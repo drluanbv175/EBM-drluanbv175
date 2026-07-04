@@ -118,41 +118,7 @@ Use this skill when you need to:
 - Bedside clinical care documentation (use `treatment-plans` skill)
 - Simple patient-specific treatment protocols (use `treatment-plans` skill)
 
-## Visual Enhancement with Scientific Schematics
-
-**⚠️ MANDATORY: Every clinical decision support document MUST include at least 1-2 AI-generated figures using the scientific-schematics skill.**
-
-This is not optional. Clinical decision documents require clear visual algorithms. Before finalizing any document:
-1. Generate at minimum ONE schematic or diagram (e.g., clinical decision algorithm, treatment pathway, or biomarker stratification tree)
-2. For cohort analyses: include patient flow diagram
-3. For treatment recommendations: include decision flowchart
-
-**How to generate figures:**
-- Use the **scientific-schematics** skill to generate AI-powered publication-quality diagrams
-- Simply describe your desired diagram in natural language
-- Nano Banana Pro will automatically generate, review, and refine the schematic
-
-**How to generate schematics:**
-```bash
-python scripts/generate_schematic.py "your diagram description" -o figures/output.png
-```
-
-The AI will automatically:
-- Create publication-quality images with proper formatting
-- Review and refine through multiple iterations
-- Ensure accessibility (colorblind-friendly, high contrast)
-- Save outputs in the figures/ directory
-
-**When to add schematics:**
-- Clinical decision algorithm flowcharts
-- Treatment pathway diagrams
-- Biomarker stratification trees
-- Patient cohort flow diagrams (CONSORT-style)
-- Survival curve visualizations
-- Molecular mechanism diagrams
-- Any complex concept that benefits from visualization
-
-For detailed guidance on creating schematics, refer to the scientific-schematics skill documentation.
+Note: this offline VN adaptation does not include AI-based figure generation (which required a paid third-party API key). For diagrams, use the markdown-mermaid-writing skill instead (free, offline).
 
 ---
 
@@ -315,7 +281,7 @@ The first page of every CDS document should contain ONLY the executive summary w
 This skill integrates with:
 - **scientific-writing**: Citation management, statistical reporting, evidence synthesis
 - **clinical-reports**: Medical terminology, HIPAA compliance, regulatory documentation
-- **scientific-schematics**: TikZ flowcharts for decision algorithms and treatment pathways
+- **markdown-mermaid-writing**: flowcharts for decision algorithms and treatment pathways (thay `scientific-schematics` — skill đó không có trong bản triển khai này, dùng AI trả phí)
 - **treatment-plans**: Individual patient applications of cohort-derived insights (bidirectional)
 
 ## Key Differentiators from Treatment-Plans Skill

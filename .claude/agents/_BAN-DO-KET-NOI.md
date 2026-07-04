@@ -88,7 +88,7 @@ Xuyên suốt: so-cai-ghi-nho (ghi sổ cái sau mỗi cổng) ; cầu thực h�
 - Mọi chuyển tiếp qua cổng đều DỪNG chờ bác sĩ duyệt khi chạm quyết định/dữ liệu/phê duyệt thật.
 
 ## 8. LỚP ROUTINES THEO LỊCH → ĐỘI AGENT (điểm vào thứ 3 — tự động hoá)
-Ngoài 2 router tương tác (mục 1), hệ có **7 routine vận hành theo lịch** (`Scheduled/<tên>/SKILL.md` THẬT) chạy nền và **uỷ thác cho cùng đội agent** (sinh nội dung EBM/NC) + **1 đặc tả META-bảo trì đã RETIRE** (`tiep-tuc-hoan-thien-he-thong-agent` — **KHÔNG** có thư mục `Scheduled/`, **KHÔNG** job lịch; playbook đã sinh TRONG PHIÊN, không phải daemon). Chuẩn dùng chung (nguồn sự thật): **`_ROUTINE-AGENT-WIRING.md`** (mapping · quy tắc · lịch). Tóm tắt cạnh:
+Ngoài 2 router tương tác (mục 1), hệ có **7 routine vận hành theo lịch** (`Scheduled/<tên>/SKILL.md` THẬT) chạy nền và **uỷ thác cho cùng đội agent** (sinh nội dung EBM/NC) + **1 bản trùng lặp đang chờ hợp nhất** (`antifacts-weekly-update`, xem dòng ghi chú bên dưới) + **1 đặc tả META-bảo trì đã RETIRE** (`tiep-tuc-hoan-thien-he-thong-agent` — **KHÔNG** có thư mục `Scheduled/`, **KHÔNG** job lịch; playbook đã sinh TRONG PHIÊN, không phải daemon). Chuẩn dùng chung (nguồn sự thật): **`_ROUTINE-AGENT-WIRING.md`** (mapping · quy tắc · lịch). Tóm tắt cạnh:
 
 | Routine | Nhịp | Uỷ thác chính | Guardrail cuối | Sổ cái/đầu ra |
 |---|---|---|---|---|
@@ -98,6 +98,7 @@ Ngoài 2 router tương tác (mục 1), hệ có **7 routine vận hành theo l�
 | `nckh` (QY175) | ad-hoc | `dieu-phoi-nghien-cuu` (gác cổng) → cụm NC | `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md` | hồ sơ đề tài |
 | `tu-kiem-dong-bo` | tuần (CN) | `_TU-SUA-CHUA-PROTOCOL.md` | bộ kiểm nội bộ | `nhat-ky.md` |
 | `antifacts-weekly-ebm` | tuần (T2 sáng) | digest EBM 13 chuyên khoa (PubMed 7 ngày) | `tham-dinh-dau-ra` | `Antifacts.html` (chờ duyệt) |
+| `antifacts-weekly-update` *(2026-07-04: TRÙNG LẶP nội dung với `antifacts-weekly-ebm` — tên cũ hơn, phát hiện khi rà lớp routine)* | tuần (T2 sáng) | y hệt `antifacts-weekly-ebm` | `tham-dinh-dau-ra` | `Antifacts.html` (chờ duyệt) — **[CẦN BÁC SĨ QUYẾT ĐỊNH]** hợp nhất 2 tên hay giữ cả hai có chủ đích; xem ghi chú trong `Scheduled/antifacts-weekly-update/SKILL.md` |
 | `tong-hop-chung-cu-hang-tuan` *(Track B)* | tuần | ứng viên chứng cứ 8 bệnh mạn (ClinicalTrials + y văn) theo skill `cap-nhat-chung-cu-y-khoa` | `tham-dinh-dau-ra` | danh sách ứng viên (chờ Track A) |
 | `tiep-tuc-hoan-thien-he-thong-agent` *(META — ĐÃ RETIRE)* | ~~vòng lặp ~1h30~~ **không có job lịch** | đặc tả khái niệm: xây/tinh chỉnh `playbooks-lam-sang/` + WIRING `.claude/` (playbook đã sinh TRONG PHIÊN) | **tự kiểm D** (bất biến + 2 cổng + không bịa/PII) — KHÔNG sinh nội dung BN nên không qua `tham-dinh-dau-ra` | `_INDEX`/`_CHANGELOG`/`_BAO-CAO-HOAN-THIEN` |
 

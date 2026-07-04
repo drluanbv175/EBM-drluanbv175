@@ -1,9 +1,18 @@
-# Skill khoa học (bản điều chỉnh EBM-VN)
+# Skill khoa học K-Dense đã Việt hóa (bản điều chỉnh EBM-VN)
+
+> **Lưu ý phạm vi (2026-07-04):** file này chỉ mô tả **21 skill nhập từ K-Dense**. Thư mục
+> `sync/skills/` có tổng cộng ~37 thư mục — 16 skill còn lại (`antifacts`,
+> `cap-nhat-chung-cu-y-khoa`, `clinical-evidence-rag`, `dark-analyst`,
+> `dashboard-master-ebm-ngoai-tru`, `ebm-master`, `giao-tiep-quyet-dinh-soap`,
+> `ke-don-an-toan-benh-man`, `kham-ngoai-tru-ebm`, `nguoi-cao-tuoi-da-benh-da-thuoc`,
+> `quan-ly-cap-nhat-ebm`, `tao-video-tiktok`, `tham-dinh-chung-cu-grade-nnt`,
+> `tiep-can-chan-doan-co-do-chuyen-tuyen`, `tuan-thu-dieu-tri`...) là skill **VN-native**, viết
+> riêng cho dự án này — KHÔNG thuộc phạm vi tài liệu này, xem `.claude/agents/_THU-VIEN-KY-NANG.md`.
 
 Bộ skill này được chọn lọc & điều chỉnh từ **scientific-agent-skills** của K-Dense Inc.
 (148 skill gốc, bản v2.53.0) cho **bác sĩ EBM ngoại trú Việt Nam**, theo quy ước trong `CLAUDE.md`.
 
-## Đã chọn 21 skill (bỏ ~127 skill tin sinh học/lý/hóa/omics không liên quan)
+## Đã chọn 21 skill K-Dense (bỏ ~127 skill tin sinh học/lý/hóa/omics không liên quan)
 
 ### Đợt 1 — truyền thông khoa học & lâm sàng
 

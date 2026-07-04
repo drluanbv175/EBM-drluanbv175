@@ -3526,12 +3526,7 @@ This skill works seamlessly with other scientific skills:
 ## Dependencies
 
 ### Required CLI Tools
-```bash
-# parallel-cli (PRIMARY — for web search and URL extraction)
-curl -fsSL https://parallel.ai/install.sh | bash
-# Or: uv tool install "parallel-web-tools[cli]"
-# Authenticate: parallel-cli auth
-```
+**[EBM-VN] KHÔNG cài parallel-cli (2026-07-04):** đoạn này trong bản gốc yêu cầu cài `parallel-cli` (dịch vụ trả phí, `curl -fsSL https://parallel.ai/install.sh | bash`) làm công cụ CHÍNH cho tìm kiếm web — trái nguyên tắc "chỉ nguồn miễn phí" của dự án (CLAUDE.md). Dùng thay: skill `research-lookup`/`paper-lookup` (PubMed E-utilities + CSDL mở, miễn phí) hoặc `database-lookup` (78 CSDL công khai).
 
 ### Required Python Packages
 ```bash

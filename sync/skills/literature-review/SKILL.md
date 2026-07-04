@@ -45,9 +45,9 @@ Use this skill when:
 - Identifying research gaps and future directions
 - Requiring verified citations and professional formatting
 
-## Hình minh họa (ưu tiên Mermaid miễn phí)
+## Hình minh họa (Mermaid miễn phí)
 
-> **[EBM-VN]** Bản gốc bắt buộc tạo hình bằng AI (Nano Banana/OpenRouter — **trả phí**). Theo quy tắc "chỉ nguồn miễn phí", **ưu tiên dùng Mermaid** (miễn phí, render trong Markdown) cho sơ đồ — đặc biệt là **PRISMA flow diagram**. Hình AY chỉ là tùy chọn nếu người dùng đã cấu hình dịch vụ riêng.
+Bản gốc dùng AI trả phí (Nano Banana/OpenRouter) để vẽ hình — **đã gỡ hoàn toàn** (2026-07-04: xóa nốt `scripts/generate_schematic*.py`, không còn "tùy chọn nếu đã cấu hình dịch vụ riêng" như bản trước). Dùng **Mermaid** (miễn phí, render trong Markdown) cho mọi sơ đồ — đặc biệt **PRISMA flow diagram**.
 
 Nên có ít nhất 1 sơ đồ cho tổng quan có hệ thống (thường là **PRISMA flow** số bài qua các bước sàng lọc). Viết bằng Mermaid, ví dụ:
 
@@ -59,32 +59,7 @@ flowchart TD
     D -->|Loại có lý do: n=___| E[Đưa vào tổng hợp: n=___]
 ```
 
-Các sơ đồ hữu ích khác (đều làm được bằng Mermaid): chiến lược tìm kiếm, sơ đồ tổng hợp theo chủ đề, khung khái niệm. Chi tiết cú pháp xem skill **markdown-mermaid-writing** nếu có.
-
-<details><summary>(Tùy chọn) Tạo hình bằng AI — chỉ khi đã có dịch vụ riêng, KHÔNG bắt buộc</summary>
-
-```bash
-python scripts/generate_schematic.py "your diagram description" -o figures/output.png
-```
-Lưu ý: script này gọi API tạo ảnh trả phí — bỏ qua nếu không dùng.
-</details>
-
-The AI will automatically:
-- Create publication-quality images with proper formatting
-- Review and refine through multiple iterations
-- Ensure accessibility (colorblind-friendly, high contrast)
-- Save outputs in the figures/ directory
-
-**When to add schematics:**
-- PRISMA flow diagrams for systematic reviews
-- Literature search strategy flowcharts
-- Thematic synthesis diagrams
-- Research gap visualization maps
-- Citation network diagrams
-- Conceptual framework illustrations
-- Any complex concept that benefits from visualization
-
-For detailed guidance on creating schematics, refer to the scientific-schematics skill documentation.
+Các sơ đồ hữu ích khác (đều làm được bằng Mermaid): chiến lược tìm kiếm, sơ đồ tổng hợp theo chủ đề, khung khái niệm, mạng lưới trích dẫn. Chi tiết cú pháp xem skill **markdown-mermaid-writing** nếu có.
 
 ---
 
@@ -674,12 +649,7 @@ This skill works seamlessly with other scientific skills:
 ## Dependencies
 
 ### Required CLI Tools
-```bash
-# parallel-cli (PRIMARY — for web search and URL extraction)
-curl -fsSL https://parallel.ai/install.sh | bash
-# Or: uv tool install "parallel-web-tools[cli]"
-# Authenticate: parallel-cli auth
-```
+**[EBM-VN] KHÔNG cài parallel-cli (2026-07-04):** bản gốc yêu cầu cài `parallel-cli` (trả phí, `curl -fsSL https://parallel.ai/install.sh | bash`) làm công cụ CHÍNH. Bản này đã thay bằng `python scripts/pubmed_lookup.py` (miễn phí, xem §"Backend tìm kiếm đã đổi" ở đầu file) + skill `paper-lookup`/`database-lookup` — không cần cài đặt gì thêm ngoài `requests`.
 
 ### Required Python Packages
 ```bash

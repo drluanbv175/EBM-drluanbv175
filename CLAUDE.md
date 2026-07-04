@@ -95,5 +95,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Test: `pytest` (khi venv đã có dev dependencies)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
 - Audit chung từ thư mục gốc: `python tools/audit_ebm_system.py`
+- **Kiểm + đồng bộ toàn hệ một lệnh:** `python tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
+- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 16 test: `tools/orchestrator/`.
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._

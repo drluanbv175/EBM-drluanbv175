@@ -13,7 +13,7 @@
 | Rà đơn/kê đơn an toàn bệnh mạn | `ke-don-an-toan-benh-man` | `ke-don-an-toan` |
 | Người cao tuổi đa bệnh – đa thuốc | `nguoi-cao-tuoi-da-benh-da-thuoc` | `ke-don-an-toan` (+`quyet-dinh-chung`) |
 | Giao tiếp/quyết định cùng BN, ghi SOAP | `giao-tiep-quyet-dinh-soap` | `quyet-dinh-chung` |
-| Lời dặn & nhắc tái khám (A5) | `ehospital-mini`, `tuan-thu-dieu-tri` | `loi-dan-tuan-thu` |
+| Lời dặn & nhắc tái khám (A5) | `tuan-thu-dieu-tri` (skill) + `ehospital-mini` (2026-07-04: sửa — đây là PROJECT riêng ở gốc `ehospital-mini/`, mini-HIS Flask+SQLite, KHÔNG phải skill trong `sync/skills/`) | `loi-dan-tuan-thu` |
 | Cập nhật chứng cứ 1 vấn đề + Web Dashboard | `cap-nhat-chung-cu-y-khoa` (Evidence Workbench, nền sáng) · `dark-analyst` (CÙNG schema `DATA`, nền tối — khi bác sĩ yêu cầu) | `huong-dan-lam-sang` / `cap-nhat-guideline` |
 | Tra cứu có trích dẫn (RAG kho y văn) | `clinical-evidence-rag`, `paper-lookup` | `tra-cuu-chung-cu` |
 | Quản lý kho cập nhật đã lưu (sổ cái) + nền tảng EBM hợp nhất | `quan-ly-cap-nhat-ebm`, `dashboard-master-ebm-ngoai-tru`, `ebm-master` (nền tảng EBM hợp nhất: lâm sàng·nghiên cứu·thống kê·giám sát guideline·an toàn thuốc·kháng sinh·thang điểm·dashboard) | `so-cai-ghi-nho` |
@@ -36,7 +36,7 @@
 | Câu hỏi cần dữ liệu di truyền/ung thư học đặc hiệu (rsID, ClinVar, COSMIC, GWAS, OMIM, PubChem — CSDL chưa có connector MCP) | `database-lookup` | `tra-cuu-chung-cu` / `thu-thu-tai-lieu` (ClinicalTrials.gov/ChEMBL đã có MCP riêng qua `_CONNECTOR-CHUNG-CU.md`, KHÔNG cần skill này cho 2 nguồn đó) |
 | Chấm điểm ĐỊNH LƯỢNG bản thảo/đề cương theo 8 chiều (0-5, có trọng số, bar chart) để theo dõi tiến bộ qua các lần sửa | `scholar-evaluation` (`scripts/calculate_scores.py`) | Bổ trợ `binh-duyet` (G8) SAU khi đã bình duyệt định tính — `run_g8_auto.py` chỉ đếm nhị phân "X/30 mục", chưa có thang điểm liên tục |
 | Hình thức hóa giả thuyết cạnh tranh + cơ chế + chấm 7 tiêu chí chất lượng (testability/falsifiability/parsimony/explanatory power/scope/consistency/novelty) trước khi chọn thiết kế | `hypothesis-generation` | `cau-hoi-nghien-cuu` (G0, sau PICO+H0/H1 thô) → `thiet-ke-nghien-cuu` (G1, trước khi chọn thiết kế/estimand) |
-| Xây mô hình tiên lượng bằng HỌC MÁY thật trên dữ liệu EHR (MIMIC/eICU/OMOP), hoặc tra/đối chiếu mã THUỐC ATC↔NDC↔RxNorm/mã bệnh ICD↔CCS khi kê đơn | `pyhealth` (`references/medcode.md` InnerMap/CrossMap — offline; cần cài PyTorch nếu train model) | `mo-hinh-tien-luong` (nhánh ML của M5 — hiện chỉ có code R cho calibration/DCA) và `ke-don-an-toan`/`ke-don-an-toan-benh-man` (mã ATC/NDC/RxNorm/CCS — MCP ICD-10-CM/PCS sẵn có KHÔNG phủ mã thuốc) |
+| Xây mô hình tiên lượng bằng HỌC MÁY thật trên dữ liệu EHR (MIMIC/eICU/OMOP), hoặc tra/đối chiếu mã THUỐC ATC↔NDC↔RxNorm/mã bệnh ICD↔CCS khi kê đơn | `pyhealth` (`references/medcode.md` InnerMap/CrossMap — offline; cần cài PyTorch nếu train model) | `mo-hinh-tien-luong` (nhánh ML của M5 — hiện chỉ có code R cho calibration/DCA) và agent `ke-don-an-toan` (+ skill `ke-don-an-toan-benh-man` — **là skill, KHÔNG phải agent riêng**, dùng bổ trợ agent `ke-don-an-toan`) cho mã ATC/NDC/RxNorm/CCS — MCP ICD-10-CM/PCS sẵn có KHÔNG phủ mã thuốc |
 | Viết IMRAD theo chuẩn báo cáo | `scientific-writing` | `viet-ban-thao` |
 | Bình duyệt trước nộp | `peer-review` | `binh-duyet` |
 | Sản phẩm đào tạo/slide/Word/PDF | `dao-tao-slide-tai-lieu-y-khoa`, `pptx`/`docx`/`pdf`/`xlsx` | (đầu ra) — gọi sau khi nội dung đã chốt |

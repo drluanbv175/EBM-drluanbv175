@@ -63,6 +63,9 @@ CHATGPT_REQUIRED_FILES = [
     CHATGPT_EXPORT / "STARTER_PROMPTS.md",
     CHATGPT_EXPORT / "INTEGRATION_CHECKLIST.md",
 ]
+SCHEDULED = ROOT / "Scheduled"
+BAN_DO_KET_NOI = AGENTS_SRC / "_BAN-DO-KET-NOI.md"
+ROUTINE_WIRING = AGENTS_SRC / "_ROUTINE-AGENT-WIRING.md"
 
 
 def configure_utf8_stdio() -> None:
@@ -212,6 +215,67 @@ def chatgpt_integration_failures() -> list[str]:
     return failures
 
 
+def routine_layer_failures() -> list[str]:
+    """Đối chiếu Scheduled/*/SKILL.md (thư mục thật trên đĩa) với bảng routine khai trong
+    _BAN-DO-KET-NOI.md §8 và _ROUTINE-AGENT-WIRING.md. Vá lỗ hổng F2 nêu trong đánh giá độc
+    lập 2026-07-03 (README kiểm 'không tham chiếu treo' cho lớp AGENT nhưng chưa áp cho lớp
+    ROUTINE — khiến 1 routine ma + routine SKILL.md rỗng lọt lưới)."""
+    failures: list[str] = []
+    if not SCHEDULED.exists():
+        return failures
+
+    real_routines: set[str] = set()
+    empty_routines: set[str] = set()
+    for d in sorted(SCHEDULED.iterdir()):
+        if not d.is_dir() or d.name.startswith("_") or d.name.startswith("."):
+            continue
+        skill_md = d / "SKILL.md"
+        if skill_md.exists() and skill_md.stat().st_size > 0:
+            real_routines.add(d.name)
+        else:
+            empty_routines.add(d.name)
+
+    if empty_routines:
+        failures.append(
+            "Scheduled/ có thư mục KHÔNG có SKILL.md thật (rỗng/thiếu): "
+            + ", ".join(sorted(empty_routines))
+        )
+
+    def mentioned(doc: Path, names: set[str]) -> set[str]:
+        # Tên routine có thể xuất hiện bọc backtick, **in đậm**, hay trần trong văn xuôi/bảng
+        # (2 tài liệu không nhất quán định dạng) — khớp theo TOKEN trọn vẹn, không phụ thuộc
+        # ký tự bao quanh, tránh dương tính giả kiểu "drug-safety-daily" chỉ in đậm không backtick.
+        if not doc.exists():
+            return set()
+        text = doc.read_text(encoding="utf-8", errors="ignore")
+        found = set()
+        for name in names:
+            pattern = r"(?<![\w-])" + re.escape(name) + r"(?![\w-])"
+            if re.search(pattern, text):
+                found.add(name)
+        return found
+
+    all_folder_names = real_routines | empty_routines
+    ban_do = mentioned(BAN_DO_KET_NOI, all_folder_names)
+    wiring = mentioned(ROUTINE_WIRING, all_folder_names)
+
+    undocumented = real_routines - ban_do
+    if undocumented:
+        failures.append(
+            "Routine có SKILL.md thật nhưng KHÔNG được nhắc trong _BAN-DO-KET-NOI.md §8: "
+            + ", ".join(sorted(undocumented))
+        )
+
+    mismatch = ban_do.symmetric_difference(wiring)
+    if mismatch:
+        failures.append(
+            "_BAN-DO-KET-NOI.md và _ROUTINE-AGENT-WIRING.md liệt kê KHÔNG khớp routine: "
+            + ", ".join(sorted(mismatch))
+        )
+
+    return failures
+
+
 def node_executable() -> str | None:
     node = shutil.which("node")
     if node:
@@ -340,6 +404,10 @@ def main() -> int:
     if chatgpt_failures:
         hard_errors.append("Tích hợp ChatGPT thiếu/chưa chuẩn: " + "; ".join(chatgpt_failures))
 
+    routine_failures = routine_layer_failures()
+    if routine_failures:
+        hard_errors.append("Lớp routine (Scheduled/) lệch tài liệu: " + "; ".join(routine_failures))
+
     antifacts_ok, antifacts_msg = antifacts_status()
     if not antifacts_ok:
         hard_errors.append("Antifacts FAIL: " + antifacts_msg)
@@ -411,6 +479,7 @@ def main() -> int:
     print("Template sync:", "PASS" if not template_failures else "FAIL")
     print("Default folder:", "PASS" if not missing_default_files else "FAIL")
     print("ChatGPT integration:", "PASS" if not chatgpt_failures else "FAIL")
+    print("Routine layer (Scheduled/):", "PASS" if not routine_failures else "FAIL: " + "; ".join(routine_failures))
     print("Antifacts:", antifacts_msg if antifacts_ok else "FAIL")
     print("Repo compile:", "PASS" if compile_ok else "FAIL")
     print("Runtime deps:", "PASS" if env_ok else "WARN")
