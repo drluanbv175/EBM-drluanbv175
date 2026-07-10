@@ -222,7 +222,10 @@ def main() -> int:
         try:
             level, details = fn()
         except Exception as e:                              # noqa: BLE001
-            level, details = "YELLOW", [f"không kiểm được: {e}"]
+            # Vá 2026-07-10: một cổng kiểm BỊ CRASH nghĩa là KHÔNG xác minh được an toàn →
+            # fail-closed = RED (DỪNG), KHÔNG hạ xuống YELLOW ("thận trọng rồi làm tiếp").
+            # Trước đây mọi lỗi bị nuốt thành YELLOW → có thể vượt cổng khi thật ra không rõ.
+            level, details = "RED", [f"CỔNG KIỂM CRASH — không xác minh được (coi như KHÔNG an toàn): {e}"]
         icon = {"GREEN": "🟢", "YELLOW": "🟡", "RED": "🔴"}[level]
         print(f"\n{icon} {title}")
         if not details:
