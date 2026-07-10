@@ -822,6 +822,14 @@ def main() -> int:
     except Exception as _e:  # noqa: BLE001
         warnings.append(f"Không chạy được kiểm chứng định tuyến agent: {_e}")
 
+    # Audit 2026-07-11: git_dirty_summary() (medical-ebm repo only — sync_safety_check.py
+    # là công cụ CHÍNH kiểm sức khỏe git cả 2 repo) từng chỉ in cho biết, không hề ảnh
+    # hưởng PASS/FAIL dù chính "không đọc được git status" là dấu hiệu hỏng index/object.
+    git_summary = git_dirty_summary()
+    if git_summary == "không đọc được git status":
+        warnings.append("medical-ebm-automation: không đọc được git status — kiểm tra "
+                         "sync_safety_check.py, có thể là dấu hiệu .git hỏng")
+
     counts = master_counts()
     if counts["missing_trace"]:
         hard_errors.append(f"EBM_MASTER còn {counts['missing_trace']} thẻ thiếu truy nguyên")
@@ -863,7 +871,7 @@ def main() -> int:
         if clinical_runtime_status != "FAIL"
         else "FAIL",
     )
-    print("Repo worktree:", git_dirty_summary())
+    print("Repo worktree:", git_summary)
     print("Dev tools:", f"pytest={'yes' if pytest_ok else 'no'}, ruff={'yes' if ruff_ok else 'no'}")
     print(
         "EBM_MASTER: "

@@ -116,8 +116,9 @@ def main() -> int:
         if s is None:
             print(f"Không tìm thấy phiên: {args.resume}")
             return 4
-        print(json.dumps(s.as_dict(), ensure_ascii=False, indent=2) if args.json else None)
-        if not args.json:
+        if args.json:
+            print(json.dumps(s.as_dict(), ensure_ascii=False, indent=2))
+        else:
             _print_session(s, orch)
         return s.exit_code
 
