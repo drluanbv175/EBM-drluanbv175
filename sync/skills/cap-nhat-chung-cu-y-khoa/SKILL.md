@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; lớp Clinical Quick View là màn hình tóm tắt mặc định) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định.
 metadata:
-  version: 1.12.1
+  version: 1.12.2
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -526,6 +526,10 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/11-guideline-bo-y-te-vn.md` (bản địa hóa Bộ Y tế VN)
 - `quality/acceptance-checklist.md`
 - `quality/web-dashboard-acceptance-checklist.md`
+
+Ngoài thư mục skill (dùng chung với các skill/quy trình EBM khác — KHÔNG nhân bản vào đây, chỉ tham chiếu):
+- `EBM_MASTER/tools/sync_all.py` — bước cuối bắt buộc của chuỗi tự động (nạp vào sổ cái trung tâm; xem §5D/§5E). `--online` xác minh PMID thật qua PubMed (mặc định tắt để nhanh — chạy định kỳ).
+- `EBM-Dashboards/tools/reskin_dashboards.py` — áp lại vỏ template chuẩn (EW/DA) cho MỌI dashboard đã xuất bản khi bố cục/CSS template đổi (bóc khối `DATA`, bọc vỏ mới, giữ nguyên dữ liệu, tự backup).
 
 ---
 

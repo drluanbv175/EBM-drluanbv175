@@ -18,7 +18,9 @@ Skill này không tự tạo báo cáo tuần/tháng, Dashboard, mã Master ho�
 
 ## Web Dashboard kèm theo
 
-Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mô hình **Clinical Quick View → Evidence Detail → Safety/Limits/Vietnam**. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
+Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mẫu **"Evidence Workbench"** (nền sáng, 3 cột: bộ lọc · Quick View + bảng item · panel thẩm định, có khối GRADE Evidence-to-Decision) — mặc định từ v1.10.0; mẫu "Dark Analyst" (nền tối) chỉ dùng khi bác sĩ yêu cầu. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
+
+Chuỗi tự động khi gọi skill (không cần yêu cầu từng bước): dựng Dashboard → cổng liêm chính `verify_dashboard.py --online` → an toàn thuốc (nếu liên quan) → thư viện `build_library.py add` → 3 sản phẩm phái sinh `make_derivatives.py` → nạp vào sổ cái trung tâm `EBM_MASTER/tools/sync_all.py`. Chi tiết: `SKILL.md` §5A/§5D/§5E.
 
 ## Trình bày theo PICO
 
@@ -28,6 +30,6 @@ Nguồn được ghi dạng văn bản thường (tác giả/tổ chức + năm 
 
 ## Phiên bản
 
-- `v1.3.0` — bổ sung chế độ PICO và quy tắc ghi nguồn sạch (văn bản + Vancouver, không thẻ markup); thêm `references/06-pico-va-trich-dan.md`.
-- `v1.2.0` — bổ sung Web Dashboard Clinical Quick View độc lập bắt buộc cho mỗi vấn đề cụ thể khi tạo file được; vẫn không tự cập nhật Dashboard Master.
-- `v1.1.0` — tách rõ cập nhật EBM theo yêu cầu khỏi hệ thống Dashboard định kỳ; bổ sung đầy đủ reference nội bộ và template đầu ra.
+Phiên bản hiện tại: xem `SKILL.md` (frontmatter `version:`). Lịch sử đầy đủ: `CHANGELOG.md` —
+KHÔNG lặp lại danh sách phiên bản ở đây (README từng đứng yên ở v1.3.0 trong khi SKILL.md đã lên
+v1.12.1, vá 2026-07-11: hai changelog tay dễ lệch nhau, chỉ giữ MỘT nguồn).

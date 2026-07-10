@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.12.2 — 2026-07-11
+
+- **Vá doc-drift (audit đối kháng 2026-07-10):** README.md "## Phiên bản" đứng yên ở v1.3.0 trong khi
+  SKILL.md đã v1.12.1 — bỏ danh sách phiên bản tay, trỏ về CHANGELOG.md (một nguồn duy nhất); mục
+  "Web Dashboard kèm theo" còn mô tả mô hình cũ Clinical Quick View → cập nhật đúng mẫu mặc định
+  hiện hành "Evidence Workbench" + chuỗi tự động 5D/5E. SKILL.md §9 bổ sung `EBM_MASTER/tools/sync_all.py`
+  và `EBM-Dashboards/tools/reskin_dashboards.py` (2 phụ thuộc ngoài thư mục skill, đã được §5D/§4 dẫn
+  chiếu là bắt buộc nhưng chưa từng liệt kê trong tài nguyên kèm theo).
+- Đồng bộ luôn `sync/skills/dark-analyst/tools/verify_dashboard.py` (lệch sha256 từ 2026-06-21, thiếu
+  toàn bộ `--check-topic`) + bổ sung `check_topic_relevance.py` còn thiếu ở đó.
+
 ## v1.12.1 — 2026-07-05
 
 - **Đồng bộ verifier lệch giữa bản chạy thật và bản phân phối skill.** Kiểm tính đồng bộ phát hiện `tools/verify_dashboard.py` bản RUNTIME (`EBM-Dashboards/tools/`, 2026-07-02) đã được nâng cấp thêm cờ opt-in `--check-topic` + module phụ `check_topic_relevance.py`, nhưng bản trong skill (`sync/skills/.../tools/`) và hub (`EBM_MASTER/skill_assets/`) vẫn là snapshot cũ 2026-06-21 → cùng một dashboard có thể qua cổng liêm chính này nhưng khác kết quả ở cổng kia.
