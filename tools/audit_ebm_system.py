@@ -249,20 +249,23 @@ def _is_runtime_only_tool(name: str) -> bool:
     )
 
 
-def tool_sync_failures() -> list[str]:
+def tool_sync_failures() -> tuple[bool, list[str]]:
     """So md5 các bản .py tool DÙNG CHUNG của skill cap-nhat-chung-cu-y-khoa giữa 3 thư mục
     song song (nguồn git · mirror hub · runtime) — bịt điểm mù nêu ở memory
     project-skill-tool-sync-topology-2026-07-05: audit chỉ so template HTML nên drift verifier
     runtime (2026-07-02, thêm --check-topic) lọt qua "Template sync: PASS" nhiều ngày.
 
-    Chỉ so file THỰC SỰ dùng chung; bỏ qua file cố ý chỉ-runtime (RUNTIME_ONLY_TOOLS / test_*).
-    Nếu <2 trong 3 thư mục tồn tại (vd đang chạy trong git worktree, nơi EBM_MASTER và
-    EBM-Dashboards bị .gitignore) → BỎ QUA êm, KHÔNG FAIL, vì không có bản thật để đối chiếu.
+    Trả (ran, failures). Chỉ so file THỰC SỰ dùng chung; bỏ qua file cố ý chỉ-runtime
+    (RUNTIME_ONLY_TOOLS / test_*). Nếu <2 trong 3 thư mục tồn tại (vd đang chạy trong git
+    worktree, nơi EBM_MASTER và EBM-Dashboards bị .gitignore) → ran=False, KHÔNG so được gì
+    (không có bản thật để đối chiếu) — caller PHẢI in SKIP, không được coi là PASS đã kiểm
+    (audit 2026-07-10: in "PASS" khi so sánh chưa từng chạy là chính điểm mù check này sinh ra
+    để bịt lại lần đầu).
     """
     failures: list[str] = []
     live = [(label, d) for label, d in TOOL_DIRS.items() if d.exists()]
     if len(live) < 2:
-        return failures
+        return False, failures
     label_of = {d: label for label, d in TOOL_DIRS.items()}
 
     # (A) Drift NỘI DUNG — so md5 mọi .py xuất hiện ở ≥2 thư mục đang tồn tại (tự bao phủ cả
@@ -299,7 +302,7 @@ def tool_sync_failures() -> list[str]:
                 + " (đang có ở " + ", ".join(label_of[d] for d in have) + ")"
             )
 
-    return failures
+    return True, failures
 
 
 def default_file_failures() -> list[str]:
@@ -727,7 +730,7 @@ def main() -> int:
     if template_failures:
         hard_errors.append("Template dashboard lệch: " + "; ".join(template_failures))
 
-    tool_failures = tool_sync_failures()
+    tool_sync_ran, tool_failures = tool_sync_failures()
     if tool_failures:
         hard_errors.append("Tool skill cap-nhat-chung-cu-y-khoa lệch bản: " + "; ".join(tool_failures))
 
@@ -841,7 +844,10 @@ def main() -> int:
     )
     print(f"Dashboard offline: {checked_dash} kiểm, {len(dash_failures)} lỗi")
     print("Template sync:", "PASS" if not template_failures else "FAIL")
-    print("Tool sync:", "PASS" if not tool_failures else "FAIL: " + "; ".join(tool_failures))
+    if not tool_sync_ran:
+        print("Tool sync: SKIP (< 2/3 thư mục tồn tại — không có bản để đối chiếu, vd đang chạy trong worktree)")
+    else:
+        print("Tool sync:", "PASS" if not tool_failures else "FAIL: " + "; ".join(tool_failures))
     print("Default folder:", "PASS" if not missing_default_files else "FAIL")
     print("ChatGPT integration:", "PASS" if not chatgpt_failures else "FAIL")
     print("Claude/Codex sync health:", sync_health_summary)
