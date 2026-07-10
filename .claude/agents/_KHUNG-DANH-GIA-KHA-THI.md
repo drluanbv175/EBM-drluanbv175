@@ -91,6 +91,26 @@ Gói hội đồng người (`_GOI-DANH-GIA-NGUOI.md`: 3 chuyên gia × 50 ca m�
 chuyển thành **tùy chọn Tier R** — kích hoạt khi: (a) bác sĩ có cộng sự/nhóm chấm được; (b) chuẩn bị **xuất bản** claim về hệ;
 (c) tiến tới vận hành **không người duyệt**. Đến lúc đó chạy đúng quy trình mù, độc lập — số liệu chỉ có giá trị khi chấm thật.
 
+## 5bis. QUYẾT ĐỊNH VẬN HÀNH — CHỦ SỞ HỮU ĐƠN LẺ (bác sĩ xác nhận 2026-07-10)
+
+Bác sĩ xác nhận: **cá nhân sử dụng, toàn quyền trên hệ thống** — đồng thời là tác giả, chủ sở hữu, người dùng và
+**người chịu trách nhiệm lâm sàng cuối** (mọi đầu ra qua Cổng A/B do chính bác sĩ duyệt). Trong bối cảnh một-người này:
+
+- **Tier R về CẤU TRÚC KHÔNG áp dụng — N/A, không phải "đang chờ".** Mô hình quản trị đa-bên (reviewer ≠ author,
+  hội đồng ≥3 chuyên gia, tách PI–reviewer, COI author↔reviewer) **giả định nhiều người**; với một người nó vô nghĩa,
+  không phải "chưa làm xong".
+- **Chuẩn vận hành = Tier S.** Chủ sở hữu, với toàn quyền và tự chịu rủi ro, **chọn Tier S** làm chuẩn cho dùng-có-mình-duyệt.
+  Tier R **tái kích hoạt** CHỈ khi: (a) **công bố/xuất bản** claim về hệ; (b) đầu ra được **chia sẻ như thẩm quyền cho NGƯỜI KHÁC**;
+  (c) vận hành **không-người-duyệt (tự trị)**. Ngoài 3 điều đó, Tier R = N/A.
+- **Do đó `NO-GO 43.56` và các cổng independent-review KHÔNG phải "hệ đang lỗi/chưa hoàn thiện"** — chúng là chỉ số
+  Tier R không áp dụng cho vận hành cá nhân. Với dùng cá nhân, hệ **ĐẠT chuẩn vận hành Tier S** (phần an toàn cốt lõi có bằng chứng §2).
+
+**⚠️ RANH GIỚI LIÊM CHÍNH — toàn quyền KHÔNG nới:** "toàn quyền" = **được quyền CHẤP NHẬN chuẩn khả thi cho rủi ro của
+CHÍNH MÌNH**, KHÔNG phải được quyền **TUYÊN BỐ điều chưa làm**. Một người — dù toàn quyền — vẫn **không tự tính được κ
+liên-người**, **không tự làm "independent review" cho chính mình**, **không tự chứng nhận "đạt MRAQ-75/đã kiểm định độc lập"**.
+Nếu về sau chia sẻ/công bố ra ngoài → các giới hạn này lập tức có hiệu lực trở lại (Tier R). AI vẫn KHÔNG tự APPROVE cổng,
+KHÔNG bịa κ/điểm. (Ghi nhận đây là **quyết định của bác sĩ-PI**, không phải AI tự phê duyệt.)
+
 ## 6. R3 (chế độ suy giảm) — đo bằng nền Tier S, KHÔNG cần hội đồng
 Khuyến nghị PA1 trong `assurance/KHAO-SAT-CHE-DO-SUY-GIAM-2026-07-10.md` được **điều chỉnh**: đo chế độ suy giảm bằng
 **§2 Lớp 1 (gold set tự động ép chế độ headless) + Lớp 2 (phản biện AI) + Lớp 3 (bác sĩ spot-check mẫu)** — KHÔNG đòi Q2/Q5
