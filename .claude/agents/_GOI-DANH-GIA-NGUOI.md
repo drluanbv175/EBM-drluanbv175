@@ -4,6 +4,12 @@
 > Hai mục CAFÉ-S này **bắt buộc cần CON NGƯỜI** — AI không tự chấm thay được. Đây là bộ công cụ sẵn dùng để **BẠN tổ chức**; điền kết quả vào `_CHUAN-CAFES.md`.
 > **"Cần bác sĩ kiểm chứng."**
 
+> ⚠️ **TÁI PHẠM VI 2026-07-10 (theo yêu cầu bác sĩ):** gói hội đồng 3-chuyên-gia này giờ là **đường TÙY CHỌN Tier R**
+> (nghiên cứu/xuất bản/tự trị) — **KHÔNG còn là chốt chặn** để bác sĩ dùng hệ như trợ lý có mình duyệt (Tier S). κ theo
+> định nghĩa cần ≥3 người chấm, một bác sĩ đơn lẻ không tổ chức được → chuyển sang **duyệt-đơn-người khả thi**:
+> `tools/eval/templates/solo_clinician_review_50cases.csv` (single-reviewer, KHÔNG phải κ — nói thẳng). Khung đầy đủ:
+> **`_KHUNG-DANH-GIA-KHA-THI.md`**. Chạy gói κ này khi có cộng sự/khi xuất bản; đến lúc đó vẫn phải mù + độc lập thật.
+
 ---
 
 ## PHẦN A — ĐỒNG THUẬN CHUYÊN GIA (P3.2, Cohen's/Fleiss' κ)

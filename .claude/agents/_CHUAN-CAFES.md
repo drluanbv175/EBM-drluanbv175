@@ -13,6 +13,12 @@ CAFÉ-S v2.0 là chuẩn cho **MỘT SẢN PHẨM LÂM SÀNG TRIỂN KHAI** (có
 - Một số trục đòi **NGHIÊN CỨU NGƯỜI THẬT** (κ chuyên gia, Likert bác sĩ) → KHÔNG tự chấm được.
 **KHÔNG gán điểm cho thứ không có** — đó chính là kỷ luật liêm chính của hệ. Điểm dưới đây là **điểm THẬT theo phạm vi**, kèm nhãn N/A trung thực.
 
+> ⚠️ **TÁI PHẠM VI 2026-07-10:** điểm **76/100** và ngưỡng **85** cùng hai chốt **P3.2 κ + P4.2 Likert** là chuẩn
+> **Tier R** (sản phẩm triển khai/nghiên cứu/xuất bản). Với **Tier S — trợ lý có bác sĩ duyệt từng đầu ra** (use-case
+> THẬT của bác sĩ), mọi trục **CRITICAL đã ĐẠT có bằng chứng tự động** (cờ đỏ 20/20 · CCĐ 10/10 · phantom 0%/52 —
+> `cafes_suite.py` chạy lại PASS 2026-07-10) → hệ **đủ dùng Tier S**, KHÔNG bị 76<85 chặn. κ/Likert người chuyển
+> thành **tùy chọn Tier R**; thay bằng duyệt-đơn-người + phản biện AI cho Tier S. Khung: **`_KHUNG-DANH-GIA-KHA-THI.md`**.
+
 ---
 
 ## SCORECARD (điểm THẬT theo phạm vi, 2026-06-14)
