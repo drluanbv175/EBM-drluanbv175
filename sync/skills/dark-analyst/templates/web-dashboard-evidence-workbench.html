@@ -179,6 +179,11 @@
   .effect{font-family:var(--mono);font-weight:600}.effect.fav{color:var(--g-high)}.effect.harm{color:var(--g-vlow)}.effect.ns{color:var(--muted)}
   .ci{color:var(--faint);font-size:10px;font-family:var(--mono)}
   .mforest svg{display:block}
+  .robmini{display:flex;gap:3px}.robmini i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .rl{background:var(--g-high)}.rs{background:var(--g-mod)}.rh{background:var(--g-vlow)}
+  .robfull{display:flex;flex-direction:column;gap:6px}
+  .robfull .r{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ink-2)}
+  .robfull .r i{width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:8px;font-weight:800;color:#fff;font-style:normal}
   .flag-mini{display:inline-block;font-size:9px;font-weight:700;color:var(--notyet);background:#fff7ed;border:1px solid #fed7aa;border-radius:5px;padding:1px 5px;margin-top:4px}
 
   /* generic section cards used in non-table tabs */
@@ -436,6 +441,7 @@ const DESIGN_META={Guideline:['b-guideline','Guideline'],Meta:['b-meta','Meta-an
 const GRADE_META={high:['g-high','Cao',4],mod:['g-mod','Trung bình',3],low:['g-low','Thấp',2],vlow:['g-vlow','Rất thấp',1],na:['g-na','Nguồn không phân hạng',0]};
 const DEC_META={apply:['d-apply','Áp dụng ngay','--apply'],consider:['d-consider','Cân nhắc chọn lọc','--consider'],notyet:['d-notyet','Chưa đủ thay đổi','--notyet']};
 const GROUP_META={'cao-tuoi':'Người cao tuổi','ckd':'CKD','gan':'Bệnh gan','dtd':'Đái tháo đường','tim-mach':'Tim mạch','da-thuoc':'Đa thuốc'};
+const RM={l:['rl','✓'],s:['rs','!'],h:['rh','✕']};
 
 let state={selected:null, tab:'cqv', q:'', filters:{decision:new Set(),group:new Set(),design:new Set(),grade:new Set()}};
 
@@ -587,19 +593,21 @@ function renderCenter(){
 function tableView(arr){
   const rows=arr.map(e=>{
     const dm=DESIGN_META[e.design]||['',''], gm=GRADE_META[e.gradeLevel]||GRADE_META.na, dec=DEC_META[e.decision]||DEC_META.consider;
-    const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+e.effect.ci+')':''}</span>`:'<span class="effect ns">—</span>';
+    const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+e.effect.ci+')':''}</span>`:(e.effectText?`<span class="effect ns" style="font-size:10.5px">${e.effectText}</span>`:'<span class="effect ns">—</span>');
     const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
+    const robm=e.rob?Object.values(e.rob).map(r=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join(''):'<span style="color:var(--faint);font-size:10px">—</span>';
     return `<tr class="${e.id===state.selected?'sel':''}" onclick="select('${e.id}')">
       <td><span class="ttl">${e.title}<span class="auth">${e.source} · <span class="idtag">${e.id}</span>${e.pmid?` · PMID <span class="pmid">${e.pmid}</span>`:''}</span>${e.flag?`<span class="flag-mini">⚑ ${e.flag}</span>`:''}</span></td>
       <td><span class="badge ${dm[0]}"><span class="d"></span>${dm[1]}</span></td>
       <td>${eff}</td>
       <td>${miniForest(e.effect)}</td>
       <td><span class="grade ${gm[0]}"><span class="pips">${pips}</span>${gm[1]}</span></td>
+      <td><div class="robmini">${robm}</div></td>
       <td><span class="dec ${dec[0]}"><span class="d"></span>${dec[1]}</span></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="6" class="empty">Không có điểm chứng cứ khớp bộ lọc</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Không có điểm chứng cứ khớp bộ lọc</td></tr>';
   return `<div class="ctoolbar"><span><b>${arr.length}</b> điểm chứng cứ · click để mở thẩm định</span><span class="sp"></span></div>
-    <table><thead><tr><th>Điểm chứng cứ</th><th>Thiết kế</th><th>Hiệu số (nguồn)</th><th>Forest</th><th>Mức chứng cứ</th><th>Quyết định</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <table><thead><tr><th>Điểm chứng cứ</th><th>Thiết kế</th><th>Hiệu số (nguồn)</th><th>Forest</th><th>Mức chứng cứ</th><th>RoB 2</th><th>Quyết định</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function cardView(arr,kind){
   if(!arr.length) return `<div class="empty">Không có nội dung cho mục này.</div>`;
@@ -645,10 +653,12 @@ function renderDetail(){
   const FL=e.frameLabels||{P:'P',I:'I',C:'C',O:'O'};
   const picoRows=['P','I','C','O'].map(k=>{const d=(e.pico||{})[k]||['—','match'];return `<div class="k k${k}">${FL[k]||k}</div><div class="v">${d[0]} ${d[1]==='match'?'<span class="match">✓ khớp</span>':'<span class="mis">⚠ lệch</span>'}</div>`;}).join('');
   const eff=e.effect;
-  const statsHtml=eff?`<div class="dsec"><h3>∑ Hiệu số (đúng như nguồn báo cáo)</h3><div class="stats">
-      <div class="stat"><div class="l">${eff.measure||'Hiệu số'}</div><div class="n" style="color:${eff.favors?'var(--g-high)':'var(--ink)'}">${eff.hr!=null?eff.hr.toFixed(2):'—'}</div><div class="x">95% CI ${eff.ci||'—'}</div></div>
-      <div class="stat"><div class="l">Forest</div><div style="margin-top:6px">${miniForest(eff)}</div><div class="x">ngưỡng 1.0</div></div>
+  const statsHtml=(eff||e.effectText)?`<div class="dsec"><h3>∑ Hiệu số (đúng như nguồn báo cáo)</h3><div class="stats">
+      <div class="stat"><div class="l">${eff?(eff.measure||'Hiệu số'):'Hiệu số'}</div><div class="n" style="color:${eff&&eff.favors?'var(--g-high)':'var(--ink)'}">${eff&&eff.hr!=null?eff.hr.toFixed(2):(e.effectText||'—')}</div><div class="x">${eff?'95% CI '+(eff.ci||'—'):''}</div></div>
+      ${eff?`<div class="stat"><div class="l">Forest</div><div style="margin-top:6px">${miniForest(eff)}</div><div class="x">ngưỡng 1.0</div></div>`:''}
     </div></div>`:'';
+  const robFull=e.rob?Object.keys(e.rob).map(d=>{const r=RM[e.rob[d]];return `<div class="r"><span>${d}</span><i class="${r[0]}">${r[1]}</i></div>`;}).join(''):'';
+  const robHtml=e.rob?`<div class="dsec"><h3>◉ Nguy cơ sai lệch (RoB 2)</h3><div class="robfull">${robFull}</div></div>`:'';
   el.innerHTML=`
     <div class="dhead">
       <button class="detail-close" onclick="closeDetail()" title="Đóng">✕</button>
@@ -669,6 +679,7 @@ function renderDetail(){
     </div></div>
     <div class="dsec"><h3>◧ Đối chiếu ${e.frame||'PICO'}</h3><div class="picogrid">${picoRows}</div></div>
     ${statsHtml}
+    ${robHtml}
     <div class="dsec"><h3>➤ Hành động & theo dõi</h3><div class="kvline">
       <div class="r"><span class="k">Hành động</span><span class="v">${e.action||'—'}</span></div>
       <div class="r"><span class="k">Monitoring</span><span class="v">${e.monitoring||'—'}</span></div>
