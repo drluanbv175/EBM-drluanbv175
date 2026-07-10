@@ -210,12 +210,20 @@ def main():
         warns.append("Không chạy được kiểm chất lượng nội dung: %s" % e)
 
     # 5) NGHI GÁN MỨC MÁY MÓC — toàn bộ item cùng gradeLevel='high' (vi phạm liêm chính R4)
+    # Audit 2026-07-11: ngưỡng >=8 trước đây bỏ sót "chế độ nhanh" (3-7 item) — vẫn cùng
+    # rủi ro nhưng mẫu nhỏ hơn nên hạ xuống WARN (không auto-chặn) thay vì ERROR cứng như n>=8.
     grades = [field(ch, "gradeLevel") for ch in items]
-    if len(items) >= 8:
+    n = len(items)
+    if n >= 8:
         n_high = sum(1 for g in grades if g == "high")
-        if n_high >= 0.9 * len(items):
+        if n_high >= 0.9 * n:
             errors.append("NGHI GÁN MỨC MÁY MÓC: %d/%d item đều gradeLevel='high' — không nguồn nào "
-                          "đồng loạt 'Cao'. Rà & chấm GRADE từng nguồn (RoB/GRADE thật)." % (n_high, len(items)))
+                          "đồng loạt 'Cao'. Rà & chấm GRADE từng nguồn (RoB/GRADE thật)." % (n_high, n))
+    elif 3 <= n < 8:
+        n_high = sum(1 for g in grades if g == "high")
+        if n_high == n:
+            warns.append("NGHI GÁN MỨC MÁY MÓC (mẫu nhỏ, %d item): tất cả đều gradeLevel='high' — "
+                         "rà lại xem có thật sự đồng loạt 'Cao' không (RoB/GRADE thật)." % n)
 
     # 6) (--check-topic, opt-in) ĐỘ LIÊN QUAN CHỦ ĐỀ — gate kỹ thuật ở trên KHÔNG bắt được item
     # lạc chủ đề (vd bài sản khoa/nhi khoa lọt vào dashboard Tim mạch — đã gặp thật ở
