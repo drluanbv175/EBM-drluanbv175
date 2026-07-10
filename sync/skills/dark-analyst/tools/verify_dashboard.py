@@ -8,24 +8,30 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
   - Mỗi item có gradeLevel + decision + references.
   - Có disclaimer "Cần bác sĩ kiểm chứng".
   - Quét dấu hiệu PII (cảnh báo để người rà — không tự ý kết luận).
+  - DOI kiểm ĐỊNH DẠNG luôn (offline, mọi lượt chạy) — KHÔNG phân giải online (chưa gọi
+    doi.org/Crossref; DOI đúng định dạng nhưng không tồn tại vẫn có thể lọt).
   - (Tùy chọn --online) Tự XÁC MINH mỗi PMID phân giải đúng qua NCBI E-utilities
-    (miễn phí, không cần key) → chống trích dẫn ảo. DOI kiểm định dạng.
+    (miễn phí, không cần key) → chống trích dẫn ảo PMID.
 
 Cách dùng:
     python3 verify_dashboard.py <dashboard.html>            # chỉ kiểm cấu trúc (offline)
-    python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID/DOI trên mạng
+    python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID trên mạng
 
 Mã thoát: 0 = PASS (không lỗi cứng), 1 = FAIL.
-Lỗi cứng: item thiếu cả pmid lẫn doi; thiếu disclaimer; item thiếu gradeLevel/decision;
-  items[] rỗng (TRỪ artifact tự khai báo kind:'cong-cu' = công cụ hỗ trợ quyết định, không phải
-  danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung).
-Cảnh báo (không chặn): nghi PII; PMID/DOI không xác minh được khi --online.
+Lỗi cứng: item thiếu cả pmid lẫn doi; DOI sai định dạng; thiếu disclaimer; item thiếu
+  gradeLevel/decision; items[] rỗng (TRỪ artifact tự khai báo kind:'cong-cu' = công cụ hỗ
+  trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung).
+Cảnh báo (không chặn): nghi PII; PMID không xác minh được khi --online.
 """
 import sys, re, json, argparse
 
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 VALID_GRADE = {"high", "mod", "low", "vlow", "na"}
 VALID_DECISION = {"apply", "consider", "notyet"}
+# Audit 2026-07-11: docstring hứa "DOI kiểm định dạng" nhưng trước đây chỉ kiểm
+# doi không rỗng — DOI bịa/gõ sai vẫn qua cổng nếu không kèm pmid. Regex chuẩn
+# DOI (registrant 4+ số + '/' + suffix bất kỳ, theo chuẩn doi.org).
+DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 
 
 def configure_utf8_stdio():
@@ -139,6 +145,8 @@ def main():
         dec = field(ch, "decision")
         if not (pmid or doi or url):
             errors.append("[%s] THIẾU định danh truy nguyên (pmid/doi/url)." % iid)
+        if doi and not DOI_RE.match(doi.strip()):
+            errors.append("[%s] DOI sai định dạng (nghi bịa/gõ sai): %r" % (iid, doi))
         if pmid:
             pmids.append((iid, pmid))
         if grade not in VALID_GRADE:
