@@ -13,7 +13,16 @@ Cách dùng:
     python3 tools/drug_safety_scan.py <dashboard>.html
     python3 tools/drug_safety_scan.py <dashboard>.html --flags data/drug_flags.json
 """
-import sys, os, re, json, argparse
+import sys, os, re, json, argparse, unicodedata
+
+
+def _strip_diacritics(s):
+    """Bỏ dấu tiếng Việt để so khớp không phân biệt có/không dấu (audit 2026-07-11:
+    alias không dấu trong drug_flags.json — vd 'khang viem khong steroid' — trước đây
+    KHÔNG BAO GIỜ khớp được vì dashboard luôn viết CÓ dấu; so khớp nay chuẩn hoá cả 2 vế)."""
+    s = s.replace("đ", "d").replace("Đ", "D")
+    nfkd = unicodedata.normalize("NFKD", s)
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
 def main():
@@ -26,11 +35,12 @@ def main():
     flagpath = a.flags or os.path.join(here, "..", "data", "drug_flags.json")
     db = json.load(open(flagpath, encoding="utf-8"))
     text = open(a.file, encoding="utf-8").read().lower()
+    text_norm = _strip_diacritics(text)
 
     hits = []
     for f in db.get("flags", []):
         names = [f["drug"]] + f.get("aliases", [])
-        found = next((n for n in names if n.lower() in text), None)
+        found = next((n for n in names if _strip_diacritics(n.lower()) in text_norm), None)
         if found:
             hits.append((f["drug"], found, f["cat"], f["flag"], f["source"]))
 

@@ -35,6 +35,7 @@ def parse_dashboard(path):
     starts = [m.start() for m in re.finditer(r"\{\s*id\s*:\s*['\"]", seg)]
     dec = {"apply": 0, "consider": 0, "notyet": 0}
     pmids = set()
+    dois = set()  # audit 2026-07-11: thư viện trước đây chỉ theo dõi PMID — thẻ chỉ có DOI vô hình
     for k, s in enumerate(starts):
         e = starts[k + 1] if k + 1 < len(starts) else len(seg)
         ch = seg[s:e]
@@ -43,6 +44,9 @@ def parse_dashboard(path):
             dec[d.group(1)] += 1
         for pm in re.findall(r"pmid\s*:\s*['\"](\d+)['\"]", ch):
             pmids.add(pm)
+        for doi in re.findall(r"doi\s*:\s*['\"]([^'\"]+)['\"]", ch):
+            if doi:
+                dois.add(doi)
     skin = "Dark Analyst" if ("ANALYST" in html or "dark-analyst" in html) else "Evidence Workbench"
     return {
         "file": os.path.basename(path),
@@ -51,7 +55,7 @@ def parse_dashboard(path):
         "eyebrow": eyebrow or "",
         "total": len(starts),
         "apply": dec["apply"], "consider": dec["consider"], "notyet": dec["notyet"],
-        "pmids": sorted(pmids), "skin": skin,
+        "pmids": sorted(pmids), "dois": sorted(dois), "skin": skin,
     }
 
 
@@ -96,7 +100,7 @@ tbody td{padding:11px 16px;vertical-align:top}
 .empty{padding:40px;text-align:center;color:var(--muted)}
 </style></head><body>
 <div class="top"><span class="logo">⊕</span><div><h1>Thư viện cập nhật chứng cứ EBM</h1><div class="sub">Chỉ mục mọi Web Dashboard đã làm · click để mở</div></div></div>
-<div class="bar"><input id="q" placeholder="Tìm: chủ đề, thuốc, PMID…" oninput="render()"/>
+<div class="bar"><input id="q" placeholder="Tìm: chủ đề, thuốc, PMID/DOI…" oninput="render()"/>
 <span class="chip on" data-f="all" onclick="setf(this)">Tất cả</span>
 <span class="chip" data-f="apply" onclick="setf(this)">Có “áp dụng ngay”</span>
 <span class="kpi" id="kpi"></span></div>
@@ -116,7 +120,7 @@ function render(){
     <td><div class="q"><span class="eb">${e.eyebrow||''}</span>${e.question}</div></td>
     <td class="d">${e.updated||'—'}</td>
     <td><span class="dec"><b class="a">${e.apply}</b><b class="c">${e.consider}</b><b class="n">${e.notyet}</b></span></td>
-    <td class="d">${e.total} item · ${(e.pmids||[]).length} PMID <span class="skin">${e.skin||''}</span></td>
+    <td class="d">${e.total} item · ${(e.pmids||[]).length} PMID · ${(e.dois||[]).length} DOI <span class="skin">${e.skin||''}</span></td>
     <td><a class="open" href="${e.file}" target="_blank">Mở →</a></td>
   </tr>`).join('')||`<tr><td colspan="5" class="empty">Chưa có bản cập nhật nào khớp.</td></tr>`;
 }

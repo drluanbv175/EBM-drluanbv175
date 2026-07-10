@@ -23,7 +23,9 @@ Lỗi cứng: item thiếu cả pmid lẫn doi; DOI sai định dạng; thiếu 
   trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung).
 Cảnh báo (không chặn): nghi PII; PMID không xác minh được khi --online.
 """
-import sys, re, json, argparse
+import sys, re, json, argparse, time
+import urllib.error
+import urllib.parse
 
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 VALID_GRADE = {"high", "mod", "low", "vlow", "na"}
@@ -76,19 +78,33 @@ def meta_kind(data_block):
     return m.group(1) if m else None
 
 
-def verify_pmid_online(pmid):
+def verify_pmid_online(pmid, retries=2):
+    """Tri-state (True/False/None) — xem docstring caller. Audit 2026-07-11: thêm
+    retry-with-backoff cho lỗi rate-limit/server tạm thời (HTTP 429/5xx) của NCBI
+    (không key → giới hạn ~3 req/s) — trước đây MỘT lần bị rate-limit là hạ ngay
+    thành "lỗi mạng" không phân biệt được với hiccup thật, khiến quét nhiều PMID
+    liên tiếp dễ tạo cảnh báo giả hàng loạt."""
     import urllib.request
     url = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
            "?db=pubmed&retmode=json&id=" + pmid)
-    try:
-        with urllib.request.urlopen(url, timeout=15) as r:
-            j = json.loads(r.read().decode("utf-8"))
-        res = j.get("result", {})
-        if pmid in res and "title" in res[pmid]:
-            return True, res[pmid].get("title", "")[:90]
-        return False, "không có trong PubMed"
-    except Exception as e:
-        return None, "lỗi mạng: %s" % e
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=15) as r:
+                j = json.loads(r.read().decode("utf-8"))
+            res = j.get("result", {})
+            if pmid in res and "title" in res[pmid]:
+                return True, res[pmid].get("title", "")[:90]
+            return False, "không có trong PubMed"
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code in (429, 500, 502, 503, 504) and attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "lỗi mạng: %s" % e
+        except Exception as e:
+            return None, "lỗi mạng: %s" % e
+    return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
 
 
 def main():
@@ -147,6 +163,14 @@ def main():
             errors.append("[%s] THIẾU định danh truy nguyên (pmid/doi/url)." % iid)
         if doi and not DOI_RE.match(doi.strip()):
             errors.append("[%s] DOI sai định dạng (nghi bịa/gõ sai): %r" % (iid, doi))
+        # Audit 2026-07-11: url được chấp nhận ngang pmid/doi để qua cổng truy nguyên
+        # nhưng trước đây KHÔNG kiểm định dạng gì — chỉ kiểm scheme http(s) + có host,
+        # KHÔNG phân giải thật (không đủ để xác nhận URL tồn tại, chỉ chặn chuỗi rác rõ ràng).
+        if url and not pmid and not doi:
+            u = urllib.parse.urlparse(url.strip())
+            if u.scheme not in ("http", "https") or not u.netloc:
+                errors.append("[%s] url không đúng định dạng (thiếu scheme http(s) hoặc host): %r"
+                              % (iid, url))
         if pmid:
             pmids.append((iid, pmid))
         if grade not in VALID_GRADE:
@@ -171,10 +195,16 @@ def main():
     if a.online and pmids:
         oks.append("Đang xác minh %d PMID trên PubMed…" % len(set(p for _, p in pmids)))
         seen = {}
+        net_calls = 0
         for iid, p in pmids:
             if p in seen:
                 ok, info = seen[p]
             else:
+                # Giãn cách ~3 req/s (NCBI E-utilities không key) để tránh TỰ gây rate-limit
+                # khi quét nhiều PMID liên tiếp, thay vì chỉ phản ứng bằng retry sau đó.
+                if net_calls:
+                    time.sleep(0.34)
+                net_calls += 1
                 ok, info = verify_pmid_online(p)
                 seen[p] = (ok, info)
             if ok is True:
