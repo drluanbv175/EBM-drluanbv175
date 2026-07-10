@@ -91,6 +91,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("file")
     ap.add_argument("--online", action="store_true", help="xác minh PMID/DOI trên mạng")
+    ap.add_argument("--check-topic", action="store_true",
+                    help="gọi Claude API chấm mỗi item có đúng chủ đề dashboard không (cần "
+                         "ANTHROPIC_API_KEY; tốn 1 lượt gọi API/dashboard)")
     a = ap.parse_args()
 
     html = open(a.file, encoding="utf-8").read()
@@ -205,6 +208,32 @@ def main():
         if n_high >= 0.9 * len(items):
             errors.append("NGHI GÁN MỨC MÁY MÓC: %d/%d item đều gradeLevel='high' — không nguồn nào "
                           "đồng loạt 'Cao'. Rà & chấm GRADE từng nguồn (RoB/GRADE thật)." % (n_high, len(items)))
+
+    # 6) (--check-topic, opt-in) ĐỘ LIÊN QUAN CHỦ ĐỀ — gate kỹ thuật ở trên KHÔNG bắt được item
+    # lạc chủ đề (vd bài sản khoa/nhi khoa lọt vào dashboard Tim mạch — đã gặp thật ở
+    # TimMach_20260609, chỉ phát hiện được bằng đọc tay). Luôn CẢNH BÁO, không chặn cứng — phân
+    # loại LLM có sai số, quyết định cuối thuộc bác sĩ. Bỏ qua êm nếu thiếu ANTHROPIC_API_KEY.
+    if a.check_topic:
+        try:
+            import os as _os, sys as _sys
+            _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+            import check_topic_relevance as CTR
+            topic_result = CTR.check_dashboard_topic_relevance(a.file)
+            if topic_result["status"] == "skipped":
+                warns.append("Kiểm chủ đề (--check-topic): BỎ QUA — %s" % topic_result["message"])
+            elif topic_result["status"] == "error":
+                warns.append("Kiểm chủ đề (--check-topic): lỗi — %s" % topic_result["message"])
+            elif topic_result["off_topic"]:
+                ids = ", ".join(it["id"] for it in topic_result["off_topic"])
+                warns.append(
+                    "NGHI %d item LẠC CHỦ ĐỀ '%s' (LLM chấm, cần bác sĩ rà, KHÔNG tự gỡ): %s"
+                    % (len(topic_result["off_topic"]), topic_result["topic"], ids)
+                )
+            else:
+                oks.append("Kiểm chủ đề: %d/%d item đều khớp chủ đề dashboard."
+                           % (topic_result["total_items"], topic_result["total_items"]))
+        except Exception as e:
+            warns.append("Không chạy được kiểm chủ đề: %s" % e)
 
     return report(errors, warns, oks)
 
