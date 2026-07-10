@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.12.3 — 2026-07-11
+
+- **Sửa `drug_safety_scan.py` gán nhầm cảnh báo đặc hiệu tramadol cho opioid khác (audit đối kháng
+  2026-07-10).** Vòng lặp in chỉ hiển thị tên thuốc CANONICAL (`drug`), không hiển thị bí danh THỰC SỰ
+  khớp (`found`) — dashboard nhắc đến fentanyl/morphine/oxycodone/codeine bị báo là "⚑ tramadol" kèm
+  cảnh báo hạ ngưỡng co giật & hạ natri/serotonin CHỈ đặc hiệu cho tramadol (cơ chế serotonergic kép),
+  không áp dụng cho các opioid thuần mu-agonist khác.
+  - `drug_flags.json`: tách entry "tramadol" (giữ cảnh báo đặc hiệu) khỏi entry mới "opioid (khác
+    tramadol)" (codeine/morphine/oxycodone/fentanyl — chỉ giữ cảnh báo CHUNG nhóm opioid: té ngã/sảng/táo bón).
+  - `drug_safety_scan.py`: in kèm bí danh thực khớp khi khác tên canonical, vd "opioid (khác tramadol)
+    (khớp: fentanyl)".
+  - Đồng bộ 4 bản (`sync/skills/cap-nhat-chung-cu-y-khoa`, `sync/skills/dark-analyst`,
+    `EBM-Dashboards/tools+data`, `EBM_MASTER/skill_assets`) — md5 khớp tuyệt đối.
+
 ## v1.12.2 — 2026-07-11
 
 - **Vá doc-drift (audit đối kháng 2026-07-10):** README.md "## Phiên bản" đứng yên ở v1.3.0 trong khi

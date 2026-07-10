@@ -47,7 +47,8 @@ def main():
         if drug in seen:
             continue
         seen.add(drug)
-        print("  ⚑ %-16s [%s · %s]" % (drug, cat, src))
+        label = drug if found.lower() == drug.lower() else "%s (khớp: %s)" % (drug, found)
+        print("  ⚑ %-28s [%s · %s]" % (label, cat, src))
         print("      %s" % flag)
     print("-" * 66)
     drugs = ", ".join(sorted(seen))
