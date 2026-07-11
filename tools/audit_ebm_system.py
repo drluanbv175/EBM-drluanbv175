@@ -878,6 +878,13 @@ def main() -> int:
     if not ruff_ok:
         warnings.append("Chưa chạy được ruff bằng Python hiện tại (thiếu dependency hoặc venv chưa cài)")
 
+    launchd_drift = launchd_registration_drift()
+    if launchd_drift:
+        warnings.append(
+            "Lịch nền launchd LỆCH giữa đĩa và bộ nhớ (job sẽ KHÔNG tự chạy đúng cho tới khi "
+            "nạp lại): " + "; ".join(launchd_drift)
+        )
+
     # S1/S2 — kiểm chứng đồ thị định tuyến agent (vá 2026-07-04: trước đây tuyên bố
     # "không mồ côi/không tham chiếu treo" ở _BAN-DO-KET-NOI.md là văn xuôi thủ công,
     # chưa có công cụ nào kiểm lại bằng máy). Đã xác nhận CHẠY SẠCH lần đầu trên hệ
