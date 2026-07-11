@@ -1,7 +1,7 @@
 # CƠ CHẾ KIỂM DUYỆT ĐỘC LẬP (output guardrail) — tài liệu tham chiếu dùng chung
 
 > Mục đích: mô tả chốt **thẩm định đầu ra độc lập** chạy SAU mỗi nhạc trưởng và TRƯỚC khi trả bác sĩ, để chặn lỗi liêm chính/an toàn/định dạng trước khi phát hành.
-> Agent thực thi: `tham-dinh-dau-ra.md`. Đồng bộ với `_HIEN-PHAP-LIEM-CHINH.md`, `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md`, `_TU-SUA-CHUA-PROTOCOL.md`, `dieu-phoi-lam-sang.md`, `dieu-phoi-nghien-cuu.md`. Cập nhật 2026-06-13.
+> Agent thực thi: `tham-dinh-dau-ra.md`. Đồng bộ với `_HIEN-PHAP-LIEM-CHINH.md`, `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md`, `_TU-SUA-CHUA-PROTOCOL.md`, `dieu-phoi-lam-sang.md`, `dieu-phoi-nghien-cuu.md`. Cập nhật 2026-07-11 (thêm R1b/R14 vào bảng rubric — trước đó lệch với `tham-dinh-dau-ra.md`).
 
 ## ⚠️ GIỚI HẠN BẢN CHẤT (đọc trước — KHÔNG nói quá)
 - Đây là **cơ chế cấp prompt do CÙNG MỘT MÔ HÌNH thực thi trong CÙNG một phiên**. **KHÔNG** phải một tiến trình tách biệt, **KHÔNG** phải sandbox/quá trình cưỡng chế ở tầng hệ điều hành, **KHÔNG** có quyền veto kỹ thuật ngăn token phát ra ngoài ý muốn của mô hình.
@@ -18,14 +18,16 @@
 | # | Tiêu chí | Lỗi đỏ (🔴) khi… |
 |---|---|---|
 | R1 | **Nguồn** — mọi khẳng định/số liệu có PMID/DOI (hoặc guideline+năm+mục) hoặc nhãn PARTIAL/[CẦN KIỂM CHỨNG] | khẳng định y khoa/con số không nguồn & không nhãn thiếu |
+| R1b | **Chống lách nhãn** — nhãn `[CẦN…]` dùng cho chỗ thiếu THẬT, không phải để "qua cổng" hàng loạt | phần lớn (≳50%) khẳng định cốt lõi đều gắn `[CẦN…]` mà không một nguồn thật nào → CHƯA hoàn thiện |
 | R2 | **PII** — không lẫn định danh BN (tên, ngày sinh, số hồ sơ/CCCD/BHYT, địa chỉ, SĐT, ảnh nhận dạng) | phát hiện bất kỳ PII nào |
 | R3 | **Cổng A/B/G** — không tự "áp dụng cho BN"/"ghi EBM_MASTER đã xác minh"/vượt G2·G4·**G5 (khóa DB)**·liêm chính tác giả khi chưa duyệt | gói tự kết luận đã áp dụng/đã ghi/đã khóa/đã đăng ký, hoặc **"đã phân tích" khi DB chưa khóa**, mà chưa có duyệt thật |
 | R4 | **Không tự gán mức** — không tự gán GRADE/độ mạnh khuyến cáo khi nguồn không cấp (`gradeLevel:'na'`); dùng đúng công cụ RoB theo thiết kế (RoB 2 RCT · ROBINS-I V2 quan sát can thiệp · ROBINS-E phơi nhiễm · AMSTAR-2 SR · QUADAS-2 chẩn đoán) | tự dán mức không từ nguồn; sai công cụ RoB theo thiết kế |
 | R5 | **Tách 2 trục** — phân biệt độ chắc chắn CHỨNG CỨ vs độ mạnh KHUYẾN CÁO | trộn hai khái niệm gây hiểu sai sức nặng |
 | R6 | **Nhãn thiếu** — dùng đúng [CẦN BỔ SUNG]/[CẦN KIỂM CHỨNG]/[CẦN XÁC NHẬN TẠI ĐƠN VỊ]/[DỰ THẢO] | lấp chỗ thiếu bằng phỏng đoán như dữ kiện chắc |
 | R7 | **Disclaimer** — kết "Cần bác sĩ kiểm chứng." | thiếu disclaimer cuối gói y khoa |
+| R14 | **Rà an toàn kê đơn** *(HARD-RED, PHỤ LỤC CÓ ĐIỀU KIỆN — chỉ gói CÓ khuyến cáo/điều chỉnh thuốc, 2026-07-07)* | gói đề xuất/đổi thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều theo eGFR-gan-tuổi → 🔴 DỪNG NGAY, giao `ke-don-an-toan` |
 
-**Phán định Lớp 1:** còn bất kỳ 🔴 → **TRẢ-VỀ-SỬA** (CẤM phát hành). Chỉ 🟡 → ĐẠT-CÓ-LƯU-Ý. Toàn ✅ → ĐẠT.
+**Phán định Lớp 1:** còn bất kỳ 🔴 → **TRẢ-VỀ-SỬA** (CẤM phát hành). Chỉ 🟡 → ĐẠT-CÓ-LƯU-Ý. Toàn ✅ → ĐẠT. (R8 — phụ lục thống kê CÓ ĐIỀU KIỆN, chỉ gói CÓ số liệu thống kê — không liệt ở đây vì không phải cốt lõi; đặc tả đầy đủ ở `tham-dinh-dau-ra.md` §3.)
 
 ## RUBRIC DÙNG CHUNG — LỚP 2: CHẤT LƯỢNG LÂM SÀNG (7 trục Q1–Q7, Med-PaLM 2)
 > CHỈ áp cho gói **lâm sàng** (đầu ra `dieu-phoi-lam-sang` + routine lâm sàng). Gói **nghiên cứu** bỏ qua Lớp 2 (dùng CONSORT/STROBE/PRISMA + `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md`). Bản chuẩn đầy đủ + xuất xứ từng trục + PMID/DOI: **`_CHUAN-CHAT-LUONG-MEDPALM.md`**.

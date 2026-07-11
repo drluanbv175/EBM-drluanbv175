@@ -72,7 +72,8 @@ def _any(text: str, cues: list[str]) -> list[str]:
 
 
 def route(request: str) -> IntentResult:
-    """Phân loại request. Ưu tiên: CA lâm sàng > ĐỀ TÀI > việc lẻ > unknown."""
+    """Phân loại request. Ưu tiên: ĐỀ TÀI > CA lâm sàng > việc lẻ > unknown (đề tài kiểm trước vì
+    'bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu — xem lý do dưới)."""
     t = (request or "").lower().strip()
     if not t:
         return IntentResult("unknown", "", "request rỗng")

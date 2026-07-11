@@ -20,8 +20,9 @@
 Đạo đức là **G2 (agent) vs G3 (skill)**; Phân tích là **G6 (agent) vs G7 (skill)**. Câu tiêu đề agent
 "dùng skill làm CHUẨN" gây hiểu nhầm thẩm quyền nguồn (vi phạm tinh thần P7/P8).
 
-**Chốt (canonical):** **TRỤC AGENT là chuẩn vận hành** — vì nó là bộ điều phối thực thi, khớp 3 cổng
-cứng 🔒 và khớp bản đồ A1–A18. Skill `nghien-cuu-y-khoa-chuan-quoc-te` cấp **NỘI DUNG/chuẩn báo cáo/
+**Chốt (canonical):** **TRỤC AGENT là chuẩn vận hành** — vì nó là bộ điều phối thực thi, khớp 4 cổng
+cứng/điểm dừng 🔒 (Đạo đức G2 · SAP G4 · Dữ liệu thật trước phân tích · Liêm chính tác giả G9 —
+2026-07-07 sửa thiếu điểm dừng dữ liệu thật) và khớp bản đồ A1–A18. Skill `nghien-cuu-y-khoa-chuan-quoc-te` cấp **NỘI DUNG/chuẩn báo cáo/
 template**, KHÔNG cấp trục đánh số. **Quy ước cứng:** khi BÀN GIAO cho người dùng, luôn gọi cổng bằng
 **TÊN** (Đạo đức / SAP / Phân tích…), không để trần số "G" — vì số G mơ hồ giữa hai trục.
 
@@ -35,7 +36,8 @@ template**, KHÔNG cấp trục đánh số. **Quy ước cứng:** khi BÀN GIA
 | GĐ6 Phân tích & báo cáo | Khóa DL · **Phân tích** · Viết | **G5 · G6/G6.5 · G7** | G5 Triển khai · G6 Dữ liệu · **G7 Phân tích** · G8 Báo cáo |
 | GĐ7 Audit & nghiệm thu | Bình duyệt · **Nghiệm thu/Liêm chính** 🔒 | **G8 · G9 🔒** | G9 Công bố |
 
-> 🔒 = cổng cứng (dừng chờ chủ nhiệm): **G2 Đạo đức+đăng ký · G4 Khóa SAP · G9 Liêm chính tác giả**.
+> 🔒 = cổng cứng (dừng chờ chủ nhiệm): **G2 Đạo đức+đăng ký · G4 Khóa SAP · Dữ liệu thật trước phân
+> tích (2026-07-07) · G9 Liêm chính tác giả**.
 > Sổ checkpoint `_SO-TRANG-THAI-CHECKPOINT.md` ghi cổng theo **TRỤC AGENT** để RESUME nhất quán.
 
 ---

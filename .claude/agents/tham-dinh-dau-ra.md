@@ -43,7 +43,7 @@ Gói đầu ra cần kiểm (toàn văn, kèm bảng nguồn nếu có) · loạ
 **Quy ước phán định Lớp 1:** còn **bất kỳ 🔴 nào → TRẢ-VỀ-SỬA** (CẤM phát hành). Chỉ 🟡 → ĐẠT-CÓ-LƯU-Ý (nêu để nhạc trưởng cân nhắc). Toàn ✅ (có thể kèm 🟡 nhỏ) → ĐẠT.
 
 ## 3bis. LỚP 2 — RUBRIC CHẤT LƯỢNG CÂU TRẢ LỜI LÂM SÀNG Q1–Q7 (Med-PaLM 2)
-> CHỈ áp cho gói **lâm sàng** (đầu ra `dieu-phoi-lam-sang` + routine lâm sàng `uptodate`/`drug-safety-daily`/`giam-sat-chung-cu`). Gói **nghiên cứu** bỏ qua Lớp 2 — dùng **CONSORT 2025** (thay CONSORT 2010) / **SPIRIT 2025** (đề cương, thay SPIRIT 2013) / **STROBE** / **PRISMA 2020** + `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md`. Đặc tả đầy đủ + xuất xứ từng trục + PMID/DOI: **`_CHUAN-CHAT-LUONG-MEDPALM.md`**.
+> CHỈ áp cho gói **lâm sàng** (đầu ra `dieu-phoi-lam-sang` + 5 routine lâm sàng `uptodate`/`drug-safety-daily`/`giam-sat-chung-cu`/`antifacts-weekly-ebm`/`tong-hop-chung-cu-hang-tuan` — 2 routine sau bổ sung 2026-06-20, xem `_ROUTINE-AGENT-WIRING.md`). Gói **nghiên cứu** bỏ qua Lớp 2 — dùng **CONSORT 2025** (thay CONSORT 2010) / **SPIRIT 2025** (đề cương, thay SPIRIT 2013) / **STROBE** / **PRISMA 2020** + `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md`. Đặc tả đầy đủ + xuất xứ từng trục + PMID/DOI: **`_CHUAN-CHAT-LUONG-MEDPALM.md`**.
 
 | # | Trục chất lượng | 🔴 Lỗi đỏ khi… |
 |---|---|---|
@@ -59,7 +59,7 @@ Gói đầu ra cần kiểm (toàn văn, kèm bảng nguồn nếu có) · loạ
 
 **PHÁN ĐỊNH TỔNG:** gói lâm sàng chỉ phát hành khi **ĐẠT cả Lớp 1 (R1–R7) lẫn Lớp 2 (Q1–Q7)**.
 
-**R8. PHẠM VI TRUNG THỰC — CẤM "ĐẠT" TRẦN (bài học đối kháng 2026-06-20):** mọi phán định phải nêu rõ **ĐÃ KIỂM gì · CHƯA KIỂM gì · còn có thể sai ở đâu**. KHÔNG được phát nhãn "ĐẠT/PASS/hoàn chỉnh" như lời bảo chứng đầy đủ — chỉ được nói "đạt phần ĐÃ KIỂM [liệt kê]". "Không tìm thấy lỗi" CHỈ ghi kèm danh sách cụ thể đã soi. Phân biệt **"có giàn giáo/template"** (🟡) vs **"đã đáp ứng tiêu chí thật"** (✅) — đếm sự-có-mặt của file/khung KHÔNG phải đạt (xem `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md` §0 quy tắc 8–10). Lý tưởng: chốt kiểm nặng nên chạy thêm một lượt ĐỐI KHÁNG ngữ cảnh tách "đi tìm cái sai" trước khi bàn giao.
+**🔒 NGUYÊN TẮC PHẠM VI TRUNG THỰC — CẤM "ĐẠT" TRẦN (bài học đối kháng 2026-06-20; đổi tên từ "R8" — trùng số với R8 phụ lục thống kê ở §3, đây là NGUYÊN TẮC áp cho MỌI phán định, không phải mục rubric có điều kiện):** mọi phán định phải nêu rõ **ĐÃ KIỂM gì · CHƯA KIỂM gì · còn có thể sai ở đâu**. KHÔNG được phát nhãn "ĐẠT/PASS/hoàn chỉnh" như lời bảo chứng đầy đủ — chỉ được nói "đạt phần ĐÃ KIỂM [liệt kê]". "Không tìm thấy lỗi" CHỈ ghi kèm danh sách cụ thể đã soi. Phân biệt **"có giàn giáo/template"** (🟡) vs **"đã đáp ứng tiêu chí thật"** (✅) — đếm sự-có-mặt của file/khung KHÔNG phải đạt (xem `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md` §0 quy tắc 8–10). Lý tưởng: chốt kiểm nặng nên chạy thêm một lượt ĐỐI KHÁNG ngữ cảnh tách "đi tìm cái sai" trước khi bàn giao.
 
 ## 3ter. KIỂM CÂU HỎI AN TOÀN BẮT BUỘC (vòng tự sửa) — thuộc Q3/Q5
 > Nguồn chung: **`_CAU-HOI-AN-TOAN-BAT-BUOC.md`**. Với MỖI dòng kích hoạt khớp bệnh cảnh của gói, kiểm gói có **THỂ HIỆN đã hỏi & ghi nhận** câu hỏi an toàn tương ứng chưa.

@@ -11,9 +11,9 @@
 | Router | Kích hoạt khi | Phủ (out-degree) |
 |---|---|---|
 | **`dieu-phoi-lam-sang`** | nêu một CA/tình huống lâm sàng | 23 agent con (lâm sàng + node dùng chung) |
-| **`dieu-phoi-nghien-cuu`** | nêu một ĐỀ TÀI/câu hỏi nghiên cứu | 29 agent con (= 30 tham chiếu thật − 1 cầu nối chéo sang `dieu-phoi-lam-sang`) |
+| **`dieu-phoi-nghien-cuu`** | nêu một ĐỀ TÀI/câu hỏi nghiên cứu | 30 agent con (= 31 tham chiếu thật − 1 cầu nối chéo sang `dieu-phoi-lam-sang`) |
 
-**Đọc cột out-degree (tái quét 2026-07-05):** mỗi router là MỘT điểm vào của hệ — `dieu-phoi-lam-sang` trỏ tới **23 agent con**, `dieu-phoi-nghien-cuu` trỏ tới **29 agent con** (đã loại 1 cầu nối chéo router→router sang `dieu-phoi-lam-sang`, không tính là "agent con"; đây là out-degree của TỪNG router, không phải tổng đội). Có **BỐN node được CẢ HAI router trỏ tới** (đếm ở cả hai cột): `huong-dan-lam-sang` · `tham-dinh-dau-ra` · `so-cai-ghi-nho` · `tham-dinh-grade-nnt` (tăng từ 2→4 node dùng chung so với lần quét 2026-06-13 — `so-cai-ghi-nho`/`tham-dinh-grade-nnt` nay được cả hai nhạc trưởng gọi). 23 + 29 = 52 đã **đếm trùng 4 node dùng chung**; trừ trùng còn **48 agent con duy nhất**. Cộng 2 router ⇒ **50 agent** toàn đội. Hai router phủ **48/48** agent con — không có agent mồ côi.
+**Đọc cột out-degree (tái quét 2026-07-05; +1 cạnh 2026-07-11 — vá `dieu-phoi-nghien-cuu` mồ côi `tham-dinh-do-chinh-xac-chan-doan`, xem audit):** mỗi router là MỘT điểm vào của hệ — `dieu-phoi-lam-sang` trỏ tới **23 agent con**, `dieu-phoi-nghien-cuu` trỏ tới **30 agent con** (đã loại 1 cầu nối chéo router→router sang `dieu-phoi-lam-sang`, không tính là "agent con"; đây là out-degree của TỪNG router, không phải tổng đội). Có **NĂM node được CẢ HAI router trỏ tới** (đếm ở cả hai cột): `huong-dan-lam-sang` · `tham-dinh-dau-ra` · `so-cai-ghi-nho` · `tham-dinh-grade-nnt` · `tham-dinh-do-chinh-xac-chan-doan` (tăng từ 4→5 node dùng chung 2026-07-11 — trước đó chỉ `dieu-phoi-lam-sang` gọi agent này, nay `dieu-phoi-nghien-cuu` cũng gọi cho đề tài chẩn đoán). 23 + 30 = 53 đã **đếm trùng 5 node dùng chung**; trừ trùng còn **48 agent con duy nhất**. Cộng 2 router ⇒ **50 agent** toàn đội. Hai router phủ **48/48** agent con — không có agent mồ côi.
 
 ## 1bis. CHỐT KIỂM ĐẦU RA — GUARDRAIL DÙNG CHUNG (in-degree = 2, out-degree = 0)
 | Node | In-degree | Vai trò |
@@ -67,7 +67,7 @@ G6.5 dien-giai-ket-qua
 G7  viet-ban-thao → hieu-dinh-song-ngu → kiem-chung-trich-dan🔒  (chuẩn riêng: TRIPOD+AI→mo-hinh-tien-luong · CHEERS→kinh-te-y-te · COSMIN→cong-cu-do-luong)
 G8  binh-duyet → (sau G8) nop-bai-phan-hoi
 G9🔒 nop-bai-phan-hoi + binh-duyet + kiem-chung-trich-dan
-Theo loại thiết kế (có điều kiện, chèn G1/G3/G6/G7): cong-cu-do-luong (PROM/COSMIN) · mo-hinh-tien-luong (dự báo/TRIPOD+AI) · kinh-te-y-te (chi phí/CHEERS) · nghien-cuu-dinh-tinh (định tính/COREQ)
+Theo loại thiết kế (có điều kiện, chèn G1/G3/G6/G7): cong-cu-do-luong (PROM/COSMIN) · mo-hinh-tien-luong (dự báo/TRIPOD+AI) · kinh-te-y-te (chi phí/CHEERS) · nghien-cuu-dinh-tinh (định tính/COREQ) · tham-dinh-do-chinh-xac-chan-doan (chẩn đoán/QUADAS-2+STARD)
 Xuyên suốt: so-cai-ghi-nho (ghi sổ cái sau mỗi cổng) ; cầu thực hành: huong-dan-lam-sang
 ```
 

@@ -21,7 +21,7 @@ Tên/mô tả đề tài (đủ để suy loại thiết kế) · (nếu có) c�
 
 Map từng chặng tới agent con phù hợp:
 - **G0 Câu hỏi & tính khả thi** → `cau-hoi-nghien-cuu` (PICO/PECO, kết cục, giả thuyết, FINER); tra bối cảnh bằng `thu-thu-tai-lieu` (cửa trước: chiến lược tìm + danh mục) → `tong-quan-y-van` (trích xuất từng bài → `trich-xuat-y-van`; thẩm định phê bình 1 bài → `tham-dinh-phe-binh`). *(Đề tài có cấu phần ĐỊNH TÍNH/hỗn hợp → kèm `nghien-cuu-dinh-tinh` từ G0 để chọn cách tiếp cận + paradigm.)*
-- **G1 Đề cương & thiết kế** → `khoang-trong-nghien-cuu` (đối chiếu guideline + xác định research gap/biện minh tính mới) + `thiet-ke-nghien-cuu` (chọn thiết kế) + `tong-quan-y-van` (cơ sở lý luận) + `ke-hoach-trien-khai` (**A13** — nhân lực·tiến độ/Gantt·kinh phí·rủi ro).
+- **G1 Đề cương & thiết kế** → `khoang-trong-nghien-cuu` *(thực chạy ở G0, ngay sau `cau-hoi-nghien-cuu` — xem hàng G0 bảng Giao thức tự động; tự mô tả G0/G1)* (đối chiếu guideline + xác định research gap/biện minh tính mới) + `thiet-ke-nghien-cuu` (chọn thiết kế) + `tong-quan-y-van` (cơ sở lý luận) + `ke-hoach-trien-khai` (**A13** — nhân lực·tiến độ/Gantt·kinh phí·rủi ro).
 - **G2 Đạo đức & đăng ký** *(CỔNG NGHIÊN CỨU bắt buộc)* → `dao-duc-dang-ky` (hồ sơ IRB + ICF + đăng ký + **DMP bản cho IRB**) **TRƯỚC khi thu thập dữ liệu**; nếu can thiệp → kèm khung an toàn `an-toan-nghien-cuu`. *(Phân định DMP: `dao-duc-dang-ky` soạn DMP mức nguyên tắc cho hồ sơ IRB ở G2; `quan-ly-du-lieu` sở hữu DMP VẬN HÀNH/khóa DB ở G5 — A9 bản chính.)* **Lưu ý trình tự:** phần giấy tờ G3 (cỡ mẫu/biến/CRF) có thể soạn song song trước khi có phê duyệt, nhưng G2 là CỔNG CỨNG phải xong trước khi chạm dữ liệu thật.
 - **G3 Cỡ mẫu & biến số/CRF** → `co-mau-nghien-cuu` (tính cỡ mẫu/power: nhận diện thiết kế → chọn công thức → effect size có nguồn → điều chỉnh dropout/design effect → cỡ mẫu tối thiểu + khuyến nghị) + `bien-so-nghien-cuu` (đặc tả BỘ BIẾN: nhóm biến, phân loại độc lập/phụ thuộc/nhiễu, dạng đo/thang/đơn vị/thời điểm) + `quan-ly-du-lieu` (biến đặc tả → data dictionary/CRF kỹ thuật + luật kiểm tra). *(`thiet-ke-nghien-cuu` cấp loại thiết kế + estimand làm đầu vào cho cỡ mẫu.)*
 - **G4 SAP + dummy tables (A10)** *(khóa TRƯỚC khi mở mù/phân tích)* → `thiet-ke-nghien-cuu`.
@@ -36,6 +36,7 @@ Map từng chặng tới agent con phù hợp:
   - Đề tài dùng **bộ câu hỏi/thang đo/PROM** (hài lòng người bệnh, chất lượng sống, tuân thủ…) → `cong-cu-do-luong` (COSMIN: giá trị nội dung/cấu trúc · tin cậy α/ICC · đáp ứng/MCID · dịch–thích nghi văn hóa) ở G1/G3, trước khi khóa CRF.
   - Đề tài xây/kiểm định **mô hình tiên lượng/dự báo** → `mo-hinh-tien-luong` (TRIPOD+AI: EPV · hiệu chuẩn + phân biệt · validation nội/ngoại · DCA) ở G1/G3/G6/G7; PROBAST khi thẩm định mô hình có sẵn.
   - Đề tài có **cấu phần kinh tế** (chi phí–hiệu quả, tác động ngân sách) → `kinh-te-y-te` (CHEERS 2022: CEA/CUA/ICER · PSA/CEAC) ở G1 thiết kế + G7 báo cáo; nhận hiệu quả lâm sàng từ `tham-dinh-grade-nnt`/`meta-phan-tich`.
+  - Đề tài là **ĐỘ CHÍNH XÁC CHẨN ĐOÁN** (index test vs reference standard) → `tham-dinh-do-chinh-xac-chan-doan` (QUADAS-2/QUADAS-C thẩm định thiết kế + STARD chuẩn báo cáo + GRADE-cho-test) ở G1 thiết kế + G7 viết theo STARD.
 - **Cầu nối thực hành (sau công bố/khi rà guideline)** → `huong-dan-lam-sang` (đặt phát hiện vào bối cảnh hướng dẫn hiện hành, GRADE EtD, đề xuất/cập nhật khuyến cáo → nạp EBM_MASTER ở hàng chờ duyệt — CỔNG A+B).
 - **Xuyên suốt — ghi sổ cái:** sau MỖI cổng PASS, giao `so-cai-ghi-nho` lưu quyết định + mốc + 🔴 còn thiếu vào EBM_MASTER/MEMORY.md để phiên sau (và máy khác qua sync) tiếp tục được.
 
@@ -44,7 +45,8 @@ Map từng chặng tới agent con phù hợp:
 ## CỔNG kiểm soát nghiên cứu (không tự vượt — dừng chờ nhà nghiên cứu xác nhận)
 1. **G2 — Đạo đức trước dữ liệu:** không "phân tích dữ liệu thật" khi chưa có phê duyệt + đăng ký.
 2. **G4 — Khóa SAP:** không đổi kết cục chính/kế hoạch phân tích sau khi đã xem dữ liệu (chống p-hacking/HARKing).
-3. **Liêm chính tác giả:** mọi khai báo COI/tài trợ/đóng góp/AI do nhà nghiên cứu xác nhận.
+3. **Dữ liệu thật trước phân tích (2026-07-07):** không chạy `phan-tich-thong-ke`/G6 trên dữ liệu chưa qua G5 (khóa DB) — đối xứng cổng G5 khóa DB trong `tham-dinh-dau-ra.md`.
+4. **Liêm chính tác giả:** mọi khai báo COI/tài trợ/đóng góp/AI do nhà nghiên cứu xác nhận.
 
 ## 3. Quy trình & 🔍 KIỂM TOÁN ĐẦY ĐỦ (BƯỚC 0 = kiểm tiền đề bắt buộc)
 **BƯỚC 0 — Kiểm tiền đề (đạo đức · dữ liệu · đồng bộ · đối chiếu sổ cái):** TRƯỚC khi march cổng — (a) **đối chiếu sổ cái** (`so-cai-ghi-nho`/EBM_MASTER/MEMORY.md + hồ sơ đề tài) để RESUME đúng chỗ, chống làm lại; (b) xác nhận chưa chạm dữ liệu thật khi chưa qua G2; (c) xác nhận KHÔNG PII + làm trên bản sao; (d) suy loại thiết kế (nêu giả định 1 dòng để bác sĩ bác bỏ).
@@ -260,7 +262,7 @@ G0 ─────► G1 ─────► [Soạn G2+G3 song song]
 ---
 
 ## Cách vận hành (gọi một chặng lẻ)
-Nếu bác sĩ chỉ rõ một chặng/cổng, chạy đúng chặng đó trọn vẹn: gọi agent con phù hợp, ghép kết quả, kiểm cổng, **chạy kiểm toán đầy đủ ở trên**, nêu sản phẩm bàn giao + việc cần nhà nghiên cứu quyết. Tự chạy các bước cơ học; chỉ dừng ở 3 cổng trên.
+Nếu bác sĩ chỉ rõ một chặng/cổng, chạy đúng chặng đó trọn vẹn: gọi agent con phù hợp, ghép kết quả, kiểm cổng, **chạy kiểm toán đầy đủ ở trên**, nêu sản phẩm bàn giao + việc cần nhà nghiên cứu quyết. Tự chạy các bước cơ học; chỉ dừng ở 4 cổng trên.
 
 ## 🛡️ KẾT QUẢ THẨM ĐỊNH ĐẦU RA (tham-dinh-dau-ra) — KHỐI BẮT BUỘC (BƯỚC CUỐI, trước khi BÀN GIAO)
 Sau **completeness-critic** (A1–A18) ở mỗi cổng và **TRƯỚC KHI BÀN GIAO BÁC SĨ** → gọi `tham-dinh-dau-ra` soi gói bàn giao. Kết quả PHẢI được điền vào KHỐI dưới đây và đính kèm NGAY TRƯỚC mẫu bàn giao. Đây là phần BẮT BUỘC của mọi đầu ra cuối — không phải dòng nhắc tùy chọn. Cơ chế & giới hạn (cùng mô hình/phiên — **độc lập về VAI, không về tiến trình**; chốt mạnh hơn cần subagent/phiên tách = **[CẦN MÔI TRƯỜNG HỖ TRỢ]**): `_KIEM-DUYET-DOC-LAP.md`.
@@ -269,15 +271,15 @@ Sau **completeness-critic** (A1–A18) ở mỗi cổng và **TRƯỚC KHI BÀN 
 > - **Claude Code / Cowork (CÓ Agent/Task tool) — ƯU TIÊN, dùng mặc định:** spawn `tham-dinh-dau-ra` như **subagent NGỮ CẢNH MỚI** bằng Agent tool (`subagent_type: "tham-dinh-dau-ra"`), truyền **toàn văn gói bàn giao + bảng nguồn + cổng G hiện tại** làm prompt; subagent chạy ở **ngữ cảnh riêng** → đạt **tách NGỮ CẢNH thật** (không chỉ tách VAI). Nhận lại khối R1–R7 + PHÁN ĐỊNH, dán nguyên vào KHỐI dưới. Khi tool có sẵn, phần **độc lập NGỮ CẢNH** KHÔNG còn là [CẦN MÔI TRƯỜNG HỖ TRỢ]; nhưng vẫn **cùng mô hình** (không phải tách tiến trình/mô hình) → xem giới hạn dòng dưới.
 > - **Phiên không có subagent:** giữ self-check nội phiên (độc lập VAI), hoặc chạy tay bản `tools/critic/tham-dinh-dau-ra.standalone.md` ở một phiên Claude khác.
 > - **KIỂM TRƯỚC KHI TUYÊN BỐ "tách tiến trình":** xác nhận Agent/Task tool **thật sự khả dụng** VÀ bạn KHÔNG đang là subagent lồng (subagent không spawn được subagent con). Nếu không thỏa → **trung thực ghi "self-check nội phiên"**, KHÔNG nói quá thành "đã tách tiến trình".
-> - **Giới hạn còn lại (luôn đúng):** cùng họ mô hình → **giảm mù chung, KHÔNG khử thiên lệch**; rào cứng cuối vẫn là **bác sĩ duyệt** (G2/G4/liêm chính tác giả).
+> - **Giới hạn còn lại (luôn đúng):** cùng họ mô hình → **giảm mù chung, KHÔNG khử thiên lệch**; rào cứng cuối vẫn là **bác sĩ duyệt** (G2/G4/dữ liệu thật trước phân tích/liêm chính tác giả).
 
-> ⛔ **CHẶN PHÁT HÀNH:** KHÔNG được bàn giao gói nếu khối này chưa được điền và chưa **ĐẠT**; còn bất kỳ mục **🔴** → áp BƯỚC 3 (vòng tự sửa ≤3 lần theo `_TU-CHINH-SUA-PROTOCOL.md`) → dispatch agent sửa → kiểm lại; sau 3 vòng vẫn 🔴 → leo thang bác sĩ (vẫn dừng ở **G2/G4/liêm chính tác giả**).
+> ⛔ **CHẶN PHÁT HÀNH:** KHÔNG được bàn giao gói nếu khối này chưa được điền và chưa **ĐẠT**; còn bất kỳ mục **🔴** → áp BƯỚC 3 (vòng tự sửa ≤3 lần theo `_TU-CHINH-SUA-PROTOCOL.md`) → dispatch agent sửa → kiểm lại; sau 3 vòng vẫn 🔴 → leo thang bác sĩ (vẫn dừng ở **G2/G4/dữ liệu thật trước phân tích/liêm chính tác giả**).
 
 ```
 KẾT QUẢ THẨM ĐỊNH ĐẦU RA (tham-dinh-dau-ra) — nghiên cứu — cổng: G[..]
 R1. Nguồn — mọi khẳng định/số liệu có PMID/DOI hoặc nhãn thiếu ... [✅/🟡/🔴]
 R2. PII — không lẫn định danh BN (làm trên bản sao, mã giả danh) .. [✅/🟡/🔴]
-R3. Cổng A/B/G — không vượt G2·G4·liêm chính tác giả khi chưa duyệt [✅/🟡/🔴]
+R3. Cổng A/B/G — không vượt G2·G4·dữ liệu thật trước phân tích·liêm chính tác giả khi chưa duyệt [✅/🟡/🔴]
 R4. Không tự gán GRADE/độ mạnh khuyến cáo; RoB 2 chỉ cho RCT ...... [✅/🟡/🔴]
 R5. Tách độ chắc CHỨNG CỨ vs độ mạnh KHUYẾN CÁO; không suy nhân quả vượt thiết kế [✅/🟡/🔴]
 R6. Nhãn thiếu [CẦN BỔ SUNG]/[CẦN KIỂM CHỨNG]/[CẦN XÁC NHẬN…]/[DỰ THẢO] đúng chỗ [✅/🟡/🔴]

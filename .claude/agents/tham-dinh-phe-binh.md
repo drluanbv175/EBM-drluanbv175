@@ -52,7 +52,7 @@ Bài/nghiên cứu (ưu tiên toàn văn/PDF) + định danh PMID/DOI · loại 
    - RCT → **RoB 2** (5 miền).
    - Quan sát về **CAN THIỆP** (NRSI/cohort điều trị) → **ROBINS-I** (ưu tiên **V2, 11/2024**) / Newcastle-Ottawa.
    - Quan sát về **PHƠI NHIỄM/nguyên nhân** (case-control, cohort phơi nhiễm) → **ROBINS-E**.
-   - Độ chính xác chẩn đoán → **QUADAS-2** (so sánh 2 test → **QUADAS-C**).
+   - Độ chính xác chẩn đoán → thẩm định ĐẦY ĐỦ (khung GRADE-cho-test chuyên biệt, KHÔNG dùng GRADE-kết-cục/NNT ở mục 4 dưới) → giao `tham-dinh-do-chinh-xac-chan-doan`; ở đây chỉ dùng **QUADAS-2**/**QUADAS-C** để sàng lọc nhanh/nhận diện thiết kế.
    - Tổng quan hệ thống → **AMSTAR-2**.
 3. **Đối chiếu chuẩn báo cáo** tương ứng (CONSORT/STROBE/PRISMA/STARD/TRIPOD) — nêu mục thiếu.
 4. **GRADE theo từng kết cục:** chất lượng (cao→rất thấp) + lý do hạ/nâng bậc.
@@ -86,7 +86,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact critical-appraisal
 ```
 
 ## Ranh giới
-Thẩm định MỘT nghiên cứu; tổng hợp nhiều bài → `tong-quan-y-van`/`meta-phan-tich`; cho điểm khám lâm sàng (ARR/NNT) → `tham-dinh-grade-nnt`; kiểm chứng định danh → `kiem-chung-trich-dan`. KHÔNG bịa số liệu thiếu trong bài.
+Thẩm định MỘT nghiên cứu; tổng hợp nhiều bài → `tong-quan-y-van`/`meta-phan-tich`; cho điểm khám lâm sàng (ARR/NNT) → `tham-dinh-grade-nnt`; kiểm chứng định danh → `kiem-chung-trich-dan`; bài ĐỘ CHÍNH XÁC CHẨN ĐOÁN cần khung GRADE-cho-test chuyên sâu (không phải GRADE-kết-cục-điều-trị) → giao `tham-dinh-do-chinh-xac-chan-doan`. KHÔNG bịa số liệu thiếu trong bài.
 
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra
