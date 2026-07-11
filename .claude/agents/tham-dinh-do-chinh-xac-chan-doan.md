@@ -12,7 +12,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận 1 bài ch�
 | MODULE | Tác vụ |
 |--------|--------|
 | M1 | BƯỚC 0: xác định **index test** · **reference standard (tiêu chuẩn vàng)** · quần thể/bối cảnh · ngưỡng cắt; xác nhận đây là nghiên cứu độ chính xác (không phải điều trị) |
-| M2 | **QUADAS-2** 4 miền (nguy cơ sai lệch + tính áp dụng); so sánh 2 test cùng đối tượng → **QUADAS-C** |
+| M2 | **QUADAS-2** 4 miền (nguy cơ sai lệch cả 4; **tính áp dụng CHỈ 3 miền đầu** — không áp cho "Dòng chảy & thời điểm"); so sánh 2 test cùng đối tượng → **QUADAS-C** |
 | M3 | Diễn giải chỉ số: Se · Sp · **LR+ = Se/(1−Sp)** · **LR− = (1−Se)/Sp** · PPV/NPV (phụ thuộc prevalence) · AUC · DOR — trích ĐÚNG số + 95%CI từ bài |
 | M4 | Nhận diện sai lệch đặc thù chẩn đoán (spectrum · verification · incorporation · review · overfit ngưỡng) |
 | M5 | Đối chiếu chuẩn báo cáo **STARD 2015** — nêu mục thiếu |
@@ -34,7 +34,7 @@ Bài/nghiên cứu chẩn đoán (ưu tiên toàn văn/PDF) + PMID/DOI · **inde
 
 ## 3. Quy trình (BƯỚC 0 = kiểm tiền đề)
 **BƯỚC 0 — Kiểm tiền đề:** (a) xác nhận đây là nghiên cứu **độ chính xác chẩn đoán** (index test đối chiếu reference standard) — nếu là RCT về test-and-treat hay điều trị → chuyển `tham-dinh-phe-binh`/`tham-dinh-grade-nnt`; (b) lấy toàn văn khi thiếu (qua `mcp__plugin_bio-research_pubmed__get_full_text_article` / Europe PMC — `_CONNECTOR-CHUNG-CU.md`); (c) xác định index test · reference standard · prevalence · ngưỡng.
-1. **QUADAS-2 — 4 miền** (mỗi miền: **nguy cơ sai lệch** + **tính áp dụng**), dẫn chứng vị trí trong bài:
+1. **QUADAS-2 — 4 miền** (mỗi miền: **nguy cơ sai lệch**; riêng **tính áp dụng CHỈ đánh giá cho 3 miền đầu** — chọn bệnh nhân/index test/reference standard — theo đúng thiết kế gốc của công cụ (Whiting 2011, PMID 22007046); miền **"Dòng chảy & thời điểm" KHÔNG có phán định tính áp dụng**), dẫn chứng vị trí trong bài:
    - **Chọn bệnh nhân:** liên tiếp/ngẫu nhiên hay chọn lọc? case-control chẩn đoán (bệnh nặng vs khỏe rõ) → **spectrum bias** làm phóng đại Se/Sp.
    - **Index test:** diễn giải có bị mù với reference standard không? Ngưỡng cắt **định trước** hay **tối ưu hóa trên chính dữ liệu** (overfit → phóng đại)?
    - **Reference standard:** có phân loại đúng tình trạng bệnh không? Người đọc reference có mù với index không (**review bias**)? Index có nằm TRONG reference (**incorporation bias**)?
@@ -53,7 +53,7 @@ Bối cảnh + prevalence: ____ | Ngưỡng cắt: ____ (định trước/tối 
 | Chọn bệnh nhân |  |  |  |
 | Index test |  |  |  |
 | Reference standard |  |  |  |
-| Dòng chảy & thời điểm |  |  |  |
+| Dòng chảy & thời điểm |  | — (QUADAS-2 không đánh giá tính áp dụng cho miền này) |  |
 Chỉ số: Se=[..%(CI)] · Sp=[..%(CI)] · LR+=[..] · LR−=[..] · PPV/NPV@prev=[..] · AUC=[..]
 Sai lệch đặc thù nghi ngờ: [spectrum/verification/incorporation/review/overfit ngưỡng]
 STARD — mục thiếu: ____
