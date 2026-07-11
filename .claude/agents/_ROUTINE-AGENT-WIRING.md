@@ -1,6 +1,6 @@
 # CHUẨN WIRING ROUTINES ↔ ĐỘI AGENT EBM
 
-> **Nguồn sự thật DUY NHẤT** cho cách các routine uỷ thác cho đội agent (`.claude/agents/`): **7 routine VẬN HÀNH có `Scheduled/<tên>/SKILL.md` thật** (uptodate · drug-safety-daily · giam-sat-chung-cu · nckh · tu-kiem-dong-bo · **antifacts-weekly-ebm** · **tong-hop-chung-cu-hang-tuan**) + **1 bản TRÙNG LẶP ĐÃ RETIRE** (`antifacts-weekly-update` — bác sĩ quyết định 2026-07-08: hợp nhất, giữ `antifacts-weekly-ebm`; xem dòng ghi chú bên dưới) + **1 META-bảo trì là ĐẶC TẢ KHÁI NIỆM, KHÔNG có thư mục `Scheduled/` và KHÔNG có job lịch** (đã RETIRE — xem dòng META bên dưới).
+> **Nguồn sự thật DUY NHẤT** cho cách các routine uỷ thác cho đội agent (`.claude/agents/`): **7 routine VẬN HÀNH có `Scheduled/<tên>/SKILL.md` thật** (uptodate · drug-safety-daily · giam-sat-chung-cu · nckh · tu-kiem-dong-bo · **antifacts-weekly-ebm** · **tong-hop-chung-cu-hang-tuan**) + **1 META-bảo trì là ĐẶC TẢ KHÁI NIỆM, KHÔNG có thư mục `Scheduled/` và KHÔNG có job lịch** (đã RETIRE — xem dòng META bên dưới). *(2026-07-12: gỡ dòng "1 bản trùng lặp `antifacts-weekly-update` đã retire" — `find` xác nhận thư mục này KHÔNG tồn tại ở bất kỳ đâu trong repo, kể cả để tham chiếu lịch sử; `ls Scheduled/` chỉ có đúng 7 thư mục routine thật liệt kê ở trên.)*
 > Sửa mapping / quy tắc / lịch ở ĐÂY rồi đồng bộ xuống từng routine — KHÔNG để mỗi routine định nghĩa một kiểu.
 > Đồng bộ với: `_BAN-DO-KET-NOI.md` · `_HIEN-PHAP-LIEM-CHINH.md` · `README.md`. Tạo 2026-06-14; thêm routine META 2026-06-15.
 
@@ -16,7 +16,6 @@
 | **nckh** *(QY175)* | ad-hoc | `dieu-phoi-nghien-cuu` (gác cổng) · `viet-ban-thao` · `binh-duyet` · `quan-ly-du-lieu` · `dao-duc-dang-ky` (G2) · `thiet-ke-nghien-cuu` + `co-mau-nghien-cuu` | hồ sơ đề tài | `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md` (+ `tham-dinh-dau-ra` nếu xuất bản thảo) |
 | **tu-kiem-dong-bo** | tuần (CN) | giao thức `_TU-SUA-CHUA-PROTOCOL.md` | `nhat-ky.md` (append-only) | bộ kiểm tự động trong protocol (nội bộ — KHÔNG cần `tham-dinh-dau-ra`) |
 | **antifacts-weekly-ebm** | tuần (T2 sáng) | digest EBM **13 chuyên khoa** (PubMed 7 ngày) — quét rộng, bản tin tiếng Việt | `Antifacts.html` (chờ duyệt) | **`tham-dinh-dau-ra`** |
-| ~~antifacts-weekly-update~~ *(2026-07-04: TRÙNG LẶP `antifacts-weekly-ebm` — tên cũ hơn, `SKILL.md` nội dung y hệt. **2026-07-08: bác sĩ quyết định HỢP NHẤT, giữ `antifacts-weekly-ebm`** — routine này RETIRED, không đăng ký lịch native (chưa từng có trong bảng taskId bên dưới nên không cần hủy job thật), thư mục `Scheduled/antifacts-weekly-update/` giữ lại để tham chiếu lịch sử, đã đánh dấu RETIRED trong SKILL.md của nó)* | — | ~~y hệt `antifacts-weekly-ebm`~~ | — | RETIRED |
 | **tong-hop-chung-cu-hang-tuan** *(Track B)* | tuần | ứng viên chứng cứ/thử nghiệm **8 bệnh mạn** (ClinicalTrials + y văn) theo skill `cap-nhat-chung-cu-y-khoa` | danh sách ứng viên (chờ thẩm định Track A) | **`tham-dinh-dau-ra`** |
 | **tiep-tuc-hoan-thien-he-thong-agent** *(META — ĐẶC TẢ, KHÔNG có `Scheduled/<tên>/SKILL.md`, KHÔNG job lịch; output đã sinh trong phiên trước)* | ~~vòng lặp ~1h30~~ **RETIRE** | KHÔNG uỷ thác agent lâm sàng; tự xây/tinh chỉnh `playbooks-lam-sang/` theo `_TEMPLATE` + xác minh `[CẦN KIỂM CHỨNG]` qua web (không bịa) + áp WIRING `.claude/` | `playbooks-lam-sang/_INDEX` · `_CHANGELOG` · `_BAO-CAO-HOAN-THIEN` | **tự kiểm bước D** (bất biến + 2 cổng A/B + không bịa/PII); KHÔNG sinh nội dung BN nên KHÔNG qua `tham-dinh-dau-ra` |
 
@@ -41,12 +40,12 @@
 
 ## 3. LỊCH CHẠY (đăng ký — scheduler in-app `~/.claude/scheduled-tasks/`)
 
-> ⚠️ **Scheduler là CỤC BỘ TỪNG MÁY — KHÔNG sync qua OneDrive** (`~/.claude/` nằm ngoài OneDrive). Phải đăng ký trên **đúng máy chủ**. **Máy chủ = Mac** (1 máy, tránh xung đột ghi OneDrive). Đăng ký trên Mac bằng gói sẵn **`Scheduled/_DANG-KY-LICH-TREN-MAC.md`** (chứa taskId·cron·prompt đủ 4 task). Trạng thái cột dưới là **đích trên Mac**.
+> ⚠️ **Scheduler là CỤC BỘ TỪNG MÁY — KHÔNG sync qua OneDrive** (`~/.claude/` nằm ngoài OneDrive). Phải đăng ký trên **đúng máy chủ**. **Máy chủ = Mac** (1 máy, tránh xung đột ghi OneDrive). Đăng ký trên Mac bằng gói sẵn **`Scheduled/_DANG-KY-LICH-TREN-MAC.md`** (chứa taskId·cron·prompt đủ **6 task** — 2026-07-12: sửa "4 task", đã lỗi thời từ trước khi TASK 5/6 được thêm 2026-07-04). Trạng thái cột dưới là **đích trên Mac**.
 
 | taskId native | Routine canonical | Cron (giờ địa phương) | Trạng thái (máy chủ = Mac) |
 |---|---|---|---|
 | `ebm-drug-safety` | `Scheduled/drug-safety-daily` | `0 7 * * 1,4` (T2 & T5, 07:00) | đăng ký trên Mac (gói sẵn) |
-| `ebm-giam-sat-chung-cu` | `Scheduled/giam-sat-chung-cu` | `20 19 * * 3` (T4, 19:20) | đăng ký trên Mac (gói sẵn) |
+| `ebm-giam-sat-chung-cu` | `Scheduled/giam-sat-chung-cu` | `20 19 * * 3` (T4, 19:20) | **[CẦN XÁC NHẬN TẠI ĐƠN VỊ]** — 2026-07-12: gọi trực tiếp `mcp__scheduled-tasks__list_scheduled_tasks` xác nhận taskId này KHÔNG có trong lịch sống, dù có gói sẵn ở `_DANG-KY-LICH-TREN-MAC.md` TASK 4; giám sát chứng cứ hằng tuần hiện KHÔNG tự chạy |
 | `ebm-uptodate-tuan` | `Scheduled/uptodate` | `30 19 * * 6` (T7, 19:30) | đăng ký trên Mac (gói sẵn) |
 | `ebm-tu-kiem-dong-bo` | `Scheduled/tu-kiem-dong-bo` | `10 8 * * 0` (CN, 08:10) | đăng ký trên Mac (gói sẵn) |
 | `ebm-nckh-qy175` | `Scheduled/nckh` | — (ad-hoc, chạy tay) | manual |

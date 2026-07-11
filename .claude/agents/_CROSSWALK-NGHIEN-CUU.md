@@ -168,8 +168,12 @@ Projects/<ten-de-tai>/
 ```
 
 > Sinh bằng generator `tools/scaffold_research_project.py` (đã tạo 2026-06-29) — copy template, chỉ điền nội dung,
-> KHÔNG sửa tay bố cục. Lệnh: `python tools/scaffold_research_project.py --study "<TEN-DE-TAI>"`
-> sinh đồng thời 20 file .md + 20 file .docx + STUDY_INDEX.md vào `exports/<TEN-DE-TAI>/`.
+> KHÔNG sửa tay bố cục. Lệnh (chạy từ thư mục `medical-ebm-automation/` — 2026-07-12: bổ sung tiền tố, có
+> HAI script trùng tên `scaffold_research_project.py`/`gen_research_docx.py` khác nhau ở gốc repo và trong
+> `medical-ebm-automation/tools/`, thiếu tiền tố sẽ chạy nhầm bản gốc lỗi/không tồn tại):
+> `python tools/scaffold_research_project.py --study "<TEN-DE-TAI>"`
+> sinh .md + .docx + STUDY_INDEX.md vào `exports/<TEN-DE-TAI>/` (số file thật — xem `_DOCX-EXPORT-PROTOCOL.md` §5,
+> KHÔNG cố định "20").
 > Xuất .docx cho từng cổng: `python tools/gen_research_docx.py --study "<TEN>" --gate G<n>` (xem `_DOCX-EXPORT-PROTOCOL.md`).
 
 ---

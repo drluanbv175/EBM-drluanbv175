@@ -44,7 +44,7 @@ def band_p42(m):
 
 def load_kappa(path):
     rows=[]; danger=[]
-    with open(path,encoding="utf-8") as f:
+    with open(path,encoding="utf-8-sig") as f:
         rd=csv.DictReader(f)
         for i,r in enumerate(rd):
             labels=[v.strip() for k,v in r.items() if k.lower() not in("ca","case","case_id","ma_ca","note","ghi_chu","summary","agent_rec") and v.strip()]
@@ -59,7 +59,7 @@ def load_kappa(path):
 
 def load_likert(path):
     crit=[[],[],[],[],[]]
-    with open(path,encoding="utf-8") as f:
+    with open(path,encoding="utf-8-sig") as f:
         for r in csv.DictReader(f):
             for j in range(5):
                 v=r.get(f"c{j+1}")

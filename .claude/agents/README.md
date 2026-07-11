@@ -121,9 +121,17 @@ Mọi agent (toàn đội) phải áp dụng **`_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-P
 | `_SO-TRANG-THAI-CHECKPOINT.md` | Sổ trạng thái RESUME giữa phiên |
 | `_THU-VIEN-KY-NANG.md` | Bản đồ skill↔agent + playbook |
 | `_BAN-DO-KET-NOI.md` | Bản đồ kết nối toàn đội (điểm vào · luồng · hub) |
-| `_ROUTINE-AGENT-WIRING.md` | Chuẩn nối 6 routine theo lịch ⇄ đội agent (mapping · guardrail cuối · lịch) |
+| `_ROUTINE-AGENT-WIRING.md` | Chuẩn nối 7 routine theo lịch ⇄ đội agent (mapping · guardrail cuối · lịch — 2026-07-12: sửa "6", khớp dòng 212 cùng file) |
 | `_CAU-HOI-AN-TOAN-BAT-BUOC.md` | Bộ câu hỏi an toàn CỨNG ở bước 0 (vd mất ngủ/đòi thuốc ngủ → sàng lọc tự sát trước khi kê) |
 | `_NGUON-GUIDELINE-TU-DONG.md` | Danh mục nguồn guideline neo để giám sát cập nhật tự động |
+| `_CROSSWALK-NGHIEN-CUU.md` | *(2026-07-12: bổ sung, thiếu ở bản trước)* Đối chiếu trục AGENT ↔ trục SKILL cho nghiên cứu (G0–G10, A1–A18 ↔ artifact key) |
+| `_DOCX-EXPORT-PROTOCOL.md` | *(bổ sung)* Giao thức xuất Word chuẩn hóa cho từng cổng G (22 artifact key) |
+| `_KHUNG-DANH-GIA-KHA-THI.md` | *(bổ sung)* Khung đánh giá khả thi Tier S/Tier R cho CAFÉ-S |
+| `_LESSONS-LEDGER-TAXONOMY.md` | *(bổ sung)* Phân loại mã lỗi cho sổ cái bài học (ánh xạ mã R ↔ mã ledger) |
+| `_RUBRIC-EVALUATE-CUNG-QA-GATE.md` | *(bổ sung)* Hợp đồng pass/fail cho cổng QA (TIER 0/1/2) |
+| `_TU-CHINH-SUA-PROTOCOL.md` | *(bổ sung)* Bảng ánh xạ mã lỗi → agent sửa → khả năng tự giải (AUTO-FIX) |
+| `_TU-SINH-AGENT.md` | *(bổ sung)* Giao thức tự sinh agent khi phát hiện khoảng trống năng lực |
+| `_VONG-LAP-KHEP-KIN.md` | *(bổ sung)* Sơ đồ vòng khép kín 5 mắt xích (khôi phục → march cổng → tự sửa/tự sinh → ghi sổ cái → tự cập nhật) |
 
 ## Cách dùng
 - **Chạy trọn ca:** "Dùng agent `dieu-phoi-lam-sang`: bệnh nhân nam 68 tuổi, ĐTĐ type 2 + suy thận eGFR 45, đang metformin, HbA1c 8.5%, hỏi nên thêm thuốc gì."

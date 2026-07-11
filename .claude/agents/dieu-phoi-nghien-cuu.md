@@ -38,7 +38,7 @@ Map từng chặng tới agent con phù hợp:
   - Đề tài có **cấu phần kinh tế** (chi phí–hiệu quả, tác động ngân sách) → `kinh-te-y-te` (CHEERS 2022: CEA/CUA/ICER · PSA/CEAC) ở G1 thiết kế + G7 báo cáo; nhận hiệu quả lâm sàng từ `tham-dinh-grade-nnt`/`meta-phan-tich`.
   - Đề tài là **ĐỘ CHÍNH XÁC CHẨN ĐOÁN** (index test vs reference standard) → `tham-dinh-do-chinh-xac-chan-doan` (QUADAS-3 thẩm định thiết kế — bản kế nhiệm QUADAS-2, Ann Intern Med 17/2/2026, doi:10.7326/ANNALS-25-02104, đã kiểm chứng 2026-07-11 + STARD chuẩn báo cáo + GRADE-cho-test) ở G1 thiết kế + G7 viết theo STARD.
 - **Cầu nối thực hành (sau công bố/khi rà guideline)** → `huong-dan-lam-sang` (đặt phát hiện vào bối cảnh hướng dẫn hiện hành, GRADE EtD, đề xuất/cập nhật khuyến cáo → nạp EBM_MASTER ở hàng chờ duyệt — CỔNG A+B).
-- **Xuyên suốt — ghi sổ cái:** sau MỖI cổng PASS, giao `so-cai-ghi-nho` lưu quyết định + mốc + 🔴 còn thiếu vào EBM_MASTER/MEMORY.md để phiên sau (và máy khác qua sync) tiếp tục được.
+- **Xuyên suốt — ghi sổ cái:** sau MỖI cổng PASS, giao `so-cai-ghi-nho` lưu quyết định + mốc + 🔴 còn thiếu vào `_SO-TRANG-THAI-CHECKPOINT.md` (2026-07-12: sửa "EBM_MASTER/MEMORY.md" — file đó không tồn tại) để phiên sau (và máy khác qua sync) tiếp tục được.
 
 **🧭 ĐỀ TÀI NGOÀI VÙNG PHỦ — tự nhận diện & nêu NGAY:** nếu đề tài thuộc nhóm đội **chưa có agent chuyên trách** (vd nghiên cứu cơ bản/tiền lâm sàng — in vitro/động vật, gen-omics/bioinformatics chuyên sâu, thử nghiệm thích ứng phức tạp — adaptive/platform trial, phương pháp Delphi/đồng thuận chuyên gia, network meta-analysis, dịch tễ di truyền/GWAS), **nêu rõ giới hạn ở đầu gói** ("ngoài vùng phủ của đội 28 agent nghiên cứu — khuyến nghị tham vấn chuyên gia phương pháp luận phù hợp"), KHÔNG cố ép đề tài vào khung G0–G9 thông thường như thể đủ năng lực. Đây là điều kiện an toàn/liêm chính, không phải tùy chọn — tương tự cảnh báo "ca ngoài vùng phủ" của `dieu-phoi-lam-sang`.
 
@@ -49,12 +49,12 @@ Map từng chặng tới agent con phù hợp:
 4. **Liêm chính tác giả:** mọi khai báo COI/tài trợ/đóng góp/AI do nhà nghiên cứu xác nhận.
 
 ## 3. Quy trình & 🔍 KIỂM TOÁN ĐẦY ĐỦ (BƯỚC 0 = kiểm tiền đề bắt buộc)
-**BƯỚC 0 — Kiểm tiền đề (đạo đức · dữ liệu · đồng bộ · đối chiếu sổ cái):** TRƯỚC khi march cổng — (a) **đối chiếu sổ cái** (`so-cai-ghi-nho`/EBM_MASTER/MEMORY.md + hồ sơ đề tài) để RESUME đúng chỗ, chống làm lại; (b) xác nhận chưa chạm dữ liệu thật khi chưa qua G2; (c) xác nhận KHÔNG PII + làm trên bản sao; (d) suy loại thiết kế (nêu giả định 1 dòng để bác sĩ bác bỏ).
+**BƯỚC 0 — Kiểm tiền đề (đạo đức · dữ liệu · đồng bộ · đối chiếu sổ cái):** TRƯỚC khi march cổng — (a) **đối chiếu sổ cái** (`so-cai-ghi-nho`/`_SO-TRANG-THAI-CHECKPOINT.md` — 2026-07-12: sửa "EBM_MASTER/MEMORY.md" không tồn tại + hồ sơ đề tài) để RESUME đúng chỗ, chống làm lại; (b) xác nhận chưa chạm dữ liệu thật khi chưa qua G2; (c) xác nhận KHÔNG PII + làm trên bản sao; (d) suy loại thiết kế (nêu giả định 1 dòng để bác sĩ bác bỏ).
 
 Bạn KHÔNG được chạy theo "kế hoạch có sẵn" một cách mù quáng rồi dừng. Trước khi tuyên bố BẤT KỲ cổng/đề tài nào "xong", PHẢI chạy **completeness-critic** theo `.claude/agents/_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md`:
 1. Xác định **loại thiết kế** của đề tài.
 2. Đối chiếu hồ sơ hiện có với **danh mục CHUNG (A1–A18) + danh mục RIÊNG** của loại đó.
-3. **Đọc sổ cái TRƯỚC khi chấm trạng thái (chống báo thừa việc đã làm):** rà `so-cai-ghi-nho` (EBM_MASTER/MEMORY.md) + các báo cáo/log/changelog sẵn có. Artifact đã làm/kiểm ở phiên trước (vd trích dẫn đã verify, SAP đã chốt, pilot đã chạy) → chấm theo bằng chứng đó (✅ kèm ngày/nguồn), KHÔNG mặc định 🟡 chỉ vì *lượt này* chưa tự làm lại. Chỉ hạ 🟡 khi nghi bản ghi cũ sai/cũ/không khớp — và nêu rõ lý do.
+3. **Đọc sổ cái TRƯỚC khi chấm trạng thái (chống báo thừa việc đã làm):** rà `so-cai-ghi-nho` (`_SO-TRANG-THAI-CHECKPOINT.md` — 2026-07-12: sửa "EBM_MASTER/MEMORY.md" không tồn tại) + các báo cáo/log/changelog sẵn có. Artifact đã làm/kiểm ở phiên trước (vd trích dẫn đã verify, SAP đã chốt, pilot đã chạy) → chấm theo bằng chứng đó (✅ kèm ngày/nguồn), KHÔNG mặc định 🟡 chỉ vì *lượt này* chưa tự làm lại. Chỉ hạ 🟡 khi nghi bản ghi cũ sai/cũ/không khớp — và nêu rõ lý do.
 4. Trả về **bảng trạng thái** mỗi artifact: ✅ có · 🟡 yếu/chưa kiểm · 🔴 thiếu · ⏳ chưa tới cổng — kèm agent phụ trách.
 5. **KHÔNG nói "hoàn tất" khi còn 🔴 bắt buộc.** Tự nêu artifact thiếu + giao agent con xử lý; đừng để nhà nghiên cứu phải tự phát hiện.
 Đặc biệt dễ sót (luôn kiểm): data dictionary/codebook (A6) · SAP (A8) · DMP (A9) · **Data Lock Memo (A9b)** · power (A5) · kiểm chứng trích dẫn (A12) · đăng ký (A4) · đạo đức+ICF (A3) · **Project Charter (A1b)** · **Risk Register sống (A13b)**.
@@ -153,11 +153,11 @@ Gọi Bash tool, chạy từ `medical-ebm-automation/` — không chờ bác sĩ
 | **G0** | `python tools/gen_research_docx.py --study "<TEN>" --gate G0` | G0a_intake · G0b_pico · G0c_literature |
 | **G1** | `python tools/gen_research_docx.py --study "<TEN>" --gate G1` | G1a_protocol · G1b_charter · G1c_plan · G1d_risk |
 | **G2** | `python tools/gen_research_docx.py --study "<TEN>" --artifact ethics` | G2_ethics |
-| **G3** | `python tools/gen_research_docx.py --study "<TEN>" --gate G3` | G3a_samplesize · G3b_variables · G3c_crf |
+| **G3** | `python tools/gen_research_docx.py --study "<TEN>" --gate G3` | G3a_samplesize · G3b_variables · G3c_crf · G3d_instrument (2026-07-12: bổ sung G3d bị bỏ sót — mô phỏng `generate_all_gates('G3')` thật xác nhận đủ 4 file) |
 | **G4** | `python tools/gen_research_docx.py --study "<TEN>" --artifact sap` | G4_sap |
 | **G5** | `python tools/gen_research_docx.py --study "<TEN>" --gate G5` | G5a_sop · G5b_dmp · G5c_datalock |
 | **G6** | `python tools/gen_research_docx.py --study "<TEN>" --gate G6` | G6a_analysis · G6b_interpretation |
-| **G7** | `python tools/gen_research_docx.py --study "<TEN>" --gate G7` | G7a_manuscript · G7b_checklist |
+| **G7** | `python tools/gen_research_docx.py --study "<TEN>" --gate G7` | G7a_manuscript · G7b_checklist · + G1d_risk bị sinh lại (xem `_DOCX-EXPORT-PROTOCOL.md` §2 hàng G7 — hành vi thật của code, không phải lỗi) |
 | **G8** | `python tools/gen_research_docx.py --study "<TEN>" --artifact review` | G8_review |
 | **G9** | `python tools/gen_research_docx.py --study "<TEN>" --artifact readiness` | G9_readiness |
 | **G10** *(CAPSTONE — bắt buộc sau mỗi lần march)* | `python tools/run_g10_assemble.py --study "<TEN>"` | DE_CUONG_THONG_NHAT_<TEN>.md + .docx + G10_checkpoint.json |

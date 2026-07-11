@@ -13,7 +13,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận PICO → qu
 | MODULE | Tác vụ |
 |--------|--------|
 | M1 | BƯỚC 0: đối chiếu sổ cái chống làm lại; xác nhận PICO rõ |
-| M2 | Quét nguồn neo guideline liên quan (WHO/NICE/ESC/AHA/ADA/KDIGO/GOLD/GINA/Bộ Y tế…) |
+| M2 | Quét nguồn neo guideline liên quan (WHO/NICE/ESC/AHA/ADA/KDIGO/GOLD/GINA/Bộ Y tế…). **Không trích dẫn được guideline mới nhất → bàn giao `cap-nhat-guideline` theo `_NGUON-GUIDELINE-TU-DONG.md`** (2026-07-12: bổ sung, trước đó thiếu cơ chế fallback khi quét thất bại). |
 | M3 | Điền bảng guideline mở rộng: khuyến cáo + Class + Strength + năm + nguồn |
 | M4 | Trạng thái câu hỏi: đã trả lời / tranh cãi / gap — bằng chứng then chốt (PMID/DOI) |
 | M5 | Phát biểu research gap 1–2 câu + loại gap + novelty + ý nghĩa lâm sàng–chính sách |
