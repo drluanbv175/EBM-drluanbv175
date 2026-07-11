@@ -14,7 +14,11 @@ python medical-ebm-automation/tools/run_g8_auto.py \
     --study "MA-DE-TAI" \
     [--target-journal "Tên tạp chí đích"] [--impact-factor <so>]
 # Tự động: đọc checkpoint G0-G7 → kiểm tra toàn diện trước nộp bài
-#           → A14 .md + .docx + G8_checkpoint.json
+#           → A15 .md + .docx + G8_checkpoint.json
+#           (2026-07-11: sửa "A14" — đó là mã của nop-bai-phan-hoi/G9 theo crosswalk;
+#           đúng mã của bình duyệt nội bộ G8 này là A15. Script thật hiện đặt tên file
+#           "G8_A9_PRESUBMISSION_..." — LỆCH khỏi crosswalk theo kiểu hệ thống, giống
+#           run_g5/g6/g9_auto.py; xem task theo dõi sửa code: task_e4138631.)
 ```
 **Sau khi chạy**, đối chiếu kết quả với 3 LĂNG KÍNH bên dưới để bổ sung nhận xét phản biện chi tiết.
 

@@ -31,7 +31,11 @@ python medical-ebm-automation/tools/run_g7_auto.py \
     --study "MA-DE-TAI" \
     [--target-journal "Tên tạp chí đích"] [--word-limit 3500]
 # Tự động: đọc checkpoint G0-G6 → dựng khung IMRAD theo chuẩn báo cáo đúng thiết kế
-#           → A12 .md + .docx + G7_checkpoint.json
+#           → A11 .md + .docx + G7_checkpoint.json
+#           (2026-07-11: sửa "A12" — đó là mã của kiem-chung-trich-dan theo crosswalk;
+#           đúng mã của bản thảo IMRAD này là A11. Script thật hiện đặt tên file
+#           "G7_A8_MANUSCRIPT_..." — LỆCH khỏi crosswalk theo kiểu hệ thống, giống
+#           run_g5/g6/g9_auto.py; xem task theo dõi sửa code: task_e4138631.)
 ```
 Script này (bản nâng cấp) tự điền Methods §3/§4 (phơi nhiễm/kết cục) bằng **TÊN BIẾN THẬT** lấy từ CRF của G5 (`quan-ly-du-lieu`), thay vì chỗ trống chung chung — giảm việc tác giả phải tự tra lại tên biến khi viết Methods.
 
