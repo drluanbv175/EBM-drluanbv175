@@ -154,7 +154,12 @@ Rà lại sau MỖI cổng và giao so-cai-ghi-nho lưu phiên bản mới.
 | 5 | Kết quả trái kỳ vọng | Khoa học | — | — | INFO | SAP định trước + pre-reg | Kế hoạch công bố kết quả âm | Mở | | CN |
 | 6 | [Thêm rủi ro theo đề tài] | | | | | | | Mở | | |
 
-Thang mức rủi ro: CAO = Xác suất TB/Cao + Hậu quả Cao; TB = các trường hợp còn lại; THẤP = Xác suất thấp + Hậu quả thấp
+Thang mức rủi ro (sửa 2026-07-11 — công thức trước không khớp dòng #3/#5 trong chính bảng trên):
+CAO = Hậu quả RẤT CAO (bất kể xác suất — rủi ro hiếm nhưng hại lớn vẫn ưu tiên CAO, vd #3)
+      HOẶC Xác suất TB/Cao + Hậu quả Cao (vd #1, #2); TB = các trường hợp còn lại (vd #4);
+      THẤP = Xác suất thấp + Hậu quả thấp; INFO = mục thông tin/giả định theo dõi, không
+      phải rủi ro cần giảm thiểu theo thang trên (vd #5 — kết quả trái kỳ vọng là một khả
+      năng khoa học, không phải sự cố vận hành cần CAPA)
 ```
 
 ---

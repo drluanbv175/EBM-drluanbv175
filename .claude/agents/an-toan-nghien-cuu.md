@@ -54,12 +54,16 @@ Thiết kế: ☐ QUAN SÁT ☐ CAN THIỆP
 
 BIẾN CỐ BẤT LỢI (AE — Adverse Event):
   Định nghĩa: Bất kỳ biến cố y tế bất lợi nào xảy ra ở người tham gia sau khi nhận can thiệp,
-  KHÔNG nhất thiết có quan hệ nhân quả với can thiệp (ICH-GCP E6(R3) §1.2)
+  KHÔNG nhất thiết có quan hệ nhân quả với can thiệp (ICH-GCP E6(R3), mục Glossary —
+  KHÔNG phải §1.2 như bản trước ghi; §1.2 là "Responsibilities" thuộc IRB/IEC, đã kiểm
+  chứng trực tiếp bản PDF chính thức 2026-07-11)
   Nguồn ghi nhận: ___
   Khoảng thời gian theo dõi: ___
 
 BIẾN CỐ BẤT LỢI NGHIÊM TRỌNG (SAE — Serious Adverse Event):
-  Định nghĩa (ICH E2A §3): Biến cố thỏa BẤT KỲ tiêu chí nào:
+  Định nghĩa (ICH E2A §II.B "Serious Adverse Event or Adverse Drug Reaction" — KHÔNG phải
+  §3 như bản trước ghi; mục 3 trong văn bản gốc là "Unexpected Adverse Drug Reaction", đã
+  kiểm chứng trực tiếp bản PDF chính thức 2026-07-11): Biến cố thỏa BẤT KỲ tiêu chí nào:
   ☐ Tử vong
   ☐ Nguy hiểm tính mạng
   ☐ Cần nhập viện / kéo dài nhập viện
@@ -77,7 +81,10 @@ PHÂN ĐỘ NẶNG (CTCAE nếu phù hợp):
   Grade 4: Nguy hiểm tính mạng — cần can thiệp khẩn cấp
   Grade 5: Tử vong liên quan can thiệp
   Phiên bản CTCAE dùng: ___ (nêu rõ vì phân độ thay đổi giữa phiên bản)
-  Nguồn: NCI CTCAE v5.0 (ctep.cancer.gov/protocoldevelopment/electronic_applications/ctc.htm)
+  Nguồn: NCI CTCAE v6.0 cho đề tài MỚI (phát hành 2025; NCI CTEP/DCP áp dụng cho thử nghiệm
+  mới từ 01/01/2026, xác nhận qua dctd.cancer.gov 2026-07-11) — v5.0 chỉ còn dùng cho đề tài
+  ĐANG chạy đã bắt đầu trước khi có v6.0 (không bắt buộc chuyển đổi ngược)
+  (dctd.cancer.gov/research/ctep-trials/for-sites/adverse-events)
 
 QUAN HỆ NHÂN QUẢ (Attribution):
   ☐ Không liên quan (Unrelated)

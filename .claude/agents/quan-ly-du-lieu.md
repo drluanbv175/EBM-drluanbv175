@@ -12,8 +12,12 @@ Khi đề tài đã có G0 checkpoint (và lý tưởng là bộ biến từ `bi
 ```bash
 python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 # Tự động: đọc topic từ G0 checkpoint → tự suy luận chuyên khoa/biến
-#           → CRF 55 dòng + data dictionary + Python scripts + STROBE flowchart
-#           → A9/A17a .md + .docx + G5_checkpoint.json
+#           → CRF (số dòng biến động 12-56 tùy thiết kế/chuyên khoa nhận diện,
+#              KHÔNG cố định — "55 dòng" trong docstring script chỉ là tên gọi lịch sử,
+#              đã kiểm chứng 2026-07-11) + data dictionary + Python scripts + STROBE flowchart
+#           → MỘT file .md + .docx duy nhất (tên file script gắn mã "A6" — LỆCH với A9/A17a
+#              theo crosswalk chính thức bên dưới; đã kiểm chứng 2026-07-11, cần đối chiếu
+#              thủ công thay vì tin filename) + G5_checkpoint.json
 ```
 **Sau khi chạy**, đối chiếu CRF sinh ra với 7 TÀI LIỆU bên dưới (đặc biệt TÀI LIỆU 1 — Data Dictionary) và với bộ biến đã đặc tả ở `bien-so-nghien-cuu` để bảo đảm không thiếu/thừa biến.
 
@@ -209,18 +213,18 @@ BÁO CÁO QC HẬU-KHÓA (trước khi giao phan-tich-thong-ke):
 ☐ So sánh với dummy tables (G4): cấu trúc dữ liệu khớp chưa
 ☐ QC PASS → giao phan-tich-thong-ke với SAP đã khóa
 
-CẤU TRÚC GÓI TÁI LẶP:
-study-data/
-├── raw/          ← dữ liệu gốc (READ-ONLY)
-├── clean/        ← sau làm sạch (versioned)
-├── analysis/     ← bản sao cho phân tích
-├── scripts/
-│   ├── 01_import.R/.py     ← import + validate
-│   ├── 02_clean.R/.py      ← làm sạch + log
-│   ├── 03_deidentify.R/.py ← khử định danh
-│   └── 04_lock.R/.py       ← tạo data lock memo
-├── output/       ← bảng/biểu đồ
-└── README.md     ← chạy lại từ đầu thế nào
+CẤU TRÚC GÓI TÁI LẶP (khớp đúng thực tế `run_g5_auto.py` sinh ra — đã kiểm chứng 2026-07-11,
+bản trước mô tả cấu trúc "study-data/" không khớp — dễ gây bác sĩ đối chiếu nhầm với BƯỚC 0):
+exports/{study}/
+├── data/             ← KHÔNG commit — chứa dữ liệu thật
+│   ├── raw/          ← dữ liệu thô từ REDCap export
+│   └── processed/    ← df_clean.csv + data_quality_report.txt
+├── scripts/          ← Python scripts tự động — có thể commit
+│   ├── data_cleaning.py        ← làm sạch REDCap export
+│   └── data_quality_report.py  ← báo cáo chất lượng
+├── output/           ← bảng kết quả, hình
+├── docs/             ← SAP, đề cương, artifact G0-G4
+└── README.md         ← hướng dẫn tái lặp đầy đủ
 ```
 
 ---

@@ -48,7 +48,7 @@ Trạng thái/quyết định cần ghi (từ `dieu-phoi-nghien-cuu` hoặc agen
 1. Nhận trạng thái/quyết định từ `dieu-phoi-nghien-cuu` (hoặc agent chuyên trách).
 2. Quy date tương đối → tuyệt đối; loại PII; viết bản ghi ngắn gọn, có nguồn.
 3. Backup → **append** vào sổ cái + cập nhật chỉ mục; nếu là dashboard, chạy chuỗi `verify_dashboard.py --online` → `build_library.py add` → `sync_all.py` (bước cuối tự dựng lại 3 trang hub + **Antifacts** — mặt tiền theo chuyên khoa, tích lũy).
-3b. **Máy kiểm khối checkpoint vừa ghi (bắt buộc, vá 2026-07-04):** `python medical-ebm-automation/tools/clinical_checkpoint.py <file_so_trang_thai>.md --json` — schema đủ trường · Cổng A/B không PASS khi còn 🔴 · Cổng A trước Cổng B · không PII. Còn 🔴 → SỬA khối vừa ghi NGAY (đây là lỗi của chính bản ghi mình vừa tạo, không giao lại agent khác), rồi kiểm lại. Chi tiết: `_SO-TRANG-THAI-CHECKPOINT.md`.
+3a. **Máy kiểm khối checkpoint vừa ghi (bắt buộc, vá 2026-07-04; đổi số từ "3b"→"3a" ngày 2026-07-11 để không trùng nhãn với mục H2 "§3b CHẾ ĐỘ AUTO-CHECKPOINT" bên dưới — 2 nội dung khác nhau, các file khác trong hệ agent trích "§3b" đều hiểu theo nghĩa AUTO-CHECKPOINT):** `python medical-ebm-automation/tools/clinical_checkpoint.py <file_so_trang_thai>.md --json` — schema đủ trường · Cổng A/B không PASS khi còn 🔴 · Cổng A trước Cổng B · không PII. Còn 🔴 → SỬA khối vừa ghi NGAY (đây là lỗi của chính bản ghi mình vừa tạo, không giao lại agent khác), rồi kiểm lại. Chi tiết: `_SO-TRANG-THAI-CHECKPOINT.md`.
 4. Trả xác nhận "đã ghi gì, ở đâu" + con trỏ để phiên sau khôi phục.
 
 ## 3b. CHẾ ĐỘ AUTO-CHECKPOINT (không chờ cổng PASS)

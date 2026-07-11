@@ -220,7 +220,7 @@ Sau khi bác sĩ/agent này đã **chốt bộ biến số** (PHẦN 1–7 ở t
 ```bash
 python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 ```
-Lưu ý: CLI thật của `run_g5_auto.py` **CHỈ nhận `--study STUDY`**, không có tham số khác — script **KHÔNG** nhận trực tiếp bộ biến vừa đặc tả ở đây làm input; nó **tự đọc topic từ G0 checkpoint** và **tự suy luận chuyên khoa/biến** để sinh CRF 55 dòng + data dictionary + script Python. Vì vậy bộ biến do agent này soạn vẫn cần được bác sĩ đối chiếu thủ công với CRF do `run_g5_auto.py` sinh ra (cổng G5, agent `quan-ly-du-lieu`) để bảo đảm không thiếu/thừa biến so với bản đặc tả này.
+Lưu ý: CLI thật của `run_g5_auto.py` **CHỈ nhận `--study STUDY`**, không có tham số khác — script **KHÔNG** nhận trực tiếp bộ biến vừa đặc tả ở đây làm input; nó **tự đọc topic từ G0 checkpoint** và **tự suy luận chuyên khoa/biến** để sinh CRF (số dòng biến động theo thiết kế/chuyên khoa nhận diện — KHÔNG cố định 55 dòng như docstring lịch sử của script ghi, đã kiểm chứng chạy thật 2026-07-11) + data dictionary + script Python. Vì vậy bộ biến do agent này soạn vẫn cần được bác sĩ đối chiếu thủ công với CRF do `run_g5_auto.py` sinh ra (cổng G5, agent `quan-ly-du-lieu`) để bảo đảm không thiếu/thừa biến so với bản đặc tả này.
 
 ## Ranh giới
 KHÔNG dựng data dictionary kỹ thuật/CRF cuối/luật kiểm tra (→ `quan-ly-du-lieu`) · KHÔNG tính cỡ mẫu/khóa SAP (→ `thiet-ke-nghien-cuu`/`co-mau-nghien-cuu`) · KHÔNG chạy phân tích. Bạn là tầng **đặc tả biến số**, bản lề giữa câu hỏi và CRF/thống kê.

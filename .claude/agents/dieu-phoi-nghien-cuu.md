@@ -34,9 +34,9 @@ Map từng chặng tới agent con phù hợp:
 - **G9 Nghiệm thu/Công bố & liêm chính** (**A14**) → `nop-bai-phan-hoi` soạn khai báo **đóng góp tác giả (ICMJE/contributorship) + COI + tài trợ + khai báo dùng AI**; `binh-duyet` rà soát tính minh bạch; `kiem-chung-trich-dan` kiểm trích dẫn lần cuối. **CỔNG liêm chính: chủ nhiệm XÁC NHẬN mọi khai báo** — agent chỉ soạn dự thảo.
 - **Chuyên gia theo loại thiết kế (kích hoạt CÓ ĐIỀU KIỆN — chèn vào G1/G3/G6/G7 đúng loại):**
   - Đề tài dùng **bộ câu hỏi/thang đo/PROM** (hài lòng người bệnh, chất lượng sống, tuân thủ…) → `cong-cu-do-luong` (COSMIN: giá trị nội dung/cấu trúc · tin cậy α/ICC · đáp ứng/MCID · dịch–thích nghi văn hóa) ở G1/G3, trước khi khóa CRF.
-  - Đề tài xây/kiểm định **mô hình tiên lượng/dự báo** → `mo-hinh-tien-luong` (TRIPOD+AI: EPV · hiệu chuẩn + phân biệt · validation nội/ngoại · DCA) ở G1/G3/G6/G7; PROBAST khi thẩm định mô hình có sẵn.
+  - Đề tài xây/kiểm định **mô hình tiên lượng/dự báo** → `mo-hinh-tien-luong` (TRIPOD+AI: EPV · hiệu chuẩn + phân biệt · validation nội/ngoại · DCA) ở G1/G3/G6/G7; PROBAST+AI khi thẩm định mô hình có sẵn (BMJ 2025;388:e082505 — bản cập nhật/mở rộng thay PROBAST-2019, đã kiểm chứng 2026-07-11).
   - Đề tài có **cấu phần kinh tế** (chi phí–hiệu quả, tác động ngân sách) → `kinh-te-y-te` (CHEERS 2022: CEA/CUA/ICER · PSA/CEAC) ở G1 thiết kế + G7 báo cáo; nhận hiệu quả lâm sàng từ `tham-dinh-grade-nnt`/`meta-phan-tich`.
-  - Đề tài là **ĐỘ CHÍNH XÁC CHẨN ĐOÁN** (index test vs reference standard) → `tham-dinh-do-chinh-xac-chan-doan` (QUADAS-2/QUADAS-C thẩm định thiết kế + STARD chuẩn báo cáo + GRADE-cho-test) ở G1 thiết kế + G7 viết theo STARD.
+  - Đề tài là **ĐỘ CHÍNH XÁC CHẨN ĐOÁN** (index test vs reference standard) → `tham-dinh-do-chinh-xac-chan-doan` (QUADAS-3 thẩm định thiết kế — bản kế nhiệm QUADAS-2, Ann Intern Med 17/2/2026, doi:10.7326/ANNALS-25-02104, đã kiểm chứng 2026-07-11 + STARD chuẩn báo cáo + GRADE-cho-test) ở G1 thiết kế + G7 viết theo STARD.
 - **Cầu nối thực hành (sau công bố/khi rà guideline)** → `huong-dan-lam-sang` (đặt phát hiện vào bối cảnh hướng dẫn hiện hành, GRADE EtD, đề xuất/cập nhật khuyến cáo → nạp EBM_MASTER ở hàng chờ duyệt — CỔNG A+B).
 - **Xuyên suốt — ghi sổ cái:** sau MỖI cổng PASS, giao `so-cai-ghi-nho` lưu quyết định + mốc + 🔴 còn thiếu vào EBM_MASTER/MEMORY.md để phiên sau (và máy khác qua sync) tiếp tục được.
 
@@ -99,7 +99,7 @@ Khi nhà nghiên cứu chỉ đưa MỘT tên/mô tả đề tài (không nói �
       --topic "Tên đề tài đầy đủ" --study "MA-DE-TAI"
   # → exports/MA-DE-TAI/G0_A1_PICO_FINER_MA-DE-TAI.md (có PMIDs thật)
   # → exports/MA-DE-TAI/G0_checkpoint.json
-  python tools/scaffold_research_project.py --study "MA-DE-TAI"
+  python medical-ebm-automation/tools/scaffold_research_project.py --study "MA-DE-TAI"
   ```
   Sinh ngay **RESEARCH INTAKE & FEASIBILITY AUDIT** (`00_Research_Intake_Feasibility_Audit.md`). Điền 10 mục (§5 `_CROSSWALK-NGHIEN-CUU.md`):
   ```
