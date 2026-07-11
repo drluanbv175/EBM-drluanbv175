@@ -15,7 +15,13 @@ python medical-ebm-automation/tools/run_g9_auto.py \
     [--n-authors <so_tac_gia>] [--target-journal "Tên tạp chí đích"]
 # Tự động: đọc checkpoint G0-G8 → sinh bộ khai báo liêm chính ICMJE+COPE
 #           (CRediT · COI · AI · Data Availability · Ethics Statement)
-#           → A15 .md + .docx + G9_checkpoint.json
+#           → A14 .md + .docx + G9_checkpoint.json
+#           (2026-07-11: sửa "A15" — đó là mã của binh-duyet/G8 theo crosswalk; đúng
+#           mã của bộ khai báo liêm chính G9 này là A14. Script thật hiện đặt tên file
+#           "G9_A10_AUTHOR_INTEGRITY_..." — LỆCH khỏi crosswalk theo kiểu hệ thống, vì
+#           mọi run_gN_auto.py đều đánh số A-code cũ kiểu "gate N → A(N+1)" thay vì mã
+#           crosswalk hiện hành; đối chiếu nội dung file, đừng tin tên file. Xem task
+#           theo dõi sửa code: task_3ee574ed.)
 ```
 **Sau khi chạy**, đối chiếu với G9 PHẦN 1–4 bên dưới; chờ bác sĩ ký 3 xác nhận trước khi mở khóa G9 thật.
 
