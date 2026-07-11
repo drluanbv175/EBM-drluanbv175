@@ -15,6 +15,7 @@
 !/.claude/
 !/sync/
 !/tools/
+!/.githooks/
 !/CLAUDE.md
 !/VERSION
 !/CHANGELOG.md

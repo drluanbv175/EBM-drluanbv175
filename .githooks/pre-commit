@@ -1,0 +1,42 @@
+#!/bin/sh
+# pre-commit — chan commit neu .claude/agents/*.md thay doi ma Codex TOML mirror
+# chua duoc dong bo. Them 2026-07-11 sau khi audit tim thay chuoi enforce->sync->check
+# khong co co che kich hoat tu dong nao (phai nho chay tay).
+#
+# Kich hoat 1 lan (chi can chay 1 lan tren moi may, khong phai moi phien):
+#   git config core.hooksPath .githooks
+#   chmod +x .githooks/pre-commit
+#
+# Bo qua khi khong co file .claude/agents/*.md nao trong staged changes (nhanh, khong
+# lam cham cac commit khac).
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT" || exit 1
+
+CHANGED_AGENTS=$(git diff --cached --name-only --diff-filter=ACM -- '.claude/agents/*.md')
+
+if [ -z "$CHANGED_AGENTS" ]; then
+  exit 0
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "pre-commit: khong tim thay python3 — bo qua kiem dong bo Codex (tu chay tay sau)." >&2
+  exit 0
+fi
+
+python3 tools/sync_agents_to_codex.py --check
+CHECK_EXIT=$?
+
+if [ "$CHECK_EXIT" -ne 0 ]; then
+  echo "" >&2
+  echo "CHAN COMMIT: ban vua sua .claude/agents/*.md nhung .Codex/agents *.toml chua dong bo." >&2
+  echo "  Chay truoc khi commit:" >&2
+  echo "    python3 tools/enforce_agent_guardrails.py" >&2
+  echo "    python3 tools/sync_agents_to_codex.py" >&2
+  echo "    python3 tools/sync_agents_to_codex.py --check" >&2
+  echo "  Roi commit lai." >&2
+  echo "  Khan cap can bo qua: git commit --no-verify (KHONG khuyen nghi — se de lai lech am tham)." >&2
+  exit 1
+fi
+
+exit 0
