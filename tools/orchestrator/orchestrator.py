@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from .agent_adapter import AgentExecutor, DryRunExecutor
 from .context import ContextStore, Session
 from .flows import FlowStep, GUARDRAIL_STEP, all_agents_in_flows, flow_for, sa
-from .intent import route
+from .intent import SINGLE_TASK_RULES, route
 from .knowledge import KnowledgeLayer
 from .lifecycle import GATES, MAX_RETRIES, Lifecycle
 from .registry import Registry
