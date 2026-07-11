@@ -68,7 +68,7 @@ Lưu ý áp dụng: thang/dấu trên chỉ đúng trong **điều kiện đã k
 | Cờ đỏ nhi (chỉ cần 1) | Nguồn neo | Hành động |
 |---|---|---|
 | **Sốt trẻ <3 tháng (≥38°C)** | NICE NG143 *Fever in under 5s* (ô đỏ) | 🔴 chuyển nhi/cấp cứu khẩn; KHÔNG hạ sốt rồi cho về |
-| Li bì/khó đánh thức · quấy khóc không dỗ được · **bú/ăn kém rõ** | NICE NG143 (red) · NICE NG254 *Suspected sepsis <16s* (2024) | 🔴 đánh giá nghi nhiễm khuẩn huyết |
+| Li bì/khó đánh thức · quấy khóc không dỗ được · **bú/ăn kém rõ** | NICE NG143 (red) · NICE NG254 *Suspected sepsis <16s* (2025 — 2026-07-11: sửa "2024", NG254 công bố 19/11/2025 theo nice.org.uk) | 🔴 đánh giá nghi nhiễm khuẩn huyết |
 | **Ban xuất huyết KHÔNG mất khi ấn kính** (non-blanching) | NICE NG143/NG254 (nghi não mô cầu) | 🔴 CẤP CỨU — kháng sinh sớm + chuyển ngay, KHÔNG chờ xét nghiệm |
 | Thóp phồng · thở nhanh/rút lõm/tím/rên/SpO₂ thấp · co giật · mất nước nặng | NICE NG143 · WHO IMCI; nhịp thở theo tuổi `[CẦN KIỂM CHỨNG]` | 🔴 O₂/bù dịch + chuyển cấp cứu nhi |
 
