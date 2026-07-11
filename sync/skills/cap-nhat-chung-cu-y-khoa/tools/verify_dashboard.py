@@ -11,7 +11,8 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
   - DOI kiểm ĐỊNH DẠNG luôn (offline, mọi lượt chạy) — KHÔNG phân giải online (chưa gọi
     doi.org/Crossref; DOI đúng định dạng nhưng không tồn tại vẫn có thể lọt).
   - (Tùy chọn --online) Tự XÁC MINH mỗi PMID phân giải đúng qua NCBI E-utilities
-    (miễn phí, không cần key) → chống trích dẫn ảo PMID.
+    (miễn phí, không cần key) → chống trích dẫn ảo PMID; đồng thời so khớp thô tiêu đề
+    PubMed thật với nội dung item để dò TRÁO TRÍCH DẪN (PMID có thật nhưng lạc đề).
 
 Cách dùng:
     python3 verify_dashboard.py <dashboard.html>            # chỉ kiểm cấu trúc (offline)
@@ -23,7 +24,8 @@ Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thi
   trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung);
   khi --online: PMID KHÔNG xác minh được (kể cả do lỗi mạng) — fail-closed, không coi lỗi
   mạng là PASS (vá 2026-07-11, trước đây fail-open: PMID bịa lọt qua nếu quét đúng lúc mất mạng).
-Cảnh báo (không chặn): nghi PII.
+Cảnh báo (không chặn): nghi PII; khi --online, PMID xác minh tồn tại nhưng tiêu đề PubMed
+  không khớp nội dung item (nghi tráo trích dẫn — heuristic từ khóa, cần rà tay).
 """
 import sys, re, json, argparse, time
 import urllib.error
@@ -89,7 +91,12 @@ def verify_pmid_online(pmid, retries=2):
     retry-with-backoff cho lỗi rate-limit/server tạm thời (HTTP 429/5xx) của NCBI
     (không key → giới hạn ~3 req/s) — trước đây MỘT lần bị rate-limit là hạ ngay
     thành "lỗi mạng" không phân biệt được với hiccup thật, khiến quét nhiều PMID
-    liên tiếp dễ tạo cảnh báo giả hàng loạt."""
+    liên tiếp dễ tạo cảnh báo giả hàng loạt.
+    Vá tiếp (vòng kế): lỗi mạng THÔNG THƯỜNG (timeout/DNS/URLError — ca thực tế phổ
+    biến hơn rate-limit) trước đây trả None NGAY, không retry, dù cùng bản chất "hiccup
+    tạm thời" như 429/5xx — giờ mọi lỗi (trừ HTTPError không nằm trong nhóm tạm thời)
+    đều được thử lại giống nhau. Trả tiêu đề ĐẦY ĐỦ (không cắt 90 ký tự) — caller tự cắt
+    khi hiển thị; giữ nguyên đủ để so khớp tráo trích dẫn (_title_overlap_ratio)."""
     import urllib.request
     url = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
            "?db=pubmed&retmode=json&id=" + pmid)
@@ -100,7 +107,7 @@ def verify_pmid_online(pmid, retries=2):
                 j = json.loads(r.read().decode("utf-8"))
             res = j.get("result", {})
             if pmid in res and "title" in res[pmid]:
-                return True, res[pmid].get("title", "")[:90]
+                return True, res[pmid].get("title", "")
             return False, "không có trong PubMed"
         except urllib.error.HTTPError as e:
             last_err = e
@@ -109,8 +116,42 @@ def verify_pmid_online(pmid, retries=2):
                 continue
             return None, "lỗi mạng: %s" % e
         except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
             return None, "lỗi mạng: %s" % e
     return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
+
+
+_TITLE_STOPWORDS = {
+    "with", "from", "that", "this", "were", "have", "been", "into", "their",
+    "after", "among", "during", "study", "using", "versus", "associated",
+    "effect", "effects", "outcomes", "outcome", "results", "patients", "adults",
+    "randomized", "controlled", "clinical", "trial", "review", "systematic",
+    "analysis", "cohort", "based", "compared", "comparison", "national",
+}
+
+
+def _significant_words(text):
+    return {w for w in re.findall(r"[A-Za-z]{4,}", (text or "").lower())} - _TITLE_STOPWORDS
+
+
+def _title_overlap_ratio(real_title, item_text):
+    """Tỷ lệ từ có nghĩa trong TIÊU ĐỀ THẬT (PubMed) xuất hiện đâu đó trong nội dung item
+    (title/action/summary/references — references[] thường chứa nguyên văn câu trích dẫn kèm
+    tiêu đề gốc). Dò TRÁO TRÍCH DẪN (PMID có thật nhưng LẠC ĐỀ) — verify_pmid_online() chỉ xác
+    nhận PMID TỒN TẠI trên PubMed, KHÔNG xác nhận PMID đó nói đúng chủ đề item (audit 2026-07-11:
+    tái hiện thật — PMID có thật của một bài không liên quan vẫn PASS sạch qua --online). Heuristic
+    thô theo từ khóa (không NLP/không đối chiếu ngữ nghĩa) — CHỈ CẢNH BÁO (warns), không tự chặn:
+    có thể bỏ sót khi title[item] diễn giải hoàn toàn khác chữ so với tiêu đề gốc, nhưng bắt được
+    trường hợp rõ nhất — PMID hoàn toàn không liên quan (không chung từ khóa nào có nghĩa)."""
+    sig = _significant_words(real_title)
+    if len(sig) < 2:
+        return 1.0  # tiêu đề quá ngắn/toàn hư từ — không đủ tín hiệu, coi như qua (tránh cảnh báo giả)
+    text_low = (item_text or "").lower()
+    hits = sum(1 for w in sig if w in text_low)
+    return hits / len(sig)
 
 
 def main():
@@ -182,7 +223,7 @@ def main():
                 errors.append("[%s] url không đúng định dạng (thiếu scheme http(s) hoặc host): %r"
                               % (iid, url))
         if pmid:
-            pmids.append((iid, pmid))
+            pmids.append((iid, pmid, ch))
         if grade not in VALID_GRADE:
             errors.append("[%s] gradeLevel không hợp lệ: %r (cần %s)." % (iid, grade, VALID_GRADE))
         if dec not in VALID_DECISION:
@@ -203,10 +244,10 @@ def main():
 
     # 3) Xác minh PMID/DOI online
     if a.online and pmids:
-        oks.append("Đang xác minh %d PMID trên PubMed…" % len(set(p for _, p in pmids)))
+        oks.append("Đang xác minh %d PMID trên PubMed…" % len(set(p for _, p, _ in pmids)))
         seen = {}
         net_calls = 0
-        for iid, p in pmids:
+        for iid, p, ch in pmids:
             if p in seen:
                 ok, info = seen[p]
             else:
@@ -218,7 +259,18 @@ def main():
                 ok, info = verify_pmid_online(p)
                 seen[p] = (ok, info)
             if ok is True:
-                oks.append("[%s] PMID %s ✓ %s" % (iid, p, info))
+                oks.append("[%s] PMID %s ✓ %s" % (iid, p, info[:90]))
+                # Vá (vòng kế tiếp 2026-07-11): dò TRÁO TRÍCH DẪN — PMID có thật nhưng tiêu đề
+                # PubMed KHÔNG khớp nội dung item (đã tái hiện thật: PMID không liên quan vẫn
+                # PASS sạch). Tính LẠI theo TỪNG item (không dùng cache) vì cùng 1 PMID có thể bị
+                # gán nhầm cho nhiều item khác chủ đề nhau. Chỉ cảnh báo — RÀ TAY, không tự chặn.
+                overlap = _title_overlap_ratio(info, ch)
+                if overlap < 0.25:
+                    warns.append(
+                        "[%s] PMID %s tồn tại thật trên PubMed nhưng tiêu đề KHÔNG khớp nội dung "
+                        "item (trùng %.0f%% từ khóa có nghĩa) — NGHI TRÁO PMID (lạc đề). Tiêu đề "
+                        "PubMed thật: \"%s\". RÀ TAY, không tự gỡ." % (iid, p, overlap * 100, info[:120])
+                    )
             elif ok is False:
                 errors.append("[%s] PMID %s KHÔNG phân giải: %s" % (iid, p, info))
             else:
@@ -229,7 +281,7 @@ def main():
                 errors.append("[%s] PMID %s CHƯA XÁC MINH ĐƯỢC (%s) — --online yêu cầu xác "
                               "nhận được mới PASS, không coi lỗi mạng là đã xác minh." % (iid, p, info))
     elif pmids:
-        oks.append("Có %d PMID (chạy --online để xác minh phân giải)." % len(set(p for _, p in pmids)))
+        oks.append("Có %d PMID (chạy --online để xác minh phân giải)." % len(set(p for _, p, _ in pmids)))
 
     # 4) CHẤT LƯỢNG NỘI DUNG — chống rác abstract NGOẠI NGỮ / placeholder (xem dashboard_content_audit.py)
     try:
