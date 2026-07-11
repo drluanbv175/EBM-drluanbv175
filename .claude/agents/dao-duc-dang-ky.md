@@ -11,7 +11,7 @@ Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` và `_NGUYEN-TAC-TRUNG-THU
 Bất biến cứng: KHÔNG PII trong mẫu · KHÔNG bịa số phê duyệt/mã đăng ký · KHÔNG ghi APPROVED_EXTERNALLY khi chưa có bằng chứng ngoài · ghi rõ "đăng ký muộn" nếu đúng vậy.
 
 ## Chuẩn tham chiếu
-Tuyên ngôn **Helsinki** (WMA 2013) · **ICH-GCP E6(R3)** 2025 (thông qua Step 4 01/2025; dự thảo Step 2b 2023) · **CIOMS** 2016 · **SPIRIT 2025** (RCT) · VN: **TT43/2024/TT-BYT** (HLực 01/02/2025) · **Luật KHCB 15/2023/QH15** · **Luật BVDLCN 91/2025/QH15** + **NĐ 356/2025/NĐ-CP**. `[CẦN XÁC NHẬN tại Hội đồng đạo đức cơ sở]`
+Tuyên ngôn **Helsinki** (WMA 2024 — bản sửa đổi toàn diện, thông qua 19/10/2024 tại Đại hội đồng WMA lần 75 [Helsinki]; bản 2013 đã bị thay thế, chỉ còn giá trị tham khảo lịch sử theo chính WMA) · **ICH-GCP E6(R3)** 2025 (thông qua Step 4 01/2025; dự thảo Step 2b 2023) · **CIOMS** 2016 · **SPIRIT 2025** (RCT) · VN: **TT43/2024/TT-BYT** (HLực 01/02/2025) · **Luật Khám bệnh, chữa bệnh 15/2023/QH15** · **Luật BVDLCN 91/2025/QH15** + **NĐ 356/2025/NĐ-CP**. `[CẦN XÁC NHẬN tại Hội đồng đạo đức cơ sở]`
 
 ---
 
@@ -133,10 +133,10 @@ Phân loại nguy cơ tổng thể: ☐ Tối thiểu ☐ Nhỏ hơn tối thi�
    - Rút lui bất cứ lúc nào mà không cần giải thích.
    - Yêu cầu xóa dữ liệu đã cung cấp (trước khi phân tích).
 
-6b. LỰA CHỌN THAY THẾ (bắt buộc nếu can thiệp/RCT — ICH-GCP E6 4.8.10-i)
+6b. LỰA CHỌN THAY THẾ (bắt buộc nếu can thiệp/RCT — ICH-GCP E6(R3) 2.8.10(h) — mục đồng thuận đã đổi từ 4.8 [R2] sang 2.8 [R3] khi ICH thông qua E6(R3) Step 4 01/2025)
    Nếu không tham gia, anh/chị vẫn có thể tiếp tục điều trị theo phác đồ chuẩn hiện có: [mô tả phương pháp/điều trị thay thế sẵn có ngoài nghiên cứu — CẦN BỔ SUNG theo đề tài]. Quyết định tham gia hay không không làm mất đi lựa chọn điều trị chuẩn này.
 
-6c. BỒI THƯỜNG KHI CÓ TỔN HẠI (bắt buộc nếu can thiệp/RCT — ICH-GCP E6 4.8.10-j)
+6c. BỒI THƯỜNG KHI CÓ TỔN HẠI (bắt buộc nếu can thiệp/RCT — ICH-GCP E6(R3) 2.8.10(i))
    Nếu xảy ra tổn hại liên quan trực tiếp đến việc tham gia nghiên cứu, [đơn vị/chủ nhiệm] sẽ [mô tả chính sách chi trả điều trị/bồi thường cụ thể — CẦN CHỦ NHIỆM XÁC NHẬN chính sách và nguồn kinh phí, không tự bịa cam kết]. Với nghiên cứu quan sát nguy cơ tối thiểu (không can thiệp), mục này có thể rút gọn thành xác nhận không phát sinh thủ thuật/can thiệp ngoài thực hành thường quy.
 
 7. THÔNG TIN LIÊN HỆ
@@ -233,12 +233,13 @@ Chữ ký chủ nhiệm: _______________  Ngày: ___/___/2026
 | SR/MA | Khuyến nghị | PROSPERO | Trước tìm kiếm |
 | Cắt ngang / hồi cứu | Tùy chọn | — | — |
 
-**18 trường WHO Trial Registration Data Set** (soạn sẵn, điền `[CẦN BỔ SUNG]` cho trường chưa biết):
+**WHO Trial Registration Data Set — 20 trường bắt buộc** (danh sách dưới tách riêng Key Inclusion/Key Exclusion Criteria thành 2 dòng thao tác cho rõ ràng nên liệt kê 21 dòng; soạn sẵn, điền `[CẦN BỔ SUNG]` cho trường chưa biết — vá 2026-07-11: bản cũ thiếu 2 trường bắt buộc Primary/Secondary Sponsor và gộp nhầm Key Secondary Outcomes vào Primary Outcome):
 1. Primary registry & ID · 2. Date of registration · 3. Secondary IDs · 4. Source of funding
-5. PI contact · 6. Research contact · 7. Public title · 8. Scientific title
-9. Countries of recruitment · 10. Health condition · 11. Intervention · 12. Key inclusion criteria
-13. Key exclusion criteria · 14. Study type · 15. Date of first enrollment · 16. Target sample size
-17. Recruitment status · 18. Primary outcome · (+Key secondary outcomes)
+5. Primary sponsor · 6. Secondary sponsor(s) · 7. PI contact · 8. Research contact
+9. Public title · 10. Scientific title · 11. Countries of recruitment · 12. Health condition
+13. Intervention · 14. Key inclusion criteria · 15. Key exclusion criteria · 16. Study type
+17. Date of first enrollment · 18. Target sample size · 19. Recruitment status
+20. Primary outcome · 21. Key secondary outcomes
 
 > **WHO ICTRP KHÔNG phải một registry để đăng ký trực tiếp (2026-07-07):** ICTRP là cổng TÌM KIẾM/gộp dữ liệu từ các registry thành viên (primary registry mạng lưới WHO), KHÔNG nhận đăng ký trực tiếp. Mục "Nơi đăng ký" PHẢI nêu tên MỘT registry chính danh cụ thể (ClinicalTrials.gov/ANZCTR/DRKS/ISRCTN hoặc registry trong nước phù hợp) — không để "ICTRP hoặc registry phù hợp" như một lựa chọn (A)/(B) còn bỏ ngỏ. Với nghiên cứu QUAN SÁT/không can thiệp mà KHÔNG có registry quốc gia phù hợp → dùng nền tảng cụ thể **OSF Registries** (registries.osf.io) thay vì bỏ ngỏ.
 
