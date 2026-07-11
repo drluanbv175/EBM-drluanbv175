@@ -43,12 +43,21 @@
 > Ghi chú: điểm 11 là *thực thi* SAP (không phải artifact tĩnh) — đạt khi `phan-tich-thong-ke` chạy ĐÚNG SAP đã khóa trên DB đã khóa, kết quả khớp dummy tables. Liêm chính tác giả (COI/AI — A14) + bình duyệt (A15) + nhân lực-kinh phí (A13) là artifact quản trị **kèm theo**, vẫn bắt buộc nhưng không nằm trong 14 điểm "chất lượng khoa học" mà chủ nhiệm liệt kê.
 
 ## A. DANH MỤC CHUNG (mọi nghiên cứu nguyên thủy — primary)
+> ⚠️ **CẢNH BÁO HỆ THỐNG (2026-07-11, xem `task_a5fde306`):** bảng A1–A18 dưới đây là mã CHUẨN/canonical, nhưng
+> `tools/run_g{3..9}_auto.py` (script THẬT sinh artifact) tự đặt tên file theo hệ mã KHÁC — quy tắc cũ
+> "gate N → A(N+1)" — LỆCH bảng này ở HẦU HẾT các mã A4–A10 (script gọi cỡ mẫu là "A4" nhưng bảng này định
+> nghĩa A4=Đăng ký; script gọi SAP là "A5" nhưng bảng định nghĩa A5=Cỡ mẫu; tương tự lệch ở A6/A7/A8/A9/A10).
+> `tools/run_pipeline_integrated.py` còn HARDCODE theo hệ mã lệch này để lấy nội dung; `tools/scaffold_
+> research_project.py` lại dùng ĐÚNG hệ mã bảng này; `tools/gen_research_docx.py` dùng hệ mã THỨ BA hoàn
+> toàn khác (không tiền tố "A"). **Khi tra artifact theo mã ở bảng dưới, ĐỪNG tin tên file — đối chiếu NỘI
+> DUNG**, tới khi việc thống nhất 3 hệ mã được xử lý. Riêng A10↔A14 đã vá 1 phần ở `nop-bai-phan-hoi.md`
+> (`task_3ee574ed`).
 | # | Artifact | Cổng | Agent phụ trách | Ghi chú bắt buộc |
 |---|----------|------|-----------------|------------------|
 | A1 | Câu hỏi nghiên cứu + PICO/PECO + FINER | G0 | `cau-hoi-nghien-cuu` | rõ, khả thi (điều phối: `dieu-phoi-nghien-cuu`) |
 | A1b | **Project Charter** (phạm vi·mục tiêu SMART·governance·milestone·link rủi ro) | G1 | `ke-hoach-trien-khai` (+`cau-hoi-nghien-cuu`) | "hiến chương" 1 trang neo đề tài; trỏ A1+A2 |
 | A2 | Đề cương/Protocol | G1 | `viet-ban-thao`+`thiet-ke-nghien-cuu` | theo chuẩn protocol (SPIRIT nếu thử nghiệm) |
-| A2b | **Evidence Ledger** (sổ chứng cứ: nguồn·thiết kế·cỡ mẫu·hiệu ứng·RoB·GRADE·gap) | G0/G1 | `tong-quan-y-van`+`trich-xuat-y-van`+`tham-dinh-phe-binh` | bảng truy được, KHÔNG citation ma; nền biện minh tính mới |
+| A2b | **Evidence Ledger** (sổ chứng cứ: nguồn·thiết kế·cỡ mẫu·hiệu ứng·RoB·GRADE·gap) | G0/G1 | `tong-quan-y-van`+`trich-xuat-y-van`+`tham-dinh-phe-binh` | bảng truy được, KHÔNG citation ma; nền biện minh tính mới. **Gói có truy xuất y văn → cũng soi 3 trục C-RAG** (`_CHUAN-NGHIEN-CUU-CRAG.md`: tự sửa có chạy? recall đủ/ghi giới hạn? phantom DOI = 0? — 2026-07-11) |
 | A3 | **Hồ sơ đạo đức (IRB) + Phiếu đồng thuận (ICF)** | **G2** | `dao-duc-dang-ky` | **bắt buộc TRƯỚC thu dữ liệu** |
 | A4 | Đăng ký nghiên cứu | G2 | `dao-duc-dang-ky` | bắt buộc cho thử nghiệm; quan sát → nêu quyết định có/không + lý do |
 | A5 | **Cỡ mẫu + lực thống kê (power)** | G3 | `co-mau-nghien-cuu` | công thức + giả định (effect size CÓ NGUỒN) + dropout/design effect; power cho kết cục chính/mục tiêu phân tích |

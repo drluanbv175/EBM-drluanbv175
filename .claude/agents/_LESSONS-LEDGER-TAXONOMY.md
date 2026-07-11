@@ -66,7 +66,7 @@ chạy thật ở `observability/LEDGER_RUBRIC_RECONCILIATION_2026-07-08.md`.
 | `CIT-WASH` | *(mới — trước 100% LLM)* | | `CLIN-SAFETYQ` | **R13** |
 | `CIT-FORMAT` | *(mới)* | | `INFER-CAUSAL` | R11 |
 | `FAB-DATA`/`FAB-ADMIN` | R4 (`no_fabrication`, mở rộng) | | `INFER-OVERREACH` | *(mới, rộng hơn R11/R5)* |
-| `GRD-SELF` | **R4** | | `GAP-MISSING` | **R6** |
+| `GRD-SELF` | **R4** | | `GAP-MISSING` | **R6** + **R1b** *(2026-07-11: code `retry_loop.py::RCODE_TO_LESSON_CODE` gộp CẢ HAI mã vào chung `ma_loi: GAP-MISSING`, dù `LEDGER_RUBRIC_RECONCILIATION_2026-07-08.md` ghi 2 mã này "bổ trợ nhau, không trùng" — 2 kiểu lỗi khác nhau [lách nhãn vs quên nhãn] đang bị đếm gộp, xem ghi chú dưới bảng)* |
 | `GRD-CONF` | **R5** | | `SEC-PII` | **R2** |
 | `SRC-STALE` | *(mới — R9 chỉ kiểm "có năm")* | | `SEC-INJECT` | *(HOÀN TOÀN MỚI)* |
 | `SRC-AGG` | *(mới, Tier 2)* | | `SEC-BYPASS` | **R3** |
