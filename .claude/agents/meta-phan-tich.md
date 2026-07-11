@@ -14,7 +14,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận tập bài 
 |--------|--------|-----------|
 | M1 | Kiểm đồng nhất lâm sàng–phương pháp–kết cục | Bắt buộc |
 | M2 | Trích & chuẩn hóa hiệu ứng (OR/RR/HR/MD/SMD) + SE | Bắt buộc |
-| M3 | Chọn mô hình fixed vs random-REML (mặc định random) | Bắt buộc |
+| M3 | Chọn mô hình fixed vs random (DerSimonian-Laird, mặc định random) | Bắt buộc |
 | M4 | Pooled effect + 95% CI + PI (nếu random) + forest plot | Bắt buộc |
 | M5 | Heterogeneity: I²/Q(p)/τ² + diễn giải mức | Bắt buộc |
 | M6 | Publication bias: Egger + funnel (+ trim-and-fill nếu asymmetry) | Khi ≥10 NC |
