@@ -18,10 +18,12 @@ Cách dùng:
     python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID trên mạng
 
 Mã thoát: 0 = PASS (không lỗi cứng), 1 = FAIL.
-Lỗi cứng: item thiếu cả pmid lẫn doi; DOI sai định dạng; thiếu disclaimer; item thiếu
+Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thiếu disclaimer; item thiếu
   gradeLevel/decision; items[] rỗng (TRỪ artifact tự khai báo kind:'cong-cu' = công cụ hỗ
-  trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung).
-Cảnh báo (không chặn): nghi PII; PMID không xác minh được khi --online.
+  trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung);
+  khi --online: PMID KHÔNG xác minh được (kể cả do lỗi mạng) — fail-closed, không coi lỗi
+  mạng là PASS (vá 2026-07-11, trước đây fail-open: PMID bịa lọt qua nếu quét đúng lúc mất mạng).
+Cảnh báo (không chặn): nghi PII.
 """
 import sys, re, json, argparse, time
 import urllib.error
@@ -34,6 +36,10 @@ VALID_DECISION = {"apply", "consider", "notyet"}
 # doi không rỗng — DOI bịa/gõ sai vẫn qua cổng nếu không kèm pmid. Regex chuẩn
 # DOI (registrant 4+ số + '/' + suffix bất kỳ, theo chuẩn doi.org).
 DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
+# Vá 2026-07-11 (vòng 9): PMID trước đây KHÔNG được kiểm định dạng gì cả — chuỗi bất kỳ
+# (kể cả không phải số) qua cổng nếu không rỗng. PMID là số nguyên dương thuần (PubMed
+# hiện dùng tới 8 chữ số, cho phép dư tới 9 để an toàn).
+PMID_RE = re.compile(r"^\d{1,9}$")
 
 
 def configure_utf8_stdio():
@@ -112,7 +118,9 @@ def main():
 
     ap = argparse.ArgumentParser()
     ap.add_argument("file")
-    ap.add_argument("--online", action="store_true", help="xác minh PMID/DOI trên mạng")
+    ap.add_argument("--online", action="store_true",
+                    help="xác minh PMID trên mạng qua NCBI (DOI chỉ kiểm định dạng offline, "
+                         "KHÔNG phân giải online — chưa gọi doi.org/Crossref)")
     ap.add_argument("--check-topic", action="store_true",
                     help="gọi Claude API chấm mỗi item có đúng chủ đề dashboard không (cần "
                          "ANTHROPIC_API_KEY; tốn 1 lượt gọi API/dashboard)")
@@ -163,6 +171,8 @@ def main():
             errors.append("[%s] THIẾU định danh truy nguyên (pmid/doi/url)." % iid)
         if doi and not DOI_RE.match(doi.strip()):
             errors.append("[%s] DOI sai định dạng (nghi bịa/gõ sai): %r" % (iid, doi))
+        if pmid and not PMID_RE.match(pmid.strip()):
+            errors.append("[%s] PMID sai định dạng (nghi bịa/gõ sai): %r" % (iid, pmid))
         # Audit 2026-07-11: url được chấp nhận ngang pmid/doi để qua cổng truy nguyên
         # nhưng trước đây KHÔNG kiểm định dạng gì — chỉ kiểm scheme http(s) + có host,
         # KHÔNG phân giải thật (không đủ để xác nhận URL tồn tại, chỉ chặn chuỗi rác rõ ràng).
@@ -212,7 +222,12 @@ def main():
             elif ok is False:
                 errors.append("[%s] PMID %s KHÔNG phân giải: %s" % (iid, p, info))
             else:
-                warns.append("[%s] PMID %s chưa xác minh được (%s)." % (iid, p, info))
+                # Vá 2026-07-11 (vòng 9): trước đây vào warns — --online có thể PASS dù
+                # KHÔNG PMID nào thực sự được xác nhận (fail-open: PMID bịa lọt qua y hệt
+                # PMID thật nếu quét đúng lúc PubMed lỗi/mất mạng). Fail-closed: không xác
+                # minh được = không cho qua cổng --online (đúng ý nghĩa "đã xác minh").
+                errors.append("[%s] PMID %s CHƯA XÁC MINH ĐƯỢC (%s) — --online yêu cầu xác "
+                              "nhận được mới PASS, không coi lỗi mạng là đã xác minh." % (iid, p, info))
     elif pmids:
         oks.append("Có %d PMID (chạy --online để xác minh phân giải)." % len(set(p for _, p in pmids)))
 
