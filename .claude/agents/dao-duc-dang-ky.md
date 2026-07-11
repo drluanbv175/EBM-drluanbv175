@@ -279,7 +279,7 @@ Kích hoạt khi Intake Audit mục [6] = "thứ cấp" hoặc "đã khóa". KH�
 ```
 YÊU CẦU MIỄN THỦ TỤC ĐỒNG THUẬN (ICF Waiver Request) — DRAFT Phiên bản 1.0
 ═══════════════════════════════════════════════════════
-Căn cứ: TT43/2024/TT-BYT Điều 15 · Helsinki WMA 2013 §29
+Căn cứ: TT43/2024/TT-BYT Điều 15 · Helsinki WMA 2024 §32 (Nghiên cứu dùng vật liệu/dữ liệu người có thể định danh — số mục không đổi từ bản 2013)
 Tên đề tài: ___   |   Chủ nhiệm: ___   |   Ngày: ___/___/20__
 
 CƠ SỞ XIN MIỄN (phải thỏa CẢ 4 điều kiện):
