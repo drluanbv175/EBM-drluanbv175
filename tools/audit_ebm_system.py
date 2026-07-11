@@ -419,6 +419,83 @@ def routine_layer_failures() -> list[str]:
     return failures
 
 
+def launchd_registration_drift() -> list[str]:
+    """macOS only: đối chiếu plist THẬT trên đĩa (~/Library/LaunchAgents/com.medicalebm.*.plist)
+    với bản ĐANG NẠP trong bộ nhớ launchd. launchd KHÔNG tự đọc lại file khi nó đổi — chỉ đọc
+    lúc 'launchctl bootstrap'; sửa file trên đĩa (vd đường dẫn OneDrive đổi) KHÔNG tự áp dụng,
+    phải bootout+bootstrap lại thủ công. Lớp lỗi này đã gặp thật nhiều vòng liền (plist đã sửa
+    đúng nhưng launchd vẫn chạy đường dẫn CŨ, job không bao giờ chạy thành công) mà KHÔNG có
+    cổng nào tự phát hiện — phải người soi tay từng 'launchctl print'. Vá 2026-07-11: thêm cổng
+    tự động này để khoảng trống KHÔNG lặp lại âm thầm. Chỉ chạy trên macOS (launchd không tồn
+    tại ở Windows); bỏ qua êm nếu máy chưa cài lịch nền com.medicalebm.*."""
+    import plistlib
+
+    if sys.platform != "darwin":
+        return []
+    agents_dir = Path.home() / "Library" / "LaunchAgents"
+    if not agents_dir.exists():
+        return []
+    plists = sorted(
+        p for p in agents_dir.glob("com.medicalebm.*.plist")
+        if ".bak" not in p.name
+    )
+    if not plists:
+        return []
+
+    drift: list[str] = []
+    for plist_path in plists:
+        try:
+            with plist_path.open("rb") as f:
+                on_disk = plistlib.load(f)
+        except Exception as e:  # noqa: BLE001
+            drift.append(f"{plist_path.name}: không đọc được plist trên đĩa ({e})")
+            continue
+        label = on_disk.get("Label", plist_path.stem)
+        disk_args = [str(a) for a in on_disk.get("ProgramArguments", [])]
+        disk_wd = str(on_disk.get("WorkingDirectory", ""))
+        reload_cmd = (
+            f"launchctl bootout gui/$(id -u)/{label} && "
+            f"launchctl bootstrap gui/$(id -u) {plist_path}"
+        )
+
+        try:
+            p = subprocess.run(
+                ["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+                capture_output=True, text=True, timeout=10,
+            )
+        except Exception as e:  # noqa: BLE001
+            drift.append(f"{label}: không chạy được 'launchctl print' để đối chiếu ({e})")
+            continue
+        if p.returncode != 0:
+            drift.append(
+                f"{label}: có plist trên đĩa nhưng CHƯA được nạp vào launchd — job sẽ KHÔNG "
+                f"BAO GIỜ tự chạy cho tới khi nạp: {reload_cmd}"
+            )
+            continue
+
+        loaded_text = p.stdout
+        m_wd = re.search(r"working directory = (.+)", loaded_text)
+        loaded_wd = m_wd.group(1).strip() if m_wd else ""
+        m_args = re.search(r"arguments = \{([^}]*)\}", loaded_text)
+        loaded_args = (
+            [line.strip() for line in m_args.group(1).splitlines() if line.strip()]
+            if m_args else []
+        )
+
+        if disk_wd and loaded_wd and disk_wd != loaded_wd:
+            drift.append(
+                f"{label}: plist trên đĩa đã sửa (WorkingDirectory={disk_wd!r}) nhưng launchd "
+                f"vẫn chạy bản CŨ trong bộ nhớ (WorkingDirectory={loaded_wd!r}) — job LỖI mọi "
+                f"lần chạy cho tới khi nạp lại: {reload_cmd}"
+            )
+        elif disk_args and loaded_args and disk_args != loaded_args:
+            drift.append(
+                f"{label}: ProgramArguments trên đĩa khác bản đang nạp trong launchd — "
+                f"cần nạp lại: {reload_cmd}"
+            )
+    return drift
+
+
 def node_executable() -> str | None:
     node = shutil.which("node")
     if node:
