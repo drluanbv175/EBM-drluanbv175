@@ -23,18 +23,18 @@
 ## 2. ĐIỂM CUỐI (leaf — out-degree = 0, theo thiết kế)
 | Agent | In-degree | Vai trò |
 |---|---|---|
-| **`ke-don-an-toan`** | 6 | điểm cuối kê đơn/rà đơn — nhận từ nhiều nhánh, không chuyển tiếp |
-| **`loi-dan-tuan-thu`** | 2 | điểm cuối dặn dò/tuân thủ — sản phẩm phát tay cho bệnh nhân |
+| **`ke-don-an-toan`** | ≥10 | điểm cuối kê đơn/rà đơn — nhận từ nhiều nhánh, không chuyển tiếp (2026-07-12: sửa "6" — đã lỗi thời từ trước khi thêm 4 agent lâm sàng 2026-06-16/07-04; đếm thật ≥10 agent có dòng "Bàn giao...→ ke-don-an-toan") |
+| **`loi-dan-tuan-thu`** | 8 | điểm cuối dặn dò/tuân thủ — sản phẩm phát tay cho bệnh nhân (2026-07-12: sửa "2" — đếm thật 8 agent có dòng "Bàn giao...→ loi-dan-tuan-thu") |
 
 ## 3. CẦU NỐI LÂM SÀNG ↔ NGHIÊN CỨU (cạnh xuyên cụm — trích thật)
 | Cạnh | Chiều | Ý nghĩa |
 |---|---|---|
-| `pico-lam-sang` → `cau-hoi-nghien-cuu` | LS → NC | câu hỏi tại giường nâng thành câu hỏi nghiên cứu |
-| `cau-hoi-nghien-cuu` → `pico-lam-sang` | NC → LS | đối chiếu PICO nghiên cứu ↔ PICO lâm sàng |
 | `huong-dan-lam-sang` → `dien-giai-ket-qua` · `tham-dinh-phe-binh` · `tong-quan-y-van` | LS → NC | đưa phát hiện nghiên cứu vào định vị khuyến cáo |
 | `ket-qua-hoc-tap` → `dao-duc-dang-ky` | LS → NC | tín hiệu nội bộ → đường nghiên cứu/QI có đạo đức |
 | `thu-thu-tai-lieu` → `tham-dinh-grade-nnt`; `trich-xuat-y-van` → `tham-dinh-grade-nnt` | NC → LS | dùng lại công cụ thẩm định nhanh cho điểm khám |
-| `tong-quan-y-van` → `tra-cuu-chung-cu`; `tra-cuu-chung-cu` → `huong-dan-lam-sang` | NC ↔ LS | chia sẻ lớp tra cứu chứng cứ |
+| `tra-cuu-chung-cu` → `huong-dan-lam-sang` | NC → LS | chia sẻ lớp tra cứu chứng cứ |
+
+> **2026-07-12: gỡ 2 cạnh không có thật** — `pico-lam-sang ↔ cau-hoi-nghien-cuu` và nửa `tong-quan-y-van → tra-cuu-chung-cu` chỉ là câu "Khác X" phân biệt phạm vi trong 2 file agent đó, KHÔNG có chỉ dẫn bàn giao/chuyển tiếp công việc thật (grep xác nhận không có mũi tên/động từ bàn giao nào ở cả 2 phía, kể cả 2 router).
 
 **`huong-dan-lam-sang`** là cầu nối chính (in=6, out=6; được CẢ HAI router trỏ tới): nơi vòng nghiên cứu đổ kết quả về thực hành (GRADE EtD → EBM_MASTER hàng chờ duyệt).
 
