@@ -1,6 +1,6 @@
 ---
 name: mo-hinh-tien-luong
-description: Phát triển và KIỂM ĐỊNH MÔ HÌNH TIÊN LƯỢNG/CHẨN ĐOÁN (clinical prediction model) cho nghiên cứu y khoa theo chuẩn TRIPOD+AI — chọn ứng viên dự báo (candidate predictors) dựa lý luận, bảo đảm EPV/EPP đủ, xử lý dữ liệu thiếu (multiple imputation), xây mô hình (hồi quy logistic/Cox hoặc học máy), tránh quá khớp (shrinkage/penalization, LASSO/ridge), đánh giá HIỆU CHUẨN (calibration plot, calibration-in-the-large/slope) + PHÂN BIỆT (C-statistic/AUC), kiểm định NỘI (bootstrap/cross-validation) và NGOẠI (quần thể độc lập), phân tích đường cong quyết định (DCA), và trình bày mô hình thành điểm/nomogram. Chuẩn báo cáo TRIPOD+AI; PROBAST khi thẩm định. Dùng khi đề tài xây/kiểm định công cụ dự báo nguy cơ. KHÔNG bịa hệ số/AUC — từ dữ liệu thật/nguồn. KHÔNG PII.
+description: Phát triển và KIỂM ĐỊNH MÔ HÌNH TIÊN LƯỢNG/CHẨN ĐOÁN (clinical prediction model) cho nghiên cứu y khoa theo chuẩn TRIPOD+AI — chọn ứng viên dự báo (candidate predictors) dựa lý luận, bảo đảm EPV/EPP đủ, xử lý dữ liệu thiếu (multiple imputation), xây mô hình (hồi quy logistic/Cox hoặc học máy), tránh quá khớp (shrinkage/penalization, LASSO/ridge), đánh giá HIỆU CHUẨN (calibration plot, calibration-in-the-large/slope) + PHÂN BIỆT (C-statistic/AUC), kiểm định NỘI (bootstrap/cross-validation) và NGOẠI (quần thể độc lập), phân tích đường cong quyết định (DCA), và trình bày mô hình thành điểm/nomogram. Chuẩn báo cáo TRIPOD+AI; PROBAST+AI khi thẩm định (bản cập nhật 2025 của PROBAST-2019, áp dụng cho mọi loại mô hình — hồi quy lẫn AI/ML). Dùng khi đề tài xây/kiểm định công cụ dự báo nguy cơ. KHÔNG bịa hệ số/AUC — từ dữ liệu thật/nguồn. KHÔNG PII.
 model: inherit
 ---
 
@@ -44,7 +44,7 @@ Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` **và** `_NGUYEN-TAC-TRUNG
 - Kết: **"Cần bác sĩ kiểm chứng."** KHÔNG PII (làm trên bản sao ẩn danh).
 
 ## 1. Mục tiêu & khi nào kích hoạt
-Mục tiêu: cung cấp **kế hoạch phát triển + kiểm định mô hình tiên lượng** theo TRIPOD+AI (hoặc thẩm định mô hình đã có theo PROBAST). Kích hoạt khi đề tài xây/kiểm định công cụ dự báo ("mô hình tiên lượng", "điểm dự báo nguy cơ", "dự đoán biến cố/tử vong/tái phát", "validate thang điểm").
+Mục tiêu: cung cấp **kế hoạch phát triển + kiểm định mô hình tiên lượng** theo TRIPOD+AI (hoặc thẩm định mô hình đã có theo PROBAST+AI). Kích hoạt khi đề tài xây/kiểm định công cụ dự báo ("mô hình tiên lượng", "điểm dự báo nguy cơ", "dự đoán biến cố/tử vong/tái phát", "validate thang điểm").
 
 ## 2. Đầu vào tối thiểu
 Kết cục cần dự báo (loại + thời điểm) · quần thể đích + bối cảnh dùng · ứng viên dự báo có sẵn · loại dữ liệu (cohort/registry…) · (khi có) cỡ mẫu + số biến cố. Thiếu → nêu cần gì để tính EPV/chạy validation.
@@ -64,7 +64,7 @@ Kết cục cần dự báo (loại + thời điểm) · quần thể đích + b
    - **Lợi ích lâm sàng:** **decision curve analysis (DCA)**.
 7. **Kiểm định:** **nội** (bootstrap/k-fold để hiệu chỉnh optimism) + **ngoại** (quần thể độc lập về thời gian/địa điểm); nêu rõ mức đã đạt.
 8. **Trình bày mô hình** để dùng được: phương trình/điểm số/nomogram + cách tính nguy cơ cá thể.
-9. **Báo cáo TRIPOD+AI**; nếu **thẩm định mô hình có sẵn** → dùng **PROBAST** (nguy cơ sai lệch + tính áp dụng).
+9. **Báo cáo TRIPOD+AI**; nếu **thẩm định mô hình có sẵn** → dùng **PROBAST+AI** (BMJ 2025;388:e082505 — bản cập nhật/mở rộng chính thức thay PROBAST-2019, áp dụng cho mọi kỹ thuật dự báo kể cả hồi quy cổ điển; nguy cơ sai lệch + tính áp dụng).
 10. **Bàn giao:** cỡ mẫu/EPV → `co-mau-nghien-cuu`; biến + codebook → `bien-so-nghien-cuu`/`quan-ly-du-lieu`; chạy số trên DB khóa → `phan-tich-thong-ke`; viết → `viet-ban-thao`; mô hình dùng tại giường → cầu `huong-dan-lam-sang`/`thang-diem-nguy-co`.
 
 ## 4. Mẫu đầu ra

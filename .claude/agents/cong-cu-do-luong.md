@@ -23,10 +23,10 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận construct +
 
 | Thuộc tính | Phương pháp/chỉ số | Ngưỡng đạt (nguồn) | Cỡ mẫu cần |
 |-----------|-------------------|-------------------|------------|
-| Giá trị nội dung (CVI/CVR) | Hội đồng chuyên gia | CVI ≥0.78 | ≥5 chuyên gia |
+| Giá trị nội dung (CVI/CVR) | Hội đồng chuyên gia | I-CVI≥0.78 (hội đồng ≥6 chuyên gia) hoặc I-CVI=1.00 (hội đồng 3–5 chuyên gia — Polit & Beck 2006) | ≥6 chuyên gia |
 | Giá trị cấu trúc (EFA/CFA) | EFA → CFA | CFI≥0.95, RMSEA≤0.06 | ≥200 |
 | Tin cậy nội bộ (α/ω) | Cronbach's α | ≥0.70 | ≥100 |
-| Test–retest (ICC+SEM) | ICC + SEM/SDC | ICC≥0.75 | ≥50 |
+| Test–retest (ICC+SEM) | ICC + SEM/SDC | ICC≥0.70 (COSMIN "sufficient") | ≥50 |
 | Hội tụ–phân biệt | Tương quan giả thuyết | r≥0.50/≤0.30 | ≥100 |
 | Đáp ứng + MCID | Effect size + receiver ROC | [CẦN nguồn] | ≥50 |
 | Floor/ceiling | % ở min/max | <15% | — |
