@@ -151,7 +151,14 @@ def load_scales():
     if not SCALES_JSON.exists():
         print(f"⚠️  Không thấy {SCALES_JSON} — bỏ qua phần thang điểm.", file=sys.stderr)
         return []
-    data = json.loads(SCALES_JSON.read_text(encoding="utf-8"))
+    # Vá 2026-07-11 (vòng 8): thiếu try/except (bất đối xứng với load_updates() ngay dưới) —
+    # JSON hỏng/ghi dở (OneDrive sync) làm crash toàn bộ build_antifacts.py thay vì chỉ bỏ
+    # qua phần thang điểm.
+    try:
+        data = json.loads(SCALES_JSON.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"⚠️  Lỗi đọc {SCALES_JSON}: {exc} — bỏ qua phần thang điểm.", file=sys.stderr)
+        return []
     items = data.get("items", [])
     out = []
     for it in items:
