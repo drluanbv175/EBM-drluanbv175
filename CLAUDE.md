@@ -34,7 +34,9 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
 - **`Antifacts.html` (gốc) = MẶT TIỀN EBM theo CHUYÊN KHOA.** Gom mọi cập nhật chứng cứ + 45
   thang điểm + công cụ NC theo chuyên khoa; sinh bằng `tools/build_antifacts.py`. **TỰ TÍCH LŨY:**
   bước cuối `EBM_MASTER/tools/sync_all.py` chạy `build_library.py add` (làm giàu badge) →
-  `build_antifacts.py`; 2 lịch (`weekly_safety`/`monthly_update`) cũng gọi. Nối 2 chiều với hub
+  `build_antifacts.py`; 2 lịch launchd (`com.medicalebm.weeklysafety`/`com.medicalebm.monthlyupdate`
+  — nhãn KHÔNG có gạch dưới, khác tên file script `weekly_safety.sh`/`monthly_update.sh` bên trong,
+  dễ nhầm khi grep/tra log) cũng gọi. Nối 2 chiều với hub
   (nút "🛡️ Antifacts ↗" trên 3 trang hub ⇄ "↩ Hub EBM" trên Antifacts). Sửa bố cục = sửa generator,
   KHÔNG sửa tay HTML. Đã wired vào hệ agent: `.claude/agents/_BAN-DO-KET-NOI.md` §9; có skill `antifacts`.
 
@@ -103,6 +105,6 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
 - Audit chung từ thư mục gốc: `python tools/audit_ebm_system.py`
 - **Kiểm + đồng bộ toàn hệ một lệnh:** `python tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
-- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 42 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/42 test): `tools/orchestrator/`.
+- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._

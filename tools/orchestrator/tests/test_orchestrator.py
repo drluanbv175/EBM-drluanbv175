@@ -16,6 +16,8 @@ from pathlib import Path
 # cho phép `import orchestrator` (thêm thư mục tools/ vào path)
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from orchestrator import intent as intent_mod  # noqa: E402
+from orchestrator import orchestrator as orchestrator_mod  # noqa: E402
 from orchestrator.context import ContextStore  # noqa: E402
 from orchestrator.intent import route  # noqa: E402
 from orchestrator.knowledge import KnowledgeLayer  # noqa: E402
@@ -76,6 +78,35 @@ class TestOrchestration(unittest.TestCase):
     def test_validate_clean(self):
         warns = self.orch.validate()
         self.assertEqual(warns, [], f"điều phối ⇄ registry phải sạch, có cảnh báo: {warns}")
+
+    def test_validate_catches_dangling_single_task_reference(self):
+        # Regression 2026-07-11: validate() trước đây chỉ quét flows.py, bỏ sót tham chiếu
+        # treo trong intent.SINGLE_TASK_RULES/GATE_HINTS/REROUTE_DEFAULT.
+        orig_rules = list(intent_mod.SINGLE_TASK_RULES)
+        orig_hints = dict(orchestrator_mod.GATE_HINTS)
+        orig_reroute = dict(orchestrator_mod.REROUTE_DEFAULT)
+        try:
+            intent_mod.SINGLE_TASK_RULES.append((["test-fake-kw"], "ten-agent-treo-single-task", "test"))
+            warns_single = self.orch.validate()
+            self.assertTrue(any("ten-agent-treo-single-task" in w for w in warns_single))
+
+            intent_mod.SINGLE_TASK_RULES[:] = orig_rules
+            orchestrator_mod.GATE_HINTS["ten-agent-treo-gate"] = "A"
+            warns_gate = self.orch.validate()
+            self.assertTrue(any("ten-agent-treo-gate" in w for w in warns_gate))
+
+            orchestrator_mod.GATE_HINTS.clear()
+            orchestrator_mod.GATE_HINTS.update(orig_hints)
+            orchestrator_mod.REROUTE_DEFAULT["FAKE"] = "ten-agent-treo-reroute"
+            warns_reroute = self.orch.validate()
+            self.assertTrue(any("ten-agent-treo-reroute" in w for w in warns_reroute))
+        finally:
+            intent_mod.SINGLE_TASK_RULES[:] = orig_rules
+            orchestrator_mod.GATE_HINTS.clear()
+            orchestrator_mod.GATE_HINTS.update(orig_hints)
+            orchestrator_mod.REROUTE_DEFAULT.clear()
+            orchestrator_mod.REROUTE_DEFAULT.update(orig_reroute)
+        self.assertEqual(self.orch.validate(), [], "phải sạch lại sau khi khôi phục")
 
     def test_clinical_stops_at_gate_A_and_B(self):
         s = self.orch.handle("Tôi có bệnh nhân nam 68, ĐTĐ2, thêm thuốc gì?", persist=False)

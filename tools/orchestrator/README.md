@@ -62,8 +62,8 @@ prognostic_model · economic · international_journal`.
 ## Kiểm thử
 
 ```bash
-python tools/orchestrator/tests/test_orchestrator.py    # 37 test, chạy offline
-python -m unittest discover -s tools/orchestrator/tests # 42 test (gồm 5 test appraisal_bridge riêng)
+python tools/orchestrator/tests/test_orchestrator.py    # 38 test, chạy offline
+python -m unittest discover -s tools/orchestrator/tests # 43 test (gồm 5 test appraisal_bridge riêng)
 ```
 
 ## Thực thi agent THẬT (seam LLM)
