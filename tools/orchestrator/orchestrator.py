@@ -218,12 +218,18 @@ class Orchestrator:
 
     # ── Tự kiểm tích hợp (điều phối ⇄ registry) ──────────────────────
     def validate(self) -> list[str]:
-        """Cảnh báo nếu flow tham chiếu agent không có trong registry (tham chiếu treo)."""
+        """Cảnh báo nếu flow/việc lẻ/gate-hint/reroute tham chiếu agent không có trong
+        registry (tham chiếu treo). Quét CẢ 4 nguồn: flows.py (all_agents_in_flows),
+        intent.SINGLE_TASK_RULES, GATE_HINTS.keys(), REROUTE_DEFAULT.values() — trước đây
+        chỉ quét flows.py nên agent treo trong 3 nguồn còn lại lọt lưới (vá 2026-07-11)."""
         warns: list[str] = []
-        referenced = all_agents_in_flows()
+        referenced: set[str] = set(all_agents_in_flows())
+        referenced.update(agent for _kws, agent, _note in SINGLE_TASK_RULES)
+        referenced.update(GATE_HINTS.keys())
+        referenced.update(REROUTE_DEFAULT.values())
         for name in sorted(referenced):
             if not self.registry.has(name):
-                warns.append(f"Flow tham chiếu agent KHÔNG có trong registry: `{name}`")
+                warns.append(f"Flow/việc lẻ/gate-hint/reroute tham chiếu agent KHÔNG có trong registry: `{name}`")
         warns += self.registry.validate()
         warns += self.knowledge.verify_against_ssot()
         return warns
