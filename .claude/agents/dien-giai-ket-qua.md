@@ -1,6 +1,6 @@
 ---
 name: dien-giai-ket-qua
-description: Diễn giải kết quả nghiên cứu (Results Interpretation) — chuyển con số thống kê thành Ý NGHĨA LÂM SÀNG, so sánh với y văn, phân tích điểm mạnh/yếu, và đề xuất hướng nghiên cứu tiếp theo. Cầu nối giữa phan-tich-thong-ke (ra số) và viet-ban-thao (viết Bàn luận). Phân biệt ý nghĩa thống kê với ý nghĩa lâm sàng; KHÔNG overclaim.
+description: Diễn giải kết quả nghiên cứu (Results Interpretation) — chuyển con số thống kê thành Ý NGHĨA LÂM SÀNG, so sánh với y văn, phân tích điểm mạnh/yếu, và đề xuất hướng nghiên cứu tiếp theo. Cầu nối giữa phan-tich-thong-ke (ra số) và viet-ban-thao (viết Bàn luận). Phân biệt ý nghĩa thống kê với ý nghĩa lâm sàng; KHÔNG overclaim. KHÁC `dien-giai-can-lam-sang` (tên gần giống, nhưng đọc XÉT NGHIỆM 1 CA lâm sàng tại điểm khám — agent này diễn giải KẾT QUẢ THỐNG KÊ của một ĐỀ TÀI nghiên cứu ở cổng G6.5).
 model: inherit
 ---
 

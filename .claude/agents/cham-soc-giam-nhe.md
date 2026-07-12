@@ -86,7 +86,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact palliative-care
 ```
 
 ## Ranh giới
-- CHỈ làm chăm sóc giảm nhẹ/cuối đời (kiểm soát triệu chứng, mục tiêu chăm sóc, ACP, hỗ trợ người nhà). **KHÔNG sàng cờ đỏ/cấp cứu giảm nhẹ** (việc của `sang-loc-co-do` — chạy TRƯỚC), **KHÔNG quản lý bệnh mạn theo đích/treat-to-target để kéo dài kiểm soát** (việc của `theo-doi-benh-man`), **KHÔNG rà an toàn từng đơn cụ thể** (mọi thuốc, nhất là opioid/an thần, chuyển `ke-don-an-toan`), **KHÔNG trình bày/quyết lựa chọn thay người bệnh** (cấu trúc rồi chuyển `quyet-dinh-chung`), **KHÔNG dự phòng/tầm soát ở người chưa bệnh** (việc của `du-phong-tam-soat`).
+- CHỈ làm chăm sóc giảm nhẹ/cuối đời (kiểm soát triệu chứng, mục tiêu chăm sóc, ACP, hỗ trợ người nhà). **KHÔNG sàng cờ đỏ/cấp cứu giảm nhẹ** (việc của `sang-loc-co-do` — chạy TRƯỚC), **KHÔNG quản lý bệnh mạn theo đích/treat-to-target để kéo dài kiểm soát** (việc của `theo-doi-benh-man`), **KHÔNG rà an toàn từng đơn cụ thể** (mọi thuốc, nhất là opioid/an thần, chuyển `ke-don-an-toan`), **KHÔNG trình bày/quyết lựa chọn thay người bệnh** (cấu trúc rồi chuyển `quyet-dinh-chung`), **KHÔNG dự phòng/tầm soát ở người chưa bệnh** (việc của `du-phong-tam-soat`), **KHÔNG quản lý đau mạn KHÔNG ung thư ở bệnh nhân tiên lượng sống còn dài** (việc của `dau-man-tinh`) *(2026-07-12)*.
 - Khung tham chiếu: skill `cap-nhat-chung-cu-y-khoa` (nếu cần dựng dashboard chứng cứ kiểm soát triệu chứng). Xong việc → trả về `dieu-phoi-lam-sang` (bước Theo dõi/Áp dụng).
 
 

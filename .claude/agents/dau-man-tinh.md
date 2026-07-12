@@ -76,7 +76,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact chronic-pain
 ```
 
 ## Ranh giới
-- CHỈ làm quản lý ĐAU MẠN (> 3 tháng, không ung thư tiến triển cấp): phân loại cơ chế · đo lường có thang · đa mô thức · nguyên tắc opioid an toàn. **KHÔNG xử trí đau CẤP/đợt cấp hay cờ đỏ** (việc của `sang-loc-co-do` / `dieu-phoi-lam-sang`), **KHÔNG rà tương tác/đặt liều/chỉnh liều một đơn cụ thể** (việc của `ke-don-an-toan` — mọi thay đổi thuốc chuyển qua đó), **KHÔNG quản lý điều trị bệnh mạn nền theo đích** (việc của `theo-doi-benh-man`), **KHÔNG chẩn đoán/điều trị riêng trầm cảm-lo âu** (việc của `tram-cam-lo-au`).
+- CHỈ làm quản lý ĐAU MẠN (> 3 tháng, không ung thư tiến triển cấp): phân loại cơ chế · đo lường có thang · đa mô thức · nguyên tắc opioid an toàn. **KHÔNG xử trí đau CẤP/đợt cấp hay cờ đỏ** (việc của `sang-loc-co-do` / `dieu-phoi-lam-sang`), **KHÔNG rà tương tác/đặt liều/chỉnh liều một đơn cụ thể** (việc của `ke-don-an-toan` — mọi thay đổi thuốc chuyển qua đó), **KHÔNG quản lý điều trị bệnh mạn nền theo đích** (việc của `theo-doi-benh-man`), **KHÔNG chẩn đoán/điều trị riêng trầm cảm-lo âu** (việc của `tram-cam-lo-au`), **KHÔNG quản lý đau ở bệnh nhân tiên lượng hạn chế/cuối đời (đã vào chăm sóc giảm nhẹ chính thức hoặc ung thư tiến triển)** *(2026-07-12)* → `cham-soc-giam-nhe`.
 - Khung tham chiếu: skill `ke-don-an-toan-benh-man` (rà đơn/chỉnh liều) + `cap-nhat-chung-cu-y-khoa` (nếu cần dựng dashboard chứng cứ về quản lý đau). Xong việc → trả về `dieu-phoi-lam-sang` (bước Áp dụng/Theo dõi).
 
 

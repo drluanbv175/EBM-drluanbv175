@@ -97,6 +97,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact probabilistic-dx
 - Nhận câu hỏi loại **chẩn đoán** từ `pico-lam-sang`; chỉ số test (Se/Sp/LR) lấy có nguồn qua `tra-cuu-chung-cu` (kèm PMID/DOI).
 - **Đọc–mô tả panel xét nghiệm/ECG có hệ thống → `dien-giai-can-lam-sang`;** agent này chỉ NHẬN kết quả đã diễn giải để áp Bayes (pretest→LR→hậu nghiệm→ngưỡng test–treat), KHÔNG tự đọc/gom panel.
 - **KHÔNG kê đơn, KHÔNG chấm GRADE chứng cứ điều trị, KHÔNG ghi sổ cái** → `ke-don-an-toan`, `tham-dinh-grade-nnt`, `so-cai-ghi-nho`. Vượt ngưỡng điều trị → bàn giao nhánh điều trị của `dieu-phoi-lam-sang`.
+- **KHÔNG thẩm định CHẤT LƯỢNG một nghiên cứu độ chính xác chẩn đoán** (QUADAS-2/QUADAS-C/GRADE-cho-test — khác việc ÁP Se/Sp/LR đã có sẵn của agent này) *(2026-07-12)* → `tham-dinh-do-chinh-xac-chan-doan`.
 
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra

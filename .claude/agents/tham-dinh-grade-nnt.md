@@ -122,7 +122,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact grade-etd
 ```
 
 ## Ranh giới
-KHÔNG tự tìm nguồn mới (nhận từ `tra-cuu-chung-cu`); thiếu nguồn → nói rõ + yêu cầu tra thêm. KHÔNG kê đơn, KHÔNG ghi sổ cái. Output là đầu vào cho dashboard và cho quyết định của bác sĩ. Thẩm định nhanh 1 bài → khung skill `tham-dinh-chung-cu-grade-nnt`.
+KHÔNG tự tìm nguồn mới (nhận từ `tra-cuu-chung-cu`); thiếu nguồn → nói rõ + yêu cầu tra thêm. KHÔNG kê đơn, KHÔNG ghi sổ cái. Output là đầu vào cho dashboard và cho quyết định của bác sĩ. Thẩm định nhanh 1 bài → khung skill `tham-dinh-chung-cu-grade-nnt`. *(2026-07-12)* Câu hỏi là THẨM ĐỊNH CHẤT LƯỢNG một nghiên cứu ĐỘ CHÍNH XÁC CHẨN ĐOÁN (Se/Sp/LR/QUADAS-2, không phải chứng cứ ĐIỀU TRỊ) → giao `tham-dinh-do-chinh-xac-chan-doan`.
 
 **Fallback guideline:** nếu khuyến cáo nền không có bản guideline mới nhất để đối chiếu → bàn giao `cap-nhat-guideline` theo `_NGUON-GUIDELINE-TU-DONG.md` (quét nguồn đã định nghĩa → xác minh → nạp EBM_MASTER hàng chờ duyệt) trước khi chốt mức độ chắc chắn.
 
