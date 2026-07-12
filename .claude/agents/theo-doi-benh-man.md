@@ -45,7 +45,7 @@ Bệnh mạn cần theo dõi · mức kiểm soát hiện tại (nếu có: HbA1
 6bis. **Ngưỡng CHUYỂN sang chăm sóc giảm nhẹ (2026-07-12 — vá khoảng trống rà kiến trúc: trước đây file này quản lý treat-to-target tới cuối mà KHÔNG có điểm dừng khi bệnh sang giai đoạn hạn chế tiên lượng):** trước khi tiếp tục đẩy đích điều trị tích cực (bước 1–2), sàng lọc nhanh bằng **"Surprise Question"** (bạn có bất ngờ không nếu bệnh nhân này qua đời trong 12 tháng tới? — công cụ sàng lọc chuẩn của Gold Standards Framework, `[CẦN KIỂM CHỨNG]` PMID/ấn bản hiện hành) + dấu hiệu **GIAI ĐOẠN TIẾN TRIỂN/HẠN CHẾ TIÊN LƯỢNG** theo đúng bệnh đang theo dõi — dùng thang phân độ CHUẨN đã có (không tự đặt ngưỡng số mới):
    - Suy tim: **NYHA III–IV** kháng trị/nhập viện tái diễn dù đã tối ưu điều trị nền.
    - COPD: **GOLD nhóm E/rất nặng**, phụ thuộc oxy dài hạn, đợt cấp thường xuyên dù tối ưu điều trị.
-   - Bệnh thận mạn: **CKD G5 (eGFR<15)** mà bệnh nhân/gia đình chọn **KHÔNG lọc máu** (điều trị bảo tồn) hoặc đang cân nhắc ngừng lọc máu.
+   - Bệnh thận mạn: **CKD G5 (eGFR<15)** — phân độ KDIGO (KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of CKD, *Kidney Int* 2024;105(4S):S117-S314) — mà bệnh nhân/gia đình chọn **KHÔNG lọc máu** (điều trị bảo tồn) hoặc đang cân nhắc ngừng lọc máu.
    - Bệnh gan mạn: **Child-Pugh C**, xơ gan mất bù tái diễn không còn chỉ định ghép.
    - Đa bệnh nặng: suy giảm chức năng tiến triển nhanh (ECOG/PS xấu đi) không đáp ứng điều trị tối ưu.
    - **Có ≥1 dấu hiệu trên** → KHÔNG tiếp tục ép đích điều trị tích cực theo mục 1–2; chuyển `cham-soc-giam-nhe` để bàn **mục tiêu chăm sóc (goals of care)** — đây là ĐỀ XUẤT chuyển hướng, KHÔNG tự quyết; bác sĩ + bệnh nhân/gia đình cùng quyết theo giá trị-ưu tiên.
