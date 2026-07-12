@@ -27,8 +27,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -68,8 +70,11 @@ def p_run(cmd: List[str], label: str, timeout: int = 300,
           need_rc: int = 0) -> Probe:
     """Chạy công cụ thật — probe MẠNH NHẤT (kiểm chứng bằng thực thi)."""
     try:
+        env = os.environ.copy()
+        env.setdefault("PYTHONIOENCODING", "utf-8")
+        env.setdefault("PYTHONPYCACHEPREFIX", str(Path(tempfile.gettempdir()) / "ebm_pycache"))
         proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True,
-                              text=True, timeout=timeout)
+                              text=True, timeout=timeout, env=env)
         ok = proc.returncode == need_rc
         return (ok, f"{label}: exit={proc.returncode} (cần {need_rc}) {'✓' if ok else '✗'}")
     except Exception as e:  # noqa: BLE001

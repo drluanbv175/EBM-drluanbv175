@@ -1,5 +1,5 @@
 {
-  "mode": "fast",
+  "mode": "deep",
   "summary": {
     "strong": 13,
     "partial": 0,
@@ -56,7 +56,7 @@
         },
         {
           "ok": true,
-          "detail": "Orchestrator control-plane có mặt: có (orchestrator.py)"
+          "detail": "Orchestrator control-plane validate PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -116,7 +116,7 @@
         },
         {
           "ok": true,
-          "detail": "Orchestrator có mặt: có (run_pipeline.py)"
+          "detail": "Công cụ import/compile được: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -131,7 +131,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 265 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 259 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -166,7 +166,7 @@
         },
         {
           "ok": true,
-          "detail": "Vòng tự sửa (code): ✓ (retry_loop.py)"
+          "detail": "Vòng tự sửa retry_loop CHẠY THẬT: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -197,11 +197,11 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 100 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 111 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
-          "detail": "Công cụ audit có mặt: có (audit_ebm_system.py)"
+          "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -232,7 +232,7 @@
         },
         {
           "ok": true,
-          "detail": "Công cụ kiểm định tuyến có mặt: có (verify_agent_routing.py)"
+          "detail": "Kiểm định tuyến agent chạy được: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -259,11 +259,11 @@
         },
         {
           "ok": true,
-          "detail": "Công cụ kiểm định tuyến có mặt: có (verify_agent_routing.py)"
+          "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Flow điều phối agent↔agent có mặt: có (flows.py)"
+          "detail": "Orchestrator 23 test (bàn giao/nhánh điều kiện) PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -315,7 +315,7 @@
         },
         {
           "ok": true,
-          "detail": "Sync mở rộng có mặt: có (sync_agents_to_codex.py)"
+          "detail": "generate_agent chạy (dry-run): exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -332,7 +332,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Audit hệ có mặt: có (audit_ebm_system.py)"
+          "detail": "Audit registry-aware PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,

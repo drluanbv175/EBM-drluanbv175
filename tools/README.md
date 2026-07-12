@@ -1,7 +1,7 @@
 # tools/ — LỚP CÔNG CỤ NGOÀI cho hệ Agent EBM (vượt "trần .md")
 
 **[PROTOTYPE — cần cài deps + BS duyệt governance trước khi chạy trên dữ liệu thật]**
-Cập nhật 2026-06-16. Lớp tools/ là cách vượt "trần .md" — không giải bài toán tools-layer bằng cách đẻ thêm agent .md (đội hiện 45 agent). KHÔNG PII — chỉ metadata chứng cứ.
+Cập nhật 2026-07-12. Lớp tools/ là cách vượt "trần .md" — không giải bài toán tools-layer bằng cách đẻ thêm agent .md (đội hiện 50 agent). KHÔNG PII — chỉ metadata chứng cứ.
 
 | Thư mục | Hạng mục | Vượt "trần" gì | Trạng thái |
 |---|---|---|---|
