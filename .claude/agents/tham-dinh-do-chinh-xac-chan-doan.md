@@ -42,7 +42,13 @@ Bài/nghiên cứu chẩn đoán (ưu tiên toàn văn/PDF) + PMID/DOI · **inde
    *(So sánh 2 test trên cùng đối tượng → dùng **QUADAS-C**.)*
 2. **Diễn giải chỉ số (trích đúng + CI):** Se · Sp · **LR+ = Se/(1−Sp)** · **LR− = (1−Se)/Sp** (LR+ >10 hoặc LR− <0,1 = đổi xác suất mạnh) · PPV/NPV **kèm prevalence** · AUC/C-statistic · DOR. Test liên tục → xét cả **đường ROC** + ngưỡng, KHÔNG chỉ 1 điểm cắt "đẹp".
 3. **Đối chiếu STARD 2015** — nêu mục báo cáo còn thiếu (sơ đồ dòng bệnh nhân, cách xử lý kết quả không xác định/indeterminate, khoảng tin cậy…).
-4. **GRADE cho test (guidelines 21–22):** xếp độ chắc chắn của ước lượng Se/Sp; hạ bậc vì risk of bias (QUADAS-2 cao), indirectness (quần thể/bối cảnh khác đích), imprecision (CI rộng), inconsistency, publication bias. **Quy về kết cục quan trọng với bệnh nhân:** hệ quả của true+/false+/true−/false− (điều trị đúng/thừa/sót/trấn an sai) — độ chính xác cao KHÔNG tự động = lợi ích.
+4. **GRADE cho test (guidelines 21–22) — GỌI CÔNG CỤ (2026-07-12: đóng task_5a25a9c7 — trước đây chỉ chấm bằng tay, nay `clinical_calc.py` đã hỗ trợ `--design dta`):** chấm mức độ NGHIÊM TRỌNG từng domain (risk of bias qua **QUADAS-2**, indirectness, imprecision, inconsistency, publication bias — 0=không/1=nghiêm trọng/2=rất nghiêm trọng), rồi gọi:
+   ```bash
+   python medical-ebm-automation/tools/clinical_calc.py grade --design dta \
+       --rob <0|1|2> --inconsistency <0|1|2> --indirectness <0|1|2> \
+       --imprecision <0|1|2> --publication-bias <0|1|2> [--json]
+   ```
+   Khởi điểm CAO (không phải thấp như observational — xác minh PMID 32060007, xem `tham-dinh-grade-nnt.md`); công cụ CHỈ tổng hợp domain bạn đã chấm, KHÔNG tự đánh giá QUADAS-2. **Quy về kết cục quan trọng với bệnh nhân:** hệ quả của true+/false+/true−/false− (điều trị đúng/thừa/sót/trấn an sai) — độ chính xác cao KHÔNG tự động = lợi ích.
 5. **Tính ứng dụng:** test này đổi quyết định trong bối cảnh của bác sĩ không? Prevalence đích khác nghiên cứu ra sao (đổi PPV/NPV)?
 
 ## 4. Mẫu đầu ra (template điền sẵn)
