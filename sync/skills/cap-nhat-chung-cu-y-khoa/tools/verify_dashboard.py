@@ -8,24 +8,36 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
   - Mỗi item có gradeLevel + decision + references.
   - Có disclaimer "Cần bác sĩ kiểm chứng".
   - Quét dấu hiệu PII (cảnh báo để người rà — không tự ý kết luận).
-  - DOI kiểm ĐỊNH DẠNG luôn (offline, mọi lượt chạy) — KHÔNG phân giải online (chưa gọi
-    doi.org/Crossref; DOI đúng định dạng nhưng không tồn tại vẫn có thể lọt).
+  - DOI kiểm ĐỊNH DẠNG luôn (offline, mọi lượt chạy); khi --online, còn PHÂN GIẢI THẬT
+    qua Crossref API (vá 2026-07-12 — trước đây chỉ kiểm định dạng, DOI bịa/404 vẫn lọt
+    qua cổng: tái hiện thật ở EBM_MASTER card EVID-2026-0270, DOI 10.1136/ard-2024-225452
+    không tồn tại nhưng đúng định dạng regex nên PASS sạch).
   - (Tùy chọn --online) Tự XÁC MINH mỗi PMID phân giải đúng qua NCBI E-utilities
     (miễn phí, không cần key) → chống trích dẫn ảo PMID; đồng thời so khớp thô tiêu đề
     PubMed thật với nội dung item để dò TRÁO TRÍCH DẪN (PMID có thật nhưng lạc đề).
+  - (--online) So NĂM item khai (dateVersion) với năm xuất bản THẬT của PMID (vá 2026-07-12
+    — cùng ca EVID-2026-0270: PMID 41826212 có thật nhưng là bản "2025 update" (2026), item
+    lại khai dateVersion "2024" — cùng họ guideline nên tiêu đề trùng đủ từ khóa để KHÔNG bị
+    heuristic tráo-trích-dẫn ở trên bắt được; đây là dạng lỗi RIÊNG — "đúng họ, sai phiên
+    bản/năm" — cần so năm trực tiếp mới bắt được).
 
 Cách dùng:
     python3 verify_dashboard.py <dashboard.html>            # chỉ kiểm cấu trúc (offline)
-    python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID trên mạng
+    python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID/DOI trên mạng
 
 Mã thoát: 0 = PASS (không lỗi cứng), 1 = FAIL.
 Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thiếu disclaimer; item thiếu
   gradeLevel/decision; items[] rỗng (TRỪ artifact tự khai báo kind:'cong-cu' = công cụ hỗ
   trợ quyết định, không phải danh sách thẻ chứng cứ — vẫn bắt buộc disclaimer + kiểm PII/nội dung);
   khi --online: PMID KHÔNG xác minh được (kể cả do lỗi mạng) — fail-closed, không coi lỗi
-  mạng là PASS (vá 2026-07-11, trước đây fail-open: PMID bịa lọt qua nếu quét đúng lúc mất mạng).
+  mạng là PASS (vá 2026-07-11, trước đây fail-open: PMID bịa lọt qua nếu quét đúng lúc mất mạng);
+  khi --online: DOI có định dạng nhưng KHÔNG phân giải được qua Crossref — cùng nguyên tắc
+  fail-closed (lỗi mạng khi tra Crossref → CẢNH BÁO, không chặn cứng — phân biệt "404 thật" và
+  "Crossref tạm lỗi" bằng mã trạng thái HTTP, không đánh đồng như PMID).
 Cảnh báo (không chặn): nghi PII; khi --online, PMID xác minh tồn tại nhưng tiêu đề PubMed
-  không khớp nội dung item (nghi tráo trích dẫn — heuristic từ khóa, cần rà tay).
+  không khớp nội dung item (nghi tráo trích dẫn — heuristic từ khóa, cần rà tay); khi --online,
+  năm PubMed thật lệch >1 năm so với dateVersion item khai (nghi trích dẫn NHẦM PHIÊN BẢN/năm
+  của cùng một họ guideline — rà tay, không tự sửa).
 """
 import sys, re, json, argparse, time
 import urllib.error
@@ -107,9 +119,43 @@ def verify_pmid_online(pmid, retries=2):
                 j = json.loads(r.read().decode("utf-8"))
             res = j.get("result", {})
             if pmid in res and "title" in res[pmid]:
-                return True, res[pmid].get("title", "")
-            return False, "không có trong PubMed"
+                # pubdate thường dạng "2026 Mar 13" hoặc "2026" — chỉ cần năm cho so khớp
+                # dateVersion (vá 2026-07-12, xem docstring module).
+                return True, res[pmid].get("title", ""), res[pmid].get("pubdate", "")
+            return False, "không có trong PubMed", ""
         except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code in (429, 500, 502, 503, 504) and attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "lỗi mạng: %s" % e, ""
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "lỗi mạng: %s" % e, ""
+    return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err, ""
+
+
+def verify_doi_online(doi, retries=2):
+    """Tri-state (True/False/None), phân giải DOI qua Crossref API (miễn phí, không cần key).
+    Vá 2026-07-12: trước đây DOI chỉ kiểm ĐỊNH DẠNG (regex), không bao giờ phân giải thật —
+    DOI bịa đúng định dạng (vd '10.1136/ard-2024-225452') PASS sạch qua cổng. Tái hiện thật:
+    EBM_MASTER card EVID-2026-0270 mang DOI này, 404 khi tự tay tra doi.org/Crossref.
+    Cùng nguyên tắc fail-closed như verify_pmid_online — lỗi mạng KHÔNG được coi là đã xác minh."""
+    import urllib.request
+    url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=15) as r:
+                j = json.loads(r.read().decode("utf-8"))
+            title = "; ".join(j.get("message", {}).get("title", []) or [])
+            return True, title
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return False, "DOI không tồn tại trên Crossref (404)"
             last_err = e
             if e.code in (429, 500, 502, 503, 504) and attempt < retries:
                 time.sleep(1.5 * (attempt + 1))
@@ -122,6 +168,12 @@ def verify_pmid_online(pmid, retries=2):
                 continue
             return None, "lỗi mạng: %s" % e
     return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
+
+
+def _year_of(text):
+    """Trích năm 4 chữ số đầu tiên trong chuỗi (dateVersion item hoặc pubdate PubMed)."""
+    m = re.search(r"\b(19|20)\d{2}\b", text or "")
+    return int(m.group(0)) if m else None
 
 
 _TITLE_STOPWORDS = {
@@ -160,8 +212,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("file")
     ap.add_argument("--online", action="store_true",
-                    help="xác minh PMID trên mạng qua NCBI (DOI chỉ kiểm định dạng offline, "
-                         "KHÔNG phân giải online — chưa gọi doi.org/Crossref)")
+                    help="xác minh PMID qua NCBI + DOI qua Crossref trên mạng, và so năm "
+                         "PubMed thật với dateVersion item khai (vá 2026-07-12)")
     ap.add_argument("--check-topic", action="store_true",
                     help="gọi Claude API chấm mỗi item có đúng chủ đề dashboard không (cần "
                          "ANTHROPIC_API_KEY; tốn 1 lượt gọi API/dashboard)")
@@ -201,6 +253,7 @@ def main():
     oks.append("Số item: %d." % len(items))
 
     pmids = []
+    dois = []
     for ch in items:
         iid = field(ch, "id") or "(?)"
         pmid = field(ch, "pmid")
@@ -208,6 +261,7 @@ def main():
         url = field(ch, "url")
         grade = field(ch, "gradeLevel")
         dec = field(ch, "decision")
+        date_version = field(ch, "dateVersion")
         if not (pmid or doi or url):
             errors.append("[%s] THIẾU định danh truy nguyên (pmid/doi/url)." % iid)
         if doi and not DOI_RE.match(doi.strip()):
@@ -223,7 +277,9 @@ def main():
                 errors.append("[%s] url không đúng định dạng (thiếu scheme http(s) hoặc host): %r"
                               % (iid, url))
         if pmid:
-            pmids.append((iid, pmid, ch))
+            pmids.append((iid, pmid, ch, date_version))
+        if doi and DOI_RE.match(doi.strip()):
+            dois.append((iid, doi.strip(), date_version))
         if grade not in VALID_GRADE:
             errors.append("[%s] gradeLevel không hợp lệ: %r (cần %s)." % (iid, grade, VALID_GRADE))
         if dec not in VALID_DECISION:
@@ -244,20 +300,20 @@ def main():
 
     # 3) Xác minh PMID/DOI online
     if a.online and pmids:
-        oks.append("Đang xác minh %d PMID trên PubMed…" % len(set(p for _, p, _ in pmids)))
+        oks.append("Đang xác minh %d PMID trên PubMed…" % len(set(p for _, p, _, _ in pmids)))
         seen = {}
         net_calls = 0
-        for iid, p, ch in pmids:
+        for iid, p, ch, date_version in pmids:
             if p in seen:
-                ok, info = seen[p]
+                ok, info, pubdate = seen[p]
             else:
                 # Giãn cách ~3 req/s (NCBI E-utilities không key) để tránh TỰ gây rate-limit
                 # khi quét nhiều PMID liên tiếp, thay vì chỉ phản ứng bằng retry sau đó.
                 if net_calls:
                     time.sleep(0.34)
                 net_calls += 1
-                ok, info = verify_pmid_online(p)
-                seen[p] = (ok, info)
+                ok, info, pubdate = verify_pmid_online(p)
+                seen[p] = (ok, info, pubdate)
             if ok is True:
                 oks.append("[%s] PMID %s ✓ %s" % (iid, p, info[:90]))
                 # Vá (vòng kế tiếp 2026-07-11): dò TRÁO TRÍCH DẪN — PMID có thật nhưng tiêu đề
@@ -271,6 +327,17 @@ def main():
                         "item (trùng %.0f%% từ khóa có nghĩa) — NGHI TRÁO PMID (lạc đề). Tiêu đề "
                         "PubMed thật: \"%s\". RÀ TAY, không tự gỡ." % (iid, p, overlap * 100, info[:120])
                     )
+                # Vá 2026-07-12: "đúng họ guideline, sai phiên bản/năm" — overlap từ khóa cao
+                # (cùng tên guideline lặp lại qua các năm) nên heuristic trên KHÔNG bắt được;
+                # so trực tiếp năm PubMed thật với dateVersion item khai. Dung sai 1 năm (in
+                # ấn/epub lệch nhau là bình thường).
+                real_year, decl_year = _year_of(pubdate), _year_of(date_version)
+                if real_year and decl_year and abs(real_year - decl_year) > 1:
+                    warns.append(
+                        "[%s] PMID %s xuất bản THẬT năm %d nhưng item khai dateVersion=%s — "
+                        "NGHI TRÍCH DẪN NHẦM PHIÊN BẢN/năm của cùng họ guideline. RÀ TAY, không "
+                        "tự sửa." % (iid, p, real_year, date_version)
+                    )
             elif ok is False:
                 errors.append("[%s] PMID %s KHÔNG phân giải: %s" % (iid, p, info))
             else:
@@ -281,7 +348,35 @@ def main():
                 errors.append("[%s] PMID %s CHƯA XÁC MINH ĐƯỢC (%s) — --online yêu cầu xác "
                               "nhận được mới PASS, không coi lỗi mạng là đã xác minh." % (iid, p, info))
     elif pmids:
-        oks.append("Có %d PMID (chạy --online để xác minh phân giải)." % len(set(p for _, p, _ in pmids)))
+        oks.append("Có %d PMID (chạy --online để xác minh phân giải)." % len(set(p for _, p, _, _ in pmids)))
+
+    # 3b) Xác minh DOI online qua Crossref (vá 2026-07-12 — xem docstring module: DOI bịa
+    # đúng định dạng trước đây PASS sạch qua cổng, kể cả với --online).
+    if a.online and dois:
+        oks.append("Đang xác minh %d DOI qua Crossref…" % len(set(d for _, d, _ in dois)))
+        seen_doi = {}
+        net_calls_doi = 0
+        for iid, d, date_version in dois:
+            if d in seen_doi:
+                ok, info = seen_doi[d]
+            else:
+                if net_calls_doi:
+                    time.sleep(0.1)  # Crossref không công bố rate-limit cứng như NCBI, giãn nhẹ
+                net_calls_doi += 1
+                ok, info = verify_doi_online(d)
+                seen_doi[d] = (ok, info)
+            if ok is True:
+                oks.append("[%s] DOI %s ✓ %s" % (iid, d, info[:90]))
+            elif ok is False:
+                errors.append("[%s] DOI %s KHÔNG phân giải qua Crossref: %s — nghi DOI bịa/sai."
+                              % (iid, d, info))
+            else:
+                # Fail-closed như PMID — lỗi mạng khi tra Crossref không được coi là đã xác minh.
+                warns.append("[%s] DOI %s CHƯA XÁC MINH ĐƯỢC qua Crossref (%s) — mạng lỗi hoặc "
+                             "Crossref tạm ngưng, rà lại thủ công." % (iid, d, info))
+    elif dois:
+        oks.append("Có %d DOI đúng định dạng (chạy --online để xác minh phân giải qua Crossref)."
+                   % len(set(d for _, d, _ in dois)))
 
     # 4) CHẤT LƯỢNG NỘI DUNG — chống rác abstract NGOẠI NGỮ / placeholder (xem dashboard_content_audit.py)
     try:
