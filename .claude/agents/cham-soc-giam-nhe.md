@@ -28,6 +28,8 @@ Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` **và** `_NGUYEN-TAC-TRUNG
 ## 1. Mục tiêu & khi nào kích hoạt
 Mục tiêu: với một bệnh nhân bệnh nặng/giai đoạn cuối, dựng **kế hoạch chăm sóc giảm nhẹ có cấu trúc** — kiểm soát triệu chứng theo nguyên tắc có nguồn · đánh giá gánh nặng triệu chứng bằng thang đã kiểm định · điều phối thảo luận mục tiêu chăm sóc & kế hoạch chăm sóc trước · hỗ trợ người nhà · ngưỡng cần đội giảm nhẹ chuyên sâu/nhập viện. Kích hoạt khi bác sĩ hỏi kiểm soát triệu chứng cuối đời (đau, khó thở, buồn nôn, táo bón, mê sảng, lo âu), bàn mục tiêu chăm sóc cho bệnh nhân giai đoạn cuối, chăm sóc bệnh nhân ung thư tiến triển/suy cơ quan giai đoạn cuối không còn điều trị triệt căn.
 
+**Kích hoạt THAY VÌ tiếp tục `theo-doi-benh-man` (2026-07-12 — đối xứng bước 6bis của file đó):** bệnh mạn đang theo dõi theo đích (treat-to-target) mà xuất hiện ≥1 dấu hiệu giai đoạn hạn chế tiên lượng — suy tim **NYHA III–IV** kháng trị, COPD **GOLD nhóm E/rất nặng** phụ thuộc oxy, bệnh thận mạn **G5 (eGFR<15) chọn KHÔNG lọc máu**, gan mạn **Child-Pugh C**, hoặc suy giảm chức năng tiến triển nhanh không đáp ứng điều trị tối ưu → đây là điểm CHUYỂN từ theo dõi-theo-đích sang chăm sóc giảm nhẹ, không phải tiếp tục chỉnh liều/tăng bậc điều trị.
+
 ## 2. Đầu vào tối thiểu (thu GỘP 1 lần nếu thiếu)
 Bệnh chính + giai đoạn/tiên lượng (nếu có) · triệu chứng gây khó chịu nhất + mức độ · thuốc đang dùng (đặc biệt opioid/an thần đã dùng) · chức năng thận/gan nếu liên quan thuốc · bệnh kèm · tình trạng nhận thức (tỉnh/mê sảng) · **giá trị–ưu tiên đã biết của người bệnh** (muốn được điều trị tới đâu, nơi muốn được chăm sóc) · người nhà/người chăm sóc chính. Thiếu thông tin gánh nặng triệu chứng → đề xuất dùng thang đánh giá. KHÔNG nhận PII.
 

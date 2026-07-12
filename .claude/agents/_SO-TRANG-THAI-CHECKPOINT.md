@@ -29,8 +29,16 @@ không PII. Trả `verdict: ĐẠT/TRẢ-VỀ-SỬA` + danh sách vi phạm cụ
 - danh_muc_🔴_con_lai: «liệt kê mục 🔴 bắt buộc còn thiếu + agent phụ trách; "(không)" nếu sạch»
 - buoc_ke:        «cổng/bước kế tiếp + CHÍNH XÁC cần bác sĩ cấp gì để đi tiếp»
 - agent_ghi:      «so-cai-ghi-nho | nhạc trưởng»
+- guardrail_dau_ra: «ĐẠT | TRẢ-VỀ-SỬA — BẮT BUỘC khi cong_vua_qua=A hoặc B, tùy chọn cho G0-G9»
 ```
 Quy ước: mỗi cổng = 1 khối mới ở CUỐI; KHÔNG sửa khối cũ. Bản ghi này là "ảnh chụp" để RESUME, khác bản ghi nội dung chi tiết (đó là việc của `_SO-EBM-MASTER.md`/hub `EBM_MASTER/`).
+
+**2026-07-12 (rà kiến trúc đội agent — vá "guardrail chỉ là quy ước prompt"):** thêm trường
+`guardrail_dau_ra` — ghi verdict THẬT của `tham-dinh-dau-ra` (ĐẠT/TRẢ-VỀ-SỬA) ngay trước khi
+ghi khối Cổng A/B. `clinical_checkpoint.py` nay CHẶN (mã `GATE_WITHOUT_GUARDRAIL_VERDICT`) mọi
+khối Cổng A/B thiếu trường này hoặc chưa ghi ĐẠT — guardrail không còn chỉ là quy ước cấp
+prompt cho riêng khối này, mà có máy kiểm thật đối chiếu. Trường KHÔNG bắt buộc cho khối
+G0-G9 trung gian (chưa tới lúc trả gói cho bác sĩ).
 
 ## CÁCH NỐI VÀO DÂY CHUYỀN
 - **Ghi (sau mỗi cổng):** nhạc trưởng giao `so-cai-ghi-nho` ghi 1 khối checkpoint theo schema trên vào sổ trạng thái (file này — 2026-07-12: sửa "hoặc `EBM_MASTER/MEMORY.md` theo CLAUDE.md", file đó KHÔNG tồn tại trên đĩa và CLAUDE.md không hề nhắc tới đường dẫn này; bộ nhớ dài hạn thật là `sync/memory/MEMORY.md`/`memory-sync/MEMORY.md`, khác mục đích với sổ checkpoint) — ngay sau khi một cổng PASS, cùng lúc ghi bản ghi nội dung vào `_SO-EBM-MASTER.md`. **NGAY SAU KHI GHI**, chạy `clinical_checkpoint.py` trên file vừa ghi — còn 🔴 (vd `GATE_WITH_OUTSTANDING_RED_ITEMS`) → SỬA khối vừa ghi trước khi bàn giao, KHÔNG để lại bản ghi hỏng cho phiên sau đọc nhầm.

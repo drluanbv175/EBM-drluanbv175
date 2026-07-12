@@ -73,12 +73,16 @@ def map_evidence_card(c: dict) -> dict:
     nguon = " | ".join([p for p in parts if p]) or ""
     loai = "khuyến cáo" if str(c.get("recommendation", "")).strip() else "chứng cứ"
     # ánh xạ tác động -> phan_loai (hub không có cột chuẩn -> đánh dấu nếu thiếu)
+    # 2026-07-12: 'consider' (decision phổ biến nhất trong hub, 130/259 thẻ) trước đây rơi
+    # vào nhánh else -> cảnh báo giả "phan_loai placeholder" cho gần một nửa sổ cái. Khớp
+    # đúng ngữ nghĩa DEC_VI/DEC_ICON đã dùng ở manage_ledger.py ("consider" = "Cân nhắc"
+    # -> theo dõi thêm trước khi đổi thực hành).
     impact = str(c.get("impact", "") or c.get("decision", "")).lower()
     if "apply" in impact or "đáng đổi" in impact or "change" in impact:
         phan = "đáng đổi"
-    elif "monitor" in impact or "theo dõi" in impact or "watch" in impact:
+    elif "consider" in impact or "monitor" in impact or "theo dõi" in impact or "watch" in impact or "cân nhắc" in impact:
         phan = "theo dõi"
-    elif "no" in impact or "không đổi" in impact:
+    elif "notyet" in impact or "no" in impact or "không đổi" in impact:
         phan = "không đổi"
     else:
         phan = "[CẦN BỔ SUNG]"
@@ -152,9 +156,14 @@ def validate(records):
                 seen_id[rid] = i
 
         # 3) verification_status hợp lệ
+        # 2026-07-12: so khớp CHÍNH XÁC trước đây báo lỗi ĐỎ giả cho 85/259 thẻ hub —
+        # hub thật dùng biến thể mở rộng có chú thích thêm (vd "đã xác minh nguồn chính
+        # thức", "chưa xác minh — thấp ưu tiên...") mà vẫn hợp lệ vì BẮT ĐẦU bằng 1 trong
+        # 3 giá trị chuẩn. Đổi sang so khớp TIỀN TỐ — không nới lỏng: giá trị không bắt
+        # đầu bằng chuẩn nào (vd "đã duyệt" ở ca demo #2) vẫn bị bắt lỗi như cũ.
         vs = str(rec.get("verification_status", "")).strip()
-        if vs and vs not in VALID_STATUS:
-            errs.append(f"verification_status không hợp lệ: '{vs}' (cho phép: {sorted(VALID_STATUS)}).")
+        if vs and not any(vs.startswith(s) for s in VALID_STATUS):
+            errs.append(f"verification_status không hợp lệ: '{vs}' (phải KHỚP hoặc BẮT ĐẦU bằng: {sorted(VALID_STATUS)}).")
 
         # 4) loai / phan_loai
         lo = str(rec.get("loai", "")).strip()

@@ -20,7 +20,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận thân chứ
 | M6 | Dashboard EW → `verify_dashboard.py --online` PASS → `sync_all.py` hàng chờ duyệt (CỔNG B) |
 
 ## Luật nền
-Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` **và** `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md` (4 trụ cột). ĐẶC BIỆT hai cổng bác sĩ: **CỔNG A** — chỉ ĐỀ XUẤT khuyến cáo (điều kiện), bác sĩ mới "áp dụng"; **CỔNG B** — thẻ nạp EBM_MASTER mang `verification_status="chưa xác minh"`, vào hàng "chờ duyệt", KHÔNG tự "áp dụng ngay". Giữ nguyên grading gốc của guideline; ghi nguồn (tên guideline + năm + mục, hoặc PMID/DOI); `gradeLevel:'na'` nếu nguồn không phân hạng; KHÔNG PII.
+Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` **và** `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md` (4 trụ cột). ĐẶC BIỆT hai cổng bác sĩ: **CỔNG A** — chỉ ĐỀ XUẤT khuyến cáo (điều kiện), bác sĩ mới "áp dụng"; **CỔNG B** — thẻ nạp EBM_MASTER vào hàng "chờ duyệt" qua trường `decision` (`notyet`/`consider`, KHÔNG tự `apply`); `verification_status="đã xác minh"` mà `sync_all.py` gán chỉ là cổng liêm chính TRÍCH DẪN tự động, KHÔNG phải bác sĩ đã duyệt — xem `_SO-EBM-MASTER.md`. KHÔNG tự "áp dụng ngay". Giữ nguyên grading gốc của guideline; ghi nguồn (tên guideline + năm + mục, hoặc PMID/DOI); `gradeLevel:'na'` nếu nguồn không phân hạng; KHÔNG PII.
 
 ## 1. Mục tiêu & khi nào kích hoạt
 Mục tiêu: định vị một phát hiện/thân chứng cứ giữa các guideline hiện hành và đề xuất khuyến cáo (chiều + độ mạnh) cho bác sĩ duyệt. Kích hoạt: "phát hiện này đổi thực hành thế nào", "guideline hiện nói gì vs chứng cứ mới", hoặc bước cuối chuỗi EBM/nghiên cứu (cầu nối thực hành).
@@ -34,7 +34,7 @@ Phát hiện/thân chứng cứ cần định vị (từ `tham-dinh-phe-binh`/`t
 2. **Đối chiếu chứng cứ mới:** **củng cố · bổ sung · mâu thuẫn · chưa đủ** so với guideline — nêu rõ chiều.
 3. **GRADE Evidence-to-Decision (EtD):** lợi ích–tác hại, độ chắc chắn chứng cứ, giá trị/ưu tiên bệnh nhân, khả thi/chi phí.
 4. **Đề xuất khuyến cáo:** phát biểu + **chiều** (nên/không nên) + **độ mạnh** (mạnh/có điều kiện) + mức chứng cứ; nêu "đổi gì so với guideline cũ" nếu có.
-5. **Sản phẩm hóa:** dựng Dashboard **Evidence Workbench** (mặc định, chỉ thay khối `DATA`) → `verify_dashboard.py --online` PASS → nạp EBM_MASTER qua `sync_all.py` (hàng chờ duyệt).
+5. **Sản phẩm hóa:** dựng Dashboard **Evidence Workbench** (mặc định, chỉ thay khối `DATA`) → `verify_dashboard.py --online` PASS → nạp EBM_MASTER qua `sync_all.py` (hàng chờ duyệt). *(2026-07-12: `sync_all.py` idempotent + tự dedup theo pmid|doi|chu_de — agent này gọi trực tiếp được, không bắt buộc bàn giao qua `so-cai-ghi-nho`; nhiều agent cùng gọi trên cùng dashboard là AN TOÀN, không sinh thẻ trùng.)*
 
 ## 4. Mẫu đầu ra (template điền sẵn)
 ```

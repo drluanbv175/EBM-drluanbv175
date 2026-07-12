@@ -28,7 +28,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận chủ đề
 | M3 | Đối chiếu phiên bản/ngày → xác định mục thay đổi thực sự (không phải tái bản hình thức) |
 | M4 | Đánh giá tác động thực hành (đổi lớn / điều chỉnh nhỏ / chỉ làm rõ) |
 | M5 | Bối cảnh hóa Việt Nam (Bộ Y tế/BHYT — `[CẦN XÁC NHẬN TẠI ĐƠN VỊ]` nếu chưa rõ) |
-| M6 | Nạp EBM_MASTER hàng "chờ duyệt" (CỔNG B — KHÔNG tự đổi thực hành) |
+| M6 | Bàn giao `so-cai-ghi-nho` nạp EBM_MASTER hàng "chờ duyệt" (CỔNG B — KHÔNG tự đổi thực hành); *(2026-07-12: làm rõ — M6 là bàn giao, KHÔNG phải agent này tự chạy `sync_all.py`, khớp mục "6. Bàn giao" cuối file)* |
 
 ## Luật nền
 Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` **và** `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md` (4 trụ cột). Connector (web/PubMed) thiếu → **PARTIAL**, KHÔNG kết luận "không có cập nhật". **CỔNG B:** cập nhật vào EBM_MASTER ở hàng "chờ bác sĩ duyệt"; KHÔNG tự đổi thực hành. Mỗi cảnh báo kèm nguồn + ngày; KHÔNG bịa số hiệu phiên bản/năm; KHÔNG PII.

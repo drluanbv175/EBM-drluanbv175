@@ -184,6 +184,58 @@ def test_r13_not_applied_to_research_type():
     assert "mandatory_safety_question" not in ids
 
 
+# ── R14 (2026-07-12): an toàn kê đơn — ERROR_ROUTING_TABLE có entry từ 2026-07-07 nhưng
+# evaluate() chưa từng kiểm thật cho tới bản vá này (xem run_eval.py cho lý do/giới hạn).
+
+def test_r14_prescribing_without_safety_review_escalates():
+    text = ("Bệnh nhân ĐTĐ2 kèm suy tim. Thêm SGLT2i vào phác đồ hiện tại. "
+            "PMID:12345678. Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+    c = [x for x in res["checks"] if x["id"] == "prescribing_safety_r14"][0]
+    assert c["pass"] is False
+    gr = RE.classify(res)
+    codes = {e.code for e in gr.errors}
+    assert "R14" in codes
+    assert gr.must_escalate is True
+
+
+def test_r14_prescribing_with_interaction_check_passes():
+    text = ("Thêm SGLT2i cho bệnh nhân ĐTĐ2 + CKD G3a. Đã rà tương tác thuốc và chống chỉ "
+            "định; hiệu chỉnh theo eGFR trước khi khởi trị. PMID:12345678. "
+            "Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "prescribing_safety_r14"][0]
+    assert c["pass"] is True
+
+
+def test_r14_not_triggered_when_no_prescribing_action():
+    # Văn bản chỉ bàn luận/tóm tắt guideline, không kê/đổi thuốc cụ thể -> không nên trigger.
+    text = "Guideline KDIGO 2024 khuyến cáo cân nhắc SGLT2i ở CKD nguy cơ cao. PMID:12345678. Cần bác sĩ kiểm chứng."
+    res = RE.evaluate(text, {"type": "clinical"})
+    ids = [c["id"] for c in res["checks"]]
+    assert "prescribing_safety_r14" not in ids
+
+
+def test_r14_not_applied_to_research_type():
+    # Cùng tiền lệ R13/who_aware_if_antibiotic — mô tả nhánh can thiệp trong nghiên cứu
+    # không phải quyết định kê đơn tại điểm khám.
+    text = "Nhóm can thiệp được thêm SGLT2i theo protocol nghiên cứu X. Cần bác sĩ kiểm chứng. PMID:12345678"
+    res = RE.evaluate(text, {"type": "research"})
+    ids = [c["id"] for c in res["checks"]]
+    assert "prescribing_safety_r14" not in ids
+
+
+def test_r14_exempted_for_evidence_positioning_text():
+    # Cùng miễn trừ LSN-20260708-52 như R12/R13 — định vị chứng cứ/EtD cấp hệ thống, không
+    # áp dụng cho bệnh nhân cụ thể.
+    text = ("Định vị chứng cứ: EtD cho thêm SGLT2i ở CKD — không tự áp dụng cho bệnh nhân "
+            "cụ thể, cần rà tại điểm khám. PMID:12345678. Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    ids = [c["id"] for c in res["checks"]]
+    assert "prescribing_safety_r14" not in ids
+
+
 # ── Vá 2026-07-04 (đợt 2, sau red-team đối kháng độc lập 10 agent) ─────────
 # Mỗi test dưới đây là MỘT văn bản đối kháng THẬT mà workflow red-team đã tự soạn
 # và tự chạy để chứng minh lỗ hổng — giữ nguyên văn để khóa hồi quy đúng ca đã tìm.

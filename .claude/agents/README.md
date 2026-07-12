@@ -184,7 +184,7 @@ Mọi agent (toàn đội) phải áp dụng **`_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-P
 
 ## Hai cổng an toàn (không bao giờ tự vượt)
 - **CỔNG A — Quyết định lâm sàng:** agent chỉ ĐỀ XUẤT; bác sĩ duyệt mới là "áp dụng".
-- **CỔNG B — Ghi EBM_MASTER:** thẻ mới vào hàng "chờ duyệt", `verification_status="chưa xác minh"`.
+- **CỔNG B — Ghi EBM_MASTER:** thẻ mới vào hàng "chờ duyệt" qua trường `decision` (`notyet`/`consider`, KHÔNG bao giờ tự `apply` lúc nạp). *(2026-07-12: sửa — `verification_status` KHÔNG phải tín hiệu Cổng B; ở đường nạp chính `ingest_dashboard.py` nó chỉ nói lên nguồn/trích dẫn đã qua cổng liêm chính tự động, khác "bác sĩ đã duyệt". Chi tiết: `_SO-EBM-MASTER.md`.)*
 
 ## Mức tự chủ: TỐI ĐA + Giao thức TỰ ĐỘNG (MẶC ĐỊNH)
 Agent tự chạy trọn các bước cơ học (tra cứu, chấm điểm, soạn nháp, dựng dashboard, lời dặn) không hỏi vặt — chỉ dừng ở 2 cổng trên.

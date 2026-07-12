@@ -129,11 +129,15 @@ bên dưới thay vì tự suy diễn lại từ đầu mỗi lần. R8/R1b/R13 
 routing nhưng KHÔNG có check thật (100% phán đoán LLM) — nay đã mã hóa; R13 đặc biệt
 quan trọng vì bắt được thiếu sàng lọc tự sát khi bệnh nhân mất ngủ đòi thuốc ngủ mạnh
 mà KHÔNG cần chờ LLM tự nhớ áp dụng §3ter. **R14 (rà an toàn kê đơn — tương tác/CCĐ/chỉnh
-liều) hiện CHỈ ở rubric Lớp 1 + bảng routing = phán đoán LLM (guardrail); check mã hóa trong
-run_eval.py là `[CẦN BỔ SUNG]`** — vì rà nội dung ADE khó rule-hóa đáng tin (khác S1/S2 có
-trigger từ khóa rõ), tạm dựa nhạc trưởng BẮT BUỘC gọi `ke-don-an-toan` cho mọi gói có khuyến
-cáo/đổi thuốc + guardrail soi R14 hard-red. Không có file để chấm (gói mới soạn trong
-hội thoại, chưa ghi file) → tự áp BẢNG ROUTING dưới bằng tay như trước.
+liều) — 2026-07-12: đã mã hóa (`prescribing_safety_r14` trong run_eval.py, kích hoạt khi văn
+bản THỂ HIỆN kê/thêm/đổi/chỉnh thuốc gần một tên/nhóm thuốc — SGLT2i/statin/DOAC/opioid/
+kháng sinh/an thần…, đòi có mặt ≥1 trong tương tác/CCĐ/eGFR/chức năng gan/tuổi; 5 test hồi
+quy ở test_classify.py).** GIỚI HẠN CÒN LẠI (không giả vờ đã hết): chỉ kiểm CÓ MẶT từ khóa
+rà an toàn — KHÔNG xác minh rà ĐÚNG/ĐỦ cho đúng thuốc đang kê (vd bỏ sót một tương tác cụ
+thể vẫn PASS nếu văn bản có nhắc "tương tác thuốc" ở đâu đó); xác minh nội dung sâu vẫn dựa
+nhạc trưởng BẮT BUỘC gọi `ke-don-an-toan` cho mọi gói có khuyến cáo/đổi thuốc + guardrail
+soi R14 hard-red như trước. Không có file để chấm (gói mới soạn trong hội thoại, chưa ghi
+file) → tự áp BẢNG ROUTING dưới bằng tay như trước.
 
 **Bước 1 — Phân loại lỗi:** Với từng 🔴, tra BẢNG ROUTING (khớp bảng dùng chung ở Bước 0):
 

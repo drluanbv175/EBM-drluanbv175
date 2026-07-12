@@ -49,13 +49,15 @@ python3 run_eval.py sample_outputs/good_antibiotic.md          --gold gold/templ
 python3 run_eval.py sample_outputs/bad_causal_cross_sectional.md --gold gold/template.yaml
 python3 run_eval.py <file> --json                              # xuất JSON
 ```
-**Kết quả demo (rubric mở rộng, đã chạy thật trong sandbox):**
+**Kết quả demo (rubric mở rộng, đã chạy thật trong sandbox — 2026-07-12: cập nhật sau khi
+thêm check `prescribing_safety_r14`; mẫu số tăng theo số kiểm điều kiện kích hoạt trên mỗi
+ca, KHÔNG phải cố định — chạy lại `--gold` để lấy số hiện hành, đừng dán cứng bảng này):**
 | Sample | Điểm | Phán định | Ghi chú |
 |---|---|---|---|
-| `good_output` | **9/9** | ĐẠT | (kháng sinh & cắt ngang không xuất hiện ⇒ 2 kiểm điều kiện không kích hoạt) |
-| `bad_output` | **1/9** | TRẢ-VỀ-SỬA | red: PII SĐT · "GRADE cao" không nguồn · vượt Cổng A · thiếu nguồn · thiếu disclaimer |
-| `good_antibiotic` | **10/10** | ĐẠT | kích hoạt + ĐẠT `who_aware_if_antibiotic` (penicillin/amoxicillin = nhóm Access) |
-| `bad_causal_cross_sectional` | **3/11** | TRẢ-VỀ-SỬA | red mới `no_causal_from_observational` ("chứng minh rằng…gây" cạnh "cắt ngang") + thiếu AWaRe (quinolon) |
+| `good_output` | **16/16** | ĐẠT | thêm SGLT2i CÓ hiệu chỉnh theo eGFR ⇒ ĐẠT `prescribing_safety_r14` |
+| `bad_output` | **7/16** | TRẢ-VỀ-SỬA | red: PII SĐT · "GRADE cao" không nguồn · vượt Cổng A · thiếu nguồn · thiếu disclaimer · thiếu cờ đỏ · **THIẾU rà an toàn kê đơn (`prescribing_safety_r14`/R14 — "tăng liều gấp đôi" không rà tương tác/CCĐ)** |
+| `good_antibiotic` | **17/17** | ĐẠT | kích hoạt + ĐẠT `who_aware_if_antibiotic` (penicillin/amoxicillin = nhóm Access) + ĐẠT `prescribing_safety_r14` (có "chức năng thận") |
+| `bad_causal_cross_sectional` | **9/18** | TRẢ-VỀ-SỬA | red: `no_causal_from_observational` ("chứng minh rằng…gây" cạnh "cắt ngang") + thiếu AWaRe (quinolon) + **THIẾU rà an toàn kê đơn (`prescribing_safety_r14`/R14 — "bắt đầu kháng sinh...cho mọi trường hợp" không rà gì)** |
 
 ## Dây chuyền CAFÉ-S: chấm → batch → PHÂN TÍCH TRỤ
 ```bash
