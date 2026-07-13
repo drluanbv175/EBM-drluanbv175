@@ -248,6 +248,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_research_practical_readiness.py")],
                                 "Smoke-test thực tiễn dữ liệu nghiên cứu PASS", 90)) or
                 p_exists(TOOLS / "verify_research_practical_readiness.py", "Verifier thực tiễn dữ liệu nghiên cứu có mặt"),
+        lambda: p_contains_all(
+            TOOLS / "build_research_readiness_evidence.py",
+            ["EvidenceRow", "blocking_failure_count", "Cần bác sĩ kiểm chứng"],
+            "Bảng chứng cứ thực tiễn có thể sinh lại",
+        ),
     ])
     crit("S6", "Đánh giá hiệu suất", "system", [
         lambda: p_exists(TOOLS / "eval" / "cafes_suite.py", "Bộ eval CAFÉ-S (code)"),

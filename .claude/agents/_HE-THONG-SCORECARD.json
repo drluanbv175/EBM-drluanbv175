@@ -343,8 +343,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 7,
-      "total": 7,
+      "passed": 8,
+      "total": 8,
       "probes": [
         {
           "ok": true,
@@ -373,6 +373,10 @@
         {
           "ok": true,
           "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 3/3 marker)"
         }
       ],
       "caveats": []
