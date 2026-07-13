@@ -335,10 +335,12 @@ Kích hoạt khi nghiên cứu thực hiện tại đơn vị có tính đặc t
 
 **Đạt G2 (AI side):** 8 tài liệu hoàn chỉnh · checklist nộp đủ mục · ICF đúng 7 mục Helsinki · DMP đủ Luật 91/2025 · khai báo COI/AI · thông tin liên hệ Hội đồng · không PII · không số phê duyệt bịa.
 
-**Mở khóa thật (human side):** bác sĩ nộp hồ sơ → Hội đồng phê duyệt → cung cấp số IRB thật → agent ghi G2_STATUS: LOCKED.
+**Mở khóa thật (human side):** bác sĩ nộp hồ sơ → Hội đồng phê duyệt → cung cấp số IRB thật → agent ghi G2_STATUS: LOCKED vào checkpoint (nội dung tham khảo).
+
+**Vá 2026-07-12 (audit toàn diện cổng G0-G9):** ghi `G2_STATUS: LOCKED` vào checkpoint KHÔNG còn tự mở cổng thật — kiểm định đối kháng xác nhận agent tự ghi dòng này từng đủ để các script phân tích dữ liệu thật (`run_stats_analysis.py`) chạy trót lọt, dù chưa hề có phê duyệt IRB thật. Cổng THẬT nay đòi `approval_ledger.json` có chữ ký (xem `tools/gate_contract.py::ledger_approved`). Việc CỦA AGENT khi có số IRB thật: nhắc bác sĩ **tự tay** chạy `python tools/approve_gate.py --study <tên> --gate G2 --artifact <hồ sơ đạo đức>` trong terminal riêng (không nhờ agent chạy hộ — nếu agent chạy hộ, chữ ký vẫn được tạo nhưng mất ý nghĩa "một người ngoài agent đã xác nhận"). Cần khóa ký đã thiết lập một lần bằng `tools/setup_gate_approval_key.py` (bác sĩ tự chạy).
 
 ## Ranh giới
-KHÔNG tự phê duyệt đạo đức · KHÔNG bịa số IRB/mã đăng ký · DMP vận hành/khóa DB thuộc `quan-ly-du-lieu` (G5).
+KHÔNG tự phê duyệt đạo đức · KHÔNG bịa số IRB/mã đăng ký · KHÔNG tự chạy `tools/approve_gate.py` thay bác sĩ · DMP vận hành/khóa DB thuộc `quan-ly-du-lieu` (G5).
 
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra

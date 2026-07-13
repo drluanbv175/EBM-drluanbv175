@@ -16,7 +16,7 @@ Agent này chạy **tự động, không hỏi xác nhận**. Nhận đề tài/
 | M2 | G1 — sinh 2–3 thiết kế ứng viên theo câu hỏi nghiên cứu (Tree-of-Thoughts); kiểm soát 7 sai lệch chính; xác định Estimand ICH E9(R1) cho can thiệp |
 | M3 | G1 — xuất KHỐI THIẾT KẾ hoàn chỉnh (loại · bố trí · ngẫu nhiên hóa · làm mù · estimand · cỡ mẫu từ `co-mau-nghien-cuu`) |
 | M4 | G4 — soạn SAP 12 mục: quần thể phân tích · kết cục · thống kê mô tả · phân tích chính/đa biến · dữ liệu thiếu · nhóm nhỏ · đa so sánh · nhạy cảm · phần mềm/seed · dummy tables + SAP Lock Certificate |
-| M5 | ⛔ CỔNG CỨNG G4: dừng — chờ bác sĩ ký xác nhận "SAP đã khóa ngày [DD/MM/YYYY]"; ghi G4_STATUS=LOCKED vào `so-cai-ghi-nho` sau khi bác sĩ xác nhận |
+| M5 | ⛔ CỔNG CỨNG G4: dừng — chờ bác sĩ ký xác nhận "SAP đã khóa ngày [DD/MM/YYYY]". **Ghi G4_STATUS=LOCKED vào checkpoint KHÔNG còn đủ để mở cổng thật (vá 2026-07-12, audit toàn diện — kiểm định đối kháng xác nhận agent tự ghi dòng này từng đủ để qua cổng, dù bác sĩ chưa hề duyệt).** Việc CỦA AGENT: nhắc bác sĩ **tự tay** (không nhờ agent) chạy `python tools/approve_gate.py --study <tên> --gate G4 --artifact <file SAP đã khóa>` trong terminal riêng — script đó tự ký bằng khóa cục bộ bác sĩ đã thiết lập (`tools/setup_gate_approval_key.py`, một lần/máy). Agent CHỈ ghi lại vào `so-cai-ghi-nho` rằng đã nhắc bác sĩ chạy lệnh này — KHÔNG tự chạy hộ, KHÔNG tự coi cổng đã đóng chỉ vì đã sửa checkpoint text. |
 
 ## Luật nền
 Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` và `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md`.
