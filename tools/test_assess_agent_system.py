@@ -30,10 +30,17 @@ def test_scorecard_checks_research_gate_contract_surface():
     s3_results = [probe() for probe in by_id["S3"]["probes"]]
     s5_results = [probe() for probe in by_id["S5"]["probes"]]
     a6_results = [probe() for probe in by_id["A6"]["probes"]]
+    a7_results = [probe() for probe in by_id["A7"]["probes"]]
 
     assert any(ok and "Hợp đồng phát hành từng cổng nghiên cứu" in detail
                for ok, detail in s3_results)
+    assert any(ok and "Pipeline dữ liệu thật synthetic đi tới audit G6" in detail
+               for ok, detail in s3_results)
     assert any(ok and "Cổng nghiên cứu chặn downstream" in detail
+               for ok, detail in s5_results)
+    assert any(ok and "Verifier thực tiễn dữ liệu nghiên cứu" in detail
                for ok, detail in s5_results)
     assert any(ok and "Audit cổng sinh action queue + resume contract" in detail
                for ok, detail in a6_results)
+    assert any(ok and "Verifier thực tiễn dữ liệu nghiên cứu" in detail
+               for ok, detail in a7_results)

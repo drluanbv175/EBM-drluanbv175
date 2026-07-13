@@ -188,8 +188,8 @@
       "name": "An toàn, ổn định, kiểm chứng",
       "level": "agent",
       "status": "strong",
-      "passed": 4,
-      "total": 4,
+      "passed": 5,
+      "total": 5,
       "probes": [
         {
           "ok": true,
@@ -206,6 +206,10 @@
         {
           "ok": true,
           "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Verifier thực tiễn dữ liệu nghiên cứu: có (verify_research_practical_readiness.py)"
         }
       ],
       "caveats": []
@@ -279,8 +283,8 @@
       "name": "Pipeline xử lý nhiệm vụ",
       "level": "system",
       "status": "strong",
-      "passed": 4,
-      "total": 4,
+      "passed": 5,
+      "total": 5,
       "probes": [
         {
           "ok": true,
@@ -297,6 +301,10 @@
         {
           "ok": true,
           "detail": "Hợp đồng phát hành từng cổng nghiên cứu: ✓ (audit_research_gates.py; 4/4 marker)"
+        },
+        {
+          "ok": true,
+          "detail": "Pipeline dữ liệu thật synthetic đi tới audit G6: ✓ (verify_research_practical_readiness.py; 5/5 marker)"
         }
       ],
       "caveats": []
@@ -335,8 +343,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 6,
-      "total": 6,
+      "passed": 7,
+      "total": 7,
       "probes": [
         {
           "ok": true,
@@ -361,6 +369,10 @@
         {
           "ok": true,
           "detail": "Smoke-test hợp đồng cổng nghiên cứu PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []

@@ -178,6 +178,7 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "audit_ebm_system.py")],
                                 "Audit hệ PASS (kiểm chứng)", 300)) or
                 p_exists(TOOLS / "audit_ebm_system.py", "Công cụ audit có mặt"),
+        lambda: p_exists(TOOLS / "verify_research_practical_readiness.py", "Verifier thực tiễn dữ liệu nghiên cứu"),
     ])
 
     # ---- HỆ ----
@@ -214,6 +215,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
             ["release_contract", "can_release_to_next_gate", "prevents_downstream", "gate_release_summary"],
             "Hợp đồng phát hành từng cổng nghiên cứu",
         ),
+        lambda: p_contains_all(
+            TOOLS / "verify_research_practical_readiness.py",
+            ["deidentify_dataset", "pseudonymize_dataset", "clean_dataset", "lock_dataset", "audit_gates"],
+            "Pipeline dữ liệu thật synthetic đi tới audit G6",
+        ),
     ])
     crit("S4", "Khả năng mở rộng", "system", [
         lambda: p_exists(TOOLS / "generate_agent.py", "Tự sinh agent (code)"),
@@ -239,6 +245,9 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_research_gate_contracts.py")],
                                 "Smoke-test hợp đồng cổng nghiên cứu PASS", 60)) or
                 p_exists(TOOLS / "verify_research_gate_contracts.py", "Verifier hợp đồng cổng nghiên cứu có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_research_practical_readiness.py")],
+                                "Smoke-test thực tiễn dữ liệu nghiên cứu PASS", 90)) or
+                p_exists(TOOLS / "verify_research_practical_readiness.py", "Verifier thực tiễn dữ liệu nghiên cứu có mặt"),
     ])
     crit("S6", "Đánh giá hiệu suất", "system", [
         lambda: p_exists(TOOLS / "eval" / "cafes_suite.py", "Bộ eval CAFÉ-S (code)"),
