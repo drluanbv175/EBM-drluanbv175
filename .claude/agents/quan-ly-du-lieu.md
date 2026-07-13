@@ -23,6 +23,26 @@ python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 
 > **Khảo sát file dữ liệu thô TRƯỚC khi có CRF (2026-07-04):** 2 script Python mà `run_g5_auto.py` sinh ra (làm sạch + báo cáo chất lượng) chỉ chạy đúng trên file CSV **đã khớp cột theo CRF/chuyên khoa định sẵn** (REDCap export) — không phải công cụ tổng quát để soi 1 file dữ liệu thô bất kỳ. Khi bác sĩ đưa 1 file (Excel/CSV thô chưa theo CRF, hoặc định dạng khác như ảnh/phổ/gen học) và cần biết nhanh cấu trúc/chất lượng TRƯỚC khi dựng CRF chính thức, dùng skill `exploratory-data-analysis` (`scripts/eda_analyzer.py`, đã kiểm chứng chạy thật) để khảo sát trước — kết quả dùng làm căn cứ thiết kế Data Dictionary ở trên, KHÔNG thay thế CRF/luật kiểm tra chính thức. **Lưu ý môi trường Windows đã xác nhận thật:** cần `PYTHONUTF8=1` khi chạy (console mặc định cp1252 sẽ lỗi in tiếng Việt), và cần cài `pandas`+`numpy` trước (Python hệ thống không có sẵn — script vẫn chạy nhưng bỏ qua phần phân tích số liệu chính nếu thiếu).
 
+> **Luồng làm sạch dữ liệu thật tự động (2026-07-13):** sau khi dữ liệu đã qua `import_real_dataset.py` hoặc `deidentify_research_dataset.py`/`pseudonymize_research_dataset.py --then-import`, gọi tool tổng quát:
+> ```bash
+> python medical-ebm-automation/tools/clean_research_dataset.py \
+>   --study "MA-DE-TAI" \
+>   --data "exports/MA-DE-TAI/02_raw_readonly/<file>.csv" \
+>   --dictionary "exports/MA-DE-TAI/data_dictionary.json"
+> ```
+> Tool này tạo `03_clean_working/df_clean.<sha>.csv`, `04_query_logs/data_cleaning_query_log.csv`,
+> `03_cleaning_scripts/DATA_CLEANING_plan.json` và `DATA_CLEANING_report.json`.
+> Quy tắc: chỉ tự động trim whitespace + chuẩn hóa mã missing; range/category/date/duplicate/missing-critical
+> thành QUERY MỞ, KHÔNG tự sửa/điền/xóa. Chỉ khi query log không còn `open` mới được chạy:
+> ```bash
+> python medical-ebm-automation/tools/lock_analysis_dataset.py --study "MA-DE-TAI" \
+>   --clean-data "exports/MA-DE-TAI/03_clean_working/df_clean.<sha>.csv" \
+>   --query-log "exports/MA-DE-TAI/04_query_logs/data_cleaning_query_log.csv" \
+>   --lock-date <YYYY-MM-DD> --approved-by <PI> --sap-version <x.y> \
+>   --confirm-deidentified --confirm-clean-copy --confirm-no-open-query --confirm-sap-locked
+> ```
+> Nếu còn query mở, data lock phải BLOCK. Đây là hành vi đúng, không phải lỗi.
+
 ## Luật nền
 Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` và `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md`.
 Bất biến cứng: KHÔNG PII (khử định danh bắt buộc) · làm trên BẢN SAO, không sửa dữ liệu gốc · KHÔNG tự sửa giá trị (chỉ gắn cờ + nhật ký) · ALCOA+ · Luật 91/2025/QH15.
