@@ -7,9 +7,10 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
   4. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
   5. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
-  6. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
-  7. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
-  8. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
+  6. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
+  7. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
+  8. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
+  9. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -76,11 +77,12 @@ def main() -> int:
         ("3. Kiểm đồng bộ (--check)", ["tools/sync_agents_to_codex.py", "--check"], True),
         ("4. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
         ("5. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
-        ("6. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
-        ("7. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
-        ("8. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
-        ("9. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
-        ("10. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        ("6. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
+        ("7. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
+        ("8. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
+        ("9. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
+        ("10. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
+        ("11. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []
