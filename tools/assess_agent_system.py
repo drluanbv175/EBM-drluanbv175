@@ -57,6 +57,19 @@ def p_contains(rel: Path, needle: str, label: str) -> Probe:
     return (ok, f"{label}: {'✓' if ok else '✗'} ({rel.name})")
 
 
+def p_contains_all(rel: Path, needles: List[str], label: str) -> Probe:
+    """Kiểm một file có đủ marker bắt buộc; dùng cho hợp đồng liên-module."""
+    if not rel.exists():
+        return (False, f"{label}: THIẾU file {rel.name}")
+    text = rel.read_text(encoding="utf-8", errors="ignore")
+    missing = [needle for needle in needles if needle not in text]
+    ok = not missing
+    detail = f"{label}: {'✓' if ok else '✗'} ({rel.name}; {len(needles) - len(missing)}/{len(needles)} marker)"
+    if missing:
+        detail += " thiếu " + ", ".join(missing[:4])
+    return (ok, detail)
+
+
 def p_count(n: int, threshold: int, label: str) -> Probe:
     return (n >= threshold, f"{label}: {n} (ngưỡng ≥{threshold})")
 
@@ -152,6 +165,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         # (--classify) — run_eval.py chính nó đã là phụ thuộc sản xuất của
         # cafes_suite.py, nên retry_loop không còn là thư viện không ai gọi.
         lambda: p_contains(TOOLS / "eval" / "run_eval.py", "import retry_loop", "retry_loop nối vào run_eval.py --classify (production, qua cafes_suite)"),
+        lambda: p_contains_all(
+            MT / "audit_research_gates.py",
+            ["ACTION_QUEUE_JSON", "resume_contract", "next_agent_action"],
+            "Audit cổng sinh action queue + resume contract",
+        ),
     ])
     crit("A7", "An toàn, ổn định, kiểm chứng", "agent", [
         lambda: p_exists(AGENTS / "_HIEN-PHAP-LIEM-CHINH.md", "Hiến pháp liêm chính"),
@@ -191,6 +209,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: p_contains(MT / "run_pipeline.py", "orchestrate", "Pipeline G0→G10 (code)"),
         lambda: p_exists(AGENTS / "_SO-DO-PIPELINE-HOP-NHAT.md", "Sơ đồ pipeline hợp nhất"),
         lambda: p_exists(AGENTS / "_VONG-LAP-KHEP-KIN.md", "Vòng lặp khép kín"),
+        lambda: p_contains_all(
+            MT / "audit_research_gates.py",
+            ["release_contract", "can_release_to_next_gate", "prevents_downstream", "gate_release_summary"],
+            "Hợp đồng phát hành từng cổng nghiên cứu",
+        ),
     ])
     crit("S4", "Khả năng mở rộng", "system", [
         lambda: p_exists(TOOLS / "generate_agent.py", "Tự sinh agent (code)"),
@@ -208,6 +231,14 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: p_exists(TOOLS / "enforce_agent_guardrails.py", "Cấy guardrail bắt buộc"),
         lambda: p_contains(MT / "run_pipeline.py", "HARD_GATE_SIGNAL", "Cổng cứng + báo trung thực"),
         lambda: p_exists(MT / "gen_morning_brief.py", "Giám sát định kỳ (morning brief)"),
+        lambda: p_contains_all(
+            MT / "audit_research_gates.py",
+            ["HUMAN_EVIDENCE_REQUIRED", "AUTO_RUN_ALLOWED", "Không chuyển cổng downstream"],
+            "Cổng nghiên cứu chặn downstream khi thiếu bằng chứng thật",
+        ),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_research_gate_contracts.py")],
+                                "Smoke-test hợp đồng cổng nghiên cứu PASS", 60)) or
+                p_exists(TOOLS / "verify_research_gate_contracts.py", "Verifier hợp đồng cổng nghiên cứu có mặt"),
     ])
     crit("S6", "Đánh giá hiệu suất", "system", [
         lambda: p_exists(TOOLS / "eval" / "cafes_suite.py", "Bộ eval CAFÉ-S (code)"),
