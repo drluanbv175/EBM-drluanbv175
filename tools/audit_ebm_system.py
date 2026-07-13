@@ -100,6 +100,14 @@ CHATGPT_REQUIRED_FILES = [
 SCHEDULED = ROOT / "Scheduled"
 BAN_DO_KET_NOI = AGENTS_SRC / "_BAN-DO-KET-NOI.md"
 ROUTINE_WIRING = AGENTS_SRC / "_ROUTINE-AGENT-WIRING.md"
+LIVING_LEDGER_COUNT_DOCS = {
+    AGENTS_SRC / "_VONG-LAP-KHEP-KIN.md": [
+        re.compile(r"ledger\s+(\d+)\s+thẻ", re.IGNORECASE),
+    ],
+    AGENTS_SRC / "cap-nhat-guideline.md": [
+        re.compile(r"EBM_MASTER\s+—\s+(\d+)\+?\s+thẻ", re.IGNORECASE),
+    ],
+}
 
 
 def configure_utf8_stdio() -> None:
@@ -215,6 +223,30 @@ def master_counts() -> dict[str, int]:
         "consider": sum(c.get("decision") == "consider" for c in cards),
         "notyet": sum(c.get("decision") == "notyet" for c in cards),
     }
+
+
+def living_document_count_failures(current_cards: int) -> list[str]:
+    """Bắt các sổ TRẠNG THÁI SỐNG còn hardcode sai số thẻ hub.
+
+    Không quét mọi tài liệu vì nhiều dòng là lịch sử/snapshot có ngày rõ ràng
+    (vd "2026-07-12: chạy thật trên hub 259 thẻ"). Cổng này chỉ soi những file
+    đang được agent dùng như hướng dẫn vận hành hiện hành; ở đó số thẻ phải đọc
+    động từ EBM_MASTER/audit, hoặc nếu hardcode thì phải khớp số thật.
+    """
+    failures: list[str] = []
+    for path, patterns in LIVING_LEDGER_COUNT_DOCS.items():
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for pattern in patterns:
+            for match in pattern.finditer(text):
+                claimed = int(match.group(1))
+                if claimed != current_cards:
+                    failures.append(
+                        f"{path.relative_to(ROOT)} ghi {claimed} thẻ, "
+                        f"EBM_MASTER hiện có {current_cards} thẻ"
+                    )
+    return failures
 
 
 def verify_dashboards() -> tuple[int, list[str]]:
@@ -915,6 +947,12 @@ def main() -> int:
                          "sync_safety_check.py, có thể là dấu hiệu .git hỏng")
 
     counts = master_counts()
+    stale_count_failures = living_document_count_failures(counts["cards"])
+    if stale_count_failures:
+        hard_errors.append(
+            "Sổ hạ tầng trạng thái sống hardcode sai số thẻ EBM_MASTER: "
+            + "; ".join(stale_count_failures)
+        )
     if counts["missing_trace"]:
         hard_errors.append(f"EBM_MASTER còn {counts['missing_trace']} thẻ thiếu truy nguyên")
     if counts["apply_unverified"]:

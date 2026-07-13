@@ -51,7 +51,7 @@
 | 1 | **Tự động hóa cổng** | `run_pipeline.py` (G0→G10) + freshness guard + retry; **hợp đồng DỪNG** (`gate_contract.py`) exit-0/2/3/1 | chạy 1 lệnh → mọi draft; dừng gọn ở cổng cần input |
 | 2 | **Tự sửa chữa** | completeness-critic (`_KIEM-TOAN`) + `tham-dinh-dau-ra` + `retry_loop.py` (≤3 vòng, BẢNG AUTO-FIX `_TU-CHINH-SUA-PROTOCOL.md`) | demo: PASS sau 2 vòng / 3 lần gọi |
 | 3 | **Tự sinh agent** | `_TU-SINH-AGENT.md` + `tools/generate_agent.py` → enforce+sync+audit + registry | test: generate→register→audit PASS (registry-aware) |
-| 4 | **Ghi sổ cái (đóng vòng)** | `so-cai-ghi-nho` → `EBM_MASTER` (`manage_ledger.py`/`sync_all.py`/`ingest_dashboard.py`) + `MEMORY.md` | ledger 259 thẻ (2026-07-12: sửa "231", đọc thật `EBM_MASTER.json` meta.counts); thẻ mới vào hàng chờ duyệt |
+| 4 | **Ghi sổ cái (đóng vòng)** | `so-cai-ghi-nho` → `EBM_MASTER` (`manage_ledger.py`/`sync_all.py`/`ingest_dashboard.py`) + `MEMORY.md` | ledger động, đọc thật từ `EBM_MASTER.json`/`tools/audit_ebm_system.py` tại thời điểm chạy; thẻ mới vào hàng chờ duyệt |
 | 5 | **Tự cập nhật** | `_GIAM-SAT-CHUNG-CU-NOI-CHUNG` · `_NGUON-GUIDELINE-TU-DONG` · `cap-nhat-guideline` · `gen_morning_brief.py` (hằng ngày 06:30, KHÔNG phải weekly/monthly — 2026-07-12: sửa; công cụ THẬT chạy theo lịch weekly/monthly là `scripts/weekly_safety.sh` [T7 19:00] + `scripts/monthly_update.sh` [ngày 1 hằng tháng], cả hai đều KHÔNG gọi `gen_morning_brief.py`) | tín hiệu guideline mới → đề tài mới/cập nhật |
 
 ## Bất biến của vòng lặp (KHÔNG được phá)

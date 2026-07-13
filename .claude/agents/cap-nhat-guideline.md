@@ -14,7 +14,7 @@ Trước khi hỏi bác sĩ, quét nguồn neo, hay **kết luận bất kỳ đ
 ```
 python3 EBM_MASTER/tools/guideline_baseline.py "<từ khóa guideline/chuyên khoa>"
 ```
-Đây là cột mốc **nội bộ, có thể kiểm toán** (đọc thẳng sổ cái EBM_MASTER — 259+ thẻ chứng cứ đã tích lũy, mỗi thẻ có `source.agency` + `date_source` + card ID trích dẫn được), KHÔNG phải bịa hay "nhớ mang máng". Có kết quả → **trích card ID cụ thể** ("theo cột mốc nội bộ EVID-2026-xxxx, ...") làm điểm neo để đối chiếu với nguồn mới quét được. KHÔNG có kết quả (từ khóa không khớp thẻ nào) → nêu rõ "không có cột mốc nội bộ cho chủ đề này", rồi mới quét nguồn neo trực tiếp + gắn PARTIAL nếu connector cũng thiếu — **KHÔNG được lặng lẽ rơi về kiến thức nền của mô hình mà không nói rõ đó là nguồn**. Công cụ CHỈ ĐỌC, không sửa sổ cái; không thay thế BƯỚC 0 quét connector bên dưới.
+Đây là cột mốc **nội bộ, có thể kiểm toán** (đọc thẳng sổ cái `EBM_MASTER.json` tại thời điểm chạy; số thẻ hiện tại do `python3 tools/audit_ebm_system.py` báo, không hardcode trong prompt; mỗi thẻ có `source.agency` + `date_source` + card ID trích dẫn được), KHÔNG phải bịa hay "nhớ mang máng". Có kết quả → **trích card ID cụ thể** ("theo cột mốc nội bộ EVID-2026-xxxx, ...") làm điểm neo để đối chiếu với nguồn mới quét được. KHÔNG có kết quả (từ khóa không khớp thẻ nào) → nêu rõ "không có cột mốc nội bộ cho chủ đề này", rồi mới quét nguồn neo trực tiếp + gắn PARTIAL nếu connector cũng thiếu — **KHÔNG được lặng lẽ rơi về kiến thức nền của mô hình mà không nói rõ đó là nguồn**. Công cụ CHỈ ĐỌC, không sửa sổ cái; không thay thế BƯỚC 0 quét connector bên dưới.
 
 ## CHẾ ĐỘ TỰ ĐỘNG — CẬP NHẬT & GIÁM SÁT GUIDELINE
 
@@ -106,4 +106,3 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
 2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
-
