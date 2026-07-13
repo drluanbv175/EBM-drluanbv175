@@ -6,8 +6,8 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
   4. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
-  5. assess_agent_system.py        — tự đánh giá 13 tiêu chí (A1–A7, S1–S6)
-  6. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
+  5. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
+  6. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
   7. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
   8. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
 
@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,7 +39,12 @@ PY = str(VENV_PY) if VENV_PY.exists() else sys.executable
 
 def run(label: str, args: list[str], pass_when_returncode_zero: bool = True) -> tuple[bool, str]:
     """Chạy một bước; trả (đạt?, dòng tóm tắt cuối). KHÔNG bịa kết quả — dựa returncode thật."""
-    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+    env = dict(
+        os.environ,
+        PYTHONUTF8="1",
+        PYTHONIOENCODING="utf-8",
+        PYTHONPYCACHEPREFIX=str(Path(tempfile.gettempdir()) / "ebm_pycache"),
+    )
     try:
         proc = subprocess.run(
             [PY, *args], cwd=str(ROOT), env=env,
@@ -69,8 +75,8 @@ def main() -> int:
     steps += [
         ("3. Kiểm đồng bộ (--check)", ["tools/sync_agents_to_codex.py", "--check"], True),
         ("4. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
-        ("5. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py"], True),
-        ("6. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
+        ("5. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
+        ("6. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
         ("7. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
         ("8. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
         ("9. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
