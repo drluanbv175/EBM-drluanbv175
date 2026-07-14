@@ -415,7 +415,7 @@
         },
         {
           "ok": true,
-          "detail": "Verifier hợp nhất thẩm định/phản biện/stakeholder/thống kê: ✓ (verify_controlled_research_automation.py; 5/5 marker)"
+          "detail": "Verifier hợp nhất thẩm định/phản biện/stakeholder/readiness/thống kê: ✓ (verify_controlled_research_automation.py; 6/6 marker)"
         }
       ],
       "caveats": [

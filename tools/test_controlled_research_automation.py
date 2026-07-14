@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import verify_controlled_research_automation as V  # noqa: E402
 
 
-def test_controlled_research_automation_passes_all_three_pillars():
+def test_controlled_research_automation_passes_all_pillars():
     report = V.run_verification()
 
     assert report["overall_status"] == "PASS"
@@ -16,6 +16,7 @@ def test_controlled_research_automation_passes_all_three_pillars():
         "appraisal_guardrail",
         "peer_review_control",
         "stakeholder_gate_control",
+        "controlled_readiness_gate",
         "statistics_control",
     }
 
@@ -59,6 +60,17 @@ def test_stakeholder_gate_control_requires_irb_statistician_and_pi():
     assert check["g4_statistician_status"]["satisfied"] is True
     assert check["g9_pi_status"]["satisfied"] is True
     assert check["gate_contract_role_filter"] is True
+
+
+def test_controlled_readiness_gate_requires_reviews_and_stakeholder_approvals():
+    check = V.check_controlled_readiness_gate()
+
+    assert check["status"] == "PASS"
+    assert check["initially_blocked"] is True
+    assert check["review_only_still_blocked"] is True
+    assert check["all_milestones_ready_after_stakeholder_approvals"] is True
+    assert check["peer_review_in_readiness"] is True
+    assert check["ready_snapshot"]["final_released_submitted_count"] == 0
 
 
 def test_statistics_control_requires_effect_ci_and_data_lock_markers():

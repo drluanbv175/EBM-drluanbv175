@@ -8,9 +8,11 @@ người dùng yêu cầu trước khi coi hệ nghiên cứu là sẵn sàng:
    về sửa, không cho phát hành im lặng.
 2. Phản biện: automation không được tự ghi review decision; mọi artifact quan
    trọng vẫn vào hàng đợi người thật/PI/statistician.
-3. Thống kê: engine thống kê chạy được trên số tổng hợp và luôn xuất cỡ hiệu
+3. Readiness có kiểm soát: review đầy đủ vẫn chưa đủ nếu thiếu G2/G4/G9 đúng
+   stakeholder; chỉ mở khi đủ PI/IRB/thống kê/phản biện + approval.
+4. Thống kê: engine thống kê chạy được trên số tổng hợp và luôn xuất cỡ hiệu
    ứng + khoảng tin cậy; đường phân tích dữ liệu thật có marker DATA LOCK.
-4. Stakeholder gates: G2/G4/G9 chỉ thỏa khi đúng nhóm IRB/thống kê viên/PI;
+5. Stakeholder gates: G2/G4/G9 chỉ thỏa khi đúng nhóm IRB/thống kê viên/PI;
    phản biện độc lập được route vào gói bản thảo/review pack.
 
 Cần bác sĩ kiểm chứng. Đây là kiểm kỹ thuật/guardrail, không thay IRB, PI,
@@ -53,10 +55,12 @@ from research_project.project_review_operations import (  # noqa: E402
     PIIInReviewRecord,
     ReviewRole,
     UnauthorizedReviewRole,
+    get_controlled_review_readiness,
     get_review_status,
     list_review_queue,
     make_review_queue_item,
     record_decision,
+    required_roles_for_artifact,
 )
 from meta_analysis_calc import pool_effects  # noqa: E402
 
@@ -101,6 +105,20 @@ def _write_minimal_artifact(project_dir: Path, artifact_id: ArtifactID) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _accept_required_reviews(project_dir: Path, config: ProjectConfig, artifact_id: ArtifactID) -> None:
+    for role in required_roles_for_artifact(artifact_id):
+        record_decision(
+            project_dir=project_dir,
+            config=config,
+            artifact_id_str=artifact_id.value,
+            decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
+            review_role=role,
+            reason=f"Synthetic {role.value} acceptance for {artifact_id.value}.",
+            reviewer_ref=f"{role.value}-CTRL-001",
+            automation_caller=False,
+        )
 
 
 def check_appraisal_control() -> dict[str, Any]:
@@ -379,6 +397,78 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
     }
 
 
+def check_controlled_readiness_gate() -> dict[str, Any]:
+    """Review đầy đủ chỉ mở milestone khi approval stakeholder tương ứng cũng đủ."""
+    with tempfile.TemporaryDirectory() as tmp:
+        project_dir = Path(tmp)
+        config = _project_config()
+        controlled_artifacts = (
+            ArtifactID.PROTOCOL_DRAFT,
+            ArtifactID.METHODS_AND_SAMPLE_SIZE,
+            ArtifactID.SAP_DRAFT,
+            ArtifactID.REPORTING_CHECKLIST_DRAFT,
+            ArtifactID.MANUSCRIPT_OUTLINE_DRAFT,
+            ArtifactID.REVIEW_PACK,
+        )
+        for artifact_id in controlled_artifacts:
+            _write_minimal_artifact(project_dir, artifact_id)
+
+        empty_ledger = ApprovalLedger()
+        initial = get_controlled_review_readiness(project_dir, approval_ledger=empty_ledger)
+        initially_blocked = initial["overall_status"] == "BLOCKED"
+
+        for artifact_id in controlled_artifacts:
+            _accept_required_reviews(project_dir, config, artifact_id)
+
+        review_only = get_controlled_review_readiness(project_dir, approval_ledger=empty_ledger)
+        review_only_blocked = (
+            review_only["overall_status"] == "BLOCKED"
+            and review_only["milestone_ready_count"] == 0
+            and "stakeholder_approval_missing:G2:IRB" in json.dumps(review_only["milestones"])
+            and "stakeholder_approval_missing:G4:STATISTICIAN" in json.dumps(review_only["milestones"])
+            and "stakeholder_approval_missing:G9:PI" in json.dumps(review_only["milestones"])
+        )
+
+        approval_ledger = ApprovalLedger()
+        for gate_id, role in (
+            ("G2", "IRB_ETHICS_COMMITTEE"),
+            ("G4", "METHODS_STATISTICS_REVIEWER"),
+            ("G9", "PI_PROJECT_OWNER"),
+        ):
+            ok, reason = approval_ledger.add_approval(_make_approval(gate_id, role))
+            if not ok:
+                return {
+                    "pillar": "controlled_readiness_gate",
+                    "status": "FAIL",
+                    "reason": reason,
+                    "proves": "Không ghi được approval stakeholder hợp lệ trên fixture synthetic.",
+                }
+
+        ready = get_controlled_review_readiness(project_dir, approval_ledger=approval_ledger)
+
+    peer_review_in_readiness = (
+        ReviewRole.INDEPENDENT_PEER_REVIEWER.value in json.dumps(ready["milestones"])
+    )
+    all_milestones_ready = (
+        ready["overall_status"] == "PASS"
+        and ready["can_advance_controlled_workflow"] is True
+        and ready["milestone_ready_count"] == ready["milestone_total"] == 3
+        and ready["blocking_count"] == 0
+        and ready["final_released_submitted_count"] == 0
+    )
+    ok = initially_blocked and review_only_blocked and all_milestones_ready and peer_review_in_readiness
+    return {
+        "pillar": "controlled_readiness_gate",
+        "status": "PASS" if ok else "FAIL",
+        "initially_blocked": initially_blocked,
+        "review_only_still_blocked": review_only_blocked,
+        "all_milestones_ready_after_stakeholder_approvals": all_milestones_ready,
+        "peer_review_in_readiness": peer_review_in_readiness,
+        "ready_snapshot": ready,
+        "proves": "Readiness tổng hợp fail-closed: đủ review nhưng thiếu G2/G4/G9 vẫn chặn; chỉ PASS khi đủ PI+IRB+thống kê+phản biện và stakeholder approvals.",
+    }
+
+
 def check_statistics_control() -> dict[str, Any]:
     """Engine thống kê phải xuất effect size + CI và main analysis phải có DATA LOCK."""
     pooled = pool_effects(
@@ -425,6 +515,7 @@ def run_verification() -> dict[str, Any]:
         check_appraisal_control(),
         check_peer_review_control(),
         check_stakeholder_gate_control(),
+        check_controlled_readiness_gate(),
         check_statistics_control(),
     ]
     failures = [check for check in checks if check["status"] != "PASS"]

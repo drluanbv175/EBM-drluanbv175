@@ -82,7 +82,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
     EvidenceCheck(
         domain="Tự động có kiểm soát: thẩm định-phản biện-PI/IRB-thống kê",
         command=["tools/verify_controlled_research_automation.py"],
-        proves="Guardrail trả về sửa khi thiếu CI; automation không tự duyệt; role sai, thiếu mã reviewer giả danh và PII trong review bị chặn; review nhiều vai trò chỉ hoàn tất khi đủ PI/IRB/thống kê viên/phản biện; G2/G4/G9 cần IRB/thống kê viên/PI; thống kê xuất effect size/CI và có DATA LOCK.",
+        proves="Guardrail trả về sửa khi thiếu CI; automation không tự duyệt; role sai, thiếu mã reviewer giả danh và PII trong review bị chặn; review nhiều vai trò chỉ hoàn tất khi đủ PI/IRB/thống kê viên/phản biện; readiness tổng hợp vẫn BLOCKED nếu thiếu G2/G4/G9 đúng stakeholder; thống kê xuất effect size/CI và có DATA LOCK.",
         limitation="Fixture synthetic/offline; không thay thẩm định IRB, PI, thống kê viên, phản biện độc lập hoặc kiểm thử dữ liệu thật tại bệnh viện.",
     ),
     EvidenceCheck(
