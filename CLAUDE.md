@@ -56,19 +56,33 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   trong `.env.example`, chưa có chỗ nào trong code đọc nó). `tools/orchestrator/` (control plane 6
   năng lực, xem mục Lệnh) cũng **tách rời khỏi luồng agent thật** — chỉ là bộ dry-run/self-audit song
   song, bác sĩ không cần đụng tới khi làm việc qua Claude/Codex agent bình thường.
-- **4 nhánh mồ côi khác trong `medical-ebm-automation/`, phát hiện qua audit cổng 2026-07-14 —
+- **5 nhánh mồ côi khác trong `medical-ebm-automation/`, phát hiện qua audit cổng 2026-07-14 —
   cùng kiểu "tách rời" như `tools/orchestrator/`, KHÔNG do doctrine/agent nào gọi tới, ĐỪNG nhầm là
   cổng thật đang bảo vệ pipeline:** (1) `runtime/policy_gate_engine.py` + `runtime/controlled_orchestrator.py`
   + `research_studio/` + `research_automation/` — tự khai "NO-GO — NOT QUALIFIED FOR RESEARCH WORKFLOW USE"
   ngay trong docstring, ledger của nó chỉ sống trong bộ nhớ (không bao giờ ghi ra
   `exports/<study>/approval_ledger.json` — file THẬT mà `tools/approve_gate.py`/`run_g*_auto.py` dùng).
-  (2) `research_project/project_cli.py` — CLI thứ ba, không nằm trong doctrine, có thể vô tình trỏ
-  `--approval-ledger` vào ĐÚNG path thật và ghi đè ledger nếu ai đó gõ nhầm (rủi ro tiềm ẩn, chưa xảy ra).
+  (2) `research_project/project_cli.py` + `research_project/project_claim_traceability.py`
+  (`ClaimTraceabilityLedger`) — CLI thứ ba, không nằm trong doctrine, có thể vô tình trỏ
+  `--approval-ledger` vào ĐÚNG path thật và ghi đè ledger nếu ai đó gõ nhầm (rủi ro tiềm ẩn, chưa xảy ra);
+  package tự khai "OFFLINE·SYNTHETIC ONLY... NO-GO — NOT QUALIFIED FOR RESEARCH WORKFLOW USE".
   (3) `app/core/approval_service.py` (class `ApprovalCenter`) + `app/models/governance_v7.py` +
   `app/chronic_care/` — hệ role thứ ba (physician/PI/system_owner) phục vụ "Chronic Care Phase 3A
   shadow pilot" nội bộ bằng Python, KHÁC HOÀN TOÀN thư mục `chronic-care-clinic-os/` (Next.js) ở trên dù
-  trùng tên "chronic care" — không có route/CLI thật nào ghi vào DB này ngoài script seed test. Cổng G0-G9
-  THẬT duy nhất đang chạy là `tools/gate_contract.py` + `tools/approve_gate.py` + `tools/run_g*_auto.py`.
+  trùng tên "chronic care" — không có route/CLI thật nào ghi vào DB này ngoài script seed test.
+  (4) `app/evidence/citation_verification.py` + `phase_2d_claim_mapping_validator.py` +
+  `retraction_monitor.py` (gọi bởi `scripts/phase_2b_live_source_smoke_test.py`,
+  `scripts/phase_2c_live_source_validation.py`, `app/evidence/phase_2d_pack_readiness.py`, và cross-ref
+  bởi `app/models/governance_v7.py` ở mục (3) — 2 nhánh mồ côi này GIAO NHAU) — một hệ claim/citation/
+  retraction-tracking THỨ HAI song song với (2), CŨNG không được `tools/run_g7_auto.py`/`run_g9_auto.py`
+  gọi tới. `retraction_monitor.detect_retraction()` của nhánh này chỉ đọc chữ "retracted"/"withdrawn"
+  ĐÃ CÓ SẴN trong metadata truyền vào — KHÔNG tự tra cứu gì, khác hẳn cơ chế THẬT đang dùng (mục dưới).
+  Cổng G0-G9 THẬT duy nhất đang chạy là `tools/gate_contract.py` + `tools/approve_gate.py` +
+  `tools/run_g*_auto.py`. Từ 2026-07-15: cổng A12 (kiểm chứng trích dẫn, agent `kiem-chung-trich-dan`)
+  cũng THẬT — `tools/run_g10_assemble.py` xác minh artifact `A12_CITATION_VERIFICATION_<study>.md` trước
+  khi cho lắp gói nộp, và rút bài được tra CHỦ ĐỘNG bằng `tools/check_citation_retraction.py`
+  (`app/sources/pubmed.py::PubMedClient.check_retraction_status()` — gọi PubMed E-utilities thật, xác
+  nhận bằng PMID 9500320/Wakefield 1998; KHÁC nhánh mồ côi (4) ở trên).
 
 ## Stack kỹ thuật
 - Python 3.11+ (khuyến nghị 3.12), venv **ngoài OneDrive** (`~/.ebm-venv`), requirements.txt
