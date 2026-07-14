@@ -335,11 +335,16 @@ def _make_approval(gate_id: str, role: str):
 
 
 def check_stakeholder_gate_control() -> dict[str, Any]:
-    """G2/G4/G9 phải fail-closed khi approval sai stakeholder hoặc synthetic."""
+    """G2/G4/G9 phải fail-closed khi approval sai stakeholder hoặc synthetic.
+
+    Vá 2026-07-15: G4 CHẤP NHẬN CẢ thống kê viên LẪN PI tự ký (gate_contract.py,
+    2026-07-14 — khớp doctrine thiet-ke-nghien-cuu.md). PI_PROJECT_OWNER không còn là
+    "role sai" cho G4 kể từ đó — dùng IRB_ETHICS_COMMITTEE làm role sai để tiếp tục
+    kiểm fail-closed (IRB chưa từng và vẫn không thỏa G4)."""
     ledger = ApprovalLedger()
 
     wrong_g2_ok, _ = ledger.add_approval(_make_approval("G2", "PI_PROJECT_OWNER"))
-    wrong_g4_ok, _ = ledger.add_approval(_make_approval("G4", "PI_PROJECT_OWNER"))
+    wrong_g4_ok, _ = ledger.add_approval(_make_approval("G4", "IRB_ETHICS_COMMITTEE"))
     wrong_roles_rejected_by_gate = (
         wrong_g2_ok and wrong_g4_ok
         and not ledger.has_ethics_approval()
@@ -374,8 +379,9 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
     gate_contract_roles = (
         not GC.reviewer_role_satisfies_gate("G2", "PI_PROJECT_OWNER")
         and GC.reviewer_role_satisfies_gate("G2", "IRB_ETHICS_COMMITTEE")
-        and not GC.reviewer_role_satisfies_gate("G4", "PI_PROJECT_OWNER")
+        and GC.reviewer_role_satisfies_gate("G4", "PI_PROJECT_OWNER")
         and GC.reviewer_role_satisfies_gate("G4", "BIOSTATISTICIAN")
+        and not GC.reviewer_role_satisfies_gate("G4", "IRB_ETHICS_COMMITTEE")
         and GC.reviewer_role_satisfies_gate("G9", "PRINCIPAL_INVESTIGATOR")
     )
     ok = (
@@ -393,7 +399,7 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
         "g4_statistician_status": statuses["G4"],
         "g9_pi_status": statuses["G9"],
         "gate_contract_role_filter": gate_contract_roles,
-        "proves": "G2/G4/G9 yêu cầu đúng stakeholder: IRB, thống kê/phương pháp, PI; synthetic approval không mở cổng.",
+        "proves": "G2/G4/G9 yêu cầu đúng stakeholder: IRB, thống kê/phương pháp HOẶC PI (G4), PI (G9); synthetic approval không mở cổng.",
     }
 
 
