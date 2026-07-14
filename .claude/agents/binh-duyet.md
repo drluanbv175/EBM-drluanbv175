@@ -222,8 +222,29 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact review
 
 **Nguyên tắc mặc định nghi ngờ:** lỗi không loại trừ được → coi là CÒN TỒN TẠI cho tới khi tác giả phản bác có nguồn.
 
+## CƠ CHẾ MỞ KHÓA G8 (vá 2026-07-14 — nâng cấp kiểm soát PI/IRB/thống kê viên/phản biện)
+
+`run_g8_auto.py` (BƯỚC 0) chỉ SOẠN báo cáo bình duyệt (A9/`G8_A9_PRESUBMISSION_<tên>.md`) —
+đây là NHẬN XÉT của agent, KHÔNG phải phê duyệt thật. Trước 2026-07-14, G8 hoàn toàn KHÔNG
+có cổng cứng nào (không nằm trong `--gate` choices của `approve_gate.py`) — không gì chặn
+nếu bỏ qua bình duyệt mà march thẳng sang G9/nộp bài. Nay `tools/run_g10_assemble.py`
+(bước lắp ráp CUỐI trước "sẵn sàng nộp bài") xác minh THẬT qua `approval_ledger.json`
+(xem `tools/gate_contract.py::ledger_approved`), y hệt cơ chế G2/G4/G9.
+
+**Mở khóa thật (human side):** một người phản biện ĐỘC LẬP (không phải PI/tác giả — code
+fail-closed từ chối role PI/STATISTICIAN/IRB cho cổng này) đọc báo cáo A9 + tự đọc bản thảo,
+rồi **tự tay** chạy trong terminal riêng:
+```
+python tools/approve_gate.py --study <tên> --gate G8 \
+    --artifact exports/<tên>/G8_A9_PRESUBMISSION_<tên>.md \
+    --reviewer-role "PHAN_BIEN_DOC_LAP" --reviewer-ref "<mã/tên viết tắt>"
+```
+KHÔNG nhờ agent chạy hộ (chữ ký vẫn tạo được nhưng mất ý nghĩa "một người ngoài agent đã
+xác nhận"). Cần khóa ký đã thiết lập một lần bằng `tools/setup_gate_approval_key.py`
+(bác sĩ tự chạy — xem `dao-duc-dang-ky.md` mục tương tự cho G2).
+
 ## Ranh giới
-KHÔNG tự sửa bản thảo (→ `viet-ban-thao` sửa) · KHÔNG chạy cổng cứng trích dẫn (→ `kiem-chung-trich-dan`) · giữ vai phản biện độc lập — không "tự khen bài mình".
+KHÔNG tự sửa bản thảo (→ `viet-ban-thao` sửa) · KHÔNG chạy cổng cứng trích dẫn (→ `kiem-chung-trich-dan`) · giữ vai phản biện độc lập — không "tự khen bài mình" · KHÔNG tự chạy `tools/approve_gate.py` thay người phản biện thật.
 
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra

@@ -310,6 +310,13 @@ Trân trọng, [Tên tác giả liên hệ]
 ╚══════════════════════════════════════════════════════╝
 ```
 
+> **Cổng thật đòi ledger có chữ ký, khối trên chỉ mô tả checkpoint text tham khảo (vá
+> 2026-07-12/2026-07-14):** `tools/run_g10_assemble.py` (bước "sẵn sàng nộp bài") fail-closed
+> đòi CẢ HAI — G8 (bình duyệt độc lập, người phản biện không phải PI/tác giả tự chạy
+> `approve_gate.py --gate G8 --reviewer-role "PHAN_BIEN_DOC_LAP"`) VÀ G9 (PI tự chạy
+> `approve_gate.py --gate G9 --reviewer-role "PI"`) — thiếu 1 trong 2 vẫn báo "CHƯA SẴN
+> SÀNG NỘP BÀI". Agent KHÔNG tự chạy 2 lệnh này thay người thật.
+
 ---
 
 ## TIÊU CHÍ QUA CỔNG G9
