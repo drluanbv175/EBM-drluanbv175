@@ -40,6 +40,8 @@ def test_peer_review_control_blocks_auto_review_and_routes_methods_reviewer():
     assert check["irb_ethics_review_routed"] is True
     assert check["independent_peer_review_routed"] is True
     assert check["unauthorized_review_role_blocked"] is True
+    assert check["missing_review_actor_ref_blocked"] is True
+    assert check["pii_in_review_record_blocked"] is True
     assert check["partial_multi_role_review_enforced"] is True
     assert check["complete_multi_role_review_detected"] is True
     assert check["human_review_required"] is True

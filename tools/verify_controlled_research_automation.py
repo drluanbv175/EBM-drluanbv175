@@ -49,6 +49,8 @@ from research_project.project_config import REQUIRE_HUMAN_INPUT_MARKER as RHI  #
 from research_project.project_review_operations import (  # noqa: E402
     AutoReviewForbidden,
     HumanDecision,
+    MissingReviewActorReference,
+    PIIInReviewRecord,
     ReviewRole,
     UnauthorizedReviewRole,
     get_review_status,
@@ -174,6 +176,7 @@ def check_peer_review_control() -> dict[str, Any]:
                 decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
                 review_role=ReviewRole.METHODS_STATISTICS_REVIEWER,
                 reason="Automation attempt should be blocked.",
+                reviewer_ref="STAT-REV-AUTO-001",
                 automation_caller=True,
             )
         except AutoReviewForbidden:
@@ -188,10 +191,42 @@ def check_peer_review_control() -> dict[str, Any]:
                 decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
                 review_role=ReviewRole.PI_PROJECT_OWNER,
                 reason="PI should not replace the statistician for SAP.",
+                reviewer_ref="PI-REV-WRONG-001",
                 automation_caller=False,
             )
         except UnauthorizedReviewRole:
             unauthorized_role_blocked = True
+
+        missing_actor_ref_blocked = False
+        try:
+            record_decision(
+                project_dir=project_dir,
+                config=config,
+                artifact_id_str=ArtifactID.EVIDENCE_PLAN.value,
+                decision=HumanDecision.REQUEST_HUMAN_INPUT,
+                review_role=ReviewRole.EVIDENCE_CITATION_REVIEWER,
+                reason="Reviewer reference is mandatory.",
+                reviewer_ref="",
+                automation_caller=False,
+            )
+        except MissingReviewActorReference:
+            missing_actor_ref_blocked = True
+
+        pii_in_review_record_blocked = False
+        try:
+            record_decision(
+                project_dir=project_dir,
+                config=config,
+                artifact_id_str=ArtifactID.SAP_DRAFT.value,
+                decision=HumanDecision.REVISION_REQUIRED,
+                review_role=ReviewRole.METHODS_STATISTICS_REVIEWER,
+                reason="Remove email from the review note before storing it.",
+                required_actions=["Không ghi họ tên hoặc patient_id vào review ledger."],
+                reviewer_ref="STAT-REV-PII-001",
+                automation_caller=False,
+            )
+        except PIIInReviewRecord:
+            pii_in_review_record_blocked = True
 
         record_decision(
             project_dir=project_dir,
@@ -200,6 +235,7 @@ def check_peer_review_control() -> dict[str, Any]:
             decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
             review_role=ReviewRole.PI_PROJECT_OWNER,
             reason="Synthetic PI internal draft acceptance.",
+            reviewer_ref="PI-REV-001",
             automation_caller=False,
         )
         partial_protocol_item = next(
@@ -219,6 +255,7 @@ def check_peer_review_control() -> dict[str, Any]:
                 decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
                 review_role=role,
                 reason=f"Synthetic {role.value} internal draft acceptance.",
+                reviewer_ref=f"{role.value}-REV-001",
                 automation_caller=False,
             )
         complete_protocol_item = next(
@@ -246,6 +283,7 @@ def check_peer_review_control() -> dict[str, Any]:
     ok = (
         automation_blocked and methods_routed and irb_routed
         and independent_peer_routed and unauthorized_role_blocked
+        and missing_actor_ref_blocked and pii_in_review_record_blocked
         and partial_review_enforced and complete_multi_role_review
         and human_required and no_auto_approve
     )
@@ -257,12 +295,14 @@ def check_peer_review_control() -> dict[str, Any]:
         "irb_ethics_review_routed": irb_routed,
         "independent_peer_review_routed": independent_peer_routed,
         "unauthorized_review_role_blocked": unauthorized_role_blocked,
+        "missing_review_actor_ref_blocked": missing_actor_ref_blocked,
+        "pii_in_review_record_blocked": pii_in_review_record_blocked,
         "partial_multi_role_review_enforced": partial_review_enforced,
         "complete_multi_role_review_detected": complete_multi_role_review,
         "human_review_required": human_required,
         "auto_approve": synthetic_queue_item["auto_approve"],
         "review_status": status,
-        "proves": "Automation không thể tự duyệt; role sai bị chặn; protocol đi qua PARTIAL_REVIEW rồi chỉ hoàn tất khi đủ PI+IRB+thống kê; bản thảo/review pack có phản biện độc lập.",
+        "proves": "Automation không thể tự duyệt; role sai, thiếu mã reviewer giả danh và PII trong review đều bị chặn; protocol đi qua PARTIAL_REVIEW rồi chỉ hoàn tất khi đủ PI+IRB+thống kê; bản thảo/review pack có phản biện độc lập.",
     }
 
 
