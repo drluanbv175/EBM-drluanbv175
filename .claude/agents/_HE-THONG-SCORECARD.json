@@ -131,7 +131,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 526 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 534 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -201,7 +201,7 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 120 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 121 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
