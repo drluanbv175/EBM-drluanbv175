@@ -101,6 +101,8 @@ def test_r8_bare_pvalue_without_ci_fails():
     res = RE.evaluate(text, {"type": "research"})
     c = [x for x in res["checks"] if x["id"] == "effect_size_ci_required"][0]
     assert c["pass"] is False
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+    assert "effect_size_ci_required" in res["red_fails"]
     gr = RE.classify(res)
     assert "R8" in {e.code for e in gr.errors}
 
@@ -503,6 +505,31 @@ def test_effect_size_ci_required_still_fails_when_no_ci_anywhere_reasonable():
     res = RE.evaluate(text, {"type": "research"})
     c = [x for x in res["checks"] if x["id"] == "effect_size_ci_required"][0]
     assert c["pass"] is False
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+
+
+def test_reporting_standard_failure_returns_for_fix():
+    text = (
+        "Bản thảo nghiên cứu đoàn hệ hồi cứu về kiểm soát huyết áp. "
+        "Tác giả dự kiến dùng checklist CONSORT. PMID:12345678. Cần bác sĩ kiểm chứng."
+    )
+    res = RE.evaluate(text, {"type": "research"})
+    c = [x for x in res["checks"] if x["id"] == "reporting_standard"][0]
+    assert c["pass"] is False
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+    assert "reporting_standard" in res["red_fails"]
+
+
+def test_ai_disclosure_failure_returns_for_fix():
+    text = (
+        "Bản thảo dùng AI hỗ trợ viết phần thảo luận để nộp tạp chí. "
+        "PMID:12345678. Cần bác sĩ kiểm chứng."
+    )
+    res = RE.evaluate(text, {"type": "research"})
+    c = [x for x in res["checks"] if x["id"] == "ai_disclosure"][0]
+    assert c["pass"] is False
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+    assert "ai_disclosure" in res["red_fails"]
 
 
 def test_who_aware_not_applied_to_research_arm_description():

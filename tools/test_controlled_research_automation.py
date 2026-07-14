@@ -24,6 +24,8 @@ def test_appraisal_guardrail_returns_for_fix_on_pvalue_without_ci():
 
     assert check["status"] == "PASS"
     assert check["returned_for_fix"] is True
+    assert check["direct_run_eval_verdict"] == "TRẢ-VỀ-SỬA"
+    assert "effect_size_ci_required" in check["direct_run_eval_red_fails"]
     assert check["code"] == "R8"
     assert "R8" in check["ledger_codes"]
 

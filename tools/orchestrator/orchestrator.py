@@ -36,7 +36,8 @@ GATE_HINTS: dict[str, str] = {
 REROUTE_DEFAULT: dict[str, str] = {
     "R1": "kiem-chung-trich-dan", "R1b": "kiem-chung-trich-dan", "CIT-GHOST": "kiem-chung-trich-dan",
     "R4": "tra-cuu-chung-cu", "R9": "tra-cuu-chung-cu", "PARTIAL": "tra-cuu-chung-cu",
-    "R8": "phan-tich-thong-ke",
+    "R8": "phan-tich-thong-ke", "STAT-MISMATCH": "phan-tich-thong-ke",
+    "STD-REPORT": "viet-ban-thao", "AI-DISCLOSE": "nop-bai-phan-hoi",
 }
 
 # Mã verdict KHÔNG chẩn đoán được (verdict_fn ném lỗi / trả dị dạng) → FAIL-CLOSED: block +

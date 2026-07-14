@@ -27,12 +27,14 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT / "medical-ebm-automation"
 TOOLS = ROOT / "tools"
+EVAL_TOOLS = TOOLS / "eval"
 MT = REPO / "tools"
 
-for path in (str(TOOLS), str(REPO), str(MT)):
+for path in (str(TOOLS), str(EVAL_TOOLS), str(REPO), str(MT)):
     if path not in sys.path:
         sys.path.insert(0, path)
 
+import run_eval  # noqa: E402
 from orchestrator.guardrail_bridge import make_run_eval_verdict  # noqa: E402
 from research_project.project_config import (  # noqa: E402
     ARTIFACT_FILENAME,
@@ -102,6 +104,7 @@ def check_appraisal_control() -> dict[str, Any]:
         "safety-net được nêu rõ trước khi áp dụng lâm sàng. PMID: 12345678 "
         "(2024). Cần bác sĩ kiểm chứng."
     )
+    direct = run_eval.evaluate(output_text, {"type": "research"})
     with tempfile.TemporaryDirectory() as tmp:
         log_path = Path(tmp) / "APPRAISALS.jsonl"
         verdict = make_run_eval_verdict(
@@ -115,7 +118,9 @@ def check_appraisal_control() -> dict[str, Any]:
         record = json.loads(log_lines[-1])
 
     ok = (
-        verdict.get("status") == "returned_for_fix"
+        direct.get("verdict") == "TRẢ-VỀ-SỬA"
+        and "effect_size_ci_required" in direct.get("red_fails", [])
+        and verdict.get("status") == "returned_for_fix"
         and verdict.get("code") == "R8"
         and "R8" in record.get("ledger_codes", [])
     )
@@ -123,6 +128,8 @@ def check_appraisal_control() -> dict[str, Any]:
         "pillar": "appraisal_guardrail",
         "status": "PASS" if ok else "FAIL",
         "returned_for_fix": verdict.get("status") == "returned_for_fix",
+        "direct_run_eval_verdict": direct.get("verdict"),
+        "direct_run_eval_red_fails": direct.get("red_fails", []),
         "code": verdict.get("code"),
         "ledger_codes": record.get("ledger_codes", []),
         "proves": "Cổng thẩm định phát hiện p-value đơn độc thiếu 95% CI/effect size và trả về sửa.",

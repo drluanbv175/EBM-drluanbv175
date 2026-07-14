@@ -15,7 +15,8 @@ sửa `run_eval.py` (đang bị phiên khác biên tập). Hòa mạng vào `run
 3 dòng (xem cuối file — mục WIRING). Vì tách file nên KHÔNG thể phá `test_classify.py` hiện có.
 
 Mỗi check trả (id, ok, detail) TƯƠNG THÍCH danh sách `checks` của run_eval (list các (k, ok, _)).
-Cả 3 là TIER-1 (return-for-fix), KHÔNG auto-fail → không nằm trong red_keys.
+Cả 3 là TIER-1: nếu fail thì `run_eval` phải TRẢ-VỀ-SỬA để không phát hành đầu ra nghiên
+cứu sai chuẩn. Đây là return-for-fix có thể sửa được, không phải hard-escalate kiểu PII.
 
 Nguyên tắc: bảo thủ (ưu tiên KHÔNG báo động giả). Chỉ kích hoạt khi bối cảnh rõ là báo cáo/
 bản thảo/nộp bài; nếu không đủ tín hiệu → trả ok=True kèm 'n/a' (không áp dụng), không phạt.
@@ -31,8 +32,9 @@ RESEARCH_CHECK_ID_TO_LEDGER = {
     "stat_mismatch": "STAT-MISMATCH",
     "ai_disclosure": "AI-DISCLOSE",
 }
-# Cả 3 là tier-1 (không auto-fail). Để rỗng để run_eval KHÔNG xếp vào red_fails/AUTO-FAIL.
-RESEARCH_RED_KEYS: set[str] = set()
+# Cả 3 là tier-1 return-for-fix. Tên biến giữ theo schema lịch sử của run_eval
+# (`red_fails` điều khiển verdict), nhưng đây không đồng nghĩa hard-escalate.
+RESEARCH_RED_KEYS: set[str] = set(RESEARCH_CHECK_ID_TO_LEDGER)
 
 # ── 1) CHUẨN BÁO CÁO theo thiết kế (STD-REPORT) ──────────────────────────────
 # Bản đồ: loại thiết kế → chuẩn báo cáo ĐÚNG (bản hiện hành). Nguồn: EQUATOR Network.
@@ -196,7 +198,8 @@ def research_checks(text: str, gold: dict | None = None) -> list[tuple[str, bool
 #          checks += research_checks(text, gold)
 #   (3) hợp nhất map cho emit_appraisal/classify:
 #          CHECK_ID_TO_RCODE.update(RESEARCH_CHECK_ID_TO_LEDGER)
-#   → 3 mã mới KHÔNG nằm red_keys ⇒ verdict thành "TRẢ-VỀ-SỬA" (tier-1), không AUTO-FAIL.
+#   → 3 mã mới nằm trong RESEARCH_RED_KEYS ⇒ verdict thành "TRẢ-VỀ-SỬA" (tier-1),
+#      nhưng orchestrator vẫn định tuyến sửa, không hard-escalate.
 
 
 # ── TỰ-TEST (verify-by-running; bài học dự án: không tin báo cáo, phải CHẠY) ──

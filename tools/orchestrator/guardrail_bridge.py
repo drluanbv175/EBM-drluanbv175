@@ -35,10 +35,16 @@ _CHECK_ID_TO_RCODE = {
     "certainty_vs_strength": "R5", "disclaimer": "R7", "source_has_year": "R9",
     "who_aware_if_antibiotic": "R10", "no_causal_from_observational": "R11", "red_flags": "R12",
     "effect_size_ci_required": "R8", "label_gaming_r1b": "R1b", "mandatory_safety_question": "R13",
-    "stat_mismatch": "R8",
+    "reporting_standard": "STD-REPORT", "stat_mismatch": "STAT-MISMATCH",
+    "ai_disclosure": "AI-DISCLOSE",
 }
-_REROUTABLE = ("R1", "R1b", "R4", "R8", "R9")                 # mã sửa-được → ưu tiên chọn re-route
-_RETURN_FOR_FIX_CHECKS = {"effect_size_ci_required", "stat_mismatch"}
+_REROUTABLE = (
+    "R1", "R1b", "R4", "R8", "R9", "STD-REPORT", "STAT-MISMATCH", "AI-DISCLOSE",
+)  # mã sửa-được → ưu tiên chọn re-route
+_RETURN_FOR_FIX_CHECKS = {
+    "effect_size_ci_required", "label_gaming_r1b",
+    "reporting_standard", "stat_mismatch", "ai_disclosure",
+}
 
 
 # ── import run_eval.evaluate (chỉ hàm cổng rule-based; giảm phụ thuộc) ────────────

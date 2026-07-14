@@ -294,6 +294,20 @@ class TestGuardrailReroute(unittest.TestCase):
         self.assertEqual(len(rr), 1)
         self.assertEqual(rr[0]["agent"], "tra-cuu-chung-cu")
 
+    def test_research_quality_codes_route_to_specialists(self):
+        cases = {
+            "STAT-MISMATCH": "phan-tich-thong-ke",
+            "STD-REPORT": "viet-ban-thao",
+            "AI-DISCLOSE": "nop-bai-phan-hoi",
+        }
+        for code, agent in cases.items():
+            with self.subTest(code=code):
+                s = self.orch.handle("Guideline nói gì về đích huyết áp?", persist=False,
+                                     guardrail_verdict=self._fail_then_pass(code=code, reroute_to=None))
+                rr = self._reroutes(s)
+                self.assertEqual(len(rr), 1)
+                self.assertEqual(rr[0]["agent"], agent)
+
     def test_fail_closed_on_none_verdict(self):
         # M3: verdict trả None (dị dạng) → KHÔNG được release; FAIL-CLOSED → blocked, leo thang
         s = self.orch.handle("Guideline nói gì về đích huyết áp?", persist=False,
