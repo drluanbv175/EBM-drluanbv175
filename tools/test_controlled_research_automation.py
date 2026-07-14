@@ -39,6 +39,9 @@ def test_peer_review_control_blocks_auto_review_and_routes_methods_reviewer():
     assert check["methods_statistics_review_routed"] is True
     assert check["irb_ethics_review_routed"] is True
     assert check["independent_peer_review_routed"] is True
+    assert check["unauthorized_review_role_blocked"] is True
+    assert check["partial_multi_role_review_enforced"] is True
+    assert check["complete_multi_role_review_detected"] is True
     assert check["human_review_required"] is True
     assert check["auto_approve"] is False
     assert check["review_status"]["final_released_submitted_count"] == 0

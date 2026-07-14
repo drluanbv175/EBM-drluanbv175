@@ -50,6 +50,7 @@ from research_project.project_review_operations import (  # noqa: E402
     AutoReviewForbidden,
     HumanDecision,
     ReviewRole,
+    UnauthorizedReviewRole,
     get_review_status,
     list_review_queue,
     make_review_queue_item,
@@ -178,6 +179,57 @@ def check_peer_review_control() -> dict[str, Any]:
         except AutoReviewForbidden:
             automation_blocked = True
 
+        unauthorized_role_blocked = False
+        try:
+            record_decision(
+                project_dir=project_dir,
+                config=config,
+                artifact_id_str=ArtifactID.SAP_DRAFT.value,
+                decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
+                review_role=ReviewRole.PI_PROJECT_OWNER,
+                reason="PI should not replace the statistician for SAP.",
+                automation_caller=False,
+            )
+        except UnauthorizedReviewRole:
+            unauthorized_role_blocked = True
+
+        record_decision(
+            project_dir=project_dir,
+            config=config,
+            artifact_id_str=ArtifactID.PROTOCOL_DRAFT.value,
+            decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
+            review_role=ReviewRole.PI_PROJECT_OWNER,
+            reason="Synthetic PI internal draft acceptance.",
+            automation_caller=False,
+        )
+        partial_protocol_item = next(
+            i for i in list_review_queue(project_dir, config)
+            if i["artifact_id"] == ArtifactID.PROTOCOL_DRAFT.value
+        )
+        partial_review_enforced = (
+            partial_protocol_item["current_status"] == "PARTIAL_REVIEW"
+            and ReviewRole.METHODS_STATISTICS_REVIEWER.value in partial_protocol_item["missing_roles"]
+            and ReviewRole.IRB_ETHICS_COMMITTEE.value in partial_protocol_item["missing_roles"]
+        )
+        for role in (ReviewRole.METHODS_STATISTICS_REVIEWER, ReviewRole.IRB_ETHICS_COMMITTEE):
+            record_decision(
+                project_dir=project_dir,
+                config=config,
+                artifact_id_str=ArtifactID.PROTOCOL_DRAFT.value,
+                decision=HumanDecision.ACCEPT_DRAFT_FOR_NEXT_INTERNAL_STAGE,
+                review_role=role,
+                reason=f"Synthetic {role.value} internal draft acceptance.",
+                automation_caller=False,
+            )
+        complete_protocol_item = next(
+            i for i in list_review_queue(project_dir, config)
+            if i["artifact_id"] == ArtifactID.PROTOCOL_DRAFT.value
+        )
+        complete_multi_role_review = (
+            complete_protocol_item["current_status"] == "ACCEPTED_DRAFT"
+            and complete_protocol_item["complete_required_review"] is True
+            and complete_protocol_item["missing_roles"] == []
+        )
         status = get_review_status(project_dir)
 
     methods_routed = (
@@ -193,7 +245,9 @@ def check_peer_review_control() -> dict[str, Any]:
     no_auto_approve = synthetic_queue_item["auto_approve"] is False
     ok = (
         automation_blocked and methods_routed and irb_routed
-        and independent_peer_routed and human_required and no_auto_approve
+        and independent_peer_routed and unauthorized_role_blocked
+        and partial_review_enforced and complete_multi_role_review
+        and human_required and no_auto_approve
     )
     return {
         "pillar": "peer_review_control",
@@ -202,10 +256,13 @@ def check_peer_review_control() -> dict[str, Any]:
         "methods_statistics_review_routed": methods_routed,
         "irb_ethics_review_routed": irb_routed,
         "independent_peer_review_routed": independent_peer_routed,
+        "unauthorized_review_role_blocked": unauthorized_role_blocked,
+        "partial_multi_role_review_enforced": partial_review_enforced,
+        "complete_multi_role_review_detected": complete_multi_role_review,
         "human_review_required": human_required,
         "auto_approve": synthetic_queue_item["auto_approve"],
         "review_status": status,
-        "proves": "Automation không thể tự duyệt; protocol có PI+IRB+thống kê, bản thảo/review pack có phản biện độc lập.",
+        "proves": "Automation không thể tự duyệt; role sai bị chặn; protocol đi qua PARTIAL_REVIEW rồi chỉ hoàn tất khi đủ PI+IRB+thống kê; bản thảo/review pack có phản biện độc lập.",
     }
 
 
