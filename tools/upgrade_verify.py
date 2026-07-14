@@ -9,12 +9,13 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc
   5. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
   6. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
   7. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
-  8. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
-  9. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
- 10. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
- 11. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
- 12. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
- 13. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
+  8. verify_controlled_research_automation.py — thẩm định/phản biện/thống kê có kiểm soát
+  9. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
+ 10. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
+ 11. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
+ 12. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
+ 13. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
+ 14. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -83,14 +84,15 @@ def main() -> int:
         ("5. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
         ("6. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
         ("7. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
-        ("8. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
-        ("9. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
-        ("10. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
-        ("11. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
-        ("12. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
-        ("13. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
-        ("14. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
-        ("15. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        ("8. Tự động NC có kiểm soát", ["tools/verify_controlled_research_automation.py"], True),
+        ("9. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
+        ("10. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
+        ("11. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
+        ("12. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
+        ("13. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
+        ("14. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
+        ("15. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
+        ("16. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []

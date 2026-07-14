@@ -37,6 +37,12 @@ def test_markdown_report_contains_honest_evidence_table():
     assert "Cần bác sĩ kiểm chứng" in md
 
 
+def test_core_checks_include_controlled_research_automation():
+    commands = [" ".join(check.command) for check in E.CORE_CHECKS]
+
+    assert any("verify_controlled_research_automation.py" in cmd for cmd in commands)
+
+
 def test_write_report_writes_markdown_and_json():
     report = {
         "kind": "research_readiness_evidence_report",

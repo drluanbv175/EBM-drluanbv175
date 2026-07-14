@@ -35,8 +35,10 @@ _CHECK_ID_TO_RCODE = {
     "certainty_vs_strength": "R5", "disclaimer": "R7", "source_has_year": "R9",
     "who_aware_if_antibiotic": "R10", "no_causal_from_observational": "R11", "red_flags": "R12",
     "effect_size_ci_required": "R8", "label_gaming_r1b": "R1b", "mandatory_safety_question": "R13",
+    "stat_mismatch": "R8",
 }
-_REROUTABLE = ("R1", "R1b", "R4", "R9")                       # mã sửa-được → ưu tiên chọn re-route
+_REROUTABLE = ("R1", "R1b", "R4", "R8", "R9")                 # mã sửa-được → ưu tiên chọn re-route
+_RETURN_FOR_FIX_CHECKS = {"effect_size_ci_required", "stat_mismatch"}
 
 
 # ── import run_eval.evaluate (chỉ hàm cổng rule-based; giảm phụ thuộc) ────────────
@@ -91,6 +93,33 @@ def _bump_repeats(codes: list, thash: str) -> dict:
     return {c: len(data.get(c, [])) for c in codes}
 
 
+def _failed_required_check_ids(res: dict) -> list:
+    """Các check không nằm trong `red_fails` nhưng vẫn phải chặn phát hành tự động.
+
+    `run_eval.evaluate()` cố ý chỉ dùng `red_fails` cho lỗi an toàn/liêm chính cứng.
+    Tuy nhiên một số lỗi chất lượng bắt buộc của nghiên cứu (vd R8: p-value đơn độc,
+    stat_mismatch) vẫn phải RETURN-FOR-FIX ở tầng điều phối, nếu không bridge có thể
+    phát PASS dù bảng checks đã báo fail.
+    """
+    ids = []
+    for check in res.get("checks", []) or []:
+        check_id = check.get("id")
+        if check_id in _RETURN_FOR_FIX_CHECKS and check.get("pass") is False:
+            ids.append(check_id)
+    return ids
+
+
+def _ledger_codes_from_result(res: dict) -> list:
+    seen = set()
+    codes = []
+    for check_id in list(res.get("red_fails", [])) + _failed_required_check_ids(res):
+        code = _CHECK_ID_TO_RCODE.get(check_id, check_id)
+        if code not in seen:
+            seen.add(code)
+            codes.append(code)
+    return codes
+
+
 def emit_appraisal(res: dict, target: str, *, source: str = "orchestrator",
                    at: str | None = None, log_path=None) -> dict:
     """Cắt bản ghi phán quyết bền (§6 `_RUBRIC-EVALUATE-CUNG-QA-GATE.md`). `at` = timestamp ISO
@@ -99,14 +128,16 @@ def emit_appraisal(res: dict, target: str, *, source: str = "orchestrator",
         res.get("verdict", ""), res.get("verdict", "?"))
     display, thash = _safe_target(target)
     red = list(res.get("red_fails", []))
-    codes = [_CHECK_ID_TO_RCODE.get(k, k) for k in red]
+    required_fix = _failed_required_check_ids(res)
+    codes = _ledger_codes_from_result(res)
     counts = _bump_repeats(codes, thash) if (codes and source not in _EXCLUDE_SOURCES) else {}
     promo = sorted({c for c in codes if counts.get(c, 0) >= PROMOTE_THRESHOLD and c not in _HARD_CODES})
     rec = {
         "id": f"APPRAISAL-{thash[:6]}-{hashlib.sha1((display + verdict + (at or '')).encode()).hexdigest()[:6]}",
         "ts": at or "", "target": display, "target_hash": thash, "source": source,
         "verdict": verdict, "score": res.get("score"),
-        "tier0_red_fails": red, "ledger_codes": codes, "promotion_candidate": promo,
+        "tier0_red_fails": red, "return_for_fix_checks": required_fix,
+        "ledger_codes": codes, "promotion_candidate": promo,
     }
     lp = log_path or APPRAISAL_LOG
     try:
@@ -128,9 +159,9 @@ def make_run_eval_verdict(output_text: str, *, target: str = "orchestrator-outpu
     def verdict(_session) -> dict:
         res = evaluate(output_text, None)
         rec = emit_appraisal(res, target, source=source, at=at, log_path=log_path)
-        if res.get("verdict") == "ĐẠT":
-            return {"status": "pass", "appraisal": rec["id"]}
         codes = rec["ledger_codes"]
+        if res.get("verdict") == "ĐẠT" and not codes:
+            return {"status": "pass", "appraisal": rec["id"]}
         # Mã VỐN cổng cứng (PII/nhân quả/thiếu câu hỏi an toàn…) → LEO THANG NGAY, KHÔNG re-route
         # auto-fix vô nghĩa. Chỉ re-route khi lỗi thuộc loại SỬA ĐƯỢC (trích dẫn/thiếu nguồn).
         hard = [c for c in codes if c in _HARD_CODES]

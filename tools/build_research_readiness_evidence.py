@@ -80,6 +80,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         limitation="Dữ liệu synthetic; dữ liệu thật cần DMP/IRB, phân quyền, và kiểm định chất lượng tại đơn vị.",
     ),
     EvidenceCheck(
+        domain="Tự động có kiểm soát: thẩm định-phản biện-thống kê",
+        command=["tools/verify_controlled_research_automation.py"],
+        proves="Guardrail trả về sửa khi thiếu CI; automation không thể tự duyệt phản biện; thống kê xuất effect size/CI và có DATA LOCK.",
+        limitation="Fixture synthetic/offline; không thay thẩm định IRB, PI, thống kê viên, phản biện độc lập hoặc kiểm thử dữ liệu thật tại bệnh viện.",
+    ),
+    EvidenceCheck(
         domain="Scorecard hệ agent",
         command=["tools/assess_agent_system.py", "--deep"],
         proves="13 tiêu chí agent/hệ thống được probe bằng file, marker và lệnh thực thi.",

@@ -366,6 +366,27 @@ class TestGuardrailBridge(unittest.TestCase):
             self.assertEqual(v["code"], "R2")
             self.assertTrue(v.get("escalate"), "mã cổng cứng phải escalate ngay")
 
+    def test_verdict_required_stat_check_returns_for_fix(self):
+        # R8/stat_mismatch có thể fail trong bảng checks dù run_eval.verdict vẫn "ĐẠT"
+        # (vì không phải red_fails an toàn cứng). Bridge vẫn phải chặn phát hành.
+        self._patch_evaluate({
+            "verdict": "ĐẠT",
+            "score": "13/15",
+            "red_fails": [],
+            "checks": [
+                {"id": "effect_size_ci_required", "pass": False, "note": "p-value đơn độc"},
+                {"id": "stat_mismatch", "pass": False, "note": "R8"},
+            ],
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "a.jsonl"
+            v = self.gb.make_run_eval_verdict("x", source="test", at="2026-07-09T00:00:00",
+                                              log_path=log)(None)
+            self.assertEqual((v["status"], v["code"]), ("returned_for_fix", "R8"))
+            rec = json.loads(log.read_text(encoding="utf-8").splitlines()[-1])
+            self.assertIn("R8", rec["ledger_codes"])
+            self.assertIn("effect_size_ci_required", rec["return_for_fix_checks"])
+
     def test_end_to_end_pass_released(self):
         self._patch_evaluate({"verdict": "ĐẠT", "score": "13/13", "red_fails": []})
         with tempfile.TemporaryDirectory() as tmp:

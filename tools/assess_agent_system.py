@@ -139,6 +139,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         # VÁ 2026-07-04: máy tính suy luận LÂM SÀNG chạy được — Bayes/ngưỡng
         # test-treat/NNT-ARR/GRADE (medical-ebm-automation/tools/clinical_calc.py).
         lambda: p_contains(MT / "clinical_calc.py", "def grade_rating", "Máy tính lâm sàng chạy được (Bayes/ngưỡng/NNT/GRADE)"),
+        lambda: p_contains_all(
+            MT / "meta_analysis_calc.py",
+            ["pool_effects", "random_effect", '"ci"', "prediction_interval"],
+            "Engine phân tích gộp xuất effect size/CI/PI",
+        ),
     ])
     crit("A4", "Dùng công cụ", "agent", [
         lambda: p_glob(MT, "run_g*_auto.py", 10, "Công cụ cổng G0–G10"),
@@ -248,9 +253,12 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_research_practical_readiness.py")],
                                 "Smoke-test thực tiễn dữ liệu nghiên cứu PASS", 90)) or
                 p_exists(TOOLS / "verify_research_practical_readiness.py", "Verifier thực tiễn dữ liệu nghiên cứu có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_controlled_research_automation.py")],
+                                "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS", 90)) or
+                p_exists(TOOLS / "verify_controlled_research_automation.py", "Verifier tự động có kiểm soát có mặt"),
         lambda: p_contains_all(
             TOOLS / "build_research_readiness_evidence.py",
-            ["EvidenceRow", "blocking_failure_count", "Cần bác sĩ kiểm chứng"],
+            ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "Cần bác sĩ kiểm chứng"],
             "Bảng chứng cứ thực tiễn có thể sinh lại",
         ),
     ])
@@ -259,6 +267,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: p_exists(TOOLS / "eval" / "run_eval.py", "Chấm rule-based (code)"),
         lambda: p_exists(TOOLS / "eval" / "human_eval_score.py", "Chấm người (κ/Likert)"),
         lambda: p_exists(TOOLS / "eval" / "cases_50_vignettes.md", "50 vignette kiểm chứng"),
+        lambda: p_contains_all(
+            TOOLS / "verify_controlled_research_automation.py",
+            ["appraisal_guardrail", "peer_review_control", "statistics_control", "overall_status"],
+            "Verifier hợp nhất thẩm định/phản biện/thống kê",
+        ),
     ])
     return C
 

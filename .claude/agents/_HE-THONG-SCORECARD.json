@@ -68,8 +68,8 @@
       "name": "Suy luận",
       "level": "agent",
       "status": "strong",
-      "passed": 5,
-      "total": 5,
+      "passed": 6,
+      "total": 6,
       "probes": [
         {
           "ok": true,
@@ -90,6 +90,10 @@
         {
           "ok": true,
           "detail": "Máy tính lâm sàng chạy được (Bayes/ngưỡng/NNT/GRADE): ✓ (clinical_calc.py)"
+        },
+        {
+          "ok": true,
+          "detail": "Engine phân tích gộp xuất effect size/CI/PI: ✓ (meta_analysis_calc.py; 4/4 marker)"
         }
       ],
       "caveats": []
@@ -343,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 8,
-      "total": 8,
+      "passed": 9,
+      "total": 9,
       "probes": [
         {
           "ok": true,
@@ -376,7 +380,11 @@
         },
         {
           "ok": true,
-          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 3/3 marker)"
+          "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 4/4 marker)"
         }
       ],
       "caveats": []
@@ -386,8 +394,8 @@
       "name": "Đánh giá hiệu suất",
       "level": "system",
       "status": "strong",
-      "passed": 4,
-      "total": 4,
+      "passed": 5,
+      "total": 5,
       "probes": [
         {
           "ok": true,
@@ -404,6 +412,10 @@
         {
           "ok": true,
           "detail": "50 vignette kiểm chứng: có (cases_50_vignettes.md)"
+        },
+        {
+          "ok": true,
+          "detail": "Verifier hợp nhất thẩm định/phản biện/thống kê: ✓ (verify_controlled_research_automation.py; 4/4 marker)"
         }
       ],
       "caveats": [
