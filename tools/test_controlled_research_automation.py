@@ -15,6 +15,7 @@ def test_controlled_research_automation_passes_all_three_pillars():
     assert set(pillars) == {
         "appraisal_guardrail",
         "peer_review_control",
+        "stakeholder_gate_control",
         "statistics_control",
     }
 
@@ -36,9 +37,23 @@ def test_peer_review_control_blocks_auto_review_and_routes_methods_reviewer():
     assert check["status"] == "PASS"
     assert check["automation_review_blocked"] is True
     assert check["methods_statistics_review_routed"] is True
+    assert check["irb_ethics_review_routed"] is True
+    assert check["independent_peer_review_routed"] is True
     assert check["human_review_required"] is True
     assert check["auto_approve"] is False
     assert check["review_status"]["final_released_submitted_count"] == 0
+
+
+def test_stakeholder_gate_control_requires_irb_statistician_and_pi():
+    check = V.check_stakeholder_gate_control()
+
+    assert check["status"] == "PASS"
+    assert check["wrong_role_approvals_do_not_unlock"] is True
+    assert check["synthetic_approval_does_not_unlock"] is True
+    assert check["g2_irb_status"]["satisfied"] is True
+    assert check["g4_statistician_status"]["satisfied"] is True
+    assert check["g9_pi_status"]["satisfied"] is True
+    assert check["gate_contract_role_filter"] is True
 
 
 def test_statistics_control_requires_effect_ci_and_data_lock_markers():

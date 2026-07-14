@@ -10,6 +10,8 @@ người dùng yêu cầu trước khi coi hệ nghiên cứu là sẵn sàng:
    trọng vẫn vào hàng đợi người thật/PI/statistician.
 3. Thống kê: engine thống kê chạy được trên số tổng hợp và luôn xuất cỡ hiệu
    ứng + khoảng tin cậy; đường phân tích dữ liệu thật có marker DATA LOCK.
+4. Stakeholder gates: G2/G4/G9 chỉ thỏa khi đúng nhóm IRB/thống kê viên/PI;
+   phản biện độc lập được route vào gói bản thảo/review pack.
 
 Cần bác sĩ kiểm chứng. Đây là kiểm kỹ thuật/guardrail, không thay IRB, PI,
 thống kê viên hoặc phản biện độc lập.
@@ -35,7 +37,9 @@ for path in (str(TOOLS), str(EVAL_TOOLS), str(REPO), str(MT)):
         sys.path.insert(0, path)
 
 import run_eval  # noqa: E402
+import gate_contract as GC  # noqa: E402
 from orchestrator.guardrail_bridge import make_run_eval_verdict  # noqa: E402
+from runtime.approval_ledger import ApprovalLedger  # noqa: E402
 from research_project.project_config import (  # noqa: E402
     ARTIFACT_FILENAME,
     ArtifactID,
@@ -144,10 +148,16 @@ def check_peer_review_control() -> dict[str, Any]:
         _write_minimal_artifact(project_dir, ArtifactID.PROTOCOL_DRAFT)
         _write_minimal_artifact(project_dir, ArtifactID.SAP_DRAFT)
         _write_minimal_artifact(project_dir, ArtifactID.METHODS_AND_SAMPLE_SIZE)
+        _write_minimal_artifact(project_dir, ArtifactID.REPORTING_CHECKLIST_DRAFT)
+        _write_minimal_artifact(project_dir, ArtifactID.REVIEW_PACK)
 
         queue = list_review_queue(project_dir, config)
         protocol_item = next(i for i in queue if i["artifact_id"] == ArtifactID.PROTOCOL_DRAFT.value)
         sap_item = next(i for i in queue if i["artifact_id"] == ArtifactID.SAP_DRAFT.value)
+        reporting_item = next(
+            i for i in queue if i["artifact_id"] == ArtifactID.REPORTING_CHECKLIST_DRAFT.value
+        )
+        review_pack_item = next(i for i in queue if i["artifact_id"] == ArtifactID.REVIEW_PACK.value)
         synthetic_queue_item = make_review_queue_item(
             config.project_id,
             ArtifactID.SAP_DRAFT,
@@ -174,18 +184,101 @@ def check_peer_review_control() -> dict[str, Any]:
         ReviewRole.METHODS_STATISTICS_REVIEWER.value in protocol_item["primary_roles"]
         and ReviewRole.METHODS_STATISTICS_REVIEWER.value in sap_item["primary_roles"]
     )
+    irb_routed = ReviewRole.IRB_ETHICS_COMMITTEE.value in protocol_item["primary_roles"]
+    independent_peer_routed = (
+        ReviewRole.INDEPENDENT_PEER_REVIEWER.value in reporting_item["primary_roles"]
+        and ReviewRole.INDEPENDENT_PEER_REVIEWER.value in review_pack_item["primary_roles"]
+    )
     human_required = all(item["human_review_required"] for item in queue)
     no_auto_approve = synthetic_queue_item["auto_approve"] is False
-    ok = automation_blocked and methods_routed and human_required and no_auto_approve
+    ok = (
+        automation_blocked and methods_routed and irb_routed
+        and independent_peer_routed and human_required and no_auto_approve
+    )
     return {
         "pillar": "peer_review_control",
         "status": "PASS" if ok else "FAIL",
         "automation_review_blocked": automation_blocked,
         "methods_statistics_review_routed": methods_routed,
+        "irb_ethics_review_routed": irb_routed,
+        "independent_peer_review_routed": independent_peer_routed,
         "human_review_required": human_required,
         "auto_approve": synthetic_queue_item["auto_approve"],
         "review_status": status,
-        "proves": "Automation không thể tự duyệt phản biện; protocol/SAP được định tuyến tới reviewer phương pháp-thống kê.",
+        "proves": "Automation không thể tự duyệt; protocol có PI+IRB+thống kê, bản thảo/review pack có phản biện độc lập.",
+    }
+
+
+def _make_approval(gate_id: str, role: str):
+    return ApprovalLedger.make_human_approval(
+        gate_id=gate_id,
+        reviewer_role=role,
+        reviewer_ref=f"REF-{gate_id}-{role}",
+        scope=f"Stakeholder gate fixture {gate_id}",
+        evidence_content=f"Evidence {gate_id} {role}",
+    )
+
+
+def check_stakeholder_gate_control() -> dict[str, Any]:
+    """G2/G4/G9 phải fail-closed khi approval sai stakeholder hoặc synthetic."""
+    ledger = ApprovalLedger()
+
+    wrong_g2_ok, _ = ledger.add_approval(_make_approval("G2", "PI_PROJECT_OWNER"))
+    wrong_g4_ok, _ = ledger.add_approval(_make_approval("G4", "PI_PROJECT_OWNER"))
+    wrong_roles_rejected_by_gate = (
+        wrong_g2_ok and wrong_g4_ok
+        and not ledger.has_ethics_approval()
+        and not ledger.has_sap_lock()
+    )
+
+    synthetic_irb = ApprovalLedger.make_synthetic_approval(
+        gate_id="G2",
+        scope="Synthetic IRB fixture",
+        evidence_content="Synthetic ethics content",
+        reviewer_role="IRB_ETHICS_COMMITTEE",
+        reviewer_ref="IRB-SYNTH",
+    )
+    ledger._records.append(synthetic_irb)
+    synthetic_not_accepted = not ledger.has_ethics_approval()
+
+    for gate_id, role in (
+        ("G2", "IRB_ETHICS_COMMITTEE"),
+        ("G4", "METHODS_STATISTICS_REVIEWER"),
+        ("G9", "PI_PROJECT_OWNER"),
+    ):
+        ok, reason = ledger.add_approval(_make_approval(gate_id, role))
+        if not ok:
+            return {
+                "pillar": "stakeholder_gate_control",
+                "status": "FAIL",
+                "reason": reason,
+                "proves": "Không ghi được approval stakeholder hợp lệ trên fixture synthetic.",
+            }
+
+    statuses = {gate: ledger.stakeholder_gate_status(gate) for gate in ("G2", "G4", "G9")}
+    gate_contract_roles = (
+        not GC.reviewer_role_satisfies_gate("G2", "PI_PROJECT_OWNER")
+        and GC.reviewer_role_satisfies_gate("G2", "IRB_ETHICS_COMMITTEE")
+        and not GC.reviewer_role_satisfies_gate("G4", "PI_PROJECT_OWNER")
+        and GC.reviewer_role_satisfies_gate("G4", "BIOSTATISTICIAN")
+        and GC.reviewer_role_satisfies_gate("G9", "PRINCIPAL_INVESTIGATOR")
+    )
+    ok = (
+        wrong_roles_rejected_by_gate
+        and synthetic_not_accepted
+        and all(status["satisfied"] for status in statuses.values())
+        and gate_contract_roles
+    )
+    return {
+        "pillar": "stakeholder_gate_control",
+        "status": "PASS" if ok else "FAIL",
+        "wrong_role_approvals_do_not_unlock": wrong_roles_rejected_by_gate,
+        "synthetic_approval_does_not_unlock": synthetic_not_accepted,
+        "g2_irb_status": statuses["G2"],
+        "g4_statistician_status": statuses["G4"],
+        "g9_pi_status": statuses["G9"],
+        "gate_contract_role_filter": gate_contract_roles,
+        "proves": "G2/G4/G9 yêu cầu đúng stakeholder: IRB, thống kê/phương pháp, PI; synthetic approval không mở cổng.",
     }
 
 
@@ -234,6 +327,7 @@ def run_verification() -> dict[str, Any]:
     checks = [
         check_appraisal_control(),
         check_peer_review_control(),
+        check_stakeholder_gate_control(),
         check_statistics_control(),
     ]
     failures = [check for check in checks if check["status"] != "PASS"]

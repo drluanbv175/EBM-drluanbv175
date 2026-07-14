@@ -9,7 +9,7 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc
   5. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
   6. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
   7. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
-  8. verify_controlled_research_automation.py — thẩm định/phản biện/thống kê có kiểm soát
+  8. verify_controlled_research_automation.py — thẩm định/phản biện/PI-IRB-thống kê có kiểm soát
   9. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
  10. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
  11. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật

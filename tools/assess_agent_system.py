@@ -269,8 +269,8 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: p_exists(TOOLS / "eval" / "cases_50_vignettes.md", "50 vignette kiểm chứng"),
         lambda: p_contains_all(
             TOOLS / "verify_controlled_research_automation.py",
-            ["appraisal_guardrail", "peer_review_control", "statistics_control", "overall_status"],
-            "Verifier hợp nhất thẩm định/phản biện/thống kê",
+            ["appraisal_guardrail", "peer_review_control", "stakeholder_gate_control", "statistics_control", "overall_status"],
+            "Verifier hợp nhất thẩm định/phản biện/stakeholder/thống kê",
         ),
     ])
     return C
