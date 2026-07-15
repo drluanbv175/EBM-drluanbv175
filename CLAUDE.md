@@ -86,13 +86,15 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
 
 ## Stack kỹ thuật
 - Python 3.11+ (khuyến nghị 3.12), venv **ngoài OneDrive** (`~/.ebm-venv`), requirements.txt.
-  **Trạng thái thật 2026-07-15:** máy Windows đã nâng lên 3.12.10 (`requirements.lock.txt`); ít
-  nhất 1 máy Mac vẫn còn 3.9.6 và KHÔNG có `python3.12`/Homebrew để tự nâng (agent không tự cài
-  phần mềm hệ thống mới khi chưa được xác nhận — việc nâng cấp cần bác sĩ tự làm trên máy đó).
-  Lưới an toàn cho khoảng lệch này: `ruff.toml` bật rule `FA102` (target-version=py39) chặn cú
-  pháp PEP604 `X | None` thiếu `from __future__ import annotations` — đúng lỗi từng làm crash
-  `pytest` trên máy 3.9 (2026-07-15, đã vá 2 file, xem `.github/workflows/offline-ci.yml`, nay
-  chạy `ruff check` mỗi lần push).
+  **Trạng thái thật 2026-07-15 (ĐÃ ĐÓNG — cả 2 máy đều ≥3.11):** Windows chạy 3.12.10; Mac đã
+  nâng từ 3.9.6 lên **3.14.6** (bác sĩ tự cài, không có bản 3.12 khả dụng lúc đó) — cùng
+  `requirements.lock.txt` cài sạch và cho đúng 1812 test pass/0 fail/17 skip trên CẢ HAI (xác
+  nhận bằng `pip freeze` giống hệt nhau). venv 3.9.6 cũ giữ lại không xóa tại
+  `~/.ebm-venv-py39-backup-20260715` làm dự phòng. Lưới an toàn vẫn giữ nguyên dù rào cản gốc đã
+  đóng: `ruff.toml` bật rule `FA102` (target-version=py39) chặn cú pháp PEP604 `X | None` thiếu
+  `from __future__ import annotations` — đúng lỗi từng làm crash `pytest` trên máy 3.9
+  (2026-07-15, đã vá 2 file) — CI chạy `ruff check` mỗi lần push
+  (`.github/workflows/offline-ci.yml`).
 - Secrets ở `.env` — đặt **ngoài OneDrive** tại `~/.ebm-secrets/`, symlink về repo (không để key
   trần trên cloud). Không hardcode, không commit, không in ra.
 - Codex API cho mọi tác vụ AI (wrapper dùng chung)
