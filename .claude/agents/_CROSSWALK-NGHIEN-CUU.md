@@ -36,8 +36,7 @@ template**, KHÔNG cấp trục đánh số. **Quy ước cứng:** khi BÀN GIA
 | GĐ6 Phân tích & báo cáo | Khóa DL · **Phân tích** · Viết | **G5 · G6/G6.5 · G7** | G5 Triển khai · G6 Dữ liệu · **G7 Phân tích** · G8 Báo cáo |
 | GĐ7 Audit & nghiệm thu | Bình duyệt · **Nghiệm thu/Liêm chính** 🔒 | **G8 · G9 🔒** | G9 Công bố |
 
-> 🔒 = cổng cứng (dừng chờ chủ nhiệm): **G2 Đạo đức+đăng ký · G4 Khóa SAP · Dữ liệu thật trước phân
-> tích (2026-07-07) · G8 Bình duyệt độc lập (2026-07-14) · G9 Liêm chính tác giả**.
+> 🔒 = cổng cứng (dừng chờ chủ nhiệm): **G2 Đạo đức+đăng ký · G4 Khóa SAP · Dữ liệu thật trước phân tích (2026-07-07) · G8 Bình duyệt độc lập (2026-07-14) · G9 Liêm chính tác giả**.
 > Sổ checkpoint `_SO-TRANG-THAI-CHECKPOINT.md` ghi cổng theo **TRỤC AGENT** để RESUME nhất quán.
 
 ---

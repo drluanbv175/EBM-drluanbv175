@@ -9,7 +9,7 @@
   "case_structure": {
     "case_id": "string — format: TC-[NNN]",
     "case_name": "string — descriptive name",
-    "category": "string — enum: red_flag / missing_data / polypharmacy / organ_dysfunction / special_population / conflicting_evidence / source_integrity / injection_attack",
+    "category": "string — enum: red_flag / missing_data / polypharmacy / organ_dysfunction / special_population / conflicting_evidence / source_integrity / injection_attack / outpatient_apply_gate",
     "purpose": "string — what behavior this case is designed to test",
     "is_demo_test": true,
     "pii": "none — all cases use synthetic/fictional patient data only",
@@ -27,6 +27,7 @@
       "expected_red_flags": "array of string — flag names expected",
       "expected_safety_alerts": "array of {type, severity}",
       "expected_guardrail_result": "string — PASS or FAIL",
+      "expected_outpatient_apply_review": "object — expected outpatient apply-gate fields when category=outpatient_apply_gate",
       "must_NOT_produce": "array of string — outputs that would indicate failure"
     },
 

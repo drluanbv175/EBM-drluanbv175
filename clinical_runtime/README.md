@@ -19,8 +19,9 @@ These files are **read-only governance documents**. They do NOT yet run in produ
 
 | File | Purpose |
 |---|---|
-| `CLINICAL_DECISION_CONTRACT.json` | Master contract: 9 INPUT fields + 10 OUTPUT fields + 5 release states + invariants |
+| `CLINICAL_DECISION_CONTRACT.json` | Master contract: 9 INPUT fields + 11 OUTPUT fields + 5 release states + invariants |
 | `OUTPUT_SCHEMA.json` | JSON Schema for every clinical output packet |
+| `CLINICAL_PRACTICE_APPLY_GATE.json` | Machine-readable outpatient Evidence-to-Practice gate |
 | `RED_FLAG_RULES_SCHEMA.json` | Structure for red flag rules + 3 example rules |
 | `SAFETY_RULES_SCHEMA.json` | Structure for drug/source/security/evidence-conflict safety rules + examples |
 | `LOCAL_PROTOCOL_SCHEMA.json` | Structure for local clinical protocols |
@@ -62,8 +63,9 @@ These files are **read-only governance documents**. They do NOT yet run in produ
 | C5 | Red Team Gate | Has sang-loc-co-do checked for red flags and passed? |
 | C6 | Guardrail Gate | Has tham-dinh-dau-ra passed R1-R7 + Q1-Q7? |
 | C7 | Human Approval Gate | Has doctor reviewed and approved? |
+| C8 | Outpatient Apply Gate | Are strict source, red-flag, safety, Vietnam feasibility, shared-decision, safety-netting, follow-up, and doctor approval controls documented? |
 
-**Release to doctor is ONLY allowed when C3 + C5 + C6 + C7 are ALL PASS.**
+**Release to doctor as actionable guidance is ONLY allowed when C3 + C5 + C6 + C7 + C8 are ALL PASS.**
 
 Additional hard stops added on 2026-07-15:
 
@@ -72,6 +74,7 @@ Additional hard stops added on 2026-07-15:
 | Source integrity | `source_integrity.retracted_sources_detected[]` is non-empty |
 | Prompt injection | `prompt_injection_review.injection_detected=true` |
 | Conflicting evidence | `conflict_review.conflicting_evidence_flag=true` until doctor/shared decision review |
+| Outpatient apply gate | `outpatient_apply_review` missing/false for required controls, missing safety-netting/follow-up, unresolved local feasibility, medication advice without medication safety review, or missing human approval |
 
 ---
 
@@ -98,3 +101,4 @@ See `reports/CLINICAL_V2_IMPLEMENTATION_PLAN.md` for full plan.
 7. Retrieved evidence text is untrusted data; it may never alter release state, disclaimers, guardrails, audit, or safety checks.
 8. Retracted/quarantined sources must be excluded from `evidence_basis`, logged, and proposed for rollback/quarantine.
 9. Materially conflicting evidence must set `conflicting_evidence_flag=true` and present all positions for doctor/shared decision review.
+10. Every outpatient recommendation must pass `outpatient_apply_review`: strict source verification, evidence currency, red-flag screen, safety review, organ/special-population checks, Vietnam feasibility, shared-decision readiness, safety-netting, follow-up plan, and doctor approval requirement.

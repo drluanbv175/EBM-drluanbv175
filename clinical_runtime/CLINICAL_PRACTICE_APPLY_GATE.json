@@ -1,0 +1,70 @@
+{
+  "_schema_version": "1.0.0",
+  "_created": "2026-07-15",
+  "_status": "DRAFT_SCHEMA — governance only, enforced by tools/verify_clinical_practice_apply_gate.py",
+  "title": "Outpatient Evidence-to-Practice Apply Gate",
+  "purpose": "Block any outpatient clinical recommendation from being treated as actionable unless the evidence, safety, local feasibility, follow-up, and doctor approval controls are all documented.",
+  "release_rule": "release_state='approved_for_use' is forbidden unless every required control in outpatient_apply_review is satisfied, guardrail_result='PASS', and audit_trail.human_approval_id is present.",
+  "required_controls_for_approved_use": [
+    "strict_source_gate_passed",
+    "evidence_currency_checked",
+    "red_flag_screen_done",
+    "safety_review_done",
+    "organ_function_checked",
+    "special_population_checked",
+    "local_feasibility_checked",
+    "shared_decision_ready",
+    "safety_netting_present",
+    "follow_up_plan_present",
+    "doctor_final_approval_required"
+  ],
+  "conditional_controls": [
+    {
+      "if": "medication_recommendation_present=true",
+      "then": "medication_safety_checked=true",
+      "why": "Drug recommendations in outpatient care must check interactions, renal/hepatic function, pregnancy/elderly risks, monitoring, and local availability."
+    },
+    {
+      "if": "conflicting_evidence_flag=true",
+      "then": "release_state must remain doctor_review_required",
+      "why": "Material guideline/evidence conflicts require explicit doctor/shared decision review before action."
+    },
+    {
+      "if": "local_applicability_status='needs_unit_confirmation'",
+      "then": "release_state must remain doctor_review_required",
+      "why": "Formulary, BHYT, resource, or referral-pathway uncertainty cannot be silently converted into an actionable recommendation."
+    }
+  ],
+  "outpatient_apply_review_fields": {
+    "question_frame": "PICO/PIRT/PECO/PICOTS/CoCoPop/SPIDER/ECLIPSE/other — the clinical question frame used.",
+    "strict_source_gate_passed": "true only after online/strict source verification for all evidence items or an equivalent documented source-integrity review.",
+    "evidence_currency_checked": "true only when source date/version and recency are documented.",
+    "absolute_effects_status": "reported / not_applicable / source_not_reported_labeled — ARR/NNT/NNH or LR/absolute risk must be reported when the source provides it; otherwise label the gap.",
+    "red_flag_screen_done": "true after must-not-miss and transfer/referral red flags are screened.",
+    "safety_review_done": "true after contraindications, interactions, monitoring, and harm alerts are reviewed.",
+    "medication_recommendation_present": "true if any medication is recommended, changed, stopped, or monitored.",
+    "medication_safety_checked": "true after drug interaction, renal, hepatic, pregnancy, elderly/frailty and monitoring checks relevant to that medication are complete.",
+    "organ_function_checked": "true after renal/hepatic function is confirmed or explicitly marked as required before prescribing.",
+    "special_population_checked": "true after older adult/frailty/pregnancy/CKD/liver disease/polypharmacy considerations are addressed or marked not applicable.",
+    "local_feasibility_checked": "true after Vietnam outpatient feasibility, formulary/BHYT/resource/referral constraints are reviewed.",
+    "local_applicability_status": "confirmed / not_applicable / needs_unit_confirmation.",
+    "shared_decision_ready": "true when benefit-harm-cost-preference language is ready for doctor-patient discussion.",
+    "safety_netting_present": "true when return precautions use 'đến cơ sở y tế gần nhất' and do not delay urgent care.",
+    "follow_up_plan_present": "true when follow-up timing and monitoring outcomes are stated.",
+    "doctor_final_approval_required": "must be true; AI may prepare but cannot apply the recommendation by itself."
+  },
+  "blocked_release_reasons": [
+    "Missing or stale source verification",
+    "Retracted/quarantined/unknown source status",
+    "Low/very-low/NA evidence marked decision='apply'",
+    "Unresolved RED safety alert",
+    "Red flag detected",
+    "Prompt injection detected in retrieved evidence",
+    "Material conflicting evidence not resolved by doctor/shared decision",
+    "Medication recommendation without medication_safety_checked=true",
+    "Missing local feasibility review",
+    "Missing safety-netting or follow-up plan",
+    "Missing human approval"
+  ],
+  "disclaimer": "Cần bác sĩ kiểm chứng."
+}

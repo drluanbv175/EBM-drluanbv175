@@ -795,6 +795,26 @@ def research_completion_gate_failures() -> list[str]:
     return failures
 
 
+def hard_gate_count_consistency_failures() -> list[str]:
+    checker = ROOT / "tools" / "verify_hard_gate_count_consistency.py"
+    if not checker.exists():
+        return ["thiếu tools/verify_hard_gate_count_consistency.py"]
+    code, out = run([sys.executable, str(checker), "--check"], cwd=ROOT)
+    if code == 0:
+        return []
+    return [out.strip()[:1000] or "hard gate count consistency FAIL"]
+
+
+def clinical_practice_apply_gate_failures() -> list[str]:
+    checker = ROOT / "tools" / "verify_clinical_practice_apply_gate.py"
+    if not checker.exists():
+        return ["thiếu tools/verify_clinical_practice_apply_gate.py"]
+    code, out = run([sys.executable, str(checker)], cwd=ROOT)
+    if code == 0:
+        return []
+    return [out.strip()[:1000] or "clinical practice apply gate FAIL"]
+
+
 def module_available(module: str) -> bool:
     py = str(VENV_PY if VENV_PY.exists() else sys.executable)
     code, _ = run([py, "-m", module, "--version"], cwd=REPO if REPO.exists() else ROOT)
@@ -902,6 +922,20 @@ def main() -> int:
             + "; ".join(research_completion_failures)
         )
 
+    hard_gate_count_failures = hard_gate_count_consistency_failures()
+    if hard_gate_count_failures:
+        hard_errors.append(
+            "Research hard-gate doctrine consistency FAIL: "
+            + "; ".join(hard_gate_count_failures)
+        )
+
+    clinical_apply_gate_failures = clinical_practice_apply_gate_failures()
+    if clinical_apply_gate_failures:
+        hard_errors.append(
+            "Clinical practice apply gate FAIL: "
+            + "; ".join(clinical_apply_gate_failures)
+        )
+
     clinical_runtime_status, clinical_runtime_blockers, clinical_runtime_failures, clinical_runtime_warnings = (
         chronic_care_production_guard()
     )
@@ -996,6 +1030,8 @@ def main() -> int:
     print("Runtime deps:", "PASS" if env_ok else "WARN")
     print("Approval independence:", "PASS" if not approval_failures else "FAIL")
     print("Research completion gates:", "PASS" if not research_completion_failures else "FAIL")
+    print("Research hard-gate doctrine:", "PASS" if not hard_gate_count_failures else "FAIL")
+    print("Clinical practice apply gate:", "PASS" if not clinical_apply_gate_failures else "FAIL")
     print(
         "Clinical runtime:",
         f"{clinical_runtime_status} ({clinical_runtime_blockers} blocker)"

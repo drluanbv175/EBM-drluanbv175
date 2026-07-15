@@ -1,5 +1,5 @@
 {
-  "_schema_version": "2.1.0",
+  "_schema_version": "2.2.0",
   "_created": "2026-06-28",
   "_updated": "2026-07-15",
   "_status": "DRAFT_SCHEMA — not yet integrated into runtime",
@@ -81,7 +81,7 @@
   },
 
   "output_fields": {
-    "_count": 10,
+    "_count": 11,
     "fields": [
       {
         "field_id": "O1",
@@ -156,6 +156,13 @@
         "type": "object",
         "required": true,
         "description": "Audit fields: {session_id, timestamp_utc, requesting_agent, guardrail_result[PASS/FAIL], guardrail_r_checks[], guardrail_q_checks[], human_approval_id}"
+      },
+      {
+        "field_id": "O11",
+        "name": "outpatient_apply_review",
+        "type": "object",
+        "required": true,
+        "description": "Outpatient Evidence-to-Practice gate: {question_frame, strict_source_gate_passed, evidence_currency_checked, absolute_effects_status, red_flag_screen_done, safety_review_done, medication_recommendation_present, medication_safety_checked, organ_function_checked, special_population_checked, local_feasibility_checked, local_applicability_status, shared_decision_ready, safety_netting_present, follow_up_plan_present, doctor_final_approval_required}. Any missing/false required control blocks release_state='approved_for_use'."
       }
     ]
   },
@@ -179,6 +186,7 @@
     "Any RETRACTED_SOURCE or quarantined evidence item MUST be excluded from evidence_basis, logged in source_integrity, and prevent release_state='approved_for_use'.",
     "Any PROMPT_INJECTION alert MUST be logged in prompt_injection_review and safety_alerts with severity RED, and prevent release_state='approved_for_use'.",
     "Any CONFLICTING_EVIDENCE alert MUST set conflict_review.conflicting_evidence_flag=true, present all material positions, and keep release_state='doctor_review_required' until doctor/shared decision review.",
-    "C3 Safety Gate, C5 Red Team Gate, C6 Guardrail Gate, and C7 Human Approval Gate MUST all pass before actionable clinical guidance can be shown."
+    "C3 Safety Gate, C5 Red Team Gate, C6 Guardrail Gate, C7 Human Approval Gate, and outpatient_apply_review MUST all pass before actionable clinical guidance can be shown.",
+    "Outpatient recommendations MUST include strict source verification, current evidence check, red-flag screening, medication/organ/special-population safety review when relevant, Vietnam local feasibility, shared-decision readiness, safety-netting, follow-up plan, and doctor_final_approval_required=true before release_state='approved_for_use'."
   ]
 }

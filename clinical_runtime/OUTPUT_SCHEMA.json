@@ -1,5 +1,5 @@
 {
-  "_schema_version": "2.1.0",
+  "_schema_version": "2.2.0",
   "_created": "2026-06-28",
   "_updated": "2026-07-15",
   "_status": "DRAFT_SCHEMA — governance only, no runtime integration yet",
@@ -9,7 +9,7 @@
 
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["output_id", "session_id", "timestamp_utc", "release_state", "recommendation_summary", "evidence_basis", "grade_summary", "safety_alerts", "red_flags_detected", "source_integrity", "prompt_injection_review", "conflict_review", "audit_trail"],
+  "required": ["output_id", "session_id", "timestamp_utc", "release_state", "recommendation_summary", "evidence_basis", "grade_summary", "safety_alerts", "red_flags_detected", "source_integrity", "prompt_injection_review", "conflict_review", "outpatient_apply_review", "audit_trail"],
   "additionalProperties": false,
 
   "properties": {
@@ -195,6 +195,57 @@
         }
       }
     },
+    "outpatient_apply_review": {
+      "type": "object",
+      "description": "Machine-readable outpatient Evidence-to-Practice gate. Blocks actionable outpatient recommendations unless source quality, safety, red flags, Vietnam feasibility, safety-netting, follow-up, shared decision readiness, and doctor approval controls are documented.",
+      "required": [
+        "question_frame",
+        "strict_source_gate_passed",
+        "evidence_currency_checked",
+        "absolute_effects_status",
+        "red_flag_screen_done",
+        "safety_review_done",
+        "medication_recommendation_present",
+        "medication_safety_checked",
+        "organ_function_checked",
+        "special_population_checked",
+        "local_feasibility_checked",
+        "local_applicability_status",
+        "shared_decision_ready",
+        "safety_netting_present",
+        "follow_up_plan_present",
+        "doctor_final_approval_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "question_frame": {
+          "type": "string",
+          "enum": ["PICO", "PIRT", "PECO", "PICOTS", "CoCoPop", "SPIDER", "ECLIPSE", "other"]
+        },
+        "strict_source_gate_passed": {"type": "boolean"},
+        "evidence_currency_checked": {"type": "boolean"},
+        "absolute_effects_status": {
+          "type": "string",
+          "enum": ["reported", "not_applicable", "source_not_reported_labeled"]
+        },
+        "red_flag_screen_done": {"type": "boolean"},
+        "safety_review_done": {"type": "boolean"},
+        "medication_recommendation_present": {"type": "boolean"},
+        "medication_safety_checked": {"type": "boolean"},
+        "organ_function_checked": {"type": "boolean"},
+        "special_population_checked": {"type": "boolean"},
+        "local_feasibility_checked": {"type": "boolean"},
+        "local_applicability_status": {
+          "type": "string",
+          "enum": ["confirmed", "not_applicable", "needs_unit_confirmation"]
+        },
+        "shared_decision_ready": {"type": "boolean"},
+        "safety_netting_present": {"type": "boolean"},
+        "follow_up_plan_present": {"type": "boolean"},
+        "doctor_final_approval_required": {"type": "boolean", "const": true},
+        "notes": {"type": "string"}
+      }
+    },
     "audit_trail": {
       "type": "object",
       "required": ["requesting_agent", "guardrail_result"],
@@ -229,6 +280,40 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "release_state": {"const": "approved_for_use"}
+        },
+        "required": ["release_state"]
+      },
+      "then": {
+        "properties": {
+          "outpatient_apply_review": {
+            "properties": {
+              "strict_source_gate_passed": {"const": true},
+              "evidence_currency_checked": {"const": true},
+              "red_flag_screen_done": {"const": true},
+              "safety_review_done": {"const": true},
+              "organ_function_checked": {"const": true},
+              "special_population_checked": {"const": true},
+              "local_feasibility_checked": {"const": true},
+              "local_applicability_status": {"enum": ["confirmed", "not_applicable"]},
+              "shared_decision_ready": {"const": true},
+              "safety_netting_present": {"const": true},
+              "follow_up_plan_present": {"const": true},
+              "doctor_final_approval_required": {"const": true}
+            }
+          },
+          "audit_trail": {
+            "required": ["human_approval_id"],
+            "properties": {
+              "guardrail_result": {"const": "PASS"}
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {

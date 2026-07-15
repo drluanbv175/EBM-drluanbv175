@@ -16,6 +16,7 @@ def test_clinical_runtime_hardening_overall_passes():
         "output_schema",
         "decision_contract",
         "validation_cases",
+        "outpatient_apply_gate",
     }
 
 
@@ -45,3 +46,10 @@ def test_validation_cases_pin_expected_hardening_outputs():
 
     assert check["status"] == "PASS"
     assert check["missing_markers"] == {}
+
+
+def test_outpatient_apply_gate_blocks_uncontrolled_practice_release():
+    check = V.check_outpatient_apply_gate()
+
+    assert check["status"] == "PASS"
+    assert check["missing_markers"] == []

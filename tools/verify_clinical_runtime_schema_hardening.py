@@ -3,9 +3,9 @@
 
 Verifier này không chứng nhận hệ lâm sàng đã production-ready. Nó chỉ xác nhận
 các schema governance đã có đủ hợp đồng máy đọc được cho 3 rủi ro đã phát hiện:
-nguồn bị rút, prompt injection trong nguồn truy xuất, và chứng cứ/hướng dẫn xung
-đột. Các cổng production thật vẫn cần runtime integration, bác sĩ, pháp lý và bảo
-mật duyệt.
+nguồn bị rút, prompt injection trong nguồn truy xuất, chứng cứ/hướng dẫn xung
+đột, và cổng áp dụng chứng cứ vào ngoại trú. Các cổng production thật vẫn cần
+runtime integration, bác sĩ, pháp lý và bảo mật duyệt.
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ def check_output_schema() -> dict[str, Any]:
     data = _load_json(path)
     text = _text(path)
 
-    required_fields = {"source_integrity", "prompt_injection_review", "conflict_review"}
+    required_fields = {"source_integrity", "prompt_injection_review", "conflict_review", "outpatient_apply_review"}
     required = set(data.get("required", []))
     properties = data.get("properties", {})
 
@@ -99,6 +99,10 @@ def check_output_schema() -> dict[str, Any]:
         "injection_detected",
         "conflicting_evidence_flag",
         "shared_decision_required",
+        "outpatient_apply_review",
+        "strict_source_gate_passed",
+        "safety_netting_present",
+        "follow_up_plan_present",
         "approved_for_use",
         "allOf",
     ]
@@ -129,7 +133,7 @@ def check_decision_contract() -> dict[str, Any]:
     }
     ok_output, detail_output = _check_required(
         output_fields,
-        {"source_integrity", "prompt_injection_review", "conflict_review"},
+        {"source_integrity", "prompt_injection_review", "conflict_review", "outpatient_apply_review"},
         "CLINICAL_DECISION_CONTRACT.output_fields",
     )
     ok_input, detail_input = _check_required(
@@ -146,6 +150,8 @@ def check_decision_contract() -> dict[str, Any]:
         "C3 Safety Gate",
         "C7 Human Approval Gate",
         "prevent release_state='approved_for_use'",
+        "outpatient_apply_review",
+        "doctor_final_approval_required",
     ]
     missing_markers = [marker for marker in markers if marker not in text]
 
@@ -177,6 +183,13 @@ def check_validation_cases() -> dict[str, Any]:
             "retrieved_content_treated_as_data",
             "audit_logged",
         ],
+        "TC-011_outpatient_apply_gate.json": [
+            "OUTPATIENT_APPLY_GATE_INCOMPLETE",
+            "expected_outpatient_apply_review",
+            "strict_source_gate_passed",
+            "safety_netting_present",
+            "human_approval_id",
+        ],
     }
     missing: dict[str, list[str]] = {}
     for filename, markers in case_checks.items():
@@ -194,12 +207,33 @@ def check_validation_cases() -> dict[str, Any]:
     }
 
 
+def check_outpatient_apply_gate() -> dict[str, Any]:
+    import verify_clinical_practice_apply_gate as apply_gate
+
+    report = apply_gate.run_verification()
+    failed = [
+        check["name"] for check in report.get("checks", [])
+        if check.get("status") != "PASS"
+    ]
+    return {
+        "name": "outpatient_apply_gate",
+        "status": "PASS" if report.get("overall_status") == "PASS" else "FAIL",
+        "details": [
+            "clinical_runtime/CLINICAL_PRACTICE_APPLY_GATE.json present",
+            "OUTPUT_SCHEMA requires outpatient_apply_review",
+            "approved_for_use blocked without strict source, safety, local feasibility, safety-netting, follow-up, and human approval",
+        ],
+        "missing_markers": failed,
+    }
+
+
 def run_verification() -> dict[str, Any]:
     checks = [
         check_safety_rules(),
         check_output_schema(),
         check_decision_contract(),
         check_validation_cases(),
+        check_outpatient_apply_gate(),
     ]
     overall = "PASS" if all(check["status"] == "PASS" for check in checks) else "FAIL"
     return {
