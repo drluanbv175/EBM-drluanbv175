@@ -347,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 11,
-      "total": 11,
+      "passed": 12,
+      "total": 12,
       "probes": [
         {
           "ok": true,
@@ -381,6 +381,10 @@
         {
           "ok": true,
           "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Chu trình tự động có kiểm soát fail-closed/human-gated: ✓ (run_controlled_automation_cycle.py; 3/3 marker)"
         },
         {
           "ok": true,

@@ -102,5 +102,6 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Kiểm + đồng bộ toàn hệ từ thư mục gốc: `python tools/upgrade_verify.py`
 - Kiểm riêng đồng bộ Claude Code ↔ Codex: `python tools/check_claude_codex_sync_health.py`
 - Kiểm riêng clinical runtime governance: `python tools/verify_clinical_runtime_schema_hardening.py`
+- Chạy chu trình tự động có kiểm soát: `python tools/run_controlled_automation_cycle.py`
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._

@@ -53,6 +53,14 @@ def test_core_checks_include_repo_alignment_and_clinical_hardening():
     assert any("verify_clinical_runtime_schema_hardening.py" in cmd for cmd in commands)
 
 
+def test_core_checks_include_controlled_automation_cycle():
+    commands = [" ".join(check.command) for check in E.CORE_CHECKS]
+    domains = {check.domain for check in E.CORE_CHECKS}
+
+    assert "Chu trình tự động có kiểm soát" in domains
+    assert any("run_controlled_automation_cycle.py" in cmd for cmd in commands)
+
+
 def test_write_report_writes_markdown_and_json():
     report = {
         "kind": "research_readiness_evidence_report",

@@ -92,6 +92,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         limitation="Fixture synthetic/offline; không thay thẩm định IRB, PI, thống kê viên, phản biện độc lập hoặc kiểm thử dữ liệu thật tại bệnh viện.",
     ),
     EvidenceCheck(
+        domain="Chu trình tự động có kiểm soát",
+        command=["tools/run_controlled_automation_cycle.py"],
+        proves="Các cổng sync, định tuyến, nghiên cứu, dữ liệu, phản biện/thống kê và clinical governance chạy thành một chu trình fail-closed/human-gated.",
+        limitation="Control-plane offline; trạng thái human gate là dừng an toàn, không phải phê duyệt thật hay clinical production.",
+    ),
+    EvidenceCheck(
         domain="Clinical runtime schema hardening",
         command=["tools/verify_clinical_runtime_schema_hardening.py"],
         proves="Clinical V2 governance có kiểm máy cho nguồn bị rút, prompt injection trong nguồn truy xuất và chứng cứ/hướng dẫn xung đột.",
