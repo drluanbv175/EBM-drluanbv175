@@ -16,6 +16,9 @@ def test_synthetic_dashboard_fixture_has_disclaimer_doi_and_no_pii():
 
         assert V.DISCLAIMER in html
         assert V.FIXTURE_DOI in html
+        assert "standards" in html
+        assert "CONSORT, STROBE, PRISMA, STARD, TRIPOD" in html
+        assert "AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST" in html
         assert ok is True, detail
 
 
@@ -25,6 +28,7 @@ def test_clinical_evidence_update_pipeline_passes_offline():
 
     assert report["overall_status"] == "PASS"
     assert domains["Dashboard integrity gate"] == "PASS"
+    assert domains["Evidence Workbench template contract"] == "PASS"
     assert domains["Library accumulation"] == "PASS"
     assert domains["Derivative artifacts"] == "PASS"
     assert "Cần bác sĩ kiểm chứng" in report["disclaimer"]

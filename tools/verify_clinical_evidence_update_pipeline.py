@@ -4,6 +4,7 @@
 Verifier này không tuyên bố một khuyến cáo lâm sàng là đúng. Nó chỉ chứng minh
 đường ống kỹ thuật đang chạy được, fail-closed ở các điểm quan trọng:
 - dashboard Evidence Workbench có disclaimer, DOI/PMID/URL, gradeLevel, decision;
+- dashboard Evidence Workbench có tab chuẩn chất lượng cập nhật chứng cứ (`standards`);
 - dashboard qua cổng `verify_dashboard.py`;
 - thư viện tích lũy `library.json` / `evidence-library.html` được sinh;
 - 3 tài liệu phái sinh được sinh;
@@ -35,6 +36,8 @@ MAKE_DERIVATIVES = DASH_TOOLS / "make_derivatives.py"
 SYNC_ALL = ROOT / "EBM_MASTER" / "tools" / "sync_all.py"
 EW_TEMPLATE = ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html"
 EW_HUB_ASSET = ROOT / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html"
+EW_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-evidence-workbench.html"
+EW_DARK_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-evidence-workbench.html"
 DEFAULT_MD = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.md"
 DEFAULT_JSON = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.json"
 
@@ -113,6 +116,21 @@ const DATA = {{
   doNow:['Chỉ dùng fixture này để kiểm pipeline kỹ thuật, không dùng làm khuyến cáo điều trị.'],
   dontDo:['Không áp dụng fixture này cho bệnh nhân hoặc quy trình chăm sóc thật.'],
   redFlags:['Nếu đây là ca bệnh thật, bác sĩ phải đánh giá cấp cứu và bối cảnh người bệnh.'],
+  standards:{{
+    frame:'Câu hỏi có cấu trúc trước khi chọn nguồn.',
+    sourceHierarchy:'Guideline chính thức, tổng quan hệ thống, thử nghiệm ngẫu nhiên và nguồn an toàn thuốc.',
+    reporting:'CONSORT, STROBE, PRISMA, STARD, TRIPOD tùy thiết kế.',
+    appraisal:'AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI.',
+    currency:'Fixture offline cập nhật ngày {updated}; dashboard thật phải ghi ngày tìm kiếm.',
+    searchSources:['PubMed','Cochrane','Guideline society'],
+    safety:'Fixture không đưa khuyến cáo điều trị; dashboard thật phải rà chống chỉ định, tương tác, chuyển tuyến.',
+    vietnamFit:'Dashboard thật phải đối chiếu sẵn có, chi phí/BHYT và năng lực theo dõi tại Việt Nam.',
+    gates:[
+      {{label:'Không PII',status:'ok',note:'Fixture không chứa dữ liệu người bệnh.'}},
+      {{label:'Truy nguyên nguồn',status:'ok',note:'Có DOI thật để kiểm đường ống.'}},
+      {{label:'Không phát hành lâm sàng',status:'ok',note:'Đây chỉ là fixture kỹ thuật.'}}
+    ]
+  }},
   items:[
     {{
       id:'CLIN-EVID-PIPE-001',
@@ -240,6 +258,21 @@ def _check_templates() -> CheckResult:
         "CLINICAL QUICK VIEW",
         "EVIDENCE DETAIL VIEW",
         "GRADE EtD",
+        "Chuẩn & chất lượng",
+        "Chuẩn chất lượng cập nhật chứng cứ",
+        "qualityView",
+        "standards",
+        "sourceHierarchy",
+        "searchSources",
+        "CONSORT",
+        "STROBE",
+        "PRISMA",
+        "AGREE II",
+        "AMSTAR 2",
+        "ROBINS-I",
+        "QUADAS-2",
+        "PROBAST",
+        "Truy nguyên từng item",
         "Kiểm chứng thao tác",
         "exportData('csv')",
         "exportData('json')",
@@ -250,7 +283,7 @@ def _check_templates() -> CheckResult:
     ]
     details = []
     ok_all = True
-    for path in (EW_TEMPLATE, EW_HUB_ASSET):
+    for path in (EW_TEMPLATE, EW_HUB_ASSET, EW_SKILL_TEMPLATE, EW_DARK_SKILL_TEMPLATE):
         ok, detail = _contains_all(path, required)
         ok_all = ok_all and ok
         details.append(f"{path.name}: {detail}")
@@ -258,7 +291,7 @@ def _check_templates() -> CheckResult:
         "Evidence Workbench template contract",
         "PASS" if ok_all else "FAIL",
         "; ".join(details),
-        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ.",
+        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ, gồm lớp standards/chất lượng.",
         "Không kiểm visual bằng Playwright; chỉ kiểm marker cấu trúc tĩnh.",
     )
 

@@ -13,16 +13,17 @@ Bố cục 3 cột (master–detail):
 | Cột | Vai trò | Nội dung |
 |---|---|---|
 | Trái — Bộ lọc | Khoanh vùng nhanh | Facet: Quyết định · Nhóm đặc biệt · Thiết kế · Mức chứng cứ (có số đếm) |
-| Giữa — Quick View + Bảng | Tra nhanh & duyệt | Băng `Clinical Quick View` cố định + bảng `ITEM-xx` + tab An toàn / Chưa đủ thay đổi / Áp dụng VN / Kiểm chứng thao tác |
+| Giữa — Quick View + Bảng | Tra nhanh & duyệt | Băng `Clinical Quick View` cố định + bảng `ITEM-xx` + tab Chuẩn & chất lượng / An toàn / Chưa đủ thay đổi / Áp dụng VN / Kiểm chứng thao tác |
 | Phải — Evidence Detail | Kiểm chứng | Nguồn, ngày/phiên bản, quần thể, PICO, hiệu số (forest), grading, hành động, tham khảo |
 
-Ba lớp nội dung bắt buộc ánh xạ vào bố cục:
+Bốn lớp nội dung bắt buộc ánh xạ vào bố cục:
 
 | Lớp | Vị trí | Nội dung |
 |---|---|---|
 | Clinical Quick View | Băng trên + tab mặc định (cột giữa) | Làm ngay, tránh gì, cờ đỏ, nhóm đặc biệt |
 | Evidence Detail View | Cột phải (mở khi click item) | Nguồn, ngày/phiên bản, quần thể, grading, tham khảo |
 | Safety / Limits / Vietnam | Các tab riêng (cột giữa) | Chuyển tuyến, chưa đủ đổi thực hành, áp dụng tại Việt Nam |
+| Standards / Quality | Tab `Chuẩn & chất lượng` (cột giữa) | Khung câu hỏi, thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, độ cập nhật, an toàn, Việt Nam, truy nguyên từng item |
 
 (Mô hình một-cột `Clinical Quick View` cũ chỉ dùng khi bác sĩ yêu cầu riêng hoặc khi chỉ có 1–2 item.)
 
@@ -52,10 +53,20 @@ Trường cốt lõi:
 - `vietnam_application`
 - `reference_vancouver_nlm`
 - `verification_status`
+- `standards.frame`
+- `standards.sourceHierarchy`
+- `standards.reporting`
+- `standards.appraisal`
+- `standards.currency`
+- `standards.searchSources[]`
+- `standards.safety`
+- `standards.vietnamFit`
+- `standards.gates[]`
 
 ## Hành vi giao diện
 
 - Tab mặc định là `Clinical Quick View` (cột giữa), có băng tóm tắt cố định phía trên.
+- Tab `Chuẩn & chất lượng` bắt buộc có để rà PICO/PECO/PIRD/PROGRESS, nguồn tìm kiếm, CONSORT/STROBE/PRISMA/STARD/TRIPOD, AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI và truy nguyên từng item.
 - Bộ lọc facet (cột trái) theo Quyết định / Nhóm đặc biệt / Thiết kế / Mức chứng cứ, có số đếm.
 - Tìm kiếm toàn cục hoạt động trên tình huống, thuốc, hành động, nhóm nguy cơ và nguồn.
 - Click một dòng `ITEM-xx` → mở panel `Evidence Detail View` ở cột phải.
@@ -66,7 +77,7 @@ Trường cốt lõi:
 
 ### Ánh xạ trường record → khoá trong template
 
-`do_now`/`do_not_do`/`red_flags_referral` → `summary.doNow/dontDo/redFlags`; `decision` → `item.decision` (`apply`/`consider`/`notyet`); `source_grading` → `item.gradeSource` (+ `gradeLevel` để tô màu); `document`/`organization`/`version_date`/`population` → `item.source`/`org`/`dateVersion`/`population`; `monitoring`/`vietnam_application` → `item.monitoring`/`vn`; `reference_vancouver_nlm` → `item.references[]`; `local_item_id` → `item.id`.
+`do_now`/`do_not_do`/`red_flags_referral` → `summary.doNow/dontDo/redFlags`; `decision` → `item.decision` (`apply`/`consider`/`notyet`); `source_grading` → `item.gradeSource` (+ `gradeLevel` để tô màu); `document`/`organization`/`version_date`/`population` → `item.source`/`org`/`dateVersion`/`population`; `monitoring`/`vietnam_application` → `item.monitoring`/`vn`; `reference_vancouver_nlm` → `item.references[]`; `local_item_id` → `item.id`; chuẩn cập nhật chứng cứ → `standards.frame/sourceHierarchy/reporting/appraisal/currency/searchSources/safety/vietnamFit/gates`.
 
 ## Kiểm soát độ tin cậy
 
@@ -74,6 +85,8 @@ Trường cốt lõi:
 - Không đưa liều, cut-off, thời gian điều trị hoặc thay đổi nhãn vào Dashboard nếu chưa được xác minh trong nguồn.
 - Phân biệt grading của nguồn và nhận định vận hành.
 - Ghi rõ ngày/phiên bản cho nguồn chính.
+- Ghi rõ ngày tìm kiếm, thứ bậc nguồn, chuẩn báo cáo và công cụ thẩm định trong `DATA.standards`.
+- Không phát hành nếu tab `Chuẩn & chất lượng` còn cổng `need` mà chưa giải thích hoặc chưa chuyển thành `[CẦN KIỂM CHỨNG]`.
 
 ## Kiểm chứng khả dụng
 
@@ -85,3 +98,4 @@ Mục tiêu thao tác:
 | Tìm cờ đỏ/chuyển tuyến | ≤30 giây |
 | Tìm nhóm đặc biệt | ≤30 giây |
 | Mở nguồn/ngày cập nhật | ≤60 giây |
+| Rà chuẩn & chất lượng trước phát hành | ≤60 giây |

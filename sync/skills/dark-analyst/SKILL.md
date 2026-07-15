@@ -1,8 +1,8 @@
 ---
 name: dark-analyst
-description: Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; lớp Clinical Quick View là màn hình tóm tắt mặc định) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định.
+description: Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định.
 metadata:
-  version: 1.12.0
+  version: 1.12.1
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -251,10 +251,10 @@ Nếu môi trường không tạo file được, phải nói rõ và vẫn cung 
 Mọi Web Dashboard lâm sàng theo vấn đề cụ thể MẶC ĐỊNH dùng mô hình **Evidence Workbench**: bố cục 3 cột (master–detail), dày dữ liệu, đọc nhanh tại điểm chăm sóc. (Mô hình một-cột `Clinical Quick View` cũ chỉ dùng khi bác sĩ yêu cầu riêng hoặc khi chỉ có 1–2 item.)
 
 - **Cột trái — Bộ lọc (facets):** Quyết định thực hành (Áp dụng ngay / Cân nhắc chọn lọc / Chưa đủ thay đổi), Nhóm đặc biệt (người cao tuổi, CKD, gan, ĐTĐ, tim mạch, đa thuốc), Loại thiết kế, Mức chứng cứ.
-- **Cột giữa — Băng `CLINICAL QUICK VIEW` cố định + bảng điểm chứng cứ + các tab nội dung:** mỗi dòng là một `ITEM-xx`; click để mở thẩm định ở cột phải. Hiệu số (HR/RR/OR…) hiển thị kèm forest plot mini đúng như nguồn báo cáo.
+- **Cột giữa — Băng `CLINICAL QUICK VIEW` cố định + bảng điểm chứng cứ + các tab nội dung:** mỗi dòng là một `ITEM-xx`; click để mở thẩm định ở cột phải. Có tab `Chuẩn & chất lượng` để rà chuẩn cập nhật chứng cứ. Hiệu số (HR/RR/OR…) hiển thị kèm forest plot mini đúng như nguồn báo cáo.
 - **Cột phải — Panel `EVIDENCE DETAIL VIEW`:** chi tiết item đang chọn.
 
-Ba lớp nội dung bắt buộc ánh xạ vào bố cục:
+Bốn lớp nội dung bắt buộc ánh xạ vào bố cục:
 
 #### Lớp 1 — `CLINICAL QUICK VIEW` (băng tóm tắt cố định + tab mặc định ở cột giữa)
 
@@ -290,6 +290,17 @@ Phải có các tab/khu vực riêng:
 - `Chưa đủ để thay đổi thực hành`: dữ liệu chưa đủ xác minh hoặc không nên áp dụng rộng;
 - `Áp dụng tại Việt Nam`: nội dung triển khai ngay và mục `[CẦN XÁC NHẬN TẠI ĐƠN VỊ]`.
 
+#### Lớp 4 — `STANDARDS / QUALITY` (tab `Chuẩn & chất lượng`)
+
+Mỗi dashboard thật phải khai báo `DATA.standards` để hiển thị:
+
+- khung câu hỏi đã dùng: PICO/PECO/PIRD/PROGRESS hoặc khung phù hợp khác;
+- thứ bậc nguồn và ngày/nguồn tìm kiếm;
+- chuẩn báo cáo cần đối chiếu: CONSORT, STROBE, PRISMA, STARD, TRIPOD theo thiết kế;
+- công cụ thẩm định: AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI;
+- cổng liêm chính trước phát hành: truy nguyên nguồn, tách độ chắc chắn với quyết định thực hành, không PII, an toàn, tính phù hợp tại Việt Nam;
+- truy nguyên từng `ITEM-xx` bằng PMID/DOI/URL/tài liệu tham khảo.
+
 Không hiển thị `Governance/Admin`, `CỔNG A/CỔNG B`, `ACTION_TRACKER` hoặc nhập Master trong Web Dashboard của vấn đề riêng lẻ, trừ khi bác sĩ yêu cầu tích hợp Dashboard Master.
 
 ### Tương tác bắt buộc
@@ -297,12 +308,14 @@ Không hiển thị `Governance/Admin`, `CỔNG A/CỔNG B`, `ACTION_TRACKER` ho
 - Ô tìm kiếm theo bệnh/tình huống, thuốc, nhóm nguy cơ, hành động hoặc nguồn.
 - Bộ lọc theo quyết định và nhóm đặc biệt khi có nhiều item.
 - Nút `Mở chi tiết`.
+- Tab `Chuẩn & chất lượng` để rà câu hỏi, nguồn, chuẩn thẩm định, độ cập nhật, an toàn, Việt Nam và truy nguyên từng item.
 - Nút xuất CSV hoặc JSON các item đang lọc nếu khả thi.
-- Tab `Kiểm chứng thao tác` với 4 nhiệm vụ:
+- Tab `Kiểm chứng thao tác` với 5 nhiệm vụ:
   1. Tìm hành động ưu tiên của vấn đề ≤30 giây.
   2. Tìm cờ đỏ/chuyển tuyến hoặc kết luận không có cập nhật liên quan ≤30 giây.
   3. Tìm nội dung cho nhóm đặc biệt liên quan ≤30 giây.
   4. Mở nguồn và ngày/phiên bản ≤60 giây.
+  5. Rà tab `Chuẩn & chất lượng` trước phát hành ≤60 giây.
 
 ### Thiết kế giao diện — bảng màu mặc định "Evidence Workbench" (nền sáng, dày dữ liệu)
 
@@ -320,10 +333,10 @@ Màu ngữ nghĩa theo Quyết định thực hành (dùng nhất quán cho face
 Màu mức chứng cứ (GRADE): Cao `#16a34a` · TB `#ca8a04` · Thấp `#ea580c` · Rất thấp `#dc2626`.
 Màu loại thiết kế (badge): RCT `#2563eb` · Meta `#7c3aed` · Cohort `#0891b2` · Guideline `#059669` · Đồng thuận `#db2777`.
 
-**Sử dụng template MẶC ĐỊNH:** `templates/web-dashboard-evidence-workbench.html` (mẫu **"Evidence Workbench"** — nền sáng, 3 cột; có khối **GRADE Evidence-to-Decision**; mặc định từ 2026-06-07 theo lựa chọn của bác sĩ).
-Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa HTML/CSS. Chrome (tiêu đề, PICO chips, KPI, băng Clinical Quick View, EtD) **tự sinh từ `DATA`**.
+**Sử dụng template MẶC ĐỊNH:** `templates/web-dashboard-evidence-workbench.html` (mẫu **"Evidence Workbench"** — nền sáng, 3 cột; có khối **GRADE Evidence-to-Decision** và tab **Chuẩn & chất lượng**; mặc định từ 2026-06-07 theo lựa chọn của bác sĩ, nâng chuẩn 2026-07-15).
+Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa HTML/CSS. Chrome (tiêu đề, PICO chips, KPI, băng Clinical Quick View, EtD, standards/quality) **tự sinh từ `DATA`**.
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
-Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO) và `etd` (GRADE Evidence-to-Decision).
+Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
 
 **TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
 **CỔNG TRA CỨU DUY NHẤT cho bác sĩ** (không phải lục từng file): nút **"Mở EBM (WebApp).command"** → `EBM_MASTER/EBM_WEBAPP.html` (tìm/lọc mọi cập nhật đã làm). `EBM-Dashboards/` chỉ là vùng staging tạo file mới.
@@ -487,7 +500,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã nêu hành động, monitoring, cờ đỏ/chuyển tuyến khi cần chưa?
 - Đã phân tích nhóm đặc biệt liên quan chưa?
 - Đã ghi rõ nội dung chưa đủ để thay đổi chưa?
-- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu — CÙNG schema `DATA`) và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa?
+- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu — CÙNG schema `DATA`) với `DATA.standards`/tab `Chuẩn & chất lượng`, và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa?
 - Đã tránh tạo ID quản trị hoặc cập nhật Dashboard Master khi người dùng không yêu cầu chưa?
 - Đã dùng tài liệu tham khảo có thể truy nguyên chưa?
 - Nếu câu hỏi về hiệu quả can thiệp: đã trình bày khối PICO đủ 5 dòng và trích hiệu số đúng như nguồn (point estimate + CI/p) chưa?
@@ -495,6 +508,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã chạy `tools/verify_dashboard.py --online` và PASS (mọi item có PMID/DOI, PMID phân giải đúng, có disclaimer, không PII) trước khi giao chưa? (xem 5D)
 - Nếu cập nhật có thuốc cho người cao tuổi/đa thuốc: đã chạy `tools/drug_safety_scan.py` + đối chiếu Beers/STOPP qua skill người cao tuổi chưa? (xem 5E)
 - Đã tự sinh 3 sản phẩm phái sinh (tờ dặn/slide/TikTok) vào `derivatives/` và (khi có khuyến cáo đổi thực hành) điền khối `etd` cho Dashboard chưa? (xem 5D)
+- Đã điền/rà `DATA.standards` gồm thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, ngày tìm kiếm, an toàn, Việt Nam và truy nguyên từng item chưa?
 - Đã nêu cả hai chiều khi chứng cứ không đồng nhất, và đánh dấu `[CẦN BỔ SUNG]` khi chỉ có đồng thuận/nguyên lý chưa?
 - Đã ghi nguồn dạng văn bản thường (tác giả/tổ chức + năm + tạp chí) và rà soát để KHÔNG còn thẻ markup trích dẫn/mã kỹ thuật thô lẫn trong câu trả lời chưa?
 
@@ -506,7 +520,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/04-thuoc-khang-sinh-va-cong-cu.md`
 - `templates/mau-cap-nhat-nhanh.md`
 - `templates/mau-cap-nhat-chuyen-sau.md`
-- `templates/web-dashboard-evidence-workbench.html` ⭐ TEMPLATE MẶC ĐỊNH (Evidence Workbench, nền sáng; có EtD; chrome tự sinh từ DATA)
+- `templates/web-dashboard-evidence-workbench.html` ⭐ TEMPLATE MẶC ĐỊNH (Evidence Workbench, nền sáng; có EtD + tab Chuẩn & chất lượng; chrome tự sinh từ DATA)
 - `templates/web-dashboard-dark-analyst.html` (mẫu KHI YÊU CẦU — nền tối, CÙNG schema DATA)
 - `templates/web-dashboard-van-de-cu-the-clinical-quick-view.html` (một-cột cũ, chỉ khi yêu cầu riêng)
 - `templates/web-dashboard-record-schema.csv`

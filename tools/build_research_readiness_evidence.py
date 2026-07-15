@@ -112,7 +112,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
     EvidenceCheck(
         domain="Cập nhật chứng cứ lâm sàng",
         command=["tools/verify_clinical_evidence_update_pipeline.py"],
-        proves="Evidence Workbench template, dashboard integrity gate, thư viện tích lũy, tài liệu phái sinh và hợp đồng sync_all được kiểm bằng fixture offline không PII.",
+        proves="Evidence Workbench template gồm tab standards/chất lượng, dashboard integrity gate, thư viện tích lũy, tài liệu phái sinh và hợp đồng sync_all được kiểm bằng fixture offline không PII.",
         limitation="Không thay xác minh online PubMed/Crossref, rà toàn văn, an toàn thuốc hoặc quyết định áp dụng cho bệnh nhân thật.",
     ),
     EvidenceCheck(

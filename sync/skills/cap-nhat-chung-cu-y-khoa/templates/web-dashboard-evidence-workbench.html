@@ -12,6 +12,7 @@
     • Lớp 1 — CLINICAL QUICK VIEW  → băng tóm tắt trên + tab mặc định + bảng item
     • Lớp 2 — EVIDENCE DETAIL VIEW → panel phải (mở khi click một item)
     • Lớp 3 — SAFETY / LIMITS / VN → các tab riêng
+    • Lớp 4 — STANDARDS / QUALITY → tab chuẩn cập nhật, thẩm định và truy nguyên
 
   QUY TẮC LIÊM CHÍNH (theo skill):
     • Chỉ hiển thị nội dung đã xác minh; số liệu/hiệu số trích ĐÚNG như nguồn.
@@ -200,6 +201,33 @@
   .vn-col h5{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:8px}
   .needconf{display:inline-block;font-size:9.5px;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;border-radius:5px;padding:1px 6px}
 
+  /* evidence update standards */
+  .quality{padding:14px 16px;display:grid;gap:12px}
+  .quality-head{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .quality-head .ey{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;color:var(--primary);margin-bottom:4px}
+  .quality-head .tx{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .qbox{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:12px 13px;min-width:0}
+  .qbox.wide{grid-column:span 3}
+  .qbox h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800;margin-bottom:7px}
+  .qbox .v{font-size:12px;color:var(--ink-2);line-height:1.5}
+  .qbox .hint{font-size:10.5px;color:var(--faint);line-height:1.45;margin-top:5px}
+  .qcheck{display:flex;flex-direction:column;gap:7px}
+  .gate{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:start;border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:8px 10px}
+  .gate .s{display:inline-flex;justify-content:center;border-radius:999px;font-size:9px;font-weight:800;padding:2px 7px;text-transform:uppercase;letter-spacing:.3px}
+  .gate.ok .s{background:#dcfce7;color:var(--apply)}
+  .gate.warn .s{background:#fef9c3;color:var(--consider)}
+  .gate.need .s{background:#fee2e2;color:var(--danger)}
+  .gate .t{font-size:12px;color:var(--ink);font-weight:700;line-height:1.35}
+  .gate .g{font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px}
+  .trace-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+  .trace-row{display:grid;grid-template-columns:86px minmax(0,1fr) 126px;gap:10px;align-items:start;border-bottom:1px solid var(--line);padding:8px 0}
+  .trace-row .id{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .trace-row .name{font-size:12px;color:var(--ink);font-weight:600;line-height:1.35}
+  .trace-row .srcx{font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+  .trace-row .trace-ok{font-size:10px;font-weight:800;color:var(--apply);white-space:nowrap}
+  .trace-row .trace-need{font-size:10px;font-weight:800;color:var(--danger);white-space:nowrap}
+
   /* verify tasks */
   .vtask{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface)}
   .vtask .n{width:24px;height:24px;border-radius:7px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;flex-shrink:0;font-family:var(--mono)}
@@ -282,6 +310,9 @@
     .search{width:160px}
     .detail{width:100vw}
     table th:nth-child(4),table td:nth-child(4){display:none}
+    .quality-grid{grid-template-columns:1fr}
+    .qbox.wide{grid-column:span 1}
+    .trace-row{grid-template-columns:1fr}
   }
   /* ≤540px: dồn về 1–2 cột cho điện thoại */
   @media (max-width:540px){
@@ -356,6 +387,11 @@
    SCHEMA:
    meta:    { question, eyebrow, pico:{P,I,C,O}, updated }
    summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }   // Lớp 1
+   standards?: {                       // Lớp 4: chuẩn cập nhật chứng cứ
+     frame, sourceHierarchy, reporting, appraisal, currency, safety, vietnamFit,
+     searchSources:[…],
+     gates:[{label, status:'ok'|'warn'|'need', note}]
+   }
    items:   [ {
      id:'ITEM-01',                       // mã cục bộ, KHÔNG phải ID Master
      title, source, org, dateVersion,
@@ -386,6 +422,23 @@ const DATA = {
     doNow:['Khởi trị SGLT2i 10 mg/ngày khi đã tối ưu nền tảng','Theo dõi eGFR, thể tích, huyết áp sau khởi trị'],
     dontDo:['Không dùng để thay thế ARNI/chẹn beta/MRA','Không ngoại suy bằng chứng HFrEF sang HFpEF mà chưa đối chiếu DELIVER'],
     redFlags:['Nhiễm toan ceton đái tháo đường (DKA) — ngưng thuốc, xử trí cấp','Tụt huyết áp/giảm thể tích có triệu chứng']
+  },
+  standards:{
+    frame:'PICO rõ ràng trước khi chọn nguồn; nếu là chẩn đoán/tiên lượng/tác hại thì đổi sang PIRD/PECO/PROGRESS phù hợp.',
+    sourceHierarchy:'Ưu tiên guideline sống hoặc guideline chính thức, SR/MA chất lượng cao, RCT then chốt, nghiên cứu quan sát khi câu hỏi không thể RCT.',
+    reporting:'Đối chiếu chuẩn báo cáo CONSORT, STROBE, PRISMA, STARD hoặc TRIPOD tùy thiết kế nguồn.',
+    appraisal:'Thẩm định bằng AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI tùy loại nghiên cứu.',
+    currency:'Nguồn ví dụ cập nhật đến 2026-06-07; dashboard thật phải ghi ngày tìm kiếm và chạy lại trước khi áp dụng.',
+    searchSources:['PubMed','Cochrane','Guideline society','Drug label/safety source'],
+    safety:'Bắt buộc rà cờ đỏ, chống chỉ định, tương tác, chỉnh liều thận/gan và tiêu chí chuyển tuyến trước khi phát hành.',
+    vietnamFit:'Đối chiếu thuốc/kỹ thuật sẵn có, BHYT/chi phí, tuyến chăm sóc, năng lực theo dõi và khác biệt dân số tại Việt Nam.',
+    gates:[
+      {label:'Câu hỏi có cấu trúc',status:'ok',note:'PICO/khung tương ứng được hiển thị ở top bar và từng item.'},
+      {label:'Truy nguyên nguồn',status:'ok',note:'Mỗi item có PMID/DOI/URL hoặc tài liệu tham khảo Vancouver/NLM.'},
+      {label:'Tách chứng cứ và khuyến cáo',status:'ok',note:'gradeSource giữ nguyên nguồn; decision là quyết định thực hành có kiểm soát.'},
+      {label:'An toàn & giới hạn',status:'ok',note:'Có cờ đỏ, không nên/giới hạn, nhóm đặc biệt và monitoring.'},
+      {label:'Không PII',status:'ok',note:'Dashboard không lưu thông tin định danh bệnh nhân.'}
+    ]
   },
   items:[
     {id:'ITEM-01', title:'SGLT2i là trụ cột nền tảng điều trị HFrEF', source:'ESC 2021 Heart Failure Guidelines', org:'European Society of Cardiology', dateVersion:'2021', pmid:'34447992', doi:'10.1093/eurheartj/ehab368',
@@ -442,8 +495,22 @@ const GRADE_META={high:['g-high','Cao',4],mod:['g-mod','Trung bình',3],low:['g-
 const DEC_META={apply:['d-apply','Áp dụng ngay','--apply'],consider:['d-consider','Cân nhắc chọn lọc','--consider'],notyet:['d-notyet','Chưa đủ thay đổi','--notyet']};
 const GROUP_META={'cao-tuoi':'Người cao tuổi','ckd':'CKD','gan':'Bệnh gan','dtd':'Đái tháo đường','tim-mach':'Tim mạch','da-thuoc':'Đa thuốc'};
 const RM={l:['rl','✓'],s:['rs','!'],h:['rh','✕']};
+const STANDARD_GATES=[
+  {label:'Câu hỏi có cấu trúc',status:'need',note:'Khai báo PICO/PECO/PIRD/PROGRESS trước khi sinh dashboard thật.'},
+  {label:'Thứ bậc nguồn',status:'need',note:'Ghi rõ guideline/SR-MA/RCT/quan sát và lý do chọn nguồn.'},
+  {label:'Chuẩn báo cáo',status:'need',note:'Đối chiếu CONSORT, STROBE, PRISMA, STARD, TRIPOD theo thiết kế.'},
+  {label:'Công cụ thẩm định',status:'need',note:'Đối chiếu AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI.'},
+  {label:'Liêm chính phát hành',status:'need',note:'Không PII, có nguồn truy nguyên, tách độ chắc chắn với sức mạnh khuyến cáo.'}
+];
 
 let state={selected:null, tab:'cqv', q:'', filters:{decision:new Set(),group:new Set(),design:new Set(),grade:new Set()}};
+
+/* 2026-07-12 (round 20 security review): chống XSS — DATA.items có thể chứa văn bản
+   NGOÀI (tiêu đề/tóm tắt PubMed, guideline...) được nội suy thẳng vào innerHTML khắp
+   file. escHtml() escape trước khi ghép chuỗi HTML; escUrl() chỉ cho phép scheme
+   http(s) khi dựng href (chặn "javascript:" URI). */
+function escHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?encodeURI(u).replace(/"/g,'%22'):'';}
 
 /* forest helpers */
 const FMIN=0.4, FMAX=2.0;
@@ -465,8 +532,8 @@ function renderStatic(){
   document.title='Dashboard EBM · '+DATA.meta.question;
   const p=DATA.meta.pico||{};
   document.getElementById('pico-bar').innerHTML=
-    `<span class="pico-chip"><b>P</b> ${p.P||''}</span><span class="pico-chip i"><b>I</b> ${p.I||''}</span>`+
-    `<span class="pico-chip c"><b>C</b> ${p.C||''}</span><span class="pico-chip o"><b>O</b> ${p.O||''}</span>`;
+    `<span class="pico-chip"><b>P</b> ${escHtml(p.P||'')}</span><span class="pico-chip i"><b>I</b> ${escHtml(p.I||'')}</span>`+
+    `<span class="pico-chip c"><b>C</b> ${escHtml(p.C||'')}</span><span class="pico-chip o"><b>O</b> ${escHtml(p.O||'')}</span>`;
   document.getElementById('updstamp').textContent='Cập nhật: '+(DATA.meta.updated||'');
   const s=DATA.summary||{};
   // LỌC PHÒNG VỆ thẻ tóm tắt: bỏ gạch đầu dòng bị nhồi nguyên văn abstract NGOẠI NGỮ
@@ -488,9 +555,9 @@ function renderStatic(){
       const v=_firstSentence(e.vn||'');     return _usable(v)?v:'';
     }).filter(Boolean).slice(0,4);
   }
-  const li=a=>(a||[]).map(x=>`<li>${x}</li>`).join('')||'<li style="color:var(--faint)">—</li>';
+  const li=a=>(a||[]).map(x=>`<li>${escHtml(x)}</li>`).join('')||'<li style="color:var(--faint)">—</li>';
   document.getElementById('summary').innerHTML=`
-    <div class="scard concl"><div class="sh"><span class="ic">✓</span>Kết luận thực hành</div><p>${s.conclusion||'—'}</p></div>
+    <div class="scard concl"><div class="sh"><span class="ic">✓</span>Kết luận thực hành</div><p>${escHtml(s.conclusion||'—')}</p></div>
     <div class="scard do"><div class="sh"><span class="ic">➤</span>Nên làm hiện nay</div><ul>${li(doNow)}</ul></div>
     <div class="scard dont"><div class="sh"><span class="ic">⊘</span>Không nên / giới hạn</div><ul>${li(_clean(s.dontDo))}</ul></div>
     <div class="scard flag"><div class="sh"><span class="ic">⚑</span>Cờ đỏ / chuyển tuyến</div><ul>${li(_clean(s.redFlags))}</ul></div>`;
@@ -500,7 +567,7 @@ function renderStatic(){
 /* GRADE Evidence-to-Decision dưới dạng nội dung tab (gọn, không chiếm chiều cao đầu trang) */
 function etdView(){
   const etd=DATA.etd; if(!etd) return '<div class="empty">Không có khối GRADE Evidence-to-Decision cho vấn đề này.</div>';
-  const cell=(label,val,tag)=>`<div class="etd-c"><div class="l">${label}${tag==='src'?'<span class="src">nguồn</span>':tag==='op'?'<span class="op">vận hành</span>':''}</div><div class="v">${val||'—'}</div></div>`;
+  const cell=(label,val,tag)=>`<div class="etd-c"><div class="l">${label}${tag==='src'?'<span class="src">nguồn</span>':tag==='op'?'<span class="op">vận hành</span>':''}</div><div class="v">${escHtml(val||'—')}</div></div>`;
   return `<div class="etd" style="border-bottom:0">
       <div class="eh">⚖ GRADE Evidence-to-Decision <span class="note">hàng "nguồn" = từ chứng cứ đã xác minh · hàng "vận hành" = đánh giá của người tổng hợp</span></div>
       <div class="etd-grid">
@@ -515,8 +582,49 @@ function etdView(){
         ${cell('Chấp nhận',etd.acceptability,'op')}
         ${cell('Khả thi',etd.feasibility,'op')}
       </div>
-      ${etd.recommendation?`<div class="etd-rec"><div class="rh">➤ Khuyến cáo (đánh giá vận hành)${etd.strength?`<span class="str">${etd.strength==='strong'?'Mạnh':'Có điều kiện'}</span>`:''}</div><div class="rv">${etd.recommendation}</div></div>`:''}
+      ${etd.recommendation?`<div class="etd-rec"><div class="rh">➤ Khuyến cáo (đánh giá vận hành)${etd.strength?`<span class="str">${escHtml(etd.strength==='strong'?'Mạnh':'Có điều kiện')}</span>`:''}</div><div class="rv">${escHtml(etd.recommendation)}</div></div>`:''}
     </div>`;
+}
+
+/* Chuẩn chất lượng cập nhật chứng cứ — hiển thị mặc định dù DATA.standards chưa khai báo,
+   để dashboard thật tự chỉ ra phần nào còn cần bác sĩ/nhóm EBM xác nhận trước phát hành. */
+function gateState(status){
+  const s=String(status||'need').toLowerCase();
+  if(['ok','pass','done','dat','đạt'].includes(s)) return ['ok','Đạt'];
+  if(['warn','partial','review','canh-bao','cảnh-báo'].includes(s)) return ['warn','Rà'];
+  return ['need','Cần'];
+}
+function qualityView(){
+  const s=DATA.standards||{};
+  const src=Array.isArray(s.searchSources)?s.searchSources.join(' · '):(s.searchSources||'Chưa khai báo nguồn tìm kiếm');
+  const gates=(Array.isArray(s.gates)&&s.gates.length?s.gates:STANDARD_GATES);
+  const box=(h,v,hint='')=>`<div class="qbox"><h4>${h}</h4><div class="v">${escHtml(v||'Chưa khai báo')}</div>${hint?`<div class="hint">${escHtml(hint)}</div>`:''}</div>`;
+  const gateHtml=gates.map(g=>{const st=gateState(g.status);return `<div class="gate ${st[0]}"><span class="s">${st[1]}</span><div><div class="t">${escHtml(g.label||'Cổng kiểm')}</div><div class="g">${escHtml(g.note||'—')}</div></div></div>`;}).join('');
+  const traces=(DATA.items||[]).map(e=>{
+    const ok=Boolean(e.pmid||e.doi||escUrl(e.url)||(Array.isArray(e.references)&&e.references.length));
+    const trace=[e.pmid?`PMID ${e.pmid}`:'',e.doi?`DOI ${e.doi}`:'',escUrl(e.url)?'URL':'',Array.isArray(e.references)&&e.references.length?'Refs':''].filter(Boolean).join(' · ')||'Thiếu định danh';
+    return `<div class="trace-row">
+      <div class="id">${escHtml(e.id||'ITEM')}</div>
+      <div><div class="name">${escHtml(e.title||'—')}</div><div class="srcx">${escHtml(e.source||'—')} · ${escHtml(e.dateVersion||'—')}</div></div>
+      <div class="${ok?'trace-ok':'trace-need'}">${escHtml(trace)}</div>
+    </div>`;
+  }).join('')||'<div class="empty">Chưa có item chứng cứ.</div>';
+  return `<div class="quality">
+    <div class="quality-head">
+      <div class="ey">Chuẩn chất lượng cập nhật chứng cứ</div>
+      <div class="tx">Tab này khóa các yêu cầu tối thiểu trước khi dùng dashboard cho thực hành lâm sàng: câu hỏi có cấu trúc, thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, độ cập nhật, an toàn, tính phù hợp tại Việt Nam và truy nguyên từng item. Đây là lớp kiểm soát bổ sung bên cạnh GRADE EtD.</div>
+    </div>
+    <div class="quality-grid">
+      ${box('Khung câu hỏi',s.frame||DATA.meta.question,'PICO/PECO/PIRD/PROGRESS phải khớp mục tiêu thực hành.')}
+      ${box('Thứ bậc nguồn',s.sourceHierarchy,'Ưu tiên nguồn tổng hợp đáng tin cậy trước nghiên cứu đơn lẻ.')}
+      ${box('Độ cập nhật',s.currency||DATA.meta.updated,`Nguồn tìm kiếm: ${src}`)}
+      ${box('Chuẩn báo cáo',s.reporting||'CONSORT · STROBE · PRISMA · STARD · TRIPOD','Chọn chuẩn theo thiết kế nghiên cứu của từng nguồn.')}
+      ${box('Công cụ thẩm định',s.appraisal||'AGREE II · AMSTAR 2 · RoB 2 · ROBINS-I · QUADAS-2 · PROBAST · JBI','Không dùng RoB 2 cho nghiên cứu không phải RCT.')}
+      ${box('An toàn & Việt Nam',`${s.safety||'Chưa khai báo an toàn'} ${s.vietnamFit?` · ${s.vietnamFit}`:''}`,'Bắt buộc rà thuốc, chống chỉ định, tương tác, chuyển tuyến, chi phí/BHYT và năng lực theo dõi.')}
+      <div class="qbox wide"><h4>Cổng liêm chính trước phát hành</h4><div class="qcheck">${gateHtml}</div></div>
+      <div class="qbox wide"><h4>Truy nguyên từng item</h4><div class="trace-list">${traces}</div></div>
+    </div>
+  </div>`;
 }
 function renderKPIs(){
   const it=DATA.items, c=k=>it.filter(x=>x.decision===k).length;
@@ -528,7 +636,7 @@ function renderKPIs(){
     {label:'Chưa đủ thay đổi',val:c('notyet'),sub:'tín hiệu/gián tiếp',cls:'notyet'},
     {label:'Nguồn mới nhất',val:newest,sub:'năm/phiên bản',cls:''},
   ];
-  document.getElementById('kpis').innerHTML=kp.map(d=>`<div class="kpi"><div class="label">${d.label}</div><div class="val ${d.cls}">${d.val}</div><div class="sub">${d.sub}</div></div>`).join('');
+  document.getElementById('kpis').innerHTML=kp.map(d=>`<div class="kpi"><div class="label">${d.label}</div><div class="val ${d.cls}">${escHtml(d.val)}</div><div class="sub">${d.sub}</div></div>`).join('');
 }
 
 /* facets */
@@ -556,13 +664,13 @@ function clearFacet(g){state.filters[g].clear();buildFacets();render();}
 function renderTabs(){
   const it=DATA.items;
   const nSafety=it.filter(x=>x.safety).length, nNot=it.filter(x=>x.decision==='notyet').length;
-  const tabs=[['cqv','◧ Clinical Quick View',it.length]];
+  const tabs=[['cqv','◧ Clinical Quick View',it.length],['quality','▣ Chuẩn & chất lượng','']];
   if(DATA.etd) tabs.push(['etd','⚖ GRADE EtD','']);
   tabs.push(
     ['safety','⚑ An toàn & chuyển tuyến',nSafety],
     ['notyet','⊘ Chưa đủ thay đổi',nNot],
     ['vn','★ Áp dụng tại Việt Nam',it.length],
-    ['verify','✓ Kiểm chứng thao tác',4]
+    ['verify','✓ Kiểm chứng thao tác',5]
   );
   document.getElementById('tabs').innerHTML=tabs.map(([k,l,n])=>`<button class="tab ${state.tab===k?'on':''}" onclick="setTab('${k}')">${l}${(n===''||n==null)?'':`<span class="badge-n">${n}</span>`}</button>`).join('');
 }
@@ -584,6 +692,7 @@ function render(){state.q=document.getElementById('q').value.trim().toLowerCase(
 function renderCenter(){
   const host=document.getElementById('center-scroll');
   if(state.tab==='cqv') host.innerHTML=tableView(filtered());
+  else if(state.tab==='quality') host.innerHTML=qualityView();
   else if(state.tab==='etd') host.innerHTML=etdView();
   else if(state.tab==='safety') host.innerHTML=cardView(DATA.items.filter(x=>x.safety),'safety');
   else if(state.tab==='notyet') host.innerHTML=cardView(DATA.items.filter(x=>x.decision==='notyet'),'notyet');
@@ -593,11 +702,11 @@ function renderCenter(){
 function tableView(arr){
   const rows=arr.map(e=>{
     const dm=DESIGN_META[e.design]||['',''], gm=GRADE_META[e.gradeLevel]||GRADE_META.na, dec=DEC_META[e.decision]||DEC_META.consider;
-    const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+e.effect.ci+')':''}</span>`:(e.effectText?`<span class="effect ns" style="font-size:10.5px">${e.effectText}</span>`:'<span class="effect ns">—</span>');
+    const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):escHtml(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+escHtml(e.effect.ci)+')':''}</span>`:(e.effectText?`<span class="effect ns" style="font-size:10.5px">${escHtml(e.effectText)}</span>`:'<span class="effect ns">—</span>');
     const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
     const robm=e.rob?Object.values(e.rob).map(r=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join(''):'<span style="color:var(--faint);font-size:10px">—</span>';
     return `<tr class="${e.id===state.selected?'sel':''}" onclick="select('${e.id}')">
-      <td><span class="ttl">${e.title}<span class="auth">${e.source} · <span class="idtag">${e.id}</span>${e.pmid?` · PMID <span class="pmid">${e.pmid}</span>`:''}</span>${e.flag?`<span class="flag-mini">⚑ ${e.flag}</span>`:''}</span></td>
+      <td><span class="ttl">${escHtml(e.title)}<span class="auth">${escHtml(e.source)} · <span class="idtag">${escHtml(e.id)}</span>${e.pmid?` · PMID <span class="pmid">${escHtml(e.pmid)}</span>`:''}</span>${e.flag?`<span class="flag-mini">⚑ ${escHtml(e.flag)}</span>`:''}</span></td>
       <td><span class="badge ${dm[0]}"><span class="d"></span>${dm[1]}</span></td>
       <td>${eff}</td>
       <td>${miniForest(e.effect)}</td>
@@ -613,16 +722,16 @@ function cardView(arr,kind){
   if(!arr.length) return `<div class="empty">Không có nội dung cho mục này.</div>`;
   return `<div class="pad"><div class="cardlist">`+arr.map(e=>{
     const col=kind==='safety'?'var(--danger)':'var(--notyet)';
-    const txt=kind==='safety'?e.safety:(e.action+(e.flag?` <span class="flag-mini">⚑ ${e.flag}</span>`:''));
+    const txt=escHtml(kind==='safety'?e.safety:(e.action||''))+(e.flag?` <span class="flag-mini">⚑ ${escHtml(e.flag)}</span>`:'');
     return `<div class="li-card" style="display:flex;gap:11px;cursor:pointer" onclick="select('${e.id}');setTab('cqv')">
       <div class="stripe" style="background:${col}"></div>
-      <div><div class="h">${e.title}</div><div class="x">${txt}</div><div class="src">${e.source} · ${e.id}${e.pmid?' · PMID '+e.pmid:''}</div></div></div>`;
+      <div><div class="h">${escHtml(e.title)}</div><div class="x">${txt}</div><div class="src">${escHtml(e.source)} · ${escHtml(e.id)}${e.pmid?' · PMID '+escHtml(e.pmid):''}</div></div></div>`;
   }).join('')+`</div></div>`;
 }
 function vnView(){
   const apply=DATA.items.filter(x=>x.decision==='apply');
   const conf=DATA.items.filter(x=>(x.vn||'').includes('[CẦN XÁC NHẬN'));
-  const row=e=>`<div class="li-card" style="cursor:pointer" onclick="select('${e.id}');setTab('cqv')"><div class="h" style="font-size:12.5px">${e.title}</div><div class="x">${e.vn||'—'}</div><div class="src">${e.source} · ${e.id}</div></div>`;
+  const row=e=>`<div class="li-card" style="cursor:pointer" onclick="select('${e.id}');setTab('cqv')"><div class="h" style="font-size:12.5px">${escHtml(e.title)}</div><div class="x">${escHtml(e.vn||'—')}</div><div class="src">${escHtml(e.source)} · ${escHtml(e.id)}</div></div>`;
   return `<div class="pad"><div class="vn-grid">
     <div class="vn-col"><h5>✓ Triển khai ngay tại phòng khám</h5><div class="cardlist">${apply.map(row).join('')||'<div class="empty">—</div>'}</div></div>
     <div class="vn-col"><h5>⚙ Cần đối chiếu sẵn có · chi phí · BHYT · phác đồ</h5><div class="cardlist">${DATA.items.filter(x=>x.decision==='consider').map(row).join('')||'<div class="empty">—</div>'}</div>
@@ -635,6 +744,7 @@ function verifyView(){
     ['2','Tìm cờ đỏ / chuyển tuyến','Băng tóm tắt phía trên → thẻ "Cờ đỏ / chuyển tuyến".','≤ 30s'],
     ['3','Tìm nội dung cho nhóm đặc biệt','Bộ lọc trái → "Nhóm đặc biệt" (CKD, người cao tuổi…).','≤ 30s'],
     ['4','Mở nguồn & ngày/phiên bản','Click một điểm → panel phải → mục "Nguồn & truy xuất".','≤ 60s'],
+    ['5','Kiểm chuẩn cập nhật chứng cứ','Mở tab "Chuẩn & chất lượng" → rà câu hỏi, nguồn, chuẩn thẩm định, độ cập nhật và cổng liêm chính.','≤ 60s'],
   ];
   return `<div class="pad"><div class="cardlist">`+tasks.map(([n,t,g,tm])=>`<div class="vtask"><div class="n">${n}</div><div><div class="t">${t}</div><div class="g">${g}</div></div><div class="timer">${tm}</div></div>`).join('')+`</div></div>`;
 }
@@ -651,10 +761,10 @@ function renderDetail(){
   const dm=DESIGN_META[e.design]||['',''], gm=GRADE_META[e.gradeLevel]||GRADE_META.na, dec=DEC_META[e.decision]||DEC_META.consider;
   const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
   const FL=e.frameLabels||{P:'P',I:'I',C:'C',O:'O'};
-  const picoRows=['P','I','C','O'].map(k=>{const d=(e.pico||{})[k]||['—','match'];return `<div class="k k${k}">${FL[k]||k}</div><div class="v">${d[0]} ${d[1]==='match'?'<span class="match">✓ khớp</span>':'<span class="mis">⚠ lệch</span>'}</div>`;}).join('');
+  const picoRows=['P','I','C','O'].map(k=>{const d=(e.pico||{})[k]||['—','match'];return `<div class="k k${k}">${escHtml(FL[k]||k)}</div><div class="v">${escHtml(d[0])} ${d[1]==='match'?'<span class="match">✓ khớp</span>':'<span class="mis">⚠ lệch</span>'}</div>`;}).join('');
   const eff=e.effect;
   const statsHtml=(eff||e.effectText)?`<div class="dsec"><h3>∑ Hiệu số (đúng như nguồn báo cáo)</h3><div class="stats">
-      <div class="stat"><div class="l">${eff?(eff.measure||'Hiệu số'):'Hiệu số'}</div><div class="n" style="color:${eff&&eff.favors?'var(--g-high)':'var(--ink)'}">${eff&&eff.hr!=null?eff.hr.toFixed(2):(e.effectText||'—')}</div><div class="x">${eff?'95% CI '+(eff.ci||'—'):''}</div></div>
+      <div class="stat"><div class="l">${escHtml(eff?(eff.measure||'Hiệu số'):'Hiệu số')}</div><div class="n" style="color:${eff&&eff.favors?'var(--g-high)':'var(--ink)'}">${eff&&eff.hr!=null?eff.hr.toFixed(2):escHtml(e.effectText||'—')}</div><div class="x">${eff?'95% CI '+escHtml(eff.ci||'—'):''}</div></div>
       ${eff?`<div class="stat"><div class="l">Forest</div><div style="margin-top:6px">${miniForest(eff)}</div><div class="x">ngưỡng 1.0</div></div>`:''}
     </div></div>`:'';
   const robFull=e.rob?Object.keys(e.rob).map(d=>{const r=RM[e.rob[d]];return `<div class="r"><span>${d}</span><i class="${r[0]}">${r[1]}</i></div>`;}).join(''):'';
@@ -662,8 +772,8 @@ function renderDetail(){
   el.innerHTML=`
     <div class="dhead">
       <button class="detail-close" onclick="closeDetail()" title="Đóng">✕</button>
-      <div class="deyebrow">⊕ Evidence Detail · ${e.id}${e.frame?' · Khung '+e.frame:''}</div>
-      <h2>${e.title}</h2>
+      <div class="deyebrow">⊕ Evidence Detail · ${escHtml(e.id)}${e.frame?' · Khung '+escHtml(e.frame):''}</div>
+      <h2>${escHtml(e.title)}</h2>
       <div class="dmeta">
         <span class="badge ${dm[0]}"><span class="d"></span>${dm[1]}</span>
         <span class="grade ${gm[0]}"><span class="pips">${pips}</span>${gm[1]}</span>
@@ -671,34 +781,34 @@ function renderDetail(){
       </div>
     </div>
     <div class="dsec"><h3>📄 Nguồn</h3><div class="kvline">
-      <div class="r"><span class="k">Tài liệu</span><span class="v">${e.source}</span></div>
-      <div class="r"><span class="k">Tổ chức</span><span class="v">${e.org||'—'}</span></div>
-      <div class="r"><span class="k">Ngày/phiên bản</span><span class="v">${e.dateVersion||'—'}</span></div>
-      <div class="r"><span class="k">Quần thể</span><span class="v">${e.population||'—'}</span></div>
-      <div class="r"><span class="k">Grading nguồn</span><span class="v">${e.gradeSource||'Nguồn không cung cấp phân hạng'}</span></div>
+      <div class="r"><span class="k">Tài liệu</span><span class="v">${escHtml(e.source)}</span></div>
+      <div class="r"><span class="k">Tổ chức</span><span class="v">${escHtml(e.org||'—')}</span></div>
+      <div class="r"><span class="k">Ngày/phiên bản</span><span class="v">${escHtml(e.dateVersion||'—')}</span></div>
+      <div class="r"><span class="k">Quần thể</span><span class="v">${escHtml(e.population||'—')}</span></div>
+      <div class="r"><span class="k">Grading nguồn</span><span class="v">${escHtml(e.gradeSource||'Nguồn không cung cấp phân hạng')}</span></div>
     </div></div>
-    <div class="dsec"><h3>◧ Đối chiếu ${e.frame||'PICO'}</h3><div class="picogrid">${picoRows}</div></div>
+    <div class="dsec"><h3>◧ Đối chiếu ${escHtml(e.frame||'PICO')}</h3><div class="picogrid">${picoRows}</div></div>
     ${statsHtml}
     ${robHtml}
     <div class="dsec"><h3>➤ Hành động & theo dõi</h3><div class="kvline">
-      <div class="r"><span class="k">Hành động</span><span class="v">${e.action||'—'}</span></div>
-      <div class="r"><span class="k">Monitoring</span><span class="v">${e.monitoring||'—'}</span></div>
-      <div class="r"><span class="k">Nhóm liên quan</span><span class="v">${(e.groups||[]).map(g=>GROUP_META[g]||g).join(', ')||'—'}</span></div>
+      <div class="r"><span class="k">Hành động</span><span class="v">${escHtml(e.action||'—')}</span></div>
+      <div class="r"><span class="k">Monitoring</span><span class="v">${escHtml(e.monitoring||'—')}</span></div>
+      <div class="r"><span class="k">Nhóm liên quan</span><span class="v">${escHtml((e.groups||[]).map(g=>GROUP_META[g]||g).join(', ')||'—')}</span></div>
     </div></div>
-    ${e.safety?`<div class="dsec"><h3>⚑ An toàn / chuyển tuyến</h3><p style="font-size:12px;color:var(--ink-2);line-height:1.5">${e.safety}</p></div>`:''}
-    <div class="dsec"><h3>★ Áp dụng tại Việt Nam</h3><div class="applybox"><div class="ah">💡 ${dec[1]}</div><p>${e.vn||'—'}</p></div></div>
+    ${e.safety?`<div class="dsec"><h3>⚑ An toàn / chuyển tuyến</h3><p style="font-size:12px;color:var(--ink-2);line-height:1.5">${escHtml(e.safety)}</p></div>`:''}
+    <div class="dsec"><h3>★ Áp dụng tại Việt Nam</h3><div class="applybox"><div class="ah">💡 ${dec[1]}</div><p>${escHtml(e.vn||'—')}</p></div></div>
     <div class="dsec"><h3>🔗 Nguồn & truy xuất</h3><div class="src">
-      ${e.pmid?`<a href="https://pubmed.ncbi.nlm.nih.gov/${e.pmid}/" target="_blank"><span class="tag pmid">PMID</span> ${e.pmid} · PubMed</a>`:''}
-      ${e.doi?`<a href="https://doi.org/${e.doi}" target="_blank"><span class="tag doi">DOI</span> ${e.doi}</a>`:''}
-      ${e.url?`<a href="${e.url}" target="_blank"><span class="tag url">URL</span> Mở nguồn</a>`:''}
+      ${e.pmid?`<a href="https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(e.pmid)}/" target="_blank" rel="noopener"><span class="tag pmid">PMID</span> ${escHtml(e.pmid)} · PubMed</a>`:''}
+      ${e.doi?`<a href="https://doi.org/${encodeURIComponent(e.doi)}" target="_blank" rel="noopener"><span class="tag doi">DOI</span> ${escHtml(e.doi)}</a>`:''}
+      ${escUrl(e.url)?`<a href="${escUrl(e.url)}" target="_blank" rel="noopener"><span class="tag url">URL</span> Mở nguồn</a>`:''}
     </div></div>
-    ${(e.references&&e.references.length)?`<div class="dsec"><h3>📚 Tài liệu tham khảo (Vancouver/NLM)</h3><div class="reflist">${e.references.map(r=>`<div class="r">${r}</div>`).join('')}</div></div>`:''}`;
+    ${(e.references&&e.references.length)?`<div class="dsec"><h3>📚 Tài liệu tham khảo (Vancouver/NLM)</h3><div class="reflist">${e.references.map(r=>`<div class="r">${escHtml(r)}</div>`).join('')}</div></div>`:''}`;
 }
 
 /* export */
 function exportData(fmt){
   const arr=filtered();
-  if(fmt==='json'){download('dashboard-ebm.json',JSON.stringify({meta:DATA.meta,items:arr},null,2),'application/json');return;}
+  if(fmt==='json'){download('dashboard-ebm.json',JSON.stringify({meta:DATA.meta,summary:DATA.summary,standards:DATA.standards,etd:DATA.etd,items:arr},null,2),'application/json');return;}
   const cols=['id','title','design','decision','gradeSource','population','source','dateVersion','pmid','doi','action','monitoring','vn'];
   const esc=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
   const rows=[cols.join(',')].concat(arr.map(e=>cols.map(c=>esc(e[c])).join(',')));

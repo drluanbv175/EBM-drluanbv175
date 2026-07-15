@@ -53,6 +53,14 @@ TEMPLATE_PAIRS = [
         MASTER / "skill_assets" / "web-dashboard-evidence-workbench.html",
     ),
     (
+        ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html",
+        ROOT / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-evidence-workbench.html",
+    ),
+    (
+        ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html",
+        ROOT / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-evidence-workbench.html",
+    ),
+    (
         ROOT / "dashboard_mockups" / "templates" / "dark-analyst-template.html",
         MASTER / "skill_assets" / "web-dashboard-dark-analyst.html",
     ),
