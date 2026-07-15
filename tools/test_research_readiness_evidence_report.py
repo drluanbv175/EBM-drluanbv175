@@ -43,6 +43,16 @@ def test_core_checks_include_controlled_research_automation():
     assert any("verify_controlled_research_automation.py" in cmd for cmd in commands)
 
 
+def test_core_checks_include_repo_alignment_and_clinical_hardening():
+    commands = [" ".join(check.command) for check in E.CORE_CHECKS]
+    domains = {check.domain for check in E.CORE_CHECKS}
+
+    assert "Repo/Claude Code/Codex alignment" in domains
+    assert "Clinical runtime schema hardening" in domains
+    assert any("verify_claude_code_repo_alignment.py" in cmd for cmd in commands)
+    assert any("verify_clinical_runtime_schema_hardening.py" in cmd for cmd in commands)
+
+
 def test_write_report_writes_markdown_and_json():
     report = {
         "kind": "research_readiness_evidence_report",

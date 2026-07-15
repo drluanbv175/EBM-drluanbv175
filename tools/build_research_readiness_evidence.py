@@ -62,6 +62,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         limitation="Chỉ kiểm cấu trúc file agent, không chứng minh chất lượng từng câu trả lời lâm sàng/nghiên cứu.",
     ),
     EvidenceCheck(
+        domain="Repo/Claude Code/Codex alignment",
+        command=["tools/verify_claude_code_repo_alignment.py"],
+        proves="AGENTS.md, CLAUDE.md, clinical_runtime governance và mirror agent Claude↔Codex cùng một hợp đồng repo, không trôi lệch doctrine.",
+        limitation="Chỉ kiểm hợp đồng repo và file governance; không thay việc review thiết kế, bảo mật hoặc đầu ra lâm sàng thật.",
+    ),
+    EvidenceCheck(
         domain="Định tuyến agent",
         command=["tools/verify_agent_routing.py"],
         proves="Nhạc trưởng tham chiếu đội agent thật, không có agent mồ côi hoặc tham chiếu treo.",
@@ -84,6 +90,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         command=["tools/verify_controlled_research_automation.py"],
         proves="Guardrail trả về sửa khi thiếu CI; automation không tự duyệt; role sai, thiếu mã reviewer giả danh và PII trong review bị chặn; review nhiều vai trò chỉ hoàn tất khi đủ PI/IRB/thống kê viên/phản biện; readiness tổng hợp vẫn BLOCKED nếu thiếu G2/G4/G9 đúng stakeholder; thống kê xuất effect size/CI và có DATA LOCK.",
         limitation="Fixture synthetic/offline; không thay thẩm định IRB, PI, thống kê viên, phản biện độc lập hoặc kiểm thử dữ liệu thật tại bệnh viện.",
+    ),
+    EvidenceCheck(
+        domain="Clinical runtime schema hardening",
+        command=["tools/verify_clinical_runtime_schema_hardening.py"],
+        proves="Clinical V2 governance có kiểm máy cho nguồn bị rút, prompt injection trong nguồn truy xuất và chứng cứ/hướng dẫn xung đột.",
+        limitation="Static schema/governance; clinical runtime/chronic-care vẫn không production nếu chưa có runtime integration, bảo mật, UAT và phê duyệt thật.",
     ),
     EvidenceCheck(
         domain="Scorecard hệ agent",
