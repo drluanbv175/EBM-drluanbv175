@@ -28,6 +28,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from orchestrator.context import ContextStore  # noqa: E402
 from orchestrator.orchestrator import Orchestrator  # noqa: E402
 
+# Ép stdout/stderr UTF-8 an toàn (kể cả Python cũ hơn không có PYTHONUTF8=1) — vá crash
+# UnicodeEncodeError THẬT đã tái hiện trên Windows khi console dùng codepage không phải UTF-8
+# (vd cp1252/cp437) và output có tiếng Việt có dấu/ký hiệu (─, ⛔, ✓…).
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
 BAR = "─" * 68
 
 
