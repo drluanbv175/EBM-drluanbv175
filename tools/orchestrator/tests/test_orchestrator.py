@@ -120,9 +120,21 @@ class TestOrchestration(unittest.TestCase):
     def test_research_hard_gates(self):
         s = self.orch.handle("Đề tài metformin ở PCOS", persist=False)
         self.assertEqual(s.kind, "research_topic")
-        for g in ("G2", "G4", "G9"):
+        for g in ("G2", "G4", "G8", "G9"):
             self.assertIn(g, s.gates_pending)
         self.assertEqual(s.exit_code, 2)
+
+    def test_canary_hard_gates_match_doctrine(self):
+        # Canary chống-trôi: tập cổng cứng hard-code trong RESEARCH_FLOW (flows.py) phải khớp
+        # ĐÚNG tập cổng cứng nêu trong doctrine `.claude/agents/dieu-phoi-nghien-cuu.md`
+        # (mục "CỔNG kiểm soát nghiên cứu"). CẬP NHẬT HẰNG SỐ NÀY cùng lúc khi sửa file .md đó —
+        # nếu không, lần trôi tiếp theo (thêm/bớt cổng cứng ở .md mà quên vá flows.py, hoặc
+        # ngược lại) sẽ bị bắt tự động ở đây thay vì phải đọc tay hai file để so.
+        DOCTRINE_HARD_GATES = {"G2", "G4", "G8", "G9"}
+        from orchestrator.flows import RESEARCH_FLOW
+        code_hard_gates = {step.gate for step in RESEARCH_FLOW if step.gate}
+        self.assertEqual(code_hard_gates, DOCTRINE_HARD_GATES,
+                         "tập cổng cứng trong flows.py lệch với doctrine dieu-phoi-nghien-cuu.md")
 
     def test_single_task_released(self):
         s = self.orch.handle("Guideline nói gì về đích huyết áp?", persist=False)

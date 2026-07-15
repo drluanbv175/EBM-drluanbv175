@@ -62,8 +62,10 @@ prognostic_model · economic · international_journal`.
 ## Kiểm thử
 
 ```bash
-python tools/orchestrator/tests/test_orchestrator.py    # 38 test, chạy offline
-python -m unittest discover -s tools/orchestrator/tests # 43 test (gồm 5 test appraisal_bridge riêng)
+python tools/orchestrator/tests/test_orchestrator.py    # 41 test (đếm thật 2026-07-15), chạy offline
+python -m unittest discover -s tools/orchestrator/tests # 46 test (đếm thật 2026-07-15; +5 test
+                                                         # appraisal_bridge riêng; gồm 1 canary mới
+                                                         # đối chiếu tập cổng cứng flows.py ⇄ doctrine)
 ```
 
 ## Thực thi agent THẬT (seam LLM)
@@ -77,6 +79,6 @@ python -m unittest discover -s tools/orchestrator/tests # 43 test (gồm 5 test 
 
 ## Bất biến (không nới an toàn/liêm chính)
 
-Orchestrator chỉ **ĐỀ XUẤT** và **dừng** ở Cổng A/B (lâm sàng) + G2/G4/G9 (nghiên cứu); bước cuối
+Orchestrator chỉ **ĐỀ XUẤT** và **dừng** ở Cổng A/B (lâm sàng) + G2/G4/G8/G9 (nghiên cứu); bước cuối
 luôn qua guardrail `tham-dinh-dau-ra` (2 lớp R1–R14 + Q1–Q7). Mọi đầu ra kèm PMID/DOI, không PII,
 kết **"Cần bác sĩ kiểm chứng."**

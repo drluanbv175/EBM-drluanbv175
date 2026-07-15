@@ -25,6 +25,7 @@ GATES = {
     "B": "Cổng B — Ghi EBM_MASTER (thẻ vào hàng chờ duyệt, chưa xác minh)",
     "G2": "Cổng cứng G2 — Đạo đức + đăng ký trước dữ liệu",
     "G4": "Cổng cứng G4 — Khóa SAP trước khi xem dữ liệu",
+    "G8": "Cổng cứng G8 — Bình duyệt độc lập trước nộp",
     "G9": "Cổng cứng — Liêm chính tác giả (COI/AI/đóng góp do người xác nhận)",
 }
 

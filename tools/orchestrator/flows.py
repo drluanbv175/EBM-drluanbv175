@@ -2,7 +2,8 @@
 
 CLINICAL_FLOW: 5 bước EBM (BƯỚC 0 cờ đỏ → nhánh chuyên biệt → Hỏi → Tìm → Thẩm định →
 Áp dụng[Cổng A] → Theo dõi[Cổng B] → Khép vòng), có nhánh chẩn đoán + nhánh chuyên biệt.
-RESEARCH_FLOW: G0→G9 với 3 cổng cứng (G2 đạo đức · G4 khóa SAP · G9 liêm chính tác giả).
+RESEARCH_FLOW: G0→G9 với 4 cổng cứng (G2 đạo đức · G4 khóa SAP · G8 bình duyệt độc lập ·
+G9 liêm chính tác giả).
 
 Mỗi AGENT trong một bước mang `condition` RIÊNG (không phải cả bước) — vd bước "Theo dõi"
 có `loi-dan-tuan-thu` LUÔN chạy, nhưng `theo-doi-benh-man` CHỈ khi tín hiệu 'chronic'.
@@ -29,7 +30,7 @@ class FlowStep:
     step_id: str
     title: str
     agents: tuple[StepAgent, ...]
-    gate: str | None = None          # None | 'A' | 'B' | 'G2' | 'G4' | 'G9'
+    gate: str | None = None          # None | 'A' | 'B' | 'G2' | 'G4' | 'G8' | 'G9'
     note: str = ""
 
     @property
@@ -97,7 +98,9 @@ RESEARCH_FLOW: tuple[FlowStep, ...] = (
     FlowStep("G7", "Viết & trích dẫn 🔒",
              (sa("viet-ban-thao"), sa("hieu-dinh-song-ngu", "international_journal"), sa("kiem-chung-trich-dan")),
              note="hieu-dinh-song-ngu CHỈ khi nộp tạp chí quốc tế"),
-    FlowStep("G8", "Bình duyệt", (sa("binh-duyet"),)),
+    FlowStep("G8", "Bình duyệt", (sa("binh-duyet"),),
+             gate="G8", note="⛔ CỔNG CỨNG — bình duyệt độc lập (không phải PI/tác giả) trước khi nộp "
+                             "(sau khi bác sĩ duyệt → so-cai-ghi-nho ghi checkpoint)"),
     FlowStep("G9", "Nộp bài & liêm chính tác giả", (sa("nop-bai-phan-hoi"),),
              gate="G9", note="⛔ CỔNG CỨNG — COI/đóng góp/khai báo AI do nhà nghiên cứu xác nhận "
                              "(sau khi xác nhận → so-cai-ghi-nho ghi khép đề tài)"),
