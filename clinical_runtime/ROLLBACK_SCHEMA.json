@@ -1,0 +1,38 @@
+{
+  "_schema_version": "2.0.0",
+  "_created": "2026-06-28",
+  "_status": "DRAFT_SCHEMA — governance only",
+
+  "title": "Rollback Schema",
+  "description": "Structure for rollback events when a previously approved clinical output must be withdrawn (retracted source, superseded guideline, safety signal, error found).",
+
+  "rollback_record_structure": {
+    "rollback_id": "string — format: RB-[YYYY]-[NNNNNN]",
+    "target_output_id": "string — output_id being rolled back",
+    "target_approval_id": "string — approval_id of the record being invalidated",
+    "rollback_reason": "string — enum: SOURCE_RETRACTED / GUIDELINE_SUPERSEDED / SAFETY_SIGNAL / ERROR_FOUND / PATIENT_SAFETY_CONCERN / OTHER",
+    "rollback_detail": "string — free text explanation",
+    "initiated_by": "string — 'doctor' always — AI may FLAG for rollback but cannot initiate",
+    "initiated_timestamp_utc": "string — ISO 8601",
+    "affected_cards": "array of string — EBM_MASTER card IDs affected",
+    "affected_dashboards": "array of string — dashboard file names affected",
+    "replacement_output_id": "string or null — ID of the replacement output if available",
+    "notification_sent_to": "array of string — roles notified (not names/emails due to PII rules)",
+    "retraction_watch_entry": "string or null — RETRACTION_AND_CORRECTION_WATCH.jsonl entry ID"
+  },
+
+  "rollback_cascade_rules": [
+    "Rolling back an output MUST set its release_state to 'retired_or_superseded' in OUTPUT_SCHEMA.",
+    "Rolling back for SOURCE_RETRACTED MUST also quarantine all EBM_MASTER cards citing that source.",
+    "Rolling back for GUIDELINE_SUPERSEDED MUST flag all dashboards using the old guideline for review.",
+    "Rollback events MUST be logged to AUDIT_LOG.jsonl within 1 hour of initiation.",
+    "Doctor who approved the original output MUST be notified (via NOTIFICATION record — no PII)."
+  ],
+
+  "invariants": [
+    "Only a doctor (initiated_by='doctor') may execute a rollback.",
+    "AI may create a rollback PROPOSAL (status=DRAFT) but it takes no effect until doctor approves.",
+    "Rollback records are immutable — no deletion; only append a correction record if wrong.",
+    "ALL rollback events trigger addition to RETRACTION_AND_CORRECTION_WATCH.jsonl."
+  ]
+}

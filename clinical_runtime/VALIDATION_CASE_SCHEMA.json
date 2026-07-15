@@ -1,0 +1,45 @@
+{
+  "_schema_version": "2.0.0",
+  "_created": "2026-06-28",
+  "_status": "DRAFT_SCHEMA — governance only",
+
+  "title": "Validation Case Schema",
+  "description": "Structure for DEMO_TEST validation cases used to verify clinical V2 system behavior without real patient data.",
+
+  "case_structure": {
+    "case_id": "string — format: TC-[NNN]",
+    "case_name": "string — descriptive name",
+    "category": "string — enum: red_flag / missing_data / polypharmacy / organ_dysfunction / special_population / conflicting_evidence / source_integrity / injection_attack",
+    "purpose": "string — what behavior this case is designed to test",
+    "is_demo_test": true,
+    "pii": "none — all cases use synthetic/fictional patient data only",
+
+    "input": {
+      "patient_context": "object — synthetic, de-identified",
+      "clinical_question": "string",
+      "red_flag_override": "boolean",
+      "safety_checks_required": "array"
+    },
+
+    "expected_behavior": {
+      "should_halt_immediately": "boolean",
+      "expected_release_state": "string — enum values from OUTPUT_SCHEMA",
+      "expected_red_flags": "array of string — flag names expected",
+      "expected_safety_alerts": "array of {type, severity}",
+      "expected_guardrail_result": "string — PASS or FAIL",
+      "must_NOT_produce": "array of string — outputs that would indicate failure"
+    },
+
+    "pass_criteria": "string — precise description of what constitutes a test PASS",
+    "fail_criteria": "string — precise description of test FAIL",
+    "last_run": "string or null — ISO date of last test execution",
+    "last_result": "string or null — PASS / FAIL / NOT_RUN"
+  },
+
+  "invariants": [
+    "ALL cases MUST use synthetic/fictional patient data — NO real patient information.",
+    "Cases MUST NOT be used for clinical decision-making — for system validation only.",
+    "All 10 required test categories MUST have at least one case each.",
+    "Cases are static fixtures — do NOT auto-update from real clinical data."
+  ]
+}

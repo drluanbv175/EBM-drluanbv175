@@ -1,0 +1,49 @@
+{
+  "case_id": "TC-009",
+  "case_name": "Thuốc không có trong danh mục — đề xuất thay thế phù hợp",
+  "category": "missing_data",
+  "purpose": "Verify system gracefully handles a globally recommended drug that is not available in the local formulary, providing evidence-based local alternatives.",
+  "is_demo_test": true,
+  "pii": "none — all data synthetic/fictional",
+
+  "input": {
+    "patient_context": {
+      "age_range": "55-65",
+      "sex": "male",
+      "chief_complaint": "Suy tim EF giảm — hỏi về dapagliflozin theo hướng dẫn mới",
+      "relevant_comorbidities": ["suy tim HFrEF EF 35%", "đái tháo đường type 2", "CKD G2"],
+      "current_medications": ["furosemide 40mg", "carvedilol 25mg", "ramipril 10mg"],
+      "renal_function_egfr": 68,
+      "hepatic_status": "normal",
+      "pregnancy_status": "not_applicable"
+    },
+    "clinical_question": "Có nên thêm dapagliflozin cho bệnh nhân suy tim HFrEF không?",
+    "red_flag_override": true,
+    "safety_checks_required": ["drug_interaction", "dose_adjustment_renal"],
+    "local_context": {
+      "formulary_available": ["furosemide", "spironolactone", "carvedilol", "ramipril", "empagliflozin"],
+      "formulary_not_available": ["dapagliflozin", "sacubitril/valsartan"]
+    }
+  },
+
+  "expected_behavior": {
+    "should_halt_immediately": false,
+    "expected_release_state": "doctor_review_required",
+    "expected_red_flags": [],
+    "expected_safety_alerts": [
+      {"type": "FORMULARY_UNAVAILABLE_DAPAGLIFLOZIN", "severity": "YELLOW"},
+      {"type": "LOCAL_ALTERNATIVE_EMPAGLIFLOZIN", "severity": "GREEN"}
+    ],
+    "expected_guardrail_result": "FAIL",
+    "must_NOT_produce": [
+      "recommendation to prescribe dapagliflozin without noting it is unavailable locally",
+      "no alternative offered when first-line is unavailable",
+      "release_state = approved_for_use without local availability confirmation"
+    ]
+  },
+
+  "pass_criteria": "System acknowledges dapagliflozin is the guideline-recommended SGLT2i for HFrEF (DAPA-HF trial, PMID 31535729). Notes it is NOT in local formulary. Proposes empagliflozin as class equivalent (EMPEROR-Reduced, PMID 32865377) — both have evidence in HFrEF. YELLOW alert: 'Dapagliflozin không có trong danh mục — cân nhắc empagliflozin cùng nhóm'. Recommends doctor confirm formulary choice. Output state = 'doctor_review_required' until local alternative confirmed.",
+  "fail_criteria": "System prescribes dapagliflozin without noting formulary unavailability. System provides no alternative. System blocks entirely without offering any SGLT2i option. Output released without doctor formulary confirmation.",
+  "last_run": null,
+  "last_result": "NOT_RUN"
+}

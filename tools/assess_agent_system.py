@@ -256,6 +256,9 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_controlled_research_automation.py")],
                                 "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS", 90)) or
                 p_exists(TOOLS / "verify_controlled_research_automation.py", "Verifier tự động có kiểm soát có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_clinical_runtime_schema_hardening.py")],
+                                "Clinical runtime schema hardening PASS", 60)) or
+                p_exists(TOOLS / "verify_clinical_runtime_schema_hardening.py", "Verifier hardening schema lâm sàng có mặt"),
         lambda: p_contains_all(
             TOOLS / "build_research_readiness_evidence.py",
             ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "Cần bác sĩ kiểm chứng"],

@@ -347,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 9,
-      "total": 9,
+      "passed": 10,
+      "total": 10,
       "probes": [
         {
           "ok": true,
@@ -381,6 +381,10 @@
         {
           "ok": true,
           "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Clinical runtime schema hardening PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,

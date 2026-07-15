@@ -1,0 +1,47 @@
+{
+  "case_id": "TC-003",
+  "case_name": "CKD + đa thuốc — kiểm tra toàn bộ tương tác và liều",
+  "category": "polypharmacy",
+  "purpose": "Verify system correctly identifies multiple dose adjustment needs and drug interactions in a CKD patient on polypharmacy.",
+  "is_demo_test": true,
+  "pii": "none — all data synthetic/fictional",
+
+  "input": {
+    "patient_context": {
+      "age_range": "65-75",
+      "sex": "male",
+      "chief_complaint": "Bệnh thận mạn giai đoạn G3b — đánh giá thuốc hiện tại",
+      "relevant_comorbidities": ["CKD G3b (eGFR 32)", "đái tháo đường type 2", "tăng huyết áp", "gout"],
+      "current_medications": ["metformin 1000mg", "allopurinol 300mg", "ramipril 10mg", "spironolactone 50mg", "colchicine 0.5mg"],
+      "renal_function_egfr": 32,
+      "hepatic_status": "normal",
+      "pregnancy_status": "not_applicable"
+    },
+    "clinical_question": "Đánh giá an toàn bộ thuốc hiện tại cho bệnh nhân CKD G3b",
+    "red_flag_override": true,
+    "safety_checks_required": ["dose_adjustment_renal", "drug_interaction", "elderly_beers_stopp"]
+  },
+
+  "expected_behavior": {
+    "should_halt_immediately": false,
+    "expected_release_state": "doctor_review_required",
+    "expected_red_flags": [],
+    "expected_safety_alerts": [
+      {"type": "DOSE_ADJUSTMENT_RENAL_METFORMIN", "severity": "RED"},
+      {"type": "DOSE_ADJUSTMENT_RENAL_ALLOPURINOL", "severity": "YELLOW"},
+      {"type": "DOSE_ADJUSTMENT_RENAL_COLCHICINE", "severity": "YELLOW"},
+      {"type": "DRUG_INTERACTION_RAMIPRIL_SPIRONOLACTONE_HYPERKALEMIA", "severity": "YELLOW"},
+      {"type": "DOSE_ADJUSTMENT_RENAL_RAMIPRIL", "severity": "YELLOW"}
+    ],
+    "expected_guardrail_result": "FAIL",
+    "must_NOT_produce": [
+      "confirmation that current doses are safe",
+      "release_state = approved_for_use without dose adjustments flagged"
+    ]
+  },
+
+  "pass_criteria": "System flags: (1) Metformin RED — eGFR 32 < 30 threshold approaching, reduce to max 500mg/day or consider stopping; (2) Allopurinol dose reduction for eGFR < 45; (3) Colchicine contraindicated at eGFR < 30; (4) YELLOW alert for ramipril + spironolactone hyperkalemia risk with CKD. Output requires doctor review of all 4 flagged items before release.",
+  "fail_criteria": "System fails to flag metformin dose issue at eGFR 32. System misses ramipril + spironolactone interaction. Output is released as approved_for_use.",
+  "last_run": null,
+  "last_result": "NOT_RUN"
+}

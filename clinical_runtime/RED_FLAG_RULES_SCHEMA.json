@@ -1,0 +1,73 @@
+{
+  "_schema_version": "2.0.0",
+  "_created": "2026-06-28",
+  "_status": "DRAFT_SCHEMA — governance only",
+  "_note": "Defines structure for red flag rules used by sang-loc-co-do agent. Individual rules are authored by doctors, NOT by AI, and stored separately. This schema governs their format.",
+
+  "title": "Red Flag Rules Schema",
+  "description": "Structure for clinical red flag rules that trigger immediate escalation regardless of evidence synthesis state.",
+
+  "rule_structure": {
+    "rule_id": "string — format: RF-[SPECIALTY]-[NNN] e.g. RF-CARDIO-001",
+    "rule_name": "string — short descriptive name",
+    "symptom_triggers": "array of string — symptom keywords/patterns that activate this rule",
+    "context_qualifiers": "object — optional: age_range, sex, setting",
+    "action_required": "string — enum: CALL_EMERGENCY / TRANSFER_IMMEDIATELY / URGENT_REFERRAL / URGENT_WORKUP",
+    "urgency_level": "string — enum: IMMEDIATE (<15min) / URGENT (<1h) / SEMI_URGENT (<24h)",
+    "rationale": "string — clinical rationale for this rule",
+    "source_guideline": "string — PMID or DOI of supporting guideline",
+    "authored_by": "string — 'doctor' always — NEVER 'AI' or 'engine'",
+    "last_reviewed": "string — ISO date",
+    "active": "boolean"
+  },
+
+  "example_rules": [
+    {
+      "rule_id": "RF-CARDIO-001",
+      "rule_name": "Đau ngực kiểu thiếu máu cơ tim",
+      "symptom_triggers": ["đau ngực", "đau thắt ngực", "chest pain", "pressure chest", "nặng ngực"],
+      "context_qualifiers": {"age_min": 35, "risk_factors": ["tiểu đường", "tăng huyết áp", "hút thuốc", "tiền sử tim mạch"]},
+      "action_required": "CALL_EMERGENCY",
+      "urgency_level": "IMMEDIATE",
+      "rationale": "Đau ngực ở bệnh nhân có yếu tố nguy cơ tim mạch phải loại trừ NMCT/HC vành cấp ngay",
+      "source_guideline": "10.1016/j.jacc.2021.09.001",
+      "authored_by": "doctor",
+      "last_reviewed": "2026-06-28",
+      "active": true
+    },
+    {
+      "rule_id": "RF-NEURO-001",
+      "rule_name": "Đột ngột đau đầu dữ dội kiểu sấm sét",
+      "symptom_triggers": ["đau đầu đột ngột", "đau đầu dữ dội nhất đời", "thunderclap headache", "worst headache"],
+      "context_qualifiers": {},
+      "action_required": "TRANSFER_IMMEDIATELY",
+      "urgency_level": "IMMEDIATE",
+      "rationale": "Thunderclap headache — loại trừ xuất huyết dưới nhện (SAH): tỷ lệ tử vong cao nếu không xử trí ngay",
+      "source_guideline": "28716720",
+      "authored_by": "doctor",
+      "last_reviewed": "2026-06-28",
+      "active": true
+    },
+    {
+      "rule_id": "RF-RESP-001",
+      "rule_name": "Khó thở cấp + SpO2 < 90%",
+      "symptom_triggers": ["khó thở cấp", "spo2 < 90", "spo2 thấp", "tím tái"],
+      "context_qualifiers": {},
+      "action_required": "CALL_EMERGENCY",
+      "urgency_level": "IMMEDIATE",
+      "rationale": "Suy hô hấp cấp — cần oxy liệu pháp và đánh giá ngay tại cấp cứu",
+      "source_guideline": "PMID_PLACEHOLDER",
+      "authored_by": "doctor",
+      "last_reviewed": "2026-06-28",
+      "active": true
+    }
+  ],
+
+  "invariants": [
+    "ALL rules MUST have authored_by='doctor' — AI may propose but doctor must confirm each rule.",
+    "Red flag detection MUST run BEFORE evidence synthesis begins (sang-loc-co-do at step 0).",
+    "If any IMMEDIATE rule fires, the entire clinical session MUST halt and display the alert — no subsequent evidence output may be shown.",
+    "Rules MAY NOT be deactivated by AI — only by doctor explicit action with audit record.",
+    "Every rule MUST have a source_guideline (PMID or DOI) — rules without citation are NOT valid."
+  ]
+}

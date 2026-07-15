@@ -1,0 +1,38 @@
+{
+  "_schema_version": "2.0.0",
+  "_created": "2026-06-28",
+  "_status": "DRAFT_SCHEMA — governance only",
+
+  "title": "Human Approval Schema",
+  "description": "Structure for recording human (doctor) approval of AI clinical outputs before they may be released as approved_for_use.",
+
+  "approval_record_structure": {
+    "approval_id": "string — format: HA-[YYYY]-[NNNNNN]",
+    "output_id": "string — links to OUTPUT_SCHEMA output_id",
+    "session_id": "string",
+    "approver_role": "string — e.g. 'attending_physician', 'resident_supervised', 'specialist'",
+    "approval_timestamp_utc": "string — ISO 8601",
+    "approval_action": "string — enum: APPROVE / APPROVE_WITH_MODIFICATION / REJECT / ESCALATE",
+    "modification_note": "string or null — if APPROVE_WITH_MODIFICATION: what was changed",
+    "rejection_reason": "string or null — if REJECT",
+    "escalation_target": "string or null — if ESCALATE: who/where escalated to",
+    "gate_checked": "string — which gate was satisfied: C5 (Feasibility), C6 (Red Team), C7 (Human Approval)",
+    "pii_confirmed_absent": "boolean — doctor confirms no PII in output before approval",
+    "disclaimer_confirmed": "boolean — doctor confirms disclaimer present"
+  },
+
+  "required_fields_for_release": [
+    "approval_id", "output_id", "approver_role", "approval_timestamp_utc",
+    "approval_action (must be APPROVE or APPROVE_WITH_MODIFICATION)",
+    "pii_confirmed_absent (must be true)",
+    "disclaimer_confirmed (must be true)"
+  ],
+
+  "invariants": [
+    "No clinical output may reach release_state='approved_for_use' without a matching approval record.",
+    "approval_action MUST be 'APPROVE' or 'APPROVE_WITH_MODIFICATION' to release.",
+    "REJECT or ESCALATE actions set release_state to 'doctor_review_required' and block use.",
+    "pii_confirmed_absent and disclaimer_confirmed BOTH must be true to release.",
+    "Approval records are immutable once created — corrections require a new approval with reference to prior record."
+  ]
+}
