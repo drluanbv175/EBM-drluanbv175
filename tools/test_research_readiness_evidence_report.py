@@ -61,6 +61,14 @@ def test_core_checks_include_controlled_automation_cycle():
     assert any("run_controlled_automation_cycle.py" in cmd for cmd in commands)
 
 
+def test_core_checks_include_clinical_evidence_update_pipeline():
+    commands = [" ".join(check.command) for check in E.CORE_CHECKS]
+    domains = {check.domain for check in E.CORE_CHECKS}
+
+    assert "Cập nhật chứng cứ lâm sàng" in domains
+    assert any("verify_clinical_evidence_update_pipeline.py" in cmd for cmd in commands)
+
+
 def test_write_report_writes_markdown_and_json():
     report = {
         "kind": "research_readiness_evidence_report",

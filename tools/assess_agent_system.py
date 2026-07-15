@@ -264,12 +264,15 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_clinical_runtime_schema_hardening.py")],
                                 "Clinical runtime schema hardening PASS", 60)) or
                 p_exists(TOOLS / "verify_clinical_runtime_schema_hardening.py", "Verifier hardening schema lâm sàng có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_clinical_evidence_update_pipeline.py"), "--no-write"],
+                                "Pipeline cập nhật chứng cứ lâm sàng PASS", 60)) or
+                p_exists(TOOLS / "verify_clinical_evidence_update_pipeline.py", "Verifier pipeline cập nhật chứng cứ lâm sàng có mặt"),
         lambda: (deep and p_run([py, str(TOOLS / "verify_claude_code_repo_alignment.py")],
                                 "Repo/Claude Code/Codex alignment PASS", 60)) or
                 p_exists(TOOLS / "verify_claude_code_repo_alignment.py", "Verifier đồng bộ repo/Claude Code/Codex có mặt"),
         lambda: p_contains_all(
             TOOLS / "build_research_readiness_evidence.py",
-            ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "Cần bác sĩ kiểm chứng"],
+            ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "verify_clinical_evidence_update_pipeline.py", "Cần bác sĩ kiểm chứng"],
             "Bảng chứng cứ thực tiễn có thể sinh lại",
         ),
     ])

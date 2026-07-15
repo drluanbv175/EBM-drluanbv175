@@ -104,6 +104,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         limitation="Static schema/governance; clinical runtime/chronic-care vẫn không production nếu chưa có runtime integration, bảo mật, UAT và phê duyệt thật.",
     ),
     EvidenceCheck(
+        domain="Cập nhật chứng cứ lâm sàng",
+        command=["tools/verify_clinical_evidence_update_pipeline.py"],
+        proves="Evidence Workbench template, dashboard integrity gate, thư viện tích lũy, tài liệu phái sinh và hợp đồng sync_all được kiểm bằng fixture offline không PII.",
+        limitation="Không thay xác minh online PubMed/Crossref, rà toàn văn, an toàn thuốc hoặc quyết định áp dụng cho bệnh nhân thật.",
+    ),
+    EvidenceCheck(
         domain="Scorecard hệ agent",
         command=["tools/assess_agent_system.py", "--deep"],
         proves="13 tiêu chí agent/hệ thống được probe bằng file, marker và lệnh thực thi.",

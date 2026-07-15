@@ -40,6 +40,8 @@ def test_scorecard_checks_research_gate_contract_surface():
                for ok, detail in s5_results)
     assert any(ok and "Verifier thực tiễn dữ liệu nghiên cứu" in detail
                for ok, detail in s5_results)
+    assert any(ok and "Verifier pipeline cập nhật chứng cứ lâm sàng" in detail
+               for ok, detail in s5_results)
     assert any(ok and "Bảng chứng cứ thực tiễn có thể sinh lại" in detail
                for ok, detail in s5_results)
     assert any(ok and "Audit cổng sinh action queue + resume contract" in detail

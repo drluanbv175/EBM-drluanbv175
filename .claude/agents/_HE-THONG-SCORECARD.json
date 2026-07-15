@@ -205,7 +205,7 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 137 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 138 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
@@ -347,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 12,
-      "total": 12,
+      "passed": 13,
+      "total": 13,
       "probes": [
         {
           "ok": true,
@@ -392,11 +392,15 @@
         },
         {
           "ok": true,
+          "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
           "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 4/4 marker)"
+          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 5/5 marker)"
         }
       ],
       "caveats": []
