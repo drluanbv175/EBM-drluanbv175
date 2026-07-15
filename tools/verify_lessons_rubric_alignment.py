@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from typing import Iterable, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 RUBRIC = ROOT / ".claude" / "agents" / "_RUBRIC-EVALUATE-CUNG-QA-GATE.md"
 TAXONOMY = ROOT / ".claude" / "agents" / "_LESSONS-LEDGER-TAXONOMY.md"
+RETRY_LOOP_DIR = ROOT / "medical-ebm-automation" / "tools"
 DEFAULT_MD = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.md"
 DEFAULT_JSON = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.json"
 
@@ -36,6 +38,9 @@ class AlignmentReport:
     taxonomy_codes: list[str]
     missing_in_taxonomy: list[str]
     missing_in_bridge: list[str]
+    retry_loop_codes: dict[str, str]
+    retry_loop_codes_missing_in_taxonomy: list[str]
+    r1b_r6_distinct: bool
     stale_gap_note_found: bool
     disclaimer: str
 
@@ -72,6 +77,15 @@ def taxonomy_bridge_codes(taxonomy_text: str) -> set[str]:
     return extract_codes(block)
 
 
+def retry_loop_lesson_codes() -> dict[str, str]:
+    """Đọc bridge R-code -> LESSONS code từ retry_loop của repo sống."""
+    if str(RETRY_LOOP_DIR) not in sys.path:
+        sys.path.insert(0, str(RETRY_LOOP_DIR))
+    import retry_loop  # noqa: PLC0415
+
+    return dict(getattr(retry_loop, "RCODE_TO_LESSON_CODE", {}))
+
+
 def _sorted(values: Iterable[str]) -> list[str]:
     return sorted(set(values))
 
@@ -82,11 +96,24 @@ def build_report() -> AlignmentReport:
     rubric_codes = rubric_controlled_codes(rubric_text)
     taxonomy_codes = taxonomy_table_codes(taxonomy_text)
     bridge_codes = taxonomy_bridge_codes(taxonomy_text)
+    retry_codes = retry_loop_lesson_codes()
 
     missing_in_taxonomy = rubric_codes - taxonomy_codes
     missing_in_bridge = rubric_codes - bridge_codes
+    retry_missing = set(retry_codes.values()) - taxonomy_codes
+    r1b_r6_distinct = (
+        retry_codes.get("R1b") == "GAP-LABEL-WASH"
+        and retry_codes.get("R6") == "GAP-MISSING"
+        and retry_codes.get("R1b") != retry_codes.get("R6")
+    )
     stale_gap_note_found = bool(STALE_GAP_RE.search(rubric_text + "\n" + taxonomy_text))
-    ok = not missing_in_taxonomy and not missing_in_bridge and not stale_gap_note_found
+    ok = (
+        not missing_in_taxonomy
+        and not missing_in_bridge
+        and not retry_missing
+        and r1b_r6_distinct
+        and not stale_gap_note_found
+    )
 
     return AlignmentReport(
         generated_at=datetime.now().isoformat(timespec="seconds"),
@@ -95,6 +122,9 @@ def build_report() -> AlignmentReport:
         taxonomy_codes=_sorted(taxonomy_codes),
         missing_in_taxonomy=_sorted(missing_in_taxonomy),
         missing_in_bridge=_sorted(missing_in_bridge),
+        retry_loop_codes=dict(sorted(retry_codes.items())),
+        retry_loop_codes_missing_in_taxonomy=_sorted(retry_missing),
+        r1b_r6_distinct=r1b_r6_distinct,
         stale_gap_note_found=stale_gap_note_found,
         disclaimer=(
             "Cần bác sĩ kiểm chứng. Đây là kiểm cấu trúc mã lỗi rubric/taxonomy, "
@@ -109,6 +139,8 @@ def markdown_report(report: AlignmentReport) -> str:
         ("Taxonomy codes", ", ".join(report.taxonomy_codes)),
         ("Missing in taxonomy", ", ".join(report.missing_in_taxonomy) or "None"),
         ("Missing in bridge §2b", ", ".join(report.missing_in_bridge) or "None"),
+        ("Retry loop codes missing in taxonomy", ", ".join(report.retry_loop_codes_missing_in_taxonomy) or "None"),
+        ("R1b/R6 distinct", str(report.r1b_r6_distinct)),
         ("Stale gap note found", str(report.stale_gap_note_found)),
     ]
     lines = [
@@ -153,6 +185,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"- taxonomy codes: {len(report.taxonomy_codes)}")
         print(f"- missing in taxonomy: {', '.join(report.missing_in_taxonomy) or 'None'}")
         print(f"- missing in bridge: {', '.join(report.missing_in_bridge) or 'None'}")
+        print(f"- retry loop missing in taxonomy: {', '.join(report.retry_loop_codes_missing_in_taxonomy) or 'None'}")
+        print(f"- R1b/R6 distinct: {report.r1b_r6_distinct}")
         print(f"- stale gap note found: {report.stale_gap_note_found}")
         print(report.disclaimer)
     return 0 if report.overall_status == "PASS" else 1

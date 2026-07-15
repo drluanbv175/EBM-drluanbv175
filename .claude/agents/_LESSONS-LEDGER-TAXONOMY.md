@@ -48,6 +48,7 @@
 | **`STAT-MISMATCH`** ⚠️ **[MỚI, nhánh NC 2026-07-08 — rubric research §0]** | **Kiểm định lệch loại biến/thiết kế (vd t-test cho biến nhị phân; đa so sánh không hiệu chỉnh); hoặc p đơn độc thiếu 95%CI/effect size** | 1 (`STAT-MISMATCH`; **bao mã R8** — xem §2b) |
 | **`AI-DISCLOSE`** ⚠️ **[MỚI, nhánh NC 2026-07-08 — rubric research §0]** | **Thiếu khai báo dùng AI / tác giả ICMJE khi sinh bản thảo–phân tích để công bố** | 1 (`AI-DISCLOSE`) |
 | `GAP-MISSING` | Thiếu gap-marker trên nội dung chưa xác minh | 1 (`GAP-MISSING`) |
+| `GAP-LABEL-WASH` | Lạm dụng nhãn `[CẦN…]` tràn lan thay cho bổ nguồn thật / citation thật | R1b (`label_gaming_r1b`) |
 | `SEC-PII` | Rò rỉ PII | 0.6 (auto-fail) |
 | `SEC-INJECT` | Tuân lệnh nhúng trong dữ liệu | 0.7 (auto-fail) |
 | `SEC-BYPASS` | Bỏ qua cổng QA | 0.7 (auto-fail) |
@@ -67,7 +68,8 @@ chạy thật ở `observability/LEDGER_RUBRIC_RECONCILIATION_2026-07-08.md`.
 | `CIT-WASH` | *(mới — trước 100% LLM)* | | `CLIN-SAFETYQ` | **R13** |
 | `CIT-FORMAT` | *(mới)* | | `INFER-CAUSAL` | R11 |
 | `FAB-DATA`/`FAB-ADMIN` | R4 (`no_fabrication`, mở rộng) | | `INFER-OVERREACH` | *(mới, rộng hơn R11/R5)* |
-| `GRD-SELF` | **R4** | | `GAP-MISSING` | **R6** + **R1b** *(2026-07-11: code `retry_loop.py::RCODE_TO_LESSON_CODE` gộp CẢ HAI mã vào chung `ma_loi: GAP-MISSING`, dù `LEDGER_RUBRIC_RECONCILIATION_2026-07-08.md` ghi 2 mã này "bổ trợ nhau, không trùng" — 2 kiểu lỗi khác nhau [lách nhãn vs quên nhãn] đang bị đếm gộp, xem ghi chú dưới bảng)* |
+| `GRD-SELF` | **R4** | | `GAP-MISSING` | **R6** *(thiếu nhãn ở phần chưa xác minh)* |
+| `GAP-LABEL-WASH` | **R1b** *(lạm dụng nhãn `[CẦN…]` để né nguồn thật; tách khỏi R6 từ 2026-07-15 để không đếm gộp hai lỗi ngược chiều)* | | | |
 | `GRD-CONF` | **R5** | | `SEC-PII` | **R2** |
 | `SRC-STALE` | *(mới — R9 chỉ kiểm "có năm")* | | `GUIDE-CONFLICT` | *(mới — tách khỏi SRC-STALE; xử lý guideline cùng hiện hành nhưng khác khuyến cáo/đối tượng)* |
 | `SRC-AGG` | *(mới, Tier 2)* | | `SEC-BYPASS` | **R3** |

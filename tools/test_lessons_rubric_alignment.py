@@ -13,8 +13,13 @@ def test_current_lessons_rubric_alignment_passes():
     assert report.overall_status == "PASS"
     assert "GUIDE-CONFLICT" in report.rubric_codes
     assert "GUIDE-CONFLICT" in report.taxonomy_codes
+    assert "GAP-LABEL-WASH" in report.taxonomy_codes
+    assert report.retry_loop_codes["R1b"] == "GAP-LABEL-WASH"
+    assert report.retry_loop_codes["R6"] == "GAP-MISSING"
+    assert report.r1b_r6_distinct is True
     assert report.missing_in_taxonomy == []
     assert report.missing_in_bridge == []
+    assert report.retry_loop_codes_missing_in_taxonomy == []
 
 
 def test_extracts_missing_rubric_code_from_synthetic_text():
