@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 """upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (17 bước tự động, thay cho gõ tay từng lệnh):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (18 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
   4. check_claude_codex_sync_health.py — cổng read-only guardrail/disclaimer/sync
-  5. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
-  6. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
-  7. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
-  8. verify_controlled_research_automation.py — thẩm định/phản biện/PI-IRB-thống kê có kiểm soát
-  9. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
- 10. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
- 11. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
- 12. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
- 13. verify_clinical_runtime_schema_hardening.py — chốt retraction/prompt-injection/conflict trong schema
- 14. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
- 15. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
- 16. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
- 17. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
+  5. verify_claude_code_repo_alignment.py — hợp đồng repo/Claude Code/Codex không trôi lệch
+  6. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
+  7. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
+  8. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
+  9. verify_controlled_research_automation.py — thẩm định/phản biện/PI-IRB-thống kê có kiểm soát
+ 10. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
+ 11. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
+ 12. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
+ 13. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
+ 14. verify_clinical_runtime_schema_hardening.py — chốt retraction/prompt-injection/conflict trong schema
+ 15. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
+ 16. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
+ 17. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
+ 18. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -84,19 +85,20 @@ def main() -> int:
     steps += [
         ("3. Kiểm đồng bộ (--check)", ["tools/sync_agents_to_codex.py", "--check"], True),
         ("4. Sync health read-only", ["tools/check_claude_codex_sync_health.py"], True),
-        ("5. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
-        ("6. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
-        ("7. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
-        ("8. Tự động NC có kiểm soát", ["tools/verify_controlled_research_automation.py"], True),
-        ("9. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
-        ("10. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
-        ("11. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
-        ("12. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
-        ("13. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
-        ("14. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
-        ("15. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
-        ("16. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
-        ("17. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        ("5. Repo/Claude Code alignment", ["tools/verify_claude_code_repo_alignment.py"], True),
+        ("6. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
+        ("7. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
+        ("8. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
+        ("9. Tự động NC có kiểm soát", ["tools/verify_controlled_research_automation.py"], True),
+        ("10. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
+        ("11. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
+        ("12. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
+        ("13. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
+        ("14. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
+        ("15. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
+        ("16. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
+        ("17. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
+        ("18. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []

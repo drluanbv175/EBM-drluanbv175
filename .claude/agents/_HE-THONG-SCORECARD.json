@@ -347,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 10,
-      "total": 10,
+      "passed": 11,
+      "total": 11,
       "probes": [
         {
           "ok": true,
@@ -385,6 +385,10 @@
         {
           "ok": true,
           "detail": "Clinical runtime schema hardening PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
+          "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,

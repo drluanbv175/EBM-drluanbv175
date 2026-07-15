@@ -1,6 +1,6 @@
 # Repo này CHỈ theo dõi hệ agent+skill EBM + clinical runtime governance
 # (không phải toàn bộ thư mục "Claude AI"):
-#   .claude/agents/  sync/skills/  tools/  clinical_runtime/  CLAUDE.md
+#   .claude/agents/  sync/skills/  tools/  clinical_runtime/  AGENTS.md  CLAUDE.md
 # Mọi thứ khác ở gốc (medical-ebm-automation/ đã có git riêng — 2.3GB, dashboard,
 # video TikTok, evidence pack .zip, sổ cái EBM_MASTER...) CỐ Ý bị loại trừ.
 #
@@ -19,6 +19,7 @@
 !/clinical_runtime/
 !/.githooks/
 !/CLAUDE.md
+!/AGENTS.md
 !/VERSION
 !/CHANGELOG.md
 !/.gitignore
