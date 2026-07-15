@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc gõ 6 lệnh tay):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (16 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
@@ -16,6 +16,8 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (thay cho việc
  12. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
  13. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
  14. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
+ 15. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
+ 16. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
