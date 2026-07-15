@@ -347,8 +347,8 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "strong",
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "probes": [
         {
           "ok": true,
@@ -376,6 +376,10 @@
         },
         {
           "ok": true,
+          "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
+        },
+        {
+          "ok": true,
           "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
@@ -400,7 +404,7 @@
         },
         {
           "ok": true,
-          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 5/5 marker)"
+          "detail": "Bảng chứng cứ thực tiễn có thể sinh lại: ✓ (build_research_readiness_evidence.py; 6/6 marker)"
         }
       ],
       "caveats": []

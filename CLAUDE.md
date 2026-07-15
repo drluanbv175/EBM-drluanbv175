@@ -166,6 +166,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Audit chung từ thư mục gốc: `python tools/audit_ebm_system.py`
 - **Kiểm + đồng bộ toàn hệ một lệnh:** `python tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
 - **Kiểm riêng repo/Claude Code/Codex alignment:** `python tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python tools/check_claude_codex_sync_health.py`.
+- **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
 - **Kiểm riêng clinical runtime governance:** `python tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
 - **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
 - **Chạy chu trình tự động có kiểm soát:** `python tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.

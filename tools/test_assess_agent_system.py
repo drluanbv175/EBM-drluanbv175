@@ -38,6 +38,8 @@ def test_scorecard_checks_research_gate_contract_surface():
                for ok, detail in s3_results)
     assert any(ok and "Cổng nghiên cứu chặn downstream" in detail
                for ok, detail in s5_results)
+    assert any(ok and "Verifier rubric QA ↔ LESSONS taxonomy" in detail
+               for ok, detail in s5_results)
     assert any(ok and "Verifier thực tiễn dữ liệu nghiên cứu" in detail
                for ok, detail in s5_results)
     assert any(ok and "Verifier pipeline cập nhật chứng cứ lâm sàng" in detail

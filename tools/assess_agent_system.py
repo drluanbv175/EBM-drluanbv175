@@ -250,6 +250,9 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "verify_research_gate_contracts.py")],
                                 "Smoke-test hợp đồng cổng nghiên cứu PASS", 60)) or
                 p_exists(TOOLS / "verify_research_gate_contracts.py", "Verifier hợp đồng cổng nghiên cứu có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_lessons_rubric_alignment.py"), "--no-write"],
+                                "Rubric QA ↔ LESSONS taxonomy PASS", 60)) or
+                p_exists(TOOLS / "verify_lessons_rubric_alignment.py", "Verifier rubric QA ↔ LESSONS taxonomy có mặt"),
         lambda: (deep and p_run([py, str(TOOLS / "verify_research_practical_readiness.py")],
                                 "Smoke-test thực tiễn dữ liệu nghiên cứu PASS", 90)) or
                 p_exists(TOOLS / "verify_research_practical_readiness.py", "Verifier thực tiễn dữ liệu nghiên cứu có mặt"),
@@ -272,7 +275,7 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
                 p_exists(TOOLS / "verify_claude_code_repo_alignment.py", "Verifier đồng bộ repo/Claude Code/Codex có mặt"),
         lambda: p_contains_all(
             TOOLS / "build_research_readiness_evidence.py",
-            ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "verify_clinical_evidence_update_pipeline.py", "Cần bác sĩ kiểm chứng"],
+            ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "verify_clinical_evidence_update_pipeline.py", "verify_lessons_rubric_alignment.py", "Cần bác sĩ kiểm chứng"],
             "Bảng chứng cứ thực tiễn có thể sinh lại",
         ),
     ])

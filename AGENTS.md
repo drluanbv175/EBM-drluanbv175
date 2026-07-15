@@ -13,7 +13,7 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
 - Bất biến: mỗi đầu ra kèm **PMID/DOI** + "Cần bác sĩ kiểm chứng"; **KHÔNG bịa, KHÔNG PII**; agent chỉ ĐỀ XUẤT, bác sĩ duyệt mới "áp dụng". Bản đồ đội: `.claude/agents/README.md`; Codex dùng bản TOML mirror sinh tự động.
 - **Đồng bộ Mac:** thư mục `.claude/agents/` nằm trong OneDrive → tự sync sang MacBook; trên Mac mở Claude Code/Codex trong cùng thư mục `~/OneDrive/Claude AI` là dùng cùng đội agent (đợi OneDrive xanh trước khi đổi máy).
 - **Đồng bộ Claude Code ↔ Codex ChatGPT:** `.claude/agents/*.md` là nguồn biên tập chính cho Claude Code; `.Codex/agents/*.toml` / `.codex/agents/*.toml` là bản sinh tự động cho Codex ChatGPT. Sau khi sửa/thêm agent, chạy `python tools/enforce_agent_guardrails.py` → `python tools/sync_agents_to_codex.py` → `python tools/sync_agents_to_codex.py --check`; kiểm tra read-only bằng `python tools/check_claude_codex_sync_health.py`. Không sửa tay TOML sinh ra.
-- **Audit tổng thể trước khi xem là sẵn sàng:** chạy `python tools/upgrade_verify.py` để enforce→sync→check→routing→gate→clinical schema hardening→clinical evidence update pipeline→audit→orchestrator. PASS nghĩa là hệ nhất quán ở mức trợ lý EBM có bác sĩ duyệt; clinical runtime/chronic-care vẫn không production nếu còn blocker/phê duyệt thật chưa xong.
+- **Audit tổng thể trước khi xem là sẵn sàng:** chạy `python tools/upgrade_verify.py` để enforce→sync→check→rubric/taxonomy→routing→gate→clinical schema hardening→clinical evidence update pipeline→audit→orchestrator. PASS nghĩa là hệ nhất quán ở mức trợ lý EBM có bác sĩ duyệt; clinical runtime/chronic-care vẫn không production nếu còn blocker/phê duyệt thật chưa xong.
 
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
@@ -103,6 +103,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Lint: `ruff check`
 - Kiểm + đồng bộ toàn hệ từ thư mục gốc: `python tools/upgrade_verify.py`
 - Kiểm riêng đồng bộ Claude Code ↔ Codex: `python tools/check_claude_codex_sync_health.py`
+- Kiểm riêng rubric QA ↔ LESSONS taxonomy: `python tools/verify_lessons_rubric_alignment.py`
 - Kiểm riêng clinical runtime governance: `python tools/verify_clinical_runtime_schema_hardening.py`
 - Kiểm riêng pipeline cập nhật chứng cứ lâm sàng: `python tools/verify_clinical_evidence_update_pipeline.py`
 - Chạy chu trình tự động có kiểm soát: `python tools/run_controlled_automation_cycle.py`

@@ -54,7 +54,7 @@ Không auto-fail, nhưng **không được xuất** khi còn thiếu → trả v
 - [ ] `DRG-INCOMPLETE` — Khuyến cáo thuốc **đủ**: chỉ định · liều (có nguồn) · chống chỉ định · TDP chính · tương tác · **hiệu chỉnh thận/gan** · nhóm đặc biệt (người cao tuổi, thai kỳ, đa bệnh–đa thuốc).
 - [ ] `DRG-ABX` — Kháng sinh: **đánh giá có thực sự cần** + cân nhắc **WHO AWaRe**.
 - [ ] `CLIN-SAFETYNET` — Ngoại trú: **thời điểm tái khám** · **tiêu chí thất bại điều trị** · **dấu hiệu quay lại ngay/đến cấp cứu**.
-- [ ] `GUIDE-CONFLICT` — Khi guideline khác nhau: nêu rõ **điểm khác biệt** + **đối tượng áp dụng**. ⚠️ **2026-07-12: mã lỗi này CHƯA có hàng tương ứng trong `_LESSONS-LEDGER-TAXONOMY.md` §2/§2b** (grep toàn repo chỉ khớp đúng 2 bản sao chính rubric này) — nếu một ca rớt đúng mục này, hiện KHÔNG có mã ledger hợp lệ để ghi `ma_loi`, phá vỡ bất biến "mỗi mục rớt → một mã lỗi → một mục ledger" ở dòng 5. Cần bổ sung mã (vd `GUIDE-CONFLICT` mới hoặc gộp vào `SRC-STALE`) trước khi mục này rớt lần đầu trong vận hành thật.
+- [ ] `GUIDE-CONFLICT` — Khi guideline khác nhau: nêu rõ **điểm khác biệt** + **đối tượng áp dụng**. Mã này đã có hàng tương ứng trong `_LESSONS-LEDGER-TAXONOMY.md` §2/§2b để cổng QA ghi `ma_loi` đúng khi rớt mục này; không gộp vào `SRC-STALE` vì "nguồn lỗi thời" khác với "nhiều nguồn hiện hành nhưng khuyến cáo/đối tượng khác nhau".
 
 ## 5. TIER 2 — CHẤT LƯỢNG (khuyến nghị; ảnh hưởng điểm, **không chặn** xuất)
 

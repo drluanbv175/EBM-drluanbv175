@@ -68,6 +68,12 @@ CORE_CHECKS: List[EvidenceCheck] = [
         limitation="Chỉ kiểm hợp đồng repo và file governance; không thay việc review thiết kế, bảo mật hoặc đầu ra lâm sàng thật.",
     ),
     EvidenceCheck(
+        domain="Rubric QA ↔ LESSONS taxonomy",
+        command=["tools/verify_lessons_rubric_alignment.py"],
+        proves="Mọi mã lỗi TIER 0/1/2 trong rubric Evaluate có hàng taxonomy và bridge §2b để vòng Learn ghi `ma_loi` đúng.",
+        limitation="Chỉ kiểm cấu trúc mã lỗi; không thay việc chấm rubric độc lập trên từng đầu ra thật.",
+    ),
+    EvidenceCheck(
         domain="Định tuyến agent",
         command=["tools/verify_agent_routing.py"],
         proves="Nhạc trưởng tham chiếu đội agent thật, không có agent mồ côi hoặc tham chiếu treo.",

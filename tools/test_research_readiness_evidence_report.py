@@ -49,8 +49,10 @@ def test_core_checks_include_repo_alignment_and_clinical_hardening():
 
     assert "Repo/Claude Code/Codex alignment" in domains
     assert "Clinical runtime schema hardening" in domains
+    assert "Rubric QA ↔ LESSONS taxonomy" in domains
     assert any("verify_claude_code_repo_alignment.py" in cmd for cmd in commands)
     assert any("verify_clinical_runtime_schema_hardening.py" in cmd for cmd in commands)
+    assert any("verify_lessons_rubric_alignment.py" in cmd for cmd in commands)
 
 
 def test_core_checks_include_controlled_automation_cycle():
