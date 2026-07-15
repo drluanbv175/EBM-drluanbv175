@@ -84,11 +84,12 @@ Mọi agent (toàn đội) phải áp dụng **`_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-P
 | `kinh-te-y-te` | **Phân tích kinh tế y tế** (CHEERS 2022): CEA/CUA-QALY/CBA/BIA · góc nhìn·chiết khấu · chi phí (nhận diện→đo→định giá) · ICER vs ngưỡng WTP · mô hình Markov · độ nhạy PSA/CEAC | Đề tài có cấu phần chi phí: "có đáng tiền không", "chi phí–hiệu quả", "tác động ngân sách" |
 | `mo-hinh-tien-luong` | Phát triển & kiểm định **mô hình tiên lượng/dự báo** (TRIPOD+AI; PROBAST khi thẩm định): EPV · chống quá khớp · **hiệu chuẩn + phân biệt (AUC)** · validation nội/ngoại · DCA · nomogram | Đề tài xây/kiểm định công cụ dự báo nguy cơ; "mô hình tiên lượng", "điểm dự báo", "validate thang điểm" |
 
-### Bốn cổng cứng/điểm dừng nghiên cứu (cụm Nghiên cứu — 2026-07-07: sửa "ba" → "bốn", khớp đúng 4 DỪNG thật trong `dieu-phoi-nghien-cuu.md` §CHẾ ĐỘ CHAY-TOAN-BO — bản trước thiếu DỪNG 3, khiến điểm dừng quan trọng nhất về liêm chính dữ liệu vắng mặt khỏi danh sách "chính thức")
+### Năm cổng cứng/điểm dừng nghiên cứu (cụm Nghiên cứu — 2026-07-15: sửa "bốn" → "năm", khớp đúng 5 DỪNG thật trong `dieu-phoi-nghien-cuu.md` §CHẾ ĐỘ CHAY-TOAN-BO — bản trước thiếu DỪNG bình duyệt độc lập G8, thêm cổng 2026-07-14 nhưng chưa lan tới bản đồ này)
 - **G2 — Đạo đức trước dữ liệu:** không phân tích dữ liệu thật khi chưa phê duyệt + đăng ký.
 - **G4 — Khóa SAP:** không đổi kết cục chính/kế hoạch sau khi xem dữ liệu.
 - **Dữ liệu thật trước phân tích (DỪNG 3):** xác nhận file dữ liệu đưa vào là dữ liệu THẬT (không phải giả lập/placeholder) trước khi `phan-tich-thong-ke` chạy — chống bịa số liệu.
-- **Liêm chính tác giả (DỪNG 4):** COI/tài trợ/đóng góp/khai báo AI do nhà nghiên cứu xác nhận.
+- **Bình duyệt độc lập (DỪNG 4, G8):** một người KHÁC chủ nhiệm đề tài đọc và ký duyệt trước khi nghiệm thu — chủ nhiệm không được tự ký thay.
+- **Liêm chính tác giả (DỪNG 5):** COI/tài trợ/đóng góp/khai báo AI do nhà nghiên cứu xác nhận.
 
 ## Guardrail dùng chung (1 agent)
 | Agent | Vai trò | Gọi khi |

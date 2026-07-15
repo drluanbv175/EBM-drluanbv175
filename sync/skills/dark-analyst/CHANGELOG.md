@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.12.2 — 2026-07-15
+
+- **Siết cổng nguồn chứng cứ để giảm nhu cầu bác sĩ tự dò từng nguồn.** Đồng bộ `--strict-sources`
+  trong `tools/verify_dashboard.py`: bắt `DATA.standards`, ngày tìm kiếm/cập nhật còn mới, ≥2 nguồn
+  tìm kiếm, thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, `references[]`, và chặn `decision='apply'`
+  nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. Khi chạy `--online --strict-sources`, cảnh báo
+  PMID lạc đề/sai năm hoặc DOI chưa xác minh được được nâng thành lỗi cứng.
+- Evidence Workbench hiển thị rõ trạng thái "Xác minh tự động nguồn" và yêu cầu
+  `verify_dashboard.py --online --strict-sources` PASS trước phát hành. Cổng này giảm việc dò nguồn
+  thủ công, nhưng không thay bác sĩ duyệt áp dụng cho bệnh nhân thật.
+
 ## v1.12.0 — 2026-06-10
 
 - **Sửa mất cân đối bố cục dọc** (bác sĩ báo: dashboard hiện tại vẫn chưa cân đối). Nguyên nhân thật: khối **GRADE Evidence-to-Decision là băng LUÔN hiển thị, rất cao ở đầu trang** → ép bảng chứng cứ (nội dung chính) thành dải mỏng ở đáy. (grep markers PASS nhưng mắt thấy lệch → đã kiểm chứng bằng ảnh chụp thực tế.)

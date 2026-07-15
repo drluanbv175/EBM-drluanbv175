@@ -39,7 +39,7 @@
        │        + MEMORY.md + checkpoint + study_meta                          │
        └──────────────┘  (phiên sau / máy khác qua OneDrive → RESUME)         │
                                                                               ─┘
-   ⛔ DỪNG THẬT ở cổng cứng: G2 IRB · G4 SAP-lock · G5 dữ liệu · G9 liêm chính
+   ⛔ DỪNG THẬT ở cổng cứng: G2 IRB · G4 SAP-lock · G5 dữ liệu · G8 phản biện độc lập · G9 liêm chính
       (hợp đồng DỪNG exit-2 + needs_input — hệ KHÔNG tự vượt, KHÔNG bịa)
 ```
 

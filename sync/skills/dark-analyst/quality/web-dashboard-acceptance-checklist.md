@@ -8,6 +8,7 @@
 - [ ] Khối `DATA.standards` khai báo khung câu hỏi, thứ bậc nguồn, ngày/nguồn tìm kiếm, chuẩn báo cáo và công cụ thẩm định.
 - [ ] Tab `Chuẩn & chất lượng` hiển thị CONSORT/STROBE/PRISMA/STARD/TRIPOD khi phù hợp và AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI cho thẩm định.
 - [ ] Cổng liêm chính trước phát hành ghi rõ truy nguyên nguồn, tách độ chắc chắn với quyết định thực hành, không PII, an toàn và tính phù hợp Việt Nam.
+- [ ] `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources` PASS: PMID/DOI phân giải, nguồn còn mới, ≥2 nguồn tìm kiếm, references[] đủ, không `apply` trên chứng cứ yếu/không phân hạng/chỉ đồng thuận.
 
 ## Cấu trúc và khả dụng (mô hình Evidence Workbench 3 cột)
 - [ ] Dùng template `web-dashboard-evidence-workbench.html`; chỉ thay khối `DATA`, không sửa HTML/CSS.

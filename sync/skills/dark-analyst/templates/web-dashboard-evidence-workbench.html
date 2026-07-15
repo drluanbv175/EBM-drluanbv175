@@ -389,6 +389,7 @@
    summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }   // Lớp 1
    standards?: {                       // Lớp 4: chuẩn cập nhật chứng cứ
      frame, sourceHierarchy, reporting, appraisal, currency, safety, vietnamFit,
+     sourceVerification, lastVerified, verificationTool,
      searchSources:[…],
      gates:[{label, status:'ok'|'warn'|'need', note}]
    }
@@ -430,11 +431,15 @@ const DATA = {
     appraisal:'Thẩm định bằng AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI tùy loại nghiên cứu.',
     currency:'Nguồn ví dụ cập nhật đến 2026-06-07; dashboard thật phải ghi ngày tìm kiếm và chạy lại trước khi áp dụng.',
     searchSources:['PubMed','Cochrane','Guideline society','Drug label/safety source'],
+    sourceVerification:'Chỉ phát hành khi cổng verify_dashboard.py --online --strict-sources PASS: PMID/DOI phân giải, tiêu đề/năm khớp, nguồn còn mới và hợp đồng standards đầy đủ.',
+    lastVerified:'2026-06-07',
+    verificationTool:'verify_dashboard.py --online --strict-sources',
     safety:'Bắt buộc rà cờ đỏ, chống chỉ định, tương tác, chỉnh liều thận/gan và tiêu chí chuyển tuyến trước khi phát hành.',
     vietnamFit:'Đối chiếu thuốc/kỹ thuật sẵn có, BHYT/chi phí, tuyến chăm sóc, năng lực theo dõi và khác biệt dân số tại Việt Nam.',
     gates:[
       {label:'Câu hỏi có cấu trúc',status:'ok',note:'PICO/khung tương ứng được hiển thị ở top bar và từng item.'},
       {label:'Truy nguyên nguồn',status:'ok',note:'Mỗi item có PMID/DOI/URL hoặc tài liệu tham khảo Vancouver/NLM.'},
+      {label:'Xác minh online nguồn',status:'warn',note:'Dashboard thật phải PASS verify_dashboard.py --online --strict-sources ngay trước phát hành.'},
       {label:'Tách chứng cứ và khuyến cáo',status:'ok',note:'gradeSource giữ nguyên nguồn; decision là quyết định thực hành có kiểm soát.'},
       {label:'An toàn & giới hạn',status:'ok',note:'Có cờ đỏ, không nên/giới hạn, nhóm đặc biệt và monitoring.'},
       {label:'Không PII',status:'ok',note:'Dashboard không lưu thông tin định danh bệnh nhân.'}
@@ -612,12 +617,13 @@ function qualityView(){
   return `<div class="quality">
     <div class="quality-head">
       <div class="ey">Chuẩn chất lượng cập nhật chứng cứ</div>
-      <div class="tx">Tab này khóa các yêu cầu tối thiểu trước khi dùng dashboard cho thực hành lâm sàng: câu hỏi có cấu trúc, thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, độ cập nhật, an toàn, tính phù hợp tại Việt Nam và truy nguyên từng item. Đây là lớp kiểm soát bổ sung bên cạnh GRADE EtD.</div>
+      <div class="tx">Tab này khóa các yêu cầu tối thiểu trước khi dùng dashboard cho thực hành lâm sàng: câu hỏi có cấu trúc, thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, độ cập nhật, xác minh online nguồn, an toàn, tính phù hợp tại Việt Nam và truy nguyên từng item. Dashboard thật chỉ được phát hành khi cổng <span class="num">verify_dashboard.py --online --strict-sources</span> PASS. Đây là lớp kiểm soát bổ sung bên cạnh GRADE EtD.</div>
     </div>
     <div class="quality-grid">
       ${box('Khung câu hỏi',s.frame||DATA.meta.question,'PICO/PECO/PIRD/PROGRESS phải khớp mục tiêu thực hành.')}
       ${box('Thứ bậc nguồn',s.sourceHierarchy,'Ưu tiên nguồn tổng hợp đáng tin cậy trước nghiên cứu đơn lẻ.')}
       ${box('Độ cập nhật',s.currency||DATA.meta.updated,`Nguồn tìm kiếm: ${src}`)}
+      ${box('Xác minh tự động nguồn',s.sourceVerification||'Chưa ghi trạng thái xác minh nguồn',`Cổng yêu cầu: ${s.verificationTool||'verify_dashboard.py --online --strict-sources'} · Lần xác minh: ${s.lastVerified||'chưa ghi'}`)}
       ${box('Chuẩn báo cáo',s.reporting||'CONSORT · STROBE · PRISMA · STARD · TRIPOD','Chọn chuẩn theo thiết kế nghiên cứu của từng nguồn.')}
       ${box('Công cụ thẩm định',s.appraisal||'AGREE II · AMSTAR 2 · RoB 2 · ROBINS-I · QUADAS-2 · PROBAST · JBI','Không dùng RoB 2 cho nghiên cứu không phải RCT.')}
       ${box('An toàn & Việt Nam',`${s.safety||'Chưa khai báo an toàn'} ${s.vietnamFit?` · ${s.vietnamFit}`:''}`,'Bắt buộc rà thuốc, chống chỉ định, tương tác, chuyển tuyến, chi phí/BHYT và năng lực theo dõi.')}

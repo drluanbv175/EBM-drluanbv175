@@ -6,6 +6,9 @@ verify_dashboard.py — Cổng kiểm liêm chính cho Web Dashboard EBM (Dark A
 Kiểm TRƯỚC KHI GIAO cho bác sĩ:
   - Mỗi item có ≥1 định danh truy nguyên (pmid hoặc doi).
   - Mỗi item có gradeLevel + decision + references.
+  - (--strict-sources) Bắt buộc khai báo `DATA.standards`, ngày tìm kiếm còn mới,
+    nguồn tìm kiếm, thứ bậc nguồn, chuẩn báo cáo/công cụ thẩm định; chặn `apply`
+    nếu chứng cứ yếu/không phân hạng hoặc chỉ dựa đồng thuận.
   - Có disclaimer "Cần bác sĩ kiểm chứng".
   - Quét dấu hiệu PII (cảnh báo để người rà — không tự ý kết luận).
   - DOI kiểm ĐỊNH DẠNG luôn (offline, mọi lượt chạy); khi --online, còn PHÂN GIẢI THẬT
@@ -23,7 +26,8 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
 
 Cách dùng:
     python3 verify_dashboard.py <dashboard.html>            # chỉ kiểm cấu trúc (offline)
-    python3 verify_dashboard.py <dashboard.html> --online   # + xác minh PMID/DOI trên mạng
+    python3 verify_dashboard.py <dashboard.html> --online --strict-sources
+        # + xác minh PMID/DOI trên mạng + cổng nguồn nghiêm ngặt trước phát hành
 
 Mã thoát: 0 = PASS (không lỗi cứng), 1 = FAIL.
 Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thiếu disclaimer; item thiếu
@@ -37,11 +41,19 @@ Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thi
 Cảnh báo (không chặn): nghi PII; khi --online, PMID xác minh tồn tại nhưng tiêu đề PubMed
   không khớp nội dung item (nghi tráo trích dẫn — heuristic từ khóa, cần rà tay); khi --online,
   năm PubMed thật lệch >1 năm so với dateVersion item khai (nghi trích dẫn NHẦM PHIÊN BẢN/năm
-  của cùng một họ guideline — rà tay, không tự sửa).
+  của cùng một họ guideline — rà tay, không tự sửa). Khi bật --strict-sources, các cảnh báo
+  nguồn này được nâng thành lỗi cứng để không cần bác sĩ tự dò từng nguồn trước khi đọc dashboard.
 """
-import sys, re, json, argparse, time
+import argparse
+import json
+import re
+import ssl
+import sys
+import time
 import urllib.error
 import urllib.parse
+from datetime import date, datetime
+from pathlib import Path
 
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 VALID_GRADE = {"high", "mod", "low", "vlow", "na"}
@@ -54,6 +66,37 @@ DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 # (kể cả không phải số) qua cổng nếu không rỗng. PMID là số nguyên dương thuần (PubMed
 # hiện dùng tới 8 chữ số, cho phép dư tới 9 để an toàn).
 PMID_RE = re.compile(r"^\d{1,9}$")
+KNOWN_DESIGNS = {"Guideline", "Meta", "RCT", "Cohort", "Consensus"}
+STRICT_SOURCE_MAX_AGE_DAYS = 180
+SOURCE_GATE_USER_AGENT = "EBM-Copilot-source-verifier/1.0"
+_HTTPS_CONTEXT = None
+
+
+def _certifi_bundle_path():
+    """Ưu tiên kho CA `certifi`; nếu chạy ngoài venv, thử bundle trong venv chuẩn."""
+    try:
+        import certifi  # type: ignore
+        return certifi.where()
+    except Exception:
+        lib_dir = Path.home() / ".ebm-venv" / "lib"
+        matches = sorted(lib_dir.glob("python*/site-packages/certifi/cacert.pem"))
+        return str(matches[-1]) if matches else None
+
+
+def _https_context():
+    global _HTTPS_CONTEXT
+    if _HTTPS_CONTEXT is not None:
+        return _HTTPS_CONTEXT
+    cafile = _certifi_bundle_path()
+    _HTTPS_CONTEXT = ssl.create_default_context(cafile=cafile) if cafile else ssl.create_default_context()
+    return _HTTPS_CONTEXT
+
+
+def source_urlopen(url, timeout=15):
+    """Mở URL nguồn y khoa với CA rõ ràng để tránh lỗi SSL giả khi kiểm online."""
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": SOURCE_GATE_USER_AGENT})
+    return urllib.request.urlopen(req, timeout=timeout, context=_https_context())
 
 
 def configure_utf8_stdio():
@@ -90,6 +133,148 @@ def field(chunk, name):
     return m.group(1) if m else None
 
 
+def _find_matching_brace(text, open_idx):
+    depth = 0
+    instr = None
+    esc = False
+    for i in range(open_idx, len(text)):
+        c = text[i]
+        if instr:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == instr:
+                instr = None
+            continue
+        if c in "\"'`":
+            instr = c
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return -1
+
+
+def object_after_key(text, key):
+    m = re.search(r"(?<![\w$])" + re.escape(key) + r"\s*:\s*\{", text)
+    if not m:
+        return None
+    start = text.find("{", m.end() - 1)
+    end = _find_matching_brace(text, start)
+    return text[start:end + 1] if end != -1 else None
+
+
+def array_field(block, name):
+    if not block:
+        return []
+    m = re.search(name + r"\s*:\s*\[([^\]]*)\]", block, re.S)
+    if not m:
+        return []
+    return [x.strip() for x in re.findall(r"['\"]([^'\"]+)['\"]", m.group(1)) if x.strip()]
+
+
+def _parse_exact_date(text):
+    m = re.search(r"\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b", text or "")
+    if not m:
+        return None
+    try:
+        return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))).date()
+    except ValueError:
+        return None
+
+
+def strict_source_checks(data_block, items, *, today=None):
+    """Cổng nguồn nghiêm ngặt cho dashboard thật.
+
+    Mục tiêu là giảm tối đa việc bác sĩ phải tự dò từng nguồn: dashboard phải khai báo
+    chiến lược cập nhật, nguồn tìm kiếm và từng item phải đủ truy nguyên/chất lượng trước
+    khi được phát hành. Cổng này không thay quyết định lâm sàng cuối cùng.
+    """
+    today = today or date.today()
+    errors, warns, oks = [], [], []
+    standards = object_after_key(data_block, "standards")
+    if not standards:
+        errors.append("THIẾU DATA.standards — không có hợp đồng nguồn/độ mới/chuẩn thẩm định.")
+        return errors, warns, oks
+
+    required_fields = {
+        "frame": "khung câu hỏi",
+        "sourceHierarchy": "thứ bậc nguồn",
+        "reporting": "chuẩn báo cáo",
+        "appraisal": "công cụ thẩm định",
+        "currency": "ngày cập nhật/tìm kiếm",
+        "safety": "an toàn",
+        "vietnamFit": "tính phù hợp Việt Nam",
+    }
+    for key, label in required_fields.items():
+        if not field(standards, key):
+            errors.append("DATA.standards thiếu %s (%s)." % (key, label))
+
+    search_sources = array_field(standards, "searchSources")
+    if len(search_sources) < 2:
+        errors.append("DATA.standards.searchSources cần ≥2 nguồn tìm kiếm độc lập (vd PubMed + guideline/Cochrane/nhãn thuốc).")
+
+    currency = field(standards, "currency") or field(data_block, "updated")
+    currency_date = _parse_exact_date(currency) or _parse_exact_date(field(data_block, "updated"))
+    if not currency_date:
+        errors.append("Không thấy ngày tìm kiếm/cập nhật dạng YYYY-MM-DD trong DATA.standards.currency hoặc DATA.meta.updated.")
+    else:
+        age = (today - currency_date).days
+        if age < 0:
+            errors.append("Ngày tìm kiếm/cập nhật ở tương lai: %s." % currency_date.isoformat())
+        elif age > STRICT_SOURCE_MAX_AGE_DAYS:
+            errors.append(
+                "Nguồn không còn đủ mới: ngày tìm kiếm/cập nhật %s đã %d ngày "
+                "(ngưỡng strict %d ngày)." % (currency_date.isoformat(), age, STRICT_SOURCE_MAX_AGE_DAYS)
+            )
+        else:
+            oks.append("Nguồn còn mới: ngày tìm kiếm/cập nhật %s (%d ngày)." % (currency_date.isoformat(), age))
+
+    if "gates" not in standards:
+        errors.append("DATA.standards thiếu gates[] — không có cổng liêm chính nguồn trước phát hành.")
+
+    for ch in items:
+        iid = field(ch, "id") or "(?)"
+        design = field(ch, "design")
+        grade = field(ch, "gradeLevel")
+        dec = field(ch, "decision")
+        source = field(ch, "source")
+        org = field(ch, "org")
+        date_version = field(ch, "dateVersion")
+        grade_source = field(ch, "gradeSource")
+        pmid = field(ch, "pmid")
+        doi = field(ch, "doi")
+        url = field(ch, "url")
+
+        if not source:
+            errors.append("[%s] thiếu source — không xác định được tài liệu gốc." % iid)
+        if not org:
+            warns.append("[%s] thiếu org — nên ghi tổ chức/tạp chí/hội chuyên môn phát hành." % iid)
+        if not date_version:
+            errors.append("[%s] thiếu dateVersion — không thể đánh giá phiên bản/độ mới của nguồn." % iid)
+        if not design:
+            errors.append("[%s] thiếu design — không thể phân tầng độ tin cậy nguồn." % iid)
+        elif design not in KNOWN_DESIGNS:
+            errors.append("[%s] design=%r không thuộc bộ hỗ trợ %s." % (iid, design, sorted(KNOWN_DESIGNS)))
+        if not grade_source:
+            errors.append("[%s] thiếu gradeSource — không thấy phân hạng/nhận định nguyên bản của nguồn." % iid)
+        if "references" not in ch:
+            errors.append("[%s] thiếu references[] — strict-sources không cho phát hành." % iid)
+
+        if dec == "apply" and grade in {"low", "vlow", "na"}:
+            errors.append("[%s] decision='apply' nhưng gradeLevel=%r — phải hạ xuống consider/notyet hoặc bổ sung nguồn mạnh hơn." % (iid, grade))
+        if dec == "apply" and design == "Consensus":
+            errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
+        if dec == "apply" and not (pmid or doi) and url:
+            warns.append("[%s] 'apply' chỉ có URL, không có PMID/DOI — chỉ chấp nhận nếu là guideline/label chính thức và đã ghi rõ trong standards.gates." % iid)
+
+    oks.append("Strict source gate đã rà DATA.standards và %d item." % len(items))
+    return errors, warns, oks
+
+
 def meta_kind(data_block):
     """Loại artifact tự khai báo trong meta (vd kind:'cong-cu' = CÔNG CỤ HỖ TRỢ quyết định,
     KHÔNG phải danh sách thẻ chứng cứ → items[] rỗng là hợp lệ). Marker phải nằm trong meta của
@@ -109,13 +294,12 @@ def verify_pmid_online(pmid, retries=2):
     tạm thời" như 429/5xx — giờ mọi lỗi (trừ HTTPError không nằm trong nhóm tạm thời)
     đều được thử lại giống nhau. Trả tiêu đề ĐẦY ĐỦ (không cắt 90 ký tự) — caller tự cắt
     khi hiển thị; giữ nguyên đủ để so khớp tráo trích dẫn (_title_overlap_ratio)."""
-    import urllib.request
     url = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
            "?db=pubmed&retmode=json&id=" + pmid)
     last_err = None
     for attempt in range(retries + 1):
         try:
-            with urllib.request.urlopen(url, timeout=15) as r:
+            with source_urlopen(url, timeout=15) as r:
                 j = json.loads(r.read().decode("utf-8"))
             res = j.get("result", {})
             if pmid in res and "title" in res[pmid]:
@@ -144,12 +328,11 @@ def verify_doi_online(doi, retries=2):
     DOI bịa đúng định dạng (vd '10.1136/ard-2024-225452') PASS sạch qua cổng. Tái hiện thật:
     EBM_MASTER card EVID-2026-0270 mang DOI này, 404 khi tự tay tra doi.org/Crossref.
     Cùng nguyên tắc fail-closed như verify_pmid_online — lỗi mạng KHÔNG được coi là đã xác minh."""
-    import urllib.request
     url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
     last_err = None
     for attempt in range(retries + 1):
         try:
-            with urllib.request.urlopen(url, timeout=15) as r:
+            with source_urlopen(url, timeout=15) as r:
                 j = json.loads(r.read().decode("utf-8"))
             title = "; ".join(j.get("message", {}).get("title", []) or [])
             return True, title
@@ -214,6 +397,9 @@ def main():
     ap.add_argument("--online", action="store_true",
                     help="xác minh PMID qua NCBI + DOI qua Crossref trên mạng, và so năm "
                          "PubMed thật với dateVersion item khai (vá 2026-07-12)")
+    ap.add_argument("--strict-sources", action="store_true",
+                    help="bật cổng nguồn nghiêm ngặt: bắt DATA.standards, ngày tìm kiếm còn mới, "
+                         "nguồn tìm kiếm ≥2, references[], và chặn apply nếu chứng cứ yếu/không phân hạng")
     ap.add_argument("--check-topic", action="store_true",
                     help="gọi Claude API chấm mỗi item có đúng chủ đề dashboard không (cần "
                          "ANTHROPIC_API_KEY; tốn 1 lượt gọi API/dashboard)")
@@ -287,6 +473,14 @@ def main():
         if "references" not in ch:
             warns.append("[%s] không thấy references[]." % iid)
 
+    if a.strict_sources:
+        se, sw, so = strict_source_checks(data, items)
+        errors.extend(se)
+        warns.extend(sw)
+        oks.extend(so)
+        if not a.online:
+            warns.append("--strict-sources đang chạy offline: đã kiểm hợp đồng nguồn, nhưng chưa phân giải thật PMID/DOI. Dashboard thật nên chạy thêm --online.")
+
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []
     pii += re.findall(r"\b\d{1,2}/\d{1,2}/\d{4}\b", html)            # ngày sinh dạng dd/mm/yyyy
@@ -322,22 +516,30 @@ def main():
                 # gán nhầm cho nhiều item khác chủ đề nhau. Chỉ cảnh báo — RÀ TAY, không tự chặn.
                 overlap = _title_overlap_ratio(info, ch)
                 if overlap < 0.25:
-                    warns.append(
+                    msg = (
                         "[%s] PMID %s tồn tại thật trên PubMed nhưng tiêu đề KHÔNG khớp nội dung "
                         "item (trùng %.0f%% từ khóa có nghĩa) — NGHI TRÁO PMID (lạc đề). Tiêu đề "
-                        "PubMed thật: \"%s\". RÀ TAY, không tự gỡ." % (iid, p, overlap * 100, info[:120])
+                        "PubMed thật: \"%s\"." % (iid, p, overlap * 100, info[:120])
                     )
+                    if a.strict_sources:
+                        errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
+                    else:
+                        warns.append(msg + " RÀ TAY, không tự gỡ.")
                 # Vá 2026-07-12: "đúng họ guideline, sai phiên bản/năm" — overlap từ khóa cao
                 # (cùng tên guideline lặp lại qua các năm) nên heuristic trên KHÔNG bắt được;
                 # so trực tiếp năm PubMed thật với dateVersion item khai. Dung sai 1 năm (in
                 # ấn/epub lệch nhau là bình thường).
                 real_year, decl_year = _year_of(pubdate), _year_of(date_version)
                 if real_year and decl_year and abs(real_year - decl_year) > 1:
-                    warns.append(
+                    msg = (
                         "[%s] PMID %s xuất bản THẬT năm %d nhưng item khai dateVersion=%s — "
-                        "NGHI TRÍCH DẪN NHẦM PHIÊN BẢN/năm của cùng họ guideline. RÀ TAY, không "
-                        "tự sửa." % (iid, p, real_year, date_version)
+                        "NGHI TRÍCH DẪN NHẦM PHIÊN BẢN/năm của cùng họ guideline."
+                        % (iid, p, real_year, date_version)
                     )
+                    if a.strict_sources:
+                        errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
+                    else:
+                        warns.append(msg + " RÀ TAY, không tự sửa.")
             elif ok is False:
                 errors.append("[%s] PMID %s KHÔNG phân giải: %s" % (iid, p, info))
             else:
@@ -372,15 +574,20 @@ def main():
                               % (iid, d, info))
             else:
                 # Fail-closed như PMID — lỗi mạng khi tra Crossref không được coi là đã xác minh.
-                warns.append("[%s] DOI %s CHƯA XÁC MINH ĐƯỢC qua Crossref (%s) — mạng lỗi hoặc "
-                             "Crossref tạm ngưng, rà lại thủ công." % (iid, d, info))
+                msg = ("[%s] DOI %s CHƯA XÁC MINH ĐƯỢC qua Crossref (%s) — mạng lỗi hoặc "
+                       "Crossref tạm ngưng." % (iid, d, info))
+                if a.strict_sources:
+                    errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
+                else:
+                    warns.append(msg + " Rà lại thủ công.")
     elif dois:
         oks.append("Có %d DOI đúng định dạng (chạy --online để xác minh phân giải qua Crossref)."
                    % len(set(d for _, d, _ in dois)))
 
     # 4) CHẤT LƯỢNG NỘI DUNG — chống rác abstract NGOẠI NGỮ / placeholder (xem dashboard_content_audit.py)
     try:
-        import os as _os, sys as _sys
+        import os as _os
+        import sys as _sys
         _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
         import dashboard_content_audit as DCA
         iss = DCA.audit_file(a.file).get("issues", {})
@@ -423,7 +630,8 @@ def main():
     # loại LLM có sai số, quyết định cuối thuộc bác sĩ. Bỏ qua êm nếu thiếu ANTHROPIC_API_KEY.
     if a.check_topic:
         try:
-            import os as _os, sys as _sys
+            import os as _os
+            import sys as _sys
             _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
             import check_topic_relevance as CTR
             topic_result = CTR.check_dashboard_topic_relevance(a.file)

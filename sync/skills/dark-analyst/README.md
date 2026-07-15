@@ -18,7 +18,7 @@ Skill này không tự tạo báo cáo tuần/tháng, Dashboard, mã Master ho�
 
 ## Web Dashboard kèm theo
 
-Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mô hình **Clinical Quick View → Evidence Detail → Safety/Limits/Vietnam**. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
+Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mẫu **"Evidence Workbench"** (nền sáng, 3 cột: bộ lọc · Quick View + bảng item · panel thẩm định, có GRADE Evidence-to-Decision và tab Chuẩn & chất lượng). Chuỗi tự động phải chạy `verify_dashboard.py --online --strict-sources` trước khi giao, để nguồn PMID/DOI được phân giải và hợp đồng `DATA.standards` đạt. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
 
 ## Trình bày theo PICO
 

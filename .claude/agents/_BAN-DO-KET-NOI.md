@@ -65,7 +65,7 @@ G5  quan-ly-du-lieu (khóa DB)
 G6  phan-tich-thong-ke (+meta-phan-tich nếu SR · +mo-hinh-tien-luong nếu mô hình dự báo)
 G6.5 dien-giai-ket-qua
 G7  viet-ban-thao → hieu-dinh-song-ngu → kiem-chung-trich-dan🔒  (chuẩn riêng: TRIPOD+AI→mo-hinh-tien-luong · CHEERS→kinh-te-y-te · COSMIN→cong-cu-do-luong)
-G8  binh-duyet → (sau G8) nop-bai-phan-hoi
+G8🔒 binh-duyet → (sau G8) nop-bai-phan-hoi
 G9🔒 nop-bai-phan-hoi + binh-duyet + kiem-chung-trich-dan
 Theo loại thiết kế (có điều kiện, chèn G1/G3/G6/G7): cong-cu-do-luong (PROM/COSMIN) · mo-hinh-tien-luong (dự báo/TRIPOD+AI) · kinh-te-y-te (chi phí/CHEERS) · nghien-cuu-dinh-tinh (định tính/COREQ) · tham-dinh-do-chinh-xac-chan-doan (chẩn đoán/QUADAS-2+STARD)
 Xuyên suốt: so-cai-ghi-nho (ghi sổ cái sau mỗi cổng) ; cầu thực hành: huong-dan-lam-sang
@@ -84,7 +84,7 @@ Xuyên suốt: so-cai-ghi-nho (ghi sổ cái sau mỗi cổng) ; cầu thực h�
 
 ## 7. CỔNG CHUYỂN (gate trên đường đi)
 - **CỔNG A** (quyết định lâm sàng) + **CỔNG B** (ghi EBM_MASTER) — xem `_HIEN-PHAP-LIEM-CHINH.md`.
-- **G2 / G4 / dữ liệu thật trước phân tích (DỪNG 3) / liêm chính tác giả (G9)** — **4** cổng cứng/điểm dừng nghiên cứu (2026-07-07: sửa thiếu DỪNG 3 — khớp đúng 4 DỪNG thật trong `dieu-phoi-nghien-cuu.md` §CHẾ ĐỘ CHAY-TOAN-BO), xem `dieu-phoi-nghien-cuu` + `_KIEM-TOAN`.
+- **G2 / G4 / dữ liệu thật trước phân tích (DỪNG 3) / G8 bình duyệt độc lập (DỪNG 4) / liêm chính tác giả (G9, DỪNG 5)** — **5** cổng cứng/điểm dừng nghiên cứu (2026-07-15: thêm DỪNG G8 — khớp đúng 5 DỪNG thật trong `dieu-phoi-nghien-cuu.md` §CHẾ ĐỘ CHAY-TOAN-BO), xem `dieu-phoi-nghien-cuu` + `_KIEM-TOAN`.
 - Mọi chuyển tiếp qua cổng đều DỪNG chờ bác sĩ duyệt khi chạm quyết định/dữ liệu/phê duyệt thật.
 
 ## 8. LỚP ROUTINES THEO LỊCH → ĐỘI AGENT (điểm vào thứ 3 — tự động hoá)

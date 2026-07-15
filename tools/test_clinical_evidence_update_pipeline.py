@@ -17,6 +17,7 @@ def test_synthetic_dashboard_fixture_has_disclaimer_doi_and_no_pii():
         assert V.DISCLAIMER in html
         assert V.FIXTURE_DOI in html
         assert "standards" in html
+        assert "--strict-sources" in html
         assert "CONSORT, STROBE, PRISMA, STARD, TRIPOD" in html
         assert "AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST" in html
         assert ok is True, detail

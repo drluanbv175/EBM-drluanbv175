@@ -5,13 +5,13 @@ Verifier này không tuyên bố một khuyến cáo lâm sàng là đúng. Nó 
 đường ống kỹ thuật đang chạy được, fail-closed ở các điểm quan trọng:
 - dashboard Evidence Workbench có disclaimer, DOI/PMID/URL, gradeLevel, decision;
 - dashboard Evidence Workbench có tab chuẩn chất lượng cập nhật chứng cứ (`standards`);
-- dashboard qua cổng `verify_dashboard.py`;
+- dashboard qua cổng `verify_dashboard.py --strict-sources`;
 - thư viện tích lũy `library.json` / `evidence-library.html` được sinh;
 - 3 tài liệu phái sinh được sinh;
 - `sync_all.py` còn hợp đồng gom dashboard qua cổng liêm chính và quarantine.
 
-Dashboard thật vẫn phải chạy `verify_dashboard.py --online`, rà toàn văn, an toàn
-thuốc khi liên quan và được bác sĩ kiểm chứng.
+Dashboard thật vẫn phải chạy `verify_dashboard.py --online --strict-sources`, rà an toàn
+thuốc khi liên quan và được bác sĩ duyệt trước khi áp dụng cho bệnh nhân.
 """
 
 from __future__ import annotations
@@ -123,6 +123,9 @@ const DATA = {{
     appraisal:'AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI.',
     currency:'Fixture offline cập nhật ngày {updated}; dashboard thật phải ghi ngày tìm kiếm.',
     searchSources:['PubMed','Cochrane','Guideline society'],
+    sourceVerification:'Fixture PASS khi verify_dashboard.py --strict-sources chạy sạch; dashboard thật phải chạy thêm --online.',
+    verificationTool:'verify_dashboard.py --online --strict-sources',
+    lastVerified:'{updated}',
     safety:'Fixture không đưa khuyến cáo điều trị; dashboard thật phải rà chống chỉ định, tương tác, chuyển tuyến.',
     vietnamFit:'Dashboard thật phải đối chiếu sẵn có, chi phí/BHYT và năng lực theo dõi tại Việt Nam.',
     gates:[
@@ -140,7 +143,7 @@ const DATA = {{
       dateVersion:'2010',
       pmid:'',
       doi:'{FIXTURE_DOI}',
-      design:'guideline',
+      design:'Guideline',
       population:'Báo cáo thử nghiệm ngẫu nhiên song song',
       frame:'reporting-standard',
       pico:{{P:'thử nghiệm ngẫu nhiên',I:'chuẩn báo cáo CONSORT',C:'báo cáo không chuẩn hóa',O:'minh bạch và tái lập'}},
@@ -149,7 +152,7 @@ const DATA = {{
       gradeLevel:'na',
       decision:'consider',
       groups:['research-reporting'],
-      action:'Dùng làm fixture kiểm đường ống; mọi khuyến cáo lâm sàng thật phải có nguồn và bác sĩ rà toàn văn.',
+      action:'Dùng làm fixture kiểm đường ống; mọi khuyến cáo lâm sàng thật phải qua strict source gate và bác sĩ duyệt trước khi áp dụng.',
       monitoring:'Xác nhận không chứa PII và không phát hành như khuyến cáo điều trị.',
       vn:'Không áp dụng trực tiếp cho bệnh nhân; chỉ dùng trong kiểm thử pipeline.',
       references:['Schulz KF, Altman DG, Moher D. CONSORT 2010 Explanation and Elaboration. BMJ. 2010;340:c869. doi:{FIXTURE_DOI}.']
@@ -273,6 +276,7 @@ def _check_templates() -> CheckResult:
         "QUADAS-2",
         "PROBAST",
         "Truy nguyên từng item",
+        "--strict-sources",
         "Kiểm chứng thao tác",
         "exportData('csv')",
         "exportData('json')",
@@ -291,7 +295,7 @@ def _check_templates() -> CheckResult:
         "Evidence Workbench template contract",
         "PASS" if ok_all else "FAIL",
         "; ".join(details),
-        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ, gồm lớp standards/chất lượng.",
+        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ, gồm lớp standards/chất lượng và strict source gate.",
         "Không kiểm visual bằng Playwright; chỉ kiểm marker cấu trúc tĩnh.",
     )
 
@@ -335,7 +339,7 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
             "Fixture không phải khuyến cáo điều trị và không thay dashboard thật.",
         ))
 
-        verify_cmd = [sys.executable, str(VERIFY_DASHBOARD), str(dash)]
+        verify_cmd = [sys.executable, str(VERIFY_DASHBOARD), str(dash), "--strict-sources"]
         if online_dashboard_gate:
             verify_cmd.append("--online")
         ok, tail = _run(verify_cmd, cwd=ROOT)
@@ -343,8 +347,8 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
             "Dashboard integrity gate",
             "PASS" if ok else "FAIL",
             tail,
-            "verify_dashboard.py chặn thiếu disclaimer/truy nguyên/grade/decision/nội dung rác.",
-            "Mặc định chạy offline cho fixture; dashboard thật nên chạy thêm --online.",
+            "verify_dashboard.py chặn thiếu disclaimer/truy nguyên/grade/decision/nội dung rác và hợp đồng nguồn nghiêm ngặt.",
+            "Mặc định chạy strict offline cho fixture; dashboard thật nên chạy thêm --online để phân giải PMID/DOI.",
         ))
 
         ok, tail = _run([sys.executable, str(BUILD_LIBRARY), "add", str(dash)], cwd=base)
@@ -377,7 +381,7 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
         "rows": [asdict(row) for row in rows],
         "disclaimer": (
             "Cần bác sĩ kiểm chứng. Đây là kiểm chứng kỹ thuật/offline của pipeline cập nhật chứng cứ, "
-            "không thay xác minh online, rà toàn văn, an toàn thuốc hoặc quyết định lâm sàng."
+            "không thay xác minh online, rà an toàn thuốc hoặc quyết định lâm sàng."
         ),
     }
 
@@ -427,7 +431,7 @@ def _print_summary(report: dict, out_md: Path, out_json: Path) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--online-dashboard-gate", action="store_true",
-                        help="Chạy verify_dashboard.py --online cho fixture (cần mạng; không dùng mặc định trong audit offline).")
+                        help="Chạy verify_dashboard.py --online --strict-sources cho fixture (cần mạng; không dùng mặc định trong audit offline).")
     parser.add_argument("--out-md", default=str(DEFAULT_MD))
     parser.add_argument("--out-json", default=str(DEFAULT_JSON))
     parser.add_argument("--no-write", action="store_true", help="Không ghi báo cáo Markdown/JSON.")

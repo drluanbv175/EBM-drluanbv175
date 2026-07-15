@@ -59,6 +59,9 @@ Trường cốt lõi:
 - `standards.appraisal`
 - `standards.currency`
 - `standards.searchSources[]`
+- `standards.sourceVerification`
+- `standards.lastVerified`
+- `standards.verificationTool`
 - `standards.safety`
 - `standards.vietnamFit`
 - `standards.gates[]`
@@ -66,7 +69,7 @@ Trường cốt lõi:
 ## Hành vi giao diện
 
 - Tab mặc định là `Clinical Quick View` (cột giữa), có băng tóm tắt cố định phía trên.
-- Tab `Chuẩn & chất lượng` bắt buộc có để rà PICO/PECO/PIRD/PROGRESS, nguồn tìm kiếm, CONSORT/STROBE/PRISMA/STARD/TRIPOD, AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI và truy nguyên từng item.
+- Tab `Chuẩn & chất lượng` bắt buộc có để rà PICO/PECO/PIRD/PROGRESS, nguồn tìm kiếm, CONSORT/STROBE/PRISMA/STARD/TRIPOD, AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI, trạng thái `verify_dashboard.py --online --strict-sources` và truy nguyên từng item.
 - Bộ lọc facet (cột trái) theo Quyết định / Nhóm đặc biệt / Thiết kế / Mức chứng cứ, có số đếm.
 - Tìm kiếm toàn cục hoạt động trên tình huống, thuốc, hành động, nhóm nguy cơ và nguồn.
 - Click một dòng `ITEM-xx` → mở panel `Evidence Detail View` ở cột phải.
@@ -77,7 +80,7 @@ Trường cốt lõi:
 
 ### Ánh xạ trường record → khoá trong template
 
-`do_now`/`do_not_do`/`red_flags_referral` → `summary.doNow/dontDo/redFlags`; `decision` → `item.decision` (`apply`/`consider`/`notyet`); `source_grading` → `item.gradeSource` (+ `gradeLevel` để tô màu); `document`/`organization`/`version_date`/`population` → `item.source`/`org`/`dateVersion`/`population`; `monitoring`/`vietnam_application` → `item.monitoring`/`vn`; `reference_vancouver_nlm` → `item.references[]`; `local_item_id` → `item.id`; chuẩn cập nhật chứng cứ → `standards.frame/sourceHierarchy/reporting/appraisal/currency/searchSources/safety/vietnamFit/gates`.
+`do_now`/`do_not_do`/`red_flags_referral` → `summary.doNow/dontDo/redFlags`; `decision` → `item.decision` (`apply`/`consider`/`notyet`); `source_grading` → `item.gradeSource` (+ `gradeLevel` để tô màu); `document`/`organization`/`version_date`/`population` → `item.source`/`org`/`dateVersion`/`population`; `monitoring`/`vietnam_application` → `item.monitoring`/`vn`; `reference_vancouver_nlm` → `item.references[]`; `local_item_id` → `item.id`; chuẩn cập nhật chứng cứ → `standards.frame/sourceHierarchy/reporting/appraisal/currency/searchSources/sourceVerification/lastVerified/verificationTool/safety/vietnamFit/gates`.
 
 ## Kiểm soát độ tin cậy
 
@@ -86,6 +89,7 @@ Trường cốt lõi:
 - Phân biệt grading của nguồn và nhận định vận hành.
 - Ghi rõ ngày/phiên bản cho nguồn chính.
 - Ghi rõ ngày tìm kiếm, thứ bậc nguồn, chuẩn báo cáo và công cụ thẩm định trong `DATA.standards`.
+- Chỉ phát hành khi `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources` PASS.
 - Không phát hành nếu tab `Chuẩn & chất lượng` còn cổng `need` mà chưa giải thích hoặc chưa chuyển thành `[CẦN KIỂM CHỨNG]`.
 
 ## Kiểm chứng khả dụng

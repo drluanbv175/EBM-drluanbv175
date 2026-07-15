@@ -19,7 +19,7 @@ Mục tiêu: từ MỘT bản cập nhật đã xác minh (khối `DATA` / dashb
 ## 2. Quy trình 1-click (4 bước)
 
 1. Hoàn tất bản cập nhật + dashboard (mẫu Dark Analyst mặc định).
-2. **Chạy cổng liêm chính:** `python3 tools/verify_dashboard.py <dashboard>.html --online` → phải **PASS**.
+2. **Chạy cổng liêm chính + nguồn nghiêm ngặt:** `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources` → phải **PASS**.
 3. Chọn sản phẩm → dùng template tương ứng (`templates/phai-sinh-*.md`) + gọi skill tạo file thật.
 4. **Bác sĩ DUYỆT** trước khi phát tay / trình chiếu / đăng.
 

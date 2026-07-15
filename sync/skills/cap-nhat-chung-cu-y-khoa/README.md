@@ -18,9 +18,9 @@ Skill này không tự tạo báo cáo tuần/tháng, Dashboard, mã Master ho�
 
 ## Web Dashboard kèm theo
 
-Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mẫu **"Evidence Workbench"** (nền sáng, 3 cột: bộ lọc · Quick View + bảng item · panel thẩm định, có khối GRADE Evidence-to-Decision) — mặc định từ v1.10.0; mẫu "Dark Analyst" (nền tối) chỉ dùng khi bác sĩ yêu cầu. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
+Khi môi trường hỗ trợ tạo file, mỗi cập nhật EBM cho vấn đề cụ thể phải tạo thêm Web Dashboard HTML độc lập theo mẫu **"Evidence Workbench"** (nền sáng, 3 cột: bộ lọc · Quick View + bảng item · panel thẩm định, có GRADE Evidence-to-Decision và tab Chuẩn & chất lượng) — mặc định từ v1.10.0, thêm cổng nguồn nghiêm ngặt từ v1.12.5; mẫu "Dark Analyst" (nền tối) chỉ dùng khi bác sĩ yêu cầu. Dashboard này dùng để tra cứu nhanh, không phải Dashboard Master.
 
-Chuỗi tự động khi gọi skill (không cần yêu cầu từng bước): dựng Dashboard → cổng liêm chính `verify_dashboard.py --online` → an toàn thuốc (nếu liên quan) → thư viện `build_library.py add` → 3 sản phẩm phái sinh `make_derivatives.py` → nạp vào sổ cái trung tâm `EBM_MASTER/tools/sync_all.py`. Chi tiết: `SKILL.md` §5A/§5D/§5E.
+Chuỗi tự động khi gọi skill (không cần yêu cầu từng bước): dựng Dashboard → cổng liêm chính `verify_dashboard.py --online --strict-sources` → an toàn thuốc (nếu liên quan) → thư viện `build_library.py add` → 3 sản phẩm phái sinh `make_derivatives.py` → nạp vào sổ cái trung tâm `EBM_MASTER/tools/sync_all.py`. Chi tiết: `SKILL.md` §5A/§5D/§5E.
 
 ## Trình bày theo PICO
 

@@ -4,8 +4,9 @@
 Chạy từ thư mục gốc:
   python3 tools/audit_ebm_system.py
 
-Mặc định chỉ dùng kiểm offline để chạy nhanh và không cần mạng. Muốn xác minh online PMID
-cho một dashboard quan trọng, chạy riêng `verify_dashboard.py --online`.
+Mặc định chỉ dùng kiểm offline để chạy nhanh và không cần mạng. Muốn xác minh online PMID/DOI
+và cổng nguồn nghiêm ngặt cho một dashboard quan trọng, chạy riêng
+`verify_dashboard.py --online --strict-sources`.
 """
 
 from __future__ import annotations

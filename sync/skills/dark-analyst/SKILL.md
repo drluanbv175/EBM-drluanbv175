@@ -2,7 +2,7 @@
 name: dark-analyst
 description: Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định.
 metadata:
-  version: 1.12.1
+  version: 1.12.2
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -338,7 +338,7 @@ Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
 Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
 
-**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
+**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online --strict-sources` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
 **CỔNG TRA CỨU DUY NHẤT cho bác sĩ** (không phải lục từng file): nút **"Mở EBM (WebApp).command"** → `EBM_MASTER/EBM_WEBAPP.html` (tìm/lọc mọi cập nhật đã làm). `EBM-Dashboards/` chỉ là vùng staging tạo file mới.
 
 
@@ -408,8 +408,8 @@ Chi tiết, ví dụ & cách ánh xạ: `references/07-mo-hinh-cau-hoi-va-khung-
 Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đảm chất lượng và nhân giá trị:
 
 **(a) Cổng kiểm liêm chính — `tools/verify_dashboard.py`** (chạy TRƯỚC khi giao):
-`python3 tools/verify_dashboard.py <dashboard>.html --online`
-Kiểm: mỗi item có PMID/DOI · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · và **tự xác minh mỗi PMID phân giải đúng trên PubMed** (chống trích dẫn ảo). FAIL → sửa trước khi giao.
+`python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
+Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
 
 **(b) Thư viện cập nhật — `tools/build_library.py`** (tích lũy thành tài sản tra cứu):
 `python3 tools/build_library.py add <dashboard>.html` → cập nhật `library.json` + sinh `evidence-library.html` (chỉ mục mọi bản cập nhật, có tìm/lọc, mở thẳng từng dashboard).
@@ -505,7 +505,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã dùng tài liệu tham khảo có thể truy nguyên chưa?
 - Nếu câu hỏi về hiệu quả can thiệp: đã trình bày khối PICO đủ 5 dòng và trích hiệu số đúng như nguồn (point estimate + CI/p) chưa?
 - Đã tự nhận diện loại câu hỏi và chọn đúng khung (PICO/PECO/chẩn đoán/tiên lượng/tần suất/định tính/dịch vụ) và nêu rõ khung đã dùng chưa? (xem 5C)
-- Đã chạy `tools/verify_dashboard.py --online` và PASS (mọi item có PMID/DOI, PMID phân giải đúng, có disclaimer, không PII) trước khi giao chưa? (xem 5D)
+- Đã chạy `tools/verify_dashboard.py --online --strict-sources` và PASS (PMID/DOI phân giải, nguồn còn mới, `DATA.standards` đủ, có disclaimer, không PII) trước khi giao chưa? (xem 5D)
 - Nếu cập nhật có thuốc cho người cao tuổi/đa thuốc: đã chạy `tools/drug_safety_scan.py` + đối chiếu Beers/STOPP qua skill người cao tuổi chưa? (xem 5E)
 - Đã tự sinh 3 sản phẩm phái sinh (tờ dặn/slide/TikTok) vào `derivatives/` và (khi có khuyến cáo đổi thực hành) điền khối `etd` cho Dashboard chưa? (xem 5D)
 - Đã điền/rà `DATA.standards` gồm thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, ngày tìm kiếm, an toàn, Việt Nam và truy nguyên từng item chưa?
@@ -530,7 +530,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/08-xuat-san-pham-phai-sinh.md`
 - `templates/phai-sinh-to-dan-nguoi-benh.md`
 - `templates/phai-sinh-kich-ban-tiktok.md`
-- `tools/verify_dashboard.py` (cổng kiểm liêm chính + xác minh PMID/DOI)
+- `tools/verify_dashboard.py` (cổng kiểm liêm chính + xác minh PMID/DOI + `--strict-sources`)
 - `tools/build_library.py` (thư viện chỉ mục cập nhật → evidence-library.html)
 - `tools/make_derivatives.py` (tự sinh tờ dặn người bệnh / dàn ý slide / kịch bản TikTok → derivatives/)
 - `references/09-an-toan-thuoc-overlay.md` · `tools/drug_safety_scan.py` · `data/drug_flags.json` (lớp phủ Beers/STOPP)

@@ -20,7 +20,7 @@
 | R1 | **Nguồn** — mọi khẳng định/số liệu có PMID/DOI (hoặc guideline+năm+mục) hoặc nhãn PARTIAL/[CẦN KIỂM CHỨNG] | khẳng định y khoa/con số không nguồn & không nhãn thiếu |
 | R1b | **Chống lách nhãn** — nhãn `[CẦN…]` dùng cho chỗ thiếu THẬT, không phải để "qua cổng" hàng loạt | phần lớn (≳50%) khẳng định cốt lõi đều gắn `[CẦN…]` mà không một nguồn thật nào → CHƯA hoàn thiện |
 | R2 | **PII** — không lẫn định danh BN (tên, ngày sinh, số hồ sơ/CCCD/BHYT, địa chỉ, SĐT, ảnh nhận dạng) | phát hiện bất kỳ PII nào |
-| R3 | **Cổng A/B/G** — không tự "áp dụng cho BN"/"ghi EBM_MASTER đã xác minh"/vượt G2·G4·**G5 (khóa DB)**·liêm chính tác giả khi chưa duyệt | gói tự kết luận đã áp dụng/đã ghi/đã khóa/đã đăng ký, hoặc **"đã phân tích" khi DB chưa khóa**, mà chưa có duyệt thật |
+| R3 | **Cổng A/B/G** — không tự "áp dụng cho BN"/"ghi EBM_MASTER đã xác minh"/vượt G2·G4·**G5 (khóa DB)**·**G8 (bình duyệt độc lập)**·liêm chính tác giả khi chưa duyệt | gói tự kết luận đã áp dụng/đã ghi/đã khóa/đã đăng ký/đã bình duyệt, hoặc **"đã phân tích" khi DB chưa khóa**, mà chưa có duyệt thật |
 | R4 | **Không tự gán mức** — không tự gán GRADE/độ mạnh khuyến cáo khi nguồn không cấp (`gradeLevel:'na'`); dùng đúng công cụ RoB theo thiết kế (RoB 2 RCT · ROBINS-I V2 quan sát can thiệp · ROBINS-E phơi nhiễm · AMSTAR-2 SR · QUADAS-2 chẩn đoán) | tự dán mức không từ nguồn; sai công cụ RoB theo thiết kế |
 | R5 | **Tách 2 trục** — phân biệt độ chắc chắn CHỨNG CỨ vs độ mạnh KHUYẾN CÁO | trộn hai khái niệm gây hiểu sai sức nặng |
 | R6 | **Nhãn thiếu** — dùng đúng [CẦN BỔ SUNG]/[CẦN KIỂM CHỨNG]/[CẦN XÁC NHẬN TẠI ĐƠN VỊ]/[DỰ THẢO] | lấp chỗ thiếu bằng phỏng đoán như dữ kiện chắc |
