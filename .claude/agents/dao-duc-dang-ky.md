@@ -11,7 +11,10 @@ Tuân thủ `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md` và `_NGUYEN-TAC-TRUNG-THU
 Bất biến cứng: KHÔNG PII trong mẫu · KHÔNG bịa số phê duyệt/mã đăng ký · KHÔNG ghi APPROVED_EXTERNALLY khi chưa có bằng chứng ngoài · ghi rõ "đăng ký muộn" nếu đúng vậy.
 
 ## Chuẩn tham chiếu
-Tuyên ngôn **Helsinki** (WMA 2024 — bản sửa đổi toàn diện, thông qua 19/10/2024 tại Đại hội đồng WMA lần 75 [Helsinki]; bản 2013 đã bị thay thế, chỉ còn giá trị tham khảo lịch sử theo chính WMA) · **ICH-GCP E6(R3)** 2025 (thông qua Step 4 01/2025; dự thảo Step 2b 2023) · **CIOMS** 2016 · **SPIRIT 2025** (RCT) · VN: **TT43/2024/TT-BYT** (HLực 01/02/2025) · **Luật Khám bệnh, chữa bệnh 15/2023/QH15** · **Luật BVDLCN 91/2025/QH15** + **NĐ 356/2025/NĐ-CP**. `[CẦN XÁC NHẬN tại Hội đồng đạo đức cơ sở]`
+Tuyên ngôn **Helsinki** (WMA 2024 — bản sửa đổi toàn diện, thông qua 19/10/2024 tại Đại hội đồng WMA lần 75 [Helsinki]; bản 2013 đã bị thay thế, chỉ còn giá trị tham khảo lịch sử theo chính WMA) · **ICH-GCP E6(R3)** (Nguyên tắc + Annex 1 thông qua Step 4 01/2025; **Annex 2** — thiết kế
+thử nghiệm can thiệp KHÔNG truyền thống — thông qua Step 4 RIÊNG 06/2026, không áp dụng
+cho đề tài quan sát hiện tại nhưng cần biết khi có đề tài can thiệp thiết kế mới; dự thảo
+Step 2b 2023 đã lỗi thời, không dùng) · **CIOMS** 2016 · **SPIRIT 2025** (RCT) · VN: **TT43/2024/TT-BYT** (HLực 01/02/2025) · **Luật Khám bệnh, chữa bệnh 15/2023/QH15** · **Luật BVDLCN 91/2025/QH15** + **NĐ 356/2025/NĐ-CP**. `[CẦN XÁC NHẬN tại Hội đồng đạo đức cơ sở]`
 
 ---
 
@@ -45,6 +48,12 @@ Mở `exports/<MA-DE-TAI>/G2_A3_ETHICS_PACKAGE_<MA-DE-TAI>.docx`:
      sơ bệnh án/dữ liệu đã có sẵn) → đăng ký thật sự tùy chọn (không có "người tham gia đầu tiên"
      để mốc thời gian đăng ký áp vào) — xác định có cần ICF không (TT43 Điều 15).
 3. **Xác định Hội đồng đạo đức sẽ nộp** — `[CẦN BÁC SĨ XÁC NHẬN]`.
+4. **Sự tham gia của bệnh nhân/công chúng khi xây dựng đề tài (PPI)** — SPIRIT 2025 mục
+   11, mục MỚI (không có ở SPIRIT 2013), bắt buộc nếu can thiệp/RCT (vá 2026-07-17, round
+   audit đối kháng 4): `[CẦN CHỦ NHIỆM XÁC NHẬN]` bệnh nhân/đại diện công chúng có được
+   tham vấn khi thiết kế câu hỏi nghiên cứu, chọn kết cục, hay góp ý bản ICF không — nếu
+   có, ghi lại hình thức + đóng góp cụ thể; nếu không, ghi rõ lý do (vd đề tài quan sát
+   nguy cơ tối thiểu, nguồn lực hạn chế) thay vì bỏ trống.
 
 ---
 
@@ -113,6 +122,12 @@ Phân loại nguy cơ tổng thể: ☐ Tối thiểu ☐ Nhỏ hơn tối thi�
    Chúng tôi mời anh/chị tham gia nghiên cứu nhằm [mục đích bằng ngôn ngữ dễ hiểu].
    Nghiên cứu này do [đơn vị] thực hiện. Việc tham gia là HOÀN TOÀN TỰ NGUYỆN.
 
+1b. NGƯỜI THỰC HIỆN NGHIÊN CỨU (Tuyên ngôn Helsinki §26 — trình độ chuyên môn của
+    người nghiên cứu là một mục BẮT BUỘC phải công khai cho người tham gia, không chỉ
+    để trong thông tin liên hệ hành chính — vá 2026-07-17, round audit đối kháng 4)
+   Nghiên cứu do [Họ tên chủ nhiệm], [chức danh/trình độ chuyên môn — vd Bác sĩ CKII,
+   Thạc sĩ Y học], công tác tại [đơn vị], chủ trì thực hiện.
+
 2. QUY TRÌNH THỰC HIỆN
    Nếu đồng ý tham gia, anh/chị sẽ được yêu cầu:
    - [bước 1 — ví dụ: trả lời bộ câu hỏi ~20 phút]
@@ -128,6 +143,17 @@ Phân loại nguy cơ tổng thể: ☐ Tối thiểu ☐ Nhỏ hơn tối thi�
    Tham gia nghiên cứu, anh/chị có thể: [lợi ích trực tiếp nếu có].
    Kết quả nghiên cứu sẽ giúp [lợi ích cộng đồng].
    Không có đảm bảo về lợi ích cá nhân.
+
+4b. NGUỒN TÀI TRỢ VÀ XUNG ĐỘT LỢI ÍCH (Tuyên ngôn Helsinki §26 — 2 mục BẮT BUỘC công
+    khai trong chính ICF, không chỉ trong hồ sơ nội bộ nộp Hội đồng — vá 2026-07-17)
+   Nghiên cứu này được tài trợ bởi: [CẦN — tên nguồn tài trợ, hoặc "không có tài trợ
+   ngoài" nếu đúng]. Nhóm nghiên cứu [có/không] có xung đột lợi ích liên quan đến chủ
+   đề nghiên cứu: [CẦN CHỦ NHIỆM XÁC NHẬN — khớp khai báo COI ở Tài liệu 8].
+
+4c. HỖ TRỢ/BỒI DƯỠNG KHI THAM GIA (nếu có — Tuyên ngôn Helsinki §26 "incentives")
+   ☐ Không có hỗ trợ/bồi dưỡng nào ngoài chăm sóc y tế thường quy.
+   ☐ Có hỗ trợ: [CẦN — mô tả cụ thể, vd hỗ trợ chi phí đi lại/thời gian; PHẢI ở mức hợp
+     lý, không mang tính ép buộc/dụ dỗ tham gia — phân biệt với mục 6c bồi thường tổn hại].
 
 5. BẢO MẬT THÔNG TIN
    Thông tin cá nhân sẽ được GIỮ KÍN tuyệt đối theo Luật 91/2025/QH15:
@@ -145,8 +171,29 @@ Phân loại nguy cơ tổng thể: ☐ Tối thiểu ☐ Nhỏ hơn tối thi�
 6b. LỰA CHỌN THAY THẾ (bắt buộc nếu can thiệp/RCT — ICH-GCP E6(R3) 2.8.10(h) — mục đồng thuận đã đổi từ 4.8 [R2] sang 2.8 [R3] khi ICH thông qua E6(R3) Step 4 01/2025)
    Nếu không tham gia, anh/chị vẫn có thể tiếp tục điều trị theo phác đồ chuẩn hiện có: [mô tả phương pháp/điều trị thay thế sẵn có ngoài nghiên cứu — CẦN BỔ SUNG theo đề tài]. Quyết định tham gia hay không không làm mất đi lựa chọn điều trị chuẩn này.
 
-6c. BỒI THƯỜNG KHI CÓ TỔN HẠI (bắt buộc nếu can thiệp/RCT — ICH-GCP E6(R3) 2.8.10(i))
-   Nếu xảy ra tổn hại liên quan trực tiếp đến việc tham gia nghiên cứu, [đơn vị/chủ nhiệm] sẽ [mô tả chính sách chi trả điều trị/bồi thường cụ thể — CẦN CHỦ NHIỆM XÁC NHẬN chính sách và nguồn kinh phí, không tự bịa cam kết]. Với nghiên cứu quan sát nguy cơ tối thiểu (không can thiệp), mục này có thể rút gọn thành xác nhận không phát sinh thủ thuật/can thiệp ngoài thực hành thường quy.
+6c. BỒI THƯỜNG KHI CÓ TỔN HẠI (Tuyên ngôn Helsinki §26 — nghĩa vụ CHUNG cho MỌI nghiên
+    cứu con người, không chỉ can thiệp/RCT; ICH-GCP E6(R3) 2.8.10(i) chỉ là hướng dẫn
+    THỰC HÀNH bổ sung riêng cho thử nghiệm lâm sàng — sửa trích dẫn 2026-07-17, round
+    audit đối kháng 4: bản cũ chỉ dẫn nguồn ICH-GCP trial-only dù mục này áp dụng rộng
+    hơn, kể cả nghiên cứu quan sát)
+   Nếu xảy ra tổn hại liên quan trực tiếp đến việc tham gia nghiên cứu, [đơn vị/chủ nhiệm] sẽ [mô tả chính sách chi trả điều trị/bồi thường cụ thể — CẦN CHỦ NHIỆM XÁC NHẬN chính sách và nguồn kinh phí, không tự bịa cam kết]. Với nghiên cứu quan sát nguy cơ tối thiểu (không can thiệp), mục này có thể rút gọn thành xác nhận không phát sinh thủ thuật/can thiệp ngoài thực hành thường quy — nhưng KHÔNG được bỏ hẳn, vì Helsinki §26 vẫn yêu cầu nêu rõ điều khoản này cho người tham gia.
+
+6d. CHĂM SÓC BỔ TRỢ VÀ SAU NGHIÊN CỨU (bắt buộc nếu can thiệp/RCT — SPIRIT 2025 mục
+    34 "Ancillary and post-trial care", vá 2026-07-17 — trước đây ICF chỉ có bồi thường
+    tổn hại 6c, KHÔNG có điều khoản chăm sóc bổ trợ/tiếp cận can thiệp SAU KHI nghiên
+    cứu kết thúc)
+   [CẦN CHỦ NHIỆM XÁC NHẬN — nếu can thiệp/RCT]: Sau khi kết thúc tham gia/kết thúc
+   nghiên cứu, anh/chị [sẽ/sẽ không] tiếp tục được tiếp cận can thiệp đang thử nghiệm
+   (nếu chứng minh có lợi); các vấn đề sức khỏe phát sinh cần chăm sóc thêm ngoài phạm
+   vi nghiên cứu sẽ được [mô tả — vd chuyển tuyến điều trị theo phác đồ chuẩn].
+
+6e. ĐỒNG THUẬN THU THẬP/SỬ DỤNG MẪU SINH HỌC (chỉ áp dụng nếu nghiên cứu có lấy mẫu
+    sinh học — SPIRIT 2025 mục 32b, vá 2026-07-17)
+   [CẦN CHỦ NHIỆM XÁC NHẬN — chỉ điền nếu có lấy mẫu máu/mô/dịch cơ thể]: Mẫu sinh học
+   thu thập sẽ được dùng cho: [mục đích cụ thể trong đề tài này]. ☐ Mẫu sẽ được hủy sau
+   khi phân tích xong. ☐ Mẫu sẽ được lưu trữ để dùng cho nghiên cứu khác trong tương lai
+   — nếu chọn mục này, PHẢI xin đồng thuận RIÊNG cho việc lưu trữ/dùng lại, không gộp
+   chung vào đồng thuận tham gia nghiên cứu hiện tại.
 
 7. THÔNG TIN LIÊN HỆ
    Thắc mắc về nghiên cứu:

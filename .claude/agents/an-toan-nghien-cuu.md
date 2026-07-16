@@ -189,6 +189,11 @@ THÀNH PHẦN DSMB (nếu CÓ):
   Bao gồm: ☐ Chuyên gia lâm sàng ☐ Nhà thống kê độc lập ☐ Chuyên gia đạo đức
   Thành viên: [CẦN CHỦ NHIỆM CHỈ ĐỊNH]
   Chủ tịch DSMB: ___
+  KHAI BÁO ĐỘC LẬP + XUNG ĐỘT LỢI ÍCH từng thành viên (SPIRIT 2025 mục 28a — bắt
+  buộc, vá 2026-07-17 round audit đối kháng 4): mỗi thành viên DSMB ký xác nhận
+  KHÔNG có quan hệ tài chính/học thuật/nhân sự với nhóm nghiên cứu hoặc nhà tài
+  trợ có thể ảnh hưởng tính khách quan — [CẦN mẫu khai báo riêng cho từng thành
+  viên, tương tự Tài liệu 8 khai báo COI tác giả ở `dao-duc-dang-ky`].
 
 TẦN SUẤT HỌP:
   Họp định kỳ: Sau khi ___ % tuyển xong (vd sau 25%, 50%, 75%)

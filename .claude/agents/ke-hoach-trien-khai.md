@@ -154,6 +154,17 @@ Rà lại sau MỖI cổng và giao so-cai-ghi-nho lưu phiên bản mới.
 | 5 | Kết quả trái kỳ vọng | Khoa học | — | — | INFO | SAP định trước + pre-reg | Kế hoạch công bố kết quả âm | Mở | | CN |
 | 6 | [Thêm rủi ro theo đề tài] | | | | | | | Mở | | |
 
+KẾ HOẠCH PHỔ BIẾN KẾT QUẢ (Dissemination Plan — SPIRIT 2025 mục 8, mục MỚI thuộc nhóm
+Open Science, bắt buộc nếu can thiệp/RCT; vá 2026-07-17 round audit đối kháng 4 — khác
+với "kế hoạch chia sẻ dữ liệu" ở A9/DMP, mục này là kế hoạch CÔNG BỐ/THÔNG BÁO kết quả):
+- Người tham gia nghiên cứu: `[CẦN CHỦ NHIỆM XÁC NHẬN]` có/không thông báo kết quả tổng
+  hợp cho người đã tham gia sau khi công bố (hình thức: thư/gặp trực tiếp/không thông báo
+  + lý do).
+- Nhân viên y tế/đơn vị liên quan: kế hoạch trình bày kết quả tại khoa/hội nghị nội bộ.
+- Công chúng/cộng đồng khoa học: công bố tạp chí (xem `nop-bai-phan-hoi`) + đăng ký kết
+  quả lên nơi đã đăng ký thử nghiệm (nếu registry hỗ trợ result-posting) — bất kể kết
+  quả dương tính hay âm tính (SAP định trước + pre-registration đã ghi ở rủi ro #5 trên).
+
 Thang mức rủi ro (sửa 2026-07-11 — công thức trước không khớp dòng #3/#5 trong chính bảng trên):
 CAO = Hậu quả RẤT CAO (bất kể xác suất — rủi ro hiếm nhưng hại lớn vẫn ưu tiên CAO, vd #3)
       HOẶC Xác suất TB/Cao + Hậu quả Cao (vd #1, #2); TB = các trường hợp còn lại (vd #4);

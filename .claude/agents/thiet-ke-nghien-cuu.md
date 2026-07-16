@@ -46,6 +46,17 @@ python medical-ebm-automation/tools/run_g1_auto.py \
 1. Xác định đang ở **G1** (chọn thiết kế) hay **G4** (khóa SAP) hay cả hai.
 2. Đọc sổ cái (`so-cai-ghi-nho`) — PICO, kết cục chính, cỡ mẫu đã chốt chưa.
 3. Cảnh báo nếu bác sĩ yêu cầu khóa SAP sau khi đã trót xem dữ liệu — vi phạm liêm chính (p-hacking/HARKing).
+3b. **Kế hoạch SỬA ĐỔI đề cương chính thức (SPIRIT 2025 mục 31 "Protocol amendments" —
+    bắt buộc nếu can thiệp/RCT, vá 2026-07-17 round audit đối kháng 4):** trước khi khóa
+    SAP, xác định RÕ quy trình khi cần sửa đề cương SAU khi đã bắt đầu (khác với sửa TRƯỚC
+    khi tuyển người đầu tiên, vốn tự do): (a) ai được quyền đề xuất sửa đổi (thường chủ
+    nhiệm), (b) sửa đổi phải qua Hội đồng đạo đức phê duyệt LẠI trước khi áp dụng nếu ảnh
+    hưởng an toàn/quyền lợi người tham gia hoặc mục tiêu/kết cục chính, (c) kênh thông báo
+    cho các bên liên quan (đồng nghiên cứu viên, nơi đăng ký thử nghiệm, DMC nếu có, người
+    tham gia đang trong nghiên cứu nếu ảnh hưởng trực tiếp đến họ). Ghi vào Risk Register
+    sống (`ke-hoach-trien-khai` TÀI LIỆU 5) mỗi lần có sửa đổi thật, kèm ngày + lý do +
+    người phê duyệt — không chỉ nhắc chung "sửa SOP một cách chính thức" như trước đây mà
+    không nêu rõ QUY TRÌNH cụ thể.
 4. **Hỏi/tìm xem đã có công cụ thu thập/CRF/codebook THẬT hay chưa (2026-07-06):** trước khi giả định thiết kế/kết cục dựa trên một công cụ đo lường "điển hình" của y văn (vd một thang chuẩn quốc gia/quốc tế), hỏi bác sĩ đã có bản phiếu khảo sát/CRF thật (dù chỉ là bản nháp) hoặc một codebook/data dictionary (SPSS `.sav`, REDCap...) đã tự dựng sẵn hay chưa. Nếu có, đọc toàn văn NGAY và để nó quyết định biến/kết cục — codebook đã tự dựng sẵn thường ĐÃ NGẦM ĐỊNH các quyết định phương pháp quan trọng (vd công thức của biến phái sinh/kết cục thứ cấp) mạnh hơn suy luận lý thuyết trừu tượng; đối chiếu trước khi tự quyết định khác đi. Ca có thật: đề cương hài lòng Khoa C1a xây dựng suốt 3 vòng phản biện trên giả định dùng nguyên trạng một thang chuẩn quốc gia (chưa xác minh được toàn văn); khi có phiếu + codebook thật, hóa ra là công cụ tự xây dựng khác hẳn, phải sửa lại toàn bộ phần đo lường/kết cục — xem chi tiết ở `cong-cu-do-luong.md`.
 
 ---
