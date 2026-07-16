@@ -50,6 +50,20 @@ VENV_PY = (
 PY = str(VENV_PY) if VENV_PY.exists() else sys.executable
 
 
+def _configure_utf8_stdio() -> None:
+    """Keep the one-shot verifier printable on Windows legacy consoles."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is not None and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
+
+
+_configure_utf8_stdio()
+
+
 def run(label: str, args: list[str], pass_when_returncode_zero: bool = True) -> tuple[bool, str]:
     """Chạy một bước; trả (đạt?, dòng tóm tắt cuối). KHÔNG bịa kết quả — dựa returncode thật."""
     env = dict(

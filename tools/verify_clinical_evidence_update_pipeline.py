@@ -45,6 +45,20 @@ DISCLAIMER = "Cần bác sĩ kiểm chứng"
 FIXTURE_DOI = "10.1136/bmj.c869"
 
 
+def _configure_utf8_stdio() -> None:
+    """Keep Vietnamese verifier output printable on Windows legacy consoles."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is not None and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
+
+
+_configure_utf8_stdio()
+
+
 @dataclass(frozen=True)
 class CheckResult:
     name: str

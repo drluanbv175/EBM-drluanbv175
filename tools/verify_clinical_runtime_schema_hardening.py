@@ -11,11 +11,26 @@ runtime integration, bác sĩ, pháp lý và bảo mật duyệt.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CLINICAL_RUNTIME = ROOT / "clinical_runtime"
+
+
+def _configure_utf8_stdio() -> None:
+    """Keep Vietnamese verifier output printable on Windows legacy consoles."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is not None and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
+
+
+_configure_utf8_stdio()
 
 
 def _load_json(path: Path) -> dict[str, Any]:
