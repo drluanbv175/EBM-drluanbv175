@@ -95,6 +95,12 @@ DASH_RULES = [
     # Tâm thần kinh ĐẶT TRƯỚC "Thần kinh – Đột quỵ" để 'tamthankinh'/'tâm thần' không bị 'thankinh' bắt nhầm.
     ("Tâm thần kinh", ["tamthan", "tâm thần", "hướng tâm thần", "thuốc tâm thần", "chống trầm cảm", "trầm cảm", "chống loạn thần", "loạn thần", "an thần kinh", "giải lo âu", "ổn định khí sắc", "psych", "ssri", "snri", "antidepressant", "antipsychotic"]),
     ("Thần kinh – Đột quỵ", ["machmaunao", "mạch máu não", "dotquy", "đột quỵ", "dmcanh", "đm cảnh", "dongmachcanh", "động mạch cảnh", "tia ", "stroke", "thankinh", "thần kinh", "neuro", "động kinh", "sa sút trí tuệ"]),
+    # Vá 2026-07-16: "Tiêu hóa – Gan mật" có trong SPECIALTIES nhưng chưa từng có luật
+    # DASH_RULES nào — mọi dashboard gan mật trước đó rơi vào khoa khác do không khớp
+    # luật nào (vd viemganb rơi vào "Thận – Tiết niệu" chỉ vì câu hỏi có chữ "CKD").
+    # ĐẶT TRƯỚC "Thận – Tiết niệu" vì nhiều dashboard gan có đối tượng CKD/lọc máu kèm
+    # theo (chữ "ckd" xuất hiện trong tiêu đề chung) nhưng chủ đề chính vẫn là gan mật.
+    ("Tiêu hóa – Gan mật", ["viemganb", "viêm gan", "gan mật", "xơ gan", "hepatitis", "cirrhosis", "hepatic", "hbv", "hcv", "gan nhiễm mỡ", "viêm tụy", "loét dạ dày", "trào ngược dạ dày"]),
     ("Thận – Tiết niệu", ["ckd", "benhthanman", "bệnh thận", "suy thận", "tiết niệu", "_than_", "than_2026"]),
     ("Tim mạch", ["timmach", "tim mạch", "suytim", "suy tim", "tienluongsuytim", "rung nhĩ", "tăng huyết áp", "tha ", "mạch vành"]),
     ("Lão khoa – Đa bệnh lý", ["laokhoa", "lão khoa", "deprescrib", "beers", "stopp", "start criteria", "cao tuổi", "người cao tuổi", "polypharmacy", "đa thuốc"]),

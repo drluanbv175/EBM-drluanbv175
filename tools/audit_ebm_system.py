@@ -27,6 +27,7 @@ AGENTS_SRC = ROOT / ".claude" / "agents"
 AGENTS_CODEX = ROOT / ".Codex" / "agents"
 DASH = ROOT / "EBM-Dashboards"
 MASTER = ROOT / "EBM_MASTER"
+HUB_DASH = MASTER / "WEB_DASHBOARDS"
 REPO = ROOT / "medical-ebm-automation"
 CHATGPT_EXPORT = ROOT / "CHATGPT_EXPORT"
 VENV_PY = (
@@ -258,15 +259,55 @@ def living_document_count_failures(current_cards: int) -> list[str]:
     return failures
 
 
+def _dashboard_data_block_hash(path: Path) -> str | None:
+    """Hash riêng khối DATA để bắt lệch nội dung dashboard sau khi đồng bộ hub.
+
+    Không so toàn bộ HTML vì vỏ template/runtime có thể được reskin hợp lệ; khối DATA mới là
+    phần quyết định nguồn, DOI/PMID, URL truy nguyên và nội dung chứng cứ mà bác sĩ sẽ đọc.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    start = text.find("const DATA")
+    if start == -1:
+        return None
+    end = text.find("HẾT KHỐI DATA", start)
+    block = text[start:end if end != -1 else start + 60000]
+    return sha256(block.encode("utf-8")).hexdigest()
+
+
 def verify_dashboards() -> tuple[int, list[str]]:
     verifier = DASH / "tools" / "verify_dashboard.py"
     failures: list[str] = []
     checked = 0
-    for html in sorted(DASH.glob("WebDashboard_EBM_*.html")):
-        checked += 1
-        code, _out = run([sys.executable, str(verifier), str(html)], cwd=ROOT)
-        if code != 0:
-            failures.append(html.name)
+    copies: dict[str, dict[str, Path]] = {}
+    dashboard_dirs = (
+        (DASH, "EBM-Dashboards"),
+        (HUB_DASH, "EBM_MASTER/WEB_DASHBOARDS"),
+    )
+    for folder, label in dashboard_dirs:
+        if not folder.exists():
+            continue
+        for html in sorted(folder.glob("WebDashboard_EBM_*.html")):
+            checked += 1
+            code, _out = run([sys.executable, str(verifier), str(html)], cwd=ROOT)
+            if code != 0:
+                failures.append(f"{label}/{html.name}")
+            copies.setdefault(html.name, {})[label] = html
+
+    for name, by_label in sorted(copies.items()):
+        staging = by_label.get("EBM-Dashboards")
+        hub = by_label.get("EBM_MASTER/WEB_DASHBOARDS")
+        if not staging or not hub:
+            continue
+        staging_hash = _dashboard_data_block_hash(staging)
+        hub_hash = _dashboard_data_block_hash(hub)
+        if staging_hash and hub_hash and staging_hash != hub_hash:
+            failures.append(
+                "Dashboard DATA drift: "
+                f"{name} khác DATA giữa EBM-Dashboards và EBM_MASTER/WEB_DASHBOARDS"
+            )
     return checked, failures
 
 
