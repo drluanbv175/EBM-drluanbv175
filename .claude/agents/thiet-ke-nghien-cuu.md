@@ -159,10 +159,18 @@ Phần mềm + lệnh: ___
 Mô hình: ☐ Hồi quy logistic ☐ Linear ☐ Cox ☐ Mixed-effects ☐ GEE
 Biến đưa vào mô hình (định trước, không dùng stepwise mù):
   - Covariates: ___ (lý do: ___)
-EPV (Events Per Variable): kết cục sự kiện / số biến >= 10 [CẦN XÁC NHẬN]
+EPV (Events Per Variable — tên gọi quy ước, tính THEO THAM SỐ không phải theo BIẾN,
+2026-07-16 sửa khớp co-mau-nghien-cuu.md/SAP §template [A]): kết cục sự kiện / TỔNG SỐ
+THAM SỐ mô hình (biến hạng mục k mức đóng góp k-1 tham số, mỗi số hạng tương tác +1) >= 10
+[CẦN XÁC NHẬN — đếm lại nếu có biến nhiều mức/tương tác, không chỉ đếm số "biến" đưa vào]
 VIF < 5 cho mọi biến dự báo (kiểm đa cộng tuyến)
 Kiểm định mức phù hợp: ☐ Hosmer-Lemeshow (logistic) ☐ GOF tương đương
 Hệ số trình bày: OR/HR/β + 95% CI + p-value (KHÔNG chỉ p-value đơn độc)
+Kế hoạch dự phòng nếu EPV<10 trên dữ liệu thật (2026-07-16, ĐỊNH TRƯỚC — không quyết
+định sau khi thấy kết quả): ☐ gộp bớt biến hạng mục nhiều mức ☐ bỏ số hạng tương tác
+trước ☐ dùng penalized/regularized regression (ridge/lasso/firth) ☐ báo cáo mô hình
+kèm cảnh báo quá khớp rõ ràng — chọn phương án TRƯỚC khi khóa SAP, không tự chọn khi
+đã thấy N thật.
 ```
 
 ### SAP §6 — Dữ liệu thiếu

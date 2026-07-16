@@ -213,6 +213,13 @@ A. XUNG ĐỘT LỢI ÍCH TÀI CHÍNH:
 ☐ Không có  ☐ Có → [liệt kê: công ty, loại lợi ích, giá trị nếu có]
 B. XUNG ĐỘT PHI TÀI CHÍNH:
 ☐ Không có  ☐ Có → [quan hệ cá nhân, lợi ích học thuật, quan điểm đối nghịch]
+B2. XUNG ĐỘT CẤU TRÚC/THỂ CHẾ (thêm 2026-07-16, sau bình duyệt độc lập phát hiện
+   taxonomy cũ bỏ sót loại COI kinh điển này — vd chủ nhiệm đề tài TỰ ĐÁNH GIÁ dịch
+   vụ của CHÍNH đơn vị/khoa mình đang công tác, tự chi trả kinh phí, hoặc kết quả
+   nghiên cứu có thể ảnh hưởng trực tiếp tới đánh giá/xếp hạng đơn vị chủ nhiệm):
+☐ Không có  ☐ Có → [mô tả quan hệ giữa chủ nhiệm/đơn vị chủ trì và đối tượng/phạm vi
+   được đánh giá; đây KHÔNG tự động là vi phạm đạo đức — minh bạch hóa để Hội đồng và
+   người đọc tự đánh giá mức độ ảnh hưởng tới tính khách quan]
 C. NGUỒN TÀI TRỢ: [tên tổ chức/cơ quan; "không có tài trợ bên ngoài" nếu đúng]
 D. VAI TRÒ NHÀ TÀI TRỢ: [có can thiệp vào thiết kế/thu thập/phân tích/báo cáo không?]
 E. SỬ DỤNG AI: ☐ Không  ☐ Có → Tên công cụ: ___  |  Mục đích: ___

@@ -67,9 +67,9 @@ Bạn KHÔNG được chạy theo "kế hoạch có sẵn" một cách mù quán
 | Mã | Artifact | Cổng | Agent phụ trách |
 |---|---|---|---|
 | **A1** | Câu hỏi + PICO/PECO + FINER | G0 | `cau-hoi-nghien-cuu` |
-| **A1b** | Project Charter (phạm vi·mục tiêu SMART·governance·milestone) | G1 | `ke-hoach-trien-khai` |
+| **A1b** | Project Charter (phạm vi·mục tiêu SMART·governance·milestone) | G1 | `ke-hoach-trien-khai` (+`cau-hoi-nghien-cuu`) |
 | **A2** | Đề cương/Protocol (SPIRIT nếu thử nghiệm) | G1 | `viet-ban-thao` + `thiet-ke-nghien-cuu` |
-| **A2b** | Evidence Ledger (nguồn·thiết kế·hiệu ứng·RoB·GRADE·gap) | G0/G1 | `tong-quan-y-van` + `trich-xuat-y-van` |
+| **A2b** | Evidence Ledger (nguồn·thiết kế·hiệu ứng·RoB·GRADE·gap) | G0/G1 | `tong-quan-y-van` + `trich-xuat-y-van` + `tham-dinh-phe-binh` |
 | **A3** | Hồ sơ đạo đức (IRB) + ICF | G2 🔒 | `dao-duc-dang-ky` |
 | **A4** | Đăng ký nghiên cứu *(🔒 bắt buộc nếu CAN THIỆP/thử nghiệm lâm sàng; nghiên cứu QUAN SÁT: xác nhận chủ trương đăng ký nội bộ, KHÔNG khóa cứng)* | G2 (🔒 nếu TN) | `dao-duc-dang-ky` |
 | **A5** | Cỡ mẫu + power | G3 | `co-mau-nghien-cuu` |
@@ -82,7 +82,7 @@ Bạn KHÔNG được chạy theo "kế hoạch có sẵn" một cách mù quán
 | **A11** | Chuẩn báo cáo phù hợp thiết kế | G7 | `viet-ban-thao` (+`hieu-dinh-song-ngu`) |
 | **A12** | Kiểm chứng trích dẫn (PMID/DOI) | G7/G9 🔒 | `kiem-chung-trich-dan` (+`binh-duyet`) |
 | **A13** | Nhân lực · tiến độ · kinh phí | G1 | `ke-hoach-trien-khai` |
-| **A13b** | Risk Register sống + CAPA (rủi ro xuyên vòng đời) | G1+G7 | `ke-hoach-trien-khai` |
+| **A13b** | Risk Register sống + CAPA (rủi ro xuyên vòng đời) | G1+G7 | `ke-hoach-trien-khai` (+`dao-duc-dang-ky`) |
 | **A14** | COI · tài trợ · đóng góp tác giả · dùng AI | G9 🔒 | `nop-bai-phan-hoi` (+`binh-duyet`) |
 | **A15** | Bình duyệt nội bộ | G8 🔒 | `binh-duyet` |
 | **A16** | Pilot/pre-test công cụ thu thập | G3 | `quan-ly-du-lieu` (PROM→`cong-cu-do-luong`) |

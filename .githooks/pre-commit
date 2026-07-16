@@ -39,4 +39,22 @@ if [ "$CHECK_EXIT" -ne 0 ]; then
   exit 1
 fi
 
+# Them 2026-07-16 sau audit doi khang: cong G8 (them 2026-07-14) tung lot luoi
+# 11+ file doctrine lien tuc 16 ngay ma hook nay khong bat duoc (chi kiem dong
+# bo Codex-mirror, khong kiem NOI DUNG dem-cong-cung). verify_hard_gate_count_
+# consistency.py doi chieu moi dong ".claude/agents/*.md" voi gate_contract.py
+# (nguon su that) — chan dung LOP LOI nay tai dien, khong chi 1 truong hop G8.
+if [ -f tools/verify_hard_gate_count_consistency.py ]; then
+  python3 tools/verify_hard_gate_count_consistency.py --check
+  GATE_COUNT_EXIT=$?
+  if [ "$GATE_COUNT_EXIT" -ne 0 ]; then
+    echo "" >&2
+    echo "CHAN COMMIT: co dong .claude/agents/*.md liet ke 'cong cung' nhung thieu it nhat 1 gate" >&2
+    echo "(doi chieu tools/gate_contract.py::_GATE_REQUIRED_STAKEHOLDERS — nguon su that duy nhat)." >&2
+    echo "  Xem chi tiet: python3 tools/verify_hard_gate_count_consistency.py" >&2
+    echo "  Khan cap can bo qua: git commit --no-verify (KHONG khuyen nghi)." >&2
+    exit 1
+  fi
+fi
+
 exit 0
