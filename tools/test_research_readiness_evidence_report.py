@@ -71,6 +71,37 @@ def test_core_checks_include_clinical_evidence_update_pipeline():
     assert any("verify_clinical_evidence_update_pipeline.py" in cmd for cmd in commands)
 
 
+def test_full_pytest_uses_project_python(monkeypatch):
+    seen: list[tuple[str, list[str], str]] = []
+
+    def fake_run_check(check: E.EvidenceCheck, *, python: str) -> E.EvidenceRow:
+        seen.append((check.domain, check.command, python))
+        return E.EvidenceRow(
+            domain=check.domain,
+            command=" ".join(check.command),
+            status="PASS",
+            returncode=0,
+            evidence_tail="ok",
+            proves=check.proves,
+            limitation=check.limitation,
+            blocking=check.blocking,
+        )
+
+    monkeypatch.setattr(E, "_project_python", lambda: "/tmp/ebm-venv/bin/python")
+    monkeypatch.setattr(E, "run_check", fake_run_check)
+
+    report = E.build_report(include_full_pytest=True)
+
+    assert report["overall_status"] == "PASS"
+    assert any(
+        domain == "Full test repo sống"
+        and command == ["-m", "pytest"]
+        and python == "/tmp/ebm-venv/bin/python"
+        for domain, command, python in seen
+    )
+    assert all(python == "/tmp/ebm-venv/bin/python" for _, _, python in seen)
+
+
 def test_write_report_writes_markdown_and_json():
     report = {
         "kind": "research_readiness_evidence_report",

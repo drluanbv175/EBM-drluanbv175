@@ -32,6 +32,16 @@ DEFAULT_MD = ROOT / "reports" / "RESEARCH_READINESS_EVIDENCE.md"
 DEFAULT_JSON = ROOT / "reports" / "RESEARCH_READINESS_EVIDENCE.json"
 
 
+def _project_python() -> str:
+    """Ưu tiên venv chuẩn của dự án để các cổng pytest/dependency chạy ổn định."""
+    venv_python = (
+        Path.home() / ".ebm-venv" / "Scripts" / "python.exe"
+        if os.name == "nt"
+        else Path.home() / ".ebm-venv" / "bin" / "python"
+    )
+    return str(venv_python) if venv_python.exists() else sys.executable
+
+
 @dataclass(frozen=True)
 class EvidenceCheck:
     domain: str
@@ -132,7 +142,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
 
 FULL_TEST_CHECK = EvidenceCheck(
     domain="Full test repo sống",
-    command=[sys.executable, "-m", "pytest"],
+    command=["-m", "pytest"],
     cwd=str(REPO),
     proves="Bộ test hồi quy rộng của `medical-ebm-automation` chạy qua trong môi trường hiện tại.",
     limitation="Một số test online/golden có thể skipped; pytest không thay kiểm thử triển khai với dữ liệu thật tại bệnh viện.",
@@ -160,8 +170,12 @@ def _display_command(command: Sequence[str], cwd: str) -> str:
     return prefix + " ".join(command)
 
 
+def _uses_project_python(command: Sequence[str]) -> bool:
+    return bool(command) and (command[0].endswith(".py") or command[0] == "-m")
+
+
 def run_check(check: EvidenceCheck, *, python: str) -> EvidenceRow:
-    command = [python, *check.command] if check.command[0].endswith(".py") else list(check.command)
+    command = [python, *check.command] if _uses_project_python(check.command) else list(check.command)
     proc = subprocess.run(
         command,
         cwd=check.cwd,
@@ -186,7 +200,7 @@ def run_check(check: EvidenceCheck, *, python: str) -> EvidenceRow:
 
 def build_report(*, include_full_pytest: bool = False,
                  python: str | None = None) -> dict:
-    py = python or sys.executable
+    py = python or _project_python()
     checks = list(CORE_CHECKS)
     if include_full_pytest:
         checks.append(FULL_TEST_CHECK)
