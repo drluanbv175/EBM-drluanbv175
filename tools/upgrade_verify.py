@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (22 bước tự động, thay cho gõ tay từng lệnh):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (23 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
@@ -20,10 +20,11 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (22 bước tự
  16. verify_personal_production_hardening.py — kiểm 7 miền hardening cá nhân trước dữ liệu thật
  17. verify_clinical_runtime_schema_hardening.py — chốt retraction/prompt-injection/conflict trong schema
  18. verify_clinical_evidence_update_pipeline.py — dashboard→library→derivatives + hợp đồng sync hub
- 19. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
- 20. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
- 21. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
- 22. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
+ 19. verify_clinical_production_control_plane.py — tự sửa/tự sinh agent/điều phối EBM lâm sàng
+ 20. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
+ 21. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
+ 22. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
+ 23. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -117,10 +118,15 @@ def main() -> int:
         ("16. Hardening cá nhân 7 miền", ["medical-ebm-automation/tools/verify_personal_production_hardening.py"], True),
         ("17. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
         ("18. Pipeline cập nhật chứng cứ LS", ["tools/verify_clinical_evidence_update_pipeline.py"], True),
-        ("19. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
-        ("20. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
-        ("21. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
-        ("22. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        (
+            "19. Clinical production control-plane",
+            ["medical-ebm-automation/tools/verify_clinical_production_control_plane.py"],
+            True,
+        ),
+        ("20. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
+        ("21. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
+        ("22. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
+        ("23. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []
