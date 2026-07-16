@@ -130,6 +130,15 @@ def control_steps() -> list[ControlStep]:
             human_gate=True,
             human_action="Đóng các blocker cần bác sĩ/pháp lý/bảo mật/UAT trước khi gọi production-ready.",
         ),
+        ControlStep(
+            step_id="personal_production_hardening",
+            phase="production_hardening",
+            command=["medical-ebm-automation/tools/verify_personal_production_hardening.py"],
+            proves="7 miền hardening cá nhân được kiểm: blocker production, actor thật, dữ liệu thật, SOP, UAT, backup/rollback và tách mode.",
+            limitation="Không thay evidence package, signoff, UAT, bảo mật hoặc go-live thật.",
+            human_gate=True,
+            human_action="Hoàn tất evidence package, UAT, backup/restore drill, actor key và signoff trước khi dùng dữ liệu bệnh nhân thật.",
+        ),
     ]
 
 
