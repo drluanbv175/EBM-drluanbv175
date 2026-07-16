@@ -33,8 +33,17 @@ Mở `exports/<MA-DE-TAI>/G2_A3_ETHICS_PACKAGE_<MA-DE-TAI>.docx`:
 1. **Xác nhận chưa thu thập dữ liệu thật** — nếu đã thu thập → cảnh báo vi phạm tiền đề G2, gợi ý đăng ký hồi tố + ghi nhận minh bạch.
 2. **Phân loại nghiên cứu:**
    - Can thiệp/RCT → BẮT BUỘC đăng ký trước tuyển + ICF đầy đủ + kế hoạch an toàn `an-toan-nghien-cuu`.
-   - Quan sát (cắt ngang/cohort/bệnh-chứng) → IRB + ICF đơn giản hơn; đăng ký tùy chọn (PROSPERO nếu SR/MA).
-   - Nghiên cứu hồ sơ bệnh án/dữ liệu thứ cấp → xác định có cần ICF không (TT43 Điều 15).
+   - Quan sát TIẾN CỨU có TUYỂN người tham gia mới (cắt ngang khảo sát/cohort tiến cứu/bệnh-chứng
+     tuyển mới) → IRB + ICF đơn giản hơn can thiệp, nhưng **đăng ký (ClinicalTrials.gov/WHO ICTRP/
+     đăng ký trong nước) VẪN BẮT BUỘC trước khi tuyển người tham gia ĐẦU TIÊN** — Tuyên ngôn
+     Helsinki (WMA, bản sửa 2024) §35 quy định "mọi nghiên cứu con người phải đăng ký công khai
+     trước khi tuyển người tham gia đầu tiên", KHÔNG giới hạn riêng RCT/can thiệp (vá 2026-07-17,
+     round audit đối kháng 4 — dòng cũ ghi "đăng ký tùy chọn" cho MỌI thiết kế quan sát mâu thuẫn
+     thẳng với §35 với các thiết kế TUYỂN người tham gia mới, vd đề tài hài lòng bệnh nhân cắt
+     ngang tiến cứu thật đang chạy trong hệ thống này).
+   - Quan sát HỒI CỨU/dữ liệu thứ cấp thuần túy KHÔNG tuyển người tham gia mới (chỉ phân tích hồ
+     sơ bệnh án/dữ liệu đã có sẵn) → đăng ký thật sự tùy chọn (không có "người tham gia đầu tiên"
+     để mốc thời gian đăng ký áp vào) — xác định có cần ICF không (TT43 Điều 15).
 3. **Xác định Hội đồng đạo đức sẽ nộp** — `[CẦN BÁC SĨ XÁC NHẬN]`.
 
 ---
