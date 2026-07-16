@@ -52,22 +52,22 @@ template**, KHÔNG cấp trục đánh số. **Quy ước cứng:** khi BÀN GIA
 | 02 | Research_Question_and_PICO.md | A1 | G0 Câu hỏi | `cau-hoi-nghien-cuu` | Methodologist | skill `templates/01` | ✅ |
 | 03 | Evidence_Ledger.csv | **A2b** | G0–G1 | `tong-quan-y-van`+`trich-xuat-y-van`+`tham-dinh-phe-binh` | EBM Specialist | bảng trong CHẾ ĐỘ TỰ ĐỘNG `tong-quan-y-van` | ✅ |
 | 04 | Literature_Review.md | A2 (cơ sở lý luận) | G0–G1 | `thu-thu-tai-lieu`+`tong-quan-y-van`+`khoang-trong-nghien-cuu` | EBM Specialist | skill workflow 01 | ✅ |
-| 05 | Protocol.md | A2 | G1 Thiết kế | `thiet-ke-nghien-cuu` | Methodologist | skill `templates/01` | ✅ |
+| 05 | Protocol.md | A2 | G1 Thiết kế | `viet-ban-thao`+`thiet-ke-nghien-cuu` | Methodologist | skill `templates/01` | ✅ |
 | 06 | Ethics_Package_Checklist.md | A3 · A4 | **G2 Đạo đức 🔒** | `dao-duc-dang-ky` | Ethics Coord. | skill `templates/02` | ✅ |
 | 07 | CRF_or_Questionnaire.md | A6 · A7 | G3 Biến/CRF | `bien-so-nghien-cuu`+`quan-ly-du-lieu`(+`cong-cu-do-luong`) | Epidemiologist/DM | skill `templates/03` | ✅ |
 | 08 | SOP_Data_Collection.md | **A17a** (tách từ A17) | G5 Thu thập | `quan-ly-du-lieu` | DM Lead | skill workflow 05 | ✅→tách |
 | 09 | Data_Dictionary.xlsx | A6 (codebook) | G3 · G5 | `quan-ly-du-lieu` | DM Lead | skill `templates/03` | ✅ |
 | 10 | Sample_Size_Calculation.md | A5 | G3 Cỡ mẫu | `co-mau-nghien-cuu` | Biostatistician | skill workflow 04 | ✅ |
-| 11 | Statistical_Analysis_Plan.md | A8 (+A10) | **G4 SAP 🔒** | `thiet-ke-nghien-cuu`+`phan-tich-thong-ke` | Biostatistician | skill `templates/03` | ✅ |
+| 11 | Statistical_Analysis_Plan.md | A8 (+A10) | **G4 SAP 🔒** | `thiet-ke-nghien-cuu` | Biostatistician | skill `templates/03` | ✅ |
 | 12 | Data_Cleaning_Plan.md | A9 (DMP) | G5 | `quan-ly-du-lieu` | DM Lead | skill workflow 05 | ✅ |
 | 13 | Data_Lock_Memo.md | **A9b** | G5/G6 | `quan-ly-du-lieu` | DM Lead | TÀI LIỆU 6 (G5c_DATALOCK) trong `quan-ly-du-lieu` | ✅ |
 | 14 | Analysis_Syntax.R/.sps | **A17b** | G6 Phân tích | `phan-tich-thong-ke` | Biostatistician | MODULE 1-6 trong `phan-tich-thong-ke` (R code + seed + sessionInfo) | ✅ |
-| 15 | Table_Shells.xlsx | A10 (dummy tables) | G4 | `thiet-ke-nghien-cuu`+`phan-tich-thong-ke` | Biostatistician | skill `templates/03` | ✅ |
+| 15 | Table_Shells.xlsx | A10 (dummy tables) | G4 | `thiet-ke-nghien-cuu` | Biostatistician | skill `templates/03` | ✅ |
 | 16 | IMRAD_Manuscript.md | A11 (DoD #12) | G7 Viết | `viet-ban-thao`+`hieu-dinh-song-ngu` | Writing Editor | skill workflow 06 | ✅ |
 | 17 | Reporting_Checklist.md | A11 | G7 Viết | `viet-ban-thao` | Writing Editor | `references/02` | ✅ |
 | 18 | Risk_Register.csv | **A13b** | G1+G7 | `ke-hoach-trien-khai`(+`dao-duc-dang-ky`) | PM | TÀI LIỆU 5 (Risk Register sống) trong `ke-hoach-trien-khai` | ✅ |
-| 19 | Research_Integrity_Audit.md | completeness-critic + A12 + A14 | G7/G9 | `dieu-phoi-nghien-cuu`+`binh-duyet`+`kiem-chung-trich-dan` | Integrity Auditor | skill `templates/04` | ✅ |
-| 20 | Final_Readiness_Report.md | A18 (+ DoD 14 điểm) | **G9 Nghiệm thu 🔒** | `dieu-phoi-nghien-cuu`+`viet-ban-thao` | PM/Integrity | §6 CROSSWALK + §D `_KIEM-TOAN` (3 hạng READY/PARTIALLY/NOT READY + GAP REGISTER + CAPA) | ✅ |
+| 19 | Research_Integrity_Audit.md | completeness-critic + A12 + A14 | G7/G9 | `dieu-phoi-nghien-cuu`+`binh-duyet`+`kiem-chung-trich-dan`+`nop-bai-phan-hoi` | Integrity Auditor | skill `templates/04` | ✅ |
+| 20 | Final_Readiness_Report.md | A18 (+ DoD 14 điểm) | **G9 Nghiệm thu 🔒** | `dieu-phoi-nghien-cuu`+`so-cai-ghi-nho`+`quan-ly-du-lieu`+`viet-ban-thao` | PM/Integrity | §6 CROSSWALK + §D `_KIEM-TOAN` (3 hạng READY/PARTIALLY/NOT READY + GAP REGISTER + CAPA) | ✅ |
 
 > Ghi chú định dạng: SPEC ghi `.xlsx` cho Evidence Ledger / Data Dictionary / Table Shells / Risk
 > Register. Hệ này **offline, markdown-first** → mặc định sinh `.md` + `.csv` (mở được bằng Excel),
