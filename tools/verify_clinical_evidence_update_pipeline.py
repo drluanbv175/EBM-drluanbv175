@@ -3,7 +3,7 @@
 
 Verifier này không tuyên bố một khuyến cáo lâm sàng là đúng. Nó chỉ chứng minh
 đường ống kỹ thuật đang chạy được, fail-closed ở các điểm quan trọng:
-- dashboard Evidence Workbench có disclaimer, DOI/PMID/URL, gradeLevel, decision;
+- dashboard Evidence Workbench có disclaimer, PMID/DOI/URL, gradeLevel, decision;
 - dashboard Evidence Workbench có tab chuẩn chất lượng cập nhật chứng cứ (`standards`);
 - dashboard qua cổng `verify_dashboard.py --strict-sources`;
 - thư viện tích lũy `library.json` / `evidence-library.html` được sinh;

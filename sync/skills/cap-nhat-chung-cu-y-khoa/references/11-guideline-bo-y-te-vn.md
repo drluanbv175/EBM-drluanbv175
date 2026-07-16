@@ -3,6 +3,7 @@
 Tăng độ sát thực hành VN: ở bước "Áp dụng tại Việt Nam" (Bước 6), đối chiếu khuyến cáo quốc tế với **hướng dẫn Bộ Y tế** bác sĩ đang theo, thay vì chỉ ghi `[CẦN XÁC NHẬN]`.
 
 ## Nguồn dữ liệu (do bác sĩ cung cấp — KHÔNG bịa)
+- Cổng phác đồ chính thức: `kcb.vn/phac-do` (Cục Quản lý Khám, chữa bệnh) khi có tài liệu phù hợp.
 - Sổ đăng ký: `EBM-Dashboards/vn-guidelines/registry.json` (tên · số QĐ · năm · phạm vi · file).
 - PDF chính thức trong `EBM-Dashboards/vn-guidelines/`.
 - (Khuyến nghị) Nạp PDF vào kho RAG của skill `clinical-evidence-rag` để truy xuất khuyến cáo cụ thể CÓ TRÍCH DẪN, có ngày, kiểm toán được.
