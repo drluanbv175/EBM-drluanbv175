@@ -2,7 +2,7 @@
 name: kham-ngoai-tru-ebm
 description: Sử dụng skill này khi bác sĩ cần tiếp cận hoặc ra quyết định cho MỘT ca khám ngoại trú theo Y học chứng cứ (EBM). Dẫn dắt trọn 5 bước tại phòng khám: đặt câu hỏi lâm sàng (PICO) · hỏi–khám có trọng điểm + sàng lọc cờ đỏ · chẩn đoán phân biệt và xác suất tiền nghiệm · áp chứng cứ vào quyết định (xét nghiệm theo LR, điều trị theo ARR/NNT/NNH, ngưỡng test–treat) · quyết định cùng bệnh nhân (shared decision-making) + safety-netting + ghi chép SOAP. Kích hoạt với "tôi có một bệnh nhân…", "khám ca này", "chẩn đoán phân biệt", "nên làm xét nghiệm gì / điều trị thế nào", hoặc khi muốn rèn ra quyết định EBM tại giường. Đây KHÔNG phải skill viết tổng quan y văn/bản thảo, KHÔNG phải Dashboard Master, KHÔNG phải hệ giám sát guideline định kỳ.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Skill: Khám ngoại trú theo Y học chứng cứ (EBM Outpatient Consultation)
@@ -133,7 +133,33 @@ Tự nhận diện loại câu hỏi và chọn khung phù hợp; nêu rõ một
 
 Chỉ số đặc thù phải trích đúng nguồn; không tự gán GRADE; không lập số liệu định lượng khi chỉ có đồng thuận/nguyên lý (mô tả định tính + đánh dấu `[CẦN BỔ SUNG]`). Khi chứng cứ không đồng nhất, nêu cả hai chiều.
 
-## 7. Nối tiếp sang skill khác (gợi ý, hỏi bác sĩ trước)
+## 7. Tài liệu tham khảo chuyên sâu (đọc khi ca chạm đúng chủ đề)
+
+19 file trong `references/` — mỗi file là hướng dẫn tự chứa cho MỘT mảng chuyên môn, chỉ đọc file khớp với ca đang xét (progressive disclosure — không đọc hết 19 file cho mọi ca). Mỗi file tự nêu rõ ở đầu bài "khi nào đọc file này".
+
+| # | File | Đọc khi nào |
+|---|---|---|
+| 1 | `references/01_sang_loc_co_do_va_nguong_chuyen_tuyen.md` | Bước 0 mọi ca — cờ đỏ theo hội chứng, luật tam chứng bắt buộc, ngưỡng chuyển cấp cứu |
+| 2 | `references/02_khai_thac_benh_su_kham_co_trong_diem.md` | Bước 2 — khung SOCRATES/OPQRST, tiền sử + khám trọng điểm theo hội chứng |
+| 3 | `references/03_pico_lam_sang.md` | Bước 1 — chuẩn hóa câu hỏi PICO, phân loại nền/tiền cảnh, kết cục quan trọng với BN |
+| 4 | `references/04_tra_cuu_chung_cu_tai_diem_kham.md` | Bước 4c — thứ tự nguồn tra cứu (guideline hiệp hội → NEJM/Lancet/JAMA/BMJ → PubMed), quy trình corrective self-RAG |
+| 5 | `references/05_dien_giai_can_lam_sang.md` | Có kết quả xét nghiệm/hình ảnh cần đọc — bảng giá trị nguy kịch đồng thuận, quy trình 6 bước diễn giải |
+| 6 | `references/06_chan_doan_xac_suat_bayes.md` | Bước 3 — tính xác suất hậu nghiệm bằng LR, ngưỡng test–treat, công cụ CLI `clinical_calc.py` |
+| 7 | `references/07_thang_diem_nguy_co.md` | Cần một thang điểm nguy cơ đã kiểm định (CHA₂DS₂-VASc, HAS-BLED, CURB-65, Wells-PE, PERC, Child-Pugh, MELD, qSOFA...) |
+| 8 | `references/08_tham_dinh_grade_nnt.md` | Cần thẩm định nhanh 1 bài/guideline — chấm GRADE, tính NNT/NNH, chọn công cụ nguy cơ sai lệch đúng thiết kế |
+| 9 | `references/09_huong_dan_lam_sang_apply.md` | Bước 4 — đặt phát hiện vào bối cảnh guideline hiện hành, dựng khối GRADE Evidence-to-Decision |
+| 10 | `references/10_ke_don_an_toan.md` | Ca chạm tới kê/rà đơn thuốc — tương tác, chống chỉ định, hiệu chỉnh liều theo thận/gan, đa thuốc người cao tuổi |
+| 11 | `references/11_quyet_dinh_chung_sdm.md` | Bước 5 — cá thể hóa khuyến cáo, trình bày lợi–hại cho bệnh nhân hiểu, shared decision-making |
+| 12 | `references/12_loi_dan_tuan_thu.md` | Cần soạn lời dặn A5 hoặc kế hoạch tuân thủ điều trị |
+| 13 | `references/13_theo_doi_benh_man.md` | Ca bệnh mạn cần kế hoạch theo dõi dài hạn/treat-to-target (ĐTĐ, THA, COPD-hen...) |
+| 14 | `references/14_du_phong_tam_soat.md` | Câu hỏi về tầm soát/dự phòng theo tuổi-giới-nguy cơ (không phải xử trí bệnh đang có) |
+| 15 | `references/15_dau_man_tinh.md` | Đau mạn tính >3 tháng (không do ung thư tiến triển cấp) — phân loại cơ chế đau, opioid stewardship |
+| 16 | `references/16_cham_soc_giam_nhe.md` | Bệnh nặng/giai đoạn cuối — kiểm soát triệu chứng, thảo luận mục tiêu chăm sóc |
+| 17 | `references/17_tram_cam_lo_au.md` | Nghi trầm cảm/lo âu — sàng lọc PHQ-9/GAD-7, chăm sóc theo bậc (stepped care) |
+| 18 | `references/18_quan_ly_khang_dong.md` | Rung nhĩ/VTE/van cơ học cần kháng đông — chọn thuốc, chỉnh liều DOAC, bắc cầu quanh thủ thuật |
+| 19 | `references/19_tham_dinh_do_chinh_xac_chan_doan.md` | Câu hỏi về ĐỘ TIN CẬY của một xét nghiệm/test chẩn đoán (QUADAS-2, Se/Sp/LR có vững không) |
+
+## 8. Nối tiếp sang skill khác (gợi ý, hỏi bác sĩ trước)
 
 - **Tuân thủ điều trị** (rào cản + lời dặn A5 cho BN) → `tuan-thu-dieu-tri`.
 - **Người cao tuổi đa thuốc** (Beers/STOPP-START, deprescribing) → `nguoi-cao-tuoi-da-benh-da-thuoc`.
@@ -142,7 +168,7 @@ Chỉ số đặc thù phải trích đúng nguồn; không tự gán GRADE; kh�
 - **Bản ghi chuẩn (SOAP/H&P)** → `clinical-reports`.
 - **Cập nhật khuyến cáo cả chủ đề + dashboard** → `cap-nhat-chung-cu-y-khoa` / `dark-analyst`.
 
-## 8. Checklist trước khi trả lời
+## 9. Checklist trước khi trả lời
 
 - **BƯỚC 0 đã chạy TRƯỚC PICO chưa?** Đã đối chiếu `_CAU-HOI-AN-TOAN-BAT-BUOC.md` (S1 tự sát khi mất ngủ+vô vọng+đòi thuốc ngủ mạnh · S2 thai kỳ trước thuốc gây quái thai) chưa — nếu khớp bệnh cảnh mà chưa hỏi được, đã dừng trước Bước 4 chưa?
 - Đã đặt PICO và nhận diện đúng loại câu hỏi + khung chưa?
@@ -155,13 +181,13 @@ Chỉ số đặc thù phải trích đúng nguồn; không tự gán GRADE; kh�
 - Mọi số liệu/nguồn đều trích đúng, không bịa; ghi nguồn dạng văn bản thường chưa?
 - Không có PII; có disclaimer "Cần bác sĩ kiểm chứng" chưa?
 
-## 8b. Chốt kiểm đầu ra 2 LỚP (BẮT BUỘC, ngay trước khi trả lời)
+## 9b. Chốt kiểm đầu ra 2 LỚP (BẮT BUỘC, ngay trước khi trả lời)
 Skill này chạy độc lập (không qua nhạc trưởng) → **tự áp** chốt kiểm 2 lớp như agent `tham-dinh-dau-ra`. Bản chuẩn: `.claude/agents/_CHUAN-CHAT-LUONG-MEDPALM.md` + `_KIEM-DUYET-DOC-LAP.md`.
 - **Lớp 1 — LIÊM CHÍNH (R1–R7):** R1 nguồn (PMID/DOI hoặc nhãn thiếu) · R2 KHÔNG PII · R3 không tự "áp dụng cho BN" (dừng Cổng A) · R4 không tự gán GRADE/độ mạnh khi nguồn không cấp · R5 tách độ chắc chứng cứ vs độ mạnh khuyến cáo · R6 nhãn `[CẦN…]` đúng chỗ · R7 disclaimer cuối.
 - **Lớp 2 — CHẤT LƯỢNG Med-PaLM (Q1–Q7):** Q1 dễ đọc (đúng đối tượng nhận) · **Q2 đúng đắn** (khớp guideline/đồng thuận — nghi sai → CHUYỂN BÁC SĨ, không tự khẳng định) · **Q3 đầy đủ — cụ thể: đã hỏi S1 (ý tưởng tự sát, nếu mất ngủ+vô vọng+đòi thuốc ngủ mạnh) và S2 (khả năng có thai, nếu cân nhắc thuốc gây quái thai) theo `_CAU-HOI-AN-TOAN-BAT-BUOC.md` chưa, không chỉ "không sót cờ đỏ" chung chung** — cùng với CCĐ/tương tác/chỉnh liều/theo dõi · Q4 không thiên kiến nhóm · **Q5 nguy cơ hại** (hại nặng không cảnh báo → CHUYỂN BÁC SĨ) · Q6 cập nhật · Q7 thẩm quyền nguồn (cảnh giác tạp chí săn mồi).
 - **Còn 🔴 ở lớp nào → SỬA trước khi trả; Q2/Q5 đỏ → nêu cờ "cần bác sĩ phán định".** Đây là tự-kiểm cùng phiên (giảm mù chung, KHÔNG khử thiên lệch) — rào cứng cuối vẫn là bác sĩ.
 
-## 9. Tài nguyên & liêm chính
+## 10. Tài nguyên & liêm chính
 
 - Tìm chứng cứ: `clinical-evidence-rag`, `research-lookup`, `paper-lookup` (chỉ nguồn miễn phí: PubMed E-utilities, CSDL mở; KHÔNG dịch vụ trả phí).
 - Công cụ lời dặn A5: `Loi-dan-benh-nhan/loi-dan-benh-nhan.html`.
