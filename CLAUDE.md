@@ -155,13 +155,15 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `integrity_guard.py --fix --quarantine-untraceable --strict` → sinh lại `DANH_MUC.html` + `EBM_WEBAPP.html`.
   Thẻ mới vào hàng "chờ bác sĩ duyệt", không tự "áp dụng ngay"; thẻ không truy nguyên được bị cách ly khỏi `evidence_cards`.
   Khi cập nhật template (EW/DA), đồng bộ luôn `EBM_MASTER/skill_assets/web-dashboard-*.html` để hub không sinh dashboard bằng bản cũ.
-- **(4) Xuất Word chi tiết — MẶC ĐỊNH khi bác sĩ yêu cầu bản in/lưu trữ/nộp ngoài trình duyệt (từ 2026-07-18):**
+- **(4) Xuất Word chi tiết — MẶC ĐỊNH TỰ CHẠY ở bước cuối mỗi dashboard lâm sàng (bác sĩ chốt 2026-07-18; trước đó chỉ chạy khi yêu cầu riêng):**
   `python3 EBM-Dashboards/tools/build_dashboard_docx.py <dashboard>.html` — tự trích khối `DATA` từ dashboard
   (không gõ lại tay, tránh sai lệch), dựng `.docx` gồm trang bìa+cảnh báo, mục lục tự động, khối tóm tắt màu
   (nên làm/không nên/cờ đỏ), MỖI mục chứng cứ 1 bảng riêng có huy hiệu MÀU mức chứng cứ + quyết định (khớp
   đúng bảng màu Evidence Workbench: xanh lá=Cao/Áp dụng ngay, cam=Trung bình-Thấp/Cân nhắc, đỏ=Rất thấp/Chưa
-  đủ), dòng "Khuyến cáo/Hành động" tô nền làm điểm nhấn, font Times New Roman toàn văn. KHÔNG tự chạy sau mỗi
-  cập nhật dashboard — chỉ khi được yêu cầu riêng. Tuỳ chọn `--parts <file.json>` để nhóm mục theo "phần" lớn
+  đủ), dòng "Khuyến cáo/Hành động" tô nền làm điểm nhấn, font Times New Roman toàn văn. TỰ CHẠY MẶC ĐỊNH ở
+  BƯỚC CUỐI mỗi dashboard (nối tiếp verify_dashboard→build_library→sync_all), KHÔNG cần hỏi lại; file ra
+  `EBM-Dashboards/derivatives/`. Parser JS→JSON của tool nhận CẢ khối `DATA` nháy đơn LẪN nháy kép (vá
+  2026-07-18: trước chỉ nhận nháy kép nên vỡ với DATA nháy đơn theo quy ước template EW/DA). Tuỳ chọn `--parts <file.json>` để nhóm mục theo "phần" lớn
   khi dashboard gộp nhiều chủ đề con (như VKDT: chẩn đoán-điều trị / bệnh kèm / đối tượng đặc biệt); không
   truyền thì liệt kê tuần tự dưới 1 mục "Nội dung chứng cứ". **Mac hiện KHÔNG có Node.js/LibreOffice/pandoc/
   Homebrew** → KHÔNG dùng nhánh docx-js của skill `docx`; dùng thẳng `python-docx` (đã có sẵn trong venv
