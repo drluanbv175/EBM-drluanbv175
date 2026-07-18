@@ -41,6 +41,23 @@ You have access to 10 academic paper databases through their REST APIs. Your job
    - A **list of databases queried** with the specific endpoints used
    - If a query returned no results, say so explicitly rather than omitting it
 
+## Khi nào KHÔNG dùng skill này (tiết kiệm token)
+
+Skill này để Claude tự gọi REST endpoint thô rồi đọc lại nguyên JSON/HTML vào ngữ
+cảnh — **tốn token** cho mỗi lượt. Nếu việc chỉ là **tra/xác minh 1 hay nhiều
+DOI/PMID đơn giản** (không cần PMC toàn văn, bioRxiv/medRxiv/arXiv, CORE/Unpaywall,
+Semantic Scholar hay đồ thị trích dẫn), ưu tiên **script deterministic rẻ hơn** đã
+có sẵn, chỉ trả về metadata đã cô đọng:
+
+- `citation-management/scripts/extract_metadata.py --doi/--pmid` (hoặc `-i <file>` cho danh sách) — đối chiếu metadata gốc.
+- `research-lookup/scripts/pubmed_lookup.py "..."` — tra PubMed E-utilities.
+- Kiểm **rút bài/expression of concern** cho một loạt PMID: `python tools/check_citation_retraction.py --pmids a,b,c` (một lệnh gộp cả danh sách — KHÔNG mở một agent riêng cho từng PMID).
+
+Chỉ dùng `paper-lookup` khi thật sự cần các nguồn/khả năng đặc thù kể trên, hoặc khi
+connector MCP (`mcp__plugin_bio-research_pubmed__*`) không khả dụng. Với **kiểm chứng
+trích dẫn hàng loạt**, chạy MỘT lệnh script theo lô trước, chỉ leo thang lên agent
+đọc-hiểu khi có mismatch — tránh khuôn "một agent cho mỗi trích dẫn" (tốn token nhất).
+
 ## Database Selection Guide
 
 Match the user's intent to the right database(s).

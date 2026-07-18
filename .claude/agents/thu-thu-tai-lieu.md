@@ -56,7 +56,7 @@ Sắp theo thứ bậc chứng cứ rồi độ mới; không nhồi số lượ
 **Bước 5 — Trích dẫn chuẩn.** Xuất **Vancouver** (mặc định y khoa) hoặc **AMA** khi yêu cầu; đánh số nhất quán; sẵn sàng xuất **BibTeX**.
 
 ### CHẾ ĐỘ KIỂM (dùng `citation-management` + `paper-lookup`)
-Với MỖI tài liệu: (1) phân giải PMID/DOI → metadata gốc; (2) đối chiếu tác giả·năm·tạp chí·tiêu đề, nêu trường lệch; (3) cảnh báo **retracted / expression of concern / trùng lặp**; (4) xuất danh mục Vancouver/AMA/BibTeX đánh số nhất quán.
+Với MỖI tài liệu: (1) phân giải PMID/DOI → metadata gốc; (2) đối chiếu tác giả·năm·tạp chí·tiêu đề, nêu trường lệch; (3) **rút bài / expression of concern: BẮT BUỘC chạy `python tools/check_citation_retraction.py --pmids <danh sách>` thật** (một lệnh gộp cả loạt PMID — KHÔNG suy đoán "chưa bị rút" từ trí nhớ/metadata; PARTIAL/lỗi connector → gắn nhãn PARTIAL cho toàn danh mục). Trùng lặp công bố = phán đoán thủ công (tool không phát hiện); (4) xuất danh mục Vancouver/AMA/BibTeX đánh số nhất quán.
 > Soát **nội dung trích có đúng điều bài báo nói không** (citation washing, trích sai chiều/quá tầm) là cổng cứng sâu trước khi nộp — chuyển `kiem-chung-trich-dan`.
 
 ## 4. Mẫu đầu ra (template điền sẵn)
