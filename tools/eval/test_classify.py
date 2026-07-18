@@ -238,6 +238,46 @@ def test_r14_exempted_for_evidence_positioning_text():
     assert "prescribing_safety_r14" not in ids
 
 
+# ── Vá 2026-07-18 (audit vòng 2 D1-F1): R14 bỏ sót đơn kê bằng TÊN INN ──────
+# Trước đây _prescribing_action_present chỉ nhận thuốc theo NHÓM (SGLT2i/statin...);
+# kê bằng tên hoạt chất (amlodipine, apixaban) LỌT backstop → gói ĐẠT dù không rà.
+
+def test_r14_triggers_for_inn_drug_name_amlodipine():
+    text = ("Bệnh nhân THA. Cờ đỏ: đau ngực dữ dội quay lại ngay. Kê thêm amlodipine 5mg "
+            "mỗi ngày. Theo ESC 2024. PMID:12345678. Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "prescribing_safety_r14"]
+    assert c and c[0]["pass"] is False, "kê amlodipine không rà an toàn phải kích hoạt R14 và FAIL"
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+
+
+def test_r14_triggers_for_high_risk_doac_apixaban():
+    text = ("Rung nhĩ không do van. Kê thêm apixaban 5mg x2/ngày. PMID:12345678. "
+            "Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    ids = [x["id"] for x in res["checks"]]
+    assert "prescribing_safety_r14" in ids, "DOAC theo tên (apixaban) phải kích hoạt R14"
+
+
+def test_r14_inn_name_with_safety_review_passes():
+    text = ("THA. Kê thêm amlodipine; đã rà tương tác thuốc và chống chỉ định, chỉnh liều "
+            "theo eGFR. Cờ đỏ: đau ngực quay lại ngay. PMID:12345678. Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "prescribing_safety_r14"]
+    assert c and c[0]["pass"] is True
+
+
+def test_r14_blindspot_advisory_when_drug_name_unrecognized():
+    # Có động từ kê đơn nhưng thuốc không nhận ra -> cảnh báo điểm mù (không im lặng),
+    # KHÔNG fail (không chắc có kê thuốc thật).
+    text = ("Bệnh nhân đau đầu. Cờ đỏ: yếu liệt quay lại ngay. Kê thêm thuốc zxqwv. "
+            "PMID:12345678. Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    ids = [x["id"] for x in res["checks"]]
+    assert "prescribing_safety_r14_blindspot" in ids
+    assert "prescribing_safety_r14" not in ids
+
+
 # ── Vá 2026-07-04 (đợt 2, sau red-team đối kháng độc lập 10 agent) ─────────
 # Mỗi test dưới đây là MỘT văn bản đối kháng THẬT mà workflow red-team đã tự soạn
 # và tự chạy để chứng minh lỗ hổng — giữ nguyên văn để khóa hồi quy đúng ca đã tìm.

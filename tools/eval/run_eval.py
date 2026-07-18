@@ -403,7 +403,25 @@ RE_S2_RESPONSE = re.compile(
 RE_RX_DRUG_CLASS = re.compile(
     r"SGLT2i|statin|DOAC|warfarin|opioid|NSAID|metformin|insulin|"
     r"lợi\s*tiểu|chẹn\s*beta|beta[-\s]?blocker|digoxin|thiazide|"
-    r"chẹn\s*kênh\s*canxi|\bCCB\b", re.I)
+    r"chẹn\s*kênh\s*canxi|\bCCB\b|"
+    # Tên INN/hoạt chất phổ biến (vá 2026-07-18, audit vòng 2 D1-F1): trước đây chỉ
+    # nhận theo NHÓM → kê bằng TÊN hoạt chất (amlodipine, apixaban...) lọt backstop R14
+    # dù đó là gói mỏng-nguy-hiểm-nhất. Ưu tiên 3 nhóm ADE ngoại trú hay gặp nhất (kháng
+    # đông/kháng kết tập, hạ đường huyết, opioid) + cửa sổ điều trị hẹp. Vẫn "bounded" —
+    # xác minh ĐỦ vẫn là việc của ke-don-an-toan/LLM; đây chỉ là lưới hỗ trợ người rà.
+    r"apixaban|rivaroxaban|dabigatran|edoxaban|clopidogrel|"
+    r"amlodipin\w*|nifedipin\w*|felodipin\w*|"
+    r"tramadol|morphin\w*|fentanyl|oxycodon\w*|codein\w*|pethidin\w*|"
+    r"gliclazid\w*|glimepirid\w*|glibenclamid\w*|glipizid\w*|"
+    r"levothyroxin\w*|gabapentin|pregabalin|"
+    r"furosemid\w*|spironolacton\w*|"
+    r"omeprazol\w*|esomeprazol\w*|pantoprazol\w*|lansoprazol\w*|"
+    r"allopurinol|colchicin\w*|"
+    r"sertralin\w*|fluoxetin\w*|escitalopram|amitriptylin\w*|"
+    r"bisoprolol|metoprolol|atenolol|carvedilol|"
+    r"lisinopril|enalapril|ramipril|perindopril|"
+    r"losartan|valsartan|telmisartan|irbesartan|"
+    r"prednisolon\w*|prednison\w*|dexamethason\w*", re.I)
 # Động từ HÀNH ĐỘNG kê/đổi/chỉnh thuốc — đòi đứng GẦN (cửa sổ ±80 ký tự) một tên/nhóm thuốc
 # cụ thể (RE_ANTIBIOTIC/RE_S2_TRIGGER/RE_RX_DRUG_CLASS/an thần) mới tính là trigger thật,
 # tránh khớp câu chung chung không nhắc thuốc nào ("chỉnh liều theo cân nặng trẻ em"...).
@@ -859,6 +877,15 @@ def evaluate(text: str, gold: dict | None):
                            "có rà tương tác/CCĐ/chỉnh liều theo tạng" if ok
                            else "CÓ khuyến cáo/đổi thuốc nhưng THIẾU rà tương tác–CCĐ–chỉnh liều "
                                 "(R14) — giao ke-don-an-toan (M2–M5) trước khi phát hành"))
+        elif RE_RX_ACTION.search(text):
+            # KHÔNG im lặng (vá 2026-07-18, audit vòng 2 D1-F1): có ĐỘNG TỪ kê đơn nhưng
+            # không nhận ra tên thuốc đã biết gần đó → R14 KHÔNG tự chạy (điểm mù của
+            # backstop tên-thuốc hữu hạn). KHÔNG fail (không chắc có kê thật) nhưng nêu rõ
+            # để không hiểu nhầm "vắng R14 = an toàn"; gói CÓ kê thuốc phải rà tay.
+            checks.append(("prescribing_safety_r14_blindspot", True,
+                           "⚠ có động từ kê đơn nhưng KHÔNG nhận ra tên thuốc đã biết gần đó — "
+                           "R14 KHÔNG tự chạy (điểm mù backstop hữu hạn); nếu gói CÓ kê thuốc thì "
+                           "BẮT BUỘC rà tay qua ke-don-an-toan (M2–M5)"))
 
     # (viii) Nối research_checks (nhánh nghiên cứu: STD-REPORT/STAT-MISMATCH/AI-DISCLOSE) —
     # vá "1 bước hòa mạng còn lại" của SCORECARD_2026-07-08_NGHIEN-CUU.md §7. Cả 3 check tự
