@@ -94,7 +94,7 @@ DASH_RULES = [
     ("Nội tiết – Chuyển hóa", ["dtd", "đái tháo", "diabet", "noitiet", "nội tiết", "lipid", "statin", "loãng xương", "tuyến giáp"]),
     # Tâm thần kinh ĐẶT TRƯỚC "Thần kinh – Đột quỵ" để 'tamthankinh'/'tâm thần' không bị 'thankinh' bắt nhầm.
     ("Tâm thần kinh", ["tamthan", "tâm thần", "hướng tâm thần", "thuốc tâm thần", "chống trầm cảm", "trầm cảm", "chống loạn thần", "loạn thần", "an thần kinh", "giải lo âu", "ổn định khí sắc", "psych", "ssri", "snri", "antidepressant", "antipsychotic"]),
-    ("Thần kinh – Đột quỵ", ["machmaunao", "mạch máu não", "dotquy", "đột quỵ", "dmcanh", "đm cảnh", "dongmachcanh", "động mạch cảnh", "tia ", "stroke", "thankinh", "thần kinh", "neuro", "động kinh", "sa sút trí tuệ"]),
+    ("Thần kinh – Đột quỵ", ["machmaunao", "mạch máu não", "dotquy", "đột quỵ", "dmcanh", "đm cảnh", "dongmachcanh", "động mạch cảnh", "tia ", "stroke", "thankinh", "thần kinh", "neuro", "động kinh", "sa sút trí tuệ", "daudau", "đau đầu", "nhức đầu", "migraine", "cluster headache", "đau nửa đầu"]),
     # Vá 2026-07-16: "Tiêu hóa – Gan mật" có trong SPECIALTIES nhưng chưa từng có luật
     # DASH_RULES nào — mọi dashboard gan mật trước đó rơi vào khoa khác do không khớp
     # luật nào (vd viemganb rơi vào "Thận – Tiết niệu" chỉ vì câu hỏi có chữ "CKD").
