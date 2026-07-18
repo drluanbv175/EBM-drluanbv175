@@ -42,6 +42,8 @@ Gói đầu ra cần kiểm (toàn văn, kèm bảng nguồn nếu có) · loạ
 
 **Quy ước phán định Lớp 1:** còn **bất kỳ 🔴 nào → TRẢ-VỀ-SỬA** (CẤM phát hành). Chỉ 🟡 → ĐẠT-CÓ-LƯU-Ý (nêu để nhạc trưởng cân nhắc). Toàn ✅ (có thể kèm 🟡 nhỏ) → ĐẠT.
 
+> **RANH GIỚI ✅ vs 🟡 (chống tự-cho-ĐẠT tràn lan — bảng trên chỉ định nghĩa ngưỡng 🔴):** một mục chỉ được ✅ khi có **bằng chứng DƯƠNG TÍNH** tiêu chí đã đạt — trích DẪN được chỗ trong gói chứng minh (vd R1: mọi khẳng định cốt lõi đều có PMID/DOI kèm NGAY cạnh + đã đối chiếu ≥1 nguồn thật; R2: đã quét đủ các trường PII kể trong tiêu chí; R4: nêu ĐÚNG tên công cụ RoB/biến thể GRADE khớp thiết kế). Mặc định là **🟡** khi: tiêu chí áp dụng nhưng bằng chứng CHƯA đầy đủ/chưa đối chiếu hết/chỉ có KHUNG-giàn-giáo (chưa có nội dung thật). **"Không thấy lỗi" một mình KHÔNG phải ✅** — phải kèm danh sách cụ thể đã soi (nhất quán §3ter). Đếm sự-có-mặt của file/mục/nhãn KHÔNG phải ✅.
+
 ## 3bis. LỚP 2 — RUBRIC CHẤT LƯỢNG CÂU TRẢ LỜI LÂM SÀNG Q1–Q7 (Med-PaLM 2)
 > CHỈ áp cho gói **lâm sàng** (đầu ra `dieu-phoi-lam-sang` + 5 routine lâm sàng `uptodate`/`drug-safety-daily`/`giam-sat-chung-cu`/`antifacts-weekly-ebm`/`tong-hop-chung-cu-hang-tuan` — 2 routine sau bổ sung 2026-06-20, xem `_ROUTINE-AGENT-WIRING.md`). Gói **nghiên cứu** bỏ qua Lớp 2 — dùng **CONSORT 2025** (thay CONSORT 2010) / **SPIRIT 2025** (đề cương, thay SPIRIT 2013) / **STROBE** / **PRISMA 2020** + `_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md`. Đặc tả đầy đủ + xuất xứ từng trục + PMID/DOI: **`_CHUAN-CHAT-LUONG-MEDPALM.md`**.
 
