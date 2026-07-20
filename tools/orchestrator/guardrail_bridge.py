@@ -28,13 +28,19 @@ APPRAISAL_REPEATS = ROOT / "observability" / "APPRAISAL_REPEATS.json"
 PROMOTE_THRESHOLD = 3
 _EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci"}          # không tính vào tái phạm (nhiễu)
 # Mã VỐN đã là cổng cứng (ESCALATE_HARD) — KHÔNG đề bạt lại (M2).
-_HARD_CODES = {"R2", "R3", "R11", "R12", "R13", "Q2", "Q5"}
+# THÊM 2026-07-19 (audit vòng 3, D5_orchestrator_dry_run_drift — cao): "R14"
+# (an toàn kê đơn HARD-RED, tham-dinh-dau-ra.md §3) THIẾU khỏi cả _HARD_CODES
+# lẫn _CHECK_ID_TO_RCODE — cầu này reroute R14 như lỗi SỬA-ĐƯỢC (3 lần) trước
+# khi mới leo thang, thay vì leo thang NGAY như các cổng cứng khác (R2/R3/
+# R11-R13/Q2/Q5).
+_HARD_CODES = {"R2", "R3", "R11", "R12", "R13", "R14", "Q2", "Q5"}
 # check-id (run_eval.evaluate) → mã R chuẩn (bản sao ỔN ĐỊNH để không phụ thuộc nội bộ run_eval).
 _CHECK_ID_TO_RCODE = {
     "pmid_or_doi": "R1", "no_pii": "R2", "gate_respected": "R3", "no_fabrication": "R4",
     "certainty_vs_strength": "R5", "disclaimer": "R7", "source_has_year": "R9",
     "who_aware_if_antibiotic": "R10", "no_causal_from_observational": "R11", "red_flags": "R12",
     "effect_size_ci_required": "R8", "label_gaming_r1b": "R1b", "mandatory_safety_question": "R13",
+    "prescribing_safety_r14": "R14",
     "reporting_standard": "STD-REPORT", "stat_mismatch": "STAT-MISMATCH",
     "ai_disclosure": "AI-DISCLOSE",
 }

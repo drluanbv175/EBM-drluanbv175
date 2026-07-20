@@ -413,6 +413,19 @@ class TestGuardrailBridge(unittest.TestCase):
             self.assertIn("R8", rec["ledger_codes"])
             self.assertIn("effect_size_ci_required", rec["return_for_fix_checks"])
 
+    def test_verdict_r14_prescribing_safety_escalates(self):
+        # THÊM 2026-07-19 (audit vòng 3, D5 — cao): trước bản vá, "R14" (an toàn
+        # kê đơn HARD-RED) THIẾU khỏi _HARD_CODES/_CHECK_ID_TO_RCODE — reroute
+        # sai như lỗi sửa-được (≤3 lần) trước khi mới leo thang, thay vì leo
+        # thang NGAY như các cổng cứng khác (R2/R3/R11-R13/Q2/Q5).
+        self._patch_evaluate({"verdict": "TRẢ-VỀ-SỬA", "score": "12/14",
+                              "red_fails": ["prescribing_safety_r14"]})
+        with tempfile.TemporaryDirectory() as tmp:
+            v = self.gb.make_run_eval_verdict("x", source="test", at="2026-07-09T00:00:00",
+                                              log_path=Path(tmp) / "a.jsonl")(None)
+            self.assertEqual(v["code"], "R14")
+            self.assertTrue(v.get("escalate"), "R14 (an toàn kê đơn) phải escalate ngay, không auto-fix")
+
     def test_end_to_end_pass_released(self):
         self._patch_evaluate({"verdict": "ĐẠT", "score": "13/13", "red_fails": []})
         with tempfile.TemporaryDirectory() as tmp:
