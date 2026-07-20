@@ -21,9 +21,16 @@ Bỏ qua (PASS, không phải lỗi) nếu:
     — không phải máy đang dùng để sửa hệ thống này.
   - Máy này rõ ràng chưa từng cài tunnel-client — mục 3 không áp dụng, vẫn
     kiểm mục 1+2 (2 hook không phụ thuộc tunnel).
+Thêm 2026-07-20 (vòng lặp kiểm tra-hoàn thiện, audit đối kháng xác nhận HIGH):
+trước đây mục 3 chỉ kiểm LaunchAgent "đã load" (boolean) — không so khớp nội
+dung `~/.ebm-tools/bin/watch-restart-ebm-tunnel` (bản cài cục bộ, KHÔNG tự
+cập nhật) với `tools/watch_restart_ebm_tunnel.sh` (nguồn trong repo). Nếu ai
+đó sửa script nguồn mà quên chạy lại `install_ebm_mcp_code_watcher.py`, mục 3
+báo PASS giả dù bản đang chạy đã lỗi thời. Nay kiểm thêm hash nội dung.
 """
 from __future__ import annotations
 
+import hashlib
 import platform
 import subprocess
 import sys
@@ -33,6 +40,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MIRROR = ROOT / "medical-ebm-automation"
 TUNNEL_LABEL = "vn.drluan.ebm-copilot-tunnel"
 WATCH_LABEL = "vn.drluan.ebm-mcp-code-watch"
+WATCHER_SOURCE = MIRROR / "tools/watch_restart_ebm_tunnel.sh"
+WATCHER_INSTALLED = Path.home() / ".ebm-tools/bin/watch-restart-ebm-tunnel"
 
 
 def _git_hooks_path(repo: Path) -> str | None:
@@ -58,6 +67,13 @@ def _launchd_job_loaded(label: str) -> bool:
     except OSError:
         return False
     return result.returncode == 0
+
+
+def _sha256(path: Path) -> str | None:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
 
 
 def main() -> int:
@@ -101,6 +117,23 @@ def main() -> int:
             )
         else:
             notes.append(f"LaunchAgent {WATCH_LABEL}: đã load, theo dõi file MCP sống.")
+            source_hash = _sha256(WATCHER_SOURCE)
+            installed_hash = _sha256(WATCHER_INSTALLED)
+            if source_hash is None:
+                pass  # repo không có file nguồn (bất thường) — không phải lỗi của máy này
+            elif installed_hash is None:
+                problems.append(
+                    f"Không đọc được bản cài {WATCHER_INSTALLED} dù LaunchAgent đã load — "
+                    f"cài lại: cd '{MIRROR}' && ~/.ebm-venv/bin/python3 tools/install_ebm_mcp_code_watcher.py"
+                )
+            elif source_hash != installed_hash:
+                problems.append(
+                    f"Bản cài {WATCHER_INSTALLED} LỖI THỜI so với nguồn {WATCHER_SOURCE} "
+                    "(watch_restart_ebm_tunnel.sh đã sửa nhưng chưa chạy lại installer). "
+                    f"Cập nhật: cd '{MIRROR}' && ~/.ebm-venv/bin/python3 tools/install_ebm_mcp_code_watcher.py"
+                )
+            else:
+                notes.append(f"LaunchAgent {WATCH_LABEL}: bản cài khớp hash với nguồn repo.")
         if not _launchd_job_loaded(TUNNEL_LABEL):
             notes.append(
                 f"Lưu ý: {TUNNEL_LABEL} (Secure MCP Tunnel) chưa load — nếu chủ ý không dùng tunnel "
