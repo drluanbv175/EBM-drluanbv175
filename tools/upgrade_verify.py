@@ -26,6 +26,7 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (24 bước tự
  22. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
  23. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
  24. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
+ 25. verify_mcp_live_sync.py        — kiểm đồng bộ MCP mặc định (git hooksPath + LaunchAgent) đã bật trên máy này
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -133,6 +134,7 @@ def main() -> int:
         ("22. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
         ("23. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
         ("24. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        ("25. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []
