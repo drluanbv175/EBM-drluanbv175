@@ -19,7 +19,7 @@ Rà soát/kê đơn an toàn cho bệnh nhân bệnh mạn (THA, ĐTĐ, suy tim,
 1. **Đối chiếu thuốc (reconciliation):** liệt kê TẤT CẢ thuốc đang dùng (kể cả OTC, đông dược, thực phẩm chức năng). Phát hiện trùng nhóm, thuốc không còn chỉ định.
 2. **Chỉ định & phù hợp:** mỗi thuốc còn lý do dùng? đúng bệnh, đúng nhóm bệnh nhân?
 3. **Tương tác:** rà cặp nguy hiểm (mục 4) + đối chiếu công cụ chính thức; chú ý thuốc khoảng QT, kháng đông, thuốc hạ kali/tăng kali.
-4. **Hiệu chỉnh theo cơ quan:** kiểm eGFR (thuốc thải thận) & chức năng gan; nêu cần giảm liều/tránh — chỉ với con số khi nguồn xác minh. **Riêng DOAC: dùng CrCl (Cockcroft–Gault), KHÔNG dùng eGFR** — nhãn thuốc FDA/thử nghiệm gốc neo CrCl (xem `ke-don-an-toan`/`quan-ly-khang-dong`).
+4. **Hiệu chỉnh theo cơ quan:** kiểm eGFR (thuốc thải thận) & chức năng gan; nêu cần giảm liều/tránh — chỉ với con số khi nguồn xác minh. **Riêng DOAC — dabigatran/rivaroxaban/edoxaban: dùng CrCl (Cockcroft–Gault), KHÔNG dùng eGFR** (nhãn thuốc FDA/thử nghiệm gốc neo CrCl); **apixaban: giảm liều theo ≥2/3 tiêu chí lâm sàng (tuổi≥80 · cân nặng≤60kg · creatinin≥1.5mg/dL), KHÔNG phải ngưỡng CrCl** (CrCl chỉ để loại trừ CrCl<15/lọc máu) — xem `ke-don-an-toan`/`quan-ly-khang-dong`.
 5. **Theo dõi (monitoring):** xét nghiệm nền + định kỳ theo nhóm thuốc (mục 5).
 6. **Cá thể hóa mục tiêu + deprescribing:** mục tiêu HbA1c/HA/LDL theo bệnh đồng mắc & kỳ vọng sống; cân nhắc giảm/ngưng thuốc hết lợi ích (nối Beers/STOPP).
 
