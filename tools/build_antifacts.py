@@ -177,6 +177,13 @@ def load_scales():
             "purpose": it.get("purpose", ""),
             "tool_type": it.get("tool_type", ""),
             "population": it.get("population", ""),
+            # LƯU Ý (vòng lặp kiểm tra-hoàn thiện vòng 4, 2026-07-21): trường "html" được
+            # render THẲNG vào innerHTML ở Antifacts.html (showScaleTab/openScale), KHÔNG
+            # qua escHtml()/sanitize — CHỦ Ý, vì đây là markup thật (bảng/danh sách tính
+            # điểm) do người biên tập tự viết, không phải văn bản tự do từ nguồn ngoài.
+            # Chấp nhận được MIỄN LÀ nguồn dữ liệu (clinical_scores_45.json) chỉ được sửa
+            # bởi người biên tập nội bộ — KHÔNG copy-paste HTML chưa rà soát từ nguồn ngoài
+            # vào trường này (không có lớp chặn kỹ thuật nào khác bảo vệ ở đây).
             "detail_html": it.get("html", ""),
         })
     return out

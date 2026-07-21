@@ -516,6 +516,14 @@ let state={selected:null, tab:'cqv', q:'', filters:{decision:new Set(),group:new
    http(s) khi dựng href (chặn "javascript:" URI). */
 function escHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function escUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?encodeURI(u).replace(/"/g,'%22'):'';}
+/* SỬA 2026-07-21 (vòng lặp kiểm tra-hoàn thiện vòng 4, phát hiện MEDIUM):
+   escHtml() KHÔNG đủ cho giá trị nội suy vào chuỗi JS single-quote bên trong
+   thuộc tính onclick="select('${e.id}')" — trình duyệt GIẢI MÃ entity HTML
+   của attribute value TRƯỚC khi biên dịch thành JS, nên &#39; lại quay về '
+   trước khi JS engine thấy, không chặn được việc thoát chuỗi. Dùng escJs()
+   escape backslash/nháy đơn THẬT trong chuỗi JS cho mọi giá trị (đặc biệt
+   e.id) nội suy vào onclick=. */
+function escJs(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 /* forest helpers */
 const FMIN=0.4, FMAX=2.0;
@@ -711,7 +719,7 @@ function tableView(arr){
     const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):escHtml(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+escHtml(e.effect.ci)+')':''}</span>`:(e.effectText?`<span class="effect ns" style="font-size:10.5px">${escHtml(e.effectText)}</span>`:'<span class="effect ns">—</span>');
     const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
     const robm=e.rob?Object.values(e.rob).map(r=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join(''):'<span style="color:var(--faint);font-size:10px">—</span>';
-    return `<tr class="${e.id===state.selected?'sel':''}" onclick="select('${e.id}')">
+    return `<tr class="${e.id===state.selected?'sel':''}" onclick="select('${escJs(e.id)}')">
       <td><span class="ttl">${escHtml(e.title)}<span class="auth">${escHtml(e.source)} · <span class="idtag">${escHtml(e.id)}</span>${e.pmid?` · PMID <span class="pmid">${escHtml(e.pmid)}</span>`:''}</span>${e.flag?`<span class="flag-mini">⚑ ${escHtml(e.flag)}</span>`:''}</span></td>
       <td><span class="badge ${dm[0]}"><span class="d"></span>${dm[1]}</span></td>
       <td>${eff}</td>
@@ -729,7 +737,7 @@ function cardView(arr,kind){
   return `<div class="pad"><div class="cardlist">`+arr.map(e=>{
     const col=kind==='safety'?'var(--danger)':'var(--notyet)';
     const txt=escHtml(kind==='safety'?e.safety:(e.action||''))+(e.flag?` <span class="flag-mini">⚑ ${escHtml(e.flag)}</span>`:'');
-    return `<div class="li-card" style="display:flex;gap:11px;cursor:pointer" onclick="select('${e.id}');setTab('cqv')">
+    return `<div class="li-card" style="display:flex;gap:11px;cursor:pointer" onclick="select('${escJs(e.id)}');setTab('cqv')">
       <div class="stripe" style="background:${col}"></div>
       <div><div class="h">${escHtml(e.title)}</div><div class="x">${txt}</div><div class="src">${escHtml(e.source)} · ${escHtml(e.id)}${e.pmid?' · PMID '+escHtml(e.pmid):''}</div></div></div>`;
   }).join('')+`</div></div>`;
@@ -737,7 +745,7 @@ function cardView(arr,kind){
 function vnView(){
   const apply=DATA.items.filter(x=>x.decision==='apply');
   const conf=DATA.items.filter(x=>(x.vn||'').includes('[CẦN XÁC NHẬN'));
-  const row=e=>`<div class="li-card" style="cursor:pointer" onclick="select('${e.id}');setTab('cqv')"><div class="h" style="font-size:12.5px">${escHtml(e.title)}</div><div class="x">${escHtml(e.vn||'—')}</div><div class="src">${escHtml(e.source)} · ${escHtml(e.id)}</div></div>`;
+  const row=e=>`<div class="li-card" style="cursor:pointer" onclick="select('${escJs(e.id)}');setTab('cqv')"><div class="h" style="font-size:12.5px">${escHtml(e.title)}</div><div class="x">${escHtml(e.vn||'—')}</div><div class="src">${escHtml(e.source)} · ${escHtml(e.id)}</div></div>`;
   return `<div class="pad"><div class="vn-grid">
     <div class="vn-col"><h5>✓ Triển khai ngay tại phòng khám</h5><div class="cardlist">${apply.map(row).join('')||'<div class="empty">—</div>'}</div></div>
     <div class="vn-col"><h5>⚙ Cần đối chiếu sẵn có · chi phí · BHYT · phác đồ</h5><div class="cardlist">${DATA.items.filter(x=>x.decision==='consider').map(row).join('')||'<div class="empty">—</div>'}</div>
