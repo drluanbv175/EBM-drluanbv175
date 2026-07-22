@@ -32,6 +32,20 @@ DEFAULT_MD = ROOT / "reports" / "RESEARCH_READINESS_EVIDENCE.md"
 DEFAULT_JSON = ROOT / "reports" / "RESEARCH_READINESS_EVIDENCE.json"
 
 
+def _configure_utf8_stdio() -> None:
+    """Keep Vietnamese evidence-report output printable on Windows legacy consoles."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is not None and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                pass
+
+
+_configure_utf8_stdio()
+
+
 def _project_python() -> str:
     """Ưu tiên venv chuẩn của dự án để các cổng pytest/dependency chạy ổn định."""
     venv_python = (
