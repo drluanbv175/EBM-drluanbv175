@@ -93,12 +93,15 @@ def test_full_pytest_uses_project_python(monkeypatch):
     report = E.build_report(include_full_pytest=True)
 
     assert report["overall_status"] == "PASS"
-    assert any(
-        domain == "Full test repo sống"
-        and command == ["-m", "pytest"]
-        and python == "/tmp/ebm-venv/bin/python"
+    full_pytest = [
+        command
         for domain, command, python in seen
-    )
+        if domain == "Full test repo sống" and python == "/tmp/ebm-venv/bin/python"
+    ]
+    assert full_pytest
+    assert full_pytest[0][:2] == ["-m", "pytest"]
+    assert full_pytest[0][2].startswith("--basetemp=")
+    assert "OneDrive" not in full_pytest[0][2]
     assert all(python == "/tmp/ebm-venv/bin/python" for _, _, python in seen)
 
 

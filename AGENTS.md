@@ -107,5 +107,6 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Kiểm riêng clinical runtime governance: `python tools/verify_clinical_runtime_schema_hardening.py`
 - Kiểm riêng pipeline cập nhật chứng cứ lâm sàng: `python tools/verify_clinical_evidence_update_pipeline.py`
 - Chạy chu trình tự động có kiểm soát: `python tools/run_controlled_automation_cycle.py`
+- Vòng lặp kiểm tra-hoàn thiện tới clinical production: `python tools/clinical_production_loop.py --max-iterations 3`
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._

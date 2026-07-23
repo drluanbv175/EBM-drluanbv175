@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import csv
 import json
+import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -154,6 +156,34 @@ def _write_gate_scaffold(out_dir: Path, gates: list[str]) -> None:
                 f"Synthetic {gate} artifact for practical readiness verification.{suffix}",
                 encoding="utf-8",
             )
+
+
+def _restore_temp_cleanup_access(path: Path) -> None:
+    """Noi long quyen tren temp synthetic de Windows co the xoa sau khi verifier xong."""
+    if not path.exists():
+        return
+    if os.name == "nt":
+        result = subprocess.run(["whoami"], capture_output=True, text=True, check=False)
+        principal = (result.stdout or "").strip()
+        if result.returncode != 0 or "\\" not in principal:
+            user = os.environ.get("USERNAME", "")
+            domain = os.environ.get("USERDOMAIN", "")
+            principal = f"{domain}\\{user}" if domain and user else user
+        if not principal:
+            return
+        commands = [
+            ["icacls", str(path), "/grant:r", f"{principal}:(OI)(CI)F", "/T", "/C"],
+            ["icacls", str(path), "/inheritance:e", "/T", "/C"],
+        ]
+        for command in commands:
+            subprocess.run(command, capture_output=True, text=True, check=False)
+        return
+
+    for item in sorted(path.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+        try:
+            item.chmod(0o700 if item.is_dir() else 0o600)
+        except OSError:
+            pass
 
 
 def _verify_deidentification_path(exports_root: Path, raw_path: Path) -> Dict[str, Any]:
@@ -297,20 +327,23 @@ def run_verification() -> Dict[str, Any]:
     """Chạy toàn bộ verifier và trả summary máy-đọc-được."""
     with tempfile.TemporaryDirectory(prefix="ebm_practical_readiness_") as tmp:
         tmp_root = Path(tmp)
-        exports_root = tmp_root / "exports"
-        mapping_root = tmp_root / "protected_mapping"
-        raw_path = _write_csv(tmp_root / "raw_with_pii.csv", RAW_ROWS)
+        try:
+            exports_root = tmp_root / "exports"
+            mapping_root = tmp_root / "protected_mapping"
+            raw_path = _write_csv(tmp_root / "raw_with_pii.csv", RAW_ROWS)
 
-        deid = _verify_deidentification_path(exports_root, raw_path)
-        pseudo = _verify_pseudonymized_lock_path(exports_root, mapping_root, raw_path)
-        return {
-            "status": "PASS",
-            "kind": "research_practical_readiness_verification",
-            "uses_synthetic_data": True,
-            "pii_policy": "raw PII blocked; public reports do not store PII values",
-            "deidentification": deid,
-            "pseudonymization_to_g6": pseudo,
-        }
+            deid = _verify_deidentification_path(exports_root, raw_path)
+            pseudo = _verify_pseudonymized_lock_path(exports_root, mapping_root, raw_path)
+            return {
+                "status": "PASS",
+                "kind": "research_practical_readiness_verification",
+                "uses_synthetic_data": True,
+                "pii_policy": "raw PII blocked; public reports do not store PII values",
+                "deidentification": deid,
+                "pseudonymization_to_g6": pseudo,
+            }
+        finally:
+            _restore_temp_cleanup_access(tmp_root)
 
 
 def main() -> int:

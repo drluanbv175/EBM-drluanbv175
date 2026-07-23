@@ -56,6 +56,21 @@ def _project_python() -> str:
     return str(venv_python) if venv_python.exists() else sys.executable
 
 
+def _current_principal_suffix() -> str:
+    result = subprocess.run(["whoami"], capture_output=True, text=True, check=False)
+    principal = (result.stdout or "").strip()
+    if result.returncode != 0 or not principal:
+        principal = os.environ.get("USERNAME") or "current-user"
+    safe = "".join(ch if ch.isalnum() else "_" for ch in principal)
+    return safe[-80:] or "current_user"
+
+
+def _pytest_basetemp_arg() -> str:
+    # Tranh pytest-of-Admin tren Windows sandbox, nhung khong dat trong OneDrive.
+    base = Path(tempfile.gettempdir()) / f"ebm_pytest_{_current_principal_suffix()}"
+    return f"--basetemp={base}"
+
+
 @dataclass(frozen=True)
 class EvidenceCheck:
     domain: str
@@ -156,7 +171,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
 
 FULL_TEST_CHECK = EvidenceCheck(
     domain="Full test repo sống",
-    command=["-m", "pytest"],
+    command=["-m", "pytest", _pytest_basetemp_arg()],
     cwd=str(REPO),
     proves="Bộ test hồi quy rộng của `medical-ebm-automation` chạy qua trong môi trường hiện tại.",
     limitation="Một số test online/golden có thể skipped; pytest không thay kiểm thử triển khai với dữ liệu thật tại bệnh viện.",
