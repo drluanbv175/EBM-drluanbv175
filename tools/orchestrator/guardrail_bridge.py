@@ -71,8 +71,17 @@ def _safe_target(path_or_name: str) -> tuple:
     name = PurePath(str(path_or_name)).name
     thash = hashlib.sha1(name.encode("utf-8")).hexdigest()[:10]
     probe = re.sub(r"[_\-.]+", " ", name)
+    # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): trước đây chỉ
+    # kiểm \d{6,} trên `probe` ĐÃ tokenize (dấu _-. → khoảng trắng) — nhưng chính bước
+    # tokenize lại CẮT ĐỨT số điện thoại/định danh viết CÓ dấu phân cách (vd
+    # "0912-345-678" → "0912 345 678") thành các nhóm 3-4 chữ số rời rạc, không còn chuỗi
+    # ≥6 số liên tục nào để bắt — làm lọt PII dạng này vào observability/APPRAISALS.jsonl
+    # (log bền, append-only). Kiểm THÊM trên bản đã gộp hết khoảng trắng của `probe` (khôi
+    # phục chuỗi số liên tục) trước khi đếm độ dài.
+    collapsed_digits = re.sub(r"\s+", "", probe)
     caps = re.findall(r"[A-ZÀ-Ỵ][a-zà-ỹ]+", probe)
-    if re.search(r"\d{6,}", probe) or (" " in name) or len(caps) >= 2:
+    if (re.search(r"\d{6,}", probe) or re.search(r"\d{6,}", collapsed_digits)
+            or (" " in name) or len(caps) >= 2):
         ext = PurePath(name).suffix
         return f"redacted-{thash[:8]}{ext}", thash
     return name, thash

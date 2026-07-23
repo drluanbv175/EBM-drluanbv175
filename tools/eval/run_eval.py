@@ -433,9 +433,15 @@ RE_RX_ACTION = re.compile(
 # Đòi CÓ MẶT ít nhất 1/3 (không đòi đủ cả 3 — "khi liên quan" trong định nghĩa gốc nghĩa là
 # không phải thuốc nào cũng cần chỉnh liều thận/gan; xác minh ĐỦ cho đúng thuốc là việc của
 # LLM/ke-don-an-toan, ngoài khả năng một regex).
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện CRITICAL): trước đây có
+# thêm nhánh "ke-don-an-toan" — chuỗi TÊN AGENT, không phải nội dung rà soát thật. Một câu
+# chỉ nhắc Ý ĐỊNH giao việc trong tương lai ("sẽ giao ke-don-an-toan xem lại sau") vẫn khớp,
+# làm check PASS SAI dù chưa hề rà tương tác/CCĐ/chỉnh liều gì — bỏ lọt đúng loại lỗi mà cổng
+# HARD-RED này (R14, ESCALATE_HARD) được thiết kế để chặn. Bỏ nhánh tên-agent, chỉ giữ các
+# dấu hiệu NỘI DUNG rà soát thật.
 RE_RX_SAFETY_REVIEWED = re.compile(
     r"tương\s*tác\s*thuốc|chống\s*chỉ\s*định|\bCCĐ\b|"
-    r"eGFR|chức\s*năng\s*thận|chức\s*năng\s*gan|creatinin|ke-don-an-toan", re.I)
+    r"eGFR|chức\s*năng\s*thận|chức\s*năng\s*gan|creatinin", re.I)
 
 
 def _prescribing_action_present(text: str) -> bool:
@@ -999,12 +1005,20 @@ _REPEAT_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci"}
 
 def _hard_codes() -> set:
     """Mã VỐN ĐÃ là cổng cứng (ESCALATE_HARD) — KHÔNG đề bạt lại (vô nghĩa, M2). Lấy từ
-    retry_loop; fallback tĩnh nếu không import được."""
+    retry_loop; fallback tĩnh nếu không import được.
+
+    SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): set fallback
+    (nhánh except — kích hoạt khi cây medical-ebm-automation/tools không có mặt, đúng kịch
+    bản "chạy eval harness tách rời" mà code này tự mô tả là được thiết kế để xử lý) THIẾU
+    "R14" — guardrail_bridge.py có _HARD_CODES tương tự và ĐÃ được vá thêm R14 (2026-07-19,
+    audit vòng 3) nhưng bản vá đó không lan sang đây. Ở chế độ fallback, R14 từng bị coi là
+    "chưa phải cổng cứng" khi tính promotion_candidate trong emit_appraisal(), ngược thực tế
+    R14 đã là ESCALATE_HARD trong retry_loop.ERROR_ROUTING_TABLE thật."""
     try:
         hard = _retry_loop.ErrorSeverity.ESCALATE_HARD
         return {c for c, (sev, _a) in _retry_loop.ERROR_ROUTING_TABLE.items() if sev == hard}
     except Exception:
-        return {"R2", "R3", "R11", "R12", "R13", "Q2", "Q5"}
+        return {"R2", "R3", "R11", "R12", "R13", "R14", "Q2", "Q5"}
 
 
 def _safe_target(path_or_name: str) -> tuple:

@@ -23,8 +23,14 @@ QUEUE = ROOT / "observability" / "PROMOTION_QUEUE.md"
 THRESHOLD = 3  # khớp REPEAT_PROMOTE_THRESHOLD trong run_eval.py
 
 # Mã ĐÃ là cổng cứng (TIER-0/1) — đề bạt thêm = tăng lớp CODE tự động, không phải 'chưa có gate'.
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): thiếu
+# "DRG-INCOMPLETE" (mã ledger của R14 theo retry_loop.RCODE_TO_LESSON_CODE) — prescribing_
+# safety_r14 vừa là red_key trong run_eval.py::evaluate() (tier-0/1, chặn phát hành khi
+# fail) vừa là ESCALATE_HARD trong retry_loop.ERROR_ROUTING_TABLE, cùng tiêu chí đã dùng
+# để đưa DRG-DOSE vào set này — thiếu entry khiến tool có thể đề bạt lại một cổng ĐÃ cứng.
 ALREADY_HARD = {"CLIN-SAFETYQ", "CIT-GHOST", "SEC-PII", "SEC-INJECT", "GRD-SELF", "FAB-DATA",
-                "FAB-ADMIN", "INFER-CAUSAL", "DRG-DOSE", "CLIN-REDFLAG", "CLIN-SAFETYNET"}
+                "FAB-ADMIN", "INFER-CAUSAL", "DRG-DOSE", "DRG-INCOMPLETE", "CLIN-REDFLAG",
+                "CLIN-SAFETYNET"}
 
 
 def _count(v) -> int:

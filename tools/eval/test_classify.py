@@ -267,6 +267,24 @@ def test_r14_inn_name_with_safety_review_passes():
     assert c and c[0]["pass"] is True
 
 
+def test_r14_not_bypassed_by_merely_naming_the_agent():
+    """Hồi quy CRITICAL (vòng lặp kiểm tra-hoàn thiện vòng 10, 2026-07-22): trước đây
+    RE_RX_SAFETY_REVIEWED có nhánh chuỗi văn bản thuần "ke-don-an-toan" — TÊN agent,
+    không phải nội dung rà soát. Một câu chỉ nêu Ý ĐỊNH giao việc trong tương lai (chưa
+    hề rà tương tác/CCĐ/chỉnh liều gì) làm check PASS SAI, bỏ lọt đúng loại lỗi R14
+    (HARD-RED) được thiết kế để chặn."""
+    text = ("Bệnh nhân đang dùng metformin, nay kê thêm apixaban 5mg x2 lần/ngày cho "
+            "rung nhĩ.\nSẽ giao ke-don-an-toan xem lại đơn này sau.\n"
+            "Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "prescribing_safety_r14"]
+    assert c and c[0]["pass"] is False, (
+        "chỉ nhắc TÊN agent như việc-cần-làm-trong-tương-lai không phải bằng chứng đã rà "
+        "an toàn thật — R14 phải FAIL, không được PASS giả"
+    )
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+
+
 def test_r14_blindspot_advisory_when_drug_name_unrecognized():
     # Có động từ kê đơn nhưng thuốc không nhận ra -> cảnh báo điểm mù (không im lặng),
     # KHÔNG fail (không chắc có kê thuốc thật).
