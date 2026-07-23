@@ -67,13 +67,26 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   ngay trong docstring, ledger của nó chỉ sống trong bộ nhớ (không bao giờ ghi ra
   `exports/<study>/approval_ledger.json` — file THẬT mà `tools/approve_gate.py`/`run_g*_auto.py` dùng).
   (2) `research_project/project_cli.py` + `research_project/project_claim_traceability.py`
-  (`ClaimTraceabilityLedger`) — CLI thứ ba, không nằm trong doctrine, có thể vô tình trỏ
-  `--approval-ledger` vào ĐÚNG path thật và ghi đè ledger nếu ai đó gõ nhầm (rủi ro tiềm ẩn, chưa xảy ra);
-  package tự khai "OFFLINE·SYNTHETIC ONLY... NO-GO — NOT QUALIFIED FOR RESEARCH WORKFLOW USE".
+  (`ClaimTraceabilityLedger`) — CLI thứ ba, không nằm trong doctrine; package tự khai "OFFLINE·SYNTHETIC
+  ONLY... NO-GO — NOT QUALIFIED FOR RESEARCH WORKFLOW USE". **Sửa 2026-07-23 (vòng lặp kiểm tra-hoàn
+  thiện vòng 11, đã xác minh bằng thực nghiệm — không phải suy đoán):** `--approval-ledger` của lệnh con
+  `project-controlled-readiness` CHỈ ĐỌC (`ApprovalLedger.from_file()` → `json.loads()`, không có
+  `to_file()`/ghi nào trong toàn bộ `research_project/`) — khẳng định cũ "có thể ghi đè ledger nếu ai đó
+  gõ nhầm" là SAI, đã rà lại; rủi ro thật của cờ này là ĐỌC một ledger G0-G9 thật rồi PHA TRỘN với khung
+  milestone/artifact 00-18 hoàn toàn hư cấu của `research_project/`, in ra báo cáo PASS/BLOCKED có thể
+  gây hiểu nhầm là xác nhận cổng thật nếu đọc thoáng qua.
   (3) `app/core/approval_service.py` (class `ApprovalCenter`) + `app/models/governance_v7.py` +
   `app/chronic_care/` — hệ role thứ ba (physician/PI/system_owner) phục vụ "Chronic Care Phase 3A
   shadow pilot" nội bộ bằng Python, KHÁC HOÀN TOÀN thư mục `chronic-care-clinic-os/` (Next.js) ở trên dù
-  trùng tên "chronic care" — không có route/CLI thật nào ghi vào DB này ngoài script seed test.
+  trùng tên "chronic care". **Sửa 2026-07-23 (vòng lặp vòng 11, phát hiện CRITICAL):** khẳng định cũ
+  "không có route/CLI thật nào ghi vào DB này ngoài script seed test" SAI ở phần "không có route thật
+  gọi vào cụm code" — `app/dashboard/main.py` (mở bằng `python run.py dashboard`, KHÔNG phải script seed
+  test) có tab 14 "🫀 Chronic Care Shadow Pilot" gọi thật `app/chronic_care/dashboard.py` mỗi lần
+  Streamlit rerun (rerun toàn bộ script trên MỌI tương tác widget ở CẢ 14 tab, không chỉ khi mở đúng tab
+  14) — route này CÓ THẬT và chạy thường xuyên trong phiên làm việc thật của bác sĩ, dù tự giới hạn
+  read-only/dữ liệu tổng hợp theo thiết kế Phase 3A (đã vá thêm 1 lỗi hệ quả: audit log JSONL từng phình
+  vô hạn mỗi lần rerun — nay seed 1 lần/tiến trình). Phần "không ghi DB thật qua ORM" của khẳng định cũ
+  vẫn ĐÚNG (ChronicCareService dùng dataclass in-memory riêng, không đụng `governance_v7.py`/ORM).
   (4) `app/evidence/citation_verification.py` + `phase_2d_claim_mapping_validator.py` +
   `retraction_monitor.py` (gọi bởi `scripts/phase_2b_live_source_smoke_test.py`,
   `scripts/phase_2c_live_source_validation.py`, `app/evidence/phase_2d_pack_readiness.py`, và cross-ref
