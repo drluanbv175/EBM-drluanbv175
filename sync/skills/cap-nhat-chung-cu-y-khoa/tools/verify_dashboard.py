@@ -23,6 +23,11 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
     lại khai dateVersion "2024" — cùng họ guideline nên tiêu đề trùng đủ từ khóa để KHÔNG bị
     heuristic tráo-trích-dẫn ở trên bắt được; đây là dạng lỗi RIÊNG — "đúng họ, sai phiên
     bản/năm" — cần so năm trực tiếp mới bắt được).
+  - (--online, SỬA 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): item
+    CHỈ khai `url` (không pmid/doi) nay CŨNG được xác minh mở được thật (GET nhẹ) — trước bản
+    vá này, url được chấp nhận ngang pmid/doi để qua cổng truy nguyên nhưng KHÔNG BAO GIỜ được
+    xác minh online dù chạy --online, dù docstring cũ chỉ liệt kê PMID/DOI mà không nói rõ url
+    bị loại hoàn toàn khỏi mọi lượt xác minh trực tuyến.
 
 Cách dùng:
     python3 verify_dashboard.py <dashboard.html>            # chỉ kiểm cấu trúc (offline)
@@ -353,6 +358,39 @@ def verify_doi_online(doi, retries=2):
     return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
 
 
+def verify_url_online(url, retries=2):
+    """Tri-state (True/False/None) — kiểm URL THẬT SỰ mở được (không chỉ đúng định dạng).
+
+    SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): trước đây một
+    item chỉ khai `url` (không pmid/doi) KHÔNG BAO GIỜ được xác minh online dù chạy --online —
+    toàn bộ khối --online chỉ lặp qua `pmids`/`dois`, biến `url` không xuất hiện ở đó. Nay thêm
+    nhánh thứ 3 cùng nguyên tắc fail-closed như PMID/DOI: lỗi mạng/timeout KHÔNG được coi là
+    "đã xác minh". Chỉ GET nhẹ (không tải toàn bộ nội dung) — đủ để xác nhận URL còn tồn tại,
+    không phải 404/hỏng."""
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            with source_urlopen(url, timeout=15) as r:
+                r.read(256)  # chỉ đọc vài trăm byte đầu — đủ xác nhận kết nối/status, không tải hết
+                status = getattr(r, "status", None) or r.getcode()
+            return True, "HTTP %s" % status
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 410):
+                return False, "URL không tồn tại (HTTP %d)" % e.code
+            last_err = e
+            if e.code in (429, 500, 502, 503, 504) and attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "lỗi mạng: %s" % e
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "lỗi mạng: %s" % e
+    return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
+
+
 def _year_of(text):
     """Trích năm 4 chữ số đầu tiên trong chuỗi (dateVersion item hoặc pubdate PubMed)."""
     m = re.search(r"\b(19|20)\d{2}\b", text or "")
@@ -440,6 +478,7 @@ def main():
 
     pmids = []
     dois = []
+    urls_only = []
     for ch in items:
         iid = field(ch, "id") or "(?)"
         pmid = field(ch, "pmid")
@@ -462,6 +501,8 @@ def main():
             if u.scheme not in ("http", "https") or not u.netloc:
                 errors.append("[%s] url không đúng định dạng (thiếu scheme http(s) hoặc host): %r"
                               % (iid, url))
+            else:
+                urls_only.append((iid, url.strip()))
         if pmid:
             pmids.append((iid, pmid, ch, date_version))
         if doi and DOI_RE.match(doi.strip()):
@@ -584,6 +625,37 @@ def main():
         oks.append("Có %d DOI đúng định dạng (chạy --online để xác minh phân giải qua Crossref)."
                    % len(set(d for _, d, _ in dois)))
 
+    # 3c) Xác minh URL online (SỬA 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện
+    # MEDIUM): item CHỈ có url (không pmid/doi) trước đây KHÔNG BAO GIỜ được xác minh online dù
+    # chạy --online — nhánh này trước đây hoàn toàn không tồn tại. Cùng nguyên tắc fail-closed.
+    if a.online and urls_only:
+        oks.append("Đang xác minh %d url mở được…" % len(set(u for _, u in urls_only)))
+        seen_url = {}
+        net_calls_url = 0
+        for iid, u in urls_only:
+            if u in seen_url:
+                ok, info = seen_url[u]
+            else:
+                if net_calls_url:
+                    time.sleep(0.1)
+                net_calls_url += 1
+                ok, info = verify_url_online(u)
+                seen_url[u] = (ok, info)
+            if ok is True:
+                oks.append("[%s] url %s ✓ %s" % (iid, u, info))
+            elif ok is False:
+                errors.append("[%s] url %s KHÔNG mở được: %s — nghi link chết/sai." % (iid, u, info))
+            else:
+                # Fail-closed như PMID/DOI — lỗi mạng không được coi là đã xác minh.
+                msg = "[%s] url %s CHƯA XÁC MINH ĐƯỢC (%s) — mạng lỗi hoặc trang tạm ngưng." % (iid, u, info)
+                if a.strict_sources:
+                    errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
+                else:
+                    warns.append(msg + " Rà lại thủ công.")
+    elif urls_only:
+        oks.append("Có %d url đúng định dạng, chỉ dùng url làm truy nguyên (chạy --online để "
+                   "xác minh mở được)." % len(set(u for _, u in urls_only)))
+
     # 4) CHẤT LƯỢNG NỘI DUNG — chống rác abstract NGOẠI NGỮ / placeholder (xem dashboard_content_audit.py)
     try:
         import os as _os
@@ -618,7 +690,13 @@ def main():
         if n_high >= 0.9 * n:
             errors.append("NGHI GÁN MỨC MÁY MÓC: %d/%d item đều gradeLevel='high' — không nguồn nào "
                           "đồng loạt 'Cao'. Rà & chấm GRADE từng nguồn (RoB/GRADE thật)." % (n_high, n))
-    elif 3 <= n < 8:
+    elif 1 <= n < 8:
+        # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện LOW): trước đây điều
+        # kiện `3 <= n < 8` bỏ sót dashboard chỉ có 1-2 item — cùng bản chất nghi vấn (gán mức
+        # không qua thẩm định thật) như trường hợp 3-7 item nhưng lại đi qua cổng này êm ru,
+        # không cảnh báo gì. Hạ ngưỡng xuống n>=1 để nhất quán với chính lý do đã thêm nhánh
+        # "chế độ nhanh" này (audit 2026-07-11): mẫu càng nhỏ, rủi ro gán mức máy móc càng khó
+        # phân biệt với ngẫu nhiên, không phải lý do để BỎ QUA hoàn toàn.
         n_high = sum(1 for g in grades if g == "high")
         if n_high == n:
             warns.append("NGHI GÁN MỨC MÁY MÓC (mẫu nhỏ, %d item): tất cả đều gradeLevel='high' — "

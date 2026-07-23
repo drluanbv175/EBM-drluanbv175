@@ -14,6 +14,7 @@ Dùng:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -1000,7 +1001,11 @@ APPRAISAL_REPEATS = _ROOT / "observability" / "APPRAISAL_REPEATS.json"
 # chỉ gắn cờ để BÁC SĨ quyết (giữ human-gate). Nguồn ⭐ 'tỷ lệ tái phạm'.
 REPEAT_PROMOTE_THRESHOLD = 3
 # Nguồn KHÔNG tính vào bộ đếm tái phạm (chấm hàng loạt corpus/CI làm nhiễu tín hiệu thật).
-_REPEAT_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci"}
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): thêm "orchestrator"
+# — tools/orchestrator/ hiện HOÀN TOÀN dry-run (chưa nối thực thi thật, xem CLAUDE.md), nên
+# mọi appraisal source=orchestrator hiện tại là dữ liệu self-test, không phải lỗi lâm sàng
+# tái diễn thật. PHẢI bỏ khỏi set này khi orchestrator được nối vào thực thi thật.
+_REPEAT_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci", "orchestrator"}
 
 
 def _hard_codes() -> set:
@@ -1040,31 +1045,77 @@ def _appraisal_id(target: str, verdict: str) -> str:
     return f"APPRAISAL-{ts}-{h}"
 
 
+@contextlib.contextmanager
+def appraisal_repeats_lock(timeout_s: float = 10.0):
+    """Khóa best-effort quanh chu trình đọc-sửa-ghi APPRAISAL_REPEATS.json.
+
+    SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): trước đây
+    _bump_repeats() ở ĐÂY và bản độc lập ở tools/orchestrator/guardrail_bridge.py đều đọc
+    toàn bộ file → sửa trong bộ nhớ → ghi đè (tmp+os.replace atomic CHO THAO TÁC GHI, nhưng
+    KHÔNG atomic cho cả chu trình đọc-sửa-ghi) — không khóa nào giữa 2 tiến trình, có thể mất
+    cập nhật (lost update) nếu 2 lời gọi gần như đồng thời (CLI + orchestrator, hoặc 2 phiên
+    song song — đã xảy ra nhiều lần trong lịch sử dự án này theo memory). Dùng CHUNG 1 file
+    khóa với cả 2 module (đặt cạnh APPRAISAL_REPEATS.json) để chúng thật sự loại trừ lẫn nhau.
+    Theo đúng tiền lệ EBM_MASTER/tools/sync_all.py::ledger_lock() — Unix: flock độc quyền, chờ
+    có giới hạn; Windows/thiếu fcntl: bỏ qua khóa hoàn toàn (best-effort, không treo)."""
+    lockpath = APPRAISAL_REPEATS.with_suffix(".json.lock")
+    f = None
+    try:
+        import fcntl
+        import time
+        APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
+        f = open(lockpath, "w")
+        waited = 0.0
+        while True:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError:
+                if waited >= timeout_s:
+                    break
+                time.sleep(0.2)
+                waited += 0.2
+    except Exception:
+        f = None  # không có fcntl (Windows) → bỏ qua khóa, vẫn best-effort như trước
+    try:
+        yield
+    finally:
+        if f is not None:
+            try:
+                import fcntl
+                fcntl.flock(f, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            f.close()
+
+
 def _bump_repeats(codes: list, thash: str) -> dict:
     """Đếm tái phạm theo mã lỗi, DEDUP theo output (thash) — chấm lại CÙNG một file KHÔNG cộng
     dồn (M1: chỉ đếm số OUTPUT KHÁC NHAU dính cùng mã). Trả {code: số_output_distinct}.
-    Best-effort, ghi NGUYÊN TỬ (tmp+os.replace) để giảm lost-update (L3)."""
-    data = {}
-    if APPRAISAL_REPEATS.exists():
+    Best-effort, ghi NGUYÊN TỬ (tmp+os.replace) để giảm lost-update (L3); toàn chu trình đọc-
+    sửa-ghi được bọc trong appraisal_repeats_lock() để giảm TOCTOU race giữa 2 tiến trình."""
+    with appraisal_repeats_lock():
+        data = {}
+        if APPRAISAL_REPEATS.exists():
+            try:
+                data = json.loads(APPRAISAL_REPEATS.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                data = {}
+        for c in codes:
+            lst = data.get(c) or []
+            if not isinstance(lst, list):          # dữ liệu rác / format cũ → khởi lại an toàn
+                lst = []
+            if thash not in lst:
+                lst.append(thash)
+            data[c] = lst
         try:
-            data = json.loads(APPRAISAL_REPEATS.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            data = {}
-    for c in codes:
-        lst = data.get(c) or []
-        if not isinstance(lst, list):          # dữ liệu rác / format cũ → khởi lại an toàn
-            lst = []
-        if thash not in lst:
-            lst.append(thash)
-        data[c] = lst
-    try:
-        APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
-        tmp = APPRAISAL_REPEATS.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(tmp, APPRAISAL_REPEATS)
-    except OSError:
-        pass
-    return {c: len(data.get(c, [])) for c in codes}
+            APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
+            tmp = APPRAISAL_REPEATS.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            os.replace(tmp, APPRAISAL_REPEATS)
+        except OSError:
+            pass
+        return {c: len(data.get(c, [])) for c in codes}
 
 
 def emit_appraisal(res: dict, target: str, *, classify_res: dict | None = None,

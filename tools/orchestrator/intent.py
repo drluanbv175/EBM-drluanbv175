@@ -14,9 +14,24 @@ CLINICAL_CASE_CUES = [
     "bn nam", "bn nữ", "nam ~", "nữ ~", "nam,", "nữ,", "cụ ông", "cụ bà",
 ]
 # Cụm từ báo hiệu một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): whitelist cũ chỉ có
+# 8 cụm hẹp — một đề tài diễn đạt TỰ NHIÊN ("Nghiên cứu hồi cứu hiệu quả metformin trên bệnh
+# nhân PCOS...", "Khảo sát cắt ngang mức độ tuân thủ...") không khớp cụm nào, rơi xuống nhánh
+# CLINICAL_CASE_CUES (do có nhắc quần thể bệnh nhân) → định tuyến SAI thành ca lâm sàng đơn
+# lẻ, bỏ qua toàn bộ cổng cứng G2/G4/G8/G9. Thêm cụm ghép "nghiên cứu/khảo sát" + từ khóa
+# THIẾT KẾ nghiên cứu cụ thể (hồi cứu/tiến cứu/cắt ngang/so sánh/thuần tập/bệnh chứng/can
+# thiệp/quan sát/mô tả) + "tôi muốn nghiên cứu" — CỐ Ý không thêm từ TRẦN "nghiên cứu" một
+# mình vì sẽ khớp nhầm câu hỏi tra cứu chứng cứ đơn thuần tại điểm khám (vd "nghiên cứu nào
+# ủng hộ dùng SGLT2i cho bệnh nhân này?" — việc lẻ, KHÔNG phải khởi động đề tài mới).
 RESEARCH_TOPIC_CUES = [
     "đề tài", "chạy nghiên cứu", "làm nghiên cứu", "đề cương", "protocol",
     "nghiên cứu của tôi", "nghiệm thu", "bản thảo của tôi",
+    "tôi muốn nghiên cứu", "muốn làm nghiên cứu", "muốn thực hiện nghiên cứu",
+    "nghiên cứu hồi cứu", "nghiên cứu tiến cứu", "nghiên cứu cắt ngang",
+    "nghiên cứu so sánh", "nghiên cứu thuần tập", "nghiên cứu bệnh chứng",
+    "nghiên cứu can thiệp", "nghiên cứu quan sát", "nghiên cứu mô tả",
+    "khảo sát cắt ngang", "khảo sát hồi cứu", "khảo sát mô tả",
+    "thử nghiệm lâm sàng", "thử nghiệm ngẫu nhiên",
 ]
 
 # Luật việc lẻ: (keywords, agent, ghi chú). Thứ tự = độ ưu tiên (đặc thù trước).

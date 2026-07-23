@@ -156,7 +156,11 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   Thẻ mới vào hàng "chờ bác sĩ duyệt", không tự "áp dụng ngay"; thẻ không truy nguyên được bị cách ly khỏi `evidence_cards`.
   Khi cập nhật template (EW/DA), đồng bộ luôn `EBM_MASTER/skill_assets/web-dashboard-*.html` để hub không sinh dashboard bằng bản cũ.
 - **(4) Xuất Word chi tiết — MẶC ĐỊNH TỰ CHẠY ở bước cuối mỗi dashboard lâm sàng (bác sĩ chốt 2026-07-18; trước đó chỉ chạy khi yêu cầu riêng):**
-  `python3 EBM-Dashboards/tools/build_dashboard_docx.py <dashboard>.html` — tự trích khối `DATA` từ dashboard
+  `python3 EBM-Dashboards/tools/build_dashboard_docx.py <dashboard>.html --verified` (SỬA 2026-07-22, vòng lặp
+  kiểm tra-hoàn thiện vòng 10, phát hiện HIGH: trước đây file .docx LUÔN khẳng định cứng "đã xác minh qua
+  PubMed/Crossref" bất kể `verify_dashboard.py --online` đã PASS hay chưa cho dashboard đó — cờ `--verified`
+  PHẢI truyền khi bước này chạy sau `verify_dashboard.py --online` đã PASS trong CÙNG lượt (đúng thứ tự pipeline
+  mặc định dưới đây); không truyền → tool tự hạ câu chữ thành "CẦN xác minh", không khẳng định sai) — tự trích khối `DATA` từ dashboard
   (không gõ lại tay, tránh sai lệch), dựng `.docx` gồm trang bìa+cảnh báo, mục lục tự động, khối tóm tắt màu
   (nên làm/không nên/cờ đỏ), MỖI mục chứng cứ 1 bảng riêng có huy hiệu MÀU mức chứng cứ + quyết định (khớp
   đúng bảng màu Evidence Workbench: xanh lá=Cao/Áp dụng ngay, cam=Trung bình-Thấp/Cân nhắc, đỏ=Rất thấp/Chưa

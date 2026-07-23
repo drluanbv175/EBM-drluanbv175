@@ -43,11 +43,16 @@ Hai kiểm điều kiện chỉ xuất hiện khi liên quan ⇒ mẫu số đi�
 ## Chạy demo (đã chạy thật trong sandbox)
 ```bash
 cd tools/eval
-python3 run_eval.py sample_outputs/good_output.md              --gold gold/template.yaml
-python3 run_eval.py sample_outputs/bad_output.md               --gold gold/template.yaml
-python3 run_eval.py sample_outputs/good_antibiotic.md          --gold gold/template.yaml
-python3 run_eval.py sample_outputs/bad_causal_cross_sectional.md --gold gold/template.yaml
-python3 run_eval.py <file> --json                              # xuất JSON
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): 4 lệnh demo dưới
+# đây chấm fixture SYNTHETIC (sample_outputs/) — PHẢI truyền --source test (loại trừ khỏi
+# bộ đếm tái phạm) thay vì để mặc định --source cli, nếu không sẽ làm ô nhiễm
+# observability/APPRAISAL_REPEATS.json bằng dữ liệu demo, ảnh hưởng quyết định đề bạt cổng
+# cứng của bác sĩ ở observability/PROMOTION_QUEUE.md.
+python3 run_eval.py sample_outputs/good_output.md              --gold gold/template.yaml --source test
+python3 run_eval.py sample_outputs/bad_output.md               --gold gold/template.yaml --source test
+python3 run_eval.py sample_outputs/good_antibiotic.md          --gold gold/template.yaml --source test
+python3 run_eval.py sample_outputs/bad_causal_cross_sectional.md --gold gold/template.yaml --source test
+python3 run_eval.py <file> --json                              # xuất JSON (file thật của bác sĩ — GIỮ --source mặc định "cli")
 ```
 **Kết quả demo (rubric mở rộng, đã chạy thật trong sandbox — 2026-07-12: cập nhật sau khi
 thêm check `prescribing_safety_r14`; mẫu số tăng theo số kiểm điều kiện kích hoạt trên mỗi

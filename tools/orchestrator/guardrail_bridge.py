@@ -26,13 +26,33 @@ from . import ROOT
 APPRAISAL_LOG = ROOT / "observability" / "APPRAISALS.jsonl"
 APPRAISAL_REPEATS = ROOT / "observability" / "APPRAISAL_REPEATS.json"
 PROMOTE_THRESHOLD = 3
-_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci"}          # không tính vào tái phạm (nhiễu)
+# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): thêm "orchestrator"
+# — giá trị source MẶC ĐỊNH của chính emit_appraisal()/make_run_eval_verdict() bên dưới, tức
+# MỌI lần gọi `python tools/run_orchestrator.py "<yêu cầu>" --gate-output <file>.md` như
+# README hướng dẫn. Theo CLAUDE.md, tools/orchestrator/ hiện HOÀN TOÀN dry-run/self-audit
+# (chưa nối LLMExecutor thật — xem agent_adapter.py) nên MỌI bản ghi source=orchestrator
+# hiện tại đều là dữ liệu demo/self-test, không phải lỗi lâm sàng thật lặp lại — nếu không
+# loại trừ, chúng làm ô nhiễm bộ đếm tái phạm dùng để đề bạt cổng cứng cho bác sĩ duyệt.
+# LƯU Ý: PHẢI bỏ "orchestrator" khỏi set này ngay khi orchestrator được nối vào thực thi
+# thật (không còn dry-run), nếu không sẽ ẩn lỗi thật.
+_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci", "orchestrator"}  # không tính vào tái phạm (nhiễu)
 # Mã VỐN đã là cổng cứng (ESCALATE_HARD) — KHÔNG đề bạt lại (M2).
 # THÊM 2026-07-19 (audit vòng 3, D5_orchestrator_dry_run_drift — cao): "R14"
 # (an toàn kê đơn HARD-RED, tham-dinh-dau-ra.md §3) THIẾU khỏi cả _HARD_CODES
 # lẫn _CHECK_ID_TO_RCODE — cầu này reroute R14 như lỗi SỬA-ĐƯỢC (3 lần) trước
 # khi mới leo thang, thay vì leo thang NGAY như các cổng cứng khác (R2/R3/
 # R11-R13/Q2/Q5).
+# GIỚI HẠN TRUNG THỰC (SỬA 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện
+# MEDIUM): "Q2"/"Q5" trong set này khớp ĐÚNG retry_loop.ERROR_ROUTING_TABLE (không sai), nhưng
+# qua cầu NÀY (make_run_eval_verdict() bên dưới, dựa 100% vào run_eval.evaluate() — cổng
+# RULE-BASED thuần regex) thì Q2/Q5 KHÔNG BAO GIỜ xuất hiện trong `codes`, vì evaluate() không
+# có check nào tạo Q-code (Q-code chỉ tới từ một grader LLM riêng — xem
+# tools/eval/analyze_failures.py::_failing_dims() q_fails — CHƯA được nối vào orchestrator ở
+# đâu cả). Hai mục "Q2"/"Q5" ở đây vì vậy là CODE CHẾT qua đường này — giữ lại để _HARD_CODES
+# khớp đúng bảng nguồn thật (phòng khi sau này có đường khác đẩy Q-code vào), nhưng ĐỪNG hiểu
+# nhầm sự có mặt của chúng là bằng chứng cầu này đã chốt được Lớp 2 Med-PaLM (Q1-Q7) như
+# CLAUDE.md yêu cầu cho gói lâm sàng — lớp đó vẫn cần một grader LLM riêng, ngoài phạm vi cầu
+# rule-based này.
 _HARD_CODES = {"R2", "R3", "R11", "R12", "R13", "R14", "Q2", "Q5"}
 # check-id (run_eval.evaluate) → mã R chuẩn (bản sao ỔN ĐỊNH để không phụ thuộc nội bộ run_eval).
 _CHECK_ID_TO_RCODE = {
@@ -54,12 +74,16 @@ _RETURN_FOR_FIX_CHECKS = {
 
 
 # ── import run_eval.evaluate (chỉ hàm cổng rule-based; giảm phụ thuộc) ────────────
-def _load_evaluate():
+def _load_run_eval_module():
     eval_dir = ROOT / "tools" / "eval"
     if str(eval_dir) not in sys.path:
         sys.path.insert(0, str(eval_dir))
     import run_eval  # noqa: E402 — nạp trễ để tránh phụ thuộc vòng
-    return run_eval.evaluate
+    return run_eval
+
+
+def _load_evaluate():
+    return _load_run_eval_module().evaluate
 
 
 # ── D1: APPRAISAL emitter tự chứa (KHỬ PII tên file) ─────────────────────────────
@@ -89,29 +113,37 @@ def _safe_target(path_or_name: str) -> tuple:
 
 def _bump_repeats(codes: list, thash: str) -> dict:
     """Đếm tái phạm DEDUP theo output (thash) — chấm lại cùng file KHÔNG cộng dồn. Ghi nguyên
-    tử (tmp+os.replace). Trả {code: số_output_distinct}. Best-effort."""
+    tử (tmp+os.replace). Trả {code: số_output_distinct}. Best-effort.
+
+    SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): bọc toàn chu
+    trình đọc-sửa-ghi trong run_eval.appraisal_repeats_lock() — CÙNG file khóa với bản
+    _bump_repeats() độc lập ở tools/eval/run_eval.py, vốn thao tác trên đúng
+    APPRAISAL_REPEATS.json này — để 2 tiến trình gọi gần như đồng thời (CLI + orchestrator)
+    không còn mất cập nhật (lost update) do TOCTOU race."""
     import os
-    data = {}
-    if APPRAISAL_REPEATS.exists():
+    lock_cm = _load_run_eval_module().appraisal_repeats_lock
+    with lock_cm():
+        data = {}
+        if APPRAISAL_REPEATS.exists():
+            try:
+                data = json.loads(APPRAISAL_REPEATS.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                data = {}
+        for c in codes:
+            lst = data.get(c) or []
+            if not isinstance(lst, list):
+                lst = []
+            if thash not in lst:
+                lst.append(thash)
+            data[c] = lst
         try:
-            data = json.loads(APPRAISAL_REPEATS.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            data = {}
-    for c in codes:
-        lst = data.get(c) or []
-        if not isinstance(lst, list):
-            lst = []
-        if thash not in lst:
-            lst.append(thash)
-        data[c] = lst
-    try:
-        APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
-        tmp = APPRAISAL_REPEATS.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-        os.replace(tmp, APPRAISAL_REPEATS)
-    except OSError:
-        pass
-    return {c: len(data.get(c, [])) for c in codes}
+            APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
+            tmp = APPRAISAL_REPEATS.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            os.replace(tmp, APPRAISAL_REPEATS)
+        except OSError:
+            pass
+        return {c: len(data.get(c, [])) for c in codes}
 
 
 def _failed_required_check_ids(res: dict) -> list:
