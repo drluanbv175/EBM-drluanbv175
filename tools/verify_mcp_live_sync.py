@@ -16,7 +16,7 @@ tool không tự đổi cấu hình hệ thống). Chỉ PHÁT HIỆN + báo rõ
      không cần chờ commit)
 
 Bỏ qua (PASS, không phải lỗi) nếu:
-  - Không phải macOS (launchd không tồn tại trên nền tảng khác).
+  - Không phải macOS: chỉ bỏ qua LaunchAgent/launchd; vẫn kiểm 2 Git hook.
   - Máy này rõ ràng chưa từng cài môi trường dev EBM (không có ~/.ebm-venv)
     — không phải máy đang dùng để sửa hệ thống này.
   - Máy này rõ ràng chưa từng cài tunnel-client — mục 3 không áp dụng, vẫn
@@ -51,9 +51,53 @@ def _git_hooks_path(repo: Path) -> str | None:
             cwd=str(repo), capture_output=True, text=True, check=False,
         )
     except OSError:
-        return None
+        return _git_hooks_path_from_local_config(repo)
     value = out.stdout.strip()
-    return value or None
+    return value or _git_hooks_path_from_local_config(repo)
+
+
+def _git_config_path(repo: Path) -> Path | None:
+    git_path = repo / ".git"
+    if git_path.is_dir():
+        return git_path / "config"
+    if not git_path.is_file():
+        return None
+    try:
+        for raw in git_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw.strip()
+            if line.lower().startswith("gitdir:"):
+                target = line.split(":", 1)[1].strip()
+                git_dir = Path(target)
+                if not git_dir.is_absolute():
+                    git_dir = (repo / git_dir).resolve()
+                return git_dir / "config"
+    except OSError:
+        return None
+    return None
+
+
+def _git_hooks_path_from_local_config(repo: Path) -> str | None:
+    """Read local config directly when Git refuses a repo due dubious ownership."""
+    config_path = _git_config_path(repo)
+    if config_path is None:
+        return None
+    try:
+        lines = config_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    in_core = False
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith(("#", ";")):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            in_core = line[1:-1].strip().split(" ", 1)[0].lower() == "core"
+            continue
+        if in_core and "=" in line:
+            key, value = line.split("=", 1)
+            if key.strip().lower() == "hookspath":
+                return value.strip() or None
+    return None
 
 
 def _launchd_job_loaded(label: str) -> bool:
@@ -76,13 +120,21 @@ def _sha256(path: Path) -> str | None:
         return None
 
 
+def ensure_utf8_console() -> None:
+    """Keep Windows PowerShell/cp1252 from crashing on Vietnamese sync messages."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            encoding = (getattr(stream, "encoding", "") or "").lower()
+            if encoding and "utf" not in encoding and hasattr(stream, "reconfigure"):
+                stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError, ValueError):
+            continue
+
+
 def main() -> int:
+    ensure_utf8_console()
     problems: list[str] = []
     notes: list[str] = []
-
-    if platform.system() != "Darwin":
-        print(f"N/A — không phải macOS ({platform.system()}), bỏ qua kiểm launchd/hook cục bộ.")
-        return 0
 
     dev_env_present = (Path.home() / ".ebm-venv").is_dir()
     if not dev_env_present:
@@ -107,6 +159,19 @@ def main() -> int:
             )
         else:
             notes.append("Repo medical-ebm-automation: hook post-commit restart tunnel đã kích hoạt.")
+
+    system_name = platform.system()
+    if system_name != "Darwin":
+        notes.append(f"{system_name}: launchd watcher không áp dụng; đã kiểm Git hook đồng bộ cục bộ.")
+        for note in notes:
+            print(f"  ok: {note}")
+        if problems:
+            print("CẢNH BÁO — đồng bộ MCP mặc định CHƯA đầy đủ trên máy này:", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+            return 1
+        print("Đồng bộ MCP mặc định: Git hooks đầy đủ; launchd watcher N/A trên máy này.")
+        return 0
 
     tunnel_ever_installed = (Path.home() / ".ebm-tools/bin/tunnel-client").is_file()
     if tunnel_ever_installed:
