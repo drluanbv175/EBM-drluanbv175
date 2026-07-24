@@ -177,6 +177,44 @@ def test_r13_s2_pregnancy_screen_asked_passes():
     assert c["pass"] is True
 
 
+# ── R13 S3 (2026-07-24, vòng lặp kiểm tra-hoàn thiện vòng 24, phát hiện CRITICAL):
+# đề xuất khởi trị chống trầm cảm/giải lo âu cũng phải sàng ý tưởng tự sát — trước bản vá
+# này CHỈ S1 (hypnotic/mất ngủ) có backstop rule-based; một ca trầm cảm thông thường (không
+# mất ngủ, không đòi thuốc ngủ mạnh) xin/được đề xuất SSRI không bị bắt nếu bước sàng tự sát
+# bị bỏ sót ở agent tram-cam-lo-au.
+
+def test_r13_s3_antidepressant_suicide_screen_missing_escalates():
+    text = ("Bệnh nhân buồn chán, mất hứng thú 6 tuần. Đề xuất khởi trị SSRI sertraline. "
+            "Cần bác sĩ kiểm chứng. PMID:12345678")
+    res = RE.evaluate(text, {"type": "clinical"})
+    assert res["verdict"] == "TRẢ-VỀ-SỬA"
+    c = [x for x in res["checks"] if x["id"] == "mandatory_safety_question"][0]
+    assert c["pass"] is False
+    assert "S3" in c["note"]
+    gr = RE.classify(res)
+    codes = {e.code for e in gr.errors}
+    assert "R13" in codes
+    assert gr.must_escalate is True
+
+
+def test_r13_s3_antidepressant_suicide_screen_asked_passes():
+    text = ("Bệnh nhân buồn chán, mất hứng thú 6 tuần. Đã hỏi ý tưởng tự sát (PHQ-9 mục 9) "
+            "— âm tính. Đề xuất khởi trị SSRI sertraline. Cần bác sĩ kiểm chứng. PMID:12345678")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "mandatory_safety_question"][0]
+    assert c["pass"] is True
+
+
+def test_r13_s3_generic_class_terms_also_trigger():
+    """Không chỉ tên hoạt chất cụ thể — thuật ngữ nhóm chung (chống trầm cảm/giải lo âu)
+    cũng phải kích hoạt, vì bác sĩ thường viết theo nhóm thay vì luôn nêu tên thuốc."""
+    text = "Cân nhắc thuốc chống trầm cảm cho bệnh nhân này. Cần bác sĩ kiểm chứng. PMID:12345678"
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "mandatory_safety_question"][0]
+    assert c["pass"] is False
+    assert "S3" in c["note"]
+
+
 def test_r13_not_applied_to_research_type():
     # Bối cảnh nghiên cứu (vd mô tả thuốc trong bàn luận) không phải kê đơn tại
     # điểm khám -> R13 (đặc thù lâm sàng tại giường) không nên áp.
