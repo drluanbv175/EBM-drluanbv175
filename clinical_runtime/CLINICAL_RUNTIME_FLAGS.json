@@ -1,0 +1,6 @@
+{
+  "require_human_approval": true,
+  "require_strict_source": true,
+  "enforce_safety_net_templates": true,
+  "notes": "Minimal flags to enable gating checks and require explicit human approval for any APPLY decisions. These flags are advisory; integrating code paths to enforce them (hooks/UI) is next step."
+}

@@ -1,0 +1,30 @@
+{
+  "default_follow_up": {
+    "title": "Follow-up plan",
+    "description": "Recommend follow-up within 4-6 weeks or sooner if red flags develop. Document symptom trajectory and adverse events.",
+    "timeline_days": 28,
+    "actions": [
+      "Schedule follow-up visit",
+      "Repeat key investigations if symptoms persist",
+      "Provide written safety-netting advice to patient"
+    ]
+  },
+  "red_flags": [
+    {
+      "name": "Severe shortness of breath",
+      "advice": "Advise immediate ED referral / call ambulance"
+    },
+    {
+      "name": "New severe chest pain",
+      "advice": "Advise immediate ED referral / call ambulance"
+    },
+    {
+      "name": "New focal neurological deficit",
+      "advice": "Advise immediate ED referral / urgent neuro review"
+    }
+  ],
+  "prescription_safety": {
+    "monitoring": "Baseline blood tests where indicated; review liver/renal function before and at 4 weeks",
+    "patient_advice": "Stop drug and seek urgent review if severe rash, jaundice, severe bleeding, or shortness of breath"
+  }
+}
