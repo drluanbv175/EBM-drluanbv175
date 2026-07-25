@@ -19,6 +19,15 @@ import sys, os, re, json, glob
 VALID_DECISION = {"apply", "consider", "notyet"}
 
 
+def configure_utf8_stdio():
+    """Giúp thông báo tiếng Việt không lỗi trên Windows console cp1252."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError, ValueError):
+            pass
+
+
 def parse_dashboard(path):
     html = open(path, encoding="utf-8").read()
     i = html.find("const DATA")
@@ -135,6 +144,7 @@ def build_html(lib, outpath):
 
 
 def main():
+    configure_utf8_stdio()
     if len(sys.argv) < 2:
         print(__doc__); return 1
     cmd = sys.argv[1]

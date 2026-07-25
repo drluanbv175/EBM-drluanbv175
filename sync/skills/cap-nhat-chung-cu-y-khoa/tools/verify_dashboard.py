@@ -57,6 +57,7 @@ import sys
 import time
 import urllib.error
 import urllib.parse
+from json import JSONDecodeError
 from datetime import date, datetime
 from pathlib import Path
 
@@ -298,20 +299,37 @@ def verify_pmid_online(pmid, retries=2):
     biến hơn rate-limit) trước đây trả None NGAY, không retry, dù cùng bản chất "hiccup
     tạm thời" như 429/5xx — giờ mọi lỗi (trừ HTTPError không nằm trong nhóm tạm thời)
     đều được thử lại giống nhau. Trả tiêu đề ĐẦY ĐỦ (không cắt 90 ký tự) — caller tự cắt
-    khi hiển thị; giữ nguyên đủ để so khớp tráo trích dẫn (_title_overlap_ratio)."""
+    khi hiển thị; giữ nguyên đủ để so khớp tráo trích dẫn (_title_overlap_ratio).
+
+    Vá 2026-07-25: NCBI đôi lúc trả HTTP 200 nhưng body là HTML "Blocked Diagnostic"
+    thay vì JSON; nếu vậy dùng Europe PMC MED mirror làm fallback metadata để vẫn xác minh
+    PMID tồn tại + tiêu đề/năm, nhưng KHÔNG dùng fallback này cho cổng retraction."""
     url = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
            "?db=pubmed&retmode=json&id=" + pmid)
     last_err = None
     for attempt in range(retries + 1):
         try:
             with source_urlopen(url, timeout=15) as r:
-                j = json.loads(r.read().decode("utf-8"))
+                raw = r.read().decode("utf-8", "replace")
+                content_type = (r.headers.get("content-type") or "").lower()
+            if "json" not in content_type and raw.lstrip().startswith("<"):
+                raise ValueError("NCBI trả HTML thay vì JSON (có thể bị block)")
+            j = json.loads(raw)
             res = j.get("result", {})
             if pmid in res and "title" in res[pmid]:
                 # pubdate thường dạng "2026 Mar 13" hoặc "2026" — chỉ cần năm cho so khớp
                 # dateVersion (vá 2026-07-12, xem docstring module).
                 return True, res[pmid].get("title", ""), res[pmid].get("pubdate", "")
             return False, "không có trong PubMed", ""
+        except (ValueError, JSONDecodeError) as e:
+            last_err = e
+            fallback = verify_pmid_europe_pmc(pmid)
+            if fallback[0] is True:
+                return fallback
+            if attempt < retries:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None, "NCBI không trả JSON và Europe PMC fallback không xác minh được: %s" % e, ""
         except urllib.error.HTTPError as e:
             last_err = e
             if e.code in (429, 500, 502, 503, 504) and attempt < retries:
@@ -325,6 +343,32 @@ def verify_pmid_online(pmid, retries=2):
                 continue
             return None, "lỗi mạng: %s" % e, ""
     return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err, ""
+
+
+def verify_pmid_europe_pmc(pmid):
+    """Fallback metadata cho PMID khi NCBI E-utilities bị block.
+
+    Europe PMC với `SRC:MED` phản chiếu bản ghi MEDLINE/PubMed đủ để kiểm PMID tồn tại,
+    tiêu đề và năm. Không dùng kết quả này để kết luận trạng thái rút bài."""
+    query = urllib.parse.quote(f"EXT_ID:{pmid} AND SRC:MED")
+    url = (
+        "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+        f"?query={query}&format=json&pageSize=1"
+    )
+    try:
+        with source_urlopen(url, timeout=20) as r:
+            j = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        return None, "lỗi Europe PMC fallback: %s" % e, ""
+    results = j.get("resultList", {}).get("result", [])
+    if not results:
+        return None, "Europe PMC không trả bản ghi MED cho PMID", ""
+    rec = results[0]
+    if str(rec.get("pmid") or rec.get("id") or "") != str(pmid):
+        return None, "Europe PMC trả bản ghi không khớp PMID", ""
+    title = rec.get("title") or ""
+    year = rec.get("pubYear") or rec.get("firstPublicationDate") or ""
+    return True, title, year
 
 
 def verify_doi_online(doi, retries=2):
