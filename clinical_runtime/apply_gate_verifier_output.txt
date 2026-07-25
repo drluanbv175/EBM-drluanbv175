@@ -1,0 +1,11 @@
+﻿Clinical practice apply gate
+- PASS: contract_files
+- PASS: approved_fixture
+- PASS: blocks_missing_local_confirmation
+  - blocked_by: approved_for_use nhưng local_applicability_status='needs_unit_confirmation'
+- PASS: blocks_weak_apply
+  - blocked_by: evidence_basis[1] decision='apply' với grade_level='low'.
+- PASS: blocks_red_flag
+  - blocked_by: approved_for_use nhưng red_flags_detected không rỗng.
+Overall: PASS
+Cần bác sĩ kiểm chứng.
