@@ -1,0 +1,352 @@
+{
+  "generated": "2026-07-25T02:19:59.600889Z",
+  "checked": 333,
+  "retracted": [],
+  "med_safety_flags": [
+    {
+      "id": "EVID-2026-0008",
+      "flags": [
+        {
+          "drug": "amitriptyline",
+          "found": "amitriptyline",
+          "flag": "Beers: TRÁNH ở người cao tuổi — kháng cholinergic mạnh, an thần, hạ HA tư thế, té ngã."
+        },
+        {
+          "drug": "gabapentin",
+          "found": "pregabalin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0214",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        },
+        {
+          "drug": "omeprazole",
+          "found": "ppi",
+          "flag": "Beers: TRÁNH dùng >8 tuần trừ chỉ định nguy cơ cao — C. difficile, gãy xương, thiếu B12."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0229",
+      "flags": [
+        {
+          "drug": "spironolactone",
+          "found": "spironolactone",
+          "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0231",
+      "flags": [
+        {
+          "drug": "doxazosin",
+          "found": "doxazosin",
+          "flag": "Beers: TRÁNH làm hạ áp thường quy — hạ HA tư thế. (Alpha-blocker vẫn dùng cho triệu chứng TLT.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0232",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0234",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0321",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        },
+        {
+          "drug": "omeprazole",
+          "found": "ppi",
+          "flag": "Beers: TRÁNH dùng >8 tuần trừ chỉ định nguy cơ cao — C. difficile, gãy xương, thiếu B12."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        },
+        {
+          "drug": "digoxin",
+          "found": "digoxin",
+          "flag": "Beers: TRÁNH liều >0,125 mg/ngày — độc tính; theo dõi chức năng thận & điện giải."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0338",
+      "flags": [
+        {
+          "drug": "spironolactone",
+          "found": "spironolactone",
+          "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0345",
+      "flags": [
+        {
+          "drug": "gabapentin",
+          "found": "gabapentin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0388",
+      "flags": [
+        {
+          "drug": "gabapentin",
+          "found": "gabapentin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0442",
+      "flags": [
+        {
+          "drug": "gabapentin",
+          "found": "gabapentin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0453",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        },
+        {
+          "drug": "omeprazole",
+          "found": "ppi",
+          "flag": "Beers: TRÁNH dùng >8 tuần trừ chỉ định nguy cơ cao — C. difficile, gãy xương, thiếu B12."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        },
+        {
+          "drug": "digoxin",
+          "found": "digoxin",
+          "flag": "Beers: TRÁNH liều >0,125 mg/ngày — độc tính; theo dõi chức năng thận & điện giải."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0467",
+      "flags": [
+        {
+          "drug": "spironolactone",
+          "found": "spironolactone",
+          "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0468",
+      "flags": [
+        {
+          "drug": "gabapentin",
+          "found": "gabapentin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0508",
+      "flags": [
+        {
+          "drug": "gabapentin",
+          "found": "gabapentin",
+          "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR."
+        },
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0659",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0679",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0680",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0693",
+      "flags": [
+        {
+          "drug": "spironolactone",
+          "found": "spironolactone",
+          "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0728",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0736",
+      "flags": [
+        {
+          "drug": "amitriptyline",
+          "found": "amitriptyline",
+          "flag": "Beers: TRÁNH ở người cao tuổi — kháng cholinergic mạnh, an thần, hạ HA tư thế, té ngã."
+        },
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0740",
+      "flags": [
+        {
+          "drug": "opioid (khác tramadol)",
+          "found": "opioid",
+          "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)"
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0752",
+      "flags": [
+        {
+          "drug": "diphenhydramine",
+          "found": "diphenhydramine",
+          "flag": "Beers: TRÁNH — kháng cholinergic, lú lẫn, té ngã."
+        },
+        {
+          "drug": "glibenclamide",
+          "found": "glibenclamide",
+          "flag": "Beers: TRÁNH — hạ đường huyết kéo dài. Ưu tiên SU tác dụng ngắn hoặc nhóm khác."
+        },
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        },
+        {
+          "drug": "haloperidol",
+          "found": "antipsychotic",
+          "flag": "Beers: TRÁNH ở sa sút trí tuệ (tăng tử vong, đột quỵ — cảnh báo khung đen). Chỉ khi thật cần."
+        },
+        {
+          "drug": "digoxin",
+          "found": "digoxin",
+          "flag": "Beers: TRÁNH liều >0,125 mg/ngày — độc tính; theo dõi chức năng thận & điện giải."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0763",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    },
+    {
+      "id": "EVID-2026-0784",
+      "flags": [
+        {
+          "drug": "ibuprofen",
+          "found": "nsaid",
+          "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch."
+        }
+      ]
+    }
+  ]
+}
