@@ -6,7 +6,8 @@ Trả lời đúng 1 câu: "Giờ mở/sửa hệ thống này có AN TOÀN khô
 mất việc / hỏng .git do OneDrive sync dở hoặc phiên khác đang chạy?"
 
 Soi 5 nguy cơ (đều là thứ đã gặp thật trong dự án này):
-  1. CONFLICT-COPY của OneDrive (dấu hiệu #1 của mất việc)
+  1. CONFLICT-COPY của OneDrive (dấu hiệu #1 của mất việc; conflict trên file
+     sinh/ignored chỉ liệt kê, không hard-block như source/hồ sơ chính)
   2. Sức khỏe git 2 repo lồng (Claude AI + medical-ebm-automation): HEAD giải được? status
      chạy được (không treo như fsck)? có khóa/đang merge dở?
   3. File lõi ĐÃ TẢI THẬT (không phải placeholder "cloud-only" chưa tải về của OneDrive)
@@ -39,7 +40,8 @@ NOW = time.time()
 
 # Thư mục BỎ QUA khi quét (nặng/không liên quan)
 PRUNE_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache",
-              "_archive", "_reskin_backup", "pycache", "worktrees", ".venv"}
+              "_archive", "_reskin_backup", "pycache", "worktrees",
+              "copilot-worktrees", ".venv"}
 
 # File LÕI phải tồn tại + đã tải thật (không placeholder). Thiếu = hệ chưa sẵn sàng.
 CORE_FILES = [
@@ -98,9 +100,30 @@ def _dr_luan_conflict_base(f: Path, name: str, low: str) -> Path | None:
     return None
 
 
+def _is_generated_conflict_artifact(rel: str) -> bool:
+    """Generated/ignored artifacts can be noisy OneDrive conflicts without source drift."""
+    low = rel.replace("\\", "/").lower()
+    name = low.rsplit("/", 1)[-1]
+    if name.endswith(".tsbuildinfo") or name.endswith(".log"):
+        return True
+    if "/data/archive/" in low or "/data/processed/" in low or "/data/reports/" in low:
+        return True
+    return low.startswith("medical-ebm-automation/results/knowledge_pack_update_queue-")
+
+
+def _add_conflict_hit(hard_hits: list[str], generated_hits: list[str], f: Path, note: str = "") -> None:
+    rel = str(f.relative_to(ROOT))
+    detail = rel + note
+    if _is_generated_conflict_artifact(rel):
+        generated_hits.append(detail + "  (artefact sinh/ignored — không chặn source sync)")
+    else:
+        hard_hits.append(detail)
+
+
 def check_conflict_copies() -> tuple[str, list[str]]:
     """Tìm file có dấu hiệu conflict-copy của OneDrive (mất việc)."""
-    hits = []
+    hard_hits = []
+    generated_hits = []
     host_stem = socket.gethostname().split(".")[0].lower()  # tên máy đang chạy
     dup_re = re.compile(r"^(.*?) (\d+)(\.[^.]+)?$")         # "tên 2.ext" (bản OneDrive nhân đôi)
     for f in _iter_files():
@@ -114,18 +137,20 @@ def check_conflict_copies() -> tuple[str, list[str]]:
             or stem.endswith(f"-{host_stem}")               # "tên-<tên-máy-này>.ext" = bản conflict cho máy này
         )
         if is_conflict:
-            hits.append(str(f.relative_to(ROOT)))
+            _add_conflict_hit(hard_hits, generated_hits, f)
             continue
         if _dr_luan_conflict_base(f, name, low) is not None:
-            hits.append(str(f.relative_to(ROOT)) + "  (nghi bản conflict — có bản gốc song song)")
+            _add_conflict_hit(hard_hits, generated_hits, f, "  (nghi bản conflict — có bản gốc song song)")
             continue
         m = dup_re.match(name)                              # "X 2.ext" mà "X.ext" cũng tồn tại
         if m and m.group(2) in {"1", "2", "3"}:
             base = f.with_name(f"{m.group(1)}{m.group(3) or ''}")
             if base.exists():
-                hits.append(str(f.relative_to(ROOT)) + "  (nghi bản OneDrive nhân đôi)")
-    if hits:
-        return ("RED", hits)
+                _add_conflict_hit(hard_hits, generated_hits, f, "  (nghi bản OneDrive nhân đôi)")
+    if hard_hits:
+        return ("RED", [*hard_hits, *generated_hits])
+    if generated_hits:
+        return ("GREEN", generated_hits)
     return ("GREEN", [])
 
 
