@@ -12,6 +12,8 @@ Cách dùng:
   python process_approved_evidence.py --input _EVIDENCE_APPROVAL_WORKFLOW.xlsx
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import logging
@@ -35,6 +37,15 @@ logger = logging.getLogger(__name__)
 # Hằng số
 EVIDENCE_DB_PATH = Path(__file__).parent.parent / "EBM_MASTER" / "EBM_MASTER.json"
 BACKUP_DIR = Path(__file__).parent.parent / "EBM_MASTER" / "BACKUPS"
+
+
+def configure_utf8_stdio() -> None:
+    """Bao ve argparse/log tieng Viet tren Windows console khong dung UTF-8."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError, ValueError):
+            pass
 
 
 class ApprovedEvidenceProcessor:
@@ -70,7 +81,7 @@ class ApprovedEvidenceProcessor:
             sys.exit(1)
         
         wb = openpyxl.load_workbook(excel_file)
-        ws = wb.active
+        ws = wb["Evidence Approval"] if "Evidence Approval" in wb.sheetnames else wb.active
         
         # Đọc header
         headers = []
@@ -252,14 +263,14 @@ class ApprovedEvidenceProcessor:
         print("="*70)
         
         summary = report["summary"]
-        print(f"\n📊 SUMMARY:")
+        print("\n📊 SUMMARY:")
         print(f"  Total processed: {summary['total_processed']}")
         print(f"  Updated: {summary['total_updated']}")
         print(f"  Unchanged: {summary['unchanged']}")
         print(f"  Errors: {summary['errors']}")
         
         updates = report["updates"]
-        print(f"\n📈 UPDATED DISTRIBUTION:")
+        print("\n📈 UPDATED DISTRIBUTION:")
         print(f"  → APPLY: {updates['apply']} cards")
         print(f"  → CONSIDER: {updates['consider']} cards")
         print(f"  → NOT_YET: {updates['notyet']} cards")
@@ -275,6 +286,8 @@ class ApprovedEvidenceProcessor:
 
 
 def main():
+    configure_utf8_stdio()
+
     import argparse
     
     parser = argparse.ArgumentParser(description="Process approved evidence from Excel")
