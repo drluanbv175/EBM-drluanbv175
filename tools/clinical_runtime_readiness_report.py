@@ -124,7 +124,7 @@ class BlockerRow:
     unlock_note: str | None = None
 
 
-# Tranche 2026-07-25: unlock 10/37 blockers at repository-control level only.
+# Tranche 2026-07-25: unlock blockers at repository-control level only.
 # These are not production clearances; each row still keeps its residual human gate.
 REPO_CONTROL_UNLOCK_RULES: tuple[UnlockRule, ...] = (
     UnlockRule(
@@ -176,16 +176,82 @@ REPO_CONTROL_UNLOCK_RULES: tuple[UnlockRule, ...] = (
         "Backup/restore evidence validator is present.",
     ),
     UnlockRule(
+        "DATA-001",
+        "RUNTIME-SITE-ISOLATION-001",
+        "organization/site isolation contract and denial tests exist",
+        "Organization/site isolation contract denies cross-organization and cross-site access.",
+    ),
+    UnlockRule(
+        "DATA-003",
+        "RUNTIME-GOVERNANCE-PERSISTENCE-001",
+        "audit log persistence contract and migration hardening are modeled",
+        "Governance persistence evidence requires audit linkage and append-only verification.",
+    ),
+    UnlockRule(
         "DATA-004",
         "RUNTIME-RETENTION-001",
         "data retention/archive policy contract added",
         "Retention/archive policy contract is present.",
     ),
     UnlockRule(
+        "CLIN-002",
+        "RUNTIME-OUTPATIENT-AUTOMATION-001",
+        "rule approval workflow and outpatient automation control contract exist",
+        "Outpatient automation control blocks unsafe, expired or patient-facing rules without approval.",
+    ),
+    UnlockRule(
+        "CLIN-003",
+        "RUNTIME-OUTPATIENT-AUTOMATION-001",
+        "clinical content and patient education approval not fully executable",
+        "Outpatient automation and patient communication controls keep patient-facing content human-gated.",
+    ),
+    UnlockRule(
         "CLIN-004",
         "RUNTIME-A5-QA-001",
         "a5 output qa contract added",
         "A5 rendered-output QA contract checks format, checksum, disclaimer and emergency boundary.",
+    ),
+    UnlockRule(
+        "OPS-001",
+        "RUNTIME-DOCKER-SMOKE-001",
+        "docker one-command run evidence contract exists",
+        "Docker smoke evidence contract checks app/db health and secret redaction.",
+    ),
+    UnlockRule(
+        "OPS-002",
+        "RUNTIME-PRISMA-MIGRATION-001",
+        "prisma migration review contract exists",
+        "Prisma migration review contract checks SQL hash, smoke test and rollback evidence.",
+    ),
+    UnlockRule(
+        "OPS-003",
+        "RUNTIME-MONITORING-001",
+        "error logging and monitoring evidence validator added",
+        "Monitoring smoke evidence covers error capture, audit-failure alerts, red flags and on-call route.",
+    ),
+    UnlockRule(
+        "OPS-004",
+        "RUNTIME-INCIDENT-DRILL-001",
+        "incident response process documented and drill validator added",
+        "Incident drill evidence requires physician, data protection and operations coverage.",
+    ),
+    UnlockRule(
+        "PHASE3A-PATIENT-COMMUNICATION-POLICY",
+        "RUNTIME-PATIENT-COMM-001",
+        "clinic-approved patient communication policy/signoff; repo contract",
+        "Patient communication policy gate blocks messages without template, consent and physician approval.",
+    ),
+    UnlockRule(
+        "PHASE3A-LIVE-GOVERNANCE-PERSISTENCE",
+        "RUNTIME-GOVERNANCE-PERSISTENCE-001",
+        "live governance persistence sign-off; repo contract",
+        "Governance persistence contract requires live governance tables, backup and append-only audit evidence.",
+    ),
+    UnlockRule(
+        "AI-001",
+        "RUNTIME-AI-DRAFTS-GATE-001",
+        "ai must remain disabled until mvp-01 is stable",
+        "AI draft circuit breaker blocks future LLM call sites unless the flag is explicitly enabled after signoff.",
     ),
 )
 
@@ -428,7 +494,10 @@ def markdown_report(report: dict[str, Any]) -> str:
             lines.extend(f"- Missing: `{path}`" for path in artefacts["missing"])
         lines.append("")
 
-    lines.append("## Repository-Control Unlocked Blockers (10/37)")
+    lines.append(
+        "## Repository-Control Unlocked Blockers "
+        f"({summary['repo_control_ready_unlocked']}/{summary['total_blockers']})"
+    )
     for row in report["repo_control_ready_blockers"]:
         files = ", ".join(f"`{item}`" for item in (row.get("control_files") or []))
         lines.append(
@@ -479,6 +548,12 @@ def main() -> int:
     print(f"- repo_control_ready: {summary['repo_control_ready_unlocked']}/{summary['total_blockers']}")
     print(f"- repo_actionable: {summary['repo_actionable_without_control']}")
     print(f"- requires_human_approval: {summary['requires_human_approval']}")
+    print(
+        "summary: "
+        f"repo_control_ready={summary['repo_control_ready_unlocked']}/{summary['total_blockers']}; "
+        f"requires_human_approval={summary['requires_human_approval']}; "
+        f"clinical_production_allowed={summary['clinical_production_allowed']}"
+    )
     return 0
 
 
