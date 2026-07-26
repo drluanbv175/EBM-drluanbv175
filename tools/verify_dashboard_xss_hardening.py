@@ -107,11 +107,29 @@ def check_build_library(rel: str) -> list[str]:
     # 1) Nguồn JS phải có đủ hàng rào (bắt trường hợp ai đó gỡ mất khi sửa vỏ)
     if "function esc(" not in src or "function escUrl(" not in src:
         problems.append(f"{rel}: thiếu hàm esc()/escUrl() trong JS")
-    if "\\u0000-\\u001F" not in src:
-        problems.append(f"{rel}: escUrl KHÔNG bỏ ký tự điều khiển trước khi dò scheme "
-                        "(java<TAB>script: sẽ lọt)")
     if "${e.question}" in src or 'href="${e.file}"' in src:
         problems.append(f"{rel}: innerHTML còn nội suy THẲNG (chưa bọc esc()/escUrl())")
+
+    # 2) HẰNG HTML SAU KHI PYTHON PHÂN TÍCH — kiểm trên thứ THẬT SỰ được ghi ra đĩa,
+    # KHÔNG phải trên văn bản nguồn.
+    # VÁ 2026-07-27: đây chính là điểm mù mà bản kiểm đầu tiên mắc phải và bị workflow
+    # kiểm định 6 góc nhìn bắt được — nó chỉ soi VĂN BẢN NGUỒN, nên bỏ lọt một lỗi THẬT
+    # do chính bản vá escUrl gây ra: dãy \\u0000 viết trong một chuỗi Python KHÔNG PHẢI
+    # raw string bị Python giải thành ký tự NUL/US/DEL THẬT, làm HTML sinh ra chứa byte
+    # điều khiển thô. Theo chuẩn HTML5, NUL trong "script data state" bị thay bằng U+FFFD
+    # → dải regex thành [U+FFFD-U+001F] (đầu > cuối) → SyntaxError → TOÀN BỘ script chết,
+    # trang thư viện không render dòng nào. Bài học: công cụ kiểm phải soi SẢN PHẨM, không
+    # soi bản mô tả sản phẩm.
+    html_const = getattr(mod, "HTML", "")
+    ctrl_codes = list(range(0, 9)) + list(range(11, 32)) + [127]
+    raw_ctrl = {i: html_const.count(chr(i)) for i in ctrl_codes if html_const.count(chr(i))}
+    if raw_ctrl:
+        problems.append(f"{rel}: hằng HTML chứa BYTE ĐIỀU KHIỂN THÔ {raw_ctrl} — NUL trong "
+                        "khối <script> bị HTML5 thay bằng U+FFFD → vỡ regex → chết cả script")
+    bs = chr(92)
+    if (bs + "u0000-" + bs + "u001F") not in html_const:
+        problems.append(f"{rel}: JS KHÔNG nhận được chuỗi thoát bỏ ký tự điều khiển "
+                        "(java<TAB>script: sẽ lọt qua escUrl)")
 
     # 2) Chạy thật: payload không được phá khối <script>
     for payload in SCRIPT_BREAKOUT_PAYLOADS:
@@ -145,6 +163,50 @@ def check_assemble_dashboard() -> list[str]:
     return problems
 
 
+def check_ebm_master_generators() -> list[str]:
+    """EBM_MASTER/tools/gen_links_html.py + gen_catalog_html.py — hai bộ sinh HTML KHÁC
+    nằm ngoài EBM-Dashboards/, workflow kiểm định 2026-07-27 phát hiện cùng lớp lỗi.
+
+    Nguy hiểm nhất ở gen_links_html.py: hàm TÊN LÀ `ESC` nhưng bản cũ
+    `s=>String(s==null?"":s)` KHÔNG escape gì cả — chỉ đổi sang chuỗi — trong khi được
+    dùng 16 chỗ trong các mẫu innerHTML. Người đọc code thấy "ESC(" sẽ tưởng đã an toàn.
+    Kiểm ở đây để lỗi ngụy trang kiểu này không tái diễn."""
+    problems: list[str] = []
+    rel = "EBM_MASTER/tools/gen_links_html.py"
+    path = ROOT / rel
+    if not path.exists():
+        return [f"{rel}: KHÔNG TỒN TẠI"]
+    src = path.read_text(encoding="utf-8")
+
+    # 1) ESC phải THẬT SỰ escape, không chỉ đổi kiểu
+    esc_line = next((ln for ln in src.splitlines() if ln.strip().startswith("const ESC=")), "")
+    if not esc_line:
+        problems.append(f"{rel}: không tìm thấy định nghĩa const ESC=")
+    elif "replace(" not in esc_line or "&lt;" not in esc_line:
+        problems.append(f"{rel}: hàm ESC KHÔNG escape thật (chỉ đổi kiểu) — XSS qua innerHTML. "
+                        f"Dòng hiện tại: {esc_line.strip()[:90]}")
+
+    # 2) JSON nhúng vào <script> phải escape "<".
+    # Kiểm bằng SỰ CÓ MẶT của phép escape, KHÔNG bằng sự vắng mặt của mẫu cũ — bản kiểm
+    # đầu tiên viết theo kiểu "vắng mặt mẫu cũ" và tự báo động giả trên chính bản đã vá
+    # (mẫu cũ vẫn xuất hiện vì lệnh escape nối tiếp ở dòng dưới).
+    if "/*CARDS*/" in src:
+        i = src.find("payload = ")
+        seg = src[i:i + 500] if i != -1 else ""
+        if "\\\\u003c" not in seg:
+            problems.append(f"{rel}: payload nhúng vào <script> chưa escape '<' "
+                            "— dữ liệu chứa </script> sẽ phá khối script")
+
+    # 3) gen_catalog_html.py — đã có escape HTML sẵn, chỉ canh không bị gỡ mất
+    rel2 = "EBM_MASTER/tools/gen_catalog_html.py"
+    p2 = ROOT / rel2
+    if p2.exists():
+        s2 = p2.read_text(encoding="utf-8")
+        if "&lt;" not in s2 or "&quot;" not in s2:
+            problems.append(f"{rel2}: mất bộ escape HTML (&lt;/&quot;) từng có")
+    return problems
+
+
 def check_url_filter() -> list[str]:
     problems: list[str] = []
     for u in BAD_URLS:
@@ -169,6 +231,10 @@ def main() -> int:
 
     p = check_assemble_dashboard()
     print(f"  {'✓ PASS' if not p else '✗ FAIL'}  {ASSEMBLE_DASHBOARD} (to_js)")
+    all_problems += p
+
+    p = check_ebm_master_generators()
+    print(f"  {'✓ PASS' if not p else '✗ FAIL'}  EBM_MASTER/tools/gen_links_html.py + gen_catalog_html.py")
     all_problems += p
 
     p = check_url_filter()
