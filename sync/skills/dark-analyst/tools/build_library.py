@@ -114,7 +114,10 @@ const LIB=/*LIBRARY*/[]/*END*/;
    trang thư viện. esc() cho nội dung văn bản; escUrl() chặn href kiểu javascript:
    (chỉ cho phép đường dẫn tương đối/http/https). */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function escUrl(u){const s=String(u==null?'':u).trim();
+function escUrl(u){/* VA 2026-07-26 vong 2 (red-team doc lap): phai BO ky tu dieu khien
+  TRUOC khi do scheme - trinh duyet loai bo TAB/LF/CR khi phan tich URL, nen
+  "java\tscript:" / "javascript\n:" lot qua bo loc cu roi van chay nhu javascript:. */
+  const s=String(u==null?'':u).replace(/[\u0000-\u001F\u007F]/g,'').trim();
   if(/^[a-z][a-z0-9+.-]*:/i.test(s))return /^https?:/i.test(s)?esc(s):'#';
   return esc(s);}
 let filt="all";
