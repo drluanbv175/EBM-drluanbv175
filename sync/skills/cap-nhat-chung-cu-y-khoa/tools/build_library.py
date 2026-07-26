@@ -117,10 +117,12 @@ tbody td{padding:11px 16px;vertical-align:top}
 <div class="foot">⚠ Mỗi dashboard kèm disclaimer “Cần bác sĩ kiểm chứng”, nguồn PMID/DOI, không lưu PII. Sinh tự động từ <span class="d">library.json</span>.</div>
 <script>
 const LIB=/*LIBRARY*/[]/*END*/;
-/* VA 2026-07-26 (audit bao mat doc lap): bang duoi dung bang innerHTML voi metadata
-   dashboard (tieu de/eyebrow/ten file) von co nguon NGOAI - truoc day noi suy thang,
-   nen mot tieu de chua <img src=x onerror=...> la chay duoc ma trong trang thu vien.
-   esc() cho noi dung van ban; escUrl() chan href kieu javascript:. */
+/* VÁ 2026-07-26 (audit bảo mật độc lập): bảng dưới dựng bằng innerHTML với dữ liệu
+   metadata dashboard (tiêu đề/eyebrow/tên file) vốn có nguồn NGOÀI — trước đây nội
+   suy thẳng, nên một tiêu đề chứa <img src=x onerror=...> là chạy được mã trong
+   trang thư viện. esc() cho nội dung văn bản; escUrl() chặn href kiểu javascript:
+   (chỉ cho phép đường dẫn tương đối/http/https). Cùng cơ chế escHtml/escUrl mà
+   template Evidence Workbench đã dùng — nay áp cho cả trang thư viện. */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function escUrl(u){const s=String(u==null?'':u).trim();
   if(/^[a-z][a-z0-9+.-]*:/i.test(s))return /^https?:/i.test(s)?esc(s):'#';
@@ -146,11 +148,14 @@ render();
 
 
 def build_html(lib, outpath):
-    # VA 2026-07-26 (audit bao mat doc lap - cung lop XSS voi assemble_dashboard.py):
-    # json.dumps() KHONG escape "<", ma khoi JSON nay duoc chen GIUA mot khoi <script>.
-    # Mot tieu de dashboard chua "</script>" (nguon ngoai qua metadata) se dong som khoi
-    # script va phan sau bi doc nhu HTML. Trinh duyet cat khoi script khi gap "</script"
-    # bat ke no nam trong chuoi JS hop le hay khong.
+    # VÁ 2026-07-26 (audit bảo mật độc lập — cùng lớp XSS với assemble_dashboard.py):
+    # json.dumps() KHÔNG escape "<", mà khối JSON này được chèn vào GIỮA một khối
+    # <script> (xem cuối hằng HTML: "...render();</script></body></html>"). Một tiêu đề
+    # dashboard chứa "</script>" — đến từ nguồn ngoài qua metadata dashboard — sẽ đóng
+    # sớm khối script và phần sau bị đọc như HTML. Trình duyệt cắt khối script khi gặp
+    # "</script" bất kể nó nằm trong chuỗi JS hợp lệ hay không.
+    # Escape "<"/">" thành </>: JS giải mã ngược lúc phân tích nên nội dung
+    # hiển thị KHÔNG đổi. U+2028/U+2029 là ký tự xuống dòng với JS → cũng phải escape.
     data = (json.dumps(lib, ensure_ascii=False, indent=1)
             .replace("<", "\\u003c")
             .replace(">", "\\u003e")
