@@ -108,6 +108,14 @@ tbody td{padding:11px 16px;vertical-align:top}
 <div class="foot">⚠ Mỗi dashboard kèm disclaimer “Cần bác sĩ kiểm chứng”, nguồn PMID/DOI, không lưu PII. Sinh tự động từ <span class="d">library.json</span>.</div>
 <script>
 const LIB=/*LIBRARY*/[]/*END*/;
+/* VA 2026-07-26 (audit bao mat doc lap): bang duoi dung bang innerHTML voi metadata
+   dashboard (tieu de/eyebrow/ten file) von co nguon NGOAI - truoc day noi suy thang,
+   nen mot tieu de chua <img src=x onerror=...> la chay duoc ma trong trang thu vien.
+   esc() cho noi dung van ban; escUrl() chan href kieu javascript:. */
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function escUrl(u){const s=String(u==null?'':u).trim();
+  if(/^[a-z][a-z0-9+.-]*:/i.test(s))return /^https?:/i.test(s)?esc(s):'#';
+  return esc(s);}
 let filt="all";
 function setf(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');filt=el.dataset.f;render();}
 function render(){
@@ -117,11 +125,11 @@ function render(){
   if(q)arr=arr.filter(e=>JSON.stringify(e).toLowerCase().includes(q));
   document.getElementById('kpi').textContent=arr.length+' / '+LIB.length+' bản cập nhật';
   document.getElementById('rows').innerHTML=arr.map(e=>`<tr>
-    <td><div class="q"><span class="eb">${e.eyebrow||''}</span>${e.question}</div></td>
-    <td class="d">${e.updated||'—'}</td>
-    <td><span class="dec"><b class="a">${e.apply}</b><b class="c">${e.consider}</b><b class="n">${e.notyet}</b></span></td>
-    <td class="d">${e.total} item · ${(e.pmids||[]).length} PMID · ${(e.dois||[]).length} DOI <span class="skin">${e.skin||''}</span></td>
-    <td><a class="open" href="${e.file}" target="_blank">Mở →</a></td>
+    <td><div class="q"><span class="eb">${esc(e.eyebrow||'')}</span>${esc(e.question)}</div></td>
+    <td class="d">${esc(e.updated||'—')}</td>
+    <td><span class="dec"><b class="a">${esc(e.apply)}</b><b class="c">${esc(e.consider)}</b><b class="n">${esc(e.notyet)}</b></span></td>
+    <td class="d">${esc(e.total)} item · ${(e.pmids||[]).length} PMID · ${(e.dois||[]).length} DOI <span class="skin">${esc(e.skin||'')}</span></td>
+    <td><a class="open" href="${escUrl(e.file)}" target="_blank" rel="noopener noreferrer">Mở →</a></td>
   </tr>`).join('')||`<tr><td colspan="5" class="empty">Chưa có bản cập nhật nào khớp.</td></tr>`;
 }
 render();
@@ -129,7 +137,16 @@ render();
 
 
 def build_html(lib, outpath):
-    data = json.dumps(lib, ensure_ascii=False, indent=1)
+    # VA 2026-07-26 (audit bao mat doc lap - cung lop XSS voi assemble_dashboard.py):
+    # json.dumps() KHONG escape "<", ma khoi JSON nay duoc chen GIUA mot khoi <script>.
+    # Mot tieu de dashboard chua "</script>" (nguon ngoai qua metadata) se dong som khoi
+    # script va phan sau bi doc nhu HTML. Trinh duyet cat khoi script khi gap "</script"
+    # bat ke no nam trong chuoi JS hop le hay khong.
+    data = (json.dumps(lib, ensure_ascii=False, indent=1)
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+            .replace("\u2028", "\\u2028")
+            .replace("\u2029", "\\u2029"))
     html = HTML.replace("/*LIBRARY*/[]/*END*/", data)
     open(outpath, "w", encoding="utf-8").write(html)
 

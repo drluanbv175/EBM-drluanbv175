@@ -100,6 +100,30 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   khi cho lắp gói nộp, và rút bài được tra CHỦ ĐỘNG bằng `tools/check_citation_retraction.py`
   (`app/sources/pubmed.py::PubMedClient.check_retraction_status()` — gọi PubMed E-utilities thật, xác
   nhận bằng PMID 9500320/Wakefield 1998; KHÁC nhánh mồ côi (4) ở trên).
+- **Về 5 nhánh mồ côi trên — ĐÃ CÓ TEST CANH GÁC, KHÔNG cần (và KHÔNG nên) dời/xóa file.** Rà lại
+  2026-07-26 bằng câu lệnh import THẬT (không grep lỏng): các nhánh này không bị cổng thật import,
+  và repo đã có 2 test chặn đúng việc đó — `tests/test_no_orphaned_citation_verification_in_real_gates.py`
+  và `TestNoResearchProjectImportInRealGates` trong `tests/test_stakeholder_review_audit.py` — nên nếu
+  ai lỡ nối dây, test đỏ ngay. Đồng thời đính chính 2 điểm hay bị hiểu nhầm: `runtime/` KHÔNG chết cả
+  gói (chỉ `policy_gate_engine.py`+`controlled_orchestrator.py` mồ côi; `runtime/approval_ledger.py`
+  là bộ ledger THẬT mà `tools/approve_gate.py` dùng), và `app/models/governance_v7.py` CÓ đường sống
+  tới dashboard qua `app/dashboard/v7_readonly.py` → `app/governance/migrations.py`. Dời các file này
+  sẽ phá ~30 file test mà không tăng an toàn.
+- **VÁ BẢO MẬT LỚP CHỮ KÝ CỔNG 2026-07-26 (audit ĐỘC LẬP, không phải vòng lặp doctrine):** 30 vòng
+  "kiểm tra-hoàn thiện" trước đó soi NỘI DUNG y khoa nên không chạm tới thiết kế mật mã. Ba lỗ hổng
+  thật đã vá trong `tools/gate_contract.py`: (1) payload ký cũ KHÔNG chứa `reviewer_role` → một chữ ký
+  hợp lệ dùng lại được cho vai trò khác (đổi nhãn role trong JSON là qua cổng G2/G8) — nay role +
+  reviewer_ref nằm trong payload (định dạng `v2:<phạm-vi>:<hex>`), và hỗ trợ **khóa RIÊNG theo vai
+  trò** `~/.ebm-secrets/gate_approval_key_<NHÓM>` (`setup_gate_approval_key.py --role IRB`) để tách vai
+  trò thành bằng chứng THẬT thay vì lời tự khai; (2) `EBM_GATE_KEY_PATH` ghi đè được ở vận hành thật →
+  nay chỉ có tác dụng dưới pytest; (3) `ledger_approved()` FAIL-OPEN khi máy chưa cấu hình khóa (mọi đề
+  tài ngoài `REAL_STUDY_DENYLIST` — danh sách phải nhớ cập nhật TAY — đều được coi là đã duyệt) → nay
+  fail-closed mặc định, ngoại lệ duy nhất là đề tài đã tự tay đánh dấu `study_kind=synthetic_test`.
+  Kèm theo: `run_g10_assemble.py` khi bị ép qua bằng `--i-know-*-not-*` nay trả **mã thoát 3**, không
+  còn trả 0 (trước đây caller đọc mã thoát tưởng gói đủ điều kiện nộp). Hồi quy đối kháng:
+  `tests/test_gate_signature_role_binding_20260726.py`. **Lưu ý vận hành:** khóa chung ký được MỌI vai
+  trò, nên `approve_gate.py` nay NÓI RÕ mức bảo đảm ("shared" vs "role") thay vì im lặng — muốn G2/G8
+  có bằng chứng độc lập thật thì phải tạo khóa riêng và để người duyệt đó giữ.
 
 ## Stack kỹ thuật
 - Python 3.11+ (khuyến nghị 3.12), venv **ngoài OneDrive** (`~/.ebm-venv`), requirements.txt.
