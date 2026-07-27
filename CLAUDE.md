@@ -244,6 +244,17 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
 - **Chạy chu trình tự động có kiểm soát:** `python tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
 - **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
+- **"Đề tài này THỰC SỰ đang ở đâu, còn gì phải làm?" (mới 2026-07-27):**
+  `python tools/study_readiness.py --study <mã>` (hoặc `--all`). Trả lời đúng câu hỏi mà
+  `list_studies.py` KHÔNG trả lời được: nó đếm **việc CHƯA làm** từ chính tài liệu của đề tài
+  (ô `[ ]` trong mọi file `.md`), gắn cờ **QUYẾT ĐỊNH CÒN TREO** (loại có thể làm thay đổi đề
+  cương), liệt kê **chỗ còn để trống** (tên chủ nhiệm, mã IRB, mã đăng ký…), và với cổng CỨNG
+  chỉ ghi "ĐÃ KÝ" khi **ledger xác nhận thật** — không tin checkpoint.
+  **Lý do tồn tại:** hệ thống ĐÃ BIẾT đề tài C1a còn 31 việc (nằm trong `_checklist-noi-bo.md`
+  của chính nó) nhưng **không lệnh nào nói ra**, nên dễ hiểu nhầm là "sắp xong". `list_studies.py`
+  thậm chí không nhận ra C1a là đề tài (nó sinh qua workflow agent, không qua `run_g*_auto.py`).
+  Công cụ **cố ý bi quan**: chỉ đếm việc chưa làm, **không bao giờ in chữ "sẵn sàng"** — kết luận
+  đó thuộc thẩm quyền bác sĩ và Hội đồng Đạo đức.
 - **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
