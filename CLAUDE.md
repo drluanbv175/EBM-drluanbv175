@@ -125,6 +125,23 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   trò, nên `approve_gate.py` nay NÓI RÕ mức bảo đảm ("shared" vs "role") thay vì im lặng — muốn G2/G8
   có bằng chứng độc lập thật thì phải tạo khóa riêng và để người duyệt đó giữ.
 
+- **SỔ CÁI PHÊ DUYỆT NAY CÓ NIÊM PHONG (2026-07-27) — ĐỌC TRƯỚC KHI ĐỤNG VÀO `exports/`:**
+  mỗi đề tài nay có THÊM file `exports/<study>/approval_ledger.seal.json` bên cạnh
+  `approval_ledger.json`. **TUYỆT ĐỐI KHÔNG xóa, không sửa tay, không bỏ qua khi sao lưu/đồng
+  bộ** — nó là con dấu (số bản ghi + vân tay đuôi, đã ký) và là thứ DUY NHẤT phát hiện được
+  việc **cắt đuôi sổ cái** (gỡ bản ghi cuối, thường là một quyết định THU HỒI). Kèm theo, mỗi
+  bản ghi nay ký cả `prev_hash` (chuỗi băm liên kết) nên **xóa/đảo/chèn bản ghi đều bị bắt**.
+  **Hệ quả vận hành cần nhớ:** (1) từ nay **sửa tay `approval_ledger.json` sẽ làm mọi cổng của
+  đề tài đó BỊ CHẶN** — muốn thay đổi phải chạy `tools/approve_gate.py` (nó tự niêm phong lại);
+  (2) nếu bị chặn, thông điệp lỗi nói RÕ lý do (chưa ai duyệt / đã bị THU HỒI / sổ cái có dấu
+  hiệu bị sửa / nội dung đã đổi sau khi duyệt) — đọc lý do trước khi làm gì; (3) đường phục hồi
+  chuẩn khi sổ cái mang dấu vết từ máy hoặc khóa khác: **ký lại trên máy hiện tại**.
+  `tools/stakeholder_review_audit.py` cũng đã kiểm chuỗi+dấu nên nó KHÔNG còn nói khác cổng thật.
+  ⚠️ Còn MỘT giới hạn chưa đóng, cần bác sĩ quyết vì đổi QUY TRÌNH: HMAC là mật mã ĐỐI XỨNG nên
+  máy xác minh buộc phải giữ khóa ⇒ **không chứng minh được người ký độc lập với chủ nhiệm đề
+  tài**. Muốn có bảo đảm đó phải chuyển sang chữ ký BẤT ĐỐI XỨNG (Ed25519): người duyệt giữ khóa
+  RIÊNG, máy chỉ giữ khóa CÔNG.
+
 ## Stack kỹ thuật
 - Python 3.11+ (khuyến nghị 3.12), venv **ngoài OneDrive** (`~/.ebm-venv`), requirements.txt.
   **Trạng thái thật 2026-07-15 (ĐÃ ĐÓNG — cả 2 máy đều ≥3.11):** Windows chạy 3.12.10; Mac đã
