@@ -255,6 +255,19 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   thậm chí không nhận ra C1a là đề tài (nó sinh qua workflow agent, không qua `run_g*_auto.py`).
   Công cụ **cố ý bi quan**: chỉ đếm việc chưa làm, **không bao giờ in chữ "sẵn sàng"** — kết luận
   đó thuộc thẩm quyền bác sĩ và Hội đồng Đạo đức.
+- **Chấm cổng G0 (câu hỏi nghiên cứu) — mới 2026-07-28:**
+  `python tools/g0_quality_gate.py --study <mã>`. Chấm lại G0 từ artifact + `study_meta.json`
+  đã có, **không gọi lại PubMed** (chạy được nhiều lần trong lúc bác sĩ điền dần).
+  **Lý do tồn tại:** G0 từng là cổng DUY NHẤT trong chuỗi không có hợp đồng chất lượng
+  riêng — `run_g0_auto.py` in "✅ G0 HOÀN THÀNH" và thoát mã 0 trên MỌI đề tài, kể cả khi
+  toàn bộ ô P/I/C/O còn là placeholder; tức cổng khởi đầu tuyên bố hoàn thành khi **câu hỏi
+  nghiên cứu chưa tồn tại**. Nay 3 trạng thái: `BLOCKED` (mã 3) · `DRAFT_READY_NEEDS_HUMAN_
+  REVIEW` (mã 2 — kết quả ĐÚNG của lần chạy tự động đầu tiên, không phải lỗi) ·
+  `PASS_G0_CONFIRMED` (mã 0, chỉ khi bác sĩ đã chốt). **Nơi chốt là `exports/<study>/
+  study_meta.json → gate_params.G0`**, KHÔNG phải file `.md` (file .md bị ghi đè mỗi lần
+  chạy lại G0 — nay có sao lưu `.bak-*` trước khi đè). G0 cũng đã tra **ClinicalTrials.gov**
+  tự động (§3.6 của artifact) để trả lời "đã có ai ĐANG LÀM chưa" — PubMed chỉ biết cái ĐÃ
+  CÔNG BỐ; PROSPERO/WHO ICTRP không có API mở nên chỉ sinh link, bác sĩ tự tra.
 - **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
