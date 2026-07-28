@@ -270,4 +270,35 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   CÔNG BỐ; PROSPERO/WHO ICTRP không có API mở nên chỉ sinh link, bác sĩ tự tra.
 - **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
+- **Hợp đồng CHẤT LƯỢNG cổng G3 — cỡ mẫu (mới 2026-07-28):**
+  `python tools/g3_quality_gate.py --study <mã>`. Tự chạy sẵn ở bước cuối của
+  `run_g3_auto.py`, không cần gọi tay; gọi tay khi muốn CHẤM LẠI sau khi bác sĩ điền thêm nguồn.
+  **Vì sao có:** guardrail cũ của G3 (`guardrail_check`, nhãn "R1–R7") chỉ soi VĂN BẢN do chính
+  `generate_artifact()` vừa sinh ra, nên hầu hết luật là TỰ ĐÚNG — R3/R4/R5/R6/R7 kiểm sự có mặt
+  của những câu in cứng trong template ("DRAFT", tiêu đề "PHÂN TÍCH ĐỘ NHẠY", 3 nhãn "[CẦN BÁC SĨ]",
+  dòng disclaimer) nên không bao giờ fail được, còn R1 (PMID) là mã chết vì artifact không in PMID
+  nào. Hệ quả: "G3 ✅ PASS" cũ chỉ có nghĩa **"hàm sinh artifact đã chạy"**. Lớp mới kiểm **CON SỐ
+  và NGUỒN**: 18 tiêu chí tự động (G3-AUTO-00…17) + 7 tiêu chí người thật (G3-HUMAN-01…07), neo vào
+  chuẩn đã xác minh sống (DELTA2 · ICH E9/E9(R1) · CONSORT 2025 **mục 16a/16b** — KHÔNG còn là 7a
+  của bản 2010 · SPIRIT 2025 mục 19 · STROBE mục 10 · STARD 2015 mục 18 · TRIPOD+AI mục 10 ·
+  Riley/pmsampsize · Buderer 1996 · TSA/RIS · FDA & EMA về biên non-inferiority · CONSORT cluster).
+  **4 trạng thái rời nghĩa:** `BLOCKED` → `DRAFT_NEEDS_HUMAN_PARAMETERS` →
+  `DRAFT_READY_NEEDS_STATISTICIAN_REVIEW` → `PASS_G3_CONFIRMED`. Kết quả ghi vào
+  `exports/<study>/G3_QUALITY_REPORT.{json,md}` + khóa `quality_gate` trong `G3_checkpoint.json`.
+  **Bác sĩ điền xác nhận ở đâu:** `study_meta.json` → `gate_params.G3` (`effect_source` kèm
+  PMID/DOI/MCID, `effect_source_confirmed`, `p0_source`/`p_event_source`/`sd_source`/
+  `dropout_source`/`prevalence_source`, `powered_for_outcome`, `hypothesis_confirmed`,
+  `recruitment_feasibility_confirmed`, `reviewed_by_role` = STATISTICIAN hoặc PI, `reviewed_at`,
+  `software`; thêm `ni_regulatory_framework`/`margin_justification`/`margin_source` cho
+  non-inferiority, và `icc`/`icc_source`/`cluster_size`/`n_clusters` cho thiết kế theo chùm).
+  **Ba giới hạn phải nhớ:** (1) G3 **KHÔNG phải cổng ký** — `_GATE_REQUIRED_STAKEHOLDERS` không khai
+  stakeholder cho G3 và `approve_gate.py` không nhận `--gate G3`, nên `PASS_G3_CONFIRMED` là lời
+  **tự khai có dấu vết**, KHÔNG phải bảo đảm mật mã như G2/G4/G8/G9; (2) lớp này **CỐ Ý KHÔNG đổi mã
+  thoát** của `run_g3_auto.py` (19 file test + `run_pipeline`/`pipeline_freshness` dựa vào hợp đồng
+  3 mã thoát cũ) — muốn quality BLOCKED chặn cứng cả pipeline là đổi QUY TRÌNH, cần bác sĩ quyết;
+  (3) artifact `G3_QUALITY_REPORT.json` đăng ký ở `audit_research_gates.py` với `required=False`
+  (khác G2 là `True`) vì `tools/verify_research_gate_contracts.py` ở thư mục gốc dựng fixture G3 chỉ
+  với `G3_A4_SAMPLE_SIZE_AUTO.md` — nâng lên bắt buộc phải sửa ĐỒNG THỜI cả hai file.
+  Kiểm hồi quy: `pytest tests/test_g3_quality_gate.py` (60 test, đã kiểm bằng 4 phép đột biến).
+
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
