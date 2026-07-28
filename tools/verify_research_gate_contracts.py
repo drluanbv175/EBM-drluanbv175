@@ -29,8 +29,18 @@ import audit_research_gates as ARG  # noqa: E402
 
 REQUIRED_ARTIFACTS = {
     "G0": ["G0_A1_PICO_FINER_AUTO.md"],
-    "G1": ["G1_A2_PROTOCOL_DESIGN_AUTO.md"],
-    "G2": ["G2_A3_ETHICS_PACKAGE_AUTO.md"],
+    "G1": [
+        "G1_A1b_PROJECT_CHARTER_AUTO.md",
+        "G1_A2_PROTOCOL_DESIGN_AUTO.md",
+        "G1_A2b_EVIDENCE_LEDGER_AUTO.md",
+        "G1_A13_IMPLEMENTATION_PLAN_AUTO.md",
+        "G1_A13b_RISK_REGISTER_AUTO.md",
+    ],
+    "G2": [
+        "G2_A3_ETHICS_PACKAGE_AUTO.md",
+        "G2_REGISTRATION_DRAFT_AUTO.json",
+        "G2_QUALITY_REPORT.json",
+    ],
     "G3": ["G3_A4_SAMPLE_SIZE_AUTO.md"],
     "G4": ["G4_A5_SAP_FINAL_AUTO.md"],
     "G5": ["G5_A6_DATA_MGMT_AUTO.md", "G5_REDCap_dictionary_AUTO.csv"],
@@ -38,6 +48,20 @@ REQUIRED_ARTIFACTS = {
     "G7": ["G7_A8_MANUSCRIPT_AUTO.md"],
     "G8": ["G8_A9_PRESUBMISSION_AUTO.md"],
     "G9": ["G9_A10_AUTHOR_INTEGRITY_AUTO.md"],
+}
+
+CONFIRMED_G1_PARAMS = {
+    "design": "rct",
+    "design_confirmed": True,
+    "objectives": ["Mục tiêu fixture đã chốt"],
+    "primary_outcome": "Kết cục chính fixture tại 12 tuần",
+    "population": "Quần thể fixture",
+    "setting": "Bệnh viện fixture",
+    "study_period": "2027-2028",
+    "feasibility_confirmed": True,
+    "evidence_review_confirmed": True,
+    "reviewed_by_role": "methodologist",
+    "reviewed_at": "2026-07-27T10:00:00+07:00",
 }
 
 
@@ -56,6 +80,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _checkpoint(out_dir: Path, gate: str, payload: dict[str, Any] | None = None) -> None:
     data: dict[str, Any] = {"gate": gate, "guardrail": {"passed": True}}
+    if gate == "G1":
+        data["quality_gate"] = {
+            "status": "PASS_G1_CONFIRMED",
+            "pending_actions": [],
+        }
     data.update(payload or {})
     _write_json(out_dir / f"{gate}_checkpoint.json", data)
 
@@ -63,6 +92,16 @@ def _checkpoint(out_dir: Path, gate: str, payload: dict[str, Any] | None = None)
 def _write_required_artifacts(out_dir: Path, gates: list[str]) -> None:
     for gate in gates:
         for name in REQUIRED_ARTIFACTS.get(gate, []):
+            if name.endswith(".json"):
+                _write_json(
+                    out_dir / name,
+                    {
+                        "kind": "synthetic_fixture",
+                        "gate": gate,
+                        "disclaimer": "Cần bác sĩ kiểm chứng.",
+                    },
+                )
+                continue
             suffix = "\n" if name.endswith(".md") else ""
             (out_dir / name).write_text(f"synthetic fixture for {gate}{suffix}", encoding="utf-8")
 
@@ -99,7 +138,11 @@ def _verify_g2_human_irb_stop() -> None:
         out_dir = Path(tmp)
         _write_json(out_dir / "study_meta.json", {
             "title": "Đề tài fixture",
-            "gate_params": {"G3": {"effect_size": 0.5}},
+            "design_code": "rct",
+            "gate_params": {
+                "G1": CONFIRMED_G1_PARAMS,
+                "G3": {"effect_size": 0.5},
+            },
         })
         for gate in ["G0", "G1", "G2"]:
             _checkpoint(out_dir, gate)
@@ -121,9 +164,13 @@ def _verify_g6_data_lock_stop() -> None:
         out_dir = Path(tmp)
         _write_json(out_dir / "study_meta.json", {
             "title": "Đề tài fixture",
+            "design_code": "rct",
             "irb_approved": True,
             "sap_lock_date": "2026-07-13",
-            "gate_params": {"G3": {"effect_size": 0.5}},
+            "gate_params": {
+                "G1": CONFIRMED_G1_PARAMS,
+                "G3": {"effect_size": 0.5},
+            },
         })
         gates = ["G0", "G1", "G2", "G3", "G4", "G5", "G6"]
         for gate in gates:
@@ -146,11 +193,15 @@ def _verify_g9_integrity_stop() -> None:
         out_dir = Path(tmp)
         _write_json(out_dir / "study_meta.json", {
             "title": "Đề tài fixture",
+            "design_code": "rct",
             "irb_approved": True,
             "sap_lock_date": "2026-07-13",
             "data_lock_date": "2026-07-13",
             "results_final": True,
-            "gate_params": {"G3": {"effect_size": 0.5}},
+            "gate_params": {
+                "G1": CONFIRMED_G1_PARAMS,
+                "G3": {"effect_size": 0.5},
+            },
         })
         gates = ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"]
         for gate in gates:
