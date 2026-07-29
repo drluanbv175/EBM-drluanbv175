@@ -301,4 +301,43 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   với `G3_A4_SAMPLE_SIZE_AUTO.md` — nâng lên bắt buộc phải sửa ĐỒNG THỜI cả hai file.
   Kiểm hồi quy: `pytest tests/test_g3_quality_gate.py` (60 test, đã kiểm bằng 4 phép đột biến).
 
+- **Hợp đồng CHẤT LƯỢNG cổng G8 — bình duyệt độc lập (mới 2026-07-28):**
+  `python tools/g8_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g8_auto.py`.
+  **Vì sao có — KHÁC hẳn G3:** lớp mật mã của G8 rất dày và ĐÚNG (chữ ký HMAC payload v4 buộc
+  nhóm vai trò · chuỗi băm `prev_hash` · con dấu niêm phong · `run_g10_assemble.py` fail-closed).
+  Chỗ hỏng nằm ở **NỘI DUNG**: artifact mà chữ ký G8 ràng buộc vào —
+  `G8_A9_PRESUBMISSION_<study>.md` — là **bản TỰ KIỂM do chính `run_g8_auto.py` sinh từ checkpoint
+  G0–G7**, KHÔNG có mục nào chứa nhận xét của người bình duyệt. Nên chữ ký G8 hợp lệ chỉ chứng
+  minh "một người truy cập được khóa đã xác nhận bản tự kiểm này", KHÔNG chứng minh "đã có bình
+  duyệt độc lập". Cộng thêm: **HMAC là mật mã ĐỐI XỨNG** nên máy xác minh buộc phải giữ khóa đã
+  ký ⇒ hệ KHÔNG chứng minh được người ký khác chủ nhiệm; `per_role_key_available()` chỉ chứng
+  minh MỘT FILE tồn tại trên cùng máy. Vì vậy nhãn đạt **cố ý là `PASS_G8_REVIEW_RECORDED`, KHÔNG
+  mang chữ "ĐỘC LẬP"**.
+  **Lớp mới kiểm 3 nhóm chưa ai làm:** (1) NỘI DUNG bản thảo — vệt công cụ nội bộ còn sót (nhãn
+  `[CẦN]`, tên file pipeline, "(A) hay (B)", TODO — doctrine xếp mức CHẶN) và **báo cáo kết quả
+  chọn lọc** (kết cục chính trong bản thảo phải khớp SAP G4); (2) nghĩa vụ **ICMJE bản 1/2026** —
+  Mục V.A (khai AI ở CẢ cover letter lẫn bản thảo, cấm AI làm tác giả, cấm trích dẫn nội dung AI
+  làm nguồn gốc), **Mục V.B (người PHẢN BIỆN phải khai dùng AI + cam kết bảo mật — khoảng trống
+  hoàn toàn trong repo)**, III.L.1 đăng ký tiền cứu, III.L.3 chia sẻ dữ liệu đủ 5 trường
+  ("undecided" bị từ chối cứng), IV.B cover letter 5 nhóm nội dung; (3) **dấu hiệu độc lập** —
+  đối chiếu `reviewer_ref` của G8 với G2/G4/G5/G9 (trùng = một người ký nhiều vai trò) và đọc
+  `approving_signature_scope` để hạ mức khẳng định khi ký bằng khóa CHUNG.
+  **5 trạng thái:** `BLOCKED` → `DRAFT_NEEDS_HUMAN_COMPLETION` → `READY_FOR_INDEPENDENT_REVIEW` →
+  `PENDING_REAL_REVIEW_SIGNATURE` → `PASS_G8_REVIEW_RECORDED`. Ra
+  `exports/<study>/G8_QUALITY_REPORT.{json,md}`. Bác sĩ điền ở `study_meta.json → gate_params.G8`.
+  **Đòi thêm một artifact MỚI:** `G8_PEER_REVIEW_REPORT_<study>.md` — bản nhận xét THẬT của người
+  phản biện theo mẫu `binh-duyet.md` (khuyến nghị 4 mức · lỗi nghiêm trọng kèm vị trí · góp ý nhỏ
+  · câu hỏi cho tác giả · kết luận tổng thể). Máy KHÔNG sinh file này và không nên sinh.
+  **Ba điều TUYỆT ĐỐI không đổi:** (1) tên `G8_A9_PRESUBMISSION_<study>.md` là hợp đồng ba bên
+  (run_g8_auto ghi · run_g10_assemble tra ledger · doctrine dạy gõ tay vào `approve_gate --artifact`)
+  và nội dung bị băm trong chữ ký — tên "A9" lệch crosswalk (A9 thật = DMP ở G5, bình duyệt = A15)
+  là lệch ĐÃ BIẾT, sửa tên sẽ vô hiệu mọi chữ ký cũ; (2) mã thoát 3 bậc của `run_g8_auto.py`;
+  (3) 5 điều kiện quyết định `g8_status` (lớp mới chỉ BÁO CÁO thêm, không thay).
+  **Ba lệch nội bộ đã ghi nhận, CHƯA sửa:** artifact in "6 điều kiện BẮT BUỘC" nhưng `g8_status`
+  chỉ tính 5 (checklist ≥60% bị bỏ ngoài); `_item_auto_check` đánh ☑ mục CONSORT/STROBE chỉ vì
+  **file checkpoint cổng trước tồn tại**, không đọc bản thảo; `guardrail_g8` R6 vẫn thưởng việc
+  dán ≥8 nhãn `[CAN`. Kiểm hồi quy: `pytest tests/test_g8_quality_gate.py` (42 test, đã kiểm bằng
+  4 phép đột biến). **Nhãn "ICMJE 2023" lỗi thời còn sót ở `run_g2_auto.py:1120` và
+  `run_g7_auto.py:1382`** (chưa vá vì thuộc file phiên khác đang sửa).
+
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
