@@ -1,27 +1,33 @@
 #!/bin/sh
-# pre-commit — chan commit neu .claude/agents/*.md thay doi ma Codex TOML mirror
-# chua duoc dong bo. Them 2026-07-11 sau khi audit tim thay chuoi enforce->sync->check
-# khong co co che kich hoat tu dong nao (phai nho chay tay).
+# pre-commit — chan MOI commit khi Claude Code ↔ Codex con lech.
+# Them 2026-07-11; fail-closed toan cuc tu 2026-07-29.
 #
 # Kich hoat 1 lan (chi can chay 1 lan tren moi may, khong phai moi phien):
 #   git config core.hooksPath .githooks
 #   chmod +x .githooks/pre-commit
 #
-# Bo qua khi khong co file .claude/agents/*.md nao trong staged changes (nhanh, khong
-# lam cham cac commit khac).
+# Khong bo qua commit "khong lien quan": drift co the do mot phien Claude/Codex khac
+# dang ghi dong thoi. Moi commit duoc coi la mot moc hoan thien, nen phai de lai he
+# thong o trang thai dong bo.
+
+COMPLETION_SYNC_FAIL_CLOSED=1
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT" || exit 1
 
-CHANGED_AGENTS=$(git diff --cached --name-only --diff-filter=ACM -- '.claude/agents/*.md')
-
-if [ -z "$CHANGED_AGENTS" ]; then
-  exit 0
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "CHAN COMMIT: khong tim thay python3 de kiem dong bo Claude Code ↔ Codex." >&2
+  exit 1
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "pre-commit: khong tim thay python3 — bo qua kiem dong bo Codex (tu chay tay sau)." >&2
-  exit 0
+# Neu source/mirror con thay doi NGOAI index, mirror tren dia co the PASS nhung
+# snapshot sap commit van lech. Buoc nay dong loi staged-vs-working-tree do.
+UNSTAGED_SYNC=$(git diff --name-only -- .claude/agents .Codex/agents .codex/agents)
+if [ -n "$UNSTAGED_SYNC" ]; then
+  echo "CHAN COMMIT: source/mirror agent con thay doi chua stage:" >&2
+  echo "$UNSTAGED_SYNC" | sed 's/^/  - /' >&2
+  echo "  Hoan tat enforce → sync → check, sau do stage CA source va mirror." >&2
+  exit 1
 fi
 
 python3 tools/sync_agents_to_codex.py --check
@@ -36,6 +42,18 @@ if [ "$CHECK_EXIT" -ne 0 ]; then
   echo "    python3 tools/sync_agents_to_codex.py --check" >&2
   echo "  Roi commit lai." >&2
   echo "  Khan cap can bo qua: git commit --no-verify (KHONG khuyen nghi — se de lai lech am tham)." >&2
+  exit 1
+fi
+
+python3 tools/check_claude_codex_sync_health.py
+if [ "$?" -ne 0 ]; then
+  echo "CHAN COMMIT: sync co file nhung guardrail/disclaimer/ha tang chua dat." >&2
+  exit 1
+fi
+
+python3 tools/verify_claude_code_repo_alignment.py
+if [ "$?" -ne 0 ]; then
+  echo "CHAN COMMIT: hop dong repo Claude Code/Codex chua dong bo." >&2
   exit 1
 fi
 

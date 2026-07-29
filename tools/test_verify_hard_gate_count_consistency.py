@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import verify_hard_gate_count_consistency as V  # noqa: E402
 
-GATE_SET = ["G2", "G4", "G8", "G9"]
+GATE_SET = ["G2", "G4", "G5", "G8", "G9", "G10"]
 
 
 def _write(d: Path, name: str, content: str) -> Path:
@@ -26,7 +26,7 @@ def _write(d: Path, name: str, content: str) -> Path:
 
 def test_scan_detects_line_missing_one_gate(tmp_path):
     """Đúng kịch bản đã xảy ra thật: liệt kê cổng cứng G2/G4/G9, THIẾU G8."""
-    _write(tmp_path, "doctrine.md", "Cổng cứng: G2/G4/G9 không được vượt qua.\n")
+    _write(tmp_path, "doctrine.md", "Cổng cứng: G2/G4/G5/G9/G10 không được vượt qua.\n")
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert len(findings) == 1
     assert findings[0]["missing"] == ["G8"]
@@ -36,22 +36,30 @@ def test_scan_detects_line_missing_one_gate(tmp_path):
 def test_scan_detects_synonym_diem_dung_cung(tmp_path):
     """Hồi quy đúng: "điểm dừng cứng" (đồng nghĩa THẬT đã lọt lưới bản đầu,
     _KHUNG-DANH-GIA-KHA-THI.md) phải được nhận diện, không chỉ "cổng cứng"."""
-    _write(tmp_path, "doctrine.md", "4 điểm dừng cứng nghiên cứu (G2/G4/liêm chính) nguyên vẹn.\n")
+    _write(
+        tmp_path,
+        "doctrine.md",
+        "6 điểm dừng cứng nghiên cứu (G2/G4/G5/G8/liêm chính G9) nguyên vẹn.\n",
+    )
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert len(findings) == 1
-    assert set(findings[0]["missing"]) == {"G8", "G9"}
+    assert findings[0]["missing"] == ["G10"]
 
 
 def test_scan_passes_when_all_gates_present(tmp_path):
     """Không dương tính giả khi dòng liệt kê ĐỦ cả 4 gate."""
-    _write(tmp_path, "doctrine.md", "Cổng cứng: G2 · G4 · G8 · G9 đều phải đóng.\n")
+    _write(
+        tmp_path,
+        "doctrine.md",
+        "Cổng cứng: G2 · G4 · G5 · G8 · G9 · G10 đều phải đóng.\n",
+    )
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert findings == []
 
 
 def test_scan_ignores_line_mentioning_only_one_gate(tmp_path):
     """Dòng chỉ nhắc 1 gate (không đủ dấu hiệu đang LIỆT KÊ cổng cứng) — không
-    báo lệch dù thiếu 3 gate còn lại (đúng ngưỡng "≥2 gate" trong docstring)."""
+    báo lệch dù thiếu các gate còn lại (đúng ngưỡng "≥2 gate" trong docstring)."""
     _write(tmp_path, "doctrine.md", "Cổng cứng quan trọng nhất là G2 (đạo đức).\n")
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert findings == []
@@ -71,7 +79,11 @@ def test_scan_scans_multiple_files_and_reports_correct_filename(tmp_path):
     KHÔNG được nhắc chữ "G4" ở BẤT KỲ đâu (kể cả trong ngoặc mô tả) — nếu không
     _gates_mentioned_on_line sẽ vô tình khớp và làm "missing" thành rỗng."""
     _write(tmp_path, "a.md", "không liên quan\n")
-    _write(tmp_path, "b.md", "Cổng cứng: G2, G8, G9 phải cùng đóng trước khi nghiệm thu.\n")
+    _write(
+        tmp_path,
+        "b.md",
+        "Cổng cứng: G2, G5, G8, G9, G10 phải cùng đóng trước khi nghiệm thu.\n",
+    )
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert len(findings) == 1
     assert findings[0]["file"].endswith("b.md")
@@ -80,7 +92,7 @@ def test_scan_scans_multiple_files_and_reports_correct_filename(tmp_path):
 
 def test_scan_case_insensitive_hard_gate_phrase(tmp_path):
     """_HARD_GATE_PHRASE dùng re.IGNORECASE — "Hard Gate" hoa/thường vẫn khớp."""
-    _write(tmp_path, "doctrine.md", "Hard Gate: G2, G4, G9.\n")
+    _write(tmp_path, "doctrine.md", "Hard Gate: G2, G4, G5, G9, G10.\n")
     findings = V.scan(agents_dir=tmp_path, gate_set=GATE_SET)
     assert len(findings) == 1
     assert findings[0]["missing"] == ["G8"]

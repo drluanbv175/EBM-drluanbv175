@@ -7,7 +7,8 @@ kháng: cổng G8 — bình duyệt độc lập — thêm 2026-07-14, nhưng 11
 `.claude/agents/*.md` vẫn liệt kê cổng cứng KHÔNG có G8, 16+ ngày sau).
 
 Nguồn sự thật DUY NHẤT: tools/gate_contract.py::_GATE_REQUIRED_STAKEHOLDERS (trong
-medical-ebm-automation/) — tập gate_id có yêu cầu stakeholder cứng (hiện G2/G4/G8/G9).
+medical-ebm-automation/) — tập gate_id có yêu cầu stakeholder cứng (hiện
+G2/G4/G5/G8/G9/G10).
 
 Cơ chế: quét mọi dòng trong .claude/agents/*.md có nhắc "cổng cứng" (hoặc đồng
 nghĩa — xem _HARD_GATE_PHRASE) VÀ nhắc ÍT NHẤT 2 gate_id trong bộ nguồn sự thật

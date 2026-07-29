@@ -53,3 +53,25 @@ def test_windows_sync_verifier_fails_when_root_hook_is_missing(monkeypatch, tmp_
     err = capsys.readouterr().err
     assert "Repo gốc" in err
     assert "core.hooksPath=None" in err
+
+
+def test_hook_contract_reports_missing_markers(tmp_path):
+    hook = tmp_path / "pre-commit"
+    hook.write_text("#!/bin/sh\nCOMPLETION_SYNC_FAIL_CLOSED=1\n", encoding="utf-8")
+
+    missing = V._hook_contract_errors(
+        hook,
+        ("COMPLETION_SYNC_FAIL_CLOSED=1", "sync_agents_to_codex.py --check"),
+    )
+
+    assert missing == ["sync_agents_to_codex.py --check"]
+
+
+def test_hook_contract_reports_missing_file(tmp_path):
+    missing = V._hook_contract_errors(
+        tmp_path / "missing-pre-commit",
+        ("COMPLETION_SYNC_FAIL_CLOSED=1",),
+    )
+
+    assert len(missing) == 1
+    assert missing[0].startswith("missing:")

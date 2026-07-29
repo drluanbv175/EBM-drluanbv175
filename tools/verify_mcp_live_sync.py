@@ -6,12 +6,12 @@ tool không tự đổi cấu hình hệ thống). Chỉ PHÁT HIỆN + báo rõ
 để lỗ hổng "quên kích hoạt trên máy mới" không im lặng trôi qua khi chạy
 `upgrade_verify.py` định kỳ.
 
-3 điều kiện coi là "đồng bộ MCP mặc định đã bật" trên máy này:
+5 điều kiện coi là "đồng bộ MCP mặc định đã bật" trên máy này:
   1. Repo gốc (Claude AI): git config core.hooksPath == .githooks
-     (chặn commit nếu .claude/agents/*.md lệch mirror Codex)
-  2. Repo medical-ebm-automation: git config core.hooksPath == .githooks
-     (tự restart tunnel-client SAU mỗi commit chạm code server MCP)
-  3. LaunchAgent vn.drluan.ebm-mcp-code-watch đã load (macOS launchctl)
+  2. Hook repo gốc có hợp đồng fail-closed toàn cục
+  3. Repo medical-ebm-automation: git config core.hooksPath == .githooks
+  4. Hook repo y khoa gọi lại chốt đồng bộ của repo gốc trước commit
+  5. LaunchAgent vn.drluan.ebm-mcp-code-watch đã load (macOS launchctl)
      (tự restart tunnel-client NGAY khi file server MCP đổi trên đĩa,
      không cần chờ commit)
 
@@ -42,6 +42,30 @@ TUNNEL_LABEL = "vn.drluan.ebm-copilot-tunnel"
 WATCH_LABEL = "vn.drluan.ebm-mcp-code-watch"
 WATCHER_SOURCE = MIRROR / "tools/watch_restart_ebm_tunnel.sh"
 WATCHER_INSTALLED = Path.home() / ".ebm-tools/bin/watch-restart-ebm-tunnel"
+ROOT_PRE_COMMIT = ROOT / ".githooks" / "pre-commit"
+MIRROR_PRE_COMMIT = MIRROR / ".githooks" / "pre-commit"
+
+ROOT_HOOK_MARKERS = (
+    "COMPLETION_SYNC_FAIL_CLOSED=1",
+    "git diff --name-only -- .claude/agents .Codex/agents .codex/agents",
+    "tools/sync_agents_to_codex.py --check",
+    "tools/check_claude_codex_sync_health.py",
+    "tools/verify_claude_code_repo_alignment.py",
+)
+MIRROR_HOOK_MARKERS = (
+    "COMPLETION_SYNC_FAIL_CLOSED=1",
+    'ROOT_HOOK="$WORKSPACE_ROOT/.githooks/pre-commit"',
+    '"$ROOT_HOOK"',
+)
+
+
+def _hook_contract_errors(path: Path, markers: tuple[str, ...]) -> list[str]:
+    """Trả các marker còn thiếu trong hook fail-closed."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return [f"missing:{path}"]
+    return [marker for marker in markers if marker not in text]
 
 
 def _git_hooks_path(repo: Path) -> str | None:
@@ -149,6 +173,14 @@ def main() -> int:
         )
     else:
         notes.append("Repo gốc: hook doctrine-sync đã kích hoạt.")
+        missing = _hook_contract_errors(ROOT_PRE_COMMIT, ROOT_HOOK_MARKERS)
+        if missing:
+            problems.append(
+                "Hook repo gốc chưa có hợp đồng completion-sync fail-closed: "
+                + ", ".join(missing)
+            )
+        else:
+            notes.append("Repo gốc: pre-commit chặn drift toàn cục và lệch index/worktree.")
 
     if MIRROR.is_dir():
         mirror_hooks = _git_hooks_path(MIRROR)
@@ -158,7 +190,15 @@ def main() -> int:
                 "Kích hoạt: cd '" + str(MIRROR) + "' && git config core.hooksPath .githooks"
             )
         else:
-            notes.append("Repo medical-ebm-automation: hook post-commit restart tunnel đã kích hoạt.")
+            notes.append("Repo medical-ebm-automation: hooksPath đã kích hoạt.")
+            missing = _hook_contract_errors(MIRROR_PRE_COMMIT, MIRROR_HOOK_MARKERS)
+            if missing:
+                problems.append(
+                    "Hook repo y khoa chưa gọi chốt đồng bộ workspace trước commit: "
+                    + ", ".join(missing)
+                )
+            else:
+                notes.append("Repo y khoa: pre-commit bắt buộc Claude Code ↔ Codex cùng đạt.")
 
     system_name = platform.system()
     if system_name != "Darwin":
