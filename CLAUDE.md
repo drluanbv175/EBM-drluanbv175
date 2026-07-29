@@ -304,6 +304,51 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   với `G3_A4_SAMPLE_SIZE_AUTO.md` — nâng lên bắt buộc phải sửa ĐỒNG THỜI cả hai file.
   Kiểm hồi quy: `pytest tests/test_g3_quality_gate.py` (60 test, đã kiểm bằng 4 phép đột biến).
 
+- **Hợp đồng CHẤT LƯỢNG cổng G4 — khóa SAP (mới 2026-07-29, từ kiểm toàn diện G0-G10):**
+  `python tools/g4_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `approve_gate.py --gate G4`
+  sau khi ký thành công (khuôn dòng gọi giống G2/G5/G9/G10); gọi tay khi muốn CHẤM LẠI.
+  **Vì sao có — G4 là cổng ký thật DUY NHẤT (cùng G2/G5/G8/G9/G10) chưa từng có lớp
+  quality_gate riêng.** Guardrail nội bộ của `run_g4_auto.py` 3/4 luật (R4/R6/R7) là tautology
+  (đếm đúng chuỗi mà `generate()` LUÔN in cứng); luật thật (R3) chỉ chạy MỘT LẦN ngay sau sinh
+  artifact, không ai gọi lại trên nội dung bác sĩ vừa sửa. Chốt gác thật DUY NHẤT trước khi ký —
+  `approve_gate._g4_sections_still_draft()` — chỉ đếm placeholder "[CẦN" ở §1/§2/§5/§10, không
+  kiểm bất kỳ nội dung phương pháp luận nào (EPV/VIF, MCAR/MAR/MNAR, đa so sánh khớp alpha) mà
+  doctrine `thiet-ke-nghien-cuu.md` đòi hỏi — thay mỗi "[CẦN...]" bằng "OK" vẫn ký sạch. **Lỗ hổng
+  nghiêm trọng nhất:** không có bước nào đối chiếu lại số liệu ĐÃ KÝ (alpha/power/N/effect/margin ở
+  §12 SAP) với `G3_checkpoint.json` HIỆN TẠI — một SAP bị sửa tay, hoặc sinh ra TRƯỚC khi G3 chạy
+  lại với tham số khác, vẫn ký sạch mà không ai biết (chữ ký mật mã chỉ bảo vệ TOÀN VẸN nội dung
+  đang có, không bảo đảm nội dung đó còn ĐÚNG với cỡ mẫu thật). Cuối cùng: tín hiệu "G4 đã khóa" mà
+  `skill_standards.real_world_signals()`/`g7_quality_gate.py`/`list_studies.py` đọc
+  (`g4_lock_date`/`g4_status`) trước đây KHÔNG được `approve_gate.py` cập nhật khi ký thật.
+  **12 tiêu chí tự động (G4-AUTO-00…11) + 7 tiêu chí ký người thật (G4-HUMAN-01…07).** Đáng chú ý:
+  G4-AUTO-03 đọc lại §12 bằng regex rồi so với G3_checkpoint.json SỐNG (không phải bản đã lưu lúc
+  sinh SAP) — BLOCK nếu lệch bất kỳ giá trị nào; G4-AUTO-05/G4-AUTO-04 CỐ Ý không đếm sự có mặt của
+  MCAR/MAR/MNAR (template mặc định ĐÃ in sẵn "MAR" nên đếm-có-mặt sẽ tautology y hệt lỗi vừa vá ở
+  G3/G8) mà đếm placeholder "[CẦN" của biến imputation chưa điền; G4-AUTO-07 (subgroup tiền định,
+  chống HARKing) kiểm §7 — mục KHÔNG nằm trong `_g4_sections_still_draft()` nên trước đây có thể ký
+  dù còn nguyên placeholder; G4-AUTO-08 bắt kiểu "thay [CẦN] bằng OK" (đòi tên+phiên bản phần mềm
+  VÀ seed số nguyên cụ thể, không chỉ vắng mặt placeholder); G4-AUTO-09 chặn CỨNG (BLOCK) khi
+  hypothesis_type≠superiority mà margin(Δ) rỗng — an toàn tối quan trọng của NI/equivalence.
+  **4 trạng thái:** `BLOCKED` → `DRAFT_NEEDS_HUMAN_CONTENT` → `READY_FOR_SIGNATURE` →
+  `PASS_G4_SAP_LOCKED` (KHÔNG mang chữ "ĐỘC LẬP", cùng lý do HMAC-đối-xứng đã ghi ở G8). Bác sĩ điền
+  xác nhận ở `study_meta.json → gate_params.G4` (`epv_vif_reviewed`, `missing_data_mechanism_confirmed`,
+  `subgroup_multiplicity_predefined_confirmed`, `reviewed_by_role`, `reviewed_at` — khóa `G4` mới
+  thêm vào `_GATE_PARAMS_SKELETON` của `gate_contract.py`); margin cần thêm `gate_params.G3.margin_source`
+  + `margin_justification` (tái dùng khóa G3 đã có, không tạo bản sao). `refresh_checkpoint()` GHI
+  `g4_lock_date` từ TIMESTAMP LEDGER THẬT khi LOCKED — đóng khoảng trống tín hiệu phân mảnh; đồng thời
+  `skill_standards.real_world_signals()` nay chấm TRỰC TIẾP qua `g4_quality_gate.evaluate_study()`
+  khi có `quality_contract_version` (mirror nhánh G5/G9), không còn tin field cũ.
+  **Ba điều TUYỆT ĐỐI không đổi (cùng nguyên tắc G3/G8):** (1) tên artifact `G4_A5_SAP_FINAL_<study>.md`
+  là hợp đồng downstream (guardrail/`approve_gate`/G5/G6/G9 đều dùng); (2) lớp này KHÔNG thêm điều
+  kiện chặn ký mới vào `approve_gate.py` — `_g4_sections_still_draft()` vẫn là chốt trước-ký DUY
+  NHẤT, module chỉ CHẤM LẠI và BÁO CÁO (nhất quán cách G3/G8 đã chọn, không đổi exit-code của
+  `run_g4_auto.py`/`approve_gate.py` mà nhiều test đã khóa); (3) artifact `G4_QUALITY_REPORT.json`
+  đăng ký ở `audit_research_gates.py` với `required=False` (giống G3/G8, khác G2) vì fixture của
+  `tools/verify_research_gate_contracts.py` chỉ dựng artifact SAP — nâng bắt buộc phải sửa đồng thời.
+  Kiểm hồi quy: `pytest tests/test_g4_quality_gate.py` (56 test, đã kiểm bằng 3 phép đột biến; gồm
+  3 test tích hợp chạy CLI thật — sinh SAP → điền → ký bằng khóa vai trò → LOCKED + `g4_lock_date`
+  khớp ledger, và mô phỏng G3 chạy lại sau khi ký để xác nhận G4-AUTO-03 bắt được).
+
 - **Hợp đồng CHẤT LƯỢNG cổng G8 — bình duyệt độc lập (mới 2026-07-28):**
   `python tools/g8_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g8_auto.py`.
   **Vì sao có — KHÁC hẳn G3:** lớp mật mã của G8 rất dày và ĐÚNG (chữ ký HMAC payload v4 buộc
