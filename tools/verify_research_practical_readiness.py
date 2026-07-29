@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT / "medical-ebm-automation"
 REPO_TOOLS = REPO / "tools"
 sys.path.insert(0, str(REPO_TOOLS))
+sys.path.insert(0, str(REPO))
 
 import audit_research_gates as ARG  # noqa: E402
 import clean_research_dataset as CLEAN  # noqa: E402
@@ -36,6 +37,8 @@ import deidentify_research_dataset as DEID  # noqa: E402
 import import_real_dataset as INTAKE  # noqa: E402
 import lock_analysis_dataset as LOCK  # noqa: E402
 import pseudonymize_research_dataset as PSEUDO  # noqa: E402
+
+from tests.g5_test_helpers import prepare_locked_g5_study  # noqa: E402
 
 
 def _configure_utf8_stdio() -> None:
@@ -149,10 +152,15 @@ def _write_checkpoint(out_dir: Path, gate: str) -> None:
 def _write_gate_scaffold(out_dir: Path, gates: list[str]) -> None:
     """Dựng checkpoint/artifact tối thiểu để audit không coi G6 là mồ côi."""
     for gate in gates:
-        _write_checkpoint(out_dir, gate)
+        checkpoint = out_dir / f"{gate}_checkpoint.json"
+        if not checkpoint.exists():
+            _write_checkpoint(out_dir, gate)
         for artifact in REQUIRED_GATE_ARTIFACTS.get(gate, []):
+            target = out_dir / artifact
+            if target.exists():
+                continue
             suffix = "\n" if artifact.endswith(".md") else ""
-            (out_dir / artifact).write_text(
+            target.write_text(
                 f"Synthetic {gate} artifact for practical readiness verification.{suffix}",
                 encoding="utf-8",
             )
@@ -272,7 +280,8 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
         study,
         clean_path,
         lock_date="2026-07-13",
-        approved_by="PI-SYNTHETIC",
+        reviewer_role="DATA_GOVERNANCE_QA_REVIEWER",
+        reviewer_ref="VERIFY-G5-BLOCKED",
         sap_version="1.0",
         query_log=query_log,
         exports_root=exports_root,
@@ -282,21 +291,19 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert(any(item.startswith("missing_confirmation:") for item in blocked_lock["blockers"]),
             "Data lock phải nêu rõ thiếu xác nhận")
 
-    locked = LOCK.lock_dataset(
+    locked_path, quality = prepare_locked_g5_study(
         study,
-        clean_path,
-        lock_date="2026-07-13",
-        approved_by="PI-SYNTHETIC",
-        sap_version="1.0",
-        query_log=query_log,
+        raw_readonly,
         exports_root=exports_root,
-        confirm_deidentified=True,
-        confirm_clean_copy=True,
-        confirm_no_open_query=True,
-        confirm_sap_locked=True,
+        repo_root=exports_root.parent,
+    )
+    locked = json.loads(
+        (out_dir / "DATA_LOCK_manifest.json").read_text(encoding="utf-8")
     )
     _assert(locked["status"] == LOCK.LOCKED_STATUS, "Data lock phải khóa khi đủ xác nhận")
     _assert(locked["analysis_allowed"] is True, "Manifest locked phải cho phép phân tích")
+    _assert(quality["status"] == "PASS_G5_DATA_LOCKED", "G5 quality phải PASS sau approval")
+    _assert(locked_path.exists(), "Dataset khóa phải tồn tại")
 
     meta = _load_meta(out_dir)
     meta["irb_approved"] = True
@@ -330,6 +337,12 @@ def run_verification() -> Dict[str, Any]:
         try:
             exports_root = tmp_root / "exports"
             mapping_root = tmp_root / "protected_mapping"
+            key_path = tmp_root / "gate_approval_key"
+            key_path.write_text("synthetic-practical-readiness-key", encoding="utf-8")
+            old_key = os.environ.get("EBM_GATE_KEY_PATH")
+            old_pytest = os.environ.get("PYTEST_CURRENT_TEST")
+            os.environ["EBM_GATE_KEY_PATH"] = str(key_path)
+            os.environ["PYTEST_CURRENT_TEST"] = "synthetic practical readiness verifier"
             raw_path = _write_csv(tmp_root / "raw_with_pii.csv", RAW_ROWS)
 
             deid = _verify_deidentification_path(exports_root, raw_path)
@@ -343,6 +356,15 @@ def run_verification() -> Dict[str, Any]:
                 "pseudonymization_to_g6": pseudo,
             }
         finally:
+            if "old_key" in locals():
+                if old_key is None:
+                    os.environ.pop("EBM_GATE_KEY_PATH", None)
+                else:
+                    os.environ["EBM_GATE_KEY_PATH"] = old_key
+                if old_pytest is None:
+                    os.environ.pop("PYTEST_CURRENT_TEST", None)
+                else:
+                    os.environ["PYTEST_CURRENT_TEST"] = old_pytest
             _restore_temp_cleanup_access(tmp_root)
 
 

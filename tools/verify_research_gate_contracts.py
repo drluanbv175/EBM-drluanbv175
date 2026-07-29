@@ -5,7 +5,7 @@ Tool này dựng fixture tạm, gọi trực tiếp `medical-ebm-automation/tool
 và kiểm 4 bất biến vận hành:
 - study mới được resume tự động ở G0, có `GATE_ACTION_QUEUE.json`;
 - G2 thiếu IRB thật phải dừng ở người thật;
-- G6 thiếu data-lock thật không được chạy phân tích downstream;
+- G5/G6 thiếu data-lock thật không được chạy phân tích downstream;
 - G9 thiếu chữ ký liêm chính thật không được phát hành công bố.
 
 Không ghi vào repo, không dùng dữ liệu thật, không chạm PII.
@@ -43,7 +43,11 @@ REQUIRED_ARTIFACTS = {
     ],
     "G3": ["G3_A4_SAMPLE_SIZE_AUTO.md"],
     "G4": ["G4_A5_SAP_FINAL_AUTO.md"],
-    "G5": ["G5_A6_DATA_MGMT_AUTO.md", "G5_REDCap_dictionary_AUTO.csv"],
+    "G5": [
+        "G5_A6_DATA_MGMT_AUTO.md",
+        "G5_REDCap_dictionary_AUTO.csv",
+        "G5_QUALITY_REPORT.json",
+    ],
     "G6": ["G6_A7_ANALYSIS_SCRIPTS_AUTO.md"],
     "G7": ["G7_A8_MANUSCRIPT_AUTO.md"],
     "G8": ["G8_A9_PRESUBMISSION_AUTO.md"],
@@ -178,14 +182,17 @@ def _verify_g6_data_lock_stop() -> None:
         _write_required_artifacts(out_dir, gates)
 
         report = ARG.audit_gates("VERIFY-GATE-G6", out_dir=out_dir, write=False)
+        g5 = _gate(report, "G5")
         g6 = _gate(report, "G6")
+        _assert(g5["status"] == ARG.STATUS_NEEDS_REAL,
+                "G5 thiếu data-lock thật phải NEEDS_REAL")
         _assert(g6["status"] == ARG.STATUS_NEEDS_REAL, "G6 thiếu data-lock thật phải NEEDS_REAL")
         _assert("dataset phân tích đã khóa" in g6["release_contract"]["blockers"],
                 "G6 phải nêu blocker data-lock thật")
         _assert(g6["release_contract"]["responsible_actor"] == "human_pi_or_data_manager",
                 "G6 thiếu data-lock phải giao cho PI/data manager")
-        _assert(report["resume_contract"]["human_blocker"]["gate"] == "G6",
-                "Human blocker đầu tiên phải là G6")
+        _assert(report["resume_contract"]["human_blocker"]["gate"] == "G5",
+                "Data-lock nay thuộc hard gate G5 nên human blocker đầu tiên phải là G5")
 
 
 def _verify_g9_integrity_stop() -> None:
@@ -223,7 +230,7 @@ def main() -> int:
     checks = [
         ("study mới resume G0", _verify_new_study_auto_resume),
         ("G2 dừng IRB thật", _verify_g2_human_irb_stop),
-        ("G6 dừng data-lock thật", _verify_g6_data_lock_stop),
+        ("G5/G6 dừng data-lock thật", _verify_g6_data_lock_stop),
         ("G9 dừng liêm chính thật", _verify_g9_integrity_stop),
     ]
     print("Research gate contract verifier")

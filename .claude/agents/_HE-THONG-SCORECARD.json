@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 13,
-    "partial": 0,
+    "strong": 11,
+    "partial": 2,
     "weak": 0,
     "total": 13
   },
@@ -191,8 +191,8 @@
       "id": "A7",
       "name": "An toàn, ổn định, kiểm chứng",
       "level": "agent",
-      "status": "strong",
-      "passed": 5,
+      "status": "partial",
+      "passed": 4,
       "total": 5,
       "probes": [
         {
@@ -205,11 +205,11 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 209 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 216 khớp 'test_*.py' (≥40)"
         },
         {
-          "ok": true,
-          "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "Audit hệ PASS (kiểm chứng): exit=1 (cần 0) ✗"
         },
         {
           "ok": true,
@@ -346,13 +346,13 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "strong",
-      "passed": 14,
+      "status": "partial",
+      "passed": 12,
       "total": 14,
       "probes": [
         {
-          "ok": true,
-          "detail": "Audit registry-aware PASS: exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "Audit registry-aware PASS: exit=1 (cần 0) ✗"
         },
         {
           "ok": true,
@@ -399,8 +399,8 @@
           "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": true,
-          "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "Repo/Claude Code/Codex alignment PASS: exit=1 (cần 0) ✗"
         },
         {
           "ok": true,
