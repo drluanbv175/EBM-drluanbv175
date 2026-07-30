@@ -271,6 +271,24 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   chạy lại G0 — nay có sao lưu `.bak-*` trước khi đè). G0 cũng đã tra **ClinicalTrials.gov**
   tự động (§3.6 của artifact) để trả lời "đã có ai ĐANG LÀM chưa" — PubMed chỉ biết cái ĐÃ
   CÔNG BỐ; PROSPERO/WHO ICTRP không có API mở nên chỉ sinh link, bác sĩ tự tra.
+  **Ba phát hiện của đợt audit toàn diện G0-G10, 2026-07-30 (cùng đợt với G3/G4/G8/G9 ở trên):**
+  (1) 3/9 luật của `guardrail_check_g0()` (R6 nhãn `[CẦN...]`, R7 disclaimer, R_LABEL "[BẢN
+  NHÁP TỰ ĐỘNG]") là TAUTOLOGY_GUARDRAIL — `generate_a1_artifact()` in CỨNG cả ba chuỗi này
+  VÔ ĐIỀU KIỆN nên không nhánh nào của pipeline thật khiến 3 luật đó BLOCK được; đã thêm
+  comment trung thực tại chỗ (không phát minh điều kiện giả) nói rõ phạm vi thật: chỉ bắt
+  được tampering/truncation SAU khi artifact đã sinh, không phải kiểm nội dung cho đề tài cụ
+  thể — cùng tinh thần nhãn `PASS_G8_REVIEW_RECORDED`/`PASS_G4_SAP_LOCKED` không mang chữ
+  "ĐỘC LẬP". (2) `refresh_checkpoint()` (cập nhật `G0_checkpoint.json["quality_gate"]` khi
+  chấm ĐỘC LẬP, không qua `run_g0_auto.py`) hoá ra ĐÃ ĐƯỢC vá xong trong CÙNG đợt audit này
+  trước khi tới lượt việc này — xác nhận lại bằng lời gọi hàm thật (`evaluate_study(write=True)`
+  trên checkpoint cũ chưa có khối `quality_gate`) và bổ sung 4 test hồi quy (mutation-tested)
+  vì trước đó module chưa có test nào phủ đúng hành vi này. (3) Doctrine `cau-hoi-nghien-cuu.md`
+  từng liệt "scaffold đề tài đã tạo" là một THÀNH PHẦN của "Đạt G0" — mâu thuẫn thời gian với
+  chính BƯỚC 0 của agent đó (`scaffold_research_project.py` chỉ chạy SAU KHI đã
+  `PASS_G0_CONFIRMED`) và `g0_quality_gate.py` chưa từng chấm mục này; đã sửa doctrine thay vì
+  thêm một tiêu chí máy giả tạo (sẽ luôn PASS vì exports/<study>/ + checkpoint LUÔN tồn tại
+  tại thời điểm evaluate_study() chạy được — cùng lỗi tautology vừa vá ở (1)). Kiểm hồi quy:
+  `pytest tests/test_g0_quality_gate_20260728.py` (47 test).
 - **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
 - **Hợp đồng CHẤT LƯỢNG cổng G3 — cỡ mẫu (mới 2026-07-28):**
