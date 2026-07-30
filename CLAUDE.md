@@ -381,11 +381,50 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   và nội dung bị băm trong chữ ký — tên "A9" lệch crosswalk (A9 thật = DMP ở G5, bình duyệt = A15)
   là lệch ĐÃ BIẾT, sửa tên sẽ vô hiệu mọi chữ ký cũ; (2) mã thoát 3 bậc của `run_g8_auto.py`;
   (3) 5 điều kiện quyết định `g8_status` (lớp mới chỉ BÁO CÁO thêm, không thay).
-  **Ba lệch nội bộ đã ghi nhận, CHƯA sửa:** artifact in "6 điều kiện BẮT BUỘC" nhưng `g8_status`
-  chỉ tính 5 (checklist ≥60% bị bỏ ngoài); `_item_auto_check` đánh ☑ mục CONSORT/STROBE chỉ vì
-  **file checkpoint cổng trước tồn tại**, không đọc bản thảo; `guardrail_g8` R6 vẫn thưởng việc
-  dán ≥8 nhãn `[CAN`. Kiểm hồi quy: `pytest tests/test_g8_quality_gate.py` (42 test, đã kiểm bằng
-  4 phép đột biến). **Nhãn "ICMJE 2023" lỗi thời còn sót ở `run_g2_auto.py:1120` và
-  `run_g7_auto.py:1382`** (chưa vá vì thuộc file phiên khác đang sửa).
+  **Một lệch nội bộ CÒN đúng:** artifact in "6 điều kiện BẮT BUỘC" nhưng `g8_status` chỉ tính 5
+  (checklist ≥60% bị bỏ ngoài) — chưa sửa. **Hai lệch khác đã VÁ (audit toàn diện G0-G10,
+  2026-07-30):** `_item_auto_check` trước đây đánh ☑ mục CONSORT/STROBE chỉ vì **file checkpoint
+  cổng trước tồn tại**, không đọc bản thảo — nay đọc thật `G7_A8_MANUSCRIPT_<study>.md`, chỉ ☑ khi
+  phần I/II tương ứng không còn nhãn `[CẦN`; `guardrail_g8` R6 (đếm nhãn `[CẦN...]`) từng thưởng
+  việc dán nhãn và PHẠT chính việc bác sĩ điền thật (một gói THỰC SỰ gần xong có thể tụt dưới
+  ngưỡng và bị chặn oan) — nay chỉ còn cảnh báo thông tin, không chặn; đồng thời `G8-AUTO-00`
+  (guardrail nền) nay chạy LẠI guardrail thật trên artifact hiện tại thay vì tin
+  `checkpoint["guardrail"]` đóng băng. Kiểm hồi quy: `pytest tests/test_g8_quality_gate.py` +
+  `tests/test_g8_r6_and_item_auto_check_20260730.py` (mutation-tested). **Nhãn "ICMJE 2023" lỗi
+  thời còn sót ở `run_g2_auto.py:1120` và `run_g7_auto.py:1382`** (chưa vá vì thuộc file phiên
+  khác đang sửa).
+
+- **Hợp đồng CHẤT LƯỢNG cổng G9 — liêm chính tác giả & sẵn sàng công bố (mới 2026-07-28, tài
+  liệu hóa 2026-07-30 — trước đó bị bỏ sót, khác hẳn G0/G3/G8 đều có mục riêng cùng ngày xây):**
+  `python tools/g9_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g9_auto.py`; gọi tay để
+  CHẤM LẠI sau khi bác sĩ bổ sung xác nhận.
+  **Vì sao có:** doctrine cũ (`nop-bai-phan-hoi.md`) hứa "bác sĩ chỉ cần đọc, ký 3 xác nhận và
+  nộp" (COI đầy đủ · tác giả đồng ý bản cuối · không đăng kép) — nhưng `approve_gate.py --gate G9`
+  thật ra chỉ cho ký khi `g9_quality_gate.py` trả `READY_FOR_G9_PI_APPROVAL`, đòi **9 nhóm tiêu
+  chí người thật** (ICMJE 4 tiêu chí + CRediT + COI + `evidence_ref` cho TỪNG tác giả · thứ tự
+  tác giả/guarantor · khai AI đủ tools/purposes/confirmed_at · Data Availability đủ chi tiết
+  ICMJE cho thử nghiệm lâm sàng · liêm chính công bố (similarity/image integrity/kết quả khớp
+  phân tích khóa) · venue due diligence · ethics/privacy) — doctrine mô tả ít hơn hẳn code thật.
+  **4 trạng thái:** `BLOCKED` → `DRAFT_READY_NEEDS_REAL_ATTESTATIONS` →
+  `READY_FOR_G9_PI_APPROVAL` → `PASS_G9_PUBLICATION_INTEGRITY_LOCKED`. Ra
+  `exports/<study>/G9_QUALITY_REPORT.{json,md}` từ `G9_PUBLICATION_READINESS.json` +
+  `G9_A10_AUTHOR_INTEGRITY_<study>.md` + `G9_checkpoint.json`.
+  **4 phát hiện đã vá cùng đợt tài liệu hóa này:** (1) STANDARDS_BASIS từng trích SAI DOI cho
+  "COPE authorship and AI guidance" (`10.24318/LQU1h9US` trỏ nhầm sang một tài liệu 2017 về xuất
+  bản luận văn — đã xác minh qua redirect thật) — sửa thành `10.24318/cCVRZBms`; (2) `G9-AUTO-02`
+  (guardrail nền) từng đọc `checkpoint["guardrail"]` đóng băng — nay chạy LẠI
+  `guardrail_check_g9()` trên file A10 thật; luật R5 (đếm `[CẦN`) từng xung đột trực tiếp với
+  `_documents_clean()`/G9-AUTO-05 (đòi CHÍNH file đó sạch placeholder để coi là sẵn sàng nộp) —
+  một gói THỰC SỰ hoàn chỉnh sẽ luôn bị R5 cũ chặn oan — nay chỉ còn cảnh báo thông tin; (3) thêm
+  `G9-HUMAN-10` đối chiếu `reviewer_ref` của người ký G9 với G2/G4/G5/G8 (mirror `G8-HUMAN-04`,
+  vốn đã nhắm cả tới G9 nhưng G9 chưa từng soi ngược lại) — CỐ Ý không gate trạng thái LOCKED (chỉ
+  4 trạng thái, không có mức trung gian như G8, nên gate sẽ tạo bẫy con-gà-quả-trứng); (4) checkpoint
+  tự mâu thuẫn nguồn chuẩn AI disclosure ("COPE + Nature Portfolio 2024" vs header thật "ICMJE Mục
+  V, cập nhật 01/2026") — thống nhất về ICMJE Mục V. **Còn hở, chưa sửa:** checklist "Phần 8 —
+  Hard Gate" mà bác sĩ đọc/ký trên giấy/Word vẫn tách rời khỏi cổng máy-chấm thật (đã thêm dòng
+  LƯU Ý trỏ đúng lệnh `g9_quality_gate.py`/`approve_gate.py --gate G9`, nhưng không có cơ chế đọc
+  ngược trạng thái tick ☐/☑). Kiểm hồi quy: `pytest tests/test_g9_quality_gate.py` +
+  `tests/test_g9_reviewer_ref_cross_check_20260730.py` +
+  `tests/test_g9_auto02_stale_cache_and_r5_20260730.py` (mutation-tested).
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
