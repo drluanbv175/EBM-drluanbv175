@@ -9,6 +9,7 @@ này chỉ đọc file và git index; không tự sửa/sync.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,22 @@ import check_claude_codex_sync_health as sync_health
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# Khi script nay chay tu hook pre-commit cua mot repo con long ben trong
+# (vd medical-ebm-automation/.githooks/pre-commit goi ra day), git da set
+# san GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE tro vao repo con trong bien moi
+# truong cua tien trinh hook. Cac bien nay ghi de viec git tu do repo theo
+# cwd, nen `git ls-files` ben duoi van doc index cua repo con du subprocess
+# duoc goi voi cwd=ROOT cua repo ngoai -> bao thieu file oan (tools/upgrade_
+# verify.py, clinical_runtime/... khong ton tai trong repo con). Phai xoa
+# cac bien nay truoc khi goi git.
+_GIT_DISCOVERY_ENV_VARS = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+)
 
 ROOT_DOCS = {
     "AGENTS.md": ROOT / "AGENTS.md",
@@ -83,6 +100,7 @@ def _missing_markers(path: Path, markers: list[str]) -> list[str]:
 
 
 def _git_ls_files() -> set[str]:
+    env = {k: v for k, v in os.environ.items() if k not in _GIT_DISCOVERY_ENV_VARS}
     proc = subprocess.run(
         ["git", "ls-files"],
         cwd=str(ROOT),
@@ -91,6 +109,7 @@ def _git_ls_files() -> set[str]:
         encoding="utf-8",
         errors="replace",
         timeout=30,
+        env=env,
     )
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or "git ls-files failed")
