@@ -245,6 +245,19 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
 - **Kiểm riêng clinical runtime governance:** `python tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
 - **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
+- **Kiểm LIÊM CHÍNH NỘI DUNG tài liệu nghiên cứu (mới 2026-07-31):**
+  `python tools/verify_exports_integrity.py` (trong `medical-ebm-automation/`; `--staged` cho hook,
+  `--path <file>` cho một tài liệu). Kiểm 5 luật trên file `.md` dưới `exports/`: toàn vẹn
+  placeholder bảng dự kiến kết quả · định dạng PMID/DOI · disclaimer · dấu vết định danh · cân
+  bằng markdown. **Đã nối vào `.githooks/pre-commit` của repo y khoa.**
+  **Lý do tồn tại:** ngày 31/07/2026 commit `a21a01f` đi qua TOÀN BỘ chốt pre-commit **sạch hoàn
+  toàn** trong khi file đề cương C1a đang hỏng 26 chỗ — placeholder giá trị (`n = —`, `cOR = —`,
+  ô `— (—; —) [ref]`) bị một bước xử lý văn bản đổi nhầm thành dấu phẩy. Mọi chốt trước đó chỉ
+  kiểm **đồng bộ agent/doctrine**, không chốt nào đọc **nội dung tài liệu nghiên cứu**; lỗi chỉ lộ
+  ra nhờ có người đối chiếu tay với bản git trước đó. Đã kiểm bằng 3 phép thử: bản hỏng → 18 lỗi
+  CHẶN; bản đã sửa → sạch; 42 tài liệu `exports/` → 0 lỗi chặn, 1 cảnh báo (không dương tính giả);
+  thử commit thật file hỏng → hook chặn, HEAD không đổi. **Phạm vi cố ý hẹp:** chỉ bắt dấu hiệu
+  hỏng máy đọc được, KHÔNG chấm chất lượng khoa học, KHÔNG thay quality gate G0-G10.
 - **Chạy chu trình tự động có kiểm soát:** `python tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
 - **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
 - **"Đề tài này THỰC SỰ đang ở đâu, còn gì phải làm?" (mới 2026-07-27):**
