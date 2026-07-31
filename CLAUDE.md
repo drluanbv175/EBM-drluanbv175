@@ -346,6 +346,29 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   với `G3_A4_SAMPLE_SIZE_AUTO.md` — nâng lên bắt buộc phải sửa ĐỒNG THỜI cả hai file.
   Kiểm hồi quy: `pytest tests/test_g3_quality_gate.py` (60 test, đã kiểm bằng 4 phép đột biến).
 
+- **NĂM LỖ HỔNG LỘ RA KHI ĐỀ TÀI THẬT ĐẦU TIÊN ĐI QUA G0-G4 (2026-07-31, đề tài hài lòng
+  người bệnh C1a):** trước ngày này, cả 19 đề tài mà `list_studies.py` nhận diện được đều là
+  **fixture test**; đề cương C1a (953 dòng) sinh qua workflow agent nên chưa từng có checkpoint
+  hay quality gate nào chấm. Cho đề tài thật chạy qua dây chuyền đã lộ ra 5 lỗi **cùng một lớp:
+  toàn bộ G3/G4 ngầm giả định nghiên cứu là SO SÁNH HAI NHÓM**, trong khi mô tả cắt ngang là
+  thiết kế phổ biến nhất ở tuyến cơ sở. (1) `run_g3_auto.py` BLOCK mọi đề tài mô tả không truyền
+  `--effect-size`, dù thiết kế này tính cỡ mẫu theo ĐỘ CHÍNH XÁC (Lwanga & Lemeshow, WHO 1991) và
+  không có effect size — muốn chạy phải nhét tỷ lệ p vào ô `--effect-size`, chính
+  `tests/test_g3_confirmed_n.py` cũng phải làm vậy; nay có `--prevalence` và `--precision` riêng.
+  (2) Sai số d bị cố định 0,05. (3) `g3_quality_gate.EFFECT_TYPES_BY_DESIGN['cross_sectional']`
+  đã khai `{'PREVALENCE'}` từ trước nhưng `run_g3_auto.py` chưa bao giờ sinh ra tên đó — hai
+  module viết cho nhau mà chưa từng nối. (4) Bảng độ nhạy dùng khung "Power × Effect size" cho
+  mọi thiết kế (vô nghĩa với mô tả: ba dòng power bằng nhau) và tiêu đề tự khai "điều chỉnh N%
+  dropout" trong khi ô là N TRƯỚC dropout; nay sinh bảng p × d và parser của quality gate đọc
+  được. (5) **NGHIÊM TRỌNG NHẤT — `run_g4_auto.py` ghi N tối thiểu vào SAP thay vì cỡ mẫu KẾ
+  HOẠCH**: `confirmed_n` trước đây chỉ dùng cho sr_ma/prediction/qualitative, nên SAP của C1a ghi
+  "N = 453" trong khi Hội đồng đã chốt n = 1000. SAP là tài liệu ĐƯỢC KÝ VÀ KHÓA; ghi sai N ở đây
+  khiến phân tích sau này lệch khỏi chính SAP đã khóa — đúng loại sai lệch mà G4 sinh ra để ngăn
+  (chữ ký mật mã chỉ bảo vệ TOÀN VẸN nội dung, không bảo đảm nội dung ĐÚNG). Đã vá đồng thời
+  `run_g4_auto.py` + `g4_quality_gate.py` (sửa một bên sẽ khiến bên kia báo lệch giả), N hiệu lực
+  = `confirmed_n` cho MỌI thiết kế, in kèm dòng "N tối thiểu theo thống kê" để không giấu thông
+  tin. Kiểm hồi quy: toàn bộ 3053 test pass. **Bài học vận hành:** fixture test không thay được
+  một đề tài thật đi hết dây chuyền; 4 trong 5 lỗi này nằm im qua hàng chục vòng audit doctrine.
 - **Hợp đồng CHẤT LƯỢNG cổng G4 — khóa SAP (mới 2026-07-29, từ kiểm toàn diện G0-G10):**
   `python tools/g4_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `approve_gate.py --gate G4`
   sau khi ký thành công (khuôn dòng gọi giống G2/G5/G9/G10); gọi tay khi muốn CHẤM LẠI.
