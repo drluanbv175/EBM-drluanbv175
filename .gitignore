@@ -47,3 +47,6 @@
 
 # Bộ nhớ Claude mirror — đồng bộ qua OneDrive (Mac↔Windows), KHÔNG commit lên GitHub
 memory-sync/
+
+# Danh mục sinh lại được, chứa đường dẫn tuyệt đối theo từng máy
+tools/vietnamize/catalog_raw.json
