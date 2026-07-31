@@ -289,6 +289,17 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   thêm một tiêu chí máy giả tạo (sẽ luôn PASS vì exports/<study>/ + checkpoint LUÔN tồn tại
   tại thời điểm evaluate_study() chạy được — cùng lỗi tautology vừa vá ở (1)). Kiểm hồi quy:
   `pytest tests/test_g0_quality_gate_20260728.py` (47 test).
+  **Giới hạn CÒN LẠI, CHẤP NHẬN CÓ CHỦ Ý (audit tích hợp plugin, 2026-07-31 — chưa từng ghi ở
+  đây, dù đã có comment tại chỗ trong code từ lần sửa R5):** `guardrail_check_g0()` R5 (chặn câu
+  hỏi nghiên cứu lồng chỉ thị lâm sàng sớm, vd "Nên dùng statin cho BN X không?" đọc nhầm thành
+  y lệnh) đã hẹp phạm vi để không còn chặn oan câu hỏi PICO hợp lệ dạng "có nên dùng X cho bệnh
+  nhân Y không?" — nhưng đổi lại, một chỉ thị lâm sàng THẬT lồng trong vỏ câu hỏi kiểu mệnh lệnh
+  cụ thể hơn (vd "Có nên kê ngay 500mg X cho bệnh nhân tại phòng cấp cứu không?") **từ nay LỌT
+  qua R5**, khác hành vi trước bản vá. Đây là đánh đổi precision/recall có chủ ý (không có bộ
+  phân tích ngữ nghĩa tiếng Việt để phân biệt chính xác hơn bằng regex) — G0 chỉ là bước đầu
+  (chưa qua Cổng A), nhưng vẫn là một guardrail an toàn có đường lách bằng cách diễn đạt lại
+  câu; ghi nhận ở đây để không bị coi là "đã đóng hoàn toàn" khi tra cứu lại sau này. Xem
+  `tools/run_g0_auto.py` quanh dòng có R5 để đọc nguyên văn giới hạn.
 - **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
 - **Hợp đồng CHẤT LƯỢNG cổng G3 — cỡ mẫu (mới 2026-07-28):**
@@ -398,19 +409,31 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (run_g8_auto ghi · run_g10_assemble tra ledger · doctrine dạy gõ tay vào `approve_gate --artifact`)
   và nội dung bị băm trong chữ ký — tên "A9" lệch crosswalk (A9 thật = DMP ở G5, bình duyệt = A15)
   là lệch ĐÃ BIẾT, sửa tên sẽ vô hiệu mọi chữ ký cũ; (2) mã thoát 3 bậc của `run_g8_auto.py`;
-  (3) 5 điều kiện quyết định `g8_status` (lớp mới chỉ BÁO CÁO thêm, không thay).
-  **Một lệch nội bộ CÒN đúng:** artifact in "6 điều kiện BẮT BUỘC" nhưng `g8_status` chỉ tính 5
-  (checklist ≥60% bị bỏ ngoài) — chưa sửa. **Hai lệch khác đã VÁ (audit toàn diện G0-G10,
-  2026-07-30):** `_item_auto_check` trước đây đánh ☑ mục CONSORT/STROBE chỉ vì **file checkpoint
-  cổng trước tồn tại**, không đọc bản thảo — nay đọc thật `G7_A8_MANUSCRIPT_<study>.md`, chỉ ☑ khi
-  phần I/II tương ứng không còn nhãn `[CẦN`; `guardrail_g8` R6 (đếm nhãn `[CẦN...]`) từng thưởng
-  việc dán nhãn và PHẠT chính việc bác sĩ điền thật (một gói THỰC SỰ gần xong có thể tụt dưới
-  ngưỡng và bị chặn oan) — nay chỉ còn cảnh báo thông tin, không chặn; đồng thời `G8-AUTO-00`
-  (guardrail nền) nay chạy LẠI guardrail thật trên artifact hiện tại thay vì tin
-  `checkpoint["guardrail"]` đóng băng. Kiểm hồi quy: `pytest tests/test_g8_quality_gate.py` +
-  `tests/test_g8_r6_and_item_auto_check_20260730.py` (mutation-tested). **Nhãn "ICMJE 2023" lỗi
-  thời còn sót ở `run_g2_auto.py:1120` và `run_g7_auto.py:1382`** (chưa vá vì thuộc file phiên
-  khác đang sửa).
+  (3) 6 điều kiện quyết định `g8_status` (lớp mới chỉ BÁO CÁO thêm, không thay — SỬA 2026-07-31:
+  con số đúng là 6, không phải 5, xem ngay dưới).
+  **"Một lệch nội bộ CÒN đúng... chưa sửa" ĐÃ LỖI THỜI (sửa 2026-07-31, phát hiện qua audit tích
+  hợp plugin — rà lại các mục "chưa sửa" cũ):** dòng cũ ở đây nói `g8_status` chỉ tính 5/6 điều
+  kiện (bỏ ngoài checklist ≥60%) — bug đó thật ra đã được vá **2026-07-29** (commit `bc2890a`,
+  `decide_g8_status()` trong `run_g8_auto.py` nhận đủ 6 biến gồm `reporting_ok`), **trước cả khi
+  dòng "chưa sửa" này được viết** — chỉ có 2 nơi mô tả bug (comment trong `g8_quality_gate.py` +
+  chính dòng CLAUDE.md này) quên cập nhật theo. Đã sửa cả 2 nơi + 1 chuỗi `rep_evidence` từng lộ
+  ra ngoài báo cáo cho bác sĩ ("run_g8_auto.py KHÔNG tính điều kiện này") — nay đọc đúng: G8-AUTO-10
+  là lớp kiểm ĐỘC LẬP THỨ HAI (đọc lại checkpoint), không phải cửa duy nhất. Kiểm hồi quy:
+  `pytest tests/test_g8_quality_gate.py -k checklist_duoi_nguong`.
+  **Hai lệch khác đã VÁ (audit toàn diện G0-G10, 2026-07-30):** `_item_auto_check` trước đây đánh
+  ☑ mục CONSORT/STROBE chỉ vì **file checkpoint cổng trước tồn tại**, không đọc bản thảo — nay đọc
+  thật `G7_A8_MANUSCRIPT_<study>.md`, chỉ ☑ khi phần I/II tương ứng không còn nhãn `[CẦN`;
+  `guardrail_g8` R6 (đếm nhãn `[CẦN...]`) từng thưởng việc dán nhãn và PHẠT chính việc bác sĩ điền
+  thật (một gói THỰC SỰ gần xong có thể tụt dưới ngưỡng và bị chặn oan) — nay chỉ còn cảnh báo
+  thông tin, không chặn; đồng thời `G8-AUTO-00` (guardrail nền) nay chạy LẠI guardrail thật trên
+  artifact hiện tại thay vì tin `checkpoint["guardrail"]` đóng băng. Kiểm hồi quy:
+  `pytest tests/test_g8_quality_gate.py` + `tests/test_g8_r6_and_item_auto_check_20260730.py`
+  (mutation-tested). **Nhãn "ICMJE 2023" ĐÃ ĐƯỢC SỬA, không còn là việc tồn đọng (đính chính
+  2026-07-31):** dòng cũ ở đây nói lỗi thời còn sót ở `run_g2_auto.py:1120` và
+  `run_g7_auto.py:1382` — kiểm lại trực tiếp cả hai vị trí xác nhận nội dung hiện tại ĐÃ đúng chuẩn
+  ("ICMJE Recommendations, Updated January 2026 — Mục V"); số dòng trong ghi chú cũ đã lệch do các
+  lần sửa khác chèn/xóa dòng ở giữa, khiến việc "chưa vá" trông như còn tồn tại dù thực ra đã xong
+  từ trước.
 
 - **Hợp đồng CHẤT LƯỢNG cổng G9 — liêm chính tác giả & sẵn sàng công bố (mới 2026-07-28, tài
   liệu hóa 2026-07-30 — trước đó bị bỏ sót, khác hẳn G0/G3/G8 đều có mục riêng cùng ngày xây):**
@@ -418,11 +441,13 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   CHẤM LẠI sau khi bác sĩ bổ sung xác nhận.
   **Vì sao có:** doctrine cũ (`nop-bai-phan-hoi.md`) hứa "bác sĩ chỉ cần đọc, ký 3 xác nhận và
   nộp" (COI đầy đủ · tác giả đồng ý bản cuối · không đăng kép) — nhưng `approve_gate.py --gate G9`
-  thật ra chỉ cho ký khi `g9_quality_gate.py` trả `READY_FOR_G9_PI_APPROVAL`, đòi **9 nhóm tiêu
+  thật ra chỉ cho ký khi `g9_quality_gate.py` trả `READY_FOR_G9_PI_APPROVAL`, đòi **10 nhóm tiêu
   chí người thật** (ICMJE 4 tiêu chí + CRediT + COI + `evidence_ref` cho TỪNG tác giả · thứ tự
   tác giả/guarantor · khai AI đủ tools/purposes/confirmed_at · Data Availability đủ chi tiết
   ICMJE cho thử nghiệm lâm sàng · liêm chính công bố (similarity/image integrity/kết quả khớp
-  phân tích khóa) · venue due diligence · ethics/privacy) — doctrine mô tả ít hơn hẳn code thật.
+  phân tích khóa) · venue due diligence · ethics/privacy · **xác nhận thể chế** — trưởng đơn
+  vị/hội đồng nội bộ/nhà tài trợ, thêm 2026-07-31, xem G9-HUMAN-11 dưới) — doctrine mô tả ít
+  hơn hẳn code thật.
   **4 trạng thái:** `BLOCKED` → `DRAFT_READY_NEEDS_REAL_ATTESTATIONS` →
   `READY_FOR_G9_PI_APPROVAL` → `PASS_G9_PUBLICATION_INTEGRITY_LOCKED`. Ra
   `exports/<study>/G9_QUALITY_REPORT.{json,md}` từ `G9_PUBLICATION_READINESS.json` +
