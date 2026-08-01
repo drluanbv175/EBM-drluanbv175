@@ -86,6 +86,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`). Không cần bác sĩ yêu cầu từng bước.
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
+- **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` phải giữ watermark, chặn bridge Hub và cảnh báo nội dung. Chỉ gọi là triển khai candidate-only khi `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` trả `READY_FOR_CONTROLLED_DEPLOYMENT` sau canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật. Agent không tự ký UAT.
 - Áp dụng cho skill `cap-nhat-chung-cu-y-khoa` và mọi tác vụ dashboard lâm sàng. Ngoại lệ: Dashboard Master
   quản trị (skill `dashboard-master-ebm-ngoai-tru`) giữ định dạng Excel/sổ riêng.
 - Liêm chính: số liệu trích ĐÚNG nguồn; giữ nguyên grading (`gradeLevel:'na'` nếu không phân hạng); RoB 2
@@ -113,6 +114,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Kiểm riêng rubric QA ↔ LESSONS taxonomy: `python tools/verify_lessons_rubric_alignment.py`
 - Kiểm riêng clinical runtime governance: `python tools/verify_clinical_runtime_schema_hardening.py`
 - Kiểm riêng pipeline cập nhật chứng cứ lâm sàng: `python tools/verify_clinical_evidence_update_pipeline.py`
+- Kiểm cổng triển khai giám sát ngoại trú: `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`
 - Chạy chu trình tự động có kiểm soát: `python tools/run_controlled_automation_cycle.py`
 - Vòng lặp kiểm tra-hoàn thiện tới clinical production: `python tools/clinical_production_loop.py --max-iterations 3`
 

@@ -1,26 +1,35 @@
-# 10 — Giám sát định kỳ (Track B)
+# 10 - Giám sát định kỳ (Track B)
 
-Bổ sung cho cập nhật theo-yêu-cầu (Track A): một vòng giám sát HẸP để **bắt thay đổi mình không nghĩ sẽ tra** (guideline mới, RCT/meta lớn, an toàn thuốc) trên các chủ đề lõi.
+Track B chỉ tạo **ứng viên** để Track A thẩm định; không tự đổi thực hành, không tự
+gắn `apply`, không dùng dữ liệu bệnh nhân thật.
 
-> Track A (pull) vẫn là trục chính. Track B (push) chỉ surface ỨNG VIÊN — không tự đổi thực hành.
+## Quyền sở hữu
 
-## Thành phần
-- **Danh sách theo dõi:** `EBM-Dashboards/watchlist.json` — 10–20 chủ đề bác sĩ gặp nhiều nhất (giữ HẸP để tránh nhiễu). Bác sĩ tự sửa.
-- **Bộ quét:** `tools/surveillance_scan.py` — với mỗi chủ đề, truy vấn PubMed tìm guideline/SR/meta/RCT MỚI trong N ngày → báo cáo ứng viên (PMID · ngày · tiêu đề).
+- Engine `weekly_safety.sh`/`monthly_update.sh`: owner thu thập, source health, watermark.
+- `giam-sat-chung-cu`: owner thẩm định candidate.
+- `tong-hop-chung-cu-hang-tuan`: worker tóm tắt queue, không quét lại.
+- `uptodate`: owner closed-loop/Hub sau khi đủ cổng.
+- Dark Analyst/Antifacts: phân tích và trình bày, không sở hữu quyết định.
 
-## Quy trình (định kỳ, vd hằng tuần/tháng)
+## Bộ quét và trạng thái
+
+`tools/surveillance_scan.py` có retry/backoff, kiểm schema watchlist, dedup PMID và
+audit JSON từng chủ đề. `PARTIAL/FAIL` trả mã khác 0; chủ đề lỗi không được diễn giải
+là "không có cập nhật".
+
 ```bash
-cd EBM-Dashboards
-python3 tools/surveillance_scan.py --days 30 --report surveillance_<ngày>.md
+python3 tools/surveillance_scan.py --days 30 \
+  --report surveillance_<ngày>.md \
+  --json-report surveillance_<ngày>.json
 ```
-1. Đọc báo cáo, **chọn mục thật sự liên quan**.
-2. Với mục đáng giá → chạy skill cập nhật chứng cứ (Track A) để **thẩm định đầy đủ** + dựng dashboard + cổng liêm chính + thư viện.
-3. (Tùy chọn) Ghi thay đổi vào Dashboard Master (skill `dashboard-master-ebm-ngoai-tru`).
 
-## Tự động hóa (tùy chọn — bác sĩ xác nhận nhịp)
-Dùng skill `schedule` để chạy bộ quét định kỳ (vd mỗi sáng thứ Hai) và gửi báo cáo. **An toàn thuốc** đã có routine riêng `Scheduled/drug-safety-daily`. Không bật lịch tự động khi chưa được bác sĩ đồng ý nhịp + chủ đề.
+## Cổng triển khai
 
-## Liêm chính
-- Kết quả giám sát là **ỨNG VIÊN**, chưa thẩm định — không trích như khuyến cáo.
-- Mọi thay đổi thực hành phải qua Track A (xác minh nguồn, PICO/khung, GRADE, cổng liêm chính).
-- Giữ watchlist hẹp; rà lại định kỳ để bỏ chủ đề không còn theo.
+Chạy `medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`.
+Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` mới cho phép candidate-only. Cần canary online,
+runtime tuần/tháng còn mới, alert, rollback hash-match, hai chu kỳ shadow, năm mẫu nguồn
+do bác sĩ đối chiếu và phê duyệt bác sĩ + vận hành. Agent không tự điền PASS/ký thay.
+
+`PARTIAL/FAIL` giữ watermark, chặn Hub và không gửi cảnh báo nội dung.
+
+**Cần bác sĩ kiểm chứng.**

@@ -425,7 +425,9 @@ Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` h�
 
 **(a) An toàn thuốc (người cao tuổi/đa thuốc):** khi cập nhật có thuốc và liên quan nhóm `cao-tuoi`/`da-thuoc`, chạy `tools/drug_safety_scan.py <dashboard>.html` (đối chiếu bảng cờ **Beers 2023/STOPP-START v3** trong `data/drug_flags.json`) → cảnh báo + sinh prompt rà soát ĐẦY ĐỦ bằng skill `nguoi-cao-tuoi-da-benh-da-thuoc`. Bảng cờ KHÔNG đầy đủ, chỉ để nhắc. Chi tiết: `references/09-an-toan-thuoc-overlay.md`.
 
-**(b) Giám sát định kỳ (Track B):** `tools/surveillance_scan.py` quét PubMed tìm guideline/SR/meta/RCT MỚI theo `EBM-Dashboards/watchlist.json` (10–20 chủ đề lõi) → báo cáo ỨNG VIÊN để thẩm định (KHÔNG tự đổi thực hành). Track A (theo yêu cầu) vẫn là trục chính. Tự động hóa qua skill `schedule` chỉ khi bác sĩ xác nhận nhịp. Chi tiết: `references/10-giam-sat-dinh-ky.md`.
+**(b) Giám sát định kỳ (Track B):** `tools/surveillance_scan.py` quét PubMed tìm guideline/SR/meta/RCT MỚI theo `EBM-Dashboards/watchlist.json` → xuất Markdown + audit JSON của ỨNG VIÊN (KHÔNG tự đổi thực hành). Scanner có retry/backoff, kiểm schema watchlist, dedup PMID và mặc định trả mã khác 0 khi PARTIAL/FAIL; chủ đề lỗi không được diễn giải là "không có cập nhật". Owner thu thập duy nhất là engine tuần/tháng; routine khác chỉ dùng lại candidate queue, không quét trùng.
+
+**Cổng triển khai bắt buộc:** `medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` mới cho phép chạy candidate-only; yêu cầu canary online, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt bác sĩ + vận hành. Agent không tự điền PASS/ký thay. PARTIAL/FAIL giữ watermark, chặn Hub và không gửi cảnh báo nội dung.
 
 **(c) Bản địa hóa Bộ Y tế VN:** ở bước "Áp dụng tại VN", tra `EBM-Dashboards/vn-guidelines/registry.json` (bác sĩ điền từ tài liệu CHÍNH THỨC — **KHÔNG bịa số QĐ**) + RAG (`clinical-evidence-rag`) để đối chiếu quốc tế ↔ BYT (phác đồ, danh mục BHYT, phân tuyến). Chi tiết: `references/11-guideline-bo-y-te-vn.md`.
 

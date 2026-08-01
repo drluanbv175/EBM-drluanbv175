@@ -856,6 +856,19 @@ def plugin_orchestration_failures() -> list[str]:
     return [out.strip()[:1200] or "plugin orchestration FAIL"]
 
 
+def evidence_surveillance_deployment_contract_failures() -> list[str]:
+    """Kiểm cổng triển khai tồn tại và fail-closed; không giả lập UAT người thật."""
+    checker = REPO / "tools" / "verify_evidence_surveillance_deployment.py"
+    if not checker.exists():
+        return ["thiếu tools/verify_evidence_surveillance_deployment.py"]
+    code, out = run(
+        [sys.executable, str(checker), "--contract-check", "--no-write"], cwd=REPO
+    )
+    if code == 0:
+        return []
+    return [out.strip()[-1200:] or "evidence surveillance deployment contract FAIL"]
+
+
 def clinical_practice_apply_gate_failures() -> list[str]:
     checker = ROOT / "tools" / "verify_clinical_practice_apply_gate.py"
     if not checker.exists():
@@ -987,6 +1000,13 @@ def main() -> int:
             + "; ".join(plugin_routing_failures)
         )
 
+    evidence_surveillance_failures = evidence_surveillance_deployment_contract_failures()
+    if evidence_surveillance_failures:
+        hard_errors.append(
+            "Evidence surveillance deployment contract FAIL: "
+            + "; ".join(evidence_surveillance_failures)
+        )
+
     clinical_apply_gate_failures = clinical_practice_apply_gate_failures()
     if clinical_apply_gate_failures:
         hard_errors.append(
@@ -1090,6 +1110,10 @@ def main() -> int:
     print("Research completion gates:", "PASS" if not research_completion_failures else "FAIL")
     print("Research hard-gate doctrine:", "PASS" if not hard_gate_count_failures else "FAIL")
     print("Plugin ownership/orchestration:", "PASS" if not plugin_routing_failures else "FAIL")
+    print(
+        "Evidence surveillance deployment gate:",
+        "PASS" if not evidence_surveillance_failures else "FAIL",
+    )
     print("Clinical practice apply gate:", "PASS" if not clinical_apply_gate_failures else "FAIL")
     print(
         "Clinical runtime:",

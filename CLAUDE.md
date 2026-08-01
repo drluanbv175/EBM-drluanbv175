@@ -204,6 +204,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`). Không cần bác sĩ yêu cầu từng bước.
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
+- **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
 - Áp dụng cho skill `cap-nhat-chung-cu-y-khoa` và mọi tác vụ dashboard lâm sàng. Ngoại lệ: Dashboard Master
   quản trị (skill `dashboard-master-ebm-ngoai-tru`) giữ định dạng Excel/sổ riêng.
 - Liêm chính: số liệu trích ĐÚNG nguồn; giữ nguyên grading (`gradeLevel:'na'` nếu không phân hạng); RoB 2
@@ -252,6 +253,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
 - **Kiểm riêng clinical runtime governance:** `python tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
 - **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
+- **Kiểm cổng triển khai giám sát ngoại trú:** `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` — PASS cuối chỉ khi đủ runtime + UAT thật; pre-commit/audit dùng `--contract-check` để kiểm fail-closed mà không giả lập phê duyệt.
 - **Kiểm LIÊM CHÍNH NỘI DUNG tài liệu nghiên cứu (mới 2026-07-31):**
   `python tools/verify_exports_integrity.py` (trong `medical-ebm-automation/`; `--staged` cho hook,
   `--path <file>` cho một tài liệu). Kiểm 5 luật trên file `.md` dưới `exports/`: toàn vẹn

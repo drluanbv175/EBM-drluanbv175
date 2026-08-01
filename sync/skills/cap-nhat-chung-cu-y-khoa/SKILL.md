@@ -426,7 +426,9 @@ Cờ **opt-in `--check-topic`** (thêm sau `--online`): gọi LLM chấm mỗi i
 
 **(a) An toàn thuốc (người cao tuổi/đa thuốc):** khi cập nhật có thuốc và liên quan nhóm `cao-tuoi`/`da-thuoc`, chạy `tools/drug_safety_scan.py <dashboard>.html` (đối chiếu bảng cờ **Beers 2023/STOPP-START v3** trong `data/drug_flags.json`) → cảnh báo + sinh prompt rà soát ĐẦY ĐỦ bằng skill `nguoi-cao-tuoi-da-benh-da-thuoc`. Bảng cờ KHÔNG đầy đủ, chỉ để nhắc. Chi tiết: `references/09-an-toan-thuoc-overlay.md`.
 
-**(b) Giám sát định kỳ (Track B):** `tools/surveillance_scan.py` quét PubMed tìm guideline/SR/meta/RCT MỚI theo `EBM-Dashboards/watchlist.json` (10–20 chủ đề lõi) → báo cáo ỨNG VIÊN để thẩm định (KHÔNG tự đổi thực hành). Track A (theo yêu cầu) vẫn là trục chính. Tự động hóa qua skill `schedule` chỉ khi bác sĩ xác nhận nhịp. Chi tiết: `references/10-giam-sat-dinh-ky.md`.
+**(b) Giám sát định kỳ (Track B):** `tools/surveillance_scan.py` quét PubMed tìm guideline/SR/meta/RCT MỚI theo `EBM-Dashboards/watchlist.json` → xuất Markdown + audit JSON của ỨNG VIÊN (KHÔNG tự đổi thực hành). Scanner có retry/backoff, kiểm schema watchlist, dedup PMID và mặc định trả mã khác 0 khi PARTIAL/FAIL; chủ đề lỗi không được diễn giải là "không có cập nhật". Owner thu thập duy nhất là engine tuần/tháng; các routine khác chỉ dùng lại candidate queue, không quét trùng cùng cửa sổ.
+
+**Cổng triển khai bắt buộc:** `medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`. Chỉ trạng thái `READY_FOR_CONTROLLED_DEPLOYMENT` mới cho phép chạy ở chế độ candidate-only. Cổng yêu cầu canary nguồn + dashboard online, runtime tuần/tháng còn mới, alert đã nhận thử, drill rollback hash-match, ít nhất 2 chu kỳ shadow không lỗi/không auto-apply, và UAT/phê duyệt bác sĩ + vận hành. Agent không tự điền PASS hoặc ký thay. PARTIAL/FAIL giữ watermark, chặn `bridge_to_ebm_master.py` và không gửi cảnh báo nội dung. Chi tiết: `references/10-giam-sat-dinh-ky.md`.
 
 **(c) Bản địa hóa Bộ Y tế VN:** ở bước "Áp dụng tại VN", tra `EBM-Dashboards/vn-guidelines/registry.json` (bác sĩ điền từ tài liệu CHÍNH THỨC — **KHÔNG bịa số QĐ**) + RAG (`clinical-evidence-rag`) để đối chiếu quốc tế ↔ BYT (phác đồ, danh mục BHYT, phân tuyến). Chi tiết: `references/11-guideline-bo-y-te-vn.md`.
 
@@ -512,6 +514,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã điền/rà `DATA.standards` gồm thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, ngày tìm kiếm, an toàn, Việt Nam và truy nguyên từng item chưa?
 - Đã nêu cả hai chiều khi chứng cứ không đồng nhất, và đánh dấu `[CẦN BỔ SUNG]` khi chỉ có đồng thuận/nguyên lý chưa?
 - Đã ghi nguồn dạng văn bản thường (tác giả/tổ chức + năm + tạp chí) và rà soát để KHÔNG còn thẻ markup trích dẫn/mã kỹ thuật thô lẫn trong câu trả lời chưa?
+- Nếu là giám sát định kỳ: `source_health=PASS`, runtime status, canary online và deployment gate đã đủ chưa? Nếu chưa, đã giữ nhãn `BLOCKED_FOR_DEPLOYMENT`/`PARTIAL`, giữ watermark và chặn Hub chưa?
 
 ## 9. Tài nguyên kèm theo
 

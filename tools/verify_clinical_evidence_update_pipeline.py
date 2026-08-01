@@ -43,6 +43,7 @@ DEFAULT_JSON = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.json"
 
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 FIXTURE_DOI = "10.1136/bmj.c869"
+FIXTURE_PMID = "20332511"
 
 
 def _configure_utf8_stdio() -> None:
@@ -155,7 +156,7 @@ const DATA = {{
       source:'BMJ',
       org:'CONSORT Group',
       dateVersion:'2010',
-      pmid:'',
+      pmid:'{FIXTURE_PMID}',
       doi:'{FIXTURE_DOI}',
       design:'Guideline',
       population:'Báo cáo thử nghiệm ngẫu nhiên song song',
@@ -362,7 +363,11 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
             "PASS" if ok else "FAIL",
             tail,
             "verify_dashboard.py chặn thiếu disclaimer/truy nguyên/grade/decision/nội dung rác và hợp đồng nguồn nghiêm ngặt.",
-            "Mặc định chạy strict offline cho fixture; dashboard thật nên chạy thêm --online để phân giải PMID/DOI.",
+            (
+                "Đã chạy canary online trên PMID fixture; dashboard thật vẫn phải chạy online với chính nguồn của nó."
+                if online_dashboard_gate
+                else "Mặc định chạy strict offline cho fixture; dashboard thật nên chạy thêm --online để phân giải PMID/DOI."
+            ),
         ))
 
         ok, tail = _run([sys.executable, str(BUILD_LIBRARY), "add", str(dash)], cwd=base)
@@ -394,6 +399,10 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
         "online_dashboard_gate": online_dashboard_gate,
         "rows": [asdict(row) for row in rows],
         "disclaimer": (
+            "Cần bác sĩ kiểm chứng. Đây là canary kỹ thuật online của pipeline cập nhật chứng cứ, "
+            "không thay double-review nguồn thật, rà an toàn thuốc hoặc quyết định lâm sàng."
+            if online_dashboard_gate
+            else
             "Cần bác sĩ kiểm chứng. Đây là kiểm chứng kỹ thuật/offline của pipeline cập nhật chứng cứ, "
             "không thay xác minh online, rà an toàn thuốc hoặc quyết định lâm sàng."
         ),

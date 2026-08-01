@@ -1,88 +1,331 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Quét PubMed định kỳ để tạo DANH SÁCH ỨNG VIÊN chứng cứ ngoại trú.
+
+Đầu ra không phải khuyến cáo và không tự đổi thực hành. Mọi lỗi chủ đề được ghi
+trong Markdown + JSON; mặc định PARTIAL/FAIL trả mã khác 0 để lịch nền không xanh giả.
 """
-surveillance_scan.py — GIÁM SÁT định kỳ (Track B) chứng cứ mới theo chủ đề lõi.
+from __future__ import annotations
 
-Với mỗi chủ đề trong watchlist.json, truy vấn PubMed (E-utilities, MIỄN PHÍ) tìm tài liệu
-CHẤT LƯỢNG CAO (guideline / systematic review / meta-analysis / RCT) MỚI trong N ngày gần đây,
-in báo cáo ứng viên (PMID · ngày · tiêu đề) để BÁC SĨ rà soát — KHÔNG tự kết luận đổi thực hành.
-
-Cách dùng (chạy trong EBM-Dashboards/):
-    python3 tools/surveillance_scan.py                      # 90 ngày, watchlist.json
-    python3 tools/surveillance_scan.py --days 30 --max 8
-    python3 tools/surveillance_scan.py --report surveillance_2026-06-07.md
-
-CẦN MẠNG. Kết quả là ỨNG VIÊN để thẩm định, không phải khuyến cáo.
-"""
-import sys, os, re, json, argparse, urllib.request, urllib.parse
+import argparse
+import json
+import os
+import ssl
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from pathlib import Path
+from typing import Callable, Iterable, Sequence
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-DESIGN = '(Guideline[ptyp] OR "systematic review"[ptyp] OR meta-analysis[ptyp] OR "practice guideline"[ptyp] OR randomized controlled trial[ptyp])'
+DESIGN = (
+    '(Guideline[ptyp] OR "systematic review"[ptyp] OR meta-analysis[ptyp] '
+    'OR "practice guideline"[ptyp] OR randomized controlled trial[ptyp])'
+)
+DISCLAIMER = "Cần bác sĩ kiểm chứng"
+DEFAULT_WATCHLIST = Path(__file__).resolve().parents[1] / "watchlist.json"
 
 
-def get_json(url):
-    with urllib.request.urlopen(url, timeout=20) as r:
-        return json.loads(r.read().decode("utf-8"))
+def _tls_context() -> ssl.SSLContext:
+    """Dùng CA bundle tin cậy, không bao giờ hạ cấp hoặc tắt xác minh TLS."""
+    ca_file = os.getenv("SSL_CERT_FILE", "").strip()
+    if not ca_file:
+        try:
+            import certifi
+        except ImportError:
+            ca_file = ""
+        else:
+            ca_file = certifi.where()
+    return ssl.create_default_context(cafile=ca_file or None)
 
 
-def search(query, days, retmax):
-    term = "(%s) AND %s" % (query, DESIGN)
-    url = EUTILS + "esearch.fcgi?db=pubmed&retmode=json&sort=date&reldate=%d&datetype=pdat&retmax=%d&term=%s" % (
-        days, retmax, urllib.parse.quote(term))
-    j = get_json(url)
-    return j.get("esearchresult", {}).get("idlist", [])
+def _open_url(request: urllib.request.Request, *, timeout: float) -> object:
+    return urllib.request.urlopen(request, timeout=timeout, context=_tls_context())
 
 
-def summarize(ids):
+@dataclass(frozen=True)
+class Candidate:
+    pmid: str
+    publication_date: str
+    title: str
+    url: str
+
+
+@dataclass(frozen=True)
+class TopicResult:
+    topic: str
+    query: str
+    status: str
+    candidates: list[Candidate]
+    error: str = ""
+
+
+def _retry_wait(exc: BaseException, attempt: int) -> float:
+    """Ưu tiên Retry-After, giới hạn 30 giây để một nguồn lỗi không treo lịch nền."""
+    if isinstance(exc, urllib.error.HTTPError):
+        retry_after = exc.headers.get("Retry-After") if exc.headers else None
+        if retry_after:
+            try:
+                return min(float(retry_after), 30.0)
+            except ValueError:
+                try:
+                    dt = parsedate_to_datetime(retry_after)
+                    return max(0.0, min((dt - datetime.now(dt.tzinfo)).total_seconds(), 30.0))
+                except (TypeError, ValueError, OverflowError):
+                    pass
+    return min(2.0 ** attempt, 30.0)
+
+
+def get_json(
+    url: str,
+    *,
+    timeout: float = 20.0,
+    retries: int = 2,
+    opener: Callable[..., object] = _open_url,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> dict:
+    """GET JSON có User-Agent, retry 429/5xx/timeout và lỗi cuối rõ ràng."""
+    email = os.getenv("NCBI_EMAIL", "").strip()
+    agent = f"medical-ebm-surveillance/1.0 (mailto:{email or 'not-configured'})"
+    request = urllib.request.Request(url, headers={"User-Agent": agent, "Accept": "application/json"})
+    last_exc: BaseException | None = None
+    for attempt in range(retries + 1):
+        try:
+            with opener(request, timeout=timeout) as response:
+                payload = response.read().decode("utf-8")
+            data = json.loads(payload)
+            if not isinstance(data, dict):
+                raise ValueError("Payload JSON không phải object")
+            return data
+        except urllib.error.HTTPError as exc:
+            last_exc = exc
+            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+                break
+        except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as exc:
+            last_exc = exc
+            if attempt >= retries:
+                break
+        sleeper(_retry_wait(last_exc, attempt))
+    detail = f"{last_exc.__class__.__name__}: {last_exc}" if last_exc else "unknown error"
+    raise RuntimeError(f"PubMed request thất bại sau {retries + 1} lần: {detail}") from last_exc
+
+
+def search(query: str, days: int, retmax: int, *, fetch_json: Callable[[str], dict] = get_json) -> list[str]:
+    term = f"({query}) AND {DESIGN}"
+    params = {
+        "db": "pubmed",
+        "retmode": "json",
+        "sort": "date",
+        "reldate": str(days),
+        "datetype": "pdat",
+        "retmax": str(retmax),
+        "term": term,
+        "tool": "medical_ebm_surveillance",
+    }
+    url = EUTILS + "esearch.fcgi?" + urllib.parse.urlencode(params)
+    result = fetch_json(url).get("esearchresult", {})
+    ids = result.get("idlist", [])
+    return [str(pmid) for pmid in ids if str(pmid).isdigit()]
+
+
+def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_json) -> list[Candidate]:
     if not ids:
         return []
-    url = EUTILS + "esummary.fcgi?db=pubmed&retmode=json&id=" + ",".join(ids)
-    res = get_json(url).get("result", {})
-    out = []
-    for pid in res.get("uids", []):
-        a = res.get(pid, {})
-        out.append((pid, a.get("pubdate", ""), a.get("title", "").strip()))
-    return out
+    params = {
+        "db": "pubmed",
+        "retmode": "json",
+        "id": ",".join(ids),
+        "tool": "medical_ebm_surveillance",
+    }
+    url = EUTILS + "esummary.fcgi?" + urllib.parse.urlencode(params)
+    result = fetch_json(url).get("result", {})
+    candidates: list[Candidate] = []
+    for pmid in result.get("uids", []):
+        item = result.get(str(pmid), {})
+        title = str(item.get("title") or "").strip()
+        if not str(pmid).isdigit() or not title:
+            continue
+        candidates.append(Candidate(
+            pmid=str(pmid),
+            publication_date=str(item.get("pubdate") or ""),
+            title=title,
+            url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+        ))
+    return candidates
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--watchlist", default="watchlist.json")
-    ap.add_argument("--days", type=int, default=90)
-    ap.add_argument("--max", type=int, default=6)
-    ap.add_argument("--report", default=None)
-    a = ap.parse_args()
+def load_watchlist(path: Path) -> list[dict[str, str]]:
+    """Kiểm schema, trùng chủ đề/query và chỉ trả chủ đề active."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Không đọc được watchlist {path}: {exc}") from exc
+    topics = payload.get("topics") if isinstance(payload, dict) else None
+    if not isinstance(topics, list):
+        raise ValueError("watchlist phải có mảng topics")
+    active: list[dict[str, str]] = []
+    seen_topics: set[str] = set()
+    seen_queries: set[str] = set()
+    for index, raw in enumerate(topics, start=1):
+        if not isinstance(raw, dict):
+            raise ValueError(f"topics[{index}] không phải object")
+        if raw.get("active", True) is False:
+            continue
+        topic = str(raw.get("topic") or "").strip()
+        query = str(raw.get("query") or "").strip()
+        if not topic or not query:
+            raise ValueError(f"topics[{index}] thiếu topic/query")
+        topic_key, query_key = topic.casefold(), query.casefold()
+        if topic_key in seen_topics:
+            raise ValueError(f"Trùng topic: {topic}")
+        if query_key in seen_queries:
+            raise ValueError(f"Trùng query: {query}")
+        seen_topics.add(topic_key)
+        seen_queries.add(query_key)
+        active.append({"topic": topic, "query": query})
+    if not active:
+        raise ValueError("watchlist không có chủ đề active")
+    if len(active) > 50:
+        raise ValueError("watchlist có hơn 50 chủ đề active; cần thu hẹp để giảm nhiễu")
+    return active
 
-    wl = json.load(open(a.watchlist, encoding="utf-8"))
-    topics = [t for t in wl.get("topics", []) if t.get("active", True)]
 
-    lines = ["# Giám sát định kỳ — chứng cứ mới (%d ngày gần đây)" % a.days,
-             "_Nguồn: PubMed E-utilities. ỨNG VIÊN để thẩm định — KHÔNG phải khuyến cáo. Cần bác sĩ kiểm chứng._", ""]
-    total = 0
-    for t in topics:
-        lines.append("## %s" % t["topic"])
+def run_scan(
+    topics: Iterable[dict[str, str]],
+    *,
+    days: int,
+    max_results: int,
+    search_fn: Callable[[str, int, int], list[str]] = search,
+    summarize_fn: Callable[[Sequence[str]], list[Candidate]] = summarize,
+) -> dict:
+    """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL."""
+    started = datetime.now(timezone.utc)
+    topic_results: list[TopicResult] = []
+    all_pmids: set[str] = set()
+    for row in topics:
         try:
-            ids = search(t["query"], a.days, a.max)
-            rows = summarize(ids)
-        except Exception as e:
-            lines.append("- (lỗi truy vấn: %s)" % e); lines.append(""); continue
-        if not rows:
-            lines.append("- Không có tài liệu chất lượng cao mới.")
-        for pid, date, title in rows:
-            total += 1
-            lines.append("- **%s** · PMID %s · https://pubmed.ncbi.nlm.nih.gov/%s/" % (date, pid, pid))
-            lines.append("  - %s" % title)
-        lines.append("")
-    lines.append("---")
-    lines.append("Tổng %d ứng viên trên %d chủ đề. Bước tiếp: chọn mục liên quan → chạy skill cập nhật chứng cứ để thẩm định đầy đủ." % (total, len(topics)))
+            ids = search_fn(row["query"], days, max_results)
+            candidates = summarize_fn(ids)
+            unique: list[Candidate] = []
+            for candidate in candidates:
+                if candidate.pmid in all_pmids:
+                    continue
+                all_pmids.add(candidate.pmid)
+                unique.append(candidate)
+            topic_results.append(TopicResult(row["topic"], row["query"], "PASS", unique))
+        except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
+            topic_results.append(TopicResult(
+                row["topic"], row["query"], "FAIL", [],
+                f"{exc.__class__.__name__}: {exc}"[:600],
+            ))
 
-    report = "\n".join(lines)
-    print(report)
-    if a.report:
-        open(a.report, "w", encoding="utf-8").write(report)
-        print("\n[Đã lưu báo cáo: %s]" % a.report)
-    return 0
+    success_count = sum(result.status == "PASS" for result in topic_results)
+    failure_count = len(topic_results) - success_count
+    if not topic_results or success_count == 0:
+        status = "FAIL"
+    elif failure_count:
+        status = "PARTIAL"
+    else:
+        status = "PASS"
+    finished = datetime.now(timezone.utc)
+    return {
+        "kind": "outpatient_evidence_surveillance_scan",
+        "status": status,
+        "started_at": started.isoformat(timespec="seconds"),
+        "finished_at": finished.isoformat(timespec="seconds"),
+        "days": days,
+        "max_results_per_topic": max_results,
+        "topic_count": len(topic_results),
+        "successful_topics": success_count,
+        "failed_topics": failure_count,
+        "candidate_count": len(all_pmids),
+        "topics": [asdict(result) for result in topic_results],
+        "auto_apply": False,
+        "next_state": "CANDIDATE_REVIEW_QUEUE",
+        "disclaimer": f"{DISCLAIMER}. Ứng viên không phải khuyến cáo; cần thẩm định Track A.",
+    }
+
+
+def markdown_report(report: dict) -> str:
+    lines = [
+        f"# Giám sát định kỳ - chứng cứ mới ({report['days']} ngày gần đây)",
+        "",
+        f"- Trạng thái: **{report['status']}**",
+        f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}",
+        f"- Ứng viên không trùng: {report['candidate_count']}",
+        "- Nguồn: PubMed E-utilities",
+        f"- **ỨNG VIÊN để thẩm định, KHÔNG phải khuyến cáo. {DISCLAIMER}.**",
+        "",
+    ]
+    for result in report["topics"]:
+        lines.append(f"## {result['topic']}")
+        if result["status"] != "PASS":
+            lines.append(f"- **KHÔNG QUÉT ĐƯỢC:** `{result['error']}`")
+            lines.append("- Không được diễn giải là 'không có cập nhật'.")
+        elif not result["candidates"]:
+            lines.append("- Không tìm thấy ứng viên trong cửa sổ đã quét thành công.")
+        else:
+            for item in result["candidates"]:
+                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}")
+                lines.append(f"  - {item['title']}")
+        lines.append("")
+    lines.extend([
+        "---",
+        "Bước tiếp: chọn mục liên quan, xác minh nguồn chính và chạy Track A trước khi đề xuất thay đổi thực hành.",
+        f"**{report['disclaimer']}**",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def write_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(temp_name, path)
+    finally:
+        if os.path.exists(temp_name):
+            os.unlink(temp_name)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--watchlist", default=str(DEFAULT_WATCHLIST))
+    parser.add_argument("--days", type=int, default=90)
+    parser.add_argument("--max", type=int, default=6)
+    parser.add_argument("--report")
+    parser.add_argument("--json-report")
+    parser.add_argument("--allow-partial", action="store_true", help="Chỉ dùng chẩn đoán; báo cáo vẫn giữ PARTIAL/FAIL.")
+    args = parser.parse_args(argv)
+    if not 1 <= args.days <= 3650:
+        parser.error("--days phải trong khoảng 1..3650")
+    if not 1 <= args.max <= 100:
+        parser.error("--max phải trong khoảng 1..100")
+
+    try:
+        topics = load_watchlist(Path(args.watchlist))
+        report = run_scan(topics, days=args.days, max_results=args.max)
+    except ValueError as exc:
+        parser.error(str(exc))
+
+    markdown = markdown_report(report)
+    print(markdown)
+    if args.report:
+        write_atomic(Path(args.report), markdown)
+        print(f"[Đã lưu báo cáo: {args.report}]")
+    if args.json_report:
+        write_atomic(Path(args.json_report), json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+        print(f"[Đã lưu audit JSON: {args.json_report}]")
+    if report["status"] == "PASS" or args.allow_partial:
+        return 0
+    return 2
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
