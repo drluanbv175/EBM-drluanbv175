@@ -54,8 +54,35 @@ def split_frontmatter(text: str) -> tuple[str, str] | None:
     return text[3:end], text[end:]
 
 
+try:                                    # PyYAML là TÙY CHỌN: công cụ phải chạy được
+    import yaml                         # cả trên máy chưa dựng venv.
+except ImportError:                     # pragma: no cover
+    yaml = None                         # type: ignore[assignment]
+
+
 def read_field(block: str, key: str) -> str | None:
-    """Đọc một trường phẳng trong frontmatter, gộp cả phần xuống dòng thụt đầu."""
+    """Đọc một trường trong frontmatter.
+
+    Ưu tiên PyYAML vì đó là parser mà hệ thống thật dùng: mô tả dạng block scalar
+    (`description: >` hoặc `|`) trải nhiều dòng, nếu tự gộp bằng khoảng trắng sẽ
+    ra giá trị KHÁC bản gốc — lỗi này từng làm 17 mục lưu sai `description-en`
+    (2026-08-01), chỉ lộ ra khi kiểm bằng verify_vi.py.
+    """
+    if yaml is not None:
+        try:
+            data = yaml.safe_load(block)
+            if isinstance(data, dict):
+                val = data.get(key)
+                if val is None:
+                    return None
+                return val if isinstance(val, str) else str(val)
+        except Exception:               # noqa: BLE001 — frontmatter lạ thì dùng cách thủ công
+            pass
+    return _read_field_thu_cong(block, key)
+
+
+def _read_field_thu_cong(block: str, key: str) -> str | None:
+    """Đọc thủ công — chỉ dùng khi máy chưa có PyYAML."""
     lines = block.splitlines()
     for i, line in enumerate(lines):
         m = re.match(rf"^{re.escape(key)}:\s*(.*)$", line)
@@ -98,9 +125,11 @@ def replace_field(block: str, key: str, value: str) -> str:
         if re.match(rf"^{re.escape(key)}:\s*", line):
             out.append(f"{key}: {encoded}")
             i += 1
-            # nuốt phần tiếp nối (dòng thụt đầu) của trường cũ
-            while i < len(lines) and not re.match(r"^[a-zA-Z_][\w-]*:", lines[i]) \
-                    and lines[i].strip():
+            # Nuốt TRỌN phần tiếp nối của trường cũ, tới tận khoá kế tiếp ở cột 0.
+            # Không được dừng ở dòng trống: mô tả dạng block scalar nhiều dòng
+            # (`description: |`) có dòng trống ở giữa, dừng sớm sẽ để lại phần đuôi
+            # thành rác phá vỡ frontmatter (đã xảy ra với skill learn và scgpt).
+            while i < len(lines) and not re.match(r"^[a-zA-Z_][\w-]*:", lines[i]):
                 i += 1
             replaced = True
             continue
@@ -184,6 +213,11 @@ def main() -> int:
     if not CATALOG.exists():
         print("✗ Chưa có catalog_raw.json — chạy extract_catalog.py trước.")
         return 1
+    if yaml is None and not args.report:
+        print("⚠ Máy chưa có PyYAML → dùng cách đọc frontmatter thủ công, có thể lưu\n"
+              "  SAI bản gốc với mô tả nhiều dòng. Nên chạy trong venv:\n"
+              "     source ~/.ebm-venv/bin/activate\n"
+              "  Sau khi chạy, kiểm lại bằng verify_vi.py.\n")
     items = json.loads(CATALOG.read_text(encoding="utf-8"))
     vi_map = json.loads(DICT.read_text(encoding="utf-8")) if DICT.exists() else {}
 
