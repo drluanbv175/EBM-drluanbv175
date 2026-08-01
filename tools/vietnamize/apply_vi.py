@@ -222,12 +222,17 @@ def main() -> int:
     vi_map = json.loads(DICT.read_text(encoding="utf-8")) if DICT.exists() else {}
 
     if args.report:
+        # Phải tính CẢ khoá `name:` — bỏ qua nó sẽ báo thiếu oan những mục đã dịch
+        # qua fallback theo tên (toàn bộ bmad và nhóm claude.ai dùng kiểu khoá này).
+        def da_dich(i: dict) -> bool:
+            return (i["id"] in vi_map or f"name:{i['name']}" in vi_map
+                    or i["already_vi"])
+
         for tier in (1, 2, 3):
             sub = [i for i in items if i["tier_guess"] == tier]
-            have = sum(1 for i in sub if i["id"] in vi_map or i["already_vi"])
+            have = sum(1 for i in sub if da_dich(i))
             print(f"  Tầng {tier}: {have}/{len(sub)} mục đã có mô tả tiếng Việt")
-        missing = [i for i in items
-                   if i["tier_guess"] <= 2 and i["id"] not in vi_map and not i["already_vi"]]
+        missing = [i for i in items if i["tier_guess"] <= 2 and not da_dich(i)]
         print(f"\nTầng 1-2 CÒN THIẾU bản dịch: {len(missing)}")
         for i in missing[:15]:
             print(f"   - {i['id']}")

@@ -3,7 +3,7 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1230 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1162 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 ## Tra nhanh theo nhu cầu
@@ -29,7 +29,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (278 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (281 mục)
 
 
 ### openmed-skills  (72)
@@ -301,10 +301,13 @@
 | `agent trich-xuat-y-van` | agent | Trích xuất và tóm tắt có cấu trúc MỘT bài báo/nghiên cứu thành bảng dữ liệu chuẩn (PICO, thiết kế, cỡ mẫu, kết cục, hiệu ứng + CI, nguy cơ sai lệch). Dùng khi cần đọc nhanh một bài, dựng bảng trích xuất cho tổng quan hệ thống, hoặc chuẩn… |
 | `agent viet-ban-thao` | agent | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy… |
 
-### healthcare  (11)
+### healthcare  (14)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
+| `agent documents-reader-cli` | agent | Internal sweep worker for /contracts in CLI transport — reads one shard of dumped contract text and records findings through the engine binary named in its spawn prompt. No MCP tools and no ToolSearch by design; a discovered server may b… |
+| `agent documents-reader-mcp` | agent | Internal sweep worker for /contracts — reads one shard of dumped contract text and records findings with verified citations. Do not invoke directly; spawned in parallel by the /contracts sweep step with shard files and a rubric. |
+| `agent note-extract-worker` | agent | Isolated extraction worker for clinical-note-extract batch runs. Reads one note from its prompt, returns one structured record. No tools — note text is untrusted input. |
 | `/healthcare:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
 | `/healthcare:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
 | `/healthcare:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
@@ -352,70 +355,8 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (713 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (642 mục)
 
-
-### zoom-plugin  (57)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/zoom-plugin:build-zoom-bot` | kỹ năng | [Zoom] Dựng bot họp, bộ ghi hình hoặc luồng xử lý âm thanh–hình ảnh thời gian thực. Từ khoá: Zoom bot. |
-| `/zoom-plugin:build-zoom-contact-center-app` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Contact Center. Từ khoá: Contact Center. |
-| `/zoom-plugin:build-zoom-meeting-app` | kỹ năng | [Zoom] Dựng hoặc nhúng luồng họp Zoom. Từ khoá: meeting app. |
-| `/zoom-plugin:build-zoom-meeting-sdk-app` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ họp Zoom. Từ khoá: Meeting SDK. |
-| `/zoom-plugin:build-zoom-phone-integration` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Phone. Từ khoá: Zoom Phone. |
-| `/zoom-plugin:build-zoom-rest-api-app` | kỹ năng | [Zoom] Tài liệu tham chiếu API REST của Zoom. Từ khoá: Zoom REST API. |
-| `/zoom-plugin:build-zoom-team-chat-app` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Team Chat. Từ khoá: Team Chat. |
-| `/zoom-plugin:build-zoom-video-sdk-app` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ video tuỳ biến. Từ khoá: Video SDK. |
-| `/zoom-plugin:build-zoom-virtual-agent` | kỹ năng | [Zoom] Tài liệu tham chiếu trợ lý ảo Zoom. Từ khoá: Virtual Agent. |
-| `/zoom-plugin:choose-zoom-approach` | kỹ năng | [Zoom] Chọn kiến trúc Zoom phù hợp cho nhu cầu. Từ khoá: Zoom architecture. |
-| `/zoom-plugin:contact-center/android` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho Android. Từ khoá: Contact Center Android. |
-| `/zoom-plugin:contact-center/ios` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho iOS. Từ khoá: Contact Center iOS. |
-| `/zoom-plugin:contact-center/web` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho nền web. Từ khoá: Contact Center web. |
-| `/zoom-plugin:debug-zoom` | kỹ năng | [Zoom] Gỡ lỗi tích hợp Zoom bằng cách khoanh vùng điểm hỏng. Từ khoá: Zoom debug. |
-| `/zoom-plugin:debug-zoom-integration` | kỹ năng | [Zoom] Gỡ lỗi nhanh khi xác thực, webhook hoặc phiên họp trục trặc. Từ khoá: Zoom debug. |
-| `/zoom-plugin:design-mcp-workflow` | kỹ năng | [Zoom] Thiết kế quy trình Zoom MCP cho trợ lý. Từ khoá: MCP workflow. |
-| `/zoom-plugin:meeting-sdk/linux` | kỹ năng | [Zoom] Bộ công cụ họp cho Linux — bot chạy nền bằng C++. Từ khoá: Meeting SDK Linux. |
-| `/zoom-plugin:plan-zoom-integration` | kỹ năng | [Zoom] Biến ý tưởng tích hợp Zoom thành kế hoạch triển khai. Từ khoá: Zoom plan. |
-| `/zoom-plugin:plan-zoom-product` | kỹ năng | [Zoom] Chọn nền tảng Zoom phù hợp cho một tình huống sử dụng. Từ khoá: Zoom product. |
-| `/zoom-plugin:probe-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ kiểm tra trước cuộc họp. Từ khoá: Probe SDK. |
-| `/zoom-plugin:rivet-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ Rivet. Từ khoá: Rivet SDK. |
-| `/zoom-plugin:scribe` | kỹ năng | [Zoom] Tài liệu tham chiếu dịch vụ ghi biên bản tự động. Từ khoá: Zoom Scribe. |
-| `/zoom-plugin:setup-zoom-mcp` | kỹ năng | [Zoom] Quyết định khi nào nên dùng Zoom MCP và cách cài an toàn. Từ khoá: Zoom MCP. |
-| `/zoom-plugin:setup-zoom-oauth` | kỹ năng | [Zoom] Cài đặt xác thực Zoom đúng cách. Từ khoá: Zoom OAuth. |
-| `/zoom-plugin:setup-zoom-webhooks` | kỹ năng | [Zoom] Tài liệu tham chiếu về webhook Zoom. Từ khoá: webhooks. |
-| `/zoom-plugin:setup-zoom-websockets` | kỹ năng | [Zoom] Tài liệu tham chiếu về WebSocket Zoom. Từ khoá: websockets. |
-| `/zoom-plugin:start` | kỹ năng | [Zoom] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom. Từ khoá: Zoom start. |
-| `/zoom-plugin:ui-toolkit/web` | kỹ năng | [Zoom] Bộ giao diện dựng sẵn cho Video SDK trên web. Từ khoá: UI Toolkit. |
-| `/zoom-plugin:video-sdk/linux` | kỹ năng | [Zoom] Bộ công cụ video cho Linux — bot chạy nền bằng C++. Từ khoá: Video SDK Linux. |
-| `/zoom-plugin:video-sdk/web` | kỹ năng | [Zoom] Bộ công cụ video cho web bằng JavaScript/TypeScript. Từ khoá: Video SDK web. |
-| `/zoom-plugin:video-sdk/windows` | kỹ năng | [Zoom] Bộ công cụ video cho Windows bằng C++. Từ khoá: Video SDK Windows. |
-| `/zoom-plugin:virtual-agent/android` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào ứng dụng Android. Từ khoá: Virtual Agent Android. |
-| `/zoom-plugin:virtual-agent/ios` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào ứng dụng iOS. Từ khoá: Virtual Agent iOS. |
-| `/zoom-plugin:virtual-agent/web` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào trang web. Từ khoá: Virtual Agent web. |
-| `/zoom-plugin:zoom-apps-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ ứng dụng nhúng trong Zoom. Từ khoá: Zoom Apps SDK. |
-| `/zoom-plugin:zoom-cobrowse-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ duyệt web cùng nhau. Từ khoá: Cobrowse SDK. |
-| `/zoom-plugin:zoom-general` | kỹ năng | [Zoom] Tài liệu tham chiếu chung, dùng chéo nhiều sản phẩm Zoom. Từ khoá: Zoom general. |
-| `/zoom-plugin:zoom-mcp` | kỹ năng | [Zoom] Hướng dẫn dùng các đầu nối Zoom MCP đi kèm. Từ khoá: Zoom MCP connectors. |
-| `/zoom-plugin:zoom-mcp/whiteboard` | kỹ năng | [Zoom] Hướng dẫn đầu nối bảng trắng Zoom. Từ khoá: Whiteboard MCP. |
-| `/zoom-plugin:zoom-meeting-sdk-android` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Android. Từ khoá: Meeting SDK Android. |
-| `/zoom-plugin:zoom-meeting-sdk-electron` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Electron. Từ khoá: Meeting SDK Electron. |
-| `/zoom-plugin:zoom-meeting-sdk-ios` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng iOS. Từ khoá: Meeting SDK iOS. |
-| `/zoom-plugin:zoom-meeting-sdk-macos` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng macOS. Từ khoá: Meeting SDK macOS. |
-| `/zoom-plugin:zoom-meeting-sdk-react-native` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng React Native. Từ khoá: Meeting SDK React Native. |
-| `/zoom-plugin:zoom-meeting-sdk-unreal` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào Unreal Engine. Từ khoá: Meeting SDK Unreal. |
-| `/zoom-plugin:zoom-meeting-sdk-web` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào trang web. Từ khoá: Meeting SDK web. |
-| `/zoom-plugin:zoom-meeting-sdk-web-client-view` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom chiếm trọn trang. Từ khoá: client view. |
-| `/zoom-plugin:zoom-meeting-sdk-web-component-view` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom dưới dạng thành phần nhỏ trong trang. Từ khoá: component view. |
-| `/zoom-plugin:zoom-meeting-sdk-windows` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Windows bằng C++. Từ khoá: Meeting SDK Windows. |
-| `/zoom-plugin:zoom-oauth` | kỹ năng | [Zoom] Tài liệu tham chiếu về xác thực Zoom. Từ khoá: Zoom auth. |
-| `/zoom-plugin:zoom-rtms` | kỹ năng | [Zoom] Tài liệu tham chiếu luồng dữ liệu thời gian thực. Từ khoá: Zoom RTMS. |
-| `/zoom-plugin:zoom-video-sdk-android` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên Android. Từ khoá: Video SDK Android. |
-| `/zoom-plugin:zoom-video-sdk-flutter` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến bằng Flutter. Từ khoá: Video SDK Flutter. |
-| `/zoom-plugin:zoom-video-sdk-ios` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên iOS. Từ khoá: Video SDK iOS. |
-| `/zoom-plugin:zoom-video-sdk-macos` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên macOS. Từ khoá: Video SDK macOS. |
-| `/zoom-plugin:zoom-video-sdk-react-native` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến bằng React Native. Từ khoá: Video SDK React Native. |
-| `/zoom-plugin:zoom-video-sdk-unity` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trong Unity. Từ khoá: Video SDK Unity. |
 
 ### bmad-deep-recon  (50)
 
@@ -881,32 +822,6 @@
 | `/small-business:tax-season-organizer` | kỹ năng | [Doanh nghiệp nhỏ] Sắp xếp tài liệu cho mùa quyết toán thuế. Từ khoá: tax season. |
 | `/small-business:ticket-deflector` | kỹ năng | [Doanh nghiệp nhỏ] Đọc thư hoặc phiếu hỗ trợ rồi soạn phản hồi kèm dữ liệu đơn hàng. Từ khoá: ticket deflection. |
 
-### brightdata-plugin  (21)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/brightdata-plugin:agent-onboarding` | kỹ năng | [Thu thập web] Hướng dẫn khởi đầu khi lần đầu dùng Bright Data. Từ khoá: Bright Data onboarding. |
-| `/brightdata-plugin:brand-listening` | kỹ năng | [Thu thập web] Lắng nghe mạng xã hội và theo dõi danh tiếng thương hiệu. Từ khoá: social listening. |
-| `/brightdata-plugin:brd-browser-debug` | kỹ năng | [Thu thập web] Gỡ lỗi phiên trình duyệt thu thập dữ liệu. Từ khoá: browser debug. |
-| `/brightdata-plugin:bright-data-best-practices` | kỹ năng | [Thu thập web] Thực hành tốt khi tích hợp Bright Data cho môi trường thật. Từ khoá: best practices. |
-| `/brightdata-plugin:bright-data-mcp` | kỹ năng | [Thu thập web] Bộ công cụ MCP xử lý mọi thao tác lấy dữ liệu web. Từ khoá: Bright Data MCP. |
-| `/brightdata-plugin:brightdata-cli` | kỹ năng | [Thu thập web] Dùng dòng lệnh Bright Data. Từ khoá: Bright Data CLI. |
-| `/brightdata-plugin:brightdata-proxy` | kỹ năng | [Thu thập web] Sinh mã định tuyến yêu cầu HTTP qua proxy Bright Data. Từ khoá: proxy. |
-| `/brightdata-plugin:brightdata-sdk` | kỹ năng | [Thu thập web] Lấy dữ liệu web bằng thư viện Python của Bright Data. Từ khoá: Python SDK. |
-| `/brightdata-plugin:brightdata-sdk-js` | kỹ năng | [Thu thập web] Lấy dữ liệu web bằng thư viện JavaScript của Bright Data. Từ khoá: JS SDK. |
-| `/brightdata-plugin:competitive-intel` | kỹ năng | [Thu thập web] Thu thập thông tin cạnh tranh và nghiên cứu thị trường theo thời gian thực. Từ khoá: competitive intelligence. |
-| `/brightdata-plugin:data-feeds` | kỹ năng | [Thu thập web] Lấy dữ liệu có cấu trúc từ hơn 40 nền tảng phổ biến. Từ khoá: data feeds. |
-| `/brightdata-plugin:design-mirror` | kỹ năng | [Thu thập web] Sao chép phong cách hình ảnh của một trang web để áp cho trang của mình. Từ khoá: design mirror. |
-| `/brightdata-plugin:discover-api` | kỹ năng | [Thu thập web] Dùng API khám phá nội dung xếp hạng theo ý định tìm kiếm. Từ khoá: discover API. |
-| `/brightdata-plugin:live-research` | kỹ năng | [Thu thập web] Dựng bản tóm tắt nghiên cứu đa nguồn có trích dẫn về một chủ đề. Với câu hỏi y khoa hãy dùng `/tra-y-van` để có PMID/DOI. Từ khoá: live research. |
-| `/brightdata-plugin:price-comparison` | kỹ năng | [Thu thập web] So sánh giá bán hàng qua dữ liệu thu thập từ web. Từ khoá: price comparison. |
-| `/brightdata-plugin:rag-pipeline` | kỹ năng | [Thu thập web] Dựng đường ống truy hồi tăng cường (RAG) từ dữ liệu web. Từ khoá: RAG pipeline. |
-| `/brightdata-plugin:scrape` | kỹ năng | [Thu thập web] Lấy nội dung trang web về dạng markdown/HTML/JSON sạch. Từ khoá: scrape. |
-| `/brightdata-plugin:scraper-builder` | kỹ năng | [Thu thập web] Dựng bộ thu thập dữ liệu cho một trang web bất kỳ. Từ khoá: scraper builder. |
-| `/brightdata-plugin:scraper-studio` | kỹ năng | [Thu thập web] Dựng và chạy bộ thu thập do AI sinh, ngay từ dòng lệnh. Từ khoá: scraper studio. |
-| `/brightdata-plugin:search` | kỹ năng | [Thu thập web] Tìm kiếm trên web qua dòng lệnh Bright Data. Từ khoá: web search. |
-| `/brightdata-plugin:seo-audit` | kỹ năng | [Tiếp thị] Rà soát và chẩn đoán vấn đề tối ưu công cụ tìm kiếm. Từ khoá: SEO audit. |
-
 ### understand-anything  (19)
 
 | Gọi bằng | Loại | Làm gì |
@@ -931,6 +846,44 @@
 | `/understand-anything:understand-knowledge` | kỹ năng | [Đọc hiểu mã] Phân tích một kho tri thức dạng wiki và dựng bản đồ thực thể liên kết. Từ khoá: knowledge base graph. |
 | `/understand-anything:understand-onboard` | kỹ năng | [Đọc hiểu mã] Sinh tài liệu HƯỚNG DẪN NHẬP MÔN cho người mới tham gia dự án. Từ khoá: onboarding guide. |
 
+### pubmed  (14)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `agent documents-reader-cli` | agent | Internal sweep worker for /contracts in CLI transport — reads one shard of dumped contract text and records findings through the engine binary named in its spawn prompt. No MCP tools and no ToolSearch by design; a discovered server may b… |
+| `agent documents-reader-mcp` | agent | Internal sweep worker for /contracts — reads one shard of dumped contract text and records findings with verified citations. Do not invoke directly; spawned in parallel by the /contracts sweep step with shard files and a rubric. |
+| `agent note-extract-worker` | agent | Isolated extraction worker for clinical-note-extract batch runs. Reads one note from its prompt, returns one structured record. No tools — note text is untrusted input. |
+| `/pubmed:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
+| `/pubmed:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/pubmed:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
+| `/pubmed:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
+| `/pubmed:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
+| `/pubmed:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
+| `/pubmed:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
+| `/pubmed:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/pubmed:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/pubmed:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/pubmed:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
+
+### icd10-codes  (14)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `agent documents-reader-cli` | agent | Internal sweep worker for /contracts in CLI transport — reads one shard of dumped contract text and records findings through the engine binary named in its spawn prompt. No MCP tools and no ToolSearch by design; a discovered server may b… |
+| `agent documents-reader-mcp` | agent | Internal sweep worker for /contracts — reads one shard of dumped contract text and records findings with verified citations. Do not invoke directly; spawned in parallel by the /contracts sweep step with shard files and a rubric. |
+| `agent note-extract-worker` | agent | Isolated extraction worker for clinical-note-extract batch runs. Reads one note from its prompt, returns one structured record. No tools — note text is untrusted input. |
+| `/icd10-codes:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
+| `/icd10-codes:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/icd10-codes:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
+| `/icd10-codes:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
+| `/icd10-codes:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
+| `/icd10-codes:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
+| `/icd10-codes:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
+| `/icd10-codes:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/icd10-codes:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/icd10-codes:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/icd10-codes:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
+
 ### figma  (14)
 
 | Gọi bằng | Loại | Làm gì |
@@ -950,6 +903,24 @@
 | `/figma:generate-project-plan` | kỹ năng | [Figma] Sinh bảng kế hoạch dự án trên FigJam từ tài liệu yêu cầu. Từ khoá: project plan board. |
 | `/figma:video-interaction-mapper` | kỹ năng | [Figma] Phân tích video thao tác giao diện để dựng lại luồng tương tác. Từ khoá: interaction mapping. |
 
+### ip-legal  (13)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `agent ip-renewal-watcher` | agent | > Scheduled agent that reads the IP portfolio register, computes what's due, and posts a ranked deadline report. Runs weekly by default. Posts to the channel named in `~/.claude/plugins/config/claude-for-legal/ip-legal/CLAUDE.md` → Renew… |
+| `/ip-legal:cease-desist` | kỹ năng | [Sở hữu trí tuệ] Soạn thư yêu cầu chấm dứt hành vi xâm phạm, hoặc phân loại thư nhận được. Từ khoá: cease and desist. |
+| `/ip-legal:clearance` | kỹ năng | [Sở hữu trí tuệ] Rà soát sơ bộ khả năng đăng ký nhãn hiệu. Từ khoá: trademark clearance. |
+| `/ip-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
+| `/ip-legal:customize` | kỹ năng | [Sở hữu trí tuệ] Tuỳ chỉnh hồ sơ hành nghề về sở hữu trí tuệ. Từ khoá: customize. |
+| `/ip-legal:fto-triage` | kỹ năng | [Sở hữu trí tuệ] Xem xét bước đầu quyền tự do thực thi sáng chế. Từ khoá: freedom to operate. |
+| `/ip-legal:infringement-triage` | kỹ năng | [Sở hữu trí tuệ] Phân loại vụ việc xâm phạm nhãn hiệu, bản quyền, sáng chế. Từ khoá: infringement. |
+| `/ip-legal:invention-intake` | kỹ năng | [Sở hữu trí tuệ] Sàng lọc bước đầu một bản mô tả sáng chế: tính mới, trình độ sáng tạo. Từ khoá: invention disclosure. |
+| `/ip-legal:ip-clause-review` | kỹ năng | [Sở hữu trí tuệ] Rà soát điều khoản sở hữu trí tuệ trong hợp đồng. Từ khoá: IP clauses. |
+| `/ip-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
+| `/ip-legal:oss-review` | kỹ năng | [Sở hữu trí tuệ] Kiểm tuân thủ giấy phép nguồn mở cho danh sách thư viện phụ thuộc. Từ khoá: OSS license. |
+| `/ip-legal:portfolio` | kỹ năng | [Sở hữu trí tuệ] Theo dõi danh mục tài sản trí tuệ: đăng ký, gia hạn, duy trì. Từ khoá: IP portfolio. |
+| `/ip-legal:takedown` | kỹ năng | [Sở hữu trí tuệ] Soạn thông báo gỡ bỏ theo DMCA hoặc xử lý thông báo nhận được. Từ khoá: DMCA takedown. |
+
 ### codex  (12)
 
 | Gọi bằng | Loại | Làm gì |
@@ -966,55 +937,6 @@
 | `/codex:codex-cli-runtime` | kỹ năng | [Codex] Hợp đồng nội bộ để gọi runtime Codex từ Claude Code. Skill nội bộ, không gọi trực tiếp. Từ khoá: codex runtime. |
 | `/codex:codex-result-handling` | kỹ năng | [Codex] Hướng dẫn nội bộ về cách trình bày kết quả Codex trả về cho người dùng. Từ khoá: codex result. |
 | `/codex:gpt-5-4-prompting` | kỹ năng | [Codex] Hướng dẫn nội bộ soạn câu lệnh cho Codex/GPT-5.4 khi viết mã, rà soát, chẩn đoán, tra cứu. Từ khoá: GPT-5.4 prompting. |
-
-### ip-legal  (12)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/ip-legal:cease-desist` | kỹ năng | [Sở hữu trí tuệ] Soạn thư yêu cầu chấm dứt hành vi xâm phạm, hoặc phân loại thư nhận được. Từ khoá: cease and desist. |
-| `/ip-legal:clearance` | kỹ năng | [Sở hữu trí tuệ] Rà soát sơ bộ khả năng đăng ký nhãn hiệu. Từ khoá: trademark clearance. |
-| `/ip-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
-| `/ip-legal:customize` | kỹ năng | [Sở hữu trí tuệ] Tuỳ chỉnh hồ sơ hành nghề về sở hữu trí tuệ. Từ khoá: customize. |
-| `/ip-legal:fto-triage` | kỹ năng | [Sở hữu trí tuệ] Xem xét bước đầu quyền tự do thực thi sáng chế. Từ khoá: freedom to operate. |
-| `/ip-legal:infringement-triage` | kỹ năng | [Sở hữu trí tuệ] Phân loại vụ việc xâm phạm nhãn hiệu, bản quyền, sáng chế. Từ khoá: infringement. |
-| `/ip-legal:invention-intake` | kỹ năng | [Sở hữu trí tuệ] Sàng lọc bước đầu một bản mô tả sáng chế: tính mới, trình độ sáng tạo. Từ khoá: invention disclosure. |
-| `/ip-legal:ip-clause-review` | kỹ năng | [Sở hữu trí tuệ] Rà soát điều khoản sở hữu trí tuệ trong hợp đồng. Từ khoá: IP clauses. |
-| `/ip-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
-| `/ip-legal:oss-review` | kỹ năng | [Sở hữu trí tuệ] Kiểm tuân thủ giấy phép nguồn mở cho danh sách thư viện phụ thuộc. Từ khoá: OSS license. |
-| `/ip-legal:portfolio` | kỹ năng | [Sở hữu trí tuệ] Theo dõi danh mục tài sản trí tuệ: đăng ký, gia hạn, duy trì. Từ khoá: IP portfolio. |
-| `/ip-legal:takedown` | kỹ năng | [Sở hữu trí tuệ] Soạn thông báo gỡ bỏ theo DMCA hoặc xử lý thông báo nhận được. Từ khoá: DMCA takedown. |
-
-### pubmed  (11)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/pubmed:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
-| `/pubmed:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/pubmed:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
-| `/pubmed:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
-| `/pubmed:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
-| `/pubmed:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
-| `/pubmed:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
-| `/pubmed:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
-| `/pubmed:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
-| `/pubmed:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
-| `/pubmed:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
-
-### icd10-codes  (11)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/icd10-codes:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
-| `/icd10-codes:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/icd10-codes:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
-| `/icd10-codes:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
-| `/icd10-codes:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
-| `/icd10-codes:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
-| `/icd10-codes:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
-| `/icd10-codes:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
-| `/icd10-codes:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
-| `/icd10-codes:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
-| `/icd10-codes:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
 
 ### ai-governance-legal  (10)
 
@@ -1075,6 +997,20 @@
 | `/operations:status-report` | kỹ năng | [Vận hành] Sinh báo cáo tình hình kèm chỉ số, rủi ro và việc cần làm. Từ khoá: status report. |
 | `/operations:vendor-review` | kỹ năng | [Vận hành] Đánh giá nhà cung cấp: chi phí, rủi ro, khuyến nghị. Từ khoá: vendor evaluation. |
 
+### product-management  (9)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/brainstorm` | lệnh | Brainstorm a product idea, problem space, or strategic question with a sharp thinking partner |
+| `/product-management:competitive-brief` | kỹ năng | [Sản phẩm] Lập bản phân tích đối thủ cạnh tranh. Từ khoá: competitive analysis. |
+| `/product-management:metrics-review` | kỹ năng | [Sản phẩm] Rà soát chỉ số sản phẩm kèm phân tích xu hướng. Từ khoá: product metrics. |
+| `/product-management:product-brainstorming` | kỹ năng | [Sản phẩm] Động não ý tưởng sản phẩm và khám phá không gian vấn đề. Từ khoá: product brainstorming. |
+| `/product-management:roadmap-update` | kỹ năng | [Sản phẩm] Cập nhật hoặc sắp lại ưu tiên lộ trình sản phẩm. Từ khoá: roadmap. |
+| `/product-management:sprint-planning` | kỹ năng | [Sản phẩm] Lập kế hoạch một đợt làm việc: phạm vi, năng lực, mục tiêu. Từ khoá: sprint planning. |
+| `/product-management:stakeholder-update` | kỹ năng | [Sản phẩm] Sinh bản cập nhật gửi các bên liên quan theo đúng đối tượng. Từ khoá: stakeholder update. |
+| `/product-management:synthesize-research` | kỹ năng | [Sản phẩm] Tổng hợp nghiên cứu người dùng từ phỏng vấn, khảo sát, phản hồi. Từ khoá: research synthesis. |
+| `/product-management:write-spec` | kỹ năng | [Sản phẩm] Viết đặc tả tính năng hoặc tài liệu yêu cầu sản phẩm. Từ khoá: feature spec. |
+
 ### human-resources  (9)
 
 | Gọi bằng | Loại | Làm gì |
@@ -1103,18 +1039,18 @@
 | `/legal:triage-nda` | kỹ năng | [Pháp lý] Phân loại nhanh một thoả thuận bảo mật (NDA) nhận được. Từ khoá: NDA triage. |
 | `/legal:vendor-check` | kỹ năng | [Pháp lý] Kiểm tình trạng các thoả thuận hiện có với một nhà cung cấp. Từ khoá: vendor check. |
 
-### product-management  (8)
+### product-legal  (8)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
-| `/product-management:competitive-brief` | kỹ năng | [Sản phẩm] Lập bản phân tích đối thủ cạnh tranh. Từ khoá: competitive analysis. |
-| `/product-management:metrics-review` | kỹ năng | [Sản phẩm] Rà soát chỉ số sản phẩm kèm phân tích xu hướng. Từ khoá: product metrics. |
-| `/product-management:product-brainstorming` | kỹ năng | [Sản phẩm] Động não ý tưởng sản phẩm và khám phá không gian vấn đề. Từ khoá: product brainstorming. |
-| `/product-management:roadmap-update` | kỹ năng | [Sản phẩm] Cập nhật hoặc sắp lại ưu tiên lộ trình sản phẩm. Từ khoá: roadmap. |
-| `/product-management:sprint-planning` | kỹ năng | [Sản phẩm] Lập kế hoạch một đợt làm việc: phạm vi, năng lực, mục tiêu. Từ khoá: sprint planning. |
-| `/product-management:stakeholder-update` | kỹ năng | [Sản phẩm] Sinh bản cập nhật gửi các bên liên quan theo đúng đối tượng. Từ khoá: stakeholder update. |
-| `/product-management:synthesize-research` | kỹ năng | [Sản phẩm] Tổng hợp nghiên cứu người dùng từ phỏng vấn, khảo sát, phản hồi. Từ khoá: research synthesis. |
-| `/product-management:write-spec` | kỹ năng | [Sản phẩm] Viết đặc tả tính năng hoặc tài liệu yêu cầu sản phẩm. Từ khoá: feature spec. |
+| `agent launch-watcher` | agent | > Monitors the launch tracker (Jira/Linear) for upcoming launches that likely need legal review, flags them before product counsel gets surprised. Runs daily. Trigger: "what launches are coming", "what should I know about", "launch radar… |
+| `/product-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
+| `/product-legal:customize` | kỹ năng | [Pháp lý sản phẩm] Tuỳ chỉnh hồ sơ hành nghề tư vấn sản phẩm. Từ khoá: customize. |
+| `/product-legal:feature-risk-assessment` | kỹ năng | [Pháp lý sản phẩm] Đánh giá rủi ro sâu cho một tính năng hoặc mảng sản phẩm. Từ khoá: feature risk. |
+| `/product-legal:is-this-a-problem` | kỹ năng | [Pháp lý sản phẩm] Trả lời nhanh câu hỏi 'chuyện này có vấn đề không'. Từ khoá: quick legal check. |
+| `/product-legal:launch-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát đầy đủ trước khi ra mắt sản phẩm. Từ khoá: launch review. |
+| `/product-legal:marketing-claims-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát nội dung quảng cáo tìm khẳng định cần chứng minh. Từ khoá: marketing claims. |
+| `/product-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
 
 ### finance  (8)
 
@@ -1141,18 +1077,6 @@
 | `/marketing:email-sequence` | kỹ năng | [Tiếp thị] Thiết kế chuỗi thư điện tử nhiều bước kèm nội dung và lịch gửi. Từ khoá: email sequence. |
 | `/marketing:performance-report` | kỹ năng | [Tiếp thị] Báo cáo hiệu quả tiếp thị kèm chỉ số và phân tích xu hướng. Từ khoá: marketing performance. |
 | `/marketing:seo-audit` | kỹ năng | [Tiếp thị] Rà soát và chẩn đoán vấn đề tối ưu công cụ tìm kiếm. Từ khoá: SEO audit. |
-
-### product-legal  (7)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/product-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
-| `/product-legal:customize` | kỹ năng | [Pháp lý sản phẩm] Tuỳ chỉnh hồ sơ hành nghề tư vấn sản phẩm. Từ khoá: customize. |
-| `/product-legal:feature-risk-assessment` | kỹ năng | [Pháp lý sản phẩm] Đánh giá rủi ro sâu cho một tính năng hoặc mảng sản phẩm. Từ khoá: feature risk. |
-| `/product-legal:is-this-a-problem` | kỹ năng | [Pháp lý sản phẩm] Trả lời nhanh câu hỏi 'chuyện này có vấn đề không'. Từ khoá: quick legal check. |
-| `/product-legal:launch-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát đầy đủ trước khi ra mắt sản phẩm. Từ khoá: launch review. |
-| `/product-legal:marketing-claims-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát nội dung quảng cáo tìm khẳng định cần chứng minh. Từ khoá: marketing claims. |
-| `/product-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
 
 ### design  (7)
 
@@ -1210,6 +1134,16 @@
 | `/desktop-commander:obsidian-vault` | kỹ năng | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, frontmatter. Từ khoá: Obsidian. |
 | `/desktop-commander:terminal` | kỹ năng | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
 
+### pdf-viewer  (5)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/annotate` | lệnh | Collaboratively annotate a PDF — propose markup, review together, iterate |
+| `/fill-form` | lệnh | Fill PDF form fields interactively with live visual feedback |
+| `/open` | lệnh | Open a PDF in the interactive viewer |
+| `/sign` | lệnh | Place a signature or initials image on a PDF |
+| `/pdf-viewer:view-pdf` | kỹ năng | [Tài liệu] Trình xem PDF tương tác — mở và xem tài liệu ngay trong phiên. Từ khoá: PDF viewer. |
+
 ### productivity  (4)
 
 | Gọi bằng | Loại | Làm gì |
@@ -1219,10 +1153,11 @@
 | `/productivity:task-management` | kỹ năng | [Năng suất] Quản lý việc cần làm bằng một file TASKS.md dùng chung. Từ khoá: tasks. |
 | `/productivity:update` | kỹ năng | [Năng suất] Đồng bộ danh sách việc và làm mới bộ nhớ từ hoạt động gần đây. Từ khoá: sync tasks. |
 
-### claude-tag-troubleshoot  (2)
+### claude-tag-troubleshoot  (3)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
+| `/debug-plugins` | lệnh | Diagnose plugin and skill loading in this @Claude session |
 | `/claude-tag-troubleshoot:config-guide` | kỹ năng | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
 | `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
 
@@ -1238,59 +1173,11 @@
 |---|---|---|
 | `/google-drive:google-drive-api` | kỹ năng | [Kết nối] Tìm, đọc, tạo, cập nhật và chia sẻ file trên Google Drive. Từ khoá: Google Drive. |
 
-### snowflake  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/snowflake:snowflake-api` | kỹ năng | [Kết nối] Chạy SQL trên kho dữ liệu Snowflake. Từ khoá: Snowflake. |
-
-### notion  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/notion:notion-api` | kỹ năng | [Kết nối] Tìm, đọc và ghi trang, cơ sở dữ liệu Notion. Từ khoá: Notion. |
-
 ### linear  (1)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
 | `/linear:linear-api` | kỹ năng | [Kết nối] Đọc và quản lý việc, dự án, chu kỳ trong Linear. Từ khoá: Linear. |
-
-### sentry  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/sentry:sentry-api` | kỹ năng | [Kết nối] Tra và quản lý dữ liệu lỗi ứng dụng trong Sentry. Từ khoá: Sentry. |
-
-### datadog  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/datadog:datadog-api` | kỹ năng | [Kết nối] Tra và quản lý dữ liệu giám sát Datadog: nhật ký, chỉ số, cảnh báo. Từ khoá: Datadog. |
-
-### hubspot  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/hubspot:hubspot-api` | kỹ năng | [Kết nối] Đọc, tạo, cập nhật bản ghi khách hàng trong HubSpot CRM. Từ khoá: HubSpot. |
-
-### claude-for-msft-365-install  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/claude-for-msft-365-install:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
-
-### pdf-viewer  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/pdf-viewer:view-pdf` | kỹ năng | [Tài liệu] Trình xem PDF tương tác — mở và xem tài liệu ngay trong phiên. Từ khoá: PDF viewer. |
-
-### bigdata-com  (1)
-
-| Gọi bằng | Loại | Làm gì |
-|---|---|---|
-| `/bigdata-com:bigdata-financial-research-analyst` | kỹ năng | [Tài chính] Phân tích nghiên cứu tài chính theo lối tổ chức đầu tư. Không liên quan y khoa. Từ khoá: financial research. |
 
 ### claude-tag-data-viz  (1)
 

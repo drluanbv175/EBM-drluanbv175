@@ -63,12 +63,14 @@ def main() -> int:
         if key.startswith("name:"):
             ds = theo_ten.get(key[5:], [])
             if not ds:
-                loi.append(f"{key}: không mục nào mang tên này")
+                # Bản dịch còn nhưng mục đã biến mất — bình thường khi plugin bị gỡ.
+                # Không phải lỗi: giữ lại bản dịch để dùng nếu plugin được cài lại.
+                canh_bao.append(f"{key}: không còn mục nào mang tên này (plugin đã gỡ?)")
             cap.extend((key, entry, i) for i in ds)
         elif key in catalog:
             cap.append((key, entry, catalog[key]))
         else:
-            loi.append(f"{key}: KHÔNG còn trong danh mục (plugin đã gỡ hoặc đổi tên?)")
+            canh_bao.append(f"{key}: không còn trong danh mục (plugin đã gỡ hoặc đổi tên?)")
 
     for key, entry, item in cap:
         path = pathlib.Path(item["path"])

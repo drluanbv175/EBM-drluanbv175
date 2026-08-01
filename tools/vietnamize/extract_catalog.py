@@ -189,15 +189,27 @@ def main() -> int:
             pdir = mf.parent / pid
             if not pdir.is_dir():
                 continue
-            for f in sorted(pdir.rglob("SKILL.md")):
+            # Quét CẢ skill, lệnh và agent — nhóm claude.ai cũng có agents/ và
+            # commands/ (healthcare 3 agent, pdf-viewer 4 lệnh...), bản đầu chỉ lấy
+            # SKILL.md nên bỏ sót 17 mục.
+            for f in sorted(pdir.rglob("*.md")):
                 if any(x in SKIP_DIRS for x in f.parts):
+                    continue
+                if f.name == "SKILL.md":
+                    kind, invoke_fmt = "skill", "/{ten}:{nm}"
+                elif f.parent.name == "commands":
+                    kind, invoke_fmt = "command", "/{nm}"
+                elif f.parent.name == "agents":
+                    kind, invoke_fmt = "agent", "agent {nm}"
+                else:
                     continue
                 fm = read_frontmatter(f)
                 if not fm.get("description"):
                     continue
-                nm = fm.get("name") or f.parent.name
-                add(items, kind="skill", source="claude.ai", plugin=ten, name=nm,
-                    desc=fm["description"], path=f, invoke=f"/{ten}:{nm}")
+                nm = fm.get("name") or (f.parent.name if kind == "skill" else f.stem)
+                add(items, kind=kind, source="claude.ai", plugin=ten, name=nm,
+                    desc=fm["description"], path=f,
+                    invoke=invoke_fmt.format(ten=ten, nm=nm))
 
     # --- 2. Skill cấp user ------------------------------------------------
     for f in sorted((HOME / ".claude/skills").glob("*/SKILL.md")):
