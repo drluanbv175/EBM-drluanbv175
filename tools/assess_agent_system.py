@@ -208,8 +208,11 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
                                 "0 tham chiếu treo (--strict)", 30)) or
                 p_exists(TOOLS / "verify_agent_routing.py", "Công cụ kiểm định tuyến có mặt"),
         lambda: (deep and p_run([py, str(TOOLS / "orchestrator" / "tests" / "test_orchestrator.py")],
-                                "Orchestrator 23 test (bàn giao/nhánh điều kiện) PASS", 30)) or
+                                "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS", 30)) or
                 p_exists(TOOLS / "orchestrator" / "flows.py", "Flow điều phối agent↔agent có mặt"),
+        lambda: (deep and p_run([py, str(TOOLS / "verify_plugin_orchestration.py")],
+                                "Một owner/capability; plugin chỉ worker PASS", 30)) or
+                p_exists(TOOLS / "verify_plugin_orchestration.py", "Cổng quyền sở hữu plugin có mặt"),
     ])
     crit("S3", "Pipeline xử lý nhiệm vụ", "system", [
         lambda: p_contains(MT / "run_pipeline.py", "orchestrate", "Pipeline G0→G10 (code)"),
@@ -305,9 +308,9 @@ STATUS_ICON = {"strong": "🟢", "partial": "🟡", "gap": "🔴", "absent": "�
 # GIỚI HẠN TRƯỞNG THÀNH trung thực (không thổi điểm) — cơ chế có thể TỒN TẠI +
 # CHẠY nhưng chưa TRƯỞNG THÀNH đủ. Nêu rõ để bác sĩ biết mức thật.
 CAVEATS: Dict[str, List[str]] = {
-    "A2": ["2026-07-04 (vá): đã dựng `tools/orchestrator/` — control-plane CHẠY ĐƯỢC cho CẢ HAI "
-           "nhánh (lâm sàng 8 bước có nhánh điều kiện + nghiên cứu G0–G9), grounded vào registry "
-           "50 agent .md THẬT (không hardcode), 23 test offline PASS. GIỚI HẠN CÒN LẠI (trung "
+    "A2": ["2026-08-01 (cập nhật): đã dựng `tools/orchestrator/` — control-plane CHẠY ĐƯỢC cho CẢ HAI "
+           "nhánh (lâm sàng 8 bước có nhánh điều kiện + nghiên cứu G0–G10), grounded vào registry "
+           "50 agent .md THẬT (không hardcode), bộ test offline PASS. GIỚI HẠN CÒN LẠI (trung "
            "thực, không thổi phồng): đây là lớp ĐỊNH TUYẾN + LẬP KẾ HOẠCH + CỔNG quyết định "
            "(dry-run) — nó CHƯA tự gọi LLM để agent thực thi thật; seam `LLMExecutor` đã có sẵn "
            "nhưng cần cắm wrapper Codex/API `[CẦN MÔI TRƯỜNG HỖ TRỢ]`. Việc thực thi agent thật "

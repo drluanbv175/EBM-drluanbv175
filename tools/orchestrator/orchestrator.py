@@ -1,9 +1,9 @@
-"""orchestrator.py — ĐIỀU PHỐI AGENT: ghép 6 năng lực thành một control plane chạy được.
+"""orchestrator.py — ĐIỀU PHỐI AGENT/PLUGIN: ghép 7 năng lực thành control plane chạy được.
 
 Orchestrator.handle(request):
   route intent → dựng plan theo flow → chạy từng bước qua executor (dry-run mặc định) →
   dừng ở cổng (Cổng A/B/G) → chốt guardrail 2 lớp → released / gate_pending / returned.
-Grounded vào registry 50 agent thật; không hardcode.
+Grounded vào registry 50 agent thật + registry quyền sở hữu plugin; không để plugin tự tranh owner.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from .flows import FlowStep, GUARDRAIL_STEP, all_agents_in_flows, flow_for, sa
 from .intent import SINGLE_TASK_RULES, route
 from .knowledge import KnowledgeLayer
 from .lifecycle import GATES, MAX_RETRIES, Lifecycle
+from .plugin_ownership import PluginOwnershipRegistry
 from .registry import Registry
 from .signals import SIGNAL_CUES, Signals, detect as detect_signals
 from .tools_registry import ToolRegistry
@@ -50,6 +51,7 @@ class Orchestrator:
     registry: Registry = field(default_factory=Registry.load)
     tools: ToolRegistry = field(default_factory=ToolRegistry)
     knowledge: KnowledgeLayer = field(default_factory=KnowledgeLayer)
+    plugin_ownership: PluginOwnershipRegistry = field(default_factory=PluginOwnershipRegistry.load)
 
     # ── Năng lực 1: điều phối ────────────────────────────────────────
     def handle(self, request: str, executor: AgentExecutor | None = None,
@@ -70,6 +72,21 @@ class Orchestrator:
             session.status = "needs_clarification"
             lc.to("blocked", intent.reason)
             session.checkpoint("routed", None, "cần làm rõ intent")
+            return self._finish(session, lc, store, persist)
+
+        # Plugin khong tu tranh quyen voi nhac truong. Moi request duoc gan mot owner
+        # duy nhat; plugin chi xuat hien trong danh sach worker duoc phep cua capability.
+        plugin_decision = self.plugin_ownership.resolve_for_intent(intent.kind, intent.target)
+        session.plugin_routing = plugin_decision.as_dict()
+        session.checkpoint(
+            "plugin_routing",
+            None,
+            f"owner `{plugin_decision.owner_unit}`; plugin chi la worker",
+            session.plugin_routing,
+        )
+        if plugin_decision.status.startswith("BLOCKED"):
+            session.status = "blocked · chưa xác định quyền sở hữu plugin"
+            lc.to("blocked", plugin_decision.status)
             return self._finish(session, lc, store, persist)
 
         # Năng lực 4 (một phần): tín hiệu ngữ cảnh — quyết định nhánh nào THỰC SỰ áp dụng
@@ -233,6 +250,7 @@ class Orchestrator:
             if not self.registry.has(name):
                 warns.append(f"Flow/việc lẻ/gate-hint/reroute tham chiếu agent KHÔNG có trong registry: `{name}`")
         warns += self.registry.validate()
+        warns += self.plugin_ownership.validate(set(self.registry.agents))
         warns += self.knowledge.verify_against_ssot()
         return warns
 
@@ -241,11 +259,16 @@ class Orchestrator:
         c = self.registry.counts()
         return {
             "1_dieu_phoi_agent": (f"{c['total']} agent · 2 nhạc trưởng + guardrail; flow lâm sàng 8 bước "
-                                  f"(nhánh chuyên biệt/chẩn đoán/CLS có điều kiện) / nghiên cứu G0–G9 "
+                                  f"(nhánh chuyên biệt/chẩn đoán/CLS có điều kiện) / nghiên cứu G0–G10 "
                                   f"(agent PROM/mô hình/kinh tế/định tính có điều kiện qua {len(SIGNAL_CUES)} tín hiệu)"),
             "2_quan_ly_ngu_canh": "Session + checkpoint + resume (~/.ebm-orchestrator)",
             "3_dinh_tuyen_intent": "IntentRouter: clinical_case / research_topic / single_task",
             "4_tich_hop_tri_thuc": f"{len(self.knowledge.tiers)} tầng nguồn (Cấp 0/0.5/1 + thuốc); thứ tự §2bis",
             "5_tich_hop_cong_cu": f"{len(self.tools.tools)} công cụ đăng ký ({sum(t.exists for t in self.tools.tools.values())} có trên đĩa)",
             "6_vong_doi_request": "Lifecycle: routed→planned→running→gate→guardrail→released/returned (retry ≤3, 4 mã thoát)",
+            "7_dieu_phoi_plugin": (
+                f"{len(self.plugin_ownership.capabilities)} capability · "
+                f"{len(self.plugin_ownership.providers)} provider; một owner nội bộ/capability, "
+                "plugin chỉ là worker và không được mở cổng người"
+            ),
         }

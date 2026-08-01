@@ -25,8 +25,10 @@ GATES = {
     "B": "Cổng B — Ghi EBM_MASTER (thẻ vào hàng chờ duyệt, chưa xác minh)",
     "G2": "Cổng cứng G2 — Đạo đức + đăng ký trước dữ liệu",
     "G4": "Cổng cứng G4 — Khóa SAP trước khi xem dữ liệu",
+    "G5": "Cổng cứng G5 — Khóa dữ liệu thật trước phân tích",
     "G8": "Cổng cứng G8 — Bình duyệt độc lập trước nộp",
-    "G9": "Cổng cứng — Liêm chính tác giả (COI/AI/đóng góp do người xác nhận)",
+    "G9": "Cổng cứng G9 — Liêm chính tác giả (COI/AI/đóng góp do PI xác nhận)",
+    "G10": "Cổng cứng G10 — PI khóa manifest gói phát hành cuối",
 }
 
 MAX_RETRIES = 3

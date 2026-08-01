@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Hub EBM.
+"""upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Plugin/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (24 bước tự động, thay cho gõ tay từng lệnh):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (26 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
@@ -9,24 +9,25 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (24 bước tự
   5. verify_claude_code_repo_alignment.py — hợp đồng repo/Claude Code/Codex không trôi lệch
   6. verify_lessons_rubric_alignment.py — rubric QA ↔ taxonomy LESSONS không lệch mã lỗi
   7. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
-  8. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
-  9. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
- 10. verify_controlled_research_automation.py — thẩm định/phản biện/PI-IRB-thống kê có kiểm soát
- 11. run_controlled_automation_cycle.py — chu trình tự động có kiểm soát, fail-closed/human-gated
- 12. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
- 13. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
- 14. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
- 15. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
- 16. verify_personal_production_hardening.py — kiểm 7 miền hardening cá nhân trước dữ liệu thật
- 17. verify_clinical_runtime_schema_hardening.py — chốt retraction/prompt-injection/conflict trong schema
- 18. verify_clinical_evidence_update_pipeline.py — dashboard→library→derivatives + hợp đồng sync hub
- 19. verify_clinical_evidence_agent_standards.py — chuẩn agent cập nhật chứng cứ lâm sàng
- 20. verify_clinical_production_control_plane.py — tự sửa/tự sinh agent/điều phối EBM lâm sàng
- 21. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
- 22. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
- 23. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
- 24. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail)
- 25. verify_mcp_live_sync.py        — kiểm đồng bộ MCP mặc định (git hooksPath + LaunchAgent) đã bật trên máy này
+  8. verify_plugin_orchestration.py — một owner/capability; plugin chỉ worker, không vượt cổng
+  9. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
+ 10. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
+ 11. verify_controlled_research_automation.py — thẩm định/phản biện/PI-IRB-thống kê có kiểm soát
+ 12. run_controlled_automation_cycle.py — chu trình tự động có kiểm soát, fail-closed/human-gated
+ 13. EBM_MASTER/tools/sync_all.py  — gom dashboard, nạp sổ cái, sinh WebApp/Antifacts
+ 14. check_sync_all_idempotent.py  — chạy lại sync_all và xác nhận số thẻ hub không đổi
+ 15. assess_agent_system.py --deep — tự đánh giá 13 tiêu chí (A1–A7, S1–S6) bằng probe chạy thật
+ 16. clinical_runtime_readiness_report.py — báo cáo blocker production có phân loại
+ 17. verify_personal_production_hardening.py — kiểm 7 miền hardening cá nhân trước dữ liệu thật
+ 18. verify_clinical_runtime_schema_hardening.py — chốt retraction/prompt-injection/conflict trong schema
+ 19. verify_clinical_evidence_update_pipeline.py — dashboard→library→derivatives + hợp đồng sync hub
+ 20. verify_clinical_evidence_agent_standards.py — chuẩn agent cập nhật chứng cứ lâm sàng
+ 21. verify_clinical_production_control_plane.py — tự sửa/tự sinh agent/điều phối EBM lâm sàng
+ 22. audit_ebm_system.py           — audit tổng thể (guardrail/dashboard/repo/EBM_MASTER)
+ 23. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
+ 24. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
+ 25. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail/plugin)
+ 26. verify_mcp_live_sync.py       — kiểm đồng bộ MCP mặc định (git hooksPath + LaunchAgent) đã bật trên máy này
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -109,32 +110,33 @@ def main() -> int:
         ("5. Repo/Claude Code alignment", ["tools/verify_claude_code_repo_alignment.py"], True),
         ("6. Rubric ↔ lessons taxonomy", ["tools/verify_lessons_rubric_alignment.py"], True),
         ("7. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
-        ("8. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
-        ("9. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
-        ("10. Tự động NC có kiểm soát", ["tools/verify_controlled_research_automation.py"], True),
-        ("11. Controlled automation cycle", ["tools/run_controlled_automation_cycle.py"], True),
-        ("12. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
-        ("13. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
-        ("14. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
-        ("15. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
-        ("16. Hardening cá nhân 7 miền", ["medical-ebm-automation/tools/verify_personal_production_hardening.py"], True),
-        ("17. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
-        ("18. Pipeline cập nhật chứng cứ LS", ["tools/verify_clinical_evidence_update_pipeline.py"], True),
+        ("8. Quyền sở hữu plugin", ["tools/verify_plugin_orchestration.py"], True),
+        ("9. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
+        ("10. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
+        ("11. Tự động NC có kiểm soát", ["tools/verify_controlled_research_automation.py"], True),
+        ("12. Controlled automation cycle", ["tools/run_controlled_automation_cycle.py"], True),
+        ("13. Đồng bộ Hub EBM_MASTER", ["EBM_MASTER/tools/sync_all.py"], True),
+        ("14. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
+        ("15. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
+        ("16. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
+        ("17. Hardening cá nhân 7 miền", ["medical-ebm-automation/tools/verify_personal_production_hardening.py"], True),
+        ("18. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
+        ("19. Pipeline cập nhật chứng cứ LS", ["tools/verify_clinical_evidence_update_pipeline.py"], True),
         (
-            "19. Clinical evidence agent standards",
+            "20. Clinical evidence agent standards",
             ["medical-ebm-automation/tools/verify_clinical_evidence_agent_standards.py"],
             True,
         ),
         (
-            "20. Clinical production control-plane",
+            "21. Clinical production control-plane",
             ["medical-ebm-automation/tools/verify_clinical_production_control_plane.py"],
             True,
         ),
-        ("21. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
-        ("22. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
-        ("23. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
-        ("24. Orchestrator (23 test)", ["tools/orchestrator/tests/test_orchestrator.py"], True),
-        ("25. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
+        ("22. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
+        ("23. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
+        ("24. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
+        ("25. Orchestrator tests", ["tools/orchestrator/tests/test_orchestrator.py"], True),
+        ("26. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []

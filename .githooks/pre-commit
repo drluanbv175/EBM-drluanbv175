@@ -75,4 +75,16 @@ if [ -f tools/verify_hard_gate_count_consistency.py ]; then
   fi
 fi
 
+# Plugin khong duoc tu tranh quyen voi nhac truong. Registry + doctrine + flow +
+# mirror phai cung khop; worker ngoai allowlist va capability la phai fail-closed.
+if [ -f tools/verify_plugin_orchestration.py ]; then
+  python3 tools/verify_plugin_orchestration.py
+  PLUGIN_ROUTING_EXIT=$?
+  if [ "$PLUGIN_ROUTING_EXIT" -ne 0 ]; then
+    echo "CHAN COMMIT: quyen so huu plugin/agent/runtime dang drift hoac co duong vong cong." >&2
+    echo "  Chay: python3 tools/verify_plugin_orchestration.py" >&2
+    exit 1
+  fi
+fi
+
 exit 0

@@ -103,6 +103,7 @@ Mọi agent (toàn đội) phải áp dụng **`_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-P
 |---|---|
 | `_HIEN-PHAP-LIEM-CHINH.md` | 6 điều bất biến + 2 Cổng bác sĩ + định dạng (luật tối cao) |
 | `_CONNECTOR-CHUNG-CU.md` | **Registry connector chứng cứ SỐNG (SSOT): ID công cụ MCP (PubMed/Consensus/ClinicalTrials/bioRxiv/ChEMBL/ICD-10) + vai + phân tầng thẩm quyền nguồn + khử PII outbound + quy tắc PARTIAL.** Mọi agent tra cứu/thẩm định/xác minh trỏ về đây để lấy "chứng cứ tốt nhất" |
+| `_PLUGIN-ROUTING-CONTRACT.md` | **Hợp đồng một owner/capability:** agent/runtime nội bộ sở hữu quyết định; ARS/Anthropic/BMAD/Bio chỉ là worker theo allowlist/stage, có provenance, không mở Cổng A/B/G. Registry máy đọc: `tools/orchestrator/plugin_ownership_registry.json` |
 | `_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md` | 4 trụ cột: Trung thực · Bảo mật · Pháp lý VN · Liêm chính |
 | `_HO-SO-NGUOI-DUNG.md` | Hồ sơ người dùng (giọng/định dạng/mặc định chuyên môn) |
 | `_SO-DO-PIPELINE-HOP-NHAT.md` | **Sơ đồ pipeline hợp nhất + mô hình hàng đợi phê duyệt** |

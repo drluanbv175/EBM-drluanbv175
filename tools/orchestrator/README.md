@@ -1,20 +1,22 @@
-# Orchestrator EBM — control plane chạy được cho đội 50 agent
+# Orchestrator EBM — control plane chạy được cho đội 50 agent + plugin worker
 
 Vá đúng khoảng trống hệ tự đánh giá: *"nhánh LÂM SÀNG (dieu-phoi-lam-sang) là prose — chưa có
 orchestrator chạy được"*. Đây là **control plane deterministic**: định tuyến → dựng plan → chạy
 từng bước → dừng ở cổng bác sĩ → chốt guardrail — **chạy & kiểm được OFFLINE** (dry-run), có seam
-cắm LLM để thực thi agent thật. Grounded vào registry `.claude/agents/*.md` THẬT (không hardcode).
+cắm LLM để thực thi agent thật. Grounded vào registry `.claude/agents/*.md` THẬT và registry quyền
+sở hữu plugin (một owner/capability; plugin chỉ là worker).
 
-## Sáu năng lực (mỗi năng lực = một module)
+## Bảy năng lực (mỗi năng lực = một module)
 
 | # | Năng lực | Module | Điểm chính |
 |---|---|---|---|
-| 1 | **Điều phối agent** | `orchestrator.py` · `flows.py` · `agent_adapter.py` · `signals.py` | Flow lâm sàng 8 bước / nghiên cứu G0–G9; **mỗi agent trong bước mang điều kiện RIÊNG** (không chạy mù cả nhánh) |
+| 1 | **Điều phối agent** | `orchestrator.py` · `flows.py` · `agent_adapter.py` · `signals.py` | Flow lâm sàng 8 bước / nghiên cứu G0–G10; **mỗi agent trong bước mang điều kiện RIÊNG** (không chạy mù cả nhánh) |
 | 2 | **Quản lý ngữ cảnh** | `context.py` | `Session` + checkpoint + **resume** (`~/.ebm-orchestrator/sessions/`) |
 | 3 | **Định tuyến intent** | `intent.py` | `clinical_case` / `research_topic` / `single_task` / `unknown` (ma trận README) |
 | 4 | **Tích hợp tri thức** | `knowledge.py` | Thứ bậc nguồn Cấp 0/0.5/1 + thuốc; thứ tự tra cứu §2bis; quy tắc PARTIAL |
 | 5 | **Tích hợp công cụ** | `tools_registry.py` | 9 công cụ THẬT (clinical_calc grade/nnt, health_econ, run_g*, checkpoint, verify_dashboard…) |
 | 6 | **Quản lý vòng đời** | `lifecycle.py` | `routed→planned→running→gate→guardrail→released/returned`; retry ≤3; **4 mã thoát** |
+| 7 | **Điều phối plugin** | `plugin_ownership.py` · `plugin_ownership_registry.json` | Một owner nội bộ/capability; allowlist worker theo stage; plugin không được mở cổng người |
 
 ## Chạy (dry-run mặc định — không cần API)
 
@@ -22,7 +24,9 @@ cắm LLM để thực thi agent thật. Grounded vào registry `.claude/agents/
 python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 ĐTĐ2, eGFR 40, thêm thuốc gì?"
 python tools/run_orchestrator.py "Đề tài hiệu quả metformin ở PCOS ngoại trú"
 python tools/run_orchestrator.py "Đơn này an toàn không, thuốc có đánh nhau không?"
-python tools/run_orchestrator.py --capabilities     # in 6 năng lực + số liệu
+python tools/run_orchestrator.py --capabilities     # in 7 năng lực + số liệu
+python tools/run_orchestrator.py --plugins          # tóm tắt registry plugin
+python tools/run_orchestrator.py --resolve-capability research_lifecycle --json
 python tools/run_orchestrator.py --validate         # tự kiểm điều phối ⇄ registry (0 = sạch)
 python tools/run_orchestrator.py --resume <id>      # khôi phục phiên
 python tools/run_orchestrator.py --list             # liệt kê phiên
@@ -36,7 +40,7 @@ Có **hai** thứ trông giống "orchestrator nghiên cứu" trong repo, KHÔNG
 
 | | `tools/orchestrator/` (ở đây) | `medical-ebm-automation/tools/run_pipeline.py` |
 |---|---|---|
-| Vai trò | **Bản thiết kế/định tuyến** — xác định intent, dựng plan 28-agent theo G0–G9, dừng đúng cổng | **Orchestrator SẢN XUẤT thật** — chạy thật chuỗi G0–G10 |
+| Vai trò | **Bản thiết kế/định tuyến** — xác định intent, owner/plugin worker, dựng plan 28-agent theo G0–G10, dừng đúng cổng | **Orchestrator SẢN XUẤT thật** — chạy thật chuỗi G0–G10 |
 | Thực thi | `DryRunExecutor` — chỉ in "sẽ gọi agent nào", KHÔNG chạy | Subprocess thật vào `run_g0_auto.py`…`run_g10_assemble.py`: PubMed thật (G0), công thức cỡ mẫu thật (G3), sinh checkpoint/DOCX thật |
 | Tự sửa/chờ cổng | Đánh dấu gate_pending rồi dừng (tĩnh) | **Freshness guard** (phát hiện cổng cũ/lệch) + **retry có trần** + đọc `study_meta.json` (tham số bác sĩ PIN) + 4 mã thoát `gate_contract.py` (0 OK · 1 lỗi tạm-thời retry · 2 BLOCKED chờ input thật, KHÔNG retry · 3 vi phạm liêm chính) |
 | Dùng khi nào | Xem trước NHANH agent nào sẽ chạy, nhánh nào áp dụng, cổng nào sẽ chặn — trước khi bắt tay làm thật | **Chạy đề tài thật**: `python tools/run_pipeline.py --study "<MÃ>" --topic "<chủ đề>"` |
@@ -68,6 +72,20 @@ python -m unittest discover -s tools/orchestrator/tests # 46 test (đếm thật
                                                          # đối chiếu tập cổng cứng flows.py ⇄ doctrine)
 ```
 
+## Quyền sở hữu plugin
+
+Nguồn sự thật là `plugin_ownership_registry.json`; doctrine dùng chung cho Claude Code/Codex nằm tại
+`.claude/agents/_PLUGIN-ROUTING-CONTRACT.md`. `/ars-full` bị hạ thành `stage_worker`, không thay
+`dieu-phoi-nghien-cuu`; các skill lâm sàng cũng chỉ làm worker dưới `dieu-phoi-lam-sang`. Mỗi phiên
+ghi checkpoint `plugin_routing` gồm capability, owner, worker được phép và cổng. Worker ngoài
+allowlist/capability lạ bị báo chặn, không fallback sang pipeline plugin tự trị.
+
+Kiểm cứng:
+
+```bash
+python tools/verify_plugin_orchestration.py
+```
+
 ## Thực thi agent THẬT (seam LLM)
 
 `agent_adapter.py` có 2 executor:
@@ -79,6 +97,6 @@ python -m unittest discover -s tools/orchestrator/tests # 46 test (đếm thật
 
 ## Bất biến (không nới an toàn/liêm chính)
 
-Orchestrator chỉ **ĐỀ XUẤT** và **dừng** ở Cổng A/B (lâm sàng) + G2/G4/G8/G9 (nghiên cứu); bước cuối
+Orchestrator chỉ **ĐỀ XUẤT** và **dừng** ở Cổng A/B (lâm sàng) + G2/G4/G5/G8/G9/G10 (nghiên cứu); bước cuối
 luôn qua guardrail `tham-dinh-dau-ra` (2 lớp R1–R14 + Q1–Q7). Mọi đầu ra kèm PMID/DOI, không PII,
 kết **"Cần bác sĩ kiểm chứng."**

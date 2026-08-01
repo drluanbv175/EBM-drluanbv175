@@ -2,8 +2,8 @@
 
 CLINICAL_FLOW: 5 bước EBM (BƯỚC 0 cờ đỏ → nhánh chuyên biệt → Hỏi → Tìm → Thẩm định →
 Áp dụng[Cổng A] → Theo dõi[Cổng B] → Khép vòng), có nhánh chẩn đoán + nhánh chuyên biệt.
-RESEARCH_FLOW: G0→G9 với 4 cổng cứng (G2 đạo đức · G4 khóa SAP · G8 bình duyệt độc lập ·
-G9 liêm chính tác giả).
+RESEARCH_FLOW: G0→G10 với 6 cổng cứng (G2 đạo đức · G4 khóa SAP · G5 khóa dữ liệu ·
+G8 bình duyệt độc lập · G9 liêm chính tác giả · G10 PI khóa gói phát hành).
 
 Mỗi AGENT trong một bước mang `condition` RIÊNG (không phải cả bước) — vd bước "Theo dõi"
 có `loi-dan-tuan-thu` LUÔN chạy, nhưng `theo-doi-benh-man` CHỈ khi tín hiệu 'chronic'.
@@ -12,7 +12,7 @@ có `loi-dan-tuan-thu` LUÔN chạy, nhưng `theo-doi-benh-man` CHỈ khi tín h
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -30,7 +30,7 @@ class FlowStep:
     step_id: str
     title: str
     agents: tuple[StepAgent, ...]
-    gate: str | None = None          # None | 'A' | 'B' | 'G2' | 'G4' | 'G8' | 'G9'
+    gate: str | None = None          # None | 'A' | 'B' | 'G2' | 'G4' | 'G5' | 'G8' | 'G9' | 'G10'
     note: str = ""
 
     @property
@@ -93,7 +93,9 @@ RESEARCH_FLOW: tuple[FlowStep, ...] = (
     FlowStep("G4", "Khóa SAP", (sa("thiet-ke-nghien-cuu"),),
              gate="G4", note="⛔ CỔNG CỨNG — khóa kế hoạch phân tích TRƯỚC khi xem dữ liệu "
                              "(sau khi bác sĩ ký khóa → so-cai-ghi-nho ghi G4_STATUS=LOCKED)"),
-    FlowStep("G5", "Dữ liệu & an toàn", (sa("quan-ly-du-lieu"), sa("an-toan-nghien-cuu"))),
+    FlowStep("G5", "Dữ liệu & an toàn", (sa("quan-ly-du-lieu"), sa("an-toan-nghien-cuu")),
+             gate="G5", note="⛔ CỔNG CỨNG — chỉ phân tích trên dataset đã khóa; quản lý dữ liệu "
+                              "hoặc PI ký data-lock thật"),
     FlowStep("G6", "Phân tích", (sa("phan-tich-thong-ke"), sa("meta-phan-tich"), sa("dien-giai-ket-qua"))),
     FlowStep("G7", "Viết & trích dẫn 🔒",
              (sa("viet-ban-thao"), sa("hieu-dinh-song-ngu", "international_journal"), sa("kiem-chung-trich-dan")),
@@ -104,6 +106,9 @@ RESEARCH_FLOW: tuple[FlowStep, ...] = (
     FlowStep("G9", "Nộp bài & liêm chính tác giả", (sa("nop-bai-phan-hoi"),),
              gate="G9", note="⛔ CỔNG CỨNG — COI/đóng góp/khai báo AI do nhà nghiên cứu xác nhận "
                              "(sau khi xác nhận → so-cai-ghi-nho ghi khép đề tài)"),
+    FlowStep("G10", "Khóa gói phát hành", (sa("dieu-phoi-nghien-cuu"),),
+             gate="G10", note="⛔ CỔNG CỨNG — chạy run_g10_assemble.py + quality gate; "
+                               "chỉ PI được khóa manifest phát hành cuối"),
 )
 
 # Agent xuyên suốt nghiên cứu (nhạc trưởng + thư ký sổ cái — không phải bước riêng vì

@@ -5,7 +5,9 @@ Dùng:
   python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 tuổi ĐTĐ2 + eGFR 40, thêm thuốc gì?"
   python tools/run_orchestrator.py "Đề tài hiệu quả metformin ở PCOS ngoại trú"
   python tools/run_orchestrator.py "Đơn này an toàn không, thuốc có đánh nhau không?"
-  python tools/run_orchestrator.py --capabilities        # in 6 năng lực + số liệu
+  python tools/run_orchestrator.py --capabilities        # in 7 năng lực + số liệu
+  python tools/run_orchestrator.py --plugins             # tóm tắt registry quyền sở hữu plugin
+  python tools/run_orchestrator.py --resolve-capability research_lifecycle
   python tools/run_orchestrator.py --validate            # tự kiểm điều phối ⇄ registry
   python tools/run_orchestrator.py --resume <session_id> # khôi phục một phiên
   python tools/run_orchestrator.py --list                # liệt kê phiên đã lưu
@@ -51,6 +53,12 @@ def _print_session(session, orch) -> None:
     print(f"            {it.get('reason')}")
     if it.get("matches"):
         print(f"  Khớp lẻ : {', '.join(it['matches'][:4])}")
+    pr = session.plugin_routing or {}
+    owner = pr.get("owner") or {}
+    if owner.get("unit"):
+        print(f"  Owner   : `{owner['unit']}` ({pr.get('capability')})")
+        workers = [f"{w['provider']}:{w['unit']}" for w in pr.get("workers", [])]
+        print(f"  Plugin  : {', '.join(workers) if workers else '(không dùng; agent nội bộ xử lý)'}")
     print(BAR)
     print("  KẾ HOẠCH ĐIỀU PHỐI (bước · agent · công cụ · cổng; ○=nhánh không áp dụng):")
     last_step = None
@@ -90,7 +98,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Orchestrator EBM (dry-run)")
     ap.add_argument("request", nargs="?", default="", help="Câu yêu cầu (ca / đề tài / câu hỏi)")
     ap.add_argument("--json", action="store_true", help="In JSON máy đọc")
-    ap.add_argument("--capabilities", action="store_true", help="In 6 năng lực")
+    ap.add_argument("--capabilities", action="store_true", help="In 7 năng lực")
+    ap.add_argument("--plugins", action="store_true", help="In tóm tắt registry quyền sở hữu plugin")
+    ap.add_argument("--resolve-capability", metavar="ID",
+                    help="Phân giải owner/worker cho một capability")
+    ap.add_argument("--worker", action="append", default=None,
+                    help="Giới hạn worker muốn dùng; lặp cờ để yêu cầu nhiều worker")
     ap.add_argument("--validate", action="store_true", help="Tự kiểm điều phối ⇄ registry")
     ap.add_argument("--resume", metavar="ID", help="Khôi phục một phiên")
     ap.add_argument("--list", action="store_true", help="Liệt kê phiên đã lưu")
@@ -106,6 +119,27 @@ def main() -> int:
         print(json.dumps(caps, ensure_ascii=False, indent=2) if args.json
               else "\n".join(f"  {k}: {v}" for k, v in caps.items()))
         return 0
+
+    if args.plugins:
+        summary = orch.plugin_ownership.summary()
+        print(json.dumps(summary, ensure_ascii=False, indent=2) if args.json
+              else "\n".join(f"  {key}: {value}" for key, value in summary.items()))
+        return 0
+
+    if args.resolve_capability:
+        decision = orch.plugin_ownership.resolve(args.resolve_capability, args.worker)
+        data = decision.as_dict()
+        if args.json:
+            print(json.dumps(data, ensure_ascii=False, indent=2))
+        else:
+            owner = data["owner"]
+            print(f"Capability: {data['capability']} · risk={data['risk']} · {data['status']}")
+            print(f"Owner: {owner['provider']}:{owner['unit']}")
+            for worker in data["workers"]:
+                print(f"Worker: {worker['provider']}:{worker['unit']} · {worker['mode']}")
+            if data["blocked_requests"]:
+                print("Bị chặn: " + ", ".join(data["blocked_requests"]))
+        return 0 if not decision.status.startswith("BLOCKED") and not decision.blocked_requests else 1
 
     if args.validate:
         warns = orch.validate()

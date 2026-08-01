@@ -100,7 +100,7 @@ def route(request: str) -> IntentResult:
     # ('bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu, nên không được thắng 'đề tài').
     if _any(t, RESEARCH_TOPIC_CUES):
         return IntentResult("research_topic", RESEARCH_ORCHESTRATOR,
-                            "phát hiện một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu (G0→G9)",
+                            "phát hiện một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu (G0→G10)",
                             match_labels)
     if _any(t, CLINICAL_CASE_CUES):
         return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,

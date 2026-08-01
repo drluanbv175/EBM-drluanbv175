@@ -62,11 +62,18 @@ TOOLS: tuple[Tool, ...] = (
     Tool("gen-docx", "tools/gen_research_docx.py", "",
          "Xuất Word cho artifact (gói quyết định/GRADE-EtD/…)",
          ("dieu-phoi-lam-sang", "dieu-phoi-nghien-cuu")),
+    Tool("research-pipeline", "medical-ebm-automation/tools/run_pipeline.py", "",
+         "Orchestrator sản xuất duy nhất cho nghiên cứu G0-G10",
+         ("dieu-phoi-nghien-cuu",)),
+    Tool("g10-assemble", "medical-ebm-automation/tools/run_g10_assemble.py", "",
+         "Lắp ráp, kiểm chất lượng và khóa manifest gói phát hành G10",
+         ("dieu-phoi-nghien-cuu",)),
 )
 
 # Công cụ chạy-cổng nghiên cứu G0..G8 (medical-ebm-automation)
 GATE_RUNNERS: dict[str, str] = {
-    f"G{n}": f"medical-ebm-automation/tools/run_g{n}_auto.py" for n in range(0, 9)
+    **{f"G{n}": f"medical-ebm-automation/tools/run_g{n}_auto.py" for n in range(0, 10)},
+    "G10": "medical-ebm-automation/tools/run_g10_assemble.py",
 }
 
 

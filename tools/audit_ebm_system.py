@@ -846,6 +846,16 @@ def hard_gate_count_consistency_failures() -> list[str]:
     return [out.strip()[:1000] or "hard gate count consistency FAIL"]
 
 
+def plugin_orchestration_failures() -> list[str]:
+    checker = ROOT / "tools" / "verify_plugin_orchestration.py"
+    if not checker.exists():
+        return ["thiếu tools/verify_plugin_orchestration.py"]
+    code, out = run([sys.executable, str(checker)], cwd=ROOT)
+    if code == 0:
+        return []
+    return [out.strip()[:1200] or "plugin orchestration FAIL"]
+
+
 def clinical_practice_apply_gate_failures() -> list[str]:
     checker = ROOT / "tools" / "verify_clinical_practice_apply_gate.py"
     if not checker.exists():
@@ -970,6 +980,13 @@ def main() -> int:
             + "; ".join(hard_gate_count_failures)
         )
 
+    plugin_routing_failures = plugin_orchestration_failures()
+    if plugin_routing_failures:
+        hard_errors.append(
+            "Plugin ownership/orchestration FAIL: "
+            + "; ".join(plugin_routing_failures)
+        )
+
     clinical_apply_gate_failures = clinical_practice_apply_gate_failures()
     if clinical_apply_gate_failures:
         hard_errors.append(
@@ -1072,6 +1089,7 @@ def main() -> int:
     print("Approval independence:", "PASS" if not approval_failures else "FAIL")
     print("Research completion gates:", "PASS" if not research_completion_failures else "FAIL")
     print("Research hard-gate doctrine:", "PASS" if not hard_gate_count_failures else "FAIL")
+    print("Plugin ownership/orchestration:", "PASS" if not plugin_routing_failures else "FAIL")
     print("Clinical practice apply gate:", "PASS" if not clinical_apply_gate_failures else "FAIL")
     print(
         "Clinical runtime:",

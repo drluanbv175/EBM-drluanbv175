@@ -485,14 +485,25 @@ def check_statistics_control() -> dict[str, Any]:
     random_effect = pooled["random_effect"]
     fixed_effect = pooled["fixed_effect"]
     stats_source = (MT / "run_stats_analysis.py").read_text(encoding="utf-8")
-    lock_markers = [
+    gate_contract_source = (MT / "gate_contract.py").read_text(encoding="utf-8")
+    # Logic data-lock đã được gom vào gate_contract để run_stats_analysis và các
+    # template G6 dùng chung. Kiểm cả điểm gọi lẫn implementation canonical; không
+    # đòi các reason-code phải còn lặp lại trong file caller.
+    caller_markers = [
         "_require_locked_analysis_dataset",
+        "GC.locked_analysis_dataset_blockers",
+        "G6_analysis_summary.json",
+    ]
+    contract_markers = [
+        "def locked_analysis_dataset_blockers",
         "LOCKED_FOR_ANALYSIS",
         "provided_data_is_not_locked_dataset",
         "locked_dataset_checksum_mismatch",
-        "G6_analysis_summary.json",
     ]
-    has_lock_gate = all(marker in stats_source for marker in lock_markers)
+    has_lock_gate = (
+        all(marker in stats_source for marker in caller_markers)
+        and all(marker in gate_contract_source for marker in contract_markers)
+    )
     has_effect_ci = (
         isinstance(random_effect.get("pooled"), float)
         and len(random_effect.get("ci", [])) == 2

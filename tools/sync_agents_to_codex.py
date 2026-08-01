@@ -68,6 +68,7 @@ REQUIRED_INFRA = {
     "_NGUYEN-TAC-TRUNG-THUC-BAO-MAT-PHAP-LY-LIEM-CHINH.md",
     "_SO-TRANG-THAI-CHECKPOINT.md",
     "_KIEM-TOAN-DAY-DU-NGHIEN-CUU.md",
+    "_PLUGIN-ROUTING-CONTRACT.md",
 }
 
 FRONTMATTER_RE = re.compile(r"\A---\n(?P<meta>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)

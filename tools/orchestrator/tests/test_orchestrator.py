@@ -22,6 +22,7 @@ from orchestrator.context import ContextStore  # noqa: E402
 from orchestrator.intent import route  # noqa: E402
 from orchestrator.knowledge import KnowledgeLayer  # noqa: E402
 from orchestrator.orchestrator import Orchestrator  # noqa: E402
+from orchestrator.plugin_ownership import PluginOwnershipRegistry  # noqa: E402
 from orchestrator.registry import Registry  # noqa: E402
 from orchestrator.tools_registry import ToolRegistry  # noqa: E402
 
@@ -120,7 +121,7 @@ class TestOrchestration(unittest.TestCase):
     def test_research_hard_gates(self):
         s = self.orch.handle("Đề tài metformin ở PCOS", persist=False)
         self.assertEqual(s.kind, "research_topic")
-        for g in ("G2", "G4", "G8", "G9"):
+        for g in ("G2", "G4", "G5", "G8", "G9", "G10"):
             self.assertIn(g, s.gates_pending)
         self.assertEqual(s.exit_code, 2)
 
@@ -130,7 +131,7 @@ class TestOrchestration(unittest.TestCase):
         # (mục "CỔNG kiểm soát nghiên cứu"). CẬP NHẬT HẰNG SỐ NÀY cùng lúc khi sửa file .md đó —
         # nếu không, lần trôi tiếp theo (thêm/bớt cổng cứng ở .md mà quên vá flows.py, hoặc
         # ngược lại) sẽ bị bắt tự động ở đây thay vì phải đọc tay hai file để so.
-        DOCTRINE_HARD_GATES = {"G2", "G4", "G8", "G9"}
+        DOCTRINE_HARD_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
         from orchestrator.flows import RESEARCH_FLOW
         code_hard_gates = {step.gate for step in RESEARCH_FLOW if step.gate}
         self.assertEqual(code_hard_gates, DOCTRINE_HARD_GATES,
@@ -148,9 +149,70 @@ class TestOrchestration(unittest.TestCase):
         for e in s.trace:
             self.assertNotEqual(e["status"], "error", f"agent treo trong plan: {e['agent']}")
 
-    def test_capabilities_has_six(self):
+    def test_capabilities_has_seven(self):
         caps = self.orch.capabilities()
-        self.assertEqual(len(caps), 6)
+        self.assertEqual(len(caps), 7)
+
+    def test_research_session_records_plugin_owner(self):
+        s = self.orch.handle("Đề tài metformin ở PCOS", persist=False)
+        self.assertEqual(s.plugin_routing["capability"], "research_lifecycle")
+        self.assertEqual(s.plugin_routing["owner"]["unit"], "dieu-phoi-nghien-cuu")
+        self.assertTrue(all(not worker["can_release_gate"] for worker in s.plugin_routing["workers"]))
+        self.assertTrue(any(c.get("stage") == "plugin_routing" for c in s.checkpoints))
+
+    def test_clinical_session_records_plugin_owner(self):
+        s = self.orch.handle("Tôi có bệnh nhân đau đầu", persist=False)
+        self.assertEqual(s.plugin_routing["capability"], "clinical_case")
+        self.assertEqual(s.plugin_routing["owner"]["unit"], "dieu-phoi-lam-sang")
+
+
+class TestPluginOwnership(unittest.TestCase):
+    def setUp(self):
+        self.agents = Registry.load()
+        self.plugins = PluginOwnershipRegistry.load()
+        self.orch = Orchestrator()
+
+    def test_registry_is_fail_closed_and_valid(self):
+        self.assertEqual(self.plugins.validate(set(self.agents.agents)), [])
+        self.assertTrue(self.plugins.global_rules["plugins_are_workers_only"])
+        self.assertFalse(self.plugins.global_rules["plugin_may_release_human_gate"])
+
+    def test_research_lifecycle_has_single_local_owner_and_six_gates(self):
+        decision = self.plugins.resolve("research_lifecycle")
+        self.assertEqual(decision.status, "READY_WITH_OWNER")
+        self.assertEqual(decision.owner_provider, "local-agent")
+        self.assertEqual(decision.owner_unit, "dieu-phoi-nghien-cuu")
+        self.assertEqual(set(decision.hard_gates), {"G2", "G4", "G5", "G8", "G9", "G10"})
+        ars_full = next(worker for worker in decision.workers if worker.unit == "source-command-ars-full")
+        self.assertEqual(ars_full.mode, "stage_worker")
+
+    def test_unauthorized_worker_is_reported_not_silently_used(self):
+        decision = self.plugins.resolve("research_lifecycle", ["source-command-ars-full", "unknown-plugin"])
+        self.assertEqual([worker.unit for worker in decision.workers], ["source-command-ars-full"])
+        self.assertEqual(decision.blocked_requests, ("unknown-plugin",))
+
+    def test_unknown_capability_blocks_without_owner(self):
+        decision = self.plugins.resolve("does-not-exist")
+        self.assertEqual(decision.status, "BLOCKED_UNKNOWN_CAPABILITY")
+        self.assertEqual(decision.owner_unit, "")
+
+    def test_single_task_without_plugin_overlap_stays_local(self):
+        decision = self.plugins.resolve_for_intent("single_task", "sang-loc-co-do")
+        self.assertEqual(decision.status, "READY_LOCAL_SPECIALIST_ONLY")
+        self.assertEqual(decision.owner_unit, "sang-loc-co-do")
+        self.assertEqual(decision.workers, ())
+
+    def test_specialist_tasks_keep_their_domain_owner(self):
+        expected = {
+            "co-mau-nghien-cuu": "co-mau-nghien-cuu",
+            "tham-dinh-phe-binh": "tham-dinh-phe-binh",
+            "tong-quan-y-van": "tong-quan-y-van",
+            "quan-ly-khang-dong": "quan-ly-khang-dong",
+        }
+        for entry_agent, owner in expected.items():
+            with self.subTest(entry_agent=entry_agent):
+                decision = self.plugins.resolve_for_intent("single_task", entry_agent)
+                self.assertEqual(decision.owner_unit, owner)
 
     # ── Nhánh có điều kiện (vá lỗ hổng "chạy mù mọi nhánh") ──────────
     def _status_of(self, session, agent_name):

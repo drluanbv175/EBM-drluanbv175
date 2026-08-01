@@ -1,0 +1,652 @@
+{
+  "schema_version": 1,
+  "policy_id": "EBM-PLUGIN-OWNERSHIP-2026-08-01",
+  "description": "Nguon su that may-doc-duoc cho quyen so huu nhiem vu giua control plane EBM va cac plugin.",
+  "canonical_research_hard_gates": [
+    "G2",
+    "G4",
+    "G5",
+    "G8",
+    "G9",
+    "G10"
+  ],
+  "global_rules": {
+    "single_owner_per_capability": true,
+    "plugins_are_workers_only": true,
+    "owner_resolves_worker_conflicts": true,
+    "all_worker_outputs_require_provenance": true,
+    "all_worker_outputs_require_guardrail": true,
+    "plugin_may_release_human_gate": false,
+    "prohibited_plugin_write_targets": [
+      "exports/*/approval_ledger.json",
+      "exports/*/approval_ledger.seal.json",
+      "exports/*/study_meta.json",
+      "clinical_runtime/*approval*",
+      "EBM_MASTER/EBM_MASTER.json"
+    ]
+  },
+  "providers": {
+    "local-agent": {
+      "kind": "local",
+      "priority": 100,
+      "may_own": true
+    },
+    "local-runtime": {
+      "kind": "local",
+      "priority": 95,
+      "may_own": true
+    },
+    "anthropic-skills": {
+      "kind": "plugin",
+      "priority": 70,
+      "may_own": false
+    },
+    "academic-research-skills": {
+      "kind": "plugin",
+      "priority": 60,
+      "may_own": false
+    },
+    "bio-research": {
+      "kind": "plugin",
+      "priority": 40,
+      "may_own": false
+    },
+    "bmad-method": {
+      "kind": "plugin",
+      "priority": 30,
+      "may_own": false
+    }
+  },
+  "capabilities": {
+    "research_lifecycle": {
+      "risk": "high",
+      "intent_kinds": [
+        "research_topic"
+      ],
+      "entry_agents": [
+        "dieu-phoi-nghien-cuu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "dieu-phoi-nghien-cuu",
+        "runtime": "medical-ebm-automation/tools/run_pipeline.py"
+      },
+      "hard_gates": [
+        "G2",
+        "G4",
+        "G5",
+        "G8",
+        "G9",
+        "G10"
+      ],
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-full",
+          "mode": "stage_worker",
+          "allowed_stages": [
+            "G0",
+            "G1",
+            "G7",
+            "G8",
+            "G9"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "nghien-cuu-y-khoa-chuan-quoc-te",
+          "mode": "template_worker",
+          "allowed_stages": [
+            "G1",
+            "G2",
+            "G7",
+            "G10"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "nghien-cuu-ebm-tong-hop",
+          "mode": "stage_worker",
+          "allowed_stages": [
+            "G0",
+            "G1",
+            "G7"
+          ]
+        }
+      ]
+    },
+    "clinical_case": {
+      "risk": "critical",
+      "intent_kinds": [
+        "clinical_case"
+      ],
+      "entry_agents": [
+        "dieu-phoi-lam-sang"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "dieu-phoi-lam-sang"
+      },
+      "hard_gates": [
+        "A",
+        "B"
+      ],
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "kham-ngoai-tru-ebm",
+          "mode": "framework_worker",
+          "allowed_stages": [
+            "ASK",
+            "ACQUIRE",
+            "APPRAISE",
+            "APPLY_DRAFT",
+            "ASSESS_DRAFT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "giao-tiep-quyet-dinh-soap",
+          "mode": "communication_worker",
+          "allowed_stages": [
+            "APPLY_DRAFT",
+            "ASSESS_DRAFT"
+          ]
+        }
+      ]
+    },
+    "clinical_evidence_update": {
+      "risk": "high",
+      "entry_agents": [
+        "cap-nhat-guideline"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "cap-nhat-guideline",
+        "runtime": "tools/verify_clinical_evidence_update_pipeline.py"
+      },
+      "hard_gates": [
+        "B",
+        "DOCTOR_REVIEW"
+      ],
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "cap-nhat-chung-cu-y-khoa",
+          "mode": "pipeline_worker",
+          "allowed_stages": [
+            "SEARCH",
+            "DASHBOARD_DRAFT",
+            "DERIVATIVES_DRAFT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "quan-ly-cap-nhat-ebm",
+          "mode": "surveillance_worker",
+          "allowed_stages": [
+            "SURVEILLANCE",
+            "UPDATE_QUEUE"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "EBM-MASTER",
+          "mode": "knowledge_worker",
+          "allowed_stages": [
+            "LIBRARY_DRAFT",
+            "HUB_SYNC_DRAFT"
+          ]
+        }
+      ]
+    },
+    "clinical_evidence_retrieval": {
+      "risk": "high",
+      "entry_agents": [
+        "tra-cuu-chung-cu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "tra-cuu-chung-cu"
+      },
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "clinical-evidence-rag",
+          "mode": "retrieval_worker",
+          "allowed_stages": [
+            "LOCAL_RAG"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "paper-lookup",
+          "mode": "discovery_worker",
+          "allowed_stages": [
+            "DISCOVERY",
+            "METADATA"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "research-lookup",
+          "mode": "discovery_worker",
+          "allowed_stages": [
+            "DISCOVERY"
+          ]
+        }
+      ]
+    },
+    "evidence_appraisal": {
+      "risk": "high",
+      "entry_agents": [
+        "tham-dinh-grade-nnt"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "tham-dinh-grade-nnt"
+      },
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "tham-dinh-chung-cu-grade-nnt",
+          "mode": "appraisal_worker",
+          "allowed_stages": [
+            "ROB",
+            "GRADE",
+            "ETD",
+            "NNT_NNH"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "peer-review",
+          "mode": "critique_worker",
+          "allowed_stages": [
+            "METHOD_CRITIQUE"
+          ]
+        }
+      ]
+    },
+    "critical_appraisal": {
+      "risk": "high",
+      "entry_agents": [
+        "tham-dinh-phe-binh"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "tham-dinh-phe-binh"
+      },
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "peer-review",
+          "mode": "critique_worker",
+          "allowed_stages": [
+            "METHOD_CRITIQUE",
+            "RISK_OF_BIAS_DRAFT"
+          ]
+        }
+      ]
+    },
+    "literature_search": {
+      "risk": "medium",
+      "entry_agents": [
+        "thu-thu-tai-lieu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "thu-thu-tai-lieu"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-lit-review",
+          "mode": "synthesis_worker",
+          "allowed_stages": [
+            "SEARCH_PLAN",
+            "SYNTHESIS_DRAFT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "literature-review",
+          "mode": "synthesis_worker",
+          "allowed_stages": [
+            "SEARCH_PLAN",
+            "SYNTHESIS_DRAFT"
+          ]
+        }
+      ]
+    },
+    "systematic_review": {
+      "risk": "high",
+      "entry_agents": [
+        "tong-quan-y-van"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "tong-quan-y-van"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-lit-review",
+          "mode": "synthesis_worker",
+          "allowed_stages": [
+            "SEARCH_PLAN",
+            "SYNTHESIS_DRAFT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "literature-review",
+          "mode": "synthesis_worker",
+          "allowed_stages": [
+            "SCREENING_DRAFT",
+            "SYNTHESIS_DRAFT"
+          ]
+        }
+      ]
+    },
+    "citation_integrity": {
+      "risk": "high",
+      "entry_agents": [
+        "kiem-chung-trich-dan"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "kiem-chung-trich-dan"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-citation-check",
+          "mode": "audit_worker",
+          "allowed_stages": [
+            "REFERENCE_AUDIT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "citation-management",
+          "mode": "metadata_worker",
+          "allowed_stages": [
+            "METADATA",
+            "DEDUP",
+            "BIBLIOGRAPHY"
+          ]
+        }
+      ]
+    },
+    "protocol_design": {
+      "risk": "high",
+      "entry_agents": [
+        "thiet-ke-nghien-cuu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "thiet-ke-nghien-cuu"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-plan",
+          "mode": "planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-outline",
+          "mode": "outline_worker",
+          "allowed_stages": [
+            "G1"
+          ]
+        }
+      ]
+    },
+    "research_question": {
+      "risk": "medium",
+      "entry_agents": [
+        "cau-hoi-nghien-cuu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "cau-hoi-nghien-cuu"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-plan",
+          "mode": "planning_worker",
+          "allowed_stages": [
+            "PICO_PECO",
+            "FINER_DRAFT"
+          ]
+        }
+      ]
+    },
+    "statistical_analysis": {
+      "risk": "high",
+      "entry_agents": [
+        "phan-tich-thong-ke",
+        "meta-phan-tich"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "phan-tich-thong-ke",
+        "runtime": "medical-ebm-automation/tools/run_stats_analysis.py"
+      },
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "statistical-analysis",
+          "mode": "analysis_worker",
+          "allowed_stages": [
+            "METHOD_DRAFT",
+            "SENSITIVITY_DRAFT",
+            "INTERPRETATION_DRAFT"
+          ]
+        }
+      ]
+    },
+    "sample_size": {
+      "risk": "high",
+      "entry_agents": [
+        "co-mau-nghien-cuu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "co-mau-nghien-cuu",
+        "runtime": "medical-ebm-automation/tools/run_g3_auto.py"
+      },
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "statistical-analysis",
+          "mode": "calculation_review_worker",
+          "allowed_stages": [
+            "ASSUMPTION_REVIEW",
+            "SENSITIVITY_DRAFT"
+          ]
+        }
+      ]
+    },
+    "manuscript_writing": {
+      "risk": "medium",
+      "entry_agents": [
+        "viet-ban-thao",
+        "hieu-dinh-song-ngu"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "viet-ban-thao"
+      },
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-abstract",
+          "mode": "draft_worker",
+          "allowed_stages": [
+            "ABSTRACT_DRAFT"
+          ]
+        },
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-revision",
+          "mode": "revision_worker",
+          "allowed_stages": [
+            "REVISION_DRAFT"
+          ]
+        },
+        {
+          "provider": "anthropic-skills",
+          "unit": "scientific-writing",
+          "mode": "draft_worker",
+          "allowed_stages": [
+            "MANUSCRIPT_DRAFT",
+            "LANGUAGE_EDIT"
+          ]
+        }
+      ]
+    },
+    "independent_review": {
+      "risk": "high",
+      "entry_agents": [
+        "binh-duyet"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "binh-duyet"
+      },
+      "hard_gates": [
+        "G8"
+      ],
+      "workers": [
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-reviewer",
+          "mode": "critique_worker",
+          "allowed_stages": [
+            "REVIEW_DRAFT"
+          ]
+        },
+        {
+          "provider": "academic-research-skills",
+          "unit": "source-command-ars-rebuttal-audit",
+          "mode": "audit_worker",
+          "allowed_stages": [
+            "REBUTTAL_AUDIT"
+          ]
+        }
+      ]
+    },
+    "prescribing_safety": {
+      "risk": "critical",
+      "entry_agents": [
+        "ke-don-an-toan"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "ke-don-an-toan"
+      },
+      "hard_gates": [
+        "A"
+      ],
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "ke-don-an-toan-benh-man",
+          "mode": "safety_worker",
+          "allowed_stages": [
+            "MEDICATION_RECONCILIATION",
+            "INTERACTION_CHECK_DRAFT",
+            "DOSE_ADJUSTMENT_DRAFT"
+          ]
+        }
+      ]
+    },
+    "anticoagulation_management": {
+      "risk": "critical",
+      "entry_agents": [
+        "quan-ly-khang-dong"
+      ],
+      "owner": {
+        "provider": "local-agent",
+        "unit": "quan-ly-khang-dong"
+      },
+      "hard_gates": [
+        "A"
+      ],
+      "workers": [
+        {
+          "provider": "anthropic-skills",
+          "unit": "quan-ly-khang-dong",
+          "mode": "specialist_worker",
+          "allowed_stages": [
+            "INDICATION_REVIEW",
+            "DOSE_DRAFT",
+            "PERIPROCEDURAL_DRAFT",
+            "REVERSAL_DRAFT"
+          ]
+        }
+      ]
+    },
+    "software_delivery": {
+      "risk": "medium",
+      "owner": {
+        "provider": "local-runtime",
+        "unit": "repo-engineering-workflow"
+      },
+      "workers": [
+        {
+          "provider": "bmad-method",
+          "unit": "bmad-build",
+          "mode": "engineering_worker",
+          "allowed_stages": [
+            "SPEC",
+            "IMPLEMENT",
+            "REVIEW",
+            "TEST"
+          ]
+        }
+      ]
+    },
+    "bioinformatics_specialist": {
+      "risk": "high",
+      "owner": {
+        "provider": "local-runtime",
+        "unit": "specialist-escalation"
+      },
+      "workers": [
+        {
+          "provider": "bio-research",
+          "unit": "nextflow-development",
+          "mode": "specialist_worker",
+          "allowed_stages": [
+            "PIPELINE_DRAFT"
+          ]
+        },
+        {
+          "provider": "bio-research",
+          "unit": "single-cell-rna-qc",
+          "mode": "specialist_worker",
+          "allowed_stages": [
+            "QC_DRAFT"
+          ]
+        },
+        {
+          "provider": "bio-research",
+          "unit": "scvi-tools",
+          "mode": "specialist_worker",
+          "allowed_stages": [
+            "MODEL_DRAFT"
+          ]
+        }
+      ]
+    }
+  }
+}

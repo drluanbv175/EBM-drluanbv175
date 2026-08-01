@@ -36,6 +36,7 @@ class Session:
     intent: dict = field(default_factory=dict)
     kind: str = ""
     entry_agent: str = ""
+    plugin_routing: dict = field(default_factory=dict)
     status: str = "received"
     trace: list[dict] = field(default_factory=list)       # mỗi bước/agent đã (dry-)chạy
     checkpoints: list[dict] = field(default_factory=list)

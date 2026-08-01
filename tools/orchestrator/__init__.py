@@ -1,4 +1,4 @@
-"""Orchestrator EBM — control plane chạy được cho đội 50 agent.
+"""Orchestrator EBM — control plane chạy được cho đội 50 agent và plugin worker.
 
 Sáu năng lực (mỗi năng lực = một module):
   1. Điều phối agent        → orchestrator.py + flows.py + agent_adapter.py
@@ -7,6 +7,7 @@ Sáu năng lực (mỗi năng lực = một module):
   4. Tích hợp tri thức      → knowledge.py (thứ bậc nguồn Cấp 0/0.5/1)
   5. Tích hợp công cụ       → tools_registry.py (ToolRegistry)
   6. Quản lý vòng đời       → lifecycle.py (RequestLifecycle · cổng · guardrail · retry)
+  7. Điều phối plugin       → plugin_ownership.py + plugin_ownership_registry.json
 
 Thiết kế: deterministic control plane, CHẠY & KIỂM ĐƯỢC OFFLINE (chế độ dry-run/plan),
 có seam cắm LLM adapter (Codex wrapper) cho thực thi agent thật. Grounded vào registry
@@ -23,4 +24,4 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 __all__ = ["ROOT"]
-__version__ = "1.0.0"
+__version__ = "1.1.0"
