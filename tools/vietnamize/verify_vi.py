@@ -51,13 +51,26 @@ def main() -> int:
     canh_bao: list[str] = []
     da_kiem = 0
 
+    # Dựng danh sách (khoá dịch, mục) — hỗ trợ cả khoá id đầy đủ lẫn `name:<tên>`
+    # (một bản dịch áp cho nhiều bản sao cùng tên, xem apply_vi.py).
+    cap: list[tuple[str, dict, dict]] = []
+    theo_ten: dict[str, list] = {}
+    for i in catalog.values():
+        theo_ten.setdefault(i["name"], []).append(i)
     for key, entry in vi_map.items():
         if key.startswith("_"):
             continue
-        item = catalog.get(key)
-        if item is None:
+        if key.startswith("name:"):
+            ds = theo_ten.get(key[5:], [])
+            if not ds:
+                loi.append(f"{key}: không mục nào mang tên này")
+            cap.extend((key, entry, i) for i in ds)
+        elif key in catalog:
+            cap.append((key, entry, catalog[key]))
+        else:
             loi.append(f"{key}: KHÔNG còn trong danh mục (plugin đã gỡ hoặc đổi tên?)")
-            continue
+
+    for key, entry, item in cap:
         path = pathlib.Path(item["path"])
         if not path.exists():
             loi.append(f"{key}: file không tồn tại — {path}")

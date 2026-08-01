@@ -3,7 +3,7 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 532 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1230 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 ## Tra nhanh theo nhu cầu
@@ -29,7 +29,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (220 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (278 mục)
 
 
 ### openmed-skills  (72)
@@ -179,6 +179,73 @@
 | `/anthropic-skills:using-model-endpoint` | kỹ năng | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
 | `/anthropic-skills:web-artifacts-builder` | kỹ năng | Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind cho artifact trên claude.ai. Dùng khi cần trang tương tác phức tạp hơn dashboard mẫu. Từ khoá: web artifacts, React. |
 
+### academic-research-skills  (62)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `agent abstract_bilingual_agent` | agent | [ARS] Agent viết và dịch tóm tắt sang ngôn ngữ đích theo yêu cầu tạp chí. Từ khoá: bilingual abstract. |
+| `agent argument_builder_agent` | agent | [ARS] Agent dựng lập luận cốt lõi và mạch suy luận của bài. Từ khoá: argument builder. |
+| `agent bibliography_agent` | agent | [ARS] Agent tìm, chú giải và định dạng danh mục tài liệu tham khảo. Từ khoá: bibliography. |
+| `agent citation_compliance_agent` | agent | [ARS] Agent đối chiếu trích dẫn với yêu cầu định dạng của tạp chí và gắn cờ chỗ sai. Từ khoá: citation compliance. |
+| `agent claim_ref_alignment_audit_agent` | agent | [ARS] Agent soi từng khẳng định có trích dẫn xem có ĐÚNG với nội dung tài liệu gốc không — bắt lỗi trích sai ý. Từ khoá: claim-reference alignment. |
+| `agent collaboration_depth_agent` | agent | [ARS] Agent chấm mức độ hợp tác giữa người và AI trong quá trình làm bài. Từ khoá: collaboration depth. |
+| `agent compliance_agent` | agent | [ARS] Agent kiểm tuân thủ chuẩn báo cáo tại các cổng liêm chính giữa chừng. Từ khoá: compliance, PRISMA. |
+| `agent devils_advocate_agent` | agent | [ARS] Agent phản biện ngược: thách thức giả định và thử phá mạch lập luận. Từ khoá: devil's advocate. |
+| `agent devils_advocate_reviewer_agent` | agent | [ARS] Agent phản biện ngược trong vai người bình duyệt: công kích lập luận cốt lõi. Từ khoá: devil's advocate reviewer. |
+| `agent domain_reviewer_agent` | agent | [ARS] Agent phản biện số 2: chấm độ chính xác chuyên ngành. Từ khoá: domain reviewer. |
+| `agent draft_writer_agent` | agent | [ARS] Agent viết bản thảo đầy đủ theo từng mục từ dàn ý đã chốt. Từ khoá: draft writer. |
+| `agent editor_in_chief_agent` | agent | [ARS] Agent rà soát ở mức tạp chí Q1, ra phán quyết Nhận/Từ chối kèm góp ý cụ thể. Từ khoá: editorial verdict. |
+| `agent editorial_synthesizer_agent` | agent | [ARS] Agent gộp mọi báo cáo phản biện thành một thư quyết định thống nhất. Từ khoá: editorial synthesis. |
+| `agent eic_agent` | agent | [ARS] Agent giữ ghế tổng biên tập: chấm mức phù hợp tạp chí, tính mới và chất lượng chung. Từ khoá: editor-in-chief. |
+| `agent ethics_review_agent` | agent | [ARS] Agent tự rà đạo đức nghiên cứu — KHÔNG thay Hội đồng Đạo đức. Hồ sơ nộp hội đồng dùng agent `dao-duc-dang-ky`. Từ khoá: ethics self-check. |
+| `agent field_analyst_agent` | agent | [ARS] Agent nhận diện lĩnh vực của bài rồi cấu hình đội phản biện cho phù hợp. Từ khoá: field analyst. |
+| `agent formatter_agent` | agent | [ARS] Agent định dạng bản thảo cuối theo yêu cầu của tạp chí đích. Từ khoá: formatting. |
+| `agent intake_agent` | agent | [ARS] Agent phỏng vấn đầu vào để dựng hồ sơ cấu hình cho bài báo. Từ khoá: intake. |
+| `agent integrity_verification_agent` | agent | [ARS] Agent kiểm mọi tài liệu, trích dẫn và số liệu trước khi nộp. Bản y khoa xác minh PMID/DOI thật là `kiem-chung-trich-dan`. Từ khoá: integrity verification. |
+| `agent literature_strategist_agent` | agent | [ARS] Agent thiết kế chiến lược tìm y văn và chọn nguồn. Từ khoá: literature strategy. |
+| `agent meta_analysis_agent` | agent | [ARS] Agent tổng hợp định lượng: tính cỡ hiệu ứng, đánh giá tính không đồng nhất. Bản y khoa đầy đủ hơn là agent `meta-phan-tich`. Từ khoá: meta-analysis. |
+| `agent methodology_reviewer_agent` | agent | [ARS] Agent phản biện số 1: chấm tính vững của phương pháp và thiết kế nghiên cứu. Từ khoá: methodology reviewer. |
+| `agent monitoring_agent` | agent | [ARS] Agent theo dõi y văn mới công bố sau khi nghiên cứu đã xong. Từ khoá: literature monitoring. |
+| `agent peer_reviewer_agent` | agent | [ARS] Agent đóng vai phản biện để tìm điểm yếu trước khi nộp. Từ khoá: peer reviewer. |
+| `agent perspective_reviewer_agent` | agent | [ARS] Agent phản biện số 3: chấm mức liên ngành và tác động rộng hơn. Từ khoá: perspective reviewer. |
+| `agent pipeline_orchestrator_agent` | agent | [ARS] Agent điều phối toàn bộ dây chuyền nghiên cứu học thuật nhiều bước. Từ khoá: pipeline orchestrator. |
+| `agent report_compiler_agent` | agent | Agent soạn báo cáo học thuật theo chuẩn APA 7.0 từ kết quả nghiên cứu. Chạy ở Giai đoạn 4 và 6 của dây chuyền ARS. Từ khoá: APA report drafting. |
+| `agent report_compiler_agent` | agent | Agent soạn báo cáo học thuật theo chuẩn APA 7.0 từ kết quả nghiên cứu. Chạy ở Giai đoạn 4 và 6 của dây chuyền ARS. Từ khoá: APA report drafting. |
+| `agent research_architect_agent` | agent | Agent thiết kế KHUNG PHƯƠNG PHÁP: chọn hệ hình nghiên cứu, phương pháp, chiến lược dữ liệu và khung phân tích. Cho đề tài y khoa thì thiet-ke-nghien-cuu của bác sĩ đúng chuẩn hơn. Từ khoá: methodology blueprint. |
+| `agent research_architect_agent` | agent | Agent thiết kế KHUNG PHƯƠNG PHÁP: chọn hệ hình nghiên cứu, phương pháp, chiến lược dữ liệu và khung phân tích. Cho đề tài y khoa thì thiet-ke-nghien-cuu của bác sĩ đúng chuẩn hơn. Từ khoá: methodology blueprint. |
+| `agent research_question_agent` | agent | [ARS] Agent biến chủ đề mơ hồ thành câu hỏi nghiên cứu rõ, chấm theo FINER. Với đề tài y khoa nên dùng agent `cau-hoi-nghien-cuu` (có PICO và cổng G0). Từ khoá: research question. |
+| `agent revision_coach_agent` | agent | [ARS] Agent phân tích góp ý phản biện thành kế hoạch sửa bài có cấu trúc. Từ khoá: revision coach. |
+| `agent risk_of_bias_agent` | agent | [ARS] Agent đánh giá nguy cơ sai lệch bằng RoB 2 (thử nghiệm ngẫu nhiên) và ROBINS-I (nghiên cứu quan sát). Trùng vai với `tham-dinh-grade-nnt` của bác sĩ — ưu tiên agent EBM vì có gắn cổng. Từ khoá: risk of bias. |
+| `agent socratic_mentor_agent` | agent | [ARS] Agent dẫn dắt tác giả bằng câu hỏi Socratic để mài sắc lập luận. Từ khoá: Socratic mentor. |
+| `agent socratic_mentor_agent` | agent | [ARS] Agent dẫn dắt tác giả bằng câu hỏi Socratic để mài sắc lập luận. Từ khoá: Socratic mentor. |
+| `agent source_verification_agent` | agent | [ARS] Agent chấm mức bằng chứng, phát hiện tạp chí săn mồi và kiểm chứng khẳng định. Từ khoá: source verification, predatory journal. |
+| `agent state_tracker_agent` | agent | [ARS] Agent theo dõi trạng thái dây chuyền và lịch sử phiên làm việc. Từ khoá: state tracker. |
+| `agent structure_architect_agent` | agent | [ARS] Agent thiết kế bố cục các mục và dàn ý chi tiết trước khi viết. Từ khoá: structure architect. |
+| `agent synthesis_agent` | agent | Agent TỔNG HỢP xuyên nguồn: gộp phát hiện, xử lý mâu thuẫn giữa các bằng chứng và chỉ ra khoảng trống kiến thức. Từ khoá: synthesis, evidence conflict. |
+| `agent synthesis_agent` | agent | Agent TỔNG HỢP xuyên nguồn: gộp phát hiện, xử lý mâu thuẫn giữa các bằng chứng và chỉ ra khoảng trống kiến thức. Từ khoá: synthesis, evidence conflict. |
+| `agent timeline_extraction_agent` | agent | [ARS] Agent rút mốc thời gian và nguồn gốc trích dẫn của từng tài liệu. Từ khoá: timeline extraction. |
+| `agent visualization_agent` | agent | [ARS] Agent mô tả đặc tả hình và biểu đồ đạt chuẩn công bố. Từ khoá: figure specification. |
+| `/ars-3w` | lệnh | Quét bài báo theo ba trục TẠI SAO / LÀM THẾ NÀO / CÁI GÌ để so sánh nhanh nhiều bài. Nhẹ hơn lit-review. Từ khoá: ARS three-way scan. |
+| `/ars-abstract` | lệnh | Viết TÓM TẮT song ngữ + từ khoá. LƯU Ý: song ngữ ở đây là Trung phồn thể + Anh (zh-TW/EN), KHÔNG phải Việt–Anh; cần abstract Việt–Anh thì nói rõ trong yêu cầu. Từ khoá: ARS abstract. |
+| `/ars-cache-invalidate` | lệnh | Xoá kết quả kiểm trích dẫn đã lưu tạm của một hoặc nhiều tài liệu, buộc kiểm lại từ đầu. Dùng khi nghi kết quả cũ đã lỗi thời. Từ khoá: ARS cache invalidate. |
+| `/ars-citation-check` | lệnh | Xuất BÁO CÁO LỖI TRÍCH DẪN cho bản thảo. LƯU Ý: với bài y khoa nên dùng agent kiem-chung-trich-dan của bác sĩ vì nó xác minh PMID/DOI thật và tra bài bị rút. Từ khoá: ARS citation check. |
+| `/ars-disclosure` | lệnh | Soạn câu KHAI BÁO SỬ DỤNG AI theo yêu cầu riêng của từng tạp chí. Dùng khi nộp bài — ICMJE Mục V bắt buộc khai. Từ khoá: ARS AI disclosure. |
+| `/ars-format-convert` | lệnh | Chuyển bản thảo qua lại giữa LaTeX / DOCX / PDF / Markdown. Dùng khi tạp chí đòi định dạng khác. Từ khoá: ARS format convert. |
+| `/ars-full` | lệnh | Chạy TRỌN dây chuyền bài báo học thuật: tra cứu → viết → bình duyệt → sửa → hoàn thiện. Tốn nhiều token nhất trong bộ ARS. Từ khoá: ARS full pipeline. |
+| `/ars-lit-review` | lệnh | Dựng THƯ MỤC CÓ CHÚ GIẢI trình bày theo dạng bài báo. Dùng khi cần phần tổng quan tài liệu; tổng quan hệ thống theo PRISMA thì dùng agent tong-quan-y-van. Từ khoá: ARS lit-review. |
+| `/ars-mark-read` | lệnh | Đánh dấu 'người đã đọc thật' cho một hoặc nhiều tài liệu trích dẫn. Dùng để phân biệt bài đã đọc toàn văn với bài chỉ đọc tóm tắt. Từ khoá: ARS mark read. |
+| `/ars-outline` | lệnh | Dựng DÀN Ý chi tiết kèm bản đồ bằng chứng cho từng mục, KHÔNG viết thành văn. Dùng khi muốn chốt khung trước khi viết. Từ khoá: ARS outline. |
+| `/ars-plan` | lệnh | Lập kế hoạch bài viết theo lối HỎI ĐÁP SOCRATIC, đi từng chương một. Dùng khi chưa rõ nên viết gì, cần người hỏi ngược để làm rõ ý. Từ khoá: ARS plan mode. |
+| `/ars-rebuttal-audit` | lệnh | Soi lại THƯ PHẢN HỒI đã viết xem đã trả lời hết từng ý phản biện chưa (chỉ góp ý, không viết thay). Dùng trước khi gửi thư đi. Từ khoá: ARS rebuttal audit. |
+| `/ars-reviewer` | lệnh | Chạy hội đồng bình duyệt mô phỏng đầy đủ trên bản thảo. Dùng khi muốn biết bài sẽ bị chê ở đâu trước khi nộp. Từ khoá: ARS reviewer panel. |
+| `/ars-revision` | lệnh | Sinh BẢN SỬA của bản thảo kèm phần trả lời góp ý (R&R). Dùng sau khi đã có nhận xét của phản biện. Từ khoá: ARS revision. |
+| `/ars-revision-coach` | lệnh | Phân tích góp ý của phản biện thành LỘ TRÌNH SỬA BÀI + khung thư phản hồi. Dùng ngay khi vừa nhận quyết định 'sửa và nộp lại'. Từ khoá: ARS revision coach. |
+| `/ars-unmark-read` | lệnh | Gỡ dấu 'đã đọc' đã gắn trước đó cho tài liệu trích dẫn. Dùng khi đánh dấu nhầm. Từ khoá: ARS unmark read. |
+| `/academic-research-skills:academic-paper` | kỹ năng | Dây chuyền VIẾT BÀI BÁO HỌC THUẬT tổng quát (12 agent, 11 chế độ: viết trọn, lập dàn ý, sửa bài, tóm tắt, tổng quan tài liệu, đổi định dạng, kiểm trích dẫn). LƯU Ý: chuẩn chung cho mọi ngành, KHÔNG theo CONSORT/STROBE — bài y khoa nên dù… |
+| `/academic-research-skills:academic-paper-reviewer` | kỹ năng | Mô phỏng HỘI ĐỒNG BÌNH DUYỆT nhiều góc nhìn: 1 tổng biên tập + 3 phản biện + người bảo vệ, mỗi vai một tính cách khác nhau. Dùng khi muốn thử phản biện bản thảo trước khi nộp thật. Từ khoá: peer review simulation. |
+| `/academic-research-skills:academic-pipeline` | kỹ năng | Điều phối TRỌN VÒNG bài báo học thuật: tra cứu → viết → kiểm liêm chính → bình duyệt → sửa → bình duyệt lại. Dùng khi muốn chạy một mạch thay vì gọi từng chế độ. Tốn nhiều token (một lần chạy đầy đủ khoảng 4–6 USD). Từ khoá: full pipeline. |
+| `/academic-research-skills:deep-research` | kỹ năng | Đội 13 agent NGHIÊN CỨU SÂU cho bất kỳ chủ đề nào, 8 chế độ (nghiên cứu đầy đủ, tóm lược nhanh, so sánh…). Dùng cho chủ đề ngoài y khoa hoặc cần quét rộng; câu hỏi lâm sàng vẫn nên đi qua tra-cuu-chung-cu để có PMID/DOI. Từ khoá: deep re… |
+
 ### ebm-agents  (50)
 
 | Gọi bằng | Loại | Làm gì |
@@ -234,33 +301,21 @@
 | `agent trich-xuat-y-van` | agent | Trích xuất và tóm tắt có cấu trúc MỘT bài báo/nghiên cứu thành bảng dữ liệu chuẩn (PICO, thiết kế, cỡ mẫu, kết cục, hiệu ứng + CI, nguy cơ sai lệch). Dùng khi cần đọc nhanh một bài, dựng bảng trích xuất cho tổng quan hệ thống, hoặc chuẩn… |
 | `agent viet-ban-thao` | agent | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy… |
 
-### academic-research-skills  (23)
+### healthcare  (11)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
-| `agent report_compiler_agent` | agent | Agent soạn báo cáo học thuật theo chuẩn APA 7.0 từ kết quả nghiên cứu. Chạy ở Giai đoạn 4 và 6 của dây chuyền ARS. Từ khoá: APA report drafting. |
-| `agent research_architect_agent` | agent | Agent thiết kế KHUNG PHƯƠNG PHÁP: chọn hệ hình nghiên cứu, phương pháp, chiến lược dữ liệu và khung phân tích. Cho đề tài y khoa thì thiet-ke-nghien-cuu của bác sĩ đúng chuẩn hơn. Từ khoá: methodology blueprint. |
-| `agent synthesis_agent` | agent | Agent TỔNG HỢP xuyên nguồn: gộp phát hiện, xử lý mâu thuẫn giữa các bằng chứng và chỉ ra khoảng trống kiến thức. Từ khoá: synthesis, evidence conflict. |
-| `/ars-3w` | lệnh | Quét bài báo theo ba trục TẠI SAO / LÀM THẾ NÀO / CÁI GÌ để so sánh nhanh nhiều bài. Nhẹ hơn lit-review. Từ khoá: ARS three-way scan. |
-| `/ars-abstract` | lệnh | Viết TÓM TẮT song ngữ + từ khoá. LƯU Ý: song ngữ ở đây là Trung phồn thể + Anh (zh-TW/EN), KHÔNG phải Việt–Anh; cần abstract Việt–Anh thì nói rõ trong yêu cầu. Từ khoá: ARS abstract. |
-| `/ars-cache-invalidate` | lệnh | Xoá kết quả kiểm trích dẫn đã lưu tạm của một hoặc nhiều tài liệu, buộc kiểm lại từ đầu. Dùng khi nghi kết quả cũ đã lỗi thời. Từ khoá: ARS cache invalidate. |
-| `/ars-citation-check` | lệnh | Xuất BÁO CÁO LỖI TRÍCH DẪN cho bản thảo. LƯU Ý: với bài y khoa nên dùng agent kiem-chung-trich-dan của bác sĩ vì nó xác minh PMID/DOI thật và tra bài bị rút. Từ khoá: ARS citation check. |
-| `/ars-disclosure` | lệnh | Soạn câu KHAI BÁO SỬ DỤNG AI theo yêu cầu riêng của từng tạp chí. Dùng khi nộp bài — ICMJE Mục V bắt buộc khai. Từ khoá: ARS AI disclosure. |
-| `/ars-format-convert` | lệnh | Chuyển bản thảo qua lại giữa LaTeX / DOCX / PDF / Markdown. Dùng khi tạp chí đòi định dạng khác. Từ khoá: ARS format convert. |
-| `/ars-full` | lệnh | Chạy TRỌN dây chuyền bài báo học thuật: tra cứu → viết → bình duyệt → sửa → hoàn thiện. Tốn nhiều token nhất trong bộ ARS. Từ khoá: ARS full pipeline. |
-| `/ars-lit-review` | lệnh | Dựng THƯ MỤC CÓ CHÚ GIẢI trình bày theo dạng bài báo. Dùng khi cần phần tổng quan tài liệu; tổng quan hệ thống theo PRISMA thì dùng agent tong-quan-y-van. Từ khoá: ARS lit-review. |
-| `/ars-mark-read` | lệnh | Đánh dấu 'người đã đọc thật' cho một hoặc nhiều tài liệu trích dẫn. Dùng để phân biệt bài đã đọc toàn văn với bài chỉ đọc tóm tắt. Từ khoá: ARS mark read. |
-| `/ars-outline` | lệnh | Dựng DÀN Ý chi tiết kèm bản đồ bằng chứng cho từng mục, KHÔNG viết thành văn. Dùng khi muốn chốt khung trước khi viết. Từ khoá: ARS outline. |
-| `/ars-plan` | lệnh | Lập kế hoạch bài viết theo lối HỎI ĐÁP SOCRATIC, đi từng chương một. Dùng khi chưa rõ nên viết gì, cần người hỏi ngược để làm rõ ý. Từ khoá: ARS plan mode. |
-| `/ars-rebuttal-audit` | lệnh | Soi lại THƯ PHẢN HỒI đã viết xem đã trả lời hết từng ý phản biện chưa (chỉ góp ý, không viết thay). Dùng trước khi gửi thư đi. Từ khoá: ARS rebuttal audit. |
-| `/ars-reviewer` | lệnh | Chạy hội đồng bình duyệt mô phỏng đầy đủ trên bản thảo. Dùng khi muốn biết bài sẽ bị chê ở đâu trước khi nộp. Từ khoá: ARS reviewer panel. |
-| `/ars-revision` | lệnh | Sinh BẢN SỬA của bản thảo kèm phần trả lời góp ý (R&R). Dùng sau khi đã có nhận xét của phản biện. Từ khoá: ARS revision. |
-| `/ars-revision-coach` | lệnh | Phân tích góp ý của phản biện thành LỘ TRÌNH SỬA BÀI + khung thư phản hồi. Dùng ngay khi vừa nhận quyết định 'sửa và nộp lại'. Từ khoá: ARS revision coach. |
-| `/ars-unmark-read` | lệnh | Gỡ dấu 'đã đọc' đã gắn trước đó cho tài liệu trích dẫn. Dùng khi đánh dấu nhầm. Từ khoá: ARS unmark read. |
-| `/academic-research-skills:academic-paper` | kỹ năng | Dây chuyền VIẾT BÀI BÁO HỌC THUẬT tổng quát (12 agent, 11 chế độ: viết trọn, lập dàn ý, sửa bài, tóm tắt, tổng quan tài liệu, đổi định dạng, kiểm trích dẫn). LƯU Ý: chuẩn chung cho mọi ngành, KHÔNG theo CONSORT/STROBE — bài y khoa nên dù… |
-| `/academic-research-skills:academic-paper-reviewer` | kỹ năng | Mô phỏng HỘI ĐỒNG BÌNH DUYỆT nhiều góc nhìn: 1 tổng biên tập + 3 phản biện + người bảo vệ, mỗi vai một tính cách khác nhau. Dùng khi muốn thử phản biện bản thảo trước khi nộp thật. Từ khoá: peer review simulation. |
-| `/academic-research-skills:academic-pipeline` | kỹ năng | Điều phối TRỌN VÒNG bài báo học thuật: tra cứu → viết → kiểm liêm chính → bình duyệt → sửa → bình duyệt lại. Dùng khi muốn chạy một mạch thay vì gọi từng chế độ. Tốn nhiều token (một lần chạy đầy đủ khoảng 4–6 USD). Từ khoá: full pipeline. |
-| `/academic-research-skills:deep-research` | kỹ năng | Đội 13 agent NGHIÊN CỨU SÂU cho bất kỳ chủ đề nào, 8 chế độ (nghiên cứu đầy đủ, tóm lược nhanh, so sánh…). Dùng cho chủ đề ngoài y khoa hoặc cần quét rộng; câu hỏi lâm sàng vẫn nên đi qua tra-cuu-chung-cu để có PMID/DOI. Từ khoá: deep re… |
+| `/healthcare:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
+| `/healthcare:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/healthcare:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
+| `/healthcare:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
+| `/healthcare:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
+| `/healthcare:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
+| `/healthcare:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
+| `/healthcare:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/healthcare:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/healthcare:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/healthcare:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
 
 ### user-skills  (10)
 
@@ -277,18 +332,433 @@
 | `/statistical-analysis` | kỹ năng | Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ thể bằng code,… |
 | `/treatment-plans` | kỹ năng | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
 
+### bio-research  (6)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bio-research:instrument-data-to-allotrope` | kỹ năng | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Từ khoá: Allotrope. |
+| `/bio-research:nextflow-development` | kỹ năng | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Từ khoá: Nextflow, nf-core. |
+| `/bio-research:scientific-problem-selection` | kỹ năng | [Nghiên cứu] Giúp nhà khoa học chọn vấn đề nghiên cứu đáng làm. Từ khoá: problem selection. |
+| `/bio-research:scvi-tools` | kỹ năng | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Từ khoá: scvi-tools. |
+| `/bio-research:single-cell-rna-qc` | kỹ năng | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Từ khoá: single-cell QC. |
+| `/bio-research:start` | kỹ năng | [Zoom] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom. Từ khoá: Zoom start. |
+
+### cowork-plugin-management  (2)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Từ khoá: plugin customizer. |
+| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Từ khoá: create plugin. |
+
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (73 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (713 mục)
 
 
-### claude-code-harness  (42)
+### zoom-plugin  (57)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/zoom-plugin:build-zoom-bot` | kỹ năng | [Zoom] Dựng bot họp, bộ ghi hình hoặc luồng xử lý âm thanh–hình ảnh thời gian thực. Từ khoá: Zoom bot. |
+| `/zoom-plugin:build-zoom-contact-center-app` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Contact Center. Từ khoá: Contact Center. |
+| `/zoom-plugin:build-zoom-meeting-app` | kỹ năng | [Zoom] Dựng hoặc nhúng luồng họp Zoom. Từ khoá: meeting app. |
+| `/zoom-plugin:build-zoom-meeting-sdk-app` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ họp Zoom. Từ khoá: Meeting SDK. |
+| `/zoom-plugin:build-zoom-phone-integration` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Phone. Từ khoá: Zoom Phone. |
+| `/zoom-plugin:build-zoom-rest-api-app` | kỹ năng | [Zoom] Tài liệu tham chiếu API REST của Zoom. Từ khoá: Zoom REST API. |
+| `/zoom-plugin:build-zoom-team-chat-app` | kỹ năng | [Zoom] Tài liệu tham chiếu Zoom Team Chat. Từ khoá: Team Chat. |
+| `/zoom-plugin:build-zoom-video-sdk-app` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ video tuỳ biến. Từ khoá: Video SDK. |
+| `/zoom-plugin:build-zoom-virtual-agent` | kỹ năng | [Zoom] Tài liệu tham chiếu trợ lý ảo Zoom. Từ khoá: Virtual Agent. |
+| `/zoom-plugin:choose-zoom-approach` | kỹ năng | [Zoom] Chọn kiến trúc Zoom phù hợp cho nhu cầu. Từ khoá: Zoom architecture. |
+| `/zoom-plugin:contact-center/android` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho Android. Từ khoá: Contact Center Android. |
+| `/zoom-plugin:contact-center/ios` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho iOS. Từ khoá: Contact Center iOS. |
+| `/zoom-plugin:contact-center/web` | kỹ năng | [Zoom] Bộ công cụ tổng đài cho nền web. Từ khoá: Contact Center web. |
+| `/zoom-plugin:debug-zoom` | kỹ năng | [Zoom] Gỡ lỗi tích hợp Zoom bằng cách khoanh vùng điểm hỏng. Từ khoá: Zoom debug. |
+| `/zoom-plugin:debug-zoom-integration` | kỹ năng | [Zoom] Gỡ lỗi nhanh khi xác thực, webhook hoặc phiên họp trục trặc. Từ khoá: Zoom debug. |
+| `/zoom-plugin:design-mcp-workflow` | kỹ năng | [Zoom] Thiết kế quy trình Zoom MCP cho trợ lý. Từ khoá: MCP workflow. |
+| `/zoom-plugin:meeting-sdk/linux` | kỹ năng | [Zoom] Bộ công cụ họp cho Linux — bot chạy nền bằng C++. Từ khoá: Meeting SDK Linux. |
+| `/zoom-plugin:plan-zoom-integration` | kỹ năng | [Zoom] Biến ý tưởng tích hợp Zoom thành kế hoạch triển khai. Từ khoá: Zoom plan. |
+| `/zoom-plugin:plan-zoom-product` | kỹ năng | [Zoom] Chọn nền tảng Zoom phù hợp cho một tình huống sử dụng. Từ khoá: Zoom product. |
+| `/zoom-plugin:probe-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ kiểm tra trước cuộc họp. Từ khoá: Probe SDK. |
+| `/zoom-plugin:rivet-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ Rivet. Từ khoá: Rivet SDK. |
+| `/zoom-plugin:scribe` | kỹ năng | [Zoom] Tài liệu tham chiếu dịch vụ ghi biên bản tự động. Từ khoá: Zoom Scribe. |
+| `/zoom-plugin:setup-zoom-mcp` | kỹ năng | [Zoom] Quyết định khi nào nên dùng Zoom MCP và cách cài an toàn. Từ khoá: Zoom MCP. |
+| `/zoom-plugin:setup-zoom-oauth` | kỹ năng | [Zoom] Cài đặt xác thực Zoom đúng cách. Từ khoá: Zoom OAuth. |
+| `/zoom-plugin:setup-zoom-webhooks` | kỹ năng | [Zoom] Tài liệu tham chiếu về webhook Zoom. Từ khoá: webhooks. |
+| `/zoom-plugin:setup-zoom-websockets` | kỹ năng | [Zoom] Tài liệu tham chiếu về WebSocket Zoom. Từ khoá: websockets. |
+| `/zoom-plugin:start` | kỹ năng | [Zoom] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom. Từ khoá: Zoom start. |
+| `/zoom-plugin:ui-toolkit/web` | kỹ năng | [Zoom] Bộ giao diện dựng sẵn cho Video SDK trên web. Từ khoá: UI Toolkit. |
+| `/zoom-plugin:video-sdk/linux` | kỹ năng | [Zoom] Bộ công cụ video cho Linux — bot chạy nền bằng C++. Từ khoá: Video SDK Linux. |
+| `/zoom-plugin:video-sdk/web` | kỹ năng | [Zoom] Bộ công cụ video cho web bằng JavaScript/TypeScript. Từ khoá: Video SDK web. |
+| `/zoom-plugin:video-sdk/windows` | kỹ năng | [Zoom] Bộ công cụ video cho Windows bằng C++. Từ khoá: Video SDK Windows. |
+| `/zoom-plugin:virtual-agent/android` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào ứng dụng Android. Từ khoá: Virtual Agent Android. |
+| `/zoom-plugin:virtual-agent/ios` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào ứng dụng iOS. Từ khoá: Virtual Agent iOS. |
+| `/zoom-plugin:virtual-agent/web` | kỹ năng | [Zoom] Nhúng trợ lý ảo Zoom vào trang web. Từ khoá: Virtual Agent web. |
+| `/zoom-plugin:zoom-apps-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ ứng dụng nhúng trong Zoom. Từ khoá: Zoom Apps SDK. |
+| `/zoom-plugin:zoom-cobrowse-sdk` | kỹ năng | [Zoom] Tài liệu tham chiếu bộ công cụ duyệt web cùng nhau. Từ khoá: Cobrowse SDK. |
+| `/zoom-plugin:zoom-general` | kỹ năng | [Zoom] Tài liệu tham chiếu chung, dùng chéo nhiều sản phẩm Zoom. Từ khoá: Zoom general. |
+| `/zoom-plugin:zoom-mcp` | kỹ năng | [Zoom] Hướng dẫn dùng các đầu nối Zoom MCP đi kèm. Từ khoá: Zoom MCP connectors. |
+| `/zoom-plugin:zoom-mcp/whiteboard` | kỹ năng | [Zoom] Hướng dẫn đầu nối bảng trắng Zoom. Từ khoá: Whiteboard MCP. |
+| `/zoom-plugin:zoom-meeting-sdk-android` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Android. Từ khoá: Meeting SDK Android. |
+| `/zoom-plugin:zoom-meeting-sdk-electron` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Electron. Từ khoá: Meeting SDK Electron. |
+| `/zoom-plugin:zoom-meeting-sdk-ios` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng iOS. Từ khoá: Meeting SDK iOS. |
+| `/zoom-plugin:zoom-meeting-sdk-macos` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng macOS. Từ khoá: Meeting SDK macOS. |
+| `/zoom-plugin:zoom-meeting-sdk-react-native` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng React Native. Từ khoá: Meeting SDK React Native. |
+| `/zoom-plugin:zoom-meeting-sdk-unreal` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào Unreal Engine. Từ khoá: Meeting SDK Unreal. |
+| `/zoom-plugin:zoom-meeting-sdk-web` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào trang web. Từ khoá: Meeting SDK web. |
+| `/zoom-plugin:zoom-meeting-sdk-web-client-view` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom chiếm trọn trang. Từ khoá: client view. |
+| `/zoom-plugin:zoom-meeting-sdk-web-component-view` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom dưới dạng thành phần nhỏ trong trang. Từ khoá: component view. |
+| `/zoom-plugin:zoom-meeting-sdk-windows` | kỹ năng | [Zoom] Nhúng cuộc họp Zoom vào ứng dụng Windows bằng C++. Từ khoá: Meeting SDK Windows. |
+| `/zoom-plugin:zoom-oauth` | kỹ năng | [Zoom] Tài liệu tham chiếu về xác thực Zoom. Từ khoá: Zoom auth. |
+| `/zoom-plugin:zoom-rtms` | kỹ năng | [Zoom] Tài liệu tham chiếu luồng dữ liệu thời gian thực. Từ khoá: Zoom RTMS. |
+| `/zoom-plugin:zoom-video-sdk-android` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên Android. Từ khoá: Video SDK Android. |
+| `/zoom-plugin:zoom-video-sdk-flutter` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến bằng Flutter. Từ khoá: Video SDK Flutter. |
+| `/zoom-plugin:zoom-video-sdk-ios` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên iOS. Từ khoá: Video SDK iOS. |
+| `/zoom-plugin:zoom-video-sdk-macos` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trên macOS. Từ khoá: Video SDK macOS. |
+| `/zoom-plugin:zoom-video-sdk-react-native` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến bằng React Native. Từ khoá: Video SDK React Native. |
+| `/zoom-plugin:zoom-video-sdk-unity` | kỹ năng | [Zoom] Dựng phiên video tuỳ biến trong Unity. Từ khoá: Video SDK Unity. |
+
+### bmad-deep-recon  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-deep-recon:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-deep-recon:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-deep-recon:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-deep-recon:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-deep-recon:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-deep-recon:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-deep-recon:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-deep-recon:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-deep-recon:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-deep-recon:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-deep-recon:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-deep-recon:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-deep-recon:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-deep-recon:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-deep-recon:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-deep-recon:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-deep-recon:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-deep-recon:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-deep-recon:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-deep-recon:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-deep-recon:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-deep-recon:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-deep-recon:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-deep-recon:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-deep-recon:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-deep-recon:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-deep-recon:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-deep-recon:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-deep-recon:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-deep-recon:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-deep-recon:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-deep-recon:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-deep-recon:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-deep-recon:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-deep-recon:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### bmad-brainstorming  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-brainstorming:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-brainstorming:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-brainstorming:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-brainstorming:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-brainstorming:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-brainstorming:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-brainstorming:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-brainstorming:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-brainstorming:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-brainstorming:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-brainstorming:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-brainstorming:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-brainstorming:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-brainstorming:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-brainstorming:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-brainstorming:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-brainstorming:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-brainstorming:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-brainstorming:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-brainstorming:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-brainstorming:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-brainstorming:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-brainstorming:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-brainstorming:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-brainstorming:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-brainstorming:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-brainstorming:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-brainstorming:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-brainstorming:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-brainstorming:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-brainstorming:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-brainstorming:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-brainstorming:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-brainstorming:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-brainstorming:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### bmad-analysis  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-analysis:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-analysis:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-analysis:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-analysis:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-analysis:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-analysis:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-analysis:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-analysis:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-analysis:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-analysis:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-analysis:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-analysis:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-analysis:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-analysis:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-analysis:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-analysis:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-analysis:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-analysis:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-analysis:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-analysis:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-analysis:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-analysis:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-analysis:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-analysis:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-analysis:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-analysis:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-analysis:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-analysis:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-analysis:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-analysis:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-analysis:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-analysis:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-analysis:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-analysis:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-analysis:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### bmad-method-lifecycle  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-method-lifecycle:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-method-lifecycle:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-method-lifecycle:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-method-lifecycle:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-method-lifecycle:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-method-lifecycle:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-method-lifecycle:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-method-lifecycle:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-method-lifecycle:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-method-lifecycle:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-method-lifecycle:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-method-lifecycle:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-method-lifecycle:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-method-lifecycle:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-method-lifecycle:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-method-lifecycle:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-method-lifecycle:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-method-lifecycle:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-method-lifecycle:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-method-lifecycle:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-method-lifecycle:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-method-lifecycle:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-method-lifecycle:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-method-lifecycle:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-method-lifecycle:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-method-lifecycle:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-method-lifecycle:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-method-lifecycle:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-method-lifecycle:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-method-lifecycle:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-method-lifecycle:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-method-lifecycle:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-method-lifecycle:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-method-lifecycle:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-method-lifecycle:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### bmad-party-mode  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-party-mode:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-party-mode:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-party-mode:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-party-mode:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-party-mode:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-party-mode:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-party-mode:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-party-mode:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-party-mode:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-party-mode:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-party-mode:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-party-mode:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-party-mode:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-party-mode:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-party-mode:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-party-mode:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-party-mode:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-party-mode:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-party-mode:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-party-mode:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-party-mode:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-party-mode:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-party-mode:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-party-mode:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-party-mode:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-party-mode:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-party-mode:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-party-mode:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-party-mode:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-party-mode:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-party-mode:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-party-mode:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-party-mode:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-party-mode:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-party-mode:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### bmad-forge-idea  (50)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bmad-forge-idea:bmad-advanced-elicitation` | kỹ năng | [BMad] Ép mô hình xem lại, tinh chỉnh và cải thiện kết quả nó vừa đưa ra. Từ khoá: advanced elicitation. |
+| `/bmad-forge-idea:bmad-agent-analyst` | kỹ năng | [BMad] Vai CHUYÊN VIÊN PHÂN TÍCH nghiệp vụ và yêu cầu. Từ khoá: business analyst. |
+| `/bmad-forge-idea:bmad-agent-architect` | kỹ năng | [BMad] Vai KIẾN TRÚC SƯ hệ thống, dẫn dắt thiết kế kỹ thuật. Từ khoá: system architect. |
+| `/bmad-forge-idea:bmad-agent-dev` | kỹ năng | [BMad] Vai LẬP TRÌNH VIÊN chính: thực thi từng hạng mục và viết mã. Từ khoá: senior engineer. |
+| `/bmad-forge-idea:bmad-agent-pm` | kỹ năng | [BMad] Vai QUẢN LÝ SẢN PHẨM: dựng tài liệu yêu cầu sản phẩm (PRD), khai thác nhu cầu. Từ khoá: product manager. |
+| `/bmad-forge-idea:bmad-agent-tech-writer` | kỹ năng | [BMad] Vai VIẾT TÀI LIỆU kỹ thuật và quản lý tri thức. Từ khoá: technical writer. |
+| `/bmad-forge-idea:bmad-agent-ux-designer` | kỹ năng | [BMad] Vai THIẾT KẾ TRẢI NGHIỆM người dùng và giao diện. Từ khoá: UX designer. |
+| `/bmad-forge-idea:bmad-architecture` | kỹ năng | [BMad] Dựng kiến trúc: bộ nguyên tắc bất biến giữ cho hệ thống nhất quán khi mở rộng. Từ khoá: architecture. |
+| `/bmad-forge-idea:bmad-brainstorming` | kỹ năng | [BMad] Điều phối buổi động não bằng nhiều kỹ thuật sáng tạo khác nhau. Từ khoá: brainstorming. |
+| `/bmad-forge-idea:bmad-build` | kỹ năng | [BMad] Thực thi mọi yêu cầu, hạng mục, sửa lỗi hay đề nghị thay đổi — đây là cách triển khai CHÍNH THỨC hiện nay. Từ khoá: build. |
+| `/bmad-forge-idea:bmad-build-auto` | kỹ năng | [BMad] Một vòng lặp phát triển KHÔNG cần người trực. Chỉ chạy khi gọi đích danh. Từ khoá: unattended loop. |
+| `/bmad-forge-idea:bmad-check-implementation-readiness` | kỹ năng | [BMad] Kiểm PRD, UX, kiến trúc và các hạng mục đã đủ chưa trước khi bắt tay làm. Từ khoá: readiness check. |
+| `/bmad-forge-idea:bmad-checkpoint-preview` | kỹ năng | [BMad] Điểm dừng để người xem lại thay đổi trước khi đi tiếp. Từ khoá: checkpoint review. |
+| `/bmad-forge-idea:bmad-code-review` | kỹ năng | [BMad] Rà soát mã theo lối phản biện, chạy nhiều lớp song song rồi phân loại vấn đề. Từ khoá: adversarial code review. |
+| `/bmad-forge-idea:bmad-correct-course` | kỹ năng | [BMad] Xử lý thay đổi lớn phát sinh giữa chừng một đợt làm việc. Từ khoá: correct course. |
+| `/bmad-forge-idea:bmad-create-architecture` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-architecture. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-create-epics-and-stories` | kỹ năng | [BMad] Chia yêu cầu thành các hạng mục lớn và câu chuyện người dùng. Từ khoá: epics, user stories. |
+| `/bmad-forge-idea:bmad-create-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-create-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-customize` | kỹ năng | [BMad] Soạn và cập nhật phần tuỳ chỉnh riêng cho các skill BMad đã cài. Từ khoá: customize. |
+| `/bmad-forge-idea:bmad-deep-recon` | kỹ năng | [BMad] Tra cứu đủ sâu để ra quyết định, theo 3 cách: soạn câu lệnh nghiên cứu sâu, tự tra, hoặc tổng hợp. Từ khoá: deep recon. |
+| `/bmad-forge-idea:bmad-dev-auto` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build-auto. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-dev-story` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-document-project` | kỹ năng | [BMad] Lập tài liệu cho dự án cũ đã có sẵn mã, để AI hiểu được bối cảnh. Từ khoá: brownfield documentation. |
+| `/bmad-forge-idea:bmad-domain-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-edit-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-editorial-review` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-editorial-review-prose` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-editorial-review-structure` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-forge-idea` | kỹ năng | [BMad] Thử thách một ý tưởng bằng cách chất vấn qua nhiều vai khác nhau cho tới khi ý tưởng đủ vững. Từ khoá: forge idea. |
+| `/bmad-forge-idea:bmad-generate-project-context` | kỹ năng | [BMad] Sinh file bối cảnh dự án kèm quy tắc dành cho AI. Từ khoá: project context. |
+| `/bmad-forge-idea:bmad-help` | kỹ năng | [BMad] Hỏi khi không biết dùng skill BMad nào — nó đọc tình hình hiện tại rồi gợi ý bước kế tiếp. Từ khoá: BMad help. |
+| `/bmad-forge-idea:bmad-market-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-party-mode` | kỹ năng | [BMad] Cho nhiều vai BMad thảo luận nhóm với nhau về một vấn đề. Từ khoá: party mode. |
+| `/bmad-forge-idea:bmad-prd` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định tài liệu yêu cầu sản phẩm (PRD). Từ khoá: PRD. |
+| `/bmad-forge-idea:bmad-prfaq` | kỹ năng | [BMad] Thử thách ý tưởng sản phẩm theo lối 'Working Backwards' (thông cáo báo chí + hỏi đáp). Từ khoá: PRFAQ. |
+| `/bmad-forge-idea:bmad-product-brief` | kỹ năng | [BMad] Tạo, cập nhật hoặc thẩm định bản tóm tắt sản phẩm. Từ khoá: product brief. |
+| `/bmad-forge-idea:bmad-qa-generate-e2e-tests` | kỹ năng | [BMad] Sinh bộ kiểm thử tự động đầu-cuối cho tính năng đã có. Từ khoá: E2E tests. |
+| `/bmad-forge-idea:bmad-quick-dev` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-build. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-retrospective` | kỹ năng | [BMad] Nhìn lại sau khi xong một hạng mục lớn để rút bài học. Từ khoá: retrospective. |
+| `/bmad-forge-idea:bmad-review` | kỹ năng | [BMad] Rà soát đa góc nhìn trên bất kỳ thay đổi, tài liệu hay đặc tả nào. Từ khoá: multi-lens review. |
+| `/bmad-forge-idea:bmad-review-adversarial-general` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-review-edge-case-hunter` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-review-verification-gap` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-review. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-spec` | kỹ năng | [BMad] Chưng cất mọi đầu vào thành bản đặc tả lõi kèm tài liệu đi kèm. Từ khoá: spec kernel. |
+| `/bmad-forge-idea:bmad-sprint-planning` | kỹ năng | [BMad] Lập bảng theo dõi đợt làm việc từ các hạng mục lớn. Từ khoá: sprint planning. |
+| `/bmad-forge-idea:bmad-sprint-status` | kỹ năng | [BMad] Tóm tắt tình hình đợt làm việc và nêu rủi ro. Từ khoá: sprint status. |
+| `/bmad-forge-idea:bmad-technical-research` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-deep-recon. Từ khoá: deprecated. |
+| `/bmad-forge-idea:bmad-ux` | kỹ năng | [BMad] Lập kế hoạch mẫu trải nghiệm người dùng và đặc tả thiết kế. Từ khoá: UX planning. |
+| `/bmad-forge-idea:bmad-validate-prd` | kỹ năng | [BMad] ĐÃ NGỪNG DÙNG — chuyển sang bmad-prd. Từ khoá: deprecated. |
+
+### claude-code-harness  (47)
 
 | Gọi bằng | Loại | Làm gì |
 |---|---|---|
 | `agent advisor` | agent | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
 | `agent reviewer` | agent | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
 | `agent worker` | agent | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
+| `/handoff-to-claude` | lệnh | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
+| `/plan-with-cc` | lệnh | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
+| `/project-overview` | lệnh | [Lập trình] Nắm nhanh bức tranh tổng thể của dự án. Từ khoá: project overview. |
+| `/review-cc-work` | lệnh | [Lập trình] Rà soát việc Claude Code đã làm rồi bàn giao lại kèm chỉ dẫn duyệt hoặc sửa. Từ khoá: review CC work. |
+| `/start-session` | lệnh | [Lập trình] Bắt đầu phiên làm việc: nắm tình hình → lập kế hoạch → giao việc cho Claude Code. Từ khoá: start session. |
 | `/claude-code-harness:agent-browser` | kỹ năng | [Lập trình] Điều khiển trình duyệt tự động: mở trang, điền biểu mẫu, chụp màn hình, thu thập dữ liệu. Từ khoá: browser automation. |
 | `/claude-code-harness:auth` | kỹ năng | [Lập trình] Hỗ trợ dựng phần đăng nhập và thanh toán (Clerk, Supabase Auth, Stripe). Từ khoá: authentication, payment. |
 | `/claude-code-harness:breezing` | kỹ năng | [Lập trình] Chế độ chạy theo NHÓM — tên gọi cũ tương đương harness-work có điều phối nhiều agent. Từ khoá: team execution. |
@@ -329,6 +799,114 @@
 | `/claude-code-harness:vibecoder-guide` | kỹ năng | [Lập trình] Hướng dẫn người KHÔNG chuyên kỹ thuật: nên hỏi gì tiếp theo, mô tả công việc thế nào cho máy hiểu. Từ khoá: vibecoder coaching. |
 | `/claude-code-harness:workflow-guide` | kỹ năng | [Lập trình] Hướng dẫn quy trình hai agent Cursor ↔ Claude Code phối hợp. Từ khoá: two-agent workflow. |
 
+### mattpocock-skills  (41)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/mattpocock-skills:ask-matt` | kỹ năng | [Lập trình] Hỏi xem tình huống hiện tại nên dùng kỹ năng nào trong bộ này. Từ khoá: skill router. |
+| `/mattpocock-skills:batch-grill-me` | kỹ năng | [Lập trình] Chất vấn dồn dập, hỏi mọi câu khó cùng lúc theo từng vòng. Từ khoá: batch grilling. |
+| `/mattpocock-skills:claude-handoff` | kỹ năng | [Lập trình] Bàn giao cuộc trò chuyện cho một agent chạy nền tiếp nhận. Từ khoá: claude handoff. |
+| `/mattpocock-skills:code-review` | kỹ năng | [Lập trình] Rà soát thay đổi kể từ một mốc cố định (commit, nhánh, thẻ). Từ khoá: code review. |
+| `/mattpocock-skills:codebase-design` | kỹ năng | [Lập trình] Bộ từ vựng chung để thiết kế mô-đun có chiều sâu. Từ khoá: deep modules. |
+| `/mattpocock-skills:design-an-interface` | kỹ năng | [Lập trình] Sinh nhiều phương án thiết kế giao diện lập trình khác hẳn nhau để so sánh. Từ khoá: interface design. |
+| `/mattpocock-skills:diagnosing-bugs` | kỹ năng | [Lập trình] Vòng chẩn đoán cho lỗi khó và sụt hiệu năng. Từ khoá: bug diagnosis. |
+| `/mattpocock-skills:domain-modeling` | kỹ năng | [Lập trình] Dựng và mài sắc mô hình miền nghiệp vụ của dự án. Từ khoá: domain model. |
+| `/mattpocock-skills:edit-article` | kỹ năng | [Viết lách] Biên tập bài viết: sắp lại bố cục, làm rõ ý, gọt câu chữ. Từ khoá: edit article. |
+| `/mattpocock-skills:git-guardrails-claude-code` | kỹ năng | [Lập trình] Cài chốt chặn lệnh git nguy hiểm (push, reset --hard...). Từ khoá: git guardrails. |
+| `/mattpocock-skills:grill-me` | kỹ năng | [Lập trình] Phỏng vấn gắt để mài sắc một kế hoạch hoặc thiết kế. Từ khoá: grill me. |
+| `/mattpocock-skills:grill-with-docs` | kỹ năng | [Lập trình] Vừa chất vấn vừa sinh tài liệu ghi lại quyết định. Từ khoá: grill with docs. |
+| `/mattpocock-skills:grilling` | kỹ năng | [Lập trình] Chất vấn liên tục về một kế hoạch, quyết định hay ý tưởng để lộ điểm yếu. Từ khoá: grilling. |
+| `/mattpocock-skills:handoff` | kỹ năng | [Lập trình] Nén cuộc trò chuyện hiện tại thành tài liệu bàn giao cho agent khác tiếp tục. Từ khoá: handoff. |
+| `/mattpocock-skills:implement` | kỹ năng | [Lập trình] Triển khai một phần việc theo đặc tả hoặc danh sách hạng mục. Từ khoá: implement. |
+| `/mattpocock-skills:improve-codebase-architecture` | kỹ năng | [Lập trình] Quét kho mã tìm chỗ nên làm sâu hơn, xuất báo cáo HTML trực quan. Từ khoá: architecture improvement. |
+| `/mattpocock-skills:loop-me` | kỹ năng | [Lập trình] Chất vấn về đặc tả cho các quy trình muốn xây trong không gian làm việc này. Từ khoá: loop me. |
+| `/mattpocock-skills:migrate-to-shoehorn` | kỹ năng | [Lập trình] Chuyển file kiểm thử sang dùng thư viện shoehorn thay cho ép kiểu bằng `as`. Từ khoá: shoehorn migration. |
+| `/mattpocock-skills:obsidian-vault` | kỹ năng | [Lập trình] Tìm, tạo và quản lý ghi chú trong kho Obsidian, có liên kết wiki. Từ khoá: Obsidian. |
+| `/mattpocock-skills:prototype` | kỹ năng | [Lập trình] Dựng bản thử nghiệm dùng một lần để trả lời một câu hỏi thiết kế. Từ khoá: prototype. |
+| `/mattpocock-skills:qa` | kỹ năng | [Lập trình] Phiên kiểm thử tương tác: người dùng báo lỗi bằng lời, hệ thống ghi nhận và xử lý. Từ khoá: QA session. |
+| `/mattpocock-skills:request-refactor-plan` | kỹ năng | [Lập trình] Lập kế hoạch tái cấu trúc chi tiết với các bước commit rất nhỏ. Từ khoá: refactor plan. |
+| `/mattpocock-skills:research` | kỹ năng | [Lập trình] Tra cứu một câu hỏi dựa trên nguồn gốc đáng tin và ghi lại kết quả. Từ khoá: research. |
+| `/mattpocock-skills:resolving-merge-conflicts` | kỹ năng | [Lập trình] Xử lý xung đột khi đang merge hoặc rebase dở dang. Từ khoá: merge conflicts. |
+| `/mattpocock-skills:scaffold-exercises` | kỹ năng | [Lập trình] Dựng khung thư mục bài tập gồm đề bài, lời giải và giải thích. Từ khoá: scaffold exercises. |
+| `/mattpocock-skills:setup-matt-pocock-skills` | kỹ năng | [Lập trình] Cấu hình kho mã để dùng được bộ kỹ năng này. Từ khoá: setup. |
+| `/mattpocock-skills:setup-pre-commit` | kỹ năng | [Lập trình] Cài chốt kiểm trước khi commit: định dạng mã, kiểm kiểu. Từ khoá: pre-commit hooks. |
+| `/mattpocock-skills:setup-ts-deep-modules` | kỹ năng | [Lập trình] Cấu hình kho mã TypeScript để mỗi gói là một mô-đun sâu. Từ khoá: deep modules, TypeScript. |
+| `/mattpocock-skills:tdd` | kỹ năng | [Lập trình] Phát triển hướng kiểm thử: viết test trước rồi mới viết mã. Từ khoá: TDD. |
+| `/mattpocock-skills:teach` | kỹ năng | [Lập trình] Dạy một kỹ năng hoặc khái niệm mới ngay trong không gian làm việc. Từ khoá: teach. |
+| `/mattpocock-skills:to-questionnaire` | kỹ năng | [Lập trình] Biến một quyết định chưa tự trả lời được thành bộ câu hỏi gửi người khác. Từ khoá: questionnaire. |
+| `/mattpocock-skills:to-spec` | kỹ năng | [Lập trình] Biến cuộc trò chuyện hiện tại thành bản đặc tả và đăng lên hệ theo dõi việc. Từ khoá: to spec. |
+| `/mattpocock-skills:to-tickets` | kỹ năng | [Lập trình] Chia kế hoạch hoặc đặc tả thành các phiếu việc nhỏ chạy được. Từ khoá: to tickets. |
+| `/mattpocock-skills:triage` | kỹ năng | [Lập trình] Đưa các vấn đề và pull request bên ngoài qua quy trình phân loại nhiều vai. Từ khoá: triage. |
+| `/mattpocock-skills:ubiquitous-language` | kỹ năng | [Lập trình] Rút bảng thuật ngữ thống nhất cho dự án từ chính cuộc trò chuyện. Từ khoá: ubiquitous language. |
+| `/mattpocock-skills:wayfinder` | kỹ năng | [Lập trình] Lập kế hoạch cho khối việc lớn hơn sức chứa của một phiên agent. Từ khoá: wayfinder. |
+| `/mattpocock-skills:wizard` | kỹ năng | [Lập trình] Sinh trình hướng dẫn dạng bash dắt người dùng qua một quy trình thủ công. Từ khoá: bash wizard. |
+| `/mattpocock-skills:writing-beats` | kỹ năng | [Viết lách] Giai đoạn DỰNG MẠCH: ghép nguyên liệu thành hành trình các nhịp có căn cứ. Từ khoá: writing beats. |
+| `/mattpocock-skills:writing-fragments` | kỹ năng | [Viết lách] Giai đoạn KHAI PHÁ: gom mảnh ý thô, chưa cần bố cục. Từ khoá: writing fragments. |
+| `/mattpocock-skills:writing-great-skills` | kỹ năng | [Lập trình] Tài liệu tham chiếu về cách viết và biên tập một skill cho tốt. Từ khoá: writing skills. |
+| `/mattpocock-skills:writing-shape` | kỹ năng | [Viết lách] Giai đoạn ĐỊNH HÌNH: nắn nguyên liệu thô thành bài, từng đoạn một. Từ khoá: writing shape. |
+
+### small-business  (31)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/small-business:business-pulse` | kỹ năng | [Doanh nghiệp nhỏ] Bản chụp nhanh một trang về tình hình kinh doanh. Không liên quan y khoa. Từ khoá: business snapshot. |
+| `/small-business:call-list` | kỹ năng | [Doanh nghiệp nhỏ] Xếp 5 khách hàng tiềm năng đáng gọi nhất hôm nay kèm gợi ý nói chuyện. Từ khoá: call list. |
+| `/small-business:canva-creator` | kỹ năng | [Doanh nghiệp nhỏ] Thực thi chiến dịch từ bản tóm tắt nội dung đã duyệt. Từ khoá: Canva. |
+| `/small-business:cash-flow-snapshot` | kỹ năng | [Doanh nghiệp nhỏ] Ảnh chụp dòng tiền từ công nợ phải thu, phải trả và chi phí cố định. Từ khoá: cash flow. |
+| `/small-business:close-month` | kỹ năng | [Doanh nghiệp nhỏ] Khoá sổ tháng: đối chiếu sổ sách với cổng thanh toán. Từ khoá: close month. |
+| `/small-business:content-strategy` | kỹ năng | [Doanh nghiệp nhỏ] Phân tích dữ liệu bán hàng để tìm hướng nội dung nên đẩy. Từ khoá: content strategy. |
+| `/small-business:contract-review` | kỹ năng | [Doanh nghiệp nhỏ] Rà soát nhẹ hợp đồng NDA, MSA và hợp đồng nhà cung cấp. Từ khoá: SMB contract. |
+| `/small-business:crm-cleanup` | kỹ năng | [Doanh nghiệp nhỏ] Quét CRM tìm cơ hội cũ, liên hệ trùng và dữ liệu thiếu. Từ khoá: CRM cleanup. |
+| `/small-business:crm-maintenance` | kỹ năng | [Doanh nghiệp nhỏ] Giữ CRM luôn cập nhật mà chủ doanh nghiệp không phải tự vào. Từ khoá: CRM maintenance. |
+| `/small-business:customer-pulse` | kỹ năng | [Doanh nghiệp nhỏ] Gom phản hồi và khiếu nại khách hàng từ nhiều nguồn. Từ khoá: customer pulse. |
+| `/small-business:customer-pulse-check` | kỹ năng | [Doanh nghiệp nhỏ] Rút chủ đề chung từ khiếu nại và phiếu hỗ trợ khách hàng. Từ khoá: customer themes. |
+| `/small-business:friday-brief` | kỹ năng | [Doanh nghiệp nhỏ] Bản tin cuối tuần: doanh thu so với tuần trước. Từ khoá: Friday brief. |
+| `/small-business:handle-complaint` | kỹ năng | [Doanh nghiệp nhỏ] Xử lý trọn vẹn một khiếu nại của khách hàng. Từ khoá: complaint handling. |
+| `/small-business:invoice-chase` | kỹ năng | [Doanh nghiệp nhỏ] Soạn thư nhắc hoá đơn quá hạn. Từ khoá: invoice reminder. |
+| `/small-business:job-post-builder` | kỹ năng | [Doanh nghiệp nhỏ] Dựng gói tuyển dụng: tin tuyển, bộ câu hỏi phỏng vấn. Từ khoá: job post. |
+| `/small-business:lead-triage` | kỹ năng | [Doanh nghiệp nhỏ] Chấm điểm khách hàng tiềm năng theo tín hiệu tương tác. Từ khoá: lead scoring. |
+| `/small-business:margin-analyzer` | kỹ năng | [Doanh nghiệp nhỏ] Phân tích biên lợi nhuận theo từng sản phẩm hoặc dịch vụ. Từ khoá: unit economics. |
+| `/small-business:monday-brief` | kỹ năng | [Doanh nghiệp nhỏ] Bản tin sáng thứ Hai: tiền mặt, doanh số, việc cần làm. Từ khoá: Monday brief. |
+| `/small-business:month-end-prep` | kỹ năng | [Doanh nghiệp nhỏ] Dẫn chủ doanh nghiệp qua các bước khoá sổ cuối tháng. Từ khoá: month-end. |
+| `/small-business:month-heads-up` | kỹ năng | [Doanh nghiệp nhỏ] Chạy ngày 25 hằng tháng — dự báo dòng tiền 30 ngày tới. Từ khoá: cash outlook. |
+| `/small-business:plan-payroll` | kỹ năng | [Doanh nghiệp nhỏ] Dự báo tiền mặt và xếp thứ tự hoá đơn quá hạn trước kỳ trả lương. Từ khoá: payroll. |
+| `/small-business:price-check` | kỹ năng | [Doanh nghiệp nhỏ] Bảng biên lợi nhuận theo sản phẩm kèm ba kịch bản giá. Từ khoá: pricing. |
+| `/small-business:quarterly-review` | kỹ năng | [Doanh nghiệp nhỏ] Báo cáo tổng kết quý: xu hướng doanh thu và biên lợi nhuận. Từ khoá: quarterly review. |
+| `/small-business:review-contract` | kỹ năng | [Pháp lý] Rà soát hợp đồng theo bộ nguyên tắc đàm phán của đơn vị. Từ khoá: contract review. |
+| `/small-business:run-campaign` | kỹ năng | [Doanh nghiệp nhỏ] Chạy trọn một chiến dịch tiếp thị từ phân tích tới nội dung. Từ khoá: campaign. |
+| `/small-business:sales-brief` | kỹ năng | [Doanh nghiệp nhỏ] Nêu sản phẩm bán chạy và bán chậm, nhận diện tính mùa vụ. Từ khoá: sales brief. |
+| `/small-business:smb-onboard` | kỹ năng | [Doanh nghiệp nhỏ] Hướng dẫn chủ doanh nghiệp kết nối các công cụ lần đầu. Từ khoá: SMB onboarding. |
+| `/small-business:smb-router` | kỹ năng | [Doanh nghiệp nhỏ] Cửa vào chung của bộ công cụ doanh nghiệp nhỏ — nghe nhu cầu rồi chuyển tới đúng skill. Từ khoá: SMB router. |
+| `/small-business:tax-prep` | kỹ năng | [Doanh nghiệp nhỏ] Chuẩn bị hồ sơ mùa thuế và tính thuế tạm nộp. Từ khoá: tax prep. |
+| `/small-business:tax-season-organizer` | kỹ năng | [Doanh nghiệp nhỏ] Sắp xếp tài liệu cho mùa quyết toán thuế. Từ khoá: tax season. |
+| `/small-business:ticket-deflector` | kỹ năng | [Doanh nghiệp nhỏ] Đọc thư hoặc phiếu hỗ trợ rồi soạn phản hồi kèm dữ liệu đơn hàng. Từ khoá: ticket deflection. |
+
+### brightdata-plugin  (21)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/brightdata-plugin:agent-onboarding` | kỹ năng | [Thu thập web] Hướng dẫn khởi đầu khi lần đầu dùng Bright Data. Từ khoá: Bright Data onboarding. |
+| `/brightdata-plugin:brand-listening` | kỹ năng | [Thu thập web] Lắng nghe mạng xã hội và theo dõi danh tiếng thương hiệu. Từ khoá: social listening. |
+| `/brightdata-plugin:brd-browser-debug` | kỹ năng | [Thu thập web] Gỡ lỗi phiên trình duyệt thu thập dữ liệu. Từ khoá: browser debug. |
+| `/brightdata-plugin:bright-data-best-practices` | kỹ năng | [Thu thập web] Thực hành tốt khi tích hợp Bright Data cho môi trường thật. Từ khoá: best practices. |
+| `/brightdata-plugin:bright-data-mcp` | kỹ năng | [Thu thập web] Bộ công cụ MCP xử lý mọi thao tác lấy dữ liệu web. Từ khoá: Bright Data MCP. |
+| `/brightdata-plugin:brightdata-cli` | kỹ năng | [Thu thập web] Dùng dòng lệnh Bright Data. Từ khoá: Bright Data CLI. |
+| `/brightdata-plugin:brightdata-proxy` | kỹ năng | [Thu thập web] Sinh mã định tuyến yêu cầu HTTP qua proxy Bright Data. Từ khoá: proxy. |
+| `/brightdata-plugin:brightdata-sdk` | kỹ năng | [Thu thập web] Lấy dữ liệu web bằng thư viện Python của Bright Data. Từ khoá: Python SDK. |
+| `/brightdata-plugin:brightdata-sdk-js` | kỹ năng | [Thu thập web] Lấy dữ liệu web bằng thư viện JavaScript của Bright Data. Từ khoá: JS SDK. |
+| `/brightdata-plugin:competitive-intel` | kỹ năng | [Thu thập web] Thu thập thông tin cạnh tranh và nghiên cứu thị trường theo thời gian thực. Từ khoá: competitive intelligence. |
+| `/brightdata-plugin:data-feeds` | kỹ năng | [Thu thập web] Lấy dữ liệu có cấu trúc từ hơn 40 nền tảng phổ biến. Từ khoá: data feeds. |
+| `/brightdata-plugin:design-mirror` | kỹ năng | [Thu thập web] Sao chép phong cách hình ảnh của một trang web để áp cho trang của mình. Từ khoá: design mirror. |
+| `/brightdata-plugin:discover-api` | kỹ năng | [Thu thập web] Dùng API khám phá nội dung xếp hạng theo ý định tìm kiếm. Từ khoá: discover API. |
+| `/brightdata-plugin:live-research` | kỹ năng | [Thu thập web] Dựng bản tóm tắt nghiên cứu đa nguồn có trích dẫn về một chủ đề. Với câu hỏi y khoa hãy dùng `/tra-y-van` để có PMID/DOI. Từ khoá: live research. |
+| `/brightdata-plugin:price-comparison` | kỹ năng | [Thu thập web] So sánh giá bán hàng qua dữ liệu thu thập từ web. Từ khoá: price comparison. |
+| `/brightdata-plugin:rag-pipeline` | kỹ năng | [Thu thập web] Dựng đường ống truy hồi tăng cường (RAG) từ dữ liệu web. Từ khoá: RAG pipeline. |
+| `/brightdata-plugin:scrape` | kỹ năng | [Thu thập web] Lấy nội dung trang web về dạng markdown/HTML/JSON sạch. Từ khoá: scrape. |
+| `/brightdata-plugin:scraper-builder` | kỹ năng | [Thu thập web] Dựng bộ thu thập dữ liệu cho một trang web bất kỳ. Từ khoá: scraper builder. |
+| `/brightdata-plugin:scraper-studio` | kỹ năng | [Thu thập web] Dựng và chạy bộ thu thập do AI sinh, ngay từ dòng lệnh. Từ khoá: scraper studio. |
+| `/brightdata-plugin:search` | kỹ năng | [Thu thập web] Tìm kiếm trên web qua dòng lệnh Bright Data. Từ khoá: web search. |
+| `/brightdata-plugin:seo-audit` | kỹ năng | [Tiếp thị] Rà soát và chẩn đoán vấn đề tối ưu công cụ tìm kiếm. Từ khoá: SEO audit. |
+
 ### understand-anything  (19)
 
 | Gọi bằng | Loại | Làm gì |
@@ -353,6 +931,25 @@
 | `/understand-anything:understand-knowledge` | kỹ năng | [Đọc hiểu mã] Phân tích một kho tri thức dạng wiki và dựng bản đồ thực thể liên kết. Từ khoá: knowledge base graph. |
 | `/understand-anything:understand-onboard` | kỹ năng | [Đọc hiểu mã] Sinh tài liệu HƯỚNG DẪN NHẬP MÔN cho người mới tham gia dự án. Từ khoá: onboarding guide. |
 
+### figma  (14)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/figma:figma-code-connect` | kỹ năng | [Figma] Tạo và duy trì file nối thành phần Figma với mã nguồn. Từ khoá: Code Connect. |
+| `/figma:figma-create-new-file` | kỹ năng | [Figma] Bắt buộc nạp trước khi tạo file Figma mới. Từ khoá: Figma new file. |
+| `/figma:figma-design-to-code` | kỹ năng | [Figma] Chuyển thiết kế Figma thành mã giao diện. Từ khoá: design to code. |
+| `/figma:figma-generate-design` | kỹ năng | [Figma] Sinh thiết kế mới trong Figma. Từ khoá: generate design. |
+| `/figma:figma-generate-diagram` | kỹ năng | [Figma] Sinh sơ đồ trong Figma. Từ khoá: generate diagram. |
+| `/figma:figma-generate-library` | kỹ năng | [Figma] Dựng hoặc cập nhật hệ thống thiết kế trong Figma. Từ khoá: design library. |
+| `/figma:figma-implement-motion` | kỹ năng | [Figma] Chuyển hiệu ứng chuyển động trong Figma thành mã chạy được. Từ khoá: motion. |
+| `/figma:figma-swiftui` | kỹ năng | [Figma] Chuyển đổi hai chiều giữa Figma và SwiftUI. Từ khoá: SwiftUI. |
+| `/figma:figma-use` | kỹ năng | [Figma] Bắt buộc nạp trước khi dùng công cụ Figma. Từ khoá: Figma prerequisite. |
+| `/figma:figma-use-figjam` | kỹ năng | [Figma] Dùng công cụ Figma trong bối cảnh bảng FigJam. Từ khoá: FigJam. |
+| `/figma:figma-use-motion` | kỹ năng | [Figma] Ngữ cảnh về hiệu ứng chuyển động cho công cụ Figma. Từ khoá: motion context. |
+| `/figma:figma-use-slides` | kỹ năng | [Figma] Dùng công cụ Figma trong bối cảnh làm slide. Từ khoá: Figma Slides. |
+| `/figma:generate-project-plan` | kỹ năng | [Figma] Sinh bảng kế hoạch dự án trên FigJam từ tài liệu yêu cầu. Từ khoá: project plan board. |
+| `/figma:video-interaction-mapper` | kỹ năng | [Figma] Phân tích video thao tác giao diện để dựng lại luồng tương tác. Từ khoá: interaction mapping. |
+
 ### codex  (12)
 
 | Gọi bằng | Loại | Làm gì |
@@ -369,6 +966,337 @@
 | `/codex:codex-cli-runtime` | kỹ năng | [Codex] Hợp đồng nội bộ để gọi runtime Codex từ Claude Code. Skill nội bộ, không gọi trực tiếp. Từ khoá: codex runtime. |
 | `/codex:codex-result-handling` | kỹ năng | [Codex] Hướng dẫn nội bộ về cách trình bày kết quả Codex trả về cho người dùng. Từ khoá: codex result. |
 | `/codex:gpt-5-4-prompting` | kỹ năng | [Codex] Hướng dẫn nội bộ soạn câu lệnh cho Codex/GPT-5.4 khi viết mã, rà soát, chẩn đoán, tra cứu. Từ khoá: GPT-5.4 prompting. |
+
+### ip-legal  (12)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/ip-legal:cease-desist` | kỹ năng | [Sở hữu trí tuệ] Soạn thư yêu cầu chấm dứt hành vi xâm phạm, hoặc phân loại thư nhận được. Từ khoá: cease and desist. |
+| `/ip-legal:clearance` | kỹ năng | [Sở hữu trí tuệ] Rà soát sơ bộ khả năng đăng ký nhãn hiệu. Từ khoá: trademark clearance. |
+| `/ip-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
+| `/ip-legal:customize` | kỹ năng | [Sở hữu trí tuệ] Tuỳ chỉnh hồ sơ hành nghề về sở hữu trí tuệ. Từ khoá: customize. |
+| `/ip-legal:fto-triage` | kỹ năng | [Sở hữu trí tuệ] Xem xét bước đầu quyền tự do thực thi sáng chế. Từ khoá: freedom to operate. |
+| `/ip-legal:infringement-triage` | kỹ năng | [Sở hữu trí tuệ] Phân loại vụ việc xâm phạm nhãn hiệu, bản quyền, sáng chế. Từ khoá: infringement. |
+| `/ip-legal:invention-intake` | kỹ năng | [Sở hữu trí tuệ] Sàng lọc bước đầu một bản mô tả sáng chế: tính mới, trình độ sáng tạo. Từ khoá: invention disclosure. |
+| `/ip-legal:ip-clause-review` | kỹ năng | [Sở hữu trí tuệ] Rà soát điều khoản sở hữu trí tuệ trong hợp đồng. Từ khoá: IP clauses. |
+| `/ip-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
+| `/ip-legal:oss-review` | kỹ năng | [Sở hữu trí tuệ] Kiểm tuân thủ giấy phép nguồn mở cho danh sách thư viện phụ thuộc. Từ khoá: OSS license. |
+| `/ip-legal:portfolio` | kỹ năng | [Sở hữu trí tuệ] Theo dõi danh mục tài sản trí tuệ: đăng ký, gia hạn, duy trì. Từ khoá: IP portfolio. |
+| `/ip-legal:takedown` | kỹ năng | [Sở hữu trí tuệ] Soạn thông báo gỡ bỏ theo DMCA hoặc xử lý thông báo nhận được. Từ khoá: DMCA takedown. |
+
+### pubmed  (11)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/pubmed:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
+| `/pubmed:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/pubmed:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
+| `/pubmed:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
+| `/pubmed:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
+| `/pubmed:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
+| `/pubmed:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
+| `/pubmed:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/pubmed:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/pubmed:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/pubmed:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
+
+### icd10-codes  (11)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/icd10-codes:clinical-note-extract-skill` | kỹ năng | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Khử định danh trước khi dùng. Từ khoá: clinical note extraction. |
+| `/icd10-codes:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/icd10-codes:contracts` | kỹ năng | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Từ khoá: contract corpus. |
+| `/icd10-codes:doc-extract` | kỹ năng | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Từ khoá: document extraction. |
+| `/icd10-codes:fhir` | kỹ năng | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner) để đọc dữ liệu bệnh án điện tử. Từ khoá: FHIR R4, EHR. |
+| `/icd10-codes:fhir-developer-skill` | kỹ năng | [Y khoa] Hướng dẫn lập trình API FHIR khi tự xây điểm cuối cho hệ thống y tế. Từ khoá: FHIR development. |
+| `/icd10-codes:fraud-detection` | kỹ năng | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Từ khoá: claims fraud. |
+| `/icd10-codes:icd10-cm-skill` | kỹ năng | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Xem thêm lệnh `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/icd10-codes:prior-auth-review-skill` | kỹ năng | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/icd10-codes:procedure-coding` | kỹ năng | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Đây là bộ mã của Mỹ, khác quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/icd10-codes:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
+
+### ai-governance-legal  (10)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/ai-governance-legal:ai-inventory` | kỹ năng | [Quản trị AI] Lập sổ kiểm kê từng hệ thống AI theo Đạo luật AI của EU. Từ khoá: EU AI Act inventory. |
+| `/ai-governance-legal:aia-generation` | kỹ năng | [Quản trị AI] Chạy đánh giá tác động của một hệ thống AI. Từ khoá: AI impact assessment. |
+| `/ai-governance-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
+| `/ai-governance-legal:customize` | kỹ năng | [Pháp lý] Tuỳ chỉnh hồ sơ hành nghề về quản trị AI. Từ khoá: customize. |
+| `/ai-governance-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
+| `/ai-governance-legal:policy-monitor` | kỹ năng | [Quản trị AI] Rà hằng tuần để giữ chính sách AI khớp với thực tế đang làm. Từ khoá: policy monitor. |
+| `/ai-governance-legal:policy-starter` | kỹ năng | [Quản trị AI] Soạn chính sách sử dụng AI cho đơn vị từ các mẫu đã công bố. Từ khoá: AI policy. |
+| `/ai-governance-legal:reg-gap-analysis` | kỹ năng | [Quản trị AI] So một quy định AI mới với bộ quản trị hiện có để tìm khoảng trống. Từ khoá: regulatory gap. |
+| `/ai-governance-legal:use-case-triage` | kỹ năng | [Quản trị AI] Phân loại một tình huống dùng AI được đề xuất so với danh mục đã đăng ký. Từ khoá: use case triage. |
+| `/ai-governance-legal:vendor-ai-review` | kỹ năng | [Quản trị AI] Rà soát điều khoản AI trong hợp đồng với nhà cung cấp. Từ khoá: vendor AI terms. |
+
+### data  (10)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/data:analyze` | kỹ năng | [Dữ liệu] Trả lời câu hỏi về dữ liệu — từ tra cứu nhanh tới phân tích đầy đủ. Từ khoá: data analysis. |
+| `/data:build-dashboard` | kỹ năng | [Dữ liệu] Dựng bảng điều khiển HTML tương tác có biểu đồ và bộ lọc. Với dashboard lâm sàng EBM, dùng mẫu Evidence Workbench của dự án. Từ khoá: dashboard. |
+| `/data:create-viz` | kỹ năng | [Dữ liệu] Vẽ biểu đồ đạt chuẩn công bố bằng Python. Từ khoá: visualization. |
+| `/data:data-context-extractor` | kỹ năng | [Dữ liệu] Sinh skill phân tích dữ liệu riêng cho đặc thù của một đơn vị. Từ khoá: data context. |
+| `/data:data-visualization` | kỹ năng | [Dữ liệu] Vẽ biểu đồ hiệu quả bằng Python (matplotlib, seaborn...). Từ khoá: data visualization. |
+| `/data:explore-data` | kỹ năng | [Dữ liệu] Khảo sát một bộ dữ liệu để nắm hình dạng, chất lượng và điểm bất thường. Từ khoá: data profiling. |
+| `/data:sql-queries` | kỹ năng | [Dữ liệu] Viết câu lệnh SQL đúng và nhanh cho các kho dữ liệu lớn. Từ khoá: SQL. |
+| `/data:statistical-analysis` | kỹ năng | [Dữ liệu] Thống kê mô tả, phân tích xu hướng và kiểm định. LƯU Ý: cho nghiên cứu y khoa hãy dùng skill `statistical-analysis` riêng của bác sĩ hoặc agent `phan-tich-thong-ke` (bám SAP đã khoá). Từ khoá: statistics. |
+| `/data:validate-data` | kỹ năng | [Dữ liệu] Rà soát một phân tích trước khi chia sẻ: phương pháp, độ chính xác, thiên lệch. Từ khoá: analysis QA. |
+| `/data:write-query` | kỹ năng | [Dữ liệu] Viết SQL tối ưu theo đúng phương ngữ của hệ quản trị đang dùng. Từ khoá: SQL dialect. |
+
+### engineering  (10)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/engineering:architecture` | kỹ năng | [Kỹ thuật] Tạo hoặc thẩm định một bản ghi quyết định kiến trúc (ADR). Từ khoá: ADR. |
+| `/engineering:code-review` | kỹ năng | [Kỹ thuật] Rà soát thay đổi mã về bảo mật, hiệu năng và tính đúng. Từ khoá: code review. |
+| `/engineering:debug` | kỹ năng | [Kỹ thuật] Phiên gỡ lỗi có cấu trúc: tái hiện → khoanh vùng → chẩn đoán → sửa. Từ khoá: debugging. |
+| `/engineering:deploy-checklist` | kỹ năng | [Kỹ thuật] Danh mục kiểm tra trước khi phát hành. Từ khoá: deploy checklist. |
+| `/engineering:documentation` | kỹ năng | [Kỹ thuật] Viết và bảo trì tài liệu kỹ thuật. Từ khoá: documentation. |
+| `/engineering:incident-response` | kỹ năng | [Kỹ thuật] Quy trình xử lý sự cố: phân loại → thông báo → khắc phục. Từ khoá: incident response. |
+| `/engineering:standup` | kỹ năng | [Kỹ thuật] Sinh bản báo cáo công việc hằng ngày từ hoạt động gần đây. Từ khoá: standup. |
+| `/engineering:system-design` | kỹ năng | [Kỹ thuật] Thiết kế hệ thống, dịch vụ và kiến trúc tổng thể. Từ khoá: system design. |
+| `/engineering:tech-debt` | kỹ năng | [Kỹ thuật] Nhận diện, phân loại và xếp ưu tiên nợ kỹ thuật. Từ khoá: tech debt. |
+| `/engineering:testing-strategy` | kỹ năng | [Kỹ thuật] Thiết kế chiến lược và kế hoạch kiểm thử. Từ khoá: testing strategy. |
+
+### operations  (9)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/operations:capacity-plan` | kỹ năng | [Vận hành] Hoạch định năng lực nguồn lực: phân tích khối lượng và mức sử dụng. Từ khoá: capacity planning. |
+| `/operations:change-request` | kỹ năng | [Vận hành] Lập yêu cầu thay đổi kèm phân tích tác động và phương án quay lui. Từ khoá: change request. |
+| `/operations:compliance-tracking` | kỹ năng | [Vận hành] Theo dõi yêu cầu tuân thủ và mức sẵn sàng cho kiểm toán. Từ khoá: compliance tracking. |
+| `/operations:process-doc` | kỹ năng | [Vận hành] Lập tài liệu quy trình: lưu đồ, ma trận trách nhiệm, quy trình chuẩn. Từ khoá: process documentation. |
+| `/operations:process-optimization` | kỹ năng | [Vận hành] Phân tích và cải tiến quy trình nghiệp vụ. Từ khoá: process optimization. |
+| `/operations:risk-assessment` | kỹ năng | [Vận hành] Nhận diện, đánh giá và giảm thiểu rủi ro vận hành. Từ khoá: risk assessment. |
+| `/operations:runbook` | kỹ năng | [Vận hành] Lập hoặc cập nhật sổ tay vận hành cho một việc lặp lại. Từ khoá: runbook. |
+| `/operations:status-report` | kỹ năng | [Vận hành] Sinh báo cáo tình hình kèm chỉ số, rủi ro và việc cần làm. Từ khoá: status report. |
+| `/operations:vendor-review` | kỹ năng | [Vận hành] Đánh giá nhà cung cấp: chi phí, rủi ro, khuyến nghị. Từ khoá: vendor evaluation. |
+
+### human-resources  (9)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/human-resources:comp-analysis` | kỹ năng | [Nhân sự] Phân tích lương thưởng: so sánh thị trường, xếp bậc, công bằng nội bộ. Từ khoá: compensation. |
+| `/human-resources:draft-offer` | kỹ năng | [Nhân sự] Soạn thư mời làm việc kèm điều khoản lương thưởng. Từ khoá: offer letter. |
+| `/human-resources:interview-prep` | kỹ năng | [Nhân sự] Dựng kế hoạch phỏng vấn có cấu trúc theo năng lực. Từ khoá: interview plan. |
+| `/human-resources:onboarding` | kỹ năng | [Nhân sự] Lập danh mục việc và kế hoạch tuần đầu cho người mới. Từ khoá: onboarding. |
+| `/human-resources:org-planning` | kỹ năng | [Nhân sự] Hoạch định nhân sự và thiết kế cơ cấu tổ chức. Từ khoá: org design. |
+| `/human-resources:people-report` | kỹ năng | [Nhân sự] Báo cáo nhân sự: quân số, nghỉ việc, đa dạng, sức khoẻ tổ chức. Từ khoá: people report. |
+| `/human-resources:performance-review` | kỹ năng | [Nhân sự] Dựng khung đánh giá kết quả công việc. Từ khoá: performance review. |
+| `/human-resources:policy-lookup` | kỹ năng | [Nhân sự] Tra và giải thích quy định nội bộ bằng lời dễ hiểu. Từ khoá: policy lookup. |
+| `/human-resources:recruiting-pipeline` | kỹ năng | [Nhân sự] Theo dõi và quản lý các bước tuyển dụng. Từ khoá: recruiting pipeline. |
+
+### legal  (9)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/legal:brief` | kỹ năng | [Pháp lý] Sinh bản tóm tắt bối cảnh cho công việc pháp lý. Từ khoá: legal brief. |
+| `/legal:compliance-check` | kỹ năng | [Pháp lý] Kiểm tra tuân thủ cho một hành động, tính năng hay chiến dịch dự kiến. Từ khoá: compliance. |
+| `/legal:legal-response` | kỹ năng | [Pháp lý] Soạn thư trả lời cho các yêu cầu pháp lý thường gặp. Từ khoá: legal response. |
+| `/legal:legal-risk-assessment` | kỹ năng | [Pháp lý] Đánh giá và phân loại rủi ro pháp lý theo ma trận mức độ × khả năng. Từ khoá: legal risk. |
+| `/legal:meeting-briefing` | kỹ năng | [Pháp lý] Chuẩn bị tài liệu tóm tắt cho cuộc họp có yếu tố pháp lý. Từ khoá: meeting briefing. |
+| `/legal:review-contract` | kỹ năng | [Pháp lý] Rà soát hợp đồng theo bộ nguyên tắc đàm phán của đơn vị. Từ khoá: contract review. |
+| `/legal:signature-request` | kỹ năng | [Pháp lý] Chuẩn bị và gửi tài liệu đi ký điện tử. Từ khoá: e-signature. |
+| `/legal:triage-nda` | kỹ năng | [Pháp lý] Phân loại nhanh một thoả thuận bảo mật (NDA) nhận được. Từ khoá: NDA triage. |
+| `/legal:vendor-check` | kỹ năng | [Pháp lý] Kiểm tình trạng các thoả thuận hiện có với một nhà cung cấp. Từ khoá: vendor check. |
+
+### product-management  (8)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/product-management:competitive-brief` | kỹ năng | [Sản phẩm] Lập bản phân tích đối thủ cạnh tranh. Từ khoá: competitive analysis. |
+| `/product-management:metrics-review` | kỹ năng | [Sản phẩm] Rà soát chỉ số sản phẩm kèm phân tích xu hướng. Từ khoá: product metrics. |
+| `/product-management:product-brainstorming` | kỹ năng | [Sản phẩm] Động não ý tưởng sản phẩm và khám phá không gian vấn đề. Từ khoá: product brainstorming. |
+| `/product-management:roadmap-update` | kỹ năng | [Sản phẩm] Cập nhật hoặc sắp lại ưu tiên lộ trình sản phẩm. Từ khoá: roadmap. |
+| `/product-management:sprint-planning` | kỹ năng | [Sản phẩm] Lập kế hoạch một đợt làm việc: phạm vi, năng lực, mục tiêu. Từ khoá: sprint planning. |
+| `/product-management:stakeholder-update` | kỹ năng | [Sản phẩm] Sinh bản cập nhật gửi các bên liên quan theo đúng đối tượng. Từ khoá: stakeholder update. |
+| `/product-management:synthesize-research` | kỹ năng | [Sản phẩm] Tổng hợp nghiên cứu người dùng từ phỏng vấn, khảo sát, phản hồi. Từ khoá: research synthesis. |
+| `/product-management:write-spec` | kỹ năng | [Sản phẩm] Viết đặc tả tính năng hoặc tài liệu yêu cầu sản phẩm. Từ khoá: feature spec. |
+
+### finance  (8)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/finance:audit-support` | kỹ năng | [Tài chính] Hỗ trợ tuân thủ SOX 404 với phương pháp kiểm thử kiểm soát. Từ khoá: SOX 404. |
+| `/finance:close-management` | kỹ năng | [Tài chính] Quản lý quy trình khoá sổ cuối tháng. Từ khoá: month-end close. |
+| `/finance:financial-statements` | kỹ năng | [Tài chính] Lập báo cáo tài chính: kết quả kinh doanh, cân đối kế toán, lưu chuyển tiền. Từ khoá: financial statements. |
+| `/finance:journal-entry` | kỹ năng | [Tài chính] Lập bút toán với nợ, có và chứng từ kèm theo. Từ khoá: journal entry. |
+| `/finance:journal-entry-prep` | kỹ năng | [Tài chính] Chuẩn bị bút toán kèm chứng từ. Từ khoá: journal entry prep. |
+| `/finance:reconciliation` | kỹ năng | [Tài chính] Đối chiếu số dư sổ cái với sổ chi tiết và sao kê ngân hàng. Từ khoá: reconciliation. |
+| `/finance:sox-testing` | kỹ năng | [Tài chính] Chọn mẫu và lập hồ sơ kiểm thử kiểm soát theo SOX. Từ khoá: SOX testing. |
+| `/finance:variance-analysis` | kỹ năng | [Tài chính] Phân rã chênh lệch tài chính theo từng yếu tố tác động. Từ khoá: variance analysis. |
+
+### marketing  (8)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/marketing:brand-review` | kỹ năng | [Tiếp thị] Rà soát nội dung theo bộ nhận diện và giọng điệu thương hiệu. Từ khoá: brand review. |
+| `/marketing:campaign-plan` | kỹ năng | [Tiếp thị] Lập kế hoạch chiến dịch đầy đủ: mục tiêu, đối tượng, thông điệp. Từ khoá: campaign brief. |
+| `/marketing:competitive-brief` | kỹ năng | [Sản phẩm] Lập bản phân tích đối thủ cạnh tranh. Từ khoá: competitive analysis. |
+| `/marketing:content-creation` | kỹ năng | [Tiếp thị] Soạn nội dung tiếp thị trên nhiều kênh. Từ khoá: content creation. |
+| `/marketing:draft-content` | kỹ năng | [Tiếp thị] Viết bài blog, mạng xã hội, thư điện tử, trang đích. Từ khoá: draft content. |
+| `/marketing:email-sequence` | kỹ năng | [Tiếp thị] Thiết kế chuỗi thư điện tử nhiều bước kèm nội dung và lịch gửi. Từ khoá: email sequence. |
+| `/marketing:performance-report` | kỹ năng | [Tiếp thị] Báo cáo hiệu quả tiếp thị kèm chỉ số và phân tích xu hướng. Từ khoá: marketing performance. |
+| `/marketing:seo-audit` | kỹ năng | [Tiếp thị] Rà soát và chẩn đoán vấn đề tối ưu công cụ tìm kiếm. Từ khoá: SEO audit. |
+
+### product-legal  (7)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/product-legal:cold-start-interview` | kỹ năng | [Pháp lý] Phỏng vấn khởi đầu để dựng hồ sơ hành nghề từ dữ liệu sẵn có. Từ khoá: cold start. |
+| `/product-legal:customize` | kỹ năng | [Pháp lý sản phẩm] Tuỳ chỉnh hồ sơ hành nghề tư vấn sản phẩm. Từ khoá: customize. |
+| `/product-legal:feature-risk-assessment` | kỹ năng | [Pháp lý sản phẩm] Đánh giá rủi ro sâu cho một tính năng hoặc mảng sản phẩm. Từ khoá: feature risk. |
+| `/product-legal:is-this-a-problem` | kỹ năng | [Pháp lý sản phẩm] Trả lời nhanh câu hỏi 'chuyện này có vấn đề không'. Từ khoá: quick legal check. |
+| `/product-legal:launch-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát đầy đủ trước khi ra mắt sản phẩm. Từ khoá: launch review. |
+| `/product-legal:marketing-claims-review` | kỹ năng | [Pháp lý sản phẩm] Rà soát nội dung quảng cáo tìm khẳng định cần chứng minh. Từ khoá: marketing claims. |
+| `/product-legal:matter-workspace` | kỹ năng | [Pháp lý] Quản lý không gian làm việc theo từng vụ việc: tạo, liệt kê, chuyển, đóng. Từ khoá: matter workspace. |
+
+### design  (7)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/design:accessibility-review` | kỹ năng | [Thiết kế] Kiểm khả năng tiếp cận theo chuẩn WCAG 2.1 AA. Từ khoá: accessibility, WCAG. |
+| `/design:design-critique` | kỹ năng | [Thiết kế] Nhận xét thiết kế có cấu trúc về tính dùng được và thứ bậc thông tin. Từ khoá: design critique. |
+| `/design:design-handoff` | kỹ năng | [Thiết kế] Sinh tài liệu bàn giao từ thiết kế cho lập trình viên. Từ khoá: design handoff. |
+| `/design:design-system` | kỹ năng | [Thiết kế] Rà soát, lập tài liệu hoặc mở rộng hệ thống thiết kế. Từ khoá: design system. |
+| `/design:research-synthesis` | kỹ năng | [Thiết kế] Tổng hợp nghiên cứu người dùng thành chủ đề và khuyến nghị. Từ khoá: research synthesis. |
+| `/design:user-research` | kỹ năng | [Thiết kế] Lập kế hoạch, thực hiện và tổng hợp nghiên cứu người dùng. Từ khoá: user research. |
+| `/design:ux-copy` | kỹ năng | [Thiết kế] Viết hoặc rà soát chữ trên giao diện: nhãn, thông báo lỗi, trạng thái rỗng. Từ khoá: UX copy. |
+
+### scientific-problem-selection  (6)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/scientific-problem-selection:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/scientific-problem-selection:instrument-data-to-allotrope` | kỹ năng | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Từ khoá: Allotrope. |
+| `/scientific-problem-selection:nextflow-development` | kỹ năng | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Từ khoá: Nextflow, nf-core. |
+| `/scientific-problem-selection:scientific-problem-selection` | kỹ năng | [Nghiên cứu] Giúp nhà khoa học chọn vấn đề nghiên cứu đáng làm. Từ khoá: problem selection. |
+| `/scientific-problem-selection:scvi-tools` | kỹ năng | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Từ khoá: scvi-tools. |
+| `/scientific-problem-selection:single-cell-rna-qc` | kỹ năng | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Từ khoá: single-cell QC. |
+
+### clinical-trial-protocol  (6)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/clinical-trial-protocol:clinical-trial-protocol-skill` | kỹ năng | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Với đề tài của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/clinical-trial-protocol:instrument-data-to-allotrope` | kỹ năng | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Từ khoá: Allotrope. |
+| `/clinical-trial-protocol:nextflow-development` | kỹ năng | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Từ khoá: Nextflow, nf-core. |
+| `/clinical-trial-protocol:scientific-problem-selection` | kỹ năng | [Nghiên cứu] Giúp nhà khoa học chọn vấn đề nghiên cứu đáng làm. Từ khoá: problem selection. |
+| `/clinical-trial-protocol:scvi-tools` | kỹ năng | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Từ khoá: scvi-tools. |
+| `/clinical-trial-protocol:single-cell-rna-qc` | kỹ năng | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Từ khoá: single-cell QC. |
+
+### enterprise-search  (6)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/enterprise-search:digest` | kỹ năng | [Tra cứu nội bộ] Sinh bản tin tổng hợp hoạt động theo ngày hoặc tuần từ mọi nguồn đã nối. Từ khoá: digest. |
+| `/enterprise-search:enterprise-search` | kỹ năng | [Tra cứu nội bộ] Tìm trong kho tri thức của đơn vị qua các nguồn đã kết nối. Từ khoá: enterprise search. |
+| `/enterprise-search:knowledge-synthesis` | kỹ năng | [Tra cứu nội bộ] Gộp kết quả từ nhiều nguồn thành câu trả lời mạch lạc có dẫn nguồn. Từ khoá: knowledge synthesis. |
+| `/enterprise-search:search` | kỹ năng | [Tra cứu nội bộ] Tìm một lượt trên mọi nguồn đã kết nối. Dùng khi hỏi kiểu 'tài liệu về... nằm đâu', 'hôm trước chốt thế nào'. Từ khoá: unified search. |
+| `/enterprise-search:search-strategy` | kỹ năng | [Tra cứu nội bộ] Tách câu hỏi lớn thành nhiều truy vấn và điều phối tìm trên nhiều nguồn. Từ khoá: search strategy. |
+| `/enterprise-search:source-management` | kỹ năng | [Tra cứu nội bộ] Quản lý các nguồn đã kết nối cho tìm kiếm nội bộ. Từ khoá: source management. |
+
+### desktop-commander  (6)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/desktop-commander:ai-tools-setup` | kỹ năng | [Máy tính] Cài, nối, kiểm và sửa Claude Desktop cùng các máy chủ MCP. Từ khoá: MCP setup. |
+| `/desktop-commander:computer-health-check` | kỹ năng | [Máy tính] Kiểm tra sức khoẻ máy tính, CHỈ ĐỌC, không thay đổi gì. Từ khoá: health check. |
+| `/desktop-commander:desktop-commander-overview` | kỹ năng | [Máy tính] Tổng quan năng lực Desktop Commander: phiên dòng lệnh lâu dài, thao tác file. Từ khoá: Desktop Commander. |
+| `/desktop-commander:knowledge-base` | kỹ năng | [Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base. |
+| `/desktop-commander:obsidian-vault` | kỹ năng | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, frontmatter. Từ khoá: Obsidian. |
+| `/desktop-commander:terminal` | kỹ năng | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
+
+### productivity  (4)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/productivity:memory-management` | kỹ năng | [Năng suất] Hệ bộ nhớ hai tầng giúp trợ lý nhớ bối cảnh công việc lâu dài. Từ khoá: memory. |
+| `/productivity:start` | kỹ năng | [Zoom] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom. Từ khoá: Zoom start. |
+| `/productivity:task-management` | kỹ năng | [Năng suất] Quản lý việc cần làm bằng một file TASKS.md dùng chung. Từ khoá: tasks. |
+| `/productivity:update` | kỹ năng | [Năng suất] Đồng bộ danh sách việc và làm mới bộ nhớ từ hoạt động gần đây. Từ khoá: sync tasks. |
+
+### claude-tag-troubleshoot  (2)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/claude-tag-troubleshoot:config-guide` | kỹ năng | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
+| `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
+
+### humanizer  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/humanizer:humanizer` | kỹ năng | [Viết lách] Xoá dấu vết văn phong máy trong một đoạn văn bản. Dùng khi biên tập bài viết cho tự nhiên hơn. Từ khoá: humanizer, AI-generated writing. |
+
+### google-drive  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/google-drive:google-drive-api` | kỹ năng | [Kết nối] Tìm, đọc, tạo, cập nhật và chia sẻ file trên Google Drive. Từ khoá: Google Drive. |
+
+### snowflake  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/snowflake:snowflake-api` | kỹ năng | [Kết nối] Chạy SQL trên kho dữ liệu Snowflake. Từ khoá: Snowflake. |
+
+### notion  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/notion:notion-api` | kỹ năng | [Kết nối] Tìm, đọc và ghi trang, cơ sở dữ liệu Notion. Từ khoá: Notion. |
+
+### linear  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/linear:linear-api` | kỹ năng | [Kết nối] Đọc và quản lý việc, dự án, chu kỳ trong Linear. Từ khoá: Linear. |
+
+### sentry  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/sentry:sentry-api` | kỹ năng | [Kết nối] Tra và quản lý dữ liệu lỗi ứng dụng trong Sentry. Từ khoá: Sentry. |
+
+### datadog  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/datadog:datadog-api` | kỹ năng | [Kết nối] Tra và quản lý dữ liệu giám sát Datadog: nhật ký, chỉ số, cảnh báo. Từ khoá: Datadog. |
+
+### hubspot  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/hubspot:hubspot-api` | kỹ năng | [Kết nối] Đọc, tạo, cập nhật bản ghi khách hàng trong HubSpot CRM. Từ khoá: HubSpot. |
+
+### claude-for-msft-365-install  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/claude-for-msft-365-install:verify` | kỹ năng | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Từ khoá: verify install. |
+
+### pdf-viewer  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/pdf-viewer:view-pdf` | kỹ năng | [Tài liệu] Trình xem PDF tương tác — mở và xem tài liệu ngay trong phiên. Từ khoá: PDF viewer. |
+
+### bigdata-com  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/bigdata-com:bigdata-financial-research-analyst` | kỹ năng | [Tài chính] Phân tích nghiên cứu tài chính theo lối tổ chức đầu tư. Không liên quan y khoa. Từ khoá: financial research. |
+
+### claude-tag-data-viz  (1)
+
+| Gọi bằng | Loại | Làm gì |
+|---|---|---|
+| `/claude-tag-data-viz:graphing` | kỹ năng | [Dữ liệu] Dựng biểu đồ chỉn chu: chuỗi thời gian, cột, đường, vùng, tròn, phân tán. Từ khoá: charts. |
 
 ---
 

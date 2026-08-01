@@ -240,7 +240,10 @@ def main() -> int:
     for item in items:
         if args.tier and item["tier_guess"] != args.tier:
             continue
-        entry = vi_map.get(item["id"], {})
+        # Khoá chính là id đầy đủ. Fallback `name:<tên>` để MỘT bản dịch áp cho mọi
+        # bản sao cùng tên — bmad-method lặp nguyên bộ 50 skill ở cả 6 plugin con,
+        # viết 300 dòng id cho cùng một nội dung là vô ích. id luôn thắng fallback.
+        entry = vi_map.get(item["id"]) or vi_map.get(f"name:{item['name']}") or {}
         if not entry and not args.restore:
             continue
         res = process(item, entry, restore=args.restore, dry=args.dry_run)

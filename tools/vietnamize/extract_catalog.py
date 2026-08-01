@@ -23,6 +23,7 @@ from pathlib import Path
 
 HOME = Path.home()
 REPO = Path(__file__).resolve().parents[2]
+APP_SUPPORT = HOME / "Library/Application Support/Claude/local-agent-mode-sessions"
 OUT = Path(__file__).resolve().parent / "catalog_raw.json"
 
 # Dấu tiếng Việt — dùng để nhận biết mô tả đã Việt hoá hay chưa
@@ -50,6 +51,10 @@ TIER_BY_SOURCE = {
     "bmad": 2,
     "humanizer": 2,
 }
+# Thư mục bỏ qua khi quét đệ quy — không phải mục gọi được
+SKIP_DIRS = {"node_modules", ".git", "dist", "build", "__pycache__", "test", "tests",
+             "fixtures", "examples", ".venv", "venv"}
+
 TIER3_HINTS = (
     "neural-trader", "market-data", "iot-cognitum", "federation",
     "ruvllm", "ruvector", "agentdb", "rvf", "arena", "browser",
@@ -137,22 +142,62 @@ def main() -> int:
             root = Path(entries[0]["installPath"])
             if not root.exists():
                 continue
-            for f in sorted(root.glob("skills/*/SKILL.md")):
+            # Quét ĐỆ QUY, không cố định khuôn `skills/*/SKILL.md`: mỗi plugin bày
+            # thư mục một kiểu — mattpocock lồng thêm cấp nhóm (`skills/engineering/
+            # tdd/`), bmad để ở `src/core-skills/` và `web-bundles/`, humanizer đặt
+            # SKILL.md ngay gốc. Khuôn cố định từng bỏ sót trọn 3 plugin này.
+            for f in sorted(root.rglob("SKILL.md")):
+                if any(p in SKIP_DIRS for p in f.parts):
+                    continue
                 fm = read_frontmatter(f)
+                if not fm.get("description"):
+                    continue                      # không có mô tả thì không phải mục gọi được
                 nm = fm.get("name") or f.parent.name
                 add(items, kind="skill", source=key, plugin=plugin, name=nm,
-                    desc=fm.get("description", ""), path=f,
-                    invoke=f"/{plugin}:{nm}")
-            for f in sorted(root.glob("commands/*.md")):
+                    desc=fm["description"], path=f, invoke=f"/{plugin}:{nm}")
+            for f in sorted(root.rglob("*.md")):
+                if any(p in SKIP_DIRS for p in f.parts):
+                    continue
+                if f.parent.name == "commands":
+                    fm = read_frontmatter(f)
+                    if not fm.get("description"):
+                        continue
+                    add(items, kind="command", source=key, plugin=plugin,
+                        name=f.stem, desc=fm["description"], path=f,
+                        invoke=f"/{f.stem}")
+                elif f.parent.name == "agents":
+                    fm = read_frontmatter(f)
+                    if not fm.get("description"):
+                        continue
+                    nm = fm.get("name") or f.stem
+                    add(items, kind="agent", source=key, plugin=plugin, name=nm,
+                        desc=fm["description"], path=f, invoke=f"agent {nm}")
+
+    # --- 1b. Plugin từ claude.ai (Claude Desktop / local agent mode) -------
+    # Nằm ở ~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/
+    # Trên đĩa có cả BẢN CŨ của những lần cập nhật trước (healthcare từng có 3 bản),
+    # nên CHỈ lấy plugin_id đang khai trong manifest.json — bản đang thật sự dùng.
+    for mf in sorted(APP_SUPPORT.rglob("rpm/manifest.json")):
+        try:
+            data = json.loads(mf.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for p in data.get("plugins", []):
+            pid, ten = p.get("id"), p.get("name") or "?"
+            if not pid:
+                continue
+            pdir = mf.parent / pid
+            if not pdir.is_dir():
+                continue
+            for f in sorted(pdir.rglob("SKILL.md")):
+                if any(x in SKIP_DIRS for x in f.parts):
+                    continue
                 fm = read_frontmatter(f)
-                add(items, kind="command", source=key, plugin=plugin,
-                    name=f.stem, desc=fm.get("description", ""), path=f,
-                    invoke=f"/{f.stem}")
-            for f in sorted(root.glob("agents/*.md")):
-                fm = read_frontmatter(f)
-                nm = fm.get("name") or f.stem
-                add(items, kind="agent", source=key, plugin=plugin, name=nm,
-                    desc=fm.get("description", ""), path=f, invoke=f"agent {nm}")
+                if not fm.get("description"):
+                    continue
+                nm = fm.get("name") or f.parent.name
+                add(items, kind="skill", source="claude.ai", plugin=ten, name=nm,
+                    desc=fm["description"], path=f, invoke=f"/{ten}:{nm}")
 
     # --- 2. Skill cấp user ------------------------------------------------
     for f in sorted((HOME / ".claude/skills").glob("*/SKILL.md")):
