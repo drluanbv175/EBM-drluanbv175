@@ -39,6 +39,7 @@ VN_CHARS = re.compile(
 TIER_BY_SOURCE = {
     "openmed-skills": 1,
     "academic-research-skills": 1,
+    "medsci": 1,                    # bộ medsci-skills: nghiên cứu y khoa, sát việc bác sĩ nhất
     "healthcare": 1,
     "bio-research": 1,
     "user-skills": 1,

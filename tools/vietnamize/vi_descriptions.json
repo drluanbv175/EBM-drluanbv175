@@ -2590,5 +2590,203 @@
   },
   "skill:bio-research:start": {
     "vi": "[Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup."
+  },
+  "name:design-study": {
+    "vi": "[MedSci] Thẩm định THIẾT KẾ nghiên cứu trước khi thu thập dữ liệu: xác định đơn vị phân tích, logic chọn cohort, nguy cơ rò rỉ dữ liệu, cách chọn nhóm chứng, chiến lược kiểm định. Dùng ở bước đầu, TRƯỚC khi viết đề cương; đề tài chính thức vẫn nên qua agent `thiet-ke-nghien-cuu` để có cổng G1. Từ khoá: study design, validity review."
+  },
+  "name:calc-sample-size": {
+    "vi": "[MedSci] Tính CỠ MẪU theo cây quyết định, sinh mã R/Python tái lập được và đoạn văn biện minh cho hồ sơ đạo đức. Dùng khi cần con số nhanh; đề tài chính thức phải qua agent `co-mau-nghien-cuu` vì đó là cổng G3 có kiểm nguồn effect size. Từ khoá: sample size, power."
+  },
+  "name:define-variables": {
+    "vi": "[MedSci] Định nghĩa BIẾN SỐ có dẫn nguồn y văn: ngưỡng cắt, cách mã hoá, ánh xạ sang tên biến trong cơ sở dữ liệu. Dùng khi cần tránh việc tự đặt định nghĩa kiểu hình rồi bị phản biện bác. Từ khoá: variable operationalization."
+  },
+  "name:generate-codebook": {
+    "vi": "[MedSci] Sinh TỪ ĐIỂN DỮ LIỆU từ một file dữ liệu: mọi biến kèm kiểu, phân bố, tỷ lệ thiếu. Dùng ngay khi nhận bộ dữ liệu mới, trước khi phân tích. Biến mã hoá không rõ nghĩa được gắn cờ chứ không đoán bừa. Từ khoá: codebook, data dictionary."
+  },
+  "name:clean-data": {
+    "vi": "[MedSci] Làm sạch dữ liệu theo 3 bước có bác sĩ duyệt từng bước: khảo sát → gắn cờ → sinh mã. Dùng khi dữ liệu có giá trị thiếu, ngoại lai, trùng lặp. KHÔNG tự sửa dữ liệu — mọi quyết định phải bác sĩ xác nhận. Từ khoá: data cleaning."
+  },
+  "name:deidentify": {
+    "vi": "[MedSci] Khử định danh dữ liệu nghiên cứu bằng công cụ chạy CỤC BỘ, có gói nhận diện cho 10 quốc gia. Dùng TRƯỚC khi đưa dữ liệu cho bất kỳ mô hình AI nào — công cụ này không gọi mạng, không AI nào chạm dữ liệu thô. Từ khoá: de-identification, PHI."
+  },
+  "name:version-dataset": {
+    "vi": "[MedSci] Đánh phiên bản bộ dữ liệu bằng mã băm nội dung để tái lập được kết quả. Dùng khi dữ liệu còn thay đổi mà đã bắt đầu phân tích. Từ khoá: dataset versioning."
+  },
+  "name:write-protocol": {
+    "vi": "[MedSci] Sinh ĐỀ CƯƠNG nộp Hội đồng Đạo đức gồm 4 phần lõi. Dùng khi cần bản nháp nhanh; hồ sơ nộp thật phải qua agent `dao-duc-dang-ky` (cổng G2) vì nó gắn Helsinki, ICH-GCP và bản đồng thuận. Từ khoá: IRB protocol."
+  },
+  "name:fill-protocol": {
+    "vi": "[MedSci] Điền nội dung vào MẪU WORD của cơ quan (đề cương, hồ sơ đạo đức, đề tài) mà giữ nguyên định dạng, bảng biểu, phông chữ. Dùng khi đơn vị bắt nộp đúng biểu mẫu có sẵn. Từ khoá: Word template."
+  },
+  "name:fill-icmje-coi": {
+    "vi": "[MedSci] Sinh hàng loạt phiếu KHAI XUNG ĐỘT LỢI ÍCH theo mẫu ICMJE cho từng tác giả. Dùng khi chuẩn bị nộp bài nhiều tác giả — mỗi người chỉ cần xem và ký. Từ khoá: ICMJE COI."
+  },
+  "name:intake-project": {
+    "vi": "[MedSci] Tiếp nhận và chuẩn hoá một đề tài mới: phân loại, tóm tắt hiện trạng, chỉ ra thứ còn thiếu, dựng file ghi nhớ cho đề tài. Dùng khi bắt đầu đề tài mới. Từ khoá: project intake."
+  },
+  "name:manage-project": {
+    "vi": "[MedSci] Quản lý tiến độ đề tài: dựng cấu trúc thư mục, theo dõi từng giai đoạn viết, sinh danh mục kiểm và mốc thời gian lùi từ hạn nộp. Dùng khi chạy nhiều đề tài song song. Từ khoá: project management."
+  },
+  "name:search-lit": {
+    "vi": "[MedSci] Tìm y văn trên PubMed, Semantic Scholar và quản lý trích dẫn. Dùng khi cần quét rộng; câu hỏi lâm sàng để ra quyết định vẫn nên qua agent `tra-cuu-chung-cu`. Từ khoá: literature search."
+  },
+  "name:fulltext-retrieval": {
+    "vi": "[MedSci] Tải hàng loạt PDF toàn văn TRUY CẬP MỞ theo DOI qua Unpaywall, PMC, OpenAlex, Crossref. Dùng khi đã có danh sách DOI và cần đọc toàn văn. Chỉ lấy bài mở, hợp pháp. Từ khoá: open access PDF."
+  },
+  "name:lit-sync": {
+    "vi": "[MedSci] Đồng bộ tài liệu tham khảo từ file .bib sang Zotero và ghi chú Obsidian. Dùng khi bác sĩ quản lý y văn bằng hai công cụ đó. Từ khoá: Zotero, Obsidian."
+  },
+  "name:verify-refs": {
+    "vi": "[MedSci] Kiểm tài liệu tham khảo đối chiếu PubMed và CrossRef, phát hiện trích dẫn BỊA. CHỈ ĐỌC, không sửa. Dùng trước khi nộp; bản của bác sĩ là agent `kiem-chung-trich-dan` (có tra bài bị rút). Từ khoá: reference verification."
+  },
+  "name:manage-refs": {
+    "vi": "[MedSci] Xử lý trích dẫn khi nộp bài: kiểm khoá trích dẫn, dựng danh mục theo định dạng tạp chí, chuyển đổi kiểu đánh số, chèn trường Zotero. Dùng ở khâu hoàn thiện bản thảo. Từ khoá: citation rendering."
+  },
+  "name:review-paper": {
+    "vi": "[MedSci] Dựng khung và viết TỔNG QUAN y văn: tường thuật, phạm vi (PRISMA-ScR) hoặc hệ thống. Dùng khi viết bài tổng quan. Từ khoá: literature review."
+  },
+  "name:analyze-stats": {
+    "vi": "[MedSci] Phân tích thống kê cho bài báo y khoa, sinh mã R/Python tái lập được kèm bảng và hình đạt chuẩn đăng bài. Bao phủ độ chính xác chẩn đoán, độ đồng thuận, phân tích gộp, sống còn, hồi quy, điểm xu hướng. Dùng sau khi dữ liệu đã khoá. Từ khoá: statistical analysis."
+  },
+  "name:meta-analysis": {
+    "vi": "[MedSci] Dây chuyền TỔNG QUAN HỆ THỐNG và PHÂN TÍCH GỘP: đăng ký PROSPERO, chiến lược tìm, sàng lọc, trích xuất, nguy cơ sai lệch (QUADAS-2/ROBINS-I), tổng hợp và báo cáo PRISMA. Dùng cho đề tài tổng quan hệ thống. Từ khoá: meta-analysis, PRISMA."
+  },
+  "name:ma-scout": {
+    "vi": "[MedSci] Tìm CHỦ ĐỀ cho phân tích gộp và chấm tính khả thi, trước khi viết đề cương. Dùng khi muốn làm tổng quan hệ thống nhưng chưa chọn được đề tài. Từ khoá: meta-analysis topic."
+  },
+  "name:check-reporting": {
+    "vi": "[MedSci] Kiểm bản thảo theo CHUẨN BÁO CÁO — hỗ trợ 47 chuẩn: STROBE, CONSORT, STARD, TRIPOD+AI, PRISMA, SPIRIT, CARE, CHEERS, COREQ… và các công cụ nguy cơ sai lệch (QUADAS-2, RoB 2, ROBINS-I, PROBAST). Chấm từng mục ĐỦ/THIẾU/MỘT PHẦN. Dùng trước khi nộp. Từ khoá: reporting guidelines."
+  },
+  "name:write-paper": {
+    "vi": "[MedSci] Viết bài báo trọn gói theo 8 giai đoạn IMRAD, từ dàn ý tới bản nộp. Dùng cho bài không đi qua dây chuyền G của bác sĩ; đề tài chính thức nên dùng agent `viet-ban-thao`. Từ khoá: paper writing, IMRAD."
+  },
+  "name:polish-language": {
+    "vi": "[MedSci] Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ toàn bài. Dùng ở khâu cuối trước khi nộp tạp chí quốc tế. Từ khoá: ESL polish."
+  },
+  "name:humanize": {
+    "vi": "[MedSci] Phát hiện và xoá 27 dấu hiệu văn phong máy trong bản thảo và thư phản hồi phản biện, giới hạn mức can thiệp để không đổi nội dung khoa học. Dùng sau khi đã viết xong. Từ khoá: AI writing patterns."
+  },
+  "name:academic-aio": {
+    "vi": "[MedSci] Tối ưu bài báo AI y tế cho các công cụ tìm kiếm học thuật (Perplexity, Elicit, Consensus) — tiêu đề, tóm tắt, hộp điểm chính. Gắn với TRIPOD+AI, CLAIM 2024, STARD-AI. Dùng khi muốn bài dễ được tìm thấy. Từ khoá: GEO, discoverability."
+  },
+  "name:make-figures": {
+    "vi": "[MedSci] Vẽ hình đạt chuẩn đăng bài: đường cong ROC, biểu đồ rừng, sơ đồ CONSORT/STARD/PRISMA, đường Kaplan-Meier, Bland-Altman, ma trận nhầm lẫn, tóm tắt bằng hình. Dùng khi chuẩn bị hình cho bản thảo. Từ khoá: publication figures."
+  },
+  "name:present-paper": {
+    "vi": "[MedSci] Chuẩn bị BÀI TRÌNH BÀY học thuật từ một bài báo (sinh hoạt khoa học, hội thảo). Dùng khi phải báo cáo journal club hay hội nghị. Từ khoá: academic presentation."
+  },
+  "name:render-pdf-doc": {
+    "vi": "[MedSci] Kết xuất tài liệu Markdown học thuật thành PDF chất lượng in. Dùng ở khâu cuối khi cần bản PDF đẹp. Từ khoá: PDF rendering."
+  },
+  "name:find-journal": {
+    "vi": "[MedSci] Gợi ý TẠP CHÍ phù hợp cho bản thảo: đối chiếu phạm vi, chính sách khai báo AI, khả năng được nhận, kèm phương án dự phòng nếu bị từ chối. Dùng khi chuẩn bị nộp. Chỉ số ảnh hưởng và phí đăng bài có thể đã cũ — phải kiểm lại trên trang tạp chí. Từ khoá: journal selection."
+  },
+  "name:add-journal": {
+    "vi": "[MedSci] Thêm một tạp chí mới vào kho hồ sơ tạp chí của bộ công cụ. Dùng khi tạp chí bác sĩ nhắm tới chưa có sẵn. Từ khoá: journal profile."
+  },
+  "name:revise": {
+    "vi": "[MedSci] Đọc góp ý phản biện và sinh THƯ PHẢN HỒI có cấu trúc từng điểm một. Dùng khi nhận quyết định 'sửa và nộp lại'. Từ khoá: response to reviewers."
+  },
+  "name:self-review": {
+    "vi": "[MedSci] Tự rà bản thảo của chính mình bằng con mắt phản biện TRƯỚC khi nộp. Dùng như bước cuối trước khi gửi tạp chí. Từ khoá: pre-submission review."
+  },
+  "name:sync-submission": {
+    "vi": "[MedSci] Soi độ lệch giữa bản thảo gốc và bộ file đem nộp, rồi lập danh mục hồ sơ nộp. Dùng ngay trước khi bấm nộp. Từ khoá: submission manifest."
+  },
+  "name:grant-builder": {
+    "vi": "[MedSci] Viết đề xuất ĐỀ TÀI/TÀI TRỢ: ý nghĩa, tính mới, cách tiếp cận, mốc tiến độ, phân vai nhóm nghiên cứu. Dùng khi xin kinh phí. Từ khoá: grant proposal."
+  },
+  "name:author-strategy": {
+    "vi": "[MedSci] Phân tích hồ sơ công bố của một tác giả trên PubMed: phân loại loại nghiên cứu, vẽ biểu đồ, gợi ý chiến lược. Dùng khi tìm hiểu một người sắp hợp tác, hoặc tự soi hồ sơ của mình. Từ khoá: author profile."
+  },
+  "name:find-cohort-gap": {
+    "vi": "[MedSci] Tìm KHOẢNG TRỐNG nghiên cứu trong một cơ sở dữ liệu cohort: soi thế mạnh dữ liệu, đối chiếu chuyên môn chủ nhiệm, quét mức bão hoà y văn, xuất danh sách đề tài xếp hạng. Dùng khi có sẵn kho dữ liệu mà chưa biết làm gì. Từ khoá: research gap."
+  },
+  "name:replicate-study": {
+    "vi": "[MedSci] Lặp lại phương pháp của một nghiên cứu đã công bố trên cơ sở dữ liệu khác. Dùng khi muốn kiểm chứng kết quả người khác trên dữ liệu của mình. Từ khoá: replication."
+  },
+  "name:batch-cohort": {
+    "vi": "[MedSci] Sinh N script phân tích từ một khuôn phương pháp × nhiều cặp phơi nhiễm–kết cục. Dùng khi chạy cùng một phương pháp cho nhiều biến. Từ khoá: batch analysis."
+  },
+  "name:cross-national": {
+    "vi": "[MedSci] Nghiên cứu SO SÁNH ĐA QUỐC GIA dùng các bộ khảo sát song song (KNHANES, NHANES, CHNS): hài hoà biến số, phân tích có trọng số, bảng so sánh. Dùng cho đề tài so sánh quốc tế. Từ khoá: cross-national."
+  },
+  "name:radiomics-ml": {
+    "vi": "[MedSci] Làm hoặc thẩm định nghiên cứu radiomics / học máy trên dữ liệu bảng. Dùng khi rút đặc trưng từ hình ảnh hoặc dữ liệu lâm sàng để dự báo. Từ khoá: radiomics."
+  },
+  "name:architecture-zoo": {
+    "vi": "[MedSci — AI hình ảnh] Chọn kiến trúc mô hình cho câu hỏi nghiên cứu hình ảnh y khoa, kèm bài báo gốc và trường hợp nên dùng. Dùng trước khi bắt tay dựng mô hình. Từ khoá: model architecture."
+  },
+  "name:model-scaffold": {
+    "vi": "[MedSci — AI hình ảnh] Dựng sẵn kho mã huấn luyện PyTorch chạy được và tái lập được. Dùng khi bắt đầu huấn luyện mô hình. Từ khoá: training scaffold."
+  },
+  "name:model-sourcing": {
+    "vi": "[MedSci — AI hình ảnh] Thẩm định mô hình bên thứ ba mà nghiên cứu định dùng: kho mã nào, bản phát hành nào, giấy phép ra sao. Dùng trước khi dựa vào mô hình có sẵn. Từ khoá: model vetting."
+  },
+  "name:model-evaluation": {
+    "vi": "[MedSci — AI hình ảnh] Tính và báo cáo chỉ số trên tập kiểm định độc lập cho đúng loại nhiệm vụ. Dùng sau khi huấn luyện xong. Từ khoá: held-out metrics."
+  },
+  "name:model-validation": {
+    "vi": "[MedSci — AI hình ảnh] Thiết kế hoặc thẩm định nghiên cứu KIỂM ĐỊNH LÂM SÀNG cho mô hình. Dùng khi muốn chứng minh mô hình dùng được trên bệnh nhân thật. Từ khoá: clinical validation."
+  },
+  "name:model-card": {
+    "vi": "[MedSci — AI hình ảnh] Sinh tài liệu bắt buộc đi kèm mô hình: mục đích dùng, chỉ số, giới hạn đã biết. Dùng khi công bố hoặc bàn giao mô hình. Từ khoá: model card."
+  },
+  "name:preprocess-imaging": {
+    "vi": "[MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khâu chuẩn bị dữ liệu ảnh (DICOM/NIfTI). Dùng trước khi huấn luyện — đây là chỗ hay sinh rò rỉ dữ liệu. Từ khoá: imaging preprocessing."
+  },
+  "name:profile-imaging": {
+    "vi": "[MedSci — AI hình ảnh] Khảo sát bộ dữ liệu ảnh TRƯỚC mọi quyết định mô hình hoá: thông số chụp, phân bố, mất cân bằng nhãn. Dùng ngay khi nhận dữ liệu ảnh. Từ khoá: dataset profiling."
+  },
+  "name:explainability": {
+    "vi": "[MedSci — AI hình ảnh] Làm hoặc thẩm định phần GIẢI THÍCH mô hình (Grad-CAM, saliency) đạt mức phản biện đòi hỏi: bắt buộc có phép thử độ tin cậy và chỉ số định lượng, không chỉ khoe vài ảnh đẹp. Dùng khi bài cần phần diễn giải. Từ khoá: explainability, Grad-CAM."
+  },
+  "name:uncertainty-imaging": {
+    "vi": "[MedSci — AI hình ảnh] Thiết kế hoặc thẩm định phần lượng hoá ĐỘ BẤT ĐỊNH và phát hiện dữ liệu ngoài phân bố. Dùng khi mô hình sắp dùng trên lâm sàng — cần biết khi nào nó không chắc. Từ khoá: uncertainty, OOD."
+  },
+  "name:mllm-eval": {
+    "vi": "[MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khung đánh giá mô hình ngôn ngữ lớn trên nhiệm vụ lâm sàng (sinh báo cáo, hỏi đáp hình ảnh). Soi cả nguy cơ mô hình đã học thuộc bộ kiểm định công khai. Dùng khi đánh giá LLM y tế. Từ khoá: LLM evaluation."
+  },
+  "name:design-ai-benchmarking": {
+    "vi": "[MedSci — AI hình ảnh] Thiết kế nghiên cứu SO SÁNH AI với hội đồng chuyên gia: định nghĩa nhánh so sánh, thang chấm có mỏ neo, độ đồng thuận giữa người chấm. Dùng TRƯỚC khi thu thập dữ liệu. Từ khoá: AI vs expert benchmarking."
+  },
+  "name:orchestrate": {
+    "vi": "[MedSci] Điều phối chung của bộ MedSci — nhận yêu cầu mơ hồ rồi chuyển tới đúng skill. Dùng khi chưa biết nên gọi skill nào trong bộ này. Từ khoá: medsci router."
+  },
+  "name:setup-medsci": {
+    "vi": "[MedSci] Kiểm môi trường chạy của bộ MedSci: Python, R, Node đã đủ chưa. Dùng khi cài lần đầu hoặc khi một skill báo lỗi thiếu công cụ. Từ khoá: setup, diagnostics."
+  },
+  "name:contribute": {
+    "vi": "[MedSci] Gửi phần bác sĩ tự sửa ngược lại cho dự án gốc, có quét dữ liệu bệnh nhân trước khi gửi và cho xem từng dòng. Dùng khi muốn đóng góp cải tiến. Từ khoá: contribute."
+  },
+  "name:publish-skill": {
+    "vi": "[MedSci] Chuyển một skill cá nhân thành skill chia sẻ được, có quét thông tin định danh trước. Dùng khi muốn đóng gói quy trình riêng để dùng chung. Từ khoá: publish skill."
+  },
+  "skill:medsci-analysis:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-data:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-literature:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-modeling:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-presentation:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-project:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-review:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-submission:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "skill:medsci-writing:peer-review": {
+    "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
   }
 }

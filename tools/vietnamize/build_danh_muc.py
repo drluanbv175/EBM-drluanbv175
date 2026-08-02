@@ -57,6 +57,14 @@ def main() -> int:
         ("Bóc thông tin có cấu trúc từ bệnh án", "`/trich-xuat-benh-an`"),
         ("Khử định danh bệnh án trước khi nghiên cứu", "`/khu-dinh-danh`"),
         ("Cập nhật chứng cứ + dựng dashboard", "kỹ năng `cap-nhat-chung-cu-y-khoa`"),
+        ("Kiểm bản thảo theo chuẩn báo cáo (47 chuẩn)", "`/medsci-review:check-reporting`"),
+        ("Chọn tạp chí để nộp bài", "`/medsci-submission:find-journal`"),
+        ("Viết thư phản hồi phản biện", "`/medsci-submission:revise`"),
+        ("Khử định danh dữ liệu nghiên cứu", "`/medsci-data:deidentify` hoặc `/khu-dinh-danh`"),
+        ("Làm sạch và khảo sát bộ dữ liệu", "`/medsci-data:clean-data` · `/medsci-data:generate-codebook`"),
+        ("Tổng quan hệ thống / phân tích gộp", "`/medsci-analysis:meta-analysis`"),
+        ("Vẽ hình đạt chuẩn đăng bài", "`/medsci-presentation:make-figures`"),
+        ("Gọt tiếng Anh học thuật trước khi nộp", "`/medsci-writing:polish-language`"),
         ("Không biết dùng gì", "`/cong-cu-gi <việc cần làm>`"),
     ]:
         dong.append(f"| {nhu_cau} | {cong_cu} |")
