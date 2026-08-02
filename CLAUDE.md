@@ -8,6 +8,7 @@ Research (nghiên cứu), Clinical (lâm sàng), Knowledge (quản lý kiến th
 Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định tuyến tới "nhạc trưởng" phù hợp và để nó **tự chạy tuần tự theo Giao thức tự động** (không hỏi vặt từng bước):
 - **Nêu một CA/tình huống lâm sàng** ("tôi có bệnh nhân…", "khám ca này", hỏi chẩn đoán/điều trị) → `dieu-phoi-lam-sang`: tự chạy 5 bước EBM (Hỏi→Tìm→Thẩm định→Áp dụng→Theo dõi); **cờ đỏ nêu NGAY**; dừng ở **Cổng A** (áp dụng cho BN) + **Cổng B** (ghi sổ cái).
 - **Nêu một ĐỀ TÀI/câu hỏi nghiên cứu** (chỉ cần tên đề tài) → `dieu-phoi-nghien-cuu`: tự khôi phục trạng thái từ sổ cái → suy loại thiết kế → march G0→G10; dừng ở 6 cổng cứng (G2 đạo đức · G4 khóa SAP · G5 khóa dữ liệu thật · **G8 bình duyệt độc lập** · G9 liêm chính tác giả · G10 PI khóa gói phát hành) + nơi cần dữ liệu/phê duyệt thật. Mỗi cổng fail-closed theo ĐÚNG role (IRB/thống kê viên hoặc PI/quản lý dữ liệu hoặc PI/phản biện độc lập/PI/PI — xem `tools/gate_contract.py`), không chỉ "có ai đó ký".
+- **Bảo đảm chuẩn nghiên cứu hiện hành:** G2 fail-closed khi WHO TRDS v1.3.1 mục 13/14/19/20 thiếu dữ kiện khoa học PI đã pin hoặc tham chiếu Hội đồng chỉ là fallback; G9 fail-closed khi thiếu quyền truy cập dữ liệu/độc lập nhà tài trợ theo ICMJE 1/2026. `python tools/verify_controlled_research_automation.py` kiểm hành vi này cùng danh sách 6 cổng canonical; không dùng PASS kỹ thuật thay IRB/PI/thống kê viên/phản biện.
 - **Việc lẻ** (tra 1 câu hỏi, soát 1 danh mục TLTK, tính cỡ mẫu, đặc tả biến…) → gọi thẳng agent chuyên trách.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
@@ -486,10 +487,10 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   CHẤM LẠI sau khi bác sĩ bổ sung xác nhận.
   **Vì sao có:** doctrine cũ (`nop-bai-phan-hoi.md`) hứa "bác sĩ chỉ cần đọc, ký 3 xác nhận và
   nộp" (COI đầy đủ · tác giả đồng ý bản cuối · không đăng kép) — nhưng `approve_gate.py --gate G9`
-  thật ra chỉ cho ký khi `g9_quality_gate.py` trả `READY_FOR_G9_PI_APPROVAL`, đòi **10 nhóm tiêu
+  thật ra chỉ cho ký khi `g9_quality_gate.py` trả `READY_FOR_G9_PI_APPROVAL`, đòi **toàn bộ nhóm tiêu
   chí người thật** (ICMJE 4 tiêu chí + CRediT + COI + `evidence_ref` cho TỪNG tác giả · thứ tự
   tác giả/guarantor · khai AI đủ tools/purposes/confirmed_at · Data Availability đủ chi tiết
-  ICMJE cho thử nghiệm lâm sàng · liêm chính công bố (similarity/image integrity/kết quả khớp
+  ICMJE cho thử nghiệm lâm sàng · quyền truy cập dữ liệu/độc lập nhà tài trợ theo ICMJE 1/2026 · liêm chính công bố (similarity/image integrity/kết quả khớp
   phân tích khóa) · venue due diligence · ethics/privacy · **xác nhận thể chế** — trưởng đơn
   vị/hội đồng nội bộ/nhà tài trợ, thêm 2026-07-31, xem G9-HUMAN-11 dưới) — doctrine mô tả ít
   hơn hẳn code thật.

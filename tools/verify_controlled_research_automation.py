@@ -14,6 +14,8 @@ người dùng yêu cầu trước khi coi hệ nghiên cứu là sẵn sàng:
    ứng + khoảng tin cậy; đường phân tích dữ liệu thật có marker DATA LOCK.
 5. Stakeholder gates: G2/G4/G9 chỉ thỏa khi đúng nhóm IRB/thống kê viên/PI;
    phản biện độc lập được route vào gói bản thảo/review pack.
+6. Chuẩn hiện hành: WHO TRDS 1.3.1 và ICMJE 1/2026 phải tạo kiểm tra hành vi
+   fail-closed, không chỉ xuất hiện dưới dạng nhãn trong tài liệu.
 
 Cần bác sĩ kiểm chứng. Đây là kiểm kỹ thuật/guardrail, không thay IRB, PI,
 thống kê viên hoặc phản biện độc lập.
@@ -39,7 +41,10 @@ for path in (str(TOOLS), str(EVAL_TOOLS), str(REPO), str(MT)):
         sys.path.insert(0, path)
 
 import run_eval  # noqa: E402
+import g2_quality_gate as G2Q  # noqa: E402
+import g9_quality_gate as G9Q  # noqa: E402
 import gate_contract as GC  # noqa: E402
+import skill_standards as STANDARDS  # noqa: E402
 from orchestrator.guardrail_bridge import make_run_eval_verdict  # noqa: E402
 from runtime.approval_ledger import ApprovalLedger  # noqa: E402
 from research_project.project_config import (  # noqa: E402
@@ -382,7 +387,14 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
         and GC.reviewer_role_satisfies_gate("G4", "PI_PROJECT_OWNER")
         and GC.reviewer_role_satisfies_gate("G4", "BIOSTATISTICIAN")
         and not GC.reviewer_role_satisfies_gate("G4", "IRB_ETHICS_COMMITTEE")
+        and GC.reviewer_role_satisfies_gate("G5", "DATA_MANAGER")
+        and GC.reviewer_role_satisfies_gate("G5", "PI_PROJECT_OWNER")
+        and not GC.reviewer_role_satisfies_gate("G5", "IRB_ETHICS_COMMITTEE")
+        and GC.reviewer_role_satisfies_gate("G8", "INDEPENDENT_PEER_REVIEWER")
+        and not GC.reviewer_role_satisfies_gate("G8", "PI_PROJECT_OWNER")
         and GC.reviewer_role_satisfies_gate("G9", "PRINCIPAL_INVESTIGATOR")
+        and GC.reviewer_role_satisfies_gate("G10", "PRINCIPAL_INVESTIGATOR")
+        and not GC.reviewer_role_satisfies_gate("G10", "INDEPENDENT_PEER_REVIEWER")
     )
     ok = (
         wrong_roles_rejected_by_gate
@@ -399,7 +411,103 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
         "g4_statistician_status": statuses["G4"],
         "g9_pi_status": statuses["G9"],
         "gate_contract_role_filter": gate_contract_roles,
-        "proves": "G2/G4/G9 yêu cầu đúng stakeholder: IRB, thống kê/phương pháp HOẶC PI (G4), PI (G9); synthetic approval không mở cổng.",
+        "proves": "Sáu cổng cứng G2/G4/G5/G8/G9/G10 lọc đúng vai trò; PI không thể thay IRB hoặc phản biện độc lập; synthetic approval không mở cổng.",
+    }
+
+
+def check_current_standards_control() -> dict[str, Any]:
+    """WHO TRDS và ICMJE 1/2026 phải chạy thành hợp đồng, không chỉ là nhãn."""
+    meta = {
+        "gate_params": {
+            "G0": {
+                "intervention": "Can thiệp tổng hợp X",
+                "comparison": "Chăm sóc chuẩn",
+                "outcomes": ["Đáp ứng", "Biến cố bất lợi"],
+                "primary_outcome": "Đáp ứng",
+                "primary_outcome_measure": "Tỷ lệ đạt đáp ứng",
+                "primary_outcome_timepoint": "12 tuần",
+            },
+            "G1": {
+                "intervention_or_exposure": "Can thiệp tổng hợp X",
+                "comparator": "Chăm sóc chuẩn",
+                "inclusion_criteria": ["Tuổi từ 18"],
+                "exclusion_criteria": ["Chống chỉ định can thiệp"],
+                "primary_outcome": "Đáp ứng",
+                "secondary_outcomes": ["Biến cố bất lợi"],
+            },
+        }
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = Path(tmp)
+        common = {
+            "study": "SYNTH-STANDARDS-001",
+            "topic": "Can thiệp X ở người trưởng thành",
+            "design_code": "rct",
+            "design_primary": "Thử nghiệm ngẫu nhiên có đối chứng",
+            "risk": {
+                "registration": "BẮT BUỘC trước tuyển mẫu",
+                "register_where": "WHO primary registry",
+            },
+            "n_target": 120,
+            "out_dir": out_dir,
+            "generated_at": "2026-08-01T00:00:00+00:00",
+        }
+        complete_path = G2Q.build_registration_draft(**common, meta=meta)
+        complete = json.loads(complete_path.read_text(encoding="utf-8"))
+        complete_gaps = G2Q.scientific_registration_item_gaps(complete, "rct")
+        missing_path = G2Q.build_registration_draft(
+            **{**common, "study": "SYNTH-STANDARDS-MISSING"},
+            meta=None,
+        )
+        missing = json.loads(missing_path.read_text(encoding="utf-8"))
+        missing_gaps = G2Q.scientific_registration_item_gaps(missing, "rct")
+
+    readiness = G9Q.build_readiness_template("SYNTH-G9-STANDARDS", 1)
+    author_refs = {"AUTHOR-01"}
+    access_default_ok, _ = G9Q.data_access_governance_ok(readiness, author_refs)
+    readiness["data_access_governance"].update(
+        {
+            "all_authors_can_review_supporting_data": True,
+            "primary_data_access_author_ref": "AUTHOR-01",
+            "primary_data_access_confirmed": True,
+            "analysis_participation_confirmed": True,
+            "academic_nonacademic_collaboration": False,
+            "sponsored_research": False,
+            "confirmed_at": "2026-08-01T00:00:00+00:00",
+        }
+    )
+    access_complete_ok, _ = G9Q.data_access_governance_ok(readiness, author_refs)
+    icmje_access_standard = any(
+        "Access to Data" in row.get("standard", "")
+        for row in G9Q.STANDARDS_BASIS
+    )
+    hard_gates = tuple(STANDARDS.PIPELINE_HARD_GATES)
+    ok = all(
+        (
+            G2Q.WHO_TRDS_VERSION == "1.3.1",
+            G2Q.WHO_TRDS_ITEM_COUNT == 24,
+            complete_gaps == [],
+            len(missing_gaps) == 4,
+            G9Q.QUALITY_CONTRACT_VERSION == "G9-2026.2",
+            icmje_access_standard,
+            access_default_ok is False,
+            access_complete_ok is True,
+            hard_gates == ("G2", "G4", "G5", "G8", "G9", "G10"),
+        )
+    )
+    return {
+        "pillar": "current_standards_control",
+        "status": "PASS" if ok else "FAIL",
+        "who_trds_version": G2Q.WHO_TRDS_VERSION,
+        "who_trds_items": G2Q.WHO_TRDS_ITEM_COUNT,
+        "complete_scientific_gaps": complete_gaps,
+        "missing_scientific_gaps": missing_gaps,
+        "g9_contract_version": G9Q.QUALITY_CONTRACT_VERSION,
+        "icmje_authors_access_to_data": icmje_access_standard,
+        "default_access_attestation_fails_closed": access_default_ok is False,
+        "complete_access_attestation_passes": access_complete_ok is True,
+        "canonical_hard_gates": list(hard_gates),
+        "proves": "WHO TRDS 1.3.1 lấy dữ kiện PI đã pin và thiếu 13/14/19/20 bị phát hiện; G9 thực thi quyền tác giả truy cập dữ liệu theo ICMJE 1/2026; nguồn chuẩn khớp sáu cổng ký runtime.",
     }
 
 
@@ -534,6 +642,7 @@ def run_verification() -> dict[str, Any]:
         check_stakeholder_gate_control(),
         check_controlled_readiness_gate(),
         check_statistics_control(),
+        check_current_standards_control(),
     ]
     failures = [check for check in checks if check["status"] != "PASS"]
     return {

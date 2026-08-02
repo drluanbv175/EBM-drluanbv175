@@ -18,6 +18,7 @@ def test_controlled_research_automation_passes_all_pillars():
         "stakeholder_gate_control",
         "controlled_readiness_gate",
         "statistics_control",
+        "current_standards_control",
     }
 
 
@@ -81,3 +82,18 @@ def test_statistics_control_requires_effect_ci_and_data_lock_markers():
     assert check["fixed_effect_ci_present"] is True
     assert check["prediction_interval_present"] is True
     assert check["data_lock_gate_markers_present"] is True
+
+
+def test_current_standards_are_enforced_not_only_named():
+    check = V.check_current_standards_control()
+
+    assert check["status"] == "PASS"
+    assert check["who_trds_version"] == "1.3.1"
+    assert check["who_trds_items"] == 24
+    assert check["complete_scientific_gaps"] == []
+    assert len(check["missing_scientific_gaps"]) == 4
+    assert check["g9_contract_version"] == "G9-2026.2"
+    assert check["icmje_authors_access_to_data"] is True
+    assert check["default_access_attestation_fails_closed"] is True
+    assert check["complete_access_attestation_passes"] is True
+    assert check["canonical_hard_gates"] == ["G2", "G4", "G5", "G8", "G9", "G10"]

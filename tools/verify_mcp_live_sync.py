@@ -56,6 +56,8 @@ MIRROR_HOOK_MARKERS = (
     "COMPLETION_SYNC_FAIL_CLOSED=1",
     'ROOT_HOOK="$WORKSPACE_ROOT/.githooks/pre-commit"',
     '"$ROOT_HOOK"',
+    "scripts/regenerate_agent_manifest.py --check",
+    "tools/agent_gate_governance.py",
 )
 
 
