@@ -29,6 +29,29 @@
 
 ---
 
+## Skill DỰNG SẴN của Claude Code  (14 mục)
+
+> Nhóm này **không có file trên máy** — chúng nhúng trong chính phần mềm nên không Việt hoá tại chỗ được (sửa sẽ phá chữ ký và mất khi cập nhật). Mô tả dưới đây là bản giải thích để tra cứu.
+
+| Gọi bằng | Là gì | Dùng khi nào | Lưu ý |
+|---|---|---|---|
+| `/artifact-capabilities` — Năng lực động của trang Artifact | Cho biết một trang Artifact được phép làm gì ngoài HTML tĩnh: đọc dữ liệu sống, giữ trạng thái chung giữa nhiều người xem, tự cập nhật lại chính nó. | Khi bác sĩ muốn một trang không chỉ hiển thị cố định mà còn tự làm mới hoặc lưu lựa chọn của người xem. | Phải nạp skill này TRƯỚC khi viết trang; không phải tài khoản nào cũng bật đủ năng lực. |
+| `/artifact-design` — Thiết kế trang kết quả (Artifact) | Nguyên tắc trình bày khi tạo một trang HTML độc lập để bác sĩ xem hoặc chia sẻ — bố cục, cỡ chữ, khoảng trắng, mức đầu tư thiết kế tương xứng với yêu cầu. | Tự chạy khi tạo trang kết quả dạng Artifact. | Artifact mặc định là RIÊNG TƯ; chỉ thành công khai khi bác sĩ tự bấm chia sẻ. |
+| `/claude-api` — Tra cứu Claude API | Tài liệu tra cứu về Claude API và bộ thư viện Anthropic: mã model, giá, giới hạn, cách gọi công cụ, cách lưu đệm ngữ cảnh. | Bắt buộc đọc trước khi viết hoặc sửa mã có gọi Claude, và trước khi trả lời câu hỏi về giá hay chọn model — để không nói theo trí nhớ. | Bỏ qua nếu đang làm với nhà cung cấp khác (OpenAI, Gemini...). |
+| `/dataviz` — Vẽ biểu đồ đúng chuẩn | Hướng dẫn cách vẽ MỌI biểu đồ, đồ thị, bảng số liệu hay bảng điều khiển sao cho đọc được và nhất quán — chọn dạng biểu đồ theo loại dữ liệu, bảng màu an toàn cho người mù màu, quy tắc trục và chú giải. | Tự chạy trước khi vẽ bất kỳ biểu đồ nào, dù bằng Python, HTML hay hình SVG. Bác sĩ không cần gọi tay. | Dashboard lâm sàng EBM của bác sĩ vẫn theo mẫu Evidence Workbench riêng, không dùng bảng màu của skill này. |
+| `/fewer-permission-prompts` — Bớt bị hỏi xin phép | Đọc lại lịch sử phiên làm việc, tìm những lệnh chỉ ĐỌC mà bác sĩ vẫn phải bấm đồng ý mỗi lần, rồi đề xuất danh sách cho phép sẵn. | Khi thấy phải bấm đồng ý quá nhiều cho những việc vô hại như xem file, xem trạng thái git. | — |
+| `/init` — Khởi tạo hồ sơ dự án | Quét một kho mã rồi sinh file CLAUDE.md mô tả dự án đó, để những phiên sau hiểu ngay bối cảnh. | Khi bắt đầu làm việc với một kho mã mới chưa có CLAUDE.md. | Dự án EBM của bác sĩ đã có CLAUDE.md rất chi tiết — chạy lại sẽ ghi đè, đừng dùng ở đây. |
+| `/keybindings-help` — Tuỳ chỉnh phím tắt | Đổi phím tắt trong Claude Code, kể cả tổ hợp nhiều phím liên tiếp. | Khi phím mặc định vướng với thói quen gõ của bác sĩ. | — |
+| `/loop` — Chạy lặp theo chu kỳ | Lặp lại một yêu cầu theo khoảng thời gian đều đặn, hoặc để hệ thống tự chọn nhịp. | Khi cần theo dõi liên tục một việc đang chạy, ví dụ chờ một tiến trình dài kết thúc. | Chỉ dùng cho việc LẶP LẠI. Việc làm một lần thì không cần. |
+| `/review` — Rà soát mã tìm lỗi | Đọc phần mã đã thay đổi để tìm lỗi sai thật sự: sai logic, thiếu trường hợp biên, rò rỉ tài nguyên. | Trước khi chốt một thay đổi quan trọng. | Khác `simplify`: cái kia lo cách viết cho gọn, cái này đi tìm lỗi. |
+| `/run` — Chạy thử ứng dụng của dự án | Khởi động ứng dụng của dự án để tận mắt thấy thay đổi có chạy đúng không, thay vì chỉ dựa vào kết quả kiểm thử. | Khi bác sĩ bảo 'chạy thử xem', hoặc muốn ảnh chụp màn hình chứng minh sửa xong đã đúng. | — |
+| `/schedule` — Đặt lịch chạy tự động | Tạo tác vụ chạy theo lịch trên máy chủ (theo giờ, theo ngày trong tuần), hoặc hẹn chạy một lần vào thời điểm định trước. | Khi muốn một việc tự chạy định kỳ mà không cần bác sĩ mở máy — ví dụ quét cập nhật guideline hằng tuần. | Hệ EBM của bác sĩ đã có lịch riêng bằng launchd (com.medicalebm.weeklysafety / monthlyupdate) — đừng đặt trùng hai nơi. |
+| `/security-review` — Rà soát an toàn bảo mật | Soi phần mã đã thay đổi theo góc bảo mật: lộ khoá hay mật khẩu, dữ liệu người dùng đi ra ngoài, kiểm tra đầu vào lỏng lẻo, phân quyền sai. | Trước khi phát hành thay đổi có đụng tới dữ liệu nhạy cảm. | Rất đáng chạy với mọi thay đổi trong hệ EBM có chạm tới dữ liệu bệnh nhân hoặc khoá ký cổng. |
+| `/simplify` — Rà gọn phần mã vừa sửa | Soi lại đoạn mã vừa thay đổi để tìm chỗ trùng lặp, chỗ viết vòng vo, chỗ đặt sai tầng — rồi sửa gọn lại. | Sau khi vừa viết xong một tính năng, muốn dọn trước khi chốt. | CHỈ lo chất lượng cách viết, KHÔNG đi tìm lỗi sai. Muốn tìm lỗi thì dùng `review`. |
+| `/update-config` — Sửa cấu hình Claude Code | Sửa file settings.json: cấp quyền chạy lệnh, đặt biến môi trường, và quan trọng nhất là cài HOOK — cơ chế để hệ thống TỰ LÀM một việc mỗi khi xảy ra sự kiện nào đó. | Khi bác sĩ muốn 'từ nay mỗi lần X thì tự động làm Y', hoặc muốn bớt bị hỏi xin phép cho một loại lệnh. | Yêu cầu kiểu 'mỗi lần... thì tự động...' BẮT BUỘC phải qua hook — ghi vào bộ nhớ hay CLAUDE.md đều không làm được, vì đó là việc của phần mềm chứ không phải của trợ lý. |
+
+---
+
 ## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (281 mục)
 
 

@@ -61,6 +61,24 @@ def main() -> int:
     ]:
         dong.append(f"| {nhu_cau} | {cong_cu} |")
 
+    # Skill DỰNG SẴN của Claude Code — không có file trên máy (nhúng trong binary),
+    # nên không nằm trong catalog. Mô tả lấy từ vi_skill_mac_dinh.json.
+    f_mac_dinh = HERE / "vi_skill_mac_dinh.json"
+    if f_mac_dinh.exists():
+        md = json.loads(f_mac_dinh.read_text("utf-8"))
+        muc = {k: v for k, v in md.items() if not k.startswith("_")}
+        dong.append("\n---\n")
+        dong.append(f"## Skill DỰNG SẴN của Claude Code  ({len(muc)} mục)\n")
+        dong.append("> Nhóm này **không có file trên máy** — chúng nhúng trong chính phần mềm "
+                    "nên không Việt hoá tại chỗ được (sửa sẽ phá chữ ký và mất khi cập nhật). "
+                    "Mô tả dưới đây là bản giải thích để tra cứu.\n")
+        dong.append("| Gọi bằng | Là gì | Dùng khi nào | Lưu ý |")
+        dong.append("|---|---|---|---|")
+        for ten, v in sorted(muc.items()):
+            lu = v.get("luu_y", "—").replace("|", "\\|")
+            dong.append(f"| `/{ten}` — {v['ten_viet']} | {v['vi'].replace('|', chr(92)+'|')} "
+                        f"| {v.get('dung_khi','—').replace('|', chr(92)+'|')} | {lu} |")
+
     # Danh sách đầy đủ, theo tầng rồi theo plugin
     theo_tang: dict[int, dict[str, list]] = defaultdict(lambda: defaultdict(list))
     for i in items:

@@ -1,0 +1,85 @@
+{
+  "_ghi_chu": "Giải thích tiếng Việt cho SKILL DỰNG SẴN của Claude Code. Khác mọi mục trong vi_descriptions.json: nhóm này KHÔNG có file SKILL.md trên máy — chúng nhúng trong binary (~/Library/Application Support/Claude/claude-code/<phiên-bản>/claude.app, có cờ .verified nghĩa là bundle được xác minh chữ ký). Sửa vào đó sẽ phá chữ ký và mất khi app cập nhật, nên chỉ mô tả lại ở đây để tra cứu, không áp vào file. Nguồn mô tả: danh sách skill mà chính Claude Code công bố cho phiên làm việc.",
+
+  "dataviz": {
+    "ten_viet": "Vẽ biểu đồ đúng chuẩn",
+    "vi": "Hướng dẫn cách vẽ MỌI biểu đồ, đồ thị, bảng số liệu hay bảng điều khiển sao cho đọc được và nhất quán — chọn dạng biểu đồ theo loại dữ liệu, bảng màu an toàn cho người mù màu, quy tắc trục và chú giải.",
+    "dung_khi": "Tự chạy trước khi vẽ bất kỳ biểu đồ nào, dù bằng Python, HTML hay hình SVG. Bác sĩ không cần gọi tay.",
+    "luu_y": "Dashboard lâm sàng EBM của bác sĩ vẫn theo mẫu Evidence Workbench riêng, không dùng bảng màu của skill này."
+  },
+  "artifact-design": {
+    "ten_viet": "Thiết kế trang kết quả (Artifact)",
+    "vi": "Nguyên tắc trình bày khi tạo một trang HTML độc lập để bác sĩ xem hoặc chia sẻ — bố cục, cỡ chữ, khoảng trắng, mức đầu tư thiết kế tương xứng với yêu cầu.",
+    "dung_khi": "Tự chạy khi tạo trang kết quả dạng Artifact.",
+    "luu_y": "Artifact mặc định là RIÊNG TƯ; chỉ thành công khai khi bác sĩ tự bấm chia sẻ."
+  },
+  "artifact-capabilities": {
+    "ten_viet": "Năng lực động của trang Artifact",
+    "vi": "Cho biết một trang Artifact được phép làm gì ngoài HTML tĩnh: đọc dữ liệu sống, giữ trạng thái chung giữa nhiều người xem, tự cập nhật lại chính nó.",
+    "dung_khi": "Khi bác sĩ muốn một trang không chỉ hiển thị cố định mà còn tự làm mới hoặc lưu lựa chọn của người xem.",
+    "luu_y": "Phải nạp skill này TRƯỚC khi viết trang; không phải tài khoản nào cũng bật đủ năng lực."
+  },
+  "update-config": {
+    "ten_viet": "Sửa cấu hình Claude Code",
+    "vi": "Sửa file settings.json: cấp quyền chạy lệnh, đặt biến môi trường, và quan trọng nhất là cài HOOK — cơ chế để hệ thống TỰ LÀM một việc mỗi khi xảy ra sự kiện nào đó.",
+    "dung_khi": "Khi bác sĩ muốn 'từ nay mỗi lần X thì tự động làm Y', hoặc muốn bớt bị hỏi xin phép cho một loại lệnh.",
+    "luu_y": "Yêu cầu kiểu 'mỗi lần... thì tự động...' BẮT BUỘC phải qua hook — ghi vào bộ nhớ hay CLAUDE.md đều không làm được, vì đó là việc của phần mềm chứ không phải của trợ lý."
+  },
+  "keybindings-help": {
+    "ten_viet": "Tuỳ chỉnh phím tắt",
+    "vi": "Đổi phím tắt trong Claude Code, kể cả tổ hợp nhiều phím liên tiếp.",
+    "dung_khi": "Khi phím mặc định vướng với thói quen gõ của bác sĩ."
+  },
+  "simplify": {
+    "ten_viet": "Rà gọn phần mã vừa sửa",
+    "vi": "Soi lại đoạn mã vừa thay đổi để tìm chỗ trùng lặp, chỗ viết vòng vo, chỗ đặt sai tầng — rồi sửa gọn lại.",
+    "dung_khi": "Sau khi vừa viết xong một tính năng, muốn dọn trước khi chốt.",
+    "luu_y": "CHỈ lo chất lượng cách viết, KHÔNG đi tìm lỗi sai. Muốn tìm lỗi thì dùng `review`."
+  },
+  "fewer-permission-prompts": {
+    "ten_viet": "Bớt bị hỏi xin phép",
+    "vi": "Đọc lại lịch sử phiên làm việc, tìm những lệnh chỉ ĐỌC mà bác sĩ vẫn phải bấm đồng ý mỗi lần, rồi đề xuất danh sách cho phép sẵn.",
+    "dung_khi": "Khi thấy phải bấm đồng ý quá nhiều cho những việc vô hại như xem file, xem trạng thái git."
+  },
+  "loop": {
+    "ten_viet": "Chạy lặp theo chu kỳ",
+    "vi": "Lặp lại một yêu cầu theo khoảng thời gian đều đặn, hoặc để hệ thống tự chọn nhịp.",
+    "dung_khi": "Khi cần theo dõi liên tục một việc đang chạy, ví dụ chờ một tiến trình dài kết thúc.",
+    "luu_y": "Chỉ dùng cho việc LẶP LẠI. Việc làm một lần thì không cần."
+  },
+  "schedule": {
+    "ten_viet": "Đặt lịch chạy tự động",
+    "vi": "Tạo tác vụ chạy theo lịch trên máy chủ (theo giờ, theo ngày trong tuần), hoặc hẹn chạy một lần vào thời điểm định trước.",
+    "dung_khi": "Khi muốn một việc tự chạy định kỳ mà không cần bác sĩ mở máy — ví dụ quét cập nhật guideline hằng tuần.",
+    "luu_y": "Hệ EBM của bác sĩ đã có lịch riêng bằng launchd (com.medicalebm.weeklysafety / monthlyupdate) — đừng đặt trùng hai nơi."
+  },
+  "claude-api": {
+    "ten_viet": "Tra cứu Claude API",
+    "vi": "Tài liệu tra cứu về Claude API và bộ thư viện Anthropic: mã model, giá, giới hạn, cách gọi công cụ, cách lưu đệm ngữ cảnh.",
+    "dung_khi": "Bắt buộc đọc trước khi viết hoặc sửa mã có gọi Claude, và trước khi trả lời câu hỏi về giá hay chọn model — để không nói theo trí nhớ.",
+    "luu_y": "Bỏ qua nếu đang làm với nhà cung cấp khác (OpenAI, Gemini...)."
+  },
+  "run": {
+    "ten_viet": "Chạy thử ứng dụng của dự án",
+    "vi": "Khởi động ứng dụng của dự án để tận mắt thấy thay đổi có chạy đúng không, thay vì chỉ dựa vào kết quả kiểm thử.",
+    "dung_khi": "Khi bác sĩ bảo 'chạy thử xem', hoặc muốn ảnh chụp màn hình chứng minh sửa xong đã đúng."
+  },
+  "init": {
+    "ten_viet": "Khởi tạo hồ sơ dự án",
+    "vi": "Quét một kho mã rồi sinh file CLAUDE.md mô tả dự án đó, để những phiên sau hiểu ngay bối cảnh.",
+    "dung_khi": "Khi bắt đầu làm việc với một kho mã mới chưa có CLAUDE.md.",
+    "luu_y": "Dự án EBM của bác sĩ đã có CLAUDE.md rất chi tiết — chạy lại sẽ ghi đè, đừng dùng ở đây."
+  },
+  "review": {
+    "ten_viet": "Rà soát mã tìm lỗi",
+    "vi": "Đọc phần mã đã thay đổi để tìm lỗi sai thật sự: sai logic, thiếu trường hợp biên, rò rỉ tài nguyên.",
+    "dung_khi": "Trước khi chốt một thay đổi quan trọng.",
+    "luu_y": "Khác `simplify`: cái kia lo cách viết cho gọn, cái này đi tìm lỗi."
+  },
+  "security-review": {
+    "ten_viet": "Rà soát an toàn bảo mật",
+    "vi": "Soi phần mã đã thay đổi theo góc bảo mật: lộ khoá hay mật khẩu, dữ liệu người dùng đi ra ngoài, kiểm tra đầu vào lỏng lẻo, phân quyền sai.",
+    "dung_khi": "Trước khi phát hành thay đổi có đụng tới dữ liệu nhạy cảm.",
+    "luu_y": "Rất đáng chạy với mọi thay đổi trong hệ EBM có chạm tới dữ liệu bệnh nhân hoặc khoá ký cổng."
+  }
+}
