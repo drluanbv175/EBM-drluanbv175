@@ -2788,5 +2788,221 @@
   },
   "skill:medsci-writing:peer-review": {
     "vi": "[MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer review draft."
+  },
+  "name:aim-and-hypothesis-designer": {
+    "vi": "[Thiết kế NC] Dựng mục tiêu chính, mục tiêu phụ và giả thuyết kiểm định được từ một ý tưởng nghiên cứu còn thô. Dùng khi mới có ý tưởng, chưa thành câu hỏi rõ. Từ khoá: aims, hypothesis."
+  },
+  "name:study-objective-refiner": {
+    "vi": "[Thiết kế NC] Gọt mục tiêu nghiên cứu còn mơ hồ thành mục tiêu rõ, đo được, làm được. Dùng khi mục tiêu viết ra còn chung chung. Từ khoá: objective refinement."
+  },
+  "name:endpoint-definition-designer": {
+    "vi": "[Thiết kế NC] Định nghĩa kết cục chính, phụ và thăm dò cho đề cương. Dùng ở bước chốt kết cục — bước quyết định cỡ mẫu và phân tích về sau. Từ khoá: endpoints."
+  },
+  "name:inclusion-exclusion-criteria-builder": {
+    "vi": "[Thiết kế NC] Dựng tiêu chuẩn chọn và loại rõ ràng, kiểm toán được. Dùng khi viết phần đối tượng nghiên cứu. Từ khoá: inclusion exclusion criteria."
+  },
+  "name:inclusion-criteria-gen": {
+    "vi": "[Thiết kế NC] Sinh và tối ưu tiêu chuẩn chọn/loại cho thử nghiệm lâm sàng, cân giữa chặt chẽ khoa học và khả năng tuyển đủ bệnh nhân. Dùng khi lo không tuyển đủ. Từ khoá: eligibility criteria."
+  },
+  "name:confounder-and-bias-control-planner": {
+    "vi": "[Thiết kế NC] Lập kế hoạch kiểm soát yếu tố nhiễu và giảm sai lệch ngay từ khâu đề cương. Dùng TRƯỚC khi thu thập dữ liệu — sau đó sửa rất tốn kém. Từ khoá: confounding, bias control."
+  },
+  "name:validation-strategy-designer": {
+    "vi": "[Thiết kế NC] Thiết kế chiến lược kiểm định nội bộ, ngoại bộ, theo thời gian và theo chức năng. Dùng khi đề tài có mô hình hoặc dấu ấn sinh học cần chứng minh. Từ khoá: validation strategy."
+  },
+  "name:sample-size-and-power-planning-assistant": {
+    "vi": "[Thiết kế NC] Lập logic ước tính cỡ mẫu, giả định lực mẫu, kiểm khả thi và phương án dự phòng khi tuyển thiếu. Đề tài chính thức vẫn nên qua agent `co-mau-nghien-cuu` (cổng G3). Dùng ở bước lập kế hoạch, trước khi chốt số bệnh nhân cần tuyển. Từ khoá: sample size planning."
+  },
+  "name:sample-size-basic": {
+    "vi": "[Thiết kế NC] Tính nhanh cỡ mẫu cho so sánh hai nhóm. Dùng khi cần con số sơ bộ; con số chính thức phải qua cổng G3. Từ khoá: sample size."
+  },
+  "name:experiment-design": {
+    "vi": "[Thiết kế NC] Thiết kế thí nghiệm: cỡ mẫu, ngẫu nhiên hoá, nhóm chứng, làm mù. Dùng cho nghiên cứu can thiệp hoặc thực nghiệm. Từ khoá: experimental design."
+  },
+  "name:randomization-gen": {
+    "vi": "[Thiết kế NC] Sinh dãy phân nhóm ngẫu nhiên cho thử nghiệm: đơn giản, theo khối, có phân tầng. Dùng khi triển khai RCT. Từ khoá: randomization."
+  },
+  "name:adaptive-trial-simulator": {
+    "vi": "[Thiết kế NC] Thiết kế và mô phỏng thử nghiệm thích ứng có phân tích giữa chừng và quy tắc quyết định. Dùng cho thử nghiệm phức tạp cần dừng sớm khi đủ bằng chứng. Từ khoá: adaptive trial."
+  },
+  "name:clinical-cohort-protocol-designer": {
+    "vi": "[Thiết kế NC] Viết đề cương nghiên cứu đoàn hệ hồi cứu hoặc tiến cứu. Dùng khi làm nghiên cứu theo dõi nhóm bệnh nhân. Từ khoá: cohort protocol."
+  },
+  "name:case-control-study-planner": {
+    "vi": "[Thiết kế NC] Dựng khung nghiên cứu bệnh–chứng có logic quần thể nguồn và cách chọn nhóm chứng rõ ràng. Dùng cho bệnh hiếm hoặc kết cục hiếm. Từ khoá: case-control."
+  },
+  "name:real-world-evidence-study-designer": {
+    "vi": "[Thiết kế NC] Thiết kế nghiên cứu bằng chứng thực hành từ bệnh án điện tử, dữ liệu thanh toán hoặc sổ bộ. Dùng khi dùng dữ liệu sẵn có thay vì thu thập mới. Từ khoá: real-world evidence."
+  },
+  "name:feasibility-aware-study-planner": {
+    "vi": "[Thiết kế NC] Dựng phương án nghiên cứu SÁT THỰC TẾ theo ràng buộc mẫu, thời gian và nguồn lực. Dùng khi đề cương lý tưởng vượt quá khả năng thực hiện. Từ khoá: feasibility."
+  },
+  "name:primary-plan-recommender": {
+    "vi": "[Thiết kế NC] So sánh nhiều hướng nghiên cứu cho cùng một câu hỏi rồi khuyến nghị chọn một. Dùng khi phân vân giữa các thiết kế. Từ khoá: study route comparison."
+  },
+  "name:medical-research-gap-to-study-planner": {
+    "vi": "[Thiết kế NC] Chuyển một khoảng trống nghiên cứu đã xác định thành thiết kế nghiên cứu hoàn chỉnh, truy được về đúng khoảng trống đó. Dùng sau khi đã rà y văn. Từ khoá: gap to study."
+  },
+  "name:medical-research-algorithm-matcher": {
+    "vi": "[Thiết kế NC] Đối chiếu hướng nghiên cứu, loại dữ liệu và nguồn lực của bác sĩ để gợi ý phương pháp phân tích phù hợp. Dùng khi chưa biết chọn phương pháp nào. Từ khoá: method matching."
+  },
+  "name:basic-research-design": {
+    "vi": "[Thiết kế NC] Sinh chuỗi tiểu đề tài thực nghiệm nối tiếp nhau từ một chủ đề y sinh. Dùng cho nghiên cứu cơ bản nhiều giai đoạn. Từ khoá: research design."
+  },
+  "name:clinic-research-design": {
+    "vi": "[Thiết kế NC] Dựng khung đề cương lâm sàng theo 4 loại: chẩn đoán, hiệu quả, nguyên nhân, tiên lượng. Dùng khi bắt đầu đề tài lâm sàng. Từ khoá: clinical study protocol."
+  },
+  "name:research-proposal-generator": {
+    "vi": "[Thiết kế NC] Sinh đề xuất nghiên cứu đầy đủ từ y văn đã đọc: giả thuyết, cơ chế, thiết kế. Dùng khi viết thuyết minh đề tài. Từ khoá: research proposal."
+  },
+  "name:research-grants": {
+    "vi": "[Thiết kế NC] Viết hồ sơ xin tài trợ theo mẫu của các cơ quan tài trợ lớn (NIH, NSF…). Chuẩn Mỹ/Đài Loan, cần chỉnh cho quỹ trong nước. Dùng khi nộp hồ sơ xin kinh phí nghiên cứu. Từ khoá: grant writing."
+  },
+  "name:protocol-standardization": {
+    "vi": "[Thiết kế NC] Chuẩn hoá các bước thí nghiệm rời rạc thành quy trình tái lặp được. Dùng khi quy trình đang nằm rải trong nhiều ghi chú. Từ khoá: protocol standardization."
+  },
+  "name:sop-writer": {
+    "vi": "[Thiết kế NC] Viết quy trình thao tác chuẩn (SOP) đạt GCP cho phòng xét nghiệm hoặc nghiên cứu lâm sàng. Dùng khi cần hồ sơ chuẩn hoá thao tác. Từ khoá: SOP, GCP."
+  },
+  "name:meta-protocol-writer": {
+    "vi": "[Tổng quan hệ thống] Viết đề cương phân tích gộp đạt chuẩn PROSPERO từ tên đề tài và PICOS. Dùng trước khi đăng ký tổng quan hệ thống. Từ khoá: meta-analysis protocol."
+  },
+  "name:prospero-registration-helper": {
+    "vi": "[Tổng quan hệ thống] Soạn nội dung đăng ký PROSPERO cho tổng quan hệ thống. Dùng khi đăng ký tiền cứu — bắt buộc với tổng quan hệ thống nghiêm túc. Từ khoá: PROSPERO."
+  },
+  "name:inplasy-registration-helper": {
+    "vi": "[Tổng quan hệ thống] Soạn nội dung đăng ký INPLASY cho phân tích gộp. Dùng khi chọn INPLASY thay cho PROSPERO. Từ khoá: INPLASY."
+  },
+  "name:prognostic-biomarker-protocol-designer": {
+    "vi": "[Dấu ấn sinh học] Thiết kế quy trình phát hiện, mô hình hoá và kiểm định dấu ấn tiên lượng. Dùng khi đề tài tìm yếu tố dự báo kết cục. Từ khoá: prognostic biomarker."
+  },
+  "name:treatment-response-predictor-planner": {
+    "vi": "[Dấu ấn sinh học] Thiết kế nghiên cứu dự báo đáp ứng hoặc kháng trị. Dùng khi muốn biết ai sẽ đáp ứng với điều trị. Từ khoá: treatment response."
+  },
+  "name:translational-study-blueprint": {
+    "vi": "[Dấu ấn sinh học] Dựng lộ trình chuyển một phát hiện y sinh sang ứng dụng chẩn đoán, tiên lượng hoặc điều trị. Dùng khi có phát hiện cơ bản muốn đưa tới lâm sàng. Từ khoá: translational."
+  },
+  "name:mechanism-to-validation-planner": {
+    "vi": "[Dấu ấn sinh học] Mở rộng một phát hiện cơ chế thành lộ trình kiểm định nhiều bước. Dùng sau khi có tín hiệu liên quan, cần chứng minh nhân quả. Từ khoá: mechanism validation."
+  },
+  "name:animal-and-cell-validation-planner": {
+    "vi": "[Tiền lâm sàng] Thiết kế kế hoạch kiểm định trên tế bào và động vật cho phát hiện tính toán hoặc omics. Không dùng cho nghiên cứu trên người. Dùng khi có phát hiện từ dữ liệu tính toán cần kiểm chứng trong phòng thí nghiệm. Từ khoá: in vitro, in vivo validation."
+  },
+  "name:drug-repurposing-study-planner": {
+    "vi": "[Dược] Thiết kế quy trình tìm và kiểm chứng công dụng MỚI cho thuốc đã có. Dùng khi muốn tái định vị thuốc cũ. Từ khoá: drug repurposing."
+  },
+  "name:faers-pharmacovigilance-disproportionality-research-planner": {
+    "vi": "[Cảnh giác dược] Thiết kế nghiên cứu tín hiệu an toàn thuốc trên dữ liệu FAERS bằng phương pháp bất cân xứng. Dùng khi nghi một thuốc có tác dụng phụ chưa được ghi nhận. Từ khoá: FAERS, disproportionality."
+  },
+  "name:single-drug-faers-safety-profile-research-planner": {
+    "vi": "[Cảnh giác dược] Thiết kế nghiên cứu vẽ toàn cảnh an toàn của MỘT thuốc trên FAERS. Dùng khi cần bức tranh tổng thể tác dụng phụ của một thuốc. Từ khoá: FAERS safety profile."
+  },
+  "name:faers-multi-drug-soc-planner": {
+    "vi": "[Cảnh giác dược] Thiết kế so sánh an toàn NHIỀU thuốc trong cùng một nhóm cơ quan trên FAERS. Dùng khi chọn giữa các thuốc cùng nhóm. Từ khoá: FAERS multi-drug."
+  },
+  "name:active-comparator-single-soc-faers-safety-comparison": {
+    "vi": "[Cảnh giác dược] Thiết kế so sánh an toàn giữa các thuốc hoặc nhóm thuốc trên FAERS, có nhóm so sánh chủ động. Dùng khi cần so sánh công bằng hơn là so với nền chung. Từ khoá: active comparator."
+  },
+  "name:mendelian-randomization-protocol-designer": {
+    "vi": "[Di truyền] Thiết kế nghiên cứu ngẫu nhiên hoá Mendel để suy luận nhân quả từ dữ liệu di truyền. Dùng khi không thể làm thử nghiệm can thiệp. Từ khoá: Mendelian randomization."
+  },
+  "name:two-sample-mr-research-planner": {
+    "vi": "[Di truyền] Thiết kế nghiên cứu ngẫu nhiên hoá Mendel hai mẫu. Dùng khi phơi nhiễm và kết cục lấy từ hai bộ dữ liệu khác nhau. Từ khoá: two-sample MR."
+  },
+  "name:two-sample-mr-exposure-screening-reference-grounded": {
+    "vi": "[Di truyền] Thiết kế ngẫu nhiên hoá Mendel hai mẫu theo hướng sàng nhiều phơi nhiễm cho một kết cục. Dùng khi chưa biết yếu tố nào là nguyên nhân. Từ khoá: MR exposure screening."
+  },
+  "name:bidirectional-multi-phenotype-mr-research-planner": {
+    "vi": "[Di truyền] Thiết kế ngẫu nhiên hoá Mendel hai chiều, nhiều kiểu hình. Dùng khi nghi quan hệ nhân quả có thể đi cả hai chiều. Từ khoá: bidirectional MR."
+  },
+  "name:mr-scrna-research-planner": {
+    "vi": "[Di truyền] Kết hợp ngẫu nhiên hoá Mendel với dữ liệu phiên mã tế bào đơn. Dùng cho nghiên cứu nhân quả có kèm cơ chế ở mức tế bào. Từ khoá: MR + scRNA-seq."
+  },
+  "name:qtl-colocalization-study-planner": {
+    "vi": "[Di truyền] Thiết kế nghiên cứu đồng định vị tín hiệu QTL với tín hiệu GWAS. Dùng khi muốn nối biến thể di truyền với cơ chế phân tử. Từ khoá: QTL colocalization."
+  },
+  "name:single-cell-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu tế bào đơn hoàn chỉnh. Dùng cho đề tài giải trình tự tế bào đơn. Từ khoá: single-cell."
+  },
+  "name:bulk-omics-integrative-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu tích hợp phiên mã, protein và chuyển hoá ở mức mẫu gộp. Dùng cho đề tài đa tầng omics. Từ khoá: bulk omics."
+  },
+  "name:multi-omics-clinical-integration-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu ghép biến số lâm sàng với dữ liệu đa omics. Dùng khi muốn nối dữ liệu phân tử với kết cục người bệnh. Từ khoá: multi-omics clinical."
+  },
+  "name:bioinfo-analysis-plan": {
+    "vi": "[Tin sinh học] Rút quy trình phân tích từ bài báo tin sinh học rồi dựng kế hoạch riêng cho đề tài. Dùng khi muốn lặp lại phương pháp của một bài đã đọc. Từ khoá: bioinformatics workflow."
+  },
+  "name:conventional-oncology-hub-gene-research-planner": {
+    "vi": "[Tin sinh học — ung thư] Thiết kế nghiên cứu tìm gen trung tâm và dấu ấn từ phiên mã khối u. Dùng cho đề tài ung thư dùng dữ liệu công khai. Từ khoá: hub gene, oncology."
+  },
+  "name:conventional-non-oncology-hub-gene-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu gen trung tâm cho bệnh KHÔNG phải ung thư. Dùng cho đề tài bệnh mạn tính khai thác dữ liệu phiên mã công khai. Từ khoá: hub gene, non-oncology."
+  },
+  "name:single-gene-oncology-reference-grounded-research-planner": {
+    "vi": "[Tin sinh học — ung thư] Thiết kế nghiên cứu xoay quanh MỘT gen trong bối cảnh ung thư, có neo vào y văn. Dùng khi đề tài xoay quanh đúng một gen đích. Từ khoá: single-gene oncology."
+  },
+  "name:dual-disease-shared-transcriptome-biomarker-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu tìm dấu ấn CHUNG giữa hai bệnh từ dữ liệu phiên mã. Dùng khi nghi hai bệnh có cơ chế chung. Từ khoá: shared biomarker."
+  },
+  "name:cross-disease-shared-biomarker-network-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu mạng dấu ấn chung xuyên nhiều bệnh. Dùng khi nghi nhiều bệnh chia sẻ chung một cơ chế. Từ khoá: cross-disease biomarker."
+  },
+  "name:comorbidity-common-immune-biomarker-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn miễn dịch chung cho các bệnh đi kèm nhau. Dùng khi quan tâm bệnh đồng mắc. Từ khoá: comorbidity biomarker."
+  },
+  "name:dual-disease-transcriptomic-ml-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu phiên mã hai bệnh kết hợp học máy. Dùng khi muốn dựng mô hình phân biệt hoặc nối hai bệnh. Từ khoá: transcriptomic ML."
+  },
+  "name:non-tumor-ml-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu học máy y sinh cho bệnh không phải ung thư. Dùng cho đề tài học máy trên bệnh không phải ung thư. Từ khoá: machine learning, non-tumor."
+  },
+  "name:non-tumor-mechanism-guided-diagnostic-ml-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu học máy chẩn đoán dẫn dắt bởi cơ chế, cho bệnh không phải ung thư. Dùng khi muốn mô hình chẩn đoán có giải thích được về cơ chế. Từ khoá: diagnostic ML."
+  },
+  "name:tumor-immune-infiltration-diagnostic-ml-research-planner": {
+    "vi": "[Tin sinh học — ung thư] Thiết kế nghiên cứu chẩn đoán dựa trên mức thâm nhiễm miễn dịch khối u kết hợp học máy. Dùng cho đề tài miễn dịch khối u. Từ khoá: immune infiltration."
+  },
+  "name:pcd-immune-oncology-research-planner": {
+    "vi": "[Tin sinh học — ung thư] Thiết kế nghiên cứu về chết tế bào theo chương trình trong miễn dịch ung thư. Dùng cho đề tài ung thư quan tâm tới cơ chế chết tế bào. Từ khoá: programmed cell death."
+  },
+  "name:process-related-diagnostic-biomarker-nomogram-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn chẩn đoán theo quá trình sinh học, có dựng toán đồ. Dùng khi muốn ra sản phẩm cuối là một toán đồ dùng được tại giường. Từ khoá: nomogram, diagnostic biomarker."
+  },
+  "name:generic-phenotype-scoring-research-planner": {
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu chấm điểm kiểu hình cho bất kỳ bệnh và bộ gen nào. Dùng khi cần quy một tập gen thành điểm số cho từng bệnh nhân. Từ khoá: phenotype scoring."
+  },
+  "name:nhanes-clinical-retrospective-biomarker-research-planner": {
+    "vi": "[Dịch tễ] Thiết kế nghiên cứu cắt ngang kiểu NHANES kết hợp kiểm chứng hồi cứu trên dữ liệu lâm sàng. Dùng khi khai thác bộ khảo sát dân số. Từ khoá: NHANES."
+  },
+  "name:network-tox-docking-research-planner": {
+    "vi": "[Độc chất] Thiết kế nghiên cứu độc chất mạng kết hợp gắn kết phân tử. Dùng khi cần chứng minh chất độc gắn trực tiếp vào đích phân tử. Từ khoá: network toxicology, docking."
+  },
+  "name:comparative-network-toxicology-shared-mechanism-reference-grounded": {
+    "vi": "[Độc chất] Thiết kế nghiên cứu so sánh độc chất mạng giữa hai phơi nhiễm, tìm cơ chế chung. Dùng khi so hai chất phơi nhiễm xem có cùng cơ chế gây hại không. Từ khoá: comparative toxicology."
+  },
+  "name:single-compound-network-toxicology-disease-link-reference-grounded": {
+    "vi": "[Độc chất] Thiết kế nghiên cứu nối MỘT chất phơi nhiễm với một bệnh qua mạng độc chất. Dùng khi cần nối một chất độc cụ thể với một bệnh cụ thể. Từ khoá: single compound toxicology."
+  },
+  "name:single-drug-adverse-effect-hub-first-network-pharmacology": {
+    "vi": "[Dược lý mạng] Thiết kế nghiên cứu tác dụng phụ của một thuốc, đi từ gen trung tâm. Dùng khi muốn truy cơ chế gây tác dụng phụ của một thuốc. Từ khoá: network pharmacology."
+  },
+  "name:single-drug-adverse-effect-pathway-anchored-network-pharmacology": {
+    "vi": "[Dược lý mạng] Thiết kế nghiên cứu tác dụng phụ của một thuốc, neo theo con đường sinh học. Dùng khi đã nghi một con đường sinh học cụ thể gây tác dụng phụ. Từ khoá: pathway-anchored."
+  },
+  "name:hypothesis-generation": {
+    "vi": "[Thiết kế NC] Dựng giả thuyết khoa học có cấu trúc từ quan sát thực nghiệm. Dùng khi có dữ liệu quan sát mà chưa thành giả thuyết. Từ khoá: hypothesis."
+  },
+  "name:hypogenic": {
+    "vi": "[Thiết kế NC] Sinh và kiểm giả thuyết tự động bằng mô hình ngôn ngữ trên dữ liệu dạng bảng. Dùng khi muốn dò tìm quy luật một cách hệ thống. Từ khoá: automated hypothesis."
+  },
+  "name:tooluniverse-clinical-trial-design": {
+    "vi": "[Thiết kế NC] Đánh giá tính khả thi của thiết kế thử nghiệm lâm sàng: quần thể bệnh nhân, tiêu chí, nguồn lực. Dùng trước khi viết đề cương, để biết thử nghiệm có làm nổi không. Từ khoá: trial feasibility."
+  },
+  "name:esm": {
+    "vi": "[Tin sinh học] Bộ công cụ mô hình ngôn ngữ protein (ESM3, ESM C) để thiết kế và biểu diễn protein. Công cụ tiền lâm sàng. Dùng cho nghiên cứu cấu trúc và thiết kế protein, không dùng cho lâm sàng. Từ khoá: protein language model."
+  },
+  "skill:aipoch-medical-research:clinical-trial-protocol-skill": {
+    "vi": "[Thiết kế NC] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh; đề tài thật nên qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: clinical trial protocol."
   }
 }

@@ -39,7 +39,8 @@ VN_CHARS = re.compile(
 TIER_BY_SOURCE = {
     "openmed-skills": 1,
     "academic-research-skills": 1,
-    "medsci": 1,                    # bộ medsci-skills: nghiên cứu y khoa, sát việc bác sĩ nhất
+    "medsci": 1,
+    "aipoch": 1,                     # kho aipoch: 603 skill nghiên cứu y khoa/khoa học
     "healthcare": 1,
     "bio-research": 1,
     "user-skills": 1,
@@ -138,11 +139,30 @@ def main() -> int:
     reg = HOME / ".claude/plugins/installed_plugins.json"
     if reg.exists():
         data = json.loads(reg.read_text(encoding="utf-8"))
+        # Marketplace kiểu "directory": plugin cài từ một thư mục trên máy. Khi cache
+        # chưa được dựng, installPath chưa tồn tại — nhưng NGUỒN thì có, và cache sẽ
+        # được sao ra từ nguồn. Dịch vào nguồn để bản dịch đi theo lúc cache sinh ra.
+        nguon_thu_muc: dict[str, Path] = {}
+        st = HOME / ".claude/settings.json"
+        if st.exists():
+            try:
+                cfg = json.loads(st.read_text(encoding="utf-8"))
+                for mp, v in (cfg.get("extraKnownMarketplaces") or {}).items():
+                    src = (v or {}).get("source") or {}
+                    if src.get("source") == "directory" and src.get("path"):
+                        nguon_thu_muc[mp] = Path(src["path"])
+            except (OSError, json.JSONDecodeError):
+                pass
+
         for key, entries in data.get("plugins", {}).items():
-            plugin = key.split("@")[0]
+            plugin, _, mktp = key.partition("@")
             root = Path(entries[0]["installPath"])
             if not root.exists():
-                continue
+                thay_the = nguon_thu_muc.get(mktp)
+                if thay_the and thay_the.exists():
+                    root = thay_the          # quét thẳng nguồn
+                else:
+                    continue
             # Quét ĐỆ QUY, không cố định khuôn `skills/*/SKILL.md`: mỗi plugin bày
             # thư mục một kiểu — mattpocock lồng thêm cấp nhóm (`skills/engineering/
             # tdd/`), bmad để ở `src/core-skills/` và `web-bundles/`, humanizer đặt

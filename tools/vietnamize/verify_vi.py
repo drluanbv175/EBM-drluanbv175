@@ -61,8 +61,10 @@ def main() -> int:
         if key.startswith("_"):
             continue
         if key.startswith("name:"):
-            ds = theo_ten.get(key[5:], [])
-            if not ds:
+            # Bỏ những mục đã có khoá id RIÊNG — id luôn thắng fallback theo tên
+            # (apply_vi.py), nên so chúng với bản dịch của khoá tên là so nhầm.
+            ds = [i for i in theo_ten.get(key[5:], []) if i["id"] not in vi_map]
+            if not ds and not theo_ten.get(key[5:]):
                 # Bản dịch còn nhưng mục đã biến mất — bình thường khi plugin bị gỡ.
                 # Không phải lỗi: giữ lại bản dịch để dùng nếu plugin được cài lại.
                 canh_bao.append(f"{key}: không còn mục nào mang tên này (plugin đã gỡ?)")
