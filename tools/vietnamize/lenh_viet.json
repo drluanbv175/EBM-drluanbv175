@@ -17,7 +17,7 @@
   },
   "tinh-thang-diem": {
     "dich": "thang-diem-nguy-co",
-    "mo_ta": "Chọn và áp thang điểm nguy cơ đã kiểm định (CHA₂DS₂-VASc, HAS-BLED, Wells, CURB-65, FRAX…)",
+    "mo_ta": "Chọn và áp thang điểm nguy cơ đã kiểm định (CHA2DS2-VASc, HAS-BLED, Wells, CURB-65, FRAX…)",
     "than": "Tình huống cần tính nguy cơ: **$ARGUMENTS**\n\nGọi agent `thang-diem-nguy-co`. Trả nguy cơ tuyệt đối + ngưỡng hành động, kèm nguồn của thang.\nKHÔNG bịa điểm cắt."
   },
   "theo-doi-benh-man": {
@@ -112,7 +112,7 @@
   },
   "phan-tich-gop": {
     "dich": "meta-phan-tich",
-    "mo_ta": "Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I², kiểm sai lệch công bố",
+    "mo_ta": "Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I2, kiểm sai lệch công bố",
     "than": "Bộ nghiên cứu cần gộp: **$ARGUMENTS**\n\nGọi agent `meta-phan-tich`. Chỉ gộp khi đồng nhất lâm sàng và phương pháp hợp lý — KHÔNG gộp ép."
   },
   "kiem-chuan-bao-cao": {
