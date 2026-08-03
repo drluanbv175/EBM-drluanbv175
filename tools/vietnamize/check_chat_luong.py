@@ -14,9 +14,12 @@ không. Script soi 6 lỗi làm mô tả mất tác dụng:
   L4  Còn sót câu tiếng Anh dài (≥ 6 từ Latin liền nhau không dấu, ngoài phần Từ khoá)
   5   Quá dài (> 400 ký tự) — tràn dòng, khó đọc khi gõ `/`
   L6  Trùng y hệt mô tả của mục khác — dấu hiệu dịch ẩu, dán nhầm
+  L7  Bản gốc có vế cảnh báo phạm vi ("NOT for...") mà bản dịch bỏ mất —
+      lỗi nguy hiểm nhất: bác sĩ gọi công cụ cho đúng loại dữ liệu nó tự
+      khai là không dùng được
 
 Chạy: python3 tools/vietnamize/check_chat_luong.py [--sua-duoc]
-Mã thoát 0 = không có lỗi chặn (L1/L2/L3), 1 = có.
+Mã thoát 0 = không có lỗi chặn (L1/L2/L3/L7), 1 = có.
 """
 from __future__ import annotations
 
@@ -30,6 +33,26 @@ HERE = pathlib.Path(__file__).resolve().parent
 VN = re.compile(r"[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", re.I)
 # chuỗi ≥6 từ Latin liền nhau, không từ nào có dấu tiếng Việt
 CAU_ANH = re.compile(r"(?:\b[A-Za-z][A-Za-z'-]{1,}\b[ ,]){5,}\b[A-Za-z][A-Za-z'-]{1,}\b")
+
+
+# Vế cảnh báo phạm vi trong mô tả gốc, và các cách phủ định hợp lệ ở bản dịch.
+CANH_BAO = re.compile(r"\bNOT for\b|\bDo not use\b|\bnot intended\b|\bNOT a substitute\b", re.I)
+PHU_DINH = re.compile(r"không dùng|không áp dụng|không thay|không gọi|KHÔNG ")
+
+
+def _mo_ta_goc(item: dict) -> str:
+    """Mô tả tiếng Anh GỐC, đọc từ file .vi-bak mà apply_vi.py lưu lại.
+
+    KHÔNG dùng `desc_en` trong catalog_raw.json: sau khi áp bản dịch, trường đó
+    chính là bản TIẾNG VIỆT (danh mục quét lại từ file trên đĩa), nên đối chiếu
+    với nó là tự so bản dịch với chính nó.
+    """
+    p = pathlib.Path(str(item.get("path", "")) + ".vi-bak")
+    if not p.exists():
+        return ""
+    m = re.search(r"^description:\s*(.+?)(?=^[a-zA-Z_-]+:|^---)",
+                  p.read_text("utf-8", errors="replace"), re.M | re.S)
+    return " ".join(m.group(1).split()) if m else ""
 
 
 def main() -> int:
@@ -63,6 +86,14 @@ def main() -> int:
             loi["L4 còn câu tiếng Anh"].append((i["id"], m.group(0)[:60]))
         if len(d) > 400:
             loi["L5 quá dài"].append((i["id"], f"{len(d)} ký tự"))
+        # L7 — bản gốc CÓ vế cảnh báo phạm vi ("NOT for...", "Do not use...") mà
+        # bản dịch KHÔNG có phủ định nào. Đây là lỗi NGUY HIỂM nhất trong các lỗi
+        # dịch: bác sĩ gọi công cụ cho đúng loại dữ liệu mà nó tự khai là không
+        # dùng được. Không luật nào từ L1-L6 bắt được — 29 mục đã lọt qua sạch
+        # sẽ cho tới đợt rà 03/08/2026 (dịch từ bản gốc bị cắt ở 230 ký tự).
+        goc = _mo_ta_goc(i)
+        if goc and CANH_BAO.search(goc) and not PHU_DINH.search(d):
+            loi["L7 bỏ mất vế cảnh báo phạm vi của bản gốc"].append((i["id"], d[:70]))
 
     for d, ids in theo_mo_ta.items():
         ten = {x.split(":")[-1] for x in ids}
@@ -79,11 +110,11 @@ def main() -> int:
             print(f"      - {k}\n        {v}")
         if len(ds) > 6:
             print(f"      … và {len(ds)-6} mục nữa")
-        if nhan.startswith(("L1", "L2", "L3")):
+        if nhan.startswith(("L1", "L2", "L3", "L7")):
             chan += len(ds)
     if not loi:
         print("  ✓ Không phát hiện lỗi chất lượng nào.")
-    print(f"\nLỗi CHẶN (L1/L2/L3): {chan}")
+    print(f"\nLỗi CHẶN (L1/L2/L3/L7): {chan}")
     return 1 if chan else 0
 
 

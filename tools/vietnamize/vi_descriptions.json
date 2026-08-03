@@ -1836,7 +1836,7 @@
     "vi": "[Dữ liệu] Dựng biểu đồ chỉn chu: chuỗi thời gian, cột, đường, vùng, tròn, phân tán. Từ khoá: charts."
   },
   "name:view-pdf": {
-    "vi": "[Tài liệu] Trình xem PDF tương tác — mở và xem tài liệu ngay trong phiên. Từ khoá: PDF viewer."
+    "vi": "[Tài liệu] Trình xem PDF tương tác — mở, xem và đánh dấu tài liệu ngay trong phiên. Dùng khi cần nhìn tận mắt nội dung file PDF; không dùng để tóm tắt hay trích xuất chữ, việc đó đọc thẳng file nhanh hơn. Từ khoá: PDF viewer."
   },
   "name:open": {
     "vi": "[Tài liệu] Mở một file PDF trong trình xem tương tác. Từ khoá: open PDF."
@@ -1932,7 +1932,7 @@
     "vi": "[Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base."
   },
   "skill:desktop-commander:obsidian-vault": {
-    "vi": "[Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, frontmatter. Từ khoá: Obsidian."
+    "vi": "[Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, chuẩn hoá frontmatter, bảng điều khiển Dataview, tìm ghi chú mồ côi. Dùng khi bác sĩ nói rõ Obsidian hoặc tính năng riêng của nó; không dùng cho ghi chú Markdown thông thường hay kho tri thức chung. Từ khoá: Obsidian, wikilink, Dataview."
   },
   "name:config-guide": {
     "vi": "[Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide."
@@ -2676,7 +2676,7 @@
     "vi": "[MedSci] Chuẩn bị BÀI TRÌNH BÀY học thuật từ một bài báo (sinh hoạt khoa học, hội thảo). Dùng khi phải báo cáo journal club hay hội nghị. Từ khoá: academic presentation."
   },
   "name:render-pdf-doc": {
-    "vi": "[MedSci] Kết xuất tài liệu Markdown học thuật thành PDF chất lượng in. Dùng ở khâu cuối khi cần bản PDF đẹp. Từ khoá: PDF rendering."
+    "vi": "[MedSci] Kết xuất tài liệu Markdown học thuật thành PDF chất lượng in. Dùng ở khâu cuối khi cần bản PDF đẹp; không dùng cho bản thảo có danh mục tài liệu tham khảo — loại đó phải đi qua công cụ quản lý trích dẫn. Từ khoá: PDF rendering."
   },
   "name:find-journal": {
     "vi": "[MedSci] Gợi ý TẠP CHÍ phù hợp cho bản thảo: đối chiếu phạm vi, chính sách khai báo AI, khả năng được nhận, kèm phương án dự phòng nếu bị từ chối. Dùng khi chuẩn bị nộp. Chỉ số ảnh hưởng và phí đăng bài có thể đã cũ — phải kiểm lại trên trang tạp chí. Từ khoá: journal selection."
@@ -3405,7 +3405,7 @@
     "vi": "[Tìm y văn] Nghiên cứu y văn chuyên sâu: khử nhập nhằng tên đích, phân hạng chứng cứ, rút chủ đề có cấu trúc, ra báo cáo kèm danh mục kiểm đầy đủ và giả thuyết kiểm định được. Dùng khi cần một báo cáo nền dày dặn. Từ khoá: deep research."
   },
   "skill:aipoch-medical-research:topic-evidence-mapper": {
-    "vi": "[Khoảng trống NC] Vẽ nhanh toàn cảnh chứng cứ của một chủ đề y khoa: dòng nghiên cứu chính, dân số đích, kết cục, phương pháp, mật độ chứng cứ và vùng còn mỏng. Dùng trước khi đi tìm khoảng trống nghiên cứu. Từ khoá: evidence map."
+    "vi": "[Khoảng trống NC] Vẽ nhanh toàn cảnh chứng cứ của một chủ đề y khoa: dòng nghiên cứu chính, dân số đích, kết cục, phương pháp, mật độ chứng cứ và vùng còn mỏng. Dùng TRƯỚC bước tìm khoảng trống; không dùng trực tiếp để chốt khoảng trống, thiết kế nghiên cứu hay lập đề cương. Từ khoá: evidence map."
   },
   "skill:aipoch-medical-research:translational-gap-analyzer": {
     "vi": "[Chuyển dịch] Đánh giá khoảng cách giữa mô hình tiền lâm sàng và bệnh ở người. Dùng khi cân nhắc một kết quả trên động vật có chuyển sang người được hay không. Từ khoá: translational gap."
@@ -3438,7 +3438,7 @@
     "vi": "[Trích xuất] Rút dữ liệu nền của thử nghiệm lâm sàng gồm nghiên cứu, vùng địa lý và người tham gia, từ toàn văn hoặc từ mã PMID. Dùng khi lập bảng đặc điểm nền cho tổng quan. Từ khoá: baseline, PMID."
   },
   "skill:aipoch-medical-research:batch-effect-correction": {
-    "vi": "[Phân tích dữ liệu] Hiệu chỉnh hiệu ứng lô trên ma trận biểu hiện gộp, giữ nguyên cấu trúc nhóm sinh học, kèm biểu đồ kiểm soát chất lượng trước và sau. Dùng khi gộp nhiều mẻ mẫu vào một phân tích. Từ khoá: batch effect."
+    "vi": "[Phân tích dữ liệu] Hiệu chỉnh hiệu ứng lô trên ma trận biểu hiện gộp, giữ nguyên cấu trúc nhóm sinh học, kèm biểu đồ kiểm soát chất lượng trước và sau. Dùng khi gộp nhiều mẻ mẫu; không dùng cho tích hợp đơn bào, xử lý FASTQ thô, hay bộ dữ liệu không có nhãn lô và nhóm sinh học. Từ khoá: batch effect."
   },
   "skill:aipoch-medical-research:bio-causal-genomics-mediation-analysis": {
     "vi": "[Nhân quả] Tách hiệu ứng di truyền thành đường trực tiếp và gián tiếp qua biến trung gian, dùng gói mediation của R. Dùng khi kiểm xem biểu hiện gen hay methyl hoá có làm trung gian không. Từ khoá: mediation analysis."
@@ -3471,10 +3471,10 @@
     "vi": "[Thẩm định] Chấm nguy cơ sai lệch của nghiên cứu bệnh chứng theo thang Newcastle-Ottawa. Dùng khi cần đánh giá chất lượng một bài bệnh chứng. Từ khoá: Newcastle-Ottawa, case-control."
   },
   "skill:aipoch-medical-research:cerna-analysis": {
-    "vi": "[Tin sinh học] Dựng mạng điều hoà ceRNA từ danh sách gen chủ chốt, kết hợp dữ liệu miRNA với mRNA và lncRNA, xuất bảng CSV và hình PDF. Dùng khi phân tích mạng cạnh tranh RNA nội sinh. Từ khoá: ceRNA, miRNA, lncRNA."
+    "vi": "[Tin sinh học] Dựng mạng điều hoà ceRNA từ danh sách gen chủ chốt, kết hợp dữ liệu miRNA với mRNA và lncRNA, xuất bảng CSV và hình PDF. Dùng khi phân tích mạng cạnh tranh RNA nội sinh; không dùng cho biểu hiện khác biệt, dữ liệu đơn bào, làm giàu tập gen, hay khi chưa có danh sách gen chủ chốt. Từ khoá: ceRNA, miRNA, lncRNA."
   },
   "skill:aipoch-medical-research:cibersort-immune-infiltration-analysis": {
-    "vi": "[Tin sinh học] Ước lượng tỷ lệ thâm nhiễm tế bào miễn dịch từ ma trận biểu hiện khối bằng giải chập kiểu CIBERSORT với ma trận LM22, so một nhóm bệnh với một nhóm chứng. Dùng khi phân tích vi môi trường miễn dịch. Từ khoá: CIBERSORT, LM22."
+    "vi": "[Tin sinh học] Ước lượng tỷ lệ thâm nhiễm tế bào miễn dịch từ ma trận biểu hiện khối bằng giải chập kiểu CIBERSORT với ma trận LM22, so nhóm bệnh với nhóm chứng. Dùng khi phân tích vi môi trường miễn dịch; không dùng cho dữ liệu đơn bào, dữ liệu không gian hay chẩn đoán lâm sàng. Từ khoá: CIBERSORT, LM22."
   },
   "skill:aipoch-medical-research:circos-plot-generator": {
     "vi": "[Hình khoa học] Sinh file cấu hình Circos để vẽ dữ liệu bộ gen dạng vòng: biến thể điểm, số bản sao, biến thể cấu trúc và mạng giao tiếp tế bào. Dùng khi cần hình vòng đạt chuẩn đăng bài. Từ khoá: Circos."
@@ -3495,7 +3495,7 @@
     "vi": "[Thẩm định] Chấm chất lượng nghiên cứu thuần tập theo thang Newcastle-Ottawa. Dùng khi có một bài thuần tập cần báo cáo đánh giá chất lượng. Từ khoá: Newcastle-Ottawa, cohort."
   },
   "skill:aipoch-medical-research:consensus-clustering-analysis": {
-    "vi": "[Phân tích dữ liệu] Tìm phân nhóm mẫu ổn định từ ma trận biểu hiện khối bằng ConsensusClusterPlus, chọn số cụm theo chỉ số PAC và vẽ ma trận đồng thuận. Dùng khi cần phân dưới nhóm bệnh. Từ khoá: consensus clustering."
+    "vi": "[Phân tích dữ liệu] Tìm phân nhóm mẫu ổn định từ ma trận biểu hiện khối bằng ConsensusClusterPlus, chọn số cụm theo chỉ số PAC và vẽ ma trận đồng thuận. Dùng khi cần phân dưới nhóm bệnh; không dùng cho biểu hiện khác biệt, phân cụm đơn bào hay bảng không phải biểu hiện. Từ khoá: consensus clustering."
   },
   "skill:aipoch-medical-research:crispr-screen-analyzer": {
     "vi": "[Tin sinh học] Xử lý dữ liệu sàng lọc CRISPR để tìm gen thiết yếu và ứng viên: kiểm soát chất lượng, phân tích thống kê RRA và gọi hit. Dùng cho sàng lọc gộp về sống sót hoặc kháng thuốc. Từ khoá: CRISPR screen, RRA."
@@ -3510,7 +3510,7 @@
     "vi": "[Quản lý dữ liệu] Biến đổi, làm sạch, định dạng lại và tiền xử lý dữ liệu bằng pandas và numpy. Dùng khi dữ liệu thô chưa ở dạng phân tích được. Từ khoá: pandas, numpy."
   },
   "skill:aipoch-medical-research:decision-curve-analysis": {
-    "vi": "[Thống kê] Đánh giá lợi ích lâm sàng của mô hình dự báo nhị phân từ một file CSV: khớp mô hình, vẽ đường quyết định và đường tác động lâm sàng. Dùng khi cần biết mô hình có đáng dùng trên thực tế không. Từ khoá: decision curve analysis."
+    "vi": "[Thống kê] Đánh giá lợi ích lâm sàng của mô hình dự báo nhị phân từ một file CSV: vẽ đường quyết định và đường tác động lâm sàng. Dùng khi cần biết mô hình có đáng dùng trên thực tế không; không dùng cho hiệu chỉnh sống còn, ROC đơn thuần, dựng toán đồ hay kết cục thời gian tới biến cố. Từ khoá: decision curve analysis."
   },
   "skill:aipoch-medical-research:decision-tree-analysis": {
     "vi": "[Thống kê] Dựng mô hình cây quyết định bằng R cho bài toán phân loại hoặc hồi quy, kèm xếp hạng tầm quan trọng biến và tóm tắt đánh giá mô hình. Dùng khi cần mô hình dễ giải thích. Từ khoá: decision tree."
@@ -3519,25 +3519,25 @@
     "vi": "[Tin sinh học] Bộ công cụ phân tích giải trình tự thế hệ mới: chuyển BAM sang bigWig, kiểm soát chất lượng, vẽ heatmap quanh điểm khởi đầu phiên mã hay quanh đỉnh tín hiệu. Dùng cho ChIP-seq, RNA-seq và ATAC-seq. Từ khoá: deepTools, bigWig."
   },
   "skill:aipoch-medical-research:deg-screening-analysis": {
-    "vi": "[Tin sinh học] Sàng gen biểu hiện khác biệt giữa hai nhóm từ ma trận biểu hiện khối, xuất bảng gen, biểu đồ núi lửa và heatmap phân cụm. Dùng khi so hai nhóm mẫu. Từ khoá: DEG, volcano plot."
+    "vi": "[Tin sinh học] Sàng gen biểu hiện khác biệt giữa hai nhóm từ ma trận biểu hiện khối, xuất bảng gen, biểu đồ núi lửa và heatmap phân cụm. Dùng khi so hai nhóm mẫu; không dùng cho đơn bào, so nhiều nhóm, quy trình theo mô hình đếm như DESeq2 hay edgeR, và dữ liệu omics không phải biểu hiện. Từ khoá: DEG, volcano plot."
   },
   "skill:aipoch-medical-research:diagnostic-study-quality-assessment-quadas": {
     "vi": "[Thẩm định] Phân tích nguy cơ sai lệch và tính áp dụng được của nghiên cứu độ chính xác chẩn đoán theo bốn miền của QUADAS-2. Dùng khi thẩm định một bài về test chẩn đoán. Từ khoá: QUADAS-2."
   },
   "skill:aipoch-medical-research:differential-expression-analysis": {
-    "vi": "[Tin sinh học] Phân tích biểu hiện khác biệt trên dữ liệu RNA-seq khối hoặc microarray, kèm biểu đồ núi lửa và heatmap. Dùng khi so nhóm bệnh với nhóm chứng trên dữ liệu gộp mô; không áp dụng cho dữ liệu đơn bào. Từ khoá: differential expression."
+    "vi": "[Tin sinh học] Phân tích biểu hiện khác biệt trên dữ liệu RNA-seq khối hoặc microarray, kèm biểu đồ núi lửa và heatmap. Dùng khi so nhóm bệnh với nhóm chứng trên dữ liệu gộp mô; không dùng cho đơn bào, methyl hoá hay dữ liệu không phải biểu hiện. Từ khoá: differential expression."
   },
   "skill:aipoch-medical-research:dnanexus-integration": {
     "vi": "[Tin sinh học] Làm việc với nền tảng hệ gen đám mây DNAnexus: dựng ứng dụng, quản lý dữ liệu, dùng bộ thư viện dxpy, chạy quy trình xử lý FASTQ, BAM và VCF. Dùng khi chạy đường ống hệ gen trên đám mây. Từ khoá: DNAnexus, dxpy."
   },
   "skill:aipoch-medical-research:elastic-net-feature-selection": {
-    "vi": "[Thống kê] Chọn gen hoặc đặc trưng phân tử có giá trị dự báo cho bài toán phân loại hai nhóm bằng hồi quy logistic elastic net, kèm đường hệ số và kiểm chứng chéo. Dùng khi số biến nhiều hơn số mẫu. Từ khoá: elastic net, feature selection."
+    "vi": "[Thống kê] Chọn gen hoặc đặc trưng phân tử có giá trị dự báo cho bài toán phân loại hai nhóm bằng hồi quy logistic elastic net, kèm đường hệ số và kiểm chứng chéo. Dùng khi số biến nhiều hơn số mẫu; không dùng cho mô hình Cox, kết cục đa lớp, dữ liệu đơn bào hay bảng không phải biểu hiện. Từ khoá: elastic net."
   },
   "skill:aipoch-medical-research:epidemiology": {
     "vi": "[Dịch tễ] Phân tích dịch tễ học: mô hình bệnh SIR và SEIR, điều tra ổ dịch, xác định yếu tố nguy cơ, ước lượng tỷ lệ mới mắc và hiện mắc, suy luận nhân quả từ dữ liệu quan sát. Dùng khi làm nghiên cứu dịch tễ. Từ khoá: SIR, SEIR, incidence."
   },
   "skill:aipoch-medical-research:estimate-immune-score-analysis": {
-    "vi": "[Tin sinh học] Tính điểm vi môi trường miễn dịch theo phương pháp ESTIMATE từ ma trận biểu hiện khối, vẽ heatmap và biểu đồ hộp so sánh giữa các nhóm. Dùng khi đánh giá thâm nhiễm miễn dịch trong khối u. Từ khoá: ESTIMATE."
+    "vi": "[Tin sinh học] Tính điểm vi môi trường miễn dịch theo phương pháp ESTIMATE từ ma trận biểu hiện khối, vẽ heatmap và biểu đồ hộp so sánh nhóm. Dùng khi đánh giá thâm nhiễm miễn dịch trong khối u; không dùng để giải chập loại tế bào, cho đơn bào, biểu hiện khác biệt hay chẩn đoán lâm sàng. Từ khoá: ESTIMATE."
   },
   "skill:aipoch-medical-research:etetoolkit": {
     "vi": "[Tin sinh học] Bộ công cụ ETE phân tích cây phát sinh loài và cây phân cấp: đọc và sửa cây Newick hay NHX, phát hiện sự kiện nhân đôi và hình thành loài, gắn phân loại NCBI, vẽ hình. Dùng khi phân tích cây tiến hoá. Từ khoá: ETE, Newick."
@@ -3549,7 +3549,7 @@
     "vi": "[Phân tích dữ liệu] Khảo sát toàn diện một file dữ liệu khoa học thuộc hơn 200 định dạng để hiểu cấu trúc, nội dung, chất lượng và đặc điểm. Dùng ở bước đầu, trước khi phân tích chính thức. Từ khoá: EDA."
   },
   "skill:aipoch-medical-research:external-model-validation": {
-    "vi": "[Thống kê] Thẩm định ngoại một dấu ấn nguy cơ tiên lượng trên đoàn hệ độc lập có dữ liệu sống còn: tính điểm nguy cơ, vẽ Kaplan-Meier, phân bố nguy cơ, heatmap và đường ROC theo thời gian. Dùng khi kiểm chứng mô hình đã có. Từ khoá: external validation."
+    "vi": "[Thống kê] Thẩm định ngoại một dấu ấn nguy cơ tiên lượng trên đoàn hệ độc lập có dữ liệu sống còn: điểm nguy cơ, Kaplan-Meier, heatmap và ROC theo thời gian. Dùng khi kiểm chứng mô hình đã có; không dùng để huấn luyện mô hình, chọn biến, dựng toán đồ, phân tích hiệu chỉnh hay cho đơn bào. Từ khoá: external validation."
   },
   "skill:aipoch-medical-research:facs-gating-viz-style": {
     "vi": "[Hình khoa học] Vẽ hình phân tích tế bào dòng chảy theo phong cách gating chuẩn, quy trình nêu rõ giả định và giới hạn đầu ra. Dùng khi trình bày kết quả FACS. Từ khoá: FACS, gating."
@@ -3564,7 +3564,7 @@
     "vi": "[Hình khoa học] Vẽ và chỉnh biểu đồ rừng theo quy trình tái lặp được, có kiểm định rõ ràng và đầu ra sẵn sàng để bình duyệt. Dùng khi trình bày kết quả phân tích gộp. Từ khoá: forest plot."
   },
   "skill:aipoch-medical-research:gene-protein-expression-matrix-normalization": {
-    "vi": "[Tin sinh học] Chuẩn hoá ma trận biểu hiện gen hoặc protein bằng biến đổi log2, chuẩn hoá z-score hay co giãn min-max. Dùng khi cần đưa các mẫu về cùng thang trước khi vẽ hình và khảo sát; không thay chuẩn hoá theo mô hình đếm. Từ khoá: normalization, z-score."
+    "vi": "[Tin sinh học] Chuẩn hoá ma trận biểu hiện gen hoặc protein bằng biến đổi log2, z-score hay co giãn min-max. Dùng khi cần đưa các mẫu về cùng thang trước khi vẽ hình; không dùng cho chuẩn hoá theo mô hình đếm như TPM hay hệ số DESeq2, hiệu chỉnh lô, hay tiền xử lý đơn bào. Từ khoá: normalization."
   },
   "skill:aipoch-medical-research:gene-structure-mapper": {
     "vi": "[Hình khoa học] Vẽ sơ đồ cấu trúc gen theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần minh hoạ exon, intron và vùng chức năng. Từ khoá: gene structure."
@@ -3576,7 +3576,7 @@
     "vi": "[Phân tích dữ liệu] Thư viện Python đọc, ghi và phân tích dữ liệu địa lý dạng vector: phép toán không gian, đổi hệ toạ độ, vẽ bản đồ. Dùng khi nghiên cứu có yếu tố địa lý. Từ khoá: GeoPandas, Shapefile."
   },
   "skill:aipoch-medical-research:gokegg-analysis": {
-    "vi": "[Tin sinh học] Phân tích làm giàu GO và KEGG cho một danh sách gen từ RNA-seq khối hoặc microarray, rồi vẽ biểu đồ chấm gộp. Dùng khi đã có danh sách gen khác biệt và cần biết chúng dồn vào con đường nào. Từ khoá: GO, KEGG, enrichment."
+    "vi": "[Tin sinh học] Phân tích làm giàu GO và KEGG cho một danh sách gen từ RNA-seq khối hoặc microarray, rồi vẽ biểu đồ chấm gộp. Dùng khi đã có danh sách gen khác biệt và cần biết chúng dồn vào con đường nào; không dùng cho đơn bào, methyl hoá hay dữ liệu không phải biểu hiện. Từ khoá: GO, KEGG."
   },
   "skill:aipoch-medical-research:graphical-abstract-wizard": {
     "vi": "[Hình khoa học] Gợi ý bố cục tóm tắt đồ hoạ dựa trên phần tóm tắt của bài. Dùng khi tạp chí yêu cầu hình tóm tắt đồ hoạ kèm bản thảo. Từ khoá: graphical abstract."
@@ -3585,7 +3585,7 @@
     "vi": "[Tin sinh học] Chạy phân tích làm giàu tập gen trên danh sách gen đã xếp hạng, xuất bảng làm giàu, bảng điểm chạy và hình minh hoạ. Dùng khi muốn nhìn theo tập gen thay vì từng gen lẻ. Từ khoá: GSEA."
   },
   "skill:aipoch-medical-research:gsva-analysis-and-visualization": {
-    "vi": "[Tin sinh học] Chạy phân tích khác biệt ở mức con đường bằng GSVA hoặc ssGSEA từ ma trận biểu hiện khối và file phân nhóm mẫu, rồi vẽ heatmap. Dùng khi muốn so sánh theo con đường thay vì theo từng gen. Từ khoá: GSVA, ssGSEA."
+    "vi": "[Tin sinh học] Chạy phân tích khác biệt ở mức con đường bằng GSVA hoặc ssGSEA từ ma trận biểu hiện khối và file phân nhóm mẫu, rồi vẽ heatmap. Dùng khi muốn so theo con đường thay vì từng gen; không dùng cho biểu hiện khác biệt mức gen, đơn bào, methyl hoá hay chẩn đoán lâm sàng. Từ khoá: GSVA, ssGSEA."
   },
   "skill:aipoch-medical-research:gtars": {
     "vi": "[Tin sinh học] Bộ công cụ Rust hiệu năng cao cho phân tích khoảng gen, có giao diện Python và dòng lệnh: truy vấn chồng lấn nhanh, dựng đường phủ, mã hoá cho học máy. Dùng khi dữ liệu vùng gen quá lớn với công cụ thường. Từ khoá: gtars."
@@ -3594,7 +3594,7 @@
     "vi": "[Hình khoa học] Làm đẹp heatmap biểu hiện gen: tự thêm cây phân cụm, dải chú giải màu và sắp lại nhãn cho dễ đọc. Dùng khi cần hình heatmap đạt chuẩn đăng bài. Từ khoá: heatmap."
   },
   "skill:aipoch-medical-research:hierarchical-clustering-plot": {
-    "vi": "[Phân tích dữ liệu] Dựng cây phân cụm phân cấp ở mức mẫu từ ma trận biểu hiện khối và bảng chú giải mẫu. Dùng khi kiểm soát chất lượng, soi hiệu ứng lô hoặc đánh giá độ giống nhau giữa các mẫu. Từ khoá: hierarchical clustering."
+    "vi": "[Phân tích dữ liệu] Dựng cây phân cụm phân cấp ở mức mẫu từ ma trận biểu hiện khối và bảng chú giải mẫu. Dùng khi kiểm soát chất lượng, soi hiệu ứng lô hoặc đánh giá độ giống nhau giữa các mẫu; không dùng để kiểm định biểu hiện khác biệt, vẽ heatmap phân cụm gen hay phân cụm đơn bào. Từ khoá: hierarchical clustering."
   },
   "skill:aipoch-medical-research:histolab": {
     "vi": "[Giải phẫu bệnh số] Xử lý ảnh tiêu bản toàn phần với các định dạng SVS, TIFF, NDPI: cắt ô ảnh và tiền xử lý ảnh mô học. Dùng khi làm nghiên cứu giải phẫu bệnh số. Từ khoá: histolab, whole slide image."
@@ -3606,7 +3606,7 @@
     "vi": "[Thống kê] Vẽ đường sống còn Kaplan-Meier từ bảng dữ liệu có thời gian, tình trạng biến cố và nhóm nguy cơ đã tính sẵn. Dùng khi trình bày kết quả sống còn. Từ khoá: Kaplan-Meier, survival."
   },
   "skill:aipoch-medical-research:knn-imputation": {
-    "vi": "[Quản lý dữ liệu] Lọc bớt gen thiếu nhiều rồi điền khuyết ma trận biểu hiện khối bằng KNN có xét nhóm, giới hạn mẫu cho theo một cột chú giải. Dùng khi dữ liệu biểu hiện thiếu rải rác. Từ khoá: KNN imputation."
+    "vi": "[Quản lý dữ liệu] Lọc bớt gen thiếu nhiều rồi điền khuyết ma trận biểu hiện khối bằng KNN có xét nhóm, giới hạn mẫu cho theo một cột chú giải. Dùng khi dữ liệu biểu hiện thiếu rải rác; không dùng cho đơn bào, phân tầng nhiều cột, đầu vào không dạng bảng hay quy trình cần mạng. Từ khoá: KNN imputation."
   },
   "skill:aipoch-medical-research:lab-budget-forecaster": {
     "vi": "[Quản lý NC] Dự trù ngân sách phòng thí nghiệm theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi lập dự toán cho đề tài hoặc cho năm tài chính. Từ khoá: lab budget."
@@ -3615,7 +3615,7 @@
     "vi": "[Quản lý dữ liệu] Khung dữ liệu mã nguồn mở cho sinh học giúp dữ liệu truy vấn được, truy nguyên được, tái lặp được và đạt chuẩn FAIR. Dùng khi quản lý nhiều bộ dữ liệu sinh học lớn. Từ khoá: LaminDB, FAIR."
   },
   "skill:aipoch-medical-research:lasso-logistics-analysis": {
-    "vi": "[Thống kê] Dựng mô hình phân loại hai nhóm từ ma trận biểu hiện hoặc đặc trưng omics bằng hồi quy logistic LASSO, kèm kiểm chứng chéo và đường hệ số. Dùng khi cần chọn biến trong dữ liệu nhiều chiều. Từ khoá: LASSO."
+    "vi": "[Thống kê] Dựng mô hình phân loại hai nhóm từ ma trận biểu hiện hoặc đặc trưng omics bằng hồi quy logistic LASSO, kèm kiểm chứng chéo và đường hệ số. Dùng khi cần chọn biến trong dữ liệu nhiều chiều; không dùng cho phân loại nhiều lớp, mô hình Cox hay hồi quy tuyến tính thường. Từ khoá: LASSO."
   },
   "skill:aipoch-medical-research:lightgbm-analysis": {
     "vi": "[Học máy] Huấn luyện mô hình LightGBM trên dữ liệu bảng bằng R, trả về chỉ số mô hình, bảng xếp hạng tầm quan trọng biến và hình minh hoạ. Dùng khi cần mô hình cây tăng cường mạnh. Từ khoá: LightGBM."
@@ -3687,7 +3687,7 @@
     "vi": "[Tin sinh học] Vẽ biểu đồ Krona cho dữ liệu hệ vi sinh vật theo quy trình tái lặp được, có bước kiểm định rõ ràng. Dùng khi trình bày thành phần loài trong mẫu. Từ khoá: Krona, metagenomics."
   },
   "skill:aipoch-medical-research:model-calibration-curve": {
-    "vi": "[Thống kê] Đánh giá mức khớp giữa xác suất dự báo của mô hình sống còn và kết cục quan sát, bằng mô hình Cox và đường hiệu chỉnh bootstrap ở một hay nhiều mốc thời gian. Dùng khi thẩm định mô hình tiên lượng. Từ khoá: calibration curve."
+    "vi": "[Thống kê] Đánh giá mức khớp giữa xác suất dự báo của mô hình sống còn và kết cục quan sát, bằng mô hình Cox và đường hiệu chỉnh bootstrap. Dùng khi thẩm định mô hình tiên lượng; không dùng để dựng toán đồ, sàng Cox đơn biến, phân tích ROC hay đường quyết định. Từ khoá: calibration curve."
   },
   "skill:aipoch-medical-research:motif-logo-generator": {
     "vi": "[Hình khoa học] Vẽ logo trình tự đạt chuẩn đăng bài cho motif ADN hoặc protein. Dùng khi cần minh hoạ vùng trình tự bảo tồn. Từ khoá: sequence logo, motif."
@@ -3702,7 +3702,7 @@
     "vi": "[Tín hiệu sinh học] Phân tích điện sinh lý ngoại bào Neuropixels trọn quy trình: tiền xử lý, hiệu chỉnh chuyển động, phân loại xung bằng Kilosort4 và các chỉ số kiểm soát chất lượng. Dùng khi xử lý dữ liệu Neuropixels. Từ khoá: Kilosort."
   },
   "skill:aipoch-medical-research:nomogram-construction": {
-    "vi": "[Thống kê] Dựng toán đồ tiên lượng từ các yếu tố dự báo lâm sàng liên quan sống còn, xuất gói toán đồ, bảng chỉ số C và bản PDF. Dùng khi cần công cụ tính nguy cơ trực quan cho lâm sàng. Từ khoá: nomogram, C-index."
+    "vi": "[Thống kê] Dựng toán đồ tiên lượng từ các yếu tố dự báo lâm sàng liên quan sống còn, xuất gói toán đồ, bảng chỉ số C và bản PDF. Dùng khi cần công cụ tính nguy cơ trực quan; không dùng để sàng biến bằng Cox, vẽ đường hiệu chỉnh, ROC, đường quyết định hay kết cục không phải sống còn. Từ khoá: nomogram."
   },
   "skill:aipoch-medical-research:outcome-extraction-for-clinical-trials": {
     "vi": "[Phân tích gộp] Rút số liệu kết cục dạng nhị phân, liên tục hoặc sống còn từ bài nghiên cứu lâm sàng để đưa vào phân tích gộp. Dùng khi lập bảng dữ liệu cho tổng quan hệ thống. Từ khoá: outcome extraction."
@@ -3723,7 +3723,7 @@
     "vi": "[Hình khoa học] Vẽ và chỉnh cây phát sinh loài theo quy trình tái lặp được, có kiểm định rõ ràng và đầu ra sẵn sàng bình duyệt. Dùng khi trình bày cây tiến hoá trong bài báo. Từ khoá: phylogenetic tree."
   },
   "skill:aipoch-medical-research:ppi-network-analysis": {
-    "vi": "[Tin sinh học] Dựng mạng tương tác protein từ danh sách gen tại chỗ và bộ nhớ đệm STRING ngoại tuyến, xuất bảng nút, bảng cạnh và hình mạng dạng PDF. Dùng khi cần mạng tương tác tái lặp được. Từ khoá: PPI, STRING."
+    "vi": "[Tin sinh học] Dựng mạng tương tác protein từ danh sách gen tại chỗ và bộ nhớ đệm STRING ngoại tuyến, xuất bảng nút, bảng cạnh và hình mạng PDF. Dùng khi cần mạng tương tác tái lặp được; không gọi API trực tuyến, không dùng cho tích hợp đa omics hay nguồn tương tác ngoài STRING. Từ khoá: PPI, STRING."
   },
   "skill:aipoch-medical-research:preclinical-pkpd-analyst": {
     "vi": "[Dược động học] Phân tích dược động học và dược lực học tiền lâm sàng theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi xử lý dữ liệu trên động vật. Từ khoá: PK/PD."
@@ -3765,10 +3765,10 @@
     "vi": "[Thẩm định] Bản chấm RoB 2 cho thử nghiệm ngẫu nhiên: đối chiếu văn bản bài báo với từng miền sai lệch rồi kết lại thành báo cáo. Dùng khi cần đánh giá chất lượng một thử nghiệm lâm sàng. Từ khoá: RoB 2, randomized trial."
   },
   "skill:aipoch-medical-research:rf-model-importance-analysis": {
-    "vi": "[Học máy] Quy trình R dòng lệnh huấn luyện rừng ngẫu nhiên hai lớp trên ma trận đặc trưng kiểu biểu hiện, xếp hạng tầm quan trọng biến và vẽ hình sai số. Dùng khi cần chọn biến bằng rừng ngẫu nhiên. Từ khoá: random forest."
+    "vi": "[Học máy] Quy trình R dòng lệnh huấn luyện rừng ngẫu nhiên hai lớp trên ma trận đặc trưng kiểu biểu hiện, xếp hạng tầm quan trọng biến và vẽ hình sai số. Dùng khi cần chọn biến bằng rừng ngẫu nhiên; không dùng cho hồi quy, phân loại nhiều lớp, điền khuyết hay lấy dữ liệu từ xa. Từ khoá: random forest."
   },
   "skill:aipoch-medical-research:roc-diagnostic-performance": {
-    "vi": "[Thống kê] Đánh giá hiệu năng dấu ấn chẩn đoán từ dữ liệu bệnh chứng bằng hồi quy logistic và đường ROC, xuất bảng hệ số, bảng AUC và hình PDF. Dùng khi cần biết một dấu ấn phân biệt bệnh tốt đến đâu. Từ khoá: ROC, AUC."
+    "vi": "[Thống kê] Đánh giá hiệu năng dấu ấn chẩn đoán từ dữ liệu bệnh chứng bằng hồi quy logistic và đường ROC, xuất bảng hệ số, bảng AUC và hình PDF. Dùng khi cần biết dấu ấn phân biệt bệnh tốt đến đâu; không dùng cho phân tích sống còn, phân loại nhiều lớp, đường hiệu chỉnh hay toán đồ. Từ khoá: ROC, AUC."
   },
   "skill:aipoch-medical-research:rowan": {
     "vi": "[Hoá tính toán] Nền tảng hoá lượng tử trên đám mây có giao diện Python: dự đoán pKa, tối ưu hình học, tìm cấu dạng, tính tính chất phân tử và tương tác protein với phối tử. Dùng khi cần tính toán hoá lượng tử. Từ khoá: Rowan, pKa."
@@ -3777,7 +3777,7 @@
     "vi": "[Thống kê] Phân tích tương quan giữa hai biến bằng hệ số Pearson và Spearman, tự nhận dạng định dạng dữ liệu và kiểm tham số đầu vào. Dùng khi cần đo mức liên hệ giữa hai biến. Từ khoá: Pearson, Spearman."
   },
   "skill:aipoch-medical-research:sample-group-sankey-plot": {
-    "vi": "[Hình khoa học] Vẽ biểu đồ Sankey hoặc phù sa từ bảng chú giải mẫu, với các cột phân loại như nhóm nguy cơ, tình trạng đáp ứng, dưới típ hay tên đoàn hệ. Dùng khi cần thể hiện dòng chuyển giữa các nhóm. Từ khoá: Sankey, alluvial."
+    "vi": "[Hình khoa học] Vẽ biểu đồ Sankey hoặc phù sa từ bảng chú giải mẫu, với các cột phân loại như nhóm nguy cơ, tình trạng đáp ứng hay dưới típ. Dùng khi cần thể hiện dòng chuyển giữa các nhóm; không dùng cho dòng chảy mạng gen, quỹ đạo giá trị liên tục hay sơ đồ con đường dạng đồ thị. Từ khoá: Sankey, alluvial."
   },
   "skill:aipoch-medical-research:sanger-chromatogram-qa": {
     "vi": "[Tin sinh học] Kiểm chất lượng sắc ký đồ giải trình tự Sanger theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi xác nhận kết quả giải trình tự. Từ khoá: Sanger."
@@ -3816,7 +3816,7 @@
     "vi": "[Tin sinh học] Ánh xạ dữ liệu phiên mã không gian từ nền tảng Visium hoặc Xenium lên lát cắt mô. Dùng khi nghiên cứu biểu hiện gen theo vị trí trong mô. Từ khoá: spatial transcriptomics, Visium."
   },
   "skill:aipoch-medical-research:ssgsea-immune-infiltration-analysis": {
-    "vi": "[Tin sinh học] Ước lượng thâm nhiễm miễn dịch từ ma trận RNA-seq khối bằng ssGSEA hoặc GSVA, so nhóm bệnh với nhóm chứng và vẽ hình điểm miễn dịch. Dùng khi cần điểm tương đối, không phải số tuyệt đối tế bào. Từ khoá: ssGSEA."
+    "vi": "[Tin sinh học] Ước lượng thâm nhiễm miễn dịch từ ma trận RNA-seq khối bằng ssGSEA hoặc GSVA, so nhóm bệnh với nhóm chứng và vẽ hình điểm miễn dịch. Dùng khi cần điểm tương đối; không dùng cho đơn bào, ước lượng tỷ lệ tế bào tuyệt đối hay ra quyết định lâm sàng. Từ khoá: ssGSEA."
   },
   "skill:aipoch-medical-research:statistical-analysis": {
     "vi": "[Thống kê] Hướng dẫn chọn kiểm định phù hợp, kiểm giả định, tính lực mẫu và báo cáo theo chuẩn APA. Dùng khi chưa chắc nên dùng kiểm định nào cho dữ liệu của mình. Từ khoá: statistical test, APA."
@@ -3834,7 +3834,7 @@
     "vi": "[Hình khoa học] Vẽ đường sống còn kèm bảng số đối tượng còn theo dõi ở từng mốc thời gian, theo quy trình tái lặp được. Dùng khi tạp chí yêu cầu bảng số còn lại dưới hình. Từ khoá: risk table."
   },
   "skill:aipoch-medical-research:svm-model-importance-analysis": {
-    "vi": "[Học máy] Quy trình R dòng lệnh xếp hạng đặc trưng bằng SVM-RFE cho bài toán hai lớp, chọn số đặc trưng theo sai số kiểm chứng chéo và vẽ hình. Dùng khi cần chọn biến bằng máy vector hỗ trợ. Từ khoá: SVM-RFE."
+    "vi": "[Học máy] Quy trình R dòng lệnh xếp hạng đặc trưng bằng SVM-RFE cho bài toán hai lớp, chọn số đặc trưng theo sai số kiểm chứng chéo và vẽ hình. Dùng khi cần chọn biến bằng máy vector hỗ trợ; không dùng cho hồi quy, phân loại nhiều lớp, điền khuyết hay lấy dữ liệu từ xa. Từ khoá: SVM-RFE."
   },
   "skill:aipoch-medical-research:table-1-generator": {
     "vi": "[Thống kê] Tự sinh bảng đặc điểm nền, tức Bảng 1, cho bài nghiên cứu lâm sàng. Dùng khi cần bảng mô tả mẫu nghiên cứu. Từ khoá: Table 1, baseline."
@@ -3858,10 +3858,10 @@
     "vi": "[Độc chất] Dò cảnh báo cấu trúc liên quan độc tính trong hợp chất theo quy trình tái lặp được, có kiểm định rõ ràng. Dùng khi sàng an toàn sớm cho ứng viên thuốc. Từ khoá: structural alert, toxicity."
   },
   "skill:aipoch-medical-research:umap-tsne-analysis": {
-    "vi": "[Phân tích dữ liệu] Giảm chiều và vẽ hình ở mức mẫu trên ma trận độ phong phú hoặc bảng OTU kèm file phân nhóm, xuất toạ độ và hình UMAP hay t-SNE. Dùng khi cần xem các nhóm có tách nhau không. Từ khoá: UMAP, t-SNE."
+    "vi": "[Phân tích dữ liệu] Giảm chiều và vẽ hình ở mức mẫu trên ma trận độ phong phú hoặc bảng OTU kèm file phân nhóm, xuất toạ độ và hình UMAP hay t-SNE. Dùng khi cần xem các nhóm có tách nhau không; không dùng để kiểm định biểu hiện khác biệt, và cần có file phân nhóm mới chạy. Từ khoá: UMAP, t-SNE."
   },
   "skill:aipoch-medical-research:univariate-multivariable-cox-regression": {
-    "vi": "[Thống kê] Phân tích sống còn tiên lượng trên đoàn hệ lâm sàng bằng mô hình Cox đơn biến và đa biến, xuất bảng kết quả và biểu đồ rừng. Dùng khi tìm yếu tố tiên lượng độc lập. Từ khoá: Cox regression."
+    "vi": "[Thống kê] Phân tích sống còn tiên lượng trên đoàn hệ lâm sàng bằng mô hình Cox đơn biến và đa biến, xuất bảng kết quả và biểu đồ rừng. Dùng khi tìm yếu tố tiên lượng độc lập; không dùng để dựng toán đồ, vẽ đường hiệu chỉnh, ROC theo thời gian hay chọn biến ngoài luật sàng sẵn có. Từ khoá: Cox regression."
   },
   "skill:aipoch-medical-research:upset-plot-converter": {
     "vi": "[Hình khoa học] Chuyển biểu đồ Venn nhiều hơn 4 tập thành biểu đồ UpSet dễ đọc hơn. Dùng khi cần thể hiện phần giao của nhiều tập hợp. Từ khoá: UpSet plot, Venn."
@@ -3879,7 +3879,7 @@
     "vi": "[Thực nghiệm] Tự nhận diện băng trên ảnh Western blot, đo mật độ và tính giá trị chuẩn hoá theo chứng nội. Dùng khi định lượng kết quả Western blot. Từ khoá: Western blot, densitometry."
   },
   "skill:aipoch-medical-research:wgcna-analysis": {
-    "vi": "[Tin sinh học] Dựng mạng đồng biểu hiện gen có trọng số từ ma trận biểu hiện khối: lọc gen biến thiên theo MAD, tìm mô-đun bằng WGCNA rồi tương quan mô-đun với đặc điểm lâm sàng. Dùng khi tìm nhóm gen liên quan kiểu hình. Từ khoá: WGCNA."
+    "vi": "[Tin sinh học] Dựng mạng đồng biểu hiện gen có trọng số từ ma trận biểu hiện khối: lọc gen theo MAD, tìm mô-đun bằng WGCNA rồi tương quan mô-đun với đặc điểm lâm sàng. Dùng khi tìm nhóm gen liên quan kiểu hình; không dùng cho đơn bào, biểu hiện khác biệt, methyl hoá hay bộ dữ liệu quá nhỏ. Từ khoá: WGCNA."
   },
   "skill:aipoch-medical-research:xgboost-analysis": {
     "vi": "[Học máy] Dựng mô hình XGBoost trên dữ liệu bảng cho phân loại nhị phân hoặc hồi quy, tự chia tập huấn luyện và kiểm tra, xuất bảng hiệu năng và xếp hạng tầm quan trọng biến. Dùng khi cần mô hình tăng cường mạnh. Từ khoá: XGBoost."
