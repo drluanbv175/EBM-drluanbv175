@@ -4710,7 +4710,7 @@
     "vi": "[Phân tích gộp — bước 1] Nhận chủ đề từ TOPIC.txt, chuyển thành đề cương PICO/PECO, xác định tiêu chuẩn chọn, kết cục và phạm vi tìm kiếm. Dùng khi khởi động một đề tài phân tích gộp mới. Từ khoá: topic intake, PICO."
   },
   "name:ma-search-bibliography": {
-    "vi": "[Phân tích gộp — bước 2] Tìm y văn bằng Python (qua uv), truy vấn PubMed và các CSDL khác, khử trùng lặp, lưu thư mục tài liệu theo từng vòng tìm. Dùng khi dựng hoặc cập nhật kho chứng cứ. CẦN cài `uv` — máy này chưa có. Từ khoá: literature search, PubMed."
+    "vi": "[Phân tích gộp — bước 2] Tìm y văn bằng Python (qua uv), truy vấn PubMed và các CSDL khác, khử trùng lặp, lưu thư mục tài liệu theo từng vòng tìm. Dùng khi dựng hoặc cập nhật kho chứng cứ. Từ khoá: literature search, PubMed."
   },
   "name:ma-screening-quality": {
     "vi": "[Phân tích gộp — bước 3] Sàng lọc tiêu đề và tóm tắt, áp tiêu chuẩn chọn/loại, đánh giá chất lượng và nguy cơ sai lệch. Dùng khi chọn nghiên cứu đủ điều kiện đưa vào gộp. Từ khoá: screening, risk of bias."
