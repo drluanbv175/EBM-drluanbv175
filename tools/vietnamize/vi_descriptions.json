@@ -4722,7 +4722,7 @@
     "vi": "[Phân tích gộp — bước 5] Định nghĩa khung trích xuất, bóc dữ liệu từ toàn văn và lưu vào cơ sở dữ liệu có cấu trúc. Dùng khi chuyển từ thu thập toàn văn sang phân tích thống kê. Từ khoá: data extraction."
   },
   "name:ma-meta-analysis": {
-    "vi": "[Phân tích gộp — bước 6] Chạy thống kê gộp bằng R (có renv): ước lượng hiệu ứng, tính không đồng nhất, chẩn đoán sai lệch công bố, xuất hình và bảng. CẦN cài R — máy này chưa có, skill sẽ dừng ở bước gọi Rscript. Bản thay thế dùng được ngay: agent `meta-phan-tich`. Từ khoá: meta-analysis, R, renv."
+    "vi": "[Phân tích gộp — bước 6] Chạy thống kê gộp bằng R (có renv): ước lượng hiệu ứng, tính không đồng nhất, chẩn đoán sai lệch công bố, xuất hình và bảng. Dùng khi đã trích xuất xong dữ liệu từ các nghiên cứu. Từ khoá: meta-analysis, R, renv."
   },
   "name:ma-publication-quality": {
     "vi": "[Phân tích gộp — bước 7] Kiểm chất lượng mức tạp chí lớn: báo cáo PRISMA/MOOSE, chẩn đoán nâng cao (Hartung-Knapp, khoảng dự báo, phân tích ảnh hưởng), bảng GRADE Summary of Findings, rà khẳng định và đối chiếu chéo. Dùng khi chuẩn bị gói nộp cuối. Từ khoá: PRISMA, MOOSE, GRADE SoF."
