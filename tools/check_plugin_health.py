@@ -51,14 +51,44 @@ DUONG_DAN = re.compile(
 )
 
 
+def nguon_directory() -> dict[str, pathlib.Path]:
+    """Marketplace kiểu 'directory' → thư mục nguồn trên máy.
+
+    Plugin cài kiểu này được Claude Code nạp THẲNG TỪ NGUỒN; cache có thể chưa
+    bao giờ được dựng mà plugin vẫn chạy bình thường (aipoch-medical-research,
+    03/08/2026). Không tra bảng này thì công cụ báo N1 'đường dẫn cài không tồn
+    tại' cho một plugin đang hoạt động — nói sai về trạng thái thật.
+    """
+    out: dict[str, pathlib.Path] = {}
+    st = HOME / ".claude/settings.json"
+    if not st.exists():
+        return out
+    try:
+        cfg = json.loads(st.read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return out
+    for mp, v in (cfg.get("extraKnownMarketplaces") or {}).items():
+        src = (v or {}).get("source") or {}
+        if src.get("source") == "directory" and src.get("path"):
+            out[mp] = pathlib.Path(src["path"])
+    return out
+
+
 def nap_plugin() -> list[tuple[str, pathlib.Path]]:
     """Danh sách (tên, thư mục cài) của mọi plugin đã đăng ký."""
     ds: list[tuple[str, pathlib.Path]] = []
     reg = HOME / ".claude/plugins/installed_plugins.json"
+    nguon = nguon_directory()
     if reg.exists():
         data = json.loads(reg.read_text("utf-8"))
         for key, entries in data.get("plugins", {}).items():
-            ds.append((key, pathlib.Path(entries[0]["installPath"])))
+            goc = pathlib.Path(entries[0]["installPath"])
+            if not goc.exists():
+                _, _, mktp = key.partition("@")
+                thay = nguon.get(mktp)
+                if thay and thay.exists():
+                    goc = thay          # cài từ thư mục nguồn, cache chưa dựng
+            ds.append((key, goc))
     app = tim_app_support()
     for mf in app.rglob("rpm/manifest.json"):
         try:

@@ -333,7 +333,7 @@
     "vi": "Áp bộ màu và kiểu chữ chính thức của Anthropic. Dùng khi làm sản phẩm cần đúng nhận diện thương hiệu đó; ít dùng cho tài liệu y khoa. Từ khoá: brand guidelines."
   },
   "skill:anthropic-skills:web-artifacts-builder": {
-    "vi": "Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind cho artifact trên claude.ai. Dùng khi cần trang tương tác phức tạp hơn dashboard mẫu. Từ khoá: web artifacts, React."
+    "vi": "Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind/shadcn cho artifact trên claude.ai. Dùng khi trang cần quản lý trạng thái, điều hướng hoặc thành phần shadcn — KHÔNG dùng cho artifact HTML/JSX đơn giản một file. Từ khoá: web artifacts, React."
   },
   "skill:anthropic-skills:algorithmic-art": {
     "vi": "Tạo tranh thuật toán bằng p5.js với yếu tố ngẫu nhiên có hạt giống và tham số điều chỉnh được. Dùng cho minh hoạ sáng tạo, không phải biểu đồ dữ liệu. Từ khoá: algorithmic art, p5.js."
