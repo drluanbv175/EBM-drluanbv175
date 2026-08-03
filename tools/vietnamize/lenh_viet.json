@@ -1,6 +1,5 @@
 {
   "_ghi_chu": "Bảng lệnh TÊN TIẾNG VIỆT trỏ tới skill/agent có sẵn. Tên đặt KHÔNG DẤU và bắt đầu bằng ĐỘNG TỪ để gõ nhanh và khác tên agent (gõ /tinh-co-mau ra lệnh, gõ tên agent co-mau-nghien-cuu vẫn ra agent). Khoá `dich` là tên skill/agent đích — sinh_lenh_viet.py đối chiếu với danh mục và từ chối sinh nếu đích không có trên máy. Sửa file này rồi chạy: python3 tools/vietnamize/sinh_lenh_viet.py",
-
   "kham-ca-benh": {
     "dich": "dieu-phoi-lam-sang",
     "mo_ta": "Khám một ca bệnh theo trọn 5 bước EBM — nêu cờ đỏ ngay, dừng ở Cổng A trước khi áp dụng cho bệnh nhân",
@@ -31,7 +30,6 @@
     "mo_ta": "Sinh tờ dặn dò khổ A5 cho bệnh nhân — văn phong dễ hiểu, không thuật ngữ khó",
     "than": "Nội dung cần dặn bệnh nhân: **$ARGUMENTS**\n\nGọi agent `loi-dan-tuan-thu`. Viết cho bệnh nhân đọc: cách dùng thuốc, lịch tái khám, dấu hiệu nguy hiểm phải quay lại ngay.\nKHÔNG ghi thông tin định danh."
   },
-
   "lam-nghien-cuu": {
     "dich": "dieu-phoi-nghien-cuu",
     "mo_ta": "Chạy một đề tài qua trọn vòng đời G0–G10 — tự dừng ở 6 cổng cứng cần người ký",
@@ -97,7 +95,6 @@
     "mo_ta": "Chọn tạp chí, soạn cover letter, đóng gói nộp và viết thư phản hồi phản biện",
     "than": "Việc cần làm khi nộp: **$ARGUMENTS**\n\nGọi agent `nop-bai-phan-hoi`. Theo ICMJE và COPE; tránh tạp chí săn mồi."
   },
-
   "tra-chung-cu": {
     "dich": "tra-cuu-chung-cu",
     "mo_ta": "Tra chứng cứ tốt nhất cho MỘT câu hỏi lâm sàng, trả lời có PMID/DOI",
@@ -118,7 +115,6 @@
     "mo_ta": "Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I², kiểm sai lệch công bố",
     "than": "Bộ nghiên cứu cần gộp: **$ARGUMENTS**\n\nGọi agent `meta-phan-tich`. Chỉ gộp khi đồng nhất lâm sàng và phương pháp hợp lý — KHÔNG gộp ép."
   },
-
   "kiem-chuan-bao-cao": {
     "dich": "check-reporting",
     "mo_ta": "Đối chiếu bản thảo với 47 chuẩn báo cáo (STROBE, CONSORT, PRISMA, STARD, TRIPOD+AI…)",
@@ -183,5 +179,25 @@
     "dich": "cap-nhat-chung-cu-y-khoa",
     "mo_ta": "Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền",
     "than": "Vấn đề lâm sàng cần cập nhật: **$ARGUMENTS**\n\nDùng kỹ năng `cap-nhat-chung-cu-y-khoa`. Tự chạy trọn dây chuyền: dựng dashboard → cổng liêm chính → thư viện → đồng bộ hub → xuất Word."
+  },
+  "gop-tron-goi": {
+    "dich": "ma-end-to-end",
+    "mo_ta": "Chạy TRỌN dây chuyền phân tích gộp meta-pipe: chủ đề → PICO → tìm → sàng lọc → trích xuất → thống kê → bản thảo",
+    "than": "Chủ đề phân tích gộp: **$ARGUMENTS**\n\nDùng kỹ năng `ma-end-to-end` của meta-pipe.\n\nBÁO TRƯỚC cho bác sĩ 3 điều rồi mới chạy:\n1. Máy này CHƯA có R, Quarto và uv → chặng thống kê (`ma-meta-analysis`), dựng bản thảo (`ma-manuscript-quarto`) và tìm y văn (`ma-search-bibliography`) sẽ dừng giữa chừng. Bản thay thế dùng được ngay: agent `meta-phan-tich` và `viet-ban-thao`.\n2. Dây chuyền này KHÔNG có cổng G0–G10 — đề tài chính thức nên đi qua agent `dieu-phoi-nghien-cuu`.\n3. Mọi kết quả vẫn cần bác sĩ kiểm chứng; không tự công bố."
+  },
+  "tim-chu-de-gop": {
+    "dich": "brainstorm-topic",
+    "mo_ta": "Động não tìm và gọt chủ đề cho một phân tích gộp, trước khi chốt câu hỏi nghiên cứu",
+    "than": "Hướng quan tâm: **$ARGUMENTS**\n\nDùng kỹ năng `brainstorm-topic` của meta-pipe. Sau khi chốt được chủ đề, chuyển sang `/dat-cau-hoi-nghien-cuu` (cổng G0) để có PICO đạt chuẩn."
+  },
+  "sang-loc-nghien-cuu": {
+    "dich": "ma-screening-quality",
+    "mo_ta": "Sàng lọc tiêu đề/tóm tắt theo tiêu chuẩn chọn-loại và đánh giá nguy cơ sai lệch cho phân tích gộp",
+    "than": "Bộ tài liệu cần sàng lọc: **$ARGUMENTS**\n\nDùng kỹ năng `ma-screening-quality` của meta-pipe. Ghi rõ lý do loại của từng bài để dựng được sơ đồ PRISMA về sau."
+  },
+  "kiem-prisma": {
+    "dich": "ma-publication-quality",
+    "mo_ta": "Kiểm chất lượng mức tạp chí lớn: PRISMA/MOOSE, Hartung-Knapp, khoảng dự báo, bảng GRADE SoF",
+    "than": "Gói phân tích gộp cần kiểm: **$ARGUMENTS**\n\nDùng kỹ năng `ma-publication-quality` của meta-pipe. Đây là bước áp chót trước khi nộp; chạy sau khi đã có kết quả thống kê."
   }
 }

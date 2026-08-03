@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1865 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1915 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1553 mục (quét ngày 2026-08-03)
+> - **Mac**: 1603 mục (quét ngày 2026-08-03)
 > - **Windows**: 1644 mục (quét ngày 2026-08-03)
 > - có ở **cả 2 máy**: 1332 mục
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1480 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1516 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -1513,6 +1513,58 @@
 | `agent trich-xuat-y-van` | agent | cả 2 máy | Trích xuất và tóm tắt có cấu trúc MỘT bài báo/nghiên cứu thành bảng dữ liệu chuẩn (PICO, thiết kế, cỡ mẫu, kết cục, hiệu ứng + CI, nguy cơ sai lệch). Dùng khi cần đọc nhanh một bài, dựng bảng trích xuất cho tổng quan hệ thống, hoặc chuẩn… |
 | `agent viet-ban-thao` | agent | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy… |
 
+### user-commands  (47)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/cap-nhat-chung-cu` | lệnh | Mac | Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền |
+| `/chay-thong-ke` | lệnh | Mac | Chạy phân tích theo đúng SAP đã khoá, trên dữ liệu đã khoá (cổng G6) |
+| `/chon-tap-chi` | lệnh | Mac | Gợi ý tạp chí phù hợp kèm chính sách khai báo AI và phương án dự phòng nếu bị từ chối |
+| `/cong-cu-gi` | lệnh | cả 2 máy | Tra xem việc mình cần làm thì gọi công cụ nào — tìm trong danh mục 532 skill/lệnh/agent đã Việt hoá |
+| `/dang-ky-tong-quan` | lệnh | Mac | Soạn nội dung đăng ký PROSPERO cho tổng quan hệ thống / phân tích gộp |
+| `/dat-bien-so` | lệnh | Mac | Xác định bộ biến số đầy đủ cho đề tài, xuất được sang CRF/REDCap |
+| `/dat-cau-hoi-nghien-cuu` | lệnh | Mac | Chuyển vấn đề lâm sàng thành câu hỏi PICO/PECO rõ, kèm kết cục và kiểm khả thi FINER (cổng G0) |
+| `/de-cuong-thu-nghiem-lam-sang` | lệnh | cả 2 máy | Soạn đề cương thử nghiệm lâm sàng theo chuẩn quốc tế (SPIRIT/ICH-GCP) |
+| `/dien-giai-so-lieu` | lệnh | Mac | Chuyển con số thống kê thành ý nghĩa lâm sàng, so với y văn — cầu nối sang phần Bàn luận |
+| `/got-tieng-anh` | lệnh | Mac | Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ |
+| `/in-to-dan-do` | lệnh | Mac | Sinh tờ dặn dò khổ A5 cho bệnh nhân — văn phong dễ hiểu, không thuật ngữ khó |
+| `/kham-ca-benh` | lệnh | Mac | Khám một ca bệnh theo trọn 5 bước EBM — nêu cờ đỏ ngay, dừng ở Cổng A trước khi áp dụng cho bệnh nhân |
+| `/khoa-du-lieu` | lệnh | Mac | Làm sạch, khử định danh và KHOÁ cơ sở dữ liệu trước khi phân tích (cổng G5) |
+| `/khu-dinh-danh` | lệnh | cả 2 máy | Khử định danh bệnh án trước khi đưa vào nghiên cứu — xoá/thay PHI, chạy ngay trên máy |
+| `/kiem-chuan-bao-cao` | lệnh | Mac | Đối chiếu bản thảo với 47 chuẩn báo cáo (STROBE, CONSORT, PRISMA, STARD, TRIPOD+AI…) |
+| `/kiem-trich-dan` | lệnh | Mac | Cổng chống trích dẫn ma — xác minh mọi PMID/DOI có thật, đúng nội dung, chưa bị rút |
+| `/lam-bang-mot` | lệnh | Mac | Dựng Bảng 1 (đặc điểm nền của quần thể nghiên cứu) từ dữ liệu |
+| `/lam-ho-so-dao-duc` | lệnh | Mac | Soạn hồ sơ Hội đồng Đạo đức, phiếu đồng thuận, đăng ký nghiên cứu và kế hoạch dữ liệu (cổng G2) |
+| `/lam-nghien-cuu` | lệnh | Mac | Chạy một đề tài qua trọn vòng đời G0–G10 — tự dừng ở 6 cổng cứng cần người ký |
+| `/lam-sach-du-lieu` | lệnh | Mac | Khảo sát và làm sạch dữ liệu theo 3 bước có bác sĩ duyệt — không tự ý sửa dữ liệu |
+| `/ma-hoa-thu-thuat` | lệnh | cả 2 máy | Gợi ý mã thủ thuật và mã chẩn đoán cho một ca, kèm lý do — phục vụ hồ sơ và thống kê |
+| `/nho-phan-bien` | lệnh | Mac | Bình duyệt bản thảo/đề cương như một phản biện khó tính trước khi nộp |
+| `/nop-bai` | lệnh | Mac | Chọn tạp chí, soạn cover letter, đóng gói nộp và viết thư phản hồi phản biện |
+| `/phan-tich-gop` | lệnh | Mac | Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I², kiểm sai lệch công bố |
+| `/ra-don-thuoc` | lệnh | Mac | Rà an toàn một đơn thuốc: tương tác, chống chỉ định, chỉnh liều theo thận/gan, người cao tuổi |
+| `/sang-loc-cap-cuu` | lệnh | Mac | Sàng lọc cờ đỏ và ngưỡng chuyển tuyến/cấp cứu — chạy TRƯỚC mọi việc tra cứu |
+| `/tham-dinh-chung-cu` | lệnh | Mac | Chấm GRADE, tính NNT/NNH, đánh giá nguy cơ sai lệch bằng đúng công cụ theo thiết kế |
+| `/theo-doi-benh-man` | lệnh | Mac | Kế hoạch theo dõi dài hạn và điều trị theo đích cho bệnh mạn (ĐTĐ, THA, lipid, COPD…) |
+| `/thiet-ke-de-tai` | lệnh | Mac | Chọn thiết kế nghiên cứu, kiểm soát sai lệch, soạn và khoá kế hoạch phân tích (G1/G4) |
+| `/tim-khoang-trong` | lệnh | Mac | Đối chiếu câu hỏi với guideline hiện hành để tìm khoảng trống nghiên cứu, biện minh tính mới |
+| `/tinh-co-mau` | lệnh | Mac | Tính cỡ mẫu / lực mẫu đúng theo thiết kế, kèm khối văn dán thẳng vào đề cương (cổng G3) |
+| `/tinh-thang-diem` | lệnh | Mac | Chọn và áp thang điểm nguy cơ đã kiểm định (CHA₂DS₂-VASc, HAS-BLED, Wells, CURB-65, FRAX…) |
+| `/tong-quan-y-van` | lệnh | Mac | Tổng quan y văn có hệ thống theo PRISMA — tái lập được, dùng cho công bố |
+| `/tra-chung-cu` | lệnh | Mac | Tra chứng cứ tốt nhất cho MỘT câu hỏi lâm sàng, trả lời có PMID/DOI |
+| `/tra-consensus` | lệnh | cả 2 máy | Tra mức ĐỒNG THUẬN của y văn về một câu hỏi — nhiều nghiên cứu nói cùng chiều hay trái chiều |
+| `/tra-loi-phan-bien` | lệnh | Mac | Đọc góp ý phản biện và soạn thư phản hồi có cấu trúc, trả lời từng điểm một |
+| `/tra-ma-icd10` | lệnh | cả 2 máy | Tra mã ICD-10 chẩn đoán/thủ thuật theo tên bệnh hoặc theo mã, kèm kiểm tính hợp lệ |
+| `/tra-preprint` | lệnh | cả 2 máy | Tra bản thảo tiền in y sinh trên medRxiv/bioRxiv — chứng cứ mới nhất nhưng CHƯA bình duyệt |
+| `/tra-thu-nghiem-lam-sang` | lệnh | cả 2 máy | Tra thử nghiệm lâm sàng trên ClinicalTrials.gov theo bệnh, can thiệp, tình trạng tuyển bệnh |
+| `/tra-thuoc` | lệnh | cả 2 máy | Tra dược lý một thuốc: cơ chế tác dụng, đích tác động, hoạt tính sinh học, đặc tính ADMET (ChEMBL) |
+| `/tra-y-van` | lệnh | cả 2 máy | Tra nhanh PubMed/PMC theo chủ đề, lấy PMID/DOI và tóm tắt — dùng khi cần tra gọn, không cần thẩm định GRADE |
+| `/trich-xuat-benh-an` | lệnh | cả 2 máy | Bóc thông tin có cấu trúc từ bệnh án chữ tự do: chẩn đoán, thuốc, xét nghiệm, thủ thuật |
+| `/tu-dien-du-lieu` | lệnh | Mac | Sinh từ điển dữ liệu từ file dữ liệu — gắn cờ biến mã hoá không rõ nghĩa thay vì đoán |
+| `/tu-ra-bai` | lệnh | Mac | Tự rà bản thảo của mình bằng con mắt phản biện trước khi gửi tạp chí |
+| `/ve-hinh-bai-bao` | lệnh | Mac | Vẽ hình đạt chuẩn đăng bài: ROC, forest plot, sơ đồ CONSORT/STARD/PRISMA, Kaplan-Meier |
+| `/viet-bai-bao` | lệnh | Mac | Viết bản thảo IMRAD bám chuẩn báo cáo (CONSORT/STROBE/PRISMA/STARD/TRIPOD+AI) |
+| `/xoa-dau-vet-ai` | lệnh | Mac | Phát hiện và xoá dấu hiệu văn phong máy trong bản thảo, giữ nguyên nội dung khoa học |
+
 ### user-skills  (36)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -1611,22 +1663,6 @@
 | `/icd10-codes:procedure-coding` | kỹ năng | cả 2 máy | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
 | `/icd10-codes:verify` | kỹ năng | cả 2 máy | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
 
-### user-commands  (11)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/cong-cu-gi` | lệnh | cả 2 máy | Tra xem việc mình cần làm thì gọi công cụ nào — tìm trong danh mục 532 skill/lệnh/agent đã Việt hoá |
-| `/de-cuong-thu-nghiem-lam-sang` | lệnh | cả 2 máy | Soạn đề cương thử nghiệm lâm sàng theo chuẩn quốc tế (SPIRIT/ICH-GCP) |
-| `/khu-dinh-danh` | lệnh | cả 2 máy | Khử định danh bệnh án trước khi đưa vào nghiên cứu — xoá/thay PHI, chạy ngay trên máy |
-| `/ma-hoa-thu-thuat` | lệnh | cả 2 máy | Gợi ý mã thủ thuật và mã chẩn đoán cho một ca, kèm lý do — phục vụ hồ sơ và thống kê |
-| `/tra-consensus` | lệnh | cả 2 máy | Tra mức ĐỒNG THUẬN của y văn về một câu hỏi — nhiều nghiên cứu nói cùng chiều hay trái chiều |
-| `/tra-ma-icd10` | lệnh | cả 2 máy | Tra mã ICD-10 chẩn đoán/thủ thuật theo tên bệnh hoặc theo mã, kèm kiểm tính hợp lệ |
-| `/tra-preprint` | lệnh | cả 2 máy | Tra bản thảo tiền in y sinh trên medRxiv/bioRxiv — chứng cứ mới nhất nhưng CHƯA bình duyệt |
-| `/tra-thu-nghiem-lam-sang` | lệnh | cả 2 máy | Tra thử nghiệm lâm sàng trên ClinicalTrials.gov theo bệnh, can thiệp, tình trạng tuyển bệnh |
-| `/tra-thuoc` | lệnh | cả 2 máy | Tra dược lý một thuốc: cơ chế tác dụng, đích tác động, hoạt tính sinh học, đặc tính ADMET (ChEMBL) |
-| `/tra-y-van` | lệnh | cả 2 máy | Tra nhanh PubMed/PMC theo chủ đề, lấy PMID/DOI và tóm tắt — dùng khi cần tra gọn, không cần thẩm định GRADE |
-| `/trich-xuat-benh-an` | lệnh | cả 2 máy | Bóc thông tin có cấu trúc từ bệnh án chữ tự do: chẩn đoán, thuốc, xét nghiệm, thủ thuật |
-
 ### scientific-problem-selection  (6)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -1669,7 +1705,7 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (120 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (134 mục)
 
 
 ### mattpocock-skills  (41 · chỉ Mac)
@@ -1752,6 +1788,25 @@
 | `/claude-code-harness:harness-work` | kỹ năng | Mac | [Lập trình] THỰC THI các việc trong Plans.md, từ một việc lẻ tới chạy song song cả nhóm. Từ khoá: harness work, implement. |
 | `/claude-code-harness:maintenance` | kỹ năng | Mac | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
 | `/claude-code-harness:memory` | kỹ năng | Mac | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
+
+### meta-pipe  (14 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/meta-pipe:brainstorm-topic` | kỹ năng | Mac | [Phân tích gộp — bước 0] Động não tương tác để tìm và gọt chủ đề phân tích gộp. Dùng khi chưa có chủ đề rõ, hoặc muốn thử nhiều hướng trước khi chốt câu hỏi. Từ khoá: brainstorm topic. |
+| `/meta-pipe:ma-agent-teams` | kỹ năng | Mac | [Phân tích gộp — điều phối] Lập đội agent cho dây chuyền phân tích gộp: tạo đội, sinh thành viên, quản danh sách việc và bàn giao giữa các chặng. Dùng cho đề tài lớn chạy nhiều chặng song song. Từ khoá: agent team orchestration. |
+| `/meta-pipe:ma-data-extraction` | kỹ năng | Mac | [Phân tích gộp — bước 5] Định nghĩa khung trích xuất, bóc dữ liệu từ toàn văn và lưu vào cơ sở dữ liệu có cấu trúc. Dùng khi chuyển từ thu thập toàn văn sang phân tích thống kê. Từ khoá: data extraction. |
+| `/meta-pipe:ma-end-to-end` | kỹ năng | Mac | [Phân tích gộp — điều phối] Chạy TRỌN dây chuyền phân tích gộp từ file TOPIC.txt tới bản thảo cuối và thư phản hồi phản biện. Dùng khi đã có chủ đề và muốn đi hết một mạch. LƯU Ý: đề tài chính thức của bác sĩ nên đi qua agent `dieu-phoi-… |
+| `/meta-pipe:ma-fulltext-management` | kỹ năng | Mac | [Phân tích gộp — bước 4] Thu thập và quản lý PDF toàn văn của các nghiên cứu được chọn, ghi vết nguồn gốc, chuẩn bị tài liệu cho khâu trích xuất. Dùng khi chuyển từ sàng lọc sang trích xuất dữ liệu. Từ khoá: fulltext management. |
+| `/meta-pipe:ma-manuscript-quarto` | kỹ năng | Mac | [Phân tích gộp — bước 8] Dựng và kết xuất bản thảo theo cấu trúc IMRaD bằng Quarto, nhúng sẵn hình và bảng. CẦN cài Quarto — máy này chưa có. Bản thay thế: agent `viet-ban-thao` (bám CONSORT/STROBE/PRISMA). Từ khoá: Quarto, IMRaD manuscr… |
+| `/meta-pipe:ma-meta-analysis` | kỹ năng | Mac | [Phân tích gộp — bước 6] Chạy thống kê gộp bằng R (có renv): ước lượng hiệu ứng, tính không đồng nhất, chẩn đoán sai lệch công bố, xuất hình và bảng. CẦN cài R — máy này chưa có, skill sẽ dừng ở bước gọi Rscript. Bản thay thế dùng được n… |
+| `/meta-pipe:ma-peer-review` | kỹ năng | Mac | [Phân tích gộp — bước 9] Đóng vai Phản biện 1 và Phản biện 2 cho bản thảo phân tích gộp: soi tính chặt chẽ, khả năng tái lập và tuân thủ chuẩn báo cáo. Dùng để tự thử trước khi nộp; KHÔNG thay bình duyệt độc lập thật (cổng G8). Từ khoá: … |
+| `/meta-pipe:ma-publication-quality` | kỹ năng | Mac | [Phân tích gộp — bước 7] Kiểm chất lượng mức tạp chí lớn: báo cáo PRISMA/MOOSE, chẩn đoán nâng cao (Hartung-Knapp, khoảng dự báo, phân tích ảnh hưởng), bảng GRADE Summary of Findings, rà khẳng định và đối chiếu chéo. Dùng khi chuẩn bị gó… |
+| `/meta-pipe:ma-screening-quality` | kỹ năng | Mac | [Phân tích gộp — bước 3] Sàng lọc tiêu đề và tóm tắt, áp tiêu chuẩn chọn/loại, đánh giá chất lượng và nguy cơ sai lệch. Dùng khi chọn nghiên cứu đủ điều kiện đưa vào gộp. Từ khoá: screening, risk of bias. |
+| `/meta-pipe:ma-search-bibliography` | kỹ năng | Mac | [Phân tích gộp — bước 2] Tìm y văn bằng Python (qua uv), truy vấn PubMed và các CSDL khác, khử trùng lặp, lưu thư mục tài liệu theo từng vòng tìm. Dùng khi dựng hoặc cập nhật kho chứng cứ. CẦN cài `uv` — máy này chưa có. Từ khoá: literat… |
+| `/meta-pipe:ma-topic-intake` | kỹ năng | Mac | [Phân tích gộp — bước 1] Nhận chủ đề từ TOPIC.txt, chuyển thành đề cương PICO/PECO, xác định tiêu chuẩn chọn, kết cục và phạm vi tìm kiếm. Dùng khi khởi động một đề tài phân tích gộp mới. Từ khoá: topic intake, PICO. |
+| `/meta-pipe:module-management` | kỹ năng | Mac | [Phân tích gộp — bảo trì] Kiểm và cập nhật sổ đăng ký module của dây chuyền. Dùng sau khi thêm script hoặc tính năng mới, để tài liệu và tích hợp không bị lệch. Từ khoá: module registry. |
+| `/meta-pipe:post-to-discussion` | kỹ năng | Mac | [Phân tích gộp — chia sẻ] Đăng đề tài đã hoàn thành lên bảng Discussions của kho meta-pipe trên GitHub. Dùng khi muốn chia sẻ kết quả. LƯU Ý: đây là đăng CÔNG KHAI ra ngoài — kiểm kỹ không còn dữ liệu bệnh nhân hay thông tin định danh tr… |
 
 ### codex  (12 · chỉ Mac)
 
