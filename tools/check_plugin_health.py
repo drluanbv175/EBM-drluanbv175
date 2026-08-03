@@ -32,6 +32,12 @@ HOME = pathlib.Path.home()
 SKIP_DIRS = {"node_modules", ".git", "dist", "build", "__pycache__", "test", "tests",
              "fixtures", "examples", ".venv", "venv", "demo"}
 
+# Bảng đường dẫn thư mục plugin claude.ai theo hệ điều hành nằm ở extract_catalog.py —
+# DÙNG LẠI, không chép sang đây: hai bản sao sẽ lệch nhau lúc nào không biết, mà lệch
+# ở đây thì công cụ soi 0 file rồi in dấu ✓ (03/08/2026 trên Windows: đúng như vậy).
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "vietnamize"))
+from extract_catalog import tim_app_support  # noqa: E402
+
 # Lệnh gọi công cụ ngoài — chỉ nhận khi đứng đầu dòng lệnh trong khối mã
 CONG_CU = ["Rscript", "node", "npx", "pandoc", "quarto", "soffice", "latexmk",
            "pdflatex", "dot", "ffmpeg"]
@@ -53,7 +59,7 @@ def nap_plugin() -> list[tuple[str, pathlib.Path]]:
         data = json.loads(reg.read_text("utf-8"))
         for key, entries in data.get("plugins", {}).items():
             ds.append((key, pathlib.Path(entries[0]["installPath"])))
-    app = HOME / "Library/Application Support/Claude/local-agent-mode-sessions"
+    app = tim_app_support()
     for mf in app.rglob("rpm/manifest.json"):
         try:
             data = json.loads(mf.read_text("utf-8"))
@@ -73,6 +79,14 @@ def main() -> int:
 
     ds = nap_plugin()
     print(f"Soi {len(ds)} plugin đã đăng ký.\n")
+    if not ds:
+        # FAIL-CLOSED: soi 0 file rồi in "✓ sạch" là lời trấn an SAI — đúng loại
+        # kết luận mà công cụ này ra đời để chặn. Không thấy plugin nào nghĩa là
+        # công cụ đang MÙ, không phải máy đang sạch.
+        print("  ✗ KHÔNG đọc được plugin nào — KHÔNG có nghĩa là không có vấn đề.")
+        print(f"      cơ chế CLI : {HOME / '.claude/plugins/installed_plugins.json'}")
+        print(f"      cơ chế app : {tim_app_support()}")
+        return 1
 
     for ten, goc in ds:
         if not goc.exists():

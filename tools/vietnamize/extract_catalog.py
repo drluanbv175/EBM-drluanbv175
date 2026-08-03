@@ -17,14 +17,77 @@ KHÔNG sửa file nào — đây là bước đọc.
 """
 from __future__ import annotations
 
+import datetime
 import json
+import os
+import platform
 import re
 from pathlib import Path
 
 HOME = Path.home()
 REPO = Path(__file__).resolve().parents[2]
-APP_SUPPORT = HOME / "Library/Application Support/Claude/local-agent-mode-sessions"
 OUT = Path(__file__).resolve().parent / "catalog_raw.json"
+# Bản chụp DÙNG CHUNG giữa các máy: chỉ giữ phần độc lập với máy (bỏ đường dẫn tuyệt
+# đối), nhờ vậy track được Git và build_danh_muc.py gộp được danh mục của cả Mac lẫn
+# Windows. Bác sĩ cài bộ plugin KHÁC NHAU trên hai máy (03/08/2026: chung 137 mục,
+# riêng Mac 1405, riêng Windows 293) nên một danh mục một máy luôn sai một nửa.
+SNAP_DIR = Path(__file__).resolve().parent / "catalog_may"
+
+
+def ten_may() -> str:
+    """Nhãn máy — lấy theo HỆ ĐIỀU HÀNH, cố ý KHÔNG dùng tên máy thật (tên máy hay
+    kèm tên người, không nên đẩy lên Git)."""
+    return {"Darwin": "Mac", "Windows": "Windows"}.get(platform.system(),
+                                                       platform.system() or "Khac")
+
+
+# Các NHÓM NGUỒN mà bản công cụ này biết quét. Ghi thẳng vào bản chụp để
+# build_danh_muc.py phân biệt được "máy kia không có mục này" với "máy kia quét
+# bằng bản công cụ cũ, chưa biết nhóm này" — hai chuyện dẫn tới hai kết luận
+# ngược nhau khi bác sĩ đọc danh mục.
+NHOM_NGUON = ("plugin-cli", "claude.ai", "user-skills", "user-commands",
+              "cowork", "ebm-agents")
+
+
+def nhom_cua(source: str) -> str:
+    """Nhóm nguồn của một mục. Plugin cài qua CLI có source riêng theo từng
+    marketplace nên gom hết về 'plugin-cli'."""
+    return source if source in NHOM_NGUON else "plugin-cli"
+
+
+def ghi_ban_chung(items: list[dict]) -> Path:
+    """Ghi bản chụp danh mục của máy đang chạy, đã bỏ đường dẫn tuyệt đối."""
+    SNAP_DIR.mkdir(exist_ok=True)
+    f = SNAP_DIR / f"{ten_may()}.json"
+    f.write_text(json.dumps({
+        "may": ten_may(),
+        "ngay_quet": datetime.date.today().isoformat(),
+        "nhom_da_quet": list(NHOM_NGUON),
+        "muc": [{k: v for k, v in i.items() if k != "path"} for i in items],
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    return f
+
+
+def tim_app_support() -> Path:
+    """Thư mục plugin của Claude Desktop (nhóm claude.ai) — mỗi hệ điều hành một nơi.
+
+    Trước 03/08/2026 chỉ có đường dẫn macOS viết cứng, nên chạy trên Windows là
+    IM LẶNG bỏ qua toàn bộ plugin claude.ai (bác sĩ dùng cả 2 máy qua OneDrive):
+    rglob trên thư mục không tồn tại trả về rỗng, không báo lỗi.
+    """
+    ung_vien = [
+        HOME / "Library/Application Support/Claude/local-agent-mode-sessions",   # macOS
+        Path(os.environ.get("APPDATA") or HOME / "AppData/Roaming")
+        / "Claude/local-agent-mode-sessions",                                    # Windows
+        HOME / ".config/Claude/local-agent-mode-sessions",                       # Linux
+    ]
+    for p in ung_vien:
+        if p.is_dir():
+            return p
+    return ung_vien[0]
+
+
+APP_SUPPORT = tim_app_support()
 
 # Dấu tiếng Việt — dùng để nhận biết mô tả đã Việt hoá hay chưa
 VN_CHARS = re.compile(
@@ -44,6 +107,7 @@ TIER_BY_SOURCE = {
     "healthcare": 1,
     "bio-research": 1,
     "user-skills": 1,
+    "user-commands": 1,
     "cowork": 1,
     "ebm-agents": 1,
     "codex": 2,
@@ -61,6 +125,22 @@ TIER3_HINTS = (
     "neural-trader", "market-data", "iot-cognitum", "federation",
     "ruvllm", "ruvector", "agentdb", "rvf", "arena", "browser",
 )
+
+# Hai bảng dưới khớp CHÍNH XÁC tên plugin, không khớp chuỗi con như TIER3_HINTS.
+# Lý do: tên ngắn kiểu "data"/"legal" nếu khớp chuỗi con sẽ nuốt nhầm plugin y khoa
+# ("medsci-data" 58 mục thành Tầng 3). Bổ sung 03/08/2026 sau khi soi máy Windows —
+# hai bảng cũ chỉ dựng theo bộ plugin trên Mac nên bỏ trắng toàn bộ nhóm claude.ai.
+TIER1_PLUGINS = {
+    "pubmed", "icd10-codes", "clinical-trials", "clinical-trial-protocol",
+    "consensus", "biorxiv", "scientific-problem-selection",
+}
+TIER3_PLUGINS = {
+    "zoom-plugin", "small-business", "bigdata-com", "brightdata-plugin", "figma",
+    "ip-legal", "ai-governance-legal", "product-legal", "legal", "finance",
+    "marketing", "human-resources", "product-management", "operations", "design",
+    "productivity", "enterprise-search", "hubspot", "sentry", "snowflake",
+    "datadog", "linear", "notion", "claude-for-msft-365-install",
+}
 
 
 def read_frontmatter(path: Path) -> dict:
@@ -106,6 +186,10 @@ def read_frontmatter(path: Path) -> dict:
 
 
 def guess_tier(source: str, plugin: str) -> int:
+    if plugin in TIER1_PLUGINS:        # khớp đúng tên → xét trước mọi luật chuỗi con
+        return 1
+    if plugin in TIER3_PLUGINS:
+        return 3
     if any(h in plugin for h in TIER3_HINTS):
         return 3
     for key, tier in TIER_BY_SOURCE.items():
@@ -239,6 +323,17 @@ def main() -> int:
         add(items, kind="skill", source="user-skills", plugin="", name=nm,
             desc=fm.get("description", ""), path=f, invoke=f"/{nm}")
 
+    # --- 2b. Lệnh tiếng Việt cấp user (~/.claude/commands) -----------------
+    # Bộ lệnh do chính bác sĩ soạn (nguồn ở sync/commands-vi, chép sang bằng
+    # copy-commands-vi.*). Trước 03/08/2026 danh mục KHÔNG quét nhóm này, nên bảng
+    # tra nhanh mời gọi /tra-ma-icd10, /khu-dinh-danh… mà chúng không nằm trong
+    # danh mục nào để đối chiếu — không biết máy nào có, máy nào không.
+    for f in sorted((HOME / ".claude/commands").glob("*.md")):
+        fm = read_frontmatter(f)
+        nm = fm.get("name") or f.stem
+        add(items, kind="command", source="user-commands", plugin="", name=nm,
+            desc=fm.get("description", ""), path=f, invoke=f"/{nm}")
+
     # --- 3. Skill Cowork (claude-science) ---------------------------------
     for f in sorted((HOME / ".claude-science/orgs").glob("*/skills/*/SKILL.md")):
         fm = read_frontmatter(f)
@@ -272,6 +367,7 @@ def main() -> int:
     empty = [i for i in items if not i["desc_en"].strip()]
     print(f"\nMục không có mô tả trong frontmatter: {len(empty)}")
     print(f"→ đã ghi: {OUT}")
+    print(f"→ bản chụp dùng chung ({ten_may()}): {ghi_ban_chung(items)}")
     return 0
 
 

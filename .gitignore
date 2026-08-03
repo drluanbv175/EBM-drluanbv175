@@ -50,3 +50,10 @@ memory-sync/
 
 # Danh mục sinh lại được, chứa đường dẫn tuyệt đối theo từng máy
 tools/vietnamize/catalog_raw.json
+
+# Bản lưu mô tả gốc do tools/vietnamize/apply_vi.py tạo — sinh lại được, không commit
+*.vi-bak
+
+# Bản chụp danh mục theo máy — sinh lại bằng extract_catalog.py, đi giữa 2 máy qua
+# OneDrive; không commit để repo khỏi phình ~1MB mỗi lần quét lại
+tools/vietnamize/catalog_may/

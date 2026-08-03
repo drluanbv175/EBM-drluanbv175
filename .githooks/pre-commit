@@ -15,6 +15,13 @@ COMPLETION_SYNC_FAIL_CLOSED=1
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT" || exit 1
 
+# Moi tool kiem tra deu IN tieng Viet. Tren Windows, stdout cua python mac dinh
+# la cp1252 nen chi rieng viec in dong disclaimer da nem UnicodeEncodeError ->
+# hook ket luan "chua dong bo" va CHAN COMMIT du moi muc deu PASS (03/08/2026).
+# Ep UTF-8 cho moi lenh python duoi day; tren macOS/Linux khong doi gi.
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
+
 if ! command -v python3 >/dev/null 2>&1; then
   echo "CHAN COMMIT: khong tim thay python3 de kiem dong bo Claude Code ↔ Codex." >&2
   exit 1

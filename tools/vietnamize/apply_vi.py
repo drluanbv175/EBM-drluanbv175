@@ -37,6 +37,8 @@ CATALOG = HERE / "catalog_raw.json"
 DICT = HERE / "vi_descriptions.json"
 
 FM_KEY = re.compile(r"^([a-zA-Z_][\w-]*):", re.MULTILINE)
+# Dấu tiếng Việt — dùng chung định nghĩa với extract_catalog.py (cùng thư mục)
+from extract_catalog import VN_CHARS  # noqa: E402
 
 
 def digest(text: str) -> str:
@@ -146,7 +148,8 @@ def replace_field(block: str, key: str, value: str) -> str:
     return "\n".join(out)
 
 
-def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool) -> str:
+def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool,
+            qua_ten: bool = False) -> str:
     """Trả về mã kết quả: applied | already | restored | nothing | skip-* | STALE."""
     path = Path(item["path"])
     if not path.exists():
@@ -180,6 +183,15 @@ def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool) -> str:
     vi = vi_entry.get("vi", "").strip()
     if not vi:
         return "no-translation"
+
+    # Bản dịch khớp qua fallback THEO TÊN (không phải id riêng) mà mô tả đang có đã là
+    # tiếng Việt do người viết tay (không mang dấu `description-src` của công cụ này)
+    # → GIỮ NGUYÊN. Cùng một skill có thể vừa nằm trong kho plugin (mô tả tiếng Anh,
+    # được dịch gọn) vừa nằm trong hub sync/skills của bác sĩ (mô tả tiếng Việt tự
+    # viết, dài và kỹ hơn); khớp theo tên sẽ lấy bản gọn đè lên bản kỹ. Đã xảy ra
+    # 03/08/2026 với hypothesis-generation, phát hiện khi soi diff Git.
+    if qua_ten and VN_CHARS.search(cur_desc) and read_field(block, "description-src") is None:
+        return "giữ-bản-việt-tự-viết"
 
     original_en = saved_en if saved_en is not None else cur_desc
     src_hash = read_field(block, "description-src")
@@ -248,10 +260,13 @@ def main() -> int:
         # Khoá chính là id đầy đủ. Fallback `name:<tên>` để MỘT bản dịch áp cho mọi
         # bản sao cùng tên — bmad-method lặp nguyên bộ 50 skill ở cả 6 plugin con,
         # viết 300 dòng id cho cùng một nội dung là vô ích. id luôn thắng fallback.
-        entry = vi_map.get(item["id"]) or vi_map.get(f"name:{item['name']}") or {}
+        entry = vi_map.get(item["id"])
+        qua_ten = entry is None
+        entry = entry or vi_map.get(f"name:{item['name']}") or {}
         if not entry and not args.restore:
             continue
-        res = process(item, entry, restore=args.restore, dry=args.dry_run)
+        res = process(item, entry, restore=args.restore, dry=args.dry_run,
+                      qua_ten=qua_ten)
         counts[res] = counts.get(res, 0) + 1
         if res == "STALE":
             stale_ids.append(item["id"])
