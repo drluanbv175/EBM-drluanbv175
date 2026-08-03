@@ -1,6 +1,6 @@
 ---
 name: tiep-can-chan-doan-co-do-chuyen-tuyen
-description: Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với "bệnh nhân đau ngực/đau đầu/đau bụng/khó thở/chóng mặt/đau lưng/sốt/sụt cân… tiếp cận thế nào", "có nguy hiểm không", "khi nào cần chuyển viện/cấp cứu", "đừng bỏ sót bệnh gì". Trọng tâm: an toàn — không để tra cứu làm trì hoãn cấp cứu. Đây là skill HỖ TRỢ tư duy, không thay khám trực tiếp; KHÔNG lưu PII.
+description: "Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu/đau bụng/khó thở/chóng mặt/đau lưng/sốt/sụt cân… tiếp cận thế nào\", \"có nguy hiểm không\", \"khi nào cần chuyển viện/cấp cứu\", \"đừng bỏ sót bệnh gì\". Trọng tâm: an toàn — không để tra cứu làm trì hoãn cấp cứu. Đây là skill HỖ TRỢ tư duy, không thay khám trực tiếp; KHÔNG lưu PII."
 metadata:
   version: 1.0.0
 ---

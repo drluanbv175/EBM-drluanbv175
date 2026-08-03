@@ -1,6 +1,6 @@
 ---
 name: ke-don-an-toan-benh-man
-description: Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với "đơn này có an toàn không", "thuốc có đánh nhau không/tương tác", "hiệu chỉnh liều theo thận/gan", "cần theo dõi xét nghiệm gì khi dùng thuốc này", "có nên bớt thuốc/ngưng thuốc không", "mục tiêu HbA1c/huyết áp cho bệnh nhân này". Quy trình: đối chiếu thuốc · kiểm tương tác · hiệu chỉnh theo eGFR/gan · lịch theo dõi · cá thể hóa mục tiêu · cân nhắc giảm/ngưng. Liều/ngưỡng CHỈ nêu khi nguồn xác minh; KHÔNG bịa; KHÔNG lưu PII.
+description: "Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với \"đơn này có an toàn không\", \"thuốc có đánh nhau không/tương tác\", \"hiệu chỉnh liều theo thận/gan\", \"cần theo dõi xét nghiệm gì khi dùng thuốc này\", \"có nên bớt thuốc/ngưng thuốc không\", \"mục tiêu HbA1c/huyết áp cho bệnh nhân này\". Quy trình: đối chiếu thuốc · kiểm tương tác · hiệu chỉnh theo eGFR/gan · lịch theo dõi · cá thể hóa mục tiêu · cân nhắc giảm/ngưng. Liều/ngưỡng CHỈ nêu khi nguồn xác minh; KHÔNG bịa; KHÔNG lưu PII."
 metadata:
   version: 1.0.0
 ---

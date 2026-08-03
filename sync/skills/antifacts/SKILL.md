@@ -1,6 +1,6 @@
 ---
 name: antifacts
-description: Sử dụng skill này khi bác sĩ muốn MỞ hoặc CẬP NHẬT "Antifacts" — Trung tâm EBM theo chuyên khoa (mặt tiền gom mọi sản phẩm EBM trong thư mục "Claude AI" theo chuyên khoa: cập nhật chứng cứ + thang điểm lâm sàng + công cụ nghiên cứu). Kích hoạt khi nghe "Antifacts", "mở Antifacts", "cập nhật Antifacts", "trung tâm EBM theo chuyên khoa", "hub EBM theo chuyên khoa". KHÔNG dùng để tạo dashboard chứng cứ MỚI cho một vấn đề (dùng cap-nhat-chung-cu-y-khoa); KHÔNG phải Dashboard Master; KHÔNG phải hệ giám sát định kỳ.
+description: "Sử dụng skill này khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (mặt tiền gom mọi sản phẩm EBM trong thư mục \"Claude AI\" theo chuyên khoa: cập nhật chứng cứ + thang điểm lâm sàng + công cụ nghiên cứu). Kích hoạt khi nghe \"Antifacts\", \"mở Antifacts\", \"cập nhật Antifacts\", \"trung tâm EBM theo chuyên khoa\", \"hub EBM theo chuyên khoa\". KHÔNG dùng để tạo dashboard chứng cứ MỚI cho một vấn đề (dùng cap-nhat-chung-cu-y-khoa); KHÔNG phải Dashboard Master; KHÔNG phải hệ giám sát định kỳ."
 metadata:
   version: 1.0.0
 ---
