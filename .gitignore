@@ -32,9 +32,24 @@
 # 3b) .claude/agents/.claude/ là thư mục rác thừa kế (sessions/state cũ), không phải nội dung agent
 /.claude/agents/.claude/
 
-# 4) Bên trong sync/: CHỈ track skills/ (bỏ memory/ — bộ nhớ cá nhân, khác phạm vi)
+# 4) Bên trong sync/: track skills/ + HẠ TẦNG CÀI ĐẶT CHO MÁY KIA.
+#    Loại trừ đúng một thứ: memory/ (bộ nhớ cá nhân, đi riêng qua OneDrive).
+#    Vì sao track thêm (2026-08-03): các script .ps1/.cmd là thứ máy WINDOWS phải chạy,
+#    và 52 lệnh tiếng Việt ở commands-vi/ là nguồn của ~/.claude/commands/ — cả hai
+#    nằm NGOÀI cây git thì Windows chỉ nhận được qua OneDrive, mà OneDrive ở repo này
+#    đã nhiều lần tạo conflict-copy và làm hỏng ref git. Có bản trên GitHub = còn đường lùi.
 /sync/*
 !/sync/skills/
+!/sync/commands-vi/
+!/sync/*.sh
+!/sync/*.ps1
+!/sync/*.cmd
+!/sync/SYNC-README.md
+!/sync/CLAUDE-user-global.md
+!/sync/MAC-LAM-TIEP.md
+!/sync/WINDOWS-LAM-TIEP.md
+!/sync/WINDOWS-PASTE-ME.md
+!/sync/WINDOWS-DONE.md
 
 # 5) Rác chung mọi nơi
 **/__pycache__/
