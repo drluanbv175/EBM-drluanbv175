@@ -3004,5 +3004,1700 @@
   },
   "skill:aipoch-medical-research:clinical-trial-protocol-skill": {
     "vi": "[Thiết kế NC] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh; đề tài thật nên qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: clinical trial protocol."
+  },
+  "skill:aipoch-medical-research:acronym-unpacker": {
+    "vi": "[Đọc tài liệu] Giải nghĩa chữ viết tắt y khoa mơ hồ dựa vào ngữ cảnh lâm sàng và chuyên khoa. Dùng khi đọc bệnh án hoặc bài báo gặp viết tắt không rõ nghĩa. Từ khoá: abbreviation, acronym."
+  },
+  "skill:aipoch-medical-research:alphafold-db": {
+    "vi": "[Tin sinh học] Tra hơn 200 triệu cấu trúc protein dự đoán trong AlphaFold DB (PDB/mmCIF, điểm tin cậy pLDDT/PAE) theo mã UniProt. Dùng khi cần cấu trúc 3D của một protein. Từ khoá: AlphaFold, protein structure."
+  },
+  "skill:aipoch-medical-research:arboreto": {
+    "vi": "[Tin sinh học] Suy ra mạng điều hoà gen từ ma trận biểu hiện bằng GRNBoost2 hoặc GENIE3. Dùng khi phân tích RNA-seq khối hay đơn bào để tìm quan hệ yếu tố phiên mã với gen đích. Từ khoá: GRN, GRNBoost2, GENIE3."
+  },
+  "skill:aipoch-medical-research:arxiv-database": {
+    "vi": "[Tra CSDL] Tìm và tải bản thảo tiền in trên arXiv theo từ khoá, tác giả hoặc phân mục; lấy tóm tắt, DOI, PDF. Dùng khi cần tài liệu mới chưa qua bình duyệt. Từ khoá: arXiv, preprint."
+  },
+  "skill:aipoch-medical-research:basic-discovery-translational-opportunity-finder": {
+    "vi": "[Chuyển dịch] Tìm hướng ứng dụng lâm sàng cho một phát hiện nghiên cứu cơ bản: chẩn đoán, phân tầng, tiên lượng, dự báo đáp ứng, theo dõi, phát triển thuốc. Dùng khi có kết quả cơ bản chưa rõ dùng vào việc gì. Từ khoá: translational opportunity."
+  },
+  "skill:aipoch-medical-research:bio-ontology-mapper": {
+    "vi": "[Chuẩn hoá dữ liệu] Ánh xạ văn bản y sinh tự do sang từ vựng chuẩn (SNOMED CT, ICD). Dùng khi cần mã hoá biến số theo từ vựng chuẩn trước khi phân tích. Từ khoá: ontology mapping, SNOMED."
+  },
+  "skill:aipoch-medical-research:biogrid-orcs": {
+    "vi": "[Tin sinh học] Tra dữ liệu sàng lọc CRISPR của BioGRID ORCS: sinh vật, thí nghiệm, điểm số theo gen. Dùng khi cần kết quả sàng lọc CRISPR cho một gen. Từ khoá: BioGRID ORCS, CRISPR screen."
+  },
+  "skill:aipoch-medical-research:bioinformatics-translational-opportunity-finder": {
+    "vi": "[Chuyển dịch] Tìm hướng ứng dụng lâm sàng cho phát hiện omics hoặc tính toán, kèm cảnh báo giới hạn bằng chứng. Dùng khi có kết quả tin sinh học cần định hướng ứng dụng. Từ khoá: omics, translational."
+  },
+  "skill:aipoch-medical-research:biomarker-landscape-scanner": {
+    "vi": "[Dấu ấn sinh học] Vẽ bản đồ dấu ấn sinh học của một bệnh theo loại, mục đích sử dụng, tầng bằng chứng, mức thẩm định và độ chín. Dùng khi cần toàn cảnh cả lĩnh vực chứ không phải một dấu ấn lẻ. Từ khoá: biomarker landscape."
+  },
+  "skill:aipoch-medical-research:biomedical-search-strategy-builder": {
+    "vi": "[Tìm y văn] Dựng chiến lược tìm chuyên nghiệp cho PubMed, Embase, Web of Science: câu Boolean theo MeSH, mở rộng đồng nghĩa, bộ lọc. Dùng khi làm tổng quan hệ thống. Từ khoá: MeSH, search strategy."
+  },
+  "skill:aipoch-medical-research:biopython-entrez": {
+    "vi": "[Tin sinh học] Gọi NCBI E-utilities qua Bio.Entrez để tìm, lấy tóm tắt và tải bản ghi từ PubMed hay GenBank. Dùng khi cần truy vấn NCBI bằng mã lệnh thay vì thao tác tay. Từ khoá: Entrez, Biopython, NCBI."
+  },
+  "skill:aipoch-medical-research:biorxiv-database": {
+    "vi": "[Tra CSDL] Tìm, lấy siêu dữ liệu và tải PDF bản thảo tiền in bioRxiv theo từ khoá, tác giả, khoảng thời gian. Dùng khi cần tài liệu sinh học mới nhất chưa bình duyệt. Từ khoá: bioRxiv, preprint."
+  },
+  "skill:aipoch-medical-research:blockbuster-therapy-predictor": {
+    "vi": "[Phân tích thị trường] Dự báo công nghệ điều trị đột phá bằng cách gộp dữ liệu pipeline lâm sàng, sáng chế và dòng vốn. Dùng cho công việc chiến lược, không dùng cho quyết định lâm sàng. Từ khoá: pipeline, blockbuster."
+  },
+  "skill:aipoch-medical-research:brenda-database": {
+    "vi": "[Tin sinh học] Tra cơ sở dữ liệu enzyme BRENDA: hằng số động học (Km, kcat, Vmax), phương trình phản ứng, pH và nhiệt độ tối ưu. Dùng khi cần thông số enzyme. Từ khoá: BRENDA, enzyme kinetics."
+  },
+  "skill:aipoch-medical-research:cellosaurus-api": {
+    "vi": "[Tin sinh học] Tra thông tin dòng tế bào trên Cellosaurus theo tên hoặc mã accession. Dùng khi cần xác minh nguồn gốc và tính xác thực của dòng tế bào. Từ khoá: Cellosaurus, cell line."
+  },
+  "skill:aipoch-medical-research:cellxgene-census": {
+    "vi": "[Tin sinh học] Truy vấn CZ CELLxGENE Census hơn 61 triệu tế bào để lấy biểu hiện theo mô, bệnh hoặc loại tế bào. Dùng khi cần so với atlas tham chiếu quy mô lớn. Từ khoá: CELLxGENE, single-cell."
+  },
+  "skill:aipoch-medical-research:chea-api": {
+    "vi": "[Tin sinh học] Phân tích làm giàu yếu tố phiên mã bằng ChEA3 và Harmonizome cho một tập gen. Dùng khi có danh sách gen và cần biết yếu tố phiên mã nào chi phối. Từ khoá: ChEA3, TF enrichment."
+  },
+  "skill:aipoch-medical-research:chembl-database": {
+    "vi": "[Dược] Truy vấn ChEMBL: phân tử có hoạt tính, đích tác động, hoạt tính sinh học, thuốc đã duyệt; lọc theo tính chất lý hoá hoặc cấu trúc SMILES. Dùng khi tra dược lý phân tử. Từ khoá: ChEMBL, SMILES."
+  },
+  "skill:aipoch-medical-research:citation-chasing-mapping": {
+    "vi": "[Tìm y văn] Truy vết trích dẫn để tìm bài nền tảng, dựng phả hệ nghiên cứu của một lĩnh vực và phát hiện nhóm nghiên cứu liên quan. Dùng khi mới bước vào một chủ đề lạ. Từ khoá: citation chasing, co-citation."
+  },
+  "skill:aipoch-medical-research:citation-management": {
+    "vi": "[Trích dẫn] Quản lý trích dẫn trọn gói: tìm bài trên Google Scholar và PubMed, rút rồi xác minh siêu dữ liệu (DOI, PMID), xuất BibTeX sạch. Dùng khi dựng danh mục tài liệu tham khảo. Từ khoá: BibTeX, DOI, PMID."
+  },
+  "skill:aipoch-medical-research:citation-network": {
+    "vi": "[Tìm y văn] Dựng và vẽ mạng trích dẫn từ file CSV nguồn-đích để lộ bài chủ chốt, cụm nghiên cứu và điểm nóng mới nổi. Dùng khi đã có sẵn cặp trích dẫn và cần nhìn tổng thể. Từ khoá: citation network."
+  },
+  "skill:aipoch-medical-research:clinical-question-clarifier": {
+    "vi": "[Câu hỏi NC] Gọt một ý tưởng lâm sàng còn mơ hồ thành câu hỏi có giới hạn, tra được và kiểm định được. Dùng khi ý tưởng còn quá rộng, chưa thành câu hỏi nghiên cứu. Từ khoá: research question, PICO."
+  },
+  "skill:aipoch-medical-research:clinical-study-info-extractor": {
+    "vi": "[Trích xuất] Rút và kiểm thông tin có cấu trúc (PMID, tiêu đề, tóm tắt, phương pháp, kết quả) hàng loạt từ một danh sách PMID. Dùng khi cần bảng trích xuất cho tổng quan hệ thống. Từ khoá: PMID, data extraction."
+  },
+  "skill:aipoch-medical-research:clinical-trial-finder": {
+    "vi": "[Thử nghiệm LS] Tìm thử nghiệm lâm sàng theo gen, biến thể hoặc bệnh trên ClinicalTrials.gov và EUCTR, xuất theo chuẩn FHIR R4. Dùng khi tìm thử nghiệm phù hợp với một hồ sơ di truyền. Từ khoá: ClinicalTrials.gov, EUCTR, FHIR."
+  },
+  "skill:aipoch-medical-research:clinicaltrials-database": {
+    "vi": "[Thử nghiệm LS] Truy vấn ClinicalTrials.gov API v2 theo bệnh, thuốc, địa điểm, tình trạng hoặc pha; lấy chi tiết theo mã NCT. Dùng khi tra thử nghiệm đang tuyển bệnh. Từ khoá: ClinicalTrials.gov, NCT."
+  },
+  "skill:aipoch-medical-research:clinicaltrials-db": {
+    "vi": "[Thử nghiệm LS] Truy vấn ClinicalTrials.gov API v2 để lấy đề cương chi tiết và phân tích tình trạng tuyển bệnh. Dùng khi cần xuất kết quả hàng loạt hoặc xác minh một nghiên cứu theo mã NCT. Từ khoá: ClinicalTrials.gov, NCT."
+  },
+  "skill:aipoch-medical-research:clinicaltrials-gov-parser": {
+    "vi": "[Phân tích thị trường] Theo dõi và tóm tắt thay đổi trạng thái thử nghiệm của đối thủ trên ClinicalTrials.gov. Dùng cho giám sát cạnh tranh, không dùng cho chăm sóc bệnh nhân. Từ khoá: trial monitoring."
+  },
+  "skill:aipoch-medical-research:clinpgx-database": {
+    "vi": "[Dược di truyền] Tra dữ liệu dược di truyền ClinPGx, kế tục PharmGKB: tương tác gen với thuốc, hướng dẫn CPIC, chức năng allele, nội dung PGx trên nhãn thuốc. Dùng khi chỉnh liều theo kiểu gen. Từ khoá: PharmGKB, CPIC, pharmacogenomics."
+  },
+  "skill:aipoch-medical-research:clinvar-database": {
+    "vi": "[Di truyền] Truy vấn ClinVar để lấy bản ghi biến thể, ý nghĩa lâm sàng và quan hệ kiểu hình. Dùng khi cần diễn giải biến thể ở mức Pathogenic, Benign hay VUS. Từ khoá: ClinVar, variant, VUS."
+  },
+  "skill:aipoch-medical-research:comparison-table-gen": {
+    "vi": "[Trình bày] Tự dựng bảng so sánh giữa các khái niệm, thuốc hoặc kết quả nghiên cứu. Dùng khi cần đặt nhiều lựa chọn cạnh nhau cho dễ đối chiếu. Từ khoá: comparison table."
+  },
+  "skill:aipoch-medical-research:competitor-trial-monitor": {
+    "vi": "[Phân tích thị trường] Theo dõi tiến độ thử nghiệm của đối thủ và cảnh báo rủi ro thị trường. Dùng cho công việc chiến lược sản phẩm, không dùng cho quyết định lâm sàng. Từ khoá: competitor, trial monitor."
+  },
+  "skill:aipoch-medical-research:concept-explainer": {
+    "vi": "[Giảng giải] Giải thích khái niệm y khoa phức tạp bằng phép so sánh dễ hiểu. Dùng khi cần diễn đạt cho người ngoài chuyên khoa, sinh viên hoặc người bệnh. Từ khoá: analogy, explain."
+  },
+  "skill:aipoch-medical-research:contradictory-findings-resolver": {
+    "vi": "[Thẩm định] Giải thích vì sao các nghiên cứu cùng chủ đề lại kết luận trái ngược: khác dân số, định nghĩa kết cục, nguồn mẫu, thiết kế, mô hình thống kê, biến hiệu chỉnh. Dùng khi chứng cứ mâu thuẫn nhau. Từ khoá: conflicting evidence."
+  },
+  "skill:aipoch-medical-research:cosmic-database": {
+    "vi": "[Ung thư] Tra COSMIC để tải bộ dữ liệu đột biến, tra Cancer Gene Census và lấy chữ ký đột biến. Dùng khi phân tích đột biến thân trong ung thư. Từ khoá: COSMIC, somatic mutation."
+  },
+  "skill:aipoch-medical-research:cross-disciplinary-bridge-finder": {
+    "vi": "[Hợp tác NC] Tìm cơ hội hợp tác liên ngành, chuyên gia ở lĩnh vực bổ trợ và cách chuyển phương pháp giữa các ngành. Dùng khi cần lập nhóm nghiên cứu liên ngành. Từ khoá: interdisciplinary."
+  },
+  "skill:aipoch-medical-research:crossref-database": {
+    "vi": "[Trích dẫn] Tra siêu dữ liệu Crossref: phân giải DOI, lấy thông tin thư mục, số lần được trích dẫn và nhà tài trợ. Dùng khi xác minh hoặc dựng trích dẫn. Từ khoá: Crossref, DOI."
+  },
+  "skill:aipoch-medical-research:ctd-api": {
+    "vi": "[Độc chất] Tra cơ sở dữ liệu CTD về tương tác giữa hoá chất, gen, bệnh và con đường sinh học. Dùng khi tìm liên hệ giữa phơi nhiễm hoá chất và bệnh. Từ khoá: CTD, toxicogenomics."
+  },
+  "skill:aipoch-medical-research:diagnostic-study-quality-assessment-quadas-2": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch của nghiên cứu độ chính xác chẩn đoán bằng công cụ QUADAS-2. Dùng khi cần biết một nghiên cứu về test chẩn đoán có đáng tin hay không. Từ khoá: QUADAS-2, diagnostic accuracy."
+  },
+  "skill:aipoch-medical-research:diffdock-molecular-docking": {
+    "vi": "[Thiết kế thuốc] Dự đoán tư thế gắn 3D của phối tử với protein bằng docking khuếch tán, kèm điểm tin cậy. Dùng khi sàng lọc ảo trong phát triển thuốc. Từ khoá: DiffDock, docking."
+  },
+  "skill:aipoch-medical-research:disease-mechanism-evidence-map": {
+    "vi": "[Cơ chế bệnh] Dựng bản đồ bằng chứng cơ chế bệnh theo tầng: phân tử, con đường, loại tế bào, mô, hậu quả sinh học rồi tới kiểu hình lâm sàng. Dùng khi cần chuỗi cơ chế có lớp lang thay vì vài trích dẫn rời. Từ khoá: mechanism evidence."
+  },
+  "skill:aipoch-medical-research:drug-interaction-checker": {
+    "vi": "[An toàn thuốc] Kiểm tra tương tác giữa nhiều thuốc, phân độ mức nặng và giải thích cơ chế. Dùng khi rà một đơn nhiều thuốc; kết quả vẫn cần bác sĩ kiểm chứng. Từ khoá: drug interaction."
+  },
+  "skill:aipoch-medical-research:drug-target-evidence-landscape": {
+    "vi": "[Thiết kế thuốc] Sắp xếp bằng chứng quanh một thuốc, đích hoặc con đường: liên quan bệnh, khả năng nhắm đích, tiền lâm sàng, lâm sàng, dạng thuốc phù hợp và mức độ cạnh tranh. Dùng khi định hướng phát triển thuốc. Từ khoá: target evidence."
+  },
+  "skill:aipoch-medical-research:drugbank-database": {
+    "vi": "[Dược] Truy cập dữ liệu thuốc và đích tác động của DrugBank: tải rồi phân tích XML để lấy tính chất, tương tác, con đường và dược lý. Dùng khi cần dữ liệu thuốc có cấu trúc. Từ khoá: DrugBank."
+  },
+  "skill:aipoch-medical-research:emerging-topic-scout": {
+    "vi": "[Xu hướng NC] Theo dõi liên tục để bắt chủ đề đang ở giai đoạn ủ, trước khi tạp chí dòng chính đặt tên cho nó. Dùng khi tìm hướng nghiên cứu mới còn ít người làm. Từ khoá: emerging topic."
+  },
+  "skill:aipoch-medical-research:ena-database": {
+    "vi": "[Tin sinh học] Tra kho trình tự ENA của châu Âu qua REST và FTP để lấy trình tự, dữ liệu đọc thô FASTQ, bản lắp ráp và siêu dữ liệu. Dùng khi có mã accession hoặc cần tìm theo siêu dữ liệu. Từ khoá: ENA, European Nucleotide Archive, FASTQ."
+  },
+  "skill:aipoch-medical-research:encode-api": {
+    "vi": "[Tin sinh học] Truy vấn REST API của ENCODE để tìm và lấy dữ liệu sinh học như mẫu sinh phẩm hay thí nghiệm, theo từ khoá hoặc mã accession. Dùng khi cần dữ liệu ENCODE. Từ khoá: ENCODE."
+  },
+  "skill:aipoch-medical-research:encori-api": {
+    "vi": "[Tin sinh học] Tra ENCORI (StarBase) về tương tác giữa miRNA và đích, giữa RNA với RNA và các quan hệ điều hoà khác. Dùng khi phân tích mạng điều hoà RNA. Từ khoá: ENCORI, StarBase, miRNA."
+  },
+  "skill:aipoch-medical-research:ensembl-database": {
+    "vi": "[Tin sinh học] Truy cập REST API của Ensembl cho dữ liệu bộ gen động vật có xương sống: tra gen theo mã, lấy trình tự, dự đoán tác động biến thể, ánh xạ toạ độ giữa các phiên bản. Dùng khi cần dữ liệu bộ gen tham chiếu. Từ khoá: Ensembl, VEP."
+  },
+  "skill:aipoch-medical-research:evidence-level-ranker": {
+    "vi": "[Thẩm định] Xếp hạng bài báo theo họ bằng chứng, tầng chất lượng phương pháp, độ sâu thẩm định và mức kỷ luật của khẳng định; gán vai trò trích dẫn thay vì xếp theo danh tiếng tạp chí. Dùng khi cần thứ tự ưu tiên đọc và trích dẫn. Từ khoá: evidence level."
+  },
+  "skill:aipoch-medical-research:fda-database": {
+    "vi": "[Quy chế] Truy vấn openFDA lấy dữ liệu quản lý của FDA: thuốc, thiết bị, biến cố bất lợi, thu hồi, hồ sơ nộp và mã UNII. Dùng khi cần bằng chứng an toàn hoặc pháp quy để phân tích. Từ khoá: openFDA, adverse event."
+  },
+  "skill:aipoch-medical-research:fda-guideline-search": {
+    "vi": "[Quy chế] Tìm hướng dẫn của FDA dành cho ngành theo lĩnh vực điều trị hoặc chủ đề. Dùng khi cần biết yêu cầu pháp quy trước khi thiết kế nghiên cứu. Từ khoá: FDA guidance."
+  },
+  "skill:aipoch-medical-research:figure-first-paper-reader": {
+    "vi": "[Đọc bài báo] Đọc bài theo từng hình trước rồi mới ghép lại mạch chung, tách nội dung hình khỏi lời diễn giải của tác giả. Dùng khi cần nắm nhanh kết quả cốt lõi và kiểm xem hình có thật sự đỡ cho khẳng định không. Từ khoá: figure-first reading."
+  },
+  "skill:aipoch-medical-research:funding-trend-forecaster": {
+    "vi": "[Tài trợ] Phân tích tóm tắt đề tài đã được cấp kinh phí và siêu dữ liệu dự án để nhận diện dịch chuyển chủ đề và dự báo ưu tiên tài trợ sắp tới. Dùng khi chọn hướng xin tài trợ. Từ khoá: funding trend."
+  },
+  "skill:aipoch-medical-research:gene-database": {
+    "vi": "[Tin sinh học] Truy vấn NCBI Gene qua E-utilities và NCBI Datasets: tra gen theo ký hiệu hoặc mã, lấy chú giải RefSeq, GO, vị trí và kiểu hình cho một hay nhiều gen. Dùng khi cần chú giải gen. Từ khoá: NCBI Gene, RefSeq."
+  },
+  "skill:aipoch-medical-research:gene-info": {
+    "vi": "[Tin sinh học] Lấy hồ sơ tổng hợp về gen: số bài PubMed, tóm tắt của NCBI, dữ liệu bản phiên mã Ensembl; chạy được hàng loạt hoặc đọc từ file. Dùng khi cần hồ sơ nhanh cho một danh sách gen. Từ khoá: gene info."
+  },
+  "skill:aipoch-medical-research:geo-search-api": {
+    "vi": "[Tin sinh học] Tìm bộ dữ liệu biểu hiện gen trên NCBI GEO theo từ khoá, sinh vật, tác giả hoặc trường cụ thể. Dùng khi tìm dữ liệu microarray hay RNA-seq công khai. Từ khoá: GEO, DataSets."
+  },
+  "skill:aipoch-medical-research:gget": {
+    "vi": "[Tin sinh học] Một giao diện dòng lệnh và Python thống nhất để truy vấn hơn 20 cơ sở dữ liệu về bộ gen, protein, cấu trúc và biểu hiện. Dùng khi cần lấy nhanh theo mã gen hoặc từ khoá bằng mã lệnh. Từ khoá: gget."
+  },
+  "skill:aipoch-medical-research:grant-funding-scout": {
+    "vi": "[Tài trợ] Phân tích xu hướng cấp kinh phí của NIH để nhận diện lĩnh vực đang được ưu tiên. Dùng khi chọn hướng nghiên cứu có khả năng xin được tài trợ. Từ khoá: NIH funding."
+  },
+  "skill:aipoch-medical-research:grant-gantt-chart-gen": {
+    "vi": "[Tài trợ] Dựng biểu đồ Gantt tiến độ cho hồ sơ xin tài trợ, ghi rõ giả định và ranh giới đầu ra. Dùng khi cần phần kế hoạch thực hiện trong đề xuất. Từ khoá: Gantt, grant timeline."
+  },
+  "skill:aipoch-medical-research:gwas-database": {
+    "vi": "[Di truyền] Truy vấn GWAS Catalog của NHGRI-EBI về liên quan giữa SNP và kiểu hình: tra theo mã rs, bệnh hoặc gen; lấy p-value và thống kê tóm tắt. Dùng cho dịch tễ di truyền và điểm nguy cơ đa gen. Từ khoá: GWAS, SNP."
+  },
+  "skill:aipoch-medical-research:hgnc-api": {
+    "vi": "[Di truyền] Tra cơ sở dữ liệu HGNC để lấy ký hiệu gen chuẩn, tên đầy đủ, mã định danh và siêu dữ liệu liên quan. Dùng khi cần thống nhất tên gen trước khi phân tích. Từ khoá: HGNC, gene symbol."
+  },
+  "skill:aipoch-medical-research:high-value-paper-screener": {
+    "vi": "[Sàng lọc] Đánh giá nhanh một bài y sinh có đáng đọc kỹ không, theo mức khớp câu hỏi, chất lượng thiết kế, cỡ mẫu, tính mới của phương pháp và khả năng tái lặp. Dùng khi có quá nhiều bài phải chọn. Từ khoá: paper screening."
+  },
+  "skill:aipoch-medical-research:hmdb-database": {
+    "vi": "[Chuyển hoá] Tra Human Metabolome Database theo tên, cấu trúc hoặc mã để lấy các trường hoá học, sinh học và lâm sàng. Dùng khi làm nghiên cứu chuyển hoá. Từ khoá: HMDB, metabolomics."
+  },
+  "skill:aipoch-medical-research:ib-summarizer": {
+    "vi": "[Thử nghiệm LS] Tóm tắt thông tin an toàn cốt lõi từ Hồ sơ Nghiên cứu viên của thuốc thử nghiệm. Dùng khi chuẩn bị hồ sơ hoặc tập huấn cho nhóm nghiên cứu. Từ khoá: Investigator Brochure."
+  },
+  "skill:aipoch-medical-research:jaspar-api": {
+    "vi": "[Tin sinh học] Tra JASPAR lấy hồ sơ gắn kết của yếu tố phiên mã dưới dạng ma trận PFM hoặc PWM, theo loài, qua REST API. Dùng khi phân tích vùng điều hoà gen. Từ khoá: JASPAR, PWM."
+  },
+  "skill:aipoch-medical-research:journal-impact-factor-trend": {
+    "vi": "[Chọn tạp chí] Xem chỉ số ảnh hưởng và phân vị của tạp chí theo xu hướng 5 năm. Dùng khi cân nhắc nơi nộp bài. Từ khoá: impact factor, quartile."
+  },
+  "skill:aipoch-medical-research:journal-latest-issue": {
+    "vi": "[Theo dõi y văn] Lấy mục lục và tóm tắt số mới nhất của một tạp chí từ URL, DOI, PMID hoặc RSS rồi rút ý chính ngay tại máy. Dùng khi cần điểm nhanh số mới và lưu trữ. Từ khoá: table of contents, RSS."
+  },
+  "skill:aipoch-medical-research:journal-matchmaker": {
+    "vi": "[Chọn tạp chí] Phân tích tóm tắt bài để gợi ý tạp chí phù hợp, cân nhắc chỉ số ảnh hưởng, phạm vi và thế mạnh chuyên môn. Dùng khi chuẩn bị nộp bài. Từ khoá: journal matching."
+  },
+  "skill:aipoch-medical-research:journal-skills": {
+    "vi": "[Chọn tạp chí] Gợi ý tạp chí đích bằng cách phân tích chủ đề bài và phân bố tạp chí của những bài PubMed tương tự. Dùng khi cần chiến lược nộp bài dựa trên dữ liệu thật. Từ khoá: journal recommendation."
+  },
+  "skill:aipoch-medical-research:kegg-api": {
+    "vi": "[Tin sinh học] Truy cập API của KEGG để lấy dữ liệu gen, con đường chuyển hoá, hợp chất và thuốc. Dùng khi cần tra hoặc liệt kê mục trong KEGG. Từ khoá: KEGG, pathway."
+  },
+  "skill:aipoch-medical-research:kegg-database": {
+    "vi": "[Tin sinh học] Gọi trực tiếp REST API của KEGG cho truy vấn con đường, gen, hợp chất và thuốc, chỉ dùng phi thương mại. Dùng khi cần kiểm soát ở mức HTTP hoặc ánh xạ mã KEGG có chủ đích. Từ khoá: KEGG REST."
+  },
+  "skill:aipoch-medical-research:key-takeaways": {
+    "vi": "[Tóm tắt] Rút ý chính từ tài liệu, biên bản họp, bài viết hay bất kỳ đoạn văn bản nào. Dùng khi cần bản tóm tắt gạch đầu dòng hoặc phần điểm nhanh. Từ khoá: summary, takeaways."
+  },
+  "skill:aipoch-medical-research:keyword-velocity-tracker": {
+    "vi": "[Xu hướng NC] Tính tốc độ và gia tốc tăng trưởng của y văn theo từ khoá để đo độ nóng của một hướng nghiên cứu. Dùng khi cân nhắc chủ đề đang lên hay đã bão hoà. Từ khoá: keyword velocity."
+  },
+  "skill:aipoch-medical-research:litbase": {
+    "vi": "[Đọc bài báo] Hệ đọc bài và phát triển nghiên cứu: tìm bài qua Semantic Scholar, đọc kèm ghi chú có cấu trúc, theo dõi nhận định và tổng hợp thành tài liệu nền. Dùng khi xây nền y văn cho một đề tài dài hơi. Từ khoá: Semantic Scholar."
+  },
+  "skill:aipoch-medical-research:literature-close-read": {
+    "vi": "[Đọc bài báo] Dựng báo cáo đọc kỹ có cấu trúc từ toàn văn bài báo đã chuyển sang Markdown, rút bối cảnh, câu hỏi, phương pháp, kết quả và hạn chế. Dùng khi cần đọc sâu một bài trọng tâm. Từ khoá: close reading."
+  },
+  "skill:aipoch-medical-research:literature-experiment-extract": {
+    "vi": "[Trích xuất] Rút mô hình thí nghiệm, phương pháp và thông tin dấu ấn sinh học từ bài báo dạng Markdown, kèm dẫn chứng cho từng mục. Dùng khi cần bảng tóm tắt thực nghiệm có nguồn. Từ khoá: experiment extraction."
+  },
+  "skill:aipoch-medical-research:literature-extensive-read": {
+    "vi": "[Đọc bài báo] Đọc lướt nhanh và tóm tắt bài báo thành bản đọc rộng có cấu trúc. Dùng khi cần nắm ý chính nhiều bài trong thời gian ngắn. Từ khoá: extensive reading."
+  },
+  "skill:aipoch-medical-research:literature-filtering": {
+    "vi": "[Sàng lọc] Lọc y văn theo năm công bố, tạp chí và bộ luật sàng lọc định sẵn để ra danh sách nhận và loại. Dùng ở bước sàng lọc sơ bộ của tổng quan hệ thống. Từ khoá: screening, inclusion criteria."
+  },
+  "skill:aipoch-medical-research:medchem": {
+    "vi": "[Thiết kế thuốc] Bộ lọc hoá dược để xếp ưu tiên hợp chất: luật giống thuốc, cảnh báo cấu trúc PAINS và thước đo độ phức tạp. Dùng khi cần sàng bớt thư viện hợp chất. Từ khoá: PAINS, drug-likeness."
+  },
+  "skill:aipoch-medical-research:medical-research-gap-finder": {
+    "vi": "[Khoảng trống NC] Tìm khoảng trống nghiên cứu thật, đã kiểm chứng bằng y văn từ nguồn tin cậy, loại bỏ khoảng trống giả rồi chuyển thành hướng đi cụ thể. Dùng khi cần biện minh tính mới của đề tài. Từ khoá: research gap."
+  },
+  "skill:aipoch-medical-research:medical-research-literature-reader-pro": {
+    "vi": "[Đọc bài báo] Đọc, phân tích và phê bình bài nghiên cứu y khoa cho người có nền lâm sàng, tin sinh học, chuyển dịch hoặc thực nghiệm cơ bản. Dùng khi cần đọc sâu một bài y khoa đúng theo chuyên môn. Từ khoá: literature reading."
+  },
+  "skill:aipoch-medical-research:medical-topic-saturation-and-whitespace-checker": {
+    "vi": "[Khoảng trống NC] Xác định một chủ đề đã thật sự bão hoà, chỉ đông đúc bề mặt, đã bị chiếm lĩnh chiến lược, hay vẫn còn chỗ để vào. Dùng khi phân vân chủ đề nóng có còn đáng làm. Từ khoá: saturation, whitespace."
+  },
+  "skill:aipoch-medical-research:medical-vector-search": {
+    "vi": "[Tra cứu] Tìm theo vector trên kho tri thức và trả lời có dẫn chứng cho câu hỏi về phương pháp, cơ chế bệnh, tác dụng thuốc hay nghiên cứu lâm sàng. Dùng khi cần câu trả lời dựa trên kho tài liệu đã nạp. Từ khoá: vector search."
+  },
+  "skill:aipoch-medical-research:method-gap-detector": {
+    "vi": "[Khoảng trống NC] Phát hiện khoảng trống về phương pháp trong một lĩnh vực: thiết kế, phân tích, thẩm định, kiểm soát sai lệch, khả năng tái lặp và mức sẵn sàng triển khai. Dùng khi tìm chỗ đóng góp về phương pháp. Từ khoá: method gap."
+  },
+  "skill:aipoch-medical-research:methodology-extractor": {
+    "vi": "[Trích xuất] Rút phần phương pháp của một hoặc nhiều bài thành bản tóm tắt theo hướng quy trình. Dùng khi so sánh phương pháp giữa các nghiên cứu hoặc viết quy trình tái lặp được. Từ khoá: methods extraction."
+  },
+  "skill:aipoch-medical-research:methods-reverse-engineer": {
+    "vi": "[Trích xuất] Dựng ngược phần phương pháp của một bài y sinh thành quy trình chi tiết, tái lặp được: nguồn dữ liệu, tiêu chuẩn chọn và loại, các bước xử lý. Dùng khi muốn làm lại đúng cách một nghiên cứu. Từ khoá: reproducible workflow."
+  },
+  "skill:aipoch-medical-research:multi-database-literature-collector": {
+    "vi": "[Tìm y văn] Gom y văn ứng viên từ nhiều cơ sở dữ liệu, chỉnh logic tìm theo từng nguồn, giữ siêu dữ liệu gốc và xếp thành tập sẵn sàng sàng lọc. Dùng khi bắt đầu một tổng quan. Từ khoá: multi-database search."
+  },
+  "skill:aipoch-medical-research:novelty-vs-feasibility-assessor": {
+    "vi": "[Khoảng trống NC] Cân tính mới thật với tính khả thi thật trong giới hạn nguồn lực, rồi ép ra một quyết định rõ ràng: bắt đầu, thu hẹp, thiết kế lại hay dừng. Dùng khi phân vân có nên khởi động đề tài. Từ khoá: novelty, feasibility."
+  },
+  "skill:aipoch-medical-research:open-access-scout": {
+    "vi": "[Chọn tạp chí] Tìm tạp chí truy cập mở hợp pháp, kiểm chính sách tạp chí và nhận diện nhà xuất bản săn mồi. Dùng khi chọn nơi nộp bài mà chưa rõ uy tín. Từ khoá: open access, predatory."
+  },
+  "skill:aipoch-medical-research:open-source-license-check": {
+    "vi": "[Pháp lý] Kiểm giấy phép của phần mềm hay mã tin sinh học xem có cho dùng thương mại không. Dùng khi định đưa mã nguồn của người khác vào sản phẩm. Từ khoá: license, GPL, MIT."
+  },
+  "skill:aipoch-medical-research:open-targets-db": {
+    "vi": "[Thiết kế thuốc] Truy vấn Open Targets để lấy đích tác động, bệnh và bản ghi bằng chứng kèm điểm liên quan giữa đích với bệnh. Dùng khi tìm đích điều trị tiềm năng. Từ khoá: Open Targets."
+  },
+  "skill:aipoch-medical-research:openalex-db": {
+    "vi": "[Tra CSDL] Truy cập OpenAlex với hơn 240 triệu công trình để phân tích trắc lượng, tìm y văn và theo dõi trích dẫn, không cần khoá API. Dùng khi cần dữ liệu thư mục quy mô lớn. Từ khoá: OpenAlex, bibliometrics."
+  },
+  "skill:aipoch-medical-research:paper-lookup": {
+    "vi": "[Tra CSDL] Tìm bài trên 10 cơ sở dữ liệu học thuật qua REST API, gồm cả nguồn toàn văn lẫn nguồn tiền in. Dùng khi cần tra một chủ đề trên nhiều nguồn cùng lúc. Từ khoá: PubMed, PMC, bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall."
+  },
+  "skill:aipoch-medical-research:paper-to-claim-verifier": {
+    "vi": "[Thẩm định] Kiểm xem một khẳng định khoa học có thật sự được bài gốc chống đỡ không, hay chỉ là trích dẫn trôi, nói quá, trích chọn lọc, hoặc biến tương quan thành nhân quả. Dùng khi nghi một câu trích dẫn bị dùng sai. Từ khoá: claim verification."
+  },
+  "skill:aipoch-medical-research:patent-claim-mapper": {
+    "vi": "[Pháp lý] Đối chiếu yêu cầu bảo hộ của sáng chế với tính năng sản phẩm để phân tích xâm phạm và quyền tự do thực thi. Dùng cho công việc sở hữu trí tuệ ngành sinh dược. Từ khoá: patent claim, freedom to operate."
+  },
+  "skill:aipoch-medical-research:patent-landscape": {
+    "vi": "[Pháp lý] Phân tích toàn cảnh sáng chế ngành sinh dược: tìm khoảng trống sở hữu trí tuệ, theo dõi sáng chế đối thủ, đánh giá quyền tự do thực thi. Dùng khi cân nhắc đầu tư phát triển thuốc. Từ khoá: patent landscape."
+  },
+  "skill:aipoch-medical-research:pathway-introduction-expert": {
+    "vi": "[Cơ chế bệnh] Viết phần giới thiệu học thuật đầy đủ cho một con đường sinh học: quá trình tín hiệu, dấu ấn và chất ức chế. Dùng khi cần đoạn tổng quan về một con đường, phân tử hay gen. Từ khoá: pathway, signaling."
+  },
+  "skill:aipoch-medical-research:pdb-database": {
+    "vi": "[Tin sinh học] Truy cập ngân hàng cấu trúc protein RCSB PDB để tìm, tải và lấy tự động cấu trúc 3D đại phân tử cùng siêu dữ liệu. Dùng khi cần tìm theo văn bản, trình tự hoặc độ tương đồng 3D. Từ khoá: PDB, RCSB."
+  },
+  "skill:aipoch-medical-research:pdf-extract-experimental-materials": {
+    "vi": "[Trích xuất] Rút vật liệu thí nghiệm và thông tin thiết bị từ PDF hoặc văn bản chuyển từ PDF thành ba bảng CSV. Dùng khi bài có mục vật liệu, hoá chất hay kháng thể cần lập bảng. Từ khoá: materials extraction."
+  },
+  "skill:aipoch-medical-research:phenotype-introduction": {
+    "vi": "[Cơ chế bệnh] Viết phần giới thiệu đầy đủ về một kiểu hình y sinh: khái niệm, cơ chế, điều hoà và cách phát hiện. Dùng khi cần đoạn học thuật mô tả kiểu hình tế bào. Từ khoá: phenotype."
+  },
+  "skill:aipoch-medical-research:pmc-official-download": {
+    "vi": "[Tra CSDL] Tải toàn văn PubMed và PMC bằng đúng cách được phép, kể cả tải hàng loạt từ tập truy cập mở và lưu theo PMID hoặc PMCID. Dùng khi cần toàn văn để đọc hoặc trích xuất. Từ khoá: PMC, Open Access Subset."
+  },
+  "skill:aipoch-medical-research:population-gap-detector": {
+    "vi": "[Khoảng trống NC] Phát hiện nhóm dân số bị bỏ sót, ít đại diện hoặc chưa được kiểm chứng kỹ trong một lĩnh vực. Dùng khi cần chọn dân số nghiên cứu chính xác và có ý nghĩa hơn. Từ khoá: population gap."
+  },
+  "skill:aipoch-medical-research:preprint-surveillance-finder": {
+    "vi": "[Theo dõi y văn] Theo dõi bản thảo tiền in mới trên bioRxiv, medRxiv và arXiv theo chủ đề. Dùng khi muốn biết đang có gì được công bố ngay lúc này, trước khi lên tạp chí. Từ khoá: preprint surveillance."
+  },
+  "skill:aipoch-medical-research:pubchem-database-skill": {
+    "vi": "[Dược] Truy cập PubChem qua PUG-REST và PubChemPy để tìm hợp chất, lấy tính chất lý hoá, tìm theo độ tương đồng hoặc cấu trúc con và lấy dữ liệu hoạt tính. Dùng khi tra một hoá chất. Từ khoá: PubChem, PUG-REST."
+  },
+  "skill:aipoch-medical-research:pubmed-database": {
+    "vi": "[Tra CSDL] Gọi trực tiếp REST API của PubMed: truy vấn Boolean và MeSH nâng cao, E-utilities, xử lý hàng loạt, quản lý trích dẫn. Dùng khi cần làm việc ở mức HTTP hoặc tự viết tích hợp. Từ khoá: PubMed, E-utilities."
+  },
+  "skill:aipoch-medical-research:pubmed-search-specialist": {
+    "vi": "[Tìm y văn] Dựng câu truy vấn Boolean phức tạp để tra PubMed và MEDLINE thật chính xác: ánh xạ MeSH, bộ lọc nâng cao, chiến lược tìm cho tổng quan hệ thống. Dùng khi cần cả độ nhạy lẫn độ đặc hiệu cao. Từ khoá: MeSH, Boolean."
+  },
+  "skill:aipoch-medical-research:pubmed-topic-recommend": {
+    "vi": "[Câu hỏi NC] Gợi ý khoảng 5 chủ đề nghiên cứu khả thi bằng cách truy vấn PubMed E-utilities. Dùng khi đã có hướng và ràng buộc, cần nhanh vài ý tưởng có dẫn chứng. Từ khoá: topic recommendation."
+  },
+  "skill:aipoch-medical-research:pytdc": {
+    "vi": "[Học máy] Bộ dữ liệu và thang đo chuẩn cho học máy trong phát triển thuốc qua Therapeutics Data Commons: nạp dữ liệu, chia tập có ý nghĩa, đánh giá nhất quán. Dùng khi làm mô hình về hấp thu, phân bố hay độc tính. Từ khoá: PyTDC, ADMET."
+  },
+  "skill:aipoch-medical-research:rare-disease-hpo-mapper": {
+    "vi": "[Bệnh hiếm] Ánh xạ triệu chứng người bệnh sang thuật ngữ chuẩn HPO để phục vụ chẩn đoán theo gen. Dùng khi nghi bệnh hiếm và cần mô tả kiểu hình chuẩn hoá. Từ khoá: HPO, rare disease."
+  },
+  "skill:aipoch-medical-research:rct-bias-assessment-rob2": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch của thử nghiệm ngẫu nhiên bằng công cụ RoB 2, phân tích theo từng miền rồi tổng hợp thành báo cáo. Dùng khi cần biết một thử nghiệm có đáng tin hay không. Từ khoá: RoB 2, risk of bias."
+  },
+  "skill:aipoch-medical-research:reactome-skill": {
+    "vi": "[Tin sinh học] Truy vấn REST API của Reactome để lấy nội dung con đường sinh học, chi tiết phản ứng và phân tích làm giàu cho một danh sách gen. Dùng khi cần dữ liệu con đường đã tuyển chọn. Từ khoá: Reactome, enrichment."
+  },
+  "skill:aipoch-medical-research:reagent-substitute-scout": {
+    "vi": "[Thực nghiệm] Tìm hoá chất hay kháng thể thay thế đã được kiểm chứng, dựa trên dữ liệu trích dẫn trong y văn. Dùng khi thiếu vật tư hoặc cần phương án dự phòng. Từ khoá: reagent substitute."
+  },
+  "skill:aipoch-medical-research:reference-finder": {
+    "vi": "[Trích dẫn] Tự tìm và xếp hạng tài liệu PubMed cho từng câu trong bản thảo, trả về tiêu đề, DOI và lý do đề xuất. Dùng khi cần gắn nguồn cho những câu chưa có trích dẫn. Từ khoá: reference finding."
+  },
+  "skill:aipoch-medical-research:reference-retrieval-skill": {
+    "vi": "[Trích dẫn] Tìm tài liệu phù hợp để trích dẫn, tự dựng câu truy vấn Boolean cho PubMed rồi lọc lại kết quả. Dùng khi cần nhanh chứng cứ chất lượng cho một luận điểm cụ thể. Từ khoá: reference retrieval."
+  },
+  "skill:aipoch-medical-research:reference-search": {
+    "vi": "[Tìm y văn] Tìm trên nhiều cơ sở dữ liệu và thiết kế chiến lược tìm, xuất danh sách kết quả có cấu trúc và tái lặp được. Dùng khi cần lịch sử tìm truy nguyên được cho tổng quan. Từ khoá: search strategy."
+  },
+  "skill:aipoch-medical-research:research-article-weekly": {
+    "vi": "[Theo dõi y văn] Sinh báo cáo y văn hằng tuần theo từ khoá trên PubMed: tự lấy, phân loại rồi tóm tắt bài mới. Dùng khi cần theo dõi tiến triển của một chủ đề đều đặn. Từ khoá: weekly digest."
+  },
+  "skill:aipoch-medical-research:research-hotspot-analysis": {
+    "vi": "[Xu hướng NC] Phân tích điểm nóng nghiên cứu của một bệnh hoặc chủ đề và đề xuất bài tiêu biểu. Dùng khi cần nhận diện hướng đang lên hoặc viết báo cáo điểm nóng. Từ khoá: research hotspot."
+  },
+  "skill:aipoch-medical-research:research-paper-downloader": {
+    "vi": "[Tra CSDL] Tải bài báo từ nguồn truy cập mở khi có DOI, mã arXiv hoặc từ khoá, trả về đường dẫn file PDF đã lưu. Dùng khi cần gom toàn văn để đọc. Từ khoá: paper download, DOI."
+  },
+  "skill:aipoch-medical-research:result-reliability-checker": {
+    "vi": "[Thẩm định] Xét kết quả nghiên cứu có đáng tin không qua tính toàn vẹn thiết kế, cấu trúc mẫu, xử lý thống kê, kiểm soát sai lệch, chuỗi thẩm định và mức kỷ luật của khẳng định. Dùng khi cần biết chỗ nào vững, chỗ nào mong manh. Từ khoá: result reliability."
+  },
+  "skill:aipoch-medical-research:retraction-watcher": {
+    "vi": "[Liêm chính] Quét danh mục tài liệu tham khảo để phát hiện bài đã bị rút, đính chính hoặc gắn cờ. Dùng trước khi nộp bài, bình duyệt hay tổng hợp chứng cứ. Từ khoá: retraction, correction."
+  },
+  "skill:aipoch-medical-research:scholar-evaluation": {
+    "vi": "[Thẩm định] Chấm điểm tài liệu học thuật theo khung ScholarEval khi có file PDF, DOCX, TXT hoặc văn bản dán vào. Dùng khi cần điểm số và nhận xét chất lượng cho một bản thảo. Từ khoá: ScholarEval."
+  },
+  "skill:aipoch-medical-research:scientific-critical-thinking": {
+    "vi": "[Thẩm định] Đánh giá độ chặt chẽ của nghiên cứu: phương pháp, thiết kế thực nghiệm, tính hợp lệ thống kê, thiên kiến, nhiễu và chất lượng chứng cứ theo GRADE hoặc Cochrane. Dùng khi phân tích phản biện một khẳng định khoa học. Từ khoá: GRADE, critical appraisal."
+  },
+  "skill:aipoch-medical-research:scientific-podcast-summary": {
+    "vi": "[Tóm tắt] Tự tóm tắt podcast khoa học như Huberman Lab hay Nature. Dùng khi muốn nắm nội dung mà không phải nghe hết. Từ khoá: podcast summary."
+  },
+  "skill:aipoch-medical-research:scite-database": {
+    "vi": "[Trích dẫn] Tra Scite.ai để biết một bài được trích dẫn theo hướng ủng hộ, phản bác hay chỉ nhắc tới. Dùng khi cần đánh giá mức độ được y văn chấp nhận của một nghiên cứu. Từ khoá: Scite, smart citations."
+  },
+  "skill:aipoch-medical-research:sds-msds-risk-scanner": {
+    "vi": "[An toàn lab] Rút mã nguy hại và thông tin an toàn từ phiếu an toàn hoá chất. Dùng khi chuẩn bị làm việc với một hoá chất mới trong phòng thí nghiệm. Từ khoá: SDS, MSDS."
+  },
+  "skill:aipoch-medical-research:semantic-scholar-database": {
+    "vi": "[Tra CSDL] Truy cập Semantic Scholar Graph API để tìm bài và lấy dữ liệu bài, tác giả cùng quan hệ trích dẫn. Dùng khi cần khám phá y văn hoặc đi theo mạng trích dẫn. Từ khoá: Semantic Scholar."
+  },
+  "skill:aipoch-medical-research:smart-journal-monitor": {
+    "vi": "[Theo dõi y văn] Giám sát vài tạp chí trọng điểm một cách có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần bám sát nguồn tạp chí cố định thay vì tìm dàn trải. Từ khoá: journal monitor."
+  },
+  "skill:aipoch-medical-research:string-database": {
+    "vi": "[Tin sinh học] Truy cập STRING để ánh xạ mã định danh, lấy mạng tương tác protein và chạy phân tích làm giàu chức năng. Dùng khi cần bối cảnh tương tác cho một tập gen hoặc protein. Từ khoá: STRING, PPI."
+  },
+  "skill:aipoch-medical-research:study-design-identifier": {
+    "vi": "[Thẩm định] Nhận diện thiết kế nghiên cứu thật sự của một bài y khoa, tách phần thiết kế chính với phần phụ khi bài lai nhiều thiết kế. Dùng khi cần gán nhãn thiết kế đúng trước khi chấm mức chứng cứ. Từ khoá: study design."
+  },
+  "skill:aipoch-medical-research:systematic-review-screener": {
+    "vi": "[Sàng lọc] Sàng lọc tóm tắt tự động cho tổng quan hệ thống, có hỗ trợ quy trình PRISMA. Dùng khi phải lọc hàng nghìn tóm tắt. Từ khoá: PRISMA, abstract screening."
+  },
+  "skill:aipoch-medical-research:target-novelty-scorer": {
+    "vi": "[Thiết kế thuốc] Chấm điểm tính mới của một đích sinh học qua khai thác y văn. Dùng khi cân nhắc theo đuổi một đích đã đông người làm hay còn mới. Từ khoá: target novelty."
+  },
+  "skill:aipoch-medical-research:tooluniverse-clinical-trial-matching": {
+    "vi": "[Thử nghiệm LS] Ghép người bệnh với thử nghiệm lâm sàng theo hồ sơ bệnh, biến đổi phân tử, giai đoạn và điều trị đã dùng; xếp hạng thử nghiệm lấy từ ClinicalTrials.gov. Dùng trong y học chính xác và ung thư. Từ khoá: trial matching."
+  },
+  "skill:aipoch-medical-research:tooluniverse-literature-deep-research": {
+    "vi": "[Tìm y văn] Nghiên cứu y văn chuyên sâu: khử nhập nhằng tên đích, phân hạng chứng cứ, rút chủ đề có cấu trúc, ra báo cáo kèm danh mục kiểm đầy đủ và giả thuyết kiểm định được. Dùng khi cần một báo cáo nền dày dặn. Từ khoá: deep research."
+  },
+  "skill:aipoch-medical-research:topic-evidence-mapper": {
+    "vi": "[Khoảng trống NC] Vẽ nhanh toàn cảnh chứng cứ của một chủ đề y khoa: dòng nghiên cứu chính, dân số đích, kết cục, phương pháp, mật độ chứng cứ và vùng còn mỏng. Dùng trước khi đi tìm khoảng trống nghiên cứu. Từ khoá: evidence map."
+  },
+  "skill:aipoch-medical-research:translational-gap-analyzer": {
+    "vi": "[Chuyển dịch] Đánh giá khoảng cách giữa mô hình tiền lâm sàng và bệnh ở người. Dùng khi cân nhắc một kết quả trên động vật có chuyển sang người được hay không. Từ khoá: translational gap."
+  },
+  "skill:aipoch-medical-research:uniprot-database": {
+    "vi": "[Tin sinh học] Gọi trực tiếp REST API của UniProt để tìm protein, lấy bản ghi và chuyển đổi mã định danh giữa các cơ sở dữ liệu. Dùng khi cần truy vấn UniProtKB bằng mã lệnh. Từ khoá: UniProt, UniProtKB."
+  },
+  "skill:aipoch-medical-research:unmet-clinical-need-extractor": {
+    "vi": "[Khoảng trống NC] Rút nhu cầu lâm sàng chưa được đáp ứng, cụ thể và có nguồn, từ guideline, bài tổng quan, nghiên cứu đời thực và chứng cứ thực hành. Dùng khi cần biến giá trị nghiên cứu chung chung thành điểm đau cụ thể. Từ khoá: unmet need."
+  },
+  "skill:aipoch-medical-research:unstructured-medical-text-miner": {
+    "vi": "[Trích xuất] Khai thác văn bản lâm sàng phi cấu trúc từ kho MIMIC-IV để rút logic chẩn đoán. Dùng khi nghiên cứu trên dữ liệu bệnh án dạng chữ tự do. Từ khoá: MIMIC-IV, text mining."
+  },
+  "skill:aipoch-medical-research:variant-annotation": {
+    "vi": "[Di truyền] Truy vấn và chú giải biến thể gen từ ClinVar và dbSNP. Dùng khi cần biết ý nghĩa lâm sàng và tần suất của một biến thể. Từ khoá: ClinVar, dbSNP, variant."
+  },
+  "skill:aipoch-medical-research:venue-templates": {
+    "vi": "[Nộp bài] Mẫu LaTeX theo từng nơi nộp, yêu cầu định dạng và hướng dẫn nộp cho tạp chí, hội nghị, poster và hồ sơ tài trợ. Dùng khi nơi nộp có quy định chặt về bố cục, số trang hay ẩn danh. Từ khoá: LaTeX template."
+  },
+  "skill:aipoch-medical-research:zinc-database": {
+    "vi": "[Thiết kế thuốc] Tra ZINC với hơn 230 triệu hợp chất mua được: tìm theo mã ZINC hoặc SMILES, tìm chất tương tự, tải cấu trúc 3D sẵn sàng docking. Dùng khi sàng lọc ảo. Từ khoá: ZINC, virtual screening."
+  },
+  "skill:aipoch-medical-research:adme-property-predictor": {
+    "vi": "[Thiết kế thuốc] Dự đoán tính chất hấp thu, phân bố, chuyển hoá và thải trừ của hợp chất theo quy trình tái lặp được, có bước kiểm định rõ ràng. Dùng khi sàng lọc ứng viên thuốc. Từ khoá: ADME."
+  },
+  "skill:aipoch-medical-research:anndata": {
+    "vi": "[Tin sinh học] Cấu trúc dữ liệu cho ma trận có chú giải trong phân tích đơn bào: đọc ghi file h5ad hoặc zarr, trao đổi dữ liệu với hệ sinh thái scverse. Dùng khi xử lý dữ liệu đơn bào. Từ khoá: AnnData, h5ad, scverse."
+  },
+  "skill:aipoch-medical-research:baseline-extraction-for-clinical-trials": {
+    "vi": "[Trích xuất] Rút dữ liệu nền của thử nghiệm lâm sàng gồm nghiên cứu, vùng địa lý và người tham gia, từ toàn văn hoặc từ mã PMID. Dùng khi lập bảng đặc điểm nền cho tổng quan. Từ khoá: baseline, PMID."
+  },
+  "skill:aipoch-medical-research:batch-effect-correction": {
+    "vi": "[Phân tích dữ liệu] Hiệu chỉnh hiệu ứng lô trên ma trận biểu hiện gộp, giữ nguyên cấu trúc nhóm sinh học, kèm biểu đồ kiểm soát chất lượng trước và sau. Dùng khi gộp nhiều mẻ mẫu vào một phân tích. Từ khoá: batch effect."
+  },
+  "skill:aipoch-medical-research:bio-causal-genomics-mediation-analysis": {
+    "vi": "[Nhân quả] Tách hiệu ứng di truyền thành đường trực tiếp và gián tiếp qua biến trung gian, dùng gói mediation của R. Dùng khi kiểm xem biểu hiện gen hay methyl hoá có làm trung gian không. Từ khoá: mediation analysis."
+  },
+  "skill:aipoch-medical-research:bio-causal-genomics-pleiotropy-detection": {
+    "vi": "[Nhân quả] Phát hiện và hiệu chỉnh đa hiệu ngang trong ngẫu nhiên hoá Mendel bằng MR-PRESSO, hồi quy MR-Egger và lọc Steiger. Dùng khi cần bảo đảm giá trị của phân tích ngẫu nhiên hoá Mendel. Từ khoá: Mendelian randomization, MR-Egger."
+  },
+  "skill:aipoch-medical-research:biopython": {
+    "vi": "[Tin sinh học] Bộ công cụ toàn diện cho sinh học phân tử tính toán: đọc trình tự và cấu trúc bằng mã lệnh, dựng đường ống xử lý hàng loạt, tự động hoá quy trình NCBI hay BLAST. Dùng khi lập trình xử lý dữ liệu sinh học. Từ khoá: Biopython, BLAST."
+  },
+  "skill:aipoch-medical-research:biopython-advanced": {
+    "vi": "[Tin sinh học] Các mô-đun nâng cao của Biopython: motif, di truyền quần thể, tiện ích trình tự, phân tích enzyme cắt giới hạn, phân cụm và vẽ GenomeDiagram. Dùng khi cần vượt quá thao tác trình tự cơ bản. Từ khoá: Biopython, GenomeDiagram."
+  },
+  "skill:aipoch-medical-research:biopython-alignment": {
+    "vi": "[Tin sinh học] Gióng hàng trình tự và xử lý file gióng hàng bằng Biopython: gióng cặp toàn cục hay cục bộ, đọc ghi và chuyển định dạng gióng hàng nhiều trình tự, thống kê và lọc. Dùng khi cần so trình tự. Từ khoá: alignment, MSA."
+  },
+  "skill:aipoch-medical-research:biopython-phylo": {
+    "vi": "[Tin sinh học] Đọc ghi cây phát sinh loài bằng Bio.Phylo kèm vẽ hình và thống kê: chuyển định dạng, tỉa cành, đổi gốc, tính khoảng cách. Dùng khi làm việc với cây phát sinh loài. Từ khoá: phylogenetic tree."
+  },
+  "skill:aipoch-medical-research:biopython-sequence-io": {
+    "vi": "[Tin sinh học] Đọc, ghi và chuyển đổi file trình tự sinh học như FASTA, GenBank hay FASTQ kèm thao tác trình tự cơ bản. Dùng khi cần vào ra trình tự đáng tin hoặc xử lý file lớn. Từ khoá: FASTA, GenBank, FASTQ."
+  },
+  "skill:aipoch-medical-research:biopython-structure": {
+    "vi": "[Tin sinh học] Phân tích cấu trúc protein bằng Bio.PDB với file PDB hoặc mmCIF: đọc cấu trúc, tính hình học, so sánh và chồng khớp. Dùng khi làm tin sinh học cấu trúc. Từ khoá: Bio.PDB, mmCIF."
+  },
+  "skill:aipoch-medical-research:bioservices": {
+    "vi": "[Tin sinh học] Truy cập hơn 40 dịch vụ web tin sinh học bằng một giao diện Python thống nhất. Dùng khi cần truy vấn nhiều cơ sở dữ liệu trong cùng một quy trình phân tích. Từ khoá: BioServices."
+  },
+  "skill:aipoch-medical-research:case-control-study-quality-assessment-nos": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch của nghiên cứu bệnh chứng theo thang Newcastle-Ottawa. Dùng khi cần đánh giá chất lượng một bài bệnh chứng. Từ khoá: Newcastle-Ottawa, case-control."
+  },
+  "skill:aipoch-medical-research:cerna-analysis": {
+    "vi": "[Tin sinh học] Dựng mạng điều hoà ceRNA từ danh sách gen chủ chốt, kết hợp dữ liệu miRNA với mRNA và lncRNA, xuất bảng CSV và hình PDF. Dùng khi phân tích mạng cạnh tranh RNA nội sinh. Từ khoá: ceRNA, miRNA, lncRNA."
+  },
+  "skill:aipoch-medical-research:cibersort-immune-infiltration-analysis": {
+    "vi": "[Tin sinh học] Ước lượng tỷ lệ thâm nhiễm tế bào miễn dịch từ ma trận biểu hiện khối bằng giải chập kiểu CIBERSORT với ma trận LM22, so một nhóm bệnh với một nhóm chứng. Dùng khi phân tích vi môi trường miễn dịch. Từ khoá: CIBERSORT, LM22."
+  },
+  "skill:aipoch-medical-research:circos-plot-generator": {
+    "vi": "[Hình khoa học] Sinh file cấu hình Circos để vẽ dữ liệu bộ gen dạng vòng: biến thể điểm, số bản sao, biến thể cấu trúc và mạng giao tiếp tế bào. Dùng khi cần hình vòng đạt chuẩn đăng bài. Từ khoá: Circos."
+  },
+  "skill:aipoch-medical-research:clinical-data-cleaner": {
+    "vi": "[Quản lý dữ liệu] Làm sạch dữ liệu thử nghiệm lâm sàng, chuẩn hoá theo SDTM, xử lý số liệu thiếu, phát hiện giá trị ngoại lai và chuyển dữ liệu phiếu thu thập thô sang chuẩn CDISC. Dùng khi chuẩn bị dữ liệu nộp cơ quan quản lý. Từ khoá: CDISC, SDTM."
+  },
+  "skill:aipoch-medical-research:cnv-caller-plotter": {
+    "vi": "[Tin sinh học] Phát hiện biến thể số bản sao từ giải trình tự toàn bộ hệ gen và vẽ hình toàn hệ gen đạt chuẩn đăng bài. Dùng trong nghiên cứu hệ gen ung thư và bệnh hiếm. Từ khoá: CNV."
+  },
+  "skill:aipoch-medical-research:cobrapy": {
+    "vi": "[Tin sinh học] Mô hình chuyển hoá theo ràng buộc: mô phỏng tăng trưởng, phân tích khoảng dòng vật chất, nghiên cứu bất hoạt gen và thay môi trường nuôi. Dùng khi làm mô hình chuyển hoá. Từ khoá: COBRApy, flux balance."
+  },
+  "skill:aipoch-medical-research:code-refactor-for-reproducibility": {
+    "vi": "[Tái lặp] Sửa lại mã phân tích cho đạt chuẩn công bố: thêm tài liệu, dựng quy trình tái lặp được, chuẩn bị mã để chia sẻ với cộng sự. Dùng trước khi nộp bài hoặc mở mã nguồn. Từ khoá: reproducibility, refactor."
+  },
+  "skill:aipoch-medical-research:cohort-study-quality-assessment-nos": {
+    "vi": "[Thẩm định] Chấm chất lượng nghiên cứu thuần tập theo thang Newcastle-Ottawa. Dùng khi có một bài thuần tập cần báo cáo đánh giá chất lượng. Từ khoá: Newcastle-Ottawa, cohort."
+  },
+  "skill:aipoch-medical-research:consensus-clustering-analysis": {
+    "vi": "[Phân tích dữ liệu] Tìm phân nhóm mẫu ổn định từ ma trận biểu hiện khối bằng ConsensusClusterPlus, chọn số cụm theo chỉ số PAC và vẽ ma trận đồng thuận. Dùng khi cần phân dưới nhóm bệnh. Từ khoá: consensus clustering."
+  },
+  "skill:aipoch-medical-research:crispr-screen-analyzer": {
+    "vi": "[Tin sinh học] Xử lý dữ liệu sàng lọc CRISPR để tìm gen thiết yếu và ứng viên: kiểm soát chất lượng, phân tích thống kê RRA và gọi hit. Dùng cho sàng lọc gộp về sống sót hoặc kháng thuốc. Từ khoá: CRISPR screen, RRA."
+  },
+  "skill:aipoch-medical-research:d-molecule-ray-tracer": {
+    "vi": "[Hình khoa học] Sinh kịch bản dựng hình phân tử như ảnh thật cho PyMOL và UCSF ChimeraX. Dùng khi cần hình phân tử đẹp cho bài báo hoặc bài giảng. Từ khoá: PyMOL, ChimeraX."
+  },
+  "skill:aipoch-medical-research:data-stats-analysis": {
+    "vi": "[Thống kê] Chạy kiểm định thống kê, kiểm định giả thuyết, phân tích tương quan và hiệu chỉnh đa so sánh bằng scipy và statsmodels. Dùng khi cần kết quả thống kê cơ bản trên dữ liệu đã có. Từ khoá: scipy, statsmodels."
+  },
+  "skill:aipoch-medical-research:data-transform": {
+    "vi": "[Quản lý dữ liệu] Biến đổi, làm sạch, định dạng lại và tiền xử lý dữ liệu bằng pandas và numpy. Dùng khi dữ liệu thô chưa ở dạng phân tích được. Từ khoá: pandas, numpy."
+  },
+  "skill:aipoch-medical-research:decision-curve-analysis": {
+    "vi": "[Thống kê] Đánh giá lợi ích lâm sàng của mô hình dự báo nhị phân từ một file CSV: khớp mô hình, vẽ đường quyết định và đường tác động lâm sàng. Dùng khi cần biết mô hình có đáng dùng trên thực tế không. Từ khoá: decision curve analysis."
+  },
+  "skill:aipoch-medical-research:decision-tree-analysis": {
+    "vi": "[Thống kê] Dựng mô hình cây quyết định bằng R cho bài toán phân loại hoặc hồi quy, kèm xếp hạng tầm quan trọng biến và tóm tắt đánh giá mô hình. Dùng khi cần mô hình dễ giải thích. Từ khoá: decision tree."
+  },
+  "skill:aipoch-medical-research:deeptools": {
+    "vi": "[Tin sinh học] Bộ công cụ phân tích giải trình tự thế hệ mới: chuyển BAM sang bigWig, kiểm soát chất lượng, vẽ heatmap quanh điểm khởi đầu phiên mã hay quanh đỉnh tín hiệu. Dùng cho ChIP-seq, RNA-seq và ATAC-seq. Từ khoá: deepTools, bigWig."
+  },
+  "skill:aipoch-medical-research:deg-screening-analysis": {
+    "vi": "[Tin sinh học] Sàng gen biểu hiện khác biệt giữa hai nhóm từ ma trận biểu hiện khối, xuất bảng gen, biểu đồ núi lửa và heatmap phân cụm. Dùng khi so hai nhóm mẫu. Từ khoá: DEG, volcano plot."
+  },
+  "skill:aipoch-medical-research:diagnostic-study-quality-assessment-quadas": {
+    "vi": "[Thẩm định] Phân tích nguy cơ sai lệch và tính áp dụng được của nghiên cứu độ chính xác chẩn đoán theo bốn miền của QUADAS-2. Dùng khi thẩm định một bài về test chẩn đoán. Từ khoá: QUADAS-2."
+  },
+  "skill:aipoch-medical-research:differential-expression-analysis": {
+    "vi": "[Tin sinh học] Phân tích biểu hiện khác biệt trên dữ liệu RNA-seq khối hoặc microarray, kèm biểu đồ núi lửa và heatmap. Dùng khi so nhóm bệnh với nhóm chứng trên dữ liệu gộp mô; không áp dụng cho dữ liệu đơn bào. Từ khoá: differential expression."
+  },
+  "skill:aipoch-medical-research:dnanexus-integration": {
+    "vi": "[Tin sinh học] Làm việc với nền tảng hệ gen đám mây DNAnexus: dựng ứng dụng, quản lý dữ liệu, dùng bộ thư viện dxpy, chạy quy trình xử lý FASTQ, BAM và VCF. Dùng khi chạy đường ống hệ gen trên đám mây. Từ khoá: DNAnexus, dxpy."
+  },
+  "skill:aipoch-medical-research:elastic-net-feature-selection": {
+    "vi": "[Thống kê] Chọn gen hoặc đặc trưng phân tử có giá trị dự báo cho bài toán phân loại hai nhóm bằng hồi quy logistic elastic net, kèm đường hệ số và kiểm chứng chéo. Dùng khi số biến nhiều hơn số mẫu. Từ khoá: elastic net, feature selection."
+  },
+  "skill:aipoch-medical-research:epidemiology": {
+    "vi": "[Dịch tễ] Phân tích dịch tễ học: mô hình bệnh SIR và SEIR, điều tra ổ dịch, xác định yếu tố nguy cơ, ước lượng tỷ lệ mới mắc và hiện mắc, suy luận nhân quả từ dữ liệu quan sát. Dùng khi làm nghiên cứu dịch tễ. Từ khoá: SIR, SEIR, incidence."
+  },
+  "skill:aipoch-medical-research:estimate-immune-score-analysis": {
+    "vi": "[Tin sinh học] Tính điểm vi môi trường miễn dịch theo phương pháp ESTIMATE từ ma trận biểu hiện khối, vẽ heatmap và biểu đồ hộp so sánh giữa các nhóm. Dùng khi đánh giá thâm nhiễm miễn dịch trong khối u. Từ khoá: ESTIMATE."
+  },
+  "skill:aipoch-medical-research:etetoolkit": {
+    "vi": "[Tin sinh học] Bộ công cụ ETE phân tích cây phát sinh loài và cây phân cấp: đọc và sửa cây Newick hay NHX, phát hiện sự kiện nhân đôi và hình thành loài, gắn phân loại NCBI, vẽ hình. Dùng khi phân tích cây tiến hoá. Từ khoá: ETE, Newick."
+  },
+  "skill:aipoch-medical-research:experimental-data-analysis": {
+    "vi": "[Thống kê] Phân tích và báo cáo thống kê cho dữ liệu thực nghiệm: kiểm định t, ANOVA và sinh báo cáo tái lặp được. Dùng khi cần diễn giải kết quả một thí nghiệm. Từ khoá: t-test, ANOVA."
+  },
+  "skill:aipoch-medical-research:exploratory-data-analysis": {
+    "vi": "[Phân tích dữ liệu] Khảo sát toàn diện một file dữ liệu khoa học thuộc hơn 200 định dạng để hiểu cấu trúc, nội dung, chất lượng và đặc điểm. Dùng ở bước đầu, trước khi phân tích chính thức. Từ khoá: EDA."
+  },
+  "skill:aipoch-medical-research:external-model-validation": {
+    "vi": "[Thống kê] Thẩm định ngoại một dấu ấn nguy cơ tiên lượng trên đoàn hệ độc lập có dữ liệu sống còn: tính điểm nguy cơ, vẽ Kaplan-Meier, phân bố nguy cơ, heatmap và đường ROC theo thời gian. Dùng khi kiểm chứng mô hình đã có. Từ khoá: external validation."
+  },
+  "skill:aipoch-medical-research:facs-gating-viz-style": {
+    "vi": "[Hình khoa học] Vẽ hình phân tích tế bào dòng chảy theo phong cách gating chuẩn, quy trình nêu rõ giả định và giới hạn đầu ra. Dùng khi trình bày kết quả FACS. Từ khoá: FACS, gating."
+  },
+  "skill:aipoch-medical-research:fastqc-report-interpreter": {
+    "vi": "[Tin sinh học] Đọc báo cáo chất lượng FastQC của dữ liệu giải trình tự, chỉ ra vấn đề và đề xuất cách xử lý. Dùng khi kiểm chất lượng dữ liệu thô trước khi phân tích. Từ khoá: FastQC."
+  },
+  "skill:aipoch-medical-research:flowio": {
+    "vi": "[Tin sinh học] Đọc file chuẩn tế bào dòng chảy FCS bản 2.0 đến 3.1, rút sự kiện và siêu dữ liệu ra mảng NumPy hoặc bảng CSV. Dùng khi tiền xử lý dữ liệu FACS. Từ khoá: FCS, flow cytometry."
+  },
+  "skill:aipoch-medical-research:forest-plot-styler": {
+    "vi": "[Hình khoa học] Vẽ và chỉnh biểu đồ rừng theo quy trình tái lặp được, có kiểm định rõ ràng và đầu ra sẵn sàng để bình duyệt. Dùng khi trình bày kết quả phân tích gộp. Từ khoá: forest plot."
+  },
+  "skill:aipoch-medical-research:gene-protein-expression-matrix-normalization": {
+    "vi": "[Tin sinh học] Chuẩn hoá ma trận biểu hiện gen hoặc protein bằng biến đổi log2, chuẩn hoá z-score hay co giãn min-max. Dùng khi cần đưa các mẫu về cùng thang trước khi vẽ hình và khảo sát; không thay chuẩn hoá theo mô hình đếm. Từ khoá: normalization, z-score."
+  },
+  "skill:aipoch-medical-research:gene-structure-mapper": {
+    "vi": "[Hình khoa học] Vẽ sơ đồ cấu trúc gen theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần minh hoạ exon, intron và vùng chức năng. Từ khoá: gene structure."
+  },
+  "skill:aipoch-medical-research:geniml": {
+    "vi": "[Học máy] Bộ công cụ học máy cho dữ liệu khoảng gen dạng BED: mã hoá tập BED, huấn luyện embedding cho vùng, tế bào hay nhãn, dựng tập đỉnh đồng thuận và tìm tương tự. Dùng khi làm học máy trên vùng gen. Từ khoá: geniml, BED."
+  },
+  "skill:aipoch-medical-research:geopandas": {
+    "vi": "[Phân tích dữ liệu] Thư viện Python đọc, ghi và phân tích dữ liệu địa lý dạng vector: phép toán không gian, đổi hệ toạ độ, vẽ bản đồ. Dùng khi nghiên cứu có yếu tố địa lý. Từ khoá: GeoPandas, Shapefile."
+  },
+  "skill:aipoch-medical-research:gokegg-analysis": {
+    "vi": "[Tin sinh học] Phân tích làm giàu GO và KEGG cho một danh sách gen từ RNA-seq khối hoặc microarray, rồi vẽ biểu đồ chấm gộp. Dùng khi đã có danh sách gen khác biệt và cần biết chúng dồn vào con đường nào. Từ khoá: GO, KEGG, enrichment."
+  },
+  "skill:aipoch-medical-research:graphical-abstract-wizard": {
+    "vi": "[Hình khoa học] Gợi ý bố cục tóm tắt đồ hoạ dựa trên phần tóm tắt của bài. Dùng khi tạp chí yêu cầu hình tóm tắt đồ hoạ kèm bản thảo. Từ khoá: graphical abstract."
+  },
+  "skill:aipoch-medical-research:gsea": {
+    "vi": "[Tin sinh học] Chạy phân tích làm giàu tập gen trên danh sách gen đã xếp hạng, xuất bảng làm giàu, bảng điểm chạy và hình minh hoạ. Dùng khi muốn nhìn theo tập gen thay vì từng gen lẻ. Từ khoá: GSEA."
+  },
+  "skill:aipoch-medical-research:gsva-analysis-and-visualization": {
+    "vi": "[Tin sinh học] Chạy phân tích khác biệt ở mức con đường bằng GSVA hoặc ssGSEA từ ma trận biểu hiện khối và file phân nhóm mẫu, rồi vẽ heatmap. Dùng khi muốn so sánh theo con đường thay vì theo từng gen. Từ khoá: GSVA, ssGSEA."
+  },
+  "skill:aipoch-medical-research:gtars": {
+    "vi": "[Tin sinh học] Bộ công cụ Rust hiệu năng cao cho phân tích khoảng gen, có giao diện Python và dòng lệnh: truy vấn chồng lấn nhanh, dựng đường phủ, mã hoá cho học máy. Dùng khi dữ liệu vùng gen quá lớn với công cụ thường. Từ khoá: gtars."
+  },
+  "skill:aipoch-medical-research:heatmap-beautifier": {
+    "vi": "[Hình khoa học] Làm đẹp heatmap biểu hiện gen: tự thêm cây phân cụm, dải chú giải màu và sắp lại nhãn cho dễ đọc. Dùng khi cần hình heatmap đạt chuẩn đăng bài. Từ khoá: heatmap."
+  },
+  "skill:aipoch-medical-research:hierarchical-clustering-plot": {
+    "vi": "[Phân tích dữ liệu] Dựng cây phân cụm phân cấp ở mức mẫu từ ma trận biểu hiện khối và bảng chú giải mẫu. Dùng khi kiểm soát chất lượng, soi hiệu ứng lô hoặc đánh giá độ giống nhau giữa các mẫu. Từ khoá: hierarchical clustering."
+  },
+  "skill:aipoch-medical-research:histolab": {
+    "vi": "[Giải phẫu bệnh số] Xử lý ảnh tiêu bản toàn phần với các định dạng SVS, TIFF, NDPI: cắt ô ảnh và tiền xử lý ảnh mô học. Dùng khi làm nghiên cứu giải phẫu bệnh số. Từ khoá: histolab, whole slide image."
+  },
+  "skill:aipoch-medical-research:immune-pathway-analysis": {
+    "vi": "[Tin sinh học] Chạy GSVA hoặc ssGSEA cho các con đường miễn dịch từ ma trận biểu hiện khối và bộ gen Reactome, xuất kết quả khác biệt và heatmap cho so sánh hai nhóm. Dùng khi phân tích miễn dịch theo con đường. Từ khoá: immune pathway, Reactome."
+  },
+  "skill:aipoch-medical-research:km-survival-curve": {
+    "vi": "[Thống kê] Vẽ đường sống còn Kaplan-Meier từ bảng dữ liệu có thời gian, tình trạng biến cố và nhóm nguy cơ đã tính sẵn. Dùng khi trình bày kết quả sống còn. Từ khoá: Kaplan-Meier, survival."
+  },
+  "skill:aipoch-medical-research:knn-imputation": {
+    "vi": "[Quản lý dữ liệu] Lọc bớt gen thiếu nhiều rồi điền khuyết ma trận biểu hiện khối bằng KNN có xét nhóm, giới hạn mẫu cho theo một cột chú giải. Dùng khi dữ liệu biểu hiện thiếu rải rác. Từ khoá: KNN imputation."
+  },
+  "skill:aipoch-medical-research:lab-budget-forecaster": {
+    "vi": "[Quản lý NC] Dự trù ngân sách phòng thí nghiệm theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi lập dự toán cho đề tài hoặc cho năm tài chính. Từ khoá: lab budget."
+  },
+  "skill:aipoch-medical-research:lamindb": {
+    "vi": "[Quản lý dữ liệu] Khung dữ liệu mã nguồn mở cho sinh học giúp dữ liệu truy vấn được, truy nguyên được, tái lặp được và đạt chuẩn FAIR. Dùng khi quản lý nhiều bộ dữ liệu sinh học lớn. Từ khoá: LaminDB, FAIR."
+  },
+  "skill:aipoch-medical-research:lasso-logistics-analysis": {
+    "vi": "[Thống kê] Dựng mô hình phân loại hai nhóm từ ma trận biểu hiện hoặc đặc trưng omics bằng hồi quy logistic LASSO, kèm kiểm chứng chéo và đường hệ số. Dùng khi cần chọn biến trong dữ liệu nhiều chiều. Từ khoá: LASSO."
+  },
+  "skill:aipoch-medical-research:lightgbm-analysis": {
+    "vi": "[Học máy] Huấn luyện mô hình LightGBM trên dữ liệu bảng bằng R, trả về chỉ số mô hình, bảng xếp hạng tầm quan trọng biến và hình minh hoạ. Dùng khi cần mô hình cây tăng cường mạnh. Từ khoá: LightGBM."
+  },
+  "skill:aipoch-medical-research:lipinski-rule-filter": {
+    "vi": "[Thiết kế thuốc] Lọc thư viện hợp chất theo quy tắc năm của Lipinski để giữ lại chất giống thuốc. Dùng khi cần sàng bớt hợp chất trước khi thử nghiệm. Từ khoá: Lipinski, drug-likeness."
+  },
+  "skill:aipoch-medical-research:lncrna-regulatory-network-construction-analysis": {
+    "vi": "[Tin sinh học] Dựng mạng điều hoà giữa lncRNA và mRNA từ danh sách lncRNA hoặc gen đích, dựa trên bằng chứng miRNA dùng chung trong bảng tham chiếu ceRNA. Dùng khi nghiên cứu vai trò điều hoà của lncRNA. Từ khoá: lncRNA, ceRNA."
+  },
+  "skill:aipoch-medical-research:matchms": {
+    "vi": "[Chuyển hoá] Xử lý, làm sạch và so sánh phổ khối MS/MS bằng Matchms. Dùng khi cần lọc phổ và chấm điểm tương đồng tái lặp được trong nghiên cứu chuyển hoá. Từ khoá: Matchms."
+  },
+  "skill:aipoch-medical-research:matplotlib": {
+    "vi": "[Hình khoa học] Thư viện vẽ hình mức thấp cho phép chỉnh từng chi tiết, xuất được PNG, PDF và nhiều định dạng. Dùng khi cần kiểm soát tuyệt đối bố cục hình hoặc tạo kiểu biểu đồ mới. Từ khoá: matplotlib."
+  },
+  "skill:aipoch-medical-research:mechanism-flowchart": {
+    "vi": "[Hình khoa học] Sinh mã Mermaid và sơ đồ minh hoạ cho cơ chế bệnh sinh. Dùng khi cần vẽ chuỗi cơ chế cho bài báo hoặc bài giảng. Từ khoá: Mermaid, flowchart."
+  },
+  "skill:aipoch-medical-research:mendelian-randomisation": {
+    "vi": "[Nhân quả] Phân tích ngẫu nhiên hoá Mendel để suy luận nhân quả từ dữ liệu di truyền. Dùng khi muốn ước lượng quan hệ nhân quả mà không làm được thử nghiệm ngẫu nhiên. Từ khoá: Mendelian randomization."
+  },
+  "skill:aipoch-medical-research:meta-abstract-screener": {
+    "vi": "[Phân tích gộp] Sàng bài theo tiêu đề và tóm tắt dựa trên tiêu chuẩn chọn, trả quyết định Nhận, Loại hoặc Cần xem thêm. Dùng ở bước sàng lọc của tổng quan hệ thống. Từ khoá: abstract screening."
+  },
+  "skill:aipoch-medical-research:meta-baujat-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ Baujat để tìm nghiên cứu đóng góp nhiều nhất vào kết quả gộp và vào tính không đồng nhất. Dùng khi cần phát hiện nghiên cứu ngoại lai. Từ khoá: Baujat plot, heterogeneity."
+  },
+  "skill:aipoch-medical-research:meta-criteria-generator": {
+    "vi": "[Phân tích gộp] Soạn tiêu chuẩn chọn và loại có căn cứ khoa học cho phân tích gộp, từ tiêu đề hoặc từ khoá. Dùng khi thiết kế tiêu chuẩn hợp lệ cho tổng quan hệ thống. Từ khoá: inclusion criteria."
+  },
+  "skill:aipoch-medical-research:meta-feasibility-analyzer": {
+    "vi": "[Phân tích gộp] Đánh giá tính khả thi của một chủ đề phân tích gộp bằng cách tra các bài gộp đã có và thử nghiệm đang chạy trên PubMed và ClinicalTrials.gov. Dùng khi cân nhắc có nên làm phân tích gộp mới. Từ khoá: feasibility."
+  },
+  "skill:aipoch-medical-research:meta-forest-binary-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ rừng cho dữ liệu nhị phân từ file CSV gồm tên nghiên cứu, số biến cố và cỡ mẫu của nhóm can thiệp và nhóm chứng. Dùng khi kết cục là có hoặc không. Từ khoá: forest plot, binary."
+  },
+  "skill:aipoch-medical-research:meta-forest-continuous-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ rừng cho dữ liệu liên tục từ file CSV gồm tên nghiên cứu, trung bình, độ lệch chuẩn và cỡ mẫu của hai nhóm. Dùng khi kết cục là biến định lượng. Từ khoá: forest plot, continuous."
+  },
+  "skill:aipoch-medical-research:meta-forest-model-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ rừng cho dữ liệu sống còn từ file CSV gồm tên nghiên cứu, tỷ số nguy hại và khoảng tin cậy 95%. Dùng khi kết cục là thời gian tới biến cố. Từ khoá: forest plot, hazard ratio."
+  },
+  "skill:aipoch-medical-research:meta-funnel-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ phễu và kiểm thiên lệch công bố bằng kiểm định Egger và Begg. Dùng khi cần đánh giá thiên lệch công bố trong phân tích gộp. Từ khoá: funnel plot, Egger, Begg."
+  },
+  "skill:aipoch-medical-research:meta-picos-generator": {
+    "vi": "[Phân tích gộp] Rút cấu trúc PICOS gồm dân số, can thiệp, đối chứng, kết cục và thiết kế nghiên cứu từ tiêu đề bài. Dùng khi cần chuẩn hoá câu hỏi cho tổng quan. Từ khoá: PICOS."
+  },
+  "skill:aipoch-medical-research:meta-radial-plot": {
+    "vi": "[Phân tích gộp] Vẽ biểu đồ hướng tâm Galbraith để đánh giá trực quan tính không đồng nhất giữa các nghiên cứu. Dùng khi cần nhìn quan hệ giữa hiệu ứng chuẩn hoá và độ chính xác. Từ khoá: radial plot, Galbraith."
+  },
+  "skill:aipoch-medical-research:meta-rob-plot": {
+    "vi": "[Phân tích gộp] Vẽ hình nguy cơ sai lệch theo RoB 2 gồm biểu đồ đèn giao thông và biểu đồ cột tổng hợp, từ file CSV đánh giá từng nghiên cứu. Dùng khi trình bày kết quả thẩm định sai lệch. Từ khoá: RoB 2."
+  },
+  "skill:aipoch-medical-research:meta-screening-fulltext": {
+    "vi": "[Phân tích gộp] Sàng toàn văn theo tiêu chuẩn chọn và loại, có thể đối chiếu siêu dữ liệu PubMed qua mã PMID. Dùng ở bước sàng toàn văn của tổng quan hệ thống. Từ khoá: full-text screening."
+  },
+  "skill:aipoch-medical-research:meta-sensitivity-plot": {
+    "vi": "[Phân tích gộp] Phân tích độ nhạy kiểu bỏ lần lượt từng nghiên cứu, xuất biểu đồ rừng độ nhạy và bảng ước lượng gộp tương ứng. Dùng khi kiểm xem kết quả có phụ thuộc vào một nghiên cứu đơn lẻ không. Từ khoá: leave-one-out."
+  },
+  "skill:aipoch-medical-research:meta-title-generator": {
+    "vi": "[Phân tích gộp] Sinh tiêu đề cho nghiên cứu phân tích gộp từ từ khoá của người dùng, có tham chiếu kết quả PubMed nếu tra được. Dùng khi cần gợi ý tên đề tài. Từ khoá: title generator."
+  },
+  "skill:aipoch-medical-research:metabolomics-workbench-database": {
+    "vi": "[Chuyển hoá] Truy cập kho Metabolomics Workbench của NIH với hơn 4.200 nghiên cứu qua REST API: tra chất chuyển hoá, danh pháp RefMet, dữ liệu khối phổ và cộng hưởng từ hạt nhân. Dùng khi tìm dữ liệu chuyển hoá. Từ khoá: RefMet."
+  },
+  "skill:aipoch-medical-research:metagenomic-krona-chart": {
+    "vi": "[Tin sinh học] Vẽ biểu đồ Krona cho dữ liệu hệ vi sinh vật theo quy trình tái lặp được, có bước kiểm định rõ ràng. Dùng khi trình bày thành phần loài trong mẫu. Từ khoá: Krona, metagenomics."
+  },
+  "skill:aipoch-medical-research:model-calibration-curve": {
+    "vi": "[Thống kê] Đánh giá mức khớp giữa xác suất dự báo của mô hình sống còn và kết cục quan sát, bằng mô hình Cox và đường hiệu chỉnh bootstrap ở một hay nhiều mốc thời gian. Dùng khi thẩm định mô hình tiên lượng. Từ khoá: calibration curve."
+  },
+  "skill:aipoch-medical-research:motif-logo-generator": {
+    "vi": "[Hình khoa học] Vẽ logo trình tự đạt chuẩn đăng bài cho motif ADN hoặc protein. Dùng khi cần minh hoạ vùng trình tự bảo tồn. Từ khoá: sequence logo, motif."
+  },
+  "skill:aipoch-medical-research:neoantigen-predictor": {
+    "vi": "[Ung thư] Dự đoán tân kháng nguyên có khả năng bị hệ miễn dịch nhận diện. Dùng khi nghiên cứu liệu pháp miễn dịch cá thể hoá. Từ khoá: neoantigen."
+  },
+  "skill:aipoch-medical-research:neurokit": {
+    "vi": "[Tín hiệu sinh học] Xử lý toàn diện tín hiệu sinh học như điện tim, mạch nảy, điện não, điện da, hô hấp và điện cơ: làm sạch, cắt đoạn và rút đặc trưng. Dùng khi phân tích biến thiên nhịp tim hoặc đáp ứng theo sự kiện. Từ khoá: NeuroKit, HRV."
+  },
+  "skill:aipoch-medical-research:neuropixels-analysis": {
+    "vi": "[Tín hiệu sinh học] Phân tích điện sinh lý ngoại bào Neuropixels trọn quy trình: tiền xử lý, hiệu chỉnh chuyển động, phân loại xung bằng Kilosort4 và các chỉ số kiểm soát chất lượng. Dùng khi xử lý dữ liệu Neuropixels. Từ khoá: Kilosort."
+  },
+  "skill:aipoch-medical-research:nomogram-construction": {
+    "vi": "[Thống kê] Dựng toán đồ tiên lượng từ các yếu tố dự báo lâm sàng liên quan sống còn, xuất gói toán đồ, bảng chỉ số C và bản PDF. Dùng khi cần công cụ tính nguy cơ trực quan cho lâm sàng. Từ khoá: nomogram, C-index."
+  },
+  "skill:aipoch-medical-research:outcome-extraction-for-clinical-trials": {
+    "vi": "[Phân tích gộp] Rút số liệu kết cục dạng nhị phân, liên tục hoặc sống còn từ bài nghiên cứu lâm sàng để đưa vào phân tích gộp. Dùng khi lập bảng dữ liệu cho tổng quan hệ thống. Từ khoá: outcome extraction."
+  },
+  "skill:aipoch-medical-research:outlier-detection-handler": {
+    "vi": "[Quản lý dữ liệu] Phát hiện và xử lý giá trị ngoại lai theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi làm sạch dữ liệu trước khi phân tích. Từ khoá: outlier detection."
+  },
+  "skill:aipoch-medical-research:pathml": {
+    "vi": "[Giải phẫu bệnh số] Bộ công cụ giải phẫu bệnh tính toán cho ảnh tiêu bản toàn phần: miễn dịch huỳnh quang đa dấu, phân đoạn nhân, dựng đồ thị mô và huấn luyện mô hình học máy. Dùng khi nghiên cứu ảnh mô bệnh học. Từ khoá: PathML."
+  },
+  "skill:aipoch-medical-research:pathology-roi-selector": {
+    "vi": "[Giải phẫu bệnh số] Chọn vùng quan tâm trên ảnh mô bệnh học theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần khoanh vùng trước khi phân tích định lượng. Từ khoá: ROI, pathology."
+  },
+  "skill:aipoch-medical-research:pca-dimensionality-reduction": {
+    "vi": "[Thống kê] Giảm chiều dữ liệu bảng bằng phân tích thành phần chính, tự chọn biến số, kiểm tham số và xuất kết quả ra CSV hoặc hình. Dùng khi cần nhìn cấu trúc của dữ liệu nhiều biến. Từ khoá: PCA."
+  },
+  "skill:aipoch-medical-research:phylogenetic-tree-styler": {
+    "vi": "[Hình khoa học] Vẽ và chỉnh cây phát sinh loài theo quy trình tái lặp được, có kiểm định rõ ràng và đầu ra sẵn sàng bình duyệt. Dùng khi trình bày cây tiến hoá trong bài báo. Từ khoá: phylogenetic tree."
+  },
+  "skill:aipoch-medical-research:ppi-network-analysis": {
+    "vi": "[Tin sinh học] Dựng mạng tương tác protein từ danh sách gen tại chỗ và bộ nhớ đệm STRING ngoại tuyến, xuất bảng nút, bảng cạnh và hình mạng dạng PDF. Dùng khi cần mạng tương tác tái lặp được. Từ khoá: PPI, STRING."
+  },
+  "skill:aipoch-medical-research:preclinical-pkpd-analyst": {
+    "vi": "[Dược động học] Phân tích dược động học và dược lực học tiền lâm sàng theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi xử lý dữ liệu trên động vật. Từ khoá: PK/PD."
+  },
+  "skill:aipoch-medical-research:probast-quality-assessment-for-prediction-model-studies": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch của nghiên cứu mô hình dự báo y khoa bằng công cụ PROBAST, nhận đầu vào là văn bản hoặc file PDF. Dùng khi thẩm định một mô hình tiên lượng đã công bố. Từ khoá: PROBAST."
+  },
+  "skill:aipoch-medical-research:protocol-deviation-classifier": {
+    "vi": "[Thử nghiệm LS] Phân loại sai lệch đề cương thử nghiệm thành nặng hay nhẹ theo ICH E6, xét ba mặt: an toàn, toàn vẹn dữ liệu và giá trị khoa học. Dùng khi lập báo cáo tuân thủ đề cương. Từ khoá: protocol deviation, ICH E6."
+  },
+  "skill:aipoch-medical-research:pseudotime-trajectory-viz": {
+    "vi": "[Tin sinh học] Vẽ quỹ đạo giả thời gian của tế bào theo quy trình tái lặp được, có bước kiểm định rõ ràng. Dùng khi trình bày trình tự biệt hoá tế bào trong dữ liệu đơn bào. Từ khoá: pseudotime, trajectory."
+  },
+  "skill:aipoch-medical-research:pydeseq": {
+    "vi": "[Tin sinh học] Phân tích biểu hiện khác biệt cho ma trận đếm RNA-seq khối theo quy trình kiểu DESeq2 bằng Python: kiểm định Wald, hiệu chỉnh FDR và co hệ số. Dùng khi thiết kế có biến nhiễu hoặc hiệu ứng lô. Từ khoá: PyDESeq2, DESeq2."
+  },
+  "skill:aipoch-medical-research:pydicom": {
+    "vi": "[Chẩn đoán hình ảnh] Thư viện Python đọc, ghi và sửa file DICOM, rút dữ liệu điểm ảnh từ ảnh y khoa như cắt lớp vi tính hay cộng hưởng từ. Dùng khi xử lý ảnh y khoa bằng mã lệnh. Từ khoá: DICOM, pydicom."
+  },
+  "skill:aipoch-medical-research:pyhealth": {
+    "vi": "[Học máy] Bộ công cụ học máy y tế: xử lý bệnh án điện tử, dự báo lâm sàng như tử vong, tái nhập viện và gợi ý thuốc, tra mã y khoa, xử lý tín hiệu điện não và điện tim. Dùng khi làm mô hình học sâu trên dữ liệu y tế. Từ khoá: PyHealth, MIMIC."
+  },
+  "skill:aipoch-medical-research:pyopenms-skill": {
+    "vi": "[Chuyển hoá] Công cụ khối phổ tính toán bằng PyOpenMS: đọc ghi định dạng mzML, mzXML và MGF, xử lý tín hiệu, phát hiện đặc trưng đồng vị và định danh peptide. Dùng khi phân tích dữ liệu khối phổ. Từ khoá: PyOpenMS, mzML."
+  },
+  "skill:aipoch-medical-research:pysam": {
+    "vi": "[Tin sinh học] Bộ công cụ file hệ gen: đọc ghi file gióng hàng SAM, BAM, CRAM, file biến thể VCF và BCF, trình tự FASTA và FASTQ; trích vùng và tính độ phủ. Dùng trong đường ống xử lý dữ liệu giải trình tự. Từ khoá: pysam, BAM, VCF."
+  },
+  "skill:aipoch-medical-research:quadas-c-assessment-for-diagnostic-accuracy-studies": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch khi so sánh hai test chẩn đoán với nhau, theo tiêu chí QUADAS-C, cần toàn văn bài báo. Dùng khi bài so sánh nhiều test chứ không chỉ đánh giá một test đơn lẻ. Từ khoá: QUADAS-C."
+  },
+  "skill:aipoch-medical-research:quality-assessment": {
+    "vi": "[Thẩm định] Tự động thẩm định phê bình bài nghiên cứu bằng cách đối chiếu văn bản với chuẩn phương pháp: công cụ nguy cơ sai lệch, danh mục kiểm chất lượng hoặc chuẩn báo cáo. Dùng khi cần báo cáo chất lượng có cấu trúc. Từ khoá: critical appraisal."
+  },
+  "skill:aipoch-medical-research:quapas-quality-assessment-for-prognosis-studies": {
+    "vi": "[Thẩm định] Chấm nguy cơ sai lệch của nghiên cứu tiên lượng theo tiêu chí QUAPAS. Dùng khi bài trả lời câu hỏi tiên lượng chứ không phải điều trị hay chẩn đoán. Từ khoá: QUAPAS, prognosis."
+  },
+  "skill:aipoch-medical-research:rct-bias-assessment-rob": {
+    "vi": "[Thẩm định] Bản chấm RoB 2 cho thử nghiệm ngẫu nhiên: đối chiếu văn bản bài báo với từng miền sai lệch rồi kết lại thành báo cáo. Dùng khi cần đánh giá chất lượng một thử nghiệm lâm sàng. Từ khoá: RoB 2, randomized trial."
+  },
+  "skill:aipoch-medical-research:rf-model-importance-analysis": {
+    "vi": "[Học máy] Quy trình R dòng lệnh huấn luyện rừng ngẫu nhiên hai lớp trên ma trận đặc trưng kiểu biểu hiện, xếp hạng tầm quan trọng biến và vẽ hình sai số. Dùng khi cần chọn biến bằng rừng ngẫu nhiên. Từ khoá: random forest."
+  },
+  "skill:aipoch-medical-research:roc-diagnostic-performance": {
+    "vi": "[Thống kê] Đánh giá hiệu năng dấu ấn chẩn đoán từ dữ liệu bệnh chứng bằng hồi quy logistic và đường ROC, xuất bảng hệ số, bảng AUC và hình PDF. Dùng khi cần biết một dấu ấn phân biệt bệnh tốt đến đâu. Từ khoá: ROC, AUC."
+  },
+  "skill:aipoch-medical-research:rowan": {
+    "vi": "[Hoá tính toán] Nền tảng hoá lượng tử trên đám mây có giao diện Python: dự đoán pKa, tối ưu hình học, tìm cấu dạng, tính tính chất phân tử và tương tác protein với phối tử. Dùng khi cần tính toán hoá lượng tử. Từ khoá: Rowan, pKa."
+  },
+  "skill:aipoch-medical-research:sample-correlation-analysis": {
+    "vi": "[Thống kê] Phân tích tương quan giữa hai biến bằng hệ số Pearson và Spearman, tự nhận dạng định dạng dữ liệu và kiểm tham số đầu vào. Dùng khi cần đo mức liên hệ giữa hai biến. Từ khoá: Pearson, Spearman."
+  },
+  "skill:aipoch-medical-research:sample-group-sankey-plot": {
+    "vi": "[Hình khoa học] Vẽ biểu đồ Sankey hoặc phù sa từ bảng chú giải mẫu, với các cột phân loại như nhóm nguy cơ, tình trạng đáp ứng, dưới típ hay tên đoàn hệ. Dùng khi cần thể hiện dòng chuyển giữa các nhóm. Từ khoá: Sankey, alluvial."
+  },
+  "skill:aipoch-medical-research:sanger-chromatogram-qa": {
+    "vi": "[Tin sinh học] Kiểm chất lượng sắc ký đồ giải trình tự Sanger theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi xác nhận kết quả giải trình tự. Từ khoá: Sanger."
+  },
+  "skill:aipoch-medical-research:scanpy": {
+    "vi": "[Tin sinh học] Đường ống chuẩn cho RNA-seq đơn bào: kiểm soát chất lượng, chuẩn hoá, giảm chiều bằng PCA, UMAP hay t-SNE, phân cụm, phân tích biểu hiện khác biệt và vẽ hình. Dùng khi khảo sát dữ liệu đơn bào. Từ khoá: Scanpy."
+  },
+  "skill:aipoch-medical-research:scikit-bio": {
+    "vi": "[Tin sinh học] Bộ công cụ Python cho trình tự, cây phát sinh loài và sinh thái quần xã vi sinh vật: tính đa dạng, sắp thứ tự và thống kê trên các định dạng chuẩn. Dùng khi phân tích hệ vi sinh vật. Từ khoá: scikit-bio, BIOM."
+  },
+  "skill:aipoch-medical-research:scikit-survival": {
+    "vi": "[Thống kê] Bộ công cụ phân tích sống còn bằng Python: mô hình Cox, rừng sống còn ngẫu nhiên, tăng cường gradient và máy vector hỗ trợ sống còn, đánh giá bằng chỉ số C. Dùng khi kết cục là thời gian tới biến cố có kiểm duyệt. Từ khoá: scikit-survival."
+  },
+  "skill:aipoch-medical-research:scrna-cell-type-annotator": {
+    "vi": "[Tin sinh học] Tự gán loại tế bào cho các cụm trong dữ liệu RNA đơn bào dựa trên gen chỉ dấu. Dùng sau khi đã phân cụm và cần biết mỗi cụm là loại tế bào gì. Từ khoá: cell type annotation."
+  },
+  "skill:aipoch-medical-research:scvi-tools": {
+    "vi": "[Học máy] Mô hình sinh sâu cho omics đơn bào: hiệu chỉnh lô theo xác suất bằng scVI, học chuyển giao, biểu hiện khác biệt có tính bất định và tích hợp đa phương thức. Dùng khi gộp nhiều bộ dữ liệu đơn bào. Từ khoá: scVI, totalVI."
+  },
+  "skill:aipoch-medical-research:seaborn": {
+    "vi": "[Hình khoa học] Thư viện vẽ hình thống kê gắn với pandas: khảo sát nhanh phân bố, quan hệ và so sánh theo nhóm bằng biểu đồ hộp, violin, cặp biến và heatmap. Dùng khi cần hình đẹp sẵn mà ít phải chỉnh. Từ khoá: seaborn."
+  },
+  "skill:aipoch-medical-research:sequence-alignment": {
+    "vi": "[Tin sinh học] Gióng hàng trình tự qua API BLAST của NCBI, so trình tự nucleotide hoặc protein với các cơ sở dữ liệu lớn. Dùng khi cần tìm trình tự tương đồng. Từ khoá: BLAST, alignment."
+  },
+  "skill:aipoch-medical-research:shap": {
+    "vi": "[Học máy] Diễn giải mô hình bằng giá trị SHAP: tầm quan trọng biến, biểu đồ phụ thuộc, hiệu ứng tương tác và phân tích công bằng cho mọi mô hình hộp đen. Dùng khi cần giải thích vì sao mô hình dự báo như vậy. Từ khoá: SHAP."
+  },
+  "skill:aipoch-medical-research:singlecell-portal": {
+    "vi": "[Tin sinh học] Truy vấn siêu dữ liệu nghiên cứu đơn bào công khai trên cổng Single Cell Portal, lọc theo loài, mô, bệnh hay loại tế bào. Dùng khi tìm bộ dữ liệu đơn bào công khai. Từ khoá: Single Cell Portal."
+  },
+  "skill:aipoch-medical-research:smiles-de-salter": {
+    "vi": "[Thiết kế thuốc] Loại phần muối khỏi chuỗi SMILES để chuẩn hoá cấu trúc hợp chất, theo quy trình tái lặp được. Dùng khi làm sạch thư viện hoá chất trước khi phân tích. Từ khoá: SMILES, desalting."
+  },
+  "skill:aipoch-medical-research:spatial-transcriptomics-mapper": {
+    "vi": "[Tin sinh học] Ánh xạ dữ liệu phiên mã không gian từ nền tảng Visium hoặc Xenium lên lát cắt mô. Dùng khi nghiên cứu biểu hiện gen theo vị trí trong mô. Từ khoá: spatial transcriptomics, Visium."
+  },
+  "skill:aipoch-medical-research:ssgsea-immune-infiltration-analysis": {
+    "vi": "[Tin sinh học] Ước lượng thâm nhiễm miễn dịch từ ma trận RNA-seq khối bằng ssGSEA hoặc GSVA, so nhóm bệnh với nhóm chứng và vẽ hình điểm miễn dịch. Dùng khi cần điểm tương đối, không phải số tuyệt đối tế bào. Từ khoá: ssGSEA."
+  },
+  "skill:aipoch-medical-research:statistical-analysis": {
+    "vi": "[Thống kê] Hướng dẫn chọn kiểm định phù hợp, kiểm giả định, tính lực mẫu và báo cáo theo chuẩn APA. Dùng khi chưa chắc nên dùng kiểm định nào cho dữ liệu của mình. Từ khoá: statistical test, APA."
+  },
+  "skill:aipoch-medical-research:statistical-analysis-advisor": {
+    "vi": "[Thống kê] Gợi ý phương pháp thống kê phù hợp, ví dụ chọn giữa kiểm định t và ANOVA, dựa trên đặc điểm dữ liệu. Dùng khi cần tư vấn nhanh về lựa chọn kiểm định. Từ khoá: ANOVA, t-test."
+  },
+  "skill:aipoch-medical-research:study-design-scale-selector": {
+    "vi": "[Thẩm định] Xác định thang chấm nguy cơ sai lệch phù hợp với thiết kế của bài, qua siêu dữ liệu PubMed hoặc phân tích văn bản. Dùng khi chưa biết nên dùng công cụ thẩm định nào cho bài đang đọc. Từ khoá: risk of bias tool."
+  },
+  "skill:aipoch-medical-research:survival-analysis-km": {
+    "vi": "[Thống kê] Phân tích sống còn Kaplan-Meier cho nghiên cứu lâm sàng và sinh học, xuất đường sống còn đạt chuẩn đăng bài kèm kiểm định thống kê. Dùng khi so sánh sống còn giữa các nhóm. Từ khoá: Kaplan-Meier, log-rank."
+  },
+  "skill:aipoch-medical-research:survival-curve-risk-table": {
+    "vi": "[Hình khoa học] Vẽ đường sống còn kèm bảng số đối tượng còn theo dõi ở từng mốc thời gian, theo quy trình tái lặp được. Dùng khi tạp chí yêu cầu bảng số còn lại dưới hình. Từ khoá: risk table."
+  },
+  "skill:aipoch-medical-research:svm-model-importance-analysis": {
+    "vi": "[Học máy] Quy trình R dòng lệnh xếp hạng đặc trưng bằng SVM-RFE cho bài toán hai lớp, chọn số đặc trưng theo sai số kiểm chứng chéo và vẽ hình. Dùng khi cần chọn biến bằng máy vector hỗ trợ. Từ khoá: SVM-RFE."
+  },
+  "skill:aipoch-medical-research:table-1-generator": {
+    "vi": "[Thống kê] Tự sinh bảng đặc điểm nền, tức Bảng 1, cho bài nghiên cứu lâm sàng. Dùng khi cần bảng mô tả mẫu nghiên cứu. Từ khoá: Table 1, baseline."
+  },
+  "skill:aipoch-medical-research:table-1-generator-advanced": {
+    "vi": "[Thống kê] Sinh Bảng 1 đạt chuẩn đăng bài với tự nhận dạng kiểu biến, chọn thống kê phù hợp như trung bình kèm độ lệch chuẩn, trung vị kèm khoảng tứ phân vị, tần số và tỷ lệ, cùng kiểm định so sánh nhóm. Dùng khi cần bảng nền đầy đủ. Từ khoá: Table 1."
+  },
+  "skill:aipoch-medical-research:tf-target-gene-regulatory-network": {
+    "vi": "[Tin sinh học] Phân tích mạng điều hoà của yếu tố phiên mã dựa trên cơ sở dữ liệu Dorothea: từ danh sách gen tìm yếu tố phiên mã chi phối rồi vẽ mạng. Dùng khi cần biết gen nào bị điều hoà bởi yếu tố nào. Từ khoá: Dorothea."
+  },
+  "skill:aipoch-medical-research:time-dependent-roc": {
+    "vi": "[Thống kê] Phân tích đường ROC phụ thuộc thời gian cho dữ liệu sống còn, cần thời gian theo dõi, tình trạng biến cố và một dấu ấn dạng số. Dùng khi cần biết khả năng phân biệt của mô hình ở từng mốc thời gian. Từ khoá: time-dependent ROC."
+  },
+  "skill:aipoch-medical-research:tooluniverse-statistical-modeling": {
+    "vi": "[Thống kê] Mô hình hoá và hồi quy cho dữ liệu y sinh: hồi quy tuyến tính, logistic, thứ bậc, Cox, mô hình hỗn hợp và ANOVA, kèm tỷ số chênh, tỷ số nguy hại, khoảng tin cậy và chẩn đoán mô hình. Dùng khi cần mô hình hồi quy đầy đủ. Từ khoá: regression, Cox."
+  },
+  "skill:aipoch-medical-research:torchdrug-english": {
+    "vi": "[Học máy] Khung mạng nơ-ron đồ thị trên PyTorch cho phân tử và protein. Dùng khi cần tự xây kiến trúc mô hình cho phát triển thuốc, mô hình hoá protein hay suy luận trên đồ thị tri thức. Từ khoá: TorchDrug, GNN."
+  },
+  "skill:aipoch-medical-research:toxicity-structure-alert": {
+    "vi": "[Độc chất] Dò cảnh báo cấu trúc liên quan độc tính trong hợp chất theo quy trình tái lặp được, có kiểm định rõ ràng. Dùng khi sàng an toàn sớm cho ứng viên thuốc. Từ khoá: structural alert, toxicity."
+  },
+  "skill:aipoch-medical-research:umap-tsne-analysis": {
+    "vi": "[Phân tích dữ liệu] Giảm chiều và vẽ hình ở mức mẫu trên ma trận độ phong phú hoặc bảng OTU kèm file phân nhóm, xuất toạ độ và hình UMAP hay t-SNE. Dùng khi cần xem các nhóm có tách nhau không. Từ khoá: UMAP, t-SNE."
+  },
+  "skill:aipoch-medical-research:univariate-multivariable-cox-regression": {
+    "vi": "[Thống kê] Phân tích sống còn tiên lượng trên đoàn hệ lâm sàng bằng mô hình Cox đơn biến và đa biến, xuất bảng kết quả và biểu đồ rừng. Dùng khi tìm yếu tố tiên lượng độc lập. Từ khoá: Cox regression."
+  },
+  "skill:aipoch-medical-research:upset-plot-converter": {
+    "vi": "[Hình khoa học] Chuyển biểu đồ Venn nhiều hơn 4 tập thành biểu đồ UpSet dễ đọc hơn. Dùng khi cần thể hiện phần giao của nhiều tập hợp. Từ khoá: UpSet plot, Venn."
+  },
+  "skill:aipoch-medical-research:variant-pathogenicity-predictor": {
+    "vi": "[Di truyền] Gộp điểm REVEL, CADD và PolyPhen để dự đoán mức gây bệnh của biến thể. Dùng khi cần xếp loại một biến thể chưa rõ ý nghĩa. Từ khoá: REVEL, CADD, PolyPhen."
+  },
+  "skill:aipoch-medical-research:volcano-plot-labeler": {
+    "vi": "[Hình khoa học] Gắn nhãn gen đáng chú ý lên biểu đồ núi lửa theo quy trình tái lặp được, có kiểm định rõ ràng. Dùng khi cần làm nổi bật gen chủ chốt trên hình. Từ khoá: volcano plot."
+  },
+  "skill:aipoch-medical-research:volcano-plot-script": {
+    "vi": "[Hình khoa học] Sinh mã R hoặc Python để vẽ biểu đồ núi lửa từ kết quả phân tích gen biểu hiện khác biệt. Dùng khi cần hình giá trị p đối chiếu mức thay đổi đạt chuẩn đăng bài. Từ khoá: volcano plot, DEG."
+  },
+  "skill:aipoch-medical-research:western-blot-quantifier": {
+    "vi": "[Thực nghiệm] Tự nhận diện băng trên ảnh Western blot, đo mật độ và tính giá trị chuẩn hoá theo chứng nội. Dùng khi định lượng kết quả Western blot. Từ khoá: Western blot, densitometry."
+  },
+  "skill:aipoch-medical-research:wgcna-analysis": {
+    "vi": "[Tin sinh học] Dựng mạng đồng biểu hiện gen có trọng số từ ma trận biểu hiện khối: lọc gen biến thiên theo MAD, tìm mô-đun bằng WGCNA rồi tương quan mô-đun với đặc điểm lâm sàng. Dùng khi tìm nhóm gen liên quan kiểu hình. Từ khoá: WGCNA."
+  },
+  "skill:aipoch-medical-research:xgboost-analysis": {
+    "vi": "[Học máy] Dựng mô hình XGBoost trên dữ liệu bảng cho phân loại nhị phân hoặc hồi quy, tự chia tập huấn luyện và kiểm tra, xuất bảng hiệu năng và xếp hạng tầm quan trọng biến. Dùng khi cần mô hình tăng cường mạnh. Từ khoá: XGBoost."
+  },
+  "skill:aipoch-medical-research:abstract-summarizer": {
+    "vi": "[Viết bài] Cô bài báo dài thành bản tóm tắt có cấu trúc khoảng 250 từ. Dùng khi cần rút gọn một nghiên cứu thành phần tóm tắt. Từ khoá: abstract."
+  },
+  "skill:aipoch-medical-research:abstract-trimmer": {
+    "vi": "[Viết bài] Cắt gọn số từ của phần tóm tắt bằng kỹ thuật nén thông minh mà vẫn giữ độ chặt khoa học. Dùng khi tóm tắt vượt giới hạn từ của tạp chí hay hội nghị. Từ khoá: abstract, word limit."
+  },
+  "skill:aipoch-medical-research:academic-abstract-refiner": {
+    "vi": "[Viết bài] Gọt bài y khoa dài thành tóm tắt không cấu trúc theo phong cách tạp chí quốc tế, dạng song ngữ, kèm báo cáo tổng hợp. Dùng khi cần cô bản thảo hay báo cáo thành tóm tắt hai thứ tiếng. Từ khoá: abstract refine."
+  },
+  "skill:aipoch-medical-research:academic-highlight-generator": {
+    "vi": "[Viết bài] Sinh 3 đến 5 dòng điểm nhấn theo yêu cầu nhà xuất bản, từ bản thảo hoặc file PDF, DOCX, TXT. Dùng khi tạp chí đòi mục điểm nhấn kèm bài. Từ khoá: highlights."
+  },
+  "skill:aipoch-medical-research:adverse-event-narrative": {
+    "vi": "[Cảnh giác dược] Viết tường trình ca biến cố bất lợi theo chuẩn CIOMS I để nộp cơ quan quản lý: phân tích trình tự thời gian, mã hoá MedDRA và đánh giá nhân quả theo WHO-UMC hoặc Naranjo. Dùng khi báo cáo an toàn thuốc. Từ khoá: CIOMS, MedDRA, Naranjo."
+  },
+  "skill:aipoch-medical-research:anatomy-quiz-master": {
+    "vi": "[Đào tạo] Sinh bộ câu hỏi giải phẫu tương tác cho giảng dạy y khoa. Dùng khi soạn bài kiểm tra hoặc tài liệu ôn tập cho sinh viên. Từ khoá: anatomy quiz."
+  },
+  "skill:aipoch-medical-research:anki-card-creator": {
+    "vi": "[Đào tạo] Sinh thẻ ghi nhớ Anki theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần chuyển kiến thức thành thẻ học lặp ngắt quãng. Từ khoá: Anki, flashcard."
+  },
+  "skill:aipoch-medical-research:arxiv-preflight": {
+    "vi": "[Nộp bài] Kiểm bản thảo trước khi tải lên arXiv: bắt tài liệu tham khảo bịa, ghi chú thừa do trợ lý AI để lại và lỗi định dạng. Dùng ngay trước khi nộp bản tiền in. Từ khoá: arXiv, preflight."
+  },
+  "skill:aipoch-medical-research:author-response-builder": {
+    "vi": "[Phản biện] Biến nhận xét của người phản biện thành thư trả lời từng điểm, gắn với chỗ đã sửa trong bản thảo, phần giải thích và phần phản bác. Dùng khi nhận được kết quả bình duyệt. Từ khoá: response to reviewers."
+  },
+  "skill:aipoch-medical-research:authorship-credit-gen": {
+    "vi": "[Liêm chính] Xác định thứ tự tác giả, gán vai trò đóng góp theo CRediT và ghi nhận phần việc của từng người. Dùng khi nhóm nhiều đơn vị cần thống nhất quyền tác giả. Từ khoá: CRediT, authorship."
+  },
+  "skill:aipoch-medical-research:automated-soap-note-generator": {
+    "vi": "[Hồ sơ bệnh án] Sinh bệnh án SOAP có cấu trúc từ lời kể, bản ghi âm hoặc ghi chép sẵn có, đã khử định danh. Dùng khi cần chuyển ghi chép tự do thành bốn phần chuẩn. Từ khoá: SOAP note."
+  },
+  "skill:aipoch-medical-research:biomed-outline-generator": {
+    "vi": "[Viết bài] Dựng dàn ý y sinh có cấu trúc cho bài tổng quan, phần bàn luận hay đề cương luận án. Dùng khi đã có từ khoá, kết quả hoặc tên đề tài và cần khung để viết. Từ khoá: outline."
+  },
+  "skill:aipoch-medical-research:biotech-pitch-deck-narrative": {
+    "vi": "[Trình bày] Dựng mạch kể cho bộ slide gọi vốn công nghệ sinh học, nêu rõ giả định và giới hạn đầu ra. Dùng khi trình bày trước nhà đầu tư. Từ khoá: pitch deck."
+  },
+  "skill:aipoch-medical-research:blind-review-sanitizer": {
+    "vi": "[Nộp bài] Ẩn danh bản thảo theo quy trình có cấu trúc để nộp bình duyệt kín hai chiều. Dùng khi tạp chí yêu cầu bản không lộ danh tính tác giả. Từ khoá: double-blind, anonymization."
+  },
+  "skill:aipoch-medical-research:citation-formatter": {
+    "vi": "[Trích dẫn] Định dạng tài liệu tham khảo theo kiểu APA, MLA, Vancouver hay Chicago và chuyển qua lại giữa các kiểu. Dùng khi chuẩn bị danh mục cho một tạp chí cụ thể. Từ khoá: citation style, Vancouver."
+  },
+  "skill:aipoch-medical-research:claim-strength-calibrator": {
+    "vi": "[Liêm chính] Chỉnh mức mạnh của lời khẳng định trong bản thảo cho khớp với mức chứng cứ, thiết kế nghiên cứu và tình trạng thẩm định thật. Dùng khi lo bản thảo nói quá kết quả. Từ khoá: claim calibration."
+  },
+  "skill:aipoch-medical-research:clinical-decision-support": {
+    "vi": "[Hỗ trợ quyết định] Soạn tài liệu hỗ trợ quyết định lâm sàng: phân tích nhóm bệnh nhân theo dấu ấn sinh học và báo cáo khuyến cáo điều trị dựa trên chứng cứ. Dùng cho nghiên cứu và tổng hợp chứng cứ; kết quả vẫn cần bác sĩ kiểm chứng. Từ khoá: clinical decision support."
+  },
+  "skill:aipoch-medical-research:conference-abstract-adaptor": {
+    "vi": "[Nộp bài] Chỉnh tóm tắt sẵn có cho khớp giới hạn từ, quy định mục và định dạng của một hội nghị cụ thể. Dùng khi mang một tóm tắt đã có đi nộp hội nghị khác. Từ khoá: conference abstract."
+  },
+  "skill:aipoch-medical-research:conference-abstract-writer": {
+    "vi": "[Nộp bài] Cô cả nghiên cứu thành tóm tắt hội nghị theo khung Đặt vấn đề, Phương pháp, Kết quả, Kết luận và đúng giới hạn ký tự. Dùng khi viết mới một tóm tắt để nộp hội nghị. Từ khoá: conference abstract."
+  },
+  "skill:aipoch-medical-research:conference-poster-pitch": {
+    "vi": "[Trình bày] Dựng bài nói ngắn cho poster hội nghị theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi chuẩn bị đứng trình bày poster. Từ khoá: poster pitch."
+  },
+  "skill:aipoch-medical-research:consistency-checker-across-manuscript": {
+    "vi": "[Liêm chính] Đối chiếu tính nhất quán giữa tiêu đề, tóm tắt, phương pháp, kết quả, hình, bảng và phụ lục để bắt mâu thuẫn nội tại và lệch phiên bản. Dùng trước khi nộp bài. Từ khoá: consistency check."
+  },
+  "skill:aipoch-medical-research:cover-letter-drafter": {
+    "vi": "[Nộp bài] Soạn thư gửi ban biên tập cho bộ hồ sơ nộp bài, nêu đóng góp của bản thảo và mức phù hợp với tạp chí đích. Dùng khi chuẩn bị nộp bản thảo. Từ khoá: cover letter."
+  },
+  "skill:aipoch-medical-research:cover-letter-generator": {
+    "vi": "[Nộp bài] Sinh thư gửi ban biên tập từ siêu dữ liệu bản thảo, các điểm nhấn và ghi chú về mức phù hợp tạp chí, kèm phần khai báo cần thiết. Dùng khi cần bản thư đã có sẵn số liệu để chỉnh lại. Từ khoá: cover letter."
+  },
+  "skill:aipoch-medical-research:dei-statement-drafter": {
+    "vi": "[Hồ sơ] Soạn tuyên bố về đa dạng, công bằng và hoà nhập cho hồ sơ học thuật. Dùng khi nơi nhận hồ sơ yêu cầu mục này. Từ khoá: DEI statement."
+  },
+  "skill:aipoch-medical-research:digital-twin-discharge-drafter": {
+    "vi": "[Hồ sơ bệnh án] Soạn tóm tắt ra viện và dặn dò cá thể hoá, có mô phỏng kết cục sau ra viện nhằm giảm tái nhập viện. Dùng khi chuẩn bị chuyển tiếp chăm sóc cho người bệnh. Từ khoá: discharge summary."
+  },
+  "skill:aipoch-medical-research:discharge-summary-writer": {
+    "vi": "[Hồ sơ bệnh án] Viết tóm tắt ra viện từ dữ liệu nhập viện, diễn biến nằm viện, chẩn đoán, thủ thuật và kế hoạch theo dõi. Dùng khi cần văn bản ra viện có cấu trúc từ ghi chép lâm sàng. Từ khoá: discharge summary."
+  },
+  "skill:aipoch-medical-research:discussion-composer": {
+    "vi": "[Viết bài] Viết phần Bàn luận quanh phát hiện chính, cơ chế, ý nghĩa lâm sàng và hạn chế. Dùng khi viết hoặc sửa phần Bàn luận của một bản thảo y sinh. Từ khoá: discussion."
+  },
+  "skill:aipoch-medical-research:discussion-section-architect": {
+    "vi": "[Viết bài] Dựng cấu trúc rồi viết phần Bàn luận: diễn giải kết quả, nối với y văn đã có, nêu hạn chế và tổng hợp lại. Dùng khi cần khung Bàn luận trước khi viết thành văn. Từ khoá: discussion structure."
+  },
+  "skill:aipoch-medical-research:ectd-xml-compiler": {
+    "vi": "[Quy chế] Chuyển hồ sơ đăng ký thuốc dạng Word hoặc PDF sang khung XML theo chuẩn eCTD. Dùng khi nộp hồ sơ đăng ký thuốc cho cơ quan quản lý. Từ khoá: eCTD."
+  },
+  "skill:aipoch-medical-research:ehr-semantic-compressor": {
+    "vi": "[Trích xuất] Nén nội dung bệnh án điện tử theo ngữ nghĩa, xác nhận mục tiêu và ràng buộc trước khi xử lý, dừng sớm nếu vượt phạm vi. Dùng khi cần rút gọn hồ sơ dài mà giữ lại ý lâm sàng. Từ khoá: EHR compression."
+  },
+  "skill:aipoch-medical-research:faq-generator": {
+    "vi": "[Truyền thông] Sinh bộ câu hỏi thường gặp từ chính sách hoặc quy trình y tế phức tạp. Dùng khi cần tài liệu giáo dục người bệnh hay bản giải thích dễ hiểu. Từ khoá: FAQ."
+  },
+  "skill:aipoch-medical-research:figure-legend-gen": {
+    "vi": "[Viết bài] Sinh chú thích hình chuẩn hoá, tóm được thiết kế, biến số, cỡ mẫu và ghi chú thống kê chính. Dùng khi chuẩn bị chú thích hình để nộp bài. Từ khoá: figure legend."
+  },
+  "skill:aipoch-medical-research:figure-legend-writer": {
+    "vi": "[Viết bài] Viết chú thích hình đầy đủ, tự nó đứng được mà không cần đọc thân bài, cho mọi loại hình từ biểu đồ cột tới đường sống còn. Dùng khi viết hoặc sửa chú thích hình. Từ khoá: figure legend."
+  },
+  "skill:aipoch-medical-research:figure-reference-checker": {
+    "vi": "[Liêm chính] Kiểm việc dẫn hình trong bài theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần chắc mọi hình đều được nhắc đúng và đúng thứ tự. Từ khoá: figure reference."
+  },
+  "skill:aipoch-medical-research:find-paper-references": {
+    "vi": "[Trích dẫn] Tự tìm tài liệu tham khảo cho bản thảo dạng Markdown: đọc toàn văn, nhận diện chỗ cần trích dẫn như số liệu dịch tễ, mô tả cơ chế hay kết luận đã có, rồi tra nguồn. Dùng khi bản thảo còn thiếu nguồn. Từ khoá: reference finding."
+  },
+  "skill:aipoch-medical-research:format-references-endnote": {
+    "vi": "[Trích dẫn] Chuyển đánh dấu PMID trong bản thảo Markdown sang file Word theo định dạng EndNote nhận diện được, kèm sinh file RIS để nhập vào thư viện. Dùng khi nhóm dùng EndNote. Từ khoá: EndNote, RIS."
+  },
+  "skill:aipoch-medical-research:format-references-zotero": {
+    "vi": "[Trích dẫn] Chuyển đánh dấu PMID trong bản thảo Markdown sang file Word có mã trường Zotero, chỉ cần bấm làm mới một lần trong Word. Dùng khi nhóm dùng Zotero. Từ khoá: Zotero."
+  },
+  "skill:aipoch-medical-research:grant-budget-justification": {
+    "vi": "[Tài trợ] Viết phần thuyết minh ngân sách cho hồ sơ tài trợ theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi nhà tài trợ đòi giải trình từng khoản chi. Từ khoá: budget justification."
+  },
+  "skill:aipoch-medical-research:grant-mock-reviewer": {
+    "vi": "[Tài trợ] Mô phỏng buổi bình duyệt hồ sơ tài trợ y sinh: soi ý nghĩa, tính mới, cách tiếp cận, tính khả thi và điểm yếu dễ bị phản biện. Dùng khi muốn thử lửa hồ sơ trước khi nộp. Từ khoá: mock review."
+  },
+  "skill:aipoch-medical-research:grant-proposal-assistant": {
+    "vi": "[Tài trợ] Hỗ trợ viết, dựng cấu trúc và sửa hồ sơ tài trợ y sinh: viết từng mục, gióng mục tiêu với phương pháp, làm rõ ý cho người bình duyệt. Dùng khi soạn đề xuất xin kinh phí. Từ khoá: grant proposal."
+  },
+  "skill:aipoch-medical-research:grant-specific-aims-writer": {
+    "vi": "[Tài trợ] Viết trang Mục tiêu cụ thể cho hồ sơ xin tài trợ, theo mẫu của các cơ quan tài trợ lớn. Dùng khi viết hoặc sửa trang mục tiêu, phần quan trọng nhất của hồ sơ. Từ khoá: specific aims."
+  },
+  "skill:aipoch-medical-research:graph-interpretation": {
+    "vi": "[Viết bài] Diễn giải biểu đồ khoa học thành lời: giải thích hình cho buổi báo cáo, viết chú thích và phân tích xu hướng trong dữ liệu lâm sàng. Dùng khi cần chuyển hình thành câu chữ. Từ khoá: graph interpretation."
+  },
+  "skill:aipoch-medical-research:graphical-abstract-generator": {
+    "vi": "[Hình khoa học] Chuyển mạch kể của nghiên cứu thành hình tóm tắt đồ hoạ, hoặc sinh gợi ý và sơ đồ Mermaid khi không vẽ trực tiếp được. Dùng khi tạp chí yêu cầu hình tóm tắt. Từ khoá: graphical abstract."
+  },
+  "skill:aipoch-medical-research:hipaa-compliance-auditor": {
+    "vi": "[Bảo mật dữ liệu] Dò và khử thông tin định danh người bệnh trong văn bản y tế theo đủ 18 nhóm định danh của HIPAA, kèm điểm tin cậy và nhật ký kiểm toán. Dùng trước khi đưa dữ liệu bệnh án vào nghiên cứu. Từ khoá: HIPAA, PHI."
+  },
+  "skill:aipoch-medical-research:iacuc-protocol-drafter": {
+    "vi": "[Đạo đức NC] Soạn hồ sơ xin phép hội đồng đạo đức nghiên cứu trên động vật, chú trọng biện minh theo nguyên tắc 3R. Dùng khi nghiên cứu có sử dụng động vật. Từ khoá: IACUC, 3Rs."
+  },
+  "skill:aipoch-medical-research:introduction-logic-builder": {
+    "vi": "[Viết bài] Dựng mạch bối cảnh, khoảng trống rồi mục tiêu cho phần Đặt vấn đề, định vị rõ chỗ đứng của nghiên cứu. Dùng khi cần khung lập luận trước khi viết. Từ khoá: introduction logic."
+  },
+  "skill:aipoch-medical-research:introduction-section-writer": {
+    "vi": "[Viết bài] Viết trọn phần Đặt vấn đề của bản thảo y sinh dựa trên mạch nghiên cứu đã chốt, giữ đúng ranh giới chứng cứ. Dùng khi đã có khung và cần viết thành văn. Từ khoá: introduction."
+  },
+  "skill:aipoch-medical-research:irb-application-assistant": {
+    "vi": "[Đạo đức NC] Hỗ trợ hồ sơ Hội đồng Đạo đức: soạn phiếu đồng thuận, rà đề cương theo yêu cầu tuân thủ, điền biểu mẫu và lập danh mục kiểm trước khi nộp. Dùng khi chuẩn bị hồ sơ đạo đức. Từ khoá: IRB, informed consent."
+  },
+  "skill:aipoch-medical-research:journal-club-presenter": {
+    "vi": "[Đào tạo] Sinh slide sinh hoạt khoa học gồm bối cảnh, phần phê bình và câu hỏi thảo luận. Dùng khi chuẩn bị trình bày một bài báo cho khoa. Từ khoá: journal club."
+  },
+  "skill:aipoch-medical-research:journal-cover-prompter": {
+    "vi": "[Hình khoa học] Viết gợi ý chi tiết cho công cụ sinh ảnh để tạo hình bìa tạp chí hoặc tranh minh hoạ khoa học. Dùng khi bài được mời làm ảnh bìa. Từ khoá: journal cover."
+  },
+  "skill:aipoch-medical-research:labarchive-integration": {
+    "vi": "[Tái lặp] Chuyển dữ liệu sổ tay điện tử LabArchives thành nội dung viết bài: phần Phương pháp, tuyên bố sẵn có dữ liệu, phụ lục tái lặp và dòng thời gian thí nghiệm. Dùng khi nhóm ghi chép trên sổ tay điện tử. Từ khoá: LabArchives, ELN."
+  },
+  "skill:aipoch-medical-research:latex-manuscript-format-converter": {
+    "vi": "[Nộp bài] Chuyển nội dung bản thảo sẵn có sang định dạng LaTeX theo mẫu của tạp chí, hội nghị hay khuôn đích, giữ nguyên ý và cấu trúc. Dùng khi nơi nộp bắt buộc dùng LaTeX. Từ khoá: LaTeX."
+  },
+  "skill:aipoch-medical-research:latex-posters": {
+    "vi": "[Trình bày] Soạn gói nội dung poster học thuật bằng LaTeX với beamerposter, tikzposter hoặc baposter: lời cho từng mục, kế hoạch hình, chú thích và bố cục. Dùng khi làm poster hội nghị hoặc bảo vệ luận án. Từ khoá: LaTeX poster."
+  },
+  "skill:aipoch-medical-research:lay-press-release-writer": {
+    "vi": "[Truyền thông] Chuyển bài báo khoa học thành thông cáo báo chí cho công chúng. Dùng khi đơn vị muốn truyền thông kết quả nghiên cứu ra ngoài giới chuyên môn. Từ khoá: press release."
+  },
+  "skill:aipoch-medical-research:lay-summary-for-cross-disciplinary-teams": {
+    "vi": "[Truyền thông] Viết lại nội dung kỹ thuật thành bản tóm tắt dễ hiểu, có cấu trúc, cho đồng nghiệp khác chuyên ngành. Dùng khi cần giải thích nghiên cứu cho bác sĩ, kỹ sư hay nhà quản lý ngoài lĩnh vực. Từ khoá: lay summary."
+  },
+  "skill:aipoch-medical-research:lay-summary-gen": {
+    "vi": "[Truyền thông] Chuyển tóm tắt y khoa phức tạp thành bản tóm tắt bằng ngôn ngữ đời thường. Dùng khi cần bản dễ đọc cho người bệnh hoặc công chúng. Từ khoá: plain language summary."
+  },
+  "skill:aipoch-medical-research:limitation-and-risk-writer": {
+    "vi": "[Viết bài] Viết phần hạn chế về mẫu, thiết kế, đo lường và thẩm định một cách chuyên nghiệp, tăng độ tin cậy mà không tự phủ định cả bài. Dùng khi viết đoạn hạn chế trong phần Bàn luận. Từ khoá: limitations."
+  },
+  "skill:aipoch-medical-research:linkedin-optimizer": {
+    "vi": "[Hồ sơ] Tối ưu hồ sơ LinkedIn cho bác sĩ, điều dưỡng và nhà nghiên cứu y khoa: viết tiêu đề, phần giới thiệu và cài từ khoá ngành y. Dùng khi xây dựng hình ảnh chuyên môn trực tuyến. Từ khoá: LinkedIn."
+  },
+  "skill:aipoch-medical-research:literature-review": {
+    "vi": "[Tổng quan y văn] Làm tổng quan y văn có hệ thống trên nhiều cơ sở dữ liệu học thuật, xuất tài liệu Markdown và PDF với trích dẫn đã kiểm chứng. Dùng khi cần bản tổng quan đầy đủ và có nguồn. Từ khoá: literature review."
+  },
+  "skill:aipoch-medical-research:market-access-value": {
+    "vi": "[Kinh tế y tế] Dựng lập luận giá trị để tiếp cận thị trường theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi làm hồ sơ chi trả hoặc đàm phán giá. Từ khoá: market access."
+  },
+  "skill:aipoch-medical-research:medical-cv-resume-builder": {
+    "vi": "[Hồ sơ] Dựng lý lịch khoa học và hồ sơ xin việc ngành y theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi nộp hồ sơ ứng tuyển hoặc xét chức danh. Từ khoá: CV, resume."
+  },
+  "skill:aipoch-medical-research:medical-device-mdr-auditor": {
+    "vi": "[Quy chế] Rà hồ sơ kỹ thuật trang thiết bị y tế theo quy định MDR 2017/745 của châu Âu. Dùng khi chuẩn bị hồ sơ đăng ký thiết bị y tế. Từ khoá: MDR, medical device."
+  },
+  "skill:aipoch-medical-research:medical-email-polisher": {
+    "vi": "[Truyền thông] Gọt bản nháp email thành thư từ chuyên nghiệp trong môi trường y khoa. Dùng khi cần viết thư trang trọng cho đồng nghiệp, ban biên tập hay đối tác. Từ khoá: email polish."
+  },
+  "skill:aipoch-medical-research:medical-english-precision-editor": {
+    "vi": "[Hiệu đính] Nâng độ chính xác của tiếng Anh y khoa mà không đổi sự kiện, ranh giới chứng cứ hay ý khoa học. Dùng khi bản thảo đúng nội dung nhưng câu chữ còn vụng. Từ khoá: English editing."
+  },
+  "skill:aipoch-medical-research:medical-imaging-review": {
+    "vi": "[Tổng quan y văn] Viết tổng quan cho nghiên cứu trí tuệ nhân tạo trong chẩn đoán hình ảnh: phân đoạn, phát hiện và phân loại trên cắt lớp, cộng hưởng từ, X-quang hay siêu âm. Dùng khi viết bài tổng quan mảng này. Từ khoá: medical imaging."
+  },
+  "skill:aipoch-medical-research:medical-review-writer-architect": {
+    "vi": "[Tổng quan y văn] Quy trình nhiều bước để viết bài tổng quan y khoa dài: dựng dàn ý từ y văn PubMed, viết từng chương, tra bổ sung rồi định dạng trích dẫn. Dùng khi viết tổng quan quy mô lớn. Từ khoá: review writing."
+  },
+  "skill:aipoch-medical-research:medical-scribe-dictation": {
+    "vi": "[Hồ sơ bệnh án] Chuyển lời đọc của bác sĩ thành bệnh án SOAP có cấu trúc. Dùng khi muốn ghi chép bằng giọng nói thay vì gõ tay. Từ khoá: medical scribe, dictation."
+  },
+  "skill:aipoch-medical-research:medical-translation": {
+    "vi": "[Hiệu đính] Dịch tài liệu y khoa theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần bản dịch giữ đúng thuật ngữ chuyên môn. Từ khoá: medical translation."
+  },
+  "skill:aipoch-medical-research:medication-adherence-message-gen": {
+    "vi": "[Tuân thủ điều trị] Soạn tin nhắn nhắc dùng thuốc theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi triển khai chương trình nhắc tuân thủ cho người bệnh. Từ khoá: adherence message."
+  },
+  "skill:aipoch-medical-research:meeting-minutes": {
+    "vi": "[Quản lý NC] Soạn biên bản cuộc họp theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần ghi lại quyết định và việc phải làm sau họp. Từ khoá: meeting minutes."
+  },
+  "skill:aipoch-medical-research:meta-analysis-methods-generator": {
+    "vi": "[Phân tích gộp] Viết phần Phương pháp cho bài phân tích gộp: chiến lược tìm, sàng lọc, thẩm định chất lượng, trích xuất dữ liệu và phân tích thống kê. Dùng khi bắt đầu viết bản thảo phân tích gộp. Từ khoá: meta-analysis methods."
+  },
+  "skill:aipoch-medical-research:meta-baseline-generator": {
+    "vi": "[Phân tích gộp] Sinh phần đặc điểm nền của bài phân tích gộp gồm cả lời văn lẫn bảng, từ dữ liệu thô. Dùng khi đã có bảng dữ liệu các nghiên cứu và cần viết thành mục kết quả. Từ khoá: baseline table."
+  },
+  "skill:aipoch-medical-research:meta-manuscript-generator": {
+    "vi": "[Phân tích gộp] Sinh bản thảo đầu tiên của bài phân tích gộp lâm sàng gồm Tóm tắt, Đặt vấn đề, Phương pháp, Kết quả và Bàn luận, từ báo cáo nghiên cứu. Dùng khi đã có kết quả và cần bản nháp toàn bài. Từ khoá: manuscript draft."
+  },
+  "skill:aipoch-medical-research:meta-results-forest-plot-analyzer": {
+    "vi": "[Phân tích gộp] Đọc biểu đồ rừng rồi viết phần mô tả kết quả kèm chú thích hình, nêu ý nghĩa thống kê và mức không đồng nhất. Dùng khi đã có hình và cần viết lời. Từ khoá: forest plot."
+  },
+  "skill:aipoch-medical-research:meta-results-funnel-plot-generator": {
+    "vi": "[Phân tích gộp] Viết phần kết quả cho biểu đồ phễu kèm bảng thống kê Egger, Begg và phương pháp cắt bù, cùng chú thích hình. Dùng khi báo cáo thiên lệch công bố. Từ khoá: funnel plot, publication bias."
+  },
+  "skill:aipoch-medical-research:meta-results-risk-of-bias": {
+    "vi": "[Phân tích gộp] Viết mục kết quả về nguy cơ sai lệch dựa trên bảng đánh giá và số liệu đã có. Dùng khi cần chuyển bảng thẩm định thành đoạn văn. Từ khoá: risk of bias."
+  },
+  "skill:aipoch-medical-research:meta-results-sensitivity-analysis": {
+    "vi": "[Phân tích gộp] Viết mục kết quả cho phân tích độ nhạy dựa trên bảng thống kê và tiêu đề bảng. Dùng khi cần mô tả kết quả độ nhạy bằng lời văn. Từ khoá: sensitivity analysis."
+  },
+  "skill:aipoch-medical-research:method-writing": {
+    "vi": "[Viết bài] Viết và sửa phần Phương pháp sao cho người khác lặp lại được. Dùng khi soạn bản thảo theo cấu trúc IMRAD hoặc phải đáp ứng chuẩn báo cáo như CONSORT, STROBE hay PRISMA. Từ khoá: methods, IMRAD."
+  },
+  "skill:aipoch-medical-research:methods-section-writer": {
+    "vi": "[Viết bài] Biến đề cương và quy trình phân tích thành phần Phương pháp sẵn sàng đăng, tuân thủ chuẩn báo cáo tương ứng. Dùng khi đã có đề cương và cần chuyển thành văn. Từ khoá: methods section."
+  },
+  "skill:aipoch-medical-research:microbiome-diversity-reporter": {
+    "vi": "[Tin sinh học] Diễn giải chỉ số đa dạng alpha và beta từ kết quả giải trình tự 16S rRNA. Dùng khi cần viết phần kết quả cho nghiên cứu hệ vi sinh vật. Từ khoá: 16S rRNA, alpha diversity."
+  },
+  "skill:aipoch-medical-research:moa-explainer": {
+    "vi": "[Truyền thông] Sinh kịch bản hoạt hình ba chiều và lời giải thích dễ hiểu cho cơ chế tác dụng của thuốc. Dùng khi cần minh hoạ cơ chế cho học viên hoặc người bệnh. Từ khoá: mechanism of action."
+  },
+  "skill:aipoch-medical-research:molecular-review-workflow": {
+    "vi": "[Tổng quan y văn] Viết tổng quan học thuật về vai trò của một phân tử trong bệnh, dựa trên y văn PubMed, trích dẫn kiểu Vancouver. Dùng khi cần bài tổng quan ở cấp phân tử. Từ khoá: molecular review, Vancouver."
+  },
+  "skill:aipoch-medical-research:networking-email-drafter": {
+    "vi": "[Truyền thông] Soạn thư theo dõi sau khi gặp đồng nghiệp ở hội nghị, đủ lịch sự mà vẫn đáng nhớ. Dùng khi muốn giữ liên hệ hợp tác sau hội nghị. Từ khoá: networking email."
+  },
+  "skill:aipoch-medical-research:nih-biosketch-builder": {
+    "vi": "[Tài trợ] Sinh hồ sơ lý lịch khoa học theo mẫu biosketch của NIH. Dùng khi nộp hồ sơ xin tài trợ tại Hoa Kỳ. Từ khoá: NIH biosketch."
+  },
+  "skill:aipoch-medical-research:nsfc-grant-writer": {
+    "vi": "[Tài trợ] Sinh hồ sơ xin tài trợ Quỹ Khoa học Tự nhiên Quốc gia Trung Quốc theo mẫu chính thức, viết bằng tiếng Trung. Dùng khi nộp hồ sơ cho quỹ này. Từ khoá: NSFC."
+  },
+  "skill:aipoch-medical-research:paper-sprint-review": {
+    "vi": "[Phản biện] Quy trình rà soát và sửa bản thảo theo từng chặng ngắn, xử lý được file docx, tex, md hay PDF: tự nhận giai đoạn bản thảo và soi theo nhiều lăng kính. Dùng khi cần sửa bài có kỷ luật tiến độ. Từ khoá: sprint review."
+  },
+  "skill:aipoch-medical-research:paper-web": {
+    "vi": "[Truyền thông] Chuyển bài báo thành sản phẩm quảng bá: trang web tương tác, video thuyết trình và poster hội nghị. Dùng khi muốn phổ biến kết quả rộng hơn một file PDF. Từ khoá: Paper2Web, Paper2Video."
+  },
+  "skill:aipoch-medical-research:patent-assistant": {
+    "vi": "[Pháp lý] Hỗ trợ nhóm nghiên cứu viết bản mô tả sáng chế và tra tính mới: cấu trúc mô tả sáng chế, tìm sáng chế liên quan và đánh giá tính mới. Dùng khi định đăng ký sáng chế. Từ khoá: patent disclosure."
+  },
+  "skill:aipoch-medical-research:patient-recruitment-ad-gen": {
+    "vi": "[Thử nghiệm LS] Soạn quảng cáo tuyển người tham gia thử nghiệm lâm sàng theo hướng đúng đạo đức, tuân thủ quy định và dễ hiểu với người bệnh. Dùng khi bắt đầu tuyển bệnh. Từ khoá: patient recruitment."
+  },
+  "skill:aipoch-medical-research:peer-review": {
+    "vi": "[Phản biện] Bình duyệt chuyên nghiệp cho bài báo hoặc luận văn, cho nhận xét có cấu trúc kèm đề xuất cải thiện. Dùng khi cần thẩm định trước khi nộp hoặc bình duyệt nội bộ. Từ khoá: peer review."
+  },
+  "skill:aipoch-medical-research:peer-review-response-drafter": {
+    "vi": "[Phản biện] Hỗ trợ soạn thư trả lời ý kiến phản biện một cách chuyên nghiệp. Dùng khi phải phúc đáp từng nhận xét của người bình duyệt. Từ khoá: response letter."
+  },
+  "skill:aipoch-medical-research:personal-statement": {
+    "vi": "[Hồ sơ] Viết bài luận cá nhân cho hồ sơ trường y, nội trú, học bổng hay cao học, làm nổi bật kinh nghiệm lâm sàng và thành tích nghiên cứu. Dùng khi nộp hồ sơ tuyển sinh. Từ khoá: personal statement."
+  },
+  "skill:aipoch-medical-research:poster-layout-planner": {
+    "vi": "[Trình bày] Lập bố cục poster theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần sắp xếp các mục và hình trước khi dựng poster. Từ khoá: poster layout."
+  },
+  "skill:aipoch-medical-research:poster-storyline-builder": {
+    "vi": "[Trình bày] Sắp xếp lại bài báo thành mạch kể hợp với poster khoa học: cấu trúc mục, thứ bậc tiêu đề, chọn hình và mạch trình bày trực tiếp. Dùng khi chuẩn bị poster hội nghị. Từ khoá: poster storyline."
+  },
+  "skill:aipoch-medical-research:presentation-hook": {
+    "vi": "[Trình bày] Viết câu mở đầu cuốn hút và câu kết mạnh cho bài trình bày y khoa. Dùng khi cần gây ấn tượng ngay đầu và cuối buổi báo cáo. Từ khoá: presentation hook."
+  },
+  "skill:aipoch-medical-research:prior-auth-letter-drafter": {
+    "vi": "[Hồ sơ] Soạn thư xin duyệt trước gửi công ty bảo hiểm, có phần biện minh lâm sàng và định dạng chuẩn. Dùng khi cần bảo hiểm chấp thuận một chỉ định. Từ khoá: prior authorization."
+  },
+  "skill:aipoch-medical-research:q-and-a-prep-partner": {
+    "vi": "[Trình bày] Dự đoán câu hỏi khó cho buổi trình bày và chuẩn bị sẵn câu trả lời có cấu trúc. Dùng khi tập dượt trước hội thảo hoặc buổi bảo vệ. Từ khoá: Q&A preparation."
+  },
+  "skill:aipoch-medical-research:radiology-image-quiz": {
+    "vi": "[Đào tạo] Sinh bộ câu hỏi chẩn đoán hình ảnh tương tác với ảnh X-quang, cắt lớp, cộng hưởng từ và siêu âm. Dùng khi soạn bài giảng hoặc ôn thi chuyên khoa. Từ khoá: radiology quiz."
+  },
+  "skill:aipoch-medical-research:rebuttal-letter-strategist": {
+    "vi": "[Phản biện] Dựng chiến lược cho thư phản bác theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần chọn cách đáp lại nhận xét gay gắt. Từ khoá: rebuttal letter."
+  },
+  "skill:aipoch-medical-research:recommendation-letter-assistant": {
+    "vi": "[Hồ sơ] Hỗ trợ giảng viên và người hướng dẫn soạn thư giới thiệu theo khuôn chuẩn. Dùng khi được học viên nhờ viết thư giới thiệu. Từ khoá: recommendation letter."
+  },
+  "skill:aipoch-medical-research:reference-integrity-checker": {
+    "vi": "[Liêm chính] Kiểm tài liệu tham khảo có khớp với khẳng định trong bài không, có bị dùng quá phạm vi, trích sai hay trích qua tay thứ hai không. Dùng trước khi nộp bài. Từ khoá: reference integrity."
+  },
+  "skill:aipoch-medical-research:reference-style-sync": {
+    "vi": "[Trích dẫn] Đồng bộ và chuẩn hoá định dạng tài liệu tham khảo trong phần mềm quản lý trích dẫn, tự sửa lỗi siêu dữ liệu. Dùng khi danh mục lộn xộn nhiều kiểu khác nhau. Từ khoá: reference style."
+  },
+  "skill:aipoch-medical-research:referral-letter-generator": {
+    "vi": "[Hồ sơ bệnh án] Sinh giấy chuyển tuyến gồm tóm tắt người bệnh, lý do chuyển, phát hiện chính và đề nghị bước tiếp theo. Dùng khi chuyển người bệnh sang đồng nghiệp hoặc khoa khác. Từ khoá: referral letter."
+  },
+  "skill:aipoch-medical-research:regulatory-submission": {
+    "vi": "[Quy chế] Chuẩn bị hồ sơ nộp cơ quan quản lý theo cấu trúc CTD: dựng đề cương từng module, kiểm tuân thủ ICH và toàn vẹn dữ liệu. Dùng khi làm hồ sơ đăng ký thuốc hoặc thiết bị y tế. Từ khoá: CTD, IND, NDA."
+  },
+  "skill:aipoch-medical-research:reporting-guideline-compliance-checker": {
+    "vi": "[Liêm chính] Đối chiếu bản thảo với chuẩn báo cáo như CONSORT, STROBE, PRISMA hay TRIPOD để tìm mục còn thiếu hoặc báo cáo yếu. Dùng trước khi nộp bài hoặc khi sửa bài. Từ khoá: CONSORT, STROBE, PRISMA."
+  },
+  "skill:aipoch-medical-research:residency-interview-prep": {
+    "vi": "[Hồ sơ] Luyện phỏng vấn nội trú với bộ câu hỏi mô phỏng. Dùng khi chuẩn bị đi phỏng vấn xét tuyển nội trú. Từ khoá: residency interview."
+  },
+  "skill:aipoch-medical-research:response-letter": {
+    "vi": "[Phản biện] Sắp xếp nhận xét của người phản biện và sinh thư trả lời chuẩn dạng Word, ánh xạ từng thay đổi tới đúng trang, đoạn và dòng. Dùng khi sửa bài theo yêu cầu bình duyệt. Từ khoá: response letter."
+  },
+  "skill:aipoch-medical-research:response-tone-polisher": {
+    "vi": "[Phản biện] Gọt giọng điệu thư trả lời phản biện: bớt phòng thủ, giữ nguyên sự thật, giữ mức chuyên nghiệp và ngắn gọn. Dùng khi bản nháp trả lời nghe gay gắt quá. Từ khoá: response tone."
+  },
+  "skill:aipoch-medical-research:results-section-structurer": {
+    "vi": "[Viết bài] Sắp hình, phân tích và các khối kết quả thành cấu trúc phần Kết quả rõ ràng, có thứ tự tường thuật kỷ luật. Dùng khi có nhiều kết quả rời chưa biết xếp thế nào. Từ khoá: results structure."
+  },
+  "skill:aipoch-medical-research:results-section-writer": {
+    "vi": "[Viết bài] Viết trọn phần Kết quả của bản thảo y sinh từ cấu trúc kết quả, danh mục hình hoặc bản tóm tắt phân tích, giữ đúng ranh giới chứng cứ. Dùng khi đã có khung và cần viết thành văn. Từ khoá: results section."
+  },
+  "skill:aipoch-medical-research:revision-strategy-planner": {
+    "vi": "[Phản biện] Lập kế hoạch sửa bài có thứ tự ưu tiên, tách riêng nhận xét cần làm thêm thí nghiệm, cần phân tích lại, cần giải thích, cần sắp xếp lại hay chỉ cần sửa câu chữ. Dùng khi nhận yêu cầu sửa lớn. Từ khoá: revision plan."
+  },
+  "skill:aipoch-medical-research:sample-size-power-calculator": {
+    "vi": "[Thống kê] Tính cỡ mẫu và lực thống kê cho thiết kế phức tạp gồm phân tích sống còn, thiết kế theo chùm và đa so sánh. Dùng khi công thức cơ bản không đủ cho thiết kế của mình. Từ khoá: sample size, power."
+  },
+  "skill:aipoch-medical-research:semantic-consistency-auditor": {
+    "vi": "[Liêm chính] Rà tính nhất quán về nghĩa trong bản thảo theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi nghi các phần của bài đang nói khác nhau. Từ khoá: semantic consistency."
+  },
+  "skill:aipoch-medical-research:slide-deck-for-lab-meeting": {
+    "vi": "[Trình bày] Sắp tiến độ nghiên cứu thành bộ slide gọn cho buổi họp nhóm hoặc rà soát dự án, không bịa thêm nội dung còn thiếu. Dùng khi chuẩn bị báo cáo tiến độ. Từ khoá: lab meeting."
+  },
+  "skill:aipoch-medical-research:study-limitations-drafter": {
+    "vi": "[Viết bài] Soạn phần hạn chế của nghiên cứu theo quy trình có cấu trúc, nêu rõ giả định và giới hạn đầu ra. Dùng khi cần viết mục hạn chế cho bản thảo. Từ khoá: limitations."
+  },
+  "skill:aipoch-medical-research:style-journal-rewrite": {
+    "vi": "[Hiệu đính] Viết lại bản nháp theo văn phong hoặc khuôn định dạng của tạp chí đích, nhận file docx, md hay txt. Dùng khi chuyển bài từ tạp chí này sang tạp chí khác. Từ khoá: journal style."
+  },
+  "skill:aipoch-medical-research:systematic-review": {
+    "vi": "[Tổng quan y văn] Điều phối trọn quy trình tổng quan hệ thống và phân tích gộp theo PRISMA 2020: từ đề cương, tìm nhiều cơ sở dữ liệu, sàng lọc, trích xuất tới tổng hợp chứng cứ. Dùng khi làm tổng quan đầy đủ. Từ khoá: PRISMA, systematic review."
+  },
+  "skill:aipoch-medical-research:table-narrative-writer": {
+    "vi": "[Viết bài] Chuyển nội dung bảng y sinh thành lời văn cho bản thảo hoặc bài trình bày, ưu tiên nêu xu hướng và tương phản có ý nghĩa thay vì đọc lại từng con số. Dùng khi cần diễn giải bảng. Từ khoá: table narrative."
+  },
+  "skill:aipoch-medical-research:target-journal-matcher": {
+    "vi": "[Chọn tạp chí] Ghép nghiên cứu với tạp chí phù hợp theo chủ đề, thiết kế và mức chứng cứ. Dùng khi phân vân nộp ở đâu, cần cân giữa chỉ số ảnh hưởng, phạm vi và mức chấp nhận phương pháp. Từ khoá: journal matching."
+  },
+  "skill:aipoch-medical-research:title-and-abstract-optimizer": {
+    "vi": "[Viết bài] Tối ưu tiêu đề và tóm tắt về mật độ thông tin, độ chính xác sự kiện và mức hợp với nơi nộp. Dùng ở bước cuối trước khi nộp bài. Từ khoá: title, abstract."
+  },
+  "skill:aipoch-medical-research:tone-adjuster": {
+    "vi": "[Truyền thông] Chuyển văn bản y khoa qua lại giữa giọng học thuật và giọng thân thiện với người bệnh, diễn giải thuật ngữ chuyên môn. Dùng khi cần bản cho công chúng hoặc tờ dặn dò người bệnh. Từ khoá: tone adjustment."
+  },
+  "skill:aipoch-medical-research:usmle-case-generator": {
+    "vi": "[Đào tạo] Sinh ca lâm sàng theo phong cách kỳ thi USMLE bước 1 và 2, có bệnh sử và khám thực thể. Dùng khi soạn đề ôn tập hoặc bài giảng ca lâm sàng. Từ khoá: USMLE."
+  },
+  "skill:aipoch-medical-research:visual-content-desc": {
+    "vi": "[Truyền thông] Sinh mô tả bằng lời cho ảnh y khoa và biểu đồ. Dùng khi cần văn bản thay thế cho hình phục vụ người khiếm thị hoặc cần chú thích chi tiết. Từ khoá: image description."
+  },
+  "skill:aipoch-medical-research:academic-cv-generator": {
+    "vi": "[Hồ sơ] Dựng lý lịch khoa học có cấu trúc từ văn bản tự do và xuất ra file Word. Dùng khi cần sắp xếp công bố, đề tài và giải thưởng thành một bản lý lịch thống nhất. Từ khoá: academic CV."
+  },
+  "skill:aipoch-medical-research:academic-norm-review": {
+    "vi": "[Liêm chính] Dò mức trùng lặp nội dung, kiểm trích dẫn và chữ viết tắt đã chuẩn hoá chưa, gắn cờ nguy cơ vi phạm liêm chính học thuật. Dùng trước khi nộp bài hoặc khi rà soát tuân thủ. Từ khoá: similarity, academic integrity."
+  },
+  "skill:aipoch-medical-research:academic-poster-generator": {
+    "vi": "[Trình bày] Quy trình trọn gói dựng poster nghiên cứu từ file PDF bài báo: rút nội dung rồi sinh poster bằng LaTeX kèm hình bắt buộc. Dùng khi cần poster từ một bài đã có. Từ khoá: academic poster, LaTeX."
+  },
+  "skill:aipoch-medical-research:adaptyv": {
+    "vi": "[Thực nghiệm] Nền tảng phòng thí nghiệm đám mây kiểm chứng protein tự động. Dùng khi đã thiết kế được trình tự protein và cần thực nghiệm ướt về khả năng gắn kết, biểu hiện, độ bền nhiệt hay hoạt tính enzyme. Từ khoá: Adaptyv, protein testing."
+  },
+  "skill:aipoch-medical-research:api-design-principles": {
+    "vi": "[Kỹ thuật] Nguyên tắc và danh mục kiểm để thiết kế, rà soát giao diện lập trình kiểu REST và GraphQL: đặt tên, mô hình lỗi, phân trang, đánh phiên bản. Dùng khi xây hoặc đánh giá một API. Từ khoá: REST, GraphQL."
+  },
+  "skill:aipoch-medical-research:article-format-adjustment": {
+    "vi": "[Nộp bài] Chỉnh định dạng bài báo và chuyển qua lại giữa DOCX, LaTeX và Markdown. Dùng khi phải theo đúng khuôn mẫu của tạp chí hoặc của trường. Từ khoá: format conversion."
+  },
+  "skill:aipoch-medical-research:benchling-integration": {
+    "vi": "[Quản lý dữ liệu] Kết nối nền tảng nghiên cứu Benchling qua giao diện lập trình để quản lý thực thể đăng ký, kho vật tư, sổ tay điện tử, quy trình và phân tích dữ liệu. Dùng khi phòng thí nghiệm dùng Benchling. Từ khoá: Benchling, ELN."
+  },
+  "skill:aipoch-medical-research:bianque": {
+    "vi": "[Cố vấn y khoa] Người dẫn kiến thức và nghiên cứu y khoa dựa trên chứng cứ theo truyền thống Biển Thước: suy luận lâm sàng, tư duy chẩn đoán, dược lý, bệnh học, chẩn đoán phân biệt và thẩm định y văn. Dùng khi cần trao đổi học thuật rộng về y khoa. Từ khoá: clinical reasoning."
+  },
+  "skill:aipoch-medical-research:bib-formatter": {
+    "vi": "[Trích dẫn] Chuyển danh mục tài liệu và trích dẫn trong bài qua lại giữa RIS, BibTeX, văn bản thuần và CSL-JSON. Dùng khi cần thống nhất kiểu trích dẫn trước lúc nộp. Từ khoá: BibTeX, RIS."
+  },
+  "skill:aipoch-medical-research:bibliography": {
+    "vi": "[Tìm y văn] Phân loại và sắp xếp y văn theo chủ đề, phương pháp và kết luận. Dùng khi cần đọc hàng loạt file trong một thư mục rồi xuất bảng CSV có cấu trúc cho tổng quan. Từ khoá: bibliography."
+  },
+  "skill:aipoch-medical-research:biodbnet-api": {
+    "vi": "[Tin sinh học] Truy cập dịch vụ bioDBnet để đổi mã định danh gen và protein, tra con đường sinh học và ánh xạ gen tương đồng. Dùng khi cần chuyển đổi mã giữa các cơ sở dữ liệu. Từ khoá: bioDBnet."
+  },
+  "skill:aipoch-medical-research:bmi-bsa-calculator": {
+    "vi": "[Công cụ LS] Tính chỉ số khối cơ thể và diện tích da theo nhiều công thức, kèm phân loại cân nặng theo WHO và tính cho trẻ em. Dùng khi cần tính liều hoá trị hoặc sàng lọc thừa cân. Từ khoá: BMI, BSA."
+  },
+  "skill:aipoch-medical-research:brainstorming": {
+    "vi": "[Ý tưởng] Khám phá và bàn ý tưởng: làm rõ mục tiêu, ràng buộc, mở nhiều phương án rồi hội tụ về một hướng. Dùng khi cần chọn hướng trước lúc bắt tay làm. Từ khoá: brainstorming."
+  },
+  "skill:aipoch-medical-research:buffer-calculator": {
+    "vi": "[Thực nghiệm] Tính công thức pha đệm chính xác về khối lượng và thể tích cho sinh học phân tử, kèm hướng dẫn pha dung dịch mẹ và chỉnh pH. Dùng khi chuẩn bị hoá chất trong phòng thí nghiệm. Từ khoá: buffer, PBS."
+  },
+  "skill:aipoch-medical-research:chart-style-unifier": {
+    "vi": "[Trình bày] Đồng bộ hàng loạt kiểu chữ trong ô bảng Word và biểu đồ nhúng mà không đụng vào phần thân bài. Dùng khi luận văn hoặc báo cáo có định dạng lộn xộn. Từ khoá: Word formatting."
+  },
+  "skill:aipoch-medical-research:chemical-storage-sorter": {
+    "vi": "[An toàn lab] Xếp hoá chất vào nhóm bảo quản an toàn theo phân loại nguy hại như axit, bazơ, chất oxy hoá, chất dễ cháy và chất độc; chỉ ra cặp kỵ nhau và lập sơ đồ kho. Dùng khi sắp xếp kho hoá chất. Từ khoá: chemical storage."
+  },
+  "skill:aipoch-medical-research:chemical-structure-converter": {
+    "vi": "[Thiết kế thuốc] Chuyển đổi giữa tên IUPAC, chuỗi SMILES, công thức phân tử và tên thông dụng; kiểm tính hợp lệ và chuẩn hoá cấu trúc hàng loạt. Dùng khi chuẩn bị dữ liệu hoá tin. Từ khoá: SMILES, IUPAC."
+  },
+  "skill:aipoch-medical-research:clinic-sample-size": {
+    "vi": "[Cỡ mẫu] Công cụ hợp nhất tính cỡ mẫu cho nghiên cứu chẩn đoán, hiệu quả điều trị, căn nguyên và tiên lượng, hỗ trợ nhiều phương pháp như độ nhạy độ đặc hiệu, log-rank, khi bình phương và số biến cố trên biến. Dùng khi tính cỡ mẫu cho nghiên cứu lâm sàng. Từ khoá: sample size."
+  },
+  "skill:aipoch-medical-research:clinical-diagnostic-reasoning": {
+    "vi": "[Suy luận LS] Nhận diện và hoá giải thiên kiến nhận thức trong ra quyết định y khoa qua phân tích lỗi có hệ thống. Dùng khi rà lại một chẩn đoán khó hoặc muốn rèn tư duy tránh sai sót. Từ khoá: cognitive bias."
+  },
+  "skill:aipoch-medical-research:clinical-reports": {
+    "vi": "[Hồ sơ bệnh án] Viết báo cáo lâm sàng đầy đủ: báo cáo ca theo chuẩn CARE, báo cáo chẩn đoán hình ảnh, giải phẫu bệnh, xét nghiệm, báo cáo thử nghiệm theo ICH E3 và hồ sơ bệnh án. Dùng khi cần văn bản lâm sàng chuẩn mực. Từ khoá: CARE, ICH E3, SOAP."
+  },
+  "skill:aipoch-medical-research:co-tank-monitor": {
+    "vi": "[Quản lý lab] Mô phỏng giám sát bình khí carbonic để dự báo lúc hết khí, tránh sự cố nuôi cấy tế bào vào cuối tuần. Dùng khi vận hành phòng nuôi cấy. Từ khoá: cell culture."
+  },
+  "skill:aipoch-medical-research:cold-chain-risk-calculator": {
+    "vi": "[Quản lý mẫu] Tính rủi ro lệch nhiệt độ khi vận chuyển lạnh: rủi ro theo tuyến, mức phù hợp của đóng gói và yêu cầu theo dõi. Dùng khi gửi mẫu sinh học hoặc thuốc cần bảo quản lạnh. Từ khoá: cold chain."
+  },
+  "skill:aipoch-medical-research:conference-tweet-generator": {
+    "vi": "[Truyền thông] Sinh bài đăng mạng xã hội và bản tóm tắt từ tóm tắt hội nghị, có lọc nội dung và đặt tiêu đề hấp dẫn. Dùng khi muốn lan toả nội dung hội nghị. Từ khoá: conference tweet."
+  },
+  "skill:aipoch-medical-research:conflict-of-interest-checker": {
+    "vi": "[Liêm chính] Kiểm xung đột lợi ích giữa tác giả và người phản biện được đề cử, dựa trên quan hệ đồng tác giả và cùng cơ quan. Dùng khi đề cử phản biện hoặc khi ban biên tập rà soát. Từ khoá: conflict of interest."
+  },
+  "skill:aipoch-medical-research:content-proofreading": {
+    "vi": "[Hiệu đính] Soát lỗi chính tả, ngữ pháp, nhất quán thuật ngữ và định dạng cho bản thảo học thuật. Dùng ở bước cuối trước khi nộp bài. Từ khoá: proofreading."
+  },
+  "skill:aipoch-medical-research:datamol": {
+    "vi": "[Thiết kế thuốc] Lớp bọc Python quanh RDKit với mặc định hợp lý: đọc SMILES, chuẩn hoá, tính mô tả tử, dấu vân tay phân tử, phân cụm và sinh cấu dạng ba chiều. Dùng cho quy trình phát triển thuốc thông thường. Từ khoá: Datamol, RDKit."
+  },
+  "skill:aipoch-medical-research:date-calculator": {
+    "vi": "[Công cụ LS] Tính các mốc thời gian y khoa gồm tuổi thai, ngày dự sinh và lịch tái khám, xuất kết quả có cấu trúc. Dùng khi điều phối nghiên cứu hoặc theo dõi thai kỳ. Từ khoá: gestational age."
+  },
+  "skill:aipoch-medical-research:dicom-anonymizer": {
+    "vi": "[Bảo mật dữ liệu] Khử định danh ảnh y khoa DICOM bằng cách xoá thẻ chứa thông tin người bệnh, có nhật ký kiểm toán và giữ liên kết theo nghiên cứu. Dùng trước khi chia sẻ ảnh cho nghiên cứu. Từ khoá: DICOM, de-identification."
+  },
+  "skill:aipoch-medical-research:docx-feedback-tracker": {
+    "vi": "[Phản biện] Tự đọc lịch sử theo dõi thay đổi trong file DOCX, nhận diện vòng sửa và ý kiến từng người rồi sinh bản giải trình dạng Markdown. Dùng khi bản thảo đã qua nhiều vòng góp ý. Từ khoá: track changes."
+  },
+  "skill:aipoch-medical-research:dpi-upscaler-checker": {
+    "vi": "[Hình khoa học] Kiểm ảnh có đạt chuẩn in 300 DPI không và nâng độ phân giải ảnh mờ. Dùng khi tạp chí trả lại vì hình không đủ độ nét. Từ khoá: DPI, upscaling."
+  },
+  "skill:aipoch-medical-research:ebm-calculator": {
+    "vi": "[Thẩm định] Máy tính test chẩn đoán theo y học chứng cứ: độ nhạy, độ đặc hiệu, giá trị tiên đoán dương và âm, tỷ số khả dĩ, NNT và xác suất trước sau xét nghiệm. Dùng khi cần con số cụ thể tại điểm khám. Từ khoá: likelihood ratio, NNT."
+  },
+  "skill:aipoch-medical-research:equipment-maintenance-log": {
+    "vi": "[Quản lý lab] Theo dõi ngày hiệu chuẩn thiết bị và nhắc bảo trì cho pipet, cân, máy ly tâm và thiết bị khác. Dùng khi quản lý thiết bị phòng thí nghiệm. Từ khoá: calibration, maintenance."
+  },
+  "skill:aipoch-medical-research:experiment-detail-comparator": {
+    "vi": "[Thực nghiệm] So chi tiết phương pháp giữa hai bài báo trong thư viện Zotero, chỉ ra khác biệt về tỷ lệ, liều, thời điểm và điều kiện, rồi tra y văn giải thích vì sao khác nhau. Dùng khi hai bài cho kết quả trái ngược. Từ khoá: protocol comparison."
+  },
+  "skill:aipoch-medical-research:expert-interview-generator": {
+    "vi": "[Truyền thông] Sinh bài phỏng vấn chuyên gia hoàn chỉnh gồm mở đầu, phần hỏi đáp và tổng kết, dựa trên câu hỏi và hồ sơ chuyên gia. Dùng khi làm nội dung truyền thông chuyên môn. Từ khoá: expert interview."
+  },
+  "skill:aipoch-medical-research:expert-interview-topics": {
+    "vi": "[Truyền thông] Sinh tiêu đề và bộ câu hỏi phỏng vấn chuyên nghiệp dựa trên hồ sơ chuyên gia và chủ đề. Dùng khi chuẩn bị cho một buổi phỏng vấn. Từ khoá: interview questions."
+  },
+  "skill:aipoch-medical-research:file-management": {
+    "vi": "[Tiện ích] Sắp xếp, sao lưu, nén, tách và gộp file theo kế hoạch có luật, xem trước an toàn rồi kiểm tra lại sau khi chạy. Dùng khi cần dọn dẹp một lượng lớn file. Từ khoá: file management."
+  },
+  "skill:aipoch-medical-research:file-search": {
+    "vi": "[Tiện ích] Tìm nhanh theo tên file và theo nội dung bằng ripgrep, hỗ trợ mẫu glob và biểu thức chính quy. Dùng khi cần tìm từ khoá xuyên nhiều thư mục. Từ khoá: ripgrep, file search."
+  },
+  "skill:aipoch-medical-research:file-security-toolkit": {
+    "vi": "[Bảo mật dữ liệu] Mã hoá và giải mã file tại chỗ, che thông tin nhạy cảm trong tài liệu và kiểm độ mạnh mật khẩu. Dùng khi xử lý dữ liệu riêng tư hoặc chuẩn bị chia sẻ file. Từ khoá: encryption, redaction."
+  },
+  "skill:aipoch-medical-research:fulltext-fetcher": {
+    "vi": "[Tra CSDL] Tải và lưu bản HTML gốc của trang bài báo khi có địa chỉ web, DOI hoặc mã PMID. Dùng khi cần lưu trữ trang để phân tích hoặc rà soát về sau. Từ khoá: full text."
+  },
+  "skill:aipoch-medical-research:hippocrates": {
+    "vi": "[Cố vấn y khoa] Người dẫn kiến thức và nghiên cứu y khoa dựa trên chứng cứ, bao quát cơ chế bệnh, dược lý, bệnh học, dịch tễ và khoa học sức khoẻ. Dùng khi cần trao đổi học thuật y khoa ở diện rộng. Từ khoá: evidence-based medicine."
+  },
+  "skill:aipoch-medical-research:html-to-pdf": {
+    "vi": "[Tiện ích] Chuyển file HTML hoặc trang web thành PDF giữ nguyên bố cục, tự nhận và xử lý văn bản viết từ phải sang trái. Dùng khi cần bản in trung thực từ một trang web. Từ khoá: HTML to PDF."
+  },
+  "skill:aipoch-medical-research:icd10-cpt-coding-assistant": {
+    "vi": "[Mã y khoa] Đọc bệnh án rồi đề xuất mã chẩn đoán ICD-10-CM và mã thủ thuật CPT kèm điểm tin cậy, có đối chiếu chéo và nêu phương án thay thế. Dùng khi mã hoá hồ sơ để thanh toán. Từ khoá: ICD-10-CM, CPT."
+  },
+  "skill:aipoch-medical-research:id-photo-tool": {
+    "vi": "[Tiện ích] Đổi màu nền ảnh thẻ và thêm chữ chìm cho file JPG hay PNG. Dùng khi cần ảnh thẻ đúng quy cách cho hồ sơ. Từ khoá: ID photo."
+  },
+  "skill:aipoch-medical-research:image-ocr": {
+    "vi": "[Tiện ích] Nhận dạng chữ trong ảnh bằng Tesseract cho nhiều định dạng ảnh, chọn được ngôn ngữ. Dùng khi cần lấy chữ từ ảnh chụp tài liệu. Từ khoá: OCR, Tesseract."
+  },
+  "skill:aipoch-medical-research:image-processing": {
+    "vi": "[Tiện ích] Chuyển định dạng và nén ảnh hàng loạt bằng Pillow, chạy ngoại tuyến theo thư mục. Dùng khi cần xử lý nhiều ảnh mà không phụ thuộc mạng. Từ khoá: Pillow."
+  },
+  "skill:aipoch-medical-research:imagegenskill": {
+    "vi": "[Hình khoa học] Sinh hình SVG kiểu khoa học trực tiếp từ mô tả bằng lời, không dùng mô hình sinh ảnh. Dùng khi cần sơ đồ khoa học hoặc poster minh hoạ ở dạng vector. Từ khoá: SVG, diagram."
+  },
+  "skill:aipoch-medical-research:iso-certification": {
+    "vi": "[Quy chế] Bộ công cụ chuẩn bị hồ sơ chứng nhận ISO 13485 cho hệ quản lý chất lượng thiết bị y tế: phân tích khoảng trống tài liệu, soạn sổ tay chất lượng và các quy trình bắt buộc. Dùng khi làm hồ sơ chứng nhận. Từ khoá: ISO 13485."
+  },
+  "skill:aipoch-medical-research:journal-recommender": {
+    "vi": "[Chọn tạp chí] Gợi ý tạp chí theo chủ đề bản thảo, phần tóm tắt và kỳ vọng về chỉ số ảnh hưởng. Dùng khi cần danh sách tạp chí phù hợp để cân nhắc. Từ khoá: journal recommendation."
+  },
+  "skill:aipoch-medical-research:knowledge-base-search": {
+    "vi": "[Tra cứu] Tìm nội dung trong kho tri thức tại chỗ gồm file, chỉ mục hoặc PageIndex. Dùng khi cần câu trả lời có trích dẫn kiểm chứng được tới tận file và trang. Từ khoá: knowledge base."
+  },
+  "skill:aipoch-medical-research:kv-design": {
+    "vi": "[Trình bày] Dựng phương án hình ảnh chủ đạo cho một chiến dịch truyền thông từ khẩu hiệu và bối cảnh. Dùng khi cần định hướng thị giác trước khi vẽ. Từ khoá: key visual."
+  },
+  "skill:aipoch-medical-research:lab-inventory-predictor": {
+    "vi": "[Quản lý lab] Dự báo thời điểm hết hoá chất trọng yếu dựa trên tần suất dùng trước đây và tự cảnh báo khi tồn kho xuống dưới ngưỡng an toàn. Dùng khi quản lý vật tư phòng thí nghiệm. Từ khoá: inventory."
+  },
+  "skill:aipoch-medical-research:lab-prep-calculations": {
+    "vi": "[Thực nghiệm] Tính toán trước thí nghiệm và sinh quy trình pha từng bước cho pha loãng, pha dung dịch, hoà tan và nồng độ phần trăm. Dùng khi lên kế hoạch pha chế. Từ khoá: dilution."
+  },
+  "skill:aipoch-medical-research:lab-result-interpretation": {
+    "vi": "[Giải thích XN] Chuyển kết quả xét nghiệm sinh hoá thành lời giải thích dễ hiểu cho người bệnh, gồm công thức máu, mỡ máu, chức năng gan thận, tuyến giáp, điện giải và dấu ấn viêm; gắn cờ giá trị nguy kịch. Dùng khi cần giải thích kết quả cho người bệnh. Từ khoá: lab results."
+  },
+  "skill:aipoch-medical-research:learning-tutoring": {
+    "vi": "[Đào tạo] Lập kế hoạch học tập, sinh bài tập, viết lời giải và hướng dẫn ôn tập. Dùng khi cần soạn chương trình học hoặc bộ đề cho học viên. Từ khoá: study plan, tutoring."
+  },
+  "skill:aipoch-medical-research:literature-management": {
+    "vi": "[Tìm y văn] Nhập y văn tại chỗ vào một thư viện có quản lý, khử trùng lặp ngoại tuyến, gắn thẻ và tạo chỉ mục tìm được. Dùng khi cần quản lý kho tài liệu không phụ thuộc mạng. Từ khoá: literature management."
+  },
+  "skill:aipoch-medical-research:literature-statistics": {
+    "vi": "[Tìm y văn] Thống kê phân bố theo năm công bố và theo tạp chí từ danh mục hoặc file PDF tại chỗ, không cần mạng. Dùng khi cần bảng mô tả nguồn y văn cho tổng quan. Từ khoá: bibliometrics."
+  },
+  "skill:aipoch-medical-research:literatureimages-interpretation": {
+    "vi": "[Đọc bài báo] Diễn giải hình trong bài báo cùng chú thích, khi đầu vào là bản Markdown chuyển từ PDF có đánh dấu trang và liên kết ảnh. Dùng khi cần rút biến số, xu hướng và kết luận từ hình. Từ khoá: figure interpretation."
+  },
+  "skill:aipoch-medical-research:market-research-report-generator": {
+    "vi": "[Phân tích thị trường] Sinh báo cáo nghiên cứu thị trường bằng cách phân tích ý định kinh doanh rồi tra dữ liệu nhiều nguồn gồm web, PubMed và cơ sở dữ liệu thử nghiệm lâm sàng. Dùng cho công việc chiến lược sản phẩm. Từ khoá: market research."
+  },
+  "skill:aipoch-medical-research:markitdown": {
+    "vi": "[Tiện ích] Chuyển file và tài liệu Office thành Markdown sạch, ít token. Dùng khi cần văn bản gọn để tóm tắt, tìm kiếm hoặc nạp vào kho tri thức. Từ khoá: MarkItDown."
+  },
+  "skill:aipoch-medical-research:medical-case-interpreter": {
+    "vi": "[Truyền thông] Soạn bài báo cáo ca bệnh phù hợp quy định để đăng trên mạng xã hội. Dùng khi muốn chia sẻ một ca lâm sàng cho công chúng. Từ khoá: case report."
+  },
+  "skill:aipoch-medical-research:medical-case-report-generator": {
+    "vi": "[Truyền thông] Sinh bản báo cáo ca bệnh thân thiện với người đọc từ ảnh ca bệnh và tên bệnh. Dùng khi muốn chuyển một ca thành bài viết ngắn có cấu trúc. Từ khoá: case report."
+  },
+  "skill:aipoch-medical-research:medical-unit-converter": {
+    "vi": "[Công cụ LS] Đổi đơn vị kết quả xét nghiệm, chẳng hạn giữa mg/dL và mmol/L, có nêu rõ công thức và khoảng tham chiếu lâm sàng. Dùng khi đọc kết quả theo hệ đơn vị khác. Từ khoá: unit conversion."
+  },
+  "skill:aipoch-medical-research:medication-reconciliation": {
+    "vi": "[An toàn thuốc] Đối chiếu danh sách thuốc trước nhập viện với y lệnh nội trú để tự phát hiện thuốc bị bỏ sót hoặc trùng lặp. Dùng khi người bệnh nhập viện hay chuyển tuyến. Từ khoá: medication reconciliation."
+  },
+  "skill:aipoch-medical-research:meeting-assistant": {
+    "vi": "[Quản lý NC] Rút thông tin cuộc họp theo trình tự thời gian rồi xuất ra quyết định cùng việc cần làm. Dùng khi cần biên bản hoặc bản theo dõi công việc từ ghi chép thô. Từ khoá: meeting notes."
+  },
+  "skill:aipoch-medical-research:meeting-minutes-generator": {
+    "vi": "[Quản lý NC] Sinh biên bản họp có cấu trúc từ bản ghi văn bản, kèm phần ký xác nhận. Dùng khi đã có bản gỡ băng và cần biên bản chính thức. Từ khoá: meeting minutes."
+  },
+  "skill:aipoch-medical-research:mendel": {
+    "vi": "[Cố vấn y khoa] Người dẫn về di truyền học theo phong cách Gregor Mendel: quy luật di truyền, kiểu di truyền, tính trạng trội lặn, phân ly và phân ly độc lập. Dùng khi cần giảng giải hoặc tra cứu về di truyền. Từ khoá: genetics, inheritance."
+  },
+  "skill:aipoch-medical-research:meta-search-builder": {
+    "vi": "[Tìm y văn] Sinh chiến lược tìm y văn từ mô tả bằng lời: tự rút thực thể y khoa như bệnh, can thiệp và dân số rồi dựng câu truy vấn. Dùng khi bắt đầu tìm cho một phân tích gộp. Từ khoá: search strategy, PICOS."
+  },
+  "skill:aipoch-medical-research:microscopy-scale-bar-adder": {
+    "vi": "[Hình khoa học] Thêm thước tỷ lệ chính xác, đạt chuẩn đăng bài vào ảnh hiển vi khi đã có dữ liệu hiệu chuẩn điểm ảnh. Dùng khi chuẩn bị hình hiển vi cho bài báo. Từ khoá: scale bar, microscopy."
+  },
+  "skill:aipoch-medical-research:mindmap": {
+    "vi": "[Trình bày] Vẽ sơ đồ tư duy ngay tại máy bằng HTML, CSS và JS thuần, không cần thư viện ngoài. Dùng khi cần hình hoá cấu trúc nội dung mà không phụ thuộc mạng. Từ khoá: mindmap."
+  },
+  "skill:aipoch-medical-research:mindmap-helper": {
+    "vi": "[Trình bày] Sắp nội dung thành cấu trúc sơ đồ tư duy dạng Markdown hoặc JSON. Dùng khi cần dàn ý phân cấp để đưa vào phần mềm sơ đồ tư duy. Từ khoá: mindmap outline."
+  },
+  "skill:aipoch-medical-research:mindmap-html-generator": {
+    "vi": "[Trình bày] Sinh sơ đồ tư duy tương tác dạng HTML ngoại tuyến và chuyển Markdown, dàn ý, biên bản họp hay cây JSON sang định dạng markmap. Dùng khi cần hình hoá một văn bản dài. Từ khoá: markmap."
+  },
+  "skill:aipoch-medical-research:multi-panel-figure-assembler": {
+    "vi": "[Hình khoa học] Ghép 6 hình con thành một hình tổng hợp độ phân giải cao, nhãn và lề đồng nhất, đạt chuẩn đăng bài. Dùng khi bài cần hình nhiều bảng. Từ khoá: multi-panel figure."
+  },
+  "skill:aipoch-medical-research:multi-source-news-writer": {
+    "vi": "[Truyền thông] Gộp nhiều nguồn tin thành một thông cáo báo chí liền mạch theo cấu trúc tháp ngược. Dùng khi có nội dung thô và cần bản tin chuyên nghiệp. Từ khoá: press release."
+  },
+  "skill:aipoch-medical-research:note-summarizer": {
+    "vi": "[Đào tạo] Sắp ghi chép học tập thành dàn ý kiến thức có cấu trúc rồi xuất ra file Word. Dùng khi cần tài liệu phân cấp, chia sẻ được từ những ghi chép rời. Từ khoá: note summary."
+  },
+  "skill:aipoch-medical-research:paper-tweet-generator": {
+    "vi": "[Truyền thông] Sinh bài đăng đọc bài có cấu trúc từ một bài báo dạng PDF, Word hay văn bản. Dùng khi muốn chia sẻ tóm tắt bài lên mạng xã hội. Từ khoá: paper tweet."
+  },
+  "skill:aipoch-medical-research:patient-consent-simplifier": {
+    "vi": "[Đạo đức NC] Viết lại phiếu đồng thuận cho dễ hiểu với người bệnh mà vẫn giữ đúng yêu cầu pháp quy, nhắm mức đọc của học sinh trung học cơ sở, có bảng lợi ích và nguy cơ. Dùng khi soạn phiếu đồng thuận. Từ khoá: informed consent."
+  },
+  "skill:aipoch-medical-research:pdf-extract": {
+    "vi": "[Tiện ích] Rút chữ chọn được và ảnh từng trang trong file PDF, kể cả bảng, ra Markdown có tiêu đề theo trang và liên kết ảnh. Dùng khi cần cả chữ lẫn hình để phân tích hoặc làm slide. Từ khoá: PDF extraction."
+  },
+  "skill:aipoch-medical-research:pdf-ppt": {
+    "vi": "[Trình bày] Dựng bộ slide báo cáo bài báo từ file PDF: rút siêu dữ liệu, tóm tắt nghiên cứu, diễn giải kết quả và hình. Dùng khi chuẩn bị sinh hoạt khoa học từ một bài báo. Từ khoá: PDF to PPT."
+  },
+  "skill:aipoch-medical-research:pdf-processor": {
+    "vi": "[Tiện ích] Thao tác PDF cơ bản ngay tại máy: gộp, tách, trích trang, trích chữ và bảng, tạo file mới. Dùng khi cần xử lý PDF mà không gửi lên dịch vụ bên ngoài. Từ khoá: PDF merge, split."
+  },
+  "skill:aipoch-medical-research:pdf-to-ppt-pack": {
+    "vi": "[Trình bày] Chuyển bài báo PDF thành bộ slide báo cáo bằng quy trình hoàn toàn ngoại tuyến: rút chữ và hình, ghép chú thích rồi sinh slide. Dùng khi cần làm slide mà không phụ thuộc mạng. Từ khoá: PDF to PPT."
+  },
+  "skill:aipoch-medical-research:phi-prompt-guard": {
+    "vi": "[Bảo mật dữ liệu] Chốt chặn ngay lúc gõ câu lệnh: phát hiện lệnh có chứa thông tin định danh người bệnh và hướng người dùng sang cách làm đã khử định danh. Dùng khi làm việc với dữ liệu bệnh án. Từ khoá: PHI, guardrail."
+  },
+  "skill:aipoch-medical-research:plan-generator": {
+    "vi": "[Đào tạo] Sinh kế hoạch ôn tập hoặc lịch thí nghiệm dạng Markdown từ khoảng thời gian, danh sách việc và số giờ mỗi ngày. Dùng khi cần chia nhỏ việc theo lịch. Từ khoá: study plan, schedule."
+  },
+  "skill:aipoch-medical-research:plotly": {
+    "vi": "[Hình khoa học] Thư viện vẽ hình tương tác cho Python: chú giải khi rê chuột, phóng to, chọn vùng, hoạt hình và nhúng được vào trang web. Dùng khi cần hình tương tác cho bảng điều khiển hay bài trình bày. Từ khoá: Plotly."
+  },
+  "skill:aipoch-medical-research:postdoc-fellowship-matcher": {
+    "vi": "[Hồ sơ] Lọc và ghép cơ hội học bổng sau tiến sĩ theo quốc tịch, số năm từ khi nhận bằng và lĩnh vực nghiên cứu. Dùng khi tìm nơi nộp hồ sơ sau tiến sĩ. Từ khoá: postdoc fellowship."
+  },
+  "skill:aipoch-medical-research:poster-designer": {
+    "vi": "[Trình bày] Sinh ý tưởng thiết kế poster chuyên nghiệp cùng gợi ý cho công cụ vẽ, rồi chạy kịch bản dựng ra ảnh poster cuối cùng. Dùng khi cần poster hoàn chỉnh. Từ khoá: poster design."
+  },
+  "skill:aipoch-medical-research:ppt": {
+    "vi": "[Trình bày] Tạo và xuất bộ slide PPTX bằng khung HTML và JS tại chỗ, sinh slide từ chủ đề hoặc dàn ý, xem trước dạng HTML. Dùng khi cần bộ slide sinh bằng mã lệnh. Từ khoá: PPTX."
+  },
+  "skill:aipoch-medical-research:ppt-master": {
+    "vi": "[Trình bày] Chuyển tài liệu nguồn dạng PDF, DOCX, trang web hay Markdown thành trang SVG chất lượng cao rồi xuất ra PPTX. Dùng khi cần bộ slide đẹp từ một tài liệu có sẵn. Từ khoá: PPT, SVG."
+  },
+  "skill:aipoch-medical-research:pptx-posters": {
+    "vi": "[Trình bày] Sinh bài trình bày PowerPoint và poster học thuật từ tóm tắt hoặc toàn văn bài báo, tự tối ưu bố cục và định dạng trích dẫn. Dùng khi cần cả slide lẫn poster. Từ khoá: PPTX, poster."
+  },
+  "skill:aipoch-medical-research:pptx-skill": {
+    "vi": "[Trình bày] Tạo, sửa và rút nội dung từ file PowerPoint. Dùng khi cần sinh slide bằng mã lệnh, cập nhật bộ slide sẵn có hoặc xuất ảnh xem trước. Từ khoá: PPTX."
+  },
+  "skill:aipoch-medical-research:reagent-expiry-alert": {
+    "vi": "[Quản lý lab] Quét mã vạch hoá chất, ghi hạn dùng và cảnh báo nhiều mức trước khi hết hạn. Dùng khi quản lý kho vật tư phòng thí nghiệm. Từ khoá: reagent expiry."
+  },
+  "skill:aipoch-medical-research:reproducibility-check": {
+    "vi": "[Tái lặp] Rà mức đầy đủ của phần Phương pháp để người khác lặp lại được, đồng thời thúc đẩy thực hành khoa học mở như đăng ký tiền cứu, dữ liệu theo chuẩn FAIR và chia sẻ mã. Dùng trước khi nộp bài. Từ khoá: reproducibility, FAIR."
+  },
+  "skill:aipoch-medical-research:resubmission-deadline-tracker": {
+    "vi": "[Quản lý NC] Theo dõi hạn nộp lại bản thảo và tự chia việc theo giai đoạn dựa trên thời gian còn lại. Dùng khi tạp chí cho hạn sửa bài. Từ khoá: resubmission deadline."
+  },
+  "skill:aipoch-medical-research:result-figure-consistencycheck": {
+    "vi": "[Liêm chính] Đối chiếu phần mô tả kết quả với chú thích hình để tìm chỗ không khớp, đầu vào là bản Markdown chuyển từ PDF. Dùng khi rà bài trước lúc nộp. Từ khoá: consistency check."
+  },
+  "skill:aipoch-medical-research:schedule-management": {
+    "vi": "[Tiện ích] Quản lý lịch tại chỗ: thêm sự kiện, theo dõi hạn chót, tạo nhắc nhở và phát hiện trùng giờ. Dùng khi cần lịch làm việc chạy ngoại tuyến. Từ khoá: schedule."
+  },
+  "skill:aipoch-medical-research:sci-paper-reviewer": {
+    "vi": "[Phản biện] Mô phỏng quy trình bình duyệt nghiêm ngặt của tạp chí quốc tế: chấm mức đổi mới, soi lỗ hổng logic thực nghiệm và đề xuất sửa. Dùng khi muốn thử phản biện gắt trước lúc nộp. Từ khoá: peer review."
+  },
+  "skill:aipoch-medical-research:science-popularization-article": {
+    "vi": "[Truyền thông] Sinh bài phổ biến khoa học kèm tiêu đề và dàn ý theo chủ đề y khoa và phong cách mong muốn. Dùng khi làm nội dung giáo dục sức khoẻ cho công chúng. Từ khoá: science popularization."
+  },
+  "skill:aipoch-medical-research:scientific-schematics": {
+    "vi": "[Hình khoa học] Tự dựng sơ đồ khoa học đạt chuẩn đăng bài như lưu đồ, sơ đồ kiến trúc hay con đường sinh học, từ mô tả bằng lời. Dùng khi cần hình minh hoạ cho bài báo hoặc poster. Từ khoá: schematic, flowchart."
+  },
+  "skill:aipoch-medical-research:search-pubmed": {
+    "vi": "[Tìm y văn] Công cụ tra cứu y văn chính xác trên PubMed qua E-utilities. Dùng khi cần tìm bài theo một câu truy vấn đã dựng sẵn. Từ khoá: PubMed, E-utilities."
+  },
+  "skill:aipoch-medical-research:shift-handover-summarizer": {
+    "vi": "[Hồ sơ bệnh án] Sinh bản bàn giao ca trực có cấu trúc từ hồ sơ bệnh án, nêu bật biến cố quan trọng, thay đổi dấu hiệu sinh tồn và việc còn tồn. Dùng khi giao ca cho kíp sau. Từ khoá: shift handover."
+  },
+  "skill:aipoch-medical-research:short-video-script-generator": {
+    "vi": "[Truyền thông] Sinh kịch bản video ngắn phổ biến khoa học theo chủ đề, thời lượng và phong cách. Dùng khi làm nội dung video giáo dục sức khoẻ. Từ khoá: short video script."
+  },
+  "skill:aipoch-medical-research:skill-auditor": {
+    "vi": "[Kỹ thuật] Kiểm toán toàn diện một skill của trợ lý AI: đánh giá, chấm điểm và soát chất lượng theo chuẩn của file SKILL.md. Dùng khi muốn biết một skill mới tải về có đáng tin không. Từ khoá: skill audit."
+  },
+  "skill:aipoch-medical-research:slide-deck-images": {
+    "vi": "[Trình bày] Sinh ảnh SVG cho từng slide thay vì file PPTX hay PDF. Dùng khi cần hình slide để chèn vào nơi khác. Từ khoá: slide images, SVG."
+  },
+  "skill:aipoch-medical-research:soft-article-writer": {
+    "vi": "[Truyền thông] Viết bài quảng bá mềm có dàn ý, phần mở và tiêu đề tối ưu, dựa trên thông tin sản phẩm và chủ đề đang nóng. Dùng cho công việc tiếp thị nội dung. Từ khoá: marketing content."
+  },
+  "skill:aipoch-medical-research:spreadsheet-ops": {
+    "vi": "[Quản lý dữ liệu] Xử lý và phân tích bảng tính CSV hay Excel: gộp, làm sạch, thống kê, thêm công thức, định dạng và vẽ biểu đồ. Dùng khi làm việc với dữ liệu dạng bảng. Từ khoá: Excel, CSV."
+  },
+  "skill:aipoch-medical-research:symptom-checker-triage": {
+    "vi": "[Phân loại LS] Gợi ý mức ưu tiên xử trí là cấp cứu, khẩn hay ngoại trú dựa trên luật về triệu chứng cờ đỏ. Đây chỉ là hỗ trợ quyết định, không thay chẩn đoán của bác sĩ. Dùng khi cần phân loại nhanh. Từ khoá: triage, red flags."
+  },
+  "skill:aipoch-medical-research:task-reminder": {
+    "vi": "[Tiện ích] Sắp việc rời rạc thành danh sách hành động và sinh kế hoạch nhắc theo ngày, tuần hoặc theo hạn chót, xuất ra Markdown hay CSV. Dùng khi cần lịch việc có cấu trúc. Từ khoá: task reminder."
+  },
+  "skill:aipoch-medical-research:text-format-organizer": {
+    "vi": "[Hiệu đính] Dọn định dạng văn bản học thuật tại chỗ: chuẩn hoá khoảng trắng và ký tự xuống dòng mà vẫn giữ cấu trúc Markdown. Dùng khi chuẩn hoá file trước khi nộp hoặc soát lỗi. Từ khoá: text formatting."
+  },
+  "skill:aipoch-medical-research:text-to-technical-roadmap": {
+    "vi": "[Hình khoa học] Chuyển văn bản nghiên cứu thành lưu đồ lộ trình kỹ thuật dạng Mermaid. Dùng khi đã có đề cương hay thiết kế thí nghiệm và cần sơ đồ tổng thể. Từ khoá: Mermaid, roadmap."
+  },
+  "skill:aipoch-medical-research:time-zone-planner": {
+    "vi": "[Tiện ích] Lập khung giờ họp cho nhóm ở nhiều múi giờ, ánh xạ giờ địa phương từng vùng và phân tích được mất khi chọn giờ. Dùng khi hợp tác quốc tế. Từ khoá: time zone."
+  },
+  "skill:aipoch-medical-research:treatment-plans": {
+    "vi": "[Kế hoạch điều trị] Sinh kế hoạch điều trị lấy người bệnh làm trung tâm, thường 1 đến 4 trang, xuất LaTeX hoặc PDF, có mục tiêu SMART, can thiệp dựa chứng cứ và kế hoạch theo dõi. Dùng khi cần kế hoạch hành động cho một ca. Từ khoá: treatment plan, SMART."
+  },
+  "skill:aipoch-medical-research:uspto-database": {
+    "vi": "[Pháp lý] Truy cập dữ liệu của cơ quan sáng chế và nhãn hiệu Hoa Kỳ để tra sáng chế và tình trạng hồ sơ. Dùng khi cần kiểm tra tình trạng pháp lý của một sáng chế. Từ khoá: USPTO, patent."
+  },
+  "skill:aipoch-medical-research:vector-text-fixer": {
+    "vi": "[Hình khoa học] Sửa chữ bị lỗi phông trong hình vector dạng PDF hay SVG để mở lại chỉnh sửa được. Dùng khi mở hình trong phần mềm đồ hoạ thấy chữ bị vỡ. Từ khoá: SVG, font encoding."
+  },
+  "skill:aipoch-medical-research:virtual-patient-roleplay": {
+    "vi": "[Đào tạo] Mô phỏng buổi khám với người bệnh chuẩn hoá để luyện hỏi bệnh kiểu OSCE, rèn kỹ năng giao tiếp và rút kinh nghiệm sau buổi. Dùng khi đào tạo học viên y khoa. Từ khoá: OSCE."
+  },
+  "skill:aipoch-medical-research:waste-disposal-guide": {
+    "vi": "[An toàn lab] Hướng dẫn bỏ từng loại chất thải hoá học vào đúng thùng theo màu, kèm lưu ý an toàn và tuân thủ quy định. Dùng khi xử lý chất thải phòng thí nghiệm. Từ khoá: waste disposal."
+  },
+  "skill:aipoch-medical-research:word-read-write": {
+    "vi": "[Tiện ích] Tạo và đọc file Word: sinh báo cáo, thư hay biểu mẫu dạng docx và rút chữ từ file docx sẵn có. Dùng khi cần xử lý tài liệu Word bằng mã lệnh. Từ khoá: docx, Word."
+  },
+  "command:bigdata-com:catalyst-monitor": {
+    "vi": "[Tài chính] Lập bản đồ các sự kiện có thể làm chuyển giá của một công ty trong vài quý tới, kèm hàm ý thị trường và điểm cần theo dõi. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: catalyst."
+  },
+  "command:bigdata-com:company-brief": {
+    "vi": "[Tài chính] Tóm tắt toàn cảnh diễn biến 30 ngày gần nhất của một công ty. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: company brief."
+  },
+  "command:bigdata-com:country-analysis": {
+    "vi": "[Tài chính] Phân tích kinh tế một quốc gia gồm tổng sản phẩm quốc nội, lạm phát, chính sách tiền tệ, thị trường lao động và hàm ý đầu tư. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: country analysis."
+  },
+  "command:bigdata-com:country-sector-analysis": {
+    "vi": "[Tài chính] Phân tích vĩ mô ghép một ngành với một quốc gia hoặc khu vực: bối cảnh kinh tế, xu hướng ngành và nền tảng doanh nghiệp. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: sector, macro."
+  },
+  "command:bigdata-com:cross-sector": {
+    "vi": "[Tài chính] So sánh các ngành về định giá, tăng trưởng lợi nhuận và vị trí trong chu kỳ, kèm khuyến nghị dịch chuyển. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: sector rotation."
+  },
+  "command:bigdata-com:earnings-digest": {
+    "vi": "[Tài chính] Phân tích kết quả kinh doanh mới nhất: doanh thu, biên lợi nhuận, hiệu quả từng mảng, dự báo của ban điều hành và các bất ngờ. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: earnings."
+  },
+  "command:bigdata-com:earnings-preview": {
+    "vi": "[Tài chính] Phân tích trước kỳ công bố kết quả: diễn biến gần đây, xu hướng ngành, kịch bản lạc quan và bi quan, chỉ số cần theo dõi. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: earnings preview."
+  },
+  "command:bigdata-com:earnings-quality-screen": {
+    "vi": "[Tài chính] Sàng chất lượng lợi nhuận: khả năng chuyển thành tiền mặt, các khoản dồn tích và dấu hiệu bất thường trong kế toán. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: earnings quality."
+  },
+  "command:bigdata-com:earnings-reaction": {
+    "vi": "[Tài chính] Viết ghi chú sau kỳ công bố kết quả: thực tế so với kỳ vọng, thay đổi dự báo, tâm lý thị trường và quan điểm điều chỉnh. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: earnings reaction."
+  },
+  "command:bigdata-com:g7-comparison": {
+    "vi": "[Tài chính] So sánh các nền kinh tế nhóm G7 về tăng trưởng, lạm phát, chính sách, vị thế thị trường và hàm ý đầu tư. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: G7."
+  },
+  "command:bigdata-com:investment-memo": {
+    "vi": "[Tài chính] Soạn bản luận điểm đầu tư đầy đủ: luận đề, góc nhìn khác đám đông, định giá, rủi ro, chất xúc tác và khuyến nghị. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: investment memo."
+  },
+  "command:bigdata-com:moat-governance-review": {
+    "vi": "[Tài chính] Đánh giá độ bền lợi thế cạnh tranh và chất lượng ban điều hành, gồm phân bổ vốn và rủi ro quản trị. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: moat, governance."
+  },
+  "command:bigdata-com:peer-comparables": {
+    "vi": "[Tài chính] So một công ty với nhóm cùng ngành về định giá, tăng trưởng, khả năng sinh lời và tâm lý thị trường. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: peer comparison."
+  },
+  "command:bigdata-com:post-ipo-day1": {
+    "vi": "[Tài chính] Ghi chú ngày giao dịch đầu tiên sau khi lên sàn: giá so với giá chào bán, tín hiệu cầu và bình ổn giá, định giá lại. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: IPO day 1."
+  },
+  "command:bigdata-com:post-ipo-day14": {
+    "vi": "[Tài chính] Ghi chú ngày thứ 14 sau khi lên sàn về khả năng được thêm nhanh vào rổ chỉ số: điều kiện, ước lượng dòng tiền thụ động và hiệu ứng chỉ số. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: index inclusion."
+  },
+  "command:bigdata-com:post-ipo-day179": {
+    "vi": "[Tài chính] Ghi chú ngày thứ 179 sau khi lên sàn, quanh mốc hết hạn khoá 180 ngày: lượng cổ phiếu được giải phóng, mở rộng lượng lưu hành và tín hiệu bán ra của nội bộ. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: lock-up expiry."
+  },
+  "command:bigdata-com:post-ipo-day365": {
+    "vi": "[Tài chính] Ghi chú ngày thứ 365 sau khi lên sàn, quanh mốc hết hạn khoá của nhà sáng lập và nhà đầu tư lớn, khi lượng lưu hành nới rộng. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: lock-up, float."
+  },
+  "command:bigdata-com:pre-ipo-analysis": {
+    "vi": "[Tài chính] Ghi chú nghiên cứu cân bằng trước khi một công ty lên sàn: cấu trúc thương vụ, tài chính, khung định giá và tranh luận hai chiều, không đưa khuyến nghị mua bán. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: pre-IPO."
+  },
+  "command:bigdata-com:quick-take": {
+    "vi": "[Tài chính] Viết nhận định nhanh theo phong cách quản lý quỹ: quan điểm hiện tại, động lực chính, rủi ro và bối cảnh ngắn hạn. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: quick take."
+  },
+  "command:bigdata-com:regional-comparison": {
+    "vi": "[Tài chính] So sánh các khu vực về chỉ số kinh tế, diễn biến thị trường và khuyến nghị phân bổ vốn. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: regional comparison."
+  },
+  "command:bigdata-com:scenario-analysis": {
+    "vi": "[Tài chính] Dựng ba kịch bản lạc quan, cơ sở và bi quan kèm giả định, xác suất và giá trị kỳ vọng. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: scenario analysis."
+  },
+  "command:bigdata-com:sector-analysis": {
+    "vi": "[Tài chính] Phân tích một ngành về hiệu quả, định giá, chủ đề nổi bật, phân ngành và chất xúc tác sắp tới. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: sector analysis."
+  },
+  "command:bigdata-com:sector-playbook": {
+    "vi": "[Tài chính] Soạn cẩm nang đầu tư cho một ngành: chỉ số then chốt, tranh luận chính, bối cảnh định giá và cách hành động. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: sector playbook."
+  },
+  "command:bigdata-com:thematic-research": {
+    "vi": "[Tài chính] Nghiên cứu một chủ đề đầu tư vĩ mô: tác động lên ngành, bên hưởng lợi và cách triển khai. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: thematic research."
+  },
+  "command:bigdata-com:valuation-snapshot": {
+    "vi": "[Tài chính] Dựng bản định giá nhanh với giả định then chốt, ba kịch bản và giá trị bình quân theo xác suất. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: valuation."
+  },
+  "command:bigdata-com:variant-perception": {
+    "vi": "[Tài chính] Nêu rõ chỗ mình nghĩ khác đồng thuận thị trường, dựa trên nền tảng doanh nghiệp, định giá và tâm lý. Dùng cho việc đầu tư, không liên quan chuyên môn y khoa. Từ khoá: variant perception."
+  },
+  "command:claude-for-msft-365-install:bootstrap": {
+    "vi": "[Kỹ thuật] Dựng điểm truy cập khởi tạo cho bộ cài Microsoft 365: máy chủ MCP theo từng người dùng, skill và cấu hình động. Dùng khi triển khai cho cả tổ chức. Từ khoá: bootstrap, MCP."
+  },
+  "command:claude-for-msft-365-install:consent": {
+    "vi": "[Kỹ thuật] Sinh đường dẫn để quản trị viên Azure chấp thuận một lần cho toàn tổ chức, mở quyền đăng nhập và truy cập thư điện tử. Dùng khi cài đặt lần đầu cho tổ chức. Từ khoá: Azure, admin consent."
+  },
+  "command:claude-for-msft-365-install:export-data": {
+    "vi": "[Kỹ thuật] Xuất bản sao lịch sử hội thoại, skill, đăng ký MCP và thiết lập của một người dùng trước khi cài lại máy. Dùng khi thay hoặc dựng lại máy trạm. Từ khoá: export data."
+  },
+  "command:claude-for-msft-365-install:manifest": {
+    "vi": "[Kỹ thuật] Sinh file kê khai XML cho phần bổ trợ, đã nhúng sẵn cấu hình đám mây của tổ chức. Dùng khi đóng gói bản cài. Từ khoá: manifest, XML."
+  },
+  "command:claude-for-msft-365-install:setup": {
+    "vi": "[Kỹ thuật] Trình hướng dẫn cài đặt: khai báo nền tảng đám mây, xin chấp thuận quản trị viên và sinh file kê khai. Dùng khi bắt đầu triển khai cho tổ chức. Từ khoá: setup wizard."
+  },
+  "command:claude-for-msft-365-install:update-user-attrs": {
+    "vi": "[Kỹ thuật] Đặt cấu hình theo từng người dùng như hạn mức và vùng máy chủ, thông qua thuộc tính mở rộng của Azure. Dùng khi cần cấu hình riêng cho một số người. Từ khoá: Azure AD, user attributes."
+  },
+  "skill:productivity:start": {
+    "vi": "[Năng suất] Khởi tạo bộ công cụ năng suất và mở bảng điều khiển. Dùng khi cài lần đầu hoặc muốn dựng lại bộ nhớ làm việc từ dữ liệu sẵn có. Từ khoá: productivity, start."
+  },
+  "skill:zoom-plugin:start": {
+    "vi": "[Kỹ thuật] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom: chọn đúng bề mặt tích hợp, định hình kiến trúc rồi rẽ vào nhánh phù hợp. Dùng khi xây ứng dụng chạy trên Zoom. Từ khoá: Zoom, integration."
   }
 }

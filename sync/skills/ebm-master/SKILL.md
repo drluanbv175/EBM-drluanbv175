@@ -1,6 +1,6 @@
 ---
 name: EBM-MASTER
-description: Unified Evidence-Based Medicine platform for clinical care, research, statistics, guideline surveillance, drug safety, antibiotic stewardship, clinical scores and dashboard management.
+description: "[EBM tổng hợp] Nền tảng y học chứng cứ hợp nhất cho cả lâm sàng lẫn nghiên cứu: tra và thẩm định chứng cứ, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh, thang điểm lâm sàng và quản trị dashboard. Dùng khi cần vào cửa chung của hệ EBM mà chưa biết gọi công cụ lẻ nào. Từ khoá: EBM, evidence-based medicine, guideline surveillance."
 ---
 
 # EBM-MASTER

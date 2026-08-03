@@ -1,13 +1,6 @@
 ---
 name: clinical-evidence-rag
-description: >
-  Cau noi kien thuc-thuc hanh y khoa cho bac si lam sang. Tra loi cau hoi lam
-  sang bang cach truy xuat (RAG) tu kho y van do nguoi dung kiem soat -
-  guideline, phac do khoa/vien, bai tong quan, bai bao tuyen chon - roi tong
-  hop cau tra loi CO TRICH DAN, co ngay thang, co the kiem toan. Dung khi can
-  cap nhat kien thuc y khoa, doi chieu nghien cuu moi voi thuc hanh, soan tom
-  tat bang chung, hoac chuan bi quyet dinh lam sang. Day la cong cu HO TRO tra
-  cuu, KHONG thay the phan doan lam sang.
+description: "[Tra cứu chứng cứ] Cầu nối kiến thức với thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất từ kho y văn do chính bác sĩ kiểm soát — guideline, phác đồ khoa hoặc viện, bài tổng quan, bài báo đã tuyển chọn — rồi tổng hợp câu trả lời CÓ TRÍCH DẪN, có ngày tháng, kiểm toán được. Dùng khi cần cập nhật kiến thức, đối chiếu nghiên cứu mới với thực hành, soạn tóm tắt chứng cứ hoặc chuẩn bị một quyết định lâm sàng. Đây là công cụ HỖ TRỢ tra cứu, KHÔNG thay phán đoán lâm sàng. Từ khoá: RAG, evidence retrieval."
 ---
 
 # Clinical Evidence RAG Skill
