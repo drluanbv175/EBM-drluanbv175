@@ -1,0 +1,187 @@
+{
+  "_ghi_chu": "Bảng lệnh TÊN TIẾNG VIỆT trỏ tới skill/agent có sẵn. Tên đặt KHÔNG DẤU và bắt đầu bằng ĐỘNG TỪ để gõ nhanh và khác tên agent (gõ /tinh-co-mau ra lệnh, gõ tên agent co-mau-nghien-cuu vẫn ra agent). Khoá `dich` là tên skill/agent đích — sinh_lenh_viet.py đối chiếu với danh mục và từ chối sinh nếu đích không có trên máy. Sửa file này rồi chạy: python3 tools/vietnamize/sinh_lenh_viet.py",
+
+  "kham-ca-benh": {
+    "dich": "dieu-phoi-lam-sang",
+    "mo_ta": "Khám một ca bệnh theo trọn 5 bước EBM — nêu cờ đỏ ngay, dừng ở Cổng A trước khi áp dụng cho bệnh nhân",
+    "than": "Bệnh nhân / tình huống lâm sàng: **$ARGUMENTS**\n\nGọi agent `dieu-phoi-lam-sang` chạy trọn 5 bước EBM (Hỏi → Tìm → Thẩm định → Áp dụng → Theo dõi).\nBắt buộc: cờ đỏ nêu NGAY ở đầu; dừng ở **Cổng A** (bác sĩ duyệt trước khi áp dụng) và **Cổng B** (ghi sổ cái).\nMọi khuyến cáo kèm PMID/DOI và dòng \"Cần bác sĩ kiểm chứng\". KHÔNG ghi thông tin định danh bệnh nhân."
+  },
+  "sang-loc-cap-cuu": {
+    "dich": "sang-loc-co-do",
+    "mo_ta": "Sàng lọc cờ đỏ và ngưỡng chuyển tuyến/cấp cứu — chạy TRƯỚC mọi việc tra cứu",
+    "than": "Triệu chứng / bệnh cảnh: **$ARGUMENTS**\n\nGọi agent `sang-loc-co-do`. Nêu NGAY điều cần loại trừ và ngưỡng phải chuyển viện hoặc gọi cấp cứu.\nKhông để việc tra cứu chứng cứ làm chậm xử trí an toàn."
+  },
+  "ra-don-thuoc": {
+    "dich": "ke-don-an-toan",
+    "mo_ta": "Rà an toàn một đơn thuốc: tương tác, chống chỉ định, chỉnh liều theo thận/gan, người cao tuổi",
+    "than": "Đơn thuốc / thuốc cần rà: **$ARGUMENTS**\n\nGọi agent `ke-don-an-toan`. Trả cảnh báo phân tầng kèm đề xuất thay thế CÓ NGUỒN.\nKhông thay quyết định kê đơn của bác sĩ; dừng ở Cổng A."
+  },
+  "tinh-thang-diem": {
+    "dich": "thang-diem-nguy-co",
+    "mo_ta": "Chọn và áp thang điểm nguy cơ đã kiểm định (CHA₂DS₂-VASc, HAS-BLED, Wells, CURB-65, FRAX…)",
+    "than": "Tình huống cần tính nguy cơ: **$ARGUMENTS**\n\nGọi agent `thang-diem-nguy-co`. Trả nguy cơ tuyệt đối + ngưỡng hành động, kèm nguồn của thang.\nKHÔNG bịa điểm cắt."
+  },
+  "theo-doi-benh-man": {
+    "dich": "theo-doi-benh-man",
+    "mo_ta": "Kế hoạch theo dõi dài hạn và điều trị theo đích cho bệnh mạn (ĐTĐ, THA, lipid, COPD…)",
+    "than": "Bệnh mạn cần lập kế hoạch theo dõi: **$ARGUMENTS**\n\nGọi agent `theo-doi-benh-man`: đích điều trị, tần suất tái khám và xét nghiệm, tiêu chí tăng/giảm bậc, ngưỡng chuyển tuyến.\nGhi rõ guideline và năm."
+  },
+  "in-to-dan-do": {
+    "dich": "loi-dan-tuan-thu",
+    "mo_ta": "Sinh tờ dặn dò khổ A5 cho bệnh nhân — văn phong dễ hiểu, không thuật ngữ khó",
+    "than": "Nội dung cần dặn bệnh nhân: **$ARGUMENTS**\n\nGọi agent `loi-dan-tuan-thu`. Viết cho bệnh nhân đọc: cách dùng thuốc, lịch tái khám, dấu hiệu nguy hiểm phải quay lại ngay.\nKHÔNG ghi thông tin định danh."
+  },
+
+  "lam-nghien-cuu": {
+    "dich": "dieu-phoi-nghien-cuu",
+    "mo_ta": "Chạy một đề tài qua trọn vòng đời G0–G10 — tự dừng ở 6 cổng cứng cần người ký",
+    "than": "Đề tài: **$ARGUMENTS**\n\nGọi agent `dieu-phoi-nghien-cuu`: khôi phục trạng thái từ sổ cái → suy loại thiết kế → chạy G0 đến G10.\nDừng đúng ở 6 cổng cứng (G2 đạo đức · G4 khoá SAP · G5 khoá dữ liệu · G8 bình duyệt độc lập · G9 liêm chính tác giả · G10 khoá gói nộp) và ở nơi cần dữ liệu thật."
+  },
+  "dat-cau-hoi-nghien-cuu": {
+    "dich": "cau-hoi-nghien-cuu",
+    "mo_ta": "Chuyển vấn đề lâm sàng thành câu hỏi PICO/PECO rõ, kèm kết cục và kiểm khả thi FINER (cổng G0)",
+    "than": "Vấn đề muốn nghiên cứu: **$ARGUMENTS**\n\nGọi agent `cau-hoi-nghien-cuu`. Ra câu hỏi PICO/PECO, kết cục chính/phụ, giả thuyết, và chấm FINER."
+  },
+  "thiet-ke-de-tai": {
+    "dich": "thiet-ke-nghien-cuu",
+    "mo_ta": "Chọn thiết kế nghiên cứu, kiểm soát sai lệch, soạn và khoá kế hoạch phân tích (G1/G4)",
+    "than": "Đề tài cần thiết kế: **$ARGUMENTS**\n\nGọi agent `thiet-ke-nghien-cuu`. Mọi việc SAU khi đã xem dữ liệu thuộc về `phan-tich-thong-ke`, không làm ở đây."
+  },
+  "tinh-co-mau": {
+    "dich": "co-mau-nghien-cuu",
+    "mo_ta": "Tính cỡ mẫu / lực mẫu đúng theo thiết kế, kèm khối văn dán thẳng vào đề cương (cổng G3)",
+    "than": "Nghiên cứu cần tính cỡ mẫu: **$ARGUMENTS**\n\nGọi agent `co-mau-nghien-cuu`. Bắt buộc nêu NGUỒN của effect size (pilot, y văn có PMID/DOI, hoặc MCID do bác sĩ ấn định) — KHÔNG bịa."
+  },
+  "lam-ho-so-dao-duc": {
+    "dich": "dao-duc-dang-ky",
+    "mo_ta": "Soạn hồ sơ Hội đồng Đạo đức, phiếu đồng thuận, đăng ký nghiên cứu và kế hoạch dữ liệu (cổng G2)",
+    "than": "Đề tài cần làm hồ sơ đạo đức: **$ARGUMENTS**\n\nGọi agent `dao-duc-dang-ky`: hồ sơ IRB, ICF, đăng ký nghiên cứu, DMP, khai xung đột lợi ích. Theo Helsinki, ICH-GCP, CIOMS, SPIRIT."
+  },
+  "dat-bien-so": {
+    "dich": "bien-so-nghien-cuu",
+    "mo_ta": "Xác định bộ biến số đầy đủ cho đề tài, xuất được sang CRF/REDCap",
+    "than": "Đề tài cần đặc tả biến số: **$ARGUMENTS**\n\nGọi agent `bien-so-nghien-cuu`. Đủ nhóm biến, phân loại theo DAG, nêu đơn vị và thời điểm đo. KHÔNG bịa thang điểm — chỉ dùng thang đã công nhận, ghi nguồn."
+  },
+  "khoa-du-lieu": {
+    "dich": "quan-ly-du-lieu",
+    "mo_ta": "Làm sạch, khử định danh và KHOÁ cơ sở dữ liệu trước khi phân tích (cổng G5)",
+    "than": "Dữ liệu cần xử lý: **$ARGUMENTS**\n\nGọi agent `quan-ly-du-lieu`: luật kiểm tra dữ liệu, nhật ký truy vấn, kế hoạch dữ liệu thiếu, quy trình khoá DB, gói tái lặp. Bảo đảm ALCOA+. KHÔNG PII."
+  },
+  "chay-thong-ke": {
+    "dich": "phan-tich-thong-ke",
+    "mo_ta": "Chạy phân tích theo đúng SAP đã khoá, trên dữ liệu đã khoá (cổng G6)",
+    "than": "Phân tích cần chạy: **$ARGUMENTS**\n\nGọi agent `phan-tich-thong-ke`. Bám SAP đã khoá; kiểm giả định; báo ước lượng kèm 95% CI theo chuẩn báo cáo.\nNếu chưa khoá SAP hoặc chưa khoá dữ liệu thì DỪNG và nói rõ."
+  },
+  "dien-giai-so-lieu": {
+    "dich": "dien-giai-ket-qua",
+    "mo_ta": "Chuyển con số thống kê thành ý nghĩa lâm sàng, so với y văn — cầu nối sang phần Bàn luận",
+    "than": "Kết quả cần diễn giải: **$ARGUMENTS**\n\nGọi agent `dien-giai-ket-qua`. Phân biệt rõ ý nghĩa THỐNG KÊ với ý nghĩa LÂM SÀNG; không thổi phồng kết luận."
+  },
+  "viet-bai-bao": {
+    "dich": "viet-ban-thao",
+    "mo_ta": "Viết bản thảo IMRAD bám chuẩn báo cáo (CONSORT/STROBE/PRISMA/STARD/TRIPOD+AI)",
+    "than": "Bản thảo cần viết: **$ARGUMENTS**\n\nGọi agent `viet-ban-thao`: dàn ý trước, văn xuôi sau. Mỗi trích dẫn kèm PMID/DOI đã kiểm chứng."
+  },
+  "kiem-trich-dan": {
+    "dich": "kiem-chung-trich-dan",
+    "mo_ta": "Cổng chống trích dẫn ma — xác minh mọi PMID/DOI có thật, đúng nội dung, chưa bị rút",
+    "than": "Danh mục / bản thảo cần kiểm: **$ARGUMENTS**\n\nGọi agent `kiem-chung-trich-dan`. Bắt trích sai nội dung, tác giả/năm/tạp chí lệch, và bài ĐÃ BỊ RÚT.\nChạy trước mỗi lần nộp."
+  },
+  "nho-phan-bien": {
+    "dich": "binh-duyet",
+    "mo_ta": "Bình duyệt bản thảo/đề cương như một phản biện khó tính trước khi nộp",
+    "than": "Bản thảo cần bình duyệt: **$ARGUMENTS**\n\nGọi agent `binh-duyet`: tính hợp lệ phương pháp, tính đúng thống kê, tuân thủ chuẩn báo cáo, liêm chính khoa học."
+  },
+  "nop-bai": {
+    "dich": "nop-bai-phan-hoi",
+    "mo_ta": "Chọn tạp chí, soạn cover letter, đóng gói nộp và viết thư phản hồi phản biện",
+    "than": "Việc cần làm khi nộp: **$ARGUMENTS**\n\nGọi agent `nop-bai-phan-hoi`. Theo ICMJE và COPE; tránh tạp chí săn mồi."
+  },
+
+  "tra-chung-cu": {
+    "dich": "tra-cuu-chung-cu",
+    "mo_ta": "Tra chứng cứ tốt nhất cho MỘT câu hỏi lâm sàng, trả lời có PMID/DOI",
+    "than": "Câu hỏi lâm sàng: **$ARGUMENTS**\n\nGọi agent `tra-cuu-chung-cu`. Thứ tự: kho chứng cứ sẵn có → nguồn chính thống (guideline, Cochrane, HTA) → PubMed/Europe PMC để đối chiếu và lấy PMID."
+  },
+  "tham-dinh-chung-cu": {
+    "dich": "tham-dinh-grade-nnt",
+    "mo_ta": "Chấm GRADE, tính NNT/NNH, đánh giá nguy cơ sai lệch bằng đúng công cụ theo thiết kế",
+    "than": "Chứng cứ cần thẩm định: **$ARGUMENTS**\n\nGọi agent `tham-dinh-grade-nnt`. Dùng ĐÚNG công cụ: RoB 2 cho RCT, ROBINS-I cho quan sát, AMSTAR-2 cho tổng quan, QUADAS cho chẩn đoán."
+  },
+  "tong-quan-y-van": {
+    "dich": "tong-quan-y-van",
+    "mo_ta": "Tổng quan y văn có hệ thống theo PRISMA — tái lập được, dùng cho công bố",
+    "than": "Câu hỏi cần tổng quan: **$ARGUMENTS**\n\nGọi agent `tong-quan-y-van`: chiến lược tìm, sàng lọc, trích xuất, đánh giá sai lệch, tổng hợp."
+  },
+  "phan-tich-gop": {
+    "dich": "meta-phan-tich",
+    "mo_ta": "Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I², kiểm sai lệch công bố",
+    "than": "Bộ nghiên cứu cần gộp: **$ARGUMENTS**\n\nGọi agent `meta-phan-tich`. Chỉ gộp khi đồng nhất lâm sàng và phương pháp hợp lý — KHÔNG gộp ép."
+  },
+
+  "kiem-chuan-bao-cao": {
+    "dich": "check-reporting",
+    "mo_ta": "Đối chiếu bản thảo với 47 chuẩn báo cáo (STROBE, CONSORT, PRISMA, STARD, TRIPOD+AI…)",
+    "than": "Bản thảo cần kiểm: **$ARGUMENTS**\n\nDùng kỹ năng `check-reporting`. Chấm từng mục ĐỦ / THIẾU / MỘT PHẦN.\nChạy trước khi nộp; nếu chưa rõ nên theo chuẩn nào thì hỏi loại thiết kế trước."
+  },
+  "chon-tap-chi": {
+    "dich": "find-journal",
+    "mo_ta": "Gợi ý tạp chí phù hợp kèm chính sách khai báo AI và phương án dự phòng nếu bị từ chối",
+    "than": "Bản thảo cần chọn nơi nộp: **$ARGUMENTS**\n\nDùng kỹ năng `find-journal`.\nLƯU Ý: chỉ số ảnh hưởng và phí đăng bài trong hồ sơ có thể đã cũ — phải kiểm lại trên trang tạp chí trước khi quyết định."
+  },
+  "tra-loi-phan-bien": {
+    "dich": "revise",
+    "mo_ta": "Đọc góp ý phản biện và soạn thư phản hồi có cấu trúc, trả lời từng điểm một",
+    "than": "Góp ý của phản biện: **$ARGUMENTS**\n\nDùng kỹ năng `revise`. Trả lời từng ý một, nêu rõ đã sửa ở đâu hoặc vì sao không sửa."
+  },
+  "got-tieng-anh": {
+    "dich": "polish-language",
+    "mo_ta": "Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ",
+    "than": "Đoạn cần gọt: **$ARGUMENTS**\n\nDùng kỹ năng `polish-language`. TUYỆT ĐỐI không đổi số liệu, trích dẫn hay PMID/DOI — chỉ sửa ngôn ngữ."
+  },
+  "ve-hinh-bai-bao": {
+    "dich": "make-figures",
+    "mo_ta": "Vẽ hình đạt chuẩn đăng bài: ROC, forest plot, sơ đồ CONSORT/STARD/PRISMA, Kaplan-Meier",
+    "than": "Hình cần vẽ: **$ARGUMENTS**\n\nDùng kỹ năng `make-figures`. Nêu rõ loại nghiên cứu để chọn đúng bộ hình bắt buộc."
+  },
+  "lam-sach-du-lieu": {
+    "dich": "clean-data",
+    "mo_ta": "Khảo sát và làm sạch dữ liệu theo 3 bước có bác sĩ duyệt — không tự ý sửa dữ liệu",
+    "than": "Bộ dữ liệu cần làm sạch: **$ARGUMENTS**\n\nDùng kỹ năng `clean-data`: khảo sát → gắn cờ → sinh mã. Mọi quyết định xử lý giá trị thiếu hay ngoại lai phải bác sĩ xác nhận."
+  },
+  "tu-dien-du-lieu": {
+    "dich": "generate-codebook",
+    "mo_ta": "Sinh từ điển dữ liệu từ file dữ liệu — gắn cờ biến mã hoá không rõ nghĩa thay vì đoán",
+    "than": "File dữ liệu: **$ARGUMENTS**\n\nDùng kỹ năng `generate-codebook`. Chạy ngay khi nhận dữ liệu mới, trước khi phân tích."
+  },
+  "xoa-dau-vet-ai": {
+    "dich": "humanize",
+    "mo_ta": "Phát hiện và xoá dấu hiệu văn phong máy trong bản thảo, giữ nguyên nội dung khoa học",
+    "than": "Đoạn cần xử lý: **$ARGUMENTS**\n\nDùng kỹ năng `humanize`. Không được đổi số liệu hay luận điểm — chỉ sửa cách diễn đạt."
+  },
+  "tu-ra-bai": {
+    "dich": "self-review",
+    "mo_ta": "Tự rà bản thảo của mình bằng con mắt phản biện trước khi gửi tạp chí",
+    "than": "Bản thảo cần tự rà: **$ARGUMENTS**\n\nDùng kỹ năng `self-review`. Đây là bước cuối trước khi nộp."
+  },
+  "dang-ky-tong-quan": {
+    "dich": "prospero-registration-helper",
+    "mo_ta": "Soạn nội dung đăng ký PROSPERO cho tổng quan hệ thống / phân tích gộp",
+    "than": "Đề tài tổng quan: **$ARGUMENTS**\n\nDùng kỹ năng `prospero-registration-helper`. Đăng ký TIỀN CỨU là yêu cầu bắt buộc của tổng quan hệ thống nghiêm túc."
+  },
+  "tim-khoang-trong": {
+    "dich": "khoang-trong-nghien-cuu",
+    "mo_ta": "Đối chiếu câu hỏi với guideline hiện hành để tìm khoảng trống nghiên cứu, biện minh tính mới",
+    "than": "Chủ đề cần tìm khoảng trống: **$ARGUMENTS**\n\nGọi agent `khoang-trong-nghien-cuu`. Trả lời: câu hỏi này đã được giải đáp chưa, guideline nói gì, còn thiếu gì."
+  },
+  "lam-bang-mot": {
+    "dich": "table-1-generator",
+    "mo_ta": "Dựng Bảng 1 (đặc điểm nền của quần thể nghiên cứu) từ dữ liệu",
+    "than": "Dữ liệu cần dựng Bảng 1: **$ARGUMENTS**\n\nDùng kỹ năng `table-1-generator`. Nêu rõ biến phân nhóm và các biến cần mô tả."
+  },
+  "cap-nhat-chung-cu": {
+    "dich": "cap-nhat-chung-cu-y-khoa",
+    "mo_ta": "Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền",
+    "than": "Vấn đề lâm sàng cần cập nhật: **$ARGUMENTS**\n\nDùng kỹ năng `cap-nhat-chung-cu-y-khoa`. Tự chạy trọn dây chuyền: dựng dashboard → cổng liêm chính → thư viện → đồng bộ hub → xuất Word."
+  }
+}
