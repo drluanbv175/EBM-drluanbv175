@@ -4728,7 +4728,7 @@
     "vi": "[Phân tích gộp — bước 7] Kiểm chất lượng mức tạp chí lớn: báo cáo PRISMA/MOOSE, chẩn đoán nâng cao (Hartung-Knapp, khoảng dự báo, phân tích ảnh hưởng), bảng GRADE Summary of Findings, rà khẳng định và đối chiếu chéo. Dùng khi chuẩn bị gói nộp cuối. Từ khoá: PRISMA, MOOSE, GRADE SoF."
   },
   "name:ma-manuscript-quarto": {
-    "vi": "[Phân tích gộp — bước 8] Dựng và kết xuất bản thảo theo cấu trúc IMRaD bằng Quarto, nhúng sẵn hình và bảng. CẦN cài Quarto — máy này chưa có. Bản thay thế: agent `viet-ban-thao` (bám CONSORT/STROBE/PRISMA). Từ khoá: Quarto, IMRaD manuscript."
+    "vi": "[Phân tích gộp — bước 8] Dựng và kết xuất bản thảo theo cấu trúc IMRaD bằng Quarto, nhúng sẵn hình và bảng. Dùng khi chuyển từ kết quả phân tích sang bản thảo. Từ khoá: Quarto, IMRaD manuscript."
   },
   "name:ma-peer-review": {
     "vi": "[Phân tích gộp — bước 9] Đóng vai Phản biện 1 và Phản biện 2 cho bản thảo phân tích gộp: soi tính chặt chẽ, khả năng tái lập và tuân thủ chuẩn báo cáo. Dùng để tự thử trước khi nộp; KHÔNG thay bình duyệt độc lập thật (cổng G8). Từ khoá: peer review simulation."
