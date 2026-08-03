@@ -18,9 +18,26 @@ vẹn**, vá **lỗi font** ở danh sách gõ `/`, và dựng đủ môi trư�
 cd %USERPROFILE%\OneDrive\Claude AI
 git pull
 cd medical-ebm-automation
+git branch --show-current
 git pull
 cd ..
 ```
+
+> ### ⚠ Repo y khoa: kiểm NHÁNH trước khi kết luận "thiếu file"
+>
+> Repo `medical-ebm-automation` **không làm việc trên `master`**. Toàn bộ đề tài C1a
+> (đề cương, hồ sơ đạo đức, SAP, 7 bản Word) nằm trên nhánh
+> **`feat/r1-1-2-design-gap-remediation`** — nhánh này đi trước `master` **510 commit**.
+>
+> Đứng ở `master` mà `git pull` thì thư mục `exports/hai-long-benh-nhan-C1a-BVQY175/`
+> **sẽ không có** — đó là do sai nhánh, không phải mất dữ liệu. Chuyển nhánh:
+>
+> ```
+> git checkout feat/r1-1-2-design-gap-remediation
+> git pull
+> ```
+>
+> Việc gộp nhánh này vào `master` là **quyết định của bác sĩ**, không máy nào tự làm.
 
 ## 2. Cài 52 lệnh tiếng Việt
 
