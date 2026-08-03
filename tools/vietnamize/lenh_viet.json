@@ -199,5 +199,10 @@
     "dich": "ma-publication-quality",
     "mo_ta": "Kiểm chất lượng mức tạp chí lớn: PRISMA/MOOSE, Hartung-Knapp, khoảng dự báo, bảng GRADE SoF",
     "than": "Gói phân tích gộp cần kiểm: **$ARGUMENTS**\n\nDùng kỹ năng `ma-publication-quality` của meta-pipe. Đây là bước áp chót trước khi nộp; chạy sau khi đã có kết quả thống kê."
+  },
+  "lo-trinh-de-tai": {
+    "dich": "",
+    "mo_ta": "Lộ trình làm trọn một đề tài: gọi lệnh nào, theo thứ tự nào, dừng ở cổng nào — và đề tài đang ở đâu",
+    "than": "Đề tài (mã hoặc tên, để trống nếu chỉ muốn xem lộ trình): **$ARGUMENTS**\n\n1. Đọc `LO-TRINH-DE-TAI.md` ở thư mục gốc dự án.\n\n2. Nếu bác sĩ đưa MÃ đề tài, chạy để biết trạng thái THẬT:\n   `cd medical-ebm-automation && python tools/study_readiness.py --study <mã>`\n   Công cụ này cố ý bi quan: chỉ đếm việc CHƯA làm, và chỉ ghi \"ĐÃ KÝ\" khi sổ cái xác\n   nhận thật. Đừng suy diễn thêm ngoài những gì nó in ra.\n\n3. Trả lời bác sĩ đúng 3 ý, ngắn gọn:\n   - **Đang ở bước nào** (số thứ tự trong lộ trình A hoặc B)\n   - **Gọi gì tiếp theo** — đúng MỘT lệnh, kèm một câu vì sao\n   - **Cổng ký gần nhất phía trước** và ai phải ký\n\n4. Nếu chưa có mã đề tài: hỏi loại đề tài (nghiên cứu gốc hay tổng quan hệ thống) rồi\n   chỉ lộ trình tương ứng, bắt đầu từ bước 1.\n\nKhông tự chạy bước nào — chỉ chỉ đường. Bác sĩ gọi lệnh kế tiếp khi sẵn sàng."
   }
 }
