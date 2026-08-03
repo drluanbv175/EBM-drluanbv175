@@ -4699,5 +4699,47 @@
   },
   "skill:zoom-plugin:start": {
     "vi": "[Kỹ thuật] Điểm bắt đầu cho mọi ý tưởng tích hợp Zoom: chọn đúng bề mặt tích hợp, định hình kiến trúc rồi rẽ vào nhánh phù hợp. Dùng khi xây ứng dụng chạy trên Zoom. Từ khoá: Zoom, integration."
+  },
+  "name:ma-end-to-end": {
+    "vi": "[Phân tích gộp — điều phối] Chạy TRỌN dây chuyền phân tích gộp từ file TOPIC.txt tới bản thảo cuối và thư phản hồi phản biện. Dùng khi đã có chủ đề và muốn đi hết một mạch. LƯU Ý: đề tài chính thức của bác sĩ nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10 và chữ ký. Từ khoá: meta-analysis pipeline, end-to-end."
+  },
+  "name:brainstorm-topic": {
+    "vi": "[Phân tích gộp — bước 0] Động não tương tác để tìm và gọt chủ đề phân tích gộp. Dùng khi chưa có chủ đề rõ, hoặc muốn thử nhiều hướng trước khi chốt câu hỏi. Từ khoá: brainstorm topic."
+  },
+  "name:ma-topic-intake": {
+    "vi": "[Phân tích gộp — bước 1] Nhận chủ đề từ TOPIC.txt, chuyển thành đề cương PICO/PECO, xác định tiêu chuẩn chọn, kết cục và phạm vi tìm kiếm. Dùng khi khởi động một đề tài phân tích gộp mới. Từ khoá: topic intake, PICO."
+  },
+  "name:ma-search-bibliography": {
+    "vi": "[Phân tích gộp — bước 2] Tìm y văn bằng Python (qua uv), truy vấn PubMed và các CSDL khác, khử trùng lặp, lưu thư mục tài liệu theo từng vòng tìm. Dùng khi dựng hoặc cập nhật kho chứng cứ. CẦN cài `uv` — máy này chưa có. Từ khoá: literature search, PubMed."
+  },
+  "name:ma-screening-quality": {
+    "vi": "[Phân tích gộp — bước 3] Sàng lọc tiêu đề và tóm tắt, áp tiêu chuẩn chọn/loại, đánh giá chất lượng và nguy cơ sai lệch. Dùng khi chọn nghiên cứu đủ điều kiện đưa vào gộp. Từ khoá: screening, risk of bias."
+  },
+  "name:ma-fulltext-management": {
+    "vi": "[Phân tích gộp — bước 4] Thu thập và quản lý PDF toàn văn của các nghiên cứu được chọn, ghi vết nguồn gốc, chuẩn bị tài liệu cho khâu trích xuất. Dùng khi chuyển từ sàng lọc sang trích xuất dữ liệu. Từ khoá: fulltext management."
+  },
+  "name:ma-data-extraction": {
+    "vi": "[Phân tích gộp — bước 5] Định nghĩa khung trích xuất, bóc dữ liệu từ toàn văn và lưu vào cơ sở dữ liệu có cấu trúc. Dùng khi chuyển từ thu thập toàn văn sang phân tích thống kê. Từ khoá: data extraction."
+  },
+  "name:ma-meta-analysis": {
+    "vi": "[Phân tích gộp — bước 6] Chạy thống kê gộp bằng R (có renv): ước lượng hiệu ứng, tính không đồng nhất, chẩn đoán sai lệch công bố, xuất hình và bảng. CẦN cài R — máy này chưa có, skill sẽ dừng ở bước gọi Rscript. Bản thay thế dùng được ngay: agent `meta-phan-tich`. Từ khoá: meta-analysis, R, renv."
+  },
+  "name:ma-publication-quality": {
+    "vi": "[Phân tích gộp — bước 7] Kiểm chất lượng mức tạp chí lớn: báo cáo PRISMA/MOOSE, chẩn đoán nâng cao (Hartung-Knapp, khoảng dự báo, phân tích ảnh hưởng), bảng GRADE Summary of Findings, rà khẳng định và đối chiếu chéo. Dùng khi chuẩn bị gói nộp cuối. Từ khoá: PRISMA, MOOSE, GRADE SoF."
+  },
+  "name:ma-manuscript-quarto": {
+    "vi": "[Phân tích gộp — bước 8] Dựng và kết xuất bản thảo theo cấu trúc IMRaD bằng Quarto, nhúng sẵn hình và bảng. CẦN cài Quarto — máy này chưa có. Bản thay thế: agent `viet-ban-thao` (bám CONSORT/STROBE/PRISMA). Từ khoá: Quarto, IMRaD manuscript."
+  },
+  "name:ma-peer-review": {
+    "vi": "[Phân tích gộp — bước 9] Đóng vai Phản biện 1 và Phản biện 2 cho bản thảo phân tích gộp: soi tính chặt chẽ, khả năng tái lập và tuân thủ chuẩn báo cáo. Dùng để tự thử trước khi nộp; KHÔNG thay bình duyệt độc lập thật (cổng G8). Từ khoá: peer review simulation."
+  },
+  "name:ma-agent-teams": {
+    "vi": "[Phân tích gộp — điều phối] Lập đội agent cho dây chuyền phân tích gộp: tạo đội, sinh thành viên, quản danh sách việc và bàn giao giữa các chặng. Dùng cho đề tài lớn chạy nhiều chặng song song. Từ khoá: agent team orchestration."
+  },
+  "name:module-management": {
+    "vi": "[Phân tích gộp — bảo trì] Kiểm và cập nhật sổ đăng ký module của dây chuyền. Dùng sau khi thêm script hoặc tính năng mới, để tài liệu và tích hợp không bị lệch. Từ khoá: module registry."
+  },
+  "name:post-to-discussion": {
+    "vi": "[Phân tích gộp — chia sẻ] Đăng đề tài đã hoàn thành lên bảng Discussions của kho meta-pipe trên GitHub. Dùng khi muốn chia sẻ kết quả. LƯU Ý: đây là đăng CÔNG KHAI ra ngoài — kiểm kỹ không còn dữ liệu bệnh nhân hay thông tin định danh trước khi gửi. Từ khoá: share project, GitHub Discussions."
   }
 }
