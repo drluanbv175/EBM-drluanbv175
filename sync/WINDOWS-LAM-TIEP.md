@@ -132,6 +132,28 @@ Chỉ cần nếu thật sự chạy dây chuyền phân tích gộp:
 `dot` (graphviz), `latexmk`/`pdflatex`, `ffmpeg`, `soffice` là **tuỳ chọn** — thiếu chỉ mất vài
 định dạng xuất, `check_plugin_health.py` xếp chúng vào nhóm cảnh báo N3, không chặn.
 
+## 6b. ASReview — sàng lọc tổng quan bằng học chủ động (tuỳ chọn)
+
+Cài trên Mac ngày 04/08/2026. Đây là **ứng dụng Python riêng, không phải plugin** — nó
+không hiện khi gõ `/`, và venv nằm ngoài OneDrive nên **Windows phải tự cài**:
+
+```
+python -m venv %USERPROFILE%\.asreview-venv
+%USERPROFILE%\.asreview-venv\Scripts\python -m pip install asreview
+%USERPROFILE%\.asreview-venv\Scripts\asreview lab
+```
+
+Lệnh tiếng Việt `/sang-loc-asreview` (giải thích cách dùng, cảnh báo PRISMA và PII) về
+theo `git pull` ở bước 2 — có sẵn ngay cả khi chưa cài ASReview.
+
+Ba điều đã biết trước, khỏi mất công dò lại:
+- ASReview khai hỗ trợ Python **≤ 3.13**; trên Mac nó vẫn chạy tốt với 3.14.6. Windows
+  đang dùng 3.12.10 nên nằm trong vùng hỗ trợ chính thức.
+- Giao diện web **chỉ có tiếng Anh** và repo không có hệ đa ngôn ngữ. Bác sĩ đã chọn giữ
+  nguyên (04/08/2026) — chữ trên giao diện rất ít, chủ yếu hai nút Relevant / Not relevant.
+- Dữ liệu dự án nằm ở `~/.asreview`, **ngoài OneDrive** → mỗi máy một kho riêng, không
+  đồng bộ. Muốn mang dự án sang máy kia thì xuất/nhập file trong chính ASReview.
+
 ## 7. Đồng bộ bộ nhớ (không tự chạy được, phải gõ tay)
 
 ```
