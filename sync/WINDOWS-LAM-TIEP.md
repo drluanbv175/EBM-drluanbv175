@@ -154,6 +154,36 @@ Ba điều đã biết trước, khỏi mất công dò lại:
 - Dữ liệu dự án nằm ở `~/.asreview`, **ngoài OneDrive** → mỗi máy một kho riêng, không
   đồng bộ. Muốn mang dự án sang máy kia thì xuất/nhập file trong chính ASReview.
 
+## 6c. MCP pubmed-search — 45 công cụ tra y văn đa nguồn (cài 04/08/2026)
+
+Kho `u9401066/pubmed-search-mcp` là loại **lai**: vừa là MCP server vừa mang sẵn skill.
+
+**Phần MCP server: Windows KHÔNG phải làm gì** — `.mcp.json` ở gốc dự án về theo `git pull`
+và gọi `uvx pubmed-search-mcp`, nên không phụ thuộc đường dẫn venv của từng máy. Chỉ cần có
+`uv` (Windows đã cài từ phiên 03/08).
+
+**Phần 10 skill** thì mỗi máy phải tự dựng cache, giống meta-pipe:
+
+```
+git clone https://github.com/u9401066/pubmed-search-mcp %USERPROFILE%\Documents\GitHub\pubmed-search-mcp
+```
+
+Rồi khai vào `installed_plugins.json` + `known_marketplaces.json` + `settings.json` và **chép
+nội dung kho vào đúng đường dẫn cache** (xem bẫy đã ghi ở mục 5 — có cấu hình mà thiếu thư mục
+cache thì app im lặng không nạp). File `.claude-plugin/marketplace.json` và `plugin.json` đã
+viết sẵn trong kho Mac; nếu Windows clone bản gốc thì chưa có, chép từ Mac sang.
+
+> **Chỉ lấy 10 skill `pubmed-*`.** 16 skill còn lại trong kho là công cụ lập trình nội bộ của
+> chính dự án đó (code-reviewer, git-precommit, test-generator…) — không liên quan việc của bác
+> sĩ và chỉ làm rối danh sách khi gõ `/`. Trên Mac đã loại chúng khỏi cache cùng `.cline`,
+> `.codex`, `tests`, `.github`; **giữ lại `docs/` và `scripts/`** vì skill có tham chiếu thật.
+
+**Lỗi Mac gặp mà Windows nhiều khả năng KHÔNG gặp:** nhánh PubMed trả 0 kết quả vì Python 3.14
+cài từ python.org trên macOS thiếu chứng chỉ CA (mọi lời gọi qua `urllib` bị
+`SSL: CERTIFICATE_VERIFY_FAILED`). Windows dùng kho chứng chỉ hệ điều hành nên thường không dính.
+Nếu vẫn dính, dấu hiệu giống hệt: Europe PMC/OpenAlex chạy được (dùng `httpx`), riêng PubMed
+trả 0.
+
 ## 7. Đồng bộ bộ nhớ (không tự chạy được, phải gõ tay)
 
 ```
