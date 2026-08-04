@@ -158,9 +158,16 @@ Ba điều đã biết trước, khỏi mất công dò lại:
 
 Kho `u9401066/pubmed-search-mcp` là loại **lai**: vừa là MCP server vừa mang sẵn skill.
 
-**Phần MCP server: Windows KHÔNG phải làm gì** — `.mcp.json` ở gốc dự án về theo `git pull`
-và gọi `uvx pubmed-search-mcp`, nên không phụ thuộc đường dẫn venv của từng máy. Chỉ cần có
-`uv` (Windows đã cài từ phiên 03/08).
+**Phần MCP server: Windows gần như không phải làm gì** — `.mcp.json` về theo `git pull` và gọi
+`uv run --no-project tools/mcp/chay_pubmed_search_mcp.py`, dùng nguyên văn được trên cả hai máy
+(Windows đã có `uv` từ phiên 03/08). Lớp bọc tự ưu tiên venv `~/.pubmed-mcp-venv` nếu có, không
+thì rơi về `uvx` — nên máy chưa cài gì vẫn chạy.
+
+> **Một điều kiện Windows PHẢI có:** file `~/.ebm-secrets/medical-ebm-automation.env` với dòng
+> `NCBI_EMAIL=…`. Kho secrets nằm ngoài OneDrive nên **không tự sang máy khác**. Thiếu nó thì
+> server vẫn khởi động nhưng NCBI có thể từ chối (NCBI đòi email trong mọi lời gọi) — lớp bọc
+> in cảnh báo ra stderr chứ không chặn. Đặt thêm API key bằng:
+> `python tools\mcp\dat_ncbi_api_key.py` (nhập ẩn, tự kiểm chứng bằng lời gọi thật).
 
 **Phần 10 skill** thì mỗi máy phải tự dựng cache, giống meta-pipe:
 
