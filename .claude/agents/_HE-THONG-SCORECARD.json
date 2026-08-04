@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 11,
-    "partial": 2,
+    "strong": 13,
+    "partial": 0,
     "weak": 0,
     "total": 13
   },
@@ -135,7 +135,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 748 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 750 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -191,8 +191,8 @@
       "id": "A7",
       "name": "An toàn, ổn định, kiểm chứng",
       "level": "agent",
-      "status": "partial",
-      "passed": 4,
+      "status": "strong",
+      "passed": 5,
       "total": 5,
       "probes": [
         {
@@ -205,11 +205,11 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 237 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 238 khớp 'test_*.py' (≥40)"
         },
         {
-          "ok": false,
-          "detail": "Audit hệ PASS (kiểm chứng): exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -350,13 +350,13 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "partial",
-      "passed": 12,
+      "status": "strong",
+      "passed": 14,
       "total": 14,
       "probes": [
         {
-          "ok": false,
-          "detail": "Audit registry-aware PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Audit registry-aware PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -383,8 +383,8 @@
           "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,

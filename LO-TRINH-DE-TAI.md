@@ -111,6 +111,7 @@ Sau khi ký, sổ cái được niêm phong — sửa tay file sổ cái sẽ l�
 | 3 | **Đăng ký PROSPERO trước khi sàng lọc** | `/dang-ky-tong-quan` |
 | 4 | Tìm y văn, khử trùng lặp | `/tong-quan-y-van` |
 | 5 | Sàng lọc + đánh giá nguy cơ sai lệch | `/sang-loc-nghien-cuu` |
+| 5b | *(tuỳ chọn)* Sàng lọc tiêu đề/tóm tắt bằng học chủ động | `/sang-loc-asreview` |
 | 6 | Trích xuất dữ liệu | `/gop-tron-goi` (chặng 5) |
 | 7 | Chạy gộp: hiệu ứng, I², sai lệch công bố | `/phan-tich-gop` |
 | 8 | Kiểm PRISMA/MOOSE, GRADE SoF | `/kiem-prisma` |

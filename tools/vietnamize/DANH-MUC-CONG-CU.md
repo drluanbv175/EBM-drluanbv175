@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1920 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1921 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1608 mục (quét ngày 2026-08-03)
+> - **Mac**: 1609 mục (quét ngày 2026-08-04)
 > - **Windows**: 1644 mục (quét ngày 2026-08-03)
 > - có ở **cả 2 máy**: 1332 mục
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1521 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1522 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -1458,7 +1458,7 @@
 | `/medsci-review:write-paper` | kỹ năng | cả 2 máy | [MedSci] Viết bài báo trọn gói theo 8 giai đoạn IMRAD, từ dàn ý tới bản nộp. Dùng cho bài không đi qua dây chuyền G của bác sĩ; đề tài chính thức nên dùng agent `viet-ban-thao`. Từ khoá: paper writing, IMRAD. |
 | `/medsci-review:write-protocol` | kỹ năng | cả 2 máy | [MedSci] Sinh ĐỀ CƯƠNG nộp Hội đồng Đạo đức gồm 4 phần lõi. Dùng khi cần bản nháp nhanh; hồ sơ nộp thật phải qua agent `dao-duc-dang-ky` (cổng G2) vì nó gắn Helsinki, ICH-GCP và bản đồng thuận. Từ khoá: IRB protocol. |
 
-### user-commands  (52)
+### user-commands  (53)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -1490,6 +1490,7 @@
 | `/nop-bai` | lệnh | Mac | Chọn tạp chí, soạn cover letter, đóng gói nộp và viết thư phản hồi phản biện |
 | `/phan-tich-gop` | lệnh | Mac | Phân tích gộp: pooled effect + 95% CI, forest/funnel plot, I2, kiểm sai lệch công bố |
 | `/ra-don-thuoc` | lệnh | Mac | Rà an toàn một đơn thuốc: tương tác, chống chỉ định, chỉnh liều theo thận/gan, người cao tuổi |
+| `/sang-loc-asreview` | lệnh | Mac | Mở ASReview LAB để sàng lọc tiêu đề/tóm tắt bằng học chủ động — máy xếp lại thứ tự đọc, bác sĩ vẫn là người dán nhãn |
 | `/sang-loc-cap-cuu` | lệnh | Mac | Sàng lọc cờ đỏ và ngưỡng chuyển tuyến/cấp cứu — chạy TRƯỚC mọi việc tra cứu |
 | `/sang-loc-nghien-cuu` | lệnh | Mac | Sàng lọc tiêu đề/tóm tắt theo tiêu chuẩn chọn-loại và đánh giá nguy cơ sai lệch cho phân tích gộp |
 | `/tham-dinh-chung-cu` | lệnh | Mac | Chấm GRADE, tính NNT/NNH, đánh giá nguy cơ sai lệch bằng đúng công cụ theo thiết kế |
