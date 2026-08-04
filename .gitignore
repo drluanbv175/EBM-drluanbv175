@@ -25,6 +25,8 @@
 !/LO-TRINH-DE-TAI.md
 !/.gitignore
 !/.gitattributes
+# Khai báo MCP server theo dự án — cần đi cùng repo để máy Windows nhận được
+!/.mcp.json
 
 # 3) Bên trong .claude/: CHỈ track agents/ (bỏ session/state/settings.local/launch — runtime cục bộ)
 /.claude/*

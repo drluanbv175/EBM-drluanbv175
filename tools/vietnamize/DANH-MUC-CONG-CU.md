@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1921 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1931 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1609 mục (quét ngày 2026-08-04)
+> - **Mac**: 1619 mục (quét ngày 2026-08-04)
 > - **Windows**: 1644 mục (quét ngày 2026-08-03)
 > - có ở **cả 2 máy**: 1332 mục
 
@@ -1711,7 +1711,7 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (134 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (144 mục)
 
 
 ### mattpocock-skills  (41 · chỉ Mac)
@@ -1830,6 +1830,21 @@
 | `/codex:codex-cli-runtime` | kỹ năng | Mac | [Codex] Hợp đồng nội bộ để gọi runtime Codex từ Claude Code. Skill nội bộ, không gọi trực tiếp. Từ khoá: codex runtime. |
 | `/codex:codex-result-handling` | kỹ năng | Mac | [Codex] Hướng dẫn nội bộ về cách trình bày kết quả Codex trả về cho người dùng. Từ khoá: codex result. |
 | `/codex:gpt-5-4-prompting` | kỹ năng | Mac | [Codex] Hướng dẫn nội bộ soạn câu lệnh cho Codex/GPT-5.4 khi viết mã, rà soát, chẩn đoán, tra cứu. Từ khoá: GPT-5.4 prompting. |
+
+### pubmed-search  (10 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/pubmed-search:pubmed-export-citations` | kỹ năng | Mac | [PubMed 7] Xuất danh mục trích dẫn ra RIS/BibTeX/EndNote/Zotero/Mendeley. Dùng khi chuyển kết quả tìm sang phần mềm quản lý tài liệu. Xuất xong nên chạy /kiem-trich-dan để xác minh PMID/DOI có thật và chưa bị rút. Từ khoá: xuất trích dẫn… |
+| `/pubmed-search:pubmed-fulltext-access` | kỹ năng | Mac | [PubMed 5] Lấy TOÀN VĂN hợp pháp — ưu tiên bản truy cập mở (PMC, Unpaywall), trích hình, gợi ý đường truy cập qua thư viện cơ sở. Chỉ lấy bản được phép; KHÔNG vượt tường phí. Từ khoá: toàn văn, tải PDF, truy cập mở, PMC, xin bài. |
+| `/pubmed-search:pubmed-gene-drug-research` | kỹ năng | Mac | [PubMed 8] Tra GENE, HOẠT CHẤT và BIẾN THỂ — search_gene, search_compound, search_clinvar (PubChem, ClinVar). Dùng cho câu hỏi dược lý/di truyền, ví dụ ý nghĩa lâm sàng của một biến thể. KHÔNG thay tư vấn di truyền. Từ khoá: gene, biến t… |
+| `/pubmed-search:pubmed-mcp-tools-reference` | kỹ năng | Mac | [PubMed 10] Tra cứu đầy đủ 45 công cụ của MCP pubmed-search — dùng khi không nhớ có công cụ nào hoặc muốn gọi thẳng một công cụ cụ thể. Từ khoá: danh sách công cụ, có những công cụ gì, tra cứu công cụ, tool reference. |
+| `/pubmed-search:pubmed-multi-source-search` | kỹ năng | Mac | [PubMed 4] Tìm ĐỒNG THỜI nhiều cơ sở dữ liệu — PubMed, Europe PMC, OpenAlex, CORE, Semantic Scholar. Dùng khi cần độ phủ rộng hơn PubMed đơn thuần, hoặc tìm bài ngoài y sinh (kinh tế y tế, khoa học xã hội). Từ khoá: đa nguồn, nhiều cơ sở… |
+| `/pubmed-search:pubmed-paper-exploration` | kỹ năng | Mac | [PubMed 6] Lần theo MỘT bài chốt để mở rộng — bài liên quan, bài trích dẫn nó, danh mục tham khảo của nó, cây trích dẫn. Dùng khi đã có một bài quan trọng và muốn tìm hết vùng lân cận (snowballing). Từ khoá: bài liên quan, ai trích dẫn b… |
+| `/pubmed-search:pubmed-pico-search` | kỹ năng | Mac | [PubMed 2] Tìm theo câu hỏi lâm sàng PICO — parse_pico tách P/I/C/O rồi dựng truy vấn chạy được. Dùng cho câu hỏi so sánh điều trị ("A có tốt hơn B không"). KHÁC agent cau-hoi-nghien-cuu: agent kia dựng câu hỏi cho ĐỀ TÀI (cổng G0), skil… |
+| `/pubmed-search:pubmed-quick-search` | kỹ năng | Mac | [PubMed 1] Tra y văn NHANH một câu hỏi qua unified_search — gộp kết quả nhiều nguồn, trả PMID/DOI. Dùng khi chỉ cần tìm nhanh vài bài, chưa cần chiến lược tìm bài bản. Từ khoá: tra y văn, tìm bài báo, tìm nhanh, search papers, PubMed. |
+| `/pubmed-search:pubmed-research-chronicle` | kỹ năng | Mac | [PubMed 9] Dựng BIÊN NIÊN một chủ đề — lĩnh vực tiến triển ra sao theo thời gian, mốc quan trọng, và có gì mới kể từ lần tra trước (lưu lại được, so được giữa các lần). Từ khoá: diễn tiến nghiên cứu, biên niên, mốc quan trọng, có gì mới,… |
+| `/pubmed-search:pubmed-systematic-search` | kỹ năng | Mac | [PubMed 3] Tìm HỆ THỐNG, đủ độ phủ cho tổng quan — generate_search_queries mở rộng MeSH và từ đồng nghĩa. Dùng ở bước tìm y văn của tổng quan hệ thống/phân tích gộp; chiến lược tìm phải ghi lại được để tái lặp (PRISMA). Từ khoá: tìm hệ t… |
 
 ### data  (10 · chỉ Windows)
 

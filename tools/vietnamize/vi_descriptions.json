@@ -4741,5 +4741,35 @@
   },
   "name:post-to-discussion": {
     "vi": "[Phân tích gộp — chia sẻ] Đăng đề tài đã hoàn thành lên bảng Discussions của kho meta-pipe trên GitHub. Dùng khi muốn chia sẻ kết quả. LƯU Ý: đây là đăng CÔNG KHAI ra ngoài — kiểm kỹ không còn dữ liệu bệnh nhân hay thông tin định danh trước khi gửi. Từ khoá: share project, GitHub Discussions."
+  },
+  "skill:pubmed-search:pubmed-quick-search": {
+    "vi": "[PubMed 1] Tra y văn NHANH một câu hỏi qua unified_search — gộp kết quả nhiều nguồn, trả PMID/DOI. Dùng khi chỉ cần tìm nhanh vài bài, chưa cần chiến lược tìm bài bản. Từ khoá: tra y văn, tìm bài báo, tìm nhanh, search papers, PubMed."
+  },
+  "skill:pubmed-search:pubmed-pico-search": {
+    "vi": "[PubMed 2] Tìm theo câu hỏi lâm sàng PICO — parse_pico tách P/I/C/O rồi dựng truy vấn chạy được. Dùng cho câu hỏi so sánh điều trị (\"A có tốt hơn B không\"). KHÁC agent cau-hoi-nghien-cuu: agent kia dựng câu hỏi cho ĐỀ TÀI (cổng G0), skill này TÌM BÀI theo PICO đã có. Từ khoá: PICO, câu hỏi lâm sàng, so sánh điều trị, hiệu quả điều trị."
+  },
+  "skill:pubmed-search:pubmed-systematic-search": {
+    "vi": "[PubMed 3] Tìm HỆ THỐNG, đủ độ phủ cho tổng quan — generate_search_queries mở rộng MeSH và từ đồng nghĩa. Dùng ở bước tìm y văn của tổng quan hệ thống/phân tích gộp; chiến lược tìm phải ghi lại được để tái lặp (PRISMA). Từ khoá: tìm hệ thống, tổng quan y văn, MeSH, từ đồng nghĩa, chiến lược tìm."
+  },
+  "skill:pubmed-search:pubmed-multi-source-search": {
+    "vi": "[PubMed 4] Tìm ĐỒNG THỜI nhiều cơ sở dữ liệu — PubMed, Europe PMC, OpenAlex, CORE, Semantic Scholar. Dùng khi cần độ phủ rộng hơn PubMed đơn thuần, hoặc tìm bài ngoài y sinh (kinh tế y tế, khoa học xã hội). Từ khoá: đa nguồn, nhiều cơ sở dữ liệu, tìm rộng, OpenAlex, Europe PMC."
+  },
+  "skill:pubmed-search:pubmed-fulltext-access": {
+    "vi": "[PubMed 5] Lấy TOÀN VĂN hợp pháp — ưu tiên bản truy cập mở (PMC, Unpaywall), trích hình, gợi ý đường truy cập qua thư viện cơ sở. Chỉ lấy bản được phép; KHÔNG vượt tường phí. Từ khoá: toàn văn, tải PDF, truy cập mở, PMC, xin bài."
+  },
+  "skill:pubmed-search:pubmed-paper-exploration": {
+    "vi": "[PubMed 6] Lần theo MỘT bài chốt để mở rộng — bài liên quan, bài trích dẫn nó, danh mục tham khảo của nó, cây trích dẫn. Dùng khi đã có một bài quan trọng và muốn tìm hết vùng lân cận (snowballing). Từ khoá: bài liên quan, ai trích dẫn bài này, tài liệu tham khảo, cây trích dẫn, lần theo."
+  },
+  "skill:pubmed-search:pubmed-export-citations": {
+    "vi": "[PubMed 7] Xuất danh mục trích dẫn ra RIS/BibTeX/EndNote/Zotero/Mendeley. Dùng khi chuyển kết quả tìm sang phần mềm quản lý tài liệu. Xuất xong nên chạy /kiem-trich-dan để xác minh PMID/DOI có thật và chưa bị rút. Từ khoá: xuất trích dẫn, RIS, BibTeX, EndNote, Zotero, danh mục tài liệu."
+  },
+  "skill:pubmed-search:pubmed-gene-drug-research": {
+    "vi": "[PubMed 8] Tra GENE, HOẠT CHẤT và BIẾN THỂ — search_gene, search_compound, search_clinvar (PubChem, ClinVar). Dùng cho câu hỏi dược lý/di truyền, ví dụ ý nghĩa lâm sàng của một biến thể. KHÔNG thay tư vấn di truyền. Từ khoá: gene, biến thể, ClinVar, hoạt chất, PubChem, ý nghĩa lâm sàng."
+  },
+  "skill:pubmed-search:pubmed-research-chronicle": {
+    "vi": "[PubMed 9] Dựng BIÊN NIÊN một chủ đề — lĩnh vực tiến triển ra sao theo thời gian, mốc quan trọng, và có gì mới kể từ lần tra trước (lưu lại được, so được giữa các lần). Từ khoá: diễn tiến nghiên cứu, biên niên, mốc quan trọng, có gì mới, theo dõi chủ đề."
+  },
+  "skill:pubmed-search:pubmed-mcp-tools-reference": {
+    "vi": "[PubMed 10] Tra cứu đầy đủ 45 công cụ của MCP pubmed-search — dùng khi không nhớ có công cụ nào hoặc muốn gọi thẳng một công cụ cụ thể. Từ khoá: danh sách công cụ, có những công cụ gì, tra cứu công cụ, tool reference."
   }
 }

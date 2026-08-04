@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "pubmed-search": {
+      "command": "uvx",
+      "args": ["pubmed-search-mcp"],
+      "env": {
+        "NCBI_EMAIL": "bsluanbv175@gmail.com",
+        "UNPAYWALL_EMAIL": "bsluanbv175@gmail.com"
+      }
+    }
+  }
+}
