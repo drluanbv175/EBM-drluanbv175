@@ -90,6 +90,15 @@ DASH_RULES = [
     ("Nhi khoa", ["nhikhoa", "nhi khoa", "socphanve", "sốc phản vệ", "anaphylaxis", "phản vệ ở trẻ"]),
     ("Phục hồi chức năng – Ngôn ngữ trị liệu", ["phatamphuam", "phát âm phụ âm", "âm ngữ trị liệu", "ngôn ngữ trị liệu", "loạn vận ngôn"]),
     ("Thuốc & An toàn thuốc", ["antoanthuoc", "an toàn thuốc", "orlistat", "mhra", " ema", "prac", "fda", "akI".lower()]),
+    # Huyết học MỨC MẠNH (2026-08-05): từ khóa ĐẶC HIỆU TUYỆT ĐỐI, không chuyên khoa nào
+    # khác dùng — đặt sớm để không bị Nội tiết/Thần kinh cướp mất khi thẻ có kèm chữ
+    # "đái tháo đường"/"đột quỵ" trong phần liệt kê nhóm bệnh nhân. Bộ từ khóa YẾU hơn
+    # (thiếu sắt · ferritin · hemoglobin…) nằm ở mục "Huyết học" phía dưới, sau Tiêu hóa.
+    ("Huyết học", ["huyethoc", "huyết học", "đa hồng cầu", "dahongcau", "polycythemia",
+                   "erythrocytosis", "thalassemia", "huyết sắc tố", "truyền máu", "transfusion",
+                   "lơ xê mi", "leukemia", "u lympho", "lymphoma", "đa u tủy", "myeloma",
+                   "myeloproliferative", "tân sinh tủy", "hepcidin", "hemophilia",
+                   "thiếu máu thiếu sắt"]),
     ("Hô hấp", ["copd", "hohap", "hô hấp", "asthma", "hen "]),
     ("Cơ xương khớp – Thấp khớp", ["viemkhopdangthap", "viêm khớp", "thấp khớp", "khớp", "arthritis", "gout", "gút"]),
     ("Nội tiết – Chuyển hóa", ["dtd", "đái tháo", "diabet", "noitiet", "nội tiết", "lipid", "statin", "loãng xương", "tuyến giáp"]),
@@ -109,14 +118,14 @@ DASH_RULES = [
     # CỐ Ý KHÔNG dùng từ khóa "thiếu máu" trần: "thiếu máu cơ tim"/"thiếu máu não" sẽ bị
     # bắt nhầm khỏi Tim mạch/Thần kinh. Cũng KHÔNG dùng "anemia" trần để dashboard thiếu
     # máu do bệnh thận mạn thuần vẫn thuộc "Thận – Tiết niệu".
-    ("Huyết học", ["huyethoc", "huyết học", "thiếu máu thiếu sắt", "thieumau_", "thiếu sắt",
-                   "đa hồng cầu", "dahongcau", "polycythemia", "erythrocytosis", "thalassemia",
-                   "hemoglobin", "huyết sắc tố", "truyền máu", "transfusion", "hồng cầu lưới",
-                   "giảm tiểu cầu", "đông máu", "hemophilia", "lơ xê mi", "leukemia",
-                   "u lympho", "lymphoma", "đa u tủy", "myeloma", "myeloproliferative",
-                   "tân sinh tủy", "ferritin", "hepcidin"]),
     ("Thận – Tiết niệu", ["ckd", "benhthanman", "bệnh thận", "suy thận", "tiết niệu", "_than_", "than_2026"]),
     ("Tim mạch", ["timmach", "tim mạch", "suytim", "suy tim", "tienluongsuytim", "rung nhĩ", "tăng huyết áp", "tha ", "mạch vành"]),
+    # Huyết học MỨC YẾU: từ khóa dùng chung với khoa khác ("thiếu sắt" xuất hiện trong mọi
+    # thẻ suy tim + thiếu sắt; "ferritin"/"hemoglobin" xuất hiện ở thẻ thận, nội tiết).
+    # ĐẶT SAU Thận và Tim mạch để các thẻ đó giữ nguyên chuyên khoa bệnh cảnh chính —
+    # xác nhận bằng kiểm hồi quy: 8 thẻ AFFIRM-AHF/IRONMAN/HEART-FID vẫn thuộc Tim mạch.
+    ("Huyết học", ["thieumau_", "thiếu sắt", "hemoglobin", "hồng cầu lưới",
+                   "giảm tiểu cầu", "đông máu", "ferritin"]),
     ("Lão khoa – Đa bệnh lý", ["laokhoa", "lão khoa", "deprescrib", "beers", "stopp", "start criteria", "cao tuổi", "người cao tuổi", "polypharmacy", "đa thuốc"]),
     ("Cấp cứu", ["capcuu", "cấp cứu", "banau", "ban đầu"]),
     ("Nhiễm khuẩn", ["nhiễm", "vaccine", "vắc", "kháng sinh", "viêm phổi", "sepsis", "cap_ats", "cap ats"]),
