@@ -229,9 +229,20 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   định bên phải TỰ THU khi chưa chọn item → bảng dùng trọn bề ngang; thẻ tóm tắt tự lọc abstract ngoại ngữ.)*
 - **Tự động khi gọi skill:** mỗi lần `cap-nhat-chung-cu-y-khoa` được gọi → tự chạy TRỌN dây chuyền: dựng Dashboard
   (EW mặc định) → cổng liêm chính (`verify_dashboard.py --online`) → an toàn thuốc (nếu liên quan) → thư viện
-  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BẢN ĐỌC**
-  (`tools/build_ban_doc_chung_cu.py`, xem mục (3-bis)) → **bản Word** (mục (4)).
+  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BỘ BA đồng thời**.
   **KHÔNG tự chạy `sync_all.py`/Antifacts nữa** (đổi 2026-08-05 — xem mục (3)). Không cần bác sĩ yêu cầu từng bước.
+- **BỘ BA XUẤT ĐỒNG THỜI — MẶC ĐỊNH (bác sĩ chốt 2026-08-05). MỘT lệnh duy nhất:**
+  `python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online`
+  Sinh cùng lúc và từ CÙNG một khối `DATA`: **① Dashboard** (đầu vào, đã qua cổng liêm chính) ·
+  **② Bản đọc** `derivatives/<mã>_ban-doc.html` · **③ Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx`.
+  Gộp một lệnh để ba sản phẩm không bao giờ lệch phiên bản nhau — chạy rời rạc thì bản Word hoặc bản đọc
+  dễ tụt lại một phiên bản so với dashboard mà không ai nhận ra.
+  Cờ `--online` chạy `verify_dashboard.py --online` TRƯỚC; **chỉ khi cổng PASS thì bản Word mới được
+  truyền `--verified`** (không PASS → tool docx tự hạ câu chữ thành "CẦN xác minh", không khẳng định sai).
+  **Sau khi chạy, MẶC ĐỊNH mở cả BA file cho bác sĩ ngay trong Claude** (SendUserFile, `display:"render"`
+  cho 2 file HTML; `.docx` đính kèm để tải) — không bắt bác sĩ tự đi tìm trong thư mục.
+  Chạy được trên cả macOS lẫn Windows: tool gọi trình thông dịch bằng `sys.executable` (Windows không có
+  lệnh `python3`) và tự ép UTF-8 cho stdout (Windows mặc định cp1252 sẽ chết khi in tiếng Việt).
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
 - **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
