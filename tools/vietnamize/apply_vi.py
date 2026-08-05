@@ -25,6 +25,20 @@ cài đặt có số phiên bản nên sẽ mất khi plugin lên bản mới.
 """
 from __future__ import annotations
 
+# --- Ép stdout sang UTF-8 (vá 05/08/2026) ---------------------------------
+# Windows mặc định stdout=cp1252 → mọi print() tiếng Việt làm script chết giữa
+# chừng bằng UnicodeEncodeError, trong khi phần việc chính đã chạy xong. Ép ở
+# đây thay vì bắt người dùng nhớ đặt PYTHONIOENCODING trước mỗi lệnh.
+import sys as _sys
+
+for _luong in (_sys.stdout, _sys.stderr):
+    if _luong is not None and (getattr(_luong, "encoding", "") or "").lower().replace("-", "") != "utf8":
+        try:
+            _luong.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass          # luồng bị chuyển hướng kiểu không reconfigure được — bỏ qua
+# --------------------------------------------------------------------------
+
 import argparse
 import hashlib
 import json

@@ -17,6 +17,20 @@ KHÔNG sửa file nào — đây là bước đọc.
 """
 from __future__ import annotations
 
+# --- Ép stdout sang UTF-8 (vá 05/08/2026) ---------------------------------
+# Windows mặc định stdout=cp1252 → mọi print() tiếng Việt làm script chết giữa
+# chừng bằng UnicodeEncodeError, trong khi phần việc chính đã chạy xong. Ép ở
+# đây thay vì bắt người dùng nhớ đặt PYTHONIOENCODING trước mỗi lệnh.
+import sys as _sys
+
+for _luong in (_sys.stdout, _sys.stderr):
+    if _luong is not None and (getattr(_luong, "encoding", "") or "").lower().replace("-", "") != "utf8":
+        try:
+            _luong.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass          # luồng bị chuyển hướng kiểu không reconfigure được — bỏ qua
+# --------------------------------------------------------------------------
+
 import datetime
 import json
 import os
@@ -227,6 +241,13 @@ def main() -> int:
         # chưa được dựng, installPath chưa tồn tại — nhưng NGUỒN thì có, và cache sẽ
         # được sao ra từ nguồn. Dịch vào nguồn để bản dịch đi theo lúc cache sinh ra.
         nguon_thu_muc: dict[str, Path] = {}
+        # Plugin ĐÃ CÀI nhưng ĐANG TẮT vẫn nằm trong installed_plugins.json. Trước
+        # 05/08/2026 danh mục liệt kê cả chúng → mời gọi những lệnh gõ vào là không
+        # chạy. Lộ ra khi tắt 8/9 plugin medsci-* (9 plugin đó chứa BỘ SKILL Y HỆT
+        # NHAU — đã so md5 byte-identical — nên 522 mục chỉ là 59 skill nhân bản).
+        # Chỉ loại khi settings ghi rõ false; vắng mặt thì GIỮ, để bản vá này không
+        # âm thầm làm rỗng danh mục trên máy cấu hình theo kiểu khác.
+        tat_ro_rang: set[str] = set()
         st = HOME / ".claude/settings.json"
         if st.exists():
             try:
@@ -235,10 +256,15 @@ def main() -> int:
                     src = (v or {}).get("source") or {}
                     if src.get("source") == "directory" and src.get("path"):
                         nguon_thu_muc[mp] = Path(src["path"])
+                for k, bat in (cfg.get("enabledPlugins") or {}).items():
+                    if bat is False:
+                        tat_ro_rang.add(k)
             except (OSError, json.JSONDecodeError):
                 pass
 
         for key, entries in data.get("plugins", {}).items():
+            if key in tat_ro_rang:
+                continue
             plugin, _, mktp = key.partition("@")
             root = Path(entries[0]["installPath"])
             if not root.exists():

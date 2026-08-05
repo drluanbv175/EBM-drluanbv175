@@ -32,6 +32,33 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   core.hooksPath .githooks && chmod +x .githooks/pre-commit`; không dùng `--no-verify`
   để tuyên bố hoàn thiện.
 
+## Tìm & dùng công cụ (plugin · skill · agent) — dọn 2026-08-05
+- **Ba cách tra, theo thứ tự nên dùng:** (1) mở **`TRA-CUU-CONG-CU.html`** ở gốc thư mục này —
+  gõ tiếng Việt CÓ DẤU hay KHÔNG DẤU đều ra, xếp theo độ sát (khớp ở TÊN thắng khớp trong mô tả),
+  lọc theo loại/máy, bấm vào lệnh là chép; mở bằng chuột, không cần Claude chạy. (2) lệnh
+  **`/cong-cu-gi <việc cần làm>`** — đọc `tools/vietnamize/INDEX-CONG-CU.md` (bản gọn 28 KB), chưa
+  đủ thì **grep** trên `DANH-MUC-CONG-CU.md`, KHÔNG đọc cả file (~530 KB ≈ 150k token). (3) danh mục
+  đầy đủ `tools/vietnamize/DANH-MUC-CONG-CU.md` khi cần đọc mô tả dài.
+- **Sinh lại sau MỖI lần cập nhật/cài/gỡ plugin** (3 lệnh, chạy trong thư mục này):
+  `python tools/vietnamize/extract_catalog.py` → `python tools/vietnamize/build_danh_muc.py` →
+  `python tools/vietnamize/build_trang_tra_cuu.py`. Chạy trên **CẢ HAI máy** — bản chụp
+  `catalog_may/<Máy>.json` của máy nào chỉ máy đó cập nhật được, và trang tra gộp cả hai để
+  gắn nhãn `[W]`/`[M]`. Bảng "Việc hay làm" sửa tay ở `tools/vietnamize/viec-hay-lam.json`
+  (file DUY NHẤT trong bộ này sửa tay được; mọi thứ khác sinh tự động — **đừng sửa tay**).
+- **Bộ `medsci-skills`: 9 plugin nhưng CÙNG MỘT bộ 58 skill byte-identical** (đã so md5). Đã
+  **tắt 8, giữ `medsci-project`** trong `~/.claude/settings.json` → danh sách Windows 1405 → 941
+  mục, **0 năng lực mất** (đã kiểm: cả 58 tên vẫn gọi được qua `/medsci-project:*`). **Tiền tố
+  lệnh đổi**: `/medsci-review:check-reporting` → `/medsci-project:check-reporting`. Bật lại =
+  đổi `false` → `true` (cache còn nguyên trên đĩa, không phải tải lại). **MÁY MAC CHƯA DỌN** —
+  làm y hệt rồi chạy lại 3 lệnh trên. Muốn lấy lại ~230 MB đĩa: `claude plugin uninstall
+  medsci-analysis@medsci-skills` (lặp cho 8 plugin đã tắt) — không bắt buộc.
+- **Ba bẫy đã vá cùng ngày, đừng để tái phát:** (a) `extract_catalog.py` từng liệt kê cả plugin
+  ĐANG TẮT → danh mục mời gọi lệnh gõ vào là không chạy; nay bỏ qua mục `enabledPlugins: false`
+  (chỉ khi ghi RÕ `false`, vắng mặt thì giữ). (b) Khi một skill có nhiều cách gọi, cách được
+  khuyên phải là cách chạy được ở NHIỀU MÁY nhất — không thì bảng chữ cái sẽ chọn
+  `/medsci-analysis:*` (đã tắt) thay vì `/medsci-project:*`. (c) 7 script trong `tools/vietnamize/`
+  từng chết giữa chừng trên Windows vì `print()` tiếng Việt gặp stdout cp1252 — nay tự ép UTF-8.
+
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
   tracker + dashboard 12 tab + Evidence Workbench + scheduler + scoring (32 thang có nguồn trích dẫn
