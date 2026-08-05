@@ -267,6 +267,16 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `~/.ebm-venv`). Xác thực output bằng `scripts/office/validate.py` của skill `docx` (kiểm XSD OOXML thuần
   Python) thay cho bước dựng ảnh xem trước (soffice+pdftoppm) mà máy này không chạy được; chú ý bẫy thứ tự
   phần tử `tcPr`/`pPr` khi tự ghép XML bằng oxml (`tcBorders` phải trước `shd`; `pBdr` phải trước `spacing`).
+- **(5) KÊNH TRÌNH BÀY THỨ 3 — "Bản tin chứng cứ trong khung chat" (chốt 2026-08-05):** khi bác sĩ hỏi ngay
+  trong hội thoại (giữa hai bệnh nhân, trên điện thoại), mở dashboard/Word là quá chậm → trả lời bằng bản tin
+  đọc thẳng trong khung chat claude.ai, theo bộ khung 8 khối cố định của
+  `dashboard_mockups/templates/CHAT-BRIEF-SPEC.md`. **Cùng khối `DATA`** với 2 kênh kia, chỉ khác cách trình
+  bày: rút gọn được, **thêm khẳng định mới thì KHÔNG** — mỗi câu phải truy được về một `items[]` của dashboard
+  đã PASS `verify_dashboard.py --online`. Hai bẫy riêng của kênh này (đã ghi thành luật trong spec): (a) nén
+  mạnh làm rụng mệnh đề điều kiện ("ngoài thai kỳ", "nếu không chống chỉ định") → biến câu đúng thành lời
+  khuyên sai; (b) khung chat không có cột "kết cục" nên số liệu phải tự gắn đúng kết cục nó đo (vd RR 0,72 của
+  sắt tĩnh mạch là kết cục GỘP nhập viện + tử vong tim mạch, KHÔNG phải "giảm nhập viện"). Chưa tự động hoá:
+  bước tiếp là thêm đầu ra thứ 4 cho `make_derivatives.py` — chờ bác sĩ duyệt vì tool này có 3 bản đồng bộ.
 
 ## Lệnh
 > Chạy trong `medical-ebm-automation/` (dự án sống), với venv `~/.ebm-venv` đã kích hoạt.
