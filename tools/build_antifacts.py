@@ -214,6 +214,30 @@ def load_scales():
 
 
 # ---- Đọc dashboard cập nhật ----------------------------------------------------
+def load_exclusions() -> set:
+    """Đọc danh sách dashboard KHÔNG đưa lên Antifacts.
+
+    Antifacts quét thư mục bằng glob nên mọi dashboard mới tự động lên hub — kể cả
+    khi dây chuyền cập nhật không gọi sync_all.py, vì hai lịch launchd (tuần/tháng)
+    vẫn dựng lại Antifacts từ chính thư mục đó. Muốn giữ một gói chứng cứ ở dạng
+    BẢN ĐỌC riêng mà không lên hub theo chuyên khoa thì phải khai ở đây.
+
+    File: EBM-Dashboards/antifacts-exclude.txt — mỗi dòng một tên file; dòng trống
+    và dòng bắt đầu bằng '#' bị bỏ qua.
+    """
+    path = DASH_DIR / "antifacts-exclude.txt"
+    if not path.exists():
+        return set()
+    names = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            names.add(line)
+    if names:
+        print(f"   ⤫ Bỏ qua {len(names)} dashboard theo antifacts-exclude.txt")
+    return names
+
+
 def load_updates():
     lib = {}
     if LIBRARY_JSON.exists():
@@ -228,8 +252,11 @@ def load_updates():
         print(f"⚠️  Không thấy {DASH_DIR}", file=sys.stderr)
         return out
 
+    excluded = load_exclusions()
     for f in sorted(DASH_DIR.glob("WebDashboard_*.html")):
         fname = f.name
+        if fname in excluded:
+            continue
         meta = lib.get(fname, {})
         question = meta.get("question") or title_from_filename(fname)
         date = meta.get("updated") or date_from_filename(fname)

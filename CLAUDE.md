@@ -229,7 +229,9 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   định bên phải TỰ THU khi chưa chọn item → bảng dùng trọn bề ngang; thẻ tóm tắt tự lọc abstract ngoại ngữ.)*
 - **Tự động khi gọi skill:** mỗi lần `cap-nhat-chung-cu-y-khoa` được gọi → tự chạy TRỌN dây chuyền: dựng Dashboard
   (EW mặc định) → cổng liêm chính (`verify_dashboard.py --online`) → an toàn thuốc (nếu liên quan) → thư viện
-  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`). Không cần bác sĩ yêu cầu từng bước.
+  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BẢN ĐỌC**
+  (`tools/build_ban_doc_chung_cu.py`, xem mục (3-bis)) → **bản Word** (mục (4)).
+  **KHÔNG tự chạy `sync_all.py`/Antifacts nữa** (đổi 2026-08-05 — xem mục (3)). Không cần bác sĩ yêu cầu từng bước.
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
 - **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
@@ -240,7 +242,23 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - **Lưu & tích lũy (thư mục chung):** mọi dashboard xuất vào `EBM-Dashboards/` (OneDrive-synced Mac↔Windows).
   Sau khi xuất, **chạy trong `EBM-Dashboards/`**: (1) `python3 tools/verify_dashboard.py <file>.html --online` → PASS;
   (2) `python3 tools/build_library.py add <file>.html` để cập nhật chỉ mục `evidence-library.html`. Hướng dẫn: `EBM-Dashboards/README.md`.
-- **(3) ĐỒNG BỘ VÀO HUB EBM_MASTER (bắt buộc — nếu không, nội dung KHÔNG vào "EBM" trung tâm):** sau khi PASS, nạp dashboard
+- **(3-bis) BẢN ĐỌC sau cập nhật — MẶC ĐỊNH TỰ CHẠY (bác sĩ chốt 2026-08-05):**
+  `python3 tools/build_ban_doc_chung_cu.py <dashboard>.html` → `EBM-Dashboards/derivatives/<mã>_ban-doc.html`.
+  Đây là trang bác sĩ ĐỌC NGAY sau khi chạy xong dây chuyền: cờ đỏ và việc cần làm đứng TRƯỚC, chứng cứ
+  đặt sau trên MỘT trục thang log dùng chung (vạch 1,0 ở giữa — trái có lợi, phải bất lợi). Khác dashboard
+  (công cụ tra cứu có bộ lọc) và khác bản Word (tài liệu lưu trữ đầy đủ). Tool tự chuẩn hoá VIẾT HOA THEO CÂU:
+  khối `DATA` hay dùng VIẾT HOA TOÀN BỘ để nhấn mạnh ("KHÔNG dùng…", "phân suất tống máu BẢO TỒN"), trang đọc
+  hạ về chữ thường và nhấn bằng màu + độ đậm, NHƯNG giữ nguyên tên viết tắt (HFrEF, PCI) và tên thử nghiệm
+  (PARADIGM-HF, ATTR-CM). Chỉ mục có hiệu số định lượng mới lên biểu đồ; guideline/đồng thuận liệt kê riêng.
+- **(3) KHÔNG còn tự đồng bộ lên Antifacts/hub (đổi mặc định 2026-08-05 theo yêu cầu bác sĩ).**
+  Trước đây bước này chạy `EBM_MASTER/tools/sync_all.py` mặc định; nay **chỉ chạy khi bác sĩ yêu cầu riêng**.
+  ⚠️ **Bỏ chạy `sync_all.py` là KHÔNG ĐỦ để giữ một gói ngoài Antifacts:** `tools/build_antifacts.py` quét
+  `EBM-Dashboards/WebDashboard_*.html` bằng **glob**, và hai lịch launchd (`com.medicalebm.weeklysafety` /
+  `com.medicalebm.monthlyupdate`) vẫn dựng lại Antifacts từ chính thư mục đó — nên gói mới sẽ tự lên hub.
+  Muốn giữ ngoài hub thì **phải khai tên file** vào `EBM-Dashboards/antifacts-exclude.txt` (mỗi dòng một tên
+  file; `#` là chú thích), rồi chạy lại `python3 tools/build_antifacts.py`.
+  Nội dung mục (3) cũ giữ lại dưới đây để dùng khi bác sĩ yêu cầu đồng bộ:
+- **(3-cũ) Đồng bộ vào hub EBM_MASTER — CHỈ KHI ĐƯỢC YÊU CẦU:** sau khi PASS, nạp dashboard
   vào sổ cái trung tâm. **Hub đã gộp NGAY trong thư mục chung này: `Claude AI/EBM_MASTER/`** (từ 2026-06-11; trước ở
   `../Cập nhật hướng dẫn điều trị/EBM_MASTER`). **Cách nhanh nhất — một lệnh idempotent tự gom + dedup:**
   `python3 EBM_MASTER/tools/sync_all.py` (hoặc bấm đúp nút `Đồng bộ EBM.command` ở thư mục chung). Lệnh này tự: copy dashboard
