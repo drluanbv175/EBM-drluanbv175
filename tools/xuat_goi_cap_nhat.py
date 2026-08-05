@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Xuất ĐỒNG THỜI bộ ba sản phẩm của một lần cập nhật chứng cứ.
+"""Xuất ĐỒNG THỜI bộ bốn sản phẩm của một lần cập nhật chứng cứ.
 
 Một lệnh duy nhất, từ file Dashboard đã dựng xong:
 
     Dashboard (.html)  →  ① Dashboard (đầu vào, kiểm liêm chính)
                           ② Bản đọc (.html)  — trang đọc ngay tại phòng khám
                           ③ Bản Word (.docx) — tài liệu lưu trữ đầy đủ
+                          ④ Bản Word dạng HTML — để ĐỌC THẲNG trong khung chat
 
 Cách dùng:
     python3 tools/xuat_goi_cap_nhat.py <dashboard>.html [--online] [--parts parts.json]
@@ -15,11 +16,26 @@ Cách dùng:
                Chỉ khi cổng PASS thì bản Word mới được truyền cờ --verified —
                nếu không, tool docx tự hạ câu chữ thành "CẦN xác minh" thay vì
                khẳng định sai là đã xác minh.
-    --json     in kết quả dạng JSON (đường dẫn 3 file) để tự động hoá.
+    --json     in kết quả dạng JSON (đường dẫn các file) để tự động hoá.
 
-Vì sao gộp thành một lệnh: ba sản phẩm này phải sinh từ CÙNG một khối DATA và
+Vì sao gộp thành một lệnh: các sản phẩm này phải sinh từ CÙNG một khối DATA và
 cùng một thời điểm. Chạy rời rạc thì dễ xảy ra tình trạng bản Word hoặc bản đọc
 tụt lại một phiên bản so với dashboard mà không ai nhận ra.
+
+Vì sao có bước ④ (thêm 05/08/2026, theo yêu cầu của bác sĩ): `.docx` là tệp nén
+nhị phân nên khung chat của Claude KHÔNG mở thẳng được — nó chỉ hiện thẻ tải về,
+bác sĩ phải rời khung chat mới đọc được tài liệu đầy đủ. Bước này dựng thêm một
+bản HTML tự chứa từ CHÍNH file `.docx` vừa sinh (không dựng lại từ dữ liệu, để
+không có đường nào làm hai bản lệch nhau).
+
+    GIỮ: toàn bộ chữ, bảng, đề mục, thứ tự.
+    MẤT: màu nền ô của bản Word — huy hiệu mức chứng cứ/quyết định chỉ còn phần
+         chữ. Bản `.docx` vẫn là bản lưu trữ chuẩn; trang này chỉ để ĐỌC NHANH.
+
+Bước ④ cần `pandoc`. Nếu máy KHÔNG có pandoc thì bỏ qua bước này và báo rõ ra
+màn hình, KHÔNG làm hỏng ba sản phẩm còn lại và KHÔNG đổi mã thoát — pandoc là
+tiện ích đọc, không phải cổng chất lượng. (Đã kiểm 05/08/2026: Mac có pandoc
+3.10; máy Windows chưa kiểm, nên nhánh thiếu pandoc phải chạy êm.)
 
 Chạy được trên cả macOS lẫn Windows: gọi trình thông dịch bằng sys.executable
 (Windows không có lệnh `python3`) và tự ép UTF-8 cho stdout (Windows mặc định
@@ -29,8 +45,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -38,6 +57,32 @@ DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
 BAN_DOC = ROOT / "tools" / "build_ban_doc_chung_cu.py"
 VERIFY = DASH_TOOLS / "verify_dashboard.py"
 DOCX = DASH_TOOLS / "build_dashboard_docx.py"
+
+# CSS nhúng thẳng vào file Python (KHÔNG tách ra file asset riêng) để bước ④ không
+# tạo thêm một thứ phải đồng bộ tay giữa Mac và Windows.
+HTML_STYLE = """<style>
+ body{font-family:"Times New Roman",Times,serif;max-width:900px;margin:0 auto;
+      padding:28px 22px;line-height:1.55;color:#111;background:#fff}
+ h1{font-size:1.9rem;border-bottom:3px solid #0e7490;padding-bottom:.4rem}
+ h2{font-size:1.35rem;margin-top:2rem;color:#0f172a;border-left:5px solid #0e7490;
+    padding-left:.55rem}
+ h3{font-size:1.1rem;margin-top:1.4rem}
+ table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.95rem}
+ td,th{border:1px solid #cbd5e1;padding:7px 9px;vertical-align:top}
+ tr:first-child td{background:#f1f5f9;font-weight:700}
+ blockquote{border-left:4px solid #ca8a04;background:#fffbeb;margin:1rem 0;padding:.6rem 1rem}
+ .hz-note{border:1px solid #fcd34d;background:#fffbeb;border-radius:8px;
+          padding:.7rem .9rem;margin:0 0 1.4rem;font-size:.92rem;line-height:1.5}
+ @media (max-width:700px){body{padding:16px 12px}table{font-size:.85rem}}
+</style>"""
+
+# Cảnh báo đặt NGAY ĐẦU trang: người đọc phải biết bản này mất màu, tránh hiểu nhầm
+# là đã xem đủ như bản Word.
+HTML_BANNER = """<div class="hz-note">
+ <strong>Bản HTML sinh tự động từ file Word cùng tên.</strong> Giữ đủ chữ, bảng và
+ đề mục; nhưng <strong>mất màu nền ô</strong> — huy hiệu mức chứng cứ và quyết định
+ chỉ còn phần chữ. Cần bản có màu: mở file <code>.docx</code> hoặc dashboard.
+</div>"""
 
 
 def configure_utf8_stdio() -> None:
@@ -56,10 +101,59 @@ def run(cmd: list, cwd: Path | None = None) -> tuple[int, str]:
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 
 
+def doc_tieu_de(dash: Path) -> str:
+    """Lấy câu hỏi lâm sàng trong khối DATA để làm <title> cho trang HTML.
+
+    Chấp nhận CẢ nháy đơn LẪN nháy kép vì hai template EW/DA dùng quy ước khác
+    nhau (đúng cái bẫy đã làm vỡ parser của build_dashboard_docx.py hồi 18/07).
+    Không đọc được thì lùi về tên file — đây chỉ là nhãn hiển thị, không được
+    phép làm hỏng cả bước.
+    """
+    try:
+        text = dash.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return dash.stem
+    m = re.search(r"question\s*:\s*(['\"])(.*?)\1", text, re.S)
+    if m and m.group(2).strip():
+        return m.group(2).strip()
+    return dash.stem
+
+
+def xuat_ban_word_html(docx_path: Path, dash: Path) -> tuple[Path | None, str]:
+    """Dựng bản HTML tự chứa TỪ file .docx vừa sinh, để đọc thẳng trong khung chat.
+
+    Trả về (đường dẫn hoặc None, lý do khi không sinh được).
+    """
+    pandoc = shutil.which("pandoc")
+    if not pandoc:
+        return None, ("thiếu pandoc — cài rồi chạy lại lệnh này; ba sản phẩm kia"
+                      " KHÔNG bị ảnh hưởng")
+    out = docx_path.with_suffix(".html")
+    with tempfile.TemporaryDirectory() as tmp:
+        style = Path(tmp) / "style.html"
+        banner = Path(tmp) / "banner.html"
+        style.write_text(HTML_STYLE, encoding="utf-8")
+        banner.write_text(HTML_BANNER, encoding="utf-8")
+        base = [pandoc, "-f", "docx", "-t", "html5", "--standalone",
+                "--include-in-header", str(style),
+                "--include-before-body", str(banner),
+                "--metadata", f"title={doc_tieu_de(dash)}",
+                str(docx_path), "-o", str(out)]
+        # --embed-resources là cờ của pandoc ≥ 2.19; bản cũ hơn dùng --self-contained.
+        # Thử cờ mới trước, lỗi thì lùi về cờ cũ (máy Windows chưa rõ phiên bản).
+        for co_nhung in ("--embed-resources", "--self-contained"):
+            rc, msg = run(base[:1] + [co_nhung] + base[1:])
+            if rc == 0 and out.exists():
+                return out, ""
+            loi = msg.strip()
+        return None, f"pandoc lỗi: {loi.splitlines()[-1] if loi else 'không rõ'}"
+
+
 def main() -> int:
     configure_utf8_stdio()
     ap = argparse.ArgumentParser(
-        description="Xuất đồng thời Dashboard + Bản đọc + Bản Word cho một lần cập nhật chứng cứ")
+        description="Xuất đồng thời Dashboard + Bản đọc + Bản Word + Bản Word dạng HTML"
+                    " cho một lần cập nhật chứng cứ")
     ap.add_argument("dashboard", help="đường dẫn WebDashboard_*.html")
     ap.add_argument("--online", action="store_true",
                     help="chạy cổng liêm chính có phân giải PMID/DOI thật trước khi xuất")
@@ -81,6 +175,7 @@ def main() -> int:
 
     py = sys.executable
     result = {"dashboard": str(dash), "ban_doc": None, "word": None,
+              "word_html": None, "word_html_ly_do": None,
               "cong_liem_chinh": "KHÔNG CHẠY", "verified_flag": False}
     rc_final = 0
 
@@ -138,8 +233,25 @@ def main() -> int:
                 result["word"] = line.replace("✓ Đã ghi", "").split("—")[0].strip()
         print("   " + (result["word"] or "(không rõ đường dẫn)"))
 
-    print("\n── Bộ ba đã sẵn sàng ──")
-    for nhan, key in (("Dashboard", "dashboard"), ("Bản đọc  ", "ban_doc"), ("Bản Word ", "word")):
+    # ── ④ Bản Word dạng HTML (đọc thẳng trong khung chat) ─────────────────────
+    # Chỉ chạy khi ③ đã ra file thật — không dựng HTML từ một bản Word không tồn tại.
+    print("④ Bản Word dạng HTML (đọc thẳng trong khung chat)…")
+    if not result["word"]:
+        result["word_html_ly_do"] = "chưa có file .docx ở bước ③"
+        print("   ⚠ Bỏ qua: " + result["word_html_ly_do"])
+    else:
+        html, ly_do = xuat_ban_word_html(Path(result["word"]), dash)
+        if html:
+            result["word_html"] = str(html)
+            print("   " + str(html))
+            print("   (giữ đủ chữ và bảng; MẤT màu nền ô — bản .docx vẫn là bản lưu trữ chuẩn)")
+        else:
+            result["word_html_ly_do"] = ly_do
+            print("   ⚠ Bỏ qua: " + ly_do)
+
+    print("\n── Bộ bốn đã sẵn sàng ──")
+    for nhan, key in (("Dashboard   ", "dashboard"), ("Bản đọc     ", "ban_doc"),
+                      ("Bản Word    ", "word"), ("Word dạng HTML", "word_html")):
         print(f"  {nhan}  {result[key] or '(chưa sinh được)'}")
     print(f"  Cổng liêm chính: {result['cong_liem_chinh']}")
     print("\nCần bác sĩ kiểm chứng trước khi áp dụng cho người bệnh cụ thể.")

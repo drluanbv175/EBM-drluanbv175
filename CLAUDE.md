@@ -229,18 +229,30 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   định bên phải TỰ THU khi chưa chọn item → bảng dùng trọn bề ngang; thẻ tóm tắt tự lọc abstract ngoại ngữ.)*
 - **Tự động khi gọi skill:** mỗi lần `cap-nhat-chung-cu-y-khoa` được gọi → tự chạy TRỌN dây chuyền: dựng Dashboard
   (EW mặc định) → cổng liêm chính (`verify_dashboard.py --online`) → an toàn thuốc (nếu liên quan) → thư viện
-  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BỘ BA đồng thời**.
+  (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BỘ BỐN đồng thời**.
   **KHÔNG tự chạy `sync_all.py`/Antifacts nữa** (đổi 2026-08-05 — xem mục (3)). Không cần bác sĩ yêu cầu từng bước.
-- **BỘ BA XUẤT ĐỒNG THỜI — MẶC ĐỊNH (bác sĩ chốt 2026-08-05). MỘT lệnh duy nhất:**
+- **BỘ BỐN XUẤT ĐỒNG THỜI — MẶC ĐỊNH (bác sĩ chốt 2026-08-05; nâng từ BỘ BA lên BỘ BỐN cùng ngày). MỘT lệnh duy nhất:**
   `python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online`
   Sinh cùng lúc và từ CÙNG một khối `DATA`: **① Dashboard** (đầu vào, đã qua cổng liêm chính) ·
-  **② Bản đọc** `derivatives/<mã>_ban-doc.html` · **③ Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx`.
-  Gộp một lệnh để ba sản phẩm không bao giờ lệch phiên bản nhau — chạy rời rạc thì bản Word hoặc bản đọc
+  **② Bản đọc** `derivatives/<mã>_ban-doc.html` · **③ Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` ·
+  **④ Bản Word dạng HTML** `derivatives/<mã>_TaiLieuChiTiet.html`.
+  Gộp một lệnh để các sản phẩm không bao giờ lệch phiên bản nhau — chạy rời rạc thì bản Word hoặc bản đọc
   dễ tụt lại một phiên bản so với dashboard mà không ai nhận ra.
   Cờ `--online` chạy `verify_dashboard.py --online` TRƯỚC; **chỉ khi cổng PASS thì bản Word mới được
   truyền `--verified`** (không PASS → tool docx tự hạ câu chữ thành "CẦN xác minh", không khẳng định sai).
-  **Sau khi chạy, MẶC ĐỊNH mở cả BA file cho bác sĩ ngay trong Claude** (SendUserFile, `display:"render"`
-  cho 2 file HTML; `.docx` đính kèm để tải) — không bắt bác sĩ tự đi tìm trong thư mục.
+  **Vì sao có ④ (thêm 05/08/2026):** `.docx` là tệp nén nhị phân nên **khung chat Claude KHÔNG mở thẳng được**,
+  chỉ hiện thẻ tải về — bác sĩ phải rời khung chat mới đọc được tài liệu đầy đủ. Bước ④ dùng `pandoc` dựng
+  HTML tự chứa **từ CHÍNH file `.docx` vừa sinh** (không dựng lại từ dữ liệu, để không có đường nào làm hai
+  bản lệch nhau). **GIỮ** đủ chữ · bảng · đề mục · thứ tự; **MẤT** màu nền ô — huy hiệu mức chứng cứ/quyết
+  định chỉ còn phần chữ, nên `.docx` vẫn là bản lưu trữ chuẩn và trang HTML tự in sẵn một dòng cảnh báo điều
+  này ở đầu trang. Máy KHÔNG có `pandoc` thì bước ④ bị bỏ qua kèm thông báo rõ, **không** làm hỏng ba sản
+  phẩm kia và **không** đổi mã thoát (pandoc là tiện ích đọc, không phải cổng chất lượng). Mac đã có pandoc
+  3.10 (`~/.local/bin/pandoc`, cài thẳng không qua Homebrew); **máy Windows chưa kiểm** — nếu thiếu thì chỉ
+  mất ④. Không xuất được PDF trên Mac này: thiếu engine LaTeX, và Microsoft Word tuy có cài nhưng **từ chối
+  mọi lệnh mở file qua AppleScript/MCP** (trả về 0 documents ở cả `/private/tmp`, `~/Documents` lẫn OneDrive)
+  — cần PDF giữ màu thì bác sĩ tự mở `.docx` rồi `File → Save as → PDF`.
+  **Sau khi chạy, MẶC ĐỊNH mở cả BỐN file cho bác sĩ ngay trong Claude** (SendUserFile, `display:"render"`
+  cho 3 file HTML; `.docx` đính kèm để tải) — không bắt bác sĩ tự đi tìm trong thư mục.
   Chạy được trên cả macOS lẫn Windows: tool gọi trình thông dịch bằng `sys.executable` (Windows không có
   lệnh `python3`) và tự ép UTF-8 cho stdout (Windows mặc định cp1252 sẽ chết khi in tiếng Việt).
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
