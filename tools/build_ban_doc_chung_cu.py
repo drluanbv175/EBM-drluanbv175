@@ -14,14 +14,17 @@ Cách dùng:
 
 Mặc định ghi vào EBM-Dashboards/derivatives/<mã>_ban-doc.html
 
-QUY ƯỚC TRÌNH BÀY (chuẩn cho tài liệu cập nhật chứng cứ khoa học):
-  - Viết hoa theo câu. KHÔNG dùng VIẾT HOA TOÀN BỘ để nhấn mạnh trong văn xuôi;
-    nhấn mạnh bằng độ đậm. Chỉ giữ nguyên viết hoa cho tên riêng, tên thử nghiệm
-    (PARADIGM-HF), tên tổ chức (ESC) và đơn vị đo.
+QUY ƯỚC TRÌNH BÀY (chuẩn cho tài liệu cập nhật chứng cứ khoa học — bác sĩ chốt 2026-08-05):
+  - Font mặc định TIMES NEW ROMAN cho toàn trang, đồng bộ với bản Word xuất kèm.
+  - ĐỀ MỤC (mục 1…5) IN HOA và IN ĐẬM. Tiêu đề khối con in đậm, không in hoa —
+    giữ đúng bậc dưới đề mục. Tiêu đề trang in đậm, không in hoa vì câu quá dài.
+  - Trong VĂN XUÔI thì viết hoa theo câu: KHÔNG dùng VIẾT HOA TOÀN BỘ để nhấn mạnh
+    (nhấn mạnh bằng độ đậm và màu). Giữ nguyên viết hoa cho tên riêng, tên thử
+    nghiệm (PARADIGM-HF), tên tổ chức (ESC) và đơn vị đo.
   - Tên thuốc gốc viết thường (empagliflozin), tên thử nghiệm viết hoa.
   - Số thập phân dùng dấu phẩy theo chuẩn tiếng Việt (0,79).
-  - In đậm chỉ dùng cho tiêu đề và nhãn; không in đậm giữa câu.
-  - Chỉ hai cấp độ đậm: 400 thường và 500 đậm.
+  - Nhãn trục được lọc theo khoảng cách thật để KHÔNG bao giờ chồng chữ, xem
+    LogAxis.MIN_TICK_GAP.
 """
 from __future__ import annotations
 
@@ -206,9 +209,30 @@ class LogAxis:
         hi = max(max(vals), 1.05) * 1.08
         return cls(round(lo, 3), round(hi, 3))
 
+    # Khoảng cách tối thiểu giữa hai nhãn trục, tính theo % bề ngang cột biểu đồ.
+    # Nhãn kiểu "1,25" rộng ~30px, cột biểu đồ hẹp nhất ~300px → cần ~11%.
+    MIN_TICK_GAP = 11.0
+
     def ticks(self) -> list[float]:
-        cand = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.25, 1.5, 2.0, 2.5]
-        return [t for t in cand if self.lo * 1.02 <= t <= self.hi * 0.98]
+        """Chọn nhãn trục sao cho KHÔNG chồng nhau.
+
+        Trục tự co giãn theo dữ liệu, nên khi có một khoảng tin cậy rất rộng (vd
+        CASTLE-HTx 0,11–0,52) thì vùng quanh 1,0 bị nén lại và các nhãn 0,7 0,8 0,9
+        đè lên nhau. Vì vậy phải lọc theo khoảng cách thực tế trên trục, và luôn
+        giữ vạch 1,0 vì đó là mốc đọc chính.
+        """
+        cand = [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+                1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0]
+        inside = [t for t in cand if self.lo * 1.02 <= t <= self.hi * 0.98]
+        kept: list[float] = []
+        if self.lo * 1.02 <= 1.0 <= self.hi * 0.98:
+            kept.append(1.0)          # mốc 1,0 luôn được ưu tiên giữ
+        for t in inside:
+            if t == 1.0:
+                continue
+            if all(abs(self.pos(t) - self.pos(k)) >= self.MIN_TICK_GAP for k in kept):
+                kept.append(t)
+        return sorted(kept)
 
 
 def vn_num(x: float) -> str:
@@ -529,8 +553,8 @@ CSS = """
 --rule:#DDE4E3;--rule-strong:#C0CBCA;--benefit:#0F7A68;--benefit-soft:#E2F0ED;
 --caution:#B0731A;--caution-soft:#F7EEDE;--harm:#9E2F2F;--harm-soft:#F6E7E5;
 --null:#5F7280;--null-soft:#ECEFF1;--axis:#40607F;
---sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",system-ui,sans-serif;
---mono:ui-monospace,"SF Mono","Menlo","Consolas",monospace;--measure:68ch}
+--sans:"Times New Roman",Times,"Liberation Serif","Nimbus Roman",serif;
+--mono:"Times New Roman",Times,"Liberation Serif",serif;--measure:70ch}
 @media (prefers-color-scheme:dark){:root{--ground:#0F1618;--surface:#161F21;--ink:#E9EFEE;
 --ink-2:#A3B4B5;--ink-3:#748688;--rule:#263234;--rule-strong:#3A4B4E;--benefit:#4FC0A7;
 --benefit-soft:#12302A;--caution:#DCA64E;--caution-soft:#332614;--harm:#E28079;
@@ -545,17 +569,17 @@ CSS = """
 --null-soft:#ECEFF1;--axis:#40607F}
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
-font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+font-size:17.5px;line-height:1.6}
 .wrap{max-width:1000px;margin:0 auto;padding:clamp(28px,5vw,64px) clamp(20px,4vw,48px) 72px}
 a{color:inherit}a:focus-visible{outline:2px solid var(--axis);outline-offset:3px}
 .eyebrow{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--axis)}
-h1{font-size:clamp(30px,4.4vw,46px);line-height:1.12;font-weight:500;letter-spacing:-.02em;
-margin:14px 0 0;max-width:22ch;text-wrap:balance}
+h1{font-size:clamp(28px,3.9vw,40px);line-height:1.2;font-weight:700;letter-spacing:0;
+margin:14px 0 0;max-width:34ch;text-wrap:balance}
 .deck{max-width:var(--measure);color:var(--ink-2);font-size:16.5px;margin:18px 0 0;text-wrap:pretty}
 .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px 28px;
 margin:32px 0 0;padding:22px 0 0;border-top:1px solid var(--rule)}
 .readout div{display:flex;flex-direction:column;gap:3px}
-.readout b{font-family:var(--mono);font-size:26px;font-weight:500;letter-spacing:-.02em;
+.readout b{font-family:var(--mono);font-size:27px;font-weight:700;letter-spacing:0;
 font-variant-numeric:tabular-nums;color:var(--ink)}
 .readout b.ok{color:var(--benefit)}
 .readout span{font-size:12.5px;color:var(--ink-3);line-height:1.45}
@@ -566,10 +590,11 @@ border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:20px}
 .sec{margin-top:56px;scroll-margin-top:64px}
 .sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:12px;
 border-bottom:1px solid var(--rule-strong)}
-.sec-head h2{font-size:19px;font-weight:500;letter-spacing:-.01em;color:var(--ink);margin:0}
+.sec-head h2{font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;
+color:var(--ink);margin:0}
 .sec-head p{margin:0;color:var(--ink-3);font-size:13.5px}
 .redflags{margin-top:24px;background:var(--harm-soft);border-top:3px solid var(--harm);padding:22px 26px}
-.redflags h3{margin:0 0 4px;font-size:16px;font-weight:500;color:var(--harm)}
+.redflags h3{margin:0 0 4px;font-size:16.5px;font-weight:700;color:var(--harm)}
 .redflags .sub{margin:0 0 14px;font-size:13.5px;color:var(--ink-2)}
 .redflags ul{margin:0;padding:0;list-style:none;display:grid;
 grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px 30px}
@@ -579,7 +604,7 @@ border-radius:50%;background:var(--harm)}
 .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1px;
 margin-top:24px;background:var(--rule)}
 .act{background:var(--ground);padding:22px 24px}
-.act h3{margin:0 0 14px;font-size:15px;font-weight:500}
+.act h3{margin:0 0 14px;font-size:16px;font-weight:700}
 .act.go h3{color:var(--benefit)}.act.stop h3{color:var(--caution)}
 .act ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px}
 .act li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
@@ -591,18 +616,18 @@ height:9px;border-radius:2px}
 gap:20px;align-items:end;padding-bottom:10px}
 .scale{position:relative;height:18px}
 .scale i{position:absolute;top:4px;transform:translateX(-50%);font-style:normal;
-font-family:var(--mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.scale i.mark{color:var(--axis);font-weight:500}
+font-family:var(--mono);font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.scale i.mark{color:var(--axis);font-weight:700}
 .colcap{font-size:12px;color:var(--ink-3);text-align:right}
 .band{display:flex;align-items:center;gap:14px;margin:24px 0 2px}
-.band span{font-size:13px;font-weight:500}
+.band span{font-size:13.5px;font-weight:700}
 .band s{flex:1;height:1px;background:var(--rule-strong);text-decoration:none}
 .band.b-benefit span{color:var(--benefit)}.band.b-harm span{color:var(--harm)}
 .trial{display:grid;grid-template-columns:minmax(240px,1.05fr) minmax(300px,1.3fr) 104px;
 gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);
 transition:background .18s ease}
 .trial:hover{background:var(--surface)}
-.trial .name{font-size:15px;font-weight:500;line-height:1.35;text-wrap:pretty}
+.trial .name{font-size:15.5px;font-weight:700;line-height:1.35;text-wrap:pretty}
 .trial .name small{display:block;font-weight:400;font-size:13px;color:var(--ink-3);margin-top:4px}
 .trial .name .num{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
 .plot{position:relative;height:26px}
@@ -632,20 +657,20 @@ border:2.5px solid var(--surface)}
 .noeffs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;
 margin-top:22px;background:var(--rule)}
 .noeff{background:var(--ground);padding:20px 22px}
-.noeff h3{margin:0 0 12px;font-size:15px;font-weight:500;display:flex;align-items:baseline;gap:8px}
+.noeff h3{margin:0 0 12px;font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:8px}
 .noeff .cnt{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--ink-3)}
 .noeff.benefit h3{color:var(--benefit)}
 .noeff.caution h3{color:var(--caution)}
 .noeff.neutral h3{color:var(--null)}
 .noeff ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
 .noeff li{font-size:14px;line-height:1.5;color:var(--ink-2)}
-.noeff li b{display:block;font-weight:500;color:var(--ink);margin-bottom:2px;text-wrap:pretty}
+.noeff li b{display:block;font-weight:700;color:var(--ink);margin-bottom:2px;text-wrap:pretty}
 .noeff li span{display:block;font-size:12.5px;color:var(--ink-3)}
 .flags{margin-top:22px;padding:20px 24px;background:var(--caution-soft);border-top:2px solid var(--caution)}
-.flags h3{margin:0 0 10px;font-size:15px;font-weight:500;color:var(--caution)}
+.flags h3{margin:0 0 10px;font-size:16px;font-weight:700;color:var(--caution)}
 .flags ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14.5px;line-height:1.7}
 .flags li{margin-bottom:8px}.flags li::marker{color:var(--caution)}
-.flags b{font-weight:500;color:var(--ink)}
+.flags b{font-weight:700;color:var(--ink)}
 footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--rule)}
 footer p{margin:0;max-width:var(--measure);font-size:12.5px;line-height:1.65;color:var(--ink-3)}
 footer .stamp{margin-top:10px;font-family:var(--mono);font-size:11.5px}
