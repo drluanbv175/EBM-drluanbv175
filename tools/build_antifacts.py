@@ -46,6 +46,7 @@ SPECIALTIES = [
     ("Tiêu hóa – Gan mật", "🩺"),
     ("Nội tiết – Chuyển hóa", "🧬"),
     ("Thận – Tiết niệu", "🫘"),
+    ("Huyết học", "🩸"),
     ("Thần kinh – Đột quỵ", "🧠"),
     ("Cơ xương khớp – Thấp khớp", "🦴"),
     ("Nhiễm khuẩn", "🦠"),
@@ -101,6 +102,19 @@ DASH_RULES = [
     # ĐẶT TRƯỚC "Thận – Tiết niệu" vì nhiều dashboard gan có đối tượng CKD/lọc máu kèm
     # theo (chữ "ckd" xuất hiện trong tiêu đề chung) nhưng chủ đề chính vẫn là gan mật.
     ("Tiêu hóa – Gan mật", ["viemganb", "viêm gan", "gan mật", "xơ gan", "hepatitis", "cirrhosis", "hepatic", "hbv", "hcv", "gan nhiễm mỡ", "viêm tụy", "loét dạ dày", "trào ngược dạ dày"]),
+    # Vá 2026-08-05: "Huyết học" chưa từng có trong SPECIALTIES lẫn DASH_RULES — dashboard
+    # huyết học đầu tiên (thiếu máu · đa hồng cầu) rơi vào "Thận – Tiết niệu" chỉ vì nội dung
+    # có mục thiếu máu do CKD. CÙNG LỚP LỖI với "Tiêu hóa – Gan mật" đã vá 2026-07-16.
+    # ĐẶT TRƯỚC "Thận – Tiết niệu" vì dashboard huyết học thường kèm mục CKD/lọc máu.
+    # CỐ Ý KHÔNG dùng từ khóa "thiếu máu" trần: "thiếu máu cơ tim"/"thiếu máu não" sẽ bị
+    # bắt nhầm khỏi Tim mạch/Thần kinh. Cũng KHÔNG dùng "anemia" trần để dashboard thiếu
+    # máu do bệnh thận mạn thuần vẫn thuộc "Thận – Tiết niệu".
+    ("Huyết học", ["huyethoc", "huyết học", "thiếu máu thiếu sắt", "thieumau_", "thiếu sắt",
+                   "đa hồng cầu", "dahongcau", "polycythemia", "erythrocytosis", "thalassemia",
+                   "hemoglobin", "huyết sắc tố", "truyền máu", "transfusion", "hồng cầu lưới",
+                   "giảm tiểu cầu", "đông máu", "hemophilia", "lơ xê mi", "leukemia",
+                   "u lympho", "lymphoma", "đa u tủy", "myeloma", "myeloproliferative",
+                   "tân sinh tủy", "ferritin", "hepcidin"]),
     ("Thận – Tiết niệu", ["ckd", "benhthanman", "bệnh thận", "suy thận", "tiết niệu", "_than_", "than_2026"]),
     ("Tim mạch", ["timmach", "tim mạch", "suytim", "suy tim", "tienluongsuytim", "rung nhĩ", "tăng huyết áp", "tha ", "mạch vành"]),
     ("Lão khoa – Đa bệnh lý", ["laokhoa", "lão khoa", "deprescrib", "beers", "stopp", "start criteria", "cao tuổi", "người cao tuổi", "polypharmacy", "đa thuốc"]),
@@ -133,6 +147,7 @@ TOKEN_MAP = {
     "AnToanThuoc": "An toàn thuốc", "Orlistat": "Orlistat", "AKI": "(AKI)",
     "CapNhatTuan": "Cập nhật tuần", "NgoaiTru": "ngoại trú",
     "PhatAmPhuAm": "Phát âm phụ âm",
+    "HuyetHoc": "Huyết học", "ThieuMau": "Thiếu máu", "DaHongCau": "Đa hồng cầu",
 }
 
 
