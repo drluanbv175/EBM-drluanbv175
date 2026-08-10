@@ -82,6 +82,27 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `catalog_may/<Máy>.json` của máy nào chỉ máy đó cập nhật được, và trang tra gộp cả hai để
   gắn nhãn `[W]`/`[M]`. Bảng "Việc hay làm" sửa tay ở `tools/vietnamize/viec-hay-lam.json`
   (file DUY NHẤT trong bộ này sửa tay được; mọi thứ khác sinh tự động — **đừng sửa tay**).
+- **VIỆT HOÁ KHÔNG CÒN PHỤ THUỘC VÀO VIỆC SỬA FILE PLUGIN (đổi 2026-08-10).** Nguồn sự thật bền
+  là **`tools/vietnamize/vi_descriptions.json`** (1664 mục, khoá theo `id`). Cả `build_danh_muc.py`
+  lẫn `build_trang_tra_cuu.py` áp nó như **LỚP PHỦ lúc dựng** ⇒ danh mục và trang tra LUÔN tiếng
+  Việt, kể cả khi bản cập nhật của plugin trả mô tả về tiếng Anh. Đã kiểm bằng thực nghiệm: ép
+  toàn bộ 588 mô tả aipoch trong bản chụp về tiếng Anh rồi dựng lại → trang vẫn ra **604/604
+  tiếng Việt**. `apply_vi.py` từ nay là **tuỳ chọn**, chỉ để menu gõ `/` trong Claude Code hiện
+  tiếng Việt; bỏ qua nó không mất gì ở danh mục/trang tra.
+- **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
+  ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
+  kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là
+  repo git thật của `github.com/aipoch/medical-research-skills`) — `extract_catalog.py` sẽ trỏ
+  thẳng vào NGUỒN mỗi khi cache chưa dựng (máy mới · vừa gỡ-cài lại · vừa dọn cache). Ghi tiếng
+  Việt vào đó = làm bẩn 605 file của repo ⇒ `git pull` lần sau XUNG ĐỘT và không cập nhật được
+  plugin nữa. Bình thường công cụ chỉ chạm **cache** (`~/.claude/plugins/cache`) — cache là sản
+  phẩm phái sinh nên sửa vào đó vô hại. **Trạng thái đã xác minh 10/08: repo nguồn aipoch SẠCH,
+  0 file bị sửa, `git pull` an toàn.**
+- **aipoch đã Việt hoá đủ 604/604** (532 bản dịch cũ + 72 bổ sung 10/08). Skill nào của aipoch
+  TRÙNG việc có cổng (cỡ mẫu · thiết kế · phân tích gộp · đăng ký PROSPERO) đều mang sẵn cảnh
+  báo ⚠️ trỏ về agent chủ, khớp với bảng định tuyến ở mục "Điều phối Agent". 8 thế mạnh RIÊNG
+  của aipoch (MR · FAERS · độc chất mạng · đơn tế bào · đa omics · tái định vị thuốc · QTL) đã
+  thêm vào bảng "Việc hay làm" — đây là các mảng hệ agent EBM không có.
 - **Bộ `medsci-skills`: 9 plugin nhưng CÙNG MỘT bộ 58 skill byte-identical** (đã so md5). Đã
   **tắt 8, giữ `medsci-project`** trong `~/.claude/settings.json` → danh sách Windows 1405 → 941
   mục, **0 năng lực mất** (đã kiểm: cả 58 tên vẫn gọi được qua `/medsci-project:*`). **Tiền tố

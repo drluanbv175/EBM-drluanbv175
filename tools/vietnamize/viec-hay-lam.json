@@ -1,39 +1,206 @@
 {
   "_ghi_chu": "Bảng 'việc cần làm → gọi cái gì'. ĐÂY LÀ FILE DUY NHẤT trong bộ tra cứu mà bác sĩ SỬA TAY được — mọi thứ còn lại sinh từ máy quét. Thêm/bớt/đổi thứ tự thoải mái rồi chạy lại: python tools/vietnamize/build_trang_tra_cuu.py. Trường 'tim' là chữ được điền vào ô tìm khi bấm thẻ (viết KHÔNG DẤU cho chắc).",
-  "_cap_nhat": "2026-08-05 — đổi tiền tố medsci-* sang medsci-project sau khi tắt 8 plugin trùng nội dung",
-
+  "_cap_nhat": "2026-08-10 — thêm 8 thế mạnh RIÊNG của aipoch (MR · FAERS · độc chất mạng · đơn tế bào · đa omics · tái định vị thuốc · QTL): đây là các mảng hệ agent EBM không có. CỐ Ý không thêm cỡ mẫu/thiết kế/viết bài của aipoch — những việc đó đã có chủ theo bảng định tuyến trong CLAUDE.md.",
   "viec": [
-    {"viec": "Khám một ca bệnh theo 5 bước EBM", "goi": "dieu-phoi-lam-sang", "tim": "dieu-phoi-lam-sang"},
-    {"viec": "Chạy một đề tài nghiên cứu qua cổng G0–G10", "goi": "dieu-phoi-nghien-cuu", "tim": "dieu-phoi-nghien-cuu"},
-    {"viec": "Sàng lọc cờ đỏ, có cần chuyển viện không", "goi": "sang-loc-co-do", "tim": "sang-loc-co-do"},
-    {"viec": "Tra chứng cứ cho một câu hỏi lâm sàng", "goi": "tra-cuu-chung-cu", "tim": "tra-cuu-chung-cu"},
-    {"viec": "Thẩm định chứng cứ, tính NNT/NNH", "goi": "tham-dinh-grade-nnt", "tim": "tham-dinh-grade-nnt"},
-    {"viec": "Rà an toàn một đơn thuốc", "goi": "ke-don-an-toan", "tim": "ke-don-an-toan"},
-    {"viec": "Tính thang điểm nguy cơ (CHA₂DS₂-VASc, Wells…)", "goi": "thang-diem-nguy-co", "tim": "thang-diem-nguy-co"},
-    {"viec": "Theo dõi bệnh mạn theo đích điều trị", "goi": "theo-doi-benh-man", "tim": "theo-doi-benh-man"},
-    {"viec": "Tính cỡ mẫu / kiểm lực mẫu", "goi": "co-mau-nghien-cuu", "tim": "co-mau"},
-    {"viec": "Đặt câu hỏi nghiên cứu (PICO, cổng G0)", "goi": "cau-hoi-nghien-cuu", "tim": "cau-hoi-nghien-cuu"},
-    {"viec": "Thiết kế nghiên cứu, khóa SAP", "goi": "thiet-ke-nghien-cuu", "tim": "thiet-ke-nghien-cuu"},
-    {"viec": "Hồ sơ đạo đức IRB + đăng ký nghiên cứu", "goi": "dao-duc-dang-ky", "tim": "dao-duc-dang-ky"},
-    {"viec": "Kiểm trích dẫn PMID/DOI có thật không", "goi": "kiem-chung-trich-dan", "tim": "kiem-chung-trich-dan"},
-    {"viec": "Viết bản thảo theo IMRAD", "goi": "viet-ban-thao", "tim": "viet-ban-thao"},
-    {"viec": "Tra mã ICD-10", "goi": "/tra-ma-icd10", "tim": "icd10"},
-    {"viec": "Tra y văn PubMed", "goi": "/tra-y-van", "tim": "tra-y-van"},
-    {"viec": "Tra thử nghiệm lâm sàng đang tuyển", "goi": "/tra-thu-nghiem-lam-sang", "tim": "thu-nghiem-lam-sang"},
-    {"viec": "Tra bản thảo tiền in (preprint)", "goi": "/tra-preprint", "tim": "preprint"},
-    {"viec": "Tra mức đồng thuận của y văn", "goi": "/tra-consensus", "tim": "consensus"},
-    {"viec": "Tra dược lý, cơ chế tác dụng của thuốc", "goi": "/tra-thuoc", "tim": "tra-thuoc"},
-    {"viec": "Bóc dữ liệu có cấu trúc từ bệnh án", "goi": "/trich-xuat-benh-an", "tim": "trich-xuat-benh-an"},
-    {"viec": "Khử định danh bệnh án trước khi nghiên cứu", "goi": "/khu-dinh-danh", "tim": "khu-dinh-danh"},
-    {"viec": "Cập nhật chứng cứ + dựng dashboard", "goi": "cap-nhat-chung-cu-y-khoa", "tim": "cap-nhat-chung-cu"},
-    {"viec": "Mở trung tâm EBM theo chuyên khoa", "goi": "antifacts", "tim": "antifacts"},
-    {"viec": "Kiểm bản thảo theo chuẩn báo cáo", "goi": "/medsci-project:check-reporting", "tim": "check-reporting"},
-    {"viec": "Chọn tạp chí để nộp bài", "goi": "/medsci-project:find-journal", "tim": "find-journal"},
-    {"viec": "Viết thư phản hồi phản biện", "goi": "/medsci-project:revise", "tim": "revise"},
-    {"viec": "Làm sạch dữ liệu, sinh codebook", "goi": "/medsci-project:clean-data", "tim": "clean-data"},
-    {"viec": "Tổng quan hệ thống / phân tích gộp", "goi": "/medsci-project:meta-analysis", "tim": "meta-analysis"},
-    {"viec": "Vẽ hình đạt chuẩn đăng bài", "goi": "/medsci-project:make-figures", "tim": "make-figures"},
-    {"viec": "Gọt tiếng Anh học thuật trước khi nộp", "goi": "/medsci-project:polish-language", "tim": "polish-language"},
-    {"viec": "Không biết dùng gì → hỏi hệ thống", "goi": "/cong-cu-gi <việc cần làm>", "tim": "cong-cu-gi"}
+    {
+      "viec": "Khám một ca bệnh theo 5 bước EBM",
+      "goi": "dieu-phoi-lam-sang",
+      "tim": "dieu-phoi-lam-sang"
+    },
+    {
+      "viec": "Chạy một đề tài nghiên cứu qua cổng G0–G10",
+      "goi": "dieu-phoi-nghien-cuu",
+      "tim": "dieu-phoi-nghien-cuu"
+    },
+    {
+      "viec": "Sàng lọc cờ đỏ, có cần chuyển viện không",
+      "goi": "sang-loc-co-do",
+      "tim": "sang-loc-co-do"
+    },
+    {
+      "viec": "Tra chứng cứ cho một câu hỏi lâm sàng",
+      "goi": "tra-cuu-chung-cu",
+      "tim": "tra-cuu-chung-cu"
+    },
+    {
+      "viec": "Thẩm định chứng cứ, tính NNT/NNH",
+      "goi": "tham-dinh-grade-nnt",
+      "tim": "tham-dinh-grade-nnt"
+    },
+    {
+      "viec": "Rà an toàn một đơn thuốc",
+      "goi": "ke-don-an-toan",
+      "tim": "ke-don-an-toan"
+    },
+    {
+      "viec": "Tính thang điểm nguy cơ (CHA₂DS₂-VASc, Wells…)",
+      "goi": "thang-diem-nguy-co",
+      "tim": "thang-diem-nguy-co"
+    },
+    {
+      "viec": "Theo dõi bệnh mạn theo đích điều trị",
+      "goi": "theo-doi-benh-man",
+      "tim": "theo-doi-benh-man"
+    },
+    {
+      "viec": "Tính cỡ mẫu / kiểm lực mẫu",
+      "goi": "co-mau-nghien-cuu",
+      "tim": "co-mau"
+    },
+    {
+      "viec": "Đặt câu hỏi nghiên cứu (PICO, cổng G0)",
+      "goi": "cau-hoi-nghien-cuu",
+      "tim": "cau-hoi-nghien-cuu"
+    },
+    {
+      "viec": "Thiết kế nghiên cứu, khóa SAP",
+      "goi": "thiet-ke-nghien-cuu",
+      "tim": "thiet-ke-nghien-cuu"
+    },
+    {
+      "viec": "Hồ sơ đạo đức IRB + đăng ký nghiên cứu",
+      "goi": "dao-duc-dang-ky",
+      "tim": "dao-duc-dang-ky"
+    },
+    {
+      "viec": "Kiểm trích dẫn PMID/DOI có thật không",
+      "goi": "kiem-chung-trich-dan",
+      "tim": "kiem-chung-trich-dan"
+    },
+    {
+      "viec": "Viết bản thảo theo IMRAD",
+      "goi": "viet-ban-thao",
+      "tim": "viet-ban-thao"
+    },
+    {
+      "viec": "Tra mã ICD-10",
+      "goi": "/tra-ma-icd10",
+      "tim": "icd10"
+    },
+    {
+      "viec": "Tra y văn PubMed",
+      "goi": "/tra-y-van",
+      "tim": "tra-y-van"
+    },
+    {
+      "viec": "Tra thử nghiệm lâm sàng đang tuyển",
+      "goi": "/tra-thu-nghiem-lam-sang",
+      "tim": "thu-nghiem-lam-sang"
+    },
+    {
+      "viec": "Tra bản thảo tiền in (preprint)",
+      "goi": "/tra-preprint",
+      "tim": "preprint"
+    },
+    {
+      "viec": "Tra mức đồng thuận của y văn",
+      "goi": "/tra-consensus",
+      "tim": "consensus"
+    },
+    {
+      "viec": "Tra dược lý, cơ chế tác dụng của thuốc",
+      "goi": "/tra-thuoc",
+      "tim": "tra-thuoc"
+    },
+    {
+      "viec": "Bóc dữ liệu có cấu trúc từ bệnh án",
+      "goi": "/trich-xuat-benh-an",
+      "tim": "trich-xuat-benh-an"
+    },
+    {
+      "viec": "Khử định danh bệnh án trước khi nghiên cứu",
+      "goi": "/khu-dinh-danh",
+      "tim": "khu-dinh-danh"
+    },
+    {
+      "viec": "Cập nhật chứng cứ + dựng dashboard",
+      "goi": "cap-nhat-chung-cu-y-khoa",
+      "tim": "cap-nhat-chung-cu"
+    },
+    {
+      "viec": "Mở trung tâm EBM theo chuyên khoa",
+      "goi": "antifacts",
+      "tim": "antifacts"
+    },
+    {
+      "viec": "Kiểm bản thảo theo chuẩn báo cáo",
+      "goi": "/medsci-project:check-reporting",
+      "tim": "check-reporting"
+    },
+    {
+      "viec": "Chọn tạp chí để nộp bài",
+      "goi": "/medsci-project:find-journal",
+      "tim": "find-journal"
+    },
+    {
+      "viec": "Viết thư phản hồi phản biện",
+      "goi": "/medsci-project:revise",
+      "tim": "revise"
+    },
+    {
+      "viec": "Làm sạch dữ liệu, sinh codebook",
+      "goi": "/medsci-project:clean-data",
+      "tim": "clean-data"
+    },
+    {
+      "viec": "Tổng quan hệ thống / phân tích gộp",
+      "goi": "/medsci-project:meta-analysis",
+      "tim": "meta-analysis"
+    },
+    {
+      "viec": "Vẽ hình đạt chuẩn đăng bài",
+      "goi": "/medsci-project:make-figures",
+      "tim": "make-figures"
+    },
+    {
+      "viec": "Gọt tiếng Anh học thuật trước khi nộp",
+      "goi": "/medsci-project:polish-language",
+      "tim": "polish-language"
+    },
+    {
+      "viec": "Không biết dùng gì → hỏi hệ thống",
+      "goi": "/cong-cu-gi <việc cần làm>",
+      "tim": "cong-cu-gi"
+    },
+    {
+      "viec": "Thiết kế nghiên cứu nhân quả di truyền (Mendelian randomization)",
+      "goi": "/aipoch-medical-research:mendelian-randomization-protocol-designer",
+      "tim": "ngau nhien hoa Mendel"
+    },
+    {
+      "viec": "MR hai mẫu từ số liệu tóm tắt GWAS",
+      "goi": "/aipoch-medical-research:two-sample-mr-research-planner",
+      "tim": "MR hai mau"
+    },
+    {
+      "viec": "Dò tín hiệu an toàn thuốc trên FAERS (dược cảnh giác)",
+      "goi": "/aipoch-medical-research:faers-pharmacovigilance-disproportionality-research-planner",
+      "tim": "duoc canh giac FAERS"
+    },
+    {
+      "viec": "Nghiên cứu độc chất mạng + gắn kết phân tử (docking)",
+      "goi": "/aipoch-medical-research:network-tox-docking-research-planner",
+      "tim": "doc chat mang"
+    },
+    {
+      "viec": "Thiết kế nghiên cứu đơn tế bào (scRNA-seq)",
+      "goi": "/aipoch-medical-research:single-cell-research-planner",
+      "tim": "don te bao"
+    },
+    {
+      "viec": "Tích hợp đa omics với biến số lâm sàng",
+      "goi": "/aipoch-medical-research:multi-omics-clinical-integration-planner",
+      "tim": "da omics"
+    },
+    {
+      "viec": "Thiết kế nghiên cứu tái định vị thuốc (drug repurposing)",
+      "goi": "/aipoch-medical-research:drug-repurposing-study-planner",
+      "tim": "tai dinh vi thuoc"
+    },
+    {
+      "viec": "Đồng định vị QTL với locus GWAS",
+      "goi": "/aipoch-medical-research:qtl-colocalization-study-planner",
+      "tim": "dong dinh vi QTL"
+    }
   ]
 }

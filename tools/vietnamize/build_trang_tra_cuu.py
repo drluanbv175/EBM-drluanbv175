@@ -50,6 +50,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 SNAP_DIR = HERE / "catalog_may"
 VIEC_HAY_LAM = HERE / "viec-hay-lam.json"
+VI_DESC = HERE / "vi_descriptions.json"
 OUT_HTML = REPO / "TRA-CUU-CONG-CU.html"
 OUT_INDEX = HERE / "INDEX-CONG-CU.md"
 
@@ -59,6 +60,32 @@ TEN_LOAI = {"skill": "kỹ năng", "command": "lệnh", "agent": "agent"}
 UU_TIEN_NGUON = ("ebm-agents", "user-commands", "user-skills", "cowork")
 
 
+def nap_lop_phu_vi() -> dict[str, str]:
+    """Bản dịch tiếng Việt dạng LỚP PHỦ, khoá theo `id` trong catalog.
+
+    VÌ SAO CÓ (sửa 2026-08-10): trước đây tiếng Việt chỉ hiện ra nhờ `apply_vi.py`
+    GHI ĐÈ trường `description:` vào chính file SKILL.md của plugin. Với plugin cài
+    kiểu thư mục từ một repo git (aipoch trỏ vào ~/Documents/GitHub/medical-research-skills),
+    mỗi lần `git pull` hoặc mỗi lần Claude Code tự đồng bộ lại cache là bản dịch bị
+    XOÁ SẠCH. Sự cố này ĐÃ XẢY RA và không ai phát hiện: bản chụp ngày 05/08 có
+    605/605 mô tả aipoch tiếng Việt, tới 10/08 trên đĩa còn 0/605.
+
+    Lớp phủ đọc lúc dựng trang nên KHÔNG đụng vào bất kỳ file plugin nào ⇒ cập nhật
+    plugin không bao giờ làm mất tiếng Việt nữa, và Việt hoá không bao giờ gây xung
+    đột `git pull` trong repo nguồn của plugin.
+    """
+    if not VI_DESC.exists():
+        return {}
+    ra: dict[str, str] = {}
+    for khoa, v in json.loads(VI_DESC.read_text(encoding="utf-8")).items():
+        if khoa.startswith("_"):          # _ghi_chu… là chú thích, không phải bản dịch
+            continue
+        s = v.get("vi") if isinstance(v, dict) else v
+        if isinstance(s, str) and s.strip():
+            ra[khoa] = s.strip()
+    return ra
+
+
 def nap_ban_chup() -> tuple[list[dict], dict[str, str]]:
     """Gộp bản chụp của mọi máy. Trả (danh sách mục, ngày quét theo máy).
 
@@ -66,6 +93,7 @@ def nap_ban_chup() -> tuple[list[dict], dict[str, str]]:
     sĩ biết "mục này có gọi được trên máy đang ngồi không", tránh cảnh gõ một lệnh
     chỉ tồn tại ở máy kia.
     """
+    lop_phu = nap_lop_phu_vi()
     gom: dict[str, dict] = {}
     ngay: dict[str, str] = {}
     for f in sorted(SNAP_DIR.glob("*.json")):
@@ -74,11 +102,16 @@ def nap_ban_chup() -> tuple[list[dict], dict[str, str]]:
         ngay[may] = d.get("ngay_quet", "?")
         for m in d.get("muc", []):
             khoa = m.get("id") or f"{m.get('kind')}:{m.get('plugin')}:{m.get('name')}"
+            # Lớp phủ THẮNG mô tả đọc từ file: file có thể vừa bị bản cập nhật của
+            # plugin trả về tiếng Anh, còn lớp phủ là bản dịch bác sĩ đã duyệt.
+            vi = lop_phu.get(khoa)
             cu = gom.get(khoa)
             if cu is None:
-                gom[khoa] = {**m, "may": {may}}
+                gom[khoa] = {**m, "may": {may}, **({"desc_en": vi} if vi else {})}
             else:
                 cu["may"].add(may)
+                if vi:
+                    cu["desc_en"] = vi
     return list(gom.values()), ngay
 
 

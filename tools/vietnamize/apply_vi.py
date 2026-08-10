@@ -162,12 +162,39 @@ def replace_field(block: str, key: str, value: str) -> str:
     return "\n".join(out)
 
 
+def trong_repo_git(path: Path) -> Path | None:
+    """Trả thư mục gốc repo git chứa `path`, hoặc None nếu không nằm trong repo nào.
+
+    Đi ngược lên tìm `.git`. Cố ý KHÔNG gọi lệnh `git` — repo nguồn của aipoch nặng
+    778 MB, `git status` ở đó mất hơn 2 phút; kiểm sự tồn tại thư mục thì tức thì.
+    """
+    for cha in [path, *path.parents]:
+        if (cha / ".git").exists():
+            return cha
+    return None
+
+
 def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool,
             qua_ten: bool = False) -> str:
     """Trả về mã kết quả: applied | already | restored | nothing | skip-* | STALE."""
     path = Path(item["path"])
     if not path.exists():
         return "skip-missing"
+
+    # RÀO AN TOÀN (2026-08-10): TUYỆT ĐỐI không ghi tiếng Việt vào file nằm trong một
+    # repo git. Bình thường công cụ này chỉ chạm CACHE plugin (~/.claude/plugins/cache)
+    # — cache là sản phẩm phái sinh, sửa vào đó không ảnh hưởng gì tới việc cập nhật.
+    # NHƯNG với plugin cài kiểu "directory" (aipoch trỏ vào ~/Documents/GitHub/
+    # medical-research-skills), `extract_catalog.py` sẽ trỏ thẳng vào NGUỒN mỗi khi
+    # cache chưa dựng — máy mới, vừa gỡ-cài lại, hoặc vừa dọn cache. Ghi vào đó là
+    # làm bẩn 605 file của một repo git ⇒ `git pull` lần sau XUNG ĐỘT và bác sĩ không
+    # cập nhật được plugin nữa. Bỏ qua ở đây KHÔNG mất tiếng Việt: bản dịch sống
+    # trong `vi_descriptions.json`, và cả `build_danh_muc.py` lẫn
+    # `build_trang_tra_cuu.py` đều áp nó như LỚP PHỦ lúc dựng.
+    if not restore:
+        repo = trong_repo_git(path)
+        if repo is not None:
+            return "skip-git-repo"
 
     text = path.read_text(encoding="utf-8", errors="replace")
     parts = split_frontmatter(text)

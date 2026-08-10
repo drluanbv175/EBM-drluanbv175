@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `tools/vietnamize/build_trang_tra_cuu.py`. KHÔNG sửa tay.
 
-**1170 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
+**1165 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
 Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy được cả hai.
 
 ## Cách dùng index này
@@ -50,6 +50,14 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 | Vẽ hình đạt chuẩn đăng bài | `/medsci-project:make-figures` |
 | Gọt tiếng Anh học thuật trước khi nộp | `/medsci-project:polish-language` |
 | Không biết dùng gì → hỏi hệ thống | `/cong-cu-gi <việc cần làm>` |
+| Thiết kế nghiên cứu nhân quả di truyền (Mendelian randomization) | `/aipoch-medical-research:mendelian-randomization-protocol-designer` |
+| MR hai mẫu từ số liệu tóm tắt GWAS | `/aipoch-medical-research:two-sample-mr-research-planner` |
+| Dò tín hiệu an toàn thuốc trên FAERS (dược cảnh giác) | `/aipoch-medical-research:faers-pharmacovigilance-disproportionality-research-planner` |
+| Nghiên cứu độc chất mạng + gắn kết phân tử (docking) | `/aipoch-medical-research:network-tox-docking-research-planner` |
+| Thiết kế nghiên cứu đơn tế bào (scRNA-seq) | `/aipoch-medical-research:single-cell-research-planner` |
+| Tích hợp đa omics với biến số lâm sàng | `/aipoch-medical-research:multi-omics-clinical-integration-planner` |
+| Thiết kế nghiên cứu tái định vị thuốc (drug repurposing) | `/aipoch-medical-research:drug-repurposing-study-planner` |
+| Đồng định vị QTL với locus GWAS | `/aipoch-medical-research:qtl-colocalization-study-planner` |
 
 ## ebm-agents  (50 mục — liệt kê đủ)
 
@@ -199,7 +207,7 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 - `/tuan-thu-dieu-tri` — Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú…
 - `/venue-templates` [W] — Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu…
 
-## Các nhóm còn lại (1031 mục)
+## Các nhóm còn lại (1026 mục)
 
 Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` như hướng dẫn trên.
 
@@ -208,9 +216,9 @@ Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` n
 | `aipoch-medical-research` | 604 | abstract-summarizer · abstract-trimmer · academic-abstract-refiner · academic-cv-generator · academic-highlight-generator · academic-norm-review |
 | `openmed-skills` | 72 | annotating-variants · assembling-fhir-bundles · auditing-deid-leakage · auditing-deidentification-runs · auditing-part11-trails · auditing-safe-harbor-checklist |
 | `academic-research-skills` | 58 | abstract_bilingual_agent · academic-paper · academic-paper-reviewer · academic-pipeline · argument_builder_agent · ars-3w |
-| `medsci-project` | 57 | academic-aio · add-journal · analyze-stats · architecture-zoo · author-strategy · batch-cohort |
+| `medsci-project` | 58 | academic-aio · add-journal · analyze-stats · architecture-zoo · author-strategy · batch-cohort |
 | `anthropic-skills` | 53 | EBM-MASTER · algorithmic-art · alphafold2 · antifacts · boltz · borzoi |
-| `mattpocock-skills` | 41 | ask-matt · batch-grill-me · claude-handoff · code-review · codebase-design · design-an-interface |
+| `mattpocock-skills` | 35 | ask-matt · claude-handoff · code-review · codebase-design · diagnosing-bugs · domain-modeling |
 | `claude-code-harness` | 30 | advisor · agent-browser · breezing · cc-update-review · ci · cursor-ask |
 | `bigdata-com` | 27 | bigdata-catalyst-monitor · bigdata-company-brief · bigdata-country-analysis · bigdata-country-sector-analysis · bigdata-cross-sector · bigdata-earnings-digest |
 | `meta-pipe` | 14 | brainstorm-topic · ma-agent-teams · ma-data-extraction · ma-end-to-end · ma-fulltext-management · ma-manuscript-quarto |
