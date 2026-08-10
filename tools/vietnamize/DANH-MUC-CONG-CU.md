@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1223 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1217 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1155 mục (quét ngày 2026-08-05)
+> - **Mac**: 1149 mục (quét ngày 2026-08-10)
 > - **Windows**: 936 mục (quét ngày 2026-08-05)
 > - có ở **cả 2 máy**: 868 mục
 
@@ -1207,22 +1207,19 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (124 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (118 mục)
 
 
-### mattpocock-skills  (41 · chỉ Mac)
+### mattpocock-skills  (35 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
 | `/mattpocock-skills:ask-matt` | kỹ năng | Mac | [Lập trình] Hỏi xem tình huống hiện tại nên dùng kỹ năng nào trong bộ này. Từ khoá: skill router. |
-| `/mattpocock-skills:batch-grill-me` | kỹ năng | Mac | [Lập trình] Chất vấn dồn dập, hỏi mọi câu khó cùng lúc theo từng vòng. Từ khoá: batch grilling. |
 | `/mattpocock-skills:claude-handoff` | kỹ năng | Mac | [Lập trình] Bàn giao cuộc trò chuyện cho một agent chạy nền tiếp nhận. Từ khoá: claude handoff. |
 | `/mattpocock-skills:code-review` | kỹ năng | Mac | [Lập trình] Rà soát thay đổi kể từ một mốc cố định (commit, nhánh, thẻ). Từ khoá: code review. |
 | `/mattpocock-skills:codebase-design` | kỹ năng | Mac | [Lập trình] Bộ từ vựng chung để thiết kế mô-đun có chiều sâu. Từ khoá: deep modules. |
-| `/mattpocock-skills:design-an-interface` | kỹ năng | Mac | [Lập trình] Sinh nhiều phương án thiết kế giao diện lập trình khác hẳn nhau để so sánh. Từ khoá: interface design. |
 | `/mattpocock-skills:diagnosing-bugs` | kỹ năng | Mac | [Lập trình] Vòng chẩn đoán cho lỗi khó và sụt hiệu năng. Từ khoá: bug diagnosis. |
 | `/mattpocock-skills:domain-modeling` | kỹ năng | Mac | [Lập trình] Dựng và mài sắc mô hình miền nghiệp vụ của dự án. Từ khoá: domain model. |
-| `/mattpocock-skills:edit-article` | kỹ năng | Mac | [Viết lách] Biên tập bài viết: sắp lại bố cục, làm rõ ý, gọt câu chữ. Từ khoá: edit article. |
 | `/mattpocock-skills:git-guardrails-claude-code` | kỹ năng | Mac | [Lập trình] Cài chốt chặn lệnh git nguy hiểm (push, reset --hard...). Từ khoá: git guardrails. |
 | `/mattpocock-skills:grill-me` | kỹ năng | Mac | [Lập trình] Phỏng vấn gắt để mài sắc một kế hoạch hoặc thiết kế. Từ khoá: grill me. |
 | `/mattpocock-skills:grill-with-docs` | kỹ năng | Mac | [Lập trình] Vừa chất vấn vừa sinh tài liệu ghi lại quyết định. Từ khoá: grill with docs. |
@@ -1232,10 +1229,7 @@
 | `/mattpocock-skills:improve-codebase-architecture` | kỹ năng | Mac | [Lập trình] Quét kho mã tìm chỗ nên làm sâu hơn, xuất báo cáo HTML trực quan. Từ khoá: architecture improvement. |
 | `/mattpocock-skills:loop-me` | kỹ năng | Mac | [Lập trình] Chất vấn về đặc tả cho các quy trình muốn xây trong không gian làm việc này. Từ khoá: loop me. |
 | `/mattpocock-skills:migrate-to-shoehorn` | kỹ năng | Mac | [Lập trình] Chuyển file kiểm thử sang dùng thư viện shoehorn thay cho ép kiểu bằng `as`. Từ khoá: shoehorn migration. |
-| `/mattpocock-skills:obsidian-vault` | kỹ năng | Mac | [Lập trình] Tìm, tạo và quản lý ghi chú trong kho Obsidian, có liên kết wiki. Từ khoá: Obsidian. |
 | `/mattpocock-skills:prototype` | kỹ năng | Mac | [Lập trình] Dựng bản thử nghiệm dùng một lần để trả lời một câu hỏi thiết kế. Từ khoá: prototype. |
-| `/mattpocock-skills:qa` | kỹ năng | Mac | [Lập trình] Phiên kiểm thử tương tác: người dùng báo lỗi bằng lời, hệ thống ghi nhận và xử lý. Từ khoá: QA session. |
-| `/mattpocock-skills:request-refactor-plan` | kỹ năng | Mac | [Lập trình] Lập kế hoạch tái cấu trúc chi tiết với các bước commit rất nhỏ. Từ khoá: refactor plan. |
 | `/mattpocock-skills:research` | kỹ năng | Mac | [Lập trình] Tra cứu một câu hỏi dựa trên nguồn gốc đáng tin và ghi lại kết quả. Từ khoá: research. |
 | `/mattpocock-skills:resolving-merge-conflicts` | kỹ năng | Mac | [Lập trình] Xử lý xung đột khi đang merge hoặc rebase dở dang. Từ khoá: merge conflicts. |
 | `/mattpocock-skills:scaffold-exercises` | kỹ năng | Mac | [Lập trình] Dựng khung thư mục bài tập gồm đề bài, lời giải và giải thích. Từ khoá: scaffold exercises. |
@@ -1248,12 +1242,12 @@
 | `/mattpocock-skills:to-spec` | kỹ năng | Mac | [Lập trình] Biến cuộc trò chuyện hiện tại thành bản đặc tả và đăng lên hệ theo dõi việc. Từ khoá: to spec. |
 | `/mattpocock-skills:to-tickets` | kỹ năng | Mac | [Lập trình] Chia kế hoạch hoặc đặc tả thành các phiếu việc nhỏ chạy được. Từ khoá: to tickets. |
 | `/mattpocock-skills:triage` | kỹ năng | Mac | [Lập trình] Đưa các vấn đề và pull request bên ngoài qua quy trình phân loại nhiều vai. Từ khoá: triage. |
-| `/mattpocock-skills:ubiquitous-language` | kỹ năng | Mac | [Lập trình] Rút bảng thuật ngữ thống nhất cho dự án từ chính cuộc trò chuyện. Từ khoá: ubiquitous language. |
+| `/mattpocock-skills:wait-what` | kỹ năng | Mac | [Lập trình] Dừng lại soi một khẳng định đáng ngờ trong hội thoại trước khi nó thành giả định ngầm. Từ khoá: khoan đã, kiểm lại giả định. |
 | `/mattpocock-skills:wayfinder` | kỹ năng | Mac | [Lập trình] Lập kế hoạch cho khối việc lớn hơn sức chứa của một phiên agent. Từ khoá: wayfinder. |
-| `/mattpocock-skills:wizard` | kỹ năng | Mac | [Lập trình] Sinh trình hướng dẫn dạng bash dắt người dùng qua một quy trình thủ công. Từ khoá: bash wizard. |
+| `/mattpocock-skills:wizard` | kỹ năng | Mac | [Lập trình] Sinh một trình hướng dẫn bash dắt NGƯỜI đi qua các bước chỉ người mới làm được — dựng hạ tầng, đặt khoá bí mật/CI, thao tác trên bảng điều khiển dịch vụ ngoài, chạy một lần chuyển đổi. Không dùng cho việc máy tự làm được. Từ … |
 | `/mattpocock-skills:writing-beats` | kỹ năng | Mac | [Viết lách] Giai đoạn DỰNG MẠCH: ghép nguyên liệu thành hành trình các nhịp có căn cứ. Từ khoá: writing beats. |
+| `/mattpocock-skills:writing-for-agents` | kỹ năng | Mac | [Lập trình] Cách viết tài liệu cho agent đọc — dùng khi tạo/sửa skill, hoặc sửa AGENTS.md và CLAUDE.md. Từ khoá: viết tài liệu cho agent, soạn skill, AGENTS.md. |
 | `/mattpocock-skills:writing-fragments` | kỹ năng | Mac | [Viết lách] Giai đoạn KHAI PHÁ: gom mảnh ý thô, chưa cần bố cục. Từ khoá: writing fragments. |
-| `/mattpocock-skills:writing-great-skills` | kỹ năng | Mac | [Lập trình] Tài liệu tham chiếu về cách viết và biên tập một skill cho tốt. Từ khoá: writing skills. |
 | `/mattpocock-skills:writing-shape` | kỹ năng | Mac | [Viết lách] Giai đoạn ĐỊNH HÌNH: nắn nguyên liệu thô thành bài, từng đoạn một. Từ khoá: writing shape. |
 
 ### claude-code-harness  (30 · chỉ Mac)

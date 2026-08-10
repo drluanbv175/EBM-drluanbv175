@@ -79,9 +79,25 @@ def nap_plugin() -> list[tuple[str, pathlib.Path]]:
     ds: list[tuple[str, pathlib.Path]] = []
     reg = HOME / ".claude/plugins/installed_plugins.json"
     nguon = nguon_directory()
+
+    # Plugin đang TẮT không được app nạp, và app còn CHỦ ĐỘNG XOÁ cache của chúng —
+    # gặp ngày 05/08/2026: tắt 8 plugin medsci xong, app dọn cache, manifest vẫn trỏ
+    # đường dẫn cũ ⇒ công cụ này báo 8 "lỗi chặn" trong khi hệ thống hoàn toàn bình
+    # thường. Bỏ qua plugin đã tắt để cảnh báo giữ đúng nghĩa "thứ đang dùng bị hỏng".
+    da_tat: set[str] = set()
+    st = HOME / ".claude/settings.json"
+    if st.exists():
+        try:
+            da_tat = {k for k, v in json.loads(st.read_text("utf-8"))
+                      .get("enabledPlugins", {}).items() if v is False}
+        except (OSError, json.JSONDecodeError):
+            pass
+
     if reg.exists():
         data = json.loads(reg.read_text("utf-8"))
         for key, entries in data.get("plugins", {}).items():
+            if key in da_tat:
+                continue
             goc = pathlib.Path(entries[0]["installPath"])
             if not goc.exists():
                 _, _, mktp = key.partition("@")

@@ -1608,7 +1608,7 @@
     "vi": "[Lập trình] Dựng khung thư mục bài tập gồm đề bài, lời giải và giải thích. Từ khoá: scaffold exercises."
   },
   "skill:mattpocock-skills:wizard": {
-    "vi": "[Lập trình] Sinh trình hướng dẫn dạng bash dắt người dùng qua một quy trình thủ công. Từ khoá: bash wizard."
+    "vi": "[Lập trình] Sinh một trình hướng dẫn bash dắt NGƯỜI đi qua các bước chỉ người mới làm được — dựng hạ tầng, đặt khoá bí mật/CI, thao tác trên bảng điều khiển dịch vụ ngoài, chạy một lần chuyển đổi. Không dùng cho việc máy tự làm được. Từ khoá: wizard, hướng dẫn từng bước."
   },
   "skill:mattpocock-skills:obsidian-vault": {
     "vi": "[Lập trình] Tìm, tạo và quản lý ghi chú trong kho Obsidian, có liên kết wiki. Từ khoá: Obsidian."
@@ -4771,5 +4771,11 @@
   },
   "skill:pubmed-search:pubmed-mcp-tools-reference": {
     "vi": "[PubMed 10] Tra cứu đầy đủ 45 công cụ của MCP pubmed-search — dùng khi không nhớ có công cụ nào hoặc muốn gọi thẳng một công cụ cụ thể. Từ khoá: danh sách công cụ, có những công cụ gì, tra cứu công cụ, tool reference."
+  },
+  "skill:mattpocock-skills:writing-for-agents": {
+    "vi": "[Lập trình] Cách viết tài liệu cho agent đọc — dùng khi tạo/sửa skill, hoặc sửa AGENTS.md và CLAUDE.md. Từ khoá: viết tài liệu cho agent, soạn skill, AGENTS.md."
+  },
+  "skill:mattpocock-skills:wait-what": {
+    "vi": "[Lập trình] Dừng lại soi một khẳng định đáng ngờ trong hội thoại trước khi nó thành giả định ngầm. Từ khoá: khoan đã, kiểm lại giả định."
   }
 }
