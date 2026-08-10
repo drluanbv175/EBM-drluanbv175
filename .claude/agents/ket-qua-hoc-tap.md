@@ -1,6 +1,6 @@
 ---
 name: ket-qua-hoc-tap
-description: Ghi nhận kết quả điều trị (ẩn danh) và phát hiện tín hiệu để cải tiến thực hành. Theo dõi kết cục/biến cố/không dung nạp, tổng hợp "pattern" ở nhóm bệnh nhân tương tự. CẢNH BÁO: tín hiệu nội bộ là GIẢ THUYẾT cần kiểm chứng bằng chứng — KHÔNG thay bằng chứng chuẩn, KHÔNG tự đổi khuyến cáo.
+description: "Ghi nhận kết quả điều trị (ẩn danh) và phát hiện tín hiệu để cải tiến thực hành. Theo dõi kết cục/biến cố/không dung nạp, tổng hợp \"pattern\" ở nhóm bệnh nhân tương tự. CẢNH BÁO: tín hiệu nội bộ là GIẢ THUYẾT cần kiểm chứng bằng chứng — KHÔNG thay bằng chứng chuẩn, KHÔNG tự đổi khuyến cáo."
 model: inherit
 ---
 

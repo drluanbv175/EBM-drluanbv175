@@ -1,6 +1,6 @@
 ---
 name: viet-ban-thao
-description: Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy trình 2 bước: dàn ý → văn xuôi. Mỗi trích dẫn kèm PMID/DOI đã kiểm chứng.
+description: "Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy trình 2 bước: dàn ý → văn xuôi. Mỗi trích dẫn kèm PMID/DOI đã kiểm chứng."
 model: inherit
 ---
 

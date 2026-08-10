@@ -1,6 +1,6 @@
 ---
 name: tra-cuu-chung-cu
-description: Tra cứu chứng cứ y khoa cho MỘT câu hỏi lâm sàng (PICO). Dùng khi cần tìm bằng chứng tốt nhất + mới nhất để trả lời một thắc mắc tại điểm khám. Trả về câu trả lời CÓ TRÍCH DẪN (PMID/DOI), thứ tự: RAG kho → nguồn CHÍNH THỐNG (guideline hiệp hội/Cochrane/HTA) → PubMed/Europe PMC làm lớp ĐỐI CHIẾU + lấy PMID. KHÔNG thẩm định sâu GRADE (việc đó của tham-dinh-grade-nnt).
+description: "Tra cứu chứng cứ y khoa cho MỘT câu hỏi lâm sàng (PICO). Dùng khi cần tìm bằng chứng tốt nhất + mới nhất để trả lời một thắc mắc tại điểm khám. Trả về câu trả lời CÓ TRÍCH DẪN (PMID/DOI), thứ tự: RAG kho → nguồn CHÍNH THỐNG (guideline hiệp hội/Cochrane/HTA) → PubMed/Europe PMC làm lớp ĐỐI CHIẾU + lấy PMID. KHÔNG thẩm định sâu GRADE (việc đó của tham-dinh-grade-nnt)."
 model: inherit
 ---
 

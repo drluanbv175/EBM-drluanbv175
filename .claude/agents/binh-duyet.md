@@ -1,6 +1,6 @@
 ---
 name: binh-duyet
-description: Bình duyệt bản thảo/đề cương theo checklist trước khi nộp. Dùng khi cần rà soát phản biện: tính hợp lệ phương pháp, tính đúng thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA), liêm chính khoa học (trích dẫn, COI, đạo đức, khai báo AI), và góp ý xây dựng. Đóng vai phản biện khó tính nhưng công tâm.
+description: "Bình duyệt bản thảo/đề cương theo checklist trước khi nộp. Dùng khi cần rà soát phản biện: tính hợp lệ phương pháp, tính đúng thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA), liêm chính khoa học (trích dẫn, COI, đạo đức, khai báo AI), và góp ý xây dựng. Đóng vai phản biện khó tính nhưng công tâm."
 model: inherit
 ---
 

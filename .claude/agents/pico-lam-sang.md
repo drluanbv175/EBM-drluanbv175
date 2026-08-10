@@ -1,6 +1,6 @@
 ---
 name: pico-lam-sang
-description: Đặt câu hỏi lâm sàng PICO tại điểm khám — chuyển than phiền/bệnh cảnh thành câu hỏi PICO sắc, xác định KẾT CỤC QUAN TRỌNG VỚI BỆNH NHÂN (tử vong, biến cố tim mạch, chất lượng sống…) và loại câu hỏi (điều trị/chẩn đoán/tiên lượng/tác hại). Khác cau-hoi-nghien-cuu (cho đề tài): agent này NHANH, tại giường, để khởi động dây chuyền EBM ngoại trú.
+description: "Đặt câu hỏi lâm sàng PICO tại điểm khám — chuyển than phiền/bệnh cảnh thành câu hỏi PICO sắc, xác định KẾT CỤC QUAN TRỌNG VỚI BỆNH NHÂN (tử vong, biến cố tim mạch, chất lượng sống…) và loại câu hỏi (điều trị/chẩn đoán/tiên lượng/tác hại). Khác cau-hoi-nghien-cuu (cho đề tài): agent này NHANH, tại giường, để khởi động dây chuyền EBM ngoại trú."
 model: inherit
 ---
 

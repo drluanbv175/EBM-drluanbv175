@@ -1,6 +1,6 @@
 ---
 name: tong-quan-y-van
-description: Thực hiện tổng quan y văn có hệ thống cho một câu hỏi nghiên cứu (PICO/PECO). Dùng khi cần rà soát bằng chứng theo PRISMA, dựng chiến lược tìm, sàng lọc, trích xuất dữ liệu, đánh giá nguy cơ sai lệch và tổng hợp (định tính/meta-analysis). Khác tra-cuu-chung-cu (vốn cho điểm khám): agent này làm tổng quan ĐẦY ĐỦ, có thể tái lặp, cho mục đích công bố/đề tài.
+description: "Thực hiện tổng quan y văn có hệ thống cho một câu hỏi nghiên cứu (PICO/PECO). Dùng khi cần rà soát bằng chứng theo PRISMA, dựng chiến lược tìm, sàng lọc, trích xuất dữ liệu, đánh giá nguy cơ sai lệch và tổng hợp (định tính/meta-analysis). Khác tra-cuu-chung-cu (vốn cho điểm khám): agent này làm tổng quan ĐẦY ĐỦ, có thể tái lặp, cho mục đích công bố/đề tài."
 model: inherit
 ---
 
