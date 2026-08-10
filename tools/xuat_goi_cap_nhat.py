@@ -176,6 +176,7 @@ def main() -> int:
     py = sys.executable
     result = {"dashboard": str(dash), "ban_doc": None, "word": None,
               "word_html": None, "word_html_ly_do": None,
+              "pdf": None, "pdf_ly_do": None,
               "cong_liem_chinh": "KHÔNG CHẠY", "verified_flag": False}
     rc_final = 0
 
@@ -249,10 +250,35 @@ def main() -> int:
             result["word_html_ly_do"] = ly_do
             print("   ⚠ Bỏ qua: " + ly_do)
 
-    print("\n── Bộ bốn đã sẵn sàng ──")
-    for nhan, key in (("Dashboard   ", "dashboard"), ("Bản đọc     ", "ban_doc"),
-                      ("Bản Word    ", "word"), ("Word dạng HTML", "word_html")):
-        print(f"  {nhan}  {result[key] or '(chưa sinh được)'}")
+    # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
+    # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.
+    # Bước này đọc màu TỪ CHÍNH .docx rồi bơm lại vào HTML, sau đó in bằng Chrome
+    # headless — cách duy nhất trên máy này giữ đúng huy hiệu mức chứng cứ.
+    print("⑤ Bản PDF giữ màu…")
+    if not result["word"]:
+        result["pdf_ly_do"] = "chưa có file .docx ở bước ③"
+        print("   ⚠ Bỏ qua: " + result["pdf_ly_do"])
+    else:
+        cmd = [py, str(ROOT / "tools" / "docx_sang_pdf_giu_mau.py"), result["word"]]
+        if result.get("word_html"):
+            cmd += ["--html-co-san", result["word_html"]]   # khỏi gọi lại pandoc
+        rc, out = run(cmd)
+        dong_ok = [l for l in out.splitlines() if l.strip().startswith("✓")]
+        if rc == 0 and dong_ok:
+            result["pdf"] = str(Path(result["word"]).with_suffix(".pdf"))
+            for l in out.splitlines():
+                if l.strip():
+                    print("   " + l.strip())
+        else:
+            result["pdf_ly_do"] = (out.strip().splitlines() or ["không rõ"])[-1][:120]
+            print("   ⚠ Bỏ qua: " + result["pdf_ly_do"])
+            # PDF là tiện ích đọc, KHÔNG phải cổng chất lượng → không đổi mã thoát
+
+    print("\n── Bộ năm đã sẵn sàng ──")
+    for nhan, key in (("Dashboard     ", "dashboard"), ("Bản đọc       ", "ban_doc"),
+                      ("Bản Word      ", "word"), ("Word dạng HTML", "word_html"),
+                      ("PDF giữ màu   ", "pdf")):
+        print(f"  {nhan}  {result.get(key) or '(chưa sinh được)'}")
     print(f"  Cổng liêm chính: {result['cong_liem_chinh']}")
     print("\nCần bác sĩ kiểm chứng trước khi áp dụng cho người bệnh cụ thể.")
 

@@ -292,11 +292,12 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (EW mặc định) → cổng liêm chính (`verify_dashboard.py --online`) → an toàn thuốc (nếu liên quan) → thư viện
   (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`) → **BỘ BỐN đồng thời**.
   **KHÔNG tự chạy `sync_all.py`/Antifacts nữa** (đổi 2026-08-05 — xem mục (3)). Không cần bác sĩ yêu cầu từng bước.
-- **BỘ BỐN XUẤT ĐỒNG THỜI — MẶC ĐỊNH (bác sĩ chốt 2026-08-05; nâng từ BỘ BA lên BỘ BỐN cùng ngày). MỘT lệnh duy nhất:**
+- **BỘ NĂM XUẤT ĐỒNG THỜI — MẶC ĐỊNH (bác sĩ chốt 2026-08-05; nâng BỘ BA→BỐN cùng ngày, →NĂM ngày 2026-08-10 khi thêm PDF giữ màu). MỘT lệnh duy nhất:**
   `python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online`
   Sinh cùng lúc và từ CÙNG một khối `DATA`: **① Dashboard** (đầu vào, đã qua cổng liêm chính) ·
   **② Bản đọc** `derivatives/<mã>_ban-doc.html` · **③ Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` ·
-  **④ Bản Word dạng HTML** `derivatives/<mã>_TaiLieuChiTiet.html`.
+  **④ Bản Word dạng HTML** `derivatives/<mã>_TaiLieuChiTiet.html` ·
+  **⑤ Bản PDF GIỮ MÀU** `derivatives/<mã>_TaiLieuChiTiet.pdf`.
   Gộp một lệnh để các sản phẩm không bao giờ lệch phiên bản nhau — chạy rời rạc thì bản Word hoặc bản đọc
   dễ tụt lại một phiên bản so với dashboard mà không ai nhận ra.
   Cờ `--online` chạy `verify_dashboard.py --online` TRƯỚC; **chỉ khi cổng PASS thì bản Word mới được
@@ -318,6 +319,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   lệnh `python3`) và tự ép UTF-8 cho stdout (Windows mặc định cp1252 sẽ chết khi in tiếng Việt).
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
+  **Vì sao có ⑤ (thêm 10/08/2026):** bước ④ dùng `pandoc`, mà pandoc **bỏ hết màu nền ô** khi chuyển `.docx`→HTML — mất đúng thứ giúp nhìn lướt bắt được mức khuyến cáo (xanh lá `#15803D` Cao/Áp dụng ngay · cam `#B45309` Trung bình/Cân nhắc · đỏ `#B91C1C` Rất thấp). `tools/docx_sang_pdf_giu_mau.py` đọc màu **từ chính `.docx`** (`w:shd/@w:fill`) rồi bơm lại vào HTML của bước ④, sau đó in bằng **Chrome headless** — giữ nguyên tắc mọi bản phái sinh sinh từ CÙNG một nguồn, không dựng lại tài liệu từ dữ liệu. Đã kiểm 9/9 tài liệu: 16-20 màu nền mỗi bản (bản HTML chỉ còn 4) và 102-111% chữ so với bản Word. **Câu 'máy này không xuất được PDF' trong các ghi chú cũ ĐÃ LỖI THỜI** — nó đúng cho đường LaTeX và Word-tự-động, nhưng đường Chrome thì chạy được và giữ màu. Máy thiếu Chrome/Edge/Chromium thì bước ⑤ bị bỏ qua kèm thông báo rõ, **không** làm hỏng bốn sản phẩm kia và **không** đổi mã thoát — PDF là tiện ích đọc, không phải cổng chất lượng.
 - **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
 - Áp dụng cho skill `cap-nhat-chung-cu-y-khoa` và mọi tác vụ dashboard lâm sàng. Ngoại lệ: Dashboard Master
   quản trị (skill `dashboard-master-ebm-ngoai-tru`) giữ định dạng Excel/sổ riêng.
