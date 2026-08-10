@@ -51,11 +51,81 @@
       "priority": 40,
       "may_own": false
     },
-    "bmad-method": {
+    "healthcare": {
       "kind": "plugin",
-      "priority": 30,
-      "may_own": false
+      "priority": 40,
+      "may_own": false,
+      "note": "MCP tra cuu du lieu (PubMed/ICD10/FHIR). Khong bind worker cho capability co cong."
+    },
+    "aipoch-medical-research": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "605 skill, KHONG bind worker o bat ky capability nao - xem khai bao unbound_providers."
+    },
+    "openmed-skills": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "KHONG bind worker - xem khai bao unbound_providers."
+    },
+    "medsci-project": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "KHONG bind worker - xem khai bao unbound_providers."
+    },
+    "meta-pipe": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "KHONG bind worker - xem khai bao unbound_providers."
+    },
+    "pubmed-search": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "Trung bio-research/pubmed. KHONG bind worker - xem khai bao unbound_providers."
+    },
+    "mattpocock-skills": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "Skill lap trinh TypeScript, ngoai pham vi y khoa. KHONG bind worker."
+    },
+    "claude-code-harness": {
+      "kind": "plugin",
+      "priority": 20,
+      "may_own": false,
+      "note": "Chi dung cho viec ky thuat cua repo, khong cham quyet dinh y khoa/nghien cuu."
+    },
+    "humanizer": {
+      "kind": "plugin",
+      "priority": 10,
+      "may_own": false,
+      "note": "Chinh van phong. KHONG duoc dung tren noi dung y khoa da qua cong."
+    },
+    "codex": {
+      "kind": "plugin",
+      "priority": 20,
+      "may_own": false,
+      "note": "Luot chan doan/cai dat thu hai cho viec ky thuat."
     }
+  },
+  "unbound_providers": {
+    "policy": "Provider khai o day duoc HE BIET DEN nhung KHONG duoc bind worker o bat ky capability nao. resolve() se tra blocked_requests neu ai do yeu cau dich danh. Muon dung phai bac si bo sung binding co chu dich, khong tu dong.",
+    "reviewed_at": "2026-08-10",
+    "evidence": "Quet 2712 transcript: 0 luot goi cho aipoch-medical-research, openmed-skills, medsci-project, mattpocock-skills, pubmed-search.",
+    "providers": [
+      "aipoch-medical-research",
+      "openmed-skills",
+      "medsci-project",
+      "meta-pipe",
+      "pubmed-search",
+      "mattpocock-skills",
+      "humanizer",
+      "healthcare"
+    ]
   },
   "capabilities": {
     "research_lifecycle": {
@@ -603,8 +673,8 @@
       },
       "workers": [
         {
-          "provider": "bmad-method",
-          "unit": "bmad-build",
+          "provider": "claude-code-harness",
+          "unit": "harness-work",
           "mode": "engineering_worker",
           "allowed_stages": [
             "SPEC",

@@ -17,6 +17,43 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   allowlist/stage, không tự hợp nhất kết quả, không đổi trục cổng và không mở Cổng A/B/G. Yêu cầu
   đích danh plugin chỉ ưu tiên worker, không chuyển quyền owner. Kiểm fail-closed bằng
   `python tools/verify_plugin_orchestration.py`.
+
+### Định tuyến khi NHIỀU công cụ cùng nhận một việc — LUẬT BẮT BUỘC (rà 2026-08-10)
+
+**Vấn đề đã đo, không phải giả định.** Máy này đang bật 10 plugin = **846 skill**. Với mỗi việc
+có cổng, số công cụ tự nhận làm được là: thiết kế nghiên cứu **53** · viết bản thảo **25** · chọn
+tạp chí **21** · tổng quan-gộp **16** · bình duyệt **14** · thống kê **12** · khử định danh **11**
+· kiểm trích dẫn **9** · cỡ mẫu **7**. Trong mỗi nhóm **chỉ 1 công cụ biết đến cổng G0–G10,
+ledger và `study_meta.json`**; phần còn lại trả ra kết quả trông hợp lệ mà **không để lại dấu vết
+cổng nào**. Registry `plugin_ownership_registry.json` có chặn, nhưng nó chỉ chạy trong
+`tools/orchestrator/` — vốn tách rời luồng thật. Bảng dưới đây là luật cho **luồng thật**.
+
+| Việc | CHỦ duy nhất (dùng cái này) | Tuyệt đối KHÔNG thay bằng |
+|---|---|---|
+| Cỡ mẫu / power | `co-mau-nghien-cuu` → `run_g3_auto.py` + `g3_quality_gate.py` | mọi `*sample-size*`, `*power-calculator*` của plugin |
+| Thiết kế đề cương / SAP | `thiet-ke-nghien-cuu` → `run_g4_auto.py` + `g4_quality_gate.py` | 47 skill `*-planner`/`*-designer` của aipoch |
+| Kiểm trích dẫn | `kiem-chung-trich-dan` + `check_citation_retraction.py` | `reference-integrity-checker`, `verify-refs`, `citation-*` |
+| Bình duyệt (G8) | `binh-duyet` + `g8_quality_gate.py` | `sci-paper-reviewer`, `peer-review*` của plugin |
+| Tổng quan / gộp | `tong-quan-y-van`, `meta-phan-tich` | `ma-end-to-end`, `systematic-review*`, `meta-*` của aipoch |
+| Thống kê | `phan-tich-thong-ke` → `run_stats_analysis.py` | mọi `*statistical-analysis*` của plugin |
+| Viết bản thảo | `viet-ban-thao` | 21 skill `*-section-writer`/`*-writer` của aipoch |
+| Nộp bài / COI / khai AI | `nop-bai-phan-hoi` + `g9_quality_gate.py` | `cover-letter-*`, `journal-*`, `target-journal-matcher` |
+| Khử định danh / PII | `quan-ly-du-lieu` + quy tắc KHÔNG PII | `deidentify*`, `openmed:*deident*` |
+| Ca lâm sàng | `dieu-phoi-lam-sang` (dừng Cổng A/B) | mọi skill lâm sàng của plugin |
+
+**Ba luật nền:**
+1. **Plugin không bao giờ là chủ của việc có cổng.** Được gọi thì chỉ ở vai worker, đầu ra phải
+   qua chủ chuẩn hoá rồi qua `tham-dinh-dau-ra`. Bác sĩ gọi đích danh plugin cũng KHÔNG đổi chủ.
+2. **Không có chủ trong bảng → hỏi bác sĩ, không tự chọn plugin.** Đặc biệt với việc chạm vào
+   `exports/*/approval_ledger*.json`, `study_meta.json`, `EBM_MASTER.json` — plugin bị cấm ghi.
+3. **`humanizer` KHÔNG được chạy trên nội dung y khoa đã qua cổng** — nó sửa câu chữ, đủ để làm
+   lệch một mệnh đề điều kiện ("ngoài thai kỳ", "nếu không chống chỉ định") mà không ai thấy.
+
+**Nhóm 0 lượt dùng (quét 2712 phiên):** `aipoch-medical-research` (605 skill) · `openmed-skills`
+(72) · `medsci-project` (59) · `mattpocock-skills` (41) · `pubmed-search` (10) = **787 skill chưa
+từng gọi một lần**. Vẫn để bật theo quyết định của bác sĩ 2026-08-10, nên bảng trên là thứ DUY
+NHẤT giữ chúng khỏi lọt vào việc có cổng. Tầng thật sự tạo giá trị là **MCP** (2528 lượt gọi,
+riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầng skill của plugin.
 - **Chốt kiểm đầu ra (MẶC ĐỊNH):** mỗi nhạc trưởng/routine lâm sàng, ở **bước cuối trước khi trả bác sĩ**, gọi guardrail `tham-dinh-dau-ra` soi gói theo **2 lớp** — **Lớp 1 LIÊM CHÍNH** R1–R7 (nguồn · PII · vượt cổng A/B/G · tự gán mức · tách 2 trục · nhãn [CẦN…] · disclaimer, mọi gói) + **Lớp 2 CHẤT LƯỢNG Med-PaLM 2** Q1–Q7 (dễ đọc · đúng đắn · đầy đủ · thiên kiến · nguy cơ hại · cập nhật · thẩm quyền nguồn — chỉ gói lâm sàng; `_CHUAN-CHAT-LUONG-MEDPALM.md`); gói lâm sàng chỉ phát hành khi ĐẠT cả 2 lớp, còn lỗi đỏ → TRẢ-VỀ-SỬA, Q2/Q5 đỏ → chuyển bác sĩ. Cơ chế & giới hạn: `.claude/agents/_KIEM-DUYET-DOC-LAP.md`.
 - Bất biến: mỗi đầu ra kèm **PMID/DOI** + "Cần bác sĩ kiểm chứng"; **KHÔNG bịa, KHÔNG PII**; agent chỉ ĐỀ XUẤT, bác sĩ duyệt mới "áp dụng". Bản đồ đội: `.claude/agents/README.md`.
 - **Đồng bộ Mac:** thư mục `.claude/agents/` nằm trong OneDrive → tự sync sang MacBook; trên Mac mở `claude` ngay trong thư mục `~/OneDrive/Claude AI` là dùng được cùng đội agent (đợi OneDrive xanh trước khi đổi máy).

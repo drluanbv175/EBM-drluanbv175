@@ -37,10 +37,31 @@
 | Viết bản thảo | `viet-ban-thao` | ARS abstract/revision, `scientific-writing` | Worker không xác nhận authorship/COI/AI |
 | Bình duyệt | `binh-duyet` | ARS reviewer/rebuttal-audit | Worker không phải chữ ký phản biện độc lập G8 |
 | An toàn kê đơn | `ke-don-an-toan` | `ke-don-an-toan-benh-man` | Dừng Cổng A; bác sĩ quyết định |
-| Xây phần mềm | workflow kỹ thuật của repo | BMAD | BMAD không sở hữu quyết định y khoa/nghiên cứu |
+| Xây phần mềm | workflow kỹ thuật của repo | `claude-code-harness` | Worker kỹ thuật không sở hữu quyết định y khoa/nghiên cứu |
 | Bioinformatics chuyên sâu | `specialist-escalation` | Bio Research | Ngoài vùng phủ lõi; cần chuyên gia phù hợp |
 
 Chi tiết allowlist từng worker/stage nằm trong JSON canonical, không sao chép lại vào agent.
+
+### 2-bis. Provider ĐƯỢC BIẾT nhưng KHÔNG bind worker (rà 2026-08-10)
+
+Registry khai `unbound_providers`: `aipoch-medical-research`, `openmed-skills`, `medsci-project`,
+`meta-pipe`, `pubmed-search`, `mattpocock-skills`, `humanizer`, `healthcare`. Chúng **đang bật**
+trong `~/.claude/settings.json` nên vẫn hiện trong danh sách skill mỗi phiên, nhưng **không được
+bind vào bất kỳ capability nào** ⇒ `resolve()` trả `blocked_requests`, kể cả khi bị gọi đích danh.
+
+Lý do khai tường minh thay vì để "tên lạ → chặn": các plugin này chiếm phần lớn bề mặt ứng cử
+(riêng `aipoch` đóng góp 47/53 công cụ mang chữ "thiết kế nghiên cứu", 21/25 "viết bản thảo",
+15/21 "chọn tạp chí"). Quét 2712 transcript cho thấy **0 lượt gọi** cho aipoch, openmed,
+medsci-project, mattpocock, pubmed-search — nên chúng là nguồn nhiễu định tuyến chứ chưa từng là
+nguồn giá trị. `healthcare` là ngoại lệ về mặt dữ liệu: MCP PubMed của nó có 310 lượt gọi thật,
+nhưng đó là **truy cập dữ liệu**, không phải worker của capability có cổng.
+
+Muốn dùng một plugin trong nhóm này cho việc có cổng: bác sĩ phải **thêm binding có chủ đích**
+vào JSON canonical rồi chạy lại `verify_plugin_orchestration.py`. Không tự động, không ngầm định.
+
+⚠️ **Giới hạn phải nhớ:** cơ chế `resolve()` ở đây chỉ chạy trong `tools/orchestrator/` — vốn
+**tách rời khỏi luồng agent thật**. Luật ràng buộc luồng thật nằm ở bảng định tuyến trong
+`CLAUDE.md` (mục "Định tuyến khi nhiều công cụ cùng nhận một việc"). Sửa một nơi phải sửa cả hai.
 
 ## 3. Thuật toán định tuyến bắt buộc
 
