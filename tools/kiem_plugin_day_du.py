@@ -65,6 +65,10 @@ MOC = REPO / "tools/moc_chuan_plugin.json"
 NGUONG_HUT_VANG = 0.90   # còn ≥90% so với mốc → chỉ cảnh báo
 NGUONG_HUT_DO = 0.50     # còn <50% so với mốc → gần như chắc chắn hỏng
 
+# Cửa sổ ngữ cảnh quy ra KÝ TỰ (~200k token × 4). Dùng để quy đổi
+# skillListingBudgetFraction — vốn khai theo phân số của cửa sổ — ra số ký tự thật.
+CUA_SO_KY_TU = 800_000
+
 
 def ten_may() -> str:
     """Cùng quy ước với tools/vietnamize/extract_catalog.py để hai bộ không lệch nhau."""
@@ -110,6 +114,45 @@ def quet() -> dict:
             "khai_bat": khoa in bat,
         }
     return ra
+
+
+def kiem_ngan_sach(hien: dict) -> list[str]:
+    """Kiểm ngân sách DANH SÁCH SKILL — nguyên nhân thật của "gọi mà không có".
+
+    Claude Code chỉ dành `skillListingBudgetFraction` (MẶC ĐỊNH 0.01 = 1% cửa sổ
+    ngữ cảnh) cho danh sách skill gửi cho model. Vượt ngân sách thì nó CẮT: rụng mô
+    tả trước, rồi rụng luôn skill. Kho 869 skill của máy này cần ~45.000 ký tự chỉ
+    để hiện đủ TÊN — vượt mặc định 5,6 lần. Hệ quả đúng như bác sĩ mô tả: gõ gọi
+    một plugin thì "không có", và danh sách "lúc đủ lúc không đủ" tuỳ những gì lọt
+    vào ngân sách của phiên đó.
+
+    Đây là chỗ hỏng KHÁC HẲN với đường dẫn treo hay cache vơi: file vẫn đủ trên đĩa,
+    chỉ là model không được cho biết chúng tồn tại.
+    """
+    canh_bao: list[str] = []
+    cfg = doc_json(SETTINGS)
+    phan = cfg.get("skillListingBudgetFraction")
+    if phan is None:
+        phan = 0.01                      # mặc định của Claude Code
+        mac_dinh = True
+    else:
+        mac_dinh = False
+
+    tong_skill = sum(v["so_skill"] for v in hien.values())
+    # ~52 ký tự mỗi dòng "- plugin:ten-skill", cộng phần lệnh/skill riêng của bác sĩ
+    can = tong_skill * 52 + 5200
+    ngan_sach = int(CUA_SO_KY_TU * phan)
+
+    if can > ngan_sach:
+        canh_bao.append(
+            f"DANH SÁCH SKILL VƯỢT NGÂN SÁCH: cần ~{can:,} ký tự để hiện đủ tên "
+            f"{tong_skill} skill, nhưng skillListingBudgetFraction={phan} chỉ cho "
+            f"{ngan_sach:,} ký tự (vượt {can/ngan_sach:.1f} lần)"
+            + (" — ĐANG DÙNG MẶC ĐỊNH, chưa đặt trong ~/.claude/settings.json" if mac_dinh else "")
+            + f". Hệ quả: gọi skill sẽ báo KHÔNG CÓ dù file vẫn đủ trên đĩa. "
+              f"Đặt skillListingBudgetFraction ≈ {min(0.3, round(can/CUA_SO_KY_TU + 0.02, 2))}."
+        )
+    return canh_bao
 
 
 def so_moc(hien: dict, moc: dict) -> tuple[str, list[str], list[str]]:
@@ -187,6 +230,13 @@ def main() -> int:
 
     moc_may = doc_json(MOC).get(may, {})
     verdict, do, vang = so_moc(hien, moc_may)
+
+    # Ngân sách danh sách skill: vượt là skill "biến mất" với model dù file vẫn đủ.
+    # Xếp mức ĐỎ vì hậu quả giống hệt mất plugin — bác sĩ gọi thì báo không có.
+    thieu_ngan_sach = kiem_ngan_sach(hien)
+    if thieu_ngan_sach:
+        do.extend(thieu_ngan_sach)
+        verdict = "🔴"
 
     if args.json:
         print(json.dumps({"may": may, "verdict": verdict, "loi_do": do,

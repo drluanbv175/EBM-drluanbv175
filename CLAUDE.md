@@ -82,6 +82,24 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `catalog_may/<Máy>.json` của máy nào chỉ máy đó cập nhật được, và trang tra gộp cả hai để
   gắn nhãn `[W]`/`[M]`. Bảng "Việc hay làm" sửa tay ở `tools/vietnamize/viec-hay-lam.json`
   (file DUY NHẤT trong bộ này sửa tay được; mọi thứ khác sinh tự động — **đừng sửa tay**).
+- **🔴 NGUYÊN NHÂN GỐC của "gọi plugin mà không có" — NGÂN SÁCH DANH SÁCH SKILL (tìm ra 2026-08-10).**
+  Claude Code chỉ dành `skillListingBudgetFraction` — **MẶC ĐỊNH 0.01 = 1% cửa sổ ngữ cảnh ≈ 8.000
+  ký tự** — cho danh sách skill gửi cho model. Kho máy này cần **~45.000 ký tự CHỈ ĐỂ HIỆN ĐỦ TÊN**
+  869 skill ⇒ **vượt 5,6 lần**. Vượt thì Claude Code **CẮT**: rụng mô tả trước, rồi rụng luôn skill.
+  **Đây là lời giải cho cả hai than phiền lặp lại nhiều tháng của bác sĩ** — "gọi plugin đều không
+  có" và "lúc đủ lúc không đủ": file vẫn ĐỦ trên đĩa, chỉ là model không được cho biết chúng tồn tại,
+  và mỗi phiên lọt vào ngân sách một tập khác nhau. Nó cũng giải thích vì sao `mattpocock-skills`
+  khai 25 skill mà chỉ 11 từng xuất hiện — phần còn lại bị cắt vì hết ngân sách, KHÔNG phải hỏng file
+  (đã kiểm: cả 25 đều có file và YAML hợp lệ).
+  **ĐÃ VÁ trong `~/.claude/settings.json`:** `skillListingBudgetFraction: 0.08` (64.000 ký tự, đủ
+  chỗ cho tên + mô tả ngắn) và `skillListingMaxDescChars: 220` (cắt mô tả dài để nhiều skill cùng
+  lọt). Sao lưu `settings.json.bak-20260810-195754`. **Chi phí phải chấp nhận: ~16.000 token mỗi
+  lượt** — đó là cái giá của việc giữ 869 skill cùng bật.
+  **Muốn rẻ hơn mà không mất năng lực:** dùng `skillOverrides` đặt các plugin ít dùng thành
+  `"user-invocable-only"` — ẩn khỏi danh sách gửi cho model nhưng **vẫn gõ `/tên` gọi được**. Hợp
+  với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
+  ⚠️ Đây là khoá cấp NGƯỜI DÙNG (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải
+  đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
 - **CHỐT KIỂM KHO CÔNG CỤ — tự chạy mỗi phiên (mới 2026-08-10).**
   `python3 tools/kiem_plugin_day_du.py` (0=🟢 · 1=🟡 · 2=🔴). Đã nối vào hook `SessionStart`
   ở `.claude/settings.json` với cờ `--im-khi-on` ⇒ **chỉ lên tiếng khi kho THIẾU**, im lặng khi đủ.
