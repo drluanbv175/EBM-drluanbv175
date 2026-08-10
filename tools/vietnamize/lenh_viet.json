@@ -177,8 +177,8 @@
   },
   "cap-nhat-chung-cu": {
     "dich": "cap-nhat-chung-cu-y-khoa",
-    "mo_ta": "Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền",
-    "than": "Vấn đề lâm sàng cần cập nhật: **$ARGUMENTS**\n\nDùng kỹ năng `cap-nhat-chung-cu-y-khoa`. Tự chạy trọn dây chuyền: dựng dashboard → cổng liêm chính → thư viện → đồng bộ hub → xuất Word."
+    "mo_ta": "Cập nhật chứng cứ cho một vấn đề lâm sàng — dựng dashboard rồi xuất BỘ NĂM (dashboard · bản đọc · Word · Word-dạng-HTML · PDF giữ màu)",
+    "than": "Vấn đề lâm sàng cần cập nhật: **$ARGUMENTS**\n\nDùng kỹ năng `cap-nhat-chung-cu-y-khoa`, chạy trọn dây chuyền, KHÔNG hỏi từng bước.\n\n## Sau khi dựng xong dashboard — MỘT lệnh duy nhất\n\n```bash\npython3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online\n```\n\nSinh đồng thời **năm** sản phẩm từ CÙNG khối `DATA`, nên không bản nào tụt phiên bản:\n① dashboard (đã qua cổng liêm chính) · ② bản đọc · ③ bản Word `.docx` (bản lưu trữ chuẩn) ·\n④ Word dạng HTML (đọc thẳng trong khung chat) · ⑤ **PDF giữ màu** huy hiệu mức chứng cứ.\n\nRồi chạy tiếp: `tools/drug_safety_scan.py` nếu có thuốc cho người cao tuổi/đa thuốc, và\n`tools/build_library.py add <dashboard>.html` để tích lũy vào chỉ mục tra cứu.\n\n**KHÔNG tự chạy `EBM_MASTER/tools/sync_all.py`** — chỉ khi bác sĩ yêu cầu riêng.\n\n## Xong thì mở luôn cho bác sĩ\n\nGửi cả năm file bằng SendUserFile — `display:\"render\"` cho dashboard, bản đọc,\nWord-dạng-HTML và PDF; `.docx` đính kèm để tải. Đừng bắt bác sĩ tự tìm trong thư mục.\n\nCổng liêm chính không đạt thì vẫn xuất, nhưng bản Word tự hạ câu chữ thành \"CẦN xác minh\".\nMọi khẳng định kèm PMID/DOI; KHÔNG PII. Cần bác sĩ kiểm chứng."
   },
   "gop-tron-goi": {
     "dich": "ma-end-to-end",

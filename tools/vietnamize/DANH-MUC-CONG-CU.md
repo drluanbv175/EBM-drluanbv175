@@ -770,7 +770,7 @@
 | `/anthropic-skills:borzoi` | kỹ năng | Mac | [Tin sinh học] Dự đoán tín hiệu chức năng toàn hệ gen (RNA-seq, CAGE, DNase, ChIP) từ chuỗi DNA bằng Borzoi. Dùng trong nghiên cứu hệ gen. Từ khoá: Borzoi, functional genomics. |
 | `/anthropic-skills:brand-guidelines` | kỹ năng | Mac | Áp bộ màu và kiểu chữ chính thức của Anthropic. Dùng khi làm sản phẩm cần đúng nhận diện thương hiệu đó; ít dùng cho tài liệu y khoa. Từ khoá: brand guidelines. |
 | `/anthropic-skills:canvas-design` | kỹ năng | Mac | Tạo ẤN PHẨM HÌNH ẢNH đẹp dạng .png/.pdf theo nguyên tắc thiết kế (poster, tờ rơi, thiệp). Dùng khi cần sản phẩm in được. Từ khoá: canvas design, poster. |
-| `/anthropic-skills:cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứ… |
+| `/anthropic-skills:cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
 | `/anthropic-skills:chai1` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp bằng mô hình nền Chai-1. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Chai-1. |
 | `/anthropic-skills:citation-management` | kỹ năng | Mac | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
 | `/anthropic-skills:clinical-evidence-rag` | kỹ năng | Mac | Cầu nối kiến thức–thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất (RAG) từ kho y văn do bác sĩ tự nạp. Dùng khi muốn tra trong kho tài liệu riêng thay vì tìm mới trên mạng. Từ khoá: clinical RAG. |
@@ -958,7 +958,7 @@
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/cap-nhat-chung-cu` | lệnh | Mac | Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền |
+| `/cap-nhat-chung-cu` | lệnh | Mac | Cập nhật chứng cứ cho một vấn đề lâm sàng — dựng dashboard rồi xuất BỘ NĂM (dashboard · bản đọc · Word · Word-dạng-HTML · PDF giữ màu) |
 | `/chay-thong-ke` | lệnh | Mac | Chạy phân tích theo đúng SAP đã khoá, trên dữ liệu đã khoá (cổng G6) |
 | `/chon-tap-chi` | lệnh | Mac | Gợi ý tạp chí phù hợp kèm chính sách khai báo AI và phương án dự phòng nếu bị từ chối |
 | `/cong-cu-gi` | lệnh | cả 2 máy | Tra xem việc mình cần làm thì gọi công cụ nào — tìm trong danh mục 532 skill/lệnh/agent đã Việt hoá |
@@ -1036,7 +1036,7 @@
 | `agent huong-dan-lam-sang` | agent | cả 2 máy | Cầu nối Nghiên cứu ↔ Thực hành — đặt phát hiện vào bối cảnh hướng dẫn lâm sàng hiện hành, dựng khối GRADE Evidence-to-Decision, đề xuất hoặc cập nhật khuyến cáo (chiều + độ mạnh), rồi nạp EBM_MASTER. Dùng khi cần trả lời "phát hiện này đ… |
 | `agent ke-don-an-toan` | agent | cả 2 máy | Rà soát an toàn kê đơn cho bệnh nhân ngoại trú. Dùng khi cần kiểm tra tương tác thuốc, chống chỉ định, chỉnh liều theo chức năng thận/gan, đa thuốc ở người cao tuổi (Beers/STOPP-START), hiệu chỉnh theo bệnh mạn. Trả về cảnh báo phân tầng… |
 | `agent ke-hoach-trien-khai` | agent | cả 2 máy | Lập KẾ HOẠCH TRIỂN KHAI đề tài (artifact A13) — nhân lực & phân công vai trò (thu thập/nhập liệu/phân tích/giám sát), TIẾN ĐỘ theo mốc cổng G0–G9 (biểu Gantt/timeline), DỰ TRÙ KINH PHÍ (nhân công, vật tư, xét nghiệm, phần mềm, công bố/AP… |
-| `agent ket-qua-hoc-tap` | agent | cả 2 máy | Ghi nhận kết quả điều trị (ẩn danh) và phát hiện tín hiệu để cải tiến thực hành. Theo dõi kết cục/biến cố/không dung nạp, tổng hợp "pattern" ở nhóm bệnh nhân tương tự. CẢNH BÁO: tín hiệu nội bộ là GIẢ THUYẾT cần kiểm chứng bằng chứng — K… |
+| `agent ket-qua-hoc-tap` | agent | cả 2 máy | Ghi nhận kết quả điều trị (ẩn danh) và phát hiện tín hiệu để cải tiến thực hành. Theo dõi kết cục/biến cố/không dung nạp, tổng hợp \"pattern\" ở nhóm bệnh nhân tương tự. CẢNH BÁO: tín hiệu nội bộ là GIẢ THUYẾT cần kiểm chứng bằng chứng —… |
 | `agent khai-thac-benh-su-kham` | agent | cả 2 máy | Khai thác BỆNH SỬ và KHÁM LÂM SÀNG CÓ TRỌNG ĐIỂM cho ca ngoại trú — hỏi bệnh có hệ thống (SOCRATES/OPQRST), điểm lại cơ quan (ROS), tiền sử, đề xuất khám thực thể theo hội chứng; trả bộ dữ liệu lâm sàng có cấu trúc cho chẩn đoán phân biệ… |
 | `agent khoang-trong-nghien-cuu` | agent | cả 2 máy | Đối chiếu câu hỏi nghiên cứu với guideline/khuyến cáo hiện hành và xác định KHOẢNG TRỐNG NGHIÊN CỨU (research gap). Trả lời "câu hỏi này đã được giải đáp chưa, guideline nói gì, còn thiếu gì" để biện minh tính mới và ý nghĩa của đề tài. … |
 | `agent kiem-chung-trich-dan` | agent | cả 2 máy | Kiểm chứng và quản lý trích dẫn học thuật — cổng cứng chống trích dẫn ma. Dùng khi cần xác minh mọi PMID/DOI có thật và đúng nội dung, đối chiếu tài liệu tham khảo với câu khẳng định trong bài, sinh danh mục Vancouver/AMA/APA hoặc BibTeX… |

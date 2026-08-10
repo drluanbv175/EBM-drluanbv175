@@ -338,7 +338,26 @@ Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
 Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
 
-**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online --strict-sources` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
+**TỰ ĐỘNG khi gọi skill — BỘ NĂM, MỘT LỆNH:** mỗi lần skill được gọi cho một vấn đề → dựng Dashboard (mẫu Evidence Workbench; Dark Analyst CHỈ khi bác sĩ yêu cầu) rồi chạy **một lệnh duy nhất**:
+
+```bash
+python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online
+```
+
+Lệnh này tự làm trọn và sinh **năm** sản phẩm từ CÙNG một khối `DATA` (nên không bản nào tụt lại một phiên bản so với bản khác):
+① **Dashboard** — đã qua cổng liêm chính `verify_dashboard.py --online` chạy sẵn bên trong ·
+② **Bản đọc** `derivatives/<mã>_ban-doc.html` — cờ đỏ và việc cần làm đứng trước ·
+③ **Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` — bản lưu trữ chuẩn, có màu ·
+④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
+⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
+
+Cổng liêm chính KHÔNG đạt thì vẫn xuất file nhưng bản Word tự hạ câu chữ thành "CẦN xác minh" — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
+
+**Chạy tiếp sau bộ năm:** `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add <dashboard>.html` (tích lũy vào chỉ mục tra cứu).
+
+**KHÔNG tự chạy `EBM_MASTER/tools/sync_all.py`** (đổi mặc định 2026-08-05 theo yêu cầu bác sĩ) — chỉ chạy khi bác sĩ yêu cầu riêng. ⚠️ Bỏ chạy `sync_all.py` là CHƯA ĐỦ để giữ một gói ngoài Antifacts: `tools/build_antifacts.py` quét `EBM-Dashboards/WebDashboard_*.html` bằng glob và hai lịch launchd vẫn dựng lại hub từ chính thư mục đó. Muốn giữ ngoài hub thì phải khai tên file vào `EBM-Dashboards/antifacts-exclude.txt` rồi chạy lại `build_antifacts.py`.
+
+**MẶC ĐỊNH sau khi chạy xong:** mở cả năm file cho bác sĩ ngay trong Claude (SendUserFile — `display:"render"` cho dashboard · bản đọc · Word-dạng-HTML · PDF; `.docx` đính kèm để tải). Không bắt bác sĩ tự đi tìm trong thư mục.
 **CỔNG TRA CỨU DUY NHẤT cho bác sĩ** (không phải lục từng file): nút **"Mở EBM (WebApp).command"** → `EBM_MASTER/EBM_WEBAPP.html` (tìm/lọc mọi cập nhật đã làm). `EBM-Dashboards/` chỉ là vùng staging tạo file mới.
 
 
@@ -545,7 +564,9 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `quality/web-dashboard-acceptance-checklist.md`
 
 Ngoài thư mục skill (dùng chung với các skill/quy trình EBM khác — KHÔNG nhân bản vào đây, chỉ tham chiếu):
-- `EBM_MASTER/tools/sync_all.py` — bước cuối bắt buộc của chuỗi tự động (nạp vào sổ cái trung tâm; xem §5D/§5E). `--online` xác minh PMID thật qua PubMed (mặc định tắt để nhanh — chạy định kỳ).
+- `tools/xuat_goi_cap_nhat.py` — **lệnh duy nhất** của chuỗi tự động: sinh đồng thời bộ năm (dashboard · bản đọc · Word · Word-dạng-HTML · PDF giữ màu) từ cùng một khối `DATA`
+- `tools/docx_sang_pdf_giu_mau.py` — bước ⑤: đọc màu từ chính `.docx` rồi in PDF bằng Chrome headless (pandoc bỏ hết màu nền ô nên bước ④ không dùng được cho việc này)
+- `EBM_MASTER/tools/sync_all.py` — **KHÔNG còn tự chạy** (đổi 2026-08-05); chỉ khi bác sĩ yêu cầu
 - `EBM-Dashboards/tools/reskin_dashboards.py` — áp lại vỏ template chuẩn (EW/DA) cho MỌI dashboard đã xuất bản khi bố cục/CSS template đổi (bóc khối `DATA`, bọc vỏ mới, giữ nguyên dữ liệu, tự backup).
 
 ---
