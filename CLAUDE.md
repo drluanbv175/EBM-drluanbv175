@@ -82,6 +82,28 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `catalog_may/<Máy>.json` của máy nào chỉ máy đó cập nhật được, và trang tra gộp cả hai để
   gắn nhãn `[W]`/`[M]`. Bảng "Việc hay làm" sửa tay ở `tools/vietnamize/viec-hay-lam.json`
   (file DUY NHẤT trong bộ này sửa tay được; mọi thứ khác sinh tự động — **đừng sửa tay**).
+- **CHỐT KIỂM KHO CÔNG CỤ — tự chạy mỗi phiên (mới 2026-08-10).**
+  `python3 tools/kiem_plugin_day_du.py` (0=🟢 · 1=🟡 · 2=🔴). Đã nối vào hook `SessionStart`
+  ở `.claude/settings.json` với cờ `--im-khi-on` ⇒ **chỉ lên tiếng khi kho THIẾU**, im lặng khi đủ.
+  **Vì sao có:** kho công cụ KHÔNG đứng yên trong một phiên. Đã đo 4 cơ chế: (a) cache plugin bị
+  dọn rồi tự nạp lại giữa phiên — aipoch đi qua 605→360→438→475→605 trong MỘT phiên, bộ máy là
+  marker `.in_use` + `.last-cleanup` + `.last_inuse_sweep`; (b) plugin kiểu thư mục đồng bộ lại từ
+  repo nguồn; (c) phiên bản đổi giữa chừng (mattpocock 1.2.0→1.2.3 làm danh sách skill đổi theo);
+  (d) **đường dẫn treo** trong `installed_plugins.json` → plugin biến mất im lặng.
+  **(d) đã TÁI PHÁT ngay 10/08:** prune lúc 17:49 thì 17:52 file bị ghi lại, 8 mục medsci quay về
+  và treo vì cache đã xoá — nguyên nhân là chúng vẫn còn tên trong `enabledPlugins` (ghi `false`)
+  nên Claude Code đăng ký lại. Đã vá: **gỡ hẳn 8 mục khỏi `enabledPlugins`**, không chỉ đặt `false`.
+  **Mốc chuẩn** ở `tools/moc_chuan_plugin.json`, ghi bằng `--ghi-moc` khi kho đang đủ; **ghi RIÊNG
+  trên mỗi máy** (Mac 10 plugin/870 skill; Windows khác). Sau khi cài/gỡ/cập nhật plugin có chủ ý
+  thì phải `--ghi-moc` lại, nếu không chốt sẽ báo động nhầm.
+  ⚠️ **Giới hạn cố ý:** công cụ đếm file `SKILL.md` TRÊN ĐĨA — con số đó KHÁC số skill Claude Code
+  thật sự chào ra, vì mỗi plugin khai báo một kiểu trong `plugin.json` (`claude-code-harness` khai
+  `["./skills/"]` cả thư mục; `medsci-project` khai 6 mà 58 skill vẫn gọi được; `mattpocock-skills`
+  khai 25 mà chỉ 11 từng xuất hiện — **chưa giải thích được, đã kiểm: cả 25 đều có file và YAML hợp
+  lệ**). Nên đây là chốt kiểm TOÀN VẸN CỦA KHO, KHÔNG phải bản kiểm kê thứ gọi được.
+  ⚠️ **Thông báo skill giữa phiên là BẢN CHÊNH LỆCH, không phải kiểm kê**: đầu phiên liệt kê đầy đủ,
+  giữa phiên chỉ liệt kê skill MỚI xuất hiện (đã thấy notice chỉ có 1–2 mục). Thấy "2 skill" mà
+  tưởng hệ chỉ còn 2 là đọc nhầm — dùng lệnh trên để biết con số thật.
 - **VIỆT HOÁ KHÔNG CÒN PHỤ THUỘC VÀO VIỆC SỬA FILE PLUGIN (đổi 2026-08-10).** Nguồn sự thật bền
   là **`tools/vietnamize/vi_descriptions.json`** (1664 mục, khoá theo `id`). Cả `build_danh_muc.py`
   lẫn `build_trang_tra_cuu.py` áp nó như **LỚP PHỦ lúc dựng** ⇒ danh mục và trang tra LUÔN tiếng

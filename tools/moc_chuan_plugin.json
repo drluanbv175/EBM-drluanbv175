@@ -1,0 +1,47 @@
+{
+  "_ghi_chu": "Mốc chuẩn kho plugin theo TỪNG MÁY. Ghi lại bằng `python3 tools/kiem_plugin_day_du.py --ghi-moc` khi kho đang ĐỦ. Mac và Windows có bộ plugin khác nhau nên phải ghi riêng trên mỗi máy.",
+  "Mac": {
+    "plugin": {
+      "codex@openai-codex": {
+        "so_skill": 3,
+        "phien_ban": "1.0.6"
+      },
+      "humanizer@humanizer": {
+        "so_skill": 1,
+        "phien_ban": "2.9.1"
+      },
+      "academic-research-skills@academic-research-skills": {
+        "so_skill": 4,
+        "phien_ban": "3.19.0"
+      },
+      "mattpocock-skills@mattpocock": {
+        "so_skill": 35,
+        "phien_ban": "1.2.3"
+      },
+      "openmed-skills@openmed-skills": {
+        "so_skill": 72,
+        "phien_ban": "e412ae8f3b04"
+      },
+      "claude-code-harness@claude-code-harness-marketplace": {
+        "so_skill": 67,
+        "phien_ban": "5.6.0"
+      },
+      "medsci-project@medsci-skills": {
+        "so_skill": 59,
+        "phien_ban": "1dcb1c8b5808"
+      },
+      "aipoch-medical-research@aipoch-medical-research": {
+        "so_skill": 605,
+        "phien_ban": "813313b27f5f"
+      },
+      "meta-pipe@meta-pipe": {
+        "so_skill": 14,
+        "phien_ban": "0fb4d92b6a2f"
+      },
+      "pubmed-search@pubmed-search": {
+        "so_skill": 10,
+        "phien_ban": "d0a21c5b9cc0"
+      }
+    }
+  }
+}
