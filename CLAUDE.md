@@ -85,10 +85,13 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - **Bộ `medsci-skills`: 9 plugin nhưng CÙNG MỘT bộ 58 skill byte-identical** (đã so md5). Đã
   **tắt 8, giữ `medsci-project`** trong `~/.claude/settings.json` → danh sách Windows 1405 → 941
   mục, **0 năng lực mất** (đã kiểm: cả 58 tên vẫn gọi được qua `/medsci-project:*`). **Tiền tố
-  lệnh đổi**: `/medsci-review:check-reporting` → `/medsci-project:check-reporting`. Bật lại =
-  đổi `false` → `true` (cache còn nguyên trên đĩa, không phải tải lại). **MÁY MAC CHƯA DỌN** —
-  làm y hệt rồi chạy lại 3 lệnh trên. Muốn lấy lại ~230 MB đĩa: `claude plugin uninstall
-  medsci-analysis@medsci-skills` (lặp cho 8 plugin đã tắt) — không bắt buộc.
+  lệnh đổi**: `/medsci-review:check-reporting` → `/medsci-project:check-reporting`.
+  **CẬP NHẬT 2026-08-10 — MAC ĐÃ DỌN, và câu "cache còn nguyên trên đĩa" KHÔNG CÒN ĐÚNG trên Mac:**
+  cache của 8 plugin đã tắt đã bị xoá cùng đợt dọn 1306 MB, và mục của chúng đã được gỡ khỏi
+  `installed_plugins.json` (gỡ cache mà để lại mục trong JSON chính là kiểu hỏng "plugin biến mất
+  im lặng" ngày 05/08). Nên trên Mac, **bật lại = phải cài lại qua mạng**, không chỉ đổi `false`
+  → `true`. Sao lưu trước khi dọn: `~/.claude/plugins/installed_plugins.json.bak-20260810-174911`
+  và `~/.claude/settings.json.bak-20260810-174911`. Máy Windows chưa dọn cache — ở đó câu cũ vẫn đúng.
 - **Ba bẫy đã vá cùng ngày, đừng để tái phát:** (a) `extract_catalog.py` từng liệt kê cả plugin
   ĐANG TẮT → danh mục mời gọi lệnh gõ vào là không chạy; nay bỏ qua mục `enabledPlugins: false`
   (chỉ khi ghi RÕ `false`, vắng mặt thì giữ). (b) Khi một skill có nhiều cách gọi, cách được
