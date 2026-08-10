@@ -52,9 +52,14 @@ bind vào bất kỳ capability nào** ⇒ `resolve()` trả `blocked_requests`,
 Lý do khai tường minh thay vì để "tên lạ → chặn": các plugin này chiếm phần lớn bề mặt ứng cử
 (riêng `aipoch` đóng góp 47/53 công cụ mang chữ "thiết kế nghiên cứu", 21/25 "viết bản thảo",
 15/21 "chọn tạp chí"). Quét 2712 transcript cho thấy **0 lượt gọi** cho aipoch, openmed,
-medsci-project, mattpocock, pubmed-search — nên chúng là nguồn nhiễu định tuyến chứ chưa từng là
-nguồn giá trị. `healthcare` là ngoại lệ về mặt dữ liệu: MCP PubMed của nó có 310 lượt gọi thật,
-nhưng đó là **truy cập dữ liệu**, không phải worker của capability có cổng.
+medsci-project, mattpocock, pubmed-search — tính đến nay chúng làm tăng bề mặt ứng cử mà chưa
+tạo ra đóng góp đo được. `healthcare` là ngoại lệ về mặt dữ liệu: MCP PubMed của nó có 310 lượt
+gọi thật, nhưng đó là **truy cập dữ liệu**, không phải worker của capability có cổng.
+
+⚠️ **"0 lượt gọi" nói về TẦN SUẤT DÙNG, KHÔNG nói plugin hỏng.** Đã kiểm ngược lại 10/08:
+aipoch có 605/605 SKILL.md hợp lệ, manifest khai đủ, nạp bình thường mỗi phiên — **đang chạy
+tốt**. Không-bind ở đây là quyết định ĐIỀU PHỐI (giữ việc có cổng cho chủ duy nhất), không phải
+phán quyết về chất lượng plugin. Một plugin có thể chưa được gọi chỉ vì khó tìm giữa 846 skill.
 
 Muốn dùng một plugin trong nhóm này cho việc có cổng: bác sĩ phải **thêm binding có chủ đích**
 vào JSON canonical rồi chạy lại `verify_plugin_orchestration.py`. Không tự động, không ngầm định.
