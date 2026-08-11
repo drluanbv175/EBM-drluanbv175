@@ -138,9 +138,33 @@ def kiem_ngan_sach(hien: dict) -> list[str]:
     else:
         mac_dinh = False
 
-    tong_skill = sum(v["so_skill"] for v in hien.values())
-    # ~52 ký tự mỗi dòng "- plugin:ten-skill", cộng phần lệnh/skill riêng của bác sĩ
-    can = tong_skill * 52 + 5200
+    # ĐO thật độ dài từng dòng "- plugin:ten-skill" thay vì nhân một con số ước
+    # lượng: tên skill dài ngắn rất khác nhau (`esm` vs
+    # `active-comparator-single-soc-faers-safety-comparison`), ước lượng sẽ lệch.
+    can = 0
+    tong_skill = 0
+    for khoa, m in hien.items():
+        pl = khoa.split("@")[0]
+        goc = Path(m["duong_dan"])
+        if not goc.is_dir():
+            continue
+        for root, _d, fs in os.walk(goc):
+            if "SKILL.md" not in fs:
+                continue
+            can += len(f"- {pl}:{os.path.basename(root)}\n")
+            tong_skill += 1
+    # + skill và lệnh riêng của bác sĩ (~/.claude/skills, ~/.claude/commands)
+    for thu_muc, hau_to in ((HOME / ".claude/skills", "SKILL.md"), (HOME / ".claude/commands", None)):
+        if not thu_muc.is_dir():
+            continue
+        if hau_to:
+            for root, _d, fs in os.walk(thu_muc):
+                if hau_to in fs:
+                    can += len(f"- {os.path.basename(root)}\n"); tong_skill += 1
+        else:
+            for f in thu_muc.glob("*.md"):
+                can += len(f"- {f.stem}\n"); tong_skill += 1
+    can += 8000          # ~14 skill dựng sẵn của Claude Code, mô tả rất dài
     ngan_sach = int(CUA_SO_KY_TU * phan)
 
     if can > ngan_sach:

@@ -91,10 +91,18 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   và mỗi phiên lọt vào ngân sách một tập khác nhau. Nó cũng giải thích vì sao `mattpocock-skills`
   khai 25 skill mà chỉ 11 từng xuất hiện — phần còn lại bị cắt vì hết ngân sách, KHÔNG phải hỏng file
   (đã kiểm: cả 25 đều có file và YAML hợp lệ).
-  **ĐÃ VÁ trong `~/.claude/settings.json`:** `skillListingBudgetFraction: 0.08` (64.000 ký tự, đủ
-  chỗ cho tên + mô tả ngắn) và `skillListingMaxDescChars: 220` (cắt mô tả dài để nhiều skill cùng
-  lọt). Sao lưu `settings.json.bak-20260810-195754`. **Chi phí phải chấp nhận: ~16.000 token mỗi
-  lượt** — đó là cái giá của việc giữ 869 skill cùng bật.
+  **ĐÃ VÁ trong `~/.claude/settings.json`:** `skillListingBudgetFraction: 0.08` +
+  `skillListingMaxDescChars: 80`. Sao lưu `.bak-20260810-195754` và `.bak-20260811-174341`.
+  **Số đo thật (2 phép đo độc lập khớp nhau):** 933 mục cần **48.607 ký tự** để hiện đủ TÊN
+  (869 skill plugin + 53 lệnh riêng + 10 skill riêng + ~8.000 ký tự cho skill dựng sẵn).
+  Ngân sách 0,08 = 64.000 ký tự ⇒ **đủ toàn bộ, còn dư biên**.
+  `maxDescChars: 80` là **trần chống vọt chi phí**: nếu cửa sổ ngữ cảnh lớn hơn 200k token thì
+  0,08 mở ra nhiều ký tự hơn, và không có trần này Claude Code sẽ bơm mô tả đầy đủ (216.449 ký tự
+  ≈ 54.000 token/lượt). Có trần thì chi phí ≤16.000 token (cửa sổ 200k) hoặc ≤31.000 (cửa sổ 1M).
+  **Thang đánh đổi đã đo, để bác sĩ chọn lại khi cần:** chỉ tên 40.573 ký tự (~10k token) ·
+  tên+mô tả ≤80 là 112.469 (~28k) · tên+mô tả đầy đủ 216.449 (~54k). Mô tả tiếng Việt đầy đủ đã
+  có sẵn ở `TRA-CUU-CONG-CU.html` — **tra ở đó không tốn ngữ cảnh nào**, nên không cần mua mô tả
+  đầy đủ bằng token.
   **Muốn rẻ hơn mà không mất năng lực:** dùng `skillOverrides` đặt các plugin ít dùng thành
   `"user-invocable-only"` — ẩn khỏi danh sách gửi cho model nhưng **vẫn gõ `/tên` gọi được**. Hợp
   với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
