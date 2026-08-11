@@ -117,8 +117,13 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   repo nguồn; (c) phiên bản đổi giữa chừng (mattpocock 1.2.0→1.2.3 làm danh sách skill đổi theo);
   (d) **đường dẫn treo** trong `installed_plugins.json` → plugin biến mất im lặng.
   **(d) đã TÁI PHÁT ngay 10/08:** prune lúc 17:49 thì 17:52 file bị ghi lại, 8 mục medsci quay về
-  và treo vì cache đã xoá — nguyên nhân là chúng vẫn còn tên trong `enabledPlugins` (ghi `false`)
-  nên Claude Code đăng ký lại. Đã vá: **gỡ hẳn 8 mục khỏi `enabledPlugins`**, không chỉ đặt `false`.
+  và treo vì cache đã xoá.
+  ⛔ **ĐÍNH CHÍNH 11/08 — lời khuyên trước đó ở dòng này là SAI và đã gây hại:** tôi từng ghi
+  "gỡ hẳn 8 mục khỏi `enabledPlugins`, không chỉ đặt `false`". Làm vậy khiến Claude Code **CÀI LẠI
+  cả 8 bộ** (278 MB tải về, 464 skill trùng tràn vào danh sách, suýt lại vượt ngân sách vừa vá).
+  **Sự thật: vắng mặt trong `enabledPlugins` = BẬT, không phải tắt.** Cách bác sĩ đặt ban đầu —
+  ghi rõ `false` — mới đúng và phải giữ nguyên. Đã khôi phục 10 BẬT · 8 TẮT.
+  Hệ quả kèm theo: `extract_catalog.py` cũng đúng khi chỉ loại mục ghi RÕ `false` và GIỮ mục vắng mặt.
   **Mốc chuẩn** ở `tools/moc_chuan_plugin.json`, ghi bằng `--ghi-moc` khi kho đang đủ; **ghi RIÊNG
   trên mỗi máy** (Mac 10 plugin/870 skill; Windows khác). Sau khi cài/gỡ/cập nhật plugin có chủ ý
   thì phải `--ghi-moc` lại, nếu không chốt sẽ báo động nhầm.
