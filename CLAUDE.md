@@ -355,6 +355,21 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   dễ tụt lại một phiên bản so với dashboard mà không ai nhận ra.
   Cờ `--online` chạy `verify_dashboard.py --online` TRƯỚC; **chỉ khi cổng PASS thì bản Word mới được
   truyền `--verified`** (không PASS → tool docx tự hạ câu chữ thành "CẦN xác minh", không khẳng định sai).
+  **CỔNG NGUỒN NGHIÊM NGẶT — bật 2026-08-11 (trước đó chưa bao giờ thi hành).** `DESIGN-SPEC.md` §6
+  đòi `--online --strict-sources` từ đầu, nhưng dây chuyền chỉ chạy `--online`, nên nhóm luật mạnh
+  nhất nằm im. Nay bước ①-bis chạy thêm `--strict-sources` và **tách hai loại lỗi** (rà 58 dashboard
+  ngày 11/08 cho thấy vì sao không thể chặn tất): **47/52 bản FAIL chỉ vì thiếu `DATA.standards`** —
+  khối siêu dữ liệu ra đời SAU các bản đó, nội dung lâm sàng không sai ⇒ **chỉ CẢNH BÁO**; "sửa" bằng
+  cách bịa hợp đồng nguồn cho một lần tìm kiếm đã xảy ra chính là bịa provenance. Còn **4 bản mang lỗi
+  AN TOÀN THẬT** (`decision='apply'` trên `gradeLevel` na/low, hoặc apply chỉ dựa Consensus) ⇒ **CHẶN
+  XUẤT, mã thoát 3**. Đáng chú ý: 2 trong 4 bản đó sinh ngày 11/08 và **PASS ở `--online`** (0 lỗi
+  cứng) — đúng khoảng trống mà cổng cũ bỏ lọt. **Cách sửa ĐÚNG: HẠ `decision`, TUYỆT ĐỐI không nâng
+  `gradeLevel`** (nâng mức cho nguồn không phân hạng là lỗi tự gán mức, R4 của `tham-dinh-dau-ra`).
+  **NHẮC ĐỘ TƯƠI:** `tools/kiem_do_tuoi_chung_cu.py` đã nối vào hook `SessionStart` — vì hai job
+  launchd (`weeklysafety` T7 19:00 · `monthlyupdate` mùng 1 18:00) kiểm ngày 11/08 đều cho
+  `runs = 0` · `(never exited)`: **chưa từng tự nổ lần nào**, do `StartCalendarInterval` đòi máy phải
+  thức đúng giờ đó. Máy móc KHÔNG hỏng — `weekly_safety.sh --canary` cho PASS toàn bộ (4/4 nguồn
+  khoẻ, scanner ra ứng viên). Chốt chỉ NHẮC, không tự quét.
   **Vì sao có ④ (thêm 05/08/2026):** `.docx` là tệp nén nhị phân nên **khung chat Claude KHÔNG mở thẳng được**,
   chỉ hiện thẻ tải về — bác sĩ phải rời khung chat mới đọc được tài liệu đầy đủ. Bước ④ dùng `pandoc` dựng
   HTML tự chứa **từ CHÍNH file `.docx` vừa sinh** (không dựng lại từ dữ liệu, để không có đường nào làm hai

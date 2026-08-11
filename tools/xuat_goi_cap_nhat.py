@@ -200,6 +200,45 @@ def main() -> int:
                 rc_final = 1
                 print("   ⚠ Cổng KHÔNG đạt — vẫn xuất file nhưng bản Word sẽ KHÔNG"
                       " khẳng định 'đã xác minh'.")
+
+            # ── ①-bis Cổng NGUỒN NGHIÊM NGẶT (thêm 2026-08-11) ────────────────
+            # `DESIGN-SPEC.md` §6 đòi `--online --strict-sources` từ đầu, nhưng dây
+            # chuyền chỉ chạy `--online` nên nhóm luật mạnh nhất chưa bao giờ thi
+            # hành. Rà 58 dashboard đã phát hành ngày 11/08 cho thấy vì sao phải
+            # tách hai loại lỗi thay vì chặn tất:
+            #   · 47/52 bản FAIL chỉ vì THIẾU `DATA.standards` — khối siêu dữ liệu
+            #     ra đời SAU những bản đó. Nội dung lâm sàng không sai. Chặn cả
+            #     nhóm này là chặn oan, và "sửa" bằng cách bịa ra hợp đồng nguồn
+            #     cho một lần tìm kiếm đã xảy ra từ lâu chính là bịa provenance.
+            #   · 4 bản mang lỗi THẬT: `decision='apply'` trên `gradeLevel` na/low,
+            #     hoặc apply chỉ dựa Consensus. Đây là lỗi AN TOÀN — một khuyến cáo
+            #     "áp dụng ngay" tựa trên chứng cứ chưa đủ mạnh.
+            # Nên: lỗi an toàn thì CHẶN xuất; thiếu siêu dữ liệu thì cảnh báo.
+            rc_s, out_s = run([py, VERIFY, dash, "--online", "--strict-sources"],
+                              cwd=DASH_TOOLS.parent)
+            if rc_s == 0:
+                result["cong_nguon_nghiem"] = "PASS"
+            else:
+                loi_an_toan = [ln.strip() for ln in out_s.splitlines()
+                               if "decision='apply'" in ln]
+                if loi_an_toan:
+                    result["cong_nguon_nghiem"] = "CHẶN"
+                    print(f"   ⛔ CHẶN XUẤT — {len(loi_an_toan)} mục khai"
+                          " 'Áp dụng ngay' trên chứng cứ chưa đủ mạnh:")
+                    for ln in loi_an_toan[:8]:
+                        print("      " + ln)
+                    if len(loi_an_toan) > 8:
+                        print(f"      … và {len(loi_an_toan)-8} mục nữa")
+                    print("   Cách sửa ĐÚNG: HẠ `decision` xuống consider/notyet."
+                          " TUYỆT ĐỐI không nâng `gradeLevel` — đó là lỗi tự gán mức.")
+                    result["cong_liem_chinh"] = "CHẶN BỞI CỔNG NGUỒN"
+                    if a.json:
+                        print(json.dumps(result, ensure_ascii=False, indent=2))
+                    return 3
+                result["cong_nguon_nghiem"] = "THIẾU DATA.standards"
+                print("   ⚠ Cổng nguồn nghiêm ngặt không đạt vì thiếu"
+                      " `DATA.standards` (bản cũ) — không chặn, nhưng nên bổ sung"
+                      " khối hợp đồng nguồn khi cập nhật lần sau.")
     else:
         print("① Bỏ qua cổng liêm chính (không có --online) —"
               " bản Word sẽ ghi 'CẦN xác minh'.")
