@@ -5,7 +5,11 @@ Writes clinical_runtime/strict_source_report.json listing evidence IDs and wheth
 import json
 from pathlib import Path
 
-ROOT = Path("C:/Users/Admin/OneDrive/Claude AI")
+# VÁ 12/08/2026: trước đây ROOT là đường dẫn Windows GHI CỨNG
+# ("C:/Users/Admin/OneDrive/Claude AI") nên công cụ này chỉ chạy được trên đúng
+# một máy và gãy im lặng trên MacBook. Suy ra từ vị trí file để chạy được ở cả
+# hai máy, giống mọi công cụ khác trong tools/.
+ROOT = Path(__file__).resolve().parents[1]
 EBM = ROOT / "EBM_MASTER" / "EBM_MASTER.json"
 OUT = ROOT / "clinical_runtime" / "strict_source_report.json"
 
@@ -37,7 +41,9 @@ def main():
         strict = has_strict_source(src)
         report['results'].append({'id': cid, 'candidate': candidate, 'strict_source': strict, 'pmid': (src.get('pmid') if isinstance(src, dict) else None), 'doi': (src.get('doi') if isinstance(src, dict) else None)})
     import datetime
-    report['generated'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    # utcnow() bị loại bỏ dần từ Python 3.12 (DeprecationWarning) — dùng bản có
+    # thông tin múi giờ tường minh để không kẹt khi nâng phiên bản.
+    report['generated'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     OUT.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
     print('Wrote', OUT)
 

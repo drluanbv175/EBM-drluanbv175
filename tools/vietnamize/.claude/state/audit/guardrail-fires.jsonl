@@ -1,0 +1,1 @@
+{"schema_version":"guardrail-fire.v1","ts":"2026-08-10T12:45:09Z","host":"claude","tool":"Write","rule_id":"R04:confirm-write-outside-project","decision":"ask","command_sha256":"831164a1afb404fbaa0cc3de1663c974f5ceb18df2a40b872451bb7e9d278bdc","command_len":94}

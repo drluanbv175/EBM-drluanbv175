@@ -23,6 +23,7 @@ Chạy:  python3 tools/docx_sang_pdf_giu_mau.py <file.docx>
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import re
 import shutil
@@ -34,9 +35,18 @@ NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 # Chrome trên macOS. Edge dùng được y hệt nếu máy không có Chrome.
 TRINH_DUYET = [
+    # macOS
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    # Windows — VÁ 12/08/2026. Trước đó danh sách CHỈ có macOS, và nhánh dự phòng
+    # `shutil.which` lại dò tên Unix ("chromium"/"google-chrome"), nên trên Windows
+    # bước ⑤ KHÔNG BAO GIỜ chạy được dù máy có sẵn cả Chrome lẫn Edge. Đã kiểm trên
+    # máy Windows ngày 12/08: cả hai đường dẫn dưới đây đều tồn tại thật.
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
 ]
 
 CSS_IN = """
@@ -59,10 +69,33 @@ CSS_IN = """
 
 
 def tim_trinh_duyet() -> str | None:
+    """Tìm một trình duyệt nhân Chromium để in PDF (Chrome/Edge/Chromium).
+
+    Dò theo 3 lớp cho chạy được trên CẢ macOS lẫn Windows:
+      1) các đường dẫn cài đặt chuẩn (hằng TRINH_DUYET);
+      2) bản cài theo NGƯỜI DÙNG trên Windows (%LOCALAPPDATA%) — Chrome rất hay
+         nằm ở đây khi máy không cho cài vào Program Files, như máy công sở;
+      3) PATH, với đủ tên gọi của cả hai hệ (Windows dùng chrome/msedge, Unix
+         dùng chromium/google-chrome).
+    """
     for p in TRINH_DUYET:
         if pathlib.Path(p).exists():
             return p
-    return shutil.which("chromium") or shutil.which("google-chrome")
+
+    localappdata = os.environ.get("LOCALAPPDATA")
+    if localappdata:
+        for duoi in (r"Google\Chrome\Application\chrome.exe",
+                     r"Microsoft\Edge\Application\msedge.exe",
+                     r"Chromium\Application\chrome.exe"):
+            p = pathlib.Path(localappdata) / duoi
+            if p.exists():
+                return str(p)
+
+    for ten in ("chrome", "msedge", "chromium", "google-chrome", "chromium-browser"):
+        found = shutil.which(ten)
+        if found:
+            return found
+    return None
 
 
 def mau_tung_o(docx_path: pathlib.Path) -> list[list[list[str | None]]]:
@@ -166,17 +199,30 @@ def main() -> int:
     else:
         pandoc = shutil.which("pandoc")
         if not pandoc:
-            print("✗ thiếu pandoc và cũng không có sẵn bản HTML", file=sys.stderr)
-            return 3
-        with tempfile.TemporaryDirectory() as tmp:
-            tam = pathlib.Path(tmp) / "x.html"
-            r = subprocess.run([pandoc, "-f", "docx", "-t", "html5", "--standalone",
-                                "--embed-resources", str(dx), "-o", str(tam)],
-                               capture_output=True, text=True)
-            if r.returncode != 0:
-                print(f"✗ pandoc lỗi: {r.stderr.strip()[:160]}", file=sys.stderr)
+            # NHÁNH DỰ PHÒNG (12/08/2026) — xem docx_sang_html_khong_pandoc.py.
+            # Trước đây thiếu pandoc là dừng hẳn, nên máy Windows không bao giờ
+            # in được PDF giữ màu dù có sẵn Chrome/Edge.
+            try:
+                sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+                from docx_sang_html_khong_pandoc import dung_html_tu_docx
+
+                with tempfile.TemporaryDirectory() as tmp:
+                    tam = pathlib.Path(tmp) / "x.html"
+                    dung_html_tu_docx(dx, tam, tieu_de=dx.stem)
+                    html = tam.read_text("utf-8", errors="replace")
+            except Exception as e:  # noqa: BLE001
+                print(f"✗ thiếu pandoc và nhánh dự phòng cũng lỗi: {e}", file=sys.stderr)
                 return 3
-            html = tam.read_text("utf-8", errors="replace")
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                tam = pathlib.Path(tmp) / "x.html"
+                r = subprocess.run([pandoc, "-f", "docx", "-t", "html5", "--standalone",
+                                    "--embed-resources", str(dx), "-o", str(tam)],
+                                   capture_output=True, text=True)
+                if r.returncode != 0:
+                    print(f"✗ pandoc lỗi: {r.stderr.strip()[:160]}", file=sys.stderr)
+                    return 3
+                html = tam.read_text("utf-8", errors="replace")
 
     # 2) Bơm màu đọc từ chính .docx
     mau = mau_tung_o(dx)

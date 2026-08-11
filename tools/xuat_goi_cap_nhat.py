@@ -84,6 +84,16 @@ HTML_BANNER = """<div class="hz-note">
  chỉ còn phần chữ. Cần bản có màu: mở file <code>.docx</code> hoặc dashboard.
 </div>"""
 
+# Banner cho NHÁNH DỰ PHÒNG (dựng bằng python-docx, không qua pandoc): nhánh này
+# đọc màu từ chính .docx nên màu nền ô CÒN NGUYÊN — không được dùng lại câu cảnh
+# báo "mất màu" ở trên, vì nói sai với người đọc.
+HTML_BANNER_GIU_MAU = """<div class="hz-note">
+ <strong>Bản HTML sinh tự động từ file Word cùng tên.</strong> Giữ đủ chữ, bảng,
+ đề mục và <strong>màu nền ô</strong> (huy hiệu mức chứng cứ · quyết định).
+ Không tái tạo ảnh nhúng và đánh số tự động của Word — bản <code>.docx</code> vẫn
+ là bản lưu trữ chuẩn.
+</div>"""
+
 
 def configure_utf8_stdio() -> None:
     for stream in (sys.stdout, sys.stderr):
@@ -124,11 +134,24 @@ def xuat_ban_word_html(docx_path: Path, dash: Path) -> tuple[Path | None, str]:
 
     Trả về (đường dẫn hoặc None, lý do khi không sinh được).
     """
+    out = docx_path.with_suffix(".html")
     pandoc = shutil.which("pandoc")
     if not pandoc:
-        return None, ("thiếu pandoc — cài rồi chạy lại lệnh này; ba sản phẩm kia"
-                      " KHÔNG bị ảnh hưởng")
-    out = docx_path.with_suffix(".html")
+        # NHÁNH DỰ PHÒNG (12/08/2026): máy không có pandoc — trước đây bỏ luôn cả
+        # bước ④ VÀ bước ⑤, khiến Windows chỉ ra 3/5 sản phẩm trong khi Mac ra đủ
+        # 5 từ cùng một dashboard. Dựng thẳng bằng python-docx (có sẵn trong venv).
+        # Nhánh này còn GIỮ ĐƯỢC màu nền ô — thứ pandoc bỏ mất — nên không kèm
+        # cảnh báo "mất màu".
+        try:
+            sys.path.insert(0, str(ROOT / "tools"))
+            from docx_sang_html_khong_pandoc import dung_html_tu_docx
+
+            dung_html_tu_docx(docx_path, out, tieu_de=doc_tieu_de(dash),
+                              style=HTML_STYLE, banner=HTML_BANNER_GIU_MAU)
+            return out, ""
+        except Exception as e:  # noqa: BLE001 — bước đọc, không phải cổng chất lượng
+            return None, (f"không có pandoc và nhánh dự phòng cũng lỗi ({e}); "
+                          "ba sản phẩm kia KHÔNG bị ảnh hưởng")
     with tempfile.TemporaryDirectory() as tmp:
         style = Path(tmp) / "style.html"
         banner = Path(tmp) / "banner.html"
@@ -283,8 +306,14 @@ def main() -> int:
         html, ly_do = xuat_ban_word_html(Path(result["word"]), dash)
         if html:
             result["word_html"] = str(html)
+            result["word_html_bo_may"] = "pandoc" if shutil.which("pandoc") else "python-docx"
             print("   " + str(html))
-            print("   (giữ đủ chữ và bảng; MẤT màu nền ô — bản .docx vẫn là bản lưu trữ chuẩn)")
+            # Nói đúng theo nhánh đã dùng: pandoc bỏ màu nền ô, nhánh python-docx giữ.
+            if result["word_html_bo_may"] == "pandoc":
+                print("   (giữ đủ chữ và bảng; MẤT màu nền ô — bản .docx vẫn là bản lưu trữ chuẩn)")
+            else:
+                print("   (dựng bằng python-docx vì máy không có pandoc; giữ cả chữ, bảng "
+                      "VÀ màu nền ô)")
         else:
             result["word_html_ly_do"] = ly_do
             print("   ⚠ Bỏ qua: " + ly_do)

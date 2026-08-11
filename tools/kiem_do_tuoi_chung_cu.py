@@ -70,12 +70,28 @@ def lan_chay_cuoi(log: Path) -> dt.date | None:
 
 
 def launchd_runs(nhan: str) -> int | None:
+    """Số lần job launchd đã chạy — CHỈ macOS mới có launchd.
+
+    Trên Windows trả None (không phải lỗi): ở đó không có lịch nền nào để hỏi,
+    nhưng chốt này vẫn nhắc được theo dấu vết log và ngày gói chứng cứ.
+
+    VÁ 12/08/2026: bản cũ gọi `os.getuid()` — hàm KHÔNG tồn tại trên Windows —
+    và chỉ bắt (OSError, SubprocessError), nên AttributeError lọt ra ngoài làm
+    CHẾT cả công cụ. Vì hook SessionStart kết thúc bằng `; true`, lỗi bị nuốt
+    IM LẶNG: suốt thời gian qua máy Windows không hề được nhắc độ tươi chứng cứ
+    mà không ai biết. Đây đúng lớp lỗi "công cụ dùng chung gãy im lặng trên
+    Windows" đã gặp nhiều lần — nên bắt Exception rộng, không đoán trước tên lỗi.
+    """
+    if sys.platform != "darwin":
+        return None
+    import os
+
     try:
-        r = subprocess.run(["launchctl", "print", f"gui/{__import__('os').getuid()}/{nhan}"],
+        r = subprocess.run(["launchctl", "print", f"gui/{os.getuid()}/{nhan}"],
                            capture_output=True, text=True, timeout=10)
         m = re.search(r"runs = (\d+)", r.stdout)
         return int(m.group(1)) if m else None
-    except (OSError, subprocess.SubprocessError):
+    except Exception:  # noqa: BLE001 — chốt nhắc không được phép làm chết phiên
         return None
 
 
@@ -103,10 +119,16 @@ def main() -> int:
     chay_tuan = lan_chay_cuoi(LOG_TUAN)
     runs = launchd_runs("com.medicalebm.weeklysafety")
     if chay_tuan is None:
-        n = "" if runs is None else f" (launchd runs = {runs})"
+        if sys.platform == "darwin":
+            n = "" if runs is None else f" (launchd runs = {runs})"
+            ly_do = (f"{n}. Lịch launchd đòi máy thức lúc 19:00 thứ Bảy nên hay lỡ")
+        else:
+            # Windows KHÔNG có launchd — hai job com.medicalebm.* chỉ tồn tại trên Mac.
+            # Nói rõ điều này, thay vì để bác sĩ tưởng có lịch nền đang chạy hộ.
+            ly_do = (". Máy này (Windows) KHÔNG có lịch nền nào chạy giám sát — "
+                     "hai job launchd chỉ tồn tại trên MacBook, nên ở đây luôn phải chạy tay")
         canh_bao.append(
-            f"Giám sát AN TOÀN THUỐC hằng tuần CHƯA TỪNG chạy{n}. Lịch launchd đòi "
-            f"máy thức lúc 19:00 thứ Bảy nên hay lỡ. Chạy tay khi tiện:\n"
+            f"Giám sát AN TOÀN THUỐC hằng tuần CHƯA TỪNG chạy{ly_do}. Chạy tay khi tiện:\n"
             f"     bash medical-ebm-automation/scripts/weekly_safety.sh\n"
             f"     (kiểm nhanh nguồn, không ghi gì: thêm `--canary`)")
     else:

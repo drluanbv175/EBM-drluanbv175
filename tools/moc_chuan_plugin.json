@@ -43,5 +43,21 @@
         "phien_ban": "d0a21c5b9cc0"
       }
     }
+  },
+  "Windows": {
+    "plugin": {
+      "academic-research-skills@academic-research-skills": {
+        "so_skill": 4,
+        "phien_ban": "3.19.0"
+      },
+      "aipoch-medical-research@aipoch-medical-research": {
+        "so_skill": 605,
+        "phien_ban": "1.0.0"
+      },
+      "medsci-project@medsci-skills": {
+        "so_skill": 59,
+        "phien_ban": "dda8b532401e"
+      }
+    }
   }
 }

@@ -73,6 +73,45 @@ DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 # hiện dùng tới 8 chữ số, cho phép dư tới 9 để an toàn).
 PMID_RE = re.compile(r"^\d{1,9}$")
 KNOWN_DESIGNS = {"Guideline", "Meta", "RCT", "Cohort", "Consensus"}
+
+# Họ thiết kế/nguồn nhận biết được, khớp theo TIỀN TỐ (không phân biệt hoa/thường).
+# Thêm 12/08/2026 sau khi đo trên toàn bộ 60 dashboard: 35 item thuộc 23 loại nằm
+# NGOÀI bộ 5 giá trị trên — trong đó có những nguồn quan trọng bậc nhất cho an toàn
+# kê đơn như "Nhãn thuốc" (FDA — liều theo CrCl) và "Cảnh báo dược cảnh giác"
+# (MHRA/EMA PRAC). Bộ cũ quá hẹp so với thực tế nguồn EBM, nên luật này tạo dương
+# tính giả hàng loạt kể từ khi dây chuyền bật --strict-sources (11/08).
+#
+# Cách xử lý: KHÔNG nới thành chấp nhận chuỗi tự do (làm vậy thì luật vô nghĩa),
+# mà phân tầng theo hậu quả — xem `design_khong_nhan_dien()`:
+#   • item chỉ mô tả  → CẢNH BÁO (việc phân tầng thật nằm ở gradeLevel/gradeSource,
+#     vốn đã có luật riêng chặt hơn);
+#   • item decision='apply' → CHẶN (đang định áp dụng dựa trên nguồn không phân
+#     tầng được thì phải nói rõ nguồn là loại gì).
+DESIGN_FAMILIES = (
+    "guideline", "hướng dẫn", "khuyến cáo",
+    "meta", "phân tích gộp", "tổng quan hệ thống", "systematic",
+    "rct", "thử nghiệm", "trial",
+    "cohort", "đoàn hệ",
+    "case-control", "bệnh-chứng", "case series", "ca lâm sàng", "chuỗi ca",
+    "cross-sectional", "cắt ngang",
+    "consensus", "đồng thuận",
+    "nhãn thuốc", "drug label", "tờ hướng dẫn sử dụng",
+    "cảnh báo", "dược cảnh giác", "drug safety", "đặc tả nguy cơ",
+    "rà soát an toàn", "kết luận tín hiệu an toàn", "tín hiệu an toàn",
+    "phê duyệt", "regulatory",
+    "pk", "dược động", "cơ chế",
+    "so sánh đa-guideline", "so sánh guideline",
+)
+
+
+def design_khong_nhan_dien(design):
+    """True nếu `design` không thuộc họ nào nhận biết được (khớp theo tiền tố)."""
+    d = (design or "").strip().lower()
+    if not d:
+        return True
+    if design in KNOWN_DESIGNS:
+        return False
+    return not any(d.startswith(p) for p in DESIGN_FAMILIES)
 STRICT_SOURCE_MAX_AGE_DAYS = 180
 SOURCE_GATE_USER_AGENT = "EBM-Copilot-source-verifier/1.0"
 _HTTPS_CONTEXT = None
@@ -135,8 +174,30 @@ def split_items(data_block):
 
 
 def field(chunk, name):
-    m = re.search(name + r"\s*:\s*['\"]([^'\"]*)['\"]", chunk)
-    return m.group(1) if m else None
+    """Lấy giá trị chuỗi của khoá `name` trong một đoạn JS.
+
+    VÁ 12/08/2026 — dương tính giả nghiêm trọng: bản cũ dùng lớp ký tự
+    `[^'\"]*`, tức DỪNG ở dấu nháy loại kia nằm bên trong chuỗi. Giá trị rất
+    thường gặp như
+
+        gradeSource:'"Usually Not Appropriate" — phân loại chính thức của ACR'
+
+    bị cắt thành chuỗi RỖNG (khớp `'` mở, 0 ký tự, rồi `\"`), khiến cổng báo
+    "[ITEM-05] thiếu gradeSource" trong khi dữ liệu CÓ đầy đủ. Trích dẫn nguyên
+    văn phân hạng của nguồn — đúng thứ `gradeSource` sinh ra để chứa — gần như
+    luôn có dấu nháy kép, nên lỗi này nhắm thẳng vào trường quan trọng nhất.
+
+    Bản mới bám đúng dấu nháy MỞ và cho phép dấu nháy loại kia nằm trong, có xử
+    lý ký tự thoát. Hệ quả: nhiều trường trước đây bị cắt cụt nay trả về đủ —
+    các luật đọc chúng vì thế mới chấm trên nội dung thật.
+    """
+    m = re.search(
+        name + r"""\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""",
+        chunk,
+    )
+    if not m:
+        return None
+    return m.group(1) if m.group(1) is not None else m.group(2)
 
 
 def _find_matching_brace(text, open_idx):
@@ -190,6 +251,63 @@ def _parse_exact_date(text):
         return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))).date()
     except ValueError:
         return None
+
+
+# ── NGUỒN QUY PHẠM ───────────────────────────────────────────────────────────
+# Thêm 12/08/2026. Vì sao cần: luật "apply phải có gradeLevel đủ mạnh" đúng với
+# chứng cứ NGHIÊN CỨU, nhưng chặn oan một loại nguồn khác hẳn về bản chất —
+# nguồn QUY PHẠM: guideline chính thức, nhãn thuốc của cơ quan quản lý, tiêu
+# chuẩn phân loại. Chúng để gradeLevel='na' vì KHÔNG dùng thang GRADE, chứ
+# không phải vì chứng cứ yếu.
+#
+# Rà 4 dashboard ngày 12/08 cho thấy hậu quả thật của việc không phân biệt: hạ
+# `decision` của một CHỐNG CHỈ ĐỊNH (AASLD+APASL xác nhận độc lập) hay của NHÃN
+# THUỐC FDA xuống "cân nhắc" là làm GIẢM an toàn, không phải tăng — đúng thứ mà
+# cổng này sinh ra để ngăn.
+#
+# Chống lách: miễn trừ KHÔNG tự suy đoán hộ. Item phải hội đủ BA điều kiện, và
+# hai trong số đó người soạn phải khai tường minh, kiểm toán được:
+#   1) design thật sự là Guideline / Nhãn thuốc (Consensus KHÔNG BAO GIỜ đủ —
+#      đồng thuận chuyên gia không phải văn bản quy phạm);
+#   2) normativeBasis khai đúng MỘT loại quy phạm trong danh sách dưới;
+#   3) gradeSource có nội dung — phân hạng hoặc nhận định NGUYÊN BẢN của nguồn.
+# Miễn trừ chỉ áp cho gradeLevel='na' (nguồn không phân hạng). Nếu nguồn CÓ
+# phân hạng và nói mức thấp ('low'/'vlow') thì vẫn chặn — đó là nguồn đã tự
+# đánh giá là yếu, không thể viện cớ quy phạm.
+NORMATIVE_BASES = {
+    "contraindication",           # chống chỉ định
+    "drug-label",                 # nhãn thuốc cơ quan quản lý (FDA/EMA/DAV…)
+    "official-classification",    # tiêu chuẩn phân loại chính thức (vd ICHD của IHS)
+    "guideline-strong-rec",       # khuyến cáo MẠNH của guideline chính thức
+    "guideline-explicit-criteria",  # bộ tiêu chí tường minh (Beers, STOPP/START)
+}
+
+# design được coi là văn bản quy phạm. So khớp không phân biệt hoa/thường và cho
+# phép hậu tố mô tả (vd "Guideline/tổng quan") — nhưng KHÔNG nhận "Consensus".
+NORMATIVE_DESIGN_PREFIXES = ("guideline", "nhãn thuốc", "nhan thuoc")
+
+
+def normative_exemption(design, grade, normative_basis, grade_source):
+    """Item có được miễn luật 'apply cần gradeLevel mạnh' vì là nguồn QUY PHẠM không?
+
+    Trả về (được_miễn, lý_do_không_miễn). Lý do dùng để báo cho người soạn biết
+    còn thiếu gì, thay vì im lặng từ chối.
+    """
+    if grade != "na":
+        return False, None  # 'low'/'vlow' là nguồn ĐÃ tự phân hạng thấp — không miễn
+    d = (design or "").strip().lower()
+    if not any(d.startswith(p) for p in NORMATIVE_DESIGN_PREFIXES):
+        return False, None  # không phải văn bản quy phạm → giữ luật gốc
+    if not normative_basis:
+        return False, ("thiếu normativeBasis — nguồn quy phạm muốn giữ 'apply' phải khai "
+                       "tường minh loại quy phạm (%s)" % "/".join(sorted(NORMATIVE_BASES)))
+    if normative_basis not in NORMATIVE_BASES:
+        return False, ("normativeBasis=%r không hợp lệ (cần %s)"
+                       % (normative_basis, "/".join(sorted(NORMATIVE_BASES))))
+    if not grade_source:
+        return False, ("có normativeBasis nhưng thiếu gradeSource — phải ghi phân hạng "
+                       "hoặc nhận định NGUYÊN BẢN của nguồn")
+    return True, None
 
 
 def strict_source_checks(data_block, items, *, today=None):
@@ -263,15 +381,32 @@ def strict_source_checks(data_block, items, *, today=None):
             errors.append("[%s] thiếu dateVersion — không thể đánh giá phiên bản/độ mới của nguồn." % iid)
         if not design:
             errors.append("[%s] thiếu design — không thể phân tầng độ tin cậy nguồn." % iid)
-        elif design not in KNOWN_DESIGNS:
-            errors.append("[%s] design=%r không thuộc bộ hỗ trợ %s." % (iid, design, sorted(KNOWN_DESIGNS)))
+        elif design_khong_nhan_dien(design):
+            # Nghiêm ở chỗ có hậu quả: chỉ CHẶN khi item đang định 'apply'.
+            if dec == "apply":
+                errors.append("[%s] decision='apply' nhưng design=%r không thuộc họ nguồn nào "
+                              "nhận diện được — ghi rõ loại nguồn (vd Guideline, RCT, Cohort, "
+                              "Nhãn thuốc, Cảnh báo dược cảnh giác) hoặc hạ quyết định."
+                              % (iid, design))
+            else:
+                warns.append("[%s] design=%r không thuộc họ nguồn nhận diện được — nên ghi rõ "
+                             "loại nguồn để phân tầng được độ tin cậy." % (iid, design))
         if not grade_source:
             errors.append("[%s] thiếu gradeSource — không thấy phân hạng/nhận định nguyên bản của nguồn." % iid)
         if "references" not in ch:
             errors.append("[%s] thiếu references[] — strict-sources không cho phát hành." % iid)
 
         if dec == "apply" and grade in {"low", "vlow", "na"}:
-            errors.append("[%s] decision='apply' nhưng gradeLevel=%r — phải hạ xuống consider/notyet hoặc bổ sung nguồn mạnh hơn." % (iid, grade))
+            normative_basis = field(ch, "normativeBasis")
+            duoc_mien, ly_do_thieu = normative_exemption(design, grade, normative_basis, grade_source)
+            if duoc_mien:
+                oks.append("[%s] 'apply' trên nguồn QUY PHẠM (%s, %s) — miễn luật gradeLevel, "
+                           "đã khai tường minh và có phân hạng nguyên bản."
+                           % (iid, design, normative_basis))
+            elif ly_do_thieu:
+                errors.append("[%s] decision='apply' nhưng gradeLevel=%r: %s." % (iid, grade, ly_do_thieu))
+            else:
+                errors.append("[%s] decision='apply' nhưng gradeLevel=%r — phải hạ xuống consider/notyet hoặc bổ sung nguồn mạnh hơn." % (iid, grade))
         if dec == "apply" and design == "Consensus":
             errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
         if dec == "apply" and not (pmid or doi) and url:

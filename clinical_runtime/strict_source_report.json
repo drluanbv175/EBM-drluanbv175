@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-25T02:06:06.653000Z",
-  "total": 744,
-  "checked": 744,
+  "generated": "2026-08-11T22:02:36.287475Z",
+  "total": 839,
+  "checked": 839,
   "results": [
     {
       "id": "EVID-2026-0001",
@@ -5210,6 +5210,671 @@
       "strict_source": true,
       "pmid": "41603019",
       "doi": "10.1161/STR.0000000000000514"
+    },
+    {
+      "id": "EVID-2026-0796",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38157499",
+      "doi": "10.1056/NEJMoa2309137"
+    },
+    {
+      "id": "EVID-2026-0797",
+      "candidate": false,
+      "strict_source": false,
+      "pmid": "",
+      "doi": ""
+    },
+    {
+      "id": "EVID-2026-0798",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42265997",
+      "doi": "10.1016/j.jacc.2026.03.056"
+    },
+    {
+      "id": "EVID-2026-0799",
+      "candidate": false,
+      "strict_source": false,
+      "pmid": "",
+      "doi": ""
+    },
+    {
+      "id": "EVID-2026-0800",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42544493",
+      "doi": "10.1093/schbul/sbag086"
+    },
+    {
+      "id": "EVID-2026-0801",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42441734",
+      "doi": "10.1016/j.jpsychires.2025.12.039"
+    },
+    {
+      "id": "EVID-2026-0802",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "42366993",
+      "doi": "10.1093/eurheartj/ehag500"
+    },
+    {
+      "id": "EVID-2026-0803",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "42494134",
+      "doi": "10.1016/j.jacc.2026.06.018"
+    },
+    {
+      "id": "EVID-2026-0804",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "34447992",
+      "doi": "10.1093/eurheartj/ehab368"
+    },
+    {
+      "id": "EVID-2026-0805",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "37622666",
+      "doi": "10.1093/eurheartj/ehad195"
+    },
+    {
+      "id": "EVID-2026-0806",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "35379503",
+      "doi": "10.1016/j.jacc.2021.12.012"
+    },
+    {
+      "id": "EVID-2026-0807",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "25176015",
+      "doi": "10.1056/NEJMoa1409077"
+    },
+    {
+      "id": "EVID-2026-0808",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "31535829",
+      "doi": "10.1056/NEJMoa1911303"
+    },
+    {
+      "id": "EVID-2026-0809",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "32865377",
+      "doi": "10.1056/NEJMoa2022190"
+    },
+    {
+      "id": "EVID-2026-0810",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "34449189",
+      "doi": "10.1056/NEJMoa2107038"
+    },
+    {
+      "id": "EVID-2026-0811",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "36027570",
+      "doi": "10.1056/NEJMoa2206286"
+    },
+    {
+      "id": "EVID-2026-0812",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39225278",
+      "doi": "10.1056/NEJMoa2407107"
+    },
+    {
+      "id": "EVID-2026-0813",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "36356631",
+      "doi": "10.1016/S0140-6736(22)02076-1"
+    },
+    {
+      "id": "EVID-2026-0814",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40879434",
+      "doi": "10.1056/NEJMoa2415471"
+    },
+    {
+      "id": "EVID-2026-0815",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40897189",
+      "doi": "10.1016/S0140-6736(25)01665-4"
+    },
+    {
+      "id": "EVID-2026-0816",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "36027559",
+      "doi": "10.1056/NEJMoa2203094"
+    },
+    {
+      "id": "EVID-2026-0817",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "36648467",
+      "doi": "10.1001/jama.2022.23924"
+    },
+    {
+      "id": "EVID-2026-0818",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "31475794",
+      "doi": "10.1056/NEJMoa1908655"
+    },
+    {
+      "id": "EVID-2026-0819",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "24716680",
+      "doi": "10.1056/NEJMoa1313731"
+    },
+    {
+      "id": "EVID-2026-0820",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "37622681",
+      "doi": "10.1056/NEJMoa2306963"
+    },
+    {
+      "id": "EVID-2026-0821",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39555826",
+      "doi": "10.1056/NEJMoa2410027"
+    },
+    {
+      "id": "EVID-2026-0822",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "36347265",
+      "doi": "10.1016/S0140-6736(22)02083-9"
+    },
+    {
+      "id": "EVID-2026-0823",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "33197395",
+      "doi": "10.1016/S0140-6736(20)32339-4"
+    },
+    {
+      "id": "EVID-2026-0824",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "37632463",
+      "doi": "10.1056/NEJMoa2304968"
+    },
+    {
+      "id": "EVID-2026-0825",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "29385358",
+      "doi": "10.1056/NEJMoa1707855"
+    },
+    {
+      "id": "EVID-2026-0826",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "37634135",
+      "doi": "10.1056/NEJMoa2306037"
+    },
+    {
+      "id": "EVID-2026-0827",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "30280640",
+      "doi": "10.1056/NEJMoa1806640"
+    },
+    {
+      "id": "EVID-2026-0828",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39216092",
+      "doi": "10.1056/NEJMoa2314328"
+    },
+    {
+      "id": "EVID-2026-0829",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "36876753",
+      "doi": "10.1056/NEJMoa2300525"
+    },
+    {
+      "id": "EVID-2026-0830",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "36027563",
+      "doi": "10.1056/NEJMoa2206606"
+    },
+    {
+      "id": "EVID-2026-0831",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "26323938",
+      "doi": "10.1056/NEJMoa1506459"
+    },
+    {
+      "id": "EVID-2026-0832",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "30145929",
+      "doi": "10.1056/NEJMoa1805689"
+    },
+    {
+      "id": "EVID-2026-0833",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38197816",
+      "doi": "10.1056/NEJMoa2305434"
+    },
+    {
+      "id": "EVID-2026-0834",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39213194",
+      "doi": "10.1056/NEJMoa2409134"
+    },
+    {
+      "id": "EVID-2026-0835",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "41326847",
+      "doi": "10.1007/s10741-025-10580-5"
+    },
+    {
+      "id": "EVID-2026-0836",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "33999544",
+      "doi": "10.1056/NEJMoa2026141"
+    },
+    {
+      "id": "EVID-2026-0837",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "36351458",
+      "doi": "10.1016/S0140-6736(22)02074-8"
+    },
+    {
+      "id": "EVID-2026-0838",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "42240859",
+      "doi": "10.1093/ejhf/xuag142"
+    },
+    {
+      "id": "EVID-2026-0839",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42110709",
+      "doi": "10.36628/ijhf.2026.0037"
+    },
+    {
+      "id": "EVID-2026-0840",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42074776",
+      "doi": "10.3390/jcm15082974"
+    },
+    {
+      "id": "EVID-2026-0841",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38432242",
+      "doi": "10.1016/S2352-3026(24)00030-9"
+    },
+    {
+      "id": "EVID-2026-0842",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "34693519",
+      "doi": "10.1111/bjh.17900"
+    },
+    {
+      "id": "EVID-2026-0843",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "34497146",
+      "doi": "10.1136/gutjnl-2021-325210"
+    },
+    {
+      "id": "EVID-2026-0844",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "29032957",
+      "doi": "10.1016/S2352-3026(17)30182-5"
+    },
+    {
+      "id": "EVID-2026-0845",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38021373",
+      "doi": "10.1016/j.eclinm.2023.102286"
+    },
+    {
+      "id": "EVID-2026-0846",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "42024457",
+      "doi": "10.1182/bloodadvances.2026019740"
+    },
+    {
+      "id": "EVID-2026-0847",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "41045907",
+      "doi": "10.1016/j.jchf.2025.102662"
+    },
+    {
+      "id": "EVID-2026-0848",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "40159279",
+      "doi": "10.1038/s41591-025-03671-1"
+    },
+    {
+      "id": "EVID-2026-0849",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "34932836",
+      "doi": "10.1002/14651858.CD002042.pub5"
+    },
+    {
+      "id": "EVID-2026-0850",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39714935",
+      "doi": "10.1056/EVIDoa2400223"
+    },
+    {
+      "id": "EVID-2026-0851",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "38664944",
+      "doi": "10.1111/bjh.19440"
+    },
+    {
+      "id": "EVID-2026-0852",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "35950578",
+      "doi": "10.1080/03630269.2022.2069032"
+    },
+    {
+      "id": "EVID-2026-0853",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38553482",
+      "doi": "10.1038/s41598-024-57513-0"
+    },
+    {
+      "id": "EVID-2026-0854",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40183554",
+      "doi": "10.1111/jdi.70037"
+    },
+    {
+      "id": "EVID-2026-0855",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39186635",
+      "doi": "10.1056/EVIDoa2300189"
+    },
+    {
+      "id": "EVID-2026-0856",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "37357958",
+      "doi": "10.1002/ajh.27002"
+    },
+    {
+      "id": "EVID-2026-0857",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "23216616",
+      "doi": "10.1056/NEJMoa1208500"
+    },
+    {
+      "id": "EVID-2026-0858",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "14711910",
+      "doi": "10.1056/NEJMoa035572"
+    },
+    {
+      "id": "EVID-2026-0859",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "37357958",
+      "doi": "10.1002/ajh.27002"
+    },
+    {
+      "id": "EVID-2026-0860",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "32014125",
+      "doi": "10.1016/S2352-3026(19)30236-4"
+    },
+    {
+      "id": "EVID-2026-0861",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "41178922",
+      "doi": "10.5306/wjco.v16.i10.112392"
+    },
+    {
+      "id": "EVID-2026-0862",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "41890273",
+      "doi": "10.1177/20406207261425083"
+    },
+    {
+      "id": "EVID-2026-0863",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "38381675",
+      "doi": "10.1056/NEJMoa2308809"
+    },
+    {
+      "id": "EVID-2026-0864",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "41123216",
+      "doi": "10.1002/ajh.70118"
+    },
+    {
+      "id": "EVID-2026-0865",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "41123216",
+      "doi": "10.1002/ajh.70118"
+    },
+    {
+      "id": "EVID-2026-0866",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40084464",
+      "doi": "10.1002/ajh.27665"
+    },
+    {
+      "id": "EVID-2026-0867",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39476004",
+      "doi": "10.1182/blood.2024025459"
+    },
+    {
+      "id": "EVID-2026-0868",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40281326",
+      "doi": "10.1038/s41375-025-02623-5"
+    },
+    {
+      "id": "EVID-2026-0869",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "15710956",
+      "doi": "10.7326/0003-4819-142-4-200502150-00005"
+    },
+    {
+      "id": "EVID-2026-0870",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "27930803",
+      "doi": "10.1002/14651858.CD005305.pub4"
+    },
+    {
+      "id": "EVID-2026-0871",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "37946601",
+      "doi": "10.1093/cid/ciad679"
+    },
+    {
+      "id": "EVID-2026-0872",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "32162970",
+      "doi": "10.1164/rccm.201911-2207OC"
+    },
+    {
+      "id": "EVID-2026-0873",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "32579807",
+      "doi": "10.1056/NEJMoa1916046"
+    },
+    {
+      "id": "EVID-2026-0874",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "40305712",
+      "doi": "10.1056/NEJMoa2413181"
+    },
+    {
+      "id": "EVID-2026-0875",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "39900091",
+      "doi": "10.1016/S2213-2600(24)00409-0"
+    },
+    {
+      "id": "EVID-2026-0876",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "37364283",
+      "doi": "10.1164/rccm.202306-0944OC"
+    },
+    {
+      "id": "EVID-2026-0877",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "20378728",
+      "doi": "10.1164/rccm.200912-1869OC"
+    },
+    {
+      "id": "EVID-2026-0878",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "40932340",
+      "doi": "10.1002/ejhf.70046"
+    },
+    {
+      "id": "EVID-2026-0879",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "21864166",
+      "doi": "10.1056/NEJMoa1104623"
+    },
+    {
+      "id": "EVID-2026-0880",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "21602540",
+      "doi": "10.1136/thx.2011.160028"
+    },
+    {
+      "id": "EVID-2026-0881",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "28528348",
+      "doi": "10.1001/jama.2017.4451"
+    },
+    {
+      "id": "EVID-2026-0882",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "27783918",
+      "doi": "10.1056/NEJMoa1604344"
+    },
+    {
+      "id": "EVID-2026-0883",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "32804188",
+      "doi": "10.1001/jamainternmed.2020.3134"
+    },
+    {
+      "id": "EVID-2026-0884",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "31633896",
+      "doi": "10.1056/NEJMoa1908142"
+    },
+    {
+      "id": "EVID-2026-0885",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "24836125",
+      "doi": "10.1056/NEJMoa1403086"
+    },
+    {
+      "id": "EVID-2026-0886",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "23095984",
+      "doi": "10.1093/eurheartj/ehs337"
+    },
+    {
+      "id": "EVID-2026-0887",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "16534009",
+      "doi": "10.1161/CIRCULATIONAHA.105.584102"
+    },
+    {
+      "id": "EVID-2026-0888",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "29806100",
+      "doi": "10.1002/ejhf.1236"
+    },
+    {
+      "id": "EVID-2026-0889",
+      "candidate": true,
+      "strict_source": true,
+      "pmid": "30429050",
+      "doi": "10.1016/S0140-6736(18)32484-X"
+    },
+    {
+      "id": "EVID-2026-0890",
+      "candidate": false,
+      "strict_source": true,
+      "pmid": "34465123",
+      "doi": "10.1161/CIRCHEARTFAILURE.120.008284"
     }
   ]
 }

@@ -108,6 +108,11 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
   ⚠️ Đây là khoá cấp NGƯỜI DÙNG (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải
   đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
+  ✅ **ĐÃ ĐẶT TRÊN WINDOWS 12/08/2026** — cùng giá trị Mac (`0.08` + `maxDescChars: 80`); sao lưu
+  `settings.json.bak-20260812-truoc-dat-skill-budget`. Chốt kho đi từ 🔴 (vượt ngân sách 5,1 lần)
+  về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 3 plugin · 668 skill (`tools/moc_chuan_plugin.json`)
+  — đúng chủ ý của bác sĩ (3 bật + 8 medsci trùng đã tắt), KHÁC Mac (10 plugin · 870 skill) vì hai
+  máy cài khác nhau, nên **mỗi máy tự `--ghi-moc` riêng, đừng chép mốc qua lại**.
 - **CHỐT KIỂM KHO CÔNG CỤ — tự chạy mỗi phiên (mới 2026-08-10).**
   `python3 tools/kiem_plugin_day_du.py` (0=🟢 · 1=🟡 · 2=🔴). Đã nối vào hook `SessionStart`
   ở `.claude/settings.json` với cờ `--im-khi-on` ⇒ **chỉ lên tiếng khi kho THIẾU**, im lặng khi đủ.
@@ -363,22 +368,68 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   cách bịa hợp đồng nguồn cho một lần tìm kiếm đã xảy ra chính là bịa provenance. Còn **4 bản mang lỗi
   AN TOÀN THẬT** (`decision='apply'` trên `gradeLevel` na/low, hoặc apply chỉ dựa Consensus) ⇒ **CHẶN
   XUẤT, mã thoát 3**. Đáng chú ý: 2 trong 4 bản đó sinh ngày 11/08 và **PASS ở `--online`** (0 lỗi
-  cứng) — đúng khoảng trống mà cổng cũ bỏ lọt. **Cách sửa ĐÚNG: HẠ `decision`, TUYỆT ĐỐI không nâng
-  `gradeLevel`** (nâng mức cho nguồn không phân hạng là lỗi tự gán mức, R4 của `tham-dinh-dau-ra`).
+  cứng) — đúng khoảng trống mà cổng cũ bỏ lọt. **TUYỆT ĐỐI không nâng `gradeLevel`** (nâng mức cho
+  nguồn không phân hạng là lỗi tự gán mức, R4 của `tham-dinh-dau-ra`).
+  ⛔ **ĐÍNH CHÍNH 12/08 — câu "cách sửa ĐÚNG là HẠ `decision`" chỉ đúng MỘT NỬA.** Đem 32 mục bị chặn
+  ra soi từng mục thì chúng thuộc HAI loại khác hẳn nhau, và hạ hết là làm giảm an toàn:
+  **Nhóm B (17 mục) — chứng cứ yếu thật** (tổng quan tường thuật JAMA/Lancet/NEJM, thư gửi toà soạn,
+  cohort n=66, Cochrane tự chấm GRADE thấp cho mọi kết cục): hạ `decision` xuống `consider` là ĐÚNG.
+  **Nhóm A (15 mục) — nguồn QUY PHẠM** (guideline chính thức AGS Beers · NICE · ADA · AASLD · APASL ·
+  IHS · EAN, và **nhãn thuốc FDA**): chúng để `gradeLevel:'na'` vì nguồn KHÔNG dùng thang GRADE, chứ
+  không phải vì yếu. Hạ một **CHỐNG CHỈ ĐỊNH** (peginterferon ở xơ gan mất bù, AASLD+APASL xác nhận
+  độc lập) hay **liều theo CrCl của nhãn FDA** xuống "cân nhắc" là làm GIẢM an toàn — đúng thứ cổng
+  này sinh ra để ngăn.
+  **Cách xử lý nhóm A: khai báo tường minh `normativeBasis`** — một trong `contraindication` ·
+  `drug-label` · `official-classification` · `guideline-strong-rec` · `guideline-explicit-criteria`.
+  Cổng chỉ miễn luật khi hội đủ BA điều kiện: `design` thật sự là Guideline/Nhãn thuốc (**Consensus
+  KHÔNG BAO GIỜ đủ**) · `normativeBasis` hợp lệ · `gradeSource` có phân hạng nguyên bản. Miễn trừ chỉ
+  áp cho `gradeLevel:'na'`; nguồn ĐÃ tự phân hạng `low`/`vlow` thì vẫn chặn. Khoá bằng
+  `python EBM-Dashboards/tools/test_verify_dashboard_source_gate.py` (18 test, có test chống lách).
+  🔴 **BUG PARSER đã vá cùng ngày — cổng từng nói SAI về dữ liệu ĐÚNG.** `field()` dùng lớp ký tự
+  `[^'\"]*` nên DỪNG ở dấu nháy loại kia nằm BÊN TRONG chuỗi: giá trị
+  `gradeSource:'"Usually Not Appropriate" — ACR'` bị đọc thành RỖNG, cổng báo "thiếu gradeSource" cho
+  item có đủ dữ liệu. Trích nguyên văn phân hạng của nguồn gần như luôn có dấu nháy kép ⇒ lỗi nhắm
+  thẳng vào trường quan trọng nhất. Vá xong còn **lộ ra 1 lỗi an toàn thật bị che từ trước**
+  (COPD_DoiTuongDacBiet ITEM-17: `apply` trên Cochrane GRADE thấp) — đã hạ. Bài học: cổng nói sai về
+  dữ liệu đúng nguy hiểm hơn cổng không chạy, vì nó tạo niềm tin sai.
+  **`KNOWN_DESIGNS` cũng đã mở rộng có kỷ luật:** bộ cũ chỉ 5 giá trị trong khi thực tế 35 item/23
+  loại nằm ngoài, gồm "Nhãn thuốc" và "Cảnh báo dược cảnh giác" — nay khớp theo HỌ (tiền tố), và
+  design lạ chỉ CHẶN khi item đang `apply`, còn lại chỉ cảnh báo.
+  **Trạng thái sau đợt rà 12/08: 60 dashboard → 13 PASS · 47 FAIL, và cả 47 chỉ vì thiếu
+  `DATA.standards`** (nhóm chỉ-cảnh-báo). **0 lỗi an toàn còn lại.**
   **NHẮC ĐỘ TƯƠI:** `tools/kiem_do_tuoi_chung_cu.py` đã nối vào hook `SessionStart` — vì hai job
   launchd (`weeklysafety` T7 19:00 · `monthlyupdate` mùng 1 18:00) kiểm ngày 11/08 đều cho
   `runs = 0` · `(never exited)`: **chưa từng tự nổ lần nào**, do `StartCalendarInterval` đòi máy phải
   thức đúng giờ đó. Máy móc KHÔNG hỏng — `weekly_safety.sh --canary` cho PASS toàn bộ (4/4 nguồn
   khoẻ, scanner ra ứng viên). Chốt chỉ NHẮC, không tự quét.
+  🔴 **Chốt này CHẾT IM LẶNG trên Windows từ lúc ra đời tới 12/08.** Nó gọi `os.getuid()` — hàm KHÔNG
+  tồn tại trên Windows — và chỉ bắt `(OSError, SubprocessError)`, nên `AttributeError` làm chết cả
+  công cụ; hook lại kết thúc bằng `; true` nên **nuốt lỗi không một dòng báo**. Máy Windows vì thế
+  chưa từng được nhắc lần nào. Vá 12/08: guard `sys.platform != "darwin"` + bắt `Exception` rộng
+  (chốt nhắc không được phép làm chết phiên), và thông điệp đổi theo nền tảng — trên Windows nói
+  thẳng **"máy này KHÔNG có lịch nền nào chạy giám sát, luôn phải chạy tay"** thay vì để bác sĩ tưởng
+  launchd đang chạy hộ. Chạy ngay sau khi vá đã lòi ra việc thật: **giám sát an toàn thuốc lần cuối
+  17/07, quá hạn 26 ngày** (ngưỡng 10).
+  ⚠️ **Lớp lỗi này lặp lại nhiều lần — kiểm mọi công cụ dùng chung trên CẢ HAI máy, đừng tin
+  "chạy được ở đây là chạy được ở kia".** Cùng đợt còn tìm thấy `tools/ensure_strict_source.py` ghi
+  CỨNG `ROOT = Path("C:/Users/Admin/OneDrive/Claude AI")` (gãy trên Mac) và
+  `tools/docx_sang_pdf_giu_mau.py` chỉ dò trình duyệt theo đường dẫn macOS nên **không bao giờ in
+  được PDF trên Windows dù máy có sẵn cả Chrome lẫn Edge**. Cả ba đã vá.
   **Vì sao có ④ (thêm 05/08/2026):** `.docx` là tệp nén nhị phân nên **khung chat Claude KHÔNG mở thẳng được**,
   chỉ hiện thẻ tải về — bác sĩ phải rời khung chat mới đọc được tài liệu đầy đủ. Bước ④ dùng `pandoc` dựng
   HTML tự chứa **từ CHÍNH file `.docx` vừa sinh** (không dựng lại từ dữ liệu, để không có đường nào làm hai
   bản lệch nhau). **GIỮ** đủ chữ · bảng · đề mục · thứ tự; **MẤT** màu nền ô — huy hiệu mức chứng cứ/quyết
   định chỉ còn phần chữ, nên `.docx` vẫn là bản lưu trữ chuẩn và trang HTML tự in sẵn một dòng cảnh báo điều
-  này ở đầu trang. Máy KHÔNG có `pandoc` thì bước ④ bị bỏ qua kèm thông báo rõ, **không** làm hỏng ba sản
-  phẩm kia và **không** đổi mã thoát (pandoc là tiện ích đọc, không phải cổng chất lượng). Mac đã có pandoc
-  3.10 (`~/.local/bin/pandoc`, cài thẳng không qua Homebrew); **máy Windows chưa kiểm** — nếu thiếu thì chỉ
-  mất ④. Không xuất được PDF trên Mac này: thiếu engine LaTeX, và Microsoft Word tuy có cài nhưng **từ chối
+  này ở đầu trang.
+  ✅ **KHÔNG CÒN PHỤ THUỘC pandoc (đổi 12/08/2026 theo quyết định của bác sĩ).** Trước đó máy thiếu pandoc
+  thì mất **CẢ ④ LẪN ⑤** (vì ⑤ dựng từ HTML của ④) ⇒ Windows chỉ ra 3/5 sản phẩm trong khi Mac ra đủ 5 từ
+  cùng một dashboard — đúng thứ mà việc gộp "bộ năm" vào một lệnh sinh ra để tránh. Nay có nhánh dự phòng
+  `tools/docx_sang_html_khong_pandoc.py` dựng HTML thẳng từ `.docx` bằng **python-docx** (đã có trong venv
+  `~/.ebm-venv`). Đáng chú ý: nhánh này đọc màu từ chính `w:shd/@w:fill` nên **GIỮ ĐƯỢC màu nền ô** —
+  thứ pandoc bỏ mất — nên trang sinh bằng nhánh dự phòng KHÔNG in cảnh báo "mất màu" (in cảnh báo đó khi
+  màu vẫn còn là nói sai với người đọc). Mac có pandoc thì vẫn đi nhánh pandoc như cũ.
+  **Đã kiểm THẬT trên Windows 12/08:** đủ **5/5 sản phẩm**, PDF 641 KB, **354/354 ô màu** bơm được,
+  30/30 bảng, 112% số từ so với bản Word. Mac vẫn có pandoc 3.10 (`~/.local/bin/pandoc`). Không xuất được PDF trên Mac này: thiếu engine LaTeX, và Microsoft Word tuy có cài nhưng **từ chối
   mọi lệnh mở file qua AppleScript/MCP** (trả về 0 documents ở cả `/private/tmp`, `~/Documents` lẫn OneDrive)
   — cần PDF giữ màu thì bác sĩ tự mở `.docx` rồi `File → Save as → PDF`.
   **Sau khi chạy, MẶC ĐỊNH mở cả BỐN file cho bác sĩ ngay trong Claude** (SendUserFile, `display:"render"`
