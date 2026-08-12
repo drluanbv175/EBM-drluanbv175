@@ -92,7 +92,11 @@ def _chuyen_sang_venv() -> None:
     os.execv(str(venv), [str(venv), *_sys_utf8.argv])
 
 
-_chuyen_sang_venv()
+# CHỈ chuyển venv khi chạy TRỰC TIẾP. Nếu để ở mức module, một tool khác chỉ cần
+# `import` file này là os.execv() THAY THẾ luôn tiến trình của nó — mất sạch việc
+# đang làm. (Đã vấp đúng lỗi này khi tự kiểm bản vá, 12/08/2026.)
+if __name__ == "__main__":
+    _chuyen_sang_venv()
 
 
 REPO = Path(__file__).resolve().parents[1]

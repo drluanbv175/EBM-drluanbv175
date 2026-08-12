@@ -61,6 +61,40 @@ import json
 import sys
 from pathlib import Path
 
+
+def _chuyen_sang_venv() -> None:
+    """Tự chạy lại bằng venv EBM khi interpreter hiện tại thiếu thư viện.
+
+    Cùng cơ chế đã vá cho tools/kiem_nguon_that.py. Ở ĐÂY hậu quả nặng hơn: thiếu
+    `python-dotenv` không làm công cụ chết mà làm bước KIỂM RÚT BÀI im lặng trả
+    rỗng, nên 36 PMID trong sổ chưa từng được kiểm lần nào.
+
+    So bằng `sys.prefix`, TUYỆT ĐỐI không dùng `Path(...).resolve()`:
+    `~/.ebm-venv/bin/python` là symlink → python3.14 → chính python hệ thống, nên
+    resolve() hai bên ra CÙNG một đường dẫn và rào sẽ thoát sớm mà không chuyển.
+    """
+    import os
+    if os.environ.get("_EBM_DA_CHUYEN_VENV"):
+        return
+    try:
+        import dotenv  # noqa: F401, PLC0415
+        return
+    except ImportError:
+        pass
+    goc = Path.home() / ".ebm-venv"
+    venv = goc / "bin/python"
+    if not venv.exists() or Path(sys.prefix) == goc:
+        return
+    os.environ["_EBM_DA_CHUYEN_VENV"] = "1"
+    os.execv(str(venv), [str(venv), *sys.argv])
+
+
+# CHỈ chuyển venv khi chạy TRỰC TIẾP. Nếu để ở mức module, một tool khác chỉ cần
+# `import` file này là os.execv() THAY THẾ luôn tiến trình của nó — mất sạch việc
+# đang làm. (Đã vấp đúng lỗi này khi tự kiểm bản vá, 12/08/2026.)
+if __name__ == "__main__":
+    _chuyen_sang_venv()
+
 # Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
 # ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong. Đo thật
 # ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
@@ -220,6 +254,21 @@ def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
     try:
         from app.sources.pubmed import PubMedClient  # noqa: PLC0415
         return PubMedClient().check_retraction_status(pmids) or {}
+    except ImportError as e:  # noqa: BLE001
+        # THIẾU THƯ VIỆN ≠ MẠNG TRỤC TRẶC. Gộp hai thứ này vào cùng một thông điệp
+        # "coi như CHƯA kiểm" là lỗi đã gây hậu quả thật: chạy bằng `python3` hệ
+        # thống thì `app.config` cần python-dotenv (chỉ có trong venv) nên NHÁNH
+        # NÀY LUÔN nổ, `kiem_rut_bai()` luôn trả {}, và KHÔNG PMID nào từng được
+        # kiểm rút bài — sổ có 36 PMID, cả 36 đều ở trạng thái "chưa kiểm lần nào".
+        # Tệ hơn: vì cờ `da_rut` không bao giờ được đặt, `bao_cao()` trả mã 1 thay
+        # vì 2, và chu_trinh_chung_cu.py dịch mã 1 thành "chạy lại thêm vòng" —
+        # một lời khuyên VÔ HIỆU, vì chạy lại không bao giờ cài được module thiếu.
+        # Đã kiểm bằng venv cùng ngày: NCBI KHÔNG chặn máy này (PMID 9500320 →
+        # retracted, 15042359 → ok), nên đây thuần tuý là lỗi gọi nhầm interpreter.
+        print(f"  ⛔ KHÔNG kiểm được rút bài vì SAI TRÌNH THÔNG DỊCH ({e}).")
+        print("     Đây KHÔNG phải lỗi mạng và chạy lại thêm vòng sẽ không sửa được.")
+        print("     Chạy bằng:  ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py …")
+        return {}
     except Exception as e:  # noqa: BLE001
         print(f"  ⚠ Không tra được rút bài lần này ({e}) — coi như CHƯA kiểm.")
         return {}
