@@ -48,6 +48,53 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
         pass
 
 
+def _chuyen_sang_venv() -> None:
+    """Tự chạy lại bằng venv EBM khi interpreter hiện tại thiếu thư viện.
+
+    VÌ SAO CÓ (12/08/2026) — đây là một BÁO ĐỘNG GIẢ đã xảy ra thật:
+    `app.config` cần `python-dotenv`, thư viện này CHỈ có trong `~/.ebm-venv`.
+    Nhưng lệnh ghi trong CLAUDE.md là `python3 tools/chu_trinh_chung_cu.py`, mà
+    `python3` trên máy này trỏ tới Python hệ thống 3.14 — KHÔNG có dotenv. Khi đó
+    `kiem_env()` bắt mọi Exception rồi kết luận "🔴 CHỨNG CỨ KHÔNG ĐÁNG TIN Ở MÁY
+    NÀY", và `chu_trinh_chung_cu.py` DỪNG toàn bộ 5 bước còn lại.
+
+    Tức là: chạy đúng lệnh đã ghi trong tài liệu thì hệ báo chứng cứ không đáng
+    tin — trong khi chạy bằng venv lại cho 🟢 4/4 nguồn phân giải được. Đúng thứ
+    mà docstring của `kiem_env()` cảnh báo phải tránh: "cảnh báo sai sẽ làm người
+    ta quen bỏ qua cảnh báo thật".
+
+    Cách vá: thay vì bắt bác sĩ nhớ gõ đường dẫn venv, công cụ TỰ chuyển sang
+    venv một lần. Biến môi trường chặn đệ quy vô hạn nếu chính venv cũng thiếu.
+    """
+    import os
+
+    if os.environ.get("_EBM_DA_CHUYEN_VENV"):
+        return                      # đã thử một lần rồi — không lặp
+    try:
+        import dotenv  # noqa: F401, PLC0415
+        return                      # interpreter hiện tại đã đủ
+    except ImportError:
+        pass
+
+    goc_venv = Path.home() / ".ebm-venv"
+    venv = goc_venv / "bin/python"
+    if not venv.exists():
+        return
+    # So sánh bằng `sys.prefix`, TUYỆT ĐỐI không dùng `Path(...).resolve()` trên
+    # đường dẫn interpreter: `~/.ebm-venv/bin/python` là symlink → `python3.14` →
+    # `/Library/Frameworks/.../bin/python3.14`, tức resolve() của venv và của
+    # python hệ thống ra CÙNG một đường dẫn. Bản vá đầu tiên của chính rào này đã
+    # mắc đúng bẫy đó và thoát sớm, không bao giờ chuyển venv. `sys.prefix` thì
+    # khác nhau thật: venv cho `~/.ebm-venv`, hệ thống cho `/Library/Frameworks/...`.
+    if Path(_sys_utf8.prefix) == goc_venv:
+        return                      # đang chạy chính venv rồi
+    os.environ["_EBM_DA_CHUYEN_VENV"] = "1"
+    os.execv(str(venv), [str(venv), *_sys_utf8.argv])
+
+
+_chuyen_sang_venv()
+
+
 REPO = Path(__file__).resolve().parents[1]
 MEA = REPO / "medical-ebm-automation"
 
@@ -73,6 +120,18 @@ def kiem_env() -> tuple[str, list[str]]:
     sys.path.insert(0, str(MEA))
     try:
         from app.config import settings  # noqa: PLC0415
+    except ImportError as e:  # noqa: BLE001
+        # THIẾU THƯ VIỆN ≠ CHỨNG CỨ KHÔNG ĐÁNG TIN. Đây là lỗi MÔI TRƯỜNG CHẠY
+        # (gọi nhầm interpreter), không phải phát biểu gì về nguồn y văn. Xếp đỏ
+        # ở đây từng làm `chu_trinh_chung_cu.py` DỪNG cả 5 bước sau và tuyên bố
+        # "CHỨNG CỨ KHÔNG ĐÁNG TIN Ở MÁY NÀY" — trong khi chạy bằng venv thì 4/4
+        # nguồn phân giải được. Rào `_chuyen_sang_venv()` ở đầu file đã tự xử lý
+        # trường hợp thường gặp; tới đây nghĩa là venv cũng thiếu.
+        return "vang", [
+            f"chưa chạy được app.config vì THIẾU THƯ VIỆN ({e}) — đây là lỗi môi "
+            f"trường, KHÔNG phải kết luận về nguồn chứng cứ.\n"
+            f"     Cài vào venv EBM:  ~/.ebm-venv/bin/pip install -r "
+            f"medical-ebm-automation/requirements.txt"]
     except Exception as e:  # noqa: BLE001
         return "do", [f"không nạp được app.config ({e}) — không kết luận được gì về nguồn"]
 
