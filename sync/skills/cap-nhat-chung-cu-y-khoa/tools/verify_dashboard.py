@@ -911,6 +911,44 @@ def main():
     return report(errors, warns, oks)
 
 
+# Dấu hiệu lỗi thuộc về MÁY/MẠNG, không phải về nguồn chứng cứ.
+_DAU_HIEU_LOI_MANG = (
+    "getaddrinfo failed",      # DNS không phân giải được tên miền
+    "timed out",
+    "lỗi mạng:",
+    "Name or service not known",
+    "Temporary failure in name resolution",
+    "có thể bị block",
+)
+
+
+def _canh_bao_loi_mang(errors):
+    """In cảnh báo riêng khi phần lớn lỗi cứng là do MẠNG chứ không phải do nguồn.
+
+    VÌ SAO CÓ (12/08/2026): chạy `--online` ba lần liên tiếp trên CÙNG một dashboard
+    ở máy Windows cho 13 → 3 → 6 lỗi cứng. Nguyên nhân là DNS của máy chỉ trỏ một
+    server đang chập chờn, không phải nguồn chứng cứ có vấn đề. Nhưng báo cáo cũ
+    gộp cả hai vào "✗ ... CHƯA XÁC MINH ĐƯỢC" và chốt "FAIL — n lỗi cứng", nên
+    người đọc rất dễ kết luận sai theo CẢ HAI chiều: tưởng nguồn hỏng (trong khi
+    nguồn có thể vẫn tốt), hoặc — nguy hiểm hơn — chạy lại vài lần tới khi may mắn
+    ra ít lỗi rồi coi đó là đã xác minh.
+
+    Cổng vẫn fail-closed như cũ (không hạ lỗi thành cảnh báo, không đổi mã thoát):
+    "chưa xác minh được" vẫn là chưa xác minh. Chỗ này chỉ nói RÕ ràng buộc đó đến
+    từ đâu, để kết quả không bị đọc thành nhận định về chất lượng chứng cứ.
+    """
+    mang = [e for e in errors if any(d in e for d in _DAU_HIEU_LOI_MANG)]
+    if not mang:
+        return
+    print("")
+    print("  ⓘ %d/%d lỗi cứng ở trên là do MÁY/MẠNG (DNS không phân giải được, quá thời"
+          " gian chờ), KHÔNG phải kết luận về nguồn chứng cứ." % (len(mang), len(errors)))
+    print("    → KHÔNG dùng lần chạy này để nói nguồn sai, cũng KHÔNG chạy lại nhiều lần")
+    print("      rồi lấy lần ít lỗi nhất làm bằng chứng đã xác minh — kết quả sẽ khác nhau")
+    print("      mỗi lần chạy và không tái lập được.")
+    print("    → Sửa mạng/DNS rồi chạy lại tới khi số lỗi ổn định thì mới kết luận được.")
+
+
 def report(errors, warns, oks):
     print("=" * 64)
     print("CỔNG KIỂM LIÊM CHÍNH — Web Dashboard EBM")
@@ -924,6 +962,7 @@ def report(errors, warns, oks):
     print("-" * 64)
     if errors:
         print("KẾT QUẢ: ✗ FAIL — %d lỗi cứng, %d cảnh báo. Sửa trước khi giao." % (len(errors), len(warns)))
+        _canh_bao_loi_mang(errors)
         return 1
     print("KẾT QUẢ: ✓ PASS — 0 lỗi cứng, %d cảnh báo (rà tay nếu có)." % len(warns))
     return 0
