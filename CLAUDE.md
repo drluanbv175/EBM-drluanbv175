@@ -397,6 +397,57 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   design lạ chỉ CHẶN khi item đang `apply`, còn lại chỉ cảnh báo.
   **Trạng thái sau đợt rà 12/08: 60 dashboard → 13 PASS · 47 FAIL, và cả 47 chỉ vì thiếu
   `DATA.standards`** (nhóm chỉ-cảnh-báo). **0 lỗi an toàn còn lại.**
+  ## 🔴 CƠ CHẾ ĐẢM BẢO CHỨNG CỨ MỚI & TIN CẬY (dựng 2026-08-12)
+  **Một lệnh duy nhất trả lời "chứng cứ của tôi có mới và đáng tin không":**
+  `python tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
+  Chạy 5 chốt theo đúng thứ tự phụ thuộc và **dừng ngay ở bước ① nếu nền tảng không đáng tin**:
+  ① nguồn có THẬT không → ② độ tươi → ③ xác minh từng nguồn → ④ rút bài → ⑤ dây chuyền còn nguyên.
+  Bước ① chặn cứng vì mọi bước sau VÔ NGHĨA khi nguồn là giả: xác minh dữ liệu giả vẫn "thành
+  công" và cho ra độ phủ đẹp nhưng rỗng. Chu trình chỉ ĐO và BÁO — không tự quét chứng cứ mới,
+  không tự nạp sổ cái, không tự áp dụng (Cổng A/B giữ nguyên).
+
+  🔴 **PHÁT HIỆN NGHIÊM TRỌNG NHẤT 12/08 — máy Windows chạy DỮ LIỆU GIẢ suốt từ đầu.**
+  `medical-ebm-automation/.env` trên Mac là **symlink** trỏ ra `~/.ebm-secrets/`. OneDrive đồng bộ
+  symlink Unix sang Windows thành **file text 57 byte chứa đường dẫn macOS** ⇒ Windows không đọc
+  được biến nào ⇒ `USE_MOCK_SOURCES` rơi về **mặc định True** ⇒ mọi lời gọi nguồn y văn trả **dữ
+  liệu bịa**, và `NCBI_EMAIL` rỗng ⇒ **không tra cứu RÚT BÀI thật được**. Cảnh báo duy nhất là một
+  dòng `logger.info`. Nghĩa là có thể chạy giám sát an toàn thuốc trên máy này và nhận một báo cáo
+  trông bình thường nhưng toàn bộ là bịa.
+  **Đã vá tận gốc:** `app/config.py` nay đọc thẳng `~/.ebm-secrets/medical-ebm-automation.env`
+  TRƯỚC `.env` trong repo ⇒ **không cần symlink đi qua OneDrive nữa**, dùng chung một đường dẫn
+  trên cả hai máy. Thứ tự ưu tiên: biến môi trường OS → kho secrets → `.env` repo.
+  **Chốt canh:** `python tools/kiem_nguon_that.py` (`--nhanh` bỏ phần đo mạng, 0,2s — đã nối vào
+  hook `SessionStart`, im khi ổn). Phân tầng rủi ro có chủ ý: **🔴 chỉ dành cho cấu hình** (mock
+  bật / thiếu NCBI_EMAIL = dữ liệu SAI), **🟡 cho mạng** (chỉ là chưa lấy được, không làm dữ liệu
+  sai) — gộp hai thứ này sẽ khiến bác sĩ quen bỏ qua màu đỏ vì mạng bệnh viện hay chập chờn.
+
+  **SỔ XÁC MINH NGUỒN — `python tools/so_xac_minh_nguon.py --quet <dashboard> --vong 3`.**
+  Vì sao cần: đo thật trên Windows, chạy `--online` bốn lần trên CÙNG một file cho **13 → 3 → 6 → 1
+  lỗi cứng** (DNS chập chờn). Cổng không nhớ gì giữa các lần nên mạng kém thì **không lượt nào đủ**.
+  Sổ tích luỹ bằng chứng theo TỪNG mục, nên chạy nhiều vòng sẽ dần đủ.
+  ⚠️ **KHÁC HẲN "chạy lại lấy lần ít lỗi nhất"** (thứ mà `verify_dashboard.py` cảnh báo chống lại):
+  ở đó người ta suy chất lượng CẢ GÓI từ một lượt may mắn; ở đây mỗi PMID/DOI có bằng chứng riêng
+  kèm thời điểm. **Chỉ ghi THÀNH CÔNG — thất bại không bao giờ thành "đã xác minh".**
+  **Hai mức hạn dùng, KHÔNG được gộp:** tồn tại+metadata **180 ngày** (gần như bất biến) · trạng
+  thái **rút bài 30 ngày** (một bài đang tốt hôm nay có thể bị rút ngày mai).
+
+  🔴 **BA BÁO ĐỘNG GIẢ đã vá cùng ngày — cùng một lớp lỗi: "không biết" bị báo thành "có vấn đề".**
+  (a) Sổ ban đầu coi mọi status khác `ok` là ĐÃ BỊ RÚT ⇒ 18 PMID lành bị gắn cờ rút bài chỉ vì máy
+  thiếu `NCBI_EMAIL` (status thật là `unknown_mock_or_no_email` = KHÔNG BIẾT).
+  (b) `check_retraction_status()` trả `unresolved` khi **parse XML lỗi** — mà `unresolved` theo
+  docstring nghĩa là "PubMed không có bản ghi" tức **nghi trích dẫn ma** ⇒ 18 PMID vừa được chính
+  PubMed xác minh có thật bị báo là trích dẫn ma. Đã tách status mới `unknown_fetch_error`.
+  (c) NCBI trả trang HTML **"WWW Error Blocked Diagnostic"** (chặn IP dùng chung, hay gặp ở mạng
+  bệnh viện khi không có API key) rơi vào nhánh "parse XML lỗi" mơ hồ — nay nhận diện đích danh và
+  chỉ ra cách sửa. Test: `pytest tests/test_check_citation_retraction.py` (27 test).
+  **Bài học chung: báo động giả còn tệ hơn không kiểm, vì nó làm mất niềm tin vào cảnh báo thật.**
+  Mỗi khi công cụ báo bất thường HÀNG LOẠT, kiểm chứng chéo trước khi tin.
+
+  ⚠️ **CÒN CHẶN: NCBI đang CHẶN máy này** ⇒ chưa tra cứu rút bài thật được. Cần bác sĩ đăng ký
+  **NCBI API key** (miễn phí, tại tài khoản NCBI) rồi thêm `NCBI_API_KEY=...` vào
+  `~/.ebm-secrets/medical-ebm-automation.env`. Chưa có key thì mọi PMID giữ nguyên trạng thái
+  **CHƯA kiểm rút bài** — fail-closed, KHÔNG bị coi là sạch.
+
   **NHẮC ĐỘ TƯƠI:** `tools/kiem_do_tuoi_chung_cu.py` đã nối vào hook `SessionStart` — vì hai job
   launchd (`weeklysafety` T7 19:00 · `monthlyupdate` mùng 1 18:00) kiểm ngày 11/08 đều cho
   `runs = 0` · `(never exited)`: **chưa từng tự nổ lần nào**, do `StartCalendarInterval` đòi máy phải
