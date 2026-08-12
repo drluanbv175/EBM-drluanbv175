@@ -397,6 +397,26 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   design lạ chỉ CHẶN khi item đang `apply`, còn lại chỉ cảnh báo.
   **Trạng thái sau đợt rà 12/08: 60 dashboard → 13 PASS · 47 FAIL, và cả 47 chỉ vì thiếu
   `DATA.standards`** (nhóm chỉ-cảnh-báo). **0 lỗi an toàn còn lại.**
+  **ĐĂNG KÝ CHỦ ĐỀ — `python tools/dang_ky_chu_de.py` (thêm 12/08/2026).**
+  Trả lời hai câu mà trước đây KHÔNG công cụ nào trả lời được: *bản nào còn hiệu lực?*
+  và *có hai bản nào nói ngược nhau không?*
+  **Phân biệt hai thứ rất dễ nhầm — nhầm là gây hại:**
+  • **PHIÊN BẢN NỐI TIẾP** = cùng LÁT CẮT, khác ngày ⇒ bản mới THAY bản cũ. Thực tế chỉ có
+    **2**: `SuyTim_TongHop` (3 bản) và `TienLuongSuyTim` (2 bản).
+  • **LÁT CẮT KHÁC NHAU** của cùng chủ đề (COPD tổng quát · COPD ở đối tượng đặc biệt · COPD kèm
+    tim mạch) là **BỔ SUNG, KHÔNG thay nhau** — phải đọc CẢ NHÓM.
+  ⚠️ Bản đầu của công cụ này gộp hai thứ đó làm một và dán nhãn "đã có bản mới hơn" lên
+  `COPD_20260610` chỉ vì có bản đối tượng đặc biệt ra sau ⇒ sẽ khiến bác sĩ **bỏ qua đúng bản
+  mình cần**. Đã sửa: nhóm theo tên đầy đủ (lát cắt), không cắt hậu tố.
+  **15 mục hai bản NÓI NGƯỢC NHAU về cùng một PMID** (COPD 4 · ĐauĐầu 5 · RA 5 · ViêmGanB 1),
+  gồm những chỗ đáng lo: PMID 27783918 `consider`→`notyet` (oxy dài hạn), PMID 35081280
+  `consider`→`apply` (cảnh báo JAK inhibitor). **5 mục ĐauĐầu là hệ quả TRỰC TIẾP của đợt sửa
+  12/08**: thêm `normativeBasis` cho bản 18/07 mà không áp cùng cách cho bản 11/08 ⇒ ICHD-3 nay
+  `apply` ở bản này và `consider` ở bản kia. **Bài học: sửa một dashboard KHÔNG tự lan sang bản
+  khác cùng chủ đề — sửa xong phải chạy công cụ này.**
+  Công cụ chỉ ĐO và BÁO; **KHÔNG tự nâng `decision`** (nâng làm khuyến cáo MẠNH hơn — nguy hiểm
+  hơn hạ, thuộc thẩm quyền bác sĩ).
+
   ## 🔴 CƠ CHẾ ĐẢM BẢO CHỨNG CỨ MỚI & TIN CẬY (dựng 2026-08-12)
   **Một lệnh duy nhất trả lời "chứng cứ của tôi có mới và đáng tin không":**
   `python tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
