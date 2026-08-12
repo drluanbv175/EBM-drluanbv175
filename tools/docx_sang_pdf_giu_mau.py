@@ -31,6 +31,17 @@ import subprocess
 import sys
 import tempfile
 
+# Windows: stdout mặc định cp1252 → mọi print() tiếng Việt ném UnicodeEncodeError.
+# Vá 12/08/2026, cùng đợt với build_dashboard_docx.py và build_dashboard_from_data.py:
+# bước ⑤ của dây chuyền bị bỏ qua với thông báo 'charmap codec can't encode ơ'
+# (chữ 'ơ') — nghĩa là công cụ chết TRƯỚC khi kịp thử tìm trình duyệt, nên bác sĩ
+# tưởng máy thiếu Chrome trong khi Chrome vẫn có sẵn.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 # Chrome trên macOS. Edge dùng được y hệt nếu máy không có Chrome.

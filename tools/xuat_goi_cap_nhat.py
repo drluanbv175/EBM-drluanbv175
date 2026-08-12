@@ -52,6 +52,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+
+
 ROOT = Path(__file__).resolve().parent.parent
 DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
 BAN_DOC = ROOT / "tools" / "build_ban_doc_chung_cu.py"
@@ -258,10 +260,33 @@ def main() -> int:
                     if a.json:
                         print(json.dumps(result, ensure_ascii=False, indent=2))
                     return 3
-                result["cong_nguon_nghiem"] = "THIẾU DATA.standards"
-                print("   ⚠ Cổng nguồn nghiêm ngặt không đạt vì thiếu"
-                      " `DATA.standards` (bản cũ) — không chặn, nhưng nên bổ sung"
-                      " khối hợp đồng nguồn khi cập nhật lần sau.")
+                # Nhánh KHÔNG-an-toàn có nhiều nguyên nhân khác nhau; trước 12/08/2026
+                # chỗ này gán CỨNG một nguyên nhân duy nhất là "thiếu DATA.standards".
+                # Đo thật hôm đó: một dashboard CÓ ĐỦ khối standards rớt cổng chỉ vì
+                # DNS gãy khi hỏi Crossref, mà vẫn bị in ra là thiếu siêu dữ liệu ⇒ đẩy
+                # bác sĩ đi bổ sung thứ đã có sẵn, và che mất nguyên nhân thật là mạng.
+                thieu_std = any("THIẾU DATA.standards" in ln or "standards thiếu" in ln
+                                for ln in out_s.splitlines())
+                loi_mang = [ln.strip() for ln in out_s.splitlines()
+                            if "CHƯA XÁC MINH ĐƯỢC" in ln or "lỗi mạng" in ln]
+                if thieu_std:
+                    result["cong_nguon_nghiem"] = "THIẾU DATA.standards"
+                    print("   ⚠ Cổng nguồn nghiêm ngặt không đạt vì thiếu"
+                          " `DATA.standards` (bản cũ) — không chặn, nhưng nên bổ sung"
+                          " khối hợp đồng nguồn khi cập nhật lần sau.")
+                elif loi_mang:
+                    result["cong_nguon_nghiem"] = "CHƯA KẾT LUẬN ĐƯỢC (mạng)"
+                    print(f"   ⚠ Cổng nguồn nghiêm ngặt CHƯA kết luận được:"
+                          f" {len(loi_mang)} định danh không phân giải được do MẠNG/DNS."
+                          " Đây KHÔNG phải kết luận nguồn sai — chạy lại khi mạng ổn,"
+                          " hoặc dùng `tools/so_xac_minh_nguon.py` để tích luỹ bằng"
+                          " chứng qua nhiều vòng.")
+                else:
+                    result["cong_nguon_nghiem"] = "FAIL (lý do khác)"
+                    print("   ⚠ Cổng nguồn nghiêm ngặt không đạt — KHÔNG phải lỗi an"
+                          " toàn, cũng không phải thiếu `DATA.standards`. Nguyên văn:")
+                    for ln in [l for l in out_s.splitlines() if l.strip().startswith("✗")][:8]:
+                        print("      " + ln.strip())
     else:
         print("① Bỏ qua cổng liêm chính (không có --online) —"
               " bản Word sẽ ghi 'CẦN xác minh'.")

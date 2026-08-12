@@ -61,6 +61,19 @@ import json
 import sys
 from pathlib import Path
 
+# Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
+# ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong. Đo thật
+# ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
+# tool thoát mã 1 ở đúng dòng print cuối ⇒ caller đọc mã thoát, tưởng hỏng, bỏ luôn 2
+# bước sau. Cùng lớp lỗi đã vá cho tools/vietnamize/.
+import sys as _sys_utf8
+for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 SO = DASH / ".so-xac-minh-nguon.json"
@@ -271,6 +284,13 @@ def lenh_quet(files: list[Path], vong: int) -> int:
         kq = kiem_rut_bai(can_kiem_rut)
         bay_gio = dt.datetime.now().isoformat(timespec="seconds")
         chua_tra_duoc = 0
+        # Gom lý do THẬT theo từng trạng thái. Trước 12/08/2026 chỗ này chỉ đếm rồi in
+        # một câu duy nhất đổ cho "thiếu NCBI_EMAIL hoặc đang bật mock" — nhưng nhánh
+        # này bắt CẢ 'unknown_fetch_error' (NCBI CHẶN IP, cần NCBI_API_KEY). Đo thật
+        # trên máy Windows hôm đó: cấu hình ĐÚNG (mock tắt, có NCBI_EMAIL) mà vẫn ra
+        # câu đó ⇒ bác sĩ bị đẩy đi sửa một cấu hình vốn không sai. Cùng lớp lỗi
+        # "không biết bị báo thành có vấn đề" mà chính công cụ này sinh ra để chặn.
+        ly_do_chua_tra = {}
         for pmid, info in kq.items():
             khoa = f"pmid:{pmid}"
             if khoa not in muc:
@@ -289,6 +309,7 @@ def lenh_quet(files: list[Path], vong: int) -> int:
                 # (mạng cắt giữa chừng / NCBI trả trang chặn). KHÔNG có cơ sở nào
                 # để nghi trích dẫn ma — khác hẳn 'unresolved'.
                 chua_tra_duoc += 1
+                ly_do_chua_tra[trang_thai] = (info or {}).get("reason", "")
                 continue
 
             muc[khoa]["kiem_rut_luc"] = bay_gio
@@ -306,9 +327,20 @@ def lenh_quet(files: list[Path], vong: int) -> int:
                 print(f"  🟠 {pmid}: PubMed không trả bản ghi (nghi trích dẫn ma) — rà tay")
 
         if chua_tra_duoc:
-            print(f"  ⚠ {chua_tra_duoc} PMID KHÔNG tra cứu thật được (thiếu NCBI_EMAIL "
-                  f"hoặc đang bật mock) — giữ nguyên trạng thái CHƯA kiểm rút bài, "
-                  f"KHÔNG coi là sạch.")
+            print(f"  ⚠ {chua_tra_duoc} PMID KHÔNG tra cứu rút bài được lần này — giữ "
+                  f"nguyên trạng thái CHƯA kiểm, KHÔNG coi là sạch.")
+            for tt, ly_do in ly_do_chua_tra.items():
+                nhan = {
+                    "unknown_mock_or_no_email":
+                        "đang bật dữ liệu giả hoặc thiếu NCBI_EMAIL — sửa cấu hình ở "
+                        "~/.ebm-secrets/medical-ebm-automation.env",
+                    "unknown_fetch_error":
+                        "gọi được nhưng không đọc được phản hồi (mạng cắt giữa chừng, "
+                        "hoặc NCBI trả trang CHẶN)",
+                }.get(tt, tt)
+                print(f"     · {nhan}")
+                if ly_do:
+                    print(f"       lý do nguồn trả về: {ly_do}")
         if not kq:
             print("  ⚠ Không tra được lần này — các PMID này vẫn tính là CHƯA kiểm rút bài.")
         ghi_so(so)
