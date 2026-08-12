@@ -421,7 +421,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   **Một lệnh duy nhất trả lời "chứng cứ của tôi có mới và đáng tin không":**
   `python tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
   Chạy 5 chốt theo đúng thứ tự phụ thuộc và **dừng ngay ở bước ① nếu nền tảng không đáng tin**:
-  ① nguồn có THẬT không → ② độ tươi → ③ xác minh từng nguồn → ④ rút bài → ⑤ dây chuyền còn nguyên.
+  ① nguồn có THẬT không → ② độ tươi → ③ xác minh từng nguồn → ④ rút bài → ⑤ hai bản có nói ngược nhau không → ⑥ dây chuyền còn nguyên.
   Bước ① chặn cứng vì mọi bước sau VÔ NGHĨA khi nguồn là giả: xác minh dữ liệu giả vẫn "thành
   công" và cho ra độ phủ đẹp nhưng rỗng. Chu trình chỉ ĐO và BÁO — không tự quét chứng cứ mới,
   không tự nạp sổ cái, không tự áp dụng (Cổng A/B giữ nguyên).

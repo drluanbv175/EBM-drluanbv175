@@ -110,11 +110,20 @@ def main() -> int:
     elif rc == 1:
         viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — chạy lại thêm vòng.")
 
-    # ── 5. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
+    # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
+    # Đặt SAU phần xác minh vì nó đọc nội dung dashboard, không gọi mạng; và đặt
+    # TRƯỚC cổng dây chuyền vì mâu thuẫn nội dung nghiêm trọng hơn lỗi cấu trúc.
+    rc, out = chay([PY, "tools/dang_ky_chu_de.py", "--mau-thuan"],
+                   "⑤ Có hai bản nào nói ngược nhau không?")
+    if rc == 1:
+        viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
+                            "quyết bản nào đúng (xem phần ⑤).")
+
+    # ── 6. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
     rc, out = chay([PY, "tools/verify_clinical_evidence_update_pipeline.py"],
-                   "⑤ Dây chuyền cập nhật chứng cứ còn nguyên vẹn?")
+                   "⑥ Dây chuyền cập nhật chứng cứ còn nguyên vẹn?")
     if rc != 0:
-        viec_can_lam.append("Dây chuyền cập nhật chứng cứ có lỗi — xem phần ⑤.")
+        viec_can_lam.append("Dây chuyền cập nhật chứng cứ có lỗi — xem phần ⑥.")
 
     # ── Tổng kết ────────────────────────────────────────────────────────────
     print("\n" + "=" * 68)
