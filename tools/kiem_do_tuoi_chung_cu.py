@@ -63,10 +63,33 @@ def ngay_tu_ten(p: Path) -> dt.date | None:
         return None
 
 
-def lan_chay_cuoi(log: Path) -> dt.date | None:
-    if log.exists() and log.stat().st_size > 0:
-        return dt.date.fromtimestamp(log.stat().st_mtime)
-    return None
+def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
+    """(ngày lần chạy cuối, trạng thái) — trạng thái ∈ PASS · LỖI · DANG_DO · "".
+
+    VÁ 13/08/2026 — bản cũ CHỈ đọc `st_mtime` rồi kết luận "còn hạn". Nhưng hai script
+    giám sát ghi dòng "BẮT ĐẦU" vào log **NGAY khi khởi động**, trước khi làm bất cứ
+    việc gì ⇒ một lượt chạy KHỞI ĐỘNG RỒI CHẾT vẫn làm mtime tươi mới, và bác sĩ nhận
+    "🟢 CHỨNG CỨ còn hạn" trong khi giám sát thật sự đã hỏng.
+
+    Từ khi `tu_khoi_dong.py` tự phóng mỗi phiên, điều này thành vòng lặp im lặng:
+    phóng → hỏng → mtime tươi → "còn hạn" → không ai biết. Chính log ĐÃ chứa câu trả
+    lời (dòng "KẾT THÚC … tổng thể=PASS | CÓ BƯỚC LỖI") — chỉ là chưa ai đọc.
+    """
+    if not (log.exists() and log.stat().st_size > 0):
+        return None, ""
+    ngay = dt.date.fromtimestamp(log.stat().st_mtime)
+    try:
+        dong = log.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return ngay, ""
+    for d in reversed(dong):
+        if "KẾT THÚC" in d:
+            return ngay, ("PASS" if "tổng thể=PASS" in d else "LỖI")
+        if "BẮT ĐẦU" in d:
+            # Gặp BẮT ĐẦU trước KẾT THÚC ⇒ lượt cuối chưa khép lại: đang chạy, hoặc
+            # đã chết giữa chừng. Cả hai đều KHÔNG được coi là một lượt giám sát xong.
+            return ngay, "DANG_DO"
+    return ngay, ""
 
 
 def launchd_runs(nhan: str) -> int | None:
@@ -116,7 +139,7 @@ def main() -> int:
                 f"cho chủ đề đang cần.")
 
     # 2) Giám sát an toàn thuốc hằng tuần
-    chay_tuan = lan_chay_cuoi(LOG_TUAN)
+    chay_tuan, tt_tuan = lan_chay_cuoi(LOG_TUAN)
     runs = launchd_runs("com.medicalebm.weeklysafety")
     if chay_tuan is None:
         if sys.platform == "darwin":
@@ -133,7 +156,19 @@ def main() -> int:
             f"     (kiểm nhanh nguồn, không ghi gì: thêm `--canary`)")
     else:
         cach = (hom_nay - chay_tuan).days
-        if cach > HAN_AN_TOAN_NGAY:
+        # Lượt chạy HỎNG hoặc chưa khép lại KHÔNG được tính là một lượt giám sát xong,
+        # dù log vừa được ghi (script ghi 'BẮT ĐẦU' ngay lúc khởi động).
+        if tt_tuan == "LỖI":
+            canh_bao.append(
+                f"Giám sát an toàn thuốc lượt cuối ({chay_tuan:%d/%m/%Y}) CÓ BƯỚC LỖI — "
+                f"log ghi 'tổng thể=CÓ BƯỚC LỖI'. Chạy lại và đọc "
+                f"medical-ebm-automation/data/archive/launchd_weekly.log để biết bước nào.")
+        elif tt_tuan == "DANG_DO":
+            canh_bao.append(
+                f"Giám sát an toàn thuốc lượt cuối ({chay_tuan:%d/%m/%Y}) CHƯA KHÉP LẠI — "
+                f"log có 'BẮT ĐẦU' mà không có 'KẾT THÚC': đang chạy dở, hoặc đã chết "
+                f"giữa chừng. KHÔNG tính là một lượt giám sát xong.")
+        elif cach > HAN_AN_TOAN_NGAY:
             canh_bao.append(
                 f"Giám sát an toàn thuốc chạy lần cuối {chay_tuan:%d/%m/%Y} — "
                 f"cách đây {cach} ngày (ngưỡng {HAN_AN_TOAN_NGAY}).")

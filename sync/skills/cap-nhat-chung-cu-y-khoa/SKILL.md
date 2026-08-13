@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.24.0
+  version: 1.25.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -667,6 +667,22 @@ mâu thuẫn thật, 3 PMID chuyển sang nhóm riêng *"không so tự động 
 
 > **Luật:** khi gom dữ liệu theo một khoá, hỏi *"khoá này có thật sự DUY NHẤT không?"*. Ở đây
 > PMID là **tài liệu**, không phải **khuyến cáo** — và cả hệ này nói về khuyến cáo.
+
+**(l) BH19 — "🟢 CHỨNG CỨ còn hạn" dựa trên một tín hiệu KHÔNG có nghĩa đó.**
+
+Chốt độ tươi kết luận từ `st_mtime` của file log. Nhưng hai script giám sát ghi dòng
+`BẮT ĐẦU` vào log **NGAY khi khởi động**, trước khi làm bất cứ việc gì ⇒ một lượt chạy
+**khởi động rồi chết** vẫn làm mtime tươi mới, và bác sĩ nhận `🟢 CHỨNG CỨ còn hạn`.
+
+Từ khi `tu_khoi_dong.py` tự phóng mỗi phiên, đây thành **vòng lặp im lặng**:
+phóng → hỏng → mtime tươi → "còn hạn" → không ai biết, tuần này qua tuần khác.
+Bản thân log **ĐÃ chứa** câu trả lời (`KẾT THÚC … tổng thể=PASS | CÓ BƯỚC LỖI`) — chỉ là
+chưa ai đọc. Nay `lan_chay_cuoi()` trả `(ngày, trạng_thái)` với 3 trạng thái phân biệt:
+`PASS` · `LỖI` · `DANG_DO` (có BẮT ĐẦU mà không có KẾT THÚC).
+
+> **Luật đọc tín hiệu:** trước khi dùng một dấu hiệu để kết luận, hỏi *"dấu hiệu này
+> thật sự CÓ NGHĨA là điều tôi đang kết luận không?"*. `mtime` nghĩa là **"file vừa
+> được ghi"**, KHÔNG phải **"công việc đã xong tốt"**.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

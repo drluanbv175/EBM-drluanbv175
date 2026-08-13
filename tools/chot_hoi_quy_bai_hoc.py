@@ -508,6 +508,41 @@ def bh18_giu_moi_item_cung_pmid():
     return True, "giữ đủ mọi item cùng PMID, phân biệt được mâu thuẫn thật"
 
 
+def bh19_do_tuoi_doc_ket_qua_khong_doc_mtime():
+    """13/08 — chốt độ tươi kết luận "còn hạn" chỉ từ `st_mtime` của file log.
+
+    Hai script giám sát ghi dòng "BẮT ĐẦU" vào log **NGAY khi khởi động**, trước khi
+    làm bất cứ việc gì ⇒ một lượt chạy KHỞI ĐỘNG RỒI CHẾT vẫn làm mtime tươi mới, và
+    bác sĩ nhận "🟢 CHỨNG CỨ còn hạn" trong khi giám sát thật sự đã hỏng.
+
+    Từ khi `tu_khoi_dong.py` tự phóng mỗi phiên, đây thành VÒNG LẶP IM LẶNG:
+    phóng → hỏng → mtime tươi → "còn hạn" → không ai biết, tuần này qua tuần khác.
+    Bản thân log ĐÃ chứa câu trả lời ("KẾT THÚC … tổng thể=PASS | CÓ BƯỚC LỖI") —
+    chỉ là chưa ai đọc. Cùng họ BH14–BH18: hệ nói sai mà không sai phép tính nào.
+
+    Kiểm HÀNH VI trên log tổng hợp, gồm cả ca lượt cũ LỖI nhưng lượt mới PASS.
+    """
+    import tempfile
+    m = _nap(REPO / "tools/kiem_do_tuoi_chung_cu.py", "dotuoi_bh19")
+    ca = [("PASS", "= BẮT ĐẦU =\n= KẾT THÚC — tổng thể=PASS =\n"),
+          ("LỖI", "= BẮT ĐẦU =\n= KẾT THÚC — bước (1)=1, tổng thể=CÓ BƯỚC LỖI =\n"),
+          ("DANG_DO", "= BẮT ĐẦU an toàn thuốc =\nđang chạy…\n"),
+          ("PASS", "= KẾT THÚC — tổng thể=CÓ BƯỚC LỖI =\n= BẮT ĐẦU =\n"
+                   "= KẾT THÚC — tổng thể=PASS =\n")]
+    with tempfile.TemporaryDirectory() as d:
+        for mong, noi in ca:
+            p = Path(d) / "t.log"
+            p.write_text(noi, encoding="utf-8")
+            try:
+                _, tt = m.lan_chay_cuoi(p)
+            except (TypeError, ValueError) as e:
+                return False, f"lan_chay_cuoi không còn trả (ngày, trạng thái): {e}"
+            if tt != mong:
+                return False, (f"lượt chạy {mong} bị đọc thành {tt!r} — "
+                               f"một lượt giám sát HỎNG có thể bị coi là còn hạn")
+    return True, "đọc KẾT QUẢ lượt chạy, không chỉ nhìn mtime"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -527,6 +562,7 @@ BAI_HOC = [
     ("BH16", "13/08", "Hook neo thư mục dự án + báo TO khi thiếu", bh16_hook_neo_vao_thu_muc_du_an_va_bao_to),
     ("BH17", "13/08", "Tiêu đề bộ năm nói đúng sự thật", bh17_tieu_de_bo_nam_noi_dung_su_that),
     ("BH18", "13/08", "Giữ mọi item cùng PMID (chống báo động giả)", bh18_giu_moi_item_cung_pmid),
+    ("BH19", "13/08", "Độ tươi đọc KẾT QUẢ, không chỉ nhìn mtime", bh19_do_tuoi_doc_ket_qua_khong_doc_mtime),
 ]
 
 
