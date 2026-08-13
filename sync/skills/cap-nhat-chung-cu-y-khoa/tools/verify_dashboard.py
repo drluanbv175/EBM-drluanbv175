@@ -61,6 +61,19 @@ from json import JSONDecodeError
 from datetime import date, datetime
 from pathlib import Path
 
+# Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
+# ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong. Đo thật
+# ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
+# tool thoát mã 1 ở đúng dòng print cuối ⇒ caller đọc mã thoát, tưởng hỏng, bỏ luôn 2
+# bước sau. Cùng lớp lỗi đã vá cho tools/vietnamize/.
+import sys as _sys_utf8
+for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 VALID_GRADE = {"high", "mod", "low", "vlow", "na"}
 VALID_DECISION = {"apply", "consider", "notyet"}
@@ -322,7 +335,17 @@ def strict_source_checks(data_block, items, *, today=None):
     standards = object_after_key(data_block, "standards")
     if not standards:
         errors.append("THIẾU DATA.standards — không có hợp đồng nguồn/độ mới/chuẩn thẩm định.")
-        return errors, warns, oks
+        # KHÔNG return sớm (sửa 12/08/2026). Bản cũ thoát ngay tại đây, nên với
+        # dashboard thiếu khối siêu dữ liệu thì TOÀN BỘ luật an toàn cấp item —
+        # `apply` trên gradeLevel yếu, `apply` chỉ dựa Consensus — KHÔNG BAO GIỜ
+        # được chạy. Hậu quả là một ảo ảnh nguy hiểm: cổng báo đúng "1 lỗi cứng",
+        # người đọc kết luận "chỉ thiếu siêu dữ liệu, nội dung lâm sàng không sai"
+        # — trong khi cổng chưa hề đọc tới một item nào để có căn cứ nói vậy.
+        # Kết luận sai đó đã bị ghi vào CLAUDE.md ngày 11/08 và lan sang cả cách
+        # xuat_goi_cap_nhat.py phân loại "chỉ cảnh báo" vs "chặn xuất".
+        # Nay: ghi nhận lỗi thiếu hợp đồng nguồn rồi CHẤM TIẾP, để luật an toàn
+        # phủ mọi dashboard bất kể có khối standards hay không.
+        standards = ""
 
     required_fields = {
         "frame": "khung câu hỏi",

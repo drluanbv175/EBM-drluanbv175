@@ -362,14 +362,24 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   truyền `--verified`** (không PASS → tool docx tự hạ câu chữ thành "CẦN xác minh", không khẳng định sai).
   **CỔNG NGUỒN NGHIÊM NGẶT — bật 2026-08-11 (trước đó chưa bao giờ thi hành).** `DESIGN-SPEC.md` §6
   đòi `--online --strict-sources` từ đầu, nhưng dây chuyền chỉ chạy `--online`, nên nhóm luật mạnh
-  nhất nằm im. Nay bước ①-bis chạy thêm `--strict-sources` và **tách hai loại lỗi** (rà 58 dashboard
-  ngày 11/08 cho thấy vì sao không thể chặn tất): **47/52 bản FAIL chỉ vì thiếu `DATA.standards`** —
-  khối siêu dữ liệu ra đời SAU các bản đó, nội dung lâm sàng không sai ⇒ **chỉ CẢNH BÁO**; "sửa" bằng
-  cách bịa hợp đồng nguồn cho một lần tìm kiếm đã xảy ra chính là bịa provenance. Còn **4 bản mang lỗi
-  AN TOÀN THẬT** (`decision='apply'` trên `gradeLevel` na/low, hoặc apply chỉ dựa Consensus) ⇒ **CHẶN
-  XUẤT, mã thoát 3**. Đáng chú ý: 2 trong 4 bản đó sinh ngày 11/08 và **PASS ở `--online`** (0 lỗi
-  cứng) — đúng khoảng trống mà cổng cũ bỏ lọt. **TUYỆT ĐỐI không nâng `gradeLevel`** (nâng mức cho
-  nguồn không phân hạng là lỗi tự gán mức, R4 của `tham-dinh-dau-ra`).
+  nhất nằm im. Nay bước ①-bis chạy thêm `--strict-sources` và **tách hai loại lỗi**: thiếu
+  `DATA.standards` ⇒ **chỉ CẢNH BÁO** (khối siêu dữ liệu ra đời SAU các bản cũ; "sửa" bằng cách bịa
+  hợp đồng nguồn cho một lần tìm kiếm đã xảy ra chính là bịa provenance); `decision='apply'` trên
+  `gradeLevel` na/low hoặc chỉ dựa Consensus ⇒ **CHẶN XUẤT, mã thoát 3**.
+  **TUYỆT ĐỐI không nâng `gradeLevel`** (nâng mức cho nguồn không phân hạng là lỗi tự gán mức, R4 của
+  `tham-dinh-dau-ra`).
+  ⛔ **ĐÍNH CHÍNH 12/08 — câu "47/52 bản FAIL CHỈ VÌ thiếu `DATA.standards`, nội dung lâm sàng không
+  sai" từng ghi ở đây là SAI, và nó CHE MẤT 73 mục nguy hiểm.** Vế "chỉ vì" là **ảo ảnh của một lệnh
+  `return` sớm**: `verify_dashboard.py` (khoảng dòng 336) thoát NGAY khi thiếu `DATA.standards`, nên
+  toàn bộ luật an toàn cấp item CHƯA TỪNG chạy trên 47 bản đó. Cổng báo đúng "1 lỗi cứng" — nhưng nó
+  chưa hề đọc tới một item nào để có căn cứ nói nội dung không sai.
+  **Đã bỏ `return` sớm.** Đo lại toàn bộ 61 dashboard sau khi vá: **73 mục `apply` trên chứng cứ
+  yếu/không phân hạng, trên 16 dashboard** (trước khi vá chỉ thấy 4). Nặng nhất: VKDT_TongHop 17/07
+  (13 mục) · SuyTim_TongHop 11/08 (12) · 05/08 (11) · 04/08 (8) · COPD_TimThanChuyenHoa (7) ·
+  COPD_20260610 (5). Ví dụ TimMach_20260609 đi từ 1 lỗi → 10 lỗi.
+  **Bài học chung, quan trọng hơn con số:** một cổng `return` sớm ở bước kiểm tra hình thức sẽ làm
+  MỌI luật nội dung phía sau im lặng, mà đầu ra vẫn trông như đã soi đủ. Khi đọc kết quả cổng, phải
+  hỏi "cổng đã chạy tới luật nào" chứ không chỉ đếm số lỗi.
   ⛔ **ĐÍNH CHÍNH 12/08 — câu "cách sửa ĐÚNG là HẠ `decision`" chỉ đúng MỘT NỬA.** Đem 32 mục bị chặn
   ra soi từng mục thì chúng thuộc HAI loại khác hẳn nhau, và hạ hết là làm giảm an toàn:
   **Nhóm B (17 mục) — chứng cứ yếu thật** (tổng quan tường thuật JAMA/Lancet/NEJM, thư gửi toà soạn,

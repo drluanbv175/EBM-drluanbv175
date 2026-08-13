@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.14.0 — 2026-08-12
+
+- **Cổng nguồn `--strict-sources` nay CHẠY THẬT trong dây chuyền một lệnh.** Trước đây
+  `DESIGN-SPEC.md` §6 đòi `--online --strict-sources` từ đầu, nhưng `xuat_goi_cap_nhat.py` chỉ chạy
+  `--online`, nên nhóm luật mạnh nhất nằm im. Nay bước ①-bis chạy thêm `--strict-sources` và tách
+  hai loại lỗi: lỗi AN TOÀN (`decision='apply'` trên chứng cứ yếu/không phân hạng) ⇒ CHẶN XUẤT, mã
+  thoát 3; thiếu `DATA.standards` ⇒ chỉ cảnh báo (bản cũ ra đời trước khi có khối này; bịa hợp đồng
+  nguồn cho một lần tìm kiếm đã xảy ra chính là bịa provenance).
+- **Vá lỗi che 73 mục nguy hiểm.** `verify_dashboard.py` `return` NGAY khi thiếu `DATA.standards`,
+  nên toàn bộ luật an toàn cấp item CHƯA TỪNG chạy trên 47 dashboard. Cổng báo đúng "1 lỗi cứng" và
+  người đọc kết luận "chỉ thiếu siêu dữ liệu, nội dung không sai" — một ảo ảnh của return sớm. Sau
+  khi bỏ return, đo lại 61 dashboard: **73 mục `apply` trên chứng cứ yếu/không phân hạng, trên 16
+  dashboard** (trước chỉ thấy 4). Bài học ghi vào SKILL.md: đọc kết quả cổng phải hỏi "cổng đã chạy
+  tới luật nào", không chỉ đếm số lỗi.
+- Đồng bộ `tools/verify_dashboard.py` cho khớp `EBM-Dashboards/tools/` và `EBM_MASTER/skill_assets/`
+  (topology 3 bản — trước đó bản vá chỉ nằm ở một nơi, nên skill chạy bản chưa vá).
+
 ## v1.12.5 — 2026-07-15
 
 - **Siết cổng nguồn chứng cứ để giảm nhu cầu bác sĩ tự dò từng nguồn.** Thêm `--strict-sources` cho
