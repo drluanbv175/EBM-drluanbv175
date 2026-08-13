@@ -14,6 +14,13 @@ Bảo đảm câu trả lời chỉ dựa trên nguồn có thể truy nguyên, 
 
 ## Nguồn thường ưu tiên theo lĩnh vực
 
+- **Registry nguồn uy tín lõi (luôn ưu tiên khi phù hợp câu hỏi):**
+  - Cấp S/nguồn tổng hợp hoặc cơ quan chính thức: Cochrane, USPSTF, NICE, WHO, CDC, FDA, EMA, MHRA.
+  - Tạp chí đa khoa lõi: NEJM, Lancet family, JAMA/JAMA Network, The BMJ, Annals of Internal Medicine, Nature Medicine.
+  - Hiệp hội/tạp chí chuyên khoa thường gặp: ACC/AHA, ESC, ADA/EASD, KDIGO, GINA, GOLD, IDSA, EULAR/ACR, ACG/AGA/ASGE, AASLD/EASL, ASH/ISTH, AGS, ATS/ERS/BTS.
+  - Registry này chỉ tăng ưu tiên thẩm định nguồn. Không tự nâng editorial/preprint/tín hiệu yếu thành thay đổi thực hành; vẫn phải dựa vào thiết kế nghiên cứu, GRADE/level gốc, truy nguyên PMID/DOI/URL, freshness và doctor/master gate.
+  - Không thêm RSS/API endpoint chưa xác minh chính thức. Nếu chưa có feed ổn định của một tạp chí/hiệp hội, tìm qua PubMed, Europe PMC, Crossref/OpenAlex và trang chính thức rồi ghi rõ đường truy nguyên.
+
 - Toàn cầu/dự phòng/y tế công cộng: WHO, CDC, USPSTF, NICE.
 - Tim mạch/đột quỵ: ESC, ACC/AHA, AHA/ASA, ESO/WSO.
 - ĐTĐ/chuyển hóa/thận: ADA/EASD, KDIGO.

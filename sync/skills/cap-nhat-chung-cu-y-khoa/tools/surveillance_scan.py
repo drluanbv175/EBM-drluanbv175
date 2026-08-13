@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import ssl
 import tempfile
 import time
@@ -29,6 +30,36 @@ DESIGN = (
 )
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 DEFAULT_WATCHLIST = Path(__file__).resolve().parents[1] / "watchlist.json"
+TRUSTED_SOURCE_ALIASES = {
+    "Cochrane": ("cochrane", "cochrane database"),
+    "NEJM": ("nejm", "new england journal of medicine", "n engl j med"),
+    "The Lancet": ("lancet",),
+    "JAMA": ("jama",),
+    "The BMJ": ("bmj", "british medical journal"),
+    "Annals of Internal Medicine": ("ann intern med", "annals of internal medicine"),
+    "Nature Medicine": ("nature medicine", "nat med"),
+    "NICE": ("nice", "national institute for health and care excellence"),
+    "USPSTF": ("uspstf", "u.s. preventive services task force"),
+    "WHO": ("who", "world health organization"),
+    "CDC": ("cdc", "mmwr", "centers for disease control"),
+    "FDA": ("fda", "food and drug administration"),
+    "EMA": ("ema", "european medicines agency"),
+    "MHRA": ("mhra", "drug safety update"),
+    "ACC/AHA": ("acc", "aha", "american college of cardiology", "american heart association", "jacc", "circulation"),
+    "ESC": ("esc", "european society of cardiology", "european heart journal"),
+    "ADA/EASD": ("ada", "easd", "american diabetes association", "diabetes care", "diabetologia"),
+    "KDIGO": ("kdigo", "kidney international"),
+    "GINA": ("gina", "global initiative for asthma"),
+    "GOLD": ("gold", "global initiative for chronic obstructive"),
+    "IDSA": ("idsa", "clinical infectious diseases"),
+    "EULAR/ACR": ("eular", "acr", "american college of rheumatology", "annals of the rheumatic diseases"),
+    "ACG/AGA/ASGE": ("acg", "aga", "asge", "american college of gastroenterology", "gastroenterology", "gut"),
+    "AASLD/EASL": ("aasld", "easl", "hepatology", "journal of hepatology"),
+    "ASH/ISTH": ("ash", "isth", "american society of hematology"),
+    "AGS": ("ags", "american geriatrics society", "beers criteria"),
+    "ATS/ERS/BTS": ("ats", "ers", "bts", "american thoracic society", "thorax"),
+}
+AMBIGUOUS_SHORT_ALIASES = {"who", "ada", "acc", "aha", "esc", "acr", "ema", "ash", "ags", "gold", "gut"}
 
 
 def _tls_context() -> ssl.SSLContext:
@@ -55,6 +86,8 @@ class Candidate:
     title: str
     url: str
     source: str = "PubMed E-utilities"
+    journal_or_organization: str = ""
+    authority_source: str = ""
 
 
 @dataclass(frozen=True)
@@ -80,6 +113,24 @@ def _retry_wait(exc: BaseException, attempt: int) -> float:
                 except (TypeError, ValueError, OverflowError):
                     pass
     return min(2.0 ** attempt, 30.0)
+
+
+def _alias_match(alias: str, blob: str) -> bool:
+    return re.search(rf"(?<![a-z0-9]){re.escape(alias.casefold())}(?![a-z0-9])", blob.casefold()) is not None
+
+
+def detect_authority_source(journal_or_org: str = "", title: str = "") -> str:
+    """Gan nhan nguon uy tin loi de loc queue; khong phai phe duyet ap dung."""
+    primary = str(journal_or_org or "")
+    combined = " | ".join(part for part in (primary, str(title or "")) if part)
+    if not combined:
+        return ""
+    for name, aliases in TRUSTED_SOURCE_ALIASES.items():
+        for alias in aliases:
+            blob = primary if alias in AMBIGUOUS_SHORT_ALIASES else combined
+            if blob and _alias_match(alias, blob):
+                return name
+    return ""
 
 
 def get_json(
@@ -222,12 +273,15 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
         title = str(item.get("title") or "").strip()
         if not str(pmid).isdigit() or not title:
             continue
+        journal = str(item.get("source") or "").strip()
         candidates.append(Candidate(
             pmid=str(pmid),
             publication_date=str(item.get("pubdate") or ""),
             title=title,
             url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
             source="PubMed E-utilities",
+            journal_or_organization=journal,
+            authority_source=detect_authority_source(journal, title),
         ))
     return candidates
 
@@ -254,12 +308,15 @@ def summarize_europe_pmc(
         title = str(item.get("title") or "").strip()
         if not str(pmid).isdigit() or not title:
             continue
+        journal = str(item.get("journalTitle") or item.get("bookOrReportDetails") or "").strip()
         candidates.append(Candidate(
             pmid=str(pmid),
             publication_date=str(item.get("firstPublicationDate") or item.get("pubYear") or ""),
             title=title,
             url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
             source="Europe PMC fallback for PMID",
+            journal_or_organization=journal,
+            authority_source=detect_authority_source(journal, title),
         ))
     return candidates
 
@@ -364,6 +421,7 @@ def markdown_report(report: dict) -> str:
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}",
         f"- Ứng viên không trùng: {report['candidate_count']}",
         "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
+        "- Trusted-source label: official guideline/regulator bodies, Cochrane, NEJM, Lancet, JAMA, BMJ, Annals, Nature Medicine, and core specialty societies/journals.",
         f"- **ỨNG VIÊN để thẩm định, KHÔNG phải khuyến cáo. {DISCLAIMER}.**",
         "",
     ]
@@ -377,7 +435,9 @@ def markdown_report(report: dict) -> str:
         else:
             for item in result["candidates"]:
                 source_note = f" · nguồn: {item.get('source', 'PubMed E-utilities')}"
-                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}")
+                journal_note = f" · journal/org: {item.get('journal_or_organization')}" if item.get("journal_or_organization") else ""
+                authority_note = f" · authority: {item.get('authority_source')}" if item.get("authority_source") else ""
+                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}{journal_note}{authority_note}")
                 lines.append(f"  - {item['title']}")
         lines.append("")
     lines.extend([

@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.13.0
+  version: 1.13.1
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -33,7 +33,7 @@ Không tự động biến một câu hỏi cụ thể thành:
 Đưa ra câu trả lời EBM có thể dùng trong thực hành lâm sàng, với các yêu cầu:
 
 1. Xác định khuyến cáo hiện hành và thay đổi có ý nghĩa thực hành.
-2. Ưu tiên nguồn gốc chính thức và bằng chứng chất lượng cao.
+2. Ưu tiên nguồn gốc chính thức, registry nguồn uy tín lõi và bằng chứng chất lượng cao.
 3. Tách rõ: khuyến cáo của nguồn, độ chắc chắn chứng cứ, đánh giá vận hành của người tổng hợp.
 4. Cá thể hóa cho ngoại trú Việt Nam, đặc biệt người cao tuổi, đa bệnh lý, đa thuốc, CKD, bệnh gan, bệnh tim mạch và đái tháo đường.
 5. Nêu rõ điều cần làm, điều không nên làm, theo dõi và khi nào chuyển tuyến/cấp cứu.
