@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.18.0
+  version: 1.19.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -550,6 +550,25 @@ Sau vá, thấy tiến độ sau **40 giây**.
 > **Bài học chung của cả hai:** một công cụ chạy nền mà không kể chuyện thì "đang chạy
 > đúng" và "đã chết" trông giống hệt nhau — và người vận hành sẽ giết nhầm, hoặc tệ hơn,
 > tin rằng bước đó đã xong.
+
+**(f) LUẬT MỚI 13/08 — `gradeSource` là LỜI KHAI, không phải sự thật đã kiểm.**
+
+Khi sửa `gradeLevel` dựa trên câu "nguồn không phân hạng GRADE" trong `gradeSource`, **phải
+tra nguồn trước**. Ca thật: `SuyTim_NoiTiet ITEM-05` khai *"không phân hạng GRADE chính thức"*,
+nhưng hướng dẫn Endocrine Society (Bornstein 2016, PMID 26760044, doi:10.1210/jc.2015-1710) nói
+rõ **được xây dựng BẰNG hệ thống GRADE**. Chuyển `gradeLevel` sang `na` theo lời khai đó sẽ là
+ghi sai về nguồn — và vì `na` mở khoá miễn trừ quy phạm, nó còn NÂNG hiệu lực khuyến cáo dựa
+trên một tiền đề sai. Mục này đã được DỪNG LẠI chờ đọc toàn văn.
+
+**Ba loại thay đổi hợp lệ, phân biệt rõ (đợt 13/08, 11 mục bác sĩ duyệt):**
+| Loại | Khi nào | Ví dụ |
+|---|---|---|
+| **HẠ `decision`** | nguồn tự nói yếu/có điều kiện | ACR 2021 *"khuyến cáo CÓ ĐIỀU KIỆN"* → `consider` |
+| **GIỮ `apply`, sửa siêu dữ liệu** | nguồn quy phạm bị ghi nhầm hạng | nhãn FDA: `low → na` + `normativeBasis:"drug-label"` |
+| **ĐỒNG NHẤT hai bản** | cùng ITEM/PMID/design, chỉ khác vì một bản chưa được áp đợt sửa | chép nguyên từ bản đã duyệt |
+
+⚠️ **Loại 2 và 3 làm khuyến cáo MẠNH hơn** ⇒ luôn cần bác sĩ chuẩn y, kể cả khi máy nhìn ra
+nguyên nhân rõ ràng. Loại 1 cũng vậy — cả ba đều là quyết định lâm sàng.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

@@ -539,6 +539,45 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   toàn.** Đã khoá bằng BH03 (miễn trừ quy phạm phải từ chối `Consensus`) và BH10 (không công
   cụ nào được ghi `decision`/`gradeLevel`).
 
+  ## ✍️ QUYẾT ĐỊNH LÂM SÀNG BÁC SĨ ĐÃ DUYỆT 13/08/2026 — 11 mục
+  Đây là dấu vết của các thay đổi `decision`/`gradeLevel` **do bác sĩ chuẩn y**, không phải
+  máy tự làm. Ghi ở đây vì `EBM-Dashboards/` nằm NGOÀI git (kiến trúc code→GitHub ·
+  dữ liệu→OneDrive) nên lịch sử sửa không có trong commit. Mọi bản đều có `.bak-<dấu-thời-gian>`.
+
+  **(a) HẠ `decision` — nguồn tự nói yếu (6 mục).** `apply → consider`:
+  `VKDT ITEM-04` (chẩn đoán phân biệt VKDT/PsA — **bài tổng quan tường thuật**, PMID 30167326) ·
+  `COPD_TimThanChuyenHoa ITEM-26` (checklist — gradeSource tự khai *"đánh giá vận hành, không
+  phải phân hạng của nguồn"*) · `RA_Than ITEM-03` + `VKDT ITEM-22` (ACR 2021 — *"đa số có điều
+  kiện"*) · `VKDT ITEM-35` (ACR 2021, trích nguyên văn *"khuyến cáo CÓ ĐIỀU KIỆN"*) ·
+  `VKDT ITEM-37` (ACR/AAHKS 2022 — *"GRADE, mức CÓ ĐIỀU KIỆN cho toàn bộ bảng"*).
+
+  **(b) GIỮ `apply`, sửa siêu dữ liệu cho đúng nguồn (1 mục).**
+  `AnToanThuoc_Orlistat_AKI_FDA ITEM-01` — cảnh báo FDA về tổn thương thận cấp:
+  `design` thêm tiền tố `"Nhãn thuốc — "` · `gradeLevel` **low → na** · khai
+  `normativeBasis:"drug-label"`. Căn cứ: chính `gradeSource` đã tự ghi *"Nhãn gradeLevel là
+  đánh giá vận hành, KHÔNG phải GRADE chính thức"* — FDA không dùng thang GRADE, nên `na` mới
+  trung thực. **Hạ một cảnh báo an toàn của cơ quan quản lý xuống "cân nhắc" là làm GIẢM an toàn.**
+
+  **(c) ĐỒNG NHẤT hai bản cùng chủ đề (5 mục).** `DauDau_TongHop 11/08` ITEM-04/07/20/21/24 được
+  chép NGUYÊN `normativeBasis` + `decision:"apply"` từ bản `DauDau 18/07` đã duyệt (ICHD-3 →
+  `official-classification`; EAN/SISC-IHS/MOH/TTH → `guideline-strong-rec`). Ánh xạ khớp tuyệt đối
+  (cùng ITEM, cùng PMID, cùng design/gradeLevel), khác biệt DUY NHẤT là bản mới chưa được áp đợt
+  sửa quy phạm 12/08. Mâu thuẫn giữa hai bản: **19 → 14**.
+
+  🔴 **MỘT MỤC BỊ DỪNG LẠI — dashboard khai SAI về nguồn.** `SuyTim_NoiTiet ITEM-05` (nhận biết
+  khủng hoảng thượng thận) có `gradeSource` ghi *"không phân hạng GRADE chính thức"*, nhưng tra
+  PubMed thì hướng dẫn Endocrine Society (Bornstein 2016, PMID 26760044,
+  doi:10.1210/jc.2015-1710) nói rõ **được xây dựng BẰNG hệ thống GRADE**. Vậy `gradeLevel` KHÔNG
+  được chuyển sang `na` — nguồn CÓ chấm, chỉ là dashboard chưa ghi mức thật. Cần đọc toàn văn,
+  ánh xạ mục này vào đúng khuyến cáo được đánh số rồi ghi mức GRADE nguyên bản.
+  **Bài học: `gradeSource` là lời NGƯỜI SOẠN khai, không phải sự thật đã kiểm — phải tra nguồn
+  trước khi dựa vào nó để đổi phân hạng.**
+
+  **Tổng kết đợt:** mục `apply` bị cổng chặn **56 → 49**; nhóm "yếu thật" **20 → 0**; độ phủ xác
+  minh tồn tại của nguồn **118 → 1146 định danh (phủ toàn bộ kho)**. *(Đính chính số cũ: mẫu số
+  "297" từng ghi là do đếm bằng regex chỉ nhận nháy ĐƠN — tổng thật ~1103, nên điểm xuất phát là
+  11% chứ không phải 39%.)* Kiểm rút bài **vẫn 0** — NCBI chặn máy này, cần `NCBI_API_KEY`.
+
   **NHẮC ĐỘ TƯƠI:** `tools/kiem_do_tuoi_chung_cu.py` đã nối vào hook `SessionStart` — vì hai job
   launchd (`weeklysafety` T7 19:00 · `monthlyupdate` mùng 1 18:00) kiểm ngày 11/08 đều cho
   `runs = 0` · `(never exited)`: **chưa từng tự nổ lần nào**, do `StartCalendarInterval` đòi máy phải
