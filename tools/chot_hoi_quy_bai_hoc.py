@@ -912,6 +912,66 @@ def bh27_khong_kiem_duoc_phai_la_van_de():
     return True, f"{len(phat)} trạng thái; mọi thứ ngoài 'ok' đều bị tính là vấn đề"
 
 
+def bh28_khong_thay_phan_doan_ngu_nghia_bang_do_giong_tu_vung():
+    """14/08 — thử tự phân loại "cùng khẳng định vs khác kết cục" bằng ĐỘ GIỐNG
+    TIÊU ĐỀ. SAI, và sai theo hướng NGUY HIỂM HƠN lỗi ban đầu.
+
+    Bối cảnh: phần dò mâu thuẫn so theo PMID, nên hai bản trích CÙNG một thử nghiệm
+    cho HAI KẾT CỤC khác nhau bị gọi là "nói ngược nhau" (IMPACT: đợt cấp vs biến cố
+    tim-phổi hậu kiểm). Đó là báo động giả thật.
+
+    Nhưng cách vá bằng `difflib` trên tiêu đề thì đo được ngay là hỏng:
+        22%  FIDELIO-DKD — finerenone…   ⟷  Finerenone ở CKD do ĐTĐ type 2…
+        45%  JAKi ORAL Surveillance…     ⟷  Thận trọng JAK inhibitor…
+        52%  DAPA-CKD — dapagliflozin…   ⟷  SGLT2i (dapagliflozin)…
+    Cả ba là CÙNG MỘT khẳng định, chỉ khác cách diễn đạt — nhưng đều rơi dưới ngưỡng
+    và BIẾN MẤT khỏi danh sách. Đổi báo động giả lấy BỎ SÓT là đánh đổi tệ hơn: bác
+    sĩ không đi tìm thứ mình không biết là đang thiếu.
+
+    Cách đúng: máy ĐO và TRÌNH BÀY (in cả hai tiêu đề cạnh nhau), người PHÁN ĐOÁN.
+    Cùng bài học với bộ phân loại `design` ngày 13/08.
+
+    Kiểm HÀNH VI: công cụ không được có ngưỡng tự phân loại, và phải in tiêu đề của
+    CẢ HAI bản.
+    """
+    src = (REPO / "tools/dang_ky_chu_de.py").read_text(encoding="utf-8")
+    if "NGUONG_CUNG_KHANG_DINH" in src or "SequenceMatcher" in src:
+        return False, ("đã quay lại tự phân loại mâu thuẫn bằng độ giống từ vựng — "
+                       "cách đó giấu mất mâu thuẫn thật (FIDELIO-DKD chỉ giống 22%)")
+    if src.count("{c[3]}") < 1 or src.count("{m[3]}") < 1:
+        return False, "không in đủ tiêu đề CẢ HAI bản — bác sĩ không tự phán đoán được"
+    return True, "máy đo và trình bày; phán đoán ngữ nghĩa để cho bác sĩ"
+
+
+def bh29_moi_ham_bh_deu_phai_duoc_dang_ky():
+    """14/08 — một chốt được ĐỊNH NGHĨA nhưng KHÔNG ĐĂNG KÝ = mã chết, im lặng.
+
+    Xảy ra thật ngay trong file này: một phiên Claude KHÁC đang làm song song đã
+    thêm BH27 của riêng nó; lệnh chèn của tôi neo vào `("BH26"…)\n]` nên KHÔNG còn
+    khớp, và **im lặng không chèn gì**. Hàm `bh28_*` vẫn được thêm vào file nhưng
+    không nằm trong `BAI_HOC`, nên nó KHÔNG BAO GIỜ CHẠY — trong khi bảng vẫn xanh
+    và trông như đã canh đủ.
+
+    Cùng họ với BH16/BH22/BH23: thứ bị loại thầm lặng nguy hiểm hơn thứ báo lỗi.
+    Ở đây nạn nhân chính là bộ chốt — nó tưởng mình canh 29 việc mà thực canh 28.
+
+    Kiểm HÀNH VI: mọi hàm `bh*` định nghĩa trong module phải xuất hiện trong BAI_HOC.
+    """
+    import inspect as _ins
+    mod = sys.modules[__name__]
+    dinh_nghia = {ten for ten, _ in _ins.getmembers(mod, _ins.isfunction)
+                  if ten.startswith("bh") and ten[2:4].isdigit()}
+    da_dang_ky = {h.__name__ for _ma, _ng, _t, h in BAI_HOC}
+    mo_coi = sorted(dinh_nghia - da_dang_ky)
+    if mo_coi:
+        return False, (f"{len(mo_coi)} chốt ĐỊNH NGHĨA mà KHÔNG đăng ký — không bao giờ "
+                       f"chạy: {', '.join(mo_coi[:3])}")
+    thua = sorted(da_dang_ky - dinh_nghia)
+    if thua:
+        return False, f"đăng ký hàm không tồn tại: {', '.join(thua[:3])}"
+    return True, f"{len(dinh_nghia)} chốt đều được đăng ký và đều chạy"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -940,6 +1000,8 @@ BAI_HOC = [
     ("BH25", "14/08", "Tách độ mạnh khuyến cáo khỏi chất lượng chứng cứ", bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu),
     ("BH26", "14/08", "Neo sửa hàng loạt phải là chunk đã parse", bh26_neo_sua_hang_loat_phai_la_chunk_da_parse),
     ("BH27", "14/08", "«Không kiểm được» phải bị tính là VẤN ĐỀ", bh27_khong_kiem_duoc_phai_la_van_de),
+    ("BH28", "14/08", "Không thay phán đoán ngữ nghĩa bằng độ giống từ vựng", bh28_khong_thay_phan_doan_ngu_nghia_bang_do_giong_tu_vung),
+    ("BH29", "14/08", "Mọi chốt định nghĩa đều phải được đăng ký", bh29_moi_ham_bh_deu_phai_duoc_dang_ky),
 ]
 
 

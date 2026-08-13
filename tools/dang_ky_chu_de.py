@@ -199,6 +199,16 @@ def main() -> int:
                             (goc, f"{lc1} ({n1})", f"{lc2} ({n2})", pm, len(a1), len(a2)))
                         continue
                     if a1[0][0] != a2[0][0]:
+                        # HOÀN TÁC 14/08/2026 — bản vá tự phân loại "khác kết cục"
+                        # theo ĐỘ GIỐNG TIÊU ĐỀ đã SAI, và sai theo hướng nguy hiểm hơn.
+                        # Đo thật trên 8 cặp: FIDELIO-DKD 22%, DAPA-CKD 52%, cảnh báo
+                        # JAK inhibitor 45% — tất cả đều là CÙNG MỘT khẳng định chỉ khác
+                        # cách diễn đạt, nhưng bị xếp thành "khác kết cục" và BIẾN MẤT
+                        # khỏi danh sách. Đổi báo động giả lấy BỎ SÓT là đánh đổi tệ hơn.
+                        # Tiêu đề tiếng Việt cho cùng một khẳng định dao động rất rộng,
+                        # nên độ giống từ vựng KHÔNG thay được phán đoán ngữ nghĩa.
+                        # Nay: vẫn báo là khác quyết định, nhưng IN CẢ HAI TIÊU ĐỀ để
+                        # bác sĩ tự thấy ngay đây là cùng khẳng định hay khác kết cục.
                         khac.append((pm, a1[0], a2[0]))
                 if khac:
                     mau_thuan.append((goc, f"{lc1} ({n1})", f"{lc2} ({n2})", khac))
@@ -265,7 +275,13 @@ def main() -> int:
                 note = "  [bản CŨ có normativeBasis, bản mới CHƯA — nhiều khả năng bản mới " \
                        "chưa được áp cách sửa quy phạm]"
             print(f"      PMID {pm}: {c[0]!r} → {m[0]!r}{note}")
-            print(f"        {m[3]}")
+            # IN CẢ HAI TIÊU ĐỀ, không chỉ tiêu đề bản mới. Bác sĩ cần thấy ngay hai
+            # bản đang nói về CÙNG một khẳng định hay về HAI KẾT CỤC khác nhau của
+            # cùng một thử nghiệm — máy KHÔNG phán đoán hộ việc đó (đã thử bằng độ
+            # giống từ vựng ngày 14/08 và SAI: FIDELIO-DKD chỉ giống 22% dù là cùng
+            # một khẳng định, nên cách đó giấu mất mâu thuẫn thật).
+            print(f"        [{c[0]:9s}] {c[3]}")
+            print(f"        [{m[0]:9s}] {m[3]}")
         print()
     print("  Công cụ này KHÔNG tự sửa và KHÔNG tự nâng decision — nâng làm một")
     print("  khuyến cáo MẠNH hơn, đó là quyết định lâm sàng của bác sĩ.")
