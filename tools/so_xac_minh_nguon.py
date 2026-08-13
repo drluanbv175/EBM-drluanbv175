@@ -264,7 +264,11 @@ def _goi_linh_hoat(ham, gt):
 
 
 def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
-    """Tra CHỦ ĐỘNG trạng thái rút bài qua PubMedClient thật của repo y khoa.
+    """Tra CHỦ ĐỘNG trạng thái rút bài qua CHUỖI 3 TẦNG thật của repo y khoa.
+
+    ĐỔI 14/08/2026: trước đây gọi thẳng `PubMedClient` nên NCBI chặn là mất hẳn
+    năng lực — đúng thứ đã khiến 562/1146 mục đứng ở "chưa kiểm rút bài". Nay đi
+    qua `RetractionChain`: nền Retraction Watch NGOẠI TUYẾN + NCBI + Europe PMC.
 
     Không có sẵn (thiếu môi trường) → trả {} và caller phải coi là CHƯA kiểm,
     KHÔNG được coi là "không bị rút".
@@ -272,12 +276,12 @@ def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
     if not pmids:
         return {}
     mea = REPO / "medical-ebm-automation"
-    if not (mea / "app" / "sources" / "pubmed.py").exists():
+    if not (mea / "app" / "sources" / "retraction_chain.py").exists():
         return {}
     sys.path.insert(0, str(mea))
     try:
-        from app.sources.pubmed import PubMedClient  # noqa: PLC0415
-        return PubMedClient().check_retraction_status(pmids) or {}
+        from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
+        return RetractionChain().check(pmids) or {}
     except ImportError as e:  # noqa: BLE001
         # THIẾU THƯ VIỆN ≠ MẠNG TRỤC TRẶC. Gộp hai thứ này vào cùng một thông điệp
         # "coi như CHƯA kiểm" là lỗi đã gây hậu quả thật: chạy bằng `python3` hệ
@@ -472,10 +476,24 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
         khac = [x for x in thieu if x not in chua_rut and x not in het_han]
         print("\n  Vì sao hết hiệu lực — CÁCH SỬA KHÁC NHAU, đừng gộp:")
         if chua_rut:
+            # ĐỔI 14/08/2026: lời khuyên cũ ("chạy lại KHÔNG sửa được, phải có NCBI_API_KEY")
+            # nay SAI, vì kiểm rút bài đã đi qua chuỗi 3 tầng — nền Retraction Watch ngoại
+            # tuyến và Europe PMC đều không cần khoá. Chỉ đường tới cách sửa THẬT SỰ có tác
+            # dụng, đúng tinh thần BH14 (đừng khuyên việc chắc chắn vô ích).
+            nen_rw = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
+                      / "retraction_watch.csv")
             print(f"     • {len(chua_rut)} mục: CHƯA kiểm được RÚT BÀI.")
-            print("       → Chạy lại thêm vòng KHÔNG sửa được. Cần `NCBI_API_KEY` trong")
-            print("         ~/.ebm-secrets/medical-ebm-automation.env (đăng ký miễn phí ở NCBI).")
-            print("       [MA] CAN_NCBI_API_KEY")
+            if not nen_rw.exists():
+                print("       → CHƯA tải nền ngoại tuyến. Tải MỘT LẦN (không cần khoá API):")
+                print("           python medical-ebm-automation/tools/tai_retraction_watch.py")
+                print("         rồi chạy lại — SẼ sửa được, không phụ thuộc NCBI.")
+                print("       [MA] CAN_TAI_RETRACTION_WATCH")
+            else:
+                print("       → Chạy lại thêm vòng CÓ THỂ sửa được (chuỗi 3 tầng: Retraction")
+                print("         Watch ngoại tuyến → NCBI → Europe PMC). Phần còn sót là mục cả")
+                print("         ba nguồn đều không kết luận được; thêm `NCBI_API_KEY` vào")
+                print("         ~/.ebm-secrets/medical-ebm-automation.env sẽ mở lại tầng NCBI.")
+                print("       [MA] CAN_NCBI_API_KEY")
         if het_han:
             print(f"     • {len(het_han)} mục: xác minh tồn tại đã quá {HAN_TON_TAI_NGAY} ngày.")
             print("       → Chạy lại thêm vòng SẼ sửa được.")

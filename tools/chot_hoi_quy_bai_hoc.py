@@ -389,9 +389,14 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     chắn vô ích tiêu thời gian THẬT của bác sĩ, và tệ hơn: nó làm mất niềm tin vào
     những cảnh báo ĐÚNG khác của cùng công cụ — cùng lớp tác hại với báo động giả.
 
-    Kiểm HÀNH VI trên dữ liệu sống: chạy `--bao-cao` (chỉ đọc sổ, không gọi mạng);
-    nếu có mục hết hiệu lực vì chưa kiểm rút bài thì báo cáo PHẢI phát mã
-    CAN_NCBI_API_KEY và PHẢI nói rõ chạy lại không sửa được.
+    CẬP NHẬT 14/08/2026 — bài học GIỮ NGUYÊN, cách sửa ĐÚNG thì đã đổi. Kiểm rút bài
+    nay đi qua chuỗi 3 tầng (Retraction Watch ngoại tuyến → NCBI → Europe PMC), nên
+    câu "chạy lại KHÔNG sửa được, phải có NCBI_API_KEY" tự nó trở thành lời khuyên
+    vô ích thứ hai: hai tầng mới đều KHÔNG cần khoá. Chốt vì thế không còn đòi đúng
+    một chuỗi cố định, mà đòi lời khuyên TRỎ VÀO ĐÒN BẨY CÒN DÙNG ĐƯỢC:
+      • chưa tải nền ngoại tuyến → phải phát CAN_TAI_RETRACTION_WATCH (tải là xong);
+      • đã có nền mà vẫn tắc     → phát CAN_NCBI_API_KEY (khoá là đòn bẩy còn lại).
+    Và tuyệt đối không được nói "KHÔNG sửa được" khi việc tải nền vẫn sửa được.
     """
     import subprocess
     try:
@@ -402,12 +407,17 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     out = r.stdout + r.stderr
     if "CHƯA kiểm được RÚT BÀI" not in out:
         return True, "không còn mục nào hết hiệu lực vì chưa kiểm rút bài"
-    if "CAN_NCBI_API_KEY" not in out:
-        return False, "có mục chưa kiểm rút bài nhưng KHÔNG phát mã CAN_NCBI_API_KEY"
-    if "KHÔNG sửa được" not in out:
-        return False, ("báo cáo không nói rõ 'chạy lại thêm vòng KHÔNG sửa được' — "
-                       "bác sĩ sẽ chạy lại vô ích")
-    return True, "tách đúng lý do, chỉ đúng cách sửa (cần NCBI_API_KEY)"
+
+    co_nen = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
+              / "retraction_watch.csv").exists()
+    can = "CAN_NCBI_API_KEY" if co_nen else "CAN_TAI_RETRACTION_WATCH"
+    if can not in out:
+        return False, (f"có mục chưa kiểm rút bài nhưng KHÔNG phát mã {can} "
+                       f"(nền ngoại tuyến {'ĐÃ' if co_nen else 'CHƯA'} tải)")
+    if not co_nen and "KHÔNG sửa được" in out:
+        return False, ("báo cáo nói 'KHÔNG sửa được' trong khi tải nền ngoại tuyến "
+                       "SẼ sửa được — lại là lời khuyên vô ích, chỉ đổi chiều")
+    return True, f"chỉ đúng đòn bẩy còn dùng được ({can})"
 
 
 def bh15_dem_muc_khong_dem_dong():
@@ -818,6 +828,90 @@ def bh26_neo_sua_hang_loat_phai_la_chunk_da_parse():
     return True, "mọi đoạn mục đều duy nhất — neo bằng chunk đã parse là an toàn"
 
 
+def bh27_khong_kiem_duoc_phai_la_van_de():
+    """14/08 — FAIL-OPEN thật trong cổng A12: "không kiểm được" bị tính là SẠCH.
+
+    Ngày 12/08 trạng thái `unknown_fetch_error` được tách ra để phân biệt "KHÔNG
+    BIẾT" với "nghi trích dẫn ma" — một bản vá đúng. Nhưng tập tiêu thụ
+    `_PROBLEM_STATUSES` trong `check_citation_retraction.py` KHÔNG được cập nhật
+    theo, nên trạng thái trung thực mới lại VÔ HÌNH với cổng.
+
+    Hậu quả đã tái hiện được ngày 14/08, đúng lúc NCBI đang chặn máy này: mọi PMID
+    nhận `unknown_fetch_error` ⇒ không cái nào bị tính là vấn đề ⇒ `all_clean=true`
+    được ghi VÀ KÝ vào `A12_RETRACTION_RECEIPT.json`, CLI in "✅ Không phát hiện rút
+    bài" và thoát 0. `run_g10_assemble.py` chỉ chặn khi `all_clean is not True`, nên
+    gói nộp đi qua cổng A12 trong khi KHÔNG một trích dẫn nào được kiểm.
+
+    Chốt này KHÔNG chỉ canh đúng một chuỗi (vá xong là hết tác dụng). Nó rút TOÀN BỘ
+    từ vựng trạng thái mà mã sống thật sự phát ra, rồi đòi: mọi trạng thái ngoài
+    "ok" đều phải nằm trong `_PROBLEM_STATUSES`. Thêm một trạng thái "không biết"
+    mới mà quên đăng ký là đỏ ngay — đúng cách lỗi này đã sinh ra.
+
+    PHẠM VI CỐ Ý HẸP: chỉ rút từ các hàm thuộc hợp đồng RÚT BÀI. Bản đầu của chính
+    chốt này quét cả file nên vớ phải `"resolved"` của `fetch_metadata()` — một hợp
+    đồng KHÁC (phân giải metadata), ở đó `resolved` là trạng thái LÀNH. Trộn hai từ
+    vựng vào nhau đẻ ra báo động giả ngay lần chạy đầu.
+    """
+    import ast
+
+    mea = REPO / "medical-ebm-automation"
+    f_tieu_thu = mea / "tools/check_citation_retraction.py"
+    # Khai ĐÍCH DANH hàm nào thuộc hợp đồng rút bài. Đổi tên hàm mà quên sửa đây thì
+    # chốt đỏ — đúng ý: nghĩa là nó đã thôi canh phần mã mà nó tưởng đang canh.
+    nguon_phat = {
+        mea / "app/sources/pubmed.py": {"check_retraction_status", "_parse_retraction_xml"},
+        mea / "app/sources/europepmc.py": {"check_retraction_status", "_doc_rut_bai"},
+        mea / "app/sources/retraction_chain.py": {"check", "_gop"},
+    }
+    if not f_tieu_thu.exists():
+        return False, "thiếu check_citation_retraction.py — không kiểm được cổng A12"
+
+    # Bên TIÊU THỤ: đọc thẳng tập literal, không import (chốt phải chạy bằng python3 hệ thống).
+    tap = None
+    for node in ast.walk(ast.parse(f_tieu_thu.read_text(encoding="utf-8"))):
+        if (isinstance(node, ast.Assign) and node.targets
+                and getattr(node.targets[0], "id", "") == "_PROBLEM_STATUSES"):
+            try:
+                tap = set(ast.literal_eval(node.value))
+            except (ValueError, SyntaxError):
+                return False, "_PROBLEM_STATUSES không còn là literal đọc được"
+    if tap is None:
+        return False, "không tìm thấy _PROBLEM_STATUSES trong check_citation_retraction.py"
+
+    # Bên PHÁT: gom giá trị gán cho khoá "status", CHỈ trong các hàm đã khai ở trên.
+    phat, thieu_ham = set(), []
+    for f, ten_ham in nguon_phat.items():
+        if not f.exists():
+            return False, f"thiếu {f.name} — chuỗi kiểm rút bài không còn nguyên vẹn"
+        cay = ast.parse(f.read_text(encoding="utf-8"))
+        thay = set()
+        for ham in ast.walk(cay):
+            if not isinstance(ham, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if ham.name not in ten_ham:
+                continue
+            thay.add(ham.name)
+            for node in ast.walk(ham):
+                if not isinstance(node, ast.Dict):
+                    continue
+                for k, v in zip(node.keys, node.values):
+                    if (isinstance(k, ast.Constant) and k.value == "status"
+                            and isinstance(v, ast.Constant) and isinstance(v.value, str)):
+                        phat.add(v.value)
+        thieu_ham += [f"{f.name}::{h}" for h in sorted(ten_ham - thay)]
+    if thieu_ham:
+        return False, ("không tìm thấy hàm thuộc hợp đồng rút bài: " + ", ".join(thieu_ham)
+                       + " → chốt đã thôi canh phần mã nó tưởng đang canh")
+    if not phat:
+        return False, "không rút được từ vựng trạng thái nào — nghi mã đã đổi cấu trúc"
+
+    sot = phat - tap - {"ok"}
+    if sot:
+        return False, ("trạng thái KHÔNG được tính là vấn đề: " + ", ".join(sorted(sot))
+                       + " → all_clean=true dù chưa kiểm được gì (fail-open cổng A12)")
+    return True, f"{len(phat)} trạng thái; mọi thứ ngoài 'ok' đều bị tính là vấn đề"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -845,6 +939,7 @@ BAI_HOC = [
     ("BH24", "14/08", "DOI ghi dạng URL vẫn qua Crossref", bh24_doi_ghi_dang_url_van_qua_crossref),
     ("BH25", "14/08", "Tách độ mạnh khuyến cáo khỏi chất lượng chứng cứ", bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu),
     ("BH26", "14/08", "Neo sửa hàng loạt phải là chunk đã parse", bh26_neo_sua_hang_loat_phai_la_chunk_da_parse),
+    ("BH27", "14/08", "«Không kiểm được» phải bị tính là VẤN ĐỀ", bh27_khong_kiem_duoc_phai_la_van_de),
 ]
 
 

@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.34.0
+  version: 1.35.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -878,6 +878,26 @@ nhưng đó là **may, không phải thiết kế**. Đã kiểm lại: khối s
 > **Neo an toàn duy nhất: chính đoạn do `split_items()` trả về** — đúng thứ mọi công cụ khác
 > coi là một mục. BH26 canh tiền đề của cách đó: mỗi đoạn phải xuất hiện **đúng một lần** trong
 > file, nếu không thì neo bằng đoạn cũng không an toàn.
+
+**(v) Lô guideline — mục 'apply' bị chặn: 16 → 2. MỤC 2 gần như đóng.**
+
+**NÂNG (3 mục) — bản chất quy phạm, giữ `apply`:** `CKM ITEM-01` khung **phân giai đoạn CKM**
+(AHA 2023) → `official-classification` · `COPD ITEM-03` **bảng phác đồ khởi trị GOLD theo nhóm
+ABE** → `guideline-explicit-criteria` · `CapNhatTuan ITEM-05` **bộ tiêu chí STOPP/START v3**,
+cùng hạng AGS Beers → `guideline-explicit-criteria` (phải sửa `design` từ `Consensus`).
+
+**HẠ (11 mục) — nguồn CÓ phân hạng nhưng item KHÔNG ghi mức:** GOLD ITEM-04/13,
+COPD_TimThanChuyenHoa ITEM-20/21/22/24/25, EULAR RA, AAN, ADA, PhatAmPhuAm. `gradeSource` chỉ
+nói *"nguồn không cung cấp GRADE riêng"* hoặc *"item này tóm tắt"*.
+
+> **Phân biệt phải giữ cho rõ:** *"nguồn KHÔNG phân hạng"* (→ có thể là quy phạm, xét
+> `normativeBasis`) khác hẳn *"nguồn CÓ phân hạng nhưng ta chưa trích"* (→ thiếu dữ kiện, phải
+> hạ). Trộn hai thứ này là con đường ngắn nhất tới việc tự gán mức (R4).
+
+🔴 **HAI MỤC CỐ Ý GIỮ LẠI CHO BÁC SĨ** — `VKDT ITEM-13` · `ViemKhopDangThap ITEM-08`: **sàng lọc
+lao tiềm ẩn + HBV/HCV BẮT BUỘC trước b/tsDMARD**. Nguồn EULAR không ghi mức trong dashboard,
+nhưng đây là yêu cầu an toàn trước thuốc ức chế miễn dịch — hạ xuống "cân nhắc" có thể khiến bỏ
+sót sàng lọc và làm bùng lao/viêm gan B. Máy không nên tự chọn chiều ở đây.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

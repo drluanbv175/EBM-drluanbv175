@@ -126,16 +126,26 @@ def main() -> int:
         # CẢ 562 là PMID chưa kiểm được rút bài vì NCBI chặn máy — chạy lại bao nhiêu
         # vòng cũng không đổi. Lời khuyên chắc chắn vô ích tiêu thời gian thật của bác
         # sĩ và làm mất niềm tin vào những cảnh báo ĐÚNG khác của cùng công cụ.
+        # BỔ SUNG 14/08/2026 — kiểm rút bài nay có chuỗi 3 tầng, nên khi chưa tải nền
+        # ngoại tuyến thì cách sửa ĐÚNG là tải nó (miễn phí, không khoá), KHÔNG phải
+        # ngồi chờ NCBI_API_KEY. Đặt TRƯỚC nhánh CAN_NCBI_API_KEY vì đây mới là việc
+        # có tác dụng ngay.
+        if "CAN_TAI_RETRACTION_WATCH" in out:
+            viec_can_lam.append(
+                "PMID CHƯA kiểm được RÚT BÀI vì chưa có nền ngoại tuyến — chạy "
+                "`python medical-ebm-automation/tools/tai_retraction_watch.py` (một lần, "
+                "không cần khoá API) rồi chạy lại.")
         if "CAN_NCBI_API_KEY" in out:
             viec_can_lam.append(
-                "PMID CHƯA kiểm được RÚT BÀI — chạy lại thêm vòng KHÔNG sửa được. "
-                "Cần thêm `NCBI_API_KEY` vào ~/.ebm-secrets/medical-ebm-automation.env "
-                "(đăng ký miễn phí tại tài khoản NCBI).")
+                "PMID CHƯA kiểm được RÚT BÀI dù đã qua cả 3 tầng (Retraction Watch ngoại "
+                "tuyến → NCBI → Europe PMC). Thêm `NCBI_API_KEY` vào "
+                "~/.ebm-secrets/medical-ebm-automation.env sẽ mở lại tầng NCBI.")
         if "CAN_CHAY_THEM_VONG" in out:
             viec_can_lam.append("Có nguồn quá hạn xác minh tồn tại — chạy lại thêm vòng SẼ sửa được.")
         if "CAN_XEM_TAY" in out:
             viec_can_lam.append("Có nguồn hết hiệu lực vì lý do khác — xem phần ③④ ở trên.")
-        if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
+        if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH",
+                                      "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
             viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
 
     # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
