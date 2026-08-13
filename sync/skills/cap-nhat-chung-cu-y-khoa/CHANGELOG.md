@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.15.0 — 2026-08-13
+
+- **Quét theo TÊN TẠP CHÍ, không chỉ theo chủ đề.** Watchlist cũ có 11 nhóm/45 từ khoá, tất cả
+  theo chủ đề — một bài NEJM/Lancet quan trọng về chủ đề ngoài 45 từ khoá đó sẽ không bao giờ
+  được tìm thấy. Thêm 2 nhóm/8 truy vấn PubMed: **"Tạp chí hàng đầu"** (NEJM · Lancet · JAMA ·
+  BMJ · Annals of Internal Medicine, lọc theo `[ta]` + publication type đổi thực hành) và
+  **"Tổng quan hệ thống & khuyến cáo"** (Cochrane · NICE · USPSTF). Watchlist: 13 nhóm/53 truy vấn.
+  Cả 8 truy vấn đã kiểm chạy thật.
+- **Vì sao KHÔNG dùng RSS cho các nguồn này:** đã kiểm 10 feed ứng viên ngày 13/08 — tất cả bị
+  chặn (Lancet/Annals/Cochrane/NICE/CHEST 403; USPSTF/Circulation/Diabetes Care/Blood 404). Nhà
+  xuất bản chặn truy cập tự động. Ghi vào `references/13-source-universe.md` để không ai "sửa"
+  bằng cách thêm lại RSS.
+- **Lọc nhiễu cảnh báo cơ quan quản lý.** Feed `fda_recalls` trả toàn bộ thu hồi của FDA (thực
+  phẩm, thiết bị, mỹ phẩm, thức ăn thú cưng, thuốc) nhưng gắn nhãn "An toàn thuốc" cho CẢ FEED.
+  Đo bản tin 13/08: 40 mục "cảnh báo an toàn thuốc" gồm 6 thực phẩm + 4 thiết bị; cảnh báo thật
+  đáng đọc (domperidone — chống chỉ định mới ở u tuỷ thượng thận, MHRA) bị chôn giữa thu hồi
+  salsa. Nay `phan_loai_canh_bao()` phân loại TỪNG MỤC theo đường dẫn rồi từ khoá, tách 25% nhiễu.
+  Nguyên tắc: **không chắc thì giữ là THUỐC** — có phép thử chống bỏ sót cho domperidone,
+  morphine, valsartan/NDMA, montelukast.
+
 ## v1.14.0 — 2026-08-12
 
 - **Cổng nguồn `--strict-sources` nay CHẠY THẬT trong dây chuyền một lệnh.** Trước đây

@@ -28,3 +28,43 @@ Tìm rộng đủ lớp nguồn để bác sĩ có chứng cứ tốt nhất có
 - Với mỗi item chính: nêu PMID/DOI/official URL, tên nguồn, năm/phiên bản, population và grading gốc nếu có.
 - Nếu source health `PARTIAL/FAIL`, nói rõ lớp nguồn nào thiếu; không diễn giải là "không có cập nhật".
 - Luôn giữ nhãn: `Cần bác sĩ kiểm chứng.`
+
+## Thực thi THẬT trên máy này — đo ngày 13/08/2026
+
+Doctrine ở trên là mục tiêu. Dưới đây là những gì hệ **thực sự** chạm tới, đã đo bằng lời gọi thật.
+
+### Kênh đang chạy
+
+| Lớp | Cơ chế | Trạng thái |
+|---|---|---|
+| Định danh | PubMed · Europe PMC · Crossref · OpenAlex | 9 connector nối trong `app/sources/__init__.py` |
+| Tạp chí/hiệp hội qua RSS | 26 feed | NEJM · JAMA · The BMJ · JACC · Gut · Thorax · Ann Rheum Dis (EULAR) · Diabetologia (EASD) · CDC MMWR · ECDC · BJGP · Heart… |
+| **Tạp chí qua PubMed `[ta]`** | nhóm **"Tạp chí hàng đầu"** | NEJM · Lancet · JAMA · BMJ · Annals of Internal Medicine |
+| **Khuyến cáo qua PubMed** | nhóm **"Tổng quan hệ thống & khuyến cáo"** | Cochrane Database Syst Rev · NICE · USPSTF |
+| An toàn thuốc | FDA MedWatch · FDA Recalls · MHRA DSU · openFDA (FAERS) | 4 kênh |
+| Registry | ClinicalTrials.gov | nối |
+
+### Vì sao một số nguồn phải đi vòng qua PubMed
+
+Đã kiểm thật 10 feed ứng viên ngày 13/08/2026 — **tất cả đều bị chặn**:
+Lancet 403 · Lancet Infect Dis 403 · Annals of Internal Medicine 403 · Cochrane 403 ·
+NICE 403 · CHEST 403 · USPSTF 404 · Circulation 404 · Diabetes Care 404 · Blood 404.
+
+Nhà xuất bản chặn truy cập tự động. Nên **không thêm RSS cho các nguồn này** — thay vào đó dùng
+truy vấn PubMed theo trường `[ta]` (journal title abbreviation) và `[cn]` (corporate author), đã
+kiểm chạy thật. Đừng "sửa" bằng cách thêm lại RSS: sẽ chỉ ghi thêm lỗi vào Source Log.
+
+### Lọc nhiễu cảnh báo cơ quan quản lý
+
+Feed `fda_recalls` trả **toàn bộ** thu hồi của FDA — thực phẩm, thiết bị y tế, mỹ phẩm, thức ăn
+thú cưng, lẫn thuốc. Trước 13/08 tất cả bị gắn nhãn "An toàn thuốc": trong 40 mục của bản tin
+13/08 chỉ ~30 liên quan thuốc, 4 là thiết bị, 6 là thực phẩm/mỹ phẩm/thú cưng.
+
+`app/sources/rss_feed.py::phan_loai_canh_bao()` nay phân loại **từng mục** theo đường dẫn rồi tới
+từ khoá, tách thành ba nhãn: `An toàn thuốc` · `An toàn thiết bị y tế` · `Thu hồi thực phẩm`.
+Thiết bị/thực phẩm **không bị vứt bỏ**, chỉ tách khỏi báo cáo An toàn thuốc (bơm insulin rò rỉ vẫn
+liên quan bệnh nhân đái tháo đường).
+
+**Nguyên tắc an toàn của bộ lọc: KHÔNG CHẮC thì giữ là THUỐC.** Bỏ sót một cảnh báo thuốc nguy
+hiểm hơn nhiều so với để lọt một mục nhiễu. Đã có phép thử chống bỏ sót cho domperidone,
+morphine, valsartan/NDMA và montelukast — cả bốn giữ nguyên trong nhóm thuốc.
