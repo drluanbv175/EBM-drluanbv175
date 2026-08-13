@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.25.0
+  version: 1.26.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -683,6 +683,24 @@ chưa ai đọc. Nay `lan_chay_cuoi()` trả `(ngày, trạng_thái)` với 3 tr
 > **Luật đọc tín hiệu:** trước khi dùng một dấu hiệu để kết luận, hỏi *"dấu hiệu này
 > thật sự CÓ NGHĨA là điều tôi đang kết luận không?"*. `mtime` nghĩa là **"file vừa
 > được ghi"**, KHÔNG phải **"công việc đã xong tốt"**.
+
+**(m) BH20 — VÁ DỞ DANG của chính BH19, và hậu quả nặng hơn.**
+
+BH19 sửa `kiem_do_tuoi_chung_cu` để đọc KẾT QUẢ lượt chạy thay vì chỉ nhìn `st_mtime`.
+Nhưng `tu_khoi_dong.qua_han()` — dùng **CÙNG tín hiệu cho CÙNG mục đích** — thì bị bỏ sót.
+
+Hậu quả nếu để nguyên còn nặng hơn BH19: script ghi `BẮT ĐẦU` ngay lúc khởi động ⇒ một lượt
+**khởi động rồi chết** vẫn làm mtime tươi ⇒ `qua_han()` kết luận "còn hạn" ⇒ **KHÔNG phóng
+lại**. BH19 chỉ làm bác sĩ *tưởng* còn hạn; BH20 làm giám sát **hỏng vĩnh viễn, không bao giờ
+được thử lại**, và cũng không ai được báo.
+
+Nay `tu_khoi_dong` gọi lại chính `lan_chay_cuoi()` — **một bản duy nhất** cho cùng một câu hỏi.
+
+> **Bài học kép:**
+> (a) khi vá một tín hiệu bị dùng sai nghĩa, phải tìm **MỌI** nơi dùng tín hiệu đó cho cùng
+> mục đích — vá một chỗ có thể để lại chỗ tệ hơn;
+> (b) hai công cụ hỏi cùng một câu phải dùng **CHUNG** một câu trả lời, nếu không chúng sẽ
+> phân kỳ đúng như đã xảy ra ở đây.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

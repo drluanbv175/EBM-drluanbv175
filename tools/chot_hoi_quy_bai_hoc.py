@@ -543,6 +543,46 @@ def bh19_do_tuoi_doc_ket_qua_khong_doc_mtime():
     return True, "đọc KẾT QUẢ lượt chạy, không chỉ nhìn mtime"
 
 
+def bh20_tu_khoi_dong_cung_doc_ket_qua():
+    """14/08 — VÁ DỞ DANG của BH19: `tu_khoi_dong.qua_han()` bị bỏ sót.
+
+    Hôm trước đã sửa `kiem_do_tuoi_chung_cu` để đọc KẾT QUẢ lượt chạy thay vì chỉ
+    nhìn `st_mtime` — nhưng `tu_khoi_dong` dùng CÙNG tín hiệu cho CÙNG mục đích thì
+    vẫn nguyên. Hậu quả nếu để nguyên còn nặng hơn BH19: script ghi "BẮT ĐẦU" ngay
+    lúc khởi động ⇒ một lượt **khởi động rồi chết** vẫn làm mtime tươi ⇒ `qua_han()`
+    kết luận "còn hạn" ⇒ **KHÔNG phóng lại**. Giám sát hỏng vĩnh viễn, không bao giờ
+    được thử lại, và cũng không ai được báo.
+
+    Bài học kép: (a) khi vá một tín hiệu bị dùng sai nghĩa, phải tìm MỌI nơi dùng
+    tín hiệu đó cho cùng mục đích; (b) hai công cụ hỏi cùng một câu phải dùng CHUNG
+    một câu trả lời — nay `tu_khoi_dong` gọi lại chính `lan_chay_cuoi()`.
+
+    Kiểm HÀNH VI: log lượt cuối LỖI và log CHẾT GIỮA CHỪNG đều phải ra "cần chạy lại".
+    """
+    import tempfile
+    m = _nap(REPO / "tools/tu_khoi_dong.py", "tk_bh20")
+    ca = [("= BẮT ĐẦU =\n= KẾT THÚC — tổng thể=PASS =\n", False, "lượt PASS mới"),
+          ("= BẮT ĐẦU =\n= KẾT THÚC — tổng thể=CÓ BƯỚC LỖI =\n", True, "lượt cuối LỖI"),
+          ("= BẮT ĐẦU an toàn thuốc =\n", True, "chết giữa chừng")]
+    goc = {k: v["log"] for k, v in m.OWNER.items()}
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "t.log"
+            for ten in m.OWNER:
+                m.OWNER[ten]["log"] = Path(d) / "khong-co.log"
+            m.OWNER["tuan"]["log"] = p
+            for noi, mong, nhan in ca:
+                p.write_text(noi, encoding="utf-8")
+                can = any(x[0] == "tuan" for x in m.qua_han())
+                if can != mong:
+                    return False, (f"{nhan}: {'không' if mong else ''} phóng lại sai — "
+                                   f"giám sát hỏng có thể KHÔNG BAO GIỜ được chạy lại")
+    finally:
+        for k, v in goc.items():
+            m.OWNER[k]["log"] = v
+    return True, "lượt hỏng/chết giữa chừng đều được phóng lại"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -563,6 +603,7 @@ BAI_HOC = [
     ("BH17", "13/08", "Tiêu đề bộ năm nói đúng sự thật", bh17_tieu_de_bo_nam_noi_dung_su_that),
     ("BH18", "13/08", "Giữ mọi item cùng PMID (chống báo động giả)", bh18_giu_moi_item_cung_pmid),
     ("BH19", "13/08", "Độ tươi đọc KẾT QUẢ, không chỉ nhìn mtime", bh19_do_tuoi_doc_ket_qua_khong_doc_mtime),
+    ("BH20", "14/08", "Tự khởi động cũng đọc KẾT QUẢ (vá dở dang)", bh20_tu_khoi_dong_cung_doc_ket_qua),
 ]
 
 

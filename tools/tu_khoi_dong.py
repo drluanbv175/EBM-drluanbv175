@@ -131,8 +131,39 @@ def dang_chay() -> str | None:
     return viec
 
 
+def _doc_trang_thai(log: Path) -> tuple[dt.date | None, str]:
+    """Dùng LẠI `lan_chay_cuoi()` của `kiem_do_tuoi_chung_cu` — MỘT bản duy nhất.
+
+    Hai công cụ này hỏi cùng một câu ("lượt giám sát cuối ra sao?") nên phải dùng
+    chung một câu trả lời; hai bản riêng sẽ phân kỳ đúng như đã xảy ra hôm nay.
+    """
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "_dotuoi", Path(__file__).resolve().parent / "kiem_do_tuoi_chung_cu.py")
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m.lan_chay_cuoi(log)
+    except Exception:  # noqa: BLE001 — chốt không được phép làm chết phiên
+        if not (log.exists() and log.stat().st_size > 0):
+            return None, ""
+        return dt.date.fromtimestamp(log.stat().st_mtime), ""
+
+
 def qua_han() -> list[tuple[str, int]]:
-    """Các việc đã quá hạn, kèm số ngày kể từ lần chạy cuối (-1 = chưa từng chạy)."""
+    """Các việc đã quá hạn, kèm số ngày kể từ lần chạy cuối (-1 = chưa từng chạy).
+
+    VÁ 14/08/2026 — VÁ DỞ DANG CỦA CHÍNH HÔM QUA. `kiem_do_tuoi_chung_cu` đã được
+    sửa để đọc KẾT QUẢ lượt chạy thay vì chỉ nhìn `st_mtime`, nhưng hàm này — dùng
+    CÙNG tín hiệu cho CÙNG mục đích — thì bị bỏ sót.
+
+    Hậu quả nếu để nguyên: hai script giám sát ghi "BẮT ĐẦU" ngay lúc khởi động, nên
+    một lượt **khởi động rồi chết** vẫn làm mtime tươi ⇒ `qua_han()` kết luận "còn
+    hạn" ⇒ **KHÔNG phóng lại**. Giám sát hỏng vĩnh viễn mà không bao giờ được thử lại,
+    và cũng không ai được báo. Đúng vòng lặp im lặng mà BH19 vừa bịt ở đầu kia.
+
+    Nay: lượt cuối LỖI hoặc CHƯA KHÉP LẠI ⇒ coi như cần chạy lại, bất kể mtime.
+    """
     ra: list[tuple[str, int]] = []
     hom_nay = dt.date.today()
     for ma, v in OWNER.items():
@@ -140,8 +171,19 @@ def qua_han() -> list[tuple[str, int]]:
         if not log.exists() or log.stat().st_size == 0:
             ra.append((ma, -1))
             continue
-        cach = (hom_nay - dt.date.fromtimestamp(log.stat().st_mtime)).days
-        if cach > v["han_ngay"]:
+        ngay, tt = _doc_trang_thai(log)
+        if ngay is None:
+            ra.append((ma, -1))
+            continue
+        cach = (hom_nay - ngay).days
+        if tt == "LỖI":
+            ra.append((ma, cach))          # lượt cuối hỏng → phải chạy lại
+        elif tt == "DANG_DO":
+            # Có BẮT ĐẦU mà không có KẾT THÚC: đang chạy dở, hoặc đã chết. Khoá PID
+            # ở `dang_chay()` lo trường hợp ĐANG chạy; tới đây nghĩa là tiến trình
+            # không còn sống ⇒ lượt đó đã chết giữa chừng, cần chạy lại.
+            ra.append((ma, cach))
+        elif cach > v["han_ngay"]:
             ra.append((ma, cach))
     return ra
 
