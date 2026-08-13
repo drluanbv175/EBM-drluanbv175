@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.12.5
+  version: 1.13.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -40,6 +40,7 @@ Không tự động biến một câu hỏi cụ thể thành:
 6. Không bịa nguồn, số liệu, liều, cut-off, phân hạng, DOI hoặc tài liệu tham khảo.
 7. Khi câu hỏi là về hiệu quả/an toàn của một can thiệp, cấu trúc hóa chứng cứ theo PICO và nêu hiệu số (point estimate) đúng như nguồn báo cáo (xem mục 5B và `references/06-pico-va-trich-dan.md`).
 8. Ghi nguồn sạch trong văn bản (tác giả/tổ chức + năm + tạp chí) và liệt kê tham khảo theo Vancouver/NLM; KHÔNG chèn thẻ markup trích dẫn thô hay ký tự kỹ thuật vào câu trả lời (xem mục 5B).
+9. Trước khi gọi một nội dung là “áp dụng trực tiếp”, phải qua cổng direct-practice readiness: đúng nguồn, còn hiện hành, độ tin cậy cao, truy nguyên PMID/DOI/URL chính thức, không PII, không còn nhãn `[CẦN...]`, và có doctor/master gate. Đọc `references/12-direct-practice-readiness.md`.
 
 ## 3. Chế độ đầu ra
 
@@ -128,6 +129,13 @@ Phân loại từng nội dung:
 - **Áp dụng ngay:** đủ xác minh, ảnh hưởng trực tiếp và có hành động cụ thể.
 - **Cân nhắc chọn lọc:** phù hợp một nhóm/bối cảnh, cần xem sẵn có, chi phí, quy định hoặc đồng mắc.
 - **Chưa đủ để thay đổi thực hành:** chưa xác minh đủ, chỉ là tín hiệu, dự thảo, dữ liệu gián tiếp hoặc không rõ tính áp dụng.
+
+Nếu kết luận là **Áp dụng ngay** hoặc dùng cụm “áp dụng trực tiếp”, phải phân biệt:
+
+- **Áp dụng trong câu trả lời chuyên đề:** đủ nguồn và đủ điều kiện để bác sĩ cân nhắc tại điểm khám.
+- **READY_FOR_PHYSICIAN_DIRECT_USE trong sổ cái:** chỉ khi cổng `verify_direct_clinical_practice_readiness.py` PASS cho thẻ đó.
+
+Chứng cứ mới từ engine/dashboards dù có PMID/DOI và high-grade vẫn giữ `REVIEW_REQUIRED` cho tới khi có doctor/master gate. Đọc `references/12-direct-practice-readiness.md` trước khi nâng ngôn ngữ từ “cân nhắc” thành “sẵn sàng áp dụng trực tiếp”.
 
 ### Bước 6 — Thích ứng ngoại trú tại Việt Nam
 
@@ -528,6 +536,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Nếu câu hỏi về hiệu quả can thiệp: đã trình bày khối PICO đủ 5 dòng và trích hiệu số đúng như nguồn (point estimate + CI/p) chưa?
 - Đã tự nhận diện loại câu hỏi và chọn đúng khung (PICO/PECO/chẩn đoán/tiên lượng/tần suất/định tính/dịch vụ) và nêu rõ khung đã dùng chưa? (xem 5C)
 - Đã chạy `tools/verify_dashboard.py --online --strict-sources` và PASS (PMID/DOI phân giải, nguồn còn mới, `DATA.standards` đủ, có disclaimer, không PII) trước khi giao chưa? (xem 5D)
+- Nếu dùng cụm “áp dụng trực tiếp” hoặc nạp/thẩm định thẻ `decision="apply"` trong `EBM_MASTER`: đã chạy/đối chiếu `medical-ebm-automation/tools/verify_direct_clinical_practice_readiness.py` và không còn `BLOCKED_FOR_DIRECT_USE` cho thẻ đó chưa? (xem `references/12-direct-practice-readiness.md`)
 - Nếu cập nhật có thuốc cho người cao tuổi/đa thuốc: đã chạy `tools/drug_safety_scan.py` + đối chiếu Beers/STOPP qua skill người cao tuổi chưa? (xem 5E)
 - Đã tự sinh 3 sản phẩm phái sinh (tờ dặn/slide/TikTok) vào `derivatives/` và (khi có khuyến cáo đổi thực hành) điền khối `etd` cho Dashboard chưa? (xem 5D)
 - Đã điền/rà `DATA.standards` gồm thứ bậc nguồn, chuẩn báo cáo, công cụ thẩm định, ngày tìm kiếm, an toàn, Việt Nam và truy nguyên từng item chưa?
@@ -560,6 +569,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/09-an-toan-thuoc-overlay.md` · `tools/drug_safety_scan.py` · `data/drug_flags.json` (lớp phủ Beers/STOPP)
 - `references/10-giam-sat-dinh-ky.md` · `tools/surveillance_scan.py` (giám sát PubMed theo watchlist)
 - `references/11-guideline-bo-y-te-vn.md` (bản địa hóa Bộ Y tế VN)
+- `references/12-direct-practice-readiness.md` (cổng phân loại READY_FOR_PHYSICIAN_DIRECT_USE / REVIEW_REQUIRED / BLOCKED_FOR_DIRECT_USE; nối với `medical-ebm-automation/tools/verify_direct_clinical_practice_readiness.py`)
 - `quality/acceptance-checklist.md`
 - `quality/web-dashboard-acceptance-checklist.md`
 

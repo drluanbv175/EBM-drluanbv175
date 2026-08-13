@@ -16,12 +16,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+EUROPE_PMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 DESIGN = (
     '(Guideline[ptyp] OR "systematic review"[ptyp] OR meta-analysis[ptyp] '
     'OR "practice guideline"[ptyp] OR randomized controlled trial[ptyp])'
@@ -53,6 +54,7 @@ class Candidate:
     publication_date: str
     title: str
     url: str
+    source: str = "PubMed E-utilities"
 
 
 @dataclass(frozen=True)
@@ -114,6 +116,40 @@ def get_json(
     raise RuntimeError(f"PubMed request thất bại sau {retries + 1} lần: {detail}") from last_exc
 
 
+def get_europe_pmc_json(
+    url: str,
+    *,
+    timeout: float = 20.0,
+    retries: int = 2,
+    opener: Callable[..., object] = _open_url,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> dict:
+    """GET JSON từ Europe PMC như nguồn dự phòng đối chiếu PMID khi NCBI tạm lỗi."""
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "medical-ebm-surveillance/1.0 (EuropePMC fallback)",
+            "Accept": "application/json",
+        },
+    )
+    last_exc: BaseException | None = None
+    for attempt in range(retries + 1):
+        try:
+            with opener(request, timeout=timeout) as response:
+                payload = response.read().decode("utf-8")
+            data = json.loads(payload)
+            if not isinstance(data, dict):
+                raise ValueError("Payload JSON không phải object")
+            return data
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as exc:
+            last_exc = exc
+            if attempt >= retries:
+                break
+        sleeper(_retry_wait(last_exc, attempt))
+    detail = f"{last_exc.__class__.__name__}: {last_exc}" if last_exc else "unknown error"
+    raise RuntimeError(f"Europe PMC fallback thất bại sau {retries + 1} lần: {detail}") from last_exc
+
+
 def search(query: str, days: int, retmax: int, *, fetch_json: Callable[[str], dict] = get_json) -> list[str]:
     term = f"({query}) AND {DESIGN}"
     params = {
@@ -127,9 +163,43 @@ def search(query: str, days: int, retmax: int, *, fetch_json: Callable[[str], di
         "tool": "medical_ebm_surveillance",
     }
     url = EUTILS + "esearch.fcgi?" + urllib.parse.urlencode(params)
-    result = fetch_json(url).get("esearchresult", {})
+    try:
+        result = fetch_json(url).get("esearchresult", {})
+    except RuntimeError:
+        return search_europe_pmc(query, days, retmax)
     ids = result.get("idlist", [])
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
+
+
+def search_europe_pmc(
+    query: str,
+    days: int,
+    retmax: int,
+    *,
+    fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+) -> list[str]:
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
+    term = (
+        f'({query}) AND (SRC:MED OR HAS_FT:Y) AND '
+        '(PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
+        'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline") '
+        f'AND FIRST_PDATE:[{since} TO {today}]'
+    )
+    params = {
+        "query": term,
+        "format": "json",
+        "pageSize": str(retmax),
+        "sort": "FIRST_PDATE_D desc",
+    }
+    url = EUROPE_PMC + "?" + urllib.parse.urlencode(params)
+    result = fetch_json(url).get("resultList", {}).get("result", [])
+    ids = [
+        str(item.get("pmid") or item.get("id") or "")
+        for item in result
+        if str(item.get("pmid") or item.get("id") or "").isdigit()
+    ]
+    return ids[:retmax]
 
 
 def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_json) -> list[Candidate]:
@@ -142,7 +212,10 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
         "tool": "medical_ebm_surveillance",
     }
     url = EUTILS + "esummary.fcgi?" + urllib.parse.urlencode(params)
-    result = fetch_json(url).get("result", {})
+    try:
+        result = fetch_json(url).get("result", {})
+    except RuntimeError:
+        return summarize_europe_pmc(ids)
     candidates: list[Candidate] = []
     for pmid in result.get("uids", []):
         item = result.get(str(pmid), {})
@@ -154,6 +227,39 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
             publication_date=str(item.get("pubdate") or ""),
             title=title,
             url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+            source="PubMed E-utilities",
+        ))
+    return candidates
+
+
+def summarize_europe_pmc(
+    ids: Sequence[str],
+    *,
+    fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+) -> list[Candidate]:
+    if not ids:
+        return []
+    quoted = " OR ".join(f"EXT_ID:{pmid}" for pmid in ids if str(pmid).isdigit())
+    params = {
+        "query": f"({quoted}) AND SRC:MED",
+        "format": "json",
+        "pageSize": str(len(ids)),
+    }
+    url = EUROPE_PMC + "?" + urllib.parse.urlencode(params)
+    result = fetch_json(url).get("resultList", {}).get("result", [])
+    by_id = {str(item.get("pmid") or item.get("id") or ""): item for item in result}
+    candidates: list[Candidate] = []
+    for pmid in ids:
+        item = by_id.get(str(pmid), {})
+        title = str(item.get("title") or "").strip()
+        if not str(pmid).isdigit() or not title:
+            continue
+        candidates.append(Candidate(
+            pmid=str(pmid),
+            publication_date=str(item.get("firstPublicationDate") or item.get("pubYear") or ""),
+            title=title,
+            url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+            source="Europe PMC fallback for PMID",
         ))
     return candidates
 
@@ -257,7 +363,7 @@ def markdown_report(report: dict) -> str:
         f"- Trạng thái: **{report['status']}**",
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}",
         f"- Ứng viên không trùng: {report['candidate_count']}",
-        "- Nguồn: PubMed E-utilities",
+        "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
         f"- **ỨNG VIÊN để thẩm định, KHÔNG phải khuyến cáo. {DISCLAIMER}.**",
         "",
     ]
@@ -270,7 +376,8 @@ def markdown_report(report: dict) -> str:
             lines.append("- Không tìm thấy ứng viên trong cửa sổ đã quét thành công.")
         else:
             for item in result["candidates"]:
-                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}")
+                source_note = f" · nguồn: {item.get('source', 'PubMed E-utilities')}"
+                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}")
                 lines.append(f"  - {item['title']}")
         lines.append("")
     lines.extend([

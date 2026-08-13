@@ -87,6 +87,12 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (`build_library.py add`) → 3 sản phẩm phái sinh (`make_derivatives.py`). Không cần bác sĩ yêu cầu từng bước.
   Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
+- **Cổng direct-practice readiness (2026-08-13):** dashboard/thẻ đã PASS nguồn chưa đồng nghĩa tự được gọi là
+  "áp dụng trực tiếp". Trước khi nâng thẻ `decision="apply"` hoặc trả một danh sách "sẵn sàng cho bác sĩ áp dụng",
+  chạy trong `medical-ebm-automation/`: `python tools/verify_direct_clinical_practice_readiness.py --today YYYY-MM-DD --write`
+  (hoặc `--strict-apply` khi cần fail-closed). Chỉ `READY_FOR_PHYSICIAN_DIRECT_USE` mới được gọi là direct-use;
+  `REVIEW_REQUIRED` và `BLOCKED_FOR_DIRECT_USE` phải giữ hàng duyệt/chặn. Không tự sửa `consider/notyet` thành `apply`;
+  bác sĩ/master gate là bắt buộc. Skill xem thêm `sync/skills/cap-nhat-chung-cu-y-khoa/references/12-direct-practice-readiness.md`.
 - **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` phải giữ watermark, chặn bridge Hub và cảnh báo nội dung. Chỉ gọi là triển khai candidate-only khi `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` trả `READY_FOR_CONTROLLED_DEPLOYMENT` sau canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật. Agent không tự ký UAT.
 - Áp dụng cho skill `cap-nhat-chung-cu-y-khoa` và mọi tác vụ dashboard lâm sàng. Ngoại lệ: Dashboard Master
   quản trị (skill `dashboard-master-ebm-ngoai-tru`) giữ định dạng Excel/sổ riêng.
