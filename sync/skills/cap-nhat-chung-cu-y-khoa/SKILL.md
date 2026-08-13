@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.30.0
+  version: 1.31.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -773,6 +773,23 @@ minh lại** (fail-closed), có sao lưu.
 
 Cùng vòng, hai giả thuyết khác đã kiểm và **loại**: `gom_nguon` dùng `vd.field()` nên xử lý cả
 hai kiểu nháy; **0/1701** định danh bị bỏ qua vì sai định dạng.
+
+**(r) 14/08 — TÔI VI PHẠM CHÍNH LUẬT CỦA MÌNH, và chốt vẫn xanh trên mã hỏng.**
+
+Bản vá BH24 thiếu `import re` ở cấp module ⇒ `xac_minh_mot()` ném
+`NameError: name 're' is not defined` ngay dòng đầu nhánh vừa vá, và **cả lượt quét nền chết**.
+
+Nhưng chốt BH24 vẫn **XANH**, vì nó chỉ (a) thử regex ở BÊN NGOÀI và (b) tìm chuỗi
+`doi_rut_tu_url` trong mã nguồn — **không hề gọi vào `xac_minh_mot`**. Đó đúng là bẫy TAUTOLOGY
+mà luật 2 của chính file chốt cấm, và tôi vừa mắc nó khi viết chốt cho bản vá của mình.
+
+> **Một chốt không chạy qua đúng đường nó canh thì KHÔNG canh gì cả — tệ hơn, nó phát ra sự
+> yên tâm sai.** Đây chính là kiểu hỏng đã gặp ở guardrail G3/G8 (R3–R7 tautology), nay tái
+> hiện ở tầng công cụ.
+
+Đã thêm **luật 4** vào `chot_hoi_quy_bai_hoc.py`: *phải THỰC SỰ GỌI vào đường mã mình canh*.
+BH24 nay dùng một `vd` giả NGOẠI TUYẾN để đi hết nhánh `url → doi`, và sẽ đỏ ngay với lỗi kiểu
+`NameError`. Kiểm lại: DOI-trong-URL → `crossref` kèm DOI đã rút; URL thường → `http`.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

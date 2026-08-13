@@ -28,6 +28,12 @@ NGUYÊN TẮC KHI THÊM MỤC
 2. Phải kiểm HÀNH VI, không kiểm sự có mặt của câu chữ. Đếm chuỗi trong file là
    đúng cái bẫy TAUTOLOGY đã gặp ở guardrail G3/G8: luật tự đúng, không bao giờ đỏ.
 3. Phải chạy NHANH và NGOẠI TUYẾN — nó chạy mỗi phiên.
+4. Phải THỰC SỰ GỌI vào đường mã mình canh. Thêm 14/08/2026 sau một lần vi phạm
+   luật 2 ngay trong file này: chốt BH24 bản đầu chỉ thử regex ở BÊN NGOÀI rồi
+   tìm một chuỗi trong mã nguồn — nên nó XANH trong khi mã thật ném
+   `NameError: name 're' is not defined` ở đúng dòng đầu của nhánh vừa vá, và
+   lượt quét nền chết ngay. Một chốt không chạy qua đúng đường nó canh thì
+   KHÔNG canh gì cả; tệ hơn, nó phát ra sự yên tâm sai.
 
 Dùng:
     python3 tools/chot_hoi_quy_bai_hoc.py             # chạy hết, in bảng
@@ -708,23 +714,38 @@ def bh24_doi_ghi_dang_url_van_qua_crossref():
     Kiểm HÀNH VI: regex rút DOI phải đúng trên link doi.org và link `/doi/` của nhà
     xuất bản, và KHÔNG bắt nhầm URL không phải DOI.
     """
-    import re as _re
-    m = _nap(REPO / "tools/so_xac_minh_nguon.py", "sx_bh24")  # noqa: F841 — chỉ để chắc file còn chạy được
-    MAU = r"(?:doi\.org/|/doi/)(10\.\d{4,9}/\S+)"
-    ca = [("https://doi.org/10.1016/j.jacc.2026.03.056", "10.1016/j.jacc.2026.03.056"),
-          ("https://www.ahajournals.org/doi/10.1161/STR.0000000000000375",
-           "10.1161/STR.0000000000000375"),
-          ("https://www.ema.europa.eu/en/news/abc", None),
-          ("https://pubmed.ncbi.nlm.nih.gov/12345678/", None)]
-    for u, mong in ca:
-        g = _re.search(MAU, u)
-        if (g.group(1) if g else None) != mong:
-            return False, f"rút DOI sai từ {u[:44]!r}"
-    src = (REPO / "tools/so_xac_minh_nguon.py").read_text(encoding="utf-8")
-    if "doi_rut_tu_url" not in src:
-        return False, ("mất nhánh nâng cấp DOI-trong-URL — nguồn lại bị xác minh "
-                       "yếu hơn mức hệ ngụ ý")
-    return True, "DOI ghi dạng URL vẫn được xác minh qua Crossref"
+    m = _nap(REPO / "tools/so_xac_minh_nguon.py", "sx_bh24")
+
+    # GỌI THẬT vào `xac_minh_mot`, KHÔNG đếm chuỗi trong mã nguồn.
+    # Bản đầu của chính chốt này chỉ (a) thử regex ở BÊN NGOÀI và (b) tìm chuỗi
+    # "doi_rut_tu_url" trong file — nên nó XANH trong khi mã thật ném
+    # `NameError: name 're' is not defined` ngay dòng đầu của nhánh vừa vá, và
+    # cả lượt quét nền chết. Một chốt không chạy qua đúng đường nó canh thì không
+    # canh gì cả. Đây là luật 2 của file này, và tôi vừa vi phạm nó.
+    class _VdGia:
+        """vd giả, NGOẠI TUYẾN: chỉ cần đủ để đi hết nhánh url→doi."""
+        @staticmethod
+        def verify_doi_online(doi, *a, **k):
+            return True, f"tiêu đề giả cho {doi}"
+
+        @staticmethod
+        def verify_url_online(url, *a, **k):
+            return True, "trang có phản hồi"
+
+    try:
+        r_doi = m.xac_minh_mot("url:https://doi.org/10.1056/NEJMoa2109927", _VdGia)
+        r_thuong = m.xac_minh_mot("url:https://www.ema.europa.eu/en/news/abc", _VdGia)
+    except Exception as e:  # noqa: BLE001 — đúng thứ chốt cũ đã bỏ lọt
+        return False, f"xac_minh_mot ném lỗi: {type(e).__name__}: {e}"
+
+    if not r_doi or r_doi.get("nguon_xac_minh") != "crossref":
+        return False, (f"DOI dạng URL KHÔNG được nâng lên Crossref: "
+                       f"{(r_doi or {}).get('nguon_xac_minh')!r}")
+    if r_doi.get("doi_rut_tu_url") != "10.1056/NEJMoa2109927":
+        return False, f"rút DOI sai: {r_doi.get('doi_rut_tu_url')!r}"
+    if not r_thuong or r_thuong.get("nguon_xac_minh") != "http":
+        return False, "URL thường bị nhận nhầm là DOI"
+    return True, "gọi thật: DOI-trong-URL → crossref; URL thường → http"
 
 
 BAI_HOC = [
