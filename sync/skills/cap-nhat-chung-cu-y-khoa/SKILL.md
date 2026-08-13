@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.26.0
+  version: 1.27.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -701,6 +701,27 @@ Nay `tu_khoi_dong` gọi lại chính `lan_chay_cuoi()` — **một bản duy nh
 > mục đích — vá một chỗ có thể để lại chỗ tệ hơn;
 > (b) hai công cụ hỏi cùng một câu phải dùng **CHUNG** một câu trả lời, nếu không chúng sẽ
 > phân kỳ đúng như đã xảy ra ở đây.
+
+**(n) BH21 + BH11 mở rộng — BÀI HỌC BH20 LẶP LẠI HAI LẦN NỮA trong cùng một vòng.**
+
+**BH21 — hai parser của cùng một dữ liệu bất đồng.** BH13 vá gộp chuỗi nối JS cho
+`build_dashboard_docx`, nhưng `array_field()` của cổng liêm chính thì bỏ sót. Từ 13/08 tới
+14/08, bộ dựng Word đọc `references` của `AnToanThuoc_EMA_PRAC` ra **3** phần tử còn cổng đọc
+**4** — một tài liệu tham khảo bị tách đôi, nửa sau chỉ là URL trần.
+
+**BH11 mở rộng — danh sách viết cứng đã mục.** Chốt cũ liệt cứng 4 tên tool nên chỉ phủ 4/8, và
+`verify_dashboard.py` — **cổng liêm chính, tool quan trọng nhất bộ** — lệch bản mà chốt vẫn xanh.
+Nay tự dò danh sách từ thư mục nguồn. Vừa mở rộng đã bắt ngay **2 tool thiếu bản vá UTF-8**
+(`check_topic_relevance`, `surveillance_scan`) — cả hai đều in tiếng Việt nên sẽ chết giữa chừng
+trên Windows.
+
+Kèm theo, chốt được chỉnh cho **đúng mức**: chỉ đòi bản vá UTF-8 ở file THẬT SỰ in ký tự ngoài
+ASCII. `test_verify_dashboard_source_gate.py` không in ký tự nào như vậy, nên đòi nó là tự tạo
+báo động giả — đúng thứ chốt này sinh ra để diệt.
+
+> **Bài học BH20 nay đã lặp ba lần trong hai vòng.** Kết luận: mỗi khi vá một logic dùng chung,
+> phải **liệt kê mọi nơi dùng nó** và vá đồng thời — và mọi danh sách kiểm phải **tự dò**, vì
+> danh sách viết cứng luôn mục đúng vào lúc có thành phần mới quan trọng nhất.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

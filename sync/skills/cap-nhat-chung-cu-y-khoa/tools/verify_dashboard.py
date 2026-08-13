@@ -253,7 +253,19 @@ def array_field(block, name):
     m = re.search(name + r"\s*:\s*\[([^\]]*)\]", block, re.S)
     if not m:
         return []
-    return [x.strip() for x in re.findall(r"['\"]([^'\"]+)['\"]", m.group(1)) if x.strip()]
+    # VÁ 14/08/2026 — GỘP chuỗi nối kiểu JS trước khi tách phần tử.
+    # Mảng viết tay hay ngắt chuỗi dài bằng dấu cộng:
+    #     references:["…EMA; 12 June 2026. "+"https://www.ema.europa.eu/…", "…"]
+    # Bản cũ tách thành HAI phần tử ⇒ một tài liệu tham khảo biến thành hai, và một
+    # trong hai chỉ là URL trần. Đo thật trên `AnToanThuoc_EMA_PRAC_20260614`: 4 phần
+    # tử thay vì 3.
+    # Quan trọng hơn con số: `build_dashboard_docx.py` ĐÃ được vá gộp chuỗi nối
+    # (13/08), nên từ đó tới nay bộ dựng Word đọc 3 còn cổng đọc 4 — HAI PARSER CỦA
+    # CÙNG MỘT DỮ LIỆU BẤT ĐỒNG. Đúng bài học BH20: vá một parser thì phải vá mọi
+    # parser đọc cùng thứ đó.
+    noi_dung = re.sub(r'"\s*\+\s*"', "", m.group(1))
+    noi_dung = re.sub(r"'\s*\+\s*'", "", noi_dung)
+    return [x.strip() for x in re.findall(r"['\"]([^'\"]+)['\"]", noi_dung) if x.strip()]
 
 
 def _parse_exact_date(text):

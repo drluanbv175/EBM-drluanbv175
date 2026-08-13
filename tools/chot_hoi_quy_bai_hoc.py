@@ -261,20 +261,48 @@ def bh11_tool_skill_ba_ban_khop_va_co_va_utf8():
     Chốt này canh HAI điều: ba bản khớp md5, VÀ cả ba đều còn bản vá UTF-8.
     """
     import hashlib
-    TEN = ["build_library", "dashboard_content_audit", "drug_safety_scan", "make_derivatives"]
+    # VÁ 14/08/2026 — TỰ DÒ danh sách tool thay vì viết cứng 4 tên.
+    # Bản cũ chỉ phủ 4/8 tool của skill, nên `verify_dashboard.py` — chính là cổng
+    # liêm chính, tool QUAN TRỌNG NHẤT trong bộ — lệch bản mà chốt vẫn xanh. Cùng
+    # bài học BH20: một danh sách viết cứng sẽ mục ngay khi có tool mới.
+    NGUON = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools"
+    TEN = sorted(p.stem for p in NGUON.glob("*.py")) if NGUON.is_dir() else []
+    if not TEN:
+        return False, "không thấy thư mục tool của skill cap-nhat-chung-cu-y-khoa"
     NOI = ["EBM-Dashboards/tools/{}.py",
            "sync/skills/cap-nhat-chung-cu-y-khoa/tools/{}.py",
            "EBM_MASTER/skill_assets/{}.py"]
+    # VÁ 14/08 (lần hai trong cùng vòng, SAU khi lần một quá tay) —
+    # `dark-analyst` là skill KHÁC: tool của nó khác là ĐÚNG, thêm nó vào danh sách
+    # chung sẽ báo lệch oan 6 tool. Nhưng cổng triển khai giám sát (ESD02) đòi RIÊNG
+    # `surveillance_scan.py` khớp ở CẢ BA nơi kể cả dark-analyst — bỏ sót đúng chỗ đó
+    # khiến chốt xanh trong khi ESD02 FAIL. Nên chỉ mở rộng cho ĐÚNG tool có hợp đồng
+    # dùng chung, không mở rộng đại trà.
+    DUNG_CHUNG = {"surveillance_scan": ["sync/skills/dark-analyst/tools/{}.py"]}
     lech, mat_va = [], []
     for t in TEN:
         ps = [REPO / n.format(t) for n in NOI]
+        for them in DUNG_CHUNG.get(t, []):
+            ps.append(REPO / them.format(t))
         co = [p for p in ps if p.exists()]
         if len(co) < 2:
             continue
         if len({hashlib.md5(p.read_bytes()).hexdigest() for p in co}) != 1:
             lech.append(t)
         for p in co:
-            if "reconfigure(encoding=" not in p.read_text(encoding="utf-8", errors="replace"):
+            noi = p.read_text(encoding="utf-8", errors="replace")
+            # CHỈ đòi bản vá ở file THẬT SỰ in ký tự ngoài ASCII. Đòi ở nơi không cần
+            # là tự tạo báo động giả — đúng thứ chốt này sinh ra để diệt. Đo thật:
+            # `test_verify_dashboard_source_gate.py` không in một ký tự tiếng Việt nào,
+            # nên cp1252 của Windows không thể làm nó chết.
+            in_ngoai_ascii = any(
+                not d.isascii() for d in noi.splitlines() if "print(" in d)
+            if not in_ngoai_ascii:
+                continue
+            # Hai lối viết đều hợp lệ: reconfigure inline, hoặc gọi hàm
+            # configure_utf8_stdio() (verify_dashboard.py dùng lối này).
+            if ("reconfigure(encoding=" not in noi
+                    and "configure_utf8_stdio" not in noi):
                 mat_va.append(f"{p.parent.name}/{t}")
     if lech:
         return False, "3 bản lệch nhau: " + ", ".join(lech)
@@ -583,6 +611,29 @@ def bh20_tu_khoi_dong_cung_doc_ket_qua():
     return True, "lượt hỏng/chết giữa chừng đều được phóng lại"
 
 
+def bh21_moi_parser_deu_gop_chuoi_noi():
+    """14/08 — vá `build_dashboard_docx` (BH13) nhưng bỏ sót `array_field` của cổng.
+
+    Từ 13/08 tới nay HAI PARSER CỦA CÙNG MỘT DỮ LIỆU BẤT ĐỒNG: bộ dựng Word đọc
+    `references` của `AnToanThuoc_EMA_PRAC_20260614` ra **3** phần tử, còn cổng liêm
+    chính đọc ra **4** — vì cổng tách `"…12 June 2026. "+"https://…"` thành hai, biến
+    một tài liệu tham khảo thành hai, một trong đó chỉ là URL trần.
+
+    Đúng bài học BH20 lặp lại: vá một nơi dùng logic đó thì phải vá MỌI nơi.
+
+    Kiểm HÀNH VI: gộp đúng, và dấu `+` nằm TRONG nội dung không được đụng.
+    """
+    vd = _nap(DASH / "tools/verify_dashboard.py", "vd_bh21")
+    ra = vd.array_field('references:["phần đầu. "+"https://vd.org/x","mục hai"]',
+                        "references")
+    if len(ra) != 2 or "https://vd.org/x" not in ra[0]:
+        return False, f"không gộp chuỗi nối: {ra}"
+    giu = vd.array_field('x:["nguy cơ tim mạch + chuyển hoá","b"]', "x")
+    if giu != ["nguy cơ tim mạch + chuyển hoá", "b"]:
+        return False, f"đụng vào dấu + nằm TRONG nội dung: {giu}"
+    return True, "gộp chuỗi nối, không đụng dấu + trong nội dung"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -604,6 +655,7 @@ BAI_HOC = [
     ("BH18", "13/08", "Giữ mọi item cùng PMID (chống báo động giả)", bh18_giu_moi_item_cung_pmid),
     ("BH19", "13/08", "Độ tươi đọc KẾT QUẢ, không chỉ nhìn mtime", bh19_do_tuoi_doc_ket_qua_khong_doc_mtime),
     ("BH20", "14/08", "Tự khởi động cũng đọc KẾT QUẢ (vá dở dang)", bh20_tu_khoi_dong_cung_doc_ket_qua),
+    ("BH21", "14/08", "Mọi parser đều gộp chuỗi nối JS", bh21_moi_parser_deu_gop_chuoi_noi),
 ]
 
 

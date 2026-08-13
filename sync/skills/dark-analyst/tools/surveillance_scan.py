@@ -22,6 +22,16 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+# Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
+# ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong.
+# Vá 14/08/2026: hai tool này bị bỏ sót vì chốt BH11 cũ chỉ liệt cứng 4 tên tool.
+import sys as _sys_utf8
+for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 EUROPE_PMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 DESIGN = (
