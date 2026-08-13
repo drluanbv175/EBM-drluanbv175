@@ -6,6 +6,8 @@ Bảo đảm câu trả lời chỉ dựa trên nguồn có thể truy nguyên, 
 
 ## Thứ tự ưu tiên
 
+Trước khi ưu tiên/chấm chất lượng, tìm rộng theo ma trận `13-source-universe.md`: bibliographic core, guideline/HTA/hiệp hội, tạp chí uy tín cao, trial registry, an toàn thuốc, retraction/integrity và full-text/citation context.
+
 1. Guideline, statement, safety communication hoặc trang chính thức của tổ chức/cơ quan phù hợp.
 2. Systematic review/meta-analysis chất lượng cao.
 3. RCT đa trung tâm lớn.
@@ -19,7 +21,7 @@ Bảo đảm câu trả lời chỉ dựa trên nguồn có thể truy nguyên, 
   - Tạp chí đa khoa lõi: NEJM, Lancet family, JAMA/JAMA Network, The BMJ, Annals of Internal Medicine, Nature Medicine.
   - Hiệp hội/tạp chí chuyên khoa thường gặp: ACC/AHA, ESC, ADA/EASD, KDIGO, GINA, GOLD, IDSA, EULAR/ACR, ACG/AGA/ASGE, AASLD/EASL, ASH/ISTH, AGS, ATS/ERS/BTS.
   - Registry này chỉ tăng ưu tiên thẩm định nguồn. Không tự nâng editorial/preprint/tín hiệu yếu thành thay đổi thực hành; vẫn phải dựa vào thiết kế nghiên cứu, GRADE/level gốc, truy nguyên PMID/DOI/URL, freshness và doctor/master gate.
-  - Không thêm RSS/API endpoint chưa xác minh chính thức. Nếu chưa có feed ổn định của một tạp chí/hiệp hội, tìm qua PubMed, Europe PMC, Crossref/OpenAlex và trang chính thức rồi ghi rõ đường truy nguyên.
+  - Không thêm RSS/API endpoint chưa xác minh chính thức. Nếu chưa có feed ổn định của một tạp chí/hiệp hội, tìm qua PubMed, Europe PMC, Crossref/OpenAlex, trial registry/trang chính thức và ghi rõ đường truy nguyên.
 
 - Toàn cầu/dự phòng/y tế công cộng: WHO, CDC, USPSTF, NICE.
 - Tim mạch/đột quỵ: ESC, ACC/AHA, AHA/ASA, ESO/WSO.

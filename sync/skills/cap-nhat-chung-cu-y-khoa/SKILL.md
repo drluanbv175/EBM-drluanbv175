@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.13.1
+  version: 1.13.2
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -33,7 +33,7 @@ Không tự động biến một câu hỏi cụ thể thành:
 Đưa ra câu trả lời EBM có thể dùng trong thực hành lâm sàng, với các yêu cầu:
 
 1. Xác định khuyến cáo hiện hành và thay đổi có ý nghĩa thực hành.
-2. Ưu tiên nguồn gốc chính thức, registry nguồn uy tín lõi và bằng chứng chất lượng cao.
+2. Tìm rộng theo source universe, rồi ưu tiên nguồn gốc chính thức, registry nguồn uy tín lõi và bằng chứng chất lượng cao.
 3. Tách rõ: khuyến cáo của nguồn, độ chắc chắn chứng cứ, đánh giá vận hành của người tổng hợp.
 4. Cá thể hóa cho ngoại trú Việt Nam, đặc biệt người cao tuổi, đa bệnh lý, đa thuốc, CKD, bệnh gan, bệnh tim mạch và đái tháo đường.
 5. Nêu rõ điều cần làm, điều không nên làm, theo dõi và khi nào chuyển tuyến/cấp cứu.
@@ -103,7 +103,7 @@ Phải xác minh tối thiểu:
 - quần thể;
 - khuyến cáo/kết quả liên quan trực tiếp đến câu hỏi.
 
-Đọc `references/01-nguon-va-xac-minh.md`.
+Đọc `references/01-nguon-va-xac-minh.md` và `references/13-source-universe.md`.
 
 ### Bước 3 — Trích khuyến cáo nguyên bản, không tự nâng cấp chứng cứ
 
@@ -524,6 +524,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 
 - Đã xác định đúng vấn đề cụ thể và quần thể chưa?
 - Đã tìm/xác minh nguồn hiện hành cho nội dung có thể thay đổi chưa?
+- Đã quét/đối chiếu đủ các lớp nguồn bắt buộc trong `references/13-source-universe.md` và ghi rõ lớp nào thiếu nếu source health PARTIAL/FAIL chưa?
 - Đã ghi đúng tiêu đề, tổ chức, ngày/phiên bản và quần thể của nguồn chưa?
 - Đã giữ nguyên grading của nguồn, không tự gán GRADE chưa?
 - Đã tách “điểm mới” khỏi “kiến thức nền hiện hành” chưa?
@@ -570,6 +571,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/10-giam-sat-dinh-ky.md` · `tools/surveillance_scan.py` (giám sát PubMed theo watchlist)
 - `references/11-guideline-bo-y-te-vn.md` (bản địa hóa Bộ Y tế VN)
 - `references/12-direct-practice-readiness.md` (cổng phân loại READY_FOR_PHYSICIAN_DIRECT_USE / REVIEW_REQUIRED / BLOCKED_FOR_DIRECT_USE; nối với `medical-ebm-automation/tools/verify_direct_clinical_practice_readiness.py`)
+- `references/13-source-universe.md` (ma trận lớp nguồn bắt buộc: bibliographic core · guideline/HTA · high-impact journals · trial registries · drug safety · retraction/integrity · full-text/citation context)
 - `quality/acceptance-checklist.md`
 - `quality/web-dashboard-acceptance-checklist.md`
 
