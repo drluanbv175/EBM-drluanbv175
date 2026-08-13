@@ -284,6 +284,69 @@ def bh11_tool_skill_ba_ban_khop_va_co_va_utf8():
     return True, f"{len(TEN)} tool × 3 nơi khớp md5, đều còn bản vá UTF-8"
 
 
+def bh12_quet_nguon_giu_tien_do_va_hien_tien_do():
+    """13/08 — vòng quét xác minh nguồn chạy 12 phút mà log 0 byte và sổ không đổi.
+
+    HAI lỗi im lặng chồng nhau:
+      • `ghi_so()` chỉ gọi SAU khi hết một vòng. Mạng chậm (NCBI đang chặn máy này)
+        làm một vòng ~180 mục kéo rất dài ⇒ đóng phiên / máy ngủ / Ctrl-C là MẤT
+        TRẮNG mọi bằng chứng vừa thu, dù từng mục đã xác minh thành công.
+      • stdout bị đệm theo KHỐI khi chuyển hướng ra file ⇒ không một dòng tiến độ.
+    Cộng lại: một lượt quét ĐANG CHẠY ĐÚNG trông y hệt như treo, nên dễ bị giết nhầm.
+
+    Kiểm bằng AST — cấu trúc chương trình, không đếm chuỗi: `ghi_so` phải được gọi
+    BÊN TRONG vòng lặp từng mục (for lồng trong for), và stdout phải bật line_buffering.
+    """
+    import ast
+    p = REPO / "tools/so_xac_minh_nguon.py"
+    cay = ast.parse(p.read_text(encoding="utf-8"))
+
+    def goi_trong(node) -> bool:
+        return any(isinstance(x, ast.Call) and getattr(x.func, "id", "") == "ghi_so"
+                   for x in ast.walk(node))
+
+    trong_vong_lap_con = False
+    for ngoai in ast.walk(cay):
+        if not isinstance(ngoai, ast.For):
+            continue
+        for trong in ast.walk(ngoai):
+            if trong is not ngoai and isinstance(trong, ast.For) and goi_trong(trong):
+                trong_vong_lap_con = True
+    if not trong_vong_lap_con:
+        return False, ("ghi_so() không còn nằm trong vòng lặp từng mục — "
+                       "mất trắng tiến độ nếu bị ngắt giữa chừng")
+    if "line_buffering=True" not in p.read_text(encoding="utf-8"):
+        return False, "stdout không bật line_buffering — chạy nền sẽ không thấy tiến độ"
+    return True, "ghi sổ từng chặng + tiến độ hiện ngay khi chạy nền"
+
+
+def bh13_docx_doc_duoc_chuoi_noi_kieu_js():
+    """13/08 — `build_dashboard_docx.py` chết trên dashboard dùng nối chuỗi JS.
+
+        source:"...EMA; 12 June 2026. "+"https://www.ema.europa.eu/..."
+
+    Hợp lệ trong JavaScript, KHÔNG hợp lệ trong JSON ⇒ `json.loads()` ném
+    "Expecting ',' delimiter". `AnToanThuoc_EMA_PRAC_20260614` là bản DUY NHẤT trong
+    10 bản xuất lại không ra được .docx — và vì PDF dựng TỪ .docx nên mất luôn PDF.
+    Dây chuyền chỉ in "⚠ Bỏ qua: chưa có file .docx", không nói lý do, nên lỗi trông
+    như một bước bị bỏ chứ không như một bản thảo hỏng.
+
+    Kiểm HÀNH VI: gọi thẳng hàm gộp, và bảo đảm dấu cộng nằm TRONG nội dung không bị
+    đụng ("nguy cơ tim mạch + chuyển hoá" là câu y khoa bình thường).
+    """
+    m = _nap(DASH / "tools/build_dashboard_docx.py", "docx_hoiquy")
+    f = getattr(m, "join_string_concatenation", None)
+    if f is None:
+        return False, "mất hàm gộp chuỗi nối — dashboard dùng \"a\"+\"b\" sẽ lại hỏng .docx"
+    ca = [('{"a":"x "+"y"}', '{"a":"x y"}'),
+          ('{"a":"nguy cơ tim mạch + chuyển hoá"}', '{"a":"nguy cơ tim mạch + chuyển hoá"}'),
+          ('{"a":"x"+\n  "y"}', '{"a":"xy"}')]
+    for vao, mong in ca:
+        if f(vao) != mong:
+            return False, f"gộp sai: {vao!r} → {f(vao)!r} (cần {mong!r})"
+    return True, "đọc được chuỗi nối JS, không đụng dấu + trong nội dung"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -296,6 +359,8 @@ BAI_HOC = [
     ("BH09", "13/08", "Skill sửa ở nguồn tới được nơi chạy", bh09_skill_toi_duoc_noi_chay),
     ("BH10", "13/08", "Ba việc lâm sàng vẫn bị cấm tự động", bh10_ba_viec_cam_van_bi_cam),
     ("BH11", "13/08", "Tool skill 3 bản khớp + còn vá UTF-8", bh11_tool_skill_ba_ban_khop_va_co_va_utf8),
+    ("BH12", "13/08", "Quét nguồn giữ tiến độ + hiện tiến độ", bh12_quet_nguon_giu_tien_do_va_hien_tien_do),
+    ("BH13", "13/08", "Bộ dựng Word đọc được chuỗi nối JS", bh13_docx_doc_duoc_chuoi_noi_kieu_js),
 ]
 
 

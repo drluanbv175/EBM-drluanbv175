@@ -100,10 +100,16 @@ if __name__ == "__main__":
 # ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
 # tool thoát mã 1 ở đúng dòng print cuối ⇒ caller đọc mã thoát, tưởng hỏng, bỏ luôn 2
 # bước sau. Cùng lớp lỗi đã vá cho tools/vietnamize/.
+# VÁ 13/08/2026 — thêm `line_buffering=True`. Khi chuyển hướng ra file/pipe (chạy nền,
+# nohup, hook), Python đệm stdout theo KHỐI ⇒ tiến trình chạy 12 phút mà log vẫn 0 byte.
+# Đo thật hôm nay: vòng quét sống, chỉ 5,3 giây CPU trên 12 phút (đang chờ mạng vì NCBI
+# chặn) nhưng KHÔNG hiện một dòng nào ⇒ trông y hệt như treo. Với một công cụ đi mạng
+# chậm, "không thấy gì" và "đã chết" phải phân biệt được, nếu không người dùng sẽ giết
+# nhầm một lượt quét đang chạy đúng.
 import sys as _sys_utf8
 for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
     try:
-        _s.reconfigure(encoding="utf-8")
+        _s.reconfigure(encoding="utf-8", line_buffering=True)
     except Exception:
         pass
 
@@ -314,6 +320,14 @@ def lenh_quet(files: list[Path], vong: int) -> int:
                     ban_ghi[k] = cu[k]
             muc[khoa] = ban_ghi
             print(f"  ✓ {khoa}")
+            # VÁ 13/08/2026 — GHI SỔ TỪNG CHẶNG, không đợi hết vòng.
+            # Bản cũ chỉ `ghi_so()` sau khi vòng chạy xong. Với mạng chậm (NCBI đang
+            # chặn máy này) một vòng ~180 mục kéo dài rất lâu ⇒ phiên đóng, máy ngủ
+            # hay Ctrl-C là MẤT TRẮNG toàn bộ bằng chứng vừa thu, dù mỗi mục đã xác
+            # minh thành công. Đo thật hôm nay: 12 phút chạy, sổ vẫn đúng 118 mục như
+            # lúc bắt đầu. Ghi mỗi 10 mục để công sức luôn được giữ lại.
+            if len(muc) % 10 == 0:
+                ghi_so(so)
         ghi_so(so)
         print(f"  Vòng {v}: thêm {len(can_lam) - len(that_bai)} · còn thiếu {len(that_bai)}")
         can_lam = that_bai

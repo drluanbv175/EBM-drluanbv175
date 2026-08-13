@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.17.0
+  version: 1.18.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -527,6 +527,29 @@ Hệ quả: một bài bất kỳ có chữ "who" trong tiêu đề được ph�
 giới — đúng loại dương tính giả mà lớp alias mơ hồ sinh ra để chặn, và nó nâng hạng
 nguồn chứ không hạ. Vá bằng cách **giữ nguyên vị trí** (đệm chuỗi rỗng) rồi mới lấy 2 vị
 trí đầu. Kiểm: `pytest tests/test_group_c_scoring.py`.
+
+**(e) Hai lỗi IM LẶNG của dây chuyền xuất, tìm được ở vòng lặp 13/08.**
+
+**BH13 — bộ dựng Word chết trên chuỗi nối kiểu JS.** Dashboard viết tay hay ngắt chuỗi
+dài bằng dấu cộng: `source:"...EMA; 12 June 2026. "+"https://..."`. Hợp lệ trong
+JavaScript, KHÔNG hợp lệ trong JSON ⇒ `json.loads()` ném *Expecting ',' delimiter*.
+`AnToanThuoc_EMA_PRAC_20260614` là bản DUY NHẤT trong 10 bản xuất lại không ra `.docx`,
+và vì **bước ⑤ PDF dựng TỪ `.docx`** nên mất luôn PDF — 3/5 sản phẩm thay vì 5/5.
+Dây chuyền chỉ in `⚠ Bỏ qua: chưa có file .docx`, **không nói lý do**, nên lỗi trông như
+một bước bị bỏ chứ không như một bản thảo hỏng. Vá bằng `join_string_concatenation()`
+quét theo TRẠNG THÁI chuỗi — dấu cộng trong nội dung ("nguy cơ tim mạch + chuyển hoá")
+không được đụng tới.
+
+**BH12 — vòng quét nguồn chạy đúng nhưng trông như treo.** Hai lỗi chồng nhau:
+`ghi_so()` chỉ gọi SAU khi hết một vòng (mạng chậm vì NCBI chặn ⇒ một vòng ~180 mục rất
+lâu ⇒ đóng phiên là **mất trắng** mọi bằng chứng vừa thu), và stdout bị đệm theo KHỐI khi
+chuyển hướng ra file ⇒ **0 byte log sau 12 phút**. Đo thật: tiến trình sống, chỉ 5,3 giây
+CPU trên 12 phút — đang chờ mạng, không hề treo. Vá: ghi sổ mỗi 10 mục + `line_buffering`.
+Sau vá, thấy tiến độ sau **40 giây**.
+
+> **Bài học chung của cả hai:** một công cụ chạy nền mà không kể chuyện thì "đang chạy
+> đúng" và "đã chết" trông giống hệt nhau — và người vận hành sẽ giết nhầm, hoặc tệ hơn,
+> tin rằng bước đó đã xong.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
