@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.29.0
+  version: 1.30.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -756,6 +756,23 @@ Chốt BH23 kiểm trên dữ liệu SỐNG: **mọi** dashboard trong kho phả
 > **Ba lỗi BH16 · BH22 · BH23 cùng một họ:** thứ bị loại thầm lặng nguy hiểm hơn thứ báo lỗi,
 > vì **không ai đi tìm cái mình không biết là đang thiếu**. Với mọi bộ lọc/regex/danh sách, phải
 > hỏi: *"cái gì rơi ra khỏi đây, và tôi có được báo không?"*
+
+**(q) BH24 — cùng một nguồn, chỉ khác CÁCH GHI, nhận hai mức bảo đảm khác hẳn.**
+
+Mục `doi:` được xác minh **metadata qua Crossref**; mục `url:` chỉ được kiểm **"địa chỉ có phản
+hồi"**. Nhưng **17 định danh** trong kho là DOI viết dạng `https://doi.org/10.…` nên rơi vào
+nhánh yếu — và mức yếu hơn đó **không hề được nói ra**.
+
+> Đây là dạng nguy hiểm riêng: hệ đưa ra một bảo đảm **THẤP HƠN mức nó ngụ ý**, trong khi sổ vẫn
+> ghi "đã xác minh".
+
+Nay nhận diện link `doi.org/` và `/doi/`, rút DOI rồi xác minh qua Crossref. Crossref không phân
+giải được thì **lùi về kiểm HTTP** — đúng mức bảo đảm cũ, không tự hạ thành "chưa xác minh"
+(HTTP vẫn là bằng chứng thật, chỉ yếu hơn). 5 bản ghi đã bị hạ cấp được **gỡ khỏi sổ để xác
+minh lại** (fail-closed), có sao lưu.
+
+Cùng vòng, hai giả thuyết khác đã kiểm và **loại**: `gom_nguon` dùng `vd.field()` nên xử lý cả
+hai kiểu nháy; **0/1701** định danh bị bỏ qua vì sai định dạng.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

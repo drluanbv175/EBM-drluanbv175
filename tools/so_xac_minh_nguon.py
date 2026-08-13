@@ -229,6 +229,23 @@ def xac_minh_mot(khoa: str, vd) -> dict | None:
         return {"loai": "doi", "gia_tri": gt, "xac_minh_luc": bay_gio,
                 "tieu_de": mo_ta, "nguon_xac_minh": "crossref"}
     if loai == "url":
+        # VÁ 14/08/2026 — MỘT DOI GHI DƯỚI DẠNG URL VẪN LÀ DOI.
+        # Trước đó mọi mục `url:` chỉ được kiểm "địa chỉ có phản hồi" (`http`), trong
+        # khi mục `doi:` được xác minh METADATA qua Crossref. Nghĩa là cùng một nguồn,
+        # chỉ khác CÁCH GHI, lại nhận hai mức bảo đảm khác hẳn nhau — và mức yếu hơn
+        # không hề được nói ra. Đo thật: **17 định danh** là DOI viết dạng
+        # `https://doi.org/10.…` nên đang bị hạ cấp xác minh.
+        # Cùng họ với các lỗi hôm nay: hệ đưa ra một bảo đảm THẤP HƠN mức nó ngụ ý,
+        # mà không ai được báo.
+        m_doi = re.search(r"(?:doi\.org/|/doi/)(10\.\d{4,9}/\S+)", gt)
+        if m_doi:
+            ok, mo_ta, *_ = _goi_linh_hoat(vd.verify_doi_online, m_doi.group(1))
+            if ok is True:
+                return {"loai": "url", "gia_tri": gt, "xac_minh_luc": bay_gio,
+                        "tieu_de": mo_ta, "nguon_xac_minh": "crossref",
+                        "doi_rut_tu_url": m_doi.group(1)}
+            # Crossref không phân giải được → LÙI về kiểm HTTP, đúng mức bảo đảm cũ.
+            # Không tự hạ thành "không xác minh": HTTP vẫn là bằng chứng thật, chỉ yếu hơn.
         ok, mo_ta, *_ = _goi_linh_hoat(vd.verify_url_online, gt)
         if ok is not True:
             return None

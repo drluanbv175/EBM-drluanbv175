@@ -693,6 +693,40 @@ def bh23_khong_dashboard_nao_bi_loai_im_lang():
     return True, f"{len(ds)}/{len(ds)} dashboard đều nằm trong đăng ký chủ đề"
 
 
+def bh24_doi_ghi_dang_url_van_qua_crossref():
+    """14/08 — cùng một nguồn, chỉ khác CÁCH GHI, nhận hai mức bảo đảm khác hẳn.
+
+    Mục `doi:` được xác minh METADATA qua Crossref; mục `url:` chỉ được kiểm "địa
+    chỉ có phản hồi". Nhưng **17 định danh** trong kho là DOI viết dạng
+    `https://doi.org/10.…` nên rơi vào nhánh yếu — và mức yếu hơn đó **không hề được
+    nói ra**. Hệ đưa ra một bảo đảm THẤP HƠN mức nó ngụ ý.
+
+    Nay nhận diện link doi.org, rút DOI và xác minh qua Crossref; Crossref không
+    phân giải được thì LÙI về kiểm HTTP — đúng mức bảo đảm cũ, không tự hạ thành
+    "chưa xác minh" (HTTP vẫn là bằng chứng thật, chỉ yếu hơn).
+
+    Kiểm HÀNH VI: regex rút DOI phải đúng trên link doi.org và link `/doi/` của nhà
+    xuất bản, và KHÔNG bắt nhầm URL không phải DOI.
+    """
+    import re as _re
+    m = _nap(REPO / "tools/so_xac_minh_nguon.py", "sx_bh24")  # noqa: F841 — chỉ để chắc file còn chạy được
+    MAU = r"(?:doi\.org/|/doi/)(10\.\d{4,9}/\S+)"
+    ca = [("https://doi.org/10.1016/j.jacc.2026.03.056", "10.1016/j.jacc.2026.03.056"),
+          ("https://www.ahajournals.org/doi/10.1161/STR.0000000000000375",
+           "10.1161/STR.0000000000000375"),
+          ("https://www.ema.europa.eu/en/news/abc", None),
+          ("https://pubmed.ncbi.nlm.nih.gov/12345678/", None)]
+    for u, mong in ca:
+        g = _re.search(MAU, u)
+        if (g.group(1) if g else None) != mong:
+            return False, f"rút DOI sai từ {u[:44]!r}"
+    src = (REPO / "tools/so_xac_minh_nguon.py").read_text(encoding="utf-8")
+    if "doi_rut_tu_url" not in src:
+        return False, ("mất nhánh nâng cấp DOI-trong-URL — nguồn lại bị xác minh "
+                       "yếu hơn mức hệ ngụ ý")
+    return True, "DOI ghi dạng URL vẫn được xác minh qua Crossref"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -717,6 +751,7 @@ BAI_HOC = [
     ("BH21", "14/08", "Mọi parser đều gộp chuỗi nối JS", bh21_moi_parser_deu_gop_chuoi_noi),
     ("BH22", "14/08", "Không đẩy file sao lưu vào nơi chạy", bh22_khong_day_file_sao_luu_vao_noi_chay),
     ("BH23", "14/08", "Không dashboard nào bị loại im lặng", bh23_khong_dashboard_nao_bi_loai_im_lang),
+    ("BH24", "14/08", "DOI ghi dạng URL vẫn qua Crossref", bh24_doi_ghi_dang_url_van_qua_crossref),
 ]
 
 
