@@ -312,17 +312,69 @@ NORMATIVE_BASES = {
 NORMATIVE_DESIGN_PREFIXES = ("guideline", "nhãn thuốc", "nhan thuoc")
 
 
+# Dấu hiệu VĂN BẢN cho thấy nguồn tuyên bố khuyến cáo MẠNH. Cố ý đòi bằng chứng
+# nguyên văn thay vì tin nhãn `normativeBasis`: nhãn thì ai gõ cũng được, còn câu
+# trích từ nguồn thì phải có thật. Danh sách khớp quy ước của các hệ lớn —
+# Endocrine Society/ACP ("we recommend" = mạnh, "we suggest" = yếu), GRADE 1A/1B/1C,
+# và cách diễn đạt tiếng Việt đã dùng trong kho.
+_MANH_RE = re.compile(
+    r"we recommend|strong(ly)? recommend|strong recommendation|khuyến cáo mạnh|"
+    r"mức độ mạnh|grade\s*1[abc]?\b|class\s*i\b|loại\s*i\b|(?<![a-z])1[abc](?![a-z])",
+    re.I)
+# Dấu hiệu NGƯỢC LẠI — nguồn tự nói CÓ ĐIỀU KIỆN/YẾU. Xuất hiện là KHÔNG miễn, kể
+# cả khi câu khác trong cùng trường có chữ "recommend".
+_CO_DIEU_KIEN_RE = re.compile(
+    r"có điều kiện|conditional|we suggest|weak recommendation|khuyến cáo yếu|"
+    r"grade\s*2[abc]?\b", re.I)
+
+
+def _co_bang_chung_khuyen_cao_manh(grade_source):
+    """`gradeSource` có TRÍCH ĐƯỢC bằng chứng nguồn tuyên bố khuyến cáo MẠNH không?
+
+    Fail-closed: không có bằng chứng → False. Có dấu hiệu CÓ ĐIỀU KIỆN → False luôn,
+    vì khi hai dấu hiệu cùng xuất hiện thì mức thấp hơn mới là mức an toàn để tin.
+    """
+    t = grade_source or ""
+    if not t.strip():
+        return False
+    if _CO_DIEU_KIEN_RE.search(t):
+        return False
+    return bool(_MANH_RE.search(t))
+
+
 def normative_exemption(design, grade, normative_basis, grade_source):
     """Item có được miễn luật 'apply cần gradeLevel mạnh' vì là nguồn QUY PHẠM không?
 
     Trả về (được_miễn, lý_do_không_miễn). Lý do dùng để báo cho người soạn biết
     còn thiếu gì, thay vì im lặng từ chối.
     """
-    if grade != "na":
-        return False, None  # 'low'/'vlow' là nguồn ĐÃ tự phân hạng thấp — không miễn
+    # VÁ 14/08/2026 — TÁCH HAI TRỤC MÀ GRADE CỐ Ý TÁCH.
+    # Bản cũ: `grade != "na"` ⇒ chặn thẳng. Nhưng GRADE có HAI trục ĐỘC LẬP:
+    #   • ĐỘ MẠNH khuyến cáo : strong (1) vs conditional (2)
+    #   • CHẤT LƯỢNG chứng cứ: high / moderate / low / very low
+    # Một khuyến cáo MẠNH trên chứng cứ chất lượng THẤP là kết quả GRADE hợp lệ và
+    # phổ biến — đúng những tình huống đe doạ tính mạng mà bỏ sót thì tai hoạ.
+    # Ca thật: `SuyTim_NoiTiet ITEM-05` (nhận biết khủng hoảng thượng thận). Hướng dẫn
+    # Endocrine Society (PMID 26760044, doi:10.1210/jc.2015-1710) dùng GRADE và viết
+    # "We recommend" = khuyến cáo MẠNH, trong khi chất lượng chứng cứ chỉ ở mức thấp.
+    # Cổng cũ ép một lựa chọn SAI CẢ HAI ĐƯỜNG: giữ `low` thì bị chặn dù nguồn nói
+    # MẠNH; đổi sang `na` thì NÓI SAI về nguồn (nguồn CÓ phân hạng).
+    #
+    # Nay: chứng cứ chất lượng thấp VẪN được miễn NẾU nguồn tuyên bố khuyến cáo MẠNH,
+    # và điều đó phải có BẰNG CHỨNG VĂN BẢN trong `gradeSource` — không chấp nhận chỉ
+    # dán nhãn. Khuyến cáo CÓ ĐIỀU KIỆN (ACR "conditional") vẫn bị chặn như cũ.
+    # Kiểm `design` TRƯỚC mọi nhánh khác. Bản đầu của chính bản vá này đặt nhánh
+    # low/vlow lên trên và trả True sớm ⇒ MỞ LẠI đúng lỗ hổng BH03 đã bịt: một văn
+    # bản `Consensus` gõ thêm nhãn `guideline-strong-rec` là đi qua cổng. Bắt được
+    # nhờ ca biên "Consensus → PHẢI chặn" trong bộ kiểm 7 ca.
     d = (design or "").strip().lower()
     if not any(d.startswith(p) for p in NORMATIVE_DESIGN_PREFIXES):
         return False, None  # không phải văn bản quy phạm → giữ luật gốc
+    if grade != "na":
+        if grade in ("low", "vlow") and normative_basis == "guideline-strong-rec" \
+                and _co_bang_chung_khuyen_cao_manh(grade_source):
+            return True, None
+        return False, None  # nguồn tự phân hạng thấp mà KHÔNG tuyên bố mạnh → không miễn
     if not normative_basis:
         return False, ("thiếu normativeBasis — nguồn quy phạm muốn giữ 'apply' phải khai "
                        "tường minh loại quy phạm (%s)" % "/".join(sorted(NORMATIVE_BASES)))

@@ -748,6 +748,43 @@ def bh24_doi_ghi_dang_url_van_qua_crossref():
     return True, "gọi thật: DOI-trong-URL → crossref; URL thường → http"
 
 
+def bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu():
+    """14/08 — cổng GỘP hai trục mà GRADE cố ý TÁCH.
+
+    GRADE có hai trục ĐỘC LẬP: ĐỘ MẠNH khuyến cáo (strong/conditional) và CHẤT
+    LƯỢNG chứng cứ (high…very low). Một khuyến cáo MẠNH trên chứng cứ chất lượng
+    THẤP là kết quả hợp lệ và phổ biến — đúng những tình huống đe doạ tính mạng.
+
+    Cổng cũ chặn thẳng mọi `gradeLevel` khác `na`, nên ép một lựa chọn SAI CẢ HAI
+    ĐƯỜNG với `SuyTim_NoiTiet ITEM-05` (nhận biết khủng hoảng thượng thận): giữ
+    `low` thì bị chặn dù Endocrine Society viết "We recommend" (= MẠNH); đổi sang
+    `na` thì NÓI SAI về nguồn (nguồn CÓ dùng GRADE).
+
+    Miễn trừ mới đòi BẰNG CHỨNG VĂN BẢN, không chấp nhận chỉ dán nhãn; và khuyến
+    cáo CÓ ĐIỀU KIỆN vẫn bị chặn. Bản đầu của chính bản vá này đặt nhánh mới lên
+    TRƯỚC phép kiểm `design` ⇒ mở lại lỗ hổng BH03 (Consensus đi qua cổng) — bắt
+    được nhờ ca biên, đã sửa thứ tự.
+    """
+    vd = _nap(DASH / "tools/verify_dashboard.py", "vd_bh25")
+    ca = [("Guideline", "low", "guideline-strong-rec",
+           'Endocrine Society dùng GRADE; "We recommend" = MẠNH', True),
+          ("Guideline", "low", "guideline-strong-rec",
+           "ACR 2021 — khuyến cáo CÓ ĐIỀU KIỆN", False),
+          ("Guideline", "low", "guideline-strong-rec", "", False),
+          ("Guideline", "low", "drug-label", '"We recommend"', False),
+          ("Consensus", "low", "guideline-strong-rec", '"We recommend"', False),
+          ("Consensus", "na", "guideline-strong-rec", "x", False),
+          ("Guideline", "na", "drug-label", "Boxed Warning FDA", True),
+          ("Guideline", "vlow", "guideline-strong-rec",
+           "GRADE 1C — strong recommendation", True)]
+    for d, g, b, gs, mong in ca:
+        duoc, _ = vd.normative_exemption(d, g, b, gs)
+        if duoc != mong:
+            return False, (f"design={d} grade={g} basis={b}: {'miễn' if duoc else 'chặn'} "
+                           f"(cần {'miễn' if mong else 'chặn'})")
+    return True, "tách đúng hai trục; Consensus và conditional vẫn bị chặn"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -773,6 +810,7 @@ BAI_HOC = [
     ("BH22", "14/08", "Không đẩy file sao lưu vào nơi chạy", bh22_khong_day_file_sao_luu_vao_noi_chay),
     ("BH23", "14/08", "Không dashboard nào bị loại im lặng", bh23_khong_dashboard_nao_bi_loai_im_lang),
     ("BH24", "14/08", "DOI ghi dạng URL vẫn qua Crossref", bh24_doi_ghi_dang_url_van_qua_crossref),
+    ("BH25", "14/08", "Tách độ mạnh khuyến cáo khỏi chất lượng chứng cứ", bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu),
 ]
 
 

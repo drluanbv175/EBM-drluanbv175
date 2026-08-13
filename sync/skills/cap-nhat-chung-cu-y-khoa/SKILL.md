@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.31.0
+  version: 1.32.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -790,6 +790,36 @@ mà luật 2 của chính file chốt cấm, và tôi vừa mắc nó khi viết
 Đã thêm **luật 4** vào `chot_hoi_quy_bai_hoc.py`: *phải THỰC SỰ GỌI vào đường mã mình canh*.
 BH24 nay dùng một `vd` giả NGOẠI TUYẾN để đi hết nhánh `url → doi`, và sẽ đỏ ngay với lỗi kiểu
 `NameError`. Kiểm lại: DOI-trong-URL → `crossref` kèm DOI đã rút; URL thường → `http`.
+
+**(s) BH25 — cổng GỘP hai trục mà GRADE cố ý TÁCH. Phát hiện quan trọng nhất về mặt khái niệm.**
+
+GRADE có **hai trục ĐỘC LẬP**:
+
+| Trục | Giá trị |
+|---|---|
+| **Độ MẠNH khuyến cáo** | strong (1) · conditional (2) |
+| **Chất lượng CHỨNG CỨ** | high · moderate · low · very low |
+
+Một **khuyến cáo MẠNH trên chứng cứ chất lượng THẤP** là kết quả GRADE hợp lệ và phổ biến —
+đúng những tình huống đe doạ tính mạng mà bỏ sót thì tai hoạ.
+
+Cổng cũ chặn thẳng mọi `gradeLevel` khác `na`, nên ép một lựa chọn **sai cả hai đường** với
+`SuyTim_NoiTiet ITEM-05` (nhận biết khủng hoảng thượng thận):
+• giữ `low` → bị chặn, dù Endocrine Society viết nguyên văn **"We recommend"** (= MẠNH);
+• đổi sang `na` → **nói sai về nguồn**, vì hướng dẫn đó *có* dùng GRADE.
+
+Nay chứng cứ chất lượng thấp **vẫn được miễn NẾU** nguồn tuyên bố khuyến cáo MẠNH, và điều đó
+phải có **bằng chứng văn bản** trong `gradeSource` (`"we recommend"`, `GRADE 1A/1B/1C`, "khuyến
+cáo mạnh"…) — không chấp nhận chỉ dán nhãn. Dấu hiệu **CÓ ĐIỀU KIỆN** xuất hiện là chặn ngay,
+kể cả khi cùng trường có chữ "recommend": khi hai dấu hiệu cùng có, mức thấp hơn mới đáng tin.
+
+⚠️ **Bản đầu của chính bản vá này đặt nhánh mới TRƯỚC phép kiểm `design`** ⇒ mở lại đúng lỗ hổng
+**BH03** (một văn bản `Consensus` gõ thêm nhãn là đi qua cổng). Bắt được nhờ ca biên trong bộ
+kiểm 9 ca, đã sửa thứ tự. Bài học: **nới một cổng an toàn thì phải chạy lại TOÀN BỘ ca biên cũ,
+không chỉ ca mới.**
+
+**Đã áp cho ITEM-05:** `gradeSource` sửa cho đúng nguồn, khai `normativeBasis:"guideline-strong-rec"`,
+**giữ nguyên `gradeLevel:'low'`** — không falsify. Bản đó nay 0 mục bị chặn.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
