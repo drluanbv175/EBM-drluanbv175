@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.16.0
+  version: 1.17.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -504,6 +504,29 @@ sự có mặt của câu chữ — đếm chuỗi chính là bẫy TAUTOLOGY đ
 *Bắt được ngay lần chạy đầu:* `tools/run_retraction_and_med_safety.py` ghi cứng
 `C:/Users/Admin/...` nên **chưa từng chạy được trên Mac** — cùng lớp lỗi với
 `ensure_strict_source.py`, và nằm đúng trong công cụ kiểm RÚT BÀI. Đã vá.
+
+**(d) Hai lỗi PHÂN LOẠI NGUỒN tìm được ở đợt kiểm toàn diện 13/08 — cùng một lớp:
+giả định ngầm bị vỡ trong im lặng.**
+
+**BH11 — tool skill 3 bản, runtime đi TRƯỚC nguồn.** 4 tool (`build_library`,
+`dashboard_content_audit`, `drug_safety_scan`, `make_derivatives`) tồn tại ở
+`EBM-Dashboards/tools` (runtime) · `sync/skills/.../tools` (nguồn git) ·
+`EBM_MASTER/skill_assets` (mirror hub). Runtime có **11 dòng riêng**, nguồn có **0** —
+11 dòng đó là **bản vá UTF-8 cho Windows** (stdout cp1252 làm `print()` tiếng Việt ném
+UnicodeEncodeError và giết tiến trình SAU KHI việc đã xong; đo 12/08: bản Word 82 KB đã
+ghi ra đĩa mà tool thoát mã 1 ⇒ caller tưởng hỏng, bỏ 2 bước sau).
+**Đẩy nguồn→runtime theo phản xạ sẽ XOÁ bản vá khỏi cả 4 tool.** Chiều đúng quyết theo
+NỘI DUNG (bên nào bao trùm), không theo mtime, cũng không theo "nguồn luôn thắng runtime".
+
+**Dương tính giả "WHO" — bài thường bị NÂNG thành nguồn chính thức.**
+`match_authority_source()` lọc tham số rỗng TRƯỚC rồi mới cắt `blobs[:2]` làm vùng kiểm
+alias mơ hồ. Khi `authors` rỗng thì **`title` trượt lên vị trí 2**, nên chữ "who" trong
+câu tiếng Anh khớp alias WHO:
+`detect_official_org("patients who underwent surgery", journal="J Surg") → 'WHO'`.
+Hệ quả: một bài bất kỳ có chữ "who" trong tiêu đề được phân loại là Tổ chức Y tế Thế
+giới — đúng loại dương tính giả mà lớp alias mơ hồ sinh ra để chặn, và nó nâng hạng
+nguồn chứ không hạ. Vá bằng cách **giữ nguyên vị trí** (đệm chuỗi rỗng) rồi mới lấy 2 vị
+trí đầu. Kiểm: `pytest tests/test_group_c_scoring.py`.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

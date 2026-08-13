@@ -15,6 +15,19 @@ LƯU Ý LIÊM CHÍNH: tờ dặn & TikTok là BẢN NHÁP — rà lại để b�
 """
 import sys, os, re, argparse
 
+# Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
+# ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong. Đo thật
+# ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
+# tool thoát mã 1 ở đúng dòng print cuối ⇒ caller đọc mã thoát, tưởng hỏng, bỏ luôn 2
+# bước sau. Cùng lớp lỗi đã vá cho tools/vietnamize/.
+import sys as _sys_utf8
+for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
 GRADE = {"high": "Cao", "mod": "Trung bình", "low": "Thấp", "vlow": "Rất thấp", "na": "Không phân hạng"}
 DEC = {"apply": "Áp dụng ngay", "consider": "Cân nhắc", "notyet": "Chưa đủ"}
 

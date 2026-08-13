@@ -244,6 +244,46 @@ def bh10_ba_viec_cam_van_bi_cam():
     return True, "không công cụ nào tự ghi decision/gradeLevel"
 
 
+def bh11_tool_skill_ba_ban_khop_va_co_va_utf8():
+    """13/08 — 4 tool của skill `cap-nhat-chung-cu-y-khoa` tồn tại ở BA nơi, và bản
+    ở `EBM-Dashboards/tools` (runtime) đi trước nguồn 11 dòng.
+
+    11 dòng đó là **bản vá UTF-8 cho Windows**: stdout mặc định cp1252 làm mọi
+    `print()` tiếng Việt ném UnicodeEncodeError và GIẾT tiến trình — thường SAU KHI
+    công việc đã xong (đo 12/08: bản Word 82 KB đã ghi ra đĩa nhưng tool thoát mã 1
+    ở đúng dòng print cuối ⇒ caller tưởng hỏng, bỏ luôn 2 bước sau).
+
+    NGUY HIỂM CỦA VIỆC "ĐỒNG BỘ" MÙ: nguồn có 0 dòng riêng, runtime có 11 — đẩy
+    nguồn→runtime theo phản xạ sẽ XOÁ bản vá khỏi cả 4 tool và tái sinh đúng lỗi cũ.
+    Chiều đúng phải quyết theo NỘI DUNG (bên nào bao trùm), không theo mtime, cũng
+    không theo "nguồn thì luôn thắng runtime".
+
+    Chốt này canh HAI điều: ba bản khớp md5, VÀ cả ba đều còn bản vá UTF-8.
+    """
+    import hashlib
+    TEN = ["build_library", "dashboard_content_audit", "drug_safety_scan", "make_derivatives"]
+    NOI = ["EBM-Dashboards/tools/{}.py",
+           "sync/skills/cap-nhat-chung-cu-y-khoa/tools/{}.py",
+           "EBM_MASTER/skill_assets/{}.py"]
+    lech, mat_va = [], []
+    for t in TEN:
+        ps = [REPO / n.format(t) for n in NOI]
+        co = [p for p in ps if p.exists()]
+        if len(co) < 2:
+            continue
+        if len({hashlib.md5(p.read_bytes()).hexdigest() for p in co}) != 1:
+            lech.append(t)
+        for p in co:
+            if "reconfigure(encoding=" not in p.read_text(encoding="utf-8", errors="replace"):
+                mat_va.append(f"{p.parent.name}/{t}")
+    if lech:
+        return False, "3 bản lệch nhau: " + ", ".join(lech)
+    if mat_va:
+        return False, ("MẤT bản vá UTF-8 (sẽ chết giữa chừng trên Windows): "
+                       + ", ".join(mat_va[:4]))
+    return True, f"{len(TEN)} tool × 3 nơi khớp md5, đều còn bản vá UTF-8"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -255,6 +295,7 @@ BAI_HOC = [
     ("BH08", "12/08", "Không gộp 'không biết' với 'có vấn đề'", bh08_khong_gop_khong_biet_voi_co_van_de),
     ("BH09", "13/08", "Skill sửa ở nguồn tới được nơi chạy", bh09_skill_toi_duoc_noi_chay),
     ("BH10", "13/08", "Ba việc lâm sàng vẫn bị cấm tự động", bh10_ba_viec_cam_van_bi_cam),
+    ("BH11", "13/08", "Tool skill 3 bản khớp + còn vá UTF-8", bh11_tool_skill_ba_ban_khop_va_co_va_utf8),
 ]
 
 

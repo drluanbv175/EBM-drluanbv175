@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 12,
-    "partial": 1,
+    "strong": 13,
+    "partial": 0,
     "weak": 0,
     "total": 13
   },
@@ -135,7 +135,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 839 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1184 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -205,7 +205,7 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 238 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 243 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
@@ -253,8 +253,8 @@
       "id": "S2",
       "name": "Phối hợp giữa các agent",
       "level": "system",
-      "status": "partial",
-      "passed": 5,
+      "status": "strong",
+      "passed": 6,
       "total": 6,
       "probes": [
         {
@@ -274,8 +274,8 @@
           "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: LỖI chạy (Command '['/Users/nguyenluan/.ebm-venv/bin/python', '/Users/)"
+          "ok": true,
+          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
