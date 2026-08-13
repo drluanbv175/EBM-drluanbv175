@@ -113,6 +113,23 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 3 plugin · 668 skill (`tools/moc_chuan_plugin.json`)
   — đúng chủ ý của bác sĩ (3 bật + 8 medsci trùng đã tắt), KHÁC Mac (10 plugin · 870 skill) vì hai
   máy cài khác nhau, nên **mỗi máy tự `--ghi-moc` riêng, đừng chép mốc qua lại**.
+- **🔴 SKILL SỬA Ở `sync/skills/` KHÔNG TỰ TỚI NƠI CHẠY (tìm ra 2026-08-13).**
+  Lệnh `/anthropic-skills:<tên>` chạy bản nằm ở `~/Library/Application Support/Claude/
+  local-agent-mode-sessions/skills-plugin/<uuid>/<uuid>/skills/<tên>/` — **không có cơ chế nào tự
+  đẩy** từ `sync/skills/` sang đó. Đo ngày 13/08: **20/22 skill riêng đang chạy bản khác nguồn**,
+  chỉ 2 khớp; `cap-nhat-chung-cu-y-khoa` chạy **v1.12.0** trong khi nguồn đã **v1.15.0** — toàn bộ
+  bản vá cổng nguồn, bài học "73 mục bị che" và `13-source-universe.md` đều CHƯA tới nơi bác sĩ gọi.
+  Đây là lời giải cho lớp bực bội "gọi skill mà nhận hành vi cũ".
+  **Công cụ:** `python3 tools/dong_bo_skill.py` (xem trước) · `--ap-dung` (đẩy thật, có sao lưu) ·
+  `--im-khi-on` (đã nối vào hook `SessionStart`). Sau đợt 13/08: **22 khớp · 0 cần đẩy · 14 giữ lại**.
+  ⚠️ **Quyết định chiều theo NỘI DUNG, KHÔNG theo `mtime`.** 6 skill từng có mtime runtime mới hơn
+  (đều đúng mốc `21/06 18:12`) — đó là dấu thời gian **dựng lại hàng loạt**, không phải nội dung mới;
+  kiểm nội dung thì runtime có **0 dòng riêng** còn nguồn nhiều hơn 1388 byte. Tin mtime sẽ chặn oan
+  hoặc tệ hơn là ghi đè mất bản đầy đủ.
+  **Hai luật của công cụ:** (a) runtime không có dòng riêng → nguồn bao trùm → đẩy; (b) runtime CÓ
+  dòng riêng → chặn, TRỪ KHI nguồn có số phiên bản CAO HƠN (một lần tăng version là tuyên bố "bản
+  này thay bản kia" — vẫn sao lưu trước khi ghi). Không có version ở một bên → không suy đoán, giữ
+  nguyên chặn. **14 skill đang bị giữ lại chính là nhóm không tuyên bố version** — cần bác sĩ xem tay.
 - **CHỐT KIỂM KHO CÔNG CỤ — tự chạy mỗi phiên (mới 2026-08-10).**
   `python3 tools/kiem_plugin_day_du.py` (0=🟢 · 1=🟡 · 2=🔴). Đã nối vào hook `SessionStart`
   ở `.claude/settings.json` với cờ `--im-khi-on` ⇒ **chỉ lên tiếng khi kho THIẾU**, im lặng khi đủ.
