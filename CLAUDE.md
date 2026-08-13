@@ -490,10 +490,43 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   **Bài học chung: báo động giả còn tệ hơn không kiểm, vì nó làm mất niềm tin vào cảnh báo thật.**
   Mỗi khi công cụ báo bất thường HÀNG LOẠT, kiểm chứng chéo trước khi tin.
 
-  ⚠️ **CÒN CHẶN: NCBI đang CHẶN máy này** ⇒ chưa tra cứu rút bài thật được. Cần bác sĩ đăng ký
-  **NCBI API key** (miễn phí, tại tài khoản NCBI) rồi thêm `NCBI_API_KEY=...` vào
-  `~/.ebm-secrets/medical-ebm-automation.env`. Chưa có key thì mọi PMID giữ nguyên trạng thái
-  **CHƯA kiểm rút bài** — fail-closed, KHÔNG bị coi là sạch.
+  ✅ **HẾT PHỤ THUỘC NCBI API KEY (14/08/2026) — kiểm rút bài nay đi qua CHUỖI 3 TẦNG.**
+  Ghi chú cũ ở đây nói "NCBI chặn ⇒ chưa tra cứu rút bài thật được, phải có API key" — **nay
+  KHÔNG còn đúng**. Vấn đề thật chưa bao giờ là thiếu khoá mà là **ĐƠN NGUỒN**: chỉ có đúng một
+  đường ra NCBI, nên một nhà cung cấp chặn là mất hẳn năng lực. `app/sources/retraction_chain.py`:
+  **① Retraction Watch (Crossref, CC0) — NGOẠI TUYẾN**, tải một lần bằng
+  `python medical-ebm-automation/tools/tai_retraction_watch.py` (63 MB, 71.778 dòng → **30.851
+  PMID có phán quyết**), không khoá, không hạn mức, không IP nào chặn được; làm mới 30 ngày/lần
+  (cache đã gitignore — là dữ liệu sinh lại được, không phải mã nguồn) ·
+  **② NCBI E-utilities** giữ nguyên, dùng khi chạy được · **③ Europe PMC** không cần khoá, soi
+  lại chính chỉ mục MEDLINE. `so_xac_minh_nguon.py` và `check_citation_retraction.py` đều đã
+  chuyển sang chuỗi này. Đo thật bằng 2 PMID biết trước đáp án: NCBI chặn hoàn toàn → Europe PMC
+  vẫn trả đúng cả hai; mất mạng hoàn toàn → nền ngoại tuyến vẫn bắt được bài đã rút. Muốn tự đo
+  lại: `python3 tools/do_nguon_rut_bai.py`.
+  **LUẬT GỘP bất đối xứng, đừng đảo:** tín hiệu **DƯƠNG** (đã rút/EoC) từ **bất kỳ** nguồn nào là
+  nhận; tín hiệu **ÂM** ("ok") **chỉ** nguồn đã THỰC SỰ lấy được bản ghi mới được phát — Retraction
+  Watch **vĩnh viễn không được nói "ok"** vì vắng mặt trong danh mục là *danh mục im lặng*, không
+  phải *bài còn nguyên vẹn*. Không nguồn nào kết luận được ⇒ giữ KHÔNG BIẾT (fail-closed).
+
+  🔴 **VÁ FAIL-OPEN TRONG CỔNG A12 cùng ngày — đã tái hiện được, không phải suy đoán.** Trạng thái
+  `unknown_fetch_error` ra đời 12/08 để tách "KHÔNG BIẾT" khỏi "nghi trích dẫn ma", nhưng tập tiêu
+  thụ `_PROBLEM_STATUSES` **không được cập nhật theo** ⇒ khi NCBI chặn (đúng tình trạng máy này),
+  MỌI PMID nhận `unknown_fetch_error`, không cái nào bị tính là vấn đề, **`all_clean=true` được ghi
+  VÀ KÝ vào `A12_RETRACTION_RECEIPT.json`**, CLI in "✅ Không phát hiện rút bài" và thoát 0 —
+  `run_g10_assemble.py` (dòng ~1895) chỉ chặn khi `all_clean is not True`, nên **gói nộp đi qua cổng
+  A12 trong khi KHÔNG một trích dẫn nào được kiểm**. Cùng lớp lỗi với `return` sớm ngày 12/08: cổng
+  báo "đạt" vì chưa hề chạy tới luật cần chạy. Khoá bằng **BH27**, đã kiểm bằng 2 phép đột biến.
+
+  🔴 **PHÁT HIỆN LÂM SÀNG NGAY LẦN CHẠY ĐẦU — và nó chứng minh vì sao phải đa nguồn.** Quét 57
+  dashboard (562 PMID) với nền ngoại tuyến: `WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20260716`
+  **ITEM-05** ("TDF liên quan nguy cơ HCC thấp hơn Entecavir") trích **PMID 30267080** (Choi và cs.,
+  JAMA Oncology) — Retraction Watch ghi **Retraction 25/04/2019, lý do "Error in Data; Retract and
+  Replace"**, thông báo PMID 31021386 / doi:10.1001/jamaoncol.2019.0576. **CẢ PubMed LẪN Europe PMC
+  đều trả `ok` cho PMID này** ⇒ thiết kế đơn nguồn cũ **sẽ không bao giờ bắt được, kể cả khi đã có
+  NCBI API key**. ⚠️ Đọc đúng mức: đây là **"rút và thay"**, tức bài đã được SỬA rồi đăng lại —
+  KHÁC bài bị rút bỏ hẳn, nên **không được xử lý như nhau**; việc cần làm là đối chiếu số liệu
+  ITEM-05 với **bản đã thay**, không phải xoá mục. Chưa sửa — chờ bác sĩ (đổi `decision` là thẩm
+  quyền bác sĩ).
 
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
