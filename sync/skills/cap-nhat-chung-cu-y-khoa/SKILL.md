@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.28.0
+  version: 1.29.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -740,6 +740,22 @@ git** — repo sạch. Rào chắn ở tầng git đã đúng; chỗ hở nằm 
 > **Bài học:** bộ lọc phải kiểm ĐÚNG TRỤC. `BO_QUA` kiểm *thành phần đường dẫn* (`__pycache__`)
 > nhưng thứ cần chặn lại là *mẫu tên file* — hai trục khác nhau, và một bộ lọc đúng trục này
 > im lặng vô dụng ở trục kia.
+
+**(p) BH23 — một dashboard bị LOẠI IM LẶNG khỏi đăng ký chủ đề.**
+
+`tach_ten()` bắt buộc dạng `<nhóm>_<chủ-đề>_<ngày>`, nên `WebDashboard_EBM_Uptodate_20260607.html`
+(không có phần chủ đề) KHÔNG khớp regex và bị bỏ qua — **vô hình luôn với phần dò mâu thuẫn**.
+Đo được **61/62** tách được, đúng một bản rơi ra mà **không một dòng báo**.
+
+Nay phần tên chủ đề là TUỲ CHỌN; thiếu thì lấy chính tên nhóm làm lát cắt. Sau vá **62/62**, và
+số mâu thuẫn **không đổi (12)** — tức vá không sinh dương tính giả.
+
+Chốt BH23 kiểm trên dữ liệu SỐNG: **mọi** dashboard trong kho phải tách được tên, nên một quy
+ước đặt tên mới trong tương lai sẽ đỏ ngay thay vì lặng lẽ rơi ra.
+
+> **Ba lỗi BH16 · BH22 · BH23 cùng một họ:** thứ bị loại thầm lặng nguy hiểm hơn thứ báo lỗi,
+> vì **không ai đi tìm cái mình không biết là đang thiếu**. Với mọi bộ lọc/regex/danh sách, phải
+> hỏi: *"cái gì rơi ra khỏi đây, và tôi có được báo không?"*
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

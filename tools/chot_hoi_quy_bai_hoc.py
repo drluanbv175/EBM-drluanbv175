@@ -669,6 +669,30 @@ def bh22_khong_day_file_sao_luu_vao_noi_chay():
     return True, "lọc đúng theo tên file; nơi chạy sạch file sao lưu"
 
 
+def bh23_khong_dashboard_nao_bi_loai_im_lang():
+    """14/08 — regex tên file loại IM LẶNG một dashboard khỏi đăng ký chủ đề.
+
+    `tach_ten()` bắt buộc dạng `<nhóm>_<chủ-đề>_<ngày>`, nên
+    `WebDashboard_EBM_Uptodate_20260607.html` (không có phần chủ đề) KHÔNG khớp và
+    bị bỏ qua — **vô hình luôn với phần dò mâu thuẫn**. Đo được 61/62 tách được,
+    đúng một bản rơi ra mà **không một dòng báo**: nó trông hệt như "đã kiểm hết".
+
+    Cùng họ với BH16 (chốt biến mất) và BH22 (lọc sai trục): thứ bị loại thầm lặng
+    nguy hiểm hơn thứ báo lỗi, vì không ai đi tìm cái mình không biết là đang thiếu.
+
+    Kiểm HÀNH VI trên dữ liệu SỐNG: MỌI dashboard trong kho phải tách được tên.
+    """
+    m = _nap(REPO / "tools/dang_ky_chu_de.py", "dkcd_bh23")
+    ds = sorted(DASH.glob("WebDashboard_*.html"))
+    if not ds:
+        return True, "kho chưa có dashboard nào"
+    hong = [p.name for p in ds if m.tach_ten(p.name) is None]
+    if hong:
+        return False, (f"{len(hong)}/{len(ds)} dashboard bị LOẠI IM LẶNG khỏi đăng ký "
+                       f"chủ đề (vô hình với dò mâu thuẫn): {', '.join(hong[:3])}")
+    return True, f"{len(ds)}/{len(ds)} dashboard đều nằm trong đăng ký chủ đề"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -692,6 +716,7 @@ BAI_HOC = [
     ("BH20", "14/08", "Tự khởi động cũng đọc KẾT QUẢ (vá dở dang)", bh20_tu_khoi_dong_cung_doc_ket_qua),
     ("BH21", "14/08", "Mọi parser đều gộp chuỗi nối JS", bh21_moi_parser_deu_gop_chuoi_noi),
     ("BH22", "14/08", "Không đẩy file sao lưu vào nơi chạy", bh22_khong_day_file_sao_luu_vao_noi_chay),
+    ("BH23", "14/08", "Không dashboard nào bị loại im lặng", bh23_khong_dashboard_nao_bi_loai_im_lang),
 ]
 
 

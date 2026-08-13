@@ -95,11 +95,19 @@ def tach_ten(ten: str) -> tuple[str, str, str] | None:
     bản về đối tượng đặc biệt ra sau — khiến bác sĩ bỏ qua đúng bản mình cần. Đó
     là làm GIẢM an toàn, tức chính thứ công cụ này sinh ra để ngăn.
     """
-    m = re.match(r"WebDashboard_EBM_(?:VanDeCuThe|Uptodate|CapNhatTuan|AnToanThuoc|"
-                 r"CongCuKeDon)_(.+?)_(\d{8})\.html$", ten)
+    # VÁ 14/08/2026 — phần TÊN CHỦ ĐỀ nay là TUỲ CHỌN.
+    # Bản cũ bắt buộc `<nhóm>_<chủ-đề>_<ngày>`, nên một file như
+    # `WebDashboard_EBM_Uptodate_20260607.html` (không có phần chủ đề) KHÔNG khớp
+    # và bị LOẠI IM LẶNG khỏi đăng ký chủ đề — vô hình luôn với phần dò mâu thuẫn.
+    # Đo thật: 61/62 dashboard tách được, đúng 1 bản rơi ra mà không một dòng báo.
+    # Không có gì báo lỗi, nên nó trông hệt như "đã kiểm hết".
+    m = re.match(r"WebDashboard_EBM_(VanDeCuThe|Uptodate|CapNhatTuan|AnToanThuoc|"
+                 r"CongCuKeDon)_(?:(.+?)_)?(\d{8})\.html$", ten)
     if not m:
         return None
-    lat_cat = m.group(1)
+    # Không có phần chủ đề → lấy chính tên NHÓM làm lát cắt (vd "Uptodate"),
+    # để bản đó vẫn nằm trong đăng ký và vẫn được so mâu thuẫn.
+    lat_cat = m.group(2) or m.group(1)
     goc = HAU_TO.sub("", lat_cat).split("_")[0]
     return lat_cat, goc, m.group(2)
 
