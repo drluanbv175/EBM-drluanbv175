@@ -785,6 +785,39 @@ def bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu():
     return True, "tách đúng hai trục; Consensus và conditional vẫn bị chặn"
 
 
+def bh26_neo_sua_hang_loat_phai_la_chunk_da_parse():
+    """14/08 — khối SCHEMA trong dashboard BẮT CHƯỚC cấu trúc mục, nên neo theo `id`
+    trúng phải TÀI LIỆU thay vì DỮ LIỆU.
+
+    Sửa hàng loạt hôm nay hỏng hai lần theo hai kiểu khác nhau:
+      • neo bằng ~42 ký tự NGỮ CẢNH → trùng giữa các mục (11/14 mục hỏng);
+      • chuyển sang neo theo `{id:'ITEM-xx'}` → vẫn trúng nhầm, vì mỗi dashboard có
+        một khối chú thích schema mở đầu bằng đúng dạng đó
+        (`design:'Guideline'|'Meta'|'RCT'|…`). ITEM-01 khớp 2 chỗ.
+    May là lần đó không hỏng dữ liệu: regex đòi đúng `'Consensus'` nên khối schema
+    không khớp. Nhưng đó là MAY, không phải thiết kế.
+
+    Neo AN TOÀN duy nhất: chính đoạn do `split_items()` trả về — đúng thứ mọi công
+    cụ khác coi là một mục. Chốt này canh tiền đề của cách đó: mỗi đoạn phải XUẤT
+    HIỆN ĐÚNG MỘT LẦN trong file, nếu không thì neo bằng đoạn cũng không an toàn.
+    """
+    vd = _nap(DASH / "tools/verify_dashboard.py", "vd_bh26")
+    xau = []
+    for f in sorted(DASH.glob("WebDashboard_*.html")):
+        t = f.read_text(encoding="utf-8", errors="replace")
+        db = vd.extract_data_block(t)
+        if not db:
+            continue
+        for ch in vd.split_items(db):
+            if t.count(ch) != 1:
+                xau.append(f"{f.name[:30]}/{vd.field(ch, 'id')}")
+                break
+    if xau:
+        return False, ("đoạn mục KHÔNG duy nhất trong file — sửa hàng loạt bằng neo "
+                       "đoạn có thể ghi nhầm: " + ", ".join(xau[:3]))
+    return True, "mọi đoạn mục đều duy nhất — neo bằng chunk đã parse là an toàn"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -811,6 +844,7 @@ BAI_HOC = [
     ("BH23", "14/08", "Không dashboard nào bị loại im lặng", bh23_khong_dashboard_nao_bi_loai_im_lang),
     ("BH24", "14/08", "DOI ghi dạng URL vẫn qua Crossref", bh24_doi_ghi_dang_url_van_qua_crossref),
     ("BH25", "14/08", "Tách độ mạnh khuyến cáo khỏi chất lượng chứng cứ", bh25_tach_do_manh_khuyen_cao_khoi_chat_luong_chung_cu),
+    ("BH26", "14/08", "Neo sửa hàng loạt phải là chunk đã parse", bh26_neo_sua_hang_loat_phai_la_chunk_da_parse),
 ]
 
 

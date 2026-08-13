@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.33.0
+  version: 1.34.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -853,6 +853,31 @@ chắn — và `ViemDaDayThanKinh ITEM-01` vì **AAN Mức C là mức YẾU** t
 mục** (11/14 mục hỏng ở lần đầu). Cách chắc chắn: định vị theo `id` của mục rồi giới hạn phạm vi
 tới `id` kế tiếp mới thay. Sửa dữ liệu y khoa hàng loạt thì neo phải **duy nhất theo cấu trúc**,
 không dựa vào ngữ cảnh văn bản.
+
+**(u) Lô SuyTim + BH26 — mục 'apply' bị chặn: 56 → 49 → 40 → 27 → 16.**
+
+**ITEM-01 (×3 bản) — nâng, GIỮ `apply`:** nguồn là *"AHA/ACC/ESC/WHF Expert Consensus Document:
+**Second Universal Definition** of Heart Failure (2026)"* — đây là **văn bản ĐỊNH NGHĨA** do bốn
+hiệp hội cùng ban hành, đúng loại tiêu chuẩn phân loại (cùng hạng với ICHD-3, ACR/EULAR 2010).
+`design` sửa cho đúng bản chất + `normativeBasis:"official-classification"`.
+
+**ITEM-02 · 37 · 42 — hạ xuống `consider`:**
+• ITEM-02: `gradeSource` **TỰ KHAI** *"là lộ trình đồng thuận, KHÔNG phải guideline có class/level"*
+• ITEM-37: bài báo tạp chí đề xuất khung thích ứng
+• ITEM-42: *position statement* của HFA/ESC — không có class/level
+
+**BH26 — NEO SỬA HÀNG LOẠT.** Hôm nay hỏng **hai lần theo hai kiểu**:
+1. neo bằng ~42 ký tự **ngữ cảnh** → trùng giữa các mục (11/14 mục hỏng);
+2. chuyển sang neo `{id:'ITEM-xx'}` → **vẫn trúng nhầm**, vì mỗi dashboard có một **khối chú
+   thích schema** mở đầu bằng đúng dạng đó (`design:'Guideline'|'Meta'|'RCT'|…`). ITEM-01 khớp
+   **2 chỗ**.
+
+May là lần 2 không hỏng dữ liệu (regex đòi đúng `'Consensus'` nên khối schema không khớp) —
+nhưng đó là **may, không phải thiết kế**. Đã kiểm lại: khối schema nguyên vẹn ở cả 3 file.
+
+> **Neo an toàn duy nhất: chính đoạn do `split_items()` trả về** — đúng thứ mọi công cụ khác
+> coi là một mục. BH26 canh tiền đề của cách đó: mỗi đoạn phải xuất hiện **đúng một lần** trong
+> file, nếu không thì neo bằng đoạn cũng không an toàn.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
