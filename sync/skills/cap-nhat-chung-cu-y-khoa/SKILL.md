@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.23.0
+  version: 1.24.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -648,6 +648,25 @@ hứa) — riêng bước ⑤ PDF vẫn cố ý không đổi mã thoát vì là
 **Không lỗi nào làm test đỏ. Không lỗi nào sai một phép tính.** Chúng chỉ lộ ra khi hỏi
 *"con số này đếm ĐƠN VỊ gì?"*, *"làm theo lời khuyên này có đổi được gì không?"* và
 *"câu tuyên bố này có điều kiện nào không, hay in ra bất kể kết quả?"*.
+
+**(k) BH18 — BÁO ĐỘNG GIẢ trong hàng đợi quyết định của bác sĩ.**
+
+`dang_ky_chu_de.doc_muc()` khoá dict theo PMID, nên khi một dashboard có NHIỀU item cùng
+trích một nguồn thì chỉ item CUỐI theo thứ tự file được giữ — các item khác bị bỏ **im lặng**.
+
+Đó là chuyện BÌNH THƯỜNG, không phải bất thường: một guideline (KDIGO 2024, ACC/AHA…) mang
+hàng chục khuyến cáo, mỗi khuyến cáo có `decision` riêng. Đo được **21 ca** như vậy trong kho.
+
+Hệ quả: phần so mâu thuẫn đem so một item **tuỳ ý** của bản này với một item **tuỳ ý** của bản
+kia ⇒ tuyên bố "hai bản nói ngược nhau" trong khi chúng chỉ nói về **hai khuyến cáo khác nhau
+của cùng một tài liệu**.
+
+Đo toàn kho: **3/224 PMID chung bị ảnh hưởng**, và **2 trong số đó đã bị báo cho bác sĩ như
+mâu thuẫn thật** (BenhThanMan PMID 38490803 · ViemGanB PMID 41186418). Sau vá: **14 → 12**
+mâu thuẫn thật, 3 PMID chuyển sang nhóm riêng *"không so tự động được — bác sĩ đọc tay"*.
+
+> **Luật:** khi gom dữ liệu theo một khoá, hỏi *"khoá này có thật sự DUY NHẤT không?"*. Ở đây
+> PMID là **tài liệu**, không phải **khuyến cáo** — và cả hệ này nói về khuyến cáo.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

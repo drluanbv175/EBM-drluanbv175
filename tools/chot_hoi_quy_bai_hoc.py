@@ -471,6 +471,43 @@ def bh17_tieu_de_bo_nam_noi_dung_su_that():
     return True, "tiêu đề nói đúng số sản phẩm thật sự sinh được"
 
 
+def bh18_giu_moi_item_cung_pmid():
+    """13/08 — `doc_muc()` khoá dict theo PMID nên BỎ IM LẶNG mọi item trùng nguồn.
+
+    Một guideline mang hàng chục khuyến cáo, mỗi khuyến cáo có `decision` riêng —
+    đo được **21 ca** như vậy trong kho. Bản cũ chỉ giữ item CUỐI theo thứ tự file,
+    nên phần so mâu thuẫn đem so một item TÙY Ý của bản này với một item TÙY Ý của
+    bản kia ⇒ có thể tuyên bố "hai bản nói ngược nhau" trong khi chúng chỉ nói về
+    HAI KHUYẾN CÁO KHÁC NHAU của cùng tài liệu.
+
+    Đo trên toàn kho: 3/224 PMID chung bị ảnh hưởng, và **2 trong số đó đã bị báo
+    cho bác sĩ như mâu thuẫn thật** (BenhThanMan PMID 38490803 · ViemGanB PMID
+    41186418). Sau vá: 14 → 12 mâu thuẫn thật. Báo động giả trong hàng đợi quyết
+    định của bác sĩ là thứ đã được ghi là tệ hơn không kiểm.
+
+    Kiểm HÀNH VI: khối DATA tổng hợp có HAI item cùng một PMID, khác decision.
+    """
+    m = _nap(REPO / "tools/dang_ky_chu_de.py", "dkcd_hoiquy")
+    vd = _nap(DASH / "tools/verify_dashboard.py", "vd_bh18")
+    import tempfile
+    mau = ("const DATA = {items:[\n"
+           " {id:'ITEM-01', title:'khuyến cáo A', pmid:'99999999', decision:'apply'},\n"
+           " {id:'ITEM-02', title:'khuyến cáo B', pmid:'99999999', decision:'consider'}\n"
+           "]};")
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "WebDashboard_EBM_VanDeCuThe_Thu_20260101.html"
+        p.write_text(mau, encoding="utf-8")
+        ra = m.doc_muc(vd, p)
+    ds = ra.get("99999999")
+    if not isinstance(ds, list):
+        return False, f"doc_muc không trả LIST — item trùng PMID lại bị bỏ ({type(ds).__name__})"
+    if len(ds) != 2:
+        return False, f"giữ {len(ds)}/2 item cùng PMID — vẫn mất item"
+    if {x[0] for x in ds} != {"apply", "consider"}:
+        return False, f"mất quyết định của item bị ghi đè: {[x[0] for x in ds]}"
+    return True, "giữ đủ mọi item cùng PMID, phân biệt được mâu thuẫn thật"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -489,6 +526,7 @@ BAI_HOC = [
     ("BH15", "13/08", "Đếm MỤC, không đếm dòng lỗi", bh15_dem_muc_khong_dem_dong),
     ("BH16", "13/08", "Hook neo thư mục dự án + báo TO khi thiếu", bh16_hook_neo_vao_thu_muc_du_an_va_bao_to),
     ("BH17", "13/08", "Tiêu đề bộ năm nói đúng sự thật", bh17_tieu_de_bo_nam_noi_dung_su_that),
+    ("BH18", "13/08", "Giữ mọi item cùng PMID (chống báo động giả)", bh18_giu_moi_item_cung_pmid),
 ]
 
 

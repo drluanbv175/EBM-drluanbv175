@@ -104,20 +104,34 @@ def tach_ten(ten: str) -> tuple[str, str, str] | None:
     return lat_cat, goc, m.group(2)
 
 
-def doc_muc(vd, p: Path) -> dict[str, tuple]:
-    """{pmid: (decision, gradeLevel, normativeBasis, title)}"""
+def doc_muc(vd, p: Path) -> dict[str, list[tuple]]:
+    """{pmid: [(decision, gradeLevel, normativeBasis, title), …]} — GIỮ MỌI item.
+
+    VÁ 13/08/2026 — bản cũ trả `{pmid: tuple}` nên khi một dashboard có NHIỀU item
+    cùng trích một PMID thì chỉ item CUỐI theo thứ tự file được giữ, các item trước
+    bị bỏ IM LẶNG. Đó là chuyện bình thường, không phải bất thường: một guideline
+    (vd KDIGO 2024) mang hàng chục khuyến cáo, mỗi khuyến cáo có `decision` riêng —
+    đo được 21 ca như vậy trong kho.
+    Hệ quả của bản cũ: phần so mâu thuẫn đem so một item TÙY Ý của bản này với một
+    item TÙY Ý của bản kia, nên có thể tuyên bố "hai bản nói ngược nhau" trong khi
+    chúng chỉ đang nói về HAI KHUYẾN CÁO KHÁC NHAU của cùng một tài liệu.
+    Đo trên toàn kho: 3/224 PMID chung bị ảnh hưởng (1%), trong đó **2 nằm đúng
+    trong danh sách mâu thuẫn đã trình bác sĩ** (BenhThanMan PMID 38490803,
+    ViemGanB PMID 41186418). Nay giữ đủ để phân biệt được hai tình huống.
+    """
     try:
         db = vd.extract_data_block(p.read_text(encoding="utf-8", errors="replace"))
     except OSError:
         return {}
     if not db:
         return {}
-    out = {}
+    out: dict[str, list[tuple]] = {}
     for c in vd.split_items(db):
         pm = vd.field(c, "pmid")
         if pm:
-            out[pm] = (vd.field(c, "decision"), vd.field(c, "gradeLevel"),
-                       vd.field(c, "normativeBasis"), (vd.field(c, "title") or "")[:58])
+            out.setdefault(pm, []).append(
+                (vd.field(c, "decision"), vd.field(c, "gradeLevel"),
+                 vd.field(c, "normativeBasis"), (vd.field(c, "title") or "")[:58]))
     return out
 
 
@@ -155,6 +169,7 @@ def main() -> int:
     # (2) MÂU THUẪN — so MỌI cặp bản trong cùng chủ đề gốc, kể cả khác lát cắt:
     # hai bản nói ngược nhau về cùng một PMID là vấn đề dù chúng bổ sung cho nhau.
     mau_thuan: list[tuple] = []
+    khong_so_duoc: list[tuple] = []
     for goc, v in sorted(theo_goc.items()):
         if len(v) < 2:
             continue
@@ -164,8 +179,19 @@ def main() -> int:
             for j in range(i + 1, len(v)):
                 (n1, lc1, _), (n2, lc2, _) = v[i], v[j]
                 m1, m2 = cache[n1], cache[n2]
-                khac = [(pm, m1[pm], m2[pm]) for pm in sorted(set(m1) & set(m2))
-                        if m1[pm][0] != m2[pm][0]]
+                khac = []
+                for pm in sorted(set(m1) & set(m2)):
+                    a1, a2 = m1[pm], m2[pm]
+                    # Chỉ so được TỰ ĐỘNG khi mỗi bên có ĐÚNG MỘT item cho PMID đó.
+                    # Nhiều item = nhiều khuyến cáo khác nhau của cùng một tài liệu;
+                    # ghép tuỳ tiện hai trong số đó rồi gọi là "nói ngược nhau" là
+                    # BÁO ĐỘNG GIẢ — thứ đã được ghi là tệ hơn không kiểm.
+                    if len(a1) > 1 or len(a2) > 1:
+                        khong_so_duoc.append(
+                            (goc, f"{lc1} ({n1})", f"{lc2} ({n2})", pm, len(a1), len(a2)))
+                        continue
+                    if a1[0][0] != a2[0][0]:
+                        khac.append((pm, a1[0], a2[0]))
                 if khac:
                     mau_thuan.append((goc, f"{lc1} ({n1})", f"{lc2} ({n2})", khac))
 
@@ -211,6 +237,12 @@ def main() -> int:
         print("  (guideline chỉ có URL) không đo được ở đây.\n  Cần bác sĩ kiểm chứng.")
         return 0
 
+    if khong_so_duoc:
+        print(f"\n  ⚠ {len(khong_so_duoc)} PMID KHÔNG so tự động được — một tài liệu mang")
+        print("     NHIỀU khuyến cáo, mỗi khuyến cáo có quyết định riêng. Ghép tuỳ tiện")
+        print("     hai trong số đó rồi gọi là 'nói ngược nhau' là BÁO ĐỘNG GIẢ.")
+        for goc, a, b, pm, n1, n2 in khong_so_duoc:
+            print(f"     • {goc}: PMID {pm} — {a} có {n1} mục · {b} có {n2} mục → bác sĩ đọc tay")
     tong = sum(len(k[3]) for k in mau_thuan)
     print(f"  🔴 {tong} MỤC HAI BẢN NÓI NGƯỢC NHAU — cùng PMID, khác quyết định")
     print("=" * 70)
