@@ -347,6 +347,60 @@ def bh13_docx_doc_duoc_chuoi_noi_kieu_js():
     return True, "đọc được chuỗi nối JS, không đụng dấu + trong nội dung"
 
 
+def bh14_khong_khuyen_viec_chac_chan_vo_ich():
+    """13/08 — chu trình bảo bác sĩ "chạy lại thêm vòng" cho việc chạy lại KHÔNG sửa được.
+
+    Đo thật: 562/1146 mục hết hiệu lực, và CẢ 562 là PMID chưa kiểm được rút bài vì
+    NCBI đang chặn máy. Chạy lại một trăm vòng cũng không đổi được gì. Lời khuyên chắc
+    chắn vô ích tiêu thời gian THẬT của bác sĩ, và tệ hơn: nó làm mất niềm tin vào
+    những cảnh báo ĐÚNG khác của cùng công cụ — cùng lớp tác hại với báo động giả.
+
+    Kiểm HÀNH VI trên dữ liệu sống: chạy `--bao-cao` (chỉ đọc sổ, không gọi mạng);
+    nếu có mục hết hiệu lực vì chưa kiểm rút bài thì báo cáo PHẢI phát mã
+    CAN_NCBI_API_KEY và PHẢI nói rõ chạy lại không sửa được.
+    """
+    import subprocess
+    try:
+        r = subprocess.run([sys.executable, str(REPO / "tools/so_xac_minh_nguon.py"), "--bao-cao"],
+                           cwd=REPO, capture_output=True, text=True, timeout=180)
+    except (OSError, subprocess.SubprocessError) as e:
+        return False, f"không chạy được báo cáo sổ: {e}"
+    out = r.stdout + r.stderr
+    if "CHƯA kiểm được RÚT BÀI" not in out:
+        return True, "không còn mục nào hết hiệu lực vì chưa kiểm rút bài"
+    if "CAN_NCBI_API_KEY" not in out:
+        return False, "có mục chưa kiểm rút bài nhưng KHÔNG phát mã CAN_NCBI_API_KEY"
+    if "KHÔNG sửa được" not in out:
+        return False, ("báo cáo không nói rõ 'chạy lại thêm vòng KHÔNG sửa được' — "
+                       "bác sĩ sẽ chạy lại vô ích")
+    return True, "tách đúng lý do, chỉ đúng cách sửa (cần NCBI_API_KEY)"
+
+
+def bh15_dem_muc_khong_dem_dong():
+    """13/08 — bản báo việc THỔI PHỒNG khối lượng vì đếm DÒNG LỖI thay vì đếm MỤC.
+
+    `verify_dashboard` sinh HAI dòng cho cùng một item khi nó vi phạm hai luật
+    ("gradeLevel='na'" VÀ "chỉ dựa Consensus"). `tu_sua_chua` cũ dùng
+    `out.count("decision='apply'")` nên báo **64 mục** trong khi thực tế chỉ **49** —
+    phóng đại 31%. Con số thổi phồng trong bản báo việc cũng là nói sai, và nó khiến
+    người ta hoãn một việc thật ra nhỏ hơn tưởng.
+
+    Kiểm HÀNH VI trên đầu ra tổng hợp có đúng tình huống đó: 3 dòng, 2 item.
+    """
+    m = _nap(REPO / "tools/tu_sua_chua.py", "tsc_hoiquy")
+    f = getattr(m, "id_muc_apply", None)
+    if f is None:
+        return False, "mất hàm id_muc_apply — nguy cơ quay lại đếm dòng"
+    mau = ("  ✗ [ITEM-01] decision='apply' nhưng gradeLevel='na' — phải hạ.\n"
+           "  ✗ [ITEM-01] decision='apply' chỉ dựa Consensus — cần guideline.\n"
+           "  ✗ [ITEM-07] decision='apply' nhưng gradeLevel='low' — phải hạ.\n"
+           "  ⚠ [ITEM-09] 'apply' chỉ có URL — cảnh báo, không phải lỗi cứng.\n")
+    ra = f(mau)
+    if ra != {"ITEM-01", "ITEM-07"}:
+        return False, f"đếm sai: {sorted(ra)} (cần ITEM-01, ITEM-07 — 3 dòng nhưng 2 mục)"
+    return True, "đếm mục riêng biệt, không đếm dòng lỗi"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -361,6 +415,8 @@ BAI_HOC = [
     ("BH11", "13/08", "Tool skill 3 bản khớp + còn vá UTF-8", bh11_tool_skill_ba_ban_khop_va_co_va_utf8),
     ("BH12", "13/08", "Quét nguồn giữ tiến độ + hiện tiến độ", bh12_quet_nguon_giu_tien_do_va_hien_tien_do),
     ("BH13", "13/08", "Bộ dựng Word đọc được chuỗi nối JS", bh13_docx_doc_duoc_chuoi_noi_kieu_js),
+    ("BH14", "13/08", "Không khuyên việc chắc chắn vô ích", bh14_khong_khuyen_viec_chac_chan_vo_ich),
+    ("BH15", "13/08", "Đếm MỤC, không đếm dòng lỗi", bh15_dem_muc_khong_dem_dong),
 ]
 
 

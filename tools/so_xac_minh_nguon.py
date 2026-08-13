@@ -441,6 +441,30 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     print("=" * 64)
     print(f"  Còn hiệu lực : {len(du)}/{tong} ({len(du) * 100 // max(tong, 1)}%)")
     print(f"  Chưa/hết hạn : {len(thieu)}")
+
+    # VÁ 13/08/2026 — TÁCH LÝ DO, vì cách sửa NGƯỢC NHAU.
+    # Trước đó mọi mục "chưa/hết hạn" đều dẫn tới một lời khuyên duy nhất: "chạy lại
+    # thêm vòng". Đo thật hôm nay: 562/1146 mục hết hiệu lực, và CẢ 562 là PMID chưa
+    # kiểm rút bài được vì NCBI đang chặn máy — chạy lại một trăm vòng cũng KHÔNG đổi
+    # được gì. Đẩy bác sĩ đi làm một việc chắc chắn vô ích còn tệ hơn im lặng: nó tiêu
+    # thời gian thật và làm mất niềm tin vào mọi lời khuyên khác của công cụ.
+    if thieu:
+        chua_rut = [x for x in thieu if "chưa kiểm rút bài" in x[1] or "kiểm rút bài đã" in x[1]]
+        het_han = [x for x in thieu if "xác minh đã" in x[1]]
+        khac = [x for x in thieu if x not in chua_rut and x not in het_han]
+        print("\n  Vì sao hết hiệu lực — CÁCH SỬA KHÁC NHAU, đừng gộp:")
+        if chua_rut:
+            print(f"     • {len(chua_rut)} mục: CHƯA kiểm được RÚT BÀI.")
+            print("       → Chạy lại thêm vòng KHÔNG sửa được. Cần `NCBI_API_KEY` trong")
+            print("         ~/.ebm-secrets/medical-ebm-automation.env (đăng ký miễn phí ở NCBI).")
+            print("       [MA] CAN_NCBI_API_KEY")
+        if het_han:
+            print(f"     • {len(het_han)} mục: xác minh tồn tại đã quá {HAN_TON_TAI_NGAY} ngày.")
+            print("       → Chạy lại thêm vòng SẼ sửa được.")
+            print("       [MA] CAN_CHAY_THEM_VONG")
+        if khac:
+            print(f"     • {len(khac)} mục: lý do khác — {khac[0][1]}")
+            print("       [MA] CAN_XEM_TAY")
     print(f"  ĐÃ BỊ RÚT    : {len(rut)}")
     if rut:
         print("\n  🔴 NGUỒN ĐÃ BỊ RÚT — phải xử lý trước khi dùng gói chứa chúng:")

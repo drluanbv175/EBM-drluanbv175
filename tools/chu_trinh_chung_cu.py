@@ -121,7 +121,22 @@ def main() -> int:
     if rc == 2:
         viec_can_lam.append("🔴 CÓ NGUỒN ĐÃ BỊ RÚT — xử lý trước khi dùng gói chứa chúng.")
     elif rc == 1:
-        viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — chạy lại thêm vòng.")
+        # VÁ 13/08/2026 — đọc MÃ lý do thay vì đưa một lời khuyên chung.
+        # Bản cũ luôn nói "chạy lại thêm vòng". Đo thật: 562/1146 mục hết hiệu lực và
+        # CẢ 562 là PMID chưa kiểm được rút bài vì NCBI chặn máy — chạy lại bao nhiêu
+        # vòng cũng không đổi. Lời khuyên chắc chắn vô ích tiêu thời gian thật của bác
+        # sĩ và làm mất niềm tin vào những cảnh báo ĐÚNG khác của cùng công cụ.
+        if "CAN_NCBI_API_KEY" in out:
+            viec_can_lam.append(
+                "PMID CHƯA kiểm được RÚT BÀI — chạy lại thêm vòng KHÔNG sửa được. "
+                "Cần thêm `NCBI_API_KEY` vào ~/.ebm-secrets/medical-ebm-automation.env "
+                "(đăng ký miễn phí tại tài khoản NCBI).")
+        if "CAN_CHAY_THEM_VONG" in out:
+            viec_can_lam.append("Có nguồn quá hạn xác minh tồn tại — chạy lại thêm vòng SẼ sửa được.")
+        if "CAN_XEM_TAY" in out:
+            viec_can_lam.append("Có nguồn hết hiệu lực vì lý do khác — xem phần ③④ ở trên.")
+        if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
+            viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
 
     # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
     # Đặt SAU phần xác minh vì nó đọc nội dung dashboard, không gọi mạng; và đặt

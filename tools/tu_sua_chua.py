@@ -73,6 +73,48 @@ VIEC_MAY = [
 ]
 
 
+def id_muc_apply(dau_ra: str) -> set[str]:
+    """Các ITEM-id bị cổng chặn vì `decision='apply'` — ĐẾM MỤC, KHÔNG ĐẾM DÒNG.
+
+    Một mục có thể sinh HAI dòng lỗi (vừa "gradeLevel='na'" vừa "chỉ dựa Consensus").
+    Đo thật 13/08: 64 dòng nhưng chỉ 49 mục ⇒ bản cũ dùng `out.count(...)` đã phóng
+    đại khối lượng việc của bác sĩ 31%. Con số thổi phồng trong bản báo việc cũng là
+    nói sai, và nó khiến người ta hoãn một việc thật ra nhỏ hơn tưởng.
+    """
+    import re as _re
+    return {m.group(1) for dong in dau_ra.splitlines()
+            if "decision='apply'" in dong and (m := _re.search(r"\[(ITEM-\d+)\]", dong))}
+
+
+def phai_sinh_lech() -> tuple[list[str], list[str]]:
+    """(thiếu bản Word, bản Word cũ hơn dashboard).
+
+    GHÉP TÊN THEO CẢ HAI DẠNG — đây là chỗ đã đo sai HAI LẦN trong ngày 13/08.
+    Sản phẩm phái sinh sinh ra theo hai quy ước tên khác nhau tuỳ thời điểm:
+        WebDashboard_EBM_<chủ-đề>_<ngày>_TaiLieuChiTiet.docx   (giữ nguyên tiền tố)
+        <chủ-đề>_<ngày>_TaiLieuChiTiet.docx                    (đã bỏ tiền tố)
+    Chỉ khớp một dạng thì 14 bản CÓ ĐỦ file bị báo là "thiếu Word" — một báo động
+    giả đủ sức đẩy người ta đi dựng lại 14 tài liệu vốn đã tồn tại. Gom logic vào
+    một chỗ để lần sau không ai đo lại bằng tay rồi sai y hệt.
+    """
+    D = REPO / "EBM-Dashboards"
+    DER = D / "derivatives"
+    if not DER.is_dir():
+        return [], []
+    import re
+    docx = list(DER.glob("*.docx"))
+    thieu, cu = [], []
+    for f in sorted(D.glob("WebDashboard_*.html")):
+        goc = re.sub(r"\.html$", "", f.name)
+        ngan = re.sub(r"^WebDashboard_EBM_(VanDeCuThe_)?", "", goc)
+        co = [p for p in docx if p.name.startswith(goc) or p.name.startswith(ngan)]
+        if not co:
+            thieu.append(ngan)
+        elif max(p.stat().st_mtime for p in co) < f.stat().st_mtime - 60:
+            cu.append(ngan)
+    return thieu, cu
+
+
 def viec_can_bac_si() -> list[str]:
     """Đếm các việc CHỈ bác sĩ quyết được. Chỉ ĐO và BÁO, không bao giờ sửa."""
     ra: list[str] = []
@@ -80,17 +122,37 @@ def viec_can_bac_si() -> list[str]:
     # (a) Mục 'apply' trên chứng cứ yếu — cần phân loại quy phạm vs yếu thật
     vd = REPO / "EBM-Dashboards/tools/verify_dashboard.py"
     if vd.exists():
-        n = d = 0
+        # VÁ 13/08/2026 — ĐẾM MỤC, KHÔNG ĐẾM DÒNG LỖI. Bản cũ dùng
+        # out.count("decision='apply'"), mà MỘT mục có thể sinh HAI dòng (vừa
+        # "gradeLevel='na'" vừa "chỉ dựa Consensus"). Đo thật: 64 dòng nhưng chỉ 49
+        # mục — phóng đại khối lượng việc của bác sĩ 31%. Một con số thổi phồng trong
+        # bản báo việc cũng là nói sai, và nó khiến người ta hoãn một việc thật ra
+        # nhỏ hơn tưởng.
+        muc: set[tuple[str, str]] = set()
+        d = 0
         for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
             rc, out = chay([PY, str(vd), str(f), "--strict-sources"], f.name)
-            c = out.count("decision='apply'")
-            n += c
-            d += 1 if c else 0
+            ids = id_muc_apply(out)
+            muc |= {(f.name, i) for i in ids}
+            d += 1 if ids else 0
+        n = len(muc)
         if n:
             ra.append(f"{n} mục khai 'Áp dụng ngay' trên chứng cứ yếu/không phân hạng, "
                       f"trên {d} dashboard — phải phân loại NGUỒN QUY PHẠM (khai "
                       f"normativeBasis, GIỮ decision) vs CHỨNG CỨ YẾU THẬT (hạ decision). "
                       f"Máy không phân biệt đáng tin được.")
+
+    # (a-bis) Sản phẩm phái sinh thiếu/tụt hậu. KHÔNG tự xuất lại ở đây: một lượt
+    # xuất đi mạng và mất vài phút, không hợp với chốt lúc mở phiên; và với bản còn
+    # mục 'apply' chờ duyệt thì cổng sẽ chặn xuất — đúng như thiết kế.
+    thieu, cu = phai_sinh_lech()
+    if thieu:
+        ra.append(f"{len(thieu)} dashboard CHƯA có bản Word — chạy "
+                  f"`tools/xuat_goi_cap_nhat.py <file>.html --online`.")
+    if cu:
+        ra.append(f"{len(cu)} dashboard có bản Word/PDF CŨ HƠN dashboard "
+                  f"({', '.join(x[:30] for x in cu[:3])}) — bác sĩ đang đọc bản lỗi thời; "
+                  f"xuất lại được ngay khi các mục 'apply' của bản đó được duyệt xong.")
 
     # (b) Hai bản nói ngược nhau
     dk = REPO / "tools/dang_ky_chu_de.py"

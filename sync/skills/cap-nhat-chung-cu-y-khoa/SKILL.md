@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.19.0
+  version: 1.21.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -569,6 +569,44 @@ trên một tiền đề sai. Mục này đã được DỪNG LẠI chờ đọc
 
 ⚠️ **Loại 2 và 3 làm khuyến cáo MẠNH hơn** ⇒ luôn cần bác sĩ chuẩn y, kể cả khi máy nhìn ra
 nguyên nhân rõ ràng. Loại 1 cũng vậy — cả ba đều là quyết định lâm sàng.
+
+**(g) BH14 — KHÔNG BAO GIỜ khuyên một việc chắc chắn vô ích.**
+
+Chu trình từng kết luận *"Còn nguồn chưa xác minh hoặc hết hạn — **chạy lại thêm vòng**"*
+cho MỌI mục hết hiệu lực. Đo thật: **562/1146 mục hết hiệu lực, và CẢ 562 là PMID chưa kiểm
+được rút bài vì NCBI đang chặn máy** — chạy lại một trăm vòng cũng không đổi được gì.
+
+Lời khuyên chắc chắn vô ích **tiêu thời gian THẬT của bác sĩ**, và tệ hơn: nó làm mất niềm tin
+vào những cảnh báo ĐÚNG khác của cùng công cụ — cùng lớp tác hại với báo động giả.
+
+Nay báo cáo TÁCH lý do và chỉ đúng cách sửa cho từng loại:
+
+| Lý do hết hiệu lực | Cách sửa | Mã |
+|---|---|---|
+| PMID chưa kiểm được rút bài | **chạy lại KHÔNG sửa được** — cần `NCBI_API_KEY` | `CAN_NCBI_API_KEY` |
+| xác minh tồn tại quá 180 ngày | chạy lại thêm vòng **SẼ** sửa được | `CAN_CHAY_THEM_VONG` |
+| lý do khác | xem tay | `CAN_XEM_TAY` |
+
+> **Luật:** trước khi in một lời khuyên, hỏi *"làm theo lời này có thật sự đổi được trạng thái
+> không?"*. Nếu không, phải nói rõ điều gì mới đổi được.
+
+**(h) BH15 — ĐẾM MỤC, KHÔNG ĐẾM DÒNG LỖI.**
+
+`verify_dashboard` sinh HAI dòng cho cùng một item khi nó vi phạm hai luật (vừa
+`gradeLevel='na'` vừa "chỉ dựa Consensus"). Bản báo việc cũ dùng
+`out.count("decision='apply'")` nên báo **64 mục** trong khi thực tế chỉ **49** — phóng đại
+khối lượng việc của bác sĩ **31%**. Con số thổi phồng trong bản báo việc cũng là nói sai, và
+nó khiến người ta hoãn một việc thật ra nhỏ hơn tưởng. Nay đếm qua `id_muc_apply()`.
+
+**Cùng lớp lỗi, gặp HAI LẦN trong ngày:** ghép tên sản phẩm phái sinh. File sinh ra theo hai
+quy ước (`WebDashboard_EBM_<chủ-đề>_...docx` và `<chủ-đề>_...docx`); chỉ khớp một dạng thì **14
+bản CÓ ĐỦ file bị báo là "thiếu Word"** — đủ sức đẩy người ta đi dựng lại 14 tài liệu đã tồn
+tại. Logic ghép nay gom vào `phai_sinh_lech()`, không đo lại bằng tay nữa.
+
+> **Luật đo lường:** trước khi báo một con số, hỏi *"tôi đang đếm ĐƠN VỊ nào — mục, dòng, hay
+> file?"* và *"cách ghép của tôi có bỏ sót biến thể tên nào không?"*. Cả hai lỗi hôm nay đều
+> sai theo hướng **thổi phồng việc**, không phải bỏ sót việc — nhưng cả hai đều làm bác sĩ
+> hành động sai.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
