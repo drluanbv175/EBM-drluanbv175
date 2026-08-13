@@ -495,6 +495,50 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `~/.ebm-secrets/medical-ebm-automation.env`. Chưa có key thì mọi PMID giữ nguyên trạng thái
   **CHƯA kiểm rút bài** — fail-closed, KHÔNG bị coi là sạch.
 
+  ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
+  Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
+  và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job
+  `com.medicalebm.weeklysafety` và `com.medicalebm.monthlyupdate` — **chưa từng nổ lần nào**
+  kể từ khi cài 11/07. `StartCalendarInterval` đòi máy THỨC đúng 19:00 thứ Bảy; Windows
+  không có launchd. Nghĩa là mọi lần cập nhật chứng cứ nhiều tháng qua đều do bác sĩ chủ
+  động — hệ là CÔNG CỤ, không phải agent.
+  **(a) `tools/tu_khoi_dong.py --phong` — TỰ KHỞI ĐỘNG.** Lấy lúc mở phiên làm nhịp thay
+  đồng hồ: quá hạn thì phóng script giám sát ở **NỀN** (tách tiến trình, không chặn phiên).
+  Chạy giống nhau trên macOS và Windows. **Ranh giới:** chỉ phóng được hai script chủ sở hữu
+  trong allowlist `OWNER` (`weekly_safety.sh`, `monthly_update.sh`) — KHÔNG tự viết bộ thu
+  thập mới, đúng doctrine "owner thu thập duy nhất"; kết quả vào hàng ỨNG VIÊN,
+  `clinical_auto_apply: false`, Cổng A/B nguyên vẹn; khoá theo PID chống phóng chồng; công
+  tắc tắt `--tat` (file `.tu-khoi-dong-tat`). **Đã kiểm THẬT 13/08:** phóng lần đầu →
+  chạy trọn → `status: PASS`, 4/4 bước critical = 0. Đây là lần tự chạy đầu tiên của hệ.
+  **(b) `tools/chot_hoi_quy_bai_hoc.py` — ĐÓNG VÒNG HỌC.** Mọi khiếm khuyết nghiêm trọng
+  tháng vừa rồi đều do người tìm bằng tay, không chốt nào bắt được ⇒ vá xong thì bài học nằm
+  trong tài liệu, không nằm trong máy, lần refactor sau lỗi quay lại y nguyên. 10 mục
+  BH01–BH10, mỗi mục là **một lỗi CÓ THẬT, có ngày**, kiểm bằng cách **gọi vào mã đang sống**.
+  Ba luật khi thêm mục: (1) chỉ lỗi ĐÃ xảy ra thật — chốt chưa từng bảo vệ điều gì chỉ làm
+  loãng tín hiệu; (2) kiểm HÀNH VI, không đếm chuỗi trong file — đếm chuỗi đúng là bẫy
+  TAUTOLOGY đã gặp ở guardrail G3/G8; (3) nhanh và ngoại tuyến.
+  **Bắt được ngay lần chạy đầu:** `tools/run_retraction_and_med_safety.py` ghi cứng
+  `C:/Users/Admin/OneDrive/Claude AI` ⇒ **chưa từng chạy được trên Mac** — cùng lớp lỗi với
+  `ensure_strict_source.py`/`docx_sang_pdf_giu_mau.py`, và nằm đúng trong công cụ kiểm RÚT
+  BÀI. Đã vá bằng `Path(__file__).resolve().parents[1]`.
+  **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ máy móc** (skill lệch bản · kho plugin thiếu
+  · sai interpreter). KHÔNG đụng nội dung y khoa.
+  🔴 **BẰNG CHỨNG vì sao ba việc lâm sàng phải cấm tự động — xảy ra 13/08 với chính công cụ
+  vừa viết.** `tools/trinh_muc_can_duyet.py` bản đầu xét dấu hiệu "yếu" TRƯỚC dấu hiệu "quy
+  phạm", mà trường `design` trong dữ liệu THẬT gắn nhãn `Consensus` cho **cả cảnh báo HỘP ĐEN
+  FDA về JAK inhibitor** (PMID 35081280) **lẫn chống chỉ định leflunomide trên NHÃN THUỐC
+  FDA**, cộng AGS Beers 2023, STOPP/START v3, tiêu chuẩn chẩn đoán GOLD, tiêu chuẩn phân loại
+  ACR/EULAR 2010. Kết quả: **8 nguồn quy phạm bị xếp vào nhóm "nên HẠ decision"**. Nếu lớp ngữ
+  nghĩa đó có quyền ghi, nó đã hạ hai cảnh báo an toàn.
+  **Đã vá:** xét NGUỒN (`gradeSource`) trước THỂ LOẠI (`design`), và tách nhóm thứ tư
+  `ĐỒNG THUẬN` thay vì gộp vào "yếu thật". Phân nhóm 56 mục đi từ *(QUY PHẠM 24 · YẾU THẬT 20
+  · CHƯA RÕ 12)* về **QUY PHẠM 30 · ĐỒNG THUẬN 12 · YẾU THẬT 2 · CHƯA RÕ 12** — con số 2 khớp
+  đúng phân tích tay từng mục (chỉ `VKDT ITEM-04` bài tổng quan tường thuật và
+  `COPD_TimThanChuyenHoa ITEM-26` tác giả tự chấm vận hành).
+  **Bài học chung: `design` là chuỗi TỰ DO — không bao giờ dùng nó làm căn cứ quyết định an
+  toàn.** Đã khoá bằng BH03 (miễn trừ quy phạm phải từ chối `Consensus`) và BH10 (không công
+  cụ nào được ghi `decision`/`gradeLevel`).
+
   **NHẮC ĐỘ TƯƠI:** `tools/kiem_do_tuoi_chung_cu.py` đã nối vào hook `SessionStart` — vì hai job
   launchd (`weeklysafety` T7 19:00 · `monthlyupdate` mùng 1 18:00) kiểm ngày 11/08 đều cho
   `runs = 0` · `(never exited)`: **chưa từng tự nổ lần nào**, do `StartCalendarInterval` đòi máy phải

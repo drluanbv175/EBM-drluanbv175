@@ -47,14 +47,38 @@ if hasattr(sys.stdout, "reconfigure"):
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
-# Dấu hiệu nguồn QUY PHẠM. Cố ý KHÔNG dùng để tự quyết — chỉ để xếp thứ tự đọc.
-QUY_PHAM = re.compile(
-    r"guideline|khuyến cáo|nhãn thuốc|drug label|prescribing information|"
-    r"beers|nice|kdigo|gold|gina|idsa|eular|acr|aasld|easl|apasl|adа|ada|"
-    r"uspstf|who|fda|ema|mhra|ihs|ean|acc/aha|esc", re.I)
+# ---------------------------------------------------------------------------
+# VÁ 13/08/2026 — BẢN ĐẦU CỦA CHÍNH TOOL NÀY XẾP SAI, VÀ SAI THEO HƯỚNG NGUY HIỂM
+# ---------------------------------------------------------------------------
+# Bản đầu xét YEU_THAT trước, mà YEU_THAT khớp "consensus|đồng thuận". Trong dữ
+# liệu thật, trường `design` gắn nhãn 'Consensus' cho CẢ những thứ này:
+#     • cảnh báo HỘP ĐEN của FDA/EMA về JAK inhibitor (PMID 35081280)
+#     • chống chỉ định + ngưỡng ngưng thuốc trên NHÃN THUỐC FDA của leflunomide
+#     • bộ tiêu chí AGS Beers 2023 và STOPP/START v3
+#     • tiêu chuẩn chẩn đoán GOLD, tiêu chuẩn phân loại ACR/EULAR 2010
+# ⇒ cả 8 mục quy phạm đó rơi vào nhóm "nên HẠ decision". Hạ một cảnh báo hộp đen
+# hay một chống chỉ định trên nhãn thuốc là LÀM GIẢM AN TOÀN — đúng thứ cổng sinh
+# ra để ngăn. Đây là bằng chứng cụ thể vì sao lớp ngữ nghĩa KHÔNG được tự quyết.
+#
+# Sửa: xét TÍNH QUY PHẠM CỦA NGUỒN trước tính "thể loại văn bản", vì `gradeSource`
+# mô tả NGUỒN THẬT còn `design` chỉ là nhãn tự do người soạn gõ vào.
+NGUON_QUY_PHAM = re.compile(
+    r"nhãn thuốc|drug label|prescribing information|boxed warning|hộp đen|"
+    r"chống chỉ định|contraindication|regulatory|quản lý dược|cơ quan quản lý|"
+    r"beers|stopp|start|tiêu chí|tiêu chuẩn chẩn đoán|tiêu chuẩn phân loại|"
+    r"phân loại chính thức|official classification|khuyến cáo (eular|acr|esc|aha|ada)",
+    re.I)
+# Thể loại văn bản quy phạm (yếu hơn dấu hiệu nguồn ở trên, xét sau).
+LOAI_QUY_PHAM = re.compile(
+    r"guideline|khuyến cáo|nice|kdigo|gold|gina|idsa|eular|aasld|easl|apasl|"
+    r"ada|uspstf|who|fda|ema|mhra|ihs|ean|acc/aha|esc", re.I)
+# Dấu hiệu chứng cứ YẾU THẬT — KHÔNG còn gồm "consensus/đồng thuận" (xem trên).
 YEU_THAT = re.compile(
-    r"narrative review|tổng quan tường thuật|letter|thư gửi|editorial|xã luận|"
-    r"case report|báo cáo ca|consensus|đồng thuận|expert opinion", re.I)
+    r"narrative review|tổng quan tường thuật|bài tổng quan|letter|thư gửi|"
+    r"editorial|xã luận|case report|báo cáo ca|expert opinion|"
+    r"đánh giá vận hành|không phải phân hạng chính thức|grade thấp|grade rất thấp",
+    re.I)
+DONG_THUAN = re.compile(r"consensus|đồng thuận|expert consensus", re.I)
 
 
 def nap_vd():
@@ -96,11 +120,29 @@ def thu_thap(vd, files: list[Path]) -> list[dict]:
 
 
 def phan_nhom(m: dict) -> str:
-    van = f"{m['design']} {m['grade_src']}"
+    """Xếp sơ bộ MỘT mục. Thứ tự xét là phần quan trọng nhất của hàm này.
+
+    NGUỒN quy phạm xét TRƯỚC thể loại văn bản, vì `gradeSource` mô tả nguồn thật
+    còn `design` chỉ là nhãn tự do — và trong dữ liệu thật `design='Consensus'`
+    đang mang cả nhãn thuốc FDA lẫn cảnh báo hộp đen (xem chú thích ở đầu file).
+    """
+    nguon = m["grade_src"] or ""
+    van = f"{m['design']} {nguon}"
+
+    # (1) Dấu hiệu NGUỒN quy phạm thắng mọi thứ khác.
+    if NGUON_QUY_PHAM.search(nguon):
+        return "QUY PHẠM?"
+    # (2) Dấu hiệu yếu thật, đã bỏ 'consensus' khỏi nhóm này.
     if YEU_THAT.search(van):
         return "YẾU THẬT"
-    if QUY_PHAM.search(van):
+    # (3) Thể loại quy phạm (guideline/cơ quan) — yếu hơn (1) nhưng vẫn là quy phạm.
+    if LOAI_QUY_PHAM.search(van):
         return "QUY PHẠM?"
+    # (4) Đồng thuận chuyên gia THẬT — nhóm RIÊNG, cố ý không gộp vào "yếu thật".
+    #     Một định nghĩa bệnh hay lộ trình quyết định của ACC không phải chứng cứ
+    #     yếu; nó chỉ không dùng thang GRADE. Bác sĩ quyết từng mục.
+    if DONG_THUAN.search(van):
+        return "ĐỒNG THUẬN"
     return "CHƯA RÕ"
 
 
@@ -130,11 +172,17 @@ def main() -> int:
         "| Nhóm sơ bộ | Số mục | Cách sửa ĐÚNG |",
         "|---|---:|---|",
         f"| QUY PHẠM? | {nhom.get('QUY PHẠM?', 0)} | khai `normativeBasis`, **GIỮ** `decision` |",
+        f"| ĐỒNG THUẬN | {nhom.get('ĐỒNG THUẬN', 0)} | bác sĩ cân từng mục — KHÔNG hạ hàng loạt |",
         f"| YẾU THẬT | {nhom.get('YẾU THẬT', 0)} | **HẠ** `decision` → consider/notyet |",
         f"| CHƯA RÕ | {nhom.get('CHƯA RÕ', 0)} | bác sĩ đọc nguồn rồi xếp nhóm |",
         "",
         "> **TUYỆT ĐỐI không nâng `gradeLevel`** — nâng mức cho nguồn không phân hạng",
         "> là lỗi tự gán mức (R4 của `tham-dinh-dau-ra`).",
+        ">",
+        "> **Vì sao có nhóm ĐỒNG THUẬN riêng:** bản đầu của công cụ này gộp đồng thuận",
+        "> vào 'yếu thật', khiến **cảnh báo hộp đen FDA về JAK inhibitor** và **chống chỉ",
+        "> định leflunomide trên nhãn FDA** bị xếp vào nhóm 'nên hạ'. Hạ chúng là làm",
+        "> GIẢM an toàn. Máy đề xuất, bác sĩ phán quyết.",
         "",
     ]
     for dash in sorted({m["dashboard"] for m in muc}):

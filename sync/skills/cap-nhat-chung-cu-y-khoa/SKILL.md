@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.15.0
+  version: 1.16.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -474,6 +474,51 @@ Cờ **opt-in `--check-topic`** (thêm sau `--online`): gọi LLM chấm mỗi i
 **Cổng triển khai bắt buộc:** `medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`. Chỉ trạng thái `READY_FOR_CONTROLLED_DEPLOYMENT` mới cho phép chạy ở chế độ candidate-only. Cổng yêu cầu canary nguồn + dashboard online, runtime tuần/tháng còn mới, alert đã nhận thử, drill rollback hash-match, ít nhất 2 chu kỳ shadow không lỗi/không auto-apply, và UAT/phê duyệt bác sĩ + vận hành. Agent không tự điền PASS hoặc ký thay. PARTIAL/FAIL giữ watermark, chặn `bridge_to_ebm_master.py` và không gửi cảnh báo nội dung. Chi tiết: `references/10-giam-sat-dinh-ky.md`.
 
 **(c) Bản địa hóa Bộ Y tế VN:** ở bước "Áp dụng tại VN", tra `EBM-Dashboards/vn-guidelines/registry.json` (bác sĩ điền từ tài liệu CHÍNH THỨC — **KHÔNG bịa số QĐ**) + RAG (`clinical-evidence-rag`) để đối chiếu quốc tế ↔ BYT (phác đồ, danh mục BHYT, phân tuyến). Chi tiết: `references/11-guideline-bo-y-te-vn.md`.
+
+
+## 5F. Ba chốt TỰ ĐỘNG chạy mỗi phiên (thêm 13/08/2026)
+
+Ba công cụ dưới đây đã nối vào hook `SessionStart` và chạy **không cần bác sĩ gọi**.
+Chúng bổ sung cho nhau, không thay nhau — đừng gộp.
+
+**(a) `tools/tu_khoi_dong.py --phong` — TỰ KHỞI ĐỘNG giám sát.**
+Đo bằng `launchctl print`: hai job `com.medicalebm.weeklysafety` và
+`com.medicalebm.monthlyupdate` đều cho `runs = 0 · (never exited)` — **chưa từng nổ
+lần nào** kể từ khi cài (11/07). `StartCalendarInterval` đòi máy phải THỨC đúng
+19:00 thứ Bảy; Windows thì không có launchd nào cả. Hệ quả: mọi lần cập nhật chứng
+cứ đều do bác sĩ chủ động — tức hệ là CÔNG CỤ, không phải agent.
+Chốt này lấy chính lúc mở phiên làm nhịp: quá hạn thì **phóng ở NỀN** (tách tiến
+trình, không chặn phiên) rồi trả quyền điều khiển ngay.
+*Ranh giới:* chỉ phóng được **hai script chủ sở hữu** trong allowlist `OWNER` — không
+tự viết bộ thu thập mới; kết quả vào **hàng ứng viên**, `clinical_auto_apply: false`,
+Cổng A/B nguyên vẹn; khoá theo PID nên không phóng chồng; tắt hẳn bằng `--tat`.
+*Đã kiểm thật 13/08:* phóng lần đầu → chạy trọn → `status: PASS`, 4/4 bước = 0.
+
+**(b) `tools/chot_hoi_quy_bai_hoc.py` — CHỐT HỒI QUY trên lỗi ĐÃ TỪNG xảy ra.**
+Vá xong mà bài học chỉ nằm trong tài liệu thì lần refactor sau lỗi quay lại y nguyên,
+và vẫn im lặng như cũ. 10 mục BH01–BH10, mỗi mục là **một lỗi có thật, có ngày**, kiểm
+bằng cách **gọi vào mã đang sống** — không mock, không đếm chuỗi tài liệu.
+Ba luật khi thêm mục: (1) chỉ thêm lỗi ĐÃ xảy ra thật; (2) kiểm HÀNH VI chứ không kiểm
+sự có mặt của câu chữ — đếm chuỗi chính là bẫy TAUTOLOGY đã gặp ở guardrail G3/G8;
+(3) chạy nhanh và ngoại tuyến.
+*Bắt được ngay lần chạy đầu:* `tools/run_retraction_and_med_safety.py` ghi cứng
+`C:/Users/Admin/...` nên **chưa từng chạy được trên Mac** — cùng lớp lỗi với
+`ensure_strict_source.py`, và nằm đúng trong công cụ kiểm RÚT BÀI. Đã vá.
+
+**(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
+Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
+y khoa: ba việc bị cấm tự động vĩnh viễn là đổi `decision`, đổi `gradeLevel`, và phân
+xử khi hai dashboard nói ngược nhau.
+
+> **BẰNG CHỨNG vì sao ba việc đó phải cấm — xảy ra ngay 13/08 với chính công cụ tôi
+> vừa viết.** `tools/trinh_muc_can_duyet.py` bản đầu xét dấu hiệu "yếu" TRƯỚC dấu hiệu
+> "quy phạm", mà trường `design` trong dữ liệu thật gắn nhãn `Consensus` cho **cả cảnh
+> báo hộp đen FDA về JAK inhibitor** (PMID 35081280) **lẫn chống chỉ định leflunomide
+> trên nhãn thuốc FDA**. Kết quả: 8 nguồn quy phạm bị xếp vào nhóm "nên HẠ decision".
+> Nếu lớp ngữ nghĩa đó có quyền ghi, nó đã hạ hai cảnh báo an toàn.
+> Đã vá (xét NGUỒN trước THỂ LOẠI, thêm nhóm riêng `ĐỒNG THUẬN`): 20 mục "yếu thật"
+> rút về đúng **2** — khớp phân tích tay từng mục.
+> Bài học: `design` là chuỗi tự do, **không dùng nó làm căn cứ quyết định an toàn**.
 
 
 ## 6. Biến thể đầu ra theo chủ đề

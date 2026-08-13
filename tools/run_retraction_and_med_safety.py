@@ -9,7 +9,10 @@ import time
 import urllib.request
 import urllib.parse
 
-ROOT = Path("C:/Users/Admin/OneDrive/Claude AI")
+# VÁ 13/08/2026 — cùng lớp lỗi với `ensure_strict_source.py`: đường dẫn ghi cứng
+# của MỘT máy Windows khiến công cụ này chưa từng chạy được trên Mac. Suy ra từ vị
+# trí file để chạy giống nhau ở mọi máy (file nằm ở <gốc>/tools/).
+ROOT = Path(__file__).resolve().parents[1]
 SSR = ROOT / "clinical_runtime" / "strict_source_report.json"
 EBM = ROOT / "EBM_MASTER" / "EBM_MASTER.json"
 DRUG_FLAGS = ROOT / "sync" / "skills" / "dark-analyst" / "data" / "drug_flags.json"
