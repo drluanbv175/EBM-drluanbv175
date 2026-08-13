@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.27.0
+  version: 1.28.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -722,6 +722,24 @@ báo động giả — đúng thứ chốt này sinh ra để diệt.
 > **Bài học BH20 nay đã lặp ba lần trong hai vòng.** Kết luận: mỗi khi vá một logic dùng chung,
 > phải **liệt kê mọi nơi dùng nó** và vá đồng thời — và mọi danh sách kiểm phải **tự dò**, vì
 > danh sách viết cứng luôn mục đúng vào lúc có thành phần mới quan trọng nhất.
+
+**(o) BH22 — quy trình đồng bộ tự đẩy CHÍNH file sao lưu của mình vào nơi chạy.**
+
+`BO_QUA` so trên `f.parts` (thành phần đường dẫn) nên không bao giờ bắt được một TÊN FILE như
+`verify_dashboard.py.bak-20260814-005720`. Đo được **8 file sao lưu** đã nằm trong thư mục skill
+ĐANG CHẠY, ngay cạnh bản sống.
+
+Không gây lỗi chạy (đuôi `.bak-*` không import được), nhưng kho phình mãi và **một bản CŨ của
+công cụ an toàn nằm cạnh bản mới** gây hiểu nhầm cho bất kỳ ai mở thư mục đó ra xem. Đã thêm
+`BO_QUA_MAU` lọc theo mẫu tên, và dọn 8 file — bản gốc ở `sync/` giữ nguyên, chỉ xoá bản sao
+chép thừa (không bao giờ xoá bản duy nhất).
+
+Điểm tốt cần ghi nhận: `.gitignore` đã có `**/*.bak-*` từ trước nên **0 file sao lưu lọt vào
+git** — repo sạch. Rào chắn ở tầng git đã đúng; chỗ hở nằm ở tầng đồng bộ runtime.
+
+> **Bài học:** bộ lọc phải kiểm ĐÚNG TRỤC. `BO_QUA` kiểm *thành phần đường dẫn* (`__pycache__`)
+> nhưng thứ cần chặn lại là *mẫu tên file* — hai trục khác nhau, và một bộ lọc đúng trục này
+> im lặng vô dụng ở trục kia.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

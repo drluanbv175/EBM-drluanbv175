@@ -634,6 +634,41 @@ def bh21_moi_parser_deu_gop_chuoi_noi():
     return True, "gộp chuỗi nối, không đụng dấu + trong nội dung"
 
 
+def bh22_khong_day_file_sao_luu_vao_noi_chay():
+    """14/08 — quy trình đồng bộ tự đẩy CHÍNH file sao lưu của mình vào nơi chạy.
+
+    `BO_QUA` so trên `f.parts` (thành phần đường dẫn) nên không bao giờ bắt được
+    một TÊN FILE như `verify_dashboard.py.bak-20260814-005720`. Đo được **8 file
+    sao lưu** đã nằm trong thư mục skill ĐANG CHẠY, ngay cạnh bản sống.
+
+    Không gây lỗi chạy (đuôi `.bak-*` không import được), nhưng kho phình mãi, và
+    một bản CŨ của công cụ an toàn nằm cạnh bản mới gây hiểu nhầm cho bất kỳ ai mở
+    thư mục đó ra xem. Cùng họ với các lỗi hôm nay: bộ lọc **kiểm sai trục** —
+    tên file vs thành phần đường dẫn.
+
+    Kiểm HÀNH VI: bộ lọc phải bắt tên file sao lưu, và không đụng file thật.
+    """
+    m = _nap(REPO / "tools/dong_bo_skill.py", "dbs_bh22")
+    f = getattr(m, "_bi_bo_qua", None)
+    if f is None:
+        return False, "mất bộ lọc _bi_bo_qua — file sao lưu sẽ lại lọt vào nơi chạy"
+    goc = Path("a")
+    ca = [(Path("a/tools/verify_dashboard.py"), False),
+          (Path("a/tools/verify_dashboard.py.bak-20260814-005720"), True),
+          (Path("a/SKILL.md"), False),
+          (Path("a/__pycache__/x.py"), True),
+          (Path("a/x.py.orig"), True)]
+    for p, mong in ca:
+        if f(p, goc) != mong:
+            return False, f"lọc sai {p.name!r}: {f(p, goc)} (cần {mong})"
+    rt = m.tim_runtime()
+    if rt is not None:
+        con = [p for p in rt.rglob("*.bak-*") if p.is_file()]
+        if con:
+            return False, f"{len(con)} file sao lưu vẫn nằm trong nơi chạy"
+    return True, "lọc đúng theo tên file; nơi chạy sạch file sao lưu"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -656,6 +691,7 @@ BAI_HOC = [
     ("BH19", "13/08", "Độ tươi đọc KẾT QUẢ, không chỉ nhìn mtime", bh19_do_tuoi_doc_ket_qua_khong_doc_mtime),
     ("BH20", "14/08", "Tự khởi động cũng đọc KẾT QUẢ (vá dở dang)", bh20_tu_khoi_dong_cung_doc_ket_qua),
     ("BH21", "14/08", "Mọi parser đều gộp chuỗi nối JS", bh21_moi_parser_deu_gop_chuoi_noi),
+    ("BH22", "14/08", "Không đẩy file sao lưu vào nơi chạy", bh22_khong_day_file_sao_luu_vao_noi_chay),
 ]
 
 

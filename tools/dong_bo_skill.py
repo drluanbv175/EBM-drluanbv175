@@ -59,6 +59,22 @@ GOC_RUNTIME = Path.home() / "Library/Application Support/Claude/local-agent-mode
 
 BO_QUA = {".DS_Store", "__pycache__", ".claude"}
 
+# VÁ 14/08/2026 — BỎ QUA THEO MẪU TÊN, không chỉ theo thành phần đường dẫn.
+# `BO_QUA` so trên `f.parts` nên không bao giờ bắt được một TÊN FILE như
+# `verify_dashboard.py.bak-20260814-005720`. Hệ quả đo được: **8 file sao lưu do
+# CHÍNH quy trình đồng bộ này tạo ra đã bị đẩy vào thư mục skill ĐANG CHẠY**, nằm
+# ngay cạnh bản sống. Không gây lỗi chạy (đuôi `.bak-*` không import được), nhưng
+# kho sẽ phình mãi và một bản CŨ của công cụ an toàn nằm cạnh bản mới là thứ gây
+# hiểu nhầm cho bất kỳ ai mở thư mục đó ra xem.
+BO_QUA_MAU = ("*.bak-*", "*.orig", "*.rej", "*~")
+
+
+def _bi_bo_qua(f: Path, goc: Path) -> bool:
+    import fnmatch
+    if any(x in f.parts for x in BO_QUA):
+        return True
+    return any(fnmatch.fnmatch(f.name, m) for m in BO_QUA_MAU)
+
 
 def tim_runtime() -> Path | None:
     """Tìm thư mục skills đang chạy. Đường dẫn có 2 tầng UUID do Claude sinh ra,
@@ -120,7 +136,7 @@ def so_mot_skill(nguon: Path, runtime: Path) -> dict:
     can_day: list[Path] = []
     phan_ky: list[tuple[Path, int]] = []      # (file, số dòng runtime sẽ mất)
     for f in sorted(nguon.rglob("*")):
-        if not f.is_file() or any(x in f.parts for x in BO_QUA):
+        if not f.is_file() or _bi_bo_qua(f, nguon):
             continue
         rel = f.relative_to(nguon)
         dich = runtime / rel
