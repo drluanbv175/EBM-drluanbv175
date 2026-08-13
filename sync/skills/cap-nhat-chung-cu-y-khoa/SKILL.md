@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.32.0
+  version: 1.33.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -820,6 +820,39 @@ không chỉ ca mới.**
 
 **Đã áp cho ITEM-05:** `gradeSource` sửa cho đúng nguồn, khai `normativeBasis:"guideline-strong-rec"`,
 **giữ nguyên `gradeLevel:'low'`** — không falsify. Bản đó nay 0 mục bị chặn.
+
+**(t) 14/08 — LÔ 22 MỤC bác sĩ duyệt: khai `normativeBasis` (8) + hạ `decision` (14).**
+
+Mục 'apply' bị cổng chặn: **56 → 49 → 40 → 27**.
+
+**Khai `normativeBasis`, GIỮ `decision` — 8 mục có bằng chứng quy phạm trích được nguyên văn:**
+
+| Mục | Căn cứ trong `gradeSource` | basis |
+|---|---|---|
+| `AnToanThuoc_MHRA` ITEM-01/02 | *"Khuyến cáo cơ quan quản lý (MHRA/CHM/PEAG)"* | `drug-label` |
+| `CapNhatTuan` ITEM-04 | *"AGS 2023 — **bảng tiêu chí** đồng thuận"* | `guideline-explicit-criteria` |
+| `COPD` ITEM-01 | *"**Tiêu chuẩn chẩn đoán** GOLD"* | `official-classification` |
+| `COPD` ITEM-02 | *"**Khung đánh giá** GOLD (bỏ C/D, gộp E)"* | `official-classification` |
+| `VKDT` ITEM-27 | *"**Quyết định quản lý dược chính thức** (regulatory action)"* | `drug-label` |
+| `VKDT` ITEM-36 | *"**Nhãn thuốc được FDA phê duyệt** (Boxed Warning + Contraindications)"* | `contraindication` |
+| `VKDT` ITEM-01 | *"**Tiêu chuẩn phân loại** ACR/EULAR 2010"* | `official-classification` |
+
+Ba mục VKDT phải **sửa `design` trước** — chúng bị gắn nhãn `Consensus` trong khi nguồn là nhãn
+thuốc FDA / hành động pháp quy / tiêu chuẩn phân loại. Đây đúng vấn đề đã ghi ở mục (d):
+**`design` là chuỗi tự do và nó đang nói sai về nguồn.**
+
+**Hạ `decision` → `consider` — 14 mục KHÔNG phải văn bản quy phạm:**
+nghiên cứu đơn lẻ (`RCT gốc`, `RCT n=17`, `RCT thí điểm nhãn mở`), phân tích gộp không có bảng
+GRADE, gộp nghiên cứu quan sát, nghiên cứu kiểm định công cụ, Cochrane không trích được độ chắc
+chắn — và `ViemDaDayThanKinh ITEM-01` vì **AAN Mức C là mức YẾU** trong hệ AAN.
+
+> Với nhóm này KHÔNG được tự gán `gradeLevel` để "cứu" mức `apply` — đó là lỗi tự gán mức (R4).
+> Hạ `decision` mới là đường đúng.
+
+⚠️ **Bẫy kỹ thuật đã gặp khi sửa hàng loạt:** neo bằng ~42 ký tự ngữ cảnh **trùng nhau giữa các
+mục** (11/14 mục hỏng ở lần đầu). Cách chắc chắn: định vị theo `id` của mục rồi giới hạn phạm vi
+tới `id` kế tiếp mới thay. Sửa dữ liệu y khoa hàng loạt thì neo phải **duy nhất theo cấu trúc**,
+không dựa vào ngữ cảnh văn bản.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
