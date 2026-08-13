@@ -3263,7 +3263,9 @@ Expand search via citation networks:
 
 1. **Forward citations** (papers citing key papers):
    - Use `parallel-cli search` to find papers citing a specific work:
-     ```bash
+     
+> **[EBM-VN] KHÔNG dùng `parallel-cli` ở bước này (bổ sung 2026-08-13).** Mục *Required CLI Tools* của chính skill này đã từ chối cài `parallel-cli` (dịch vụ TRẢ PHÍ, trái nguyên tắc "chỉ nguồn miễn phí" trong CLAUDE.md) từ 04/07/2026, nhưng đoạn dưới vẫn dạy dùng nó — tức bảo "đừng cài, nhưng hãy dùng". Thay bằng công cụ MIỄN PHÍ: `paper-lookup` (PubMed E-utilities · Crossref · Europe PMC), `research-lookup` (ClinicalTrials.gov · registry mở), `database-lookup` (78 CSDL công khai). Giữ nguyên đoạn tiếng Anh bên dưới để đối chiếu với bản gốc.
+```bash
      parallel-cli search "papers citing [Author et al. Year] [paper title]" \
        -q "citing" -q "[key author]" \
        --json --max-results 10 --excerpt-max-chars-total 27000 \
@@ -3276,7 +3278,9 @@ Expand search via citation networks:
 
 2. **Backward citations** (references from key papers):
    - Use `parallel-cli extract` to fetch full text of key papers and extract their reference lists:
-     ```bash
+     
+> **[EBM-VN] KHÔNG dùng `parallel-cli` ở bước này (bổ sung 2026-08-13).** Mục *Required CLI Tools* của chính skill này đã từ chối cài `parallel-cli` (dịch vụ TRẢ PHÍ, trái nguyên tắc "chỉ nguồn miễn phí" trong CLAUDE.md) từ 04/07/2026, nhưng đoạn dưới vẫn dạy dùng nó — tức bảo "đừng cài, nhưng hãy dùng". Thay bằng công cụ MIỄN PHÍ: `paper-lookup` (PubMed E-utilities · Crossref · Europe PMC), `research-lookup` (ClinicalTrials.gov · registry mở), `database-lookup` (78 CSDL công khai). Giữ nguyên đoạn tiếng Anh bên dưới để đối chiếu với bản gốc.
+```bash
      parallel-cli extract "https://doi.org/10.xxxx/yyyy" --json
      ```
    - Extract references from included papers
@@ -3401,6 +3405,8 @@ For any topic, identify foundational work by:
 
 Complete workflow for a biomedical literature review:
 
+
+> **[EBM-VN] KHÔNG dùng `parallel-cli` ở bước này (bổ sung 2026-08-13).** Mục *Required CLI Tools* của chính skill này đã từ chối cài `parallel-cli` (dịch vụ TRẢ PHÍ, trái nguyên tắc "chỉ nguồn miễn phí" trong CLAUDE.md) từ 04/07/2026, nhưng đoạn dưới vẫn dạy dùng nó — tức bảo "đừng cài, nhưng hãy dùng". Thay bằng công cụ MIỄN PHÍ: `paper-lookup` (PubMed E-utilities · Crossref · Europe PMC), `research-lookup` (ClinicalTrials.gov · registry mở), `database-lookup` (78 CSDL công khai). Giữ nguyên đoạn tiếng Anh bên dưới để đối chiếu với bản gốc.
 ```bash
 # 1. Create review document from template
 cp assets/review_template.md crispr_sickle_cell_review.md
