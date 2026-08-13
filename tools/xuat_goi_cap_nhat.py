@@ -174,6 +174,29 @@ def xuat_ban_word_html(docx_path: Path, dash: Path) -> tuple[Path | None, str]:
         return None, f"pandoc lỗi: {loi.splitlines()[-1] if loi else 'không rõ'}"
 
 
+KHOI_BO_NAM = (("Dashboard     ", "dashboard"), ("Bản đọc       ", "ban_doc"),
+               ("Bản Word      ", "word"), ("Word dạng HTML", "word_html"),
+               ("PDF giữ màu   ", "pdf"))
+
+
+def tom_tat_bo_nam(result: dict) -> str:
+    """Dòng tiêu đề tổng kết — PHẢI nói đúng số sản phẩm THẬT SỰ sinh được.
+
+    VÌ SAO CÓ (vá 13/08/2026): bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể
+    cả khi chỉ sinh được 3/5. Ca thật cùng ngày: `AnToanThuoc_EMA_PRAC_20260614` hỏng
+    ở bước ③ (chuỗi nối kiểu JS làm chết bộ dựng Word) nên mất cả ④ lẫn ⑤ — mà dòng
+    tiêu đề vẫn tuyên bố "đã sẵn sàng". Người đọc lướt sẽ tin gói đã đủ và đem bản
+    Word cũ đi dùng.
+
+    Cùng họ với BH14/BH15/BH16: hệ NÓI SAI với bác sĩ mà không sai một phép tính nào.
+    """
+    co = [nhan.strip() for nhan, key in KHOI_BO_NAM if result.get(key)]
+    thieu = [nhan.strip() for nhan, key in KHOI_BO_NAM if not result.get(key)]
+    if thieu:
+        return f"── Bộ năm: {len(co)}/5 — THIẾU {', '.join(thieu)} ──"
+    return "── Bộ năm đã sẵn sàng (5/5) ──"
+
+
 def main() -> int:
     configure_utf8_stdio()
     ap = argparse.ArgumentParser(
@@ -342,6 +365,11 @@ def main() -> int:
         else:
             result["word_html_ly_do"] = ly_do
             print("   ⚠ Bỏ qua: " + ly_do)
+            # VÁ 13/08/2026: bản HTML của Word là MỘT trong bộ năm đã hứa (bác sĩ đọc
+            # thẳng trong khung chat vì .docx không mở được ở đó) — thiếu nó là thiếu
+            # một sản phẩm, phải phản ánh vào mã thoát. KHÁC bước ⑤ PDF: PDF là tiện
+            # ích đọc, cố ý KHÔNG đổi mã thoát (đã ghi trong doctrine).
+            rc_final = 1
 
     # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
     # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.
@@ -367,11 +395,14 @@ def main() -> int:
             print("   ⚠ Bỏ qua: " + result["pdf_ly_do"])
             # PDF là tiện ích đọc, KHÔNG phải cổng chất lượng → không đổi mã thoát
 
-    print("\n── Bộ năm đã sẵn sàng ──")
-    for nhan, key in (("Dashboard     ", "dashboard"), ("Bản đọc       ", "ban_doc"),
-                      ("Bản Word      ", "word"), ("Word dạng HTML", "word_html"),
-                      ("PDF giữ màu   ", "pdf")):
-        print(f"  {nhan}  {result.get(key) or '(chưa sinh được)'}")
+    # VÁ 13/08/2026 — TIÊU ĐỀ PHẢI NÓI ĐÚNG SỰ THẬT.
+    # Bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể cả khi chỉ sinh được 3/5.
+    # Ca thật cùng ngày: `AnToanThuoc_EMA_PRAC_20260614` hỏng bước ③ nên mất cả ④ và
+    # ⑤, mà dòng tiêu đề vẫn tuyên bố "đã sẵn sàng" — người đọc lướt sẽ tin gói đủ.
+    # Cùng họ lỗi với BH14/BH15/BH16: hệ NÓI SAI mà không sai một phép tính nào.
+    print("\n" + tom_tat_bo_nam(result))
+    for nhan, key in KHOI_BO_NAM:
+        print(f"  {nhan}  {result.get(key) or '(CHƯA SINH ĐƯỢC)'}")
     print(f"  Cổng liêm chính: {result['cong_liem_chinh']}")
     print("\nCần bác sĩ kiểm chứng trước khi áp dụng cho người bệnh cụ thể.")
 

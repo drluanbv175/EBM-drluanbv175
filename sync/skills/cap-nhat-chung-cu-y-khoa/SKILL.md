@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.22.0
+  version: 1.23.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -625,6 +625,29 @@ trước vá thì 0/7 chạy và không một dòng báo; sau vá thì 7/7 chạ
 sĩ* mà không sai một phép tính nào — khuyên việc vô ích, thổi phồng khối lượng, hoặc lặng lẽ
 không chạy. Không lỗi nào trong ba lỗi này làm test đỏ; cả ba chỉ lộ ra khi có người hỏi
 *"con số này thật sự đếm gì?"* và *"làm theo lời khuyên này có đổi được gì không?"*.
+
+**(j) BH17 — dây chuyền tuyên bố "Bộ năm đã sẵn sàng" khi chỉ có 3/5.**
+
+Dòng tổng kết in **VÔ ĐIỀU KIỆN**. Ca thật cùng ngày: `AnToanThuoc_EMA_PRAC_20260614` hỏng
+bước ③ (chuỗi nối kiểu JS làm chết bộ dựng Word) nên mất cả ④ lẫn ⑤ — mà tiêu đề vẫn nói
+"đã sẵn sàng". Bác sĩ đọc lướt sẽ tin gói đủ và **đem bản Word CŨ đi dùng cho người bệnh**.
+
+Nay tiêu đề nói đúng: `── Bộ năm: 3/5 — THIẾU Word dạng HTML, PDF giữ màu ──`, và các ô
+trống ghi rõ `(CHƯA SINH ĐƯỢC)`. Bước ④ hỏng nay **đổi mã thoát** (nó là một trong bộ năm đã
+hứa) — riêng bước ⑤ PDF vẫn cố ý không đổi mã thoát vì là tiện ích đọc, đúng doctrine cũ.
+
+**Bốn lỗi BH14–BH17 là MỘT HỌ, và là họ nguy hiểm nhất của hệ này:**
+
+| | Hệ nói gì | Sự thật |
+|---|---|---|
+| BH14 | "chạy lại thêm vòng" | chạy lại không bao giờ sửa được |
+| BH15 | "64 mục cần duyệt" | thật ra 49 |
+| BH16 | *(im lặng — mọi thứ ổn)* | 0/7 chốt đã chạy |
+| BH17 | "Bộ năm đã sẵn sàng" | chỉ có 3/5 |
+
+**Không lỗi nào làm test đỏ. Không lỗi nào sai một phép tính.** Chúng chỉ lộ ra khi hỏi
+*"con số này đếm ĐƠN VỊ gì?"*, *"làm theo lời khuyên này có đổi được gì không?"* và
+*"câu tuyên bố này có điều kiện nào không, hay in ra bất kể kết quả?"*.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung

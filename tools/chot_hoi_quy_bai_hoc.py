@@ -447,6 +447,30 @@ def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
     return True, f"{len(lenhs)} chốt neo vào $CLAUDE_PROJECT_DIR, thiếu file thì báo TO"
 
 
+def bh17_tieu_de_bo_nam_noi_dung_su_that():
+    """13/08 — dây chuyền in "Bộ năm đã sẵn sàng" VÔ ĐIỀU KIỆN, kể cả khi chỉ có 3/5.
+
+    Ca thật cùng ngày: `AnToanThuoc_EMA_PRAC_20260614` hỏng bước ③ (chuỗi nối kiểu JS
+    làm chết bộ dựng Word) nên mất cả ④ lẫn ⑤ — mà dòng tiêu đề vẫn tuyên bố "đã sẵn
+    sàng". Người đọc lướt sẽ tin gói đã đủ và đem bản Word CŨ đi dùng cho người bệnh.
+
+    Kiểm HÀNH VI: gọi thẳng hàm tóm tắt với ba trạng thái đủ/thiếu.
+    """
+    m = _nap(REPO / "tools/xuat_goi_cap_nhat.py", "xuat_hoiquy")
+    f = getattr(m, "tom_tat_bo_nam", None)
+    if f is None:
+        return False, "mất hàm tom_tat_bo_nam — nguy cơ quay lại tiêu đề vô điều kiện"
+    du = {"dashboard": "a", "ban_doc": "b", "word": "c", "word_html": "d", "pdf": "e"}
+    if "5/5" not in f(du):
+        return False, f"gói ĐỦ mà không nói 5/5: {f(du)!r}"
+    thieu = f({"dashboard": "a", "ban_doc": "b", "word": "c"})
+    if "3/5" not in thieu or "THIẾU" not in thieu:
+        return False, f"gói THIẾU mà vẫn không nói rõ: {thieu!r}"
+    if "sẵn sàng" in thieu:
+        return False, f"gói thiếu vẫn tự nhận 'sẵn sàng': {thieu!r}"
+    return True, "tiêu đề nói đúng số sản phẩm thật sự sinh được"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -464,6 +488,7 @@ BAI_HOC = [
     ("BH14", "13/08", "Không khuyên việc chắc chắn vô ích", bh14_khong_khuyen_viec_chac_chan_vo_ich),
     ("BH15", "13/08", "Đếm MỤC, không đếm dòng lỗi", bh15_dem_muc_khong_dem_dong),
     ("BH16", "13/08", "Hook neo thư mục dự án + báo TO khi thiếu", bh16_hook_neo_vao_thu_muc_du_an_va_bao_to),
+    ("BH17", "13/08", "Tiêu đề bộ năm nói đúng sự thật", bh17_tieu_de_bo_nam_noi_dung_su_that),
 ]
 
 
