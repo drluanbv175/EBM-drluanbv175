@@ -401,6 +401,52 @@ def bh15_dem_muc_khong_dem_dong():
     return True, "đếm mục riêng biệt, không đếm dòng lỗi"
 
 
+def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
+    """13/08 — cả 7 chốt SessionStart im lặng bỏ qua khi mở Claude ở thư mục khác.
+
+    Guard cũ là `[ -f tools/X.py ]` — đường dẫn TƯƠNG ĐỐI. Mở Claude ở thư mục con
+    (vd `medical-ebm-automation/`) thì guard sai ⇒ KHÔNG chốt nào chạy, và vì mỗi
+    lệnh kết thúc bằng `; true` nên mã thoát vẫn 0: **bác sĩ nhận đúng cùng một màn
+    hình im lặng như khi mọi thứ đều tốt.** Đây là kiểu hỏng tệ nhất của một hệ giám
+    sát — nó không sai, nó biến mất.
+
+    Vá: neo vào `$CLAUDE_PROJECT_DIR` và **BÁO TO** khi không tìm thấy công cụ.
+
+    Kiểm HÀNH VI, nhanh: chạy từng lệnh hook với `CLAUDE_PROJECT_DIR` trỏ vào một
+    thư mục KHÔNG có công cụ — mỗi lệnh PHẢI in cảnh báo, không được im.
+    """
+    import json
+    import os
+    import subprocess
+    import tempfile
+    p = REPO / ".claude/settings.json"
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8"))
+        lenhs = [m["command"] for nhom in cfg["hooks"]["SessionStart"] for m in nhom["hooks"]]
+    except (OSError, ValueError, KeyError) as e:
+        return False, f"không đọc được hook SessionStart: {e}"
+    if not lenhs:
+        return False, "không còn chốt SessionStart nào"
+    with tempfile.TemporaryDirectory() as rong:
+        env = dict(os.environ, CLAUDE_PROJECT_DIR=rong)
+        im = []
+        for c in lenhs:
+            if "CLAUDE_PROJECT_DIR" not in c:
+                im.append("có chốt KHÔNG neo vào $CLAUDE_PROJECT_DIR")
+                continue
+            try:
+                r = subprocess.run(["bash", "-c", c], capture_output=True, text=True,
+                                   env=env, cwd=rong, timeout=30)
+            except (OSError, subprocess.SubprocessError) as e:
+                im.append(f"chạy lỗi: {e}")
+                continue
+            if "KHÔNG CHẠY" not in (r.stdout + r.stderr):
+                im.append("một chốt IM LẶNG khi không thấy công cụ")
+    if im:
+        return False, f"{len(im)}/{len(lenhs)} chốt hỏng im lặng: {im[0]}"
+    return True, f"{len(lenhs)} chốt neo vào $CLAUDE_PROJECT_DIR, thiếu file thì báo TO"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -417,6 +463,7 @@ BAI_HOC = [
     ("BH13", "13/08", "Bộ dựng Word đọc được chuỗi nối JS", bh13_docx_doc_duoc_chuoi_noi_kieu_js),
     ("BH14", "13/08", "Không khuyên việc chắc chắn vô ích", bh14_khong_khuyen_viec_chac_chan_vo_ich),
     ("BH15", "13/08", "Đếm MỤC, không đếm dòng lỗi", bh15_dem_muc_khong_dem_dong),
+    ("BH16", "13/08", "Hook neo thư mục dự án + báo TO khi thiếu", bh16_hook_neo_vao_thu_muc_du_an_va_bao_to),
 ]
 
 

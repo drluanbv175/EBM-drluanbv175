@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.21.0
+  version: 1.22.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -607,6 +607,24 @@ tại. Logic ghép nay gom vào `phai_sinh_lech()`, không đo lại bằng tay 
 > file?"* và *"cách ghép của tôi có bỏ sót biến thể tên nào không?"*. Cả hai lỗi hôm nay đều
 > sai theo hướng **thổi phồng việc**, không phải bỏ sót việc — nhưng cả hai đều làm bác sĩ
 > hành động sai.
+
+**(i) BH16 — CẢ 7 CHỐT BIẾN MẤT nếu mở Claude ở thư mục khác.**
+
+Guard cũ là `[ -f tools/X.py ]` — đường dẫn **TƯƠNG ĐỐI**. Mở Claude ở thư mục con
+(vd `medical-ebm-automation/`) thì guard sai ⇒ **không chốt nào chạy**, và vì mỗi lệnh kết
+thúc bằng `; true` nên mã thoát vẫn 0.
+
+> **Bác sĩ nhận đúng cùng một màn hình im lặng như khi mọi thứ đều tốt.** Đây là kiểu hỏng
+> tệ nhất của một hệ giám sát: nó không báo sai — nó **biến mất**.
+
+Vá: neo vào `$CLAUDE_PROJECT_DIR` (fallback `$PWD`) và **BÁO TO** khi không tìm thấy công cụ,
+thay vì im lặng bỏ qua. Đã kiểm thật: chạy cả 7 lệnh hook nguyên văn từ `/private/tmp` —
+trước vá thì 0/7 chạy và không một dòng báo; sau vá thì 7/7 chạy đúng.
+
+**Ba lỗi BH14–BH16 cùng một họ, và đó là họ nguy hiểm nhất của hệ này:** hệ *nói sai với bác
+sĩ* mà không sai một phép tính nào — khuyên việc vô ích, thổi phồng khối lượng, hoặc lặng lẽ
+không chạy. Không lỗi nào trong ba lỗi này làm test đỏ; cả ba chỉ lộ ra khi có người hỏi
+*"con số này thật sự đếm gì?"* và *"làm theo lời khuyên này có đổi được gì không?"*.
 
 **(c) `tools/tu_sua_chua.py --ap-dung` — TỰ VÁ phần máy móc.**
 Skill lệch bản · kho plugin thiếu · cấu hình sai interpreter. **KHÔNG** đụng nội dung
