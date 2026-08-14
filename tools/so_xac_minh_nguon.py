@@ -107,8 +107,7 @@ if __name__ == "__main__":
 # chặn) nhưng KHÔNG hiện một dòng nào ⇒ trông y hệt như treo. Với một công cụ đi mạng
 # chậm, "không thấy gì" và "đã chết" phải phân biệt được, nếu không người dùng sẽ giết
 # nhầm một lượt quét đang chạy đúng.
-import sys as _sys_utf8
-for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8", line_buffering=True)
     except Exception:
@@ -175,7 +174,14 @@ def con_hieu_luc(ban_ghi: dict) -> tuple[bool, str]:
     if tuoi > HAN_TON_TAI_NGAY:
         return False, f"xác minh đã {tuoi} ngày (hạn {HAN_TON_TAI_NGAY})"
     tuoi_rut = _tuoi_ngay(ban_ghi.get("kiem_rut_luc"))
-    if ban_ghi.get("loai") == "pmid":
+    # MỞ RỘNG 14/08/2026 (vòng 4) — DOI cũng phải có dấu vết kiểm rút bài.
+    # Trước đó chỉ `pmid` bị đòi, nên 540 DOI trong kho đứng ở trạng thái "còn hiệu
+    # lực" mà CHƯA TỪNG được kiểm rút bài lần nào. Đó là một lời bảo đảm rỗng, và nó
+    # đã bị chạm vào thật: một mục đổi từ PMID đã rút sang DOI của CHÍNH bài đã rút
+    # thì cổng thôi cảnh báo. Một định danh đi kèm bảo đảm nào thì phải chịu đúng
+    # phép kiểm của bảo đảm đó — không phụ thuộc nó được ghi bằng kiểu nào (BH24).
+    co_doi = ban_ghi.get("loai") == "doi" or ban_ghi.get("doi_rut_tu_url")
+    if ban_ghi.get("loai") == "pmid" or co_doi:
         if tuoi_rut is None:
             return False, "chưa kiểm rút bài lần nào"
         if tuoi_rut > HAN_RUT_BAI_NGAY:
@@ -246,6 +252,29 @@ def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
     return nguon
 
 
+def dong_bo_lien_ket_dashboard(
+    muc: dict[str, dict],
+    nguon: dict[str, set[str]],
+    ten_da_quet: set[str],
+) -> int:
+    """Đối soát liên kết nguồn↔dashboard trong đúng phạm vi vừa quét.
+
+    Khi một citation bị loại hoặc thay bằng bản hợp lệ, bản cũ trong sổ không được
+    tiếp tục khai dashboard đó đang sử dụng nguồn. Tuy nhiên ``--quet`` có thể chỉ
+    nhận một vài dashboard, nên phải giữ nguyên liên kết tới các file KHÔNG thuộc
+    lượt quét hiện tại; nếu gán thẳng từ ``nguon`` sẽ làm mất lịch sử của cả kho.
+    """
+    thay_doi = 0
+    for khoa, ban_ghi in muc.items():
+        cu = set(ban_ghi.get("cac_dashboard") or [])
+        moi = (cu - ten_da_quet) | set(nguon.get(khoa, set()))
+        moi_sap_xep = sorted(moi)
+        if moi_sap_xep != sorted(cu):
+            ban_ghi["cac_dashboard"] = moi_sap_xep
+            thay_doi += 1
+    return thay_doi
+
+
 def xac_minh_mot(khoa: str, vd) -> dict | None:
     """Xác minh MỘT nguồn. Trả bản ghi khi THÀNH CÔNG, None khi không.
 
@@ -300,6 +329,78 @@ def _goi_linh_hoat(ham, gt):
     return [kq, "", None]
 
 
+def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
+    """Tra rút bài cho các DOI (kể cả DOI ghi dạng URL) và ghi thẳng vào sổ.
+
+    VÌ SAO CÓ (14/08/2026, vòng 4): chuỗi 3 tầng chỉ nhận PMID, nên **540 DOI trong
+    kho CHƯA TỪNG được kiểm rút bài lần nào** — gần một nửa số định danh, và không
+    một dòng nào nói ra điều đó.
+
+    Điểm mù bị chạm vào ngay trong ngày: một mục trích PMID 30267080 (đã rút) được
+    sửa thành trích DOI `10.1001/jamaoncol.2018.4070` — mà Crossref ghi rõ DOI đó
+    CHÍNH LÀ bài đã rút (`updated-by: retraction`). Cổng vì thế thôi cảnh báo trong
+    khi rủi ro còn nguyên: một đèn đỏ tắt đi mà nguy cơ không mất.
+
+    Giữ nguyên luật bất đối xứng: chỉ ghi `da_rut` khi Crossref khẳng định; "không
+    hỏi được" giữ trạng thái CHƯA kiểm, không bao giờ thành "sạch".
+    """
+    can = []
+    for khoa, bg in muc.items():
+        if bg.get("da_rut") or khoa not in nguon:
+            continue
+        # DOI ghi dạng URL cũng là DOI — cùng lý lẽ của BH24.
+        doi = bg.get("gia_tri") if bg.get("loai") == "doi" else bg.get("doi_rut_tu_url")
+        if not doi:
+            continue
+        t = _tuoi_ngay(bg.get("kiem_rut_luc"))
+        if t is None or t > HAN_RUT_BAI_NGAY:
+            can.append((khoa, doi))
+    if not can:
+        return
+
+    mea = REPO / "medical-ebm-automation"
+    if not (mea / "app" / "sources" / "crossref_retraction.py").exists():
+        print(f"\n⚠ {len(can)} DOI CHƯA kiểm được rút bài: thiếu "
+              f"app/sources/crossref_retraction.py — giữ nguyên trạng thái CHƯA kiểm.")
+        return
+    sys.path.insert(0, str(mea))
+    try:
+        from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
+    except ImportError as e:
+        print(f"\n⚠ {len(can)} DOI CHƯA kiểm được rút bài (thiếu thư viện: {e}) — "
+              f"KHÔNG coi là sạch.")
+        return
+
+    print(f"\n── Tra rút bài cho {len(can)} DOI (Crossref) ──")
+    import os
+    kq = CrossrefRetraction(mailto=os.environ.get("NCBI_EMAIL", "")).check(
+        [d for _k, d in can])
+    bay_gio = dt.datetime.now().isoformat(timespec="seconds")
+    chua = 0
+    for khoa, doi in can:
+        info = kq.get(doi) or {}
+        tt = info.get("status", "")
+        if tt in ("unknown_fetch_error", ""):
+            chua += 1
+            continue
+        muc[khoa]["kiem_rut_luc"] = bay_gio
+        muc[khoa]["ghi_chu_rut"] = tt
+        if tt == "retracted":
+            muc[khoa]["da_rut"] = True
+            muc[khoa]["thong_bao_rut_doi"] = info.get("notice_doi", "")
+            print(f"  🔴 {doi}: ĐÃ BỊ RÚT (thông báo {info.get('notice_doi','')})")
+        elif tt == "expression_of_concern":
+            muc[khoa]["quan_ngai"] = True
+            print(f"  🟠 {doi}: có Expression of Concern — bác sĩ đọc lại")
+        elif tt == "unresolved":
+            muc[khoa]["nghi_ma"] = True
+            print(f"  🟠 {doi}: Crossref không có bản ghi (nghi định danh ma) — rà tay")
+    if chua:
+        print(f"  ⚠ {chua} DOI KHÔNG tra được lần này — giữ nguyên CHƯA kiểm, "
+              f"KHÔNG coi là sạch.")
+    ghi_so(so)
+
+
 def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
     """Tra CHỦ ĐỘNG trạng thái rút bài qua CHUỖI 3 TẦNG thật của repo y khoa.
 
@@ -346,6 +447,17 @@ def lenh_quet(files: list[Path], vong: int) -> int:
     nguon = gom_nguon(files, vd)
     print(f"Gom được {len(nguon)} nguồn khác nhau từ {len(files)} dashboard.")
 
+    # Đối soát TRƯỚC khi gọi mạng để việc loại một citation đã rút có hiệu lực ngay,
+    # kể cả lượt xác minh online bị gián đoạn sau đó.
+    so_lien_ket = dong_bo_lien_ket_dashboard(
+        muc,
+        nguon,
+        {f.name for f in files},
+    )
+    if so_lien_ket:
+        ghi_so(so)
+        print(f"Đã đối soát liên kết nguồn↔dashboard: {so_lien_ket} bản ghi thay đổi.")
+
     can_lam = []
     for khoa in sorted(nguon):
         cu = muc.get(khoa)
@@ -390,6 +502,8 @@ def lenh_quet(files: list[Path], vong: int) -> int:
         ghi_so(so)
         print(f"  Vòng {v}: thêm {len(can_lam) - len(that_bai)} · còn thiếu {len(that_bai)}")
         can_lam = that_bai
+
+    kiem_rut_bai_theo_doi(muc, nguon, so)
 
     # ── kiểm rút bài cho PMID đã xác minh nhưng quá hạn kiểm ────────────────
     can_kiem_rut = []

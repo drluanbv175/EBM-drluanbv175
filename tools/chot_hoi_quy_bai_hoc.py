@@ -1140,6 +1140,46 @@ def bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap():
         _sh.rmtree(tmp, ignore_errors=True)
 
 
+def bh33_kiem_rut_bai_phai_phu_moi_kieu_dinh_danh():
+    """14/08 — kiểm rút bài chỉ phủ PMID, nên đổi sang trích DOI là thoát cổng.
+
+    Chuỗi 3 tầng dựng cùng ngày chỉ nhận PMID ⇒ **540 DOI trong kho CHƯA TỪNG được
+    kiểm rút bài lần nào** (gần một nửa số định danh), mà `con_hieu_luc()` vẫn xếp
+    chúng vào nhóm "còn hiệu lực" — một lời bảo đảm rỗng.
+
+    Điểm mù bị chạm vào THẬT trong cùng ngày: một mục trích PMID 30267080 (đã rút)
+    được sửa thành trích DOI `10.1001/jamaoncol.2018.4070`; tra Crossref thì DOI đó
+    CHÍNH LÀ bài đã rút (`updated-by: retraction → 10.1001/jamaoncol.2019.0576`).
+    Cổng thôi cảnh báo trong khi rủi ro còn nguyên — đèn đỏ tắt mà nguy cơ không mất,
+    nguy hiểm hơn hẳn chưa từng có đèn.
+
+    Cùng lý lẽ BH24 (DOI ghi dạng URL vẫn là DOI): **một định danh mang bảo đảm nào
+    thì phải chịu đúng phép kiểm của bảo đảm đó, bất kể nó được ghi bằng kiểu gì.**
+
+    Kiểm HÀNH VI: bản ghi DOI thiếu dấu vết kiểm rút bài KHÔNG được coi là còn hiệu lực.
+    """
+    sx = _nap(REPO / "tools" / "so_xac_minh_nguon.py", "sx_bh33")
+    moi = __import__("datetime").datetime.now().isoformat(timespec="seconds")
+    ca = [
+        ({"loai": "doi", "gia_tri": "10.x/y", "xac_minh_luc": moi},
+         False, "DOI chưa kiểm rút bài mà vẫn được coi là còn hiệu lực"),
+        ({"loai": "url", "gia_tri": "https://doi.org/10.x/y", "doi_rut_tu_url": "10.x/y",
+          "xac_minh_luc": moi},
+         False, "DOI ghi dạng URL chưa kiểm rút bài mà vẫn còn hiệu lực"),
+        ({"loai": "doi", "gia_tri": "10.x/y", "xac_minh_luc": moi, "kiem_rut_luc": moi},
+         True, "DOI đã kiểm rút bài mà bị coi là hết hiệu lực (báo động giả)"),
+        ({"loai": "url", "gia_tri": "https://nice.org.uk/ng28", "xac_minh_luc": moi},
+         True, "URL thuần (không phải DOI) bị đòi kiểm rút bài — báo động giả"),
+    ]
+    for ban_ghi, mong, thong_diep in ca:
+        con, _ly_do = sx.con_hieu_luc(ban_ghi)
+        if con is not mong:
+            return False, thong_diep
+    if not hasattr(sx, "kiem_rut_bai_theo_doi"):
+        return False, "mất kiem_rut_bai_theo_doi — DOI lại không có đường nào được kiểm"
+    return True, "DOI (kể cả ghi dạng URL) phải có dấu vết kiểm rút bài; URL thuần thì không"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1173,6 +1213,7 @@ BAI_HOC = [
     ("BH30", "14/08", "Khoá gom nhóm phải định danh duy nhất", bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat),
     ("BH31", "14/08", "Nguồn đã rút phải chặn được ở cổng", bh31_nguon_da_rut_phai_chan_duoc_o_cong),
     ("BH32", "14/08", "Chỉ số gộp không được kết luận cho cả tập", bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap),
+    ("BH33", "14/08", "Kiểm rút bài phải phủ mọi kiểu định danh", bh33_kiem_rut_bai_phai_phu_moi_kieu_dinh_danh),
 ]
 
 
