@@ -1634,6 +1634,36 @@ def bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc():
     return True, f"canary xanh {so}/{so} phép thử gài lỗi"
 
 
+def bh44_dieu_phoi_agent_phai_sach():
+    """15/08 — tầng ĐIỀU PHỐI chưa từng được đo, và lần đo đầu ra 2 lớp việc thật.
+
+    (a) Skill `nghien-cuu-ebm-tong-hop` (44K) + `dao-tao-slide-tai-lieu-y-khoa` (28K) +
+        `ehospital-mini` chạy ở runtime mà KHÔNG có nguồn trong cây OneDrive — app dọn
+        runtime (đã xảy ra nhiều lần, đo 13/08: 20/22 skill lệch bản) là mất trắng, và
+        `dong_bo_skill.py` không hề biết chúng tồn tại. Đã cứu cả ba về `sync/skills/`.
+    (b) Chính phép đo đầu tiên tạo BÁO ĐỘNG GIẢ hai lần: 6 "tham chiếu hỏng" hoá ra là
+        SKILL (tên agent và skill sống chung mặt chữ backtick nhưng thuộc hai sổ đăng
+        ký); 22 skill "mất trắng" hoá ra 20 là skill dựng sẵn của Anthropic. Chốt
+        `kiem_dieu_phoi.py` vì thế dùng KHAI BÁO tường minh (SKILL_DUNG_SAN ·
+        TEN_LICH_SU) thay vì suy đoán — skill LẠ không nguồn vẫn đỏ, đúng như cần.
+
+    Đồ thị điều phối đo được đang lành: nhạc trưởng lâm sàng gọi 23 agent, nghiên cứu
+    31, không agent mồ côi. Chốt này giữ nó tiếp tục lành.
+
+    Kiểm HÀNH VI: chạy chốt điều phối thật, đòi exit 0.
+    """
+    import subprocess
+    tp = REPO / "tools" / "kiem_dieu_phoi.py"
+    if not tp.exists():
+        return False, "mất kiem_dieu_phoi.py — tầng điều phối lại không ai đo"
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        dong = [d.strip() for d in (r.stdout or "").splitlines() if d.strip().startswith("🔴")]
+        return False, ("điều phối KHÔNG sạch: "
+                       + (dong[0][:140] if dong else "chạy `python tools/kiem_dieu_phoi.py`"))
+    return True, "tham chiếu phân giải được · agent đều có đường gọi · skill runtime đều có nguồn"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1678,6 +1708,7 @@ BAI_HOC = [
     ("BH41", "14/08", "Công cụ chứng cứ không được mồ côi", bh41_cong_cu_chung_cu_khong_duoc_mo_coi),
     ("BH42", "14/08", "Guideline không được tin theo thương hiệu", bh42_guideline_khong_duoc_tin_theo_thuong_hieu),
     ("BH43", "14/08", "Canary đầu-cuối phải chạy và phải bắt được", bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc),
+    ("BH44", "15/08", "Điều phối agent phải sạch", bh44_dieu_phoi_agent_phai_sach),
 ]
 
 

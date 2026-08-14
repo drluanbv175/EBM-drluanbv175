@@ -850,6 +850,30 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   mỗi phiên — nên KHÔNG thêm hook riêng (thêm sẽ chạy hai lần và hai chỗ cùng báo một việc).
   *Số đo: canary 2 giây · trọn bộ 43 chốt 19 giây.*
 
+  ## 🕸️ TẦNG ĐIỀU PHỐI AGENT — đo lần đầu 15/08/2026, chốt `kiem_dieu_phoi.py` (BH44)
+  Tầng duy nhất chưa từng được đo. Kết quả: **đồ thị điều phối LÀNH** — `dieu-phoi-lam-sang`
+  gọi 23 agent, `dieu-phoi-nghien-cuu` gọi 31, **0 agent mồ côi**, `dien-giai-ket-qua` thuộc
+  nhạc trưởng nghiên cứu (G6.5) đúng thiết kế. Nhưng lần đo đầu lộ 2 lớp việc thật:
+
+  🔴 **3 skill của bác sĩ chạy runtime mà KHÔNG có nguồn trong cây OneDrive** —
+  `nghien-cuu-ebm-tong-hop` (44K) · `dao-tao-slide-tai-lieu-y-khoa` (28K) · `ehospital-mini`.
+  App dọn runtime (đã xảy ra nhiều lần, đo 13/08: 20/22 skill lệch bản) là **mất trắng**, và
+  `dong_bo_skill.py` không hề biết chúng tồn tại. **Đã cứu cả ba về `sync/skills/`** — nguồn
+  skill nay 47, runtime 60/60 đều có nguồn.
+
+  ⚠️ **Chính phép đo đầu tiên tạo BÁO ĐỘNG GIẢ hai lần** — ghi lại để lần rà sau không lặp:
+  (a) 6 "tham chiếu agent hỏng" hoá ra là **SKILL** — tên agent và tên skill sống chung mặt
+  chữ backtick nhưng thuộc **hai sổ đăng ký khác nhau**; phân giải phải tra agent ∪ skill
+  nguồn ∪ skill runtime. (b) 22 skill "mất trắng" hoá ra **20 là skill dựng sẵn của
+  Anthropic** (docx, pdf, pptx…) không cần nguồn cục bộ. (c) 3 tên còn lại
+  (`antifacts-weekly-update`…) là **ghi chú lịch sử về routine đã RETIRE** mà doctrine tự ghi
+  "không tồn tại" — xoá đi sẽ mất dấu vết vì sao retire.
+  ⇒ Chốt dùng **KHAI BÁO tường minh** (`SKILL_DUNG_SAN` · `TEN_LICH_SU`) thay vì suy đoán —
+  skill LẠ không nguồn vẫn đỏ, đúng như cần (BH28).
+
+  **BH44** chạy chốt này trong bộ hồi quy (tự chạy mỗi phiên qua `chot_hoi_quy_bai_hoc`);
+  đột biến kiểm: xoá nguồn một skill vừa cứu ⇒ đỏ đúng ③.
+
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
   và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job
