@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import collections
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -177,6 +178,30 @@ def quet_kho(dash: Path | None = None):
     return vd, theo_lat_cat, theo_goc
 
 
+DA_DUYET = DASH / "mau-thuan-da-duyet.json"
+
+
+def _nap_da_duyet() -> dict[tuple[str, str], dict]:
+    """{(chủ_đề, pmid): bản ghi} — cặp bác sĩ ĐÃ XEM và kết luận không phải mâu thuẫn.
+
+    Thêm 14/08/2026. Có những cặp khác `decision` mà KHÔNG phải nói ngược nhau: hai
+    bản trích HAI KẾT CỤC khác nhau của cùng một thử nghiệm (ca thật: IMPACT
+    PMID 29668352 — giảm đợt cấp/nhập viện ở bản COPD vs biến cố tim-phổi phối hợp ở
+    hai bản tim mạch). Máy KHÔNG được tự phán điều đó: đã thử bằng độ giống tiêu đề
+    ngày 14/08 và SAI theo hướng nguy hiểm hơn — giấu mất mâu thuẫn THẬT (BH28).
+
+    Nên đây là KHAI BÁO của bác sĩ, có lý do và ngày duyệt. Mục đã duyệt vẫn được
+    liệt kê (không biến mất), chỉ tách khỏi danh sách đỏ.
+    """
+    if not DA_DUYET.exists():
+        return {}
+    try:
+        d = json.loads(DA_DUYET.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {(m.get("chu_de", ""), str(m.get("pmid", ""))): m for m in d.get("muc", [])}
+
+
 def tim_mau_thuan(vd, theo_goc) -> tuple[list[dict], list[dict]]:
     """(mâu_thuẫn, không_so_được) — bản ghi CÓ ĐƯỜNG DẪN để lọc theo từng file.
 
@@ -185,6 +210,8 @@ def tim_mau_thuan(vd, theo_goc) -> tuple[list[dict], list[dict]]:
     """
     mau_thuan: list[dict] = []
     khong_so_duoc: list[dict] = []
+    da_duyet: list[dict] = []
+    _DA_DUYET = _nap_da_duyet()
     for goc, v in sorted(theo_goc.items()):
         if len(v) < 2:
             continue
@@ -213,6 +240,12 @@ def tim_mau_thuan(vd, theo_goc) -> tuple[list[dict], list[dict]]:
                         })
                         continue
                     if a1[0][0] != a2[0][0]:
+                        if (goc, pm) in _DA_DUYET:
+                            da_duyet.append({"goc": goc, "pmid": pm,
+                                             "a": {"lat_cat": lc1, "ngay": n1},
+                                             "b": {"lat_cat": lc2, "ngay": n2},
+                                             **_DA_DUYET[(goc, pm)]})
+                            continue
                         # HOÀN TÁC 14/08/2026 — bản vá tự phân loại "khác kết cục"
                         # theo ĐỘ GIỐNG TIÊU ĐỀ đã SAI, và sai theo hướng nguy hiểm hơn.
                         # Đo thật trên 8 cặp: FIDELIO-DKD 22%, DAPA-CKD 52%, cảnh báo
@@ -230,6 +263,7 @@ def tim_mau_thuan(vd, theo_goc) -> tuple[list[dict], list[dict]]:
                         "a": {"lat_cat": lc1, "ngay": n1, "path": p1},
                         "b": {"lat_cat": lc2, "ngay": n2, "path": p2},
                     })
+    tim_mau_thuan.da_duyet = da_duyet  # phụ, không đổi chữ ký hàm
     return mau_thuan, khong_so_duoc
 
 
@@ -261,6 +295,24 @@ def mau_thuan_cua_ban(duong_dan: Path) -> list[dict]:
                     "tieu_de_minh": cua_minh[3], "tieu_de_ben": cua_ben[3],
                 })
     return ra
+
+
+def _in_da_duyet() -> None:
+    """In các cặp bác sĩ ĐÃ DUYỆT là không phải mâu thuẫn — vẫn hiện, không biến mất.
+
+    Giấu hẳn một cặp đã duyệt sẽ khiến không ai rà lại được quyết định đó, và nếu
+    một trong hai bản sau này đổi nội dung thì miễn trừ cũ có thể không còn đúng.
+    """
+    ds = getattr(tim_mau_thuan, "da_duyet", None) or []
+    if not ds:
+        return
+    print(f"\n  ✔ {len(ds)} cặp BÁC SĨ ĐÃ DUYỆT là KHÔNG phải mâu thuẫn "
+          f"(khai ở mau-thuan-da-duyet.json):")
+    for m in ds:
+        print(f"     • {m['goc']} PMID {m['pmid']}: {m['a']['lat_cat']} ⟷ {m['b']['lat_cat']} "
+              f"— duyệt {m.get('duyet_ngay','?')}")
+        print(f"       {m.get('ly_do','')[:150]}")
+    print("     (Nội dung hai bản đổi thì phải rà lại miễn trừ này.)")
 
 
 def main() -> int:
@@ -329,6 +381,7 @@ def main() -> int:
         print("  (guideline chỉ có URL) không đo được ở đây.\n  Cần bác sĩ kiểm chứng.")
         return 0
 
+    _in_da_duyet()
     if khong_so_duoc:
         print(f"\n  ⚠ {len(khong_so_duoc)} PMID KHÔNG so tự động được — một tài liệu mang")
         print("     NHIỀU khuyến cáo, mỗi khuyến cáo có quyết định riêng. Ghép tuỳ tiện")

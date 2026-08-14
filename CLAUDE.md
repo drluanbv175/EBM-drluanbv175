@@ -584,6 +584,35 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   lại nên chạy thêm vòng `so_xac_minh_nguon.py` lấp gần hết; câu "cần NCBI_API_KEY" trong các ghi
   chú cũ chỉ đúng cho lúc NCBI đang chặn, **không phải điều kiện thường trực**.
 
+  ## ✍️ QUYẾT ĐỊNH LÂM SÀNG BÁC SĨ DUYỆT 14/08/2026 — 4 câu, 11 mâu thuẫn → còn 5
+  11 mục "hai bản nói ngược nhau" quy về **4 quyết định**; bác sĩ chọn, tôi ghi.
+  **(a) COPD, theo bản mới 05/08** — `COPD_20260610`: PMID 27783918 (oxy dài hạn)
+  `consider→notyet`; PMID 32162970 (bộ ba giảm tử vong) `consider→apply`.
+  **(b) RA, thống nhất `apply` cho cảnh báo an toàn** — PMID 35081280 (ORAL Surveillance)
+  ở `RA_EULAR2024` và `RA_TimMachChuyenHoaNoiTiet`; PMID 27697765 ở `RA_Than`.
+  **(c) IMPACT (PMID 29668352) — KHÔNG phải mâu thuẫn:** hai lát cắt trích HAI KẾT CỤC
+  khác nhau của cùng thử nghiệm (đợt cấp/nhập viện vs biến cố tim-phổi phối hợp). Khai ở
+  `EBM-Dashboards/mau-thuan-da-duyet.json`; `dang_ky_chu_de.py` tách khỏi danh sách đỏ
+  nhưng **vẫn liệt kê** kèm lý do + ngày duyệt — giấu hẳn thì không ai rà lại được, và
+  nếu một bản đổi nội dung thì miễn trừ cũ có thể hết đúng.
+  **(d) Sàng lọc lao tiềm ẩn/HBV trước b/tsDMARD** (`VKDT_TongHop` ITEM-13,
+  `ViemKhopDangThap` ITEM-08): khai `normativeBasis:'drug-label'` dựa trên **Boxed
+  Warning của FDA tra sống qua openFDA** — etanercept/infliximab: *"Perform test for
+  latent TB; if positive, start treatment for TB prior to starting"*. EULAR 2025
+  (PMID 41826212) **không** nêu tường minh việc này trong tóm tắt nên không dùng làm căn
+  cứ. Giữ nguyên `decision:'apply'` và `gradeLevel:'na'` (FDA không dùng thang GRADE).
+
+  🔴 **5 mục CÒN LẠI KHÔNG ghi được — vướng đúng luật chống tự gán mức, không được lách:**
+  3 mục CKD (`BenhThanMan_BenhKem_DoiTuongDacBiet`: DAPA-CKD 32970396 · FIDELIO-DKD
+  33264825 · EMPA-KIDNEY 36331190) và 2 mục RA (`RA_TimMachChuyenHoaNoiTiet` ITEM-01,
+  PMID 27697765) đang có `gradeLevel:'na'`. Nâng lên `apply` cần một phân hạng THẬT.
+  ⚠️ Đáng chú ý: bản `BenhThanMan_CKD` 07/06 đang để `apply` với `gradeLevel:'high'` mà lý
+  do ghi là *"RCT đa trung tâm, mù đôi (chất lượng cao)"* — đó là **tự chấm của người
+  soạn**, đúng thứ đã khiến `COPD_TimThanChuyenHoa ITEM-26` bị hạ ngày 13/08. Muốn cả hai
+  bản cùng `apply` một cách trung thực thì phải **neo vào phân hạng của một tổ chức có
+  chấm** (KDIGO cho CKD, EULAR LoE/SoR cho RA) và ghi mức nguyên bản của tổ chức đó —
+  không phải chép mức tự chấm sang bản còn lại.
+
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
   và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job
