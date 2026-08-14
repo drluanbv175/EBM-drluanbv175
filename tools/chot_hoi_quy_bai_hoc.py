@@ -60,7 +60,17 @@ DASH = REPO / "EBM-Dashboards"
 def _nap(duong_dan: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong_dan)
     m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
+    # ĐĂNG KÝ TRƯỚC khi exec — bắt buộc, không phải tuỳ chọn. `@dataclass` gọi
+    # `sys.modules.get(cls.__module__).__dict__` lúc dựng lớp; module chưa đăng ký thì
+    # nhận None và ném AttributeError. Nghĩa là mọi module CÓ dataclass đều nạp hỏng
+    # bằng lối cũ — và chốt hỏng thì hiện thành "BÀI HỌC TÁI PHÁT", tức báo động giả
+    # đúng vào thứ sinh ra để chống báo động giả. (Vấp thật khi thêm BH37, 14/08/2026.)
+    sys.modules[ten] = m
+    try:
+        spec.loader.exec_module(m)
+    except BaseException:
+        sys.modules.pop(ten, None)
+        raise
     return m
 
 
@@ -1343,6 +1353,48 @@ def bh36_grade_phai_khai_ai_cham():
     return True, "thiếu gradeBy thì lộ ra, khai rồi thì im"
 
 
+def bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan():
+    """14/08 — khâu THU THẬP chưa bao giờ hỏi "bài này có đáng tin không".
+
+    Chuỗi 3 tầng kiểm rút bài tồn tại từ trước, nhưng chỉ được gọi khi rà kho CŨ. Đo
+    trong `surveillance_scan.py`: **0 lần** kiểm rút bài · 0 lần đọc publication type ·
+    0 lần đối chiếu kho. Ứng viên tới tay bác sĩ chỉ mang tiêu đề · tạp chí · ngày ·
+    một nhãn "authority" SUY TỪ TÊN TẠP CHÍ — thứ trông như bảo đảm chất lượng nhưng
+    không phải. Nghĩa là "mới nhất" và "tin cậy nhất" chưa bao giờ đi cùng nhau tại
+    đúng chỗ chứng cứ đi vào hệ.
+
+    Hệ quả cụ thể: một bài ĐÃ BỊ RÚT vẫn có thể vào thẳng hàng ứng viên trình bác sĩ.
+
+    Kiểm HÀNH VI: `gan_do_tin_cay()` phải gắn đủ 4 trường, và khi không kiểm được rút
+    bài thì để `chua_kiem` — TUYỆT ĐỐI không mặc định 'ok' (BH08/BH27/BH31).
+    """
+    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh37")
+    for ten in ("gan_do_tin_cay", "_pmid_da_co_trong_kho"):
+        if not hasattr(ss, ten):
+            return False, f"mất {ten} — khâu nhận lại không gắn độ tin cậy"
+    c = ss.Candidate(pmid="0", publication_date="2026", title="t", url="u")
+    for truong in ("rut_bai", "da_co_trong_kho", "pubtype", "chua_binh_duyet"):
+        if not hasattr(c, truong):
+            return False, f"Candidate mất trường {truong}"
+    if c.rut_bai != "chua_kiem":
+        return False, (f"mặc định rut_bai={c.rut_bai!r} — chưa kiểm PHẢI là 'chua_kiem', "
+                       "không được mặc định thành 'ok'")
+    # PMID không tồn tại: chuỗi không kết luận được ⇒ phải giữ 'chua_kiem', không thành 'ok'
+    ra = ss.gan_do_tin_cay([c])
+    if not ra or ra[0].rut_bai == "ok":
+        return False, "PMID không tra được mà vẫn gắn 'ok' — im lặng thành lời bảo đảm"
+    # Nhãn phải HIỆN trong báo cáo, nằm trong JSON mà không in ra thì coi như không có.
+    import dataclasses as _dc
+    bc = {"days": 1, "status": "PASS", "successful_topics": 1, "failed_topics": 0,
+          "candidate_count": 1, "disclaimer": "x",
+          "topics": [{"topic": "T", "query": "q", "status": "PASS", "error": "",
+                      "candidates": [_dc.asdict(_dc.replace(c, rut_bai="retracted"))]}]}
+    md = ss.markdown_report(bc)
+    if "ĐÃ BỊ RÚT" not in md:
+        return False, "ứng viên đã bị rút mà báo cáo KHÔNG nói ra"
+    return True, "ứng viên mang rút bài · loại thiết kế · trùng kho · preprint, và nhãn có in ra"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1380,6 +1432,7 @@ BAI_HOC = [
     ("BH34", "14/08", "Cảnh báo phải nói đúng MỨC", bh34_canh_bao_phai_noi_dung_muc),
     ("BH35", "14/08", "Khai chưa-biết không được tắt luật an toàn", bh35_khai_chua_biet_khong_duoc_tat_luat_an_toan),
     ("BH36", "14/08", "gradeLevel phải khai ai đã chấm", bh36_grade_phai_khai_ai_cham),
+    ("BH37", "14/08", "Ứng viên phải mang độ tin cậy ngay lúc nhận", bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan),
 ]
 
 

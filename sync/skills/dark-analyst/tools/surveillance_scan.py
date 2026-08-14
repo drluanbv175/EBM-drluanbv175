@@ -102,6 +102,14 @@ class Candidate:
     # Thêm 14/08/2026: trước đây một lượt quét trộn lẫn RCT nhỏ với guideline và trả
     # theo thứ tự PubMed, nên bác sĩ phải tự lọc lại đúng thứ hệ đáng lẽ làm hộ.
     tang: str = "chung"
+    # ĐỘ TIN CẬY GẮN NGAY LÚC NHẬN (thêm 14/08/2026). Trước đây ứng viên tới tay bác sĩ
+    # chỉ mang tiêu đề · tạp chí · ngày · nhãn thẩm quyền SUY TỪ TÊN TẠP CHÍ. Đo được:
+    # 0 lần kiểm rút bài, 0 lần đọc loại thiết kế, 0 lần đối chiếu kho trong cả bộ quét.
+    # Nghĩa là "mới nhất" và "tin cậy nhất" chưa bao giờ đi cùng nhau tại khâu thu thập.
+    pubtype: tuple[str, ...] = ()      # loại thiết kế THẬT từ PubMed, không đoán theo tạp chí
+    rut_bai: str = "chua_kiem"         # ok · retracted · expression_of_concern · chua_kiem
+    da_co_trong_kho: bool = False      # đã được một dashboard trích rồi → khỏi trình lại
+    chua_binh_duyet: bool = False      # preprint (medRxiv/bioRxiv) — chưa qua bình duyệt
 
 
 @dataclass(frozen=True)
@@ -296,6 +304,7 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
             source="PubMed E-utilities",
             journal_or_organization=journal,
             authority_source=detect_authority_source(journal, title),
+            pubtype=tuple(str(x) for x in (item.get("pubtype") or [])),
         ))
     return candidates
 
@@ -382,6 +391,69 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
     return active
 
 
+
+_CHUOI_RUT_BAI = None   # dựng một lần cho cả tiến trình (xem gan_do_tin_cay)
+
+
+def _pmid_da_co_trong_kho() -> set[str]:
+    """PMID đã được MỘT dashboard nào đó trích — đọc sổ xác minh nguồn, không gọi mạng.
+
+    Trình lại thứ bác sĩ đã đọc là tiêu thời gian thật và làm loãng danh sách ứng viên,
+    khiến thứ MỚI thật sự bị chôn giữa thứ cũ.
+    """
+    so = Path(__file__).resolve().parents[1] / ".so-xac-minh-nguon.json"
+    if not so.exists():
+        return set()
+    try:
+        muc = (json.loads(so.read_text(encoding="utf-8")) or {}).get("muc", {}) or {}
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return {k.split(":", 1)[1] for k, v in muc.items()
+            if k.startswith("pmid:") and v.get("cac_dashboard")}
+
+
+def gan_do_tin_cay(candidates: Sequence[Candidate]) -> list[Candidate]:
+    """Gắn RÚT BÀI + ĐÃ CÓ TRONG KHO cho từng ứng viên, NGAY tại khâu nhận.
+
+    VÌ SAO Ở ĐÂY (14/08/2026): chuỗi 3 tầng kiểm rút bài đã tồn tại từ trước, nhưng chỉ
+    được gọi khi rà kho CŨ. Khâu THU THẬP — nơi chứng cứ mới đi vào hệ — chưa bao giờ
+    hỏi câu đó. Hệ quả: một bài đã bị rút vẫn có thể vào thẳng hàng ứng viên trình cho
+    bác sĩ, và nhãn "authority" suy từ tên tạp chí trông như một bảo đảm chất lượng.
+
+    BẤT ĐỐI XỨNG giữ nguyên như mọi nơi khác: không kiểm được ⇒ `chua_kiem`, TUYỆT ĐỐI
+    không mặc định thành "ok". Thiếu môi trường (chạy bằng python hệ thống, thiếu thư
+    viện) cũng là `chua_kiem` — im lặng coi là sạch mới là lỗi.
+    """
+    if not candidates:
+        return []
+    trong_kho = _pmid_da_co_trong_kho()
+    trang_thai: dict[str, str] = {}
+    mea = Path(__file__).resolve().parents[2] / "medical-ebm-automation"
+    if (mea / "app" / "sources" / "retraction_chain.py").exists():
+        try:
+            import sys as _sys  # noqa: PLC0415
+            if str(mea) not in _sys.path:
+                _sys.path.insert(0, str(mea))
+            from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
+            # DÙNG LẠI một instance cho cả lượt quét. Mỗi lần dựng mới sẽ nạp lại chỉ mục
+            # Retraction Watch 30.851 dòng — đo được 4 lần nạp cho 4 chủ đề. Với watchlist
+            # 43 chủ đề thì đó là 43 lần nạp thừa, đủ chậm để người ta tắt lịch nền đi.
+            global _CHUOI_RUT_BAI  # noqa: PLW0603
+            if _CHUOI_RUT_BAI is None:
+                _CHUOI_RUT_BAI = RetractionChain()
+            kq = _CHUOI_RUT_BAI.check([c.pmid for c in candidates]) or {}
+            for pm, info in kq.items():
+                tt = (info or {}).get("status", "")
+                trang_thai[pm] = tt if tt in ("ok", "retracted", "expression_of_concern") \
+                    else "chua_kiem"
+        except Exception:  # noqa: BLE001 — không kiểm được thì để `chua_kiem`, không nuốt thành 'ok'
+            trang_thai = {}
+    return [replace(c,
+                    rut_bai=trang_thai.get(c.pmid, "chua_kiem"),
+                    da_co_trong_kho=c.pmid in trong_kho)
+            for c in candidates]
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -406,6 +478,7 @@ def run_scan(
                         continue
                     all_pmids.add(candidate.pmid)
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
+            unique = gan_do_tin_cay(unique)
             topic_results.append(TopicResult(row["topic"], row["query"], "PASS", unique))
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
             topic_results.append(TopicResult(
@@ -449,6 +522,9 @@ def markdown_report(report: dict) -> str:
         f"- Ứng viên không trùng: {report['candidate_count']}",
         "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
         "- Trusted-source label: official guideline/regulator bodies, Cochrane, NEJM, Lancet, JAMA, BMJ, Annals, Nature Medicine, and core specialty societies/journals.",
+        "- **Nhãn độ tin cậy gắn NGAY lúc nhận:** trạng thái rút bài (chuỗi 3 tầng) · loại "
+        "thiết kế thật từ PubMed · đã có trong kho chưa · preprint chưa bình duyệt. "
+        "`⚪ chưa kiểm rút bài` nghĩa là CHƯA BIẾT, không phải 'sạch'.",
         f"- **ỨNG VIÊN để thẩm định, KHÔNG phải khuyến cáo. {DISCLAIMER}.**",
         "",
     ]
@@ -464,8 +540,28 @@ def markdown_report(report: dict) -> str:
                 source_note = f" · nguồn: {item.get('source', 'PubMed E-utilities')}"
                 journal_note = f" · journal/org: {item.get('journal_or_organization')}" if item.get("journal_or_organization") else ""
                 authority_note = f" · authority: {item.get('authority_source')}" if item.get("authority_source") else ""
+                # NHÃN ĐỘ TIN CẬY phải hiện ngay dòng đầu. Nằm trong JSON mà không in ra
+                # thì với người đọc nó không tồn tại — đúng bài học lớn nhất ngày 14/08.
+                nhan = []
+                rb = item.get("rut_bai", "chua_kiem")
+                if rb == "retracted":
+                    nhan.append("🔴 ĐÃ BỊ RÚT — KHÔNG dùng")
+                elif rb == "expression_of_concern":
+                    nhan.append("🟠 có quan ngại (EoC)")
+                elif rb != "ok":
+                    nhan.append("⚪ chưa kiểm rút bài")
+                if item.get("chua_binh_duyet"):
+                    nhan.append("⚠️ CHƯA BÌNH DUYỆT (preprint)")
+                if item.get("da_co_trong_kho"):
+                    nhan.append("↺ đã có trong kho")
+                if item.get("tang") and item.get("tang") != "chung":
+                    nhan.append(f"tầng: {item['tang']}")
+                pts = item.get("pubtype") or []
+                if pts:
+                    nhan.append("loại: " + ", ".join(pts[:3]))
+                nhan_note = ("  \n  - " + " · ".join(nhan)) if nhan else ""
                 lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}{journal_note}{authority_note}")
-                lines.append(f"  - {item['title']}")
+                lines.append(f"  - {item['title']}{nhan_note}")
         lines.append("")
     lines.extend([
         "---",

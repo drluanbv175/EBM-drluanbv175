@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.39.0 — 2026-08-14
+
+**Cổng NHẬN chứng cứ** — nâng đúng chỗ chứng cứ đi vào hệ, không đụng kho cũ.
+
+- **Độ tin cậy gắn NGAY lúc nhận.** Đo trước đó trong `surveillance_scan.py`: **0 lần kiểm
+  rút bài · 0 lần đọc loại thiết kế · 0 lần đối chiếu kho**. Ứng viên chỉ mang tiêu đề ·
+  tạp chí · ngày · nhãn `authority` **suy từ tên tạp chí** — một bài đã bị rút vẫn có thể
+  vào thẳng hàng ứng viên. Nay mỗi ứng viên mang `rut_bai` (chuỗi 3 tầng) · `pubtype` (loại
+  thiết kế THẬT từ PubMed) · `da_co_trong_kho` · `chua_binh_duyet`, và nhãn **in ra** trong
+  báo cáo. Không kiểm được ⇒ `chua_kiem`, không mặc định `ok`. **BH37**.
+- **4 nguồn thẩm quyền được gọi TÊN:** Cochrane · NICE · USPSTF · WHO — trước đó watchlist
+  không nhắc tên nguồn nào trong nhóm này. Tra qua chính PubMed, không cần API mới.
+- **Đo sau khi nối** (43 chủ đề · 45 ngày): PASS · 87 ứng viên · 0 lỗi · **87/87 đã kiểm rút
+  bài** (trước 0) · **87/87 có loại thiết kế** (trước 0) · 41 SR · 24 practice guideline ·
+  12 meta-analysis · 26 RCT · 1 mục đã có trong kho được lọc.
+- Chuỗi rút bài dùng lại **một instance** cho cả lượt quét — trước đó nạp lại chỉ mục 30.851
+  dòng cho MỖI chủ đề (43 lần nạp thừa, đủ chậm để người ta tắt lịch nền).
+- Vá `_nap()` của bộ chốt: không đăng ký `sys.modules` trước `exec_module` ⇒ mọi module có
+  `@dataclass` nạp hỏng ⇒ chốt báo "BÀI HỌC TÁI PHÁT" giả.
+
+⚠️ **Chưa làm có chủ ý:** preprint (medRxiv/bioRxiv) và ClinicalTrials.gov chưa nối vào
+routine — thêm dòng tài liệu chưa bình duyệt khi nhãn độ tin cậy vừa mới có sẽ làm hỏng
+chính mục tiêu.
+
 ## v1.38.0 — 2026-08-14
 
 Năm việc của đề xuất "chứng cứ tốt nhất · mới nhất · tin cậy nhất".

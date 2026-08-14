@@ -667,6 +667,41 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   chứng cứ mà nguồn chưa từng phân hạng** — chờ bác sĩ quyết: hạ `decision`, hoặc neo vào
   một tổ chức có chấm (KDIGO/EULAR/Cochrane…) rồi ghi mức nguyên bản của tổ chức đó.
 
+  ## 📥 CỔNG NHẬN CHỨNG CỨ — "mới nhất" và "tin cậy nhất" đi CÙNG NHAU (dựng 14/08/2026)
+  Mọi thứ trước đây soi **kho đã có**. Mục này nâng đúng chỗ chứng cứ **đi vào hệ**.
+
+  **Trạng thái cũ, đo được trong `surveillance_scan.py`: 0 lần kiểm rút bài · 0 lần đọc loại
+  thiết kế · 0 lần đối chiếu kho.** Ứng viên tới tay bác sĩ chỉ mang tiêu đề · tạp chí · ngày ·
+  một nhãn `authority` **suy từ TÊN TẠP CHÍ** — thứ trông như bảo đảm chất lượng nhưng không
+  phải. Nghĩa là một bài **đã bị rút** vẫn có thể vào thẳng hàng ứng viên.
+
+  **Nay mỗi ứng viên mang sẵn 4 dữ kiện trước khi tới mắt bác sĩ** (`gan_do_tin_cay()`):
+  `rut_bai` (chuỗi 3 tầng) · `pubtype` (loại thiết kế THẬT từ PubMed, không đoán theo tạp chí)
+  · `da_co_trong_kho` (đọc sổ xác minh, khỏi trình lại thứ đã đọc) · `chua_binh_duyet` (preprint).
+  Nhãn **in ra trong báo cáo** — nằm trong JSON mà không hiện thì với người đọc nó không tồn tại.
+  Bất đối xứng giữ nguyên: không kiểm được ⇒ `chua_kiem`, **tuyệt đối không mặc định `ok`**.
+
+  **4 NGUỒN THẨM QUYỀN nay được gọi TÊN** — Cochrane · NICE · USPSTF · WHO. Trước đó watchlist
+  **không nhắc tên nguồn nào trong nhóm này**, nên guideline/tổng quan mới nhất của họ có thể ra
+  đời mà hệ không thấy. (Ghi chú: `CHANGELOG v1.15.0` khai đã thêm nhóm này ngày 13/08 nhưng bản
+  sống KHÔNG có — thay đổi đó hoặc chưa từng áp, hoặc đã bị ghi đè.) Cả 4 tra qua chính PubMed,
+  không cần API mới; **cố ý không áp bộ lọc 3 tầng** vì chúng đã là tầng cao nhất.
+
+  **Đo sau khi nối (43 chủ đề · 45 ngày):** PASS · 87 ứng viên · 0 lỗi ·
+  **87/87 đã kiểm rút bài** (trước: 0) · **87/87 có loại thiết kế thật** (trước: 0) ·
+  41 tổng quan hệ thống · 24 practice guideline · 12 phân tích gộp · 26 RCT ·
+  1 mục đã có trong kho (lọc khỏi danh sách). **BH37** khoá hành vi này.
+
+  ⚠️ **Chưa làm, có chủ ý:** preprint (medRxiv/bioRxiv) và ClinicalTrials.gov **chưa** nối vào
+  routine dù đã có MCP. Lý do: thêm một dòng tài liệu **chưa bình duyệt** khi nhãn độ tin cậy
+  vừa mới có sẽ làm hỏng chính mục tiêu — phải để nhãn chạy ổn định trước.
+
+  🔧 **Vá kèm — lỗi của chính bộ chốt:** `_nap()` trong `chot_hoi_quy_bai_hoc.py` không đăng ký
+  module vào `sys.modules` trước khi `exec_module`, nên **mọi module có `@dataclass` đều nạp
+  hỏng** (`@dataclass` tra `sys.modules.get(cls.__module__).__dict__` lúc dựng lớp → nhận None).
+  Chốt hỏng thì hiện thành "BÀI HỌC TÁI PHÁT" — báo động giả đúng vào thứ sinh ra để chống báo
+  động giả. Đã vá.
+
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
   và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job
