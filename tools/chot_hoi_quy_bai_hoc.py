@@ -1097,6 +1097,49 @@ def bh31_nguon_da_rut_phai_chan_duoc_o_cong():
     return True, "chặn khi dương tính · không tự khen khi im lặng · lộ ra khi hỏng"
 
 
+def bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap():
+    """14/08 — `max(ngày)` bị trình bày thành kết luận về TOÀN BỘ kho.
+
+    `kiem_do_tuoi_chung_cu.py` lấy gói mới nhất trên toàn kho rồi in
+    "🟢 CHỨNG CỨ còn hạn". Nghĩa thật của dòng đó chỉ là "có ít nhất MỘT gói mới".
+    Đo 14/08/2026: gói mới nhất 1 ngày tuổi ⇒ 🟢, trong khi 37/59 chủ đề đã quá 35
+    ngày và trung vị là 45 ngày. Bác sĩ đọc dòng đó sẽ tin mọi chủ đề đều vừa được rà.
+
+    Cùng họ BH15/BH30 — con số không đo thứ nó tự nhận là đang đo — nhưng ở đây hại
+    theo hướng ngược lại: không phải báo động giả mà là YÊN TÂM GIẢ.
+
+    Kiểm HÀNH VI: dựng kho giả có 1 gói mới + 1 gói rất cũ, đòi công cụ phải trả tuổi
+    THEO TỪNG chủ đề và thấy được gói cũ — chứ không chỉ thấy gói mới nhất.
+    """
+    import datetime as _dt
+    import shutil as _sh
+    import tempfile as _tmp
+    kt = _nap(REPO / "tools" / "kiem_do_tuoi_chung_cu.py", "kt_bh32")
+    if not hasattr(kt, "lau_chua_xem_lai"):
+        return False, "mất hàm lau_chua_xem_lai — độ tươi lại chỉ còn nhìn gói mới nhất"
+    tmp = Path(_tmp.mkdtemp())
+    goc = kt.DASH
+    try:
+        hn = _dt.date.today()
+        (tmp / f"WebDashboard_EBM_VanDeCuThe_ChuDeMoi_{hn:%Y%m%d}.html").write_text("x")
+        cu = hn - _dt.timedelta(days=200)
+        (tmp / f"WebDashboard_EBM_VanDeCuThe_ChuDeCu_{cu:%Y%m%d}.html").write_text("x")
+        kt.DASH = tmp
+        ra = kt.lau_chua_xem_lai()
+        if len(ra) != 2:
+            return False, f"đếm theo chủ đề sai: nhận {len(ra)} chủ đề, cần 2"
+        if ra[0][0] != "ChuDeCu" or ra[0][1] < 190:
+            return False, f"không xếp chủ đề cũ lên đầu: {ra[0]}"
+        if not any(t > kt.HAN_RAT_LAU_NGAY for _k, t in ra):
+            return False, "chủ đề 200 ngày không vượt ngưỡng rất-lâu — cảnh báo sẽ câm"
+        if all(t > kt.HAN_RAT_LAU_NGAY for _k, t in ra):
+            return False, "gói mới cũng bị tính là rất lâu — sẽ báo động giả"
+        return True, f"đo được tuổi từng chủ đề: cũ nhất {ra[0][1]} ngày, mới nhất {ra[-1][1]}"
+    finally:
+        kt.DASH = goc
+        _sh.rmtree(tmp, ignore_errors=True)
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1129,6 +1172,7 @@ BAI_HOC = [
     ("BH29", "14/08", "Mọi chốt định nghĩa đều phải được đăng ký", bh29_moi_ham_bh_deu_phai_duoc_dang_ky),
     ("BH30", "14/08", "Khoá gom nhóm phải định danh duy nhất", bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat),
     ("BH31", "14/08", "Nguồn đã rút phải chặn được ở cổng", bh31_nguon_da_rut_phai_chan_duoc_o_cong),
+    ("BH32", "14/08", "Chỉ số gộp không được kết luận cho cả tập", bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap),
 ]
 
 

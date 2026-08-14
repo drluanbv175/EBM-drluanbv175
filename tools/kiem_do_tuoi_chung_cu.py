@@ -49,6 +49,12 @@ LOG_THANG = REPO / "medical-ebm-automation/data/archive/launchd_monthly.log"
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
 HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần
 HAN_CAP_NHAT_NGAY = 35     # cập nhật guideline: chu kỳ tháng
+# Ngưỡng RIÊNG cho "chủ đề lâu chưa xem lại", cố ý cao hơn HAN_CAP_NHAT_NGAY nhiều.
+# Lý do là chống nhờn cảnh báo: ở nhịp làm việc thật, phần lớn chủ đề luôn quá 35 ngày
+# (đo 14/08: 37/59), nên lấy 35 làm ngưỡng báo động sẽ khiến mỗi phiên đều đỏ và bác sĩ
+# học cách bỏ qua — lúc đó cảnh báo thật cũng chìm theo. 120 ngày là mức mà "chưa xem
+# lại" khó biện minh với gần như mọi lĩnh vực.
+HAN_RAT_LAU_NGAY = 120
 
 
 def ngay_tu_ten(p: Path) -> dt.date | None:
@@ -118,6 +124,56 @@ def launchd_runs(nhan: str) -> int | None:
         return None
 
 
+def lau_chua_xem_lai() -> list[tuple[str, int]]:
+    """[(lát cắt, số ngày kể từ bản mới nhất của nó)] — xếp cũ nhất lên đầu.
+
+    VÌ SAO CÓ (14/08/2026, vòng lặp kiểm tra–hoàn thiện vòng 3): mục (1) của công cụ
+    này lấy `max(ngày)` trên toàn kho, nên **một gói mới làm cả kho trông còn hạn**.
+    Đo thật hôm nay: gói mới nhất 1 ngày tuổi ⇒ in 🟢, trong khi 37/59 chủ đề đã quá
+    35 ngày và trung vị là 45 ngày. Bác sĩ đọc dòng 🟢 đó sẽ tin rằng mọi chủ đề đều
+    vừa được rà — đúng loại bảo đảm sai mà kho này đã vấp nhiều lần.
+
+    Đơn vị đếm là LÁT CẮT, không phải file: ba bản SuyTim_TongHop nối tiếp nhau chỉ
+    là một chủ đề được xem lại ba lần, không phải ba chủ đề.
+
+    Công cụ CHỈ ĐO, không phán "đã lỗi thời": nhịp cập nhật của mỗi lĩnh vực rất khác
+    nhau (cảnh báo thuốc tính bằng tuần, guideline tính bằng năm), và quyết định xem
+    lại chủ đề nào trước là của bác sĩ.
+    """
+    import datetime as _dt
+    hom_nay = _dt.date.today()
+    moi_nhat: dict[str, _dt.date] = {}
+    for p in DASH.glob("WebDashboard_*.html"):
+        d = ngay_tu_ten(p)
+        if not d:
+            continue
+        # Lát cắt = tên file bỏ tiền tố nhóm và bỏ ngày.
+        m = re.match(r"WebDashboard_EBM_(?:VanDeCuThe|Uptodate|CapNhatTuan|AnToanThuoc|"
+                     r"CongCuKeDon)_(?:(.+?)_)?\d{8}\.html$", p.name)
+        if not m:
+            continue
+        lc = m.group(1) or p.name.split("_")[2]
+        if lc not in moi_nhat or d > moi_nhat[lc]:
+            moi_nhat[lc] = d
+    return sorted(((k, (hom_nay - v).days) for k, v in moi_nhat.items()),
+                  key=lambda kv: -kv[1])
+
+
+def in_bang_tuoi(lau: list[tuple[str, int]]) -> None:
+    """In phân bố tuổi để dòng 🟢 ở trên không bị đọc quá rộng."""
+    if not lau:
+        return
+    tuoi = [t for _k, t in lau]
+    qua = sum(1 for t in tuoi if t > HAN_CAP_NHAT_NGAY)
+    print(f"   {len(lau)} chủ đề · trung vị {sorted(tuoi)[len(tuoi) // 2]} ngày kể từ lần "
+          f"xem lại · {qua} chủ đề quá {HAN_CAP_NHAT_NGAY} ngày")
+    if qua:
+        ten = " · ".join(f"{k} ({t}ng)" for k, t in lau[:5])
+        print(f"   Lâu nhất: {ten}")
+        print("   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi")
+        print("    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Nhắc khi giám sát chứng cứ quá hạn")
     ap.add_argument("--im-khi-on", action="store_true",
@@ -173,10 +229,26 @@ def main() -> int:
                 f"Giám sát an toàn thuốc chạy lần cuối {chay_tuan:%d/%m/%Y} — "
                 f"cách đây {cach} ngày (ngưỡng {HAN_AN_TOAN_NGAY}).")
 
+    # 3) TUỔI TỪNG CHỦ ĐỀ — thứ mà `max()` ở mục (1) không nói được.
+    lau = lau_chua_xem_lai()
+    rat_lau = [x for x in lau if x[1] > HAN_RAT_LAU_NGAY]
+    if rat_lau:
+        ten = ", ".join(f"{k} ({t}ng)" for k, t in rat_lau[:3])
+        canh_bao.append(
+            f"{len(rat_lau)} chủ đề chưa xem lại quá {HAN_RAT_LAU_NGAY} ngày: {ten}"
+            + (f" và {len(rat_lau) - 3} chủ đề nữa" if len(rat_lau) > 3 else "")
+            + ". Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
+
     if not canh_bao:
         if not a.im_khi_on:
-            print(f"🟢 CHỨNG CỨ còn hạn — gói mới nhất {mới_nhất:%d/%m/%Y}"
-                  if mới_nhất else "🟢 CHỨNG CỨ còn hạn")
+            # NÓI ĐÚNG THỨ ĐÃ ĐO. Câu cũ "CHỨNG CỨ còn hạn" suy từ `max(ngày)` — tức
+            # chỉ cần MỘT gói mới là cả kho trông còn hạn. Đo 14/08/2026: gói mới nhất
+            # 1 ngày tuổi trong khi 37/59 chủ đề đã quá 35 ngày, trung vị 45 ngày. Một
+            # dòng 🟢 đọc thành "mọi chủ đề đều mới" là lời bảo đảm không có cơ sở —
+            # cùng lớp lỗi BH15/BH30: con số không đo thứ nó tự nhận là đang đo.
+            print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
+                  if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
+            in_bang_tuoi(lau)
         return 0
 
     if a.im_khi_on:
