@@ -108,6 +108,24 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CHUAN-QUOC-TE-2026 -->
+## PRISMA-S — báo cáo CHIẾN LƯỢC TÌM, không chỉ báo cáo kết quả tìm
+
+**PRISMA-S** (Rethlefsen và cs., PMID **34285662**, J Med Libr Assoc 2021,
+doi:10.5195/jmla.2021.962) — 16 mục, phần mở rộng của PRISMA 2020 dành riêng cho việc tìm.
+
+**Vì sao cần ngay:** đo 14/08/2026 — **44/62 gói chứng cứ chưa từng ghi lại chiến lược tìm
+kiếm**, nên không tái lập và không kiểm toán được. Không thể hồi tố (bịa lại một lần tìm đã
+xảy ra chính là bịa provenance), nhưng **mọi gói MỚI phải khai đủ**.
+
+Tối thiểu phải ghi cho mỗi lần tìm: **tên CSDL + giao diện + ngày tìm · truy vấn NGUYÊN VĂN
+(đủ để chạy lại) · giới hạn ngôn ngữ/thời gian · nguồn ngoài CSDL (guideline, tra tay, danh
+mục tham khảo) · số bản ghi mỗi nguồn · ai thiết kế truy vấn**. Ánh xạ: `standards.searchSources`
+(≥2 nguồn độc lập) + `standards.currency` (ngày tìm) + `standards.frame`.
+
+Gói cũ không có ⇒ khai thẳng `provenanceUnknown: true` + lý do — nói ra sự thật kiểm chứng
+được, KHÁC HẲN bịa một chiến lược tìm.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

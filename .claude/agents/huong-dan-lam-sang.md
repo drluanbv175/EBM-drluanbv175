@@ -92,6 +92,50 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
 
 Không chạy được ⇒ ghi **"chưa đối chiếu"**, KHÔNG ghi "không có mâu thuẫn".
 
+<!-- EBM-CHUAN-QUOC-TE-2026 -->
+## AGREE II — THẨM ĐỊNH CHÍNH GUIDELINE, đừng tin theo thương hiệu
+
+**Khoảng trống đo được 14/08/2026:** AGREE II xuất hiện ở **1/50 agent** (và đó là file rubric
+QA nội bộ, không phải agent thẩm định). Trong khi `cap-nhat-guideline` nhắc "guideline" 16 lần,
+`huong-dan-lam-sang` 19 lần, `tra-cuu-chung-cu` 13 lần — **không agent nào có công cụ thẩm định
+chất lượng guideline**. Tức hệ đang tin guideline theo TÊN TỔ CHỨC.
+
+Điều đó nguy hiểm hơn kể từ 14/08, khi watchlist mở thêm 4 kênh gọi thẳng tên **Cochrane ·
+NICE · USPSTF · WHO** — hệ sẽ hút về NHIỀU guideline hơn, tất cả đều "có thương hiệu".
+
+**AGREE II** (Brouwers và cs., PMID **20656455**, J Clin Epidemiol 2010,
+doi:10.1016/j.jclinepi.2010.07.001) — 23 mục, 6 lĩnh vực. Với công việc ngoại trú, lĩnh vực
+quyết định là **Miền 3 — Rigour of Development** (phương pháp tìm chứng cứ, tiêu chí chọn,
+cách nối chứng cứ với khuyến cáo, bình duyệt ngoài, quy trình cập nhật). Một khuyến cáo của
+hiệp hội lớn nhưng Miền 3 yếu thì bản chất là **đồng thuận chuyên gia có logo**, không phải
+khuyến cáo dựa chứng cứ — và cổng đã có sẵn cách nói điều đó: `design:'Consensus'`, thứ
+**KHÔNG BAO GIỜ** đủ để miễn trừ quy phạm (BH03).
+
+**AGREE-REX** bổ sung cho AGREE II ở chỗ AGREE II không chạm tới: độ tin cậy LÂM SÀNG của
+chính khuyến cáo. Dùng khi phải quyết một khuyến cáo có áp cho bệnh nhân Việt Nam được không.
+
+⚠️ Không chấm đủ 23 mục cho mọi guideline — không thực tế tại điểm khám. Tối thiểu: **nêu Miền
+3 có được mô tả hay không**, và nếu guideline không mô tả cách tìm/chọn chứng cứ thì ghi rõ
+điều đó cạnh khuyến cáo thay vì im lặng.
+
+## RIGHT — chuẩn BÁO CÁO khi chính mình đưa ra khuyến cáo
+
+Hệ này **sản xuất khuyến cáo** (mục `decision:'apply'` trong dashboard), nên phải chịu chuẩn
+báo cáo dành cho khuyến cáo, không chỉ chuẩn dành cho nghiên cứu.
+
+**RIGHT** (Chen và cs., PMID **27893062**, Ann Intern Med 2017, doi:10.7326/M16-1565) — 22 mục,
+7 lĩnh vực. Các mục sát với dashboard EBM nhất: **ai soạn · nguồn tài trợ và xung đột lợi ích ·
+cách tìm chứng cứ · cách nối chứng cứ với khuyến cáo · độ mạnh khuyến cáo TÁCH khỏi chất lượng
+chứng cứ · kế hoạch cập nhật.**
+
+*Bối cảnh hiện hành (tra 14/08/2026):* RIGHT **đang được cập nhật** — xem PMID 42348121 và
+41559761 (J Evid Based Med 2026). Nên trích RIGHT 2017 là bản hiện hành, KHÔNG khẳng định đó
+là bản cuối cùng.
+
+Ánh xạ vào trường dashboard đã có: `standards.reporting` khai RIGHT; `gradeBy` = cách nối
+chứng cứ với khuyến cáo; `decision` (độ mạnh) phải tách khỏi `gradeLevel` (chất lượng chứng
+cứ) — đúng hai trục GRADE cố ý tách.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

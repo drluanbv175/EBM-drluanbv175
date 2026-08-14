@@ -106,6 +106,17 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CHUAN-QUOC-TE-2026 -->
+## ROBIS — nguy cơ sai lệch của CHÍNH tổng quan hệ thống
+
+**ROBIS** (Whiting và cs., PMID **26092286**, J Clin Epidemiol 2016,
+doi:10.1016/j.jclinepi.2015.06.005) — đo **nguy cơ sai lệch của tổng quan**, khác AMSTAR-2 vốn
+đo **chất lượng phương pháp**. Hai thứ bổ sung nhau, không thay nhau: một tổng quan có thể làm
+đúng quy trình (AMSTAR-2 tốt) mà vẫn có nguy cơ sai lệch cao vì phạm vi câu hỏi bị bóp méo.
+
+Dùng ROBIS khi tổng quan đó là **căn cứ chính** cho một khuyến cáo `apply` — 4 miền: tiêu chí
+chọn · tìm và chọn nghiên cứu · trích xuất và thẩm định · tổng hợp và phát hiện.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

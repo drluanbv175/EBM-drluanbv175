@@ -173,6 +173,32 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CHUAN-QUOC-TE-2026 -->
+## AGREE II — THẨM ĐỊNH CHÍNH GUIDELINE, đừng tin theo thương hiệu
+
+**Khoảng trống đo được 14/08/2026:** AGREE II xuất hiện ở **1/50 agent** (và đó là file rubric
+QA nội bộ, không phải agent thẩm định). Trong khi `cap-nhat-guideline` nhắc "guideline" 16 lần,
+`huong-dan-lam-sang` 19 lần, `tra-cuu-chung-cu` 13 lần — **không agent nào có công cụ thẩm định
+chất lượng guideline**. Tức hệ đang tin guideline theo TÊN TỔ CHỨC.
+
+Điều đó nguy hiểm hơn kể từ 14/08, khi watchlist mở thêm 4 kênh gọi thẳng tên **Cochrane ·
+NICE · USPSTF · WHO** — hệ sẽ hút về NHIỀU guideline hơn, tất cả đều "có thương hiệu".
+
+**AGREE II** (Brouwers và cs., PMID **20656455**, J Clin Epidemiol 2010,
+doi:10.1016/j.jclinepi.2010.07.001) — 23 mục, 6 lĩnh vực. Với công việc ngoại trú, lĩnh vực
+quyết định là **Miền 3 — Rigour of Development** (phương pháp tìm chứng cứ, tiêu chí chọn,
+cách nối chứng cứ với khuyến cáo, bình duyệt ngoài, quy trình cập nhật). Một khuyến cáo của
+hiệp hội lớn nhưng Miền 3 yếu thì bản chất là **đồng thuận chuyên gia có logo**, không phải
+khuyến cáo dựa chứng cứ — và cổng đã có sẵn cách nói điều đó: `design:'Consensus'`, thứ
+**KHÔNG BAO GIỜ** đủ để miễn trừ quy phạm (BH03).
+
+**AGREE-REX** bổ sung cho AGREE II ở chỗ AGREE II không chạm tới: độ tin cậy LÂM SÀNG của
+chính khuyến cáo. Dùng khi phải quyết một khuyến cáo có áp cho bệnh nhân Việt Nam được không.
+
+⚠️ Không chấm đủ 23 mục cho mọi guideline — không thực tế tại điểm khám. Tối thiểu: **nêu Miền
+3 có được mô tả hay không**, và nếu guideline không mô tả cách tìm/chọn chứng cứ thì ghi rõ
+điều đó cạnh khuyến cáo thay vì im lặng.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 
