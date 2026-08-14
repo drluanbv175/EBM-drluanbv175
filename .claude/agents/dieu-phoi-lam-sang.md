@@ -185,6 +185,19 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — chốt trước khi trả gói cho bác sĩ
+
+```
+python tools/chu_trinh_chung_cu.py --nhanh      # 6 chốt: nguồn thật · độ tươi · độ phủ
+                                                # xác minh · rút bài · mâu thuẫn · dây chuyền
+python tools/dang_ky_chu_de.py --mau-thuan      # hai bản cùng chủ đề có nói ngược nhau?
+```
+Chu trình **dừng ngay ở bước ① nếu nguồn không đáng tin** — mọi bước sau vô nghĩa khi nguồn
+là dữ liệu giả (ca thật: máy Windows chạy `USE_MOCK_SOURCES=true` suốt mà chỉ có một dòng
+`logger.info` báo). Kết quả chu trình là dữ kiện để bác sĩ quyết ở **Cổng A/B**, không phải
+giấy thông hành tự động.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

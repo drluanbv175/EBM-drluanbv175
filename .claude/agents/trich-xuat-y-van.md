@@ -101,6 +101,19 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — con số trích có THẬT trong bài không?
+
+```
+python tools/kiem_so_lieu.py --file <dashboard>.html
+```
+Hệ xác minh "PMID có thật + tiêu đề khớp" từ lâu, nhưng **chưa bao giờ xác minh CON SỐ**.
+Một mục có thể trích đúng PMID, đúng tiêu đề, mà hiệu số lại là số của **kết cục khác**,
+**phân nhóm khác**, hoặc gõ sai.
+Ba mức, **cố ý không có mức "SAI"**: ✓ khớp · 🟠 một phần · ⚪ tóm tắt không nêu.
+⚪ là chuyện BÌNH THƯỜNG — nhiều bài chỉ để số ở toàn văn/bảng. Nói "sai" từ việc vắng mặt
+trong tóm tắt là biến *không biết* thành *có vấn đề*.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

@@ -105,6 +105,18 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — chứng cứ đã bị VƯỢT QUA chưa?
+
+Trước khi kết luận, với mỗi PMID định đưa vào nhóm "áp dụng":
+```
+python tools/kiem_chung_cu_vuot_qua.py --gioi-han 20
+```
+Hỏi PubMed xem có **tổng quan hệ thống / phân tích gộp / guideline MỚI HƠN** về cùng chủ đề.
+Đo 14/08/2026: **125/172 mục đang `apply` có chứng cứ tổng hợp mới hơn**, trong đó bắt được
+**KDIGO 2026** và **guideline đột quỵ 2026**. Bài mới hơn có thể CỦNG CỐ hoặc BÁC kết luận
+đang dùng — công cụ không đọc nội dung và không phán chiều, bạn phải đọc.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

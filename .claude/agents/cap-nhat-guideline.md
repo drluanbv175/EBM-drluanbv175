@@ -92,6 +92,22 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — trước khi kết luận "chưa có gì mới"
+
+```
+python tools/kiem_phu_giam_sat.py     # chủ đề nào có dashboard mà KHÔNG ai canh?
+python tools/uu_tien_cap_nhat.py      # tuổi × số ứng viên mới — xếp việc theo giá trị
+```
+🔴 **"0 ứng viên" KHÔNG đồng nghĩa "không có chứng cứ mới".** Đo 14/08/2026: bộ lọc
+publication type từng giết sạch kết quả vì MEDLINE gán loại thiết kế **sau** khi bài vào
+PubMed — CKD trả **0** trong khi thực có **22** bản ghi mới; sau khi vá, chủ đề "0 ứng viên"
+đi từ **22 → 7**. Trước khi báo "chưa có gì mới", phải xác nhận lượt quét thật sự PASS và
+chủ đề đó **có** trong watchlist (46 chủ đề gốc, khai ở `EBM-Dashboards/giam-sat-chu-de.json`).
+
+Tuổi tự nó KHÔNG phải lý do cập nhật: 12/34 chủ đề không có chứng cứ mới nào trong 75 ngày
+dù nhiều mục đã 47–68 ngày tuổi.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

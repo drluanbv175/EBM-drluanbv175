@@ -114,6 +114,25 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — SỔ XÁC MINH NGUỒN (tích luỹ, chịu được mạng chập chờn)
+
+```
+python tools/so_xac_minh_nguon.py --quet <dashboard>.html --vong 3
+python tools/so_xac_minh_nguon.py --bao-cao        # chỉ đọc sổ, không gọi mạng
+```
+**Vì sao không chỉ chạy `--online` một lượt:** đo thật trên máy Windows — chạy cổng bốn lần
+liên tiếp trên CÙNG một file cho **13 → 3 → 6 → 1** lỗi cứng (DNS chập chờn). Cổng không nhớ
+gì giữa các lần, nên mạng kém thì **không lượt nào đủ**. Sổ tích luỹ bằng chứng theo TỪNG
+định danh nên chạy nhiều vòng sẽ dần đủ.
+
+⚠️ **KHÁC HẲN "chạy lại lấy lần ít lỗi nhất"** — cách đó suy chất lượng CẢ GÓI từ một lượt
+may mắn. Ở đây mỗi PMID/DOI có bằng chứng riêng kèm thời điểm, và **sổ chỉ ghi THÀNH CÔNG**:
+mạng hỏng không bao giờ thành "đã xác minh".
+
+**Hai mức hạn dùng, KHÔNG được gộp:** tồn tại + metadata **180 ngày** (gần như bất biến) ·
+trạng thái **rút bài 30 ngày** (bài tốt hôm nay có thể bị rút ngày mai).
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

@@ -164,6 +164,7 @@ file) → tự áp BẢNG ROUTING dưới bằng tay như trước.
 | R1 thiếu PMID/DOI | `tra-cuu-chung-cu` + `kiem-chung-trich-dan` | ✅ |
 | R1b lách nhãn [CẦN] tràn lan | Agent gốc (yêu cầu bổ nguồn thật) | ✅ |
 | R4 tự gán GRADE | `tham-dinh-grade-nnt` hoặc xóa nhãn | ✅ |
+| R1c **hiệu số trích không đối chiếu được với bài** | `trich-xuat-y-van` (đọc lại nguồn) — chạy `python tools/kiem_so_lieu.py --file <dashboard>.html`; ⚪ *tóm tắt không nêu* là BÌNH THƯỜNG, KHÔNG kết luận trích sai | ✅ |
 | R4b **`gradeLevel` khác `na` mà không khai `gradeBy`** | `tham-dinh-grade-nnt` (khai tổ chức đã chấm) hoặc hạ về `na` | ✅ |
 | R4c **`apply` trên `gradeLevel:'na'` mà không khai `normativeBasis`** | `tham-dinh-grade-nnt` (khai loại quy phạm) hoặc bác sĩ hạ `decision` | 🚫 (đổi `decision` là quyết định lâm sàng) |
 | R5 trộn hai trục | Agent gốc (thêm phân biệt rõ) | ✅ |

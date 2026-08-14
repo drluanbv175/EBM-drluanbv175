@@ -80,6 +80,18 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
   KẾT: ĐẠT TỰ KIỂM / CÒN 🔴 → [hành động cụ thể]
 ```
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ bắt buộc — trước khi đổi một khuyến cáo
+
+1. **Chứng cứ đã bị vượt qua chưa:** `python tools/kiem_chung_cu_vuot_qua.py`
+   (125/172 mục `apply` có tổng quan mới hơn — đo 14/08/2026).
+2. **Bản khác cùng chủ đề có nói ngược không:** `python tools/dang_ky_chu_de.py --mau-thuan`
+   Sửa một dashboard **KHÔNG tự lan** sang bản khác cùng chủ đề. Đo 12/08: 15 mục hai bản
+   kết luận ngược nhau về CÙNG một PMID, gồm cảnh báo JAK inhibitor và oxy dài hạn.
+   Cặp đã được bác sĩ duyệt là "khác kết cục" khai ở `EBM-Dashboards/mau-thuan-da-duyet.json`.
+
+Không chạy được ⇒ ghi **"chưa đối chiếu"**, KHÔNG ghi "không có mâu thuẫn".
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 
