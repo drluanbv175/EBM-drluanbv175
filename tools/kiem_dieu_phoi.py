@@ -81,7 +81,13 @@ def _skill_nguon() -> set[str]:
 def _skill_runtime() -> tuple[Path | None, set[str]]:
     goc = Path.home() / "Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin"
     for p in sorted(goc.glob("*/*/skills")) if goc.is_dir() else []:
-        return p, {x.parent.name for x in p.glob("*/SKILL.md")}
+        # Bỏ qua thư mục `.bak-*` — đó là SAO LƯU do dong_bo_skill.py tạo trước khi ghi
+        # đè (cơ chế phục hồi có chủ ý), không phải skill cần nguồn. Bản đầu của chốt
+        # này đếm chúng là "skill mất nguồn" ngay lượt chạy sau một lần --ap-dung —
+        # tức chốt tự báo động về dấu vết của chính quy trình đồng bộ. Chúng nằm ngoài
+        # phạm vi ①②③; dọn định kỳ là việc riêng, không phải lỗi điều phối.
+        return p, {x.parent.name for x in p.glob("*/SKILL.md")
+                   if ".bak-" not in x.parent.name}
     return None, set()
 
 

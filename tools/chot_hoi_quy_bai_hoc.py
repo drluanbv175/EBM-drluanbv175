@@ -1664,6 +1664,39 @@ def bh44_dieu_phoi_agent_phai_sach():
     return True, "tham chiếu phân giải được · agent đều có đường gọi · skill runtime đều có nguồn"
 
 
+def bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky():
+    """15/08 — mọi bản vá "mới nhất/tin cậy nhất" nằm ở luồng ĐỊNH KỲ; luồng THEO-YÊU-CẦU
+    (bác sĩ nêu vấn đề → skill dựng gói) KHÔNG thừa hưởng gì.
+
+    Đo trước khi vá, trong SKILL.md của `cap-nhat-chung-cu-y-khoa`: `edat` 0 lần ·
+    `kiem_chung_cu_vuot_qua` 0 · NEJM/Lancet gọi tên 0 · lượt mới-vào-PubMed 0. Tức là
+    khi bác sĩ HỎI TRỰC TIẾP một vấn đề — đường dùng nhiều nhất — skill vẫn tìm theo lối
+    cũ: dính lại đúng bộ lọc `[pt]` vứt bài mới (BH38), không kiểm chứng cứ vượt qua,
+    không kiểm rút bài từng PMID.
+
+    Hai luồng lấy chứng cứ phải cùng một chuẩn — nếu không, chất lượng gói phụ thuộc vào
+    việc bác sĩ hỏi theo cách nào, và không ai nhìn thấy sự khác biệt đó.
+
+    Kiểm HÀNH VI (doctrine-drift, cùng họ BH39): Bước 2 của SKILL.md phải giữ đủ 4 dấu
+    vết của cách tìm mới. Mất dấu nào ⇒ luồng theo-yêu-cầu lại tụt sau luồng định kỳ.
+    """
+    sk = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "SKILL.md"
+    if not sk.exists():
+        return False, "mất SKILL.md của cap-nhat-chung-cu-y-khoa"
+    s = sk.read_text(encoding="utf-8", errors="replace")
+    dau_vet = {
+        "lượt mới-vào-PubMed (edat, không lọc pt)": "datetype=edat",
+        "kiểm chứng cứ vượt qua cho mục apply": "kiem_chung_cu_vuot_qua",
+        "tạp chí đỉnh gọi TÊN": '"N Engl J Med"[ta]',
+        "kiểm rút bài từng PMID": "check_citation_retraction",
+    }
+    thieu = [ten for ten, mk in dau_vet.items() if mk not in s]
+    if thieu:
+        return False, (f"Bước 2 mất {len(thieu)} dấu vết: {', '.join(thieu)} — luồng "
+                       "theo-yêu-cầu lại tìm theo lối cũ")
+    return True, "luồng theo-yêu-cầu giữ đủ 4 lượt tìm + kiểm rút bài"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1709,6 +1742,7 @@ BAI_HOC = [
     ("BH42", "14/08", "Guideline không được tin theo thương hiệu", bh42_guideline_khong_duoc_tin_theo_thuong_hieu),
     ("BH43", "14/08", "Canary đầu-cuối phải chạy và phải bắt được", bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc),
     ("BH44", "15/08", "Điều phối agent phải sạch", bh44_dieu_phoi_agent_phai_sach),
+    ("BH45", "15/08", "Luồng theo-yêu-cầu phải thừa hưởng luồng định kỳ", bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky),
 ]
 
 

@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.40.0
+  version: 1.41.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -94,6 +94,35 @@ Với nội dung có thể thay đổi theo thời gian, phải truy cập/tìm 
 3. RCT đa trung tâm lớn.
 4. Cohort/registry/RWD lớn khi có tác động thực hành rõ.
 5. Consensus chuyên gia khi thiếu chứng cứ mạnh hơn, phải ghi rõ.
+
+**CÁCH TÌM CỤ THỂ — 4 lượt, kế thừa đúng bài học của luồng giám sát định kỳ (14/08/2026).**
+Luồng theo-yêu-cầu này từng KHÔNG thừa hưởng gì từ các bản vá của luồng định kỳ — bác sĩ nêu
+vấn đề thì skill vẫn tìm theo lối cũ, dính lại đúng các lỗi đã vá:
+
+1. **Lượt GUIDELINE/HTA — gọi TÊN nguồn, không chỉ từ khoá:** hiệp hội chuyên khoa của chủ đề
+   (ESC/ACC-AHA · ADA/EASD · KDIGO · GOLD/GINA · EULAR/ACR · AASLD/EASL/APASL · IDSA…) +
+   `"Cochrane Database Syst Rev"[ta]` + NICE + USPSTF + WHO. Nguồn quản lý dược khi liên quan
+   thuốc (FDA/EMA/MHRA). Đây là tầng lấy KHUYẾN CÁO.
+2. **Lượt SR/MA rồi RCT LỚN:** `systematic review[pt] OR meta-analysis[pt]`, rồi
+   `randomized controlled trial[pt]` ưu tiên đa trung tâm/tạp chí đỉnh —
+   `"N Engl J Med"[ta]` · `"Lancet"[ta]` · `"JAMA"[ta]` · `"BMJ"[ta]` · `"Ann Intern Med"[ta]`.
+3. **⚡ Lượt MỚI-VÀO-PUBMED — BẮT BUỘC, không được bỏ:** cùng truy vấn chủ đề, `datetype=edat`
+   (ngày VÀO PubMed), **KHÔNG lọc publication type**. Vì sao: MEDLINE gán loại thiết kế hàng
+   tuần-đến-hàng-tháng SAU khi bài vào PubMed — đo 14/08: **30/40 bài mới nhất chưa gán loại,
+   trong đó có cả tổng quan hệ thống**; lọc `[pt]` ở lượt này là vứt đi chính thứ mới nhất
+   (BH38). Bài chưa gán loại → tự đọc tóm tắt để xếp tầng, ghi rõ *"⚡ mới vào PubMed — chưa
+   gán loại, tự xếp"*.
+4. **Lượt VƯỢT-QUA cho mọi mục định để `apply`:** chạy
+   `python tools/kiem_chung_cu_vuot_qua.py --file <dashboard>.html` — hỏi PubMed có tổng
+   quan/gộp/guideline MỚI HƠN về cùng chủ đề không (đo 14/08: **125/172 mục `apply` của kho có
+   chứng cứ tổng hợp mới hơn**, gồm KDIGO 2026). Bài mới hơn có thể CỦNG CỐ hoặc BÁC — phải
+   đọc, không phán từ tiêu đề.
+
+**Với TỪNG PMID/DOI trước khi đưa vào gói:** kiểm rút bài bằng
+`python medical-ebm-automation/tools/check_citation_retraction.py --pmid <PMID…>` (chuỗi 3
+tầng, nền Retraction Watch chạy được khi mất mạng). Không tra được ⇒ ghi **"chưa kiểm rút
+bài"**, TUYỆT ĐỐI không ghi "chưa bị rút". Ca chuẩn: PMID 30267080 — cả PubMed lẫn Europe PMC
+đều trả `ok`, chỉ nền ngoại tuyến bắt được là đã rút-và-thay.
 
 Phải xác minh tối thiểu:
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.41.0 — 2026-08-15
+
+**Luồng THEO-YÊU-CẦU thừa hưởng bài học của luồng định kỳ.** Bác sĩ nêu vấn đề → Bước 2 nay
+có "CÁCH TÌM CỤ THỂ — 4 lượt": (1) guideline/HTA gọi TÊN nguồn (hiệp hội chuyên khoa +
+Cochrane/NICE/USPSTF/WHO + FDA/EMA/MHRA); (2) SR/MA rồi RCT lớn, tạp chí đỉnh gọi tên
+(`"N Engl J Med"[ta]` · Lancet · JAMA · BMJ · Annals); (3) **lượt MỚI-VÀO-PUBMED bắt buộc** —
+`edat`, KHÔNG lọc publication type, vì MEDLINE gán loại SAU khi bài vào PubMed (BH38);
+(4) lượt VƯỢT-QUA cho mọi mục định `apply` (`kiem_chung_cu_vuot_qua.py`). Kèm kiểm rút bài
+từng PMID qua chuỗi 3 tầng. Trước bản này, luồng theo-yêu-cầu KHÔNG thừa hưởng gì — tìm theo
+lối cũ, dính lại đúng các lỗi luồng định kỳ đã vá.
+
 ## v1.40.0 — 2026-08-14
 
 **Bộ lọc loại thiết kế đang vứt đi chính thứ mới nhất** — lỗi "mới nhất" lớn nhất tìm được.
