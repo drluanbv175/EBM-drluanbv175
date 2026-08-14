@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.36.0 — 2026-08-14
+
+Vòng lặp kiểm tra–hoàn thiện (3 vòng). Ba lỗi cùng một họ: **con số không đo thứ nó tự nhận
+là đang đo** — công cụ vẫn chạy, vẫn in kết quả trông hợp lệ, nên không chốt nào bắt được.
+
+- **Cổng liêm chính nay CHẶN nguồn đã bị rút** (trước đó không kiểm). Đọc lại kết luận dương
+  tính trong sổ xác minh qua `so_xac_minh_nguon.nguon_da_rut()`; sổ im lặng **không** thành
+  tín hiệu "đã kiểm, sạch". Phát hiện thật: PMID 30267080 (JAMA Oncology, rút 2019,
+  retract-and-replace) trong `ViemGanB_DieuTri` đi qua cổng sạch sẽ suốt. **BH31**.
+- **Bản đọc mang 2 dải cảnh báo** ngay dưới đầu trang: đỏ "Nguồn đã bị rút", cam "Bản khác
+  cùng chủ đề đang kết luận ngược". Phép dò mâu thuẫn đã có từ 12/08 nhưng chỉ nói ra khi gõ
+  lệnh; tại phòng khám thứ được mở là bản đọc. Không đổi `decision` nào, không đoán bên nào đúng.
+- **Sửa lỗi bỏ sót mâu thuẫn**: `tach_ten()` trả tên chủ đề ở vị trí ngày ⇒ 3 bản
+  `SuyTim_TongHop` sập vào một khoá cache, cặp 04/08⟷05/08 hoá thành so bản 11/08 với chính nó.
+  Khoá lại theo **đường dẫn** (ngày cũng va chạm: `RA_Than` và `RA_TimMach` đều 30/06). **BH30**.
+- **Độ tươi đo theo TỪNG chủ đề**, không còn suy từ `max(ngày)` toàn kho. Đo được: gói mới nhất
+  1 ngày tuổi trong khi 37/59 chủ đề quá 35 ngày, trung vị 45. Ngưỡng báo động riêng 120 ngày
+  để chống nhờn cảnh báo. **BH32**.
+- Độ phủ xác minh nguồn: **51% → 99%** (1154/1155), 0 mục chưa kiểm.
+
 ## v1.15.0 — 2026-08-13
 
 - **Quét theo TÊN TẠP CHÍ, không chỉ theo chủ đề.** Watchlist cũ có 11 nhóm/45 từ khoá, tất cả

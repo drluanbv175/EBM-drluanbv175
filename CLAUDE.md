@@ -527,6 +527,40 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   KHÁC bài bị rút bỏ hẳn, nên **không được xử lý như nhau**; việc cần làm là đối chiếu số liệu
   ITEM-05 với **bản đã thay**, không phải xoá mục. Chưa sửa — chờ bác sĩ (đổi `decision` là thẩm
   quyền bác sĩ).
+  ✅ **CẬP NHẬT 14/08 — mục này KHÔNG còn chỉ nằm trong sổ.** Từ nay `verify_dashboard.py`
+  **CHẶN CỨNG** gói có nguồn đã rút, và bản đọc in dải cảnh báo đỏ ngay dưới đầu trang. Hệ quả
+  có chủ ý: `audit_ebm_system.py` nay **FAIL** chừng nào ITEM-05 chưa được xử lý — hệ không tự
+  tuyên bố sạch khi còn một trích dẫn đã bị rút. Xem mục 🔎 ngay dưới.
+
+  ## 🔎 BA LỖI "CON SỐ KHÔNG ĐO THỨ NÓ TỰ NHẬN" (vòng lặp kiểm tra–hoàn thiện, 14/08/2026)
+  Cả ba đều lọt qua mọi chốt trước đó vì **công cụ vẫn chạy và vẫn in ra kết quả trông hợp lệ**.
+  Đây là họ lỗi nguy hiểm nhất của hệ này, và nó đã tái diễn đủ nhiều lần để thành luật nền.
+
+  | Mã | Lỗi | Vì sao vô hình | Hại theo hướng |
+  |---|---|---|---|
+  | **BH30** | `dang_ky_chu_de.tach_ten()` trả **tên chủ đề** ở đúng vị trí **NGÀY** (lệch một bậc sau bản vá "chủ đề là tuỳ chọn"). Bộ dò mâu thuẫn khoá cache theo giá trị đó ⇒ 3 bản `SuyTim_TongHop` sập vào MỘT khoá; cặp 04/08⟷05/08 hoá thành so bản 11/08 với **chính nó** ⇒ vĩnh viễn 0 mâu thuẫn | tổng số mâu thuẫn **không đổi** (11) vì kho tình cờ không có mâu thuẫn giữa các bản SuyTim ⇒ nhìn số là hoàn toàn không thấy | **bỏ sót** |
+  | **BH31** | Cổng liêm chính **chưa bao giờ kiểm rút bài**; kết luận dương tính đã nằm sẵn trong sổ mà không nơi nào đọc | gói đúng ở mọi luật khác nên trông như đã soi đủ | **bỏ sót** |
+  | **BH32** | `kiem_do_tuoi_chung_cu` lấy `max(ngày)` toàn kho rồi in *"🟢 CHỨNG CỨ còn hạn"* — nghĩa thật chỉ là *"có ít nhất MỘT gói mới"* | 🟢 là màu người ta không kiểm lại | **yên tâm giả** |
+
+  **Số đo:** BH32 — gói mới nhất **1 ngày** tuổi ⇒ in 🟢, trong khi **37/59 chủ đề đã quá 35
+  ngày**, trung vị **45**. Nay in kèm trung vị + 5 chủ đề lâu nhất; ngưỡng báo động để **riêng ở
+  120 ngày**, cố ý cao hơn nhiều — ở nhịp làm việc thật phần lớn chủ đề luôn quá 35 ngày, lấy 35
+  làm ngưỡng đỏ sẽ khiến mỗi phiên đều đỏ và bác sĩ học cách bỏ qua; lúc đó cảnh báo THẬT chìm theo.
+  **Khoá gom nhóm** (BH30) từ nay phải là **đường dẫn**, không phải ngày: hai lát cắt khác nhau
+  của cùng chủ đề có thể trùng ngày (`RA_Than` và `RA_TimMach` đều 30/06/2026).
+
+  > **LUẬT NỀN, áp cho mọi lần đọc kết quả công cụ:** hỏi **"nó đã chạy tới luật nào"** và
+  > **"con số này là của TẬP HỢP hay của MỘT phần tử"**, chứ không chỉ đếm số lỗi. Một chỉ số
+  > gộp (`max` · `min` · "mới nhất") **không bao giờ** được trình bày như kết luận về toàn bộ.
+
+  **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
+  (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và
+  **cam "Bản khác cùng chủ đề đang kết luận ngược"**. Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận —
+  **không đổi `decision`** (BH10), **không đoán bên nào đúng** (BH28); không tính được thì in rõ
+  *"chưa kiểm"*, tuyệt đối không im lặng.
+  **Độ phủ xác minh nguồn: 51% → 99%** (1154/1155, 0 mục chưa kiểm) — NCBI đã trả lời được trở
+  lại nên chạy thêm vòng `so_xac_minh_nguon.py` lấp gần hết; câu "cần NCBI_API_KEY" trong các ghi
+  chú cũ chỉ đúng cho lúc NCBI đang chặn, **không phải điều kiện thường trực**.
 
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,

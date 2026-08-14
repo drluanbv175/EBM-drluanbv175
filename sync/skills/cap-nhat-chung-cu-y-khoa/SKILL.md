@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.35.0
+  version: 1.36.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -355,7 +355,12 @@ python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online
 Lệnh này tự làm trọn và sinh **năm** sản phẩm từ CÙNG một khối `DATA` (nên không bản nào tụt lại một phiên bản so với bản khác):
 ① **Dashboard** — đã qua **HAI** cổng chạy sẵn bên trong: `verify_dashboard.py --online` (liêm chính:
 PMID/DOI phân giải thật) và **①-bis `--strict-sources`** (cổng nguồn nghiêm ngặt) ·
-② **Bản đọc** `derivatives/<mã>_ban-doc.html` — cờ đỏ và việc cần làm đứng trước ·
+② **Bản đọc** `derivatives/<mã>_ban-doc.html` — cờ đỏ và việc cần làm đứng trước; từ 14/08/2026
+mang thêm **hai dải cảnh báo về ĐỘ TIN CẬY của chính tài liệu**, đặt ngay dưới đầu trang: dải
+**đỏ "Nguồn đã bị rút"** và dải **cam "Bản khác cùng chủ đề đang kết luận ngược"** (xem 5D-a
+và mục *Đăng ký chủ đề*). Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận, **không đổi `decision` nào**
+(BH10) và **không đoán bên nào đúng** (BH28 — hai bản có thể đang nói về hai kết cục khác nhau
+của cùng một thử nghiệm). Không tính được thì in rõ *"chưa kiểm"*, tuyệt đối không im lặng ·
 ③ **Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` — bản lưu trữ chuẩn, có màu ·
 ④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
 ⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
@@ -454,6 +459,19 @@ Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đả
 `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
 Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
 Cờ **opt-in `--check-topic`** (thêm sau `--online`): gọi LLM chấm mỗi item có LẠC CHỦ ĐỀ/chuyên khoa của dashboard không (`tools/check_topic_relevance.py` — lấp khoảng trống cổng kỹ thuật không bắt được item lạc chủ đề, vd bài sản/nhi lọt vào dashboard Tim mạch). Chỉ CẢNH BÁO, không chặn cứng; thiếu `ANTHROPIC_API_KEY` → bỏ qua êm.
+
+🔴 **CỔNG NAY CHẶN NGUỒN ĐÃ BỊ RÚT (thêm 14/08/2026 — trước đó KHÔNG kiểm).** Cổng vẫn giữ
+nguyên tắc *không tự kết luận* trạng thái rút bài từ một nguồn metadata thiếu thẩm quyền; điều
+mới là nó **đọc lại kết luận DƯƠNG TÍNH** mà chuỗi 3 tầng đã xác nhận và ghi vào
+`EBM-Dashboards/.so-xac-minh-nguon.json`, qua `tools/so_xac_minh_nguon.py::nguon_da_rut()`.
+*Vì sao cần:* PMID 30267080 (JAMA Oncology, rút 2019, dạng **retract-and-replace**) nằm trong
+`ViemGanB_DieuTri` và **đi qua cổng sạch sẽ** suốt — nó chỉ hiện khi bác sĩ chủ động gõ
+`so_xac_minh_nguon.py --bao-cao`.
+**Bất đối xứng bắt buộc:** có bản ghi ⇒ **lỗi cứng**; sổ **im lặng ⇒ KHÔNG** phát tín hiệu nào
+(im lặng chỉ nghĩa là chưa ai quét file đó — biến nó thành dấu ✓ là dựng lời bảo đảm không có
+cơ sở); tra cứu hỏng ⇒ **cảnh báo hiện ra**, không bỏ qua thầm lặng. Khoá bằng **BH31**.
+⚠️ Cổng chỉ ĐO. Không tự gỡ mục: *retract-and-replace* nghĩa là bài đã được sửa rồi đăng lại,
+việc cần làm là **đối chiếu số liệu với bản đã thay**, không phải xoá — và đó là việc của bác sĩ.
 
 **(b) Thư viện cập nhật — `tools/build_library.py`** (tích lũy thành tài sản tra cứu):
 `python3 tools/build_library.py add <dashboard>.html` → cập nhật `library.json` + sinh `evidence-library.html` (chỉ mục mọi bản cập nhật, có tìm/lọc, mở thẳng từng dashboard).
@@ -913,6 +931,28 @@ xử khi hai dashboard nói ngược nhau.
 > Đã vá (xét NGUỒN trước THỂ LOẠI, thêm nhóm riêng `ĐỒNG THUẬN`): 20 mục "yếu thật"
 > rút về đúng **2** — khớp phân tích tay từng mục.
 > Bài học: `design` là chuỗi tự do, **không dùng nó làm căn cứ quyết định an toàn**.
+
+**(u) BH30 · BH31 · BH32 — 14/08, vòng lặp kiểm tra–hoàn thiện. Một họ lỗi duy nhất: CON SỐ
+KHÔNG ĐO THỨ NÓ TỰ NHẬN LÀ ĐANG ĐO.** Cả ba đều lọt qua mọi chốt trước đó vì công cụ vẫn chạy,
+vẫn in ra một kết quả trông hợp lệ.
+
+| Mã | Lỗi | Vì sao vô hình | Hại theo hướng |
+|---|---|---|---|
+| **BH30** | `dang_ky_chu_de.tach_ten()` trả **tên chủ đề** ở vị trí **ngày** (lệch một bậc sau bản vá "chủ đề là tuỳ chọn"). Cache dò mâu thuẫn khoá theo giá trị đó ⇒ 3 bản `SuyTim_TongHop` sập vào MỘT khoá; cặp 04/08⟷05/08 hoá thành so bản 11/08 với **chính nó** ⇒ vĩnh viễn 0 mâu thuẫn | tổng số mâu thuẫn **không đổi** (11) vì kho tình cờ không có mâu thuẫn giữa các bản SuyTim | **bỏ sót** |
+| **BH31** | Cổng liêm chính **không hề kiểm rút bài**; kết luận dương tính đã nằm trong sổ mà không ai đọc | gói FAIL/PASS đúng ở mọi luật khác nên trông như đã soi đủ | **bỏ sót** |
+| **BH32** | `kiem_do_tuoi_chung_cu` lấy `max(ngày)` toàn kho rồi in *"🟢 CHỨNG CỨ còn hạn"* — nghĩa thật chỉ là *"có ít nhất MỘT gói mới"* | 🟢 là màu người ta không kiểm lại | **yên tâm giả** |
+
+*Số đo 14/08 cho BH32:* gói mới nhất **1 ngày** tuổi ⇒ in 🟢, trong khi **37/59 chủ đề đã quá 35
+ngày**, trung vị **45 ngày**. Nay in kèm trung vị + 5 chủ đề lâu nhất, và ngưỡng báo động để
+**riêng ở 120 ngày** — cố ý cao hơn nhiều, vì ở nhịp làm việc thật phần lớn chủ đề luôn quá 35
+ngày; lấy 35 làm ngưỡng đỏ sẽ khiến mỗi phiên đều đỏ và bác sĩ học cách bỏ qua, lúc đó cảnh báo
+thật cũng chìm theo.
+
+> **Luật rút ra, áp cho mọi chốt về sau:** khi đọc kết quả một công cụ, hỏi **"nó đã chạy tới
+> luật nào"** và **"con số này là của TẬP HỢP hay của MỘT phần tử"** — chứ không chỉ đếm số lỗi.
+> Một chỉ số gộp (`max`/`min`/"mới nhất") **không bao giờ** được trình bày như kết luận về toàn bộ.
+
+*Đã kiểm bằng đột biến từng chốt:* tái hiện lỗi cũ ⇒ BH30/BH31/BH32 đỏ; khôi phục bản vá ⇒ xanh.
 
 
 ## 6. Biến thể đầu ra theo chủ đề
