@@ -673,12 +673,32 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
         if khac:
             print(f"     • {len(khac)} mục: lý do khác — {khac[0][1]}")
             print("       [MA] CAN_XEM_TAY")
-    print(f"  ĐÃ BỊ RÚT    : {len(rut)}")
-    if rut:
-        print("\n  🔴 NGUỒN ĐÃ BỊ RÚT — phải xử lý trước khi dùng gói chứa chúng:")
-        for khoa, gc in rut:
+    # Đếm RIÊNG hai mức: "rút bỏ hẳn" và "rút rồi ĐĂNG LẠI bản đã sửa". Gộp lại thì
+    # một trích dẫn HỢP LỆ (bản đã sửa, thường cùng DOI/PMID) bị đọc thành "không được
+    # dùng" — cảnh báo sai làm hỏng giá trị của cảnh báo đúng. Xem BH34.
+    # CHỈ báo nguồn đang thực sự được MỘT dashboard nào đó trích. Bản ghi mồ côi
+    # (đã gỡ khỏi mọi dashboard) không còn là việc phải xử lý — hiện nó lên như báo
+    # động đỏ chỉ tạo nhiễu, và nhiễu dạy người ta bỏ qua màu đỏ. Vẫn giữ trong sổ để
+    # không mất lịch sử.
+    dang_dung = [(k, g) for k, g in rut if muc[k].get("cac_dashboard")]
+    mo_coi = len(rut) - len(dang_dung)
+    thay = [(k, g) for k, g in dang_dung if muc[k].get("rut_va_thay")]
+    han = [(k, g) for k, g in dang_dung if not muc[k].get("rut_va_thay")]
+    print(f"  ĐÃ BỊ RÚT    : {len(han)}"
+          + (f"  ·  RÚT & ĐĂNG LẠI BẢN SỬA: {len(thay)}" if thay else "")
+          + (f"  ·  {mo_coi} bản ghi cũ không còn dashboard nào trích" if mo_coi else ""))
+    if han:
+        print("\n  🔴 NGUỒN ĐÃ BỊ RÚT — không dùng kết luận của các bài này:")
+        for khoa, gc in han:
             dash = ", ".join(muc[khoa].get("cac_dashboard", [])[:3])
             print(f"     • {khoa} [{gc}]  ← {dash}")
+    if thay:
+        print("\n  🟠 RÚT & ĐĂNG LẠI BẢN ĐÃ SỬA — trích dẫn VẪN dùng được, nhưng số liệu")
+        print("     phải lấy từ BẢN ĐÃ SỬA (thường cùng DOI/PMID), không phải bỏ mục đi:")
+        for khoa, _gc in thay:
+            dash = ", ".join(muc[khoa].get("cac_dashboard", [])[:3])
+            tb = muc[khoa].get("thong_bao_rut_doi") or ""
+            print(f"     • {khoa}" + (f"  (thông báo {tb})" if tb else "") + f"  ← {dash}")
     if luu_y:
         print("\n  🟠 CẦN BÁC SĨ ĐỌC LẠI (không phải rút bài, nhưng không bỏ qua được):")
         for khoa, gc in luu_y:
