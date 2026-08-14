@@ -125,6 +125,22 @@ Kết: **"Cần bác sĩ kiểm chứng."**
 ## 6. Tiêu chí hoàn thành + qua cổng
 **Hoàn thành khi:** mỗi outcome quan trọng có hàng GRADE + lý do + nguồn; lượng hóa (hoặc nêu rõ không tính được); tách ý nghĩa thống kê/lâm sàng; có khối EtD với khuyến nghị **có điều kiện**. Không tự gán mức nếu nguồn không phân hạng (`gradeLevel:'na'`).
 
+🔴 **HAI TRƯỜNG BẮT BUỘC KHI ĐẦU RA ĐI VÀO DASHBOARD** (cổng `verify_dashboard.py
+--strict-sources` kiểm; doctrine này trước 14/08/2026 **chưa hề nhắc**, nên đầu ra của
+agent bị chặn mà không ai hiểu vì sao):
+
+| Trường | Khi nào | Ghi gì |
+|---|---|---|
+| `gradeBy` | mọi `gradeLevel` **khác `na`** | TÊN tổ chức/hệ đã chấm — `"KDIGO 2024"` · `"Cochrane (GRADE)"` · `"EULAR LoE/SoR"` · `"AHA/ASA COR-LOE"`. **Mô tả thiết kế KHÔNG phải phân hạng**: *"RCT đa trung tâm, mù đôi"* là tự chấm, không phải `gradeBy`. |
+| `normativeBasis` | `decision:'apply'` **trên** `gradeLevel:'na'` | Loại quy phạm: `contraindication` · `drug-label` · `official-classification` · `guideline-strong-rec` · `guideline-explicit-criteria`. Chỉ hợp lệ khi `design` là Guideline/Nhãn thuốc — **`Consensus` KHÔNG BAO GIỜ đủ** (BH03). |
+
+**Vì sao nghiêm:** đo toàn kho 14/08/2026 — **530 item có `gradeLevel` khác `na`, 249 (47%)
+không truy được về tổ chức nào đã chấm**; 128 mục lấy mô tả thiết kế làm lý do; **56 mục tự
+khai "nguồn không cung cấp phân hạng" mà VẪN mang mức** (đã đưa về `na`). `gradeLevel` là thứ
+bác sĩ **hành động theo**, nên một mức không truy được nguồn gây hại ở MỌI lần đọc.
+Không xác định được ai chấm ⇒ **để `na`**, đừng đoán.
+Soi phần còn tồn: `python tools/kiem_phan_hang.py`.
+
 ## 7. Nguyên tắc nền & disclaimer
 Áp 4 trụ cột; giữ grading gốc; dùng đúng công cụ RoB theo thiết kế (RoB 2 RCT · ROBINS-I V2/ROBINS-E quan sát · AMSTAR-2 SR · QUADAS-3 chẩn đoán); chọn đúng biến thể GRADE (can thiệp/test/tiên lượng/ADOLOPMENT); tách chứng cứ vs khuyến cáo; không bịa số. Kết: **"Cần bác sĩ kiểm chứng."**
 

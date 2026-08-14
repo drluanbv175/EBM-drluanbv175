@@ -42,6 +42,21 @@ Câu hỏi lâm sàng (thô hoặc PICO) · dân số/bối cảnh (tuổi, bệ
    - **Có nguồn bậc cao hơn mâu thuẫn?** Nếu có → ưu tiên nguồn mạnh/mới + NÊU mâu thuẫn, KHÔNG chọn bài hợp ý.
    - **Truy xuất nghèo/lệch?** → MỞ RỘNG truy vấn (đồng nghĩa/MeSH/nới ràng buộc) rồi LỌC LẠI; vẫn nghèo → **PARTIAL**, KHÔNG kết luận chắc.
    - Bài không qua các câu hỏi trên → **LOẠI, ghi lý do** (vd "trả về sai chủ đề", "retracted", "surrogate không suy ra kết cục cứng").
+   - 🔴 **"Bài có bị rút không?" PHẢI TRA, KHÔNG ĐƯỢC TỰ NHỚ.** Một vụ rút bài xảy ra sau
+     thời điểm cắt kiến thức thì trí nhớ mô hình không thể biết — trả lời từ trí nhớ ở đây
+     là đoán, và đoán sai theo hướng nguy hiểm nhất. Chạy:
+     `python medical-ebm-automation/tools/check_citation_retraction.py --pmid <PMID…>`
+     (chuỗi 3 tầng: Retraction Watch ngoại tuyến → NCBI → Europe PMC; nền ngoại tuyến chạy
+     được cả khi mất mạng). Không tra được ⇒ ghi **"chưa kiểm rút bài"**, TUYỆT ĐỐI không
+     ghi "chưa bị rút".
+     *Ca thật 14/08/2026:* PMID 30267080 (JAMA Oncology) — **cả PubMed lẫn Europe PMC đều
+     trả `ok`**, chỉ nền Retraction Watch bắt được là đã rút-và-thay. Tự nhớ hay hỏi một
+     nguồn đều trượt.
+   - ⚡ **Bài quá mới thường CHƯA có publication type.** MEDLINE gán loại thiết kế trong lúc
+     lập chỉ mục — hàng tuần đến hàng tháng SAU khi bài vào PubMed. Đo 14/08: 30/40 bài mới
+     nhất chưa gán loại, trong đó có cả một tổng quan hệ thống. **Đừng loại một bài chỉ vì
+     PubMed chưa gán loại cho nó** — đọc tiêu đề/tóm tắt để tự xếp tầng, và ghi rõ là mình
+     tự xếp.
 6. **Soạn câu trả lời** ngắn, có trích dẫn + khoảng trống. **Trích dẫn từ TRÍ NHỚ (chưa phân giải PMID/DOI bằng công cụ) → gắn `[CẦN KIỂM CHỨNG]`, KHÔNG đưa vào bảng nguồn chính** (chuyển `kiem-chung-trich-dan` xác minh). Mục tiêu **tỷ lệ trích dẫn ảo = 0%**.
 
 ## 4. Mẫu đầu ra (template điền sẵn)
