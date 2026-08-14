@@ -63,7 +63,8 @@ KHOA = REPO / ".tu-khoi-dong.json"
 CONG_TAC_TAT = REPO / ".tu-khoi-dong-tat"
 NHAT_KY = PROJ / "data/archive/tu_khoi_dong.log"
 
-# CHỈ hai script này được phóng. Thêm mục vào đây là đổi doctrine — cần bác sĩ duyệt.
+# CHỈ các script trong allowlist này được phóng. Thêm mục = đổi doctrine — cần bác sĩ
+# duyệt (mục 'quy' đã duyệt 15/08/2026 qua LÔ 0/Q3 của kế hoạch kiện toàn).
 OWNER = {
     "tuan": {
         "script": PROJ / "scripts/weekly_safety.sh",
@@ -76,6 +77,15 @@ OWNER = {
         "log": PROJ / "data/archive/launchd_monthly.log",
         "han_ngay": 35,          # chu kỳ tháng, nới 5 ngày
         "ten": "cập nhật guideline hằng tháng",
+    },
+    # CHỦ SỞ HỮU THỨ BA — bác sĩ duyệt Q3 ngày 15/08/2026 (LÔ 0 kế hoạch kiện toàn):
+    # quét "chứng cứ bị vượt qua" toàn kho theo QUÝ, canh chỉ số "guideline đang dùng
+    # nhưng đã bị thay thế = 0" vốn trước đó không ai canh định kỳ.
+    "quy": {
+        "script": PROJ / "scripts/quarterly_superseded.sh",
+        "log": PROJ / "data/archive/quarterly_superseded.log",
+        "han_ngay": 92,          # chu kỳ quý, nới 2 ngày
+        "ten": "quét chứng cứ bị vượt qua (quý)",
     },
 }
 

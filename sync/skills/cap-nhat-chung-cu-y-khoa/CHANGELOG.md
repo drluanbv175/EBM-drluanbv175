@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.42.0 — 2026-08-15
+
+**PHA 2 kế hoạch kiện toàn (bác sĩ duyệt LÔ 0)** — bộ quét thêm 3 mảnh an toàn vận hành:
+- **Khoá `.quet.lock`** chống 2 máy/2 tiến trình cùng quét (OneDrive 2 máy) — tiến trình sau
+  FAIL rõ, exit 3; khoá mồ côi tự hết hạn 30'. **BH47**.
+- **Con trỏ tăng dần `.quet-cursor.json`** theo chủ đề: lượt sau hỏi `mindate = cursor−3ng`
+  (lùi 3 ngày chống hở khe), `--days` vẫn là trần; `--since`/`--khong-cursor` để ghi đè.
+- **Đo ĐỘ TRỄ ngay trong báo cáo** (khối `do_tre`): trung vị + số mục quá ngưỡng 14 ngày —
+  định nghĩa vận hành của «mới nhất» lần đầu ĐO ĐƯỢC (lượt đầu: trung vị 3ng, 0 quá ngưỡng).
+- **Kênh `alerts/YYYY-MM-DD.md`**: CHỈ sự kiện khẩn (ứng viên ĐÃ RÚT/EoC lọt lượt quét, cổng
+  quét FAIL); không có sự kiện → không sinh file (chống nhờn màu đỏ, BH32).
+Kèm hệ mới cùng đợt: cổng **E0–E6** (quality/gates.md — KHÔNG đụng G0–G10 nghiên cứu) ·
+hợp đồng item + máy trạng thái (contracts/, validator `kiem_hop_dong_item.py`, **BH46**) ·
+AWaRe vào drug_flags · registry VN skeleton · quét BỊ-VƯỢT-QUA theo QUÝ (`tu_khoi_dong` chủ
+sở hữu thứ ba) · canary 8→10 ca.
+
 ## v1.41.0 — 2026-08-15
 
 **Luồng THEO-YÊU-CẦU thừa hưởng bài học của luồng định kỳ.** Bác sĩ nêu vấn đề → Bước 2 nay

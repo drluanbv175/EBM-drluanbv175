@@ -1,0 +1,47 @@
+{
+  "_about": "SỔ ĐĂNG KÝ hướng dẫn/quyết định BYT cho lớp bản địa hoá (A8/VN Localizer). LUẬT CỨNG (I1): KHÔNG BỊA số quyết định, ngày ký hay nội dung — ô nào chưa tra được nguồn chính thức thì để đúng nhãn [CẦN XÁC NHẬN TẠI ĐƠN VỊ]. Mỗi bản ghi chỉ được coi là DÙNG ĐƯỢC khi có url phân giải được (kcb.vn / thuvienphapluat / moh.gov.vn) HOẶC bác sĩ đã đối chiếu bản giấy tại đơn vị và ghi vào truong 'xac_nhan'.",
+  "_schema": {
+    "chu_de": "chủ đề lâm sàng khớp watchlist",
+    "ten_van_ban": "tên đầy đủ hướng dẫn/quyết định",
+    "so_quyet_dinh": "số QĐ-BYT — [CẦN XÁC NHẬN TẠI ĐƠN VỊ] nếu chưa tra được",
+    "ngay_ban_hanh": "YYYY-MM-DD hoặc [CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+    "url": "đường dẫn chính thức phân giải được, hoặc null",
+    "pham_vi": "áp cho tuyến nào",
+    "xac_nhan": "null | {boi, ngay, ghi_chu} — bác sĩ đối chiếu",
+    "trang_thai": "chua-tra-cuu | dung-duoc | nghi-da-thay-the"
+  },
+  "_updated": "2026-08-15",
+  "muc": [
+    {
+      "chu_de": "Đái tháo đường type 2",
+      "ten_van_ban": "Hướng dẫn chẩn đoán và điều trị đái tháo đường típ 2 (Bộ Y tế)",
+      "so_quyet_dinh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "ngay_ban_hanh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "url": null,
+      "pham_vi": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "xac_nhan": null,
+      "trang_thai": "chua-tra-cuu"
+    },
+    {
+      "chu_de": "Tăng huyết áp",
+      "ten_van_ban": "Hướng dẫn chẩn đoán và điều trị tăng huyết áp (Bộ Y tế)",
+      "so_quyet_dinh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "ngay_ban_hanh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "url": null,
+      "pham_vi": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "xac_nhan": null,
+      "trang_thai": "chua-tra-cuu"
+    },
+    {
+      "chu_de": "Viêm gan B mạn",
+      "ten_van_ban": "Hướng dẫn chẩn đoán, điều trị bệnh viêm gan vi rút B (Bộ Y tế)",
+      "so_quyet_dinh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "ngay_ban_hanh": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "url": null,
+      "pham_vi": "[CẦN XÁC NHẬN TẠI ĐƠN VỊ]",
+      "xac_nhan": null,
+      "trang_thai": "chua-tra-cuu"
+    }
+  ],
+  "_ghi_chu_trien_khai": "Skeleton 3 chủ đề hay gặp nhất để bác sĩ điền dần theo bản tại đơn vị. Nguồn tra trực tuyến ưu tiên: kcb.vn/vi/phac-do (doctrine tra-cuu-chung-cu đã trỏ). Mở rộng theo watchlist khi có nhu cầu — KHÔNG điền hàng loạt bằng máy."
+}

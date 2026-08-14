@@ -225,7 +225,8 @@ def get_europe_pmc_json(
 
 def search(query: str, days: int, retmax: int, *,
            fetch_json: Callable[[str], dict] = get_json,
-           datetype: str = "pdat", loc_thiet_ke: bool = True) -> list[str]:
+           datetype: str = "pdat", loc_thiet_ke: bool = True,
+           mindate: str = "", maxdate: str = "") -> list[str]:
     """Tìm ứng viên. `loc_thiet_ke=False` + `datetype='edat'` = tầng BẮT CÁI MỚI NHẤT.
 
     VÌ SAO CÓ HAI CHẾ ĐỘ (đo thật 14/08/2026)
@@ -254,12 +255,19 @@ def search(query: str, days: int, retmax: int, *,
         "db": "pubmed",
         "retmode": "json",
         "sort": "date",
-        "reldate": str(days),
         "datetype": datetype,
         "retmax": str(retmax),
         "term": term,
         "tool": "medical_ebm_surveillance",
     }
+    # CON TRỎ TĂNG DẦN (K8): có mindate ⇒ hỏi [mindate, maxdate] thay cho cửa sổ
+    # reldate. mindate luôn lùi 3 ngày so với cursor để CHỐNG HỞ KHE (bản ghi vào
+    # PubMed muộn quanh ranh giới); dedup phía sau chặn trùng nên lùi là rẻ.
+    if mindate:
+        params["mindate"] = mindate
+        params["maxdate"] = maxdate or "3000"
+    else:
+        params["reldate"] = str(days)
     url = EUTILS + "esearch.fcgi?" + urllib.parse.urlencode(params)
     try:
         result = fetch_json(url).get("esearchresult", {})
@@ -420,6 +428,80 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
 
 
 
+
+# ══ LÔ 1 KIỆN TOÀN 15/08/2026 (bác sĩ duyệt Q3) — khoá ghi · con trỏ · alerts ══
+# Inline thay vì import chéo: file này sống ở 3 bản đồng bộ (EBM-Dashboards/tools ·
+# sync/skills/*/tools) — bản trong runtime skill KHÔNG có ../../tools để import.
+
+def _khoa_path() -> Path:
+    return DEFAULT_WATCHLIST.parent / ".quet.lock"
+
+
+def gianh_khoa(han_phut: int = 30) -> tuple[bool, str]:
+    """Khoá chống 2 máy/2 tiến trình cùng quét (OneDrive đồng bộ 2 máy — K3).
+
+    Khoá cũ quá `han_phut` coi là MỒ CÔI (tiến trình chết giữa chừng) và được thay.
+    Không giành được ⇒ caller phải FAIL RÕ RÀNG, không lặng lẽ chạy tiếp (I7).
+    """
+    import json as _j
+    import os as _os
+    import socket as _sk
+    import time as _t
+    kp = _khoa_path()
+    if kp.exists():
+        try:
+            d = _j.loads(kp.read_text(encoding="utf-8"))
+            tuoi_phut = (_t.time() - float(d.get("luc", 0))) / 60
+            if tuoi_phut < han_phut:
+                return False, (f"máy {d.get('may','?')} (pid {d.get('pid','?')}) đang quét "
+                               f"từ {tuoi_phut:.0f} phút trước — không chạy chồng")
+        except (ValueError, OSError):
+            pass  # khoá hỏng định dạng → coi như mồ côi
+    kp.write_text(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(),
+                            "luc": _t.time()}), encoding="utf-8")
+    return True, ""
+
+
+def tra_khoa() -> None:
+    try:
+        _khoa_path().unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def _cursor_path() -> Path:
+    return DEFAULT_WATCHLIST.parent / ".quet-cursor.json"
+
+
+def doc_cursor() -> dict:
+    import json as _j
+    try:
+        return _j.loads(_cursor_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def ghi_cursor(cur: dict) -> None:
+    import json as _j
+    _cursor_path().write_text(_j.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def ghi_alert(dong_md: list[str], ngay: str) -> Path | None:
+    """Gom SỰ KIỆN KHẨN vào alerts/YYYY-MM-DD.md (K7). CHỈ sự kiện khẩn — trộn mức
+    là dạy người đọc bỏ qua màu đỏ (bài học BH32)."""
+    if not dong_md:
+        return None
+    d = DEFAULT_WATCHLIST.parent.parent / "alerts"
+    d.mkdir(exist_ok=True)
+    f = d / f"{ngay}.md"
+    dau = not f.exists()
+    with f.open("a", encoding="utf-8") as fh:
+        if dau:
+            fh.write(f"# CẢNH BÁO KHẨN — {ngay}\n\n(chỉ sự kiện khẩn: rút bài · cổng FAIL"
+                     f" · guideline bị vượt. Cần bác sĩ kiểm chứng.)\n\n")
+        fh.write("\n".join(dong_md) + "\n")
+    return f
+
 _CHUOI_RUT_BAI = None   # dựng một lần cho cả tiến trình (xem gan_do_tin_cay)
 
 
@@ -487,6 +569,7 @@ def run_scan(
     *,
     days: int,
     max_results: int,
+    cursor: dict | None = None,
     search_fn: Callable[[str, int, int], list[str]] = search,
     summarize_fn: Callable[[Sequence[str]], list[Candidate]] = summarize,
 ) -> dict:
@@ -499,6 +582,19 @@ def run_scan(
             unique: list[Candidate] = []
             # Chạy THEO THỨ TỰ TẦNG: guideline → tổng quan/gộp → RCT. Ứng viên tầng cao
             # vào trước, nên bác sĩ đọc thứ mạnh nhất trước thay vì thứ PubMed trả trước.
+            # CON TRỎ theo chủ đề (K8): quét từ max(cursor−3ng, hôm_nay−days) tới nay.
+            # --days vẫn là TRẦN cửa sổ; xoá .quet-cursor.json là quay về cửa sổ thuần.
+            md = ""
+            if cursor is not None:
+                cu = cursor.get(row["topic"])
+                if cu:
+                    import datetime as _dt
+                    try:
+                        tu = max(_dt.date.fromisoformat(cu) - _dt.timedelta(days=3),
+                                 _dt.date.today() - _dt.timedelta(days=days))
+                        md = tu.strftime("%Y/%m/%d")
+                    except ValueError:
+                        md = ""
             for muc_tang in row.get("queries") or [{"tang": "chung", "query": row["query"]}]:
                 # Tầng "moi_vao_pubmed" phải đi bằng edat + KHÔNG lọc loại thiết kế —
                 # nếu không nó lại rơi vào đúng cái bẫy đang vá. Bộ tìm kiếm giả trong
@@ -506,7 +602,8 @@ def run_scan(
                 try:
                     ids = search_fn(muc_tang["query"], days, max_results,
                                     datetype=muc_tang.get("datetype", "pdat"),
-                                    loc_thiet_ke=muc_tang.get("loc_thiet_ke", True))
+                                    loc_thiet_ke=muc_tang.get("loc_thiet_ke", True),
+                                    mindate=md)
                 except TypeError:
                     ids = search_fn(muc_tang["query"], days, max_results)
                 for candidate in summarize_fn(ids):
@@ -516,6 +613,9 @@ def run_scan(
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
             unique = gan_do_tin_cay(unique)
             topic_results.append(TopicResult(row["topic"], row["query"], "PASS", unique))
+            if cursor is not None:
+                import datetime as _dt
+                cursor[row["topic"]] = _dt.date.today().isoformat()
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
             topic_results.append(TopicResult(
                 row["topic"], row["query"], "FAIL", [],
@@ -556,6 +656,10 @@ def markdown_report(report: dict) -> str:
         f"- Trạng thái: **{report['status']}**",
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}",
         f"- Ứng viên không trùng: {report['candidate_count']}",
+        (f"- Độ trễ phát hiện: trung vị {report['do_tre']['trung_vi_ngay']} ngày "
+         f"({report['do_tre']['n_do_duoc']}/{report['do_tre']['n_tong']} đo được; "
+         f"{report['do_tre']['qua_14_ngay']} mục quá ngưỡng 14 ngày)"
+         if report.get("do_tre") else "- Độ trễ phát hiện: [CẦN BỔ SUNG] (ngày công bố không đủ chi tiết)"),
         "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
         "- Trusted-source label: official guideline/regulator bodies, Cochrane, NEJM, Lancet, JAMA, BMJ, Annals, Nature Medicine, and core specialty societies/journals.",
         "- **Nhãn độ tin cậy gắn NGAY lúc nhận:** trạng thái rút bài (chuỗi 3 tầng) · loại "
@@ -633,17 +737,71 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--report")
     parser.add_argument("--json-report")
     parser.add_argument("--allow-partial", action="store_true", help="Chỉ dùng chẩn đoán; báo cáo vẫn giữ PARTIAL/FAIL.")
+    parser.add_argument("--since", help="YYYY-MM-DD: ép quét từ ngày này (ghi đè cursor, --days vẫn là trần)")
+    parser.add_argument("--khong-cursor", action="store_true",
+                        help="bỏ qua con trỏ tăng dần, quét trọn cửa sổ --days")
     args = parser.parse_args(argv)
     if not 1 <= args.days <= 3650:
         parser.error("--days phải trong khoảng 1..3650")
     if not 1 <= args.max <= 100:
         parser.error("--max phải trong khoảng 1..100")
 
+    # KHOÁ chống 2 máy/2 tiến trình cùng quét (K3) — FAIL rõ ràng, không chạy chồng.
+    duoc, ly_do = gianh_khoa()
+    if not duoc:
+        print(f"🔴 KHÔNG QUÉT: {ly_do}")
+        return 3
     try:
-        topics = load_watchlist(Path(args.watchlist))
-        report = run_scan(topics, days=args.days, max_results=args.max)
-    except ValueError as exc:
-        parser.error(str(exc))
+        cursor = None if args.khong_cursor else doc_cursor()
+        if args.since and cursor is not None:
+            for t0 in load_watchlist(Path(args.watchlist)):
+                cursor[t0["topic"]] = args.since
+        try:
+            topics = load_watchlist(Path(args.watchlist))
+            report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor)
+        except ValueError as exc:
+            parser.error(str(exc))
+        if cursor is not None:
+            ghi_cursor(cursor)
+
+        # ĐO ĐỘ TRỄ (K4) — định nghĩa vận hành của "mới nhất" phải đo được. Chỉ đo
+        # khi tóm tắt cho ngày đủ chi tiết; thiếu thì [CẦN BỔ SUNG], không ước lượng.
+        import datetime as _dt
+        tre: list[int] = []
+        for _t in report["topics"]:
+            for _c in _t["candidates"]:
+                try:
+                    d0 = _dt.datetime.strptime(_c["publication_date"][:11].strip(),
+                                               "%Y %b %d").date()
+                    tre.append((_dt.date.today() - d0).days)
+                except ValueError:
+                    pass
+        if tre:
+            tre.sort()
+            report["do_tre"] = {
+                "n_do_duoc": len(tre), "n_tong": report["candidate_count"],
+                "trung_vi_ngay": tre[len(tre) // 2],
+                "qua_14_ngay": sum(1 for x in tre if x > 14),
+                "ghi_chu": ("trễ = hôm_nay − ngày công bố; chỉ tính ứng viên có ngày đủ "
+                            "chi tiết, phần còn lại [CẦN BỔ SUNG]"),
+            }
+
+        # ALERTS (K7) — chỉ sự kiện KHẨN
+        khan: list[str] = []
+        for _t in report["topics"]:
+            if _t["status"] != "PASS":
+                khan.append(f"- 🔴 CỔNG QUÉT FAIL: chủ đề «{_t['topic']}» — `{_t['error'][:90]}`")
+            for _c in _t["candidates"]:
+                if _c.get("rut_bai") == "retracted":
+                    khan.append(f"- 🔴 ỨNG VIÊN ĐÃ BỊ RÚT lọt vào lượt quét: PMID {_c['pmid']} "
+                                f"({_t['topic']}) — KHÔNG dùng")
+                elif _c.get("rut_bai") == "expression_of_concern":
+                    khan.append(f"- 🟠 EoC: PMID {_c['pmid']} ({_t['topic']}) — đọc lại trước khi dùng")
+        f_alert = ghi_alert(khan, _dt.date.today().isoformat())
+        if f_alert:
+            print(f"[⚠ Đã ghi {len(khan)} cảnh báo khẩn: {f_alert}]")
+    finally:
+        tra_khoa()
 
     markdown = markdown_report(report)
     print(markdown)

@@ -1,0 +1,92 @@
+{
+  "$id": "ebm-evidence-item.v1",
+  "$comment": "HỢP ĐỒNG DỮ LIỆU cho MỘT mục chứng cứ (PHA 2 prompt kiện toàn, bác sĩ duyệt LÔ 0 15/08/2026). HÌNH THỨC HOÁ từ schema DATA.items[] đang chạy (DESIGN-SPEC §5) + trường prompt v2.0 đòi — KHÔNG migrate gói cũ, áp cho gói MỚI. Validator stdlib: tools/kiem_hop_dong_item.py (không cần thư viện jsonschema).",
+  "type": "object",
+  "required": ["id", "topic", "source", "status", "decision"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^(ITEM-\\d{2}|EBM-\\d{4}-\\d{4})$" },
+    "topic": { "type": "string" },
+    "specialty": { "type": "string" },
+    "question_frame": { "enum": ["PICO", "chan-doan", "tien-luong", "tan-suat", "dich-vu"] },
+    "source": {
+      "type": "object",
+      "required": ["type", "title", "year"],
+      "properties": {
+        "type": { "enum": ["guideline", "SR-MA", "RCT", "cohort", "regulatory", "consensus"] },
+        "org_or_authors": { "type": "string" },
+        "title": { "type": "string" },
+        "journal": { "type": "string" },
+        "year": { "type": "integer" },
+        "version_or_date": { "type": "string" },
+        "pmid": { "type": "string", "pattern": "^\\d{1,9}$" },
+        "doi": { "type": "string", "pattern": "^10\\.\\d{4,9}/" },
+        "resolved": { "type": "boolean", "$comment": "true CHỈ khi đã phân giải ONLINE hoặc có trong sổ xác minh còn hạn (.so-xac-minh-nguon.json). Không phải lời tự khai." },
+        "resolved_at": { "type": "string" },
+        "retracted": { "type": "boolean", "$comment": "kết luận của chuỗi 3 tầng (check_citation_retraction). Vắng kiểm ⇒ để null/absent, KHÔNG mặc định false (BH08/BH27)." },
+        "retract_and_replace": { "type": "boolean" },
+        "superseded_by": { "type": ["string", "null"], "$comment": "PMID/DOI của tổng quan/guideline MỚI HƠN nếu kiem_chung_cu_vuot_qua tìm thấy và bác sĩ xác nhận nó THAY bản này." }
+      }
+    },
+    "population": { "type": "string" },
+    "setting": { "type": "string" },
+    "source_recommendation": {
+      "type": "object",
+      "$comment": "LỚP 1/3 — khuyến cáo CỦA NGUỒN, trích nguyên bản.",
+      "properties": {
+        "text": { "type": "string" },
+        "grading_system": { "type": "string", "$comment": "≡ gradeBy hiện hành: TÊN hệ/tổ chức đã chấm (KDIGO 2024, Cochrane GRADE, AHA COR-LOE…). Mô tả thiết kế KHÔNG phải hệ chấm (BH36)." },
+        "class_level": { "type": "string" },
+        "normativeBasis": { "enum": ["contraindication", "drug-label", "official-classification", "guideline-strong-rec", "guideline-explicit-criteria", null] }
+      }
+    },
+    "certainty": {
+      "type": "object",
+      "$comment": "LỚP 2/3 — độ chắc chắn chứng cứ. reported_by_source=false ⇒ level phải là 'na' (I2: không tự gán).",
+      "properties": {
+        "reported_by_source": { "type": "boolean" },
+        "level": { "enum": ["high", "mod", "low", "vlow", "na"] },
+        "note": { "type": "string" }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "$comment": "Hiệu số TRÍCH ĐÚNG NGUỒN. as_reported=true bắt buộc khi có số; số tự tính (ARR/NNT từ dữ kiện nguồn) phải ghi công thức ở derivation.",
+      "properties": {
+        "measure": { "enum": ["RR", "HR", "OR", "MD", "SMD", "Sn", "Sp", "LR+", "LR-", null] },
+        "point_estimate": {}, "ci": { "type": "string" }, "p": {},
+        "arr": {}, "nnt": {}, "nnh": {},
+        "as_reported": { "type": "boolean" },
+        "derivation": { "type": "string" }
+      }
+    },
+    "operational_assessment": {
+      "type": "object",
+      "$comment": "LỚP 3/3 — đánh giá VẬN HÀNH của hệ, không bao giờ trộn vào 2 lớp trên (I3).",
+      "required": ["label"],
+      "properties": {
+        "label": { "const": "đánh giá vận hành — không phải phân hạng của nguồn" },
+        "text": { "type": "string" }
+      }
+    },
+    "vn_context": {
+      "type": "object",
+      "properties": {
+        "availability": { "type": "string" },
+        "bhyt": { "type": "string" },
+        "byt_reference": { "type": "string", "$comment": "Số QĐ BYT chỉ được điền khi tra được vn-guidelines/registry.json hoặc URL chính thức; không thì để '[CẦN XÁC NHẬN TẠI ĐƠN VỊ]' (I1 cấm bịa)." }
+      }
+    },
+    "safety_flags": { "type": "array", "items": { "enum": ["Beers", "STOPP", "START", "eGFR", "gan", "AWaRe-Access", "AWaRe-Watch", "AWaRe-Reserve", "anticholinergic"] } },
+    "decision": { "enum": ["apply", "consider", "notyet"] },
+    "status": { "enum": ["NEW", "VERIFIED", "APPRAISED", "CANDIDATE", "APPROVED", "APPLIED", "DROPPED", "UNRESOLVED"] },
+    "provenance": {
+      "type": "object",
+      "properties": { "agent": { "type": "string" }, "run_id": { "type": "string" }, "input_hash": { "type": "string" }, "log_ref": { "type": "string" } }
+    },
+    "human_review": {
+      "type": "object",
+      "$comment": "BẮT BUỘC khác null khi status ∈ {APPROVED, APPLIED} — máy trạng thái cấm agent tự chuyển hai trạng thái này (I4). Validator thi hành.",
+      "properties": { "reviewed_by": { "type": ["string", "null"] }, "reviewed_at": { "type": ["string", "null"] }, "note": { "type": ["string", "null"] } }
+    }
+  }
+}

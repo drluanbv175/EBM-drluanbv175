@@ -157,6 +157,25 @@ def main() -> int:
         tt = gan[0].rut_bai if gan else "?"
         ket.append((f"ứng viên PMID {PMID_DA_RUT} (đã rút) → BẮT ở khâu nhận",
                     tt in ("retracted", "expression_of_concern"), f"trạng thái={tt}"))
+        # ── HỢP ĐỒNG ITEM (LÔ 2): máy tự APPROVED / tự gán mức / số không nguồn ─────
+        hd = _nap(REPO / "tools" / "kiem_hop_dong_item.py", "hd_canary")
+        xau = {"id": "EBM-2026-9999", "topic": "t", "status": "APPROVED",
+               "decision": "apply",
+               "source": {"type": "RCT", "title": "x", "year": 2026, "pmid": "1",
+                          "resolved": True},
+               "certainty": {"reported_by_source": False, "level": "high"}}
+        vi_pham = hd.kiem(xau)
+        ket.append(("hợp đồng item: máy tự APPROVED + tự gán mức → BẮT",
+                    sum(1 for v in vi_pham if "I4" in v or "I2" in v) >= 2,
+                    " | ".join(vi_pham)[:110]))
+
+        # ── KHOÁ GHI (LÔ 1): giành lần 2 phải FAIL, không lặng lẽ chạy chồng ───────
+        ok1, _ = ss.gianh_khoa()
+        ok2, _ly = ss.gianh_khoa()
+        ss.tra_khoa()
+        ket.append(("khoá quét: tiến trình thứ hai bị chặn rõ ràng",
+                    ok1 and not ok2, f"lần1={ok1} lần2={ok2}"))
+
         # và KHÔNG được mặc định 'ok' cho PMID không tra được
         gan2 = ss.gan_do_tin_cay([ss.Candidate(pmid="99999999", publication_date="2026",
                                                title="không tồn tại", url="u")])

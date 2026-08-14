@@ -1697,6 +1697,71 @@ def bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky():
     return True, "luồng theo-yêu-cầu giữ đủ 4 lượt tìm + kiểm rút bài"
 
 
+def bh46_hop_dong_item_va_may_trang_thai():
+    """15/08 — LÔ 2 kế hoạch kiện toàn: máy trạng thái item phải THI HÀNH ĐƯỢC BẰNG MÁY.
+
+    Trước đó trạng thái một mục chứng cứ phải suy ra từ 3 chỗ (sổ xác minh · hàng chờ
+    EBM_MASTER · quyết định bác sĩ) và KHÔNG có gì cấm-bằng-máy việc một tool đặt thẳng
+    APPROVED. Nay: `contracts/evidence-item.schema.json` + `state-machine.md` +
+    validator stdlib `tools/kiem_hop_dong_item.py` thi hành 4 luật cấm — máy tự
+    APPROVED/APPLIED (I4) · nhảy cóc CANDIDATE khi chưa resolved (I1) · retracted vẫn
+    CANDIDATE (dừng khẩn) · tự gán mức khi nguồn không chấm (I2).
+
+    Kiểm HÀNH VI: chạy self-test của validator — item tốt PASS, cả 5 ca xấu bị bắt.
+    """
+    import subprocess
+    vd = REPO / "tools" / "kiem_hop_dong_item.py"
+    for f in (vd, REPO / "contracts" / "evidence-item.schema.json",
+              REPO / "contracts" / "state-machine.md"):
+        if not f.exists():
+            return False, f"mất {f.name} — máy trạng thái lại chỉ còn trên giấy"
+    r = subprocess.run([sys.executable, str(vd), "--self-test"],
+                       capture_output=True, text=True, timeout=60)
+    if r.returncode != 0 or "LỌT" in (r.stdout or ""):
+        return False, "validator không bắt đủ 5 ca xấu — luật cấm thành lời khuyên"
+    return True, "4 luật cấm của máy trạng thái đều thi hành được bằng máy"
+
+
+def bh47_quet_phai_co_khoa_cursor_va_alert():
+    """15/08 — LÔ 1: ba mảnh an toàn vận hành của bộ quét phải HOẠT ĐỘNG, không chỉ có mặt.
+
+    (a) KHOÁ: OneDrive đồng bộ 2 máy — hai tiến trình cùng ghi sổ JSON là mất bản ghi
+        (điều kiện dừng khẩn). Giành khoá lần 2 phải FAIL rõ, không lặng lẽ chạy chồng.
+    (b) CON TRỎ: không có cursor thì chạy dày = quét lại toàn cửa sổ, chạy thưa = HỞ KHE
+        giữa hai cửa sổ. Lượt sau phải hỏi bằng mindate = cursor−3ngày (lùi 3 ngày chống
+        hở khe quanh ranh giới — dedup phía sau chặn trùng nên lùi là rẻ).
+    (c) ALERT: sự kiện KHẨN phải có kênh riêng `alerts/` — trộn với tín hiệu thường là
+        dạy người đọc bỏ qua màu đỏ (BH32). Không có sự kiện ⇒ KHÔNG sinh file.
+    """
+    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh47")
+    for ten in ("gianh_khoa", "tra_khoa", "doc_cursor", "ghi_cursor", "ghi_alert"):
+        if not hasattr(ss, ten):
+            return False, f"mất {ten} — LÔ 1 bị tháo"
+    # (a) khoá
+    ok1, _ = ss.gianh_khoa()
+    ok2, _ = ss.gianh_khoa()
+    ss.tra_khoa()
+    if not (ok1 and not ok2):
+        return False, "khoá không chặn tiến trình thứ hai — 2 máy sẽ ghi chồng"
+    # (b) cursor → mindate
+    urls: list[str] = []
+
+    def _fetch(u):
+        urls.append(u)
+        return {"esearchresult": {"idlist": []}}
+
+    ss.search("abc", 30, 5, fetch_json=_fetch, mindate="2026/08/01")
+    if "mindate=2026%2F08%2F01" not in urls[-1] or "reldate" in urls[-1]:
+        return False, "search() có mindate mà vẫn hỏi reldate — cursor không tác dụng"
+    ss.search("abc", 30, 5, fetch_json=_fetch)
+    if "reldate=30" not in urls[-1]:
+        return False, "search() không mindate phải lùi về reldate — mất tương thích cũ"
+    # (c) alert: rỗng không sinh file
+    if ss.ghi_alert([], "2099-01-01") is not None:
+        return False, "ghi_alert sinh file cho danh sách RỖNG — nhiễu kênh khẩn"
+    return True, "khoá chặn chồng · cursor ra mindate · alert chỉ khi có sự kiện"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1743,6 +1808,8 @@ BAI_HOC = [
     ("BH43", "14/08", "Canary đầu-cuối phải chạy và phải bắt được", bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc),
     ("BH44", "15/08", "Điều phối agent phải sạch", bh44_dieu_phoi_agent_phai_sach),
     ("BH45", "15/08", "Luồng theo-yêu-cầu phải thừa hưởng luồng định kỳ", bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky),
+    ("BH46", "15/08", "Hợp đồng item + máy trạng thái thi hành được", bh46_hop_dong_item_va_may_trang_thai),
+    ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
 ]
 
 
