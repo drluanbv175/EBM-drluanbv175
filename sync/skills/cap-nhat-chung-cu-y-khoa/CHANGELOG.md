@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.38.0 — 2026-08-14
+
+Năm việc của đề xuất "chứng cứ tốt nhất · mới nhất · tin cậy nhất".
+
+- **#1 `gradeBy` — ai đã chấm mức này?** Đo: 530 item có `gradeLevel` khác `na`, **249
+  (47%) không truy được về tổ chức nào**; 128 lấy MÔ TẢ THIẾT KẾ làm lý do; **56 mục tự
+  khai "nguồn không cung cấp phân hạng" mà vẫn mang mức** — vi phạm chính DESIGN-SPEC §6.
+  56 mục đó đã đưa về `na`. Thêm trường `gradeBy` + luật cổng (mức CẢNH BÁO) và công cụ
+  `tools/kiem_phan_hang.py` để xử lý dần. **BH36**.
+- **#2 Chứng cứ đã bị VƯỢT QUA** — `tools/kiem_chung_cu_vuot_qua.py`: với mỗi PMID đang
+  `apply`, hỏi PubMed các tổng quan/gộp/guideline MỚI HƠN. Lần chạy đầu: **125/172 mục có
+  chứng cứ tổng hợp mới hơn**, bắt được KDIGO 2026 và guideline đột quỵ 2026. Chỉ liệt kê
+  để đọc — không phán chiều, không đổi `decision`.
+- **#3 Tìm kiếm theo TẦNG** — watchlist có `queries` 3 tầng: guideline/đồng thuận → tổng
+  quan/gộp → RCT lớn; bộ quét chạy đúng thứ tự đó và gắn nhãn `tang` cho ứng viên. Nhóm
+  cảnh báo cơ quan quản lý cố ý KHÔNG áp thứ bậc (lọc theo publication type sẽ giết sạch
+  kết quả đúng). Tương thích ngược: thiếu `queries` thì lùi về `query` cũ.
+- **#4 Kiểm CON SỐ** — `tools/kiem_so_lieu.py` đối chiếu `effect{hr,lo,hi}` với tóm tắt
+  bài (đọc được cả `0.72` · `0·72` · `0,72`). Ba mức, **cố ý không có mức "SAI"**: vắng
+  mặt trong tóm tắt KHÔNG phải bằng chứng trích sai — nhiều bài chỉ để số ở toàn văn.
+  Thử 25 mục `apply`: 24 khớp đủ.
+- **#5 `provenanceUnknown`** — 44/62 gói chưa từng ghi nhận chiến lược tìm kiếm, rải đều
+  06→08/2026 (không có mốc ngày để suy). Trước đây chúng sinh 10 lỗi cứng GIỐNG HỆT gói
+  lẽ ra phải có mà cố tình bỏ ⇒ cổng không phân biệt **chưa khai** với **có vấn đề**
+  (BH08). Nay gói khai thẳng `provenanceUnknown: true` + lý do → một CẢNH BÁO nói rõ gói
+  không tái lập/kiểm toán được, thay cho 10 dòng đỏ. Miễn trừ **chỉ** bỏ phần hợp đồng
+  nguồn; **mọi luật an toàn cấp item vẫn chạy** (**BH35** khoá điều này).
+
+**Kết quả cổng: 15/62 → 51/62 gói PASS.** 11 gói còn lại đều vì đúng 26 mục `apply` trên
+chứng cứ mà nguồn chưa từng phân hạng — chờ bác sĩ quyết (hạ `decision` hoặc neo vào một
+tổ chức có chấm).
+
 ## v1.37.0 — 2026-08-14
 
 - **Kiểm rút bài nay phủ cả DOI** (trước chỉ PMID). 540 DOI trong kho — gần nửa số định danh —

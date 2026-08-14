@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -98,6 +98,10 @@ class Candidate:
     source: str = "PubMed E-utilities"
     journal_or_organization: str = ""
     authority_source: str = ""
+    # TẦNG chứng cứ mà truy vấn tìm ra ứng viên này (guideline / sr_ma / rct / chung).
+    # Thêm 14/08/2026: trước đây một lượt quét trộn lẫn RCT nhỏ với guideline và trả
+    # theo thứ tự PubMed, nên bác sĩ phải tự lọc lại đúng thứ hệ đáng lẽ làm hộ.
+    tang: str = "chung"
 
 
 @dataclass(frozen=True)
@@ -359,7 +363,18 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
             raise ValueError(f"Trùng query: {query}")
         seen_topics.add(topic_key)
         seen_queries.add(query_key)
-        active.append({"topic": topic, "query": query})
+        # `queries` = danh sách theo THỨ BẬC chứng cứ. Bổ sung thuần: thiếu thì lùi về
+        # `query` cũ, nên watchlist chưa nâng cấp vẫn chạy y như trước.
+        tiers = raw.get("queries")
+        ds_tang: list[dict[str, str]] = []
+        if isinstance(tiers, list):
+            for t in tiers:
+                if isinstance(t, dict) and str(t.get("query") or "").strip():
+                    ds_tang.append({"tang": str(t.get("tang") or "chung"),
+                                    "query": str(t["query"]).strip()})
+        if not ds_tang:
+            ds_tang = [{"tang": "chung", "query": query}]
+        active.append({"topic": topic, "query": query, "queries": ds_tang})
     if not active:
         raise ValueError("watchlist không có chủ đề active")
     if len(active) > 50:
@@ -381,14 +396,16 @@ def run_scan(
     all_pmids: set[str] = set()
     for row in topics:
         try:
-            ids = search_fn(row["query"], days, max_results)
-            candidates = summarize_fn(ids)
             unique: list[Candidate] = []
-            for candidate in candidates:
-                if candidate.pmid in all_pmids:
-                    continue
-                all_pmids.add(candidate.pmid)
-                unique.append(candidate)
+            # Chạy THEO THỨ TỰ TẦNG: guideline → tổng quan/gộp → RCT. Ứng viên tầng cao
+            # vào trước, nên bác sĩ đọc thứ mạnh nhất trước thay vì thứ PubMed trả trước.
+            for muc_tang in row.get("queries") or [{"tang": "chung", "query": row["query"]}]:
+                ids = search_fn(muc_tang["query"], days, max_results)
+                for candidate in summarize_fn(ids):
+                    if candidate.pmid in all_pmids:
+                        continue
+                    all_pmids.add(candidate.pmid)
+                    unique.append(replace(candidate, tang=muc_tang["tang"]))
             topic_results.append(TopicResult(row["topic"], row["query"], "PASS", unique))
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
             topic_results.append(TopicResult(

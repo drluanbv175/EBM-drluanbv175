@@ -613,6 +613,60 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   chấm** (KDIGO cho CKD, EULAR LoE/SoR cho RA) và ghi mức nguyên bản của tổ chức đó —
   không phải chép mức tự chấm sang bản còn lại.
 
+  ## 🎯 NĂM TRỤ "CHỨNG CỨ TỐT NHẤT · MỚI NHẤT · TIN CẬY NHẤT" (dựng 14/08/2026)
+  Hệ vốn mạnh ở câu hỏi *"trích dẫn có THẬT không"*. Năm việc dưới đây nhắm câu hỏi khác:
+  *"trích dẫn có ĐÚNG LÀ chứng cứ tốt nhất hiện có không"*.
+
+  **① `gradeBy` — AI ĐÃ CHẤM MỨC NÀY?** `gradeLevel` là thứ bác sĩ **hành động theo**, nên
+  một mức không truy được nguồn gây hại ở MỌI lần đọc (khác rút bài vốn hiếm). Đo: **530
+  item có `gradeLevel` khác `na`, 249 (47%) không truy được**; 128 lấy MÔ TẢ THIẾT KẾ làm
+  lý do ("RCT đa trung tâm, mù đôi" ⇒ `high`); **56 mục tự khai "nguồn không cung cấp phân
+  hạng" mà VẪN mang mức** — vi phạm chính `DESIGN-SPEC §6`. **56 mục đó đã đưa về `na`**
+  (chỉ hạ, không nâng; không đụng `decision`). Trường mới `gradeBy` + luật cổng ở mức
+  **CẢNH BÁO**; công cụ xử lý dần: `python tools/kiem_phan_hang.py`. **BH36**.
+  ⚠️ *Cố ý KHÔNG chặn cứng:* "chưa khai `gradeBy`" ≠ "mức sai" — nhiều mục đã nêu hệ chấm
+  ngay trong `gradeSource` (vd "khuyến cáo COR I của AHA/ASA"), chỉ chưa tách trường. Chặn
+  256 mục là biến CHƯA BIẾT thành CÓ VẤN ĐỀ (BH08), và bức tường đỏ sẽ bị vô hiệu hoá.
+  Chuyển thành lỗi cứng khi `kiem_phan_hang.py` về 0.
+
+  **② CHỨNG CỨ ĐÃ BỊ VƯỢT QUA** — `python tools/kiem_chung_cu_vuot_qua.py`. Mảnh thiếu lớn
+  nhất của chữ *"mới nhất"*: `kiem_do_tuoi_chung_cu.py` chỉ đo tuổi GÓI, không đo tuổi
+  CHỨNG CỨ bên trong. Với mỗi PMID đang `apply`, hỏi PubMed (`elink pubmed_pubmed_reviews`)
+  các tổng quan/gộp/guideline MỚI HƠN. Lần chạy đầu: **125/172 mục có chứng cứ tổng hợp mới
+  hơn**, bắt được **KDIGO 2026** (PMID 41485807) và **guideline đột quỵ 2026** (41582814).
+  Báo cáo: `EBM-Dashboards/derivatives/CHUNG-CU-VUOT-QUA_*.txt`.
+  ⚠️ Đây là *danh sách đáng đọc*, KHÔNG phải "chứng cứ của anh đã sai": bài mới có thể
+  CỦNG CỐ kết luận đang dùng. Máy không đọc nội dung và không phán chiều (BH28).
+
+  **③ TÌM KIẾM THEO TẦNG** — watchlist nay có `queries` 3 tầng: guideline/đồng thuận →
+  tổng quan/gộp → RCT lớn; `surveillance_scan.py` chạy đúng thứ tự đó và gắn nhãn `tang`
+  cho từng ứng viên, nên thứ mạnh nhất hiện trước thay vì thứ PubMed trả trước. Nhóm cảnh
+  báo cơ quan quản lý **cố ý không** áp thứ bậc (lọc theo publication type sẽ giết sạch kết
+  quả đúng). Tương thích ngược: thiếu `queries` thì lùi về `query` cũ.
+
+  **④ KIỂM CON SỐ, KHÔNG CHỈ KIỂM PMID** — `python tools/kiem_so_lieu.py`. Trước nay hệ
+  xác minh "PMID có thật + tiêu đề khớp", chưa bao giờ xác minh **hiệu số**. Đối chiếu
+  `effect{hr,lo,hi}` với tóm tắt; đọc được cả `0.72` · `0·72` (Lancet) · `0,72`.
+  **Ba mức, cố ý KHÔNG có mức "SAI"**: ✓ khớp · 🟠 một phần · ⚪ tóm tắt không nêu. Vắng mặt
+  trong tóm tắt KHÔNG phải bằng chứng trích sai (nhiều bài chỉ để số ở toàn văn/bảng) — nói
+  "sai" từ việc vắng mặt chính là biến *không biết* thành *có vấn đề*. Thử 25 mục `apply`:
+  **24 khớp đủ**.
+
+  **⑤ `provenanceUnknown` — TÁCH "CHƯA KHAI" KHỎI "CÓ VẤN ĐỀ"** — 44/62 gói chưa từng ghi
+  nhận chiến lược tìm kiếm, rải đều 06→08/2026 (**không có mốc ngày nào để suy**, nên phải
+  là khai báo tường minh). Trước đây chúng sinh 10 lỗi cứng GIỐNG HỆT gói lẽ ra phải có mà
+  cố tình bỏ. Nay gói khai `provenanceUnknown: true` + `provenanceUnknownLyDo` → **một cảnh
+  báo** nói rõ gói không tái lập/kiểm toán được. Khai mà không nêu lý do ⇒ lỗi cứng (miễn
+  trừ phải có người chịu trách nhiệm). Miễn trừ **CHỈ** bỏ phần hợp đồng nguồn — **mọi luật
+  an toàn cấp item vẫn chạy**, nếu không nó thành đường lách rộng hơn cả lỗi `return` sớm
+  ngày 12/08 vốn đã che 73 mục nguy hiểm. **BH35** khoá đúng điều này.
+  ⚠️ Khai `provenanceUnknown` là nói ra một sự thật kiểm chứng được (file không có khối
+  standards) — **KHÁC HẲN** việc bịa chiến lược tìm kiếm, thứ vẫn tuyệt đối cấm.
+
+  **KẾT QUẢ CỔNG: 15/62 → 51/62 gói PASS.** 11 gói còn lại đều vì **26 mục `apply` trên
+  chứng cứ mà nguồn chưa từng phân hạng** — chờ bác sĩ quyết: hạ `decision`, hoặc neo vào
+  một tổ chức có chấm (KDIGO/EULAR/Cochrane…) rồi ghi mức nguyên bản của tổ chức đó.
+
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
   và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job

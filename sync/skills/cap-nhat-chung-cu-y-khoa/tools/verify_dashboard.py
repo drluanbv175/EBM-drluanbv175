@@ -397,8 +397,35 @@ def strict_source_checks(data_block, items, *, today=None):
     today = today or date.today()
     errors, warns, oks = [], [], []
     standards = object_after_key(data_block, "standards")
-    if not standards:
-        errors.append("THIẾU DATA.standards — không có hợp đồng nguồn/độ mới/chuẩn thẩm định.")
+    # KHAI BÁO "CHƯA GHI NHẬN PROVENANCE" — thêm 14/08/2026.
+    # 44/62 gói không có khối `standards`, rải đều từ 06→08/2026 (không có mốc ngày nào
+    # để suy). Trước bản vá này chúng sinh 10 lỗi cứng GIỐNG HỆT một gói lẽ ra phải có
+    # mà cố tình bỏ — tức cổng KHÔNG phân biệt được **chưa khai** với **có vấn đề**,
+    # đúng lỗi BH08. Một bức tường 10 lỗi × 44 gói cũng dạy người đọc bỏ qua màu đỏ.
+    # Nay: gói được phép khai THẲNG là provenance chưa từng ghi nhận. Đó là nói ra một
+    # sự thật kiểm chứng được (file không có khối standards), KHÔNG phải bịa chiến lược
+    # tìm kiếm — bịa provenance mới là thứ tuyệt đối cấm.
+    # Đổi lại, cổng nói to rằng gói ấy KHÔNG tái lập và KHÔNG kiểm toán được.
+    if standards and re.search(r"\bprovenanceUnknown\s*:\s*true\b", standards):
+        ly_do = field(standards, "provenanceUnknownLyDo") or ""
+        if not ly_do.strip():
+            errors.append("Khai provenanceUnknown nhưng THIẾU `provenanceUnknownLyDo` — "
+                          "phải nói rõ vì sao không ghi nhận được chiến lược tìm kiếm.")
+        else:
+            warns.append("PROVENANCE CHƯA GHI NHẬN (gói tự khai): không tái lập và không "
+                         "kiểm toán được chiến lược tìm kiếm của gói này — %s. Đây là "
+                         "'chưa biết', KHÔNG phải 'đã kiểm đủ'; gói mới BẮT BUỘC khai "
+                         "DATA.standards đầy đủ." % ly_do[:120])
+        # Vẫn chấm TIẾP mọi luật an toàn cấp item ở dưới (bài học 12/08) — chỉ bỏ phần
+        # đòi từng trường của hợp đồng nguồn, vì gói đã khai là không có.
+        bo_qua_truong = True
+        standards = ""
+    else:
+        bo_qua_truong = False
+    if not bo_qua_truong and not standards:
+        errors.append("THIẾU DATA.standards — không có hợp đồng nguồn/độ mới/chuẩn thẩm định. "
+                      "Gói cũ chưa từng ghi nhận provenance thì khai thẳng "
+                      "`provenanceUnknown: true` + `provenanceUnknownLyDo` thay vì bịa.")
         # KHÔNG return sớm (sửa 12/08/2026). Bản cũ thoát ngay tại đây, nên với
         # dashboard thiếu khối siêu dữ liệu thì TOÀN BỘ luật an toàn cấp item —
         # `apply` trên gradeLevel yếu, `apply` chỉ dựa Consensus — KHÔNG BAO GIỜ
@@ -420,18 +447,22 @@ def strict_source_checks(data_block, items, *, today=None):
         "safety": "an toàn",
         "vietnamFit": "tính phù hợp Việt Nam",
     }
-    for key, label in required_fields.items():
+    # Gói đã khai THẲNG là chưa từng ghi nhận provenance ⇒ không đòi từng trường nữa.
+    # Đòi tiếp chỉ tạo 10 dòng đỏ lặp lại cùng một sự thật đã được nói ra ở trên.
+    for key, label in ({} if bo_qua_truong else required_fields).items():
         if not field(standards, key):
             errors.append("DATA.standards thiếu %s (%s)." % (key, label))
 
     search_sources = array_field(standards, "searchSources")
-    if len(search_sources) < 2:
+    if not bo_qua_truong and len(search_sources) < 2:
         errors.append("DATA.standards.searchSources cần ≥2 nguồn tìm kiếm độc lập (vd PubMed + guideline/Cochrane/nhãn thuốc).")
 
     currency = field(standards, "currency") or field(data_block, "updated")
     currency_date = _parse_exact_date(currency) or _parse_exact_date(field(data_block, "updated"))
     if not currency_date:
-        errors.append("Không thấy ngày tìm kiếm/cập nhật dạng YYYY-MM-DD trong DATA.standards.currency hoặc DATA.meta.updated.")
+        (warns if bo_qua_truong else errors).append(
+            "Không thấy ngày tìm kiếm/cập nhật dạng YYYY-MM-DD trong DATA.standards.currency "
+            "hoặc DATA.meta.updated.")
     else:
         age = (today - currency_date).days
         if age < 0:
@@ -444,7 +475,7 @@ def strict_source_checks(data_block, items, *, today=None):
         else:
             oks.append("Nguồn còn mới: ngày tìm kiếm/cập nhật %s (%d ngày)." % (currency_date.isoformat(), age))
 
-    if "gates" not in standards:
+    if not bo_qua_truong and "gates" not in standards:
         errors.append("DATA.standards thiếu gates[] — không có cổng liêm chính nguồn trước phát hành.")
 
     for ch in items:
@@ -494,6 +525,33 @@ def strict_source_checks(data_block, items, *, today=None):
                 errors.append("[%s] decision='apply' nhưng gradeLevel=%r: %s." % (iid, grade, ly_do_thieu))
             else:
                 errors.append("[%s] decision='apply' nhưng gradeLevel=%r — phải hạ xuống consider/notyet hoặc bổ sung nguồn mạnh hơn." % (iid, grade))
+        # AI ĐÃ CHẤM MỨC NÀY? — thêm 14/08/2026.
+        # Đo trên toàn kho: 530 item có `gradeLevel` khác 'na', trong đó **249 (47%)
+        # KHÔNG truy được về một tổ chức nào đã chấm**; 128 mục lấy mô tả THIẾT KẾ
+        # ("RCT đa trung tâm, mù đôi") làm lý do cho mức, và 18 mục tự khai thẳng
+        # "nguồn không nêu GRADE" mà vẫn mang mức `mod`/`low`.
+        # `gradeLevel` là thứ bác sĩ HÀNH ĐỘNG THEO, nên một mức không truy được nguồn
+        # gây hại ở MỌI lần đọc — khác rút bài vốn hiếm.
+        # KIỂM KHAI BÁO, KHÔNG DÒ TỪ KHOÁ: bản đo đầu tiên của chính luật này đã dò tên
+        # tổ chức trong `gradeSource` và đếm nhầm 18 mục có tên tổ chức trong câu PHỦ
+        # ĐỊNH ("CHƯA được AASLD đưa vào khuyến cáo") thành "đã có tổ chức chấm" — đúng
+        # lỗi BH28. Nên đòi một trường RIÊNG `gradeBy`, giống cách `normativeBasis` làm.
+        if grade and grade != "na" and not field(ch, "gradeBy"):
+            thieu = ("[%s] gradeLevel=%r nhưng KHÔNG khai `gradeBy` — ai đã chấm mức này? "
+                     "Khai tên tổ chức/hệ thống chấm (vd 'KDIGO 2024', 'Cochrane (GRADE)', "
+                     "'EULAR LoE/SoR'). Mô tả thiết kế nghiên cứu KHÔNG phải phân hạng: "
+                     "nguồn không chấm thì để gradeLevel='na'." % (iid, grade))
+            # CẢNH BÁO, KHÔNG chặn — và đây là quyết định đã cân nhắc rồi SỬA LẠI.
+            # Bản đầu của luật này chặn cứng mọi mục `apply` thiếu `gradeBy`: 256 mục
+            # trên ~50 dashboard. Nhưng "chưa khai `gradeBy`" KHÔNG đồng nghĩa "mức sai"
+            # — rất nhiều mục đã nêu hệ chấm ngay trong `gradeSource` (vd "khuyến cáo
+            # COR I của AHA/ASA"), chỉ là chưa tách ra trường riêng. Chặn cứng ở đây
+            # chính là biến CHƯA BIẾT thành CÓ VẤN ĐỀ (BH08), và một bức tường đỏ như
+            # vậy sẽ bị vô hiệu hoá bằng cách bỏ qua — mất luôn cả cảnh báo thật.
+            # Nhóm THỰC SỰ tự mâu thuẫn (gradeSource tự khai "nguồn không phân hạng" mà
+            # vẫn mang mức) đã được đưa về `na` ngày 14/08 — đó mới là phần chặn được.
+            # Chuyển thành lỗi cứng khi `tools/kiem_phan_hang.py` về 0.
+            warns.append(thieu)
         if dec == "apply" and design == "Consensus":
             errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
         if dec == "apply" and not (pmid or doi) and url:

@@ -1271,6 +1271,78 @@ def bh34_canh_bao_phai_noi_dung_muc():
     return True, "hai mức nói khác nhau, cả hai vẫn chặn"
 
 
+def bh35_khai_chua_biet_khong_duoc_tat_luat_an_toan():
+    """14/08 — cho phép khai "chưa ghi nhận provenance", nhưng KHÔNG được tắt luật an toàn.
+
+    44/62 gói không có khối `DATA.standards`, rải đều 06→08/2026. Trước đây chúng sinh
+    10 lỗi cứng GIỐNG HỆT một gói lẽ ra phải có mà cố tình bỏ ⇒ cổng không phân biệt
+    **chưa khai** với **có vấn đề** (BH08), và một bức tường 10 lỗi × 44 gói dạy người
+    đọc bỏ qua màu đỏ.
+
+    Nay gói được khai `provenanceUnknown: true` + lý do. Nhưng miễn trừ này CHỈ được
+    bỏ phần đòi từng trường của hợp đồng nguồn — **mọi luật an toàn cấp item vẫn phải
+    chạy**. Nếu nó tắt luôn luật item thì đây thành đường lách rộng hơn cả lỗi `return`
+    sớm ngày 12/08, vốn đã che 73 mục nguy hiểm.
+
+    Kiểm HÀNH VI: gói khai provenanceUnknown mà có `apply` trên chứng cứ yếu ⇒ VẪN CHẶN.
+    Và khai mà KHÔNG nêu lý do ⇒ lỗi cứng (miễn trừ phải có người chịu trách nhiệm).
+    """
+    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh35")
+    khoi = ('const DATA = {standards:{provenanceUnknown:true,'
+            'provenanceUnknownLyDo:"bản cũ, không dựng lại được"},'
+            'items:[{id:"ITEM-01",pmid:"1",design:"RCT",gradeLevel:"low",'
+            'decision:"apply",gradeSource:"x"}]}')
+    items = vd.split_items(khoi)
+    if not items:
+        return False, "không tách được item trong ca thử"
+    e, w, _o = vd.strict_source_checks(khoi, items)
+    if not any("gradeLevel" in x and "apply" in x for x in e):
+        return False, ("gói khai provenanceUnknown mà luật an toàn cấp item KHÔNG chạy — "
+                       "miễn trừ đã thành đường lách")
+    if any("standards thiếu" in x for x in e):
+        return False, "vẫn đòi từng trường hợp đồng nguồn — bức tường đỏ chưa được gỡ"
+    if not any("PROVENANCE CHƯA GHI NHẬN" in x for x in w):
+        return False, "không nói ra rằng gói này không tái lập/kiểm toán được"
+
+    thieu_ly_do = khoi.replace(',provenanceUnknownLyDo:"bản cũ, không dựng lại được"', "")
+    e2, _w2, _o2 = vd.strict_source_checks(thieu_ly_do, vd.split_items(thieu_ly_do))
+    if not any("provenanceUnknownLyDo" in x for x in e2):
+        return False, "khai miễn trừ mà không cần nêu lý do — miễn trừ vô danh"
+    return True, "miễn trừ chỉ bỏ phần hợp đồng nguồn; luật an toàn item vẫn chặn"
+
+
+def bh36_grade_phai_khai_ai_cham():
+    """14/08 — `gradeLevel` không truy được về tổ chức nào đã chấm.
+
+    Đo toàn kho: 530 item có gradeLevel khác 'na', **249 (47%) không truy được**; 128
+    lấy MÔ TẢ THIẾT KẾ làm lý do ("RCT đa trung tâm, mù đôi" ⇒ high), và **56 mục tự
+    khai thẳng "nguồn không cung cấp phân hạng" mà VẪN mang mức** — vi phạm chính
+    DESIGN-SPEC §6 của dự án. 56 mục đó đã đưa về 'na' ngày 14/08.
+
+    `gradeLevel` là thứ bác sĩ HÀNH ĐỘNG THEO, nên mức không truy được nguồn gây hại ở
+    MỌI lần đọc — khác rút bài vốn hiếm.
+
+    Luật: mọi `gradeLevel` khác 'na' phải khai `gradeBy` (ai đã chấm). Hiện ở mức CẢNH
+    BÁO — "chưa khai" không đồng nghĩa "mức sai", và chặn cứng 256 mục sẽ lại là biến
+    chưa-biết thành có-vấn-đề (BH08). Chuyển thành lỗi cứng khi `kiem_phan_hang.py` về 0.
+
+    Kiểm HÀNH VI: thiếu `gradeBy` phải LỘ RA; có `gradeBy` thì im.
+    """
+    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh36")
+    nen = ('const DATA = {standards:{provenanceUnknown:true,provenanceUnknownLyDo:"x"},'
+           'items:[{id:"ITEM-01",pmid:"1",design:"RCT",gradeLevel:"high",'
+           'decision:"consider",gradeSource:"RCT đa trung tâm"%s}]}')
+    thieu = nen % ""
+    e1, w1, _ = vd.strict_source_checks(thieu, vd.split_items(thieu))
+    if not any("gradeBy" in x for x in (w1 + e1)):
+        return False, "thiếu `gradeBy` mà cổng im lặng — mức chứng cứ không ai truy được"
+    co = nen % ',gradeBy:"Cochrane (GRADE)"'
+    e2, w2, _ = vd.strict_source_checks(co, vd.split_items(co))
+    if any("gradeBy" in x for x in (w2 + e2)):
+        return False, "đã khai `gradeBy` mà vẫn báo thiếu — báo động giả"
+    return True, "thiếu gradeBy thì lộ ra, khai rồi thì im"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1306,6 +1378,8 @@ BAI_HOC = [
     ("BH32", "14/08", "Chỉ số gộp không được kết luận cho cả tập", bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap),
     ("BH33", "14/08", "Kiểm rút bài phải phủ mọi kiểu định danh", bh33_kiem_rut_bai_phai_phu_moi_kieu_dinh_danh),
     ("BH34", "14/08", "Cảnh báo phải nói đúng MỨC", bh34_canh_bao_phai_noi_dung_muc),
+    ("BH35", "14/08", "Khai chưa-biết không được tắt luật an toàn", bh35_khai_chua_biet_khong_duoc_tat_luat_an_toan),
+    ("BH36", "14/08", "gradeLevel phải khai ai đã chấm", bh36_grade_phai_khai_ai_cham),
 ]
 
 
