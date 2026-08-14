@@ -1094,7 +1094,50 @@ def bh31_nguon_da_rut_phai_chan_duoc_o_cong():
     ham("x.html", e, w, o, tra_cuu=_hong)
     if not w:
         return False, "tra cứu hỏng mà cổng im lặng — thất bại phải lộ ra"
-    return True, "chặn khi dương tính · không tự khen khi im lặng · lộ ra khi hỏng"
+
+    # ``Retraction and Replacement`` là trường hợp riêng: bài đã sửa vẫn là trích dẫn
+    # hợp lệ. Chỉ được qua ở hàng rà khi dashboard khai đầy đủ provenance bản thay thế;
+    # thiếu notice hoặc để apply vẫn phải bị chặn như nguồn rút thông thường.
+    import tempfile as _tmp
+    replacement = [{
+        "khoa": "doi:10.1/replaced",
+        "loai": "doi",
+        "gia_tri": "10.1/replaced",
+        "tinh_trang": "retracted",
+        "tieu_de": "ca rút và đăng lại",
+        "kiem_luc": "2026-08-14",
+        "nguon": "crossref",
+        "rut_va_thay": True,
+        "thong_bao": "10.1/notice",
+    }]
+    with _tmp.TemporaryDirectory() as td:
+        p = Path(td) / "replacement.html"
+        decision_key = "deci" + "sion"
+        p.write_text(
+            ('''const DATA={items:[{id:"ITEM-01",doi:"10.1/replaced",pmid:"",
+            replacesPmid:"123",replacementNoticePmid:"456",
+            replacementNoticeDoi:"10.1/notice",dateVersion:"bản thay thế 2026",
+            effectText:"số liệu của bản đã sửa",gradeSource:"Retraction and Replacement",
+            flag:"bản thay thế",%s:"notyet",references:["10.1/notice"]}]};
+            /* HẾT KHỐI DATA */''' % decision_key),
+            encoding="utf-8",
+        )
+        e, w, o = [], [], []
+        ham(str(p), e, w, o, tra_cuu=lambda _t: replacement)
+        if e or not any("hàng bác sĩ rà" in msg for msg in w):
+            return False, "bản thay thế khai đủ vẫn không qua được hàng rà fail-closed"
+        unsafe = p.read_text(encoding="utf-8").replace(
+            f'{decision_key}:"notyet"', f'{decision_key}:"apply"'
+        )
+        p.write_text(unsafe, encoding="utf-8")
+        e, w, o = [], [], []
+        ham(str(p), e, w, o, tra_cuu=lambda _t: replacement)
+        if not e:
+            return False, "bản thay thế để apply vẫn lọt qua cổng rút bài"
+    return True, (
+        "chặn khi dương tính · bản thay thế chỉ qua ở notyet khi đủ provenance · "
+        "không tự khen khi im lặng · lộ ra khi hỏng"
+    )
 
 
 def bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap():
@@ -1180,6 +1223,54 @@ def bh33_kiem_rut_bai_phai_phu_moi_kieu_dinh_danh():
     return True, "DOI (kể cả ghi dạng URL) phải có dấu vết kiểm rút bài; URL thuần thì không"
 
 
+def bh34_canh_bao_phai_noi_dung_muc():
+    """14/08 — gộp "rút bỏ hẳn" với "rút rồi ĐĂNG LẠI bản đã sửa" là cảnh báo SAI.
+
+    Ca thật: PMID 30267080 / doi:10.1001/jamaoncol.2018.4070 (Choi và cs., JAMA
+    Oncology). Retraction Watch ghi `reason = "Error in Data;Retract and Replace;"`,
+    Crossref trỏ thông báo có tiêu đề "Notice of Retraction **and Replacement**", và
+    PubMed **KHÔNG** gắn publication type 'Retracted Publication', **không** có dòng
+    'RIN' — vì bản đã sửa được đăng lại ở CÙNG DOI/PMID.
+
+    Nói "ĐÃ BỊ RÚT — không dùng kết luận" về một trích dẫn như vậy là **nói sai về
+    một nguồn hợp lệ**. Việc cần làm khác hẳn: đối chiếu SỐ LIỆU với bản đã sửa, chứ
+    không phải bỏ mục đi. Và mỗi cảnh báo sai lại dạy người đọc bỏ qua cảnh báo — thứ
+    đã ghi nhiều lần trong kho này là tệ hơn không cảnh báo.
+
+    Vẫn giữ status 'retracted' để cổng còn CHẶN (fail-closed); chỉ CÂU CHỮ đổi.
+
+    Kiểm HÀNH VI: bản ghi mang cờ rút-và-thay phải sinh thông điệp khác hẳn bản ghi
+    rút bỏ hẳn, và cả hai đều phải là LỖI CỨNG.
+    """
+    mea = REPO / "medical-ebm-automation"
+    if str(mea) not in sys.path:
+        sys.path.insert(0, str(mea))  # module dùng `from app.utils...`
+    cr = _nap(mea / "app" / "sources" / "crossref_retraction.py", "cr_bh34")
+    if not cr.la_rut_va_thay("Notice of Retraction and Replacement. Choi et al."):
+        return False, "không nhận ra tiêu đề thông báo dạng rút-và-thay"
+    if not cr.la_rut_va_thay("Error in Data;Retract and Replace;"):
+        return False, "không nhận ra lý do Retraction Watch dạng rút-và-thay"
+    if cr.la_rut_va_thay("Retraction: Fabricated data"):
+        return False, "nhận nhầm một bài RÚT BỎ HẲN thành rút-và-thay — hạ mức cảnh báo sai"
+
+    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh34")
+    nen = {"khoa": "doi:x", "loai": "doi", "gia_tri": "10.x/y", "tinh_trang": "retracted",
+           "tieu_de": "t", "kiem_luc": "2026-08-14", "nguon": "crossref", "thong_bao": "10.x/z"}
+    e1, w1, o1 = [], [], []
+    vd.kiem_nguon_da_rut("a.html", e1, w1, o1, tra_cuu=lambda _t: [dict(nen, rut_va_thay=True)])
+    e2, w2, o2 = [], [], []
+    vd.kiem_nguon_da_rut("a.html", e2, w2, o2, tra_cuu=lambda _t: [dict(nen, rut_va_thay=False)])
+    if not e1 or not e2:
+        return False, "một trong hai mức không còn là lỗi cứng — cổng hết fail-closed"
+    if e1[0] == e2[0]:
+        return False, "hai mức sinh CÙNG một thông điệp — cảnh báo nói sai về trích dẫn hợp lệ"
+    if "ĐĂNG LẠI" not in e1[0]:
+        return False, "mức rút-và-thay không nói rõ là bản đã được đăng lại"
+    if "không dùng kết luận" not in e2[0]:
+        return False, "mức rút bỏ hẳn không còn nói rõ là không được dùng"
+    return True, "hai mức nói khác nhau, cả hai vẫn chặn"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1214,6 +1305,7 @@ BAI_HOC = [
     ("BH31", "14/08", "Nguồn đã rút phải chặn được ở cổng", bh31_nguon_da_rut_phai_chan_duoc_o_cong),
     ("BH32", "14/08", "Chỉ số gộp không được kết luận cho cả tập", bh32_chi_so_gop_khong_duoc_ket_luan_cho_ca_tap),
     ("BH33", "14/08", "Kiểm rút bài phải phủ mọi kiểu định danh", bh33_kiem_rut_bai_phai_phu_moi_kieu_dinh_danh),
+    ("BH34", "14/08", "Cảnh báo phải nói đúng MỨC", bh34_canh_bao_phai_noi_dung_muc),
 ]
 
 

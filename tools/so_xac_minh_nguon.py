@@ -222,6 +222,8 @@ def nguon_da_rut(ten_file: str) -> list[dict]:
             "tieu_de": bg.get("tieu_de") or "",
             "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
             "nguon": bg.get("nguon_xac_minh") or "",
+            "rut_va_thay": bool(bg.get("rut_va_thay")),
+            "thong_bao": bg.get("thong_bao_rut_doi") or "",
         })
     return ra
 
@@ -346,14 +348,23 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
     """
     can = []
     for khoa, bg in muc.items():
-        if bg.get("da_rut") or khoa not in nguon:
+        # Bản ghi ĐÃ đánh dấu rút bài trước đây bị bỏ qua vĩnh viễn, nên khi thêm một
+        # trường mới (vd `rut_va_thay`) nó KHÔNG BAO GIỜ được ghi vào các bản ghi cũ —
+        # cảnh báo cứ giữ nguyên câu chữ sai. Cho phép hỏi lại ĐÚNG MỘT LẦN khi thiếu
+        # trường đó; đã có phán quyết rồi thì không hỏi lại nữa.
+        if khoa not in nguon:
+            continue
+        if bg.get("da_rut") and "rut_va_thay" in bg:
             continue
         # DOI ghi dạng URL cũng là DOI — cùng lý lẽ của BH24.
         doi = bg.get("gia_tri") if bg.get("loai") == "doi" else bg.get("doi_rut_tu_url")
         if not doi:
             continue
         t = _tuoi_ngay(bg.get("kiem_rut_luc"))
-        if t is None or t > HAN_RUT_BAI_NGAY:
+        # Thiếu `rut_va_thay` ⇒ bản ghi có TRƯỚC khi phân biệt "rút bỏ hẳn" với "rút
+        # rồi đăng lại bản sửa" ⇒ phải hỏi lại BẤT KỂ vừa kiểm hôm nay, nếu không câu
+        # chữ sai sẽ đóng băng vĩnh viễn.
+        if t is None or t > HAN_RUT_BAI_NGAY or "rut_va_thay" not in bg:
             can.append((khoa, doi))
     if not can:
         return
@@ -388,7 +399,12 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
         if tt == "retracted":
             muc[khoa]["da_rut"] = True
             muc[khoa]["thong_bao_rut_doi"] = info.get("notice_doi", "")
-            print(f"  🔴 {doi}: ĐÃ BỊ RÚT (thông báo {info.get('notice_doi','')})")
+            # Phân biệt "rút bỏ hẳn" với "rút rồi ĐĂNG LẠI bản đã sửa" — xem
+            # crossref_retraction.la_rut_va_thay(). Gọi chung một tên là nói sai về
+            # một trích dẫn hợp lệ, và cảnh báo sai làm hỏng giá trị của cảnh báo đúng.
+            muc[khoa]["rut_va_thay"] = bool(info.get("retract_and_replace"))
+            nhan = "ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA" if info.get("retract_and_replace") else "ĐÃ BỊ RÚT"
+            print(f"  🔴 {doi}: {nhan} (thông báo {info.get('notice_doi','')})")
         elif tt == "expression_of_concern":
             muc[khoa]["quan_ngai"] = True
             print(f"  🟠 {doi}: có Expression of Concern — bác sĩ đọc lại")
@@ -508,12 +524,14 @@ def lenh_quet(files: list[Path], vong: int) -> int:
     # ── kiểm rút bài cho PMID đã xác minh nhưng quá hạn kiểm ────────────────
     can_kiem_rut = []
     for khoa, bg in muc.items():
-        if bg.get("loai") != "pmid" or bg.get("da_rut"):
+        if bg.get("loai") != "pmid":
             continue
         if khoa not in nguon:
             continue
+        if bg.get("da_rut") and "rut_va_thay" in bg:
+            continue  # xem ghi chú cùng lý do ở kiem_rut_bai_theo_doi()
         t = _tuoi_ngay(bg.get("kiem_rut_luc"))
-        if t is None or t > HAN_RUT_BAI_NGAY:
+        if t is None or t > HAN_RUT_BAI_NGAY or (bg.get("da_rut") and "rut_va_thay" not in bg):
             can_kiem_rut.append(bg["gia_tri"])
     if can_kiem_rut:
         print(f"\n── Tra rút bài cho {len(can_kiem_rut)} PMID ──")
@@ -552,7 +570,10 @@ def lenh_quet(files: list[Path], vong: int) -> int:
             muc[khoa]["ghi_chu_rut"] = trang_thai
             if trang_thai == "retracted":
                 muc[khoa]["da_rut"] = True
-                print(f"  🔴 {pmid}: ĐÃ BỊ RÚT")
+                muc[khoa]["rut_va_thay"] = bool((info or {}).get("retract_and_replace"))
+                nhan = ("ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA"
+                        if (info or {}).get("retract_and_replace") else "ĐÃ BỊ RÚT")
+                print(f"  🔴 {pmid}: {nhan}")
             elif trang_thai == "expression_of_concern":
                 muc[khoa]["quan_ngai"] = True
                 print(f"  🟠 {pmid}: có Expression of Concern — cần bác sĩ đọc lại")

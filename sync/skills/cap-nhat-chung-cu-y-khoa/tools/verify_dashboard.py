@@ -1038,6 +1038,65 @@ def _canh_bao_loi_mang(errors):
     print("    → Sửa mạng/DNS rồi chạy lại tới khi số lỗi ổn định thì mới kết luận được.")
 
 
+def _replacement_acknowledgement(duong_dan, record):
+    """Xác nhận dashboard đã khai ĐỦ một bản ``Retraction and Replacement``.
+
+    Chỉ trả mã item khi cùng item: trỏ đúng định danh bị ảnh hưởng, khai nguồn bị
+    thay + thông báo thay thế, ghi rõ đang dùng bản sửa, và bị hạ về ``notyet``.
+    Thiếu bất kỳ điều kiện nào đều trả ``None`` để cổng tiếp tục chặn fail-closed.
+    """
+    if not record.get("rut_va_thay"):
+        return None
+    try:
+        html = Path(duong_dan).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    data = extract_data_block(html)
+    if not data:
+        return None
+
+    def norm_identifier(value):
+        value = str(value or "").strip().casefold()
+        for prefix in ("https://doi.org/", "http://doi.org/", "doi.org/", "doi:"):
+            if value.startswith(prefix):
+                value = value[len(prefix):]
+                break
+        return value
+
+    affected_type = str(record.get("loai") or "").strip()
+    affected_value = norm_identifier(record.get("gia_tri"))
+    notice = norm_identifier(record.get("thong_bao"))
+    for chunk in split_items(data):
+        if affected_type not in {"pmid", "doi"}:
+            continue
+        if norm_identifier(field(chunk, affected_type)) != affected_value:
+            continue
+        replaces_pmid = field(chunk, "replacesPmid")
+        notice_pmid = field(chunk, "replacementNoticePmid")
+        notice_doi = field(chunk, "replacementNoticeDoi")
+        declared_notices = {norm_identifier(notice_pmid), norm_identifier(notice_doi)} - {""}
+        if not replaces_pmid or not declared_notices:
+            continue
+        if notice and notice not in declared_notices and notice not in norm_identifier(chunk):
+            continue
+        if field(chunk, "decision") != "notyet":
+            continue
+        revision_text = " ".join(
+            [
+                field(chunk, "dateVersion"),
+                field(chunk, "effectText"),
+                field(chunk, "gradeSource"),
+                field(chunk, "flag"),
+            ]
+        ).casefold()
+        if not any(marker in revision_text for marker in ("bản thay thế", "bản đã sửa", "replacement")):
+            continue
+        if not any(value in norm_identifier(chunk) for value in declared_notices):
+            continue
+        return field(chunk, "id") or "(?)"
+    return None
+
+
 def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
     """LỖI CỨNG khi sổ xác minh đã ghi nhận một nguồn của gói này ĐÃ BỊ RÚT.
 
@@ -1092,12 +1151,34 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         # ai quét file này. Một dòng ✓ ở đây sẽ là lời bảo đảm mà dữ liệu không đỡ nổi.
         return
     for r in da_rut:
-        nhan = "ĐÃ BỊ RÚT" if r["tinh_trang"] == "retracted" else "CÓ QUAN NGẠI (EoC)"
+        # BA mức, KHÔNG gộp — mỗi mức đòi một việc khác hẳn:
+        #   • rút rồi ĐĂNG LẠI bản đã sửa → trích dẫn vẫn dùng được, phải đối chiếu SỐ LIỆU
+        #     với bản đã sửa (thường CÙNG DOI/PMID). Gọi nó là "đã bị rút, không dùng" là
+        #     nói sai về một trích dẫn hợp lệ.
+        #   • rút bỏ hẳn → không dùng kết luận.
+        #   • Expression of Concern → chưa kết luận, đọc lại.
+        if r.get("rut_va_thay"):
+            nhan, viec = ("ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA",
+                          "trích dẫn VẪN dùng được nhưng số liệu phải lấy từ BẢN ĐÃ SỬA")
+            acknowledged_item = _replacement_acknowledgement(duong_dan, r)
+            if acknowledged_item:
+                warns.append(
+                    "[%s] NGUỒN ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA đã được khai tường minh: "
+                    "%s:%s; có định danh thông báo thay thế, số liệu bản sửa và "
+                    "decision='notyet'. Giữ ở hàng bác sĩ rà, không tự áp dụng."
+                    % (acknowledged_item, r["loai"], r["gia_tri"])
+                )
+                continue
+        elif r["tinh_trang"] == "retracted":
+            nhan, viec = "ĐÃ BỊ RÚT", "không dùng kết luận của bài này"
+        else:
+            nhan, viec = "CÓ QUAN NGẠI (EoC)", "chưa kết luận — đọc lại trước khi dùng"
+        tb = f", thông báo {r['thong_bao']}" if r.get("thong_bao") else ""
         errors.append(
-            "NGUỒN %s: %s:%s — %s (sổ ghi %s, nguồn %s). Đối chiếu bản đã thay/thông báo "
-            "rút trước khi dùng; KHÔNG tự xoá mục — quyết định là của bác sĩ."
+            "NGUỒN %s: %s:%s — %s (sổ ghi %s, nguồn %s%s). %s; KHÔNG tự xoá mục — "
+            "quyết định là của bác sĩ."
             % (nhan, r["loai"], r["gia_tri"], (r["tieu_de"] or "")[:80],
-               r["kiem_luc"], r["nguon"]))
+               r["kiem_luc"], r["nguon"], tb, viec))
 
 
 def report(errors, warns, oks):

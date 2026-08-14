@@ -422,16 +422,35 @@ def khoi_rut_bai(src: Path) -> str:
                 '<code>python tools/so_xac_minh_nguon.py --quet &lt;file&gt;</code>.</p></div>')
     if not da_rut:
         return ""
-    hang = "".join(
-        f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — '
-        f'<em>{"đã bị rút" if r["tinh_trang"] == "retracted" else "có quan ngại (EoC)"}</em>'
-        f'<span class="doi">{esc(r["tieu_de"])}</span>'
-        f'<span class="doi">sổ ghi {esc(r["kiem_luc"])} · nguồn {esc(r["nguon"])}</span></li>'
-        for r in da_rut)
-    return ('<div class="rutbai"><h3>Nguồn đã bị rút — không dùng kết luận này trước khi '
-            f'đối chiếu ({len(da_rut)} nguồn)</h3>'
-            '<p class="sub">Một bài bị “rút và thay” đã được sửa rồi đăng lại: cần đối chiếu số '
-            'liệu với bản đã thay, không phải bỏ mục đi. Máy không tự gỡ mục nào.</p>'
+    def _nhan(r):
+        if r.get("rut_va_thay"):
+            return ("đã rút &amp; đăng lại bản sửa",
+                    "Trích dẫn vẫn dùng được, nhưng số liệu phải lấy từ BẢN ĐÃ SỬA "
+                    "(thường cùng DOI/PMID).")
+        if r["tinh_trang"] == "retracted":
+            return "đã bị rút", "Không dùng kết luận của bài này."
+        return "có quan ngại (EoC)", "Chưa kết luận — đọc lại trước khi dùng."
+
+    hang = ""
+    for r in da_rut:
+        nhan, viec = _nhan(r)
+        tb = (f'<span class="doi">thông báo: {esc(r["thong_bao"])}</span>'
+              if r.get("thong_bao") else "")
+        hang += (f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — <em>{nhan}</em>'
+                 f'<span class="doi">{esc(r["tieu_de"])}</span>'
+                 f'<span class="doi">{viec}</span>{tb}'
+                 f'<span class="doi">sổ ghi {esc(r["kiem_luc"])} · nguồn '
+                 f'{esc(r["nguon"])}</span></li>')
+    # Tiêu đề phải nói ĐÚNG mức nặng. Một gói chỉ chứa bài "rút &amp; đăng lại" mà bị
+    # gắn nhãn "không dùng" là cảnh báo sai về trích dẫn hợp lệ — và cảnh báo sai làm
+    # hỏng giá trị của cảnh báo đúng.
+    chi_rut_va_thay = all(r.get("rut_va_thay") for r in da_rut)
+    tieu_de = ("Nguồn đã rút &amp; đăng lại bản sửa — đối chiếu số liệu trước khi dùng"
+               if chi_rut_va_thay
+               else "Nguồn đã bị rút — không dùng kết luận này trước khi đối chiếu")
+    return (f'<div class="rutbai"><h3>{tieu_de} ({len(da_rut)} nguồn)</h3>'
+            '<p class="sub">“Rút và thay” nghĩa là bài đã được sửa rồi đăng lại: việc cần làm là '
+            'đối chiếu số liệu với bản đã sửa, KHÔNG phải bỏ mục đi. Máy không tự gỡ mục nào.</p>'
             f'<ul>{hang}</ul></div>')
 
 
