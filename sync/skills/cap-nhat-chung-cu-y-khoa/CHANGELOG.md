@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.40.0 — 2026-08-14
+
+**Bộ lọc loại thiết kế đang vứt đi chính thứ mới nhất** — lỗi "mới nhất" lớn nhất tìm được.
+
+- `search()` luôn AND thêm bộ lọc `[ptyp]`. Nhưng publication type do **MEDLINE gán TRONG
+  LÚC lập chỉ mục**, việc xảy ra hàng tuần đến hàng tháng SAU khi bài vào PubMed. Lọc theo
+  nó = chỉ thấy thứ đã đánh chỉ mục xong, tức thứ **không còn mới**.
+- Đo 40 bài mới vào PubMed 45 ngày (suy tim): **30 bài chưa gán loại nào ngoài "Journal
+  Article"**, trong đó có PMID 42552200 — *"Prevalence of orthostatic hypotension in heart
+  failure: a systematic review"* — một tổng quan hệ thống bị vứt vì chưa kịp đánh chỉ mục.
+- Đếm theo chủ đề (45 ngày, `edat`): CÓ lọc **1 · 8 · 0** — KHÔNG lọc **46 · 49 · 22**.
+  CKD trả **0** trong khi thực có 22 bản ghi mới; "0 ứng viên" bị đọc thành "không có gì
+  mới" — biến KHÔNG BIẾT thành SỰ THẬT.
+- **Sửa:** thêm tầng thứ tư `moi_vao_pubmed` — đi bằng `edat` (ngày vào PubMed, đúng câu hỏi
+  "có gì mới so với lần quét trước") và **không lọc** publication type. Ba tầng cũ giữ
+  nguyên. Loại thiết kế nay dùng để **gắn nhãn và xếp hạng**, không dùng để loại bỏ.
+  Bài chưa gán loại được ghi rõ *"⚡ mới vào PubMed — chưa gán loại thiết kế"*: đó là dấu
+  hiệu MỚI, không phải khiếm khuyết. **BH38**.
+
+**Đo trước/sau (43 chủ đề · 45 ngày):** 87 → **165 ứng viên** · chủ đề "0 ứng viên"
+**22 → 7** · 48/165 là bài chưa gán loại (nhóm trước đây bị lọc sạch) · 165/165 đã kiểm rút
+bài. 15 chủ đề từng báo "không có chứng cứ mới" thực ra **có** — gồm RA · viêm gan B · hen
+phế quản · đột quỵ dự phòng thứ phát · lão khoa · GDMT nội trú.
+
 ## v1.39.0 — 2026-08-14
 
 **Cổng NHẬN chứng cứ** — nâng đúng chỗ chứng cứ đi vào hệ, không đụng kho cũ.

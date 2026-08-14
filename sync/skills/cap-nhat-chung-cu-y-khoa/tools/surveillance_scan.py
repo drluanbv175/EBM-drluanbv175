@@ -223,14 +223,39 @@ def get_europe_pmc_json(
     raise RuntimeError(f"Europe PMC fallback thất bại sau {retries + 1} lần: {detail}") from last_exc
 
 
-def search(query: str, days: int, retmax: int, *, fetch_json: Callable[[str], dict] = get_json) -> list[str]:
-    term = f"({query}) AND {DESIGN}"
+def search(query: str, days: int, retmax: int, *,
+           fetch_json: Callable[[str], dict] = get_json,
+           datetype: str = "pdat", loc_thiet_ke: bool = True) -> list[str]:
+    """Tìm ứng viên. `loc_thiet_ke=False` + `datetype='edat'` = tầng BẮT CÁI MỚI NHẤT.
+
+    VÌ SAO CÓ HAI CHẾ ĐỘ (đo thật 14/08/2026)
+    ==========================================
+    Bộ lọc `[ptyp]` loại bỏ **chính thứ mới nhất**, vì publication type do MEDLINE gán
+    trong lúc lập chỉ mục — việc xảy ra HÀNG TUẦN ĐẾN HÀNG THÁNG SAU khi bài vào PubMed.
+    Đo trên 40 bài mới vào PubMed 45 ngày (chủ đề suy tim): **30 bài chưa được gán loại
+    nào ngoài "Journal Article"**, trong đó có PMID 42552200 — *"Prevalence of orthostatic
+    hypotension in heart failure: a systematic review"* — một tổng quan hệ thống bị bộ lọc
+    vứt đi chỉ vì chưa kịp đánh chỉ mục.
+
+    Đếm theo chủ đề (45 ngày, `edat`): CÓ lọc 1 · 8 · 0 ứng viên — KHÔNG lọc 46 · 49 · 22.
+    Riêng CKD trả **0** trong khi thực có 22 bản ghi mới; bác sĩ đọc "0 ứng viên" thành
+    "không có gì mới", trong khi sự thật là bộ lọc đã giết hết.
+
+    `pdat` (ngày công bố) cũng sai cho giám sát: một bài VÀO PubMed hôm nay nhưng mang
+    ngày bìa cũ sẽ không lọt cửa sổ. `edat` là ngày bản ghi vào PubMed — đúng câu hỏi
+    "có gì MỚI so với lần quét trước".
+
+    Nên: giữ 3 tầng cũ (bắt tài liệu đã đánh chỉ mục, thứ bậc rõ) và THÊM tầng thứ tư
+    không lọc để không bỏ sót cái mới. Loại thiết kế nay dùng để GẮN NHÃN và XẾP HẠNG
+    (xem `gan_do_tin_cay`), KHÔNG dùng để loại bỏ.
+    """
+    term = f"({query}) AND {DESIGN}" if loc_thiet_ke else f"({query})"
     params = {
         "db": "pubmed",
         "retmode": "json",
         "sort": "date",
         "reldate": str(days),
-        "datetype": "pdat",
+        "datetype": datetype,
         "retmax": str(retmax),
         "term": term,
         "tool": "medical_ebm_surveillance",
@@ -380,9 +405,12 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
             for t in tiers:
                 if isinstance(t, dict) and str(t.get("query") or "").strip():
                     ds_tang.append({"tang": str(t.get("tang") or "chung"),
-                                    "query": str(t["query"]).strip()})
+                                    "query": str(t["query"]).strip(),
+                                    "datetype": str(t.get("datetype") or "pdat"),
+                                    "loc_thiet_ke": t.get("loc_thiet_ke", True)})
         if not ds_tang:
-            ds_tang = [{"tang": "chung", "query": query}]
+            ds_tang = [{"tang": "chung", "query": query,
+                        "datetype": "pdat", "loc_thiet_ke": True}]
         active.append({"topic": topic, "query": query, "queries": ds_tang})
     if not active:
         raise ValueError("watchlist không có chủ đề active")
@@ -472,7 +500,15 @@ def run_scan(
             # Chạy THEO THỨ TỰ TẦNG: guideline → tổng quan/gộp → RCT. Ứng viên tầng cao
             # vào trước, nên bác sĩ đọc thứ mạnh nhất trước thay vì thứ PubMed trả trước.
             for muc_tang in row.get("queries") or [{"tang": "chung", "query": row["query"]}]:
-                ids = search_fn(muc_tang["query"], days, max_results)
+                # Tầng "moi_vao_pubmed" phải đi bằng edat + KHÔNG lọc loại thiết kế —
+                # nếu không nó lại rơi vào đúng cái bẫy đang vá. Bộ tìm kiếm giả trong
+                # test không nhận tham số phụ, nên lùi êm về chữ ký cũ.
+                try:
+                    ids = search_fn(muc_tang["query"], days, max_results,
+                                    datetype=muc_tang.get("datetype", "pdat"),
+                                    loc_thiet_ke=muc_tang.get("loc_thiet_ke", True))
+                except TypeError:
+                    ids = search_fn(muc_tang["query"], days, max_results)
                 for candidate in summarize_fn(ids):
                     if candidate.pmid in all_pmids:
                         continue
@@ -556,9 +592,14 @@ def markdown_report(report: dict) -> str:
                     nhan.append("↺ đã có trong kho")
                 if item.get("tang") and item.get("tang") != "chung":
                     nhan.append(f"tầng: {item['tang']}")
-                pts = item.get("pubtype") or []
+                pts = [x for x in (item.get("pubtype") or []) if x != "Journal Article"]
                 if pts:
                     nhan.append("loại: " + ", ".join(pts[:3]))
+                else:
+                    # CHƯA gán loại = bài vừa vào PubMed, MEDLINE chưa lập chỉ mục. Đây là
+                    # dấu hiệu MỚI, không phải khiếm khuyết — và chính nhóm này từng bị bộ
+                    # lọc [ptyp] vứt sạch. Nói rõ để bác sĩ biết phải tự đọc loại thiết kế.
+                    nhan.append("⚡ mới vào PubMed — CHƯA gán loại thiết kế, tự đọc để xếp tầng")
                 nhan_note = ("  \n  - " + " · ".join(nhan)) if nhan else ""
                 lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}{journal_note}{authority_note}")
                 lines.append(f"  - {item['title']}{nhan_note}")

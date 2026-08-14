@@ -692,6 +692,24 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   41 tổng quan hệ thống · 24 practice guideline · 12 phân tích gộp · 26 RCT ·
   1 mục đã có trong kho (lọc khỏi danh sách). **BH37** khoá hành vi này.
 
+  🔴 **LỖI "MỚI NHẤT" LỚN NHẤT — bộ lọc loại thiết kế đang vứt đi CHÍNH thứ mới nhất.**
+  `search()` luôn AND thêm `[ptyp]`. Nhưng **publication type do MEDLINE gán TRONG LÚC lập chỉ
+  mục**, việc xảy ra hàng tuần đến hàng tháng SAU khi bài vào PubMed. Lọc theo nó nghĩa là chỉ
+  thấy thứ đã đánh chỉ mục xong — tức thứ **không còn mới**.
+  **Số đo:** 40 bài mới vào PubMed 45 ngày (suy tim) → **30 bài chưa gán loại nào ngoài
+  "Journal Article"**, trong đó có PMID 42552200 *"…heart failure: a systematic review"* — một
+  tổng quan hệ thống bị vứt chỉ vì chưa kịp đánh chỉ mục. Đếm theo chủ đề (`edat`, 45 ngày):
+  CÓ lọc **1 · 8 · 0** — KHÔNG lọc **46 · 49 · 22**. CKD trả **0** trong khi thực có 22 bản
+  ghi mới, và "0 ứng viên" bị đọc thành "không có gì mới" — biến KHÔNG BIẾT thành SỰ THẬT.
+  **Đã sửa:** tầng thứ tư `moi_vao_pubmed` đi bằng **`edat`** (ngày vào PubMed — đúng câu hỏi
+  *"có gì mới so với lần quét trước"*, khác `pdat` là ngày bìa) và **không lọc** publication
+  type. Ba tầng cũ giữ nguyên. Loại thiết kế nay dùng để **GẮN NHÃN và XẾP HẠNG, không dùng để
+  loại bỏ**; bài chưa gán loại ghi rõ *"⚡ mới vào PubMed — chưa gán loại thiết kế"* (dấu hiệu
+  MỚI, không phải khiếm khuyết). **BH38** khoá điều này.
+  **Trước/sau (43 chủ đề · 45 ngày): 87 → 165 ứng viên · chủ đề "0 ứng viên" 22 → 7.**
+  15 chủ đề từng báo "không có chứng cứ mới" thực ra CÓ — RA · viêm gan B · hen phế quản ·
+  đột quỵ dự phòng thứ phát · lão khoa · GDMT nội trú…
+
   ⚠️ **Chưa làm, có chủ ý:** preprint (medRxiv/bioRxiv) và ClinicalTrials.gov **chưa** nối vào
   routine dù đã có MCP. Lý do: thêm một dòng tài liệu **chưa bình duyệt** khi nhãn độ tin cậy
   vừa mới có sẽ làm hỏng chính mục tiêu — phải để nhãn chạy ổn định trước.

@@ -1395,6 +1395,57 @@ def bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan():
     return True, "ứng viên mang rút bài · loại thiết kế · trùng kho · preprint, và nhãn có in ra"
 
 
+def bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim():
+    """14/08 — bộ lọc `[ptyp]` ở khâu TÌM KIẾM vứt đi chính thứ mới nhất.
+
+    Publication type do MEDLINE gán TRONG LÚC lập chỉ mục — việc xảy ra hàng tuần đến
+    hàng tháng SAU khi bài vào PubMed. Lọc theo nó lúc tìm kiếm nghĩa là chỉ thấy thứ
+    đã đánh chỉ mục xong, tức là thứ KHÔNG còn mới.
+
+    Đo thật 14/08/2026, 40 bài mới vào PubMed 45 ngày (chủ đề suy tim): **30 bài chưa
+    được gán loại nào ngoài "Journal Article"**, trong đó có PMID 42552200 —
+    *"Prevalence of orthostatic hypotension in heart failure: a systematic review"* —
+    một tổng quan hệ thống bị vứt chỉ vì chưa kịp đánh chỉ mục.
+    Đếm theo chủ đề (45 ngày, `edat`): CÓ lọc 1 · 8 · 0 — KHÔNG lọc 46 · 49 · 22.
+    Riêng CKD trả **0** trong khi thực có 22 bản ghi mới, và "0 ứng viên" bị đọc thành
+    "không có gì mới" — biến KHÔNG BIẾT thành SỰ THẬT (BH08).
+
+    Luật: loại thiết kế dùng để **GẮN NHÃN và XẾP HẠNG**, KHÔNG dùng để loại bỏ ở khâu
+    tìm. Phải luôn còn một tầng đi bằng `edat` và không lọc.
+
+    Kiểm HÀNH VI: watchlist phải có tầng không-lọc, và `search()` phải tôn trọng cờ đó.
+    """
+    import json as _json
+    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh38")
+    wl = REPO / "EBM-Dashboards" / "watchlist.json"
+    if not wl.exists():
+        return False, "không thấy watchlist.json"
+    tp = _json.loads(wl.read_text(encoding="utf-8")).get("topics", [])
+    co_tang = [t for t in tp if any(q.get("loc_thiet_ke") is False
+                                    for q in (t.get("queries") or []))]
+    if not co_tang:
+        return False, ("KHÔNG chủ đề nào có tầng không-lọc — hệ chỉ còn thấy tài liệu đã "
+                       "đánh chỉ mục xong, tức thứ không còn mới")
+
+    # `search()` phải thực sự bỏ bộ lọc khi được yêu cầu, và dùng đúng datetype.
+    ghi: dict[str, str] = {}
+
+    def gia_fetch(url):
+        ghi["url"] = url
+        return {"esearchresult": {"idlist": []}}
+
+    ss.search("abc", 30, 5, fetch_json=gia_fetch, datetype="edat", loc_thiet_ke=False)
+    u1 = ghi.get("url", "")
+    if "ptyp" in u1:
+        return False, "yêu cầu bỏ lọc mà truy vấn vẫn mang [ptyp] — cái mới vẫn bị vứt"
+    if "edat" not in u1:
+        return False, "không dùng edat — vẫn hỏi theo ngày công bố, bỏ sót bài mới vào PubMed"
+    ss.search("abc", 30, 5, fetch_json=gia_fetch)
+    if "ptyp" not in ghi.get("url", ""):
+        return False, "chế độ mặc định mất bộ lọc — 3 tầng có thứ bậc hoá ra không lọc gì"
+    return True, f"{len(co_tang)} chủ đề có tầng không-lọc; search() tôn trọng cả hai chế độ"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1433,6 +1484,7 @@ BAI_HOC = [
     ("BH35", "14/08", "Khai chưa-biết không được tắt luật an toàn", bh35_khai_chua_biet_khong_duoc_tat_luat_an_toan),
     ("BH36", "14/08", "gradeLevel phải khai ai đã chấm", bh36_grade_phai_khai_ai_cham),
     ("BH37", "14/08", "Ứng viên phải mang độ tin cậy ngay lúc nhận", bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan),
+    ("BH38", "14/08", "Không lọc bỏ cái mới nhất ở khâu tìm", bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim),
 ]
 
 
