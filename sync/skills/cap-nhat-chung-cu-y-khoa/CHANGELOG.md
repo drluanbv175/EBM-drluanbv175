@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.37.0 — 2026-08-14
+
+- **Kiểm rút bài nay phủ cả DOI** (trước chỉ PMID). 540 DOI trong kho — gần nửa số định danh —
+  chưa từng được kiểm rút bài lần nào, mà sổ vẫn xếp là "còn hiệu lực". Bị chạm vào thật:
+  ITEM-05 của `ViemGanB_DieuTri` đổi từ PMID 30267080 (đã rút) sang DOI
+  `10.1001/jamaoncol.2018.4070` — tra PubMed + Crossref xác nhận **cùng một bài** — nên cổng
+  thôi cảnh báo trong khi rủi ro còn nguyên. Thêm tầng Crossref (`updated-by`, không cần khoá).
+  **BH33**.
+- Áp cho cả **DOI ghi dạng URL** (lý lẽ BH24); **không** áp cho URL thuần → tránh báo động giả.
+  `correction`/`erratum` cố ý không tính là rút bài.
+- Luật mới: *một định danh mang bảo đảm nào thì phải chịu đúng phép kiểm của bảo đảm đó, bất kể
+  được ghi bằng kiểu gì.* Đổi kiểu ghi không được là đường thoát cổng.
+- Cách sửa đúng cho *retract-and-replace*: đối chiếu số liệu với **bản đã thay** rồi trích đúng
+  bản đó — không đổi sang định danh khác của chính bài đã rút, cũng không xoá mục.
+
 ## v1.36.0 — 2026-08-14
 
 Vòng lặp kiểm tra–hoàn thiện (3 vòng). Ba lỗi cùng một họ: **con số không đo thứ nó tự nhận

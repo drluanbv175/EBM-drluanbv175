@@ -553,6 +553,28 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   > **"con số này là của TẬP HỢP hay của MỘT phần tử"**, chứ không chỉ đếm số lỗi. Một chỉ số
   > gộp (`max` · `min` · "mới nhất") **không bao giờ** được trình bày như kết luận về toàn bộ.
 
+  🔴 **BH33 — ĐIỂM MÙ THỨ TƯ, và nó bị chạm vào NGAY trong ngày.** Chuỗi 3 tầng chỉ nhận
+  **PMID**, nên `con_hieu_luc()` xếp **540 DOI** (gần một nửa số định danh trong kho) vào nhóm
+  "còn hiệu lực" dù chúng **CHƯA TỪNG được kiểm rút bài lần nào** — một lời bảo đảm rỗng.
+  **Chuyện đã xảy ra:** mục `ViemGanB_DieuTri` ITEM-05 trích PMID 30267080 (đã rút) được sửa
+  thành trích DOI `10.1001/jamaoncol.2018.4070`. Tra PubMed + Crossref: **hai định danh đó là
+  CÙNG MỘT BÀI** (PMID 30267080 ⇄ DOI 10.1001/jamaoncol.2018.4070), và Crossref ghi rõ
+  `updated-by: retraction → 10.1001/jamaoncol.2019.0576`. Nội dung không đổi; chỉ có **cảnh báo
+  tắt đi**. Một đèn đỏ tắt mà nguy cơ còn nguyên nguy hiểm hơn hẳn chưa từng có đèn.
+  **Đã vá:** tầng `medical-ebm-automation/app/sources/crossref_retraction.py` (Crossref
+  `updated-by`, không cần khoá) + `so_xac_minh_nguon.kiem_rut_bai_theo_doi()`; `con_hieu_luc()`
+  nay đòi dấu vết kiểm rút bài cho **DOI, kể cả DOI ghi dạng URL** (cùng lý lẽ BH24), nhưng
+  **KHÔNG** đòi với URL thuần (nice.org.uk/…) — tránh báo động giả.
+  `correction`/`corrigendum`/`erratum` **cố ý không** tính là rút bài: đính chính là chuyện bình
+  thường của xuất bản, gộp vào sẽ tạo báo động giả hàng loạt.
+  > **Luật:** *một định danh mang bảo đảm nào thì phải chịu đúng phép kiểm của bảo đảm đó, bất
+  > kể nó được ghi bằng kiểu gì.* Đổi kiểu ghi không bao giờ được là đường thoát cổng.
+
+  ⚠️ **Bài học vận hành đi kèm:** cách sửa ĐÚNG cho *retract-and-replace* là **đối chiếu số liệu
+  với bản đã thay** rồi trích đúng bản đó — KHÔNG phải đổi sang một định danh khác của **chính
+  bài đã rút**, và cũng không phải xoá mục. Bản thay thế của ca này là **PMID 31021386 /
+  doi:10.1001/jamaoncol.2019.0576** (Notice of Retraction and Replacement).
+
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và
   **cam "Bản khác cùng chủ đề đang kết luận ngược"**. Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận —

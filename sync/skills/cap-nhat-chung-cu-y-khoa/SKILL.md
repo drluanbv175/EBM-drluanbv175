@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.36.0
+  version: 1.37.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -951,6 +951,22 @@ thật cũng chìm theo.
 > **Luật rút ra, áp cho mọi chốt về sau:** khi đọc kết quả một công cụ, hỏi **"nó đã chạy tới
 > luật nào"** và **"con số này là của TẬP HỢP hay của MỘT phần tử"** — chứ không chỉ đếm số lỗi.
 > Một chỉ số gộp (`max`/`min`/"mới nhất") **không bao giờ** được trình bày như kết luận về toàn bộ.
+
+**(v) BH33 — ĐỔI KIỂU GHI ĐỊNH DANH KHÔNG ĐƯỢC LÀ ĐƯỜNG THOÁT CỔNG.** Chuỗi 3 tầng chỉ nhận
+**PMID** ⇒ **540 DOI** trong kho (gần nửa số định danh) **chưa từng được kiểm rút bài lần nào**,
+mà sổ vẫn xếp chúng vào "còn hiệu lực".
+*Bị chạm vào ngay trong ngày:* `ViemGanB_DieuTri` ITEM-05 trích PMID 30267080 (đã rút) được sửa
+thành trích DOI `10.1001/jamaoncol.2018.4070`. Tra PubMed + Crossref: **hai định danh đó là CÙNG
+MỘT BÀI**, và Crossref ghi `updated-by: retraction → 10.1001/jamaoncol.2019.0576`. Nội dung
+không đổi, chỉ có **cảnh báo tắt đi**.
+*Đã vá:* tầng Crossref (`app/sources/crossref_retraction.py`) + `kiem_rut_bai_theo_doi()`;
+`con_hieu_luc()` đòi dấu vết kiểm rút bài cho **DOI, kể cả DOI ghi dạng URL** (lý lẽ BH24),
+**không** đòi với URL thuần. `correction`/`erratum` cố ý KHÔNG tính là rút bài.
+> **Luật:** *một định danh mang bảo đảm nào thì phải chịu đúng phép kiểm của bảo đảm đó, bất kể
+> nó được ghi bằng kiểu gì.*
+
+⚠️ **Cách sửa ĐÚNG cho *retract-and-replace*:** đối chiếu số liệu với **bản đã thay** rồi trích
+đúng bản đó — KHÔNG đổi sang một định danh khác của **chính bài đã rút**, cũng KHÔNG xoá mục.
 
 *Đã kiểm bằng đột biến từng chốt:* tái hiện lỗi cũ ⇒ BH30/BH31/BH32 đỏ; khôi phục bản vá ⇒ xanh.
 
