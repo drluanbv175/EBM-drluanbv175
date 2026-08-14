@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.44.0 — 2026-08-15
+
+**LÔ 4/6 PHA 2 — quét theo MỘT chủ đề + chạy thật đầu-cuối:**
+- `surveillance_scan.py` thêm `--topic <tên>` (khớp không dấu 2 chiều; không khớp
+  → NỔ, không lặng lẽ quét cả kho). Sinh ra cho `ops/orchestrator.py` (một cửa
+  A2→B5, log JSONL, `--resume`, khoá `ops/lock.py`).
+- Chạy THẬT chủ đề «Bệnh thận mạn (CKD)» --online: A2 1/1 PASS (trễ trung vị
+  2 ngày) → A3 (84 ứng viên/34 chủ đề) → A4 sổ vòng 1 → B2 PASS 0 lỗi → B5.
+  Toàn tuyến ~135s, log `logs/20260815T064642-*.jsonl`.
+
+## v1.43.0 — 2026-08-15
+
+**LÔ 2 PHA 2 — mã thoát cổng tách «gói sai» khỏi «chưa xác minh được»:**
+- `verify_dashboard.py` `report()` nay trả **0** sạch · **1** có ≥1 lỗi NỘI DUNG ·
+  **2** khi TOÀN BỘ lỗi cứng là máy/mạng (DNS/timeout). Cả 1 lẫn 2 đều nonzero —
+  cổng vẫn fail-closed, không caller nào bị mở nhầm; chỉ máy gọi phân biệt được
+  «phải sửa gói» với «chạy lại khi mạng ổn / dùng sổ xác minh». Đo gốc 12/08:
+  cùng dashboard `--online` 4 lần cho 13→3→6→1 lỗi vì DNS. Khoá bằng **BH48**
+  (mutation-tested: xoá nhánh exit-2 → chốt đỏ).
+- Hạ tầng cùng đợt (ngoài skill, ghi để truy vết): `tools/validate_ledger.py` +
+  `tools/migrate_ledger.py` (dry-run, chờ bác sĩ) + `tools/provenance_ledger.py`
+  (quét truy nguyên toàn sổ 1193 thẻ, offline-first, alert APPLY×đã-rút).
+
 ## v1.42.0 — 2026-08-15
 
 **PHA 2 kế hoạch kiện toàn (bác sĩ duyệt LÔ 0)** — bộ quét thêm 3 mảnh an toàn vận hành:

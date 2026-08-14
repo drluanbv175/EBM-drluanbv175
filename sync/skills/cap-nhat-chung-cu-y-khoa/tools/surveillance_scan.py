@@ -738,6 +738,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json-report")
     parser.add_argument("--allow-partial", action="store_true", help="Chỉ dùng chẩn đoán; báo cáo vẫn giữ PARTIAL/FAIL.")
     parser.add_argument("--since", help="YYYY-MM-DD: ép quét từ ngày này (ghi đè cursor, --days vẫn là trần)")
+    parser.add_argument("--topic", help="chỉ quét MỘT chủ đề (khớp tên không dấu, chuỗi con) — "
+                                        "orchestrator LÔ 4 và chạy tay dùng; bỏ trống = cả watchlist")
     parser.add_argument("--khong-cursor", action="store_true",
                         help="bỏ qua con trỏ tăng dần, quét trọn cửa sổ --days")
     args = parser.parse_args(argv)
@@ -753,11 +755,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 3
     try:
         cursor = None if args.khong_cursor else doc_cursor()
-        if args.since and cursor is not None:
-            for t0 in load_watchlist(Path(args.watchlist)):
-                cursor[t0["topic"]] = args.since
         try:
             topics = load_watchlist(Path(args.watchlist))
+        except ValueError as exc:
+            parser.error(str(exc))
+        if args.topic:
+            # Lọc MỘT chủ đề (orchestrator/chạy tay): khớp KHÔNG DẤU hai chiều —
+            # «Suy tim» khớp «Suy tim mạn (HFrEF/HFpEF)». Không khớp gì thì phải
+            # NỔ ngay chứ không lặng lẽ quét cả kho (im lặng ≠ an toàn).
+            import unicodedata as _ud
+
+            def _bo_dau(s: str) -> str:
+                return "".join(c for c in _ud.normalize("NFD", s)
+                               if _ud.category(c) != "Mn").lower()
+
+            khoa = _bo_dau(args.topic)
+            topics = [t for t in topics
+                      if khoa in _bo_dau(t["topic"]) or _bo_dau(t["topic"]) in khoa]
+            if not topics:
+                parser.error(f"--topic không khớp chủ đề nào trong watchlist: {args.topic}")
+        if args.since and cursor is not None:
+            for t0 in topics:
+                cursor[t0["topic"]] = args.since
+        try:
             report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor)
         except ValueError as exc:
             parser.error(str(exc))

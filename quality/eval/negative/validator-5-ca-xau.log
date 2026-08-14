@@ -1,0 +1,6 @@
+item hợp lệ → PASS
+  ca xấu «máy tự APPROVED» → BẮT ĐƯỢC: status=APPROVED mà human_review.reviewed_by rỗng — chỉ bác sĩ được đặt (I4)
+  ca xấu «retracted vẫn CANDIDATE» → BẮT ĐƯỢC: source.retracted=true mà status=CANDIDATE — điều kiện dừng khẩn (cấm #3)
+  ca xấu «tự gán mức» → BẮT ĐƯỢC: certainty: nguồn KHÔNG chấm mà level='high' — tự gán mức (I2)
+  ca xấu «CANDIDATE chưa resolved» → BẮT ĐƯỢC: status=CANDIDATE nhưng source.resolved != true — nhảy cóc qua truy nguyên (cấm #2)
+  ca xấu «số không nguồn gốc» → BẮT ĐƯỢC: effect có số mà as_reported≠true và KHÔNG ghi derivation — số ở đâu ra? (I1)

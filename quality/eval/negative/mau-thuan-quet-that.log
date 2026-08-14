@@ -1,0 +1,31 @@
+BenhThanMan_CKD (20260607) có 3 mục · BenhThanMan_BenhKem_DoiTuongDacBiet (20260813) có 1 mục → bác sĩ đọc tay
+     • MachMauNao: PMID 34024117 — MachMauNao_DongMachCanh (20260610) có 5 mục · MachMauNao_TiepCanTongQuat (20260724) có 1 mục → bác sĩ đọc tay
+     • ViemGanB: PMID 41186418 — ViemGanB_DieuTri (20260716) có 3 mục · ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet (20260811) có 5 mục → bác sĩ đọc tay
+  🔴 5 MỤC HAI BẢN NÓI NGƯỢC NHAU — cùng PMID, khác quyết định
+======================================================================
+  Đây là rủi ro thật: mở bản cũ sẽ đọc một kết luận mà bản mới đã bác.
+
+  ▸ BenhThanMan:  BenhThanMan_CKD (20260607)   ⟷   BenhThanMan_BenhKem_DoiTuongDacBiet (20260813)
+      PMID 32970396: 'apply' → 'consider'
+        [apply    ] SGLT2i (dapagliflozin) làm chậm tiến triển CKD — DAPA-CKD
+        [consider ] DAPA-CKD — dapagliflozin giảm tiến triển bệnh thận ở người
+      PMID 33264825: 'apply' → 'consider'
+        [apply    ] Finerenone ở CKD do ĐTĐ type 2 — FIDELIO-DKD
+        [consider ] FIDELIO-DKD — finerenone giảm tiến triển bệnh thận ở đái t
+      PMID 36331190: 'apply' → 'consider'
+        [apply    ] SGLT2i (empagliflozin) làm chậm tiến triển CKD — EMPA-KIDN
+        [consider ] EMPA-KIDNEY — empagliflozin giảm tiến triển thận hoặc tử v
+
+  ▸ RA:  RA_Than (20260630)   ⟷   RA_TimMachChuyenHoaNoiTiet (20260705)
+      PMID 27697765: 'apply' → 'consider'
+        [apply    ] NSAID: thận trọng tim mạch và thận; hạn chế ở nhóm nguy cơ
+        [consider ] RA/viêm khớp viêm có nguy cơ tim mạch tăng — cần đánh giá 
+
+  ▸ RA:  RA_TimMach (20260630)   ⟷   RA_TimMachChuyenHoaNoiTiet (20260705)
+      PMID 27697765: 'apply' → 'consider'
+        [apply    ] Bác sĩ điều trị RA chịu trách nhiệm quản lý nguy cơ tim mạ
+        [consider ] RA/viêm khớp viêm có nguy cơ tim mạch tăng — cần đánh giá 
+
+  Công cụ này KHÔNG tự sửa và KHÔNG tự nâng decision — nâng làm một
+  khuyến cáo MẠNH hơn, đó là quyết định lâm sàng của bác sĩ.
+  Cần bác sĩ kiểm chứng.

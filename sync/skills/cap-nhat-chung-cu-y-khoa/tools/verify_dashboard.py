@@ -1253,7 +1253,13 @@ def report(errors, warns, oks):
     if errors:
         print("KẾT QUẢ: ✗ FAIL — %d lỗi cứng, %d cảnh báo. Sửa trước khi giao." % (len(errors), len(warns)))
         _canh_bao_loi_mang(errors)
-        return 1
+        # MÃ THOÁT TÁCH HAI LOẠI THẤT BẠI (LÔ 2 PHA 2, 15/08/2026):
+        #   1 = có ít nhất MỘT lỗi NỘI DUNG (nguồn/số liệu/an toàn) — phải sửa gói;
+        #   2 = TOÀN BỘ lỗi cứng là MÁY/MẠNG (DNS, timeout) — gói chưa được xác
+        #       minh chứ không phải gói sai; chạy lại khi mạng ổn / dùng sổ xác minh.
+        # Cả hai đều nonzero: cổng vẫn fail-closed, không caller nào bị mở nhầm.
+        mang = [e for e in errors if any(d in e for d in _DAU_HIEU_LOI_MANG)]
+        return 2 if len(mang) == len(errors) else 1
     print("KẾT QUẢ: ✓ PASS — 0 lỗi cứng, %d cảnh báo (rà tay nếu có)." % len(warns))
     return 0
 

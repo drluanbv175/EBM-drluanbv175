@@ -1,0 +1,17 @@
+======================================================================
+  CANARY ĐẦU–CUỐI — gài lỗi đã biết, đòi dây chuyền bắt được
+======================================================================
+  ✓ apply + 'na' trên RCT → CHẶN, thông điệp 'hạ xuống consider'
+  ✓ apply + 'na' trên GUIDELINE chưa khai basis → CHẶN đúng 'normativeBasis'
+  ✓ apply chỉ dựa Consensus → CHẶN
+  ✓ gradeLevel khác 'na' không khai gradeBy → CẢNH BÁO
+  ✓ khai provenanceUnknown KHÔNG tắt luật an toàn cấp item
+  ✓ hai bản cùng chủ đề nói ngược nhau → PHÁT HIỆN
+  ✓ ứng viên PMID 30267080 (đã rút) → BẮT ở khâu nhận
+  ✓ hợp đồng item: máy tự APPROVED + tự gán mức → BẮT
+  ✓ khoá quét: tiến trình thứ hai bị chặn rõ ràng
+  ✓ PMID không tra được → 'chua_kiem', KHÔNG mặc định 'ok'
+----------------------------------------------------------------------
+🟢 10/10 lỗi gài đều bị bắt.
+   Canary kiểm DÂY CHUYỀN CÔNG CỤ — KHÔNG chứng minh agent đã GỌI cổng lúc chạy
+   thật. Cần bác sĩ kiểm chứng.

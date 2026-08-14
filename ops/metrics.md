@@ -12,3 +12,14 @@
 
 Mẫu báo cáo tháng: gộp `--bao-cao` sổ + `do_tre` gần nhất + alerts trong tháng + đếm hàng
 chờ E6. Thiếu số → ghi `[CẦN BỔ SUNG]`, không ước lượng.
+
+## Số đo NGHIỆM THU PHA 2 (15/08/2026 — đo thật, không ước lượng)
+| Chỉ số | Giá trị | Nguồn |
+|---|---|---|
+| Diễn tập phục hồi ledger | ĐẠT (hash khớp từng byte, 1193 thẻ) | runbook §Sao lưu |
+| Sức khoẻ sổ | 0 CHẶN · 288 BÁO CÁO /1193 | `reports/ledger-health.md` |
+| Di trú hợp đồng mới (dry-run) | 1157/1193 đạt · 0 mint APPROVED | chờ bác sĩ duyệt diff |
+| Truy nguyên toàn sổ | 951 ok-30d · 241 KHÔNG BIẾT · 1 dương tính (notyet) | `reports/provenance-2026-08-15.md` |
+| Gold set tự động | 12/12 đạt (~26 hành vi) · 5 nhóm khai CẦN MẠNG/CHƯA TỰ ĐỘNG | `reports/eval-2026-08-15.md` |
+| E2E CKD --online | 5/5 bước rc=0, ~135s, trễ trung vị 2 ngày | `logs/20260815T064642-*.jsonl` |
+| Chốt hồi quy | 48/48 xanh (BH48 mới, mutation-tested) | `chot_hoi_quy_bai_hoc.py` |

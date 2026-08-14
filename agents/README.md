@@ -1,33 +1,68 @@
-# BIÊN CHẾ AGENT A/B/C ↔ HIỆN THÂN THẬT (LÔ 5, 15/08/2026)
+# BIÊN CHẾ AGENT — hệ cập nhật chứng cứ (PHA 2, cập nhật LÔ 3 15/08/2026)
 
-> File này + 20 file con là **CON TRỎ**, không nhân bản doctrine (chống trôi BH39/BH40).
-> Lực lượng thật: 50 agent `.claude/agents/` (đồng bộ Codex 50/50) + ~15 tool chứng cứ.
-> Root `AGENTS.md` là hợp đồng repo (alignment-checked) — KHÔNG gộp vào đây.
+20 hồ sơ trong thư mục này là **con trỏ biên chế 10-mục**: mỗi file khai định
+danh, đầu vào/ra, công cụ, **file được ghi**, cổng, điều kiện dừng khẩn, giới
+hạn, một ca chuẩn và số đo. Doctrine thật nằm ở HIỆN THÂN (tool/skill/agent
+`.claude/agents/`) — sửa ở nguồn, không sửa ở đây.
 
-Đường đi dữ liệu: `watchlist → quét(E1) → sổ xác minh(E2) → thẩm định(E3) → dashboard(E4)
-→ ledger/BỘ NĂM(E5) → bác sĩ(E6)`. Cổng: `quality/gates.md`.
+> **Vì sao ma trận GHI nằm ở đây mà không ở `AGENTS.md` gốc:** file gốc là hợp
+> đồng của REPO (bị `verify_claude_code_repo_alignment.py` khoá và phiên khác
+> đang biên tập). Lệch khỏi đề bài có chủ ý, ghi lại tại đây (luật mục 10).
 
-| ID | Agent | Hiện thân chính | Nhiệm vụ | Nhịp/Cổng |
-|---|---|---|---|---|
-| A1 | [watchlist-curator](./A1-watchlist-curator.md) | `watchlist.json` | Giữ watchlist khớp thực hành; 46/46 chủ đề khai canh/không-canh | THÁNG |
-| A2 | [source-harvester](./A2-source-harvester.md) | `surveillance_scan.py` | Thu hoạch 5 tầng nguồn; ứng viên mang sẵn rút-bài/loại/trùng-kho/preprint | TUẦN |
-| A3 | [dedup-triage](./A3-dedup-triage.md) | `surveillance_scan` | Khử trùng DOI/PMID; tín hiệu vs nhiễu | TUẦN |
-| A4 | [provenance-verifier](./A4-provenance-verifier.md) | `so_xac_minh_nguon.py` | E2 cứng: phân giải + retraction + rút-và-thay | MỖI LẦN |
-| A5 | [critical-appraiser](./A5-critical-appraiser.md) | `.claude/agents/tham-dinh-grade-nnt.md` | AGREE II·AMSTAR-2·RoB 2·ROBINS-I·QUADAS-3·ROBIS·CERQual·GRADE | MỖI LẦN |
-| A6 | [effect-extractor](./A6-effect-extractor.md) | `tham-dinh-grade-nnt` | Hiệu số as-reported; NNT/NNH ghi công thức | MỖI LẦN |
-| A7 | [discordance-resolver](./A7-discordance-resolver.md) | `dang_ky_chu_de.py` | Nêu khác biệt, không ép một kết luận | KHI CÓ |
-| A8 | [vn-localizer](./A8-vn-localizer.md) | `vn-guidelines/registry.json` | [CẦN XÁC NHẬN TẠI ĐƠN VỊ] khi không tra được; CẤM bịa số QĐ | KHI CÓ |
-| A9 | [safety-overlay](./A9-safety-overlay.md) | `drug_safety_scan.py` | Cờ nhắc, không đầy đủ | KHI CÓ THUỐC |
-| A10 | [impact-classifier](./A10-impact-classifier.md) | `decision` | Áp dụng ngay/Cân nhắc/Chưa đủ + lý do | MỖI LẦN |
-| B1 | [dashboard-builder](./B1-dashboard-builder.md) | `skill` | 3 cột + Quick View + etd | E4 |
-| B2 | [integrity-gate](./B2-integrity-gate.md) | `verify_dashboard.py` | E4 cứng; FAIL chặn giao | E4 |
-| B3 | [librarian](./B3-librarian.md) | `build_library.py` | Một sổ cái duy nhất | E5 |
-| B4 | [derivative-factory](./B4-derivative-factory.md) | `xuat_goi_cap_nhat.py` | Tờ dặn KHÔNG liều; chờ duyệt | E5 |
-| B5 | [approval-broker](./B5-approval-broker.md) | `hàng` | TUYỆT ĐỐI không tự duyệt (I4, validator thi hành) | E6 |
-| C1 | [red-team](./C1-red-team.md) | `thu_dau_cuoi_chung_cu.py` | Mỗi lỗi thật → test vĩnh viễn | MỖI PHIÊN |
-| C2 | [evaluator](./C2-evaluator.md) | `tham-dinh-dau-ra` | FAIL cứng chặn lô | MỖI GÓI |
-| C3 | [observability](./C3-observability.md) | `do_tre` | Chỉ số mục 7; thiếu → [CẦN BỔ SUNG] | MỖI LƯỢT |
-| C4 | [learner](./C4-learner.md) | `chot_hoi_quy_bai_hoc.py` | Lỗi lặp → chốt + sửa skill; CẤM nới cổng | MỖI PHIÊN |
-| C5 | [orchestrator](./C5-orchestrator.md) | `dieu-phoi-lam-sang` | Khoá chống trùng + lịch + báo cáo | — |
+## Sơ đồ luồng chuẩn (một chủ đề)
 
-*Cần bác sĩ kiểm chứng.*
+```
+watchlist (BÁC SĨ, A1 đề xuất)
+   │
+   ▼
+A2 thu hoạch ──A10 nhãn tin cậy──A3 dedup/ưu tiên──► ứng viên surveillance/*.md
+   │                                  │
+   │        A4 truy nguyên (E2 cứng) ─┤   A9 cờ an toàn thuốc
+   │        A5 phân hạng khai báo ────┤   A7 mâu thuẫn giữa bản
+   │        A6 đối chiếu số liệu ─────┘
+   ▼
+B1 dựng dashboard ──► B2 CỔNG liêm chính (exit 0/1/2) ──► B3 thư viện ──► B4 BỘ NĂM
+                                                              │
+                                            B5 trình bác sĩ ──┴──► CỔNG A/B (NGƯỜI)
+C1 canary · C2 eval · C3 quan sát · C4 chốt bài học · C5 orchestrator (bọc ngoài)
+```
+
+## MA TRẬN QUYỀN GHI — mỗi file state có đúng MỘT chủ
+
+| File | Chủ ghi DUY NHẤT | Ghi chú |
+|---|---|---|
+| `EBM-Dashboards/watchlist.json` | **BÁC SĨ** | A1 chỉ đề xuất |
+| `EBM-Dashboards/giam-sat-chu-de.json` | **BÁC SĨ** | khai báo phạm vi (BH29) |
+| `EBM-Dashboards/mau-thuan-da-duyet.json` | **BÁC SĨ** | qua phiên duyệt A7 trình |
+| `EBM-Dashboards/.quet-cursor.json` | A2 | dưới khoá `.quet.lock` |
+| `EBM-Dashboards/.quet.lock` | A2 | pid+host, hết hạn 30' |
+| `EBM-Dashboards/.so-xac-minh-nguon.json` | A4 | chỉ ghi THÀNH CÔNG |
+| `EBM-Dashboards/data/drug_flags.json` | A9 | đợt có bác sĩ duyệt |
+| `EBM-Dashboards/WebDashboard_*.html` | B1 | `.bak-*` trước mỗi đợt sửa |
+| `EBM-Dashboards/library.json` + `evidence-library.html` | B3 | |
+| `EBM-Dashboards/derivatives/*` | B4 | + bản quét quý (owner `quarterly_superseded.sh`) |
+| `EBM_MASTER/EBM_MASTER.json` | `EBM_MASTER/tools/` (sync_all/ingest) | CHỈ khi bác sĩ yêu cầu (mặc định 05/08) |
+| `EBM_MASTER/EBM_MASTER.v2.json` | `tools/migrate_ledger.py --ap-dung` | CHỈ sau khi bác sĩ duyệt diff |
+| `vn-guidelines/registry.json` | A8 (khung) / **BÁC SĨ** (nội dung) | cấm bịa số QĐ |
+| `reports/*.md` | mỗi công cụ MỘT tên file riêng | ledger-health / provenance-* / eval-* |
+| `logs/*.jsonl` | C5 | mỗi run_id một file |
+| `backups/<ISO>/` | quy trình LÔ 0 | chỉ tạo, không sửa |
+| `alerts/<ngày>.md` | ⚠️ **NGOẠI LỆ CÓ CHỦ Ý**: kênh APPEND chung (A2, A4, quét quý) | từng dòng idempotent theo định danh — kiểm trước khi ghi, không nhân đôi |
+| `decision`/`gradeLevel`/`APPROVED`/`APPLIED` trong MỌI file | **BÁC SĨ — không tool nào** | I4/BH10; validator I4 thi hành |
+
+**Luật:** (1) không agent nào ghi file ngoài dòng của mình; (2) ghi state phải
+qua khoá khi có thể chạy song song (`ops/lock.py`); (3) mọi lần sửa hàng loạt
+có `.bak-<timestamp>`; (4) im lặng ≠ an toàn — FAIL phải nói RÕ (I7).
+
+## Chỉ mục
+
+| Nhánh A — thu nhận | Nhánh B — sản xuất | Nhánh C — bảo đảm |
+|---|---|---|
+| A1 watchlist-curator | B1 dashboard-builder | C1 red-team |
+| A2 source-harvester | B2 integrity-gate | C2 evaluator |
+| A3 dedup-triage | B3 librarian | C3 observability |
+| A4 provenance-verifier | B4 derivative-factory | C4 learner |
+| A5 critical-appraiser | B5 approval-broker | C5 orchestrator |
+| A6 effect-extractor · A7 discordance-resolver · A8 vn-localizer · A9 safety-overlay · A10 impact-classifier | | |
+
+> Cần bác sĩ kiểm chứng. Máy chỉ ĐỀ XUẤT — Cổng A/B và mọi `decision` thuộc bác sĩ.

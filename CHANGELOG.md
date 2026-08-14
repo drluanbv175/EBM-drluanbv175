@@ -8,6 +8,31 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-15
+
+PHA 2 «THI CÔNG & NGHIỆM THU» của prompt kiện toàn hệ cập nhật chứng cứ — 8 lô
+LÔ 0→7 chạy trọn, mỗi lô có bằng chứng đo thật (xem `ops/metrics.md` mục nghiệm thu).
+
+### Added
+- `ops/lock.py` (khoá ghi dùng chung, self-test 4/4) · `ops/orchestrator.py` (một cửa
+  A2→B5: --topic/--dry-run/--online/--xuat/--resume, log `logs/<run_id>.jsonl`, chạy
+  TỪNG lát cắt chủ đề — đúng BH30) · `README.md` hub 10 dòng.
+- `tools/validate_ledger.py` (sức khoẻ 1193 thẻ: 0 CHẶN/288 BÁO CÁO) ·
+  `tools/migrate_ledger.py` (di trú hợp đồng mới, DRY-RUN chờ bác sĩ, legacy_raw giữ 100%) ·
+  `tools/provenance_ledger.py` (truy nguyên toàn sổ, offline-first, alert APPLY×đã-rút;
+  bắt 1 dương tính thật: EVID-2026-0553 rút-và-thay, decision notyet).
+- `quality/eval/run_eval.py` — gold set 12 nhóm, 12/12 tự động đạt, bằng chứng âm tính
+  vào `quality/eval/negative/`; 20 hồ sơ agent nâng lên khuôn 10-mục + MA TRẬN QUYỀN GHI
+  (`agents/README.md`).
+- `surveillance_scan.py --topic` (skill v1.44.0) — E2E thật CKD --online 5 bước ~135s.
+
+### Fixed
+- **BH34/BH43 tái phát** (hook chạy python3 hệ thống thiếu dotenv/requests): vá 3 lớp ở
+  `medical-ebm-automation/app` (config fallback stdlib · sources nạp chịu lỗi + nổ to khi
+  nguồn BẬT thiếu thư viện · retraction_chain 2 tầng online vắng mặt CÓ KHAI BÁO).
+- `verify_dashboard.py` exit 0/1/2 — tách «gói sai» khỏi «chưa xác minh được» (**BH48**,
+  mutation-tested; skill v1.43.0).
+
 ## [1.2.1] - 2026-07-05
 
 Rà nhất quán sau đợt 48→50 agent + đóng gói xong phần MÁY LÀM ĐƯỢC của gói đánh giá

@@ -1762,6 +1762,37 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     return True, "khoá chặn chồng · cursor ra mindate · alert chỉ khi có sự kiện"
 
 
+def bh48_ma_thoat_tach_noi_dung_va_ha_tang():
+    """15/08 — LÔ 2: FAIL vì MẠNG không được đội lốt FAIL vì NỘI DUNG.
+
+    Đo thật 12/08: cùng một dashboard chạy `--online` 4 lần cho 13→3→6→1 lỗi cứng
+    chỉ vì DNS chập chờn. Caller không phân biệt được «gói SAI» với «gói CHƯA XÁC
+    MINH ĐƯỢC» thì người vận hành sẽ (a) đi sửa một gói lành, hoặc (b) chạy lại
+    tới lần may mắn rồi coi đó là đã xác minh — cả hai đều đã xảy ra thật.
+    Hợp đồng từ 15/08 (LÔ 2 PHA 2): `report()` trả 1 khi có ≥1 lỗi NỘI DUNG,
+    2 khi TOÀN BỘ lỗi cứng mang dấu hiệu máy/mạng, 0 khi sạch. 1 và 2 đều
+    nonzero — cổng vẫn fail-closed, không caller nào bị mở nhầm.
+    """
+    import contextlib
+    import io
+    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh48")
+    if not hasattr(vd, "_DAU_HIEU_LOI_MANG"):
+        return False, "mất _DAU_HIEU_LOI_MANG — bộ phân loại lỗi mạng bị tháo"
+    dau = next(iter(vd._DAU_HIEU_LOI_MANG))
+    with contextlib.redirect_stdout(io.StringIO()):
+        rc_sach = vd.report([], [], [])
+        rc_mang = vd.report([f"PMID 999 CHƯA XÁC MINH ĐƯỢC ({dau} x)"], [], [])
+        rc_tron = vd.report([f"PMID 999 CHƯA XÁC MINH ĐƯỢC ({dau} x)",
+                             "ITEM-01: decision='apply' trên chứng cứ yếu"], [], [])
+    if rc_sach != 0:
+        return False, f"sạch phải trả 0, đang trả {rc_sach}"
+    if rc_mang != 2:
+        return False, f"toàn lỗi mạng phải trả 2 («chưa xác minh»), đang trả {rc_mang}"
+    if rc_tron != 1:
+        return False, f"có lỗi nội dung phải trả 1 («gói sai»), đang trả {rc_tron}"
+    return True, "0/1/2 tách đúng: sạch · gói sai · chưa-xác-minh-được"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1810,6 +1841,7 @@ BAI_HOC = [
     ("BH45", "15/08", "Luồng theo-yêu-cầu phải thừa hưởng luồng định kỳ", bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky),
     ("BH46", "15/08", "Hợp đồng item + máy trạng thái thi hành được", bh46_hop_dong_item_va_may_trang_thai),
     ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
+    ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
 ]
 
 
