@@ -995,6 +995,8 @@ def main():
         except Exception as e:
             warns.append("Không chạy được kiểm chủ đề: %s" % e)
 
+    kiem_nguon_da_rut(a.file, errors, warns, oks)
+
     return report(errors, warns, oks)
 
 
@@ -1034,6 +1036,68 @@ def _canh_bao_loi_mang(errors):
     print("      rồi lấy lần ít lỗi nhất làm bằng chứng đã xác minh — kết quả sẽ khác nhau")
     print("      mỗi lần chạy và không tái lập được.")
     print("    → Sửa mạng/DNS rồi chạy lại tới khi số lỗi ổn định thì mới kết luận được.")
+
+
+def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
+    """LỖI CỨNG khi sổ xác minh đã ghi nhận một nguồn của gói này ĐÃ BỊ RÚT.
+
+    Thêm 14/08/2026 (vòng lặp kiểm tra–hoàn thiện, vòng 2). Đây KHÔNG mâu thuẫn với
+    nguyên tắc "cổng này cố ý không kết luận trạng thái rút bài" ghi ở
+    `verify_pmid_europe_pmc()`: chỗ đó cấm SUY RA trạng thái rút bài từ một nguồn
+    metadata không đủ thẩm quyền. Ở đây cổng không suy ra gì cả — nó chỉ ĐỌC LẠI kết
+    luận DƯƠNG TÍNH mà chuỗi 3 tầng (Retraction Watch → NCBI → Europe PMC) đã xác
+    nhận và ghi vào sổ, theo đúng luật gộp bất đối xứng.
+
+    Vì sao phải chặn: PMID 30267080 (JAMA Oncology, rút 2019) nằm trong
+    ViemGanB_DieuTri và đi qua cổng này sạch sẽ, vì trước nay không có bước nào hỏi
+    "nguồn này còn hiệu lực không". Một trích dẫn đã bị rút là lỗi nghiêm trọng hơn
+    hầu hết những gì cổng đang bắt.
+
+    KHÔNG BAO GIỜ phát tín hiệu ngược lại: sổ im lặng nghĩa là CHƯA KIỂM, không phải
+    "đã kiểm và sạch" (BH08/BH27). Khi không đọc được sổ, ghi CẢNH BÁO chứ không âm
+    thầm bỏ qua — bỏ qua im lặng sẽ đọc thành "đã kiểm, không có gì".
+    """
+    from pathlib import Path as _Path
+    if tra_cuu is None:
+        # DÒ NGƯỢC LÊN, không đếm cứng số bậc: file này sống ở BA nơi có độ sâu khác
+        # nhau (EBM-Dashboards/tools · EBM_MASTER/skill_assets · sync/skills/…/tools)
+        # cộng thêm bản trong thư mục chạy của skill. Một hằng số `parents[2]` chỉ
+        # đúng ở một nơi và im lặng sai ở những nơi còn lại — đúng lớp lỗi BH06.
+        _p = None
+        for _t in _Path(__file__).resolve().parents:
+            _u = _t / "tools" / "so_xac_minh_nguon.py"
+            if _u.exists():
+                _p = _u
+                break
+        if _p is None:
+            warns.append("Chưa kiểm được rút bài: không thấy tools/so_xac_minh_nguon.py "
+                         "(đây là 'chưa biết', KHÔNG phải 'không có').")
+            return
+
+        def tra_cuu(ten):
+            import importlib.util as _ilu
+            _spec = _ilu.spec_from_file_location("so_xm_vd", _p)
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            return _mod.nguon_da_rut(ten)
+    try:
+        da_rut = tra_cuu(_Path(duong_dan).name)
+    except Exception as e:
+        warns.append("Chưa kiểm được rút bài (%s) — 'chưa biết', KHÔNG phải 'không có'. "
+                     "Chạy: python tools/so_xac_minh_nguon.py --quet <file>" % e)
+        return
+
+    if not da_rut:
+        # Cố ý KHÔNG ghi vào oks: sổ không có bản ghi dương tính có thể chỉ vì chưa
+        # ai quét file này. Một dòng ✓ ở đây sẽ là lời bảo đảm mà dữ liệu không đỡ nổi.
+        return
+    for r in da_rut:
+        nhan = "ĐÃ BỊ RÚT" if r["tinh_trang"] == "retracted" else "CÓ QUAN NGẠI (EoC)"
+        errors.append(
+            "NGUỒN %s: %s:%s — %s (sổ ghi %s, nguồn %s). Đối chiếu bản đã thay/thông báo "
+            "rút trước khi dùng; KHÔNG tự xoá mục — quyết định là của bác sĩ."
+            % (nhan, r["loai"], r["gia_tri"], (r["tieu_de"] or "")[:80],
+               r["kiem_luc"], r["nguon"]))
 
 
 def report(errors, warns, oks):

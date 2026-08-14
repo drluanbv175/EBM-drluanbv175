@@ -183,6 +183,43 @@ def con_hieu_luc(ban_ghi: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def nguon_da_rut(ten_file: str) -> list[dict]:
+    """Nguồn của MỘT dashboard đã được sổ ghi nhận là ĐÃ RÚT / có quan ngại.
+
+    Thêm 14/08/2026 (vòng lặp kiểm tra–hoàn thiện, vòng 2). Trước đó việc phát hiện
+    rút bài chỉ sống trong sổ và chỉ nói ra khi bác sĩ gõ `--bao-cao`; cổng phát hành
+    `verify_dashboard.py` CỐ Ý không kết luận trạng thái rút bài, còn trang bản đọc
+    thì im lặng hoàn toàn. Kết quả: PMID 30267080 (đã rút 2019, JAMA Oncology) nằm
+    trong ViemGanB_DieuTri suốt mà không chỗ nào bác sĩ mở ra thấy được.
+
+    BẤT ĐỐI XỨNG BẮT BUỘC — chỗ dễ sai nhất:
+      • Có bản ghi `da_rut` ⇒ DƯƠNG TÍNH, phát ra. Đó là kết luận đã được một nguồn
+        SỐNG xác nhận (xem luật gộp ở `app/sources/retraction_chain.py`).
+      • VẮNG MẶT trong sổ ⇒ KHÔNG có nghĩa là sạch. Hàm này KHÔNG BAO GIỜ trả tín
+        hiệu "đã kiểm, không sao" — nó chỉ trả những gì đã bị bắt. Biến im lặng
+        thành lời bảo đảm chính là BH08/BH27, hai bài học đắt nhất của kho này.
+
+    Không phụ thuộc mạng: chỉ đọc sổ, chạy được ở mọi nơi mọi lúc.
+    """
+    muc = (doc_so() or {}).get("muc", {}) or {}
+    ra: list[dict] = []
+    for khoa, bg in sorted(muc.items()):
+        if not bg.get("da_rut"):
+            continue
+        if ten_file not in (bg.get("cac_dashboard") or []):
+            continue
+        ra.append({
+            "khoa": khoa,
+            "loai": bg.get("loai", ""),
+            "gia_tri": bg.get("gia_tri", ""),
+            "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
+            "tieu_de": bg.get("tieu_de") or "",
+            "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
+            "nguon": bg.get("nguon_xac_minh") or "",
+        })
+    return ra
+
+
 def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
     """Gom mọi pmid/doi/url từ các dashboard. Trả {khoá: {file đã dùng}}."""
     nguon: dict[str, set[str]] = {}

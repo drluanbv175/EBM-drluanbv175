@@ -1050,6 +1050,53 @@ def bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat():
         _sh.rmtree(tmp, ignore_errors=True)
 
 
+def bh31_nguon_da_rut_phai_chan_duoc_o_cong():
+    """14/08 — kết luận rút bài đã ghi trong sổ phải CHẶN được ở cổng phát hành.
+
+    Lỗ hổng thật: `verify_dashboard.py` cố ý không tự kết luận trạng thái rút bài
+    (đúng — không được suy ra từ nguồn metadata thiếu thẩm quyền), nhưng nó cũng
+    không ĐỌC LẠI kết luận dương tính mà chuỗi 3 tầng đã xác nhận và ghi vào sổ.
+    Hệ quả đo được: PMID 30267080 (JAMA Oncology, rút 2019, 'retract and replace')
+    nằm trong ViemGanB_DieuTri và đi qua cổng SẠCH SẼ; nó chỉ hiện khi bác sĩ chủ
+    động gõ `so_xac_minh_nguon.py --bao-cao`. Trang bản đọc cũng im lặng hoàn toàn.
+
+    Ba hành vi bị khoá ở đây, mất cái nào cũng đủ tái tạo lỗ hổng:
+      1. có bản ghi dương tính ⇒ vào `errors` (chặn), KHÔNG phải `warns`;
+      2. sổ không có bản ghi ⇒ TUYỆT ĐỐI không ghi gì vào `oks` — im lặng của sổ
+         có thể chỉ vì chưa ai quét file đó, biến nó thành dấu ✓ là dựng một lời
+         bảo đảm mà dữ liệu không đỡ nổi (BH08/BH27);
+      3. tra cứu hỏng ⇒ phải vào `warns` (lộ ra), không được bỏ qua im lặng.
+    """
+    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh31")
+    ham = getattr(vd, "kiem_nguon_da_rut", None)
+    if ham is None:
+        return False, "verify_dashboard.py không còn hàm kiem_nguon_da_rut — cổng rút bài đã mất"
+
+    duong = [{"khoa": "pmid:1", "loai": "pmid", "gia_tri": "1", "tinh_trang": "retracted",
+              "tieu_de": "ca thử", "kiem_luc": "2026-08-14", "nguon": "pubmed"}]
+    e, w, o = [], [], []
+    ham("x.html", e, w, o, tra_cuu=lambda _t: duong)
+    if not e:
+        return False, "nguồn ĐÃ RÚT không tạo lỗi cứng — cổng cho gói đi qua"
+    if w or o:
+        return False, "nguồn đã rút bị hạ xuống cảnh báo/ghi nhận thay vì chặn"
+
+    e, w, o = [], [], []
+    ham("x.html", e, w, o, tra_cuu=lambda _t: [])
+    if o or e:
+        return False, ("sổ im lặng mà cổng vẫn phát tín hiệu — 'chưa quét' đang bị đọc "
+                       "thành 'đã kiểm, sạch'")
+
+    def _hong(_t):
+        raise RuntimeError("sổ hỏng")
+
+    e, w, o = [], [], []
+    ham("x.html", e, w, o, tra_cuu=_hong)
+    if not w:
+        return False, "tra cứu hỏng mà cổng im lặng — thất bại phải lộ ra"
+    return True, "chặn khi dương tính · không tự khen khi im lặng · lộ ra khi hỏng"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1081,6 +1128,7 @@ BAI_HOC = [
     ("BH28", "14/08", "Không thay phán đoán ngữ nghĩa bằng độ giống từ vựng", bh28_khong_thay_phan_doan_ngu_nghia_bang_do_giong_tu_vung),
     ("BH29", "14/08", "Mọi chốt định nghĩa đều phải được đăng ký", bh29_moi_ham_bh_deu_phai_duoc_dang_ky),
     ("BH30", "14/08", "Khoá gom nhóm phải định danh duy nhất", bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat),
+    ("BH31", "14/08", "Nguồn đã rút phải chặn được ở cổng", bh31_nguon_da_rut_phai_chan_duoc_o_cong),
 ]
 
 

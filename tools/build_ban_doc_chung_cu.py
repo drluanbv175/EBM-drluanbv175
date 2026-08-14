@@ -400,6 +400,41 @@ DEC_VN = {"apply": "áp dụng ngay", "consider": "cân nhắc chọn lọc",
           "notyet": "chưa đủ để đổi thực hành"}
 
 
+def khoi_rut_bai(src: Path) -> str:
+    """Dải cảnh báo: gói này trích một nguồn ĐÃ BỊ RÚT / có quan ngại.
+
+    Nặng hơn mâu thuẫn giữa các bản nên đặt TRÊN, và dùng tông đỏ. Nguồn dữ kiện là
+    sổ xác minh (`tools/so_xac_minh_nguon.py::nguon_da_rut`) — chỉ đọc kết luận
+    DƯƠNG TÍNH đã được chuỗi 3 tầng xác nhận, không tự suy diễn.
+
+    Sổ im lặng KHÔNG được hiển thị thành "đã kiểm, sạch": khi không đọc được sổ thì
+    nói rõ là CHƯA KIỂM. Không tự gỡ mục nào — một bài "rút và thay" cần đối chiếu
+    với bản đã thay chứ không phải xoá đi, và đó là việc của bác sĩ.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from so_xac_minh_nguon import nguon_da_rut  # noqa: PLC0415
+        da_rut = nguon_da_rut(Path(src).name)
+    except Exception as e:  # noqa: BLE001 — chưa kiểm được phải LỘ RA
+        return ('<div class="xungdot chuakiem"><h3>Chưa kiểm được tình trạng rút bài</h3>'
+                f'<p>Không đọc được sổ xác minh nguồn ({esc(type(e).__name__)}). Đây là '
+                '“chưa biết”, không phải “không có”. Chạy '
+                '<code>python tools/so_xac_minh_nguon.py --quet &lt;file&gt;</code>.</p></div>')
+    if not da_rut:
+        return ""
+    hang = "".join(
+        f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — '
+        f'<em>{"đã bị rút" if r["tinh_trang"] == "retracted" else "có quan ngại (EoC)"}</em>'
+        f'<span class="doi">{esc(r["tieu_de"])}</span>'
+        f'<span class="doi">sổ ghi {esc(r["kiem_luc"])} · nguồn {esc(r["nguon"])}</span></li>'
+        for r in da_rut)
+    return ('<div class="rutbai"><h3>Nguồn đã bị rút — không dùng kết luận này trước khi '
+            f'đối chiếu ({len(da_rut)} nguồn)</h3>'
+            '<p class="sub">Một bài bị “rút và thay” đã được sửa rồi đăng lại: cần đối chiếu số '
+            'liệu với bản đã thay, không phải bỏ mục đi. Máy không tự gỡ mục nào.</p>'
+            f'<ul>{hang}</ul></div>')
+
+
 def khoi_mau_thuan(src: Path) -> str:
     """Dải cảnh báo: bản KHÁC cùng chủ đề đang kết luận ngược về cùng một PMID.
 
@@ -545,6 +580,7 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
   </div>
 </header>
 
+{khoi_rut_bai(src) if src else ''}
 {khoi_mau_thuan(src) if src else ''}
 
 <nav class="nav" aria-label="Mục lục">
@@ -664,6 +700,19 @@ grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px 30px}
 .redflags li{position:relative;padding-left:18px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
 .redflags li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;
 border-radius:50%;background:var(--harm)}
+/* Dải RÚT BÀI — nặng nhất trong các cảnh báo về độ tin cậy của tài liệu, nên dùng
+   tông đỏ và đứng trên dải mâu thuẫn. Vẫn khác cờ đỏ lâm sàng ở chỗ nằm ngoài
+   phần nội dung, ngay dưới đầu trang. */
+.rutbai{background:var(--harm-soft);border-left:4px solid var(--harm);
+padding:20px 24px;margin:26px 0 0}
+.rutbai h3{margin:0 0 6px;font-size:16px;font-weight:700;color:var(--harm)}
+.rutbai .sub{margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.rutbai ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.rutbai li{font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.rutbai li b{color:var(--ink)}
+.rutbai li em{font-style:normal;font-weight:700;color:var(--harm);text-transform:uppercase;
+font-size:12.5px;letter-spacing:.04em}
+.rutbai .doi{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
 /* Dải mâu thuẫn giữa các bản — đặt ngay dưới đầu trang, trước mục lục, vì đây là
    cảnh báo về ĐỘ TIN CẬY của chính tài liệu đang đọc. Dùng tông cảnh báo (cam)
    chứ KHÔNG dùng tông cờ đỏ: cờ đỏ là nguy cấp lâm sàng của người bệnh, hai thứ
