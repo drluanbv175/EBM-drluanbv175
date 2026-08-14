@@ -27,6 +27,9 @@
 !/.gitattributes
 # Khai báo MCP server theo dự án — cần đi cùng repo để máy Windows nhận được
 !/.mcp.json
+# Hồ sơ kiểm kê/kiện toàn hệ thống (PHA 1 của prompt điều khiển 15/08/2026) — là tài
+# liệu hệ thống, cần theo repo sang máy Windows như CLAUDE.md
+!/audit/
 
 # 3) Bên trong .claude/: CHỈ track agents/ (bỏ session/state/settings.local/launch — runtime cục bộ)
 /.claude/*
