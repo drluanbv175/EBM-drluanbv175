@@ -720,6 +720,136 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   Chốt hỏng thì hiện thành "BÀI HỌC TÁI PHÁT" — báo động giả đúng vào thứ sinh ra để chống báo
   động giả. Đã vá.
 
+  ## 🧩 TẦNG AGENT — doctrine đã TRÔI TỤT sau cổng (rà 14/08/2026)
+  Cả phiên 14/08 nâng **tầng công cụ**. Rà tầng agent lộ ra một khoảng trống chưa ai đo:
+
+  | Thứ cổng ĐANG bắt buộc | Doctrine agent nhắc |
+  |---|---|
+  | `normativeBasis` (cổng bắt từ **12/08**) | **0/84 agent** |
+  | `gradeBy` (cổng bắt từ 14/08) | **0/84 agent** |
+  | 8 công cụ chứng cứ lâm sàng (sổ xác minh · chuỗi rút bài · dò vượt qua · phân hạng · con số · đăng ký chủ đề · chu trình · phủ giám sát) | **0/84 agent** gọi tên |
+
+  Trong khi **tuyến NGHIÊN CỨU đã nối dây đầy đủ** — `gen_research_docx.py` được nhắc 73 lượt,
+  `approve_gate.py` 8, `gate_contract.py` 6. Tức tuyến nghiên cứu có công cụ, **tuyến chứng cứ
+  lâm sàng chỉ có doctrine**.
+
+  🔴 **Chỗ nguy hiểm nhất:** `tra-cuu-chung-cu` có dặn tự chất vấn *"bài có bị rút không?"* —
+  nhưng **không đưa công cụ nào**. Tức bảo mô hình trả lời bằng TRÍ NHỚ về một sự kiện có thể
+  xảy ra sau ngày cắt kiến thức. Ca thật PMID 30267080: **cả PubMed lẫn Europe PMC đều trả
+  `ok`**, chỉ nền Retraction Watch ngoại tuyến bắt được là đã rút-và-thay.
+
+  **Đã sửa:** `tra-cuu-chung-cu` nay ra LỆNH CHẠY `check_citation_retraction.py` (không tra
+  được ⇒ ghi *"chưa kiểm rút bài"*, không được ghi *"chưa bị rút"*), và được dạy rằng **bài quá
+  mới thường CHƯA có publication type** nên đừng loại nó. `tham-dinh-grade-nnt` nay có hợp đồng
+  hai trường `gradeBy` + `normativeBasis`. Guardrail `tham-dinh-dau-ra` thêm **R4b/R4c**.
+
+  > **LUẬT NỀN MỚI (BH39):** thêm một luật ở CỔNG thì phải DẠY AGENT cùng lúc. Cổng bắt buộc
+  > một trường mà agent chưa từng nghe tên nghĩa là agent dựng gói đúng theo doctrine rồi bị
+  > chặn — và người đọc tưởng nội dung sai, trong khi lỗi thật là hai tầng nói hai thứ khác nhau.
+  > Chốt BH39 đối chiếu trực tiếp: mọi trường cổng đang bắt buộc phải có mặt trong doctrine.
+
+  🔧 **VÌ SAO DOCTRINE TRÔI TỤT ĐƯỢC — nguyên nhân gốc, đã vá (BH40).**
+  `enforce_agent_guardrails.py` cấy một khối chung vào cả 50 agent, nhưng `_refresh()` chỉ
+  biết **đúng MỘT cặp thay thế viết cứng**. Muốn thêm một luật cho toàn đội thì phải sửa chính
+  cơ chế — nên trên thực tế **không ai thêm**, và mỗi luật mới chỉ nằm ở cổng. Đó là lý do cấu
+  trúc khiến BH39 xảy ra được, chứ không phải ai đó quên.
+  Nay `THAY_THE` là **danh sách cặp**: thêm luật = thêm một dòng rồi chạy `--refresh`.
+  **Luật đầu tiên lan bằng cơ chế mới — "RÚT BÀI phải TRA, không được tự nhớ": 0/50 → 50/50
+  agent.** Kèm câu chữ cụ thể: không tra được ⇒ ghi *"chưa kiểm rút bài"*, TUYỆT ĐỐI không ghi
+  *"chưa bị rút"*; và bài quá mới thường chưa có publication type nên đừng loại nó.
+  Đáng chú ý trong nhóm vừa nhận luật: **`tong-quan-y-van`** (agent tổng quan hệ thống) trước
+  đó có **0 lần** nhắc rút bài — trong khi PRISMA/Cochrane bắt buộc kiểm trạng thái rút bài của
+  nghiên cứu đưa vào.
+
+  **7 CÔNG CỤ CÒN LẠI NỐI THEO VAI, không cấy đại trà** (cấy sai chỗ chỉ tạo nhiễu, mà nhiễu
+  dạy người ta bỏ qua). Marker `<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->`:
+
+  | Agent | Công cụ phải gọi | Vì sao |
+  |---|---|---|
+  | `tra-cuu-chung-cu` | `kiem_chung_cu_vuot_qua` | 125/172 mục `apply` có tổng quan MỚI HƠN |
+  | `huong-dan-lam-sang` | `kiem_chung_cu_vuot_qua` · `dang_ky_chu_de` | sửa 1 dashboard KHÔNG tự lan sang bản khác cùng chủ đề |
+  | `dieu-phoi-lam-sang` | `chu_trinh_chung_cu` · `dang_ky_chu_de` | chốt trước khi trả gói; chu trình DỪNG ở bước ① nếu nguồn không đáng tin |
+  | `cap-nhat-guideline` | `kiem_phu_giam_sat` · `uu_tien_cap_nhat` | **"0 ứng viên" ≠ "không có chứng cứ mới"** |
+  | `trich-xuat-y-van` | `kiem_so_lieu` | hệ chưa bao giờ xác minh CON SỐ, chỉ xác minh PMID |
+  | `kiem-chung-trich-dan` | `so_xac_minh_nguon` | cổng không nhớ gì giữa các lần chạy; mạng kém thì không lượt nào đủ |
+  | `tham-dinh-dau-ra` | `kiem_so_lieu` (**R1c** mới) | R1 cũ chỉ kiểm PMID, không kiểm hiệu số |
+
+  🔎 **Chốt BH41 tự bắt được một mục tôi bỏ sót** ngay lần chạy đầu: `so_xac_minh_nguon` chưa
+  agent nào gọi. Đó đúng là việc chốt sinh ra để làm — một công cụ không agent nào gọi thì với
+  dây chuyền hằng ngày nó **không tồn tại**, dù chạy đúng và có test.
+
+  ## 🌍 CHUẨN QUỐC TẾ CÒN THIẾU Ở TẦNG AGENT (rà 14/08/2026)
+  Đo trên 84 file `.claude/agents/`. Năm chuẩn ở mức **0 agent** (hoặc chỉ nằm ở rubric nội bộ):
+
+  🔴 **AGREE II — nghiêm trọng nhất.** Xuất hiện ở **đúng 1 file**, và đó là
+  `_RUBRIC-EVALUATE-CUNG-QA-GATE.md` (rubric QA nội bộ), **không phải agent thẩm định**. Trong
+  khi `cap-nhat-guideline` nhắc "guideline" **16 lần**, `huong-dan-lam-sang` **19**,
+  `tra-cuu-chung-cu` **13** — không agent nào cầm công cụ đo chất lượng guideline.
+  ⇒ **Hệ đang tin guideline theo TÊN TỔ CHỨC.** Và điều đó vừa nguy hiểm hơn: watchlist mới mở
+  4 kênh gọi thẳng tên Cochrane · NICE · USPSTF · WHO, nên hệ sẽ hút về nhiều guideline hơn,
+  tất cả đều "có thương hiệu".
+  **Điểm mấu chốt:** một khuyến cáo của hiệp hội lớn nhưng **Miền 3 — Rigour of Development**
+  yếu thì bản chất là **đồng thuận chuyên gia có logo**. Cổng đã có sẵn cách gọi tên thứ đó:
+  `design:'Consensus'` — và Consensus **KHÔNG BAO GIỜ** đủ để miễn trừ quy phạm (BH03).
+  *(Thực dụng: không chấm đủ 23 mục cho mọi guideline. Tối thiểu — nêu Miền 3 có được mô tả
+  không; guideline không mô tả cách tìm/chọn chứng cứ thì ghi rõ điều đó cạnh khuyến cáo.)*
+
+  | Chuẩn | Vai trò | Bài phương pháp GỐC (đã tra PubMed 14/08, không lấy từ trí nhớ) |
+  |---|---|---|
+  | **AGREE II** | thẩm định chất lượng guideline | PMID **20656455** · J Clin Epidemiol 2010 · doi:10.1016/j.jclinepi.2010.07.001 |
+  | **AGREE-REX** | độ tin cậy LÂM SÀNG của khuyến cáo (AGREE II không chạm tới) | — |
+  | **RIGHT** | chuẩn BÁO CÁO khi CHÍNH MÌNH đưa ra khuyến cáo | PMID **27893062** · Ann Intern Med 2017 · doi:10.7326/M16-1565 |
+  | **PRISMA-S** | báo cáo CHIẾN LƯỢC TÌM (16 mục) | PMID **34285662** · J Med Libr Assoc 2021 · doi:10.5195/jmla.2021.962 |
+  | **ROBIS** | sai lệch của CHÍNH tổng quan (khác AMSTAR-2 = chất lượng phương pháp) | PMID **26092286** · J Clin Epidemiol 2016 · doi:10.1016/j.jclinepi.2015.06.005 |
+  | **GRADE-CERQual** | độ tin cậy phát hiện ĐỊNH TÍNH (GRADE chuẩn không áp được) | PMID **26506244** · PLoS Med 2015 · doi:10.1371/journal.pmed.1001895 |
+
+  **RIGHT gắn thẳng vào việc hệ đang làm:** hệ **sản xuất khuyến cáo** (`decision:'apply'`), nên
+  phải chịu chuẩn báo cáo dành cho khuyến cáo — ai soạn · COI · cách tìm chứng cứ · cách NỐI
+  chứng cứ với khuyến cáo · **độ mạnh TÁCH khỏi chất lượng chứng cứ** · kế hoạch cập nhật.
+  *Bối cảnh:* RIGHT **đang được cập nhật** (PMID 42348121 · 41559761, J Evid Based Med 2026) —
+  trích RIGHT 2017 là bản hiện hành, KHÔNG khẳng định là bản cuối.
+
+  **PRISMA-S gắn vào lỗ hổng provenance:** 44/62 gói chưa từng ghi chiến lược tìm. Không hồi tố
+  được, nhưng **mọi gói MỚI phải khai đủ**: CSDL + giao diện + ngày · truy vấn NGUYÊN VĂN chạy
+  lại được · giới hạn · nguồn ngoài CSDL · số bản ghi mỗi nguồn · ai thiết kế truy vấn.
+
+  **BH42** khoá: mỗi chuẩn phải có agent CẦM, kèm PMID bài phương pháp GỐC, và AGREE II phải nằm
+  ở agent TIÊU THỤ guideline chứ không chỉ ở rubric nội bộ. *(Cả 5 PMID đã chạy qua chuỗi kiểm
+  rút bài — `ok` toàn bộ, đúng luật vừa áp cho 50 agent.)*
+
+  ## 🐤 CANARY ĐẦU–CUỐI — chứng minh dây chuyền CHẠY đúng, không chỉ CÓ CHỮ (14/08/2026)
+  `python tools/thu_dau_cuoi_chung_cu.py` · **2 giây, ngoại tuyến, dữ liệu hoàn toàn giả**.
+
+  **Vì sao cần:** cả BH01–BH42 đều kiểm **chữ trong file** — luật có mặt chưa, doctrine nhắc
+  chưa, ba bản khớp chưa. **Không chốt nào chứng minh dây chuyền THẬT SỰ BẮT ĐƯỢC lỗi khi
+  chạy.** Khoảng cách đó không lý thuyết: riêng 14/08 tìm được **ba ca luật CÓ MẶT mà KHÔNG BAO
+  GIỜ chạy tới** — `return` sớm khi thiếu `DATA.standards` (che 73 mục nguy hiểm trên 47
+  dashboard) · bộ lọc `[ptyp]` ở khâu tìm (22 chủ đề báo "0 ứng viên" trong khi có chứng cứ
+  mới) · 8 công cụ chứng cứ mà 0 agent gọi.
+
+  Canary gài **8 lỗi đã biết** vào một gói GIẢ rồi đòi dây chuyền bắt: `apply`+`na` trên nghiên
+  cứu thường · `apply`+`na` trên guideline chưa khai basis · `apply` chỉ dựa Consensus · thiếu
+  `gradeBy` · miễn trừ provenance **không được** tắt luật item · hai bản nói ngược nhau · PMID
+  đã rút bắt ở khâu nhận · PMID không tra được **không** thành `ok`.
+
+  ✅ **Đã kiểm bằng đột biến trên đúng lỗi lịch sử:** tái hiện `return` sớm ngày 12/08 ⇒ canary
+  đỏ **5/8**. Tức nếu canary tồn tại từ 12/08, lỗi che 73 mục đã bị bắt ngay hôm đó.
+  Bản đầu của canary còn **kỳ vọng NHẦM nhánh** luật `apply`+`na` (đòi thông điệp
+  "normativeBasis" cho một `design:'RCT'`) — **cổng mới là bên đúng**. Đó chính là giá trị của
+  phép thử có đáp án biết trước: nó sửa cả người viết test.
+
+  ⚠️ **Giới hạn có chủ ý, đừng nói quá:** canary kiểm **dây chuyền CÔNG CỤ** — chứng minh
+  *"cổng bắt được lỗi nếu gói đi qua cổng"*, KHÔNG chứng minh *"agent đã GỌI cổng"*. Vế sau chỉ
+  quan sát được ở phiên thật; doctrine + BH39/40/41 làm cho vế sau khả dĩ, không thay thế được.
+
+  📌 **ĐÍNH CHÍNH — 7 chốt TỰ CHẠY mỗi phiên, không phải 5.** Ghi chú trước đó của tôi nói
+  `chot_hoi_quy_bai_hoc` "chỉ chạy khi có người gõ lệnh" là **SAI** (lệnh grep bị cắt ở dòng
+  20). Danh sách đúng ở `SessionStart`: `chot_hoi_quy_bai_hoc` · `dong_bo_skill` ·
+  `kiem_do_tuoi_chung_cu` · `kiem_nguon_that` · `kiem_plugin_day_du` · `tu_khoi_dong` ·
+  `tu_sua_chua`. Vì **BH43 gọi canary từ bên trong** `chot_hoi_quy_bai_hoc`, canary đã tự chạy
+  mỗi phiên — nên KHÔNG thêm hook riêng (thêm sẽ chạy hai lần và hai chỗ cùng báo một việc).
+  *Số đo: canary 2 giây · trọn bộ 43 chốt 19 giây.*
+
   ## 🤖 BA CHỐT TỰ ĐỘNG — hệ tự chạy, không chờ bác sĩ gọi (dựng 13/08/2026)
   Trả lời câu hỏi "hệ này đã là một hệ AGENT chưa". Trước 13/08 câu trả lời là **CHƯA**,
   và lý do đo được: `launchctl print` cho **`runs = 0 · (never exited)`** trên CẢ HAI job

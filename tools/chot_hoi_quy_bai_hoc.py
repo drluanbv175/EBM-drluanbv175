@@ -1446,6 +1446,194 @@ def bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim():
     return True, f"{len(co_tang)} chủ đề có tầng không-lọc; search() tôn trọng cả hai chế độ"
 
 
+def bh39_doctrine_khong_duoc_troi_sau_cong():
+    """14/08 — cổng bắt buộc một trường mà KHÔNG agent nào biết trường đó tồn tại.
+
+    Đo ngày 14/08/2026 trên 84 file trong `.claude/agents/`:
+      • `normativeBasis` — cổng bắt buộc từ **12/08**, doctrine nhắc: **0 agent**
+      • `gradeBy` — cổng bắt buộc từ 14/08, doctrine nhắc: **0 agent**
+      • 8 công cụ chứng cứ lâm sàng (sổ xác minh · chuỗi rút bài · dò vượt qua · phân
+        hạng · con số · đăng ký chủ đề · chu trình · phủ giám sát): **0 agent** gọi tên
+    Trong khi tuyến NGHIÊN CỨU đã nối dây đầy đủ (`gen_research_docx.py` 73 lượt nhắc,
+    `approve_gate.py` 8, `gate_contract.py` 6).
+
+    Hệ quả: agent dựng ra một gói đúng theo doctrine, rồi bị cổng chặn vì một luật nó
+    chưa từng được cho biết. Người đọc thấy "cổng chặn" và tưởng nội dung sai, trong khi
+    lỗi thật là hai tầng nói hai thứ khác nhau. Nặng hơn: `tra-cuu-chung-cu` có dặn tự hỏi
+    *"bài có bị rút không?"* mà KHÔNG đưa công cụ nào — tức bảo mô hình trả lời bằng trí
+    nhớ về một sự kiện có thể xảy ra sau ngày cắt kiến thức. Ca thật PMID 30267080: cả
+    PubMed lẫn Europe PMC đều trả `ok`, chỉ nền Retraction Watch bắt được.
+
+    Kiểm HÀNH VI: mọi trường mà cổng ĐANG bắt buộc phải xuất hiện trong ít nhất một
+    doctrine agent. Thêm luật ở cổng thì phải dạy agent — nếu không, chốt này đỏ.
+    """
+    cong = (REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py")
+    thu_muc = REPO / ".claude" / "agents"
+    if not cong.exists() or not thu_muc.is_dir():
+        return False, "không thấy cổng hoặc thư mục agent"
+    van_cong = cong.read_text(encoding="utf-8", errors="replace")
+    # Trường mà cổng thực sự đọc từ item và có thể sinh lỗi/cảnh báo.
+    truong = [t for t in ("normativeBasis", "gradeBy", "provenanceUnknown")
+              if f'"{t}"' in van_cong or f"'{t}'" in van_cong]
+    if not truong:
+        return False, "không dò được trường nào cổng đang bắt buộc — chốt mất hiệu lực"
+    van_agent = "\n".join(
+        p.read_text(encoding="utf-8", errors="replace") for p in thu_muc.glob("*.md"))
+    thieu = [t for t in truong if t not in van_agent]
+    if thieu:
+        return False, (f"cổng bắt buộc {', '.join(thieu)} mà KHÔNG doctrine agent nào nhắc — "
+                       "agent sẽ bị chặn vì luật nó chưa từng được cho biết")
+    # Và câu "bài có bị rút không" phải đi kèm CÔNG CỤ, không để mô hình tự nhớ.
+    tra = thu_muc / "tra-cuu-chung-cu.md"
+    if tra.exists():
+        vb = tra.read_text(encoding="utf-8", errors="replace")
+        if "retract" in vb.lower() and "check_citation_retraction" not in vb:
+            return False, ("tra-cuu-chung-cu hỏi 'bài có bị rút không' mà không đưa công cụ "
+                           "— buộc mô hình trả lời bằng trí nhớ về sự kiện sau ngày cắt")
+    return True, f"{len(truong)} trường cổng bắt buộc đều có trong doctrine agent"
+
+
+def bh40_luat_toan_doi_phai_lan_duoc_xuong_moi_agent():
+    """14/08 — có luật chung cho cả đội nhưng KHÔNG có đường lan xuống 50 agent.
+
+    `enforce_agent_guardrails.py` cấy một khối chung vào mọi agent, nhưng `_refresh()`
+    chỉ biết **đúng MỘT cặp thay thế viết cứng**. Muốn thêm một luật cho toàn đội thì
+    phải sửa chính cơ chế — nên trên thực tế không ai thêm, và doctrine cứ trôi tụt sau
+    cổng (BH39). Đo trước khi vá: luật "phải TRA rút bài, không được tự nhớ" có ở
+    **0/50** agent; sau khi vá: **50/50**.
+
+    Nay `THAY_THE` là một DANH SÁCH cặp: thêm luật = thêm một dòng, chạy `--refresh`.
+
+    Kiểm HÀNH VI: (a) cơ chế phải nhận nhiều cặp; (b) luật rút bài phải có mặt ở MỌI
+    agent — thiếu một file cũng là một agent trả lời bằng trí nhớ về chuyện sau ngày cắt.
+    """
+    e = _nap(REPO / "tools" / "enforce_agent_guardrails.py", "eag_bh40")
+    if not isinstance(getattr(e, "THAY_THE", None), list) or len(e.THAY_THE) < 2:
+        return False, ("cơ chế refresh lại chỉ nhận một cặp cứng — thêm luật cho toàn đội "
+                       "sẽ phải sửa chính cơ chế, và vì thế sẽ không ai thêm")
+    if "check_citation_retraction" not in e.BLOCK:
+        return False, "khối chung mất luật kiểm rút bài — agent mới cấy sẽ không có"
+    thu_muc = REPO / ".claude" / "agents"
+    ds = [p for p in thu_muc.glob("*.md") if not p.name.startswith("_")
+          and p.name not in ("README.md",)]
+    thieu = [p.name for p in ds
+             if e.MARKER in p.read_text(encoding="utf-8", errors="replace")
+             and "check_citation_retraction" not in p.read_text(encoding="utf-8", errors="replace")]
+    if thieu:
+        return False, (f"{len(thieu)} agent thiếu luật kiểm rút bài (vd {thieu[0]}) — "
+                       "sẽ trả lời bằng trí nhớ về một sự kiện có thể sau ngày cắt")
+    return True, f"{len(e.THAY_THE)} cặp lan được; {len(ds)} agent đều có luật kiểm rút bài"
+
+
+def bh41_cong_cu_chung_cu_khong_duoc_mo_coi():
+    """14/08 — 8 công cụ chứng cứ lâm sàng tồn tại mà KHÔNG agent nào gọi tên.
+
+    Đo trước khi vá, trên 84 file `.claude/agents/`: sổ xác minh nguồn · chuỗi rút bài ·
+    dò chứng cứ vượt qua · phân hạng · kiểm con số · đăng ký chủ đề · chu trình · phủ
+    giám sát — **0 agent** nhắc tới cái nào. Trong khi tuyến NGHIÊN CỨU nối dây đầy đủ
+    (`gen_research_docx.py` 73 lượt, `approve_gate.py` 8, `gate_contract.py` 6).
+
+    Một công cụ không agent nào gọi thì với dây chuyền hằng ngày nó **không tồn tại** —
+    dù nó chạy đúng và có test. Đây là cách công sức âm thầm bốc hơi: viết xong, chạy
+    được một lần, rồi không bao giờ được gọi lại.
+
+    Kiểm HÀNH VI: mỗi công cụ chứng cứ lâm sàng phải được ÍT NHẤT một agent gọi tên.
+    Thêm công cụ mới mà quên dạy agent ⇒ chốt này đỏ.
+    """
+    thu_muc = REPO / ".claude" / "agents"
+    if not thu_muc.is_dir():
+        return False, "không thấy thư mục agent"
+    # Công cụ thuộc dây chuyền CHỨNG CỨ LÂM SÀNG (không tính tuyến nghiên cứu G0-G10).
+    CONG_CU = ("check_citation_retraction", "so_xac_minh_nguon", "kiem_chung_cu_vuot_qua",
+               "kiem_phan_hang", "kiem_so_lieu", "dang_ky_chu_de", "chu_trinh_chung_cu",
+               "kiem_phu_giam_sat", "uu_tien_cap_nhat")
+    van = "\n".join(p.read_text(encoding="utf-8", errors="replace")
+                    for p in thu_muc.glob("*.md"))
+    mo_coi = [t for t in CONG_CU
+              if (REPO / "tools" / f"{t}.py").exists()
+              or (REPO / "medical-ebm-automation" / "tools" / f"{t}.py").exists()]
+    mo_coi = [t for t in mo_coi if t not in van]
+    if mo_coi:
+        return False, (f"{len(mo_coi)} công cụ chứng cứ KHÔNG agent nào gọi tên "
+                       f"({', '.join(mo_coi[:3])}) — với dây chuyền hằng ngày chúng không tồn tại")
+    return True, f"{len(CONG_CU)} công cụ chứng cứ đều có agent gọi"
+
+
+def bh42_guideline_khong_duoc_tin_theo_thuong_hieu():
+    """14/08 — hệ hút guideline về rồi tin theo TÊN TỔ CHỨC, không có công cụ thẩm định.
+
+    Đo trên 84 file `.claude/agents/`: **AGREE II xuất hiện ở đúng 1 file — và đó là
+    rubric QA nội bộ, không phải agent thẩm định**. Trong khi `cap-nhat-guideline` nhắc
+    "guideline" 16 lần, `huong-dan-lam-sang` 19 lần, `tra-cuu-chung-cu` 13 lần — không
+    agent nào cầm công cụ đo chất lượng guideline.
+
+    Nguy hiểm hơn kể từ 14/08: watchlist vừa mở 4 kênh gọi thẳng tên Cochrane · NICE ·
+    USPSTF · WHO, nên hệ hút về NHIỀU guideline hơn, tất cả đều "có thương hiệu".
+    Một khuyến cáo của hiệp hội lớn nhưng **Miền 3 (Rigour of Development)** yếu thì bản
+    chất là đồng thuận chuyên gia có logo — đúng thứ `design:'Consensus'` mô tả, và
+    Consensus KHÔNG BAO GIỜ đủ để miễn trừ quy phạm (BH03).
+
+    Bốn chuẩn quốc tế khác cũng ở mức 0 agent trước ngày này: RIGHT (báo cáo khuyến cáo
+    do chính mình đưa ra) · PRISMA-S (báo cáo chiến lược tìm — 44/62 gói chưa từng ghi) ·
+    ROBIS (sai lệch của chính tổng quan) · CERQual (chứng cứ định tính).
+
+    Kiểm HÀNH VI: mỗi chuẩn phải có ít nhất một agent cầm, VÀ định danh trích kèm phải
+    đúng bài phương pháp gốc — trích nhầm bài ÁP DỤNG thành bài chuẩn là lỗi trích dẫn.
+    """
+    thu_muc = REPO / ".claude" / "agents"
+    if not thu_muc.is_dir():
+        return False, "không thấy thư mục agent"
+    van = {p.name: p.read_text(encoding="utf-8", errors="replace")
+           for p in thu_muc.glob("*.md")}
+    gop = "\n".join(van.values())
+    # (chuẩn, PMID bài PHƯƠNG PHÁP GỐC — đã tra PubMed 14/08/2026, không lấy từ trí nhớ)
+    CHUAN = (("AGREE II", "20656455"), ("RIGHT", "27893062"), ("PRISMA-S", "34285662"),
+             ("CERQual", "26506244"), ("ROBIS", "26092286"))
+    thieu = [t for t, _ in CHUAN if t not in gop]
+    if thieu:
+        return False, (f"{len(thieu)} chuẩn quốc tế không agent nào cầm: {', '.join(thieu)}")
+    sai_pmid = [t for t, pm in CHUAN if pm not in gop]
+    if sai_pmid:
+        return False, (f"chuẩn {', '.join(sai_pmid)} được nhắc nhưng THIẾU PMID bài phương "
+                       "pháp gốc — trích tên chuẩn mà không truy được nguồn")
+    # AGREE II phải nằm ở agent TIÊU THỤ guideline, không chỉ ở rubric nội bộ.
+    tieu_thu = [t for t in ("cap-nhat-guideline.md", "huong-dan-lam-sang.md")
+                if t in van and "AGREE II" not in van[t]]
+    if tieu_thu:
+        return False, (f"agent tiêu thụ guideline thiếu AGREE II: {', '.join(tieu_thu)} — "
+                       "hệ lại tin guideline theo thương hiệu")
+    return True, f"{len(CHUAN)} chuẩn đều có agent cầm, kèm PMID bài gốc"
+
+
+def bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc():
+    """14/08 — mọi chốt BH01–BH42 kiểm CHỮ TRONG FILE, không cái nào kiểm dây chuyền CHẠY.
+
+    Khoảng cách này không lý thuyết. Riêng ngày 14/08 tìm được ba ca mà luật CÓ MẶT nhưng
+    KHÔNG BAO GIỜ chạy tới: `return` sớm khi thiếu `DATA.standards` (che 73 mục nguy hiểm
+    trên 47 dashboard) · bộ lọc `[ptyp]` ở khâu tìm (22 chủ đề báo "0 ứng viên" trong khi
+    có chứng cứ mới) · 8 công cụ chứng cứ mà 0 agent gọi.
+
+    `tools/thu_dau_cuoi_chung_cu.py` gài lỗi ĐÃ BIẾT vào một gói GIẢ rồi đòi dây chuyền
+    bắt được — 8 phép thử, gồm cả hai nhánh của luật `apply` + `gradeLevel:'na'` (nhánh
+    nghiên cứu thường và nhánh văn bản quy phạm). Chính bản đầu của canary đã kỳ vọng
+    NHẦM nhánh, và cổng mới là bên đúng — đúng giá trị của một phép thử có đáp án biết trước.
+
+    Kiểm HÀNH VI: canary phải tồn tại VÀ chạy xanh. Canary đỏ ⇒ có lỗ hổng THẬT ở dây
+    chuyền, không phải chuyện câu chữ.
+    """
+    import subprocess
+    tp = REPO / "tools" / "thu_dau_cuoi_chung_cu.py"
+    if not tp.exists():
+        return False, "mất canary đầu-cuối — không còn gì chứng minh dây chuyền CHẠY đúng"
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=300)
+    if r.returncode != 0:
+        dong = [d.strip() for d in (r.stdout or "").splitlines() if d.strip().startswith("✗")]
+        return False, ("canary ĐỎ — lỗ hổng thật ở dây chuyền: "
+                       + (dong[0][:150] if dong else "xem `python tools/thu_dau_cuoi_chung_cu.py`"))
+    so = (r.stdout or "").count("  ✓ ")
+    return True, f"canary xanh {so}/{so} phép thử gài lỗi"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1485,6 +1673,11 @@ BAI_HOC = [
     ("BH36", "14/08", "gradeLevel phải khai ai đã chấm", bh36_grade_phai_khai_ai_cham),
     ("BH37", "14/08", "Ứng viên phải mang độ tin cậy ngay lúc nhận", bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan),
     ("BH38", "14/08", "Không lọc bỏ cái mới nhất ở khâu tìm", bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim),
+    ("BH39", "14/08", "Doctrine không được trôi sau cổng", bh39_doctrine_khong_duoc_troi_sau_cong),
+    ("BH40", "14/08", "Luật toàn đội phải lan được xuống mọi agent", bh40_luat_toan_doi_phai_lan_duoc_xuong_moi_agent),
+    ("BH41", "14/08", "Công cụ chứng cứ không được mồ côi", bh41_cong_cu_chung_cu_khong_duoc_mo_coi),
+    ("BH42", "14/08", "Guideline không được tin theo thương hiệu", bh42_guideline_khong_duoc_tin_theo_thuong_hieu),
+    ("BH43", "14/08", "Canary đầu-cuối phải chạy và phải bắt được", bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc),
 ]
 
 
