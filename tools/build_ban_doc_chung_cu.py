@@ -396,7 +396,55 @@ def li_list(items, cls="") -> str:
     return "".join(f"<li>{esc(normalize_title(x))}</li>" for x in items)
 
 
-def build_page(data: dict, source_name: str) -> str:
+DEC_VN = {"apply": "áp dụng ngay", "consider": "cân nhắc chọn lọc",
+          "notyet": "chưa đủ để đổi thực hành"}
+
+
+def khoi_mau_thuan(src: Path) -> str:
+    """Dải cảnh báo: bản KHÁC cùng chủ đề đang kết luận ngược về cùng một PMID.
+
+    VÌ SAO Ở ĐÂY (14/08/2026). Phép dò đã có từ 12/08 trong
+    `tools/dang_ky_chu_de.py`, nhưng nó chỉ nói ra khi bác sĩ chủ động gõ lệnh đó.
+    Tại phòng khám, thứ được mở là bản đọc — và bản đọc trước nay hoàn toàn im
+    lặng về việc một lát cắt khác của cùng chủ đề đã kết luận ngược lại. Cảnh báo
+    nằm đúng nơi người ta nhìn thì mới có tác dụng.
+
+    KHÔNG đổi `decision` của bất kỳ mục nào (BH10) — chỉ đặt hai kết luận cạnh
+    nhau để bác sĩ tự quyết. Cũng KHÔNG đoán bên nào đúng: hai bản có thể đang nói
+    về hai KẾT CỤC khác nhau của cùng một thử nghiệm, và độ giống từ vựng không
+    phân biệt được việc đó (BH28) — nên in cả hai tiêu đề, để người đọc phán.
+
+    Không tính được (thiếu module, kho không quét được) thì NÓI RA là chưa kiểm,
+    tuyệt đối không im lặng bỏ qua — im lặng ở đây đọc thành "đã kiểm, không có".
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from dang_ky_chu_de import mau_thuan_cua_ban  # noqa: PLC0415
+        xung_dot = mau_thuan_cua_ban(src)
+    except Exception as e:  # noqa: BLE001 — chưa kiểm được phải LỘ RA
+        return ('<div class="xungdot chuakiem"><h3>Chưa kiểm được mâu thuẫn giữa các bản</h3>'
+                f'<p>Không quét được kho dashboard ({esc(type(e).__name__)}). '
+                'Đây là “chưa biết”, không phải “không có”. Chạy '
+                '<code>python tools/dang_ky_chu_de.py</code> để kiểm tay.</p></div>')
+    if not xung_dot:
+        return ""
+    hang = "".join(
+        f'<li><b>PMID {esc(x["pmid"])}</b> — bản đang đọc kết luận '
+        f'<em>{esc(DEC_VN.get(x["quyet_dinh_minh"], x["quyet_dinh_minh"]))}</em>, '
+        f'còn bản <b>{esc(x["doi_ben"])}</b> ({esc(x["ngay_ben"])}) kết luận '
+        f'<em>{esc(DEC_VN.get(x["quyet_dinh_ben"], x["quyet_dinh_ben"]))}</em>.'
+        f'<span class="doi">bản này: {esc(x["tieu_de_minh"])}</span>'
+        f'<span class="doi">bản kia: {esc(x["tieu_de_ben"])}</span></li>'
+        for x in xung_dot)
+    return ('<div class="xungdot"><h3>Bản khác cùng chủ đề đang kết luận ngược — '
+            f'{len(xung_dot)} mục</h3>'
+            '<p class="sub">Đọc cả hai trước khi áp dụng. Hai bản có thể đang nói về hai kết cục '
+            'khác nhau của cùng một nghiên cứu, hoặc một bản chưa được cập nhật. Máy không phán '
+            'bên nào đúng và không tự đổi kết luận nào.</p>'
+            f'<ul>{hang}</ul></div>')
+
+
+def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
     meta = data.get("meta", {})
     summary = data.get("summary", {})
     items = data.get("items", [])
@@ -496,6 +544,8 @@ def build_page(data: dict, source_name: str) -> str:
     <div><b class="ok">{len(eff_items)}</b><span>mục có hiệu số định lượng</span></div>
   </div>
 </header>
+
+{khoi_mau_thuan(src) if src else ''}
 
 <nav class="nav" aria-label="Mục lục">
   <a href="#lam">1. Việc cần làm</a>
@@ -614,6 +664,21 @@ grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px 30px}
 .redflags li{position:relative;padding-left:18px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
 .redflags li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;
 border-radius:50%;background:var(--harm)}
+/* Dải mâu thuẫn giữa các bản — đặt ngay dưới đầu trang, trước mục lục, vì đây là
+   cảnh báo về ĐỘ TIN CẬY của chính tài liệu đang đọc. Dùng tông cảnh báo (cam)
+   chứ KHÔNG dùng tông cờ đỏ: cờ đỏ là nguy cấp lâm sàng của người bệnh, hai thứ
+   không được trông giống nhau. */
+.xungdot{background:var(--caution-soft);border-left:4px solid var(--caution);
+padding:20px 24px;margin:26px 0 0}
+.xungdot h3{margin:0 0 6px;font-size:16px;font-weight:700;color:var(--caution)}
+.xungdot .sub{margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.xungdot ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.xungdot li{font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.xungdot li b{color:var(--ink)}.xungdot li em{font-style:normal;font-weight:700;color:var(--caution)}
+.xungdot .doi{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+.xungdot.chuakiem{background:var(--ground);border-left-color:var(--rule-strong)}
+.xungdot.chuakiem h3{color:var(--ink-2)}
+.xungdot code{font-size:12.5px;background:var(--surface);padding:1px 5px;border-radius:3px}
 .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1px;
 margin-top:24px;background:var(--rule)}
 .act{background:var(--ground);padding:22px 24px}
@@ -711,7 +776,7 @@ def main() -> int:
         return 2
 
     data = extract_data(src.read_text(encoding="utf-8"))
-    page = build_page(data, src.name)
+    page = build_page(data, src.name, src)
 
     if a.out:
         out = Path(a.out)

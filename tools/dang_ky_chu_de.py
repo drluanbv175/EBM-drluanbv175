@@ -109,7 +109,19 @@ def tach_ten(ten: str) -> tuple[str, str, str] | None:
     # để bản đó vẫn nằm trong đăng ký và vẫn được so mâu thuẫn.
     lat_cat = m.group(2) or m.group(1)
     goc = HAU_TO.sub("", lat_cat).split("_")[0]
-    return lat_cat, goc, m.group(2)
+    # VÁ 14/08/2026 (vòng lặp kiểm tra–hoàn thiện) — trước đây trả `m.group(2)`,
+    # tức TÊN CHỦ ĐỀ, ở đúng vị trí NGÀY. Lỗi vào kho cùng bản vá "chủ đề là tuỳ
+    # chọn" ở trên: khi thêm nhóm bắt được tuỳ chọn, chỉ số nhóm dịch đi một bậc
+    # mà chỗ trả về không dịch theo. Hai hậu quả, cái sau nặng hơn nhiều:
+    #   (a) hiển thị: bảng "PHIÊN BẢN NỐI TIẾP" in tên chủ đề vào cột ngày, nên
+    #       đọc ra "bản SuyTim_TongHop nằm gọn trong bản SuyTim_TongHop" — vô nghĩa;
+    #   (b) ĐÚNG ĐẮN: `tim_mau_thuan()` khoá cache theo giá trị này, nên 3 bản
+    #       SuyTim_TongHop (04/08 · 05/08 · 11/08) sập vào MỘT khoá — mọi phép so
+    #       dính tới chúng đều đọc nhầm nội dung bản 11/08. Cặp 04/08⟷05/08 hoá
+    #       thành so bản 11/08 với CHÍNH NÓ ⇒ vĩnh viễn 0 mâu thuẫn.
+    # Cùng lớp lỗi với BH15/BH23: công cụ vẫn chạy, vẫn in một con số, nhưng con
+    # số đó không đo thứ nó tự nhận là đang đo.
+    return lat_cat, goc, m.group(3)
 
 
 def doc_muc(vd, p: Path) -> dict[str, list[tuple]]:
@@ -143,50 +155,49 @@ def doc_muc(vd, p: Path) -> dict[str, list[tuple]]:
     return out
 
 
-def main() -> int:
-    for s in (sys.stdout, sys.stderr):
-        try:
-            s.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, ValueError):
-            pass
-    ap = argparse.ArgumentParser(description="Đăng ký chủ đề + phát hiện mâu thuẫn giữa các bản")
-    ap.add_argument("--mau-thuan", action="store_true", help="chỉ in phần mâu thuẫn")
-    a = ap.parse_args()
+def quet_kho(dash: Path | None = None):
+    """Quét kho dashboard → (vd, theo_lat_cat, theo_goc).
 
+    Tách ra khỏi main() ngày 14/08/2026 để `build_ban_doc_chung_cu.py` dùng lại
+    ĐÚNG phép dò này. Trước đó phần dò mâu thuẫn chỉ sống trong một lệnh CLI mà
+    bác sĩ hiếm khi gõ, nên một bản đọc tại phòng khám không hề biết bản khác cùng
+    chủ đề đang kết luận ngược lại. Chép logic sang nơi thứ hai sẽ tạo hai bản dễ
+    lệch nhau — đúng lớp lỗi mà kho này đã vấp nhiều lần.
+    """
     vd = nap_vd()
     theo_lat_cat: dict[str, list[tuple[str, Path]]] = collections.defaultdict(list)
     theo_goc: dict[str, list[tuple[str, str, Path]]] = collections.defaultdict(list)
-    for p in sorted(DASH.glob("WebDashboard_*.html")):
+    for p in sorted((dash or DASH).glob("WebDashboard_*.html")):
         r = tach_ten(p.name)
         if not r:
             continue
         lat_cat, goc, ngay = r
         theo_lat_cat[lat_cat].append((ngay, p))
         theo_goc[goc].append((ngay, lat_cat, p))
+    return vd, theo_lat_cat, theo_goc
 
-    # (1) PHIÊN BẢN NỐI TIẾP — cùng lát cắt, khác ngày. Đây mới là "bản cũ bị thay".
-    nhieu_phien_ban = {k: sorted(v) for k, v in theo_lat_cat.items() if len(v) > 1}
-    chi_thieu: list[tuple] = []
-    for lc, v in nhieu_phien_ban.items():
-        muc_moi = doc_muc(vd, v[-1][1])
-        for ngay_cu, p_cu in v[:-1]:
-            muc_cu = doc_muc(vd, p_cu)
-            if muc_cu and not (set(muc_cu) - set(muc_moi)):
-                chi_thieu.append((lc, ngay_cu, v[-1][0], len(set(muc_moi) - set(muc_cu))))
 
-    # (2) MÂU THUẪN — so MỌI cặp bản trong cùng chủ đề gốc, kể cả khác lát cắt:
-    # hai bản nói ngược nhau về cùng một PMID là vấn đề dù chúng bổ sung cho nhau.
-    mau_thuan: list[tuple] = []
-    khong_so_duoc: list[tuple] = []
+def tim_mau_thuan(vd, theo_goc) -> tuple[list[dict], list[dict]]:
+    """(mâu_thuẫn, không_so_được) — bản ghi CÓ ĐƯỜNG DẪN để lọc theo từng file.
+
+    So MỌI cặp bản trong cùng chủ đề gốc, kể cả khác lát cắt: hai bản nói ngược
+    nhau về cùng một PMID là vấn đề dù chúng bổ sung cho nhau.
+    """
+    mau_thuan: list[dict] = []
+    khong_so_duoc: list[dict] = []
     for goc, v in sorted(theo_goc.items()):
         if len(v) < 2:
             continue
         v = sorted(v)
-        cache = {ngay: doc_muc(vd, p) for ngay, _lc, p in v}
+        # Khoá cache theo ĐƯỜNG DẪN, không theo ngày. Ngày cũng va chạm được: hai
+        # lát cắt khác nhau của cùng chủ đề có thể ra cùng ngày (RA_Than và
+        # RA_TimMach đều 30/06/2026). Va chạm khoá ở đây không báo lỗi — nó lặng
+        # lẽ đem nội dung của bản này gán cho bản kia.
+        cache = {p: doc_muc(vd, p) for _n, _lc, p in v}
         for i in range(len(v)):
             for j in range(i + 1, len(v)):
-                (n1, lc1, _), (n2, lc2, _) = v[i], v[j]
-                m1, m2 = cache[n1], cache[n2]
+                (n1, lc1, p1), (n2, lc2, p2) = v[i], v[j]
+                m1, m2 = cache[p1], cache[p2]
                 khac = []
                 for pm in sorted(set(m1) & set(m2)):
                     a1, a2 = m1[pm], m2[pm]
@@ -195,8 +206,11 @@ def main() -> int:
                     # ghép tuỳ tiện hai trong số đó rồi gọi là "nói ngược nhau" là
                     # BÁO ĐỘNG GIẢ — thứ đã được ghi là tệ hơn không kiểm.
                     if len(a1) > 1 or len(a2) > 1:
-                        khong_so_duoc.append(
-                            (goc, f"{lc1} ({n1})", f"{lc2} ({n2})", pm, len(a1), len(a2)))
+                        khong_so_duoc.append({
+                            "goc": goc, "pmid": pm,
+                            "a": {"lat_cat": lc1, "ngay": n1, "path": p1, "so_muc": len(a1)},
+                            "b": {"lat_cat": lc2, "ngay": n2, "path": p2, "so_muc": len(a2)},
+                        })
                         continue
                     if a1[0][0] != a2[0][0]:
                         # HOÀN TÁC 14/08/2026 — bản vá tự phân loại "khác kết cục"
@@ -211,7 +225,67 @@ def main() -> int:
                         # bác sĩ tự thấy ngay đây là cùng khẳng định hay khác kết cục.
                         khac.append((pm, a1[0], a2[0]))
                 if khac:
-                    mau_thuan.append((goc, f"{lc1} ({n1})", f"{lc2} ({n2})", khac))
+                    mau_thuan.append({
+                        "goc": goc, "khac": khac,
+                        "a": {"lat_cat": lc1, "ngay": n1, "path": p1},
+                        "b": {"lat_cat": lc2, "ngay": n2, "path": p2},
+                    })
+    return mau_thuan, khong_so_duoc
+
+
+def mau_thuan_cua_ban(duong_dan: Path) -> list[dict]:
+    """Mâu thuẫn liên quan tới ĐÚNG một dashboard, theo góc nhìn của bản đó.
+
+    Trả danh sách `{"doi_ben": <lát cắt bản kia>, "ngay_ben": …, "pmid": …,
+    "quyet_dinh_minh": …, "quyet_dinh_ben": …, "tieu_de_minh": …,
+    "tieu_de_ben": …}`. Dùng cho trang bác sĩ đọc: câu hỏi ở đó không phải "kho
+    có bao nhiêu mâu thuẫn" mà "bản TÔI ĐANG ĐỌC có chỗ nào bản khác nói ngược".
+    """
+    duong_dan = Path(duong_dan).resolve()
+    vd, _lat, theo_goc = quet_kho(duong_dan.parent)
+    mau_thuan, _ = tim_mau_thuan(vd, theo_goc)
+    ra: list[dict] = []
+    for m in mau_thuan:
+        for minh, ben, dao in ((m["a"], m["b"], False), (m["b"], m["a"], True)):
+            if Path(minh["path"]).resolve() != duong_dan:
+                continue
+            for pm, x, y in m["khac"]:
+                # `khac` luôn xếp theo (bản a, bản b); khi bản ĐANG ĐỌC là b thì
+                # phải đảo, nếu không trang sẽ gán nhầm quyết định của bản kia
+                # thành của chính mình — sai theo hướng nguy hiểm nhất.
+                cua_minh, cua_ben = (y, x) if dao else (x, y)
+                ra.append({
+                    "goc": m["goc"], "pmid": pm,
+                    "doi_ben": ben["lat_cat"], "ngay_ben": ben["ngay"],
+                    "quyet_dinh_minh": cua_minh[0], "quyet_dinh_ben": cua_ben[0],
+                    "tieu_de_minh": cua_minh[3], "tieu_de_ben": cua_ben[3],
+                })
+    return ra
+
+
+def main() -> int:
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+    ap = argparse.ArgumentParser(description="Đăng ký chủ đề + phát hiện mâu thuẫn giữa các bản")
+    ap.add_argument("--mau-thuan", action="store_true", help="chỉ in phần mâu thuẫn")
+    a = ap.parse_args()
+
+    vd, theo_lat_cat, theo_goc = quet_kho()
+
+    # (1) PHIÊN BẢN NỐI TIẾP — cùng lát cắt, khác ngày. Đây mới là "bản cũ bị thay".
+    nhieu_phien_ban = {k: sorted(v) for k, v in theo_lat_cat.items() if len(v) > 1}
+    chi_thieu: list[tuple] = []
+    for lc, v in nhieu_phien_ban.items():
+        muc_moi = doc_muc(vd, v[-1][1])
+        for ngay_cu, p_cu in v[:-1]:
+            muc_cu = doc_muc(vd, p_cu)
+            if muc_cu and not (set(muc_cu) - set(muc_moi)):
+                chi_thieu.append((lc, ngay_cu, v[-1][0], len(set(muc_moi) - set(muc_cu))))
+
+    mau_thuan, khong_so_duoc = tim_mau_thuan(vd, theo_goc)
 
     if not a.mau_thuan:
         print("=" * 70)
@@ -259,15 +333,21 @@ def main() -> int:
         print(f"\n  ⚠ {len(khong_so_duoc)} PMID KHÔNG so tự động được — một tài liệu mang")
         print("     NHIỀU khuyến cáo, mỗi khuyến cáo có quyết định riêng. Ghép tuỳ tiện")
         print("     hai trong số đó rồi gọi là 'nói ngược nhau' là BÁO ĐỘNG GIẢ.")
-        for goc, a, b, pm, n1, n2 in khong_so_duoc:
-            print(f"     • {goc}: PMID {pm} — {a} có {n1} mục · {b} có {n2} mục → bác sĩ đọc tay")
-    tong = sum(len(k[3]) for k in mau_thuan)
+        for k in khong_so_duoc:
+            x, y = k["a"], k["b"]
+            print(f"     • {k['goc']}: PMID {k['pmid']} — {x['lat_cat']} ({x['ngay']}) có "
+                  f"{x['so_muc']} mục · {y['lat_cat']} ({y['ngay']}) có {y['so_muc']} mục "
+                  f"→ bác sĩ đọc tay")
+    tong = sum(len(k["khac"]) for k in mau_thuan)
     print(f"  🔴 {tong} MỤC HAI BẢN NÓI NGƯỢC NHAU — cùng PMID, khác quyết định")
     print("=" * 70)
     print("  Đây là rủi ro thật: mở bản cũ sẽ đọc một kết luận mà bản mới đã bác.\n")
-    for cd, cu, moi, khac in mau_thuan:
+    for rec in mau_thuan:
+        cd = rec["goc"]
+        cu = f"{rec['a']['lat_cat']} ({rec['a']['ngay']})"
+        moi = f"{rec['b']['lat_cat']} ({rec['b']['ngay']})"
         print(f"  ▸ {cd}:  {cu}   ⟷   {moi}")
-        for pm, c, m in khac:
+        for pm, c, m in rec["khac"]:
             note = ""
             if m[2] and not c[2]:
                 note = "  [bản mới có normativeBasis, bản cũ chưa]"

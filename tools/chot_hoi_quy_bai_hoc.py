@@ -972,6 +972,84 @@ def bh29_moi_ham_bh_deu_phai_duoc_dang_ky():
     return True, f"{len(dinh_nghia)} chốt đều được đăng ký và đều chạy"
 
 
+def bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat():
+    """14/08 — khoá gom nhóm bị TRÙNG thì nội dung bản này bị gán cho bản kia.
+
+    Lỗi thật trong `tools/dang_ky_chu_de.py`: `tach_ten()` trả `m.group(2)` (TÊN
+    CHỦ ĐỀ) ở đúng vị trí NGÀY — lệch một bậc sau khi thêm nhóm bắt tuỳ chọn cho
+    file không có phần chủ đề. Phần dò mâu thuẫn khoá cache theo giá trị đó, nên
+    3 bản `SuyTim_TongHop` (04/08 · 05/08 · 11/08) sập vào MỘT khoá: mọi phép so
+    dính tới chúng đọc nhầm nội dung bản 11/08, và cặp 04/08⟷05/08 hoá thành so
+    bản 11/08 với CHÍNH NÓ ⇒ vĩnh viễn 0 mâu thuẫn.
+
+    Đã chứng minh bằng đột biến: cấy MỘT mâu thuẫn thật vào bản 04/08 thì bản lỗi
+    báo 0, bản vá báo 1. Kho lúc đó tình cờ không có mâu thuẫn nào giữa các bản
+    SuyTim nên con số tổng KHÔNG đổi — tức lỗi hoàn toàn vô hình nếu chỉ nhìn số.
+
+    Ngày cũng KHÔNG đủ làm khoá: hai lát cắt khác nhau của cùng chủ đề có thể ra
+    cùng ngày (RA_Than và RA_TimMach đều 30/06/2026). Khoá duy nhất là ĐƯỜNG DẪN.
+
+    Cùng họ BH15/BH23: công cụ vẫn chạy, vẫn in một con số, nhưng con số đó không
+    đo thứ nó tự nhận là đang đo.
+
+    Kiểm HÀNH VI (không đếm chuỗi): dựng 2 bản cùng lát cắt khác ngày, cấy mâu
+    thuẫn, đòi bộ dò phải bắt được.
+    """
+    import shutil as _sh
+    import tempfile as _tmp
+    dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_bh30")
+    dash = REPO / "EBM-Dashboards"
+    goc = sorted(dash.glob("WebDashboard_*.html"))
+    if len(goc) < 1:
+        return False, "kho dashboard rỗng — không dựng được ca thử"
+    vd = dk.nap_vd()
+    mau = None
+    for p in goc:
+        blk = vd.extract_data_block(p.read_text(encoding="utf-8", errors="replace"))
+        if not blk:
+            continue
+        for c in vd.split_items(blk):
+            if vd.field(c, "pmid") and vd.field(c, "decision"):
+                mau = (p, c)
+                break
+        if mau:
+            break
+    if not mau:
+        return False, "không tìm được item có pmid+decision để dựng ca thử"
+
+    p_goc, chunk = mau
+    tmp = Path(_tmp.mkdtemp())
+    try:
+        # Hai bản CÙNG lát cắt, KHÁC ngày — đúng hình dạng đã gây lỗi.
+        a = tmp / "WebDashboard_EBM_VanDeCuThe_ChotBH30_20260101.html"
+        b = tmp / "WebDashboard_EBM_VanDeCuThe_ChotBH30_20260202.html"
+        _sh.copy(p_goc, a)
+        _sh.copy(p_goc, b)
+        s = a.read_text(encoding="utf-8")
+        cu = vd.field(chunk, "decision")
+        moi_dec = "notyet" if cu != "notyet" else "apply"
+        moi, n = re.subn(r'(decision\s*:\s*)["\'][a-z]+["\']',
+                         rf'\1"{moi_dec}"', chunk, count=1)
+        if n != 1:
+            return False, "không cấy được mâu thuẫn vào chunk"
+        a.write_text(s.replace(chunk, moi), encoding="utf-8")
+
+        v, _lat, theo_goc = dk.quet_kho(tmp)
+        mt, _ = dk.tim_mau_thuan(v, theo_goc)
+        tong = sum(len(m["khac"]) for m in mt)
+        if tong < 1:
+            return False, ("cấy 1 mâu thuẫn giữa 2 bản cùng lát cắt mà bộ dò báo 0 — "
+                           "khoá gom nhóm lại bị trùng")
+        # và phải quy đúng cho bản đang đọc, không đảo chiều
+        rieng = dk.mau_thuan_cua_ban(a)
+        if not rieng or rieng[0]["quyet_dinh_minh"] != moi_dec:
+            return False, ("mâu thuẫn quy sai chiều: bản đang đọc phải mang quyết định "
+                           f"{moi_dec!r}, nhận {rieng[0]['quyet_dinh_minh'] if rieng else None!r}")
+        return True, f"bắt được {tong} mâu thuẫn cấy vào và quy đúng chiều"
+    finally:
+        _sh.rmtree(tmp, ignore_errors=True)
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1002,6 +1080,7 @@ BAI_HOC = [
     ("BH27", "14/08", "«Không kiểm được» phải bị tính là VẤN ĐỀ", bh27_khong_kiem_duoc_phai_la_van_de),
     ("BH28", "14/08", "Không thay phán đoán ngữ nghĩa bằng độ giống từ vựng", bh28_khong_thay_phan_doan_ngu_nghia_bang_do_giong_tu_vung),
     ("BH29", "14/08", "Mọi chốt định nghĩa đều phải được đăng ký", bh29_moi_ham_bh_deu_phai_duoc_dang_ky),
+    ("BH30", "14/08", "Khoá gom nhóm phải định danh duy nhất", bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat),
 ]
 
 
