@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""TRẠM QUAN SÁT THEO TỔ CHỨC — LÔ B PHA 4 (15/08/2026).
+
+Vì sao: guideline thường lên WEB CỦA HỘI trước khi vào PubMed hàng tuần–tháng
+(GOLD/GINA/ADA SoC là ca kinh điển) — chỉ quét PubMed là chấp nhận trễ đúng
+khoảng đó. Trạm này theo dõi trang danh mục guideline/feed chính thức.
+
+TRẠNG THÁI THẬT (P6 — không bịa): egress tới host ngoài danh sách phê duyệt bị
+chặn ở tầng runtime của máy này, và tôi không xác minh sống được URL các hội ⇒
+mọi nguồn html-watch/rss trong `data/sources.json` đang `not-covered` với
+`endpoint_or_url=null`. Trạm vì thế DỰNG XONG NHƯNG NẰM CHỜ: bác sĩ xác minh
+URL + phê duyệt egress → điền endpoint, đổi status → trạm chạy ngay, không cần
+sửa code. Năng lực dò được CHỨNG MINH bằng `--self-test` fixture ngoại tuyến.
+
+Cách dò (chống báo động giả — đúng yêu cầu LÔ B):
+  • So TIÊU ĐỀ đã chuẩn hoá (bỏ thẻ HTML, gộp khoảng trắng), KHÔNG so vị trí
+    phần tử: đổi giao diện thuần tuý ⇒ 0 cảnh báo.
+  • Chỉ báo khi xuất hiện TIÊU ĐỀ MỚI mang năm/số hiệu, hoặc feed có item mới.
+  • Nguồn fetch hỏng → status degraded + in RÕ «chuyên khoa X đang mù» — tuyệt
+    đối không im lặng bỏ qua (I7).
+
+Đầu ra: `EBM-Dashboards/surveillance/to-chuc-<ngày>.md` (ứng viên
+source.type=guideline, kèm ngày phát hiện) · state ở `state/giam-sat-to-chuc.json`.
+Mã thoát: 0 sạch · 1 có phát hiện/degraded · 2 sổ nguồn hỏng.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+import urllib.error
+import urllib.request
+from datetime import date
+from pathlib import Path
+
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+GOC = Path(__file__).resolve().parents[1]
+SO_NGUON = GOC / "data" / "sources.json"
+STATE = GOC / "state" / "giam-sat-to-chuc.json"
+RA = GOC / "EBM-Dashboards" / "surveillance"
+
+# Tiêu đề «đáng giá»: có năm 20xx HOẶC từ khoá guideline/report/update/statement.
+RE_TIEU_DE = re.compile(
+    r"(?:20\d{2}|guideline|report|update|standards|statement|recommendation)", re.I)
+
+
+def rut_tieu_de(html: str) -> set[str]:
+    """Rút tập tiêu đề chuẩn hoá từ HTML/feed — so NỘI DUNG, không so vị trí."""
+    # feed: <title>…</title>; html: nội dung <a>/<h1..h4>
+    tho = re.findall(r"<title[^>]*>(.*?)</title>|<a[^>]*>(.*?)</a>|<h[1-4][^>]*>(.*?)</h[1-4]>",
+                     html, re.S | re.I)
+    ket: set[str] = set()
+    for bo in tho:
+        for x in bo:
+            if not x:
+                continue
+            sach = re.sub(r"<[^>]+>", " ", x)
+            sach = re.sub(r"\s+", " ", sach).strip()
+            if 12 <= len(sach) <= 220 and RE_TIEU_DE.search(sach):
+                ket.add(sach)
+    return ket
+
+
+def quet_mot_nguon(s: dict, noi_dung: str, state: dict) -> tuple[list[str], bool]:
+    """So với state cũ. Trả (tiêu đề MỚI, có_thay_đổi_thuần_giao_diện)."""
+    cu = state.get(s["id"], {})
+    tieu_de = rut_tieu_de(noi_dung)
+    moi = sorted(tieu_de - set(cu.get("titles", [])))
+    hash_moi = hashlib.sha256(noi_dung.encode("utf-8", "replace")).hexdigest()
+    chi_giao_dien = (not moi) and cu.get("hash") and cu["hash"] != hash_moi
+    state[s["id"]] = {"hash": hash_moi, "titles": sorted(tieu_de),
+                      "luc": date.today().isoformat()}
+    return moi, bool(chi_giao_dien)
+
+
+def _fetch(url: str) -> str | None:
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent":
+                                     "Mozilla/5.0 EBM-org-watch/1.0 (+bac si ngoai tru)"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return r.read(400_000).decode("utf-8", "replace")
+    except (urllib.error.URLError, OSError, ValueError):
+        return None
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Trạm quan sát guideline theo tổ chức")
+    ap.add_argument("--self-test", action="store_true")
+    a = ap.parse_args()
+    if a.self_test:
+        return _self_test()
+
+    try:
+        du = json.loads(SO_NGUON.read_text(encoding="utf-8"))
+        nguon = du["sources"]
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"🔴 Sổ nguồn hỏng: {exc}")
+        return 2
+    muc_tieu = [s for s in nguon if s["access"] in ("rss", "html-watch")
+                and s.get("endpoint_or_url") and s["status"] != "not-covered"]
+    if not muc_tieu:
+        cho = [s["id"] for s in nguon if s["access"] in ("rss", "html-watch")]
+        print(f"◌ 0 trạm đang bật. {len(cho)} trạm NẰM CHỜ endpoint đã xác minh + "
+              f"egress: {', '.join(cho)}")
+        print("  → bác sĩ xác minh URL chính thức, điền endpoint_or_url và đổi "
+              "status trong data/sources.json — trạm chạy ngay, không sửa code.")
+        return 0
+
+    state = {}
+    if STATE.exists():
+        try:
+            state = json.loads(STATE.read_text(encoding="utf-8"))
+        except ValueError:
+            state = {}
+    phat_hien: list[str] = []
+    hong: list[str] = []
+    for s in muc_tieu:
+        nd = _fetch(s["endpoint_or_url"])
+        if nd is None:
+            s["status"] = "degraded"
+            hong.append(f"{s['id']} {s['org']} — fetch hỏng ⇒ chuyên khoa "
+                        f"{'/'.join(s['domain'])} đang MÙ ở làn web (PubMed-lane vẫn chạy)")
+            continue
+        s["last_success_at"] = date.today().isoformat()
+        moi, giao_dien = quet_mot_nguon(s, nd, state)
+        for t in moi:
+            phat_hien.append(f"- **{s['org']}** · phát hiện {date.today().isoformat()} · "
+                             f"source.type=guideline · «{t}» — [CẦN KIỂM CHỨNG] đối chiếu "
+                             f"trang gốc trước khi vào hàng ứng viên")
+        if giao_dien:
+            print(f"  (bỏ qua {s['id']}: trang đổi thuần giao diện, 0 tiêu đề mới)")
+
+    STATE.parent.mkdir(exist_ok=True)
+    STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+    # Ghi CHÍNH đối tượng đã sửa (degraded/last_success) — đọc lại từ đĩa ở đây
+    # sẽ lặng lẽ vứt các đánh dấu vừa đặt, tức «nguồn hỏng im lặng» ngay trong
+    # công cụ chống nguồn-hỏng-im-lặng.
+    du["updated"] = date.today().isoformat()
+    SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n",
+                        encoding="utf-8")
+    if phat_hien:
+        RA.mkdir(exist_ok=True)
+        f = RA / f"to-chuc-{date.today().isoformat()}.md"
+        f.write_text("# ỨNG VIÊN TỪ TRẠM TỔ CHỨC — " + date.today().isoformat()
+                     + "\n\n" + "\n".join(phat_hien)
+                     + "\n\n> Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
+        print(f"🟠 {len(phat_hien)} tiêu đề mới → {f.relative_to(GOC)}")
+    for h in hong:
+        print("  ✗ " + h)
+    return 1 if (phat_hien or hong) else 0
+
+
+def _self_test() -> int:
+    """Giả lập «hội đăng guideline mới» — phải bắt trong 1 chu kỳ, giao diện đổi phải im."""
+    v1 = """<html><div class=old><h2>GOLD Report 2025 — Global Strategy for COPD</h2>
+            <a href=/x>Pocket Guide 2025</a><p>giới thiệu hội</p></html>"""
+    v1b = """<html><section class=new-layout><table><tr><td>
+             <h3>GOLD Report 2025 — Global Strategy for COPD</h3></td></tr></table>
+             <a href=/y>Pocket Guide 2025</a><footer>đổi giao diện</footer></html>"""
+    v2 = v1b.replace("</html>", "<a href=/z>2026 GOLD Report — NEW</a></html>")
+    s = {"id": "TEST", "org": "GOLD", "domain": ["hô hấp"]}
+    st: dict = {}
+    moi1, gd1 = quet_mot_nguon(s, v1, st)
+    moi1b, gd1b = quet_mot_nguon(s, v1b, st)
+    moi2, _gd2 = quet_mot_nguon(s, v2, st)
+    ok = True
+    print(f"  lượt 1 (nền): {len(moi1)} tiêu đề nạp — OK")
+    if moi1b or not gd1b:
+        print(f"  ✗ đổi THUẦN GIAO DIỆN mà báo {moi1b} — báo động giả")
+        ok = False
+    else:
+        print("  ✓ đổi thuần giao diện → 0 cảnh báo, nhận diện đúng là giao diện")
+    if moi2 == ["2026 GOLD Report — NEW"]:
+        print("  ✓ guideline MỚI bắt được trong 1 chu kỳ:", moi2[0])
+    else:
+        print(f"  ✗ không bắt được guideline mới (được: {moi2})")
+        ok = False
+    print("🟢 self-test ĐẠT" if ok else "🔴 self-test TRƯỢT")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

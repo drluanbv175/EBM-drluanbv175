@@ -554,6 +554,20 @@ def strict_source_checks(data_block, items, *, today=None):
             warns.append(thieu)
         if dec == "apply" and design == "Consensus":
             errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
+        # TẦNG TOÀN VĂN (PHA 4 LÔ D, 15/08/2026): thẩm định trên abstract KHÔNG
+        # ngang thẩm định đầy đủ. Item tự khai `appraisalCompleteness:'partial'`
+        # (chưa đọc toàn văn) thì bị CHẶN khỏi mức 'apply' — tối đa 'consider'.
+        # CHỈ chặn khi khai TƯỜNG MINH 'partial'; trường VẮNG MẶT thì không suy
+        # đoán (BH08 — «chưa khai» ≠ «một phần»; kho cũ chưa có trường này).
+        ac = field(ch, "appraisalCompleteness")
+        if dec == "apply" and ac == "partial":
+            errors.append("[%s] decision='apply' nhưng appraisalCompleteness='partial' "
+                          "(thẩm định CHƯA có toàn văn) — hạ xuống consider, hoặc đọc "
+                          "toàn văn hợp pháp (PMC OA/Europe PMC/bản công khai của tổ "
+                          "chức) rồi đổi thành 'full'." % iid)
+        elif ac == "partial":
+            warns.append("[%s] thẩm định MỘT PHẦN (chưa toàn văn) — nhãn này phải hiện "
+                         "trên bản đọc, không giấu trong metadata." % iid)
         if dec == "apply" and not (pmid or doi) and url:
             warns.append("[%s] 'apply' chỉ có URL, không có PMID/DOI — chỉ chấp nhận nếu là guideline/label chính thức và đã ghi rõ trong standards.gates." % iid)
 
@@ -1191,18 +1205,42 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                          "(đây là 'chưa biết', KHÔNG phải 'không có').")
             return
 
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("so_xm_vd", _p)
+        _mod_so = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod_so)
+
         def tra_cuu(ten):
-            import importlib.util as _ilu
-            _spec = _ilu.spec_from_file_location("so_xm_vd", _p)
-            _mod = _ilu.module_from_spec(_spec)
-            _spec.loader.exec_module(_mod)
-            return _mod.nguon_da_rut(ten)
+            return _mod_so.nguon_da_rut(ten)
+        _tra_dinh_danh = getattr(_mod_so, "dinh_danh_da_rut", None)
+    else:
+        # tra_cuu tiêm từ ngoài (test/BH31): giữ nguyên hợp đồng cũ, không tự ý
+        # mở thêm tầng định danh mà bên tiêm không biết.
+        _tra_dinh_danh = None
     try:
-        da_rut = tra_cuu(_Path(duong_dan).name)
+        da_rut = list(tra_cuu(_Path(duong_dan).name))
     except Exception as e:
         warns.append("Chưa kiểm được rút bài (%s) — 'chưa biết', KHÔNG phải 'không có'. "
                      "Chạy: python tools/so_xac_minh_nguon.py --quet <file>" % e)
         return
+
+    # TẦNG 2 (PHA 4 LÔ E, 15/08/2026): tra THẲNG định danh của CHÍNH file vào sổ.
+    # Lỗ hổng tìm ra bằng fixture: `nguon_da_rut` lọc theo ánh xạ cac_dashboard,
+    # nên dashboard MỚI trích đúng DOI đã rút nhưng chưa từng qua vòng quét A4 sẽ
+    # đi qua cổng sạch sẽ. Sổ đã BIẾT bài bị rút thì mọi file trích nó phải nghe.
+    if _tra_dinh_danh is not None:
+        try:
+            _nd = _Path(duong_dan).read_text(encoding="utf-8", errors="replace")
+            _ids = set(re.findall(r"pmid['\"]?\s*[:=]\s*['\"]?(\d{6,9})", _nd, re.I))
+            _ids |= {m.rstrip(".,;'\")”") for m in
+                     re.findall(r"10\.\d{4,9}/[^\s'\"<>]+", _nd)}
+            da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
+            for r in _tra_dinh_danh(sorted(_ids)):
+                if (r["loai"], r["gia_tri"]) not in da_co:
+                    da_rut.append(r)
+        except Exception as e:
+            warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
+                         "KHÔNG phải 'không có'." % e)
 
     if not da_rut:
         # Cố ý KHÔNG ghi vào oks: sổ không có bản ghi dương tính có thể chỉ vì chưa

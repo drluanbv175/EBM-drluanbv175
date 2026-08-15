@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.44.0
+  version: 1.45.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -1130,3 +1130,25 @@ Skill chạy độc lập (không qua nhạc trưởng) → **tự áp** chốt 
 - Còn 🔴 ở lớp nào → **sửa trước khi trả**; **Q2/Q5 đỏ → nêu cờ "cần bác sĩ phán định"**. Tự-kiểm cùng phiên (giảm mù chung, KHÔNG khử thiên lệch) — rào cứng cuối vẫn là bác sĩ.
 
 **"Cần bác sĩ kiểm chứng."**
+
+
+## CHỐNG THIÊN LỆCH CÁI MỚI + KỶ LUẬT TRÍCH SỐ (PHA 4 LÔ G/H, 15/08/2026)
+
+**G-1** Một RCT ĐƠN LẺ không được tự xếp `apply` — trừ khi trả lời câu hỏi chưa từng có
+chứng cứ, hoặc là tín hiệu an toàn từ cơ quan quản lý dược.
+**G-2** Trước khi đề xuất đổi thực hành: đối chiếu guideline hiện hành + SR gần nhất
+(`kiem_chung_cu_vuot_qua.py`); ghi rõ nghiên cứu mới *củng cố* hay *mâu thuẫn* khối chứng cứ.
+**G-3** Mâu thuẫn khối chứng cứ hiện có → mặc định `notyet` («chưa đủ để đổi thực hành») kèm lý do.
+**G-4** Kết cục THAY THẾ (surrogate) phải ghi rõ là surrogate.
+**G-5** Mẫu không đại diện bệnh nhân ngoại trú VN (tuổi/đa bệnh/chủng tộc/tuyến) → ghi rõ ở vietnamFit.
+
+**Trích số (checklist 9.1 — BẮT BUỘC cho item `apply` có hiệu số):** khai `effect.outcome_role`
+(chính/phụ) · `effect.source_location` (bảng/hình nào — để đối chiếu ngược) · `measure` ĐÚNG nhãn
+nguồn dùng (KHÔNG quy đổi HR↔RR↔OR — lớp so nhãn `kiem_so_lieu.py` sẽ bắt) · ITT/mITT/PP ·
+phân nhóm phải nêu định-trước + kiểm tương tác · ghi cả hiệu số tuyệt đối khi nguồn có.
+
+**Toàn văn (LÔ D):** item sắp `apply` phải thẩm định TOÀN VĂN hợp pháp (PMC OA · Europe PMC ·
+bản công khai của tổ chức · quyền của bác sĩ [CẦN XÁC NHẬN TẠI ĐƠN VỊ]); chỉ có abstract →
+khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`.
+
+**Tuyên bố độ phủ (LÔ I):** mỗi gói phát hành dán khối từ `python3 tools/tuyen_bo_do_phu.py`.

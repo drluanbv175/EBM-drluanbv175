@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.45.0 — 2026-08-15 (PHA 4 — độ phủ, đo bỏ sót, chống sai trích số)
+
+- **Sổ đăng ký nguồn** `data/sources.json` (18 nguồn: 6 active đã thăm sống · 12
+  not-covered CÓ khai known_gap) + `tools/sources_health.py` (nguồn hỏng >2 chu kỳ → báo).
+- **Trạm tổ chức** `tools/giam_sat_to_chuc.py` (content-hash + so tiêu đề, đổi giao diện
+  → im; guideline mới → bắt trong 1 chu kỳ — self-test). NẰM CHỜ bác sĩ duyệt egress/URL.
+- **Làn nhập tay VN** `tools/add_vn_source.py` — TỪ CHỐI thiếu số hiệu/tệp gốc; verified_by_human.
+- **Tầng toàn văn**: `appraisalCompleteness:'partial'` × `apply` → cổng CHẶN (fixture chứng minh).
+- **Rút bài theo ĐỊNH DANH** `dinh_danh_da_rut()`: dashboard MỚI trích DOI đã-rút bị bắt
+  ngay cả khi chưa từng qua vòng quét A4 (lỗ hổng tìm bằng fixture đối kháng — đã vá).
+- **Chống sai trích số**: lớp so NHÃN quanh trị số (`kiem_so_lieu.py --self-test`: đổi HR→RR
+  → bắt) + 7 trường checklist 9.1 vào schema; validator chặn apply thiếu outcome_role/source_location.
+- **Đối chứng ngoài Q3**: BẮT 7/10; 3 bỏ sót (ADA SoC ch.9, GOLD 2026 ×2) — hồ sơ MISS +
+  đề xuất sửa watchlist/egress ở `reports/de-xuat-thay-doi.md`. Ước lượng có thiên lệch,
+  KHÔNG phải độ phủ.
+- **Tuyên bố độ phủ tự sinh** `tools/tuyen_bo_do_phu.py` (tự kiểm chuỗi cấm P1).
+- Doctrine G-1…G-5 chống thiên lệch cái mới (khối cuối SKILL).
+
+
 ## v1.44.0 — 2026-08-15
 
 **LÔ 4/6 PHA 2 — quét theo MỘT chủ đề + chạy thật đầu-cuối:**

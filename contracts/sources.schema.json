@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sổ đăng ký nguồn — hợp đồng PHA 4 LÔ A (15/08/2026)",
+  "description": "Nguồn không khai báo = nguồn không tồn tại với hệ (P2). Mỗi nguồn đang quét PHẢI có bản ghi; nguồn KHÔNG phủ được cũng phải có bản ghi status=not-covered kèm known_gap — độ phủ chỉ trung thực khi khoảng trống được ghi thành chữ.",
+  "type": "object",
+  "required": ["updated", "sources"],
+  "properties": {
+    "updated": {"type": "string"},
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "org", "tier", "domain", "access",
+                     "scan_frequency", "detection_method", "owner", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^SRC-\\d{3}$"},
+          "name": {"type": "string"},
+          "org": {"type": "string"},
+          "tier": {"type": "integer", "minimum": 1, "maximum": 3,
+                   "description": "1=guideline/quy phạm · 2=tổng hợp SR/MA · 3=sơ cấp"},
+          "domain": {"type": "array", "items": {"type": "string"}},
+          "access": {"enum": ["api", "rss", "html-watch", "file", "manual", "none"]},
+          "endpoint_or_url": {"type": ["string", "null"],
+            "description": "CHỈ ghi URL đã xác minh sống; chưa xác minh → null + ghi chú trong known_gap (P6 cấm bịa)"},
+          "auth_required": {"type": "boolean"},
+          "terms_ok": {"type": ["boolean", "null"]},
+          "terms_note": {"type": ["string", "null"]},
+          "scan_frequency": {"enum": ["daily", "weekly", "monthly", "quarterly", "ad-hoc"]},
+          "detection_method": {"enum": ["api-query", "feed-item", "content-hash",
+                                        "version-field", "human"]},
+          "measured_latency_days": {"type": ["number", "null"],
+            "description": "trung vị ĐO ĐƯỢC, không ước lượng — null nếu chưa đo"},
+          "owner": {"type": "string"},
+          "status": {"enum": ["active", "degraded", "broken", "not-covered"]},
+          "last_success_at": {"type": ["string", "null"]},
+          "known_gap": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

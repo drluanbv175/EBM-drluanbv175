@@ -228,6 +228,37 @@ def nguon_da_rut(ten_file: str) -> list[dict]:
     return ra
 
 
+def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
+    """Dương tính rút bài trong MỘT DANH SÁCH định danh — không cần ánh xạ dashboard.
+
+    Vì sao có (PHA 4 LÔ E, 15/08/2026 — lỗ hổng tìm ra bằng fixture): `nguon_da_rut`
+    lọc theo `cac_dashboard`, nên một dashboard MỚI trích đúng DOI đã rút mà chưa
+    từng qua vòng quét A4 sẽ đi qua cổng sạch sẽ. Hàm này tra THẲNG từng định danh
+    vào sổ: sổ đã biết bài đó bị rút thì bất kỳ file nào trích nó đều phải nghe.
+    Giữ nguyên bất đối xứng: chỉ trả DƯƠNG TÍNH; vắng mặt ≠ sạch (BH08/BH27).
+    """
+    muc = (doc_so() or {}).get("muc", {}) or {}
+    ra: list[dict] = []
+    for dd in cac_dinh_danh:
+        dd = str(dd).strip()
+        for khoa in (f"pmid:{dd}", f"doi:{dd.lower()}"):
+            bg = muc.get(khoa)
+            if bg and bg.get("da_rut"):
+                ra.append({
+                    "khoa": khoa,
+                    "loai": bg.get("loai", ""),
+                    "gia_tri": bg.get("gia_tri", ""),
+                    "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
+                    "tieu_de": bg.get("tieu_de") or "",
+                    "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
+                    "nguon": bg.get("nguon_xac_minh") or "",
+                    "rut_va_thay": bool(bg.get("rut_va_thay")),
+                    "thong_bao": bg.get("thong_bao_rut_doi") or "",
+                })
+                break
+    return ra
+
+
 def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
     """Gom mọi pmid/doi/url từ các dashboard. Trả {khoá: {file đã dùng}}."""
     nguon: dict[str, set[str]] = {}

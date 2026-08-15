@@ -1793,6 +1793,48 @@ def bh48_ma_thoat_tach_noi_dung_va_ha_tang():
     return True, "0/1/2 tách đúng: sạch · gói sai · chưa-xác-minh-được"
 
 
+def bh49_toan_van_va_rut_bai_theo_dinh_danh():
+    """15/08 — PHA 4 LÔ D/E: hai cổng an toàn mới phải BẮT được trên file thật.
+
+    (a) `appraisalCompleteness:'partial'` × decision `apply` → CHẶN — thẩm định
+        trên abstract không được đội lốt thẩm định đầy đủ (P4).
+    (b) Dashboard MỚI trích DOI mà sổ đã biết ĐÃ RÚT → CHẶN qua tầng tra-theo-
+        ĐỊNH-DANH — lỗ hổng thật tìm bằng fixture 15/08: `nguon_da_rut` chỉ tra
+        theo ánh xạ cac_dashboard nên file chưa từng qua vòng quét A4 đi qua sạch.
+    Kiểm bằng cách CHẠY cổng thật trên fixture (không đếm chuỗi trong code).
+    """
+    import subprocess
+    import sys as _sys
+    fx = REPO / "EBM-Dashboards" / ".bh49-fixture.html"
+    fx.write_text("""<script>
+const DATA = { meta: { title: 'bh49', dateUpdated: '2026-08-15' },
+  provenanceUnknown: true, provenanceUnknownLyDo: 'fixture chốt BH49',
+  summary: { doNow: [], doNot: [], redFlags: [] },
+  items: [
+    { id: 'ITEM-01', source: 'GL', org: 'X', dateVersion: '2026', design: 'Guideline',
+      gradeLevel: 'high', gradeBy: 'X (GRADE)', gradeSource: 'GRADE high',
+      decision: 'apply', appraisalCompleteness: 'partial', pmid: '26760044', title: 't' },
+    { id: 'ITEM-02', source: 'RR', org: 'Y', dateVersion: '2018', design: 'Cohort',
+      gradeLevel: 'na', decision: 'consider', doi: '10.1001/jamaoncol.2018.4070', title: 't' }
+  ]};
+// ===== HẾT KHỐI DATA =====
+</script><p>Cần bác sĩ kiểm chứng.</p>""", encoding="utf-8")
+    try:
+        r = subprocess.run([_sys.executable,
+                            str(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"),
+                            str(fx), "--strict-sources"],
+                           capture_output=True, text=True, cwd=REPO, timeout=120)
+    finally:
+        fx.unlink(missing_ok=True)
+    if "appraisalCompleteness='partial'" not in r.stdout:
+        return False, "cổng KHÔNG chặn apply trên thẩm định một phần — P4 bị tháo"
+    if "10.1001/jamaoncol.2018.4070" not in r.stdout or "RÚT" not in r.stdout:
+        return False, "cổng KHÔNG bắt DOI đã rút theo định danh — dashboard mới lại đi qua sạch"
+    if r.returncode == 0:
+        return False, "fixture có 2 lỗi an toàn mà cổng trả exit 0"
+    return True, "partial×apply chặn · DOI đã-rút bắt theo định danh · exit nonzero"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1842,6 +1884,7 @@ BAI_HOC = [
     ("BH46", "15/08", "Hợp đồng item + máy trạng thái thi hành được", bh46_hop_dong_item_va_may_trang_thai),
     ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
     ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
+    ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
 ]
 
 

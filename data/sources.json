@@ -1,0 +1,386 @@
+{
+ "updated": "2026-08-15",
+ "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới).",
+ "sources": [
+  {
+   "id": "SRC-001",
+   "name": "PubMed E-utilities — 43 chủ đề × 4 tầng (guideline→SR/MA→RCT→edat)",
+   "org": "NCBI/NLM",
+   "tier": 1,
+   "domain": [
+    "toàn bộ watchlist"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "E-utilities public, ≤3 req/s không key",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": 2,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33"
+  },
+  {
+   "id": "SRC-002",
+   "name": "Kênh gọi tên thẩm quyền qua PubMed (Cochrane[ta] · NICE · USPSTF · WHO)",
+   "org": "nhiều",
+   "tier": 1,
+   "domain": [
+    "đa khoa"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": null,
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": "cùng giới hạn PubMed-lag như SRC-001"
+  },
+  {
+   "id": "SRC-003",
+   "name": "Retraction Watch DB ngoại tuyến (30.851 PMID có phán quyết)",
+   "org": "Crossref/RW (CC0)",
+   "tier": 1,
+   "domain": [
+    "toàn kho"
+   ],
+   "access": "file",
+   "endpoint_or_url": "medical-ebm-automation/data/retraction_watch/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "CC0",
+   "scan_frequency": "monthly",
+   "detection_method": "version-field",
+   "measured_latency_days": null,
+   "owner": "agent-A4",
+   "status": "active",
+   "last_success_at": "2026-08-14",
+   "known_gap": "làm mới 30 ngày/lần bằng tools/tai_retraction_watch.py; chỉ tra được PMID, không DOI"
+  },
+  {
+   "id": "SRC-004",
+   "name": "Crossref REST (phân giải DOI + updated-by retraction)",
+   "org": "Crossref",
+   "tier": 1,
+   "domain": [
+    "toàn kho"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.crossref.org/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "polite pool, có mailto",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A4",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": null
+  },
+  {
+   "id": "SRC-005",
+   "name": "Europe PMC REST (dự phòng NCBI + soi MEDLINE)",
+   "org": "EMBL-EBI",
+   "tier": 1,
+   "domain": [
+    "toàn kho"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": null,
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A4",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": null
+  },
+  {
+   "id": "SRC-006",
+   "name": "openFDA (nhãn thuốc + cảnh báo an toàn)",
+   "org": "FDA",
+   "tier": 1,
+   "domain": [
+    "an toàn thuốc"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.fda.gov/",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": null,
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "weekly_safety.sh",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)"
+  },
+  {
+   "id": "SRC-010",
+   "name": "GOLD — báo cáo COPD thường niên (web hội)",
+   "org": "GOLD",
+   "tier": 1,
+   "domain": [
+    "hô hấp"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "egress ngoài danh sách phê duyệt bị chặn từ máy này; URL chưa xác minh sống. GOLD report ra web TRƯỚC PubMed hàng tuần-tháng. Monitor đã dựng (tools/giam_sat_to_chuc.py) — cần bác sĩ phê duyệt egress 1 lần"
+  },
+  {
+   "id": "SRC-011",
+   "name": "GINA — báo cáo hen thường niên (web hội)",
+   "org": "GINA",
+   "tier": 1,
+   "domain": [
+    "hô hấp"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010"
+  },
+  {
+   "id": "SRC-012",
+   "name": "KDIGO — guideline thận (web hội)",
+   "org": "KDIGO",
+   "tier": 1,
+   "domain": [
+    "thận"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010; KDIGO 2026 CKD hệ đã bắt QUA PubMed (PMID 41485807) — web-first sẽ sớm hơn"
+  },
+  {
+   "id": "SRC-013",
+   "name": "ADA Standards of Care (web-first tháng 12 hằng năm)",
+   "org": "ADA",
+   "tier": 1,
+   "domain": [
+    "nội tiết"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010; SoC là ca kinh điển web-trước-PubMed"
+  },
+  {
+   "id": "SRC-014",
+   "name": "ESC Clinical Practice Guidelines (web hội)",
+   "org": "ESC",
+   "tier": 1,
+   "domain": [
+    "tim mạch"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010"
+  },
+  {
+   "id": "SRC-015",
+   "name": "ACC/AHA Guidelines & Statements (web hội)",
+   "org": "ACC/AHA",
+   "tier": 1,
+   "domain": [
+    "tim mạch"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010; lipid 2026 hệ bắt qua PubMed-lane (W33-01)"
+  },
+  {
+   "id": "SRC-016",
+   "name": "EMA news/RSS + MHRA Drug Safety Update (feed)",
+   "org": "EMA · MHRA",
+   "tier": 1,
+   "domain": [
+    "an toàn thuốc"
+   ],
+   "access": "rss",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "weekly",
+   "detection_method": "feed-item",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "feed có thật nhưng chưa xác minh được từ máy này (egress); tạm phủ bằng chủ đề PubMed 'An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA)' + openFDA"
+  },
+  {
+   "id": "SRC-017",
+   "name": "IDSA practice guidelines · AGS Beers · USPSTF web · WHO web · NICE web",
+   "org": "nhiều",
+   "tier": 1,
+   "domain": [
+    "nhiễm",
+    "lão khoa",
+    "đa khoa"
+   ],
+   "access": "html-watch",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": null,
+   "terms_note": "AGS Beers toàn văn sau paywall hội viên",
+   "scan_frequency": "quarterly",
+   "detection_method": "content-hash",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "như SRC-010; NICE/USPSTF/WHO/Cochrane đã có kênh PubMed gọi tên (SRC-002)"
+  },
+  {
+   "id": "SRC-020",
+   "name": "Bộ Y tế VN — hướng dẫn chẩn đoán điều trị (kcb.vn / moh.gov.vn)",
+   "org": "BYT",
+   "tier": 1,
+   "domain": [
+    "bản địa hoá VN"
+   ],
+   "access": "manual",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "văn bản công",
+   "scan_frequency": "quarterly",
+   "detection_method": "human",
+   "measured_latency_days": null,
+   "owner": "bác sĩ",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "không API ổn định; làn nhập tay tools/add_vn_source.py (LÔ C) — 0 văn bản đã nhập, 3 khung chờ [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
+  },
+  {
+   "id": "SRC-021",
+   "name": "Cục Quản lý Dược VN — công văn/thu hồi/cảnh báo",
+   "org": "DAV",
+   "tier": 1,
+   "domain": [
+    "an toàn thuốc VN"
+   ],
+   "access": "manual",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": null,
+   "scan_frequency": "quarterly",
+   "detection_method": "human",
+   "measured_latency_days": null,
+   "owner": "bác sĩ",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "làn nhập tay LÔ C; chưa có bản ghi nào"
+  },
+  {
+   "id": "SRC-030",
+   "name": "UpToDate · DynaMed · Embase (thương mại)",
+   "org": "Wolters Kluwer · EBSCO · Elsevier",
+   "tier": 2,
+   "domain": [
+    "tổng hợp thương mại"
+   ],
+   "access": "none",
+   "endpoint_or_url": null,
+   "auth_required": true,
+   "terms_ok": false,
+   "terms_note": "trả phí, CẤM cào (P5)",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "human",
+   "measured_latency_days": null,
+   "owner": "bác sĩ",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "ngoài phạm vi hợp pháp của máy; bác sĩ tra tay khi cần, quyền truy cập [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
+  },
+  {
+   "id": "SRC-031",
+   "name": "ClinicalTrials.gov + medRxiv/bioRxiv (preprint)",
+   "org": "NIH · CSHL",
+   "tier": 3,
+   "domain": [
+    "tín hiệu sớm"
+   ],
+   "access": "api",
+   "endpoint_or_url": null,
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": null,
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "CỐ Ý chưa nối vào routine lâm sàng (quyết định 14/08): thêm dòng chưa-bình-duyệt khi nhãn tin cậy vừa ổn định sẽ hỏng mục tiêu; MCP có sẵn cho tra tay"
+  }
+ ]
+}

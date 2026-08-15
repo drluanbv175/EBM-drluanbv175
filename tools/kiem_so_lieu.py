@@ -92,12 +92,66 @@ def doc_effect(chunk: str) -> tuple[float, float, float] | None:
     return hr, lo, hi
 
 
+# ── NHÃN HIỆU SỐ (PHA 4 LÔ H, 15/08/2026) ─────────────────────────────────────
+# Lỗi «đổi HR thành RR» nguy hiểm vì TRỊ SỐ vẫn khớp — lớp so-số ở trên mù hoàn
+# toàn với nó. Lớp này so NHÃN đo lường đứng quanh trị số trong tóm tắt với nhãn
+# item TỰ KHAI (trường `measure`). Item không khai → KHÔNG suy đoán (BH08).
+NHAN_DO = {
+    "hr": r"\b(?:hazard ratio|adjusted hazard ratio|a?hr)s?\b",
+    "rr": r"\b(?:risk ratio|relative risk|rr)s?\b",
+    "or": r"\b(?:odds ratio|a?or)s?\b",
+    "md": r"\b(?:mean difference|md)\b",
+    "smd": r"\b(?:standardi[sz]ed mean difference|smd)\b",
+}
+
+
+def nhan_lech(van_ban: str, measure: str | None, x: float) -> str | None:
+    """Nhãn đo lường quanh trị số x trong tóm tắt có KHÁC nhãn item khai không.
+
+    Trả tên nhãn TÌM THẤY nếu lệch rõ ràng; None = khớp HOẶC không kết luận được
+    (không thấy trị số, không thấy nhãn nào, item không khai) — vắng mặt không
+    bao giờ bị đọc thành sai (BH08). KHÔNG quy đổi lẫn nhau các loại hiệu số.
+    """
+    if not measure or measure.lower() not in NHAN_DO:
+        return None
+    vb = _chuan_hoa(van_ban)
+    m = re.search(r"(?<![\d.])" + re.escape(f"{x:g}") + r"(?![\d])", vb)
+    if not m:
+        return None
+    cua_so = vb[max(0, m.start() - 80):m.start() + 20].lower()
+    khai = measure.lower()
+    thay = [ten for ten, mau in NHAN_DO.items() if re.search(mau, cua_so, re.I)]
+    if thay and khai not in thay:
+        return "/".join(thay)
+    return None
+
+
+def _self_test_nhan() -> int:
+    tt = "In the intention-to-treat analysis, the hazard ratio was 0.72 (95% CI 0.64-0.82)."
+    ca = [
+        ("khai rr, nguồn nói HR → phải LỆCH", nhan_lech(tt, "rr", 0.72) == "hr"),
+        ("khai hr, nguồn nói HR → khớp", nhan_lech(tt, "hr", 0.72) is None),
+        ("không khai measure → không suy đoán", nhan_lech(tt, None, 0.72) is None),
+        ("trị số không có trong tóm tắt → không kết luận", nhan_lech(tt, "rr", 0.55) is None),
+    ]
+    ok = True
+    for ten, dat in ca:
+        print(f"  {'✓' if dat else '✗'} {ten}")
+        ok = ok and dat
+    print("🟢 self-test nhãn ĐẠT" if ok else "🔴 TRƯỢT")
+    return 0 if ok else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Đối chiếu hiệu số trong dashboard với tóm tắt bài")
     ap.add_argument("--file", help="chỉ một dashboard")
     ap.add_argument("--chi-apply", action="store_true", help="chỉ mục decision='apply'")
     ap.add_argument("--gioi-han", type=int, help="chỉ N mục đầu")
+    ap.add_argument("--self-test", action="store_true",
+                    help="kiểm lớp so NHÃN hiệu số (HR≠RR) bằng ca có đáp án")
     a = ap.parse_args()
+    if a.self_test:
+        return _self_test_nhan()
 
     spec = importlib.util.spec_from_file_location("vd_so", DASH / "tools" / "verify_dashboard.py")
     vd = importlib.util.module_from_spec(spec)
@@ -119,7 +173,8 @@ def main() -> int:
                 continue
             e = doc_effect(c)
             if e:
-                viec.append((f.name, vd.field(c, "id"), pm, dec, e))
+                viec.append((f.name, vd.field(c, "id"), pm, dec, e,
+                             vd.field(c, "measure")))
     if a.gioi_han:
         viec = viec[:a.gioi_han]
 
@@ -127,7 +182,7 @@ def main() -> int:
     tom_tat: dict[str, str | None] = {}
     khop = mot_phan = khong_thay = hong = 0
     can_doc: list[tuple] = []
-    for k, (fn, iid, pm, dec, (hr, lo, hi)) in enumerate(viec, 1):
+    for k, (fn, iid, pm, dec, (hr, lo, hi), meas) in enumerate(viec, 1):
         if pm not in tom_tat:
             tom_tat[pm] = lay_tom_tat(pm)
             time.sleep(0.34)
@@ -137,6 +192,10 @@ def main() -> int:
             continue
         t = _chuan_hoa(tt)
         c_hr, c_lo, c_hi = co_so(t, hr), co_so(t, lo), co_so(t, hi)
+        lech = nhan_lech(t, meas, hr)
+        if lech:
+            # SỐ khớp mà NHÃN khác = nguy hiểm hơn số sai: trông rất hợp lý (LÔ H).
+            can_doc.append(("🔴 NHÃN LỆCH " + lech.upper(), fn, iid, pm, dec, hr, lo, hi))
         if c_hr and c_lo and c_hi:
             khop += 1
         elif c_hr:

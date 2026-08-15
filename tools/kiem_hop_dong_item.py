@@ -74,6 +74,16 @@ def kiem(item: dict) -> list[str]:
     if ef and (ef.get("point_estimate") is not None) and ef.get("as_reported") is not True \
             and not ef.get("derivation"):
         loi.append("effect có số mà as_reported≠true và KHÔNG ghi derivation — số ở đâu ra? (I1)")
+    # LÔ H PHA 4 (15/08/2026) — checklist trích số cho mức ẢNH HƯỞNG TRỰC TIẾP:
+    # item APPLY mang hiệu số phải khai kết cục chính/phụ + vị trí trong nguồn
+    # (để đối chiếu ngược được). Chỉ áp cho apply — thẻ cũ/consider không bị
+    # chặn oan bởi trường ra đời sau chúng (đúng bài học provenanceUnknown).
+    if item.get("decision") == "apply" and ef.get("point_estimate") is not None:
+        if not ef.get("outcome_role"):
+            loi.append("apply + hiệu số mà thiếu effect.outcome_role (chính/phụ?) — LÔ H 9.1")
+        if not ef.get("source_location"):
+            loi.append("apply + hiệu số mà thiếu effect.source_location (bảng/hình nào?) "
+                       "— không đối chiếu ngược được (LÔ H 9.1)")
 
     oa = item.get("operational_assessment") or {}
     if oa and oa.get("label") != "đánh giá vận hành — không phải phân hạng của nguồn":
@@ -92,6 +102,8 @@ def _self_test() -> int:
         ("CANDIDATE chưa resolved", {**tot, "source": {**tot["source"], "resolved": False}}),
         ("số không nguồn gốc", {**tot, "effect": {"measure": "RR", "point_estimate": 0.8,
                                                   "as_reported": False}}),
+        ("apply + hiệu số thiếu checklist 9.1", {**tot, "decision": "apply",
+         "effect": {"measure": "HR", "point_estimate": 0.8, "as_reported": True}}),
     ]
     ok = not kiem(tot)
     hong = [(ten, kiem(it)) for ten, it in ca_xau]

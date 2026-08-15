@@ -91,3 +91,5 @@ tools/vietnamize/catalog_may/
 # kết thúc). Không commit — nếu commit thì mỗi máy lại thấy "1 thay đổi chưa commit"
 # và chốt sync_safety_check báo 🟡 giả.
 *.jsonl.lock
+# Sổ đăng ký nguồn PHA 4 — cấu hình hệ, cần theo repo
+!/data/
