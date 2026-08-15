@@ -181,6 +181,103 @@ def main() -> int:
                                                title="không tồn tại", url="u")])
         ket.append(("PMID không tra được → 'chua_kiem', KHÔNG mặc định 'ok'",
                     bool(gan2) and gan2[0].rut_bai != "ok", f"trạng thái={gan2[0].rut_bai if gan2 else '?'}"))
+
+        # ── MỞ RỘNG TẦNG-1 (16/08, bác sĩ duyệt): 2 làn mới + phân xử + ed1 ──────
+        # (11) làn preprint (fetch_json TIÊM — offline) phải TỰ KHAI chưa-bình-duyệt
+        pp = ss.search_preprint_lane("x", 45, 5, fetch_json=lambda _u: {
+            "resultList": {"result": [{"id": "PPR1", "doi": "10.1101/x",
+                                       "title": "preprint thử", "journalTitle": "medRxiv",
+                                       "firstPublicationDate": "2026-08-01"}]}})
+        ket.append(("làn preprint → chua_binh_duyet=True + tầng riêng",
+                    bool(pp) and pp[0].chua_binh_duyet
+                    and pp[0].tang == "preprint_chua_binh_duyet",
+                    f"tang={pp[0].tang if pp else '?'}"))
+        # (12) ứng viên NCT trong BÁO CÁO không được nhận chú «mới vào PubMed»
+        #      (bản ghi ngoài PubMed) và không in «PMID <rỗng>»
+        tr = ss.search_trials_lane("x", 45, 5, fetch_json=lambda _u: {"studies": [{
+            "protocolSection": {"identificationModule": {"nctId": "NCT99999999",
+                                                         "briefTitle": "thử"},
+                                "statusModule": {"overallStatus": "RECRUITING",
+                                                 "lastUpdatePostDateStruct":
+                                                     {"date": "2099-01-01"}}},
+            "hasResults": False}]})
+        bao = ss.markdown_report({"status": "PASS", "started_at": "", "finished_at": "",
+                                  "days": 45, "max_results_per_topic": 5,
+                                  "topic_count": 1, "successful_topics": 1,
+                                  "failed_topics": 0, "candidate_count": 1,
+                                  "topics": [{"topic": "t", "query": "q", "status": "PASS",
+                                              "error": "",
+                                              "candidates": [ss.asdict(tr[0])] if tr else []}],
+                                  "disclaimer": "x"})
+        ket.append(("ứng viên NCT trong báo cáo: không «mới vào PubMed», không PMID-rỗng",
+                    bool(tr) and "mới vào PubMed" not in bao and "(không PMID" in bao,
+                    bao[bao.find("NCT"):bao.find("NCT") + 80] if "NCT" in bao else "?"))
+        # (13) phân xử rút-và-thay: item khai ĐỦ → CẢNH BÁO (không chặn);
+        #      thiếu decision='notyet' → vẫn CHẶN (chống lách)
+        rr = [{"loai": "pmid", "gia_tri": "30267080", "tinh_trang": "retracted",
+               "rut_va_thay": True, "tieu_de": "ca thử", "kiem_luc": "2026-08-15",
+               "nguon": "canary", "thong_bao": "31021386"}]
+        du_path = tmp / "WebDashboard_EBM_VanDeCuThe_CanaryRR_20260101.html"
+        du_path.write_text(_KHUNG.format(standards=_STANDARDS_TRONG, items=_item(
+            "ITEM-05", "", "Cohort", "low", "notyet",
+            extra=(', replacesPmid: "30267080", replacementNoticePmid: "31021386", '
+                   'dateVersion: "2019 (bản thay thế)", '
+                   'effectText: "số liệu của bản thay thế"'))),
+            encoding="utf-8")
+        e_rr, w_rr = [], []
+        vd.kiem_nguon_da_rut(du_path, e_rr, w_rr, [], tra_cuu=lambda _t: list(rr))
+        thieu_path = tmp / "WebDashboard_EBM_VanDeCuThe_CanaryRR_20260102.html"
+        thieu_path.write_text(_KHUNG.format(standards=_STANDARDS_TRONG, items=_item(
+            "ITEM-05", "", "Cohort", "low", "apply",
+            extra=', replacesPmid: "30267080", replacementNoticePmid: "31021386"')),
+            encoding="utf-8")
+        e_rr2, w_rr2 = [], []
+        vd.kiem_nguon_da_rut(thieu_path, e_rr2, w_rr2, [], tra_cuu=lambda _t: list(rr))
+        ket.append(("rút-và-thay khai ĐỦ → cảnh báo; khai THIẾU (apply) → vẫn chặn",
+                    not e_rr and any("RÚT" in w for w in w_rr) and bool(e_rr2),
+                    f"đủ: e={len(e_rr)}/w={len(w_rr)} · thiếu: e={len(e_rr2)}"))
+        # (14) vòng ed1: ký bằng khoá riêng tạm → xác minh CHỈ bằng khoá công;
+        #      thiếu cryptography (python3 hệ thống) → bỏ qua CÓ KHAI BÁO (lượt venv
+        #      của bộ chốt vẫn kiểm thật — không phải lượt nào cũng mù).
+        try:
+            from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+                Ed25519PrivateKey,
+            )
+            from cryptography.hazmat.primitives.serialization import (
+                Encoding, NoEncryption, PrivateFormat, PublicFormat,
+            )
+            gc_mod = _nap(REPO / "medical-ebm-automation" / "tools" / "gate_contract.py",
+                          "gc_canary")
+            priv = Ed25519PrivateKey.generate()
+            (tmp / "priv").mkdir()
+            (tmp / "pub").mkdir()
+            grp = gc_mod.role_group_for("IRB_ETHICS_COMMITTEE")
+            (tmp / "priv" / f"gate_ed25519_{grp}.key").write_bytes(
+                priv.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()))
+            (tmp / "pub" / f"{grp}.pub").write_bytes(priv.public_key().public_bytes(
+                Encoding.PEM, PublicFormat.SubjectPublicKeyInfo))
+            gc_mod._ED_PRIVATE_DIR = tmp / "priv"
+            gc_mod._ED_PUBLIC_DIR = tmp / "pub"
+            sig = gc_mod.sign_approval_ed25519(
+                "G2", "CANARY-ED", "a" * 64, "2026-08-16T00:00:00+00:00",
+                reviewer_role="IRB_ETHICS_COMMITTEE", reviewer_ref="REF-CANARY",
+                decision="APPROVED")
+            (tmp / "priv" / f"gate_ed25519_{grp}.key").unlink()  # ĐỘC LẬP: xoá khoá riêng
+            rec = {"gate_id": "G2", "reviewer_role": "IRB_ETHICS_COMMITTEE",
+                   "reviewer_identity_reference": "REF-CANARY", "decision": "APPROVED",
+                   "evidence_hash": "a" * 64,
+                   "timestamp_utc": "2026-08-16T00:00:00+00:00",
+                   "is_synthetic": False, "prev_hash": "", "approver_signature": sig}
+            ok_ed = (bool(sig) and sig.startswith("ed1:role:")
+                     and gc_mod.verify_approval_signature(rec, "CANARY-ED")
+                     and not gc_mod.verify_approval_signature(
+                         dict(rec, decision="REJECTED"), "CANARY-ED"))
+            ket.append(("ed1: ký khoá riêng tạm → verify CHỈ bằng khoá công; sửa nội dung → trượt",
+                        ok_ed, (sig or "?")[:40]))
+        except ImportError:
+            ket.append(("ed1: vòng ký-xác minh",
+                        True, "bỏ qua CÓ KHAI BÁO — thiếu cryptography ở trình "
+                              "thông dịch này; lượt venv của bộ chốt kiểm thật"))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
