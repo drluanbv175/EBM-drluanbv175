@@ -46,8 +46,9 @@ def kiem(item: dict) -> list[str]:
         loi.append(f"decision={item['decision']!r} không hợp lệ")
 
     src = item.get("source") or {}
-    if st not in ("UNRESOLVED", "NEW", None) and not (src.get("pmid") or src.get("doi")):
-        loi.append(f"status={st} nhưng KHÔNG có PMID/DOI — chưa truy nguyên thì chưa qua NEW (I1)")
+    if st not in ("UNRESOLVED", "NEW", None) and not (src.get("pmid") or src.get("doi")
+                                                       or src.get("alt_id")):
+        loi.append(f"status={st} nhưng KHÔNG có PMID/DOI/alt_id — chưa truy nguyên thì chưa qua NEW (I1)")
     if st in ("CANDIDATE", "APPROVED", "APPLIED") and src.get("resolved") is not True:
         loi.append(f"status={st} nhưng source.resolved != true — nhảy cóc qua truy nguyên (cấm #2)")
     if src.get("retracted") is True and st in ("CANDIDATE", "APPROVED", "APPLIED"):

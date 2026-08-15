@@ -90,6 +90,13 @@
             "null"
           ],
           "$comment": "PMID/DOI của tổng quan/guideline MỚI HƠN nếu kiem_chung_cu_vuot_qua tìm thấy và bác sĩ xác nhận nó THAY bản này."
+        },
+        "alt_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Định danh THAY THẾ khi nguồn cơ quan không có PMID/DOI (NCT########, URL chính thức CDC/WHO/BYT…). Bác sĩ duyệt QĐ4 15/08/2026 — 36 thẻ CDC/CT.gov hợp lệ hoá bằng định danh thật của chúng; KHÔNG dùng để né kiểm rút bài của PMID/DOI (BH33)."
         }
       }
     },

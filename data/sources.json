@@ -142,17 +142,17 @@
     "hô hấp"
    ],
    "access": "html-watch",
-   "endpoint_or_url": null,
+   "endpoint_or_url": "https://goldcopd.org/gold-reports/",
    "auth_required": false,
-   "terms_ok": null,
-   "terms_note": null,
+   "terms_ok": true,
+   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
    "scan_frequency": "quarterly",
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "egress ngoài danh sách phê duyệt bị chặn từ máy này; URL chưa xác minh sống. GOLD report ra web TRƯỚC PubMed hàng tuần-tháng. Monitor đã dựng (tools/giam_sat_to_chuc.py) — cần bác sĩ phê duyệt egress 1 lần"
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
   },
   {
    "id": "SRC-011",
@@ -163,17 +163,17 @@
     "hô hấp"
    ],
    "access": "html-watch",
-   "endpoint_or_url": null,
+   "endpoint_or_url": "https://ginasthma.org/reports/",
    "auth_required": false,
-   "terms_ok": null,
-   "terms_note": null,
+   "terms_ok": true,
+   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
    "scan_frequency": "quarterly",
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010"
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
   },
   {
    "id": "SRC-012",
@@ -184,17 +184,17 @@
     "thận"
    ],
    "access": "html-watch",
-   "endpoint_or_url": null,
+   "endpoint_or_url": "https://kdigo.org/guidelines/",
    "auth_required": false,
-   "terms_ok": null,
-   "terms_note": null,
+   "terms_ok": true,
+   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
    "scan_frequency": "quarterly",
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010; KDIGO 2026 CKD hệ đã bắt QUA PubMed (PMID 41485807) — web-first sẽ sớm hơn"
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
   },
   {
    "id": "SRC-013",
@@ -205,17 +205,17 @@
     "nội tiết"
    ],
    "access": "html-watch",
-   "endpoint_or_url": null,
+   "endpoint_or_url": "https://professional.diabetes.org/standards-of-care",
    "auth_required": false,
-   "terms_ok": null,
-   "terms_note": null,
+   "terms_ok": true,
+   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
    "scan_frequency": "quarterly",
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010; SoC là ca kinh điển web-trước-PubMed"
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
   },
   {
    "id": "SRC-014",
@@ -236,7 +236,7 @@
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010"
+   "known_gap": "như SRC-010 | Bác sĩ đã duyệt QĐ1 15/08 — chờ xác minh URL ở phiên kế (4 hội lõi đã xong trước)."
   },
   {
    "id": "SRC-015",
@@ -257,7 +257,7 @@
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010; lipid 2026 hệ bắt qua PubMed-lane (W33-01)"
+   "known_gap": "như SRC-010; lipid 2026 hệ bắt qua PubMed-lane (W33-01) | Bác sĩ đã duyệt QĐ1 15/08 — chờ xác minh URL ở phiên kế (4 hội lõi đã xong trước)."
   },
   {
    "id": "SRC-016",
@@ -278,7 +278,7 @@
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "feed có thật nhưng chưa xác minh được từ máy này (egress); tạm phủ bằng chủ đề PubMed 'An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA)' + openFDA"
+   "known_gap": "feed có thật nhưng chưa xác minh được từ máy này (egress); tạm phủ bằng chủ đề PubMed 'An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA)' + openFDA | Bác sĩ đã duyệt QĐ1 15/08 — chờ xác minh URL ở phiên kế (4 hội lõi đã xong trước)."
   },
   {
    "id": "SRC-017",
@@ -301,7 +301,7 @@
    "owner": "agent-A2",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "như SRC-010; NICE/USPSTF/WHO/Cochrane đã có kênh PubMed gọi tên (SRC-002)"
+   "known_gap": "như SRC-010; NICE/USPSTF/WHO/Cochrane đã có kênh PubMed gọi tên (SRC-002) | Bác sĩ đã duyệt QĐ1 15/08 — chờ xác minh URL ở phiên kế (4 hội lõi đã xong trước)."
   },
   {
    "id": "SRC-020",

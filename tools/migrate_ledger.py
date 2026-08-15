@@ -72,6 +72,13 @@ def anh_xa(card: dict) -> dict:
             "pmid": src.get("pmid") or None,
             "doi": src.get("doi") or None,
             "url": src.get("url") or None,
+            # QĐ4 (bác sĩ duyệt 15/08): nguồn cơ quan không PMID/DOI → alt_id từ
+            # references (NCT/URL chính thức) — 36 thẻ CDC/CT.gov hết kẹt hợp đồng.
+            "alt_id": (lambda refs: next(
+                (r.split("URL:", 1)[-1].strip() for r in refs
+                 if isinstance(r, str) and ("NCT" in r or r.startswith("URL:"))),
+                None) if not (src.get("pmid") or src.get("doi")) else None
+            )(card.get("references") or []),
             "resolved": True if da_xac_minh else None,
         },
         "certainty": {
