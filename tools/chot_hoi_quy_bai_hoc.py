@@ -1884,8 +1884,10 @@ def bh51_ledger_synthetic_dung_pham_vi():
 
     ĐÍNH CHÍNH trung thực (đo bằng đột biến ngay khi viết chốt): thứ MỞ KHOÁ
     demo là SỬA THỨ TỰ THAM SỐ — tôi gọi (study, gate) suốt buổi sáng, TypeError
-    bị nuốt thành False im lặng. Bản vá #8 đúng docstring nhưng hiện DORMANT với
-    cơ chế admin (tool ghi is_synthetic=False — xem đề xuất #10). Chốt này khoá
+    bị nuốt thành False im lặng. CẬP NHẬT 15/08 chiều: #10 ĐÃ ÁP (bác sĩ duyệt
+    tường minh qua AskUserQuestion) — admin tool nay ghi is_synthetic=True nên
+    nhánh #8 SỐNG THẬT: entry chép sang đề tài KHÔNG marker bị từ chối (đã đo
+    bằng đột biến sao-chép-ledger). Chốt này khoá
     hai thứ THẬT SỰ kiểm được: gọi đúng chữ ký (gate_id, study, artifact) trên
     đề tài demo → True; artifact sửa 1 byte → False (hash vẫn ràng, fail-closed).
     """
@@ -1923,6 +1925,42 @@ def bh51_ledger_synthetic_dung_pham_vi():
         return False, ("G6-AUTO-01 không còn lấy bằng chứng từ ledger — điểm gọi "
                        "ledger_approved trong g6_quality_gate hỏng (đảo tham số?)")
     return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
+
+
+def bh53_elink_chi_nhan_pubmed_pmc():
+    """15/08 — PHA R5-D2: elink pubmed→pmc CHỈ được nhận linkname `pubmed_pmc`.
+
+    Lỗi thật, nguy hiểm nhất của mảng toàn văn: bài KHÔNG có trong PMC (Polit &
+    Beck 17654487) vẫn trả linkset `pubmed_pmc_refs` = 1.678 bài TRÍCH DẪN nó;
+    bản đầu của gom_toan_van_oa vơ mọi dbto=="pmc" nên gắn TOÀN VĂN BÀI KHÁC vào
+    PMID gốc — «56/62 OA» hoá 31/62, kho demo 5/5 nhiễm, và mọi phép hỏi/đối
+    chiếu hạ nguồn chạy trên văn bản sai không một dòng báo. Chỉ vòng thẩm định
+    toàn văn (⚪ hàng loạt ở ngưỡng kinh điển 0,78) mới lộ. Chốt gọi thẳng
+    _parse_linksets với fixture mang CẢ HAI linkname — nhận nhầm refs là đỏ.
+    """
+    import importlib.util
+    duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
+    if not duong.exists():
+        return False, "gom_toan_van_oa.py biến mất"
+    sp = importlib.util.spec_from_file_location("gom_tv", duong)
+    m = importlib.util.module_from_spec(sp)
+    import sys as _sys
+    _sys.modules["gom_tv"] = m
+    sp.loader.exec_module(m)
+    fixture = {"linksets": [
+        {"ids": ["17654487"], "linksetdbs": [
+            {"dbto": "pmc", "linkname": "pubmed_pmc_refs", "links": ["13469762"]}]},
+        {"ids": ["34017606"], "linksetdbs": [
+            {"dbto": "pmc", "linkname": "pubmed_pmc", "links": ["8114273"]},
+            {"dbto": "pmc", "linkname": "pubmed_pmc_refs", "links": ["12832380"]}]},
+    ]}
+    ra = m._parse_linksets(fixture)
+    if "17654487" in ra:
+        return False, ("_parse_linksets lại vơ pubmed_pmc_refs — bài không-OA sẽ "
+                       "được gắn toàn văn của bài ĐI TRÍCH DẪN nó")
+    if ra.get("34017606") != "8114273":
+        return False, f"mất ánh xạ pubmed_pmc hợp lệ: {ra}"
+    return True, "chỉ nhận pubmed_pmc; refs bị loại đúng"
 
 
 def bh52_g0_kiem_rut_bai_tai_cua():
@@ -2014,6 +2052,7 @@ BAI_HOC = [
     ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),
     ("BH51", "15/08", "Ledger synthetic đúng phạm vi + gọi đúng chữ ký hàm", bh51_ledger_synthetic_dung_pham_vi),
     ("BH52", "15/08", "G0 kiểm rút bài ngay tại cửa nhận (R1C)", bh52_g0_kiem_rut_bai_tai_cua),
+    ("BH53", "15/08", "elink chỉ nhận pubmed_pmc — cấm vơ bài đi-trích-dẫn", bh53_elink_chi_nhan_pubmed_pmc),
 ]
 
 
