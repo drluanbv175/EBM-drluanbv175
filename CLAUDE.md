@@ -9,6 +9,14 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
 - **Nêu một CA/tình huống lâm sàng** ("tôi có bệnh nhân…", "khám ca này", hỏi chẩn đoán/điều trị) → `dieu-phoi-lam-sang`: tự chạy 5 bước EBM (Hỏi→Tìm→Thẩm định→Áp dụng→Theo dõi); **cờ đỏ nêu NGAY**; dừng ở **Cổng A** (áp dụng cho BN) + **Cổng B** (ghi sổ cái).
 - **Nêu một ĐỀ TÀI/câu hỏi nghiên cứu** (chỉ cần tên đề tài) → `dieu-phoi-nghien-cuu`: tự khôi phục trạng thái từ sổ cái → suy loại thiết kế → march G0→G10; dừng ở 6 cổng cứng (G2 đạo đức · G4 khóa SAP · G5 khóa dữ liệu thật · **G8 bình duyệt độc lập** · G9 liêm chính tác giả · G10 PI khóa gói phát hành) + nơi cần dữ liệu/phê duyệt thật. Mỗi cổng fail-closed theo ĐÚNG role (IRB/thống kê viên hoặc PI/quản lý dữ liệu hoặc PI/phản biện độc lập/PI/PI — xem `tools/gate_contract.py`), không chỉ "có ai đó ký".
 - **Bảo đảm chuẩn nghiên cứu hiện hành:** G2 fail-closed khi WHO TRDS v1.3.1 mục 13/14/19/20 thiếu dữ kiện khoa học PI đã pin hoặc tham chiếu Hội đồng chỉ là fallback; G9 fail-closed khi thiếu quyền truy cập dữ liệu/độc lập nhà tài trợ theo ICMJE 1/2026. `python tools/verify_controlled_research_automation.py` kiểm hành vi này cùng danh sách 6 cổng canonical; không dùng PASS kỹ thuật thay IRB/PI/thống kê viên/phản biện.
+- **Nêu VẤN ĐỀ CHỨNG CỨ (định tuyến bổ sung 15/08/2026 — «nêu vấn đề là tự giải quyết»):**
+  (a) hỏi tại điểm khám («X xử trí thế nào?») → `python3 tools/tra_diem_kham.py "<câu hỏi>"`
+  trả lời <1s CHỈ từ thẻ đã duyệt, ngoài phạm vi thì nói «chưa giám sát» + tự ghi tín hiệu
+  watchlist; (b) «cập nhật chứng cứ chủ đề X» → `python3 ops/orchestrator.py --topic "X"
+  --online` (A2 quét→A4 truy nguyên→B2 cổng→B5 hàng chờ; chủ đề chưa có dashboard thì
+  orchestrator tự dừng ở bước PHIÊN NGƯỜI = gọi skill `cap-nhat-chung-cu-y-khoa`);
+  (c) gói duyệt tuần TỰ nằm sẵn thứ Bảy 07:07 (tác vụ lịch `goi-duyet-tuan-ebm`).
+  Mọi nhánh dừng ở CANDIDATE — Cổng A/B của bác sĩ nguyên vẹn.
 - **Việc lẻ** (tra 1 câu hỏi, soát 1 danh mục TLTK, tính cỡ mẫu, đặc tả biến…) → gọi thẳng agent chuyên trách.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +

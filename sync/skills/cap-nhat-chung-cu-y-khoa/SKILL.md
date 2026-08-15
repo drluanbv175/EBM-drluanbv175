@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.46.0
+  version: 1.47.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -1152,3 +1152,11 @@ bản công khai của tổ chức · quyền của bác sĩ [CẦN XÁC NHẬN 
 khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`.
 
 **Tuyên bố độ phủ (LÔ I):** mỗi gói phát hành dán khối từ `python3 tools/tuyen_bo_do_phu.py`.
+
+
+## BƯỚC 0 — ĐỊNH TUYẾN KHI BÁC SĨ NÊU VẤN ĐỀ (15/08/2026)
+Trước khi dựng gì mới, đi theo thứ tự rẻ→đắt: (1) `tools/tra_diem_kham.py "<câu hỏi>"` —
+có thẻ đã duyệt thì trả lời NGAY, kèm cờ 🟠 nếu có bản tổng hợp mới chưa rà; (2) chủ đề có
+trong watchlist → `ops/orchestrator.py --topic "<tên>" --online` chạy chuỗi máy; (3) «chưa
+giám sát» → đề xuất bác sĩ thêm watchlist (mẫu 4 tầng, tầng edat không lọc) rồi mới dựng
+dashboard theo skill này. Không nhánh nào tự duyệt thẻ — CANDIDATE là trần của máy.

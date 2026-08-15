@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.47.0 — 2026-08-15
+
+**Bước 0 định tuyến «nêu vấn đề là tự giải quyết»** — khe hở cuối: CLAUDE.md chỉ định
+tuyến ca lâm sàng + đề tài nghiên cứu, tuyến CHỨNG CỨ chưa có dòng tường minh. Nay:
+điểm khám (`tra_diem_kham`, <1s, chỉ thẻ đã duyệt) → chuỗi máy (`orchestrator --topic`)
+→ ngoài phạm vi thì «chưa giám sát» + tín hiệu watchlist. Kèm 4 quyết định bác sĩ duyệt
+cùng ngày: watchlist 44 chủ đề (+Dengue, token-AND GOLD/SoC — phrase-index PubMed không
+có các cụm đó) · lịch tuần goi-duyet-tuan-ebm T7 07:07 · ledger v2 1193/1193 + alt_id ·
+4 hội lõi URL xác minh sống qua trình duyệt.
+
+
 ## v1.46.0 — 2026-08-15 (vòng «tự động tốt nhất + trung thực»)
 
 - **Bản đọc nhúng TUYÊN BỐ ĐỘ PHỦ** ở footer (sinh sống từ data/sources.json;
