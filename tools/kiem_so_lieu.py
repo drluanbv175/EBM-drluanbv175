@@ -76,6 +76,33 @@ def _chuan_hoa(t: str) -> str:
     return re.sub(r"(?<=\d)[·,](?=\d)", ".", t)
 
 
+# ── TẦNG TOÀN VĂN (nâng cấp A, 15/08/2026 — bác sĩ duyệt) ────────────────────
+# Kho OA dùng chung do tools/gom_toan_van_dashboard.py tải về. LEO THANG trung
+# thực: tóm tắt trước; KHÔNG đủ mới mở toàn văn; nhãn kết quả ghi rõ tầng nào
+# tìm thấy. ⚪ từ nay nghĩa là «CẢ tóm tắt LẪN toàn văn đang có đều không nêu»
+# — hẹp hơn hẳn nghĩa cũ, đúng lớp tồn đọng 73,4%-nằm-trong-bảng.
+KHO_TV = DASH / "toan_van_oa"
+_tv_cache: dict[str, str | None] = {}
+
+
+def lay_toan_van(pmid: str) -> str | None:
+    """Văn bản toàn văn từ kho OA chung (đã tải sẵn, KHÔNG gọi mạng ở đây).
+    Không có file / XML hỏng → None — «chưa có toàn văn», không phải «không nêu»."""
+    if pmid in _tv_cache:
+        return _tv_cache[pmid]
+    ra: str | None = None
+    for f in KHO_TV.glob(f"PMID-{pmid}_*.xml"):
+        try:
+            from xml.etree import ElementTree as ET
+            goc = ET.fromstring(f.read_bytes())
+            ra = re.sub(r"\s+", " ", " ".join(goc.itertext())) or None
+        except Exception:  # noqa: BLE001 — một file hỏng không được giết cả lượt
+            ra = None
+        break
+    _tv_cache[pmid] = ra
+    return ra
+
+
 def co_so(van_ban: str, x: float) -> bool:
     """Số x có xuất hiện như MỘT SỐ RIÊNG trong văn bản không (không phải phần của số khác)."""
     s = f"{x:g}"
@@ -180,7 +207,7 @@ def main() -> int:
 
     print(f"Đối chiếu {len(viec)} mục có hiệu số định lượng…")
     tom_tat: dict[str, str | None] = {}
-    khop = mot_phan = khong_thay = hong = 0
+    khop = khop_tv = mot_phan = khong_thay = hong = 0
     can_doc: list[tuple] = []
     for k, (fn, iid, pm, dec, (hr, lo, hi), meas) in enumerate(viec, 1):
         if pm not in tom_tat:
@@ -198,19 +225,33 @@ def main() -> int:
             can_doc.append(("🔴 NHÃN LỆCH " + lech.upper(), fn, iid, pm, dec, hr, lo, hi))
         if c_hr and c_lo and c_hi:
             khop += 1
-        elif c_hr:
-            mot_phan += 1
-            can_doc.append(("🟠 MỘT PHẦN", fn, iid, pm, dec, hr, lo, hi))
         else:
-            khong_thay += 1
-            can_doc.append(("⚪ KHÔNG THẤY", fn, iid, pm, dec, hr, lo, hi))
+            # LEO THANG TOÀN VĂN (nâng cấp A): tóm tắt không đủ → mở toàn văn OA
+            # đã gom sẵn. Nhiều bài chỉ để số trong thân bài/bảng — lớp ⚪ cũ.
+            tv = lay_toan_van(pm)
+            if tv is not None:
+                v = _chuan_hoa(tv)
+                if co_so(v, hr) and co_so(v, lo) and co_so(v, hi):
+                    khop_tv += 1
+                    continue
+                c_hr = c_hr or co_so(v, hr)
+            if c_hr:
+                mot_phan += 1
+                can_doc.append(("🟠 MỘT PHẦN", fn, iid, pm, dec, hr, lo, hi))
+            else:
+                khong_thay += 1
+                nhan_o = ("⚪ KHÔNG THẤY (cả toàn văn)" if tv is not None
+                          else "⚪ KHÔNG THẤY (chưa có toàn văn)")
+                can_doc.append((nhan_o, fn, iid, pm, dec, hr, lo, hi))
         if k % 25 == 0:
             print(f"  … {k}/{len(viec)}")
 
     print("\n" + "=" * 70)
-    print(f"  ✓ KHỚP đầy đủ : {khop}")
+    print(f"  ✓ KHỚP đầy đủ : {khop} (tóm tắt)"
+          + (f"  +  {khop_tv} (chỉ thấy đủ trong TOÀN VĂN)" if khop_tv else ""))
     print(f"  🟠 MỘT PHẦN   : {mot_phan}  (thấy ước lượng điểm, không đủ khoảng tin cậy)")
-    print(f"  ⚪ KHÔNG THẤY : {khong_thay}  (tóm tắt không nêu — KHÔNG kết luận là trích sai)")
+    print(f"  ⚪ KHÔNG THẤY : {khong_thay}  (cả tóm tắt lẫn toàn văn ĐANG CÓ đều không nêu — "
+          "KHÔNG kết luận là trích sai)")
     if hong:
         print(f"  ⚠ Không lấy được tóm tắt: {hong} — 'chưa kiểm', không phải 'không sao'")
     print("=" * 70)

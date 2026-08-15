@@ -564,6 +564,84 @@ def gan_do_tin_cay(candidates: Sequence[Candidate]) -> list[Candidate]:
             for c in candidates]
 
 
+def search_preprint_lane(topic: str, days: int, retmax: int,
+                         *, fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+                         ) -> list[Candidate]:
+    """LÀN PREPRINT (nâng cấp C, 15/08/2026 — bác sĩ duyệt sau khi nhãn tin cậy
+    chạy ổn định, đúng điều kiện «chưa làm, có chủ ý» đặt ra 14/08).
+
+    Đi qua Europe PMC `SRC:PPR` (medRxiv/bioRxiv/Research Square… — một cửa,
+    có tìm theo từ khoá; API riêng của bioRxiv KHÔNG tìm từ khoá được). Mỗi ứng
+    viên TỰ KHAI `chua_binh_duyet=True` + tầng riêng — tín hiệu SỚM NHẤT nhưng
+    chưa qua bình duyệt, tuyệt đối không trộn lẫn với y văn đã duyệt."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
+    params = {
+        "query": f'({topic}) AND SRC:PPR AND FIRST_PDATE:[{since} TO {today}]',
+        "format": "json", "pageSize": str(min(retmax, 10)),
+        "sort": "FIRST_PDATE_D desc",
+    }
+    url = EUROPE_PMC + "?" + urllib.parse.urlencode(params)
+    ra: list[Candidate] = []
+    for it in fetch_json(url).get("resultList", {}).get("result", []):
+        doi = str(it.get("doi") or "")
+        ra.append(Candidate(
+            pmid=str(it.get("pmid") or ""),
+            publication_date=str(it.get("firstPublicationDate") or ""),
+            title=str(it.get("title") or "")[:300],
+            url=(f"https://doi.org/{doi}" if doi
+                 else f"https://europepmc.org/article/PPR/{it.get('id', '')}"),
+            source="Europe PMC (preprint)",
+            journal_or_organization=str(it.get("bookOrReportDetails", {}).get("publisher")
+                                        or it.get("journalTitle") or "preprint server"),
+            tang="preprint_chua_binh_duyet",
+            rut_bai="chua_kiem",
+            chua_binh_duyet=True,
+        ))
+    return ra
+
+
+def search_trials_lane(topic: str, days: int, retmax: int,
+                       *, fetch_json: Callable[[str], dict] = get_json,
+                       ) -> list[Candidate]:
+    """LÀN THỬ NGHIỆM ĐĂNG KÝ (ClinicalTrials.gov API v2, không cần khoá).
+
+    Trả lời câu «có ai ĐANG LÀM không» LIÊN TỤC cho cả watchlist lâm sàng lẫn
+    đề tài nghiên cứu đang chạy — trước đây chỉ được hỏi đúng một lần lúc G0.
+    Lọc theo LastUpdatePostDate phía client (API v2 sort được nhưng cú pháp
+    filter khoảng-ngày rườm rà); ứng viên mang NCT trong tiêu đề + cờ đã-có-
+    kết-quả. KHÔNG phải y văn — tầng riêng, không đếm vào nhóm bình duyệt."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    params = {
+        "query.cond": topic, "pageSize": str(min(retmax, 15)),
+        "sort": "LastUpdatePostDate:desc",
+        "fields": ("NCTId|BriefTitle|OverallStatus|LastUpdatePostDate|HasResults"),
+    }
+    url = "https://clinicaltrials.gov/api/v2/studies?" + urllib.parse.urlencode(params)
+    ra: list[Candidate] = []
+    for st in fetch_json(url).get("studies", []):
+        ps = st.get("protocolSection", {})
+        nct = ps.get("identificationModule", {}).get("nctId", "")
+        cap_nhat = (ps.get("statusModule", {})
+                    .get("lastUpdatePostDateStruct", {}).get("date", ""))
+        if not nct or (cap_nhat and cap_nhat < since):
+            continue
+        trang_thai = ps.get("statusModule", {}).get("overallStatus", "?")
+        co_kq = " · ĐÃ ĐĂNG KẾT QUẢ" if st.get("hasResults") else ""
+        ra.append(Candidate(
+            pmid="",
+            publication_date=cap_nhat,
+            title=(f"[{nct} · {trang_thai}{co_kq}] "
+                   f"{ps.get('identificationModule', {}).get('briefTitle', '')}")[:300],
+            url=f"https://clinicaltrials.gov/study/{nct}",
+            source="ClinicalTrials.gov v2",
+            journal_or_organization="ClinicalTrials.gov",
+            tang="thu_nghiem_dang_ky",
+            rut_bai="chua_kiem",
+        ))
+    return ra
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -612,7 +690,25 @@ def run_scan(
                     all_pmids.add(candidate.pmid)
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
             unique = gan_do_tin_cay(unique)
-            topic_results.append(TopicResult(row["topic"], row["query"], "PASS", unique))
+            # HAI LÀN MỚI (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì
+            # tự khai nhãn riêng (preprint không có PMID để tra rút bài; NCT không
+            # phải y văn). FAIL-SOFT TỪNG LÀN: làn phụ hỏng không được kéo cả chủ
+            # đề FAIL — mất tín hiệu sớm không tệ bằng mất cả lượt quét chính.
+            ghi_chu_lan: list[str] = []
+            for lane_fn, ten_lan in ((search_preprint_lane, "preprint"),
+                                     (search_trials_lane, "clinicaltrials")):
+                try:
+                    for candidate in lane_fn(row["topic"], days, max_results):
+                        khoa_c = candidate.pmid or candidate.url
+                        if khoa_c in all_pmids:
+                            continue
+                        all_pmids.add(khoa_c)
+                        unique.append(candidate)
+                except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
+                    ghi_chu_lan.append(f"làn {ten_lan} lỗi: {type(exc).__name__}")
+            topic_results.append(TopicResult(
+                row["topic"], row["query"], "PASS", unique,
+                "; ".join(ghi_chu_lan)))
             if cursor is not None:
                 import datetime as _dt
                 cursor[row["topic"]] = _dt.date.today().isoformat()
