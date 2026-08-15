@@ -1927,6 +1927,43 @@ def bh51_ledger_synthetic_dung_pham_vi():
     return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
 
 
+def bh54_ma_thoat_rut_bai_ba_muc():
+    """15/08 — bao_cao() sổ xác minh: còi ĐỎ (rc=2) CHỈ dành cho «rút BỎ HẲN đang
+    được dashboard trích».
+
+    Lỗi thật: BH34 tách phần IN từ 14/08 nhưng return vẫn `if rut: return 2` ⇒ ca
+    rút-và-thay ĐÃ phân xử xong trong gói (verify_dashboard PASS với dải cảnh báo)
+    vẫn làm chu_trinh in «🔴 xử lý trước khi dùng» vĩnh viễn — chuông không tắt
+    được dạy người ta bỏ chuông. Chốt tiêm sổ giả: rút-bỏ-hẳn → 2; chỉ
+    rút-và-thay → 1; đảo lại là đỏ.
+    """
+    import subprocess
+    ma = (
+        "import importlib.util,sys;"
+        "sp=importlib.util.spec_from_file_location('so','tools/so_xac_minh_nguon.py');"
+        "m=importlib.util.module_from_spec(sp);sys.modules['so']=m;sp.loader.exec_module(m);"
+        "lam=lambda muc: (setattr(m,'doc_so',lambda: {'muc': muc}) or m.bao_cao(set(muc)));"
+        "han={'pmid:1': {'loai':'pmid','gia_tri':'1','da_rut':True,"
+        "'ghi_chu_rut':'retracted','cac_dashboard':['x.html'],"
+        "'kiem_rut_luc':'2026-08-15T00:00:00','xac_minh_luc':'2026-08-15T00:00:00'}};"
+        "thay={'pmid:2': {'loai':'pmid','gia_tri':'2','da_rut':True,'rut_va_thay':True,"
+        "'ghi_chu_rut':'retracted','cac_dashboard':['x.html'],"
+        "'kiem_rut_luc':'2026-08-15T00:00:00','xac_minh_luc':'2026-08-15T00:00:00'}};"
+        "print('HAN=%d THAY=%d' % (lam(han), lam(thay)))"
+    )
+    r = subprocess.run([sys.executable, "-c", ma], capture_output=True, text=True,
+                       cwd=REPO, timeout=120)
+    if r.returncode != 0:
+        return False, f"bao_cao không chạy được: {r.stderr.strip()[-120:]}"
+    dong = [x for x in r.stdout.splitlines() if x.startswith("HAN=")]
+    if not dong:
+        return False, "không đọc được kết quả HAN/THAY"
+    if dong[0] != "HAN=2 THAY=1":
+        return False, (f"mã thoát sai ({dong[0]}) — rút-bỏ-hẳn phải 2, "
+                       "rút-và-thay đơn thuần phải 1 (không kéo còi đỏ mãi)")
+    return True, "rc: rút-bỏ-hẳn=2 · chỉ rút-và-thay=1"
+
+
 def bh53_elink_chi_nhan_pubmed_pmc():
     """15/08 — PHA R5-D2: elink pubmed→pmc CHỈ được nhận linkname `pubmed_pmc`.
 
@@ -2053,6 +2090,7 @@ BAI_HOC = [
     ("BH51", "15/08", "Ledger synthetic đúng phạm vi + gọi đúng chữ ký hàm", bh51_ledger_synthetic_dung_pham_vi),
     ("BH52", "15/08", "G0 kiểm rút bài ngay tại cửa nhận (R1C)", bh52_g0_kiem_rut_bai_tai_cua),
     ("BH53", "15/08", "elink chỉ nhận pubmed_pmc — cấm vơ bài đi-trích-dẫn", bh53_elink_chi_nhan_pubmed_pmc),
+    ("BH54", "15/08", "Còi đỏ rút bài chỉ cho «rút bỏ hẳn đang trích»", bh54_ma_thoat_rut_bai_ba_muc),
 ]
 
 

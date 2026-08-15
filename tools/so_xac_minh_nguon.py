@@ -847,9 +847,18 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     print("  Đây KHÔNG thay cổng --online và không thay bác sĩ duyệt.")
     print("  Cần bác sĩ kiểm chứng.")
 
-    if rut:
+    # MÃ THOÁT THEO BA MỨC (vá 15/08/2026 — vòng lặp kiểm tra–hoàn thiện):
+    # phần IN đã tách «rút bỏ hẳn» / «rút-và-thay» / «mồ côi» từ BH34, nhưng return
+    # vẫn gộp `if rut: return 2` ⇒ một ca rút-và-thay ĐÃ phân xử xong trong gói
+    # (verify_dashboard PASS) vẫn làm chu_trinh in «🔴 xử lý trước khi dùng» mãi mãi.
+    # Chuông không tắt được dạy người ta bỏ chuông. Nay: đỏ (2) CHỈ khi có bài RÚT
+    # BỎ HẲN đang được dashboard trích; rút-và-thay/mồ côi → mức chú ý (1) — thẩm
+    # quyền chặn TỪNG GÓI vẫn thuộc verify_dashboard (nó mới biết gói đã khai đủ chưa).
+    if han:
         return 2
-    return 0 if not thieu else 1
+    if thay or thieu:
+        return 1
+    return 0
 
 
 

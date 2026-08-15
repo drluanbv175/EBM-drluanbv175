@@ -119,7 +119,10 @@ def main() -> int:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--vong", str(a.vong)],
                        f"③④ Xác minh nguồn + tra rút bài ({a.vong} vòng)")
     if rc == 2:
-        viec_can_lam.append("🔴 CÓ NGUỒN ĐÃ BỊ RÚT — xử lý trước khi dùng gói chứa chúng.")
+        # rc=2 từ 15/08 CHỈ còn nghĩa «rút BỎ HẲN đang được dashboard trích» —
+        # rút-và-thay đã phân xử trong gói không kéo còi đỏ nữa (nó ở rc=1, phần
+        # 🟠 của báo cáo); thẩm quyền chặn từng gói thuộc verify_dashboard.
+        viec_can_lam.append("🔴 CÓ NGUỒN RÚT BỎ HẲN đang được trích — xử lý trước khi dùng gói chứa chúng.")
     elif rc == 1:
         # VÁ 13/08/2026 — đọc MÃ lý do thay vì đưa một lời khuyên chung.
         # Bản cũ luôn nói "chạy lại thêm vòng". Đo thật: 562/1146 mục hết hiệu lực và
