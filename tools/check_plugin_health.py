@@ -28,6 +28,14 @@ import re
 import shutil
 import sys
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 HOME = pathlib.Path.home()
 SKIP_DIRS = {"node_modules", ".git", "dist", "build", "__pycache__", "test", "tests",
              "fixtures", "examples", ".venv", "venv", "demo"}
@@ -192,7 +200,7 @@ def main() -> int:
         for x in canh_bao[nhan][:5]:
             print(f"      - {x}")
     if thieu_cong_cu:
-        print(f"  ⚠ N3 công cụ ngoài chưa có trên máy — skill chạy tới đó sẽ dừng:")
+        print("  ⚠ N3 công cụ ngoài chưa có trên máy — skill chạy tới đó sẽ dừng:")
         for ten, cs in sorted(thieu_cong_cu.items()):
             print(f"      - {ten}: {', '.join(sorted(cs))}")
     if not loi and not canh_bao and not thieu_cong_cu:

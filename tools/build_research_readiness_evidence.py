@@ -166,6 +166,13 @@ CORE_CHECKS: List[EvidenceCheck] = [
         proves="Guardrail, dashboard/hub, evidence cards và audit vận hành đạt cổng tổng thể.",
         limitation="Không xác nhận mọi thẻ/chứng cứ là phù hợp cho một đề tài cụ thể nếu chưa rà theo protocol.",
     ),
+    EvidenceCheck(
+        domain="Lint repo sống",
+        command=["-m", "ruff", "check", "."],
+        cwd=str(REPO),
+        proves="Mã Python của repo sống qua cổng lint bắt buộc trong đúng cấu hình dự án.",
+        limitation="Lint kiểm lỗi tĩnh và định dạng; không thay test hành vi, review chuyên môn hoặc phê duyệt thật.",
+    ),
 ]
 
 

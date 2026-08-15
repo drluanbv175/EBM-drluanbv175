@@ -40,6 +40,9 @@ NEW_BLOCK_LOP2_LINE = (
     "     A1-A18 thay thế).\n"
 )
 
+OLD_RUT_BAI = '     khuyến cáo/điều chỉnh thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều (2026-07-07).\n'
+NEW_RUT_BAI = '     khuyến cáo/điều chỉnh thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều (2026-07-07).\n   - RÚT BÀI — PHẢI TRA, KHÔNG ĐƯỢC TỰ NHỚ (2026-08-14): mọi PMID/DOI đưa vào kết luận\n     phải kiểm bằng `python medical-ebm-automation/tools/check_citation_retraction.py\n     --pmid <PMID…>` (chuỗi 3 tầng: Retraction Watch ngoại tuyến → NCBI → Europe PMC).\n     Một vụ rút bài có thể xảy ra SAU ngày cắt kiến thức nên trí nhớ mô hình không biết\n     được; ca thật PMID 30267080 — cả PubMed lẫn Europe PMC đều trả \'ok\', chỉ nền ngoại\n     tuyến bắt được. Không tra được ⇒ ghi "chưa kiểm rút bài", TUYỆT ĐỐI không ghi\n     "chưa bị rút". Bài quá mới thường CHƯA có publication type (MEDLINE gán sau) —\n     đừng loại nó vì lý do đó.\n'
+
 BLOCK = f"""
 
 {MARKER}
@@ -53,8 +56,7 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
      nguồn PMID/DOI/URL, không PII, không vượt cổng bác sĩ duyệt,
      không tự gán GRADE khi nguồn không cấp, tách độ chắc chứng cứ với độ mạnh khuyến cáo,
      gắn nhãn `[CẦN...]` khi thiếu dữ liệu, có disclaimer. R14 HARD-RED khi gói CÓ
-     khuyến cáo/điều chỉnh thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều (2026-07-07).
-{NEW_BLOCK_LOP2_LINE}2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
+{NEW_RUT_BAI}{NEW_BLOCK_LOP2_LINE}2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
 """
@@ -64,14 +66,32 @@ def is_agent(path: Path) -> bool:
     return path.suffix == ".md" and path.name != "README.md" and not path.name.startswith("_")
 
 
+# DANH SÁCH cặp thay thế, không phải MỘT cặp cứng (đổi 2026-08-14). Trước đây `_refresh`
+# chỉ biết đúng một cặp, nên mỗi lần thêm luật mới cho toàn đội lại phải sửa cơ chế. Đó
+# chính là lý do khiến doctrine TRÔI TỤT sau cổng: thêm luật ở cổng thì dễ, lan luật xuống
+# 50 agent thì không có đường — xem BH39.
+THAY_THE: list[tuple[str, str]] = [
+    (OLD_BLOCK_LOP2_LINE, NEW_BLOCK_LOP2_LINE),
+    (OLD_RUT_BAI, NEW_RUT_BAI),
+]
+
+
 def _refresh(path: Path) -> bool:
-    """Thay ĐÚNG dòng Lớp 2 cũ bằng bản mới trong file ĐÃ có marker — bỏ qua
-    im lặng nếu không khớp chính xác (file có thể đã bị sửa tay khác bản gốc,
-    KHÔNG ép ghi đè)."""
+    """Áp mọi cặp thay thế còn khớp trong file ĐÃ có marker.
+
+    Bỏ qua im lặng cặp nào không khớp chính xác — file có thể đã bị sửa tay khác bản gốc,
+    KHÔNG ép ghi đè. Chỉ báo True khi thực sự có thay đổi.
+    """
     text = path.read_text(encoding="utf-8")
-    if MARKER not in text or OLD_BLOCK_LOP2_LINE not in text:
+    if MARKER not in text:
         return False
-    path.write_text(text.replace(OLD_BLOCK_LOP2_LINE, NEW_BLOCK_LOP2_LINE), encoding="utf-8")
+    goc = text
+    for cu, moi in THAY_THE:
+        if cu in text and moi not in text:
+            text = text.replace(cu, moi)
+    if text == goc:
+        return False
+    path.write_text(text, encoding="utf-8")
     return True
 
 

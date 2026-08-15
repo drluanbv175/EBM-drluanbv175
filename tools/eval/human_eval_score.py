@@ -10,7 +10,17 @@ CSV κ: mỗi dòng 1 ca; cột = nhãn của từng chuyên gia, giá trị ∈
 CSV Likert: mỗi dòng 1 phiếu; cột c1..c5 (điểm 1–5).
 Cần bác sĩ kiểm chứng.
 """
-import argparse, csv, sys, math
+import argparse
+import csv
+import sys
+
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
 CATS=["khop_hoan_toan","khop_phan_lon","khac_biet_nho","khac_biet_lon","ai_nguy_hiem"]
 
 def fleiss_kappa(rows):

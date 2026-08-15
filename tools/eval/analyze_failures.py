@@ -18,8 +18,19 @@ Dùng:
 [PROTOTYPE — hỗ trợ CON NGƯỜI rà chất lượng. Auto-prompt-optimizer KHÔNG bật. Cần bác sĩ kiểm chứng.]
 """
 from __future__ import annotations
-import argparse, json, os, sys
-from collections import Counter, defaultdict
+import argparse
+import json
+import os
+import sys
+from collections import Counter
+
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
 
 # ── 5 TRỤ CAFÉ-S (nguồn: _CHUAN-CAFES.md) ───────────────────────────────────
 PILLARS = {

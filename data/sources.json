@@ -107,7 +107,7 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-08-14",
+   "last_success_at": "2026-08-15",
    "known_gap": null,
    "last_probe_at": "2026-08-15"
   },

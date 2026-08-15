@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Vong lap kiem tra - hoan thien den nguong clinical production.
+"""Vòng lặp kiểm tra–hoàn thiện toàn hệ EBM tới ngưỡng tốt nhất có thể.
 
-Cong cu nay dieu phoi cac verifier san co thanh mot loop co gioi han:
-- loi ky thuat/sync/Unicode/test -> chay remediation an toan roi lap lai;
-- thieu phe duyet lam sang, evidence package, UAT, signoff that -> dung fail-closed;
-- chi bao CLINICAL_PRODUCTION_READY khi tat ca cong ky thuat PASS, knowledge packs
-  clinical-release-ready va go-live gate that su PRODUCTION_READY.
+Công cụ điều phối các verifier Research, Clinical, Knowledge và hạ tầng thành
+một vòng lặp có giới hạn:
+- lỗi kỹ thuật/sync/Unicode/test -> chạy remediation an toàn rồi kiểm lại;
+- lỗi không đổi sau remediation hoặc remediation lỗi -> dừng sớm, không lặp mù;
+- thiếu phê duyệt lâm sàng, evidence package, UAT, signoff thật -> dừng fail-closed
+  và ghi nhận đây là mức tốt nhất có thể đạt tự động;
+- chỉ báo CLINICAL_PRODUCTION_READY khi tất cả cổng kỹ thuật PASS, knowledge packs
+  clinical-release-ready và go-live gate thật sự PRODUCTION_READY.
 
-No KHONG tao approval, KHONG sua evidence manifest thanh "approved", KHONG bat du lieu
-benh nhan that. Do la phan cua bac si/PI/phap ly/bao mat/van hanh.
+Nó KHÔNG tạo approval, KHÔNG sửa evidence manifest thành "approved", KHÔNG bật dữ
+liệu bệnh nhân thật. Đó là phần của bác sĩ/PI/pháp lý/bảo mật/vận hành.
 """
 
 from __future__ import annotations
@@ -43,10 +46,21 @@ TECHNICAL_FAIL = "TECHNICAL_FAIL"
 BLOCKED_BY_HUMAN_GATES = "BLOCKED_BY_HUMAN_GATES"
 CLINICAL_PRODUCTION_READY = "CLINICAL_PRODUCTION_READY"
 
+ALL_GATES_PASSED = "ALL_GATES_PASSED"
+HUMAN_GATES_ONLY = "HUMAN_GATES_ONLY"
+NO_PROGRESS_AFTER_SAFE_REMEDIATION = "NO_PROGRESS_AFTER_SAFE_REMEDIATION"
+SAFE_REMEDIATION_FAILED = "SAFE_REMEDIATION_FAILED"
+REMEDIATION_DISABLED = "REMEDIATION_DISABLED"
+MAX_ITERATIONS_REACHED = "MAX_ITERATIONS_REACHED"
+
+FULLY_READY = "FULLY_READY"
+BEST_ACHIEVABLE_WITHOUT_HUMAN_APPROVAL = "BEST_ACHIEVABLE_WITHOUT_HUMAN_APPROVAL"
+INCOMPLETE_TECHNICAL = "INCOMPLETE_TECHNICAL"
+
 DISCLAIMER = (
-    "Can bac si kiem chung. Vong lap nay chi tu sua cac loi ky thuat an toan; "
-    "khong thay phe duyet lam sang, IRB/PI, bao mat, phap ly, UAT, signoff "
-    "hoac quyet dinh dieu tri."
+    "Cần bác sĩ kiểm chứng. Vòng lặp này chỉ tự sửa các lỗi kỹ thuật an toàn; "
+    "không thay phê duyệt lâm sàng, IRB/PI, bảo mật, pháp lý, UAT, signoff "
+    "hoặc quyết định điều trị."
 )
 
 
@@ -88,6 +102,7 @@ class LoopIteration:
     status: str
     steps: list[LoopStep]
     remediation_steps: list[LoopStep]
+    technical_failure_signature: str = ""
 
 
 Runner = Callable[[Sequence[str], Path], CommandResult]
@@ -195,7 +210,7 @@ def _find_tsx_cli() -> str:
     fallback = CCOS / "node_modules" / "tsx" / "dist" / "cli.mjs"
     if fallback.exists():
         return str(fallback)
-    raise SystemExit("Cannot find tsx CLI. Run pnpm install in chronic-care-clinic-os first.")
+    raise SystemExit("Không tìm thấy tsx CLI. Hãy chạy pnpm install trong chronic-care-clinic-os trước.")
 
 
 def _go_live_command(
@@ -253,6 +268,16 @@ def run_remediation(runner: Runner) -> list[LoopStep]:
     return steps
 
 
+def _technical_failure_signature(steps: Sequence[LoopStep]) -> str:
+    """Tạo dấu vân tay ổn định để phát hiện remediation không tạo tiến triển."""
+    failures = [
+        f"{step.step_id}:{step.returncode}:{step.evidence_tail}"
+        for step in steps
+        if step.status == FAIL
+    ]
+    return " || ".join(failures)
+
+
 def evaluate_once(
     *,
     runner: Runner = _default_runner,
@@ -274,14 +299,35 @@ def evaluate_once(
     cycle_payload = _json_from_output(cycle)
     cycle_failed = cycle.returncode != 0 or cycle_payload.get("overall_status") == "FAIL_CLOSED"
     steps.append(_step("controlled_automation_cycle", PASS if not cycle_failed else FAIL, cycle))
+    if not cycle_failed:
+        for item in cycle_payload.get("next_required_human_actions") or []:
+            step_id = str(item.get("step_id") or "").strip()
+            action = str(item.get("action") or "").strip()
+            if not step_id or not action:
+                continue
+            inherited_gate = CommandResult(
+                command=cycle.command,
+                cwd=cycle.cwd,
+                returncode=0,
+                stdout=f"CONTROLLED_HUMAN_GATE: {step_id}",
+                stderr="",
+            )
+            steps.append(
+                _step(
+                    f"controlled_cycle:{step_id}",
+                    HUMAN_GATE,
+                    inherited_gate,
+                    human_action=action,
+                )
+            )
 
     kp = _run_command(runner, [PY, "tools/assess_knowledge_pack_release.py", "--json"], REPO)
     kp_payload = _json_from_output(kp)
     kp_ready = bool(kp_payload.get("clinical_release_allowed"))
     kp_summary = kp_payload.get("summary") or {}
     kp_action = (
-        "Hoan tat 13_approval_record.json va 10_evidence_manifest.json cho moi pack; "
-        f"hien tai clinical_release_ready={kp_summary.get('clinical_release_ready', '?')}/"
+        "Hoàn tất 13_approval_record.json và 10_evidence_manifest.json cho từng pack; "
+        f"hiện tại clinical_release_ready={kp_summary.get('clinical_release_ready', '?')}/"
         f"{kp_summary.get('total', '?')}."
     )
     steps.append(_step("knowledge_pack_release_gate", PASS if kp_ready else HUMAN_GATE, kp,
@@ -293,15 +339,15 @@ def evaluate_once(
             cwd=str(CCOS),
             returncode=2,
             stdout="",
-            stderr="BLOCKED: provide production evidence package and dual-control go-live attestation.",
+            stderr="BLOCKED: cần gói chứng cứ production và xác nhận go-live kiểm soát kép.",
         )
         steps.append(_step(
             "clinical_go_live_gate",
             HUMAN_GATE,
             missing,
             human_action=(
-                "Cung cap production evidence package that, UAT/security/legal/clinical signoff, "
-                "release-id, operator-ref, admin-approver, change ticket, rollback plan va "
+                "Cung cấp production evidence package thật, UAT/security/legal/clinical signoff, "
+                "release-id, operator-ref, admin-approver, change ticket, rollback plan và "
                 "post-deploy checklist."
             ),
         ))
@@ -331,7 +377,7 @@ def evaluate_once(
             "clinical_go_live_gate",
             PASS if go_live_ready else HUMAN_GATE,
             go_live,
-            human_action="" if go_live_ready else "Sua tat ca blockedReasons trong go-live report; khong duoc dung placeholder hoac self-approval.",
+            human_action="" if go_live_ready else "Sửa tất cả blockedReasons trong go-live report; không được dùng placeholder hoặc self-approval.",
         ))
 
     if any(step.status == FAIL for step in steps):
@@ -359,6 +405,9 @@ def run_loop(
     max_iterations = max(1, max_iterations)
 
     final_status = TECHNICAL_FAIL
+    previous_failure_signature = ""
+    convergence_reason = ""
+    converged = False
     for index in range(1, max_iterations + 1):
         status, steps = evaluate_once(
             runner=runner,
@@ -373,33 +422,84 @@ def run_loop(
         )
         remediation: list[LoopStep] = []
         final_status = status
-        if status == TECHNICAL_FAIL and remediate and index < max_iterations:
+        failure_signature = _technical_failure_signature(steps)
+
+        if status == CLINICAL_PRODUCTION_READY:
+            converged = True
+            convergence_reason = ALL_GATES_PASSED
+        elif status == BLOCKED_BY_HUMAN_GATES:
+            converged = True
+            convergence_reason = HUMAN_GATES_ONLY
+        elif previous_failure_signature and failure_signature == previous_failure_signature:
+            converged = True
+            convergence_reason = NO_PROGRESS_AFTER_SAFE_REMEDIATION
+        elif not remediate:
+            convergence_reason = REMEDIATION_DISABLED
+        elif index >= max_iterations:
+            convergence_reason = MAX_ITERATIONS_REACHED
+        else:
             remediation = run_remediation(runner)
-        iterations.append(LoopIteration(index, status, steps, remediation))
-        if status != TECHNICAL_FAIL:
+            if any(step.status == FAIL for step in remediation):
+                convergence_reason = SAFE_REMEDIATION_FAILED
+            else:
+                previous_failure_signature = failure_signature
+
+        iterations.append(
+            LoopIteration(index, status, steps, remediation, failure_signature)
+        )
+        if status != TECHNICAL_FAIL or convergence_reason in {
+            NO_PROGRESS_AFTER_SAFE_REMEDIATION,
+            SAFE_REMEDIATION_FAILED,
+            REMEDIATION_DISABLED,
+            MAX_ITERATIONS_REACHED,
+        }:
             break
 
     all_steps = [step for item in iterations for step in item.steps]
-    human_actions = [
-        {"step_id": step.step_id, "action": step.human_action}
-        for step in all_steps
-        if step.status == HUMAN_GATE and step.human_action
-    ]
+    human_actions = []
+    seen_human_actions: set[tuple[str, str]] = set()
+    for step in all_steps:
+        key = (step.step_id, step.human_action)
+        if step.status == HUMAN_GATE and step.human_action and key not in seen_human_actions:
+            seen_human_actions.add(key)
+            human_actions.append({"step_id": step.step_id, "action": step.human_action})
     technical_failures = [
         {"step_id": step.step_id, "tail": step.evidence_tail}
         for step in all_steps
         if step.status == FAIL
     ]
+    final_steps = iterations[-1].steps if iterations else []
+    unresolved_technical_failures = [
+        {"step_id": step.step_id, "tail": step.evidence_tail}
+        for step in final_steps
+        if step.status == FAIL
+    ]
+    technical_completion_achieved = final_status != TECHNICAL_FAIL
+    best_achievable_automatically = final_status == BLOCKED_BY_HUMAN_GATES
+    if final_status == CLINICAL_PRODUCTION_READY:
+        completion_level = FULLY_READY
+    elif best_achievable_automatically:
+        completion_level = BEST_ACHIEVABLE_WITHOUT_HUMAN_APPROVAL
+    else:
+        completion_level = INCOMPLETE_TECHNICAL
     return {
         "kind": "clinical_production_loop_report",
+        "scope": ["research", "clinical", "knowledge", "agents", "plugins", "hub", "tests", "lint"],
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "overall_status": final_status,
+        "completion_level": completion_level,
+        "technical_completion_achieved": technical_completion_achieved,
+        "best_achievable_automatically": best_achievable_automatically,
+        "converged": converged,
+        "convergence_reason": convergence_reason,
         "clinical_production_allowed": final_status == CLINICAL_PRODUCTION_READY,
         "iteration_count": len(iterations),
         "max_iterations": max_iterations,
         "technical_failure_count": len(technical_failures),
+        "unresolved_technical_failure_count": len(unresolved_technical_failures),
         "human_gate_count": len(human_actions),
         "technical_failures": technical_failures,
+        "unresolved_technical_failures": unresolved_technical_failures,
         "required_human_actions": human_actions,
         "iterations": [asdict(item) for item in iterations],
         "disclaimer": DISCLAIMER,
@@ -408,16 +508,22 @@ def run_loop(
 
 def markdown_report(report: dict) -> str:
     lines = [
-        "# Clinical Production Loop",
+        "# Vòng lặp kiểm tra–hoàn thiện toàn hệ EBM",
         "",
-        f"- Generated: `{report['generated_at']}`",
-        f"- Overall status: `{report['overall_status']}`",
-        f"- Clinical production allowed: `{report['clinical_production_allowed']}`",
-        f"- Iterations: `{report['iteration_count']}/{report['max_iterations']}`",
-        f"- Technical failures: `{report['technical_failure_count']}`",
-        f"- Human gates: `{report['human_gate_count']}`",
+        f"- Thời điểm: `{report['generated_at']}`",
+        f"- Trạng thái tổng thể: `{report['overall_status']}`",
+        f"- Mức hoàn thiện: `{report.get('completion_level', '-')}`",
+        f"- Hoàn thiện kỹ thuật: `{report.get('technical_completion_achieved', False)}`",
+        f"- Mức tốt nhất có thể tự động: `{report.get('best_achievable_automatically', False)}`",
+        f"- Đã hội tụ: `{report.get('converged', False)}`",
+        f"- Lý do hội tụ: `{report.get('convergence_reason', '-')}`",
+        f"- Cho phép clinical production: `{report['clinical_production_allowed']}`",
+        f"- Số vòng: `{report['iteration_count']}/{report['max_iterations']}`",
+        f"- Tổng lỗi kỹ thuật đã gặp: `{report['technical_failure_count']}`",
+        f"- Lỗi kỹ thuật chưa giải quyết: `{report.get('unresolved_technical_failure_count', 0)}`",
+        f"- Cổng con người: `{report['human_gate_count']}`",
         "",
-        "| Iteration | Step | Status | Evidence tail | Human action |",
+        "| Vòng | Bước | Trạng thái | Chứng cứ cuối | Hành động con người |",
         "|---|---|---|---|---|",
     ]
     for item in report["iterations"]:
@@ -441,7 +547,7 @@ def markdown_report(report: dict) -> str:
                 )
             )
     if report["required_human_actions"]:
-        lines.extend(["", "## Required Human Actions"])
+        lines.extend(["", "## Hành động bắt buộc của con người"])
         for action in report["required_human_actions"]:
             lines.append(f"- `{action['step_id']}`: {action['action']}")
     lines.extend(["", f"> {report['disclaimer']}", ""])
@@ -456,9 +562,11 @@ def write_report(report: dict, *, out_json: Path, out_md: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run a fail-closed loop toward clinical production readiness.")
-    parser.add_argument("--max-iterations", type=int, default=3)
-    parser.add_argument("--evidence", help="Production evidence package JSON for final go-live.")
+    parser = argparse.ArgumentParser(
+        description="Chạy vòng lặp fail-closed hoàn thiện toàn hệ tới mức tốt nhất có thể."
+    )
+    parser.add_argument("--max-iterations", type=int, default=3, help="Số vòng kỹ thuật tối đa.")
+    parser.add_argument("--evidence", help="Gói chứng cứ production JSON cho cổng go-live cuối.")
     parser.add_argument("--release-id")
     parser.add_argument("--source-commit")
     parser.add_argument("--operator-ref")
@@ -466,11 +574,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--change-ticket")
     parser.add_argument("--rollback-plan")
     parser.add_argument("--post-deploy-checklist")
-    parser.add_argument("--no-remediate", action="store_true")
+    parser.add_argument("--no-remediate", action="store_true", help="Chỉ kiểm, không tự sửa kỹ thuật an toàn.")
     parser.add_argument("--out-json", default=str(REPORT_JSON))
     parser.add_argument("--out-md", default=str(REPORT_MD))
-    parser.add_argument("--no-write", action="store_true")
-    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--no-write", action="store_true", help="Không ghi báo cáo JSON/Markdown.")
+    parser.add_argument("--json", action="store_true", help="In toàn bộ báo cáo JSON ra stdout.")
     args = parser.parse_args(argv)
 
     report = run_loop(
@@ -491,9 +599,15 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
         print(f"overall_status={report['overall_status']}")
+        print(f"completion_level={report['completion_level']}")
+        print(f"technical_completion_achieved={report['technical_completion_achieved']}")
+        print(f"best_achievable_automatically={report['best_achievable_automatically']}")
+        print(f"converged={report['converged']}")
+        print(f"convergence_reason={report['convergence_reason']}")
         print(f"clinical_production_allowed={report['clinical_production_allowed']}")
         print(f"iteration_count={report['iteration_count']}/{report['max_iterations']}")
         print(f"technical_failure_count={report['technical_failure_count']}")
+        print(f"unresolved_technical_failure_count={report['unresolved_technical_failure_count']}")
         print(f"human_gate_count={report['human_gate_count']}")
         for action in report["required_human_actions"]:
             print(f"human_gate:{action['step_id']}={action['action']}")

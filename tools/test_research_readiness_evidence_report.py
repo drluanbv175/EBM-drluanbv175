@@ -71,6 +71,22 @@ def test_core_checks_include_clinical_evidence_update_pipeline():
     assert any("verify_clinical_evidence_update_pipeline.py" in cmd for cmd in commands)
 
 
+def test_core_checks_include_blocking_repo_lint():
+    lint_checks = [check for check in E.CORE_CHECKS if check.domain == "Lint repo sống"]
+
+    assert len(lint_checks) == 1
+    lint = lint_checks[0]
+    assert lint.command == ["-m", "ruff", "check", "."]
+    assert Path(lint.cwd).resolve() == E.REPO.resolve()
+    assert lint.blocking is True
+
+
+def test_upgrade_verify_wires_blocking_repo_lint():
+    upgrade = (E.ROOT / "tools" / "upgrade_verify.py").read_text(encoding="utf-8")
+
+    assert '("27. Lint repo sống", ["-m", "ruff", "check", "medical-ebm-automation"], True)' in upgrade
+
+
 def test_full_pytest_uses_project_python(monkeypatch):
     seen: list[tuple[str, list[str], str]] = []
 

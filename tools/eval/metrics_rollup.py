@@ -105,7 +105,7 @@ def main(stamp: str | None = None) -> None:
         L.append("  - ⚠️ **Lưu ý precision:** 2/2 RETURN phiên 2026-07-08 (CL-A5, CL-A8) là **DƯƠNG TÍNH GIẢ** "
                  "(grader độc lập: output ĐÚNG) — cổng rule-based thiếu phân loại document/task-type. "
                  "Đây là hướng an-toàn (over-return) nhưng cần tinh chỉnh → xem `PROMOTION_QUEUE.md` (LSN-20260708-51/52).")
-    L.append(f"- **Hiện diện gap-marker (output probe):** " +
+    L.append("- **Hiện diện gap-marker (output probe):** " +
              ", ".join(f"{k.split('_')[0]}={v}" for k, v in sorted(gap.items())) + " marker.")
     L.append("- **Độ cũ guideline / GRADE tự gán:** chưa instrument (theo METRICS_SPEC: bắt đầu đếm từ đây).")
     L.append("")

@@ -33,6 +33,14 @@ from research_checks import (
     research_checks,
 )
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # ── Nối vào retry_loop (A6 — self-eval + correction, vá 2026-07-04) ─────────
 # retry_loop.py nằm ở cây git KHÁC (medical-ebm-automation/tools/, không phải cây
 # tools/eval/ này) — import chéo AN TOÀN qua sys.path (try/except): nếu cây đó vắng

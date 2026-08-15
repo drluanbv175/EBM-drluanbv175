@@ -792,16 +792,22 @@ def markdown_report(report: dict) -> str:
                     nhan.append("↺ đã có trong kho")
                 if item.get("tang") and item.get("tang") != "chung":
                     nhan.append(f"tầng: {item['tang']}")
+                # Ứng viên từ 2 LÀN NGOÀI PubMed (preprint/NCT — 15/08) KHÔNG được
+                # nhận chú «mới vào PubMed» (nói sai về một bản ghi không phải PubMed)
+                # và không in «PMID <rỗng>».
+                ngoai_pubmed = item.get("tang") in ("preprint_chua_binh_duyet",
+                                                    "thu_nghiem_dang_ky")
                 pts = [x for x in (item.get("pubtype") or []) if x != "Journal Article"]
                 if pts:
                     nhan.append("loại: " + ", ".join(pts[:3]))
-                else:
+                elif not ngoai_pubmed:
                     # CHƯA gán loại = bài vừa vào PubMed, MEDLINE chưa lập chỉ mục. Đây là
                     # dấu hiệu MỚI, không phải khiếm khuyết — và chính nhóm này từng bị bộ
                     # lọc [ptyp] vứt sạch. Nói rõ để bác sĩ biết phải tự đọc loại thiết kế.
                     nhan.append("⚡ mới vào PubMed — CHƯA gán loại thiết kế, tự đọc để xếp tầng")
                 nhan_note = ("  \n  - " + " · ".join(nhan)) if nhan else ""
-                lines.append(f"- **{item['publication_date']}** · PMID {item['pmid']} · {item['url']}{source_note}{journal_note}{authority_note}")
+                dinh_danh = f"PMID {item['pmid']}" if item.get("pmid") else "(không PMID — xem link)"
+                lines.append(f"- **{item['publication_date']}** · {dinh_danh} · {item['url']}{source_note}{journal_note}{authority_note}")
                 lines.append(f"  - {item['title']}{nhan_note}")
         lines.append("")
     lines.extend([

@@ -4,3 +4,4 @@ item hợp lệ → PASS
   ca xấu «tự gán mức» → BẮT ĐƯỢC: certainty: nguồn KHÔNG chấm mà level='high' — tự gán mức (I2)
   ca xấu «CANDIDATE chưa resolved» → BẮT ĐƯỢC: status=CANDIDATE nhưng source.resolved != true — nhảy cóc qua truy nguyên (cấm #2)
   ca xấu «số không nguồn gốc» → BẮT ĐƯỢC: effect có số mà as_reported≠true và KHÔNG ghi derivation — số ở đâu ra? (I1)
+  ca xấu «apply + hiệu số thiếu checklist 9.1» → BẮT ĐƯỢC: apply + hiệu số mà thiếu effect.outcome_role (chính/phụ?) — LÔ H 9.1

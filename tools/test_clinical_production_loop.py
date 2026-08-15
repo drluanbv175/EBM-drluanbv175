@@ -29,8 +29,21 @@ def _result(
     )
 
 
-def _controlled_payload() -> dict:
-    return {"overall_status": "CONTROLLED_READY_WITH_HUMAN_GATES"}
+def _controlled_payload(*, with_human_gates: bool = True) -> dict:
+    payload = {
+        "overall_status": (
+            "CONTROLLED_READY_WITH_HUMAN_GATES" if with_human_gates else "CONTROLLED_READY"
+        )
+    }
+    if with_human_gates:
+        payload["human_gate_count"] = 1
+        payload["next_required_human_actions"] = [
+            {
+                "step_id": "research_gate_contract",
+                "action": "Cần IRB/PI xác nhận cổng nghiên cứu thật.",
+            }
+        ]
+    return payload
 
 
 def _knowledge_payload(*, allowed: bool) -> dict:
@@ -59,10 +72,16 @@ def test_loop_blocks_on_human_gates_without_evidence_or_pack_release():
     report = L.run_loop(max_iterations=2, runner=runner, remediate=False)
 
     assert report["overall_status"] == L.BLOCKED_BY_HUMAN_GATES
+    assert report["completion_level"] == L.BEST_ACHIEVABLE_WITHOUT_HUMAN_APPROVAL
+    assert report["technical_completion_achieved"] is True
+    assert report["best_achievable_automatically"] is True
+    assert report["converged"] is True
+    assert report["convergence_reason"] == L.HUMAN_GATES_ONLY
     assert report["clinical_production_allowed"] is False
     assert report["technical_failure_count"] == 0
-    assert report["human_gate_count"] == 2
+    assert report["human_gate_count"] == 3
     assert {item["step_id"] for item in report["required_human_actions"]} == {
+        "controlled_cycle:research_gate_contract",
         "knowledge_pack_release_gate",
         "clinical_go_live_gate",
     }
@@ -77,7 +96,7 @@ def test_loop_can_report_clinical_production_ready_when_all_gates_pass(monkeypat
         if "upgrade_verify.py" in command_text:
             return _result(command, cwd, stdout="PASS 25/25")
         if "run_controlled_automation_cycle.py" in command_text:
-            return _result(command, cwd, payload=_controlled_payload())
+            return _result(command, cwd, payload=_controlled_payload(with_human_gates=False))
         if "assess_knowledge_pack_release.py" in command_text:
             return _result(command, cwd, payload=_knowledge_payload(allowed=True))
         if "production-go-live.ts" in command_text:
@@ -102,6 +121,11 @@ def test_loop_can_report_clinical_production_ready_when_all_gates_pass(monkeypat
     )
 
     assert report["overall_status"] == L.CLINICAL_PRODUCTION_READY
+    assert report["completion_level"] == L.FULLY_READY
+    assert report["technical_completion_achieved"] is True
+    assert report["best_achievable_automatically"] is False
+    assert report["converged"] is True
+    assert report["convergence_reason"] == L.ALL_GATES_PASSED
     assert report["clinical_production_allowed"] is True
     assert report["human_gate_count"] == 0
     assert report["technical_failure_count"] == 0
@@ -139,6 +163,60 @@ def test_loop_remediates_technical_failure_then_rechecks():
     assert remediation_calls
 
 
+def test_loop_stops_early_when_safe_remediation_makes_no_progress():
+    remediation_calls: list[str] = []
+
+    def runner(command: Sequence[str], cwd: Path) -> L.CommandResult:
+        command_text = " ".join(str(part) for part in command)
+        if "upgrade_verify.py" in command_text:
+            return _result(command, cwd, returncode=1, stdout="FAIL stable gate")
+        if "run_controlled_automation_cycle.py" in command_text:
+            return _result(command, cwd, payload=_controlled_payload())
+        if "assess_knowledge_pack_release.py" in command_text:
+            return _result(command, cwd, payload=_knowledge_payload(allowed=False))
+        remediation_calls.append(command_text)
+        return _result(command, cwd, stdout="remediated")
+
+    report = L.run_loop(max_iterations=5, runner=runner, remediate=True)
+
+    assert report["overall_status"] == L.TECHNICAL_FAIL
+    assert report["completion_level"] == L.INCOMPLETE_TECHNICAL
+    assert report["iteration_count"] == 2
+    assert report["converged"] is True
+    assert report["convergence_reason"] == L.NO_PROGRESS_AFTER_SAFE_REMEDIATION
+    assert report["unresolved_technical_failure_count"] == 1
+    assert remediation_calls
+    assert report["iterations"][1]["remediation_steps"] == []
+
+
+def test_loop_stops_when_a_safe_remediation_step_fails():
+    def runner(command: Sequence[str], cwd: Path) -> L.CommandResult:
+        command_text = " ".join(str(part) for part in command)
+        if "upgrade_verify.py" in command_text:
+            return _result(command, cwd, returncode=1, stdout="FAIL technical gate")
+        if "run_controlled_automation_cycle.py" in command_text:
+            return _result(command, cwd, payload=_controlled_payload())
+        if "assess_knowledge_pack_release.py" in command_text:
+            return _result(command, cwd, payload=_knowledge_payload(allowed=False))
+        if "sync_codex_agents" in command_text:
+            return _result(command, cwd, returncode=1, stdout="FAIL remediation")
+        # Nhận diện chính xác một lệnh remediation thật để mô phỏng thất bại.
+        if "sync_agents_to_codex.py" in command_text and "--check" not in command_text:
+            return _result(command, cwd, returncode=1, stdout="FAIL remediation")
+        return _result(command, cwd, stdout="remediated")
+
+    report = L.run_loop(max_iterations=5, runner=runner, remediate=True)
+
+    assert report["overall_status"] == L.TECHNICAL_FAIL
+    assert report["iteration_count"] == 1
+    assert report["converged"] is False
+    assert report["convergence_reason"] == L.SAFE_REMEDIATION_FAILED
+    assert any(
+        step["status"] == L.FAIL
+        for step in report["iterations"][0]["remediation_steps"]
+    )
+
+
 def test_markdown_report_lists_required_human_actions():
     report = {
         "generated_at": "2026-07-23T00:00:00+00:00",
@@ -170,7 +248,7 @@ def test_markdown_report_lists_required_human_actions():
 
     md = L.markdown_report(report)
 
-    assert "Clinical Production Loop" in md
+    assert "Vòng lặp kiểm tra–hoàn thiện toàn hệ EBM" in md
     assert L.BLOCKED_BY_HUMAN_GATES in md
-    assert "Required Human Actions" in md
+    assert "Hành động bắt buộc của con người" in md
     assert "Provide real signoff." in md

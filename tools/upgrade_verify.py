@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Plugin/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (27 bước tự động, thay cho gõ tay từng lệnh):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (28 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
@@ -28,7 +28,8 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (27 bước tự
  24. build_research_readiness_evidence.py --include-full-pytest — xuất bảng chứng cứ kỹ thuật trung thực
  25. run_orchestrator.py --validate — tự kiểm điều phối ⇄ registry (control plane, không lỗi cấu hình)
  26. orchestrator/tests/test_orchestrator.py — bộ test đơn vị của orchestrator (routing/plan/gate/guardrail/plugin)
- 27. verify_mcp_live_sync.py       — kiểm đồng bộ MCP mặc định (git hooksPath + LaunchAgent) đã bật trên máy này
+ 27. ruff check medical-ebm-automation — lint repo sống; chặn tuyên bố PASS khi chất lượng mã chưa sạch
+ 28. verify_mcp_live_sync.py       — kiểm đồng bộ MCP mặc định (git hooksPath + LaunchAgent) đã bật trên máy này
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
@@ -146,7 +147,8 @@ def main() -> int:
         ("24. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
         ("25. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
         ("26. Orchestrator tests", ["tools/orchestrator/tests/test_orchestrator.py"], True),
-        ("27. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
+        ("27. Lint repo sống", ["-m", "ruff", "check", "medical-ebm-automation"], True),
+        ("28. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
     ]
 
     results: list[tuple[str, bool, str]] = []

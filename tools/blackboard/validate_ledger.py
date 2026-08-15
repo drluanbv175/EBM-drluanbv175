@@ -27,7 +27,19 @@ Quy ước thoát: 0 = không lỗi ĐỎ; 1 = có ít nhất một lỗi ĐỎ 
 [PROTOTYPE — chạy demo trên synthetic; KHÔNG tự sửa sổ cái, mọi thay đổi do bác sĩ duyệt.]
 """
 from __future__ import annotations
-import argparse, json, re, sys, unicodedata
+import argparse
+import json
+import re
+import sys
+import unicodedata
+
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
 
 # 8 trường bắt buộc theo SCHEMA của _SO-EBM-MASTER.md
 REQUIRED_FIELDS = ["id", "ngay", "chu_de", "nguon", "loai",

@@ -8,7 +8,6 @@ này chỉ đọc file và git index; không tự sửa/sync.
 
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 from pathlib import Path
@@ -170,6 +169,8 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
         "Repo/Claude Code alignment",
         "tools/check_claude_codex_sync_health.py",
         "tools/verify_clinical_runtime_schema_hardening.py",
+        '"-m", "ruff", "check", "medical-ebm-automation"',
+        "Lint repo sống",
     ]
     missing = _missing_markers(path, required)
     return {
