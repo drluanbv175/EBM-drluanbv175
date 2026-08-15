@@ -71,11 +71,21 @@ def main() -> int:
         pmids |= pmids_tu_dashboard(f)
     KHO.mkdir(parents=True, exist_ok=True)
     da_co = {re.search(r"PMID-(\d+)_", p.name).group(1) for p in KHO.glob("PMID-*.xml")}
-    khong_pmc_cu: set[str] = set()
-    ghi_chu = KHO / "khong-oa.txt"   # nhớ bài đã tra và KHÔNG lấy được — khỏi tra lại
+    # Sổ «không lấy được» CÓ HẠN DÙNG 30 ngày (vá 15/08 chiều — bản đầu là danh
+    # sách trần, tức SỔ ĐEN VĨNH VIỄN: một bài vào PMC-OA muộn (embargo hết,
+    # tác giả nộp bản OA…) sẽ không bao giờ được thử lại. Tập OA là tập LỚN DẦN
+    # theo thời gian — sổ nhớ phải già đi cùng nó. Dòng: «PMID yyyy-mm-dd»;
+    # dòng cũ chỉ có PMID (không ngày) = hết hạn ngay, thử lại lượt này.
+    ghi_chu = KHO / "khong-oa.txt"
+    khong_pmc_cu: dict[str, str] = {}
     if ghi_chu.exists():
-        khong_pmc_cu = set(ghi_chu.read_text(encoding="utf-8").split())
-    can = sorted(pmids - da_co - khong_pmc_cu)
+        for dong in ghi_chu.read_text(encoding="utf-8").split("\n"):
+            phan = dong.split()
+            if phan:
+                khong_pmc_cu[phan[0]] = phan[1] if len(phan) > 1 else ""
+    han = (date.today() - __import__("datetime").timedelta(days=30)).isoformat()
+    con_han = {pm for pm, ngay in khong_pmc_cu.items() if ngay and ngay > han}
+    can = sorted(pmids - da_co - con_han)
     if a.gioi_han:
         can = can[: a.gioi_han]
     print(f"Kho chung: {len(da_co)} toàn văn sẵn có · {len(pmids)} PMID trong "
@@ -114,9 +124,14 @@ def main() -> int:
     if loi_mang:
         print(f"  ⚠ {loi_mang} bài lỗi mạng lượt này — CHƯA tải được (không phải "
               "không-OA); chạy lại tool sẽ thử tiếp.")
-    # ghi nhớ nhóm không lấy được (tra lại tốn mạng vô ích; xoá file này nếu muốn tra lại)
-    ghi_chu.write_text("\n".join(sorted(khong_pmc_cu | set(khong_pmc) | set(khong_oa))) + "\n",
-                       encoding="utf-8")
+    # ghi sổ «không lấy được» KÈM NGÀY — mục vừa tra nhận ngày hôm nay; mục còn
+    # hạn giữ nguyên ngày cũ; mục hết hạn mà lượt này không tra tới thì rơi khỏi sổ
+    hom_nay = date.today().isoformat()
+    so_moi = {pm: ngay for pm, ngay in khong_pmc_cu.items() if pm in con_han}
+    for pm in list(khong_pmc) + list(khong_oa):
+        so_moi[pm] = hom_nay
+    ghi_chu.write_text("\n".join(f"{pm} {ngay}" for pm, ngay in sorted(so_moi.items()))
+                       + "\n", encoding="utf-8")
     tong_co = len(da_co) + moi
     (KHO / "DO-PHU-OA.md").write_text(
         f"# ĐỘ PHỦ TOÀN VĂN OA — kho dùng chung dashboard — {date.today().isoformat()}\n\n"

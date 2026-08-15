@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""CHỐT TƯƠNG THÍCH ĐA NỀN TẢNG — quét tĩnh họ lỗi «viết cho một máy» (15/08/2026).
+
+Vì sao: đây là HỌ LỖI TÁI PHÁT NHIỀU NHẤT của kho, toàn bộ đều gãy IM LẶNG trên
+máy còn lại — mỗi lần một tool, chưa từng có chốt quét cả kho:
+  · run_retraction_and_med_safety.py ghi cứng `C:/Users/Admin/...` → chưa từng chạy trên Mac
+  · ensure_strict_source.py ghi cứng ROOT Windows → gãy trên Mac
+  · docx_sang_pdf_giu_mau.py chỉ dò trình duyệt theo đường dẫn macOS → không in được PDF trên Windows
+  · kiem_do_tuoi_chung_cu.py gọi os.getuid() → chết im lặng trên Windows TỪ LÚC RA ĐỜI
+  · 7 script vietnamize print tiếng Việt vào stdout cp1252 → chết giữa chừng trên Windows
+  · xuat_goi_cap_nhat gọi lệnh `python3` — Windows không có tên lệnh đó
+
+Luật quét (chỉ mã Python trong các cây tool đang sống):
+  🔴 CHẶN — gần chắc chắn gãy trên máy kia:
+     R1 đường dẫn user ghi cứng (`C:/Users/`, `C:\\Users\\`, `/Users/<tên>/`)
+     R2 os.getuid()/os.geteuid() không có guard sys.platform
+     R3 subprocess gọi literal "python3"/"python" thay vì sys.executable
+  🟡 CẢNH BÁO — đáng soi tay:
+     R4 in ký tự ngoài-ASCII mà file không reconfigure stdout UTF-8
+     R5 đường dẫn đặc thù nền tảng (`/Library/`, `AppData`) ngoài nhánh có guard
+
+Miễn trừ TƯỜNG MINH bằng chú thích `# da-nen: bo-qua` trên cùng dòng (phải kèm lý do
+ngay cạnh — miễn trừ câm là đường lách). Chốt chỉ ĐO và BÁO — không sửa file.
+Mã thoát: 0 sạch 🔴 · 1 chỉ 🟡 · 2 có 🔴. Cần bác sĩ kiểm chứng (với nhóm 🟡).
+"""
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+REPO = Path(__file__).resolve().parents[1]
+CAY_QUET = [REPO / "tools", REPO / "medical-ebm-automation" / "tools",
+            REPO / "EBM-Dashboards" / "tools", REPO / "EBM_MASTER" / "tools",
+            REPO / "ops"]
+BO_QUA_TEN = {"__pycache__"}
+MIEN_TRU = "da-nen: bo-qua"
+
+R1 = re.compile(r"[\"'](?:[A-Za-z]:[/\\]Users[/\\]|/Users/(?!nguyenluan['\"])[A-Za-z])")
+R1B = re.compile(r"[\"']/Users/[A-Za-z]")          # kể cả user hiện tại — vẫn là ghi cứng
+R2 = re.compile(r"\bos\.gete?uid\s*\(")
+R3 = re.compile(r"""(?:subprocess\.\w+|Popen)\(\s*\[\s*[\"'](?:python3?|py)[\"']""")
+R5 = re.compile(r"[\"'](?:/Library/|/Applications/|AppData\\\\|AppData/)")
+
+
+def _mask_khong_phai_code(dong: list[str]) -> list[str]:
+    """Trả bản sao các dòng với CHÚ THÍCH và DOCSTRING đã che — bẫy đo thật ngay
+    lượt quét đầu: 6/12 «phát hiện» là docstring/chú thích ĐANG KỂ về chính bài
+    học cũ (ensure_strict_source mô tả bug đã vá; chot_hoi_quy liệt kê bài học;
+    chính file này nêu ví dụ). Chốt bắt lời kể về lỗi thì chốt thành máy tạo
+    báo động giả. Máy trạng thái ''' / \"\"\" đơn giản — đủ cho kho tool này."""
+    ra: list[str] = []
+    trong_ds = None  # dấu docstring đang mở (''' hoặc \"\"\") hoặc None
+    for ln in dong:
+        s = ln
+        if trong_ds:
+            if trong_ds in s:
+                s = s.split(trong_ds, 1)[1]
+                trong_ds = None
+            else:
+                ra.append("")
+                continue
+        # che chú thích (an toàn đủ dùng: '#' trong chuỗi hiếm gặp ở luật đang quét)
+        if "#" in s:
+            s = s.split("#", 1)[0]
+        # docstring/chuỗi ba-nháy mở trên dòng này
+        for dau in ('"""', "'''"):
+            while dau in s:
+                truoc, sau = s.split(dau, 1)
+                if dau in sau:
+                    s = truoc + sau.split(dau, 1)[1]
+                else:
+                    s = truoc
+                    trong_ds = dau
+                    break
+        ra.append(s)
+    return ra
+
+
+def quet_file(p: Path) -> tuple[list[str], list[str]]:
+    do, vang = [], []
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return do, vang
+    dong = text.splitlines()
+    code = _mask_khong_phai_code(dong)
+    co_utf8 = "reconfigure" in text or "PYTHONIOENCODING" in text
+    co_in_ngoai_ascii = any(
+        ln.lstrip().startswith("print(") and any(ord(c) > 127 for c in ln)
+        for ln in code)
+    # File có nhận thức nền tảng ở BẤT KỲ đâu → R2/R5 hạ xuống 🟡 (guard có thể
+    # nằm xa hơn cửa sổ nhìn của chốt; đòi chốt hiểu luồng điều khiển là đòi nó
+    # thành trình phân tích tĩnh thật — ngoài phạm vi, và 🔴 oan sẽ dạy bỏ 🔴).
+    biet_nen_tang = ("sys.platform" in text or "os.name" in text
+                     or "platform.system" in text)
+    try:
+        ten = str(p.relative_to(REPO))
+    except ValueError:
+        ten = str(p)
+    for i, ln in enumerate(code, 1):
+        if MIEN_TRU in dong[i - 1]:
+            continue
+        if R1.search(ln) or R1B.search(ln):
+            do.append(f"{ten}:{i} R1 đường dẫn user ghi cứng: {dong[i-1].strip()[:80]}")
+        if R2.search(ln):
+            (vang if biet_nen_tang else do).append(
+                f"{ten}:{i} R2 os.getuid — " +
+                ("file CÓ nhận thức nền tảng, soi tay guard" if biet_nen_tang
+                 else "file KHÔNG hề nhắc sys.platform (chết im lặng trên Windows)"))
+        if R3.search(ln):
+            do.append(f"{ten}:{i} R3 subprocess gọi literal python3 — dùng sys.executable")
+        if R5.search(ln) and not biet_nen_tang:
+            vang.append(f"{ten}:{i} R5 đường dẫn đặc thù nền tảng không guard: "
+                        f"{dong[i-1].strip()[:70]}")
+    if co_in_ngoai_ascii and not co_utf8:
+        vang.append(f"{ten} R4 print ngoài-ASCII mà không reconfigure UTF-8 (bẫy cp1252)")
+    return do, vang
+
+
+def main() -> int:
+    do_tong, vang_tong, n = [], [], 0
+    for cay in CAY_QUET:
+        if not cay.exists():
+            continue
+        for p in sorted(cay.rglob("*.py")):
+            if any(t in p.parts for t in BO_QUA_TEN) or ".bak" in p.name:
+                continue
+            n += 1
+            d, v = quet_file(p)
+            do_tong += d
+            vang_tong += v
+    print(f"CHỐT ĐA NỀN TẢNG — quét {n} file Python trong {len(CAY_QUET)} cây tool")
+    for x in do_tong:
+        print(f"  🔴 {x}")
+    for x in vang_tong[:20]:
+        print(f"  🟡 {x}")
+    if len(vang_tong) > 20:
+        print(f"  … và {len(vang_tong) - 20} cảnh báo nữa")
+    print(f"KẾT: 🔴 {len(do_tong)} chặn · 🟡 {len(vang_tong)} cảnh báo. "
+          "Cần bác sĩ kiểm chứng (nhóm 🟡).")
+    return 2 if do_tong else (1 if vang_tong else 0)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1927,6 +1927,33 @@ def bh51_ledger_synthetic_dung_pham_vi():
     return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
 
 
+def bh55_khong_duong_dan_cung_mot_may():
+    """15/08 — HỌ LỖI TÁI PHÁT NHIỀU NHẤT KHO: tool viết cho MỘT máy, gãy IM LẶNG
+    trên máy kia (ensure_strict_source · run_retraction_and_med_safety ·
+    docx_sang_pdf · kiem_do_tuoi/os.getuid · 7 script vietnamize/cp1252 —
+    mỗi lần vá một tool, chưa từng có chốt quét CẢ KHO).
+
+    Chốt chạy kiem_tuong_thich_da_nen.py: exit 2 (có 🔴 — đường dẫn user ghi
+    cứng / getuid không nhận thức nền tảng / subprocess literal python3) là đỏ.
+    Ngay lượt quét đầu đã bắt 1 ca thật: generate_cerebrovascular ROOT=C:\\Users
+    — chưa từng chạy được trên Mac. Đột biến gieo-file-đường-dẫn-cứng → đỏ ✓.
+    Nhóm 🟡 (104 mục, chủ yếu cp1252 chưa reconfigure) là tồn kho soi dần,
+    KHÔNG chặn — 🔴 oan hàng loạt sẽ dạy người ta bỏ 🔴.
+    """
+    import subprocess
+    duong = REPO / "tools" / "kiem_tuong_thich_da_nen.py"
+    if not duong.exists():
+        return False, "kiem_tuong_thich_da_nen.py biến mất"
+    r = subprocess.run([sys.executable, str(duong)], capture_output=True,
+                       text=True, cwd=REPO, timeout=180)
+    if r.returncode == 2:
+        dong_do = [x.strip() for x in r.stdout.splitlines() if "🔴" in x][:3]
+        return False, "tool viết-cho-một-máy quay lại: " + " | ".join(dong_do)
+    if "KẾT:" not in r.stdout:
+        return False, f"chốt đa nền không chạy trọn: {r.stderr.strip()[-100:]}"
+    return True, "0 🔴 toàn kho tool (5 cây, ~268 file)"
+
+
 def bh54_ma_thoat_rut_bai_ba_muc():
     """15/08 — bao_cao() sổ xác minh: còi ĐỎ (rc=2) CHỈ dành cho «rút BỎ HẲN đang
     được dashboard trích».
@@ -2091,6 +2118,7 @@ BAI_HOC = [
     ("BH52", "15/08", "G0 kiểm rút bài ngay tại cửa nhận (R1C)", bh52_g0_kiem_rut_bai_tai_cua),
     ("BH53", "15/08", "elink chỉ nhận pubmed_pmc — cấm vơ bài đi-trích-dẫn", bh53_elink_chi_nhan_pubmed_pmc),
     ("BH54", "15/08", "Còi đỏ rút bài chỉ cho «rút bỏ hẳn đang trích»", bh54_ma_thoat_rut_bai_ba_muc),
+    ("BH55", "15/08", "Không tool nào viết-cho-một-máy (đa nền tảng)", bh55_khong_duong_dan_cung_mot_may),
 ]
 
 
