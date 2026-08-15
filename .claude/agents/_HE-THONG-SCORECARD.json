@@ -1,5 +1,5 @@
 {
-  "mode": "fast",
+  "mode": "deep",
   "summary": {
     "strong": 13,
     "partial": 0,
@@ -56,7 +56,7 @@
         },
         {
           "ok": true,
-          "detail": "Orchestrator control-plane có mặt: có (orchestrator.py)"
+          "detail": "Orchestrator control-plane validate PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -120,7 +120,7 @@
         },
         {
           "ok": true,
-          "detail": "Orchestrator có mặt: có (run_pipeline.py)"
+          "detail": "Công cụ import/compile được: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -170,7 +170,7 @@
         },
         {
           "ok": true,
-          "detail": "Vòng tự sửa (code): ✓ (retry_loop.py)"
+          "detail": "Vòng tự sửa retry_loop CHẠY THẬT: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -205,11 +205,11 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 247 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 248 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
-          "detail": "Công cụ audit có mặt: có (audit_ebm_system.py)"
+          "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -244,7 +244,7 @@
         },
         {
           "ok": true,
-          "detail": "Công cụ kiểm định tuyến có mặt: có (verify_agent_routing.py)"
+          "detail": "Kiểm định tuyến agent chạy được: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -271,15 +271,15 @@
         },
         {
           "ok": true,
-          "detail": "Công cụ kiểm định tuyến có mặt: có (verify_agent_routing.py)"
+          "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Flow điều phối agent↔agent có mặt: có (flows.py)"
+          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Cổng quyền sở hữu plugin có mặt: có (verify_plugin_orchestration.py)"
+          "detail": "Một owner/capability; plugin chỉ worker PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -339,7 +339,7 @@
         },
         {
           "ok": true,
-          "detail": "Sync mở rộng có mặt: có (sync_agents_to_codex.py)"
+          "detail": "generate_agent chạy (dry-run): exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -356,7 +356,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Audit hệ có mặt: có (audit_ebm_system.py)"
+          "detail": "Audit registry-aware PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -376,19 +376,19 @@
         },
         {
           "ok": true,
-          "detail": "Verifier hợp đồng cổng nghiên cứu có mặt: có (verify_research_gate_contracts.py)"
+          "detail": "Smoke-test hợp đồng cổng nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Verifier rubric QA ↔ LESSONS taxonomy có mặt: có (verify_lessons_rubric_alignment.py)"
+          "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Verifier thực tiễn dữ liệu nghiên cứu có mặt: có (verify_research_practical_readiness.py)"
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Verifier tự động có kiểm soát có mặt: có (verify_controlled_research_automation.py)"
+          "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -396,15 +396,15 @@
         },
         {
           "ok": true,
-          "detail": "Verifier hardening schema lâm sàng có mặt: có (verify_clinical_runtime_schema_hardening.py)"
+          "detail": "Clinical runtime schema hardening PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Verifier pipeline cập nhật chứng cứ lâm sàng có mặt: có (verify_clinical_evidence_update_pipeline.py)"
+          "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
-          "detail": "Verifier đồng bộ repo/Claude Code/Codex có mặt: có (verify_claude_code_repo_alignment.py)"
+          "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,

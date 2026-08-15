@@ -487,6 +487,108 @@ def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
         return {}
 
 
+def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
+    """Tái kiểm rút bài cho từng định danh CHỈ ĐỊNH TAY — vá lỗ «bản ghi mồ côi».
+
+    Vì sao (đo thật 15/08/2026, ca ITEM-05 ViemGanB): `--quet` chỉ tái kiểm định
+    danh mà `gom_nguon` rút được từ TRƯỜNG NGUỒN CHÍNH của item; PMID nằm ở trường
+    phụ (`replacesPmid`) có bản ghi trong sổ nhưng `cac_dashboard=[]` nên nhánh
+    di trú «da_rut thiếu rut_va_thay ⇒ tra lại» KHÔNG BAO GIỜ chạy tới nó — trong
+    khi cổng verify_dashboard (tầng 2) lại quét thấy và chặn cứng vĩnh viễn.
+    Hai bộ nhìn hai tập định danh khác nhau ⇒ cần lệnh tái kiểm đích danh.
+
+    Luật bất đối xứng GIỮ NGUYÊN: kết quả mới chỉ được BỔ SUNG cờ/dữ kiện
+    (rut_va_thay, thong_bao, thời điểm); dương tính cũ KHÔNG bị xoá kể cả khi
+    lượt tra này trả «ok» — nguồn không thấy ≠ bài còn nguyên vẹn (BH08/BH27).
+    """
+    so = doc_so()
+    muc = so["muc"]
+    bay_gio = dt.datetime.now().isoformat(timespec="seconds")
+    doi_can, pmid_can = [], []
+    for raw in ids:
+        v = raw.strip()
+        if v.lower().startswith("pmid:"):
+            pmid_can.append(v.split(":", 1)[1])
+        elif v.isdigit():
+            pmid_can.append(v)
+        else:
+            doi_can.append(v.removeprefix("doi:"))
+    thay_doi = 0
+    if pmid_can:
+        kq = kiem_rut_bai(pmid_can)
+        for pm in pmid_can:
+            khoa = f"pmid:{pm}"
+            info = kq.get(pm) or {}
+            tt = info.get("status", "")
+            bg = muc.setdefault(khoa, {"loai": "pmid", "gia_tri": pm,
+                                       "cac_dashboard": []})
+            if tt == "retracted":
+                bg["kiem_rut_luc"] = bay_gio
+                bg["ghi_chu_rut"] = tt
+                bg["da_rut"] = True
+                bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
+                if info.get("retraction_notice"):
+                    bg["thong_bao_rut"] = (info["retraction_notice"] or {}).get("pmid", "")
+                nhan = ("ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA" if bg["rut_va_thay"] else "ĐÃ BỊ RÚT")
+                print(f"  🔴 {khoa}: {nhan} — đã cập nhật bản ghi")
+                thay_doi += 1
+            elif tt == "expression_of_concern":
+                bg["kiem_rut_luc"] = bay_gio
+                bg["ghi_chu_rut"] = tt
+                bg["quan_ngai"] = True
+                print(f"  🟠 {khoa}: Expression of Concern — đã cập nhật")
+                thay_doi += 1
+            elif tt == "ok" and not bg.get("da_rut"):
+                bg["kiem_rut_luc"] = bay_gio
+                bg["ghi_chu_rut"] = tt
+                print(f"  ✓ {khoa}: ok (chuỗi 3 tầng)")
+                thay_doi += 1
+            elif tt == "ok" and bg.get("da_rut"):
+                print(f"  ⚠ {khoa}: lượt này trả 'ok' nhưng sổ đang DƯƠNG TÍNH — "
+                      f"GIỮ dương tính (luật bất đối xứng), không xoá.")
+            else:
+                print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
+    if doi_can:
+        mea = REPO / "medical-ebm-automation"
+        sys.path.insert(0, str(mea))
+        try:
+            from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
+            import os as _os  # noqa: PLC0415
+            kq_doi = CrossrefRetraction(mailto=_os.environ.get("NCBI_EMAIL", "")).check(doi_can)
+        except Exception as e:  # noqa: BLE001
+            kq_doi = {}
+            print(f"  ⚠ Không tra được nhóm DOI ({e}) — giữ nguyên, KHÔNG coi là sạch.")
+        for doi in doi_can:
+            khoa = f"doi:{doi.casefold()}"
+            bg = muc.setdefault(khoa, {"loai": "doi", "gia_tri": doi,
+                                       "cac_dashboard": []})
+            info = kq_doi.get(doi) or {}
+            tt = info.get("status", "")
+            if tt == "retracted":
+                bg["kiem_rut_luc"] = bay_gio
+                bg["ghi_chu_rut"] = tt
+                bg["da_rut"] = True
+                bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
+                bg["thong_bao_rut_doi"] = info.get("notice_doi", "")
+                print(f"  🔴 {khoa}: {'ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA' if bg['rut_va_thay'] else 'ĐÃ BỊ RÚT'} — đã cập nhật")
+                thay_doi += 1
+            elif tt == "ok" and not bg.get("da_rut"):
+                bg["kiem_rut_luc"] = bay_gio
+                bg["ghi_chu_rut"] = tt
+                print(f"  ✓ {khoa}: ok (Crossref)")
+                thay_doi += 1
+            elif tt == "ok" and bg.get("da_rut"):
+                print(f"  ⚠ {khoa}: lượt này 'ok' nhưng sổ DƯƠNG TÍNH — giữ (luật bất đối xứng).")
+            else:
+                print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
+    if thay_doi:
+        ghi_so(so)
+        print(f"Đã ghi sổ ({thay_doi} bản ghi chạm tới). Chạy lại verify_dashboard để thấy hiệu lực.")
+    else:
+        print("Không bản ghi nào thay đổi.")
+    return 0
+
+
 def lenh_quet(files: list[Path], vong: int) -> int:
     vd = _nap_verify_dashboard()
     so = doc_so()
@@ -852,8 +954,15 @@ def main() -> int:
     ap.add_argument("--bao-cao", action="store_true", help="chỉ in độ phủ, không gọi mạng")
     ap.add_argument("--quet-ledger", action="store_true",
                     help="quét rút bài cho định danh CHỈ-CÓ-TRONG-HUB (lựa chọn A, 15/08)")
+    ap.add_argument("--kiem-rut-lai", nargs="+", metavar="ID",
+                    help="tái kiểm rút bài ĐÍCH DANH (pmid:XXX hoặc DOI) — cho bản ghi "
+                         "MỒ CÔI mà --quet không bao giờ chạm tới (định danh chỉ xuất "
+                         "hiện ở trường phụ như replacesPmid). Luật bất đối xứng giữ "
+                         "nguyên: KHÔNG bao giờ xoá dương tính cũ.")
     a = ap.parse_args()
 
+    if a.kiem_rut_lai:
+        return kiem_rut_lai_dich_danh(a.kiem_rut_lai)
     if a.quet_ledger:
         quet_ledger_hub(a.vong)
         return 0

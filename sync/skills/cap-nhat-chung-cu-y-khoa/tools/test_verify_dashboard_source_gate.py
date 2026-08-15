@@ -195,5 +195,49 @@ class TestCongTrenDuLieuThat(unittest.TestCase):
                               f"{ten}:{vd.field(ch, 'id')} miễn trừ mà khai {basis!r}")
 
 
+
+
+class TestPhanXuRutVaThay(unittest.TestCase):
+    """Khớp phân xử rút-và-thay — vá 15/08/2026 (ca ITEM-05 ViemGanB).
+
+    Item khai chuẩn cố ý để pmid:"" (nguồn chính là DOI bản thay), PMID bài gốc
+    CHỈ nằm ở replacesPmid — bộ khớp phải nhận đường này. Đồng thời khoá các
+    đường lách: decision khác notyet, hay bài rút BỎ HẲN (không rut_va_thay),
+    đều KHÔNG được phân xử.
+    """
+
+    ITEM = (
+        'const DATA = { items:[ {id:"ITEM-05", pmid:"", '
+        'doi:"10.1001/jamaoncol.2018.4070", replacesPmid:"30267080", '
+        'replacementNoticePmid:"31021386", '
+        'replacementNoticeDoi:"10.1001/jamaoncol.2019.0576", '
+        'dateVersion:"2019 (bản thay thế)", decision:"%s", '
+        'gradeSource:"số liệu lấy từ bản thay thế", flag:"x"} ] }\n// HẾT KHỐI DATA'
+    )
+
+    def _viet(self, decision):
+        import tempfile, os
+        f = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False,
+                                        encoding="utf-8")
+        f.write(self.ITEM % decision)
+        f.close()
+        self.addCleanup(os.unlink, f.name)
+        return f.name
+
+    def test_khop_qua_replacesPmid_khi_pmid_rong(self):
+        rec = {"loai": "pmid", "gia_tri": "30267080", "rut_va_thay": True,
+               "thong_bao": "31021386"}
+        self.assertEqual(
+            vd._replacement_acknowledgement(self._viet("notyet"), rec), "ITEM-05")
+
+    def test_decision_apply_khong_duoc_phan_xu(self):
+        rec = {"loai": "pmid", "gia_tri": "30267080", "rut_va_thay": True}
+        self.assertIsNone(vd._replacement_acknowledgement(self._viet("apply"), rec))
+
+    def test_rut_bo_han_khong_bao_gio_duoc_phan_xu(self):
+        rec = {"loai": "pmid", "gia_tri": "30267080", "rut_va_thay": False}
+        self.assertIsNone(vd._replacement_acknowledgement(self._viet("notyet"), rec))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

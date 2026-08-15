@@ -1141,9 +1141,18 @@ def _replacement_acknowledgement(duong_dan, record):
     for chunk in split_items(data):
         if affected_type not in {"pmid", "doi"}:
             continue
-        if norm_identifier(field(chunk, affected_type)) != affected_value:
-            continue
         replaces_pmid = field(chunk, "replacesPmid")
+        # Khớp theo HAI đường (vá 15/08/2026, ca ITEM-05 ViemGanB): (a) định danh
+        # CHÍNH của item; hoặc (b) bản ghi loại pmid trùng `replacesPmid` — item
+        # rút-và-thay chuẩn cố ý để pmid:"" và trỏ nguồn chính bằng DOI bản thay,
+        # nên PMID bài gốc CHỈ xuất hiện ở replacesPmid; đòi nó nằm ở trường pmid
+        # là đòi một điều khai báo đúng không bao giờ thoả. Mọi điều kiện
+        # fail-closed còn lại (notice khai đủ, notyet, chữ «bản thay thế») giữ nguyên.
+        own_match = norm_identifier(field(chunk, affected_type)) == affected_value
+        replaces_match = (affected_type == "pmid"
+                          and norm_identifier(replaces_pmid) == affected_value)
+        if not (own_match or replaces_match):
+            continue
         notice_pmid = field(chunk, "replacementNoticePmid")
         notice_doi = field(chunk, "replacementNoticeDoi")
         declared_notices = {norm_identifier(notice_pmid), norm_identifier(notice_doi)} - {""}
@@ -1153,12 +1162,15 @@ def _replacement_acknowledgement(duong_dan, record):
             continue
         if field(chunk, "decision") != "notyet":
             continue
+        # (field() or "") — vá 15/08: field() trả None khi khoá vắng mặt; item thiếu
+        # một trong bốn trường làm join nổ TypeError ⇒ cổng CRASH thay vì chặn có
+        # thông điệp. Fail-closed nghĩa là trả lời «không đạt», không phải chết.
         revision_text = " ".join(
             [
-                field(chunk, "dateVersion"),
-                field(chunk, "effectText"),
-                field(chunk, "gradeSource"),
-                field(chunk, "flag"),
+                field(chunk, "dateVersion") or "",
+                field(chunk, "effectText") or "",
+                field(chunk, "gradeSource") or "",
+                field(chunk, "flag") or "",
             ]
         ).casefold()
         if not any(marker in revision_text for marker in ("bản thay thế", "bản đã sửa", "replacement")):
