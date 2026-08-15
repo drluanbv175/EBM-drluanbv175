@@ -750,6 +750,95 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     return 0 if not thieu else 1
 
 
+
+def quet_ledger_hub(vong: int = 1) -> None:
+    """Quét RÚT BÀI cho định danh CHỈ-CÓ-TRONG-HUB — lựa chọn A bác sĩ duyệt 15/08/2026.
+
+    Vì sao: quét theo-dashboard không chạm được ~240 thẻ hub tích luỹ nhiều tháng
+    mà dashboard gốc không còn trên đĩa ⇒ chúng vĩnh viễn KHÔNG BIẾT dù mạng tốt.
+    Chế độ này đọc thẳng EBM_MASTER, gom pmid/doi chưa có phán quyết còn hạn,
+    hỏi chuỗi 3 tầng (PMID, lô 50) + tầng Crossref (DOI) rồi ghi sổ — CHỈ ghi
+    THÀNH CÔNG, thất bại giữ nguyên KHÔNG BIẾT (bất biến của sổ).
+    """
+    from datetime import datetime as _dt, timedelta as _td
+    hub = json.loads((DASH.parent / "EBM_MASTER" / "EBM_MASTER.json")
+                     .read_text(encoding="utf-8"))
+    so = doc_so()
+    muc = so.setdefault("muc", {})
+    bay_gio = _dt.now().isoformat(timespec="seconds")
+    han = (_dt.now() - _td(days=30)).isoformat()
+
+    can_pmid, can_doi = [], []
+    for c in hub.get("evidence_cards", []):
+        src = c.get("source") or {}
+        pm, doi = src.get("pmid"), (src.get("doi") or "").lower()
+        if pm:
+            bg = muc.get(f"pmid:{pm}")
+            if not (bg and bg.get("ghi_chu_rut") and (bg.get("kiem_rut_luc") or "") > han):
+                can_pmid.append(str(pm))
+        elif doi:
+            bg = muc.get(f"doi:{doi}")
+            if not (bg and bg.get("ghi_chu_rut") and (bg.get("kiem_rut_luc") or "") > han):
+                can_doi.append(doi)
+    can_pmid, can_doi = sorted(set(can_pmid)), sorted(set(can_doi))
+    print(f"HUB: cần kiểm {len(can_pmid)} PMID + {len(can_doi)} DOI (chưa có phán quyết còn hạn)")
+
+    sys.path.insert(0, str(DASH.parent / "medical-ebm-automation"))
+    from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
+    from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
+    chain, cr = RetractionChain(), CrossrefRetraction()
+    ghi = 0
+    for _v in range(max(1, vong)):
+        for i in range(0, len(can_pmid), 50):
+            lo = can_pmid[i:i + 50]
+            try:
+                kq = chain.check(lo)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  lô PMID {i//50+1}: lỗi {type(exc).__name__} — giữ KHÔNG BIẾT")
+                continue
+            for p, v in kq.items():
+                tt = v.get("status", "")
+                if tt == "ok" or tt in ("retracted", "expression_of_concern"):
+                    k = f"pmid:{p}"
+                    bg = muc.setdefault(k, {"loai": "pmid", "gia_tri": p,
+                                            "cac_dashboard": ["(hub-only)"]})
+                    bg["ghi_chu_rut"] = tt
+                    bg["kiem_rut_luc"] = bay_gio
+                    bg["nguon_xac_minh"] = v.get("source") or "chain"
+                    if tt != "ok":
+                        bg["da_rut"] = True
+                        if v.get("retract_and_replace"):
+                            bg["rut_va_thay"] = True
+                    ghi += 1
+        for i in range(0, len(can_doi), 20):
+            lo = can_doi[i:i + 20]
+            try:
+                kq = cr.check(lo)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  lô DOI {i//20+1}: lỗi {type(exc).__name__} — giữ KHÔNG BIẾT")
+                continue
+            for d, v in (kq or {}).items():
+                tt = (v or {}).get("status", "")
+                if tt == "ok" or tt in ("retracted", "expression_of_concern"):
+                    k = f"doi:{d.lower()}"
+                    bg = muc.setdefault(k, {"loai": "doi", "gia_tri": d,
+                                            "cac_dashboard": ["(hub-only)"]})
+                    bg["ghi_chu_rut"] = tt
+                    bg["kiem_rut_luc"] = bay_gio
+                    bg["nguon_xac_minh"] = "crossref"
+                    if tt != "ok":
+                        bg["da_rut"] = True
+                        if v.get("retract_and_replace"):
+                            bg["rut_va_thay"] = True
+                    ghi += 1
+        # các mục đã ghi thành công sẽ bị lọc ở vòng kế nhờ điều kiện còn-hạn
+        can_pmid = [p for p in can_pmid
+                    if not ((muc.get(f"pmid:{p}") or {}).get("kiem_rut_luc") or "") > han]
+        can_doi = [d for d in can_doi
+                   if not ((muc.get(f"doi:{d}") or {}).get("kiem_rut_luc") or "") > han]
+    ghi_so(so)
+    print(f"✓ ghi {ghi} phán quyết vào sổ · còn KHÔNG BIẾT: {len(can_pmid)} PMID + {len(can_doi)} DOI")
+
 def main() -> int:
     for s in (sys.stdout, sys.stderr):
         try:
@@ -761,8 +850,13 @@ def main() -> int:
     ap.add_argument("--vong", type=int, default=2,
                     help="số vòng thử lại cho mạng chập chờn (mặc định 2)")
     ap.add_argument("--bao-cao", action="store_true", help="chỉ in độ phủ, không gọi mạng")
+    ap.add_argument("--quet-ledger", action="store_true",
+                    help="quét rút bài cho định danh CHỈ-CÓ-TRONG-HUB (lựa chọn A, 15/08)")
     a = ap.parse_args()
 
+    if a.quet_ledger:
+        quet_ledger_hub(a.vong)
+        return 0
     if a.bao_cao and a.quet is None:
         return bao_cao()
 
