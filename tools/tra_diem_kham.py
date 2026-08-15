@@ -92,7 +92,32 @@ def tra(cau_hoi: str, cards: list[dict], vq: set[str]) -> list[dict]:
     return [c for _d, c in sorted(diem, key=lambda x: -x[0])[:3]]
 
 
+def _ghi_nhat_ky_tac_dong(ket: list[dict], giay: float) -> None:
+    """VÒNG ĐO TÁC ĐỘNG (Tầng-2, 16/08/2026 — bác sĩ duyệt) — KHÔNG-PII TỪ GỐC.
+
+    Chỉ ghi TRƯỜNG PHÁI SINH: id thẻ khớp / cờ miss / thời điểm / độ trễ.
+    CÂU HỎI THÔ TUYỆT ĐỐI KHÔNG LƯU ở đây — câu hỏi tại điểm khám có thể chứa
+    chi tiết người bệnh; log tác động không được là nơi PII rò vào. (Riêng
+    nhánh miss vẫn ghi câu hỏi vào watchlist-signal như LÔ 5 đã thiết kế —
+    đó là kênh khác, phục vụ bổ sung giám sát, bác sĩ đã duyệt trước.)
+    Ghi hỏng không được làm hỏng câu trả lời điểm khám — nuốt lỗi CÓ CHỦ ĐÍCH."""
+    try:
+        p = GOC / "state" / "nhat-ky-tac-dong.jsonl"
+        p.parent.mkdir(exist_ok=True)
+        import datetime as _dt
+        with p.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "luc": _dt.datetime.now().isoformat(timespec="seconds"),
+                "khop": [c.get("id") for c in ket] if ket else [],
+                "miss": not ket,
+                "ms": round(giay * 1000),
+            }, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
 def in_quick_view(cau_hoi: str, ket: list[dict], vq: set[str], giay: float) -> None:
+    _ghi_nhat_ky_tac_dong(ket, giay)
     print(f"\n❓ {cau_hoi}   ({giay*1000:.0f} ms)")
     if not ket:
         print("  ⛔ CHỦ ĐỀ NÀY CHƯA ĐƯỢC GIÁM SÁT — hệ KHÔNG sinh câu trả lời thay thế.")
