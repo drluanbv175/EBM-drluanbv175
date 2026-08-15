@@ -82,17 +82,20 @@ def _goi(url: str) -> dict:
 
 
 def _nap_rut_bai():
-    import importlib.util as ilu
-    duong = GOC / "tools" / "so_xac_minh_nguon.py"
-    spec = ilu.spec_from_file_location("so_xm_oa", duong)
-    m = ilu.module_from_spec(spec)
-    sys.modules["so_xm_oa"] = m
+    """Tầng Crossref updated-by (stdlib) — primitive ĐÚNG cho tra-theo-DOI.
+
+    Bài học 15/08 (vòng «tiếp tục hoàn thiện»): bản đầu gọi nhầm
+    `so_xac_minh_nguon.kiem_rut_bai_theo_doi` — đó là hàm NỘI BỘ ghi sổ, 3 tham
+    số — và nhãn «lỗi mạng» dán cho mọi exception đã CHE một TypeError. Lỗi sai
+    hợp đồng mà đọc thành lỗi mạng là đúng lớp «không biết bị báo thành thứ
+    khác» (BH08/BH34).
+    """
+    sys.path.insert(0, str(GOC / "medical-ebm-automation"))
     try:
-        spec.loader.exec_module(m)
-    except BaseException:
-        sys.modules.pop("so_xm_oa", None)
+        from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
+        return CrossrefRetraction().check
+    except Exception:  # noqa: BLE001
         return None
-    return getattr(m, "kiem_rut_bai_theo_doi", None)
 
 
 def quet_chu_de(t: dict, ngay: int, toi_da: int, biet: set[str], kiem_doi) -> list[str]:
@@ -118,8 +121,9 @@ def quet_chu_de(t: dict, ngay: int, toi_da: int, biet: set[str], kiem_doi) -> li
                 tt = (kq.get(doi) or {}).get("status", "")
                 rut = ("🔴 " + tt) if tt in ("retracted", "expression_of_concern") \
                     else ("ok (Crossref)" if tt == "ok" else "chưa kiểm rút bài")
-            except Exception:  # noqa: BLE001 — lỗi mạng không được giết cả lượt
-                rut = "chưa kiểm rút bài (lỗi mạng)"
+            except Exception as exc:  # noqa: BLE001 — không giết cả lượt, nhưng
+                # nhãn phải nói ĐÚNG loại lỗi — «lỗi mạng» từng che một TypeError.
+                rut = f"chưa kiểm rút bài ({type(exc).__name__})"
         venue = ((w.get("primary_location") or {}).get("source") or {}).get("display_name", "")
         dong.append(f"- **{w.get('publication_date','?')}** · {w.get('type','?')} · "
                     f"{venue[:40]} · DOI {doi or '—'} · PMID {pmid or '—'}{chi_oa}\n"
