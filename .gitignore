@@ -93,3 +93,6 @@ tools/vietnamize/catalog_may/
 *.jsonl.lock
 # Sổ đăng ký nguồn PHA 4 — cấu hình hệ, cần theo repo
 !/data/
+# PHA 5 — gói triển khai + bàn giao (tài liệu hệ, theo repo)
+!/implementation/
+!/HANDOVER.md
