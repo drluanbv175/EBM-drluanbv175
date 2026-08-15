@@ -1925,6 +1925,42 @@ def bh51_ledger_synthetic_dung_pham_vi():
     return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
 
 
+def bh52_g0_kiem_rut_bai_tai_cua():
+    """15/08 — PHA R4/R5: G0 phải TỰ kiểm rút bài nền y văn (R1C), không tin PMID.
+
+    Lỗi thật: đề tài demo đầu tiên đi qua G0 với một Expression-of-Concern trong
+    nền mà không dòng nào nói ra — chỉ lộ khi kiểm tay. Chốt gọi THẲNG
+    guardrail_check_g0 với PMID Wakefield 9500320 (retracted, nền Retraction
+    Watch NGOẠI TUYẾN có phán quyết ⇒ chốt chạy được không cần mạng): errors
+    phải mang R1C + đúng PMID. Tháo R1C là đỏ ngay.
+    """
+    # run_g0_auto import defusedxml ở mức module — python3 hệ thống không có
+    # (đúng lớp BH34/BH05: hook chạy python3). Chốt vì thế chạy qua VENV tường
+    # minh, đa nền tảng; venv vắng mặt thì khai rõ thay vì đỏ oan/chết phiên.
+    import subprocess
+    import sys as _sys
+    venv = Path.home() / ".ebm-venv" / ("Scripts/python.exe" if _sys.platform == "win32"
+                                        else "bin/python")
+    if not venv.exists():
+        return True, "venv ~/.ebm-venv vắng mặt trên máy này — chốt bỏ qua CÓ KHAI BÁO"
+    ma = ("import importlib.util,sys,json;"
+          "sp=importlib.util.spec_from_file_location('g0','tools/run_g0_auto.py');"
+          "m=importlib.util.module_from_spec(sp);sys.modules['g0']=m;"
+          "sp.loader.exec_module(m);"
+          "print(json.dumps(m.guardrail_check_g0('',{'all_pmids':['9500320']}),"
+          "ensure_ascii=False))")
+    r = subprocess.run([str(venv), "-c", ma], capture_output=True, text=True,
+                       cwd=REPO / "medical-ebm-automation", timeout=180)
+    if r.returncode != 0:
+        return False, f"guardrail_check_g0 không chạy được: {r.stderr.strip()[-120:]}"
+    goi = r.stdout
+    if "R1C" not in goi:
+        return False, "R1C biến mất — G0 lại tin PMID còn hiệu lực mà không kiểm"
+    if "9500320" not in goi:
+        return False, "R1C chạy nhưng KHÔNG bắt bài đã rút 9500320 (nền RW ngoại tuyến có)"
+    return True, "G0 tự bắt bài đã rút tại cửa nhận (R1C sống, chạy được ngoại tuyến)"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1977,6 +2013,7 @@ BAI_HOC = [
     ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
     ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),
     ("BH51", "15/08", "Ledger synthetic đúng phạm vi + gọi đúng chữ ký hàm", bh51_ledger_synthetic_dung_pham_vi),
+    ("BH52", "15/08", "G0 kiểm rút bài ngay tại cửa nhận (R1C)", bh52_g0_kiem_rut_bai_tai_cua),
 ]
 
 
