@@ -8,7 +8,7 @@ Research (nghiên cứu), Clinical (lâm sàng), Knowledge (quản lý kiến th
 Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định tuyến tới "nhạc trưởng" phù hợp và để nó **tự chạy tuần tự theo Giao thức tự động** (không hỏi vặt từng bước):
 - **Nêu một CA/tình huống lâm sàng** ("tôi có bệnh nhân…", "khám ca này", hỏi chẩn đoán/điều trị) → `dieu-phoi-lam-sang`: tự chạy 5 bước EBM (Hỏi→Tìm→Thẩm định→Áp dụng→Theo dõi); **cờ đỏ nêu NGAY**; dừng ở **Cổng A** (áp dụng cho BN) + **Cổng B** (ghi sổ cái).
 - **Nêu một ĐỀ TÀI/câu hỏi nghiên cứu** (chỉ cần tên đề tài) → `dieu-phoi-nghien-cuu`: tự khôi phục trạng thái từ sổ cái → suy loại thiết kế → march G0→G10; dừng ở 6 cổng cứng (G2 đạo đức · G4 khóa SAP · G5 khóa dữ liệu thật · **G8 bình duyệt độc lập** · G9 liêm chính tác giả · G10 PI khóa gói phát hành) + nơi cần dữ liệu/phê duyệt thật. Mỗi cổng fail-closed theo ĐÚNG role (IRB/thống kê viên hoặc PI/quản lý dữ liệu hoặc PI/phản biện độc lập/PI/PI — xem `tools/gate_contract.py`), không chỉ "có ai đó ký".
-- **Bảo đảm chuẩn nghiên cứu hiện hành:** G2 fail-closed khi WHO TRDS v1.3.1 mục 13/14/19/20 thiếu dữ kiện khoa học PI đã pin hoặc tham chiếu Hội đồng chỉ là fallback; G9 fail-closed khi thiếu quyền truy cập dữ liệu/độc lập nhà tài trợ theo ICMJE 1/2026. `python tools/verify_controlled_research_automation.py` kiểm hành vi này cùng danh sách 6 cổng canonical; không dùng PASS kỹ thuật thay IRB/PI/thống kê viên/phản biện.
+- **Bảo đảm chuẩn nghiên cứu hiện hành:** G2 fail-closed khi WHO TRDS v1.3.1 mục 13/14/19/20 thiếu dữ kiện khoa học PI đã pin hoặc tham chiếu Hội đồng chỉ là fallback; G9 fail-closed khi thiếu quyền truy cập dữ liệu/độc lập nhà tài trợ theo ICMJE 1/2026. `python3 tools/verify_controlled_research_automation.py` kiểm hành vi này cùng danh sách 6 cổng canonical; không dùng PASS kỹ thuật thay IRB/PI/thống kê viên/phản biện.
 - **Nêu VẤN ĐỀ CHỨNG CỨ (định tuyến bổ sung 15/08/2026 — «nêu vấn đề là tự giải quyết»):**
   (a) hỏi tại điểm khám («X xử trí thế nào?») → `python3 tools/tra_diem_kham.py "<câu hỏi>"`
   trả lời <1s CHỈ từ thẻ đã duyệt, ngoài phạm vi thì nói «chưa giám sát» + tự ghi tín hiệu
@@ -24,7 +24,7 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   G0–G10; `dieu-phoi-lam-sang` sở hữu ca ngoại trú. ARS/Anthropic/BMAD/Bio chỉ là worker đúng
   allowlist/stage, không tự hợp nhất kết quả, không đổi trục cổng và không mở Cổng A/B/G. Yêu cầu
   đích danh plugin chỉ ưu tiên worker, không chuyển quyền owner. Kiểm fail-closed bằng
-  `python tools/verify_plugin_orchestration.py`.
+  `python3 tools/verify_plugin_orchestration.py`.
 
 ### Định tuyến khi NHIỀU công cụ cùng nhận một việc — LUẬT BẮT BUỘC (rà 2026-08-10)
 
@@ -67,7 +67,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - **Đồng bộ Mac:** thư mục `.claude/agents/` nằm trong OneDrive → tự sync sang MacBook; trên Mac mở `claude` ngay trong thư mục `~/OneDrive/Claude AI` là dùng được cùng đội agent (đợi OneDrive xanh trước khi đổi máy).
 - **Kiểm tra AN TOÀN đồng bộ — MẶC ĐỊNH trước khi làm việc/đổi máy:** chạy `python3 tools/sync_safety_check.py` (hoặc bấm đúp **`Kiểm tra An toàn Đồng bộ.command`**) để soi 4 nguy cơ đã gặp thật (conflict-copy OneDrive · git 2 repo lồng hỏng/treo · file lõi chưa tải thật · dấu hiệu máy/phiên khác vừa ghi). Verdict 🟢/🟡/🔴 (exit 0/1/2) — 🔴 nghĩa là DỪNG, không sửa gì cho tới khi xử lý xong mục đỏ. Thuần thư viện chuẩn Python, không cần venv/mạng, chạy được ngay cả khi môi trường EBM chưa cài. Nếu tool báo git repo hỏng (HEAD không giải được/`git fsck` báo "missing object" — dấu hiệu OneDrive đồng bộ dở `.git` sống, hay gặp khi 1 máy tạo git worktree bên trong cây OneDrive): trên máy CÒN đủ dữ liệu chạy `git bundle create <ten>.bundle --all` (ghi ra 1 file tĩnh, an toàn để OneDrive đồng bộ, khác với đồng bộ `.git` sống); đợi OneDrive xanh; máy thiếu chạy `git fetch <duong-dan-bundle> 'refs/*:refs/rescue/*'` rồi `git fsck --full` xác nhận sạch. Hoặc nhờ Claude Code soi từng mục.
 - **Đồng bộ BỘ NHỚ (memory) giữa máy — KHÔNG tự sync, phải chạy tay:** bộ nhớ tự-động của Claude nằm ở `~/.claude/projects/<đường-dẫn-mã-hóa>/memory/` — **NGOÀI cây OneDrive** → đổi máy = "mất trí nhớ" dự án. Khắc phục: `python3 tools/sync_memory.py` (hoặc bấm đúp **`Đồng bộ Bộ nhớ.command`**) mirror 2 chiều sang `memory-sync/` (trong OneDrive, gitignored). **An toàn: file mới hơn thắng, KHÔNG xóa.** Chạy trên MỖI máy sau khi OneDrive xanh (máy A đẩy → máy B kéo về đúng đường-dẫn-mã-hóa của B). Các thứ NGOÀI OneDrive khác cũng phải làm lại mỗi máy: venv `~/.ebm-venv`, secrets `~/.ebm-secrets`, và cấp quyền lại MCP connectors.
-- **Đồng bộ Claude Code ↔ Codex ChatGPT:** `.claude/agents/*.md` là nguồn biên tập chính; `.Codex/agents/*.toml` / `.codex/agents/*.toml` là bản sinh tự động. Sau khi sửa/thêm agent, chạy `python tools/enforce_agent_guardrails.py` → `python tools/sync_agents_to_codex.py` → `python tools/sync_agents_to_codex.py --check`; kiểm tra tổng thể bằng `python tools/audit_ebm_system.py`.
+- **Đồng bộ Claude Code ↔ Codex ChatGPT:** `.claude/agents/*.md` là nguồn biên tập chính; `.Codex/agents/*.toml` / `.codex/agents/*.toml` là bản sinh tự động. Sau khi sửa/thêm agent, chạy `python3 tools/enforce_agent_guardrails.py` → `python3 tools/sync_agents_to_codex.py` → `python3 tools/sync_agents_to_codex.py --check`; kiểm tra tổng thể bằng `python3 tools/audit_ebm_system.py`.
   **Chặn tự động (2026-07-11; fail-closed toàn cục 2026-07-29):** hai repo dùng
   `.githooks/pre-commit`; mọi commit bị chặn khi source/mirror còn drift, guardrail/disclaimer
   chưa đạt, hợp đồng repo lệch, hoặc còn thay đổi agent chưa stage. Repo y khoa gọi lại chốt
@@ -85,8 +85,8 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   đủ thì **grep** trên `DANH-MUC-CONG-CU.md`, KHÔNG đọc cả file (~530 KB ≈ 150k token). (3) danh mục
   đầy đủ `tools/vietnamize/DANH-MUC-CONG-CU.md` khi cần đọc mô tả dài.
 - **Sinh lại sau MỖI lần cập nhật/cài/gỡ plugin** (3 lệnh, chạy trong thư mục này):
-  `python tools/vietnamize/extract_catalog.py` → `python tools/vietnamize/build_danh_muc.py` →
-  `python tools/vietnamize/build_trang_tra_cuu.py`. Chạy trên **CẢ HAI máy** — bản chụp
+  `python3 tools/vietnamize/extract_catalog.py` → `python3 tools/vietnamize/build_danh_muc.py` →
+  `python3 tools/vietnamize/build_trang_tra_cuu.py`. Chạy trên **CẢ HAI máy** — bản chụp
   `catalog_may/<Máy>.json` của máy nào chỉ máy đó cập nhật được, và trang tra gộp cả hai để
   gắn nhãn `[W]`/`[M]`. Bảng "Việc hay làm" sửa tay ở `tools/vietnamize/viec-hay-lam.json`
   (file DUY NHẤT trong bộ này sửa tay được; mọi thứ khác sinh tự động — **đừng sửa tay**).
@@ -219,7 +219,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   tầng dùng chung (xem mục Dashboard + INDEX.md ở thư mục gốc).
 - **`clinical_runtime/` = hợp đồng governance Clinical V2 đã track Git.** Đây là schema/static
   hardening cho C3/C5/C6/C7, retraction, prompt-injection và conflicting evidence; kiểm bằng
-  `python tools/verify_clinical_runtime_schema_hardening.py`. Không gọi đây là production runtime
+  `python3 tools/verify_clinical_runtime_schema_hardening.py`. Không gọi đây là production runtime
   cho dữ liệu bệnh nhân thật nếu chưa có runtime integration, bảo mật, UAT và phê duyệt thật.
 - **`Antifacts.html` (gốc) = MẶT TIỀN EBM theo CHUYÊN KHOA.** Gom mọi cập nhật chứng cứ + 45
   thang điểm + công cụ NC theo chuyên khoa; sinh bằng `tools/build_antifacts.py`. **TỰ TÍCH LŨY:**
@@ -432,7 +432,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   design lạ chỉ CHẶN khi item đang `apply`, còn lại chỉ cảnh báo.
   **Trạng thái sau đợt rà 12/08: 60 dashboard → 13 PASS · 47 FAIL, và cả 47 chỉ vì thiếu
   `DATA.standards`** (nhóm chỉ-cảnh-báo). **0 lỗi an toàn còn lại.**
-  **ĐĂNG KÝ CHỦ ĐỀ — `python tools/dang_ky_chu_de.py` (thêm 12/08/2026).**
+  **ĐĂNG KÝ CHỦ ĐỀ — `python3 tools/dang_ky_chu_de.py` (thêm 12/08/2026).**
   Trả lời hai câu mà trước đây KHÔNG công cụ nào trả lời được: *bản nào còn hiệu lực?*
   và *có hai bản nào nói ngược nhau không?*
   **Phân biệt hai thứ rất dễ nhầm — nhầm là gây hại:**
@@ -454,7 +454,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 
   ## 🔴 CƠ CHẾ ĐẢM BẢO CHỨNG CỨ MỚI & TIN CẬY (dựng 2026-08-12)
   **Một lệnh duy nhất trả lời "chứng cứ của tôi có mới và đáng tin không":**
-  `python tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
+  `python3 tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
   Chạy 5 chốt theo đúng thứ tự phụ thuộc và **dừng ngay ở bước ① nếu nền tảng không đáng tin**:
   ① nguồn có THẬT không → ② độ tươi → ③ xác minh từng nguồn → ④ rút bài → ⑤ hai bản có nói ngược nhau không → ⑥ dây chuyền còn nguyên.
   Bước ① chặn cứng vì mọi bước sau VÔ NGHĨA khi nguồn là giả: xác minh dữ liệu giả vẫn "thành
@@ -471,12 +471,12 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   **Đã vá tận gốc:** `app/config.py` nay đọc thẳng `~/.ebm-secrets/medical-ebm-automation.env`
   TRƯỚC `.env` trong repo ⇒ **không cần symlink đi qua OneDrive nữa**, dùng chung một đường dẫn
   trên cả hai máy. Thứ tự ưu tiên: biến môi trường OS → kho secrets → `.env` repo.
-  **Chốt canh:** `python tools/kiem_nguon_that.py` (`--nhanh` bỏ phần đo mạng, 0,2s — đã nối vào
+  **Chốt canh:** `python3 tools/kiem_nguon_that.py` (`--nhanh` bỏ phần đo mạng, 0,2s — đã nối vào
   hook `SessionStart`, im khi ổn). Phân tầng rủi ro có chủ ý: **🔴 chỉ dành cho cấu hình** (mock
   bật / thiếu NCBI_EMAIL = dữ liệu SAI), **🟡 cho mạng** (chỉ là chưa lấy được, không làm dữ liệu
   sai) — gộp hai thứ này sẽ khiến bác sĩ quen bỏ qua màu đỏ vì mạng bệnh viện hay chập chờn.
 
-  **SỔ XÁC MINH NGUỒN — `python tools/so_xac_minh_nguon.py --quet <dashboard> --vong 3`.**
+  **SỔ XÁC MINH NGUỒN — `python3 tools/so_xac_minh_nguon.py --quet <dashboard> --vong 3`.**
   Vì sao cần: đo thật trên Windows, chạy `--online` bốn lần trên CÙNG một file cho **13 → 3 → 6 → 1
   lỗi cứng** (DNS chập chờn). Cổng không nhớ gì giữa các lần nên mạng kém thì **không lượt nào đủ**.
   Sổ tích luỹ bằng chứng theo TỪNG mục, nên chạy nhiều vòng sẽ dần đủ.
@@ -503,7 +503,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   KHÔNG còn đúng**. Vấn đề thật chưa bao giờ là thiếu khoá mà là **ĐƠN NGUỒN**: chỉ có đúng một
   đường ra NCBI, nên một nhà cung cấp chặn là mất hẳn năng lực. `app/sources/retraction_chain.py`:
   **① Retraction Watch (Crossref, CC0) — NGOẠI TUYẾN**, tải một lần bằng
-  `python medical-ebm-automation/tools/tai_retraction_watch.py` (63 MB, 71.778 dòng → **30.851
+  `python3 medical-ebm-automation/tools/tai_retraction_watch.py` (63 MB, 71.778 dòng → **30.851
   PMID có phán quyết**), không khoá, không hạn mức, không IP nào chặn được; làm mới 30 ngày/lần
   (cache đã gitignore — là dữ liệu sinh lại được, không phải mã nguồn) ·
   **② NCBI E-utilities** giữ nguyên, dùng khi chạy được · **③ Europe PMC** không cần khoá, soi
@@ -631,13 +631,13 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   lý do ("RCT đa trung tâm, mù đôi" ⇒ `high`); **56 mục tự khai "nguồn không cung cấp phân
   hạng" mà VẪN mang mức** — vi phạm chính `DESIGN-SPEC §6`. **56 mục đó đã đưa về `na`**
   (chỉ hạ, không nâng; không đụng `decision`). Trường mới `gradeBy` + luật cổng ở mức
-  **CẢNH BÁO**; công cụ xử lý dần: `python tools/kiem_phan_hang.py`. **BH36**.
+  **CẢNH BÁO**; công cụ xử lý dần: `python3 tools/kiem_phan_hang.py`. **BH36**.
   ⚠️ *Cố ý KHÔNG chặn cứng:* "chưa khai `gradeBy`" ≠ "mức sai" — nhiều mục đã nêu hệ chấm
   ngay trong `gradeSource` (vd "khuyến cáo COR I của AHA/ASA"), chỉ chưa tách trường. Chặn
   256 mục là biến CHƯA BIẾT thành CÓ VẤN ĐỀ (BH08), và bức tường đỏ sẽ bị vô hiệu hoá.
   Chuyển thành lỗi cứng khi `kiem_phan_hang.py` về 0.
 
-  **② CHỨNG CỨ ĐÃ BỊ VƯỢT QUA** — `python tools/kiem_chung_cu_vuot_qua.py`. Mảnh thiếu lớn
+  **② CHỨNG CỨ ĐÃ BỊ VƯỢT QUA** — `python3 tools/kiem_chung_cu_vuot_qua.py`. Mảnh thiếu lớn
   nhất của chữ *"mới nhất"*: `kiem_do_tuoi_chung_cu.py` chỉ đo tuổi GÓI, không đo tuổi
   CHỨNG CỨ bên trong. Với mỗi PMID đang `apply`, hỏi PubMed (`elink pubmed_pubmed_reviews`)
   các tổng quan/gộp/guideline MỚI HƠN. Lần chạy đầu: **125/172 mục có chứng cứ tổng hợp mới
@@ -652,7 +652,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   báo cơ quan quản lý **cố ý không** áp thứ bậc (lọc theo publication type sẽ giết sạch kết
   quả đúng). Tương thích ngược: thiếu `queries` thì lùi về `query` cũ.
 
-  **④ KIỂM CON SỐ, KHÔNG CHỈ KIỂM PMID** — `python tools/kiem_so_lieu.py`. Trước nay hệ
+  **④ KIỂM CON SỐ, KHÔNG CHỈ KIỂM PMID** — `python3 tools/kiem_so_lieu.py`. Trước nay hệ
   xác minh "PMID có thật + tiêu đề khớp", chưa bao giờ xác minh **hiệu số**. Đối chiếu
   `effect{hr,lo,hi}` với tóm tắt; đọc được cả `0.72` · `0·72` (Lancet) · `0,72`.
   **Ba mức, cố ý KHÔNG có mức "SAI"**: ✓ khớp · 🟠 một phần · ⚪ tóm tắt không nêu. Vắng mặt
@@ -826,7 +826,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   rút bài — `ok` toàn bộ, đúng luật vừa áp cho 50 agent.)*
 
   ## 🐤 CANARY ĐẦU–CUỐI — chứng minh dây chuyền CHẠY đúng, không chỉ CÓ CHỮ (14/08/2026)
-  `python tools/thu_dau_cuoi_chung_cu.py` · **2 giây, ngoại tuyến, dữ liệu hoàn toàn giả**.
+  `python3 tools/thu_dau_cuoi_chung_cu.py` · **2 giây, ngoại tuyến, dữ liệu hoàn toàn giả**.
 
   **Vì sao cần:** cả BH01–BH42 đều kiểm **chữ trong file** — luật có mặt chưa, doctrine nhắc
   chưa, ba bản khớp chưa. **Không chốt nào chứng minh dây chuyền THẬT SỰ BẮT ĐƯỢC lỗi khi
@@ -1004,10 +1004,10 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   cho 3 file HTML; `.docx` đính kèm để tải) — không bắt bác sĩ tự đi tìm trong thư mục.
   Chạy được trên cả macOS lẫn Windows: tool gọi trình thông dịch bằng `sys.executable` (Windows không có
   lệnh `python3`) và tự ép UTF-8 cho stdout (Windows mặc định cp1252 sẽ chết khi in tiếng Việt).
-  Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python tools/verify_clinical_evidence_update_pipeline.py`
+  Kiểm hồi quy kỹ thuật cho toàn dây chuyền này bằng `python3 tools/verify_clinical_evidence_update_pipeline.py`
   (fixture offline, không PII; dashboard thật vẫn cần `--online`, rà toàn văn và bác sĩ duyệt).
   **Vì sao có ⑤ (thêm 10/08/2026):** bước ④ dùng `pandoc`, mà pandoc **bỏ hết màu nền ô** khi chuyển `.docx`→HTML — mất đúng thứ giúp nhìn lướt bắt được mức khuyến cáo (xanh lá `#15803D` Cao/Áp dụng ngay · cam `#B45309` Trung bình/Cân nhắc · đỏ `#B91C1C` Rất thấp). `tools/docx_sang_pdf_giu_mau.py` đọc màu **từ chính `.docx`** (`w:shd/@w:fill`) rồi bơm lại vào HTML của bước ④, sau đó in bằng **Chrome headless** — giữ nguyên tắc mọi bản phái sinh sinh từ CÙNG một nguồn, không dựng lại tài liệu từ dữ liệu. Đã kiểm 9/9 tài liệu: 16-20 màu nền mỗi bản (bản HTML chỉ còn 4) và 102-111% chữ so với bản Word. **Câu 'máy này không xuất được PDF' trong các ghi chú cũ ĐÃ LỖI THỜI** — nó đúng cho đường LaTeX và Word-tự-động, nhưng đường Chrome thì chạy được và giữ màu. Máy thiếu Chrome/Edge/Chromium thì bước ⑤ bị bỏ qua kèm thông báo rõ, **không** làm hỏng bốn sản phẩm kia và **không** đổi mã thoát — PDF là tiện ích đọc, không phải cổng chất lượng.
-- **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
+- **Triển khai giám sát định kỳ fail-closed:** owner thu thập duy nhất là `medical-ebm-automation/scripts/weekly_safety.sh` + `monthly_update.sh`; routine khác chỉ dùng candidate queue. `source_health=PARTIAL/FAIL` giữ watermark, chặn bridge Hub/cảnh báo nội dung. Chỉ `READY_FOR_CONTROLLED_DEPLOYMENT` từ `python3 medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` mới cho phép candidate-only; canary, runtime tuần/tháng, alert, rollback, 2 chu kỳ shadow và UAT/phê duyệt thật là bắt buộc. Claude Code không tự điền PASS hoặc ký UAT.
 - Áp dụng cho skill `cap-nhat-chung-cu-y-khoa` và mọi tác vụ dashboard lâm sàng. Ngoại lệ: Dashboard Master
   quản trị (skill `dashboard-master-ebm-ngoai-tru`) giữ định dạng Excel/sổ riêng.
 - Liêm chính: số liệu trích ĐÚNG nguồn; giữ nguyên grading (`gradeLevel:'na'` nếu không phân hạng); RoB 2
@@ -1076,15 +1076,15 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Kiểm nhanh: `python -m compileall -q app scripts tests`
 - Test: `pytest` (khi venv đã có dev dependencies)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
-- Audit chung từ thư mục gốc: `python tools/audit_ebm_system.py`
-- **Kiểm + đồng bộ toàn hệ một lệnh:** `python tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
-- **Kiểm riêng repo/Claude Code/Codex alignment:** `python tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python tools/check_claude_codex_sync_health.py`.
-- **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
-- **Kiểm riêng clinical runtime governance:** `python tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
-- **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
-- **Kiểm cổng triển khai giám sát ngoại trú:** `python medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` — PASS cuối chỉ khi đủ runtime + UAT thật; pre-commit/audit dùng `--contract-check` để kiểm fail-closed mà không giả lập phê duyệt.
+- Audit chung từ thư mục gốc: `python3 tools/audit_ebm_system.py`
+- **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
+- **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 tools/check_claude_codex_sync_health.py`.
+- **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
+- **Kiểm riêng clinical runtime governance:** `python3 tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
+- **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python3 tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
+- **Kiểm cổng triển khai giám sát ngoại trú:** `python3 medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` — PASS cuối chỉ khi đủ runtime + UAT thật; pre-commit/audit dùng `--contract-check` để kiểm fail-closed mà không giả lập phê duyệt.
 - **Kiểm LIÊM CHÍNH NỘI DUNG tài liệu nghiên cứu (mới 2026-07-31):**
-  `python tools/verify_exports_integrity.py` (trong `medical-ebm-automation/`; `--staged` cho hook,
+  `python3 tools/verify_exports_integrity.py` (trong `medical-ebm-automation/`; `--staged` cho hook,
   `--path <file>` cho một tài liệu). Kiểm 5 luật trên file `.md` dưới `exports/`: toàn vẹn
   placeholder bảng dự kiến kết quả · định dạng PMID/DOI · disclaimer · dấu vết định danh · cân
   bằng markdown. **Đã nối vào `.githooks/pre-commit` của repo y khoa.**
@@ -1096,10 +1096,10 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   CHẶN; bản đã sửa → sạch; 42 tài liệu `exports/` → 0 lỗi chặn, 1 cảnh báo (không dương tính giả);
   thử commit thật file hỏng → hook chặn, HEAD không đổi. **Phạm vi cố ý hẹp:** chỉ bắt dấu hiệu
   hỏng máy đọc được, KHÔNG chấm chất lượng khoa học, KHÔNG thay quality gate G0-G10.
-- **Chạy chu trình tự động có kiểm soát:** `python tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
-- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
+- **Chạy chu trình tự động có kiểm soát:** `python3 tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
+- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python3 tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
 - **"Đề tài này THỰC SỰ đang ở đâu, còn gì phải làm?" (mới 2026-07-27):**
-  `python tools/study_readiness.py --study <mã>` (hoặc `--all`). Trả lời đúng câu hỏi mà
+  `python3 tools/study_readiness.py --study <mã>` (hoặc `--all`). Trả lời đúng câu hỏi mà
   `list_studies.py` KHÔNG trả lời được: nó đếm **việc CHƯA làm** từ chính tài liệu của đề tài
   (ô `[ ]` trong mọi file `.md`), gắn cờ **QUYẾT ĐỊNH CÒN TREO** (loại có thể làm thay đổi đề
   cương), liệt kê **chỗ còn để trống** (tên chủ nhiệm, mã IRB, mã đăng ký…), và với cổng CỨNG
@@ -1110,7 +1110,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   Công cụ **cố ý bi quan**: chỉ đếm việc chưa làm, **không bao giờ in chữ "sẵn sàng"** — kết luận
   đó thuộc thẩm quyền bác sĩ và Hội đồng Đạo đức.
 - **Chấm cổng G0 (câu hỏi nghiên cứu) — mới 2026-07-28:**
-  `python tools/g0_quality_gate.py --study <mã>`. Chấm lại G0 từ artifact + `study_meta.json`
+  `python3 tools/g0_quality_gate.py --study <mã>`. Chấm lại G0 từ artifact + `study_meta.json`
   đã có, **không gọi lại PubMed** (chạy được nhiều lần trong lúc bác sĩ điền dần).
   **Lý do tồn tại:** G0 từng là cổng DUY NHẤT trong chuỗi không có hợp đồng chất lượng
   riêng — `run_g0_auto.py` in "✅ G0 HOÀN THÀNH" và thoát mã 0 trên MỌI đề tài, kể cả khi
@@ -1151,10 +1151,10 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   (chưa qua Cổng A), nhưng vẫn là một guardrail an toàn có đường lách bằng cách diễn đạt lại
   câu; ghi nhận ở đây để không bị coi là "đã đóng hoàn toàn" khi tra cứu lại sau này. Xem
   `tools/run_g0_auto.py` quanh dòng có R5 để đọc nguyên văn giới hạn.
-- **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
+- **Danh sách + theo dõi TẤT CẢ đề tài (mới 2026-07-17):** `python3 tools/list_studies.py` — quét `exports/*/`, phân loại đề tài nhận diện được (topic + cổng xa nhất + mốc IRB/SAP/DB-khóa/kết quả/G9-ký) vs thư mục lạ vs thư mục RỖNG (nghi bị bỏ dở/gõ nhầm mã `--study`). `--study <mã>` xem chi tiết 1 đề tài; `--json` xuất máy đọc. Mỗi đề tài LUÔN có thư mục riêng `exports/<study>/` dùng xuyên suốt G0-G10 (mọi `run_g*_auto.py` ghi vào đó theo `--study`); `run_g0_auto.py` tự cảnh báo (không chặn) nếu `--study` trùng mã một đề tài khác hẳn về topic, tránh trộn lẫn dữ liệu 2 đề tài vào cùng thư mục.
 
 - **Hợp đồng CHẤT LƯỢNG cổng G3 — cỡ mẫu (mới 2026-07-28):**
-  `python tools/g3_quality_gate.py --study <mã>`. Tự chạy sẵn ở bước cuối của
+  `python3 tools/g3_quality_gate.py --study <mã>`. Tự chạy sẵn ở bước cuối của
   `run_g3_auto.py`, không cần gọi tay; gọi tay khi muốn CHẤM LẠI sau khi bác sĩ điền thêm nguồn.
   **Vì sao có:** guardrail cũ của G3 (`guardrail_check`, nhãn "R1–R7") chỉ soi VĂN BẢN do chính
   `generate_artifact()` vừa sinh ra, nên hầu hết luật là TỰ ĐÚNG — R3/R4/R5/R6/R7 kiểm sự có mặt
@@ -1208,7 +1208,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   tin. Kiểm hồi quy: toàn bộ 3053 test pass. **Bài học vận hành:** fixture test không thay được
   một đề tài thật đi hết dây chuyền; 4 trong 5 lỗi này nằm im qua hàng chục vòng audit doctrine.
 - **Hợp đồng CHẤT LƯỢNG cổng G4 — khóa SAP (mới 2026-07-29, từ kiểm toàn diện G0-G10):**
-  `python tools/g4_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `approve_gate.py --gate G4`
+  `python3 tools/g4_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `approve_gate.py --gate G4`
   sau khi ký thành công (khuôn dòng gọi giống G2/G5/G9/G10); gọi tay khi muốn CHẤM LẠI.
   **Vì sao có — G4 là cổng ký thật DUY NHẤT (cùng G2/G5/G8/G9/G10) chưa từng có lớp
   quality_gate riêng.** Guardrail nội bộ của `run_g4_auto.py` 3/4 luật (R4/R6/R7) là tautology
@@ -1253,7 +1253,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   khớp ledger, và mô phỏng G3 chạy lại sau khi ký để xác nhận G4-AUTO-03 bắt được).
 
 - **Hợp đồng CHẤT LƯỢNG cổng G8 — bình duyệt độc lập (mới 2026-07-28):**
-  `python tools/g8_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g8_auto.py`.
+  `python3 tools/g8_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g8_auto.py`.
   **Vì sao có — KHÁC hẳn G3:** lớp mật mã của G8 rất dày và ĐÚNG (chữ ký HMAC payload v4 buộc
   nhóm vai trò · chuỗi băm `prev_hash` · con dấu niêm phong · `run_g10_assemble.py` fail-closed).
   Chỗ hỏng nằm ở **NỘI DUNG**: artifact mà chữ ký G8 ràng buộc vào —
@@ -1311,7 +1311,7 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 
 - **Hợp đồng CHẤT LƯỢNG cổng G9 — liêm chính tác giả & sẵn sàng công bố (mới 2026-07-28, tài
   liệu hóa 2026-07-30 — trước đó bị bỏ sót, khác hẳn G0/G3/G8 đều có mục riêng cùng ngày xây):**
-  `python tools/g9_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g9_auto.py`; gọi tay để
+  `python3 tools/g9_quality_gate.py --study <mã>`. Tự chạy ở bước cuối `run_g9_auto.py`; gọi tay để
   CHẤM LẠI sau khi bác sĩ bổ sung xác nhận.
   **Vì sao có:** doctrine cũ (`nop-bai-phan-hoi.md`) hứa "bác sĩ chỉ cần đọc, ký 3 xác nhận và
   nộp" (COI đầy đủ · tác giả đồng ý bản cuối · không đăng kép) — nhưng `approve_gate.py --gate G9`
