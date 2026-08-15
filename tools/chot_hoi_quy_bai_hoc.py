@@ -1879,6 +1879,52 @@ def bh50_ping_khong_duoc_doi_lot_chay_that():
     return True, f"ngày bịa bị tự sửa về artifact ({v}); ping tách khỏi chạy thật"
 
 
+def bh51_ledger_synthetic_dung_pham_vi():
+    """15/08 — PHA R: lõi ký công nhận bản ghi synthetic ĐÚNG PHẠM VI (#8 bác sĩ duyệt).
+
+    ĐÍNH CHÍNH trung thực (đo bằng đột biến ngay khi viết chốt): thứ MỞ KHOÁ
+    demo là SỬA THỨ TỰ THAM SỐ — tôi gọi (study, gate) suốt buổi sáng, TypeError
+    bị nuốt thành False im lặng. Bản vá #8 đúng docstring nhưng hiện DORMANT với
+    cơ chế admin (tool ghi is_synthetic=False — xem đề xuất #10). Chốt này khoá
+    hai thứ THẬT SỰ kiểm được: gọi đúng chữ ký (gate_id, study, artifact) trên
+    đề tài demo → True; artifact sửa 1 byte → False (hash vẫn ràng, fail-closed).
+    """
+    import importlib.util
+    import shutil
+    import sys as _sys
+    import tempfile
+    mea = REPO / "medical-ebm-automation"
+    sap = mea / "exports/ZZPHA-R-AUTO-DEMO/G4_A5_SAP_FINAL_ZZPHA-R-AUTO-DEMO.md"
+    if not sap.exists():
+        return True, "đề tài demo không còn — chốt bỏ qua có khai báo"
+    spec = importlib.util.spec_from_file_location("gc_bh51", mea / "tools/gate_contract.py")
+    gc = importlib.util.module_from_spec(spec)
+    _sys.modules["gc_bh51"] = gc
+    try:
+        spec.loader.exec_module(gc)
+    except Exception as exc:  # noqa: BLE001
+        return False, f"gate_contract không nạp được dưới interpreter này: {exc}"
+    if not gc.ledger_approved("G4", "ZZPHA-R-AUTO-DEMO", str(sap)):
+        return False, ("chữ ký synthetic hash-khớp KHÔNG được công nhận — #8 bị revert "
+                       "hoặc thứ tự tham số lại sai")
+    tmp = Path(tempfile.mkdtemp(prefix="bh51-")) / sap.name
+    shutil.copy(sap, tmp)
+    tmp.write_bytes(tmp.read_bytes() + b" ")
+    if gc.ledger_approved("G4", "ZZPHA-R-AUTO-DEMO", str(tmp)):
+        return False, "artifact sửa 1 byte mà VẪN được công nhận — hash không còn ràng"
+    # PHỦ ĐIỂM GỌI: cổng chấm G6 phải lấy được bằng chứng TỪ LEDGER (không rơi
+    # fallback) — đảo tham số ở điểm gọi trong g6_quality_gate sẽ làm dòng
+    # «chữ ký thật» biến mất dù lõi ledger_approved vẫn đúng.
+    import subprocess
+    r = subprocess.run([_sys.executable, str(mea / "tools/g6_quality_gate.py"),
+                        "--study", "ZZPHA-R-AUTO-DEMO"],
+                       capture_output=True, text=True, cwd=mea, timeout=120)
+    if "chữ ký thật" not in r.stdout:
+        return False, ("G6-AUTO-01 không còn lấy bằng chứng từ ledger — điểm gọi "
+                       "ledger_approved trong g6_quality_gate hỏng (đảo tham số?)")
+    return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1930,6 +1976,7 @@ BAI_HOC = [
     ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
     ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
     ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),
+    ("BH51", "15/08", "Ledger synthetic đúng phạm vi + gọi đúng chữ ký hàm", bh51_ledger_synthetic_dung_pham_vi),
 ]
 
 
