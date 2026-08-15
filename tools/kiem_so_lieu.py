@@ -57,6 +57,11 @@ EFETCH = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
 
 def lay_tom_tat(pmid: str) -> str | None:
+    # Lưới bắt phải gồm CẢ http.client.HTTPException/OSError — 15/08 một
+    # IncompleteRead đơn lẻ (thoát lưới URLError vì nổ TRONG r.read()) giết trọn
+    # lượt 234 mục; cùng họ bệnh đã vá ở gom_toan_van_oa cùng ngày. Bài lỗi trả
+    # None = «chưa kiểm», caller đếm riêng, không chết cả lượt.
+    import http.client
     req = urllib.request.Request(EFETCH + pmid, headers={"User-Agent": "EBM-Copilot/1.0"})
     for lan in range(3):
         try:
@@ -65,7 +70,7 @@ def lay_tom_tat(pmid: str) -> str | None:
             if "<html" in t[:200].lower():
                 raise ValueError("NCBI trả HTML")
             return t
-        except (urllib.error.URLError, ValueError):
+        except (urllib.error.URLError, ValueError, http.client.HTTPException, OSError):
             if lan < 2:
                 time.sleep(1.5 * (lan + 1))
     return None
