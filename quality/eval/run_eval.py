@@ -86,8 +86,14 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     ca(3, "RÚT-VÀ-THAY (Choi 30267080) → retracted + retract_and_replace (BH34)",
        c.get("status") == "retracted" and c.get("retract_and_replace") is True)
     u = kq.get("99999999", {})
-    ca(4, "PMID không tồn tại → KHÔNG BIẾT, tuyệt đối không «ok» (BH08)",
-       u.get("status") not in ("ok",) and "unknown" in str(u.get("status")))
+    # Hợp đồng đúng phụ thuộc TẦNG đang sống (đo thật 15/08, lượt nền venv):
+    #   offline-only (python3)  → unknown_*  («không kết luận được»)
+    #   online (venv)           → unresolved («nguồn sống XÁC NHẬN không có bản
+    #                              ghi» — nghi PMID ma, một phát hiện ĐÚNG)
+    # Cấm duy nhất là «ok». Bản đầu chỉ nhận unknown_* nên đỏ giả dưới venv.
+    st = str(u.get("status"))
+    ca(4, "PMID không tồn tại → không bao giờ «ok» (unknown_* hoặc unresolved)",
+       st != "ok" and ("unknown" in st or st == "unresolved"))
     _ghi_neg("rut-bai-3-muc", json.dumps(kq, ensure_ascii=False, indent=1))
 
     # ── Khối 3: HỢP ĐỒNG ITEM — 5 ca xấu + 2 ca mới ─────────────────────────

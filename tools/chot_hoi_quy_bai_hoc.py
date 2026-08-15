@@ -1835,6 +1835,50 @@ const DATA = { meta: { title: 'bh49', dateUpdated: '2026-08-15' },
     return True, "partial×apply chặn · DOI đã-rút bắt theo định danh · exit nonzero"
 
 
+def bh50_ping_khong_duoc_doi_lot_chay_that():
+    """15/08 — vòng «tự động + trung thực»: PING endpoint ≠ LẦN THU HOẠCH THẬT.
+
+    Bản đầu của sources_health ghi `last_success_at` ngay khi ping thành công —
+    một nguồn sống mà 3 tuần không ai chạy vẫn hiện «thành công hôm nay», và
+    tuyên bố độ phủ đọc trường đó sẽ nói dối bác sĩ. Hợp đồng từ 15/08: ping chỉ
+    ghi `last_probe_at`; `last_success_at` SUY TỪ ARTIFACT (log weekly_safety,
+    sổ xác minh, mtime kho RW…) và một giá trị BỊA trong sổ phải bị TỰ SỬA về
+    ngày artifact ở lượt chạy kế.
+    """
+    import json
+    import sys as _sys
+    import tempfile
+    sh = _nap(REPO / "tools" / "sources_health.py", "sh_bh50")
+    if not hasattr(sh, "lay_thanh_cong_that"):
+        return False, "mất lay_thanh_cong_that — tách ping/chạy-thật bị tháo"
+    that_006 = sh.lay_thanh_cong_that("SRC-006")
+    if not (that_006 and that_006 < "2027"):
+        return False, f"SRC-006 không suy được từ log weekly_safety (được: {that_006!r})"
+    # Gài ngày BỊA tương lai vào bản SAO sổ → chạy tool trên bản sao → phải bị sửa.
+    goc = json.loads((REPO / "data" / "sources.json").read_text(encoding="utf-8"))
+    for s in goc["sources"]:
+        if s["id"] == "SRC-006":
+            s["last_success_at"] = "2099-01-01"
+    tmp = Path(tempfile.mkdtemp(prefix="bh50-")) / "sources.json"
+    tmp.write_text(json.dumps(goc, ensure_ascii=False), encoding="utf-8")
+    cu, sh.SO = sh.SO, tmp
+    cu_argv = _sys.argv
+    try:
+        _sys.argv = ["sources_health", "--khong-mang", "--im-khi-on"]
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            sh.main()
+    finally:
+        sh.SO = cu
+        _sys.argv = cu_argv
+    sau = json.loads(tmp.read_text(encoding="utf-8"))
+    v = next(s for s in sau["sources"] if s["id"] == "SRC-006")["last_success_at"]
+    if v == "2099-01-01":
+        return False, "ngày chạy-thật BỊA (2099) sống sót qua lượt kiểm — sổ nói dối được"
+    return True, f"ngày bịa bị tự sửa về artifact ({v}); ping tách khỏi chạy thật"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -1885,6 +1929,7 @@ BAI_HOC = [
     ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
     ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
     ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
+    ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),
 ]
 
 

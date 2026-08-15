@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.46.0 — 2026-08-15 (vòng «tự động tốt nhất + trung thực»)
+
+- **Bản đọc nhúng TUYÊN BỐ ĐỘ PHỦ** ở footer (sinh sống từ data/sources.json;
+  sinh lỗi thì in rõ, không im lặng — I7).
+- **Nhịp THÁNG tự động** — chủ sở hữu thứ tư `evidence_integrity_monthly.sh`
+  (validate ledger · truy nguyên toàn sổ · sức khoẻ nguồn · eval) qua tu_khoi_dong;
+  lượt nền đầu tự khai «CÓ BƯỚC LỖI» (bug shift nhãn) → vá → PASS.
+- **Vá trung thực sources_health**: ping chỉ ghi `last_probe_at`; `last_success_at`
+  SUY TỪ ARTIFACT thật (log weekly_safety · sổ xác minh · mtime RW) — ngày bịa bị
+  tự sửa (**BH50**, mutation-tested). Eval N04 nhận đúng hợp đồng cả hai ngữ cảnh
+  (offline→unknown_* · online→unresolved; cấm duy nhất là «ok»).
+
+
 ## v1.45.0 — 2026-08-15 (PHA 4 — độ phủ, đo bỏ sót, chống sai trích số)
 
 - **Sổ đăng ký nguồn** `data/sources.json` (18 nguồn: 6 active đã thăm sống · 12

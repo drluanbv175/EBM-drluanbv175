@@ -5,7 +5,7 @@
 2. **Chạy tuần:** `python3 EBM-Dashboards/tools/surveillance_scan.py` → chọn ≤7 thẻ
    → `queue/tuan-<W>.md` (mẫu W33). Một cửa theo chủ đề: `python3 ops/orchestrator.py
    --topic "<tên>" --online`. Tra điểm khám: `python3 tools/tra_diem_kham.py "<câu hỏi>"`.
-3. **Sức khoẻ:** mở phiên là 7 hook tự chấm (49 chốt BH + canary). Đỏ = việc số 1.
+3. **Sức khoẻ:** mở phiên là 7 hook tự chấm (bộ chốt BH + canary (con số hiện hành in đầu phiên)). Đỏ = việc số 1.
    Tay: `python3 tools/chu_trinh_chung_cu.py --nhanh` · `python3 tools/sources_health.py`.
 4. **Duyệt:** bác sĩ ghi ✓/✗ vào queue; decision/gradeLevel KHÔNG tool nào được sửa
    (ma trận `agents/README.md`). Sự cố: `ops/runbook.md`. Đề xuất đổi hệ:
@@ -23,4 +23,4 @@
    [CẦN XÁC NHẬN TẠI ĐƠN VỊ]. Ngưỡng xem lại: khi phát sinh phí API/khoá trả tiền.
 8. **Phiên bản đang tin:** skill cap-nhat v1.45.0 · Python venv `~/.ebm-venv`
    (requirements.lock) · đổi lớn mô hình/thư viện → chạy `quality/eval/run_eval.py`
-   + 49 chốt TRƯỚC khi tin lại.
+   + toàn bộ chốt BH TRƯỚC khi tin lại.

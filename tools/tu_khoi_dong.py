@@ -81,6 +81,16 @@ OWNER = {
     # CHỦ SỞ HỮU THỨ BA — bác sĩ duyệt Q3 ngày 15/08/2026 (LÔ 0 kế hoạch kiện toàn):
     # quét "chứng cứ bị vượt qua" toàn kho theo QUÝ, canh chỉ số "guideline đang dùng
     # nhưng đã bị thay thế = 0" vốn trước đó không ai canh định kỳ.
+    # CHỦ SỞ HỮU THỨ TƯ (15/08/2026, vòng «tự động tốt nhất + trung thực»): nhịp
+    # THÁNG của PHA 3 mục 4 — validate ledger · truy nguyên toàn sổ · sức khoẻ sổ
+    # nguồn · eval gold set. Trước đây 4 tool này chỉ chạy khi có người gõ ⇒ nhịp
+    # tháng chỉ tồn tại trên giấy.
+    "thang_liem_chinh": {
+        "script": PROJ / "scripts/evidence_integrity_monthly.sh",
+        "log": PROJ / "data/archive/evidence_integrity.log",
+        "han_ngay": 35,
+        "ten": "liêm chính chứng cứ hằng tháng (ledger·truy nguyên·nguồn·eval)",
+    },
     "quy": {
         "script": PROJ / "scripts/quarterly_superseded.sh",
         "log": PROJ / "data/archive/quarterly_superseded.log",

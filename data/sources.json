@@ -21,7 +21,8 @@
    "owner": "agent-A2",
    "status": "active",
    "last_success_at": "2026-08-15",
-   "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33"
+   "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
+   "last_probe_at": "2026-08-15"
   },
   {
    "id": "SRC-002",
@@ -42,7 +43,8 @@
    "owner": "agent-A2",
    "status": "active",
    "last_success_at": "2026-08-15",
-   "known_gap": "cùng giới hạn PubMed-lag như SRC-001"
+   "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
+   "last_probe_at": "2026-08-15"
   },
   {
    "id": "SRC-003",
@@ -84,7 +86,8 @@
    "owner": "agent-A4",
    "status": "active",
    "last_success_at": "2026-08-15",
-   "known_gap": null
+   "known_gap": null,
+   "last_probe_at": "2026-08-15"
   },
   {
    "id": "SRC-005",
@@ -104,8 +107,9 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-08-15",
-   "known_gap": null
+   "last_success_at": "2026-08-14",
+   "known_gap": null,
+   "last_probe_at": "2026-08-15"
   },
   {
    "id": "SRC-006",
@@ -125,8 +129,9 @@
    "measured_latency_days": null,
    "owner": "weekly_safety.sh",
    "status": "active",
-   "last_success_at": "2026-08-15",
-   "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)"
+   "last_success_at": "2026-08-13",
+   "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
+   "last_probe_at": "2026-08-15"
   },
   {
    "id": "SRC-010",

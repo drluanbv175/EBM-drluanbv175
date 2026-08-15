@@ -54,6 +54,56 @@ def _tham(url: str) -> bool:
         return False
 
 
+def lay_thanh_cong_that(sid: str) -> str | None:
+    """Ngày CHẠY THẬT gần nhất của nguồn, đọc từ ARTIFACT — không phải ping.
+
+    Vá trung thực 15/08/2026: bản đầu của tool này ghi `last_success_at` ngay khi
+    PING endpoint thành công — «endpoint sống» bị đội lốt «đã thu hoạch thành
+    công». Một nguồn có thể sống mà 3 tuần không ai chạy; tuyên bố độ phủ đọc
+    trường này sẽ nói dối. Nay ping chỉ ghi `last_probe_at`; trường này suy từ
+    dấu vết chạy thật:
+      SRC-001/002  → lượt quét A2 mới nhất (surveillance/*.json hoặc cursor)
+      SRC-003      → mtime kho Retraction Watch
+      SRC-004/005  → mốc `kiem_rut_luc` mới nhất trong sổ xác minh theo đúng
+                     nguồn (crossref / europepmc·pubmed)
+      SRC-006      → dòng «KẾT THÚC … PASS» cuối trong log weekly_safety
+    Không có dấu vết → None (KHÔNG BIẾT ≠ hôm nay — BH08).
+    """
+    try:
+        if sid in ("SRC-001", "SRC-002"):
+            ung = list((GOC / "EBM-Dashboards" / "surveillance").glob("*.json")) + \
+                  [GOC / "EBM-Dashboards" / ".quet-cursor.json"]
+            ung = [p for p in ung if p.exists()]
+            if ung:
+                return datetime.fromtimestamp(
+                    max(p.stat().st_mtime for p in ung)).date().isoformat()
+        if sid == "SRC-003":
+            d = GOC / "medical-ebm-automation" / "data" / "retraction_watch"
+            if d.exists():
+                return datetime.fromtimestamp(d.stat().st_mtime).date().isoformat()
+        if sid in ("SRC-004", "SRC-005"):
+            so = json.loads((GOC / "EBM-Dashboards" / ".so-xac-minh-nguon.json")
+                            .read_text(encoding="utf-8")).get("muc", {})
+            nhan = {"SRC-004": ("crossref",), "SRC-005": ("europepmc", "pubmed")}[sid]
+            moc = [m.get("kiem_rut_luc") or m.get("xac_minh_luc") for m in so.values()
+                   if (m.get("nguon_xac_minh") or "") in nhan]
+            moc = [x for x in moc if x]
+            if moc:
+                return max(moc)[:10]
+        if sid == "SRC-006":
+            log = (GOC / "medical-ebm-automation" / "data" / "archive"
+                   / "launchd_weekly.log")
+            if log.exists():
+                for dong in reversed(log.read_text(encoding="utf-8",
+                                                   errors="replace").splitlines()):
+                    # dạng: «===== 2026-08-13 19:04:11 : KẾT THÚC — ... tổng thể=PASS»
+                    if "KẾT THÚC" in dong and "PASS" in dong:
+                        return dong[6:16]
+    except (OSError, ValueError, KeyError):
+        return None
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Sức khoẻ sổ đăng ký nguồn")
     ap.add_argument("--im-khi-on", action="store_true")
@@ -73,16 +123,21 @@ def main() -> int:
         if s["status"] == "not-covered":
             continue
         chu_ky = CHU_KY_NGAY.get(s["scan_frequency"], 31)
-        # (1) thăm sống nguồn API
+        # (1) thăm sống nguồn API — ping CHỈ ghi last_probe_at («endpoint sống»);
+        # last_success_at là chuyện khác hẳn: LẦN CHẠY THẬT, suy từ artifact.
+        # Gộp hai thứ này chính là lỗi trung thực đã vá 15/08 (ping ≠ thu hoạch).
         if s["access"] == "api" and s["id"] in DIEM_THAM and not a.khong_mang:
             if _tham(DIEM_THAM[s["id"]]):
-                s["last_success_at"] = hom_nay.isoformat()
+                s["last_probe_at"] = hom_nay.isoformat()
                 if s["status"] != "active":
                     dong.append(f"  ↺ {s['id']} hồi phục → active")
                 s["status"] = "active"
             else:
                 # hỏng 1 lần = degraded; quá 2 chu kỳ không thành công = broken
                 s["status"] = "degraded"
+        that = lay_thanh_cong_that(s["id"])
+        if that:
+            s["last_success_at"] = that
         # (2) nguồn file: tuổi so với chu kỳ
         if s["access"] == "file" and s.get("endpoint_or_url"):
             f = GOC / s["endpoint_or_url"]
