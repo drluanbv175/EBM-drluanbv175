@@ -134,6 +134,28 @@
    "last_probe_at": "2026-08-15"
   },
   {
+   "id": "SRC-007",
+   "name": "OpenAlex — làn ĐỐI CHIẾU corpus rộng (đề xuất #6, bác sĩ duyệt 15/08)",
+   "org": "OurResearch (OpenAlex)",
+   "tier": 2,
+   "domain": [
+    "toàn bộ watchlist"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.openalex.org/works",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "API mở CC0, polite pool qua mailto — không khoá",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-08-15",
+   "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
+   "last_probe_at": "2026-08-15"
+  },
+  {
    "id": "SRC-010",
    "name": "GOLD — báo cáo COPD thường niên (web hội)",
    "org": "GOLD",

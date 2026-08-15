@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.48.0 — 2026-08-15 (đề xuất #6 — bác sĩ duyệt «làm #6»)
+
+**Làn ĐỐI CHIẾU OpenAlex** `tools/doi_chieu_openalex.py`: corpus lớp AnswerThis
+(Crossref-nhanh, 250M+ công trình) bên cạnh PubMed-lane — dedup DOI/PMID với sổ+kho,
+nhãn «⚡ chỉ-OpenAlex» cho bài chưa/không vào PubMed. Chạy thật: Suy tim cửa sổ 30
+ngày → **+15 ứng viên ngoài mọi thứ hệ đã biết, 10/15 chỉ-OpenAlex**. SRC-007 active
+trong sổ nguồn (probe + artifact mapping); lịch tuần thêm bước 1b. Rút bài theo DOI
+trong làn ghi «chưa kiểm» trung thực (fail-closed) — nối tầng kiểm ở vòng sau.
+Học breadth của AnswerThis, giữ cổng của mình: ứng viên vẫn dừng CANDIDATE.
+
+
 ## v1.47.0 — 2026-08-15
 
 **Bước 0 định tuyến «nêu vấn đề là tự giải quyết»** — khe hở cuối: CLAUDE.md chỉ định

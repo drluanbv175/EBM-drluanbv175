@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.47.0
+  version: 1.48.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể

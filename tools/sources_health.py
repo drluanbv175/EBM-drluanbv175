@@ -41,6 +41,7 @@ DIEM_THAM = {
     "SRC-004": "https://api.crossref.org/works?rows=0",
     "SRC-005": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
     "SRC-006": "https://api.fda.gov/drug/label.json?limit=1",
+    "SRC-007": "https://api.openalex.org/works?per-page=1&mailto=bsluanbv175@gmail.com",
 }
 CHU_KY_NGAY = {"daily": 1, "weekly": 7, "monthly": 31, "quarterly": 92, "ad-hoc": 3650}
 
@@ -74,6 +75,11 @@ def lay_thanh_cong_that(sid: str) -> str | None:
             ung = list((GOC / "EBM-Dashboards" / "surveillance").glob("*.json")) + \
                   [GOC / "EBM-Dashboards" / ".quet-cursor.json"]
             ung = [p for p in ung if p.exists()]
+            if ung:
+                return datetime.fromtimestamp(
+                    max(p.stat().st_mtime for p in ung)).date().isoformat()
+        if sid == "SRC-007":
+            ung = list((GOC / "EBM-Dashboards" / "surveillance").glob("openalex-*.md"))
             if ung:
                 return datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ung)).date().isoformat()
