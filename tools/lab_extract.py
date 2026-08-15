@@ -20,6 +20,14 @@ Cần bác sĩ kiểm chứng.
 from __future__ import annotations
 import re, sys, json, os
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # Dòng dạng:  <Tên>  <giá trị>  [đơn vị]  (low - high) | [low-high] | low - high
 # Hỗ trợ số thập phân dùng '.' hoặc ',' ; dấu gạch '-', '–', '—' ; ngoặc () [] hoặc không.
 _NUM = r"[-+]?\d+(?:[.,]\d+)?"

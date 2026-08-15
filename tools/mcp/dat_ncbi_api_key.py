@@ -26,6 +26,14 @@ import pathlib
 import re
 import sys
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 KHO = pathlib.Path.home() / ".ebm-secrets" / "medical-ebm-automation.env"
 TEN_KHOA = "NCBI_API_KEY"
 # Khoá NCBI hiện là 36 ký tự hex thường. Kiểm lỏng để không chặn oan nếu NCBI đổi

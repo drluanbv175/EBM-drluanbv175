@@ -131,7 +131,7 @@ def _launchd_job_loaded(label: str) -> bool:
 
     try:
         result = subprocess.run(
-            ["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+            ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
             capture_output=True, text=True, check=False,
         )
     except OSError:

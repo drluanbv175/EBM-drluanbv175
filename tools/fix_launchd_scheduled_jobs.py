@@ -29,7 +29,7 @@ def _loaded_working_directory(label: str) -> tuple[bool, str]:
     từng được bootstrap (launchctl print không thấy)."""
     try:
         p = subprocess.run(
-            ["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+            ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
             capture_output=True, text=True, timeout=10,
         )
     except Exception as e:  # noqa: BLE001
@@ -79,10 +79,10 @@ def main() -> int:
 
         reason = "chưa từng nạp" if not loaded else f"đang chạy bản cũ ({loaded_wd!r})"
         print(f"🟡 {label}: {reason} — nạp lại từ {plist_path}…")
-        subprocess.run(["launchctl", "bootout", f"gui/{os.getuid()}/{label}"],
+        subprocess.run(["launchctl", "bootout", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
                        capture_output=True, text=True, timeout=15)
         boot = subprocess.run(
-            ["launchctl", "bootstrap", f"gui/{os.getuid()}", str(plist_path)],
+            ["launchctl", "bootstrap", f"gui/{getattr(os, "getuid", lambda: 0)()}", str(plist_path)],
             capture_output=True, text=True, timeout=15,
         )
         if boot.returncode != 0:

@@ -47,9 +47,9 @@ NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 # Chrome trên macOS. Edge dùng được y hệt nếu máy không có Chrome.
 TRINH_DUYET = [
     # macOS
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",  # da-nen: bo-qua (dò theo TỒN TẠI file; danh sách đã gồm Windows — vá 12/08)
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",  # da-nen: bo-qua (dò theo TỒN TẠI file; danh sách đã gồm Windows — vá 12/08)
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",  # da-nen: bo-qua (dò theo TỒN TẠI file; danh sách đã gồm Windows — vá 12/08)
     # Windows — VÁ 12/08/2026. Trước đó danh sách CHỈ có macOS, và nhánh dự phòng
     # `shutil.which` lại dò tên Unix ("chromium"/"google-chrome"), nên trên Windows
     # bước ⑤ KHÔNG BAO GIỜ chạy được dù máy có sẵn cả Chrome lẫn Edge. Đã kiểm trên

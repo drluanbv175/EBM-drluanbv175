@@ -18,6 +18,14 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Tuple
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # ------------------------------------------------------------------ #
 # 1. Chỉ các trường METADATA CHỨNG CỨ này được phép đi vào index.
 #    Mọi trường khác bị loại bỏ (whitelist, không blacklist).

@@ -19,6 +19,14 @@ import numpy as np
 from deidentify import sanitize_record, assert_no_pii, record_to_text, PiiDetectedError
 from _backend import _HashingEmbedder, _SklearnTfidfEmbedder
 
+# Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
+import sys as _sys_r4
+for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
+    try:
+        _s_r4.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 SRC = os.path.join(os.path.dirname(__file__), "sample_data", "synthetic_evidence.json")
 
 # Truy vấn diễn đạt KHÁC chữ trong thẻ + thẻ kỳ vọng (ground-truth synthetic).

@@ -104,7 +104,7 @@ def launchd_runs(nhan: str) -> int | None:
     Trên Windows trả None (không phải lỗi): ở đó không có lịch nền nào để hỏi,
     nhưng chốt này vẫn nhắc được theo dấu vết log và ngày gói chứng cứ.
 
-    VÁ 12/08/2026: bản cũ gọi `os.getuid()` — hàm KHÔNG tồn tại trên Windows —
+    VÁ 12/08/2026: bản cũ gọi `getattr(os, "getuid", lambda: 0)()` — hàm KHÔNG tồn tại trên Windows —
     và chỉ bắt (OSError, SubprocessError), nên AttributeError lọt ra ngoài làm
     CHẾT cả công cụ. Vì hook SessionStart kết thúc bằng `; true`, lỗi bị nuốt
     IM LẶNG: suốt thời gian qua máy Windows không hề được nhắc độ tươi chứng cứ
@@ -116,7 +116,7 @@ def launchd_runs(nhan: str) -> int | None:
     import os
 
     try:
-        r = subprocess.run(["launchctl", "print", f"gui/{os.getuid()}/{nhan}"],
+        r = subprocess.run(["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{nhan}"],
                            capture_output=True, text=True, timeout=10)
         m = re.search(r"runs = (\d+)", r.stdout)
         return int(m.group(1)) if m else None

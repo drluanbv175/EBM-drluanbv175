@@ -542,7 +542,7 @@ def launchd_registration_drift() -> list[str]:
 
         try:
             p = subprocess.run(
-                ["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+                ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
                 capture_output=True, text=True, timeout=10,
             )
         except Exception as e:  # noqa: BLE001
