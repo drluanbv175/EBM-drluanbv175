@@ -585,10 +585,27 @@ def search_preprint_lane(topic: str, days: int, retmax: int,
     ra: list[Candidate] = []
     for it in fetch_json(url).get("resultList", {}).get("result", []):
         doi = str(it.get("doi") or "")
+        # PREPRINT → BẢN BÌNH DUYỆT (16/08, hoãn 2 lần vì giá — nay làn đã trần
+        # ≤10 nên 1 call Crossref/preprint là rẻ): quan hệ `is-preprint-of` cho
+        # biết bài ĐÃ có bản tạp chí — dán nhãn để bác sĩ trích BẢN ĐÓ, đừng
+        # trích preprint khi bản bình duyệt tồn tại. Fail-soft từng bài.
+        da_xuat_ban = ""
+        if doi:
+            try:
+                cr = fetch_json("https://api.crossref.org/works/"
+                                + urllib.parse.quote(doi))
+                rel = ((cr.get("message") or {}).get("relation") or {})
+                cua = rel.get("is-preprint-of") or []
+                if cua and cua[0].get("id"):
+                    da_xuat_ban = str(cua[0]["id"])
+            except Exception:  # noqa: BLE001 — nhãn phụ, không giết làn
+                pass
         ra.append(Candidate(
             pmid=str(it.get("pmid") or ""),
             publication_date=str(it.get("firstPublicationDate") or ""),
-            title=str(it.get("title") or "")[:300],
+            title=((f"[✅ ĐÃ CÓ BẢN BÌNH DUYỆT — trích doi:{da_xuat_ban}] "
+                    if da_xuat_ban else "")
+                   + str(it.get("title") or ""))[:300],
             url=(f"https://doi.org/{doi}" if doi
                  else f"https://europepmc.org/article/PPR/{it.get('id', '')}"),
             source="Europe PMC (preprint)",

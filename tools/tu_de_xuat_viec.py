@@ -103,6 +103,34 @@ def main() -> int:
         de_xuat.append((1, "👤", "C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ "
                         "G2 nộp IRB thật", "xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md"))
 
+    # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
+    # đọc phán quyết run mới nhất; đỏ = việc ưu tiên 0. Fail-soft khi thiếu gh/mạng.
+    out = _chay(["gh", "run", "list", "--workflow", "offline-ci.yml", "--limit", "1",
+                 "--json", "conclusion,headBranch", "--jq",
+                 ".[0].conclusion + \" \" + .[0].headBranch"], giay=30)
+    kq_ci = out.strip().split()[0] if out.strip() else ""
+    if kq_ci == "failure":
+        de_xuat.append((0, "🤖", "CI GitHub FAILURE trên nhánh làm việc — đọc log, "
+                        "sửa tới xanh, đừng để đỏ qua đêm",
+                        "cd medical-ebm-automation && gh run view --log-failed"))
+    elif kq_ci != "success":
+        # đang chạy / gh lỗi / mạng — KHÔNG BIẾT ≠ CÓ VẤN ĐỀ (BH08): mức nhắc
+        de_xuat.append((2, "🤖", f"Chưa đọc được phán quyết CI (thấy: {kq_ci or 'rỗng'}) — "
+                        "kiểm tay khi tiện", "gh run list --workflow offline-ci.yml --limit 3"))
+
+    # ⑦c GIÁC QUAN GIT (bài «40 file chưa commit mà tưởng cây sạch»): đếm file
+    # bẩn + commit chưa đẩy ở cả hai repo. Chỉ ĐẾM và BÁO — không tự add của ai.
+    for ten_repo, duong in (("gốc", REPO), ("y khoa", REPO / "medical-ebm-automation")):
+        st = _chay(["git", "-C", str(duong), "status", "--porcelain"], giay=20)
+        n_ban = len([x for x in st.splitlines() if x.strip()])
+        ab = _chay(["git", "-C", str(duong), "rev-list", "--count", "@{u}..HEAD"], giay=20)
+        n_chua_day = int(ab.strip()) if ab.strip().isdigit() else 0
+        if n_ban or n_chua_day:
+            de_xuat.append((2, "🤖", f"Repo {ten_repo}: {n_ban} file chưa commit · "
+                            f"{n_chua_day} commit chưa đẩy — soi rồi commit/push "
+                            "(file của phiên khác thì ĐỂ NGUYÊN)",
+                            f"git -C \"{duong.name}\" status -sb"))
+
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
     if log.exists():
