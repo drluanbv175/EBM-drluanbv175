@@ -44,6 +44,43 @@ def _chay(lenh: list[str], giay: int = 120) -> str:
         return ""
 
 
+def giac_quan_lich_nen(log_tuan: Path,
+                       hom_nay: dt.date | None = None) -> list[tuple[int, str]]:
+    """Kỳ lịch tuần có NỔ thật không — đọc dòng «KẾT THÚC … tổng thể=PASS» trong log.
+
+    Trả [(ưu tiên, mô tả)]. Ba mức theo tuổi lượt PASS cuối: ≤7 ngày mà kỳ T7
+    06:30 vừa qua không nổ → 2 (nhắc, dữ liệu vẫn tươi nhờ watchdog mở-phiên);
+    8–10 ngày → 1 (chạy bù); >10 hoặc không đọc được lượt PASS nào → 0.
+    Hàm thuần nhận đường log + ngày để chốt BH đột biến được bằng file tạm.
+    """
+    hom_nay = hom_nay or dt.date.today()
+    try:
+        dong = log_tuan.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return [(0, "Log giám sát tuần KHÔNG ĐỌC ĐƯỢC — chưa từng chạy trên máy này?")]
+    ngay_pass = None
+    for ln in reversed(dong):
+        if "KẾT THÚC" in ln and "tổng thể=PASS" in ln:
+            m = re.search(r"(\d{4}-\d{2}-\d{2})", ln)
+            if m:
+                ngay_pass = dt.date.fromisoformat(m.group(1))
+            break
+    if ngay_pass is None:
+        return [(0, "Log tuần không có lượt PASS nào — giám sát chưa từng chạy trọn")]
+    tuoi = (hom_nay - ngay_pass).days
+    # thứ Bảy gần nhất đã qua (weekday: T2=0 … T7=5); đúng T7 thì chính hôm nay
+    t7 = hom_nay - dt.timedelta(days=(hom_nay.weekday() - 5) % 7)
+    lo_ky = ngay_pass < t7 <= hom_nay
+    if tuoi > 10:
+        return [(0, f"Giám sát tuần quá hạn {tuoi} ngày (PASS cuối {ngay_pass}) — chạy bù NGAY")]
+    if tuoi > 7:
+        return [(1, f"Giám sát tuần {tuoi} ngày tuổi (PASS cuối {ngay_pass}) — kỳ lịch đã lỡ, chạy bù")]
+    if lo_ky:
+        return [(2, f"Kỳ lịch T7 vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi "
+                    f"(PASS {ngay_pass}, {tuoi} ngày), nhưng lịch nền đang không tự chạy")]
+    return []
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Bảng đề xuất việc tự sinh từ bộ đếm sống")
     ap.add_argument("--gon", action="store_true", help="chỉ in bảng, bỏ phần giải thích")
@@ -130,6 +167,17 @@ def main() -> int:
                             f"{n_chua_day} commit chưa đẩy — soi rồi commit/push "
                             "(file của phiên khác thì ĐỂ NGUYÊN)",
                             f"git -C \"{duong.name}\" status -sb"))
+
+    # ⑦d GIÁC QUAN LỊCH-NỀN (16/08 — ngay kỳ đầu của kiến trúc lịch mới đã LỠ:
+    # tác vụ Claude 06:30 T7 không nổ vì máy/app không chạy, nextRunAt nhảy thẳng
+    # tuần sau, không lastRunAt — không bộ đếm nào nhìn thấy). Đo ĐẦU RA THẬT
+    # trong log (bài học launchd: đăng ký ≠ nổ), không đọc đăng ký lịch.
+    for uu, dong in giac_quan_lich_nen(
+            REPO / "medical-ebm-automation" / "data" / "archive" / "launchd_weekly.log"):
+        de_xuat.append((uu, "🤖" if uu < 2 else "👤", dong,
+                        "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
+                        if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "
+                        "hoặc đổi giờ sang lúc máy thường thức"))
 
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"

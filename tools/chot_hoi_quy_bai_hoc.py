@@ -1961,6 +1961,50 @@ def bh56_cong_cu_moi_phai_co_day():
     return True, "2 tool có dây gọi · chỉ mục tươi theo kho"
 
 
+def bh57_ky_lich_lo_phai_nhin_thay():
+    """16/08 — KỲ ĐẦU TIÊN của kiến trúc lịch mới (tác vụ Claude thay launchd)
+    đã LỠ ngay sáng ra đời: 06:30 T7 máy/app không chạy, nextRunAt nhảy thẳng
+    tuần sau, không lastRunAt — KHÔNG bộ đếm nào nhìn thấy. Cùng họ với launchd
+    đạt-giả 13/08 (đăng ký ≠ nổ): đăng ký lịch đúng mà kỳ trôi qua im lặng thì
+    hệ quay về «chạy khi mở phiên» không ai hay.
+
+    Chốt kiểm HÀNH VI giac_quan_lich_nen (tu_de_xuat_viec) bằng log giả:
+    PASS 12 ngày → mức 0; PASS 3 ngày nhưng kỳ T7 vừa qua không nổ → mức 2;
+    PASS đúng sáng T7 → im. Giác quan đọc ĐẦU RA THẬT trong log, không đọc
+    đăng ký lịch — đó chính là bài học."""
+    import datetime as _dt
+    import importlib.util as _ilu
+    duong = REPO / "tools" / "tu_de_xuat_viec.py"
+    spec = _ilu.spec_from_file_location("_tdx_bh57", duong)
+    mod = _ilu.module_from_spec(spec)
+    sys.modules["_tdx_bh57"] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:  # noqa: BLE001 — chốt nhắc không được làm chết bộ chạy
+        return False, f"không nạp được tu_de_xuat_viec: {e}"
+    if not hasattr(mod, "giac_quan_lich_nen"):
+        return False, "giac_quan_lich_nen BIẾN MẤT khỏi tu_de_xuat_viec (giác quan bị tháo)"
+    import tempfile
+    t7 = _dt.date(2026, 8, 16)  # một thứ Bảy cố định — không dùng date.today()
+    with tempfile.TemporaryDirectory() as td:
+        log = Path(td) / "log_gia.log"
+        log.write_text("===== 2026-08-04 06:35:00 : KẾT THÚC — tổng thể=PASS =====\n",
+                       encoding="utf-8", newline="\n")
+        qua_han = mod.giac_quan_lich_nen(log, t7)
+        if not qua_han or qua_han[0][0] != 0:
+            return False, "log PASS 12 ngày mà giác quan KHÔNG báo mức 0 — mù quá hạn"
+        log.write_text("===== 2026-08-13 17:36:22 : KẾT THÚC — tổng thể=PASS =====\n",
+                       encoding="utf-8", newline="\n")
+        lo_ky = mod.giac_quan_lich_nen(log, t7)
+        if not lo_ky or lo_ky[0][0] != 2:
+            return False, "kỳ T7 lỡ (PASS 3 ngày) mà giác quan im — mù lỡ-kỳ"
+        log.write_text("===== 2026-08-16 06:35:00 : KẾT THÚC — tổng thể=PASS =====\n",
+                       encoding="utf-8", newline="\n")
+        if mod.giac_quan_lich_nen(log, t7):
+            return False, "kỳ NỔ đúng hẹn mà vẫn báo — báo động giả dạy người ta bỏ qua"
+    return True, "giác quan lịch-nền bắt đúng 3 ca: quá hạn · lỡ-kỳ · nổ-đúng-hẹn"
+
+
 def bh55_khong_duong_dan_cung_mot_may():
     """15/08 — HỌ LỖI TÁI PHÁT NHIỀU NHẤT KHO: tool viết cho MỘT máy, gãy IM LẶNG
     trên máy kia (ensure_strict_source · run_retraction_and_med_safety ·
@@ -2154,6 +2198,7 @@ BAI_HOC = [
     ("BH54", "15/08", "Còi đỏ rút bài chỉ cho «rút bỏ hẳn đang trích»", bh54_ma_thoat_rut_bai_ba_muc),
     ("BH55", "15/08", "Không tool nào viết-cho-một-máy (đa nền tảng)", bh55_khong_duong_dan_cung_mot_may),
     ("BH56", "16/08", "Công cụ mới phải có dây gọi + chỉ mục RAG tươi", bh56_cong_cu_moi_phai_co_day),
+    ("BH57", "16/08", "Kỳ lịch lỡ phải nhìn thấy được (đăng ký ≠ nổ)", bh57_ky_lich_lo_phai_nhin_thay),
 ]
 
 
