@@ -106,6 +106,13 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
 ```
 
 <!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+- **RAG NGỮ NGHĨA trên toàn văn OA (nâng cấp 16/08/2026):** khi câu hỏi cần TÌM ĐOẠN
+  trong bài (không chỉ metadata), chạy `~/.ebm-venv/bin/python tools/rag_toan_van.py
+  --tim "<câu hỏi>" [--study <mã>]` — hỏi tiếng Việt trúng đoạn tiếng Anh cùng nghĩa
+  (embedding tĩnh đa ngữ). Máy chỉ XẾP HẠNG + TRÍCH VỊ TRÍ, đọc-hiểu vẫn là việc của
+  agent/bác sĩ; kho thiếu chỉ mục thì chạy `--dung-index` trước, KHÔNG rơi về khớp
+  chuỗi rồi tuyên bố «không thấy».
+
 ## Công cụ bắt buộc — chứng cứ đã bị VƯỢT QUA chưa?
 
 Trước khi kết luận, với mỗi PMID định đưa vào nhóm "áp dụng":

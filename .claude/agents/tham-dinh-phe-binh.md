@@ -117,6 +117,16 @@ doi:10.1016/j.jclinepi.2015.06.005) — đo **nguy cơ sai lệch của tổng q
 Dùng ROBIS khi tổng quan đó là **căn cứ chính** cho một khuyến cáo `apply` — 4 miền: tiêu chí
 chọn · tìm và chọn nghiên cứu · trích xuất và thẩm định · tổng hợp và phát hiện.
 
+
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## Công cụ chứng cứ bắt buộc biết
+- **RAG NGỮ NGHĨA trên toàn văn OA (nâng cấp 16/08/2026):** khi câu hỏi cần TÌM ĐOẠN
+  trong bài (không chỉ metadata), chạy `~/.ebm-venv/bin/python tools/rag_toan_van.py
+  --tim "<câu hỏi>" [--study <mã>]` — hỏi tiếng Việt trúng đoạn tiếng Anh cùng nghĩa
+  (embedding tĩnh đa ngữ). Máy chỉ XẾP HẠNG + TRÍCH VỊ TRÍ, đọc-hiểu vẫn là việc của
+  agent/bác sĩ; kho thiếu chỉ mục thì chạy `--dung-index` trước, KHÔNG rơi về khớp
+  chuỗi rồi tuyên bố «không thấy».
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 

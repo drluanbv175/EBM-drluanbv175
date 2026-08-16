@@ -1927,6 +1927,40 @@ def bh51_ledger_synthetic_dung_pham_vi():
     return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger"
 
 
+def bh56_cong_cu_moi_phai_co_day():
+    """16/08 — BH41 áp cho lứa công cụ Tầng-1/2: «tool không ai gọi = không tồn tại».
+
+    Hai vế, cả hai từng là lỗi thật:
+    (1) rag_toan_van/do_tac_dong phải được NHẮC ở ≥1 nơi tiêu thụ (doctrine agent
+        hoặc nhịp tuần/tác vụ lịch) — chính BH41 từng bắt so_xac_minh mồ côi.
+    (2) chỉ mục RAG kho chung phải TƯƠI theo kho: có XML mới hơn vec.npy quá 8
+        ngày mà không dựng lại → lớp hỏi-đáp mù phần mới một cách im lặng
+        (weekly 5b là dây nối; chốt này canh dây không bị tháo).
+    """
+    goc = REPO
+    noi_tieu_thu = [goc / ".claude" / "agents" / "tra-cuu-chung-cu.md",
+                    goc / ".claude" / "agents" / "tong-quan-y-van.md",
+                    goc / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
+                    Path.home() / ".claude" / "scheduled-tasks" / "goi-duyet-tuan-ebm"
+                    / "SKILL.md"]
+    van_ban = " ".join(p.read_text(encoding="utf-8", errors="replace")
+                       for p in noi_tieu_thu if p.exists())
+    for tool in ("rag_toan_van", "do_tac_dong"):
+        if tool not in van_ban:
+            return False, f"{tool} MỒ CÔI — không doctrine/nhịp nào gọi (họ BH41)"
+    kho = goc / "EBM-Dashboards" / "toan_van_oa"
+    vec = kho / ".rag" / "vec.npy"
+    xmls = list(kho.glob("PMID-*.xml"))
+    if xmls and vec.exists():
+        moi_nhat = max(f.stat().st_mtime for f in xmls)
+        if moi_nhat - vec.stat().st_mtime > 8 * 86400:
+            return False, ("chỉ mục RAG cũ hơn kho >8 ngày — dây weekly 5b đứt "
+                           "hoặc chưa chạy; hỏi-đáp đang mù phần bài mới")
+    elif xmls and not vec.exists():
+        return False, "kho có bài mà CHƯA từng dựng chỉ mục RAG"
+    return True, "2 tool có dây gọi · chỉ mục tươi theo kho"
+
+
 def bh55_khong_duong_dan_cung_mot_may():
     """15/08 — HỌ LỖI TÁI PHÁT NHIỀU NHẤT KHO: tool viết cho MỘT máy, gãy IM LẶNG
     trên máy kia (ensure_strict_source · run_retraction_and_med_safety ·
@@ -2119,6 +2153,7 @@ BAI_HOC = [
     ("BH53", "15/08", "elink chỉ nhận pubmed_pmc — cấm vơ bài đi-trích-dẫn", bh53_elink_chi_nhan_pubmed_pmc),
     ("BH54", "15/08", "Còi đỏ rút bài chỉ cho «rút bỏ hẳn đang trích»", bh54_ma_thoat_rut_bai_ba_muc),
     ("BH55", "15/08", "Không tool nào viết-cho-một-máy (đa nền tảng)", bh55_khong_duong_dan_cung_mot_may),
+    ("BH56", "16/08", "Công cụ mới phải có dây gọi + chỉ mục RAG tươi", bh56_cong_cu_moi_phai_co_day),
 ]
 
 
