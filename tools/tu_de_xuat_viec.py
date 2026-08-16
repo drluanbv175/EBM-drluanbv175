@@ -232,6 +232,21 @@ def main() -> int:
                         "nghi thức sau-cập-nhật để danh mục+trang tra+mốc khớp thực tế",
                         "python3 tools/sau_cap_nhat_plugin.py --ghi-moc"))
 
+    # ⑩ PHÁI SINH LỖI THỜI (16/08 — đo được 45/62 bản Word/bản-đọc CŨ HƠN chính
+    # dashboard sau các đợt sửa nội dung: bác sĩ đọc bản lỗi thời mà không biết).
+    n_cu = 0
+    for f_db in sorted(DASH.glob("WebDashboard_*.html")):
+        if ".bak" in f_db.name:
+            continue
+        ma = f_db.stem.replace("WebDashboard_EBM_VanDeCuThe_", "").replace("WebDashboard_EBM_", "")
+        docx = DASH / "derivatives" / f"{ma}_TaiLieuChiTiet.docx"
+        if not docx.exists() or docx.stat().st_mtime < f_db.stat().st_mtime:
+            n_cu += 1
+    if n_cu:
+        de_xuat.append((2, "🤖", f"{n_cu} dashboard có bản Word/bản-đọc CŨ HƠN nội dung "
+                        "— xuất lại để bác sĩ không đọc bản lỗi thời",
+                        "chạy lại tools/xuat_goi_cap_nhat.py cho từng bản (gói tuần tự làm)"))
+
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
     if log.exists():
