@@ -2014,6 +2014,38 @@ def bh57_ky_lich_lo_phai_nhin_thay():
     return True, "giác quan lịch-nền bắt đúng 3 ca: quá hạn · lỡ-kỳ · nổ-đúng-hẹn"
 
 
+def bh59_khoi_data_phai_parse_duoc_nhu_js():
+    """16/08 — đợt sửa-hàng-loạt 14/08 («đưa 56 mục về na») chèn ghi chú chứa
+    NHÁY ĐƠN LỒNG vào chuỗi nháy đơn của 16 dashboard: JS vỡ ⇒ trang trắng
+    im lặng, mà verify_dashboard vẫn PASS (field() dung sai đọc được từng
+    trường). Chỉ lộ ra khi bước ③ bộ-năm (parser CHẶT) chết hàng loạt.
+
+    Chốt: chạy extract_dashboard_data (parser chặt nhất hệ có) trên TOÀN KHO —
+    bản nào không parse là DATA hỏng thật với trình duyệt. Đây là JS-parse
+    canary; hai biến thể đã gặp («đưa về 'na'» · «giữ 'na'») nhắc rằng quét
+    theo MẪU CHUỖI sẽ luôn sót — phải parse thật."""
+    import importlib.util as _ilu
+    duong = REPO / "EBM-Dashboards" / "tools" / "build_dashboard_docx.py"
+    spec = _ilu.spec_from_file_location("_bdd_bh59", duong)
+    mod = _ilu.module_from_spec(spec)
+    sys.modules["_bdd_bh59"] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:  # noqa: BLE001 — chốt nhắc không được làm chết bộ chạy
+        return False, f"không nạp được build_dashboard_docx: {e}"
+    hong = []
+    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+        if ".bak" in f.name:
+            continue
+        try:
+            mod.extract_dashboard_data(str(f))
+        except Exception as e:  # noqa: BLE001
+            hong.append(f"{f.name[:48]}: {str(e)[:60]}")
+    if hong:
+        return False, f"{len(hong)} dashboard có khối DATA KHÔNG parse được (JS vỡ → trang trắng) — {hong[0]}"
+    return True, "toàn kho parse sạch như JS"
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2248,6 +2280,7 @@ BAI_HOC = [
     ("BH56", "16/08", "Công cụ mới phải có dây gọi + chỉ mục RAG tươi", bh56_cong_cu_moi_phai_co_day),
     ("BH57", "16/08", "Kỳ lịch lỡ phải nhìn thấy được (đăng ký ≠ nổ)", bh57_ky_lich_lo_phai_nhin_thay),
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
+    ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
 ]
 
 

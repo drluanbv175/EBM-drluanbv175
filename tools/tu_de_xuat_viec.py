@@ -234,13 +234,18 @@ def main() -> int:
 
     # ⑩ PHÁI SINH LỖI THỜI (16/08 — đo được 45/62 bản Word/bản-đọc CŨ HƠN chính
     # dashboard sau các đợt sửa nội dung: bác sĩ đọc bản lỗi thời mà không biết).
+    # Sửa 16/08 đêm: tool xuất đặt tên phái sinh theo HAI mẫu — nhóm VanDeCuThe
+    # cắt tiền tố, nhóm còn lại (Uptodate/AnToanThuoc…) GIỮ nguyên cả
+    # WebDashboard_EBM_ — đếm bằng một mẫu tạo 13 «tồn ảo» bị xuất lại vô ích.
     n_cu = 0
     for f_db in sorted(DASH.glob("WebDashboard_*.html")):
         if ".bak" in f_db.name:
             continue
         ma = f_db.stem.replace("WebDashboard_EBM_VanDeCuThe_", "").replace("WebDashboard_EBM_", "")
-        docx = DASH / "derivatives" / f"{ma}_TaiLieuChiTiet.docx"
-        if not docx.exists() or docx.stat().st_mtime < f_db.stat().st_mtime:
+        cac_docx = [DASH / "derivatives" / f"{ma}_TaiLieuChiTiet.docx",
+                    DASH / "derivatives" / f"{f_db.stem}_TaiLieuChiTiet.docx"]
+        docx = next((d for d in cac_docx if d.exists()), None)
+        if docx is None or docx.stat().st_mtime < f_db.stat().st_mtime:
             n_cu += 1
     if n_cu:
         de_xuat.append((2, "🤖", f"{n_cu} dashboard có bản Word/bản-đọc CŨ HƠN nội dung "
