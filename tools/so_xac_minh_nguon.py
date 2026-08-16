@@ -963,6 +963,10 @@ def main() -> int:
     ap.add_argument("--bao-cao", action="store_true", help="chỉ in độ phủ, không gọi mạng")
     ap.add_argument("--quet-ledger", action="store_true",
                     help="quét rút bài cho định danh CHỈ-CÓ-TRONG-HUB (lựa chọn A, 15/08)")
+    ap.add_argument("--phu-mo-coi", action="store_true",
+                    help="xác minh nhóm bản ghi MỒ CÔI DASHBOARD (do cầu NC⇄LS/hub tạo "
+                         "trần, không có ngày xác minh — 255 mục đo 16/08): --quet chỉ "
+                         "tái kiểm định danh gom từ dashboard nên nhóm này đọng vĩnh viễn.")
     ap.add_argument("--kiem-rut-lai", nargs="+", metavar="ID",
                     help="tái kiểm rút bài ĐÍCH DANH (pmid:XXX hoặc DOI) — cho bản ghi "
                          "MỒ CÔI mà --quet không bao giờ chạm tới (định danh chỉ xuất "
@@ -970,6 +974,56 @@ def main() -> int:
                          "nguyên: KHÔNG bao giờ xoá dương tính cũ.")
     a = ap.parse_args()
 
+    if a.phu_mo_coi:
+        vd = _nap_verify_dashboard()
+        so = doc_so()
+        muc = so["muc"]
+        can = [k for k, bg in muc.items()
+               if not bg.get("da_rut") and not con_hieu_luc(bg)[0]
+               and bg.get("loai") in ("pmid", "doi")]
+        print(f"Phủ mồ côi: {len(can)} bản ghi không dashboard nào kéo vào --quet.")
+        thanh, hong = 0, []
+        for v in range(1, max(1, a.vong) + 1):
+            if not can:
+                break
+            print(f"── Vòng {v}/{a.vong} — còn {len(can)} ──")
+            con_lai = []
+            for khoa in can:
+                bg_moi = xac_minh_mot(khoa, vd)
+                if bg_moi is None:
+                    con_lai.append(khoa)
+                    continue
+                # GIỮ liên kết cũ (NC:*/dashboard) — xác minh không được xoá dấu chân
+                bg_moi["cac_dashboard"] = muc[khoa].get("cac_dashboard", [])
+                muc[khoa] = bg_moi
+                thanh += 1
+                if thanh % 25 == 0:
+                    ghi_so(so)
+                    print(f"  … {thanh} đã xác minh (đã ghi sổ giữa chừng)")
+            can = con_lai
+        ghi_so(so)
+        # nhóm PMID vừa có ngày → kiểm rút bài luôn bằng chuỗi 3 tầng (một thể)
+        pmids_moi = [muc[k]["gia_tri"] for k in list(muc)
+                     if muc[k].get("loai") == "pmid" and muc[k].get("xac_minh_luc")
+                     and not muc[k].get("kiem_rut_luc")]
+        if pmids_moi:
+            print(f"Kiểm rút bài cho {len(pmids_moi)} PMID mới có ngày…")
+            kq = kiem_rut_bai(pmids_moi)
+            import datetime as _dt
+            bay_gio = _dt.datetime.now().isoformat(timespec="seconds")
+            for pm, info in kq.items():
+                khoa = f"pmid:{pm}"
+                tt = (info or {}).get("status", "")
+                if khoa in muc and tt in ("retracted", "expression_of_concern", "ok"):
+                    muc[khoa]["kiem_rut_luc"] = bay_gio
+                    muc[khoa]["ghi_chu_rut"] = tt
+                    if tt == "retracted":
+                        muc[khoa]["da_rut"] = True
+                        muc[khoa]["rut_va_thay"] = bool((info or {}).get("retract_and_replace"))
+            ghi_so(so)
+        print(f"Xong: +{thanh} xác minh · {len(can)} chưa tra được (giữ CHƯA KIỂM). "
+              "Chạy --bao-cao xem độ phủ mới.")
+        return 0
     if a.kiem_rut_lai:
         return kiem_rut_lai_dich_danh(a.kiem_rut_lai)
     if a.quet_ledger:
