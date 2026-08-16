@@ -150,11 +150,83 @@ def ap_dung(cac_ma: list[str]) -> int:
     return 0
 
 
+def tra_song_g7() -> None:
+    """ĐỢT 2 (16/08 — bác sĩ duyệt vòng meta): với nhóm KHÔNG-TỰ-SUY, hỏi PubMed
+    loại xuất bản THẬT. CHỈ đề xuất khi chính bài LÀ «Practice Guideline» VÀ tên
+    tổ chức đọc được từ tiêu đề/tạp chí của CHÍNH bài — tức tổ chức chấm là tác
+    giả guideline, không phải suy từ uy tín tạp chí (chống đúng lỗi authority-
+    từ-tên-tạp-chí đã vá 14/08). Ghi thành nhóm G7 chờ bác sĩ duyệt như mọi nhóm."""
+    import time
+    import urllib.request
+    if not DE_XUAT_JSON.exists():
+        print("🔴 Chạy quét thường trước để có danh sách không-tự-suy.")
+        return
+    dx = json.loads(DE_XUAT_JSON.read_text(encoding="utf-8"))
+    ks = dx.get("khong_suy_duoc", [])
+    # cần PMID: đọc lại từ dashboard theo (file, item)
+    vd = _nap_vd()
+    pmid_theo_muc: dict[tuple[str, str], str] = {}
+    for f in sorted({m["file"] for m in ks}):
+        try:
+            blk = vd.extract_data_block((DASH / f).read_text(encoding="utf-8",
+                                                             errors="replace"))
+        except OSError:
+            continue
+        for c in vd.split_items(blk or ""):
+            pm = vd.field(c, "pmid")
+            if pm:
+                pmid_theo_muc[(f, vd.field(c, "id") or "?")] = pm
+    pmids = sorted({pmid_theo_muc.get((m["file"], m["item"]), "") for m in ks} - {""})
+    print(f"Tra sống loại xuất bản cho {len(pmids)} PMID (lô 100)…")
+    ptypes: dict[str, list[str]] = {}
+    tieude: dict[str, str] = {}
+    for i in range(0, len(pmids), 100):
+        lo = pmids[i:i + 100]
+        u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed"
+             f"&retmode=json&id={','.join(lo)}&tool=ebm&email=bsluanbv175@gmail.com")
+        try:
+            d = json.loads(urllib.request.urlopen(
+                urllib.request.Request(u, headers={"User-Agent": "ebm-gradeby"}),
+                timeout=30).read())
+        except Exception as e:  # noqa: BLE001 — lô hỏng bỏ qua, không chết cả lượt
+            print(f"  ⚠ lô {i//100+1} lỗi ({type(e).__name__}) — bỏ qua")
+            continue
+        for pm, rec in (d.get("result") or {}).items():
+            if pm == "uids" or not isinstance(rec, dict):
+                continue
+            ptypes[pm] = [str(x) for x in (rec.get("pubtype") or [])]
+            tieude[pm] = f"{rec.get('title', '')} | {rec.get('fulljournalname', '')}"
+        time.sleep(0.34)
+    g7 = []
+    for m in ks:
+        pm = pmid_theo_muc.get((m["file"], m["item"]), "")
+        if not pm or "Practice Guideline" not in ptypes.get(pm, []):
+            continue
+        tc = TO_CHUC.search(tieude.get(pm, ""))
+        if not tc:
+            continue        # guideline nhưng không đọc được tổ chức → vẫn để tay
+        g7.append({**m, "de_xuat": f"{tc.group(1)} (guideline gốc — pubtype PubMed)",
+                   "pmid": pm})
+    dx.setdefault("nhom", {})["G7"] = g7
+    DE_XUAT_JSON.write_text(json.dumps(dx, ensure_ascii=False, indent=1),
+                            encoding="utf-8")
+    n_a = sum(1 for x in g7 if x["decision"] == "apply")
+    print(f"G7 (tra sống pubtype): {len(g7)} item đề xuất được ({n_a} apply) — "
+          f"chờ bác sĩ duyệt; {len(ks) - len(g7)} vẫn để tay người.")
+    for x in g7[:5]:
+        print(f"  · {x['file'][:40]} {x['item']} → {x['de_xuat']}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Đề xuất gradeBy hàng loạt — bác sĩ duyệt theo nhóm")
     ap.add_argument("--ap-dung", nargs="*", metavar="NHÓM",
                     help="áp các nhóm ĐÃ được bác sĩ duyệt (vd: G1 G3)")
+    ap.add_argument("--tra-song", action="store_true",
+                    help="đợt 2: hỏi PubMed pubtype cho nhóm không-tự-suy → nhóm G7")
     a = ap.parse_args()
+    if a.tra_song:
+        tra_song_g7()
+        return 0
     if a.ap_dung:
         return ap_dung([x.upper() for x in a.ap_dung])
 
