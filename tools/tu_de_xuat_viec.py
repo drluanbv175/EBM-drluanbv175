@@ -101,13 +101,18 @@ def main() -> int:
         de_xuat.append((0, "👤", "CÓ nguồn rút-bỏ-hẳn đang được trích — xử lý trước "
                         "khi dùng gói chứa nó", "python3 tools/so_xac_minh_nguon.py --bao-cao"))
 
-    # ② gradeBy tồn kho
-    out = _chay([sys.executable, "tools/kiem_phan_hang.py"])
-    m = re.search(r"(\d+) CHƯA khai `gradeBy` \((\d+)", out)
-    if m and int(m.group(1)):
-        de_xuat.append((1, "👤", f"{m.group(1)} item chưa khai gradeBy "
-                        f"({m.group(2)} đang apply) — duyệt đề xuất theo nhóm",
-                        "python3 tools/de_xuat_gradeby.py"))
+    # ② gradeBy tồn kho — ĐÓNG 16/08 theo duyệt bác sĩ: mọi đường máy đã vét
+    # (nhóm tổ chức · tra sống pubtype · toàn văn PMC-OA); 'na' là khai báo
+    # TRUNG THỰC khi nguồn không phân hạng, cổng đang mức CẢNH BÁO. Chuyển
+    # theo dõi thành KIỂM KÊ QUÝ (chỉ nhắc 🟡 tháng đầu quý), số sẽ tự giảm
+    # khi các phiên cập-nhật-chủ-đề thay nguồn cũ bằng guideline có chấm.
+    if dt.date.today().month in (1, 4, 7, 10):
+        out = _chay([sys.executable, "tools/kiem_phan_hang.py"])
+        m = re.search(r"(\d+) CHƯA khai `gradeBy` \((\d+)", out)
+        if m and int(m.group(1)):
+            de_xuat.append((2, "👤", f"Kiểm kê quý gradeBy: {m.group(1)} item chưa khai "
+                            f"({m.group(2)} đang apply) — na là trung thực, xem có nguồn mới neo được không",
+                            "python3 tools/de_xuat_gradeby.py"))
 
     # ③ Hai bản nói ngược
     out = _chay([sys.executable, "tools/dang_ky_chu_de.py"])
