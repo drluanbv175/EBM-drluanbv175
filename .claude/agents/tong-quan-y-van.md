@@ -165,3 +165,5 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
 
+<!-- EBM-WORKER-PLUGIN-2026-08-16 -->
+**Worker plugin có hợp đồng (16/08/2026):** ba bước lẻ của `meta-pipe` được khai chính danh dưới quyền chủ trì của agent này: `ma-search-bibliography` (SEARCH_PLAN) · `ma-screening-quality` (SCREENING_DRAFT) · `ma-meta-analysis` (SYNTHESIS_DRAFT — phần gộp thuộc chủ `meta-phan-tich`). CỐ Ý không dùng `ma-end-to-end` thay nhạc trưởng: bác sĩ gọi đích danh thì nó chạy DƯỚI owner. Kết quả tìm/sàng/gộp của worker phải qua đối chiếu nguồn của owner + kiểm rút bài trước khi vào tổng quan.

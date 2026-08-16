@@ -380,6 +380,11 @@ def plot_row(item: dict, ax: LogAxis) -> str:
     sub_bits = []
     if item.get("design"):
         sub_bits.append(esc(item["design"]))
+    # Thẩm định MỚI CÓ TÓM TẮT phải hiện ra cho người ĐỌC, không nằm im trong metadata:
+    # cổng liêm chính cảnh báo đúng điều này, và bản đọc là nơi bác sĩ thật sự đọc.
+    if item.get("appraisalCompleteness") == "partial":
+        sub_bits.append('<span class="partial">thẩm định trên tóm tắt — '
+                        'chưa đọc toàn văn</span>')
     if hr and lo and hi:
         m = esc(eff.get("measure", "HR"))
         sub_bits.append(
@@ -580,9 +585,18 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
         if not rows:
             return ""
         tone = DECISION[key][0]
+        def _src(r):
+            # Mục không có hiệu số định lượng chỉ hiện tiêu đề + nguồn, nên nhãn
+            # «mới thẩm định trên tóm tắt» phải gắn ngay ở đây — nếu không nó
+            # biến mất khỏi đúng trang mà bác sĩ đọc.
+            s = esc(r.get("source", ""))
+            if r.get("appraisalCompleteness") == "partial":
+                s += (' · <span class="partial">thẩm định trên tóm tắt — '
+                      'chưa đọc toàn văn</span>')
+            return s
         lis = "".join(
             f'<li><b>{esc(normalize_title(r.get("title","")))}</b>'
-            f'<span>{esc(r.get("source",""))}</span></li>' for r in rows)
+            f'<span>{_src(r)}</span></li>' for r in rows)
         return (f'<div class="noeff {tone}"><h3>{esc(heading)} '
                 f'<span class="cnt">{len(rows)}</span></h3><ul>{lis}</ul></div>')
 
@@ -836,6 +850,8 @@ margin-top:22px;background:var(--rule)}
 .flags ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14.5px;line-height:1.7}
 .flags li{margin-bottom:8px}.flags li::marker{color:var(--caution)}
 .flags b{font-weight:700;color:var(--ink)}
+.trial .name small .partial{color:var(--caution);font-weight:700}
+.noeff li span .partial{color:var(--caution);font-weight:700}
 footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--rule)}
 footer p{margin:0;max-width:var(--measure);font-size:12.5px;line-height:1.65;color:var(--ink-3)}
 footer .stamp{margin-top:10px;font-family:var(--mono);font-size:11.5px}

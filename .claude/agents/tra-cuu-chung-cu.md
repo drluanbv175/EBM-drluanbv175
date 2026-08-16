@@ -153,3 +153,5 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
 
+<!-- EBM-WORKER-PLUGIN-2026-08-16 -->
+**Worker plugin có hợp đồng (16/08/2026):** MCP `pubmed-search` (`pubmed-quick-search` cho DISCOVERY/METADATA; `pubmed-systematic-search` cho SEARCH_PLAN khi cần độ phủ) là đường tra chính danh — đây là công cụ dùng nhiều nhất kho (1322 lượt/2712 phiên). Kết quả trả về vẫn đi qua thứ bậc nguồn của agent này (RAG kho → nguồn chính thống → PubMed/Europe PMC đối chiếu) và mọi PMID trước khi vào gói phải qua `check_citation_retraction.py`.

@@ -38,6 +38,21 @@
 | Bình duyệt | `binh-duyet` | ARS reviewer/rebuttal-audit | Worker không phải chữ ký phản biện độc lập G8 |
 | An toàn kê đơn | `ke-don-an-toan` | `ke-don-an-toan-benh-man` | Dừng Cổng A; bác sĩ quyết định |
 | Xây phần mềm | workflow kỹ thuật của repo | `claude-code-harness` | Worker kỹ thuật không sở hữu quyết định y khoa/nghiên cứu |
+
+## 2b. Worker CÓ HỢP ĐỒNG bổ sung 16/08/2026 (bác sĩ duyệt phương án B — «plugin thành worker chính thức»)
+
+Bối cảnh số đo: 846 skill plugin chỉ 53 lượt gọi/2712 phiên trong khi MCP 2528 lượt — plugin
+trước nay chỉ bị CHẶN khỏi việc có cổng, chưa được DÙNG chủ động. Ba cụm dưới đây được khai
+chính danh vào `plugin_ownership_registry.json`; mọi bất biến mục 1 giữ nguyên (owner hợp nhất,
+đầu ra qua `tham-dinh-dau-ra`, trích dẫn từ worker PHẢI qua `check_citation_retraction` + sổ
+xác minh trước khi vào kho):
+
+| Cụm worker mới | Chủ | Phạm vi | Ghi chú |
+|---|---|---|---|
+| **aipoch 8 planner đặc thù** (MR · FAERS · đơn tế bào · đa omics · tái định vị thuốc · QTL · độc chất mạng · biomarker tiên lượng) | `thiet-ke-nghien-cuu` (dưới nhạc trưởng `dieu-phoi-nghien-cuu`) | G0–G1, `specialty_planning_worker` | Đây là 8 mảng hệ agent KHÔNG có; bản kế hoạch plugin trả về phải được chủ chuẩn hoá theo khung G0–G10 rồi mới thành artifact |
+| **meta-pipe từng bước** (`ma-search-bibliography` · `ma-screening-quality` · `ma-meta-analysis`) | `tong-quan-y-van` / `meta-phan-tich` | SEARCH_PLAN · SCREENING_DRAFT · SYNTHESIS_DRAFT, `pipeline_step_worker` | CỐ Ý không khai `ma-end-to-end` làm worker — nó tự điều phối trọn chuỗi nên dễ tranh owner; bác sĩ gọi đích danh thì vẫn chạy DƯỚI owner, không thay owner |
+| **pubmed-search MCP** (`pubmed-quick-search` · `pubmed-systematic-search`) | `tra-cuu-chung-cu` / `thu-thu-tai-lieu` | DISCOVERY · METADATA · SEARCH_PLAN | Chính danh hoá đường tra dùng nhiều nhất kho (1322 lượt); kết quả tra vẫn qua thứ bậc nguồn của owner |
+
 | Bioinformatics chuyên sâu | `specialist-escalation` | Bio Research | Ngoài vùng phủ lõi; cần chuyên gia phù hợp |
 
 Chi tiết allowlist từng worker/stage nằm trong JSON canonical, không sao chép lại vào agent.

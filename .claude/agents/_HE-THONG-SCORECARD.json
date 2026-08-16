@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 13,
-    "partial": 0,
+    "strong": 12,
+    "partial": 1,
     "weak": 0,
     "total": 13
   },
@@ -135,7 +135,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1193 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1210 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -253,8 +253,8 @@
       "id": "S2",
       "name": "Phối hợp giữa các agent",
       "level": "system",
-      "status": "strong",
-      "passed": 6,
+      "status": "partial",
+      "passed": 5,
       "total": 6,
       "probes": [
         {
@@ -270,8 +270,8 @@
           "detail": "Dispatch agent con: ✓ (dieu-phoi-nghien-cuu.md)"
         },
         {
-          "ok": true,
-          "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "0 tham chiếu treo (--strict): exit=1 (cần 0) ✗"
         },
         {
           "ok": true,

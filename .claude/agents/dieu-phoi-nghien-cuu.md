@@ -394,3 +394,6 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
 2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
+
+<!-- EBM-WORKER-PLUGIN-2026-08-16 -->
+**Worker plugin có hợp đồng (16/08/2026):** với đề tài thuộc 8 mảng đặc thù (Mendelian randomization · FAERS dược cảnh giác · đơn tế bào · đa omics · tái định vị thuốc · QTL đồng định vị · độc chất mạng · biomarker tiên lượng), ở G0–G1 ĐƯỢC gọi planner tương ứng của `aipoch-medical-research` làm `specialty_planning_worker` (danh sách trong `tools/orchestrator/plugin_ownership_registry.json`). Bản kế hoạch plugin trả về KHÔNG phải artifact — `thiet-ke-nghien-cuu` chuẩn hoá theo khung G0–G10, trích dẫn trong đó phải qua `check_citation_retraction.py`, rồi mới qua `tham-dinh-dau-ra`. Plugin không mở cổng, không ghi ledger/`study_meta.json`.

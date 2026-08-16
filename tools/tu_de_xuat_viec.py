@@ -218,6 +218,20 @@ def main() -> int:
                             f"— bản đặt-cạnh sẵn ở {cac_ban[-1].name} (không phán chiều, "
                             "bác sĩ tự so)", f"mở EBM-Dashboards/derivatives/{cac_ban[-1].name}"))
 
+    # ⑨ GIÁC QUAN PLUGIN (16/08 — kho không đứng yên: 2 plugin tự đổi bản giữa
+    # một resume; danh mục/trang tra/mốc trôi theo mà không ai thấy). Đọc chốt
+    # kiem_plugin_day_du: lệch mốc/đổi bản → nhắc chạy nghi thức MỘT lệnh.
+    r_pl = subprocess.run([sys.executable, "tools/kiem_plugin_day_du.py"],
+                          capture_output=True, text=True, timeout=60, cwd=REPO)
+    if r_pl.returncode == 2:
+        de_xuat.append((1, "🤖", "Kho plugin THIẾU so với mốc chuẩn — xem chi tiết rồi "
+                        "chạy nghi thức sau-cập-nhật (hoặc cài lại plugin thiếu)",
+                        "python3 tools/kiem_plugin_day_du.py && python3 tools/sau_cap_nhat_plugin.py --ghi-moc"))
+    elif r_pl.returncode == 1:
+        de_xuat.append((2, "🤖", "Plugin đổi phiên bản/kho lệch nhẹ so với mốc — chạy "
+                        "nghi thức sau-cập-nhật để danh mục+trang tra+mốc khớp thực tế",
+                        "python3 tools/sau_cap_nhat_plugin.py --ghi-moc"))
+
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
     if log.exists():

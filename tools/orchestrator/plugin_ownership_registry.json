@@ -304,6 +304,15 @@
           "allowed_stages": [
             "DISCOVERY"
           ]
+        },
+        {
+          "provider": "pubmed-search",
+          "unit": "pubmed-quick-search",
+          "mode": "discovery_worker",
+          "allowed_stages": [
+            "DISCOVERY",
+            "METADATA"
+          ]
         }
       ]
     },
@@ -386,6 +395,14 @@
             "SEARCH_PLAN",
             "SYNTHESIS_DRAFT"
           ]
+        },
+        {
+          "provider": "pubmed-search",
+          "unit": "pubmed-systematic-search",
+          "mode": "search_plan_worker",
+          "allowed_stages": [
+            "SEARCH_PLAN"
+          ]
         }
       ]
     },
@@ -414,6 +431,30 @@
           "mode": "synthesis_worker",
           "allowed_stages": [
             "SCREENING_DRAFT",
+            "SYNTHESIS_DRAFT"
+          ]
+        },
+        {
+          "provider": "meta-pipe",
+          "unit": "ma-search-bibliography",
+          "mode": "pipeline_step_worker",
+          "allowed_stages": [
+            "SEARCH_PLAN"
+          ]
+        },
+        {
+          "provider": "meta-pipe",
+          "unit": "ma-screening-quality",
+          "mode": "pipeline_step_worker",
+          "allowed_stages": [
+            "SCREENING_DRAFT"
+          ]
+        },
+        {
+          "provider": "meta-pipe",
+          "unit": "ma-meta-analysis",
+          "mode": "pipeline_step_worker",
+          "allowed_stages": [
             "SYNTHESIS_DRAFT"
           ]
         }
@@ -473,6 +514,78 @@
           "unit": "source-command-ars-outline",
           "mode": "outline_worker",
           "allowed_stages": [
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "mendelian-randomization-protocol-designer",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "faers-pharmacovigilance-disproportionality-research-planner",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "single-cell-research-planner",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "bulk-omics-integrative-planner",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "drug-repurposing-study-planner",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "qtl-colocalization-study-planner",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "comparative-network-toxicology-shared-mechanism-reference-grounded",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
+            "G1"
+          ]
+        },
+        {
+          "provider": "aipoch-medical-research",
+          "unit": "prognostic-biomarker-protocol-designer",
+          "mode": "specialty_planning_worker",
+          "allowed_stages": [
+            "G0",
             "G1"
           ]
         }
