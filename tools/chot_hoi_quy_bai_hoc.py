@@ -253,8 +253,16 @@ def bh10_ba_viec_cam_van_bi_cam():
     pham: list[str] = []
     for f in sorted((REPO / "tools").glob("*.py")):
         t = f.read_text(encoding="utf-8", errors="replace")
-        if ghi.search(t):
+        for m in ghi.finditer(t):
+            # miễn trừ TƯỜNG MINH kèm lý do trên dòng ngay TRƯỚC match — sinh ra
+            # 17/08 khi BH10 bắt nhầm fixture BH58 (ghi item giả vào
+            # TemporaryDirectory để tự-đột-biến chốt, không phải dashboard thật).
+            # Miễn theo TỪNG match, không miễn cả file — code ghi thật vẫn bị bắt.
+            dau_dong = t.rfind("\n", 0, t.rfind("\n", 0, m.start()))
+            if "bh10-mien:" in t[max(0, dau_dong):m.start()]:
+                continue
             pham.append(f.name)
+            break
     if pham:
         return False, ("có công cụ ghi decision/gradeLevel vào dashboard: "
                        + ", ".join(pham))
@@ -2035,6 +2043,7 @@ def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
         (goc / "so.json").write_text(json.dumps({"quyet_dinh": [
             {"file": "A.html", "item": "ITEM-01", "ky_vong": {"decision": "consider"},
              "duyet": "x", "ly_do": "fixture"}]}), encoding="utf-8", newline="\n")
+        # bh10-mien: fixture TemporaryDirectory tự-đột-biến chốt BH58 — không phải dashboard thật
         (goc / "A.html").write_text(
             'const DATA = { items: [\n  {id:"ITEM-01", pmid:"1", decision:"apply"},\n]};'
             "\n// HẾT KHỐI DATA", encoding="utf-8", newline="\n")

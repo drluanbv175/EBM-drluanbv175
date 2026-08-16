@@ -201,6 +201,17 @@ def main() -> int:
                         "— xem chi tiết rồi quyết áp lại hay duyệt lại",
                         "python3 tools/kiem_quyet_dinh_da_duyet.py"))
 
+    # ⑧ Bản ĐẶT-CẠNH mới nhất (16/08): nhắc khi có mục 'apply' mang nguồn tổng
+    # hợp mới hơn chưa được bác sĩ so — đọc con số từ chính header bản gần nhất.
+    cac_ban = sorted((DASH / "derivatives").glob("DAT-CANH-CHUNG-CU-MOI_*.md"))
+    if cac_ban:
+        dau = cac_ban[-1].read_text(encoding="utf-8", errors="replace")[:600]
+        m = re.search(r"(\d+) mục có tổng quan/guideline", dau)
+        if m and int(m.group(1)):
+            de_xuat.append((2, "👤", f"{m.group(1)} mục 'apply' có nguồn tổng hợp MỚI HƠN "
+                            f"— bản đặt-cạnh sẵn ở {cac_ban[-1].name} (không phán chiều, "
+                            "bác sĩ tự so)", f"mở EBM-Dashboards/derivatives/{cac_ban[-1].name}"))
+
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
     if log.exists():
