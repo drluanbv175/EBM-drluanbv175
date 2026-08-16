@@ -48,6 +48,12 @@ R1B = re.compile(r"[\"']/Users/[A-Za-z]")          # kể cả user hiện tại
 R2 = re.compile(r"\bos\.gete?uid\s*\(")
 R3 = re.compile(r"""(?:subprocess\.\w+|Popen)\(\s*\[\s*[\"'](?:python3?|py)[\"']""")
 R5 = re.compile(r"[\"'](?:/Library/|/Applications/|AppData\\\\|AppData/)")
+# R6 (16/08 — phát hiện CRLF từ CI Windows): write_text có encoding mà THIẾU
+# newline="\n" trong vùng CHUỖI-KÝ (medical tools/runtime/tests/scripts) —
+# Windows dịch \n→CRLF làm «ký hash → sinh lại artifact» lệch byte.
+R6 = re.compile(r'\.write_text\([^\n]*encoding="utf-8"\)')
+VUNG_KY = ("medical-ebm-automation/tools", "medical-ebm-automation/runtime",
+           "medical-ebm-automation/tests", "medical-ebm-automation/scripts")
 
 
 def _mask_khong_phai_code(dong: list[str]) -> list[str]:
@@ -120,6 +126,9 @@ def quet_file(p: Path) -> tuple[list[str], list[str]]:
         if R5.search(ln) and not biet_nen_tang:
             vang.append(f"{ten}:{i} R5 đường dẫn đặc thù nền tảng không guard: "
                         f"{dong[i-1].strip()[:70]}")
+        if (R6.search(ln) and 'newline=' not in ln
+                and any(v in ten for v in VUNG_KY)):
+            do.append(f"{ten}:{i} R6 write_text thiếu newline='\\n' trong vùng chuỗi-ký (CRLF phá hash)")
     if co_in_ngoai_ascii and not co_utf8:
         vang.append(f"{ten} R4 print ngoài-ASCII mà không reconfigure UTF-8 (bẫy cp1252)")
     return do, vang
@@ -137,7 +146,31 @@ def main() -> int:
             d, v = quet_file(p)
             do_tong += d
             vang_tong += v
-    print(f"CHỐT ĐA NỀN TẢNG — quét {n} file Python trong {len(CAY_QUET)} cây tool")
+    # LƯỢT R6-RIÊNG cho phần còn lại của vùng chuỗi-ký (runtime/tests/scripts —
+    # nằm trong VUNG_KY nhưng ngoài CAY_QUET; áp cả R1-R5 vào 3 cây này sẽ tạo
+    # trăm cảnh báo R4 nhiễu từ test in tiếng Việt, nên chỉ soi đúng luật hash).
+    for cay in (REPO / "medical-ebm-automation" / "runtime",
+                REPO / "medical-ebm-automation" / "tests",
+                REPO / "medical-ebm-automation" / "scripts"):
+        if not cay.exists():
+            continue
+        for p in sorted(cay.rglob("*.py")):
+            if any(x in p.parts for x in BO_QUA_TEN) or ".bak" in p.name:
+                continue
+            n += 1
+            try:
+                dong = p.read_text(encoding="utf-8", errors="replace").splitlines()
+            except OSError:
+                continue
+            code = _mask_khong_phai_code(dong)
+            ten = str(p.relative_to(REPO))
+            for i, ln in enumerate(code, 1):
+                if MIEN_TRU in dong[i - 1]:
+                    continue
+                if R6.search(ln) and 'newline=' not in ln:
+                    do_tong.append(f"{ten}:{i} R6 write_text thiếu newline='\\n' "
+                                   "trong vùng chuỗi-ký (CRLF phá hash)")
+    print(f"CHỐT ĐA NỀN TẢNG — quét {n} file Python trong {len(CAY_QUET)} cây tool + vùng ký R6")
     for x in do_tong:
         print(f"  🔴 {x}")
     for x in vang_tong[:20]:
