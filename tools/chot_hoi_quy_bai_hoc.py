@@ -1945,7 +1945,7 @@ def bh56_cong_cu_moi_phai_co_day():
                     / "SKILL.md"]
     van_ban = " ".join(p.read_text(encoding="utf-8", errors="replace")
                        for p in noi_tieu_thu if p.exists())
-    for tool in ("rag_toan_van", "do_tac_dong"):
+    for tool in ("rag_toan_van", "do_tac_dong", "dat_canh_chung_cu_moi"):
         if tool not in van_ban:
             return False, f"{tool} MỒ CÔI — không doctrine/nhịp nào gọi (họ BH41)"
     kho = goc / "EBM-Dashboards" / "toan_van_oa"
