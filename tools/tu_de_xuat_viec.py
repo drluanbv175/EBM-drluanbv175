@@ -88,13 +88,14 @@ def main() -> int:
     a = ap.parse_args()
     de_xuat: list[tuple[int, str, str, str]] = []  # (ưu tiên, ai, việc+số đo, lệnh)
 
-    # ① Sổ xác minh — độ phủ & rút bài
+    # ① Sổ xác minh — độ phủ & rút bài. Sửa 16/08: đọc dòng «Chưa/hết hạn» TRỰC
+    # TIẾP thay vì hiệu số tổng−hiệu-lực — hiệu số dính cả ca rút-và-thay (dương
+    # tính THẬT phải giữ) và bản ghi lịch sử không còn ai trích ⇒ «còn 2 mục»
+    # treo vĩnh viễn dù việc thật = 0 (họ BH32: chỉ số gộp nói sai về tập hợp).
     out = _chay([sys.executable, "tools/so_xac_minh_nguon.py", "--bao-cao"])
-    m = re.search(r"Còn hiệu lực\s*:\s*(\d+)/(\d+)", out)
-    if m and int(m.group(1)) < int(m.group(2)):
-        thieu = int(m.group(2)) - int(m.group(1))
-        de_xuat.append((2, "🤖", f"Phủ sổ xác minh: còn {thieu} mục chưa/hết hạn "
-                        f"({m.group(1)}/{m.group(2)})",
+    m = re.search(r"Chưa/hết hạn\s*:\s*(\d+)", out)
+    if m and int(m.group(1)):
+        de_xuat.append((2, "🤖", f"Phủ sổ xác minh: {m.group(1)} mục chưa/hết hạn",
                         "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3"))
     if re.search(r"ĐÃ BỊ RÚT\s*:\s*[1-9]", out):
         de_xuat.append((0, "👤", "CÓ nguồn rút-bỏ-hẳn đang được trích — xử lý trước "
