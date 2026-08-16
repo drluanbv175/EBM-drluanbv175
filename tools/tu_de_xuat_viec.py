@@ -158,6 +158,9 @@ def main() -> int:
     # ⑦c GIÁC QUAN GIT (bài «40 file chưa commit mà tưởng cây sạch»): đếm file
     # bẩn + commit chưa đẩy ở cả hai repo. Chỉ ĐẾM và BÁO — không tự add của ai.
     for ten_repo, duong in (("gốc", REPO), ("y khoa", REPO / "medical-ebm-automation")):
+        if not (duong / ".git").exists():
+            continue  # máy/cây thiếu repo (CI checkout đơn-repo) — stderr của git
+            # sẽ bị _chay gộp vào stdout và đếm nhầm thành "1 file chưa commit"
         st = _chay(["git", "-C", str(duong), "status", "--porcelain"], giay=20)
         n_ban = len([x for x in st.splitlines() if x.strip()])
         ab = _chay(["git", "-C", str(duong), "rev-list", "--count", "@{u}..HEAD"], giay=20)

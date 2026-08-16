@@ -1,0 +1,54 @@
+name: kiem-tinh-da-nen
+
+# 16/08/2026 — repo GỐC trước nay KHÔNG có CI, trong khi chính nó sinh ra họ lỗi
+# «viết cho một máy, gãy im lặng trên máy kia» (kiem_do_tuoi/os.getuid chết im
+# trên Windows từ lúc ra đời · 7 script vietnamize/cp1252 · đường dẫn cứng).
+# Hai lane ubuntu + windows chạy trên PHẦN ĐƯỢC TRACK (tools/ + ops/ + .claude/)
+# — hẹp hơn máy thật (EBM-Dashboards/EBM_MASTER là data ngoài git), nói rõ để
+# xanh ở đây không bị đọc thành «toàn kho sạch». Cần bác sĩ kiểm chứng.
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kiem-tinh:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile toàn bộ tools/ + ops/ (bắt lỗi cú pháp đa nền)
+        run: python -m compileall -q tools ops
+
+      - name: Chốt đa nền R1–R6 (fail khi có 🔴; 🟡 là tồn kho soi dần)
+        run: |
+          set +e
+          python tools/kiem_tuong_thich_da_nen.py
+          rc=$?
+          set -e
+          if [ "$rc" -ge 2 ]; then
+            echo "Có vi phạm 🔴 — xem log trên." >&2
+            exit "$rc"
+          fi
+
+      - name: Smoke bảng tự-đề-xuất (phải chạy trọn dù thiếu mọi dữ liệu ngoài git)
+        run: python tools/tu_de_xuat_viec.py --gon
