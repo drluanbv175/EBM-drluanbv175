@@ -36,9 +36,10 @@ REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
 
-def _chay(lenh: list[str], giay: int = 120) -> str:
+def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
     try:
-        r = subprocess.run(lenh, capture_output=True, text=True, timeout=giay, cwd=REPO)
+        r = subprocess.run(lenh, capture_output=True, text=True, timeout=giay,
+                           cwd=cwd or REPO)
         return (r.stdout or "") + (r.stderr or "")
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -141,19 +142,27 @@ def main() -> int:
                         "G2 nộp IRB thật", "xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md"))
 
     # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
-    # đọc phán quyết run mới nhất; đỏ = việc ưu tiên 0. Fail-soft khi thiếu gh/mạng.
-    out = _chay(["gh", "run", "list", "--workflow", "offline-ci.yml", "--limit", "1",
-                 "--json", "conclusion,headBranch", "--jq",
-                 ".[0].conclusion + \" \" + .[0].headBranch"], giay=30)
-    kq_ci = out.strip().split()[0] if out.strip() else ""
-    if kq_ci == "failure":
-        de_xuat.append((0, "🤖", "CI GitHub FAILURE trên nhánh làm việc — đọc log, "
-                        "sửa tới xanh, đừng để đỏ qua đêm",
-                        "cd medical-ebm-automation && gh run view --log-failed"))
-    elif kq_ci != "success":
-        # đang chạy / gh lỗi / mạng — KHÔNG BIẾT ≠ CÓ VẤN ĐỀ (BH08): mức nhắc
-        de_xuat.append((2, "🤖", f"Chưa đọc được phán quyết CI (thấy: {kq_ci or 'rỗng'}) — "
-                        "kiểm tay khi tiện", "gh run list --workflow offline-ci.yml --limit 3"))
+    # đọc phán quyết run mới nhất CỦA TỪNG REPO; đỏ = việc ưu tiên 0. Fail-soft
+    # khi thiếu gh/mạng. Sửa cùng ngày: bản đầu chạy gh với cwd repo GỐC cho
+    # workflow của repo Y KHOA ⇒ HTTP 404 đội lốt «mạng chập chờn» — dòng nhắc
+    # «thấy: HTTP» dai dẳng nhiều lượt bảng thật ra là hỏi NHẦM REPO.
+    for ten_ci, cwd_ci, wf in (("y khoa", REPO / "medical-ebm-automation", "offline-ci.yml"),
+                               ("gốc", REPO, "kiem-tinh-da-nen.yml")):
+        if not (cwd_ci / ".github" / "workflows" / wf).exists():
+            continue
+        out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1",
+                     "--json", "conclusion,headBranch", "--jq",
+                     ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
+        kq_ci = out.strip().split()[0] if out.strip() else ""
+        if kq_ci == "failure":
+            de_xuat.append((0, "🤖", f"CI repo {ten_ci} FAILURE — đọc log, sửa tới xanh, "
+                            "đừng để đỏ qua đêm",
+                            f"cd \"{cwd_ci.name}\" && gh run view --log-failed"))
+        elif kq_ci != "success":
+            # đang chạy / gh lỗi / mạng — KHÔNG BIẾT ≠ CÓ VẤN ĐỀ (BH08): mức nhắc
+            de_xuat.append((2, "🤖", f"Chưa đọc được phán quyết CI repo {ten_ci} "
+                            f"(thấy: {kq_ci or 'rỗng'}) — kiểm tay khi tiện",
+                            f"gh run list --workflow {wf} --limit 3"))
 
     # ⑦c GIÁC QUAN GIT (bài «40 file chưa commit mà tưởng cây sạch»): đếm file
     # bẩn + commit chưa đẩy ở cả hai repo. Chỉ ĐẾM và BÁO — không tự add của ai.
