@@ -168,9 +168,19 @@ def main() -> int:
                     help="thật sự ghi (mặc định chỉ xem trước)")
     ap.add_argument("--im-khi-on", action="store_true",
                     help="không in gì khi mọi skill đã khớp (dùng cho hook)")
+    ap.add_argument("--don-bak", action="store_true",
+                    help="dọn *.bak-* còn sót trong NƠI CHẠY (BH22: app có thể "
+                         "nạp nhầm; sao lưu đúng chỗ là nguồn/git, không phải runtime)")
     a = ap.parse_args()
 
     runtime = tim_runtime()
+    if a.don_bak and runtime:
+        rac = list(runtime.rglob("*.bak-*"))
+        for f in rac:
+            f.unlink()
+        print(f"✓ dọn {len(rac)} file .bak khỏi nơi chạy (BH22)")
+        if not a.ap_dung:
+            return 0
     if runtime is None:
         if not a.im_khi_on:
             print("⚠ Không tìm thấy thư mục skill đang chạy — bỏ qua.")
