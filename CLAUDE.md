@@ -452,6 +452,31 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   Công cụ chỉ ĐO và BÁO; **KHÔNG tự nâng `decision`** (nâng làm khuyến cáo MẠNH hơn — nguy hiểm
   hơn hạ, thuộc thẩm quyền bác sĩ).
 
+  ## 🧭 MẶC ĐỊNH MỚI 15–16/08/2026 — «nêu vấn đề là tự chạy» (đọc trước khi hỏi «còn gì để làm»)
+  Toàn cảnh một trang: `EBM-Dashboards/derivatives/BAN-GIAO-KIEN-TRUC_2026-08-16.md`.
+  - **«Hệ còn gì để hoàn thiện?» = `python3 tools/tu_de_xuat_viec.py`** — bảng 8 giác quan
+    (sổ xác minh · gradeBy · mâu thuẫn · độ tươi · RAG · C1a · ⑦b CI HAI repo · ⑦c git 2 repo ·
+    ⑦d lịch-nền đọc ĐẦU RA thật · ⑦e quyết-định-đã-duyệt · ⑧ bản đặt-cạnh). Mỗi dòng có số đo;
+    👤 = thẩm quyền bác sĩ; «không còn gì» là kết quả hợp lệ. Tự chạy mở đầu gói tuần.
+  - **Quyết định lâm sàng đã duyệt được CANH vĩnh viễn:** sổ máy-đọc
+    `EBM-Dashboards/quyet-dinh-da-duyet.json` (CHỈ bác sĩ thêm/sửa) + `tools/kiem_quyet_dinh_da_duyet.py`
+    — dashboard sinh lại lật ngược quyết định 13–14/08 sẽ bị BH58 (tự chạy mỗi phiên) bắt.
+  - **Đặt-cạnh chứng cứ:** `tools/dat_canh_chung_cu_moi.py` (2 tuần/lần trong gói tuần) — mục
+    `apply` có tổng quan/guideline MỚI HƠN được đặt cạnh kết luận nguyên văn abstract, ĐÃ tra rút
+    bài, KHÔNG phán chiều (đã đo: cosine title không phân tách lạc/đúng — không lọc máy).
+  - **Lịch nền = 2 tác vụ Claude** (`thu-thap-tuan-an-toan-thuoc` T7 06:30 · `cap-nhat-thang-ebm`
+    mùng 1 18:30; launchd đã nghỉ hưu — chưa từng nổ thật). ⚠️ Kỳ đầu 16/08 ĐÃ LỠ (máy không thức);
+    lưới đỡ: `tu_khoi_dong` khi mở phiên + giác quan ⑦d. Muốn nổ đúng hẹn: máy thức giờ đó hoặc
+    bác sĩ đổi giờ/bấm «Run now».
+  - **CI: HAI repo × 2 lane (ubuntu+windows), cả hai xanh.** Repo gốc lần đầu có CI
+    (`.github/workflows/kiem-tinh-da-nen.yml`: compileall + chốt đa nền R1–R6 + smoke bảng);
+    repo y khoa thêm bước `tools/kiem_newline_vung_ky.py` (miễn trừ `# da-nen: bo-qua` kèm lý do).
+  - **Ed25519 «ed1»** đã sẵn trong lõi ký (`gate_contract.py`): khoá công trong repo ⇒ verify
+    không cần bí mật; phát khoá từng vai bằng nút «Phat Khoa Ed25519» — CHỈ bác sĩ tự tay.
+  - Bộ chốt bài học nay **BH01–BH58** (mutation-tested), tự chạy mỗi phiên. Sau khi thêm/sửa BH
+    phải chạy TRỌN BỘ `chot_hoi_quy_bai_hoc.py` (17/08: BH10 từng bắt nhầm fixture BH58 — miễn
+    trừ theo TỪNG match bằng marker `bh10-mien:` kèm lý do, không miễn cả file).
+
   ## 🔴 CƠ CHẾ ĐẢM BẢO CHỨNG CỨ MỚI & TIN CẬY (dựng 2026-08-12)
   **Một lệnh duy nhất trả lời "chứng cứ của tôi có mới và đáng tin không":**
   `python3 tools/chu_trinh_chung_cu.py` (thêm `--nhanh` để chỉ đọc sổ, không gọi mạng).
