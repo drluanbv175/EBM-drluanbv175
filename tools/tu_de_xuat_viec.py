@@ -191,6 +191,16 @@ def main() -> int:
                         if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "
                         "hoặc đổi giờ sang lúc máy thường thức"))
 
+    # ⑦e GIÁC QUAN QUYẾT ĐỊNH ĐÃ DUYỆT (16/08): dashboard sinh lại/sửa hàng loạt
+    # có thể lật ngược im lặng quyết định bác sĩ 13–14/08 (đã xảy ra: 5 mục Đau
+    # Đầu tái lệch do đợt 12/08). Tái phạm = 🔴 👤 — đổi decision là thẩm quyền.
+    out = _chay([sys.executable, "tools/kiem_quyet_dinh_da_duyet.py"], giay=60)
+    m = re.search(r"🔴 (\d+) tái phạm", out)
+    if m and int(m.group(1)):
+        de_xuat.append((0, "👤", f"{m.group(1)} quyết định ĐÃ DUYỆT bị lật ngược trong kho "
+                        "— xem chi tiết rồi quyết áp lại hay duyệt lại",
+                        "python3 tools/kiem_quyet_dinh_da_duyet.py"))
+
     # ⑦ Nhật ký tác động — miss dồn cụm
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
     if log.exists():

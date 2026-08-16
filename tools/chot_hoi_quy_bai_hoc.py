@@ -46,6 +46,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import inspect
+import json
 import re
 import sys
 from pathlib import Path
@@ -2005,6 +2006,44 @@ def bh57_ky_lich_lo_phai_nhin_thay():
     return True, "giác quan lịch-nền bắt đúng 3 ca: quá hạn · lỡ-kỳ · nổ-đúng-hẹn"
 
 
+def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
+    """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
+    bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
+    từ skill cũ có thể LẬT NGƯỢC IM LẶNG (tiền lệ thật: 5 mục Đau Đầu tái lệch
+    là hệ quả đợt sửa 12/08; CSS «sửa xong lại như cũ»).
+
+    Hai vế: (1) kho THẬT không có tái phạm và sổ đọc được; (2) chốt còn RĂNG —
+    fixture item lật consider→apply phải ra đúng 1 🔴 (đột biến tự chạy, chống
+    chốt bị sửa thành luôn-xanh)."""
+    import importlib.util as _ilu
+    import tempfile
+    duong = REPO / "tools" / "kiem_quyet_dinh_da_duyet.py"
+    if not duong.exists():
+        return False, "kiem_quyet_dinh_da_duyet.py BIẾN MẤT — vòng học nội dung lại hở"
+    spec = _ilu.spec_from_file_location("_kqd_bh58", duong)
+    mod = _ilu.module_from_spec(spec)
+    sys.modules["_kqd_bh58"] = mod
+    try:
+        spec.loader.exec_module(mod)
+        khop, lech, mu = mod.kiem()
+    except Exception as e:  # noqa: BLE001 — chốt nhắc không được làm chết bộ chạy
+        return False, f"chốt quyết định không chạy được: {e}"
+    if lech:
+        return False, f"{len(lech)} quyết định ĐÃ DUYỆT bị lật ngược — {lech[0][:90]}"
+    with tempfile.TemporaryDirectory() as td:
+        goc = Path(td)
+        (goc / "so.json").write_text(json.dumps({"quyet_dinh": [
+            {"file": "A.html", "item": "ITEM-01", "ky_vong": {"decision": "consider"},
+             "duyet": "x", "ly_do": "fixture"}]}), encoding="utf-8", newline="\n")
+        (goc / "A.html").write_text(
+            'const DATA = { items: [\n  {id:"ITEM-01", pmid:"1", decision:"apply"},\n]};'
+            "\n// HẾT KHỐI DATA", encoding="utf-8", newline="\n")
+        _, lech_gia, _ = mod.kiem(goc / "so.json", goc)
+        if len(lech_gia) != 1:
+            return False, "chốt MẤT RĂNG — fixture lật consider→apply mà không ra 🔴"
+    return True, f"✓ {len(khop)} quyết định còn nguyên · ⚪ {len(mu)} · răng còn (fixture đỏ đúng)"
+
+
 def bh55_khong_duong_dan_cung_mot_may():
     """15/08 — HỌ LỖI TÁI PHÁT NHIỀU NHẤT KHO: tool viết cho MỘT máy, gãy IM LẶNG
     trên máy kia (ensure_strict_source · run_retraction_and_med_safety ·
@@ -2199,6 +2238,7 @@ BAI_HOC = [
     ("BH55", "15/08", "Không tool nào viết-cho-một-máy (đa nền tảng)", bh55_khong_duong_dan_cung_mot_may),
     ("BH56", "16/08", "Công cụ mới phải có dây gọi + chỉ mục RAG tươi", bh56_cong_cu_moi_phai_co_day),
     ("BH57", "16/08", "Kỳ lịch lỡ phải nhìn thấy được (đăng ký ≠ nổ)", bh57_ky_lich_lo_phai_nhin_thay),
+    ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
 ]
 
 
