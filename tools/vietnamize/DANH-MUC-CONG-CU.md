@@ -3,13 +3,13 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1182 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1155 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
 > - **Mac**: 1114 mục (quét ngày 2026-08-16)
-> - **Windows**: 936 mục (quét ngày 2026-08-05)
+> - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 868 mục
 
 > Nhãn máy chỉ đúng TỚI NGÀY QUÉT ghi trên. Máy nào quét trước một lần nâng cấp công cụ có thể thiếu cả một nhóm mục (và bị hiểu nhầm là "máy kia mới có") — chạy lại `extract_catalog.py` trên máy đó rồi sinh lại danh mục.
@@ -1345,40 +1345,8 @@
 
 ---
 
-## TẦNG 3 — Ngoài chuyên môn (biết là có, hiếm khi dùng)  (41 mục)
+## TẦNG 3 — Ngoài chuyên môn (biết là có, hiếm khi dùng)  (14 mục)
 
-
-### bigdata-com  (27 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/bigdata-com:bigdata-catalyst-monitor` | kỹ năng | Windows | > Map the dated events that could move a public company over the next few quarters, using Bigdata.com data (events calendar, filings, news, tearsheet). Covers scheduled catalysts — earnings, investor days, index reviews, lock-up and pate… |
-| `/bigdata-com:bigdata-company-brief` | kỹ năng | Windows | > Generate a company brief — a cited 30-day summary of what happened at a public company and why it matters — using Bigdata.com data (news, filings, transcripts, tearsheet financials). Findings are categorized into financial results, pro… |
-| `/bigdata-com:bigdata-country-analysis` | kỹ năng | Windows | > Produce a deep country economic analysis using Bigdata.com data — GDP, inflation, monetary policy, labor markets, debt mechanics, and investment implications. Goes beyond a point-in-time snapshot: structural and historical context (sec… |
-| `/bigdata-com:bigdata-country-sector-analysis` | kỹ năng | Windows | > Analyze a specific sector inside a specific country or region using Bigdata.com data — combining the macroeconomic backdrop (GDP, inflation, rates, policy), country-specific sector trends and valuations, fundamentals of country-domicil… |
-| `/bigdata-com:bigdata-cross-sector` | kỹ năng | Windows | > Compare two or more sectors using Bigdata.com data — relative valuations, earnings growth, analyst sentiment, and where each sits in the economic cycle — and turn that into a rotation call with overweight and underweight recommendation… |
-| `/bigdata-com:bigdata-earnings-digest` | kỹ năng | Windows | > Analyze a public company's latest reported earnings — a cited post-print digest using Bigdata.com data (results, consensus and surprise, transcript, analyst reactions, tearsheet financials). Breaks down revenue and margins, segment and… |
-| `/bigdata-com:bigdata-earnings-preview` | kỹ năng | Windows | > Create a forward-looking earnings preview for a public company ahead of its next earnings call, using Bigdata.com data (estimates, tearsheet financials, news, filings, transcripts, events calendar). Produces an EPIC driver table, earni… |
-| `/bigdata-com:bigdata-earnings-quality-screen` | kỹ năng | Windows | > Screen a public company's reported earnings for quality and accounting red flags using Bigdata.com data and filings. Covers cash conversion (OCF/NI, FCF/NI across periods), accruals and the balance-sheet accrual ratio, working-capital … |
-| `/bigdata-com:bigdata-earnings-reaction` | kỹ năng | Windows | > Write a tight post-earnings reaction note using Bigdata.com data — headline numbers versus consensus with beat/miss magnitude, what mattered on both sides, a prior-versus-new guidance table, an explicit thesis check (Intact / Strengthe… |
-| `/bigdata-com:bigdata-g7-comparison` | kỹ năng | Windows | > Benchmark the seven G7 economies side by side using Bigdata.com data — the United States, Japan, Germany, the United Kingdom, France, Italy, and Canada. Produces a like-for-like indicator table (GDP, inflation, unemployment, policy rat… |
-| `/bigdata-com:bigdata-investment-memo` | kỹ năng | Windows | > Write a full institutional investment memo on a public company using Bigdata.com data — thesis, variant perception versus consensus, valuation, risks, catalysts, and an explicit recommendation with conviction. Runs the complete workflo… |
-| `/bigdata-com:bigdata-moat-governance-review` | kỹ năng | Windows | > Assess how durable a public company's competitive advantage is and whether management can be trusted with the capital, using Bigdata.com data. Covers moat identification by type with evidence, moat strength via ROIC versus WACC, pricin… |
-| `/bigdata-com:bigdata-peer-comparables` | kỹ năng | Windows | > Compare a public company against its peer set using Bigdata.com data — valuation multiples, growth, profitability, returns, leverage, and sentiment — to judge relative attractiveness. Builds the peer set with an explicit rationale for … |
-| `/bigdata-com:bigdata-post-ipo-day1` | kỹ năng | Windows | > Write a first-trading-day post-IPO reaction note for a newly listed company using Bigdata.com data plus web market data. Anchors the deal (offer price vs range, shares, greenshoe, implied market cap), reconstructs day 1 (open, intraday… |
-| `/bigdata-com:bigdata-post-ipo-day14` | kỹ năng | Windows | > Write a day-14 post-IPO note on potential NASDAQ-100 fast-track index inclusion for a recently listed large-cap, using Bigdata.com data plus web search for index methodology and market data. Covers two-week trading status, an eligibili… |
-| `/bigdata-com:bigdata-post-ipo-day179` | kỹ năng | Windows | > Write a day-179 post-IPO note on the 180-day lock-up expiry using Bigdata.com data plus filings and market data. Covers lock-up terms from the prospectus (expiry date, covered holders, share count, early-release provisions), float and … |
-| `/bigdata-com:bigdata-post-ipo-day365` | kỹ năng | Windows | > Write a day-365 post-IPO note on the 366-day founder and significant-investor lock-up expiry and float expansion toward 15-20%, using Bigdata.com data plus filings and market data. Covers the staggered lock-up structure from the prospe… |
-| `/bigdata-com:bigdata-pre-ipo-analysis` | kỹ năng | Windows | > Produce a balanced pre-IPO research note on an upcoming, not-yet-listed company using its S-1/F-1 plus Bigdata.com data. Covers deal structure (price range, shares, greenshoe, implied valuation, underwriters, lock-ups, share classes), … |
-| `/bigdata-com:bigdata-quick-take` | kỹ năng | Windows | > Give a fast, PM-style quick take on a stock using Bigdata.com data — a one-line current view, the 2-3 drivers that actually matter right now, the key risks and what would change the view, and the near-term setup with the next catalyst.… |
-| `/bigdata-com:bigdata-regional-comparison` | kỹ năng | Windows | > Compare regions or blocs using Bigdata.com data — economic indicators, market performance, and cross-asset views — and turn that into an allocation recommendation. Covers growth, inflation, policy and labor per region, comparative deve… |
-| `/bigdata-com:bigdata-risk-assessment` | kỹ năng | Windows | > Produce a comprehensive risk assessment for a public company using Bigdata.com data (10-K risk factors, 8-K material events, news, tearsheet financials). Covers six categories — regulatory and legal, competitive and moat erosion, opera… |
-| `/bigdata-com:bigdata-scenario-analysis` | kỹ năng | Windows | > Build bull, base, and bear cases for a public company using Bigdata.com data — with explicit line-item assumptions, justified probability weights summing to 100%, a value or price per scenario with the bridge shown, a probability-weigh… |
-| `/bigdata-com:bigdata-sector-analysis` | kỹ năng | Windows | > Analyze a market sector using Bigdata.com data — performance, valuations, themes, sub-industries, and upcoming catalysts. Maps the sector to its own operating and valuation KPIs rather than generic P/E, reads cycle and profitability po… |
-| `/bigdata-com:bigdata-sector-playbook` | kỹ năng | Windows | > Build an actionable investment playbook for a sector using Bigdata.com data and sector-specific frameworks — the KPIs that actually matter in that sector, how to value companies in it and why, the live debates and where consensus sits … |
-| `/bigdata-com:bigdata-thematic-research` | kỹ năng | Windows | > Research a macro investment theme using Bigdata.com data — scope and sub-themes, investment implications, sector impact, named beneficiaries and vulnerable losers with tearsheet fundamentals, the policy and regulatory dimension, geogra… |
-| `/bigdata-com:bigdata-valuation-snapshot` | kỹ năng | Windows | > Answer what a public company is worth and whether it is cheap or expensive, using Bigdata.com data (tearsheet multiples, estimates, margins, peer context). Produces a multiples cross-check against the company's own history and peer med… |
-| `/bigdata-com:bigdata-variant-perception` | kỹ năng | Windows | > State explicitly where your view on a public company differs from consensus, using Bigdata.com data. Establishes the consensus baseline from estimates and sell-side posture, applies the EPIC filter to candidate differentiators, frames … |
 
 ### human-resources  (9 · chỉ Windows)
 

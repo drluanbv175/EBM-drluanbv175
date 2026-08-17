@@ -94,6 +94,9 @@ tools/vietnamize/catalog_may/
 *.jsonl.lock
 # Sổ đăng ký nguồn PHA 4 — cấu hình hệ, cần theo repo
 !/data/
+# NHƯNG data/processed/ là DỮ LIỆU SINH (audit JSONL Chronic Care ~1MB) — theo kiến
+# trúc "code→GitHub · dữ liệu→OneDrive" nên không vào git; chỉ data/sources.json theo repo
+/data/processed/
 # PHA 5 — gói triển khai + bàn giao (tài liệu hệ, theo repo)
 !/implementation/
 !/HANDOVER.md
