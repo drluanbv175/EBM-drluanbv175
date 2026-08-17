@@ -44,7 +44,7 @@
     "plugin": {
       "academic-research-skills@academic-research-skills": {
         "so_skill": 4,
-        "phien_ban": "3.19.0"
+        "phien_ban": "3.20.1"
       },
       "aipoch-medical-research@aipoch-medical-research": {
         "so_skill": 605,
