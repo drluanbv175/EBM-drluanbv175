@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `tools/vietnamize/build_trang_tra_cuu.py`. KHÔNG sửa tay.
 
-**1165 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
+**1134 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
 Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy được cả hai.
 
 ## Cách dùng index này
@@ -114,7 +114,7 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 
 ## user-commands  (53 mục — liệt kê đủ)
 
-- `/cap-nhat-chung-cu` [M] — Cập nhật chứng cứ cho một vấn đề lâm sàng + dựng dashboard Evidence Workbench trọn dây chuyền
+- `/cap-nhat-chung-cu` [M] — Cập nhật chứng cứ cho một vấn đề lâm sàng — dựng dashboard rồi xuất BỘ NĂM (dashboard · bản đọc · Word · Word-dạng-HTML · PDF giữ…
 - `/chay-thong-ke` [M] — Chạy phân tích theo đúng SAP đã khoá, trên dữ liệu đã khoá (cổng G6)
 - `/chon-tap-chi` [M] — Gợi ý tạp chí phù hợp kèm chính sách khai báo AI và phương án dự phòng nếu bị từ chối
 - `/cong-cu-gi` — Tra xem việc mình cần làm thì gọi công cụ nào — tìm trong danh mục 532 skill/lệnh/agent đã Việt hoá
@@ -207,7 +207,7 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 - `/tuan-thu-dieu-tri` — Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú…
 - `/venue-templates` [W] — Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu…
 
-## Các nhóm còn lại (1026 mục)
+## Các nhóm còn lại (995 mục)
 
 Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` như hướng dẫn trên.
 
@@ -218,7 +218,6 @@ Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` n
 | `academic-research-skills` | 58 | abstract_bilingual_agent · academic-paper · academic-paper-reviewer · academic-pipeline · argument_builder_agent · ars-3w |
 | `medsci-project` | 58 | academic-aio · add-journal · analyze-stats · architecture-zoo · author-strategy · batch-cohort |
 | `anthropic-skills` | 53 | EBM-MASTER · algorithmic-art · alphafold2 · antifacts · boltz · borzoi |
-| `mattpocock-skills` | 35 | ask-matt · claude-handoff · code-review · codebase-design · diagnosing-bugs · domain-modeling |
 | `claude-code-harness` | 30 | advisor · agent-browser · breezing · cc-update-review · ci · cursor-ask |
 | `bigdata-com` | 27 | bigdata-catalyst-monitor · bigdata-company-brief · bigdata-country-analysis · bigdata-country-sector-analysis · bigdata-cross-sector · bigdata-earnings-digest |
 | `meta-pipe` | 14 | brainstorm-topic · ma-agent-teams · ma-data-extraction · ma-end-to-end · ma-fulltext-management · ma-manuscript-quarto |
@@ -228,10 +227,10 @@ Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` n
 | `human-resources` | 9 | comp-analysis · draft-offer · interview-prep · onboarding · org-planning · people-report |
 | `bio-research` | 6 | instrument-data-to-allotrope · nextflow-development · scientific-problem-selection · scvi-tools · single-cell-rna-qc · start |
 | `desktop-commander` | 6 | ai-tools-setup · computer-health-check · desktop-commander-overview · knowledge-base · obsidian-vault · terminal |
+| `clinical-trial-protocol` | 5 | clinical-trial-protocol-skill · instrument-data-to-allotrope · nextflow-development · scientific-problem-selection · single-cell-rna-qc |
 | `pdf-viewer` | 5 | annotate · fill-form · open · sign · view-pdf |
 | `claude-tag-troubleshoot` | 3 | config-guide · debug-plugins · debug-plugins |
 | `cowork-plugin-management` | 2 | cowork-plugin-customizer · create-cowork-plugin |
-| `clinical-trial-protocol` | 1 | clinical-trial-protocol-skill |
 | `claude-tag-data-viz` | 1 | graphing |
 | `google-drive` | 1 | google-drive-api |
 | `humanizer` | 1 | humanizer |

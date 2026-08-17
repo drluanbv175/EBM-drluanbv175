@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1217 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1182 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1149 mục (quét ngày 2026-08-10)
+> - **Mac**: 1114 mục (quét ngày 2026-08-16)
 > - **Windows**: 936 mục (quét ngày 2026-08-05)
 > - có ở **cả 2 máy**: 868 mục
 
@@ -1191,64 +1191,24 @@
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/bio-research:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
-| `/bio-research:nextflow-development` | kỹ năng | cả 2 máy | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
-| `/bio-research:scientific-problem-selection` | kỹ năng | cả 2 máy | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+| `/bio-research:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | Convert laboratory instrument output files (PDF, CSV, Excel, TXT) to Allotrope Simple Model (ASM) JSON format or flattened 2D CSV. Use this skill when scientists need to standardize instrument data for LIMS systems, data lakes, or downst… |
+| `/bio-research:nextflow-development` | kỹ năng | cả 2 máy | Run nf-core bioinformatics pipelines (rnaseq, sarek, atacseq) on sequencing data. Use when analyzing RNA-seq, WGS/WES, or ATAC-seq data—either local FASTQs or public datasets from GEO/SRA. Triggers on nf-core, Nextflow, FASTQ analysis, v… |
+| `/bio-research:scientific-problem-selection` | kỹ năng | cả 2 máy | This skill should be used when scientists need help with research problem selection, project ideation, troubleshooting stuck projects, or strategic scientific decisions. Use this skill when users ask to pitch a new research idea, work th… |
 | `/bio-research:scvi-tools` | kỹ năng | cả 2 máy | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
-| `/bio-research:single-cell-rna-qc` | kỹ năng | cả 2 máy | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
+| `/bio-research:single-cell-rna-qc` | kỹ năng | cả 2 máy | Performs quality control on single-cell RNA-seq data (.h5ad or .h5 files) using scverse best practices with MAD-based filtering and comprehensive visualizations. Use when users request QC analysis, filtering low-quality cells, assessing … |
 | `/bio-research:start` | kỹ năng | cả 2 máy | [Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup. |
 
 ### cowork-plugin-management  (2)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | cả 2 máy | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Dùng khi plugin có sẵn gần đúng nhưng cần sửa vài chỗ. Từ khoá: plugin customizer. |
-| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | cả 2 máy | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Dùng khi muốn đóng gói quy trình riêng thành plugin dùng lại được. Từ khoá: create plugin. |
+| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | cả 2 máy | > Customize a Claude Code plugin for a specific organization's tools and workflows. Use when: customize plugin, set up plugin, configure plugin, tailor plugin, adjust plugin settings, customize plugin connectors, customize plugin skill, … |
+| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | cả 2 máy | > Guide users through creating a new plugin from scratch in a cowork session. Use when users want to create a plugin, build a plugin, make a new plugin, develop a plugin, scaffold a plugin, start a plugin from scratch, or design a plugin… |
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (118 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (83 mục)
 
-
-### mattpocock-skills  (35 · chỉ Mac)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/mattpocock-skills:ask-matt` | kỹ năng | Mac | [Lập trình] Hỏi xem tình huống hiện tại nên dùng kỹ năng nào trong bộ này. Từ khoá: skill router. |
-| `/mattpocock-skills:claude-handoff` | kỹ năng | Mac | [Lập trình] Bàn giao cuộc trò chuyện cho một agent chạy nền tiếp nhận. Từ khoá: claude handoff. |
-| `/mattpocock-skills:code-review` | kỹ năng | Mac | [Lập trình] Rà soát thay đổi kể từ một mốc cố định (commit, nhánh, thẻ). Từ khoá: code review. |
-| `/mattpocock-skills:codebase-design` | kỹ năng | Mac | [Lập trình] Bộ từ vựng chung để thiết kế mô-đun có chiều sâu. Từ khoá: deep modules. |
-| `/mattpocock-skills:diagnosing-bugs` | kỹ năng | Mac | [Lập trình] Vòng chẩn đoán cho lỗi khó và sụt hiệu năng. Từ khoá: bug diagnosis. |
-| `/mattpocock-skills:domain-modeling` | kỹ năng | Mac | [Lập trình] Dựng và mài sắc mô hình miền nghiệp vụ của dự án. Từ khoá: domain model. |
-| `/mattpocock-skills:git-guardrails-claude-code` | kỹ năng | Mac | [Lập trình] Cài chốt chặn lệnh git nguy hiểm (push, reset --hard...). Từ khoá: git guardrails. |
-| `/mattpocock-skills:grill-me` | kỹ năng | Mac | [Lập trình] Phỏng vấn gắt để mài sắc một kế hoạch hoặc thiết kế. Từ khoá: grill me. |
-| `/mattpocock-skills:grill-with-docs` | kỹ năng | Mac | [Lập trình] Vừa chất vấn vừa sinh tài liệu ghi lại quyết định. Từ khoá: grill with docs. |
-| `/mattpocock-skills:grilling` | kỹ năng | Mac | [Lập trình] Chất vấn liên tục về một kế hoạch, quyết định hay ý tưởng để lộ điểm yếu. Từ khoá: grilling. |
-| `/mattpocock-skills:handoff` | kỹ năng | Mac | [Lập trình] Nén cuộc trò chuyện hiện tại thành tài liệu bàn giao cho agent khác tiếp tục. Từ khoá: handoff. |
-| `/mattpocock-skills:implement` | kỹ năng | Mac | [Lập trình] Triển khai một phần việc theo đặc tả hoặc danh sách hạng mục. Từ khoá: implement. |
-| `/mattpocock-skills:improve-codebase-architecture` | kỹ năng | Mac | [Lập trình] Quét kho mã tìm chỗ nên làm sâu hơn, xuất báo cáo HTML trực quan. Từ khoá: architecture improvement. |
-| `/mattpocock-skills:loop-me` | kỹ năng | Mac | [Lập trình] Chất vấn về đặc tả cho các quy trình muốn xây trong không gian làm việc này. Từ khoá: loop me. |
-| `/mattpocock-skills:migrate-to-shoehorn` | kỹ năng | Mac | [Lập trình] Chuyển file kiểm thử sang dùng thư viện shoehorn thay cho ép kiểu bằng `as`. Từ khoá: shoehorn migration. |
-| `/mattpocock-skills:prototype` | kỹ năng | Mac | [Lập trình] Dựng bản thử nghiệm dùng một lần để trả lời một câu hỏi thiết kế. Từ khoá: prototype. |
-| `/mattpocock-skills:research` | kỹ năng | Mac | [Lập trình] Tra cứu một câu hỏi dựa trên nguồn gốc đáng tin và ghi lại kết quả. Từ khoá: research. |
-| `/mattpocock-skills:resolving-merge-conflicts` | kỹ năng | Mac | [Lập trình] Xử lý xung đột khi đang merge hoặc rebase dở dang. Từ khoá: merge conflicts. |
-| `/mattpocock-skills:scaffold-exercises` | kỹ năng | Mac | [Lập trình] Dựng khung thư mục bài tập gồm đề bài, lời giải và giải thích. Từ khoá: scaffold exercises. |
-| `/mattpocock-skills:setup-matt-pocock-skills` | kỹ năng | Mac | [Lập trình] Cấu hình kho mã để dùng được bộ kỹ năng này. Từ khoá: setup. |
-| `/mattpocock-skills:setup-pre-commit` | kỹ năng | Mac | [Lập trình] Cài chốt kiểm trước khi commit: định dạng mã, kiểm kiểu. Từ khoá: pre-commit hooks. |
-| `/mattpocock-skills:setup-ts-deep-modules` | kỹ năng | Mac | [Lập trình] Cấu hình kho mã TypeScript để mỗi gói là một mô-đun sâu. Từ khoá: deep modules, TypeScript. |
-| `/mattpocock-skills:tdd` | kỹ năng | Mac | [Lập trình] Phát triển hướng kiểm thử: viết test trước rồi mới viết mã. Từ khoá: TDD. |
-| `/mattpocock-skills:teach` | kỹ năng | Mac | [Lập trình] Dạy một kỹ năng hoặc khái niệm mới ngay trong không gian làm việc. Từ khoá: teach. |
-| `/mattpocock-skills:to-questionnaire` | kỹ năng | Mac | [Lập trình] Biến một quyết định chưa tự trả lời được thành bộ câu hỏi gửi người khác. Từ khoá: questionnaire. |
-| `/mattpocock-skills:to-spec` | kỹ năng | Mac | [Lập trình] Biến cuộc trò chuyện hiện tại thành bản đặc tả và đăng lên hệ theo dõi việc. Từ khoá: to spec. |
-| `/mattpocock-skills:to-tickets` | kỹ năng | Mac | [Lập trình] Chia kế hoạch hoặc đặc tả thành các phiếu việc nhỏ chạy được. Từ khoá: to tickets. |
-| `/mattpocock-skills:triage` | kỹ năng | Mac | [Lập trình] Đưa các vấn đề và pull request bên ngoài qua quy trình phân loại nhiều vai. Từ khoá: triage. |
-| `/mattpocock-skills:wait-what` | kỹ năng | Mac | [Lập trình] Dừng lại soi một khẳng định đáng ngờ trong hội thoại trước khi nó thành giả định ngầm. Từ khoá: khoan đã, kiểm lại giả định. |
-| `/mattpocock-skills:wayfinder` | kỹ năng | Mac | [Lập trình] Lập kế hoạch cho khối việc lớn hơn sức chứa của một phiên agent. Từ khoá: wayfinder. |
-| `/mattpocock-skills:wizard` | kỹ năng | Mac | [Lập trình] Sinh một trình hướng dẫn bash dắt NGƯỜI đi qua các bước chỉ người mới làm được — dựng hạ tầng, đặt khoá bí mật/CI, thao tác trên bảng điều khiển dịch vụ ngoài, chạy một lần chuyển đổi. Không dùng cho việc máy tự làm được. Từ … |
-| `/mattpocock-skills:writing-beats` | kỹ năng | Mac | [Viết lách] Giai đoạn DỰNG MẠCH: ghép nguyên liệu thành hành trình các nhịp có căn cứ. Từ khoá: writing beats. |
-| `/mattpocock-skills:writing-for-agents` | kỹ năng | Mac | [Lập trình] Cách viết tài liệu cho agent đọc — dùng khi tạo/sửa skill, hoặc sửa AGENTS.md và CLAUDE.md. Từ khoá: viết tài liệu cho agent, soạn skill, AGENTS.md. |
-| `/mattpocock-skills:writing-fragments` | kỹ năng | Mac | [Viết lách] Giai đoạn KHAI PHÁ: gom mảnh ý thô, chưa cần bố cục. Từ khoá: writing fragments. |
-| `/mattpocock-skills:writing-shape` | kỹ năng | Mac | [Viết lách] Giai đoạn ĐỊNH HÌNH: nắn nguyên liệu thô thành bài, từng đoạn một. Từ khoá: writing shape. |
 
 ### claude-code-harness  (30 · chỉ Mac)
 
@@ -1256,7 +1216,7 @@
 |---|---|---|---|
 | `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
 | `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
-| `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
+| `agent test-wiring-auditor` | agent | Mac | 変更差分に対してテスト網が追随しているかを fresh-context で監査する read-only auditor |
 | `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
 | `/handoff-to-claude` | lệnh | Mac | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
 | `/plan-with-cc` | lệnh | Mac | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
@@ -1271,7 +1231,7 @@
 | `/claude-code-harness:cursor-do` | kỹ năng | Mac | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
 | `/claude-code-harness:cursor-review` | kỹ năng | Mac | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
 | `/claude-code-harness:cursor-setup` | kỹ năng | Mac | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
-| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
+| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | Extract recurring failure patterns from breezing orchestration logs and Judgment Ledger, emit failure-rule.v1 proposals with confidence scores. SSOT promotion to patterns.md or decisions.md is proposal-only — human-approval-required. Use… |
 | `/claude-code-harness:harness-accept` | kỹ năng | Mac | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
 | `/claude-code-harness:harness-loop` | kỹ năng | Mac | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
 | `/claude-code-harness:harness-plan` | kỹ năng | Mac | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
@@ -1340,22 +1300,22 @@
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/desktop-commander:ai-tools-setup` | kỹ năng | cả 2 máy | [Máy tính] Cài, nối, kiểm và sửa Claude Desktop cùng các máy chủ MCP. Từ khoá: MCP setup. |
-| `/desktop-commander:computer-health-check` | kỹ năng | cả 2 máy | [Máy tính] Kiểm tra sức khoẻ máy tính, CHỈ ĐỌC, không thay đổi gì. Từ khoá: health check. |
-| `/desktop-commander:desktop-commander-overview` | kỹ năng | cả 2 máy | [Máy tính] Tổng quan năng lực Desktop Commander: phiên dòng lệnh lâu dài, thao tác file. Từ khoá: Desktop Commander. |
-| `/desktop-commander:knowledge-base` | kỹ năng | cả 2 máy | [Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base. |
+| `/desktop-commander:ai-tools-setup` | kỹ năng | cả 2 máy | >- Set up, connect, validate, and repair Claude Desktop and MCP servers using Desktop Commander — inspecting and fixing mcp.json / claude_desktop_config.json, getting MCP servers to connect, and diagnosing local AI tooling. Use when a us… |
+| `/desktop-commander:computer-health-check` | kỹ năng | cả 2 máy | >- Run a comprehensive, read-only health check on the user's computer and return a scored chat summary with prioritized, plain-English recommendations and safe cleanup suggestions. Use this whenever the user wants to check their computer… |
+| `/desktop-commander:desktop-commander-overview` | kỹ năng | cả 2 máy | Use for Desktop Commander MCP capabilities — persistent shells and REPLs, long-running processes, filesystem beyond the workspace, structured files (.xlsx, .docx, .pdf, images) and large local data files such as CSVs, ripgrep search at s… |
+| `/desktop-commander:knowledge-base` | kỹ năng | cả 2 máy | >- Create and maintain a Markdown knowledge base that any AI agent can read, search, and update. Use when the user wants to start a knowledge base, add or update notes, organize docs/notes for an agent or LLM to consume, build an index o… |
 | `/desktop-commander:obsidian-vault` | kỹ năng | cả 2 máy | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, chuẩn hoá frontmatter, bảng điều khiển Dataview, tìm ghi chú mồ côi. Dùng khi bác sĩ nói rõ Obsidian hoặc tính năng riêng của nó; không dùng cho ghi chú Markdown thông thườ… |
-| `/desktop-commander:terminal` | kỹ năng | cả 2 máy | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
+| `/desktop-commander:terminal` | kỹ năng | cả 2 máy | >- Use Desktop Commander for terminal and command-line work, especially anything that needs a shell whose state persists across turns: Python/Node REPLs, database shells, dev servers and other long-running processes, SSH into remote mach… |
 
 ### pdf-viewer  (5)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/annotate` | lệnh | cả 2 máy | [Tài liệu] Chú thích PDF cùng nhau — đề xuất đánh dấu, cùng xem lại và chỉnh dần. Từ khoá: annotate PDF. |
-| `/fill-form` | lệnh | cả 2 máy | [Tài liệu] Điền biểu mẫu PDF với xem trước trực tiếp từng ô. Từ khoá: fill PDF form. |
-| `/open` | lệnh | cả 2 máy | [Tài liệu] Mở một file PDF trong trình xem tương tác. Từ khoá: open PDF. |
-| `/sign` | lệnh | cả 2 máy | [Tài liệu] Đặt chữ ký hoặc chữ viết tắt lên file PDF. LƯU Ý: chỉ chèn hình ảnh chữ ký sẵn có, không thay việc bác sĩ tự ký văn bản pháp lý. Từ khoá: sign PDF. |
-| `/pdf-viewer:view-pdf` | kỹ năng | cả 2 máy | [Tài liệu] Trình xem PDF tương tác — mở, xem và đánh dấu tài liệu ngay trong phiên. Dùng khi cần nhìn tận mắt nội dung file PDF; không dùng để tóm tắt hay trích xuất chữ, việc đó đọc thẳng file nhanh hơn. Từ khoá: PDF viewer. |
+| `/annotate` | lệnh | cả 2 máy | Collaboratively annotate a PDF — propose markup, review together, iterate |
+| `/fill-form` | lệnh | cả 2 máy | Fill PDF form fields interactively with live visual feedback |
+| `/open` | lệnh | cả 2 máy | Open a PDF in the interactive viewer |
+| `/sign` | lệnh | cả 2 máy | Place a signature or initials image on a PDF |
+| `/pdf-viewer:view-pdf` | kỹ năng | cả 2 máy | Interactive PDF viewer. Use when the user wants to open, show, or view a PDF and collaborate on it visually — annotate, highlight, stamp, fill form fields, place signature/initials, or review markup together. Not for summarization or tex… |
 
 ### claude-tag-troubleshoot  (3)
 
