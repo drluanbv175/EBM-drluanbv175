@@ -7,8 +7,8 @@
         "phien_ban": "1.0.6"
       },
       "humanizer@humanizer": {
-        "so_skill": 1,
-        "phien_ban": "2.9.1"
+        "so_skill": 2,
+        "phien_ban": "2.11.0"
       },
       "academic-research-skills@academic-research-skills": {
         "so_skill": 4,
@@ -19,8 +19,8 @@
         "phien_ban": "e412ae8f3b04"
       },
       "claude-code-harness@claude-code-harness-marketplace": {
-        "so_skill": 67,
-        "phien_ban": "5.8.0"
+        "so_skill": 70,
+        "phien_ban": "5.9.0"
       },
       "medsci-project@medsci-skills": {
         "so_skill": 59,

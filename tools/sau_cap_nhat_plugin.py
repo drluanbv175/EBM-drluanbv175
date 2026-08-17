@@ -62,6 +62,36 @@ def main() -> int:
         if not _buoc(ten, lenh):
             return 1
     if a.ghi_moc:
+        # CHẶN NHẢY VỌT (16/08 — lỗi thật vừa xảy: app ghi đè settings làm 8 bộ
+        # medsci trùng bật lại ⇒ kho phồng 9→17 plugin/839→1311 skill, và nghi
+        # thức đã TỰ CHỐT MỐC SAI trên trạng thái đó. Ghi mốc là tuyên bố «kho
+        # đang đủ» — thay đổi >25% phải có mắt người xem, không tự gật).
+        import json
+        moc_p = REPO / "tools" / "moc_chuan_plugin.json"
+        try:
+            import platform
+            may = "Mac" if platform.system() == "Darwin" else "Windows"
+            cu = json.loads(moc_p.read_text(encoding="utf-8")).get(may, {}).get("plugin", {})
+            n_cu = len(cu)
+            sk_cu = sum(v.get("so_skill", 0) for v in cu.values())
+            # đếm nhanh theo cùng nguồn kiem_plugin_day_du dùng (SKILL.md trên đĩa)
+            r = subprocess.run([sys.executable, "tools/kiem_plugin_day_du.py"],
+                               capture_output=True, text=True, cwd=REPO, timeout=60)
+            import re
+            m = re.search(r"(\d+) plugin, (\d+) skill", r.stdout or "")
+            if m and n_cu:
+                n_moi, sk_moi = int(m.group(1)), int(m.group(2))
+                if abs(n_moi - n_cu) / n_cu > 0.25 or (sk_cu and abs(sk_moi - sk_cu) / sk_cu > 0.25):
+                    print(f"\n🔴 TỪ CHỐI tự ghi mốc: kho đổi quá 25% so mốc cũ "
+                          f"({n_cu}→{n_moi} plugin · {sk_cu}→{sk_moi} skill).")
+                    print("   Nhảy vọt cỡ này thường là cache nạp lại hàng loạt hoặc app ghi đè")
+                    print("   enabledPlugins (đã xảy ra 16/08: 8 bộ medsci trùng bật lại).")
+                    print("   → Bác sĩ xem `python3 tools/kiem_plugin_day_du.py` + settings.json,")
+                    print("     xử xong chạy lại; hoặc cố ý chấp nhận thì chạy thẳng")
+                    print("     `python3 tools/kiem_plugin_day_du.py --ghi-moc`.")
+                    return 1
+        except (OSError, json.JSONDecodeError, subprocess.SubprocessError):
+            pass  # thiếu mốc cũ/không đọc được — cho qua, lần đầu ghi mốc là hợp lệ
         if not _buoc("④ ghi mốc chuẩn mới", ["tools/kiem_plugin_day_du.py", "--ghi-moc"]):
             return 1
     else:
