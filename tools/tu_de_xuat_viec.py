@@ -38,8 +38,10 @@ DASH = REPO / "EBM-Dashboards"
 
 def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
     try:
+        # encoding tường minh: Windows mặc định cp1252 → thread đọc output chết
+        # UnicodeDecodeError với tiếng Việt/UTF-8 (lớp lỗi đã ghi ở CLAUDE.md)
         r = subprocess.run(lenh, capture_output=True, text=True, timeout=giay,
-                           cwd=cwd or REPO)
+                           cwd=cwd or REPO, encoding="utf-8", errors="replace")
         return (r.stdout or "") + (r.stderr or "")
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -222,7 +224,8 @@ def main() -> int:
     # một resume; danh mục/trang tra/mốc trôi theo mà không ai thấy). Đọc chốt
     # kiem_plugin_day_du: lệch mốc/đổi bản → nhắc chạy nghi thức MỘT lệnh.
     r_pl = subprocess.run([sys.executable, "tools/kiem_plugin_day_du.py"],
-                          capture_output=True, text=True, timeout=60, cwd=REPO)
+                          capture_output=True, text=True, timeout=60, cwd=REPO,
+                          encoding="utf-8", errors="replace")
     if r_pl.returncode == 2:
         de_xuat.append((1, "🤖", "Kho plugin THIẾU so với mốc chuẩn — xem chi tiết rồi "
                         "chạy nghi thức sau-cập-nhật (hoặc cài lại plugin thiếu)",
