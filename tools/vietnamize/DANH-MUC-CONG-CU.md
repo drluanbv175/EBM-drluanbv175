@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1155 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1156 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1114 mục (quét ngày 2026-08-16)
+> - **Mac**: 1115 mục (quét ngày 2026-08-17)
 > - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 868 mục
 
@@ -1207,10 +1207,10 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (83 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (84 mục)
 
 
-### claude-code-harness  (30 · chỉ Mac)
+### claude-code-harness  (31 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -1242,6 +1242,7 @@
 | `/claude-code-harness:harness-setup` | kỹ năng | Mac | [Lập trình] Khởi tạo dự án, cài công cụ, cấu hình agent, dựng bộ nhớ và đồng bộ bản sao skill. Từ khoá: harness setup, init. |
 | `/claude-code-harness:harness-sync` | kỹ năng | Mac | [Lập trình] Đối chiếu Plans.md với mã thật, phát hiện lệch, cập nhật mốc và rút kinh nghiệm. Dùng khi hỏi 'đang làm tới đâu'. Từ khoá: harness sync, drift. |
 | `/claude-code-harness:harness-work` | kỹ năng | Mac | [Lập trình] THỰC THI các việc trong Plans.md, từ một việc lẻ tới chạy song song cả nhóm. Từ khoá: harness work, implement. |
+| `/claude-code-harness:japanese-writing-drafter` | kỹ năng | Mac | Detect when the operator corrects the agent's Japanese phrasing mid-conversation (rewrites a sentence, calls out a style problem, says 'this wording is bad, say it like X instead') and draft a pending writing-rule proposal into ~/.claude… |
 | `/claude-code-harness:maintenance` | kỹ năng | Mac | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
 | `/claude-code-harness:memory` | kỹ năng | Mac | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
 

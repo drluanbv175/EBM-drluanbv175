@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `tools/vietnamize/build_trang_tra_cuu.py`. KHÔNG sửa tay.
 
-**1107 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
+**1108 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
 Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy được cả hai.
 
 ## Cách dùng index này
@@ -207,7 +207,7 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 - `/tuan-thu-dieu-tri` — Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú…
 - `/venue-templates` [W] — Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu…
 
-## Các nhóm còn lại (968 mục)
+## Các nhóm còn lại (969 mục)
 
 Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` như hướng dẫn trên.
 
@@ -218,7 +218,7 @@ Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` n
 | `academic-research-skills` | 58 | abstract_bilingual_agent · academic-paper · academic-paper-reviewer · academic-pipeline · argument_builder_agent · ars-3w |
 | `medsci-project` | 58 | academic-aio · add-journal · analyze-stats · architecture-zoo · author-strategy · batch-cohort |
 | `anthropic-skills` | 53 | EBM-MASTER · algorithmic-art · alphafold2 · antifacts · boltz · borzoi |
-| `claude-code-harness` | 30 | advisor · agent-browser · breezing · cc-update-review · ci · cursor-ask |
+| `claude-code-harness` | 31 | advisor · agent-browser · breezing · cc-update-review · ci · cursor-ask |
 | `meta-pipe` | 14 | brainstorm-topic · ma-agent-teams · ma-data-extraction · ma-end-to-end · ma-fulltext-management · ma-manuscript-quarto |
 | `healthcare` | 13 | clinical-note-extract-skill · contracts · doc-extract · documents-reader-cli · documents-reader-mcp · fhir |
 | `codex` | 12 | adversarial-review · cancel · codex-cli-runtime · codex-rescue · codex-result-handling · gpt-5-4-prompting |

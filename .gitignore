@@ -54,6 +54,7 @@
 #    đã nhiều lần tạo conflict-copy và làm hỏng ref git. Có bản trên GitHub = còn đường lùi.
 /sync/*
 !/sync/skills/
+!/sync/scheduled-tasks/
 !/sync/commands-vi/
 !/sync/*.sh
 !/sync/*.ps1
