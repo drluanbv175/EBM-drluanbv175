@@ -387,6 +387,11 @@
    SCHEMA:
    meta:    { question, eyebrow, pico:{P,I,C,O}, updated }
    summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }   // Lớp 1
+            // ⚠ ĐÚNG 4 TÊN NÀY, không thêm không đổi. Template và cả ba bộ sinh phái
+            // sinh chỉ đọc đúng chúng; gõ sai tên (vd `notDo`) thì nội dung bị VỨT ÂM
+            // THẦM — panel render rỗng trên MỌI sản phẩm mà không báo lỗi. Đã xảy ra
+            // thật 18/08/2026 trên 2 dashboard, giấu mất nội dung an toàn. Nay
+            // verify_dashboard.py chặn cứng (khoá lạ = lỗi cứng), khoá bằng BH61.
    standards?: {                       // Lớp 4: chuẩn cập nhật chứng cứ
      frame, sourceHierarchy, reporting, appraisal, currency, safety, vietnamFit,
      sourceVerification, lastVerified, verificationTool,

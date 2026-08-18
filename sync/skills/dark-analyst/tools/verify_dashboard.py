@@ -642,6 +642,97 @@ def strict_source_checks(data_block, items, *, today=None):
     return errors, warns, oks
 
 
+# Khoá cấp 1 HỢP LỆ của DATA.summary — phải khớp ĐÚNG thứ mà template và ba bộ
+# sinh phái sinh đọc: evidence-workbench-template.html (s.dontDo),
+# tools/build_ban_doc_chung_cu.py, EBM-Dashboards/tools/build_dashboard_docx.py và
+# make_derivatives.py. Sửa danh sách này mà không sửa cả bốn nơi kia là tái lập
+# đúng lỗi mà nó sinh ra để chặn.
+KHOA_SUMMARY_HOP_LE = {"conclusion", "doNow", "dontDo", "redFlags"}
+
+
+def _khoa_cap_mot(block):
+    """Khoá cấp 1 của một object JS, bỏ qua mọi thứ nằm trong chuỗi và trong object con."""
+    ks = []
+    depth = 0
+    quote = None
+    esc = False
+    buf = ""
+    for ch in block:
+        if esc:
+            esc = False
+            continue
+        if ch == "\\":
+            esc = True
+            continue
+        if quote:
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf = ""
+            continue
+        if ch in "{[":
+            depth += 1
+            buf = ""
+            continue
+        if ch in "}]":
+            depth -= 1
+            buf = ""
+            continue
+        if ch == ":" and depth == 1:
+            ten = re.findall(r"([A-Za-z_][A-Za-z0-9_]*)\s*$", buf)
+            if ten:
+                ks.append(ten[0])
+            buf = ""
+            continue
+        if ch == "," and depth == 1:
+            buf = ""
+            continue
+        buf += ch
+    return ks
+
+
+def kiem_khoa_summary(data_block, errors, warns, oks):
+    """Bắt khoá SAI TÊN trong DATA.summary — lỗi làm MẤT TRẮNG một panel an toàn.
+
+    CA THẬT 18/08/2026 (lý do hàm này tồn tại): hai dashboard mới nhất ghi
+    `notDo:` trong khi template VÀ cả ba bộ sinh phái sinh đều đọc `dontDo`
+    ⇒ panel "Không nên / giới hạn" render RỖNG trên MỌI sản phẩm (dashboard,
+    bản đọc, Word, Word-HTML, PDF). Thứ bị giấu là nội dung an toàn thật:
+    "KHÔNG ngừng opioid ĐỘT NGỘT ở người đang dùng dài hạn" và "không bình
+    thường hoá Hb bằng ESA (đích 13-13,5 g/dL) — tăng biến cố tim mạch".
+    KHÔNG cổng nào bắt được, vì khối DATA vẫn đúng cú pháp và mọi luật khác
+    vẫn chạy bình thường — đầu ra trông như đã soi đủ.
+
+    Cùng HỌ lỗi với `return` sớm 12/08 (che 73 mục) và BH27 (fail-open A12):
+    công cụ vẫn chạy, vẫn in kết quả hợp lệ, nhưng thứ cần kiểm thì không bao
+    giờ được kiểm. Nên khoá LẠ là LỖI CỨNG chứ không phải cảnh báo: nội dung
+    bị vứt âm thầm nguy hiểm hơn nội dung sai, vì không ai đi tìm thứ mình
+    không biết là đã mất.
+    """
+    block = object_after_key(data_block, "summary")
+    if block is None:
+        warns.append("Không đọc được khối DATA.summary — bỏ qua kiểm khoá.")
+        return
+    co = set(_khoa_cap_mot(block))
+    la = sorted(co - KHOA_SUMMARY_HOP_LE)
+    thieu = sorted(KHOA_SUMMARY_HOP_LE - co)
+    if la:
+        errors.append(
+            "DATA.summary có khoá LẠ %s — template và các bộ sinh phái sinh chỉ đọc %s, "
+            "nên nội dung dưới khoá lạ bị VỨT ÂM THẦM (panel render rỗng trên mọi sản phẩm). "
+            "Đổi lại đúng tên khoá; nếu thật sự cần trường mới thì phải nối dây ở CẢ "
+            "template lẫn build_ban_doc_chung_cu.py, build_dashboard_docx.py và make_derivatives.py."
+            % (", ".join(repr(k) for k in la), ", ".join(sorted(KHOA_SUMMARY_HOP_LE))))
+    if thieu:
+        warns.append(
+            "DATA.summary THIẾU khoá %s — panel tương ứng sẽ trống."
+            % ", ".join(repr(k) for k in thieu))
+    if not la and not thieu:
+        oks.append("DATA.summary đủ 4 khoá chuẩn, không có khoá lạ bị vứt âm thầm.")
+
+
 def meta_kind(data_block):
     """Loại artifact tự khai báo trong meta (vd kind:'cong-cu' = CÔNG CỤ HỖ TRỢ quyết định,
     KHÔNG phải danh sách thẻ chứng cứ → items[] rỗng là hợp lệ). Marker phải nằm trong meta của
@@ -861,6 +952,8 @@ def main():
     if not data:
         errors.append("Không tìm thấy khối const DATA.")
         return report(errors, warns, oks)
+
+    kiem_khoa_summary(data, errors, warns, oks)
 
     kind = meta_kind(data)
     is_tool = kind in {"cong-cu", "cong-cu-ho-tro", "tool"}

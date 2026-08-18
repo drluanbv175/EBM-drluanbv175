@@ -12,6 +12,9 @@
   SCHEMA (DÙNG CHUNG với evidence-workbench-template.html — 1 DATA chạy được cả hai):
     meta:    { eyebrow, question, pico:{P,I,C,O}, updated }
     summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }     // Clinical Quick View
+            // ⚠ ĐÚNG 4 TÊN NÀY, không thêm không đổi. Gõ sai tên (vd `notDo`) thì nội
+            // dung bị VỨT ÂM THẦM — panel rỗng trên MỌI sản phẩm, không báo lỗi.
+            // Đã xảy ra thật 18/08/2026; nay verify_dashboard.py chặn cứng (BH61).
     items:   [ {
       id:'ITEM-01', title, source, org, dateVersion, pmid?, doi?, url?,
       design:'Guideline'|'Meta'|'RCT'|'Cohort'|'Consensus',

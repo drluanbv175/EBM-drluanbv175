@@ -2278,6 +2278,62 @@ def bh60_array_field_khong_gay_o_ngoac_vuong():
     return True, f"array_field chịu được ngoặc vuông + nháy lồng, vẫn gộp chuỗi nối ({', '.join(kq)})"
 
 
+def bh61_khoa_summary_sai_ten_phai_bi_bat():
+    """18/08 — hai dashboard mới nhất ghi `notDo:` trong khi template VÀ cả ba bộ
+    sinh phái sinh (bản đọc · Word · bộ ba) đều đọc `dontDo` ⇒ panel
+    «Không nên / giới hạn» render RỖNG trên MỌI sản phẩm. Thứ bị giấu là nội
+    dung an toàn thật: «KHÔNG ngừng opioid ĐỘT NGỘT» và «không bình thường hoá
+    Hb bằng ESA — tăng biến cố tim mạch». Không cổng nào bắt được vì khối DATA
+    vẫn đúng cú pháp và mọi luật khác vẫn chạy đúng.
+
+    Cùng HỌ với `return` sớm 12/08 (che 73 mục) và BH27 (fail-open A12): công cụ
+    vẫn chạy, vẫn in kết quả hợp lệ, nhưng thứ cần kiểm thì không bao giờ được
+    kiểm. Chốt gọi THẲNG kiem_khoa_summary() nên nó kiểm HÀNH VI, không đếm chuỗi.
+    """
+    import importlib.util as _ilu
+    duong = REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
+    spec = _ilu.spec_from_file_location("_vd_bh61", duong)
+    mod = _ilu.module_from_spec(spec)
+    sys.modules["_vd_bh61"] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:  # noqa: BLE001 — chốt nhắc không được làm chết bộ chạy
+        return False, f"không nạp được verify_dashboard: {e}"
+    if not hasattr(mod, "kiem_khoa_summary"):
+        return False, "verify_dashboard KHÔNG còn hàm kiem_khoa_summary — luật đã bị gỡ"
+
+    # (a) khoá SAI TÊN phải thành LỖI CỨNG
+    hong = 'const DATA = { summary:{ conclusion:"x", doNow:["a"], notDo:["b"], redFlags:["c"] } };'
+    e1, w1, o1 = [], [], []
+    mod.kiem_khoa_summary(hong, e1, w1, o1)
+    if not e1:
+        return False, "khoá lạ 'notDo' KHÔNG bị bắt — lỗi 18/08 tái phát được"
+
+    # (b) khoá ĐÚNG phải sạch (chống chốt bắt oan)
+    dung = 'const DATA = { summary:{ conclusion:"x", doNow:["a"], dontDo:["b"], redFlags:["c"] } };'
+    e2, w2, o2 = [], [], []
+    mod.kiem_khoa_summary(dung, e2, w2, o2)
+    if e2:
+        return False, f"bản ĐÚNG bị báo lỗi oan: {e2[0][:80]}"
+
+    # (c) toàn kho thật phải sạch
+    ban_hong = []
+    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+        if ".bak" in f.name:
+            continue
+        t = f.read_text(encoding="utf-8", errors="replace")
+        i = t.find("const DATA")
+        if i < 0:
+            continue
+        e3, w3, o3 = [], [], []
+        mod.kiem_khoa_summary(t[i:], e3, w3, o3)
+        if e3:
+            ban_hong.append(f.name[:52])
+    if ban_hong:
+        return False, f"{len(ban_hong)} dashboard có khoá summary bị vứt âm thầm — {ban_hong[0]}"
+    return True, "khoá lạ bị chặn cứng, bản đúng không bắt oan, toàn kho sạch"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2339,6 +2395,7 @@ BAI_HOC = [
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
     ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
+    ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
 ]
 
 

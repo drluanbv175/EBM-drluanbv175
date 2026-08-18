@@ -432,6 +432,20 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   design lạ chỉ CHẶN khi item đang `apply`, còn lại chỉ cảnh báo.
   **Trạng thái sau đợt rà 12/08: 60 dashboard → 13 PASS · 47 FAIL, và cả 47 chỉ vì thiếu
   `DATA.standards`** (nhóm chỉ-cảnh-báo). **0 lỗi an toàn còn lại.**
+  🔴 **LỖI CỨNG MỚI 18/08/2026 — KHOÁ LẠ TRONG `DATA.summary` (chống VỨT ÂM THẦM nội dung an toàn).**
+  `summary` chỉ được có ĐÚNG 4 khoá: `conclusion` · `doNow` · `dontDo` · `redFlags`. Template và **cả ba**
+  bộ sinh phái sinh (`build_ban_doc_chung_cu.py` · `build_dashboard_docx.py` · `make_derivatives.py`) đều
+  chỉ đọc đúng 4 tên đó. **Ca thật:** hai dashboard mới nhất (`BenhThanMan_ThieuMau` 16/08 và
+  `DauManTinh` 18/08) ghi `notDo` ⇒ panel «Không nên / giới hạn» render **RỖNG trên MỌI sản phẩm** —
+  đo được **0 mục** trong khối đó của cả hai bản đọc. Thứ bị giấu là nội dung an toàn thật: «KHÔNG ngừng
+  opioid ĐỘT NGỘT ở người dùng dài hạn» và «không bình thường hoá Hb bằng ESA (đích 13-13,5 g/dL) — tăng
+  biến cố tim mạch». **Không cổng nào bắt được** vì khối DATA vẫn đúng cú pháp và mọi luật khác vẫn chạy
+  đúng — cùng HỌ với `return` sớm 12/08 (che 73 mục) và BH27 (fail-open A12): *công cụ vẫn chạy, vẫn in
+  kết quả hợp lệ, nhưng thứ cần kiểm thì không bao giờ được kiểm.* Nay `verify_dashboard.py::kiem_khoa_summary`
+  chặn **cứng** (chạy ở luồng LUÔN-CHẠY, không cần `--strict-sources`), khoá bằng **BH61**. Đã sửa cả 2 bản
+  và **dựng lại trọn bộ năm** cho chúng — sửa nguồn mà không dựng lại phái sinh thì nội dung vẫn chưa tới tay
+  bác sĩ. Muốn thêm trường mới vào `summary` thì phải nối dây ở CẢ 4 nơi rồi mới mở rộng `KHOA_SUMMARY_HOP_LE`.
+
   **ĐĂNG KÝ CHỦ ĐỀ — `python3 tools/dang_ky_chu_de.py` (thêm 12/08/2026).**
   Trả lời hai câu mà trước đây KHÔNG công cụ nào trả lời được: *bản nào còn hiệu lực?*
   và *có hai bản nào nói ngược nhau không?*
@@ -1078,10 +1092,18 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `EBM-Dashboards/derivatives/`. Parser JS→JSON của tool nhận CẢ khối `DATA` nháy đơn LẪN nháy kép (vá
   2026-07-18: trước chỉ nhận nháy kép nên vỡ với DATA nháy đơn theo quy ước template EW/DA). Tuỳ chọn `--parts <file.json>` để nhóm mục theo "phần" lớn
   khi dashboard gộp nhiều chủ đề con (như VKDT: chẩn đoán-điều trị / bệnh kèm / đối tượng đặc biệt); không
-  truyền thì liệt kê tuần tự dưới 1 mục "Nội dung chứng cứ". **Mac hiện KHÔNG có Node.js/LibreOffice/pandoc/
-  Homebrew** → KHÔNG dùng nhánh docx-js của skill `docx`; dùng thẳng `python-docx` (đã có sẵn trong venv
-  `~/.ebm-venv`). Xác thực output bằng `scripts/office/validate.py` của skill `docx` (kiểm XSD OOXML thuần
-  Python) thay cho bước dựng ảnh xem trước (soffice+pdftoppm) mà máy này không chạy được; chú ý bẫy thứ tự
+  truyền thì liệt kê tuần tự dưới 1 mục "Nội dung chứng cứ". ⛔ **ĐÍNH CHÍNH 18/08/2026 — câu cũ ở đây
+  ("Mac hiện KHÔNG có Node.js/LibreOffice/pandoc/Homebrew") SAI ở 2/4 vế và tự mâu thuẫn với chính dòng
+  1025 của file này.** Đo lại từng vế: **`node` v24.18.1 CÓ** (`~/.local/bin/node`, kèm `npm` 11.16.0) ·
+  **`pandoc` 3.10 CÓ** (`~/.local/bin/pandoc` — dòng 1025 đã ghi đúng điều này từ trước, nên câu cũ mâu
+  thuẫn nội bộ) · **LibreOffice/`soffice` THIẾU thật** · **Homebrew THIẾU thật**. Cả hai thứ CÓ đều nằm ở
+  `~/.local/bin` chứ không phải `/usr/local/bin`, nên lệnh dò theo đường dẫn hệ thống sẽ báo thiếu nhầm —
+  đây nhiều khả năng là nguồn gốc của khẳng định sai. Hệ quả: nhánh docx-js của skill `docx` **dùng được**
+  trên máy này; vẫn KHUYẾN NGHỊ `python-docx` (đã có trong venv `~/.ebm-venv`) cho dây chuyền dashboard vì
+  toàn bộ `build_dashboard_docx.py` đã viết theo nó — đổi sang docx-js là đổi cả dây chuyền, không phải đổi
+  một lệnh. Xác thực output bằng `scripts/office/validate.py` của skill `docx` (kiểm XSD OOXML thuần
+  Python) thay cho bước dựng ảnh xem trước (soffice+pdftoppm) mà máy này **thật sự** không chạy được (thiếu
+  LibreOffice); chú ý bẫy thứ tự
   phần tử `tcPr`/`pPr` khi tự ghép XML bằng oxml (`tcBorders` phải trước `shd`; `pBdr` phải trước `spacing`).
 - **(5) KÊNH TRÌNH BÀY THỨ 3 — "Bản tin chứng cứ trong khung chat" (chốt 2026-08-05):** khi bác sĩ hỏi ngay
   trong hội thoại (giữa hai bệnh nhân, trên điện thoại), mở dashboard/Word là quá chậm → trả lời bằng bản tin
