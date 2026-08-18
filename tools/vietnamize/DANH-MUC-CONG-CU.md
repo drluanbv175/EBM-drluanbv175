@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1159 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1157 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1118 mục (quét ngày 2026-08-18)
+> - **Mac**: 1116 mục (quét ngày 2026-08-18)
 > - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 868 mục
 
@@ -1208,7 +1208,7 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (86 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (84 mục)
 
 
 ### claude-code-harness  (31 · chỉ Mac)
@@ -1326,13 +1326,6 @@
 | `/debug-plugins` | lệnh | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
 | `/claude-tag-troubleshoot:config-guide` | kỹ năng | cả 2 máy | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
 | `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
-
-### watermarks-remover  (2 · chỉ Mac)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/watermarks-remover:clean-user-facing-text` | kỹ năng | Mac | [Dọn siêu dữ liệu] Soi ký tự Unicode vô hình gây lỗi hiển thị/tìm kiếm trong văn bản sắp đưa người đọc, rồi chuẩn hoá mà GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hoặc tài liệu dán từ nhiều nguồn hiện chữ lạ. ⚠️ KHÔNG dùng để né kiểm … |
-| `/watermarks-remover:remove-ai-marks` | kỹ năng | Mac | [Dọn siêu dữ liệu] Gỡ ký tự Unicode ẩn, siêu dữ liệu EXIF/XMP và C2PA khỏi PNG·JPEG·SVG·PDF·DOCX·HTML·MD. Dùng khi cần dọn siêu dữ liệu RIÊNG TƯ trước khi chia sẻ file — toạ độ GPS, tên tác giả, thiết bị chụp. ⚠️ KHÔNG dùng cho bản thảo … |
 
 ### humanizer  (1 · chỉ Mac)
 

@@ -146,6 +146,24 @@ def main() -> int:
         if not goc.exists():
             loi["N1 đường dẫn cài không tồn tại"].append(f"{ten} → {goc}")
             continue
+
+        # N5 — thiếu `name` trong .claude-plugin/plugin.json thì Claude Code lấy TÊN THƯ
+        # MỤC cache làm tiền tố lệnh. Thư mục cache đặt theo mã băm, nên bác sĩ thấy
+        # `/de57f34b4921:check-reporting` thay vì `/medsci-project:check-reporting` — một
+        # chuỗi vô nghĩa không ai nhớ để gõ. Gặp thật 18/08/2026 với medsci-project và
+        # openmed-skills. Cache do app quản lý nên nó có thể xoá lại file này bất cứ lúc
+        # nào ⇒ phải canh, không vá một lần là xong.
+        pj = goc / ".claude-plugin" / "plugin.json"
+        ten_khai = None
+        if pj.exists():
+            try:
+                ten_khai = json.loads(pj.read_text("utf-8")).get("name")
+            except (OSError, json.JSONDecodeError):
+                ten_khai = None
+        if not ten_khai:
+            canh_bao["N5 thiếu name → tiền tố lệnh thành mã băm"].append(
+                f"{ten}: sẽ hiện `/{goc.name}:<skill>` thay vì `/{ten.split('@')[0]}:<skill>`")
+
         so_skill = 0
         goc_ngoai: set[str] = set()
         for f in goc.rglob("*.md"):
