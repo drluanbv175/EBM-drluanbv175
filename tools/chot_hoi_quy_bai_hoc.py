@@ -2221,6 +2221,63 @@ def bh52_g0_kiem_rut_bai_tai_cua():
     return True, "G0 tự bắt bài đã rút tại cửa nhận (R1C sống, chạy được ngoại tuyến)"
 
 
+def bh60_array_field_khong_gay_o_ngoac_vuong():
+    """18/08 — `array_field` cắt mảng ở dấu `]` NẰM TRONG chuỗi truy vấn PubMed.
+
+    Lỗi thật, đo được ngày 18/08 khi dựng gói «đau mạn tính»: bản cũ dùng lớp ký
+    tự `[^\\]]*` để lấy phần trong `[...]`, nên nó DỪNG ở dấu `]` ĐẦU TIÊN gặp
+    được. Nhưng MỌI truy vấn PubMed đều mang ngoặc vuông — `[MeSH]`, `[Title]`,
+    `[pt]`, `[ta]`. Hệ quả: dashboard nào ghi TRUNG THỰC chiến lược tìm (đúng thứ
+    `DATA.standards.searchSources` sinh ra để ghi, và đúng thứ PRISMA-S đòi) thì
+    mảng bị cắt còn 1 phần tử ⇒ cổng ném LỖI CỨNG «searchSources cần ≥2 nguồn tìm
+    kiếm độc lập» TRÊN DỮ LIỆU HOÀN TOÀN ĐÚNG.
+
+    Đây đúng họ lỗi nguy hiểm nhất của hệ và đã gặp ba lần: cổng NÓI SAI về dữ
+    liệu ĐÚNG (bug `field()` nháy lồng 12/08 — che 1 lỗi an toàn thật; BH21 — hai
+    parser của cùng một dữ liệu bất đồng). Nó phạt đúng người khai báo trung thực
+    nhất, và cách «sửa» tự nhiên nhất lại là bỏ bớt truy vấn khỏi provenance.
+
+    Chốt gọi THẲNG `array_field` đang sống, ngoại tuyến: (a) mảng có ngoặc vuông
+    lồng phải đọc đủ 3 phần tử; (b) nháy đơn lồng trong chuỗi nháy kép không được
+    làm vỡ phần tử; (c) chuỗi nối kiểu JS vẫn phải GỘP (giữ bản vá BH13/BH21).
+    """
+    import importlib.util
+    kq = []
+    for ten, duong in (("runtime", REPO / "EBM-Dashboards/tools/verify_dashboard.py"),
+                       ("nguồn", REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py")):
+        if not duong.exists():
+            return False, f"thiếu bản {ten}: {duong}"
+        sp = importlib.util.spec_from_file_location(f"vd_{ten}", duong)
+        m = importlib.util.module_from_spec(sp)
+        import sys as _s
+        _s.modules[sp.name] = m
+        sp.loader.exec_module(m)
+
+        # (a) ngoặc vuông TRONG chuỗi — ca đã làm gãy bản cũ
+        mau = ('searchSources:["PubMed E-utilities. Truy vấn: '
+               "'chronic pain[MeSH] AND practice guideline[pt]'" '",'
+               '"openFDA drug/label API — nhãn gabapentin mục 5.7",'
+               '"Europe PMC — toàn văn CDC 2022"],')
+        r = m.array_field(mau, "searchSources")
+        if len(r) != 3:
+            return False, (f"[{ten}] array_field đọc {len(r)}/3 phần tử khi chuỗi chứa "
+                           f"'[MeSH]'/'[pt]' — mảng lại bị cắt ở ngoặc vuông")
+        if "[MeSH]" not in r[0]:
+            return False, f"[{ten}] phần tử 1 mất nội dung trong ngoặc vuông: {r[0][:70]!r}"
+
+        # (b) nháy đơn lồng không được làm vỡ phần tử
+        if not r[0].endswith("'"):
+            return False, f"[{ten}] nháy đơn lồng làm vỡ phần tử: {r[0][-40:]!r}"
+
+        # (c) chuỗi nối kiểu JS vẫn phải GỘP (bản vá BH13/BH21 còn nguyên)
+        noi = 'references:["Phần đầu. "+"https://vi-du.org/x","Bài hai."]'
+        r2 = m.array_field(noi, "references")
+        if len(r2) != 2:
+            return False, f"[{ten}] chuỗi nối JS không còn được gộp: đọc {len(r2)}/2"
+        kq.append(ten)
+    return True, f"array_field chịu được ngoặc vuông + nháy lồng, vẫn gộp chuỗi nối ({', '.join(kq)})"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2281,6 +2338,7 @@ BAI_HOC = [
     ("BH57", "16/08", "Kỳ lịch lỡ phải nhìn thấy được (đăng ký ≠ nổ)", bh57_ky_lich_lo_phai_nhin_thay),
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
+    ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
 ]
 
 

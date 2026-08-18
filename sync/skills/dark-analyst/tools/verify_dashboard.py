@@ -247,12 +247,79 @@ def object_after_key(text, key):
     return text[start:end + 1] if end != -1 else None
 
 
+def _cat_mang_theo_trang_thai_chuoi(block, name):
+    r"""Tra ve NOI DUNG ben trong [...] cua truong `name`, ton trong trang thai chuoi.
+
+    VA 18/08/2026 — lop ky tu `[^\]]*` cua ban cu DUNG o ']' DAU TIEN gap duoc.
+    Nhung MOI truy van PubMed deu mang ngoac vuong (`[MeSH]`, `[Title]`, `[pt]`,
+    `[ta]`), nen mang `searchSources` cua bat ky dashboard nao ghi TRUNG THUC chien
+    luoc tim se bi cat ngay o truy van dau tien -> chi doc ra 1 phan tu -> cong nem
+    loi cung "searchSources can >=2 nguon tim kiem doc lap" TREN DU LIEU DUNG.
+    Do la lop loi nguy hiem nhat cua he: cong noi SAI ve du lieu DUNG (xem bug
+    field() nested-quote 12/08 va BH21 — hai parser cua cung mot du lieu bat dong).
+    Nay quet tung ky tu, theo doi dang o trong chuoi nhay don hay nhay kep, va chi
+    dem do sau ngoac vuong khi dang O NGOAI chuoi.
+    """
+    m = re.search(name + r"\s*:\s*\[", block)
+    if not m:
+        return None
+    i = start = m.end()
+    n = len(block)
+    depth = 1
+    quote = None
+    while i < n:
+        c = block[i]
+        if quote:
+            if c == "\\":
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+        elif c in "\"'":
+            quote = c
+        elif c == "[":
+            depth += 1
+        elif c == "]":
+            depth -= 1
+            if depth == 0:
+                return block[start:i]
+        i += 1
+    return None
+
+
+def _tach_phan_tu_chuoi(noi_dung):
+    """Tach cac phan tu chuoi, ton trong nhay LONG NHAU (vd "... 'chronic pain[MeSH]' ...")."""
+    ket = []
+    i, n = 0, len(noi_dung)
+    while i < n:
+        c = noi_dung[i]
+        if c in "\"'":
+            q = c
+            i += 1
+            buf = []
+            while i < n:
+                if noi_dung[i] == "\\" and i + 1 < n:
+                    buf.append(noi_dung[i + 1])
+                    i += 2
+                    continue
+                if noi_dung[i] == q:
+                    break
+                buf.append(noi_dung[i])
+                i += 1
+            s = "".join(buf).strip()
+            if s:
+                ket.append(s)
+        i += 1
+    return ket
+
+
 def array_field(block, name):
     if not block:
         return []
-    m = re.search(name + r"\s*:\s*\[([^\]]*)\]", block, re.S)
-    if not m:
+    _noi_dung = _cat_mang_theo_trang_thai_chuoi(block, name)
+    if _noi_dung is None:
         return []
+    m = type("M", (), {"group": staticmethod(lambda _i, _v=_noi_dung: _v)})()
     # VÁ 14/08/2026 — GỘP chuỗi nối kiểu JS trước khi tách phần tử.
     # Mảng viết tay hay ngắt chuỗi dài bằng dấu cộng:
     #     references:["…EMA; 12 June 2026. "+"https://www.ema.europa.eu/…", "…"]
@@ -265,7 +332,7 @@ def array_field(block, name):
     # parser đọc cùng thứ đó.
     noi_dung = re.sub(r'"\s*\+\s*"', "", m.group(1))
     noi_dung = re.sub(r"'\s*\+\s*'", "", noi_dung)
-    return [x.strip() for x in re.findall(r"['\"]([^'\"]+)['\"]", noi_dung) if x.strip()]
+    return _tach_phan_tu_chuoi(noi_dung)
 
 
 def _parse_exact_date(text):
