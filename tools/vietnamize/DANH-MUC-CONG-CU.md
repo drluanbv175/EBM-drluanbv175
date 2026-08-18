@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1156 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1159 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1115 mục (quét ngày 2026-08-17)
+> - **Mac**: 1118 mục (quét ngày 2026-08-18)
 > - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 868 mục
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1058 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1059 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -828,6 +828,70 @@
 | `/anthropic-skills:using-model-endpoint` | kỹ năng | Mac | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
 | `/anthropic-skills:web-artifacts-builder` | kỹ năng | Mac | Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind/shadcn cho artifact trên claude.ai. Dùng khi trang cần quản lý trạng thái, điều hướng hoặc thành phần shadcn — KHÔNG dùng cho artifact HTML/JSX đơn giản một file. Từ khoá: w… |
 
+### medsci-project  (59)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/medsci-project:academic-aio` | kỹ năng | cả 2 máy | [MedSci] Tối ưu bài báo AI y tế cho các công cụ tìm kiếm học thuật (Perplexity, Elicit, Consensus) — tiêu đề, tóm tắt, hộp điểm chính. Gắn với TRIPOD+AI, CLAIM 2024, STARD-AI. Dùng khi muốn bài dễ được tìm thấy. Từ khoá: GEO, discoverabi… |
+| `/medsci-project:add-journal` | kỹ năng | cả 2 máy | [MedSci] Thêm một tạp chí mới vào kho hồ sơ tạp chí của bộ công cụ. Dùng khi tạp chí bác sĩ nhắm tới chưa có sẵn. Từ khoá: journal profile. |
+| `/medsci-project:analyze-stats` | kỹ năng | cả 2 máy | [MedSci] Phân tích thống kê cho bài báo y khoa, sinh mã R/Python tái lập được kèm bảng và hình đạt chuẩn đăng bài. Bao phủ độ chính xác chẩn đoán, độ đồng thuận, phân tích gộp, sống còn, hồi quy, điểm xu hướng. Dùng sau khi dữ liệu đã kh… |
+| `/medsci-project:architecture-zoo` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Chọn kiến trúc mô hình cho câu hỏi nghiên cứu hình ảnh y khoa, kèm bài báo gốc và trường hợp nên dùng. Dùng trước khi bắt tay dựng mô hình. Từ khoá: model architecture. |
+| `/medsci-project:author-strategy` | kỹ năng | cả 2 máy | [MedSci] Phân tích hồ sơ công bố của một tác giả trên PubMed: phân loại loại nghiên cứu, vẽ biểu đồ, gợi ý chiến lược. Dùng khi tìm hiểu một người sắp hợp tác, hoặc tự soi hồ sơ của mình. Từ khoá: author profile. |
+| `/medsci-project:batch-cohort` | kỹ năng | cả 2 máy | [MedSci] Sinh N script phân tích từ một khuôn phương pháp × nhiều cặp phơi nhiễm–kết cục. Dùng khi chạy cùng một phương pháp cho nhiều biến. Từ khoá: batch analysis. |
+| `/medsci-project:calc-sample-size` | kỹ năng | cả 2 máy | [MedSci] Tính CỠ MẪU theo cây quyết định, sinh mã R/Python tái lập được và đoạn văn biện minh cho hồ sơ đạo đức. Dùng khi cần con số nhanh; đề tài chính thức phải qua agent `co-mau-nghien-cuu` vì đó là cổng G3 có kiểm nguồn effect size. … |
+| `/medsci-project:check-reporting` | kỹ năng | cả 2 máy | [MedSci] Kiểm bản thảo theo CHUẨN BÁO CÁO — hỗ trợ 47 chuẩn: STROBE, CONSORT, STARD, TRIPOD+AI, PRISMA, SPIRIT, CARE, CHEERS, COREQ… và các công cụ nguy cơ sai lệch (QUADAS-2, RoB 2, ROBINS-I, PROBAST). Chấm từng mục ĐỦ/THIẾU/MỘT PHẦN. D… |
+| `/medsci-project:clean-data` | kỹ năng | cả 2 máy | [MedSci] Làm sạch dữ liệu theo 3 bước có bác sĩ duyệt từng bước: khảo sát → gắn cờ → sinh mã. Dùng khi dữ liệu có giá trị thiếu, ngoại lai, trùng lặp. KHÔNG tự sửa dữ liệu — mọi quyết định phải bác sĩ xác nhận. Từ khoá: data cleaning. |
+| `/medsci-project:contribute` | kỹ năng | cả 2 máy | [MedSci] Gửi phần bác sĩ tự sửa ngược lại cho dự án gốc, có quét dữ liệu bệnh nhân trước khi gửi và cho xem từng dòng. Dùng khi muốn đóng góp cải tiến. Từ khoá: contribute. |
+| `/medsci-project:cross-national` | kỹ năng | cả 2 máy | [MedSci] Nghiên cứu SO SÁNH ĐA QUỐC GIA dùng các bộ khảo sát song song (KNHANES, NHANES, CHNS): hài hoà biến số, phân tích có trọng số, bảng so sánh. Dùng cho đề tài so sánh quốc tế. Từ khoá: cross-national. |
+| `/medsci-project:define-variables` | kỹ năng | cả 2 máy | [MedSci] Định nghĩa BIẾN SỐ có dẫn nguồn y văn: ngưỡng cắt, cách mã hoá, ánh xạ sang tên biến trong cơ sở dữ liệu. Dùng khi cần tránh việc tự đặt định nghĩa kiểu hình rồi bị phản biện bác. Từ khoá: variable operationalization. |
+| `/medsci-project:deidentify` | kỹ năng | cả 2 máy | [MedSci] Khử định danh dữ liệu nghiên cứu bằng công cụ chạy CỤC BỘ, có gói nhận diện cho 10 quốc gia. Dùng TRƯỚC khi đưa dữ liệu cho bất kỳ mô hình AI nào — công cụ này không gọi mạng, không AI nào chạm dữ liệu thô. Từ khoá: de-identific… |
+| `/medsci-project:design-ai-benchmarking` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế nghiên cứu SO SÁNH AI với hội đồng chuyên gia: định nghĩa nhánh so sánh, thang chấm có mỏ neo, độ đồng thuận giữa người chấm. Dùng TRƯỚC khi thu thập dữ liệu. Từ khoá: AI vs expert benchmarking. |
+| `/medsci-project:design-study` | kỹ năng | cả 2 máy | [MedSci] Thẩm định THIẾT KẾ nghiên cứu trước khi thu thập dữ liệu: xác định đơn vị phân tích, logic chọn cohort, nguy cơ rò rỉ dữ liệu, cách chọn nhóm chứng, chiến lược kiểm định. Dùng ở bước đầu, TRƯỚC khi viết đề cương; đề tài chính th… |
+| `/medsci-project:explainability` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Làm hoặc thẩm định phần GIẢI THÍCH mô hình (Grad-CAM, saliency) đạt mức phản biện đòi hỏi: bắt buộc có phép thử độ tin cậy và chỉ số định lượng, không chỉ khoe vài ảnh đẹp. Dùng khi bài cần phần diễn giải. Từ khoá:… |
+| `/medsci-project:fill-icmje-coi` | kỹ năng | cả 2 máy | [MedSci] Sinh hàng loạt phiếu KHAI XUNG ĐỘT LỢI ÍCH theo mẫu ICMJE cho từng tác giả. Dùng khi chuẩn bị nộp bài nhiều tác giả — mỗi người chỉ cần xem và ký. Từ khoá: ICMJE COI. |
+| `/medsci-project:fill-protocol` | kỹ năng | cả 2 máy | [MedSci] Điền nội dung vào MẪU WORD của cơ quan (đề cương, hồ sơ đạo đức, đề tài) mà giữ nguyên định dạng, bảng biểu, phông chữ. Dùng khi đơn vị bắt nộp đúng biểu mẫu có sẵn. Từ khoá: Word template. |
+| `/medsci-project:find-cohort-gap` | kỹ năng | cả 2 máy | [MedSci] Tìm KHOẢNG TRỐNG nghiên cứu trong một cơ sở dữ liệu cohort: soi thế mạnh dữ liệu, đối chiếu chuyên môn chủ nhiệm, quét mức bão hoà y văn, xuất danh sách đề tài xếp hạng. Dùng khi có sẵn kho dữ liệu mà chưa biết làm gì. Từ khoá: … |
+| `/medsci-project:find-journal` | kỹ năng | cả 2 máy | [MedSci] Gợi ý TẠP CHÍ phù hợp cho bản thảo: đối chiếu phạm vi, chính sách khai báo AI, khả năng được nhận, kèm phương án dự phòng nếu bị từ chối. Dùng khi chuẩn bị nộp. Chỉ số ảnh hưởng và phí đăng bài có thể đã cũ — phải kiểm lại trên … |
+| `/medsci-project:fulltext-retrieval` | kỹ năng | cả 2 máy | [MedSci] Tải hàng loạt PDF toàn văn TRUY CẬP MỞ theo DOI qua Unpaywall, PMC, OpenAlex, Crossref. Dùng khi đã có danh sách DOI và cần đọc toàn văn. Chỉ lấy bài mở, hợp pháp. Từ khoá: open access PDF. |
+| `/medsci-project:generate-codebook` | kỹ năng | cả 2 máy | [MedSci] Sinh TỪ ĐIỂN DỮ LIỆU từ một file dữ liệu: mọi biến kèm kiểu, phân bố, tỷ lệ thiếu. Dùng ngay khi nhận bộ dữ liệu mới, trước khi phân tích. Biến mã hoá không rõ nghĩa được gắn cờ chứ không đoán bừa. Từ khoá: codebook, data dictio… |
+| `/medsci-project:grant-builder` | kỹ năng | cả 2 máy | [MedSci] Viết đề xuất ĐỀ TÀI/TÀI TRỢ: ý nghĩa, tính mới, cách tiếp cận, mốc tiến độ, phân vai nhóm nghiên cứu. Dùng khi xin kinh phí. Từ khoá: grant proposal. |
+| `/medsci-project:humanize` | kỹ năng | cả 2 máy | [MedSci] Phát hiện và xoá 27 dấu hiệu văn phong máy trong bản thảo và thư phản hồi phản biện, giới hạn mức can thiệp để không đổi nội dung khoa học. Dùng sau khi đã viết xong. Từ khoá: AI writing patterns. |
+| `/medsci-project:intake-project` | kỹ năng | cả 2 máy | [MedSci] Tiếp nhận và chuẩn hoá một đề tài mới: phân loại, tóm tắt hiện trạng, chỉ ra thứ còn thiếu, dựng file ghi nhớ cho đề tài. Dùng khi bắt đầu đề tài mới. Từ khoá: project intake. |
+| `/medsci-project:lit-sync` | kỹ năng | cả 2 máy | [MedSci] Đồng bộ tài liệu tham khảo từ file .bib sang Zotero và ghi chú Obsidian. Dùng khi bác sĩ quản lý y văn bằng hai công cụ đó. Từ khoá: Zotero, Obsidian. |
+| `/medsci-project:ma-scout` | kỹ năng | cả 2 máy | [MedSci] Tìm CHỦ ĐỀ cho phân tích gộp và chấm tính khả thi, trước khi viết đề cương. Dùng khi muốn làm tổng quan hệ thống nhưng chưa chọn được đề tài. Từ khoá: meta-analysis topic. |
+| `/medsci-project:make-figures` | kỹ năng | cả 2 máy | [MedSci] Vẽ hình đạt chuẩn đăng bài: đường cong ROC, biểu đồ rừng, sơ đồ CONSORT/STARD/PRISMA, đường Kaplan-Meier, Bland-Altman, ma trận nhầm lẫn, tóm tắt bằng hình. Dùng khi chuẩn bị hình cho bản thảo. Từ khoá: publication figures. |
+| `/medsci-project:manage-project` | kỹ năng | cả 2 máy | [MedSci] Quản lý tiến độ đề tài: dựng cấu trúc thư mục, theo dõi từng giai đoạn viết, sinh danh mục kiểm và mốc thời gian lùi từ hạn nộp. Dùng khi chạy nhiều đề tài song song. Từ khoá: project management. |
+| `/medsci-project:manage-refs` | kỹ năng | cả 2 máy | [MedSci] Xử lý trích dẫn khi nộp bài: kiểm khoá trích dẫn, dựng danh mục theo định dạng tạp chí, chuyển đổi kiểu đánh số, chèn trường Zotero. Dùng ở khâu hoàn thiện bản thảo. Từ khoá: citation rendering. |
+| `/medsci-project:meta-analysis` | kỹ năng | cả 2 máy | [MedSci] Dây chuyền TỔNG QUAN HỆ THỐNG và PHÂN TÍCH GỘP: đăng ký PROSPERO, chiến lược tìm, sàng lọc, trích xuất, nguy cơ sai lệch (QUADAS-2/ROBINS-I), tổng hợp và báo cáo PRISMA. Dùng cho đề tài tổng quan hệ thống. Từ khoá: meta-analysis… |
+| `/medsci-project:mllm-eval` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khung đánh giá mô hình ngôn ngữ lớn trên nhiệm vụ lâm sàng (sinh báo cáo, hỏi đáp hình ảnh). Soi cả nguy cơ mô hình đã học thuộc bộ kiểm định công khai. Dùng khi đánh giá LLM y tế. Từ khoá: … |
+| `/medsci-project:model-card` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Sinh tài liệu bắt buộc đi kèm mô hình: mục đích dùng, chỉ số, giới hạn đã biết. Dùng khi công bố hoặc bàn giao mô hình. Từ khoá: model card. |
+| `/medsci-project:model-evaluation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Tính và báo cáo chỉ số trên tập kiểm định độc lập cho đúng loại nhiệm vụ. Dùng sau khi huấn luyện xong. Từ khoá: held-out metrics. |
+| `/medsci-project:model-scaffold` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Dựng sẵn kho mã huấn luyện PyTorch chạy được và tái lập được. Dùng khi bắt đầu huấn luyện mô hình. Từ khoá: training scaffold. |
+| `/medsci-project:model-sourcing` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thẩm định mô hình bên thứ ba mà nghiên cứu định dùng: kho mã nào, bản phát hành nào, giấy phép ra sao. Dùng trước khi dựa vào mô hình có sẵn. Từ khoá: model vetting. |
+| `/medsci-project:model-validation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định nghiên cứu KIỂM ĐỊNH LÂM SÀNG cho mô hình. Dùng khi muốn chứng minh mô hình dùng được trên bệnh nhân thật. Từ khoá: clinical validation. |
+| `/medsci-project:obsidian-paper-vault` | kỹ năng | Mac | Turn a folder of research PDFs into an Obsidian knowledge vault — consistently formatted literature notes with frontmatter, PDF embed links, and cross-referenced atomic concept notes. Use whenever the user wants PDFs converted to Obsidia… |
+| `/medsci-project:orchestrate` | kỹ năng | cả 2 máy | [MedSci] Điều phối chung của bộ MedSci — nhận yêu cầu mơ hồ rồi chuyển tới đúng skill. Dùng khi chưa biết nên gọi skill nào trong bộ này. Từ khoá: medsci router. |
+| `/medsci-project:peer-review` | kỹ năng | cả 2 máy | [MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer rev… |
+| `/medsci-project:polish-language` | kỹ năng | cả 2 máy | [MedSci] Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ toàn bài. Dùng ở khâu cuối trước khi nộp tạp chí quốc tế. Từ khoá: ESL polish. |
+| `/medsci-project:preprocess-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khâu chuẩn bị dữ liệu ảnh (DICOM/NIfTI). Dùng trước khi huấn luyện — đây là chỗ hay sinh rò rỉ dữ liệu. Từ khoá: imaging preprocessing. |
+| `/medsci-project:present-paper` | kỹ năng | cả 2 máy | [MedSci] Chuẩn bị BÀI TRÌNH BÀY học thuật từ một bài báo (sinh hoạt khoa học, hội thảo). Dùng khi phải báo cáo journal club hay hội nghị. Từ khoá: academic presentation. |
+| `/medsci-project:profile-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Khảo sát bộ dữ liệu ảnh TRƯỚC mọi quyết định mô hình hoá: thông số chụp, phân bố, mất cân bằng nhãn. Dùng ngay khi nhận dữ liệu ảnh. Từ khoá: dataset profiling. |
+| `/medsci-project:publish-skill` | kỹ năng | cả 2 máy | [MedSci] Chuyển một skill cá nhân thành skill chia sẻ được, có quét thông tin định danh trước. Dùng khi muốn đóng gói quy trình riêng để dùng chung. Từ khoá: publish skill. |
+| `/medsci-project:radiomics-ml` | kỹ năng | cả 2 máy | [MedSci] Làm hoặc thẩm định nghiên cứu radiomics / học máy trên dữ liệu bảng. Dùng khi rút đặc trưng từ hình ảnh hoặc dữ liệu lâm sàng để dự báo. Từ khoá: radiomics. |
+| `/medsci-project:render-pdf-doc` | kỹ năng | cả 2 máy | [MedSci] Kết xuất tài liệu Markdown học thuật thành PDF chất lượng in. Dùng ở khâu cuối khi cần bản PDF đẹp; không dùng cho bản thảo có danh mục tài liệu tham khảo — loại đó phải đi qua công cụ quản lý trích dẫn. Từ khoá: PDF rendering. |
+| `/medsci-project:replicate-study` | kỹ năng | cả 2 máy | [MedSci] Lặp lại phương pháp của một nghiên cứu đã công bố trên cơ sở dữ liệu khác. Dùng khi muốn kiểm chứng kết quả người khác trên dữ liệu của mình. Từ khoá: replication. |
+| `/medsci-project:review-paper` | kỹ năng | cả 2 máy | [MedSci] Dựng khung và viết TỔNG QUAN y văn: tường thuật, phạm vi (PRISMA-ScR) hoặc hệ thống. Dùng khi viết bài tổng quan. Từ khoá: literature review. |
+| `/medsci-project:revise` | kỹ năng | cả 2 máy | [MedSci] Đọc góp ý phản biện và sinh THƯ PHẢN HỒI có cấu trúc từng điểm một. Dùng khi nhận quyết định 'sửa và nộp lại'. Từ khoá: response to reviewers. |
+| `/medsci-project:search-lit` | kỹ năng | cả 2 máy | [MedSci] Tìm y văn trên PubMed, Semantic Scholar và quản lý trích dẫn. Dùng khi cần quét rộng; câu hỏi lâm sàng để ra quyết định vẫn nên qua agent `tra-cuu-chung-cu`. Từ khoá: literature search. |
+| `/medsci-project:self-review` | kỹ năng | cả 2 máy | [MedSci] Tự rà bản thảo của chính mình bằng con mắt phản biện TRƯỚC khi nộp. Dùng như bước cuối trước khi gửi tạp chí. Từ khoá: pre-submission review. |
+| `/medsci-project:setup-medsci` | kỹ năng | cả 2 máy | [MedSci] Kiểm môi trường chạy của bộ MedSci: Python, R, Node đã đủ chưa. Dùng khi cài lần đầu hoặc khi một skill báo lỗi thiếu công cụ. Từ khoá: setup, diagnostics. |
+| `/medsci-project:sync-submission` | kỹ năng | cả 2 máy | [MedSci] Soi độ lệch giữa bản thảo gốc và bộ file đem nộp, rồi lập danh mục hồ sơ nộp. Dùng ngay trước khi bấm nộp. Từ khoá: submission manifest. |
+| `/medsci-project:uncertainty-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định phần lượng hoá ĐỘ BẤT ĐỊNH và phát hiện dữ liệu ngoài phân bố. Dùng khi mô hình sắp dùng trên lâm sàng — cần biết khi nào nó không chắc. Từ khoá: uncertainty, OOD. |
+| `/medsci-project:verify-refs` | kỹ năng | cả 2 máy | [MedSci] Kiểm tài liệu tham khảo đối chiếu PubMed và CrossRef, phát hiện trích dẫn BỊA. CHỈ ĐỌC, không sửa. Dùng trước khi nộp; bản của bác sĩ là agent `kiem-chung-trich-dan` (có tra bài bị rút). Từ khoá: reference verification. |
+| `/medsci-project:version-dataset` | kỹ năng | cả 2 máy | [MedSci] Đánh phiên bản bộ dữ liệu bằng mã băm nội dung để tái lập được kết quả. Dùng khi dữ liệu còn thay đổi mà đã bắt đầu phân tích. Từ khoá: dataset versioning. |
+| `/medsci-project:write-paper` | kỹ năng | cả 2 máy | [MedSci] Viết bài báo trọn gói theo 8 giai đoạn IMRAD, từ dàn ý tới bản nộp. Dùng cho bài không đi qua dây chuyền G của bác sĩ; đề tài chính thức nên dùng agent `viet-ban-thao`. Từ khoá: paper writing, IMRAD. |
+| `/medsci-project:write-protocol` | kỹ năng | cả 2 máy | [MedSci] Sinh ĐỀ CƯƠNG nộp Hội đồng Đạo đức gồm 4 phần lõi. Dùng khi cần bản nháp nhanh; hồ sơ nộp thật phải qua agent `dao-duc-dang-ky` (cổng G2) vì nó gắn Helsinki, ICH-GCP và bản đồng thuận. Từ khoá: IRB protocol. |
+
 ### academic-research-skills  (58)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -890,69 +954,6 @@
 | `/academic-research-skills:academic-paper-reviewer` | kỹ năng | cả 2 máy | Mô phỏng HỘI ĐỒNG BÌNH DUYỆT nhiều góc nhìn: 1 tổng biên tập + 3 phản biện + người bảo vệ, mỗi vai một tính cách khác nhau. Dùng khi muốn thử phản biện bản thảo trước khi nộp thật. Từ khoá: peer review simulation. |
 | `/academic-research-skills:academic-pipeline` | kỹ năng | cả 2 máy | Điều phối TRỌN VÒNG bài báo học thuật: tra cứu → viết → kiểm liêm chính → bình duyệt → sửa → bình duyệt lại. Dùng khi muốn chạy một mạch thay vì gọi từng chế độ. Tốn nhiều token (một lần chạy đầy đủ khoảng 4–6 USD). Từ khoá: full pipeline. |
 | `/academic-research-skills:deep-research` | kỹ năng | cả 2 máy | Đội 13 agent NGHIÊN CỨU SÂU cho bất kỳ chủ đề nào, 8 chế độ (nghiên cứu đầy đủ, tóm lược nhanh, so sánh…). Dùng cho chủ đề ngoài y khoa hoặc cần quét rộng; câu hỏi lâm sàng vẫn nên đi qua tra-cuu-chung-cu để có PMID/DOI. Từ khoá: deep re… |
-
-### medsci-project  (58)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/medsci-project:academic-aio` | kỹ năng | cả 2 máy | [MedSci] Tối ưu bài báo AI y tế cho các công cụ tìm kiếm học thuật (Perplexity, Elicit, Consensus) — tiêu đề, tóm tắt, hộp điểm chính. Gắn với TRIPOD+AI, CLAIM 2024, STARD-AI. Dùng khi muốn bài dễ được tìm thấy. Từ khoá: GEO, discoverabi… |
-| `/medsci-project:add-journal` | kỹ năng | cả 2 máy | [MedSci] Thêm một tạp chí mới vào kho hồ sơ tạp chí của bộ công cụ. Dùng khi tạp chí bác sĩ nhắm tới chưa có sẵn. Từ khoá: journal profile. |
-| `/medsci-project:analyze-stats` | kỹ năng | cả 2 máy | [MedSci] Phân tích thống kê cho bài báo y khoa, sinh mã R/Python tái lập được kèm bảng và hình đạt chuẩn đăng bài. Bao phủ độ chính xác chẩn đoán, độ đồng thuận, phân tích gộp, sống còn, hồi quy, điểm xu hướng. Dùng sau khi dữ liệu đã kh… |
-| `/medsci-project:architecture-zoo` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Chọn kiến trúc mô hình cho câu hỏi nghiên cứu hình ảnh y khoa, kèm bài báo gốc và trường hợp nên dùng. Dùng trước khi bắt tay dựng mô hình. Từ khoá: model architecture. |
-| `/medsci-project:author-strategy` | kỹ năng | cả 2 máy | [MedSci] Phân tích hồ sơ công bố của một tác giả trên PubMed: phân loại loại nghiên cứu, vẽ biểu đồ, gợi ý chiến lược. Dùng khi tìm hiểu một người sắp hợp tác, hoặc tự soi hồ sơ của mình. Từ khoá: author profile. |
-| `/medsci-project:batch-cohort` | kỹ năng | cả 2 máy | [MedSci] Sinh N script phân tích từ một khuôn phương pháp × nhiều cặp phơi nhiễm–kết cục. Dùng khi chạy cùng một phương pháp cho nhiều biến. Từ khoá: batch analysis. |
-| `/medsci-project:calc-sample-size` | kỹ năng | cả 2 máy | [MedSci] Tính CỠ MẪU theo cây quyết định, sinh mã R/Python tái lập được và đoạn văn biện minh cho hồ sơ đạo đức. Dùng khi cần con số nhanh; đề tài chính thức phải qua agent `co-mau-nghien-cuu` vì đó là cổng G3 có kiểm nguồn effect size. … |
-| `/medsci-project:check-reporting` | kỹ năng | cả 2 máy | [MedSci] Kiểm bản thảo theo CHUẨN BÁO CÁO — hỗ trợ 47 chuẩn: STROBE, CONSORT, STARD, TRIPOD+AI, PRISMA, SPIRIT, CARE, CHEERS, COREQ… và các công cụ nguy cơ sai lệch (QUADAS-2, RoB 2, ROBINS-I, PROBAST). Chấm từng mục ĐỦ/THIẾU/MỘT PHẦN. D… |
-| `/medsci-project:clean-data` | kỹ năng | cả 2 máy | [MedSci] Làm sạch dữ liệu theo 3 bước có bác sĩ duyệt từng bước: khảo sát → gắn cờ → sinh mã. Dùng khi dữ liệu có giá trị thiếu, ngoại lai, trùng lặp. KHÔNG tự sửa dữ liệu — mọi quyết định phải bác sĩ xác nhận. Từ khoá: data cleaning. |
-| `/medsci-project:contribute` | kỹ năng | cả 2 máy | [MedSci] Gửi phần bác sĩ tự sửa ngược lại cho dự án gốc, có quét dữ liệu bệnh nhân trước khi gửi và cho xem từng dòng. Dùng khi muốn đóng góp cải tiến. Từ khoá: contribute. |
-| `/medsci-project:cross-national` | kỹ năng | cả 2 máy | [MedSci] Nghiên cứu SO SÁNH ĐA QUỐC GIA dùng các bộ khảo sát song song (KNHANES, NHANES, CHNS): hài hoà biến số, phân tích có trọng số, bảng so sánh. Dùng cho đề tài so sánh quốc tế. Từ khoá: cross-national. |
-| `/medsci-project:define-variables` | kỹ năng | cả 2 máy | [MedSci] Định nghĩa BIẾN SỐ có dẫn nguồn y văn: ngưỡng cắt, cách mã hoá, ánh xạ sang tên biến trong cơ sở dữ liệu. Dùng khi cần tránh việc tự đặt định nghĩa kiểu hình rồi bị phản biện bác. Từ khoá: variable operationalization. |
-| `/medsci-project:deidentify` | kỹ năng | cả 2 máy | [MedSci] Khử định danh dữ liệu nghiên cứu bằng công cụ chạy CỤC BỘ, có gói nhận diện cho 10 quốc gia. Dùng TRƯỚC khi đưa dữ liệu cho bất kỳ mô hình AI nào — công cụ này không gọi mạng, không AI nào chạm dữ liệu thô. Từ khoá: de-identific… |
-| `/medsci-project:design-ai-benchmarking` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế nghiên cứu SO SÁNH AI với hội đồng chuyên gia: định nghĩa nhánh so sánh, thang chấm có mỏ neo, độ đồng thuận giữa người chấm. Dùng TRƯỚC khi thu thập dữ liệu. Từ khoá: AI vs expert benchmarking. |
-| `/medsci-project:design-study` | kỹ năng | cả 2 máy | [MedSci] Thẩm định THIẾT KẾ nghiên cứu trước khi thu thập dữ liệu: xác định đơn vị phân tích, logic chọn cohort, nguy cơ rò rỉ dữ liệu, cách chọn nhóm chứng, chiến lược kiểm định. Dùng ở bước đầu, TRƯỚC khi viết đề cương; đề tài chính th… |
-| `/medsci-project:explainability` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Làm hoặc thẩm định phần GIẢI THÍCH mô hình (Grad-CAM, saliency) đạt mức phản biện đòi hỏi: bắt buộc có phép thử độ tin cậy và chỉ số định lượng, không chỉ khoe vài ảnh đẹp. Dùng khi bài cần phần diễn giải. Từ khoá:… |
-| `/medsci-project:fill-icmje-coi` | kỹ năng | cả 2 máy | [MedSci] Sinh hàng loạt phiếu KHAI XUNG ĐỘT LỢI ÍCH theo mẫu ICMJE cho từng tác giả. Dùng khi chuẩn bị nộp bài nhiều tác giả — mỗi người chỉ cần xem và ký. Từ khoá: ICMJE COI. |
-| `/medsci-project:fill-protocol` | kỹ năng | cả 2 máy | [MedSci] Điền nội dung vào MẪU WORD của cơ quan (đề cương, hồ sơ đạo đức, đề tài) mà giữ nguyên định dạng, bảng biểu, phông chữ. Dùng khi đơn vị bắt nộp đúng biểu mẫu có sẵn. Từ khoá: Word template. |
-| `/medsci-project:find-cohort-gap` | kỹ năng | cả 2 máy | [MedSci] Tìm KHOẢNG TRỐNG nghiên cứu trong một cơ sở dữ liệu cohort: soi thế mạnh dữ liệu, đối chiếu chuyên môn chủ nhiệm, quét mức bão hoà y văn, xuất danh sách đề tài xếp hạng. Dùng khi có sẵn kho dữ liệu mà chưa biết làm gì. Từ khoá: … |
-| `/medsci-project:find-journal` | kỹ năng | cả 2 máy | [MedSci] Gợi ý TẠP CHÍ phù hợp cho bản thảo: đối chiếu phạm vi, chính sách khai báo AI, khả năng được nhận, kèm phương án dự phòng nếu bị từ chối. Dùng khi chuẩn bị nộp. Chỉ số ảnh hưởng và phí đăng bài có thể đã cũ — phải kiểm lại trên … |
-| `/medsci-project:fulltext-retrieval` | kỹ năng | cả 2 máy | [MedSci] Tải hàng loạt PDF toàn văn TRUY CẬP MỞ theo DOI qua Unpaywall, PMC, OpenAlex, Crossref. Dùng khi đã có danh sách DOI và cần đọc toàn văn. Chỉ lấy bài mở, hợp pháp. Từ khoá: open access PDF. |
-| `/medsci-project:generate-codebook` | kỹ năng | cả 2 máy | [MedSci] Sinh TỪ ĐIỂN DỮ LIỆU từ một file dữ liệu: mọi biến kèm kiểu, phân bố, tỷ lệ thiếu. Dùng ngay khi nhận bộ dữ liệu mới, trước khi phân tích. Biến mã hoá không rõ nghĩa được gắn cờ chứ không đoán bừa. Từ khoá: codebook, data dictio… |
-| `/medsci-project:grant-builder` | kỹ năng | cả 2 máy | [MedSci] Viết đề xuất ĐỀ TÀI/TÀI TRỢ: ý nghĩa, tính mới, cách tiếp cận, mốc tiến độ, phân vai nhóm nghiên cứu. Dùng khi xin kinh phí. Từ khoá: grant proposal. |
-| `/medsci-project:humanize` | kỹ năng | cả 2 máy | [MedSci] Phát hiện và xoá 27 dấu hiệu văn phong máy trong bản thảo và thư phản hồi phản biện, giới hạn mức can thiệp để không đổi nội dung khoa học. Dùng sau khi đã viết xong. Từ khoá: AI writing patterns. |
-| `/medsci-project:intake-project` | kỹ năng | cả 2 máy | [MedSci] Tiếp nhận và chuẩn hoá một đề tài mới: phân loại, tóm tắt hiện trạng, chỉ ra thứ còn thiếu, dựng file ghi nhớ cho đề tài. Dùng khi bắt đầu đề tài mới. Từ khoá: project intake. |
-| `/medsci-project:lit-sync` | kỹ năng | cả 2 máy | [MedSci] Đồng bộ tài liệu tham khảo từ file .bib sang Zotero và ghi chú Obsidian. Dùng khi bác sĩ quản lý y văn bằng hai công cụ đó. Từ khoá: Zotero, Obsidian. |
-| `/medsci-project:ma-scout` | kỹ năng | cả 2 máy | [MedSci] Tìm CHỦ ĐỀ cho phân tích gộp và chấm tính khả thi, trước khi viết đề cương. Dùng khi muốn làm tổng quan hệ thống nhưng chưa chọn được đề tài. Từ khoá: meta-analysis topic. |
-| `/medsci-project:make-figures` | kỹ năng | cả 2 máy | [MedSci] Vẽ hình đạt chuẩn đăng bài: đường cong ROC, biểu đồ rừng, sơ đồ CONSORT/STARD/PRISMA, đường Kaplan-Meier, Bland-Altman, ma trận nhầm lẫn, tóm tắt bằng hình. Dùng khi chuẩn bị hình cho bản thảo. Từ khoá: publication figures. |
-| `/medsci-project:manage-project` | kỹ năng | cả 2 máy | [MedSci] Quản lý tiến độ đề tài: dựng cấu trúc thư mục, theo dõi từng giai đoạn viết, sinh danh mục kiểm và mốc thời gian lùi từ hạn nộp. Dùng khi chạy nhiều đề tài song song. Từ khoá: project management. |
-| `/medsci-project:manage-refs` | kỹ năng | cả 2 máy | [MedSci] Xử lý trích dẫn khi nộp bài: kiểm khoá trích dẫn, dựng danh mục theo định dạng tạp chí, chuyển đổi kiểu đánh số, chèn trường Zotero. Dùng ở khâu hoàn thiện bản thảo. Từ khoá: citation rendering. |
-| `/medsci-project:meta-analysis` | kỹ năng | cả 2 máy | [MedSci] Dây chuyền TỔNG QUAN HỆ THỐNG và PHÂN TÍCH GỘP: đăng ký PROSPERO, chiến lược tìm, sàng lọc, trích xuất, nguy cơ sai lệch (QUADAS-2/ROBINS-I), tổng hợp và báo cáo PRISMA. Dùng cho đề tài tổng quan hệ thống. Từ khoá: meta-analysis… |
-| `/medsci-project:mllm-eval` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khung đánh giá mô hình ngôn ngữ lớn trên nhiệm vụ lâm sàng (sinh báo cáo, hỏi đáp hình ảnh). Soi cả nguy cơ mô hình đã học thuộc bộ kiểm định công khai. Dùng khi đánh giá LLM y tế. Từ khoá: … |
-| `/medsci-project:model-card` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Sinh tài liệu bắt buộc đi kèm mô hình: mục đích dùng, chỉ số, giới hạn đã biết. Dùng khi công bố hoặc bàn giao mô hình. Từ khoá: model card. |
-| `/medsci-project:model-evaluation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Tính và báo cáo chỉ số trên tập kiểm định độc lập cho đúng loại nhiệm vụ. Dùng sau khi huấn luyện xong. Từ khoá: held-out metrics. |
-| `/medsci-project:model-scaffold` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Dựng sẵn kho mã huấn luyện PyTorch chạy được và tái lập được. Dùng khi bắt đầu huấn luyện mô hình. Từ khoá: training scaffold. |
-| `/medsci-project:model-sourcing` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thẩm định mô hình bên thứ ba mà nghiên cứu định dùng: kho mã nào, bản phát hành nào, giấy phép ra sao. Dùng trước khi dựa vào mô hình có sẵn. Từ khoá: model vetting. |
-| `/medsci-project:model-validation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định nghiên cứu KIỂM ĐỊNH LÂM SÀNG cho mô hình. Dùng khi muốn chứng minh mô hình dùng được trên bệnh nhân thật. Từ khoá: clinical validation. |
-| `/medsci-project:orchestrate` | kỹ năng | cả 2 máy | [MedSci] Điều phối chung của bộ MedSci — nhận yêu cầu mơ hồ rồi chuyển tới đúng skill. Dùng khi chưa biết nên gọi skill nào trong bộ này. Từ khoá: medsci router. |
-| `/medsci-project:peer-review` | kỹ năng | cả 2 máy | [MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer rev… |
-| `/medsci-project:polish-language` | kỹ năng | cả 2 máy | [MedSci] Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ toàn bài. Dùng ở khâu cuối trước khi nộp tạp chí quốc tế. Từ khoá: ESL polish. |
-| `/medsci-project:preprocess-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định khâu chuẩn bị dữ liệu ảnh (DICOM/NIfTI). Dùng trước khi huấn luyện — đây là chỗ hay sinh rò rỉ dữ liệu. Từ khoá: imaging preprocessing. |
-| `/medsci-project:present-paper` | kỹ năng | cả 2 máy | [MedSci] Chuẩn bị BÀI TRÌNH BÀY học thuật từ một bài báo (sinh hoạt khoa học, hội thảo). Dùng khi phải báo cáo journal club hay hội nghị. Từ khoá: academic presentation. |
-| `/medsci-project:profile-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Khảo sát bộ dữ liệu ảnh TRƯỚC mọi quyết định mô hình hoá: thông số chụp, phân bố, mất cân bằng nhãn. Dùng ngay khi nhận dữ liệu ảnh. Từ khoá: dataset profiling. |
-| `/medsci-project:publish-skill` | kỹ năng | cả 2 máy | [MedSci] Chuyển một skill cá nhân thành skill chia sẻ được, có quét thông tin định danh trước. Dùng khi muốn đóng gói quy trình riêng để dùng chung. Từ khoá: publish skill. |
-| `/medsci-project:radiomics-ml` | kỹ năng | cả 2 máy | [MedSci] Làm hoặc thẩm định nghiên cứu radiomics / học máy trên dữ liệu bảng. Dùng khi rút đặc trưng từ hình ảnh hoặc dữ liệu lâm sàng để dự báo. Từ khoá: radiomics. |
-| `/medsci-project:render-pdf-doc` | kỹ năng | cả 2 máy | [MedSci] Kết xuất tài liệu Markdown học thuật thành PDF chất lượng in. Dùng ở khâu cuối khi cần bản PDF đẹp; không dùng cho bản thảo có danh mục tài liệu tham khảo — loại đó phải đi qua công cụ quản lý trích dẫn. Từ khoá: PDF rendering. |
-| `/medsci-project:replicate-study` | kỹ năng | cả 2 máy | [MedSci] Lặp lại phương pháp của một nghiên cứu đã công bố trên cơ sở dữ liệu khác. Dùng khi muốn kiểm chứng kết quả người khác trên dữ liệu của mình. Từ khoá: replication. |
-| `/medsci-project:review-paper` | kỹ năng | cả 2 máy | [MedSci] Dựng khung và viết TỔNG QUAN y văn: tường thuật, phạm vi (PRISMA-ScR) hoặc hệ thống. Dùng khi viết bài tổng quan. Từ khoá: literature review. |
-| `/medsci-project:revise` | kỹ năng | cả 2 máy | [MedSci] Đọc góp ý phản biện và sinh THƯ PHẢN HỒI có cấu trúc từng điểm một. Dùng khi nhận quyết định 'sửa và nộp lại'. Từ khoá: response to reviewers. |
-| `/medsci-project:search-lit` | kỹ năng | cả 2 máy | [MedSci] Tìm y văn trên PubMed, Semantic Scholar và quản lý trích dẫn. Dùng khi cần quét rộng; câu hỏi lâm sàng để ra quyết định vẫn nên qua agent `tra-cuu-chung-cu`. Từ khoá: literature search. |
-| `/medsci-project:self-review` | kỹ năng | cả 2 máy | [MedSci] Tự rà bản thảo của chính mình bằng con mắt phản biện TRƯỚC khi nộp. Dùng như bước cuối trước khi gửi tạp chí. Từ khoá: pre-submission review. |
-| `/medsci-project:setup-medsci` | kỹ năng | cả 2 máy | [MedSci] Kiểm môi trường chạy của bộ MedSci: Python, R, Node đã đủ chưa. Dùng khi cài lần đầu hoặc khi một skill báo lỗi thiếu công cụ. Từ khoá: setup, diagnostics. |
-| `/medsci-project:sync-submission` | kỹ năng | cả 2 máy | [MedSci] Soi độ lệch giữa bản thảo gốc và bộ file đem nộp, rồi lập danh mục hồ sơ nộp. Dùng ngay trước khi bấm nộp. Từ khoá: submission manifest. |
-| `/medsci-project:uncertainty-imaging` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định phần lượng hoá ĐỘ BẤT ĐỊNH và phát hiện dữ liệu ngoài phân bố. Dùng khi mô hình sắp dùng trên lâm sàng — cần biết khi nào nó không chắc. Từ khoá: uncertainty, OOD. |
-| `/medsci-project:verify-refs` | kỹ năng | cả 2 máy | [MedSci] Kiểm tài liệu tham khảo đối chiếu PubMed và CrossRef, phát hiện trích dẫn BỊA. CHỈ ĐỌC, không sửa. Dùng trước khi nộp; bản của bác sĩ là agent `kiem-chung-trich-dan` (có tra bài bị rút). Từ khoá: reference verification. |
-| `/medsci-project:version-dataset` | kỹ năng | cả 2 máy | [MedSci] Đánh phiên bản bộ dữ liệu bằng mã băm nội dung để tái lập được kết quả. Dùng khi dữ liệu còn thay đổi mà đã bắt đầu phân tích. Từ khoá: dataset versioning. |
-| `/medsci-project:write-paper` | kỹ năng | cả 2 máy | [MedSci] Viết bài báo trọn gói theo 8 giai đoạn IMRAD, từ dàn ý tới bản nộp. Dùng cho bài không đi qua dây chuyền G của bác sĩ; đề tài chính thức nên dùng agent `viet-ban-thao`. Từ khoá: paper writing, IMRAD. |
-| `/medsci-project:write-protocol` | kỹ năng | cả 2 máy | [MedSci] Sinh ĐỀ CƯƠNG nộp Hội đồng Đạo đức gồm 4 phần lõi. Dùng khi cần bản nháp nhanh; hồ sơ nộp thật phải qua agent `dao-duc-dang-ky` (cổng G2) vì nó gắn Helsinki, ICH-GCP và bản đồng thuận. Từ khoá: IRB protocol. |
 
 ### user-commands  (53)
 
@@ -1191,23 +1192,23 @@
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/bio-research:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | Convert laboratory instrument output files (PDF, CSV, Excel, TXT) to Allotrope Simple Model (ASM) JSON format or flattened 2D CSV. Use this skill when scientists need to standardize instrument data for LIMS systems, data lakes, or downst… |
-| `/bio-research:nextflow-development` | kỹ năng | cả 2 máy | Run nf-core bioinformatics pipelines (rnaseq, sarek, atacseq) on sequencing data. Use when analyzing RNA-seq, WGS/WES, or ATAC-seq data—either local FASTQs or public datasets from GEO/SRA. Triggers on nf-core, Nextflow, FASTQ analysis, v… |
-| `/bio-research:scientific-problem-selection` | kỹ năng | cả 2 máy | This skill should be used when scientists need help with research problem selection, project ideation, troubleshooting stuck projects, or strategic scientific decisions. Use this skill when users ask to pitch a new research idea, work th… |
+| `/bio-research:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
+| `/bio-research:nextflow-development` | kỹ năng | cả 2 máy | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
+| `/bio-research:scientific-problem-selection` | kỹ năng | cả 2 máy | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
 | `/bio-research:scvi-tools` | kỹ năng | cả 2 máy | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
-| `/bio-research:single-cell-rna-qc` | kỹ năng | cả 2 máy | Performs quality control on single-cell RNA-seq data (.h5ad or .h5 files) using scverse best practices with MAD-based filtering and comprehensive visualizations. Use when users request QC analysis, filtering low-quality cells, assessing … |
+| `/bio-research:single-cell-rna-qc` | kỹ năng | cả 2 máy | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
 | `/bio-research:start` | kỹ năng | cả 2 máy | [Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup. |
 
 ### cowork-plugin-management  (2)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | cả 2 máy | > Customize a Claude Code plugin for a specific organization's tools and workflows. Use when: customize plugin, set up plugin, configure plugin, tailor plugin, adjust plugin settings, customize plugin connectors, customize plugin skill, … |
-| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | cả 2 máy | > Guide users through creating a new plugin from scratch in a cowork session. Use when users want to create a plugin, build a plugin, make a new plugin, develop a plugin, scaffold a plugin, start a plugin from scratch, or design a plugin… |
+| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | cả 2 máy | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Dùng khi plugin có sẵn gần đúng nhưng cần sửa vài chỗ. Từ khoá: plugin customizer. |
+| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | cả 2 máy | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Dùng khi muốn đóng gói quy trình riêng thành plugin dùng lại được. Từ khoá: create plugin. |
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (84 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (86 mục)
 
 
 ### claude-code-harness  (31 · chỉ Mac)
@@ -1216,7 +1217,7 @@
 |---|---|---|---|
 | `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
 | `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
-| `agent test-wiring-auditor` | agent | Mac | 変更差分に対してテスト網が追随しているかを fresh-context で監査する read-only auditor |
+| `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
 | `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
 | `/handoff-to-claude` | lệnh | Mac | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
 | `/plan-with-cc` | lệnh | Mac | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
@@ -1231,7 +1232,7 @@
 | `/claude-code-harness:cursor-do` | kỹ năng | Mac | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
 | `/claude-code-harness:cursor-review` | kỹ năng | Mac | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
 | `/claude-code-harness:cursor-setup` | kỹ năng | Mac | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
-| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | Extract recurring failure patterns from breezing orchestration logs and Judgment Ledger, emit failure-rule.v1 proposals with confidence scores. SSOT promotion to patterns.md or decisions.md is proposal-only — human-approval-required. Use… |
+| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
 | `/claude-code-harness:harness-accept` | kỹ năng | Mac | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
 | `/claude-code-harness:harness-loop` | kỹ năng | Mac | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
 | `/claude-code-harness:harness-plan` | kỹ năng | Mac | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
@@ -1301,22 +1302,22 @@
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/desktop-commander:ai-tools-setup` | kỹ năng | cả 2 máy | >- Set up, connect, validate, and repair Claude Desktop and MCP servers using Desktop Commander — inspecting and fixing mcp.json / claude_desktop_config.json, getting MCP servers to connect, and diagnosing local AI tooling. Use when a us… |
-| `/desktop-commander:computer-health-check` | kỹ năng | cả 2 máy | >- Run a comprehensive, read-only health check on the user's computer and return a scored chat summary with prioritized, plain-English recommendations and safe cleanup suggestions. Use this whenever the user wants to check their computer… |
-| `/desktop-commander:desktop-commander-overview` | kỹ năng | cả 2 máy | Use for Desktop Commander MCP capabilities — persistent shells and REPLs, long-running processes, filesystem beyond the workspace, structured files (.xlsx, .docx, .pdf, images) and large local data files such as CSVs, ripgrep search at s… |
-| `/desktop-commander:knowledge-base` | kỹ năng | cả 2 máy | >- Create and maintain a Markdown knowledge base that any AI agent can read, search, and update. Use when the user wants to start a knowledge base, add or update notes, organize docs/notes for an agent or LLM to consume, build an index o… |
+| `/desktop-commander:ai-tools-setup` | kỹ năng | cả 2 máy | [Máy tính] Cài, nối, kiểm và sửa Claude Desktop cùng các máy chủ MCP. Từ khoá: MCP setup. |
+| `/desktop-commander:computer-health-check` | kỹ năng | cả 2 máy | [Máy tính] Kiểm tra sức khoẻ máy tính, CHỈ ĐỌC, không thay đổi gì. Từ khoá: health check. |
+| `/desktop-commander:desktop-commander-overview` | kỹ năng | cả 2 máy | [Máy tính] Tổng quan năng lực Desktop Commander: phiên dòng lệnh lâu dài, thao tác file. Từ khoá: Desktop Commander. |
+| `/desktop-commander:knowledge-base` | kỹ năng | cả 2 máy | [Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base. |
 | `/desktop-commander:obsidian-vault` | kỹ năng | cả 2 máy | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, chuẩn hoá frontmatter, bảng điều khiển Dataview, tìm ghi chú mồ côi. Dùng khi bác sĩ nói rõ Obsidian hoặc tính năng riêng của nó; không dùng cho ghi chú Markdown thông thườ… |
-| `/desktop-commander:terminal` | kỹ năng | cả 2 máy | >- Use Desktop Commander for terminal and command-line work, especially anything that needs a shell whose state persists across turns: Python/Node REPLs, database shells, dev servers and other long-running processes, SSH into remote mach… |
+| `/desktop-commander:terminal` | kỹ năng | cả 2 máy | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
 
 ### pdf-viewer  (5)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/annotate` | lệnh | cả 2 máy | Collaboratively annotate a PDF — propose markup, review together, iterate |
-| `/fill-form` | lệnh | cả 2 máy | Fill PDF form fields interactively with live visual feedback |
-| `/open` | lệnh | cả 2 máy | Open a PDF in the interactive viewer |
-| `/sign` | lệnh | cả 2 máy | Place a signature or initials image on a PDF |
-| `/pdf-viewer:view-pdf` | kỹ năng | cả 2 máy | Interactive PDF viewer. Use when the user wants to open, show, or view a PDF and collaborate on it visually — annotate, highlight, stamp, fill form fields, place signature/initials, or review markup together. Not for summarization or tex… |
+| `/annotate` | lệnh | cả 2 máy | [Tài liệu] Chú thích PDF cùng nhau — đề xuất đánh dấu, cùng xem lại và chỉnh dần. Từ khoá: annotate PDF. |
+| `/fill-form` | lệnh | cả 2 máy | [Tài liệu] Điền biểu mẫu PDF với xem trước trực tiếp từng ô. Từ khoá: fill PDF form. |
+| `/open` | lệnh | cả 2 máy | [Tài liệu] Mở một file PDF trong trình xem tương tác. Từ khoá: open PDF. |
+| `/sign` | lệnh | cả 2 máy | [Tài liệu] Đặt chữ ký hoặc chữ viết tắt lên file PDF. LƯU Ý: chỉ chèn hình ảnh chữ ký sẵn có, không thay việc bác sĩ tự ký văn bản pháp lý. Từ khoá: sign PDF. |
+| `/pdf-viewer:view-pdf` | kỹ năng | cả 2 máy | [Tài liệu] Trình xem PDF tương tác — mở, xem và đánh dấu tài liệu ngay trong phiên. Dùng khi cần nhìn tận mắt nội dung file PDF; không dùng để tóm tắt hay trích xuất chữ, việc đó đọc thẳng file nhanh hơn. Từ khoá: PDF viewer. |
 
 ### claude-tag-troubleshoot  (3)
 
@@ -1325,6 +1326,13 @@
 | `/debug-plugins` | lệnh | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
 | `/claude-tag-troubleshoot:config-guide` | kỹ năng | cả 2 máy | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
 | `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
+
+### watermarks-remover  (2 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/watermarks-remover:clean-user-facing-text` | kỹ năng | Mac | [Dọn siêu dữ liệu] Rà và làm sạch văn bản sắp đưa cho người đọc: soi ký tự Unicode vô hình đáng ngờ (gây lỗi hiển thị, lỗi tìm kiếm, lỗi đếm ký tự) rồi chuẩn hoá, GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hay tài liệu dán từ nhiều ngu… |
+| `/watermarks-remover:remove-ai-marks` | kỹ năng | Mac | [Dọn siêu dữ liệu] Gỡ dấu vết kỹ thuật khỏi văn bản và file: ký tự Unicode ẩn, siêu dữ liệu EXIF/XMP, và C2PA trên PNG·JPEG·SVG·PDF·DOCX·HTML·MD. Dùng khi cần dọn siêu dữ liệu RIÊNG TƯ trước khi chia sẻ file ra ngoài — toạ độ GPS, tên tá… |
 
 ### humanizer  (1 · chỉ Mac)
 

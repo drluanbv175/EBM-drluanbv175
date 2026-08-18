@@ -71,6 +71,13 @@ CAU_HINH = {
             "gene-drug-research", "research-chronicle", "mcp-tools-reference")},
         "sinh_manifest": None,
     },
+    "watermarks-remover": {
+        "kho": "watermarks-remover",
+        "url": "https://github.com/guillaumemeyer/watermarks-remover",
+        "plugin_key": "watermarks-remover@watermarks-remover",
+        "bo_them": {"docs", "integrations", "service/scripts/__pycache__"},
+        "sinh_manifest": None,
+    },
     "aipoch-medical-research": {
         "kho": "medical-research-skills",
         "url": "https://github.com/aipoch/medical-research-skills",

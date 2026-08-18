@@ -4993,5 +4993,11 @@
   },
   "skill:aipoch-medical-research:hypogenic": {
     "vi": "[Tin sinh học] Sinh và kiểm giả thuyết tự động bằng LLM trên dữ liệu dạng bảng; kết hợp hiểu biết từ y văn với quy luật rút từ dữ liệu. Dùng khi cần dò tìm quy luật có hệ thống. Từ khoá: hypothesis generation, tabular."
+  },
+  "skill:watermarks-remover:remove-ai-marks": {
+    "vi": "[Dọn siêu dữ liệu] Gỡ dấu vết kỹ thuật khỏi văn bản và file: ký tự Unicode ẩn, siêu dữ liệu EXIF/XMP, và C2PA trên PNG·JPEG·SVG·PDF·DOCX·HTML·MD. Dùng khi cần dọn siêu dữ liệu RIÊNG TƯ trước khi chia sẻ file ra ngoài — toạ độ GPS, tên tác giả, thông tin thiết bị chụp. ⚠️ TUYỆT ĐỐI KHÔNG dùng lên bản thảo nộp tạp chí hay hồ sơ Hội đồng Đạo đức: ICMJE Mục V bắt buộc khai báo dùng AI, và cổng G9 của chính hệ này đang thi hành điều đó. KHÁC /xoa-dau-vet-ai (chỉ gọt văn phong máy móc, không đụng siêu dữ liệu). Từ khoá: dọn siêu dữ liệu, xoá EXIF, ký tự ẩn, C2PA, riêng tư ảnh."
+  },
+  "skill:watermarks-remover:clean-user-facing-text": {
+    "vi": "[Dọn siêu dữ liệu] Rà và làm sạch văn bản sắp đưa cho người đọc: soi ký tự Unicode vô hình đáng ngờ (gây lỗi hiển thị, lỗi tìm kiếm, lỗi đếm ký tự) rồi chuẩn hoá, GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hay tài liệu dán từ nhiều nguồn bị lỗi hiển thị lạ. ⚠️ Không dùng để né kiểm tra liêm chính học thuật — xem cảnh báo ở remove-ai-marks. Từ khoá: ký tự vô hình, lỗi hiển thị chữ, chuẩn hoá văn bản, dọn văn bản dán."
   }
 }
