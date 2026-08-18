@@ -188,7 +188,7 @@ const DATA = {{
     strength:'conditional'
   }}
 }};
-// HẾT KHỐI DATA
+/* ▲▲▲  HẾT KHỐI DATA  ▲▲▲ */
 </script>
 </body>
 </html>

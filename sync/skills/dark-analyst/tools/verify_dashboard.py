@@ -733,6 +733,184 @@ def kiem_khoa_summary(data_block, errors, warns, oks):
         oks.append("DATA.summary đủ 4 khoá chuẩn, không có khoá lạ bị vứt âm thầm.")
 
 
+# ===================== PARSE CHẶT KHỐI DATA =====================
+# CHUYỂN VỀ ĐÂY 18/08/2026. Ba hàm dưới trước nằm trong build_dashboard_docx.py —
+# nhưng file đó CHỈ có ở EBM-Dashboards/tools, trong khi verify_dashboard.py được
+# đồng bộ 3 nơi, nên cổng không thể import chúng. Nay chúng sống ở file được đồng
+# bộ, và build_dashboard_docx.py IMPORT NGƯỢC về đây ⇒ vẫn đúng MỘT bản cài đặt
+# (BH21: nhiều parser của cùng một dữ liệu sẽ bất đồng, và lúc đó không ai biết
+# bên nào đúng).
+
+
+def js_object_literal_to_json(text):
+    """Quét ký tự có trạng thái trong/ngoài chuỗi rồi mới quote bareword key khi CHẮC CHẮN
+    đang ở ngoài chuỗi. Hỗ trợ CẢ chuỗi nháy đơn '...' (quy ước template EW/DA) LẪN nháy kép
+    "...": chuỗi nháy đơn được tái mã hóa thành chuỗi JSON nháy kép — escape dấu " chưa escape
+    nằm bên trong, và chuyển \\' (JS) → ' (hợp lệ JSON). KHÔNG dùng regex đơn giản kiểu
+    ([{,]\\s*)(\\w+)(\\s*:) — nó bắt nhầm text như 'CDAI, SDAI: công thức' bên trong 1 title
+    (dấu phẩy + từ + hai chấm y hệt vị trí key nhưng thực ra là nội dung chuỗi)."""
+    out = []
+    i, n = 0, len(text)
+    quote = None  # None | "'" | '"' — ký tự đã MỞ chuỗi đang xét
+    while i < n:
+        c = text[i]
+        if quote is not None:
+            if c == "\\" and i + 1 < n:
+                nxt = text[i + 1]
+                if quote == "'" and nxt == "'":
+                    out.append("'")            # \' trong JS → ' hợp lệ JSON
+                else:
+                    out.append(c); out.append(nxt)
+                i += 2; continue
+            if c == quote:
+                out.append('"'); quote = None; i += 1; continue   # đóng chuỗi → luôn xuất "
+            if c == '"' and quote == "'":
+                out.append('\\"'); i += 1; continue               # " chưa escape bên trong '...'
+            out.append(c); i += 1; continue
+        if c == '"' or c == "'":
+            out.append('"'); quote = c; i += 1; continue          # mở chuỗi → luôn xuất "
+        if c.isalpha() or c == "_":
+            j = i
+            while j < n and (text[j].isalnum() or text[j] == "_"):
+                j += 1
+            word = text[i:j]
+            k = j
+            while k < n and text[k] in " \t\n\r":
+                k += 1
+            out.append('"' + word + '"' if (k < n and text[k] == ":") else word)
+            i = j; continue
+        out.append(c); i += 1
+    return "".join(out)
+
+
+def join_string_concatenation(text):
+    """Gộp chuỗi nối kiểu JS `"a" + "b"` thành MỘT chuỗi JSON `"ab"`.
+
+    VÌ SAO CẦN (vá 13/08/2026): dashboard được viết tay hay xuống dòng cho dễ đọc
+    thường ngắt chuỗi dài bằng dấu cộng —
+
+        source:"...PRAC 8-11 June 2026. Amsterdam: EMA; 12 June 2026. "+"https://..."
+
+    Đó là JavaScript hợp lệ nhưng JSON KHÔNG có phép nối, nên `json.loads()` chết với
+    "Expecting ',' delimiter". Đo thật hôm nay: `AnToanThuoc_EMA_PRAC_20260614` là bản
+    DUY NHẤT trong 10 bản xuất lại KHÔNG ra được .docx — và vì bước ⑤ PDF dựng TỪ .docx
+    nên nó mất luôn cả PDF. Dây chuyền chỉ in "⚠ Bỏ qua: chưa có file .docx", không nói
+    lý do, nên lỗi trông như một bước bị bỏ chứ không như một bản thảo hỏng.
+
+    Quét theo TRẠNG THÁI chuỗi, không dùng regex: dấu cộng nằm TRONG nội dung
+    ("nguy cơ tim mạch + chuyển hoá") tuyệt đối không được đụng tới.
+    """
+    out = []
+    i, n = 0, len(text)
+    in_string = False
+    while i < n:
+        c = text[i]
+        if in_string:
+            if c == "\\" and i + 1 < n:
+                out.append(c); out.append(text[i + 1]); i += 2; continue
+            if c == '"':
+                # Nhìn tới: `"` + khoảng trắng + `+` + khoảng trắng + `"` ⇒ nối tiếp
+                k = i + 1
+                while k < n and text[k] in " \t\n\r":
+                    k += 1
+                if k < n and text[k] == "+":
+                    k += 1
+                    while k < n and text[k] in " \t\n\r":
+                        k += 1
+                    if k < n and text[k] == '"':
+                        i = k + 1        # bỏ cả `"`, `+` và `"` → vẫn đang trong chuỗi
+                        continue
+                out.append(c); in_string = False; i += 1; continue
+            out.append(c); i += 1; continue
+        if c == '"':
+            in_string = True; out.append(c); i += 1; continue
+        out.append(c); i += 1
+    return "".join(out)
+
+
+def strip_trailing_commas(text):
+    """JS cho phép dấu phẩy thừa trước }/] , JSON thì không — dọn bằng cùng cơ chế quét
+    trạng thái để không đụng dấu phẩy nằm trong nội dung chuỗi."""
+    out = []
+    i, n = 0, len(text)
+    in_string = False
+    while i < n:
+        c = text[i]
+        if in_string:
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(text[i + 1]); i += 2; continue
+            if c == '"':
+                in_string = False
+            i += 1; continue
+        if c == '"':
+            in_string = True; out.append(c); i += 1; continue
+        if c == ",":
+            k = i + 1
+            while k < n and text[k] in " \t\n\r":
+                k += 1
+            if k < n and text[k] in "}]":
+                i += 1; continue
+        out.append(c); i += 1
+    return "".join(out)
+
+
+def phan_tich_data_chat(html):
+    """Parse khối DATA NGHIÊM NGẶT như trình duyệt sẽ làm. Ném ValueError nếu hỏng."""
+    start = html.index("const DATA = {") + len("const DATA = ")
+    end = -1
+    for m in ("/* ▲▲▲  HẾT KHỐI DATA  ▲▲▲ */", "/* ▲▲▲ HẾT KHỐI DATA ▲▲▲ */"):
+        i = html.find(m, start)
+        if i != -1:
+            end = i
+            break
+    if end == -1:
+        raise ValueError("không tìm thấy marker kết thúc khối DATA")
+    block = re.sub(r";\s*$", "", html[start:end].strip())
+    return json.loads(strip_trailing_commas(
+        join_string_concatenation(js_object_literal_to_json(block))))
+
+
+def kiem_parse_chat(html, errors, warns, oks):
+    """Khối DATA có parse được như TRÌNH DUYỆT không — chống TRANG TRẮNG im lặng.
+
+    VÌ SAO Ở CỔNG (thêm 18/08/2026 theo yêu cầu của bác sĩ): field() của cổng là
+    parser DUNG SAI — nó đọc từng trường bằng regex nên vẫn rút được dữ liệu từ một
+    khối DATA đã vỡ cú pháp. Hệ quả đo được cùng ngày: chèn 2 mục mới làm rơi MỘT
+    dấu phẩy giữa ITEM-22 và ITEM-23 ⇒ JS vỡ ⇒ trình duyệt render TRANG TRẮNG, mà
+    cổng vẫn in PASS. Bước ② của bộ năm chết đúng chỗ và BH59 bắt được, nhưng ai chỉ
+    chạy cổng rồi tin thì đã tin nhầm.
+
+    Đây là lỗi CHẶN PHÁT HÀNH: gói không hiển thị được thì mọi nội dung bên trong,
+    kể cả cờ đỏ, đều bằng không. Đo trước khi bật: 67/67 dashboard trong kho parse
+    sạch ⇒ không báo động giả.
+    """
+    # TÁCH HAI HỎNG HÓC KHÁC NHAU — cổng KHÔNG được nói sai về dữ liệu.
+    # Bản đầu của hàm này gộp cả hai vào một câu "trình duyệt sẽ render TRANG TRẮNG".
+    # Sai với ca THIẾU MARKER: khi đó JS vẫn hợp lệ, trình duyệt vẫn hiện bình thường —
+    # thứ gãy là dây chuyền phái sinh (build_dashboard_docx đòi marker để cắt khối).
+    # Nói quá về hậu quả cũng là nói sai, và nó làm người đọc mất tin vào cảnh báo thật.
+    try:
+        data = phan_tich_data_chat(html)
+    except ValueError as e:
+        if "marker" in str(e):
+            errors.append(
+                "Khối DATA THIẾU marker kết thúc '/* ▲▲▲ HẾT KHỐI DATA ▲▲▲ */' — trình duyệt "
+                "vẫn hiện bình thường, NHƯNG bước ③ (Word) và ⑤ (PDF) của bộ năm sẽ chết vì "
+                "không cắt được khối. Đây là bug đã gặp 17/07/2026, khi đó cổng im lặng bỏ qua.")
+        else:
+            errors.append(
+                "Khối DATA KHÔNG parse được như JS (%s) — trình duyệt sẽ render TRANG TRẮNG "
+                "dù mọi luật khác của cổng vẫn đạt. Nguyên nhân hay gặp: thiếu dấu phẩy giữa "
+                "hai mục hoặc nháy lồng chưa escape." % str(e)[:110])
+        return
+    except Exception as e:  # noqa: BLE001 — cổng không được chết vì dữ liệu lạ
+        warns.append("Không chạy được parse chặt khối DATA: %s" % str(e)[:120])
+        return
+    n = len(data.get("items") or [])
+    oks.append("Khối DATA parse được như trình duyệt (%d mục) — không có nguy cơ trang trắng." % n)
+
+
 def meta_kind(data_block):
     """Loại artifact tự khai báo trong meta (vd kind:'cong-cu' = CÔNG CỤ HỖ TRỢ quyết định,
     KHÔNG phải danh sách thẻ chứng cứ → items[] rỗng là hợp lệ). Marker phải nằm trong meta của
@@ -953,6 +1131,7 @@ def main():
         errors.append("Không tìm thấy khối const DATA.")
         return report(errors, warns, oks)
 
+    kiem_parse_chat(html, errors, warns, oks)
     kiem_khoa_summary(data, errors, warns, oks)
 
     kind = meta_kind(data)

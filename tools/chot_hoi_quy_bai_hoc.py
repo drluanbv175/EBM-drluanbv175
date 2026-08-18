@@ -2334,6 +2334,78 @@ def bh61_khoa_summary_sai_ten_phai_bi_bat():
     return True, "khoá lạ bị chặn cứng, bản đúng không bắt oan, toàn kho sạch"
 
 
+def bh62_cong_phai_tu_parse_chat_khoi_data():
+    """18/08 — CỔNG in PASS trên khối DATA đã VỠ cú pháp. `field()` của cổng là parser
+    DUNG SAI (đọc từng trường bằng regex) nên vẫn rút được dữ liệu từ JS hỏng. Đo thật
+    cùng ngày: chèn 2 mục mới làm rơi MỘT dấu phẩy giữa ITEM-22 và ITEM-23 ⇒ trình duyệt
+    render TRANG TRẮNG, mà `verify_dashboard.py` vẫn nói ✓ PASS. BH59 bắt được ở mức
+    PHIÊN và bước ② của bộ năm chết to, nhưng ai chỉ chạy CỔNG rồi tin thì đã tin nhầm —
+    và cổng chính là thứ doctrine bảo phải chạy trước khi phát hành.
+
+    Chốt canh BA điều, tất cả bằng HÀNH VI:
+      (a) cổng còn hàm kiem_parse_chat và nó CHẶN CỨNG khối DATA vỡ cú pháp;
+      (b) cổng KHÔNG bắt oan khối DATA đúng;
+      (c) parser chỉ có ĐÚNG MỘT bản cài đặt — build_dashboard_docx phải dùng CHUNG
+          hàm của verify_dashboard (BH21: hai parser của cùng dữ liệu sẽ bất đồng, và
+          lúc đó không ai biết bên nào đúng).
+    """
+    import importlib.util as _ilu
+    thu_muc = REPO / "EBM-Dashboards" / "tools"
+    spec = _ilu.spec_from_file_location("_vd_bh62", thu_muc / "verify_dashboard.py")
+    vd = _ilu.module_from_spec(spec)
+    sys.modules["_vd_bh62"] = vd
+    try:
+        spec.loader.exec_module(vd)
+    except Exception as e:  # noqa: BLE001
+        return False, f"không nạp được verify_dashboard: {e}"
+    if not hasattr(vd, "kiem_parse_chat"):
+        return False, "verify_dashboard KHÔNG còn kiem_parse_chat — luật parse chặt đã bị gỡ"
+
+    dung = ('const DATA = {items:[{id:"ITEM-01"},{id:"ITEM-02"}]};\n'
+            '/* \u25b2\u25b2\u25b2  HẾT KHỐI DATA  \u25b2\u25b2\u25b2 */')
+    vo = dung.replace('{id:"ITEM-01"},', '{id:"ITEM-01"}')   # rơi dấu phẩy — đúng lỗi 18/08
+
+    e1, w1, o1 = [], [], []
+    vd.kiem_parse_chat(vo, e1, w1, o1)
+    if not e1:
+        return False, "khối DATA VỠ cú pháp KHÔNG bị chặn — lỗi trang trắng tái phát được"
+
+    e2, w2, o2 = [], [], []
+    vd.kiem_parse_chat(dung, e2, w2, o2)
+    if e2:
+        return False, f"khối DATA ĐÚNG bị bắt oan: {e2[0][:80]}"
+
+    # (c) một bản cài đặt duy nhất
+    spec2 = _ilu.spec_from_file_location("_bdd_bh62", thu_muc / "build_dashboard_docx.py")
+    bdd = _ilu.module_from_spec(spec2)
+    sys.modules["_bdd_bh62"] = bdd
+    try:
+        sys.path.insert(0, str(thu_muc))
+        spec2.loader.exec_module(bdd)
+    except Exception as e:  # noqa: BLE001
+        return False, f"không nạp được build_dashboard_docx: {e}"
+    finally:
+        if str(thu_muc) in sys.path:
+            sys.path.remove(str(thu_muc))
+    ten_mod = getattr(bdd.js_object_literal_to_json, "__module__", "")
+    if "verify_dashboard" not in ten_mod:
+        return False, ("build_dashboard_docx KHÔNG dùng chung parser của verify_dashboard "
+                       f"(đang là {ten_mod!r}) — đã có HAI bản, nguy cơ bất đồng như BH21")
+
+    # toàn kho phải parse sạch
+    hong = []
+    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+        if ".bak" in f.name:
+            continue
+        e3, w3, o3 = [], [], []
+        vd.kiem_parse_chat(f.read_text(encoding="utf-8", errors="replace"), e3, w3, o3)
+        if e3:
+            hong.append(f.name[:52])
+    if hong:
+        return False, f"{len(hong)} dashboard không parse chặt được — {hong[0]}"
+    return True, "cổng tự chặn khối DATA vỡ, không bắt oan, và dùng chung MỘT parser"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2396,6 +2468,7 @@ BAI_HOC = [
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
     ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
+    ("BH62", "18/08", "Cổng tự parse chặt khối DATA (chống trang trắng lọt cổng)", bh62_cong_phai_tu_parse_chat_khoi_data),
 ]
 
 
