@@ -1,24 +1,243 @@
 {
   "_about": "Bảng CỜ an toàn thuốc cô đọng cho người cao tuổi/đa thuốc — chỉ để NHẮC RÀ SOÁT, KHÔNG đầy đủ và KHÔNG thay tiêu chí gốc.",
-  "_source": "AGS Beers Criteria 2023 + STOPP/START v3 (đối chiếu NGUYÊN VĂN). Rà soát đầy đủ: dùng skill nguoi-cao-tuoi-da-benh-da-thuoc.",
-  "_updated": "2026-06-07",
+  "_source": "AGS Beers Criteria 2023 + STOPP/START v3 (đối chiếu NGUYÊN VĂN). Rà soát đầy đủ: dùng skill nguoi-cao-tuoi-da-benh-da-thuoc. + WHO AWaRe 2023 (nhóm nhắc kháng sinh, thêm 15/08/2026 — LÔ 3)",
+  "_updated": "2026-08-18",
   "flags": [
-    {"drug": "amitriptyline", "aliases": ["amitriptylin", "nortriptyline", "imipramine"], "cat": "TCA", "flag": "Beers: TRÁNH ở người cao tuổi — kháng cholinergic mạnh, an thần, hạ HA tư thế, té ngã.", "source": "Beers 2023"},
-    {"drug": "diphenhydramine", "aliases": ["chlorpheniramine", "clorpheniramin", "hydroxyzine", "promethazine"], "cat": "Kháng histamine thế hệ 1", "flag": "Beers: TRÁNH — kháng cholinergic, lú lẫn, té ngã.", "source": "Beers 2023"},
-    {"drug": "diazepam", "aliases": ["lorazepam", "alprazolam", "clonazepam", "bromazepam", "benzodiazepine"], "cat": "Benzodiazepine", "flag": "Beers: TRÁNH — té ngã, suy giảm nhận thức, lệ thuộc.", "source": "Beers 2023 / STOPP v3"},
-    {"drug": "zolpidem", "aliases": ["zopiclone", "eszopiclone"], "cat": "Z-drug", "flag": "Beers: TRÁNH — an thần, té ngã, lẫn.", "source": "Beers 2023"},
-    {"drug": "glibenclamide", "aliases": ["glyburide", "glibenclamid", "chlorpropamide"], "cat": "Sulfonylurea tác dụng dài", "flag": "Beers: TRÁNH — hạ đường huyết kéo dài. Ưu tiên SU tác dụng ngắn hoặc nhóm khác.", "source": "Beers 2023"},
-    {"drug": "ibuprofen", "aliases": ["naproxen", "diclofenac", "meloxicam", "ketorolac", "nsaid", "khang viem khong steroid"], "cat": "NSAID", "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch.", "source": "Beers 2023 / STOPP v3"},
-    {"drug": "omeprazole", "aliases": ["esomeprazole", "pantoprazole", "lansoprazole", "rabeprazole", "ppi"], "cat": "PPI", "flag": "Beers: TRÁNH dùng >8 tuần trừ chỉ định nguy cơ cao — C. difficile, gãy xương, thiếu B12.", "source": "Beers 2023"},
-    {"drug": "haloperidol", "aliases": ["olanzapine", "risperidone", "quetiapine", "antipsychotic"], "cat": "Chống loạn thần", "flag": "Beers: TRÁNH ở sa sút trí tuệ (tăng tử vong, đột quỵ — cảnh báo khung đen). Chỉ khi thật cần.", "source": "Beers 2023"},
-    {"drug": "gabapentin", "aliases": ["pregabalin", "gabapentinoid"], "cat": "Gabapentinoid", "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR.", "source": "Beers 2023"},
-    {"drug": "tramadol", "aliases": [], "cat": "Opioid", "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón (chung nhóm opioid); RIÊNG tramadol còn hạ ngưỡng co giật & nguy cơ hạ natri/serotonin (không áp dụng các opioid khác).", "source": "STOPP v3 / Beers 2023"},
-    {"drug": "opioid (khác tramadol)", "aliases": ["codeine", "morphine", "oxycodone", "fentanyl", "opioid"], "cat": "Opioid", "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)", "source": "STOPP v3 / Beers 2023"},
-    {"drug": "cyclobenzaprine", "aliases": ["tizanidine", "eperisone", "muscle relaxant", "gian co"], "cat": "Giãn cơ", "flag": "Beers: TRÁNH — kháng cholinergic, an thần, té ngã; hiệu quả hạn chế.", "source": "Beers 2023"},
-    {"drug": "doxazosin", "aliases": ["prazosin", "terazosin", "methyldopa"], "cat": "Hạ áp tác dụng phụ tư thế", "flag": "Beers: TRÁNH làm hạ áp thường quy — hạ HA tư thế. (Alpha-blocker vẫn dùng cho triệu chứng TLT.)", "source": "Beers 2023"},
-    {"drug": "digoxin", "aliases": ["digoxin"], "cat": "Glycoside tim", "flag": "Beers: TRÁNH liều >0,125 mg/ngày — độc tính; theo dõi chức năng thận & điện giải.", "source": "Beers 2023"},
-    {"drug": "nitrofurantoin", "aliases": ["nitrofurantoin"], "cat": "Kháng sinh", "flag": "Beers: TRÁNH nếu CrCl <30 hoặc dùng dài hạn — độc phổi/gan, kém hiệu quả khi suy thận.", "source": "Beers 2023"},
-    {"drug": "spironolactone", "aliases": ["eplerenone", "amiloride"], "cat": "Lợi tiểu giữ kali", "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin.", "source": "STOPP v3"},
-    {"drug": "insulin sliding scale", "aliases": ["sliding scale insulin", "insulin thang truot"], "cat": "Insulin", "flag": "Beers: TRÁNH phác đồ insulin thang trượt đơn thuần — hạ đường huyết, không cải thiện kiểm soát.", "source": "Beers 2023"}
+    {
+      "drug": "amitriptyline",
+      "aliases": [
+        "amitriptylin",
+        "nortriptyline",
+        "imipramine"
+      ],
+      "cat": "TCA",
+      "flag": "Beers: TRÁNH ở người cao tuổi — kháng cholinergic mạnh, an thần, hạ HA tư thế, té ngã.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "diphenhydramine",
+      "aliases": [
+        "chlorpheniramine",
+        "clorpheniramin",
+        "hydroxyzine",
+        "promethazine"
+      ],
+      "cat": "Kháng histamine thế hệ 1",
+      "flag": "Beers: TRÁNH — kháng cholinergic, lú lẫn, té ngã.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "diazepam",
+      "aliases": [
+        "lorazepam",
+        "alprazolam",
+        "clonazepam",
+        "bromazepam",
+        "benzodiazepine"
+      ],
+      "cat": "Benzodiazepine",
+      "flag": "Beers: TRÁNH — té ngã, suy giảm nhận thức, lệ thuộc.",
+      "source": "Beers 2023 / STOPP v3"
+    },
+    {
+      "drug": "zolpidem",
+      "aliases": [
+        "zopiclone",
+        "eszopiclone"
+      ],
+      "cat": "Z-drug",
+      "flag": "Beers: TRÁNH — an thần, té ngã, lẫn.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "glibenclamide",
+      "aliases": [
+        "glyburide",
+        "glibenclamid",
+        "chlorpropamide",
+        "sulfonylurea",
+        "sulphonylurea"
+      ],
+      "cat": "Sulfonylurea tác dụng dài",
+      "flag": "Beers: TRÁNH — hạ đường huyết kéo dài. Ưu tiên SU tác dụng ngắn hoặc nhóm khác.",
+      "source": "Beers 2023",
+      "ghi_chu_khop": "Thêm 18/08/2026: alias theo TÊN NHÓM. Trước đó bảng chỉ có tên riêng (glibenclamide/glyburide/chlorpropamide) nên 3 dashboard bàn về 'sulfonylurea' ở người cao tuổi — gồm cả bản NguoiCaoTuoi_DaBenhLy và bản đái tháo đường 18/08 — KHÔNG hề được nhắc cờ Beers này. CHỈ mở rộng cách KHỚP, KHÔNG thêm tiêu chí Beers mới."
+    },
+    {
+      "drug": "ibuprofen",
+      "aliases": [
+        "naproxen",
+        "diclofenac",
+        "meloxicam",
+        "ketorolac",
+        "nsaid",
+        "khang viem khong steroid"
+      ],
+      "cat": "NSAID",
+      "flag": "Beers: TRÁNH dùng kéo dài — xuất huyết tiêu hóa, suy thận, giữ dịch/suy tim. Thận trọng CKD/tim mạch.",
+      "source": "Beers 2023 / STOPP v3"
+    },
+    {
+      "drug": "omeprazole",
+      "aliases": [
+        "esomeprazole",
+        "pantoprazole",
+        "lansoprazole",
+        "rabeprazole",
+        "ppi"
+      ],
+      "cat": "PPI",
+      "flag": "Beers: TRÁNH dùng >8 tuần trừ chỉ định nguy cơ cao — C. difficile, gãy xương, thiếu B12.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "haloperidol",
+      "aliases": [
+        "olanzapine",
+        "risperidone",
+        "quetiapine",
+        "antipsychotic"
+      ],
+      "cat": "Chống loạn thần",
+      "flag": "Beers: TRÁNH ở sa sút trí tuệ (tăng tử vong, đột quỵ — cảnh báo khung đen). Chỉ khi thật cần.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "gabapentin",
+      "aliases": [
+        "pregabalin",
+        "gabapentinoid"
+      ],
+      "cat": "Gabapentinoid",
+      "flag": "Beers 2023: THẬN TRỌNG — an thần, té ngã, suy hô hấp khi PHỐI HỢP opioid; chỉnh liều theo eGFR.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "tramadol",
+      "aliases": [],
+      "cat": "Opioid",
+      "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón (chung nhóm opioid); RIÊNG tramadol còn hạ ngưỡng co giật & nguy cơ hạ natri/serotonin (không áp dụng các opioid khác).",
+      "source": "STOPP v3 / Beers 2023"
+    },
+    {
+      "drug": "opioid (khác tramadol)",
+      "aliases": [
+        "codeine",
+        "morphine",
+        "oxycodone",
+        "fentanyl",
+        "opioid"
+      ],
+      "cat": "Opioid",
+      "flag": "STOPP v3 / Beers: THẬN TRỌNG — té ngã, sảng, táo bón. (Nguy cơ hạ ngưỡng co giật/hạ natri/serotonin là ĐẶC HIỆU tramadol — xem cờ riêng nếu có tramadol.)",
+      "source": "STOPP v3 / Beers 2023"
+    },
+    {
+      "drug": "cyclobenzaprine",
+      "aliases": [
+        "tizanidine",
+        "eperisone",
+        "muscle relaxant",
+        "gian co"
+      ],
+      "cat": "Giãn cơ",
+      "flag": "Beers: TRÁNH — kháng cholinergic, an thần, té ngã; hiệu quả hạn chế.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "doxazosin",
+      "aliases": [
+        "prazosin",
+        "terazosin",
+        "methyldopa"
+      ],
+      "cat": "Hạ áp tác dụng phụ tư thế",
+      "flag": "Beers: TRÁNH làm hạ áp thường quy — hạ HA tư thế. (Alpha-blocker vẫn dùng cho triệu chứng TLT.)",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "digoxin",
+      "aliases": [
+        "digoxin"
+      ],
+      "cat": "Glycoside tim",
+      "flag": "Beers: TRÁNH liều >0,125 mg/ngày — độc tính; theo dõi chức năng thận & điện giải.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "nitrofurantoin",
+      "aliases": [
+        "nitrofurantoin"
+      ],
+      "cat": "Kháng sinh",
+      "flag": "Beers: TRÁNH nếu CrCl <30 hoặc dùng dài hạn — độc phổi/gan, kém hiệu quả khi suy thận.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "spironolactone",
+      "aliases": [
+        "eplerenone",
+        "amiloride"
+      ],
+      "cat": "Lợi tiểu giữ kali",
+      "flag": "STOPP v3: THẬN TRỌNG phối hợp ACEi/ARB hoặc kali — tăng kali máu; theo dõi K+ & creatinin.",
+      "source": "STOPP v3"
+    },
+    {
+      "drug": "insulin sliding scale",
+      "aliases": [
+        "sliding scale insulin",
+        "insulin thang truot"
+      ],
+      "cat": "Insulin",
+      "flag": "Beers: TRÁNH phác đồ insulin thang trượt đơn thuần — hạ đường huyết, không cải thiện kiểm soát.",
+      "source": "Beers 2023"
+    },
+    {
+      "drug": "ciprofloxacin",
+      "aliases": [
+        "levofloxacin",
+        "moxifloxacin",
+        "ofloxacin",
+        "quinolon",
+        "fluoroquinolone"
+      ],
+      "cat": "AWaRe-Watch",
+      "flag": "WHO AWaRe: nhóm WATCH — nguy cơ đề kháng cao; chỉ dùng khi chỉ định rõ, ưu tiên nhóm Access nếu đủ. FQ còn cảnh báo gân/QT/thần kinh.",
+      "source": "WHO AWaRe classification 2023 (WHO/MHP/HPS/EML/2023.04)"
+    },
+    {
+      "drug": "azithromycin",
+      "aliases": [
+        "clarithromycin",
+        "macrolide"
+      ],
+      "cat": "AWaRe-Watch",
+      "flag": "WHO AWaRe: nhóm WATCH — hạn chế dùng theo kinh nghiệm cho nhiễm khuẩn hô hấp không biến chứng; kiểm tương tác QT.",
+      "source": "WHO AWaRe classification 2023"
+    },
+    {
+      "drug": "ceftriaxone",
+      "aliases": [
+        "cefixime",
+        "cefpodoxime",
+        "cephalosporin thế hệ 3",
+        "c3g"
+      ],
+      "cat": "AWaRe-Watch",
+      "flag": "WHO AWaRe: nhóm WATCH — cephalosporin thế hệ 3 dùng rộng làm tăng ESBL; cân nhắc Access (amoxicillin±clavulanate) khi phù hợp.",
+      "source": "WHO AWaRe classification 2023"
+    },
+    {
+      "drug": "linezolid",
+      "aliases": [
+        "colistin",
+        "vancomycin uống",
+        "fosfomycin tiêm"
+      ],
+      "cat": "AWaRe-Reserve",
+      "flag": "WHO AWaRe: nhóm RESERVE — kháng sinh dự trữ cuối; ngoại trú gần như không có chỉ định khởi trị, cần hội chẩn.",
+      "source": "WHO AWaRe classification 2023"
+    }
   ]
 }

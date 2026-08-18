@@ -129,7 +129,11 @@ def main() -> int:
     ap.add_argument("--file", help="chỉ một dashboard")
     ap.add_argument("--gioi-han", type=int, help="chỉ xử lý N mục đầu")
     ap.add_argument("--tu-nam", type=int, help="chỉ tính bài công bố từ năm này trở đi")
+    ap.add_argument("--gom-consider", action="store_true",
+                    help="dò CẢ mục decision='consider' (mặc định chỉ 'apply'). Cần khi gói mới thẩm định trên tóm tắt nên chưa mục nào ở 'apply'.")
     a = ap.parse_args()
+    _pham_vi = {"apply", "consider"} if a.gom_consider else {"apply"}
+    _nhan_pham_vi = "'apply'+'consider'" if a.gom_consider else "'apply'"
 
     spec = importlib.util.spec_from_file_location("vd_vq", DASH / "tools" / "verify_dashboard.py")
     vd = importlib.util.module_from_spec(spec)
@@ -145,7 +149,8 @@ def main() -> int:
         if not blk:
             continue
         for c in vd.split_items(blk):
-            if vd.field(c, "decision") != "apply":
+            _dec = vd.field(c, "decision")
+            if _dec not in _pham_vi:
                 continue
             pm = vd.field(c, "pmid")
             if pm:
@@ -161,7 +166,7 @@ def main() -> int:
     if a.gioi_han:
         ds = ds[:a.gioi_han]
 
-    print(f"Dò {len(ds)} PMID đang ở decision='apply' (trên {len(muc)} lượt dùng)…")
+    print(f"Dò {len(ds)} PMID ở decision {_nhan_pham_vi} (trên {len(muc)} lượt dùng)…")
     co = 0
     hong = 0
     ket: list[tuple] = []
@@ -178,12 +183,23 @@ def main() -> int:
         time.sleep(0.34)   # tôn trọng hạn mức 3 lời gọi/giây của NCBI khi không có API key
 
     print("\n" + "=" * 70)
+    # VÁ 18/08/2026 — KHÔNG ĐO ĐƯỢC GÌ THÌ KHÔNG ĐƯỢC IN XANH.
+    # Bản cũ: lọc apply-only rồi `if not ket` ⇒ gói KHÔNG có mục 'apply' nào (vd gói mới
+    # thẩm định trên TÓM TẮT nên toàn bộ ở 'consider') vẫn nhận 🟢 "không thấy bài mới hơn"
+    # — trong khi thực tế nó chưa tra một PMID nào. Đúng họ lỗi BH32: một chỉ số GỘP được
+    # trình bày như kết luận về toàn bộ. Nay tách rời "đã đo, không thấy" khỏi "chưa đo".
+    if not ds:
+        print("  ⚪ CHƯA ĐO ĐƯỢC GÌ — không có mục nào khớp phạm vi %s." % _nhan_pham_vi)
+        print("     Đây KHÔNG phải kết luận 'chứng cứ còn mới'. Gói mà mọi mục còn ở")
+        print("     'consider' (vd mới thẩm định trên tóm tắt) sẽ luôn rơi vào đây.")
+        print("     Chạy lại với --gom-consider để thật sự dò. Cần bác sĩ kiểm chứng.")
+        return 0
     if not ket:
-        print("  🟢 Không thấy tổng quan/gộp/guideline nào MỚI HƠN cho các mục đang 'apply'.")
+        print("  🟢 Đã dò %d PMID, không thấy tổng quan/gộp/guideline nào MỚI HƠN." % len(ds))
         print("     (Không chứng minh chứng cứ còn đúng — chỉ nghĩa là PubMed không trả bài")
         print("      tổng quan mới hơn nào liên quan. Cần bác sĩ kiểm chứng.)")
         return 0
-    print(f"  🟠 {len(ket)}/{len(ds)} mục 'apply' có chứng cứ TỔNG HỢP MỚI HƠN — nên đọc lại")
+    print(f"  🟠 {len(ket)}/{len(ds)} mục có chứng cứ TỔNG HỢP MỚI HƠN — nên đọc lại")
     print("=" * 70)
     print("  Bài mới hơn có thể CỦNG CỐ hoặc BÁC kết luận đang dùng. Máy KHÔNG đọc nội dung")
     print("  và KHÔNG phán chiều — đây chỉ là danh sách đáng đọc.\n")
