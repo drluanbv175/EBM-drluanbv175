@@ -90,7 +90,19 @@ def main() -> int:
         # L2 chỉ áp cho thứ bác sĩ GÕ `/` GỌI TRỰC TIẾP. Agent do nhạc trưởng điều
         # phối gọi, mô tả của nó phục vụ việc định tuyến chứ không phải để bác sĩ
         # đọc rồi quyết định — đòi "Dùng khi" ở đó chỉ tạo câu chữ gượng ép.
-        if tier == 1 and i["kind"] != "agent" and not re.search(r"\bDùng\s+\S", d):
+        #
+        # Thu hẹp thêm 18/08/2026 sau khi đo: trong 199 mục thiếu vế "Dùng khi",
+        # 38 mục là AGENT NỘI BỘ của plugin nhưng được ĐĂNG KÝ DƯỚI DẠNG SKILL
+        # (tên `*_agent`, vd abstract_bilingual_agent của dây chuyền ARS) nên lọt
+        # qua bộ lọc kind != "agent" ở trên; 36 mục nữa là công cụ LẬP TRÌNH nằm
+        # ngoài phạm vi y khoa. Cả hai nhóm bác sĩ không bao giờ gõ `/` gọi, nên
+        # bắt chúng khai "Dùng khi" chỉ sinh chữ thừa và làm loãng 125 cảnh báo
+        # THẬT ở nhóm skill y khoa.
+        ten = i["id"].rsplit(":", 1)[-1]
+        la_agent_noi_bo = ten.endswith(("_agent", "-agent"))
+        la_lap_trinh = d.startswith(("[Lập trình]", "[Codex]", "[Kỹ thuật]"))
+        if (tier == 1 and i["kind"] != "agent" and not la_agent_noi_bo
+                and not la_lap_trinh and not re.search(r"\bDùng\s+\S", d)):
             loi["L2 không nói dùng khi nào (skill/lệnh Tầng 1)"].append((i["id"], d[:70]))
         if "Từ khoá:" not in d:
             loi["L3 mất từ khoá kích hoạt"].append((i["id"], d[:70]))

@@ -4794,7 +4794,7 @@
     "vi": "[Thiết kế NC] Khung đề cương nghiên cứu lâm sàng cho 4 loại câu hỏi: chẩn đoán, hiệu quả, căn nguyên, tiên lượng; có tính cỡ mẫu kèm theo. Dùng khi cần bản nháp nhanh. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: clinical study protocol."
   },
   "skill:aipoch-medical-research:experiment-design": {
-    "vi": "[Thiết kế NC] Thiết kế thí nghiệm: cỡ mẫu, ngẫu nhiên hoá, nhóm chứng, làm mù, đề cương. Phủ RCT, bán thực nghiệm, giai thừa, A/B test, quan sát. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: experimental design."
+    "vi": "[Thiết kế NC] Thiết kế thí nghiệm: cỡ mẫu, ngẫu nhiên hoá, nhóm chứng, làm mù, đề cương. Phủ RCT, bán thực nghiệm, giai thừa, A/B test, quan sát. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi cần chốt thiết kế, cách ngẫu nhiên hoá và nhóm chứng trước khi thu thập bất kỳ dữ liệu nào. Từ khoá: experimental design."
   },
   "skill:aipoch-medical-research:case-control-study-planner": {
     "vi": "[Thiết kế NC] Dựng khung bệnh–chứng: logic quần thể nguồn, luật chọn nhóm chứng, ghép cặp, đo phơi nhiễm, chốt kiểm soát sai lệch. Dùng khi chọn thiết kế bệnh–chứng. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: case-control."
@@ -4803,190 +4803,190 @@
     "vi": "[Thiết kế NC] Đề cương thuần tập hồi cứu hoặc tiến cứu cho nghiên cứu lâm sàng. Dùng khi đã chốt thiết kế thuần tập chứ không còn ở mức ý tưởng. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: cohort protocol."
   },
   "skill:aipoch-medical-research:real-world-evidence-study-designer": {
-    "vi": "[Thiết kế NC] Thiết kế nghiên cứu dữ liệu đời thực (EHR, bảo hiểm, sổ bộ) với thời điểm 0, cửa sổ đủ điều kiện, định nghĩa phơi nhiễm–kết cục, kiểm duyệt và kiểm soát nhiễu. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: real-world evidence, RWE."
+    "vi": "[Thiết kế NC] Thiết kế nghiên cứu dữ liệu đời thực (EHR, bảo hiểm, sổ bộ) với thời điểm 0, cửa sổ đủ điều kiện, định nghĩa phơi nhiễm–kết cục, kiểm duyệt và kiểm soát nhiễu. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi làm nghiên cứu trên hồ sơ bệnh án hay dữ liệu bảo hiểm sẵn có, không thu thập mới. Từ khoá: real-world evidence, RWE."
   },
   "skill:aipoch-medical-research:adaptive-trial-simulator": {
     "vi": "[Thiết kế NC] Thiết kế và mô phỏng thử nghiệm thích ứng: phân tích giữa chừng, luật dừng, làm giàu quần thể, ước lượng lại cỡ mẫu. Dùng khi cân nhắc thiết kế adaptive. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: adaptive trial."
   },
   "skill:aipoch-medical-research:endpoint-definition-designer": {
-    "vi": "[Thiết kế NC] Chuyển mục tiêu thành kết cục chính–phụ–thăm dò có định nghĩa vận hành: luật xác định biến cố, thời điểm đánh giá, người phân xử. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: endpoint definition."
+    "vi": "[Thiết kế NC] Chuyển mục tiêu thành kết cục chính–phụ–thăm dò có định nghĩa vận hành: luật xác định biến cố, thời điểm đánh giá, người phân xử. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi mục tiêu nghiên cứu đã rõ nhưng chưa định nghĩa được thế nào là biến cố, đo lúc nào, ai phân xử. Từ khoá: endpoint definition."
   },
   "skill:aipoch-medical-research:inclusion-criteria-gen": {
-    "vi": "[Thiết kế NC] Sinh và tối ưu tiêu chuẩn chọn vào/loại ra sao cho cân bằng giữa chặt chẽ khoa học và khả năng tuyển đủ bệnh nhân. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: inclusion exclusion criteria."
+    "vi": "[Thiết kế NC] Sinh và tối ưu tiêu chuẩn chọn vào/loại ra sao cho cân bằng giữa chặt chẽ khoa học và khả năng tuyển đủ bệnh nhân. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi tiêu chuẩn chọn bệnh nhân đang quá chặt khiến không tuyển đủ, hoặc quá lỏng khiến mẫu tạp. Từ khoá: inclusion exclusion criteria."
   },
   "skill:aipoch-medical-research:inclusion-exclusion-criteria-builder": {
-    "vi": "[Thiết kế NC] Dựng tiêu chuẩn chọn vào/loại ra rõ ràng, thực thi được và kiểm toán được, gắn thẳng vào quy trình sàng lọc. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: eligibility criteria."
+    "vi": "[Thiết kế NC] Dựng tiêu chuẩn chọn vào/loại ra rõ ràng, thực thi được và kiểm toán được, gắn thẳng vào quy trình sàng lọc. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi bắt đầu viết đề cương và cần tiêu chuẩn chọn bệnh nhân đủ chặt để người khác lặp lại được. Từ khoá: eligibility criteria."
   },
   "skill:aipoch-medical-research:confounder-and-bias-control-planner": {
     "vi": "[Thiết kế NC] Lập kế hoạch kiểm soát nhiễu, chọn biến hiệu chỉnh và chiến lược giảm sai lệch NGAY từ giai đoạn đề cương. Dùng cho NC quan sát, dịch tễ, dấu ấn sinh học. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: confounding, bias control."
   },
   "skill:aipoch-medical-research:randomization-gen": {
-    "vi": "[Thiết kế NC] Sinh dãy phân nhóm ngẫu nhiên cho RCT: đơn giản, theo khối, phân tầng; xuất danh sách niêm phong phục vụ che giấu phân nhóm. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: randomization, allocation concealment."
+    "vi": "[Thiết kế NC] Sinh dãy phân nhóm ngẫu nhiên cho RCT: đơn giản, theo khối, phân tầng; xuất danh sách niêm phong phục vụ che giấu phân nhóm. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi chuẩn bị chạy một thử nghiệm ngẫu nhiên và cần dãy phân nhóm cùng cách che giấu. Từ khoá: randomization, allocation concealment."
   },
   "skill:aipoch-medical-research:validation-strategy-designer": {
-    "vi": "[Thiết kế NC] Thiết kế chiến lược kiểm định nội bộ, ngoại bộ, theo thời gian và theo chức năng, chốt ngay ở giai đoạn đề cương. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: validation strategy."
+    "vi": "[Thiết kế NC] Thiết kế chiến lược kiểm định nội bộ, ngoại bộ, theo thời gian và theo chức năng, chốt ngay ở giai đoạn đề cương. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi cần chốt cách kiểm định ngay từ đề cương, trước khi có dữ liệu. Từ khoá: validation strategy."
   },
   "skill:aipoch-medical-research:feasibility-aware-study-planner": {
     "vi": "[Thiết kế NC] Rút gọn đề tài về bản THỰC THI ĐƯỢC theo ràng buộc mẫu, thời gian, kinh phí, quyền truy cập dữ liệu và năng lực nhóm. Dùng khi đề tài quá tham vọng so với nguồn lực. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: feasibility."
   },
   "skill:aipoch-medical-research:medical-research-gap-to-study-planner": {
-    "vi": "[Thiết kế NC] Chuyển một khoảng trống nghiên cứu đã thẩm định thành thiết kế đề tài hoàn chỉnh, truy vết được về đúng khoảng trống đó. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: research gap to study."
+    "vi": "[Thiết kế NC] Chuyển một khoảng trống nghiên cứu đã thẩm định thành thiết kế đề tài hoàn chỉnh, truy vết được về đúng khoảng trống đó. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi đã tìm ra khoảng trống y văn và cần biến nó thành thiết kế đề tài cụ thể. Từ khoá: research gap to study."
   },
   "skill:aipoch-medical-research:primary-plan-recommender": {
-    "vi": "[Thiết kế NC] So sánh nhiều hướng triển khai cho cùng một câu hỏi rồi chọn ra một phương án chính, nói rõ vì sao các hướng còn lại là phụ, non hoặc phụ thuộc quá nhiều. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: study route comparison."
+    "vi": "[Thiết kế NC] So sánh nhiều hướng triển khai cho cùng một câu hỏi rồi chọn ra một phương án chính, nói rõ vì sao các hướng còn lại là phụ, non hoặc phụ thuộc quá nhiều. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi có vài hướng làm cho cùng một câu hỏi và cần lý do rõ ràng để chọn một hướng chính. Từ khoá: study route comparison."
   },
   "skill:aipoch-medical-research:research-proposal-generator": {
-    "vi": "[Thiết kế NC] Sinh đề cương nghiên cứu đầy đủ từ một bài báo đầu vào: giả thuyết, kiểm chứng cơ chế, dự trù kinh phí. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: research proposal."
+    "vi": "[Thiết kế NC] Sinh đề cương nghiên cứu đầy đủ từ một bài báo đầu vào: giả thuyết, kiểm chứng cơ chế, dự trù kinh phí. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi có một bài báo làm điểm tựa và cần bản đề cương đầu tiên để bàn với nhóm. Từ khoá: research proposal."
   },
   "skill:aipoch-medical-research:tooluniverse-clinical-trial-design": {
-    "vi": "[Thiết kế NC] Đánh giá tính khả thi chiến lược của một thử nghiệm lâm sàng: quy mô quần thể, tần suất dấu ấn, chọn kết cục, chọn nhóm so sánh, giám sát an toàn, lộ trình pháp quy. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial feasibility."
+    "vi": "[Thiết kế NC] Đánh giá tính khả thi chiến lược của một thử nghiệm lâm sàng: quy mô quần thể, tần suất dấu ấn, chọn kết cục, chọn nhóm so sánh, giám sát an toàn, lộ trình pháp quy. Đề tài thật đi qua `dieu-phoi-nghien-cuu` để có cổng G0–G10. Dùng khi cân nhắc có nên khởi động một thử nghiệm hay không, trước khi đầu tư nguồn lực. Từ khoá: trial feasibility."
   },
   "skill:aipoch-medical-research:protocol-standardization": {
-    "vi": "[Thiết kế NC] Chuẩn hoá các bước thí nghiệm rời rạc thành tài liệu quy trình tái lặp được; tham số thiếu bị đánh dấu rõ chứ không tự bịa. Từ khoá: protocol standardization, SOP."
+    "vi": "[Thiết kế NC] Chuẩn hoá các bước thí nghiệm rời rạc thành tài liệu quy trình tái lặp được; tham số thiếu bị đánh dấu rõ chứ không tự bịa. Dùng khi các bước làm đang nằm rải rác trong ghi chép và cần gom thành quy trình người khác lặp lại được. Từ khoá: protocol standardization, SOP."
   },
   "skill:aipoch-medical-research:sop-writer": {
-    "vi": "[Thiết kế NC] Viết quy trình thao tác chuẩn (SOP) theo GCP cho phòng xét nghiệm, lâm sàng hoặc nghiên cứu, có vai trò, bước và điểm kiểm soát. Từ khoá: SOP, GCP."
+    "vi": "[Thiết kế NC] Viết quy trình thao tác chuẩn (SOP) theo GCP cho phòng xét nghiệm, lâm sàng hoặc nghiên cứu, có vai trò, bước và điểm kiểm soát. Dùng khi quy trình đã chạy ổn định và cần viết thành SOP để bàn giao hoặc phục vụ kiểm tra. Từ khoá: SOP, GCP."
   },
   "skill:aipoch-medical-research:research-grants": {
     "vi": "[Viết bài] Viết hồ sơ xin tài trợ theo yêu cầu của NSF, NIH, DOE, DARPA, NSTC Đài Loan: thuyết minh, dự trù kinh phí, bám tiêu chí chấm. Dùng khi nộp theo một FOA/BAA cụ thể. Từ khoá: grant proposal."
   },
   "skill:aipoch-medical-research:sample-size-and-power-planning-assistant": {
-    "vi": "[Cỡ mẫu] Lập logic ước lượng cỡ mẫu, giả định lực mẫu, kiểm khả thi và phương án tuyển dự phòng ở mức đề cương. ⚠️ Cỡ mẫu của đề tài thật phải qua `co-mau-nghien-cuu` + `g3_quality_gate.py`. Từ khoá: sample size, power."
+    "vi": "[Cỡ mẫu] Lập logic ước lượng cỡ mẫu, giả định lực mẫu, kiểm khả thi và phương án tuyển dự phòng ở mức đề cương. ⚠️ Cỡ mẫu của đề tài thật phải qua `co-mau-nghien-cuu` + `g3_quality_gate.py`. Dùng khi cần con số cỡ mẫu ở mức nháp để bàn với nhóm, trước khi tính chính thức. Từ khoá: sample size, power."
   },
   "skill:aipoch-medical-research:sample-size-basic": {
-    "vi": "[Cỡ mẫu] Tính nhanh N mỗi nhóm và tổng cho t-test hai mẫu/bắt cặp, khi bình phương và so sánh tỷ lệ; báo alpha, power, effect size. ⚠️ Chỉ để ước lượng nháp — đề tài thật phải qua `co-mau-nghien-cuu` + `g3_quality_gate.py`. Từ khoá: sample size calculator."
+    "vi": "[Cỡ mẫu] Tính nhanh N mỗi nhóm và tổng cho t-test hai mẫu/bắt cặp, khi bình phương và so sánh tỷ lệ; báo alpha, power, effect size. ⚠️ Chỉ để ước lượng nháp — đề tài thật phải qua `co-mau-nghien-cuu` + `g3_quality_gate.py`. Dùng khi cần một con số nhanh cho thiết kế đơn giản, không phải bản nộp Hội đồng. Từ khoá: sample size calculator."
   },
   "skill:aipoch-medical-research:meta-analysis": {
-    "vi": "[Tổng quan/Gộp] Chạy phân tích gộp định lượng: tính effect size, forest plot, funnel plot, đánh giá tính không đồng nhất. ⚠️ Tổng quan để công bố đi qua `tong-quan-y-van` + `meta-phan-tich`. Từ khoá: meta-analysis, forest plot."
+    "vi": "[Tổng quan/Gộp] Chạy phân tích gộp định lượng: tính effect size, forest plot, funnel plot, đánh giá tính không đồng nhất. ⚠️ Tổng quan để công bố đi qua `tong-quan-y-van` + `meta-phan-tich`. Dùng khi đã trích xuất xong số liệu từ các nghiên cứu và cần gộp lại. Từ khoá: meta-analysis, forest plot."
   },
   "skill:aipoch-medical-research:meta-protocol-writer": {
-    "vi": "[Tổng quan/Gộp] Sinh đề cương phân tích gộp đúng chuẩn PROSPERO từ tên đề tài và PICOS. ⚠️ Đề cương nộp thật đi qua `tong-quan-y-van`. Từ khoá: PROSPERO protocol."
+    "vi": "[Tổng quan/Gộp] Sinh đề cương phân tích gộp đúng chuẩn PROSPERO từ tên đề tài và PICOS. ⚠️ Đề cương nộp thật đi qua `tong-quan-y-van`. Dùng khi cần bản đề cương phân tích gộp để đăng ký trước khi sàng lọc. Từ khoá: PROSPERO protocol."
   },
   "skill:aipoch-medical-research:prospero-registration-helper": {
-    "vi": "[Tổng quan/Gộp] Soạn nội dung đăng ký PROSPERO cho phân tích gộp từ tên đề tài và đề cương (nếu có). ⚠️ Bản nộp thật cần `dao-duc-dang-ky` rà trước. Từ khoá: PROSPERO registration."
+    "vi": "[Tổng quan/Gộp] Soạn nội dung đăng ký PROSPERO cho phân tích gộp từ tên đề tài và đề cương (nếu có). ⚠️ Bản nộp thật cần `dao-duc-dang-ky` rà trước. Dùng khi chuẩn bị đăng ký tổng quan hệ thống trước lúc bắt đầu sàng lọc. Từ khoá: PROSPERO registration."
   },
   "skill:aipoch-medical-research:inplasy-registration-helper": {
-    "vi": "[Tổng quan/Gộp] Soạn nội dung đăng ký INPLASY cho tổng quan hệ thống/phân tích gộp — dùng khi PROSPERO từ chối hoặc quá tải. ⚠️ Bản nộp thật cần `dao-duc-dang-ky` rà trước. Từ khoá: INPLASY registration."
+    "vi": "[Tổng quan/Gộp] Soạn nội dung đăng ký INPLASY cho tổng quan hệ thống hoặc phân tích gộp. Dùng khi PROSPERO từ chối hoặc quá tải và cần nơi đăng ký thay thế. ⚠️ Bản nộp thật cần `dao-duc-dang-ky` rà trước. Từ khoá: INPLASY registration."
   },
   "skill:aipoch-medical-research:mendelian-randomization-protocol-designer": {
     "vi": "[Nhân quả di truyền] Thiết kế nghiên cứu ngẫu nhiên hoá Mendel (MR) hoàn chỉnh từ một cặp phơi nhiễm–kết cục. Dùng khi muốn suy luận nhân quả bằng biến công cụ di truyền. Từ khoá: Mendelian randomization."
   },
   "skill:aipoch-medical-research:two-sample-mr-research-planner": {
-    "vi": "[Nhân quả di truyền] Thiết kế MR hai mẫu (two-sample MR) từ một hướng nghiên cứu, dùng số liệu tóm tắt GWAS để kiểm quan hệ nhân quả. Từ khoá: two-sample MR."
+    "vi": "[Nhân quả di truyền] Thiết kế MR hai mẫu (two-sample MR) từ một hướng nghiên cứu, dùng số liệu tóm tắt GWAS để kiểm quan hệ nhân quả. Dùng khi có sẵn số liệu tóm tắt GWAS và muốn kiểm một quan hệ nhân quả cụ thể. Từ khoá: two-sample MR."
   },
   "skill:aipoch-medical-research:two-sample-mr-exposure-screening-reference-grounded": {
-    "vi": "[Nhân quả di truyền] Thiết kế MR hai mẫu theo lối SÀNG phơi nhiễm: cố định kết cục, quét cả một họ phơi nhiễm, kèm hướng kiểm định độ vững. Từ khoá: MR exposure screening."
+    "vi": "[Nhân quả di truyền] Thiết kế MR hai mẫu theo lối SÀNG phơi nhiễm: cố định kết cục, quét cả một họ phơi nhiễm, kèm hướng kiểm định độ vững. Dùng khi cố định một kết cục và muốn quét hàng loạt phơi nhiễm xem cái nào có nhân quả. Từ khoá: MR exposure screening."
   },
   "skill:aipoch-medical-research:bidirectional-multi-phenotype-mr-research-planner": {
-    "vi": "[Nhân quả di truyền] Thiết kế MR hai chiều đa kiểu hình từ một họ phơi nhiễm và một họ kết cục — trả lời cả chiều thuận lẫn chiều ngược. Từ khoá: bidirectional MR."
+    "vi": "[Nhân quả di truyền] Thiết kế MR hai chiều đa kiểu hình từ một họ phơi nhiễm và một họ kết cục — trả lời cả chiều thuận lẫn chiều ngược. Dùng khi nghi quan hệ nhân quả có thể chạy cả hai chiều, không chắc đâu là nguyên nhân đâu là hậu quả. Từ khoá: bidirectional MR."
   },
   "skill:aipoch-medical-research:mr-scrna-research-planner": {
-    "vi": "[Nhân quả di truyền] Thiết kế nghiên cứu ghép MR với phiên mã đơn tế bào (scRNA-seq): tìm nhân quả rồi định vị về loại tế bào. Từ khoá: MR + scRNA-seq."
+    "vi": "[Nhân quả di truyền] Thiết kế nghiên cứu ghép MR với phiên mã đơn tế bào (scRNA-seq): tìm nhân quả rồi định vị về loại tế bào. Dùng khi muốn vừa chứng minh nhân quả vừa chỉ ra loại tế bào nào chịu trách nhiệm. Từ khoá: MR + scRNA-seq."
   },
   "skill:aipoch-medical-research:qtl-colocalization-study-planner": {
-    "vi": "[Nhân quả di truyền] Thiết kế nghiên cứu đồng định vị QTL: nối tín hiệu eQTL/pQTL/sQTL với locus GWAS để hỏi hai tín hiệu có chung một biến nhân quả không. Từ khoá: colocalization, QTL."
+    "vi": "[Nhân quả di truyền] Thiết kế nghiên cứu đồng định vị QTL: nối tín hiệu eQTL/pQTL/sQTL với locus GWAS để hỏi hai tín hiệu có chung một biến nhân quả không. Dùng khi có một locus GWAS và muốn biết nó tác động qua gen nào. Từ khoá: colocalization, QTL."
   },
   "skill:aipoch-medical-research:faers-pharmacovigilance-disproportionality-research-planner": {
-    "vi": "[Dược cảnh giác] Thiết kế nghiên cứu tín hiệu bất tương xứng trên FAERS từ nhóm thuốc, chiến lược so sánh, nhóm biến cố bất lợi và phân tầng bệnh nhân. Từ khoá: FAERS, disproportionality."
+    "vi": "[Dược cảnh giác] Thiết kế nghiên cứu tín hiệu bất tương xứng trên FAERS từ nhóm thuốc, chiến lược so sánh, nhóm biến cố bất lợi và phân tầng bệnh nhân. Dùng khi nghi một thuốc gây biến cố bất lợi và muốn dò tín hiệu trên dữ liệu báo cáo thật. Từ khoá: FAERS, disproportionality."
   },
   "skill:aipoch-medical-research:single-drug-faers-safety-profile-research-planner": {
-    "vi": "[Dược cảnh giác] Thiết kế nghiên cứu FAERS lập BẢN ĐỒ an toàn trọn hồ sơ cho MỘT thuốc: dò tín hiệu, phân tầng, thời điểm khởi phát, mức nghiêm trọng, diễn giải khoảng trống nhãn thuốc. Từ khoá: FAERS safety profile."
+    "vi": "[Dược cảnh giác] Thiết kế nghiên cứu FAERS lập BẢN ĐỒ an toàn trọn hồ sơ cho MỘT thuốc: dò tín hiệu, phân tầng, thời điểm khởi phát, mức nghiêm trọng, diễn giải khoảng trống nhãn thuốc. Dùng khi cần bức tranh an toàn trọn vẹn của một thuốc, không chỉ một biến cố lẻ. Từ khoá: FAERS safety profile."
   },
   "skill:aipoch-medical-research:faers-multi-drug-soc-planner": {
-    "vi": "[Dược cảnh giác] Thiết kế so sánh an toàn NHIỀU thuốc trong một nhóm cơ quan (SOC) trên FAERS, từ bộ thuốc và nhóm biến cố cho trước. Từ khoá: FAERS multi-drug SOC."
+    "vi": "[Dược cảnh giác] Thiết kế so sánh an toàn NHIỀU thuốc trong một nhóm cơ quan (SOC) trên FAERS, từ bộ thuốc và nhóm biến cố cho trước. Dùng khi cần so an toàn cả một nhóm thuốc chứ không phải từng thuốc riêng lẻ. Từ khoá: FAERS multi-drug SOC."
   },
   "skill:aipoch-medical-research:active-comparator-single-soc-faers-safety-comparison": {
-    "vi": "[Dược cảnh giác] Thiết kế so sánh an toàn FAERS theo lối NHÓM CHỨNG CHỦ ĐỘNG (active comparator) trong một SOC định trước — giảm sai lệch so với so sánh với toàn cơ sở dữ liệu. Từ khoá: active comparator, FAERS."
+    "vi": "[Dược cảnh giác] Thiết kế so sánh an toàn FAERS theo lối NHÓM CHỨNG CHỦ ĐỘNG (active comparator) trong một SOC định trước — giảm sai lệch so với so sánh với toàn cơ sở dữ liệu. Dùng khi so an toàn hai thuốc cùng nhóm và muốn tránh sai lệch của lối so với toàn cơ sở dữ liệu. Từ khoá: active comparator, FAERS."
   },
   "skill:aipoch-medical-research:network-tox-docking-research-planner": {
-    "vi": "[Độc chất mạng] Thiết kế nghiên cứu độc chất mạng ghép mô phỏng gắn kết phân tử (docking) cho một chất độc và một bệnh/kiểu hình. Từ khoá: network toxicology, molecular docking."
+    "vi": "[Độc chất mạng] Thiết kế nghiên cứu độc chất mạng ghép mô phỏng gắn kết phân tử (docking) cho một chất độc và một bệnh/kiểu hình. Dùng khi muốn bổ sung bằng chứng gắn kết phân tử cho một giả thuyết độc chất mạng. Từ khoá: network toxicology, molecular docking."
   },
   "skill:aipoch-medical-research:single-compound-network-toxicology-disease-link-reference-grounded": {
-    "vi": "[Độc chất mạng] Thiết kế nghiên cứu độc chất mạng cho MỘT hợp chất – MỘT bệnh, có neo tài liệu tham chiếu và hướng kiểm chứng. Từ khoá: single compound network toxicology."
+    "vi": "[Độc chất mạng] Thiết kế nghiên cứu độc chất mạng cho MỘT hợp chất – MỘT bệnh, có neo tài liệu tham chiếu và hướng kiểm chứng. Dùng khi nghi một hợp chất cụ thể liên quan một bệnh cụ thể và cần dựng giả thuyết cơ chế. Từ khoá: single compound network toxicology."
   },
   "skill:aipoch-medical-research:comparative-network-toxicology-shared-mechanism-reference-grounded": {
-    "vi": "[Độc chất mạng] Thiết kế so sánh độc chất mạng cho HAI phơi nhiễm cùng một kết cục, đi tìm cơ chế chung. Từ khoá: comparative network toxicology."
+    "vi": "[Độc chất mạng] Thiết kế so sánh độc chất mạng cho HAI phơi nhiễm cùng một kết cục, đi tìm cơ chế chung. Dùng khi hai phơi nhiễm khác nhau cùng gây một hậu quả và muốn biết chúng có chung đường không. Từ khoá: comparative network toxicology."
   },
   "skill:aipoch-medical-research:single-drug-adverse-effect-hub-first-network-pharmacology": {
-    "vi": "[Độc chất mạng] Thiết kế dược lý mạng giải thích tác dụng bất lợi của một thuốc theo lối HUB-TRƯỚC: tìm gen trung tâm rồi mới suy ra con đường. Từ khoá: network pharmacology, hub gene."
+    "vi": "[Độc chất mạng] Thiết kế dược lý mạng giải thích tác dụng bất lợi của một thuốc theo lối HUB-TRƯỚC: tìm gen trung tâm rồi mới suy ra con đường. Dùng khi muốn giải thích tác dụng phụ của một thuốc và chưa biết bắt đầu từ gen nào. Từ khoá: network pharmacology, hub gene."
   },
   "skill:aipoch-medical-research:single-drug-adverse-effect-pathway-anchored-network-pharmacology": {
-    "vi": "[Độc chất mạng] Thiết kế dược lý mạng giải thích tác dụng bất lợi của một thuốc theo lối NEO CON ĐƯỜNG: cố định pathway trước rồi mới xét gen. Từ khoá: network pharmacology, pathway."
+    "vi": "[Độc chất mạng] Thiết kế dược lý mạng giải thích tác dụng bất lợi của một thuốc theo lối NEO CON ĐƯỜNG: cố định pathway trước rồi mới xét gen. Dùng khi đã nghi sẵn một con đường sinh học và muốn kiểm nó trước. Từ khoá: network pharmacology, pathway."
   },
   "skill:aipoch-medical-research:bioinfo-analysis-plan": {
-    "vi": "[Tin sinh học] Bóc quy trình phân tích từ MỘT bài báo cụ thể rồi dựng kế hoạch tương ứng cho đề tài của mình. Chỉ chạy khi bác sĩ chỉ đích danh bài báo. Từ khoá: pipeline extraction."
+    "vi": "[Tin sinh học] Bóc quy trình phân tích từ MỘT bài báo cụ thể rồi dựng kế hoạch tương ứng cho đề tài của mình. Chỉ chạy khi bác sĩ chỉ đích danh bài báo. Dùng khi đọc được một bài báo có quy trình phân tích ưng ý và muốn làm theo trên dữ liệu của mình. Từ khoá: pipeline extraction."
   },
   "skill:aipoch-medical-research:bulk-omics-integrative-planner": {
-    "vi": "[Tin sinh học] Thiết kế kế hoạch tích hợp bulk transcriptomics, proteomics, metabolomics từ một hướng nghiên cứu y sinh. Từ khoá: bulk omics integration."
+    "vi": "[Tin sinh học] Thiết kế kế hoạch tích hợp bulk transcriptomics, proteomics, metabolomics từ một hướng nghiên cứu y sinh. Dùng khi có sẵn nhiều tầng dữ liệu omics của cùng một nhóm mẫu và chưa biết ghép chúng ra sao. Từ khoá: bulk omics integration."
   },
   "skill:aipoch-medical-research:multi-omics-clinical-integration-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu tích hợp biến số LÂM SÀNG với dữ liệu đa omics. Từ khoá: multi-omics clinical integration."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu tích hợp biến số LÂM SÀNG với dữ liệu đa omics. Dùng khi có cả dữ liệu omics lẫn biến số lâm sàng của cùng nhóm bệnh nhân. Từ khoá: multi-omics clinical integration."
   },
   "skill:aipoch-medical-research:single-cell-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu đơn tế bào trọn gói từ một hướng y sinh: theo bệnh, theo cơ chế hoặc theo quần thể tế bào. Từ khoá: single-cell, scRNA-seq."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu đơn tế bào trọn gói từ một hướng y sinh: theo bệnh, theo cơ chế hoặc theo quần thể tế bào. Dùng khi bắt đầu một đề tài đơn tế bào và cần khung từ đầu tới cuối. Từ khoá: single-cell, scRNA-seq."
   },
   "skill:aipoch-medical-research:conventional-oncology-hub-gene-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn và gen trung tâm trên phiên mã khối u theo lối kinh điển, từ loại ung thư và hướng nghiên cứu. Từ khoá: oncology hub gene."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn và gen trung tâm trên phiên mã khối u theo lối kinh điển, từ loại ung thư và hướng nghiên cứu. Dùng khi bắt đầu đề tài dấu ấn khối u theo lối kinh điển và cần khung chuẩn. Từ khoá: oncology hub gene."
   },
   "skill:aipoch-medical-research:conventional-non-oncology-hub-gene-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu gen trung tâm cho bệnh KHÔNG phải ung thư, từ bối cảnh bệnh, họ gen/chủ đề sinh học và hướng kiểm chứng. Từ khoá: non-oncology hub gene."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu gen trung tâm cho bệnh KHÔNG phải ung thư, từ bối cảnh bệnh, họ gen/chủ đề sinh học và hướng kiểm chứng. Dùng khi bắt đầu một đề tài gen trung tâm cho bệnh không phải ung thư và cần khung chuẩn. Từ khoá: non-oncology hub gene."
   },
   "skill:aipoch-medical-research:single-gene-oncology-reference-grounded-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu ung thư xoay quanh MỘT gen ứng viên cố định, có neo tài liệu: biểu hiện, chức năng, hướng kiểm chứng. Từ khoá: single gene oncology."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu ung thư xoay quanh MỘT gen ứng viên cố định, có neo tài liệu: biểu hiện, chức năng, hướng kiểm chứng. Dùng khi đã khoá một gen ứng viên và cần dựng đề tài xoay quanh nó. Từ khoá: single gene oncology."
   },
   "skill:aipoch-medical-research:cross-disease-shared-biomarker-network-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn CHUNG giữa hai bệnh khác nhau trên nhiều bộ dữ liệu. Từ khoá: cross-disease shared biomarker."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn CHUNG giữa hai bệnh khác nhau trên nhiều bộ dữ liệu. Dùng khi nghi hai bệnh khác hẳn nhau chia sẻ một cơ chế phân tử. Từ khoá: cross-disease shared biomarker."
   },
   "skill:aipoch-medical-research:dual-disease-shared-transcriptome-biomarker-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn và gen trung tâm dùng chung trên phiên mã của một CẶP bệnh, theo một hướng sinh học chung. Từ khoá: dual disease shared transcriptome."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn và gen trung tâm dùng chung trên phiên mã của một CẶP bệnh, theo một hướng sinh học chung. Dùng khi chọn được một cặp bệnh và muốn tìm dấu ấn dùng chung cho cả hai. Từ khoá: dual disease shared transcriptome."
   },
   "skill:aipoch-medical-research:dual-disease-transcriptomic-ml-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu phiên mã ghép học máy cho một CẶP bệnh: tìm DEG chung, gen trung tâm chung, cơ chế phân tử chung. Từ khoá: dual disease transcriptomic ML."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu phiên mã ghép học máy cho một CẶP bệnh: tìm DEG chung, gen trung tâm chung, cơ chế phân tử chung. Dùng khi có một cặp bệnh và muốn ghép phiên mã với học máy để tìm cơ chế chung. Từ khoá: dual disease transcriptomic ML."
   },
   "skill:aipoch-medical-research:comorbidity-common-immune-biomarker-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn miễn dịch chung cho hai bệnh ĐỒNG MẮC về mặt lâm sàng, qua DEG chung và làm giàu chức năng. Từ khoá: comorbidity shared biomarker."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn miễn dịch chung cho hai bệnh ĐỒNG MẮC về mặt lâm sàng, qua DEG chung và làm giàu chức năng. Dùng khi hai bệnh hay đi cùng nhau trên lâm sàng và muốn tìm cơ chế miễn dịch chung. Từ khoá: comorbidity shared biomarker."
   },
   "skill:aipoch-medical-research:pcd-immune-oncology-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu ung thư theo chủ đề CHẾT TẾ BÀO CÓ LẬP TRÌNH (PCD/RCD) trên phiên mã khối u. Từ khoá: programmed cell death, oncology."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu ung thư theo chủ đề CHẾT TẾ BÀO CÓ LẬP TRÌNH (PCD/RCD) trên phiên mã khối u. Dùng khi chọn chết tế bào có lập trình làm trục cho một đề tài ung thư. Từ khoá: programmed cell death, oncology."
   },
   "skill:aipoch-medical-research:tumor-immune-infiltration-diagnostic-ml-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn chẩn đoán ghép học máy, dẫn đường bằng THÂM NHIỄM MIỄN DỊCH khối u, từ loại ung thư cho trước. Từ khoá: immune infiltration, diagnostic ML."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn chẩn đoán ghép học máy, dẫn đường bằng THÂM NHIỄM MIỄN DỊCH khối u, từ loại ung thư cho trước. Dùng khi lấy vi môi trường miễn dịch làm trục cho mô hình chẩn đoán ung thư. Từ khoá: immune infiltration, diagnostic ML."
   },
   "skill:aipoch-medical-research:non-tumor-ml-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu tin sinh ghép học máy cho bệnh KHÔNG phải ung thư (chuyển hoá, miễn dịch, tim mạch, thần kinh…). Từ khoá: non-tumor machine learning."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu tin sinh ghép học máy cho bệnh KHÔNG phải ung thư (chuyển hoá, miễn dịch, tim mạch, thần kinh…). Dùng khi bắt đầu đề tài tin sinh ghép học máy cho bệnh ngoài ung thư. Từ khoá: non-tumor machine learning."
   },
   "skill:aipoch-medical-research:non-tumor-mechanism-guided-diagnostic-ml-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu học máy chẩn đoán cho bệnh không phải ung thư, dẫn đường bằng một chủ đề CƠ CHẾ cụ thể. Từ khoá: mechanism-guided diagnostic ML."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu học máy chẩn đoán cho bệnh không phải ung thư, dẫn đường bằng một chủ đề CƠ CHẾ cụ thể. Dùng khi muốn mô hình chẩn đoán bám vào một cơ chế sinh học cụ thể thay vì chạy máy học mù. Từ khoá: mechanism-guided diagnostic ML."
   },
   "skill:aipoch-medical-research:process-related-diagnostic-biomarker-nomogram-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn chẩn đoán theo một QUÁ TRÌNH sinh học (họ gen/pathway) và dựng toán đồ nomogram. Từ khoá: nomogram, diagnostic biomarker."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dấu ấn chẩn đoán theo một QUÁ TRÌNH sinh học (họ gen/pathway) và dựng toán đồ nomogram. Dùng khi muốn kết quả cuối là một toán đồ dùng được tại phòng khám. Từ khoá: nomogram, diagnostic biomarker."
   },
   "skill:aipoch-medical-research:generic-phenotype-scoring-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu CHẤM ĐIỂM KIỂU HÌNH cho bất kỳ bệnh và bất kỳ tập gen/pathway/chữ ký phân tử nào do bác sĩ tự định nghĩa. Từ khoá: phenotype scoring, gene set."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu CHẤM ĐIỂM KIỂU HÌNH cho bất kỳ bệnh và bất kỳ tập gen/pathway/chữ ký phân tử nào do bác sĩ tự định nghĩa. Dùng khi tự có một tập gen hoặc pathway và muốn biến nó thành điểm số chấm cho từng bệnh nhân. Từ khoá: phenotype scoring, gene set."
   },
   "skill:aipoch-medical-research:nhanes-clinical-retrospective-biomarker-research-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dịch tễ cắt ngang kiểu NHANES ghép kiểm chứng lâm sàng hồi cứu, từ một cặp bệnh–dấu ấn. Từ khoá: NHANES, cross-sectional biomarker."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dịch tễ cắt ngang kiểu NHANES ghép kiểm chứng lâm sàng hồi cứu, từ một cặp bệnh–dấu ấn. Dùng khi muốn dựa vào bộ dữ liệu dân số công khai rồi kiểm lại bằng hồ sơ bệnh viện của mình. Từ khoá: NHANES, cross-sectional biomarker."
   },
   "skill:aipoch-medical-research:prognostic-biomarker-protocol-designer": {
-    "vi": "[Tin sinh học] Thiết kế quy trình phát hiện – mô hình hoá – kiểm định cho dấu ấn TIÊN LƯỢNG. Mô hình tiên lượng dùng cho lâm sàng nên qua `mo-hinh-tien-luong` (TRIPOD+AI). Từ khoá: prognostic biomarker."
+    "vi": "[Tin sinh học] Thiết kế quy trình phát hiện – mô hình hoá – kiểm định cho dấu ấn TIÊN LƯỢNG. Mô hình tiên lượng dùng cho lâm sàng nên qua `mo-hinh-tien-luong` (TRIPOD+AI). Dùng khi muốn tìm dấu ấn dự báo diễn tiến bệnh chứ không phải để chẩn đoán. Từ khoá: prognostic biomarker."
   },
   "skill:aipoch-medical-research:treatment-response-predictor-planner": {
-    "vi": "[Tin sinh học] Thiết kế nghiên cứu dự báo ĐÁP ỨNG hoặc ĐỀ KHÁNG điều trị. Mô hình dùng cho lâm sàng nên qua `mo-hinh-tien-luong` (TRIPOD+AI). Từ khoá: treatment response prediction."
+    "vi": "[Tin sinh học] Thiết kế nghiên cứu dự báo ĐÁP ỨNG hoặc ĐỀ KHÁNG điều trị. Mô hình dùng cho lâm sàng nên qua `mo-hinh-tien-luong` (TRIPOD+AI). Dùng khi muốn biết trước bệnh nhân nào đáp ứng, bệnh nhân nào kháng trị. Từ khoá: treatment response prediction."
   },
   "skill:aipoch-medical-research:drug-repurposing-study-planner": {
-    "vi": "[Tin sinh học] Thiết kế quy trình khám phá và kiểm chứng cho TÁI ĐỊNH VỊ THUỐC: cơ chế bệnh, logic đích thuốc, đảo chiều biểu hiện, chứng cứ đời thực. Từ khoá: drug repurposing."
+    "vi": "[Tin sinh học] Thiết kế quy trình khám phá và kiểm chứng cho TÁI ĐỊNH VỊ THUỐC: cơ chế bệnh, logic đích thuốc, đảo chiều biểu hiện, chứng cứ đời thực. Dùng khi có một thuốc cũ và muốn kiểm giả thuyết nó dùng được cho bệnh khác. Từ khoá: drug repurposing."
   },
   "skill:aipoch-medical-research:mechanism-to-validation-planner": {
-    "vi": "[Tin sinh học] Kéo dài một phát hiện mức cơ chế hoặc mức liên quan thành lộ trình kiểm chứng nhiều bậc, tiến dần tới bằng chứng chức năng và ý nghĩa lâm sàng. Từ khoá: mechanism to validation."
+    "vi": "[Tin sinh học] Kéo dài một phát hiện mức cơ chế hoặc mức liên quan thành lộ trình kiểm chứng nhiều bậc, tiến dần tới bằng chứng chức năng và ý nghĩa lâm sàng. Dùng khi có phát hiện mức cơ chế nhưng chưa biết chứng minh nó có ý nghĩa lâm sàng bằng cách nào. Từ khoá: mechanism to validation."
   },
   "skill:aipoch-medical-research:animal-and-cell-validation-planner": {
-    "vi": "[Tin sinh học] Thiết kế kế hoạch kiểm chứng trên tế bào và động vật cho phát hiện từ tính toán, omics, dấu ấn hoặc lâm sàng. Từ khoá: in vitro, in vivo validation."
+    "vi": "[Tin sinh học] Thiết kế kế hoạch kiểm chứng trên tế bào và động vật cho phát hiện từ tính toán, omics, dấu ấn hoặc lâm sàng. Dùng khi đã có phát hiện trên máy tính hoặc trên dữ liệu và cần bước kiểm chứng ướt trước khi tin. Từ khoá: in vitro, in vivo validation."
   },
   "skill:aipoch-medical-research:translational-study-blueprint": {
-    "vi": "[Tin sinh học] Dựng bản đồ chuyển dịch đưa một phát hiện y sinh tiến về chẩn đoán, tiên lượng, dự báo đáp ứng, phân tầng bệnh nhân hoặc phát triển thuốc, có mốc chuyển dịch rõ. Từ khoá: translational blueprint."
+    "vi": "[Tin sinh học] Dựng bản đồ chuyển dịch đưa một phát hiện y sinh tiến về chẩn đoán, tiên lượng, dự báo đáp ứng, phân tầng bệnh nhân hoặc phát triển thuốc, có mốc chuyển dịch rõ. Dùng khi có phát hiện cơ bản và cần lộ trình đưa nó tới ứng dụng lâm sàng. Từ khoá: translational blueprint."
   },
   "skill:aipoch-medical-research:medical-research-algorithm-matcher": {
-    "vi": "[Tin sinh học] Ghép hướng nghiên cứu và ràng buộc nguồn lực của bác sĩ với các thuật toán và bài báo phương pháp mới nhất; luôn tra tài liệu thật trước. Từ khoá: algorithm matching."
+    "vi": "[Tin sinh học] Ghép hướng nghiên cứu và ràng buộc nguồn lực của bác sĩ với các thuật toán và bài báo phương pháp mới nhất; luôn tra tài liệu thật trước. Dùng khi biết mình muốn hỏi gì nhưng chưa biết dùng thuật toán nào, và bị giới hạn về dữ liệu hay máy móc. Từ khoá: algorithm matching."
   },
   "skill:aipoch-medical-research:esm": {
     "vi": "[Tin sinh học] Bộ công cụ mô hình ngôn ngữ protein (ESM3 sinh thiết kế protein đa phương thức; ESM C sinh embedding). Dùng khi cần sinh/dự đoán chuỗi–cấu trúc–chức năng, inverse folding. Từ khoá: ESM, protein language model."
@@ -4995,9 +4995,9 @@
     "vi": "[Tin sinh học] Sinh và kiểm giả thuyết tự động bằng LLM trên dữ liệu dạng bảng; kết hợp hiểu biết từ y văn với quy luật rút từ dữ liệu. Dùng khi cần dò tìm quy luật có hệ thống. Từ khoá: hypothesis generation, tabular."
   },
   "skill:watermarks-remover:remove-ai-marks": {
-    "vi": "[Dọn siêu dữ liệu] Gỡ dấu vết kỹ thuật khỏi văn bản và file: ký tự Unicode ẩn, siêu dữ liệu EXIF/XMP, và C2PA trên PNG·JPEG·SVG·PDF·DOCX·HTML·MD. Dùng khi cần dọn siêu dữ liệu RIÊNG TƯ trước khi chia sẻ file ra ngoài — toạ độ GPS, tên tác giả, thông tin thiết bị chụp. ⚠️ TUYỆT ĐỐI KHÔNG dùng lên bản thảo nộp tạp chí hay hồ sơ Hội đồng Đạo đức: ICMJE Mục V bắt buộc khai báo dùng AI, và cổng G9 của chính hệ này đang thi hành điều đó. KHÁC /xoa-dau-vet-ai (chỉ gọt văn phong máy móc, không đụng siêu dữ liệu). Từ khoá: dọn siêu dữ liệu, xoá EXIF, ký tự ẩn, C2PA, riêng tư ảnh."
+    "vi": "[Dọn siêu dữ liệu] Gỡ ký tự Unicode ẩn, siêu dữ liệu EXIF/XMP và C2PA khỏi PNG·JPEG·SVG·PDF·DOCX·HTML·MD. Dùng khi cần dọn siêu dữ liệu RIÊNG TƯ trước khi chia sẻ file — toạ độ GPS, tên tác giả, thiết bị chụp. ⚠️ KHÔNG dùng cho bản thảo nộp tạp chí hay hồ sơ Hội đồng Đạo đức: ICMJE Mục V buộc khai báo dùng AI. Từ khoá: dọn siêu dữ liệu, xoá EXIF, ký tự ẩn, C2PA."
   },
   "skill:watermarks-remover:clean-user-facing-text": {
-    "vi": "[Dọn siêu dữ liệu] Rà và làm sạch văn bản sắp đưa cho người đọc: soi ký tự Unicode vô hình đáng ngờ (gây lỗi hiển thị, lỗi tìm kiếm, lỗi đếm ký tự) rồi chuẩn hoá, GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hay tài liệu dán từ nhiều nguồn bị lỗi hiển thị lạ. ⚠️ Không dùng để né kiểm tra liêm chính học thuật — xem cảnh báo ở remove-ai-marks. Từ khoá: ký tự vô hình, lỗi hiển thị chữ, chuẩn hoá văn bản, dọn văn bản dán."
+    "vi": "[Dọn siêu dữ liệu] Soi ký tự Unicode vô hình gây lỗi hiển thị/tìm kiếm trong văn bản sắp đưa người đọc, rồi chuẩn hoá mà GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hoặc tài liệu dán từ nhiều nguồn hiện chữ lạ. ⚠️ KHÔNG dùng để né kiểm tra liêm chính học thuật. Từ khoá: ký tự vô hình, lỗi hiển thị chữ, chuẩn hoá văn bản."
   }
 }
