@@ -2067,6 +2067,13 @@ def bh60_goi_tuan_phai_doc_toan_van():
     vb = skill.read_text(encoding="utf-8")
     if "gom_toan_van_dashboard" not in vb or "doc_sau_toan_van" not in vb:
         return False, "SKILL gói tuần KHÔNG còn nhắc bước đọc toàn văn (trôi doctrine kiểu BH39)"
+    # 19/08 chiều — bác sĩ chỉnh hướng «nguồn chuẩn, không phải toàn văn»: skill
+    # tổng thuật phải giữ làn authority-first (tra_nguon_chuan) đi TRƯỚC PubMed
+    tt = REPO / "sync" / "skills" / "tong-thuat-chung-cu" / "SKILL.md"
+    if not tt.exists() or "tra_nguon_chuan" not in tt.read_text(encoding="utf-8"):
+        return False, "skill tổng thuật mất làn NGUỒN CHUẨN (tra_nguon_chuan) — trôi doctrine"
+    if not (REPO / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json").exists():
+        return False, "thiếu danh bạ nguồn chuẩn (EBM-Dashboards/nguon_chuan/)"
     import importlib.util as _ilu
     spec = _ilu.spec_from_file_location("_dstv_bh60", tool_doc)
     mod = _ilu.module_from_spec(spec)

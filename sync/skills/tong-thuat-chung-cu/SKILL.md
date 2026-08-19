@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.0.0
+version: 1.1.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -14,6 +14,21 @@ trải nghiệm một-bài-đọc-liền-mạch NHƯNG giữ nguyên thứ hệ 
 THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết, không bịa.
 
 ## QUY TRÌNH
+
+0. **NGUỒN CHUẨN ĐI TRƯỚC (v1.1 — bác sĩ chỉnh hướng 19/08: «cách Gemini/ChatGPT
+   tìm nguồn chứng cứ chuẩn», không phải PubMed-first):**
+   `python3 tools/tra_nguon_chuan.py "<câu hỏi>"` — danh bạ trả về guideline
+   hiện hành của hiệp hội cho chủ đề + hệ phân mức nguyên bản:
+   · Có 📌 BẢN CHỤP trong `EBM-Dashboards/guideline_snapshot/` → ĐỌC bản chụp
+     (PDF đọc bằng Read theo trang), trích kèm «bản chụp <ngày>».
+   · Nguồn «✓ máy thăm được» → WebFetch/đọc thẳng; nguồn «⛔ chặn máy» → mở
+     bằng Browser pane (egress qua cổng đi được) đọc trang guideline thật.
+   · Guideline vừa đọc được bản mở → `python3 tools/luu_guideline.py` chụp lại
+     cho lần sau (provenance URL·ngày·SHA-256).
+   · Câu hỏi không khớp chủ đề nào → nói rõ trong bài «chưa có nguồn chuẩn
+     trong danh bạ» và đề xuất bác sĩ bổ sung chủ đề; KHÔNG lặng lẽ bỏ qua làn này.
+   Guideline hiện hành trả lời trọn câu hỏi thì BÀI ĐI THEO KHUNG GUIDELINE,
+   các làn dưới làm lớp đối chiếu/bổ trợ.
 
 1. **BỐN LÀN NGUỒN song song** (đủ làn mới viết — thiếu làn nào ghi rõ trong bài):
    a. KHO NỘI BỘ đã duyệt: `python3 tools/tra_diem_kham.py "<câu hỏi>"` + grep
@@ -48,9 +63,17 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    (95% CI) NGUYÊN VĂN như nguồn báo cáo — không quy đổi HR↔RR↔OR.
    `## IV. Độ tin cậy và khoảng trống` — RoB đáng chú ý, I², mâu thuẫn giữa
    nguồn (đặt cạnh, KHÔNG phán bên nào đúng), cái CHƯA biết.
-   `## V. Cho thực hành` — khuyến nghị ĐIỀU KIỆN HOÁ (ai · khi nào · theo dõi
-   gì), phân biệt rõ điều guideline nói vs điều suy từ RCT; mọi câu ở mục này
-   phải truy được về [n]. KHÔNG kê liều mới ngoài nguồn.
+   `## V. Cho thực hành` — viết theo KHUNG THỰC HÀNH đầy đủ (v1.1), không phải
+   khung nghiên cứu:
+     1) **Chẩn đoán/tiêu chuẩn — ngưỡng số cụ thể** (eGFR/ACR, HbA1c, điểm cắt…);
+     2) **Phân tầng** (nhóm nguy cơ nào xử trí khác nhau);
+     3) **Xử trí theo bậc** — mỗi dòng kèm MỨC KHUYẾN CÁO NGUYÊN BẢN của nguồn
+        (GRADE 1A/2B, COR I/LoE A, A–E…) + [n]; LIỀU chỉ khi nguồn nêu nguyên văn;
+     4) **Theo dõi** — chỉ số gì, bao lâu một lần, ngưỡng hành động;
+     5) **Ngưỡng chuyển tuyến/chuyên khoa**.
+   Phân biệt rõ điều guideline nói vs điều suy từ RCT; mọi câu truy được về [n].
+   KHÔNG kê liều mới ngoài nguồn. Điều guideline KHÔNG đề cập → ghi «guideline
+   không đề cập», không lấp bằng suy diễn.
    `## Nguồn` — Vancouver đánh số `1. Tác giả. Tiêu đề. Tạp chí Năm · PMID …
    · doi:… · [đã kiểm rút bài: ok/chưa kiểm] · [toàn văn đã đọc/chỉ tóm tắt]`.
    Cuối bài: «Cần bác sĩ kiểm chứng.»
