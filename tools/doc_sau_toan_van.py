@@ -206,11 +206,19 @@ def main() -> int:
     if not pmids:
         print("✗ Không có PMID đầu vào (--queue hoặc --pmid).")
         return 1
-    co, thieu = [], []
+    co, thieu, dang_khac = [], [], []
     for pm in sorted(pmids):
         khop = list(KHO.glob(f"PMID-{pm}_*.xml"))
         if not khop:
-            thieu.append(pm)
+            # kho có bản HTML/PDF tầng-2 (Unpaywall) → toàn văn CÓ, chỉ là không
+            # qua bộ bóc JATS — phiên thẩm định đọc trực tiếp file đó
+            khac = sorted(KHO.glob(f"PMID-{pm}_UPW.*"))
+            if khac:
+                dang_khac.append(pm)
+                print(f"  ◐ {pm}: toàn văn dạng {khac[0].suffix[1:].upper()} "
+                      f"({khac[0].name}) — đọc trực tiếp, không qua bóc JATS")
+            else:
+                thieu.append(pm)
             continue
         try:
             ra = viet_ban_doc(pm, khop[0])
@@ -219,8 +227,8 @@ def main() -> int:
         except ET.ParseError:
             thieu.append(pm)
             print(f"  ⚠ {pm}: XML hỏng — bỏ qua, coi như chưa có toàn văn")
-    print(f"\nĐọc sâu: {len(co)} bài có toàn văn OA · {len(thieu)} bài CHỈ TÓM TẮT "
-          f"(chưa có/không-OA — ghi rõ trên thẻ, không đoán)")
+    print(f"\nĐọc sâu: {len(co)} bài JATS · {len(dang_khac)} bài toàn văn HTML/PDF "
+          f"(đọc trực tiếp) · {len(thieu)} bài CHỈ TÓM TẮT (ghi rõ trên thẻ, không đoán)")
     if thieu:
         print("  Chỉ tóm tắt: " + " ".join(thieu))
     print("Cần bác sĩ kiểm chứng.")

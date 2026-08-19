@@ -40,6 +40,100 @@ DASH = REPO / "EBM-Dashboards"
 KHO = DASH / "toan_van_oa"
 
 
+def _email_lich_su() -> str:
+    """Email định danh lịch sự cho API (Unpaywall/NCBI đòi) — đọc theo đúng chuỗi
+    ưu tiên của app/config.py: biến môi trường → kho secrets ngoài OneDrive."""
+    import os
+    e = os.environ.get("NCBI_EMAIL") or os.environ.get("UNPAYWALL_EMAIL")
+    if e:
+        return e
+    sec = Path.home() / ".ebm-secrets" / "medical-ebm-automation.env"
+    if sec.exists():
+        for d in sec.read_text(encoding="utf-8", errors="replace").splitlines():
+            m = re.match(r"\s*NCBI_EMAIL\s*=\s*(\S+)", d)
+            if m:
+                return m.group(1).strip("'\"")
+    return ""
+
+
+def _van_ban_tho(du_lieu: bytes) -> str:
+    import html as _h
+    vb = du_lieu.decode("utf-8", errors="replace")
+    vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
+    return re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", vb)))
+
+
+def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
+    """TẦNG 2 OA — Unpaywall (bác sĩ duyệt gói ② 19/08): bài không có bản PMC vẫn
+    thường có bản OA HỢP PHÁP ở repository (bản tác giả tự lưu, Gold OA ngoài PMC).
+    Chỉ tải link best_oa_location do Unpaywall xác nhận — KHÔNG cào nguồn trả phí.
+    Lưu PMID-<n>_UPW.pdf|.html (doc_sau không parse được PDF — phiên Claude đọc
+    trực tiếp bằng skill pdf khi thẩm định). Trả (số tải được, danh sách còn thiếu)."""
+    import json as _json
+    import urllib.request as _rq
+    email = _email_lich_su()
+    if not email:
+        print("  ⚠ Unpaywall cần email định danh (NCBI_EMAIL trong ~/.ebm-secrets) — bỏ tầng 2.")
+        return 0, pmids
+    moi_tai, con_thieu = 0, []
+    for pm in pmids:
+        try:  # DOI qua esummary (id → articleids)
+            u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+                 f"?db=pubmed&id={pm}&retmode=json&email={email}")
+            js = _json.loads(_rq.urlopen(u, timeout=20).read())
+            ids = js["result"][pm].get("articleids", [])
+            doi = next((x["value"] for x in ids if x.get("idtype") == "doi"), "")
+            if not doi:
+                con_thieu.append(pm)
+                continue
+            uj = _json.loads(_rq.urlopen(
+                f"https://api.unpaywall.org/v2/{doi}?email={email}", timeout=25).read())
+            loc = uj.get("best_oa_location") or {}
+            url = loc.get("url_for_pdf") or loc.get("url")
+            if not (uj.get("is_oa") and url):
+                con_thieu.append(pm)
+                continue
+            req = _rq.Request(url, headers={"User-Agent": "Mozilla/5.0 (EBM-OA-fetch)"})
+            phan_hoi = _rq.urlopen(req, timeout=40)
+            du_lieu = phan_hoi.read()
+            url_cuoi = phan_hoi.geturl() or url
+            # Link trỏ về PMC → lấy JATS CHUẨN qua đúng đường PMC (doc_sau/RAG
+            # parse được), không giữ bản HTML trang web
+            m_pmc = (re.search(r"pmc\.ncbi\.nlm\.nih\.gov/articles/PMC(\d+)", url_cuoi)
+                     or re.search(r"/articles/PMC(\d+)/", du_lieu[:4000].decode(
+                         "utf-8", errors="replace")))
+            if m_pmc and gom is not None:
+                xml = gom.tai_toan_van(m_pmc.group(1))
+                if xml:
+                    (KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml").write_bytes(xml)
+                    moi_tai += 1
+                    print(f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)})")
+                    time.sleep(0.4)
+                    continue
+            if du_lieu[:5] == b"%PDF-":
+                (KHO / f"PMID-{pm}_UPW.pdf").write_bytes(du_lieu)
+                moi_tai += 1
+                print(f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB)")
+                time.sleep(0.4)
+                continue
+            # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
+            # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
+            vb = _van_ban_tho(du_lieu)
+            if len(vb.split()) < 500 or "Cookies must be enabled" in vb:
+                print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn "
+                      f"({len(vb.split())} từ) — từ chối, không lưu")
+                con_thieu.append(pm)
+                continue
+            (KHO / f"PMID-{pm}_UPW.html").write_bytes(du_lieu)
+            moi_tai += 1
+            print(f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật)")
+            time.sleep(0.4)
+        except Exception as exc:  # noqa: BLE001 — lỗi MỘT bài không giết cả lượt
+            print(f"  ⚠ Unpaywall {pm}: {type(exc).__name__} — chưa lấy được, lần sau thử lại")
+            con_thieu.append(pm)
+    return moi_tai, con_thieu
+
+
 def _nap_gom():
     duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
     sp = importlib.util.spec_from_file_location("gom_tv_nc", duong)
@@ -61,6 +155,8 @@ def main() -> int:
                     help="file queue/tuan-*.md — gom PMID trong thẻ gói tuần "
                          "(mở rộng 18/08: dây chuyền tuần từng thẩm định 100%% từ tóm tắt)")
     ap.add_argument("--pmid", nargs="*", help="PMID chỉ định thêm")
+    ap.add_argument("--unpaywall", action="store_true",
+                    help="tầng 2 OA: bài không-PMC thử Unpaywall (bản OA hợp pháp ngoài PMC)")
     ap.add_argument("--gioi-han", type=int, default=0,
                     help="chỉ xử lý N PMID chưa có mỗi lần chạy (0 = không giới hạn)")
     a = ap.parse_args()
@@ -100,12 +196,14 @@ def main() -> int:
         can = can[: a.gioi_han]
     print(f"Kho chung: {len(da_co)} toàn văn sẵn có · {len(pmids)} PMID trong "
           f"{len(files)} dashboard · cần tra lần này: {len(can)}")
-    if not can:
+    if not can and not a.unpaywall:
         print("✓ Không có gì mới để gom.")
         return 0
+    # (họ lỗi return-sớm 12/08: khi --unpaywall bật, KHÔNG thoát ở đây — tầng 2
+    # nằm sau và xét tập thiếu độc lập với sổ back-off của tầng PMC)
     gom = _nap_gom()
     try:
-        anh_xa = gom.lien_ket_pmc(can)
+        anh_xa = gom.lien_ket_pmc(can) if can else {}
     except Exception as exc:  # noqa: BLE001
         print(f"🔴 HẠ TẦNG: elink không trả lời ({type(exc).__name__}) — chưa gom, "
               "KHÔNG kết luận độ phủ.")
@@ -136,6 +234,17 @@ def main() -> int:
               "không-OA); chạy lại tool sẽ thử tiếp.")
     # ghi sổ «không lấy được» KÈM NGÀY — mục vừa tra nhận ngày hôm nay; mục còn
     # hạn giữ nguyên ngày cũ; mục hết hạn mà lượt này không tra tới thì rơi khỏi sổ
+    if a.unpaywall:
+        # Tầng 2 xét TRỰC TIẾP tập còn thiếu trong kho — KHÔNG để sổ 30-ngày của
+        # tầng PMC chặn (sổ đó ghi «không có bản PMC»; Unpaywall là nguồn KHÁC
+        # chưa từng thử — back-off của nguồn này không được gác cửa nguồn kia).
+        da_bat_ky = {re.search(r"PMID-(\d+)_", q.name).group(1)
+                     for q in KHO.glob("PMID-*_*.*")}
+        thu = sorted(pmids - da_bat_ky)
+        if thu:
+            print(f"  Tầng 2 Unpaywall: thử {len(thu)} bài không có bản PMC…")
+            upw_moi, _ = tang_unpaywall(thu, gom=gom)
+            moi += upw_moi
     hom_nay = date.today().isoformat()
     so_moi = {pm: ngay for pm, ngay in khong_pmc_cu.items() if pm in con_han}
     for pm in list(khong_pmc) + list(khong_oa):
