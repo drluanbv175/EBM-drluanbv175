@@ -57,18 +57,28 @@ def pmids_tu_dashboard(f: Path) -> set[str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Gom toàn văn PMC-OA dùng chung cho dashboard")
     ap.add_argument("--file", nargs="*", help="dashboard cụ thể (mặc định: tất cả)")
+    ap.add_argument("--queue", nargs="*",
+                    help="file queue/tuan-*.md — gom PMID trong thẻ gói tuần "
+                         "(mở rộng 18/08: dây chuyền tuần từng thẩm định 100%% từ tóm tắt)")
+    ap.add_argument("--pmid", nargs="*", help="PMID chỉ định thêm")
     ap.add_argument("--gioi-han", type=int, default=0,
                     help="chỉ xử lý N PMID chưa có mỗi lần chạy (0 = không giới hạn)")
     a = ap.parse_args()
+    chi_dinh = bool(a.queue or a.pmid)
     files = ([Path(p) for m in a.file for p in glob.glob(m)] if a.file
-             else sorted(DASH.glob("WebDashboard_*.html")))
+             else [] if chi_dinh else sorted(DASH.glob("WebDashboard_*.html")))
     files = [f for f in files if f.exists()]
-    if not files:
+    if not files and not chi_dinh:
         print("✗ Không thấy dashboard nào.")
         return 2
     pmids: set[str] = set()
     for f in files:
         pmids |= pmids_tu_dashboard(f)
+    for m in (a.queue or []):
+        for q in glob.glob(m):
+            qt = Path(q).read_text(encoding="utf-8", errors="replace")
+            pmids |= set(re.findall(r"PMID[ :]?(\d{6,9})", qt))
+    pmids |= {pm for pm in (a.pmid or []) if re.fullmatch(r"\d{6,9}", pm)}
     KHO.mkdir(parents=True, exist_ok=True)
     da_co = {re.search(r"PMID-(\d+)_", p.name).group(1) for p in KHO.glob("PMID-*.xml")}
     # Sổ «không lấy được» CÓ HẠN DÙNG 30 ngày (vá 15/08 chiều — bản đầu là danh
@@ -132,10 +142,12 @@ def main() -> int:
         so_moi[pm] = hom_nay
     ghi_chu.write_text("\n".join(f"{pm} {ngay}" for pm, ngay in sorted(so_moi.items()))
                        + "\n", encoding="utf-8")
-    tong_co = len(da_co) + moi
+    da_co_sau = {re.search(r"PMID-(\d+)_", p.name).group(1) for p in KHO.glob("PMID-*.xml")}
+    tong_co = len(da_co_sau)
+    phu_quet = len(pmids & da_co_sau)
     (KHO / "DO-PHU-OA.md").write_text(
         f"# ĐỘ PHỦ TOÀN VĂN OA — kho dùng chung dashboard — {date.today().isoformat()}\n\n"
-        f"- Toàn văn OA trong kho: **{tong_co}/{len(pmids)}** PMID đang được dashboard trích\n"
+        f"- Kho hiện có **{tong_co}** toàn văn OA; tập vừa quét phủ **{phu_quet}/{len(pmids)}**\n"
         f"- Lượt này: +{moi} tải mới · {len(khong_oa)} có PMC nhưng không-OA · "
         f"{len(khong_pmc)} không có bản PMC\n\n"
         "> Phần không-OA cần quyền truy cập của bác sĩ — độ phủ thấp là SỰ THẬT về OA,\n"

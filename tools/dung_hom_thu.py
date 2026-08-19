@@ -264,7 +264,7 @@ def render_the(khoi: str) -> str:
     truong: dict[str, str] = {}
     phu: list[str] = []
     for d in dong[1:]:
-        mm = re.match(r"(Điều gì thay đổi|Nguồn|Hiệu số như nguồn báo cáo|Ai bị ảnh hưởng|Rủi ro nếu áp dụng sai)\s*:\s*(.*)", d.strip())
+        mm = re.match(r"(Điều gì thay đổi|Nguồn|Hiệu số như nguồn báo cáo|Ai bị ảnh hưởng|Rủi ro nếu áp dụng sai|Thẩm định toàn văn)\s*:\s*(.*)", d.strip())
         if mm:
             truong[mm.group(1)] = mm.group(2)
         else:
@@ -277,6 +277,9 @@ def render_the(khoi: str) -> str:
     if "Hiệu số như nguồn báo cáo" in truong:
         than.append(_hang("Hiệu số<div class='chu-thich'>như nguồn báo cáo</div>",
                           f'<div class="hieu-so">{_lk_thong_ke(_gach_dau_dong(_inline(truong["Hiệu số như nguồn báo cáo"])))}</div>'))
+    if "Thẩm định toàn văn" in truong:
+        than.append(_hang("Thẩm định toàn văn",
+                          _lk_thong_ke(_gach_dau_dong(_inline(truong["Thẩm định toàn văn"])))))
     if "Ai bị ảnh hưởng" in truong:
         than.append(_hang("Ai bị ảnh hưởng", _gach_dau_dong(_inline(truong["Ai bị ảnh hưởng"]))))
     if "Rủi ro nếu áp dụng sai" in truong:

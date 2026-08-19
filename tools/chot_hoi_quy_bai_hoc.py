@@ -2046,6 +2046,44 @@ def bh59_khoi_data_phai_parse_duoc_nhu_js():
     return True, "toàn kho parse sạch như JS"
 
 
+def bh60_goi_tuan_phai_doc_toan_van():
+    """19/08 — đo được: kho toàn văn phủ 170/579 PMID của dashboard CŨ nhưng
+    0/12 PMID của gói tuần W34 — dây chuyền TUẦN (chứng cứ MỚI nhất, thứ cần
+    chi tiết nhất) thẩm định 100%% từ TÓM TẮT, kể cả khi bài OA nằm sẵn trên PMC.
+    Cùng họ BH39: năng lực có ở TẦNG CÔNG CỤ mà doctrine vận hành không gọi tên
+    thì với dây chuyền hằng ngày nó không tồn tại.
+
+    Chốt 3 vế: (a) hai tool tồn tại; (b) SKILL gói tuần (bản NGUỒN trong OneDrive
+    — sync/scheduled-tasks/) phải gọi tên CẢ gom --queue LẪN doc_sau_toan_van;
+    (c) bộ lọc câu-hiệu-số của doc_sau còn sống: bắt câu có MD+CI, chặn rác bảng
+    ép phẳng >420 ký tự (đã gặp thật 19/08)."""
+    tool_gom = REPO / "tools" / "gom_toan_van_dashboard.py"
+    tool_doc = REPO / "tools" / "doc_sau_toan_van.py"
+    if not (tool_gom.exists() and tool_doc.exists()):
+        return False, "thiếu tool gom/doc_sau toàn văn"
+    skill = REPO / "sync" / "scheduled-tasks" / "goi-duyet-tuan-ebm" / "SKILL.md"
+    if not skill.exists():
+        return False, "thiếu nguồn cứu hộ SKILL gói tuần trong sync/scheduled-tasks/"
+    vb = skill.read_text(encoding="utf-8")
+    if "gom_toan_van_dashboard" not in vb or "doc_sau_toan_van" not in vb:
+        return False, "SKILL gói tuần KHÔNG còn nhắc bước đọc toàn văn (trôi doctrine kiểu BH39)"
+    import importlib.util as _ilu
+    spec = _ilu.spec_from_file_location("_dstv_bh60", tool_doc)
+    mod = _ilu.module_from_spec(spec)
+    sys.modules["_dstv_bh60"] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:  # noqa: BLE001
+        return False, f"không nạp được doc_sau_toan_van: {e}"
+    cau = mod._cau_hieu_so(["Pooled mean difference was 2.29% (95% CI 1.48-3.09, p = 0.005)."])
+    if len(cau) != 1:
+        return False, "bộ lọc câu-hiệu-số không bắt được câu MD+CI chuẩn"
+    rac = mod._cau_hieu_so(["13.76 g/dL NR NR " + "x" * 500 + " OR 1.2"])
+    if rac:
+        return False, "bộ lọc câu-hiệu-số nhận cả RÁC BẢNG ép phẳng (>420 ký tự)"
+    return True, "gói tuần có dây đọc toàn văn: tool + SKILL + bộ lọc sống"
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2466,6 +2504,7 @@ BAI_HOC = [
     ("BH57", "16/08", "Kỳ lịch lỡ phải nhìn thấy được (đăng ký ≠ nổ)", bh57_ky_lich_lo_phai_nhin_thay),
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
+    ("BH60", "19/08", "Gói tuần phải ĐỌC TOÀN VĂN OA, không thẩm định mù từ tóm tắt", bh60_goi_tuan_phai_doc_toan_van),
     ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
     ("BH62", "18/08", "Cổng tự parse chặt khối DATA (chống trang trắng lọt cổng)", bh62_cong_phai_tu_parse_chat_khoi_data),

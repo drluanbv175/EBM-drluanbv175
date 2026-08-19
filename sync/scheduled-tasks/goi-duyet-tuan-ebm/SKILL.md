@@ -11,7 +11,18 @@ QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 1c. Đọc `EBM-Dashboards/surveillance/ung-vien-ngoai-quet.jsonl` (nếu có) — ứng viên do worker/canary/phiên thường phát hiện NGOÀI vòng quét; mục `trang_thai` còn CANDIDATE thì cân nhắc chọn thẻ như 1b (vẫn ≤7 tổng, vẫn kiểm rút bài ở bước 4); đã lên thẻ hoặc bị loại thì cập nhật `trang_thai` kèm tuần xử lý — không xoá dòng (giữ dấu vết).
 2. Đọc /tmp/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json.
 3. Chọn TỐI ĐA 7 thẻ theo tác động lâm sàng ngoại trú (ưu tiên: guideline/nhãn an toàn > SR/MA > RCT lớn; loại mục da_co_trong_kho; mục rut_bai dương tính → alerts, KHÔNG vào queue). Phần dư GIỮ LẠI có ghi chú — không bỏ âm thầm.
-4. Với 7 PMID được chọn: kiểm rút bài qua `python3 medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (hoặc chuỗi trong medical-ebm-automation/app/sources/retraction_chain.py); lấy abstract qua efetch để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
+4. Với 7 PMID được chọn: kiểm rút bài qua `~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (PHẢI venv — python3 hệ thống làm tầng NCBI rụng âm thầm, alert 17/08); lấy abstract qua efetch để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
+4b. ĐỌC TOÀN VĂN trước khi thẩm định (thêm 19/08 — trước đó gói tuần thẩm định 100% từ
+tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
+   `python3 tools/gom_toan_van_dashboard.py --queue queue/tuan-<W>.md` (tải OA hợp pháp,
+   idempotent) → `python3 tools/doc_sau_toan_van.py --queue queue/tuan-<W>.md` →
+   ĐỌC các bản `EBM-Dashboards/toan_van_oa/doc_sau/PMID-*.md` của thẻ được chọn.
+   Mỗi thẻ thêm dòng `Thẩm định toàn văn:` — có toàn văn thì thẩm định TỪ TOÀN VĂN
+   (mã đăng ký · RoB đáng chú ý · I²/heterogeneity · hạn chế tự khai · tài trợ nếu
+   đáng nói) + `appraisalCompleteness=full`; không có thì ghi rõ *"chưa đọc được —
+   chưa có bản OA trên PMC (sổ 30 ngày tự thử lại)"* và giữ `partial`. LUẬT: partial
+   → tối đa "Cân nhắc" như cũ; toàn văn KHÔNG tự động nâng đề xuất — chỉ ghi dữ kiện,
+   nâng/hạ là thẩm quyền bác sĩ lúc duyệt.
 5. Xuất `queue/tuan-<ISO-week>.md` đúng định dạng 6 dòng/thẻ của Phụ lục A PHA 3 (xem mẫu W33): [ID] chủ đề — đề xuất (Áp dụng ngay|Cân nhắc|Chưa đủ, ghi rõ là ĐỀ XUẤT để bác sĩ phản bác) / Điều gì thay đổi / Nguồn + PMID·DOI đã phân giải / Hiệu số như nguồn / Ai bị ảnh hưởng / Rủi ro nếu áp dụng sai | nếu bỏ qua. Cuối gói: dòng tổng "Đã quét N chủ đề · M nguồn mới · K thẻ trình · L giữ lại" + tuyên bố độ phủ (`python3 tools/tuyen_bo_do_phu.py`).
 6. Có sự kiện khẩn (ứng viên đã rút, cổng FAIL, cảnh báo an toàn thuốc mới) → thêm dòng vào alerts/<ngày>.md (idempotent, không nhân đôi).
 7. Không có thẻ đạt ngưỡng → vẫn xuất queue ghi "0 thẻ — đã quét N chủ đề, M nguồn mới, không đủ ngưỡng đổi thực hành". TUYỆT ĐỐI không hạ tiêu chuẩn.
