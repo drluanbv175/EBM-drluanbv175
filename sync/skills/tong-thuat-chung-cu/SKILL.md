@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.1.0
+version: 1.2.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -74,8 +74,23 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    Phân biệt rõ điều guideline nói vs điều suy từ RCT; mọi câu truy được về [n].
    KHÔNG kê liều mới ngoài nguồn. Điều guideline KHÔNG đề cập → ghi «guideline
    không đề cập», không lấp bằng suy diễn.
-   `## Nguồn` — Vancouver đánh số `1. Tác giả. Tiêu đề. Tạp chí Năm · PMID …
-   · doi:… · [đã kiểm rút bài: ok/chưa kiểm] · [toàn văn đã đọc/chỉ tóm tắt]`.
+   `## Nguồn` — CHUẨN VANCOUVER THUẦN (v1.2 — bác sĩ chỉnh 19/08: «trích từ bản
+   chụp» không phù hợp, phải có link đúng chuẩn):
+     · Dạng: `n. Tác giả/Tổ chức. Tiêu đề. *Tạp chí* Năm;Tập(Số):Trang. PMID … · doi:10.…`
+       — PMID/DOI renderer tự thành link bấm được.
+     · Tập/Số/Trang phải TRA MÁY (esummary/Crossref) — cấm điền từ trí nhớ
+       (đo 19/08: trí nhớ sai 2/7 trường ngay lần đầu).
+     · GUIDELINE trích theo ẤN PHẨM của nó (guideline lớn đều đăng tạp chí —
+       tra PMID/DOI thật, vd KDIGO 2024 = Kidney Int 2024;105(4S):S117–S314,
+       PMID 38490803); tài liệu dài ghi «(phần trích: tr. Sxxx–Syyy)» theo SỐ
+       TRANG ẤN PHẨM, không phải trang file PDF. Guideline không đăng tạp chí
+       → URL trang chính thức + «[truy cập ngày …]».
+     · TUYỆT ĐỐI KHÔNG lộ ngôn ngữ vận hành vào thân bài hay mục Nguồn:
+       «bản chụp», tên kho/đường dẫn nội bộ, SHA, nhãn [đã kiểm rút bài]…
+       Provenance máy nằm ở sổ (so-guideline.json) — đó là chỗ của nó.
+     · Minh bạch thẩm định gom thành MỘT đoạn «Ghi chú thẩm định: …» đặt SAU
+       danh mục (renderer tự in nghiêng nhỏ): ngày kiểm rút bài + chuỗi kiểm,
+       nguồn nào thẩm định trên toàn văn/tóm tắt.
    Cuối bài: «Cần bác sĩ kiểm chứng.»
 
 4. **XUẤT + GIAO**: lưu md vào `EBM-Dashboards/tong_thuat/TT_<slug>_<YYYYMMDD>.md`

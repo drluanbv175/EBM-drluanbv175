@@ -88,7 +88,7 @@ def _inline(t: str) -> str:
     return t
 
 
-def render(md: str, ten_file: str) -> str:
+def render(md: str, ten_file: str = "") -> str:  # ten_file giữ cho tương thích, không in ra
     than, nguon = re.split(r"^## Nguồn\s*$", md, maxsplit=1, flags=re.M)
     dong_ra: list[str] = []
     bang: list[list[str]] = []
@@ -137,10 +137,17 @@ def render(md: str, ten_file: str) -> str:
     _xa_bang()
 
     muc_nguon = []
-    for m in re.finditer(r"^(\d{1,3})\.\s+(.+)$", nguon, re.M):
-        muc_nguon.append(f"<p class='nguon-muc' id='nguon-{m.group(1)}'>"
-                         f"<span class='so-nguon'>{m.group(1)}.</span> "
-                         f"{_inline(m.group(2))}</p>")
+    ghi_chu_nguon = []
+    for d in nguon.split("\n"):
+        s = d.strip()
+        m = re.match(r"^(\d{1,3})\.\s+(.+)$", s)
+        if m:
+            muc_nguon.append(f"<p class='nguon-muc' id='nguon-{m.group(1)}'>"
+                             f"<span class='so-nguon'>{m.group(1)}.</span> "
+                             f"{_inline(m.group(2))}</p>")
+        elif s:
+            ghi_chu_nguon.append(f"<p class='ghi-chu-nguon'>{_inline(s)}</p>")
+    muc_nguon += ghi_chu_nguon
 
     return f"""<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -176,6 +183,7 @@ code{{font-family:inherit;font-style:italic}}
 .nguon-muc{{font-size:.92rem;margin:6px 0;padding-left:2em;text-indent:-2em;text-align:left}}
 .so-nguon{{font-weight:700}}
 .nguon-muc:target{{background:#fdf6dd;border-left:3px solid var(--nhan);padding-left:calc(2em - 3px)}}
+.ghi-chu-nguon{{font-size:.88rem;color:var(--muted);font-style:italic;margin:12px 0 0;padding-top:8px;border-top:1px dotted var(--line2);text-align:left}}
 .chan{{margin-top:30px;padding-top:12px;border-top:3px double var(--line);
 font-size:.88rem;color:var(--muted);font-style:italic;text-align:center}}
 @media print{{body{{background:#fff;padding:0}}main{{border:none;padding:10mm 14mm}}}}
@@ -189,7 +197,7 @@ font-size:.88rem;color:var(--muted);font-style:italic;text-align:center}}
 <h2>Nguồn</h2>
 {chr(10).join(muc_nguon)}
 <p class="chan">Tài liệu hỗ trợ quyết định — không thay khám bệnh; áp dụng cho bệnh nhân
-qua Cổng A của bác sĩ. Cần bác sĩ kiểm chứng. Nguồn file: {html.escape(ten_file)}</p>
+qua Cổng A của bác sĩ. Cần bác sĩ kiểm chứng.</p>
 </main></body></html>"""
 
 
