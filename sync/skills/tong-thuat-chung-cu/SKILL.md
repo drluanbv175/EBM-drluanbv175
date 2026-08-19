@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.2.0
+version: 1.3.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -54,7 +54,27 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    (PHẢI venv). Không tra được → ghi «chưa kiểm rút bài» cạnh nguồn, TUYỆT ĐỐI
    không ghi «chưa bị rút». DOI không PMID → chuỗi Crossref đã có trong hệ.
 
-3. **VIẾT BÀI** — cấu trúc cố định (văn xuôi liền mạch, không dán thẻ):
+3. **VIẾT BÀI** — hai chế độ (văn xuôi liền mạch, không dán thẻ):
+
+   **3a. CÂU HỎI HẸP** (một quyết định lâm sàng cụ thể) — khung I–V như dưới.
+
+   **3b. TỔNG QUAN CHỦ ĐỀ** (v1.3 — bác sĩ đưa mẫu Gemini 19/08: khi yêu cầu là
+   «cập nhật chứng cứ cho <bệnh>» trọn chủ đề): khung 5 phần kiểu chương giáo khoa —
+   `## I. Nguyên tắc quản lý hiện đại` (triết lý điều trị, cửa sổ cơ hội, T2T…)
+   `## II. Chẩn đoán` (tiêu chuẩn phân loại + ngưỡng số nguyên văn)
+   `## III. Điều trị theo bậc` (khởi đầu → bước hai → head-to-head then chốt)
+   `## IV. Quản lý dài hạn` (giảm liều/ngừng thuốc · can thiệp không dùng thuốc)
+   `## V. Kết luận và hướng chưa trả lời`
+   — kèm ≥2 BẢNG so sánh (tiêu chuẩn · khuyến cáo hai tổ chức · head-to-head).
+   LUẬT RIÊNG chế độ này (đúng lỗ hổng của bản Gemini bác sĩ đưa: chia sẻ ra ngoài
+   là MẤT SẠCH trích dẫn, «một phân tích tổng hợp cho thấy…» không truy được):
+   · CẤM khẳng định mồ côi — mọi «nghiên cứu/phân tích cho thấy» phải có [n];
+   · chủ đề KHÔNG kịp xác minh nguồn gốc (dấu ấn mới, NMA xếp hạng…) → ghi rõ
+     «chưa đưa vào vì chưa xác minh bài gốc», KHÔNG viết dựa trí nhớ;
+   · nhất quán KHO: đối chiếu quyet-dinh-da-duyet.json + dashboard cùng chủ đề,
+     mục nào hệ đã có quyết định thì bài phải ăn khớp hoặc nêu rõ vênh.
+
+   Khung I–V cho chế độ 3a:
    `# <Câu hỏi lâm sàng làm tiêu đề>`
    `## I. Câu hỏi và bối cảnh` — PICO ngắn, vì sao đáng hỏi bây giờ.
    `## II. Chứng cứ hiện có theo tầng` — guideline (ghi MỨC NGUYÊN BẢN của tổ
