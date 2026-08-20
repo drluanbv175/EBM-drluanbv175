@@ -5,7 +5,19 @@ Có **2 môi trường tách biệt**, cơ chế đồng bộ khác nhau:
 | Môi trường | Là gì | Đồng bộ thế nào |
 |---|---|---|
 | **Cowork** (Claude Desktop) | Skills y khoa + harness bạn upload qua giao diện | **Tự động** qua tài khoản |
-| **Code** (Claude Code CLI) | Cấu hình `~/.claude/` (skills, agents, harness, memory) | **Thủ công** bằng script |
+| **Code + Codex** | Skill riêng trong `~/.claude/skills` và `~/.codex/skills` | **Tự động** từ `sync/skills/` bằng liên kết + watcher |
+
+Nguồn chuẩn duy nhất là `sync/skills/`. Cài liên kết một lần bằng:
+
+```bash
+bash sync/link-skills.sh
+```
+
+Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay:
+
+```bash
+python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
+```
 
 ---
 
@@ -21,9 +33,9 @@ Skills của Cowork lưu trên **tài khoản Claude** (server), không phải f
 
 ---
 
-## 2) Code (CLI) — chạy 1 script
+## 2) Code (CLI) và Codex — liên kết tự động
 
-Cấu hình CLI nằm ở `~/.claude/` trên từng máy, **không tự sync**. Không copy file qua lại (binary khác nền tảng). Thay vào đó **tái cài bằng script** — repo harness đã có sẵn binary cho macOS/Linux/Windows.
+Cấu hình runtime vẫn nằm trên từng máy, nhưng skill riêng dùng liên kết tới nguồn OneDrive. Chạy script cài đặt một lần trên mỗi máy; các lần sửa sau không cần chép lại.
 
 ### Trên MacBook
 1. Cài Claude Code CLI và `git`.
@@ -35,8 +47,8 @@ Cấu hình CLI nằm ở `~/.claude/` trên từng máy, **không tự sync**. 
 3. Script sẽ: clone/cập nhật harness, mirror skills → `~/.claude/skills`, agents → `~/.claude/agents`, và kiểm tra binary.
 4. Mở `claude` trong một thư mục git, gõ `/harness-plan`.
 
-### Cập nhật về sau (cả 2 máy)
-Chạy lại đúng script đó bất cứ lúc nào — nó `git pull` rồi mirror lại. Idempotent, an toàn.
+### Cập nhật về sau
+Trên macOS và Windows, nội dung skill đã có đi qua symlink/junction ngay lập tức. Hook `SessionStart` tự tạo liên kết cho skill mới. Trên Windows có thể chạy lại `link-skills.ps1` sau khi thêm thư mục mới nếu chưa mở phiên Claude/Codex.
 
 > Nếu CLI trên máy đó hỗ trợ `/plugin`, có thể dùng cách "xịn" hơn:
 > ```
@@ -190,4 +202,3 @@ bash sync/copy-commands-vi.sh                 # cài lên máy
 
 Script TỪ CHỐI sinh lệnh trỏ vào skill không có trên máy — một lệnh gọi ra rồi báo
 "không tìm thấy" còn tệ hơn là không có lệnh.
-

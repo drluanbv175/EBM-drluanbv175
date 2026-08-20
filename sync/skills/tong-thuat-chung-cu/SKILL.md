@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.3.1
+version: 1.4.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -119,6 +119,28 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    theo mẫu bác sĩ duyệt 19/08; cổng hình thức fail-closed:
    [n] khớp Nguồn hai chiều, nguồn nào cũng có PMID/DOI/URL) → gửi bác sĩ file
    HTML (SendUserFile, display:"render") → `python3 tools/dung_hom_thu.py`.
+
+## 5. TỰ SOI NỘI DUNG TRƯỚC KHI GIAO (v1.4 — bắt buộc)
+
+Đo thật 20/08 trên 5 bài do máy viết: **trích dẫn hoàn hảo mà nội dung vẫn sai
+nguy hiểm** — 7/7 dòng Vancouver khớp từng trường, mọi con số truy được về tóm
+tắt, cổng hình thức PASS; nhưng thẩm định đối kháng vẫn bắt **13 lỗi NẶNG**,
+trong đó có lỗi hại người bệnh. **Cổng trích dẫn là điều kiện CẦN, không đủ.**
+
+Trước khi giao bài, soi đúng 5 lớp lỗi ĐÃ XẢY RA THẬT (mỗi lớp kiểm bằng cách
+mở lại nguồn, không kiểm bằng trí nhớ):
+
+| Lớp | Ca thật 20/08 | Cách tự bắt |
+|---|---|---|
+| ① Ngưỡng an toàn gán SAI nhóm thuốc | ngưỡng kali >5,0 của MRA bị gán cho ACE-I | mỗi ngưỡng phải chỉ đúng thuốc mà nguồn gắn nó |
+| ② Bỏ sót luật NGỪNG thuốc / mức Harm | thiếu «ngừng MRA nếu K không giữ được <5,5» (COR 3: Harm) | tra mục khuyến cáo của chính thuốc đó, đọc CẢ khuyến cáo nghịch |
+| ③ Khẳng định MỒ CÔI trái guideline | «yếu tố này quyết định trình tự chứ không quyết định có dùng hay không» — không [n], trái điều kiện khởi trị | mọi câu mang tính luật phải có [n] |
+| ④ «Không nguồn nào nêu X» khi CHƯA đọc toàn văn | bài nói không nguồn nào cho mốc chỉnh liều, trong khi guideline có mục riêng | chỉ được viết «không nêu» cho phần ĐÃ ĐỌC; chưa đọc thì ghi «chưa đọc được» |
+| ⑤ Gán N GỘP cho từng ước lượng | N của cả tổng quan (30.994) dán cho mọi hàng trong bảng | mỗi hàng lấy đúng N của phân tích đó, không có thì để trống |
+
+Bài dùng cho quyết định thực hành (benchmark, gói tuần, tra điểm khám) nên chạy
+thêm MỘT lượt thẩm định ĐỘC LẬP (agent khác/phiên khác) — người viết không nhìn
+thấy lỗi của chính mình, đã đo được nhiều lần trong hệ này.
 
 ## LUẬT CỨNG
 - KHÔNG bịa; số nào không có trong nguồn thì không viết; «tóm tắt không nêu» là

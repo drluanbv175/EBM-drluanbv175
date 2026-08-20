@@ -2152,6 +2152,33 @@ def bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan():
     return True, "mọi định danh guideline đều khai ai xác nhận"
 
 
+def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
+    """20/08 — phát hiện đắt nhất của đợt benchmark: 5 bài tổng thuật do máy viết
+    có trích dẫn HOÀN HẢO (7/7 dòng Vancouver khớp từng trường, mọi con số truy
+    được về tóm tắt, cổng hình thức PASS) mà thẩm định đối kháng vẫn bắt 13 LỖI
+    NẶNG, trong đó có lỗi hại người bệnh: ngưỡng kali của MRA bị gán cho ACE-I;
+    thiếu luật NGỪNG MRA khi K không giữ được <5,5 (COR 3: Harm); khẳng định mồ
+    côi trái điều kiện khởi trị; nói «không nguồn nào nêu mốc chỉnh liều» trong
+    khi guideline có mục riêng; dán N gộp của cả tổng quan cho từng ước lượng.
+
+    Bài học: CỔNG TRÍCH DẪN LÀ ĐIỀU KIỆN CẦN, KHÔNG ĐỦ. Chốt giữ bảng 5 lớp lỗi
+    nội dung trong skill + yêu cầu một lượt thẩm định ĐỘC LẬP cho bài dùng vào
+    quyết định thực hành."""
+    f = REPO / "sync" / "skills" / "tong-thuat-chung-cu" / "SKILL.md"
+    if not f.exists():
+        return False, "thiếu nguồn skill tong-thuat-chung-cu"
+    vb = f.read_text(encoding="utf-8")
+    if "điều kiện CẦN, không đủ" not in vb and "điều kiện CẦN" not in vb:
+        return False, "skill mất cảnh báo «cổng trích dẫn là điều kiện cần, không đủ»"
+    thieu = [x for x in ("gán SAI nhóm thuốc", "NGỪNG thuốc", "MỒ CÔI",
+                         "CHƯA đọc toàn văn", "N GỘP") if x not in vb]
+    if thieu:
+        return False, f"skill mất {len(thieu)} lớp lỗi nội dung trong bảng tự soi — {thieu[0]}"
+    if "thẩm định ĐỘC LẬP" not in vb:
+        return False, "skill không còn đòi lượt thẩm định độc lập cho bài dùng thực hành"
+    return True, "skill giữ đủ bảng 5 lớp lỗi nội dung + đòi thẩm định độc lập"
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2579,6 +2606,7 @@ BAI_HOC = [
     ("BH63", "20/08", "Benchmark mù — máy ẩn danh, KHÔNG tự chấm chất lượng", bh63_benchmark_mu_khong_de_may_tu_cham),
     ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
+    ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
 ]
 
 
