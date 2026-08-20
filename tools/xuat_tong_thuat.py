@@ -88,6 +88,64 @@ def _inline(t: str) -> str:
     return t
 
 
+_MAU_MONO = ["#1d4ed8", "#15803d", "#a16207", "#b91c1c", "#6d28d9", "#0e7490"]
+
+
+def _thong_tin_chip(muc: dict[int, str]) -> dict[int, dict]:
+    """Mỗi nguồn Vancouver → dữ liệu THẺ NGUỒN tại-chỗ (bác sĩ 19/08 đưa mẫu ảnh
+    Gemini: «luôn có trích dẫn và link đính kèm nội dung» — số [n] trong câu +
+    dải thẻ nguồn bấm-mở-thẳng ngay dưới nội dung, không bắt người đọc nhảy
+    xuống cuối bài). Link ưu tiên DOI → PMID → URL; danh mục Vancouver cuối bài
+    GIỮ NGUYÊN — thẻ chỉ là lớp trực quan bổ sung."""
+    info: dict[int, dict] = {}
+    for n, dong in muc.items():
+        m_doi = re.search(r"doi:(10\.\S+?)(?=[\s|,;)\]]|$)", dong)
+        m_pmid = re.search(r"PMID (\d{6,9})", dong)
+        m_url = re.search(r"https?://\S+", dong)
+        if m_doi:
+            link = "https://doi.org/" + m_doi.group(1)
+            dom = "doi.org/" + m_doi.group(1)
+        elif m_pmid:
+            link = f"https://pubmed.ncbi.nlm.nih.gov/{m_pmid.group(1)}/"
+            dom = f"pubmed.ncbi.nlm.nih.gov/{m_pmid.group(1)}"
+        elif m_url:
+            link = m_url.group(0).rstrip(".,;")
+            dom = re.sub(r"^https?://(www\.)?", "", link)
+        else:
+            link, dom = f"#nguon-{n}", ""
+        if len(dom) > 34:
+            dom = dom[:33] + "…"
+        ten = dong.split(". ")[0] if ". " in dong[:90] else dong[:60]
+        if len(ten) > 54:
+            ten = ten[:53] + "…"
+        m_tap = re.search(r"\*([^*]+)\*", dong)
+        m_nam = re.search(r"\b(19|20)\d{2}\b", dong)
+        phu = " · ".join(x for x in [(m_tap.group(1) if m_tap else ""),
+                                     (m_nam.group(0) if m_nam else "")] if x)
+        goc_mono = (m_tap.group(1) if m_tap else ten).split()
+        mono = "".join(w[0] for w in goc_mono[:2]).upper() or "N"
+        mau = _MAU_MONO[sum(ord(c) for c in ten) % len(_MAU_MONO)]
+        info[n] = {"link": link, "dom": dom, "ten": ten, "phu": phu,
+                   "mono": mono, "mau": mau}
+    return info
+
+
+def _dai_chip(so_thu_tu: list[int], info: dict[int, dict]) -> str:
+    the = []
+    for n in so_thu_tu:
+        i = info.get(n)
+        if not i:
+            continue
+        dong2 = " · ".join(x for x in [i["phu"], i["dom"]] if x)
+        the.append(
+            f'<a class="chip-nguon" href="{html.escape(i["link"], quote=True)}"'
+            f' target="_blank" rel="noopener">'
+            f'<span class="mono" style="background:{i["mau"]}">{html.escape(i["mono"])}</span>'
+            f'<span class="chip-body"><span class="chip-ten">[{n}] {html.escape(i["ten"])}</span>'
+            f'<span class="chip-dom">{html.escape(dong2)}</span></span></a>')
+    return f"<div class='the-nguon'>{''.join(the)}</div>" if the else ""
+
+
 def render(md: str, ten_file: str = "") -> str:  # ten_file giữ cho tương thích, không in ra
     than, nguon = re.split(r"^## Nguồn\s*$", md, maxsplit=1, flags=re.M)
     dong_ra: list[str] = []
@@ -104,9 +162,28 @@ def render(md: str, ten_file: str = "") -> str:  # ten_file giữ cho tương th
         dong_ra.append("</table></div>")
         bang.clear()
 
+    # parse Nguồn TRƯỚC để có info thẻ khi dựng thân bài
+    muc_tho: dict[int, str] = {}
+    for m in re.finditer(r"^(\d{1,3})\.\s+(.+)$", nguon, re.M):
+        muc_tho[int(m.group(1))] = m.group(2)
+    chip_info = _thong_tin_chip(muc_tho)
+    so_muc_nay: list[int] = []
+
+    def _xa_chip():
+        if so_muc_nay:
+            dong_ra.append(_dai_chip(so_muc_nay, chip_info))
+            so_muc_nay.clear()
+
+    def _gom_so(raw: str):
+        for m in re.finditer(r"\[(\d{1,3})\]", raw):
+            n = int(m.group(1))
+            if n not in so_muc_nay:
+                so_muc_nay.append(n)
+
     trong_ul = False
     for d in than.split("\n"):
         s = d.strip()
+        _gom_so(s)
         if s.startswith("|"):
             o = [x.strip() for x in s.strip("|").split("|")]
             if not re.fullmatch(r"[-:\s|]+", s):
@@ -125,6 +202,7 @@ def render(md: str, ten_file: str = "") -> str:  # ten_file giữ cho tương th
         if s.startswith("# ") and tieu_de == "Bài tổng thuật chứng cứ":
             tieu_de = s[2:].strip()
         elif s.startswith("## "):
+            _xa_chip()
             dong_ra.append(f"<h2>{_inline(s[3:])}</h2>")
         elif s.startswith("### "):
             dong_ra.append(f"<h3>{_inline(s[4:])}</h3>")
@@ -135,6 +213,7 @@ def render(md: str, ten_file: str = "") -> str:  # ten_file giữ cho tương th
     if trong_ul:
         dong_ra.append("</ul>")
     _xa_bang()
+    _xa_chip()
 
     muc_nguon = []
     ghi_chu_nguon = []
@@ -183,6 +262,19 @@ code{{font-family:inherit;font-style:italic}}
 .nguon-muc{{font-size:.92rem;margin:6px 0;padding-left:2em;text-indent:-2em;text-align:left}}
 .so-nguon{{font-weight:700}}
 .nguon-muc:target{{background:#fdf6dd;border-left:3px solid var(--nhan);padding-left:calc(2em - 3px)}}
+.the-nguon{{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}}
+.chip-nguon{{display:flex;gap:9px;align-items:center;border:1px solid var(--line2);
+background:#faf8f1;padding:7px 11px;border-radius:9px;text-decoration:none;
+color:var(--ink2);max-width:265px;min-width:150px}}
+.chip-nguon:hover{{border-color:var(--nhan);background:#f6f2e7}}
+.mono{{width:27px;height:27px;border-radius:50%;color:#fff;display:flex;flex:none;
+align-items:center;justify-content:center;font-size:.66rem;font-weight:700;
+font-family:Georgia,serif;letter-spacing:.02em}}
+.chip-body{{display:flex;flex-direction:column;gap:1px;min-width:0}}
+.chip-ten{{font-size:.8rem;line-height:1.3;overflow:hidden;text-overflow:ellipsis;
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}
+.chip-dom{{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;
+text-overflow:ellipsis}}
 .ghi-chu-nguon{{font-size:.88rem;color:var(--muted);font-style:italic;margin:12px 0 0;padding-top:8px;border-top:1px dotted var(--line2);text-align:left}}
 .chan{{margin-top:30px;padding-top:12px;border-top:3px double var(--line);
 font-size:.88rem;color:var(--muted);font-style:italic;text-align:center}}

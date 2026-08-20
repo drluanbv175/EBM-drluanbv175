@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.3.0
+version: 1.3.1
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -114,7 +114,9 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    Cuối bài: «Cần bác sĩ kiểm chứng.»
 
 4. **XUẤT + GIAO**: lưu md vào `EBM-Dashboards/tong_thuat/TT_<slug>_<YYYYMMDD>.md`
-   → `python3 tools/xuat_tong_thuat.py <file>.md` (cổng hình thức fail-closed:
+   → `python3 tools/xuat_tong_thuat.py <file>.md` (renderer TỰ sinh dải THẺ
+   NGUỒN có link dưới mỗi mục — số [n] trong câu + thẻ bấm-mở-thẳng DOI/PubMed,
+   theo mẫu bác sĩ duyệt 19/08; cổng hình thức fail-closed:
    [n] khớp Nguồn hai chiều, nguồn nào cũng có PMID/DOI/URL) → gửi bác sĩ file
    HTML (SendUserFile, display:"render") → `python3 tools/dung_hom_thu.py`.
 
