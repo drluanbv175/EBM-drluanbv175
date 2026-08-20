@@ -268,6 +268,26 @@ def main() -> int:
         except (json.JSONDecodeError, OSError):
             pass
 
+    # ⑪ BÀI TỔNG THUẬT — độ tươi + phủ hòm thư (thêm 20/08: bài là ẢNH TĨNH, không
+    # ai canh thì nó cũ đi IM LẶNG — đúng họ lỗi đã vá ở dashboard).
+    out = _chay([sys.executable, "tools/dang_ky_tong_thuat.py"])
+    m = re.search(r"(\d+)/(\d+) bài quá (\d+) ngày", out)
+    if m and int(m.group(1)):
+        de_xuat.append((2, "👤", f"{m.group(1)}/{m.group(2)} bài tổng thuật quá "
+                        f"{m.group(3)} ngày — rà nguồn mới hơn trước khi dùng lại",
+                        "python3 tools/dang_ky_tong_thuat.py"))
+    so_tt = REPO / "EBM-Dashboards" / "tong_thuat" / "so-tong-thuat.json"
+    if so_tt.exists():
+        try:
+            bai = json.loads(so_tt.read_text(encoding="utf-8")).get("bai", [])
+            mo_coi = [b for b in bai if not b.get("chu_de")]
+            if mo_coi:
+                de_xuat.append((2, "🤖", f"{len(mo_coi)} bài tổng thuật CHƯA khớp chủ đề "
+                                "danh bạ — bộ dò chứng-cứ-vượt-qua không quét tới",
+                                "python3 tools/tra_nguon_chuan.py --danh-sach"))
+        except (json.JSONDecodeError, OSError):
+            pass
+
     hom_nay = dt.date.today().isoformat()
     print("=" * 66)
     print(f"  HỆ TỰ ĐỀ XUẤT VIỆC — {hom_nay} (sinh từ bộ đếm sống, không cảm giác)")

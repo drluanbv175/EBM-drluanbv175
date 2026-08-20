@@ -241,7 +241,7 @@ def _phu_luc_thong_ke() -> str:
         muc.append(f'<div class="dn" id="tk-{mid}"><b>{k}</b> · <i>{ten}</i>'
                    f'<p>{_ha_caps_nhan_manh(giai)}</p></div>')
     return ('<section id="phu-luc-b"><div class="dau-muc"><h2 class="muc">'
-            '<span class="so">VI.</span>Phụ lục B — Giải nghĩa chỉ số thống kê '
+            '<span class="so">VII.</span>Phụ lục B — Giải nghĩa chỉ số thống kê '
             'cho thực hành</h2></div>'
             '<p class="mo">Bấm vào chỉ số gạch chấm trong văn bản để bung giải nghĩa ngắn tại chỗ; '
             'bảng dưới đây là bản đầy đủ.</p>' + "".join(muc) + "</section>")
@@ -420,6 +420,36 @@ def main() -> int:
                     "<p class='mo'>Bấm mở thẳng — cờ đỏ và việc-cần-làm đứng trước, chứng cứ xếp sau trên một trục.</p>"
                     f"<div class='luoi-doc'>{''.join(ban_doc)}</div></section>")
 
+    # ── IV. Bài tổng thuật (đưa vào hòm thư 20/08: sản phẩm không nằm ở đây thì
+    #    với bác sĩ nó không tồn tại; và bài không ai canh sẽ cũ đi im lặng).
+    so_tt = REPO / "EBM-Dashboards" / "tong_thuat" / "so-tong-thuat.json"
+    if so_tt.exists():
+        try:
+            bai = json.loads(so_tt.read_text(encoding="utf-8")).get("bai", [])
+        except json.JSONDecodeError:
+            bai = []
+        gan_day = [b for b in bai if b.get("tuoi_ngay", 999) <= 30]
+        if gan_day:
+            o = []
+            for b in sorted(gan_day, key=lambda x: x["ngay"], reverse=True):
+                lk = b.get("file_html") or b.get("file_md")
+                qua_han = b.get("tuoi_ngay", 0) > 90
+                ten_b = html.escape(b["tieu_de"])
+                if len(ten_b) > 88:
+                    ten_b = ten_b[:87] + "…"
+                o.append(
+                    f"<a class='o-doc' href='{html.escape(lk, quote=True)}'>"
+                    f"<span>{_hoa_dau(ten_b)}</span>"
+                    f"<span class='mo'>{b.get('so_nguon', 0)} nguồn · "
+                    f"{b['ngay'][8:]}/{b['ngay'][5:7]}"
+                    + (" ⚠" if qua_han else "") + "</span></a>")
+            khoi.append(
+                "<section><div class='dau-muc'><h2 class='muc'><span class='so'>IV.</span>"
+                f"Bài tổng thuật chứng cứ trong 30 ngày ({len(gan_day)})</h2>"
+                "<p class='mo'>Trả lời một chủ đề bằng MỘT bài liền mạch — mọi nguồn đã "
+                "kiểm rút bài; bấm thẻ nguồn trong bài để mở bài gốc</p></div>"
+                f"<div class='luoi-doc'>{''.join(o)}</div></section>")
+
     try:
         r = subprocess.run([sys.executable, "tools/tu_de_xuat_viec.py", "--gon"],
                            capture_output=True, text=True, timeout=300, cwd=REPO)
@@ -434,7 +464,7 @@ def main() -> int:
             else:
                 giu = False
         if loc:
-            khoi.append("<section><div class='dau-muc'><h2 class='muc'><span class='so'>IV.</span>Việc chờ bác sĩ</h2></div>"
+            khoi.append("<section><div class='dau-muc'><h2 class='muc'><span class='so'>V.</span>Việc chờ bác sĩ</h2></div>"
                         + "\n".join(loc) + "</section>")
     except (OSError, subprocess.SubprocessError):
         pass
@@ -447,7 +477,7 @@ def main() -> int:
             dong = [f"<div class='li'>{_inline('PMID ' + c['pmid'])} — {_hoa_dau(html.escape(c['title'][:110]))} "
                     f"<span class='mo'>({html.escape(c.get('nguon_phat_hien', ''))})</span></div>"
                     for c in con]
-            khoi.append("<section><div class='dau-muc'><h2 class='muc'><span class='so'>V.</span>Ứng viên ngoài vòng quét còn chờ</h2></div>"
+            khoi.append("<section><div class='dau-muc'><h2 class='muc'><span class='so'>VI.</span>Ứng viên ngoài vòng quét còn chờ</h2></div>"
                         + "\n".join(dong) + "</section>")
 
     RA.write_text(f"""<!DOCTYPE html>

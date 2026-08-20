@@ -2091,6 +2091,67 @@ def bh60_goi_tuan_phai_doc_toan_van():
     return True, "gói tuần có dây đọc toàn văn: tool + SKILL + bộ lọc sống"
 
 
+def bh63_benchmark_mu_khong_de_may_tu_cham():
+    """20/08 — bác sĩ duyệt benchmark mù vì mọi so sánh «hệ hơn/thua Gemini» tới nay
+    đều do CHÍNH hệ chấm (xung đột grader=generator, sổ bài học 08/07). Chốt giữ ba
+    bất biến của công cụ benchmark: (a) có ẩn danh + khoá mở nhãn; (b) KHÔNG có
+    đường nào để máy tự cho điểm chất lượng; (c) bản không có định danh nào phải
+    được ghi «KHÔNG kiểm được», tuyệt đối không đọc thành «sạch»."""
+    f = REPO / "tools" / "bench_mu.py"
+    if not f.exists():
+        return False, "thiếu tools/bench_mu.py"
+    vb = f.read_text(encoding="utf-8")
+    if "khoa-mo-nhan.json" not in vb or "random.Random" not in vb:
+        return False, "benchmark mất cơ chế ẩn danh/khoá mở nhãn"
+    if "KHÔNG kiểm được" not in vb:
+        return False, "bản 0 định danh không còn được ghi «KHÔNG kiểm được» (nguy cơ đọc thành sạch)"
+    # máy KHÔNG được tự chấm: cấm mọi hàm/nhánh tính điểm chất lượng
+    if re.search(r"def\s+cham_diem|diem_chat_luong|tu_cham", vb):
+        return False, "xuất hiện đường máy TỰ CHẤM chất lượng — vi phạm nguyên tắc benchmark mù"
+    return True, "benchmark mù: có ẩn danh + khoá nhãn, máy không tự chấm"
+
+
+def bh64_bai_tong_thuat_phai_o_trong_vong_song():
+    """20/08 — bài tổng thuật từng là ẢNH TĨNH: không nằm trong hòm thư, không sổ
+    đăng ký, không ai canh độ tươi ⇒ cũ đi IM LẶNG (đúng họ lỗi đã vá ở dashboard).
+    Chốt: sổ đăng ký còn sống + hòm thư còn khối bài + giác quan độ tươi còn dây."""
+    dk = REPO / "tools" / "dang_ky_tong_thuat.py"
+    if not dk.exists():
+        return False, "thiếu tools/dang_ky_tong_thuat.py"
+    hom = (REPO / "tools" / "dung_hom_thu.py").read_text(encoding="utf-8")
+    if "so-tong-thuat.json" not in hom:
+        return False, "hòm thư KHÔNG còn đọc sổ bài tổng thuật — sản phẩm biến mất khỏi một-cửa"
+    tdx = (REPO / "tools" / "tu_de_xuat_viec.py").read_text(encoding="utf-8")
+    if "dang_ky_tong_thuat" not in tdx:
+        return False, "bảng tự-đề-xuất mất giác quan độ tươi bài tổng thuật"
+    # khớp chủ đề phải theo RANH GIỚI TỪ, không phải chuỗi con
+    vb = dk.read_text(encoding="utf-8")
+    if "la_viet_tat" not in vb:
+        return False, ("khớp chủ đề quay lại kiểu chuỗi con — «CAP» sẽ trúng «cấp», "
+                       "«THA» trúng «tha», mọi bài dính mọi chủ đề")
+    return True, "bài tổng thuật có sổ đăng ký + mặt trong hòm thư + giác quan độ tươi"
+
+
+def bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan():
+    """20/08 — khớp guideline tự động chỉ chứng minh «đúng tổ chức + đúng loại ấn
+    phẩm», KHÔNG chứng minh «đúng bản CHỦ LỰC» (đo thật: nhánh IDSA/ATS ra guideline
+    hẹp về xét nghiệm acid nucleic; Maastricht ra bản IV/V thay vì VI). Nếu danh bạ
+    không phân biệt máy-khớp với người-chốt thì bài tổng thuật sẽ trích guideline
+    lệch mà không ai biết. Chốt: mọi nguồn có PMID phải khai `xac_nhan`."""
+    f = REPO / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json"
+    if not f.exists():
+        return True, "chưa có danh bạ nguồn chuẩn (bỏ qua)"
+    db = json.loads(f.read_text(encoding="utf-8"))
+    thieu = [f"{ma}/{n['to_chuc']}" for ma, cd in db["chu_de"].items()
+             for n in cd["nguon"] if n.get("pmid") and not n.get("xac_nhan")]
+    if thieu:
+        return False, f"{len(thieu)} nguồn có PMID mà KHÔNG khai xac_nhan — {thieu[0]}"
+    tool = (REPO / "tools" / "nap_guideline_pmc.py").read_text(encoding="utf-8")
+    if '"may"' not in tool or "--chot" not in tool:
+        return False, "công cụ nạp guideline mất nhãn «may»/đường «--chot» của người"
+    return True, "mọi định danh guideline đều khai ai xác nhận"
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2515,6 +2576,9 @@ BAI_HOC = [
     ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
     ("BH62", "18/08", "Cổng tự parse chặt khối DATA (chống trang trắng lọt cổng)", bh62_cong_phai_tu_parse_chat_khoi_data),
+    ("BH63", "20/08", "Benchmark mù — máy ẩn danh, KHÔNG tự chấm chất lượng", bh63_benchmark_mu_khong_de_may_tu_cham),
+    ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
+    ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
 ]
 
 
