@@ -2539,6 +2539,21 @@ def bh62_cong_phai_tu_parse_chat_khoi_data():
     return True, "cổng tự chặn khối DATA vỡ, không bắt oan, và dùng chung MỘT parser"
 
 
+def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
+    """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
+    tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
+    nên lỗi sổ sách này không có đường nào lộ ra: tra theo mã sẽ trúng nhầm mục, đếm
+    theo mã sẽ hụt một mục. Chốt đọc chính bảng đăng ký đang sống.
+    """
+    from collections import Counter
+
+    dem = Counter(ma for ma, _, _, _ in BAI_HOC)
+    trung = sorted(ma for ma, n in dem.items() if n > 1)
+    if trung:
+        return False, "mã trùng: " + ", ".join(trung)
+    return True, f"{len(BAI_HOC)} mục, mã duy nhất"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2600,13 +2615,14 @@ BAI_HOC = [
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
     ("BH60", "19/08", "Gói tuần phải ĐỌC TOÀN VĂN OA, không thẩm định mù từ tóm tắt", bh60_goi_tuan_phai_doc_toan_van),
-    ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
     ("BH62", "18/08", "Cổng tự parse chặt khối DATA (chống trang trắng lọt cổng)", bh62_cong_phai_tu_parse_chat_khoi_data),
     ("BH63", "20/08", "Benchmark mù — máy ẩn danh, KHÔNG tự chấm chất lượng", bh63_benchmark_mu_khong_de_may_tu_cham),
     ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
     ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
+    ("BH67", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
+    ("BH68", "21/08", "Mã bài học phải DUY NHẤT (hai phiên thêm song song đụng số)", bh68_ma_bai_hoc_phai_duy_nhat),
 ]
 
 

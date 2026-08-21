@@ -439,6 +439,11 @@ def main() -> int:
     print(f"\n── ĐỘ PHỦ DANH BẠ: {co_dinh_danh}/{tong} nguồn có định danh ấn phẩm thật "
           f"({nguoi_chot} do NGƯỜI chốt · {co_dinh_danh - nguoi_chot} máy tự khớp) · "
           f"{co_toan_van} có toàn văn JATS trong kho")
+    web = sum(1 for cd in db["chu_de"].values() for n in cd["nguon"]
+              if n.get("an_pham") == "web")
+    chua = tong - co_dinh_danh - web
+    print(f"   Trong {tong - co_dinh_danh} nguồn không có PMID: {web} là tài liệu WEB "
+          f"(không có ấn phẩm tạp chí đơn lẻ — KHÔNG phải thiếu sót) · {chua} chưa tra được.")
     if co_dinh_danh - nguoi_chot:
         print("   ⚠ Nguồn nhãn «máy tự khớp» chỉ bảo đảm ĐÚNG TỔ CHỨC + ĐÚNG LOẠI ẤN PHẨM,")
         print("     KHÔNG bảo đảm là bản CHỦ LỰC của chủ đề — chốt bằng --chot khi đã xem.")
