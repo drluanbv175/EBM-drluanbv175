@@ -130,9 +130,39 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   Đây là lời giải cho lớp bực bội "gọi skill mà nhận hành vi cũ".
   **Cơ chế hiện hành:** `sync/skills/` là nguồn duy nhất; `python3 tools/dong_bo_skill_claude_codex.py
   --ap-dung --dong-bo-plugin` nối trực tiếp sang `~/.claude/skills` + `~/.codex/skills`, đẩy Cowork
-  bằng công cụ cũ, dựng lại catalog/ZIP router và giữ plugin Codex không cũ hơn Claude. Hook
+  bằng công cụ cũ, dựng lại catalog/ZIP router và đối chiếu kho plugin. Hook
   `SessionStart` tự chạy để bắt skill mới/registry mới; sửa nội dung skill có hiệu lực tức thời qua
   symlink. Không dùng LaunchAgent đọc OneDrive vì macOS TCC chặn tiến trình nền chưa được cấp quyền.
+  🔴 **BỐN THỨ BỘ HỢP NHẤT TỪNG TRỎ VÀO KHOẢNG KHÔNG — vá 21/08/2026 (BH67).** Bản commit 20/08 được
+  tài liệu hoá ở CẢ AGENTS.md lẫn mục này, nhưng đo trên repo sạch thì `--ap-dung` thoát **mã 2**:
+  (a) `tools/dong_bo_plugin_claude_codex.py` **chưa bao giờ có trong repo** — chân «đồng bộ Plugin»
+  chưa từng tồn tại; (b) `sync/skills/plugin-router-chatgpt/` chỉ có trên Mac, chưa commit, nên làn
+  ChatGPT luôn lỗi; (c) cờ `--nguon-la-chuan` **chưa từng tồn tại** trong `dong_bo_skill.py`
+  (`git log -S` không ra lần thêm nào) → argparse trả mã 2; (d) chính nó tự chặn Windows bằng
+  `if os.name == "nt": return 1`. Nghĩa là lệnh được tin là «xương sống tự động» **chưa từng chạy
+  trọn ở đâu**, và trên Windows chưa từng chạy một dòng. Nay: (a) đã xây, (b) bỏ qua kèm lời nhắc —
+  thiếu NGUYÊN LIỆU không được biến lượt nối skill thành công thành thất bại, còn bước phụ CHẠY MÀ
+  LỖI thì vẫn fail-closed, (c) đã thi công đúng hợp đồng AGENTS.md mô tả, (d) đã bỏ.
+  **Đồng bộ CHÉO MÁY (mới 21/08):** `tools/dong_bo_plugin_claude_codex.py` đối chiếu kho plugin với
+  **sổ khai dùng chung `sync/plugin-manifest.json`** — file đi qua git nên hai máy đọc CÙNG một bản.
+  Nó khai **Ý ĐỊNH** (plugin nào CẦN ở máy nào, vì sao), khác `tools/moc_chuan_plugin.json` vốn là ảnh
+  chụp TRẠNG THÁI riêng từng máy và cố ý không bao giờ nhìn sang máy kia. Nhờ vậy mới tách được
+  **«thiếu vì cố ý»** khỏi **«thiếu vì trôi dạt»** — hai thứ trông giống hệt nhau trong mọi bản kiểm
+  cũ mà xử lý thì ngược nhau. Đo trên chính hai mốc đang có: **Mac 9 plugin/839 skill · Windows 3
+  plugin/668 skill — 6 plugin chỉ có ở Mac**, và trước file này không công cụ nào nói được con số đó.
+  ⚠️ Mục nào còn `da_xac_nhan: false` thì `can_o_may` mới chỉ là SUY từ hiện trạng lúc dựng sổ, nên
+  chốt **chỉ cảnh báo, không báo đỏ** (báo đỏ dựa trên suy đoán là biến CHƯA BIẾT thành CÓ VẤN ĐỀ —
+  BH08, và bức tường đỏ giả sẽ dạy người ta bỏ qua cả cảnh báo thật). Bác sĩ xác nhận xong thì chính
+  chỗ đó thành cổng thật. Tool **KHÔNG** tự cài/gỡ plugin qua mạng và **KHÔNG** tự sửa `enabledPlugins`
+  — bài học 11/08 (gỡ mục khỏi `enabledPlugins` làm Claude Code cài lại 278 MB) vẫn nguyên giá trị.
+  **Hook `SessionStart` nay đi được sang máy kia:** `tools/dong_bo_hook_sessionstart.py --xuat` chụp
+  khối hook của máy ĐANG CHẠY ĐÚNG thành `sync/hooks-sessionstart.json`, máy kia `--ap-dung` để cài
+  (chỉ chạm khoá `hooks.SessionStart`, sao lưu trước, **giữ nguyên** cấu hình riêng của máy như
+  `skillListingBudgetFraction` — đè cả file là xoá mất bản vá ngân sách skill 12/08). Công cụ **không
+  tự soạn hook**: bản khai thật chỉ máy đó biết, soạn theo trí nhớ tài liệu là sai cờ và hỏng im lặng.
+  ⚠️ Cả hai file sổ khai phải nằm trong danh sách un-ignore của `.gitignore` — quy tắc `/sync/*` loại
+  mọi file gốc, và lúc mới dựng thì `plugin-manifest.json` **bị ignore im lặng**, tức cơ chế «đi qua
+  git» sẽ không đi đâu cả. BH67 canh luôn điều này.
   ⚠️ **Quyết định chiều theo NỘI DUNG, KHÔNG theo `mtime`.** 6 skill từng có mtime runtime mới hơn
   (đều đúng mốc `21/06 18:12`) — đó là dấu thời gian **dựng lại hàng loạt**, không phải nội dung mới;
   kiểm nội dung thì runtime có **0 dòng riêng** còn nguồn nhiều hơn 1388 byte. Tin mtime sẽ chặn oan

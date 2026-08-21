@@ -171,6 +171,13 @@ def main() -> int:
     ap.add_argument("--don-bak", action="store_true",
                     help="dọn *.bak-* còn sót trong NƠI CHẠY (BH22: app có thể "
                          "nạp nhầm; sao lưu đúng chỗ là nguồn/git, không phải runtime)")
+    ap.add_argument("--nguon-la-chuan", action="store_true",
+                    help="phân kỳ hai chiều thì NGUỒN thắng (vẫn sao lưu trước khi "
+                         "ghi). Mặc định KHÔNG bật: chạy riêng thì phân kỳ phải chặn "
+                         "để bác sĩ xem. Chỉ bộ hợp nhất dong_bo_skill_claude_codex.py "
+                         "mới truyền cờ này — đúng hợp đồng đã ghi ở AGENTS.md §Đồng bộ "
+                         "skill/plugin: «nguồn OneDrive thắng runtime Cowork nhưng bản "
+                         "cũ luôn được sao lưu».")
     a = ap.parse_args()
 
     runtime = tim_runtime()
@@ -213,7 +220,10 @@ def main() -> int:
             print(f"   {k:44s} {n} file")
 
     if phan_ky:
-        print("\n⚠ PHÂN KỲ HAI CHIỀU — KHÔNG tự đẩy, cần bác sĩ xem:")
+        if a.nguon_la_chuan:
+            print("\n▸ PHÂN KỲ HAI CHIỀU — nguồn được chọn làm chuẩn, sao lưu trước khi ghi:")
+        else:
+            print("\n⚠ PHÂN KỲ HAI CHIỀU — KHÔNG tự đẩy, cần bác sĩ xem:")
         for k in phan_ky:
             for rel, mat in ket[k]["phan_ky"]:
                 print(f"   {k}/{rel}: runtime có {mat} dòng sẽ MẤT nếu ghi đè")
@@ -226,6 +236,14 @@ def main() -> int:
     # --- Ghi thật, có sao lưu ---
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     da_day = 0
+    # Skill phân kỳ chỉ vào danh sách ghi khi bác sĩ (hoặc bộ hợp nhất) đã chọn
+    # nguồn làm chuẩn. Chúng được đẩy TRỌN nguồn: danh sách "day" của một skill
+    # phân kỳ chỉ là phần giao, đẩy phần giao thì runtime vẫn giữ dòng riêng và
+    # lần chạy sau lại báo phân kỳ y như cũ.
+    if a.nguon_la_chuan:
+        for k in phan_ky:
+            ket[k]["day"] = []
+        can_day = can_day + phan_ky
     for k in can_day:
         src, dst = NGUON / k, runtime / k
         if dst.exists():
@@ -236,9 +254,13 @@ def main() -> int:
             shutil.copy2(f, d)
             da_day += 1
     print(f"\n✓ Đã đẩy {da_day} file cho {len(can_day)} skill (sao lưu đuôi .bak-{stamp}).")
-    if phan_ky:
+    if phan_ky and not a.nguon_la_chuan:
         print(f"⚠ Bỏ qua {len(phan_ky)} skill phân kỳ hai chiều — chưa đụng tới.")
-    return 2 if phan_ky else 0
+        return 2
+    if phan_ky:
+        print(f"  Trong đó {len(phan_ky)} skill phân kỳ đã bị nguồn ghi đè theo "
+              f"--nguon-la-chuan; bản runtime cũ nằm ở .bak-{stamp}.")
+    return 0
 
 
 if __name__ == "__main__":

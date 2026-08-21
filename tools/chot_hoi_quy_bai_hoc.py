@@ -2179,6 +2179,151 @@ def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
     return True, "skill giữ đủ bảng 5 lớp lỗi nội dung + đòi thẩm định độc lập"
 
 
+def bh67_bo_dong_bo_khong_tro_vao_thu_khong_co():
+    """21/08 — bộ hợp nhất `dong_bo_skill_claude_codex.py` được commit và tài liệu
+    hoá ở CẢ AGENTS.md lẫn CLAUDE.md, nhưng gọi vào BỐN thứ không tồn tại:
+      · `tools/dong_bo_plugin_claude_codex.py` — chưa bao giờ có trong repo
+      · `sync/skills/plugin-router-chatgpt/scripts/build_catalog.py` — chỉ có trên Mac
+      · cờ `--nguon-la-chuan` của `dong_bo_skill.py` — **chưa từng tồn tại**
+        (`git log -S` không ra lần thêm nào), nên argparse trả mã 2
+      · và chính nó tự chặn Windows bằng `if os.name == "nt": return 1`
+    Đo được: `--ap-dung` thoát mã 2 trên máy sạch, `--dong-bo-plugin` in
+    `can't open file`. Tức lệnh đồng bộ được tin là «xương sống tự động» chưa từng
+    chạy trọn ở đâu, và trên Windows thì chưa từng chạy dòng nào.
+
+    Đây là họ lỗi TÀI LIỆU-TRỎ-VÀO-KHOẢNG-KHÔNG, đúng thứ commit b7c4bb7 nói là đi
+    sửa («bỏ lại là doctrine trỏ vào công cụ không có trong repo») — mà bản thân
+    nó lại mang vào bốn cái mới. Chốt vì thế KHÔNG đếm chữ trong tài liệu: nó phân
+    giải TỪNG công cụ được gọi và TỪNG cờ được truyền, đối chiếu với argparse thật
+    của file đích. Cờ sai tên là lỗi im lặng — argparse chỉ kêu lúc chạy thật.
+    """
+    import ast
+
+    gm = REPO / "tools/dong_bo_skill_claude_codex.py"
+    if not gm.exists():
+        return False, "thiếu bộ hợp nhất dong_bo_skill_claude_codex.py"
+    vb = gm.read_text(encoding="utf-8")
+
+    # (a) không còn tự chặn Windows
+    cay = ast.parse(vb)
+    for nut in ast.walk(cay):
+        if (isinstance(nut, ast.Compare) and isinstance(nut.left, ast.Attribute)
+                and nut.left.attr == "name"
+                and any(isinstance(c, ast.Constant) and c.value == "nt"
+                        for c in nut.comparators)):
+            return False, "bộ hợp nhất lại tự chặn Windows bằng os.name == 'nt'"
+
+    def co_o(ham: ast.FunctionDef) -> tuple[list[str], list[str]]:
+        """Trả (công cụ tools/*.py được gọi, cờ --* truyền trong cùng hàm)."""
+        cong_cu, co = [], []
+        for n in ast.walk(ham):
+            if isinstance(n, ast.Constant) and isinstance(n.value, str):
+                if n.value.startswith("tools/") and n.value.endswith(".py"):
+                    cong_cu.append(n.value)
+                elif n.value.startswith("--"):
+                    co.append(n.value)
+        return cong_cu, co
+
+    thieu, sai_co = [], []
+    for ham in [n for n in ast.walk(cay) if isinstance(n, ast.FunctionDef)]:
+        cong_cu, co_truyen = co_o(ham)
+        for tuong_doi in cong_cu:
+            dich = REPO / tuong_doi
+            if not dich.exists():
+                thieu.append(f"{ham.name}() gọi {tuong_doi} — không có trong repo")
+                continue
+            nhan = set()
+            for n in ast.walk(ast.parse(dich.read_text(encoding="utf-8"))):
+                if (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                        and n.func.attr == "add_argument"):
+                    nhan.update(a.value for a in n.args
+                                if isinstance(a, ast.Constant) and isinstance(a.value, str))
+            for c in co_truyen:
+                if c not in nhan:
+                    sai_co.append(f"{ham.name}() truyền {c} cho {tuong_doi} "
+                                  f"— argparse của nó KHÔNG nhận cờ này")
+    if thieu:
+        return False, f"{len(thieu)} công cụ được gọi mà không có: {thieu[0]}"
+    if sai_co:
+        return False, f"{len(sai_co)} cờ không được chấp nhận: {sai_co[0]}"
+
+    # (b) hai script cài đặt phải nối CẢ HAI runtime — bỏ sót Codex thì máy đó
+    #     không thấy skill nào, đúng tình trạng Windows trước 21/08.
+    #
+    # KIỂM BẰNG HÀNH VI, KHÔNG ĐẾM CHUỖI. Bản đầu của chốt này chỉ hỏi «chuỗi
+    # .codex có trong file không» — và đột biến gỡ Codex khỏi vòng lặp vẫn XANH,
+    # vì chữ .codex còn nguyên trong chú thích. Đúng bẫy TAUTOLOGY mà kho đã vấp ở
+    # guardrail G3/G8: đếm chuỗi thì thứ được canh là câu chữ, không phải hành vi.
+    import os as _os
+    import shutil as _sh
+    import subprocess
+    import tempfile
+
+    sh = REPO / "sync/link-skills.sh"
+    ps = REPO / "sync/link-skills.ps1"
+    for f in (sh, ps):
+        if not f.exists():
+            return False, f"thiếu {f.name}"
+
+    bash = _sh.which("bash")
+    if bash:
+        # Chạy THẬT với HOME tạm rồi đếm liên kết sinh ra ở từng runtime.
+        with tempfile.TemporaryDirectory() as tam:
+            kq = subprocess.run([bash, str(sh)], check=False, capture_output=True,
+                                text=True, timeout=120,
+                                env={"HOME": tam, "PATH": _os.environ.get("PATH", "")})
+            if kq.returncode != 0:
+                return False, f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            for runtime in (".claude", ".codex"):
+                d = Path(tam) / runtime / "skills"
+                n = sum(1 for x in d.iterdir() if x.is_symlink()) if d.is_dir() else 0
+                if n == 0:
+                    return False, (f"link-skills.sh KHÔNG nối {runtime}/skills "
+                                   f"(chạy thật, 0 liên kết) — runtime đó sẽ trắng skill")
+
+    # Bản .ps1: chạy THẬT nếu máy có PowerShell (tức trên chính Windows, nơi nó
+    # phải đúng). Máy không có thì kiểm tĩnh — nhưng loại cả CHÚ THÍCH lẫn dòng
+    # `Write-Host`: bản đầu của chốt để lọt đột biến vì chuỗi ".codex\skills" vẫn
+    # còn ở dòng in hướng dẫn cuối file. Chữ dùng để HIỂN THỊ không phải hành vi.
+    pwsh = _sh.which("pwsh") or _sh.which("powershell")
+    if pwsh:
+        with tempfile.TemporaryDirectory() as tam:
+            moi_truong = dict(_os.environ, USERPROFILE=tam, HOME=tam)
+            kq = subprocess.run([pwsh, "-ExecutionPolicy", "Bypass", "-File", str(ps)],
+                                check=False, capture_output=True, text=True,
+                                timeout=180, env=moi_truong)
+            if kq.returncode != 0:
+                return False, f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            for runtime in (".claude", ".codex"):
+                d = Path(tam) / runtime / "skills"
+                n = sum(1 for _x in d.iterdir()) if d.is_dir() else 0
+                if n == 0:
+                    return False, (f"link-skills.ps1 KHÔNG nối {runtime}/skills "
+                                   f"(chạy thật, 0 mục)")
+    else:
+        ma_ps = "\n".join(
+            d for d in ps.read_text(encoding="utf-8-sig").splitlines()
+            if not d.lstrip().startswith("#") and not d.lstrip().startswith("Write-Host"))
+        for runtime in (".claude", ".codex"):
+            if f"{runtime}\\skills" not in ma_ps:
+                return False, (f"link-skills.ps1 không nối {runtime}\\skills trong phần MÃ "
+                               f"(chữ trong chú thích hay dòng in không tính)")
+    # (c) Sổ khai dùng chung phải THEO ĐƯỢC git. `.gitignore` của repo mở đầu bằng
+    # `/*` rồi un-ignore từng mục, nên một file mới ở gốc `sync/` bị loại IM LẶNG:
+    # cơ chế «hai máy đọc cùng một bản ý định» sẽ không có bản nào đi sang máy kia.
+    # Đúng họ lỗi mà chính BH này đi vá, chỉ khác chỗ hỏng là .gitignore.
+    git = _sh.which("git")
+    if git:
+        for ten in ("sync/plugin-manifest.json", "sync/hooks-sessionstart.json"):
+            kq = subprocess.run([git, "check-ignore", "-q", ten], cwd=REPO,
+                                check=False, capture_output=True, timeout=60)
+            if kq.returncode == 0:
+                return False, (f"{ten} đang bị .gitignore loại — sổ khai dùng chung "
+                               f"không đi được sang máy kia")
+    return True, ("công cụ + cờ phân giải được · Windows không bị chặn · "
+                  "link-skills.sh chạy thật nối đủ 2 runtime · sổ khai theo được git")
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2607,6 +2752,7 @@ BAI_HOC = [
     ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
     ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
+    ("BH67", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh67_bo_dong_bo_khong_tro_vao_thu_khong_co),
 ]
 
 

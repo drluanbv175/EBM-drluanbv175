@@ -10,14 +10,38 @@ Có **2 môi trường tách biệt**, cơ chế đồng bộ khác nhau:
 Nguồn chuẩn duy nhất là `sync/skills/`. Cài liên kết một lần bằng:
 
 ```bash
-bash sync/link-skills.sh
+bash sync/link-skills.sh          # macOS/Linux — symlink
+```
+```powershell
+sync\link-skills.ps1              # Windows — junction (bấm đúp link-skills.cmd cũng được)
 ```
 
-Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay:
+Cả hai script nối **cả `~/.claude/skills` lẫn `~/.codex/skills`** (sửa 21/08/2026 — trước đó chỉ nối Claude, nên Codex trắng skill trên cả hai máy).
+
+Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay (chạy được trên **cả hai** máy từ 21/08/2026):
 
 ```bash
 python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 ```
+
+### Ba việc mỗi máy làm MỘT LẦN (21/08/2026)
+
+| Việc | Lệnh | Vì sao |
+|---|---|---|
+| Nối skill vào Claude + Codex | `bash sync/link-skills.sh` · `sync\link-skills.ps1` | nguồn duy nhất `sync/skills/` |
+| Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | `.claude/settings.json` bị gitignore nên hook không tự đi |
+| Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
+
+Máy ĐANG CHẠY ĐÚNG (thường là Mac) chạy trước một lần để nạp bản nguồn vào git:
+
+```bash
+python3 tools/dong_bo_hook_sessionstart.py --xuat        # hook thật → sync/hooks-sessionstart.json
+python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai   # dựng khung sync/plugin-manifest.json
+```
+
+Rồi mở `sync/plugin-manifest.json`, sửa `can_o_may` cho đúng Ý ĐỊNH và bật `da_xac_nhan: true`. Chừng nào còn `false`, công cụ chỉ **cảnh báo** — vì lúc đó `can_o_may` mới chỉ là suy từ hiện trạng, mà báo đỏ dựa trên suy đoán sẽ dạy người ta bỏ qua cả cảnh báo thật.
+
+> Công cụ **không** tự cài/gỡ plugin qua mạng và **không** sửa `enabledPlugins`. Bài học 11/08: gỡ một mục khỏi `enabledPlugins` khiến Claude Code cài lại 278 MB. Vắng mặt trong `enabledPlugins` = **BẬT**, chỉ ghi rõ `false` mới là tắt.
 
 ---
 
@@ -49,6 +73,8 @@ Cấu hình runtime vẫn nằm trên từng máy, nhưng skill riêng dùng li�
 
 ### Cập nhật về sau
 Trên macOS và Windows, nội dung skill đã có đi qua symlink/junction ngay lập tức. Hook `SessionStart` tự tạo liên kết cho skill mới. Trên Windows có thể chạy lại `link-skills.ps1` sau khi thêm thư mục mới nếu chưa mở phiên Claude/Codex.
+
+> ⚠️ Windows dùng **junction**, không phải symlink: `os.symlink` ném WinError 1314 khi máy chưa bật Developer Mode (đã đo trên chính máy này 17/08/2026). `tools/lien_ket_da_nen.py` chọn đúng cơ chế theo nền, và nhận diện junction bằng `os.path.isjunction` — `Path.is_symlink()` trả **False** cho junction, dùng nhầm thì mỗi lượt chạy lại đẻ thêm một bản `.bak`.
 
 > Nếu CLI trên máy đó hỗ trợ `/plugin`, có thể dùng cách "xịn" hơn:
 > ```
