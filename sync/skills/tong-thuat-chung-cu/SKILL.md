@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.4.0
+version: 1.5.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -136,7 +136,12 @@ mở lại nguồn, không kiểm bằng trí nhớ):
 | ② Bỏ sót luật NGỪNG thuốc / mức Harm | thiếu «ngừng MRA nếu K không giữ được <5,5» (COR 3: Harm) | tra mục khuyến cáo của chính thuốc đó, đọc CẢ khuyến cáo nghịch |
 | ③ Khẳng định MỒ CÔI trái guideline | «yếu tố này quyết định trình tự chứ không quyết định có dùng hay không» — không [n], trái điều kiện khởi trị | mọi câu mang tính luật phải có [n] |
 | ④ «Không nguồn nào nêu X» khi CHƯA đọc toàn văn | bài nói không nguồn nào cho mốc chỉnh liều, trong khi guideline có mục riêng | chỉ được viết «không nêu» cho phần ĐÃ ĐỌC; chưa đọc thì ghi «chưa đọc được» |
+| ⑥ Trưng mức khuyến cáo KHÔNG áp cho quần thể của bài | bài viết cho ca CHƯA từng dùng thuốc, lại trưng mức của tình huống ĐỔI thuốc | đọc điều kiện áp dụng trong chính câu khuyến cáo; không khớp thì nói rõ «chưa đối chiếu được», KHÔNG chép mức từ trí nhớ |
+| ⑦ Bỏ điều kiện an toàn của thuốc vừa khuyên kê | khuyên chuyển sang ARNI + đưa bảng liều mà thiếu rửa trôi 36 giờ và chống chỉ định phù mạch | mỗi thuốc có bảng liều PHẢI kèm điều kiện khởi trị/chống chỉ định; nguồn guideline không đọc được thì tra **nhãn thuốc** |
+| ⑧ Mục hành động chỉ mang nửa NGUY CƠ, bỏ nửa LỢI ÍCH | ba gạch đều nghiêng khỏi JAKi, trong khi chính nguồn kết luận hồ sơ lợi ích–nguy cơ thuận lợi | mục V phải mang CẢ hai vế của nguồn lợi ích–nguy cơ, hoặc nói rõ vì sao chỉ lấy một vế |
 | ⑤ Gán N GỘP cho từng ước lượng | N của cả tổng quan (30.994) dán cho mọi hàng trong bảng | mỗi hàng lấy đúng N của phân tích đó, không có thì để trống |
+
+Ba lớp ⑥⑦⑧ bổ sung 21/08 sau khi vòng SỬA lại sinh lỗi mới: **mỗi lần sửa phải thẩm định lại**, vì bản vá có thể tạo lỗi ở đúng chỗ nó vừa chạm vào (đo thật: 3/5 bài phát sinh lỗi nặng MỚI trong chính vòng sửa).
 
 Bài dùng cho quyết định thực hành (benchmark, gói tuần, tra điểm khám) nên chạy
 thêm MỘT lượt thẩm định ĐỘC LẬP (agent khác/phiên khác) — người viết không nhìn
