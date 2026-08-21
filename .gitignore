@@ -59,6 +59,7 @@
 !/sync/*.sh
 !/sync/*.ps1
 !/sync/*.cmd
+!/sync/*.command
 !/sync/SYNC-README.md
 !/sync/CLAUDE-user-global.md
 !/sync/MAC-LAM-TIEP.md

@@ -7,6 +7,35 @@ Có **2 môi trường tách biệt**, cơ chế đồng bộ khác nhau:
 | **Cowork** (Claude Desktop) | Skills y khoa + harness bạn upload qua giao diện | **Tự động** qua tài khoản |
 | **Code + Codex** | Skill riêng trong `~/.claude/skills` và `~/.codex/skills` | **Tự động** từ `sync/skills/` bằng liên kết + watcher |
 
+## ⚡ MỘT LỆNH DUY NHẤT (21/08/2026)
+
+```bash
+python3 tools/dong_bo_tat_ca.py             # KIỂM — không ghi gì
+python3 tools/dong_bo_tat_ca.py --ap-dung   # đồng bộ thật
+```
+Hoặc **bấm đúp** `sync/dong-bo-tat-ca.command` (Mac) · `sync/dong-bo-tat-ca.cmd` (Windows).
+
+Lệnh này phủ **8 làn theo đúng thứ tự phụ thuộc** — xem bằng `--liet-ke-lan`:
+
+| # | Làn | Việc |
+|---|---|---|
+| ① | An toàn đồng bộ | conflict-copy OneDrive · git hỏng · file lõi chưa tải. **🔴 là DỪNG TẤT CẢ** |
+| ② | Git | commit chưa đẩy/chưa kéo — máy kia sẽ không thấy |
+| ③ | Skill → Claude + Codex | `sync/skills/` → 2 runtime |
+| ④ | Agent → Codex | enforce → sync → check |
+| ⑤ | Plugin | đối chiếu 2 máy qua sổ khai chung + chiếu sang Codex |
+| ⑥ | Hook SessionStart | cơ chế tự động đi giữa 2 máy |
+| ⑦ | Bộ nhớ Claude | mirror 2 chiều, file mới hơn thắng |
+| ⑧ | Kho công cụ | kho plugin so mốc chuẩn máy này |
+
+Vì sao gộp: trước đó muốn máy này khớp máy kia phải nhớ đúng thứ tự **chín** thứ rời rạc, mà lệnh gộp duy nhất đang có (`upgrade_verify.py`) kiểm hệ agent chứ không chạm một làn đồng bộ nào. Quy trình phải nhớ chín bước là quy trình sẽ bị bỏ sót bước — và bỏ sót ở đây **không kêu**, nó chỉ làm máy kia thiếu lặng lẽ.
+
+Ba luật giữ cho báo cáo không nói quá: thiếu **nguyên liệu** ghi «bỏ qua» chứ không tô đỏ · **mạng** là 🟡 còn **cấu hình** mới là 🔴 · dòng tổng kết chỉ kể làn **thật sự chạy**.
+
+> Muốn nó tự chạy mỗi phiên: thêm `python3 tools/dong_bo_tat_ca.py --im-khi-on` vào hook `SessionStart` (im lặng khi mọi làn khớp), rồi `python3 tools/dong_bo_hook_sessionstart.py --xuat` để máy kia nhận cùng cấu hình.
+
+---
+
 Nguồn chuẩn duy nhất là `sync/skills/`. Cài liên kết một lần bằng:
 
 ```bash

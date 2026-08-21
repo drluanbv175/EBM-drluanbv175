@@ -6,6 +6,14 @@
 
 * text=auto eol=lf
 
+# Script cho Windows phải giữ CRLF (thêm 21/08/2026). `eol=lf` ở trên đưa file
+# .cmd tới Windows với xuống dòng LF; batch có nhãn `goto`/khối nhiều dòng đọc
+# LF-only là hỏng thất thường — hỏng theo kiểu khó truy, vì file vẫn mở được và
+# vài dòng đầu vẫn chạy. PowerShell cũng an toàn hơn với CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
 *.xlsx binary
 *.pkl binary
 *.npy binary

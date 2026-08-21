@@ -163,6 +163,21 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   ⚠️ Cả hai file sổ khai phải nằm trong danh sách un-ignore của `.gitignore` — quy tắc `/sync/*` loại
   mọi file gốc, và lúc mới dựng thì `plugin-manifest.json` **bị ignore im lặng**, tức cơ chế «đi qua
   git» sẽ không đi đâu cả. BH67 canh luôn điều này.
+  ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
+  thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
+  tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`
+  in danh sách, `--im-khi-on` dùng cho hook. **Vì sao cần:** trước đó muốn hai máy khớp nhau phải nhớ
+  đúng thứ tự CHÍN thứ rời rạc, còn lệnh gộp duy nhất đang có (`upgrade_verify.py`, 27 bước) kiểm HỆ
+  AGENT và **không chạm một làn đồng bộ nào** — quy trình phải nhớ chín bước là quy trình sẽ bị bỏ
+  sót bước, mà bỏ sót ở đây không kêu, nó chỉ làm máy kia thiếu lặng lẽ.
+  **Làn ① là CỔNG CHẶN:** `sync_safety_check` báo 🔴 thì DỪNG mọi làn sau — đồng bộ khi cây thư mục
+  đang hỏng là nhân bản cái hỏng sang máy kia. Nhưng công cụ VẮNG MẶT thì KHÔNG dừng (thiếu nguyên
+  liệu không phải bằng chứng nguy hiểm — BH08). **Làn ② Git** là chỗ hở không làn nào khác nhìn tới:
+  việc đã commit mà chưa đẩy thì máy kia không bao giờ thấy; công cụ cố ý **không tự commit/push** —
+  đẩy hộ là quyết định thay bác sĩ về thứ được công bố. `cac_lan()` là nguồn DUY NHẤT (main lặp trên
+  chính nó) nên «làn khai» và «làn chạy» không thể lệch; **BH68** khoá điều này cùng quy tắc dừng và
+  nút bấm đúp (kèm `.gitattributes` ép CRLF cho `.cmd`/`.ps1` — batch có khối nhiều dòng đọc LF-only
+  là hỏng thất thường trên Windows).
   ⚠️ **Quyết định chiều theo NỘI DUNG, KHÔNG theo `mtime`.** 6 skill từng có mtime runtime mới hơn
   (đều đúng mốc `21/06 18:12`) — đó là dấu thời gian **dựng lại hàng loạt**, không phải nội dung mới;
   kiểm nội dung thì runtime có **0 dòng riêng** còn nguồn nhiều hơn 1388 byte. Tin mtime sẽ chặn oan

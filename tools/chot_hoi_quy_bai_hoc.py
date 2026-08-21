@@ -58,6 +58,12 @@ REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
 
+def _sh_which(ten: str):
+    """shutil.which tách riêng để các chốt gọi mà không import lặp."""
+    import shutil
+    return shutil.which(ten)
+
+
 def _nap(duong_dan: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong_dan)
     m = importlib.util.module_from_spec(spec)
@@ -2324,6 +2330,86 @@ def bh67_bo_dong_bo_khong_tro_vao_thu_khong_co():
                   "link-skills.sh chạy thật nối đủ 2 runtime · sổ khai theo được git")
 
 
+def bh68_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
+    """21/08 — hệ có đủ công cụ cho từng làn đồng bộ nhưng KHÔNG có lối vào duy
+    nhất: muốn máy này khớp máy kia phải nhớ đúng thứ tự CHÍN thứ rời rạc. Lệnh gộp
+    duy nhất đang có (`upgrade_verify.py`, 27 bước) kiểm HỆ AGENT và không chạm một
+    làn đồng bộ nào. Quy trình phải nhớ chín bước là quy trình sẽ bị bỏ sót bước —
+    và bỏ sót ở đây không kêu, nó chỉ làm máy kia thiếu lặng lẽ.
+
+    Chốt canh ba thứ mà `dong_bo_tat_ca.py` phải giữ, tất cả bằng HÀNH VI:
+      (a) Chốt an toàn 🔴 phải DỪNG mọi làn sau — đồng bộ khi cây thư mục đang hỏng
+          là nhân bản cái hỏng sang máy kia. Nhưng công cụ VẮNG MẶT thì KHÔNG được
+          dừng: thiếu nguyên liệu không phải bằng chứng nguy hiểm (BH08).
+      (b) Danh sách làn khai ra phải KHỚP làn chạy thật — thêm công cụ đồng bộ mới
+          mà quên nối thì lệnh gộp âm thầm phủ ít hơn tên gọi của nó.
+      (c) Nút bấm đúp phải THEO ĐƯỢC git và giữ CRLF. `.gitattributes` đặt
+          `eol=lf` toàn cục; batch có khối nhiều dòng đọc LF-only là hỏng thất
+          thường — hỏng kiểu khó truy vì file vẫn mở được và vài dòng đầu vẫn chạy.
+    """
+    import ast
+    import subprocess
+
+    f = REPO / "tools/dong_bo_tat_ca.py"
+    if not f.exists():
+        return False, "thiếu tools/dong_bo_tat_ca.py — hệ lại không có lối vào duy nhất"
+    m = _nap(f, "dbtc_bh68")
+
+    # (a) quy tắc dừng, kiểm bằng cách GỌI hàm chứ không đọc chữ
+    do = m.KetQua("thử", ma=2)
+    vang = m.KetQua("thử", ma=1)
+    vang_mat = m.KetQua("thử", bo_qua="máy chưa có công cụ")
+    if not m.phai_dung_som(do):
+        return False, "chốt an toàn 🔴 KHÔNG còn dừng — sẽ nhân bản cây hỏng sang máy kia"
+    if m.phai_dung_som(vang):
+        return False, "🟡 đã làm dừng cả lệnh — cảnh báo thường không được chặn"
+    if m.phai_dung_som(vang_mat):
+        return False, "công cụ VẮNG MẶT làm dừng cả lệnh — biến CHƯA BIẾT thành CÓ VẤN ĐỀ"
+
+    # (b) khai vs chạy. Dùng --liet-ke-lan (không chạy làn nào) để chốt vẫn nhanh
+    # và ngoại tuyến: chạy thật sẽ gọi `git fetch`, tức chạm mạng.
+    khai = m.ten_cac_lan()
+    if len(khai) < 8:
+        return False, f"lệnh gộp chỉ còn khai {len(khai)} làn (cần ≥8)"
+    # `cac_lan()` là nguồn duy nhất: mỗi mục phải gọi được và tên phải khớp danh
+    # sách khai. Bản đầu của chốt so với chuỗi trong main() và bắt được đúng việc
+    # hai chỗ đang lệch — nay lệch đó đã được đóng bằng THIẾT KẾ, chốt canh để nó
+    # không mở lại. Chỉ gọi các làn KHÔNG chạm mạng/tiến trình con: ở đây chỉ kiểm
+    # tên và tính gọi được, không thực thi (bộ chốt phải nhanh và ngoại tuyến).
+    bo = m.cac_lan()
+    if [t for t, _ in bo] != khai:
+        return False, "ten_cac_lan() lệch cac_lan() — lại có hai bản danh sách làn"
+    khong_goi_duoc = [t for t, h in bo if not callable(h)]
+    if khong_goi_duoc:
+        return False, f"làn không gọi được: {khong_goi_duoc[0]}"
+    goc = ast.parse(f.read_text(encoding="utf-8"))
+    ham_main = next((n for n in ast.walk(goc)
+                     if isinstance(n, ast.FunctionDef) and n.name == "main"), None)
+    if ham_main is None:
+        return False, "không tìm thấy main() trong dong_bo_tat_ca.py"
+    if not any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+               and n.func.id == "cac_lan" for n in ast.walk(ham_main)):
+        return False, ("main() không còn lặp trên cac_lan() — làn khai và làn chạy "
+                       "có thể lệch nhau trở lại")
+
+    # (c) nút bấm đúp
+    for ten in ("sync/dong-bo-tat-ca.command", "sync/dong-bo-tat-ca.cmd"):
+        if not (REPO / ten).exists():
+            return False, f"thiếu nút bấm đúp {ten}"
+    git = _sh_which("git")
+    if git:
+        for ten in ("sync/dong-bo-tat-ca.command", "sync/dong-bo-tat-ca.cmd"):
+            if subprocess.run([git, "check-ignore", "-q", ten], cwd=REPO,
+                              check=False, capture_output=True, timeout=60).returncode == 0:
+                return False, f"{ten} bị .gitignore loại — nút bấm không đi sang máy kia"
+        ra = subprocess.run([git, "check-attr", "eol", "--", "sync/dong-bo-tat-ca.cmd"],
+                            cwd=REPO, check=False, capture_output=True, text=True, timeout=60)
+        if "crlf" not in (ra.stdout or ""):
+            return False, ".cmd không được ép CRLF — batch LF-only hỏng thất thường trên Windows"
+    return True, (f"dừng đúng khi nguy hiểm · {len(khai)} làn khai khớp main() · "
+                  f"nút bấm đúp theo git, .cmd giữ CRLF")
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2753,6 +2839,7 @@ BAI_HOC = [
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
     ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
     ("BH67", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh67_bo_dong_bo_khong_tro_vao_thu_khong_co),
+    ("BH68", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh68_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
 ]
 
 
