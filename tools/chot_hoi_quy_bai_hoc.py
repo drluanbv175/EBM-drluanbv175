@@ -2174,9 +2174,22 @@ def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
                          "CHƯA đọc toàn văn", "N GỘP") if x not in vb]
     if thieu:
         return False, f"skill mất {len(thieu)} lớp lỗi nội dung trong bảng tự soi — {thieu[0]}"
+    # Ba lớp thêm 21/08 sau ba vòng thẩm định liên tiếp trên MỘT bài. Cả ba đều là lỗi
+    # mà cổng trích dẫn không thể thấy: chữ trích đúng nguyên văn, chỉ có ĐÍCH hoặc CÁN
+    # CÂN là sai. ⑩ đáng nhớ nhất — bản «sửa cho đúng mức» theo một guideline lại làm
+    # thuốc trông yếu hơn nền chứng cứ, vì guideline kia đặt mức cao hơn cho cùng quần thể.
+    thieu2 = [x for x in ("gắn NHẦM khuyến cáo", "LỐI RA",
+                          "CẢ BỘ NGUỒN của bài") if x not in vb]
+    if thieu2:
+        return False, f"skill mất lớp lỗi bổ sung 21/08 — {thieu2[0]}"
     if "thẩm định ĐỘC LẬP" not in vb:
         return False, "skill không còn đòi lượt thẩm định độc lập cho bài dùng thực hành"
-    return True, "skill giữ đủ bảng 5 lớp lỗi nội dung + đòi thẩm định độc lập"
+    # «0 lỗi nặng» KHÔNG phải điều kiện dừng: đo thật trên bài suy tim, số lỗi nặng về 0
+    # từ vòng hai nhưng vòng ba và vòng bốn vẫn ra thêm lỗi CÂN BẰNG do chính vòng sửa
+    # trước gây ra. Dừng khi một vòng không còn phát hiện nào do vòng sửa trước sinh ra.
+    if "đừng dừng ở «0 lỗi" not in vb:
+        return False, "skill mất luật «0 lỗi nặng chưa phải điều kiện dừng»"
+    return True, "skill giữ đủ 8 lớp lỗi nội dung + đòi thẩm định độc lập + luật điều kiện dừng"
 
 
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
@@ -2671,7 +2684,7 @@ BAI_HOC = [
     ("BH63", "20/08", "Benchmark mù — máy ẩn danh, KHÔNG tự chấm chất lượng", bh63_benchmark_mu_khong_de_may_tu_cham),
     ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
-    ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
+    ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 8 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
     ("BH67", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH68", "21/08", "Mã bài học phải DUY NHẤT (hai phiên thêm song song đụng số)", bh68_ma_bai_hoc_phai_duy_nhat),
     ("BH69", "21/08", "Cờ TẮT plugin trùng bị app xoá phải được ghi lại (không xoá khoá)", bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc),
