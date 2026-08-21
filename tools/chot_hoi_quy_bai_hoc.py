@@ -2189,6 +2189,10 @@ def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
     # trước gây ra. Dừng khi một vòng không còn phát hiện nào do vòng sửa trước sinh ra.
     if "đừng dừng ở «0 lỗi" not in vb:
         return False, "skill mất luật «0 lỗi nặng chưa phải điều kiện dừng»"
+    # Đo 21/08: bốn vòng liền lỗi tái sinh ĐÚNG khối vừa vá; viết lại trọn khối thì
+    # vòng sau sạch khối đó. Luật này là thứ duy nhất phá được vòng lặp vá-rồi-hỏng.
+    if "VIẾT LẠI TRỌN KHỐI" not in vb:
+        return False, "skill mất luật «lỗi tái sinh đúng chỗ vừa vá thì viết lại trọn khối»"
     return True, "skill giữ đủ 8 lớp lỗi nội dung + đòi thẩm định độc lập + luật điều kiện dừng"
 
 

@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.6.0
+version: 1.7.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -145,6 +145,14 @@ mở lại nguồn, không kiểm bằng trí nhớ):
 | ⑪ Cấm một lối mà không nêu LỐI RA | mở rộng đúng lệnh cấm phù mạch cho cả ARNI lẫn ACE-I, nhưng bỏ mất **ARB ở COR 1 A** cho chính người không dung nạp vì phù mạch ⇒ mục hành động thành ngõ cụt | mỗi khi bài CẤM một lựa chọn, phải tra trong cùng nguồn xem có phương án thay được khuyến cáo không, và nêu kèm mức của nó |
 
 Ba lớp ⑥⑦⑧ bổ sung 21/08 sau khi vòng SỬA lại sinh lỗi mới; ba lớp ⑨⑩⑪ bổ sung cùng ngày sau ba vòng thẩm định liên tiếp trên MỘT bài. **Mỗi lần sửa phải thẩm định lại** — bản vá tạo lỗi ở đúng chỗ nó vừa chạm vào, và điều này đo được ổn định: 3/5 bài sinh lỗi nặng MỚI trong vòng sửa đầu; vòng hai sinh thêm 4 phát hiện mới; vòng ba lại sinh 4 nữa, trong đó có một chỗ mà bản «sửa cho đúng mức» làm một thuốc trông yếu hơn nền chứng cứ. Số lỗi NẶNG về 0 từ vòng hai, nhưng lỗi CÂN BẰNG thì mỗi vòng vẫn ra thêm ⇒ **đừng dừng ở «0 lỗi nặng»**, dừng khi một vòng không còn phát hiện nào do chính vòng sửa trước gây ra.
+
+**KHI LỖI TÁI SINH ĐÚNG CHỖ VỪA VÁ — DỪNG VÁ, VIẾT LẠI TRỌN KHỐI.** Đo trên bài suy tim
+21/08: bốn vòng liền, mỗi vòng sửa xong thì vòng sau lại tìm ra lỗi mới **ngay tại khối vừa
+chạm vào** (chuỗi phù mạch → lối ra). Đó không phải chuỗi lỗi rời rạc mà là dấu hiệu của một
+**mạch lập luận có ràng buộc lẫn nhau**: thêm một vế cân bằng thì lộ ra vế kế tiếp, vì cả khối
+phải đúng cùng lúc mới đúng. Vòng năm viết lại trọn khối thành một thang có đủ bậc — vòng sáu
+**không còn phát hiện nào trong khối đó**, hai điểm mới rơi sang mục khác và nhẹ hơn hẳn.
+Dấu hiệu nhận biết: hai vòng liên tiếp cùng báo lỗi ở cùng một khối, dù mỗi lần một câu khác.
 
 Bài dùng cho quyết định thực hành (benchmark, gói tuần, tra điểm khám) nên chạy
 thêm MỘT lượt thẩm định ĐỘC LẬP (agent khác/phiên khác) — người viết không nhìn
