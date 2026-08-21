@@ -61,12 +61,20 @@ python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 | Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | `.claude/settings.json` bị gitignore nên hook không tự đi |
 | Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
 
-Máy ĐANG CHẠY ĐÚNG (thường là Mac) chạy trước một lần để nạp bản nguồn vào git:
+Máy ĐANG CHẠY ĐÚNG (thường là Mac) chạy trước **một lần** để nạp bản nguồn vào git — bấm đúp `sync/nap-ban-nguon.command`, hoặc:
 
 ```bash
-python3 tools/dong_bo_hook_sessionstart.py --xuat        # hook thật → sync/hooks-sessionstart.json
-python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai   # dựng khung sync/plugin-manifest.json
+bash sync/nap-ban-nguon.sh
 ```
+
+Nút này DỪNG NGAY nếu cây làm việc còn thay đổi chưa lưu (đổi nhánh khi còn việc dở là cách mất việc dở), rồi lấy nhánh có công cụ và chạy hai bước nạp:
+
+```bash
+python3 tools/dong_bo_hook_sessionstart.py --xuat             # hook thật → sync/hooks-sessionstart.json
+python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai    # kho thật → sync/plugin-manifest.json
+```
+
+Nó **không commit, không push, không sửa `~/.claude/settings.json`, không cài/gỡ plugin** — chỉ ghi hai file khai vào repo rồi in ra việc còn lại.
 
 Rồi mở `sync/plugin-manifest.json`, sửa `can_o_may` cho đúng Ý ĐỊNH và bật `da_xac_nhan: true`. Chừng nào còn `false`, công cụ chỉ **cảnh báo** — vì lúc đó `can_o_may` mới chỉ là suy từ hiện trạng, mà báo đỏ dựa trên suy đoán sẽ dạy người ta bỏ qua cả cảnh báo thật.
 
