@@ -7,28 +7,28 @@
         "phien_ban": "1.0.6"
       },
       "humanizer@humanizer": {
-        "so_skill": 2,
-        "phien_ban": "2.11.0"
+        "so_skill": 1,
+        "phien_ban": "2.11.2"
       },
       "academic-research-skills@academic-research-skills": {
         "so_skill": 4,
-        "phien_ban": "3.20.1"
+        "phien_ban": "3.21.0"
       },
       "openmed-skills@openmed-skills": {
         "so_skill": 72,
-        "phien_ban": "e412ae8f3b04"
+        "phien_ban": "576520381df7"
       },
       "claude-code-harness@claude-code-harness-marketplace": {
         "so_skill": 70,
         "phien_ban": "5.9.0"
       },
       "medsci-project@medsci-skills": {
-        "so_skill": 59,
-        "phien_ban": "1dcb1c8b5808"
+        "so_skill": 60,
+        "phien_ban": "de57f34b4921"
       },
       "aipoch-medical-research@aipoch-medical-research": {
         "so_skill": 605,
-        "phien_ban": "813313b27f5f"
+        "phien_ban": "f5ef65b9bea7"
       },
       "meta-pipe@meta-pipe": {
         "so_skill": 14,
@@ -36,7 +36,7 @@
       },
       "pubmed-search@pubmed-search": {
         "so_skill": 10,
-        "phien_ban": "d0a21c5b9cc0"
+        "phien_ban": "ad85dde08269"
       }
     }
   },

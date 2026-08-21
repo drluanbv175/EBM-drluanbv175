@@ -205,21 +205,41 @@ def so_moc(hien: dict, moc: dict) -> tuple[str, list[str], list[str]]:
                       f"kiểm enabledPlugins và installed_plugins.json")
             continue
         cu_n, moi_n = m0.get("so_skill", 0), m["so_skill"]
+        # Phiên bản có ĐỔI hay không quyết định cách đọc con số hụt. Cùng một phiên bản
+        # mà hụt skill là bất thường (cache nạp dở hoặc mất thật); ĐỔI phiên bản mà hụt
+        # skill thì thường chỉ là nhà phát hành đổi bố cục file — đo thật 21/08/2026:
+        # humanizer 2.11.1 có 2 `SKILL.md` (một cái lồng trong `skills/`), 2.11.2 bỏ cái
+        # lồng còn 1. Gộp hai tình huống vào một câu «có thể cache đang nạp lại» là ĐOÁN
+        # SAI nguyên nhân, và nó đẩy người đọc tới hai lựa chọn đều dở: hoặc chờ mãi một
+        # thứ sẽ không bao giờ đổi, hoặc ghi mốc mới mà không biết mình đang ghi cái gì.
+        doi_ban = m0.get("phien_ban") not in ("?", None) and m0["phien_ban"] != m["phien_ban"]
         if cu_n and moi_n < cu_n:
             ty = moi_n / cu_n
             loi = (f"{khoa}: {moi_n}/{cu_n} skill "
                    f"(hụt {cu_n - moi_n}, còn {ty*100:.0f}%)")
-            if ty < NGUONG_HUT_DO:
-                do.append(loi + " — hụt sâu, nhiều khả năng cache chưa nạp xong hoặc mất thật")
+            if doi_ban:
+                vang.append(
+                    loi + f" — nhưng phiên bản đã đổi {m0['phien_ban']} → {m['phien_ban']}, "
+                    "nên nhiều khả năng là nhà phát hành đổi bố cục file chứ không phải mất; "
+                    "đối chiếu cache của HAI phiên bản rồi mới `--ghi-moc`")
+            elif ty < NGUONG_HUT_DO:
+                do.append(loi + " — hụt sâu mà phiên bản KHÔNG đổi: cache chưa nạp xong hoặc mất thật")
             elif ty < NGUONG_HUT_VANG:
-                vang.append(loi + " — có thể cache đang nạp lại, đợi rồi kiểm lại")
-        if m0.get("phien_ban") not in ("?", None) and m0["phien_ban"] != m["phien_ban"]:
+                vang.append(loi + " — phiên bản không đổi, có thể cache đang nạp lại, đợi rồi kiểm lại")
+        if doi_ban and moi_n >= cu_n:
             vang.append(f"{khoa}: đổi phiên bản {m0['phien_ban']} → {m['phien_ban']} "
                         f"— danh sách skill có thể đổi theo")
 
     them = set(hien) - set(cu)
     for khoa in sorted(them):
-        vang.append(f"{khoa}: MỚI so với mốc — chạy `--ghi-moc` nếu đây là chủ ý")
+        goi_y = "chạy `--ghi-moc` nếu đây là chủ ý"
+        # Bộ trùng quay lại KHÔNG BAO GIỜ là «chủ ý»: đó là dấu app vừa ghi đè
+        # settings.json và xoá cờ `false`. Ghi mốc lúc đó sẽ nuốt luôn chỗ phồng,
+        # và từ đó chốt này không còn báo được nữa (đo thật 17/08 và 21/08/2026).
+        if khoa.startswith("medsci-"):
+            goi_y = ("ĐỪNG `--ghi-moc` — nhiều khả năng app vừa xoá cờ `false`; "
+                     "chạy `python3 tools/kiem_co_tat_plugin_trung.py --ap-dung` trước")
+        vang.append(f"{khoa}: MỚI so với mốc — {goi_y}")
 
     return ("🔴" if do else "🟡" if vang else "🟢"), do, vang
 
