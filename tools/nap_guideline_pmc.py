@@ -444,6 +444,23 @@ def main() -> int:
     chua = tong - co_dinh_danh - web
     print(f"   Trong {tong - co_dinh_danh} nguồn không có PMID: {web} là tài liệu WEB "
           f"(không có ấn phẩm tạp chí đơn lẻ — KHÔNG phải thiếu sót) · {chua} chưa tra được.")
+
+    # Đề xuất của MÁY nằm ở khoá riêng, không phải `pmid`, nên mọi công cụ khác vẫn đọc
+    # nguồn đó là «chưa có định danh» cho tới khi người chốt. In ra đây để đề xuất không
+    # nằm im trong JSON — thứ không hiện ra thì với người dùng là không tồn tại (BH41).
+    de_xuat = [(cd, n) for cd, v in db["chu_de"].items() for n in v["nguon"]
+               if n.get("de_xuat_dinh_danh") and not n.get("pmid")]
+    if de_xuat:
+        print(f"\n   ⏳ {len(de_xuat)} ĐỀ XUẤT định danh do MÁY khớp, CHỜ bác sĩ chốt "
+              "(khớp máy chỉ chứng minh đúng tổ chức + đúng loại ấn phẩm, KHÔNG chứng "
+              "minh đúng bản chủ lực):")
+        for cd, n in de_xuat:
+            dx = n["de_xuat_dinh_danh"]
+            print(f"      • {cd} · {n.get('to_chuc','?')} → PMID {dx['pmid']} — {dx.get('an_pham','?')}")
+            if dx.get("luu_y"):
+                print(f"        {dx['luu_y']}")
+            print(f"        chốt: python3 tools/nap_guideline_pmc.py --chot {cd} "
+                  f"\"{n.get('to_chuc','')}\" {dx['pmid']}")
     if co_dinh_danh - nguoi_chot:
         print("   ⚠ Nguồn nhãn «máy tự khớp» chỉ bảo đảm ĐÚNG TỔ CHỨC + ĐÚNG LOẠI ẤN PHẨM,")
         print("     KHÔNG bảo đảm là bản CHỦ LỰC của chủ đề — chốt bằng --chot khi đã xem.")
