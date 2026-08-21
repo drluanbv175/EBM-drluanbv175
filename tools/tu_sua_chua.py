@@ -64,6 +64,9 @@ VIEC_MAY = [
     ("Skill đang chạy lệch nguồn",
      [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
      [PY, "tools/dong_bo_skill.py", "--ap-dung"]),
+    ("Cờ TẮT của plugin trùng bị app xoá",
+     [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
+     [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"]),
     ("Kho plugin/skill thiếu so với mốc",
      [PY, "tools/kiem_plugin_day_du.py", "--im-khi-on"],
      None),                      # cài lại plugin cần mạng + quyết định của bác sĩ

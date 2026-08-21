@@ -199,6 +199,15 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   im lặng" ngày 05/08). Nên trên Mac, **bật lại = phải cài lại qua mạng**, không chỉ đổi `false`
   → `true`. Sao lưu trước khi dọn: `~/.claude/plugins/installed_plugins.json.bak-20260810-174911`
   và `~/.claude/settings.json.bak-20260810-174911`. Máy Windows chưa dọn cache — ở đó câu cũ vẫn đúng.
+- **🔁 8 CỜ `false` NÀY BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ, không sửa tay nữa (21/08/2026).**
+  App ghi đè `settings.json` sau một số đợt cập nhật và xoá sạch các cờ `false`. Đã đo hai lần
+  trên Mac: **17/08 (839→1311 skill)** và **21/08 (870→1319)**. Đây là hiện tượng ĐỊNH KỲ, không
+  phải sự cố một lần. `python3 tools/kiem_co_tat_plugin_trung.py [--ap-dung]` khôi phục, đọc mốc
+  chuẩn của CHÍNH máy để biết bộ nào bác sĩ giữ; đã nối vào `tu_sua_chua.py`, khoá bằng **BH69**.
+  ⚠️ **Bẫy nguy hiểm hơn chính sự cố:** lúc đó chốt kho báo medsci-* là «MỚI so với mốc» và gợi ý
+  `--ghi-moc`. **Làm theo là hỏng hẳn** — mốc sẽ nuốt luôn chỗ phồng và từ đó không chốt nào còn
+  báo nữa, tức mất đúng cái giác quan sinh ra để canh. Khôi phục cờ TRƯỚC, ghi mốc SAU, và chỉ
+  ghi khi việc cài/gỡ đúng là chủ ý của bác sĩ.
 - **Ba bẫy đã vá cùng ngày, đừng để tái phát:** (a) `extract_catalog.py` từng liệt kê cả plugin
   ĐANG TẮT → danh mục mời gọi lệnh gõ vào là không chạy; nay bỏ qua mục `enabledPlugins: false`
   (chỉ khi ghi RÕ `false`, vắng mặt thì giữ). (b) Khi một skill có nhiều cách gọi, cách được

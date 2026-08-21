@@ -2539,6 +2539,57 @@ def bh62_cong_phai_tu_parse_chat_khoi_data():
     return True, "cổng tự chặn khối DATA vỡ, không bắt oan, và dùng chung MỘT parser"
 
 
+def bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc() -> tuple[bool, str]:
+    """21/08/2026 — app Claude ghi đè `settings.json` và xoá sạch các cờ `false` của 8
+    plugin medsci trùng (đã xảy ra 17/08 và 21/08, kho phồng 870 → 1319 skill).
+
+    Hai điều dễ làm sai, chốt canh cả hai:
+    (a) Phải GHI `false`, KHÔNG được xoá khoá — vắng mặt trong `enabledPlugins` nghĩa là
+        BẬT. Lời khuyên «gỡ hẳn khỏi enabledPlugins» ngày 11/08 từng làm Claude Code cài
+        lại cả 8 bộ (278 MB).
+    (b) Plugin mà mốc chuẩn đang giữ thì tuyệt đối không được đụng tới.
+
+    Kiểm bằng cách gọi thẳng vào mã đang sống trên một `settings.json` giả.
+    """
+    import json
+    import tempfile
+
+    m = _nap(REPO / "tools" / "kiem_co_tat_plugin_trung.py", "_bh69_co_tat")
+
+    with tempfile.TemporaryDirectory() as d:
+        st = Path(d) / "settings.json"
+        moc = Path(d) / "moc.json"
+        # mốc giữ đúng một thành viên của họ
+        moc.write_text(json.dumps({"plugin": {"medsci-project@medsci-skills": {"so_skill": 58}}}),
+                       encoding="utf-8")
+        # app vừa ghi đè: cờ false biến mất, một bộ ghi true, một bộ vắng mặt hoàn toàn
+        st.write_text(json.dumps({"enabledPlugins": {
+            "medsci-project@medsci-skills": True,
+            "medsci-data@medsci-skills": True,
+            "khac@marketplace-khac": True,
+        }}), encoding="utf-8")
+        m.SETTINGS, m.MOC = st, moc
+
+        thieu, _ = m.do()
+        if "medsci-data@medsci-skills" not in thieu:
+            return False, "không phát hiện plugin trùng đang bật"
+        if "medsci-project@medsci-skills" in thieu:
+            return False, "đụng vào plugin mà mốc đang giữ"
+        if "khac@marketplace-khac" in thieu:
+            return False, "đụng vào họ plugin ngoài phạm vi"
+
+        m.sua(thieu)
+        ep = json.loads(st.read_text(encoding="utf-8"))["enabledPlugins"]
+        if "medsci-data@medsci-skills" not in ep:
+            return False, "đã XOÁ khoá thay vì ghi false — vắng mặt nghĩa là BẬT"
+        if ep["medsci-data@medsci-skills"] is not False:
+            return False, "không ghi được cờ false"
+        if ep["medsci-project@medsci-skills"] is not True:
+            return False, "đã tắt nhầm plugin mốc đang giữ"
+
+    return True, "ghi false đúng bộ trùng, giữ nguyên bộ trong mốc"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -2623,6 +2674,7 @@ BAI_HOC = [
     ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
     ("BH67", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH68", "21/08", "Mã bài học phải DUY NHẤT (hai phiên thêm song song đụng số)", bh68_ma_bai_hoc_phai_duy_nhat),
+    ("BH69", "21/08", "Cờ TẮT plugin trùng bị app xoá phải được ghi lại (không xoá khoá)", bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc),
 ]
 
 
