@@ -88,6 +88,20 @@ Kết: **"Cần bác sĩ kiểm chứng."**
 ## 5. Ví dụ minh họa (ẩn danh, KHÔNG PII)
 > *Đầu vào:* "Theo dõi bệnh nhân ĐTĐ2 cao tuổi nhiều bệnh kèm thế nào?" → đích HbA1c **cá thể hóa lỏng hơn** (lý do: cao tuổi, nguy cơ hạ đường huyết) theo guideline+năm → danh mục theo dõi (HbA1c mỗi mấy tháng, chức năng thận, lipid, albumin niệu, đáy mắt, bàn chân — tần suất + nguồn) → tiêu chí tăng/giảm bậc (Cổng A, qua `ke-don-an-toan`) → ngưỡng chuyển nội tiết/thận → bàn giao `loi-dan-tuan-thu`. *Đích/tần suất CHỈ ghi khi có nguồn; nhớ không chắc → `[CẦN KIỂM CHỨNG]`.*
 
+<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+## 5b. Mỗi mốc theo dõi phải thành MỘT VIỆC TREO có hạn
+
+Kế hoạch theo dõi chỉ nằm trong đầu ra thì không ai canh được nó. Sau khi bác sĩ chốt danh mục
+theo dõi (Cổng A), mở một dòng sổ cho TỪNG mốc:
+
+```
+python tools/so_viec_chua_dong.py --them --loai xet-nghiem \
+        --mo-ta "<xét nghiệm theo dõi, KHÔNG PII>" --han-sau <N ngày theo tần suất đã chốt>
+```
+
+Một kế hoạch "HbA1c mỗi 3 tháng" không có dòng sổ nào thì đến tháng thứ 6 sẽ không ai biết nó đã
+trượt. Sổ chỉ ĐO và NHẮC — không tự đóng việc, không đổi đích điều trị, không ghi `decision`.
+
 ## 6. Tiêu chí hoàn thành
 **Hoàn thành khi:** đích điều trị cá thể hóa có nguồn; danh mục theo dõi + tần suất + lý do có nguồn; tiêu chí tăng/giảm bậc rõ (dừng Cổng A); tầm soát biến chứng có lịch; ngưỡng chuyển tuyến rõ; bàn giao rõ. KHÔNG áp đích cứng không cá thể hóa; KHÔNG tự đổi thuốc (chỉ đề xuất → `ke-don-an-toan`).
 

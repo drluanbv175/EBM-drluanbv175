@@ -29,9 +29,9 @@
    meta-analysis trên 42.473 bác sĩ đã bị JAMA Internal Medicine **RÚT** năm 2020 — nếu tin trí
    nhớ, nó đã nằm trong báo cáo này.
 6. **Bốn việc cụ thể** ở §V, xếp theo lợi ích/công sức, kèm đặc tả đủ để làm ngay.
-7. **Hai trong bốn việc ĐÃ XÂY XONG trong phiên này** (§V-bis): sổ việc chưa đóng và chốt
-   safety-netting — 625 dòng công cụ + 476 dòng test, 51 test xanh, cả hai mutation-tested.
-   Tool chạm vào phòng khám: **1 → 3**.
+7. **Ba trong bốn việc ĐÃ XONG** (§V-bis): sổ việc chưa đóng · chốt safety-netting · ô nghị
+   trình bệnh nhân trong mẫu SOAP. Tool chạm vào phòng khám **1 → 3**; hai tool mới đã được
+   **nối dây vào 3 agent** và **khoá bằng BH70/BH71** trong bộ chốt hồi quy tự chạy mỗi phiên.
 
 ---
 
@@ -437,11 +437,56 @@ Test `test_thieu_khoi_loi_dan_bi_chan` bắt được ngay lần chạy đầu; 
 
 ### V-bis.4 — Hai việc còn lại, và vì sao chưa làm
 
-| Việc | Trạng thái | Lý do |
+| Việc | Trạng thái | Ghi chú |
 |---|---|---|
-| ② Ô "Nghị trình bệnh nhân" trong mẫu SOAP | **chưa làm** | Đây là đổi THÓI QUEN, không phải code. Một dòng trong mẫu ghi chép; tôi không tự sửa mẫu lâm sàng của bác sĩ. |
-| ④ Tờ quyết định một trang | **chưa làm** | Là đầu ra thứ 6 của `xuat_goi_cap_nhat.py` — dây chuyền này có **3 bản đồng bộ**, và `CLAUDE.md` đã ghi rõ phải chờ bác sĩ duyệt trước khi thêm đầu ra. |
+| ② Ô "Nghị trình bệnh nhân" trong mẫu SOAP | **XONG** | Thêm ô `S0` vào §4 của skill `giao-tiep-quyet-dinh-soap`, đứng TRƯỚC S, kèm ô tick ☐ đã hỏi tới khi hết. Mang theo số đo biện minh (36% · 11 giây · 6 giây) để người đọc thấy vì sao ô này tồn tại. |
+| ④ Tờ quyết định một trang | **chưa làm** | Là đầu ra thứ 6 của `xuat_goi_cap_nhat.py` — dây chuyền này có **3 bản đồng bộ**, và `CLAUDE.md` ghi rõ phải chờ bác sĩ duyệt trước khi thêm đầu ra. Đây là ranh giới quy trình, không phải khó kỹ thuật. |
 
+
+### V-bis.5 — Nối dây: chữa đúng bài học BH41 của chính repo
+
+Ngay sau khi xây xong hai công cụ, phép đo đầu tiên cho kết quả đáng chú ý:
+
+| Công cụ | Số agent gọi tới |
+|---|---|
+| `so_viec_chua_dong.py` | **0** |
+| `kiem_safety_net.py` | **0** |
+
+Đây đúng BH41 mà repo đã tự ghi: *"một công cụ không agent nào gọi thì với dây chuyền hằng ngày
+nó KHÔNG TỒN TẠI, dù chạy đúng và có test."* Một công cụ có 30 test xanh mà không ai gọi thì giá
+trị thực tế bằng không.
+
+**Đã nối vào 3 agent** (marker `<!-- EBM-CONGCU-CHUNGCU-LAMSANG -->`, đúng quy ước sẵn có):
+
+| Agent | Nối gì | Đặt ở đâu |
+|---|---|---|
+| `dieu-phoi-lam-sang` | `so_viec_chua_dong --them` | BƯỚC 5 Theo dõi — mọi việc treo sinh ra trong ca phải có một dòng sổ |
+| `theo-doi-benh-man` | `so_viec_chua_dong --them` | §5b — mỗi mốc theo dõi (HbA1c mỗi 3 tháng…) thành một việc treo có hạn |
+| `loi-dan-tuan-thu` | `kiem_safety_net` + đọc ngân hàng | §5b — safety-netting LẤY TỪ ngân hàng; hội chứng `chua-dien` ⇒ ghi thẳng «CHƯA CÓ MẪU — bác sĩ tự ghi» |
+
+Ba luật cứng viết vào doctrine của `loi-dan-tuan-thu`: (1) không sinh ngưỡng cờ đỏ từ trí nhớ;
+(2) **không gộp hai trục** — chép danh sách cờ đỏ chuyên môn lên tờ A5 là biến thuật ngữ thành lời
+khuyên cho người bệnh; (3) mỗi tờ phải có ít nhất một tiêu chí **đo được**.
+
+Sau khi nối: `enforce_agent_guardrails.py` → **0 file phải sửa**; `sync_agents_to_codex.py --check`
+→ **PASS, 50/50 TOML** khớp ở cả `.Codex/` lẫn `.codex/`.
+
+### V-bis.6 — Đóng vòng học: BH70 và BH71
+
+Repo có sẵn `tools/chot_hoi_quy_bai_hoc.py` — tự chạy mỗi phiên, mỗi mục là một lỗi **có thật, có
+ngày**, kiểm bằng cách gọi vào mã đang sống. Hai công cụ mới nay được khoá ở đó:
+
+| Mã | Canh điều gì |
+|---|---|
+| **BH70** | Bản ghi thiếu hạn phải rơi vào nhóm PHẢI XEM (fail-closed) · việc treo không hạn bị từ chối lúc mở · công cụ **không tự đóng việc** · sổ không mang `decision`/`gradeLevel` · PII chặn đúng mức (bắt số điện thoại, **không** chặn oan mô tả lâm sàng) |
+| **BH71** | R9 — cờ bật mà 0 hội chứng có nguồn ⇒ lỗi cứng · cờ tắt thì R9 **không** nổ · R3 bắt được hội chứng thiếu hẳn khối lời dặn (chính fail-open đã vá) · R4 từ chối nguồn văn xuôi · R5 từ chối *"nếu nặng hơn"* · file thật trong repo phải qua được chốt |
+
+**Đo trung thực, không nói quá:** bộ chốt chạy trong container này cho **39 mục đỏ — và con số đó
+y hệt trước khi tôi sửa** (kiểm bằng `git stash` rồi chạy lại). Tức **0 hồi quy do đợt này**. 39
+mục đó đỏ vì container không có `EBM-Dashboards/` (thư mục dữ liệu nằm trên OneDrive, ngoài git)
+và không có hook `~/.claude`; trên máy của bác sĩ phần lớn sẽ xanh. **BH70 và BH71 đều xanh.**
+
+---
 
 ## VI. BA CÂU HỎI ĐÓNG MỖI LẦN KHÁM + THƯỚC TỰ CHẤM
 

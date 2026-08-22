@@ -198,6 +198,31 @@ là dữ liệu giả (ca thật: máy Windows chạy `USE_MOCK_SOURCES=true` su
 `logger.info` báo). Kết quả chu trình là dữ kiện để bác sĩ quyết ở **Cổng A/B**, không phải
 giấy thông hành tự động.
 
+## BƯỚC 5 THEO DÕI — mở SỔ VIỆC CHƯA ĐÓNG cho mọi thứ còn treo
+
+Mỗi ca sinh ra một việc treo (xét nghiệm đã chỉ định · hình ảnh · chuyển tuyến · hẹn tái khám ·
+thử điều trị) thì **phải mở một dòng trong sổ**, ngay ở bước Theo dõi:
+
+```
+python tools/so_viec_chua_dong.py --them --loai <xet-nghiem|hinh-anh|chuyen-tuyen|tai-kham|thu-dieu-tri> \
+        --mo-ta "<việc, KHÔNG PII>" --han-sau <N ngày>
+python tools/so_viec_chua_dong.py            # đầu phiên sau: việc nào đã quá hạn
+```
+
+**Vì sao bắt buộc:** 6,8–62% kết quả xét nghiệm và 1,0–35,7% kết quả chẩn đoán hình ảnh của bệnh
+nhân ngoại trú KHÔNG được theo dõi tiếp, hậu quả ghi nhận gồm cả chẩn đoán ung thư bị bỏ sót
+(Callen 2012, J Gen Intern Med · PMID 22183961 · doi:10.1007/s11606-011-1949-5); và 14,7% điểm gãy
+sai sót chẩn đoán ngoại trú nằm ở khâu theo dõi/truy vết (Singh 2013 · PMID 23440149).
+*Cần bác sĩ kiểm chứng — số liệu Mỹ; cái chuyển được là VỊ TRÍ điểm gãy.*
+
+Lý do phải là một sổ NGOÀI đầu bác sĩ: độ chính xác chẩn đoán rơi 55,3% → 5,8% giữa ca dễ và ca
+khó trong khi độ tự tin gần như không đổi 7,2 → 6,4/10 (Meyer 2013 · PMID 23979070) — **niềm tin
+không đo được độ đúng**.
+
+**Ranh giới:** sổ chỉ ĐO và NHẮC. Nó KHÔNG tự đóng việc, KHÔNG suy diễn lâm sàng, KHÔNG ghi
+`decision`/`gradeLevel`. Đóng một việc là hành vi lâm sàng — thuộc bác sĩ. Việc treo **không có
+hạn** bị từ chối ngay lúc mở, vì không hạn thì không ai biết lúc nào quá hạn.
+
 <!-- EBM-MANDATORY-FINAL-GUARDRAIL -->
 ## Cổng bắt buộc trước khi trả lời
 
