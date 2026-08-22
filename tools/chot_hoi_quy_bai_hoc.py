@@ -58,6 +58,12 @@ REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
 
+def _sh_which(ten: str):
+    """shutil.which tách riêng để các chốt gọi mà không import lặp."""
+    import shutil
+    return shutil.which(ten)
+
+
 def _nap(duong_dan: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong_dan)
     m = importlib.util.module_from_spec(spec)
@@ -2196,6 +2202,231 @@ def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
     return True, "skill giữ đủ 8 lớp lỗi nội dung + đòi thẩm định độc lập + luật điều kiện dừng"
 
 
+def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
+    """21/08 — bộ hợp nhất `dong_bo_skill_claude_codex.py` được commit và tài liệu
+    hoá ở CẢ AGENTS.md lẫn CLAUDE.md, nhưng gọi vào BỐN thứ không tồn tại:
+      · `tools/dong_bo_plugin_claude_codex.py` — chưa bao giờ có trong repo
+      · `sync/skills/plugin-router-chatgpt/scripts/build_catalog.py` — chỉ có trên Mac
+      · cờ `--nguon-la-chuan` của `dong_bo_skill.py` — **chưa từng tồn tại**
+        (`git log -S` không ra lần thêm nào), nên argparse trả mã 2
+      · và chính nó tự chặn Windows bằng `if os.name == "nt": return 1`
+    Đo được: `--ap-dung` thoát mã 2 trên máy sạch, `--dong-bo-plugin` in
+    `can't open file`. Tức lệnh đồng bộ được tin là «xương sống tự động» chưa từng
+    chạy trọn ở đâu, và trên Windows thì chưa từng chạy dòng nào.
+
+    Đây là họ lỗi TÀI LIỆU-TRỎ-VÀO-KHOẢNG-KHÔNG, đúng thứ commit b7c4bb7 nói là đi
+    sửa («bỏ lại là doctrine trỏ vào công cụ không có trong repo») — mà bản thân
+    nó lại mang vào bốn cái mới. Chốt vì thế KHÔNG đếm chữ trong tài liệu: nó phân
+    giải TỪNG công cụ được gọi và TỪNG cờ được truyền, đối chiếu với argparse thật
+    của file đích. Cờ sai tên là lỗi im lặng — argparse chỉ kêu lúc chạy thật.
+    """
+    import ast
+
+    gm = REPO / "tools/dong_bo_skill_claude_codex.py"
+    if not gm.exists():
+        return False, "thiếu bộ hợp nhất dong_bo_skill_claude_codex.py"
+    vb = gm.read_text(encoding="utf-8")
+
+    # (a) không còn tự chặn Windows
+    cay = ast.parse(vb)
+    for nut in ast.walk(cay):
+        if (isinstance(nut, ast.Compare) and isinstance(nut.left, ast.Attribute)
+                and nut.left.attr == "name"
+                and any(isinstance(c, ast.Constant) and c.value == "nt"
+                        for c in nut.comparators)):
+            return False, "bộ hợp nhất lại tự chặn Windows bằng os.name == 'nt'"
+
+    def co_o(ham: ast.FunctionDef) -> tuple[list[str], list[str]]:
+        """Trả (công cụ tools/*.py được gọi, cờ --* truyền trong cùng hàm)."""
+        cong_cu, co = [], []
+        for n in ast.walk(ham):
+            if isinstance(n, ast.Constant) and isinstance(n.value, str):
+                if n.value.startswith("tools/") and n.value.endswith(".py"):
+                    cong_cu.append(n.value)
+                elif n.value.startswith("--"):
+                    co.append(n.value)
+        return cong_cu, co
+
+    thieu, sai_co = [], []
+    for ham in [n for n in ast.walk(cay) if isinstance(n, ast.FunctionDef)]:
+        cong_cu, co_truyen = co_o(ham)
+        for tuong_doi in cong_cu:
+            dich = REPO / tuong_doi
+            if not dich.exists():
+                thieu.append(f"{ham.name}() gọi {tuong_doi} — không có trong repo")
+                continue
+            nhan = set()
+            for n in ast.walk(ast.parse(dich.read_text(encoding="utf-8"))):
+                if (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                        and n.func.attr == "add_argument"):
+                    nhan.update(a.value for a in n.args
+                                if isinstance(a, ast.Constant) and isinstance(a.value, str))
+            for c in co_truyen:
+                if c not in nhan:
+                    sai_co.append(f"{ham.name}() truyền {c} cho {tuong_doi} "
+                                  f"— argparse của nó KHÔNG nhận cờ này")
+    if thieu:
+        return False, f"{len(thieu)} công cụ được gọi mà không có: {thieu[0]}"
+    if sai_co:
+        return False, f"{len(sai_co)} cờ không được chấp nhận: {sai_co[0]}"
+
+    # (b) hai script cài đặt phải nối CẢ HAI runtime — bỏ sót Codex thì máy đó
+    #     không thấy skill nào, đúng tình trạng Windows trước 21/08.
+    #
+    # KIỂM BẰNG HÀNH VI, KHÔNG ĐẾM CHUỖI. Bản đầu của chốt này chỉ hỏi «chuỗi
+    # .codex có trong file không» — và đột biến gỡ Codex khỏi vòng lặp vẫn XANH,
+    # vì chữ .codex còn nguyên trong chú thích. Đúng bẫy TAUTOLOGY mà kho đã vấp ở
+    # guardrail G3/G8: đếm chuỗi thì thứ được canh là câu chữ, không phải hành vi.
+    import os as _os
+    import shutil as _sh
+    import subprocess
+    import tempfile
+
+    sh = REPO / "sync/link-skills.sh"
+    ps = REPO / "sync/link-skills.ps1"
+    for f in (sh, ps):
+        if not f.exists():
+            return False, f"thiếu {f.name}"
+
+    bash = _sh.which("bash")
+    if bash:
+        # Chạy THẬT với HOME tạm rồi đếm liên kết sinh ra ở từng runtime.
+        with tempfile.TemporaryDirectory() as tam:
+            kq = subprocess.run([bash, str(sh)], check=False, capture_output=True,
+                                text=True, timeout=120,
+                                env={"HOME": tam, "PATH": _os.environ.get("PATH", "")})
+            if kq.returncode != 0:
+                return False, f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            for runtime in (".claude", ".codex"):
+                d = Path(tam) / runtime / "skills"
+                n = sum(1 for x in d.iterdir() if x.is_symlink()) if d.is_dir() else 0
+                if n == 0:
+                    return False, (f"link-skills.sh KHÔNG nối {runtime}/skills "
+                                   f"(chạy thật, 0 liên kết) — runtime đó sẽ trắng skill")
+
+    # Bản .ps1: chạy THẬT nếu máy có PowerShell (tức trên chính Windows, nơi nó
+    # phải đúng). Máy không có thì kiểm tĩnh — nhưng loại cả CHÚ THÍCH lẫn dòng
+    # `Write-Host`: bản đầu của chốt để lọt đột biến vì chuỗi ".codex\skills" vẫn
+    # còn ở dòng in hướng dẫn cuối file. Chữ dùng để HIỂN THỊ không phải hành vi.
+    pwsh = _sh.which("pwsh") or _sh.which("powershell")
+    if pwsh:
+        with tempfile.TemporaryDirectory() as tam:
+            moi_truong = dict(_os.environ, USERPROFILE=tam, HOME=tam)
+            kq = subprocess.run([pwsh, "-ExecutionPolicy", "Bypass", "-File", str(ps)],
+                                check=False, capture_output=True, text=True,
+                                timeout=180, env=moi_truong)
+            if kq.returncode != 0:
+                return False, f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            for runtime in (".claude", ".codex"):
+                d = Path(tam) / runtime / "skills"
+                n = sum(1 for _x in d.iterdir()) if d.is_dir() else 0
+                if n == 0:
+                    return False, (f"link-skills.ps1 KHÔNG nối {runtime}/skills "
+                                   f"(chạy thật, 0 mục)")
+    else:
+        ma_ps = "\n".join(
+            d for d in ps.read_text(encoding="utf-8-sig").splitlines()
+            if not d.lstrip().startswith("#") and not d.lstrip().startswith("Write-Host"))
+        for runtime in (".claude", ".codex"):
+            if f"{runtime}\\skills" not in ma_ps:
+                return False, (f"link-skills.ps1 không nối {runtime}\\skills trong phần MÃ "
+                               f"(chữ trong chú thích hay dòng in không tính)")
+    # (c) Sổ khai dùng chung phải THEO ĐƯỢC git. `.gitignore` của repo mở đầu bằng
+    # `/*` rồi un-ignore từng mục, nên một file mới ở gốc `sync/` bị loại IM LẶNG:
+    # cơ chế «hai máy đọc cùng một bản ý định» sẽ không có bản nào đi sang máy kia.
+    # Đúng họ lỗi mà chính BH này đi vá, chỉ khác chỗ hỏng là .gitignore.
+    git = _sh.which("git")
+    if git:
+        for ten in ("sync/plugin-manifest.json", "sync/hooks-sessionstart.json"):
+            kq = subprocess.run([git, "check-ignore", "-q", ten], cwd=REPO,
+                                check=False, capture_output=True, timeout=60)
+            if kq.returncode == 0:
+                return False, (f"{ten} đang bị .gitignore loại — sổ khai dùng chung "
+                               f"không đi được sang máy kia")
+    return True, ("công cụ + cờ phân giải được · Windows không bị chặn · "
+                  "link-skills.sh chạy thật nối đủ 2 runtime · sổ khai theo được git")
+
+
+def bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
+    """21/08 — hệ có đủ công cụ cho từng làn đồng bộ nhưng KHÔNG có lối vào duy
+    nhất: muốn máy này khớp máy kia phải nhớ đúng thứ tự CHÍN thứ rời rạc. Lệnh gộp
+    duy nhất đang có (`upgrade_verify.py`, 27 bước) kiểm HỆ AGENT và không chạm một
+    làn đồng bộ nào. Quy trình phải nhớ chín bước là quy trình sẽ bị bỏ sót bước —
+    và bỏ sót ở đây không kêu, nó chỉ làm máy kia thiếu lặng lẽ.
+
+    Chốt canh ba thứ mà `dong_bo_tat_ca.py` phải giữ, tất cả bằng HÀNH VI:
+      (a) Chốt an toàn 🔴 phải DỪNG mọi làn sau — đồng bộ khi cây thư mục đang hỏng
+          là nhân bản cái hỏng sang máy kia. Nhưng công cụ VẮNG MẶT thì KHÔNG được
+          dừng: thiếu nguyên liệu không phải bằng chứng nguy hiểm (BH08).
+      (b) Danh sách làn khai ra phải KHỚP làn chạy thật — thêm công cụ đồng bộ mới
+          mà quên nối thì lệnh gộp âm thầm phủ ít hơn tên gọi của nó.
+      (c) Nút bấm đúp phải THEO ĐƯỢC git và giữ CRLF. `.gitattributes` đặt
+          `eol=lf` toàn cục; batch có khối nhiều dòng đọc LF-only là hỏng thất
+          thường — hỏng kiểu khó truy vì file vẫn mở được và vài dòng đầu vẫn chạy.
+    """
+    import ast
+    import subprocess
+
+    f = REPO / "tools/dong_bo_tat_ca.py"
+    if not f.exists():
+        return False, "thiếu tools/dong_bo_tat_ca.py — hệ lại không có lối vào duy nhất"
+    m = _nap(f, "dbtc_bh68")
+
+    # (a) quy tắc dừng, kiểm bằng cách GỌI hàm chứ không đọc chữ
+    do = m.KetQua("thử", ma=2)
+    vang = m.KetQua("thử", ma=1)
+    vang_mat = m.KetQua("thử", bo_qua="máy chưa có công cụ")
+    if not m.phai_dung_som(do):
+        return False, "chốt an toàn 🔴 KHÔNG còn dừng — sẽ nhân bản cây hỏng sang máy kia"
+    if m.phai_dung_som(vang):
+        return False, "🟡 đã làm dừng cả lệnh — cảnh báo thường không được chặn"
+    if m.phai_dung_som(vang_mat):
+        return False, "công cụ VẮNG MẶT làm dừng cả lệnh — biến CHƯA BIẾT thành CÓ VẤN ĐỀ"
+
+    # (b) khai vs chạy. Dùng --liet-ke-lan (không chạy làn nào) để chốt vẫn nhanh
+    # và ngoại tuyến: chạy thật sẽ gọi `git fetch`, tức chạm mạng.
+    khai = m.ten_cac_lan()
+    if len(khai) < 8:
+        return False, f"lệnh gộp chỉ còn khai {len(khai)} làn (cần ≥8)"
+    # `cac_lan()` là nguồn duy nhất: mỗi mục phải gọi được và tên phải khớp danh
+    # sách khai. Bản đầu của chốt so với chuỗi trong main() và bắt được đúng việc
+    # hai chỗ đang lệch — nay lệch đó đã được đóng bằng THIẾT KẾ, chốt canh để nó
+    # không mở lại. Chỉ gọi các làn KHÔNG chạm mạng/tiến trình con: ở đây chỉ kiểm
+    # tên và tính gọi được, không thực thi (bộ chốt phải nhanh và ngoại tuyến).
+    bo = m.cac_lan()
+    if [t for t, _ in bo] != khai:
+        return False, "ten_cac_lan() lệch cac_lan() — lại có hai bản danh sách làn"
+    khong_goi_duoc = [t for t, h in bo if not callable(h)]
+    if khong_goi_duoc:
+        return False, f"làn không gọi được: {khong_goi_duoc[0]}"
+    goc = ast.parse(f.read_text(encoding="utf-8"))
+    ham_main = next((n for n in ast.walk(goc)
+                     if isinstance(n, ast.FunctionDef) and n.name == "main"), None)
+    if ham_main is None:
+        return False, "không tìm thấy main() trong dong_bo_tat_ca.py"
+    if not any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+               and n.func.id == "cac_lan" for n in ast.walk(ham_main)):
+        return False, ("main() không còn lặp trên cac_lan() — làn khai và làn chạy "
+                       "có thể lệch nhau trở lại")
+
+    # (c) nút bấm đúp
+    for ten in ("sync/dong-bo-tat-ca.command", "sync/dong-bo-tat-ca.cmd"):
+        if not (REPO / ten).exists():
+            return False, f"thiếu nút bấm đúp {ten}"
+    git = _sh_which("git")
+    if git:
+        for ten in ("sync/dong-bo-tat-ca.command", "sync/dong-bo-tat-ca.cmd"):
+            if subprocess.run([git, "check-ignore", "-q", ten], cwd=REPO,
+                              check=False, capture_output=True, timeout=60).returncode == 0:
+                return False, f"{ten} bị .gitignore loại — nút bấm không đi sang máy kia"
+        ra = subprocess.run([git, "check-attr", "eol", "--", "sync/dong-bo-tat-ca.cmd"],
+                            cwd=REPO, check=False, capture_output=True, text=True, timeout=60)
+        if "crlf" not in (ra.stdout or ""):
+            return False, ".cmd không được ép CRLF — batch LF-only hỏng thất thường trên Windows"
+    return True, (f"dừng đúng khi nguy hiểm · {len(khai)} làn khai khớp main() · "
+                  f"nút bấm đúp theo git, .cmd giữ CRLF")
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2692,6 +2923,11 @@ BAI_HOC = [
     ("BH67", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH68", "21/08", "Mã bài học phải DUY NHẤT (hai phiên thêm song song đụng số)", bh68_ma_bai_hoc_phai_duy_nhat),
     ("BH69", "21/08", "Cờ TẮT plugin trùng bị app xoá phải được ghi lại (không xoá khoá)", bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc),
+    # Hai mục dưới ra đời song song ở phiên đồng bộ đa nền và ban đầu mang số 67/68
+    # — trùng đúng ba mục trên. Chính BH68 vừa thêm ở master là chốt bắt việc này;
+    # đánh số lại thành 70/71 thay vì giành số, đúng thứ nó dạy.
+    ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
+    ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
 ]
 
 

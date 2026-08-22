@@ -42,6 +42,15 @@ import shutil
 import sys
 from pathlib import Path
 
+# Windows mặc định stdout=cp1252 → mọi print() tiếng Việt làm script chết giữa
+# chừng. Đúng lỗi đã giết 7 script trong tools/vietnamize/ ngày 03/08/2026, và
+# công cụ này chạy trên CẢ HAI máy nên phải có. (Chốt đa nền R4 gắn cờ 21/08.)
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 GOC = Path(__file__).resolve().parents[1]
 SETTINGS = Path.home() / ".claude" / "settings.json"
 MOC = GOC / "tools" / "moc_chuan_plugin.json"

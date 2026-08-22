@@ -7,17 +7,89 @@ Có **2 môi trường tách biệt**, cơ chế đồng bộ khác nhau:
 | **Cowork** (Claude Desktop) | Skills y khoa + harness bạn upload qua giao diện | **Tự động** qua tài khoản |
 | **Code + Codex** | Skill riêng trong `~/.claude/skills` và `~/.codex/skills` | **Tự động** từ `sync/skills/` bằng liên kết + watcher |
 
+## ⚡ MỘT LỆNH DUY NHẤT (21/08/2026)
+
+```bash
+python3 tools/dong_bo_tat_ca.py             # KIỂM — không ghi gì
+python3 tools/dong_bo_tat_ca.py --ap-dung   # đồng bộ thật
+```
+Hoặc **bấm đúp** `sync/dong-bo-tat-ca.command` (Mac) · `sync/dong-bo-tat-ca.cmd` (Windows).
+
+Lệnh này phủ **8 làn theo đúng thứ tự phụ thuộc** — xem bằng `--liet-ke-lan`:
+
+| # | Làn | Việc |
+|---|---|---|
+| ① | An toàn đồng bộ | conflict-copy OneDrive · git hỏng · file lõi chưa tải. **🔴 là DỪNG TẤT CẢ** |
+| ② | Git | commit chưa đẩy/chưa kéo — máy kia sẽ không thấy |
+| ③ | Skill → Claude + Codex | `sync/skills/` → 2 runtime |
+| ④ | Agent → Codex | enforce → sync → check |
+| ⑤ | Plugin | đối chiếu 2 máy qua sổ khai chung + chiếu sang Codex |
+| ⑥ | Hook SessionStart | cơ chế tự động đi giữa 2 máy |
+| ⑦ | Bộ nhớ Claude | mirror 2 chiều, file mới hơn thắng |
+| ⑧ | Kho công cụ | kho plugin so mốc chuẩn máy này |
+
+Vì sao gộp: trước đó muốn máy này khớp máy kia phải nhớ đúng thứ tự **chín** thứ rời rạc, mà lệnh gộp duy nhất đang có (`upgrade_verify.py`) kiểm hệ agent chứ không chạm một làn đồng bộ nào. Quy trình phải nhớ chín bước là quy trình sẽ bị bỏ sót bước — và bỏ sót ở đây **không kêu**, nó chỉ làm máy kia thiếu lặng lẽ.
+
+Ba luật giữ cho báo cáo không nói quá: thiếu **nguyên liệu** ghi «bỏ qua» chứ không tô đỏ · **mạng** là 🟡 còn **cấu hình** mới là 🔴 · dòng tổng kết chỉ kể làn **thật sự chạy**.
+
+> Muốn nó tự chạy mỗi phiên: thêm `python3 tools/dong_bo_tat_ca.py --im-khi-on` vào hook `SessionStart` (im lặng khi mọi làn khớp), rồi `python3 tools/dong_bo_hook_sessionstart.py --xuat` để máy kia nhận cùng cấu hình.
+
+---
+
 Nguồn chuẩn duy nhất là `sync/skills/`. Cài liên kết một lần bằng:
 
 ```bash
-bash sync/link-skills.sh
+bash sync/link-skills.sh          # macOS/Linux — symlink
+```
+```powershell
+sync\link-skills.ps1              # Windows — junction (bấm đúp link-skills.cmd cũng được)
 ```
 
-Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay:
+Cả hai script nối **cả `~/.claude/skills` lẫn `~/.codex/skills`** (sửa 21/08/2026 — trước đó chỉ nối Claude, nên Codex trắng skill trên cả hai máy).
+
+Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay (chạy được trên **cả hai** máy từ 21/08/2026):
 
 ```bash
 python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 ```
+
+### Ba việc mỗi máy làm MỘT LẦN (21/08/2026)
+
+| Việc | Lệnh | Vì sao |
+|---|---|---|
+| Nối skill vào Claude + Codex | `bash sync/link-skills.sh` · `sync\link-skills.ps1` | nguồn duy nhất `sync/skills/` |
+| Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | `.claude/settings.json` bị gitignore nên hook không tự đi |
+| Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
+
+> ⚠️ **Máy chưa có file `sync/nap-ban-nguon.command`?** Bình thường — nút nằm trong nhánh phát triển, mà máy đang ở `master`. Nút không tự lấy chính nó về được, nên lần đầu phải kéo nhánh bằng tay (dán trọn khối, dùng được cả hai kiểu đường dẫn OneDrive trên macOS):
+>
+> ```bash
+> cd ~/OneDrive/Claude\ AI 2>/dev/null || cd ~/Library/CloudStorage/OneDrive-Personal/Claude\ AI
+> git fetch origin claude/multi-platform-plugin-sync-cslwb0
+> git checkout claude/multi-platform-plugin-sync-cslwb0
+> bash sync/nap-ban-nguon.sh
+> ```
+>
+> Sau khi nhánh này được gộp vào `master` thì chỉ cần `git pull`.
+
+Máy ĐANG CHẠY ĐÚNG (thường là Mac) chạy trước **một lần** để nạp bản nguồn vào git — bấm đúp `sync/nap-ban-nguon.command`, hoặc:
+
+```bash
+bash sync/nap-ban-nguon.sh
+```
+
+Nút này DỪNG NGAY nếu cây làm việc còn thay đổi chưa lưu (đổi nhánh khi còn việc dở là cách mất việc dở), rồi lấy nhánh có công cụ và chạy hai bước nạp:
+
+```bash
+python3 tools/dong_bo_hook_sessionstart.py --xuat             # hook thật → sync/hooks-sessionstart.json
+python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai    # kho thật → sync/plugin-manifest.json
+```
+
+Nó **không commit, không push, không sửa `~/.claude/settings.json`, không cài/gỡ plugin** — chỉ ghi hai file khai vào repo rồi in ra việc còn lại.
+
+Rồi mở `sync/plugin-manifest.json`, sửa `can_o_may` cho đúng Ý ĐỊNH và bật `da_xac_nhan: true`. Chừng nào còn `false`, công cụ chỉ **cảnh báo** — vì lúc đó `can_o_may` mới chỉ là suy từ hiện trạng, mà báo đỏ dựa trên suy đoán sẽ dạy người ta bỏ qua cả cảnh báo thật.
+
+> Công cụ **không** tự cài/gỡ plugin qua mạng và **không** sửa `enabledPlugins`. Bài học 11/08: gỡ một mục khỏi `enabledPlugins` khiến Claude Code cài lại 278 MB. Vắng mặt trong `enabledPlugins` = **BẬT**, chỉ ghi rõ `false` mới là tắt.
 
 ---
 
@@ -49,6 +121,8 @@ Cấu hình runtime vẫn nằm trên từng máy, nhưng skill riêng dùng li�
 
 ### Cập nhật về sau
 Trên macOS và Windows, nội dung skill đã có đi qua symlink/junction ngay lập tức. Hook `SessionStart` tự tạo liên kết cho skill mới. Trên Windows có thể chạy lại `link-skills.ps1` sau khi thêm thư mục mới nếu chưa mở phiên Claude/Codex.
+
+> ⚠️ Windows dùng **junction**, không phải symlink: `os.symlink` ném WinError 1314 khi máy chưa bật Developer Mode (đã đo trên chính máy này 17/08/2026). `tools/lien_ket_da_nen.py` chọn đúng cơ chế theo nền, và nhận diện junction bằng `os.path.isjunction` — `Path.is_symlink()` trả **False** cho junction, dùng nhầm thì mỗi lượt chạy lại đẻ thêm một bản `.bak`.
 
 > Nếu CLI trên máy đó hỗ trợ `/plugin`, có thể dùng cách "xịn" hơn:
 > ```

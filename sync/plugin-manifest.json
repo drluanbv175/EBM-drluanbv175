@@ -1,0 +1,118 @@
+{
+  "_ghi_chu": "SỔ KHAI Ý ĐỊNH về kho plugin — đi qua git nên HAI MÁY đọc cùng một bản. Khác moc_chuan_plugin.json (ảnh chụp TRẠNG THÁI riêng từng máy): file này khai Ý ĐỊNH — plugin nào CẦN có ở máy nào, và vì sao. Nhờ vậy mới tách được «thiếu vì cố ý» khỏi «thiếu vì trôi dạt», hai thứ trông giống hệt nhau nhưng xử lý ngược nhau. Sửa TAY file này; công cụ chỉ đọc.",
+  "_cach_dung": "python3 tools/dong_bo_plugin_claude_codex.py            # đối chiếu, chỉ đọc\npython3 tools/dong_bo_plugin_claude_codex.py --ap-dung  # nối skill sang Codex\npython3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai  # dựng lại khung",
+  "_truong": {
+    "can_o_may": "danh sách máy PHẢI có plugin này (Mac/Windows)",
+    "chieu_sang_codex": "true = nối skill của plugin vào ~/.codex/skills",
+    "ly_do": "vì sao — để người đọc sau biết đây là chủ ý, không phải sót",
+    "do_duoc_luc_ghi": "số skill ĐO ĐƯỢC lúc dựng sổ, chỉ để tham chiếu"
+  },
+  "phien_ban_so_khai": 1,
+  "plugin": {
+    "academic-research-skills@academic-research-skills": {
+      "can_o_may": [
+        "Mac",
+        "Windows"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "do_duoc_luc_ghi": {
+        "Mac": 4,
+        "Windows": 4
+      }
+    },
+    "aipoch-medical-research@aipoch-medical-research": {
+      "can_o_may": [
+        "Mac",
+        "Windows"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08).",
+      "do_duoc_luc_ghi": {
+        "Mac": 605,
+        "Windows": 605
+      }
+    },
+    "claude-code-harness@claude-code-harness-marketplace": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Cấp 4 lệnh harness (/harness-plan · -work · -review · -sync) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4).",
+      "do_duoc_luc_ghi": {
+        "Mac": 70
+      }
+    },
+    "codex@openai-codex": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "do_duoc_luc_ghi": {
+        "Mac": 3
+      }
+    },
+    "humanizer@humanizer": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Worker văn phong. CẤM chạy trên nội dung y khoa ĐÃ QUA CỔNG — nó sửa câu chữ, đủ để làm lệch một mệnh đề điều kiện («ngoài thai kỳ», «nếu không chống chỉ định») mà không ai thấy (CLAUDE.md, luật nền 3 của bảng định tuyến).",
+      "do_duoc_luc_ghi": {
+        "Mac": 2
+      }
+    },
+    "medsci-project@medsci-skills": {
+      "can_o_may": [
+        "Mac",
+        "Windows"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Bản GIỮ LẠI trong 9 plugin medsci-* có bộ 58 skill BYTE-IDENTICAL (đã so md5). 8 bản trùng đã tắt 10/08/2026 — danh sách Windows 1405 → 941 mục, 0 năng lực mất. Tiền tố lệnh là /medsci-project:*.",
+      "do_duoc_luc_ghi": {
+        "Mac": 59,
+        "Windows": 59
+      }
+    },
+    "meta-pipe@meta-pipe": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "do_duoc_luc_ghi": {
+        "Mac": 14
+      }
+    },
+    "openmed-skills@openmed-skills": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Worker NLP lâm sàng. Skill khử định danh của nó KHÔNG thay quan-ly-du-lieu — khử định danh/PII là việc CÓ CỔNG, chủ là agent EBM (bảng định tuyến).",
+      "do_duoc_luc_ghi": {
+        "Mac": 72
+      }
+    },
+    "pubmed-search@pubmed-search": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "do_duoc_luc_ghi": {
+        "Mac": 10
+      }
+    }
+  }
+}
