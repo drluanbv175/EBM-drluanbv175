@@ -133,7 +133,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   bằng công cụ cũ, dựng lại catalog/ZIP router và đối chiếu kho plugin. Hook
   `SessionStart` tự chạy để bắt skill mới/registry mới; sửa nội dung skill có hiệu lực tức thời qua
   symlink. Không dùng LaunchAgent đọc OneDrive vì macOS TCC chặn tiến trình nền chưa được cấp quyền.
-  🔴 **BỐN THỨ BỘ HỢP NHẤT TỪNG TRỎ VÀO KHOẢNG KHÔNG — vá 21/08/2026 (BH67).** Bản commit 20/08 được
+  🔴 **BỐN THỨ BỘ HỢP NHẤT TỪNG TRỎ VÀO KHOẢNG KHÔNG — vá 21/08/2026 (BH70).** Bản commit 20/08 được
   tài liệu hoá ở CẢ AGENTS.md lẫn mục này, nhưng đo trên repo sạch thì `--ap-dung` thoát **mã 2**:
   (a) `tools/dong_bo_plugin_claude_codex.py` **chưa bao giờ có trong repo** — chân «đồng bộ Plugin»
   chưa từng tồn tại; (b) `sync/skills/plugin-router-chatgpt/` chỉ có trên Mac, chưa commit, nên làn
@@ -162,7 +162,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   tự soạn hook**: bản khai thật chỉ máy đó biết, soạn theo trí nhớ tài liệu là sai cờ và hỏng im lặng.
   ⚠️ Cả hai file sổ khai phải nằm trong danh sách un-ignore của `.gitignore` — quy tắc `/sync/*` loại
   mọi file gốc, và lúc mới dựng thì `plugin-manifest.json` **bị ignore im lặng**, tức cơ chế «đi qua
-  git» sẽ không đi đâu cả. BH67 canh luôn điều này.
+  git» sẽ không đi đâu cả. BH70 canh luôn điều này.
   ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
   thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
   tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`
@@ -175,7 +175,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   liệu không phải bằng chứng nguy hiểm — BH08). **Làn ② Git** là chỗ hở không làn nào khác nhìn tới:
   việc đã commit mà chưa đẩy thì máy kia không bao giờ thấy; công cụ cố ý **không tự commit/push** —
   đẩy hộ là quyết định thay bác sĩ về thứ được công bố. `cac_lan()` là nguồn DUY NHẤT (main lặp trên
-  chính nó) nên «làn khai» và «làn chạy» không thể lệch; **BH68** khoá điều này cùng quy tắc dừng và
+  chính nó) nên «làn khai» và «làn chạy» không thể lệch; **BH71** khoá điều này cùng quy tắc dừng và
   nút bấm đúp (kèm `.gitattributes` ép CRLF cho `.cmd`/`.ps1` — batch có khối nhiều dòng đọc LF-only
   là hỏng thất thường trên Windows).
   ⚠️ **Quyết định chiều theo NỘI DUNG, KHÔNG theo `mtime`.** 6 skill từng có mtime runtime mới hơn
@@ -244,6 +244,15 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   im lặng" ngày 05/08). Nên trên Mac, **bật lại = phải cài lại qua mạng**, không chỉ đổi `false`
   → `true`. Sao lưu trước khi dọn: `~/.claude/plugins/installed_plugins.json.bak-20260810-174911`
   và `~/.claude/settings.json.bak-20260810-174911`. Máy Windows chưa dọn cache — ở đó câu cũ vẫn đúng.
+- **🔁 8 CỜ `false` NÀY BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ, không sửa tay nữa (21/08/2026).**
+  App ghi đè `settings.json` sau một số đợt cập nhật và xoá sạch các cờ `false`. Đã đo hai lần
+  trên Mac: **17/08 (839→1311 skill)** và **21/08 (870→1319)**. Đây là hiện tượng ĐỊNH KỲ, không
+  phải sự cố một lần. `python3 tools/kiem_co_tat_plugin_trung.py [--ap-dung]` khôi phục, đọc mốc
+  chuẩn của CHÍNH máy để biết bộ nào bác sĩ giữ; đã nối vào `tu_sua_chua.py`, khoá bằng **BH69**.
+  ⚠️ **Bẫy nguy hiểm hơn chính sự cố:** lúc đó chốt kho báo medsci-* là «MỚI so với mốc» và gợi ý
+  `--ghi-moc`. **Làm theo là hỏng hẳn** — mốc sẽ nuốt luôn chỗ phồng và từ đó không chốt nào còn
+  báo nữa, tức mất đúng cái giác quan sinh ra để canh. Khôi phục cờ TRƯỚC, ghi mốc SAU, và chỉ
+  ghi khi việc cài/gỡ đúng là chủ ý của bác sĩ.
 - **Ba bẫy đã vá cùng ngày, đừng để tái phát:** (a) `extract_catalog.py` từng liệt kê cả plugin
   ĐANG TẮT → danh mục mời gọi lệnh gõ vào là không chạy; nay bỏ qua mục `enabledPlugins: false`
   (chỉ khi ghi RÕ `false`, vắng mặt thì giữ). (b) Khi một skill có nhiều cách gọi, cách được

@@ -2180,12 +2180,29 @@ def bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang():
                          "CHƯA đọc toàn văn", "N GỘP") if x not in vb]
     if thieu:
         return False, f"skill mất {len(thieu)} lớp lỗi nội dung trong bảng tự soi — {thieu[0]}"
+    # Ba lớp thêm 21/08 sau ba vòng thẩm định liên tiếp trên MỘT bài. Cả ba đều là lỗi
+    # mà cổng trích dẫn không thể thấy: chữ trích đúng nguyên văn, chỉ có ĐÍCH hoặc CÁN
+    # CÂN là sai. ⑩ đáng nhớ nhất — bản «sửa cho đúng mức» theo một guideline lại làm
+    # thuốc trông yếu hơn nền chứng cứ, vì guideline kia đặt mức cao hơn cho cùng quần thể.
+    thieu2 = [x for x in ("gắn NHẦM khuyến cáo", "LỐI RA",
+                          "CẢ BỘ NGUỒN của bài") if x not in vb]
+    if thieu2:
+        return False, f"skill mất lớp lỗi bổ sung 21/08 — {thieu2[0]}"
     if "thẩm định ĐỘC LẬP" not in vb:
         return False, "skill không còn đòi lượt thẩm định độc lập cho bài dùng thực hành"
-    return True, "skill giữ đủ bảng 5 lớp lỗi nội dung + đòi thẩm định độc lập"
+    # «0 lỗi nặng» KHÔNG phải điều kiện dừng: đo thật trên bài suy tim, số lỗi nặng về 0
+    # từ vòng hai nhưng vòng ba và vòng bốn vẫn ra thêm lỗi CÂN BẰNG do chính vòng sửa
+    # trước gây ra. Dừng khi một vòng không còn phát hiện nào do vòng sửa trước sinh ra.
+    if "đừng dừng ở «0 lỗi" not in vb:
+        return False, "skill mất luật «0 lỗi nặng chưa phải điều kiện dừng»"
+    # Đo 21/08: bốn vòng liền lỗi tái sinh ĐÚNG khối vừa vá; viết lại trọn khối thì
+    # vòng sau sạch khối đó. Luật này là thứ duy nhất phá được vòng lặp vá-rồi-hỏng.
+    if "VIẾT LẠI TRỌN KHỐI" not in vb:
+        return False, "skill mất luật «lỗi tái sinh đúng chỗ vừa vá thì viết lại trọn khối»"
+    return True, "skill giữ đủ 8 lớp lỗi nội dung + đòi thẩm định độc lập + luật điều kiện dừng"
 
 
-def bh67_bo_dong_bo_khong_tro_vao_thu_khong_co():
+def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
     """21/08 — bộ hợp nhất `dong_bo_skill_claude_codex.py` được commit và tài liệu
     hoá ở CẢ AGENTS.md lẫn CLAUDE.md, nhưng gọi vào BỐN thứ không tồn tại:
       · `tools/dong_bo_plugin_claude_codex.py` — chưa bao giờ có trong repo
@@ -2330,7 +2347,7 @@ def bh67_bo_dong_bo_khong_tro_vao_thu_khong_co():
                   "link-skills.sh chạy thật nối đủ 2 runtime · sổ khai theo được git")
 
 
-def bh68_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
+def bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
     """21/08 — hệ có đủ công cụ cho từng làn đồng bộ nhưng KHÔNG có lối vào duy
     nhất: muốn máy này khớp máy kia phải nhớ đúng thứ tự CHÍN thứ rời rạc. Lệnh gộp
     duy nhất đang có (`upgrade_verify.py`, 27 bước) kiểm HỆ AGENT và không chạm một
@@ -2770,6 +2787,72 @@ def bh62_cong_phai_tu_parse_chat_khoi_data():
     return True, "cổng tự chặn khối DATA vỡ, không bắt oan, và dùng chung MỘT parser"
 
 
+def bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc() -> tuple[bool, str]:
+    """21/08/2026 — app Claude ghi đè `settings.json` và xoá sạch các cờ `false` của 8
+    plugin medsci trùng (đã xảy ra 17/08 và 21/08, kho phồng 870 → 1319 skill).
+
+    Hai điều dễ làm sai, chốt canh cả hai:
+    (a) Phải GHI `false`, KHÔNG được xoá khoá — vắng mặt trong `enabledPlugins` nghĩa là
+        BẬT. Lời khuyên «gỡ hẳn khỏi enabledPlugins» ngày 11/08 từng làm Claude Code cài
+        lại cả 8 bộ (278 MB).
+    (b) Plugin mà mốc chuẩn đang giữ thì tuyệt đối không được đụng tới.
+
+    Kiểm bằng cách gọi thẳng vào mã đang sống trên một `settings.json` giả.
+    """
+    import json
+    import tempfile
+
+    m = _nap(REPO / "tools" / "kiem_co_tat_plugin_trung.py", "_bh69_co_tat")
+
+    with tempfile.TemporaryDirectory() as d:
+        st = Path(d) / "settings.json"
+        moc = Path(d) / "moc.json"
+        # mốc giữ đúng một thành viên của họ
+        moc.write_text(json.dumps({"plugin": {"medsci-project@medsci-skills": {"so_skill": 58}}}),
+                       encoding="utf-8")
+        # app vừa ghi đè: cờ false biến mất, một bộ ghi true, một bộ vắng mặt hoàn toàn
+        st.write_text(json.dumps({"enabledPlugins": {
+            "medsci-project@medsci-skills": True,
+            "medsci-data@medsci-skills": True,
+            "khac@marketplace-khac": True,
+        }}), encoding="utf-8")
+        m.SETTINGS, m.MOC = st, moc
+
+        thieu, _ = m.do()
+        if "medsci-data@medsci-skills" not in thieu:
+            return False, "không phát hiện plugin trùng đang bật"
+        if "medsci-project@medsci-skills" in thieu:
+            return False, "đụng vào plugin mà mốc đang giữ"
+        if "khac@marketplace-khac" in thieu:
+            return False, "đụng vào họ plugin ngoài phạm vi"
+
+        m.sua(thieu)
+        ep = json.loads(st.read_text(encoding="utf-8"))["enabledPlugins"]
+        if "medsci-data@medsci-skills" not in ep:
+            return False, "đã XOÁ khoá thay vì ghi false — vắng mặt nghĩa là BẬT"
+        if ep["medsci-data@medsci-skills"] is not False:
+            return False, "không ghi được cờ false"
+        if ep["medsci-project@medsci-skills"] is not True:
+            return False, "đã tắt nhầm plugin mốc đang giữ"
+
+    return True, "ghi false đúng bộ trùng, giữ nguyên bộ trong mốc"
+
+
+def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
+    """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
+    tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
+    nên lỗi sổ sách này không có đường nào lộ ra: tra theo mã sẽ trúng nhầm mục, đếm
+    theo mã sẽ hụt một mục. Chốt đọc chính bảng đăng ký đang sống.
+    """
+    from collections import Counter
+
+    dem = Counter(ma for ma, _, _, _ in BAI_HOC)
+    trung = sorted(ma for ma, n in dem.items() if n > 1)
+    if trung:
+        return False, "mã trùng: " + ", ".join(trung)
+    return True, f"{len(BAI_HOC)} mục, mã duy nhất"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2831,15 +2914,20 @@ BAI_HOC = [
     ("BH58", "16/08", "Quyết định đã duyệt không bị lật ngược im lặng", bh58_quyet_dinh_da_duyet_khong_lat_nguoc),
     ("BH59", "16/08", "Khối DATA phải parse được như JS (chống trang trắng)", bh59_khoi_data_phai_parse_duoc_nhu_js),
     ("BH60", "19/08", "Gói tuần phải ĐỌC TOÀN VĂN OA, không thẩm định mù từ tóm tắt", bh60_goi_tuan_phai_doc_toan_van),
-    ("BH60", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
     ("BH61", "18/08", "Khoá summary sai tên phải bị bắt (chống vứt nội dung an toàn)", bh61_khoa_summary_sai_ten_phai_bi_bat),
     ("BH62", "18/08", "Cổng tự parse chặt khối DATA (chống trang trắng lọt cổng)", bh62_cong_phai_tu_parse_chat_khoi_data),
     ("BH63", "20/08", "Benchmark mù — máy ẩn danh, KHÔNG tự chấm chất lượng", bh63_benchmark_mu_khong_de_may_tu_cham),
     ("BH64", "20/08", "Bài tổng thuật phải nằm trong vòng sống (sổ + hòm thư + độ tươi)", bh64_bai_tong_thuat_phai_o_trong_vong_song),
     ("BH65", "20/08", "Định danh guideline phải khai máy-khớp hay người-chốt", bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan),
-    ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 5 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
-    ("BH67", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh67_bo_dong_bo_khong_tro_vao_thu_khong_co),
-    ("BH68", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh68_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
+    ("BH66", "20/08", "Cổng trích dẫn KHÔNG bảo đảm đúng lâm sàng — giữ bảng 8 lớp lỗi nội dung", bh66_cong_trich_dan_khong_bao_dam_dung_lam_sang),
+    ("BH67", "18/08", "array_field không gãy ở ngoặc vuông trong truy vấn", bh60_array_field_khong_gay_o_ngoac_vuong),
+    ("BH68", "21/08", "Mã bài học phải DUY NHẤT (hai phiên thêm song song đụng số)", bh68_ma_bai_hoc_phai_duy_nhat),
+    ("BH69", "21/08", "Cờ TẮT plugin trùng bị app xoá phải được ghi lại (không xoá khoá)", bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc),
+    # Hai mục dưới ra đời song song ở phiên đồng bộ đa nền và ban đầu mang số 67/68
+    # — trùng đúng ba mục trên. Chính BH68 vừa thêm ở master là chốt bắt việc này;
+    # đánh số lại thành 70/71 thay vì giành số, đúng thứ nó dạy.
+    ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
+    ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
 ]
 
 

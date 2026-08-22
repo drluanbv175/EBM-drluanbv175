@@ -1,7 +1,7 @@
 ---
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
-version: 1.4.0
+version: 1.7.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -136,7 +136,23 @@ mở lại nguồn, không kiểm bằng trí nhớ):
 | ② Bỏ sót luật NGỪNG thuốc / mức Harm | thiếu «ngừng MRA nếu K không giữ được <5,5» (COR 3: Harm) | tra mục khuyến cáo của chính thuốc đó, đọc CẢ khuyến cáo nghịch |
 | ③ Khẳng định MỒ CÔI trái guideline | «yếu tố này quyết định trình tự chứ không quyết định có dùng hay không» — không [n], trái điều kiện khởi trị | mọi câu mang tính luật phải có [n] |
 | ④ «Không nguồn nào nêu X» khi CHƯA đọc toàn văn | bài nói không nguồn nào cho mốc chỉnh liều, trong khi guideline có mục riêng | chỉ được viết «không nêu» cho phần ĐÃ ĐỌC; chưa đọc thì ghi «chưa đọc được» |
+| ⑥ Trưng mức khuyến cáo KHÔNG áp cho quần thể của bài | bài viết cho ca CHƯA từng dùng thuốc, lại trưng mức của tình huống ĐỔI thuốc | đọc điều kiện áp dụng trong chính câu khuyến cáo; không khớp thì nói rõ «chưa đối chiếu được», KHÔNG chép mức từ trí nhớ |
+| ⑦ Bỏ điều kiện an toàn của thuốc vừa khuyên kê | khuyên chuyển sang ARNI + đưa bảng liều mà thiếu rửa trôi 36 giờ và chống chỉ định phù mạch | mỗi thuốc có bảng liều PHẢI kèm điều kiện khởi trị/chống chỉ định; nguồn guideline không đọc được thì tra **nhãn thuốc** |
+| ⑧ Mục hành động chỉ mang nửa NGUY CƠ, bỏ nửa LỢI ÍCH | ba gạch đều nghiêng khỏi JAKi, trong khi chính nguồn kết luận hồ sơ lợi ích–nguy cơ thuận lợi | mục V phải mang CẢ hai vế của nguồn lợi ích–nguy cơ, hoặc nói rõ vì sao chỉ lấy một vế |
 | ⑤ Gán N GỘP cho từng ước lượng | N của cả tổng quan (30.994) dán cho mọi hàng trong bảng | mỗi hàng lấy đúng N của phân tích đó, không có thì để trống |
+| ⑨ Điều kiện gắn NHẦM khuyến cáo | mốc «40 ngày sau nhồi máu» của khuyến cáo **cấy ICD** bị đặt làm ngoại lệ của tiêu chí **chuyển tuyến** ⇒ đọc thành «NYHA III–IV trong 40 ngày thì chưa chuyển», tức TRÌ HOÃN đúng nhóm nặng nhất | trích đúng nguyên văn vẫn có thể gắn sai đích. Với mỗi điều kiện, hỏi «điều kiện này là của KHUYẾN CÁO NÀO» và đọc lại đúng bảng/sơ đồ đó — cổng trích dẫn mù hoàn toàn với lớp này |
+| ⑩ Hạ/nâng một mức theo MỘT nguồn khi bộ nguồn có nhiều mức | sửa mức ARNI ở ca de novo xuống **IIb B** cho đúng ESC, mà bỏ mất **COR 1 A** của AHA/ACC/HFSA cho cùng quần thể ⇒ bản «sửa cho đúng» làm thuốc trông YẾU hơn nền chứng cứ, có thể dẫn tới hoãn thuốc | trước khi đổi bất kỳ mức nào, quét **CẢ BỘ NGUỒN của bài** xem có tổ chức nào đặt mức khác cho cùng quần thể. Hai nguồn lệch nhau thì nêu CẢ HAI; không lấy mức thấp nhất làm kết luận chung |
+| ⑪ Cấm một lối mà không nêu LỐI RA | mở rộng đúng lệnh cấm phù mạch cho cả ARNI lẫn ACE-I, nhưng bỏ mất **ARB ở COR 1 A** cho chính người không dung nạp vì phù mạch ⇒ mục hành động thành ngõ cụt | mỗi khi bài CẤM một lựa chọn, phải tra trong cùng nguồn xem có phương án thay được khuyến cáo không, và nêu kèm mức của nó |
+
+Ba lớp ⑥⑦⑧ bổ sung 21/08 sau khi vòng SỬA lại sinh lỗi mới; ba lớp ⑨⑩⑪ bổ sung cùng ngày sau ba vòng thẩm định liên tiếp trên MỘT bài. **Mỗi lần sửa phải thẩm định lại** — bản vá tạo lỗi ở đúng chỗ nó vừa chạm vào, và điều này đo được ổn định: 3/5 bài sinh lỗi nặng MỚI trong vòng sửa đầu; vòng hai sinh thêm 4 phát hiện mới; vòng ba lại sinh 4 nữa, trong đó có một chỗ mà bản «sửa cho đúng mức» làm một thuốc trông yếu hơn nền chứng cứ. Số lỗi NẶNG về 0 từ vòng hai, nhưng lỗi CÂN BẰNG thì mỗi vòng vẫn ra thêm ⇒ **đừng dừng ở «0 lỗi nặng»**, dừng khi một vòng không còn phát hiện nào do chính vòng sửa trước gây ra.
+
+**KHI LỖI TÁI SINH ĐÚNG CHỖ VỪA VÁ — DỪNG VÁ, VIẾT LẠI TRỌN KHỐI.** Đo trên bài suy tim
+21/08: bốn vòng liền, mỗi vòng sửa xong thì vòng sau lại tìm ra lỗi mới **ngay tại khối vừa
+chạm vào** (chuỗi phù mạch → lối ra). Đó không phải chuỗi lỗi rời rạc mà là dấu hiệu của một
+**mạch lập luận có ràng buộc lẫn nhau**: thêm một vế cân bằng thì lộ ra vế kế tiếp, vì cả khối
+phải đúng cùng lúc mới đúng. Vòng năm viết lại trọn khối thành một thang có đủ bậc — vòng sáu
+**không còn phát hiện nào trong khối đó**, hai điểm mới rơi sang mục khác và nhẹ hơn hẳn.
+Dấu hiệu nhận biết: hai vòng liên tiếp cùng báo lỗi ở cùng một khối, dù mỗi lần một câu khác.
 
 Bài dùng cho quyết định thực hành (benchmark, gói tuần, tra điểm khám) nên chạy
 thêm MỘT lượt thẩm định ĐỘC LẬP (agent khác/phiên khác) — người viết không nhìn
