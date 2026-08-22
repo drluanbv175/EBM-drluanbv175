@@ -29,6 +29,9 @@
    meta-analysis trên 42.473 bác sĩ đã bị JAMA Internal Medicine **RÚT** năm 2020 — nếu tin trí
    nhớ, nó đã nằm trong báo cáo này.
 6. **Bốn việc cụ thể** ở §V, xếp theo lợi ích/công sức, kèm đặc tả đủ để làm ngay.
+7. **Hai trong bốn việc ĐÃ XÂY XONG trong phiên này** (§V-bis): sổ việc chưa đóng và chốt
+   safety-netting — 625 dòng công cụ + 476 dòng test, 51 test xanh, cả hai mutation-tested.
+   Tool chạm vào phòng khám: **1 → 3**.
 
 ---
 
@@ -199,6 +202,11 @@ Sáu phép đo chạy trực tiếp trên `EBM-drluanbv175/` ngày 22/08/2026:
 | 5 | Tool kiểm nguồn/trích dẫn/rút bài | 8 |
 | 6 | **Tool chạm vào khoảnh khắc trong phòng khám** | **1** — `tools/tra_diem_kham.py` |
 
+> **CẬP NHẬT CÙNG NGÀY, sau khi xây (§V-bis):** tổng `tools/*.py` **117 → 121**; nhóm chạm vào
+> phòng khám **1 → 3** (`tra_diem_kham.py` · `so_viec_chua_dong.py` · `kiem_safety_net.py`).
+> Tỷ lệ vẫn là **3/101 tool**, nên kết luận của §III không đổi — chỉ là đã có ba viên gạch
+> đầu tiên thay vì một.
+
 Cấu trúc agent: 21 agent, toàn bộ nằm trên trục **A1–A10** (quét → khử trùng → truy nguyên → thẩm
 định → trích hiệu số → bản địa hoá → phủ an toàn) · **B1–B5** (dashboard → cổng → thư viện → phái
 sinh → hàng chờ duyệt) · **C1–C5** (red-team → chấm → quan sát → học → điều phối).
@@ -337,6 +345,103 @@ dưới đây chỉ là áp **đúng kỹ thuật ấy** cho một tầng khác:
 - Chi phí thời gian đã đo: **+1,5 phút** nếu dùng trong buổi khám, **0 phút** nếu đưa trước (§II.2).
 
 ---
+
+---
+
+## V-bis. ĐÃ XÂY TRONG PHIÊN NÀY — việc ① và ③
+
+Hai việc đầu trong §V đã được cài đặt, kiểm và đẩy lên nhánh
+`claude/outpatient-clinical-practice-sm8r27` (commit `807f554`).
+
+### V-bis.1 — `tools/so_viec_chua_dong.py` (việc ①)
+
+| | |
+|---|---|
+| Mã | 389 dòng công cụ + 270 dòng test |
+| Test | **30**, đều xanh |
+| Đột biến kiểm | 2 phép — bỏ regex điện thoại ⇒ đỏ 2 test; cho bản ghi thiếu hạn rơi vào nhóm "ổn" ⇒ đỏ 1 test |
+| Phụ thuộc | **0** — chỉ thư viện chuẩn, ngoại tuyến hoàn toàn |
+| Mã thoát | 0 không quá hạn · 1 CÓ quá hạn · 2 lỗi dữ liệu/PII |
+
+**Quyết định thiết kế đáng ghi lại:**
+
+- **Bắt buộc mỗi việc có HẠN.** Không hạn thì không ai biết lúc nào quá hạn — đúng thứ sổ này
+  sinh ra để chặn. `--them` thiếu `--han`/`--han-sau` bị từ chối.
+- **Bản ghi thiếu hạn bị xếp vào nhóm PHẢI XEM, không phải nhóm ổn.** Dữ liệu hỏng không được
+  rơi vào phía im lặng (fail-closed).
+- **Huỷ việc bắt buộc có `--ly-do`.** Huỷ không dấu vết là cách một việc biến mất mà không ai biết.
+- **Bộ chặn PII cố ý HẸP.** Chỉ bắt mẫu độ chính xác cao: số điện thoại · dãy 9/12 chữ số ·
+  email · ngày sinh · từ khoá định danh. **Không dò tên riêng** — tiếng Việt viết hoa ở quá nhiều
+  chỗ, chặn oan hàng loạt sẽ dạy người dùng bỏ qua cảnh báo. Thông điệp lỗi nói thẳng giới hạn
+  này thay vì để người nhập tưởng đã được bảo vệ toàn phần. Có test chống chặn oan trên 5 mô tả
+  lâm sàng bình thường.
+- **Không tự đóng việc, không ghi `decision`/`gradeLevel`** — có test khoá riêng (BH10).
+- **Sổ nằm ngoài git có chủ ý:** `state/viec-chua-dong.jsonl` rơi vào luật `/*` của `.gitignore`.
+  Dữ liệu vận hành phòng khám không lên GitHub; chỉ công cụ mới cần version-control.
+- **Sổ trống KHÔNG tuyên bố "không bỏ sót gì"** — nó in rõ *"sổ trống chỉ có nghĩa là chưa ai
+  ghi"*. Đây là BH32 áp cho công cụ mới: một chỉ số gộp không được trình bày như kết luận về
+  toàn bộ.
+
+### V-bis.2 — `tools/kiem_safety_net.py` + `safety_net_templates.json` v2.0.0 (việc ③)
+
+| | |
+|---|---|
+| Mã | 236 dòng công cụ + 206 dòng test |
+| Test | **21**, đều xanh |
+| Đột biến kiểm | bỏ luật R9 ⇒ đỏ 1 test |
+| Luật | 9 (R1–R9) |
+| Độ phủ hiện tại | **1/8** hội chứng có nguồn · **0/8** có lời dặn bệnh nhân |
+
+**Lỗi đã tồn tại trong repo, nay mới đo được.** `CLINICAL_RUNTIME_FLAGS.json` khai
+`enforce_safety_net_templates: true`. `grep` toàn repo: **0 file tham chiếu** tới file mẫu.
+Nội dung file mẫu: ba câu tiếng Anh chung chung. Tức một **lá cờ tuyên bố có thi hành mà không
+có gì thi hành** — cùng họ với `return` sớm ngày 12/08 (che 73 mục), BH27 (fail-open cổng A12)
+và BH61 (khoá lạ trong `DATA.summary`). Khác biệt: lần này nó rơi vào **tầng an toàn cho bệnh
+nhân**, không phải tầng governance.
+
+**Schema v2.0.0 tách HAI TRỤC** — đây là quyết định quan trọng nhất:
+
+| Trục | Là gì | Trạng thái |
+|---|---|---|
+| `co_do_cho_bac_si` | Dấu hiệu bác sĩ TÌM lúc khám | 1/8 hội chứng có nguồn |
+| `dan_benh_nhan_quay_lai` | Câu dặn người bệnh MANG VỀ NHÀ | 0/8 — bác sĩ phải tự viết |
+
+Gộp hai trục là biến một danh sách thuật ngữ chuyên môn thành lời khuyên cho người bệnh. R3 chặn
+cứng nếu thiếu một trong hai.
+
+**Chín luật:** R1 khung · R2 trạng thái phải khớp nội dung · R3 đủ hai trục · R4 nguồn phải truy
+được (PMID / DOI / guideline + năm — **văn xuôi bị từ chối**) · R5 ít nhất một tiêu chí
+`do_duoc: true` (*"nếu nặng hơn"* không phải tiêu chí) · R6 khai `co-nguon` mà còn
+`[CẦN BÁC SĨ ĐIỀN]` ⇒ lỗi · R7 phải nói ra giới hạn nguyên văn của nguồn · R8 hạn rà soát
+365 ngày · **R9 — lá cờ không được nói hộ: cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.**
+Thiếu file cờ ⇒ fail-closed (giả định cờ đang bật), không đọc thành "cờ đang tắt".
+
+**Mục duy nhất đã điền là `dau-dau`** — chép NGUYÊN 15 mục **SNNOOP10**, kèm **giới hạn nguyên
+văn của chính bài gốc**: *"thiếu nghiên cứu dịch tễ tiến cứu về cờ đỏ… một công cụ sàng lọc đã
+kiểm định VẪN CHƯA CÓ"*. Không được trình bày như một thang đã kiểm định.
+*(Do TP và cs., Neurology 2019;92(3):134-144 · PMID **30587518** ·
+doi:10.1212/WNL.0000000000006697 — bài tổng quan, không phải nghiên cứu kiểm định.)*
+
+🔴 **7 hội chứng còn lại để `[CẦN BÁC SĨ ĐIỀN]` — đây là kết quả ĐÚNG, không phải việc chưa xong.**
+Bịa ngưỡng cờ đỏ cho đau ngực · khó thở · đau bụng · sốt · đau lưng · chóng mặt · sụt cân là đúng
+thứ doctrine cấm tuyệt đối. Máy dựng được **cái rương**; nội dung y khoa thuộc Cổng A.
+
+### V-bis.3 — Một fail-open bị chính test bắt được
+
+Bản đầu của chốt viết `hc.get("dan_benh_nhan_quay_lai", {})`. Vì `{}` **là** một dict nên
+`isinstance(ld, dict)` luôn đúng ⇒ một hội chứng **thiếu hẳn** khối lời dặn vẫn lọt qua R3.
+Test `test_thieu_khoi_loi_dan_bi_chan` bắt được ngay lần chạy đầu; mặc định phải là `None`.
+
+Đây đúng bài học nền của repo — *luật CÓ MẶT nhưng không bao giờ chạy tới* — và lần này nó bị bắt
+**trong vòng vài phút** thay vì sau vài tháng, vì test được viết cùng lúc với luật.
+
+### V-bis.4 — Hai việc còn lại, và vì sao chưa làm
+
+| Việc | Trạng thái | Lý do |
+|---|---|---|
+| ② Ô "Nghị trình bệnh nhân" trong mẫu SOAP | **chưa làm** | Đây là đổi THÓI QUEN, không phải code. Một dòng trong mẫu ghi chép; tôi không tự sửa mẫu lâm sàng của bác sĩ. |
+| ④ Tờ quyết định một trang | **chưa làm** | Là đầu ra thứ 6 của `xuat_goi_cap_nhat.py` — dây chuyền này có **3 bản đồng bộ**, và `CLAUDE.md` đã ghi rõ phải chờ bác sĩ duyệt trước khi thêm đầu ra. |
+
 
 ## VI. BA CÂU HỎI ĐÓNG MỖI LẦN KHÁM + THƯỚC TỰ CHẤM
 

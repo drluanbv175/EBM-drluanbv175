@@ -1203,6 +1203,14 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
 - **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
   lời dặn (9 luật, R9 chặn cứng khi lá cờ `enforce_safety_net_templates` nói hộ).
+- **Markdown → Word, font mặc định TIMES NEW ROMAN:** `python3 tools/md_sang_docx_times.py <file>.md
+  [--ra <ra>.docx] [--co-chu 12]`. Lấp khoảng trống mà `build_dashboard_docx.py` không phủ (công cụ
+  đó chỉ đọc khối `DATA` của dashboard, không chuyển được tài liệu Markdown thường). Bản `.docx`
+  sinh TỪ CHÍNH file `.md` nguồn — cùng nguyên tắc "một nguồn, nhiều bản phái sinh" của bộ năm, để
+  hai bản không bao giờ lệch nhau. Hỗ trợ đề mục · bảng ống · trích dẫn · danh sách · **đậm** ·
+  *nghiêng* · `mã` · liên kết (in kèm URL để bản giấy tra được nguồn). Đoạn mã GIỮ Times New Roman,
+  phân biệt bằng nền xám — không đổi font, vì mặc định đã được ấn định. **KHÔNG commit file `.docx`
+  sinh ra**: nó tái tạo được từ `.md` bằng một lệnh, giống mọi dữ liệu phái sinh khác của repo.
 - **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
 - **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 tools/check_claude_codex_sync_health.py`.
 - **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
