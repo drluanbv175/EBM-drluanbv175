@@ -488,6 +488,49 @@ và không có hook `~/.claude`; trên máy của bác sĩ phần lớn sẽ xan
 
 ---
 
+### V-bis.7 — Một lỗi lộ ra từ chính bước kiểm, không phải từ việc đang làm
+
+Chạy `python -m compileall -q tools ops` như bước xác minh thường lệ thì **5 file không biên dịch
+được** trên Python 3.11 (6 chỗ):
+
+| File | Vì sao |
+|---|---|
+| `audit_ebm_system.py` · `fix_launchd_scheduled_jobs.py` · `kiem_do_tuoi_chung_cu.py` · `verify_mcp_live_sync.py` | Lồng nháy **kép** bên trong f-string nháy kép: `f"gui/{getattr(os, "getuid", …)}"` |
+| `kiem_phan_hang.py` | Dấu gạch chéo ngược trong phần biểu thức của f-string |
+
+Cả hai là cú pháp **PEP 701 — chỉ hợp lệ từ Python 3.12**, trong khi `CLAUDE.md` khai sàn
+**"Python 3.11+"**.
+
+**Vì sao nằm im được:** CI ghim đúng `python-version: "3.12"`, và hai máy của bác sĩ chạy 3.12.10
+và 3.14.6. **Không đâu chạm tới sàn đã khai.**
+
+🔴 **Hại thật, không lý thuyết.** Trên bất kỳ môi trường 3.11 nào — container phiên web, máy mới,
+đồng nghiệp cài bản khác — `kiem_do_tuoi_chung_cu.py` chết `SyntaxError`. Đó là **một trong 7 chốt
+tự chạy mỗi phiên**, và hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không một dòng
+báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính ngày 12/08 trên Windows (`os.getuid` không tồn tại
++ chỉ bắt `OSError` ⇒ chết im lặng).
+
+**Đã xử lý:** vá cả 6 chỗ (nhấc `uid` ra khỏi f-string — hợp 3.11 và dễ đọc hơn bản cũ) · đổi CI
+sang matrix `python-version: ["3.11", "3.12"]` để **sàn khai báo thật sự được kiểm** · khoá bằng
+**BH72**, có ghi rõ giới hạn: chốt dùng trình thông dịch đang chạy nên trên máy 3.12+ nó không
+thấy được cú pháp 3.12-only — guard thật cho sàn là lane CI 3.11.
+
+**Số đo:** bộ chốt bài học **39 → 35 mục đỏ**, **0 hồi quy** (kiểm bằng `git stash` rồi so danh
+sách mã đỏ trước/sau). Bốn chốt tự xanh lại:
+
+| Mã | Tên | Vì sao trước đó đỏ |
+|---|---|---|
+| **BH05** | Công cụ chung sống được trên Windows | Module không nạp nổi trên 3.11 |
+| BH19 | Độ tươi đọc KẾT QUẢ, không chỉ nhìn mtime | như trên |
+| BH20 | Tự khởi động cũng đọc KẾT QUẢ | như trên |
+| BH32 | Chỉ số gộp không được kết luận cho cả tập | như trên |
+
+Đáng chú ý nhất là **BH05** — bài học *"công cụ chung sống được trên Windows"* đang đỏ vì đúng cái
+file nó canh không biên dịch được. Chốt đã cố báo, nhưng nó báo bằng một dòng lẫn trong 39 dòng đỏ
+khác, nên không ai đọc ra. *Cùng bài học nền: phải hỏi "chốt đã chạy tới đâu", không chỉ đếm số lỗi.*
+
+---
+
 ## VI. BA CÂU HỎI ĐÓNG MỖI LẦN KHÁM + THƯỚC TỰ CHẤM
 
 > **Tôi đã nghe hết chưa?** · **Việc gì còn treo, ai đóng, hạn nào?** · **Bệnh nhân có biết khi nào
