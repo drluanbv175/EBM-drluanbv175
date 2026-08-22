@@ -13,7 +13,11 @@
 # =============================================================
 set -uo pipefail
 
-NHANH="${1:-claude/multi-platform-plugin-sync-cslwb0}"
+# KHÔNG ghi cứng tên nhánh. Script này ra đời lúc công cụ còn nằm ở nhánh phát
+# triển, nên bản đầu để nhánh đó làm mặc định — sau khi gộp vào master, chính cái
+# mặc định ấy sẽ KÉO BÁC SĨ RA KHỎI master mỗi lần bấm nút. Nay: ở nguyên nhánh
+# đang dùng, chỉ đổi khi được truyền tên nhánh tường minh.
+NHANH="${1:-}"
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
@@ -36,18 +40,32 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 2
 fi
 
-# ② Lấy nhánh có công cụ. Ghi rõ nhánh cũ để bác sĩ quay lại được.
+# ② Cập nhật nhánh ĐANG DÙNG. Chỉ đổi nhánh khi bác sĩ truyền tên tường minh —
+#    tự ý kéo cây làm việc sang nhánh khác là việc không ai muốn một cái nút làm.
 NHANH_CU=$(git rev-parse --abbrev-ref HEAD)
 echo ""
 echo "── Đang ở nhánh: $NHANH_CU"
-if [ "$NHANH_CU" != "$NHANH" ]; then
-  echo "── Lấy nhánh có công cụ: $NHANH"
+if [ -n "$NHANH" ] && [ "$NHANH_CU" != "$NHANH" ]; then
+  echo "── Chuyển sang nhánh được chỉ định: $NHANH"
   git fetch origin "$NHANH" || { echo "✗ Không lấy được nhánh (mạng?)."; exit 2; }
   git checkout "$NHANH" || { echo "✗ Không chuyển được nhánh."; exit 2; }
   echo "   (quay lại bằng: git checkout $NHANH_CU)"
 else
-  git pull --ff-only origin "$NHANH" || echo "   ⚠ không kéo được bản mới (mạng?) — dùng bản đang có"
+  git pull --ff-only origin "$NHANH_CU" || echo "   ⚠ không kéo được bản mới (mạng?) — dùng bản đang có"
 fi
+
+# ②-bis Công cụ phải CÓ THẬT trước khi chạy. Thiếu = nhánh này chưa có chúng;
+#       nói ra cách lấy thay vì để hai bước sau chết với thông điệp khó hiểu.
+for f in tools/dong_bo_hook_sessionstart.py tools/dong_bo_plugin_claude_codex.py; do
+  if [ ! -f "$f" ]; then
+    echo ""
+    echo "⛔ DỪNG — nhánh '$NHANH_CU' chưa có $f"
+    echo "   Nhánh này chưa chứa bộ công cụ đồng bộ. Lấy về bằng:"
+    echo "     git pull                       # nếu đã gộp vào nhánh chính"
+    echo "     bash sync/nap-ban-nguon.sh <tên-nhánh>   # nếu còn ở nhánh riêng"
+    exit 2
+  fi
+done
 
 # ③ Hai bước nạp. Mỗi bước tự nói ra khi thiếu nguyên liệu.
 ma=0
