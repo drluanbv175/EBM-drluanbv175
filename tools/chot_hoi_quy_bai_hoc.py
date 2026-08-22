@@ -2783,6 +2783,57 @@ def bh71_la_co_safety_net_khong_duoc_noi_ho() -> tuple[bool, str]:
                   f"tiêu-chí-không-đo-được · file thật {dp['co_nguon']}/{dp['tong']} có nguồn")
 
 
+
+def bh72_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao() -> tuple[bool, str]:
+    """22/08/2026 — `python -m compileall tools ops` trên Python 3.11 báo **5 file
+    KHÔNG biên dịch được**: `audit_ebm_system.py` · `fix_launchd_scheduled_jobs.py` ·
+    `kiem_do_tuoi_chung_cu.py` · `kiem_phan_hang.py` · `verify_mcp_live_sync.py`
+    (6 chỗ). Nguyên nhân: cú pháp PEP 701 — lồng nháy KÉP bên trong f-string nháy kép
+    (`f"gui/{getattr(os, "getuid", ...)}"`) và dấu gạch chéo ngược trong phần biểu
+    thức của f-string — **chỉ hợp lệ từ Python 3.12**, trong khi `CLAUDE.md` khai sàn
+    **3.11+**.
+
+    Vì sao nằm im lâu: CI ghim đúng `python-version: "3.12"`, và hai máy của bác sĩ
+    chạy 3.12.10 / 3.14.6 — nên không đâu chạm tới sàn đã khai. Hại thật: trên một
+    môi trường 3.11 (container phiên web, máy mới, đồng nghiệp cài bản khác),
+    `kiem_do_tuoi_chung_cu.py` — **một trong 7 chốt tự chạy mỗi phiên** — chết
+    SyntaxError, mà hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không
+    một dòng báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính hồi 12/08 trên Windows
+    (`os.getuid` không tồn tại + chỉ bắt OSError ⇒ chết im lặng).
+
+    ⚠️ GIỚI HẠN CÓ CHỦ Ý, đừng đọc quá: chốt này biên dịch bằng **trình thông dịch
+    đang chạy**. Trên máy 3.12+ nó KHÔNG thấy được cú pháp 3.12-only. Guard thật cho
+    sàn khai báo là **lane `python-version: "3.11"` trong `.github/workflows/
+    kiem-tinh-da-nen.yml`**, thêm cùng ngày. Chốt này bắt mọi lỗi cú pháp khác và bắt
+    đúng lớp trên khi phiên đang chạy ở sàn.
+    """
+    import sys
+
+    hong = []
+    for thu_muc in ("tools", "ops"):
+        goc = REPO / thu_muc
+        if not goc.is_dir():
+            continue
+        for f in sorted(goc.rglob("*.py")):
+            if "__pycache__" in f.parts:
+                continue
+            try:
+                compile(f.read_text(encoding="utf-8"), str(f), "exec")
+            except SyntaxError as e:
+                hong.append(f"{f.relative_to(REPO)}:{e.lineno} {e.msg}")
+            except (OSError, UnicodeDecodeError) as e:
+                hong.append(f"{f.relative_to(REPO)} đọc lỗi: {e}")
+
+    if hong:
+        return False, f"{len(hong)} file không biên dịch được: " + " · ".join(hong[:3])
+
+    v = f"{sys.version_info.major}.{sys.version_info.minor}"
+    o_san = v == "3.11"
+    return True, (f"mọi tools/ + ops/ biên dịch được trên Python {v}"
+                  + (" (ĐÚNG sàn khai báo)" if o_san
+                     else " — lưu ý: không phải sàn 3.11, lane CI 3.11 mới là guard thật"))
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -2855,6 +2906,7 @@ BAI_HOC = [
     ("BH69", "21/08", "Cờ TẮT plugin trùng bị app xoá phải được ghi lại (không xoá khoá)", bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc),
     ("BH70", "22/08", "Sổ việc treo: fail-closed khi thiếu hạn, không tự đóng việc", bh70_so_viec_treo_fail_closed_va_khong_tu_dong),
     ("BH71", "22/08", "Lá cờ safety-netting không được nói hộ (R9) + R3 bắt khối thiếu", bh71_la_co_safety_net_khong_duoc_noi_ho),
+    ("BH72", "22/08", "Mọi công cụ biên dịch được trên SÀN KHAI BÁO (3.11), không chỉ 3.12", bh72_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao),
 ]
 
 

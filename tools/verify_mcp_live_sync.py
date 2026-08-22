@@ -130,8 +130,9 @@ def _launchd_job_loaded(label: str) -> bool:
     import os
 
     try:
+        uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
         result = subprocess.run(
-            ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
+            ["launchctl", "print", f"gui/{uid}/{label}"],
             capture_output=True, text=True, check=False,
         )
     except OSError:

@@ -116,7 +116,8 @@ def launchd_runs(nhan: str) -> int | None:
     import os
 
     try:
-        r = subprocess.run(["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{nhan}"],
+        uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
+        r = subprocess.run(["launchctl", "print", f"gui/{uid}/{nhan}"],
                            capture_output=True, text=True, timeout=10)
         m = re.search(r"runs = (\d+)", r.stdout)
         return int(m.group(1)) if m else None

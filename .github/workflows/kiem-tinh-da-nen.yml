@@ -21,6 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        # 3.11 = SÀN KHAI BÁO trong CLAUDE.md; 3.12 = bản CI cũ + máy Windows thật.
+        # Trước 22/08/2026 CI chỉ chạy 3.12 nên 6 chỗ cú pháp PEP 701 (chỉ hợp lệ từ
+        # 3.12) nằm im trong 5 file — trong đó có `kiem_do_tuoi_chung_cu.py`, MỘT
+        # TRONG 7 CHỐT TỰ CHẠY MỖI PHIÊN. Trên môi trường 3.11 nó chết SyntaxError,
+        # mà hook SessionStart kết thúc bằng `; true` nên nuốt lỗi không một dòng báo
+        # — đúng lại họ lỗi mà chính file đó đã dính hồi 12/08 trên Windows.
+        python-version: ["3.11", "3.12"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -34,7 +41,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Compile toàn bộ tools/ + ops/ (bắt lỗi cú pháp đa nền)
         run: python -m compileall -q tools ops

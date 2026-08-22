@@ -28,8 +28,9 @@ def _loaded_working_directory(label: str) -> tuple[bool, str]:
     """Trả (đã_nạp, working_directory_hiện_tại_trong_bộ_nhớ). đã_nạp=False nếu job chưa
     từng được bootstrap (launchctl print không thấy)."""
     try:
+        uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
         p = subprocess.run(
-            ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
+            ["launchctl", "print", f"gui/{uid}/{label}"],
             capture_output=True, text=True, timeout=10,
         )
     except Exception as e:  # noqa: BLE001
@@ -79,10 +80,12 @@ def main() -> int:
 
         reason = "chưa từng nạp" if not loaded else f"đang chạy bản cũ ({loaded_wd!r})"
         print(f"🟡 {label}: {reason} — nạp lại từ {plist_path}…")
-        subprocess.run(["launchctl", "bootout", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
+        uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
+        subprocess.run(["launchctl", "bootout", f"gui/{uid}/{label}"],
                        capture_output=True, text=True, timeout=15)
         boot = subprocess.run(
-            ["launchctl", "bootstrap", f"gui/{getattr(os, "getuid", lambda: 0)()}", str(plist_path)],
+            uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
+            ["launchctl", "bootstrap", f"gui/{uid}", str(plist_path)],
             capture_output=True, text=True, timeout=15,
         )
         if boot.returncode != 0:

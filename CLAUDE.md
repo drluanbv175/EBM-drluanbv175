@@ -347,6 +347,23 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `from __future__ import annotations` — đúng lỗi từng làm crash `pytest` trên máy 3.9
   (2026-07-15, đã vá 2 file) — CI chạy `ruff check` mỗi lần push
   (`.github/workflows/offline-ci.yml`).
+  🔴 **SÀN 3.11 CHƯA BAO GIỜ ĐƯỢC KIỂM — vá 22/08/2026.** `python -m compileall tools ops`
+  trên Python **3.11** báo **5 file KHÔNG biên dịch được** (6 chỗ): `audit_ebm_system.py` ·
+  `fix_launchd_scheduled_jobs.py` · `kiem_do_tuoi_chung_cu.py` · `kiem_phan_hang.py` ·
+  `verify_mcp_live_sync.py`. Nguyên nhân là cú pháp **PEP 701** — lồng nháy KÉP trong f-string
+  nháy kép (`f"gui/{getattr(os, "getuid", ...)}"`) và dấu gạch chéo ngược trong phần biểu thức
+  f-string — **chỉ hợp lệ từ 3.12**, trong khi dòng ngay trên khai sàn **3.11+**.
+  **Vì sao nằm im:** CI ghim đúng `python-version: "3.12"` và hai máy chạy 3.12.10 / 3.14.6, nên
+  KHÔNG đâu chạm tới sàn đã khai. **Hại thật:** trên môi trường 3.11 bất kỳ (container phiên web,
+  máy mới, đồng nghiệp cài bản khác), `kiem_do_tuoi_chung_cu.py` — **một trong 7 chốt tự chạy mỗi
+  phiên** — chết `SyntaxError`, mà hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không
+  một dòng báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính 12/08 trên Windows.
+  **Đã vá cả 6 chỗ** (nhấc `uid` ra khỏi f-string — hợp 3.11 và dễ đọc hơn) + **thêm lane
+  `python-version: ["3.11", "3.12"]`** vào `.github/workflows/kiem-tinh-da-nen.yml` để sàn khai
+  báo thật sự được kiểm + khoá bằng **BH72**.
+  **Số đo:** bộ chốt bài học đi từ **39 → 35 mục đỏ**, 0 hồi quy. Bốn chốt tự xanh lại là
+  **BH05 (công cụ chung sống được trên Windows)** · BH19 · BH20 · BH32 — chúng đỏ chỉ vì module
+  không nạp nổi trên 3.11, tức bài học BH05 đang đỏ vì đúng file nó canh không biên dịch được.
 - Secrets ở `.env` — đặt **ngoài OneDrive** tại `~/.ebm-secrets/`, symlink về repo (không để key
   trần trên cloud). Không hardcode, không commit, không in ra.
 - Codex API cho mọi tác vụ AI (wrapper dùng chung)

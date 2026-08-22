@@ -140,7 +140,10 @@ def main() -> int:
         print(f"\n  ▸ {fn.replace('WebDashboard_EBM_', '')}")
         for iid, g, dec, gs, la in rows:
             print(f"      {iid:8} grade={g:5} dec={dec:9} [{_phan_nhom(gs)}]")
-            print(f"        gradeSource: {re.sub(r'\\s+', ' ', gs)[:120]}")
+            # Dấu gạch chéo ngược trong phần biểu thức của f-string cũng là PEP 701
+            # (3.12+). Nhấc ra biến để giữ đúng sàn 3.11 mà CLAUDE.md khai.
+            gs_gon = re.sub(r"\s+", " ", gs)[:120]
+            print(f"        gradeSource: {gs_gon}")
 
     print("\n" + "=" * 70)
     print("  CÁCH SỬA — hai đường, chọn theo SỰ THẬT của nguồn:")
