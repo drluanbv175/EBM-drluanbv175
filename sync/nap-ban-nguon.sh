@@ -53,7 +53,13 @@ fi
 ma=0
 echo ""
 echo "── ① Hook SessionStart của máy này → git"
-"$PY" tools/dong_bo_hook_sessionstart.py --xuat || ma=1
+# Hook có thể khai ở settings DỰ ÁN (<repo>/.claude/settings.json) hoặc settings
+# NGƯỜI DÙNG (~/.claude/settings.json) — máy nào để đâu chỉ máy đó biết. Thử cả
+# hai thay vì bắt bác sĩ đoán; file xuất ra tự ghi lại nó lấy từ phạm vi nào.
+if ! "$PY" tools/dong_bo_hook_sessionstart.py --xuat; then
+  echo "   → thử phạm vi NGƯỜI DÙNG (~/.claude/settings.json):"
+  "$PY" tools/dong_bo_hook_sessionstart.py --xuat --pham-vi nguoi-dung || ma=1
+fi
 
 echo ""
 echo "── ② Kho plugin của máy này → sổ khai chung"

@@ -61,6 +61,17 @@ python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 | Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | `.claude/settings.json` bị gitignore nên hook không tự đi |
 | Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
 
+> ⚠️ **Máy chưa có file `sync/nap-ban-nguon.command`?** Bình thường — nút nằm trong nhánh phát triển, mà máy đang ở `master`. Nút không tự lấy chính nó về được, nên lần đầu phải kéo nhánh bằng tay (dán trọn khối, dùng được cả hai kiểu đường dẫn OneDrive trên macOS):
+>
+> ```bash
+> cd ~/OneDrive/Claude\ AI 2>/dev/null || cd ~/Library/CloudStorage/OneDrive-Personal/Claude\ AI
+> git fetch origin claude/multi-platform-plugin-sync-cslwb0
+> git checkout claude/multi-platform-plugin-sync-cslwb0
+> bash sync/nap-ban-nguon.sh
+> ```
+>
+> Sau khi nhánh này được gộp vào `master` thì chỉ cần `git pull`.
+
 Máy ĐANG CHẠY ĐÚNG (thường là Mac) chạy trước **một lần** để nạp bản nguồn vào git — bấm đúp `sync/nap-ban-nguon.command`, hoặc:
 
 ```bash
