@@ -1128,6 +1128,69 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   sắt tĩnh mạch là kết cục GỘP nhập viện + tử vong tim mạch, KHÔNG phải "giảm nhập viện"). Chưa tự động hoá:
   bước tiếp là thêm đầu ra thứ 4 cho `make_derivatives.py` — chờ bác sĩ duyệt vì tool này có 3 bản đồng bộ.
 
+## 🩺 TẦNG CUỘC GẶP — hai công cụ đầu tiên phục vụ PHÒNG KHÁM, không phải kho chứng cứ (22/08/2026)
+
+**Vì sao có.** Báo cáo `audit/03-diem-nghen-thuc-hanh-ngoai-tru_2026-08-22.md` đo lại kho công cụ
+và tìm ra một mất cân đối chưa ai nói ra: **117 tool, trong đó 32 tool chỉ để hệ tự kiểm chính nó,
+và ĐÚNG 1 tool chạm vào khoảnh khắc trong phòng khám** (`tra_diem_kham.py`). Toàn bộ A1–A10 ·
+B1–B5 · C1–C5 phục vụ **chuỗi cung ứng chứng cứ**. Trong khi số đo y văn nói tổn hại ngoại trú tập
+trung ở chỗ khác: **78,9%** điểm gãy sai sót chẩn đoán nằm trong CUỘC GẶP (Singh 2013, PMID
+23440149) và **6,8–62%** kết quả xét nghiệm không được theo dõi tiếp (Callen 2012, PMID 22183961).
+*Cần bác sĩ kiểm chứng — số liệu Mỹ, cái chuyển được là VỊ TRÍ điểm gãy, không phải con số.*
+
+**Luận điểm nối hai tầng:** độ chính xác chẩn đoán rơi 55,3% → 5,8% giữa ca dễ và ca khó trong khi
+độ tự tin gần như không đổi 7,2 → 6,4/10 (Meyer 2013, PMID 23979070) ⇒ **niềm tin không đo được độ
+đúng, nên phòng vệ phải nằm NGOÀI đầu bác sĩ.** Đó chính là kỹ thuật hệ này đã thành thạo ở tầng
+chứng cứ (32 chốt tự kiểm) — hai công cụ dưới đây chỉ áp đúng kỹ thuật ấy cho tầng cuộc gặp.
+
+**(a) `python3 tools/so_viec_chua_dong.py` — SỔ VIỆC CHƯA ĐÓNG.** Canh mọi thứ còn treo sau khi
+bệnh nhân ra về (xét nghiệm chờ kết quả · hình ảnh · chuyển tuyến · tái khám · thử điều trị).
+`--them` mở việc (BẮT BUỘC có hạn: `--han` hoặc `--han-sau N`) · `--dong` · `--huy --ly-do`
+(huỷ không dấu vết là cách một việc biến mất mà không ai biết) · `--ds` · `--tuan` ·
+mặc định in việc quá hạn. **Mã thoát 0/1/2**; có `--im-khi-on` để nối làm **chốt thứ 8** của hook
+`SessionStart` (7 chốt hiện tại + cái này).
+**Ranh giới cứng:** chỉ ĐO và NHẮC — không suy diễn lâm sàng, **không tự đóng việc**, không ghi
+`decision`/`gradeLevel` (BH10, có test khoá). **Bộ chặn PII** ở `soi_pii()` cố ý chỉ bắt mẫu ĐỘ
+CHÍNH XÁC CAO (điện thoại · dãy 9/12 số · email · ngày sinh · từ khoá định danh) — **không dò tên
+riêng**, vì tiếng Việt viết hoa ở quá nhiều chỗ và chặn oan hàng loạt sẽ dạy người dùng bỏ qua cảnh
+báo (BH08); thông điệp lỗi nói thẳng giới hạn đó.
+**Sổ nằm NGOÀI git có chủ ý:** `state/viec-chua-dong.jsonl` rơi vào luật `/*` của `.gitignore` —
+đây là dữ liệu vận hành phòng khám, chỉ CÔNG CỤ mới cần version-control.
+Hồi quy: `python3 tools/test_so_viec_chua_dong.py` (30 test, đã kiểm bằng 2 phép đột biến —
+bỏ regex điện thoại ⇒ đỏ 2; cho bản ghi thiếu hạn rơi vào nhóm "ổn" ⇒ đỏ 1).
+
+**(b) `python3 tools/kiem_safety_net.py` — CHỐT SAFETY-NETTING.**
+🔴 **Lỗi đã tồn tại trong repo, nay mới đo được:** `CLINICAL_RUNTIME_FLAGS.json` khai
+`enforce_safety_net_templates: true`, nhưng `grep` toàn repo trả **0 file tham chiếu** tới
+`clinical_runtime/safety_net_templates.json`, và nội dung file đó là **ba mẫu tiếng Anh chung
+chung** ("Recommend follow-up within 4-6 weeks", "Severe shortness of breath") — không hội chứng,
+không tiêu chí đo được, không nguồn. Tức **một lá cờ tuyên bố có thi hành mà không có gì thi hành**
+— cùng HỌ với `return` sớm 12/08 (che 73 mục), BH27 (fail-open cổng A12) và BH61 (khoá lạ trong
+`DATA.summary`), nhưng lần này rơi vào **tầng an toàn cho bệnh nhân**, không phải tầng governance.
+**Đã dựng lại `safety_net_templates.json` v2.0.0** với schema 8 hội chứng và **hai trục TÁCH RIÊNG**:
+`co_do_cho_bac_si` (dấu hiệu bác sĩ tìm lúc khám) ≠ `dan_benh_nhan_quay_lai` (câu dặn mang về nhà)
+— gộp hai thứ này là biến thuật ngữ chuyên môn thành lời khuyên cho người bệnh.
+**9 luật của chốt:** R1 khung · R2 trạng thái khớp nội dung · R3 đủ hai trục · R4 nguồn phải truy
+được (PMID / DOI / guideline+năm — **văn xuôi bị từ chối**) · R5 ≥1 tiêu chí `do_duoc:true`
+("nếu nặng hơn" không phải tiêu chí) · R6 khai `co-nguon` mà còn `[CẦN BÁC SĨ ĐIỀN]` ⇒ lỗi ·
+R7 phải NÓI RA giới hạn nguyên văn của nguồn · R8 hạn rà soát 365 ngày ·
+**R9 — luật mạnh nhất: cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.** Thiếu file cờ ⇒ fail-closed
+(giả định cờ đang bật), không đọc thành "cờ đang tắt".
+**Độ phủ hiện tại, nói thẳng: 1/8 hội chứng có nguồn · 0/8 có lời dặn bệnh nhân.** Mục duy nhất đã
+điền là `dau-dau`, chép NGUYÊN 15 mục **SNNOOP10** (Do TP và cs., Neurology 2019;92(3):134-144 ·
+PMID **30587518** · doi:10.1212/WNL.0000000000006697) kèm **giới hạn nguyên văn của chính bài gốc**
+("một công cụ sàng lọc đã kiểm định VẪN CHƯA CÓ") — không được trình bày như thang đã kiểm định.
+7 hội chứng còn lại để `chua-dien` + `[CẦN BÁC SĨ ĐIỀN]`: **trạng thái TRUNG THỰC, không phải lỗi**
+— bịa ngưỡng cờ đỏ cho 7 hội chứng là đúng thứ doctrine cấm tuyệt đối.
+Hồi quy: `python3 tools/test_kiem_safety_net.py` (21 test, mutation-tested).
+🔎 **Chính test bắt được một fail-open trong bản đầu của chốt:** `hc.get("dan_benh_nhan_quay_lai", {})`
+— `{}` LÀ dict nên `isinstance` luôn đúng ⇒ hội chứng **thiếu hẳn** khối lời dặn vẫn lọt R3. Mặc định
+phải là `None`. Đúng bài học nền: luật CÓ MẶT nhưng không bao giờ chạy tới.
+
+**Hai việc CHƯA làm, có chủ ý** (nêu ở §V báo cáo, chờ bác sĩ quyết): ② ô "Nghị trình bệnh nhân"
+trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quyết định một trang" (đầu ra thứ 6 của
+`xuat_goi_cap_nhat.py`) đụng vào dây chuyền có 3 bản đồng bộ nên cần bác sĩ duyệt trước.
+
 ## Lệnh
 > Chạy trong `medical-ebm-automation/` (dự án sống), với venv `~/.ebm-venv` đã kích hoạt.
 - Cài: `pip install -r requirements.txt`
@@ -1136,6 +1199,10 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Test: `pytest` (khi venv đã có dev dependencies)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
 - Audit chung từ thư mục gốc: `python3 tools/audit_ebm_system.py`
+- **Sổ việc chưa đóng (tầng cuộc gặp):** `python3 tools/so_viec_chua_dong.py` — mặc định in việc
+  quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
+- **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
+  lời dặn (9 luật, R9 chặn cứng khi lá cờ `enforce_safety_net_templates` nói hộ).
 - **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
 - **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 tools/check_claude_codex_sync_health.py`.
 - **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
