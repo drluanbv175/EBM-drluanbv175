@@ -1649,6 +1649,41 @@ def bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc():
     return True, f"canary xanh {so}/{so} phép thử gài lỗi"
 
 
+def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
+    """22/08 — chuỗi cổng CHỨNG CỨ có canary đầu-cuối từ 14/08 (BH43), chuỗi 11 cổng
+    NGHIÊN CỨU G0–G10 thì KHÔNG có gì tương đương suốt từ đó.
+
+    Bất đối xứng này nguy hiểm vì chuỗi nghiên cứu đã mắc đúng họ lỗi mà canary sinh ra để
+    bắt: guardrail G3/G8 phần lớn là TAUTOLOGY (đếm chuỗi do chính hàm sinh artifact in
+    cứng, nên không nhánh nào khiến luật BLOCK được); SAP đã ký có thể không còn khớp
+    `G3_checkpoint.json` sau khi G3 chạy lại (phát hiện F5, audit 30/07); cổng A12 fail-open
+    kiểu BH27. Tất cả đều thuộc lớp «công cụ vẫn chạy, vẫn in kết quả hợp lệ, nhưng thứ cần
+    kiểm thì không bao giờ được kiểm».
+
+    `medical-ebm-automation/tools/thu_dau_cuoi_cong_nghien_cuu.py` gài 9 lỗi BIẾT TRƯỚC vào
+    một đề tài GIẢ (thư mục tạm, không đụng `exports/` thật, không ký, không gọi mạng) rồi
+    đòi các quality gate thật phải BLOCK đúng chỗ.
+
+    Kiểm HÀNH VI, không đếm chữ: canary phải tồn tại VÀ chạy xanh. Đã kiểm bằng đột biến
+    TRÊN ĐĨA — vô hiệu luật G4-AUTO-03 ⇒ canary đỏ đúng hai lỗi drift (7/9) và **mã thoát
+    đổi sang 1**; khôi phục thì xanh lại. Mã thoát đúng là điều kiện sống còn: một canary in
+    ĐỎ mà vẫn thoát 0 thì chính nó fail-open.
+    """
+    import subprocess
+
+    tp = REPO / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
+    if not tp.exists():
+        return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
+                       timeout=300, cwd=str(tp.parent.parent))
+    if r.returncode != 0:
+        dong = [d.strip() for d in (r.stdout or "").splitlines() if "LỌT" in d]
+        return False, ("canary cổng nghiên cứu ĐỎ — lỗi gài KHÔNG bị cổng nào bắt: "
+                       + (dong[0][:150] if dong else "xem thu_dau_cuoi_cong_nghien_cuu.py"))
+    so = (r.stdout or "").count("[✅ BẮT ĐƯỢC]")
+    return True, f"canary cổng nghiên cứu xanh {so}/{so} lỗi gài"
+
+
 def bh44_dieu_phoi_agent_phai_sach():
     """15/08 — tầng ĐIỀU PHỐI chưa từng được đo, và lần đo đầu ra 2 lớp việc thật.
 
@@ -2928,6 +2963,7 @@ BAI_HOC = [
     # đánh số lại thành 70/71 thay vì giành số, đúng thứ nó dạy.
     ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
     ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
+    ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
 ]
 
 
