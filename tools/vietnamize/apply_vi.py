@@ -261,16 +261,31 @@ def main() -> int:
     ap.add_argument("--restore", action="store_true", help="trả mô tả về tiếng Anh gốc")
     ap.add_argument("--report", action="store_true", help="chỉ báo cáo độ phủ")
     ap.add_argument("--tier", type=int, default=0, help="chỉ xử lý một tầng (1/2/3)")
+    ap.add_argument("--im-khi-on", action="store_true",
+                    help="chỉ KIỂM (ngầm --dry-run): im lặng khi mọi mô tả đã tiếng Việt, "
+                         "mã thoát 1 khi có mục bị bản cập nhật plugin trả về tiếng Anh")
     args = ap.parse_args()
+    if args.im_khi_on:
+        args.dry_run = True
 
     if not CATALOG.exists():
         print("✗ Chưa có catalog_raw.json — chạy extract_catalog.py trước.")
         return 1
-    if yaml is None and not args.report:
-        print("⚠ Máy chưa có PyYAML → dùng cách đọc frontmatter thủ công, có thể lưu\n"
-              "  SAI bản gốc với mô tả nhiều dòng. Nên chạy trong venv:\n"
-              "     source ~/.ebm-venv/bin/activate\n"
-              "  Sau khi chạy, kiểm lại bằng verify_vi.py.\n")
+    if yaml is None and args.im_khi_on:
+        # BH08: thiếu NGUYÊN LIỆU không phải bằng chứng có vấn đề. Parser thủ công
+        # đọc sai mô tả nhiều dòng ⇒ sẽ báo "lệch" giả. Im lặng, đừng kêu oan.
+        return 0
+    if yaml is None and not (args.report or args.dry_run):
+        # TỪ CHỐI GHI, không chỉ cảnh báo. Parser thủ công lưu SAI bản gốc với mô tả
+        # nhiều dòng, và bản gốc sai thì --restore không trả lại được nữa — đúng kiểu
+        # hỏng IM LẶNG đã xảy ra ngày 10/08/2026 với 6 file agent. Xem trước thì cho,
+        # ghi đè thì không.
+        print("✗ Máy chưa có PyYAML → TỪ CHỐI ghi (parser thủ công có thể lưu SAI bản\n"
+              "  gốc với mô tả nhiều dòng, và bản gốc sai thì --restore vô dụng).\n"
+              "  Chạy lại bằng venv đã có PyYAML:\n"
+              "     ~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py\n"
+              "  Chỉ muốn xem trước thì thêm --dry-run (không cần PyYAML).")
+        return 2
     items = json.loads(CATALOG.read_text(encoding="utf-8"))
     vi_map = json.loads(DICT.read_text(encoding="utf-8")) if DICT.exists() else {}
 
@@ -311,6 +326,16 @@ def main() -> int:
         counts[res] = counts.get(res, 0) + 1
         if res == "STALE":
             stale_ids.append(item["id"])
+
+    if args.im_khi_on:
+        n = counts.get("applied", 0)
+        if not n:
+            return 0
+        print(f"⚠ VIỆT HOÁ BỊ TRẢ VỀ TIẾNG ANH: {n} mô tả — dấu hiệu plugin vừa cập nhật\n"
+              "  (bản cập nhật tạo thư mục phiên bản MỚI với file gốc tiếng Anh; bản đã\n"
+              "   Việt hoá nằm lại thư mục cũ). Sửa:\n"
+              "     ~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py")
+        return 1
 
     mode = "XEM TRƯỚC (chưa ghi gì)" if args.dry_run else "ĐÃ GHI"
     print(f"=== {mode} ===")

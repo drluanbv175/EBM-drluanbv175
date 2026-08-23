@@ -2873,6 +2873,86 @@ def bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc() -> tuple[bool, str]:
     return True, "ghi false đúng bộ trùng, giữ nguyên bộ trong mốc"
 
 
+def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
+    """23/08/2026 — bác sĩ hỏi «sao Việt hoá plugin lại bị lỗi». Đo ra: 87 mô tả đã
+    trở lại tiếng Anh (claude-code-harness 5.9.0→5.11.0 làm mất 85, humanizer
+    2.11.1→2.11.2 mất 1, medsci thêm 1 skill mới chưa dịch).
+
+    Cơ chế: bản cập nhật plugin tạo thư mục PHIÊN BẢN MỚI với file gốc tiếng Anh; bản
+    đã Việt hoá nằm lại thư mục cũ thành mồ côi. `apply_vi.py` là thứ DUY NHẤT ghi
+    tiếng Việt vào file plugin — nhưng KHÔNG chỗ nào chạy lại nó. Mỗi lần cập nhật là
+    một lần mất tiếng Việt, IM LẶNG, chỉ lộ ra khi bác sĩ tình cờ gõ `/`.
+
+    Lớp phủ `vi_descriptions.json` (dựng 10/08) KHÔNG cứu được ca này: nó chỉ áp lúc
+    dựng DANH-MUC/TRA-CUU, còn menu gõ `/` đọc THẲNG file plugin. Đây đúng họ lỗi
+    BH41 — công cụ chạy đúng, có test, nhưng không ai gọi thì với dây chuyền hằng
+    ngày nó KHÔNG TỒN TẠI.
+
+    Chốt canh CẢ HAI vế, vì vế thứ hai mới là vế đã hỏng:
+      (a) apply_vi phát hiện được mô tả bị trả về tiếng Anh và vá lại đúng;
+      (b) tu_sua_chua CÓ GỌI apply_vi — chạy trên bảng VIEC_MAY đang sống.
+    """
+    import sys as _sys
+    import tempfile
+
+    # apply_vi.py import anh em cùng thư mục (`from extract_catalog import VN_CHARS`),
+    # nên nạp rời khỏi thư mục đó sẽ ModuleNotFoundError. Thêm đường dẫn trước khi nạp.
+    _vn = str(REPO / "tools" / "vietnamize")
+    _da_co = _vn in _sys.path
+    if not _da_co:
+        _sys.path.insert(0, _vn)
+    try:
+        m = _nap(REPO / "tools" / "vietnamize" / "apply_vi.py", "_bh73_apply_vi")
+    finally:
+        if not _da_co and _vn in _sys.path:
+            _sys.path.remove(_vn)
+
+    # --- (a) hành vi: bắt được drift, vá đúng, không vá lại lần hai ----------
+    with tempfile.TemporaryDirectory() as d:
+        sk = Path(d) / "SKILL.md"
+        sk.write_text('---\nname: thu-nghiem\n'
+                      'description: Draft a plan and validate it with the team.\n'
+                      '---\n\n# Thân file không được đổi\n', encoding="utf-8")
+        item = {"id": "skill:x:thu-nghiem", "name": "thu-nghiem", "path": str(sk)}
+        entry = {"vi": "[Lập trình] Lập KẾ HOẠCH rồi kiểm chứng cùng đội. "
+                       "Dùng khi mở một hạng mục mới. Từ khoá: plan."}
+
+        if m.process(item, entry, restore=False, dry=True) != "applied":
+            return False, "không phát hiện mô tả bị bản cập nhật trả về tiếng Anh"
+        if "Draft a plan" not in sk.read_text(encoding="utf-8"):
+            return False, "--dry-run đã GHI vào file"
+
+        if m.process(item, entry, restore=False, dry=False) != "applied":
+            return False, "không vá được mô tả"
+        t = sk.read_text(encoding="utf-8")
+        if entry["vi"] not in t:
+            return False, "vá xong nhưng mô tả tiếng Việt không có trong file"
+        if "# Thân file không được đổi" not in t:
+            return False, "đã làm hỏng thân file"
+        if m.process(item, entry, restore=False, dry=True) != "already":
+            return False, "vá xong vẫn báo còn lệch — sẽ vá lặp mỗi phiên"
+
+    # --- (b) nối dây: tu_sua_chua PHẢI gọi apply_vi -------------------------
+    ts = _nap(REPO / "tools" / "tu_sua_chua.py", "_bh73_tu_sua_chua")
+    goi = [v for v in ts.VIEC_MAY
+           if any("apply_vi" in str(x) for x in (v[1] or []) + (v[2] or []))]
+    if not goi:
+        return False, ("tu_sua_chua KHÔNG gọi apply_vi — công cụ có mà không ai chạy "
+                       "thì mỗi lần cập nhật plugin lại mất tiếng Việt (BH41)")
+    nhan, kiem, sua = goi[0]
+    if not kiem or "--im-khi-on" not in kiem:
+        return False, f"bước «{nhan}» thiếu --im-khi-on → sẽ ồn mỗi phiên"
+    if not sua:
+        return False, f"bước «{nhan}» chỉ báo mà không tự sửa"
+    if "yaml" not in Path(sua[0]).name.lower() and ".ebm-venv" not in sua[0]:
+        # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
+        # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
+        if getattr(ts, "_VENV", Path("/")).exists():
+            return False, "lệnh sửa không dùng trình thông dịch có PyYAML"
+
+    return True, f"apply_vi bắt+vá đúng; tu_sua_chua đã nối «{nhan}»"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -2964,6 +3044,7 @@ BAI_HOC = [
     ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
     ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
     ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
+    ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
 ]
 
 

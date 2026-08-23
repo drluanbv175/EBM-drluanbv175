@@ -869,7 +869,7 @@
 | `/medsci-project:model-scaffold` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Dựng sẵn kho mã huấn luyện PyTorch chạy được và tái lập được. Dùng khi bắt đầu huấn luyện mô hình. Từ khoá: training scaffold. |
 | `/medsci-project:model-sourcing` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thẩm định mô hình bên thứ ba mà nghiên cứu định dùng: kho mã nào, bản phát hành nào, giấy phép ra sao. Dùng trước khi dựa vào mô hình có sẵn. Từ khoá: model vetting. |
 | `/medsci-project:model-validation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định nghiên cứu KIỂM ĐỊNH LÂM SÀNG cho mô hình. Dùng khi muốn chứng minh mô hình dùng được trên bệnh nhân thật. Từ khoá: clinical validation. |
-| `/medsci-project:obsidian-paper-vault` | kỹ năng | Mac | Turn a folder of research PDFs into an Obsidian knowledge vault — consistently formatted literature notes with frontmatter, PDF embed links, and cross-referenced atomic concept notes. Use whenever the user wants PDFs converted to Obsidia… |
+| `/medsci-project:obsidian-paper-vault` | kỹ năng | Mac | [MedSci] Biến thư mục PDF nghiên cứu thành kho tri thức Obsidian: ghi chú y văn cùng khuôn có frontmatter, link nhúng PDF, ghi chú khái niệm liên kết chéo. Dùng khi cần chuyển loạt PDF thành ghi chú Obsidian, tóm nhiều bài theo một mẫu, … |
 | `/medsci-project:orchestrate` | kỹ năng | cả 2 máy | [MedSci] Điều phối chung của bộ MedSci — nhận yêu cầu mơ hồ rồi chuyển tới đúng skill. Dùng khi chưa biết nên gọi skill nào trong bộ này. Từ khoá: medsci router. |
 | `/medsci-project:peer-review` | kỹ năng | cả 2 máy | [MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer rev… |
 | `/medsci-project:polish-language` | kỹ năng | cả 2 máy | [MedSci] Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ toàn bài. Dùng ở khâu cuối trước khi nộp tạp chí quốc tế. Từ khoá: ESL polish. |
@@ -1221,7 +1221,7 @@
 |---|---|---|---|
 | `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
 | `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
-| `agent test-wiring-auditor` | agent | Mac | 変更差分に対してテスト網が追随しているかを fresh-context で監査する read-only auditor |
+| `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
 | `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
 | `/handoff-to-claude` | lệnh | Mac | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
 | `/plan-with-cc` | lệnh | Mac | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
@@ -1236,7 +1236,7 @@
 | `/claude-code-harness:cursor-do` | kỹ năng | Mac | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
 | `/claude-code-harness:cursor-review` | kỹ năng | Mac | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
 | `/claude-code-harness:cursor-setup` | kỹ năng | Mac | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
-| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | Extract recurring failure patterns from breezing orchestration logs and Judgment Ledger, emit failure-rule.v1 proposals with confidence scores. SSOT promotion to patterns.md or decisions.md is proposal-only — human-approval-required. Use… |
+| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
 | `/claude-code-harness:harness-accept` | kỹ năng | Mac | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
 | `/claude-code-harness:harness-loop` | kỹ năng | Mac | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
 | `/claude-code-harness:harness-plan` | kỹ năng | Mac | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
@@ -1247,7 +1247,7 @@
 | `/claude-code-harness:harness-setup` | kỹ năng | Mac | [Lập trình] Khởi tạo dự án, cài công cụ, cấu hình agent, dựng bộ nhớ và đồng bộ bản sao skill. Từ khoá: harness setup, init. |
 | `/claude-code-harness:harness-sync` | kỹ năng | Mac | [Lập trình] Đối chiếu Plans.md với mã thật, phát hiện lệch, cập nhật mốc và rút kinh nghiệm. Dùng khi hỏi 'đang làm tới đâu'. Từ khoá: harness sync, drift. |
 | `/claude-code-harness:harness-work` | kỹ năng | Mac | [Lập trình] THỰC THI các việc trong Plans.md, từ một việc lẻ tới chạy song song cả nhóm. Từ khoá: harness work, implement. |
-| `/claude-code-harness:japanese-writing-drafter` | kỹ năng | Mac | Detect when the operator corrects the agent's Japanese phrasing mid-conversation (rewrites a sentence, calls out a style problem, says 'this wording is bad, say it like X instead') and draft a pending writing-rule proposal into ~/.claude… |
+| `/claude-code-harness:japanese-writing-drafter` | kỹ năng | Mac | [Lập trình] Bắt lúc người dùng sửa cách diễn đạt TIẾNG NHẬT của agent, rồi ghi đề xuất luật văn phong vào proposals.jsonl chờ người duyệt — nơi DUY NHẤT ghi file đó, không đụng rules.jsonl. Dùng khi người dùng nói 表現を直して, 文体を直して, その言い方はN… |
 | `/claude-code-harness:maintenance` | kỹ năng | Mac | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
 | `/claude-code-harness:memory` | kỹ năng | Mac | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
 

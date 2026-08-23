@@ -220,6 +220,25 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   toàn bộ 588 mô tả aipoch trong bản chụp về tiếng Anh rồi dựng lại → trang vẫn ra **604/604
   tiếng Việt**. `apply_vi.py` từ nay là **tuỳ chọn**, chỉ để menu gõ `/` trong Claude Code hiện
   tiếng Việt; bỏ qua nó không mất gì ở danh mục/trang tra.
+  ⛔ **ĐÍNH CHÍNH 23/08/2026 — vế «tuỳ chọn… bỏ qua nó không mất gì» đúng chữ nhưng SAI trọng
+  lượng, và chính nó đã tạo ra lỗ hổng.** Lớp phủ cứu DANH-MUC/TRA-CUU thật, nhưng **menu gõ `/`
+  đọc THẲNG file plugin** — mà đó mới là nơi bác sĩ làm việc hằng ngày. Vì tài liệu xếp `apply_vi`
+  vào loại «tuỳ chọn», **không chỗ nào chạy lại nó**: đã kiểm bằng grep trên `tu_sua_chua.py`,
+  `tu_khoi_dong.py`, `dong_bo_tat_ca.py` — 0 lượt gọi. Nên **mỗi lần plugin cập nhật là một lần
+  mất tiếng Việt, im lặng.** Đo ngày 23/08 khi bác sĩ hỏi «sao Việt hoá lại bị lỗi»: **87 mô tả đã
+  trở lại tiếng Anh** — `claude-code-harness` 5.9.0→5.11.0 mất **85** (68 skill + 10 lệnh + 7
+  agent), `humanizer` 2.11.1→2.11.2 mất 1, `medsci-project` thêm 1 skill mới chưa dịch.
+  **Cơ chế:** bản cập nhật tạo thư mục PHIÊN BẢN MỚI với file gốc tiếng Anh; bản đã Việt hoá nằm
+  lại thư mục cũ thành mồ côi (thấy rõ: `5.9.0` có 65 mục tiếng Việt, `5.11.0` có 0/68).
+  **Đã vá:** `apply_vi.py --im-khi-on` (kiểm ngầm dry-run, im khi ổn, mã thoát 1 khi có mục bị trả
+  về tiếng Anh) và **đã nối vào `tu_sua_chua.py`** — chốt tự chạy mỗi phiên nay tự phát hiện và tự
+  vá. Khoá bằng **BH73**, đã kiểm bằng đột biến (gỡ bước khỏi `tu_sua_chua` ⇒ chốt đỏ đúng).
+  ⚠️ **`apply_vi.py` nay TỪ CHỐI GHI khi máy thiếu PyYAML** (mã thoát 2) thay vì cảnh báo rồi vẫn
+  ghi bằng parser thủ công: parser đó lưu SAI bản gốc với mô tả nhiều dòng, mà bản gốc sai thì
+  `--restore` vô dụng — đúng kiểu hỏng im lặng đã xảy ra 10/08 với 6 file agent. Luôn chạy bằng
+  `~/.ebm-venv/bin/python`; `--dry-run`/`--report` vẫn chạy được không cần PyYAML.
+  > **Luật nền:** một công cụ KHÔNG AI GỌI thì với dây chuyền hằng ngày nó **không tồn tại** —
+  > cùng bài học BH41. Xếp một việc vào loại «tuỳ chọn» chính là cách nó lặng lẽ không bao giờ chạy.
 - **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
   ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
   kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là

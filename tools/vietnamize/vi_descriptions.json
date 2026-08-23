@@ -4999,5 +4999,11 @@
   },
   "skill:watermarks-remover:clean-user-facing-text": {
     "vi": "[Dọn siêu dữ liệu] Soi ký tự Unicode vô hình gây lỗi hiển thị/tìm kiếm trong văn bản sắp đưa người đọc, rồi chuẩn hoá mà GIỮ NGUYÊN nghĩa. Dùng khi tờ dặn người bệnh hoặc tài liệu dán từ nhiều nguồn hiện chữ lạ. ⚠️ KHÔNG dùng để né kiểm tra liêm chính học thuật. Từ khoá: ký tự vô hình, lỗi hiển thị chữ, chuẩn hoá văn bản."
+  },
+  "skill:claude-code-harness:japanese-writing-drafter": {
+    "vi": "[Lập trình] Bắt lúc người dùng sửa cách diễn đạt TIẾNG NHẬT của agent, rồi ghi đề xuất luật văn phong vào proposals.jsonl chờ người duyệt — nơi DUY NHẤT ghi file đó, không đụng rules.jsonl. Dùng khi người dùng nói 表現を直して, 文体を直して, その言い方はNG. KHÔNG dùng để duyệt/liệt kê đề xuất hay quét văn bản theo từ điển sẵn có — đã có script riêng. Từ khoá: writing-rule proposal, writing lint."
+  },
+  "skill:medsci-project:obsidian-paper-vault": {
+    "vi": "[MedSci] Biến thư mục PDF nghiên cứu thành kho tri thức Obsidian: ghi chú y văn cùng khuôn có frontmatter, link nhúng PDF, ghi chú khái niệm liên kết chéo. Dùng khi cần chuyển loạt PDF thành ghi chú Obsidian, tóm nhiều bài theo một mẫu, dựng «bộ não thứ hai», hoặc rút khái niệm xuyên ghi chú — kể cả khi không nhắc chữ Obsidian. Dùng chung kho với /medsci-project:lit-sync. Từ khoá: Obsidian vault."
   }
 }
