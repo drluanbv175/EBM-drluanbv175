@@ -20,7 +20,7 @@
       },
       "claude-code-harness@claude-code-harness-marketplace": {
         "so_skill": 70,
-        "phien_ban": "5.9.0"
+        "phien_ban": "5.11.0"
       },
       "medsci-project@medsci-skills": {
         "so_skill": 60,

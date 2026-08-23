@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1162 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1161 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1147 mục (quét ngày 2026-08-21)
+> - **Mac**: 1146 mục (quét ngày 2026-08-23)
 > - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 894 mục
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1064 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1063 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -1068,7 +1068,7 @@
 | `agent trich-xuat-y-van` | agent | cả 2 máy | Trích xuất và tóm tắt có cấu trúc MỘT bài báo/nghiên cứu thành bảng dữ liệu chuẩn (PICO, thiết kế, cỡ mẫu, kết cục, hiệu ứng + CI, nguy cơ sai lệch). Dùng khi cần đọc nhanh một bài, dựng bảng trích xuất cho tổng quan hệ thống, hoặc chuẩn… |
 | `agent viet-ban-thao` | agent | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy… |
 
-### user-skills  (41)
+### user-skills  (40)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -1095,7 +1095,6 @@
 | `/nguoi-cao-tuoi-da-benh-da-thuoc` | kỹ năng | cả 2 máy | Chăm sóc toàn diện người cao tuổi suy yếu, đa bệnh lý và đa thuốc theo hướng an toàn thuốc, giảm hại và tránh điều trị quá mức. Dùng skill này bất cứ khi nào có bệnh nhân lớn tuổi kèm nhiều thuốc hoặc nhiều bệnh đồng mắc — rà soát và đối… |
 | `/paper-lookup` | kỹ năng | cả 2 máy | Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC (toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy abstract/toàn văn,… |
 | `/peer-review` | kỹ năng | cả 2 máy | Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp. |
-| `/plugin-router-chatgpt` | kỹ năng | Mac | Định tuyến tác vụ tới đúng skill trong 9 plugin người dùng đã chuyển từ Claude sang Codex/ChatGPT: codex, humanizer, academic-research-skills, openmed-skills, claude-code-harness, medsci-project, aipoch-medical-research, meta-pipe và pub… |
 | `/pyhealth` | kỹ năng | cả 2 máy | Xây dựng pipeline học máy lâm sàng bằng thư viện PyHealth: tải dữ liệu EHR (MIMIC-III/IV, eICU, OMOP), định nghĩa tác vụ (tử vong, tái nhập viện, gợi ý thuốc, giai đoạn ngủ, mã hóa ICD), huấn luyện mô hình (Transformer, RETAIN, GAMENet, … |
 | `/quan-ly-cap-nhat-ebm` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
 | `/research-lookup` | kỹ năng | cả 2 máy | Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả phí (parallel.a… |
@@ -1222,7 +1221,7 @@
 |---|---|---|---|
 | `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
 | `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
-| `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
+| `agent test-wiring-auditor` | agent | Mac | 変更差分に対してテスト網が追随しているかを fresh-context で監査する read-only auditor |
 | `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
 | `/handoff-to-claude` | lệnh | Mac | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
 | `/plan-with-cc` | lệnh | Mac | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
@@ -1237,7 +1236,7 @@
 | `/claude-code-harness:cursor-do` | kỹ năng | Mac | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
 | `/claude-code-harness:cursor-review` | kỹ năng | Mac | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
 | `/claude-code-harness:cursor-setup` | kỹ năng | Mac | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
-| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
+| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | Extract recurring failure patterns from breezing orchestration logs and Judgment Ledger, emit failure-rule.v1 proposals with confidence scores. SSOT promotion to patterns.md or decisions.md is proposal-only — human-approval-required. Use… |
 | `/claude-code-harness:harness-accept` | kỹ năng | Mac | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
 | `/claude-code-harness:harness-loop` | kỹ năng | Mac | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
 | `/claude-code-harness:harness-plan` | kỹ năng | Mac | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
