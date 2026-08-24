@@ -1493,4 +1493,53 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `tests/test_g9_reviewer_ref_cross_check_20260730.py` +
   `tests/test_g9_auto02_stale_cache_and_r5_20260730.py` (mutation-tested).
 
+## 🔴 AUDIT ĐA-AGENT G0-G10 24/08/2026 — G8 KHÔNG có chốt nào, G2/G4 chỉ kiểm SAU khi ký (đã vá)
+
+**Đính chính:** các mục phía trên chỉ liệt kê G0/G3/G4/G8/G9 có `gN_quality_gate.py` riêng —
+tại thời điểm viết những mục đó đúng, nhưng nay **CẢ 11 CỔNG G0→G10 đều đã có**
+`tools/gN_quality_gate.py` riêng (`ls tools/g*_quality_gate.py` xác nhận g0…g10, mỗi file
+294–1674 dòng, nối đúng dây vào `run_gN_auto.py`/`approve_gate.py` tương ứng). Không cần lập
+kế hoạch "xây quality gate cho G1/G2/G5/G6/G7/G10" trong tương lai vì tưởng chưa có.
+
+**Phát hiện nghiêm trọng nhất, chưa từng được ghi trước đây:** lớp **đo lường** (11 file trên,
+logic đúng, có test) tách biệt khỏi lớp **thực thi chặn chữ ký** trong `tools/approve_gate.py`
+— và trước 24/08, lớp thực thi chỉ thật sự dùng lớp đo lường cho 3/6 cổng cứng canonical
+(G5, G9, G10). Cụ thể:
+- **G8 (bình duyệt độc lập) — KHÔNG có bất kỳ chốt chất lượng nào trước khi ký.**
+  `g8_quality_gate.py` tồn tại, đúng logic, có test riêng — nhưng `approve_gate.py` chưa từng
+  `import` nó. Ai giữ khóa vai trò `PHAN_BIEN`/`PEER_REVIEWER` có thể ký "đã bình duyệt độc lập"
+  mà không cần bản nhận xét phản biện thật tồn tại, không cần cổng kiểm rút bài A12 từng chạy,
+  kể cả tự duyệt cho chính đề tài mình đứng tên thống kê viên (G4) — không gì chặn lại.
+- **G2, G4 — tiêu chí đầy đủ (24 mục WHO TRDS cho G2; 12 tiêu chí gồm đối chiếu SAP-đã-ký với
+  G3_checkpoint.json HIỆN TẠI cho G4) chỉ chạy SAU KHI đã ghi ledger**, thuần advisory — mâu
+  thuẫn trực tiếp với dòng "G2 phải chặn khi thiếu mục 13/14/19/20" đã ghi ở mục Project Context.
+- Canary BH72 (`thu_dau_cuoi_cong_nghien_cuu.py`) tưởng đã phủ toàn chuỗi G0-G10 nhưng thực ra
+  chỉ gài lỗi cho G3/G4/G8 và gọi thẳng hàm Python, bỏ qua `approve_gate.py` — nên không bắt
+  được chính hai lỗ hổng trên. Việc mở rộng canary để gọi qua đúng CLI ký thật là việc CÒN LẠI
+  (Plans.md medical-ebm-automation Sprint 9, task 9.5), chưa làm.
+
+**Đã vá (Sprint 9, task 9.1):** nối `G8Q/G2Q/G4Q.evaluate_study(write=False)` vào ĐÚNG TRƯỚC
+bước ghi ledger trong `approve_gate.py`, khuôn theo G5/G9/G10 đã có sẵn — G8 chấp nhận
+status∈{PENDING_REAL_REVIEW_SIGNATURE, PASS_G8_REVIEW_RECORDED} (STATUS_REVIEWED không bao giờ
+đạt được trước khi ký vì G8-HUMAN-03/04 tự đọc ledger nên luôn "REVIEW" khi chưa có gì để đối
+chiếu — đây là thiết kế đúng, không phải bug); G4 chấp nhận đúng STATUS_READY
+("READY_FOR_SIGNATURE"); G2 từ chối khi BLOCKED/DRAFT. Kiểm bằng **đột biến thật**: tắt từng
+chốt (comment tạm điều kiện bằng `False and ...`), chạy lại test tương ứng — cả 3 nhóm đều đỏ
+đúng chỗ, khôi phục lại xanh. Test hồi quy:
+`pytest tests/test_approve_gate_quality_gate_wiring_20260824.py` (8 test, mutation-tested) +
+2 test cũ trong `test_approval_ledger.py` được sửa lại dùng SAP thật sinh qua `run_g4_auto.py`
+(SAP tối giản viết tay không còn đạt STATUS_READY sau bản vá này — đúng ý, không phải hồi quy).
+Đo trước/sau: toàn repo `pytest` 3136→3144 passed, 0 fail.
+
+**Bốn trục audit còn lại (cùng đợt 24/08, mỗi trục một agent độc lập) đều SẠCH ở lõi, không
+cần vá nội dung/an toàn:** cổng tra cứu chứng cứ (MCP PubMed/ClinicalTrials.gov/pubmed-search
+đều trả dữ liệu thật, chuỗi kiểm rút bài 3 tầng xác nhận đúng qua PMID Wakefield) · nguồn
+chứng cứ mới nhất (0/63 chủ đề quá ngưỡng đỏ 120 ngày, watchlist 4 nguồn thẩm quyền
+Cochrane/NICE/USPSTF/WHO đã thật sự active — đính chính ghi chú cũ nói "CHANGELOG khai đã
+thêm nhưng bản sống KHÔNG có") · mẫu cập nhật chứng cứ (5 dashboard mẫu PASS
+`verify_dashboard.py --online --strict-sources`, template↔skill_assets khớp tuyệt đối; chỉ có
+66/67 dashboard lệch VỎ CSS/HTML — không phải nội dung — cần chạy lại `reskin_dashboards.py`)
+· tầng agent doctrine (74/74 bài học BH01-74 không tái phát, 0 tham chiếu hỏng, mọi phân công
+công cụ khớp đúng bảng phân công đã ghi ở các mục trên).
+
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
