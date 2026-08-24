@@ -231,7 +231,16 @@ def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool,
     # được dịch gọn) vừa nằm trong hub sync/skills của bác sĩ (mô tả tiếng Việt tự
     # viết, dài và kỹ hơn); khớp theo tên sẽ lấy bản gọn đè lên bản kỹ. Đã xảy ra
     # 03/08/2026 với hypothesis-generation, phát hiện khi soi diff Git.
-    if qua_ten and VN_CHARS.search(cur_desc) and read_field(block, "description-src") is None:
+    # GIỮ mô tả tiếng Việt DO NGƯỜI VIẾT — không đè bằng bản dịch trong từ điển.
+    # `description-src` là dấu vết của CHÍNH apply_vi; vắng nó mà nội dung đã là
+    # tiếng Việt nghĩa là file vốn được viết bằng tiếng Việt, không phải do đây dịch.
+    # 24/08/2026 — TRƯỚC ĐÂY luật này chỉ chạy khi bản dịch khớp qua khoá `name:`,
+    # nên đường khoá `id` vẫn đè được. Vô hại chừng nào catalog chỉ quét file plugin
+    # (vốn tiếng Anh), nhưng ngay khi thêm Cowork — nơi chứa CHÍNH skill của bác sĩ —
+    # nó đã đè mất mô tả tự viết của 3 skill (clinical-evidence-rag, ebm-master,
+    # literature-review). Bỏ điều kiện `qua_ten`: nguồn gốc của khoá không đổi được
+    # sự thật rằng mô tả đang có là do người viết.
+    if VN_CHARS.search(cur_desc) and read_field(block, "description-src") is None:
         return "giữ-bản-việt-tự-viết"
 
     original_en = saved_en if saved_en is not None else cur_desc
@@ -261,6 +270,9 @@ def main() -> int:
     ap.add_argument("--restore", action="store_true", help="trả mô tả về tiếng Anh gốc")
     ap.add_argument("--report", action="store_true", help="chỉ báo cáo độ phủ")
     ap.add_argument("--tier", type=int, default=0, help="chỉ xử lý một tầng (1/2/3)")
+    ap.add_argument("--tu-quet", action="store_true",
+                    help="quét lại catalog TRƯỚC khi làm việc — bắt buộc sau khi plugin "
+                         "cập nhật, vì catalog cũ còn trỏ vào thư mục phiên bản CŨ")
     ap.add_argument("--im-khi-on", action="store_true",
                     help="chỉ KIỂM (ngầm --dry-run): im lặng khi mọi mô tả đã tiếng Việt, "
                          "mã thoát 1 khi có mục bị bản cập nhật plugin trả về tiếng Anh")
@@ -268,6 +280,21 @@ def main() -> int:
     if args.im_khi_on:
         args.dry_run = True
 
+    if args.tu_quet:
+        # 24/08/2026 — VÌ SAO BẮT BUỘC. `catalog_raw.json` ghi ĐƯỜNG DẪN TUYỆT ĐỐI có
+        # kèm số phiên bản (…/claude-code-harness/5.11.0/…). Plugin cập nhật xong thì
+        # thư mục ĐANG DÙNG đổi sang 5.12.0, còn catalog vẫn trỏ 5.11.0 — nơi tiếng
+        # Việt vẫn còn nguyên. Chốt --im-khi-on đọc catalog cũ nên báo "sạch", trong
+        # khi thư mục thật đang 100% tiếng Anh. Đo ngày 24/08: chốt báo sạch trong lúc
+        # 147 mô tả (harness 85 + academic-research-skills 62) đã về tiếng Anh.
+        # Cùng họ lỗi với `return` sớm 12/08: luật có chạy, chỉ là chạy trên dữ liệu
+        # không còn đúng. Quét lại tốn ~1,3 giây — rẻ hơn nhiều so với hỏng im lặng.
+        import subprocess
+        r = subprocess.run([_sys.executable, str(HERE / "extract_catalog.py")],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            print("✗ Quét lại catalog thất bại:", (r.stderr or r.stdout)[-400:])
+            return 2
     if not CATALOG.exists():
         print("✗ Chưa có catalog_raw.json — chạy extract_catalog.py trước.")
         return 1
@@ -334,7 +361,7 @@ def main() -> int:
         print(f"⚠ VIỆT HOÁ BỊ TRẢ VỀ TIẾNG ANH: {n} mô tả — dấu hiệu plugin vừa cập nhật\n"
               "  (bản cập nhật tạo thư mục phiên bản MỚI với file gốc tiếng Anh; bản đã\n"
               "   Việt hoá nằm lại thư mục cũ). Sửa:\n"
-              "     ~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py")
+              "     ~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py --tu-quet")
         return 1
 
     mode = "XEM TRƯỚC (chưa ghi gì)" if args.dry_run else "ĐÃ GHI"

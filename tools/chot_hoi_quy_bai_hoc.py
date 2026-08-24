@@ -2953,6 +2953,86 @@ def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
     return True, f"apply_vi bắt+vá đúng; tu_sua_chua đã nối «{nhan}»"
 
 
+def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
+    """24/08/2026 — BH73 nối dây xong, nhưng chốt vẫn báo SẠCH trong khi 147 mô tả đã
+    trở về tiếng Anh. Ba lỗi khác nhau, cùng một họ «đo đúng, nhưng đo nhầm chỗ»:
+
+    (a) SAI THƯ MỤC. `extract_catalog` quét `~/.claude-science/orgs/*/skills/` rồi gán
+        nhãn `/anthropic-skills:<tên>`, nhưng lệnh đó THẬT SỰ chạy bản nằm ở
+        `local-agent-mode-sessions/skills-plugin/`. Đo được: `.claude-science/learn`
+        tiếng Việt trong khi bản Cowork — bản bác sĩ thấy khi gõ `/` — vẫn tiếng Anh.
+        Mọi công cụ báo «đã Việt hoá 100%», còn bác sĩ thì đang đọc tiếng Anh.
+
+    (b) CATALOG LẠC HẬU. `catalog_raw.json` ghi đường dẫn TUYỆT ĐỐI kèm số phiên bản
+        (…/claude-code-harness/5.11.0/…). Plugin lên 5.12.0 thì catalog vẫn trỏ 5.11.0
+        — nơi tiếng Việt còn nguyên — nên chốt đọc catalog cũ báo «sạch» trong khi thư
+        mục đang phục vụ 100% tiếng Anh. Vá bằng `--tu-quet` (quét lại, ~1,3 giây).
+
+    (c) VÁ LÀM HỎNG THỨ NÓ PHẢI GIỮ. Thêm Cowork vào catalog kéo CHÍNH skill của bác sĩ
+        vào tầm ghi của apply_vi. Rào «giữ-bản-việt-tự-viết» khi đó chỉ chạy cho khoá
+        `name:`, nên đường khoá `id` vẫn đè — mất mô tả tự viết của 3 skill
+        (clinical-evidence-rag, ebm-master, literature-review). Nguồn gốc của khoá
+        không đổi được sự thật rằng mô tả đang có là do người viết.
+    """
+    import re as _re
+    import sys as _sys
+    import tempfile
+
+    src = (REPO / "tools" / "vietnamize" / "extract_catalog.py").read_text(encoding="utf-8")
+    if "skills-plugin/*/*/skills/*/SKILL.md" not in src:
+        return False, ("extract_catalog KHÔNG quét mặt Cowork (skills-plugin) — đó mới là "
+                       "nơi lệnh /anthropic-skills:* chạy; chỉ quét .claude-science thì "
+                       "công cụ báo Việt hoá xong trong lúc bác sĩ vẫn đọc tiếng Anh")
+
+    ts = _nap(REPO / "tools" / "tu_sua_chua.py", "_bh74_tu_sua_chua")
+    viet = [v for v in ts.VIEC_MAY
+            if any("apply_vi" in str(x) for x in (v[1] or []) + (v[2] or []))]
+    if not viet:
+        return False, "tu_sua_chua không còn gọi apply_vi (xem BH73)"
+    nhan, kiem, sua = viet[0]
+    for ten, lenh in (("lệnh kiểm", kiem), ("lệnh sửa", sua)):
+        if not lenh or "--tu-quet" not in lenh:
+            return False, (f"{ten} của bước «{nhan}» thiếu --tu-quet ⇒ đọc catalog cũ, "
+                           "sẽ báo sạch sau mỗi lần plugin đổi phiên bản")
+
+    ap = (REPO / "tools" / "vietnamize" / "apply_vi.py").read_text(encoding="utf-8")
+    dau = ap.find("giữ-bản-việt-tự-viết")
+    dieu_kien = ap[max(0, dau - 400):dau]
+    if "VN_CHARS.search(cur_desc)" not in dieu_kien:
+        return False, "không tìm thấy rào giữ-bản-việt-tự-viết trong apply_vi"
+    dong_if = dieu_kien[dieu_kien.rfind("if "):]
+    if "qua_ten" in dong_if:
+        return False, ("rào giữ-bản-việt-tự-viết vẫn phụ thuộc `qua_ten` ⇒ bản dịch khớp "
+                       "qua khoá `id` sẽ đè mô tả bác sĩ tự viết")
+
+    _vn = str(REPO / "tools" / "vietnamize")
+    _co = _vn in _sys.path
+    if not _co:
+        _sys.path.insert(0, _vn)
+    try:
+        m2 = _nap(REPO / "tools" / "vietnamize" / "apply_vi.py", "_bh74_apply_vi")
+    finally:
+        if not _co and _vn in _sys.path:
+            _sys.path.remove(_vn)
+
+    with tempfile.TemporaryDirectory() as d:
+        sk = Path(d) / "SKILL.md"
+        tu_viet = "Mô tả do bác sĩ tự viết bằng tiếng Việt, không phải bản dịch máy."
+        sk.write_text("---" + chr(10) + "name: cua-bac-si" + chr(10)
+                      + 'description: "' + tu_viet + '"' + chr(10) + "---" + chr(10)
+                      + chr(10) + "# than file" + chr(10), encoding="utf-8")
+        item = {"id": "skill:anthropic-skills:cua-bac-si", "name": "cua-bac-si",
+                "path": str(sk)}
+        kq = m2.process(item, {"vi": "Ban dich trong tu dien, KHONG duoc phep de."},
+                        restore=False, dry=False, qua_ten=False)
+        if kq != "giữ-bản-việt-tự-viết":
+            return False, f"khoá `id` vẫn đè mô tả tự viết (process trả '{kq}')"
+        if tu_viet not in sk.read_text(encoding="utf-8"):
+            return False, "mô tả bác sĩ tự viết đã bị ghi đè"
+
+    return True, "catalog quét mặt phục vụ · chốt --tu-quet · rào giữ chữ bác sĩ tự viết"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -3045,6 +3125,7 @@ BAI_HOC = [
     ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
     ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
     ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
+    ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
 ]
 
 

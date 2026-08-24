@@ -90,8 +90,8 @@ VIEC_MAY = [
     # lại tiếng Anh. Lớp phủ vi_descriptions.json chỉ cứu DANH-MUC/TRA-CUU, KHÔNG
     # cứu menu gõ `/` — menu đọc thẳng file plugin.
     ("Việt hoá plugin bị bản cập nhật trả về tiếng Anh",
-     [PY_YAML, "tools/vietnamize/apply_vi.py", "--im-khi-on"],
-     [PY_YAML, "tools/vietnamize/apply_vi.py"]),
+     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet", "--im-khi-on"],
+     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet"]),
 ]
 
 

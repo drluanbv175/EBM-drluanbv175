@@ -239,6 +239,32 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `~/.ebm-venv/bin/python`; `--dry-run`/`--report` vẫn chạy được không cần PyYAML.
   > **Luật nền:** một công cụ KHÔNG AI GỌI thì với dây chuyền hằng ngày nó **không tồn tại** —
   > cùng bài học BH41. Xếp một việc vào loại «tuỳ chọn» chính là cách nó lặng lẽ không bao giờ chạy.
+  🔴 **VÒNG HAI 24/08/2026 — nối dây xong rồi mà chốt VẪN báo sạch trong lúc 147 mô tả đã về
+  tiếng Anh.** Ba lỗi khác nhau, cùng một họ «đo đúng, nhưng đo nhầm chỗ»:
+  **(a) SAI THƯ MỤC — lời giải cho lớp bực bội «công cụ bảo đã Việt hoá mà tôi vẫn đọc tiếng
+  Anh».** `extract_catalog.py` quét `~/.claude-science/orgs/*/skills/` rồi gắn nhãn
+  `/anthropic-skills:<tên>` — nhưng lệnh đó **thật sự chạy bản ở
+  `local-agent-mode-sessions/skills-plugin/`** (đúng như AGENTS.md và chính CLAUDE.md đã ghi).
+  Hai thư mục KHÁC NHAU: đo được `.claude-science/learn` tiếng Việt trong khi bản Cowork —
+  bản hiện ra khi bác sĩ gõ `/` — vẫn tiếng Anh. Nay quét **CẢ HAI**; trùng `id` là cố ý vì
+  apply_vi xử lý theo từng đường dẫn nên một bản dịch áp cho cả hai bản sao.
+  **(b) CATALOG LẠC HẬU.** `catalog_raw.json` ghi đường dẫn TUYỆT ĐỐI kèm số phiên bản
+  (`…/claude-code-harness/5.11.0/…`). Plugin lên 5.12.0 thì catalog vẫn trỏ 5.11.0 — nơi tiếng
+  Việt còn nguyên — nên chốt báo «sạch» trong khi thư mục đang phục vụ **100% tiếng Anh**.
+  Nay `apply_vi.py --tu-quet` quét lại trước khi kiểm (~1,3 giây) và `tu_sua_chua` dùng cờ này
+  ở CẢ lệnh kiểm lẫn lệnh sửa.
+  **(c) BẢN VÁ LÀM HỎNG THỨ NÓ PHẢI GIỮ.** Thêm Cowork vào catalog kéo **chính skill của bác
+  sĩ** vào tầm ghi của apply_vi. Rào «giữ-bản-việt-tự-viết» khi đó chỉ chạy cho khoá `name:`,
+  nên đường khoá `id` vẫn đè — **mất mô tả tự viết của 3 skill** (`clinical-evidence-rag`,
+  `ebm-master`, `literature-review`). Đã khôi phục cả 3 và bỏ điều kiện `qua_ten`: nguồn gốc
+  của khoá không đổi được sự thật rằng mô tả đang có là do người viết. Kèm luật mới cho từ
+  điển — **`vi_descriptions.json` KHÔNG được chứa bản dịch cho skill bác sĩ tự viết trong
+  `sync/skills/`** (đã gỡ 4 khoá tranh chấp).
+  **Đo sau khi sửa:** Cowork **62/62**, `.claude-science` **65/65**, `sync/skills` **40/40**,
+  plugin đang bật **100%** — 0 mô tả tiếng Anh, 0 YAML hỏng. Còn 472 file tiếng Anh nằm trong
+  **8 bộ medsci ĐANG TẮT** (8 × 59, không hiện trong menu `/`); bản dịch của chúng đã có sẵn
+  trong từ điển theo khoá `name:` nên bật lại bộ nào là Việt hoá ngay, không phải dịch thêm.
+  **Khoá bằng BH74**, đã kiểm bằng 3 phép đột biến riêng cho 3 vế.
 - **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
   ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
   kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là
