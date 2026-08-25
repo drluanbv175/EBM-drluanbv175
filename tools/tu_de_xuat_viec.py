@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import re
 import subprocess
@@ -82,6 +83,50 @@ def giac_quan_lich_nen(log_tuan: Path,
         return [(2, f"Kỳ lịch T7 vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi "
                     f"(PASS {ngay_pass}, {tuoi} ngày), nhưng lịch nền đang không tự chạy")]
     return []
+
+
+def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
+    """Đếm dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
+
+    Ưu tiên so HASH khối `const DATA` (sidecar `<tên>.data-sha256` cạnh file
+    `.docx`, ghi bởi `xuat_goi_cap_nhat.py` mỗi lần xuất — xem BH76). Không có
+    sidecar (dashboard chưa từng qua cơ chế mới) thì lùi về heuristic MTIME cũ:
+    docx thiếu hoặc cũ hơn html. Trả về số dashboard thật sự lỗi thời."""
+    n_cu = 0
+    vd = None
+    try:
+        tools_dir = str(dash_dir / "tools")
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+        import verify_dashboard as vd  # noqa: PLC0415
+    except ImportError:
+        vd = None
+    for f_db in sorted(dash_dir.glob("WebDashboard_*.html")):
+        if ".bak" in f_db.name:
+            continue
+        ma = f_db.stem.replace("WebDashboard_EBM_VanDeCuThe_", "").replace("WebDashboard_EBM_", "")
+        cac_docx = [dash_dir / "derivatives" / f"{ma}_TaiLieuChiTiet.docx",
+                    dash_dir / "derivatives" / f"{f_db.stem}_TaiLieuChiTiet.docx"]
+        docx = next((d for d in cac_docx if d.exists()), None)
+        if docx is None:
+            n_cu += 1
+            continue
+        sidecar = docx.with_suffix(".data-sha256")
+        if sidecar.exists() and vd is not None:
+            try:
+                html = f_db.read_text(encoding="utf-8", errors="replace")
+                data_block = vd.extract_data_block(html)
+                h_hien_tai = (hashlib.sha256(data_block.encode("utf-8")).hexdigest()
+                              if data_block else None)
+                h_luc_xuat = sidecar.read_text(encoding="utf-8").strip()
+                if h_hien_tai is not None and h_hien_tai != h_luc_xuat:
+                    n_cu += 1
+                continue
+            except OSError:
+                pass  # đọc lỗi ⇒ lùi về heuristic mtime bên dưới
+        if docx.stat().st_mtime < f_db.stat().st_mtime:
+            n_cu += 1
+    return n_cu
 
 
 def main() -> int:
@@ -240,16 +285,21 @@ def main() -> int:
     # Sửa 16/08 đêm: tool xuất đặt tên phái sinh theo HAI mẫu — nhóm VanDeCuThe
     # cắt tiền tố, nhóm còn lại (Uptodate/AnToanThuoc…) GIỮ nguyên cả
     # WebDashboard_EBM_ — đếm bằng một mẫu tạo 13 «tồn ảo» bị xuất lại vô ích.
-    n_cu = 0
-    for f_db in sorted(DASH.glob("WebDashboard_*.html")):
-        if ".bak" in f_db.name:
-            continue
-        ma = f_db.stem.replace("WebDashboard_EBM_VanDeCuThe_", "").replace("WebDashboard_EBM_", "")
-        cac_docx = [DASH / "derivatives" / f"{ma}_TaiLieuChiTiet.docx",
-                    DASH / "derivatives" / f"{f_db.stem}_TaiLieuChiTiet.docx"]
-        docx = next((d for d in cac_docx if d.exists()), None)
-        if docx is None or docx.stat().st_mtime < f_db.stat().st_mtime:
-            n_cu += 1
+    #
+    # VÁ 25/08/2026 (BH76) — MTIME KHÔNG PHÂN BIỆT ĐƯỢC «SỬA NỘI DUNG» VỚI «SỬA VỎ».
+    # Đo thật: Sprint 9 task 9.2 reskin THUẦN CSS/HTML cho 66/67 dashboard (đã xác
+    # nhận `DATA` byte-for-byte không đổi) bump mtime của CẢ 66 bản cùng lúc ⇒
+    # heuristic mtime báo "66 dashboard lỗi thời" trong khi THẬT SỰ chỉ 5 bản có
+    # nội dung đổi (đối chiếu DATA-hash với bản backup trước reskin xác nhận đúng
+    # 5/66, đã xuất lại). Chạy `xuat_goi_cap_nhat.py --online` cho 61 bản còn lại
+    # sẽ lãng phí ~60 lượt gọi PubMed thật cho một thay đổi KHÔNG đụng khoa học.
+    # Nay ưu tiên so HASH nội dung khối DATA (sidecar `<tên>.data-sha256`, ghi bởi
+    # `xuat_goi_cap_nhat.py` mỗi lần xuất) — chỉ báo lỗi thời khi hash THẬT SỰ khác.
+    # Dashboard chưa từng có sidecar (chưa qua cơ chế mới) lùi về heuristic mtime cũ,
+    # không đổi hành vi cho dashboard chưa từng chạm. Logic tách hàm riêng
+    # `dem_dashboard_phai_sinh_loi_thoi()` để BH76 kiểm được bằng đột biến trên
+    # đĩa tạm, không đụng kho dashboard thật.
+    n_cu = dem_dashboard_phai_sinh_loi_thoi(DASH)
     if n_cu:
         de_xuat.append((2, "🤖", f"{n_cu} dashboard có bản Word/bản-đọc CŨ HƠN nội dung "
                         "— xuất lại để bác sĩ không đọc bản lỗi thời",

@@ -3088,6 +3088,84 @@ def bh75_don_bak_phai_xu_ly_ca_thu_muc() -> tuple[bool, str]:
     return True, "don_bak() xử lý đúng cả thư mục lẫn file, không crash"
 
 
+def bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime() -> tuple[bool, str]:
+    """25/08/2026 — `tu_de_xuat_viec.py` từng đo độ tươi bản Word/bản-đọc BẰNG MTIME
+    (docx cũ hơn html ⇒ "lỗi thời"). Một lần reskin THUẦN VỎ CSS/HTML (Sprint 9, task
+    9.2 — đã xác nhận `DATA` byte-for-byte không đổi trên 66/67 dashboard) bump mtime
+    của MỌI dashboard đã reskin cùng lúc ⇒ cảm biến báo "66 dashboard lỗi thời" trong
+    khi THẬT SỰ chỉ 5 bản có nội dung đổi (đối chiếu DATA-hash với bản backup trước
+    reskin xác nhận đúng 5/66). Nếu tin cảm biến mù chữ, bác sĩ sẽ tốn ~60 lượt gọi
+    PubMed thật để xuất lại thứ không hề đổi khoa học — đúng họ lỗi BH32 (chỉ số gộp
+    kết luận sai cho cả tập) nhưng ở một cảm biến khác.
+
+    Vá bằng sidecar `<tên>.data-sha256` (ghi bởi `xuat_goi_cap_nhat.py` mỗi lần xuất,
+    chứa SHA256 của khối `const DATA`) — `dem_dashboard_phai_sinh_loi_thoi()` so HASH
+    thay vì MTIME khi sidecar tồn tại, chỉ lùi về mtime khi dashboard chưa từng có
+    sidecar (không đổi hành vi cho dashboard cũ).
+
+    Kiểm HÀNH VI trên đĩa tạm, GỌI THẲNG hàm thật (không viết lại logic riêng), MỖI
+    CA MỘT THƯ MỤC RIÊNG (không gộp chung rồi chỉ so TỔNG — tự bắt được lúc soạn:
+    gộp chung khiến một đột biến làm ① sai + ② sai vẫn cho tổng ĐÚNG NGẪU NHIÊN,
+    đúng họ lỗi BH32 mà chính bài học này đang nói tới): sidecar khớp (không lỗi
+    thời dù mtime docx cũ hơn) · sidecar lệch (lỗi thời) · thiếu docx (lỗi thời) ·
+    mtime fallback cũ hơn (lỗi thời) · mtime fallback mới hơn (không lỗi thời)."""
+    import hashlib
+    import os
+    import shutil as _shutil
+    import tempfile
+
+    m = _nap(REPO / "tools/tu_de_xuat_viec.py", "tdxv_bh76")
+    vd_src = REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
+    vd_mod = _nap(vd_src, "vd_bh76")
+
+    def _html(data_noi_dung: str) -> str:
+        return (f"<html><body><script>\nconst DATA = {{{data_noi_dung}}};\n"
+                "// HẾT KHỐI DATA\n</script></body></html>")
+
+    def _hash(data_noi_dung: str) -> str:
+        # Băm ĐÚNG những gì extract_data_block() thật sự trả về (gồm cả phần
+        # ";\n// " trước marker) — không tự dựng chuỗi tay, tránh lệch khỏi
+        # logic thật của xuat_goi_cap_nhat.py::ghi_sidecar_hash_data().
+        data_block = vd_mod.extract_data_block(_html(data_noi_dung))
+        return hashlib.sha256(data_block.encode("utf-8")).hexdigest()
+
+    def _mot_ca(*, sidecar_noi_dung: str | None, mtime_docx: float | None) -> int:
+        """Dựng MỘT dashboard trong thư mục tạm RIÊNG, trả kết quả đếm (0 hoặc 1).
+        `sidecar_noi_dung=None` ⇒ không ghi sidecar (test nhánh fallback mtime).
+        `mtime_docx=None` ⇒ không tạo docx (test nhánh 'thiếu docx')."""
+        with tempfile.TemporaryDirectory() as d:
+            dash_dir = Path(d)
+            (dash_dir / "derivatives").mkdir()
+            tools_dir = dash_dir / "tools"
+            tools_dir.mkdir()
+            _shutil.copy2(vd_src, tools_dir / "verify_dashboard.py")
+            f_db = dash_dir / "WebDashboard_EBM_ca.html"
+            f_db.write_text(_html("items:[{id:'a'}]"), encoding="utf-8")
+            if mtime_docx is not None:
+                docx = dash_dir / "derivatives" / "ca_TaiLieuChiTiet.docx"
+                docx.write_text("x", encoding="utf-8")
+                if sidecar_noi_dung is not None:
+                    docx.with_suffix(".data-sha256").write_text(
+                        _hash(sidecar_noi_dung) + "\n", encoding="utf-8")
+                os.utime(docx, (mtime_docx, mtime_docx))
+            return m.dem_dashboard_phai_sinh_loi_thoi(dash_dir)
+
+    ca = [
+        ("① sidecar khớp, docx CŨ (mtime không được dùng)",
+         _mot_ca(sidecar_noi_dung="items:[{id:'a'}]", mtime_docx=1.0), 0),
+        ("② sidecar LỆCH", _mot_ca(sidecar_noi_dung="items:[{id:'KHAC'}]", mtime_docx=1.0), 1),
+        ("③ thiếu docx", _mot_ca(sidecar_noi_dung=None, mtime_docx=None), 1),
+        ("④ không sidecar, docx CŨ (fallback mtime)",
+         _mot_ca(sidecar_noi_dung=None, mtime_docx=1.0), 1),
+        ("⑤ không sidecar, docx MỚI (fallback mtime)",
+         _mot_ca(sidecar_noi_dung=None, mtime_docx=9_999_999_999.0), 0),
+    ]
+    sai = [f"{ten}: được {thuc}, mong {mong}" for ten, thuc, mong in ca if thuc != mong]
+    if sai:
+        return False, "; ".join(sai)
+    return True, "dem_dashboard_phai_sinh_loi_thoi() ưu tiên hash DATA, chỉ lùi mtime khi thiếu sidecar"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3167,6 +3245,7 @@ BAI_HOC = [
     ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
     ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
     ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
+    ("BH76", "25/08", "Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime", bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime),
 ]
 
 

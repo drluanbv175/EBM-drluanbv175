@@ -44,6 +44,7 @@ cp1252 sẽ chết khi in tiếng Việt).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -111,6 +112,38 @@ def run(cmd: list, cwd: Path | None = None) -> tuple[int, str]:
         [str(c) for c in cmd], cwd=str(cwd) if cwd else None,
         capture_output=True, text=True, encoding="utf-8", errors="replace")
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def ghi_sidecar_hash_data(dash: Path, word_path: str) -> None:
+    """VÁ 25/08/2026 (BH76) — ghi sidecar `<tên>.data-sha256` cạnh bản Word, chứa
+    SHA256 của khối `const DATA` trong dashboard TẠI THỜI ĐIỂM xuất.
+
+    Vì sao cần: `tu_de_xuat_viec.py` từng đo độ tươi phái sinh bằng MTIME của
+    file (docx cũ hơn html ⇒ "lỗi thời"). Một lần reskin THUẦN VỎ CSS/HTML (Sprint
+    9, task 9.2 — đã xác nhận `DATA` byte-for-byte không đổi trên 66/67 dashboard)
+    bump mtime của MỌI dashboard đã reskin, khiến CẢ 66 bản bị báo "lỗi thời" dù
+    nội dung khoa học không đổi một ký tự — đẩy bác sĩ vào việc xuất lại 66 lần
+    (mỗi lần gọi PubMed thật) cho một thay đổi thuần trình bày.
+
+    Sidecar này cho phép so CONTENT thay vì MTIME: `tu_de_xuat_viec.py` chỉ báo
+    "lỗi thời" khi hash hiện tại của DATA KHÁC hash lúc xuất — sống sót qua mọi
+    thao tác không đụng DATA (reskin, đổi khoảng trắng ngoài DATA...). Không có
+    sidecar (dashboard chưa từng xuất qua cơ chế này) thì cảm biến lùi về heuristic
+    mtime cũ, không thay đổi hành vi cho dashboard cũ.
+
+    Lỗi khi ghi sidecar KHÔNG được làm hỏng lượt xuất chính — đây là tiện ích tối
+    ưu cho một cảm biến khác, không phải một trong bộ năm sản phẩm đã hứa."""
+    try:
+        sys.path.insert(0, str(DASH_TOOLS))
+        import verify_dashboard as vd  # noqa: E402 — cần sys.path.insert trước
+        html = dash.read_text(encoding="utf-8", errors="replace")
+        data_block = vd.extract_data_block(html)
+        if not data_block:
+            return
+        h = hashlib.sha256(data_block.encode("utf-8")).hexdigest()
+        Path(word_path).with_suffix(".data-sha256").write_text(h + "\n", encoding="utf-8")
+    except (OSError, ImportError, UnicodeDecodeError):
+        pass
 
 
 def doc_tieu_de(dash: Path) -> str:
@@ -343,6 +376,8 @@ def main() -> int:
             if line.startswith("✓ Đã ghi"):
                 result["word"] = line.replace("✓ Đã ghi", "").split("—")[0].strip()
         print("   " + (result["word"] or "(không rõ đường dẫn)"))
+        if result["word"]:
+            ghi_sidecar_hash_data(dash, result["word"])
 
     # ── ④ Bản Word dạng HTML (đọc thẳng trong khung chat) ─────────────────────
     # Chỉ chạy khi ③ đã ra file thật — không dựng HTML từ một bản Word không tồn tại.
