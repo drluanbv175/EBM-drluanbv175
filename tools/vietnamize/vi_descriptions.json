@@ -5024,5 +5024,11 @@
   "name:obsidian-paper-vault": {
     "vi": "[MedSci] Biến thư mục PDF nghiên cứu thành kho tri thức Obsidian: ghi chú y văn cùng khuôn có frontmatter, link nhúng PDF, ghi chú khái niệm liên kết chéo. Dùng khi cần chuyển loạt PDF thành ghi chú Obsidian, tóm nhiều bài theo một mẫu, dựng «bộ não thứ hai», hoặc rút khái niệm xuyên ghi chú — kể cả khi không nhắc chữ Obsidian. Dùng chung kho với /medsci-project:lit-sync. Từ khoá: Obsidian vault."
   },
-  "_ghi_chu_khong_tranh_ban_tu_viet": "24/08/2026 — TỪ ĐIỂN KHÔNG ĐƯỢC CHỨA BẢN DỊCH CHO SKILL BÁC SĨ TỰ VIẾT trong sync/skills/. Nguồn duy nhất của những skill đó là chính file SKILL.md; để một bản dịch khác nằm ở đây thì apply_vi sẽ đè lên chữ của bác sĩ (đã xảy ra hôm nay với clinical-evidence-rag, ebm-master, literature-review khi Cowork được thêm vào catalog). Đã gỡ 3 khoá tranh chấp. Rào chặn nằm ở apply_vi.process(): mô tả đang là tiếng Việt mà KHÔNG có `description-src` ⇒ giữ nguyên, bất kể khoá đến từ `id` hay `name:`."
+  "_ghi_chu_khong_tranh_ban_tu_viet": "24/08/2026 — TỪ ĐIỂN KHÔNG ĐƯỢC CHỨA BẢN DỊCH CHO SKILL BÁC SĨ TỰ VIẾT trong sync/skills/. Nguồn duy nhất của những skill đó là chính file SKILL.md; để một bản dịch khác nằm ở đây thì apply_vi sẽ đè lên chữ của bác sĩ (đã xảy ra hôm nay với clinical-evidence-rag, ebm-master, literature-review khi Cowork được thêm vào catalog). Đã gỡ 3 khoá tranh chấp. Rào chặn nằm ở apply_vi.process(): mô tả đang là tiếng Việt mà KHÔNG có `description-src` ⇒ giữ nguyên, bất kể khoá đến từ `id` hay `name:`.",
+  "skill:claude-code-harness:session-send": {
+    "vi": "[Lập trình] Gửi thông điệp liên phiên tới agent khác — dùng khi bác sĩ yêu cầu báo phiên khác, bàn giao phiên, hoặc \"nói với agent kia\". Từ khoá: session send, cross-session message."
+  },
+  "agent:claude-code-harness:livemsg-gate": {
+    "vi": "[Lập trình] Agent CHỈ ĐỌC kiểm chứng khẳng định trong thông điệp liên phiên trước khi gửi, trả về SEND hoặc HOLD. Từ khoá: livemsg gate, cross-session verification."
+  }
 }

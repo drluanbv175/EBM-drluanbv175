@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1185 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1172 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1170 mục (quét ngày 2026-08-24)
+> - **Mac**: 1157 mục (quét ngày 2026-08-25)
 > - **Windows**: 909 mục (quét ngày 2026-08-17)
 > - có ở **cả 2 máy**: 894 mục
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1087 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1072 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -681,7 +681,7 @@
 | `/aipoch-medical-research:xgboost-analysis` | kỹ năng | cả 2 máy | [Học máy] Dựng mô hình XGBoost trên dữ liệu bảng cho phân loại nhị phân hoặc hồi quy, tự chia tập huấn luyện và kiểm tra, xuất bảng hiệu năng và xếp hạng tầm quan trọng biến. Dùng khi cần mô hình tăng cường mạnh. Từ khoá: XGBoost. |
 | `/aipoch-medical-research:zinc-database` | kỹ năng | cả 2 máy | [Thiết kế thuốc] Tra ZINC với hơn 230 triệu hợp chất mua được: tìm theo mã ZINC hoặc SMILES, tìm chất tương tự, tải cấu trúc 3D sẵn sàng docking. Dùng khi sàng lọc ảo. Từ khoá: ZINC, virtual screening. |
 
-### anthropic-skills  (89 · chỉ Mac)
+### anthropic-skills  (74 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -696,30 +696,24 @@
 | `/anthropic-skills:cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
 | `/anthropic-skills:chai1` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp bằng mô hình nền Chai-1. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Chai-1. |
 | `/anthropic-skills:citation-management` | kỹ năng | Mac | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
-| `/anthropic-skills:clinical-decision-support` | kỹ năng | Mac | Tạo tài liệu hỗ trợ quyết định lâm sàng (CDS): phân tích nhóm bệnh nhân (cohort) theo dấu ấn sinh học, báo cáo khuyến cáo điều trị dựa trên bằng chứng kèm thuật toán quyết định và phân độ GRADE; phân tích thống kê (HR, đường sống còn); x… |
 | `/anthropic-skills:clinical-evidence-rag` | kỹ năng | Mac | Cầu nối kiến thức–thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất (RAG) từ kho y văn do bác sĩ tự nạp. Dùng khi muốn tra trong kho tài liệu riêng thay vì tìm mới trên mạng. Từ khoá: clinical RAG. |
-| `/anthropic-skills:clinical-reports` | kỹ năng | Mac | Viết báo cáo lâm sàng: case report (chuẩn CARE), báo cáo chẩn đoán (X-quang/giải phẫu bệnh/xét nghiệm), báo cáo thử nghiệm lâm sàng (ICH-E3) và hồ sơ bệnh án (SOAP, H&P, tóm tắt xuất viện). Kèm template và công cụ kiểm tra. Mọi đầu ra kè… |
 | `/anthropic-skills:compute-env-setup` | kỹ năng | Mac | Cài môi trường tính toán trên máy chủ từ xa (SSH/conda, cụm Slurm) để chạy việc nặng. Dùng khi máy cá nhân không đủ sức. Từ khoá: compute environment. |
 | `/anthropic-skills:consolidate-memory` | kỹ năng | Mac | [Bộ nhớ] Rà lại toàn bộ file bộ nhớ của Claude: gộp mục trùng, sửa thông tin đã lỗi thời, tỉa bớt chỉ mục cho gọn. Dùng khi bộ nhớ phình to, có hai mục nói ngược nhau, hoặc trước khi bàn giao sang máy khác. Từ khoá: consolidate memory, m… |
 | `/anthropic-skills:customize` | kỹ năng | Mac | Tạo và bảo trì hồ sơ agent riêng, và soạn skill mới qua công cụ repl. Dùng khi muốn tuỳ biến cách trợ lý làm việc. Từ khoá: customize agent profile. |
 | `/anthropic-skills:dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | Mac | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
 | `/anthropic-skills:dark-analyst` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
 | `/anthropic-skills:dashboard-master-ebm-ngoai-tru` | kỹ năng | Mac | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
-| `/anthropic-skills:database-lookup` | kỹ năng | Mac | Truy vấn 78+ CƠ SỞ DỮ LIỆU khoa học/y khoa công khai qua API đã tài liệu hóa rõ endpoint, bộ lọc, phân trang và nguồn gốc dữ liệu (PubChem, ChEMBL, UniProt, ClinicalTrials.gov, FDA, dbSNP, ClinVar, COSMIC, GWAS Catalog, OMIM... phần lớn … |
 | `/anthropic-skills:diffdock` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán tư thế gắn của phân tử nhỏ vào protein bằng DiffDock-L. Dùng khi sàng lọc thuốc tiền lâm sàng. Từ khoá: DiffDock. |
 | `/anthropic-skills:doc-coauthoring` | kỹ năng | Mac | Đồng soạn tài liệu theo quy trình có cấu trúc (tài liệu kỹ thuật, đề xuất, hướng dẫn). Dùng khi viết tài liệu dài cần thống nhất bố cục. Từ khoá: doc co-authoring. |
 | `/anthropic-skills:docx` | kỹ năng | Mac | [Tài liệu] Tạo, đọc và sửa file Word (.docx) cùng mẫu Word (.dotx): mục lục, đề mục, số trang, tiêu đề thư, bảng, chèn hoặc thay ảnh, tìm-thay hàng loạt, theo dõi thay đổi. Dùng khi bác sĩ nhắc tới file Word, .docx, .dotx, hoặc cần xuất … |
 | `/anthropic-skills:ehospital-mini` | kỹ năng | Mac | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
 | `/anthropic-skills:esmfold2` | kỹ năng | Mac | [Sinh học cấu trúc] Gấp cuộn toàn nguyên tử bằng ESMFold2, chạy được từ một chuỗi đơn. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ESMFold2. |
 | `/anthropic-skills:evo2` | kỹ năng | Mac | [Tin sinh học] Chấm điểm, biểu diễn và sinh chuỗi DNA bằng mô hình nền Evo 2 ngữ cảnh dài. Dùng trong nghiên cứu hệ gen. Từ khoá: Evo 2, genomic foundation model. |
-| `/anthropic-skills:experimental-design` | kỹ năng | Mac | Thiết kế thí nghiệm/nghiên cứu TRƯỚC khi thu thập dữ liệu — chọn thiết kế, ngẫu nhiên hóa (randomization), phân khối (blocking/stratification), bố trí factorial/fractional-factorial, crossover, split-plot, Latin square, kiểm soát hiệu ứn… |
 | `/anthropic-skills:explain-usage` | kỹ năng | Mac | [Tiện ích] Giải thích phiên làm việc này đã tiêu token vào đâu, kèm MỘT biểu đồ đơn giản và lời văn dễ hiểu. Dùng khi bác sĩ hỏi «token đi đâu hết», «giải thích mức dùng», hoặc muốn xem bảng bóc tách chi phí của phiên. Từ khoá: usage, to… |
-| `/anthropic-skills:exploratory-data-analysis` | kỹ năng | Mac | Khảo sát nhanh cấu trúc, chất lượng và đặc điểm của MỘT file dữ liệu khoa học (200+ định dạng: bảng tính, gen học, hóa học, ảnh vi mô, phổ, proteomics...) — tự nhận diện định dạng, sinh báo cáo markdown về chất lượng dữ liệu và gợi ý bướ… |
 | `/anthropic-skills:fair-esm2` | kỹ năng | Mac | [Tin sinh học] Sinh vector biểu diễn (embedding) cho protein bằng ESM-2 của Meta AI. Dùng khi phân tích chuỗi protein bằng học máy. Từ khoá: ESM-2, protein embedding. |
 | `/anthropic-skills:figure-composer` | kỹ năng | Mac | Dựng MỘT hình nhiều panel đạt chuẩn công bố, từ một câu khẳng định + dữ liệu nguồn. Dùng khi cần hình chính cho bài báo. Từ khoá: multi-panel figure. |
 | `/anthropic-skills:figure-style` | kỹ năng | Mac | Quy tắc trình bày hình đạt chuẩn công bố (độ đọc được, nhãn, đơn vị, màu). Dùng cho hình NỘP BÀI, không cần cho biểu đồ xem nhanh. Từ khoá: figure style, publication-grade. |
 | `/anthropic-skills:giao-tiep-quyet-dinh-soap` | kỹ năng | Mac | Sử dụng skill này khi cần kỹ năng GIAO TIẾP với bệnh nhân, RA QUYẾT ĐỊNH CÙNG BỆNH NHÂN (shared decision-making), báo tin xấu, hoặc GHI HỒ SƠ SOAP. Kích hoạt với "giải thích cho bệnh nhân thế nào", "bệnh nhân không chịu điều trị/lưỡng lự… |
-| `/anthropic-skills:hypothesis-generation` | kỹ năng | Mac | Hình thức hóa GIẢ THUYẾT khoa học từ quan sát/dữ liệu — sinh 3-5 giả thuyết CẠNH TRANH kèm CƠ CHẾ, chấm chất lượng theo 7 tiêu chí (khả kiểm định, khả bác bỏ theo Popper, tính đơn giản, sức giải thích, phạm vi, nhất quán, tính mới), rồi … |
 | `/anthropic-skills:import-memory` | kỹ năng | Mac | [Bộ nhớ] Nhập bản xuất bộ nhớ từ một trợ lý AI khác vào bộ nhớ của Claude — theo lối trò chuyện, CHỈ THÊM chứ không đè, và coi nội dung nhập vào là DỮ LIỆU chứ không phải chỉ thị. Dùng khi chuyển từ trợ lý khác sang. Từ khoá: import memo… |
 | `/anthropic-skills:indication-dossier` | kỹ năng | Mac | Soạn HỒ SƠ CHỈ ĐỊNH ĐIỀU TRỊ: quần thể bệnh nhân, dịch tễ, sinh bệnh học, chuẩn điều trị hiện hành, bối cảnh pháp quy. Dùng cho tổng quan chuyên sâu một chỉ định. Từ khoá: indication dossier. |
 | `/anthropic-skills:internal-comms` | kỹ năng | Mac | Viết các loại THÔNG BÁO NỘI BỘ theo mẫu quen dùng của đơn vị. Dùng cho thư gửi khoa/phòng, thông báo thay đổi quy trình. Từ khoá: internal communications. |
@@ -743,17 +737,13 @@
 | `/anthropic-skills:pptx` | kỹ năng | Mac | [Trình bày] Làm việc với file PowerPoint (.pptx, .potx): dựng bộ slide, bóc chữ từ slide có sẵn, sửa bài trình bày, gộp hoặc tách file, xử lý mẫu, bố cục, ghi chú người trình bày và bình luận. Dùng bất cứ khi nào có .pptx/.potx ở đầu vào… |
 | `/anthropic-skills:product-self-knowledge` | kỹ năng | Mac | Tra thông tin CHÍNH XÁC về sản phẩm của Anthropic (Claude Code, gói dịch vụ, giới hạn). Dùng BẮT BUỘC trước khi khẳng định điều gì về sản phẩm, tránh nói theo trí nhớ. Từ khoá: product facts. |
 | `/anthropic-skills:proteinmpnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi acid amin từ khung cấu trúc bằng ProteinMPNN. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ProteinMPNN. |
-| `/anthropic-skills:pyhealth` | kỹ năng | Mac | Xây dựng pipeline học máy lâm sàng bằng thư viện PyHealth: tải dữ liệu EHR (MIMIC-III/IV, eICU, OMOP), định nghĩa tác vụ (tử vong, tái nhập viện, gợi ý thuốc, giai đoạn ngủ, mã hóa ICD), huấn luyện mô hình (Transformer, RETAIN, GAMENet, … |
 | `/anthropic-skills:quan-ly-cap-nhat-ebm` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
 | `/anthropic-skills:remote-compute-modal` | kỹ năng | Mac | Chạy việc cần GPU trên tài khoản Modal của bác sĩ. Dùng cho tác vụ học máy nặng. Từ khoá: Modal GPU. |
 | `/anthropic-skills:remote-compute-ssh` | kỹ năng | Mac | Gửi việc tính toán lên máy chủ SSH/SLURM của bác sĩ rồi chờ và thu kết quả. Dùng sau khi đã quyết định chạy từ xa. Từ khoá: SSH, SLURM. |
 | `/anthropic-skills:research-lookup` | kỹ năng | Mac | Tra cứu NGHIÊN CỨU & ĐĂNG KÝ THỬ NGHIỆM qua nguồn mở — ClinicalTrials.gov (API v2), WHO ICTRP, PROSPERO. Dùng khi cần kiểm một thử nghiệm đã đăng ký chưa, tìm nghiên cứu đang tiến hành/đã hoàn tất, đối chiếu kết cục đăng ký vs công bố (c… |
 | `/anthropic-skills:scgpt` | kỹ năng | Mac | [Tế bào đơn] Biểu diễn và chú giải dữ liệu biểu hiện gen tế bào đơn bằng scGPT. Dùng khi phân tích dữ liệu tế bào đơn. Từ khoá: scGPT. |
 | `/anthropic-skills:schedule` | kỹ năng | Mac | [Tiện ích] Tạo hoặc sửa TÁC VỤ CHẠY THEO LỊCH, tự nổ đúng giờ mà không cần ngồi chờ. Dùng khi bác sĩ nói «mỗi ngày», «mỗi sáng», «nhắc tôi sau một giờ», «chạy lúc 12 giờ trưa», hoặc muốn đổi giờ một tác vụ đã đặt. Từ khoá: schedule, sche… |
-| `/anthropic-skills:scholar-evaluation` | kỹ năng | Mac | Chấm điểm ĐỊNH LƯỢNG chất lượng học thuật của bản thảo/đề cương/tổng quan theo khung ScholarEval — 8 chiều (đặt vấn đề, tổng quan y văn, phương pháp, thu thập dữ liệu, phân tích, kết quả, văn phong, trích dẫn), mỗi chiều chấm 0-5 có trọn… |
-| `/anthropic-skills:scientific-critical-thinking` | kỹ năng | Mac | Khung THẨM ĐỊNH chất lượng chứng cứ và tính hợp lệ của thiết kế nghiên cứu — áp dụng GRADE, Cochrane Risk of Bias, nhận diện thiên kiến/nhiễu/ngụy biện logic và các lỗi thống kê thường gặp. Dùng để dạy hoặc tự kiểm tra tư duy phản biện k… |
 | `/anthropic-skills:scientific-writing` | kỹ năng | Mac | Viết bản thảo khoa học y khoa theo cấu trúc IMRAD, văn xuôi liền mạch, khớp CHUẨN BÁO CÁO đúng thiết kế (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD+AI; COREQ/SRQR cho định tính; SQUIRE cho QI). Dùng khi cần viết bài báo, protocol, hoặc bá… |
-| `/anthropic-skills:scikit-survival` | kỹ năng | Mac | Phân tích SỐNG CÒN / thời gian-đến-biến-cố (time-to-event) bằng scikit-survival: mô hình Cox, Random Survival Forest, Gradient Boosting, Survival SVM; xử lý dữ liệu KIỂM DUYỆT (censoring) và NGUY CƠ CẠNH TRANH (competing risks); đánh giá… |
 | `/anthropic-skills:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA-seq tế bào đơn theo mô hình xác suất với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn bán giám sát. Từ khoá: scvi-tools, scVI. |
 | `/anthropic-skills:self-awareness` | kỹ năng | Mac | Truy vấn cơ sở dữ liệu phiên làm việc của Claude Science. Dùng khi cần tự kiểm phiên đang chạy gì. Từ khoá: session introspection. |
 | `/anthropic-skills:setup-cowork` | kỹ năng | Mac | [Hỗ trợ] Cài đặt Cowork có dẫn dắt từng bước: cài plugin hợp với vai trò, nối các công cụ đang dùng, chạy thử một skill cho quen. Dùng khi mới dựng máy hoặc mới bật Cowork lần đầu. Từ khoá: setup Cowork, cowork onboarding. |
@@ -761,17 +751,12 @@
 | `/anthropic-skills:slack-gif-creator` | kỹ năng | Mac | Tạo ảnh động GIF tối ưu cho Slack, kèm ràng buộc kích thước và công cụ kiểm tra. Dùng khi cần ảnh động cho tin nhắn nhóm. Từ khoá: Slack GIF. |
 | `/anthropic-skills:solublempnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi thiên về protein TAN được. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: SolubleMPNN. |
 | `/anthropic-skills:statistical-analysis` | kỹ năng | Mac | Quy trình phân tích thống kê lâm sàng/nghiên cứu y khoa — mô tả dữ liệu, chọn kiểm định theo loại biến + thiết kế + giả định, hồi quy/sống còn/ROC/hiệu chỉnh, báo cáo ước lượng + 95% CI. Dùng khi cần chạy/đọc phân tích thống kê cho một đ… |
-| `/anthropic-skills:statistical-power` | kỹ năng | Mac | Tính CỠ MẪU / LỰC THỐNG KÊ (power analysis) TRƯỚC khi thu thập dữ liệu — bằng công thức đóng (t-test, ANOVA, tỷ lệ, tương quan, chi-square, hồi quy) VÀ mô phỏng Monte Carlo cho thiết kế không có công thức chuẩn (hồi quy logistic/Poisson,… |
-| `/anthropic-skills:statsmodels` | kỹ năng | Mac | Chạy mô hình thống kê THẬT bằng thư viện statsmodels: OLS, GLM, mô hình hỗn hợp (mixed-effects), ARIMA/chuỗi thời gian — kèm bảng hệ số, chẩn đoán giả định, phân tích residual. Dùng khi ĐÃ có dữ liệu và cần fit một mô hình cụ thể (khác s… |
 | `/anthropic-skills:tao-video-tiktok` | kỹ năng | Mac | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
 | `/anthropic-skills:tham-dinh-chung-cu-grade-nnt` | kỹ năng | Mac | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
 | `/anthropic-skills:theme-factory` | kỹ năng | Mac | Bộ chủ đề trình bày cho slide, tài liệu, báo cáo, trang HTML — có 10 chủ đề dựng sẵn. Dùng khi muốn thống nhất phong cách một bộ sản phẩm. Từ khoá: theme, styling. |
 | `/anthropic-skills:tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
-| `/anthropic-skills:tong-thuat-chung-cu` | kỹ năng | Mac | Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày … |
-| `/anthropic-skills:treatment-plans` | kỹ năng | Mac | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
 | `/anthropic-skills:tuan-thu-dieu-tri` | kỹ năng | Mac | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
 | `/anthropic-skills:using-model-endpoint` | kỹ năng | Mac | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
-| `/anthropic-skills:venue-templates` | kỹ năng | Mac | Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu, và đề cương xin tài trợ — kèm chuẩn báo cáo CONSORT/STROBE/PRISMA cho bài y khoa. Dùng khi chuẩn bị bản thả… |
 | `/anthropic-skills:web-artifacts-builder` | kỹ năng | Mac | Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind/shadcn cho artifact trên claude.ai. Dùng khi trang cần quản lý trạng thái, điều hướng hoặc thành phần shadcn — KHÔNG dùng cho artifact HTML/JSX đơn giản một file. Từ khoá: w… |
 | `/anthropic-skills:xlsx` | kỹ năng | Mac | [Bảng tính] Làm việc với bảng tính (.xlsx, .xlsm, .xltx, .csv, .tsv): mở, đọc, sửa, thêm cột, tính công thức, định dạng, vẽ biểu đồ, dọn dữ liệu lộn xộn, dựng bảng mới hoặc đổi qua lại giữa các định dạng. Dùng khi bảng tính là đầu vào ha… |
 
@@ -1236,14 +1221,15 @@
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (84 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (86 mục)
 
 
-### claude-code-harness  (31 · chỉ Mac)
+### claude-code-harness  (33 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
 | `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
+| `agent livemsg-gate` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC kiểm chứng khẳng định trong thông điệp liên phiên trước khi gửi, trả về SEND hoặc HOLD. Từ khoá: livemsg gate, cross-session verification. |
 | `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
 | `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
 | `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
@@ -1274,6 +1260,7 @@
 | `/claude-code-harness:japanese-writing-drafter` | kỹ năng | Mac | [Lập trình] Bắt lúc người dùng sửa cách diễn đạt TIẾNG NHẬT của agent, rồi ghi đề xuất luật văn phong vào proposals.jsonl chờ người duyệt — nơi DUY NHẤT ghi file đó, không đụng rules.jsonl. Dùng khi người dùng nói 表現を直して, 文体を直して, その言い方はN… |
 | `/claude-code-harness:maintenance` | kỹ năng | Mac | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
 | `/claude-code-harness:memory` | kỹ năng | Mac | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
+| `/claude-code-harness:session-send` | kỹ năng | Mac | [Lập trình] Gửi thông điệp liên phiên tới agent khác — dùng khi bác sĩ yêu cầu báo phiên khác, bàn giao phiên, hoặc "nói với agent kia". Từ khoá: session send, cross-session message. |
 
 ### meta-pipe  (14 · chỉ Mac)
 
