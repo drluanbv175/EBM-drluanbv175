@@ -1084,21 +1084,74 @@ def _significant_words(text):
     return {w for w in re.findall(r"[A-Za-z]{4,}", (text or "").lower())} - _TITLE_STOPWORDS
 
 
+def _find_reference_entry_for_pmid(ch, pmid):
+    """Tìm entry trong references[] của item có nhắc đúng PMID này (chuỗi số PMID
+    xuất hiện nguyên vẹn trong entry). Trả về entry hoặc None nếu references[]
+    không có entry nào nhắc PMID này (thiếu hẳn, không phải chỉ thiếu tiêu đề)."""
+    for r in array_field(ch, "references"):
+        if pmid in r:
+            return r
+    return None
+
+
+def _reference_entry_missing_title(ref_entry, real_title):
+    """True nếu entry references[] tìm được cho PMID này QUÁ NGẮN để chứa trọn tiêu
+    đề gốc — dùng ĐỘ DÀI KÝ TỰ, không đếm từ, vì đếm từ dễ sai khi tác giả/tạp chí
+    dài (vd nhiều đồng tác giả) tự nhiên vượt ngưỡng dù thực sự thiếu tiêu đề. Bất
+    biến: nếu entry CHỨA trọn tiêu đề, entry phải dài ít nhất gần bằng tiêu đề đó
+    (còn cộng thêm tác giả/tạp chí/năm/PMID) — nên entry ngắn hơn tiêu đề rõ rệt là
+    bằng chứng CHẮC CHẮN (không phải suy đoán) rằng tiêu đề không nằm trong đó."""
+    if not ref_entry or not real_title:
+        return False
+    return len(ref_entry) < len(real_title) * 0.5
+
+
 def _title_overlap_ratio(real_title, item_text):
     """Tỷ lệ từ có nghĩa trong TIÊU ĐỀ THẬT (PubMed) xuất hiện đâu đó trong nội dung item
     (title/action/summary/references — references[] thường chứa nguyên văn câu trích dẫn kèm
     tiêu đề gốc). Dò TRÁO TRÍCH DẪN (PMID có thật nhưng LẠC ĐỀ) — verify_pmid_online() chỉ xác
     nhận PMID TỒN TẠI trên PubMed, KHÔNG xác nhận PMID đó nói đúng chủ đề item (audit 2026-07-11:
     tái hiện thật — PMID có thật của một bài không liên quan vẫn PASS sạch qua --online). Heuristic
-    thô theo từ khóa (không NLP/không đối chiếu ngữ nghĩa) — CHỈ CẢNH BÁO (warns), không tự chặn:
-    có thể bỏ sót khi title[item] diễn giải hoàn toàn khác chữ so với tiêu đề gốc, nhưng bắt được
-    trường hợp rõ nhất — PMID hoàn toàn không liên quan (không chung từ khóa nào có nghĩa)."""
+    thô theo từ khóa TIẾNG ANH (không NLP/không đối chiếu ngữ nghĩa) — item viết tiếng Việt nên chỉ
+    khớp qua các đoạn tiếng Anh chép nguyên văn trong references[].
+
+    ⚠️ overlap thấp KHÔNG tự động nghĩa là "tráo trích dẫn" — nơi GỌI hàm này (main(), quanh dòng
+    "overlap = _title_overlap_ratio(...)") PHẢI dùng `_title_mismatch_message()` để dựng thông điệp,
+    KHÔNG tự viết "NGHI TRÁO PMID" thẳng từ overlap thấp. Hàm đó phân biệt "references[] thiếu tiêu
+    đề gốc" (entry quá ngắn để chứa trọn tiêu đề — không đủ dữ liệu để phán, KHÔNG PHẢI bằng chứng
+    tráo) khỏi "nghi tráo thật" (entry đủ dài mà vẫn không khớp). Vá 2026-08-24 sau khi đo thực
+    nghiệm 8/8 lỗi cứng liên tiếp của một đợt quét 67 dashboard đều là trường hợp thứ nhất, 0 là
+    tráo PMID thật — heuristic gốc (chỉ overlap < 0.25) đẩy CẢ HAI trường hợp vào cùng một thông
+    điệp "NGHI TRÁO PMID" khiến mỗi lần đều phải điều tra tốn kém để xác nhận không phải tráo."""
     sig = _significant_words(real_title)
     if len(sig) < 2:
         return 1.0  # tiêu đề quá ngắn/toàn hư từ — không đủ tín hiệu, coi như qua (tránh cảnh báo giả)
     text_low = (item_text or "").lower()
     hits = sum(1 for w in sig if w in text_low)
     return hits / len(sig)
+
+
+def _title_mismatch_message(iid, pmid, real_title, ch, overlap):
+    """Dựng thông điệp khi overlap tiêu đề thấp — TÁCH riêng khỏi mức độ nghiêm trọng
+    (caller tự quyết định errors/warns theo --strict-sources, hàm này KHÔNG đổi mức độ
+    chặn) để hai nhánh dễ test độc lập, không cần gọi mạng. Xem docstring
+    `_title_overlap_ratio()` để biết lý do có hai nhánh."""
+    ref_entry = _find_reference_entry_for_pmid(ch, pmid)
+    if ref_entry and _reference_entry_missing_title(ref_entry, real_title):
+        return (
+            "[%s] PMID %s tồn tại thật, references[] có nhắc PMID này nhưng "
+            "entry quá ngắn để chứa tiêu đề gốc (%d ký tự entry vs %d ký tự "
+            "tiêu đề thật) — KHÔNG ĐỦ DỮ LIỆU để xác nhận khớp chủ đề, không "
+            "phải bằng chứng tráo. Tiêu đề PubMed thật: \"%s\". Sửa: bổ sung "
+            "nguyên văn tiêu đề gốc (đã xác minh qua PubMed) vào references[], "
+            "KHÔNG đổi pmid/doi."
+            % (iid, pmid, len(ref_entry), len(real_title), real_title[:120])
+        )
+    return (
+        "[%s] PMID %s tồn tại thật trên PubMed nhưng tiêu đề KHÔNG khớp nội dung "
+        "item (trùng %.0f%% từ khóa có nghĩa) — NGHI TRÁO PMID (lạc đề). Tiêu đề "
+        "PubMed thật: \"%s\"." % (iid, pmid, overlap * 100, real_title[:120])
+    )
 
 
 def main():
@@ -1234,11 +1287,17 @@ def main():
                 # gán nhầm cho nhiều item khác chủ đề nhau. Chỉ cảnh báo — RÀ TAY, không tự chặn.
                 overlap = _title_overlap_ratio(info, ch)
                 if overlap < 0.25:
-                    msg = (
-                        "[%s] PMID %s tồn tại thật trên PubMed nhưng tiêu đề KHÔNG khớp nội dung "
-                        "item (trùng %.0f%% từ khóa có nghĩa) — NGHI TRÁO PMID (lạc đề). Tiêu đề "
-                        "PubMed thật: \"%s\"." % (iid, p, overlap * 100, info[:120])
-                    )
+                    # VÁ 2026-08-24 (Sprint 10, kiểm bằng thực nghiệm 8/8 ca): overlap thấp
+                    # KHÔNG chỉ do lạc đề — heuristic đếm từ khóa TIẾNG ANH, mà dashboard viết
+                    # TIẾNG VIỆT, nên khi references[] chỉ ghi "Tác giả. Tạp chí. Năm. PMID X."
+                    # (thiếu tiêu đề gốc) thì overlap luôn thấp DÙ PMID hoàn toàn đúng. Đo thật
+                    # trên 8 lỗi cứng liên tiếp của đợt quét 67 dashboard: cả 8 đều là trường hợp
+                    # này, 0 là tráo PMID thật. `_title_mismatch_message()` phân biệt bằng ĐỘ DÀI
+                    # entry references chứa đúng PMID. KHÔNG nới lỏng mức độ nghiêm ngặt:
+                    # strict-sources vẫn chặn ở CẢ hai nhánh — chỉ sửa THÔNG ĐIỆP cho đúng bản
+                    # chất, để lần sau không cần điều tra tốn agent mới biết cách sửa (bổ sung
+                    # tiêu đề) khác với cách sửa khi thật sự tráo (đổi PMID).
+                    msg = _title_mismatch_message(iid, p, info, ch, overlap)
                     if a.strict_sources:
                         errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
                     else:
