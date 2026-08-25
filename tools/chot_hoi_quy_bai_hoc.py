@@ -2974,7 +2974,6 @@ def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
         (clinical-evidence-rag, ebm-master, literature-review). Nguồn gốc của khoá
         không đổi được sự thật rằng mô tả đang có là do người viết.
     """
-    import re as _re
     import sys as _sys
     import tempfile
 
@@ -3046,6 +3045,47 @@ def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     if trung:
         return False, "mã trùng: " + ", ".join(trung)
     return True, f"{len(BAI_HOC)} mục, mã duy nhất"
+
+
+def bh75_don_bak_phai_xu_ly_ca_thu_muc() -> tuple[bool, str]:
+    """25/08/2026 — `dong_bo_skill.py --don-bak` chỉ biết `.unlink()` (file), nhưng từ
+    khi `dong_bo_skill_claude_codex.py` sao lưu NGUYÊN THƯ MỤC skill phân kỳ bằng
+    `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)` thay vì từng file rời,
+    `rglob("*.bak-*")` trả về CẢ thư mục khớp mẫu tên. Gọi `.unlink()` lên một thư mục
+    trên macOS ném `PermissionError` (không phải `IsADirectoryError` — dễ đọc nhầm
+    thành lỗi quyền hệ thống) và giết cả lượt dọn giữa chừng, để lại rác `.bak-*` nằm
+    cạnh bản sống trong runtime — đúng điều BH22 sinh ra để ngăn, nhưng BH22 chỉ đo
+    KẾT QUẢ (còn rác hay không), không đo được đường đi (`--don-bak` có tự chạy nổi
+    không). Đo thật: 17 mục rác tồn đọng từ 13/08–25/08 vì mọi lần gọi `--don-bak`
+    trước đó đều chết ngay khi gặp thư mục `.bak-*` đầu tiên.
+
+    Kiểm HÀNH VI trên đĩa tạm bằng cách gọi THẲNG `don_bak()` thật (không viết lại
+    logic riêng — tránh lệch với bản đang chạy): dựng cả THƯ MỤC lẫn FILE tên
+    `.bak-*`, xác nhận không crash và cả hai loại đều bị xoá sạch."""
+    import tempfile
+
+    m = _nap(REPO / "tools/dong_bo_skill.py", "dbs_bh75")
+    with tempfile.TemporaryDirectory() as d:
+        rt = Path(d) / "skills"
+        (rt / "mot-skill" / "tools").mkdir(parents=True)
+        (rt / "mot-skill" / "tools" / "x.py").write_text("pass", encoding="utf-8")
+        thu_muc_bak = rt / "mot-skill.bak-20260101-000000"
+        (thu_muc_bak / "tools").mkdir(parents=True)
+        (thu_muc_bak / "tools" / "x.py").write_text("pass cu", encoding="utf-8")
+        file_bak = rt / "mot-skill" / "tools" / "x.py.bak-20260101-000000"
+        file_bak.write_text("pass cu 2", encoding="utf-8")
+
+        try:
+            n = m.don_bak(rt)
+        except OSError as exc:
+            return False, f"don_bak() crash trên thư mục .bak: {exc}"
+        if n != 2:
+            return False, f"don_bak() báo xoá {n} mục, mong đợi 2 (1 thư mục + 1 file)"
+        if thu_muc_bak.exists():
+            return False, "thư mục .bak vẫn còn sau khi dọn"
+        if file_bak.exists():
+            return False, "file .bak vẫn còn sau khi dọn"
+    return True, "don_bak() xử lý đúng cả thư mục lẫn file, không crash"
 
 
 BAI_HOC = [
@@ -3126,6 +3166,7 @@ BAI_HOC = [
     ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
     ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
     ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
+    ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
 ]
 
 

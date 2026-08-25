@@ -86,6 +86,25 @@ def tim_runtime() -> Path | None:
     return ung_vien[0] if ung_vien else None
 
 
+def don_bak(runtime: Path) -> int:
+    """Dọn mọi mục tên `*.bak-*` (BH22) khỏi thư mục skill đang chạy — TÁCH theo
+    is_dir()/is_file() vì từ khi dong_bo_skill_claude_codex.py sao lưu NGUYÊN THƯ
+    MỤC skill (`shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)`) thay vì
+    từng file rời, rglob("*.bak-*") trả về cả DIRECTORY khớp mẫu tên. Gọi
+    `.unlink()` lên một thư mục trên macOS ném `PermissionError` (không phải
+    `IsADirectoryError` — dễ đọc nhầm thành lỗi quyền hệ thống) và giết cả lượt dọn
+    giữa chừng (VÁ 25/08/2026, BH75 — đo được 17 mục rác tồn đọng từ 13/08 vì mọi
+    lần gọi `--don-bak` trước đó đều chết ngay ở thư mục `.bak-*` đầu tiên).
+    Trả về số mục đã xoá."""
+    rac = list(runtime.rglob("*.bak-*"))
+    for f in rac:
+        if f.is_dir():
+            shutil.rmtree(f, ignore_errors=True)
+        elif f.is_file():
+            f.unlink()
+    return len(rac)
+
+
 def _bam(p: Path) -> str:
     return hashlib.md5(p.read_bytes()).hexdigest()
 
@@ -182,10 +201,8 @@ def main() -> int:
 
     runtime = tim_runtime()
     if a.don_bak and runtime:
-        rac = list(runtime.rglob("*.bak-*"))
-        for f in rac:
-            f.unlink()
-        print(f"✓ dọn {len(rac)} file .bak khỏi nơi chạy (BH22)")
+        n = don_bak(runtime)
+        print(f"✓ dọn {n} mục .bak khỏi nơi chạy (BH22)")
         if not a.ap_dung:
             return 0
     if runtime is None:

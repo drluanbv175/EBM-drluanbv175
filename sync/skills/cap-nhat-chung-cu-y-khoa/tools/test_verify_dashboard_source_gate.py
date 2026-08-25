@@ -239,5 +239,96 @@ class TestPhanXuRutVaThay(unittest.TestCase):
         self.assertIsNone(vd._replacement_acknowledgement(self._viet("notyet"), rec))
 
 
+class TestPhanBietThieuTieuDeVsTraoThat(unittest.TestCase):
+    """Khoá bản vá 2026-08-24 (Sprint 10): overlap tiêu đề thấp phải được phân biệt
+    thành 'references[] thiếu tiêu đề gốc' (KHÔNG phải bằng chứng tráo, vẫn chặn
+    strict-sources nhưng với thông điệp đúng bản chất + gợi ý sửa đúng) khỏi 'nghi
+    tráo thật' (entry đủ dài mà vẫn không khớp — giữ nguyên thông điệp cũ). Đo thực
+    nghiệm: 8/8 lỗi cứng liên tiếp của một đợt quét 67 dashboard đều là trường hợp
+    thứ nhất — bản vá KHÔNG được làm yếu khả năng bắt trường hợp thứ hai."""
+
+    REAL_TITLE = ("2026 ACC/AHA/AACVPR/ABC/ACPM/ADA/AGS/APhA/ASPC/NLA/PCNA Guideline "
+                  "on the Management of Dyslipidemia: A Report of the American College "
+                  "of Cardiology/American Heart Association Joint Committee")
+
+    # ── _find_reference_entry_for_pmid ──────────────────────────────────────
+
+    def test_tim_thay_entry_chua_dung_pmid(self):
+        ch = "references:['Long B, Gottlieb M. Am J Emerg Med. 2026. PMID 42127879.']"
+        entry = vd._find_reference_entry_for_pmid(ch, "42127879")
+        self.assertIsNotNone(entry)
+        self.assertIn("42127879", entry)
+
+    def test_khong_tim_thay_khi_pmid_khong_xuat_hien_trong_references(self):
+        ch = "references:['Fraenkel L, et al. Arthritis Rheumatol. 2021. PMID 34101376.']"
+        self.assertIsNone(vd._find_reference_entry_for_pmid(ch, "99999999"))
+
+    def test_khong_tim_thay_khi_thieu_hoan_toan_references(self):
+        ch = "title:'Không có references nào', action:'test'"
+        self.assertIsNone(vd._find_reference_entry_for_pmid(ch, "42127879"))
+
+    # ── _reference_entry_missing_title ──────────────────────────────────────
+
+    def test_entry_ngan_thieu_tieu_de_la_true(self):
+        # Đúng ca thật CAP_ATS2025 ITEM-03 trước khi sửa: chỉ tác giả+tạp chí+năm+PMID.
+        entry = "Long B, Gottlieb M. Am J Emerg Med. 2026;107:16-20. PMID 42127879."
+        self.assertTrue(vd._reference_entry_missing_title(entry, self.REAL_TITLE))
+
+    def test_entry_du_dai_co_tieu_de_la_false(self):
+        entry = (
+            "Long B, Gottlieb M. 2025 guideline updates for community-acquired "
+            "pneumonia diagnosis and management. Am J Emerg Med. 2026;107:16-20. "
+            "PMID 42127879."
+        )
+        # Cùng entry NHƯNG so với tiêu đề ngắn hơn (CAP thay vì dyslipidemia đa hội) —
+        # kiểm đúng ngữ cảnh thật thay vì trộn tiêu đề của case khác.
+        real_title_cap = "2025 guideline updates for community-acquired pneumonia diagnosis and management."
+        self.assertFalse(vd._reference_entry_missing_title(entry, real_title_cap))
+
+    def test_gioi_han_co_chu_y_entry_dai_do_tac_gia_khong_duoc_nhan_dien(self):
+        """GIỚI HẠN CÓ CHỦ Ý, không phải bug: khi tên tác giả (nhiều đồng tác giả) +
+        tên tạp chí KHÔNG viết tắt khiến entry tình cờ dài gần bằng một tiêu đề
+        multi-society cũng rất dài, thuật toán so ĐỘ DÀI không phân biệt được — và
+        NGHIÊNG VỀ AN TOÀN (coi vẫn có thể là 'nghi tráo', không tự ý nới lỏng) thay
+        vì đoán liều là 'thiếu tiêu đề'. Đây là đánh đổi có chủ ý: thà báo động giả
+        thêm ở ca hiếm này còn hơn làm yếu khả năng bắt tráo thật ở ca không chắc
+        chắn. ĐỪNG sửa hàm để test này pass — nếu cần xử lý ca này, phải là một tín
+        hiệu MẠNH HƠN (vd so khớp cấu trúc "Tên. Tiêu đề. Tạp chí." bằng dấu chấm),
+        không phải nới ngưỡng độ dài."""
+        entry = ("Blumenthal RS, Morris PB, Gaudino M, Johnson HM, Anderson TS, et al. "
+                 "Journal of the American College of Cardiology. 2026;87(19). PMID 41824590.")
+        self.assertFalse(vd._reference_entry_missing_title(entry, self.REAL_TITLE))
+
+    def test_entry_rong_khong_loi(self):
+        self.assertFalse(vd._reference_entry_missing_title("", self.REAL_TITLE))
+        self.assertFalse(vd._reference_entry_missing_title(None, self.REAL_TITLE))
+
+    # ── _title_mismatch_message — hành vi tổng hợp ──────────────────────────
+
+    def test_message_thieu_tieu_de_khong_noi_nghi_trao(self):
+        ch = "references:['Long B, Gottlieb M. Am J Emerg Med. 2026. PMID 42127879.']"
+        msg = vd._title_mismatch_message("ITEM-03", "42127879", self.REAL_TITLE, ch, 0.14)
+        self.assertIn("KHÔNG ĐỦ DỮ LIỆU", msg)
+        self.assertNotIn("NGHI TRÁO PMID", msg)
+        self.assertIn("bổ sung", msg.lower())
+
+    def test_message_khong_co_reference_van_la_nghi_trao(self):
+        """references[] hoàn toàn không nhắc PMID này — KHÔNG có cơ sở nào để nói
+        'chỉ thiếu tiêu đề', nên giữ nguyên mức nghiêm ngặt cũ."""
+        ch = "title:'ITEM khác chủ đề', action:'không liên quan'"
+        msg = vd._title_mismatch_message("ITEM-13", "34153348", self.REAL_TITLE, ch, 0.0)
+        self.assertIn("NGHI TRÁO PMID", msg)
+
+    def test_message_entry_du_dai_ma_van_khong_khop_la_nghi_trao_that(self):
+        """Entry ĐỦ DÀI (đủ chỗ chứa tiêu đề) nhưng vẫn không khớp — đây mới là
+        trường hợp heuristic PHẢI giữ nguyên mức nghiêm ngặt, không được nới lỏng."""
+        # Entry dài, có vẻ đủ chứa 1 tiêu đề — nhưng tiêu đề đó không phải REAL_TITLE.
+        ch = ("references:['Smith J, Doe A, Nguyen K, et al. Một tiêu đề hoàn toàn "
+              "khác về chủ đề khác, dài ngang bằng tiêu đề thật để không bị coi là "
+              "thiếu, nhưng nội dung sai be bét. J Fake Journal. 2020. PMID 41824590.']")
+        msg = vd._title_mismatch_message("ITEM-01", "41824590", self.REAL_TITLE, ch, 0.05)
+        self.assertIn("NGHI TRÁO PMID", msg)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
