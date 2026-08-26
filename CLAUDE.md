@@ -390,7 +390,9 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `medical-ebm-automation/chronic-care-clinic-os/` là app Next.js+Prisma THẬT (không phải mock) cho
   một sáng kiến "phòng khám bệnh mạn" riêng — **CHƯA nối vào hệ agent `.claude/agents/` hay
   `tools/orchestrator/`** (dieu-phoi-lam-sang/dieu-phoi-nghien-cuu không gọi tới); tự khóa
-  `BLOCKED_FOR_PRODUCTION` (37 blocker mở, xem `chronic-care-clinic-os/PRODUCTION_BLOCKERS.md`) —
+  `BLOCKED_FOR_PRODUCTION` (24 blocker mở — đính chính 26/08/2026, số cũ "37" đã lỗi thời so với
+  nội dung thật của `chronic-care-clinic-os/PRODUCTION_BLOCKERS.md`; Security 8 · Data protection 5 ·
+  Clinical safety 6 · Operations 4 · AI 1) —
   hiện KHÔNG ghi DB thật, KHÔNG có code AI/LLM nào (`AI_DRAFTS_ENABLED=false` mới chỉ là biến khai
   trong `.env.example`, chưa có chỗ nào trong code đọc nó). `tools/orchestrator/` (control plane 6
   năng lực, xem mục Lệnh) cũng **tách rời khỏi luồng agent thật** — chỉ là bộ dry-run/self-audit song
