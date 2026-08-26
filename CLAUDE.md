@@ -330,6 +330,32 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   ⚠️ **Chỉ dùng cho việc LẬP TRÌNH** (repo `medical-ebm-automation`). Harness KHÔNG phải chủ của bất
   kỳ việc có cổng nào — bảng định tuyến ở mục trên vẫn nguyên giá trị.
 
+- **🧹 DỌN 628 «BÓNG TIẾNG ANH» TRONG `~/.claude/skills/` (26/08/2026) — lời giải cho lớp bực bội
+  «Việt hoá bị lỗi» và «danh sách quá dài».** Đo được: `~/.claude/skills/` có **707 thư mục thật**,
+  trong đó **643 trùng TÊN với skill của plugin ĐANG BẬT nhưng NỘI DUNG KHÁC**. Soi diff thì thấy
+  chiều ngược với dự đoán: **bản trong plugin ĐÃ Việt hoá** (có `description-src` + `description-en`
+  + `description` tiếng Việt), còn **bản trong `~/.claude/skills/` là tiếng Anh thô** — tức mỗi skill
+  hiện HAI lần, và bản tiếng Anh không có tiền tố nên thường thắng. Mốc `mtime` cho thấy 630/643 được
+  chép hàng loạt **một lần ngày 21/08**, KHÔNG bị hook `SessionStart` tạo lại (hook chạy 26/08 08:04
+  không đụng tới chúng) ⇒ dọn là dứt điểm, không tái phát.
+  **Đã chuyển (KHÔNG xoá) 628 mục** sang `~/.claude/skills-backup/bong-tieng-anh-20260826/`.
+  Kết quả đo: mục gọi được **1720 → 1092** · `INDEX-CONG-CU.md` (file `/cong-cu-gi` đọc)
+  **128 KB → 35 KB** · trang tra 718 → 495 KB. Muốn lùi: chuyển ngược thư mục là xong.
+  🔴 **BẪY ĐÃ MẮC NGAY TRONG LÚC DỌN — cùng họ BH74, ghi để đừng lặp lại.** Phân loại theo **TÊN**
+  đã cuốn nhầm **15 skill RIÊNG của bác sĩ** chỉ vì trùng tên với skill plugin
+  (`literature-review` · `peer-review` · `citation-management` · `clinical-decision-support` ·
+  `clinical-reports` · `exploratory-data-analysis` · `hypothesis-generation` · `paper-lookup` ·
+  `pyhealth` · `scholar-evaluation` · `scientific-critical-thinking` · `scikit-survival` ·
+  `statistical-analysis` · `treatment-plans` · `venue-templates`). Đã khôi phục đủ 15, và đối chiếu
+  **40/40 khớp BYTE với `sync/skills/`**. **Luật: trước khi dời bất cứ thứ gì khỏi `~/.claude/skills/`,
+  phải loại trừ mọi tên có trong `sync/skills/` TRƯỚC, không được xét theo tên plugin.**
+  **38 skill MỒ CÔI được GIỮ LẠI** — không plugin nào có, xoá là mất hẳn: `alphafold2` · `boltz` ·
+  `borzoi` · `chai1` · `diffdock` · `esmfold2` · `evo2` · `openfold3` · `proteinmpnn` · `scgpt` ·
+  `playwright` · `pptx-skill` · `neurokit` · `pydeseq` … (phần lớn là skill sinh-tin học của plugin
+  đã gỡ). Sau dọn `~/.claude/skills/` còn **78 mục = 40 skill riêng + 38 mồ côi**.
+  ⚠️ Hook `SessionStart` đang bảo chạy `tools/verify_skill_sync_health.py` — **file đó không tồn tại**;
+  tên thật là `tools/check_claude_codex_sync_health.py` (chạy ngày 26/08: PASS, 50/50 agent).
+
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
   tracker + dashboard 12 tab + Evidence Workbench + scheduler + scoring (32 thang có nguồn trích dẫn
