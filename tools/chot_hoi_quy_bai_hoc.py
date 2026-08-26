@@ -3166,6 +3166,65 @@ def bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime() -> tuple[bool, str]:
     return True, "dem_dashboard_phai_sinh_loi_thoi() ưu tiên hash DATA, chỉ lùi mtime khi thiếu sidecar"
 
 
+def bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la() -> tuple[bool, str]:
+    """26/08/2026 — `sync/skills/peer-review/` và `sync/skills/literature-review/`
+    (2 skill dựa trên bản gốc K-Dense Inc., đã được bác sĩ chỉnh khối
+    `EBM-VN-GUARD` — bắt buộc tiếng Việt, disclaimer, PMID/DOI, không PII, chỉ
+    nguồn miễn phí) bị GHI ĐÈ HOÀN TOÀN bằng một bộ skill khác — tiếng Anh, có
+    từ khoá tiếng Hàn (리뷰, 논문 리뷰), mẫu tạp chí X-quang (RYAI/INSI/EURE/AJR/
+    KJR), và `kernel.py` tự khai chạy trong hệ sinh thái "Claude Science" —
+    KHÔNG liên quan gì tới phòng khám EBM tiếng Việt của bác sĩ. Khối
+    EBM-VN-GUARD (tiếng Việt bắt buộc + disclaimer + PMID/DOI + không PII)
+    biến mất hoàn toàn khỏi bản NGUỒN git-tracked.
+
+    May mắn: bản Cowork RUNTIME vẫn còn nguyên khối EBM-VN-GUARD (chưa ai chạy
+    `--nguon-la-chuan` để đẩy bản nguồn đã hỏng đè lên runtime), và nội dung lạ
+    CHƯA TỪNG được git commit — khôi phục bằng cách chép lại từ runtime khiến
+    working tree khớp TUYỆT ĐỐI với commit đã có (0 dòng lệch). Không rõ cơ chế
+    gốc đã ghi đè — nghi vấn liên quan một tiến trình trên máy khác (tệp
+    `catalog_raw-Dr Luân BV175.json` xuất hiện cùng thời điểm) nhưng chưa xác
+    định được chắc chắn.
+
+    Đây là biến thể MỚI của họ lỗi BH73/BH74 (plugin cập nhật ghi đè bản Việt
+    hoá) — nhưng nặng hơn nhiều: BH73/74 chỉ mất MÔ TẢ, còn ca này mất TOÀN BỘ
+    THÂN SKILL kể cả rào an toàn bắt buộc (ngôn ngữ, disclaimer, nguồn, PII).
+    Chốt cũ (apply_vi.py --tu-quet) không bắt được vì nó chỉ so mô tả qua từ
+    điển, không so sự TỒN TẠI của khối guard trong thân bài.
+
+    Kiểm HÀNH VI: quét toàn bộ 23 skill đã biết mang khối EBM-VN-GUARD (chốt
+    tại thời điểm phát hiện sự cố), xác nhận CẢ 22 vẫn còn khối này trong bản
+    nguồn hiện tại. Không cái nào tái phát ⇒ ĐẠT."""
+    # Danh sách 23 skill mang EBM-VN-GUARD, chốt tại thời điểm phát hiện sự cố
+    # 26/08/2026 (grep -rl "EBM-VN-GUARD" sync/skills/*/SKILL.md). Danh sách mới
+    # thêm sau này không tự động vào đây — đây là chốt HỒI QUY (không tái phát
+    # trên skill ĐàN biết mang guard), không phải kiểm kê skill nào NÊN mang guard.
+    SKILL_CO_GUARD = [
+        "antifacts", "citation-management", "clinical-decision-support",
+        "clinical-reports", "database-lookup", "exploratory-data-analysis",
+        "experimental-design", "ebm-master", "hypothesis-generation",
+        "literature-review", "paper-lookup", "peer-review", "research-lookup",
+        "scholar-evaluation", "scientific-writing", "scikit-survival", "pyhealth",
+        "statistical-analysis", "statsmodels", "scientific-critical-thinking",
+        "treatment-plans", "statistical-power", "venue-templates",
+    ]
+    mat = []
+    thieu_file = []
+    for ten in SKILL_CO_GUARD:
+        f = REPO / "sync" / "skills" / ten / "SKILL.md"
+        if not f.exists():
+            thieu_file.append(ten)
+            continue
+        noi_dung = f.read_text(encoding="utf-8", errors="replace")
+        if "EBM-VN-GUARD" not in noi_dung:
+            mat.append(ten)
+    if thieu_file:
+        return False, "SKILL.md biến mất hoàn toàn (không chỉ mất guard): " + ", ".join(thieu_file)
+    if mat:
+        return False, ("mất khối EBM-VN-GUARD (khả năng đã bị ghi đè bằng nội dung lạ, "
+                       "xem BH77): " + ", ".join(mat))
+    return True, f"{len(SKILL_CO_GUARD)}/{len(SKILL_CO_GUARD)} skill còn nguyên khối EBM-VN-GUARD"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3246,6 +3305,7 @@ BAI_HOC = [
     ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
     ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
     ("BH76", "25/08", "Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime", bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime),
+    ("BH77", "26/08", "Skill đã Việt hoá không được mất khối EBM-VN-GUARD", bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la),
 ]
 
 
