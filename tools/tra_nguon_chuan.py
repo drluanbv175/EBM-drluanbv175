@@ -91,11 +91,17 @@ def tim(cau_hoi: str) -> int:
             ks = ng.get("kiem_song", {})
             tt = {"ok": "✓ máy thăm được", "chan": "⛔ chặn máy — mở Browser/tải tay",
                   "": "chưa kiểm sống"}.get(ks.get("trang_thai", ""), ks.get("trang_thai", ""))
+            if ng.get("url"):
+                url = ng["url"]
+            elif ng.get("pmid"):
+                url = f"https://pubmed.ncbi.nlm.nih.gov/{ng['pmid']}/"
+            else:
+                url = "(không có URL/PMID trong danh bạ — tra tay theo tên nguồn)"
             print(f"  • {ng['to_chuc']} — {ng['ten']}")
-            print(f"    {ng['url']}")
-            print(f"    hệ mức nguyên bản: {ng['he_muc']} · {tt}"
+            print(f"    {url}")
+            print(f"    hệ mức nguyên bản: {ng.get('he_muc', 'chưa rõ')} · {tt}"
                   + (f" ({ks.get('ngay', '')})" if ks.get("ngay") else ""))
-            for bc in _ban_chup_cua(ng["url"], ng.get("ban_chup")):
+            for bc in _ban_chup_cua(url, ng.get("ban_chup")):
                 print(f"    📌 BẢN CHỤP SẴN TRONG KHO: guideline_snapshot/{bc} — đọc ngay")
             if ng.get("ghi_chu"):
                 print(f"    ghi chú: {ng['ghi_chu']}")
@@ -112,12 +118,20 @@ def kiem_song(loc: str | None) -> int:
         if loc and loc != ma:
             continue
         for ng in cd["nguon"]:
+            url = ng.get("url") or (f"https://pubmed.ncbi.nlm.nih.gov/{ng['pmid']}/" if ng.get("pmid") else None)
+            if not url:
+                # Thiếu cả url lẫn pmid trong dữ liệu — đây là DỮ LIỆU CHƯA ĐỦ,
+                # KHÁC "chặn máy" (host từ chối bot). Gộp chung sẽ đọc sai thành
+                # "nguồn có URL nhưng bị chặn" trong khi thực ra chưa có gì để thăm.
+                ng["kiem_song"] = {"trang_thai": "khong_co_url", "ngay": hom_nay}
+                print(f"  ? {ng['to_chuc']:<18} thiếu cả url và pmid trong danh bạ — cần bổ sung tay")
+                continue
             try:
-                req = urllib.request.Request(ng["url"], headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
                 with urllib.request.urlopen(req, timeout=15) as ph:
                     du = ph.read(2048)
                 ng["kiem_song"] = {"trang_thai": "ok" if du else "chan", "ngay": hom_nay}
-                print(f"  ✓ {ng['to_chuc']:<18} {ng['url'][:64]}")
+                print(f"  ✓ {ng['to_chuc']:<18} {url[:64]}")
             except Exception as exc:  # noqa: BLE001 — chặn máy là dữ kiện, không phải lỗi dừng
                 ng["kiem_song"] = {"trang_thai": "chan", "ngay": hom_nay,
                                    "loi": type(exc).__name__}
