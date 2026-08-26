@@ -1,6 +1,6 @@
 {
   "_ghi_chu": "Bảng 'việc cần làm → gọi cái gì'. ĐÂY LÀ FILE DUY NHẤT trong bộ tra cứu mà bác sĩ SỬA TAY được — mọi thứ còn lại sinh từ máy quét. Thêm/bớt/đổi thứ tự thoải mái rồi chạy lại: python tools/vietnamize/build_trang_tra_cuu.py. Trường 'tim' là chữ được điền vào ô tìm khi bấm thẻ (viết KHÔNG DẤU cho chắc).",
-  "_cap_nhat": "2026-08-10 — thêm 8 thế mạnh RIÊNG của aipoch (MR · FAERS · độc chất mạng · đơn tế bào · đa omics · tái định vị thuốc · QTL): đây là các mảng hệ agent EBM không có. CỐ Ý không thêm cỡ mẫu/thiết kế/viết bài của aipoch — những việc đó đã có chủ theo bảng định tuyến trong CLAUDE.md.",
+  "_cap_nhat": "2026-08-26 — thêm 4 quy trình harness sau khi bổ sung plugin claude-code-harness v5.13.1 cho máy Windows. Trong v5.13.1 chúng là SKILL chứ không phải lệnh, nên gọi bằng /claude-code-harness:<tên>. Chỉ dùng cho việc LẬP TRÌNH (repo medical-ebm-automation), KHÔNG dùng cho việc lâm sàng/nghiên cứu có cổng.",
   "viec": [
     {
       "viec": "Khám một ca bệnh theo 5 bước EBM",
@@ -201,6 +201,26 @@
       "viec": "Đồng định vị QTL với locus GWAS",
       "goi": "/aipoch-medical-research:qtl-colocalization-study-planner",
       "tim": "dong dinh vi QTL"
+    },
+    {
+      "viec": "Lập kế hoạch sprint cho repo code (harness)",
+      "goi": "/claude-code-harness:harness-plan",
+      "tim": "harness-plan"
+    },
+    {
+      "viec": "Chạy một task theo hợp đồng harness (TDD)",
+      "goi": "/claude-code-harness:harness-work",
+      "tim": "harness-work"
+    },
+    {
+      "viec": "Rà lại việc harness vừa làm trước khi chốt",
+      "goi": "/claude-code-harness:harness-review",
+      "tim": "harness-review"
+    },
+    {
+      "viec": "Đồng bộ cấu hình harness.toml sang file plugin",
+      "goi": "/claude-code-harness:harness-sync",
+      "tim": "harness-sync"
     }
   ]
 }

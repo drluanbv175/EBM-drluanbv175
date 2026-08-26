@@ -44,7 +44,7 @@
     "plugin": {
       "academic-research-skills@academic-research-skills": {
         "so_skill": 4,
-        "phien_ban": "3.20.1"
+        "phien_ban": "3.21.0"
       },
       "aipoch-medical-research@aipoch-medical-research": {
         "so_skill": 605,
@@ -53,6 +53,10 @@
       "medsci-project@medsci-skills": {
         "so_skill": 59,
         "phien_ban": "dda8b532401e"
+      },
+      "claude-code-harness@claude-code-harness-marketplace": {
+        "so_skill": 73,
+        "phien_ban": "5.13.1"
       }
     }
   }

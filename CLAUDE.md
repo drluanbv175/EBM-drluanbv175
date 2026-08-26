@@ -118,7 +118,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
   ✅ **ĐÃ ĐẶT TRÊN WINDOWS 12/08/2026** — cùng giá trị Mac (`0.08` + `maxDescChars: 80`); sao lưu
   `settings.json.bak-20260812-truoc-dat-skill-budget`. Chốt kho đi từ 🔴 (vượt ngân sách 5,1 lần)
-  về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 3 plugin · 668 skill (`tools/moc_chuan_plugin.json`)
+  về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 4 plugin · 741 skill (`tools/moc_chuan_plugin.json`) — cập nhật 26/08/2026 khi bổ sung `claude-code-harness`; trước đó là 3 plugin · 668 skill
   — đúng chủ ý của bác sĩ (3 bật + 8 medsci trùng đã tắt), KHÁC Mac (10 plugin · 870 skill) vì hai
   máy cài khác nhau, nên **mỗi máy tự `--ghi-moc` riêng, đừng chép mốc qua lại**.
 - **✅ SKILL DÙNG NGUỒN CHUNG VÀ TỰ ĐỒNG BỘ (hoàn thiện 2026-08-20).**
@@ -149,7 +149,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   chụp TRẠNG THÁI riêng từng máy và cố ý không bao giờ nhìn sang máy kia. Nhờ vậy mới tách được
   **«thiếu vì cố ý»** khỏi **«thiếu vì trôi dạt»** — hai thứ trông giống hệt nhau trong mọi bản kiểm
   cũ mà xử lý thì ngược nhau. Đo trên chính hai mốc đang có: **Mac 9 plugin/839 skill · Windows 3
-  plugin/668 skill — 6 plugin chỉ có ở Mac**, và trước file này không công cụ nào nói được con số đó.
+  plugin/741 skill (từ 26/08/2026, gồm harness) — 5 plugin chỉ có ở Mac**, và trước file này không công cụ nào nói được con số đó.
   ⚠️ Mục nào còn `da_xac_nhan: false` thì `can_o_may` mới chỉ là SUY từ hiện trạng lúc dựng sổ, nên
   chốt **chỉ cảnh báo, không báo đỏ** (báo đỏ dựa trên suy đoán là biến CHƯA BIẾT thành CÓ VẤN ĐỀ —
   BH08, và bức tường đỏ giả sẽ dạy người ta bỏ qua cả cảnh báo thật). Bác sĩ xác nhận xong thì chính
@@ -304,6 +304,31 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   khuyên phải là cách chạy được ở NHIỀU MÁY nhất — không thì bảng chữ cái sẽ chọn
   `/medsci-analysis:*` (đã tắt) thay vì `/medsci-project:*`. (c) 7 script trong `tools/vietnamize/`
   từng chết giữa chừng trên Windows vì `print()` tiếng Việt gặp stdout cp1252 — nay tự ép UTF-8.
+
+- **🔧 HARNESS ĐÃ CÓ TRÊN WINDOWS (bổ sung 26/08/2026 theo yêu cầu bác sĩ).**
+  `claude-code-harness` **v5.13.1** (Mac đang v5.11.0 — Windows nay MỚI HƠN). Trước hôm đó máy
+  Windows **không có gì**: không clone, không skill, không agent, không lệnh — chỉ Mac có.
+  **Gọi bằng SKILL, KHÔNG phải lệnh** — đây là chỗ dễ hiểu nhầm nhất: `commands/` của bản
+  5.13.1 **rỗng**, 4 quy trình nằm trong `skills/`, nên phải gõ
+  `/claude-code-harness:harness-plan` (·`-work` ·`-review` ·`-sync` ·`-accept` ·`-loop`
+  ·`-release` ·`-setup` ·`-progress` ·`-plan-brief`), KHÔNG phải `/harness-plan`. Sổ khai
+  `sync/plugin-manifest.json` (mô tả cũ ghi «4 lệnh harness») đã sửa lại cho đúng.
+  **Cài thủ công vì máy này KHÔNG có `claude` CLI trong PATH** — nối dây đúng khuôn 3 file như
+  các plugin khác: `marketplaces/claude-code-harness-marketplace` (clone `--depth 1`, 113 MB
+  thay vì 553 MB full — bản đầy đủ từng là mục phình đĩa lớn nhất trong đợt audit 05/08) ·
+  `cache/<marketplace>/claude-code-harness/5.13.1` (đã bỏ `.git`) · đăng ký ở
+  `known_marketplaces.json` + `installed_plugins.json` + `enabledPlugins`. Sao lưu
+  `*.bak-truoc-them-harness-20260826-074126`. Nguồn: `github.com/Chachamaru127/claude-code-harness`
+  (chính repo mà `sync/setup-claude-cli.sh` của bác sĩ vẫn dùng).
+  ⚠️ **Plugin này mang 56 HOOK trên 27 sự kiện**, gồm `PreToolUse` khớp `Write|Edit|MultiEdit|Bash|Read`
+  — tức chạm vào MỌI lời gọi công cụ. Thiết kế là **fail-safe**: `bin/harness` có nhánh Windows riêng
+  (exec `harness-windows-amd64.exe`) và khi thiếu binary thì **thoát 0 với stdout rỗng** để hook coi
+  là «không quyết định». `/bin/bash` + `/usr/bin/grep` mà hook cần đều có sẵn (Git Bash). **NHƯNG
+  binary CHƯA được chạy thử** — cần bác sĩ tự kiểm sau khi khởi động lại. Thấy chậm bất thường hoặc
+  lỗi lạ khi Write/Edit/Bash ⇒ nghi hook harness trước tiên, tắt bằng cách đặt
+  `"claude-code-harness@claude-code-harness-marketplace": false` trong `~/.claude/settings.json`.
+  ⚠️ **Chỉ dùng cho việc LẬP TRÌNH** (repo `medical-ebm-automation`). Harness KHÔNG phải chủ của bất
+  kỳ việc có cổng nào — bảng định tuyến ở mục trên vẫn nguyên giá trị.
 
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
