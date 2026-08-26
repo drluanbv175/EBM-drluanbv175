@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `tools/vietnamize/build_trang_tra_cuu.py`. KHÔNG sửa tay.
 
-**1155 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
+**1140 công cụ** (đã gộp bản trùng giữa các plugin cùng nội dung).
 Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy được cả hai.
 
 ## Cách dùng index này
@@ -253,7 +253,7 @@ Nhãn máy: **[W]** chỉ Windows · **[M]** chỉ Mac · không ghi = chạy đ
 - `/venue-templates` — Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu…
 - `/xgboost-analysis` [W] — Use when building XGBoost models on tabular data and returning feature importance ranking outputs…
 
-## Các nhóm còn lại (974 mục)
+## Các nhóm còn lại (959 mục)
 
 Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` như hướng dẫn trên.
 
@@ -269,18 +269,11 @@ Không liệt kê đủ ở đây — dùng `grep` trên `DANH-MUC-CONG-CU.md` n
 | `healthcare` | 13 | clinical-note-extract-skill · contracts · doc-extract · documents-reader-cli · documents-reader-mcp · fhir |
 | `codex` | 12 | adversarial-review · cancel · codex-cli-runtime · codex-rescue · codex-result-handling · gpt-5-4-prompting |
 | `pubmed-search` | 10 | pubmed-export-citations · pubmed-fulltext-access · pubmed-gene-drug-research · pubmed-mcp-tools-reference · pubmed-multi-source-search · pubmed-paper-exploration |
-| `human-resources` | 9 | comp-analysis · draft-offer · interview-prep · onboarding · org-planning · people-report |
 | `bio-research` | 6 | instrument-data-to-allotrope · nextflow-development · scientific-problem-selection · scvi-tools · single-cell-rna-qc · start |
 | `desktop-commander` | 6 | ai-tools-setup · computer-health-check · desktop-commander-overview · knowledge-base · obsidian-vault · terminal |
 | `pdf-viewer` | 5 | annotate · fill-form · open · sign · view-pdf |
 | `claude-tag-troubleshoot` | 3 | config-guide · debug-plugins · debug-plugins |
 | `cowork-plugin-management` | 2 | cowork-plugin-customizer · create-cowork-plugin |
 | `clinical-trial-protocol` | 1 | clinical-trial-protocol-skill |
-| `claude-tag-data-viz` | 1 | graphing |
 | `google-drive` | 1 | google-drive-api |
 | `humanizer` | 1 | humanizer |
-| `enterprise-search` | 1 | enterprise-search |
-| `hubspot` | 1 | hubspot-api |
-| `notion` | 1 | notion-api |
-| `sentry` | 1 | sentry-api |
-| `snowflake` | 1 | snowflake-api |
