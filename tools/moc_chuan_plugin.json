@@ -12,15 +12,15 @@
       },
       "academic-research-skills@academic-research-skills": {
         "so_skill": 4,
-        "phien_ban": "3.21.0"
+        "phien_ban": "3.21.1"
       },
       "openmed-skills@openmed-skills": {
         "so_skill": 72,
         "phien_ban": "576520381df7"
       },
       "claude-code-harness@claude-code-harness-marketplace": {
-        "so_skill": 70,
-        "phien_ban": "5.11.0"
+        "so_skill": 73,
+        "phien_ban": "5.13.1"
       },
       "medsci-project@medsci-skills": {
         "so_skill": 60,
