@@ -88,6 +88,9 @@ memory-sync/
 
 # Danh mục sinh lại được, chứa đường dẫn tuyệt đối theo từng máy
 tools/vietnamize/catalog_raw.json
+# Biến thể tên máy cũ (trước khi có catalog_may/<Máy>.json) — cùng loại dữ liệu
+# sinh lại được, đã thấy lọt vào working tree từ máy khác qua OneDrive (26/08/2026)
+tools/vietnamize/catalog_raw-*.json
 
 # Bản lưu mô tả gốc do tools/vietnamize/apply_vi.py tạo — sinh lại được, không commit
 *.vi-bak

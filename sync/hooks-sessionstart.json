@@ -1,0 +1,59 @@
+{
+  "_ghi_chu": "BẢN NGUỒN của hook SessionStart — chép từ máy đang chạy đúng bằng `python3 tools/dong_bo_hook_sessionstart.py --xuat`, KHÔNG soạn tay. Máy kia cài bằng `--ap-dung`. File này tồn tại vì .gitignore loại trừ .claude/settings.json, nên trước 21/08/2026 cơ chế tự động của hệ không có đường nào đi sang máy thứ hai.",
+  "_pham_vi": "du-an",
+  "_xuat_luc": "2026-08-23 11:52",
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill_claude_codex.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dong_bo_skill_claude_codex.py --ap-dung --dong-bo-plugin --im-khi-on || echo \"⚠ Đồng bộ Claude–Codex còn lỗi — chạy tools/verify_skill_sync_health.py\"; else echo \"⚠ Không tìm thấy Python để đồng bộ Claude–Codex\"; fi; else echo \"⚠ CHỐT đồng bộ Claude–Codex KHÔNG CHẠY — thiếu công cụ\"; fi; true",
+          "timeout": 300,
+          "statusMessage": "Đồng bộ skill Claude–Codex…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_plugin_day_du.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/kiem_plugin_day_du.py --im-khi-on || python tools/kiem_plugin_day_du.py --im-khi-on; }; else echo \"⚠ CHỐT kiem_plugin_day_du KHÔNG CHẠY — không thấy $D/tools/kiem_plugin_day_du.py\"; fi; true",
+          "timeout": 20,
+          "statusMessage": "Kiểm kho plugin/skill…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_do_tuoi_chung_cu.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/kiem_do_tuoi_chung_cu.py --im-khi-on || python tools/kiem_do_tuoi_chung_cu.py --im-khi-on; }; else echo \"⚠ CHỐT kiem_do_tuoi_chung_cu KHÔNG CHẠY — không thấy $D/tools/kiem_do_tuoi_chung_cu.py\"; fi; true",
+          "timeout": 20,
+          "statusMessage": "Kiểm độ tươi chứng cứ…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_nguon_that.py\" ]; then cd \"$D\" && { PY=\"$HOME/.ebm-venv/bin/python\"; [ -x \"$PY\" ] || PY=\"$HOME/.ebm-venv/Scripts/python.exe\"; [ -x \"$PY\" ] || PY=\"$(command -v python3 || command -v python)\"; \"$PY\" tools/kiem_nguon_that.py --nhanh --im-khi-on; }; else echo \"⚠ CHỐT kiem_nguon_that KHÔNG CHẠY — không thấy $D/tools/kiem_nguon_that.py\"; fi; true",
+          "timeout": 20,
+          "statusMessage": "Kiểm nguồn chứng cứ có thật…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/dong_bo_skill.py --im-khi-on || python tools/dong_bo_skill.py --im-khi-on; }; else echo \"⚠ CHỐT dong_bo_skill KHÔNG CHẠY — không thấy $D/tools/dong_bo_skill.py\"; fi; true",
+          "timeout": 25,
+          "statusMessage": "Kiểm skill đang chạy có khớp nguồn…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_sua_chua.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/tu_sua_chua.py --ap-dung --bo-qua-lam-sang --im-khi-on || python tools/tu_sua_chua.py --ap-dung --bo-qua-lam-sang --im-khi-on; }; else echo \"⚠ CHỐT tu_sua_chua KHÔNG CHẠY — không thấy $D/tools/tu_sua_chua.py\"; fi; true",
+          "timeout": 60,
+          "statusMessage": "Tự sửa lỗi máy móc của hệ chứng cứ…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/chot_hoi_quy_bai_hoc.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/chot_hoi_quy_bai_hoc.py --im-khi-on || python tools/chot_hoi_quy_bai_hoc.py --im-khi-on; }; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không thấy $D/tools/chot_hoi_quy_bai_hoc.py\"; fi; true",
+          "timeout": 30,
+          "statusMessage": "Kiểm bài học cũ có tái phát không…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_khoi_dong.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/tu_khoi_dong.py --phong --im-khi-on || python tools/tu_khoi_dong.py --phong --im-khi-on; }; else echo \"⚠ CHỐT tu_khoi_dong KHÔNG CHẠY — không thấy $D/tools/tu_khoi_dong.py\"; fi; true",
+          "timeout": 30,
+          "statusMessage": "Tự khởi động giám sát nếu quá hạn…"
+        }
+      ]
+    }
+  ]
+}
