@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """upgrade_verify.py — MỘT LỆNH kiểm tra + đồng bộ toàn hệ Agent/Plugin/Hub EBM.
 
-Chạy trọn dây chuyền liêm chính theo đúng thứ tự (28 bước tự động, thay cho gõ tay từng lệnh):
+Chạy trọn dây chuyền liêm chính theo đúng thứ tự (29 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
   2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
   3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
   4. check_claude_codex_sync_health.py — cổng read-only guardrail/disclaimer/sync
   5. verify_claude_code_repo_alignment.py — hợp đồng repo/Claude Code/Codex không trôi lệch
   6. verify_lessons_rubric_alignment.py — rubric QA ↔ taxonomy LESSONS không lệch mã lỗi
-  7. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo
+  7. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo (báo cáo, không --strict)
+ 7b. test_verify_agent_routing.py — CỔNG CỨNG pytest cho chính bước 7 (phát hiện 26/08/2026:
+     bước 7 không --strict nên KHÔNG BAO GIỜ chặn dù có tham chiếu treo thật; file test này
+     tồn tại từ trước nhưng không nằm trong routine nào — vá khoảng trống "không ai gọi")
   8. verify_plugin_orchestration.py — một owner/capability; plugin chỉ worker, không vượt cổng
   9. verify_research_gate_contracts.py — smoke-test action queue/resume/release contract
  10. verify_research_practical_readiness.py — synthetic real-data path đến G6 data-lock
@@ -112,6 +115,7 @@ def main() -> int:
         ("5. Repo/Claude Code alignment", ["tools/verify_claude_code_repo_alignment.py"], True),
         ("6. Rubric ↔ lessons taxonomy", ["tools/verify_lessons_rubric_alignment.py"], True),
         ("7. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
+        ("7b. Routing tests (pytest hard-gate)", ["tools/test_verify_agent_routing.py"], True),
         ("8. Quyền sở hữu plugin", ["tools/verify_plugin_orchestration.py"], True),
         ("9. Hợp đồng gate nghiên cứu", ["tools/verify_research_gate_contracts.py"], True),
         ("10. Thực tiễn dữ liệu nghiên cứu", ["tools/verify_research_practical_readiness.py"], True),
