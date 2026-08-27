@@ -54,6 +54,10 @@
 #    đã nhiều lần tạo conflict-copy và làm hỏng ref git. Có bản trên GitHub = còn đường lùi.
 /sync/*
 !/sync/skills/
+# Thư mục cách ly của tools/phuc_hoi_skill_guard.py (27/08/2026) — bản skill bị
+# ghi đè lạ được giữ lại đây để bác sĩ xem, KHÔNG bao giờ commit (nội dung là
+# hệ skill ngoài, sự cố BH77 tái phát 2 lần qua OneDrive từ máy kia).
+/sync/skills/_quarantine-guard/
 !/sync/scheduled-tasks/
 !/sync/commands-vi/
 !/sync/*.sh

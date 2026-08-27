@@ -69,6 +69,14 @@ def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
 # Các việc MÁY MÓC — mỗi việc: (nhãn, lệnh kiểm, lệnh sửa hoặc None)
 # ---------------------------------------------------------------------------
 VIEC_MAY = [
+    # Thêm 27/08/2026 — PHẢI đứng TRƯỚC dong_bo_skill: sự cố BH77 tái phát lần 2
+    # (OneDrive đồng bộ lại bản «Claude Science» cũ từ máy kia đè lên 2 skill đã
+    # Việt hoá) cho thấy nếu đồng bộ chạy TRƯỚC khi nguồn được khôi phục, chính
+    # hook này sẽ đẩy bản hỏng sang Cowork runtime — đúng chuyện đã xảy ra sáng
+    # 27/08. Khôi phục nguồn sạch từ git HEAD trước, rồi mới đồng bộ.
+    ("Skill mất khối EBM-VN-GUARD (ghi đè lạ — BH77)",
+     [PY, "tools/phuc_hoi_skill_guard.py", "--im-khi-on"],
+     [PY, "tools/phuc_hoi_skill_guard.py", "--ap-dung"]),
     ("Skill đang chạy lệch nguồn",
      [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
      [PY, "tools/dong_bo_skill.py", "--ap-dung"]),
