@@ -47,6 +47,16 @@ ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
 GATE_CONTRACT_TOOLS_DIR = ROOT / "medical-ebm-automation" / "tools"
 
+# 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
+# thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
+if not (GATE_CONTRACT_TOOLS_DIR / "gate_contract.py").exists():
+    _THIEU_NGUYEN_LIEU = ("FAIL (bỏ qua CÓ KHAI BÁO): thiếu medical-ebm-automation/tools/gate_contract.py — "
+                          "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
+    # Chạy CLI thì thoát sạch một dòng; bị IMPORT (pytest) thì raise ModuleNotFoundError
+    # để bộ thu thập test xử lý như thiếu module bình thường, không chết INTERNALERROR.
+    if __name__ == "__main__":
+        raise SystemExit(_THIEU_NGUYEN_LIEU)
+    raise ModuleNotFoundError(_THIEU_NGUYEN_LIEU)
 if str(GATE_CONTRACT_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(GATE_CONTRACT_TOOLS_DIR))
 import gate_contract as GC  # noqa: E402

@@ -72,8 +72,16 @@ HAU_TO = re.compile(
 
 
 def nap_vd():
-    spec = importlib.util.spec_from_file_location(
-        "vd_chu_de", DASH / "tools" / "verify_dashboard.py")
+    duong = DASH / "tools" / "verify_dashboard.py"
+    # 28/08/2026 — trên bản sao git TRẦN (phiên cloud/CI) cây EBM-Dashboards nằm
+    # ngoài git nên file này không bao giờ có; chết traceback ở đây làm bước ⑤ của
+    # chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu nguyên liệu.
+    # Khai báo rõ rồi thoát, thay vì để FileNotFoundError nói hộ.
+    if not duong.exists():
+        raise SystemExit(
+            f"⚪ Không kiểm được trên máy này: thiếu {duong} — EBM-Dashboards nằm "
+            "ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
+    spec = importlib.util.spec_from_file_location("vd_chu_de", duong)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

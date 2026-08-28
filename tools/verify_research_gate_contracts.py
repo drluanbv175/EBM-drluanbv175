@@ -32,6 +32,17 @@ REPO = ROOT / "medical-ebm-automation"
 REPO_TOOLS = REPO / "tools"
 sys.path.insert(0, str(REPO_TOOLS))
 
+# 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
+# thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
+if not (REPO_TOOLS / "audit_research_gates.py").exists():
+    _THIEU_NGUYEN_LIEU = ("FAIL (bỏ qua CÓ KHAI BÁO): thiếu medical-ebm-automation/tools/audit_research_gates.py — "
+                          "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
+    # Chạy CLI thì thoát sạch một dòng; bị IMPORT (pytest) thì raise ModuleNotFoundError
+    # để bộ thu thập test xử lý như thiếu module bình thường, không chết INTERNALERROR.
+    if __name__ == "__main__":
+        raise SystemExit(_THIEU_NGUYEN_LIEU)
+    raise ModuleNotFoundError(_THIEU_NGUYEN_LIEU)
+
 import audit_research_gates as ARG  # noqa: E402
 
 

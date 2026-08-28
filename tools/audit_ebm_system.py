@@ -961,12 +961,20 @@ def main() -> int:
     if not antifacts_ok:
         hard_errors.append("Antifacts FAIL: " + antifacts_msg)
 
-    integrity_code, integrity_out = run(
-        [sys.executable, "tools/integrity_guard.py", "--strict"],
-        cwd=MASTER,
-    )
-    if integrity_code != 0:
-        hard_errors.append("EBM_MASTER integrity_guard FAIL")
+    # 28/08/2026 — EBM_MASTER nằm ngoài git; trên bản sao trần subprocess với
+    # cwd không tồn tại chết FileNotFoundError giữa chừng, nuốt luôn mọi kết quả
+    # đã gom phía trên. Thiếu thì ghi FAIL có khai báo, không chết không lời.
+    if MASTER.exists():
+        integrity_code, integrity_out = run(
+            [sys.executable, "tools/integrity_guard.py", "--strict"],
+            cwd=MASTER,
+        )
+        if integrity_code != 0:
+            hard_errors.append("EBM_MASTER integrity_guard FAIL")
+    else:
+        hard_errors.append(
+            "EBM_MASTER không có trên máy này (ngoài git — bản sao trần): "
+            "audit KHÔNG kết luận được toàn kho; chạy trên máy có cây OneDrive")
 
     compile_ok, compile_out = repo_compile_status()
     if not compile_ok:
@@ -1070,21 +1078,25 @@ def main() -> int:
         warnings.append("medical-ebm-automation: không đọc được git status — kiểm tra "
                          "sync_safety_check.py, có thể là dấu hiệu .git hỏng")
 
-    counts = master_counts()
-    stale_count_failures = living_document_count_failures(counts["cards"])
-    if stale_count_failures:
-        hard_errors.append(
-            "Sổ hạ tầng trạng thái sống hardcode sai số thẻ EBM_MASTER: "
-            + "; ".join(stale_count_failures)
-        )
-    if counts["missing_trace"]:
-        hard_errors.append(f"EBM_MASTER còn {counts['missing_trace']} thẻ thiếu truy nguyên")
-    if counts["apply_unverified"]:
-        hard_errors.append(f"EBM_MASTER còn {counts['apply_unverified']} thẻ apply chưa/cần xác minh")
-    if counts["unverified_queue"]:
-        warnings.append(f"{counts['unverified_queue']} thẻ đang ở hàng chưa/cần xác minh, không áp dụng tự động")
-    if counts["quarantined_cards"]:
-        warnings.append(f"{counts['quarantined_cards']} thẻ đã cách ly khỏi evidence_cards vì thiếu truy nguyên")
+    # 28/08/2026 — cùng lý do với chốt integrity_guard phía trên: EBM_MASTER ngoài
+    # git, bản sao trần không có; sổ cái vắng mặt đã được ghi hard_error ở trên rồi,
+    # đọc tiếp chỉ chết FileNotFoundError giữa chừng và nuốt toàn bộ báo cáo.
+    if MASTER.exists():
+        counts = master_counts()
+        stale_count_failures = living_document_count_failures(counts["cards"])
+        if stale_count_failures:
+            hard_errors.append(
+                "Sổ hạ tầng trạng thái sống hardcode sai số thẻ EBM_MASTER: "
+                + "; ".join(stale_count_failures)
+            )
+        if counts["missing_trace"]:
+            hard_errors.append(f"EBM_MASTER còn {counts['missing_trace']} thẻ thiếu truy nguyên")
+        if counts["apply_unverified"]:
+            hard_errors.append(f"EBM_MASTER còn {counts['apply_unverified']} thẻ apply chưa/cần xác minh")
+        if counts["unverified_queue"]:
+            warnings.append(f"{counts['unverified_queue']} thẻ đang ở hàng chưa/cần xác minh, không áp dụng tự động")
+        if counts["quarantined_cards"]:
+            warnings.append(f"{counts['quarantined_cards']} thẻ đã cách ly khỏi evidence_cards vì thiếu truy nguyên")
 
     print("================================================================")
     print("AUDIT TỔNG THỂ — EBM Copilot")
@@ -1126,14 +1138,17 @@ def main() -> int:
     )
     print("Repo worktree:", git_summary)
     print("Dev tools:", f"pytest={'yes' if pytest_ok else 'no'}, ruff={'yes' if ruff_ok else 'no'}")
-    print(
-        "EBM_MASTER: "
-        f"{counts['cards']} thẻ chính "
-        f"({counts['apply']} apply · {counts['consider']} consider · {counts['notyet']} notyet), "
-        f"{counts['quarantined_cards']} cách ly"
-    )
-    print(f"Thiếu truy nguyên trong evidence_cards: {counts['missing_trace']}")
-    print(f"Apply chưa/cần xác minh: {counts['apply_unverified']}")
+    if MASTER.exists():
+        print(
+            "EBM_MASTER: "
+            f"{counts['cards']} thẻ chính "
+            f"({counts['apply']} apply · {counts['consider']} consider · {counts['notyet']} notyet), "
+            f"{counts['quarantined_cards']} cách ly"
+        )
+        print(f"Thiếu truy nguyên trong evidence_cards: {counts['missing_trace']}")
+        print(f"Apply chưa/cần xác minh: {counts['apply_unverified']}")
+    else:
+        print("EBM_MASTER: KHÔNG CÓ trên máy này (ngoài git) — không đếm được thẻ")
     if warnings:
         print("----------------------------------------------------------------")
         for warn in warnings:

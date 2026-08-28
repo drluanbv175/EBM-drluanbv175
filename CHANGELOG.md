@@ -8,6 +8,40 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+### 2026-08-28 — Rà toàn diện trên bản sao git TRẦN (phiên cloud) + vá «tường đỏ giả»
+
+Bối cảnh: chạy trọn bộ kiểm trên một bản clone git KHÔNG có cây OneDrive
+(EBM-Dashboards/ · medical-ebm-automation/ · EBM_MASTER/) — lần đầu hệ được đo
+ở trạng thái này. 37 mục đỏ của `chot_hoi_quy_bai_hoc`, trong đó CHỈ MỘT là lỗi
+thật; 36 mục còn lại đỏ vì thiếu nguyên liệu ngoài git — đúng «bức tường đỏ giả»
+mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
+
+### Added
+- **Cứu skill `nghien-cuu-y-khoa-chuan-quoc-te` về nguồn** `sync/skills/` (38 file,
+  khớp byte với bản runtime) — lỗi thật duy nhất của đợt rà: skill được 4 file doctrine
+  tham chiếu (`dieu-phoi-nghien-cuu.md`, `_CROSSWALK-NGHIEN-CUU.md`,
+  `_PLUGIN-ROUTING-CONTRACT.md`, `_THU-VIEN-KY-NANG.md`) nhưng chỉ tồn tại ở runtime —
+  app dọn runtime là mất trắng (đúng họ lỗi BH44 ngày 15/08 với 3 skill trước).
+  `kiem_dieu_phoi` từ 🔴 về 🟢 (41 skill nguồn, mọi tham chiếu phân giải được).
+- **BH82** trong `chot_hoi_quy_bai_hoc.py`: trên bản sao git trần, mục thiếu nguyên
+  liệu in **⚪ «ngoài phạm vi» có khai báo** (vẫn hiện đủ, không đếm đỏ); lỗi trong-repo
+  vẫn ✗; trên máy đủ dữ liệu hành vi fail-closed cũ giữ NGUYÊN. Khai báo tường minh
+  `_CAN_NGUYEN_LIEU_NGOAI_REPO` (36 mã, đo từng mã). Đã kiểm 3 phép đột biến.
+
+### Fixed
+- 6 công cụ chết-không-khai-báo trên bản sao trần nay «bỏ qua CÓ KHAI BÁO» một dòng
+  rõ nghĩa thay vì traceback: `audit_ebm_system.py` (2 chỗ — nay chạy TRỌN báo cáo,
+  FAIL có lý do thay vì chết giữa chừng nuốt kết quả) · `dang_ky_chu_de.py` ·
+  `verify_lessons_rubric_alignment.py` · `verify_hard_gate_count_consistency.py` ·
+  `verify_research_gate_contracts.py` · `verify_research_practical_readiness.py` ·
+  `verify_controlled_research_automation.py`. Guard mức import tách hai đường: CLI
+  thoát sạch một dòng; bị import (pytest) thì `ModuleNotFoundError` để bộ thu thập
+  test không chết INTERNALERROR.
+- `kiem_do_tuoi_chung_cu.py` không còn tự xưng «Máy này (Windows)» khi chạy trên
+  Linux (phiên cloud/CI) — in đúng nền tảng thật.
+- Đối chứng: bộ test tools/ (`pytest`) cho **kết quả giống hệt trước và sau bản vá**
+  (258 pass · 23 fail đều do thiếu repo y khoa/EBM-Dashboards trên bản trần) — 0 hồi quy.
+
 ## [1.3.0] - 2026-08-15
 
 PHA 2 «THI CÔNG & NGHIỆM THU» của prompt kiện toàn hệ cập nhật chứng cứ — 8 lô
