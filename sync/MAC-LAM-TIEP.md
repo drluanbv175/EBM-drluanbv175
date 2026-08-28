@@ -1,3 +1,5 @@
+> ⚠️ **Bản 03/08 này đã LỖI THỜI** — bàn giao hiện hành: `sync/DONG-BO-2026-08-28.md`.
+
 # Việc cần chạy TRÊN MÁY MAC (bàn giao từ phiên Windows 03/08/2026)
 
 > Đợi OneDrive **XANH** rồi mới bắt đầu. Mở terminal ở `~/OneDrive/Claude AI`.

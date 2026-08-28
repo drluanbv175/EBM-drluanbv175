@@ -74,6 +74,7 @@
 !/sync/WINDOWS-LAM-TIEP.md
 !/sync/WINDOWS-PASTE-ME.md
 !/sync/WINDOWS-DONE.md
+!/sync/DONG-BO-2026-08-28.md
 # Sổ khai dùng chung của cơ chế đồng bộ (21/08/2026). PHẢI theo git: đây chính là
 # thứ làm hai máy đọc CÙNG một bản ý định. Quy tắc `/sync/*` ở trên loại mọi file
 # gốc, và trước khi thêm 2 dòng này thì `plugin-manifest.json` bị ignore im lặng —
