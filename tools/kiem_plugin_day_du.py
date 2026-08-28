@@ -138,9 +138,32 @@ def kiem_ngan_sach(hien: dict) -> list[str]:
     else:
         mac_dinh = False
 
-    # ĐO thật độ dài từng dòng "- plugin:ten-skill" thay vì nhân một con số ước
-    # lượng: tên skill dài ngắn rất khác nhau (`esm` vs
-    # `active-comparator-single-soc-faers-safety-comparison`), ước lượng sẽ lệch.
+    can, tong_skill = do_ky_tu_can(hien)
+    ngan_sach = int(CUA_SO_KY_TU * phan)
+
+    if can > ngan_sach:
+        canh_bao.append(
+            f"DANH SÁCH SKILL VƯỢT NGÂN SÁCH: cần ~{can:,} ký tự để hiện đủ tên "
+            f"{tong_skill} skill, nhưng skillListingBudgetFraction={phan} chỉ cho "
+            f"{ngan_sach:,} ký tự (vượt {can/ngan_sach:.1f} lần)"
+            + (" — ĐANG DÙNG MẶC ĐỊNH, chưa đặt trong ~/.claude/settings.json" if mac_dinh else "")
+            + f". Hệ quả: gọi skill sẽ báo KHÔNG CÓ dù file vẫn đủ trên đĩa. "
+              f"Đặt skillListingBudgetFraction ≈ {min(0.3, round(can/CUA_SO_KY_TU + 0.02, 2))}."
+        )
+    return canh_bao
+
+
+def do_ky_tu_can(hien: dict) -> tuple[int, int]:
+    """ĐO số ký tự cần để hiện đủ TÊN skill, và tổng số skill.
+
+    Tách riêng khỏi `kiem_ngan_sach` (22/08/2026) để công cụ khác hỏi được phép ĐO
+    mà không phải đọc ngược chuỗi cảnh báo — chuỗi đó chỉ tồn tại khi ĐÃ vượt, nên
+    ai muốn kiểm «giá trị đã khai còn đủ không» sẽ không có gì để hỏi.
+
+    ĐO thật độ dài từng dòng "- plugin:ten-skill" thay vì nhân một con số ước
+    lượng: tên skill dài ngắn rất khác nhau (`esm` vs
+    `active-comparator-single-soc-faers-safety-comparison`), ước lượng sẽ lệch.
+    """
     can = 0
     tong_skill = 0
     for khoa, m in hien.items():
@@ -165,18 +188,7 @@ def kiem_ngan_sach(hien: dict) -> list[str]:
             for f in thu_muc.glob("*.md"):
                 can += len(f"- {f.stem}\n"); tong_skill += 1
     can += 8000          # ~14 skill dựng sẵn của Claude Code, mô tả rất dài
-    ngan_sach = int(CUA_SO_KY_TU * phan)
-
-    if can > ngan_sach:
-        canh_bao.append(
-            f"DANH SÁCH SKILL VƯỢT NGÂN SÁCH: cần ~{can:,} ký tự để hiện đủ tên "
-            f"{tong_skill} skill, nhưng skillListingBudgetFraction={phan} chỉ cho "
-            f"{ngan_sach:,} ký tự (vượt {can/ngan_sach:.1f} lần)"
-            + (" — ĐANG DÙNG MẶC ĐỊNH, chưa đặt trong ~/.claude/settings.json" if mac_dinh else "")
-            + f". Hệ quả: gọi skill sẽ báo KHÔNG CÓ dù file vẫn đủ trên đĩa. "
-              f"Đặt skillListingBudgetFraction ≈ {min(0.3, round(can/CUA_SO_KY_TU + 0.02, 2))}."
-        )
-    return canh_bao
+    return can, tong_skill
 
 
 def so_moc(hien: dict, moc: dict) -> tuple[str, list[str], list[str]]:

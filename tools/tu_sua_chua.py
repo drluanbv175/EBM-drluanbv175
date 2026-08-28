@@ -67,6 +67,13 @@ VIEC_MAY = [
     ("Cờ TẮT của plugin trùng bị app xoá",
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"]),
+    # 22/08/2026 — cùng sự cố «app ghi đè settings.json» với dòng trên, nhưng khoá
+    # KHÁC: đợt ghi đè xoá cả bản vá ngân sách danh sách skill, mà trước công cụ
+    # này không gì khôi phục nó. Mất khoá đó là skill vẫn đủ trên đĩa nhưng model
+    # không được cho biết chúng tồn tại — đúng triệu chứng «gọi skill không được».
+    ("Khoá cấu hình người dùng bị app xoá",
+     [PY, "tools/kiem_cau_hinh_nguoi_dung.py", "--im-khi-on"],
+     [PY, "tools/kiem_cau_hinh_nguoi_dung.py", "--ap-dung"]),
     ("Kho plugin/skill thiếu so với mốc",
      [PY, "tools/kiem_plugin_day_du.py", "--im-khi-on"],
      None),                      # cài lại plugin cần mạng + quyết định của bác sĩ

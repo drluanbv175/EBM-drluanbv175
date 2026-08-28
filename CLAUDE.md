@@ -116,6 +116,19 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
   ⚠️ Đây là khoá cấp NGƯỜI DÙNG (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải
   đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
+  🔁 **KHOÁ NÀY CŨNG BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ khôi phục (22/08/2026, BH72).**
+  Cùng đợt ghi đè `settings.json` đã xoá 8 cờ `false` (mục dưới) thì nó xoá LUÔN bản vá ngân
+  sách này. Khác nhau ở chỗ: cờ `false` đã có `kiem_co_tat_plugin_trung.py` khôi phục, còn khoá
+  ngân sách thì **KHÔNG công cụ nào khôi phục** — `kiem_plugin_day_du.py` chỉ ĐỌC và báo 🔴, còn
+  `kiem_co_tat_plugin_trung.py` tự giới hạn «chỉ chạm enabledPlugins». Nên mỗi lần app ghi đè là
+  triệu chứng «skill cài rồi mà gọi không được» quay lại nguyên vẹn, và không ai biết vì sao.
+  **Nay:** giá trị bác sĩ đã chọn được KHAI ở `sync/cau-hinh-nguoi-dung.json` (đi qua git nên hai
+  máy dùng chung một bản), và `python3 tools/kiem_cau_hinh_nguoi_dung.py [--ap-dung]` khôi phục —
+  **chỉ ghi đúng khoá đã khai, luôn sao lưu trước, không đụng `enabledPlugins`/`hooks`/khoá nào
+  khác** (đè cả file là xoá mất cấu hình riêng của máy). Đã nối vào `tu_sua_chua.py` nên chạy mỗi
+  phiên. Công cụ còn NÓI RA khi giá trị đã khai **không còn đủ** cho kho hiện tại — khôi phục một
+  con số đã lỗi thời mà im lặng cũng là để bác sĩ mắc kẹt. Phép đo dùng chung
+  `kiem_plugin_day_du.do_ky_tu_can()`, không có bản đo thứ hai.
   ✅ **ĐÃ ĐẶT TRÊN WINDOWS 12/08/2026** — cùng giá trị Mac (`0.08` + `maxDescChars: 80`); sao lưu
   `settings.json.bak-20260812-truoc-dat-skill-budget`. Chốt kho đi từ 🔴 (vượt ngân sách 5,1 lần)
   về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 3 plugin · 668 skill (`tools/moc_chuan_plugin.json`)

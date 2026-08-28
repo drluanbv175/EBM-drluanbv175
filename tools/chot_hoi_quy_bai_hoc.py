@@ -2427,6 +2427,82 @@ def bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
                   f"nút bấm đúp theo git, .cmd giữ CRLF")
 
 
+def bh72_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc():
+    """22/08 — bác sĩ than nhiều tháng «skill cài rồi mà gọi không được». Nguyên
+    nhân gốc tìm 10/08 là ngân sách danh sách skill (mặc định 0,01 = 8.000 ký tự,
+    kho ~869 skill cần ~45.000 ⇒ Claude Code CẮT). Đã vá bằng 0.08 trên cả hai máy.
+
+    Chỗ hở còn lại: **app Claude ghi đè ~/.claude/settings.json** (đo hai lần trên
+    Mac: 17/08 kho 839→1311 skill, 21/08 870→1319). Đợt ghi đè xoá cờ enabledPlugins
+    — có `kiem_co_tat_plugin_trung.py` khôi phục — VÀ xoá luôn bản vá ngân sách, mà
+    KHÔNG công cụ nào khôi phục: `kiem_plugin_day_du.py` chỉ ĐỌC và báo 🔴, còn
+    `kiem_co_tat_plugin_trung.py` tự giới hạn «chỉ chạm enabledPlugins». Nên mỗi lần
+    app ghi đè là triệu chứng cũ quay lại nguyên vẹn.
+
+    Chốt canh ba vế, bằng HÀNH VI:
+      (a) khôi phục đúng khoá đã khai và KHÔNG đụng khoá nào khác — đè cả file là
+          xoá mất enabledPlugins/hooks/theme của máy;
+      (b) công cụ được nối vào `tu_sua_chua.py` (chạy mỗi phiên) — không nối thì
+          nó chỉ tồn tại chứ không canh gì;
+      (c) bản khai theo được git — `/sync/*` loại mọi file gốc, và đây là lần thứ
+          BA vấp đúng cái bẫy ignore-im-lặng đó.
+    """
+    import json
+    import subprocess
+    import tempfile
+
+    f = REPO / "tools/kiem_cau_hinh_nguoi_dung.py"
+    khai_f = REPO / "sync/cau-hinh-nguoi-dung.json"
+    if not f.exists():
+        return False, "thiếu tools/kiem_cau_hinh_nguoi_dung.py — khoá ngân sách lại không ai khôi phục"
+    if not khai_f.exists():
+        return False, "thiếu sync/cau-hinh-nguoi-dung.json — không biết phải giữ khoá nào"
+    khai = (json.loads(khai_f.read_text(encoding="utf-8")).get("khoa") or {})
+    if "skillListingBudgetFraction" not in khai:
+        return False, "bản khai mất skillListingBudgetFraction — đúng khoá gây «gọi skill không được»"
+
+    # (a) hành vi: mất khoá → khôi phục, và mọi khoá khác còn nguyên
+    m = _nap(f, "kchnd_bh72")
+    with tempfile.TemporaryDirectory() as tam:
+        st = Path(tam) / "settings.json"
+        goc = {"enabledPlugins": {"x@y": False}, "hooks": {"SessionStart": [1]}, "theme": "dark"}
+        st.write_text(json.dumps(goc), encoding="utf-8")
+        m.SETTINGS = st
+        # Nuốt đầu ra của công cụ: bộ chốt phải im khi mọi thứ ổn, không kéo theo
+        # báo cáo của thứ nó đang kiểm.
+        import contextlib
+        import io
+        cu_argv = sys.argv
+        try:
+            sys.argv = ["x", "--ap-dung"]
+            with contextlib.redirect_stdout(io.StringIO()), \
+                 contextlib.redirect_stderr(io.StringIO()):
+                m.main()
+        finally:
+            sys.argv = cu_argv
+        sau = json.loads(st.read_text(encoding="utf-8"))
+        for ten, muc in khai.items():
+            if sau.get(ten) != muc.get("gia_tri"):
+                return False, f"không khôi phục được {ten}"
+        for ten, gt in goc.items():
+            if sau.get(ten) != gt:
+                return False, (f"khoá KHÁC bị đụng: {ten} — đè cả settings.json là xoá "
+                               f"mất cấu hình riêng của máy")
+
+    # (b) đã nối vào tự-sửa-chữa
+    tsc = (REPO / "tools/tu_sua_chua.py").read_text(encoding="utf-8")
+    if "kiem_cau_hinh_nguoi_dung.py" not in tsc:
+        return False, "chưa nối vào tu_sua_chua.py — công cụ tồn tại nhưng không canh gì"
+
+    # (c) bản khai theo được git
+    git = _sh_which("git")
+    if git and subprocess.run([git, "check-ignore", "-q", "sync/cau-hinh-nguoi-dung.json"],
+                              cwd=REPO, check=False, capture_output=True,
+                              timeout=60).returncode == 0:
+        return False, "sync/cau-hinh-nguoi-dung.json bị .gitignore loại — máy kia không nhận được"
+    return True, "khôi phục đúng khoá · không đụng khoá khác · đã nối tu_sua_chua · theo được git"
+
+
 def bh58_quyet_dinh_da_duyet_khong_lat_nguoc():
     """16/08 — vòng học NỘI DUNG chưa từng được đóng: 15+ quyết định lâm sàng
     bác sĩ duyệt 13–14/08 chỉ nằm trong văn xuôi CLAUDE.md; dashboard sinh lại
@@ -2928,6 +3004,7 @@ BAI_HOC = [
     # đánh số lại thành 70/71 thay vì giành số, đúng thứ nó dạy.
     ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
     ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
+    ("BH72", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục (gọi skill không được)", bh72_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
 ]
 
 

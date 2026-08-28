@@ -1,0 +1,16 @@
+{
+  "_ghi_chu": "KHAI BÁO các khoá trong ~/.claude/settings.json PHẢI SỐNG SÓT sau khi app ghi đè. Đi qua git nên hai máy dùng cùng một bản. App Claude ghi đè settings.json sau một số đợt cập nhật — đã đo hai lần trên Mac (17/08/2026: kho 839→1311 skill; 21/08/2026: 870→1319). Đợt ghi đè đó xoá cờ enabledPlugins (đã có kiem_co_tat_plugin_trung.py khôi phục) VÀ xoá luôn bản vá ngân sách skill, mà trước 22/08/2026 KHÔNG công cụ nào khôi phục khoá này.",
+  "_vi_sao_quan_trong": "Mất skillListingBudgetFraction thì Claude Code lùi về mặc định 0.01 = 8.000 ký tự cho danh sách skill, trong khi kho ~869 skill cần ~45.000 ký tự chỉ để hiện đủ TÊN (vượt 5,6 lần). Vượt thì Claude Code CẮT: rụng mô tả trước, rồi rụng luôn skill. Triệu chứng đúng như bác sĩ mô tả nhiều tháng: «skill cài rồi mà gọi không được», và «lúc đủ lúc không đủ» vì mỗi phiên lọt vào ngân sách một tập khác nhau. File vẫn ĐỦ trên đĩa — chỉ là model không được cho biết chúng tồn tại.",
+  "_nguon_quyet_dinh": "CLAUDE.md mục «NGUYÊN NHÂN GỐC của gọi plugin mà không có» — đặt trên Mac 10/08/2026, đặt trên Windows 12/08/2026, CÙNG giá trị.",
+  "_ranh_gioi": "Công cụ kiem_cau_hinh_nguoi_dung.py CHỈ ghi đúng các khoá liệt kê ở đây, luôn sao lưu trước, và KHÔNG bao giờ đụng enabledPlugins hay khoá nào khác.",
+  "khoa": {
+    "skillListingBudgetFraction": {
+      "gia_tri": 0.08,
+      "ly_do": "0,08 = 64.000 ký tự (cửa sổ 200k token). Đo thật: 933 mục cần 48.607 ký tự để hiện đủ tên — đủ, còn dư biên."
+    },
+    "skillListingMaxDescChars": {
+      "gia_tri": 80,
+      "ly_do": "Trần chống vọt chi phí. Không có trần, cửa sổ lớn hơn 200k sẽ khiến Claude Code bơm mô tả đầy đủ (216.449 ký tự ≈ 54.000 token mỗi lượt). Có trần: ≤16.000 token (cửa sổ 200k) hoặc ≤31.000 (cửa sổ 1M)."
+    }
+  }
+}

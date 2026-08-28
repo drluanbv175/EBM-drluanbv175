@@ -68,10 +68,12 @@
 !/sync/WINDOWS-DONE.md
 # Sổ khai dùng chung của cơ chế đồng bộ (21/08/2026). PHẢI theo git: đây chính là
 # thứ làm hai máy đọc CÙNG một bản ý định. Quy tắc `/sync/*` ở trên loại mọi file
-# gốc, và trước khi thêm 2 dòng này thì `plugin-manifest.json` bị ignore im lặng —
+# gốc, và trước khi có dòng này thì `plugin-manifest.json` bị ignore im lặng —
 # tức cơ chế "đi qua git" sẽ không đi đâu cả, đúng họ lỗi mà chính nó đi vá.
-!/sync/plugin-manifest.json
-!/sync/hooks-sessionstart.json
+# Dùng MẪU `*.json` chứ không liệt kê từng tên (đổi 22/08): ba lần thêm sổ khai là
+# ba lần vấp đúng cái bẫy này, mà lần nào cũng hỏng IM LẶNG — file nằm trên đĩa,
+# `git status` không nhắc, và máy kia không bao giờ nhận được.
+!/sync/*.json
 
 # 5) Rác chung mọi nơi
 **/__pycache__/
