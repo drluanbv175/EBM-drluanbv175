@@ -28,6 +28,28 @@ mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
   vẫn ✗; trên máy đủ dữ liệu hành vi fail-closed cũ giữ NGUYÊN. Khai báo tường minh
   `_CAN_NGUYEN_LIEU_NGOAI_REPO` (36 mã, đo từng mã). Đã kiểm 3 phép đột biến.
 
+### Added (vòng 2 cùng ngày — «Hoàn thiện cho tôi»)
+- **Ngân hàng safety-netting: 1/8 → 8/8 hội chứng có nguồn** (`clinical_runtime/
+  safety_net_templates.json` v2.1.0). 7 hội chứng còn trống nay có khối `co_do_cho_bac_si`
+  với nguồn ĐÃ TRA PubMed 28/08 (metadata khớp, không nhãn Retracted): đau ngực —
+  Marburg Heart Score (PMID 20603345) · khó thở — NEWS2 RCP 2017 + caveat Pimentel 2018
+  (PMID 30287355) · đau bụng (phạm vi hẹp: khó tiêu) — ACG/CAG 2017 (PMID 28631728) ·
+  sốt — qSOFA/Sepsis-3 (PMID 26903335) · đau thắt lưng — Downie BMJ 2013 (PMID 24335669) ·
+  chóng mặt (chỉ hội chứng tiền đình cấp) — HINTS (PMID 19762709) · sụt cân —
+  Gaddey & Holder AFP 2021 (PMID 34264616). Kỷ luật giữ nguyên: chỉ ghi điều tóm tắt
+  nguồn THẬT SỰ nói (ngưỡng tóm tắt không nêu thì ghi ở `gioi_han`, không bịa);
+  mọi mục mang nhãn `de_xuat` = CHƯA được bác sĩ chuẩn y; `dan_benh_nhan_quay_lai`
+  giữ `[CẦN BÁC SĨ ĐIỀN]` — máy không sinh thay (Cổng A). `kiem_safety_net`: 0 lỗi cứng,
+  21/21 test pass.
+- **`tools/conftest.py`** — bộ test tools/ chạy được trên bản sao trần: 4 module import
+  repo y khoa lúc thu thập + 23 test đích danh cần cây OneDrive được **skip CÓ KHAI BÁO**;
+  1 test viết cho filesystem APFS/NTFS được skip theo phép đo thuộc tính filesystem thật.
+  Kết quả: 23 fail + 4 lỗi thu thập → **258 pass · 23 skip · 0 fail**, và đã kiểm đối
+  chứng fail-closed (tạo lại 1 gốc dữ liệu ⇒ fail quay về đúng chỗ). Bản đầu từng skip
+  oan 81/92 test của test_classify vì quy tắc «cả file» — đã đo lại và khai đích danh 11.
+- **CI thêm bước `pytest tools/`** trên lane ubuntu (đúng điều kiện đã đo); lane windows
+  chưa đo nên chưa bật, lý do ghi ngay trong workflow (BH08 — không dựng tường đỏ chưa đo).
+
 ### Fixed
 - 6 công cụ chết-không-khai-báo trên bản sao trần nay «bỏ qua CÓ KHAI BÁO» một dòng
   rõ nghĩa thay vì traceback: `audit_ebm_system.py` (2 chỗ — nay chạy TRỌN báo cáo,

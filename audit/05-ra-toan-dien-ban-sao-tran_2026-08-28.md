@@ -123,6 +123,49 @@ UAT/phê duyệt — đúng quy tắc «không dùng PASS kỹ thuật thay IRB/
 5. **5 mục `gradeLevel:'na'` chờ neo phân hạng thật** (3 CKD + 2 RA) và **ITEM-05 ViemGanB
    (rút-và-thay)** — các quyết định lâm sàng tồn đọng từ 14/08, chỉ bác sĩ quyết.
 
+## 5-bis. VÒNG 2 cùng ngày — «Hoàn thiện cho tôi» (3 việc đã đóng thêm)
+
+### (a) Safety-netting: 1/8 → 8/8 hội chứng có nguồn — ĐỀ XUẤT chờ bác sĩ chuẩn y
+
+7 hội chứng còn trống của `clinical_runtime/safety_net_templates.json` (v2.1.0) nay có khối
+cờ đỏ cho bác sĩ, mỗi khối neo vào MỘT nguồn đã tra PubMed ngày 28/08 (metadata khớp,
+không mục nào mang nhãn Retracted Publication — theo PubMed):
+
+| Hội chứng | Nguồn (đã tra PubMed) | PMID / DOI |
+|---|---|---|
+| Đau ngực | Marburg Heart Score — Bösner, CMAJ 2010 | 20603345 · [10.1503/cmaj.100212](https://doi.org/10.1503/cmaj.100212) |
+| Khó thở | NEWS2 — RCP 2017 (guideline); caveat Pimentel, Resuscitation 2018 | 30287355 · [10.1016/j.resuscitation.2018.09.026](https://doi.org/10.1016/j.resuscitation.2018.09.026) |
+| Đau bụng (hẹp: khó tiêu) | ACG/CAG Dyspepsia — Moayyedi 2017 | 28631728 · [10.1038/ajg.2017.154](https://doi.org/10.1038/ajg.2017.154) |
+| Sốt | qSOFA (Sepsis-3) — Seymour, JAMA 2016 | 26903335 · [10.1001/jama.2016.0288](https://doi.org/10.1001/jama.2016.0288) |
+| Đau thắt lưng | Downie, BMJ 2013 (tổng quan hệ thống) | 24335669 · [10.1136/bmj.f7095](https://doi.org/10.1136/bmj.f7095) |
+| Chóng mặt (chỉ HC tiền đình cấp) | HINTS — Kattah, Stroke 2009 | 19762709 · [10.1161/STROKEAHA.109.551234](https://doi.org/10.1161/STROKEAHA.109.551234) |
+| Sụt cân | Gaddey & Holder, Am Fam Physician 2021 | 34264616 (PubMed không ghi DOI) |
+
+**Kỷ luật đã giữ:** chỉ ghi điều tóm tắt nguồn THẬT SỰ nói — ngưỡng nào tóm tắt không nêu
+(ngưỡng tuổi của «older age» ở Downie; ngưỡng ≥5%/6–12 tháng của sụt cân; bảng alarm
+features đầy đủ của ACG/CAG) thì ghi rõ ở `gioi_han_nguyen_van_cua_nguon` là *cần đối
+chiếu toàn văn*, KHÔNG ghi thành tiêu chí. Mỗi khối mang nhãn `de_xuat` nói rõ **chưa được
+bác sĩ chuẩn y**. `dan_benh_nhan_quay_lai` cả 8 hội chứng giữ `[CẦN BÁC SĨ ĐIỀN]` — lời dặn
+bệnh nhân là thẩm quyền bác sĩ (Cổng A), máy không sinh thay. `kiem_safety_net`: 0 lỗi cứng ·
+8/8 có nguồn · 21/21 test pass.
+
+### (b) Bộ test tools/ chạy sạch trên bản sao trần
+
+`tools/conftest.py` mới: 4 module import repo y khoa lúc thu thập + 23 test đích danh cần
+cây OneDrive → **skip CÓ KHAI BÁO** (đọc lý do bằng `pytest -rs`); 1 test viết riêng cho
+filesystem APFS/NTFS → skip theo phép đo thuộc tính filesystem THẬT (không đoán theo os).
+Kết quả: 23 fail + 4 lỗi thu thập → **258 pass · 23 skip · 0 fail**; đối chứng fail-closed
+đã đo (tạo lại một gốc dữ liệu ⇒ fail quay về đúng chỗ). Ghi nhận trung thực: bản đầu của
+conftest skip oan 81/92 test của `test_classify` vì quy tắc «cả file» — phát hiện nhờ so
+số pass trước/sau (258 → 177), đã khai lại đích danh 11 test.
+
+### (c) CI có thêm bước test thật
+
+`.github/workflows/kiem-tinh-da-nen.yml` thêm bước `pytest tools/` trên lane **ubuntu**
+(đúng điều kiện vừa đo). Lane **windows chưa bật có chủ ý** — chưa có phép đo nào trên
+Windows bare-clone, và một bức tường đỏ chưa đo sẽ dạy người ta bỏ qua cả đỏ thật (BH08);
+điều kiện mở ghi ngay trong workflow.
+
 ## 6. Số đo trước/sau của phiên này
 
 | Chỉ số | Trước | Sau |
@@ -131,5 +174,7 @@ UAT/phê duyệt — đúng quy tắc «không dùng PASS kỹ thuật thay IRB/
 | Tham chiếu điều phối không phân giải | 1 (skill mất nguồn) | 0 — 41 skill nguồn |
 | Skill nguồn trong `sync/skills/` | 40 | 41 (+gói 38 file, khớp byte runtime) |
 | Công cụ chết-traceback trên bản trần | 7 | 0 (đều khai báo rõ, vẫn fail-closed) |
-| `pytest tools/` | 258 pass · 23 fail (env) | 258 pass · 23 fail (env) — **0 hồi quy** |
+| `pytest tools/` trên bản trần | 258 pass · 23 fail · 4 lỗi thu thập | **258 pass · 23 skip khai báo · 0 fail** |
 | Mirror Codex trên máy này | 0 TOML | 50/50 ×2, check PASS |
+| Safety-netting: hội chứng có nguồn cờ đỏ | 1/8 | **8/8** (đề xuất, chờ bác sĩ chuẩn y) |
+| CI chạy test thật | không | có (lane ubuntu, skip khai báo) |

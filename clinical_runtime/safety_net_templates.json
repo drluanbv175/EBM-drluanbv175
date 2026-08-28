@@ -1,8 +1,7 @@
 {
-  "phien_ban": "2.0.0",
-  "ngay_cap_nhat": "2026-08-22",
+  "phien_ban": "2.1.0",
+  "ngay_cap_nhat": "2026-08-28",
   "kiem_bang": "python3 tools/kiem_safety_net.py",
-
   "vi_sao_co": [
     "Bản 1.x của file này là ba mẫu tiếng Anh chung chung ('Recommend follow-up within 4-6 weeks',",
     "'Severe shortness of breath'), không hội chứng cụ thể, không tiêu chí đo được, không nguồn.",
@@ -11,7 +10,6 @@
     "tức một lá cờ tuyên bố có thi hành mà không có gì thi hành. Bản 2.0.0 dựng SCHEMA + bộ kiểm",
     "để lá cờ đó có nghĩa thật."
   ],
-
   "luat": {
     "khong_bia_nguong": "Mọi tiêu chí phải có `nguon` truy được (PMID/DOI hoặc guideline+năm). Không có nguồn thì để `[CẦN BÁC SĨ ĐIỀN]` — TUYỆT ĐỐI không sinh từ trí nhớ mô hình.",
     "do_duoc": "`do_duoc: true` nghĩa là bệnh nhân hoặc điều dưỡng kiểm được mà không cần phán đoán lâm sàng (có con số, mốc thời gian, hoặc dấu hiệu nhị phân). 'nếu nặng hơn' KHÔNG đo được.",
@@ -19,12 +17,10 @@
     "khong_thay_kham": "File này KHÔNG chẩn đoán và KHÔNG thay khám trực tiếp. Nó chỉ là bộ mẫu để bác sĩ chọn và chuẩn y.",
     "khong_pii": "Không bao giờ chứa thông tin định danh người bệnh."
   },
-
   "trang_thai_hop_le": {
     "co-nguon": "Đã có ít nhất một tiêu chí truy được nguồn VÀ ít nhất một tiêu chí đo được.",
     "chua-dien": "Khung đã dựng, nội dung chờ bác sĩ điền. Đây là trạng thái TRUNG THỰC, không phải lỗi."
   },
-
   "hoi_chung": {
     "dau-dau": {
       "ten": "Đau đầu",
@@ -39,21 +35,81 @@
         },
         "gioi_han_nguyen_van_cua_nguon": "Chính bài gốc ghi: thiếu nghiên cứu dịch tễ tiến cứu về cờ đỏ và tần suất thấp của nhiều loại đau đầu thứ phát khiến nhiều câu hỏi chưa có lời đáp; MỘT CÔNG CỤ SÀNG LỌC ĐÃ KIỂM ĐỊNH VẪN CHƯA CÓ. Không được trình bày danh sách này như một thang đã kiểm định.",
         "tieu_chi": [
-          { "ma": "S", "mo_ta": "Triệu chứng toàn thân, gồm sốt", "do_duoc": false },
-          { "ma": "N1", "mo_ta": "Tiền sử ung thư", "do_duoc": true },
-          { "ma": "N2", "mo_ta": "Thiếu sót thần kinh (kể cả giảm tri giác)", "do_duoc": false },
-          { "ma": "O1", "mo_ta": "Khởi phát đột ngột hoặc cấp kỳ", "do_duoc": false },
-          { "ma": "O2", "mo_ta": "Tuổi cao — khởi phát sau 65 tuổi", "do_duoc": true },
-          { "ma": "P1", "mo_ta": "Đổi kiểu đau, hoặc đau đầu kiểu mới xuất hiện gần đây", "do_duoc": false },
-          { "ma": "P2", "mo_ta": "Đau đầu theo tư thế", "do_duoc": true },
-          { "ma": "P3", "mo_ta": "Khởi phát khi hắt hơi, ho hoặc gắng sức", "do_duoc": true },
-          { "ma": "P4", "mo_ta": "Phù gai thị", "do_duoc": false },
-          { "ma": "P5", "mo_ta": "Đau đầu tiến triển và biểu hiện không điển hình", "do_duoc": false },
-          { "ma": "P6", "mo_ta": "Thai kỳ hoặc thời kỳ hậu sản", "do_duoc": true },
-          { "ma": "P7", "mo_ta": "Đau mắt kèm dấu hiệu thần kinh tự chủ", "do_duoc": false },
-          { "ma": "P8", "mo_ta": "Khởi phát sau chấn thương", "do_duoc": true },
-          { "ma": "P9", "mo_ta": "Bệnh lý hệ miễn dịch, ví dụ HIV", "do_duoc": true },
-          { "ma": "P10", "mo_ta": "Lạm dụng thuốc giảm đau, hoặc dùng thuốc mới ngay lúc khởi phát đau đầu", "do_duoc": false }
+          {
+            "ma": "S",
+            "mo_ta": "Triệu chứng toàn thân, gồm sốt",
+            "do_duoc": false
+          },
+          {
+            "ma": "N1",
+            "mo_ta": "Tiền sử ung thư",
+            "do_duoc": true
+          },
+          {
+            "ma": "N2",
+            "mo_ta": "Thiếu sót thần kinh (kể cả giảm tri giác)",
+            "do_duoc": false
+          },
+          {
+            "ma": "O1",
+            "mo_ta": "Khởi phát đột ngột hoặc cấp kỳ",
+            "do_duoc": false
+          },
+          {
+            "ma": "O2",
+            "mo_ta": "Tuổi cao — khởi phát sau 65 tuổi",
+            "do_duoc": true
+          },
+          {
+            "ma": "P1",
+            "mo_ta": "Đổi kiểu đau, hoặc đau đầu kiểu mới xuất hiện gần đây",
+            "do_duoc": false
+          },
+          {
+            "ma": "P2",
+            "mo_ta": "Đau đầu theo tư thế",
+            "do_duoc": true
+          },
+          {
+            "ma": "P3",
+            "mo_ta": "Khởi phát khi hắt hơi, ho hoặc gắng sức",
+            "do_duoc": true
+          },
+          {
+            "ma": "P4",
+            "mo_ta": "Phù gai thị",
+            "do_duoc": false
+          },
+          {
+            "ma": "P5",
+            "mo_ta": "Đau đầu tiến triển và biểu hiện không điển hình",
+            "do_duoc": false
+          },
+          {
+            "ma": "P6",
+            "mo_ta": "Thai kỳ hoặc thời kỳ hậu sản",
+            "do_duoc": true
+          },
+          {
+            "ma": "P7",
+            "mo_ta": "Đau mắt kèm dấu hiệu thần kinh tự chủ",
+            "do_duoc": false
+          },
+          {
+            "ma": "P8",
+            "mo_ta": "Khởi phát sau chấn thương",
+            "do_duoc": true
+          },
+          {
+            "ma": "P9",
+            "mo_ta": "Bệnh lý hệ miễn dịch, ví dụ HIV",
+            "do_duoc": true
+          },
+          {
+            "ma": "P10",
+            "mo_ta": "Lạm dụng thuốc giảm đau, hoặc dùng thuốc mới ngay lúc khởi phát đau đầu",
+            "do_duoc": false
+          }
         ]
       },
       "dan_benh_nhan_quay_lai": {
@@ -64,22 +120,334 @@
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
       "ngay_ra_soat": "2026-08-22"
     },
-
-    "dau-nguc":    { "ten": "Đau ngực",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "kho-tho":     { "ten": "Khó thở",               "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "dau-bung":    { "ten": "Đau bụng",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "sot":         { "ten": "Sốt",                   "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "dau-lung":    { "ten": "Đau lưng",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "chong-mat":   { "ten": "Chóng mặt",             "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
-    "sut-can":     { "ten": "Sụt cân không chủ ý",   "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" }
+    "dau-nguc": {
+      "ten": "Đau ngực",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Ước lượng khả năng đau ngực do BỆNH MẠCH VÀNH ở chăm sóc ban đầu (Marburg Heart Score, 0–5 điểm; mỗi tiêu chí 1 điểm). Điểm ≥3 = KHÔNG loại trừ được mạch vành → cần đánh giá thêm/chuyển. Đây là thang LOẠI TRỪ mạch vành, KHÔNG phải danh sách cờ đỏ cho mọi nguyên nhân đau ngực nguy hiểm.",
+        "nguon": {
+          "ten": "Marburg Heart Score — Bösner và cs., CMAJ 2010;182(12):1295-300",
+          "pmid": "20603345",
+          "doi": "10.1503/cmaj.100212",
+          "loai": "Nghiên cứu chẩn đoán cắt ngang ở chăm sóc ban đầu (phát triển + kiểm định)",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Thang được phát triển và kiểm định ở chăm sóc ban đầu (Đức/Thụy Sĩ) để LOẠI TRỪ bệnh mạch vành: AUC 0,87 (dẫn xuất) và 0,90 (kiểm định); ngưỡng 3 điểm cho độ nhạy 87,1% và độ đặc hiệu 80,8%. Thang KHÔNG sàng lọc các nguyên nhân nguy hiểm khác (bóc tách động mạch chủ, thuyên tắc phổi, tràn khí màng phổi) và không thay đánh giá cấp cứu khi bệnh cảnh cấp tính.",
+        "tieu_chi": [
+          {
+            "ma": "M1",
+            "mo_ta": "Tuổi/giới thuộc nhóm nguy cơ (nữ ≥65, nam ≥55 — ngưỡng theo toàn văn bài gốc)",
+            "do_duoc": true
+          },
+          {
+            "ma": "M2",
+            "mo_ta": "Tiền sử bệnh mạch máu đã biết (mạch vành, mạch não hoặc mạch ngoại biên)",
+            "do_duoc": true
+          },
+          {
+            "ma": "M3",
+            "mo_ta": "Bệnh nhân tự cho rằng cơn đau có nguồn gốc từ tim",
+            "do_duoc": true
+          },
+          {
+            "ma": "M4",
+            "mo_ta": "Đau tăng lên khi gắng sức",
+            "do_duoc": true
+          },
+          {
+            "ma": "M5",
+            "mo_ta": "Đau KHÔNG tái tạo được khi ấn/sờ thành ngực (cần thăm khám)",
+            "do_duoc": false
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "Marburg là thang cho BÁC SĨ tại điểm khám. Câu dặn bệnh nhân về nhà (khi nào gọi cấp cứu vì đau ngực) cần bác sĩ chọn ngưỡng và diễn đạt — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "kho-tho": {
+      "ten": "Khó thở",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Ngưỡng dấu hiệu sinh tồn mức NẶNG NHẤT (3 điểm/thông số) của NEWS2 — điều dưỡng đo được không cần phán đoán lâm sàng. BẤT KỲ thông số nào chạm ngưỡng dưới đây ở bệnh nhân khó thở là dấu hiệu phải đánh giá khẩn/chuyển viện.",
+        "nguon": {
+          "ten": "National Early Warning Score 2 (NEWS2) — Royal College of Physicians",
+          "guideline": "Royal College of Physicians — National Early Warning Score 2 (NEWS2)",
+          "nam": "2017",
+          "loai": "Chuẩn cảnh báo sớm quốc gia (guideline)"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "NEWS2 sinh ra để phát hiện diễn tiến xấu ở người bệnh NỘI TRÚ cấp tính — CHƯA được kiểm định như bộ phân loại khó thở ngoại trú. Kiểm định ngoài (Pimentel và cs., Resuscitation 2018;134:147-156, PMID 30287355, doi:10.1016/j.resuscitation.2018.09.026 — đã tra PubMed 28/08/2026): NEWS2 KHÔNG cải thiện phân biệt kết cục xấu so với NEWS và GIẢM phân biệt ở nhóm nguy cơ suy hô hấp type 2. Bệnh nhân COPD/nguy cơ tăng CO₂ dùng thang SpO₂ riêng (Scale 2) theo chỉ định bác sĩ.",
+        "tieu_chi": [
+          {
+            "ma": "N1",
+            "mo_ta": "Nhịp thở ≥25 hoặc ≤8 lần/phút",
+            "do_duoc": true
+          },
+          {
+            "ma": "N2",
+            "mo_ta": "SpO₂ ≤91% (thang chuẩn — Scale 1)",
+            "do_duoc": true
+          },
+          {
+            "ma": "N3",
+            "mo_ta": "Huyết áp tâm thu ≤90 hoặc ≥220 mmHg",
+            "do_duoc": true
+          },
+          {
+            "ma": "N4",
+            "mo_ta": "Mạch ≥131 hoặc ≤40 lần/phút",
+            "do_duoc": true
+          },
+          {
+            "ma": "N5",
+            "mo_ta": "Mới lú lẫn hoặc giảm đáp ứng (bất kỳ mức nào ngoài Alert trên thang ACVPU)",
+            "do_duoc": true
+          },
+          {
+            "ma": "N6",
+            "mo_ta": "Nhiệt độ ≤35,0°C",
+            "do_duoc": true
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "Ngưỡng sinh tồn là ngôn ngữ chuyên môn; bệnh nhân ở nhà không đo NEWS2. Câu dặn 'khó thở thế nào thì quay lại ngay' cần bác sĩ diễn đạt theo bệnh cảnh — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "dau-bung": {
+      "ten": "Đau bụng",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "PHẠM VI HẸP CÓ CHỦ Ý: khó tiêu / đau bụng trên KÉO DÀI ở ngoại trú (guideline ACG/CAG). KHÔNG phủ đau bụng CẤP — bệnh cảnh bụng ngoại khoa cần khám trực tiếp và xử trí cấp cứu, không dùng danh sách này.",
+        "nguon": {
+          "ten": "ACG and CAG Clinical Guideline: Management of Dyspepsia — Moayyedi và cs., Am J Gastroenterol 2017;112(7):988-1013",
+          "pmid": "28631728",
+          "doi": "10.1038/ajg.2017.154",
+          "loai": "Practice Guideline",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Nguyên văn guideline: ở người <60 tuổi, các alarm features KHÔNG tự động dẫn tới nội soi — cân nhắc theo từng ca. Khuyến cáo nội soi ở tuổi ≥60 là khuyến cáo CÓ ĐIỀU KIỆN (conditional). Danh sách alarm features chi tiết nằm trong toàn văn — tóm tắt không liệt kê đủ, bác sĩ đối chiếu toàn văn trước khi dùng rộng hơn các tiêu chí dưới đây.",
+        "tieu_chi": [
+          {
+            "ma": "D1",
+            "mo_ta": "Tuổi ≥60 mới xuất hiện khó tiêu → khuyến cáo nội soi tiêu hoá trên để loại trừ bệnh thực thể",
+            "do_duoc": true
+          },
+          {
+            "ma": "D2",
+            "mo_ta": "Nguy cơ ung thư dạ dày cao hơn (thời thơ ấu sống ở vùng nguy cơ cao, hoặc tiền sử gia đình ung thư dạ dày) → cân nhắc nội soi ở tuổi sớm hơn",
+            "do_duoc": true
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "Guideline dành cho quyết định NỘI SOI của bác sĩ. Câu dặn bệnh nhân (nôn máu, phân đen, đau dữ dội đột ngột…) cần bác sĩ chọn và diễn đạt — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "sot": {
+      "ten": "Sốt",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Khi SỐT/nghi nhiễm trùng ở người lớn: qSOFA ≥2/3 tiêu chí gợi ý nguy cơ diễn tiến nặng (tử vong nội viện tăng 3–14 lần so với qSOFA <2 qua các thập phân nguy cơ nền) → đánh giá khẩn/chuyển viện.",
+        "nguon": {
+          "ten": "qSOFA (Sepsis-3) — Seymour và cs., JAMA 2016;315(8):762-74",
+          "pmid": "26903335",
+          "doi": "10.1001/jama.2016.0288",
+          "loai": "Nghiên cứu kiểm định tiêu chí lâm sàng (Sepsis-3)",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "qSOFA là dấu NHẮC cân nhắc sepsis ngoài ICU, KHÔNG phải tiêu chuẩn chẩn đoán sepsis; trong ICU độ phân biệt của qSOFA kém hơn SOFA. Dữ liệu phát triển/kiểm định từ hồ sơ điện tử các bệnh viện Mỹ và ngoài Mỹ — không phải quần thể ngoại trú Việt Nam.",
+        "tieu_chi": [
+          {
+            "ma": "Q1",
+            "mo_ta": "Nhịp thở ≥22 lần/phút",
+            "do_duoc": true
+          },
+          {
+            "ma": "Q2",
+            "mo_ta": "Huyết áp tâm thu ≤100 mmHg",
+            "do_duoc": true
+          },
+          {
+            "ma": "Q3",
+            "mo_ta": "Thay đổi tri giác",
+            "do_duoc": false
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "qSOFA là công cụ của người khám. Câu dặn bệnh nhân sốt khi nào quay lại (co giật, lơ mơ, không uống được…) cần bác sĩ chọn theo bệnh cảnh — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "dau-lung": {
+      "ten": "Đau thắt lưng",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Sàng lọc GÃY XƯƠNG ĐỐT SỐNG và ÁC TÍNH ở người đau thắt lưng. Tổng quan hệ thống cho thấy CHỈ MỘT NHÓM NHỎ cờ đỏ có giá trị thông tin thật — danh sách dưới đây là đúng nhóm đó (kèm xác suất hậu nghiệm từ bài gốc).",
+        "nguon": {
+          "ten": "Downie và cs., BMJ 2013;347:f7095 — Red flags to screen for malignancy and fracture in patients with low back pain",
+          "pmid": "24335669",
+          "doi": "10.1136/bmj.f7095",
+          "loai": "Tổng quan hệ thống",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Nguyên văn bài gốc: nhiều cờ đỏ trong các guideline hiện hành hầu như KHÔNG làm thay đổi xác suất gãy xương/ác tính hoặc chưa từng được kiểm định độ chính xác; không gộp được dữ liệu vì các nghiên cứu quá không đồng nhất; các xác suất hậu nghiệm mang khoảng tin cậy rất rộng.",
+        "tieu_chi": [
+          {
+            "ma": "F1",
+            "mo_ta": "GÃY XƯƠNG — dùng corticosteroid kéo dài (xác suất hậu nghiệm 33%; KTC 10–67%)",
+            "do_duoc": true
+          },
+          {
+            "ma": "F2",
+            "mo_ta": "GÃY XƯƠNG — chấn thương nặng (11%; KTC 8–16%)",
+            "do_duoc": true
+          },
+          {
+            "ma": "F3",
+            "mo_ta": "GÃY XƯƠNG — có vết bầm tím hoặc trầy xước tại chỗ (62%; KTC 49–74%)",
+            "do_duoc": true
+          },
+          {
+            "ma": "F4",
+            "mo_ta": "GÃY XƯƠNG — tuổi cao (9%; KTC 3–25%; bài gốc không nêu ngưỡng tuổi trong tóm tắt)",
+            "do_duoc": false
+          },
+          {
+            "ma": "F5",
+            "mo_ta": "GÃY XƯƠNG — NHIỀU cờ đỏ cùng lúc (90%; KTC 34–99%)",
+            "do_duoc": true
+          },
+          {
+            "ma": "C1",
+            "mo_ta": "ÁC TÍNH — tiền sử ung thư (33%; KTC 22–46%)",
+            "do_duoc": true
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "Xác suất hậu nghiệm là ngôn ngữ của người khám. Câu dặn bệnh nhân đau lưng khi nào quay lại (yếu chân, bí tiểu, tê vùng yên ngựa…) cần bác sĩ chọn nguồn và diễn đạt — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "chong-mat": {
+      "ten": "Chóng mặt",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "CHỈ áp cho HỘI CHỨNG TIỀN ĐÌNH CẤP (chóng mặt liên tục + rung giật nhãn cầu + buồn nôn/nôn + không dung nạp cử động đầu + dáng đi không vững). Bất kỳ MỘT dấu HINTS 'nguy hiểm' nào dưới đây → nghi đột quỵ hố sau (bộ ba đạt độ nhạy 100%, độ đặc hiệu 96% trong nghiên cứu gốc, nhạy hơn MRI khuếch tán sớm).",
+        "nguon": {
+          "ten": "HINTS — Kattah và cs., Stroke 2009;40(11):3504-10",
+          "pmid": "19762709",
+          "doi": "10.1161/STROKEAHA.109.551234",
+          "loai": "Nghiên cứu cắt ngang tiến cứu",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Nghiên cứu gốc: 101 bệnh nhân NGUY CƠ CAO (có ≥1 yếu tố nguy cơ đột quỵ), người khám là chuyên gia được huấn luyện khám vận nhãn — độ chính xác KHÔNG tự chuyển sang người khám chưa huấn luyện. MRI khuếch tán SỚM âm tính giả 12% khi chụp <48 giờ — MRI sớm bình thường KHÔNG loại trừ. HINTS không áp cho chóng mặt từng cơn ngắn hoặc đã hết triệu chứng.",
+        "tieu_chi": [
+          {
+            "ma": "H1",
+            "mo_ta": "Head impulse test ngang BÌNH THƯỜNG trong bệnh cảnh tiền đình cấp (nghịch lý: bình thường = nguy hiểm)",
+            "do_duoc": false
+          },
+          {
+            "ma": "H2",
+            "mo_ta": "Rung giật nhãn cầu ĐỔI CHIỀU theo hướng nhìn lệch tâm",
+            "do_duoc": false
+          },
+          {
+            "ma": "H3",
+            "mo_ta": "Skew deviation — lệch trục dọc nhãn cầu khi test che mắt luân phiên",
+            "do_duoc": false
+          },
+          {
+            "ma": "H4",
+            "mo_ta": "Bệnh cảnh tiền đình cấp Ở NGƯỜI có ≥1 yếu tố nguy cơ đột quỵ (tăng huyết áp, đái tháo đường, rung nhĩ, hút thuốc…) — đúng quần thể nghiên cứu gốc áp dụng",
+            "do_duoc": true
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "HINTS là kỹ thuật khám chuyên môn. Câu dặn bệnh nhân chóng mặt khi nào quay lại ngay (nói khó, nhìn đôi, yếu liệt…) cần bác sĩ chọn nguồn và diễn đạt — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    },
+    "sut-can": {
+      "ten": "Sụt cân",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Sụt cân KHÔNG CHỦ Ý ở người lớn tuổi (>65) — liên quan tăng bệnh tật và tử vong; ÁC TÍNH chiếm tới 1/3 số ca dù nguyên nhân không ác tính phổ biến hơn.",
+        "nguon": {
+          "ten": "Gaddey & Holder — Unintentional Weight Loss in Older Adults, Am Fam Physician 2021;104(1):34-40",
+          "pmid": "34264616",
+          "loai": "Tổng quan (Review)",
+          "da_tra_pubmed": "2026-08-28 — metadata khớp, không mang nhãn Retracted Publication; PubMed không ghi DOI cho bài này"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Tóm tắt bài gốc KHÔNG nêu ngưỡng % sụt cân — ngưỡng định lượng thường dùng (≥5% trọng lượng trong 6–12 tháng) cần bác sĩ đối chiếu toàn văn hoặc nguồn khác trước khi ghi thành tiêu chí. 6–28% số ca không tìm được nguyên nhân rõ sau đánh giá.",
+        "tieu_chi": [
+          {
+            "ma": "W1",
+            "mo_ta": "Tuổi >65 + sụt cân không chủ ý GHI NHẬN ĐƯỢC bằng cân (số đo giảm giữa hai lần khám)",
+            "do_duoc": true
+          },
+          {
+            "ma": "W2",
+            "mo_ta": "Đánh giá ban đầu không tìm ra nguyên nhân → theo dõi CÓ HẸN 3–6 tháng, không bỏ ngỏ",
+            "do_duoc": true
+          },
+          {
+            "ma": "W3",
+            "mo_ta": "Đang đa thuốc hoặc dùng thuốc ảnh hưởng vị giác/gây buồn nôn (đếm được số thuốc, rà từng thuốc)",
+            "do_duoc": true
+          }
+        ],
+        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "Câu dặn bệnh nhân (tự cân mỗi tuần, mốc quay lại…) cần bác sĩ chọn ngưỡng và diễn đạt — Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-28"
+    }
   },
-
   "_ban_1_x_giu_lai_de_doi_chieu": {
     "ghi_chu": "Nội dung bản cũ, giữ lại để thấy khoảng cách — KHÔNG dùng làm mẫu.",
     "default_follow_up": "Recommend follow-up within 4-6 weeks or sooner if red flags develop.",
-    "red_flags": ["Severe shortness of breath", "New severe chest pain", "New focal neurological deficit"],
+    "red_flags": [
+      "Severe shortness of breath",
+      "New severe chest pain",
+      "New focal neurological deficit"
+    ],
     "vi_sao_khong_dung_duoc": "Tiếng Anh · không hội chứng cụ thể · 'severe' và 'sooner' không đo được · không nguồn · không ngày rà soát."
   },
-
   "disclaimer": "Cần bác sĩ kiểm chứng. Mọi nội dung ở đây là ĐỀ XUẤT — chỉ áp dụng cho người bệnh sau khi bác sĩ chuẩn y (Cổng A)."
 }
