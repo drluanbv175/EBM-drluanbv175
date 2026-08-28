@@ -71,6 +71,24 @@ def _mau_nen_o(o) -> str | None:
         return None
 
 
+def _mau_chu_run(run) -> str | None:
+    """Màu CHỮ của một run, đọc từ w:rPr/w:color/@w:val.
+
+    Vì sao cần: bản đầu chỉ đọc màu NỀN ô (w:shd). Với huy hiệu mức chứng cứ và
+    quyết định — nền đậm (#15803D xanh · #B45309 cam · #B91C1C đỏ) + chữ TRẮNG —
+    bỏ màu chữ làm chữ rơi về đen, tức chữ đen trên nền đỏ đậm. Giữ nền mà mất
+    chữ còn khó đọc HƠN là mất cả hai. Đo trên bản Word tâm thần kinh 24/08/2026:
+    380 ô có nền, trong đó các ô huy hiệu đều mất chữ trắng.
+    """
+    try:
+        rgb = run.font.color.rgb  # None nếu tự động/theo theme
+        if rgb is None:
+            return None
+        return "#" + str(rgb)
+    except Exception:  # noqa: BLE001 — thiếu màu không được làm hỏng cả bản dựng
+        return None
+
+
 def _doan_sang_html(doan) -> str:
     """Một đoạn văn Word → thẻ HTML tương ứng, giữ đề mục và in đậm/nghiêng."""
     ten = (doan.style.name or "").lower() if doan.style is not None else ""
@@ -83,6 +101,9 @@ def _doan_sang_html(doan) -> str:
             t = f"<strong>{t}</strong>"
         if run.italic:
             t = f"<em>{t}</em>"
+        mau_chu = _mau_chu_run(run)
+        if mau_chu:
+            t = f'<span style="color:{mau_chu}">{t}</span>'
         noi_dung.append(t)
     text = "".join(noi_dung) or _thoat(doan.text)
     if not text.strip():
