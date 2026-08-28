@@ -48,6 +48,14 @@ if hasattr(sys.stdout, "reconfigure"):
 REPO = Path(__file__).resolve().parents[1]
 PY = sys.executable
 
+# apply_vi.py PHẢI chạy bằng trình thông dịch CÓ PyYAML. Hook SessionStart gọi
+# tu_sua_chua bằng python3 hệ thống (không có PyYAML), mà parser thủ công có thể
+# lưu SAI bản gốc tiếng Anh — bản gốc sai thì --restore không cứu lại được. Nay
+# apply_vi tự từ chối ghi khi thiếu PyYAML, nên đường dẫn venv này là để việc sửa
+# CHẠY ĐƯỢC, không phải để tránh hỏng.
+_VENV = Path.home() / ".ebm-venv" / "bin" / "python"
+PY_YAML = str(_VENV) if _VENV.exists() else PY
+
 
 def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
     try:
@@ -61,6 +69,14 @@ def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
 # Các việc MÁY MÓC — mỗi việc: (nhãn, lệnh kiểm, lệnh sửa hoặc None)
 # ---------------------------------------------------------------------------
 VIEC_MAY = [
+    # Thêm 27/08/2026 — PHẢI đứng TRƯỚC dong_bo_skill: sự cố BH77 tái phát lần 2
+    # (OneDrive đồng bộ lại bản «Claude Science» cũ từ máy kia đè lên 2 skill đã
+    # Việt hoá) cho thấy nếu đồng bộ chạy TRƯỚC khi nguồn được khôi phục, chính
+    # hook này sẽ đẩy bản hỏng sang Cowork runtime — đúng chuyện đã xảy ra sáng
+    # 27/08. Khôi phục nguồn sạch từ git HEAD trước, rồi mới đồng bộ.
+    ("Skill mất khối EBM-VN-GUARD (ghi đè lạ — BH77)",
+     [PY, "tools/phuc_hoi_skill_guard.py", "--im-khi-on"],
+     [PY, "tools/phuc_hoi_skill_guard.py", "--ap-dung"]),
     ("Skill đang chạy lệch nguồn",
      [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
      [PY, "tools/dong_bo_skill.py", "--ap-dung"]),
@@ -80,6 +96,17 @@ VIEC_MAY = [
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
      None),                      # cấu hình secrets — không tự điền
+    # Thêm 23/08/2026. Bản cập nhật plugin tạo thư mục PHIÊN BẢN MỚI với file gốc
+    # tiếng Anh; bản đã Việt hoá nằm lại thư mục cũ thành mồ côi. apply_vi.py là
+    # thứ DUY NHẤT ghi tiếng Việt vào file plugin, mà trước hôm nay KHÔNG chỗ nào
+    # chạy lại nó — nên mỗi lần cập nhật là một lần mất tiếng Việt, im lặng, và chỉ
+    # lộ ra khi bác sĩ tình cờ gõ `/` rồi thấy mô tả tiếng Anh. Đo ngày 23/08:
+    # claude-code-harness 5.9.0→5.11.0 và humanizer 2.11.1→2.11.2 làm 85 mục trở
+    # lại tiếng Anh. Lớp phủ vi_descriptions.json chỉ cứu DANH-MUC/TRA-CUU, KHÔNG
+    # cứu menu gõ `/` — menu đọc thẳng file plugin.
+    ("Việt hoá plugin bị bản cập nhật trả về tiếng Anh",
+     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet", "--im-khi-on"],
+     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet"]),
 ]
 
 

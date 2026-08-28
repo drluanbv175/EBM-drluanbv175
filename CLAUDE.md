@@ -116,7 +116,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
   ⚠️ Đây là khoá cấp NGƯỜI DÙNG (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải
   đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
-  🔁 **KHOÁ NÀY CŨNG BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ khôi phục (22/08/2026, BH72).**
+  🔁 **KHOÁ NÀY CŨNG BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ khôi phục (22/08/2026, BH81).**
   Cùng đợt ghi đè `settings.json` đã xoá 8 cờ `false` (mục dưới) thì nó xoá LUÔN bản vá ngân
   sách này. Khác nhau ở chỗ: cờ `false` đã có `kiem_co_tat_plugin_trung.py` khôi phục, còn khoá
   ngân sách thì **KHÔNG công cụ nào khôi phục** — `kiem_plugin_day_du.py` chỉ ĐỌC và báo 🔴, còn
@@ -131,7 +131,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `kiem_plugin_day_du.do_ky_tu_can()`, không có bản đo thứ hai.
   ✅ **ĐÃ ĐẶT TRÊN WINDOWS 12/08/2026** — cùng giá trị Mac (`0.08` + `maxDescChars: 80`); sao lưu
   `settings.json.bak-20260812-truoc-dat-skill-budget`. Chốt kho đi từ 🔴 (vượt ngân sách 5,1 lần)
-  về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 3 plugin · 668 skill (`tools/moc_chuan_plugin.json`)
+  về 🟢. Đã ghi **mốc chuẩn riêng cho Windows**: 4 plugin · 741 skill (`tools/moc_chuan_plugin.json`) — cập nhật 26/08/2026 khi bổ sung `claude-code-harness`; trước đó là 3 plugin · 668 skill
   — đúng chủ ý của bác sĩ (3 bật + 8 medsci trùng đã tắt), KHÁC Mac (10 plugin · 870 skill) vì hai
   máy cài khác nhau, nên **mỗi máy tự `--ghi-moc` riêng, đừng chép mốc qua lại**.
 - **✅ SKILL DÙNG NGUỒN CHUNG VÀ TỰ ĐỒNG BỘ (hoàn thiện 2026-08-20).**
@@ -162,7 +162,7 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   chụp TRẠNG THÁI riêng từng máy và cố ý không bao giờ nhìn sang máy kia. Nhờ vậy mới tách được
   **«thiếu vì cố ý»** khỏi **«thiếu vì trôi dạt»** — hai thứ trông giống hệt nhau trong mọi bản kiểm
   cũ mà xử lý thì ngược nhau. Đo trên chính hai mốc đang có: **Mac 9 plugin/839 skill · Windows 3
-  plugin/668 skill — 6 plugin chỉ có ở Mac**, và trước file này không công cụ nào nói được con số đó.
+  plugin/741 skill (từ 26/08/2026, gồm harness) — 5 plugin chỉ có ở Mac**, và trước file này không công cụ nào nói được con số đó.
   ⚠️ Mục nào còn `da_xac_nhan: false` thì `can_o_may` mới chỉ là SUY từ hiện trạng lúc dựng sổ, nên
   chốt **chỉ cảnh báo, không báo đỏ** (báo đỏ dựa trên suy đoán là biến CHƯA BIẾT thành CÓ VẤN ĐỀ —
   BH08, và bức tường đỏ giả sẽ dạy người ta bỏ qua cả cảnh báo thật). Bác sĩ xác nhận xong thì chính
@@ -233,6 +233,51 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   toàn bộ 588 mô tả aipoch trong bản chụp về tiếng Anh rồi dựng lại → trang vẫn ra **604/604
   tiếng Việt**. `apply_vi.py` từ nay là **tuỳ chọn**, chỉ để menu gõ `/` trong Claude Code hiện
   tiếng Việt; bỏ qua nó không mất gì ở danh mục/trang tra.
+  ⛔ **ĐÍNH CHÍNH 23/08/2026 — vế «tuỳ chọn… bỏ qua nó không mất gì» đúng chữ nhưng SAI trọng
+  lượng, và chính nó đã tạo ra lỗ hổng.** Lớp phủ cứu DANH-MUC/TRA-CUU thật, nhưng **menu gõ `/`
+  đọc THẲNG file plugin** — mà đó mới là nơi bác sĩ làm việc hằng ngày. Vì tài liệu xếp `apply_vi`
+  vào loại «tuỳ chọn», **không chỗ nào chạy lại nó**: đã kiểm bằng grep trên `tu_sua_chua.py`,
+  `tu_khoi_dong.py`, `dong_bo_tat_ca.py` — 0 lượt gọi. Nên **mỗi lần plugin cập nhật là một lần
+  mất tiếng Việt, im lặng.** Đo ngày 23/08 khi bác sĩ hỏi «sao Việt hoá lại bị lỗi»: **87 mô tả đã
+  trở lại tiếng Anh** — `claude-code-harness` 5.9.0→5.11.0 mất **85** (68 skill + 10 lệnh + 7
+  agent), `humanizer` 2.11.1→2.11.2 mất 1, `medsci-project` thêm 1 skill mới chưa dịch.
+  **Cơ chế:** bản cập nhật tạo thư mục PHIÊN BẢN MỚI với file gốc tiếng Anh; bản đã Việt hoá nằm
+  lại thư mục cũ thành mồ côi (thấy rõ: `5.9.0` có 65 mục tiếng Việt, `5.11.0` có 0/68).
+  **Đã vá:** `apply_vi.py --im-khi-on` (kiểm ngầm dry-run, im khi ổn, mã thoát 1 khi có mục bị trả
+  về tiếng Anh) và **đã nối vào `tu_sua_chua.py`** — chốt tự chạy mỗi phiên nay tự phát hiện và tự
+  vá. Khoá bằng **BH73**, đã kiểm bằng đột biến (gỡ bước khỏi `tu_sua_chua` ⇒ chốt đỏ đúng).
+  ⚠️ **`apply_vi.py` nay TỪ CHỐI GHI khi máy thiếu PyYAML** (mã thoát 2) thay vì cảnh báo rồi vẫn
+  ghi bằng parser thủ công: parser đó lưu SAI bản gốc với mô tả nhiều dòng, mà bản gốc sai thì
+  `--restore` vô dụng — đúng kiểu hỏng im lặng đã xảy ra 10/08 với 6 file agent. Luôn chạy bằng
+  `~/.ebm-venv/bin/python`; `--dry-run`/`--report` vẫn chạy được không cần PyYAML.
+  > **Luật nền:** một công cụ KHÔNG AI GỌI thì với dây chuyền hằng ngày nó **không tồn tại** —
+  > cùng bài học BH41. Xếp một việc vào loại «tuỳ chọn» chính là cách nó lặng lẽ không bao giờ chạy.
+  🔴 **VÒNG HAI 24/08/2026 — nối dây xong rồi mà chốt VẪN báo sạch trong lúc 147 mô tả đã về
+  tiếng Anh.** Ba lỗi khác nhau, cùng một họ «đo đúng, nhưng đo nhầm chỗ»:
+  **(a) SAI THƯ MỤC — lời giải cho lớp bực bội «công cụ bảo đã Việt hoá mà tôi vẫn đọc tiếng
+  Anh».** `extract_catalog.py` quét `~/.claude-science/orgs/*/skills/` rồi gắn nhãn
+  `/anthropic-skills:<tên>` — nhưng lệnh đó **thật sự chạy bản ở
+  `local-agent-mode-sessions/skills-plugin/`** (đúng như AGENTS.md và chính CLAUDE.md đã ghi).
+  Hai thư mục KHÁC NHAU: đo được `.claude-science/learn` tiếng Việt trong khi bản Cowork —
+  bản hiện ra khi bác sĩ gõ `/` — vẫn tiếng Anh. Nay quét **CẢ HAI**; trùng `id` là cố ý vì
+  apply_vi xử lý theo từng đường dẫn nên một bản dịch áp cho cả hai bản sao.
+  **(b) CATALOG LẠC HẬU.** `catalog_raw.json` ghi đường dẫn TUYỆT ĐỐI kèm số phiên bản
+  (`…/claude-code-harness/5.11.0/…`). Plugin lên 5.12.0 thì catalog vẫn trỏ 5.11.0 — nơi tiếng
+  Việt còn nguyên — nên chốt báo «sạch» trong khi thư mục đang phục vụ **100% tiếng Anh**.
+  Nay `apply_vi.py --tu-quet` quét lại trước khi kiểm (~1,3 giây) và `tu_sua_chua` dùng cờ này
+  ở CẢ lệnh kiểm lẫn lệnh sửa.
+  **(c) BẢN VÁ LÀM HỎNG THỨ NÓ PHẢI GIỮ.** Thêm Cowork vào catalog kéo **chính skill của bác
+  sĩ** vào tầm ghi của apply_vi. Rào «giữ-bản-việt-tự-viết» khi đó chỉ chạy cho khoá `name:`,
+  nên đường khoá `id` vẫn đè — **mất mô tả tự viết của 3 skill** (`clinical-evidence-rag`,
+  `ebm-master`, `literature-review`). Đã khôi phục cả 3 và bỏ điều kiện `qua_ten`: nguồn gốc
+  của khoá không đổi được sự thật rằng mô tả đang có là do người viết. Kèm luật mới cho từ
+  điển — **`vi_descriptions.json` KHÔNG được chứa bản dịch cho skill bác sĩ tự viết trong
+  `sync/skills/`** (đã gỡ 4 khoá tranh chấp).
+  **Đo sau khi sửa:** Cowork **62/62**, `.claude-science` **65/65**, `sync/skills` **40/40**,
+  plugin đang bật **100%** — 0 mô tả tiếng Anh, 0 YAML hỏng. Còn 472 file tiếng Anh nằm trong
+  **8 bộ medsci ĐANG TẮT** (8 × 59, không hiện trong menu `/`); bản dịch của chúng đã có sẵn
+  trong từ điển theo khoá `name:` nên bật lại bộ nào là Việt hoá ngay, không phải dịch thêm.
+  **Khoá bằng BH74**, đã kiểm bằng 3 phép đột biến riêng cho 3 vế.
 - **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
   ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
   kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là
@@ -273,6 +318,57 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `/medsci-analysis:*` (đã tắt) thay vì `/medsci-project:*`. (c) 7 script trong `tools/vietnamize/`
   từng chết giữa chừng trên Windows vì `print()` tiếng Việt gặp stdout cp1252 — nay tự ép UTF-8.
 
+- **🔧 HARNESS ĐÃ CÓ TRÊN WINDOWS (bổ sung 26/08/2026 theo yêu cầu bác sĩ).**
+  `claude-code-harness` **v5.13.1** (Mac đang v5.11.0 — Windows nay MỚI HƠN). Trước hôm đó máy
+  Windows **không có gì**: không clone, không skill, không agent, không lệnh — chỉ Mac có.
+  **Gọi bằng SKILL, KHÔNG phải lệnh** — đây là chỗ dễ hiểu nhầm nhất: `commands/` của bản
+  5.13.1 **rỗng**, 4 quy trình nằm trong `skills/`, nên phải gõ
+  `/claude-code-harness:harness-plan` (·`-work` ·`-review` ·`-sync` ·`-accept` ·`-loop`
+  ·`-release` ·`-setup` ·`-progress` ·`-plan-brief`), KHÔNG phải `/harness-plan`. Sổ khai
+  `sync/plugin-manifest.json` (mô tả cũ ghi «4 lệnh harness») đã sửa lại cho đúng.
+  **Cài thủ công vì máy này KHÔNG có `claude` CLI trong PATH** — nối dây đúng khuôn 3 file như
+  các plugin khác: `marketplaces/claude-code-harness-marketplace` (clone `--depth 1`, 113 MB
+  thay vì 553 MB full — bản đầy đủ từng là mục phình đĩa lớn nhất trong đợt audit 05/08) ·
+  `cache/<marketplace>/claude-code-harness/5.13.1` (đã bỏ `.git`) · đăng ký ở
+  `known_marketplaces.json` + `installed_plugins.json` + `enabledPlugins`. Sao lưu
+  `*.bak-truoc-them-harness-20260826-074126`. Nguồn: `github.com/Chachamaru127/claude-code-harness`
+  (chính repo mà `sync/setup-claude-cli.sh` của bác sĩ vẫn dùng).
+  ⚠️ **Plugin này mang 56 HOOK trên 27 sự kiện**, gồm `PreToolUse` khớp `Write|Edit|MultiEdit|Bash|Read`
+  — tức chạm vào MỌI lời gọi công cụ. Thiết kế là **fail-safe**: `bin/harness` có nhánh Windows riêng
+  (exec `harness-windows-amd64.exe`) và khi thiếu binary thì **thoát 0 với stdout rỗng** để hook coi
+  là «không quyết định». `/bin/bash` + `/usr/bin/grep` mà hook cần đều có sẵn (Git Bash). **NHƯNG
+  binary CHƯA được chạy thử** — cần bác sĩ tự kiểm sau khi khởi động lại. Thấy chậm bất thường hoặc
+  lỗi lạ khi Write/Edit/Bash ⇒ nghi hook harness trước tiên, tắt bằng cách đặt
+  `"claude-code-harness@claude-code-harness-marketplace": false` trong `~/.claude/settings.json`.
+  ⚠️ **Chỉ dùng cho việc LẬP TRÌNH** (repo `medical-ebm-automation`). Harness KHÔNG phải chủ của bất
+  kỳ việc có cổng nào — bảng định tuyến ở mục trên vẫn nguyên giá trị.
+
+- **🧹 DỌN 628 «BÓNG TIẾNG ANH» TRONG `~/.claude/skills/` (26/08/2026) — lời giải cho lớp bực bội
+  «Việt hoá bị lỗi» và «danh sách quá dài».** Đo được: `~/.claude/skills/` có **707 thư mục thật**,
+  trong đó **643 trùng TÊN với skill của plugin ĐANG BẬT nhưng NỘI DUNG KHÁC**. Soi diff thì thấy
+  chiều ngược với dự đoán: **bản trong plugin ĐÃ Việt hoá** (có `description-src` + `description-en`
+  + `description` tiếng Việt), còn **bản trong `~/.claude/skills/` là tiếng Anh thô** — tức mỗi skill
+  hiện HAI lần, và bản tiếng Anh không có tiền tố nên thường thắng. Mốc `mtime` cho thấy 630/643 được
+  chép hàng loạt **một lần ngày 21/08**, KHÔNG bị hook `SessionStart` tạo lại (hook chạy 26/08 08:04
+  không đụng tới chúng) ⇒ dọn là dứt điểm, không tái phát.
+  **Đã chuyển (KHÔNG xoá) 628 mục** sang `~/.claude/skills-backup/bong-tieng-anh-20260826/`.
+  Kết quả đo: mục gọi được **1720 → 1092** · `INDEX-CONG-CU.md` (file `/cong-cu-gi` đọc)
+  **128 KB → 35 KB** · trang tra 718 → 495 KB. Muốn lùi: chuyển ngược thư mục là xong.
+  🔴 **BẪY ĐÃ MẮC NGAY TRONG LÚC DỌN — cùng họ BH74, ghi để đừng lặp lại.** Phân loại theo **TÊN**
+  đã cuốn nhầm **15 skill RIÊNG của bác sĩ** chỉ vì trùng tên với skill plugin
+  (`literature-review` · `peer-review` · `citation-management` · `clinical-decision-support` ·
+  `clinical-reports` · `exploratory-data-analysis` · `hypothesis-generation` · `paper-lookup` ·
+  `pyhealth` · `scholar-evaluation` · `scientific-critical-thinking` · `scikit-survival` ·
+  `statistical-analysis` · `treatment-plans` · `venue-templates`). Đã khôi phục đủ 15, và đối chiếu
+  **40/40 khớp BYTE với `sync/skills/`**. **Luật: trước khi dời bất cứ thứ gì khỏi `~/.claude/skills/`,
+  phải loại trừ mọi tên có trong `sync/skills/` TRƯỚC, không được xét theo tên plugin.**
+  **38 skill MỒ CÔI được GIỮ LẠI** — không plugin nào có, xoá là mất hẳn: `alphafold2` · `boltz` ·
+  `borzoi` · `chai1` · `diffdock` · `esmfold2` · `evo2` · `openfold3` · `proteinmpnn` · `scgpt` ·
+  `playwright` · `pptx-skill` · `neurokit` · `pydeseq` … (phần lớn là skill sinh-tin học của plugin
+  đã gỡ). Sau dọn `~/.claude/skills/` còn **78 mục = 40 skill riêng + 38 mồ côi**.
+  ⚠️ Hook `SessionStart` đang bảo chạy `tools/verify_skill_sync_health.py` — **file đó không tồn tại**;
+  tên thật là `tools/check_claude_codex_sync_health.py` (chạy ngày 26/08: PASS, 50/50 agent).
+
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
   tracker + dashboard 12 tab + Evidence Workbench + scheduler + scoring (32 thang có nguồn trích dẫn
@@ -307,7 +403,9 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `medical-ebm-automation/chronic-care-clinic-os/` là app Next.js+Prisma THẬT (không phải mock) cho
   một sáng kiến "phòng khám bệnh mạn" riêng — **CHƯA nối vào hệ agent `.claude/agents/` hay
   `tools/orchestrator/`** (dieu-phoi-lam-sang/dieu-phoi-nghien-cuu không gọi tới); tự khóa
-  `BLOCKED_FOR_PRODUCTION` (37 blocker mở, xem `chronic-care-clinic-os/PRODUCTION_BLOCKERS.md`) —
+  `BLOCKED_FOR_PRODUCTION` (24 blocker mở — đính chính 26/08/2026, số cũ "37" đã lỗi thời so với
+  nội dung thật của `chronic-care-clinic-os/PRODUCTION_BLOCKERS.md`; Security 8 · Data protection 5 ·
+  Clinical safety 6 · Operations 4 · AI 1) —
   hiện KHÔNG ghi DB thật, KHÔNG có code AI/LLM nào (`AI_DRAFTS_ENABLED=false` mới chỉ là biến khai
   trong `.env.example`, chưa có chỗ nào trong code đọc nó). `tools/orchestrator/` (control plane 6
   năng lực, xem mục Lệnh) cũng **tách rời khỏi luồng agent thật** — chỉ là bộ dry-run/self-audit song
@@ -405,6 +503,23 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `from __future__ import annotations` — đúng lỗi từng làm crash `pytest` trên máy 3.9
   (2026-07-15, đã vá 2 file) — CI chạy `ruff check` mỗi lần push
   (`.github/workflows/offline-ci.yml`).
+  🔴 **SÀN 3.11 CHƯA BAO GIỜ ĐƯỢC KIỂM — vá 22/08/2026.** `python -m compileall tools ops`
+  trên Python **3.11** báo **5 file KHÔNG biên dịch được** (6 chỗ): `audit_ebm_system.py` ·
+  `fix_launchd_scheduled_jobs.py` · `kiem_do_tuoi_chung_cu.py` · `kiem_phan_hang.py` ·
+  `verify_mcp_live_sync.py`. Nguyên nhân là cú pháp **PEP 701** — lồng nháy KÉP trong f-string
+  nháy kép (`f"gui/{getattr(os, "getuid", ...)}"`) và dấu gạch chéo ngược trong phần biểu thức
+  f-string — **chỉ hợp lệ từ 3.12**, trong khi dòng ngay trên khai sàn **3.11+**.
+  **Vì sao nằm im:** CI ghim đúng `python-version: "3.12"` và hai máy chạy 3.12.10 / 3.14.6, nên
+  KHÔNG đâu chạm tới sàn đã khai. **Hại thật:** trên môi trường 3.11 bất kỳ (container phiên web,
+  máy mới, đồng nghiệp cài bản khác), `kiem_do_tuoi_chung_cu.py` — **một trong 7 chốt tự chạy mỗi
+  phiên** — chết `SyntaxError`, mà hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không
+  một dòng báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính 12/08 trên Windows.
+  **Đã vá cả 6 chỗ** (nhấc `uid` ra khỏi f-string — hợp 3.11 và dễ đọc hơn) + **thêm lane
+  `python-version: ["3.11", "3.12"]`** vào `.github/workflows/kiem-tinh-da-nen.yml` để sàn khai
+  báo thật sự được kiểm + khoá bằng **BH80**.
+  **Số đo:** bộ chốt bài học đi từ **39 → 35 mục đỏ**, 0 hồi quy. Bốn chốt tự xanh lại là
+  **BH05 (công cụ chung sống được trên Windows)** · BH19 · BH20 · BH32 — chúng đỏ chỉ vì module
+  không nạp nổi trên 3.11, tức bài học BH05 đang đỏ vì đúng file nó canh không biên dịch được.
 - Secrets ở `.env` — đặt **ngoài OneDrive** tại `~/.ebm-secrets/`, symlink về repo (không để key
   trần trên cloud). Không hardcode, không commit, không in ra.
 - Codex API cho mọi tác vụ AI (wrapper dùng chung)
@@ -1186,6 +1301,69 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   sắt tĩnh mạch là kết cục GỘP nhập viện + tử vong tim mạch, KHÔNG phải "giảm nhập viện"). Chưa tự động hoá:
   bước tiếp là thêm đầu ra thứ 4 cho `make_derivatives.py` — chờ bác sĩ duyệt vì tool này có 3 bản đồng bộ.
 
+## 🩺 TẦNG CUỘC GẶP — hai công cụ đầu tiên phục vụ PHÒNG KHÁM, không phải kho chứng cứ (22/08/2026)
+
+**Vì sao có.** Báo cáo `audit/03-diem-nghen-thuc-hanh-ngoai-tru_2026-08-22.md` đo lại kho công cụ
+và tìm ra một mất cân đối chưa ai nói ra: **117 tool, trong đó 32 tool chỉ để hệ tự kiểm chính nó,
+và ĐÚNG 1 tool chạm vào khoảnh khắc trong phòng khám** (`tra_diem_kham.py`). Toàn bộ A1–A10 ·
+B1–B5 · C1–C5 phục vụ **chuỗi cung ứng chứng cứ**. Trong khi số đo y văn nói tổn hại ngoại trú tập
+trung ở chỗ khác: **78,9%** điểm gãy sai sót chẩn đoán nằm trong CUỘC GẶP (Singh 2013, PMID
+23440149) và **6,8–62%** kết quả xét nghiệm không được theo dõi tiếp (Callen 2012, PMID 22183961).
+*Cần bác sĩ kiểm chứng — số liệu Mỹ, cái chuyển được là VỊ TRÍ điểm gãy, không phải con số.*
+
+**Luận điểm nối hai tầng:** độ chính xác chẩn đoán rơi 55,3% → 5,8% giữa ca dễ và ca khó trong khi
+độ tự tin gần như không đổi 7,2 → 6,4/10 (Meyer 2013, PMID 23979070) ⇒ **niềm tin không đo được độ
+đúng, nên phòng vệ phải nằm NGOÀI đầu bác sĩ.** Đó chính là kỹ thuật hệ này đã thành thạo ở tầng
+chứng cứ (32 chốt tự kiểm) — hai công cụ dưới đây chỉ áp đúng kỹ thuật ấy cho tầng cuộc gặp.
+
+**(a) `python3 tools/so_viec_chua_dong.py` — SỔ VIỆC CHƯA ĐÓNG.** Canh mọi thứ còn treo sau khi
+bệnh nhân ra về (xét nghiệm chờ kết quả · hình ảnh · chuyển tuyến · tái khám · thử điều trị).
+`--them` mở việc (BẮT BUỘC có hạn: `--han` hoặc `--han-sau N`) · `--dong` · `--huy --ly-do`
+(huỷ không dấu vết là cách một việc biến mất mà không ai biết) · `--ds` · `--tuan` ·
+mặc định in việc quá hạn. **Mã thoát 0/1/2**; có `--im-khi-on` để nối làm **chốt thứ 8** của hook
+`SessionStart` (7 chốt hiện tại + cái này).
+**Ranh giới cứng:** chỉ ĐO và NHẮC — không suy diễn lâm sàng, **không tự đóng việc**, không ghi
+`decision`/`gradeLevel` (BH10, có test khoá). **Bộ chặn PII** ở `soi_pii()` cố ý chỉ bắt mẫu ĐỘ
+CHÍNH XÁC CAO (điện thoại · dãy 9/12 số · email · ngày sinh · từ khoá định danh) — **không dò tên
+riêng**, vì tiếng Việt viết hoa ở quá nhiều chỗ và chặn oan hàng loạt sẽ dạy người dùng bỏ qua cảnh
+báo (BH08); thông điệp lỗi nói thẳng giới hạn đó.
+**Sổ nằm NGOÀI git có chủ ý:** `state/viec-chua-dong.jsonl` rơi vào luật `/*` của `.gitignore` —
+đây là dữ liệu vận hành phòng khám, chỉ CÔNG CỤ mới cần version-control.
+Hồi quy: `python3 tools/test_so_viec_chua_dong.py` (30 test, đã kiểm bằng 2 phép đột biến —
+bỏ regex điện thoại ⇒ đỏ 2; cho bản ghi thiếu hạn rơi vào nhóm "ổn" ⇒ đỏ 1).
+
+**(b) `python3 tools/kiem_safety_net.py` — CHỐT SAFETY-NETTING.**
+🔴 **Lỗi đã tồn tại trong repo, nay mới đo được:** `CLINICAL_RUNTIME_FLAGS.json` khai
+`enforce_safety_net_templates: true`, nhưng `grep` toàn repo trả **0 file tham chiếu** tới
+`clinical_runtime/safety_net_templates.json`, và nội dung file đó là **ba mẫu tiếng Anh chung
+chung** ("Recommend follow-up within 4-6 weeks", "Severe shortness of breath") — không hội chứng,
+không tiêu chí đo được, không nguồn. Tức **một lá cờ tuyên bố có thi hành mà không có gì thi hành**
+— cùng HỌ với `return` sớm 12/08 (che 73 mục), BH27 (fail-open cổng A12) và BH61 (khoá lạ trong
+`DATA.summary`), nhưng lần này rơi vào **tầng an toàn cho bệnh nhân**, không phải tầng governance.
+**Đã dựng lại `safety_net_templates.json` v2.0.0** với schema 8 hội chứng và **hai trục TÁCH RIÊNG**:
+`co_do_cho_bac_si` (dấu hiệu bác sĩ tìm lúc khám) ≠ `dan_benh_nhan_quay_lai` (câu dặn mang về nhà)
+— gộp hai thứ này là biến thuật ngữ chuyên môn thành lời khuyên cho người bệnh.
+**9 luật của chốt:** R1 khung · R2 trạng thái khớp nội dung · R3 đủ hai trục · R4 nguồn phải truy
+được (PMID / DOI / guideline+năm — **văn xuôi bị từ chối**) · R5 ≥1 tiêu chí `do_duoc:true`
+("nếu nặng hơn" không phải tiêu chí) · R6 khai `co-nguon` mà còn `[CẦN BÁC SĨ ĐIỀN]` ⇒ lỗi ·
+R7 phải NÓI RA giới hạn nguyên văn của nguồn · R8 hạn rà soát 365 ngày ·
+**R9 — luật mạnh nhất: cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.** Thiếu file cờ ⇒ fail-closed
+(giả định cờ đang bật), không đọc thành "cờ đang tắt".
+**Độ phủ hiện tại, nói thẳng: 1/8 hội chứng có nguồn · 0/8 có lời dặn bệnh nhân.** Mục duy nhất đã
+điền là `dau-dau`, chép NGUYÊN 15 mục **SNNOOP10** (Do TP và cs., Neurology 2019;92(3):134-144 ·
+PMID **30587518** · doi:10.1212/WNL.0000000000006697) kèm **giới hạn nguyên văn của chính bài gốc**
+("một công cụ sàng lọc đã kiểm định VẪN CHƯA CÓ") — không được trình bày như thang đã kiểm định.
+7 hội chứng còn lại để `chua-dien` + `[CẦN BÁC SĨ ĐIỀN]`: **trạng thái TRUNG THỰC, không phải lỗi**
+— bịa ngưỡng cờ đỏ cho 7 hội chứng là đúng thứ doctrine cấm tuyệt đối.
+Hồi quy: `python3 tools/test_kiem_safety_net.py` (21 test, mutation-tested).
+🔎 **Chính test bắt được một fail-open trong bản đầu của chốt:** `hc.get("dan_benh_nhan_quay_lai", {})`
+— `{}` LÀ dict nên `isinstance` luôn đúng ⇒ hội chứng **thiếu hẳn** khối lời dặn vẫn lọt R3. Mặc định
+phải là `None`. Đúng bài học nền: luật CÓ MẶT nhưng không bao giờ chạy tới.
+
+**Hai việc CHƯA làm, có chủ ý** (nêu ở §V báo cáo, chờ bác sĩ quyết): ② ô "Nghị trình bệnh nhân"
+trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quyết định một trang" (đầu ra thứ 6 của
+`xuat_goi_cap_nhat.py`) đụng vào dây chuyền có 3 bản đồng bộ nên cần bác sĩ duyệt trước.
+
 ## Lệnh
 > Chạy trong `medical-ebm-automation/` (dự án sống), với venv `~/.ebm-venv` đã kích hoạt.
 - Cài: `pip install -r requirements.txt`
@@ -1194,6 +1372,18 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - Test: `pytest` (khi venv đã có dev dependencies)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
 - Audit chung từ thư mục gốc: `python3 tools/audit_ebm_system.py`
+- **Sổ việc chưa đóng (tầng cuộc gặp):** `python3 tools/so_viec_chua_dong.py` — mặc định in việc
+  quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
+- **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
+  lời dặn (9 luật, R9 chặn cứng khi lá cờ `enforce_safety_net_templates` nói hộ).
+- **Markdown → Word, font mặc định TIMES NEW ROMAN:** `python3 tools/md_sang_docx_times.py <file>.md
+  [--ra <ra>.docx] [--co-chu 12]`. Lấp khoảng trống mà `build_dashboard_docx.py` không phủ (công cụ
+  đó chỉ đọc khối `DATA` của dashboard, không chuyển được tài liệu Markdown thường). Bản `.docx`
+  sinh TỪ CHÍNH file `.md` nguồn — cùng nguyên tắc "một nguồn, nhiều bản phái sinh" của bộ năm, để
+  hai bản không bao giờ lệch nhau. Hỗ trợ đề mục · bảng ống · trích dẫn · danh sách · **đậm** ·
+  *nghiêng* · `mã` · liên kết (in kèm URL để bản giấy tra được nguồn). Đoạn mã GIỮ Times New Roman,
+  phân biệt bằng nền xám — không đổi font, vì mặc định đã được ấn định. **KHÔNG commit file `.docx`
+  sinh ra**: nó tái tạo được từ `.md` bằng một lệnh, giống mọi dữ liệu phái sinh khác của repo.
 - **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
 - **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 tools/check_claude_codex_sync_health.py`.
 - **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
@@ -1460,5 +1650,54 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   ngược trạng thái tick ☐/☑). Kiểm hồi quy: `pytest tests/test_g9_quality_gate.py` +
   `tests/test_g9_reviewer_ref_cross_check_20260730.py` +
   `tests/test_g9_auto02_stale_cache_and_r5_20260730.py` (mutation-tested).
+
+## 🔴 AUDIT ĐA-AGENT G0-G10 24/08/2026 — G8 KHÔNG có chốt nào, G2/G4 chỉ kiểm SAU khi ký (đã vá)
+
+**Đính chính:** các mục phía trên chỉ liệt kê G0/G3/G4/G8/G9 có `gN_quality_gate.py` riêng —
+tại thời điểm viết những mục đó đúng, nhưng nay **CẢ 11 CỔNG G0→G10 đều đã có**
+`tools/gN_quality_gate.py` riêng (`ls tools/g*_quality_gate.py` xác nhận g0…g10, mỗi file
+294–1674 dòng, nối đúng dây vào `run_gN_auto.py`/`approve_gate.py` tương ứng). Không cần lập
+kế hoạch "xây quality gate cho G1/G2/G5/G6/G7/G10" trong tương lai vì tưởng chưa có.
+
+**Phát hiện nghiêm trọng nhất, chưa từng được ghi trước đây:** lớp **đo lường** (11 file trên,
+logic đúng, có test) tách biệt khỏi lớp **thực thi chặn chữ ký** trong `tools/approve_gate.py`
+— và trước 24/08, lớp thực thi chỉ thật sự dùng lớp đo lường cho 3/6 cổng cứng canonical
+(G5, G9, G10). Cụ thể:
+- **G8 (bình duyệt độc lập) — KHÔNG có bất kỳ chốt chất lượng nào trước khi ký.**
+  `g8_quality_gate.py` tồn tại, đúng logic, có test riêng — nhưng `approve_gate.py` chưa từng
+  `import` nó. Ai giữ khóa vai trò `PHAN_BIEN`/`PEER_REVIEWER` có thể ký "đã bình duyệt độc lập"
+  mà không cần bản nhận xét phản biện thật tồn tại, không cần cổng kiểm rút bài A12 từng chạy,
+  kể cả tự duyệt cho chính đề tài mình đứng tên thống kê viên (G4) — không gì chặn lại.
+- **G2, G4 — tiêu chí đầy đủ (24 mục WHO TRDS cho G2; 12 tiêu chí gồm đối chiếu SAP-đã-ký với
+  G3_checkpoint.json HIỆN TẠI cho G4) chỉ chạy SAU KHI đã ghi ledger**, thuần advisory — mâu
+  thuẫn trực tiếp với dòng "G2 phải chặn khi thiếu mục 13/14/19/20" đã ghi ở mục Project Context.
+- Canary BH72 (`thu_dau_cuoi_cong_nghien_cuu.py`) tưởng đã phủ toàn chuỗi G0-G10 nhưng thực ra
+  chỉ gài lỗi cho G3/G4/G8 và gọi thẳng hàm Python, bỏ qua `approve_gate.py` — nên không bắt
+  được chính hai lỗ hổng trên. Việc mở rộng canary để gọi qua đúng CLI ký thật là việc CÒN LẠI
+  (Plans.md medical-ebm-automation Sprint 9, task 9.5), chưa làm.
+
+**Đã vá (Sprint 9, task 9.1):** nối `G8Q/G2Q/G4Q.evaluate_study(write=False)` vào ĐÚNG TRƯỚC
+bước ghi ledger trong `approve_gate.py`, khuôn theo G5/G9/G10 đã có sẵn — G8 chấp nhận
+status∈{PENDING_REAL_REVIEW_SIGNATURE, PASS_G8_REVIEW_RECORDED} (STATUS_REVIEWED không bao giờ
+đạt được trước khi ký vì G8-HUMAN-03/04 tự đọc ledger nên luôn "REVIEW" khi chưa có gì để đối
+chiếu — đây là thiết kế đúng, không phải bug); G4 chấp nhận đúng STATUS_READY
+("READY_FOR_SIGNATURE"); G2 từ chối khi BLOCKED/DRAFT. Kiểm bằng **đột biến thật**: tắt từng
+chốt (comment tạm điều kiện bằng `False and ...`), chạy lại test tương ứng — cả 3 nhóm đều đỏ
+đúng chỗ, khôi phục lại xanh. Test hồi quy:
+`pytest tests/test_approve_gate_quality_gate_wiring_20260824.py` (8 test, mutation-tested) +
+2 test cũ trong `test_approval_ledger.py` được sửa lại dùng SAP thật sinh qua `run_g4_auto.py`
+(SAP tối giản viết tay không còn đạt STATUS_READY sau bản vá này — đúng ý, không phải hồi quy).
+Đo trước/sau: toàn repo `pytest` 3136→3144 passed, 0 fail.
+
+**Bốn trục audit còn lại (cùng đợt 24/08, mỗi trục một agent độc lập) đều SẠCH ở lõi, không
+cần vá nội dung/an toàn:** cổng tra cứu chứng cứ (MCP PubMed/ClinicalTrials.gov/pubmed-search
+đều trả dữ liệu thật, chuỗi kiểm rút bài 3 tầng xác nhận đúng qua PMID Wakefield) · nguồn
+chứng cứ mới nhất (0/63 chủ đề quá ngưỡng đỏ 120 ngày, watchlist 4 nguồn thẩm quyền
+Cochrane/NICE/USPSTF/WHO đã thật sự active — đính chính ghi chú cũ nói "CHANGELOG khai đã
+thêm nhưng bản sống KHÔNG có") · mẫu cập nhật chứng cứ (5 dashboard mẫu PASS
+`verify_dashboard.py --online --strict-sources`, template↔skill_assets khớp tuyệt đối; chỉ có
+66/67 dashboard lệch VỎ CSS/HTML — không phải nội dung — cần chạy lại `reskin_dashboards.py`)
+· tầng agent doctrine (74/74 bài học BH01-74 không tái phát, 0 tham chiếu hỏng, mọi phân công
+công cụ khớp đúng bảng phân công đã ghi ở các mục trên).
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._

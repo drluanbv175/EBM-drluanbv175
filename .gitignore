@@ -39,6 +39,10 @@
 !/agents/
 !/alerts/
 !/vn-guidelines/
+# Gói tiếp cận lâm sàng theo chủ đề, DỪNG Ở CỔNG A (27/08/2026). Phải khai tường minh:
+# quy tắc /* ở trên loại mọi thư mục gốc mới, nên thiếu dòng này thì cả thư mục bị
+# ignore IM LẶNG — đúng họ lỗi BH70 đã gặp với sync/plugin-manifest.json.
+!/lam-sang/
 
 # 3) Bên trong .claude/: CHỈ track agents/ (bỏ session/state/settings.local/launch — runtime cục bộ)
 /.claude/*
@@ -54,6 +58,10 @@
 #    đã nhiều lần tạo conflict-copy và làm hỏng ref git. Có bản trên GitHub = còn đường lùi.
 /sync/*
 !/sync/skills/
+# Thư mục cách ly của tools/phuc_hoi_skill_guard.py (27/08/2026) — bản skill bị
+# ghi đè lạ được giữ lại đây để bác sĩ xem, KHÔNG bao giờ commit (nội dung là
+# hệ skill ngoài, sự cố BH77 tái phát 2 lần qua OneDrive từ máy kia).
+/sync/skills/_quarantine-guard/
 !/sync/scheduled-tasks/
 !/sync/commands-vi/
 !/sync/*.sh
@@ -66,6 +74,7 @@
 !/sync/WINDOWS-LAM-TIEP.md
 !/sync/WINDOWS-PASTE-ME.md
 !/sync/WINDOWS-DONE.md
+!/sync/DONG-BO-2026-08-28.md
 # Sổ khai dùng chung của cơ chế đồng bộ (21/08/2026). PHẢI theo git: đây chính là
 # thứ làm hai máy đọc CÙNG một bản ý định. Quy tắc `/sync/*` ở trên loại mọi file
 # gốc, và trước khi có dòng này thì `plugin-manifest.json` bị ignore im lặng —
@@ -90,6 +99,9 @@ memory-sync/
 
 # Danh mục sinh lại được, chứa đường dẫn tuyệt đối theo từng máy
 tools/vietnamize/catalog_raw.json
+# Biến thể tên máy cũ (trước khi có catalog_may/<Máy>.json) — cùng loại dữ liệu
+# sinh lại được, đã thấy lọt vào working tree từ máy khác qua OneDrive (26/08/2026)
+tools/vietnamize/catalog_raw-*.json
 
 # Bản lưu mô tả gốc do tools/vietnamize/apply_vi.py tạo — sinh lại được, không commit
 *.vi-bak

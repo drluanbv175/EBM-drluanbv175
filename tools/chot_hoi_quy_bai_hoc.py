@@ -1649,6 +1649,41 @@ def bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc():
     return True, f"canary xanh {so}/{so} phép thử gài lỗi"
 
 
+def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
+    """22/08 — chuỗi cổng CHỨNG CỨ có canary đầu-cuối từ 14/08 (BH43), chuỗi 11 cổng
+    NGHIÊN CỨU G0–G10 thì KHÔNG có gì tương đương suốt từ đó.
+
+    Bất đối xứng này nguy hiểm vì chuỗi nghiên cứu đã mắc đúng họ lỗi mà canary sinh ra để
+    bắt: guardrail G3/G8 phần lớn là TAUTOLOGY (đếm chuỗi do chính hàm sinh artifact in
+    cứng, nên không nhánh nào khiến luật BLOCK được); SAP đã ký có thể không còn khớp
+    `G3_checkpoint.json` sau khi G3 chạy lại (phát hiện F5, audit 30/07); cổng A12 fail-open
+    kiểu BH27. Tất cả đều thuộc lớp «công cụ vẫn chạy, vẫn in kết quả hợp lệ, nhưng thứ cần
+    kiểm thì không bao giờ được kiểm».
+
+    `medical-ebm-automation/tools/thu_dau_cuoi_cong_nghien_cuu.py` gài 9 lỗi BIẾT TRƯỚC vào
+    một đề tài GIẢ (thư mục tạm, không đụng `exports/` thật, không ký, không gọi mạng) rồi
+    đòi các quality gate thật phải BLOCK đúng chỗ.
+
+    Kiểm HÀNH VI, không đếm chữ: canary phải tồn tại VÀ chạy xanh. Đã kiểm bằng đột biến
+    TRÊN ĐĨA — vô hiệu luật G4-AUTO-03 ⇒ canary đỏ đúng hai lỗi drift (7/9) và **mã thoát
+    đổi sang 1**; khôi phục thì xanh lại. Mã thoát đúng là điều kiện sống còn: một canary in
+    ĐỎ mà vẫn thoát 0 thì chính nó fail-open.
+    """
+    import subprocess
+
+    tp = REPO / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
+    if not tp.exists():
+        return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
+                       timeout=300, cwd=str(tp.parent.parent))
+    if r.returncode != 0:
+        dong = [d.strip() for d in (r.stdout or "").splitlines() if "LỌT" in d]
+        return False, ("canary cổng nghiên cứu ĐỎ — lỗi gài KHÔNG bị cổng nào bắt: "
+                       + (dong[0][:150] if dong else "xem thu_dau_cuoi_cong_nghien_cuu.py"))
+    so = (r.stdout or "").count("[✅ BẮT ĐƯỢC]")
+    return True, f"canary cổng nghiên cứu xanh {so}/{so} lỗi gài"
+
+
 def bh44_dieu_phoi_agent_phai_sach():
     """15/08 — tầng ĐIỀU PHỐI chưa từng được đo, và lần đo đầu ra 2 lớp việc thật.
 
@@ -2427,7 +2462,7 @@ def bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
                   f"nút bấm đúp theo git, .cmd giữ CRLF")
 
 
-def bh72_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc():
+def bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc():
     """22/08 — bác sĩ than nhiều tháng «skill cài rồi mà gọi không được». Nguyên
     nhân gốc tìm 10/08 là ngân sách danh sách skill (mặc định 0,01 = 8.000 ký tự,
     kho ~869 skill cần ~45.000 ⇒ Claude Code CẮT). Đã vá bằng 0.08 trên cả hai máy.
@@ -2914,6 +2949,165 @@ def bh69_co_tat_plugin_trung_phai_duoc_khoi_phuc() -> tuple[bool, str]:
     return True, "ghi false đúng bộ trùng, giữ nguyên bộ trong mốc"
 
 
+def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
+    """23/08/2026 — bác sĩ hỏi «sao Việt hoá plugin lại bị lỗi». Đo ra: 87 mô tả đã
+    trở lại tiếng Anh (claude-code-harness 5.9.0→5.11.0 làm mất 85, humanizer
+    2.11.1→2.11.2 mất 1, medsci thêm 1 skill mới chưa dịch).
+
+    Cơ chế: bản cập nhật plugin tạo thư mục PHIÊN BẢN MỚI với file gốc tiếng Anh; bản
+    đã Việt hoá nằm lại thư mục cũ thành mồ côi. `apply_vi.py` là thứ DUY NHẤT ghi
+    tiếng Việt vào file plugin — nhưng KHÔNG chỗ nào chạy lại nó. Mỗi lần cập nhật là
+    một lần mất tiếng Việt, IM LẶNG, chỉ lộ ra khi bác sĩ tình cờ gõ `/`.
+
+    Lớp phủ `vi_descriptions.json` (dựng 10/08) KHÔNG cứu được ca này: nó chỉ áp lúc
+    dựng DANH-MUC/TRA-CUU, còn menu gõ `/` đọc THẲNG file plugin. Đây đúng họ lỗi
+    BH41 — công cụ chạy đúng, có test, nhưng không ai gọi thì với dây chuyền hằng
+    ngày nó KHÔNG TỒN TẠI.
+
+    Chốt canh CẢ HAI vế, vì vế thứ hai mới là vế đã hỏng:
+      (a) apply_vi phát hiện được mô tả bị trả về tiếng Anh và vá lại đúng;
+      (b) tu_sua_chua CÓ GỌI apply_vi — chạy trên bảng VIEC_MAY đang sống.
+    """
+    import sys as _sys
+    import tempfile
+
+    # apply_vi.py import anh em cùng thư mục (`from extract_catalog import VN_CHARS`),
+    # nên nạp rời khỏi thư mục đó sẽ ModuleNotFoundError. Thêm đường dẫn trước khi nạp.
+    _vn = str(REPO / "tools" / "vietnamize")
+    _da_co = _vn in _sys.path
+    if not _da_co:
+        _sys.path.insert(0, _vn)
+    try:
+        m = _nap(REPO / "tools" / "vietnamize" / "apply_vi.py", "_bh73_apply_vi")
+    finally:
+        if not _da_co and _vn in _sys.path:
+            _sys.path.remove(_vn)
+
+    # --- (a) hành vi: bắt được drift, vá đúng, không vá lại lần hai ----------
+    with tempfile.TemporaryDirectory() as d:
+        sk = Path(d) / "SKILL.md"
+        sk.write_text('---\nname: thu-nghiem\n'
+                      'description: Draft a plan and validate it with the team.\n'
+                      '---\n\n# Thân file không được đổi\n', encoding="utf-8")
+        item = {"id": "skill:x:thu-nghiem", "name": "thu-nghiem", "path": str(sk)}
+        entry = {"vi": "[Lập trình] Lập KẾ HOẠCH rồi kiểm chứng cùng đội. "
+                       "Dùng khi mở một hạng mục mới. Từ khoá: plan."}
+
+        if m.process(item, entry, restore=False, dry=True) != "applied":
+            return False, "không phát hiện mô tả bị bản cập nhật trả về tiếng Anh"
+        if "Draft a plan" not in sk.read_text(encoding="utf-8"):
+            return False, "--dry-run đã GHI vào file"
+
+        if m.process(item, entry, restore=False, dry=False) != "applied":
+            return False, "không vá được mô tả"
+        t = sk.read_text(encoding="utf-8")
+        if entry["vi"] not in t:
+            return False, "vá xong nhưng mô tả tiếng Việt không có trong file"
+        if "# Thân file không được đổi" not in t:
+            return False, "đã làm hỏng thân file"
+        if m.process(item, entry, restore=False, dry=True) != "already":
+            return False, "vá xong vẫn báo còn lệch — sẽ vá lặp mỗi phiên"
+
+    # --- (b) nối dây: tu_sua_chua PHẢI gọi apply_vi -------------------------
+    ts = _nap(REPO / "tools" / "tu_sua_chua.py", "_bh73_tu_sua_chua")
+    goi = [v for v in ts.VIEC_MAY
+           if any("apply_vi" in str(x) for x in (v[1] or []) + (v[2] or []))]
+    if not goi:
+        return False, ("tu_sua_chua KHÔNG gọi apply_vi — công cụ có mà không ai chạy "
+                       "thì mỗi lần cập nhật plugin lại mất tiếng Việt (BH41)")
+    nhan, kiem, sua = goi[0]
+    if not kiem or "--im-khi-on" not in kiem:
+        return False, f"bước «{nhan}» thiếu --im-khi-on → sẽ ồn mỗi phiên"
+    if not sua:
+        return False, f"bước «{nhan}» chỉ báo mà không tự sửa"
+    if "yaml" not in Path(sua[0]).name.lower() and ".ebm-venv" not in sua[0]:
+        # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
+        # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
+        if getattr(ts, "_VENV", Path("/")).exists():
+            return False, "lệnh sửa không dùng trình thông dịch có PyYAML"
+
+    return True, f"apply_vi bắt+vá đúng; tu_sua_chua đã nối «{nhan}»"
+
+
+def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
+    """24/08/2026 — BH73 nối dây xong, nhưng chốt vẫn báo SẠCH trong khi 147 mô tả đã
+    trở về tiếng Anh. Ba lỗi khác nhau, cùng một họ «đo đúng, nhưng đo nhầm chỗ»:
+
+    (a) SAI THƯ MỤC. `extract_catalog` quét `~/.claude-science/orgs/*/skills/` rồi gán
+        nhãn `/anthropic-skills:<tên>`, nhưng lệnh đó THẬT SỰ chạy bản nằm ở
+        `local-agent-mode-sessions/skills-plugin/`. Đo được: `.claude-science/learn`
+        tiếng Việt trong khi bản Cowork — bản bác sĩ thấy khi gõ `/` — vẫn tiếng Anh.
+        Mọi công cụ báo «đã Việt hoá 100%», còn bác sĩ thì đang đọc tiếng Anh.
+
+    (b) CATALOG LẠC HẬU. `catalog_raw.json` ghi đường dẫn TUYỆT ĐỐI kèm số phiên bản
+        (…/claude-code-harness/5.11.0/…). Plugin lên 5.12.0 thì catalog vẫn trỏ 5.11.0
+        — nơi tiếng Việt còn nguyên — nên chốt đọc catalog cũ báo «sạch» trong khi thư
+        mục đang phục vụ 100% tiếng Anh. Vá bằng `--tu-quet` (quét lại, ~1,3 giây).
+
+    (c) VÁ LÀM HỎNG THỨ NÓ PHẢI GIỮ. Thêm Cowork vào catalog kéo CHÍNH skill của bác sĩ
+        vào tầm ghi của apply_vi. Rào «giữ-bản-việt-tự-viết» khi đó chỉ chạy cho khoá
+        `name:`, nên đường khoá `id` vẫn đè — mất mô tả tự viết của 3 skill
+        (clinical-evidence-rag, ebm-master, literature-review). Nguồn gốc của khoá
+        không đổi được sự thật rằng mô tả đang có là do người viết.
+    """
+    import sys as _sys
+    import tempfile
+
+    src = (REPO / "tools" / "vietnamize" / "extract_catalog.py").read_text(encoding="utf-8")
+    if "skills-plugin/*/*/skills/*/SKILL.md" not in src:
+        return False, ("extract_catalog KHÔNG quét mặt Cowork (skills-plugin) — đó mới là "
+                       "nơi lệnh /anthropic-skills:* chạy; chỉ quét .claude-science thì "
+                       "công cụ báo Việt hoá xong trong lúc bác sĩ vẫn đọc tiếng Anh")
+
+    ts = _nap(REPO / "tools" / "tu_sua_chua.py", "_bh74_tu_sua_chua")
+    viet = [v for v in ts.VIEC_MAY
+            if any("apply_vi" in str(x) for x in (v[1] or []) + (v[2] or []))]
+    if not viet:
+        return False, "tu_sua_chua không còn gọi apply_vi (xem BH73)"
+    nhan, kiem, sua = viet[0]
+    for ten, lenh in (("lệnh kiểm", kiem), ("lệnh sửa", sua)):
+        if not lenh or "--tu-quet" not in lenh:
+            return False, (f"{ten} của bước «{nhan}» thiếu --tu-quet ⇒ đọc catalog cũ, "
+                           "sẽ báo sạch sau mỗi lần plugin đổi phiên bản")
+
+    ap = (REPO / "tools" / "vietnamize" / "apply_vi.py").read_text(encoding="utf-8")
+    dau = ap.find("giữ-bản-việt-tự-viết")
+    dieu_kien = ap[max(0, dau - 400):dau]
+    if "VN_CHARS.search(cur_desc)" not in dieu_kien:
+        return False, "không tìm thấy rào giữ-bản-việt-tự-viết trong apply_vi"
+    dong_if = dieu_kien[dieu_kien.rfind("if "):]
+    if "qua_ten" in dong_if:
+        return False, ("rào giữ-bản-việt-tự-viết vẫn phụ thuộc `qua_ten` ⇒ bản dịch khớp "
+                       "qua khoá `id` sẽ đè mô tả bác sĩ tự viết")
+
+    _vn = str(REPO / "tools" / "vietnamize")
+    _co = _vn in _sys.path
+    if not _co:
+        _sys.path.insert(0, _vn)
+    try:
+        m2 = _nap(REPO / "tools" / "vietnamize" / "apply_vi.py", "_bh74_apply_vi")
+    finally:
+        if not _co and _vn in _sys.path:
+            _sys.path.remove(_vn)
+
+    with tempfile.TemporaryDirectory() as d:
+        sk = Path(d) / "SKILL.md"
+        tu_viet = "Mô tả do bác sĩ tự viết bằng tiếng Việt, không phải bản dịch máy."
+        sk.write_text("---" + chr(10) + "name: cua-bac-si" + chr(10)
+                      + 'description: "' + tu_viet + '"' + chr(10) + "---" + chr(10)
+                      + chr(10) + "# than file" + chr(10), encoding="utf-8")
+        item = {"id": "skill:anthropic-skills:cua-bac-si", "name": "cua-bac-si",
+                "path": str(sk)}
+        kq = m2.process(item, {"vi": "Ban dich trong tu dien, KHONG duoc phep de."},
+                        restore=False, dry=False, qua_ten=False)
+        if kq != "giữ-bản-việt-tự-viết":
+            return False, f"khoá `id` vẫn đè mô tả tự viết (process trả '{kq}')"
+        if tu_viet not in sk.read_text(encoding="utf-8"):
+            return False, "mô tả bác sĩ tự viết đã bị ghi đè"
+
+    return True, "catalog quét mặt phục vụ · chốt --tu-quet · rào giữ chữ bác sĩ tự viết"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -2927,6 +3121,394 @@ def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     if trung:
         return False, "mã trùng: " + ", ".join(trung)
     return True, f"{len(BAI_HOC)} mục, mã duy nhất"
+
+
+def bh75_don_bak_phai_xu_ly_ca_thu_muc() -> tuple[bool, str]:
+    """25/08/2026 — `dong_bo_skill.py --don-bak` chỉ biết `.unlink()` (file), nhưng từ
+    khi `dong_bo_skill_claude_codex.py` sao lưu NGUYÊN THƯ MỤC skill phân kỳ bằng
+    `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)` thay vì từng file rời,
+    `rglob("*.bak-*")` trả về CẢ thư mục khớp mẫu tên. Gọi `.unlink()` lên một thư mục
+    trên macOS ném `PermissionError` (không phải `IsADirectoryError` — dễ đọc nhầm
+    thành lỗi quyền hệ thống) và giết cả lượt dọn giữa chừng, để lại rác `.bak-*` nằm
+    cạnh bản sống trong runtime — đúng điều BH22 sinh ra để ngăn, nhưng BH22 chỉ đo
+    KẾT QUẢ (còn rác hay không), không đo được đường đi (`--don-bak` có tự chạy nổi
+    không). Đo thật: 17 mục rác tồn đọng từ 13/08–25/08 vì mọi lần gọi `--don-bak`
+    trước đó đều chết ngay khi gặp thư mục `.bak-*` đầu tiên.
+
+    Kiểm HÀNH VI trên đĩa tạm bằng cách gọi THẲNG `don_bak()` thật (không viết lại
+    logic riêng — tránh lệch với bản đang chạy): dựng cả THƯ MỤC lẫn FILE tên
+    `.bak-*`, xác nhận không crash và cả hai loại đều bị xoá sạch."""
+    import tempfile
+
+    m = _nap(REPO / "tools/dong_bo_skill.py", "dbs_bh75")
+    with tempfile.TemporaryDirectory() as d:
+        rt = Path(d) / "skills"
+        (rt / "mot-skill" / "tools").mkdir(parents=True)
+        (rt / "mot-skill" / "tools" / "x.py").write_text("pass", encoding="utf-8")
+        thu_muc_bak = rt / "mot-skill.bak-20260101-000000"
+        (thu_muc_bak / "tools").mkdir(parents=True)
+        (thu_muc_bak / "tools" / "x.py").write_text("pass cu", encoding="utf-8")
+        file_bak = rt / "mot-skill" / "tools" / "x.py.bak-20260101-000000"
+        file_bak.write_text("pass cu 2", encoding="utf-8")
+
+        try:
+            n = m.don_bak(rt)
+        except OSError as exc:
+            return False, f"don_bak() crash trên thư mục .bak: {exc}"
+        if n != 2:
+            return False, f"don_bak() báo xoá {n} mục, mong đợi 2 (1 thư mục + 1 file)"
+        if thu_muc_bak.exists():
+            return False, "thư mục .bak vẫn còn sau khi dọn"
+        if file_bak.exists():
+            return False, "file .bak vẫn còn sau khi dọn"
+    return True, "don_bak() xử lý đúng cả thư mục lẫn file, không crash"
+
+
+def bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime() -> tuple[bool, str]:
+    """25/08/2026 — `tu_de_xuat_viec.py` từng đo độ tươi bản Word/bản-đọc BẰNG MTIME
+    (docx cũ hơn html ⇒ "lỗi thời"). Một lần reskin THUẦN VỎ CSS/HTML (Sprint 9, task
+    9.2 — đã xác nhận `DATA` byte-for-byte không đổi trên 66/67 dashboard) bump mtime
+    của MỌI dashboard đã reskin cùng lúc ⇒ cảm biến báo "66 dashboard lỗi thời" trong
+    khi THẬT SỰ chỉ 5 bản có nội dung đổi (đối chiếu DATA-hash với bản backup trước
+    reskin xác nhận đúng 5/66). Nếu tin cảm biến mù chữ, bác sĩ sẽ tốn ~60 lượt gọi
+    PubMed thật để xuất lại thứ không hề đổi khoa học — đúng họ lỗi BH32 (chỉ số gộp
+    kết luận sai cho cả tập) nhưng ở một cảm biến khác.
+
+    Vá bằng sidecar `<tên>.data-sha256` (ghi bởi `xuat_goi_cap_nhat.py` mỗi lần xuất,
+    chứa SHA256 của khối `const DATA`) — `dem_dashboard_phai_sinh_loi_thoi()` so HASH
+    thay vì MTIME khi sidecar tồn tại, chỉ lùi về mtime khi dashboard chưa từng có
+    sidecar (không đổi hành vi cho dashboard cũ).
+
+    Kiểm HÀNH VI trên đĩa tạm, GỌI THẲNG hàm thật (không viết lại logic riêng), MỖI
+    CA MỘT THƯ MỤC RIÊNG (không gộp chung rồi chỉ so TỔNG — tự bắt được lúc soạn:
+    gộp chung khiến một đột biến làm ① sai + ② sai vẫn cho tổng ĐÚNG NGẪU NHIÊN,
+    đúng họ lỗi BH32 mà chính bài học này đang nói tới): sidecar khớp (không lỗi
+    thời dù mtime docx cũ hơn) · sidecar lệch (lỗi thời) · thiếu docx (lỗi thời) ·
+    mtime fallback cũ hơn (lỗi thời) · mtime fallback mới hơn (không lỗi thời)."""
+    import hashlib
+    import os
+    import shutil as _shutil
+    import tempfile
+
+    m = _nap(REPO / "tools/tu_de_xuat_viec.py", "tdxv_bh76")
+    vd_src = REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
+    vd_mod = _nap(vd_src, "vd_bh76")
+
+    def _html(data_noi_dung: str) -> str:
+        return (f"<html><body><script>\nconst DATA = {{{data_noi_dung}}};\n"
+                "// HẾT KHỐI DATA\n</script></body></html>")
+
+    def _hash(data_noi_dung: str) -> str:
+        # Băm ĐÚNG những gì extract_data_block() thật sự trả về (gồm cả phần
+        # ";\n// " trước marker) — không tự dựng chuỗi tay, tránh lệch khỏi
+        # logic thật của xuat_goi_cap_nhat.py::ghi_sidecar_hash_data().
+        data_block = vd_mod.extract_data_block(_html(data_noi_dung))
+        return hashlib.sha256(data_block.encode("utf-8")).hexdigest()
+
+    def _mot_ca(*, sidecar_noi_dung: str | None, mtime_docx: float | None) -> int:
+        """Dựng MỘT dashboard trong thư mục tạm RIÊNG, trả kết quả đếm (0 hoặc 1).
+        `sidecar_noi_dung=None` ⇒ không ghi sidecar (test nhánh fallback mtime).
+        `mtime_docx=None` ⇒ không tạo docx (test nhánh 'thiếu docx')."""
+        with tempfile.TemporaryDirectory() as d:
+            dash_dir = Path(d)
+            (dash_dir / "derivatives").mkdir()
+            tools_dir = dash_dir / "tools"
+            tools_dir.mkdir()
+            _shutil.copy2(vd_src, tools_dir / "verify_dashboard.py")
+            f_db = dash_dir / "WebDashboard_EBM_ca.html"
+            f_db.write_text(_html("items:[{id:'a'}]"), encoding="utf-8")
+            if mtime_docx is not None:
+                docx = dash_dir / "derivatives" / "ca_TaiLieuChiTiet.docx"
+                docx.write_text("x", encoding="utf-8")
+                if sidecar_noi_dung is not None:
+                    docx.with_suffix(".data-sha256").write_text(
+                        _hash(sidecar_noi_dung) + "\n", encoding="utf-8")
+                os.utime(docx, (mtime_docx, mtime_docx))
+            return m.dem_dashboard_phai_sinh_loi_thoi(dash_dir)
+
+    ca = [
+        ("① sidecar khớp, docx CŨ (mtime không được dùng)",
+         _mot_ca(sidecar_noi_dung="items:[{id:'a'}]", mtime_docx=1.0), 0),
+        ("② sidecar LỆCH", _mot_ca(sidecar_noi_dung="items:[{id:'KHAC'}]", mtime_docx=1.0), 1),
+        ("③ thiếu docx", _mot_ca(sidecar_noi_dung=None, mtime_docx=None), 1),
+        ("④ không sidecar, docx CŨ (fallback mtime)",
+         _mot_ca(sidecar_noi_dung=None, mtime_docx=1.0), 1),
+        ("⑤ không sidecar, docx MỚI (fallback mtime)",
+         _mot_ca(sidecar_noi_dung=None, mtime_docx=9_999_999_999.0), 0),
+    ]
+    sai = [f"{ten}: được {thuc}, mong {mong}" for ten, thuc, mong in ca if thuc != mong]
+    if sai:
+        return False, "; ".join(sai)
+    return True, "dem_dashboard_phai_sinh_loi_thoi() ưu tiên hash DATA, chỉ lùi mtime khi thiếu sidecar"
+
+
+def bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la() -> tuple[bool, str]:
+    """26/08/2026 — `sync/skills/peer-review/` và `sync/skills/literature-review/`
+    (2 skill dựa trên bản gốc K-Dense Inc., đã được bác sĩ chỉnh khối
+    `EBM-VN-GUARD` — bắt buộc tiếng Việt, disclaimer, PMID/DOI, không PII, chỉ
+    nguồn miễn phí) bị GHI ĐÈ HOÀN TOÀN bằng một bộ skill khác — tiếng Anh, có
+    từ khoá tiếng Hàn (리뷰, 논문 리뷰), mẫu tạp chí X-quang (RYAI/INSI/EURE/AJR/
+    KJR), và `kernel.py` tự khai chạy trong hệ sinh thái "Claude Science" —
+    KHÔNG liên quan gì tới phòng khám EBM tiếng Việt của bác sĩ. Khối
+    EBM-VN-GUARD (tiếng Việt bắt buộc + disclaimer + PMID/DOI + không PII)
+    biến mất hoàn toàn khỏi bản NGUỒN git-tracked.
+
+    May mắn: bản Cowork RUNTIME vẫn còn nguyên khối EBM-VN-GUARD (chưa ai chạy
+    `--nguon-la-chuan` để đẩy bản nguồn đã hỏng đè lên runtime), và nội dung lạ
+    CHƯA TỪNG được git commit — khôi phục bằng cách chép lại từ runtime khiến
+    working tree khớp TUYỆT ĐỐI với commit đã có (0 dòng lệch). Không rõ cơ chế
+    gốc đã ghi đè — nghi vấn liên quan một tiến trình trên máy khác (tệp
+    `catalog_raw-Dr Luân BV175.json` xuất hiện cùng thời điểm) nhưng chưa xác
+    định được chắc chắn.
+
+    Đây là biến thể MỚI của họ lỗi BH73/BH74 (plugin cập nhật ghi đè bản Việt
+    hoá) — nhưng nặng hơn nhiều: BH73/74 chỉ mất MÔ TẢ, còn ca này mất TOÀN BỘ
+    THÂN SKILL kể cả rào an toàn bắt buộc (ngôn ngữ, disclaimer, nguồn, PII).
+    Chốt cũ (apply_vi.py --tu-quet) không bắt được vì nó chỉ so mô tả qua từ
+    điển, không so sự TỒN TẠI của khối guard trong thân bài.
+
+    Kiểm HÀNH VI: quét toàn bộ 23 skill đã biết mang khối EBM-VN-GUARD (chốt
+    tại thời điểm phát hiện sự cố), xác nhận CẢ 22 vẫn còn khối này trong bản
+    nguồn hiện tại. Không cái nào tái phát ⇒ ĐẠT."""
+    # Danh sách 23 skill mang EBM-VN-GUARD, chốt tại thời điểm phát hiện sự cố
+    # 26/08/2026 (grep -rl "EBM-VN-GUARD" sync/skills/*/SKILL.md). Danh sách mới
+    # thêm sau này không tự động vào đây — đây là chốt HỒI QUY (không tái phát
+    # trên skill ĐàN biết mang guard), không phải kiểm kê skill nào NÊN mang guard.
+    SKILL_CO_GUARD = [
+        "antifacts", "citation-management", "clinical-decision-support",
+        "clinical-reports", "database-lookup", "exploratory-data-analysis",
+        "experimental-design", "ebm-master", "hypothesis-generation",
+        "literature-review", "paper-lookup", "peer-review", "research-lookup",
+        "scholar-evaluation", "scientific-writing", "scikit-survival", "pyhealth",
+        "statistical-analysis", "statsmodels", "scientific-critical-thinking",
+        "treatment-plans", "statistical-power", "venue-templates",
+    ]
+    mat = []
+    thieu_file = []
+    for ten in SKILL_CO_GUARD:
+        f = REPO / "sync" / "skills" / ten / "SKILL.md"
+        if not f.exists():
+            thieu_file.append(ten)
+            continue
+        noi_dung = f.read_text(encoding="utf-8", errors="replace")
+        if "EBM-VN-GUARD" not in noi_dung:
+            mat.append(ten)
+    if thieu_file:
+        return False, "SKILL.md biến mất hoàn toàn (không chỉ mất guard): " + ", ".join(thieu_file)
+    if mat:
+        return False, ("mất khối EBM-VN-GUARD (khả năng đã bị ghi đè bằng nội dung lạ, "
+                       "xem BH77): " + ", ".join(mat))
+    return True, f"{len(SKILL_CO_GUARD)}/{len(SKILL_CO_GUARD)} skill còn nguyên khối EBM-VN-GUARD"
+
+def bh78_so_viec_treo_fail_closed_va_khong_tu_dong() -> tuple[bool, str]:
+    """22/08/2026 — `tools/so_viec_chua_dong.py` ra đời để canh việc còn treo sau khi
+    bệnh nhân ra về (6,8-62% kết quả xét nghiệm ngoại trú không được theo dõi tiếp —
+    Callen 2012, PMID 22183961). Ba hành vi PHẢI giữ, vì mất bất kỳ cái nào thì sổ
+    biến thành lời bảo đảm rỗng:
+
+    (a) Bản ghi THIẾU HẠN phải rơi vào nhóm PHẢI XEM, không phải nhóm "ổn". Dữ liệu
+        hỏng rơi về phía im lặng là đúng họ lỗi BH01/BH27/BH61 — công cụ vẫn chạy, vẫn
+        in kết quả hợp lệ, nhưng thứ cần thấy thì không bao giờ hiện.
+    (b) Công cụ KHÔNG được tự đóng việc. Đóng một việc treo là hành vi lâm sàng.
+    (c) Sổ KHÔNG được mang trường `decision`/`gradeLevel` (BH10).
+
+    Kiểm bằng cách gọi thẳng vào mã đang sống.
+    """
+    import datetime as _dt
+    import io
+    import json
+    import tempfile
+    from contextlib import redirect_stdout
+
+    m = _nap(REPO / "tools" / "so_viec_chua_dong.py", "_bh70_so_viec")
+    hom_nay = _dt.date(2026, 8, 22)
+
+    # (a) thiếu hạn → PHẢI XEM
+    _con_han, qua_han = m.phan_loai(
+        [{"id": "V001", "trang_thai": "mo", "mo_ta": "x", "loai": "khac",
+          "ma_noi_bo": "", "han": None}], hom_nay)
+    if not any(t is None for _r, t in qua_han):
+        return False, "bản ghi thiếu hạn KHÔNG rơi vào nhóm phải xem (fail-open)"
+
+    with tempfile.TemporaryDirectory() as d:
+        so = Path(d) / "v.jsonl"
+        args = ["--so", str(so), "--hom-nay", hom_nay.isoformat()]
+
+        # việc treo không hạn phải bị TỪ CHỐI ngay lúc mở
+        with redirect_stdout(io.StringIO()):
+            ma = m.main(args + ["--them", "--loai", "tai-kham", "--mo-ta", "hẹn 3 tháng"])
+        if ma != 2:
+            return False, "mở được việc treo KHÔNG có hạn"
+
+        with redirect_stdout(io.StringIO()):
+            m.main(args + ["--them", "--loai", "xet-nghiem",
+                           "--mo-ta", "creatinin, chờ kết quả", "--han", "2026-07-01"])
+            ma_bc = m.main(args)          # báo cáo
+            m.main(args + ["--tuan"])     # bảng tuần
+
+        if ma_bc != 1:
+            return False, "việc quá hạn không làm mã thoát = 1"
+
+        # (b) không tự đóng
+        ds = [json.loads(x) for x in so.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if any(r["trang_thai"] != "mo" for r in ds):
+            return False, "công cụ TỰ ĐÓNG việc — vượt thẩm quyền lâm sàng"
+
+        # (c) không ghi decision/gradeLevel
+        raw = so.read_text(encoding="utf-8")
+        for cam in ("decision", "gradeLevel", "gradeBy", "normativeBasis"):
+            if cam in raw:
+                return False, f"sổ mang trường {cam} (BH10)"
+
+        # PII: mẫu độ chính xác cao phải bị chặn, mô tả lâm sàng thường KHÔNG bị chặn oan
+        if not m.soi_pii("gọi lại 0912345678"):
+            return False, "bộ chặn PII bỏ lọt số điện thoại"
+        if m.soi_pii("eGFR 48 mL/phút/1,73m2, nhắc lại creatinin"):
+            return False, "bộ chặn PII chặn oan mô tả lâm sàng bình thường (BH08)"
+
+    return True, "fail-closed khi thiếu hạn · không tự đóng · không ghi decision · PII đúng mức"
+
+
+def bh79_la_co_safety_net_khong_duoc_noi_ho() -> tuple[bool, str]:
+    """22/08/2026 — `CLINICAL_RUNTIME_FLAGS.json` khai
+    `enforce_safety_net_templates: true` từ lâu, nhưng grep toàn repo trả 0 file tham
+    chiếu tới `safety_net_templates.json`, và nội dung file đó là ba mẫu tiếng Anh chung
+    chung không nguồn. Một lá cờ TUYÊN BỐ có thi hành mà không có gì thi hành — cùng họ
+    với BH01 (`return` sớm che 73 mục), BH27 (fail-open cổng A12) và BH61 (khoá lạ trong
+    `DATA.summary`), nhưng rơi vào TẦNG AN TOÀN CHO BỆNH NHÂN.
+
+    Chốt canh hai hành vi của `tools/kiem_safety_net.py`:
+    (a) R9 — cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.
+    (b) R3 — hội chứng THIẾU HẲN khối `dan_benh_nhan_quay_lai` phải bị bắt. Bản đầu của
+        chốt viết `.get(khoa, {})`, mà `{}` LÀ dict nên `isinstance` luôn đúng ⇒ khối
+        thiếu hẳn vẫn lọt. Mặc định phải là `None`.
+    """
+    import datetime as _dt
+
+    m = _nap(REPO / "tools" / "kiem_safety_net.py", "_bh71_safety_net")
+    hom_nay = _dt.date(2026, 8, 22)
+    co_bat = {"enforce_safety_net_templates": True}
+
+    def hc_co_nguon():
+        return {
+            "ten": "Đau đầu", "trang_thai": "co-nguon",
+            "co_do_cho_bac_si": {
+                "nguon": {"pmid": "30587518"},
+                "gioi_han_nguyen_van_cua_nguon": "chưa có công cụ đã kiểm định",
+                "tieu_chi": [{"mo_ta": "Khởi phát sau 65 tuổi", "do_duoc": True}],
+            },
+            "dan_benh_nhan_quay_lai": {"trang_thai": "chua-dien",
+                                       "noi_dung": m.PLACEHOLDER},
+            "ngay_ra_soat": "2026-08-22",
+        }
+
+    def hc_chua_dien():
+        return {
+            "ten": "Đau ngực", "trang_thai": "chua-dien",
+            "co_do_cho_bac_si": {"trang_thai": "chua-dien", "noi_dung": m.PLACEHOLDER},
+            "dan_benh_nhan_quay_lai": {"trang_thai": "chua-dien",
+                                       "noi_dung": m.PLACEHOLDER},
+            "ngay_ra_soat": "2026-08-22",
+        }
+
+    # (a) cờ bật + 0 hội chứng có nguồn ⇒ R9
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-nguc": hc_chua_dien()}},
+                       co_bat, hom_nay)
+    if not any(x.startswith("R9") for x in loi):
+        return False, "cờ bật mà 0 hội chứng có nguồn KHÔNG bị bắt (lá cờ nói hộ)"
+
+    # cờ tắt ⇒ R9 không áp
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-nguc": hc_chua_dien()}},
+                       {"enforce_safety_net_templates": False}, hom_nay)
+    if any(x.startswith("R9") for x in loi):
+        return False, "R9 nổ cả khi cờ đang tắt"
+
+    # (b) thiếu hẳn khối lời dặn ⇒ R3
+    hc = hc_co_nguon()
+    del hc["dan_benh_nhan_quay_lai"]
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R3") for x in loi):
+        return False, "hội chứng thiếu hẳn khối lời dặn vẫn lọt R3 (fail-open .get(k, {}))"
+
+    # nguồn văn xuôi phải bị từ chối; tiêu chí không đo được phải bị từ chối
+    hc = hc_co_nguon()
+    hc["co_do_cho_bac_si"]["nguon"] = {"ten": "theo kinh nghiệm lâm sàng"}
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R4") for x in loi):
+        return False, "nguồn dạng văn xuôi vẫn được chấp nhận"
+
+    hc = hc_co_nguon()
+    hc["co_do_cho_bac_si"]["tieu_chi"] = [{"mo_ta": "nếu nặng hơn", "do_duoc": False}]
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R5") for x in loi):
+        return False, "'nếu nặng hơn' được nhận là tiêu chí"
+
+    # file THẬT trong repo phải qua được chốt (không lỗi cứng)
+    that = _nap(REPO / "tools" / "kiem_safety_net.py", "_bh71_that")
+    import json as _json
+    mau_that = _json.loads((REPO / "clinical_runtime" / "safety_net_templates.json")
+                           .read_text(encoding="utf-8"))
+    co_that = _json.loads((REPO / "clinical_runtime" / "CLINICAL_RUNTIME_FLAGS.json")
+                          .read_text(encoding="utf-8"))
+    loi, _, dp = that.kiem(mau_that, co_that, hom_nay)
+    if loi:
+        return False, f"file thật đang có LỖI CỨNG: {loi[0]}"
+    if dp["co_nguon"] < 1:
+        return False, "file thật không còn hội chứng nào có nguồn — R9 lẽ ra phải nổ"
+
+    return True, (f"R9 canh lá cờ · R3 bắt khối thiếu · R4/R5 chặn nguồn-văn-xuôi và "
+                  f"tiêu-chí-không-đo-được · file thật {dp['co_nguon']}/{dp['tong']} có nguồn")
+
+
+
+def bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao() -> tuple[bool, str]:
+    """22/08/2026 — `python -m compileall tools ops` trên Python 3.11 báo **5 file
+    KHÔNG biên dịch được**: `audit_ebm_system.py` · `fix_launchd_scheduled_jobs.py` ·
+    `kiem_do_tuoi_chung_cu.py` · `kiem_phan_hang.py` · `verify_mcp_live_sync.py`
+    (6 chỗ). Nguyên nhân: cú pháp PEP 701 — lồng nháy KÉP bên trong f-string nháy kép
+    (`f"gui/{getattr(os, "getuid", ...)}"`) và dấu gạch chéo ngược trong phần biểu
+    thức của f-string — **chỉ hợp lệ từ Python 3.12**, trong khi `CLAUDE.md` khai sàn
+    **3.11+**.
+
+    Vì sao nằm im lâu: CI ghim đúng `python-version: "3.12"`, và hai máy của bác sĩ
+    chạy 3.12.10 / 3.14.6 — nên không đâu chạm tới sàn đã khai. Hại thật: trên một
+    môi trường 3.11 (container phiên web, máy mới, đồng nghiệp cài bản khác),
+    `kiem_do_tuoi_chung_cu.py` — **một trong 7 chốt tự chạy mỗi phiên** — chết
+    SyntaxError, mà hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không
+    một dòng báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính hồi 12/08 trên Windows
+    (`os.getuid` không tồn tại + chỉ bắt OSError ⇒ chết im lặng).
+
+    ⚠️ GIỚI HẠN CÓ CHỦ Ý, đừng đọc quá: chốt này biên dịch bằng **trình thông dịch
+    đang chạy**. Trên máy 3.12+ nó KHÔNG thấy được cú pháp 3.12-only. Guard thật cho
+    sàn khai báo là **lane `python-version: "3.11"` trong `.github/workflows/
+    kiem-tinh-da-nen.yml`**, thêm cùng ngày. Chốt này bắt mọi lỗi cú pháp khác và bắt
+    đúng lớp trên khi phiên đang chạy ở sàn.
+    """
+    import sys
+
+    hong = []
+    for thu_muc in ("tools", "ops"):
+        goc = REPO / thu_muc
+        if not goc.is_dir():
+            continue
+        for f in sorted(goc.rglob("*.py")):
+            if "__pycache__" in f.parts:
+                continue
+            try:
+                compile(f.read_text(encoding="utf-8"), str(f), "exec")
+            except SyntaxError as e:
+                hong.append(f"{f.relative_to(REPO)}:{e.lineno} {e.msg}")
+            except (OSError, UnicodeDecodeError) as e:
+                hong.append(f"{f.relative_to(REPO)} đọc lỗi: {e}")
+
+    if hong:
+        return False, f"{len(hong)} file không biên dịch được: " + " · ".join(hong[:3])
+
+    v = f"{sys.version_info.major}.{sys.version_info.minor}"
+    o_san = v == "3.11"
+    return True, (f"mọi tools/ + ops/ biên dịch được trên Python {v}"
+                  + (" (ĐÚNG sàn khai báo)" if o_san
+                     else " — lưu ý: không phải sàn 3.11, lane CI 3.11 mới là guard thật"))
 
 
 BAI_HOC = [
@@ -3004,7 +3586,22 @@ BAI_HOC = [
     # đánh số lại thành 70/71 thay vì giành số, đúng thứ nó dạy.
     ("BH70", "21/08", "Bộ đồng bộ không được trỏ vào công cụ/cờ không tồn tại; Windows không bị chặn", bh70_bo_dong_bo_khong_tro_vao_thu_khong_co),
     ("BH71", "21/08", "Lệnh gộp phủ đủ làn và DỪNG khi chốt an toàn đỏ", bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem),
-    ("BH72", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục (gọi skill không được)", bh72_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
+    ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
+    ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
+    ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
+    ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
+    ("BH76", "25/08", "Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime", bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime),
+    ("BH77", "26/08", "Skill đã Việt hoá không được mất khối EBM-VN-GUARD", bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la),
+    # Ba mục dưới ra đời trên nhánh outpatient 22/08 với số 70/71/72 — trùng với ba
+    # mục master đặt song song cùng tuần. Đánh số lại thành 78/79/80 theo đúng tiền lệ
+    # ghi ngay phía trên (BH68 canh mã duy nhất).
+    ("BH78", "22/08", "Sổ việc treo: fail-closed khi thiếu hạn, không tự đóng việc", bh78_so_viec_treo_fail_closed_va_khong_tu_dong),
+    ("BH79", "22/08", "Lá cờ safety-netting không được nói hộ (R9) + R3 bắt khối thiếu", bh79_la_co_safety_net_khong_duoc_noi_ho),
+    ("BH80", "22/08", "Mọi công cụ biên dịch được trên SÀN KHAI BÁO (3.11), không chỉ 3.12", bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao),
+    # Mục dưới ra đời song song ở phiên đồng bộ đa nền và ban đầu mang số 72 — trùng
+    # canary cổng nghiên cứu của master. Đánh số lại thành 81 theo đúng tiền lệ BH68.
+    ("BH81", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục («gọi skill không được»)", bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
+
 ]
 
 

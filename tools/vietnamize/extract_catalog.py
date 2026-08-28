@@ -368,6 +368,24 @@ def main() -> int:
             name=nm, desc=fm.get("description", ""), path=f,
             invoke=f"/anthropic-skills:{nm}")
 
+    # --- 3-bis. Skill Cowork ĐANG PHỤC VỤ (skills-plugin) -----------------
+    # 24/08/2026 — NGUỒN CỦA MỘT LỚP BỰC BỘI KÉO DÀI. Mục 3 ở trên quét
+    # `~/.claude-science/orgs/*/skills/` và gán nhãn `/anthropic-skills:<tên>`,
+    # nhưng lệnh đó THẬT RA chạy bản nằm ở `local-agent-mode-sessions/skills-plugin/`
+    # (AGENTS.md và CLAUDE.md đều đã ghi đúng điều này). Hai thư mục khác nhau:
+    # đo ngày 24/08, `.claude-science/learn` tiếng Việt trong khi bản Cowork —
+    # bản THẬT SỰ hiện ra khi bác sĩ gõ `/` — vẫn tiếng Anh. Vì catalog chỉ nhìn
+    # thư mục KHÔNG phục vụ, mọi công cụ đều báo "đã Việt hoá" còn bác sĩ thì
+    # thấy tiếng Anh — công cụ đo đúng một thứ, chỉ là không phải thứ nó tự nhận.
+    # Quét CẢ HAI: trùng `id` là CỐ Ý — apply_vi xử lý theo từng đường dẫn nên
+    # một bản dịch sẽ áp cho cả hai bản sao, không bản nào bị bỏ lại.
+    for f in sorted(APP_SUPPORT.glob("skills-plugin/*/*/skills/*/SKILL.md")):
+        fm = read_frontmatter(f)
+        nm = fm.get("name") or f.parent.name
+        add(items, kind="skill", source="cowork", plugin="anthropic-skills",
+            name=nm, desc=fm.get("description", ""), path=f,
+            invoke=f"/anthropic-skills:{nm}")
+
     # --- 4. Agent EBM của bác sĩ ------------------------------------------
     for f in sorted((REPO / ".claude/agents").glob("*.md")):
         if f.name.startswith("_") or f.name == "README.md":

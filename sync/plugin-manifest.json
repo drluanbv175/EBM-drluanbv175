@@ -37,13 +37,15 @@
     },
     "claude-code-harness@claude-code-harness-marketplace": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Windows"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Cấp 4 lệnh harness (/harness-plan · -work · -review · -sync) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4).",
+      "ly_do": "Cấp bộ quy trình harness (harness-plan · -work · -review · -sync · -accept · -loop · -release · -setup) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4). Trong v5.13.1 chúng là SKILL, không phải lệnh: gọi /claude-code-harness:harness-plan. Bác sĩ yêu cầu bổ sung sang Windows 26/08/2026 — trước đó máy Windows KHÔNG có gì (không clone, không skill, không agent).",
       "do_duoc_luc_ghi": {
-        "Mac": 70
+        "Mac": 70,
+        "Windows": 73
       }
     },
     "codex@openai-codex": {
@@ -65,7 +67,52 @@
       "chieu_sang_codex": false,
       "ly_do": "Worker văn phong. CẤM chạy trên nội dung y khoa ĐÃ QUA CỔNG — nó sửa câu chữ, đủ để làm lệch một mệnh đề điều kiện («ngoài thai kỳ», «nếu không chống chỉ định») mà không ai thấy (CLAUDE.md, luật nền 3 của bảng định tuyến).",
       "do_duoc_luc_ghi": {
-        "Mac": 2
+        "Mac": 1
+      }
+    },
+    "medsci-analysis@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-data@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-literature@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-modeling@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-presentation@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
       }
     },
     "medsci-project@medsci-skills": {
@@ -77,8 +124,35 @@
       "chieu_sang_codex": false,
       "ly_do": "Bản GIỮ LẠI trong 9 plugin medsci-* có bộ 58 skill BYTE-IDENTICAL (đã so md5). 8 bản trùng đã tắt 10/08/2026 — danh sách Windows 1405 → 941 mục, 0 năng lực mất. Tiền tố lệnh là /medsci-project:*.",
       "do_duoc_luc_ghi": {
-        "Mac": 59,
+        "Mac": 60,
         "Windows": 59
+      }
+    },
+    "medsci-review@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-submission@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
+      }
+    },
+    "medsci-writing@medsci-skills": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "do_duoc_luc_ghi": {
+        "Mac": 60
       }
     },
     "meta-pipe@meta-pipe": {

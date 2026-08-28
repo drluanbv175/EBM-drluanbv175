@@ -53,7 +53,7 @@ AG = REPO / ".claude" / "agents"
 # (BH28): skill lạ mới xuất hiện ở runtime mà không nguồn → vẫn ĐỎ, đúng như cần.
 SKILL_DUNG_SAN = {
     "algorithmic-art", "brand-guidelines", "canvas-design", "consolidate-memory",
-    "doc-coauthoring", "docx", "explain-usage", "internal-comms", "learn",
+    "doc-coauthoring", "docx", "explain-usage", "import-memory", "internal-comms", "learn",
     "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-cowork",
     "skill-creator", "slack-gif-creator", "theme-factory", "web-artifacts-builder",
     "xlsx",

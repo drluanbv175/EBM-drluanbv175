@@ -3,14 +3,14 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1162 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1195 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1147 mục (quét ngày 2026-08-21)
-> - **Windows**: 909 mục (quét ngày 2026-08-17)
-> - có ở **cả 2 máy**: 894 mục
+> - **Mac**: 1157 mục (quét ngày 2026-08-26)
+> - **Windows**: 892 mục (quét ngày 2026-08-26)
+> - có ở **cả 2 máy**: 854 mục
 
 > Nhãn máy chỉ đúng TỚI NGÀY QUÉT ghi trên. Máy nào quét trước một lần nâng cấp công cụ có thể thiếu cả một nhóm mục (và bị hiểu nhầm là "máy kia mới có") — chạy lại `extract_catalog.py` trên máy đó rồi sinh lại danh mục.
 
@@ -69,7 +69,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1064 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1110 mục)
 
 
 ### aipoch-medical-research  (604)
@@ -681,6 +681,168 @@
 | `/aipoch-medical-research:xgboost-analysis` | kỹ năng | cả 2 máy | [Học máy] Dựng mô hình XGBoost trên dữ liệu bảng cho phân loại nhị phân hoặc hồi quy, tự chia tập huấn luyện và kiểm tra, xuất bảng hiệu năng và xếp hạng tầm quan trọng biến. Dùng khi cần mô hình tăng cường mạnh. Từ khoá: XGBoost. |
 | `/aipoch-medical-research:zinc-database` | kỹ năng | cả 2 máy | [Thiết kế thuốc] Tra ZINC với hơn 230 triệu hợp chất mua được: tìm theo mã ZINC hoặc SMILES, tìm chất tương tự, tải cấu trúc 3D sẵn sàng docking. Dùng khi sàng lọc ảo. Từ khoá: ZINC, virtual screening. |
 
+### user-skills  (78)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/EBM-MASTER` | kỹ năng | cả 2 máy | [EBM tổng hợp] Nền tảng y học chứng cứ hợp nhất cho cả lâm sàng lẫn nghiên cứu: tra và thẩm định chứng cứ, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh, thang điểm lâm sàng và quản trị dashboard. Dùng khi cần vào cửa c… |
+| `/academic-research-suite` | kỹ năng | Windows | > ARS-Codex workflows for research, academic writing, manuscript review, research-to-paper pipelines, and experiment planning. Use when the user asks for deep research, literature review, systematic review, meta-analysis, research questi… |
+| `/alphafold2` | kỹ năng | Windows | > Predict protein structure for monomers and multimers with AlphaFold2 via the ColabFold runner (Mirdita et al. 2022, github.com/sokrypton/ColabFold; AlphaFold2 Jumper et al. 2021). Reach for this skill to fold a sequence or complex with… |
+| `/antifacts` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (mặt tiền gom mọi sản phẩm EBM trong thư mục \"Claude AI\" theo chuyên khoa: cập nhật chứng cứ + thang điểm lâm sàng + công cụ nghiên cứu).… |
+| `/boltz` | kỹ năng | Windows | > Structure prediction for protein, nucleic-acid, and small-molecule complexes with Boltz-2 (Passaro & Wohlwend et al. 2025, github.com/jwohlwend/boltz). Reach for this skill to validate designed binders against a target, to co-fold a pr… |
+| `/borzoi` | kỹ năng | Windows | > Predict genome-wide functional tracks (RNA-seq, CAGE, DNase, ChIP) from DNA sequence with Borzoi. Use this skill when: (1) Scoring the regulatory effect of a variant on expression/accessibility, (2) Generating predicted coverage tracks… |
+| `/cap-nhat-chung-cu-y-khoa` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/case-control-study-quality-assessment-nos` | kỹ năng | Windows | Clinical Research Bias Assessment - Case-Control Study (NOS) v2.3.0. Use when you need to assess the bias of a case-control study using the Newcastle-Ottawa Scale (NOS) criteria, or when evaluating the quality of a medical paper. |
+| `/chai1` | kỹ năng | Windows | > Structure prediction for protein, nucleic-acid, and small-molecule complexes with the Chai-1 foundation model (Chai Discovery 2024, github.com/chaidiscovery/chai-lab). Reach for this skill to predict an antibody-antigen or protein-liga… |
+| `/citation-management` | kỹ năng | cả 2 máy | Quản lý trích dẫn học thuật: tìm bài trên PubMed (E-utilities miễn phí) và Google Scholar, trích xuất metadata chính xác, kiểm chứng trích dẫn, sinh BibTeX đúng chuẩn. Dùng khi cần tìm bài, xác minh thông tin trích dẫn, đổi DOI→BibTeX ho… |
+| `/clinical-decision-support` | kỹ năng | cả 2 máy | Tạo tài liệu hỗ trợ quyết định lâm sàng (CDS): phân tích nhóm bệnh nhân (cohort) theo dấu ấn sinh học, báo cáo khuyến cáo điều trị dựa trên bằng chứng kèm thuật toán quyết định và phân độ GRADE; phân tích thống kê (HR, đường sống còn); x… |
+| `/clinical-evidence-rag` | kỹ năng | cả 2 máy | [Tra cứu chứng cứ] Cầu nối kiến thức với thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất từ kho y văn do chính bác sĩ kiểm soát — guideline, phác đồ khoa hoặc viện, bài tổng quan, bài báo đã tuyển chọn — rồi tổng hợp câu trả lời … |
+| `/clinical-reports` | kỹ năng | cả 2 máy | Viết báo cáo lâm sàng: case report (chuẩn CARE), báo cáo chẩn đoán (X-quang/giải phẫu bệnh/xét nghiệm), báo cáo thử nghiệm lâm sàng (ICH-E3) và hồ sơ bệnh án (SOAP, H&P, tóm tắt xuất viện). Kèm template và công cụ kiểm tra. Mọi đầu ra kè… |
+| `/co-tank-monitor` | kỹ năng | Windows | IoT monitoring simulation to predict CO2 tank depletion and prevent weekend gas outages in cell culture facilities. Monitors cylinder pressure, calculates consumption rates, provides early warnings, and supports automated scheduling via … |
+| `/customize` | kỹ năng | Windows | Use when the user wants to create or manage a Specialist agent or create, revise, publish, or delete a Skill through the conversational `/Customize` entry. Routes Skill work to the internal skill-creator and handles Specialist work throu… |
+| `/d-molecule-ray-tracer` | kỹ năng | Windows | Generate photorealistic rendering scripts for PyMOL and UCSF ChimeraX. |
+| `/dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | cả 2 máy | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
+| `/dark-analyst` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/dashboard-master-ebm-ngoai-tru` | kỹ năng | cả 2 máy | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
+| `/database-lookup` | kỹ năng | cả 2 máy | Truy vấn 78+ CƠ SỞ DỮ LIỆU khoa học/y khoa công khai qua API đã tài liệu hóa rõ endpoint, bộ lọc, phân trang và nguồn gốc dữ liệu (PubChem, ChEMBL, UniProt, ClinicalTrials.gov, FDA, dbSNP, ClinVar, COSMIC, GWAS Catalog, OMIM... phần lớn … |
+| `/diagnostic-study-quality-assessment-quadas` | kỹ năng | Windows | Analyzes clinical diagnostic accuracy studies for bias using the QUADAS-2 tool. Use when Claude needs to assess the quality, risk of bias, or applicability of diagnostic accuracy studies (e.g., \"Assess this paper using QUADAS-2\"). |
+| `/diffdock` | kỹ năng | Windows | > Predict small-molecule binding poses with DiffDock-L (Corso et al. 2023/2024, github.com/gcorso/DiffDock) — blind diffusion docking that places a ligand into a protein pocket without a predefined search box and ranks the samples with a… |
+| `/ehospital-mini` | kỹ năng | cả 2 máy | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
+| `/env-management` | kỹ năng | Windows | Use when a notebook run fails on a missing package (ImportError, ModuleNotFoundError, "there is no package called"), when you need to inspect an installed package version, or when you need to install, add, or manage Python or R packages … |
+| `/esmfold2` | kỹ năng | Windows | > Biohub ESMFold2 / ESMFold2-Fast all-atom co-folding (Candido et al. 2026, github.com/Biohub/esm). Single-sequence and MSA modes; protein, DNA, RNA, ligand (CCD/SMILES), modified residues. FoldBench Ab-Ag 50-55%, PPI 70-77% DockQ-pass. … |
+| `/evo2` | kỹ năng | Windows | > Score, embed, and generate DNA sequences with Evo 2, a long-context genomic foundation model. Use this skill when: (1) Computing per-nucleotide or per-sequence likelihoods for variant effect scoring, (2) Embedding genomic windows for d… |
+| `/experimental-design` | kỹ năng | cả 2 máy | Thiết kế thí nghiệm/nghiên cứu TRƯỚC khi thu thập dữ liệu — chọn thiết kế, ngẫu nhiên hóa (randomization), phân khối (blocking/stratification), bố trí factorial/fractional-factorial, crossover, split-plot, Latin square, kiểm soát hiệu ứn… |
+| `/exploratory-data-analysis` | kỹ năng | cả 2 máy | Khảo sát nhanh cấu trúc, chất lượng và đặc điểm của MỘT file dữ liệu khoa học (200+ định dạng: bảng tính, gen học, hóa học, ảnh vi mô, phổ, proteomics...) — tự nhận diện định dạng, sinh báo cáo markdown về chất lượng dữ liệu và gợi ý bướ… |
+| `/fair-esm2` | kỹ năng | Windows | > Embed proteins with Meta AI's ESM-2 (`fair-esm` package). Use this skill when: (1) Extracting per-residue or per-sequence embeddings for downstream ML, (2) Masked-LM likelihood / mutation effect scoring, (3) Contact prediction from a s… |
+| `/giao-tiep-quyet-dinh-soap` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần kỹ năng GIAO TIẾP với bệnh nhân, RA QUYẾT ĐỊNH CÙNG BỆNH NHÂN (shared decision-making), báo tin xấu, hoặc GHI HỒ SƠ SOAP. Kích hoạt với "giải thích cho bệnh nhân thế nào", "bệnh nhân không chịu điều trị/lưỡng lự… |
+| `/gokegg-analysis` | kỹ năng | Windows | Use when performing GO and KEGG enrichment on a gene list from bulk RNA-seq or microarray studies, then generating a combined GO/KEGG dot chart. NOT for single-cell RNA-seq, methylation data, or non-expression data. |
+| `/hypothesis-generation` | kỹ năng | cả 2 máy | Hình thức hóa GIẢ THUYẾT khoa học từ quan sát/dữ liệu — sinh 3-5 giả thuyết CẠNH TRANH kèm CƠ CHẾ, chấm chất lượng theo 7 tiêu chí (khả kiểm định, khả bác bỏ theo Popper, tính đơn giản, sức giải thích, phạm vi, nhất quán, tính mới), rồi … |
+| `/indication-dossier` | kỹ năng | Windows | > Generate a therapeutic indication dossier. Covers the patient population, epidemiology, disease biology, standard of care, regulatory precedent, and landmark clinical trials. |
+| `/inplasy-registration-helper` | kỹ năng | Windows | Assists researchers in generating INPLASY registration content for meta-analyses from a title and optional protocol. Use when the user wants to draft a INPLASY registration form. |
+| `/iso-certification` | kỹ năng | Windows | A toolkit for preparing ISO 13485:2016 certification documentation for medical device QMS. Use when you need to perform a documentation gap analysis, draft or update a Quality Manual, create required procedures/work instructions, build M… |
+| `/ke-don-an-toan-benh-man` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với \"đơn này có an toàn không\", \"thuốc có đánh nhau không/tương tác\", \"hiệu chỉnh liều theo thận/… |
+| `/kham-ngoai-tru-ebm` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ cần tiếp cận hoặc ra quyết định cho MỘT ca khám ngoại trú theo Y học chứng cứ (EBM). Dẫn dắt trọn 5 bước tại phòng khám: đặt câu hỏi lâm sàng (PICO) · hỏi–khám có trọng điểm + sàng lọc cờ đỏ · chẩn đoán phân … |
+| `/lab-prep-calculations` | kỹ năng | Windows | Perform pre-experiment calculations and generate step-by-step preparation protocols for dilutions, solution preparation, dissolution, and % concentrations when planning formulations and lab prep workflows. |
+| `/ligandmpnn` | kỹ năng | Windows | > Inverse-fold a backbone with ligand, nucleic-acid, and metal context using LigandMPNN (Dauparas et al. 2023, github.com/dauparas/LigandMPNN). Reach for this skill to redesign the residues lining a binding pocket around a bound small mo… |
+| `/lightgbm-analysis` | kỹ năng | Windows | Use when training a LightGBM model on tabular data in R and returning model metrics, feature importance ranking tables, and feature importance plots. |
+| `/literature-review` | kỹ năng | cả 2 máy | Thực hiện tổng quan y văn có hệ thống (systematic review, tổng quan, meta-analysis) bằng các CSDL học thuật MIỄN PHÍ (PubMed E-utilities, PMC, bioRxiv, medRxiv, OpenAlex, Crossref, Semantic Scholar). Dùng khi cần tổng hợp bằng chứng cho … |
+| `/meta-rob-plot` | kỹ năng | Windows | Draw ROB2 risk-of-bias plots, including a Traffic Light Plot and a Summary Bar Plot. Input is a CSV file with ROB2 assessments for each study; output are two PNG plot files. |
+| `/neurokit` | kỹ năng | Windows | Comprehensive biosignal processing for ECG/PPG/EEG/EDA/RSP/EMG/EOG; use when you need to clean, segment, and extract physiological features for HRV, event-related responses, complexity metrics, or multimodal psychophysiology pipelines. |
+| `/nghien-cuu-ebm-tong-hop` | kỹ năng | cả 2 máy | >- Trợ lý NGHIÊN CỨU Y KHOA & Y HỌC CHỨNG CỨ (EBM) hợp nhất cho bác sĩ lâm sàng. Gồm 5 mô-đun: (1) Tìm & thu thập y văn; (2) Đọc & thẩm định chứng cứ; (3) Thiết kế nghiên cứu lâm sàng; (4) Thống kê & mô hình lâm sàng; (5) Viết & nộp bản … |
+| `/nguoi-cao-tuoi-da-benh-da-thuoc` | kỹ năng | cả 2 máy | Chăm sóc toàn diện người cao tuổi suy yếu, đa bệnh lý và đa thuốc theo hướng an toàn thuốc, giảm hại và tránh điều trị quá mức. Dùng skill này bất cứ khi nào có bệnh nhân lớn tuổi kèm nhiều thuốc hoặc nhiều bệnh đồng mắc — rà soát và đối… |
+| `/obsidian-paper-vault` | kỹ năng | Windows | Turn a folder of research PDFs into an Obsidian knowledge vault — consistently formatted literature notes with frontmatter, PDF embed links, and cross-referenced atomic concept notes. Use whenever the user wants PDFs converted to Obsidia… |
+| `/openfold3` | kỹ năng | Windows | > Structure prediction using OpenFold3, an open-weights PyTorch reproduction of AlphaFold3 from the AlQuraishi Lab. Use this skill when predicting protein/nucleic-acid/ligand complex structures with an Apache-2.0-licensed AF3 reimplement… |
+| `/paper-lookup` | kỹ năng | cả 2 máy | Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC (toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy abstract/toàn văn,… |
+| `/paper-web` | kỹ năng | Windows | Use this skill when converting academic papers to promotional and presentation formats, including interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster). This skill is suitable for pape… |
+| `/peer-review` | kỹ năng | cả 2 máy | Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp. |
+| `/playwright` | kỹ năng | Windows | Use when the task requires automating a real browser from the terminal (navigation, form filling, snapshots, screenshots, data extraction, UI-flow debugging) via `playwright-cli` or the bundled wrapper script. |
+| `/pptx-skill` | kỹ năng | Windows | Create, edit, and extract content from PowerPoint (.pptx) files; use when you need to generate slides programmatically, update existing decks, or export slide previews. |
+| `/proteinmpnn` | kỹ năng | Windows | > Inverse-fold a protein backbone (PDB structure) into amino-acid sequence with ProteinMPNN (Dauparas et al. 2022, github.com/dauparas/ProteinMPNN). Reach for this skill to run sequence design on RFdiffusion backbones, to redesign one ch… |
+| `/pydeseq` | kỹ năng | Windows | Differential gene expression analysis for bulk RNA-seq count matrices using a DESeq2-like workflow in Python; use when you need Wald tests, FDR correction, and optional LFC shrinkage for condition/batch/covariate designs. |
+| `/pyhealth` | kỹ năng | cả 2 máy | Xây dựng pipeline học máy lâm sàng bằng thư viện PyHealth: tải dữ liệu EHR (MIMIC-III/IV, eICU, OMOP), định nghĩa tác vụ (tử vong, tái nhập viện, gợi ý thuốc, giai đoạn ngủ, mã hóa ICD), huấn luyện mô hình (Transformer, RETAIN, GAMENet, … |
+| `/quan-ly-cap-nhat-ebm` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
+| `/rct-bias-assessment-rob` | kỹ năng | Windows | Automates Risk of Bias 2 (ROB2) assessment for RCT papers by analyzing text against specific domains and synthesizing a report. Use when you need to assess the quality of a clinical trial paper or evaluate risk of bias. |
+| `/remote-compute-ssh` | kỹ năng | Windows | Evaluate and use SSH Remote Compute before choosing where to run GPU, high-memory, parallel, batch, model-inference, bioinformatics, or other long-running scientific work; supports short remote commands and asynchronous jobs with automat… |
+| `/research-lookup` | kỹ năng | cả 2 máy | Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả phí (parallel.a… |
+| `/scgpt` | kỹ năng | Windows | > Embed and annotate single-cell expression data with scGPT, a foundation model for single-cell biology. Use this skill when: (1) Producing cell embeddings from an AnnData for clustering/integration, (2) Zero-shot or fine-tuned cell-type… |
+| `/scholar-evaluation` | kỹ năng | cả 2 máy | Chấm điểm ĐỊNH LƯỢNG chất lượng học thuật của bản thảo/đề cương/tổng quan theo khung ScholarEval — 8 chiều (đặt vấn đề, tổng quan y văn, phương pháp, thu thập dữ liệu, phân tích, kết quả, văn phong, trích dẫn), mỗi chiều chấm 0-5 có trọn… |
+| `/scientific-critical-thinking` | kỹ năng | cả 2 máy | Khung THẨM ĐỊNH chất lượng chứng cứ và tính hợp lệ của thiết kế nghiên cứu — áp dụng GRADE, Cochrane Risk of Bias, nhận diện thiên kiến/nhiễu/ngụy biện logic và các lỗi thống kê thường gặp. Dùng để dạy hoặc tự kiểm tra tư duy phản biện k… |
+| `/scientific-writing` | kỹ năng | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch (không gạch đầu dòng), trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA). Dùng khi viết bài báo nghiên cứu hoặc bản thảo nộp tạp chí. Quy trình 2 bư… |
+| `/scikit-survival` | kỹ năng | cả 2 máy | Phân tích SỐNG CÒN / thời gian-đến-biến-cố (time-to-event) bằng scikit-survival: mô hình Cox, Random Survival Forest, Gradient Boosting, Survival SVM; xử lý dữ liệu KIỂM DUYỆT (censoring) và NGUY CƠ CẠNH TRANH (competing risks); đánh giá… |
+| `/self-awareness` | kỹ năng | Windows | Inspect Open Science's JavaScript control REPL, discover managed Project files, Sessions, and Agent Frames, and safely feature-gate host.* calls with host.capabilities(). Use when an Agent needs to discover available host APIs, locate an… |
+| `/solublempnn` | kỹ năng | Windows | > Inverse-fold a backbone with SolubleMPNN — ProteinMPNN retrained on a soluble-PDB subset (Dauparas et al. 2022) — for sequences biased toward cytosolic expression and reduced aggregation. Reach for this skill when designs from vanilla … |
+| `/statistical-analysis` | kỹ năng | cả 2 máy | Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ thể bằng code,… |
+| `/statistical-power` | kỹ năng | cả 2 máy | Tính CỠ MẪU / LỰC THỐNG KÊ (power analysis) TRƯỚC khi thu thập dữ liệu — bằng công thức đóng (t-test, ANOVA, tỷ lệ, tương quan, chi-square, hồi quy) VÀ mô phỏng Monte Carlo cho thiết kế không có công thức chuẩn (hồi quy logistic/Poisson,… |
+| `/statsmodels` | kỹ năng | cả 2 máy | Chạy mô hình thống kê THẬT bằng thư viện statsmodels: OLS, GLM, mô hình hỗn hợp (mixed-effects), ARIMA/chuỗi thời gian — kèm bảng hệ số, chẩn đoán giả định, phân tích residual. Dùng khi ĐÃ có dữ liệu và cần fit một mô hình cụ thể (khác s… |
+| `/tao-video-tiktok` | kỹ năng | cả 2 máy | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
+| `/tham-dinh-chung-cu-grade-nnt` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
+| `/tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
+| `/tong-thuat-chung-cu` | kỹ năng | cả 2 máy | Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày … |
+| `/torchdrug-english` | kỹ năng | Windows | PyTorch-native Graph Neural Network framework for molecules and proteins. Suitable for building custom GNN architectures for drug discovery, protein modeling, or knowledge graph reasoning. Best for custom model development, protein prope… |
+| `/treatment-plans` | kỹ năng | cả 2 máy | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
+| `/tuan-thu-dieu-tri` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
+| `/venue-templates` | kỹ năng | cả 2 máy | Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu, và đề cương xin tài trợ — kèm chuẩn báo cáo CONSORT/STROBE/PRISMA cho bài y khoa. Dùng khi chuẩn bị bản thả… |
+| `/xgboost-analysis` | kỹ năng | Windows | Use when building XGBoost models on tabular data and returning feature importance ranking outputs. Supports binary classification and regression with automatic task detection, train-test split, performance tables, feature importance rank… |
+
+### anthropic-skills  (74 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/anthropic-skills:EBM-MASTER` | kỹ năng | Mac | Nền tảng Y HỌC BẰNG CHỨNG hợp nhất của bác sĩ: lâm sàng, nghiên cứu, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh. Dùng khi cần cửa vào chung cho công việc EBM. Từ khoá: EBM platform. |
+| `/anthropic-skills:algorithmic-art` | kỹ năng | Mac | Tạo tranh thuật toán bằng p5.js với yếu tố ngẫu nhiên có hạt giống và tham số điều chỉnh được. Dùng cho minh hoạ sáng tạo, không phải biểu đồ dữ liệu. Từ khoá: algorithmic art, p5.js. |
+| `/anthropic-skills:alphafold2` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc protein đơn phân và đa phân bằng AlphaFold2. Dùng cho nghiên cứu tiền lâm sàng, KHÔNG dùng cho chăm sóc bệnh nhân. Từ khoá: AlphaFold2. |
+| `/anthropic-skills:antifacts` | kỹ năng | Mac | Dùng khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (gom cập nhật chứng cứ + 45 thang điểm lâm sàng + công cụ nghiên cứu theo chuyên khoa). Kích hoạt khi nghe \"Antifacts\", \"mở Antifacts\", \"cập nhật A… |
+| `/anthropic-skills:boltz` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp protein – acid nucleic – phân tử nhỏ bằng Boltz-2. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Boltz-2. |
+| `/anthropic-skills:borzoi` | kỹ năng | Mac | [Tin sinh học] Dự đoán tín hiệu chức năng toàn hệ gen (RNA-seq, CAGE, DNase, ChIP) từ chuỗi DNA bằng Borzoi. Dùng trong nghiên cứu hệ gen. Từ khoá: Borzoi, functional genomics. |
+| `/anthropic-skills:brand-guidelines` | kỹ năng | Mac | Áp bộ màu và kiểu chữ chính thức của Anthropic. Dùng khi làm sản phẩm cần đúng nhận diện thương hiệu đó; ít dùng cho tài liệu y khoa. Từ khoá: brand guidelines. |
+| `/anthropic-skills:canvas-design` | kỹ năng | Mac | Tạo ẤN PHẨM HÌNH ẢNH đẹp dạng .png/.pdf theo nguyên tắc thiết kế (poster, tờ rơi, thiệp). Dùng khi cần sản phẩm in được. Từ khoá: canvas design, poster. |
+| `/anthropic-skills:cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/anthropic-skills:chai1` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp bằng mô hình nền Chai-1. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Chai-1. |
+| `/anthropic-skills:citation-management` | kỹ năng | Mac | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
+| `/anthropic-skills:clinical-evidence-rag` | kỹ năng | Mac | Cầu nối kiến thức–thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất (RAG) từ kho y văn do bác sĩ tự nạp. Dùng khi muốn tra trong kho tài liệu riêng thay vì tìm mới trên mạng. Từ khoá: clinical RAG. |
+| `/anthropic-skills:compute-env-setup` | kỹ năng | Mac | Cài môi trường tính toán trên máy chủ từ xa (SSH/conda, cụm Slurm) để chạy việc nặng. Dùng khi máy cá nhân không đủ sức. Từ khoá: compute environment. |
+| `/anthropic-skills:consolidate-memory` | kỹ năng | Mac | [Bộ nhớ] Rà lại toàn bộ file bộ nhớ của Claude: gộp mục trùng, sửa thông tin đã lỗi thời, tỉa bớt chỉ mục cho gọn. Dùng khi bộ nhớ phình to, có hai mục nói ngược nhau, hoặc trước khi bàn giao sang máy khác. Từ khoá: consolidate memory, m… |
+| `/anthropic-skills:customize` | kỹ năng | Mac | Tạo và bảo trì hồ sơ agent riêng, và soạn skill mới qua công cụ repl. Dùng khi muốn tuỳ biến cách trợ lý làm việc. Từ khoá: customize agent profile. |
+| `/anthropic-skills:dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | Mac | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
+| `/anthropic-skills:dark-analyst` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/anthropic-skills:dashboard-master-ebm-ngoai-tru` | kỹ năng | Mac | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
+| `/anthropic-skills:diffdock` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán tư thế gắn của phân tử nhỏ vào protein bằng DiffDock-L. Dùng khi sàng lọc thuốc tiền lâm sàng. Từ khoá: DiffDock. |
+| `/anthropic-skills:doc-coauthoring` | kỹ năng | Mac | Đồng soạn tài liệu theo quy trình có cấu trúc (tài liệu kỹ thuật, đề xuất, hướng dẫn). Dùng khi viết tài liệu dài cần thống nhất bố cục. Từ khoá: doc co-authoring. |
+| `/anthropic-skills:docx` | kỹ năng | Mac | [Tài liệu] Tạo, đọc và sửa file Word (.docx) cùng mẫu Word (.dotx): mục lục, đề mục, số trang, tiêu đề thư, bảng, chèn hoặc thay ảnh, tìm-thay hàng loạt, theo dõi thay đổi. Dùng khi bác sĩ nhắc tới file Word, .docx, .dotx, hoặc cần xuất … |
+| `/anthropic-skills:ehospital-mini` | kỹ năng | Mac | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
+| `/anthropic-skills:esmfold2` | kỹ năng | Mac | [Sinh học cấu trúc] Gấp cuộn toàn nguyên tử bằng ESMFold2, chạy được từ một chuỗi đơn. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ESMFold2. |
+| `/anthropic-skills:evo2` | kỹ năng | Mac | [Tin sinh học] Chấm điểm, biểu diễn và sinh chuỗi DNA bằng mô hình nền Evo 2 ngữ cảnh dài. Dùng trong nghiên cứu hệ gen. Từ khoá: Evo 2, genomic foundation model. |
+| `/anthropic-skills:explain-usage` | kỹ năng | Mac | [Tiện ích] Giải thích phiên làm việc này đã tiêu token vào đâu, kèm MỘT biểu đồ đơn giản và lời văn dễ hiểu. Dùng khi bác sĩ hỏi «token đi đâu hết», «giải thích mức dùng», hoặc muốn xem bảng bóc tách chi phí của phiên. Từ khoá: usage, to… |
+| `/anthropic-skills:fair-esm2` | kỹ năng | Mac | [Tin sinh học] Sinh vector biểu diễn (embedding) cho protein bằng ESM-2 của Meta AI. Dùng khi phân tích chuỗi protein bằng học máy. Từ khoá: ESM-2, protein embedding. |
+| `/anthropic-skills:figure-composer` | kỹ năng | Mac | Dựng MỘT hình nhiều panel đạt chuẩn công bố, từ một câu khẳng định + dữ liệu nguồn. Dùng khi cần hình chính cho bài báo. Từ khoá: multi-panel figure. |
+| `/anthropic-skills:figure-style` | kỹ năng | Mac | Quy tắc trình bày hình đạt chuẩn công bố (độ đọc được, nhãn, đơn vị, màu). Dùng cho hình NỘP BÀI, không cần cho biểu đồ xem nhanh. Từ khoá: figure style, publication-grade. |
+| `/anthropic-skills:giao-tiep-quyet-dinh-soap` | kỹ năng | Mac | Sử dụng skill này khi cần kỹ năng GIAO TIẾP với bệnh nhân, RA QUYẾT ĐỊNH CÙNG BỆNH NHÂN (shared decision-making), báo tin xấu, hoặc GHI HỒ SƠ SOAP. Kích hoạt với "giải thích cho bệnh nhân thế nào", "bệnh nhân không chịu điều trị/lưỡng lự… |
+| `/anthropic-skills:import-memory` | kỹ năng | Mac | [Bộ nhớ] Nhập bản xuất bộ nhớ từ một trợ lý AI khác vào bộ nhớ của Claude — theo lối trò chuyện, CHỈ THÊM chứ không đè, và coi nội dung nhập vào là DỮ LIỆU chứ không phải chỉ thị. Dùng khi chuyển từ trợ lý khác sang. Từ khoá: import memo… |
+| `/anthropic-skills:indication-dossier` | kỹ năng | Mac | Soạn HỒ SƠ CHỈ ĐỊNH ĐIỀU TRỊ: quần thể bệnh nhân, dịch tễ, sinh bệnh học, chuẩn điều trị hiện hành, bối cảnh pháp quy. Dùng cho tổng quan chuyên sâu một chỉ định. Từ khoá: indication dossier. |
+| `/anthropic-skills:internal-comms` | kỹ năng | Mac | Viết các loại THÔNG BÁO NỘI BỘ theo mẫu quen dùng của đơn vị. Dùng cho thư gửi khoa/phòng, thông báo thay đổi quy trình. Từ khoá: internal communications. |
+| `/anthropic-skills:ke-don-an-toan-benh-man` | kỹ năng | Mac | Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với \"đơn này có an toàn không\", \"thuốc có đánh nhau không/tương tác\", \"hiệu chỉnh liều theo thận/… |
+| `/anthropic-skills:kham-ngoai-tru-ebm` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ cần tiếp cận hoặc ra quyết định cho MỘT ca khám ngoại trú theo Y học chứng cứ (EBM). Dẫn dắt trọn 5 bước tại phòng khám: đặt câu hỏi lâm sàng (PICO) · hỏi–khám có trọng điểm + sàng lọc cờ đỏ · chẩn đoán phân … |
+| `/anthropic-skills:learn` | kỹ năng | Mac | Giải thích để HIỂU BẢN CHẤT một vấn đề (vì sao, cơ chế thế nào) thay vì làm hộ một việc. Dùng khi bác sĩ muốn học chứ không muốn nhận kết quả. Từ khoá: learn, understanding. |
+| `/anthropic-skills:ligandmpnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi có tính tới phối tử, acid nucleic và ion kim loại. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: LigandMPNN. |
+| `/anthropic-skills:literature-review` | kỹ năng | Mac | Tìm, XÁC MINH và tổng hợp y văn — từ 'bài kinh điển của chủ đề X là bài nào' cho tới tổng quan đa nguồn đầy đủ. Dùng khi cần rà y văn có kiểm chứng nguồn. Từ khoá: literature review. |
+| `/anthropic-skills:managed-model-endpoints` | kỹ năng | Mac | Đăng ký một dịch vụ mô hình (cục bộ hoặc từ xa) để hệ thống tự bật/tắt khi cần. Dùng khi muốn chạy mô hình riêng ngoài Claude. Từ khoá: model endpoint. |
+| `/anthropic-skills:mcp-builder` | kỹ năng | Mac | Hướng dẫn dựng máy chủ MCP chất lượng tốt để mô hình gọi được dịch vụ bên ngoài. Dùng khi muốn nối một nguồn dữ liệu mới vào Claude. Từ khoá: MCP server builder. |
+| `/anthropic-skills:morning` | kỹ năng | Mac | Dựng BẢN TIN BUỔI SÁNG dạng trang HTML, hoặc đặt lịch chạy tự động các ngày trong tuần. Dùng khi bác sĩ yêu cầu rõ — không tự chạy. Từ khoá: morning brief. |
+| `/anthropic-skills:nghien-cuu-ebm-tong-hop` | kỹ năng | Mac | >- Trợ lý NGHIÊN CỨU Y KHOA & Y HỌC CHỨNG CỨ (EBM) hợp nhất cho bác sĩ lâm sàng. Gồm 5 mô-đun: (1) Tìm & thu thập y văn; (2) Đọc & thẩm định chứng cứ; (3) Thiết kế nghiên cứu lâm sàng; (4) Thống kê & mô hình lâm sàng; (5) Viết & nộp bản … |
+| `/anthropic-skills:nghien-cuu-y-khoa-chuan-quoc-te` | kỹ năng | Mac | Thực hiện, thiết kế và rà soát nghiên cứu y khoa theo chuẩn quốc tế qua cổng chất lượng G0-G9. Dùng skill này khi người dùng cần xác định câu hỏi/đề cương/protocol, hồ sơ đạo đức và đăng ký nghiên cứu, tính cỡ mẫu, thiết kế biến số/CRF/p… |
+| `/anthropic-skills:nguoi-cao-tuoi-da-benh-da-thuoc` | kỹ năng | Mac | Chăm sóc toàn diện người cao tuổi suy yếu, đa bệnh lý và đa thuốc theo hướng an toàn thuốc, giảm hại và tránh điều trị quá mức. Dùng skill này bất cứ khi nào có bệnh nhân lớn tuổi kèm nhiều thuốc hoặc nhiều bệnh đồng mắc — rà soát và đối… |
+| `/anthropic-skills:openfold3` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc bằng OpenFold3 — bản mã nguồn mở của AlphaFold3. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: OpenFold3. |
+| `/anthropic-skills:paper-lookup` | kỹ năng | Mac | Tra cứu bài báo y khoa qua API MIỄN PHÍ (PubMed E-utilities, Crossref, Europe PMC) — tìm theo PICO/từ khóa/MeSH, phân giải và xác minh PMID/DOI, lấy metadata gốc. Dùng khi cần tìm bài cho một câu hỏi, kiểm một PMID/DOI có thật, hoặc lấy … |
+| `/anthropic-skills:paper-narrative` | kỹ năng | Mac | Chấm và sắp lại MẠCH TRUYỆN mà bộ hình trong bài báo đang kể — đầu vào là chính bản thảo + bộ hình. Dùng khi bài đủ dữ liệu nhưng đọc rời rạc. Từ khoá: paper narrative, figure story. |
+| `/anthropic-skills:pdf` | kỹ năng | Mac | [Tài liệu] Mọi việc với file PDF: đọc và bóc chữ hay bảng, gộp, tách, xoay trang, đóng dấu chìm, tạo PDF mới, điền biểu mẫu, mã hoá và giải mã, bóc ảnh, OCR bản scan cho tra được chữ. Dùng khi bác sĩ nhắc tới một file .pdf hoặc muốn xuất… |
+| `/anthropic-skills:pdf-explore` | kỹ năng | Mac | Đọc sâu tài liệu PDF dài (bài báo, báo cáo) khi câu trả lời nằm rải ở nhiều chỗ trong file. Dùng khi bác sĩ đính kèm PDF và cần tổng hợp xuyên suốt, không chỉ tra một đoạn. Từ khoá: PDF exploration. |
+| `/anthropic-skills:peer-review` | kỹ năng | Mac | Bình duyệt bản thảo khoa học có CẤU TRÚC — đánh giá tính hợp lệ (validity), phương pháp, thống kê, đạo đức/đăng ký, trình bày & chuẩn báo cáo, trích dẫn; soạn nhận xét đối kháng đa lăng kính + thư phản biện cho tác giả. Dùng trước khi nộ… |
+| `/anthropic-skills:pptx` | kỹ năng | Mac | [Trình bày] Làm việc với file PowerPoint (.pptx, .potx): dựng bộ slide, bóc chữ từ slide có sẵn, sửa bài trình bày, gộp hoặc tách file, xử lý mẫu, bố cục, ghi chú người trình bày và bình luận. Dùng bất cứ khi nào có .pptx/.potx ở đầu vào… |
+| `/anthropic-skills:product-self-knowledge` | kỹ năng | Mac | Tra thông tin CHÍNH XÁC về sản phẩm của Anthropic (Claude Code, gói dịch vụ, giới hạn). Dùng BẮT BUỘC trước khi khẳng định điều gì về sản phẩm, tránh nói theo trí nhớ. Từ khoá: product facts. |
+| `/anthropic-skills:proteinmpnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi acid amin từ khung cấu trúc bằng ProteinMPNN. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ProteinMPNN. |
+| `/anthropic-skills:quan-ly-cap-nhat-ebm` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
+| `/anthropic-skills:remote-compute-modal` | kỹ năng | Mac | Chạy việc cần GPU trên tài khoản Modal của bác sĩ. Dùng cho tác vụ học máy nặng. Từ khoá: Modal GPU. |
+| `/anthropic-skills:remote-compute-ssh` | kỹ năng | Mac | Gửi việc tính toán lên máy chủ SSH/SLURM của bác sĩ rồi chờ và thu kết quả. Dùng sau khi đã quyết định chạy từ xa. Từ khoá: SSH, SLURM. |
+| `/anthropic-skills:research-lookup` | kỹ năng | Mac | Tra cứu NGHIÊN CỨU & ĐĂNG KÝ THỬ NGHIỆM qua nguồn mở — ClinicalTrials.gov (API v2), WHO ICTRP, PROSPERO. Dùng khi cần kiểm một thử nghiệm đã đăng ký chưa, tìm nghiên cứu đang tiến hành/đã hoàn tất, đối chiếu kết cục đăng ký vs công bố (c… |
+| `/anthropic-skills:scgpt` | kỹ năng | Mac | [Tế bào đơn] Biểu diễn và chú giải dữ liệu biểu hiện gen tế bào đơn bằng scGPT. Dùng khi phân tích dữ liệu tế bào đơn. Từ khoá: scGPT. |
+| `/anthropic-skills:schedule` | kỹ năng | Mac | [Tiện ích] Tạo hoặc sửa TÁC VỤ CHẠY THEO LỊCH, tự nổ đúng giờ mà không cần ngồi chờ. Dùng khi bác sĩ nói «mỗi ngày», «mỗi sáng», «nhắc tôi sau một giờ», «chạy lúc 12 giờ trưa», hoặc muốn đổi giờ một tác vụ đã đặt. Từ khoá: schedule, sche… |
+| `/anthropic-skills:scientific-writing` | kỹ năng | Mac | Viết bản thảo khoa học y khoa theo cấu trúc IMRAD, văn xuôi liền mạch, khớp CHUẨN BÁO CÁO đúng thiết kế (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD+AI; COREQ/SRQR cho định tính; SQUIRE cho QI). Dùng khi cần viết bài báo, protocol, hoặc bá… |
+| `/anthropic-skills:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA-seq tế bào đơn theo mô hình xác suất với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn bán giám sát. Từ khoá: scvi-tools, scVI. |
+| `/anthropic-skills:self-awareness` | kỹ năng | Mac | Truy vấn cơ sở dữ liệu phiên làm việc của Claude Science. Dùng khi cần tự kiểm phiên đang chạy gì. Từ khoá: session introspection. |
+| `/anthropic-skills:setup-cowork` | kỹ năng | Mac | [Hỗ trợ] Cài đặt Cowork có dẫn dắt từng bước: cài plugin hợp với vai trò, nối các công cụ đang dùng, chạy thử một skill cho quen. Dùng khi mới dựng máy hoặc mới bật Cowork lần đầu. Từ khoá: setup Cowork, cowork onboarding. |
+| `/anthropic-skills:skill-creator` | kỹ năng | Mac | Tạo skill mới, sửa và cải thiện skill sẵn có, đo hiệu quả của skill. Dùng khi bác sĩ muốn tự đóng gói một quy trình thành skill gọi được. Từ khoá: skill creator. |
+| `/anthropic-skills:slack-gif-creator` | kỹ năng | Mac | Tạo ảnh động GIF tối ưu cho Slack, kèm ràng buộc kích thước và công cụ kiểm tra. Dùng khi cần ảnh động cho tin nhắn nhóm. Từ khoá: Slack GIF. |
+| `/anthropic-skills:solublempnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi thiên về protein TAN được. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: SolubleMPNN. |
+| `/anthropic-skills:statistical-analysis` | kỹ năng | Mac | Quy trình phân tích thống kê lâm sàng/nghiên cứu y khoa — mô tả dữ liệu, chọn kiểm định theo loại biến + thiết kế + giả định, hồi quy/sống còn/ROC/hiệu chỉnh, báo cáo ước lượng + 95% CI. Dùng khi cần chạy/đọc phân tích thống kê cho một đ… |
+| `/anthropic-skills:tao-video-tiktok` | kỹ năng | Mac | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
+| `/anthropic-skills:tham-dinh-chung-cu-grade-nnt` | kỹ năng | Mac | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
+| `/anthropic-skills:theme-factory` | kỹ năng | Mac | Bộ chủ đề trình bày cho slide, tài liệu, báo cáo, trang HTML — có 10 chủ đề dựng sẵn. Dùng khi muốn thống nhất phong cách một bộ sản phẩm. Từ khoá: theme, styling. |
+| `/anthropic-skills:tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
+| `/anthropic-skills:tuan-thu-dieu-tri` | kỹ năng | Mac | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
+| `/anthropic-skills:using-model-endpoint` | kỹ năng | Mac | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
+| `/anthropic-skills:web-artifacts-builder` | kỹ năng | Mac | Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind/shadcn cho artifact trên claude.ai. Dùng khi trang cần quản lý trạng thái, điều hướng hoặc thành phần shadcn — KHÔNG dùng cho artifact HTML/JSX đơn giản một file. Từ khoá: w… |
+| `/anthropic-skills:xlsx` | kỹ năng | Mac | [Bảng tính] Làm việc với bảng tính (.xlsx, .xlsm, .xltx, .csv, .tsv): mở, đọc, sửa, thêm cột, tính công thức, định dạng, vẽ biểu đồ, dọn dữ liệu lộn xộn, dựng bảng mới hoặc đổi qua lại giữa các định dạng. Dùng khi bảng tính là đầu vào ha… |
+
 ### openmed-skills  (72 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -758,76 +920,6 @@
 | `/openmed-skills:summarizing-clinical-notes` | kỹ năng | Mac | Tóm tắt bệnh án có CHỈ RÕ NGUỒN cho từng ý — tóm tắt một dòng, diễn biến nằm viện, tóm tắt theo vấn đề. Dùng khi cần bản tóm tắt kiểm chứng được, không phải bản viết lại tự do. Từ khoá: clinical summarization, citation-anchored. |
 | `/openmed-skills:validating-us-core` | kỹ năng | Mac | Kiểm tài nguyên và Bundle FHIR R4 theo hồ sơ US Core/USCDI bằng bộ kiểm chính thức của HL7. Dùng trước khi gửi dữ liệu vào bệnh án điện tử, để bắt lỗi cấu trúc sớm. Từ khoá: US Core validation. |
 
-### anthropic-skills  (65 · chỉ Mac)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/anthropic-skills:EBM-MASTER` | kỹ năng | Mac | Nền tảng Y HỌC BẰNG CHỨNG hợp nhất của bác sĩ: lâm sàng, nghiên cứu, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh. Dùng khi cần cửa vào chung cho công việc EBM. Từ khoá: EBM platform. |
-| `/anthropic-skills:algorithmic-art` | kỹ năng | Mac | Tạo tranh thuật toán bằng p5.js với yếu tố ngẫu nhiên có hạt giống và tham số điều chỉnh được. Dùng cho minh hoạ sáng tạo, không phải biểu đồ dữ liệu. Từ khoá: algorithmic art, p5.js. |
-| `/anthropic-skills:alphafold2` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc protein đơn phân và đa phân bằng AlphaFold2. Dùng cho nghiên cứu tiền lâm sàng, KHÔNG dùng cho chăm sóc bệnh nhân. Từ khoá: AlphaFold2. |
-| `/anthropic-skills:antifacts` | kỹ năng | Mac | Dùng khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (gom cập nhật chứng cứ + 45 thang điểm lâm sàng + công cụ nghiên cứu theo chuyên khoa). Kích hoạt khi nghe \"Antifacts\", \"mở Antifacts\", \"cập nhật A… |
-| `/anthropic-skills:boltz` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp protein – acid nucleic – phân tử nhỏ bằng Boltz-2. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Boltz-2. |
-| `/anthropic-skills:borzoi` | kỹ năng | Mac | [Tin sinh học] Dự đoán tín hiệu chức năng toàn hệ gen (RNA-seq, CAGE, DNase, ChIP) từ chuỗi DNA bằng Borzoi. Dùng trong nghiên cứu hệ gen. Từ khoá: Borzoi, functional genomics. |
-| `/anthropic-skills:brand-guidelines` | kỹ năng | Mac | Áp bộ màu và kiểu chữ chính thức của Anthropic. Dùng khi làm sản phẩm cần đúng nhận diện thương hiệu đó; ít dùng cho tài liệu y khoa. Từ khoá: brand guidelines. |
-| `/anthropic-skills:canvas-design` | kỹ năng | Mac | Tạo ẤN PHẨM HÌNH ẢNH đẹp dạng .png/.pdf theo nguyên tắc thiết kế (poster, tờ rơi, thiệp). Dùng khi cần sản phẩm in được. Từ khoá: canvas design, poster. |
-| `/anthropic-skills:cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
-| `/anthropic-skills:chai1` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc phức hợp bằng mô hình nền Chai-1. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: Chai-1. |
-| `/anthropic-skills:citation-management` | kỹ năng | Mac | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
-| `/anthropic-skills:clinical-evidence-rag` | kỹ năng | Mac | Cầu nối kiến thức–thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất (RAG) từ kho y văn do bác sĩ tự nạp. Dùng khi muốn tra trong kho tài liệu riêng thay vì tìm mới trên mạng. Từ khoá: clinical RAG. |
-| `/anthropic-skills:compute-env-setup` | kỹ năng | Mac | Cài môi trường tính toán trên máy chủ từ xa (SSH/conda, cụm Slurm) để chạy việc nặng. Dùng khi máy cá nhân không đủ sức. Từ khoá: compute environment. |
-| `/anthropic-skills:customize` | kỹ năng | Mac | Tạo và bảo trì hồ sơ agent riêng, và soạn skill mới qua công cụ repl. Dùng khi muốn tuỳ biến cách trợ lý làm việc. Từ khoá: customize agent profile. |
-| `/anthropic-skills:dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | Mac | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
-| `/anthropic-skills:dark-analyst` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH "Evidence Workbench" (bố cục 3 cột: bộ lọc · bảng điểm chứ… |
-| `/anthropic-skills:dashboard-master-ebm-ngoai-tru` | kỹ năng | Mac | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
-| `/anthropic-skills:diffdock` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán tư thế gắn của phân tử nhỏ vào protein bằng DiffDock-L. Dùng khi sàng lọc thuốc tiền lâm sàng. Từ khoá: DiffDock. |
-| `/anthropic-skills:doc-coauthoring` | kỹ năng | Mac | Đồng soạn tài liệu theo quy trình có cấu trúc (tài liệu kỹ thuật, đề xuất, hướng dẫn). Dùng khi viết tài liệu dài cần thống nhất bố cục. Từ khoá: doc co-authoring. |
-| `/anthropic-skills:ehospital-mini` | kỹ năng | Mac | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
-| `/anthropic-skills:esmfold2` | kỹ năng | Mac | [Sinh học cấu trúc] Gấp cuộn toàn nguyên tử bằng ESMFold2, chạy được từ một chuỗi đơn. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ESMFold2. |
-| `/anthropic-skills:evo2` | kỹ năng | Mac | [Tin sinh học] Chấm điểm, biểu diễn và sinh chuỗi DNA bằng mô hình nền Evo 2 ngữ cảnh dài. Dùng trong nghiên cứu hệ gen. Từ khoá: Evo 2, genomic foundation model. |
-| `/anthropic-skills:fair-esm2` | kỹ năng | Mac | [Tin sinh học] Sinh vector biểu diễn (embedding) cho protein bằng ESM-2 của Meta AI. Dùng khi phân tích chuỗi protein bằng học máy. Từ khoá: ESM-2, protein embedding. |
-| `/anthropic-skills:figure-composer` | kỹ năng | Mac | Dựng MỘT hình nhiều panel đạt chuẩn công bố, từ một câu khẳng định + dữ liệu nguồn. Dùng khi cần hình chính cho bài báo. Từ khoá: multi-panel figure. |
-| `/anthropic-skills:figure-style` | kỹ năng | Mac | Quy tắc trình bày hình đạt chuẩn công bố (độ đọc được, nhãn, đơn vị, màu). Dùng cho hình NỘP BÀI, không cần cho biểu đồ xem nhanh. Từ khoá: figure style, publication-grade. |
-| `/anthropic-skills:giao-tiep-quyet-dinh-soap` | kỹ năng | Mac | Sử dụng skill này khi cần kỹ năng GIAO TIẾP với bệnh nhân, RA QUYẾT ĐỊNH CÙNG BỆNH NHÂN (shared decision-making), báo tin xấu, hoặc GHI HỒ SƠ SOAP. Kích hoạt với "giải thích cho bệnh nhân thế nào", "bệnh nhân không chịu điều trị/lưỡng lự… |
-| `/anthropic-skills:indication-dossier` | kỹ năng | Mac | Soạn HỒ SƠ CHỈ ĐỊNH ĐIỀU TRỊ: quần thể bệnh nhân, dịch tễ, sinh bệnh học, chuẩn điều trị hiện hành, bối cảnh pháp quy. Dùng cho tổng quan chuyên sâu một chỉ định. Từ khoá: indication dossier. |
-| `/anthropic-skills:internal-comms` | kỹ năng | Mac | Viết các loại THÔNG BÁO NỘI BỘ theo mẫu quen dùng của đơn vị. Dùng cho thư gửi khoa/phòng, thông báo thay đổi quy trình. Từ khoá: internal communications. |
-| `/anthropic-skills:ke-don-an-toan-benh-man` | kỹ năng | Mac | Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với "đơn này có an toàn không", "thuốc có đánh nhau không/tương tác", "hiệu chỉnh liều theo thận/gan",… |
-| `/anthropic-skills:kham-ngoai-tru-ebm` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ cần tiếp cận hoặc ra quyết định cho MỘT ca khám ngoại trú theo Y học chứng cứ (EBM). Dẫn dắt trọn 5 bước tại phòng khám: đặt câu hỏi lâm sàng (PICO) · hỏi–khám có trọng điểm + sàng lọc cờ đỏ · chẩn đoán phân … |
-| `/anthropic-skills:learn` | kỹ năng | Mac | Giải thích để HIỂU BẢN CHẤT một vấn đề (vì sao, cơ chế thế nào) thay vì làm hộ một việc. Dùng khi bác sĩ muốn học chứ không muốn nhận kết quả. Từ khoá: learn, understanding. |
-| `/anthropic-skills:ligandmpnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi có tính tới phối tử, acid nucleic và ion kim loại. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: LigandMPNN. |
-| `/anthropic-skills:literature-review` | kỹ năng | Mac | Tìm, XÁC MINH và tổng hợp y văn — từ 'bài kinh điển của chủ đề X là bài nào' cho tới tổng quan đa nguồn đầy đủ. Dùng khi cần rà y văn có kiểm chứng nguồn. Từ khoá: literature review. |
-| `/anthropic-skills:managed-model-endpoints` | kỹ năng | Mac | Đăng ký một dịch vụ mô hình (cục bộ hoặc từ xa) để hệ thống tự bật/tắt khi cần. Dùng khi muốn chạy mô hình riêng ngoài Claude. Từ khoá: model endpoint. |
-| `/anthropic-skills:mcp-builder` | kỹ năng | Mac | Hướng dẫn dựng máy chủ MCP chất lượng tốt để mô hình gọi được dịch vụ bên ngoài. Dùng khi muốn nối một nguồn dữ liệu mới vào Claude. Từ khoá: MCP server builder. |
-| `/anthropic-skills:morning` | kỹ năng | Mac | Dựng BẢN TIN BUỔI SÁNG dạng trang HTML, hoặc đặt lịch chạy tự động các ngày trong tuần. Dùng khi bác sĩ yêu cầu rõ — không tự chạy. Từ khoá: morning brief. |
-| `/anthropic-skills:nghien-cuu-ebm-tong-hop` | kỹ năng | Mac | >- Trợ lý NGHIÊN CỨU Y KHOA & Y HỌC CHỨNG CỨ (EBM) hợp nhất cho bác sĩ lâm sàng. Gồm 5 mô-đun: (1) Tìm & thu thập y văn; (2) Đọc & thẩm định chứng cứ; (3) Thiết kế nghiên cứu lâm sàng; (4) Thống kê & mô hình lâm sàng; (5) Viết & nộp bản … |
-| `/anthropic-skills:nghien-cuu-y-khoa-chuan-quoc-te` | kỹ năng | Mac | Thực hiện, thiết kế và rà soát nghiên cứu y khoa theo chuẩn quốc tế qua cổng chất lượng G0-G9. Dùng skill này khi người dùng cần xác định câu hỏi/đề cương/protocol, hồ sơ đạo đức và đăng ký nghiên cứu, tính cỡ mẫu, thiết kế biến số/CRF/p… |
-| `/anthropic-skills:nguoi-cao-tuoi-da-benh-da-thuoc` | kỹ năng | Mac | Chăm sóc toàn diện người cao tuổi suy yếu, đa bệnh lý và đa thuốc theo hướng an toàn thuốc, giảm hại và tránh điều trị quá mức. Dùng skill này bất cứ khi nào có bệnh nhân lớn tuổi kèm nhiều thuốc hoặc nhiều bệnh đồng mắc — rà soát và đối… |
-| `/anthropic-skills:openfold3` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán cấu trúc bằng OpenFold3 — bản mã nguồn mở của AlphaFold3. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: OpenFold3. |
-| `/anthropic-skills:paper-lookup` | kỹ năng | Mac | Tra cứu bài báo y khoa qua API MIỄN PHÍ (PubMed E-utilities, Crossref, Europe PMC) — tìm theo PICO/từ khóa/MeSH, phân giải và xác minh PMID/DOI, lấy metadata gốc. Dùng khi cần tìm bài cho một câu hỏi, kiểm một PMID/DOI có thật, hoặc lấy … |
-| `/anthropic-skills:paper-narrative` | kỹ năng | Mac | Chấm và sắp lại MẠCH TRUYỆN mà bộ hình trong bài báo đang kể — đầu vào là chính bản thảo + bộ hình. Dùng khi bài đủ dữ liệu nhưng đọc rời rạc. Từ khoá: paper narrative, figure story. |
-| `/anthropic-skills:pdf-explore` | kỹ năng | Mac | Đọc sâu tài liệu PDF dài (bài báo, báo cáo) khi câu trả lời nằm rải ở nhiều chỗ trong file. Dùng khi bác sĩ đính kèm PDF và cần tổng hợp xuyên suốt, không chỉ tra một đoạn. Từ khoá: PDF exploration. |
-| `/anthropic-skills:peer-review` | kỹ năng | Mac | Bình duyệt bản thảo khoa học có CẤU TRÚC — đánh giá tính hợp lệ (validity), phương pháp, thống kê, đạo đức/đăng ký, trình bày & chuẩn báo cáo, trích dẫn; soạn nhận xét đối kháng đa lăng kính + thư phản biện cho tác giả. Dùng trước khi nộ… |
-| `/anthropic-skills:product-self-knowledge` | kỹ năng | Mac | Tra thông tin CHÍNH XÁC về sản phẩm của Anthropic (Claude Code, gói dịch vụ, giới hạn). Dùng BẮT BUỘC trước khi khẳng định điều gì về sản phẩm, tránh nói theo trí nhớ. Từ khoá: product facts. |
-| `/anthropic-skills:proteinmpnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi acid amin từ khung cấu trúc bằng ProteinMPNN. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: ProteinMPNN. |
-| `/anthropic-skills:quan-ly-cap-nhat-ebm` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
-| `/anthropic-skills:remote-compute-modal` | kỹ năng | Mac | Chạy việc cần GPU trên tài khoản Modal của bác sĩ. Dùng cho tác vụ học máy nặng. Từ khoá: Modal GPU. |
-| `/anthropic-skills:remote-compute-ssh` | kỹ năng | Mac | Gửi việc tính toán lên máy chủ SSH/SLURM của bác sĩ rồi chờ và thu kết quả. Dùng sau khi đã quyết định chạy từ xa. Từ khoá: SSH, SLURM. |
-| `/anthropic-skills:research-lookup` | kỹ năng | Mac | Tra cứu NGHIÊN CỨU & ĐĂNG KÝ THỬ NGHIỆM qua nguồn mở — ClinicalTrials.gov (API v2), WHO ICTRP, PROSPERO. Dùng khi cần kiểm một thử nghiệm đã đăng ký chưa, tìm nghiên cứu đang tiến hành/đã hoàn tất, đối chiếu kết cục đăng ký vs công bố (c… |
-| `/anthropic-skills:scgpt` | kỹ năng | Mac | [Tế bào đơn] Biểu diễn và chú giải dữ liệu biểu hiện gen tế bào đơn bằng scGPT. Dùng khi phân tích dữ liệu tế bào đơn. Từ khoá: scGPT. |
-| `/anthropic-skills:scientific-writing` | kỹ năng | Mac | Viết bản thảo khoa học y khoa theo cấu trúc IMRAD, văn xuôi liền mạch, khớp CHUẨN BÁO CÁO đúng thiết kế (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD+AI; COREQ/SRQR cho định tính; SQUIRE cho QI). Dùng khi cần viết bài báo, protocol, hoặc bá… |
-| `/anthropic-skills:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA-seq tế bào đơn theo mô hình xác suất với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn bán giám sát. Từ khoá: scvi-tools, scVI. |
-| `/anthropic-skills:self-awareness` | kỹ năng | Mac | Truy vấn cơ sở dữ liệu phiên làm việc của Claude Science. Dùng khi cần tự kiểm phiên đang chạy gì. Từ khoá: session introspection. |
-| `/anthropic-skills:skill-creator` | kỹ năng | Mac | Tạo skill mới, sửa và cải thiện skill sẵn có, đo hiệu quả của skill. Dùng khi bác sĩ muốn tự đóng gói một quy trình thành skill gọi được. Từ khoá: skill creator. |
-| `/anthropic-skills:slack-gif-creator` | kỹ năng | Mac | Tạo ảnh động GIF tối ưu cho Slack, kèm ràng buộc kích thước và công cụ kiểm tra. Dùng khi cần ảnh động cho tin nhắn nhóm. Từ khoá: Slack GIF. |
-| `/anthropic-skills:solublempnn` | kỹ năng | Mac | [Thiết kế protein] Suy ngược chuỗi thiên về protein TAN được. Dùng cho nghiên cứu tiền lâm sàng. Từ khoá: SolubleMPNN. |
-| `/anthropic-skills:statistical-analysis` | kỹ năng | Mac | Quy trình phân tích thống kê lâm sàng/nghiên cứu y khoa — mô tả dữ liệu, chọn kiểm định theo loại biến + thiết kế + giả định, hồi quy/sống còn/ROC/hiệu chỉnh, báo cáo ước lượng + 95% CI. Dùng khi cần chạy/đọc phân tích thống kê cho một đ… |
-| `/anthropic-skills:tao-video-tiktok` | kỹ năng | Mac | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
-| `/anthropic-skills:tham-dinh-chung-cu-grade-nnt` | kỹ năng | Mac | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
-| `/anthropic-skills:theme-factory` | kỹ năng | Mac | Bộ chủ đề trình bày cho slide, tài liệu, báo cáo, trang HTML — có 10 chủ đề dựng sẵn. Dùng khi muốn thống nhất phong cách một bộ sản phẩm. Từ khoá: theme, styling. |
-| `/anthropic-skills:tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với "bệnh nhân đau ngực/đau đầu/… |
-| `/anthropic-skills:tuan-thu-dieu-tri` | kỹ năng | Mac | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói "bệnh nhân không tuân thủ", "hay quên uống thuốc", "bỏ thuốc/tự ngưng thuốc", "uống kh… |
-| `/anthropic-skills:using-model-endpoint` | kỹ năng | Mac | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
-| `/anthropic-skills:web-artifacts-builder` | kỹ năng | Mac | Bộ công cụ dựng trang HTML nhiều thành phần bằng React/Tailwind/shadcn cho artifact trên claude.ai. Dùng khi trang cần quản lý trạng thái, điều hướng hoặc thành phần shadcn — KHÔNG dùng cho artifact HTML/JSX đơn giản một file. Từ khoá: w… |
-
 ### medsci-project  (59)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -869,7 +961,7 @@
 | `/medsci-project:model-scaffold` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Dựng sẵn kho mã huấn luyện PyTorch chạy được và tái lập được. Dùng khi bắt đầu huấn luyện mô hình. Từ khoá: training scaffold. |
 | `/medsci-project:model-sourcing` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thẩm định mô hình bên thứ ba mà nghiên cứu định dùng: kho mã nào, bản phát hành nào, giấy phép ra sao. Dùng trước khi dựa vào mô hình có sẵn. Từ khoá: model vetting. |
 | `/medsci-project:model-validation` | kỹ năng | cả 2 máy | [MedSci — AI hình ảnh] Thiết kế hoặc thẩm định nghiên cứu KIỂM ĐỊNH LÂM SÀNG cho mô hình. Dùng khi muốn chứng minh mô hình dùng được trên bệnh nhân thật. Từ khoá: clinical validation. |
-| `/medsci-project:obsidian-paper-vault` | kỹ năng | Mac | Turn a folder of research PDFs into an Obsidian knowledge vault — consistently formatted literature notes with frontmatter, PDF embed links, and cross-referenced atomic concept notes. Use whenever the user wants PDFs converted to Obsidia… |
+| `/medsci-project:obsidian-paper-vault` | kỹ năng | Mac | [MedSci] Biến thư mục PDF nghiên cứu thành kho tri thức Obsidian: ghi chú y văn cùng khuôn có frontmatter, link nhúng PDF, ghi chú khái niệm liên kết chéo. Dùng khi cần chuyển loạt PDF thành ghi chú Obsidian, tóm nhiều bài theo một mẫu, … |
 | `/medsci-project:orchestrate` | kỹ năng | cả 2 máy | [MedSci] Điều phối chung của bộ MedSci — nhận yêu cầu mơ hồ rồi chuyển tới đúng skill. Dùng khi chưa biết nên gọi skill nào trong bộ này. Từ khoá: medsci router. |
 | `/medsci-project:peer-review` | kỹ năng | cả 2 máy | [MedSci] Trợ lý viết BẢN NHẬN XÉT PHẢN BIỆN cho tạp chí, theo khung của từng tạp chí. Dùng khi bác sĩ được mời phản biện cho tạp chí. Khác skill `peer-review` riêng của bác sĩ (rà bản thảo của chính mình trước khi nộp). Từ khoá: peer rev… |
 | `/medsci-project:polish-language` | kỹ năng | cả 2 máy | [MedSci] Gọt tiếng Anh học thuật cho người không nói tiếng Anh bản ngữ, thống nhất thuật ngữ toàn bài. Dùng ở khâu cuối trước khi nộp tạp chí quốc tế. Từ khoá: ESL polish. |
@@ -1068,189 +1160,145 @@
 | `agent trich-xuat-y-van` | agent | cả 2 máy | Trích xuất và tóm tắt có cấu trúc MỘT bài báo/nghiên cứu thành bảng dữ liệu chuẩn (PICO, thiết kế, cỡ mẫu, kết cục, hiệu ứng + CI, nguy cơ sai lệch). Dùng khi cần đọc nhanh một bài, dựng bảng trích xuất cho tổng quan hệ thống, hoặc chuẩn… |
 | `agent viet-ban-thao` | agent | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch, trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD). Dùng khi cần viết bài báo nghiên cứu, protocol, hoặc báo cáo nghiệm thu. Quy… |
 
-### user-skills  (41)
+### healthcare  (14 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/EBM-MASTER` | kỹ năng | cả 2 máy | [EBM tổng hợp] Nền tảng y học chứng cứ hợp nhất cho cả lâm sàng lẫn nghiên cứu: tra và thẩm định chứng cứ, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh, thang điểm lâm sàng và quản trị dashboard. Dùng khi cần vào cửa c… |
-| `/antifacts` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (mặt tiền gom mọi sản phẩm EBM trong thư mục \"Claude AI\" theo chuyên khoa: cập nhật chứng cứ + thang điểm lâm sàng + công cụ nghiên cứu).… |
-| `/cap-nhat-chung-cu-y-khoa` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
-| `/citation-management` | kỹ năng | cả 2 máy | Quản lý trích dẫn học thuật: tìm bài trên PubMed (E-utilities miễn phí) và Google Scholar, trích xuất metadata chính xác, kiểm chứng trích dẫn, sinh BibTeX đúng chuẩn. Dùng khi cần tìm bài, xác minh thông tin trích dẫn, đổi DOI→BibTeX ho… |
-| `/clinical-decision-support` | kỹ năng | cả 2 máy | Tạo tài liệu hỗ trợ quyết định lâm sàng (CDS): phân tích nhóm bệnh nhân (cohort) theo dấu ấn sinh học, báo cáo khuyến cáo điều trị dựa trên bằng chứng kèm thuật toán quyết định và phân độ GRADE; phân tích thống kê (HR, đường sống còn); x… |
-| `/clinical-evidence-rag` | kỹ năng | cả 2 máy | [Tra cứu chứng cứ] Cầu nối kiến thức với thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất từ kho y văn do chính bác sĩ kiểm soát — guideline, phác đồ khoa hoặc viện, bài tổng quan, bài báo đã tuyển chọn — rồi tổng hợp câu trả lời … |
-| `/clinical-reports` | kỹ năng | cả 2 máy | Viết báo cáo lâm sàng: case report (chuẩn CARE), báo cáo chẩn đoán (X-quang/giải phẫu bệnh/xét nghiệm), báo cáo thử nghiệm lâm sàng (ICH-E3) và hồ sơ bệnh án (SOAP, H&P, tóm tắt xuất viện). Kèm template và công cụ kiểm tra. Mọi đầu ra kè… |
-| `/dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | Mac | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
-| `/dark-analyst` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
-| `/dashboard-master-ebm-ngoai-tru` | kỹ năng | cả 2 máy | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
-| `/database-lookup` | kỹ năng | cả 2 máy | Truy vấn 78+ CƠ SỞ DỮ LIỆU khoa học/y khoa công khai qua API đã tài liệu hóa rõ endpoint, bộ lọc, phân trang và nguồn gốc dữ liệu (PubChem, ChEMBL, UniProt, ClinicalTrials.gov, FDA, dbSNP, ClinVar, COSMIC, GWAS Catalog, OMIM... phần lớn … |
-| `/ehospital-mini` | kỹ năng | Mac | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
-| `/experimental-design` | kỹ năng | cả 2 máy | Thiết kế thí nghiệm/nghiên cứu TRƯỚC khi thu thập dữ liệu — chọn thiết kế, ngẫu nhiên hóa (randomization), phân khối (blocking/stratification), bố trí factorial/fractional-factorial, crossover, split-plot, Latin square, kiểm soát hiệu ứn… |
-| `/exploratory-data-analysis` | kỹ năng | cả 2 máy | Khảo sát nhanh cấu trúc, chất lượng và đặc điểm của MỘT file dữ liệu khoa học (200+ định dạng: bảng tính, gen học, hóa học, ảnh vi mô, phổ, proteomics...) — tự nhận diện định dạng, sinh báo cáo markdown về chất lượng dữ liệu và gợi ý bướ… |
-| `/giao-tiep-quyet-dinh-soap` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần kỹ năng GIAO TIẾP với bệnh nhân, RA QUYẾT ĐỊNH CÙNG BỆNH NHÂN (shared decision-making), báo tin xấu, hoặc GHI HỒ SƠ SOAP. Kích hoạt với "giải thích cho bệnh nhân thế nào", "bệnh nhân không chịu điều trị/lưỡng lự… |
-| `/hypothesis-generation` | kỹ năng | cả 2 máy | Hình thức hóa GIẢ THUYẾT khoa học từ quan sát/dữ liệu — sinh 3-5 giả thuyết CẠNH TRANH kèm CƠ CHẾ, chấm chất lượng theo 7 tiêu chí (khả kiểm định, khả bác bỏ theo Popper, tính đơn giản, sức giải thích, phạm vi, nhất quán, tính mới), rồi … |
-| `/ke-don-an-toan-benh-man` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần KÊ ĐƠN / RÀ ĐƠN AN TOÀN cho bệnh nhân bệnh mạn ngoại trú (mọi lứa tuổi, không chỉ người cao tuổi). Kích hoạt với \"đơn này có an toàn không\", \"thuốc có đánh nhau không/tương tác\", \"hiệu chỉnh liều theo thận/… |
-| `/kham-ngoai-tru-ebm` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ cần tiếp cận hoặc ra quyết định cho MỘT ca khám ngoại trú theo Y học chứng cứ (EBM). Dẫn dắt trọn 5 bước tại phòng khám: đặt câu hỏi lâm sàng (PICO) · hỏi–khám có trọng điểm + sàng lọc cờ đỏ · chẩn đoán phân … |
-| `/literature-review` | kỹ năng | cả 2 máy | Thực hiện tổng quan y văn có hệ thống (systematic review, tổng quan, meta-analysis) bằng các CSDL học thuật MIỄN PHÍ (PubMed E-utilities, PMC, bioRxiv, medRxiv, OpenAlex, Crossref, Semantic Scholar). Dùng khi cần tổng hợp bằng chứng cho … |
-| `/nghien-cuu-ebm-tong-hop` | kỹ năng | Mac | >- Trợ lý NGHIÊN CỨU Y KHOA & Y HỌC CHỨNG CỨ (EBM) hợp nhất cho bác sĩ lâm sàng. Gồm 5 mô-đun: (1) Tìm & thu thập y văn; (2) Đọc & thẩm định chứng cứ; (3) Thiết kế nghiên cứu lâm sàng; (4) Thống kê & mô hình lâm sàng; (5) Viết & nộp bản … |
-| `/nguoi-cao-tuoi-da-benh-da-thuoc` | kỹ năng | cả 2 máy | Chăm sóc toàn diện người cao tuổi suy yếu, đa bệnh lý và đa thuốc theo hướng an toàn thuốc, giảm hại và tránh điều trị quá mức. Dùng skill này bất cứ khi nào có bệnh nhân lớn tuổi kèm nhiều thuốc hoặc nhiều bệnh đồng mắc — rà soát và đối… |
-| `/paper-lookup` | kỹ năng | cả 2 máy | Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC (toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy abstract/toàn văn,… |
-| `/peer-review` | kỹ năng | cả 2 máy | Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp. |
-| `/plugin-router-chatgpt` | kỹ năng | Mac | Định tuyến tác vụ tới đúng skill trong 9 plugin người dùng đã chuyển từ Claude sang Codex/ChatGPT: codex, humanizer, academic-research-skills, openmed-skills, claude-code-harness, medsci-project, aipoch-medical-research, meta-pipe và pub… |
-| `/pyhealth` | kỹ năng | cả 2 máy | Xây dựng pipeline học máy lâm sàng bằng thư viện PyHealth: tải dữ liệu EHR (MIMIC-III/IV, eICU, OMOP), định nghĩa tác vụ (tử vong, tái nhập viện, gợi ý thuốc, giai đoạn ngủ, mã hóa ICD), huấn luyện mô hình (Transformer, RETAIN, GAMENet, … |
-| `/quan-ly-cap-nhat-ebm` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ muốn QUẢN LÝ kho cập nhật EBM đã lưu (sổ cái EBM_MASTER) — xem tổng quan, tìm/lọc, duyệt và phê chuẩn các cập nhật. Kích hoạt với "quản lý EBM", "xem các cập nhật", "hàng đợi duyệt", "duyệt thẻ…", "thống kê s… |
-| `/research-lookup` | kỹ năng | cả 2 máy | Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả phí (parallel.a… |
-| `/scholar-evaluation` | kỹ năng | cả 2 máy | Chấm điểm ĐỊNH LƯỢNG chất lượng học thuật của bản thảo/đề cương/tổng quan theo khung ScholarEval — 8 chiều (đặt vấn đề, tổng quan y văn, phương pháp, thu thập dữ liệu, phân tích, kết quả, văn phong, trích dẫn), mỗi chiều chấm 0-5 có trọn… |
-| `/scientific-critical-thinking` | kỹ năng | cả 2 máy | Khung THẨM ĐỊNH chất lượng chứng cứ và tính hợp lệ của thiết kế nghiên cứu — áp dụng GRADE, Cochrane Risk of Bias, nhận diện thiên kiến/nhiễu/ngụy biện logic và các lỗi thống kê thường gặp. Dùng để dạy hoặc tự kiểm tra tư duy phản biện k… |
-| `/scientific-writing` | kỹ năng | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch (không gạch đầu dòng), trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA). Dùng khi viết bài báo nghiên cứu hoặc bản thảo nộp tạp chí. Quy trình 2 bư… |
-| `/scikit-survival` | kỹ năng | cả 2 máy | Phân tích SỐNG CÒN / thời gian-đến-biến-cố (time-to-event) bằng scikit-survival: mô hình Cox, Random Survival Forest, Gradient Boosting, Survival SVM; xử lý dữ liệu KIỂM DUYỆT (censoring) và NGUY CƠ CẠNH TRANH (competing risks); đánh giá… |
-| `/statistical-analysis` | kỹ năng | cả 2 máy | Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ thể bằng code,… |
-| `/statistical-power` | kỹ năng | cả 2 máy | Tính CỠ MẪU / LỰC THỐNG KÊ (power analysis) TRƯỚC khi thu thập dữ liệu — bằng công thức đóng (t-test, ANOVA, tỷ lệ, tương quan, chi-square, hồi quy) VÀ mô phỏng Monte Carlo cho thiết kế không có công thức chuẩn (hồi quy logistic/Poisson,… |
-| `/statsmodels` | kỹ năng | cả 2 máy | Chạy mô hình thống kê THẬT bằng thư viện statsmodels: OLS, GLM, mô hình hỗn hợp (mixed-effects), ARIMA/chuỗi thời gian — kèm bảng hệ số, chẩn đoán giả định, phân tích residual. Dùng khi ĐÃ có dữ liệu và cần fit một mô hình cụ thể (khác s… |
-| `/tao-video-tiktok` | kỹ năng | cả 2 máy | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
-| `/tham-dinh-chung-cu-grade-nnt` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
-| `/tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
-| `/tong-thuat-chung-cu` | kỹ năng | Mac | Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày … |
-| `/treatment-plans` | kỹ năng | cả 2 máy | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
-| `/tuan-thu-dieu-tri` | kỹ năng | cả 2 máy | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
-| `/venue-templates` | kỹ năng | cả 2 máy | Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu, và đề cương xin tài trợ — kèm chuẩn báo cáo CONSORT/STROBE/PRISMA cho bài y khoa. Dùng khi chuẩn bị bản thả… |
+| `agent documents-reader-cli` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
+| `agent documents-reader-mcp` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
+| `agent note-extract-worker` | agent | Mac | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
+| `/healthcare:clinical-note-extract-skill` | kỹ năng | Mac | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
+| `/healthcare:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/healthcare:contracts` | kỹ năng | Mac | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
+| `/healthcare:doc-extract` | kỹ năng | Mac | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
+| `/healthcare:fhir` | kỹ năng | Mac | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
+| `/healthcare:fhir-developer-skill` | kỹ năng | Mac | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
+| `/healthcare:fraud-detection` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
+| `/healthcare:icd10-cm-skill` | kỹ năng | Mac | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/healthcare:prior-auth-review-skill` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/healthcare:procedure-coding` | kỹ năng | Mac | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/healthcare:verify` | kỹ năng | Mac | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
 
-### healthcare  (14)
+### pubmed  (14 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `agent documents-reader-cli` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
-| `agent documents-reader-mcp` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
-| `agent note-extract-worker` | agent | cả 2 máy | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
-| `/healthcare:clinical-note-extract-skill` | kỹ năng | cả 2 máy | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
-| `/healthcare:clinical-trial-protocol-skill` | kỹ năng | cả 2 máy | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/healthcare:contracts` | kỹ năng | cả 2 máy | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
-| `/healthcare:doc-extract` | kỹ năng | cả 2 máy | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
-| `/healthcare:fhir` | kỹ năng | cả 2 máy | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
-| `/healthcare:fhir-developer-skill` | kỹ năng | cả 2 máy | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
-| `/healthcare:fraud-detection` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
-| `/healthcare:icd10-cm-skill` | kỹ năng | cả 2 máy | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
-| `/healthcare:prior-auth-review-skill` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
-| `/healthcare:procedure-coding` | kỹ năng | cả 2 máy | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
-| `/healthcare:verify` | kỹ năng | cả 2 máy | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
+| `agent documents-reader-cli` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
+| `agent documents-reader-mcp` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
+| `agent note-extract-worker` | agent | Mac | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
+| `/pubmed:clinical-note-extract-skill` | kỹ năng | Mac | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
+| `/pubmed:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/pubmed:contracts` | kỹ năng | Mac | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
+| `/pubmed:doc-extract` | kỹ năng | Mac | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
+| `/pubmed:fhir` | kỹ năng | Mac | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
+| `/pubmed:fhir-developer-skill` | kỹ năng | Mac | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
+| `/pubmed:fraud-detection` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
+| `/pubmed:icd10-cm-skill` | kỹ năng | Mac | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/pubmed:prior-auth-review-skill` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/pubmed:procedure-coding` | kỹ năng | Mac | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/pubmed:verify` | kỹ năng | Mac | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
 
-### pubmed  (14)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `agent documents-reader-cli` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
-| `agent documents-reader-mcp` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
-| `agent note-extract-worker` | agent | cả 2 máy | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
-| `/pubmed:clinical-note-extract-skill` | kỹ năng | cả 2 máy | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
-| `/pubmed:clinical-trial-protocol-skill` | kỹ năng | cả 2 máy | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/pubmed:contracts` | kỹ năng | cả 2 máy | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
-| `/pubmed:doc-extract` | kỹ năng | cả 2 máy | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
-| `/pubmed:fhir` | kỹ năng | cả 2 máy | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
-| `/pubmed:fhir-developer-skill` | kỹ năng | cả 2 máy | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
-| `/pubmed:fraud-detection` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
-| `/pubmed:icd10-cm-skill` | kỹ năng | cả 2 máy | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
-| `/pubmed:prior-auth-review-skill` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
-| `/pubmed:procedure-coding` | kỹ năng | cả 2 máy | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
-| `/pubmed:verify` | kỹ năng | cả 2 máy | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
-
-### icd10-codes  (14)
+### icd10-codes  (14 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `agent documents-reader-cli` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
-| `agent documents-reader-mcp` | agent | cả 2 máy | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
-| `agent note-extract-worker` | agent | cả 2 máy | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
-| `/icd10-codes:clinical-note-extract-skill` | kỹ năng | cả 2 máy | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
-| `/icd10-codes:clinical-trial-protocol-skill` | kỹ năng | cả 2 máy | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/icd10-codes:contracts` | kỹ năng | cả 2 máy | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
-| `/icd10-codes:doc-extract` | kỹ năng | cả 2 máy | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
-| `/icd10-codes:fhir` | kỹ năng | cả 2 máy | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
-| `/icd10-codes:fhir-developer-skill` | kỹ năng | cả 2 máy | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
-| `/icd10-codes:fraud-detection` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
-| `/icd10-codes:icd10-cm-skill` | kỹ năng | cả 2 máy | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
-| `/icd10-codes:prior-auth-review-skill` | kỹ năng | cả 2 máy | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
-| `/icd10-codes:procedure-coding` | kỹ năng | cả 2 máy | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
-| `/icd10-codes:verify` | kỹ năng | cả 2 máy | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
+| `agent documents-reader-cli` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng, bản chạy qua dòng lệnh. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker CLI. |
+| `agent documents-reader-mcp` | agent | Mac | [Pháp lý] Tiến trình con đọc một phần kho hợp đồng và ghi nhận phát hiện kèm trích dẫn. Chạy nội bộ, không gọi trực tiếp. Từ khoá: contracts sweep worker. |
+| `agent note-extract-worker` | agent | Mac | [Y khoa] Tiến trình con bóc dữ liệu cho từng bệnh án khi chạy hàng loạt. Chạy nội bộ, không gọi trực tiếp — dùng `/trich-xuat-benh-an`. Từ khoá: note extraction worker. |
+| `/icd10-codes:clinical-note-extract-skill` | kỹ năng | Mac | [Y khoa] Bóc dữ liệu có cấu trúc từ bệnh án, chỉ rõ vị trí từng thông tin trong văn bản gốc. Dùng khi cần chuyển bệnh án chữ tự do thành bảng dữ liệu; khử định danh trước bằng `/khu-dinh-danh`. Từ khoá: clinical note extraction. |
+| `/icd10-codes:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/icd10-codes:contracts` | kỹ năng | Mac | [Pháp lý] Trả lời câu hỏi xuyên suốt một kho hợp đồng, có trích dẫn vị trí. Dùng khi phải tra nhiều hợp đồng cùng lúc. Từ khoá: contract corpus. |
+| `/icd10-codes:doc-extract` | kỹ năng | Mac | [Tài liệu] Rút văn bản thuần từ file PDF, DOCX, XLSX, PPTX. Dùng khi cần lấy nội dung ra khỏi file để xử lý tiếp. Từ khoá: document extraction. |
+| `/icd10-codes:fhir` | kỹ năng | Mac | [Y khoa] Kết nối tới máy chủ FHIR R4 của bệnh viện (Epic, Oracle Health/Cerner). Dùng khi cần lấy dữ liệu trực tiếp từ bệnh án điện tử thay vì nhập tay. Từ khoá: FHIR R4, EHR. |
+| `/icd10-codes:fhir-developer-skill` | kỹ năng | Mac | [Y khoa] Hướng dẫn lập trình API FHIR. Dùng khi tự xây điểm cuối kết nối hệ thống y tế, không phải khi chỉ đọc dữ liệu. Từ khoá: FHIR development. |
+| `/icd10-codes:fraud-detection` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Sàng kho hồ sơ thanh toán Medicare/Medicaid tìm gian lận và lãng phí. Dùng khi kiểm toán chi trả theo hệ Mỹ. Từ khoá: claims fraud. |
+| `/icd10-codes:icd10-cm-skill` | kỹ năng | Mac | [Y khoa] Rút mã chẩn đoán ICD-10-CM dùng để thanh toán từ một bệnh án. Dùng khi cần mã hoá hồ sơ đã có sẵn bệnh án; tra mã lẻ thì dùng `/tra-ma-icd10`. Từ khoá: ICD-10-CM. |
+| `/icd10-codes:prior-auth-review-skill` | kỹ năng | Mac | [Y khoa — hệ Mỹ] Tự động hoá việc xét duyệt yêu cầu chấp thuận trước của hãng bảo hiểm. Dùng khi làm việc với bảo hiểm Mỹ; ít dùng ở Việt Nam. Từ khoá: prior authorization. |
+| `/icd10-codes:procedure-coding` | kỹ năng | Mac | [Y khoa] Gán mã thủ thuật CPT và HCPCS cấp II từ hồ sơ lâm sàng. Dùng khi lập hồ sơ thanh toán theo hệ Mỹ — bộ mã này KHÁC quy định Việt Nam. Từ khoá: CPT, HCPCS. |
+| `/icd10-codes:verify` | kỹ năng | Mac | [Hỗ trợ] Kiểm tra thay đổi đối với script cài đặt quản trị. Dùng khi vừa sửa script cài và muốn chắc không hỏng. Từ khoá: verify install. |
 
-### scientific-problem-selection  (6)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/scientific-problem-selection:clinical-trial-protocol-skill` | kỹ năng | cả 2 máy | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/scientific-problem-selection:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
-| `/scientific-problem-selection:nextflow-development` | kỹ năng | cả 2 máy | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
-| `/scientific-problem-selection:scientific-problem-selection` | kỹ năng | cả 2 máy | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
-| `/scientific-problem-selection:scvi-tools` | kỹ năng | cả 2 máy | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
-| `/scientific-problem-selection:single-cell-rna-qc` | kỹ năng | cả 2 máy | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
-
-### clinical-trial-protocol  (6)
+### scientific-problem-selection  (6 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/clinical-trial-protocol:clinical-trial-protocol-skill` | kỹ năng | cả 2 máy | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/clinical-trial-protocol:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
-| `/clinical-trial-protocol:nextflow-development` | kỹ năng | cả 2 máy | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
-| `/clinical-trial-protocol:scientific-problem-selection` | kỹ năng | cả 2 máy | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
-| `/clinical-trial-protocol:scvi-tools` | kỹ năng | cả 2 máy | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
-| `/clinical-trial-protocol:single-cell-rna-qc` | kỹ năng | cả 2 máy | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
+| `/scientific-problem-selection:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/scientific-problem-selection:instrument-data-to-allotrope` | kỹ năng | Mac | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
+| `/scientific-problem-selection:nextflow-development` | kỹ năng | Mac | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
+| `/scientific-problem-selection:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+| `/scientific-problem-selection:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
+| `/scientific-problem-selection:single-cell-rna-qc` | kỹ năng | Mac | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
 
-### bio-research  (6)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/bio-research:instrument-data-to-allotrope` | kỹ năng | cả 2 máy | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
-| `/bio-research:nextflow-development` | kỹ năng | cả 2 máy | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
-| `/bio-research:scientific-problem-selection` | kỹ năng | cả 2 máy | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
-| `/bio-research:scvi-tools` | kỹ năng | cả 2 máy | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
-| `/bio-research:single-cell-rna-qc` | kỹ năng | cả 2 máy | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
-| `/bio-research:start` | kỹ năng | cả 2 máy | [Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup. |
-
-### cowork-plugin-management  (2)
+### clinical-trial-protocol  (6 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | cả 2 máy | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Dùng khi plugin có sẵn gần đúng nhưng cần sửa vài chỗ. Từ khoá: plugin customizer. |
-| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | cả 2 máy | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Dùng khi muốn đóng gói quy trình riêng thành plugin dùng lại được. Từ khoá: create plugin. |
+| `/clinical-trial-protocol:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/clinical-trial-protocol:instrument-data-to-allotrope` | kỹ năng | Mac | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
+| `/clinical-trial-protocol:nextflow-development` | kỹ năng | Mac | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
+| `/clinical-trial-protocol:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+| `/clinical-trial-protocol:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
+| `/clinical-trial-protocol:single-cell-rna-qc` | kỹ năng | Mac | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
+
+### bio-research  (6 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/bio-research:instrument-data-to-allotrope` | kỹ năng | Mac | [Tin sinh học] Chuyển dữ liệu máy xét nghiệm (PDF, CSV, Excel) sang chuẩn Allotrope. Dùng khi cần đưa số liệu từ máy labo về một định dạng chung. Từ khoá: Allotrope. |
+| `/bio-research:nextflow-development` | kỹ năng | Mac | [Tin sinh học] Chạy các đường ống phân tích nf-core (rnaseq, sarek, atacseq) bằng Nextflow. Dùng khi xử lý dữ liệu giải trình tự quy mô lớn. Từ khoá: Nextflow, nf-core. |
+| `/bio-research:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+| `/bio-research:scvi-tools` | kỹ năng | Mac | [Tế bào đơn] Phân tích RNA tế bào đơn bằng học sâu với scvi-tools. Dùng khi cần hiệu chỉnh lô hoặc chuyển nhãn tế bào. Từ khoá: scvi-tools. |
+| `/bio-research:single-cell-rna-qc` | kỹ năng | Mac | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
+| `/bio-research:start` | kỹ năng | Mac | [Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup. |
+
+### cowork-plugin-management  (2 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | Mac | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Dùng khi plugin có sẵn gần đúng nhưng cần sửa vài chỗ. Từ khoá: plugin customizer. |
+| `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | Mac | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Dùng khi muốn đóng gói quy trình riêng thành plugin dùng lại được. Từ khoá: create plugin. |
 
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (84 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (85 mục)
 
 
-### claude-code-harness  (31 · chỉ Mac)
+### claude-code-harness  (33)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `agent advisor` | agent | Mac | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
-| `agent reviewer` | agent | Mac | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
-| `agent test-wiring-auditor` | agent | Mac | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
-| `agent worker` | agent | Mac | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
-| `/handoff-to-claude` | lệnh | Mac | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
-| `/plan-with-cc` | lệnh | Mac | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
-| `/project-overview` | lệnh | Mac | [Lập trình] Nắm nhanh bức tranh tổng thể của dự án. Từ khoá: project overview. |
-| `/review-cc-work` | lệnh | Mac | [Lập trình] Rà soát việc Claude Code đã làm rồi bàn giao lại kèm chỉ dẫn duyệt hoặc sửa. Từ khoá: review CC work. |
-| `/start-session` | lệnh | Mac | [Lập trình] Bắt đầu phiên làm việc: nắm tình hình → lập kế hoạch → giao việc cho Claude Code. Từ khoá: start session. |
-| `/claude-code-harness:agent-browser` | kỹ năng | Mac | [Lập trình] Điều khiển trình duyệt tự động: mở trang, điền biểu mẫu, chụp màn hình, thu thập dữ liệu. Từ khoá: browser automation. |
-| `/claude-code-harness:breezing` | kỹ năng | Mac | [Lập trình] Chế độ chạy theo NHÓM — tên gọi cũ tương đương harness-work có điều phối nhiều agent. Từ khoá: team execution. |
-| `/claude-code-harness:cc-update-review` | kỹ năng | Mac | [Lập trình] Chốt chất lượng khi tích hợp bản cập nhật Claude/Codex; bắt trường hợp chỉ thêm tài liệu mà chưa có mã thật. Từ khoá: update review. |
-| `/claude-code-harness:ci` | kỹ năng | Mac | [Lập trình] Chữa cháy CI: build đỏ, test hỏng, pipeline lỗi. Từ khoá: CI failure, build error. |
-| `/claude-code-harness:cursor-ask` | kỹ năng | Mac | [Lập trình] Hỏi Cursor ở chế độ CHỈ ĐỌC để điều tra, bàn thiết kế, phản biện — không cho sửa file. Từ khoá: cursor ask. |
-| `/claude-code-harness:cursor-do` | kỹ năng | Mac | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
-| `/claude-code-harness:cursor-review` | kỹ năng | Mac | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
-| `/claude-code-harness:cursor-setup` | kỹ năng | Mac | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
-| `/claude-code-harness:failure-codifier` | kỹ năng | Mac | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
-| `/claude-code-harness:harness-accept` | kỹ năng | Mac | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
-| `/claude-code-harness:harness-loop` | kỹ năng | Mac | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
-| `/claude-code-harness:harness-plan` | kỹ năng | Mac | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
-| `/claude-code-harness:harness-plan-brief` | kỹ năng | Mac | [Lập trình] Dựng trang HTML TÓM TẮT KẾ HOẠCH dễ đọc cho người không rành kỹ thuật, trước khi bắt tay làm. Từ khoá: plan brief. |
-| `/claude-code-harness:harness-progress` | kỹ năng | Mac | [Lập trình] Dựng trang HTML THEO DÕI TIẾN ĐỘ phiên làm việc để liếc nhanh. Từ khoá: progress tracker. |
-| `/claude-code-harness:harness-release` | kỹ năng | Mac | [Lập trình] Tự động hoá phát hành theo Keep a Changelog + GitHub, có một cổng xác nhận trước khi chạy. Từ khoá: harness release. |
-| `/claude-code-harness:harness-review` | kỹ năng | Mac | [Lập trình] RÀ SOÁT mã nguồn, kế hoạch và phạm vi từ nhiều góc; kiểm bảo mật và chất lượng. Từ khoá: harness review, code review. |
-| `/claude-code-harness:harness-setup` | kỹ năng | Mac | [Lập trình] Khởi tạo dự án, cài công cụ, cấu hình agent, dựng bộ nhớ và đồng bộ bản sao skill. Từ khoá: harness setup, init. |
-| `/claude-code-harness:harness-sync` | kỹ năng | Mac | [Lập trình] Đối chiếu Plans.md với mã thật, phát hiện lệch, cập nhật mốc và rút kinh nghiệm. Dùng khi hỏi 'đang làm tới đâu'. Từ khoá: harness sync, drift. |
-| `/claude-code-harness:harness-work` | kỹ năng | Mac | [Lập trình] THỰC THI các việc trong Plans.md, từ một việc lẻ tới chạy song song cả nhóm. Từ khoá: harness work, implement. |
-| `/claude-code-harness:japanese-writing-drafter` | kỹ năng | Mac | Detect when the operator corrects the agent's Japanese phrasing mid-conversation (rewrites a sentence, calls out a style problem, says 'this wording is bad, say it like X instead') and draft a pending writing-rule proposal into ~/.claude… |
-| `/claude-code-harness:maintenance` | kỹ năng | Mac | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
-| `/claude-code-harness:memory` | kỹ năng | Mac | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
+| `agent advisor` | agent | cả 2 máy | [Lập trình] Agent cố vấn KHÔNG thực thi: chỉ trả về hướng xử lý cho yêu cầu mà agent thợ gửi lên. Từ khoá: advisor agent. |
+| `agent livemsg-gate` | agent | cả 2 máy | [Lập trình] Agent CHỈ ĐỌC kiểm chứng khẳng định trong thông điệp liên phiên trước khi gửi, trả về SEND hoặc HOLD. Từ khoá: livemsg gate, cross-session verification. |
+| `agent reviewer` | agent | cả 2 máy | [Lập trình] Agent rà soát CHỈ ĐỌC: đưa phán quyết dựa trên hợp đồng công việc và tài liệu rà soát. Từ khoá: reviewer agent. |
+| `agent test-wiring-auditor` | agent | cả 2 máy | [Lập trình] Agent CHỈ ĐỌC, kiểm xem bộ kiểm thử đã bám theo phần mã vừa thay đổi chưa; chạy trong ngữ cảnh sạch để khỏi bị thiên lệch. Từ khoá: test coverage audit. |
+| `agent worker` | agent | cả 2 máy | [Lập trình] Agent thợ chính: thực hiện một việc trọn gói — viết mã, tự kiểm trước, xác minh và chuẩn bị commit. Từ khoá: worker agent. |
+| `/handoff-to-claude` | lệnh | cả 2 máy | [Lập trình] Sinh câu lệnh giao việc cho Claude Code. Từ khoá: handoff to Claude. |
+| `/plan-with-cc` | lệnh | cả 2 máy | [Lập trình] Lập kế hoạch — phối hợp với Claude Code để chia nhỏ công việc. Từ khoá: plan with CC. |
+| `/project-overview` | lệnh | cả 2 máy | [Lập trình] Nắm nhanh bức tranh tổng thể của dự án. Từ khoá: project overview. |
+| `/review-cc-work` | lệnh | cả 2 máy | [Lập trình] Rà soát việc Claude Code đã làm rồi bàn giao lại kèm chỉ dẫn duyệt hoặc sửa. Từ khoá: review CC work. |
+| `/start-session` | lệnh | cả 2 máy | [Lập trình] Bắt đầu phiên làm việc: nắm tình hình → lập kế hoạch → giao việc cho Claude Code. Từ khoá: start session. |
+| `/claude-code-harness:agent-browser` | kỹ năng | cả 2 máy | [Lập trình] Điều khiển trình duyệt tự động: mở trang, điền biểu mẫu, chụp màn hình, thu thập dữ liệu. Từ khoá: browser automation. |
+| `/claude-code-harness:breezing` | kỹ năng | cả 2 máy | [Lập trình] Chế độ chạy theo NHÓM — tên gọi cũ tương đương harness-work có điều phối nhiều agent. Từ khoá: team execution. |
+| `/claude-code-harness:cc-update-review` | kỹ năng | cả 2 máy | [Lập trình] Chốt chất lượng khi tích hợp bản cập nhật Claude/Codex; bắt trường hợp chỉ thêm tài liệu mà chưa có mã thật. Từ khoá: update review. |
+| `/claude-code-harness:ci` | kỹ năng | cả 2 máy | [Lập trình] Chữa cháy CI: build đỏ, test hỏng, pipeline lỗi. Từ khoá: CI failure, build error. |
+| `/claude-code-harness:cursor-ask` | kỹ năng | cả 2 máy | [Lập trình] Hỏi Cursor ở chế độ CHỈ ĐỌC để điều tra, bàn thiết kế, phản biện — không cho sửa file. Từ khoá: cursor ask. |
+| `/claude-code-harness:cursor-do` | kỹ năng | cả 2 máy | [Lập trình] Giao MỘT việc có sửa file cho Cursor trong nhánh làm việc tách biệt rồi thu kết quả về. Từ khoá: cursor do. |
+| `/claude-code-harness:cursor-review` | kỹ năng | cả 2 máy | [Lập trình] Nhờ Cursor rà soát như ý kiến thứ hai; kết luận cuối vẫn thuộc về bên chính. Từ khoá: cursor review. |
+| `/claude-code-harness:cursor-setup` | kỹ năng | cả 2 máy | [Lập trình] Cài và kiểm tra nền Cursor cho harness. Từ khoá: cursor setup. |
+| `/claude-code-harness:failure-codifier` | kỹ năng | cả 2 máy | [Lập trình] Rút ra các kiểu lỗi LẶP LẠI từ những lần chạy nhiều agent, để lần sau tránh đúng vết cũ. Từ khoá: failure patterns. |
+| `/claude-code-harness:harness-accept` | kỹ năng | cả 2 máy | [Lập trình] Dựng trang HTML NGHIỆM THU cho người không rành kỹ thuật xem trước khi quyết định phát hành. Từ khoá: acceptance demo. |
+| `/claude-code-harness:harness-loop` | kỹ năng | cả 2 máy | [Lập trình] Chạy việc DÀI HƠI theo vòng lặp, tự hẹn giờ quay lại với ngữ cảnh mới. Dùng cho việc nhiều giờ. Từ khoá: harness loop. |
+| `/claude-code-harness:harness-plan` | kỹ năng | cả 2 máy | [Lập trình] Lập KẾ HOẠCH công việc có kiểm chứng, quản lý Plans.md và đồng bộ tiến độ. Dùng khi bắt đầu một hạng mục sửa hệ thống. Từ khoá: harness plan, Plans.md. |
+| `/claude-code-harness:harness-plan-brief` | kỹ năng | cả 2 máy | [Lập trình] Dựng trang HTML TÓM TẮT KẾ HOẠCH dễ đọc cho người không rành kỹ thuật, trước khi bắt tay làm. Từ khoá: plan brief. |
+| `/claude-code-harness:harness-progress` | kỹ năng | cả 2 máy | [Lập trình] Dựng trang HTML THEO DÕI TIẾN ĐỘ phiên làm việc để liếc nhanh. Từ khoá: progress tracker. |
+| `/claude-code-harness:harness-release` | kỹ năng | cả 2 máy | [Lập trình] Tự động hoá phát hành theo Keep a Changelog + GitHub, có một cổng xác nhận trước khi chạy. Từ khoá: harness release. |
+| `/claude-code-harness:harness-review` | kỹ năng | cả 2 máy | [Lập trình] RÀ SOÁT mã nguồn, kế hoạch và phạm vi từ nhiều góc; kiểm bảo mật và chất lượng. Từ khoá: harness review, code review. |
+| `/claude-code-harness:harness-setup` | kỹ năng | cả 2 máy | [Lập trình] Khởi tạo dự án, cài công cụ, cấu hình agent, dựng bộ nhớ và đồng bộ bản sao skill. Từ khoá: harness setup, init. |
+| `/claude-code-harness:harness-sync` | kỹ năng | cả 2 máy | [Lập trình] Đối chiếu Plans.md với mã thật, phát hiện lệch, cập nhật mốc và rút kinh nghiệm. Dùng khi hỏi 'đang làm tới đâu'. Từ khoá: harness sync, drift. |
+| `/claude-code-harness:harness-work` | kỹ năng | cả 2 máy | [Lập trình] THỰC THI các việc trong Plans.md, từ một việc lẻ tới chạy song song cả nhóm. Từ khoá: harness work, implement. |
+| `/claude-code-harness:japanese-writing-drafter` | kỹ năng | cả 2 máy | [Lập trình] Bắt lúc người dùng sửa cách diễn đạt TIẾNG NHẬT của agent, rồi ghi đề xuất luật văn phong vào proposals.jsonl chờ người duyệt — nơi DUY NHẤT ghi file đó, không đụng rules.jsonl. Dùng khi người dùng nói 表現を直して, 文体を直して, その言い方はN… |
+| `/claude-code-harness:maintenance` | kỹ năng | cả 2 máy | [Lập trình] Dọn dẹp và lưu trữ file: Plans.md phình to, nhật ký phiên, log cũ. Từ khoá: cleanup, archiving. |
+| `/claude-code-harness:memory` | kỹ năng | cả 2 máy | [Lập trình] Quản lý bộ nhớ dự án và tìm kiếm xuyên công cụ; giữ decisions.md và patterns.md. Từ khoá: memory, SSOT. |
+| `/claude-code-harness:session-send` | kỹ năng | cả 2 máy | [Lập trình] Gửi thông điệp liên phiên tới agent khác — dùng khi bác sĩ yêu cầu báo phiên khác, bàn giao phiên, hoặc "nói với agent kia". Từ khoá: session send, cross-session message. |
 
 ### meta-pipe  (14 · chỉ Mac)
 
@@ -1303,34 +1351,34 @@
 | `/pubmed-search:pubmed-research-chronicle` | kỹ năng | Mac | [PubMed 9] Dựng BIÊN NIÊN một chủ đề — lĩnh vực tiến triển ra sao theo thời gian, mốc quan trọng, và có gì mới kể từ lần tra trước (lưu lại được, so được giữa các lần). Từ khoá: diễn tiến nghiên cứu, biên niên, mốc quan trọng, có gì mới,… |
 | `/pubmed-search:pubmed-systematic-search` | kỹ năng | Mac | [PubMed 3] Tìm HỆ THỐNG, đủ độ phủ cho tổng quan — generate_search_queries mở rộng MeSH và từ đồng nghĩa. Dùng ở bước tìm y văn của tổng quan hệ thống/phân tích gộp; chiến lược tìm phải ghi lại được để tái lặp (PRISMA). Từ khoá: tìm hệ t… |
 
-### desktop-commander  (6)
+### desktop-commander  (6 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/desktop-commander:ai-tools-setup` | kỹ năng | cả 2 máy | [Máy tính] Cài, nối, kiểm và sửa Claude Desktop cùng các máy chủ MCP. Từ khoá: MCP setup. |
-| `/desktop-commander:computer-health-check` | kỹ năng | cả 2 máy | [Máy tính] Kiểm tra sức khoẻ máy tính, CHỈ ĐỌC, không thay đổi gì. Từ khoá: health check. |
-| `/desktop-commander:desktop-commander-overview` | kỹ năng | cả 2 máy | [Máy tính] Tổng quan năng lực Desktop Commander: phiên dòng lệnh lâu dài, thao tác file. Từ khoá: Desktop Commander. |
-| `/desktop-commander:knowledge-base` | kỹ năng | cả 2 máy | [Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base. |
-| `/desktop-commander:obsidian-vault` | kỹ năng | cả 2 máy | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, chuẩn hoá frontmatter, bảng điều khiển Dataview, tìm ghi chú mồ côi. Dùng khi bác sĩ nói rõ Obsidian hoặc tính năng riêng của nó; không dùng cho ghi chú Markdown thông thườ… |
-| `/desktop-commander:terminal` | kỹ năng | cả 2 máy | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
+| `/desktop-commander:ai-tools-setup` | kỹ năng | Mac | [Máy tính] Cài, nối, kiểm và sửa Claude Desktop cùng các máy chủ MCP. Từ khoá: MCP setup. |
+| `/desktop-commander:computer-health-check` | kỹ năng | Mac | [Máy tính] Kiểm tra sức khoẻ máy tính, CHỈ ĐỌC, không thay đổi gì. Từ khoá: health check. |
+| `/desktop-commander:desktop-commander-overview` | kỹ năng | Mac | [Máy tính] Tổng quan năng lực Desktop Commander: phiên dòng lệnh lâu dài, thao tác file. Từ khoá: Desktop Commander. |
+| `/desktop-commander:knowledge-base` | kỹ năng | Mac | [Máy tính] Tạo và duy trì kho tri thức dạng Markdown cho mọi trợ lý AI dùng chung. Từ khoá: knowledge base. |
+| `/desktop-commander:obsidian-vault` | kỹ năng | Mac | [Máy tính] Sắp xếp kho Obsidian: bản đồ nội dung, liên kết wiki, chuẩn hoá frontmatter, bảng điều khiển Dataview, tìm ghi chú mồ côi. Dùng khi bác sĩ nói rõ Obsidian hoặc tính năng riêng của nó; không dùng cho ghi chú Markdown thông thườ… |
+| `/desktop-commander:terminal` | kỹ năng | Mac | [Máy tính] Dùng Desktop Commander cho công việc dòng lệnh. Từ khoá: terminal. |
 
-### pdf-viewer  (5)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/annotate` | lệnh | cả 2 máy | [Tài liệu] Chú thích PDF cùng nhau — đề xuất đánh dấu, cùng xem lại và chỉnh dần. Từ khoá: annotate PDF. |
-| `/fill-form` | lệnh | cả 2 máy | [Tài liệu] Điền biểu mẫu PDF với xem trước trực tiếp từng ô. Từ khoá: fill PDF form. |
-| `/open` | lệnh | cả 2 máy | [Tài liệu] Mở một file PDF trong trình xem tương tác. Từ khoá: open PDF. |
-| `/sign` | lệnh | cả 2 máy | [Tài liệu] Đặt chữ ký hoặc chữ viết tắt lên file PDF. LƯU Ý: chỉ chèn hình ảnh chữ ký sẵn có, không thay việc bác sĩ tự ký văn bản pháp lý. Từ khoá: sign PDF. |
-| `/pdf-viewer:view-pdf` | kỹ năng | cả 2 máy | [Tài liệu] Trình xem PDF tương tác — mở, xem và đánh dấu tài liệu ngay trong phiên. Dùng khi cần nhìn tận mắt nội dung file PDF; không dùng để tóm tắt hay trích xuất chữ, việc đó đọc thẳng file nhanh hơn. Từ khoá: PDF viewer. |
-
-### claude-tag-troubleshoot  (3)
+### pdf-viewer  (5 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/debug-plugins` | lệnh | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
-| `/claude-tag-troubleshoot:config-guide` | kỹ năng | cả 2 máy | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
-| `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | cả 2 máy | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
+| `/annotate` | lệnh | Mac | [Tài liệu] Chú thích PDF cùng nhau — đề xuất đánh dấu, cùng xem lại và chỉnh dần. Từ khoá: annotate PDF. |
+| `/fill-form` | lệnh | Mac | [Tài liệu] Điền biểu mẫu PDF với xem trước trực tiếp từng ô. Từ khoá: fill PDF form. |
+| `/open` | lệnh | Mac | [Tài liệu] Mở một file PDF trong trình xem tương tác. Từ khoá: open PDF. |
+| `/sign` | lệnh | Mac | [Tài liệu] Đặt chữ ký hoặc chữ viết tắt lên file PDF. LƯU Ý: chỉ chèn hình ảnh chữ ký sẵn có, không thay việc bác sĩ tự ký văn bản pháp lý. Từ khoá: sign PDF. |
+| `/pdf-viewer:view-pdf` | kỹ năng | Mac | [Tài liệu] Trình xem PDF tương tác — mở, xem và đánh dấu tài liệu ngay trong phiên. Dùng khi cần nhìn tận mắt nội dung file PDF; không dùng để tóm tắt hay trích xuất chữ, việc đó đọc thẳng file nhanh hơn. Từ khoá: PDF viewer. |
+
+### claude-tag-troubleshoot  (3 · chỉ Mac)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/debug-plugins` | lệnh | Mac | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
+| `/claude-tag-troubleshoot:config-guide` | kỹ năng | Mac | [Hỗ trợ] Tài liệu tra cứu cách cấu hình các agent @Claude. Từ khoá: config guide. |
+| `/claude-tag-troubleshoot:debug-plugins` | kỹ năng | Mac | [Hỗ trợ] Chẩn đoán vì sao một plugin hoặc skill không hoạt động như mong đợi. Từ khoá: plugin debug. |
 
 ### humanizer  (1 · chỉ Mac)
 
@@ -1338,63 +1386,13 @@
 |---|---|---|---|
 | `/humanizer:humanizer` | kỹ năng | Mac | [Viết lách] Xoá dấu vết văn phong máy trong một đoạn văn bản. Dùng khi biên tập bài viết cho tự nhiên hơn. Từ khoá: humanizer, AI-generated writing. |
 
-### google-drive  (1)
+### google-drive  (1 · chỉ Mac)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
-| `/google-drive:google-drive-api` | kỹ năng | cả 2 máy | [Kết nối] Tìm, đọc, tạo, cập nhật và chia sẻ file trên Google Drive. Từ khoá: Google Drive. |
-
-### claude-tag-data-viz  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/claude-tag-data-viz:graphing` | kỹ năng | Windows | [Dữ liệu] Dựng biểu đồ chỉn chu: chuỗi thời gian, cột, đường, vùng, tròn, phân tán. Từ khoá: charts. |
+| `/google-drive:google-drive-api` | kỹ năng | Mac | [Kết nối] Tìm, đọc, tạo, cập nhật và chia sẻ file trên Google Drive. Từ khoá: Google Drive. |
 
 ---
 
-## TẦNG 3 — Ngoài chuyên môn (biết là có, hiếm khi dùng)  (14 mục)
+## TẦNG 3 — Ngoài chuyên môn (biết là có, hiếm khi dùng)  (0 mục)
 
-
-### human-resources  (9 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/human-resources:comp-analysis` | kỹ năng | Windows | Analyze compensation — benchmarking, band placement, and equity modeling. Trigger with "what should we pay a [role]", "is this offer competitive", "model this equity grant", or when uploading comp data to find outliers and retention risks. |
-| `/human-resources:draft-offer` | kỹ năng | Windows | Draft an offer letter with comp details and terms. Use when a candidate is ready for an offer, assembling a total comp package (base, equity, signing bonus), writing the offer letter text itself, or prepping negotiation guidance for the … |
-| `/human-resources:interview-prep` | kỹ năng | Windows | Create structured interview plans with competency-based questions and scorecards. Trigger with "interview plan for", "interview questions for", "how should we interview", "scorecard for", or when the user is preparing to interview candid… |
-| `/human-resources:onboarding` | kỹ năng | Windows | Generate an onboarding checklist and first-week plan for a new hire. Use when someone has a start date coming up, building the pre-start task list (accounts, equipment, buddy), scheduling Day 1 and Week 1, or setting 30/60/90-day goals f… |
-| `/human-resources:org-planning` | kỹ năng | Windows | Headcount planning, org design, and team structure optimization. Trigger with "org planning", "headcount plan", "team structure", "reorg", "who should we hire next", or when the user is thinking about team size, reporting structure, or o… |
-| `/human-resources:people-report` | kỹ năng | Windows | Generate headcount, attrition, diversity, or org health reports. Use when pulling a headcount snapshot for leadership, analyzing turnover trends by team, preparing diversity representation metrics, or assessing span of control and flight… |
-| `/human-resources:performance-review` | kỹ năng | Windows | Structure a performance review with self-assessment, manager template, and calibration prep. Use when review season kicks off and you need a self-assessment template, writing a manager review for a direct report, prepping rating distribu… |
-| `/human-resources:policy-lookup` | kỹ năng | Windows | Find and explain company policies in plain language. Trigger with "what's our PTO policy", "can I work remotely from another country", "how do expenses work", or any plain-language question about benefits, travel, leave, or handbook rules. |
-| `/human-resources:recruiting-pipeline` | kỹ năng | Windows | Track and manage recruiting pipeline stages. Trigger with "recruiting update", "candidate pipeline", "how many candidates", "hiring status", or when the user discusses sourcing, screening, interviewing, or extending offers. |
-
-### sentry  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/sentry:sentry-api` | kỹ năng | Windows | [Kết nối] Tra và quản lý dữ liệu lỗi ứng dụng trong Sentry. Từ khoá: Sentry. |
-
-### snowflake  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/snowflake:snowflake-api` | kỹ năng | Windows | [Kết nối] Chạy SQL trên kho dữ liệu Snowflake. Từ khoá: Snowflake. |
-
-### notion  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/notion:notion-api` | kỹ năng | Windows | [Kết nối] Tìm, đọc và ghi trang, cơ sở dữ liệu Notion. Từ khoá: Notion. |
-
-### hubspot  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/hubspot:hubspot-api` | kỹ năng | Windows | [Kết nối] Đọc, tạo, cập nhật bản ghi khách hàng trong HubSpot CRM. Từ khoá: HubSpot. |
-
-### enterprise-search  (1 · chỉ Windows)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/enterprise-search:enterprise-search` | kỹ năng | Windows | [Tra cứu nội bộ] Tìm trong kho tri thức của đơn vị qua các nguồn đã kết nối. Từ khoá: enterprise search. |

@@ -37,6 +37,8 @@ Câu hỏi mở · Khẳng định điểm tích cực · Phản ánh (lắng ng
 **S**etting (riêng tư) · **P**erception (hỏi họ biết gì) · **I**nvitation (hỏi muốn biết tới đâu) · **K**nowledge (báo, từ tốn, cảnh báo trước) · **E**motions (đón nhận cảm xúc, đồng cảm) · **S**trategy (kế hoạch tiếp theo + hẹn).
 
 ## 4. Ghi hồ sơ SOAP (chuẩn, không PII trong mẫu chia sẻ)
+- **S0 — NGHỊ TRÌNH BỆNH NHÂN (ô mới, ghi TRƯỚC S):** đã hỏi *"hôm nay anh/chị lo nhất điều gì?"* → **không cắt lời** → *"còn gì nữa không?"* cho tới khi hết. Ghi lại danh sách mối lo theo thứ tự bệnh nhân nêu. ☐ đã hỏi tới khi hết  ☐ chưa.
+  > *Vì sao có ô này:* đo trên 112 cuộc khám ghi âm — bác sĩ chỉ hỏi nghị trình ở **36%** cuộc khám; khi có hỏi thì **67%** bị cắt lời sau trung vị **11 giây**, trong khi bệnh nhân không bị cắt chỉ cần trung vị **6 giây** để nói hết (Singh Ospina 2019, J Gen Intern Med · PMID 29968051 · doi:10.1007/s11606-018-4540-5). Cái giá của việc nghe trọn là 6 giây, và **78,9%** điểm gãy sai sót chẩn đoán ngoại trú nằm trong chính cuộc gặp (Singh 2013 · PMID 23440149). *Cần bác sĩ kiểm chứng — dữ liệu Mỹ.*
 - **S (Subjective):** lý do khám, bệnh sử, triệu chứng theo lời bệnh nhân, tiền sử/thuốc/dị ứng liên quan.
 - **O (Objective):** sinh hiệu, khám thực thể, cận lâm sàng có sẵn.
 - **A (Assessment):** chẩn đoán/chẩn đoán phân biệt + mức độ/nguy cơ; lý giải ngắn.

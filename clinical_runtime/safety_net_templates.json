@@ -1,30 +1,85 @@
 {
-  "default_follow_up": {
-    "title": "Follow-up plan",
-    "description": "Recommend follow-up within 4-6 weeks or sooner if red flags develop. Document symptom trajectory and adverse events.",
-    "timeline_days": 28,
-    "actions": [
-      "Schedule follow-up visit",
-      "Repeat key investigations if symptoms persist",
-      "Provide written safety-netting advice to patient"
-    ]
-  },
-  "red_flags": [
-    {
-      "name": "Severe shortness of breath",
-      "advice": "Advise immediate ED referral / call ambulance"
-    },
-    {
-      "name": "New severe chest pain",
-      "advice": "Advise immediate ED referral / call ambulance"
-    },
-    {
-      "name": "New focal neurological deficit",
-      "advice": "Advise immediate ED referral / urgent neuro review"
-    }
+  "phien_ban": "2.0.0",
+  "ngay_cap_nhat": "2026-08-22",
+  "kiem_bang": "python3 tools/kiem_safety_net.py",
+
+  "vi_sao_co": [
+    "Bản 1.x của file này là ba mẫu tiếng Anh chung chung ('Recommend follow-up within 4-6 weeks',",
+    "'Severe shortness of breath'), không hội chứng cụ thể, không tiêu chí đo được, không nguồn.",
+    "Đo ngày 22/08/2026: grep toàn repo trả 0 file tham chiếu tới nó — không code nào, không",
+    "doctrine nào đọc. Trong khi CLINICAL_RUNTIME_FLAGS.json khai enforce_safety_net_templates=true,",
+    "tức một lá cờ tuyên bố có thi hành mà không có gì thi hành. Bản 2.0.0 dựng SCHEMA + bộ kiểm",
+    "để lá cờ đó có nghĩa thật."
   ],
-  "prescription_safety": {
-    "monitoring": "Baseline blood tests where indicated; review liver/renal function before and at 4 weeks",
-    "patient_advice": "Stop drug and seek urgent review if severe rash, jaundice, severe bleeding, or shortness of breath"
-  }
+
+  "luat": {
+    "khong_bia_nguong": "Mọi tiêu chí phải có `nguon` truy được (PMID/DOI hoặc guideline+năm). Không có nguồn thì để `[CẦN BÁC SĨ ĐIỀN]` — TUYỆT ĐỐI không sinh từ trí nhớ mô hình.",
+    "do_duoc": "`do_duoc: true` nghĩa là bệnh nhân hoặc điều dưỡng kiểm được mà không cần phán đoán lâm sàng (có con số, mốc thời gian, hoặc dấu hiệu nhị phân). 'nếu nặng hơn' KHÔNG đo được.",
+    "hai_truc_khac_nhau": "`co_do_cho_bac_si` (dấu hiệu bác sĩ tìm khi khám) KHÁC `dan_benh_nhan_quay_lai` (câu dặn người bệnh mang về nhà). Gộp hai thứ này là lỗi: một danh sách cờ đỏ chuyên môn không dùng làm tờ dặn được.",
+    "khong_thay_kham": "File này KHÔNG chẩn đoán và KHÔNG thay khám trực tiếp. Nó chỉ là bộ mẫu để bác sĩ chọn và chuẩn y.",
+    "khong_pii": "Không bao giờ chứa thông tin định danh người bệnh."
+  },
+
+  "trang_thai_hop_le": {
+    "co-nguon": "Đã có ít nhất một tiêu chí truy được nguồn VÀ ít nhất một tiêu chí đo được.",
+    "chua-dien": "Khung đã dựng, nội dung chờ bác sĩ điền. Đây là trạng thái TRUNG THỰC, không phải lỗi."
+  },
+
+  "hoi_chung": {
+    "dau-dau": {
+      "ten": "Đau đầu",
+      "trang_thai": "co-nguon",
+      "co_do_cho_bac_si": {
+        "muc_dich": "Tăng khả năng phát hiện ĐAU ĐẦU THỨ PHÁT. Đây là danh sách SÀNG LỌC, không phải tiêu chí cấp cứu — bài gốc không phân tầng mức khẩn.",
+        "nguon": {
+          "ten": "SNNOOP10 — Do TP và cs., Neurology 2019;92(3):134-144",
+          "pmid": "30587518",
+          "doi": "10.1212/WNL.0000000000006697",
+          "loai": "Bài tổng quan (Review)"
+        },
+        "gioi_han_nguyen_van_cua_nguon": "Chính bài gốc ghi: thiếu nghiên cứu dịch tễ tiến cứu về cờ đỏ và tần suất thấp của nhiều loại đau đầu thứ phát khiến nhiều câu hỏi chưa có lời đáp; MỘT CÔNG CỤ SÀNG LỌC ĐÃ KIỂM ĐỊNH VẪN CHƯA CÓ. Không được trình bày danh sách này như một thang đã kiểm định.",
+        "tieu_chi": [
+          { "ma": "S", "mo_ta": "Triệu chứng toàn thân, gồm sốt", "do_duoc": false },
+          { "ma": "N1", "mo_ta": "Tiền sử ung thư", "do_duoc": true },
+          { "ma": "N2", "mo_ta": "Thiếu sót thần kinh (kể cả giảm tri giác)", "do_duoc": false },
+          { "ma": "O1", "mo_ta": "Khởi phát đột ngột hoặc cấp kỳ", "do_duoc": false },
+          { "ma": "O2", "mo_ta": "Tuổi cao — khởi phát sau 65 tuổi", "do_duoc": true },
+          { "ma": "P1", "mo_ta": "Đổi kiểu đau, hoặc đau đầu kiểu mới xuất hiện gần đây", "do_duoc": false },
+          { "ma": "P2", "mo_ta": "Đau đầu theo tư thế", "do_duoc": true },
+          { "ma": "P3", "mo_ta": "Khởi phát khi hắt hơi, ho hoặc gắng sức", "do_duoc": true },
+          { "ma": "P4", "mo_ta": "Phù gai thị", "do_duoc": false },
+          { "ma": "P5", "mo_ta": "Đau đầu tiến triển và biểu hiện không điển hình", "do_duoc": false },
+          { "ma": "P6", "mo_ta": "Thai kỳ hoặc thời kỳ hậu sản", "do_duoc": true },
+          { "ma": "P7", "mo_ta": "Đau mắt kèm dấu hiệu thần kinh tự chủ", "do_duoc": false },
+          { "ma": "P8", "mo_ta": "Khởi phát sau chấn thương", "do_duoc": true },
+          { "ma": "P9", "mo_ta": "Bệnh lý hệ miễn dịch, ví dụ HIV", "do_duoc": true },
+          { "ma": "P10", "mo_ta": "Lạm dụng thuốc giảm đau, hoặc dùng thuốc mới ngay lúc khởi phát đau đầu", "do_duoc": false }
+        ]
+      },
+      "dan_benh_nhan_quay_lai": {
+        "trang_thai": "chua-dien",
+        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
+        "vi_sao_de_trong": "SNNOOP10 là danh sách cho BÁC SĨ lúc khám, không phải câu dặn mang về nhà. Chuyển nó thành lời dặn bệnh nhân cần bác sĩ chọn ngưỡng và diễn đạt lại — việc đó thuộc Cổng A."
+      },
+      "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
+      "ngay_ra_soat": "2026-08-22"
+    },
+
+    "dau-nguc":    { "ten": "Đau ngực",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "kho-tho":     { "ten": "Khó thở",               "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "dau-bung":    { "ten": "Đau bụng",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "sot":         { "ten": "Sốt",                   "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "dau-lung":    { "ten": "Đau lưng",              "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "chong-mat":   { "ten": "Chóng mặt",             "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" },
+    "sut-can":     { "ten": "Sụt cân không chủ ý",   "trang_thai": "chua-dien", "co_do_cho_bac_si": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "dan_benh_nhan_quay_lai": { "trang_thai": "chua-dien", "noi_dung": "[CẦN BÁC SĨ ĐIỀN]" }, "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]", "ngay_ra_soat": "2026-08-22" }
+  },
+
+  "_ban_1_x_giu_lai_de_doi_chieu": {
+    "ghi_chu": "Nội dung bản cũ, giữ lại để thấy khoảng cách — KHÔNG dùng làm mẫu.",
+    "default_follow_up": "Recommend follow-up within 4-6 weeks or sooner if red flags develop.",
+    "red_flags": ["Severe shortness of breath", "New severe chest pain", "New focal neurological deficit"],
+    "vi_sao_khong_dung_duoc": "Tiếng Anh · không hội chứng cụ thể · 'severe' và 'sooner' không đo được · không nguồn · không ngày rà soát."
+  },
+
+  "disclaimer": "Cần bác sĩ kiểm chứng. Mọi nội dung ở đây là ĐỀ XUẤT — chỉ áp dụng cho người bệnh sau khi bác sĩ chuẩn y (Cổng A)."
 }

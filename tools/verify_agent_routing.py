@@ -49,6 +49,22 @@ ORCHESTRATORS = [
     AGENTS_DIR / "dieu-phoi-nghien-cuu.md",
     AGENTS_DIR / "dieu-phoi-lam-sang.md",
 ]
+PLUGIN_REGISTRY_PATH = ROOT / "tools" / "orchestrator" / "plugin_ownership_registry.json"
+
+
+def known_plugin_names() -> Set[str]:
+    """Tên plugin worker HỢP LỆ mà nhạc trưởng được phép backtick-nhắc (vd
+    `aipoch-medical-research` trong đoạn 'Worker plugin có hợp đồng'), đọc ĐỘNG từ
+    tools/orchestrator/plugin_ownership_registry.json — nguồn sự thật canonical đã có
+    sẵn (CLAUDE.md mục 'Điều phối plugin'). Đọc động, KHÔNG hardcode danh sách thứ hai:
+    một plugin mới thêm vào registry thì checker này tự biết, khỏi phải sửa 2 nơi.
+    Phát hiện 26/08/2026: registry đã có "aipoch-medical-research" từ 10/08 (worker plugin
+    có hợp đồng thêm 16/08) nhưng checker này chưa từng đọc registry — báo dangling giả."""
+    try:
+        data = json.loads(PLUGIN_REGISTRY_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return set(data.get("providers", {}).keys())
 
 # Skill thật (từ danh mục skill khả dụng trong phiên — cập nhật nếu danh mục đổi).
 # Đây là allowlist THỦ CÔNG có chủ đích: skill sống ở kho riêng, KHÔNG phải file
@@ -98,9 +114,9 @@ def _first_word(token: str) -> str:
     return token.strip().split()[0] if token.strip() else ""
 
 
-def classify_token(token: str, agents: Set[str]) -> str:
+def classify_token(token: str, agents: Set[str], plugins: Set[str] | None = None) -> str:
     """Phân loại 1 token backtick: 'agent' | 'infra_or_script' | 'artifact_id' |
-    'skill' | 'dangling_candidate' | 'other' (không phải định dạng tên agent)."""
+    'skill' | 'plugin' | 'dangling_candidate' | 'other' (không phải định dạng tên agent)."""
     t = _first_word(token)
     if not t:
         return "other"
@@ -114,10 +130,14 @@ def classify_token(token: str, agents: Set[str]) -> str:
         return "agent"
     if t in KNOWN_SKILL_NAMES:
         return "skill"
+    if plugins and t in plugins:
+        return "plugin"
     return "dangling_candidate"
 
 
-def extract_references(md_path: Path, agents: Set[str]) -> Dict[str, Set[str]]:
+def extract_references(
+    md_path: Path, agents: Set[str], plugins: Set[str] | None = None
+) -> Dict[str, Set[str]]:
     """Trích tham chiếu từ 1 file nhạc trưởng — trả {agent, dangling, filtered}."""
     if not md_path.exists():
         return {"agent": set(), "dangling": set(), "filtered": set()}
@@ -131,12 +151,12 @@ def extract_references(md_path: Path, agents: Set[str]) -> Dict[str, Set[str]]:
         t = _first_word(m.group(1))
         if not t:
             continue
-        kind = classify_token(t, agents)
+        kind = classify_token(t, agents, plugins)
         if kind == "agent":
             out["agent"].add(t)
         elif kind == "dangling_candidate":
             out["dangling"].add(t)
-        elif kind in ("infra_or_script", "artifact_id", "skill"):
+        elif kind in ("infra_or_script", "artifact_id", "skill", "plugin"):
             out["filtered"].add(t)
     return out
 
@@ -159,13 +179,14 @@ def check_title_counts_fresh(total_agents: int) -> list:
 def audit_routing() -> Dict:
     """Chạy kiểm chứng đầy đủ trên hệ THẬT — trả dict báo cáo."""
     agents = real_agent_slugs()
+    plugins = known_plugin_names()
     referenced: Set[str] = set()
     dangling: Set[str] = set()
     filtered_examples: Set[str] = set()
     per_file: Dict[str, Dict] = {}
 
     for orch in ORCHESTRATORS:
-        r = extract_references(orch, agents)
+        r = extract_references(orch, agents, plugins)
         referenced |= r["agent"]
         dangling |= r["dangling"]
         filtered_examples |= r["filtered"]

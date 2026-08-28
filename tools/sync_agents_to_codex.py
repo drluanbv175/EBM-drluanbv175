@@ -142,18 +142,61 @@ def source_infra_paths() -> list[Path]:
     )
 
 
+_CASE_INSENSITIVE_FS_CACHE: bool | None = None
+
+
+def _case_insensitive_fs() -> bool:
+    """Phat hien (mot lan, co cache) filesystem chua ROOT co phan biet
+    hoa/thuong hay khong.
+
+    Dung `ROOT / "tools"` (thu muc chua chinh script nay, nen CHAC CHAN da
+    ton tai) lam vat tham do, roi thu doi ten hoa/thuong va kiem samefile —
+    KHONG dua vao Path.exists() cua .Codex/.codex nhu truoc, vi trong mot
+    git worktree moi (ca hai deu gitignored, chua tung chay script) ca hai
+    thu muc do deu chua ton tai tai thoi diem kiem tra dedup dau tien, khien
+    heuristic cu coi chung la KHONG trung nhau va ghi doc lap. Tren filesystem
+    case-insensitive (vd APFS mac dinh), hai lan ghi do thuc chat ghi de len
+    CUNG mot thu muc vat ly -> lan ghi sau (nhan ".codex/agents") de len lan
+    ghi truoc (nhan ".Codex/agents"), lam moi file mang nhan sai va bao drift
+    hang loat khi chay lai --check sau khi ca hai thu muc da ton tai.
+    """
+    global _CASE_INSENSITIVE_FS_CACHE
+    if _CASE_INSENSITIVE_FS_CACHE is not None:
+        return _CASE_INSENSITIVE_FS_CACHE
+
+    probe_dir = ROOT / "tools"
+    flipped = probe_dir.parent / probe_dir.name.upper()
+    result = False
+    try:
+        if flipped.exists() and flipped.samefile(probe_dir):
+            result = True
+    except OSError:
+        result = False
+
+    _CASE_INSENSITIVE_FS_CACHE = result
+    return result
+
+
 def active_targets() -> list[tuple[Path, str]]:
-    """Loai bo target trung nhau tren filesystem khong phan biet hoa/thuong."""
+    """Loai bo target trung nhau tren filesystem khong phan biet hoa/thuong.
+
+    So sanh ten duong dan (khong phan biet hoa/thuong) CHI KHI da xac dinh
+    filesystem la case-insensitive (xem _case_insensitive_fs) — khong con
+    phu thuoc vao .Codex/.codex da ton tai tren dia hay chua, nen dedup dung
+    ngay tu lan goi dau tien ke ca khi ca hai thu muc dich deu chua duoc tao.
+    Tren filesystem case-sensitive (vd Linux/CI), tra ve nguyen TARGETS —
+    ca hai thu muc PHAI duoc ghi doc lap dung nhu thiet ke goc.
+    """
+    if not _case_insensitive_fs():
+        return list(TARGETS)
+
     active: list[tuple[Path, str]] = []
     for target_dir, target_label in TARGETS:
         duplicate_of: str | None = None
         for seen_dir, seen_label in active:
-            try:
-                if target_dir.exists() and seen_dir.exists() and target_dir.samefile(seen_dir):
-                    duplicate_of = seen_label
-                    break
-            except OSError:
-                continue
+            if str(target_dir).lower() == str(seen_dir).lower():
+                duplicate_of = seen_label
+                break
         if duplicate_of:
             print(
                 f"Note: {target_label} points to the same directory as {duplicate_of}; "
