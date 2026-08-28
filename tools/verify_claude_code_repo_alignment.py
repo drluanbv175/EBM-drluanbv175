@@ -129,13 +129,18 @@ def check_root_docs() -> dict[str, Any]:
 
 
 def ban_sao_tran() -> bool:
-    """True khi repo y khoa vắng mặt HOÀN TOÀN (bản clone git trần — cloud/CI).
+    """True CHỈ khi bản sao git trần — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py.
 
-    28/08/2026 — trên bản trần, hook pre-commit không thể xanh vì check này FAIL
-    do thiếu nguyên liệu, nên phiên cloud buộc commit KHÔNG QUA CỔNG nào — tệ hơn
-    một cổng biết nói «phần này ngoài phạm vi». Chỉ nhận diện khi CẢ THƯ MỤC repo
-    vắng mặt; repo có mà file mất vẫn FAIL như cũ (fail-closed nguyên vẹn)."""
-    return not (ROOT / "medical-ebm-automation").exists()
+    SỬA 28/08 vòng 4 (bình duyệt đối kháng bắt được): bản đầu chỉ kiểm MỘT gốc
+    (medical-ebm-automation/) — trên máy thật còn EBM-Dashboards/EBM_MASTER mà
+    thiếu riêng repo y khoa (sự cố OneDrive đã gặp), hook lặng lẽ PASS = fail-open.
+    Nay đòi cả BA gốc vắng mặt, cùng ngữ nghĩa với bộ chốt bài học/conftest."""
+    import importlib.util
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    spec = importlib.util.spec_from_file_location("_bst_alignment", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(ROOT)
 
 
 def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:

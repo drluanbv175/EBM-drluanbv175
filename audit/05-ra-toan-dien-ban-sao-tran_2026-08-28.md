@@ -215,6 +215,39 @@ bằng `msvcrt.locking` (loại trừ cả giữa tiến trình lẫn giữa lu�
 hết thời gian chờ vẫn đi tiếp không khoá (giữ hợp đồng best-effort không-treo). Sửa MỘT
 chỗ — `guardrail_bridge` dùng lại cùng khoá của `run_eval`.
 
+## 5-quater. VÒNG 4 — bình duyệt đối kháng trên CHÍNH diff của phiên (6 phát hiện, sửa hết)
+
+Trước khi bác sĩ merge, toàn bộ diff `origin/master..HEAD` được đưa qua một lượt code
+review đối kháng (mức high). **6 phát hiện — cái nặng nhất là fail-open do chính vòng 3
+của phiên này tạo ra:**
+
+1. 🔴 **Ba verifier của hook nhận diện «bản trần» bằng phép thử MỘT gốc** trong khi bộ
+   chốt bài học đòi cả BA — trên máy thật còn EBM-Dashboards/EBM_MASTER mà thiếu riêng
+   repo y khoa (sự cố OneDrive từng gặp: conflict-rename, selective sync), **hook lặng lẽ
+   PASS**. Đã đóng: MỘT định nghĩa duy nhất `tools/ban_sao_tran.py` (đòi cả 3 gốc vắng),
+   5 nơi uỷ quyền về nó; đối chứng hai chiều đo được (bản trần → ⚪; máy hỏng dở → ĐỎ cả
+   ba); ngữ nghĩa khoá vào BH83 bằng phép thử thư mục tạm, đã kiểm đột biến.
+2. 🔴 **`phan_loai` ⚪ hoá cả CRASH trong-repo** trên bản trần — một hồi quy TypeError
+   trong mã in-git có thể ship từ cloud kèm dòng «🟢». Nay chỉ FileNotFound/ModuleNotFound
+   là thiếu-nguyên-liệu; crash khác ✗ kể cả trên bản trần (khoá thêm vào BH82).
+3. 🔴 **`nap_vd` ném SystemExit xuyên qua `except Exception`** của caller — giết cả lượt
+   chạy bộ chốt giữa chừng, hook `; true` nuốt sạch. Đổi thành FileNotFoundError; vòng
+   chạy bộ chốt nâng lên bắt BaseException làm lưới cuối.
+4. 🟠 **Mục chóng mặt dán nhãn quần thể nghiên cứu thành «dấu HINTS nguy hiểm»** (tiêu
+   chí H4 cũ chính là tiêu chí tuyển bệnh của Kattah 2009, lại là tiêu chí đo-được duy
+   nhất thoả cổng R5 — đúng mẫu «dán nhãn cho qua cổng» mà BH03/R1b cấm). Đã tách hai
+   lớp tường minh: nhận diện BỆNH CẢNH (đo được, tự khai «không phải dấu khám HINTS»)
+   ≠ ba dấu KHÁM HINTS (người được huấn luyện).
+5. 🟡 **Thông điệp «FAIL (bỏ qua CÓ KHAI BÁO)» tự mâu thuẫn** ở 4 verifier nghiên cứu —
+   nay hai nhánh rõ nghĩa (⚪ bản trần / FAIL máy hỏng dở, đều thoát ≠0 vì không có phần
+   trong-repo nào kiểm được).
+6. 🟡 **5 bản sao của cùng một phép thử trong một PR** — nguyên nhân cấu trúc của (1);
+   đã hợp nhất về một module.
+
+Ghi trung thực kèm theo: thử «nâng nguồn» cho ngưỡng ≥5% của mục sụt cân bằng tiêu chuẩn
+GLIM (Cederholm 2019, PMID 30181091) — tóm tắt GLIM **cũng không nêu ngưỡng**, nên mục
+này GIỮ NGUYÊN trạng thái «cần đối chiếu toàn văn» thay vì trích vượt nguồn.
+
 ## 6. Số đo trước/sau của phiên này
 
 | Chỉ số | Trước | Sau |

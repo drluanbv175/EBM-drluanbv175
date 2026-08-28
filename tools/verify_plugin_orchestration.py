@@ -42,13 +42,18 @@ def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
 
 
 def ban_sao_tran() -> bool:
-    """True khi repo y khoa vắng mặt HOÀN TOÀN (bản clone git trần — cloud/CI).
+    """True CHỈ khi bản sao git trần — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py.
 
-    28/08/2026 — trên bản trần mọi mục cần medical-ebm-automation/ đỏ vì thiếu
-    nguyên liệu, chặn luôn hook pre-commit ⇒ phiên cloud commit KHÔNG QUA CỔNG
-    nào. Chỉ nhận diện khi CẢ THƯ MỤC repo vắng mặt; repo có mà file/binding
-    mất vẫn FAIL như cũ (fail-closed nguyên vẹn trên hai máy thật)."""
-    return not (ROOT / "medical-ebm-automation").exists()
+    SỬA 28/08 vòng 4 (bình duyệt đối kháng bắt được): bản đầu chỉ kiểm MỘT gốc
+    (medical-ebm-automation/) — trên máy thật còn EBM-Dashboards/EBM_MASTER mà
+    thiếu riêng repo y khoa (sự cố OneDrive đã gặp), hook lặng lẽ PASS = fail-open.
+    Nay đòi cả BA gốc vắng mặt, cùng ngữ nghĩa với bộ chốt bài học/conftest."""
+    import importlib.util
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    spec = importlib.util.spec_from_file_location("_bst_plugin_orch", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(ROOT)
 
 
 def loi_ngoai_pham_vi_tran(error: str) -> bool:

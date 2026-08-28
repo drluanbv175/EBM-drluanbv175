@@ -76,9 +76,12 @@ def nap_vd():
     # 28/08/2026 — trên bản sao git TRẦN (phiên cloud/CI) cây EBM-Dashboards nằm
     # ngoài git nên file này không bao giờ có; chết traceback ở đây làm bước ⑤ của
     # chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu nguyên liệu.
-    # Khai báo rõ rồi thoát, thay vì để FileNotFoundError nói hộ.
+    # Vòng 4 (bình duyệt đối kháng): KHÔNG ném SystemExit từ hàm thư viện — nó
+    # xuyên qua mọi guard `except Exception` của caller trong-tiến-trình (bộ chốt
+    # bài học, build_ban_doc) và giết cả lượt chạy của họ giữa chừng. Ném
+    # FileNotFoundError mang thông điệp rõ; main() bắt và in sạch cho người chạy CLI.
     if not duong.exists():
-        raise SystemExit(
+        raise FileNotFoundError(
             f"⚪ Không kiểm được trên máy này: thiếu {duong} — EBM-Dashboards nằm "
             "ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
     spec = importlib.util.spec_from_file_location("vd_chu_de", duong)
@@ -333,7 +336,12 @@ def main() -> int:
     ap.add_argument("--mau-thuan", action="store_true", help="chỉ in phần mâu thuẫn")
     a = ap.parse_args()
 
-    vd, theo_lat_cat, theo_goc = quet_kho()
+    # Thiếu nguyên liệu (bản sao trần) → in một dòng rõ nghĩa, thoát 1 — không traceback.
+    try:
+        vd, theo_lat_cat, theo_goc = quet_kho()
+    except FileNotFoundError as e:
+        print(e)
+        return 1
 
     # (1) PHIÊN BẢN NỐI TIẾP — cùng lát cắt, khác ngày. Đây mới là "bản cũ bị thay".
     nhieu_phien_ban = {k: sorted(v) for k, v in theo_lat_cat.items() if len(v) > 1}

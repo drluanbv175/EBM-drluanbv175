@@ -3521,7 +3521,9 @@ def bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao() -> tuple[bool, str]:
 # sao TRẦN, mục thiếu nguyên liệu in ⚪ «ngoài phạm vi» — vẫn HIỆN đầy đủ, không đếm
 # vào tổng đỏ; mục trong-repo đỏ vẫn đỏ. Trên máy thật (còn ≥1 gốc dữ liệu) hành vi
 # cũ giữ NGUYÊN — fail-closed, một file thiếu là ✗ như trước.
-_GOC_DU_LIEU_NGOAI_GIT = ("EBM-Dashboards", "medical-ebm-automation", "EBM_MASTER")
+# Vòng 4 (28/08): định nghĩa «bản sao trần» dời về tools/ban_sao_tran.py — MỘT nơi
+# duy nhất, vì trong chính PR này năm bản sao của phép thử đã phân kỳ thành hai ngữ
+# nghĩa (1-gốc vs 3-gốc) và tạo fail-open ở ba verifier của hook.
 
 # Khai báo TƯỜNG MINH (không suy từ thông điệp lỗi): các mã mà ĐỐI TƯỢNG được kiểm
 # nằm ngoài phần git track — đo từng mã ngày 28/08 trên bản clone trần.
@@ -3534,18 +3536,25 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
 
 
 def ban_sao_git_tran() -> bool:
-    """True khi KHÔNG một gốc dữ liệu ngoài-git nào có mặt (clone tươi / CI / cloud).
-
-    Trên máy bác sĩ luôn còn ít nhất một gốc; mất CẢ BA cùng lúc là sự cố cây
-    OneDrive — việc của sync_safety_check (làn ①), không phải của bộ chốt này."""
-    return not any((REPO / g).exists() for g in _GOC_DU_LIEU_NGOAI_GIT)
+    """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (đòi cả BA gốc vắng)."""
+    return _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot").ban_sao_git_tran(REPO)
 
 
-def phan_loai(ma: str, ok: bool, tran: bool) -> str:
+# Vòng 4 (bình duyệt đối kháng): một chốt trong danh sách ⚪ mà CHẾT vì lỗi mã
+# trong-repo (TypeError, AttributeError…) từng bị ⚪ hoá luôn trên bản trần — tức
+# một hồi quy trong-git có thể ship từ phiên cloud với dòng «🟢 không tái phát».
+# Hai kiểu vắng-nguyên-liệu hợp lệ duy nhất là thiếu FILE/MODULE; mọi exception
+# khác trong «chốt lỗi:» là crash thật và phải ✗ kể cả trên bản trần.
+_LOI_THIEU_NGUYEN_LIEU = ("FileNotFoundError", "ModuleNotFoundError", "NotADirectoryError")
+
+
+def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "") -> str:
     """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪."""
     if ok:
         return "dat"
     if tran and ma in _CAN_NGUYEN_LIEU_NGOAI_REPO:
+        if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
+            return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
         return "ngoai_pham_vi"
     return "tai_phat"
 
@@ -3572,7 +3581,13 @@ def bh82_ban_sao_tran_khong_duoc_do_gia():
         return False, "mục đạt bị phân loại sai"
     if "BH44" in _CAN_NGUYEN_LIEU_NGOAI_REPO or "BH82" in _CAN_NGUYEN_LIEU_NGOAI_REPO:
         return False, "mã trong-repo bị khai nhầm là ngoài-repo — đường ⚪ hoá lỗi thật đang mở"
-    return True, "bản trần: ⚪ đúng chỗ có khai báo, ✗ giữ nguyên cho lỗi trong-repo"
+    # Vòng 4 (bình duyệt đối kháng): CRASH trong mã trong-repo không được ⚪ hoá
+    # trên bản trần — thiếu nguyên liệu chỉ hiện dạng FileNotFound/ModuleNotFound.
+    if phan_loai("BH01", False, True, "chốt lỗi: TypeError: tach_ten() thiếu tham số") != "tai_phat":
+        return False, "crash trong-repo (TypeError) bị ⚪ hoá trên bản trần — hồi quy ship được từ cloud"
+    if phan_loai("BH01", False, True, "chốt lỗi: FileNotFoundError: thiếu file") != "ngoai_pham_vi":
+        return False, "thiếu-file trên bản trần không còn ra ⚪ — tường đỏ giả quay lại"
+    return True, "bản trần: ⚪ đúng chỗ có khai báo, ✗ giữ nguyên cho lỗi trong-repo và crash"
 
 
 def bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang():
@@ -3609,7 +3624,20 @@ def bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang():
         tong = va.run_verification()["overall_status"]
         if tong != "PASS":
             return False, f"bản trần mà alignment tổng thể {tong} — hook vẫn bị chặn oan"
-    return True, "hook sống được trên bản trần; máy thật giữ nguyên fail-closed"
+    # Vòng 4: khoá NGỮ NGHĨA 3-GỐC của định nghĩa dùng chung bằng thư mục tạm —
+    # chính PR này từng có 5 bản sao phân kỳ thành phép thử 1-gốc, tạo fail-open
+    # khi máy thật chỉ thiếu riêng repo y khoa (bình duyệt đối kháng bắt được).
+    import tempfile
+    bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh83")
+    with tempfile.TemporaryDirectory() as td:
+        goc = Path(td)
+        if not bst.ban_sao_git_tran(goc):
+            return False, "thư mục vắng cả 3 gốc mà không được nhận là bản trần"
+        (goc / "EBM_MASTER").mkdir()
+        if bst.ban_sao_git_tran(goc):
+            return False, ("còn MỘT gốc dữ liệu (EBM_MASTER) mà vẫn bị coi là bản trần — "
+                           "ngữ nghĩa 1-gốc quay lại, hook fail-open trên máy thật hỏng dở")
+    return True, "hook sống được trên bản trần; máy thật giữ nguyên fail-closed; ngữ nghĩa 3-gốc khoá"
 
 
 BAI_HOC = [
@@ -3718,9 +3746,14 @@ def main() -> int:
     for ma, ngay, ten, ham in BAI_HOC:
         try:
             ok, ct = ham()
-        except Exception as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
+        except KeyboardInterrupt:
+            raise
+        # Vòng 4: bắt BaseException, không chỉ Exception — một chốt lỡ ném SystemExit
+        # (đã suýt xảy ra với nap_vd bản SystemExit) sẽ giết CẢ lượt chạy giữa chừng,
+        # mọi chốt sau không được kiểm, và hook `; true` nuốt sạch không một dòng báo.
+        except BaseException as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
             ok, ct = False, f"chốt lỗi: {type(e).__name__}: {e}"
-        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran), ct))
+        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct), ct))
 
     do = [k for k in ket if k[3] == "tai_phat"]
     ngoai = [k for k in ket if k[3] == "ngoai_pham_vi"]

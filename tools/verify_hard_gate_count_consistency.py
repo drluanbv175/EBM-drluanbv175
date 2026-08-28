@@ -54,11 +54,18 @@ if not (GATE_CONTRACT_TOOLS_DIR / "gate_contract.py").exists():
                           "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
     if __name__ == "__main__":
         # 28/08/2026 — tách HAI trường hợp khác hẳn nhau:
-        # (a) repo y khoa vắng mặt HOÀN TOÀN = bản sao trần (cloud/CI): chốt này không
-        #     có nguồn sự thật để đối chiếu ⇒ ⚪ bỏ qua CÓ KHAI BÁO, thoát 0 — để hook
+        # (a) BẢN SAO TRẦN (cloud/CI — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py,
+        #     đòi cả BA gốc dữ liệu vắng mặt; vòng 4 sửa từ phép thử 1-gốc vốn
+        #     fail-open khi máy thật chỉ thiếu riêng repo y khoa): chốt này không có
+        #     nguồn sự thật để đối chiếu ⇒ ⚪ bỏ qua CÓ KHAI BÁO, thoát 0 — để hook
         #     pre-commit chạy được trên bản trần thay vì buộc commit KHÔNG QUA CỔNG nào.
-        # (b) repo CÓ mà gate_contract.py mất = hỏng thật trên máy bác sĩ ⇒ đỏ như cũ.
-        if not (ROOT / "medical-ebm-automation").exists():
+        # (b) máy thật (còn ≥1 gốc dữ liệu) mà thiếu gate_contract.py ⇒ đỏ như cũ.
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location(
+            "_bst_hgc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        _bst = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_bst)
+        if _bst.ban_sao_git_tran(ROOT):
             print("⚪ BỎ QUA CÓ KHAI BÁO: repo y khoa không có trên bản sao git trần — "
                   "chốt đếm-cổng-cứng cần gate_contract.py làm nguồn sự thật; "
                   "chạy trên máy có đủ hai repo. ⚪ KHÔNG có nghĩa là đạt.")

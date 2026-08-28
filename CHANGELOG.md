@@ -66,6 +66,29 @@ mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
   ép sẵn, conftest đo thuộc tính filesystem THẬT nên test dedup `.Codex≡.codex` tự chạy
   đúng trên NTFS.
 
+### Fixed (vòng 4 cùng ngày — bình duyệt đối kháng trên CHÍNH diff của phiên, 6 phát hiện)
+- **Fail-open thật do vòng 3 tạo ra, đã đóng:** ba verifier của hook nhận diện «bản trần»
+  bằng phép thử MỘT gốc (chỉ medical-ebm-automation/) trong khi bộ chốt bài học đòi cả BA —
+  trên máy thật còn EBM-Dashboards/EBM_MASTER mà thiếu riêng repo y khoa (sự cố OneDrive
+  đã gặp), hook lặng lẽ PASS. Nay MỘT định nghĩa duy nhất `tools/ban_sao_tran.py` (3-gốc),
+  cả 5 nơi uỷ quyền về nó; đối chứng hai chiều đã đo (bản trần → ⚪/PASS; máy hỏng dở →
+  ĐỎ cả ba); ngữ nghĩa 3-gốc khoá vào BH83 bằng phép thử thư mục tạm (mutation-tested).
+- **`phan_loai` hết ⚪ hoá CRASH trong-repo:** chốt trong danh sách ⚪ mà chết vì
+  TypeError/AttributeError (hồi quy mã thật) từng được ⚪ trên bản trần — một hồi quy
+  trong-git có thể ship từ cloud với dòng «🟢». Nay chỉ FileNotFound/ModuleNotFound được
+  coi là thiếu nguyên liệu; crash khác ✗ kể cả trên bản trần (khoá thêm vào BH82).
+- **`nap_vd` hết ném SystemExit xuyên guard:** SystemExit từ hàm thư viện xuyên qua mọi
+  `except Exception` của caller trong-tiến-trình và giết cả lượt chạy của bộ chốt giữa
+  chừng. Đổi thành FileNotFoundError mang thông điệp rõ; main() bắt in sạch; vòng chạy
+  bộ chốt cũng nâng lên bắt BaseException (trừ KeyboardInterrupt) làm lưới cuối.
+- **Mục chóng mặt (safety-net) hết dán nhãn quần thể thành «dấu HINTS»:** tách hai lớp
+  tường minh — LỚP 1 nhận diện bệnh cảnh (AVS + ≥1 yếu tố nguy cơ, đo được, 76/101 ca
+  cohort gốc là tổn thương trung ương) ≠ LỚP 2 ba dấu khám HINTS (người được huấn luyện);
+  tiêu chí P1 tự khai «KHÔNG phải dấu khám HINTS». kiem_safety_net vẫn 0 lỗi, 21/21 test.
+- **Bỏ thông điệp tự mâu thuẫn «FAIL (bỏ qua CÓ KHAI BÁO)»** ở 4 verifier nghiên cứu —
+  tách hai nhánh rõ nghĩa: bản trần → «⚪ NGOÀI PHẠM VI… thoát 1 để không ai đọc thành
+  đã kiểm»; máy thật hỏng dở → «FAIL… chạy sync_safety_check trước».
+
 ### Fixed (vòng 3)
 - **Khoá `appraisal_repeats_lock` trên Windows từ «không khoá» thành `msvcrt.locking`.**
   Lần ĐẦU pytest chạy trên lane CI windows-3.11 (phép đo vòng 3), chính test hồi quy

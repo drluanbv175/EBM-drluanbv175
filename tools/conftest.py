@@ -23,12 +23,17 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-_GOC_NGOAI_GIT = ("EBM-Dashboards", "medical-ebm-automation", "EBM_MASTER")
 
 
 def _ban_sao_tran() -> bool:
-    """True khi không một gốc dữ liệu ngoài-git nào có mặt (clone tươi/CI/cloud)."""
-    return not any((REPO / g).exists() for g in _GOC_NGOAI_GIT)
+    """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (vòng 4 — trong một
+    PR năm bản sao của phép thử này đã phân kỳ thành hai ngữ nghĩa; hết nhân bản)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_bst_conftest", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(REPO)
 
 
 # 4 module import thẳng mã của repo y khoa NGAY LÚC THU THẬP — thiếu repo là
