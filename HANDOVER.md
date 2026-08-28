@@ -24,3 +24,11 @@
 8. **Phiên bản đang tin:** skill cap-nhat v1.45.0 · Python venv `~/.ebm-venv`
    (requirements.lock) · đổi lớn mô hình/thư viện → chạy `quality/eval/run_eval.py`
    + toàn bộ chốt BH TRƯỚC khi tin lại.
+9. **NHẬN VỀ TỪ PHIÊN CLOUD 28/08/2026** (nhánh `claude/medical-research-system-phggdf`,
+   CI xanh, chờ bác sĩ merge): trên MỖI máy sau khi kéo nhánh — (a) chạy
+   `python3 tools/chot_hoi_quy_bai_hoc.py`: trên máy đủ dữ liệu cả 83 chốt phải chạy đủ,
+   KHÔNG mục nào ⚪ (⚪ chỉ hợp lệ trên bản clone không có cây OneDrive); (b) DUYỆT 7 khối
+   cờ đỏ safety-netting mang nhãn `de_xuat` trong `clinical_runtime/safety_net_templates.json`
+   — nguồn đã tra PubMed nhưng CHƯA được bác sĩ chuẩn y, và lời dặn bệnh nhân 0/8 là phần
+   bác sĩ tự viết (Cổng A); (c) đọc `audit/05-ra-toan-dien-ban-sao-tran_2026-08-28.md`
+   để biết trọn ba vòng thay đổi (BH82/BH83, conftest, CI pytest 4 lane).

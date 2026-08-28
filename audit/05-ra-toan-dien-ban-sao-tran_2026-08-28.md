@@ -198,11 +198,22 @@ vẫn in đầy đủ**; phần trong-repo (doctrine gốc, mirror, registry, gu
 như cũ. Khoá bằng **BH83** (mutation-tested: nuốt lỗi trong-repo ⇒ đỏ; ⚪ hoá máy thật ⇒
 đỏ). Hook đã kích hoạt trong clone này; các commit vòng 3 đi qua cổng thật.
 
-### (b) Lane Windows của bước pytest CI — đo bằng chính CI
+### (b) Lane Windows của bước pytest CI — và phép đo BẮT ĐƯỢC MỘT RACE THẬT ngay lượt đầu
 
 Ghi chú vòng 2 đòi «đo trước rồi mở». Đã rà rủi ro (0 test dùng symlink/chmod; PYTHONUTF8
 ép sẵn; conftest đo thuộc tính filesystem thật nên test dedup `.Codex≡.codex` tự chạy đúng
-trên NTFS) rồi mở lane windows — kết quả đo nằm ở run CI của commit vòng 3.
+trên NTFS) rồi mở lane windows.
+
+🔴 **Lượt đo đầu (run #92): windows-3.11 ĐỎ đúng nghĩa** — test hồi quy
+`test_appraisal_repeats_concurrency` bắt được **lost-update thật** (1/20 hash biến mất khỏi
+`APPRAISAL_REPEATS.json`). Nguyên nhân nằm ngay trong docstring của
+`appraisal_repeats_lock`: nhánh Windows cũ *«bỏ qua khóa hoàn toàn (best-effort)»* — mà
+Windows là máy làm việc thật của bác sĩ, nghĩa là sổ đếm tái phạm có thể lặng lẽ mất bản
+ghi mỗi khi CLI + orchestrator chạy gần nhau. Test này tồn tại từ 22/07 nhưng **chưa từng
+được chạy trên Windows** — đúng giá trị của việc mở lane đo. **Đã sửa:** Windows nay khoá
+bằng `msvcrt.locking` (loại trừ cả giữa tiến trình lẫn giữa luồng); Unix giữ nguyên flock;
+hết thời gian chờ vẫn đi tiếp không khoá (giữ hợp đồng best-effort không-treo). Sửa MỘT
+chỗ — `guardrail_bridge` dùng lại cùng khoá của `run_eval`.
 
 ## 6. Số đo trước/sau của phiên này
 

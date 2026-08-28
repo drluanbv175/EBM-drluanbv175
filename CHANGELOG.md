@@ -66,6 +66,16 @@ mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
   ép sẵn, conftest đo thuộc tính filesystem THẬT nên test dedup `.Codex≡.codex` tự chạy
   đúng trên NTFS.
 
+### Fixed (vòng 3)
+- **Khoá `appraisal_repeats_lock` trên Windows từ «không khoá» thành `msvcrt.locking`.**
+  Lần ĐẦU pytest chạy trên lane CI windows-3.11 (phép đo vòng 3), chính test hồi quy
+  `test_appraisal_repeats_concurrency` bắt được **lost-update thật** (1/20 hash biến mất):
+  nhánh Windows cũ ghi rõ «bỏ qua khóa hoàn toàn» — mà Windows là máy làm việc thật của
+  bác sĩ, tức sổ đếm tái phạm `APPRAISAL_REPEATS.json` có thể lặng lẽ mất bản ghi mỗi khi
+  CLI + orchestrator chạy gần nhau. Sửa MỘT chỗ (`tools/eval/run_eval.py` — guardrail_bridge
+  dùng lại cùng khoá); Unix giữ nguyên flock; hết thời gian chờ vẫn đi tiếp không khoá
+  (giữ hợp đồng best-effort không-treo).
+
 ### Fixed
 - 6 công cụ chết-không-khai-báo trên bản sao trần nay «bỏ qua CÓ KHAI BÁO» một dòng
   rõ nghĩa thay vì traceback: `audit_ebm_system.py` (2 chỗ — nay chạy TRỌN báo cáo,
