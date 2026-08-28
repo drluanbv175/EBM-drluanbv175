@@ -66,8 +66,12 @@ jobs:
       # lane ubuntu — đúng điều kiện đã đo (Linux, clone trần); lane windows CHƯA đo
       # nên chưa bật: một bức tường đỏ chưa đo sẽ dạy người ta bỏ qua cả đỏ thật (BH08).
       # Muốn bật windows: chạy một lượt đo trên máy Windows thật/CI thử rồi mở điều kiện.
+      # Sinh mirror Codex TRƯỚC khi test: test_agent_sync_health_is_green kiểm «mirror
+      # khớp nguồn» — trên checkout tươi mirror chưa tồn tại (nó là bản tự sinh, cố ý
+      # không track). Sinh ở đây cũng biến chính đường sync thành thứ được CI kiểm thật.
       - name: Bộ test tools/ (ubuntu — bản sao trần, skip có khai báo)
         if: runner.os == 'Linux'
         run: |
           pip install pytest
+          python tools/sync_agents_to_codex.py
           python -m pytest tools/ -q -rs

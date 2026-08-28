@@ -15,6 +15,21 @@ sys.modules[SPEC.name] = S
 SPEC.loader.exec_module(S)
 
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _chan_lan_goi_mang(monkeypatch):
+    """28/08/2026 — run_scan có HAI làn phụ gọi MẠNG THẬT (medRxiv + ClinicalTrials.gov)
+    mà test không stub: trên máy có mạng, truy vấn giả «A»/«B» kéo về ứng viên THẬT và
+    candidate_count nhảy 1 → 10 (bắt được lần đầu trên CI ubuntu — nơi mạng đi thẳng,
+    trong khi máy dev đi proxy nên làn lỗi êm và test «tình cờ» xanh). Unit test phải
+    NGOẠI TUYẾN và tất định (đúng luật «nhanh và ngoại tuyến» của bộ chốt): chặn cả hai
+    làn ở mọi test trong file; muốn test riêng làn thì viết test đích danh với stub HTTP."""
+    monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
+
+
 def test_watchlist_schema_rejects_duplicate_queries() -> None:
     payload = {
         "topics": [
