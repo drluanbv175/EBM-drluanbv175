@@ -52,10 +52,20 @@ GATE_CONTRACT_TOOLS_DIR = ROOT / "medical-ebm-automation" / "tools"
 if not (GATE_CONTRACT_TOOLS_DIR / "gate_contract.py").exists():
     _THIEU_NGUYEN_LIEU = ("FAIL (bỏ qua CÓ KHAI BÁO): thiếu medical-ebm-automation/tools/gate_contract.py — "
                           "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
-    # Chạy CLI thì thoát sạch một dòng; bị IMPORT (pytest) thì raise ModuleNotFoundError
-    # để bộ thu thập test xử lý như thiếu module bình thường, không chết INTERNALERROR.
     if __name__ == "__main__":
+        # 28/08/2026 — tách HAI trường hợp khác hẳn nhau:
+        # (a) repo y khoa vắng mặt HOÀN TOÀN = bản sao trần (cloud/CI): chốt này không
+        #     có nguồn sự thật để đối chiếu ⇒ ⚪ bỏ qua CÓ KHAI BÁO, thoát 0 — để hook
+        #     pre-commit chạy được trên bản trần thay vì buộc commit KHÔNG QUA CỔNG nào.
+        # (b) repo CÓ mà gate_contract.py mất = hỏng thật trên máy bác sĩ ⇒ đỏ như cũ.
+        if not (ROOT / "medical-ebm-automation").exists():
+            print("⚪ BỎ QUA CÓ KHAI BÁO: repo y khoa không có trên bản sao git trần — "
+                  "chốt đếm-cổng-cứng cần gate_contract.py làm nguồn sự thật; "
+                  "chạy trên máy có đủ hai repo. ⚪ KHÔNG có nghĩa là đạt.")
+            raise SystemExit(0)
         raise SystemExit(_THIEU_NGUYEN_LIEU)
+    # Bị IMPORT (pytest) thì raise ModuleNotFoundError để bộ thu thập test xử lý
+    # như thiếu module bình thường, không chết INTERNALERROR.
     raise ModuleNotFoundError(_THIEU_NGUYEN_LIEU)
 if str(GATE_CONTRACT_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(GATE_CONTRACT_TOOLS_DIR))

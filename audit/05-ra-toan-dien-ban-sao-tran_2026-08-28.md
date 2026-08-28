@@ -183,6 +183,27 @@ lý do để nối test vào CI:**
 
 Đối chứng trên clone sạch theo đúng luồng CI mới: **258 pass · 23 skip · 0 fail**.
 
+## 5-ter. VÒNG 3 cùng ngày — «Tiếp tục hoàn thiện» (2 việc đóng thêm)
+
+### (a) Hook pre-commit sống được trên bản trần — commit cloud từ nay ĐI QUA CỔNG THẬT
+
+Phát hiện tự soi: hai commit đầu của chính phiên này đi qua mà KHÔNG qua hook nào — vì
+hook không thể xanh trên bản trần (bước alignment/plugin-orchestration/hard-gate-count đều
+FAIL do thiếu repo y khoa). Một cổng không chạy được còn tệ hơn một cổng biết nói «phần
+này ngoài phạm vi». Ba công cụ trong dây hook nay nhận diện bản trần (CHỈ khi repo y khoa
+vắng mặt hoàn toàn) và tách phần thiếu-nguyên-liệu thành **⚪ NGOAI-PHAM-VI có khai báo,
+vẫn in đầy đủ**; phần trong-repo (doctrine gốc, mirror, registry, guardrail) **vẫn kiểm
+đủ và vẫn chặn**. Đối chứng hai chiều đã đo: bản trần → exit 0 + ⚪; thư mục
+`medical-ebm-automation/` RỖNG (repo có mà file mất — tình huống máy thật hỏng) → ĐỎ lại
+như cũ. Khoá bằng **BH83** (mutation-tested: nuốt lỗi trong-repo ⇒ đỏ; ⚪ hoá máy thật ⇒
+đỏ). Hook đã kích hoạt trong clone này; các commit vòng 3 đi qua cổng thật.
+
+### (b) Lane Windows của bước pytest CI — đo bằng chính CI
+
+Ghi chú vòng 2 đòi «đo trước rồi mở». Đã rà rủi ro (0 test dùng symlink/chmod; PYTHONUTF8
+ép sẵn; conftest đo thuộc tính filesystem thật nên test dedup `.Codex≡.codex` tự chạy đúng
+trên NTFS) rồi mở lane windows — kết quả đo nằm ở run CI của commit vòng 3.
+
 ## 6. Số đo trước/sau của phiên này
 
 | Chỉ số | Trước | Sau |

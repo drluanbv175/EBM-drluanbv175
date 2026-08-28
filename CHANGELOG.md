@@ -50,6 +50,22 @@ mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
 - **CI thêm bước `pytest tools/`** trên lane ubuntu (đúng điều kiện đã đo); lane windows
   chưa đo nên chưa bật, lý do ghi ngay trong workflow (BH08 — không dựng tường đỏ chưa đo).
 
+### Added (vòng 3 cùng ngày — «Tiếp tục hoàn thiện»)
+- **Hook pre-commit sống được trên bản sao trần (BH83, mutation-tested 2 phép).** Trước đó
+  hook không thể xanh trên clone không có repo y khoa ⇒ phiên cloud buộc commit KHÔNG QUA
+  CỔNG nào (hai commit đầu của chính phiên 28/08 đã đi qua lỗ hổng đó). Ba công cụ trong
+  dây hook nay tách phần thiếu-nguyên-liệu thành ⚪ NGOAI-PHAM-VI có khai báo — CHỈ khi
+  repo y khoa vắng mặt HOÀN TOÀN: `verify_claude_code_repo_alignment` (medical_repo_docs)
+  · `verify_plugin_orchestration` (lỗi trỏ vào repo y khoa/binding) ·
+  `verify_hard_gate_count_consistency` (⚪ thoát 0 ở CLI). Đối chứng cả hai chiều đã đo:
+  bản trần → cả ba exit 0 với ⚪ in đủ; tạo thư mục `medical-ebm-automation/` RỖNG (repo
+  có mà file mất) → cả ba ĐỎ lại như cũ. Hook đã kích hoạt trong clone này
+  (`git config core.hooksPath .githooks`) — commit của vòng 3 đi qua cổng thật.
+- **CI mở bước pytest sang lane windows** — phép đo windows mà ghi chú vòng 2 đòi, thực
+  hiện bằng chính CI có người canh: đã rà không test nào dùng symlink/chmod, PYTHONUTF8
+  ép sẵn, conftest đo thuộc tính filesystem THẬT nên test dedup `.Codex≡.codex` tự chạy
+  đúng trên NTFS.
+
 ### Fixed
 - 6 công cụ chết-không-khai-báo trên bản sao trần nay «bỏ qua CÓ KHAI BÁO» một dòng
   rõ nghĩa thay vì traceback: `audit_ebm_system.py` (2 chỗ — nay chạy TRỌN báo cáo,

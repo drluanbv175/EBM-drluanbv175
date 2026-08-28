@@ -3575,6 +3575,43 @@ def bh82_ban_sao_tran_khong_duoc_do_gia():
     return True, "bản trần: ⚪ đúng chỗ có khai báo, ✗ giữ nguyên cho lỗi trong-repo"
 
 
+def bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang():
+    """28/08 — vòng 3 cùng ngày: hook pre-commit KHÔNG THỂ xanh trên bản sao trần vì
+    hai verifier trong hook (alignment · plugin orchestration) và chốt đếm-cổng-cứng
+    FAIL do thiếu repo y khoa ⇒ phiên cloud buộc commit KHÔNG QUA CỔNG nào — tệ hơn
+    một cổng biết nói «phần này ngoài phạm vi». Hai commit đầu của phiên 28/08 đã đi
+    qua đúng lỗ hổng đó.
+
+    Đã sửa: ba công cụ nhận diện bản trần (repo y khoa vắng mặt HOÀN TOÀN) và tách
+    phần thiếu-nguyên-liệu thành ⚪ NGOAI-PHAM-VI có khai báo; máy có repo (kể cả thư
+    mục RỖNG — tức repo có mà file mất) vẫn FAIL như cũ.
+
+    Chốt kiểm HÀNH VI phân loại (gọi thẳng hàm, chạy được trên MỌI máy):
+      • đường ⚪ tồn tại: check_medical_docs(tran=True) → NGOAI-PHAM-VI
+      • máy thật không bao giờ ⚪: check_medical_docs(tran=False) ≠ NGOAI-PHAM-VI
+      • bộ phân loại lỗi plugin: lỗi trỏ vào repo y khoa/binding → ngoài phạm vi;
+        lỗi trong-repo (registry hỏng…) TUYỆT ĐỐI không được nuốt
+      • trên bản trần, alignment tổng thể phải PASS (thuộc tính mở khoá hook)
+    """
+    va = _nap(REPO / "tools" / "verify_claude_code_repo_alignment.py", "va_bh83")
+    vp = _nap(REPO / "tools" / "verify_plugin_orchestration.py", "vp_bh83")
+    if va.check_medical_docs(tran=True).get("status") != "NGOAI-PHAM-VI":
+        return False, "đường ⚪ biến mất — bản trần lại đỏ giả, hook lại chết"
+    if va.check_medical_docs(tran=False).get("status") == "NGOAI-PHAM-VI":
+        return False, "máy thật bị ⚪ hoá — fail-closed của alignment bị tháo"
+    if not vp.loi_ngoai_pham_vi_tran("thieu file medical-ebm-automation/CLAUDE.md"):
+        return False, "lỗi thiếu-repo-y-khoa không được nhận là ngoài phạm vi"
+    if not vp.loi_ngoai_pham_vi_tran("thieu production tool binding: g10-assemble"):
+        return False, "binding trỏ sang repo y khoa không được nhận là ngoài phạm vi"
+    if vp.loi_ngoai_pham_vi_tran("registry schema hong: thieu owner_unit"):
+        return False, "lỗi TRONG-repo bị nuốt thành ngoài phạm vi — chốt mất răng"
+    if va.ban_sao_tran():
+        tong = va.run_verification()["overall_status"]
+        if tong != "PASS":
+            return False, f"bản trần mà alignment tổng thể {tong} — hook vẫn bị chặn oan"
+    return True, "hook sống được trên bản trần; máy thật giữ nguyên fail-closed"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3666,6 +3703,7 @@ BAI_HOC = [
     # canary cổng nghiên cứu của master. Đánh số lại thành 81 theo đúng tiền lệ BH68.
     ("BH81", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục («gọi skill không được»)", bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
     ("BH82", "28/08", "Bản sao git trần: «không kiểm được» là ⚪ có khai báo, không phải ✗ giả", bh82_ban_sao_tran_khong_duoc_do_gia),
+    ("BH83", "28/08", "Hook pre-commit sống được trên bản trần mà không mất răng trên máy thật", bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang),
 
 ]
 

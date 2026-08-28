@@ -41,6 +41,22 @@ def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
     ]
 
 
+def ban_sao_tran() -> bool:
+    """True khi repo y khoa vắng mặt HOÀN TOÀN (bản clone git trần — cloud/CI).
+
+    28/08/2026 — trên bản trần mọi mục cần medical-ebm-automation/ đỏ vì thiếu
+    nguyên liệu, chặn luôn hook pre-commit ⇒ phiên cloud commit KHÔNG QUA CỔNG
+    nào. Chỉ nhận diện khi CẢ THƯ MỤC repo vắng mặt; repo có mà file/binding
+    mất vẫn FAIL như cũ (fail-closed nguyên vẹn trên hai máy thật)."""
+    return not (ROOT / "medical-ebm-automation").exists()
+
+
+def loi_ngoai_pham_vi_tran(error: str) -> bool:
+    """Lỗi CHỈ vì nguyên liệu nằm trong repo y khoa (đường dẫn/binding trỏ sang đó)."""
+    return ("medical-ebm-automation" in error
+            or error.startswith("thieu production tool binding"))
+
+
 def verify() -> dict[str, Any]:
     errors: list[str] = []
     checks: list[str] = []
@@ -127,12 +143,20 @@ def verify() -> dict[str, Any]:
     if not errors:
         checks.append("unknown capability + worker ngoai allowlist fail-closed")
 
+    # Trên bản sao trần, các lỗi CHỈ vì nguyên liệu nằm trong repo y khoa được tách
+    # sang «ngoài phạm vi» — vẫn IN RA đầy đủ, không đếm FAIL (BH82/BH08). Máy có
+    # repo y khoa: ngoai_pham_vi luôn rỗng, hành vi cũ giữ nguyên.
+    ngoai_pham_vi: list[str] = []
+    if ban_sao_tran():
+        ngoai_pham_vi = [e for e in errors if loi_ngoai_pham_vi_tran(e)]
+        errors = [e for e in errors if not loi_ngoai_pham_vi_tran(e)]
     return {
         "status": "PASS" if not errors else "FAIL",
         "policy_id": plugins.policy_id,
         "summary": plugins.summary(),
         "checks": checks,
         "errors": errors,
+        "ngoai_pham_vi": ngoai_pham_vi,
     }
 
 
@@ -150,6 +174,10 @@ def main() -> int:
             print(f"- PASS {check}")
         for error in report["errors"]:
             print(f"- FAIL {error}")
+        for muc in report.get("ngoai_pham_vi", []):
+            print(f"- ⚪ NGOAI-PHAM-VI (ban sao tran) {muc}")
+        if report.get("ngoai_pham_vi"):
+            print("  ⚪ KHONG phai dat — phan nay chi kiem duoc tren may co du hai repo.")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 
