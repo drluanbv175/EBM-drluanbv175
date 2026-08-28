@@ -541,8 +541,11 @@ def launchd_registration_drift() -> list[str]:
         )
 
         try:
+            # uid nhấc RA KHỎI f-string: lồng nháy kép trong f-string là cú pháp
+            # PEP 701, chỉ hợp lệ từ Python 3.12 — mà CLAUDE.md khai sàn 3.11.
+            uid = getattr(os, "getuid", lambda: 0)()
             p = subprocess.run(
-                ["launchctl", "print", f"gui/{getattr(os, "getuid", lambda: 0)()}/{label}"],
+                ["launchctl", "print", f"gui/{uid}/{label}"],
                 capture_output=True, text=True, timeout=10,
             )
         except Exception as e:  # noqa: BLE001

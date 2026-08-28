@@ -3224,6 +3224,216 @@ def bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la() -> tuple[bool, str]:
                        "xem BH77): " + ", ".join(mat))
     return True, f"{len(SKILL_CO_GUARD)}/{len(SKILL_CO_GUARD)} skill còn nguyên khối EBM-VN-GUARD"
 
+def bh78_so_viec_treo_fail_closed_va_khong_tu_dong() -> tuple[bool, str]:
+    """22/08/2026 — `tools/so_viec_chua_dong.py` ra đời để canh việc còn treo sau khi
+    bệnh nhân ra về (6,8-62% kết quả xét nghiệm ngoại trú không được theo dõi tiếp —
+    Callen 2012, PMID 22183961). Ba hành vi PHẢI giữ, vì mất bất kỳ cái nào thì sổ
+    biến thành lời bảo đảm rỗng:
+
+    (a) Bản ghi THIẾU HẠN phải rơi vào nhóm PHẢI XEM, không phải nhóm "ổn". Dữ liệu
+        hỏng rơi về phía im lặng là đúng họ lỗi BH01/BH27/BH61 — công cụ vẫn chạy, vẫn
+        in kết quả hợp lệ, nhưng thứ cần thấy thì không bao giờ hiện.
+    (b) Công cụ KHÔNG được tự đóng việc. Đóng một việc treo là hành vi lâm sàng.
+    (c) Sổ KHÔNG được mang trường `decision`/`gradeLevel` (BH10).
+
+    Kiểm bằng cách gọi thẳng vào mã đang sống.
+    """
+    import datetime as _dt
+    import io
+    import json
+    import tempfile
+    from contextlib import redirect_stdout
+
+    m = _nap(REPO / "tools" / "so_viec_chua_dong.py", "_bh70_so_viec")
+    hom_nay = _dt.date(2026, 8, 22)
+
+    # (a) thiếu hạn → PHẢI XEM
+    _con_han, qua_han = m.phan_loai(
+        [{"id": "V001", "trang_thai": "mo", "mo_ta": "x", "loai": "khac",
+          "ma_noi_bo": "", "han": None}], hom_nay)
+    if not any(t is None for _r, t in qua_han):
+        return False, "bản ghi thiếu hạn KHÔNG rơi vào nhóm phải xem (fail-open)"
+
+    with tempfile.TemporaryDirectory() as d:
+        so = Path(d) / "v.jsonl"
+        args = ["--so", str(so), "--hom-nay", hom_nay.isoformat()]
+
+        # việc treo không hạn phải bị TỪ CHỐI ngay lúc mở
+        with redirect_stdout(io.StringIO()):
+            ma = m.main(args + ["--them", "--loai", "tai-kham", "--mo-ta", "hẹn 3 tháng"])
+        if ma != 2:
+            return False, "mở được việc treo KHÔNG có hạn"
+
+        with redirect_stdout(io.StringIO()):
+            m.main(args + ["--them", "--loai", "xet-nghiem",
+                           "--mo-ta", "creatinin, chờ kết quả", "--han", "2026-07-01"])
+            ma_bc = m.main(args)          # báo cáo
+            m.main(args + ["--tuan"])     # bảng tuần
+
+        if ma_bc != 1:
+            return False, "việc quá hạn không làm mã thoát = 1"
+
+        # (b) không tự đóng
+        ds = [json.loads(x) for x in so.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if any(r["trang_thai"] != "mo" for r in ds):
+            return False, "công cụ TỰ ĐÓNG việc — vượt thẩm quyền lâm sàng"
+
+        # (c) không ghi decision/gradeLevel
+        raw = so.read_text(encoding="utf-8")
+        for cam in ("decision", "gradeLevel", "gradeBy", "normativeBasis"):
+            if cam in raw:
+                return False, f"sổ mang trường {cam} (BH10)"
+
+        # PII: mẫu độ chính xác cao phải bị chặn, mô tả lâm sàng thường KHÔNG bị chặn oan
+        if not m.soi_pii("gọi lại 0912345678"):
+            return False, "bộ chặn PII bỏ lọt số điện thoại"
+        if m.soi_pii("eGFR 48 mL/phút/1,73m2, nhắc lại creatinin"):
+            return False, "bộ chặn PII chặn oan mô tả lâm sàng bình thường (BH08)"
+
+    return True, "fail-closed khi thiếu hạn · không tự đóng · không ghi decision · PII đúng mức"
+
+
+def bh79_la_co_safety_net_khong_duoc_noi_ho() -> tuple[bool, str]:
+    """22/08/2026 — `CLINICAL_RUNTIME_FLAGS.json` khai
+    `enforce_safety_net_templates: true` từ lâu, nhưng grep toàn repo trả 0 file tham
+    chiếu tới `safety_net_templates.json`, và nội dung file đó là ba mẫu tiếng Anh chung
+    chung không nguồn. Một lá cờ TUYÊN BỐ có thi hành mà không có gì thi hành — cùng họ
+    với BH01 (`return` sớm che 73 mục), BH27 (fail-open cổng A12) và BH61 (khoá lạ trong
+    `DATA.summary`), nhưng rơi vào TẦNG AN TOÀN CHO BỆNH NHÂN.
+
+    Chốt canh hai hành vi của `tools/kiem_safety_net.py`:
+    (a) R9 — cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.
+    (b) R3 — hội chứng THIẾU HẲN khối `dan_benh_nhan_quay_lai` phải bị bắt. Bản đầu của
+        chốt viết `.get(khoa, {})`, mà `{}` LÀ dict nên `isinstance` luôn đúng ⇒ khối
+        thiếu hẳn vẫn lọt. Mặc định phải là `None`.
+    """
+    import datetime as _dt
+
+    m = _nap(REPO / "tools" / "kiem_safety_net.py", "_bh71_safety_net")
+    hom_nay = _dt.date(2026, 8, 22)
+    co_bat = {"enforce_safety_net_templates": True}
+
+    def hc_co_nguon():
+        return {
+            "ten": "Đau đầu", "trang_thai": "co-nguon",
+            "co_do_cho_bac_si": {
+                "nguon": {"pmid": "30587518"},
+                "gioi_han_nguyen_van_cua_nguon": "chưa có công cụ đã kiểm định",
+                "tieu_chi": [{"mo_ta": "Khởi phát sau 65 tuổi", "do_duoc": True}],
+            },
+            "dan_benh_nhan_quay_lai": {"trang_thai": "chua-dien",
+                                       "noi_dung": m.PLACEHOLDER},
+            "ngay_ra_soat": "2026-08-22",
+        }
+
+    def hc_chua_dien():
+        return {
+            "ten": "Đau ngực", "trang_thai": "chua-dien",
+            "co_do_cho_bac_si": {"trang_thai": "chua-dien", "noi_dung": m.PLACEHOLDER},
+            "dan_benh_nhan_quay_lai": {"trang_thai": "chua-dien",
+                                       "noi_dung": m.PLACEHOLDER},
+            "ngay_ra_soat": "2026-08-22",
+        }
+
+    # (a) cờ bật + 0 hội chứng có nguồn ⇒ R9
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-nguc": hc_chua_dien()}},
+                       co_bat, hom_nay)
+    if not any(x.startswith("R9") for x in loi):
+        return False, "cờ bật mà 0 hội chứng có nguồn KHÔNG bị bắt (lá cờ nói hộ)"
+
+    # cờ tắt ⇒ R9 không áp
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-nguc": hc_chua_dien()}},
+                       {"enforce_safety_net_templates": False}, hom_nay)
+    if any(x.startswith("R9") for x in loi):
+        return False, "R9 nổ cả khi cờ đang tắt"
+
+    # (b) thiếu hẳn khối lời dặn ⇒ R3
+    hc = hc_co_nguon()
+    del hc["dan_benh_nhan_quay_lai"]
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R3") for x in loi):
+        return False, "hội chứng thiếu hẳn khối lời dặn vẫn lọt R3 (fail-open .get(k, {}))"
+
+    # nguồn văn xuôi phải bị từ chối; tiêu chí không đo được phải bị từ chối
+    hc = hc_co_nguon()
+    hc["co_do_cho_bac_si"]["nguon"] = {"ten": "theo kinh nghiệm lâm sàng"}
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R4") for x in loi):
+        return False, "nguồn dạng văn xuôi vẫn được chấp nhận"
+
+    hc = hc_co_nguon()
+    hc["co_do_cho_bac_si"]["tieu_chi"] = [{"mo_ta": "nếu nặng hơn", "do_duoc": False}]
+    loi, _, _ = m.kiem({"phien_ban": "2", "hoi_chung": {"dau-dau": hc}}, co_bat, hom_nay)
+    if not any(x.startswith("R5") for x in loi):
+        return False, "'nếu nặng hơn' được nhận là tiêu chí"
+
+    # file THẬT trong repo phải qua được chốt (không lỗi cứng)
+    that = _nap(REPO / "tools" / "kiem_safety_net.py", "_bh71_that")
+    import json as _json
+    mau_that = _json.loads((REPO / "clinical_runtime" / "safety_net_templates.json")
+                           .read_text(encoding="utf-8"))
+    co_that = _json.loads((REPO / "clinical_runtime" / "CLINICAL_RUNTIME_FLAGS.json")
+                          .read_text(encoding="utf-8"))
+    loi, _, dp = that.kiem(mau_that, co_that, hom_nay)
+    if loi:
+        return False, f"file thật đang có LỖI CỨNG: {loi[0]}"
+    if dp["co_nguon"] < 1:
+        return False, "file thật không còn hội chứng nào có nguồn — R9 lẽ ra phải nổ"
+
+    return True, (f"R9 canh lá cờ · R3 bắt khối thiếu · R4/R5 chặn nguồn-văn-xuôi và "
+                  f"tiêu-chí-không-đo-được · file thật {dp['co_nguon']}/{dp['tong']} có nguồn")
+
+
+
+def bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao() -> tuple[bool, str]:
+    """22/08/2026 — `python -m compileall tools ops` trên Python 3.11 báo **5 file
+    KHÔNG biên dịch được**: `audit_ebm_system.py` · `fix_launchd_scheduled_jobs.py` ·
+    `kiem_do_tuoi_chung_cu.py` · `kiem_phan_hang.py` · `verify_mcp_live_sync.py`
+    (6 chỗ). Nguyên nhân: cú pháp PEP 701 — lồng nháy KÉP bên trong f-string nháy kép
+    (`f"gui/{getattr(os, "getuid", ...)}"`) và dấu gạch chéo ngược trong phần biểu
+    thức của f-string — **chỉ hợp lệ từ Python 3.12**, trong khi `CLAUDE.md` khai sàn
+    **3.11+**.
+
+    Vì sao nằm im lâu: CI ghim đúng `python-version: "3.12"`, và hai máy của bác sĩ
+    chạy 3.12.10 / 3.14.6 — nên không đâu chạm tới sàn đã khai. Hại thật: trên một
+    môi trường 3.11 (container phiên web, máy mới, đồng nghiệp cài bản khác),
+    `kiem_do_tuoi_chung_cu.py` — **một trong 7 chốt tự chạy mỗi phiên** — chết
+    SyntaxError, mà hook `SessionStart` kết thúc bằng `; true` nên **nuốt lỗi không
+    một dòng báo**. Đúng lại họ lỗi mà CHÍNH file đó đã dính hồi 12/08 trên Windows
+    (`os.getuid` không tồn tại + chỉ bắt OSError ⇒ chết im lặng).
+
+    ⚠️ GIỚI HẠN CÓ CHỦ Ý, đừng đọc quá: chốt này biên dịch bằng **trình thông dịch
+    đang chạy**. Trên máy 3.12+ nó KHÔNG thấy được cú pháp 3.12-only. Guard thật cho
+    sàn khai báo là **lane `python-version: "3.11"` trong `.github/workflows/
+    kiem-tinh-da-nen.yml`**, thêm cùng ngày. Chốt này bắt mọi lỗi cú pháp khác và bắt
+    đúng lớp trên khi phiên đang chạy ở sàn.
+    """
+    import sys
+
+    hong = []
+    for thu_muc in ("tools", "ops"):
+        goc = REPO / thu_muc
+        if not goc.is_dir():
+            continue
+        for f in sorted(goc.rglob("*.py")):
+            if "__pycache__" in f.parts:
+                continue
+            try:
+                compile(f.read_text(encoding="utf-8"), str(f), "exec")
+            except SyntaxError as e:
+                hong.append(f"{f.relative_to(REPO)}:{e.lineno} {e.msg}")
+            except (OSError, UnicodeDecodeError) as e:
+                hong.append(f"{f.relative_to(REPO)} đọc lỗi: {e}")
+
+    if hong:
+        return False, f"{len(hong)} file không biên dịch được: " + " · ".join(hong[:3])
+
+    v = f"{sys.version_info.major}.{sys.version_info.minor}"
+    o_san = v == "3.11"
+    return True, (f"mọi tools/ + ops/ biên dịch được trên Python {v}"
+                  + (" (ĐÚNG sàn khai báo)" if o_san
+                     else " — lưu ý: không phải sàn 3.11, lane CI 3.11 mới là guard thật"))
+
 
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
@@ -3306,6 +3516,12 @@ BAI_HOC = [
     ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
     ("BH76", "25/08", "Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime", bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime),
     ("BH77", "26/08", "Skill đã Việt hoá không được mất khối EBM-VN-GUARD", bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la),
+    # Ba mục dưới ra đời trên nhánh outpatient 22/08 với số 70/71/72 — trùng với ba
+    # mục master đặt song song cùng tuần. Đánh số lại thành 78/79/80 theo đúng tiền lệ
+    # ghi ngay phía trên (BH68 canh mã duy nhất).
+    ("BH78", "22/08", "Sổ việc treo: fail-closed khi thiếu hạn, không tự đóng việc", bh78_so_viec_treo_fail_closed_va_khong_tu_dong),
+    ("BH79", "22/08", "Lá cờ safety-netting không được nói hộ (R9) + R3 bắt khối thiếu", bh79_la_co_safety_net_khong_duoc_noi_ho),
+    ("BH80", "22/08", "Mọi công cụ biên dịch được trên SÀN KHAI BÁO (3.11), không chỉ 3.12", bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao),
 ]
 
 
