@@ -159,12 +159,29 @@ Kết quả: 23 fail + 4 lỗi thu thập → **258 pass · 23 skip · 0 fail**;
 conftest skip oan 81/92 test của `test_classify` vì quy tắc «cả file» — phát hiện nhờ so
 số pass trước/sau (258 → 177), đã khai lại đích danh 11 test.
 
-### (c) CI có thêm bước test thật
+### (c) CI có thêm bước test thật — và lần chạy ĐẦU TIÊN đã bắt được 2 lỗi thật
 
 `.github/workflows/kiem-tinh-da-nen.yml` thêm bước `pytest tools/` trên lane **ubuntu**
 (đúng điều kiện vừa đo). Lane **windows chưa bật có chủ ý** — chưa có phép đo nào trên
 Windows bare-clone, và một bức tường đỏ chưa đo sẽ dạy người ta bỏ qua cả đỏ thật (BH08);
 điều kiện mở ghi ngay trong workflow.
+
+**Lần CI đầu tiên chạy pytest (run #89) ĐỎ — và cả hai lỗi đều là phát hiện THẬT, đúng
+lý do để nối test vào CI:**
+
+1. 🔴 **`test_scan_deduplicates_pmid_across_topics` — unit test phụ thuộc MẠNG THẬT.**
+   `run_scan` có hai làn phụ gọi thẳng medRxiv + ClinicalTrials.gov mà test không stub.
+   Trên CI (mạng đi thẳng), truy vấn giả «A»/«B» kéo về ứng viên THẬT: candidate_count
+   1 → 10, test đỏ. Trên máy dev đi proxy, hai làn lỗi êm (fail-soft) nên test
+   **«tình cờ xanh» suốt từ khi ra đời** — cùng họ «công cụ vẫn chạy, vẫn in kết quả
+   hợp lệ, nhưng thứ cần kiểm thì không được kiểm». Vá: fixture autouse chặn cả hai làn
+   trong file test — unit test phải NGOẠI TUYẾN và tất định, đúng luật của chính bộ chốt.
+2. 🔴 **`test_agent_sync_health_is_green` đỏ trên checkout tươi** — mirror Codex là bản
+   tự sinh cố ý không track, nên checkout tươi không có. Vá ở workflow: chạy
+   `sync_agents_to_codex.py` TRƯỚC pytest — nhờ đó chính đường sync mirror cũng thành
+   thứ CI kiểm thật mỗi lần push.
+
+Đối chứng trên clone sạch theo đúng luồng CI mới: **258 pass · 23 skip · 0 fail**.
 
 ## 6. Số đo trước/sau của phiên này
 
