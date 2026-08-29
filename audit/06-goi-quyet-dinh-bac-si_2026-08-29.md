@@ -167,4 +167,33 @@ thật) trên CẢ HAI máy.
 
 ---
 
+---
+
+## ✍️ QUYẾT ĐỊNH BÁC SĨ 29/08/2026 (trả lời trong phiên Claude Code) + thi hành
+
+1. **Cờ đỏ:** «Duyệt cả 7» → 7 khối `de_xuat` đã đổi thành `da_duyet` kèm ngày; nội dung
+   tiêu chí giữ nguyên. (`safety_net_templates.json` v2.2.0)
+2. **Lời dặn:** «Bổ sung nguồn cho chính xác giúp tôi» → 8 khối lời dặn đã ghi vào JSON,
+   MỖI CÂU truy về nguồn tra sống PubMed 29/08/2026; các nguồn BỔ SUNG so với bản nháp:
+   - Chùm đuôi ngựa (đau lưng): Dionne 2019, tổng quan hệ thống — PMID 31132655 ·
+     [doi:10.1016/j.msksp.2019.05.004](https://doi.org/10.1016/j.msksp.2019.05.004)
+     (+ Corrigendum 2021 — PMID 33722511); tóm tắt nêu đích danh tê yên ngựa, bí tiểu,
+     tiểu/đại tiện không tự chủ; giới hạn: đặc hiệu hơn nhạy (Se gộp 0,19–0,43).
+   - Dấu đột quỵ (chóng mặt): BE-FAST — Aroor, Stroke 2017 — PMID 28082668 ·
+     [doi:10.1161/STROKEAHA.116.015169](https://doi.org/10.1161/STROKEAHA.116.015169)
+     (thêm Thăng bằng + Mắt giảm bỏ sót 14,1%→4,4%; hồi cứu một trung tâm).
+   - Dấu báo động tiêu hoá: Odeghe 2019 — PMID 31762930 ·
+     [doi:10.11604/pamj.2019.34.66.18848](https://doi.org/10.11604/pamj.2019.34.66.18848)
+     (nôn máu/nôn dai dẳng/nuốt đau → nội soi sớm; hồi cứu một trung tâm, Se 65%/Sp 49%).
+   - Mốc cấp cứu đau ngực: TÓM TẮT AHA/ACC 2021 (PMID 34709879 ·
+     [doi:10.1161/CIR.0000000000001029](https://doi.org/10.1161/CIR.0000000000001029))
+     không nêu ngưỡng cụ thể → ô này GIỮ `[CẦN BÁC SĨ ĐIỀN]`, chỉ ghi nguồn đề xuất —
+     không bịa ngưỡng.
+   ⚠️ Câu chữ cuối của lời dặn vẫn mang nhãn `de_xuat` — chỉ in cho bệnh nhân sau khi
+   bác sĩ chuẩn y câu chữ (Cổng A). `moc_thoi_gian` 8/8 vẫn `[CẦN BÁC SĨ ĐIỀN]`.
+3. **Merge:** «Merge và push master» → thi hành trong cùng phiên (merge `--no-ff`).
+4. **Chứng cứ:** «Đồng ý hướng neo» → hồ sơ neo ở mục 4 là quyết định hiện hành; việc áp
+   vào dashboard làm trên máy thật (chép mức nguyên bản KDIGO 2024/EULAR từ toàn văn
+   TRƯỚC, rồi mới nâng `decision`; ITEM-05 giữ chiều, đối chiếu HR 0,61 bản đã thay).
+
 *Tài liệu do Claude soạn 29/08/2026; nguồn tra qua PubMed cùng ngày. Cần bác sĩ kiểm chứng.*

@@ -1,6 +1,6 @@
 {
-  "phien_ban": "2.1.0",
-  "ngay_cap_nhat": "2026-08-28",
+  "phien_ban": "2.2.0",
+  "ngay_cap_nhat": "2026-08-29",
   "kiem_bang": "python3 tools/kiem_safety_net.py",
   "vi_sao_co": [
     "Bản 1.x của file này là ba mẫu tiếng Anh chung chung ('Recommend follow-up within 4-6 weeks',",
@@ -113,12 +113,43 @@
         ]
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "SNNOOP10 là danh sách cho BÁC SĨ lúc khám, không phải câu dặn mang về nhà. Chuyển nó thành lời dặn bệnh nhân cần bác sĩ chọn ngưỡng và diễn đạt lại — việc đó thuộc Cổng A."
+        "trang_thai": "co-nguon",
+        "nguon": {
+          "ten": "SNNOOP10 — Do TP và cs., Neurology 2019",
+          "pmid": "30587518",
+          "doi": "10.1212/WNL.0000000000006697"
+        },
+        "noi_dung": [
+          {
+            "cau": "Quay lại khám NGAY hoặc đi cấp cứu nếu: đau đầu khởi phát ĐỘT NGỘT, dữ dội",
+            "ma_nguon": "O1"
+          },
+          {
+            "cau": "… đau đầu kèm SỐT",
+            "ma_nguon": "S"
+          },
+          {
+            "cau": "… kèm yếu tay chân, nói khó, nhìn mờ/nhìn đôi, hoặc lú lẫn",
+            "ma_nguon": "N2"
+          },
+          {
+            "cau": "… đau đầu sau ngã hoặc va đập đầu",
+            "ma_nguon": "P8"
+          },
+          {
+            "cau": "… đau đầu kiểu MỚI khác hẳn trước đây, hoặc ngày càng nặng dần",
+            "ma_nguon": "P1, P5"
+          },
+          {
+            "cau": "… đang mang thai hoặc mới sinh mà xuất hiện đau đầu mới",
+            "ma_nguon": "P6"
+          }
+        ],
+        "ghi_chu": "Mỗi câu là bản diễn đạt bệnh-nhân-hiểu-được của đúng tiêu chí SNNOOP10 tương ứng (mã kèm theo).",
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-22"
+      "ngay_ra_soat": "2026-08-29"
     },
     "dau-nguc": {
       "ten": "Đau ngực",
@@ -160,15 +191,24 @@
             "do_duoc": false
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "Marburg là thang cho BÁC SĨ tại điểm khám. Câu dặn bệnh nhân về nhà (khi nào gọi cấp cứu vì đau ngực) cần bác sĩ chọn ngưỡng và diễn đạt — Cổng A."
+        "trang_thai": "co-nguon",
+        "noi_dung": [
+          {
+            "cau": "Đau ngực xuất hiện hoặc tăng lên khi gắng sức → đi khám sớm",
+            "nguon_goc": "Marburg M4 — PMID 20603345, doi:10.1503/cmaj.100212"
+          },
+          {
+            "cau": "[CẦN BÁC SĨ ĐIỀN] — mốc GỌI CẤP CỨU (đau kéo dài bao lâu, dấu đi kèm nào)",
+            "nguon_goc": "Nguồn đề xuất để rút ngưỡng: AHA/ACC 2021 Guideline for the Evaluation and Diagnosis of Chest Pain — PMID 34709879, doi:10.1161/CIR.0000000000001029 (Practice Guideline; TÓM TẮT không nêu ngưỡng cụ thể — phải lấy từ toàn văn, không được bịa)"
+          }
+        ],
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "kho-tho": {
       "ten": "Khó thở",
@@ -214,15 +254,34 @@
             "do_duoc": true
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "Ngưỡng sinh tồn là ngôn ngữ chuyên môn; bệnh nhân ở nhà không đo NEWS2. Câu dặn 'khó thở thế nào thì quay lại ngay' cần bác sĩ diễn đạt theo bệnh cảnh — Cổng A."
+        "trang_thai": "co-nguon",
+        "nguon": {
+          "ten": "NEWS2 — Royal College of Physicians",
+          "guideline": "Royal College of Physicians — National Early Warning Score 2 (NEWS2)",
+          "nam": "2017"
+        },
+        "noi_dung": [
+          {
+            "cau": "SpO₂ trên máy kẹp ngón tại nhà ≤91% → đi cấp cứu",
+            "ma_nguon": "N2"
+          },
+          {
+            "cau": "Người nhà đếm nhịp thở trọn 1 phút: từ 25 lần/phút trở lên → quay lại ngay",
+            "ma_nguon": "N1"
+          },
+          {
+            "cau": "Mới lú lẫn, nói lẫn, hoặc khó đánh thức → đi cấp cứu",
+            "ma_nguon": "N5"
+          }
+        ],
+        "ghi_chu": "Người bệnh COPD/nguy cơ tăng CO₂ dùng ngưỡng SpO₂ riêng (Scale 2) theo chỉ định của bác sĩ.",
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "dau-bung": {
       "ten": "Đau bụng",
@@ -249,15 +308,25 @@
             "do_duoc": true
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "Guideline dành cho quyết định NỘI SOI của bác sĩ. Câu dặn bệnh nhân (nôn máu, phân đen, đau dữ dội đột ngột…) cần bác sĩ chọn và diễn đạt — Cổng A."
+        "trang_thai": "co-nguon",
+        "noi_dung": [
+          {
+            "cau": "Từ 60 tuổi trở lên MỚI xuất hiện khó tiêu → đi khám để bác sĩ cân nhắc nội soi",
+            "nguon_goc": "ACG/CAG 2017 (D1) — PMID 28631728, doi:10.1038/ajg.2017.154"
+          },
+          {
+            "cau": "Nôn ra máu, nôn kéo dài không dứt, hoặc nuốt đau → đi khám/nội soi KHẨN",
+            "nguon_goc": "Odeghe và cs., Pan Afr Med J 2019 — PMID 31762930, doi:10.11604/pamj.2019.34.66.18848 (kết luận nguyên văn tóm tắt: bệnh nhân khó tiêu kèm xuất huyết tiêu hoá trên, nôn dai dẳng hoặc nuốt đau cần được nội soi sớm)"
+          }
+        ],
+        "gioi_han": "Odeghe 2019 là nghiên cứu HỒI CỨU một trung tâm (Nigeria); alarm features gộp có độ nhạy 65%, độ đặc hiệu 49% — bác sĩ có thể thay bằng nguồn mạnh hơn khi chọn được.",
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "sot": {
       "ten": "Sốt",
@@ -289,15 +358,33 @@
             "do_duoc": false
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "qSOFA là công cụ của người khám. Câu dặn bệnh nhân sốt khi nào quay lại (co giật, lơ mơ, không uống được…) cần bác sĩ chọn theo bệnh cảnh — Cổng A."
+        "trang_thai": "co-nguon",
+        "nguon": {
+          "ten": "qSOFA (Sepsis-3) — Seymour và cs., JAMA 2016",
+          "pmid": "26903335",
+          "doi": "10.1001/jama.2016.0288"
+        },
+        "noi_dung": [
+          {
+            "cau": "Sốt kèm lơ mơ, nói lẫn, hoặc khó đánh thức → đi cấp cứu",
+            "ma_nguon": "Q3"
+          },
+          {
+            "cau": "Người nhà đếm nhịp thở trọn 1 phút: từ 22 lần/phút trở lên khi đang sốt → quay lại ngay",
+            "ma_nguon": "Q1"
+          },
+          {
+            "cau": "Nếu nhà có máy đo huyết áp: huyết áp tâm thu ≤100 mmHg → quay lại ngay",
+            "ma_nguon": "Q2"
+          }
+        ],
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "dau-lung": {
       "ten": "Đau thắt lưng",
@@ -344,15 +431,29 @@
             "do_duoc": true
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "Xác suất hậu nghiệm là ngôn ngữ của người khám. Câu dặn bệnh nhân đau lưng khi nào quay lại (yếu chân, bí tiểu, tê vùng yên ngựa…) cần bác sĩ chọn nguồn và diễn đạt — Cổng A."
+        "trang_thai": "co-nguon",
+        "noi_dung": [
+          {
+            "cau": "Đau lưng sau ngã/tai nạn đáng kể, hoặc thấy bầm tím/trầy xước vùng đau → đi khám sớm",
+            "nguon_goc": "Downie BMJ 2013 (F2, F3) — PMID 24335669, doi:10.1136/bmj.f7095"
+          },
+          {
+            "cau": "Đang dùng corticoid kéo dài, hoặc từng bị ung thư, mà đau lưng mới xuất hiện → đi khám sớm",
+            "nguon_goc": "Downie BMJ 2013 (F1, C1) — PMID 24335669, doi:10.1136/bmj.f7095"
+          },
+          {
+            "cau": "Tê vùng yên ngựa (vùng tiếp xúc yên xe), bí tiểu, tiểu không tự chủ hoặc đại tiện không tự chủ → đi CẤP CỨU NGAY",
+            "nguon_goc": "Dionne và cs., Musculoskelet Sci Pract 2019 (tổng quan hệ thống cờ đỏ hội chứng chùm đuôi ngựa) — PMID 31132655, doi:10.1016/j.msksp.2019.05.004; có Corrigendum 2021 — PMID 33722511, doi:10.1016/j.msksp.2021.102355"
+          }
+        ],
+        "gioi_han": "Dionne 2019: các dấu chùm đuôi ngựa ĐẶC HIỆU hơn là NHẠY (độ nhạy gộp 0,19–0,43) — CÓ dấu là lý do đi khám khẩn, nhưng KHÔNG CÓ dấu không loại trừ được; bác sĩ đối chiếu bản corrigendum 2021 khi đọc toàn văn.",
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "chong-mat": {
       "ten": "Chóng mặt",
@@ -389,15 +490,25 @@
             "do_duoc": false
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "HINTS là kỹ thuật khám chuyên môn. Câu dặn bệnh nhân chóng mặt khi nào quay lại ngay (nói khó, nhìn đôi, yếu liệt…) cần bác sĩ chọn nguồn và diễn đạt — Cổng A."
+        "trang_thai": "co-nguon",
+        "noi_dung": [
+          {
+            "cau": "Chóng mặt LIÊN TỤC không dứt kèm đi đứng không vững — nhất là người có tăng huyết áp/đái tháo đường/rung nhĩ/hút thuốc → đi khám NGAY",
+            "nguon_goc": "Kattah và cs., Stroke 2009 (P1 — bệnh cảnh quần thể nghiên cứu) — PMID 19762709, doi:10.1161/STROKEAHA.109.551234"
+          },
+          {
+            "cau": "Kèm BẤT KỲ dấu nào: méo mặt, yếu tay, nói khó, mất thăng bằng/yếu chân, nhìn mờ/nhìn đôi → gọi cấp cứu (dấu hiệu đột quỵ)",
+            "nguon_goc": "BE-FAST — Aroor và cs., Stroke 2017 — PMID 28082668, doi:10.1161/STROKEAHA.116.015169 (thêm Thăng bằng + Mắt vào FAST giảm tỷ lệ đột quỵ bị bỏ sót từ 14,1% xuống 4,4% trong dữ liệu bài gốc)"
+          }
+        ],
+        "gioi_han": "BE-FAST là phân tích hồi cứu MỘT trung tâm; chính bài gốc ghi cần kiểm định tiến cứu trước khi đổi chương trình giáo dục cộng đồng — dùng ở đây làm lời dặn an toàn, không phải công cụ chẩn đoán.",
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     },
     "sut-can": {
       "ten": "Sụt cân",
@@ -428,15 +539,32 @@
             "do_duoc": true
           }
         ],
-        "de_xuat": "Do Claude điền 28/08/2026 từ nguồn đã tra PubMed cùng ngày (metadata khớp, không mang nhãn Retracted Publication) — là ĐỀ XUẤT, chưa được bác sĩ chuẩn y; chỉ dùng sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
-        "noi_dung": "[CẦN BÁC SĨ ĐIỀN]",
-        "vi_sao_de_trong": "Câu dặn bệnh nhân (tự cân mỗi tuần, mốc quay lại…) cần bác sĩ chọn ngưỡng và diễn đạt — Cổng A."
+        "trang_thai": "co-nguon",
+        "nguon": {
+          "ten": "Gaddey & Holder — Am Fam Physician 2021",
+          "pmid": "34264616"
+        },
+        "noi_dung": [
+          {
+            "cau": "Tự cân mỗi tuần, cùng một cân, cùng điều kiện (ví dụ buổi sáng), ghi lại số",
+            "ma_nguon": "W1"
+          },
+          {
+            "cau": "Số cân TIẾP TỤC giảm giữa hai lần khám → quay lại TRƯỚC hẹn",
+            "ma_nguon": "W1"
+          },
+          {
+            "cau": "Giữ đúng hẹn theo dõi 3–6 tháng kể cả khi thấy khỏe",
+            "ma_nguon": "W2"
+          }
+        ],
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
-      "ngay_ra_soat": "2026-08-28"
+      "ngay_ra_soat": "2026-08-29"
     }
   },
   "_ban_1_x_giu_lai_de_doi_chieu": {
@@ -449,5 +577,11 @@
     ],
     "vi_sao_khong_dung_duoc": "Tiếng Anh · không hội chứng cụ thể · 'severe' và 'sooner' không đo được · không nguồn · không ngày rà soát."
   },
-  "disclaimer": "Cần bác sĩ kiểm chứng. Mọi nội dung ở đây là ĐỀ XUẤT — chỉ áp dụng cho người bệnh sau khi bác sĩ chuẩn y (Cổng A)."
+  "disclaimer": "Cần bác sĩ kiểm chứng. Mọi nội dung ở đây là ĐỀ XUẤT — chỉ áp dụng cho người bệnh sau khi bác sĩ chuẩn y (Cổng A).",
+  "lich_su_duyet": [
+    {
+      "ngay": "2026-08-29",
+      "noi_dung": "Bác sĩ duyệt cả 7 khối cờ đỏ de_xuat (nay da_duyet); yêu cầu bổ sung nguồn cho lời dặn bệnh nhân — 8 khối lời dặn được ghi với nguồn tra sống PubMed 29/08/2026, câu chữ cuối chờ bác sĩ chuẩn y (nhãn de_xuat trong từng khối)."
+    }
+  ]
 }
