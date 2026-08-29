@@ -3511,6 +3511,135 @@ def bh80_moi_cong_cu_bien_dich_duoc_tren_san_khai_bao() -> tuple[bool, str]:
                      else " — lưu ý: không phải sàn 3.11, lane CI 3.11 mới là guard thật"))
 
 
+# ── Bản sao git TRẦN (phiên cloud/CI): tách «không kiểm được» khỏi «tái phát» ──
+# 28/08/2026 — chạy trọn bộ chốt trên một bản clone git KHÔNG có cây OneDrive cho
+# 37 mục đỏ, trong đó CHỈ MỘT (BH44) là lỗi thật nằm trong repo; 36 mục còn lại đỏ
+# vì nguyên liệu (EBM-Dashboards/ · medical-ebm-automation/ · EBM_MASTER/ · cấu hình
+# máy trong ~/.claude) nằm NGOÀI git nên bản clone không bao giờ có. Bức tường đỏ
+# giả đó vi phạm đúng BH08 («không biết» ≠ «có vấn đề») và suýt che mất lỗi thật
+# duy nhất. Quy ước từ 28/08 (cùng họ «bỏ qua CÓ KHAI BÁO» của BH51/BH52): trên bản
+# sao TRẦN, mục thiếu nguyên liệu in ⚪ «ngoài phạm vi» — vẫn HIỆN đầy đủ, không đếm
+# vào tổng đỏ; mục trong-repo đỏ vẫn đỏ. Trên máy thật (còn ≥1 gốc dữ liệu) hành vi
+# cũ giữ NGUYÊN — fail-closed, một file thiếu là ✗ như trước.
+# Vòng 4 (28/08): định nghĩa «bản sao trần» dời về tools/ban_sao_tran.py — MỘT nơi
+# duy nhất, vì trong chính PR này năm bản sao của phép thử đã phân kỳ thành hai ngữ
+# nghĩa (1-gốc vs 3-gốc) và tạo fail-open ở ba verifier của hook.
+
+# Khai báo TƯỜNG MINH (không suy từ thông điệp lỗi): các mã mà ĐỐI TƯỢNG được kiểm
+# nằm ngoài phần git track — đo từng mã ngày 28/08 trên bản clone trần.
+_CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
+    "BH01", "BH02", "BH03", "BH04", "BH07", "BH08", "BH13", "BH16", "BH18",
+    "BH21", "BH25", "BH26", "BH27", "BH30", "BH31", "BH34", "BH35", "BH36",
+    "BH37", "BH38", "BH39", "BH43", "BH47", "BH48", "BH49", "BH50", "BH53",
+    "BH56", "BH58", "BH59", "BH60", "BH61", "BH62", "BH67", "BH72", "BH76",
+})
+
+
+def ban_sao_git_tran() -> bool:
+    """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (đòi cả BA gốc vắng)."""
+    return _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot").ban_sao_git_tran(REPO)
+
+
+# Vòng 4 (bình duyệt đối kháng): một chốt trong danh sách ⚪ mà CHẾT vì lỗi mã
+# trong-repo (TypeError, AttributeError…) từng bị ⚪ hoá luôn trên bản trần — tức
+# một hồi quy trong-git có thể ship từ phiên cloud với dòng «🟢 không tái phát».
+# Hai kiểu vắng-nguyên-liệu hợp lệ duy nhất là thiếu FILE/MODULE; mọi exception
+# khác trong «chốt lỗi:» là crash thật và phải ✗ kể cả trên bản trần.
+_LOI_THIEU_NGUYEN_LIEU = ("FileNotFoundError", "ModuleNotFoundError", "NotADirectoryError")
+
+
+def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "") -> str:
+    """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪."""
+    if ok:
+        return "dat"
+    if tran and ma in _CAN_NGUYEN_LIEU_NGOAI_REPO:
+        if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
+            return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+        return "ngoai_pham_vi"
+    return "tai_phat"
+
+
+def bh82_ban_sao_tran_khong_duoc_do_gia():
+    """28/08 — bộ chốt chạy trên bản sao git TRẦN (phiên cloud) in 37 mục đỏ, trong đó
+    chỉ MỘT (BH44 — skill `nghien-cuu-y-khoa-chuan-quoc-te` chạy runtime mà không có
+    nguồn trong sync/skills/) là lỗi thật trong repo. 36 mục còn lại đỏ chỉ vì nguyên
+    liệu nằm ngoài git — đúng «bức tường đỏ giả» mà BH08 cảnh báo: nó suýt che mất lỗi
+    thật duy nhất, và nếu thành nếp thì người đọc học cách bỏ qua cả cảnh báo thật.
+
+    Chốt kiểm HÀNH VI phân loại (gọi thẳng `phan_loai`, không đếm chữ):
+      • bản trần + mục cần nguyên liệu ngoài repo + fail ⇒ «ngoai_pham_vi» (⚪ có khai báo)
+      • bản trần + mục trong-repo (BH44) + fail ⇒ vẫn «tai_phat» — lỗi thật không được ⚪ hoá
+      • máy đủ dữ liệu (tran=False) ⇒ mọi fail đều «tai_phat» — fail-closed cũ giữ nguyên
+    """
+    if phan_loai("BH01", False, True) != "ngoai_pham_vi":
+        return False, "mục thiếu nguyên liệu trên bản trần không ra ⚪ — tường đỏ giả quay lại"
+    if phan_loai("BH44", False, True) != "tai_phat":
+        return False, "lỗi trong-repo bị ⚪ hoá trên bản trần — chốt mất răng"
+    if phan_loai("BH01", False, False) != "tai_phat":
+        return False, "máy đủ dữ liệu mà vẫn ⚪ — fail-closed bị tháo"
+    if phan_loai("BH01", True, True) != "dat":
+        return False, "mục đạt bị phân loại sai"
+    if "BH44" in _CAN_NGUYEN_LIEU_NGOAI_REPO or "BH82" in _CAN_NGUYEN_LIEU_NGOAI_REPO:
+        return False, "mã trong-repo bị khai nhầm là ngoài-repo — đường ⚪ hoá lỗi thật đang mở"
+    # Vòng 4 (bình duyệt đối kháng): CRASH trong mã trong-repo không được ⚪ hoá
+    # trên bản trần — thiếu nguyên liệu chỉ hiện dạng FileNotFound/ModuleNotFound.
+    if phan_loai("BH01", False, True, "chốt lỗi: TypeError: tach_ten() thiếu tham số") != "tai_phat":
+        return False, "crash trong-repo (TypeError) bị ⚪ hoá trên bản trần — hồi quy ship được từ cloud"
+    if phan_loai("BH01", False, True, "chốt lỗi: FileNotFoundError: thiếu file") != "ngoai_pham_vi":
+        return False, "thiếu-file trên bản trần không còn ra ⚪ — tường đỏ giả quay lại"
+    return True, "bản trần: ⚪ đúng chỗ có khai báo, ✗ giữ nguyên cho lỗi trong-repo và crash"
+
+
+def bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang():
+    """28/08 — vòng 3 cùng ngày: hook pre-commit KHÔNG THỂ xanh trên bản sao trần vì
+    hai verifier trong hook (alignment · plugin orchestration) và chốt đếm-cổng-cứng
+    FAIL do thiếu repo y khoa ⇒ phiên cloud buộc commit KHÔNG QUA CỔNG nào — tệ hơn
+    một cổng biết nói «phần này ngoài phạm vi». Hai commit đầu của phiên 28/08 đã đi
+    qua đúng lỗ hổng đó.
+
+    Đã sửa: ba công cụ nhận diện bản trần (repo y khoa vắng mặt HOÀN TOÀN) và tách
+    phần thiếu-nguyên-liệu thành ⚪ NGOAI-PHAM-VI có khai báo; máy có repo (kể cả thư
+    mục RỖNG — tức repo có mà file mất) vẫn FAIL như cũ.
+
+    Chốt kiểm HÀNH VI phân loại (gọi thẳng hàm, chạy được trên MỌI máy):
+      • đường ⚪ tồn tại: check_medical_docs(tran=True) → NGOAI-PHAM-VI
+      • máy thật không bao giờ ⚪: check_medical_docs(tran=False) ≠ NGOAI-PHAM-VI
+      • bộ phân loại lỗi plugin: lỗi trỏ vào repo y khoa/binding → ngoài phạm vi;
+        lỗi trong-repo (registry hỏng…) TUYỆT ĐỐI không được nuốt
+      • trên bản trần, alignment tổng thể phải PASS (thuộc tính mở khoá hook)
+    """
+    va = _nap(REPO / "tools" / "verify_claude_code_repo_alignment.py", "va_bh83")
+    vp = _nap(REPO / "tools" / "verify_plugin_orchestration.py", "vp_bh83")
+    if va.check_medical_docs(tran=True).get("status") != "NGOAI-PHAM-VI":
+        return False, "đường ⚪ biến mất — bản trần lại đỏ giả, hook lại chết"
+    if va.check_medical_docs(tran=False).get("status") == "NGOAI-PHAM-VI":
+        return False, "máy thật bị ⚪ hoá — fail-closed của alignment bị tháo"
+    if not vp.loi_ngoai_pham_vi_tran("thieu file medical-ebm-automation/CLAUDE.md"):
+        return False, "lỗi thiếu-repo-y-khoa không được nhận là ngoài phạm vi"
+    if not vp.loi_ngoai_pham_vi_tran("thieu production tool binding: g10-assemble"):
+        return False, "binding trỏ sang repo y khoa không được nhận là ngoài phạm vi"
+    if vp.loi_ngoai_pham_vi_tran("registry schema hong: thieu owner_unit"):
+        return False, "lỗi TRONG-repo bị nuốt thành ngoài phạm vi — chốt mất răng"
+    if va.ban_sao_tran():
+        tong = va.run_verification()["overall_status"]
+        if tong != "PASS":
+            return False, f"bản trần mà alignment tổng thể {tong} — hook vẫn bị chặn oan"
+    # Vòng 4: khoá NGỮ NGHĨA 3-GỐC của định nghĩa dùng chung bằng thư mục tạm —
+    # chính PR này từng có 5 bản sao phân kỳ thành phép thử 1-gốc, tạo fail-open
+    # khi máy thật chỉ thiếu riêng repo y khoa (bình duyệt đối kháng bắt được).
+    import tempfile
+    bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh83")
+    with tempfile.TemporaryDirectory() as td:
+        goc = Path(td)
+        if not bst.ban_sao_git_tran(goc):
+            return False, "thư mục vắng cả 3 gốc mà không được nhận là bản trần"
+        (goc / "EBM_MASTER").mkdir()
+        if bst.ban_sao_git_tran(goc):
+            return False, ("còn MỘT gốc dữ liệu (EBM_MASTER) mà vẫn bị coi là bản trần — "
+                           "ngữ nghĩa 1-gốc quay lại, hook fail-open trên máy thật hỏng dở")
+    return True, "hook sống được trên bản trần; máy thật giữ nguyên fail-closed; ngữ nghĩa 3-gốc khoá"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3601,6 +3730,8 @@ BAI_HOC = [
     # Mục dưới ra đời song song ở phiên đồng bộ đa nền và ban đầu mang số 72 — trùng
     # canary cổng nghiên cứu của master. Đánh số lại thành 81 theo đúng tiền lệ BH68.
     ("BH81", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục («gọi skill không được»)", bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
+    ("BH82", "28/08", "Bản sao git trần: «không kiểm được» là ⚪ có khai báo, không phải ✗ giả", bh82_ban_sao_tran_khong_duoc_do_gia),
+    ("BH83", "28/08", "Hook pre-commit sống được trên bản trần mà không mất răng trên máy thật", bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang),
 
 ]
 
@@ -3610,31 +3741,47 @@ def main() -> int:
     ap.add_argument("--im-khi-on", action="store_true", help="chỉ nói khi có mục tái phát")
     a = ap.parse_args()
 
-    ket: list[tuple[str, str, str, bool, str]] = []
+    tran = ban_sao_git_tran()
+    ket: list[tuple[str, str, str, str, str]] = []
     for ma, ngay, ten, ham in BAI_HOC:
         try:
             ok, ct = ham()
-        except Exception as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
+        except KeyboardInterrupt:
+            raise
+        # Vòng 4: bắt BaseException, không chỉ Exception — một chốt lỡ ném SystemExit
+        # (đã suýt xảy ra với nap_vd bản SystemExit) sẽ giết CẢ lượt chạy giữa chừng,
+        # mọi chốt sau không được kiểm, và hook `; true` nuốt sạch không một dòng báo.
+        except BaseException as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
             ok, ct = False, f"chốt lỗi: {type(e).__name__}: {e}"
-        ket.append((ma, ngay, ten, ok, ct))
+        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct), ct))
 
-    do = [k for k in ket if not k[3]]
+    do = [k for k in ket if k[3] == "tai_phat"]
+    ngoai = [k for k in ket if k[3] == "ngoai_pham_vi"]
     if a.im_khi_on and not do:
         return 0
 
     if a.im_khi_on:
         print("")
-    print(f"CHỐT HỒI QUY BÀI HỌC — {len(ket) - len(do)}/{len(ket)} còn được canh")
-    for ma, ngay, ten, ok, ct in ket:
-        print(f"  {'✓' if ok else '✗'} {ma} [{ngay}] {ten}")
-        if not ok:
+    dat = len(ket) - len(do) - len(ngoai)
+    print(f"CHỐT HỒI QUY BÀI HỌC — {dat}/{len(ket)} còn được canh"
+          + (f" · ⚪ {len(ngoai)} ngoài phạm vi bản sao trần" if ngoai else ""))
+    ICON = {"dat": "✓", "tai_phat": "✗", "ngoai_pham_vi": "⚪"}
+    for ma, ngay, ten, loai, ct in ket:
+        print(f"  {ICON[loai]} {ma} [{ngay}] {ten}")
+        if loai == "tai_phat":
             print(f"      → {ct}")
+    if ngoai:
+        print(f"\n⚪ {len(ngoai)} mục KHÔNG kiểm được trên bản sao git trần — nguyên liệu"
+              " (EBM-Dashboards/ · medical-ebm-automation/ · EBM_MASTER/ · cấu hình máy)"
+              " nằm ngoài git.")
+        print("   ⚪ KHÔNG có nghĩa là ĐẠT — chạy trên máy có đủ cây dữ liệu để canh đủ.")
     if do:
         print(f"\n🔴 {len(do)} BÀI HỌC TÁI PHÁT — lỗi đã sửa nay quay lại.")
         print("   Đọc docstring của hàm tương ứng trong tools/chot_hoi_quy_bai_hoc.py")
         print("   để biết lỗi đó từng gây hại gì.")
         return 1
-    print("\n🟢 Không bài học nào tái phát.")
+    print("\n🟢 Không bài học nào tái phát"
+          + (" trong phạm vi kiểm được trên bản sao trần." if ngoai else "."))
     return 0
 
 

@@ -47,6 +47,33 @@ ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
 GATE_CONTRACT_TOOLS_DIR = ROOT / "medical-ebm-automation" / "tools"
 
+# 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
+# thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
+if not (GATE_CONTRACT_TOOLS_DIR / "gate_contract.py").exists():
+    _THIEU_NGUYEN_LIEU = ("FAIL (bỏ qua CÓ KHAI BÁO): thiếu medical-ebm-automation/tools/gate_contract.py — "
+                          "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
+    if __name__ == "__main__":
+        # 28/08/2026 — tách HAI trường hợp khác hẳn nhau:
+        # (a) BẢN SAO TRẦN (cloud/CI — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py,
+        #     đòi cả BA gốc dữ liệu vắng mặt; vòng 4 sửa từ phép thử 1-gốc vốn
+        #     fail-open khi máy thật chỉ thiếu riêng repo y khoa): chốt này không có
+        #     nguồn sự thật để đối chiếu ⇒ ⚪ bỏ qua CÓ KHAI BÁO, thoát 0 — để hook
+        #     pre-commit chạy được trên bản trần thay vì buộc commit KHÔNG QUA CỔNG nào.
+        # (b) máy thật (còn ≥1 gốc dữ liệu) mà thiếu gate_contract.py ⇒ đỏ như cũ.
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location(
+            "_bst_hgc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        _bst = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_bst)
+        if _bst.ban_sao_git_tran(ROOT):
+            print("⚪ BỎ QUA CÓ KHAI BÁO: repo y khoa không có trên bản sao git trần — "
+                  "chốt đếm-cổng-cứng cần gate_contract.py làm nguồn sự thật; "
+                  "chạy trên máy có đủ hai repo. ⚪ KHÔNG có nghĩa là đạt.")
+            raise SystemExit(0)
+        raise SystemExit(_THIEU_NGUYEN_LIEU)
+    # Bị IMPORT (pytest) thì raise ModuleNotFoundError để bộ thu thập test xử lý
+    # như thiếu module bình thường, không chết INTERNALERROR.
+    raise ModuleNotFoundError(_THIEU_NGUYEN_LIEU)
 if str(GATE_CONTRACT_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(GATE_CONTRACT_TOOLS_DIR))
 import gate_contract as GC  # noqa: E402

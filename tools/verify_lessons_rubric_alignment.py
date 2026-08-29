@@ -79,6 +79,12 @@ def taxonomy_bridge_codes(taxonomy_text: str) -> set[str]:
 
 def retry_loop_lesson_codes() -> dict[str, str]:
     """Đọc bridge R-code -> LESSONS code từ retry_loop của repo sống."""
+    # 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
+    # thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
+    if not (RETRY_LOOP_DIR / "retry_loop.py").exists():
+        raise SystemExit(
+            "FAIL (bỏ qua CÓ KHAI BÁO): thiếu medical-ebm-automation/tools/retry_loop.py — "
+            "repo y khoa không có trên bản sao git này; chạy trên máy có đủ hai repo.")
     if str(RETRY_LOOP_DIR) not in sys.path:
         sys.path.insert(0, str(RETRY_LOOP_DIR))
     import retry_loop  # noqa: PLC0415

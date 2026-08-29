@@ -203,9 +203,12 @@ def main() -> int:
             n = "" if runs is None else f" (launchd runs = {runs})"
             ly_do = (f"{n}. Lịch launchd đòi máy thức lúc 19:00 thứ Bảy nên hay lỡ")
         else:
-            # Windows KHÔNG có launchd — hai job com.medicalebm.* chỉ tồn tại trên Mac.
+            # Ngoài macOS KHÔNG có launchd — hai job com.medicalebm.* chỉ tồn tại trên Mac.
             # Nói rõ điều này, thay vì để bác sĩ tưởng có lịch nền đang chạy hộ.
-            ly_do = (". Máy này (Windows) KHÔNG có lịch nền nào chạy giám sát — "
+            # 28/08/2026: không ghi cứng "(Windows)" — chạy trên Linux (phiên cloud/CI)
+            # mà tự xưng là Windows là nói sai về chính máy đang đứng.
+            ten_nen = {"win32": "Windows", "linux": "Linux"}.get(sys.platform, sys.platform)
+            ly_do = (f". Máy này ({ten_nen}) KHÔNG có lịch nền nào chạy giám sát — "
                      "hai job launchd chỉ tồn tại trên MacBook, nên ở đây luôn phải chạy tay")
         canh_bao.append(
             f"Giám sát AN TOÀN THUỐC hằng tuần CHƯA TỪNG chạy{ly_do}. Chạy tay khi tiện:\n"

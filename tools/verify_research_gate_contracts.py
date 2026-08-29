@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import pathlib
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,31 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT / "medical-ebm-automation"
 REPO_TOOLS = REPO / "tools"
 sys.path.insert(0, str(REPO_TOOLS))
+
+# 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
+# thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
+if not (REPO_TOOLS / "audit_research_gates.py").exists():
+    # Vòng 4 (bình duyệt đối kháng): thông điệp cũ «FAIL (bỏ qua CÓ KHAI BÁO)» tự mâu
+    # thuẫn, và không phân biệt bản trần với máy thật đang hỏng. Nay tách hai nhánh
+    # bằng định nghĩa DUY NHẤT ở tools/ban_sao_tran.py; CẢ HAI đều thoát ≠0 vì toàn bộ
+    # đối tượng của verifier này nằm trong repo y khoa — không có gì kiểm được thì
+    # không được đọc thành «đã kiểm» (khác nhóm hook vốn còn phần trong-repo kiểm đủ).
+    import importlib.util as _ilu
+    _sp = _ilu.spec_from_file_location(
+        "_bst_vrgc", pathlib.Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst = _ilu.module_from_spec(_sp)
+    _sp.loader.exec_module(_bst)
+    if _bst.ban_sao_git_tran(ROOT):
+        _LY_DO = ("⚪ NGOÀI PHẠM VI BẢN SAO TRẦN: thiếu medical-ebm-automation/tools/audit_research_gates.py — "
+                  "toàn bộ đối tượng của verifier này nằm trong repo y khoa nên không có phần "
+                  "trong-repo nào kiểm được; thoát 1 để không ai đọc thành «đã kiểm». "
+                  "Chạy trên máy có đủ hai repo.")
+    else:
+        _LY_DO = ("FAIL: máy này CÓ cây dữ liệu OneDrive nhưng thiếu medical-ebm-automation/tools/audit_research_gates.py — "
+                  "repo y khoa hỏng hoặc đồng bộ dở; chạy tools/sync_safety_check.py trước.")
+    if __name__ == "__main__":
+        raise SystemExit(_LY_DO)
+    raise ModuleNotFoundError(_LY_DO)
 
 import audit_research_gates as ARG  # noqa: E402
 

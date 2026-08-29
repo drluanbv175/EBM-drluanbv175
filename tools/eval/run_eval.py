@@ -1082,34 +1082,65 @@ def appraisal_repeats_lock(timeout_s: float = 10.0):
     cập nhật (lost update) nếu 2 lời gọi gần như đồng thời (CLI + orchestrator, hoặc 2 phiên
     song song — đã xảy ra nhiều lần trong lịch sử dự án này theo memory). Dùng CHUNG 1 file
     khóa với cả 2 module (đặt cạnh APPRAISAL_REPEATS.json) để chúng thật sự loại trừ lẫn nhau.
-    Theo đúng tiền lệ EBM_MASTER/tools/sync_all.py::ledger_lock() — Unix: flock độc quyền, chờ
-    có giới hạn; Windows/thiếu fcntl: bỏ qua khóa hoàn toàn (best-effort, không treo)."""
+    Theo đúng tiền lệ EBM_MASTER/tools/sync_all.py::ledger_lock() — Unix: flock độc quyền,
+    chờ có giới hạn; Windows: msvcrt.locking trên cùng file khóa.
+
+    SỬA 28/08/2026 — nhánh Windows cũ «bỏ qua khóa hoàn toàn» KHÔNG còn là lý thuyết:
+    lần ĐẦU TIÊN bước pytest chạy trên lane CI windows-3.11, chính test hồi quy
+    test_appraisal_repeats_concurrency bắt được lost-update thật (1/20 hash biến mất).
+    Windows là máy làm việc thật của bác sĩ, nên «best-effort = không khóa» ở đó nghĩa
+    là sổ đếm tái phạm có thể lặng lẽ mất bản ghi bất kỳ lúc nào CLI + orchestrator chạy
+    gần nhau. Nay Windows khóa bằng msvcrt.locking (loại trừ cả giữa tiến trình lẫn giữa
+    luồng — Windows khóa vùng file là mandatory); hết thời gian chờ vẫn đi tiếp không
+    khóa (giữ đúng hợp đồng best-effort không-treo cũ)."""
     lockpath = APPRAISAL_REPEATS.with_suffix(".json.lock")
     f = None
+    khoa = None  # "fcntl" | "msvcrt" — nhánh THẬT SỰ đang giữ khóa (để nhả đúng cách)
     try:
-        import fcntl
         import time
         APPRAISAL_REPEATS.parent.mkdir(parents=True, exist_ok=True)
-        f = open(lockpath, "w")
-        waited = 0.0
-        while True:
-            try:
-                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError:
-                if waited >= timeout_s:
+        f = open(lockpath, "a+")
+        try:
+            import fcntl
+            waited = 0.0
+            while True:
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    khoa = "fcntl"
                     break
-                time.sleep(0.2)
-                waited += 0.2
+                except OSError:
+                    if waited >= timeout_s:
+                        break
+                    time.sleep(0.2)
+                    waited += 0.2
+        except ImportError:  # Windows — không có fcntl
+            import msvcrt
+            waited = 0.0
+            while True:
+                try:
+                    f.seek(0)
+                    msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                    khoa = "msvcrt"
+                    break
+                except OSError:
+                    if waited >= timeout_s:
+                        break
+                    time.sleep(0.2)
+                    waited += 0.2
     except Exception:
-        f = None  # không có fcntl (Windows) → bỏ qua khóa, vẫn best-effort như trước
+        khoa = None  # bất thường ngoài dự kiến → best-effort như cũ, không làm treo phiên
     try:
         yield
     finally:
         if f is not None:
             try:
-                import fcntl
-                fcntl.flock(f, fcntl.LOCK_UN)
+                if khoa == "fcntl":
+                    import fcntl
+                    fcntl.flock(f, fcntl.LOCK_UN)
+                elif khoa == "msvcrt":
+                    import msvcrt
+                    f.seek(0)
+                    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
             except Exception:
                 pass
             f.close()

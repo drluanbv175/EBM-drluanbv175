@@ -41,6 +41,27 @@ def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
     ]
 
 
+def ban_sao_tran() -> bool:
+    """True CHỈ khi bản sao git trần — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py.
+
+    SỬA 28/08 vòng 4 (bình duyệt đối kháng bắt được): bản đầu chỉ kiểm MỘT gốc
+    (medical-ebm-automation/) — trên máy thật còn EBM-Dashboards/EBM_MASTER mà
+    thiếu riêng repo y khoa (sự cố OneDrive đã gặp), hook lặng lẽ PASS = fail-open.
+    Nay đòi cả BA gốc vắng mặt, cùng ngữ nghĩa với bộ chốt bài học/conftest."""
+    import importlib.util
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    spec = importlib.util.spec_from_file_location("_bst_plugin_orch", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(ROOT)
+
+
+def loi_ngoai_pham_vi_tran(error: str) -> bool:
+    """Lỗi CHỈ vì nguyên liệu nằm trong repo y khoa (đường dẫn/binding trỏ sang đó)."""
+    return ("medical-ebm-automation" in error
+            or error.startswith("thieu production tool binding"))
+
+
 def verify() -> dict[str, Any]:
     errors: list[str] = []
     checks: list[str] = []
@@ -127,12 +148,20 @@ def verify() -> dict[str, Any]:
     if not errors:
         checks.append("unknown capability + worker ngoai allowlist fail-closed")
 
+    # Trên bản sao trần, các lỗi CHỈ vì nguyên liệu nằm trong repo y khoa được tách
+    # sang «ngoài phạm vi» — vẫn IN RA đầy đủ, không đếm FAIL (BH82/BH08). Máy có
+    # repo y khoa: ngoai_pham_vi luôn rỗng, hành vi cũ giữ nguyên.
+    ngoai_pham_vi: list[str] = []
+    if ban_sao_tran():
+        ngoai_pham_vi = [e for e in errors if loi_ngoai_pham_vi_tran(e)]
+        errors = [e for e in errors if not loi_ngoai_pham_vi_tran(e)]
     return {
         "status": "PASS" if not errors else "FAIL",
         "policy_id": plugins.policy_id,
         "summary": plugins.summary(),
         "checks": checks,
         "errors": errors,
+        "ngoai_pham_vi": ngoai_pham_vi,
     }
 
 
@@ -150,6 +179,10 @@ def main() -> int:
             print(f"- PASS {check}")
         for error in report["errors"]:
             print(f"- FAIL {error}")
+        for muc in report.get("ngoai_pham_vi", []):
+            print(f"- ⚪ NGOAI-PHAM-VI (ban sao tran) {muc}")
+        if report.get("ngoai_pham_vi"):
+            print("  ⚪ KHONG phai dat — phan nay chi kiem duoc tren may co du hai repo.")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 

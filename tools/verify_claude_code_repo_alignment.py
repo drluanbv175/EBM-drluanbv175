@@ -128,7 +128,31 @@ def check_root_docs() -> dict[str, Any]:
     }
 
 
-def check_medical_docs() -> dict[str, Any]:
+def ban_sao_tran() -> bool:
+    """True CHỈ khi bản sao git trần — định nghĩa DUY NHẤT ở tools/ban_sao_tran.py.
+
+    SỬA 28/08 vòng 4 (bình duyệt đối kháng bắt được): bản đầu chỉ kiểm MỘT gốc
+    (medical-ebm-automation/) — trên máy thật còn EBM-Dashboards/EBM_MASTER mà
+    thiếu riêng repo y khoa (sự cố OneDrive đã gặp), hook lặng lẽ PASS = fail-open.
+    Nay đòi cả BA gốc vắng mặt, cùng ngữ nghĩa với bộ chốt bài học/conftest."""
+    import importlib.util
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    spec = importlib.util.spec_from_file_location("_bst_alignment", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(ROOT)
+
+
+def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:
+    tran = ban_sao_tran() if tran is None else tran
+    if tran:
+        return {
+            "name": "medical_repo_docs",
+            "status": "NGOAI-PHAM-VI",
+            "missing_markers": {},
+            "ghi_chu": ("bản sao git trần — medical-ebm-automation/ không có trên máy "
+                        "này; phần đối chiếu chéo repo chạy trên máy có đủ hai repo"),
+        }
     missing: dict[str, list[str]] = {}
     for label, path in MEDICAL_DOCS.items():
         absent = _missing_markers(path, MEDICAL_CONTRACT_MARKERS[label])
@@ -188,7 +212,10 @@ def run_verification() -> dict[str, Any]:
         check_agent_sync_health(),
         check_upgrade_verify_wires_alignment(),
     ]
-    overall = "PASS" if all(check["status"] == "PASS" for check in checks) else "FAIL"
+    # «NGOAI-PHAM-VI» (chỉ phát khi bản sao trần) không phải FAIL: phần kiểm được
+    # vẫn kiểm đủ, phần thiếu nguyên liệu được NÓI RA thay vì đỏ giả (BH82/BH08).
+    overall = ("PASS" if all(check["status"] in ("PASS", "NGOAI-PHAM-VI")
+                             for check in checks) else "FAIL")
     return {
         "overall_status": overall,
         "checks": checks,

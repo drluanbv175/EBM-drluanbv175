@@ -8,6 +8,111 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+### 2026-08-28 — Rà toàn diện trên bản sao git TRẦN (phiên cloud) + vá «tường đỏ giả»
+
+Bối cảnh: chạy trọn bộ kiểm trên một bản clone git KHÔNG có cây OneDrive
+(EBM-Dashboards/ · medical-ebm-automation/ · EBM_MASTER/) — lần đầu hệ được đo
+ở trạng thái này. 37 mục đỏ của `chot_hoi_quy_bai_hoc`, trong đó CHỈ MỘT là lỗi
+thật; 36 mục còn lại đỏ vì thiếu nguyên liệu ngoài git — đúng «bức tường đỏ giả»
+mà BH08 cảnh báo, và nó suýt che mất lỗi thật duy nhất.
+
+### Added
+- **Cứu skill `nghien-cuu-y-khoa-chuan-quoc-te` về nguồn** `sync/skills/` (38 file,
+  khớp byte với bản runtime) — lỗi thật duy nhất của đợt rà: skill được 4 file doctrine
+  tham chiếu (`dieu-phoi-nghien-cuu.md`, `_CROSSWALK-NGHIEN-CUU.md`,
+  `_PLUGIN-ROUTING-CONTRACT.md`, `_THU-VIEN-KY-NANG.md`) nhưng chỉ tồn tại ở runtime —
+  app dọn runtime là mất trắng (đúng họ lỗi BH44 ngày 15/08 với 3 skill trước).
+  `kiem_dieu_phoi` từ 🔴 về 🟢 (41 skill nguồn, mọi tham chiếu phân giải được).
+- **BH82** trong `chot_hoi_quy_bai_hoc.py`: trên bản sao git trần, mục thiếu nguyên
+  liệu in **⚪ «ngoài phạm vi» có khai báo** (vẫn hiện đủ, không đếm đỏ); lỗi trong-repo
+  vẫn ✗; trên máy đủ dữ liệu hành vi fail-closed cũ giữ NGUYÊN. Khai báo tường minh
+  `_CAN_NGUYEN_LIEU_NGOAI_REPO` (36 mã, đo từng mã). Đã kiểm 3 phép đột biến.
+
+### Added (vòng 2 cùng ngày — «Hoàn thiện cho tôi»)
+- **Ngân hàng safety-netting: 1/8 → 8/8 hội chứng có nguồn** (`clinical_runtime/
+  safety_net_templates.json` v2.1.0). 7 hội chứng còn trống nay có khối `co_do_cho_bac_si`
+  với nguồn ĐÃ TRA PubMed 28/08 (metadata khớp, không nhãn Retracted): đau ngực —
+  Marburg Heart Score (PMID 20603345) · khó thở — NEWS2 RCP 2017 + caveat Pimentel 2018
+  (PMID 30287355) · đau bụng (phạm vi hẹp: khó tiêu) — ACG/CAG 2017 (PMID 28631728) ·
+  sốt — qSOFA/Sepsis-3 (PMID 26903335) · đau thắt lưng — Downie BMJ 2013 (PMID 24335669) ·
+  chóng mặt (chỉ hội chứng tiền đình cấp) — HINTS (PMID 19762709) · sụt cân —
+  Gaddey & Holder AFP 2021 (PMID 34264616). Kỷ luật giữ nguyên: chỉ ghi điều tóm tắt
+  nguồn THẬT SỰ nói (ngưỡng tóm tắt không nêu thì ghi ở `gioi_han`, không bịa);
+  mọi mục mang nhãn `de_xuat` = CHƯA được bác sĩ chuẩn y; `dan_benh_nhan_quay_lai`
+  giữ `[CẦN BÁC SĨ ĐIỀN]` — máy không sinh thay (Cổng A). `kiem_safety_net`: 0 lỗi cứng,
+  21/21 test pass.
+- **`tools/conftest.py`** — bộ test tools/ chạy được trên bản sao trần: 4 module import
+  repo y khoa lúc thu thập + 23 test đích danh cần cây OneDrive được **skip CÓ KHAI BÁO**;
+  1 test viết cho filesystem APFS/NTFS được skip theo phép đo thuộc tính filesystem thật.
+  Kết quả: 23 fail + 4 lỗi thu thập → **258 pass · 23 skip · 0 fail**, và đã kiểm đối
+  chứng fail-closed (tạo lại 1 gốc dữ liệu ⇒ fail quay về đúng chỗ). Bản đầu từng skip
+  oan 81/92 test của test_classify vì quy tắc «cả file» — đã đo lại và khai đích danh 11.
+- **CI thêm bước `pytest tools/`** trên lane ubuntu (đúng điều kiện đã đo); lane windows
+  chưa đo nên chưa bật, lý do ghi ngay trong workflow (BH08 — không dựng tường đỏ chưa đo).
+
+### Added (vòng 3 cùng ngày — «Tiếp tục hoàn thiện»)
+- **Hook pre-commit sống được trên bản sao trần (BH83, mutation-tested 2 phép).** Trước đó
+  hook không thể xanh trên clone không có repo y khoa ⇒ phiên cloud buộc commit KHÔNG QUA
+  CỔNG nào (hai commit đầu của chính phiên 28/08 đã đi qua lỗ hổng đó). Ba công cụ trong
+  dây hook nay tách phần thiếu-nguyên-liệu thành ⚪ NGOAI-PHAM-VI có khai báo — CHỈ khi
+  repo y khoa vắng mặt HOÀN TOÀN: `verify_claude_code_repo_alignment` (medical_repo_docs)
+  · `verify_plugin_orchestration` (lỗi trỏ vào repo y khoa/binding) ·
+  `verify_hard_gate_count_consistency` (⚪ thoát 0 ở CLI). Đối chứng cả hai chiều đã đo:
+  bản trần → cả ba exit 0 với ⚪ in đủ; tạo thư mục `medical-ebm-automation/` RỖNG (repo
+  có mà file mất) → cả ba ĐỎ lại như cũ. Hook đã kích hoạt trong clone này
+  (`git config core.hooksPath .githooks`) — commit của vòng 3 đi qua cổng thật.
+- **CI mở bước pytest sang lane windows** — phép đo windows mà ghi chú vòng 2 đòi, thực
+  hiện bằng chính CI có người canh: đã rà không test nào dùng symlink/chmod, PYTHONUTF8
+  ép sẵn, conftest đo thuộc tính filesystem THẬT nên test dedup `.Codex≡.codex` tự chạy
+  đúng trên NTFS.
+
+### Fixed (vòng 4 cùng ngày — bình duyệt đối kháng trên CHÍNH diff của phiên, 6 phát hiện)
+- **Fail-open thật do vòng 3 tạo ra, đã đóng:** ba verifier của hook nhận diện «bản trần»
+  bằng phép thử MỘT gốc (chỉ medical-ebm-automation/) trong khi bộ chốt bài học đòi cả BA —
+  trên máy thật còn EBM-Dashboards/EBM_MASTER mà thiếu riêng repo y khoa (sự cố OneDrive
+  đã gặp), hook lặng lẽ PASS. Nay MỘT định nghĩa duy nhất `tools/ban_sao_tran.py` (3-gốc),
+  cả 5 nơi uỷ quyền về nó; đối chứng hai chiều đã đo (bản trần → ⚪/PASS; máy hỏng dở →
+  ĐỎ cả ba); ngữ nghĩa 3-gốc khoá vào BH83 bằng phép thử thư mục tạm (mutation-tested).
+- **`phan_loai` hết ⚪ hoá CRASH trong-repo:** chốt trong danh sách ⚪ mà chết vì
+  TypeError/AttributeError (hồi quy mã thật) từng được ⚪ trên bản trần — một hồi quy
+  trong-git có thể ship từ cloud với dòng «🟢». Nay chỉ FileNotFound/ModuleNotFound được
+  coi là thiếu nguyên liệu; crash khác ✗ kể cả trên bản trần (khoá thêm vào BH82).
+- **`nap_vd` hết ném SystemExit xuyên guard:** SystemExit từ hàm thư viện xuyên qua mọi
+  `except Exception` của caller trong-tiến-trình và giết cả lượt chạy của bộ chốt giữa
+  chừng. Đổi thành FileNotFoundError mang thông điệp rõ; main() bắt in sạch; vòng chạy
+  bộ chốt cũng nâng lên bắt BaseException (trừ KeyboardInterrupt) làm lưới cuối.
+- **Mục chóng mặt (safety-net) hết dán nhãn quần thể thành «dấu HINTS»:** tách hai lớp
+  tường minh — LỚP 1 nhận diện bệnh cảnh (AVS + ≥1 yếu tố nguy cơ, đo được, 76/101 ca
+  cohort gốc là tổn thương trung ương) ≠ LỚP 2 ba dấu khám HINTS (người được huấn luyện);
+  tiêu chí P1 tự khai «KHÔNG phải dấu khám HINTS». kiem_safety_net vẫn 0 lỗi, 21/21 test.
+- **Bỏ thông điệp tự mâu thuẫn «FAIL (bỏ qua CÓ KHAI BÁO)»** ở 4 verifier nghiên cứu —
+  tách hai nhánh rõ nghĩa: bản trần → «⚪ NGOÀI PHẠM VI… thoát 1 để không ai đọc thành
+  đã kiểm»; máy thật hỏng dở → «FAIL… chạy sync_safety_check trước».
+
+### Fixed (vòng 3)
+- **Khoá `appraisal_repeats_lock` trên Windows từ «không khoá» thành `msvcrt.locking`.**
+  Lần ĐẦU pytest chạy trên lane CI windows-3.11 (phép đo vòng 3), chính test hồi quy
+  `test_appraisal_repeats_concurrency` bắt được **lost-update thật** (1/20 hash biến mất):
+  nhánh Windows cũ ghi rõ «bỏ qua khóa hoàn toàn» — mà Windows là máy làm việc thật của
+  bác sĩ, tức sổ đếm tái phạm `APPRAISAL_REPEATS.json` có thể lặng lẽ mất bản ghi mỗi khi
+  CLI + orchestrator chạy gần nhau. Sửa MỘT chỗ (`tools/eval/run_eval.py` — guardrail_bridge
+  dùng lại cùng khoá); Unix giữ nguyên flock; hết thời gian chờ vẫn đi tiếp không khoá
+  (giữ hợp đồng best-effort không-treo).
+
+### Fixed
+- 6 công cụ chết-không-khai-báo trên bản sao trần nay «bỏ qua CÓ KHAI BÁO» một dòng
+  rõ nghĩa thay vì traceback: `audit_ebm_system.py` (2 chỗ — nay chạy TRỌN báo cáo,
+  FAIL có lý do thay vì chết giữa chừng nuốt kết quả) · `dang_ky_chu_de.py` ·
+  `verify_lessons_rubric_alignment.py` · `verify_hard_gate_count_consistency.py` ·
+  `verify_research_gate_contracts.py` · `verify_research_practical_readiness.py` ·
+  `verify_controlled_research_automation.py`. Guard mức import tách hai đường: CLI
+  thoát sạch một dòng; bị import (pytest) thì `ModuleNotFoundError` để bộ thu thập
+  test không chết INTERNALERROR.
+- `kiem_do_tuoi_chung_cu.py` không còn tự xưng «Máy này (Windows)» khi chạy trên
+  Linux (phiên cloud/CI) — in đúng nền tảng thật.
+- Đối chứng: bộ test tools/ (`pytest`) cho **kết quả giống hệt trước và sau bản vá**
+  (258 pass · 23 fail đều do thiếu repo y khoa/EBM-Dashboards trên bản trần) — 0 hồi quy.
+
 ## [1.3.0] - 2026-08-15
 
 PHA 2 «THI CÔNG & NGHIỆM THU» của prompt kiện toàn hệ cập nhật chứng cứ — 8 lô

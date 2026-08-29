@@ -59,3 +59,19 @@ jobs:
 
       - name: Smoke bảng tự-đề-xuất (phải chạy trọn dù thiếu mọi dữ liệu ngoài git)
         run: python tools/tu_de_xuat_viec.py --gon
+
+      # 28/08/2026 — bộ test tools/ chạy được trên bản sao trần nhờ tools/conftest.py:
+      # 23 test cần cây OneDrive được skip CÓ KHAI BÁO (pytest -rs đọc được lý do),
+      # 0 test đang pass bị che (đo: 258 pass giữ nguyên trước/sau). Lượt đầu bật riêng
+      # ubuntu; cùng ngày mở sang windows sau khi rà: không test nào dùng symlink/chmod,
+      # PYTHONUTF8 đã ép, conftest ĐO thuộc tính filesystem thật (không đoán theo os)
+      # nên test dedup .Codex≡.codex tự chạy đúng trên NTFS. Đây chính là phép đo
+      # windows mà ghi chú cũ đòi — đo bằng chính CI, có người canh kết quả.
+      # Sinh mirror Codex TRƯỚC khi test: test_agent_sync_health_is_green kiểm «mirror
+      # khớp nguồn» — trên checkout tươi mirror chưa tồn tại (nó là bản tự sinh, cố ý
+      # không track). Sinh ở đây cũng biến chính đường sync thành thứ được CI kiểm thật.
+      - name: Bộ test tools/ (bản sao trần, skip có khai báo)
+        run: |
+          pip install pytest
+          python tools/sync_agents_to_codex.py
+          python -m pytest tools/ -q -rs
