@@ -103,3 +103,19 @@ def test_scan_deduplicates_pmid_across_topics() -> None:
     assert report["candidate_count"] == 1
     assert len(report["topics"][0]["candidates"]) == 1
     assert len(report["topics"][1]["candidates"]) == 0
+
+
+def test_ba_nhan_tap_chi_bac_si_duyet_30_08() -> None:
+    """Ba nhóm nhãn bác sĩ duyệt 30/08/2026 (audit/07 §3). Vế ÂM quan trọng nhất:
+    «stroke»/«neurology» trong TIÊU ĐỀ không được gán nhãn — chúng là từ thường
+    gặp; chỉ trường tạp chí/tổ chức mới được khớp (AMBIGUOUS_SHORT_ALIASES)."""
+    # Vế dương — khớp qua trường tạp chí
+    assert S.detect_authority_source("Stroke", "HINTS to diagnose stroke") == "Stroke (AHA)"
+    assert S.detect_authority_source("Neurology", "Red and orange flags") == "AAN/Neurology"
+    assert S.detect_authority_source("American Family Physician", "Weight loss") == "AAFP"
+    assert S.detect_authority_source("Am Fam Physician", "Weight loss") == "AAFP"
+    # Vế ÂM — từ nhạy cảm chỉ nằm trong tiêu đề thì KHÔNG nhãn
+    assert S.detect_authority_source("Tap chi X", "Acute stroke management update") == ""
+    assert S.detect_authority_source("Tap chi X", "Neurology consult patterns 2026") == ""
+    # JAMA Neurology vẫn thuộc nhóm JAMA (alias «jama» đứng trước) — hành vi chấp nhận
+    assert S.detect_authority_source("JAMA Neurology", "BE-FAST validation") == "JAMA"

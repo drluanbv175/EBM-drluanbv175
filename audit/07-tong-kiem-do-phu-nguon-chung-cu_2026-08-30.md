@@ -67,8 +67,10 @@ Cochrane** + tạp chí chính thức của các hội ở §2a (Circulation, JA
 Diabetes Care, Diabetologia, Kidney Int, Clin Infect Dis, Ann Rheum Dis, Gastroenterology,
 Gut, Hepatology, J Hepatol, Thorax…).
 
-**Đề xuất bổ sung — chờ bác sĩ duyệt** (đây là lớp GÁN NHÃN TIN CẬY, thêm tên là quyết
-định biên tập; alias ngắn dễ khớp nhầm sang tiêu đề bài nên phải thêm cẩn thận):
+**✍️ BÁC SĨ ĐÃ DUYỆT CẢ BA — 30/08/2026, ĐÃ THI HÀNH** («3 tạp chí hãy bổ sung»): ba nhóm
+dưới đây đã vào `TRUSTED_SOURCE_ALIASES`; «stroke»/«neurology» đặt trong nhóm alias-cẩn-trọng
+(chỉ khớp trường tạp chí/tổ chức, KHÔNG khớp tiêu đề bài — có test vế âm, đã kiểm đột biến).
+Nhãn nay là 31 nhóm. Đề xuất gốc giữ lại dưới đây làm hồ sơ:
 1. **AAN / Neurology®** — kho hiện có 2 dashboard đau đầu + chóng mặt; nguồn SNNOOP10
    nằm ở Neurology. Alias an toàn: "american academy of neurology".
 2. **Stroke / JAMA Neurology** — HINTS, BE-FAST đều ở Stroke. Alias "stroke" TRÙNG từ
