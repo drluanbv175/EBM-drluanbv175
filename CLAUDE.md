@@ -1677,8 +1677,15 @@ logic đúng, có test) tách biệt khỏi lớp **thực thi chặn chữ ký*
   thuẫn trực tiếp với dòng "G2 phải chặn khi thiếu mục 13/14/19/20" đã ghi ở mục Project Context.
 - Canary BH72 (`thu_dau_cuoi_cong_nghien_cuu.py`) tưởng đã phủ toàn chuỗi G0-G10 nhưng thực ra
   chỉ gài lỗi cho G3/G4/G8 và gọi thẳng hàm Python, bỏ qua `approve_gate.py` — nên không bắt
-  được chính hai lỗ hổng trên. Việc mở rộng canary để gọi qua đúng CLI ký thật là việc CÒN LẠI
-  (Plans.md medical-ebm-automation Sprint 9, task 9.5), chưa làm.
+  được chính hai lỗ hổng trên.
+  ⛔ **ĐÍNH CHÍNH 30/08/2026 — vế «việc CÒN LẠI... chưa làm» từng ghi ở đây ĐÃ LỖI THỜI, và nó
+  vừa gây một báo cáo sai:** task 9.5 đã `cc:done` trong Plans.md repo y khoa — canary có mục ③
+  "Wiring canary" gọi thật `approve_gate.main()` qua `sys.argv`, kiểm đột biến 3 lượt riêng
+  từng cổng G8/G4/G2; chạy sống 30/08 cho «3/3 cổng có dây nối còn nguyên». Dòng cũ ở đây bị
+  chép lại thành «khoảng cách còn mở» trong một báo cáo cùng ngày (audit/08 bản đầu cũng dính,
+  đã đính chính tại chỗ). **Bài học: khoảng hở thuộc repo nào phải đối chiếu MÃ SỐNG + Plans.md
+  của repo đó trước khi báo, không chép từ ghi chú tổng quan** — ghi chú tổng quan là ảnh chụp,
+  không tự cập nhật khi repo con vá xong.
 
 **Đã vá (Sprint 9, task 9.1):** nối `G8Q/G2Q/G4Q.evaluate_study(write=False)` vào ĐÚNG TRƯỚC
 bước ghi ledger trong `approve_gate.py`, khuôn theo G5/G9/G10 đã có sẵn — G8 chấp nhận
