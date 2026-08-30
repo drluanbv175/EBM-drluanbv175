@@ -133,11 +133,11 @@ trả mã thoát **3** (vá 26/07 — trước trả 0 khiến caller tưởng g
 
 | # | Khoảng hở | Mức | Việc đóng |
 |---|---|---|---|
-| 1 | Canary chuỗi nghiên cứu (BH72) gọi thẳng hàm Python, **chưa đi qua đúng CLI `approve_gate.py`** — chính lớp từng hở ở G8/G2/G4 | 🟠 đáng làm sớm | Sprint 9 task 9.5 (medical repo) — mở rộng canary gài lỗi qua CLI ký thật |
-| 2 | G8 chưa chứng minh ĐỘC LẬP thật (HMAC đối xứng) | 🟠 bản chất | Bác sĩ phát khoá Ed25519 riêng cho vai PHAN_BIEN (nút sẵn, tự tay) |
-| 3 | G3 không phải cổng ký + BLOCKED không chặn mã thoát pipeline | 🟡 cố ý | Giữ nguyên trừ khi bác sĩ muốn đổi quy trình |
-| 4 | G0-R5 lách được bằng diễn đạt mệnh lệnh cụ thể | 🟡 cố ý | Đã ghi tại chỗ; G0 chưa qua Cổng A |
-| 5 | G9 checklist giấy tách rời cổng máy | 🟡 nhỏ | Cơ chế đọc ngược ô tick — chưa làm |
+| 1 | Canary chuỗi nghiên cứu (BH72) gọi thẳng hàm Python, chưa đi qua đúng CLI `approve_gate.py` | 🟢 **ĐÃ ĐÓNG TỪ TRƯỚC — đính chính 30/08** | Đối chiếu repo y khoa sống: task 9.5 đã `cc:done` trong Plans.md, canary wiring gọi thật `approve_gate.main()` nằm ở `tools/thu_dau_cuoi_cong_nghien_cuu.py` (từ dòng ~691), kiểm đột biến 3 lượt riêng từng cổng G8/G4/G2. Dòng «chưa làm» trong bản đầu của báo cáo này chép từ ghi chú CLAUDE.md repo gốc đã lỗi thời — bài học: khoảng hở về repo nào phải đối chiếu MÃ SỐNG repo đó |
+| 2 | G8 chưa chứng minh ĐỘC LẬP thật (HMAC đối xứng) | 🟠 bản chất | Bác sĩ phát khoá Ed25519 riêng cho vai PHAN_BIEN (nút sẵn, tự tay) — máy không tự làm được, đây là chính điểm bảo đảm |
+| 3 | G3 không phải cổng ký + BLOCKED không chặn mã thoát pipeline | 🟡 cố ý | Đổi = đổi QUY TRÌNH (hợp đồng 3 mã thoát + 19 file test) — chờ bác sĩ trả lời câu hỏi riêng, không tự đổi |
+| 4 | G0-R5 lách được bằng diễn đạt mệnh lệnh cụ thể | 🟢 **ĐÃ ĐÓNG 30/08** | Luật hẹp trong `run_g0_auto.py` (repo y khoa, commit 5e288d8): vỏ câu hỏi KHÔNG miễn trừ khi hội đủ CẢ HAI dấu hiệu «động từ y lệnh + ngay» VÀ «liều cụ thể»; PICO hợp lệ chỉ mang một dấu hiệu vẫn qua (test vế âm, kiểm đột biến 2 phép) |
+| 5 | G9 checklist giấy tách rời cổng máy | 🟢 **ĐÃ ĐÓNG 30/08** | Tiêu chí mới `G9-AUTO-08` trong `g9_quality_gate.py` (commit 2c3d2d3+3b42403): đọc ngược tick ☑/☒/[x] của tờ «Phần 8 — Hard Gate», soi hai chiều lệch tờ-giấy ↔ hồ-sơ-điện-tử; ADVISORY-ONLY (không lật đề tài đã khoá, không phạt người tích sớm); kiểm đột biến 3 phép |
 | 6 | Phán quyết SỐNG toàn chuỗi không đo được từ cloud | ⚪ kiến trúc | Trên máy thật: `python3 tools/verify_controlled_research_automation.py` + `python3 tools/upgrade_verify.py` + canary `thu_dau_cuoi_cong_nghien_cuu.py` |
 
 ## 5. Kết luận
@@ -146,8 +146,11 @@ Chuỗi cổng G0→G10 **vững ở cả ba lớp** sau ba đợt gia cố lớ
 31/07 đề tài thật đầu tiên · 24/08 nối lớp chất lượng vào TRƯỚC ký cho G2/G4/G8):
 mọi cổng cứng nay đều fail-closed đúng VAI + đúng NỘI DUNG trước khi ledger nhận
 chữ ký, sổ cái chống sửa/cắt, và bộ chốt bài học canh không cho các lỗi cũ quay lại.
-Sáu khoảng hở còn mở đều ĐÃ ĐƯỢC GỌI TÊN kèm đường đóng — không có khoảng hở nào
-đang im lặng. Hai việc đáng làm sớm nhất: canary qua CLI ký thật (#1) và phát khoá
-Ed25519 cho vai phản biện (#2).
+
+**Cập nhật 30/08 (đợt «hoàn thiện cho xanh»):** #1 hoá ra đã đóng từ 24/08 (đính
+chính), #4 và #5 đóng hôm nay bằng code + test đột biến trong repo y khoa (suite
+3123 passed / 0 fail). Ba mục còn lại đều KHÔNG phải việc máy tự đóng được: #2 là
+hành động phát khoá của bác sĩ, #3 là quyết định đổi quy trình chờ bác sĩ trả lời,
+#6 là giới hạn kiến trúc phiên cloud — chạy lệnh xác minh trên máy thật.
 
 *Soạn 30/08/2026. Cần bác sĩ kiểm chứng.*
