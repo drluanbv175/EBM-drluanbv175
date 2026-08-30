@@ -91,12 +91,87 @@ def _fetch(url: str) -> str | None:
         return None
 
 
+def kiem_tra_tram(nguon: list[dict]) -> dict[str, dict]:
+    """Dò SỐNG mọi trạm rss/html-watch CÓ endpoint (kể cả not-covered) — CHỈ ĐO,
+    không đổi state/sổ. Dùng CHÍNH _fetch + rut_tieu_de của trạm để câu trả lời
+    là «trạm chạy được như code hiện tại không», không phải một phép đo khác rồi suy.
+
+    VÌ SAO CÓ (29/08/2026): đã đo từ phiên cloud — mọi host hội bị chính sách
+    mạng chặn (CONNECT 403), kể cả WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi
+    từ sandbox. Đường hoàn tất duy nhất là chạy phép dò này trên máy thật (ngoài
+    sandbox); trước đây «bác sĩ xác minh URL» là việc tay không có công cụ."""
+    kq: dict[str, dict] = {}
+    for s in nguon:
+        if s.get("access") not in ("rss", "html-watch") or not s.get("endpoint_or_url"):
+            continue
+        nd = _fetch(s["endpoint_or_url"])
+        if nd is None:
+            kq[s["id"]] = {"ok": False, "so_tieu_de": 0,
+                           "ly_do": "fetch hỏng (mạng/chặn egress/URL sai)"}
+            continue
+        so = len(rut_tieu_de(nd))
+        kq[s["id"]] = {"ok": so >= 1, "so_tieu_de": so,
+                       "ly_do": None if so >= 1 else
+                       "fetch OK nhưng 0 tiêu đề — parser không đọc được trang này"}
+    return kq
+
+
+def bat_neu_ok(du: dict, kq: dict[str, dict]) -> list[str]:
+    """Đổi status not-covered → active CHỈ cho trạm vừa dò ĐẠT (fetch OK + ≥1 tiêu
+    đề), ghi kèm bằng chứng kích hoạt. Trả về danh sách id đã bật. KHÔNG ghi đĩa —
+    caller quyết (và phải sao lưu trước khi ghi)."""
+    bat: list[str] = []
+    for s in du["sources"]:
+        r = kq.get(s["id"])
+        if r and r["ok"] and s.get("status") == "not-covered":
+            s["status"] = "active"
+            s["kich_hoat"] = {"ngay": date.today().isoformat(),
+                             "bang": "giam_sat_to_chuc --bat-neu-ok",
+                             "so_tieu_de_luc_do": r["so_tieu_de"]}
+            bat.append(s["id"])
+    return bat
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Trạm quan sát guideline theo tổ chức")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--kiem-tra", action="store_true",
+                    help="dò sống mọi trạm có endpoint (kể cả not-covered), chỉ đo không ghi")
+    ap.add_argument("--bat-neu-ok", action="store_true",
+                    help="dò sống rồi BẬT (not-covered→active) trạm nào dò đạt; sao lưu sổ trước khi ghi")
     a = ap.parse_args()
     if a.self_test:
         return _self_test()
+
+    if a.kiem_tra or a.bat_neu_ok:
+        try:
+            du = json.loads(SO_NGUON.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            print(f"🔴 Sổ nguồn hỏng: {exc}")
+            return 2
+        kq = kiem_tra_tram(du["sources"])
+        if not kq:
+            print("◌ Không trạm rss/html-watch nào có endpoint để dò.")
+            return 0
+        for sid, r in sorted(kq.items()):
+            dau = "✓" if r["ok"] else "✗"
+            print(f"  {dau} {sid}: {r['so_tieu_de']} tiêu đề" +
+                  (f" — {r['ly_do']}" if r["ly_do"] else ""))
+        if a.bat_neu_ok:
+            bat = bat_neu_ok(du, kq)
+            if bat:
+                sao_luu = SO_NGUON.with_suffix(
+                    f".json.bak-{date.today().isoformat()}")
+                sao_luu.write_text(SO_NGUON.read_text(encoding="utf-8"),
+                                   encoding="utf-8")
+                du["updated"] = date.today().isoformat()
+                SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1)
+                                    + "\n", encoding="utf-8")
+                print(f"🟢 Đã BẬT {len(bat)} trạm: {', '.join(bat)} "
+                      f"(sao lưu: {sao_luu.name})")
+            else:
+                print("◌ Không trạm not-covered nào dò đạt — sổ giữ nguyên.")
+        return 0 if all(r["ok"] for r in kq.values()) else 1
 
     try:
         du = json.loads(SO_NGUON.read_text(encoding="utf-8"))
