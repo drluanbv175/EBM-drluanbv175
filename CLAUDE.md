@@ -1483,9 +1483,13 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   non-inferiority, và `icc`/`icc_source`/`cluster_size`/`n_clusters` cho thiết kế theo chùm).
   **Ba giới hạn phải nhớ:** (1) G3 **KHÔNG phải cổng ký** — `_GATE_REQUIRED_STAKEHOLDERS` không khai
   stakeholder cho G3 và `approve_gate.py` không nhận `--gate G3`, nên `PASS_G3_CONFIRMED` là lời
-  **tự khai có dấu vết**, KHÔNG phải bảo đảm mật mã như G2/G4/G5/G8/G9/G10; (2) lớp này **CỐ Ý KHÔNG đổi mã
-  thoát** của `run_g3_auto.py` (19 file test + `run_pipeline`/`pipeline_freshness` dựa vào hợp đồng
-  3 mã thoát cũ) — muốn quality BLOCKED chặn cứng cả pipeline là đổi QUY TRÌNH, cần bác sĩ quyết;
+  **tự khai có dấu vết**, KHÔNG phải bảo đảm mật mã như G2/G4/G5/G8/G9/G10; (2) ⛔ **ĐÍNH CHÍNH 30/08/2026 — G3 nay là CHẶN CỨNG theo quyết định
+  bác sĩ** (trả lời «Nâng thành chặn cứng», đợt «hoàn thiện cho xanh»): quality BLOCKED trên một
+  lượt lẽ ra EXIT_OK ⇒ `run_g3_auto.py` trả **mã thoát 3** (EXIT_GUARDRAIL_FAIL — mã có sẵn,
+  consumer không đổi); lớp chấm CRASH cũng ⇒ 3 (fail-closed kiểu BH27); DRAFT_* giữ mã cũ (kết quả
+  đúng của lượt tự động đầu) và exit 2 giữ nguyên 2. Câu cũ «CỐ Ý KHÔNG đổi mã thoát... cần bác sĩ
+  quyết» hết hiệu lực — quyết định đã có. 4 fixture cũ dựa vào chế độ tư vấn được sửa cho HỢP LỆ
+  (không nới assertion); hồi quy `tests/test_g3_hard_block_20260830.py` (mutation-tested 3 phép);
   (3) artifact `G3_QUALITY_REPORT.json` đăng ký ở `audit_research_gates.py` với `required=False`
   (khác G2 là `True`) vì `tools/verify_research_gate_contracts.py` ở thư mục gốc dựng fixture G3 chỉ
   với `G3_A4_SAMPLE_SIZE_AUTO.md` — nâng lên bắt buộc phải sửa ĐỒNG THỜI cả hai file.
