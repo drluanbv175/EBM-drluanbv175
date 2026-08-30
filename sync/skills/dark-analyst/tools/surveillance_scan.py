@@ -68,8 +68,16 @@ TRUSTED_SOURCE_ALIASES = {
     "ASH/ISTH": ("ash", "isth", "american society of hematology"),
     "AGS": ("ags", "american geriatrics society", "beers criteria"),
     "ATS/ERS/BTS": ("ats", "ers", "bts", "american thoracic society", "thorax"),
+    # Ba nhóm bác sĩ duyệt 30/08/2026 (audit/07 §3): kho đang có 2 dashboard thần
+    # kinh (SNNOOP10 ở Neurology; HINTS/BE-FAST ở Stroke) + nguồn sụt cân ở AFP.
+    # «neurology»/«stroke» là từ hay gặp trong TIÊU ĐỀ bài ⇒ phải nằm trong
+    # AMBIGUOUS_SHORT_ALIASES để chỉ khớp trường tạp chí/tổ chức, không khớp title.
+    "AAN/Neurology": ("american academy of neurology", "neurology"),
+    "Stroke (AHA)": ("stroke",),
+    "AAFP": ("american family physician", "am fam physician", "aafp"),
 }
-AMBIGUOUS_SHORT_ALIASES = {"who", "ada", "acc", "aha", "esc", "acr", "ema", "ash", "ags", "gold", "gut"}
+AMBIGUOUS_SHORT_ALIASES = {"who", "ada", "acc", "aha", "esc", "acr", "ema", "ash", "ags", "gold", "gut",
+                           "stroke", "neurology"}
 
 
 def _tls_context() -> ssl.SSLContext:
