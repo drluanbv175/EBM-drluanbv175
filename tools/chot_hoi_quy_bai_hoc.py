@@ -483,19 +483,29 @@ def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
 
     Kiểm HÀNH VI, nhanh: chạy từng lệnh hook với `CLAUDE_PROJECT_DIR` trỏ vào một
     thư mục KHÔNG có công cụ — mỗi lệnh PHẢI in cảnh báo, không được im.
+
+    01/09/2026: đọc CẢ `.claude/settings.json` (đi qua git, chỉ hook cloud) LẪN
+    `.claude/settings.local.json` (8 chốt máy thật, không qua git). Đo được hook ở hai
+    file CỘNG DỒN — chỉ đọc file tracked là mất phủ đúng 8 chốt mà BH16 sinh ra để canh.
     """
     import json
     import os
     import subprocess
     import tempfile
-    p = REPO / ".claude/settings.json"
-    try:
-        cfg = json.loads(p.read_text(encoding="utf-8"))
-        lenhs = [m["command"] for nhom in cfg["hooks"]["SessionStart"] for m in nhom["hooks"]]
-    except (OSError, ValueError, KeyError) as e:
-        return False, f"không đọc được hook SessionStart: {e}"
+    lenhs: list[str] = []
+    for ten in (".claude/settings.json", ".claude/settings.local.json"):
+        p = REPO / ten
+        if not p.exists():
+            continue
+        try:
+            cfg = json.loads(p.read_text(encoding="utf-8"))
+            lenhs += [m["command"]
+                      for nhom in (cfg.get("hooks") or {}).get("SessionStart") or []
+                      for m in nhom.get("hooks") or []]
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            return False, f"không đọc được hook SessionStart ở {ten}: {e}"
     if not lenhs:
-        return False, "không còn chốt SessionStart nào"
+        return False, "không còn chốt SessionStart nào (cả settings.json lẫn settings.local.json)"
     with tempfile.TemporaryDirectory() as rong:
         env = dict(os.environ, CLAUDE_PROJECT_DIR=rong)
         im = []
@@ -3318,7 +3328,10 @@ def bh78_so_viec_treo_fail_closed_va_khong_tu_dong() -> tuple[bool, str]:
     import io
     import json
     import tempfile
-    from contextlib import redirect_stdout
+    # Fixture cố tình gọi vào nhánh TỪ CHỐI của công cụ, nên nó in thông điệp
+    # fail-closed ra **stderr** — chỉ nuốt stdout thì chốt «im khi ổn» vẫn ồn mỗi
+    # phiên (đo 01/09: dòng «❌ Thiếu hạn» lọt ra giữa hook SessionStart).
+    from contextlib import redirect_stderr, redirect_stdout
 
     m = _nap(REPO / "tools" / "so_viec_chua_dong.py", "_bh70_so_viec")
     hom_nay = _dt.date(2026, 8, 22)
@@ -3335,12 +3348,12 @@ def bh78_so_viec_treo_fail_closed_va_khong_tu_dong() -> tuple[bool, str]:
         args = ["--so", str(so), "--hom-nay", hom_nay.isoformat()]
 
         # việc treo không hạn phải bị TỪ CHỐI ngay lúc mở
-        with redirect_stdout(io.StringIO()):
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             ma = m.main(args + ["--them", "--loai", "tai-kham", "--mo-ta", "hẹn 3 tháng"])
         if ma != 2:
             return False, "mở được việc treo KHÔNG có hạn"
 
-        with redirect_stdout(io.StringIO()):
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
             m.main(args + ["--them", "--loai", "xet-nghiem",
                            "--mo-ta", "creatinin, chờ kết quả", "--han", "2026-07-01"])
             ma_bc = m.main(args)          # báo cáo
@@ -3640,6 +3653,151 @@ def bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang():
     return True, "hook sống được trên bản trần; máy thật giữ nguyên fail-closed; ngữ nghĩa 3-gốc khoá"
 
 
+def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
+    """01/09 — phiên Claude Code trên WEB dựng container mới mỗi lần và chỉ clone repo.
+    Đo trên chính phiên đó: `~/.claude/skills` có 2 thư mục, 26/41 skill riêng chào ra
+    (15 thiếu, gồm `tong-thuat-chung-cu`), và KHÔNG có `~/.claude/settings.json` nên
+    ngân sách danh sách skill lùi về mặc định 0,01 ≈ 8.000 ký tự trong khi 41 skill
+    riêng cần ~21.600 — đúng gốc «skill cài rồi mà gọi không được» (BH81), lần này ở
+    cloud: 4/6 skill không chào ra nằm trong top-8 mô tả dài nhất. Tám chốt SessionStart
+    bác sĩ đã xuất (sync/hooks-sessionstart.json) chưa từng chạy một lần trên cloud vì
+    repo không track `.claude/settings.json`.
+
+    Sửa: `.claude/hooks/session-start.sh` (nối `sync/skills/*` vào ~/.claude/skills ·
+    khôi phục khoá ngân sách từ CÙNG bản khai `sync/cau-hinh-nguoi-dung.json` hai máy
+    đang dùng · cài 3 thư viện đo được là thiếu · chốt bài học CHỈ trên bản trần) khai
+    trong `.claude/settings.json` ĐI QUA GIT. 8 chốt máy thật dời sang
+    `settings.local.json` — đo 01/09: hook ở hai file CỘNG DỒN, cả hai chạy. Hook thoát
+    ngay khi không phải remote: nó không có quyền chạm ~/.claude của máy bác sĩ.
+
+    Kiểm HÀNH VI (fixture tạm + HOME tạm, không đụng máy đang chạy):
+      ① hai file đi qua git · settings.local.json vẫn bị ignore · script có bit thực thi
+        trong index · settings.json thật sự GỌI script (BH41: không ai gọi = không tồn tại)
+      ② KHÔNG remote ⇒ thoát 0 và HOME tạm không có gì mới
+      ③ remote + fixture ⇒ skill được nối vào $HOME/.claude/skills và settings.json nhận
+        đúng khoá ĐÃ KHAI (so với bản khai, không so với số viết cứng)
+      ④ chốt bài học chỉ chạy trên bản trần: còn một gốc dữ liệu ⇒ KHÔNG gọi; vắng ⇒ gọi;
+        mirror Codex (gitignore, sinh từ .claude/agents) PHẢI được sinh lại — clone tươi
+        không có nó thì alignment FAIL và BH83 đỏ ở mọi phiên cloud
+      ⑤ dong_bo_hook_sessionstart: phạm vi du-an KHÔNG trỏ vào file tracked
+    """
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+
+    hook = REPO / ".claude/hooks/session-start.sh"
+    cfg = REPO / ".claude/settings.json"
+    git = _sh_which("git")
+    if not git:
+        return False, "không có git để kiểm file có đi qua git không"
+
+    # ① đi qua git — bẫy ignore im lặng đã vấp ≥3 lần trong cùng đợt (BH70)
+    r = subprocess.run([git, "ls-files", "--error-unmatch", str(cfg), str(hook)],
+                       cwd=REPO, capture_output=True, text=True)
+    if r.returncode != 0:
+        return False, "settings.json / hooks/session-start.sh KHÔNG đi qua git — phiên cloud lại trắng tay"
+    r = subprocess.run([git, "check-ignore", "-q", ".claude/settings.local.json"],
+                       cwd=REPO, capture_output=True)
+    if r.returncode != 0:
+        return False, "settings.local.json KHÔNG còn bị ignore — 8 chốt trỏ đường dẫn riêng từng máy sẽ lọt vào git"
+    r = subprocess.run([git, "ls-files", "-s", ".claude/hooks/session-start.sh"],
+                       cwd=REPO, capture_output=True, text=True)
+    if not r.stdout.startswith("100755"):
+        return False, "hook mất bit thực thi trong index — Claude Code sẽ không chạy được"
+    try:
+        lenhs = [h["command"]
+                 for m in json.loads(cfg.read_text(encoding="utf-8"))["hooks"]["SessionStart"]
+                 for h in m["hooks"]]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return False, f"settings.json không đọc được khối SessionStart: {e}"
+    if not any("session-start.sh" in c for c in lenhs):
+        return False, "settings.json không gọi hooks/session-start.sh — script có mà không ai gọi"
+
+    env_goc = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_REMOTE"}
+
+    # ② không remote ⇒ không làm gì
+    with tempfile.TemporaryDirectory() as home:
+        env = dict(env_goc, HOME=home, CLAUDE_PROJECT_DIR=str(REPO))
+        r = subprocess.run(["bash", str(hook)], cwd=REPO, env=env,
+                           capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            return False, f"hook thoát {r.returncode} khi KHÔNG remote"
+        if any(Path(home).iterdir()):
+            return False, "KHÔNG remote mà hook vẫn ghi vào $HOME — nó sẽ đụng máy bác sĩ"
+
+    khai = json.loads((REPO / "sync/cau-hinh-nguoi-dung.json").read_text(encoding="utf-8"))["khoa"]
+    with tempfile.TemporaryDirectory() as td:
+        P = Path(td) / "du-an"
+        home = Path(td) / "home"
+        shim = Path(td) / "shim"
+        for d in (P / "sync/skills/skill-thu", P / "tools", home, shim):
+            d.mkdir(parents=True)
+        (P / "sync/skills/skill-thu/SKILL.md").write_text(
+            "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
+        shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
+        shutil.copy2(REPO / "tools/kiem_cau_hinh_nguoi_dung.py", P / "tools/kiem_cau_hinh_nguoi_dung.py")
+        shutil.copy2(REPO / "tools/ban_sao_tran.py", P / "tools/ban_sao_tran.py")
+        # Stub chốt bài học: chỉ để lại DẤU đã bị gọi. KHÔNG chép chốt thật — chốt thật
+        # gọi BH84, BH84 chạy hook, hook gọi chốt thật… đệ quy.
+        dau = Path(td) / "da-goi-chot"
+        (P / "tools/chot_hoi_quy_bai_hoc.py").write_text(
+            f"open({str(dau)!r}, 'w').write('x')\n", encoding="utf-8")
+        # Stub sinh mirror Codex: chỉ để lại DẤU. Bản clone tươi không có mirror
+        # (gitignore) ⇒ alignment FAIL ⇒ BH83 đỏ ở mọi phiên cloud — hook phải gọi nó.
+        dau_mirror = Path(td) / "da-sinh-mirror"
+        (P / "tools/sync_agents_to_codex.py").write_text(
+            f"open({str(dau_mirror)!r}, 'w').write('x')\n", encoding="utf-8")
+        # pip3 giả: chốt hồi quy KHÔNG được ra mạng. Máy thiếu docx/bs4/lxml thì hook
+        # sẽ gọi pip3 — ở đây nó gặp shim này và đi tiếp, không cài gì.
+        (shim / "pip3").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (shim / "pip3").chmod(0o755)
+        env = dict(env_goc, HOME=str(home), CLAUDE_PROJECT_DIR=str(P), CLAUDE_CODE_REMOTE="true",
+                   PATH=f"{shim}{os.pathsep}{env_goc.get('PATH', '')}")
+
+        # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
+        (P / "medical-ebm-automation").mkdir()
+        r = subprocess.run(["bash", str(hook)], cwd=P, env=env,
+                           capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            return False, f"hook thoát {r.returncode} ở chế độ remote: {(r.stdout + r.stderr)[-300:]}"
+        if dau.exists():
+            return False, ("cây còn gốc dữ liệu (không phải bản trần) mà hook vẫn gọi chốt bài học "
+                           "— tường đỏ giả 32 mục quay lại")
+
+        if not dau_mirror.exists():
+            return False, "hook không sinh lại mirror Codex — clone tươi sẽ FAIL agent_sync_health, BH83 đỏ mọi phiên cloud"
+
+        # ③ nối skill + khôi phục khoá đã khai
+        lk = home / ".claude/skills/skill-thu"
+        if not lk.is_symlink() or not (lk / "SKILL.md").is_file():
+            return False, "remote mà skill riêng KHÔNG được nối vào ~/.claude/skills"
+        st = home / ".claude/settings.json"
+        if not st.is_file():
+            return False, ("remote mà ~/.claude/settings.json không được tạo — ngân sách skill "
+                           "lại về mặc định 0,01")
+        co = json.loads(st.read_text(encoding="utf-8"))
+        for ten, m in khai.items():
+            if co.get(ten) != m.get("gia_tri"):
+                return False, (f"khoá {ten} trên cloud = {co.get(ten)!r}, "
+                               f"bản khai hai máy = {m.get('gia_tri')!r}")
+
+        # ④b bản trần ⇒ chốt bài học PHẢI được gọi
+        (P / "medical-ebm-automation").rmdir()
+        subprocess.run(["bash", str(hook)], cwd=P, env=env,
+                       capture_output=True, text=True, timeout=120)
+        if not dau.exists():
+            return False, "bản trần mà hook không gọi chốt bài học — cloud mất giác quan hồi quy"
+
+    # ⑤ đích ghi của công cụ đồng bộ hook không được là file tracked
+    m = _nap(REPO / "tools/dong_bo_hook_sessionstart.py", "dbh_bh84")
+    if m.PHAM_VI["du-an"].name != "settings.local.json" or m.PHAM_VI["du-an"] == m.SETTINGS_TRACKED:
+        return False, ("phạm vi du-an lại trỏ vào .claude/settings.json (tracked) — mỗi --ap-dung là "
+                       "một diff git, và 8 chốt máy này sẽ ép sang máy kia")
+    return True, ("hook cloud đi qua git, nối skill + khôi phục ngân sách trên fixture, "
+                  "không đụng máy thật, chốt chỉ chạy trên bản trần")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3732,6 +3890,7 @@ BAI_HOC = [
     ("BH81", "22/08", "Khoá ngân sách skill bị app xoá phải được khôi phục («gọi skill không được»)", bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc),
     ("BH82", "28/08", "Bản sao git trần: «không kiểm được» là ⚪ có khai báo, không phải ✗ giả", bh82_ban_sao_tran_khong_duoc_do_gia),
     ("BH83", "28/08", "Hook pre-commit sống được trên bản trần mà không mất răng trên máy thật", bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang),
+    ("BH84", "01/09", "Hook phiên cloud đi qua git, nối skill + khôi phục ngân sách, KHÔNG đụng máy thật", bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that),
 
 ]
 

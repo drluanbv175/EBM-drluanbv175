@@ -26,6 +26,18 @@ mà file chưa tải về thì Claude Code mất hook một cách IM LẶNG.
     python3 tools/dong_bo_hook_sessionstart.py --ap-dung   # git → máy này (có sao lưu)
 
 Mã thoát: 0 khớp · 1 lệch/chưa có nguồn · 2 không ghi được.
+
+ĐỔI CHỖ 01/09/2026 — phạm vi `du-an` nay là `.claude/settings.local.json`, KHÔNG còn là
+`.claude/settings.json`. Lý do: `.claude/settings.json` từ 01/09 ĐI QUA GIT và chỉ khai
+MỘT hook chuẩn bị phiên cloud (`.claude/hooks/session-start.sh`, tự thoát khi không phải
+remote). Tám chốt của MÁY THẬT trỏ vào venv/kho plugin/OneDrive riêng từng máy nên
+KHÔNG được đi qua git — chúng ở `settings.local.json` (gitignore giữ nguyên). Đo 01/09:
+hook ở hai file CỘNG DỒN (cả hai chạy), nên tách như vậy không mất chốt nào.
+⚠ Máy đã có `.claude/settings.json` CHƯA TRACK (bản cũ giữ 8 chốt) sẽ bị `git pull` từ
+chối («untracked working tree file would be overwritten»). Cách xử lý MỘT LẦN, trước pull:
+    mv .claude/settings.json .claude/settings.local.json && git pull
+Công cụ này phát hiện tình huống đó và in đúng lệnh trên, không tự dời file hộ (dời cấu
+hình của máy là việc bác sĩ phải thấy tận mắt).
 """
 from __future__ import annotations
 
@@ -45,9 +57,31 @@ for _s in (sys.stdout, sys.stderr):
 REPO = Path(__file__).resolve().parents[1]
 NGUON = REPO / "sync/hooks-sessionstart.json"
 PHAM_VI = {
-    "du-an": REPO / ".claude/settings.json",
+    "du-an": REPO / ".claude/settings.local.json",   # 8 chốt máy thật — KHÔNG qua git
     "nguoi-dung": Path.home() / ".claude/settings.json",
 }
+# File ĐI QUA GIT từ 01/09/2026: chỉ giữ hook phiên cloud. Không bao giờ là đích ghi.
+SETTINGS_TRACKED = REPO / ".claude/settings.json"
+HOOK_CLOUD = ".claude/hooks/session-start.sh"
+
+
+def _la_ban_cu_chua_track() -> bool:
+    """True khi `.claude/settings.json` là BẢN CŨ của máy (giữ chốt thật, chưa track).
+
+    Nhận diện theo NỘI DUNG, không theo trạng thái git: bản tracked chỉ có đúng hook
+    cloud; bản cũ có ≥1 lệnh KHÔNG trỏ vào hook cloud. Nhờ vậy phát hiện được cả
+    trước lẫn sau khi bác sĩ pull (sau pull mà còn thấy thì là pull chưa hoàn tất).
+    """
+    hook = lay_hook(doc_json(SETTINGS_TRACKED))
+    lenh = [h.get("command", "") for m in hook for h in (m.get("hooks") or [])]
+    return bool(lenh) and any(HOOK_CLOUD not in c for c in lenh)
+
+
+def _nhac_doi_ban_cu() -> None:
+    print("⚠ `.claude/settings.json` đang giữ chốt của MÁY NÀY (bản cũ, chưa track).")
+    print("  Từ 01/09/2026 file đó đi qua git và chỉ khai hook cloud; chốt máy thật")
+    print("  phải nằm ở `.claude/settings.local.json`. Dời MỘT LẦN rồi pull:")
+    print("      mv .claude/settings.json .claude/settings.local.json && git pull")
 
 
 def doc_json(p: Path) -> dict:
@@ -69,16 +103,20 @@ def xuat(dich_pham_vi: str) -> int:
     if not hook:
         print(f"✗ Máy này không có hook SessionStart ở {p} — không có gì để xuất.",
               file=sys.stderr)
-        print("  Chạy `--xuat` trên MÁY ĐANG CHẠY ĐÚNG (thường là Mac).", file=sys.stderr)
+        if dich_pham_vi == "du-an" and _la_ban_cu_chua_track():
+            _nhac_doi_ban_cu()
+        else:
+            print("  Chạy `--xuat` trên MÁY ĐANG CHẠY ĐÚNG (thường là Mac).", file=sys.stderr)
         return 1
     NGUON.parent.mkdir(parents=True, exist_ok=True)
     NGUON.write_text(json.dumps({
         "_ghi_chu": (
             "BẢN NGUỒN của hook SessionStart — chép từ máy đang chạy đúng bằng "
             "`python3 tools/dong_bo_hook_sessionstart.py --xuat`, KHÔNG soạn tay. "
-            "Máy kia cài bằng `--ap-dung`. File này tồn tại vì .gitignore loại trừ "
-            ".claude/settings.json, nên trước 21/08/2026 cơ chế tự động của hệ "
-            "không có đường nào đi sang máy thứ hai."),
+            "Máy kia cài bằng `--ap-dung`. Phạm vi du-an ghi vào "
+            ".claude/settings.local.json (không qua git — chốt trỏ vào venv/kho "
+            "plugin riêng từng máy); .claude/settings.json từ 01/09/2026 đi qua git "
+            "và chỉ giữ hook phiên cloud."),
         "_pham_vi": dich_pham_vi,
         "_xuat_luc": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "SessionStart": hook,
@@ -104,6 +142,9 @@ def ap_dung(dich_pham_vi: str, that: bool) -> int:
     if dang_co == muon:
         print(f"✓ Hook SessionStart đã khớp bản nguồn ({dich_pham_vi}).")
         return 0
+    if dich_pham_vi == "du-an" and not dang_co and _la_ban_cu_chua_track():
+        _nhac_doi_ban_cu()
+        return 1
 
     if not that:
         print(f"⚠ Hook SessionStart LỆCH bản nguồn ({dich_pham_vi}):")

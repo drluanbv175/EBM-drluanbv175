@@ -48,9 +48,17 @@
 # ignore IM LẶNG — đúng họ lỗi BH70 đã gặp với sync/plugin-manifest.json.
 !/lam-sang/
 
-# 3) Bên trong .claude/: CHỈ track agents/ (bỏ session/state/settings.local/launch — runtime cục bộ)
+# 3) Bên trong .claude/: track agents/ + hook chuẩn bị phiên CLOUD.
+#    (bỏ session/state/settings.local/launch — runtime cục bộ)
 /.claude/*
 !/.claude/agents/
+# 3a) Hook phiên cloud (01/09/2026). Phải khai TƯỜNG MINH: quy tắc /.claude/* ở trên
+#     loại sạch, nên thiếu hai dòng này thì hook bị ignore IM LẶNG và phiên cloud lại
+#     không có skill nào — đúng họ lỗi BH70 (sync/plugin-manifest.json bị ignore im lặng).
+#     settings.local.json CỐ Ý vẫn bị loại: nó giữ 8 chốt trỏ vào venv/kho plugin/OneDrive
+#     RIÊNG từng máy, đưa vào git là ép máy này chạy đường dẫn của máy kia.
+!/.claude/settings.json
+!/.claude/hooks/
 # 3b) .claude/agents/.claude/ là thư mục rác thừa kế (sessions/state cũ), không phải nội dung agent
 /.claude/agents/.claude/
 

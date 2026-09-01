@@ -1,0 +1,15 @@
+{
+  "_ghi_chu": "CHỈ khai hook chuẩn bị phiên CLOUD. Script tự thoát ngay khi không phải môi trường remote, nên file này vô hại trên Mac/Windows của bác sĩ. Tám chốt SessionStart của MÁY THẬT nằm ở .claude/settings.local.json (không đi qua git, vì chúng trỏ vào venv/kho plugin/OneDrive riêng từng máy) — cài bằng tools/dong_bo_hook_sessionstart.py --ap-dung. Đã đo 01/09/2026: hook ở HAI file này CỘNG DỒN, cả hai đều chạy, không cái nào đè cái nào.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/.claude/hooks/session-start.sh\" ]; then bash \"$D/.claude/hooks/session-start.sh\"; else echo \"⚠ KHÔNG CHẠY hook phiên cloud: không thấy $D/.claude/hooks/session-start.sh\"; fi; true"
+          }
+        ]
+      }
+    ]
+  }
+}

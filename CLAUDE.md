@@ -176,6 +176,35 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   ⚠️ Cả hai file sổ khai phải nằm trong danh sách un-ignore của `.gitignore` — quy tắc `/sync/*` loại
   mọi file gốc, và lúc mới dựng thì `plugin-manifest.json` **bị ignore im lặng**, tức cơ chế «đi qua
   git» sẽ không đi đâu cả. BH70 canh luôn điều này.
+  ☁️ **PHIÊN CLOUD (claude.ai/code) ĐÃ CÓ ĐƯỜNG NHẬN SKILL — 01/09/2026 (BH84).** Trước đó, container
+  cloud dựng mới mỗi phiên và chỉ clone repo: đo được `~/.claude/skills` 2 thư mục, **26/41 skill riêng
+  chào ra (15 thiếu, có `tong-thuat-chung-cu`)**, và **không có `~/.claude/settings.json`** nên ngân
+  sách danh sách skill lùi về mặc định 0,01 — 41 skill riêng cần ~21.600 ký tự mà chỉ có ~8.000 ⇒ CẮT,
+  đúng gốc «skill cài rồi mà gọi không được» của mục trên, lần này ở cloud (4/6 skill không chào ra nằm
+  trong top-8 mô tả dài nhất). Tám chốt SessionStart bác sĩ đã xuất **chưa từng chạy một lần trên cloud**
+  vì repo không track `.claude/settings.json`.
+  **Nay:** `.claude/hooks/session-start.sh` khai trong `.claude/settings.json` **đi qua git**, làm 5 việc
+  khi mở phiên cloud (đo ~1,5 giây): nối `sync/skills/*` vào `~/.claude/skills` · khôi phục khoá ngân sách
+  bằng `kiem_cau_hinh_nguoi_dung.py --ap-dung --tao-neu-thieu` **từ CÙNG bản khai `sync/cau-hinh-nguoi-dung.json`
+  hai máy đang dùng** (không viết cứng số nào, nên cloud không thể trôi khỏi local) · cài đúng 3 thư viện
+  đo được là thiếu (python-docx · beautifulsoup4 · lxml) · **sinh lại mirror Codex** `.codex/.Codex/agents`
+  (file gitignore sinh từ `.claude/agents/*.md`, 0,1 giây — clone tươi không có nó nên
+  `verify_claude_code_repo_alignment` FAIL `agent_sync_health` và **BH83 đỏ ở MỌI phiên cloud** dù được ghi
+  là đã vá 28/08; phiên đó chắc đã có mirror sinh sẵn. Cố ý KHÔNG chạy `enforce_agent_guardrails` vì nó sửa
+  file tracked) · chạy chốt bài học **CHỈ trên bản sao trần** (cây còn một phần gốc dữ liệu thì bộ chốt in
+  32 mục ✗ giả và tổng kết «32 BÀI HỌC TÁI PHÁT» — sai sự thật; trên bản trần đường ⚪ của BH82 mở nên còn
+  **49/84 canh · 35 ⚪ · 0 đỏ**). Đo sau khi nối: 26 → 35/41 chào ra ngay trong phiên; 6 còn lại là do
+  ngân sách, phiên sau (có settings.json) mới đủ.
+  **RANH GIỚI:** hook **thoát ngay khi không phải remote** (`CLAUDE_CODE_REMOTE`) — nó không có quyền chạm
+  `~/.claude` của Mac/Windows; BH84 chạy hook với HOME tạm và đòi HOME đó **trống** sau khi chạy.
+  **ĐỔI CHỖ 8 CHỐT MÁY THẬT — việc MỘT LẦN trên MỖI máy, làm TRƯỚC `git pull`:** `.claude/settings.json`
+  nay là file tracked (chỉ hook cloud), còn bản đang có trên máy (8 chốt, chưa track) sẽ làm `git pull`
+  từ chối («untracked working tree file would be overwritten»). Xử lý:
+  `mv .claude/settings.json .claude/settings.local.json && git pull`. Đo 01/09 bằng phép thử thật: hook ở
+  **hai file CỘNG DỒN** (cả hai đều chạy), nên không mất chốt nào. `dong_bo_hook_sessionstart.py` phạm
+  vi `du-an` từ nay ghi/đọc `settings.local.json`; gặp bản cũ nó **in đúng lệnh `mv` trên, không tự dời**.
+  BH16 đọc cả hai file để không mất phủ 8 chốt. Plugin marketplace (787 skill) vẫn **không** đi theo repo
+  — chúng chỉ là worker, không phải chủ của việc có cổng, nên cloud thiếu chúng không chặn việc gì có cổng.
   ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
   thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
   tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`

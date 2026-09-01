@@ -24,7 +24,7 @@ Lệnh này phủ **8 làn theo đúng thứ tự phụ thuộc** — xem bằng
 | ③ | Skill → Claude + Codex | `sync/skills/` → 2 runtime |
 | ④ | Agent → Codex | enforce → sync → check |
 | ⑤ | Plugin | đối chiếu 2 máy qua sổ khai chung + chiếu sang Codex |
-| ⑥ | Hook SessionStart | cơ chế tự động đi giữa 2 máy |
+| ⑥ | Hook SessionStart | cơ chế tự động đi giữa 2 máy (đích: `.claude/settings.local.json`) |
 | ⑦ | Bộ nhớ Claude | mirror 2 chiều, file mới hơn thắng |
 | ⑧ | Kho công cụ | kho plugin so mốc chuẩn máy này |
 
@@ -58,7 +58,8 @@ python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 | Việc | Lệnh | Vì sao |
 |---|---|---|
 | Nối skill vào Claude + Codex | `bash sync/link-skills.sh` · `sync\link-skills.ps1` | nguồn duy nhất `sync/skills/` |
-| Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | `.claude/settings.json` bị gitignore nên hook không tự đi |
+| Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | 8 chốt trỏ venv/kho plugin RIÊNG từng máy nên nằm ở `.claude/settings.local.json` (không qua git) |
+| Dời bản cũ (MỘT LẦN, trước `git pull`) | `mv .claude/settings.json .claude/settings.local.json && git pull` | từ 01/09/2026 `.claude/settings.json` đi qua git và chỉ khai hook phiên **cloud**; bản cũ chưa track sẽ làm pull từ chối. Hook ở hai file cộng dồn — không mất chốt nào |
 | Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
 
 > ⚠️ **Máy chưa có file `sync/nap-ban-nguon.command`?** Bình thường — nút nằm trong nhánh phát triển, mà máy đang ở `master`. Nút không tự lấy chính nó về được, nên lần đầu phải kéo nhánh bằng tay (dán trọn khối, dùng được cả hai kiểu đường dẫn OneDrive trên macOS):
@@ -81,7 +82,7 @@ bash sync/nap-ban-nguon.sh
 Nút này DỪNG NGAY nếu cây làm việc còn thay đổi chưa lưu (đổi nhánh khi còn việc dở là cách mất việc dở), rồi lấy nhánh có công cụ và chạy hai bước nạp:
 
 ```bash
-python3 tools/dong_bo_hook_sessionstart.py --xuat             # hook thật → sync/hooks-sessionstart.json
+python3 tools/dong_bo_hook_sessionstart.py --xuat             # hook thật (.claude/settings.local.json) → sync/hooks-sessionstart.json
 python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai    # kho thật → sync/plugin-manifest.json
 ```
 

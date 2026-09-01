@@ -87,15 +87,32 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Canh khoá settings.json bị app ghi đè")
     ap.add_argument("--ap-dung", action="store_true", help="ghi lại khoá đã khai (có sao lưu)")
     ap.add_argument("--im-khi-on", action="store_true", help="im khi mọi khoá đã khớp")
+    # CỐ Ý là cờ opt-in, KHÔNG phải mặc định. Trên máy bác sĩ, settings.json vắng mặt
+    # là chuyện BẤT THƯỜNG (app vừa xoá? sai HOME?) và tự dựng file mới ở đó sẽ giấu
+    # mất sự bất thường đó. Trên phiên cloud thì ngược lại: container dựng mới mỗi
+    # lần nên vắng mặt là chuyện BÌNH THƯỜNG, và bỏ qua đồng nghĩa danh sách skill
+    # luôn bị cắt theo mặc định 0,01. Cờ này để đúng phía cloud tự khai mình là cloud.
+    ap.add_argument("--tao-neu-thieu", action="store_true",
+                    help="tạo settings.json rỗng nếu chưa có (dùng cho phiên cloud)")
     a = ap.parse_args()
 
     khai = (doc_json(KHAI) or {}).get("khoa") or {}
     if not khai:
         print(f"⚠ Chưa có bản khai {KHAI.name} — không biết phải giữ khoá nào.", file=sys.stderr)
         return 1
+    vua_tao = False
     if not SETTINGS.exists():
-        print(f"⚠ Máy này chưa có {SETTINGS} — bỏ qua.", file=sys.stderr)
-        return 0
+        if not (a.tao_neu_thieu and a.ap_dung):
+            print(f"⚠ Máy này chưa có {SETTINGS} — bỏ qua.", file=sys.stderr)
+            return 0
+        try:
+            SETTINGS.parent.mkdir(parents=True, exist_ok=True)
+            SETTINGS.write_text("{}\n", encoding="utf-8", newline="\n")
+        except OSError as exc:
+            print(f"✗ Không tạo được {SETTINGS}: {exc}", file=sys.stderr)
+            return 2
+        vua_tao = True
+        print(f"• Chưa có {SETTINGS} — đã tạo file rỗng để ghi khoá đã khai.")
 
     hien = doc_json(SETTINGS)
     lech: list[tuple[str, object, object]] = []
@@ -137,8 +154,12 @@ def main() -> int:
         return 1
 
     try:
-        luu = SETTINGS.with_name(f"settings.json.bak-{_dt.datetime.now():%Y%m%d-%H%M%S}")
-        shutil.copy2(SETTINGS, luu)
+        # File vừa do chính lệnh này tạo thì không có gì để sao lưu — sao lưu một
+        # file rỗng chỉ tạo rác và làm loãng đống .bak-* thật sự đáng xem.
+        luu = None
+        if not vua_tao:
+            luu = SETTINGS.with_name(f"settings.json.bak-{_dt.datetime.now():%Y%m%d-%H%M%S}")
+            shutil.copy2(SETTINGS, luu)
         for ten, _cu, muon in lech:
             hien[ten] = muon              # CHỈ khoá đã khai; không đụng khoá khác
         SETTINGS.write_text(json.dumps(hien, ensure_ascii=False, indent=2) + "\n",
@@ -146,7 +167,8 @@ def main() -> int:
     except OSError as exc:
         print(f"✗ Không ghi được {SETTINGS}: {exc}", file=sys.stderr)
         return 2
-    print(f"\n✓ Đã khôi phục {len(lech)} khoá (sao lưu {luu.name}).")
+    print(f"\n✓ Đã khôi phục {len(lech)} khoá"
+          + (f" (sao lưu {luu.name})." if luu else " (file mới, không cần sao lưu)."))
     print("   Mở lại Claude Code để danh sách skill được dựng theo ngân sách mới.")
     return 0
 
