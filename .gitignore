@@ -29,6 +29,10 @@
 !/.gitattributes
 # Khai báo MCP server theo dự án — cần đi cùng repo để máy Windows nhận được
 !/.mcp.json
+# Nút phát khoá Ed25519 — bản trong git thay bản OneDrive-only hỏng (gọi nhầm Python,
+# đo 01/09/2026: venv có sẵn cryptography mà nút vẫn báo thiếu). Đi qua git để hai máy
+# cùng nhận đúng một bản; đây chính là lớp bẫy BH70 (/* nuốt file gốc im lặng).
+!/Phat Khoa Ed25519.command
 # Hồ sơ kiểm kê/kiện toàn hệ thống (PHA 1 của prompt điều khiển 15/08/2026) — là tài
 # liệu hệ thống, cần theo repo sang máy Windows như CLAUDE.md
 !/audit/
