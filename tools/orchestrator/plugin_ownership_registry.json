@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "policy_id": "EBM-PLUGIN-OWNERSHIP-2026-08-01",
   "description": "Nguon su that may-doc-duoc cho quyen so huu nhiem vu giua control plane EBM va cac plugin.",
   "canonical_research_hard_gates": [
@@ -61,7 +61,7 @@
       "kind": "plugin",
       "priority": 10,
       "may_own": false,
-      "note": "605 skill, KHONG bind worker o bat ky capability nao - xem khai bao unbound_providers."
+      "note": "Kho lon; chi 8 planner dac thu duoc bind co dieu kien tai G0-G1."
     },
     "openmed-skills": {
       "kind": "plugin",
@@ -79,13 +79,13 @@
       "kind": "plugin",
       "priority": 10,
       "may_own": false,
-      "note": "KHONG bind worker - xem khai bao unbound_providers."
+      "note": "Ba worker tung buoc duoc bind cho systematic_review; khong dung ma-end-to-end lam owner."
     },
     "pubmed-search": {
       "kind": "plugin",
       "priority": 10,
       "may_own": false,
-      "note": "Trung bio-research/pubmed. KHONG bind worker - xem khai bao unbound_providers."
+      "note": "Hai worker discovery/search-plan duoc bind duoi owner tra-cuu/thu-thu-tai-lieu."
     },
     "mattpocock-skills": {
       "kind": "plugin",
@@ -114,14 +114,11 @@
   },
   "unbound_providers": {
     "policy": "Provider khai o day duoc HE BIET DEN nhung KHONG duoc bind worker o bat ky capability nao. resolve() se tra blocked_requests neu ai do yeu cau dich danh. Muon dung phai bac si bo sung binding co chu dich, khong tu dong.",
-    "reviewed_at": "2026-08-10",
-    "evidence": "Quet 2712 transcript: 0 luot goi cho aipoch-medical-research, openmed-skills, medsci-project, mattpocock-skills, pubmed-search.",
+    "reviewed_at": "2026-09-01",
+    "evidence": "Danh sach nay chi con provider chua co worker binding canonical.",
     "providers": [
-      "aipoch-medical-research",
       "openmed-skills",
       "medsci-project",
-      "meta-pipe",
-      "pubmed-search",
       "mattpocock-skills",
       "humanizer",
       "healthcare"
@@ -521,6 +518,13 @@
           "provider": "aipoch-medical-research",
           "unit": "mendelian-randomization-protocol-designer",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "mendelian randomization",
+            "mendelian randomisation",
+            "ngẫu nhiên hóa mendel",
+            "ngẫu nhiên hoá mendel",
+            "mr study"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -530,6 +534,13 @@
           "provider": "aipoch-medical-research",
           "unit": "faers-pharmacovigilance-disproportionality-research-planner",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "faers",
+            "pharmacovigilance",
+            "disproportionality",
+            "cảnh giác dược",
+            "tín hiệu an toàn thuốc"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -539,6 +550,13 @@
           "provider": "aipoch-medical-research",
           "unit": "single-cell-research-planner",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "single-cell",
+            "single cell",
+            "đơn bào",
+            "đơn tế bào",
+            "scrna-seq"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -548,6 +566,13 @@
           "provider": "aipoch-medical-research",
           "unit": "bulk-omics-integrative-planner",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "bulk omics",
+            "multi-omics",
+            "multiomics",
+            "đa omics",
+            "tích hợp omics"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -557,6 +582,12 @@
           "provider": "aipoch-medical-research",
           "unit": "drug-repurposing-study-planner",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "drug repurposing",
+            "drug repositioning",
+            "tái định vị thuốc",
+            "tái sử dụng thuốc"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -566,6 +597,13 @@
           "provider": "aipoch-medical-research",
           "unit": "qtl-colocalization-study-planner",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "qtl",
+            "eqtl",
+            "colocalization",
+            "colocalisation",
+            "đồng định vị"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -575,6 +613,12 @@
           "provider": "aipoch-medical-research",
           "unit": "comparative-network-toxicology-shared-mechanism-reference-grounded",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "network toxicology",
+            "độc chất mạng",
+            "độc học mạng",
+            "shared mechanism"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -584,6 +628,12 @@
           "provider": "aipoch-medical-research",
           "unit": "prognostic-biomarker-protocol-designer",
           "mode": "specialty_planning_worker",
+          "match_any": [
+            "prognostic biomarker",
+            "biomarker tiên lượng",
+            "dấu ấn tiên lượng",
+            "chỉ dấu tiên lượng"
+          ],
           "allowed_stages": [
             "G0",
             "G1"
@@ -764,19 +814,7 @@
       "hard_gates": [
         "A"
       ],
-      "workers": [
-        {
-          "provider": "anthropic-skills",
-          "unit": "quan-ly-khang-dong",
-          "mode": "specialist_worker",
-          "allowed_stages": [
-            "INDICATION_REVIEW",
-            "DOSE_DRAFT",
-            "PERIPROCEDURAL_DRAFT",
-            "REVERSAL_DRAFT"
-          ]
-        }
-      ]
+      "workers": []
     },
     "software_delivery": {
       "risk": "medium",

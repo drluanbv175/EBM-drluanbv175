@@ -1,4 +1,4 @@
-"""orchestrator.py — ĐIỀU PHỐI AGENT/PLUGIN: ghép 7 năng lực thành control plane chạy được.
+"""orchestrator.py — ĐIỀU PHỐI AGENT/PLUGIN: ghép 8 năng lực thành control plane chạy được.
 
 Orchestrator.handle(request):
   route intent → dựng plan theo flow → chạy từng bước qua executor (dry-run mặc định) →
@@ -21,6 +21,7 @@ from .plugin_ownership import PluginOwnershipRegistry
 from .registry import Registry
 from .signals import SIGNAL_CUES, Signals, detect as detect_signals
 from .tools_registry import ToolRegistry
+from .worker_inventory import WorkerInventory
 
 # Cổng cho VIỆC LẺ (agent đơn phát ra khuyến cáo / vượt cổng cứng)
 GATE_HINTS: dict[str, str] = {
@@ -52,6 +53,7 @@ class Orchestrator:
     tools: ToolRegistry = field(default_factory=ToolRegistry)
     knowledge: KnowledgeLayer = field(default_factory=KnowledgeLayer)
     plugin_ownership: PluginOwnershipRegistry = field(default_factory=PluginOwnershipRegistry.load)
+    worker_inventory: WorkerInventory = field(default_factory=WorkerInventory)
 
     # ── Năng lực 1: điều phối ────────────────────────────────────────
     def handle(self, request: str, executor: AgentExecutor | None = None,
@@ -76,8 +78,12 @@ class Orchestrator:
 
         # Plugin khong tu tranh quyen voi nhac truong. Moi request duoc gan mot owner
         # duy nhat; plugin chi xuat hien trong danh sach worker duoc phep cua capability.
-        plugin_decision = self.plugin_ownership.resolve_for_intent(intent.kind, intent.target)
-        session.plugin_routing = plugin_decision.as_dict()
+        plugin_decision = self.plugin_ownership.resolve_for_intent(
+            intent.kind,
+            intent.target,
+            request=request,
+        )
+        session.plugin_routing = self._routing_with_availability(plugin_decision)
         session.checkpoint(
             "plugin_routing",
             None,
@@ -151,12 +157,40 @@ class Orchestrator:
                     "condition": agent.condition, "signal_matched": False,
                 })
                 continue
+            # Định tuyến PHÂN CẤP: nhạc trưởng tổng chọn owner của request; tại từng bước,
+            # agent chuyên trách lại chọn đúng worker của capability hẹp hơn. Nhờ vậy G1
+            # có thể dùng đúng 1 planner AIPOCH theo chủ đề thay vì nạp cả kho.
+            stage = step.step_id if step.step_id.startswith("G") else None
+            scoped = self.plugin_ownership.resolve_for_intent(
+                "single_task",
+                agent.name,
+                request=session.request,
+                stage=stage,
+            )
+            scoped_data = self._routing_with_availability(scoped)
             res = ex.execute(agent.name, self.registry, self.tools)
             session.record({
                 "step": step.step_id, "title": step.title, "gate": step.gate,
                 "condition": agent.condition, "signal_matched": bool(agent.condition),
+                "worker_routing": scoped_data,
                 **res.as_dict(),
             })
+
+    def _routing_with_availability(self, decision) -> dict:
+        """Gắn trạng thái runtime vào quyết định mà không thay owner canonical."""
+
+        data = decision.as_dict()
+        unavailable: list[dict] = []
+        for worker_data, worker in zip(data["workers"], decision.workers):
+            availability = self.worker_inventory.locate(worker)
+            worker_data["available"] = availability.available
+            worker_data["source"] = availability.source
+            if not availability.available:
+                unavailable.append(availability.as_dict())
+        data["unavailable_workers"] = unavailable
+        if unavailable and not data["status"].startswith("BLOCKED"):
+            data["status"] = "READY_WITH_LOCAL_FALLBACK"
+        return data
 
     # ── Năng lực 6+2: vòng re-route khi guardrail trả-về-sửa ─────────
     def _guardrail_reroute_loop(self, session: Session, lc: Lifecycle,
@@ -236,7 +270,7 @@ class Orchestrator:
         return (store or ContextStore()).load(session_id)
 
     # ── Tự kiểm tích hợp (điều phối ⇄ registry) ──────────────────────
-    def validate(self) -> list[str]:
+    def validate(self, *, check_runtime: bool = False) -> list[str]:
         """Cảnh báo nếu flow/việc lẻ/gate-hint/reroute tham chiếu agent không có trong
         registry (tham chiếu treo). Quét CẢ 4 nguồn: flows.py (all_agents_in_flows),
         intent.SINGLE_TASK_RULES, GATE_HINTS.keys(), REROUTE_DEFAULT.values() — trước đây
@@ -251,6 +285,10 @@ class Orchestrator:
                 warns.append(f"Flow/việc lẻ/gate-hint/reroute tham chiếu agent KHÔNG có trong registry: `{name}`")
         warns += self.registry.validate()
         warns += self.plugin_ownership.validate(set(self.registry.agents))
+        if check_runtime:
+            for availability in self.worker_inventory.audit(self.plugin_ownership):
+                if not availability.available:
+                    warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
         warns += self.knowledge.verify_against_ssot()
         return warns
 
@@ -270,5 +308,9 @@ class Orchestrator:
                 f"{len(self.plugin_ownership.capabilities)} capability · "
                 f"{len(self.plugin_ownership.providers)} provider; một owner nội bộ/capability, "
                 "plugin chỉ là worker và không được mở cổng người"
+            ),
+            "8_vong_khep_kin": (
+                "định tuyến phân cấp theo từng bước + kiểm worker thật trên runtime + "
+                f"guardrail re-route tối đa {MAX_RETRIES} vòng + LOCAL_FALLBACK khi thiếu plugin"
             ),
         }

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +25,13 @@ from orchestrator.flows import RESEARCH_FLOW  # noqa: E402
 from orchestrator.plugin_ownership import PluginOwnershipRegistry  # noqa: E402
 from orchestrator.registry import Registry  # noqa: E402
 from orchestrator.tools_registry import ToolRegistry  # noqa: E402
+from orchestrator.worker_inventory import WorkerInventory  # noqa: E402
 
 CONTRACT_MARKER = "_PLUGIN-ROUTING-CONTRACT.md"
 REGISTRY_MARKER = "plugin_ownership_registry.json"
 CANONICAL_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
+ROUTER_SOURCE = ROOT / "sync/skills/plugin-router-chatgpt"
+ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 
 
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
@@ -147,6 +151,71 @@ def verify() -> dict[str, Any]:
         errors.append("worker ngoai allowlist khong bi bao blocked")
     if not errors:
         checks.append("unknown capability + worker ngoai allowlist fail-closed")
+
+    # Worker binding phải trỏ tới skill CÓ THẬT. Registry chỉ nói quyền; nếu không
+    # kiểm runtime, một binding treo vẫn PASS và owner có thể tưởng plugin đã chạy.
+    inventory = WorkerInventory()
+    missing_workers = [item for item in inventory.audit(plugins) if not item.available]
+    for item in missing_workers:
+        errors.append(f"worker binding khong kha dung: {item.worker} — {item.reason}")
+    if not missing_workers:
+        checks.append("mọi worker binding có SKILL.md thật trong đúng provider")
+
+    # Router là cửa vào tự động cho ChatGPT/Codex. Kiểm nguồn canonical, liên kết hai
+    # runtime và gói phân phối; symlink gãy không được phép bị báo như đã đồng bộ.
+    router_files = (
+        ROUTER_SOURCE / "SKILL.md",
+        ROUTER_SOURCE / "agents/openai.yaml",
+        ROUTER_SOURCE / "references/governance.md",
+        ROUTER_SOURCE / "references/plugin-catalog.json",
+        ROUTER_SOURCE / "scripts/build_catalog.py",
+        ROUTER_SOURCE / "scripts/route_skill.py",
+    )
+    missing_router = [path for path in router_files if not path.is_file()]
+    for path in missing_router:
+        errors.append(f"router thieu file: {path.relative_to(ROOT)}")
+
+    for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
+        target = runtime / "plugin-router-chatgpt"
+        if not target.exists():
+            errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
+        elif target.resolve() != ROUTER_SOURCE.resolve():
+            errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
+
+    if not ROUTER_ZIP.is_file():
+        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
+    elif not missing_router:
+        source_files = [
+            path
+            for path in ROUTER_SOURCE.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+        ]
+        newest_source = max(path.stat().st_mtime for path in source_files)
+        if ROUTER_ZIP.stat().st_mtime < newest_source:
+            errors.append("goi plugin-router-chatgpt.zip cu hon nguon canonical")
+        try:
+            with zipfile.ZipFile(ROUTER_ZIP) as archive:
+                bad = archive.testzip()
+                names = set(archive.namelist())
+            if bad:
+                errors.append(f"goi router ZIP hong tai: {bad}")
+            if "plugin-router-chatgpt/SKILL.md" not in names:
+                errors.append("goi router ZIP thieu SKILL.md o thu muc goc")
+        except (OSError, zipfile.BadZipFile) as exc:
+            errors.append(f"khong doc duoc goi router ZIP: {exc}")
+
+    catalog_path = ROUTER_SOURCE / "references/plugin-catalog.json"
+    if catalog_path.is_file():
+        try:
+            catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+            count = len(catalog.get("skills", []))
+            if count < 100:
+                errors.append(f"catalog router bat thuong: chi co {count} skill")
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"catalog router JSON khong hop le: {exc}")
+
+    if not missing_router and not any("router" in error or "catalog" in error for error in errors):
+        checks.append("router canonical + runtime links + catalog + ZIP")
 
     # Trên bản sao trần, các lỗi CHỈ vì nguyên liệu nằm trong repo y khoa được tách
     # sang «ngoài phạm vi» — vẫn IN RA đầy đủ, không đếm FAIL (BH82/BH08). Máy có

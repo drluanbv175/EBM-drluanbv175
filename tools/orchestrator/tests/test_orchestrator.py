@@ -149,9 +149,9 @@ class TestOrchestration(unittest.TestCase):
         for e in s.trace:
             self.assertNotEqual(e["status"], "error", f"agent treo trong plan: {e['agent']}")
 
-    def test_capabilities_has_seven(self):
+    def test_capabilities_has_eight(self):
         caps = self.orch.capabilities()
-        self.assertEqual(len(caps), 7)
+        self.assertEqual(len(caps), 8)
 
     def test_research_session_records_plugin_owner(self):
         s = self.orch.handle("Đề tài metformin ở PCOS", persist=False)
@@ -201,6 +201,48 @@ class TestPluginOwnership(unittest.TestCase):
         self.assertEqual(decision.status, "READY_LOCAL_SPECIALIST_ONLY")
         self.assertEqual(decision.owner_unit, "sang-loc-co-do")
         self.assertEqual(decision.workers, ())
+
+    def test_specialized_aipoch_worker_only_runs_when_request_matches(self):
+        generic = self.plugins.resolve(
+            "protocol_design",
+            request="Thiết kế nghiên cứu đoàn hệ về tăng huyết áp",
+            stage="G1",
+        )
+        generic_units = {worker.unit for worker in generic.workers}
+        self.assertIn("source-command-ars-plan", generic_units)
+        self.assertFalse(any(worker.provider == "aipoch-medical-research" for worker in generic.workers))
+
+        mr = self.plugins.resolve(
+            "protocol_design",
+            request="Thiết kế Mendelian randomization về đái tháo đường",
+            stage="G1",
+        )
+        mr_units = {worker.unit for worker in mr.workers}
+        self.assertIn("mendelian-randomization-protocol-designer", mr_units)
+        self.assertNotIn("single-cell-research-planner", mr_units)
+
+    def test_unbound_provider_cannot_also_have_worker_binding(self):
+        original = self.plugins.unbound_providers
+        try:
+            self.plugins.unbound_providers = frozenset({"aipoch-medical-research"})
+            errors = self.plugins.validate(set(self.agents.agents))
+            self.assertTrue(any("vua unbound vua co worker binding" in error for error in errors))
+        finally:
+            self.plugins.unbound_providers = original
+
+    def test_nested_step_routing_selects_aipoch_mr_planner(self):
+        session = self.orch.handle(
+            "Đề tài Mendelian randomization về đái tháo đường",
+            persist=False,
+        )
+        g1 = next(
+            row for row in session.trace
+            if row["step"] == "G1" and row["agent"] == "thiet-ke-nghien-cuu"
+        )
+        units = {worker["unit"] for worker in g1["worker_routing"]["workers"]}
+        self.assertIn("mendelian-randomization-protocol-designer", units)
+        self.assertNotIn("single-cell-research-planner", units)
+        self.assertEqual(g1["worker_routing"]["unavailable_workers"], [])
 
     def test_specialist_tasks_keep_their_domain_owner(self):
         expected = {

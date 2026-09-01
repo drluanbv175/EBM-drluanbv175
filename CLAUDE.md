@@ -153,9 +153,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   ChatGPT luôn lỗi; (c) cờ `--nguon-la-chuan` **chưa từng tồn tại** trong `dong_bo_skill.py`
   (`git log -S` không ra lần thêm nào) → argparse trả mã 2; (d) chính nó tự chặn Windows bằng
   `if os.name == "nt": return 1`. Nghĩa là lệnh được tin là «xương sống tự động» **chưa từng chạy
-  trọn ở đâu**, và trên Windows chưa từng chạy một dòng. Nay: (a) đã xây, (b) bỏ qua kèm lời nhắc —
-  thiếu NGUYÊN LIỆU không được biến lượt nối skill thành công thành thất bại, còn bước phụ CHẠY MÀ
-  LỖI thì vẫn fail-closed, (c) đã thi công đúng hợp đồng AGENTS.md mô tả, (d) đã bỏ.
+  trọn ở đâu**, và trên Windows chưa từng chạy một dòng. Nay: (a) đã xây; (b) nguồn canonical
+  `sync/skills/plugin-router-chatgpt/` đã được phục hồi ngày 01/09/2026, tự sinh catalog JSON/Markdown,
+  ZIP và được verifier kiểm cả liên kết gãy lẫn độ mới; (c) đã thi công đúng hợp đồng AGENTS.md mô tả;
+  (d) đã bỏ. Thiếu nguyên liệu phụ vẫn được báo rõ, còn bước đã chạy mà lỗi thì fail-closed.
   **Đồng bộ CHÉO MÁY (mới 21/08):** `tools/dong_bo_plugin_claude_codex.py` đối chiếu kho plugin với
   **sổ khai dùng chung `sync/plugin-manifest.json`** — file đi qua git nên hai máy đọc CÙNG một bản.
   Nó khai **Ý ĐỊNH** (plugin nào CẦN ở máy nào, vì sao), khác `tools/moc_chuan_plugin.json` vốn là ảnh

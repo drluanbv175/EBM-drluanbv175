@@ -6,7 +6,7 @@ từng bước → dừng ở cổng bác sĩ → chốt guardrail — **chạy 
 cắm LLM để thực thi agent thật. Grounded vào registry `.claude/agents/*.md` THẬT và registry quyền
 sở hữu plugin (một owner/capability; plugin chỉ là worker).
 
-## Bảy năng lực (mỗi năng lực = một module)
+## Tám năng lực (mỗi năng lực = một module)
 
 | # | Năng lực | Module | Điểm chính |
 |---|---|---|---|
@@ -17,6 +17,7 @@ sở hữu plugin (một owner/capability; plugin chỉ là worker).
 | 5 | **Tích hợp công cụ** | `tools_registry.py` | 9 công cụ THẬT (clinical_calc grade/nnt, health_econ, run_g*, checkpoint, verify_dashboard…) |
 | 6 | **Quản lý vòng đời** | `lifecycle.py` | `routed→planned→running→gate→guardrail→released/returned`; retry ≤3; **4 mã thoát** |
 | 7 | **Điều phối plugin** | `plugin_ownership.py` · `plugin_ownership_registry.json` | Một owner nội bộ/capability; allowlist worker theo stage; plugin không được mở cổng người |
+| 8 | **Vòng khép kín** | `worker_inventory.py` · `guardrail_bridge.py` | Định tuyến phân cấp từng bước; chọn worker theo cue; kiểm skill thật; LOCAL_FALLBACK; re-route tối đa 3 vòng |
 
 ## Chạy (dry-run mặc định — không cần API)
 
@@ -24,7 +25,7 @@ sở hữu plugin (một owner/capability; plugin chỉ là worker).
 python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 ĐTĐ2, eGFR 40, thêm thuốc gì?"
 python tools/run_orchestrator.py "Đề tài hiệu quả metformin ở PCOS ngoại trú"
 python tools/run_orchestrator.py "Đơn này an toàn không, thuốc có đánh nhau không?"
-python tools/run_orchestrator.py --capabilities     # in 7 năng lực + số liệu
+python tools/run_orchestrator.py --capabilities     # in 8 năng lực + số liệu
 python tools/run_orchestrator.py --plugins          # tóm tắt registry plugin
 python tools/run_orchestrator.py --resolve-capability research_lifecycle --json
 python tools/run_orchestrator.py --validate         # tự kiểm điều phối ⇄ registry (0 = sạch)
@@ -79,6 +80,11 @@ Nguồn sự thật là `plugin_ownership_registry.json`; doctrine dùng chung c
 `dieu-phoi-nghien-cuu`; các skill lâm sàng cũng chỉ làm worker dưới `dieu-phoi-lam-sang`. Mỗi phiên
 ghi checkpoint `plugin_routing` gồm capability, owner, worker được phép và cổng. Worker ngoài
 allowlist/capability lạ bị báo chặn, không fallback sang pipeline plugin tự trị.
+
+Từ 01/09/2026, mỗi agent trong flow còn được phân giải capability hẹp của chính nó. Ví dụ,
+`dieu-phoi-nghien-cuu` vẫn sở hữu đề tài; tới G1, `thiet-ke-nghien-cuu` chọn ARS nền và chỉ gọi
+đúng planner AIPOCH khi cue chuyên biệt khớp. `worker_inventory.py` kiểm `SKILL.md` trong đúng
+provider; worker thiếu không làm đổi owner mà chuyển trạng thái `LOCAL_FALLBACK`.
 
 Kiểm cứng:
 

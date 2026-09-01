@@ -5,7 +5,7 @@ Dùng:
   python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 tuổi ĐTĐ2 + eGFR 40, thêm thuốc gì?"
   python tools/run_orchestrator.py "Đề tài hiệu quả metformin ở PCOS ngoại trú"
   python tools/run_orchestrator.py "Đơn này an toàn không, thuốc có đánh nhau không?"
-  python tools/run_orchestrator.py --capabilities        # in 7 năng lực + số liệu
+  python tools/run_orchestrator.py --capabilities        # in 8 năng lực + số liệu
   python tools/run_orchestrator.py --plugins             # tóm tắt registry quyền sở hữu plugin
   python tools/run_orchestrator.py --resolve-capability research_lifecycle
   python tools/run_orchestrator.py --validate            # tự kiểm điều phối ⇄ registry
@@ -98,7 +98,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Orchestrator EBM (dry-run)")
     ap.add_argument("request", nargs="?", default="", help="Câu yêu cầu (ca / đề tài / câu hỏi)")
     ap.add_argument("--json", action="store_true", help="In JSON máy đọc")
-    ap.add_argument("--capabilities", action="store_true", help="In 7 năng lực")
+    ap.add_argument("--capabilities", action="store_true", help="In 8 năng lực")
     ap.add_argument("--plugins", action="store_true", help="In tóm tắt registry quyền sở hữu plugin")
     ap.add_argument("--resolve-capability", metavar="ID",
                     help="Phân giải owner/worker cho một capability")
@@ -110,6 +110,8 @@ def main() -> int:
     ap.add_argument("--gate-output", metavar="FILE",
                     help="Chấm output THẬT (.md) qua cổng rule-based → cắt bản ghi APPRAISAL "
                          "+ re-route nếu TRẢ-VỀ-SỬA (D1+D3 operational, không cần LLM)")
+    ap.add_argument("--no-persist", action="store_true",
+                    help="không lưu Session ra ~/.ebm-orchestrator (dùng cho CI/sandbox)")
     args = ap.parse_args()
 
     orch = Orchestrator()
@@ -142,7 +144,7 @@ def main() -> int:
         return 0 if not decision.status.startswith("BLOCKED") and not decision.blocked_requests else 1
 
     if args.validate:
-        warns = orch.validate()
+        warns = orch.validate(check_runtime=True)
         if args.json:
             print(json.dumps({"ok": not warns, "warnings": warns}, ensure_ascii=False, indent=2))
         else:
@@ -185,7 +187,11 @@ def main() -> int:
             target=args.gate_output, source="orchestrator",
             at=datetime.now().isoformat(timespec="seconds"))
 
-    session = orch.handle(args.request, guardrail_verdict=verdict_fn)
+    session = orch.handle(
+        args.request,
+        guardrail_verdict=verdict_fn,
+        persist=not args.no_persist,
+    )
     if args.json:
         print(json.dumps(session.as_dict(), ensure_ascii=False, indent=2))
     else:
