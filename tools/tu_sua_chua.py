@@ -80,6 +80,15 @@ VIEC_MAY = [
     ("Skill đang chạy lệch nguồn",
      [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
      [PY, "tools/dong_bo_skill.py", "--ap-dung"]),
+    # Thêm 01/09/2026 — ca thật: bác sĩ bị hook pre-commit CHẶN commit khoá công
+    # Ed25519 vì ESD02 đỏ (bản EBM-Dashboards/tools/surveillance_scan.py lệch hash
+    # với 2 bản sync/skills). Bộ ba này trước đó được giữ khớp BẰNG TAY — tức với
+    # dây chuyền hằng ngày cơ chế đó không tồn tại (BH41). Chốt phát hiện (ESD02)
+    # đã có; đây là mảnh tự-vá, theo luật nội-dung 21/08: nguồn bao trùm mới chép,
+    # bản đích có dòng riêng thì giữ lại chờ bác sĩ.
+    ("Bộ ba scanner giám sát lệch hash (ESD02 chặn commit)",
+     [PY, "tools/dong_bo_scanner_giam_sat.py", "--im-khi-on"],
+     [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"]),
     ("Cờ TẮT của plugin trùng bị app xoá",
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"]),
