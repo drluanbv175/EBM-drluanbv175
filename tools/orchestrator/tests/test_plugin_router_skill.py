@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -18,6 +20,17 @@ def load_router_module():
     spec = importlib.util.spec_from_file_location("_router_skill_test", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_catalog_module():
+    path = ROUTER / "scripts/build_catalog.py"
+    module_name = "_router_catalog_test"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -51,6 +64,28 @@ class TestPluginRouterSkill(unittest.TestCase):
         self.assertTrue(ranked)
         self.assertEqual(ranked[0]["plugin"], "aipoch-medical-research")
         self.assertEqual(ranked[0]["skill"], "mendelian-randomization-protocol-designer")
+
+    def test_catalog_falls_back_to_enabled_config_and_real_cache(self):
+        module = load_catalog_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "config.toml"
+            cache_root = root / "cache"
+            config_lines: list[str] = []
+            for plugin_id in module.PLUGIN_IDS:
+                name, marketplace = plugin_id.split("@", 1)
+                config_lines.extend([f'[plugins."{plugin_id}"]', "enabled = true", ""])
+                version = "local" if name in {
+                    "openmed-skills", "medsci-project", "aipoch-medical-research",
+                    "meta-pipe", "pubmed-search",
+                } else "1.0.0"
+                (cache_root / marketplace / name / version).mkdir(parents=True)
+            config_path.write_text("\n".join(config_lines), encoding="utf-8")
+
+            records = module.read_configured_plugins_from_cache(config_path, cache_root)
+
+        self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
+        self.assertEqual(len(records), 9)
 
 
 if __name__ == "__main__":

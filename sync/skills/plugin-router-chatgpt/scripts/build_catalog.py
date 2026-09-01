@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -111,6 +112,81 @@ def select_plugins(payload: dict[str, object]) -> list[PluginRecord]:
     return records
 
 
+def read_configured_plugins_from_cache(
+    config_path: Path | None = None,
+    cache_root: Path | None = None,
+) -> list[PluginRecord]:
+    """Dự phòng fail-closed bằng cấu hình bật + cache thật khi Codex CLI lỗi.
+
+    Một marketplace kiểu Claude không có manifest Codex có thể khiến
+    ``codex plugin list`` hỏng TOÀN BỘ dù chín plugin đã cài vẫn còn nguyên trong
+    cache. Nhánh này không cài/gỡ/sửa cấu hình: nó chỉ nhận plugin được ghi rõ
+    ``enabled = true`` rồi đòi đúng thư mục cache tương ứng phải tồn tại.
+    """
+
+    config_path = config_path or Path.home() / ".codex/config.toml"
+    cache_root = cache_root or Path.home() / ".codex/plugins/cache"
+    try:
+        config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        raise RuntimeError(f"Không đọc được cấu hình Codex dự phòng: {exc}") from exc
+
+    configured = config.get("plugins")
+    if not isinstance(configured, dict):
+        raise RuntimeError("Cấu hình Codex không có bảng plugins.")
+
+    records: list[PluginRecord] = []
+    missing: list[str] = []
+    for plugin_id in PLUGIN_IDS:
+        name, marketplace = plugin_id.split("@", 1)
+        setting = configured.get(plugin_id)
+        base = cache_root / marketplace / name
+        if not isinstance(setting, dict) or setting.get("enabled") is not True or not base.is_dir():
+            missing.append(plugin_id)
+            continue
+
+        local = base / "local"
+        if local.is_dir():
+            source_path = local
+            version = "local"
+        else:
+            candidates = [path for path in base.iterdir() if path.is_dir()]
+            if not candidates:
+                missing.append(plugin_id)
+                continue
+            source_path = max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.name))
+            version = source_path.name
+
+        records.append(
+            PluginRecord(
+                plugin_id=plugin_id,
+                name=name,
+                marketplace=marketplace,
+                version=version,
+                source_path=source_path,
+            )
+        )
+
+    if missing:
+        raise RuntimeError("Plugin dự phòng thiếu/chưa bật/cache không tồn tại: " + ", ".join(missing))
+    return records
+
+
+def load_plugin_records() -> list[PluginRecord]:
+    """Ưu tiên CLI chính thức; hạ xuống cache chỉ đọc khi CLI không thể liệt kê."""
+
+    try:
+        return select_plugins(read_installed_plugins())
+    except RuntimeError as cli_error:
+        records = read_configured_plugins_from_cache()
+        print(
+            "CẢNH BÁO: Codex CLI không liệt kê được marketplace; "
+            f"đã đối chiếu config+cache cục bộ ({cli_error}).",
+            file=sys.stderr,
+        )
+        return records
+
+
 def resolve_scan_root(record: PluginRecord) -> Path:
     candidates = [
         Path.home() / ".codex/plugins/cache" / record.marketplace / record.name / record.version,
@@ -202,7 +278,7 @@ def _write_if_changed(path: Path, content: str) -> bool:
 def main() -> int:
     args = parse_args()
     try:
-        plugins = select_plugins(read_installed_plugins())
+        plugins = load_plugin_records()
         skills = [skill for plugin in plugins for skill in collect_skills(plugin)]
         markdown = render_markdown(plugins, skills)
         payload = {
