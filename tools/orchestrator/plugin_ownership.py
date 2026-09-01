@@ -24,6 +24,7 @@ class WorkerSpec:
     unit: str
     mode: str
     allowed_stages: tuple[str, ...] = ()
+    match_any: tuple[str, ...] = ()
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "WorkerSpec":
@@ -32,6 +33,7 @@ class WorkerSpec:
             unit=str(data.get("unit", "")),
             mode=str(data.get("mode", "worker")),
             allowed_stages=tuple(str(x) for x in data.get("allowed_stages", [])),
+            match_any=tuple(str(x).casefold() for x in data.get("match_any", [])),
         )
 
     @property
@@ -44,6 +46,7 @@ class WorkerSpec:
             "unit": self.unit,
             "mode": self.mode,
             "allowed_stages": list(self.allowed_stages),
+            "match_any": list(self.match_any),
             "can_release_gate": False,
         }
 
@@ -113,6 +116,7 @@ class PluginOwnershipRegistry:
     global_rules: dict[str, Any]
     canonical_research_hard_gates: tuple[str, ...]
     policy_id: str
+    unbound_providers: frozenset[str] = frozenset()
     path: Path = DEFAULT_REGISTRY_PATH
 
     @classmethod
@@ -122,12 +126,14 @@ class PluginOwnershipRegistry:
             capability_id: CapabilitySpec.from_dict(capability_id, raw)
             for capability_id, raw in (data.get("capabilities") or {}).items()
         }
+        unbound = data.get("unbound_providers") or {}
         return cls(
             providers=dict(data.get("providers") or {}),
             capabilities=caps,
             global_rules=dict(data.get("global_rules") or {}),
             canonical_research_hard_gates=tuple(data.get("canonical_research_hard_gates") or ()),
             policy_id=str(data.get("policy_id", "")),
+            unbound_providers=frozenset(str(x) for x in unbound.get("providers", [])),
             path=path,
         )
 
@@ -144,6 +150,9 @@ class PluginOwnershipRegistry:
         self,
         capability_id: str,
         requested_workers: tuple[str, ...] | list[str] | None = None,
+        *,
+        request: str = "",
+        stage: str | None = None,
     ) -> PluginRoutingDecision:
         cap = self.capabilities.get(capability_id)
         if cap is None:
@@ -172,6 +181,26 @@ class PluginOwnershipRegistry:
                     selected.append(worker)
                     seen.add(worker.key)
             workers = selected
+        else:
+            # Worker có `match_any` là chuyên biệt: chỉ bật khi request thật sự mang tín
+            # hiệu tương ứng. Worker không có cue là worker nền của capability.
+            # Request rỗng (CLI/audit) cố ý trả toàn bộ binding để kiểm kê không bị che.
+            text = request.casefold().strip()
+            if text:
+                workers = [
+                    worker
+                    for worker in workers
+                    if not worker.match_any or any(cue in text for cue in worker.match_any)
+                ]
+
+        if stage:
+            allowed: list[WorkerSpec] = []
+            for worker in workers:
+                if not worker.allowed_stages or stage in worker.allowed_stages:
+                    allowed.append(worker)
+                elif requested_workers is not None:
+                    blocked.append(worker.key)
+            workers = allowed
 
         workers.sort(
             key=lambda worker: int(self.providers.get(worker.provider, {}).get("priority", 0)),
@@ -191,10 +220,17 @@ class PluginOwnershipRegistry:
             rules=self.global_rules,
         )
 
-    def resolve_for_intent(self, kind: str, entry_agent: str) -> PluginRoutingDecision:
+    def resolve_for_intent(
+        self,
+        kind: str,
+        entry_agent: str,
+        *,
+        request: str = "",
+        stage: str | None = None,
+    ) -> PluginRoutingDecision:
         cap = self.capability_for(kind, entry_agent)
         if cap is not None:
-            return self.resolve(cap.capability_id)
+            return self.resolve(cap.capability_id, request=request, stage=stage)
         if kind == "single_task" and entry_agent:
             return PluginRoutingDecision(
                 status="READY_LOCAL_SPECIALIST_ONLY",
@@ -224,7 +260,12 @@ class PluginOwnershipRegistry:
         if self.global_rules.get("plugin_may_release_human_gate") is not False:
             errors.append("plugin_may_release_human_gate phai la false")
 
+        unknown_unbound = self.unbound_providers - set(self.providers)
+        for provider in sorted(unknown_unbound):
+            errors.append(f"unbound provider khong ton tai trong providers: {provider}")
+
         intent_owners: dict[str, str] = {}
+        bound_plugin_providers: set[str] = set()
         for capability_id, cap in self.capabilities.items():
             provider = self.providers.get(cap.owner_provider)
             if provider is None:
@@ -257,11 +298,19 @@ class PluginOwnershipRegistry:
                     continue
                 if worker_provider.get("kind") != "plugin" or worker_provider.get("may_own"):
                     errors.append(f"{capability_id}: worker provider phai la plugin khong co quyen owner")
+                bound_plugin_providers.add(worker.provider)
                 if not worker.unit or not worker.mode:
                     errors.append(f"{capability_id}: worker thieu unit/mode")
+                if any(not cue.strip() for cue in worker.match_any):
+                    errors.append(f"{capability_id}: worker {worker.key} co match_any rong")
                 if worker.key in seen_workers:
                     errors.append(f"{capability_id}: worker trung lap: {worker.key}")
                 seen_workers.add(worker.key)
+
+        for provider in sorted(bound_plugin_providers & self.unbound_providers):
+            errors.append(
+                f"provider vua unbound vua co worker binding: {provider}"
+            )
 
         research = self.capabilities.get("research_lifecycle")
         if research is None:
@@ -277,11 +326,18 @@ class PluginOwnershipRegistry:
 
     def summary(self) -> dict[str, Any]:
         workers = sum(len(cap.workers) for cap in self.capabilities.values())
+        conditional = sum(
+            bool(worker.match_any)
+            for cap in self.capabilities.values()
+            for worker in cap.workers
+        )
         return {
             "policy_id": self.policy_id,
             "providers": len(self.providers),
             "capabilities": len(self.capabilities),
             "worker_bindings": workers,
+            "conditional_worker_bindings": conditional,
+            "unbound_providers": len(self.unbound_providers),
             "research_hard_gates": list(self.canonical_research_hard_gates),
             "plugins_are_workers_only": self.global_rules.get("plugins_are_workers_only") is True,
         }
