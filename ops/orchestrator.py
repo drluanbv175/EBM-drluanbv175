@@ -111,8 +111,21 @@ def ke_hoach(topic: str | None, online: bool, xuat: bool) -> list[dict]:
         buoc.append({"buoc": f"A4-so-xac-minh[{lat}]",
                      "lenh": [PY, str(GOC / "tools" / "so_xac_minh_nguon.py"),
                               "--quet", str(db), "--vong", "1"]})
+        # `--strict-sources` ĐI KÈM `--online` (vá 02/09/2026, BH96). Đây là ĐÚNG lỗi mà
+        # bác sĩ đã vá một lần ở `tools/xuat_goi_cap_nhat.py:298` ngày 11/08 — nhóm luật
+        # MẠNH NHẤT (chặn `decision='apply'` trên gradeLevel na/low, hoặc chỉ dựa
+        # `Consensus`) chỉ bật khi có cờ này; thiếu nó thì nhóm luật ấy NẰM IM và cổng vẫn
+        # in "PASS". Tuyến `xuat_goi_cap_nhat` đã được vá, nhưng tuyến NÀY (đường
+        # «cập nhật chứng cứ chủ đề X», dựng 15/08) sinh sau và lặp lại y nguyên lỗi cũ.
+        # Cùng họ với `return` sớm 12/08 vốn che 73 mục `apply` nguy hiểm trên 47 dashboard.
+        # An toàn về mã thoát: verify_dashboard trả 3 khi CHẶN XUẤT; nhánh `rc != 0` bên
+        # dưới bắt được và DỪNG ngay ở B2, nên gói bị chặn KHÔNG bao giờ đi tiếp sang B4.
+        # GIỚI HẠN CÒN LẠI, nói rõ: chạy KHÔNG `--online` thì vẫn không có strict-sources —
+        # giữ đúng khuôn đã chứng minh ở xuat_goi_cap_nhat, không tự mở rộng sang nhánh
+        # offline khi chưa kiểm được `verify_dashboard.py` (cây EBM-Dashboards ngoài git).
         buoc.append({"buoc": f"B2-cong-liem-chinh[{lat}]",
-                     "lenh": [PY, vd, str(db)] + (["--online"] if online else [])})
+                     "lenh": [PY, vd, str(db)]
+                             + (["--online", "--strict-sources"] if online else [])})
         if xuat:
             buoc.append({"buoc": f"B4-bo-nam[{lat}]",
                          "lenh": [PY, str(GOC / "tools" / "xuat_goi_cap_nhat.py"), str(db)]

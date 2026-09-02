@@ -4743,6 +4743,76 @@ def bh95_verdict_phai_khai_dung_pham_vi_da_cham():
                   f"({khoa[0]}) — 'pass' không còn bị đọc thành 'đạt cả 2 lớp'")
 
 
+
+def bh96_orchestrator_b2_phai_bat_strict_sources():
+    """02/09 — `ops/orchestrator.py` (đường «cập nhật chứng cứ chủ đề X», dựng 15/08) gọi cổng
+    liêm chính B2 bằng `verify_dashboard.py <db> --online` mà **THIẾU `--strict-sources`** —
+    lặp lại Y NGUYÊN lỗi bác sĩ đã vá ở `tools/xuat_goi_cap_nhat.py:298` ngày 11/08.
+
+    Vì sao nghiêm trọng: `--strict-sources` mới bật nhóm luật MẠNH NHẤT — chặn
+    `decision='apply'` khi `gradeLevel` là na/low, hoặc khi chỉ dựa `Consensus`. Thiếu cờ này
+    thì nhóm luật ấy **NẰM IM** trong khi cổng vẫn in "PASS": đúng cơ chế đã che **73 mục
+    `apply` nguy hiểm trên 47 dashboard** cho tới 12/08. Hai tuyến xuất bản cùng đọc một khối
+    `DATA`, nên một tuyến chặt một tuyến lỏng nghĩa là gói đi đường lỏng vẫn tới tay bác sĩ.
+
+    Kiểm HÀNH VI trên `ke_hoach()` thật, có tiêm dashboard giả (cây EBM-Dashboards nằm ngoài
+    git nên không thể dựa vào dữ liệu thật):
+      ① `--online` ⇒ lệnh B2 phải có CẢ `--online` LẪN `--strict-sources`
+      ② mã thoát 3 (CHẶN XUẤT) phải khiến B2 DỪNG, không đi tiếp sang B4 xuất bộ năm
+      ③ hai tuyến không được lệch: `xuat_goi_cap_nhat.py` vẫn phải giữ `--strict-sources`
+    """
+    import importlib.util as _iu
+
+    ops = REPO / "ops" / "orchestrator.py"
+    if not ops.exists():
+        return False, "thiếu ops/orchestrator.py"
+    spec = _iu.spec_from_file_location("_bh96_ops", ops)
+    m = _iu.module_from_spec(spec); sys.modules["_bh96_ops"] = m; spec.loader.exec_module(m)
+
+    # ① tiêm một dashboard giả để bước B2 chắc chắn được dựng
+    that = m._dashboards_cua_chu_de
+    m._dashboards_cua_chu_de = lambda _t: [Path("WebDashboard_EBM_VanDeCuThe_ThuNghiem_20260101.html")]
+    try:
+        cac = m.ke_hoach("thu-nghiem", online=True, xuat=False)
+    finally:
+        m._dashboards_cua_chu_de = that
+
+    b2 = [b for b in cac if b.get("buoc", "").startswith("B2")]
+    if not b2:
+        return False, "ke_hoach() không dựng bước B2 dù đã có dashboard — cổng liêm chính biến mất"
+    lenh = " ".join(str(x) for x in b2[0].get("lenh", []))
+    if "verify_dashboard.py" not in lenh:
+        return False, f"B2 không gọi verify_dashboard.py: {lenh[:120]}"
+    if "--strict-sources" not in lenh:
+        return False, ("B2 THIẾU --strict-sources ⇒ nhóm luật mạnh nhất (apply trên gradeLevel "
+                       "na/low, apply chỉ dựa Consensus) NẰM IM trong khi cổng vẫn in PASS — "
+                       "đúng cơ chế đã che 73 mục nguy hiểm tới 12/08")
+    if "--online" not in lenh:
+        return False, "B2 mất --online — không còn xác minh nguồn sống"
+
+    # ② mã thoát khác 0 ở B2 phải DỪNG (không cho gói bị chặn đi tiếp sang B4 xuất bản)
+    src = ops.read_text(encoding="utf-8")
+    if 'b["buoc"].startswith("B2")' not in src or "return 1" not in src:
+        return False, ("mất nhánh DỪNG khi B2 fail — gói bị cổng chặn vẫn có thể đi tiếp "
+                       "sang B4 xuất bộ năm tới tay bác sĩ")
+
+    # ③ tuyến kia không được tụt lại
+    xuat = REPO / "tools" / "xuat_goi_cap_nhat.py"
+    if xuat.exists():
+        # Phải là dòng THI HÀNH, không phải dòng bình luận: file này có một chú thích dài
+        # giải thích lịch sử bản vá 11/08 và chú thích đó CŨNG chứa chuỗi "--strict-sources",
+        # nên phép khớp cả-file vẫn xanh sau khi lời gọi thật đã mất cờ (đột biến bắt được).
+        # Cùng lỗi khớp-lỏng đã vá ở BH90/BH93/BH94.
+        thi_hanh = [d for d in xuat.read_text(encoding="utf-8").splitlines()
+                    if "--strict-sources" in d and not d.strip().startswith("#")]
+        if not thi_hanh:
+            return False, ("xuat_goi_cap_nhat.py mất --strict-sources ở dòng THI HÀNH — hai "
+                            "tuyến xuất bản lại lệch nhau (chỉ còn nhắc trong bình luận)")
+
+    return True, ("B2 của ops/orchestrator bật đủ --online --strict-sources; fail ở B2 vẫn DỪNG "
+                  "trước B4; tuyến xuat_goi_cap_nhat không tụt lại")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -4846,6 +4916,7 @@ BAI_HOC = [
     ("BH93", "02/09", "Cây lạc hậu/nông sinh ÂM TÍNH GIẢ — phủ định không phải bằng chứng; thiếu ref là CHƯA KIỂM ĐƯỢC", bh93_cay_lac_hau_sinh_am_tinh_gia),
     ("BH94", "02/09", "Máy thiếu dữ liệu thật KHÔNG được ghi đè artifact bằng chứng (chặn đi lùi, thông chiều đi lên)", bh94_khong_ghi_de_bang_chung_bang_may_thieu_du_lieu),
     ("BH95", "02/09", "Verdict phải khai ĐÚNG phạm vi đã chấm — 'pass' của cầu rule-based không phải 'đạt cả 2 lớp'", bh95_verdict_phai_khai_dung_pham_vi_da_cham),
+    ("BH96", "02/09", "Cổng B2 của ops/orchestrator phải bật --strict-sources — hai tuyến xuất bản không được lệch", bh96_orchestrator_b2_phai_bat_strict_sources),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

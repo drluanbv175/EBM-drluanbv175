@@ -127,6 +127,33 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   `find . -name __pycache__ -prune -exec rm -rf {} +` rồi mới kết luận.
   📌 **Việc vận hành:** repo y khoa trong phiên cloud đứng ở nhánh cũ; trước khi kết luận «mã X
   không tồn tại» phải `git fetch origin master` rồi đối chiếu `git show origin/master:<đường-dẫn>`.
+- **🔴 CỔNG NGUỒN NGHIÊM NGẶT BỊ BỎ QUÊN Ở TUYẾN THỨ HAI — vá 02/09/2026 (BH96).**
+  `ops/orchestrator.py` (đường «cập nhật chứng cứ chủ đề X», dựng 15/08) gọi cổng liêm chính
+  B2 bằng `verify_dashboard.py <db> --online` mà **THIẾU `--strict-sources`** — lặp lại Y
+  NGUYÊN lỗi đã vá ở `tools/xuat_goi_cap_nhat.py:298` ngày 11/08, chỉ khác chỗ. Thiếu cờ đó
+  thì nhóm luật MẠNH NHẤT (chặn `decision='apply'` khi `gradeLevel` na/low, hoặc chỉ dựa
+  `Consensus`) **nằm im trong khi cổng vẫn in PASS** — đúng cơ chế đã che **73 mục `apply`
+  nguy hiểm trên 47 dashboard** cho tới 12/08. Hai tuyến đọc CÙNG một khối `DATA`, nên một
+  tuyến chặt một tuyến lỏng nghĩa là gói đi đường lỏng vẫn tới tay bác sĩ.
+  Đã bật đủ `--online --strict-sources`, khuôn theo đúng lời gọi đã chứng minh ở tuyến kia.
+  **Mã thoát an toàn:** `verify_dashboard` trả 3 khi CHẶN XUẤT; nhánh `rc != 0` của
+  orchestrator bắt được và DỪNG ngay ở B2 ⇒ gói bị chặn KHÔNG đi tiếp sang B4 xuất bộ năm.
+  **Giới hạn còn lại, nói rõ:** chạy KHÔNG `--online` thì vẫn chưa có strict-sources — giữ
+  đúng khuôn đã chứng minh, không tự mở rộng khi chưa kiểm được `verify_dashboard.py` (cây
+  `EBM-Dashboards/` nằm ngoài git nên không thử được ở phiên cloud).
+  **BH96** khoá: B2 phải có đủ hai cờ · fail ở B2 phải DỪNG trước B4 · tuyến
+  `xuat_goi_cap_nhat` không được tụt lại. Đột biến kiểm 3 phép; phép thứ ba lộ thêm một lần
+  nữa lỗi **khớp lỏng**: chuỗi `--strict-sources` còn nằm trong một BÌNH LUẬN lịch sử của
+  `xuat_goi_cap_nhat.py`, nên phép khớp cả-file vẫn xanh sau khi lời gọi thật đã mất cờ —
+  nay đòi dòng THI HÀNH (cùng lỗi đã vá ở BH90/93/94).
+  ⚠️ **Đối chiếu với bản kiểm toán cùng ngày:** trong 6 khoảng trống nó xếp hạng, **① đã xong
+  từ trước** (G8 nối dây thật trên `master`) và **② không đáng xây** — «bộ soát lời khai
+  CLAUDE.md ↔ mã sống» được đề xuất vì tưởng bắt được 3 file «không tồn tại», nhưng cả 3 đều
+  là ảo ảnh của cây lạc hậu. Đo thử thật: 212 lời khai đường dẫn trong CLAUDE.md → **181 phân
+  giải được**, 31 còn lại đều là mẫu `gN_`/`<study>`, artifact sinh lúc chạy, hoặc file thuộc
+  cây dữ liệu ngoài git ⇒ **0 tham chiếu hỏng thật**. Xây nó bây giờ là dựng một máy phát
+  nhiễu. *Bài học: một khuyến nghị của kiểm toán phải được KIỂM LẠI trước khi thi công, nhất
+  là khi chính bản kiểm toán đó đã đo trên cây lạc hậu.*
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời
