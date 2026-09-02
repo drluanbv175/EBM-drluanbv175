@@ -215,8 +215,27 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `mv .claude/settings.json .claude/settings.local.json && git pull`. Đo 01/09 bằng phép thử thật: hook ở
   **hai file CỘNG DỒN** (cả hai đều chạy), nên không mất chốt nào. `dong_bo_hook_sessionstart.py` phạm
   vi `du-an` từ nay ghi/đọc `settings.local.json`; gặp bản cũ nó **in đúng lệnh `mv` trên, không tự dời**.
-  BH16 đọc cả hai file để không mất phủ 8 chốt. Plugin marketplace (787 skill) vẫn **không** đi theo repo
-  — chúng chỉ là worker, không phải chủ của việc có cổng, nên cloud thiếu chúng không chặn việc gì có cổng.
+  BH16 đọc cả hai file để không mất phủ 8 chốt.
+  ☁️ **CLOUD ĐỦ PLUGIN NHƯ LOCAL — 02/09/2026 (BH86), quyết định của bác sĩ sau khi nghe lý do không cài.**
+  Câu cũ «plugin marketplace không đi theo repo» hết hiệu lực. Cơ chế: `sync/plugin-manifest.json` v2 khai
+  máy thứ ba **«Cloud»** (`tools/nhan_dien_may.py` — MỘT nguồn nhận diện máy, `CLAUDE_CODE_REMOTE=true` ⇒
+  «Cloud», thay hai bản chép `ten_may()` từng phân kỳ) và trường **`nguon`** cho từng plugin; hook cloud gọi
+  `tools/cai_plugin_phien_cloud.py --ap-dung` **ở NỀN** (đo lần đầu ~60 giây vì aipoch chép 808 MB vào
+  cache, đã đủ thì 0,1 giây — chặn phiên 1 phút mỗi lần mở là dạy người ta tắt hook). Cài bằng chính CLI
+  `claude plugin marketplace add` + `plugin install -y`, không đụng `installed_plugins.json` bằng tay. Bốn
+  loại nguồn: `git` (harness · humanizer · openai-codex — hai cái sau xác minh bằng `marketplace.json`
+  thật: tên + phiên bản khớp mốc Mac) · `thu-muc-phien` (aipoch · openmed = fork của bác sĩ đã clone sẵn
+  trong container, dự phòng url git) · `git-thu-cong` (meta-pipe · pubmed-search: kho không có
+  `marketplace.json` ⇒ sinh manifest + **lọc đúng 10 skill tra y văn** theo `cap_nhat_plugin_tay.py::CAU_HINH`,
+  rồi cắt tỉa cache cho khớp bản Mac — CLI chép trọn 35 SKILL.md) · `chua-ro` (⚪ có khai báo, KHÔNG đỏ).
+  **Đo 02/09: 7/9 plugin cài xong trên cloud (605 + 73 + 72 + 14 + 10 + 3 + 1 SKILL.md), 53 lệnh tiếng Việt
+  chép vào `~/.claude/commands` bằng đúng `sync/copy-commands-vi.sh`.** Hai mục còn `chua-ro` —
+  `academic-research-skills` và `medsci-project` — vì nguồn không có trong repo, chỉ Mac biết: trên Mac chạy
+  `python3 tools/cai_plugin_phien_cloud.py --xuat-nguon` (đọc `known_marketplaces.json`, điền vào sổ khai, sao
+  lưu trước) rồi commit là cloud tự cài nốt ở phiên sau. **Ranh giới không đổi:** công cụ TỪ CHỐI `--ap-dung`
+  khi không phải cloud (máy thật không bao giờ bị cài qua mạng — bài học 11/08), 8 medsci trùng có
+  `can_o_may: []` nên không vào cloud, plugin trên cloud vẫn chỉ là worker (bảng định tuyến ở mục Điều phối
+  không đổi). 38 skill mồ côi trong `~/.claude/skills` của Mac không nằm trong git nên cloud không có.
   ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
   thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
   tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`
@@ -616,6 +635,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 3. Mọi hàm gọi API: có error handling + retry
 4. KHÔNG lưu thông tin định danh bệnh nhân (PII)
 5. Mọi output y khoa kèm disclaimer "Cần bác sĩ kiểm chứng" và ghi nguồn (PMID/DOI)
+6. **Trả lời bác sĩ bằng TIẾNG VIỆT** — chỉ thị ngôn ngữ THƯỜNG TRỰC của dự án (thêm 02/09/2026 khi cài
+   plugin lên cloud: `claude-code-harness` mang hook `UserPromptSubmit` ép «Response Language: English» theo
+   `CLAUDE_CODE_HARNESS_LANG`, vốn chỉ biết `ja`/English; chính hook đó tự nhường khi có chỉ thị thường trực
+   của người dùng — dòng này là chỉ thị đó). Định danh máy đọc (JSON, mã, tên file, tiền tố commit) giữ nguyên.
 
 ## Thứ tự xây dựng
 Phase 1: Module Research (làm trước, hoàn chỉnh)

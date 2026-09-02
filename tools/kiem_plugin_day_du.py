@@ -76,9 +76,11 @@ CUA_SO_KY_TU = 800_000
 
 
 def ten_may() -> str:
-    """Cùng quy ước với tools/vietnamize/extract_catalog.py để hai bộ không lệch nhau."""
-    return {"Darwin": "Mac", "Windows": "Windows"}.get(
-        platform.system(), platform.system() or "Khac")
+    """Uỷ quyền cho tools/nhan_dien_may.py — MỘT nguồn duy nhất (cloud = «Cloud»)."""
+    import importlib.util as _ilu
+    _spec = _ilu.spec_from_file_location("nhan_dien_may", Path(__file__).resolve().parent / "nhan_dien_may.py")
+    _m = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_m)
+    return _m.ten_may()
 
 
 def doc_json(p: Path) -> dict:

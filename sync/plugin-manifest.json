@@ -1,73 +1,104 @@
 {
-  "_ghi_chu": "SỔ KHAI Ý ĐỊNH về kho plugin — đi qua git nên HAI MÁY đọc cùng một bản. Khác moc_chuan_plugin.json (ảnh chụp TRẠNG THÁI riêng từng máy): file này khai Ý ĐỊNH — plugin nào CẦN có ở máy nào, và vì sao. Nhờ vậy mới tách được «thiếu vì cố ý» khỏi «thiếu vì trôi dạt», hai thứ trông giống hệt nhau nhưng xử lý ngược nhau. Sửa TAY file này; công cụ chỉ đọc.",
-  "_cach_dung": "python3 tools/dong_bo_plugin_claude_codex.py            # đối chiếu, chỉ đọc\npython3 tools/dong_bo_plugin_claude_codex.py --ap-dung  # nối skill sang Codex\npython3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai  # dựng lại khung",
+  "_ghi_chu": "SỔ KHAI Ý ĐỊNH về kho plugin — đi qua git nên HAI MÁY đọc cùng một bản. Khác moc_chuan_plugin.json (ảnh chụp TRẠNG THÁI riêng từng máy): file này khai Ý ĐỊNH — plugin nào CẦN có ở máy nào, và vì sao. Nhờ vậy mới tách được «thiếu vì cố ý» khỏi «thiếu vì trôi dạt», hai thứ trông giống hệt nhau nhưng xử lý ngược nhau. Sửa TAY file này; công cụ chỉ đọc. Từ 02/09/2026 có máy thứ ba «Cloud» (phiên Claude Code trên web, container dựng mới mỗi phiên): bác sĩ quyết định cloud phải đủ plugin như local, nên trường `nguon` cho phép phiên cloud tự cài; 8 plugin medsci trùng vẫn TẮT ở mọi máy kể cả Cloud.",
+  "_cach_dung": "python3 tools/dong_bo_plugin_claude_codex.py            # đối chiếu, chỉ đọc\npython3 tools/dong_bo_plugin_claude_codex.py --ap-dung  # nối skill sang Codex\npython3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai  # dựng lại khung\npython3 tools/cai_plugin_phien_cloud.py               # cloud: xem còn thiếu gì (chỉ đọc)\npython3 tools/cai_plugin_phien_cloud.py --ap-dung     # cloud: cài theo sổ khai (hook SessionStart tự gọi ở nền)\npython3 tools/cai_plugin_phien_cloud.py --xuat-nguon  # Mac/Windows: xuất nguồn marketplace vào sổ khai",
   "_truong": {
     "can_o_may": "danh sách máy PHẢI có plugin này (Mac/Windows)",
     "chieu_sang_codex": "true = nối skill của plugin vào ~/.codex/skills",
     "ly_do": "vì sao — để người đọc sau biết đây là chủ ý, không phải sót",
-    "do_duoc_luc_ghi": "số skill ĐO ĐƯỢC lúc dựng sổ, chỉ để tham chiếu"
+    "do_duoc_luc_ghi": "số skill ĐO ĐƯỢC lúc dựng sổ, chỉ để tham chiếu",
+    "nguon": "nguồn để PHIÊN CLOUD tự cài: loai ∈ {git (marketplace add <url>) · thu-muc-phien (repo anh em đã clone trong container, dự phòng url_du_phong) · git-thu-cong (kho không có marketplace.json — sinh manifest + lọc skill theo tools/cap_nhat_plugin_tay.py CAU_HINH) · chua-ro (chờ --xuat-nguon từ Mac)}. Máy thật KHÔNG dùng trường này để tự cài — bài học 11/08 vẫn nguyên."
   },
-  "phien_ban_so_khai": 1,
+  "phien_ban_so_khai": 2,
   "plugin": {
     "academic-research-skills@academic-research-skills": {
       "can_o_may": [
         "Mac",
-        "Windows"
+        "Windows",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Worker VIẾT/SOÁT cho tuyến nghiên cứu: registry bind 10 lệnh ars-* (plan · outline · lit-review · full · abstract · revision · reviewer · rebuttal-audit · citation-check) ở stage G0/G1/G7/G8/G9, priority 60, may_own=false. Chủ vẫn là agent nội bộ theo bảng _PLUGIN-ROUTING-CONTRACT.md: viet-ban-thao · kiem-chung-trich-dan · binh-duyet · thiet-ke-nghien-cuu; ARS không xác nhận authorship/COI/AI và không phải chữ ký G8. Đang có ở CẢ HAI máy vì đề tài chạy ở cả hai. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
+      "ly_do": "Worker VIẾT/SOÁT cho tuyến nghiên cứu: registry bind 10 lệnh ars-* (plan · outline · lit-review · full · abstract · revision · reviewer · rebuttal-audit · citation-check) ở stage G0/G1/G7/G8/G9, priority 60, may_own=false. Chủ vẫn là agent nội bộ theo bảng _PLUGIN-ROUTING-CONTRACT.md: viet-ban-thao · kiem-chung-trich-dan · binh-duyet · thiet-ke-nghien-cuu; ARS không xác nhận authorship/COI/AI và không phải chữ ký G8. Đang có ở CẢ HAI máy vì đề tài chạy ở cả hai. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 4,
         "Windows": 4
+      },
+      "nguon": {
+        "loai": "chua-ro",
+        "ghi_chu": "[CẦN BÁC SĨ] nguồn không có trong repo; chạy trên Mac: python3 tools/cai_plugin_phien_cloud.py --xuat-nguon (đọc ~/.claude/plugins/known_marketplaces.json) rồi commit"
       }
     },
     "aipoch-medical-research@aipoch-medical-research": {
       "can_o_may": [
         "Mac",
-        "Windows"
+        "Windows",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08).",
+      "ly_do": "605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 605,
         "Windows": 605
+      },
+      "nguon": {
+        "loai": "thu-muc-phien",
+        "duong_dan": "../medical-research-skills",
+        "url_du_phong": "https://github.com/drluanbv175/medical-research-skills",
+        "ghi_chu": "fork của bác sĩ, đã có .claude-plugin/marketplace.json (603 skill); phiên cloud clone sẵn repo này làm nguồn phiên"
       }
     },
     "claude-code-harness@claude-code-harness-marketplace": {
       "can_o_may": [
         "Mac",
-        "Windows"
+        "Windows",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Cấp bộ quy trình harness (harness-plan · -work · -review · -sync · -accept · -loop · -release · -setup) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4). Trong v5.13.1 chúng là SKILL, không phải lệnh: gọi /claude-code-harness:harness-plan. Bác sĩ yêu cầu bổ sung sang Windows 26/08/2026 — trước đó máy Windows KHÔNG có gì (không clone, không skill, không agent).",
+      "ly_do": "Cấp bộ quy trình harness (harness-plan · -work · -review · -sync · -accept · -loop · -release · -setup) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4). Trong v5.13.1 chúng là SKILL, không phải lệnh: gọi /claude-code-harness:harness-plan. Bác sĩ yêu cầu bổ sung sang Windows 26/08/2026 — trước đó máy Windows KHÔNG có gì (không clone, không skill, không agent). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 70,
         "Windows": 73
+      },
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/Chachamaru127/claude-code-harness",
+        "ghi_chu": "cùng repo sync/setup-claude-cli.sh dùng; CLAUDE.md mục harness 26/08"
       }
     },
     "codex@openai-codex": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Cầu nối gọi Codex CLI từ Claude Code — 3 skill NỘI BỘ (codex-cli-runtime · codex-result-handling · gpt-5-4-prompting). Registry: provider `codex` priority 20, may_own=false, ghi chú «lượt chẩn đoán/cài đặt thứ hai cho việc kỹ thuật» — chỉ cho việc lập trình repo, KHÔNG chạm quyết định y khoa/nghiên cứu. Chỉ có ở Mac. [CẦN BÁC SĨ] xác nhận có cần ở Windows không (Codex CLI chưa cài ở đó).",
+      "ly_do": "Cầu nối gọi Codex CLI từ Claude Code — 3 skill NỘI BỘ (codex-cli-runtime · codex-result-handling · gpt-5-4-prompting). Registry: provider `codex` priority 20, may_own=false, ghi chú «lượt chẩn đoán/cài đặt thứ hai cho việc kỹ thuật» — chỉ cho việc lập trình repo, KHÔNG chạm quyết định y khoa/nghiên cứu. Chỉ có ở Mac. [CẦN BÁC SĨ] xác nhận có cần ở Windows không (Codex CLI chưa cài ở đó). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 3
+      },
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/openai/codex-plugin-cc",
+        "ghi_chu": "xác minh 02/09/2026: marketplace.json name=openai-codex, plugin codex 1.0.6 khớp mốc Mac"
       }
     },
     "humanizer@humanizer": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Worker văn phong. CẤM chạy trên nội dung y khoa ĐÃ QUA CỔNG — nó sửa câu chữ, đủ để làm lệch một mệnh đề điều kiện («ngoài thai kỳ», «nếu không chống chỉ định») mà không ai thấy (CLAUDE.md, luật nền 3 của bảng định tuyến).",
+      "ly_do": "Worker văn phong. CẤM chạy trên nội dung y khoa ĐÃ QUA CỔNG — nó sửa câu chữ, đủ để làm lệch một mệnh đề điều kiện («ngoài thai kỳ», «nếu không chống chỉ định») mà không ai thấy (CLAUDE.md, luật nền 3 của bảng định tuyến). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 1
+      },
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/blader/humanizer",
+        "ghi_chu": "xác minh 02/09/2026: marketplace.json name=humanizer, plugin humanizer 2.11.2 khớp mốc Mac"
       }
     },
     "medsci-analysis@medsci-skills": {
@@ -118,14 +149,19 @@
     "medsci-project@medsci-skills": {
       "can_o_may": [
         "Mac",
-        "Windows"
+        "Windows",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Bản GIỮ LẠI trong 9 plugin medsci-* có bộ 58 skill BYTE-IDENTICAL (đã so md5). 8 bản trùng đã tắt 10/08/2026 — danh sách Windows 1405 → 941 mục, 0 năng lực mất. Tiền tố lệnh là /medsci-project:*.",
+      "ly_do": "Bản GIỮ LẠI trong 9 plugin medsci-* có bộ 58 skill BYTE-IDENTICAL (đã so md5). 8 bản trùng đã tắt 10/08/2026 — danh sách Windows 1405 → 941 mục, 0 năng lực mất. Tiền tố lệnh là /medsci-project:*. Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 60,
         "Windows": 59
+      },
+      "nguon": {
+        "loai": "chua-ro",
+        "ghi_chu": "[CẦN BÁC SĨ] nguồn không có trong repo; chạy trên Mac: python3 tools/cai_plugin_phien_cloud.py --xuat-nguon rồi commit"
       }
     },
     "medsci-review@medsci-skills": {
@@ -157,35 +193,54 @@
     },
     "meta-pipe@meta-pipe": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Worker tổng quan/gộp TỪNG BƯỚC: registry bind 3 skill ma-search-bibliography (SEARCH_PLAN) · ma-screening-quality (SCREENING_DRAFT) · ma-meta-analysis (SYNTHESIS_DRAFT) dưới chủ tong-quan-y-van / meta-phan-tich; ma-end-to-end BỊ CẤM làm chủ (registry note + bảng định tuyến CLAUDE.md). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
+      "ly_do": "Worker tổng quan/gộp TỪNG BƯỚC: registry bind 3 skill ma-search-bibliography (SEARCH_PLAN) · ma-screening-quality (SCREENING_DRAFT) · ma-meta-analysis (SYNTHESIS_DRAFT) dưới chủ tong-quan-y-van / meta-phan-tich; ma-end-to-end BỊ CẤM làm chủ (registry note + bảng định tuyến CLAUDE.md). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 14
+      },
+      "nguon": {
+        "loai": "git-thu-cong",
+        "cau_hinh": "meta-pipe",
+        "ghi_chu": "kho không có marketplace.json — tools/cap_nhat_plugin_tay.py CAU_HINH['meta-pipe'] giữ url + cách sinh manifest (14 skill)"
       }
     },
     "openmed-skills@openmed-skills": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Worker NLP lâm sàng. Skill khử định danh của nó KHÔNG thay quan-ly-du-lieu — khử định danh/PII là việc CÓ CỔNG, chủ là agent EBM (bảng định tuyến).",
+      "ly_do": "Worker NLP lâm sàng. Skill khử định danh của nó KHÔNG thay quan-ly-du-lieu — khử định danh/PII là việc CÓ CỔNG, chủ là agent EBM (bảng định tuyến). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 72
+      },
+      "nguon": {
+        "loai": "thu-muc-phien",
+        "duong_dan": "../openmed",
+        "url_du_phong": "https://github.com/drluanbv175/openmed",
+        "ghi_chu": "fork của bác sĩ, có marketplace.json (72 skill)"
       }
     },
     "pubmed-search@pubmed-search": {
       "can_o_may": [
-        "Mac"
+        "Mac",
+        "Cloud"
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "Worker tra PubMed: registry bind 2 skill pubmed-quick-search (DISCOVERY · METADATA) · pubmed-systematic-search (SEARCH_PLAN) dưới chủ tra-cuu-chung-cu / thu-thu-tai-lieu. Đo 10/08/2026: 0 lượt dùng trong 2712 phiên — tầng tạo giá trị thật là MCP PubMed (1322 lượt); giữ theo quyết định 10/08 (không gỡ nhóm 0 lượt). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
+      "ly_do": "Worker tra PubMed: registry bind 2 skill pubmed-quick-search (DISCOVERY · METADATA) · pubmed-systematic-search (SEARCH_PLAN) dưới chủ tra-cuu-chung-cu / thu-thu-tai-lieu. Đo 10/08/2026: 0 lượt dùng trong 2712 phiên — tầng tạo giá trị thật là MCP PubMed (1322 lượt); giữ theo quyết định 10/08 (không gỡ nhóm 0 lượt). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 10
+      },
+      "nguon": {
+        "loai": "git-thu-cong",
+        "cau_hinh": "pubmed-search",
+        "ghi_chu": "kho mang 26 skill, chỉ giữ 10 skill tra y văn theo CAU_HINH['pubmed-search'].giu_skill — đúng bản 10 skill trên Mac"
       }
     }
   }
