@@ -140,6 +140,30 @@ nền ⇒ ✗ với thông điệp mới · ép `Path.home()` sang đường d�
 máy nào trong phiên này kết luận được R1C của G0 còn sống hay không** — và đó là chốt
 canh việc G0 tự bắt bài đã rút ngay tại cửa nhận y văn.
 
+## 2-quater. VÒNG 3 — soi 39 mục 🟡 xem có việc nào máy làm được mà bị xếp nhầm sang bác sĩ
+
+Bảng điểm gộp mọi nhãn `[CẦN` vào một dòng «thẩm quyền chủ nhiệm». Phân loại 250 nhãn
+đó theo cụm thì lộ một khoảng hở **tự động hoá dở dang**:
+
+Sổ chứng cứ `G1_A2b_EVIDENCE_LEDGER` để **12 dòng `[CẦN TRÍCH XUẤT METADATA]`** — việc
+TAY của chủ nhiệm — trong khi **đủ tiêu đề, tạp chí, năm của đúng 12 PMID đó đã nằm
+sẵn trong `G0_pubmed_raw.json` cùng thư mục**, do chính G0 tra về trong cùng dây
+chuyền (đo: 12/12 phủ). Nặng hơn: trong **cùng một lượt sinh**, PMID nào có effect
+size thì tiêu đề được điền, số còn lại thì không — năng lực đã có, chỉ thiếu một đoạn
+dây. Đây là kiểu dở dang đắt nhất vì nó đẩy sang người thật đúng việc máy vừa làm ở
+dòng trên, và người đọc không có cách nào biết.
+
+Đã nối, với ranh giới không nới: **không gọi mạng** (đọc file đã có nên ngoại tuyến,
+tất định, CI an toàn) · **không bịa** (không có bản ghi ⇒ giữ nguyên nhãn) · **chỉ cột
+metadata** — trích xuất dữ liệu, thẩm định RoB và xác nhận nội dung vẫn là việc người
+thật · dòng khai nguồn ghi **đúng số dòng** đã điền, không điền được thì không khai.
+
+Đo trên C1a: nhãn metadata **12 → 0**; bảng điểm **🟡 39 → 38 · 🔴 0**. Lượt chạy lại
+G1 không mất nội dung nào (diff chỉ là dấu thời gian và seed theo ngày). Test 6 mục,
+**4 phép đột biến đều đỏ đúng chỗ**. Ghi lại một bài học nhỏ của chính đợt test: bản
+đầu dùng khoá checkpoint tự nghĩ (`pmids_verified`) nên **test xanh giả** — phải lấy
+đúng hình dạng thật của C1a (`pubmed_results.all_pmids`) mới đo được thứ cần đo.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
