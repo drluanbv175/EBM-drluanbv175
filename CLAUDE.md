@@ -18,6 +18,26 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   (c) gói duyệt tuần TỰ nằm sẵn thứ Bảy 07:07 (tác vụ lịch `goi-duyet-tuan-ebm`).
   Mọi nhánh dừng ở CANDIDATE — Cổng A/B của bác sĩ nguyên vẹn.
 - **Việc lẻ** (tra 1 câu hỏi, soát 1 danh mục TLTK, tính cỡ mẫu, đặc tả biến…) → gọi thẳng agent chuyên trách.
+- **🚪 CỬA VÀO NHẠC TRƯỞNG — đo 02/09/2026, vá cùng ngày (BH88).** Đo 30 câu bác sĩ nói TỰ
+  NHIÊN qua `tools/orchestrator/intent.py`: **12 câu rơi `unknown`** — nhạc trưởng KHÔNG vào
+  cửa — và 2 câu định tuyến QUÁ TAY ("tính cỡ mẫu cho nghiên cứu cắt ngang" kéo cả vòng đời
+  G0–G10 chỉ để xin MỘT con số). Nghiêm trọng ở chỗ **cả 12 câu đó đều ĐÃ CÓ CHỦ** (agent,
+  skill hoặc lệnh tiếng Việt): khoảng trống nằm ở CỬA VÀO, không ở năng lực, và `unknown` là
+  câu trả lời SAI SỰ THẬT về việc mà hệ biết rõ chủ. **Sau khi vá: 30/30 vào đúng cửa, 0
+  unknown, 0 lệch.** Thêm kind thứ tư **`cong_cu`** cho việc có chủ là lệnh/skill/công cụ
+  (không có agent) — nhạc trưởng không dựng bước agent cho nhóm này nhưng đầu ra vẫn qua
+  `tham-dinh-dau-ra`. Bảng người đọc: `.claude/agents/README.md` §Ma trận định tuyến (12 dòng
+  mới + 2 luật ưu tiên).
+  ⚠️ **Hai luật ưu tiên ngược chiều nhau CÓ CHỦ Ý:** việc lẻ MẠNH (`VIEC_LE_MANH`) thắng cue
+  ĐỀ TÀI, nhưng **không bao giờ** thắng cue CA LÂM SÀNG — over-route sang nơi CÓ sàng lọc cờ
+  đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không.
+  🔴 **Lỗi thứ hai cùng đợt, nặng hơn cho chính mục tiêu «cloud đủ plugin»:** `WorkerInventory`
+  chỉ tra `~/.codex/plugins/cache`, trong khi `claude plugin install` GHI vào
+  `~/.claude/plugins/cache`. Đo ngay sau khi cài đủ 7 plugin (778 SKILL.md) trên cloud: thư mục
+  Codex KHÔNG TỒN TẠI ⇒ **0/43 worker binding khả dụng** ⇒ nhạc trưởng luôn ghi `LOCAL_FALLBACK`
+  và **không bao giờ dùng plugin vừa cài**. Nay tra CẢ HAI kho: **31/43**; 12 mục còn lại là
+  plugin thật sự chưa có trên máy này (⚪ có khai báo, không đỏ). Cùng họ «đo đúng, nhưng đo
+  nhầm chỗ» của BH74.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời

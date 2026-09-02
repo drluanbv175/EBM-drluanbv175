@@ -46,22 +46,31 @@ class WorkerInventory:
 
     def __init__(self, provider_roots: dict[str, tuple[Path, ...]] | None = None) -> None:
         home = Path.home()
-        cache = home / ".codex/plugins/cache"
+        # HAI kho cache — vá 02/09/2026. Bản cũ chỉ tra `~/.codex/plugins/cache`, trong khi
+        # Claude Code cài plugin vào `~/.claude/plugins/cache`. Đo trên phiên cloud ngay sau
+        # khi cài đủ 7 plugin (778 SKILL.md): thư mục Codex KHÔNG TỒN TẠI, nên cả 26 worker
+        # binding đều báo «chưa cài» — nghĩa là nhạc trưởng sẽ luôn ghi LOCAL_FALLBACK và
+        # KHÔNG BAO GIỜ dùng plugin vừa cài. Cùng họ lỗi «đo đúng, nhưng đo nhầm chỗ» của
+        # BH74 (catalog quét sai thư mục đang phục vụ).
+        # Thứ tự: Claude trước (nơi `claude plugin install` ghi), Codex sau (máy có Codex CLI).
+        caches = (home / ".claude/plugins/cache", home / ".codex/plugins/cache")
+
+        def duong(*hau_to: str) -> tuple[Path, ...]:
+            """Cùng một hậu tố, tra ở CẢ HAI kho — thứ tự quyết định bản nào thắng."""
+            return tuple(c / h for c in caches for h in hau_to)
+
         self.provider_roots = provider_roots or {
-            "anthropic-skills": (
-                ROOT / "sync/skills",
-                cache / "claude-cowork/anthropic-skills",
-            ),
-            "academic-research-skills": (cache / "academic-research-skills",),
-            "aipoch-medical-research": (cache / "aipoch-medical-research",),
-            "meta-pipe": (cache / "meta-pipe",),
-            "pubmed-search": (cache / "pubmed-search",),
-            "claude-code-harness": (cache / "claude-code-harness-marketplace/claude-code-harness",),
-            "bio-research": (cache / "claude-cowork/bio-research",),
-            "openmed-skills": (cache / "openmed-skills",),
-            "medsci-project": (cache / "medsci-skills/medsci-project",),
-            "humanizer": (cache / "humanizer",),
-            "codex": (cache / "openai-codex/codex",),
+            "anthropic-skills": (ROOT / "sync/skills",) + duong("claude-cowork/anthropic-skills"),
+            "academic-research-skills": duong("academic-research-skills"),
+            "aipoch-medical-research": duong("aipoch-medical-research"),
+            "meta-pipe": duong("meta-pipe"),
+            "pubmed-search": duong("pubmed-search"),
+            "claude-code-harness": duong("claude-code-harness-marketplace/claude-code-harness"),
+            "bio-research": duong("claude-cowork/bio-research"),
+            "openmed-skills": duong("openmed-skills"),
+            "medsci-project": duong("medsci-skills/medsci-project"),
+            "humanizer": duong("humanizer"),
+            "codex": duong("openai-codex/codex"),
         }
 
     @staticmethod

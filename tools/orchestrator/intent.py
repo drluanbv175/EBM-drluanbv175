@@ -1,4 +1,4 @@
-"""intent.py — Định tuyến INTENT: request thô → {clinical_case | research_topic | single_task}.
+"""intent.py — Định tuyến INTENT: request thô → {clinical_case | research_topic | single_task | cong_cu}.
 
 Grounded vào ma trận định tuyến trong README (§'Ma trận định tuyến'). Trả về đích + các luật
 khớp để minh bạch. Không phán đoán mù: nếu không khớp → 'unknown' + gợi ý.
@@ -65,6 +65,55 @@ SINGLE_TASK_RULES: list[tuple[list[str], str, str]] = [
     (["cosmin", "kiểm định thang đo", "prom"], "cong-cu-do-luong", "công cụ đo lường"),
     (["định tính", "phỏng vấn", "nhóm tiêu điểm", "coreq"], "nghien-cuu-dinh-tinh", "định tính"),
     (["soi gói", "kiểm liêm chính", "có vượt cổng", "có lẫn pii"], "tham-dinh-dau-ra", "guardrail"),
+    # ── ĐO 02/09/2026: 12/30 câu bác sĩ nói TỰ NHIÊN rơi `unknown`, tức nhạc trưởng
+    # KHÔNG vào cửa — dù MỌI câu trong đó đều đã có chủ (agent/skill/lệnh). Khoảng
+    # trống nằm ở CỬA VÀO, không phải ở năng lực. Chín luật dưới đây trỏ vào agent CÓ
+    # THẬT (validate() chặn tham chiếu treo); ba việc còn lại không có agent nên nằm ở
+    # VIEC_CONG_CU. Cụm chọn theo lời bác sĩ hay dùng, không phải thuật ngữ nội bộ.
+    (["viết bản thảo", "viết bài báo", "làm bài báo", "làm một bài báo", "phần bàn luận",
+      "phần kết quả", "viết phần"],
+     "viet-ban-thao", "viết bản thảo"),
+    (["phân tích số liệu", "phân tích dữ liệu", "chạy thống kê", "xử lý số liệu"],
+     "phan-tich-thong-ke", "phân tích số liệu"),
+    (["có gì mới", "cập nhật chứng cứ", "chứng cứ mới", "guideline mới", "khuyến cáo mới"],
+     "cap-nhat-guideline", "cập nhật chứng cứ chủ đề"),
+    (["dashboard", "cổng liêm chính", "bộ năm", "bản đọc chứng cứ"],
+     "cap-nhat-guideline", "kiểm gói cập nhật chứng cứ"),
+    (["bị rút không", "đã bị rút", "rút bài", "retracted"],
+     "kiem-chung-trich-dan", "kiểm rút bài"),
+    (["chọn tạp chí", "nộp bài", "cover letter", "tạp chí nào"],
+     "nop-bai-phan-hoi", "chọn tạp chí / nộp bài"),
+    (["tương tác gì", "thuốc này với", "dùng chung được không", "có dùng được"],
+     "ke-don-an-toan", "an toàn kê đơn"),
+    (["sàng lọc ung thư", "sàng lọc từ tuổi", "nên sàng lọc", "khám định kỳ"],
+     "du-phong-tam-soat", "dự phòng–tầm soát"),
+    (["tờ dặn dò", "dặn dò bệnh nhân", "in tờ", "hướng dẫn cho bệnh nhân"],
+     "loi-dan-tuan-thu", "tờ dặn dò A5"),
+]
+
+# VIỆC LẺ MẠNH — cụm gọi ĐÍCH DANH ĐÚNG MỘT sản phẩm. Khi câu vừa khớp việc lẻ này vừa
+# mang cue ĐỀ TÀI, việc lẻ thắng: "tính cỡ mẫu cho nghiên cứu cắt ngang" là xin MỘT con
+# số, không phải khởi động vòng đời G0–G10 (đo 02/09: câu đó từng đẩy cả nhạc trưởng
+# nghiên cứu chạy 11 cổng).
+# ⚠️ BẤT ĐỐI XỨNG CÓ CHỦ Ý: việc lẻ mạnh KHÔNG bao giờ thắng cue CA LÂM SÀNG. Câu vừa có
+# "bệnh nhân" vừa xin một sản phẩm lẻ vẫn đi vào nhạc trưởng lâm sàng — over-route sang
+# nơi CÓ sàng lọc cờ đỏ là chiều an toàn; under-route bỏ qua cờ đỏ thì không.
+VIEC_LE_MANH: set[str] = {
+    "co-mau-nghien-cuu", "kiem-chung-trich-dan", "thu-thu-tai-lieu",
+    "nop-bai-phan-hoi", "viet-ban-thao", "phan-tich-thong-ke", "tham-dinh-phe-binh",
+}
+
+# VIỆC CÓ CHỦ NHƯNG KHÔNG PHẢI AGENT — chủ là lệnh/skill/công cụ. Tách riêng vì
+# `_run_step` tra registry AGENT: nhét tên lệnh vào SINGLE_TASK_RULES sẽ thành tham
+# chiếu treo. Trả `cong_cu` để nhạc trưởng gọi đúng chủ, thay vì trả "không biết" về
+# một việc mà hệ biết rõ chủ của nó.
+VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
+    (["còn gì để hoàn thiện", "còn gì phải làm", "hệ thống còn gì", "còn việc gì"],
+     "tools/tu_de_xuat_viec.py", "bảng 8 giác quan — hệ còn gì để hoàn thiện"),
+    (["icd-10", "icd10", "mã bệnh", "mã chẩn đoán", "mã thủ thuật"],
+     "/tra-ma-icd10", "tra mã ICD-10"),
+    (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
+     "dao-tao-slide-tai-lieu-y-khoa", "sản phẩm đào tạo / slide"),
 ]
 
 CLINICAL_ORCHESTRATOR = "dieu-phoi-lam-sang"
@@ -73,7 +122,7 @@ RESEARCH_ORCHESTRATOR = "dieu-phoi-nghien-cuu"
 
 @dataclass
 class IntentResult:
-    kind: str  # 'clinical_case' | 'research_topic' | 'single_task' | 'unknown'
+    kind: str  # 'clinical_case' | 'research_topic' | 'single_task' | 'cong_cu' | 'unknown'
     target: str  # agent điểm vào
     reason: str
     matches: list[str] = field(default_factory=list)  # các luật việc-lẻ khớp (minh bạch)
@@ -99,6 +148,13 @@ def route(request: str) -> IntentResult:
     # Cue nghiên cứu ('đề tài/đề cương/protocol') là tín hiệu MẠNH → kiểm TRƯỚC cue lâm sàng
     # ('bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu, nên không được thắng 'đề tài').
     if _any(t, RESEARCH_TOPIC_CUES):
+        # Việc lẻ MẠNH thắng cue đề tài: xin một sản phẩm cụ thể ≠ khởi động vòng đời.
+        manh = [(a, n) for a, n in single_hits if a in VIEC_LE_MANH]
+        if manh:
+            agent, note = manh[0]
+            return IntentResult("single_task", agent,
+                                f"khớp việc lẻ MẠNH ({note}) — xin một sản phẩm cụ thể, "
+                                f"không khởi động vòng đời G0–G10", match_labels)
         return IntentResult("research_topic", RESEARCH_ORCHESTRATOR,
                             "phát hiện một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu (G0→G10)",
                             match_labels)
@@ -109,6 +165,11 @@ def route(request: str) -> IntentResult:
     if single_hits:
         agent, note = single_hits[0]
         return IntentResult("single_task", agent, f"khớp việc lẻ: {note}", match_labels)
+
+    for kws, cong_cu, note in VIEC_CONG_CU:
+        if _any(t, kws):
+            return IntentResult("cong_cu", cong_cu, f"việc có chủ là CÔNG CỤ/SKILL: {note}",
+                                match_labels)
 
     return IntentResult("unknown", "",
                         "chưa khớp luật nào — nêu rõ CA (‘tôi có bệnh nhân…’) / ĐỀ TÀI (‘đề tài…’) / hoặc câu hỏi cụ thể",
