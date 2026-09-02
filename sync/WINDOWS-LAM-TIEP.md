@@ -241,3 +241,39 @@ bước lùi về ASCII, đọc kém hơn hẳn.
 | Quyền truy cập các MCP connector | phải cấp lại trên từng máy |
 
 _Cần bác sĩ kiểm chứng — đây là ghi chú bàn giao, không thay phán đoán._
+
+## 02/09/2026 — DỌN «BÓNG TIẾNG ANH» (việc lớn nhất còn lại của Việt hoá)
+
+**Triệu chứng bác sĩ gặp:** gõ `/` thấy skill hiện HAI lần, bản tiếng Anh thường thắng
+vì không mang tiền tố plugin.
+
+**Số đo (bản chụp Windows 28/08):** `~/.claude/skills/` có **706 mục `user-skills`,
+trong đó 666 còn TIẾNG ANH**. Mac đã dọn 26/08 và còn 42 mục (toàn skill của bác sĩ).
+Đây là chênh lệch lớn nhất giữa hai máy.
+
+**Chạy (đã có công cụ, KHÔNG dọn tay):**
+
+```
+python tools\don_bong_tieng_anh.py
+python tools\don_bong_tieng_anh.py --ap-dung
+python tools\vietnamize\extract_catalog.py
+```
+
+Lệnh đầu chỉ XEM. Lệnh hai CHUYỂN (không xoá) vào
+`~/.claude/skills-backup/bong-tieng-anh-<ngày>/` — muốn lùi thì chuyển ngược.
+
+⚠️ **Vì sao phải dùng công cụ chứ đừng xoá tay:** lần dọn tay trên Mac 26/08 đã cuốn
+nhầm **15 skill RIÊNG của bác sĩ** chỉ vì trùng tên skill plugin (`literature-review`,
+`peer-review`, `statistical-analysis`, `treatment-plans`…). Công cụ loại trừ mọi tên có
+trong `sync/skills/` TRƯỚC, và giữ nguyên skill mồ côi (xoá là mất hẳn).
+
+**Sau khi dọn, kiểm:** `python tools\tu_sua_chua.py` — mục «Bóng tiếng Anh trong
+~/.claude/skills» phải biến mất.
+
+## 02/09/2026 — settings.json có thể BIẾN MẤT
+
+Trên Mac hôm nay `~/.claude/settings.json` biến mất hai lần trong một phiên, trong khi
+cấu hình thật vẫn nguyên ở `~/.claude/settings.local.json`. Các chốt nay đọc CẢ HAI
+(`tools/doc_settings.py`) nên không còn báo động đỏ giả. Nếu Windows cũng mất file đó,
+**không cần hoảng**: kiểm bằng `python tools\kiem_cau_hinh_nguoi_dung.py`; chỉ khi nó
+báo thiếu THẬT mới chạy `--ap-dung`.

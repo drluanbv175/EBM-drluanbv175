@@ -319,6 +319,46 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   **8 bộ medsci ĐANG TẮT** (8 × 59, không hiện trong menu `/`); bản dịch của chúng đã có sẵn
   trong từ điển theo khoá `name:` nên bật lại bộ nào là Việt hoá ngay, không phải dịch thêm.
   **Khoá bằng BH74**, đã kiểm bằng 3 phép đột biến riêng cho 3 vế.
+  🔴 **VÒNG BA 02/09/2026 — cấu hình BIẾN MẤT, và chốt kêu ĐỎ về đúng thứ vẫn đang tốt.**
+  Sáng đó chốt kho nổ: «DANH SÁCH SKILL VƯỢT NGÂN SÁCH… `skillListingBudgetFraction=0.01`,
+  ĐANG DÙNG MẶC ĐỊNH», kèm 8 bộ medsci «MỚI so với mốc», kho phồng **842 → 1322 skill**.
+  **Cả hai đều SAI.** Sự thật: `~/.claude/settings.json` biến mất, nhưng cấu hình của bác
+  sĩ **vẫn nguyên** ở `~/.claude/settings.local.json` (0,08 · 80 · đủ 8 cờ `false`).
+  Claude Code đọc **CẢ HAI** file và bản `.local` **ĐÈ** bản chung; còn 4 công cụ của ta
+  (`kiem_plugin_day_du` · `kiem_co_tat_plugin_trung` · `kiem_cau_hinh_nguoi_dung` ·
+  `extract_catalog`) chỉ đọc file chung, thấy trống nên kết luận «chưa đặt» + «tất cả
+  plugin đang bật». Cùng họ BH74, nhưng hại theo hướng xấu nhất: **báo động ĐỎ GIẢ**, lại
+  còn xúi hai việc gây hại thật — `--ghi-moc` lúc kho đang phồng (nuốt mất giác quan canh,
+  đúng bẫy BH69) và ghi đè một khoá vốn đã đúng.
+  **Đã vá:** `tools/doc_settings.py` là bộ đọc DUY NHẤT, gộp hai file theo thứ tự neo vào
+  `TEN_FILE` (`.local` luôn đè), **nhận tham số `goc`** để chốt hồi quy tiêm được fixture.
+  ⚠️ Bản vá ĐẦU đọc thẳng `~/.claude` và lập tức làm **BH69 + BH81 đỏ** — hai chốt đang
+  chạy tốt — vì fixture hết đường chen vào. *Một chốt không tiêm được dữ liệu thử thì
+  không chứng minh được gì.* Khoá bằng **BH84**, kiểm bằng 3 đột biến (bỏ đọc `.local` ·
+  đảo chiều đè · bám cứng đường dẫn) — cả ba đều nổ đúng.
+
+  ## ☁️ LOCAL ⇄ CLOUD — Việt hoá tự động tới đâu, và ranh giới ở đâu (chốt 02/09/2026)
+  Kho skill nằm trên **ba loại mặt**, và chỉ hai loại đầu ta ghi được:
+  | Mặt | Ai làm chủ | Việt hoá | Cơ chế giữ |
+  |---|---|---|---|
+  | `sync/skills/` · `.claude/agents/` | **bác sĩ** (git + OneDrive) | tự viết sẵn | nguồn chuẩn, `apply_vi` KHÔNG đè (rào giữ-bản-tự-viết) |
+  | Cache plugin `~/.claude/plugins/cache/` | app tải về | `apply_vi` ghi | tự vá mỗi phiên |
+  | **Cowork + `.claude-science`** | **CLOUD (claude.ai)** | `apply_vi` ghi | **cloud đồng bộ lại là MẤT — chỉ bộ tự sửa dựng lại** |
+  **Đo thật 02/09:** 4 skill dựng sẵn đã dịch hôm 24/08 (`consolidate-memory` ·
+  `explain-usage` · `schedule` · `setup-cowork`) **quay lại tiếng Anh**, và 18 file Cowork
+  bị ghi lại lúc 06:16 — bằng chứng trực tiếp rằng **cloud đè xuống định kỳ**.
+  ⚠️ **Vì vậy «đồng bộ Việt hoá lên Cloud» là việc KHÔNG làm được từ máy này**: chiều dữ
+  liệu là cloud → máy, ta không có đường ghi ngược. Thứ làm được — và đang chạy — là
+  **phục hồi tự động**: `tu_sua_chua.py` (hook `SessionStart`) chạy
+  `apply_vi.py --tu-quet` mỗi phiên, nên sau mỗi đợt cloud đè, lần mở phiên kế tiếp là
+  tiếng Việt trở lại. Khoảng hở còn lại là **giữa hai phiên**: cloud đồng bộ lúc đang làm
+  việc thì tới cuối phiên đó bác sĩ vẫn thấy tiếng Anh. Muốn hẹp hơn thì phải chạy tay
+  `~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py --tu-quet`.
+  🚫 **KHÔNG Việt hoá được, có chủ ý:** ~17 skill **dựng sẵn trong Claude Code**
+  (`workflow-authoring` · `artifact-design` · `dataviz` · `simplify` · `code-review` ·
+  `loop` · `run` · `init` · `security-review` · `design` · `schedule` · `claude-api`…) —
+  đã tìm trên đĩa, **không có file nào**: chúng nằm trong chính ứng dụng. Và 7 skill trong
+  `~/.codex/skills/.system/` do Codex CLI quản lý, bị ghi đè mỗi lần cập nhật.
 - **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
   ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
   kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là

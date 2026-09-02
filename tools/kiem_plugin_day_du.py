@@ -49,6 +49,11 @@ import platform
 import sys
 from pathlib import Path
 
+import sys as _s_ds, pathlib as _p_ds
+_s_ds.path.insert(0, str(_p_ds.Path(__file__).resolve().parents[0]))
+from doc_settings import doc_settings as _doc_settings, duong_dan_ghi as _dd_ghi  # noqa: E402
+
+
 # Windows mặc định stdout=cp1252 → mọi print() tiếng Việt sẽ làm script chết giữa
 # chừng. Đây là lỗi đã làm hỏng 7 script trong tools/vietnamize/ ngày 03/08/2026.
 if hasattr(sys.stdout, "reconfigure"):
@@ -57,7 +62,7 @@ if hasattr(sys.stdout, "reconfigure"):
 HOME = Path.home()
 REPO = Path(__file__).resolve().parents[1]
 REG = HOME / ".claude/plugins/installed_plugins.json"
-SETTINGS = HOME / ".claude/settings.json"
+SETTINGS = HOME / ".claude/settings.json"   # giữ để báo cáo; ĐỌC bằng _doc_settings()
 MOC = REPO / "tools/moc_chuan_plugin.json"
 
 # Ngưỡng cảnh báo: cache đang nạp lại có thể làm số skill hụt tạm thời. Dưới ngưỡng
@@ -94,7 +99,7 @@ def dem_skill(goc: Path) -> int:
 def quet() -> dict:
     """Chụp trạng thái kho công cụ hiện tại."""
     reg = doc_json(REG)
-    cfg = doc_json(SETTINGS)
+    cfg = _doc_settings(nghiem=False, goc=SETTINGS)
     bat = {k for k, v in (cfg.get("enabledPlugins") or {}).items() if v}
     tat = {k for k, v in (cfg.get("enabledPlugins") or {}).items() if v is False}
 
@@ -130,7 +135,7 @@ def kiem_ngan_sach(hien: dict) -> list[str]:
     chỉ là model không được cho biết chúng tồn tại.
     """
     canh_bao: list[str] = []
-    cfg = doc_json(SETTINGS)
+    cfg = _doc_settings(nghiem=False, goc=SETTINGS)
     phan = cfg.get("skillListingBudgetFraction")
     if phan is None:
         phan = 0.01                      # mặc định của Claude Code

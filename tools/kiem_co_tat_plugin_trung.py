@@ -42,6 +42,11 @@ import shutil
 import sys
 from pathlib import Path
 
+import sys as _s_ds, pathlib as _p_ds
+_s_ds.path.insert(0, str(_p_ds.Path(__file__).resolve().parents[0]))
+from doc_settings import doc_settings as _doc_settings, duong_dan_ghi as _dd_ghi  # noqa: E402
+
+
 # Windows mặc định stdout=cp1252 → mọi print() tiếng Việt làm script chết giữa
 # chừng. Đúng lỗi đã giết 7 script trong tools/vietnamize/ ngày 03/08/2026, và
 # công cụ này chạy trên CẢ HAI máy nên phải có. (Chốt đa nền R4 gắn cờ 21/08.)
@@ -92,10 +97,10 @@ def _ten_trong_moc() -> set[str]:
 
 def do() -> tuple[list[str], str]:
     """Trả (danh sách plugin ĐÁNG LẼ phải tắt mà đang bật, ghi chú)."""
-    if not SETTINGS.exists():
+    if not SETTINGS.exists() and not (SETTINGS.parent / "settings.local.json").exists():
         return [], f"không thấy {SETTINGS}"
     try:
-        d = json.loads(SETTINGS.read_text(encoding="utf-8"))
+        d = _doc_settings(nghiem=True, goc=SETTINGS)
     except (OSError, json.JSONDecodeError) as e:
         return [], f"đọc settings.json lỗi: {type(e).__name__}"
 
@@ -128,7 +133,7 @@ def sua(thieu_co: list[str]) -> str:
     bak = SETTINGS.with_suffix(f".json.bak-{dau}-khoi-phuc-co-tat")
     shutil.copy2(SETTINGS, bak)
 
-    d = json.loads(SETTINGS.read_text(encoding="utf-8"))
+    d = _doc_settings(nghiem=True, goc=SETTINGS)
     for ten in thieu_co:
         d["enabledPlugins"][ten] = False      # GHI false, không del — vắng mặt = BẬT
     SETTINGS.write_text(

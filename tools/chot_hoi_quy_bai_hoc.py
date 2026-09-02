@@ -3118,6 +3118,67 @@ def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
     return True, "catalog quét mặt phục vụ · chốt --tu-quet · rào giữ chữ bác sĩ tự viết"
 
 
+def bh86_doc_ca_settings_local_khong_bao_dong_gia() -> tuple[bool, str]:
+    """02/09/2026 — sáng đó chốt kho nổ 🔴 gắt: «DANH SÁCH SKILL VƯỢT NGÂN SÁCH…
+    skillListingBudgetFraction=0.01, ĐANG DÙNG MẶC ĐỊNH», kèm 8 bộ medsci trùng «MỚI
+    so với mốc», kho phồng 842 → 1322 skill. **Cả hai đều SAI.**
+
+    Sự thật: `~/.claude/settings.json` biến mất, nhưng cấu hình của bác sĩ vẫn nguyên ở
+    `~/.claude/settings.local.json` (0,08 · 80 · đủ 8 cờ `false`). Claude Code đọc CẢ
+    HAI và bản `.local` ĐÈ; công cụ chỉ đọc file chung nên thấy trống rồi kết luận
+    «chưa đặt» và «tất cả plugin đang bật».
+
+    Cùng họ BH74 — **đo đúng, nhưng đo nhầm chỗ** — lần này hại theo hướng xấu nhất:
+    báo động ĐỎ GIẢ. Nó còn xúi hai việc gây hại thật: `--ghi-moc` lúc kho đang phồng
+    (nuốt luôn giác quan canh, đúng bẫy BH69), và ghi đè một khoá vốn đã đúng.
+
+    Chốt canh HAI vế, vì vế (b) là chỗ bản vá đầu tiên đã tự làm hỏng:
+      (a) đọc cấu hình phải GỘP settings.json + settings.local.json, `.local` thắng;
+      (b) hàm đọc phải TIÊM ĐƯỢC đường dẫn — bản vá đầu đọc thẳng `~/.claude` nên
+          BH69 và BH81 (hai chốt đang chạy tốt) đỏ ngay, vì fixture hết đường chen vào.
+    """
+    import json
+    import tempfile
+
+    m = _nap(REPO / "tools" / "doc_settings.py", "_bh84_doc_settings")
+
+    with tempfile.TemporaryDirectory() as d:
+        thu = Path(d)
+        chinh = thu / "settings.json"
+        cuc_bo = thu / "settings.local.json"
+
+        # (a1) chỉ có bản .local — đúng tình huống sáng 02/09
+        cuc_bo.write_text(json.dumps({
+            "skillListingBudgetFraction": 0.08,
+            "enabledPlugins": {"a@m": False, "b@m": True},
+        }), encoding="utf-8")
+        cfg = m.doc_settings(nghiem=False, goc=chinh)
+        if cfg.get("skillListingBudgetFraction") != 0.08:
+            return False, "thiếu settings.json thì KHÔNG đọc được khoá trong settings.local.json"
+        if cfg.get("enabledPlugins", {}).get("a@m") is not False:
+            return False, "cờ `false` trong settings.local.json bị bỏ qua ⇒ báo plugin tắt là đang bật"
+
+        # (a2) có cả hai — bản .local phải ĐÈ
+        chinh.write_text(json.dumps({
+            "skillListingBudgetFraction": 0.01,
+            "khoa_rieng_cua_file_chung": 1,
+        }), encoding="utf-8")
+        cfg = m.doc_settings(nghiem=False, goc=chinh)
+        if cfg.get("skillListingBudgetFraction") != 0.08:
+            return False, "settings.local.json KHÔNG đè settings.json (sai thứ tự gộp)"
+        if cfg.get("khoa_rieng_cua_file_chung") != 1:
+            return False, "gộp làm mất khoá chỉ có ở settings.json"
+
+    # (b) phải tiêm được đường dẫn, không bám cứng ~/.claude. Dùng thư mục tạm RIÊNG,
+    # HOÀN TOÀN TRỐNG — thư mục ở trên còn fixture của (a2) nên không chứng minh được gì.
+    with tempfile.TemporaryDirectory() as d2:
+        if m.doc_settings(nghiem=False, goc=Path(d2) / "settings.json"):
+            return False, ("thư mục trống mà vẫn trả cấu hình ⇒ hàm đang đọc ~/.claude "
+                           "thật, chốt hồi quy sẽ hết tiêm được fixture")
+
+    return True, "gộp đúng thứ tự, sống khi thiếu settings.json, và tiêm được đường dẫn"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -3949,6 +4010,7 @@ BAI_HOC = [
     ("BH84", "01/09", "Hook phiên cloud đi qua git, nối skill + khôi phục ngân sách, KHÔNG đụng máy thật", bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that),
     ("BH85", "01/09", "Cổng plugin không được đòi kho plugin của MÁY KHÁC (chưa cài ⇒ ⚪, thiếu skill ⇒ FAIL)", bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac),
 
+    ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
 
 
