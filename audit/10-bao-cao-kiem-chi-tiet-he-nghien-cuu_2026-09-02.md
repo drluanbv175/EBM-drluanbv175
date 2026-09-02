@@ -201,6 +201,64 @@ không tạo quy ước mới; (2) đã dời 4 file thật của C1a bằng `gi
 file mồ côi không còn được chấm ở trục ④ — đúng, chúng không còn là artifact chính
 thức). Test thêm 4 mục, **2 phép đột biến đều đỏ đúng chỗ**.
 
+## 2-sexies. VÒNG 5 — cảnh báo "bản dự thảo, không phải artifact chính thức" mới phủ 2/6 cổng cứng
+
+Đính chính ở VÒNG 4 (`_gen_readiness()` rơi về mặc định NOT READY khi gọi thiếu
+`content` thật) đặt ra câu hỏi rộng hơn: bản vá `task_a5fde306` (2026-07-12) từng thêm
+cảnh báo "đây là bản DỰ THẢO scaffold, KHÔNG phải artifact chính thức" vào `_gen_ethics`
+(G2) và `_gen_sap` (G4) — hai trong sáu cổng cứng. **5/6 cổng cứng còn lại có cảnh báo
+này chưa?** Grep trực tiếp `gen_research_docx.py` cho 6 hàm `_gen_*` tương ứng G2/G4/
+G5/G8/G9/G10 (G10 không có generator riêng — cổng lắp gói, không sinh tài liệu độc lập
+qua công cụ này):
+
+- G2 (`_gen_ethics`) — **CÓ** cảnh báo.
+- G4 (`_gen_sap`) — **CÓ** cảnh báo.
+- G5 (`_gen_dmp`) — **KHÔNG.**
+- G8 (`review`) — **KHÔNG có hàm riêng**, rơi vào `_gen_generic()` — không cảnh báo, không
+  cấu trúc gì đặc thù cho bình duyệt.
+- G9 (`_gen_readiness`) — **KHÔNG** — đúng file gây ra đính chính ở VÒNG 4.
+
+Không phải lỗi đối xứng ngẫu nhiên: ledger của G2/G4/G8 hash một artifact `.md` THẬT
+(`G2_A3_ETHICS_PACKAGE_<mã>.md` · `G4_A5_SAP_FINAL_<mã>.md` ·
+`G8_A9_PRESUBMISSION_<mã>.md`, xác nhận qua `approve_gate.py`), trong khi G5 và G9 hash
+CHÍNH checkpoint JSON của cổng đó (`G5_checkpoint.json` · `G9Q.CHECKPOINT_JSON` —
+`expected_artifact` trong `approve_gate.py` dòng 496/592, đối lập dòng 554 của G8 trỏ
+vào `G8Q.presubmission_artifact_name()`). Nghĩa là nguyên văn cảnh báo G2/G4 dùng
+("Artifact chính thức là ... được `approve_gate.py` hash") **sai với G5/G9** — không thể
+copy-paste, phải viết lại đúng cơ chế của từng cổng.
+
+**Vá theo 2 khuôn câu chữ ("Variant"), không lẫn lộn:**
+- **Variant A** (G8 — hash file `.md` thật, giống hệt G2/G4): thêm cảnh báo nguyên khuôn
+  cũ, đổi tên artifact/script cho đúng G8. Đồng thời nói rõ nhận xét phản biện THẬT phải
+  là file khác hẳn — `G8_PEER_REVIEW_REPORT_<mã>.md` (do người phản biện viết theo mẫu
+  `binh-duyet.md`), vì `.docx` này không chứa nhận xét thật.
+- **Variant B** (G5, G9 — hash checkpoint JSON): cảnh báo KHÔNG được nói "sẽ ghi đè
+  artifact đã hash" (sai) mà nói "không phản ánh trạng thái khóa/nghiệm thu THẬT — đọc
+  checkpoint JSON hoặc chạy `gN_quality_gate.py --study <mã>`". Với G9 còn nêu thêm tên
+  file THẬT của pipeline G9 (`G9_PUBLICATION_READINESS.json`) để không ai lặp lại đúng
+  hiểu nhầm đã xảy ra ở VÒNG 4.
+
+`_gen_generic()` trước đó là điểm vào DUY NHẤT cho `review` (G8) — không có hàm riêng để
+gắn cảnh báo vào. Thay vì chèn logic đặc thù artifact vào `_gen_generic()` (sẽ làm hàm
+generic không còn generic), tách phần thân render nội dung (list/dict/str) thành hàm
+dùng chung `_render_kv_body()`, rồi thêm `_gen_review()` riêng gọi `_render_kv_body()` +
+cảnh báo Variant A. `_gen_generic()` sau khi tách hành vi giữ NGUYÊN (có test khóa).
+
+Kiểm tên file trước khi vá: `G5b_DMP_<mã>.docx` (thật là `G5_A6_DATA_MGMT_<mã>.md`/
+`.docx`) · `G8_REVIEW_<mã>.docx` (thật là `G8_A9_PRESUBMISSION_<mã>.md`/`.docx`) ·
+`G9_READINESS_<mã>.docx` (thật là `G9_PUBLICATION_READINESS.json`, không có `.docx`) —
+**không tên nào trùng artifact ledger thật**, giữ đúng bất biến của `task_a5fde306`
+(không đổi tên để "khớp" — nguy cơ ghi đè nhầm bản đã khóa).
+
+Test mới: `tests/test_gen_research_docx_scaffold_warning_vong5_20260902.py` (7 mục —
+3 cảnh báo đúng khuôn · 1 nội dung mặc định vẫn bảo thủ (NOT READY) · 1 không trùng tên
+· 2 khóa hành vi refactor `_render_kv_body`). **5 phép đột biến, cả 5 đều đỏ đúng chỗ**
+(gỡ từng cảnh báo G5/G8/G9 riêng lẻ · vô hiệu hóa nhánh render nội dung · đổi tên file
+G8 trùng artifact thật). `pytest` toàn bộ nhóm test đụng `gen_research_docx.py` (9 file,
+88 test) xanh; `ruff check` sạch. Toàn bộ pytest repo y khoa: **3225 passed, 42 skipped,
+0 fail** (315s). Chi tiết ở commit `5ea8d13` repo y khoa (3 nhánh `claude/medical-research-
+system-phggdf` · `master` · `feat/r1-1-2-design-gap-remediation` đã đồng bộ).
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
