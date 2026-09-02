@@ -259,6 +259,47 @@ G8 trùng artifact thật). `pytest` toàn bộ nhóm test đụng `gen_research
 0 fail** (315s). Chi tiết ở commit `5ea8d13` repo y khoa (3 nhánh `claude/medical-research-
 system-phggdf` · `master` · `feat/r1-1-2-design-gap-remediation` đã đồng bộ).
 
+## 2-septies. VÒNG RÀ 6 — hai hàng scaffold khác nội dung dùng chung một khóa artifact
+
+`SCAFFOLD_FILES` (21 hàng, `tools/scaffold_research_project.py`) có 3 cặp hàng dùng
+CHUNG một `artifact_key`: `literature` (hàng 03/04), `sap` (hàng 11/15), `checklist`
+(hàng 17/19) — điều tra để lại dở dang ở VÒNG RÀ 5 quay lại đây. Kiểm từng cặp bằng
+`ARTIFACT_MAP[key]` (tiêu đề + nội dung generator thật, không suy đoán):
+
+- `literature` — tiêu đề ARTIFACT_MAP đã gộp CẢ HAI khái niệm ("Tổng quan y văn &
+  Evidence Ledger") → có chủ ý, gọi `generate()` hai lần cho hai hàng 03/04 ra cùng
+  một nội dung đúng như thiết kế.
+- `sap` — `_gen_sap()` tự có mục "10. Khung bảng kết quả dự kiến (Dummy Tables)" phủ
+  đúng khái niệm của hàng 15 (Table_Shells) → cùng lý do, có chủ ý.
+- `checklist` — tiêu đề ARTIFACT_MAP chỉ nói **"Checklist chuẩn báo cáo
+  (CONSORT/STROBE/PRISMA)"**, không hề nhắc "kiểm toán completeness" — trong khi hàng
+  19 (Research_Integrity_Audit) là một khái niệm HOÀN TOÀN KHÁC: bảng kiểm toán A1–A18
+  (đủ hồ sơ IRB/đăng ký/cỡ mẫu…) trước khi nghiệm thu G9. **Đây là lỗi thật, không phải
+  thiết kế.**
+
+Tái hiện bằng `scaffold()` thật (không giả lập): chạy scaffold một đề tài test, log
+cho thấy `G7b_CHECKLIST_<mã>.docx` được in **HAI LẦN** — lần từ hàng 17, lần từ hàng 19
+— lần sau GHI ĐÈ lần trước trên đĩa. Vì cả hai lần gọi `generate("checklist")` đều
+không truyền `content` (rơi vào `_gen_generic` với cờ nhắc điền rỗng), nội dung hai lần
+ghi giống hệt nhau nên **không mất thông tin duy nhất nào trên đĩa** — nhưng
+`STUDY_INDEX.md` (bảng bác sĩ đọc để biết trạng thái 20 tài liệu) ghi **CÙNG MỘT** tên
+`.docx` kỳ vọng cho hai hàng 17 và 19 khác nội dung — bác sĩ đọc chỉ mục sẽ hiểu nhầm
+hai mục dùng chung một tài liệu output.
+
+Vá: thêm khóa `integrity-audit` (mã `G9b`, gate `G7-G9`) riêng cho hàng 19 trong
+`ARTIFACT_MAP` — `len(ARTIFACT_MAP)` 38 → 39 (cập nhật cả assertion khóa hồi quy trong
+`tests/test_gen_research_docx_round11_artifact_keys.py` lẫn con số cũ trong docstring
+`generate()`). Không đổi `num`/`fname` của hai hàng 17/19 (nội dung `.md` — thứ cổng
+thật đọc — chưa bao giờ bị ảnh hưởng, chỉ tên `.docx` phụ trợ mới trùng).
+
+Test mới `tests/test_scaffold_checklist_vs_integrity_audit_distinct_20260902.py` (7
+mục: 2 khóa khác nhau + mã riêng biệt · scaffold thật sinh 2 tên `.docx` khác nhau ·
+2 file `.md` giữ nội dung thật distinct · `STUDY_INDEX.md` không còn ghi trùng tên cho
+2 hàng). **2 phép đột biến, cả 2 đều đỏ đúng chỗ** (trả hàng 19 về khóa `checklist` cũ
+→ 3 test đỏ; xóa khóa `integrity-audit` khỏi `ARTIFACT_MAP` → 4 test đỏ, gồm cả test
+đếm-mã-không-trùng đã có từ vòng 11). Nhóm test đụng `gen_research_docx.py`/
+`scaffold_research_project.py` (11 file, 109 test) xanh; `ruff check` sạch.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
