@@ -107,4 +107,22 @@ if [ -f "$SURVEILLANCE_GATE" ]; then
   fi
 fi
 
+# Chan commit khi ARTIFACT BANG CHUNG bi HA CAP (them 02/09/2026, BH94).
+# Ca that cung ngay: mot phien cloud khong co ~/.ebm-secrets (USE_MOCK_SOURCES=true)
+# va khong co nen Retraction Watch da ghi de 3 artifact, ca 3 deu di lui — mot so
+# canary 10/10 bi xoa trang, hai phan quyet "retracted" (PMID 9500320 Wakefield va
+# 30267080) tut xuong "unknown_mock_or_no_email", va duong dan tuyet doi trong
+# checkpoint cua mot de tai THAT bi viet lai tu OneDrive-Mac sang /home/user cua
+# container. Khong cong nao bao dong: JSON van hop le, cong cu van "chay thanh cong".
+# Luat: may THIEU du lieu that khong duoc ghi de artifact do may CO du lieu sinh ra.
+if [ -f tools/kiem_o_nhiem_artifact.py ]; then
+  python3 tools/kiem_o_nhiem_artifact.py --staged
+  ARTIFACT_EXIT=$?
+  if [ "$ARTIFACT_EXIT" -ne 0 ]; then
+    echo "CHAN COMMIT: artifact bang chung bi ha cap boi may thieu du lieu that." >&2
+    echo "  Chay: python3 tools/kiem_o_nhiem_artifact.py --staged" >&2
+    exit 1
+  fi
+fi
+
 exit 0

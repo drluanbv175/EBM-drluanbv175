@@ -159,12 +159,39 @@ if [ -f tools/tu_sua_chua.py ]; then
   fi
 fi
 
+# ⑤c TƯ CÁCH CỦA CÂY MÃ (thêm 02/09/2026, BH93). Phiên cloud clone NÔNG và có thể đứng
+#    trên nhánh lạc hậu — đo được hôm dựng: medical-ebm-automation HEAD 17/08, shallow,
+#    KHÔNG có ref master, LẠC HẬU 55 commit. Trên cây đó một kiểm toán 11 agent kết luận
+#    cổng G8 «không có chốt chất lượng nào» và bản vá 24/08 «chưa từng tồn tại» — cả hai
+#    SAI; `git fetch origin master` cho thấy G8Q nối dây ở approve_gate.py:76,567. Cây lạc
+#    hậu sinh ÂM TÍNH GIẢ: tuyên bố một cơ chế an toàn không tồn tại trong khi nó đang chạy.
+#    Chỉ ĐO, KHÔNG tự fetch (kéo hàng trăm MB hộ bác sĩ là quyết định của bác sĩ). Cây nông
+#    = 🟡 im lặng (mọi phiên cloud đều nông; báo đỏ mỗi phiên là tường đỏ vô ích — BH08),
+#    chỉ LẠC HẬU mới lên tiếng vì đó mới có việc để làm.
+if [ -f tools/kiem_cay_lam_viec.py ]; then
+  python3 tools/kiem_cay_lam_viec.py --im-khi-on || true
+fi
+
 # ⑥ Nói ra GIỚI HẠN còn lại, không để người đọc tưởng cloud = local tuyệt đối:
 #    plugin nào sổ khai còn «chua-ro» (chỉ Mac biết nguồn) thì cloud chưa có cho tới khi
 #    bác sĩ chạy --xuat-nguon trên Mac; 38 skill mồ côi trong ~/.claude/skills của Mac
 #    không nằm trong git nên cloud không có. Theo bảng định tuyến ở CLAUDE.md, plugin
 #    chỉ là worker và KHÔNG BAO GIỜ là chủ của việc có cổng — thiếu chúng không chặn
 #    việc gì có cổng.
+# ⑥b NGUỒN CHỨNG CỨ CỦA MÁY NÀY LÀ THẬT HAY GIẢ (thêm 02/09/2026, BH94). Container cloud
+#    không có ~/.ebm-secrets ⇒ USE_MOCK_SOURCES về mặc định true ⇒ mọi lời gọi nguồn y văn
+#    trả DỮ LIỆU BỊA. Hôm dựng mục này, chính điều đó đã làm hai phán quyết "retracted"
+#    (PMID 9500320 · 30267080) tụt xuống "unknown" trong sổ bằng chứng và suýt được commit.
+#    CỐ Ý chỉ in MỘT DÒNG thay vì khối đỏ của kiem_nguon_that: trên cloud đây là trạng thái
+#    BÌNH THƯỜNG VĨNH VIỄN và không sửa được trong container ⇒ khối đỏ mỗi phiên là tường đỏ
+#    vô ích (BH08). Chốt CHẶN thật nằm ở pre-commit (kiem_o_nhiem_artifact).
+if [ -f tools/kiem_nguon_that.py ]; then
+  if ! python3 tools/kiem_nguon_that.py --nhanh >/dev/null 2>&1; then
+    echo "   ⚠ Nguồn y văn của máy này là DỮ LIỆU GIẢ (không có secrets) — KHÔNG dùng số"
+    echo "     liệu quét/giám sát ở đây cho quyết định lâm sàng. Chi tiết: python3 tools/kiem_nguon_that.py"
+  fi
+fi
+
 echo "   ℹ Plugin: theo sổ khai sync/plugin-manifest.json (mục chua-ro chờ --xuat-nguon từ Mac)."
 echo "     Việc có cổng vẫn chạy đủ: chủ của mọi việc có cổng là agent/skill trong repo."
 exit 0

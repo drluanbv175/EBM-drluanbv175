@@ -203,6 +203,12 @@ def emit_appraisal(res: dict, target: str, *, source: str = "orchestrator",
 
 
 # ── D3: verdict-maker cho Orchestrator.handle(guardrail_verdict=…) ────────────────
+# Phạm vi THẬT của cầu này, đi kèm MỌI verdict để không ai đọc "pass" thành "đạt cả 2 lớp".
+# Đây là khai báo TRUNG THỰC, không phải cờ tính năng: muốn Lớp 2 được chấm thật thì phải nối
+# một grader LLM (tools/eval/analyze_failures.py::_failing_dims) — chưa nối ở bất kỳ đâu.
+_PHU_LOP_2 = {"lop_2_medpalm": "KHONG_DANH_GIA_QUA_CAU_NAY"}
+
+
 def make_run_eval_verdict(output_text: str, *, target: str = "orchestrator-output",
                           source: str = "orchestrator", at: str | None = None, log_path=None):
     """Trả callable `verdict(session) -> dict` chấm `output_text` bằng run_eval.evaluate (THẬT),
@@ -214,14 +220,22 @@ def make_run_eval_verdict(output_text: str, *, target: str = "orchestrator-outpu
         rec = emit_appraisal(res, target, source=source, at=at, log_path=log_path)
         codes = rec["ledger_codes"]
         if res.get("verdict") == "ĐẠT" and not codes:
-            return {"status": "pass", "appraisal": rec["id"]}
+            # "pass" Ở ĐÂY CHỈ CÓ NGHĨA LỚP 1. Cầu này chấm 100% bằng run_eval.evaluate()
+            # — cổng RULE-BASED thuần regex, không có check nào sinh Q-code — nên Lớp 2
+            # Med-PaLM (Q1-Q7: đúng đắn · nguy cơ hại…) KHÔNG HỀ ĐƯỢC CHẤM ở đường này.
+            # Trả "pass" trơn là mời người đọc hiểu nhầm cả hai lớp đã đạt: đúng lớp lỗi
+            # BH27 (ghi all_clean=true trong khi không trích dẫn nào được kiểm). Nên sự
+            # thật đó đi kèm verdict như DỮ LIỆU, không nằm trong một chú thích mà người
+            # tiêu thụ verdict không bao giờ đọc. Xem thêm _CHUAN-CHAT-LUONG-MEDPALM.md.
+            return {"status": "pass", "appraisal": rec["id"],
+                    **_PHU_LOP_2}
         # Mã VỐN cổng cứng (PII/nhân quả/thiếu câu hỏi an toàn…) → LEO THANG NGAY, KHÔNG re-route
         # auto-fix vô nghĩa. Chỉ re-route khi lỗi thuộc loại SỬA ĐƯỢC (trích dẫn/thiếu nguồn).
         hard = [c for c in codes if c in _HARD_CODES]
         if hard:
             return {"status": "returned_for_fix", "code": hard[0],
-                    "escalate": True, "appraisal": rec["id"]}
+                    "escalate": True, "appraisal": rec["id"], **_PHU_LOP_2}
         code = next((c for c in codes if c in _REROUTABLE), codes[0] if codes else "R1")
-        return {"status": "returned_for_fix", "code": code, "appraisal": rec["id"]}
+        return {"status": "returned_for_fix", "code": code, "appraisal": rec["id"], **_PHU_LOP_2}
 
     return verdict

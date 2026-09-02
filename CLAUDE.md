@@ -82,6 +82,51 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   BH74 từng vỡ giữa chừng vì `tu_sua_chua.VIEC_MAY` đổi từ 3-phần-tử sang 4-phần-tử — đã sửa
   điểm unpack ở cả hai, đúng bài học nền: đổi CẤU TRÚC DỮ LIỆU dùng chung phải rà hết nơi tiêu
   thụ, không chỉ nơi vừa sửa).
+- **🔬 BA CHỖ HỞ LỘ RA TỪ MỘT CUỘC KIỂM TOÁN TỰ MẮC BẪY — vá 02/09/2026 (BH93/94/95).**
+  Chạy kiểm toán 11 agent hỏi «agent có kiểm chéo nhau thật không». Nó báo động NGHIÊM
+  TRỌNG: cổng G8 «KHÔNG có chốt chất lượng nào», bản vá 24/08 «chưa từng tồn tại trong bất
+  kỳ ref nào», G2/G4 «chỉ tư vấn, chấm SAU khi ký». **Cả năm khẳng định đều SAI.** Sự thật
+  đo được ngay sau đó: `medical-ebm-automation` trong container ở HEAD **17/08**, **shallow**,
+  **KHÔNG có ref master**, **LẠC HẬU 55 commit**. `git log --all` trên clone nông chỉ thấy ref
+  đã fetch. Sau `git fetch origin master`: G8Q nối dây thật (`approve_gate.py:76,567`), test
+  hồi quy `test_approve_gate_quality_gate_wiring_20260824.py` có thật, canary có thật, G3
+  chặn cứng có thật, và G2Q`:437`·G4Q`:475`·G8Q`:567` đều chấm **TRƯỚC** `add_approval:768`.
+  Đây là BH74 «đo đúng, nhưng đo nhầm chỗ» giáng vào chính bộ kiểm toán, và hại theo chiều
+  xấu nhất: **âm tính giả** — tuyên bố một cơ chế an toàn không tồn tại trong khi nó đang chạy.
+  **(A) `tools/kiem_cay_lam_viec.py` (BH93)** — cây đang đứng có ĐỦ TƯ CÁCH kết luận không?
+  Soi cả hai repo: nông? lạc hậu bao nhiêu commit? Chỉ ĐO, **không tự fetch** (kéo hàng trăm MB
+  hộ bác sĩ là quyết định của bác sĩ). Phân tầng có chủ ý: **nông = 🟡 im lặng** (mọi phiên cloud
+  đều nông ⇒ báo đỏ mỗi phiên là tường đỏ vô ích, BH08), **chỉ LẠC HẬU mới 🔴** vì đó mới có việc
+  để làm. Thiếu ref để so ⇒ **«CHƯA KIỂM ĐƯỢC»**, tuyệt đối không đỏ. Nối vào hook cloud ⑤c.
+  **(B) `tools/kiem_o_nhiem_artifact.py` (BH94)** — chặn commit khi **máy THIẾU dữ liệu thật ghi
+  đè artifact do máy CÓ dữ liệu sinh ra**. Ca thật cùng ngày, suýt commit: `canary-10-loi-gai.log`
+  973 byte «🟢 10/10» → **0 byte**; PMID **9500320** (Wakefield) và **30267080** đi từ `retracted`
+  kèm đúng thông báo rút bài → `unknown_mock_or_no_email`; và `G3_checkpoint.json` của một đề tài
+  THẬT bị viết lại đường dẫn từ OneDrive-Mac sang `/home/user` của container. Không cổng nào báo
+  động: JSON vẫn hợp lệ, công cụ vẫn «chạy thành công». **Bất đối xứng CÓ CHỦ Ý, đừng đảo:**
+  `retracted→unknown` CHẶN (máy vừa quên), `unknown→retracted` CHO QUA (máy vừa biết thêm) —
+  chặn cả hai chiều sẽ khiến bác sĩ không cập nhật được sổ trên máy thật, và một cổng cản việc
+  đúng là cổng sẽ bị tắt. Nối vào `.githooks/pre-commit`.
+  **(C) `guardrail_bridge` khai đúng phạm vi (BH95)** — `make_run_eval_verdict()` trả
+  `{"status": "pass"}` cho gói mà **Lớp 2 Med-PaLM (Q1–Q7) chưa hề được chấm**: cầu này dựa 100%
+  vào `run_eval.evaluate()` (rule-based thuần regex, không check nào sinh Q-code; Q-code chỉ đến
+  từ một grader LLM chưa nối vào đâu). Mã đã tự khai trong chú thích 12 dòng — nhưng chú thích
+  **không đi theo giá trị trả về**, nên người tiêu thụ đọc `pass` là hiểu «đạt cả hai lớp». Đúng
+  họ **BH27** (ghi `all_clean=true` khi không trích dẫn nào được kiểm). Nay mọi nhánh verdict mang
+  `lop_2_medpalm: KHONG_DANH_GIA_QUA_CAU_NAY` — sự thật đi cùng DỮ LIỆU, không nằm trong chú thích.
+  **Kiểm đột biến bắt được 3 lỗi trong chính 3 chốt mới** (ghi lại vì đây là giá trị thật của phép
+  thử có đáp án biết trước): ① fixture BH93 xoá ref rồi `remote remove` nhưng `origin/master` VẪN
+  phân giải được ⇒ nhánh «không có ref» chưa từng chạy tới, test đạt vì lý do SAI; ② hai chốt dây
+  nối khớp lỏng `"... .py" in dòng` nên vẫn xanh sau khi lời gọi thật bị gỡ — vì **dòng `if [ -f
+  tools/... ]` và dòng `echo "Chay: python3 tools/..."` cũng chứa tên file**; nay đòi dòng
+  **BẮT ĐẦU** bằng `python3 tools/<tên>`; ③ fixture BH94 viết literal đường dẫn Mac làm **BH06 +
+  BH55 đỏ thật** (hai chốt quét đường dẫn cứng-một-máy) — sửa bằng cách ghép chuỗi từ mảnh, KHÔNG
+  xin miễn trừ, để không nới lỏng hai chốt kia vì một fixture.
+  ⚠️ **Bẫy vận hành gặp trong lúc kiểm:** `__pycache__` cũ khiến bản `.pyc` ĐÃ ĐỘT BIẾN vẫn được
+  nạp sau khi source đã hoàn nguyên ⇒ chốt báo đỏ giả. Sau mỗi vòng đột biến phải
+  `find . -name __pycache__ -prune -exec rm -rf {} +` rồi mới kết luận.
+  📌 **Việc vận hành:** repo y khoa trong phiên cloud đứng ở nhánh cũ; trước khi kết luận «mã X
+  không tồn tại» phải `git fetch origin master` rồi đối chiếu `git show origin/master:<đường-dẫn>`.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời

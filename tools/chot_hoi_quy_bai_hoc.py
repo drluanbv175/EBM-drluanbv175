@@ -4540,6 +4540,209 @@ def bh92_vong_lap_khep_kin_phu_ca_hai_nhac_truong():
                   "nêu rõ khác biệt mật mã vs kỷ luật vận hành, giữ nguyên neo Tự sinh agent")
 
 
+
+def bh93_cay_lac_hau_sinh_am_tinh_gia():
+    """02/09 — một cuộc kiểm toán 11 agent kết luận cổng G8 «KHÔNG có chốt chất lượng nào»
+    và bản vá 24/08 «chưa từng tồn tại trong bất kỳ ref nào», kèm bằng chứng `git log --all`.
+    SAI TOÀN BỘ. Cây đo được: medical-ebm-automation ở HEAD 17/08, **shallow**, KHÔNG có ref
+    master, LẠC HẬU 55 commit. `git log --all` trên clone nông chỉ thấy ref đã fetch, mà
+    master chưa từng được fetch. Sau `git fetch origin master`: G8Q nối dây thật ở
+    `approve_gate.py:76,567`; test hồi quy, canary, G3-chặn-cứng đều có thật; G2Q/G4Q/G8Q
+    chấm TRƯỚC `add_approval` chứ không phải sau.
+
+    Họ lỗi BH74 «đo đúng, nhưng đo nhầm chỗ», lần này nạn nhân là chính bộ kiểm toán, và hại
+    theo chiều xấu nhất: **âm tính giả** — tuyên bố một cơ chế an toàn không tồn tại trong khi
+    nó đang chạy.
+
+    Kiểm HÀNH VI trên công cụ đang sống (fixture repo git tạm, không đụng repo thật):
+      ① repo LẠC HẬU so với origin/master ⇒ ĐỎ (exit 1) và nêu đúng số commit thiếu
+      ② repo ĐỒNG BỘ ⇒ KHÔNG đỏ (không dựng tường đỏ vô cớ)
+      ③ repo KHÔNG có ref để so ⇒ «CHƯA KIỂM ĐƯỢC», TUYỆT ĐỐI không đỏ (BH08: thiếu ref
+        không phải bằng chứng cây lành, cũng không phải bằng chứng cây hỏng)
+      ④ hook phiên cloud phải THẬT SỰ gọi công cụ (có công cụ mà không ai gọi = không tồn tại)
+    """
+    import subprocess
+    import tempfile
+
+    tool = REPO / "tools" / "kiem_cay_lam_viec.py"
+    if not tool.exists():
+        return False, "thiếu tools/kiem_cay_lam_viec.py — mất chốt canh cây lạc hậu"
+
+    def _g(cay, *a):
+        return subprocess.run(["git", *a], cwd=cay, capture_output=True, text=True, timeout=30)
+
+    with tempfile.TemporaryDirectory() as td:
+        goc, ban = Path(td) / "goc", Path(td) / "ban"
+        goc.mkdir()
+        _g(goc, "init", "-q", "-b", "master")
+        _g(goc, "config", "user.email", "t@t.t"); _g(goc, "config", "user.name", "t")
+        (goc / "a.txt").write_text("1", encoding="utf-8")
+        _g(goc, "add", "-A"); _g(goc, "commit", "-qm", "c1")
+        _g(Path(td), "clone", "-q", str(goc), str(ban))
+        _g(ban, "config", "user.email", "t@t.t"); _g(ban, "config", "user.name", "t")
+
+        import importlib.util as _iu
+        spec = _iu.spec_from_file_location("_bh93_kcl", tool)
+        m = _iu.module_from_spec(spec); sys.modules["_bh93_kcl"] = m; spec.loader.exec_module(m)
+
+        # ② đồng bộ ⇒ không đỏ
+        if m.soi_mot_cay(ban)["do"]:
+            return False, "repo ĐỒNG BỘ mà bị báo đỏ — dựng tường đỏ vô cớ (BH08)"
+
+        # ① nguồn tiến 2 commit ⇒ bản sao lạc hậu ⇒ đỏ, đúng số
+        for i in (2, 3):
+            (goc / "a.txt").write_text(str(i), encoding="utf-8")
+            _g(goc, "add", "-A"); _g(goc, "commit", "-qm", f"c{i}")
+        _g(ban, "fetch", "-q", "origin", "master:refs/remotes/origin/master")
+        kq = m.soi_mot_cay(ban)
+        if not kq["do"]:
+            return False, "cây LẠC HẬU 2 commit mà KHÔNG báo đỏ — âm tính giả sẽ tái diễn"
+        if kq["thieu_bao_nhieu"] != 2:
+            return False, f"đếm sai độ lạc hậu: {kq['thieu_bao_nhieu']} (đúng phải là 2)"
+
+        # ③ không có ref để so ⇒ chưa kiểm được, KHÔNG đỏ.
+        # DÙNG REPO ĐỘC LẬP, KHÔNG REMOTE: bản đầu của chốt này xoá ref rồi `remote remove`
+        # trên chính bản clone, nhưng `origin/master` VẪN phân giải được (packed-refs /
+        # refs/remotes/origin/HEAD còn lại) ⇒ nhánh «không có ref» KHÔNG BAO GIỜ chạy tới và
+        # test ③ đạt vì lý do SAI. Kiểm đột biến bắt được: tiêm `do=True` vào đúng nhánh đó
+        # mà chốt vẫn xanh. Đúng bẫy tautology mà chính bộ chốt này sinh ra để chống.
+        le = Path(td) / "le"
+        le.mkdir()
+        _g(le, "init", "-q", "-b", "master")
+        _g(le, "config", "user.email", "t@t.t"); _g(le, "config", "user.name", "t")
+        (le / "a.txt").write_text("1", encoding="utf-8")
+        _g(le, "add", "-A"); _g(le, "commit", "-qm", "c1")
+        if m.nhanh_mac_dinh(le) is not None:
+            return False, "fixture hỏng: repo không remote mà vẫn tìm ra ref mặc định"
+        kq3 = m.soi_mot_cay(le)
+        if kq3["do"]:
+            return False, ("không có ref để so mà báo ĐỎ — biến CHƯA BIẾT thành CÓ VẤN ĐỀ, "
+                            "đúng lỗi BH08 mà chốt này sinh ra để chống")
+        if not any("CHƯA KIỂM ĐƯỢC" in c for c in kq3["canh_bao"]):
+            return False, "không có ref để so mà im lặng — phải NÓI RA là chưa kiểm được"
+
+    # ④ dây nối vào hook cloud
+    hook = REPO / ".claude/hooks/session-start.sh"
+    if hook.exists():
+        noi = hook.read_text(encoding="utf-8")
+        # Phải là dòng THI HÀNH (`python3 tools/...`), không phải dòng `if [ -f ... ]` — dòng
+        # điều kiện cũng chứa tên file nên bản đầu của chốt này vẫn xanh sau khi lời gọi thật
+        # đã bị gỡ (kiểm đột biến bắt được). Cùng lỗi đã vá ở BH90.
+        if not [d for d in noi.splitlines()
+                if d.strip().startswith("python3 tools/kiem_cay_lam_viec.py")]:
+            return False, "hook phiên cloud KHÔNG THI HÀNH kiem_cay_lam_viec.py — chốt có mà không ai chạy (BH41)"
+
+    return True, ("cây lạc hậu ⇒ đỏ đúng số commit; cây đồng bộ ⇒ im; thiếu ref ⇒ CHƯA KIỂM "
+                  "ĐƯỢC chứ không đỏ; hook cloud có gọi thật")
+
+
+def bh94_khong_ghi_de_bang_chung_bang_may_thieu_du_lieu():
+    """02/09 — một phiên cloud KHÔNG có `~/.ebm-secrets` (⇒ USE_MOCK_SOURCES=true) và KHÔNG có
+    nền Retraction Watch đã ghi đè 3 artifact bằng chứng, cả 3 đều ĐI LÙI, và suýt commit:
+      • canary-10-loi-gai.log: 973 byte «🟢 10/10 lỗi gài đều bị bắt» → **0 byte**
+      • rut-bai-3-muc.log: PMID 9500320 (Wakefield) VÀ 30267080 đi từ `retracted` (kèm đúng
+        thông báo rút bài) → `unknown_mock_or_no_email`
+      • exports/<đề-tài-THẬT>/G3_checkpoint.json: đường dẫn tuyệt đối bị viết lại từ OneDrive
+        trên Mac của bác sĩ sang `/home/user/...` của container
+    Không cổng nào báo động: JSON vẫn hợp lệ, công cụ vẫn «chạy thành công», git chỉ thấy
+    «file đã đổi». Luật bị vi phạm: **máy THIẾU dữ liệu thật không được ghi đè artifact do máy
+    CÓ dữ liệu sinh ra**; và ghi `unknown` đè lên `retracted` là hạ một phán quyết an toàn
+    xuống vô tri (BH08).
+
+    Kiểm HÀNH VI + BẤT ĐỐI XỨNG (đây mới là phần dễ làm sai):
+      ① `retracted` → `unknown_*` ⇒ CHẶN
+      ② `unknown_*` → `retracted` ⇒ CHO QUA (máy vừa biết thêm; chặn cả hai chiều sẽ khiến
+        bác sĩ không cập nhật được sổ trên máy thật, và cổng cản việc đúng là cổng sẽ bị tắt)
+      ③ sổ bằng chứng có nội dung bị ghi RỖNG ⇒ CHẶN
+      ④ đường dẫn tuyệt đối đổi sang MÁY KHÁC ⇒ CHẶN
+      ⑤ thay đổi thường (không phải bằng chứng) ⇒ CHO QUA (không dương tính giả)
+      ⑥ pre-commit phải THẬT SỰ gọi chốt này
+    """
+    import importlib.util as _iu
+
+    tool = REPO / "tools" / "kiem_o_nhiem_artifact.py"
+    if not tool.exists():
+        return False, "thiếu tools/kiem_o_nhiem_artifact.py — mất chốt chặn hạ cấp bằng chứng"
+    spec = _iu.spec_from_file_location("_bh94_koa", tool)
+    m = _iu.module_from_spec(spec); sys.modules["_bh94_koa"] = m; spec.loader.exec_module(m)
+
+    if not m.soi_mot_file("t.log", '{"1":{"status":"retracted"}}', '{"1":{"status":"unknown_mock"}}'):
+        return False, "phán quyết ĐI LÙI retracted→unknown KHÔNG bị chặn — đúng ca thật 02/09"
+    if m.soi_mot_file("t.log", '{"1":{"status":"unknown_mock"}}', '{"1":{"status":"retracted"}}'):
+        return False, ("chặn cả chiều ĐI LÊN unknown→retracted — sai bất đối xứng; bác sĩ sẽ "
+                        "không cập nhật được sổ trên máy thật và sẽ tắt cổng này")
+    if not m.soi_mot_file("t.log", '{"1":{"status":"ok"}}', '{"1":{"status":"unknown_fetch_error"}}'):
+        return False, "ok→unknown cũng là hạ cấp mà không bị chặn"
+    if not m.soi_mot_file("x.log", "kết quả thật 10/10", "   \n"):
+        return False, "sổ bằng chứng bị ghi RỖNG mà không bị chặn"
+    # Đường dẫn máy được GHÉP TỪ MẢNH, cố ý không viết literal: BH06/BH55 quét đường dẫn
+    # cứng của-một-máy trên toàn repo và sẽ bắt đúng chuỗi fixture này (đã xảy ra thật khi
+    # dựng chốt). Ghép từ mảnh giữ nguyên phép thử mà không phải xin miễn trừ — không nới
+    # lỏng hai chốt kia chỉ vì một fixture.
+    _mac = "/" + "Users/ai/Library/CloudStorage/OneDrive-Personal/x/a.md"
+    _linux = "/" + "home/user/medical-ebm-automation/exports/x/a.md"
+    if not m.soi_mot_file("exports/x/G3.json",
+                          '{"p":"%s"}' % _mac, '{"p":"%s"}' % _linux):
+        return False, "đường dẫn tuyệt đối bị viết lại sang MÁY KHÁC mà không bị chặn"
+    if m.soi_mot_file("t.py", "def a():\n    return 1\n", "def a():\n    return 2\n"):
+        return False, "thay đổi thường bị chặn — dương tính giả sẽ làm cổng này bị tắt"
+
+    hook = REPO / ".githooks" / "pre-commit"
+    if hook.exists():
+        noi = hook.read_text(encoding="utf-8")
+        # Phải là dòng THI HÀNH thật. Dòng `if [ -f tools/... ]` cũng chứa tên file, nên một
+        # phép khớp lỏng vẫn xanh sau khi lời gọi đã bị gỡ — kiểm đột biến bắt được đúng điều
+        # này ở cả BH93 lẫn đây. Cùng lỗi đã vá ở BH90.
+        if not [d for d in noi.splitlines()
+                if d.strip().startswith("python3 tools/kiem_o_nhiem_artifact.py")]:
+            return False, "pre-commit KHÔNG THI HÀNH kiem_o_nhiem_artifact.py — chốt có mà không ai chạy (BH41)"
+
+    return True, ("hạ cấp phán quyết/xoá trắng/đổi máy đều bị chặn; chiều ĐI LÊN vẫn thông; "
+                  "thay đổi thường không dương tính giả; pre-commit có gọi thật")
+
+
+def bh95_verdict_phai_khai_dung_pham_vi_da_cham():
+    """02/09 — `guardrail_bridge.make_run_eval_verdict()` trả `{"status": "pass"}` cho một gói
+    mà **Lớp 2 Med-PaLM (Q1-Q7) chưa hề được chấm**: cầu này dựa 100% vào `run_eval.evaluate()`
+    — cổng rule-based thuần regex, không check nào sinh Q-code; Q-code chỉ đến từ một grader LLM
+    riêng chưa nối vào đâu. Chính mã đã tự khai điều đó trong một chú thích 12 dòng — nhưng chú
+    thích không đi theo giá trị trả về, nên người TIÊU THỤ verdict đọc "pass" là hiểu «đạt cả hai
+    lớp». Đây đúng họ BH27 (ghi `all_clean=true` trong khi không trích dẫn nào được kiểm) và họ
+    «luật CÓ MẶT nhưng không bao giờ chạy tới».
+
+    Kiểm HÀNH VI: mọi nhánh trả về của verdict phải MANG theo lời khai phạm vi, để sự thật đi
+    cùng dữ liệu chứ không nằm trong một chú thích không ai đọc.
+    """
+    import importlib
+
+    if str(REPO / "tools") not in sys.path:
+        sys.path.insert(0, str(REPO / "tools"))
+    gb = importlib.import_module("orchestrator.guardrail_bridge")
+    importlib.reload(gb)
+
+    if not hasattr(gb, "_PHU_LOP_2"):
+        return False, "mất khai báo phạm vi _PHU_LOP_2 — 'pass' lại đọc thành 'đạt cả 2 lớp'"
+    khoa = list(gb._PHU_LOP_2)
+    if not khoa:
+        return False, "_PHU_LOP_2 rỗng — không khai gì thì bằng không khai"
+
+    src = (REPO / "tools/orchestrator/guardrail_bridge.py").read_text(encoding="utf-8")
+    than = src[src.find("def make_run_eval_verdict("):]
+    tra_ve = [d for d in than.splitlines() if "return {" in d or 'return {"status"' in d]
+    if not tra_ve:
+        return False, "không tìm thấy nhánh trả về nào của verdict — cấu trúc đã đổi, kiểm lại"
+    # mọi nhánh trả về của verdict() phải gắn _PHU_LOP_2 (trực tiếp hoặc qua **)
+    doan = than[: than.find("\n    return verdict")]
+    so_return = doan.count("return {")
+    so_khai = doan.count("_PHU_LOP_2")
+    if so_khai < so_return:
+        return False, (f"{so_return} nhánh trả về nhưng chỉ {so_khai} nhánh khai phạm vi — "
+                        "một nhánh im lặng là một nhánh bị đọc nhầm thành 'đạt cả 2 lớp'")
+
+    return True, (f"cả {so_return} nhánh verdict đều mang lời khai phạm vi "
+                  f"({khoa[0]}) — 'pass' không còn bị đọc thành 'đạt cả 2 lớp'")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -4640,6 +4843,9 @@ BAI_HOC = [
     ("BH90", "02/09", "Tự sửa chữa (tu_sua_chua) tới CLOUD qua --pham-vi-cloud, hook thật sự gọi", bh90_tu_sua_chua_toi_cloud),
     ("BH91", "02/09", "dieu-phoi-lam-sang cũng dạy TỰ SINH AGENT — đối xứng với dieu-phoi-nghien-cuu, sau CA NGOÀI VÙNG PHỦ, buộc Cổng A/B", bh91_dieu_phoi_lam_sang_co_tu_sinh_agent),
     ("BH92", "02/09", "Vòng lặp khép kín phủ CẢ HAI nhạc trưởng, sơ đồ lâm sàng riêng, nêu rõ khác biệt mật mã vs kỷ luật vận hành", bh92_vong_lap_khep_kin_phu_ca_hai_nhac_truong),
+    ("BH93", "02/09", "Cây lạc hậu/nông sinh ÂM TÍNH GIẢ — phủ định không phải bằng chứng; thiếu ref là CHƯA KIỂM ĐƯỢC", bh93_cay_lac_hau_sinh_am_tinh_gia),
+    ("BH94", "02/09", "Máy thiếu dữ liệu thật KHÔNG được ghi đè artifact bằng chứng (chặn đi lùi, thông chiều đi lên)", bh94_khong_ghi_de_bang_chung_bang_may_thieu_du_lieu),
+    ("BH95", "02/09", "Verdict phải khai ĐÚNG phạm vi đã chấm — 'pass' của cầu rule-based không phải 'đạt cả 2 lớp'", bh95_verdict_phai_khai_dung_pham_vi_da_cham),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
