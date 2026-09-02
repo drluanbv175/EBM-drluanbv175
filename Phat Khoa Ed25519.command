@@ -19,15 +19,15 @@ echo "Trình Python sẽ dùng: $PY"
 echo ""
 echo "Chọn vai trò cần phát khoá (khoá RIÊNG vào ~/.ebm-secrets — trao cho người giữ vai;"
 echo "khoá CÔNG vào config/gate_ed25519_pubkeys — commit vào repo):"
-select VAI in IRB STATISTICIAN INDEPENDENT_PEER_REVIEWER PI Thoat; do
+select VAI in IRB STATISTICIAN DATA_MANAGER INDEPENDENT_PEER_REVIEWER PI Thoat; do
   case "$VAI" in
-    IRB|STATISTICIAN|INDEPENDENT_PEER_REVIEWER|PI)
+    IRB|STATISTICIAN|DATA_MANAGER|INDEPENDENT_PEER_REVIEWER|PI)
       "$PY" tools/setup_gate_approval_key.py --role "$VAI" --ed25519
       echo "" ;;
     Thoat)
       break ;;
     *)
-      echo "Gõ số 1-5." ;;
+      echo "Gõ số 1-6." ;;
   esac
 done
 echo "──────────────────────────────────────────────"
