@@ -1416,6 +1416,20 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
 - Test: `pytest` (khi venv đã có dev dependencies)
 - Lint: `ruff check` (khi venv đã có dev dependencies)
 - Audit chung từ thư mục gốc: `python3 tools/audit_ebm_system.py`
+- **Kiểm CHI TIẾT hệ nghiên cứu — 11 cổng × 5 trục, một đề tài (mới 02/09/2026, thi công theo
+  `audit/09-prompt-kiem-chi-tiet-he-nghien-cuu_2026-09-02.md`; báo cáo thi hành `audit/10-…`):**
+  `python3 tools/kiem_chi_tiet_he_nghien_cuu.py --study <mã>` (trong `medical-ebm-automation/`;
+  `--no-write` · `--khong-canary`). Ghép audit_research_gates · pipeline_freshness · 11 `gN_quality_gate`
+  chấm SỐNG (write=False) · dây nối approve_gate · sổ cái · verify_exports_integrity · chuẩn trình bày
+  `.docx` · canary thành MỘT bảng điểm; ra `exports/<mã>/KIEM_CHI_TIET_report.{json,md}`. Mã thoát
+  **0** sạch · **1** còn việc người thật (🟡 kèm vai + lệnh) · **2** có 🔴 máy-sửa-được hoặc fail-closed hở ·
+  **3** công cụ chết. **Vì sao có:** trước đó phải chạy tay ≥7 công cụ rời rạc rồi tự ghép trong đầu — nguồn
+  của chuỗi «đã hoàn thiện» → «kiểm lại thì chưa» (họ BH41). Lần chạy đầu trên C1a bắt 2 lỗi thật: checkpoint
+  G0 TỰ MÂU THUẪN (`needs_input.blocked` MISSING_PICO còn nằm lại sau khi hợp đồng đã PASS_G0_CONFIRMED —
+  `audit_research_gates` vì thế vẫn đòi «chốt PICO» trong khi `study_readiness` nói «ĐÃ CHỐT»;
+  `g0_quality_gate.refresh_checkpoint` nay gỡ cờ, giữ truy vết) và 2 bản `.docx` đề cương còn ký tự trang
+  trí/12pt (render lại bằng `xuat_docx_chuan.py --file`). Luật màu BH08: 🟡 KHÔNG phải lỗi; cảnh báo độ tươi
+  chỉ theo mtime — nội dung có khớp hay không xem trục ② chấm sống. Không ký, không sinh lại artifact.
 - **Sổ việc chưa đóng (tầng cuộc gặp):** `python3 tools/so_viec_chua_dong.py` — mặc định in việc
   quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
 - **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
