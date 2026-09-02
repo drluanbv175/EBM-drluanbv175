@@ -4224,6 +4224,90 @@ def bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that():
                   "phân giải được; việc lẻ mạnh không vượt cờ đỏ; inventory tra cả hai kho")
 
 
+def bh89_worker_inventory_doc_ca_lenh_lan_skill():
+    """02/09 — cài ĐÚNG academic-research-skills lần đầu tiên (xác minh qua marketplace.json
+    khớp TUYỆT ĐỐI phiên bản patch 3.21.1 với mốc Mac) lộ ra một lỗi CHƯA TỪNG được kiểm:
+    9/9 worker binding registry bind vào provider này đều FAIL «không tìm thấy SKILL.md».
+
+    Nguyên nhân KÉP, cả hai đều là «đo đúng, nhưng đo nhầm chỗ» (họ BH74/BH85):
+      (1) `WorkerInventory._index()` chỉ `rglob("SKILL.md")` — nhưng academic-research-skills
+          phơi năng lực bằng LỆNH (`commands/ars-*.md`, 16 file), KHÔNG bằng SKILL.md-trong-
+          thư-mục-riêng cho 9 unit registry đã bind (4 SKILL.md thật của plugin này phục vụ
+          năng lực KHÁC, không phải 9 unit đó).
+      (2) Registry đặt tên 9 unit đó `source-command-ars-<tên>` — một quy ước ĐẶT TÊN riêng
+          của registry, không khớp tên file thật `ars-<tên>.md` (không tiền tố).
+    Cả hai lỗi NẰM IM vì trước 02/09, provider này ⚪ "chưa cài" trên MỌI máy đã kiểm — nhánh
+    kiểm SKILL.md/lệnh thật chưa từng chạy tới dữ liệu thật. Cài thật lần đầu là phép thử duy
+    nhất bắt được cả hai.
+
+    Kiểm HÀNH VI (fixture thư mục tạm mô phỏng đúng cấu trúc marketplace/version/commands):
+      ① provider có `commands/*.md` (không SKILL.md) → vẫn ĐƯỢC lập chỉ mục
+      ② unit registry mang tiền tố `source-command-` → khớp được lệnh KHÔNG mang tiền tố
+      ③ khớp THẲNG (không tiền tố) vẫn ưu tiên trước — không đổi hành vi 40 unit còn lại
+      ④ `commands/` nằm SÂU dưới root (root/<provider>/<version>/commands/, đúng cấu trúc
+        cache marketplace thật) — không chỉ ngay-dưới-root — vẫn được tìm thấy
+      ⑤ lệnh KHÔNG có trong registry (không tiền tố, không khớp) vẫn báo thiếu đúng — không
+        biến `_index` thành "mọi lệnh đều pass"
+    """
+    import importlib
+    import tempfile
+
+    if str(REPO / "tools") not in sys.path:
+        sys.path.insert(0, str(REPO / "tools"))
+    wi = importlib.import_module("orchestrator.worker_inventory")
+    po = importlib.import_module("orchestrator.plugin_ownership")
+
+    with tempfile.TemporaryDirectory() as td:
+        # ④ mô phỏng đúng độ sâu thật: <root>/<provider>/<version>/commands/*.md
+        goc = Path(td) / "cache" / "ars"
+        sau = goc / "ars" / "9.9.9"
+        (sau / "commands").mkdir(parents=True)
+        (sau / "commands" / "ars-full.md").write_text("# lệnh thử", encoding="utf-8")
+        (sau / "commands" / "ars-khac.md").write_text("# lệnh không ai bind", encoding="utf-8")
+
+        inv = wi.WorkerInventory(provider_roots={"ars-thu": (goc,)})
+
+        # ① + ④ lập chỉ mục được lệnh nằm sâu, không cần SKILL.md
+        w1 = po.WorkerSpec(provider="ars-thu", unit="ars-full", mode="worker")
+        kq1 = inv.locate(w1)
+        if not kq1.available:
+            return False, "lệnh trong commands/ (không SKILL.md, nằm sâu 2 cấp) không được lập chỉ mục"
+
+        # ② tiền tố source-command- phải khớp được lệnh không tiền tố
+        w2 = po.WorkerSpec(provider="ars-thu", unit="source-command-ars-full", mode="worker")
+        kq2 = inv.locate(w2)
+        if not kq2.available:
+            return False, "unit mang tiền tố source-command- không khớp được lệnh thật (bỏ tiền tố)"
+        if "tiền tố" not in kq2.reason:
+            return False, "khớp qua bỏ tiền tố nhưng không NÓI RÕ — người đọc tưởng khớp thẳng"
+
+        # ③ khớp thẳng (không tiền tố) không được thoái hoá — thêm một unit khớp thẳng, đảm
+        # bảo hai đường (thẳng và bỏ-tiền-tố) cùng sống, không cái này đè cái kia
+        w3 = po.WorkerSpec(provider="ars-thu", unit="ars-khac", mode="worker")
+        if not inv.locate(w3).available:
+            return False, "unit khớp THẲNG (không tiền tố) bị hỏng sau khi thêm đường bỏ-tiền-tố"
+
+        # ⑤ lệnh lạ, không đăng ký, không tiền tố khớp được → phải báo thiếu, không tự nhận bừa
+        w5 = po.WorkerSpec(provider="ars-thu", unit="source-command-ars-khong-ton-tai", mode="worker")
+        kq5 = inv.locate(w5)
+        if kq5.available:
+            return False, "lệnh không tồn tại vẫn được báo khả dụng — _index nhận bừa"
+
+    # Đối chiếu với đo THẬT trên chính plugin đã cài (không chỉ fixture) — 9/9 unit ARS registry
+    # bind phải khả dụng sau bản vá, đúng số đo đã ghi trong CLAUDE.md.
+    cache = Path.home() / ".claude/plugins/cache/academic-research-skills"
+    if cache.is_dir():
+        reg = po.PluginOwnershipRegistry.load()
+        that = wi.WorkerInventory()
+        thieu_ars = [w.worker for w in that.audit(reg)
+                    if w.worker.startswith("academic-research-skills") and not w.available]
+        if thieu_ars:
+            return False, f"đã cài academic-research-skills thật mà vẫn thiếu binding: {thieu_ars}"
+
+    return True, ("commands/*.md được lập chỉ mục ở đúng độ sâu; tiền tố source-command- khớp "
+                  "được lệnh thật mà vẫn nói rõ nguồn; khớp thẳng và lệnh lạ không bị hỏng theo")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -4320,6 +4404,7 @@ BAI_HOC = [
     ("BH85", "01/09", "Cổng plugin không được đòi kho plugin của MÁY KHÁC (chưa cài ⇒ ⚪, thiếu skill ⇒ FAIL)", bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac),
     ("BH87", "02/09", "Cloud cài plugin theo sổ khai qua CLI, từ chối ngoài cloud, idempotent, medsci trùng vẫn tắt", bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that),
     ("BH88", "02/09", "Cửa vào nhạc trưởng mở cho lời bác sĩ thật; inventory tra CẢ HAI kho plugin", bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that),
+    ("BH89", "02/09", "WorkerInventory đọc CẢ lệnh (commands/) lẫn skill; hiểu tiền tố đặt tên riêng của registry", bh89_worker_inventory_doc_ca_lenh_lan_skill),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
