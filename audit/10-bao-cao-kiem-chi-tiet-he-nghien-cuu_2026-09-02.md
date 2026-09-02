@@ -300,6 +300,44 @@ mục: 2 khóa khác nhau + mã riêng biệt · scaffold thật sinh 2 tên `.d
 đếm-mã-không-trùng đã có từ vòng 11). Nhóm test đụng `gen_research_docx.py`/
 `scaffold_research_project.py` (11 file, 109 test) xanh; `ruff check` sạch.
 
+## 2-octies. VÒNG RÀ 7 — module docstring hứa một file "Makefile.md" chưa từng được sinh
+
+Khởi động qua lệnh `/harness-loop` của bác sĩ ("Tiếp tục hoàn thiện hệ thống nghiên cứu
+y khoa"). Kiểm bước đầu tiên của chính skill đó trước khi làm gì khác: `Plans.md` repo
+y khoa có `cc:wip`/`cc:todo` nào không? Grep xác nhận **0** — cả Sprint 9 lẫn Sprint 10
+đều đã `cc:done` (task cuối 10.3: "67/67 PASS · 0 FAIL"). Đúng theo đặc tả CỦA CHÍNH
+skill này ("không còn task chưa xong → dừng loop, hoàn thành bình thường"), không có gì
+để giao cho worker agent/sprint-contract/cherry-pick tự động — tiếp tục bằng đúng
+phương pháp thủ công đã dùng cho vòng 1–6 (doctrine `CLAUDE.md` cũng nói rõ:
+`claude-code-harness` chỉ là WORKER cho việc lập trình, không phải chủ của quy trình
+hoàn thiện repo này).
+
+Rà tiếp phần liền kề với sửa của vòng 6 (`scaffold_research_project.py`): docstring đầu
+module, mục "Đầu ra:", hứa sinh `+ Makefile.md (gợi ý lệnh cho từng cổng G)`. Grep toàn
+`tools/` cho `Makefile`: **đúng 1 lần khớp — chính dòng docstring đó**, không code nào
+tạo file này. Xác minh bằng `scaffold()` thật (không chỉ đọc mã): scaffold một đề tài
+test, liệt kê thư mục — không có `Makefile.md`. Đối chiếu nội dung đã hứa ("gợi ý lệnh
+cho từng cổng G") với thực tế: `STUDY_INDEX.md` sinh ra đã có sẵn mục
+"## Lệnh xuất .docx từng cổng" mang đúng nội dung đó — tính năng không mất, chỉ đổi chỗ
+chứa mà docstring quên cập nhật.
+
+Điều tra 2 nghi vấn liên quan, cả hai đều SẠCH (không phải bug):
+- Tiêu đề "20-file chuẩn" (cả trong docstring lẫn `STUDY_INDEX.md`) trong khi
+  `SCAFFOLD_FILES` thật có **21** hàng (00→20) — nhưng `_CROSSWALK-NGHIEN-CUU.md` xác
+  nhận "20 file" là TÊN GỐC của đặc tả "Medical Research OS" do chủ nhiệm soạn, lặp lại
+  nhất quán ở ≥3 nơi doctrine — quy ước có chủ ý, không sửa.
+- Mục "## Lệnh xuất .docx từng cổng" chỉ liệt kê VÍ DỤ minh họa (không phải danh sách
+  đủ 39 khóa) nên khóa `integrity-audit` mới thêm ở vòng 6 không xuất hiện ở đó — đúng
+  như nhiều khóa cũ khác (`dmp`, `checklist`, `pico`…) cũng vắng mặt, không phải hồi quy.
+  `--all` (đường xuất-hết) tự động lặp `for key in ARTIFACT_MAP` nên đã bao khóa mới mà
+  không cần sửa gì thêm — xác nhận vòng 6 tích hợp sạch vào đường CLI này.
+
+Vá: sửa lại mục "Đầu ra:" — bỏ dòng `Makefile.md` sai, thêm chú thích trỏ đúng vào mục
+STUDY_INDEX.md đã có, và thêm dòng `study_meta.json` (file thật có sinh ra nhưng trước
+đó cũng vắng mặt khỏi danh sách). Thuần docstring, `[tdd:skip:docs-only]` — không hàm
+nào đọc chuỗi này để quyết định hành vi (grep xác nhận 0 test tham chiếu). `ruff check`
+sạch; nhóm test liên quan (26 test) vẫn xanh không đổi.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
