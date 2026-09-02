@@ -74,8 +74,99 @@ G5/G6/G10 tự tra sổ cái thượng nguồn · `ARTIFACT_MAP` 38 khoá · can
 | — | G5→G9 chưa tới lượt (chờ ký G4 → G5); G10 đang BLOCKED = **từ chối fail-closed đúng** | tự chạy khi thượng nguồn ký |
 | (tự động, chỉ nhắc) | độ tươi theo **mtime**: G1/G2/G3 «cũ hơn G0», G4 «cũ hơn G3» — do chấm lại G0 và G1 ngày 01–02/09 làm mtime đổi; trục ② chấm SỐNG vẫn PASS mọi tiêu chí tự động (G4-AUTO-03 SAP↔G3 khớp) | không cần chạy lại; `run_pipeline.py --from` khi muốn đồng bộ mtime |
 
+## 2-bis. VÒNG RÀ THỨ HAI — công cụ tự bắt được điểm mù của CHÍNH NÓ
+
+Ngay sau khi đóng 3 mục đỏ, rà lại công cụ trên cùng đề tài lộ ra một khoảng hở
+thuộc **đúng họ lỗi mà nó sinh ra để bắt**: trục ④ chỉ soi bản `.docx` **có `.md`
+đi kèm**. Nhưng `gen_research_docx.py` dựng thẳng từ checkpoint, không qua `.md` —
+nên **4 bản trong thư mục đề tài C1a chưa từng bị kiểm một lần nào**:
+
+| Bản .docx (không có .md nguồn) | Đo được trước khi vá |
+|---|---|
+| `G6a_ANALYSIS` | thân bài **11pt** (chuẩn 13) · 1 ký tự trang trí `⚠` |
+| `G6b_INTERPRETATION` | thân bài **11pt** · 1 ký tự trang trí |
+| `G6d_CLINICAL-GUIDELINE` | thân bài **11pt** · 1 ký tự trang trí |
+| `G9_READINESS` | đạt chuẩn (13/11, 0 ký tự lạ) |
+
+**Cách vá (bền, không phải vá một ca):** `docx_theo_cong()` gom **MỌI** `.docx` trong
+thư mục đề tài theo tiền tố tên file (`G6a…` → G6; tài liệu gói nộp không mang tiền
+tố cổng → G10); `danh_gia_docx()` nhận `md=None` cho bản mồ côi — vẫn kiểm đủ chuẩn
+trình bày, chỉ khác ở **cách sửa được chỉ ra**: bản mồ côi phải chạy lại bộ sinh của
+cổng, không dùng được `xuat_docx_chuan --file` (công cụ đó cần `.md`). Bổ sung luôn
+chiều ngược: có `.md` mà chưa render `.docx` ⇒ 🔴.
+
+**Trung thực về nguồn gốc 3 file:** chúng là **dư của chính các lần chạy thử generator
+của tôi** ngày 01/09 (nội dung chỉ có ô `[CẦN CHỦ NHIỆM XÁC NHẬN]`, cổng G6 chưa hề
+chạy trên C1a), và vì `exports/` nằm ngoài git nên chúng **chỉ tồn tại trong container
+phiên này**, không có trên máy bác sĩ. Đã sinh lại cả ba bằng bộ sinh hiện hành →
+13pt, 0 ký tự trang trí. **Giá trị bền của vòng này là BẢN VÁ CÔNG CỤ**, thứ sẽ bắt
+đúng lớp lỗi đó trên máy thật khi G6/G9 chạy thật.
+
+Đo sau vòng 2: **🟢 38 → 42 · 🟡 39 · 🔴 0**. Test thêm 4 mục
+(gom theo tiền tố · mồ côi sai chuẩn bị bắt · mồ côi đạt chuẩn thì xanh · báo cáo chỉ
+đúng cách sửa), **3 phép đột biến đều đỏ đúng chỗ**: quay về chỉ soi bản có `.md` ⇒ đỏ;
+gom mọi `.docx` về G10 ⇒ đỏ 2; miễn kiểm cỡ chữ cho bản mồ côi ⇒ đỏ.
+
+> **Bài học ghi lại:** một bộ kiểm lấy đầu vào từ *danh sách A* rồi kết luận về *tập B*
+> luôn có điểm mù bằng đúng phần B ngoài A. Ở đây A = artifact `.md` khai trong hợp
+> đồng cổng, B = mọi thứ bác sĩ có thể mở và in.
+
+## 2-ter. VÒNG 2b — hai báo động giả nữa, cùng một họ
+
+**(a) Bảng điểm có thẩm quyền cho thứ không có cổng nào.** Chạy công cụ trên hai thư
+mục còn lại của `exports/` — `chatgpt_project` (scaffold dự án) và `phase_2b` (báo cáo
+smoke test) — nó **không chết**, nhưng in bảng điểm đầy đủ 11 cổng, 38 🟡, kèm một 🔴
+«G0 chưa chạy — máy làm được» và khuyên chạy `run_g0_auto` **trên chúng**. Đó đúng là
+thứ bác sĩ gặp ở lần gõ nhầm mã đề tài đầu tiên. Nay `la_de_tai_nghien_cuu()` gọi thẳng
+`list_studies.scan_study()` — **không viết luật nhận diện thứ hai** — và từ chối với mã
+3 kèm hai đường ra rõ ràng, không in bảng điểm. Fixture cũ dùng thư mục rỗng được sửa
+cho **hợp lệ** (đề tài đã ghim chủ đề, chưa chạy cổng), assertion gốc giữ nguyên từng chữ.
+
+**(b) Chốt bài học BH52 vừa nói sai nguyên nhân, vừa có dấu ✓ cho mục chưa hề kiểm.**
+Sau khi hợp nhất master của bác sĩ, bộ chốt đỏ ở BH52 (G0 kiểm rút bài tại cửa nhận).
+Truy nguyên thì chính chốt đó mắc đúng họ lỗi nó sinh ra để chống:
+
+| Vấn đề | Trước | Sau |
+|---|---|---|
+| Nền Retraction Watch ngoại tuyến chưa tải (63 MB, gitignore) | ghi «R1C chạy nhưng KHÔNG bắt bài đã rút» — **đổ lỗi cho guardrail, đẩy người đọc đi sửa nhầm file**; vế «nền RW ngoại tuyến có» là khẳng định chưa từng được đo | «CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không» + đúng lệnh `tai_retraction_watch.py` |
+| Thiếu venv | `return True` ⇒ in dấu **✓ trần** (ghi chú không hiện ở dòng ✓) — mục chưa hề kiểm trông y hệt mục đã đạt | fail-closed kèm lệnh khắc phục |
+| Bản sao git trần | ✗ (bức tường đỏ giả) | ⚪ có khai báo — đo bằng `git ls-files`: **0 file** thuộc `medical-ebm-automation/` được repo gốc track |
+
+Kiểm ba chiều bằng phép đo thật: bản trần ⇒ ⚪, tổng đỏ 0 · nối tạm repo y khoa, thiếu
+nền ⇒ ✗ với thông điệp mới · ép `Path.home()` sang đường dẫn không tồn tại ⇒ ✗ thay vì ✓.
+
+⚠️ **Hệ quả cần bác sĩ làm trên máy thật:** chạy
+`python3 medical-ebm-automation/tools/tai_retraction_watch.py`. Cho tới lúc đó **chưa
+máy nào trong phiên này kết luận được R1C của G0 còn sống hay không** — và đó là chốt
+canh việc G0 tự bắt bài đã rút ngay tại cửa nhận y văn.
+
+## 2-quater. VÒNG 3 — soi 39 mục 🟡 xem có việc nào máy làm được mà bị xếp nhầm sang bác sĩ
+
+Bảng điểm gộp mọi nhãn `[CẦN` vào một dòng «thẩm quyền chủ nhiệm». Phân loại 250 nhãn
+đó theo cụm thì lộ một khoảng hở **tự động hoá dở dang**:
+
+Sổ chứng cứ `G1_A2b_EVIDENCE_LEDGER` để **12 dòng `[CẦN TRÍCH XUẤT METADATA]`** — việc
+TAY của chủ nhiệm — trong khi **đủ tiêu đề, tạp chí, năm của đúng 12 PMID đó đã nằm
+sẵn trong `G0_pubmed_raw.json` cùng thư mục**, do chính G0 tra về trong cùng dây
+chuyền (đo: 12/12 phủ). Nặng hơn: trong **cùng một lượt sinh**, PMID nào có effect
+size thì tiêu đề được điền, số còn lại thì không — năng lực đã có, chỉ thiếu một đoạn
+dây. Đây là kiểu dở dang đắt nhất vì nó đẩy sang người thật đúng việc máy vừa làm ở
+dòng trên, và người đọc không có cách nào biết.
+
+Đã nối, với ranh giới không nới: **không gọi mạng** (đọc file đã có nên ngoại tuyến,
+tất định, CI an toàn) · **không bịa** (không có bản ghi ⇒ giữ nguyên nhãn) · **chỉ cột
+metadata** — trích xuất dữ liệu, thẩm định RoB và xác nhận nội dung vẫn là việc người
+thật · dòng khai nguồn ghi **đúng số dòng** đã điền, không điền được thì không khai.
+
+Đo trên C1a: nhãn metadata **12 → 0**; bảng điểm **🟡 39 → 38 · 🔴 0**. Lượt chạy lại
+G1 không mất nội dung nào (diff chỉ là dấu thời gian và seed theo ngày). Test 6 mục,
+**4 phép đột biến đều đỏ đúng chỗ**. Ghi lại một bài học nhỏ của chính đợt test: bản
+đầu dùng khoá checkpoint tự nghĩ (`pmids_verified`) nên **test xanh giả** — phải lấy
+đúng hình dạng thật của C1a (`pubmed_results.all_pmids`) mới đo được thứ cần đo.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
+- Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
 - Công cụ chứng minh **«cổng bắt được lỗi nếu gói đi qua cổng»** và **«tài liệu hiện có đúng
   chuẩn hình thức»**. Nó KHÔNG chứng minh nội dung khoa học đúng (đó là G8) và KHÔNG chứng minh
   agent đã gọi cổng trong phiên thật — vì thế mới nối vào doctrine `dieu-phoi-nghien-cuu`.

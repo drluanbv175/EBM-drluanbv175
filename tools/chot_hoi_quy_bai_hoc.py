@@ -2695,6 +2695,21 @@ def bh52_g0_kiem_rut_bai_tai_cua():
     guardrail_check_g0 với PMID Wakefield 9500320 (retracted, nền Retraction
     Watch NGOẠI TUYẾN có phán quyết ⇒ chốt chạy được không cần mạng): errors
     phải mang R1C + đúng PMID. Tháo R1C là đỏ ngay.
+
+    SỬA 02/09/2026 (đo lại trên container không có nền RW) — chốt này từng NÓI
+    SAI NGUYÊN NHÂN, đúng họ BH08 và ngay trong bộ chốt sinh ra để chống họ đó:
+      • Thiếu nền `data/retraction_watch/retraction_watch.csv` (63 MB, gitignore,
+        tải bằng `tools/tai_retraction_watch.py`) thì R1C không có bằng chứng để
+        bắt — nhưng thông điệp cũ ghi «R1C chạy nhưng KHÔNG bắt bài đã rút», tức
+        đổ lỗi cho guardrail và đẩy người đọc đi sửa NHẦM FILE. Nay phân định:
+        thiếu nền ⇒ nói rõ CHƯA KẾT LUẬN ĐƯỢC + đúng lệnh tải; có nền mà vẫn
+        trượt ⇒ mới là R1C hỏng thật.
+      • Thiếu venv thì bản cũ `return True` — in ra dấu ✓ TRẦN (ghi chú không
+        hiện ở dòng ✓), tức một mục CHƯA HỀ ĐƯỢC KIỂM trông y hệt mục đã đạt
+        («yên tâm giả» BH32). Nay fail-closed kèm lệnh khắc phục, đúng doctrine
+        BH82 «trên máy thật, một file thiếu là ✗».
+    Cả hai vẫn ⚪ trên bản sao git trần vì BH52 đã khai trong
+    _CAN_NGUYEN_LIEU_NGOAI_REPO — đối tượng nó soi nằm ở repo y khoa.
     """
     # run_g0_auto import defusedxml ở mức module — python3 hệ thống không có
     # (đúng lớp BH34/BH05: hook chạy python3). Chốt vì thế chạy qua VENV tường
@@ -2704,7 +2719,8 @@ def bh52_g0_kiem_rut_bai_tai_cua():
     venv = Path.home() / ".ebm-venv" / ("Scripts/python.exe" if _sys.platform == "win32"
                                         else "bin/python")
     if not venv.exists():
-        return True, "venv ~/.ebm-venv vắng mặt trên máy này — chốt bỏ qua CÓ KHAI BÁO"
+        return False, (f"CHƯA KIỂM ĐƯỢC R1C: venv {venv} vắng mặt (run_g0_auto cần defusedxml). "
+                       "Dựng venv theo CLAUDE.md rồi chốt lại — không được coi là đạt.")
     ma = ("import importlib.util,sys,json;"
           "sp=importlib.util.spec_from_file_location('g0','tools/run_g0_auto.py');"
           "m=importlib.util.module_from_spec(sp);sys.modules['g0']=m;"
@@ -2719,7 +2735,13 @@ def bh52_g0_kiem_rut_bai_tai_cua():
     if "R1C" not in goi:
         return False, "R1C biến mất — G0 lại tin PMID còn hiệu lực mà không kiểm"
     if "9500320" not in goi:
-        return False, "R1C chạy nhưng KHÔNG bắt bài đã rút 9500320 (nền RW ngoại tuyến có)"
+        nen_rw = REPO / "medical-ebm-automation" / "data" / "retraction_watch" / "retraction_watch.csv"
+        if not nen_rw.exists():
+            return False, ("CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không: nền Retraction Watch NGOẠI "
+                           "TUYẾN chưa tải (data/retraction_watch/retraction_watch.csv — gitignore). "
+                           "Chạy `python3 medical-ebm-automation/tools/tai_retraction_watch.py` "
+                           "rồi chốt lại. KHÔNG phải bằng chứng R1C hỏng.")
+        return False, "R1C chạy nhưng KHÔNG bắt bài đã rút 9500320 (nền RW ngoại tuyến ĐÃ CÓ)"
     return True, "G0 tự bắt bài đã rút tại cửa nhận (R1C sống, chạy được ngoại tuyến)"
 
 
@@ -3606,6 +3628,14 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
     "BH21", "BH25", "BH26", "BH27", "BH30", "BH31", "BH34", "BH35", "BH36",
     "BH37", "BH38", "BH39", "BH43", "BH47", "BH48", "BH49", "BH50", "BH53",
     "BH56", "BH58", "BH59", "BH60", "BH61", "BH62", "BH67", "BH72", "BH76",
+    # +BH52 (02/09/2026, đo lại trên bản trần): chốt chạy guardrail_check_g0 với
+    # cwd=medical-ebm-automation/ — `git ls-files` của repo GỐC trả 0 file thuộc
+    # đường dẫn đó, tức đối tượng nằm ở repo KHÁC. Trên bản trần nó ném
+    # FileNotFoundError trước cả nhánh «bỏ qua CÓ KHAI BÁO» của venv, nên bị đếm
+    # ✗ — đúng «bức tường đỏ giả» BH08/BH82 sinh ra để chặn. Trên máy có đủ cây
+    # dữ liệu, ban_sao_git_tran() = False nên danh sách này KHÔNG được tra: chốt
+    # vẫn fail-closed y như cũ.
+    "BH52",
 })
 
 
