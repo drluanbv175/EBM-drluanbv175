@@ -24,7 +24,11 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   G0–G10; `dieu-phoi-lam-sang` sở hữu ca ngoại trú. ARS/Anthropic/BMAD/Bio chỉ là worker đúng
   allowlist/stage, không tự hợp nhất kết quả, không đổi trục cổng và không mở Cổng A/B/G. Yêu cầu
   đích danh plugin chỉ ưu tiên worker, không chuyển quyền owner. Kiểm fail-closed bằng
-  `python3 tools/verify_plugin_orchestration.py`.
+  `python3 tools/verify_plugin_orchestration.py`. **Cổng này tra kho plugin của MÁY ĐANG CHẠY**
+  (`~/.codex/plugins/cache`), nên từ 01/09/2026 (BH85) nó tách hai loại: plugin **chưa cài trên máy
+  này** ⇒ ⚪ có khai báo (ý định «cần ở máy nào» nằm ở `sync/plugin-manifest.json`, lane ⑤ đối chiếu);
+  provider **có mà thiếu đúng skill đã khai** ⇒ FAIL. Trước đó gộp làm một nên pre-commit đỏ ở mọi
+  máy không phải Mac (cloud đo 10 binding «không tìm thấy» chỉ vì thiếu thư mục cache).
 
 ### Định tuyến khi NHIỀU công cụ cùng nhận một việc — LUẬT BẮT BUỘC (rà 2026-08-10)
 
@@ -185,7 +189,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   trong top-8 mô tả dài nhất). Tám chốt SessionStart bác sĩ đã xuất **chưa từng chạy một lần trên cloud**
   vì repo không track `.claude/settings.json`.
   **Nay:** `.claude/hooks/session-start.sh` khai trong `.claude/settings.json` **đi qua git**, làm 5 việc
-  khi mở phiên cloud (đo ~1,5 giây): nối `sync/skills/*` vào `~/.claude/skills` · khôi phục khoá ngân sách
+  khi mở phiên cloud (đo ~1,5 giây): chạy đúng **làn ③** `dong_bo_skill_claude_codex.py --ap-dung --im-khi-on`
+  (nối `sync/skills/*` vào CẢ `~/.claude/skills` lẫn `~/.codex/skills`, đóng gói ZIP router; máy không có
+  Codex thì giữ catalog đã commit — bản đầu của hook tự viết vòng `ln -s` chỉ nối một runtime nên cổng plugin
+  vẫn FAIL «router runtime không tồn tại») · khôi phục khoá ngân sách
   bằng `kiem_cau_hinh_nguoi_dung.py --ap-dung --tao-neu-thieu` **từ CÙNG bản khai `sync/cau-hinh-nguoi-dung.json`
   hai máy đang dùng** (không viết cứng số nào, nên cloud không thể trôi khỏi local) · cài đúng 3 thư viện
   đo được là thiếu (python-docx · beautifulsoup4 · lxml) · **sinh lại mirror Codex** `.codex/.Codex/agents`

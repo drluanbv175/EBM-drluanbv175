@@ -3674,8 +3674,9 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
       ① hai file đi qua git · settings.local.json vẫn bị ignore · script có bit thực thi
         trong index · settings.json thật sự GỌI script (BH41: không ai gọi = không tồn tại)
       ② KHÔNG remote ⇒ thoát 0 và HOME tạm không có gì mới
-      ③ remote + fixture ⇒ skill được nối vào $HOME/.claude/skills và settings.json nhận
-        đúng khoá ĐÃ KHAI (so với bản khai, không so với số viết cứng)
+      ③ remote + fixture ⇒ skill được nối vào CẢ $HOME/.claude/skills lẫn $HOME/.codex/skills
+        bằng đúng làn ③ (dong_bo_skill_claude_codex.py), và settings.json nhận đúng khoá
+        ĐÃ KHAI (so với bản khai, không so với số viết cứng)
       ④ chốt bài học chỉ chạy trên bản trần: còn một gốc dữ liệu ⇒ KHÔNG gọi; vắng ⇒ gọi;
         mirror Codex (gitignore, sinh từ .claude/agents) PHẢI được sinh lại — clone tươi
         không có nó thì alignment FAIL và BH83 đỏ ở mọi phiên cloud
@@ -3716,9 +3717,10 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
     env_goc = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_REMOTE"}
 
-    # ② không remote ⇒ không làm gì
+    # ② không remote ⇒ không làm gì. Đặt CẢ HOME lẫn USERPROFILE: Path.home() trên
+    # Windows đọc USERPROFILE — chỉ đổi HOME là chốt ghi thẳng vào hồ sơ thật của bác sĩ.
     with tempfile.TemporaryDirectory() as home:
-        env = dict(env_goc, HOME=home, CLAUDE_PROJECT_DIR=str(REPO))
+        env = dict(env_goc, HOME=home, USERPROFILE=home, CLAUDE_PROJECT_DIR=str(REPO))
         r = subprocess.run(["bash", str(hook)], cwd=REPO, env=env,
                            capture_output=True, text=True, timeout=60)
         if r.returncode != 0:
@@ -3738,6 +3740,10 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
         shutil.copy2(REPO / "tools/kiem_cau_hinh_nguoi_dung.py", P / "tools/kiem_cau_hinh_nguoi_dung.py")
         shutil.copy2(REPO / "tools/ban_sao_tran.py", P / "tools/ban_sao_tran.py")
+        # Làn ③ thật (không stub): hook phải nối được cả hai runtime bằng đúng công cụ
+        # bác sĩ dùng trên máy — ba file này thuần stdlib, chạy trong fixture ~0,3 s.
+        for ten in ("dong_bo_skill_claude_codex.py", "dong_bo_skill.py", "lien_ket_da_nen.py"):
+            shutil.copy2(REPO / "tools" / ten, P / "tools" / ten)
         # Stub chốt bài học: chỉ để lại DẤU đã bị gọi. KHÔNG chép chốt thật — chốt thật
         # gọi BH84, BH84 chạy hook, hook gọi chốt thật… đệ quy.
         dau = Path(td) / "da-goi-chot"
@@ -3752,8 +3758,8 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         # sẽ gọi pip3 — ở đây nó gặp shim này và đi tiếp, không cài gì.
         (shim / "pip3").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
         (shim / "pip3").chmod(0o755)
-        env = dict(env_goc, HOME=str(home), CLAUDE_PROJECT_DIR=str(P), CLAUDE_CODE_REMOTE="true",
-                   PATH=f"{shim}{os.pathsep}{env_goc.get('PATH', '')}")
+        env = dict(env_goc, HOME=str(home), USERPROFILE=str(home), CLAUDE_PROJECT_DIR=str(P),
+                   CLAUDE_CODE_REMOTE="true", PATH=f"{shim}{os.pathsep}{env_goc.get('PATH', '')}")
 
         # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
         (P / "medical-ebm-automation").mkdir()
@@ -3769,9 +3775,10 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
             return False, "hook không sinh lại mirror Codex — clone tươi sẽ FAIL agent_sync_health, BH83 đỏ mọi phiên cloud"
 
         # ③ nối skill + khôi phục khoá đã khai
-        lk = home / ".claude/skills/skill-thu"
-        if not lk.is_symlink() or not (lk / "SKILL.md").is_file():
-            return False, "remote mà skill riêng KHÔNG được nối vào ~/.claude/skills"
+        for rt in (".claude/skills", ".codex/skills"):
+            lk = home / rt / "skill-thu"
+            if not (lk / "SKILL.md").is_file():
+                return False, f"remote mà skill riêng KHÔNG được nối vào ~/{rt} — cổng plugin sẽ FAIL router runtime"
         st = home / ".claude/settings.json"
         if not st.is_file():
             return False, ("remote mà ~/.claude/settings.json không được tạo — ngân sách skill "
@@ -3796,6 +3803,55 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
                        "một diff git, và 8 chốt máy này sẽ ép sang máy kia")
     return True, ("hook cloud đi qua git, nối skill + khôi phục ngân sách trên fixture, "
                   "không đụng máy thật, chốt chỉ chạy trên bản trần")
+
+
+def bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac():
+    """01/09 — commit 611f5ed/397897f thêm kiểm «worker binding có SKILL.md thật» vào
+    verify_plugin_orchestration, tra trong ~/.codex/plugins/cache của MÁY ĐANG CHẠY. Trên
+    Mac (nơi commit) nó xanh; trên cloud đo được 10 binding FAIL chỉ vì thư mục cache
+    không tồn tại — và Windows cũng vậy với meta-pipe/pubmed-search, thứ mà chính sổ
+    khai sync/plugin-manifest.json ghi `can_o_may: ["Mac"]`. Hệ quả: pre-commit KHÔNG
+    THỂ xanh ở 2/3 môi trường, dù registry không có gì hỏng — đúng «thiếu nguyên liệu»
+    bị báo như «có vấn đề» (BH08), lần này ở cổng mới nhất.
+
+    Sửa: WorkerInventory tách LY_DO_CHUA_CAI (không có thư mục provider nào) khỏi
+    LY_DO_THIEU_SKILL (provider có mà thiếu đúng skill); cổng ghi ⚪ cho loại đầu, giữ
+    FAIL cho loại sau. Ý định «plugin nào cần ở máy nào» KHÔNG đoán lại ở đây — đó là
+    việc của lane ⑤ (dong_bo_plugin_claude_codex.py) đối chiếu với sổ khai.
+
+    Kiểm HÀNH VI (thư mục tạm, không đọc kho plugin của máy):
+      • provider vắng hoàn toàn ⇒ reason == LY_DO_CHUA_CAI ⇒ cổng phân loại 'chua_cai'
+      • provider có mà thiếu skill ⇒ LY_DO_THIEU_SKILL ⇒ 'loi' (răng giữ nguyên)
+      • provider không khai quy tắc ⇒ 'loi' (lỗi registry, không được ⚪ hoá)
+    """
+    import tempfile
+    sys.path.insert(0, str(REPO / "tools"))
+    try:
+        from orchestrator import worker_inventory as wi
+        from orchestrator.plugin_ownership import WorkerSpec
+    finally:
+        sys.path.pop(0)
+    vpo = _nap(REPO / "tools/verify_plugin_orchestration.py", "vpo_bh85")
+    with tempfile.TemporaryDirectory() as td:
+        co = Path(td) / "co"
+        (co / "s1").mkdir(parents=True)
+        (co / "s1/SKILL.md").write_text("---\nname: s1\n---\n", encoding="utf-8")
+        inv = wi.WorkerInventory(provider_roots={"co": (co,), "vang": (Path(td) / "khong",)})
+        chua = inv.locate(WorkerSpec(provider="vang", unit="x", mode="worker"))
+        if chua.available or chua.reason != wi.LY_DO_CHUA_CAI:
+            return False, "provider vắng trên máy này không được nhận là «chưa cài» — cổng lại đỏ ở Windows/cloud"
+        if vpo.phan_loai_binding(chua) != "chua_cai":
+            return False, "«chưa cài» bị cổng xếp thành lỗi — thiếu nguyên liệu lại thành FAIL (BH08)"
+        thieu = inv.locate(WorkerSpec(provider="co", unit="s2", mode="worker"))
+        if thieu.available or vpo.phan_loai_binding(thieu) != "loi":
+            return False, "provider CÓ mà thiếu skill không còn là lỗi — binding treo lọt cổng (mất răng)"
+        la = inv.locate(WorkerSpec(provider="khong-khai", unit="x", mode="worker"))
+        if vpo.phan_loai_binding(la) != "loi":
+            return False, "provider không khai quy tắc bị ⚪ hoá — lỗi registry bị nuốt"
+        ok = inv.locate(WorkerSpec(provider="co", unit="s1", mode="worker"))
+        if not ok.available or vpo.phan_loai_binding(ok) != "dat":
+            return False, "skill có thật không được nhận là khả dụng"
+    return True, "chưa cài ⇒ ⚪ có khai báo; provider có mà thiếu skill ⇒ vẫn FAIL; registry lỗi ⇒ vẫn FAIL"
 
 
 BAI_HOC = [
@@ -3891,6 +3947,7 @@ BAI_HOC = [
     ("BH82", "28/08", "Bản sao git trần: «không kiểm được» là ⚪ có khai báo, không phải ✗ giả", bh82_ban_sao_tran_khong_duoc_do_gia),
     ("BH83", "28/08", "Hook pre-commit sống được trên bản trần mà không mất răng trên máy thật", bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang),
     ("BH84", "01/09", "Hook phiên cloud đi qua git, nối skill + khôi phục ngân sách, KHÔNG đụng máy thật", bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that),
+    ("BH85", "01/09", "Cổng plugin không được đòi kho plugin của MÁY KHÁC (chưa cài ⇒ ⚪, thiếu skill ⇒ FAIL)", bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac),
 
 ]
 

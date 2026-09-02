@@ -25,7 +25,11 @@ from orchestrator.flows import RESEARCH_FLOW  # noqa: E402
 from orchestrator.plugin_ownership import PluginOwnershipRegistry  # noqa: E402
 from orchestrator.registry import Registry  # noqa: E402
 from orchestrator.tools_registry import ToolRegistry  # noqa: E402
-from orchestrator.worker_inventory import WorkerInventory  # noqa: E402
+from orchestrator.worker_inventory import (  # noqa: E402
+    LY_DO_CHUA_CAI,
+    WorkerAvailability,
+    WorkerInventory,
+)
 
 CONTRACT_MARKER = "_PLUGIN-ROUTING-CONTRACT.md"
 REGISTRY_MARKER = "plugin_ownership_registry.json"
@@ -64,6 +68,20 @@ def loi_ngoai_pham_vi_tran(error: str) -> bool:
     """Lỗi CHỈ vì nguyên liệu nằm trong repo y khoa (đường dẫn/binding trỏ sang đó)."""
     return ("medical-ebm-automation" in error
             or error.startswith("thieu production tool binding"))
+
+
+def phan_loai_binding(item: WorkerAvailability) -> str:
+    """'dat' | 'chua_cai' | 'loi' — tách «thiếu nguyên liệu» khỏi «binding treo» (BH08/BH85).
+
+    Plugin không cài trên máy NÀY là chuyện sổ khai sync/plugin-manifest.json (can_o_may)
+    đã dự liệu và lane ⑤ của dong_bo_tat_ca đối chiếu; cổng này KHÔNG đoán lại ý định
+    máy, chỉ ghi ⚪ có khai báo. Provider có mặt mà thiếu đúng skill đã khai mới là lỗi.
+    """
+    if item.available:
+        return "dat"
+    if item.reason == LY_DO_CHUA_CAI:
+        return "chua_cai"
+    return "loi"
 
 
 def verify() -> dict[str, Any]:
@@ -155,11 +173,21 @@ def verify() -> dict[str, Any]:
     # Worker binding phải trỏ tới skill CÓ THẬT. Registry chỉ nói quyền; nếu không
     # kiểm runtime, một binding treo vẫn PASS và owner có thể tưởng plugin đã chạy.
     inventory = WorkerInventory()
-    missing_workers = [item for item in inventory.audit(plugins) if not item.available]
+    chua_cai: list[str] = []
+    missing_workers: list[WorkerAvailability] = []
+    for item in inventory.audit(plugins):
+        loai = phan_loai_binding(item)
+        if loai == "chua_cai":
+            chua_cai.append(f"worker binding chua kiem duoc: {item.worker} — {item.reason}")
+        elif loai == "loi":
+            missing_workers.append(item)
     for item in missing_workers:
         errors.append(f"worker binding khong kha dung: {item.worker} — {item.reason}")
-    if not missing_workers:
+    if not missing_workers and not chua_cai:
         checks.append("mọi worker binding có SKILL.md thật trong đúng provider")
+    elif not missing_workers:
+        checks.append(f"worker binding: {len(chua_cai)} thuộc plugin chưa cài trên máy này (⚪), "
+                      "còn lại có SKILL.md thật")
 
     # Router là cửa vào tự động cho ChatGPT/Codex. Kiểm nguồn canonical, liên kết hai
     # runtime và gói phân phối; symlink gãy không được phép bị báo như đã đồng bộ.
@@ -231,6 +259,7 @@ def verify() -> dict[str, Any]:
         "checks": checks,
         "errors": errors,
         "ngoai_pham_vi": ngoai_pham_vi,
+        "chua_cai": chua_cai,
     }
 
 
@@ -252,6 +281,11 @@ def main() -> int:
             print(f"- ⚪ NGOAI-PHAM-VI (ban sao tran) {muc}")
         if report.get("ngoai_pham_vi"):
             print("  ⚪ KHONG phai dat — phan nay chi kiem duoc tren may co du hai repo.")
+        for muc in report.get("chua_cai", []):
+            print(f"- ⚪ CHUA-CAI-TREN-MAY-NAY {muc}")
+        if report.get("chua_cai"):
+            print("  ⚪ KHONG phai dat — plugin cai theo tung may; y dinh o sync/plugin-manifest.json,"
+                  " doi chieu bang tools/dong_bo_plugin_claude_codex.py (lane 5).")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 

@@ -14,6 +14,17 @@ from . import ROOT
 from .plugin_ownership import PluginOwnershipRegistry, WorkerSpec
 
 
+# Hai lý do vắng mặt KHÁC NHAU về bản chất (01/09/2026, BH85). Plugin cài THEO TỪNG MÁY
+# (sổ khai sync/plugin-manifest.json cho phép một plugin chỉ có ở Mac): máy không có thư
+# mục provider là THIẾU NGUYÊN LIỆU — lane ⑤ dong_bo_plugin_claude_codex.py đối chiếu với
+# ý định đã khai. Còn provider CÓ mà thiếu đúng SKILL.md đã khai là BINDING TREO thật.
+# Gộp hai thứ thành một FAIL khiến cổng đỏ ở mọi máy không phải Mac (đo trên cloud:
+# 10 binding «không tìm thấy» chỉ vì ~/.codex/plugins/cache không tồn tại).
+LY_DO_CHUA_CAI = "plugin chưa cài trên máy này"
+LY_DO_THIEU_SKILL = "không tìm thấy SKILL.md trong provider đã khai"
+LY_DO_KHONG_QUY_TAC = "provider chưa có quy tắc kiểm runtime"
+
+
 @dataclass(frozen=True)
 class WorkerAvailability:
     worker: str
@@ -87,8 +98,10 @@ class WorkerInventory:
             return WorkerAvailability(worker.key, True, str(path), "SKILL.md khả dụng")
         roots = self.provider_roots.get(worker.provider, ())
         if not roots:
-            return WorkerAvailability(worker.key, False, reason="provider chưa có quy tắc kiểm runtime")
-        return WorkerAvailability(worker.key, False, reason="không tìm thấy SKILL.md trong provider đã khai")
+            return WorkerAvailability(worker.key, False, reason=LY_DO_KHONG_QUY_TAC)
+        if not any(root.is_dir() for root in roots):
+            return WorkerAvailability(worker.key, False, reason=LY_DO_CHUA_CAI)
+        return WorkerAvailability(worker.key, False, reason=LY_DO_THIEU_SKILL)
 
     def audit(self, registry: PluginOwnershipRegistry) -> list[WorkerAvailability]:
         seen: set[str] = set()

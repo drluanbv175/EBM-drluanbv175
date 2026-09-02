@@ -27,26 +27,23 @@ export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
 echo "── Chuẩn bị phiên cloud cho EBM ──"
 
-# ① Skill riêng của bác sĩ → nơi Claude Code đọc. `sync/skills/` là NGUỒN DUY NHẤT
-#    (doctrine CLAUDE.md); ở đây chỉ NỐI vào, không chép nội dung — chép là tạo bản
-#    thứ hai để lệch nhau.
-if [ -d sync/skills ]; then
-  mkdir -p "$HOME/.claude/skills"
-  n=0
-  for d in sync/skills/*/; do
-    ten="$(basename "$d")"
-    case "$ten" in _*) continue ;; esac
-    [ -f "${d}SKILL.md" ] || continue
-    dich="$HOME/.claude/skills/$ten"
-    [ -e "$dich" ] || [ -L "$dich" ] || { ln -s "$D/${d%/}" "$dich" && n=$((n+1)); }
-  done
+# ① Skill riêng của bác sĩ → hai runtime. Gọi ĐÚNG làn ③ của dong_bo_tat_ca
+#    (`dong_bo_skill_claude_codex.py`) thay vì tự viết vòng `ln -s`: bản đầu của hook
+#    (01/09) chỉ nối `~/.claude/skills`, nên cổng plugin vẫn FAIL «router runtime không
+#    tồn tại: ~/.codex/skills/plugin-router-chatgpt» + thiếu ZIP router. Một cơ chế nối
+#    skill thứ hai là chỗ để hai bản lệch nhau (BH70). Làn này nối cả `~/.claude/skills`
+#    lẫn `~/.codex/skills`, đóng gói ZIP router; Cowork/plugin store vắng thì tự bỏ qua có
+#    lời nhắc; máy không có Codex thì giữ catalog đã commit (02/09).
+if [ -f tools/dong_bo_skill_claude_codex.py ]; then
+  ra=$(python3 tools/dong_bo_skill_claude_codex.py --ap-dung --im-khi-on 2>&1); ma=$?
   co=$(find sync/skills -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d " ")
-  if [ "$n" -gt 0 ]; then
-    echo "   ✓ nối $n/$co skill riêng vào ~/.claude/skills"
+  if [ $ma -eq 0 ]; then
+    echo "   ✓ $co skill riêng nối vào ~/.claude/skills + ~/.codex/skills"
   else
-    # «0» KHÔNG được đọc thành «không có skill nào»: lần chạy sau, tất cả đã nối rồi.
-    echo "   ✓ $co skill riêng đã có sẵn ở ~/.claude/skills (không phải nối thêm)"
+    echo "   ⚠ làn skill thoát $ma:"; echo "$ra" | tail -3 | sed 's/^/      /'
   fi
+else
+  echo "   ⚠ KHÔNG CHẠY nối skill: thiếu tools/dong_bo_skill_claude_codex.py"
 fi
 
 # ② NGÂN SÁCH DANH SÁCH SKILL — nếu không có bước này thì bước ① phần lớn vô ích.

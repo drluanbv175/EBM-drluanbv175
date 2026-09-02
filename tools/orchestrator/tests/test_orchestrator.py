@@ -242,7 +242,14 @@ class TestPluginOwnership(unittest.TestCase):
         units = {worker["unit"] for worker in g1["worker_routing"]["workers"]}
         self.assertIn("mendelian-randomization-protocol-designer", units)
         self.assertNotIn("single-cell-research-planner", units)
-        self.assertEqual(g1["worker_routing"]["unavailable_workers"], [])
+        # Plugin cài THEO TỪNG MÁY (sổ khai sync/plugin-manifest.json): máy không có
+        # aipoch thì worker «chưa cài» là sự thật runtime, không phải binding treo.
+        # Chỉ binding TREO (provider có mà thiếu skill / provider không khai) mới là lỗi
+        # — trên Mac đủ plugin, phép thử này tương đương `== []` như cũ (BH85).
+        from orchestrator.worker_inventory import LY_DO_CHUA_CAI
+        treo = [w for w in g1["worker_routing"]["unavailable_workers"]
+                if w["reason"] != LY_DO_CHUA_CAI]
+        self.assertEqual(treo, [])
 
     def test_specialist_tasks_keep_their_domain_owner(self):
         expected = {

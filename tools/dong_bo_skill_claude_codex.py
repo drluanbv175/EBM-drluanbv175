@@ -110,10 +110,37 @@ def ensure_link(source: Path, destination: Path, apply: bool) -> LinkResult:
     return LinkResult(label, source.name, "DA_NOI")
 
 
+def co_codex_tren_may() -> bool:
+    """Máy này có Codex để hỏi «plugin nào đang cài» không (cùng ứng viên build_catalog dùng).
+
+    KHÔNG suy từ thông điệp lỗi của build_catalog (BH82: khai báo tường minh, không đoán
+    qua chuỗi) — hỏi thẳng sự có mặt của binary hoặc cấu hình dự phòng.
+    """
+    ung_vien = (
+        os.environ.get("EBM_CODEX_BIN"),
+        __import__("shutil").which("codex"),
+        "/Applications/ChatGPT.app/Contents/Resources/codex",
+        str(Path.home() / ".local/bin/codex"),
+    )
+    if any(u and Path(u).is_file() for u in ung_vien):
+        return True
+    return (Path.home() / ".codex/config.toml").is_file()
+
+
 def rebuild_router(source_root: Path, quiet: bool) -> int:
     """Dựng lại catalog từ trạng thái plugin Codex thật."""
 
     script = source_root / ROUTER_NAME / "scripts/build_catalog.py"
+    if script.is_file() and not co_codex_tren_may():
+        # Cùng luật với nhánh dưới, lùi thêm một bậc (02/09/2026): catalog được dựng TỪ
+        # kho plugin Codex của máy đang chạy; máy KHÔNG có Codex (phiên cloud, máy mới)
+        # thì không có gì để dựng — bản catalog đã commit (từ máy Mac) là nguyên liệu
+        # đúng để đóng gói. Đo trên cloud: build_catalog ném «Không đọc được cấu hình
+        # Codex dự phòng» và làn skill THÀNH CÔNG (42+42 liên kết, ZIP đủ) bị trả mã 1
+        # ở mọi phiên. Có Codex mà dựng lỗi thì vẫn fail-closed như cũ.
+        if not quiet:
+            print("⚠ Máy này không có Codex — giữ catalog router đã commit, không dựng lại.")
+        return 0
     if not script.is_file():
         # THIẾU NGUYÊN LIỆU ≠ HỎNG. Nguồn router hiện chỉ có trên máy Mac và chưa
         # được commit, nên trên mọi máy khác nhánh này luôn thiếu. Trả 0 kèm lời
