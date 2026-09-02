@@ -176,9 +176,20 @@ như sản phẩm THẬT của G6/G9 mà đài kiểm soát trước đây khôn
 Xác minh nội dung trước khi kết luận: ba file G6 là khung mẫu 100%, không một chữ do
 người viết (`[CẦN CHỦ NHIỆM XÁC NHẬN] Chủ nhiệm điền nội dung cho phần này.`). File
 `G9_READINESS` có cấu trúc hơn — kết luận "NOT READY", bảng ba cổng cứng đều "CHƯA
-ĐÓNG" (khớp thực tế) — nhưng **bộ sinh ra nó không còn tồn tại trong repo** (grep toàn
-bộ `tools/*.py` không tìm thấy nơi nào sinh đúng tiêu đề "BÁO CÁO SẴN SÀNG NGHIỆM THU")
-— tức không tái lập được, không có dây kiểm liêm chính nào chạy qua nó.
+ĐÓNG" (khớp thực tế).
+
+⛔ **ĐÍNH CHÍNH cùng ngày — bản đầu ở đây viết SAI "bộ sinh ra nó không còn tồn tại
+trong repo".** Grep lần đầu tìm nhầm tiêu đề IN HOA trong khi mã nguồn lưu chữ thường
+có hoa đầu câu; đọc lại `gen_research_docx.py::_gen_readiness()` xác nhận hàm **VẪN
+TỒN TẠI** (khoá `readiness` trong `ARTIFACT_MAP`, sinh đúng tên `G9_READINESS_<mã>.docx`).
+**Vấn đề thật:** hàm nhận `content: dict` từ người gọi; không truyền `dod`/`gaps`/
+`g2_status`/`g4_status`/`g9_status` thì rơi về mặc định "NOT READY"/"CHƯA ĐÓNG" — đúng
+những gì thấy trên đĩa. Không nơi nào trong repo tính các giá trị đó từ checkpoint/
+ledger thật rồi truyền vào. Quan trọng hơn: **cổng G9 THẬT không hề đụng tới file này**
+— `run_g9_auto.py` → `g9_quality_gate.write_readiness_template()` ghi
+`G9_PUBLICATION_READINESS.json` (tên hoàn toàn khác). Kết luận hành động không đổi
+(vẫn nên dời — không có checkpoint ràng buộc, không đảm bảo còn đúng khi trạng thái ba
+cổng đổi), chỉ lý do bị viết sai lúc đầu. Chi tiết ở commit `9e4aa26` repo y khoa.
 
 Vá ở hai lớp: (1) cổng không có checkpoint mà **có** `.docx` trùng tiền tố ⇒ 🔴 tại
 trục ①, chỉ đúng cách sửa — dời sang `exports/<mã>/_tai-lieu-mo-coi/` nếu chỉ là khung
