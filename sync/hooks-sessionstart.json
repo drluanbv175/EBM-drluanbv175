@@ -7,7 +7,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill_claude_codex.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dong_bo_skill_claude_codex.py --ap-dung --dong-bo-plugin --im-khi-on || echo \"⚠ Đồng bộ Claude–Codex còn lỗi — chạy tools/verify_skill_sync_health.py\"; else echo \"⚠ Không tìm thấy Python để đồng bộ Claude–Codex\"; fi; else echo \"⚠ CHỐT đồng bộ Claude–Codex KHÔNG CHẠY — thiếu công cụ\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill_claude_codex.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dong_bo_skill_claude_codex.py --ap-dung --dong-bo-plugin --im-khi-on || echo \"⚠ Đồng bộ Claude–Codex còn lỗi — chạy tools/check_claude_codex_sync_health.py\"; else echo \"⚠ Không tìm thấy Python để đồng bộ Claude–Codex\"; fi; else echo \"⚠ CHỐT đồng bộ Claude–Codex KHÔNG CHẠY — thiếu công cụ\"; fi; true",
           "timeout": 300,
           "statusMessage": "Đồng bộ skill Claude–Codex…"
         },

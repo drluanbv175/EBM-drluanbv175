@@ -202,7 +202,11 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   file tracked) · chạy chốt bài học **CHỈ trên bản sao trần** (cây còn một phần gốc dữ liệu thì bộ chốt in
   32 mục ✗ giả và tổng kết «32 BÀI HỌC TÁI PHÁT» — sai sự thật; trên bản trần đường ⚪ của BH82 mở nên còn
   **49/84 canh · 35 ⚪ · 0 đỏ**). Đo sau khi nối: 26 → 35/41 chào ra ngay trong phiên; 6 còn lại là do
-  ngân sách, phiên sau (có settings.json) mới đủ.
+  ngân sách, phiên sau (có settings.json) mới đủ. **ĐÃ KIỂM 02/09/2026** — phiên resume sau khi hook đã
+  ghi `~/.claude/settings.json`: **42/42 skill riêng chào ra**, cả 6 skill từng thiếu (`dao-tao-slide…` ·
+  `dashboard-master…` · `ehospital-mini` · `nghien-cuu-ebm-tong-hop` · `nghien-cuu-y-khoa-chuan-quoc-te` ·
+  `tao-video-tiktok`) đều có mặt. Số đo: 42 skill ở trần 80 ký tự cần 4.346 ký tự = 7% ngân sách 0,08
+  (đủ mô tả là 21.910 — vượt 2,7 lần ngân sách mặc định 0,01, đó là lý do 6 skill mô tả dài nhất rụng).
   **RANH GIỚI:** hook **thoát ngay khi không phải remote** (`CLAUDE_CODE_REMOTE`) — nó không có quyền chạm
   `~/.claude` của Mac/Windows; BH84 chạy hook với HOME tạm và đòi HOME đó **trống** sau khi chạy.
   **ĐỔI CHỖ 8 CHỐT MÁY THẬT — việc MỘT LẦN trên MỖI máy, làm TRƯỚC `git pull`:** `.claude/settings.json`
@@ -403,8 +407,11 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `borzoi` · `chai1` · `diffdock` · `esmfold2` · `evo2` · `openfold3` · `proteinmpnn` · `scgpt` ·
   `playwright` · `pptx-skill` · `neurokit` · `pydeseq` … (phần lớn là skill sinh-tin học của plugin
   đã gỡ). Sau dọn `~/.claude/skills/` còn **78 mục = 40 skill riêng + 38 mồ côi**.
-  ⚠️ Hook `SessionStart` đang bảo chạy `tools/verify_skill_sync_health.py` — **file đó không tồn tại**;
+  ⚠️ Hook `SessionStart` từng bảo chạy `tools/verify_skill_sync_health.py` — **file đó không tồn tại**;
   tên thật là `tools/check_claude_codex_sync_health.py` (chạy ngày 26/08: PASS, 50/50 agent).
+  **Đã sửa 02/09/2026** trong `sync/hooks-sessionstart.json` (chỉ nằm ở thông điệp `|| echo` của chốt #1,
+  không phải lệnh chạy); máy thật nhận bản sửa khi chạy `tools/dong_bo_hook_sessionstart.py --ap-dung`
+  (lane ⑥ của `dong_bo_tat_ca.py` sẽ báo LỆCH cho tới lúc đó).
 
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research

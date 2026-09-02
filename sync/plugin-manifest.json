@@ -16,7 +16,7 @@
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "ly_do": "Worker VIẾT/SOÁT cho tuyến nghiên cứu: registry bind 10 lệnh ars-* (plan · outline · lit-review · full · abstract · revision · reviewer · rebuttal-audit · citation-check) ở stage G0/G1/G7/G8/G9, priority 60, may_own=false. Chủ vẫn là agent nội bộ theo bảng _PLUGIN-ROUTING-CONTRACT.md: viet-ban-thao · kiem-chung-trich-dan · binh-duyet · thiet-ke-nghien-cuu; ARS không xác nhận authorship/COI/AI và không phải chữ ký G8. Đang có ở CẢ HAI máy vì đề tài chạy ở cả hai. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 4,
         "Windows": 4
@@ -54,7 +54,7 @@
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "ly_do": "Cầu nối gọi Codex CLI từ Claude Code — 3 skill NỘI BỘ (codex-cli-runtime · codex-result-handling · gpt-5-4-prompting). Registry: provider `codex` priority 20, may_own=false, ghi chú «lượt chẩn đoán/cài đặt thứ hai cho việc kỹ thuật» — chỉ cho việc lập trình repo, KHÔNG chạm quyết định y khoa/nghiên cứu. Chỉ có ở Mac. [CẦN BÁC SĨ] xác nhận có cần ở Windows không (Codex CLI chưa cài ở đó).",
       "do_duoc_luc_ghi": {
         "Mac": 3
       }
@@ -74,7 +74,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -83,7 +83,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -92,7 +92,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -101,7 +101,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -110,7 +110,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -132,7 +132,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -141,7 +141,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -150,7 +150,7 @@
       "can_o_may": [],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao",
+      "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 60
       }
@@ -161,7 +161,7 @@
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "ly_do": "Worker tổng quan/gộp TỪNG BƯỚC: registry bind 3 skill ma-search-bibliography (SEARCH_PLAN) · ma-screening-quality (SCREENING_DRAFT) · ma-meta-analysis (SYNTHESIS_DRAFT) dưới chủ tong-quan-y-van / meta-phan-tich; ma-end-to-end BỊ CẤM làm chủ (registry note + bảng định tuyến CLAUDE.md). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 14
       }
@@ -183,7 +183,7 @@
       ],
       "da_xac_nhan": false,
       "chieu_sang_codex": false,
-      "ly_do": "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào",
+      "ly_do": "Worker tra PubMed: registry bind 2 skill pubmed-quick-search (DISCOVERY · METADATA) · pubmed-systematic-search (SEARCH_PLAN) dưới chủ tra-cuu-chung-cu / thu-thu-tai-lieu. Đo 10/08/2026: 0 lượt dùng trong 2712 phiên — tầng tạo giá trị thật là MCP PubMed (1322 lượt); giữ theo quyết định 10/08 (không gỡ nhóm 0 lượt). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
         "Mac": 10
       }
