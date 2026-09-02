@@ -164,6 +164,32 @@ G1 không mất nội dung nào (diff chỉ là dấu thời gian và seed theo 
 đầu dùng khoá checkpoint tự nghĩ (`pmids_verified`) nên **test xanh giả** — phải lấy
 đúng hình dạng thật của C1a (`pubmed_results.all_pmids`) mới đo được thứ cần đo.
 
+## 2-quinquies. VÒNG 4 — artifact mồ côi trông như sản phẩm THẬT của cổng chưa chạy
+
+Chạy lại công cụ trên C1a sau vòng 3 (0 🔴), rồi hỏi tiếp: bảng điểm đã chấm ĐỦ mọi
+tổ hợp «checkpoint có/không × artifact có/không» chưa? Đo trực tiếp: `G6_checkpoint.json`
+và `G9_checkpoint.json` **KHÔNG TỒN TẠI** (đúng thực tế — G5 khoá dữ liệu chưa ký, G6
+không thể phân tích trước khi có dữ liệu khoá), nhưng thư mục vẫn có bốn `.docx` mang
+tên **G6a_ANALYSIS · G6b_INTERPRETATION · G6d_CLINICAL-GUIDELINE · G9_READINESS** — trông
+như sản phẩm THẬT của G6/G9 mà đài kiểm soát trước đây không chạm tới.
+
+Xác minh nội dung trước khi kết luận: ba file G6 là khung mẫu 100%, không một chữ do
+người viết (`[CẦN CHỦ NHIỆM XÁC NHẬN] Chủ nhiệm điền nội dung cho phần này.`). File
+`G9_READINESS` có cấu trúc hơn — kết luận "NOT READY", bảng ba cổng cứng đều "CHƯA
+ĐÓNG" (khớp thực tế) — nhưng **bộ sinh ra nó không còn tồn tại trong repo** (grep toàn
+bộ `tools/*.py` không tìm thấy nơi nào sinh đúng tiêu đề "BÁO CÁO SẴN SÀNG NGHIỆM THU")
+— tức không tái lập được, không có dây kiểm liêm chính nào chạy qua nó.
+
+Vá ở hai lớp: (1) cổng không có checkpoint mà **có** `.docx` trùng tiền tố ⇒ 🔴 tại
+trục ①, chỉ đúng cách sửa — dời sang `exports/<mã>/_tai-lieu-mo-coi/` nếu chỉ là khung
+rỗng, dùng tiền tố `_` là quy ước NỘI BỘ đã có sẵn trong `verify_exports_integrity.py`,
+không tạo quy ước mới; (2) đã dời 4 file thật của C1a bằng `git mv` (giữ lịch sử), kèm
+`_GHI-CHU.md` giải thích và đường phục hồi khi G6/G9 chạy thật.
+
+Đo trước/sau: **🟢 41 → 38 · 🔴 2 → 0** (xanh giảm vì ba mục "0 ký tự trang trí" của
+file mồ côi không còn được chấm ở trục ④ — đúng, chúng không còn là artifact chính
+thức). Test thêm 4 mục, **2 phép đột biến đều đỏ đúng chỗ**.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
