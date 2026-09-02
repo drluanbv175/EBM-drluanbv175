@@ -18,6 +18,26 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   (c) gói duyệt tuần TỰ nằm sẵn thứ Bảy 07:07 (tác vụ lịch `goi-duyet-tuan-ebm`).
   Mọi nhánh dừng ở CANDIDATE — Cổng A/B của bác sĩ nguyên vẹn.
 - **Việc lẻ** (tra 1 câu hỏi, soát 1 danh mục TLTK, tính cỡ mẫu, đặc tả biến…) → gọi thẳng agent chuyên trách.
+- **🚪 CỬA VÀO NHẠC TRƯỞNG — đo 02/09/2026, vá cùng ngày (BH88).** Đo 30 câu bác sĩ nói TỰ
+  NHIÊN qua `tools/orchestrator/intent.py`: **12 câu rơi `unknown`** — nhạc trưởng KHÔNG vào
+  cửa — và 2 câu định tuyến QUÁ TAY ("tính cỡ mẫu cho nghiên cứu cắt ngang" kéo cả vòng đời
+  G0–G10 chỉ để xin MỘT con số). Nghiêm trọng ở chỗ **cả 12 câu đó đều ĐÃ CÓ CHỦ** (agent,
+  skill hoặc lệnh tiếng Việt): khoảng trống nằm ở CỬA VÀO, không ở năng lực, và `unknown` là
+  câu trả lời SAI SỰ THẬT về việc mà hệ biết rõ chủ. **Sau khi vá: 30/30 vào đúng cửa, 0
+  unknown, 0 lệch.** Thêm kind thứ tư **`cong_cu`** cho việc có chủ là lệnh/skill/công cụ
+  (không có agent) — nhạc trưởng không dựng bước agent cho nhóm này nhưng đầu ra vẫn qua
+  `tham-dinh-dau-ra`. Bảng người đọc: `.claude/agents/README.md` §Ma trận định tuyến (12 dòng
+  mới + 2 luật ưu tiên).
+  ⚠️ **Hai luật ưu tiên ngược chiều nhau CÓ CHỦ Ý:** việc lẻ MẠNH (`VIEC_LE_MANH`) thắng cue
+  ĐỀ TÀI, nhưng **không bao giờ** thắng cue CA LÂM SÀNG — over-route sang nơi CÓ sàng lọc cờ
+  đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không.
+  🔴 **Lỗi thứ hai cùng đợt, nặng hơn cho chính mục tiêu «cloud đủ plugin»:** `WorkerInventory`
+  chỉ tra `~/.codex/plugins/cache`, trong khi `claude plugin install` GHI vào
+  `~/.claude/plugins/cache`. Đo ngay sau khi cài đủ 7 plugin (778 SKILL.md) trên cloud: thư mục
+  Codex KHÔNG TỒN TẠI ⇒ **0/43 worker binding khả dụng** ⇒ nhạc trưởng luôn ghi `LOCAL_FALLBACK`
+  và **không bao giờ dùng plugin vừa cài**. Nay tra CẢ HAI kho: **31/43**; 12 mục còn lại là
+  plugin thật sự chưa có trên máy này (⚪ có khai báo, không đỏ). Cùng họ «đo đúng, nhưng đo
+  nhầm chỗ» của BH74.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời
@@ -215,8 +235,27 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   `mv .claude/settings.json .claude/settings.local.json && git pull`. Đo 01/09 bằng phép thử thật: hook ở
   **hai file CỘNG DỒN** (cả hai đều chạy), nên không mất chốt nào. `dong_bo_hook_sessionstart.py` phạm
   vi `du-an` từ nay ghi/đọc `settings.local.json`; gặp bản cũ nó **in đúng lệnh `mv` trên, không tự dời**.
-  BH16 đọc cả hai file để không mất phủ 8 chốt. Plugin marketplace (787 skill) vẫn **không** đi theo repo
-  — chúng chỉ là worker, không phải chủ của việc có cổng, nên cloud thiếu chúng không chặn việc gì có cổng.
+  BH16 đọc cả hai file để không mất phủ 8 chốt.
+  ☁️ **CLOUD ĐỦ PLUGIN NHƯ LOCAL — 02/09/2026 (BH86), quyết định của bác sĩ sau khi nghe lý do không cài.**
+  Câu cũ «plugin marketplace không đi theo repo» hết hiệu lực. Cơ chế: `sync/plugin-manifest.json` v2 khai
+  máy thứ ba **«Cloud»** (`tools/nhan_dien_may.py` — MỘT nguồn nhận diện máy, `CLAUDE_CODE_REMOTE=true` ⇒
+  «Cloud», thay hai bản chép `ten_may()` từng phân kỳ) và trường **`nguon`** cho từng plugin; hook cloud gọi
+  `tools/cai_plugin_phien_cloud.py --ap-dung` **ở NỀN** (đo lần đầu ~60 giây vì aipoch chép 808 MB vào
+  cache, đã đủ thì 0,1 giây — chặn phiên 1 phút mỗi lần mở là dạy người ta tắt hook). Cài bằng chính CLI
+  `claude plugin marketplace add` + `plugin install -y`, không đụng `installed_plugins.json` bằng tay. Bốn
+  loại nguồn: `git` (harness · humanizer · openai-codex — hai cái sau xác minh bằng `marketplace.json`
+  thật: tên + phiên bản khớp mốc Mac) · `thu-muc-phien` (aipoch · openmed = fork của bác sĩ đã clone sẵn
+  trong container, dự phòng url git) · `git-thu-cong` (meta-pipe · pubmed-search: kho không có
+  `marketplace.json` ⇒ sinh manifest + **lọc đúng 10 skill tra y văn** theo `cap_nhat_plugin_tay.py::CAU_HINH`,
+  rồi cắt tỉa cache cho khớp bản Mac — CLI chép trọn 35 SKILL.md) · `chua-ro` (⚪ có khai báo, KHÔNG đỏ).
+  **Đo 02/09: 7/9 plugin cài xong trên cloud (605 + 73 + 72 + 14 + 10 + 3 + 1 SKILL.md), 53 lệnh tiếng Việt
+  chép vào `~/.claude/commands` bằng đúng `sync/copy-commands-vi.sh`.** Hai mục còn `chua-ro` —
+  `academic-research-skills` và `medsci-project` — vì nguồn không có trong repo, chỉ Mac biết: trên Mac chạy
+  `python3 tools/cai_plugin_phien_cloud.py --xuat-nguon` (đọc `known_marketplaces.json`, điền vào sổ khai, sao
+  lưu trước) rồi commit là cloud tự cài nốt ở phiên sau. **Ranh giới không đổi:** công cụ TỪ CHỐI `--ap-dung`
+  khi không phải cloud (máy thật không bao giờ bị cài qua mạng — bài học 11/08), 8 medsci trùng có
+  `can_o_may: []` nên không vào cloud, plugin trên cloud vẫn chỉ là worker (bảng định tuyến ở mục Điều phối
+  không đổi). 38 skill mồ côi trong `~/.claude/skills` của Mac không nằm trong git nên cloud không có.
   ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
   thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
   tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`
@@ -319,6 +358,46 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   **8 bộ medsci ĐANG TẮT** (8 × 59, không hiện trong menu `/`); bản dịch của chúng đã có sẵn
   trong từ điển theo khoá `name:` nên bật lại bộ nào là Việt hoá ngay, không phải dịch thêm.
   **Khoá bằng BH74**, đã kiểm bằng 3 phép đột biến riêng cho 3 vế.
+  🔴 **VÒNG BA 02/09/2026 — cấu hình BIẾN MẤT, và chốt kêu ĐỎ về đúng thứ vẫn đang tốt.**
+  Sáng đó chốt kho nổ: «DANH SÁCH SKILL VƯỢT NGÂN SÁCH… `skillListingBudgetFraction=0.01`,
+  ĐANG DÙNG MẶC ĐỊNH», kèm 8 bộ medsci «MỚI so với mốc», kho phồng **842 → 1322 skill**.
+  **Cả hai đều SAI.** Sự thật: `~/.claude/settings.json` biến mất, nhưng cấu hình của bác
+  sĩ **vẫn nguyên** ở `~/.claude/settings.local.json` (0,08 · 80 · đủ 8 cờ `false`).
+  Claude Code đọc **CẢ HAI** file và bản `.local` **ĐÈ** bản chung; còn 4 công cụ của ta
+  (`kiem_plugin_day_du` · `kiem_co_tat_plugin_trung` · `kiem_cau_hinh_nguoi_dung` ·
+  `extract_catalog`) chỉ đọc file chung, thấy trống nên kết luận «chưa đặt» + «tất cả
+  plugin đang bật». Cùng họ BH74, nhưng hại theo hướng xấu nhất: **báo động ĐỎ GIẢ**, lại
+  còn xúi hai việc gây hại thật — `--ghi-moc` lúc kho đang phồng (nuốt mất giác quan canh,
+  đúng bẫy BH69) và ghi đè một khoá vốn đã đúng.
+  **Đã vá:** `tools/doc_settings.py` là bộ đọc DUY NHẤT, gộp hai file theo thứ tự neo vào
+  `TEN_FILE` (`.local` luôn đè), **nhận tham số `goc`** để chốt hồi quy tiêm được fixture.
+  ⚠️ Bản vá ĐẦU đọc thẳng `~/.claude` và lập tức làm **BH69 + BH81 đỏ** — hai chốt đang
+  chạy tốt — vì fixture hết đường chen vào. *Một chốt không tiêm được dữ liệu thử thì
+  không chứng minh được gì.* Khoá bằng **BH84**, kiểm bằng 3 đột biến (bỏ đọc `.local` ·
+  đảo chiều đè · bám cứng đường dẫn) — cả ba đều nổ đúng.
+
+  ## ☁️ LOCAL ⇄ CLOUD — Việt hoá tự động tới đâu, và ranh giới ở đâu (chốt 02/09/2026)
+  Kho skill nằm trên **ba loại mặt**, và chỉ hai loại đầu ta ghi được:
+  | Mặt | Ai làm chủ | Việt hoá | Cơ chế giữ |
+  |---|---|---|---|
+  | `sync/skills/` · `.claude/agents/` | **bác sĩ** (git + OneDrive) | tự viết sẵn | nguồn chuẩn, `apply_vi` KHÔNG đè (rào giữ-bản-tự-viết) |
+  | Cache plugin `~/.claude/plugins/cache/` | app tải về | `apply_vi` ghi | tự vá mỗi phiên |
+  | **Cowork + `.claude-science`** | **CLOUD (claude.ai)** | `apply_vi` ghi | **cloud đồng bộ lại là MẤT — chỉ bộ tự sửa dựng lại** |
+  **Đo thật 02/09:** 4 skill dựng sẵn đã dịch hôm 24/08 (`consolidate-memory` ·
+  `explain-usage` · `schedule` · `setup-cowork`) **quay lại tiếng Anh**, và 18 file Cowork
+  bị ghi lại lúc 06:16 — bằng chứng trực tiếp rằng **cloud đè xuống định kỳ**.
+  ⚠️ **Vì vậy «đồng bộ Việt hoá lên Cloud» là việc KHÔNG làm được từ máy này**: chiều dữ
+  liệu là cloud → máy, ta không có đường ghi ngược. Thứ làm được — và đang chạy — là
+  **phục hồi tự động**: `tu_sua_chua.py` (hook `SessionStart`) chạy
+  `apply_vi.py --tu-quet` mỗi phiên, nên sau mỗi đợt cloud đè, lần mở phiên kế tiếp là
+  tiếng Việt trở lại. Khoảng hở còn lại là **giữa hai phiên**: cloud đồng bộ lúc đang làm
+  việc thì tới cuối phiên đó bác sĩ vẫn thấy tiếng Anh. Muốn hẹp hơn thì phải chạy tay
+  `~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py --tu-quet`.
+  🚫 **KHÔNG Việt hoá được, có chủ ý:** ~17 skill **dựng sẵn trong Claude Code**
+  (`workflow-authoring` · `artifact-design` · `dataviz` · `simplify` · `code-review` ·
+  `loop` · `run` · `init` · `security-review` · `design` · `schedule` · `claude-api`…) —
+  đã tìm trên đĩa, **không có file nào**: chúng nằm trong chính ứng dụng. Và 7 skill trong
+  `~/.codex/skills/.system/` do Codex CLI quản lý, bị ghi đè mỗi lần cập nhật.
 - **RÀO AN TOÀN chống làm hỏng việc cập nhật plugin (2026-08-10).** `apply_vi.py` nay **TỪ CHỐI
   ghi vào bất kỳ file nào nằm trong một repo git** (trả `skip-git-repo`). Vì sao cần: plugin cài
   kiểu `"source": "directory"` (aipoch trỏ vào `~/Documents/GitHub/medical-research-skills`, là
@@ -576,6 +655,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 3. Mọi hàm gọi API: có error handling + retry
 4. KHÔNG lưu thông tin định danh bệnh nhân (PII)
 5. Mọi output y khoa kèm disclaimer "Cần bác sĩ kiểm chứng" và ghi nguồn (PMID/DOI)
+6. **Trả lời bác sĩ bằng TIẾNG VIỆT** — chỉ thị ngôn ngữ THƯỜNG TRỰC của dự án (thêm 02/09/2026 khi cài
+   plugin lên cloud: `claude-code-harness` mang hook `UserPromptSubmit` ép «Response Language: English» theo
+   `CLAUDE_CODE_HARNESS_LANG`, vốn chỉ biết `ja`/English; chính hook đó tự nhường khi có chỉ thị thường trực
+   của người dùng — dòng này là chỉ thị đó). Định danh máy đọc (JSON, mã, tên file, tiền tố commit) giữ nguyên.
 
 ## Thứ tự xây dựng
 Phase 1: Module Research (làm trước, hoàn chỉnh)

@@ -64,9 +64,11 @@ SO_KHAI = REPO / "sync/plugin-manifest.json"
 
 
 def ten_may() -> str:
-    """Cùng quy ước với kiem_plugin_day_du.py và vietnamize/extract_catalog.py."""
-    return {"Darwin": "Mac", "Windows": "Windows"}.get(
-        platform.system(), platform.system() or "Khac")
+    """Uỷ quyền cho tools/nhan_dien_may.py — MỘT nguồn duy nhất (cloud = «Cloud»)."""
+    import importlib.util as _ilu
+    _spec = _ilu.spec_from_file_location("nhan_dien_may", Path(__file__).resolve().parent / "nhan_dien_may.py")
+    _m = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_m)
+    return _m.ten_may()
 
 
 def doc_json(p: Path) -> dict:
@@ -188,9 +190,16 @@ def doi_chieu(hien: dict, so_khai: dict, may: str) -> tuple[list[str], list[str]
             if khoa in hien and hien[khoa]["khai_tat_ro"]:
                 loi = (f"{khoa}: sổ khai nói CẦN ở {may} nhưng enabledPlugins đang "
                        f"ghi rõ false — sổ khai và cấu hình máy MÂU THUẪN")
+            elif may == "Cloud" and (m.get("nguon") or {}).get("loai", "chua-ro") == "chua-ro":
+                # Cloud tự cài theo trường `nguon`; mục chưa có nguồn KHÔNG phải trôi dạt —
+                # nó là «chỉ Mac biết» và có đường xử lý rõ (--xuat-nguon). Gọi là trôi dạt
+                # là biến CHƯA BIẾT thành CÓ VẤN ĐỀ (BH08).
+                loi = (f"{khoa}: sổ khai nói CẦN ở Cloud nhưng chưa có nguồn cài — trên Mac chạy "
+                       f"`python3 tools/cai_plugin_phien_cloud.py --xuat-nguon` rồi commit sổ khai")
             else:
+                ly = str(m.get("ly_do", "?"))
                 loi = (f"{khoa}: sổ khai nói CẦN ở {may} nhưng kho KHÔNG có — "
-                       f"trôi dạt, cần cài lại (lý do khai: {m.get('ly_do', '?')})")
+                       f"trôi dạt, cần cài lại (lý do khai: {ly[:110]}{'…' if len(ly) > 110 else ''})")
             # Ô «cần ở máy nào» chưa được bác sĩ xác nhận thì nó mới chỉ là SUY từ
             # hiện trạng lúc dựng sổ. Báo đỏ dựa trên một suy đoán là biến CHƯA BIẾT
             # thành CÓ VẤN ĐỀ — đúng bài học BH08, và bức tường đỏ giả sẽ dạy người

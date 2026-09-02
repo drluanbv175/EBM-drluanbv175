@@ -41,6 +41,11 @@ import shutil
 import sys
 from pathlib import Path
 
+import sys as _s_ds, pathlib as _p_ds
+_s_ds.path.insert(0, str(_p_ds.Path(__file__).resolve().parents[0]))
+from doc_settings import doc_settings as _doc_settings, duong_dan_ghi as _dd_ghi  # noqa: E402
+
+
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8")
@@ -101,10 +106,22 @@ def main() -> int:
         print(f"⚠ Chưa có bản khai {KHAI.name} — không biết phải giữ khoá nào.", file=sys.stderr)
         return 1
     vua_tao = False
+    # 02/09/2026 — GỘP HAI VÁ CÙNG NGÀY, hai phiên khác nhau:
+    #   · phiên cloud: `--tao-neu-thieu` DỰNG settings.json khi máy chưa có;
+    #   · phiên Mac  : settings.json BIẾN MẤT trong khi cấu hình thật vẫn nguyên ở
+    #     `settings.local.json` — lúc đó «bỏ qua» là sai, phải ĐỌC TIẾP bản .local,
+    #     nếu không chốt báo «chưa đặt» cho khoá vốn đã đúng rồi xúi ghi đè.
+    # Thứ tự: có bản .local thì đi tiếp; không có thì mới xét chuyện dựng file.
+    co_local = (SETTINGS.parent / "settings.local.json").is_file()
     if not SETTINGS.exists():
-        if not (a.tao_neu_thieu and a.ap_dung):
+        if a.tao_neu_thieu and a.ap_dung:
+            pass                      # phiên cloud: dựng file rồi ghi khoá (dưới)
+        elif co_local:
+            co_local = True           # có bản .local: ĐỌC TIẾP, đừng bỏ qua
+        else:
             print(f"⚠ Máy này chưa có {SETTINGS} — bỏ qua.", file=sys.stderr)
             return 0
+    if not SETTINGS.exists() and a.tao_neu_thieu and a.ap_dung:
         try:
             SETTINGS.parent.mkdir(parents=True, exist_ok=True)
             SETTINGS.write_text("{}\n", encoding="utf-8", newline="\n")
@@ -114,7 +131,10 @@ def main() -> int:
         vua_tao = True
         print(f"• Chưa có {SETTINGS} — đã tạo file rỗng để ghi khoá đã khai.")
 
-    hien = doc_json(SETTINGS)
+    # So sánh trên cấu hình ĐÃ GỘP (settings.json + settings.local.json) — 02/09/2026
+    # settings.json biến mất trong khi giá trị đúng nằm ở bản `.local`, chốt cũ chỉ đọc
+    # file chung nên báo «chưa đặt» và xúi ghi đè một khoá vốn đã đúng.
+    hien = _doc_settings(nghiem=False, goc=SETTINGS)
     lech: list[tuple[str, object, object]] = []
     for ten, m in khai.items():
         muon = m.get("gia_tri")

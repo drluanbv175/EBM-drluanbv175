@@ -38,6 +38,11 @@ import platform
 import re
 from pathlib import Path
 
+import sys as _s_ds, pathlib as _p_ds
+_s_ds.path.insert(0, str(_p_ds.Path(__file__).resolve().parents[1]))
+from doc_settings import doc_settings as _doc_settings, duong_dan_ghi as _dd_ghi  # noqa: E402
+
+
 HOME = Path.home()
 REPO = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "catalog_raw.json"
@@ -248,10 +253,14 @@ def main() -> int:
         # Chỉ loại khi settings ghi rõ false; vắng mặt thì GIỮ, để bản vá này không
         # âm thầm làm rỗng danh mục trên máy cấu hình theo kiểu khác.
         tat_ro_rang: set[str] = set()
+        # 02/09/2026 — ĐỌC CẢ `settings.json` LẪN `settings.local.json`. Hôm đó
+        # settings.json biến mất trong khi cấu hình thật (đủ 8 cờ `false`) nằm ở bản
+        # `.local`; chỉ đọc file chung thì `tat_ro_rang` rỗng ⇒ catalog nuốt thêm 8 bộ
+        # medsci trùng (472 mục) và apply_vi đi dịch một đống file không ai gọi tới.
         st = HOME / ".claude/settings.json"
-        if st.exists():
+        if _doc_settings(nghiem=False):
             try:
-                cfg = json.loads(st.read_text(encoding="utf-8"))
+                cfg = _doc_settings(nghiem=False)
                 for mp, v in (cfg.get("extraKnownMarketplaces") or {}).items():
                     src = (v or {}).get("source") or {}
                     if src.get("source") == "directory" and src.get("path"):

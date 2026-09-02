@@ -113,6 +113,15 @@ VIEC_MAY = [
     # claude-code-harness 5.9.0→5.11.0 và humanizer 2.11.1→2.11.2 làm 85 mục trở
     # lại tiếng Anh. Lớp phủ vi_descriptions.json chỉ cứu DANH-MUC/TRA-CUU, KHÔNG
     # cứu menu gõ `/` — menu đọc thẳng file plugin.
+    # Thêm 02/09/2026. `~/.claude/skills/` tích các bản SAO tiếng Anh của skill plugin
+    # («bóng»): mỗi skill hiện HAI lần khi gõ `/`, bản tiếng Anh không có tiền tố nên
+    # thường thắng. Mac đã dọn 26/08 (1720 → 1092 mục gọi được); bản chụp Windows
+    # 28/08 vẫn còn 706 mục user-skills, 666 tiếng Anh. CỐ Ý chỉ BÁO, không tự dọn:
+    # chuyển hàng trăm thư mục là việc khó lùi, và lần dọn tay 26/08 đã cuốn nhầm 15
+    # skill riêng của bác sĩ — công cụ nay có rào, nhưng quyết định vẫn thuộc bác sĩ.
+    ("Bóng tiếng Anh trong ~/.claude/skills",
+     [PY, "tools/don_bong_tieng_anh.py", "--im-khi-on"],
+     None),
     ("Việt hoá plugin bị bản cập nhật trả về tiếng Anh",
      [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet", "--im-khi-on"],
      [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet"]),

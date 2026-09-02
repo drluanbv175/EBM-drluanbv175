@@ -140,6 +140,11 @@ class Orchestrator:
         flow = flow_for(kind)
         if flow:
             return list(flow)
+        # `cong_cu`: chủ là LỆNH/SKILL/công cụ, không phải agent — không dựng bước agent
+        # (ex.execute tra registry AGENT, tên lệnh sẽ thành tham chiếu treo). Vẫn giữ
+        # guardrail: đầu ra công cụ có yếu tố y khoa vẫn phải qua `tham-dinh-dau-ra`.
+        if kind == "cong_cu":
+            return [GUARDRAIL_STEP]
         # single_task: một agent + guardrail; suy cổng từ GATE_HINTS
         gate = GATE_HINTS.get(entry_agent)
         step = FlowStep("task", "Việc lẻ", (sa(entry_agent),), gate=gate,

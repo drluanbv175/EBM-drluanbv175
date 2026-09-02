@@ -61,6 +61,34 @@ if [ -f tools/kiem_cau_hinh_nguoi_dung.py ]; then
     | grep -E "^(•|✓|✗|⚠)" || true
 fi
 
+# ②b LỆNH TIẾNG VIỆT — 53 lệnh `/…` do bác sĩ sở hữu, nguồn sync/commands-vi/ (đi qua git).
+#    Dùng đúng script bác sĩ dùng trên máy (idempotent, chỉ chép file trong commands-vi/).
+if [ -f sync/copy-commands-vi.sh ]; then
+  if bash sync/copy-commands-vi.sh >/dev/null 2>&1; then
+    echo "   ✓ $(ls sync/commands-vi/*.md 2>/dev/null | wc -l | tr -d ' ') lệnh tiếng Việt → ~/.claude/commands"
+  else
+    echo "   ⚠ không chép được lệnh tiếng Việt (xem sync/copy-commands-vi.sh)"
+  fi
+fi
+
+# ②c PLUGIN — quyết định bác sĩ 02/09/2026: cloud phải ĐỦ plugin như local. Cài theo
+#    CÙNG sổ khai hai máy đang dùng (sync/plugin-manifest.json, trường `nguon`) bằng chính
+#    CLI `claude plugin`. Chạy ở NỀN vì đo được lần đầu ~60 giây (aipoch chép 808 MB vào
+#    cache), đã đủ thì 0,1 giây — chặn phiên 1 phút mỗi lần mở là dạy người ta tắt hook.
+#    Skill plugin xuất hiện giữa phiên (Claude Code dựng lại danh sách skill khi kho đổi —
+#    đã quan sát 01/09 với skill riêng). Công cụ tự từ chối khi không phải cloud, nên máy
+#    bác sĩ không bao giờ bị cài qua mạng (bài học 11/08).
+if [ -f tools/cai_plugin_phien_cloud.py ] && command -v claude >/dev/null 2>&1; then
+  LOG_PLUGIN="$HOME/.claude/ebm-cai-plugin-cloud.log"
+  mkdir -p "$HOME/.claude"
+  if command -v setsid >/dev/null 2>&1; then
+    ( setsid nohup python3 tools/cai_plugin_phien_cloud.py --ap-dung --im-khi-on >"$LOG_PLUGIN" 2>&1 </dev/null & )
+  else
+    ( nohup python3 tools/cai_plugin_phien_cloud.py --ap-dung --im-khi-on >"$LOG_PLUGIN" 2>&1 </dev/null & )
+  fi
+  echo "   ⏳ plugin theo sổ khai đang cài ở NỀN — xem: python3 tools/cai_plugin_phien_cloud.py · log $LOG_PLUGIN"
+fi
+
 # ③ Thư viện các công cụ trong repo cần. Cố ý HẸP và nhanh: hook chạy đồng bộ nên
 #    nó chặn lúc mở phiên. Đây đúng ba thứ đo được là thiếu trên container
 #    (python-docx · beautifulsoup4 · lxml) — không cài trọn requirements của repo
@@ -107,11 +135,12 @@ if [ -f tools/chot_hoi_quy_bai_hoc.py ] && [ -f tools/ban_sao_tran.py ]; then
   fi
 fi
 
-# ⑥ Nói ra GIỚI HẠN, không để người đọc tưởng cloud = local. 787 skill của plugin
-#    (aipoch · openmed · medsci · harness…) cài theo TỪNG MÁY qua marketplace nên
-#    không đi theo repo được. Theo bảng định tuyến ở CLAUDE.md, chúng chỉ là worker
-#    và KHÔNG BAO GIỜ là chủ của việc có cổng — nên thiếu chúng ở cloud không chặn
+# ⑥ Nói ra GIỚI HẠN còn lại, không để người đọc tưởng cloud = local tuyệt đối:
+#    plugin nào sổ khai còn «chua-ro» (chỉ Mac biết nguồn) thì cloud chưa có cho tới khi
+#    bác sĩ chạy --xuat-nguon trên Mac; 38 skill mồ côi trong ~/.claude/skills của Mac
+#    không nằm trong git nên cloud không có. Theo bảng định tuyến ở CLAUDE.md, plugin
+#    chỉ là worker và KHÔNG BAO GIỜ là chủ của việc có cổng — thiếu chúng không chặn
 #    việc gì có cổng.
-echo "   ℹ Cloud KHÔNG có plugin store của máy bác sĩ (cài theo từng máy)."
+echo "   ℹ Plugin: theo sổ khai sync/plugin-manifest.json (mục chua-ro chờ --xuat-nguon từ Mac)."
 echo "     Việc có cổng vẫn chạy đủ: chủ của mọi việc có cổng là agent/skill trong repo."
 exit 0

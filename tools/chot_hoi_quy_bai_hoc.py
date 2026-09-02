@@ -3118,6 +3118,67 @@ def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
     return True, "catalog quét mặt phục vụ · chốt --tu-quet · rào giữ chữ bác sĩ tự viết"
 
 
+def bh86_doc_ca_settings_local_khong_bao_dong_gia() -> tuple[bool, str]:
+    """02/09/2026 — sáng đó chốt kho nổ 🔴 gắt: «DANH SÁCH SKILL VƯỢT NGÂN SÁCH…
+    skillListingBudgetFraction=0.01, ĐANG DÙNG MẶC ĐỊNH», kèm 8 bộ medsci trùng «MỚI
+    so với mốc», kho phồng 842 → 1322 skill. **Cả hai đều SAI.**
+
+    Sự thật: `~/.claude/settings.json` biến mất, nhưng cấu hình của bác sĩ vẫn nguyên ở
+    `~/.claude/settings.local.json` (0,08 · 80 · đủ 8 cờ `false`). Claude Code đọc CẢ
+    HAI và bản `.local` ĐÈ; công cụ chỉ đọc file chung nên thấy trống rồi kết luận
+    «chưa đặt» và «tất cả plugin đang bật».
+
+    Cùng họ BH74 — **đo đúng, nhưng đo nhầm chỗ** — lần này hại theo hướng xấu nhất:
+    báo động ĐỎ GIẢ. Nó còn xúi hai việc gây hại thật: `--ghi-moc` lúc kho đang phồng
+    (nuốt luôn giác quan canh, đúng bẫy BH69), và ghi đè một khoá vốn đã đúng.
+
+    Chốt canh HAI vế, vì vế (b) là chỗ bản vá đầu tiên đã tự làm hỏng:
+      (a) đọc cấu hình phải GỘP settings.json + settings.local.json, `.local` thắng;
+      (b) hàm đọc phải TIÊM ĐƯỢC đường dẫn — bản vá đầu đọc thẳng `~/.claude` nên
+          BH69 và BH81 (hai chốt đang chạy tốt) đỏ ngay, vì fixture hết đường chen vào.
+    """
+    import json
+    import tempfile
+
+    m = _nap(REPO / "tools" / "doc_settings.py", "_bh84_doc_settings")
+
+    with tempfile.TemporaryDirectory() as d:
+        thu = Path(d)
+        chinh = thu / "settings.json"
+        cuc_bo = thu / "settings.local.json"
+
+        # (a1) chỉ có bản .local — đúng tình huống sáng 02/09
+        cuc_bo.write_text(json.dumps({
+            "skillListingBudgetFraction": 0.08,
+            "enabledPlugins": {"a@m": False, "b@m": True},
+        }), encoding="utf-8")
+        cfg = m.doc_settings(nghiem=False, goc=chinh)
+        if cfg.get("skillListingBudgetFraction") != 0.08:
+            return False, "thiếu settings.json thì KHÔNG đọc được khoá trong settings.local.json"
+        if cfg.get("enabledPlugins", {}).get("a@m") is not False:
+            return False, "cờ `false` trong settings.local.json bị bỏ qua ⇒ báo plugin tắt là đang bật"
+
+        # (a2) có cả hai — bản .local phải ĐÈ
+        chinh.write_text(json.dumps({
+            "skillListingBudgetFraction": 0.01,
+            "khoa_rieng_cua_file_chung": 1,
+        }), encoding="utf-8")
+        cfg = m.doc_settings(nghiem=False, goc=chinh)
+        if cfg.get("skillListingBudgetFraction") != 0.08:
+            return False, "settings.local.json KHÔNG đè settings.json (sai thứ tự gộp)"
+        if cfg.get("khoa_rieng_cua_file_chung") != 1:
+            return False, "gộp làm mất khoá chỉ có ở settings.json"
+
+    # (b) phải tiêm được đường dẫn, không bám cứng ~/.claude. Dùng thư mục tạm RIÊNG,
+    # HOÀN TOÀN TRỐNG — thư mục ở trên còn fixture của (a2) nên không chứng minh được gì.
+    with tempfile.TemporaryDirectory() as d2:
+        if m.doc_settings(nghiem=False, goc=Path(d2) / "settings.json"):
+            return False, ("thư mục trống mà vẫn trả cấu hình ⇒ hàm đang đọc ~/.claude "
+                           "thật, chốt hồi quy sẽ hết tiêm được fixture")
+
+    return True, "gộp đúng thứ tự, sống khi thiếu settings.json, và tiêm được đường dẫn"
+
+
 def bh68_ma_bai_hoc_phai_duy_nhat() -> tuple[bool, str]:
     """21/08/2026 — hai phiên làm việc song song cùng thêm một mục và cùng lấy số kế
     tiếp, sinh ra HAI mục cùng mang mã «BH60». Bảng vẫn chạy đủ và báo cáo vẫn xanh,
@@ -3739,6 +3800,12 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
             "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
         shutil.copy2(REPO / "tools/kiem_cau_hinh_nguoi_dung.py", P / "tools/kiem_cau_hinh_nguoi_dung.py")
+        # 02/09/2026 — kiem_cau_hinh_nguoi_dung nay import `doc_settings` (đọc gộp
+        # settings.json + settings.local.json). Thiếu file này trong fixture thì công
+        # cụ chết ngay ở import, settings.json không được tạo, và chốt báo đúng —
+        # nhưng báo về một khiếm khuyết của FIXTURE chứ không phải của mã. Đây là
+        # bài học BH70 lặp lại: bộ đồng bộ không được trỏ vào thứ không có mặt.
+        shutil.copy2(REPO / "tools/doc_settings.py", P / "tools/doc_settings.py")
         shutil.copy2(REPO / "tools/ban_sao_tran.py", P / "tools/ban_sao_tran.py")
         # Làn ③ thật (không stub): hook phải nối được cả hai runtime bằng đúng công cụ
         # bác sĩ dùng trên máy — ba file này thuần stdlib, chạy trong fixture ~0,3 s.
@@ -3854,6 +3921,279 @@ def bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac():
     return True, "chưa cài ⇒ ⚪ có khai báo; provider có mà thiếu skill ⇒ vẫn FAIL; registry lỗi ⇒ vẫn FAIL"
 
 
+def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
+    """02/09 — (đánh số lại BH86→BH87 sau khi BH68 bắt trùng mã với một phiên song song)
+    bác sĩ quyết định phiên cloud phải ĐỦ plugin như local (sau khi nghe lý do
+    không cài). Trước đó cloud có 0 plugin: `~/.claude/plugins` chỉ có thư mục `synced`, và
+    hook 01/09 còn in «Cloud KHÔNG có plugin store». Cài xong thì cần giữ ĐỒNG THỜI hai
+    điều dễ mất: (a) máy thật KHÔNG BAO GIỜ bị công cụ này cài/gỡ qua mạng (bài học
+    11/08: gỡ mục enabledPlugins làm Claude Code tải lại 278 MB); (b) cloud cài theo ĐÚNG
+    sổ khai ý định hai máy đang dùng (`sync/plugin-manifest.json`, trường `nguon`), không
+    theo một danh sách viết cứng ở đâu khác — 8 bản medsci trùng phải tiếp tục TẮT.
+
+    Kiểm HÀNH VI (HOME tạm + CLI `claude` giả ghi lại lời gọi, không ra mạng):
+      ① sổ khai: mọi mục có "Cloud" đều khai `nguon.loai` hợp lệ; 8 medsci trùng không có
+        "Cloud"; sổ khai đi qua git (bẫy ignore /sync/* — BH70)
+      ② `ten_may()` của CẢ HAI công cụ sổ khai trả «Cloud» khi CLAUDE_CODE_REMOTE=true —
+        một nguồn duy nhất (tools/nhan_dien_may.py), không hai bản chép phân kỳ
+      ③ `--ap-dung` KHÔNG remote ⇒ thoát 0, HOME tạm trống, CLI giả không bị gọi
+      ④ remote + CLI giả ⇒ gọi `marketplace add` rồi `install` cho mục loai git; mục chua-ro
+        ⇒ ⚪ không gọi gì; chạy lần hai ⇒ 0 lời gọi (idempotent — hook gọi mỗi phiên)
+      ⑤ hook cloud gọi công cụ ở NỀN (`&`) và chép lệnh tiếng Việt bằng đúng script bác sĩ
+    """
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+
+    so_khai = REPO / "sync/plugin-manifest.json"
+    tool = REPO / "tools/cai_plugin_phien_cloud.py"
+    hook = REPO / ".claude/hooks/session-start.sh"
+    for f in (so_khai, tool, hook, REPO / "tools/nhan_dien_may.py"):
+        if not f.is_file():
+            return False, f"thiếu {f.relative_to(REPO)}"
+
+    # ① sổ khai
+    git = _sh_which("git")
+    if git:
+        r = subprocess.run([git, "check-ignore", "-q", "sync/plugin-manifest.json"],
+                           cwd=REPO, capture_output=True)
+        if r.returncode == 0:
+            return False, "sync/plugin-manifest.json bị ignore — cloud sẽ không biết phải cài gì"
+    so = json.loads(so_khai.read_text(encoding="utf-8"))
+    m_tool = _nap(tool, "cpc_bh86")
+    cloud = {k: m for k, m in so["plugin"].items() if "Cloud" in (m.get("can_o_may") or [])}
+    if not cloud:
+        return False, "sổ khai không có mục nào cần ở Cloud — quyết định 02/09 chưa được khai"
+    for k, m in cloud.items():
+        if (m.get("nguon") or {}).get("loai") not in m_tool.LOAI_HOP_LE:
+            return False, f"{k}: cần ở Cloud mà nguon.loai không hợp lệ"
+    trung = [k for k, m in so["plugin"].items()
+             if k.startswith("medsci-") and k != "medsci-project@medsci-skills"]
+    if not trung or any("Cloud" in (so["plugin"][k].get("can_o_may") or []) for k in trung):
+        return False, "8 bản medsci trùng lại được khai cho Cloud — kho cloud phình y như 17/08 trên Mac"
+
+    # ② một nguồn nhận diện máy
+    env_goc = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_REMOTE"}
+    for ten in ("dong_bo_plugin_claude_codex.py", "kiem_plugin_day_du.py"):
+        r = subprocess.run([sys.executable, "-c",
+                            "import importlib.util,sys;from pathlib import Path;"
+                            f"s=importlib.util.spec_from_file_location('m', {str(REPO / 'tools' / ten)!r});"
+                            "m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.ten_may())"],
+                           env=dict(env_goc, CLAUDE_CODE_REMOTE="true"), capture_output=True, text=True)
+        if r.stdout.strip() != "Cloud":
+            return False, f"{ten}: ten_may() dưới CLAUDE_CODE_REMOTE=true trả {r.stdout.strip()!r}, không phải 'Cloud'"
+
+    # fixture: sổ khai nhỏ + CLI giả
+    with tempfile.TemporaryDirectory() as td:
+        T = Path(td)
+        home, shim = T / "home", T / "shim"
+        home.mkdir(); shim.mkdir()
+        goi = T / "goi.log"
+        khai = {"plugin": {
+            "gia@gia-mk": {"can_o_may": ["Cloud"], "da_xac_nhan": False, "ly_do": "fixture",
+                           "nguon": {"loai": "git", "url": "https://example.invalid/gia.git"}},
+            "mo@mo-mk": {"can_o_may": ["Cloud"], "da_xac_nhan": False, "ly_do": "fixture",
+                         "nguon": {"loai": "chua-ro", "ghi_chu": "[CẦN BÁC SĨ]"}},
+            "tat@tat-mk": {"can_o_may": [], "da_xac_nhan": False, "ly_do": "fixture tắt",
+                           "nguon": {"loai": "git", "url": "https://example.invalid/tat.git"}},
+        }}
+        (T / "so-khai.json").write_text(json.dumps(khai, ensure_ascii=False), encoding="utf-8")
+        # CLI giả: ghi lời gọi; `install` dựng cache + installed_plugins.json như CLI thật
+        (shim / "claude").write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,os,sys\nfrom pathlib import Path\n"
+            f"open({str(goi)!r},'a').write(' '.join(sys.argv[1:])+'\\n')\n"
+            "h=Path(os.environ['HOME'])/'.claude/plugins'\n"
+            "if sys.argv[1:3]==['plugin','install']:\n"
+            "    k=sys.argv[3]; d=h/'cache'/k.split('@')[1]/k.split('@')[0]/'1.0'\n"
+            "    (d/'skills/s').mkdir(parents=True,exist_ok=True); (d/'skills/s/SKILL.md').write_text('---\\nname: s\\n---\\n')\n"
+            "    f=h/'installed_plugins.json'; j=json.loads(f.read_text()) if f.exists() else {'version':2,'plugins':{}}\n"
+            "    j['plugins'][k]=[{'scope':'user','installPath':str(d),'version':'1.0'}]; f.write_text(json.dumps(j))\n"
+            "elif sys.argv[1:4]==['plugin','marketplace','add']:\n"
+            "    h.mkdir(parents=True,exist_ok=True); f=h/'known_marketplaces.json'\n"
+            "    j=json.loads(f.read_text()) if f.exists() else {}; j['gia-mk']={'source':{'source':'git','url':sys.argv[4]}}; f.write_text(json.dumps(j))\n",
+            encoding="utf-8")
+        (shim / "claude").chmod(0o755)
+        env = dict(env_goc, HOME=str(home), USERPROFILE=str(home),
+                   PATH=f"{shim}{os.pathsep}{env_goc.get('PATH', '')}")
+        lenh = [sys.executable, str(tool), "--ap-dung", "--so-khai", str(T / "so-khai.json")]
+
+        # ③ không remote ⇒ không làm gì
+        r = subprocess.run(lenh, cwd=REPO, env=env, capture_output=True, text=True, timeout=60)
+        if r.returncode != 0 or any(home.iterdir()) or goi.exists():
+            return False, "KHÔNG remote mà --ap-dung vẫn chạy/ghi HOME/gọi CLI — máy bác sĩ sẽ bị cài qua mạng"
+
+        # ④ remote (qua cờ fixture) ⇒ add + install đúng mục; chua-ro ⚪; tắt không cài
+        r = subprocess.run(lenh + ["--toi-biet-day-la-cloud", "--json"], cwd=REPO, env=env,
+                           capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            return False, f"remote fixture thoát {r.returncode}: {(r.stdout + r.stderr)[-300:]}"
+        loi_goi = goi.read_text(encoding="utf-8").splitlines() if goi.exists() else []
+        if not any(l.startswith("plugin marketplace add https://example.invalid/gia.git") for l in loi_goi):
+            return False, "không gọi `marketplace add` cho mục loai git"
+        if not any(l.startswith("plugin install gia@gia-mk") for l in loi_goi):
+            return False, "không gọi `plugin install` cho mục cần ở Cloud"
+        if any("tat@tat-mk" in l for l in loi_goi):
+            return False, "cài cả plugin có can_o_may rỗng — 8 medsci trùng sẽ vào cloud"
+        kq = json.loads(r.stdout)
+        tt = {x["plugin"]: x["trang_thai"] for x in kq["plugin"]}
+        if not tt.get("mo@mo-mk", "").startswith("⚪"):
+            return False, "mục chua-ro không ra ⚪ có khai báo — sẽ thành đỏ giả trên cloud"
+        n1 = len(loi_goi)
+        r = subprocess.run(lenh + ["--toi-biet-day-la-cloud"], cwd=REPO, env=env,
+                           capture_output=True, text=True, timeout=120)
+        n2 = len(goi.read_text(encoding="utf-8").splitlines())
+        if r.returncode != 0 or n2 != n1:
+            return False, f"chạy lần hai gọi thêm {n2 - n1} lệnh CLI — không idempotent, hook sẽ cài lại mỗi phiên"
+
+    # ⑤ hook gọi ở nền + chép lệnh tiếng Việt bằng script bác sĩ
+    h = hook.read_text(encoding="utf-8")
+    dong = [l for l in h.splitlines() if "cai_plugin_phien_cloud.py --ap-dung" in l and not l.lstrip().startswith("#")]
+    if not dong or not all("&" in l for l in dong):
+        return False, "hook không gọi cai_plugin_phien_cloud ở NỀN — mở phiên sẽ chặn ~60 giây"
+    if not any("sync/copy-commands-vi.sh" in l and not l.lstrip().startswith("#") for l in h.splitlines()):
+        return False, "hook không chép lệnh tiếng Việt bằng sync/copy-commands-vi.sh"
+    return True, "cloud cài theo sổ khai qua CLI giả, từ chối ngoài cloud, idempotent, medsci trùng vẫn tắt"
+
+
+# Bộ câu bác sĩ nói TỰ NHIÊN — khai tường minh để rà lại được, không suy đoán (BH28).
+# `None` = chấp nhận nhiều đích hợp lệ; xem ghi chú trong bh87.
+CAU_BAC_SI_NOI: tuple[tuple[str, str | None], ...] = (
+    ("Bệnh nhân nam 62 tuổi, đái tháo đường type 2, HbA1c 8.5%, cần chỉnh thuốc", "clinical_case"),
+    ("Cụ bà 78 tuổi rung nhĩ, eGFR 38, có nên dùng kháng đông không", "clinical_case"),
+    ("Tôi có một ca COPD đợt cấp, SpO2 88%", "clinical_case"),
+    ("Ca này đau ngực 2 giờ, ECG ST chênh", "clinical_case"),
+    ("Người bệnh nữ 45 tuổi đau đầu mạn tính 6 tháng", "clinical_case"),
+    ("Khám ca suy tim EF 30% mới nhập viện", "clinical_case"),
+    ("BN nam 55 tuổi tăng huyết áp kháng trị, đang dùng 3 thuốc", "clinical_case"),
+    ("Bệnh nhân xơ gan Child B, hỏi có dùng được NSAID không", "clinical_case"),
+    ("Đề tài đánh giá hiệu quả metformin trên bệnh nhân PCOS", "research_topic"),
+    ("Tôi muốn nghiên cứu tỷ lệ tuân thủ điều trị ở bệnh nhân tăng huyết áp", "research_topic"),
+    ("Nghiên cứu cắt ngang mức độ hài lòng người bệnh ngoại trú", "research_topic"),
+    ("Chạy nghiên cứu so sánh hai phác đồ kháng sinh", "research_topic"),
+    ("Làm đề cương thử nghiệm lâm sàng thuốc mới", "research_topic"),
+    ("Khảo sát hồi cứu biến chứng sau phẫu thuật nội soi", "research_topic"),
+    ("Xem lại đề tài C1a đang ở đâu rồi", "research_topic"),
+    ("Giúp tôi viết bản thảo phần bàn luận", "single_task"),
+    ("Tôi muốn làm một bài báo về suy tim ở người cao tuổi", "single_task"),
+    ("Phân tích số liệu tôi vừa thu thập xong", "single_task"),
+    ("Cập nhật chứng cứ mới nhất về đái tháo đường", "single_task"),
+    ("Chủ đề COPD có gì mới không", "single_task"),
+    ("Kiểm tra xem dashboard của tôi có lỗi gì không", "single_task"),
+    ("Tính cỡ mẫu cho nghiên cứu cắt ngang", "single_task"),
+    ("Bài này có bị rút không", "single_task"),
+    ("Đơn thuốc này có tương tác gì không", "single_task"),
+    ("Chọn tạp chí nào để nộp bài", "single_task"),
+    ("Sàng lọc ung thư đại trực tràng từ tuổi nào", "single_task"),
+    ("Hệ thống còn gì để hoàn thiện", "cong_cu"),
+    ("Tra ICD-10 cho viêm phổi", "cong_cu"),
+    ("Làm slide bài giảng về kháng sinh", "cong_cu"),
+    # Vừa xin MỘT sản phẩm vừa có cue ca lâm sàng → CỐ Ý về nhạc trưởng lâm sàng
+    # (over-route sang nơi CÓ sàng lọc cờ đỏ). `None` = không ràng buộc đích, chỉ đòi
+    # KHÔNG được `unknown`.
+    ("Soạn tờ dặn dò cho bệnh nhân đái tháo đường", None),
+)
+
+
+def bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that():
+    """02/09 — đo cửa vào của hai nhạc trưởng bằng 30 câu bác sĩ nói TỰ NHIÊN:
+    **12 câu rơi `unknown`** (nhạc trưởng KHÔNG vào cửa) và **2 câu định tuyến quá tay**
+    ("tính cỡ mẫu cho nghiên cứu cắt ngang" kéo cả vòng đời G0–G10 chỉ để xin MỘT con số).
+    Nghiêm trọng ở chỗ: **cả 12 câu đó ĐỀU đã có chủ** — agent, skill hoặc lệnh tiếng Việt
+    đều tồn tại. Khoảng trống nằm ở CỬA VÀO, không phải ở năng lực; và `unknown` là câu
+    trả lời SAI SỰ THẬT về một việc mà hệ biết rõ chủ của nó.
+
+    Cùng đợt, phát hiện thứ hai còn nặng hơn cho đúng mục tiêu của bác sĩ: `WorkerInventory`
+    chỉ tra `~/.codex/plugins/cache`, trong khi `claude plugin install` ghi vào
+    `~/.claude/plugins/cache`. Đo ngay sau khi cài đủ 7 plugin (778 SKILL.md) trên cloud:
+    thư mục Codex KHÔNG TỒN TẠI ⇒ **0/43 worker binding khả dụng** ⇒ nhạc trưởng luôn ghi
+    `LOCAL_FALLBACK` và KHÔNG BAO GIỜ dùng plugin vừa cài. Vá xong: **31/43**, 12 mục còn
+    lại là plugin thật sự chưa có trên máy này (⚪ có khai báo, không đỏ).
+
+    Kiểm HÀNH VI (gọi thẳng route()/WorkerInventory, không đếm chuỗi):
+      ① không câu nào trong bộ khai trả `unknown`; đích khớp kind đã khai
+      ② mọi đích SINGLE_TASK_RULES là AGENT CÓ THẬT (`_run_step` tra registry agent —
+        nhét tên lệnh vào đây là tham chiếu treo)
+      ③ mọi đích VIEC_CONG_CU phân giải được sang file thật (tool · lệnh · skill)
+      ④ bất đối xứng an toàn: việc lẻ mạnh THẮNG cue đề tài, nhưng KHÔNG BAO GIỜ thắng
+        cue ca lâm sàng — over-route sang nơi có sàng lọc cờ đỏ là chiều an toàn
+      ⑤ WorkerInventory tra CẢ HAI kho cache (fixture: chỉ có kho Claude ⇒ vẫn thấy)
+    """
+    import tempfile
+
+    it = _nap(REPO / "tools/orchestrator/intent.py", "intent_bh87")
+    ag = {p.stem for p in (REPO / ".claude/agents").glob("*.md")
+          if not p.name.startswith("_") and p.stem != "README"}
+
+    # ① cửa vào mở cho lời bác sĩ thật
+    unknown, lech = [], []
+    for cau, mong in CAU_BAC_SI_NOI:
+        r = it.route(cau)
+        if r.kind == "unknown":
+            unknown.append(cau)
+        elif mong is not None and r.kind != mong:
+            lech.append(f"{cau!r}: mong {mong}, thực {r.kind}→{r.target}")
+    if unknown:
+        return False, (f"{len(unknown)}/{len(CAU_BAC_SI_NOI)} câu bác sĩ nói rơi «unknown» — "
+                       f"nhạc trưởng không vào cửa dù việc ĐÃ có chủ: {unknown[0]!r}")
+    if lech:
+        return False, f"{len(lech)} câu định tuyến sai kind: {lech[0]}"
+
+    # ② đích việc lẻ phải là agent thật
+    treo = sorted({a for _k, a, _n in it.SINGLE_TASK_RULES} - ag)
+    if treo:
+        return False, f"SINGLE_TASK_RULES trỏ agent KHÔNG có thật (tham chiếu treo): {treo}"
+
+    # ③ đích công cụ phải phân giải được
+    for _k, dich, note in it.VIEC_CONG_CU:
+        if dich.startswith("/"):
+            co = (REPO / "sync/commands-vi" / f"{dich.lstrip('/')}.md").is_file()
+        elif dich.endswith(".py"):
+            co = (REPO / dich).is_file()
+        else:
+            co = (REPO / "sync/skills" / dich / "SKILL.md").is_file()
+        if not co:
+            return False, f"VIEC_CONG_CU «{note}» trỏ {dich} — không phân giải được sang file thật"
+
+    # ④ bất đối xứng an toàn
+    r = it.route("Tính cỡ mẫu cho nghiên cứu cắt ngang")
+    if r.kind != "single_task" or r.target != "co-mau-nghien-cuu":
+        return False, ("xin MỘT con số cỡ mẫu lại kéo cả vòng đời G0–G10 "
+                       f"({r.kind}→{r.target}) — việc lẻ mạnh thua cue đề tài")
+    r = it.route("Bệnh nhân nam 62 tuổi đau ngực, tính cỡ mẫu giúp tôi")
+    if r.kind != "clinical_case":
+        return False, ("câu CÓ cue ca lâm sàng bị việc lẻ kéo khỏi nhạc trưởng lâm sàng "
+                       f"({r.kind}→{r.target}) — mất bước sàng lọc cờ đỏ")
+
+    # ⑤ inventory tra cả hai kho
+    # worker_inventory dùng relative import (`from . import ROOT`) nên phải nạp THEO GÓI,
+    # không dùng _nap (nạp file rời ⇒ ImportError «no known parent package»).
+    import importlib
+    if str(REPO / "tools") not in sys.path:
+        sys.path.insert(0, str(REPO / "tools"))
+    wi = importlib.import_module("orchestrator.worker_inventory")
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td)
+        d = home / ".claude/plugins/cache/humanizer/humanizer/9.9.9/skills/humanizer"
+        d.mkdir(parents=True)
+        (d / "SKILL.md").write_text("---\nname: humanizer\n---\n", encoding="utf-8")
+        cu = Path.home
+        try:
+            Path.home = staticmethod(lambda: home)          # type: ignore[assignment]
+            goc = wi.WorkerInventory().provider_roots["humanizer"]
+        finally:
+            Path.home = cu                                   # type: ignore[assignment]
+    if not any(".claude/plugins/cache" in str(g) for g in goc):
+        return False, ("WorkerInventory không tra ~/.claude/plugins/cache — nơi "
+                       "`claude plugin install` GHI; mọi worker sẽ báo «chưa cài» và "
+                       "nhạc trưởng không bao giờ dùng plugin đã cài")
+    if not any(".codex/plugins/cache" in str(g) for g in goc):
+        return False, "WorkerInventory bỏ mất kho Codex — máy có Codex CLI sẽ mất worker"
+    return True, (f"{len(CAU_BAC_SI_NOI)} câu bác sĩ nói đều vào đúng cửa; đích việc lẻ/công cụ "
+                  "phân giải được; việc lẻ mạnh không vượt cờ đỏ; inventory tra cả hai kho")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -3948,7 +4288,10 @@ BAI_HOC = [
     ("BH83", "28/08", "Hook pre-commit sống được trên bản trần mà không mất răng trên máy thật", bh83_hook_chay_duoc_tren_ban_tran_khong_mat_rang),
     ("BH84", "01/09", "Hook phiên cloud đi qua git, nối skill + khôi phục ngân sách, KHÔNG đụng máy thật", bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that),
     ("BH85", "01/09", "Cổng plugin không được đòi kho plugin của MÁY KHÁC (chưa cài ⇒ ⚪, thiếu skill ⇒ FAIL)", bh85_cong_plugin_khong_doi_kho_plugin_cua_may_khac),
+    ("BH87", "02/09", "Cloud cài plugin theo sổ khai qua CLI, từ chối ngoài cloud, idempotent, medsci trùng vẫn tắt", bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that),
+    ("BH88", "02/09", "Cửa vào nhạc trưởng mở cho lời bác sĩ thật; inventory tra CẢ HAI kho plugin", bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that),
 
+    ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
 
 

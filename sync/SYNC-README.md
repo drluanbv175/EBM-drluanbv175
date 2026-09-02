@@ -61,6 +61,7 @@ python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 | Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | 8 chốt trỏ venv/kho plugin RIÊNG từng máy nên nằm ở `.claude/settings.local.json` (không qua git) |
 | Dời bản cũ (MỘT LẦN, trước `git pull`) | `mv .claude/settings.json .claude/settings.local.json && git pull` | từ 01/09/2026 `.claude/settings.json` đi qua git và chỉ khai hook phiên **cloud**; bản cũ chưa track sẽ làm pull từ chối. Hook ở hai file cộng dồn — không mất chốt nào |
 | Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
+| Cho CLOUD biết nguồn plugin (Mac, MỘT LẦN, 02/09/2026) | `python3 tools/cai_plugin_phien_cloud.py --xuat-nguon` rồi commit `sync/plugin-manifest.json` | phiên web tự cài plugin theo sổ khai (`nguon`); hai mục `academic-research-skills` · `medsci-project` chỉ Mac biết nguồn |
 
 > ⚠️ **Máy chưa có file `sync/nap-ban-nguon.command`?** Bình thường — nút nằm trong nhánh phát triển, mà máy đang ở `master`. Nút không tự lấy chính nó về được, nên lần đầu phải kéo nhánh bằng tay (dán trọn khối, dùng được cả hai kiểu đường dẫn OneDrive trên macOS):
 >
