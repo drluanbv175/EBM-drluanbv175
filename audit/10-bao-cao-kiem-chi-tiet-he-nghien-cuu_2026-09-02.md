@@ -164,6 +164,180 @@ G1 không mất nội dung nào (diff chỉ là dấu thời gian và seed theo 
 đầu dùng khoá checkpoint tự nghĩ (`pmids_verified`) nên **test xanh giả** — phải lấy
 đúng hình dạng thật của C1a (`pubmed_results.all_pmids`) mới đo được thứ cần đo.
 
+## 2-quinquies. VÒNG 4 — artifact mồ côi trông như sản phẩm THẬT của cổng chưa chạy
+
+Chạy lại công cụ trên C1a sau vòng 3 (0 🔴), rồi hỏi tiếp: bảng điểm đã chấm ĐỦ mọi
+tổ hợp «checkpoint có/không × artifact có/không» chưa? Đo trực tiếp: `G6_checkpoint.json`
+và `G9_checkpoint.json` **KHÔNG TỒN TẠI** (đúng thực tế — G5 khoá dữ liệu chưa ký, G6
+không thể phân tích trước khi có dữ liệu khoá), nhưng thư mục vẫn có bốn `.docx` mang
+tên **G6a_ANALYSIS · G6b_INTERPRETATION · G6d_CLINICAL-GUIDELINE · G9_READINESS** — trông
+như sản phẩm THẬT của G6/G9 mà đài kiểm soát trước đây không chạm tới.
+
+Xác minh nội dung trước khi kết luận: ba file G6 là khung mẫu 100%, không một chữ do
+người viết (`[CẦN CHỦ NHIỆM XÁC NHẬN] Chủ nhiệm điền nội dung cho phần này.`). File
+`G9_READINESS` có cấu trúc hơn — kết luận "NOT READY", bảng ba cổng cứng đều "CHƯA
+ĐÓNG" (khớp thực tế).
+
+⛔ **ĐÍNH CHÍNH cùng ngày — bản đầu ở đây viết SAI "bộ sinh ra nó không còn tồn tại
+trong repo".** Grep lần đầu tìm nhầm tiêu đề IN HOA trong khi mã nguồn lưu chữ thường
+có hoa đầu câu; đọc lại `gen_research_docx.py::_gen_readiness()` xác nhận hàm **VẪN
+TỒN TẠI** (khoá `readiness` trong `ARTIFACT_MAP`, sinh đúng tên `G9_READINESS_<mã>.docx`).
+**Vấn đề thật:** hàm nhận `content: dict` từ người gọi; không truyền `dod`/`gaps`/
+`g2_status`/`g4_status`/`g9_status` thì rơi về mặc định "NOT READY"/"CHƯA ĐÓNG" — đúng
+những gì thấy trên đĩa. Không nơi nào trong repo tính các giá trị đó từ checkpoint/
+ledger thật rồi truyền vào. Quan trọng hơn: **cổng G9 THẬT không hề đụng tới file này**
+— `run_g9_auto.py` → `g9_quality_gate.write_readiness_template()` ghi
+`G9_PUBLICATION_READINESS.json` (tên hoàn toàn khác). Kết luận hành động không đổi
+(vẫn nên dời — không có checkpoint ràng buộc, không đảm bảo còn đúng khi trạng thái ba
+cổng đổi), chỉ lý do bị viết sai lúc đầu. Chi tiết ở commit `9e4aa26` repo y khoa.
+
+Vá ở hai lớp: (1) cổng không có checkpoint mà **có** `.docx` trùng tiền tố ⇒ 🔴 tại
+trục ①, chỉ đúng cách sửa — dời sang `exports/<mã>/_tai-lieu-mo-coi/` nếu chỉ là khung
+rỗng, dùng tiền tố `_` là quy ước NỘI BỘ đã có sẵn trong `verify_exports_integrity.py`,
+không tạo quy ước mới; (2) đã dời 4 file thật của C1a bằng `git mv` (giữ lịch sử), kèm
+`_GHI-CHU.md` giải thích và đường phục hồi khi G6/G9 chạy thật.
+
+Đo trước/sau: **🟢 41 → 38 · 🔴 2 → 0** (xanh giảm vì ba mục "0 ký tự trang trí" của
+file mồ côi không còn được chấm ở trục ④ — đúng, chúng không còn là artifact chính
+thức). Test thêm 4 mục, **2 phép đột biến đều đỏ đúng chỗ**.
+
+## 2-sexies. VÒNG 5 — cảnh báo "bản dự thảo, không phải artifact chính thức" mới phủ 2/6 cổng cứng
+
+Đính chính ở VÒNG 4 (`_gen_readiness()` rơi về mặc định NOT READY khi gọi thiếu
+`content` thật) đặt ra câu hỏi rộng hơn: bản vá `task_a5fde306` (2026-07-12) từng thêm
+cảnh báo "đây là bản DỰ THẢO scaffold, KHÔNG phải artifact chính thức" vào `_gen_ethics`
+(G2) và `_gen_sap` (G4) — hai trong sáu cổng cứng. **5/6 cổng cứng còn lại có cảnh báo
+này chưa?** Grep trực tiếp `gen_research_docx.py` cho 6 hàm `_gen_*` tương ứng G2/G4/
+G5/G8/G9/G10 (G10 không có generator riêng — cổng lắp gói, không sinh tài liệu độc lập
+qua công cụ này):
+
+- G2 (`_gen_ethics`) — **CÓ** cảnh báo.
+- G4 (`_gen_sap`) — **CÓ** cảnh báo.
+- G5 (`_gen_dmp`) — **KHÔNG.**
+- G8 (`review`) — **KHÔNG có hàm riêng**, rơi vào `_gen_generic()` — không cảnh báo, không
+  cấu trúc gì đặc thù cho bình duyệt.
+- G9 (`_gen_readiness`) — **KHÔNG** — đúng file gây ra đính chính ở VÒNG 4.
+
+Không phải lỗi đối xứng ngẫu nhiên: ledger của G2/G4/G8 hash một artifact `.md` THẬT
+(`G2_A3_ETHICS_PACKAGE_<mã>.md` · `G4_A5_SAP_FINAL_<mã>.md` ·
+`G8_A9_PRESUBMISSION_<mã>.md`, xác nhận qua `approve_gate.py`), trong khi G5 và G9 hash
+CHÍNH checkpoint JSON của cổng đó (`G5_checkpoint.json` · `G9Q.CHECKPOINT_JSON` —
+`expected_artifact` trong `approve_gate.py` dòng 496/592, đối lập dòng 554 của G8 trỏ
+vào `G8Q.presubmission_artifact_name()`). Nghĩa là nguyên văn cảnh báo G2/G4 dùng
+("Artifact chính thức là ... được `approve_gate.py` hash") **sai với G5/G9** — không thể
+copy-paste, phải viết lại đúng cơ chế của từng cổng.
+
+**Vá theo 2 khuôn câu chữ ("Variant"), không lẫn lộn:**
+- **Variant A** (G8 — hash file `.md` thật, giống hệt G2/G4): thêm cảnh báo nguyên khuôn
+  cũ, đổi tên artifact/script cho đúng G8. Đồng thời nói rõ nhận xét phản biện THẬT phải
+  là file khác hẳn — `G8_PEER_REVIEW_REPORT_<mã>.md` (do người phản biện viết theo mẫu
+  `binh-duyet.md`), vì `.docx` này không chứa nhận xét thật.
+- **Variant B** (G5, G9 — hash checkpoint JSON): cảnh báo KHÔNG được nói "sẽ ghi đè
+  artifact đã hash" (sai) mà nói "không phản ánh trạng thái khóa/nghiệm thu THẬT — đọc
+  checkpoint JSON hoặc chạy `gN_quality_gate.py --study <mã>`". Với G9 còn nêu thêm tên
+  file THẬT của pipeline G9 (`G9_PUBLICATION_READINESS.json`) để không ai lặp lại đúng
+  hiểu nhầm đã xảy ra ở VÒNG 4.
+
+`_gen_generic()` trước đó là điểm vào DUY NHẤT cho `review` (G8) — không có hàm riêng để
+gắn cảnh báo vào. Thay vì chèn logic đặc thù artifact vào `_gen_generic()` (sẽ làm hàm
+generic không còn generic), tách phần thân render nội dung (list/dict/str) thành hàm
+dùng chung `_render_kv_body()`, rồi thêm `_gen_review()` riêng gọi `_render_kv_body()` +
+cảnh báo Variant A. `_gen_generic()` sau khi tách hành vi giữ NGUYÊN (có test khóa).
+
+Kiểm tên file trước khi vá: `G5b_DMP_<mã>.docx` (thật là `G5_A6_DATA_MGMT_<mã>.md`/
+`.docx`) · `G8_REVIEW_<mã>.docx` (thật là `G8_A9_PRESUBMISSION_<mã>.md`/`.docx`) ·
+`G9_READINESS_<mã>.docx` (thật là `G9_PUBLICATION_READINESS.json`, không có `.docx`) —
+**không tên nào trùng artifact ledger thật**, giữ đúng bất biến của `task_a5fde306`
+(không đổi tên để "khớp" — nguy cơ ghi đè nhầm bản đã khóa).
+
+Test mới: `tests/test_gen_research_docx_scaffold_warning_vong5_20260902.py` (7 mục —
+3 cảnh báo đúng khuôn · 1 nội dung mặc định vẫn bảo thủ (NOT READY) · 1 không trùng tên
+· 2 khóa hành vi refactor `_render_kv_body`). **5 phép đột biến, cả 5 đều đỏ đúng chỗ**
+(gỡ từng cảnh báo G5/G8/G9 riêng lẻ · vô hiệu hóa nhánh render nội dung · đổi tên file
+G8 trùng artifact thật). `pytest` toàn bộ nhóm test đụng `gen_research_docx.py` (9 file,
+88 test) xanh; `ruff check` sạch. Toàn bộ pytest repo y khoa: **3225 passed, 42 skipped,
+0 fail** (315s). Chi tiết ở commit `5ea8d13` repo y khoa (3 nhánh `claude/medical-research-
+system-phggdf` · `master` · `feat/r1-1-2-design-gap-remediation` đã đồng bộ).
+
+## 2-septies. VÒNG RÀ 6 — hai hàng scaffold khác nội dung dùng chung một khóa artifact
+
+`SCAFFOLD_FILES` (21 hàng, `tools/scaffold_research_project.py`) có 3 cặp hàng dùng
+CHUNG một `artifact_key`: `literature` (hàng 03/04), `sap` (hàng 11/15), `checklist`
+(hàng 17/19) — điều tra để lại dở dang ở VÒNG RÀ 5 quay lại đây. Kiểm từng cặp bằng
+`ARTIFACT_MAP[key]` (tiêu đề + nội dung generator thật, không suy đoán):
+
+- `literature` — tiêu đề ARTIFACT_MAP đã gộp CẢ HAI khái niệm ("Tổng quan y văn &
+  Evidence Ledger") → có chủ ý, gọi `generate()` hai lần cho hai hàng 03/04 ra cùng
+  một nội dung đúng như thiết kế.
+- `sap` — `_gen_sap()` tự có mục "10. Khung bảng kết quả dự kiến (Dummy Tables)" phủ
+  đúng khái niệm của hàng 15 (Table_Shells) → cùng lý do, có chủ ý.
+- `checklist` — tiêu đề ARTIFACT_MAP chỉ nói **"Checklist chuẩn báo cáo
+  (CONSORT/STROBE/PRISMA)"**, không hề nhắc "kiểm toán completeness" — trong khi hàng
+  19 (Research_Integrity_Audit) là một khái niệm HOÀN TOÀN KHÁC: bảng kiểm toán A1–A18
+  (đủ hồ sơ IRB/đăng ký/cỡ mẫu…) trước khi nghiệm thu G9. **Đây là lỗi thật, không phải
+  thiết kế.**
+
+Tái hiện bằng `scaffold()` thật (không giả lập): chạy scaffold một đề tài test, log
+cho thấy `G7b_CHECKLIST_<mã>.docx` được in **HAI LẦN** — lần từ hàng 17, lần từ hàng 19
+— lần sau GHI ĐÈ lần trước trên đĩa. Vì cả hai lần gọi `generate("checklist")` đều
+không truyền `content` (rơi vào `_gen_generic` với cờ nhắc điền rỗng), nội dung hai lần
+ghi giống hệt nhau nên **không mất thông tin duy nhất nào trên đĩa** — nhưng
+`STUDY_INDEX.md` (bảng bác sĩ đọc để biết trạng thái 20 tài liệu) ghi **CÙNG MỘT** tên
+`.docx` kỳ vọng cho hai hàng 17 và 19 khác nội dung — bác sĩ đọc chỉ mục sẽ hiểu nhầm
+hai mục dùng chung một tài liệu output.
+
+Vá: thêm khóa `integrity-audit` (mã `G9b`, gate `G7-G9`) riêng cho hàng 19 trong
+`ARTIFACT_MAP` — `len(ARTIFACT_MAP)` 38 → 39 (cập nhật cả assertion khóa hồi quy trong
+`tests/test_gen_research_docx_round11_artifact_keys.py` lẫn con số cũ trong docstring
+`generate()`). Không đổi `num`/`fname` của hai hàng 17/19 (nội dung `.md` — thứ cổng
+thật đọc — chưa bao giờ bị ảnh hưởng, chỉ tên `.docx` phụ trợ mới trùng).
+
+Test mới `tests/test_scaffold_checklist_vs_integrity_audit_distinct_20260902.py` (7
+mục: 2 khóa khác nhau + mã riêng biệt · scaffold thật sinh 2 tên `.docx` khác nhau ·
+2 file `.md` giữ nội dung thật distinct · `STUDY_INDEX.md` không còn ghi trùng tên cho
+2 hàng). **2 phép đột biến, cả 2 đều đỏ đúng chỗ** (trả hàng 19 về khóa `checklist` cũ
+→ 3 test đỏ; xóa khóa `integrity-audit` khỏi `ARTIFACT_MAP` → 4 test đỏ, gồm cả test
+đếm-mã-không-trùng đã có từ vòng 11). Nhóm test đụng `gen_research_docx.py`/
+`scaffold_research_project.py` (11 file, 109 test) xanh; `ruff check` sạch.
+
+## 2-octies. VÒNG RÀ 7 — module docstring hứa một file "Makefile.md" chưa từng được sinh
+
+Khởi động qua lệnh `/harness-loop` của bác sĩ ("Tiếp tục hoàn thiện hệ thống nghiên cứu
+y khoa"). Kiểm bước đầu tiên của chính skill đó trước khi làm gì khác: `Plans.md` repo
+y khoa có `cc:wip`/`cc:todo` nào không? Grep xác nhận **0** — cả Sprint 9 lẫn Sprint 10
+đều đã `cc:done` (task cuối 10.3: "67/67 PASS · 0 FAIL"). Đúng theo đặc tả CỦA CHÍNH
+skill này ("không còn task chưa xong → dừng loop, hoàn thành bình thường"), không có gì
+để giao cho worker agent/sprint-contract/cherry-pick tự động — tiếp tục bằng đúng
+phương pháp thủ công đã dùng cho vòng 1–6 (doctrine `CLAUDE.md` cũng nói rõ:
+`claude-code-harness` chỉ là WORKER cho việc lập trình, không phải chủ của quy trình
+hoàn thiện repo này).
+
+Rà tiếp phần liền kề với sửa của vòng 6 (`scaffold_research_project.py`): docstring đầu
+module, mục "Đầu ra:", hứa sinh `+ Makefile.md (gợi ý lệnh cho từng cổng G)`. Grep toàn
+`tools/` cho `Makefile`: **đúng 1 lần khớp — chính dòng docstring đó**, không code nào
+tạo file này. Xác minh bằng `scaffold()` thật (không chỉ đọc mã): scaffold một đề tài
+test, liệt kê thư mục — không có `Makefile.md`. Đối chiếu nội dung đã hứa ("gợi ý lệnh
+cho từng cổng G") với thực tế: `STUDY_INDEX.md` sinh ra đã có sẵn mục
+"## Lệnh xuất .docx từng cổng" mang đúng nội dung đó — tính năng không mất, chỉ đổi chỗ
+chứa mà docstring quên cập nhật.
+
+Điều tra 2 nghi vấn liên quan, cả hai đều SẠCH (không phải bug):
+- Tiêu đề "20-file chuẩn" (cả trong docstring lẫn `STUDY_INDEX.md`) trong khi
+  `SCAFFOLD_FILES` thật có **21** hàng (00→20) — nhưng `_CROSSWALK-NGHIEN-CUU.md` xác
+  nhận "20 file" là TÊN GỐC của đặc tả "Medical Research OS" do chủ nhiệm soạn, lặp lại
+  nhất quán ở ≥3 nơi doctrine — quy ước có chủ ý, không sửa.
+- Mục "## Lệnh xuất .docx từng cổng" chỉ liệt kê VÍ DỤ minh họa (không phải danh sách
+  đủ 39 khóa) nên khóa `integrity-audit` mới thêm ở vòng 6 không xuất hiện ở đó — đúng
+  như nhiều khóa cũ khác (`dmp`, `checklist`, `pico`…) cũng vắng mặt, không phải hồi quy.
+  `--all` (đường xuất-hết) tự động lặp `for key in ARTIFACT_MAP` nên đã bao khóa mới mà
+  không cần sửa gì thêm — xác nhận vòng 6 tích hợp sạch vào đường CLI này.
+
+Vá: sửa lại mục "Đầu ra:" — bỏ dòng `Makefile.md` sai, thêm chú thích trỏ đúng vào mục
+STUDY_INDEX.md đã có, và thêm dòng `study_meta.json` (file thật có sinh ra nhưng trước
+đó cũng vắng mặt khỏi danh sách). Thuần docstring, `[tdd:skip:docs-only]` — không hàm
+nào đọc chuỗi này để quyết định hành vi (grep xác nhận 0 test tham chiếu). `ruff check`
+sạch; nhóm test liên quan (26 test) vẫn xanh không đổi.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
