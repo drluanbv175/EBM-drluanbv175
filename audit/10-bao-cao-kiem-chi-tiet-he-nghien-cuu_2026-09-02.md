@@ -111,6 +111,35 @@ gom mọi `.docx` về G10 ⇒ đỏ 2; miễn kiểm cỡ chữ cho bản mồ 
 > luôn có điểm mù bằng đúng phần B ngoài A. Ở đây A = artifact `.md` khai trong hợp
 > đồng cổng, B = mọi thứ bác sĩ có thể mở và in.
 
+## 2-ter. VÒNG 2b — hai báo động giả nữa, cùng một họ
+
+**(a) Bảng điểm có thẩm quyền cho thứ không có cổng nào.** Chạy công cụ trên hai thư
+mục còn lại của `exports/` — `chatgpt_project` (scaffold dự án) và `phase_2b` (báo cáo
+smoke test) — nó **không chết**, nhưng in bảng điểm đầy đủ 11 cổng, 38 🟡, kèm một 🔴
+«G0 chưa chạy — máy làm được» và khuyên chạy `run_g0_auto` **trên chúng**. Đó đúng là
+thứ bác sĩ gặp ở lần gõ nhầm mã đề tài đầu tiên. Nay `la_de_tai_nghien_cuu()` gọi thẳng
+`list_studies.scan_study()` — **không viết luật nhận diện thứ hai** — và từ chối với mã
+3 kèm hai đường ra rõ ràng, không in bảng điểm. Fixture cũ dùng thư mục rỗng được sửa
+cho **hợp lệ** (đề tài đã ghim chủ đề, chưa chạy cổng), assertion gốc giữ nguyên từng chữ.
+
+**(b) Chốt bài học BH52 vừa nói sai nguyên nhân, vừa có dấu ✓ cho mục chưa hề kiểm.**
+Sau khi hợp nhất master của bác sĩ, bộ chốt đỏ ở BH52 (G0 kiểm rút bài tại cửa nhận).
+Truy nguyên thì chính chốt đó mắc đúng họ lỗi nó sinh ra để chống:
+
+| Vấn đề | Trước | Sau |
+|---|---|---|
+| Nền Retraction Watch ngoại tuyến chưa tải (63 MB, gitignore) | ghi «R1C chạy nhưng KHÔNG bắt bài đã rút» — **đổ lỗi cho guardrail, đẩy người đọc đi sửa nhầm file**; vế «nền RW ngoại tuyến có» là khẳng định chưa từng được đo | «CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không» + đúng lệnh `tai_retraction_watch.py` |
+| Thiếu venv | `return True` ⇒ in dấu **✓ trần** (ghi chú không hiện ở dòng ✓) — mục chưa hề kiểm trông y hệt mục đã đạt | fail-closed kèm lệnh khắc phục |
+| Bản sao git trần | ✗ (bức tường đỏ giả) | ⚪ có khai báo — đo bằng `git ls-files`: **0 file** thuộc `medical-ebm-automation/` được repo gốc track |
+
+Kiểm ba chiều bằng phép đo thật: bản trần ⇒ ⚪, tổng đỏ 0 · nối tạm repo y khoa, thiếu
+nền ⇒ ✗ với thông điệp mới · ép `Path.home()` sang đường dẫn không tồn tại ⇒ ✗ thay vì ✓.
+
+⚠️ **Hệ quả cần bác sĩ làm trên máy thật:** chạy
+`python3 medical-ebm-automation/tools/tai_retraction_watch.py`. Cho tới lúc đó **chưa
+máy nào trong phiên này kết luận được R1C của G0 còn sống hay không** — và đó là chốt
+canh việc G0 tự bắt bài đã rút ngay tại cửa nhận y văn.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
