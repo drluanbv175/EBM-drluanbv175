@@ -135,6 +135,30 @@ if [ -f tools/chot_hoi_quy_bai_hoc.py ] && [ -f tools/ban_sao_tran.py ]; then
   fi
 fi
 
+# ⑤b TỰ SỬA CHỮA (system self-repair) — trước 02/09/2026 KHÔNG BAO GIỜ chạy trên cloud.
+#    `tools/tu_sua_chua.py` là bộ tự vá lỗi máy móc mà Mac/Windows chạy MỖI PHIÊN qua
+#    `SessionStart` cục bộ — nhưng hook cloud này (dựng 01/09) chưa từng gọi nó, nên phần
+#    "tự sửa chữa" của "nhạc trưởng tự sửa chữa, tự gọi Agent, tự cập nhật" mà bác sĩ yêu
+#    cầu 02/09 KHÔNG hoạt động trên cloud. Ca thật đã bắt được ngay lần chạy đầu: 924 mô tả
+#    skill/lệnh bị các plugin vừa cài (②c) trả về tiếng Anh — đúng loại lỗi mà `apply_vi.py
+#    --tu-quet` sinh ra để tự vá, và trên cloud mỗi phiên là một container MỚI nên lỗi này
+#    xảy ra ở MỌI phiên, không phải một lần.
+#    Cờ `--pham-vi-cloud` (mới, xem tools/tu_sua_chua.py::VIEC_MAY) lọc CHỈ 3/9 mục an toàn
+#    và có ý nghĩa trên container dựng mới (khoá guard skill · đồng bộ nguồn skill · Việt
+#    hoá lại mô tả plugin) — KHÔNG chạy 6 mục còn lại: chúng cần `moc_chuan_plugin.json`/
+#    `EBM-Dashboards`/`.env` riêng của máy sống lâu dài mà container này không có, chạy sẽ
+#    chỉ in báo động giả «cần bác sĩ» cho những thứ cloud không thể sửa (đúng lỗi BH08 cấm:
+#    biến "không áp dụng ở đây" thành "có vấn đề").
+if [ -f tools/tu_sua_chua.py ]; then
+  ra=$(python3 tools/tu_sua_chua.py --pham-vi-cloud --ap-dung 2>&1); ma=$?
+  if [ $ma -eq 0 ]; then
+    echo "   ✓ tự sửa chữa (phạm vi cloud): không còn việc máy"
+  else
+    echo "   ⚠ tự sửa chữa còn việc — xem: python3 tools/tu_sua_chua.py --pham-vi-cloud"
+    echo "$ra" | grep -E "^   •" | sed 's/^/     /'
+  fi
+fi
+
 # ⑥ Nói ra GIỚI HẠN còn lại, không để người đọc tưởng cloud = local tuyệt đối:
 #    plugin nào sổ khai còn «chua-ro» (chỉ Mac biết nguồn) thì cloud chưa có cho tới khi
 #    bác sĩ chạy --xuat-nguon trên Mac; 38 skill mồ côi trong ~/.claude/skills của Mac

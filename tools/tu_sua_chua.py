@@ -68,6 +68,21 @@ def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
 # ---------------------------------------------------------------------------
 # Các việc MÁY MÓC — mỗi việc: (nhãn, lệnh kiểm, lệnh sửa hoặc None)
 # ---------------------------------------------------------------------------
+# CLOUD=True: an toàn (không crash khi thiếu medical-ebm-automation/EBM-Dashboards) VÀ có ý
+# nghĩa cho một container dựng mới mỗi phiên (khác Mac/Windows là máy SỐNG LÂU DÀI mà công
+# cụ vốn được viết cho). Khai TƯỜNG MINH theo từng mục — không suy đoán (BH28) — vì im lặng
+# chạy cả 9 mục sẽ in ra ồn ào 2 dòng "cần bác sĩ, không tự sửa được" cho những thứ cloud
+# KHÔNG THỂ sửa (baseline machine-riêng `moc_chuan_plugin.json`, `.env` của một repo vắng mặt)
+# — đúng lỗi BH08 cấm: biến "không áp dụng ở đây" thành "có vấn đề". 02/09/2026 (BH90):
+#   ①②⑨ CLOUD=True — skill/lệnh Việt hoá tồn tại y hệt trên cloud qua sync/skills + plugin
+#       cache; ⑨ (apply_vi) đặc biệt QUAN TRỌNG trên cloud vì mỗi phiên cài plugin MỚI (qua
+#       cai_plugin_phien_cloud.py) và mô tả gốc luôn tiếng Anh cho tới khi việt hoá chạy.
+#   ③④⑥⑦⑧ CLOUD=False — cần medical-ebm-automation/EBM-Dashboards vắng mặt trên bản trần,
+#       hoặc cần khái niệm "máy sống lâu dài có baseline riêng" (moc_chuan_plugin.json,
+#       enabledPlugins) mà cloud không có — cloud đã có công cụ cloud-native riêng
+#       (cai_plugin_phien_cloud.py) thay cho ⑥.
+#   ⑤ CLOUD=False vì trùng việc: hook cloud đã tự gọi kiem_cau_hinh_nguoi_dung.py riêng
+#       (--tao-neu-thieu) TRƯỚC bước này; gọi lại ở đây chỉ tốn thời gian, không sai nhưng dư.
 VIEC_MAY = [
     # Thêm 27/08/2026 — PHẢI đứng TRƯỚC dong_bo_skill: sự cố BH77 tái phát lần 2
     # (OneDrive đồng bộ lại bản «Claude Science» cũ từ máy kia đè lên 2 skill đã
@@ -76,10 +91,10 @@ VIEC_MAY = [
     # 27/08. Khôi phục nguồn sạch từ git HEAD trước, rồi mới đồng bộ.
     ("Skill mất khối EBM-VN-GUARD (ghi đè lạ — BH77)",
      [PY, "tools/phuc_hoi_skill_guard.py", "--im-khi-on"],
-     [PY, "tools/phuc_hoi_skill_guard.py", "--ap-dung"]),
+     [PY, "tools/phuc_hoi_skill_guard.py", "--ap-dung"], True),
     ("Skill đang chạy lệch nguồn",
      [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
-     [PY, "tools/dong_bo_skill.py", "--ap-dung"]),
+     [PY, "tools/dong_bo_skill.py", "--ap-dung"], True),
     # Thêm 01/09/2026 — ca thật: bác sĩ bị hook pre-commit CHẶN commit khoá công
     # Ed25519 vì ESD02 đỏ (bản EBM-Dashboards/tools/surveillance_scan.py lệch hash
     # với 2 bản sync/skills). Bộ ba này trước đó được giữ khớp BẰNG TAY — tức với
@@ -88,23 +103,23 @@ VIEC_MAY = [
     # bản đích có dòng riêng thì giữ lại chờ bác sĩ.
     ("Bộ ba scanner giám sát lệch hash (ESD02 chặn commit)",
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--im-khi-on"],
-     [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"]),
+     [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"], False),
     ("Cờ TẮT của plugin trùng bị app xoá",
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
-     [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"]),
+     [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"], False),
     # 22/08/2026 — cùng sự cố «app ghi đè settings.json» với dòng trên, nhưng khoá
     # KHÁC: đợt ghi đè xoá cả bản vá ngân sách danh sách skill, mà trước công cụ
     # này không gì khôi phục nó. Mất khoá đó là skill vẫn đủ trên đĩa nhưng model
     # không được cho biết chúng tồn tại — đúng triệu chứng «gọi skill không được».
     ("Khoá cấu hình người dùng bị app xoá",
      [PY, "tools/kiem_cau_hinh_nguoi_dung.py", "--im-khi-on"],
-     [PY, "tools/kiem_cau_hinh_nguoi_dung.py", "--ap-dung"]),
+     [PY, "tools/kiem_cau_hinh_nguoi_dung.py", "--ap-dung"], False),
     ("Kho plugin/skill thiếu so với mốc",
      [PY, "tools/kiem_plugin_day_du.py", "--im-khi-on"],
-     None),                      # cài lại plugin cần mạng + quyết định của bác sĩ
+     None, False),                # cài lại plugin cần mạng + quyết định của bác sĩ
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
-     None),                      # cấu hình secrets — không tự điền
+     None, False),                # cấu hình secrets — không tự điền
     # Thêm 23/08/2026. Bản cập nhật plugin tạo thư mục PHIÊN BẢN MỚI với file gốc
     # tiếng Anh; bản đã Việt hoá nằm lại thư mục cũ thành mồ côi. apply_vi.py là
     # thứ DUY NHẤT ghi tiếng Việt vào file plugin, mà trước hôm nay KHÔNG chỗ nào
@@ -121,10 +136,10 @@ VIEC_MAY = [
     # skill riêng của bác sĩ — công cụ nay có rào, nhưng quyết định vẫn thuộc bác sĩ.
     ("Bóng tiếng Anh trong ~/.claude/skills",
      [PY, "tools/don_bong_tieng_anh.py", "--im-khi-on"],
-     None),
+     None, False),
     ("Việt hoá plugin bị bản cập nhật trả về tiếng Anh",
      [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet", "--im-khi-on"],
-     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet"]),
+     [PY_YAML, "tools/vietnamize/apply_vi.py", "--tu-quet"], True),
 ]
 
 
@@ -228,10 +243,18 @@ def main() -> int:
     ap.add_argument("--im-khi-on", action="store_true", help="chỉ nói khi có việc")
     ap.add_argument("--bo-qua-lam-sang", action="store_true",
                     help="không chạy phần đo việc cần bác sĩ (nhanh hơn, cho hook)")
+    ap.add_argument("--pham-vi-cloud", action="store_true",
+                    help="chỉ chạy các mục an toàn/có ý nghĩa trên container cloud "
+                         "(chay_tren_cloud=True) — dùng cho hook SessionStart trên "
+                         "claude.ai/code, bỏ qua việc lâm sàng (bo-qua-lam-sang ngầm bật)")
     a = ap.parse_args()
+    if a.pham_vi_cloud:
+        a.bo_qua_lam_sang = True
+
+    viec = [v for v in VIEC_MAY if v[3]] if a.pham_vi_cloud else VIEC_MAY
 
     con_lai, da_sua = [], []
-    for nhan, lenh_kiem, lenh_sua in VIEC_MAY:
+    for nhan, lenh_kiem, lenh_sua, _cloud in viec:
         rc, _ = chay(lenh_kiem, nhan)
         if rc == 0:
             continue

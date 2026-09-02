@@ -38,6 +38,50 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   và **không bao giờ dùng plugin vừa cài**. Nay tra CẢ HAI kho: **31/43**; 12 mục còn lại là
   plugin thật sự chưa có trên máy này (⚪ có khai báo, không đỏ). Cùng họ «đo đúng, nhưng đo
   nhầm chỗ» của BH74.
+- **🔧 BA CHỖ HỞ "KHÉP KÍN" — đo và vá 02/09/2026 (BH90/91/92), theo yêu cầu bác sĩ "các
+  nhạc trưởng có cơ chế tự sửa chữa, tự gọi Agent, tự cập nhật".** Trước khi vá, tra thực tế
+  thay vì đoán: `_TU-SINH-AGENT.md`, hệ `so-cai-ghi-nho` và tự-rà C1–C9 của
+  `dieu-phoi-lam-sang.md` **đã hoạt động đúng** — không cần xây lại. Ba khoảng trống thật:
+  **(A) tự sửa chữa chưa từng tới CLOUD.** `tools/tu_sua_chua.py` là bộ tự vá lỗi máy móc
+  (skill lệch bản/lệch nguồn, Việt hoá bị plugin trả về tiếng Anh…) mà Mac/Windows chạy MỖI
+  PHIÊN qua `SessionStart` cục bộ — nhưng hook cloud (`session-start.sh`, dựng 01/09) chưa
+  từng gọi nó. Đo được ngay: **924 mô tả skill/lệnh bị 2 plugin vừa cài trả về tiếng Anh**,
+  đúng loại lỗi `apply_vi.py --tu-quet` sinh ra để tự vá, và trên cloud nó tái diễn ở MỌI
+  phiên (container mới mỗi lần) chứ không phải một lần. Không thể chạy TRỌN 9 mục của
+  `tu_sua_chua.py` trên container mới — 6/9 mục cần `moc_chuan_plugin.json`/`EBM-Dashboards`/
+  `.env` của máy sống lâu dài, chạy sẽ chỉ in báo động giả (đúng lỗi BH08). Đã thêm trường
+  `chay_tren_cloud` KHAI TƯỜNG MINH cho từng mục của `VIEC_MAY` (3/9 mục an toàn trên cloud:
+  khoá guard skill · đồng bộ nguồn skill · Việt hoá lại) và cờ lọc mới `--pham-vi-cloud`; hook
+  cloud nay gọi `tu_sua_chua.py --pham-vi-cloud --ap-dung` ở bước ⑤b. **Đo sau khi nối: 924
+  mô tả tiếng Anh → 0** (chỉ còn 1 skill MỚI chưa có bản dịch trong từ điển — khác hẳn "bị
+  plugin trả về", không phải hồi quy).
+  **(B) `dieu-phoi-lam-sang` chưa được DẠY tự sinh agent.** Cơ chế NỀN (`_TU-SINH-AGENT.md`
+  §1) đã trung lập giữa hai nhạc trưởng từ 2026-07-04 ("Bộ điều phối (LLM:
+  `dieu-phoi-nghien-cuu`/`dieu-phoi-lam-sang`)"), nhưng đo bằng grep thật: `dieu-phoi-lam-sang.md`
+  có **0 lần** nhắc `_TU-SINH-AGENT.md`/`generate_agent.py`, trong khi `dieu-phoi-nghien-cuu.md`
+  có nguyên một đoạn. Đã thêm mục "TỰ SINH AGENT" vào `dieu-phoi-lam-sang.md`, đặt SAU "CA
+  NGOÀI VÙNG PHỦ" có chủ ý — mặc định vẫn là nêu giới hạn + chuyển/hội chẩn cho MỘT ca đơn lẻ;
+  chỉ cân nhắc tự sinh khi khoảng trống **LẶP LẠI** qua nhiều ca, và agent tự sinh vẫn đi qua
+  **CÙNG** Cổng A/B như mọi agent khác — không có đường tắt cổng an toàn cho tuyến lâm sàng.
+  **(C) `_VONG-LAP-KHEP-KIN.md` chỉ mô tả MỘT tuyến.** File tổng quan 5 cơ chế (tự động hóa
+  cổng · tự sửa chữa · tự sinh agent · ghi sổ cái · tự cập nhật) từng viết hoàn toàn từ góc
+  `dieu-phoi-nghien-cuu` (docstring gốc: "Nhạc trưởng: dieu-phoi-nghien-cuu", 0 lần nhắc
+  `dieu-phoi-lam-sang`) dù tuyến lâm sàng đã có đủ cả 5 cơ chế thật sự chạy (BƯỚC 0 sàng cờ
+  đỏ · tự-rà C1–C9 + vòng tự sửa 2 tầng (Tầng 1 chèn instruction chạy lại · Tầng 2 ghi bền
+  `LEDGER_LESSONS.jsonl` mã `CLIN-SAFETYQ`) · Cổng A/B · `so-cai-ghi-nho` · `cap-nhat-guideline`).
+  Đã tổng quát hoá file: bảng ánh xạ 5 cơ chế sang HAI tuyến, sơ đồ ASCII RIÊNG cho vòng lâm
+  sàng (khác vòng nghiên cứu ở điểm dừng: BƯỚC 0 cờ đỏ → 5 bước EBM → Cổng A → theo dõi →
+  Cổng B, thay vì march G0→G10), và **nêu rõ khác biệt không được xoá nhoè**: cổng G nghiên
+  cứu có chữ ký mật mã HMAC theo vai trò (`gate_contract.py::ledger_approved()`), Cổng A/B
+  lâm sàng **KHÔNG có** lớp mật mã tương đương — chỉ có kỷ luật vận hành (đã tự ghi rõ ở
+  `dieu-phoi-lam-sang.md` §BƯỚC 0a từ trước). Trình bày hai tuyến song song mà không nói rõ
+  điều này sẽ ngầm gợi ý hai cổng nặng ký như nhau — sai.
+  **Khoá bằng BH90/BH91/BH92** (mỗi lock kiểm HÀNH VI trên file `.md`/`.py` đang sống, không
+  đếm chuỗi suông; đã kiểm bằng 3 phép đột biến/lock — 9 phép tổng cộng, cả 9 đều đỏ đúng chỗ
+  rồi phục hồi xanh). Bộ chốt bài học đi từ 89 → **92 mục**, 0 hồi quy trên các lock cũ (BH73/
+  BH74 từng vỡ giữa chừng vì `tu_sua_chua.VIEC_MAY` đổi từ 3-phần-tử sang 4-phần-tử — đã sửa
+  điểm unpack ở cả hai, đúng bài học nền: đổi CẤU TRÚC DỮ LIỆU dùng chung phải rà hết nơi tiêu
+  thụ, không chỉ nơi vừa sửa).
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời

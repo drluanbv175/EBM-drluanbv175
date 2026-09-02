@@ -3025,7 +3025,7 @@ def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
     if not goi:
         return False, ("tu_sua_chua KHÔNG gọi apply_vi — công cụ có mà không ai chạy "
                        "thì mỗi lần cập nhật plugin lại mất tiếng Việt (BH41)")
-    nhan, kiem, sua = goi[0]
+    nhan, kiem, sua = goi[0][:3]  # 02/09 (BH90): mục nay là 4-phần tử, thêm cờ chay_tren_cloud
     if not kiem or "--im-khi-on" not in kiem:
         return False, f"bước «{nhan}» thiếu --im-khi-on → sẽ ồn mỗi phiên"
     if not sua:
@@ -3074,7 +3074,7 @@ def bh74_catalog_phai_do_dung_mat_dang_phuc_vu() -> tuple[bool, str]:
             if any("apply_vi" in str(x) for x in (v[1] or []) + (v[2] or []))]
     if not viet:
         return False, "tu_sua_chua không còn gọi apply_vi (xem BH73)"
-    nhan, kiem, sua = viet[0]
+    nhan, kiem, sua = viet[0][:3]  # 02/09 (BH90): mục nay là 4-phần tử, thêm cờ chay_tren_cloud
     for ten, lenh in (("lệnh kiểm", kiem), ("lệnh sửa", sua)):
         if not lenh or "--tu-quet" not in lenh:
             return False, (f"{ten} của bước «{nhan}» thiếu --tu-quet ⇒ đọc catalog cũ, "
@@ -4278,6 +4278,238 @@ def bh89_worker_inventory_doc_ca_lenh_lan_skill():
                   "được lệnh thật mà vẫn nói rõ nguồn; khớp thẳng và lệnh lạ không bị hỏng theo")
 
 
+
+def bh90_tu_sua_chua_toi_cloud():
+    """02/09 — «tự sửa chữa» chưa từng tới CLOUD, dù Mac/Windows chạy nó MỖI PHIÊN qua
+    `SessionStart` cục bộ. Bác sĩ yêu cầu «các nhạc trưởng có cơ chế tự sửa chữa» — nhưng
+    hook cloud (dựng 01/09) chưa từng gọi `tools/tu_sua_chua.py`, nên trên container mới mỗi
+    phiên, lớp tự vá lỗi máy móc không hoạt động. Ca thật bắt được ngay: 924 mô tả skill/lệnh
+    bị các plugin vừa cài trả về tiếng Anh — đúng loại lỗi `apply_vi.py --tu-quet` sinh ra để
+    tự vá, và trên cloud nó tái diễn ở MỌI phiên (container mới), không phải một lần.
+
+    `tu_sua_chua.py` không thể chạy TRỌN 9 mục trên cloud: 6/9 mục cần `moc_chuan_plugin.json`/
+    `EBM-Dashboards`/`.env` riêng của máy sống lâu dài — chạy chúng trên container mới chỉ in
+    báo động giả «cần bác sĩ» cho thứ cloud không thể sửa (đúng lỗi BH08: biến "không áp dụng
+    ở đây" thành "có vấn đề"). Nên bản vá thêm cờ lọc `--pham-vi-cloud`, tiêu chuẩn theo trường
+    `chay_tren_cloud` đã khai TƯỜNG MINH trên từng mục của `VIEC_MAY` (không suy đoán).
+
+    Kiểm HÀNH VI (gọi thẳng `main()` với `chay()` đã thay bằng bản ghi lại lệnh, không thật sự
+    chạy subprocess nào — nhanh, ngoại tuyến, không phụ thuộc kho plugin/skill thật):
+      ① `--pham-vi-cloud` phải lọc ĐÚNG tập con `chay_tren_cloud=True` — không nhiều hơn,
+         không ít hơn — so với đếm trực tiếp trên `VIEC_MAY`.
+      ② KHÔNG có cờ thì mọi mục đều được xét (hành vi cũ không đổi).
+      ③ Hook cloud (`session-start.sh`) phải THẬT SỰ gọi `tu_sua_chua.py --pham-vi-cloud
+         --ap-dung` — có cờ lọc mà hook không gọi thì cơ chế vẫn không tới cloud, đúng kiểu
+         «nối dây một nửa» đã gặp ở BH70/BH74.
+    """
+    import importlib
+    import io
+    from contextlib import redirect_stdout
+
+    if str(REPO / "tools") not in sys.path:
+        sys.path.insert(0, str(REPO / "tools"))
+    tsc = importlib.import_module("tu_sua_chua")
+    importlib.reload(tsc)
+
+    tong = len(tsc.VIEC_MAY)
+    cloud_khai = sum(1 for v in tsc.VIEC_MAY if v[3])
+    if cloud_khai == 0 or cloud_khai == tong:
+        return False, "VIEC_MAY không còn khai chay_tren_cloud hỗn hợp — mất căn cứ để lọc"
+
+    goi = {"co_pham_vi": [], "khong_pham_vi": []}
+
+    def _gia(lenh, nhan):
+        return 0, ""
+
+    thuc_chay = tsc.chay
+    tsc.chay = _gia
+    try:
+        for cờ, khoa in ((["--pham-vi-cloud"], "co_pham_vi"), ([], "khong_pham_vi")):
+            import sys as _sys
+            cu_argv = _sys.argv
+            _sys.argv = ["tu_sua_chua.py", *cờ, "--bo-qua-lam-sang"]
+            try:
+                with redirect_stdout(io.StringIO()):
+                    tsc.main()
+            finally:
+                _sys.argv = cu_argv
+    finally:
+        tsc.chay = thuc_chay
+
+    # Đếm gián tiếp: patch _gia để ghi lại nhãn được gọi, chạy lại đúng cách.
+    ghi = {"nhan": []}
+
+    def _ghi(lenh, nhan):
+        ghi["nhan"].append(nhan)
+        return 0, ""
+
+    tsc.chay = _ghi
+    try:
+        import sys as _sys
+        cu_argv = _sys.argv
+        _sys.argv = ["tu_sua_chua.py", "--pham-vi-cloud", "--bo-qua-lam-sang"]
+        try:
+            with redirect_stdout(io.StringIO()):
+                tsc.main()
+        finally:
+            _sys.argv = cu_argv
+        so_loc = len(ghi["nhan"])
+
+        ghi["nhan"] = []
+        _sys.argv = ["tu_sua_chua.py", "--bo-qua-lam-sang"]
+        try:
+            with redirect_stdout(io.StringIO()):
+                tsc.main()
+        finally:
+            _sys.argv = cu_argv
+        so_day_du = len(ghi["nhan"])
+    finally:
+        tsc.chay = thuc_chay
+
+    if so_loc != cloud_khai:
+        return False, (f"--pham-vi-cloud lọc {so_loc} mục, khai báo chay_tren_cloud=True là "
+                        f"{cloud_khai} mục — cờ lọc SAI tập con")
+    if so_day_du != tong:
+        return False, (f"không có cờ mà chỉ xét {so_day_du}/{tong} mục — hành vi cũ (không lọc) "
+                        "đã bị đổi")
+
+    hook = REPO / ".claude/hooks/session-start.sh"
+    if not hook.exists():
+        return False, "thiếu .claude/hooks/session-start.sh — không kiểm được dây nối"
+    noi_dung = hook.read_text(encoding="utf-8")
+    if "tu_sua_chua.py" not in noi_dung:
+        return False, "hook cloud KHÔNG gọi tools/tu_sua_chua.py — tự sửa chữa vẫn chưa tới cloud"
+    if "--pham-vi-cloud" not in noi_dung:
+        return False, "hook cloud gọi tu_sua_chua.py nhưng thiếu --pham-vi-cloud — sẽ chạy cả 6 mục dựng báo động giả trên container mới"
+    # Dòng THI HÀNH thật (không phải mọi dòng nhắc tới tên file trong bình luận) —
+    # phải là dòng gọi `python3 tools/tu_sua_chua.py` kèm ĐỦ cả hai cờ trên CÙNG một dòng.
+    dong_goi = [d for d in noi_dung.splitlines()
+                if "python3 tools/tu_sua_chua.py" in d and not d.strip().startswith("#")]
+    if not any("--pham-vi-cloud" in d and "--ap-dung" in d for d in dong_goi):
+        return False, ("hook không có dòng THI HÀNH nào gọi "
+                        "`python3 tools/tu_sua_chua.py --pham-vi-cloud --ap-dung` — "
+                        "nhắc tên file trong bình luận không phải là nối dây")
+
+    return True, (f"--pham-vi-cloud lọc đúng {so_loc}/{tong} mục (chay_tren_cloud=True); "
+                  "không cờ vẫn xét đủ; hook cloud gọi đúng --pham-vi-cloud --ap-dung")
+
+
+
+def bh91_dieu_phoi_lam_sang_co_tu_sinh_agent():
+    """02/09 — bác sĩ yêu cầu «các nhạc trưởng có cơ chế tự sửa chữa, tự gọi Agent, tự cập
+    nhật» (số nhiều — CẢ HAI nhạc trưởng). Cơ chế NỀN (`_TU-SINH-AGENT.md` +
+    `tools/generate_agent.py`) vốn ĐÃ trung lập giữa hai nhạc trưởng ngay từ khi dựng —
+    §1 của `_TU-SINH-AGENT.md` ghi "Bộ điều phối (LLM: `dieu-phoi-nghien-cuu`/
+    `dieu-phoi-lam-sang`)" ở vai «Phát hiện khoảng trống». Nhưng đo bằng grep thật (không
+    suy đoán): `dieu-phoi-lam-sang.md` có **0 lần** nhắc "TỰ SINH AGENT"/`generate_agent`,
+    trong khi `dieu-phoi-nghien-cuu.md` có nguyên một đoạn mô tả quy trình. Nghĩa là cơ chế
+    CÓ nhưng chỉ một nhạc trưởng THỰC SỰ ĐƯỢC DẠY dùng nó — nhạc trưởng lâm sàng gặp khoảng
+    trống năng lực sẽ không biết cửa `_TU-SINH-AGENT.md` tồn tại.
+
+    Kiểm HÀNH VI trên file `.md` đang sống (không phải suy diễn từ tài liệu tổng quan):
+      ① `dieu-phoi-lam-sang.md` phải nhắc `_TU-SINH-AGENT.md` hoặc `generate_agent.py`.
+      ② Đoạn đó phải nằm SAU (trong file) đoạn "CA NGOÀI VÙNG PHỦ" — tự sinh chỉ là lựa
+         chọn THỨ HAI cho khoảng trống LẶP LẠI, không phải thay thế fallback một-lần đã có.
+      ③ Đoạn đó phải nêu RÕ agent tự sinh vẫn qua Cổng A/B (không có đường tắt cổng cứng
+         cho tuyến lâm sàng) — thiếu câu này là lặp đúng lỗi mà BH39 từng khoá ở tuyến
+         chứng cứ: thêm năng lực mới mà không buộc nó vào cổng an toàn sẵn có.
+      ④ File vẫn phải qua được `enforce_agent_guardrails.py`/`sync_agents_to_codex.py
+         --check` — thêm đoạn mới không được làm hỏng khung agent chuẩn.
+    """
+    import subprocess
+
+    p_ls = REPO / ".claude" / "agents" / "dieu-phoi-lam-sang.md"
+    if not p_ls.exists():
+        return False, "thiếu .claude/agents/dieu-phoi-lam-sang.md"
+    noi_dung = p_ls.read_text(encoding="utf-8")
+
+    vi_tri_sinh = None
+    for tu_khoa in ("_TU-SINH-AGENT.md", "generate_agent.py"):
+        i = noi_dung.find(tu_khoa)
+        if i != -1 and (vi_tri_sinh is None or i < vi_tri_sinh):
+            vi_tri_sinh = i
+    if vi_tri_sinh is None:
+        return False, ("dieu-phoi-lam-sang.md KHÔNG nhắc _TU-SINH-AGENT.md/generate_agent.py — "
+                       "cơ chế tự sinh agent NỀN đã trung lập nhưng tài liệu tuyến lâm sàng "
+                       "chưa dạy dùng nó (bất đối xứng với dieu-phoi-nghien-cuu.md)")
+
+    vi_tri_ngoai_vung_phu = noi_dung.find("CA NGOÀI VÙNG PHỦ")
+    if vi_tri_ngoai_vung_phu == -1:
+        return False, "mất luôn đoạn CA NGOÀI VÙNG PHỦ gốc — không còn fallback một-lần"
+    if vi_tri_sinh < vi_tri_ngoai_vung_phu:
+        return False, ("đoạn TỰ SINH AGENT nằm TRƯỚC CA NGOÀI VÙNG PHỦ — thứ tự sai: "
+                       "một ca đơn lẻ phải rơi vào fallback nêu-giới-hạn trước, tự sinh "
+                       "chỉ dành cho khoảng trống LẶP LẠI")
+
+    doan_sinh = noi_dung[vi_tri_sinh - 400: vi_tri_sinh + 1600]
+    if "Cổng A" not in doan_sinh or "Cổng B" not in doan_sinh:
+        return False, ("đoạn TỰ SINH AGENT không nhắc Cổng A/Cổng B — agent tự sinh có thể "
+                       "bị hiểu nhầm là được vượt cổng an toàn lâm sàng (đúng lớp lỗi BH39)")
+    if "LẶP LẠI" not in doan_sinh and "lặp lại" not in doan_sinh:
+        return False, "đoạn TỰ SINH AGENT không nói rõ điều kiện LẶP LẠI — rủi ro sinh cho ca đơn lẻ"
+
+    r = subprocess.run([sys.executable, str(REPO / "tools" / "sync_agents_to_codex.py"), "--check"],
+                        capture_output=True, text=True, timeout=60, cwd=REPO)
+    if r.returncode != 0:
+        out = (r.stdout or "") + (r.stderr or "")
+        return False, f"sync_agents_to_codex.py --check FAIL sau khi sửa dieu-phoi-lam-sang.md: {out[-300:]}"
+
+    return True, ("dieu-phoi-lam-sang.md nay dạy _TU-SINH-AGENT.md, đúng sau CA NGOÀI VÙNG "
+                  "PHỦ, buộc Cổng A/B, khung agent vẫn PASS sync_agents_to_codex --check")
+
+
+
+def bh92_vong_lap_khep_kin_phu_ca_hai_nhac_truong():
+    """02/09 — `_VONG-LAP-KHEP-KIN.md` mô tả "vòng khép kín" (tự động hóa cổng · tự sửa chữa ·
+    tự sinh agent · ghi sổ cái · tự cập nhật) nhưng CHỈ viết từ góc nhìn `dieu-phoi-nghien-cuu`
+    (docstring gốc: "Nhạc trưởng: dieu-phoi-nghien-cuu", 0 lần nhắc `dieu-phoi-lam-sang`) — dù
+    tuyến lâm sàng ĐÃ CÓ đủ 5 cơ chế thật sự chạy (BƯỚC 0 sàng cờ đỏ · tự-rà C1–C9 + vòng tự
+    sửa 2 tầng · Cổng A/B · so-cai-ghi-nho · cap-nhat-guideline), chỉ là tài liệu tổng quan
+    chưa từng nói tới. Bác sĩ yêu cầu "các nhạc trưởng [số nhiều] có cơ chế... khép kín" — tài
+    liệu vòng lặp một-tuyến là câu trả lời SAI SỰ THẬT về việc hệ đã có.
+
+    Kiểm HÀNH VI trên file `.md` đang sống:
+      ① phải nhắc `dieu-phoi-lam-sang` — không chỉ `dieu-phoi-nghien-cuu`.
+      ② phải có sơ đồ ASCII RIÊNG cho tuyến lâm sàng (không dùng chung một sơ đồ rồi nói
+         "tương tự" — mỗi tuyến có điểm dừng khác nhau: G-gates mật mã vs Cổng A/B kỷ luật
+         vận hành, đáng để vẽ tách biệt).
+      ③ phải nêu RÕ sự khác biệt về bảo đảm — Cổng A/B KHÔNG có chữ ký mật mã như G-gates —
+         nếu không, bảng ánh xạ song song sẽ ngầm gợi ý hai cổng nặng ký như nhau, một tuyên
+         bố sai đã bị chính `dieu-phoi-lam-sang.md` §BƯỚC 0a bác bỏ.
+      ④ vẫn phải giữ được cụm "Tự sinh agent" (điểm neo mà `_TU-SINH-AGENT.md` §6 tham chiếu
+         tới) — đổi cấu trúc không được làm gãy tham chiếu ngược.
+    """
+    p_vlkk = REPO / ".claude" / "agents" / "_VONG-LAP-KHEP-KIN.md"
+    if not p_vlkk.exists():
+        return False, "thiếu .claude/agents/_VONG-LAP-KHEP-KIN.md"
+    noi_dung = p_vlkk.read_text(encoding="utf-8")
+
+    if "dieu-phoi-lam-sang" not in noi_dung:
+        return False, ("_VONG-LAP-KHEP-KIN.md KHÔNG nhắc dieu-phoi-lam-sang — vẫn là tài liệu "
+                       "một-tuyến trong khi bác sĩ yêu cầu CẢ HAI nhạc trưởng")
+
+    so_do_ls = noi_dung.count("Sơ đồ vòng LÂM SÀNG")
+    if so_do_ls == 0:
+        return False, "thiếu sơ đồ ASCII riêng cho tuyến LÂM SÀNG (không được gộp chung sơ đồ)"
+
+    canh_bao_mat_ma = any(tu in noi_dung for tu in
+                          ("KHÔNG có chữ ký mật mã", "không có lớp mật mã", "KHÔNG có lớp mật mã"))
+    if not canh_bao_mat_ma:
+        return False, ("không nêu rõ Cổng A/B lâm sàng KHÔNG có chữ ký mật mã như G-gates — "
+                       "bảng ánh xạ song song sẽ ngầm gợi ý hai cổng nặng ký như nhau")
+
+    if "Tự sinh agent" not in noi_dung:
+        return False, ("mất cụm neo \"Tự sinh agent\" — _TU-SINH-AGENT.md §6 tham chiếu "
+                       "\"_VONG-LAP-KHEP-KIN.md §'Tự sinh agent'\" sẽ trỏ vào chỗ trống")
+
+    p_tsa = REPO / ".claude" / "agents" / "_TU-SINH-AGENT.md"
+    if p_tsa.exists() and "_VONG-LAP-KHEP-KIN.md" not in p_tsa.read_text(encoding="utf-8"):
+        return False, "_TU-SINH-AGENT.md không còn tham chiếu ngược _VONG-LAP-KHEP-KIN.md"
+
+    return True, ("_VONG-LAP-KHEP-KIN.md nay phủ cả hai nhạc trưởng, có sơ đồ lâm sàng riêng, "
+                  "nêu rõ khác biệt mật mã vs kỷ luật vận hành, giữ nguyên neo Tự sinh agent")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -4375,6 +4607,9 @@ BAI_HOC = [
     ("BH87", "02/09", "Cloud cài plugin theo sổ khai qua CLI, từ chối ngoài cloud, idempotent, medsci trùng vẫn tắt", bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that),
     ("BH88", "02/09", "Cửa vào nhạc trưởng mở cho lời bác sĩ thật; inventory tra CẢ HAI kho plugin", bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that),
     ("BH89", "02/09", "WorkerInventory đọc CẢ lệnh (commands/) lẫn skill; hiểu tiền tố đặt tên riêng của registry", bh89_worker_inventory_doc_ca_lenh_lan_skill),
+    ("BH90", "02/09", "Tự sửa chữa (tu_sua_chua) tới CLOUD qua --pham-vi-cloud, hook thật sự gọi", bh90_tu_sua_chua_toi_cloud),
+    ("BH91", "02/09", "dieu-phoi-lam-sang cũng dạy TỰ SINH AGENT — đối xứng với dieu-phoi-nghien-cuu, sau CA NGOÀI VÙNG PHỦ, buộc Cổng A/B", bh91_dieu_phoi_lam_sang_co_tu_sinh_agent),
+    ("BH92", "02/09", "Vòng lặp khép kín phủ CẢ HAI nhạc trưởng, sơ đồ lâm sàng riêng, nêu rõ khác biệt mật mã vs kỷ luật vận hành", bh92_vong_lap_khep_kin_phu_ca_hai_nhac_truong),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
