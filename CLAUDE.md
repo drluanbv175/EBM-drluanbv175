@@ -248,14 +248,29 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   trong container, dự phòng url git) · `git-thu-cong` (meta-pipe · pubmed-search: kho không có
   `marketplace.json` ⇒ sinh manifest + **lọc đúng 10 skill tra y văn** theo `cap_nhat_plugin_tay.py::CAU_HINH`,
   rồi cắt tỉa cache cho khớp bản Mac — CLI chép trọn 35 SKILL.md) · `chua-ro` (⚪ có khai báo, KHÔNG đỏ).
-  **Đo 02/09: 7/9 plugin cài xong trên cloud (605 + 73 + 72 + 14 + 10 + 3 + 1 SKILL.md), 53 lệnh tiếng Việt
-  chép vào `~/.claude/commands` bằng đúng `sync/copy-commands-vi.sh`.** Hai mục còn `chua-ro` —
-  `academic-research-skills` và `medsci-project` — vì nguồn không có trong repo, chỉ Mac biết: trên Mac chạy
-  `python3 tools/cai_plugin_phien_cloud.py --xuat-nguon` (đọc `known_marketplaces.json`, điền vào sổ khai, sao
-  lưu trước) rồi commit là cloud tự cài nốt ở phiên sau. **Ranh giới không đổi:** công cụ TỪ CHỐI `--ap-dung`
+  **Đo 02/09: 9/9 plugin cài xong trên cloud (605 + 73 + 72 + 60 + 14 + 10 + 4 + 3 + 1 SKILL.md), 53 lệnh
+  tiếng Việt chép vào `~/.claude/commands` bằng đúng `sync/copy-commands-vi.sh`.** Hai mục từng `chua-ro` —
+  `academic-research-skills` và `medsci-project` — đã có nguồn XÁC MINH cùng ngày qua WebSearch + clone đối
+  chiếu (không cần chờ `--xuat-nguon` từ Mac): `Imbad0202/academic-research-skills` (marketplace.json khớp
+  TUYỆT ĐỐI phiên bản patch `3.21.1` đã ghi ở mốc Mac) và `Aperivue/medsci-skills` (khai đủ 9 plugin
+  medsci-* — đúng cấu trúc đã ghi ở mục "Bộ `medsci-skills`" bên dưới). Kênh `--xuat-nguon` từ Mac vẫn còn
+  đó cho lần sau kho phồng thêm mục `chua-ro` mới.
+  **Ranh giới không đổi:** công cụ TỪ CHỐI `--ap-dung`
   khi không phải cloud (máy thật không bao giờ bị cài qua mạng — bài học 11/08), 8 medsci trùng có
   `can_o_may: []` nên không vào cloud, plugin trên cloud vẫn chỉ là worker (bảng định tuyến ở mục Điều phối
   không đổi). 38 skill mồ côi trong `~/.claude/skills` của Mac không nằm trong git nên cloud không có.
+  🔴 **CÀI THẬT LẦN ĐẦU LỘ LỖI REGISTRY CHƯA TỪNG CHẠM DỮ LIỆU THẬT (BH89).** `academic-research-skills`
+  trước 02/09 luôn ⚪ "chưa cài" trên MỌI máy đã kiểm — nhánh đối chiếu binding-registry↔plugin-thật CHƯA
+  TỪNG chạy tới dữ liệu thật của provider này. Cài xong lộ ra: 9/9 worker registry bind vào provider này
+  FAIL, vì HAI lý do cộng dồn — (a) plugin phơi năng lực bằng LỆNH (`commands/ars-*.md`, 16 file) chứ
+  không phải SKILL.md (4 SKILL.md thật của plugin phục vụ năng lực KHÁC), mà `WorkerInventory` chỉ từng
+  `rglob("SKILL.md")`; (b) registry đặt tên 9 unit đó `source-command-ars-<tên>` — quy ước ĐẶT TÊN riêng
+  của registry, không khớp tên file thật `ars-<tên>.md` (không tiền tố). Đã vá `worker_inventory.py`: lập
+  chỉ mục thêm `commands/*.md` (rglob đúng độ sâu marketplace/version, giống hệt cách SKILL.md đã dùng) +
+  thử bỏ tiền tố `source-command-` SAU KHI khớp thẳng thất bại, có nói rõ nguồn khớp qua tiền tố (không
+  giả vờ khớp thẳng). Đo: worker binding khả dụng đi từ 31/43 → **40/43** (3 còn lại là `bio-research`,
+  plugin thật sự chưa cài). Cùng họ «đo đúng, nhưng đo nhầm chỗ» của BH74/BH85. Khoá bằng **BH89**,
+  mutation-tested 2 phép (bỏ đọc `commands/` · bỏ nhánh bỏ-tiền-tố — cả hai đỏ đúng).
   ⚡ **MỘT LỆNH CHO TẤT CẢ (21/08):** `python3 tools/dong_bo_tat_ca.py` (thêm `--ap-dung` để làm
   thật; bấm đúp `sync/dong-bo-tat-ca.command` trên Mac, `.cmd` trên Windows). Phủ **8 làn theo thứ
   tự phụ thuộc**: an toàn → git → skill → agent → plugin → hook → bộ nhớ → kho công cụ; `--liet-ke-lan`

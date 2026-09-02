@@ -8,7 +8,7 @@
     "do_duoc_luc_ghi": "số skill ĐO ĐƯỢC lúc dựng sổ, chỉ để tham chiếu",
     "nguon": "nguồn để PHIÊN CLOUD tự cài: loai ∈ {git (marketplace add <url>) · thu-muc-phien (repo anh em đã clone trong container, dự phòng url_du_phong) · git-thu-cong (kho không có marketplace.json — sinh manifest + lọc skill theo tools/cap_nhat_plugin_tay.py CAU_HINH) · chua-ro (chờ --xuat-nguon từ Mac)}. Máy thật KHÔNG dùng trường này để tự cài — bài học 11/08 vẫn nguyên."
   },
-  "phien_ban_so_khai": 2,
+  "phien_ban_so_khai": 3,
   "plugin": {
     "academic-research-skills@academic-research-skills": {
       "can_o_may": [
@@ -24,8 +24,9 @@
         "Windows": 4
       },
       "nguon": {
-        "loai": "chua-ro",
-        "ghi_chu": "[CẦN BÁC SĨ] nguồn không có trong repo; chạy trên Mac: python3 tools/cai_plugin_phien_cloud.py --xuat-nguon (đọc ~/.claude/plugins/known_marketplaces.json) rồi commit"
+        "loai": "git",
+        "url": "https://github.com/Imbad0202/academic-research-skills",
+        "ghi_chu": "xác minh 02/09/2026 qua WebSearch + clone: marketplace.json name=academic-research-skills, plugin version=3.21.1 — KHỚP TUYỆT ĐỐI phiên bản patch đã ghi ở tools/moc_chuan_plugin.json (mốc Mac). 16 lệnh ars-* trên đĩa bao trùm cả 10 lệnh registry đã bind."
       }
     },
     "aipoch-medical-research@aipoch-medical-research": {
@@ -160,8 +161,9 @@
         "Windows": 59
       },
       "nguon": {
-        "loai": "chua-ro",
-        "ghi_chu": "[CẦN BÁC SĨ] nguồn không có trong repo; chạy trên Mac: python3 tools/cai_plugin_phien_cloud.py --xuat-nguon rồi commit"
+        "loai": "git",
+        "url": "https://github.com/Aperivue/medsci-skills",
+        "ghi_chu": "xác minh 02/09/2026 qua WebSearch + clone: marketplace.json name=medsci-skills, khai đủ 9 plugin medsci-* (literature/data/modeling/analysis/writing/review/submission/project/presentation) — đúng cấu trúc CLAUDE.md đã ghi (9 plugin cùng bộ skill byte-identical, chỉ medsci-project được giữ bật). 60 SKILL.md trên đĩa."
       }
     },
     "medsci-review@medsci-skills": {

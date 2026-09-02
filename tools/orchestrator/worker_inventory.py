@@ -21,8 +21,18 @@ from .plugin_ownership import PluginOwnershipRegistry, WorkerSpec
 # Gộp hai thứ thành một FAIL khiến cổng đỏ ở mọi máy không phải Mac (đo trên cloud:
 # 10 binding «không tìm thấy» chỉ vì ~/.codex/plugins/cache không tồn tại).
 LY_DO_CHUA_CAI = "plugin chưa cài trên máy này"
-LY_DO_THIEU_SKILL = "không tìm thấy SKILL.md trong provider đã khai"
+LY_DO_THIEU_SKILL = "không tìm thấy SKILL.md/lệnh trong provider đã khai"
 LY_DO_KHONG_QUY_TAC = "provider chưa có quy tắc kiểm runtime"
+
+# TIỀN TỐ TÊN UNIT cho worker kiểu LỆNH (không phải SKILL.md) — riêng của
+# academic-research-skills (02/09/2026, phát hiện khi lần đầu cài THẬT plugin này).
+# `plugin_ownership_registry.json` đặt tên 9 unit của provider này là
+# `source-command-ars-<tên>`, nhưng file thật trên đĩa là `commands/ars-<tên>.md`
+# (không có tiền tố) — registry chưa từng được đối chiếu với plugin cài thật, vì
+# trước 02/09 provider này luôn ⚪ "chưa cài" trên mọi máy đã kiểm. Đây là quy ước
+# ĐẶT TÊN của registry, không phải cách runtime khác đặt tên; không suy rộng cho
+# provider khác (đã kiểm: không provider nào khác dùng tiền tố này).
+TIEN_TO_LENH = "source-command-"
 
 
 @dataclass(frozen=True)
@@ -99,12 +109,30 @@ class WorkerInventory:
                     names.add(declared.casefold())
                 for name in names:
                     index.setdefault(name, skill_file)
+            # Một plugin có thể phơi năng lực bằng LỆNH (`commands/*.md`) thay vì SKILL.md —
+            # đo được ở academic-research-skills: 4 SKILL.md ở gốc + 16 lệnh trong `commands/`,
+            # và toàn bộ 9 worker registry bind vào ĐỀU trỏ lệnh, không trỏ skill. `rglob`
+            # (không phải `root / "commands"`) vì `provider_roots` trỏ THƯ MỤC MARKETPLACE —
+            # nội dung plugin thật nằm sâu thêm một cấp phiên bản (`<provider>/<version>/commands/`),
+            # đúng cách SKILL.md ở trên cũng phải rglob thay vì `root.glob("SKILL.md")`.
+            for cmd_file in root.rglob("commands/*.md"):
+                if ".git" in cmd_file.parts or "__pycache__" in cmd_file.parts:
+                    continue
+                index.setdefault(cmd_file.stem.casefold(), cmd_file)
         return index
 
     def locate(self, worker: WorkerSpec) -> WorkerAvailability:
-        path = self._index(worker.provider).get(worker.unit.casefold())
+        muc_luc = self._index(worker.provider)
+        unit = worker.unit.casefold()
+        path = muc_luc.get(unit)
+        nguon = "SKILL.md khả dụng"
+        if path is None and unit.startswith(TIEN_TO_LENH):
+            # Quy ước đặt tên riêng của registry (xem TIEN_TO_LENH) — không phải cách
+            # runtime đặt tên; chỉ thử bỏ tiền tố SAU khi khớp thẳng đã thất bại.
+            path = muc_luc.get(unit[len(TIEN_TO_LENH):])
+            nguon = "lệnh khả dụng (registry đặt tên có tiền tố source-command-)"
         if path is not None:
-            return WorkerAvailability(worker.key, True, str(path), "SKILL.md khả dụng")
+            return WorkerAvailability(worker.key, True, str(path), nguon)
         roots = self.provider_roots.get(worker.provider, ())
         if not roots:
             return WorkerAvailability(worker.key, False, reason=LY_DO_KHONG_QUY_TAC)
