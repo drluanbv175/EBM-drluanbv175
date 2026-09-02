@@ -113,10 +113,15 @@ def main() -> int:
     #     nếu không chốt báo «chưa đặt» cho khoá vốn đã đúng rồi xúi ghi đè.
     # Thứ tự: có bản .local thì đi tiếp; không có thì mới xét chuyện dựng file.
     co_local = (SETTINGS.parent / "settings.local.json").is_file()
-    if not SETTINGS.exists() and not co_local:
-        if not (a.tao_neu_thieu and a.ap_dung):
+    if not SETTINGS.exists():
+        if a.tao_neu_thieu and a.ap_dung:
+            pass                      # phiên cloud: dựng file rồi ghi khoá (dưới)
+        elif co_local:
+            co_local = True           # có bản .local: ĐỌC TIẾP, đừng bỏ qua
+        else:
             print(f"⚠ Máy này chưa có {SETTINGS} — bỏ qua.", file=sys.stderr)
             return 0
+    if not SETTINGS.exists() and a.tao_neu_thieu and a.ap_dung:
         try:
             SETTINGS.parent.mkdir(parents=True, exist_ok=True)
             SETTINGS.write_text("{}\n", encoding="utf-8", newline="\n")

@@ -3800,6 +3800,12 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
             "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
         shutil.copy2(REPO / "tools/kiem_cau_hinh_nguoi_dung.py", P / "tools/kiem_cau_hinh_nguoi_dung.py")
+        # 02/09/2026 — kiem_cau_hinh_nguoi_dung nay import `doc_settings` (đọc gộp
+        # settings.json + settings.local.json). Thiếu file này trong fixture thì công
+        # cụ chết ngay ở import, settings.json không được tạo, và chốt báo đúng —
+        # nhưng báo về một khiếm khuyết của FIXTURE chứ không phải của mã. Đây là
+        # bài học BH70 lặp lại: bộ đồng bộ không được trỏ vào thứ không có mặt.
+        shutil.copy2(REPO / "tools/doc_settings.py", P / "tools/doc_settings.py")
         shutil.copy2(REPO / "tools/ban_sao_tran.py", P / "tools/ban_sao_tran.py")
         # Làn ③ thật (không stub): hook phải nối được cả hai runtime bằng đúng công cụ
         # bác sĩ dùng trên máy — ba file này thuần stdlib, chạy trong fixture ~0,3 s.
