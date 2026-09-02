@@ -4813,6 +4813,130 @@ def bh96_orchestrator_b2_phai_bat_strict_sources():
                   "trước B4; tuyến xuat_goi_cap_nhat không tụt lại")
 
 
+
+def bh97_sap_rong_khong_duoc_khoa_bang_chu_ky():
+    """02/09 — `approve_gate._g4_sections_still_draft()` là chốt gác TRƯỚC-KHI-KÝ của G4, nhưng
+    `if start is None: continue` khiến mục BẮT BUỘC VẮNG MẶT bị bỏ qua im lặng. Đo thật trước
+    khi vá: `_g4_sections_still_draft("")` trả **`[]`** (SAP RỖNG đi qua sạch) và xoá hẳn tiêu
+    đề §1 cũng trả `[]`. G4 là cổng **KHOÁ SAP bằng chữ ký**: khoá một bản rỗng thì mọi phân
+    tích về sau lệch khỏi chính SAP đã khoá mà không ai thấy — đúng loại sai lệch G4 sinh ra để
+    ngăn (chữ ký mật mã chỉ bảo vệ TOÀN VẸN nội dung, không bảo đảm nội dung ĐÚNG).
+
+    Nhượng bộ gốc là ĐÚNG và phải giữ: thiết kế không dùng một mục nào đó (định tính dùng §5
+    CHIẾN LƯỢC MÃ HOÁ thay vì PHÂN TÍCH ĐA BIẾN) không phải lỗi. Nên ranh giới là VẮNG MỘT VÀI
+    (cho qua) vs VẮNG SẠCH (chặn) — không cần biết `design`, nên không phải đổi chữ ký hàm.
+
+    Kiểm HÀNH VI trên mã sống của repo y khoa (⚪ khi repo vắng — không suy đoán):
+      ① SAP rỗng ⇒ CHẶN   ② vắng đúng một mục ⇒ vẫn cho qua (biến thể thiết kế hợp lệ)
+      ③ đủ mục, còn `[CẦN` ⇒ vẫn chặn đúng như cũ (không phá hành vi gốc)
+    """
+    import importlib.util as _iu
+
+    ag = REPO / "medical-ebm-automation" / "tools" / "approve_gate.py"
+    if not ag.exists():
+        return True, "⚪ repo y khoa vắng mặt trên cây này — không kiểm được (không suy đoán)"
+
+    spec = _iu.spec_from_file_location("_bh97_ag", ag)
+    m = _iu.module_from_spec(spec)
+    sys.modules["_bh97_ag"] = m
+    try:
+        spec.loader.exec_module(m)
+    except Exception as e:  # noqa: BLE001 — thiếu dependency của repo kia không phải lỗi bài học
+        return True, f"⚪ không nạp được approve_gate ({type(e).__name__}) — không kết luận"
+
+    f = m._g4_sections_still_draft
+    if not f(""):
+        return False, ("SAP RỖNG vẫn đi qua chốt trước-khi-ký của G4 — cổng sẽ KHOÁ BẰNG CHỮ KÝ "
+                       "một bản rỗng, và mọi phân tích sau đó lệch khỏi SAP đã khoá")
+    day_du = ("## §1 a\nok\n## §2 b\nok\n## §5 c\nok\n## §10 d\nok")
+    if f(day_du):
+        return False, f"SAP ĐỦ MỤC, đã điền mà vẫn bị chặn — dương tính giả: {f(day_du)}"
+    thieu_mot = "## §2 b\nok\n## §5 c\nok\n## §10 d\nok"
+    if f(thieu_mot):
+        return False, ("thiếu ĐÚNG MỘT mục đã bị chặn — mất nhượng bộ cho biến thể thiết kế "
+                       "(định tính dùng §5 khác), sẽ chặn oan SAP hợp lệ")
+    con_can = "## §1 a\n[CẦN BÁC SĨ]\n## §2 b\nok\n## §5 c\nok\n## §10 d\nok"
+    if not f(con_can):
+        return False, "SAP còn placeholder [CẦN mà không bị chặn — mất hành vi gốc của chốt"
+
+    return True, ("SAP rỗng bị chặn; thiếu một mục vẫn cho qua (biến thể thiết kế); "
+                  "placeholder [CẦN vẫn chặn như cũ")
+
+
+
+def bh98_bien_nhan_guardrail_lam_sang():
+    """02/09 — `clinical_checkpoint.guardrail_passed` chỉ kiểm chuỗi bắt đầu bằng "ĐẠT", tức
+    LỜI TỰ KHAI của mô hình về chính nó. Hệ quả đã được chính file đó tự khai ở docstring:
+    **một guardrail bị bỏ qua trong im lặng KHÔNG phân biệt được với một guardrail đã chạy và
+    ĐẠT.** Trong khi đó bằng chứng THẬT đã tồn tại sẵn mà chưa ai đối chiếu:
+    `observability/APPRAISALS.jsonl` do bộ chấm XÁC ĐỊNH `tools/eval/run_eval.py` ghi.
+
+    Bản vá KHÔNG bắt buộc biên nhận (luồng lâm sàng thật hôm nay chưa có đường ghi sổ đó ⇒ bắt
+    buộc ngay là fail-closed lên điều kiện bất khả thi, cổng sẽ bị tắt trong một tuần). Nó tạo
+    ba mức và bắt đúng mức giữa — **biên nhận BỊA**:
+      ① không dẫn biên nhận      ⇒ hợp lệ, nhưng báo rõ `CHI_LA_TU_KHAI_CUA_MO_HINH`
+      ② dẫn biên nhận CÓ THẬT    ⇒ `CO_BIEN_NHAN_MAY_GHI`
+      ③ dẫn biên nhận KHÔNG CÓ   ⇒ VI PHẠM `GUARDRAIL_RECEIPT_UNRESOLVABLE`
+      ④ KHÔNG TÌM THẤY SỔ        ⇒ TUYỆT ĐỐI không kết luận (BH08) — nếu không, mọi biên nhận
+        hợp lệ sẽ bị kết luận là bịa trên máy có bố cục thư mục khác.
+    """
+    import importlib.util as _iu
+    import os
+    import tempfile
+
+    cc = REPO / "medical-ebm-automation" / "tools" / "clinical_checkpoint.py"
+    if not cc.exists():
+        return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
+    spec = _iu.spec_from_file_location("_bh98_cc", cc)
+    m = _iu.module_from_spec(spec)
+    sys.modules["_bh98_cc"] = m
+    try:
+        spec.loader.exec_module(m)
+    except Exception as e:  # noqa: BLE001
+        return True, f"⚪ không nạp được clinical_checkpoint ({type(e).__name__})"
+
+    if not hasattr(m, "_so_bien_nhan"):
+        return False, ("mất cơ chế biên nhận guardrail — 'ĐẠT' lại thành lời tự khai không "
+                       "phân biệt được với guardrail bị bỏ qua im lặng")
+
+    def _khoi(g: str) -> str:
+        return ("## CHECKPOINT [2026-09-02] — đề tài/ca: THU-NGHIEM\n"
+                "- cong_vua_qua: A\n- ngay: 2026-09-02\n- loai_nhiem_vu: lam_sang\n"
+                "- san_pham_vua_xong: goi\n- danh_muc_do_con_lai: (khong)\n"
+                "- buoc_ke: theo doi\n- agent_ghi: so-cai-ghi-nho\n"
+                f"- guardrail_dau_ra: {g}\n")
+
+    def _ma(g: str) -> list[str]:
+        return [v.code for v in m.validate_entries(m.parse_checkpoint_log(_khoi(g)))]
+
+    with tempfile.TemporaryDirectory() as td:
+        so = Path(td) / "APPRAISALS.jsonl"
+        so.write_text('{"id": "APPRAISAL-that-0001"}\n', encoding="utf-8")
+        cu = os.environ.get("EBM_APPRAISALS_PATH")
+        os.environ["EBM_APPRAISALS_PATH"] = str(so)
+        try:
+            if "GUARDRAIL_RECEIPT_UNRESOLVABLE" in _ma("ĐẠT"):
+                return False, "không dẫn biên nhận mà bị coi là bịa — chặn oan mọi khối cũ"
+            if "GUARDRAIL_RECEIPT_UNRESOLVABLE" in _ma("ĐẠT [bien-nhan: APPRAISAL-that-0001]"):
+                return False, "biên nhận CÓ THẬT trong sổ vẫn bị coi là bịa — dương tính giả"
+            if "GUARDRAIL_RECEIPT_UNRESOLVABLE" not in _ma("ĐẠT [bien-nhan: APPRAISAL-bia-9]"):
+                return False, ("biên nhận BỊA KHÔNG bị bắt — tạo vẻ ngoài có bằng chứng máy ghi "
+                                "trong khi không có (cùng lớp BH27)")
+            # ④ sổ không tìm thấy ⇒ CHƯA BIẾT, không được kết luận
+            os.environ["EBM_APPRAISALS_PATH"] = str(Path(td) / "khong-ton-tai.jsonl")
+            if "GUARDRAIL_RECEIPT_UNRESOLVABLE" in _ma("ĐẠT [bien-nhan: APPRAISAL-that-0001]"):
+                return False, ("KHÔNG tìm thấy sổ mà vẫn kết luận biên nhận là bịa — biến CHƯA "
+                                "BIẾT thành CÓ VẤN ĐỀ (BH08); trên máy bố cục khác sẽ chặn oan hết")
+        finally:
+            if cu is None:
+                os.environ.pop("EBM_APPRAISALS_PATH", None)
+            else:
+                os.environ["EBM_APPRAISALS_PATH"] = cu
+
+    return True, ("biên nhận bịa bị bắt; biên nhận thật và khối không-dẫn vẫn thông; "
+                  "không tìm thấy sổ ⇒ không kết luận (BH08)")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -4917,6 +5041,8 @@ BAI_HOC = [
     ("BH94", "02/09", "Máy thiếu dữ liệu thật KHÔNG được ghi đè artifact bằng chứng (chặn đi lùi, thông chiều đi lên)", bh94_khong_ghi_de_bang_chung_bang_may_thieu_du_lieu),
     ("BH95", "02/09", "Verdict phải khai ĐÚNG phạm vi đã chấm — 'pass' của cầu rule-based không phải 'đạt cả 2 lớp'", bh95_verdict_phai_khai_dung_pham_vi_da_cham),
     ("BH96", "02/09", "Cổng B2 của ops/orchestrator phải bật --strict-sources — hai tuyến xuất bản không được lệch", bh96_orchestrator_b2_phai_bat_strict_sources),
+    ("BH97", "02/09", "SAP RỖNG không được khoá bằng chữ ký G4 — vắng sạch mục bắt buộc là tài liệu hỏng, không phải biến thể thiết kế", bh97_sap_rong_khong_duoc_khoa_bang_chu_ky),
+    ("BH98", "02/09", "Biên nhận guardrail lâm sàng: bịa thì bị bắt, thật thì thông, không có sổ thì KHÔNG kết luận", bh98_bien_nhan_guardrail_lam_sang),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

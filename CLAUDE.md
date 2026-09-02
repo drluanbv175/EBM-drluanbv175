@@ -154,6 +154,48 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   cây dữ liệu ngoài git ⇒ **0 tham chiếu hỏng thật**. Xây nó bây giờ là dựng một máy phát
   nhiễu. *Bài học: một khuyến nghị của kiểm toán phải được KIỂM LẠI trước khi thi công, nhất
   là khi chính bản kiểm toán đó đã đo trên cây lạc hậu.*
+- **🔒 HAI CỔNG NỮA ĐƯỢC SIẾT — vá 02/09/2026 (BH97/BH98), repo y khoa.**
+  **(A) SAP RỖNG không được khoá bằng chữ ký G4 (BH97).** `approve_gate._g4_sections_still_draft()`
+  là chốt gác nội-dung DUY NHẤT trước khi ký G4, nhưng `if start is None: continue` bỏ qua im
+  lặng mục bắt buộc VẮNG MẶT. Đo trước khi vá: `_g4_sections_still_draft("")` trả **`[]`** —
+  SAP rỗng đi qua sạch; xoá hẳn tiêu đề §1 cũng trả `[]`. G4 là cổng **KHOÁ SAP bằng chữ ký**:
+  khoá một bản rỗng thì mọi phân tích về sau lệch khỏi chính SAP đã khoá mà không ai thấy —
+  đúng loại sai lệch G4 sinh ra để ngăn (chữ ký bảo vệ TOÀN VẸN nội dung, không bảo đảm nội
+  dung ĐỦ). Nhượng bộ gốc GIỮ NGUYÊN: thiết kế không dùng một mục (định tính dùng §5 CHIẾN
+  LƯỢC MÃ HOÁ thay vì PHÂN TÍCH ĐA BIẾN) là hợp lệ ⇒ ranh giới là **thiếu MỘT VÀI mục (cho
+  qua) vs VẮNG SẠCH (chặn)**, không cần biết `design` nên không phải đổi chữ ký hàm.
+  Hai fixture viết tay trong `test_approval_ledger.py` bị chặn đúng ⇒ **sửa fixture cho HỢP LỆ,
+  không nới assertion** — đúng tiền lệ đợt siết 24/08.
+  **(B) Biên nhận guardrail lâm sàng (BH98).** `clinical_checkpoint.guardrail_passed` chỉ kiểm
+  chuỗi bắt đầu bằng `"ĐẠT"` — lời TỰ KHAI của mô hình về chính nó; chính docstring file đó đã
+  tự khai hệ quả: **guardrail bị bỏ qua im lặng KHÔNG phân biệt được với guardrail đã chạy và
+  ĐẠT.** Bằng chứng THẬT đã có sẵn mà chưa ai đối chiếu: `observability/APPRAISALS.jsonl` do bộ
+  chấm XÁC ĐỊNH `tools/eval/run_eval.py` ghi. Nay khối checkpoint dẫn được id đó dạng
+  `ĐẠT [bien-nhan: <id>]`, cho **ba mức** thay vì một: không dẫn ⇒ hợp lệ nhưng báo rõ
+  `CHI_LA_TU_KHAI_CUA_MO_HINH` · dẫn id CÓ THẬT ⇒ `CO_BIEN_NHAN_MAY_GHI` · dẫn id KHÔNG CÓ ⇒
+  **vi phạm `GUARDRAIL_RECEIPT_UNRESOLVABLE`**.
+  ⚠️ **CỐ Ý KHÔNG BẮT BUỘC** — hôm nay chưa đường nào trong luồng lâm sàng THẬT ghi sổ đó (chỉ
+  `tools/orchestrator/`, vốn tách rời, và test). Bắt buộc ngay là fail-closed lên điều kiện
+  BẤT KHẢ THI, và cổng đó sẽ bị tắt trong một tuần. Mức GIỮA mới là thứ đáng giá: **biên nhận
+  BỊA bị bắt**, vì một id không phân giải được còn xấu hơn không dẫn gì — nó tạo VẺ NGOÀI có
+  bằng chứng máy ghi (cùng lớp BH27).
+  ⚠️ **Không tìm thấy sổ ⇒ trả `None`, KHÔNG phải tập rỗng.** Hai repo lồng nhau qua symlink nên
+  đường dẫn đổi tuỳ cách gọi; coi «không thấy sổ» thành «không có id nào» sẽ kết luận MỌI biên
+  nhận hợp lệ là bịa — biến CHƯA BIẾT thành CÓ VẤN ĐỀ (BH08). `EBM_APPRAISALS_PATH` trỏ tay khi
+  bố cục lạ. `format_report` nay in **mức bảo đảm từng cổng**, để chữ "ĐẠT" không che mất khoảng
+  cách giữa *tự khai* và *có vật đối chứng máy ghi*.
+  **Kiểm hồi quy:** BH97 (2 đột biến) · BH98 (3 đột biến — phép thứ hai đầu tiên KHÔNG bắt được
+  vì nó đột biến NHÁNH MÀ TEST KHÔNG ĐI QUA; đổi sang đúng nhánh env-override thì đỏ ngay. Ghi
+  lại vì đây là bẫy thật của kiểm đột biến: *một đột biến không bị bắt có thể là lỗi của phép
+  thử, không phải bằng chứng chốt yếu*). Không hồi quy: cùng bộ chọn `-k "approve or g4 or
+  ledger or gate"` fail ĐÚNG 18 test trước và sau (đều có sẵn trong container vì thiếu
+  numpy/pandas), 944 passed.
+  🔑 **Ed25519 — hạ tầng ĐÃ ĐỦ, chỉ còn việc của bác sĩ.** Đã kiểm: `gate_contract.py` có
+  `sign_approval_ed25519()`, scheme `ed1:role:<hex>`, khoá riêng ngoài repo, khoá công
+  `config/gate_ed25519_pubkeys/` (hiện **trống** — chưa phát khoá nào). Nút `Phat Khoa Ed25519.command`
+  tự ghi rõ *"★ CHỈ BÁC SĨ TỰ BẤM — không nhờ agent chạy hộ: khoá riêng phải sinh ngoài tầm với
+  của agent thì chữ ký mới là bằng chứng độc lập thật."* ⇒ **agent KHÔNG được làm bước này**, và
+  đó là lý do đúng, không phải hạn chế kỹ thuật.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời
