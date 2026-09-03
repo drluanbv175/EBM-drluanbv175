@@ -313,6 +313,21 @@ def check_target(target_dir: Path, target_label: str) -> list[str]:
         if not (target_dir / infra).exists():
             errors.append(f"{target_label}: thieu so ha tang {infra}")
 
+    # SUA 2026-09-03 (Workflow doi khang da-agent, phat hien #7): vong for o
+    # tren (REQUIRED_INFRA) va vong for tren dong 290-297 (expected.items(),
+    # bao trum toan bo source_infra_paths()) da cung bat "thieu" hai lan --
+    # nhung khong noi nao bat chieu NGUOC: mot file .md mo coi con nam lai
+    # trong target_dir (source bi doi ten/xoa nhung mirror cu van con) khong
+    # bao gio bi phat hien, khac han cach agent .toml da kiem CA HAI chieu o
+    # dong 299-306 (missing + extra). Dong xung voi extra_agents: chi can
+    # them chieu "extra" cho ha tang, vi chieu "missing" da du roi (thua con
+    # lam trung thong diep loi).
+    source_infra_names = {path.name for path in source_infra_paths()}
+    target_infra_names = {path.name for path in target_dir.glob("*.md")}
+    extra_infra = sorted(target_infra_names - source_infra_names)
+    if extra_infra:
+        errors.append(f"{target_label}: so ha tang mo coi {', '.join(extra_infra)}")
+
     for toml_path in sorted(target_dir.glob("*.toml")):
         try:
             data = parse_generated_toml(toml_path.read_text(encoding="utf-8"))
