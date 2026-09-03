@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import check_claude_codex_sync_health as sync_health
+import sync_agents_to_codex as sync
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -186,6 +187,30 @@ def check_agent_sync_health() -> dict[str, Any]:
     }
 
 
+def check_agent_files_git_tracked() -> dict[str, Any]:
+    """Bắt lỗ hổng mà `check_agent_sync_health()`/`check_tracked_contract_files()`
+    không canh: một file `.claude/agents/*.md` có mặt trên đĩa (nên
+    `sync.source_agent_paths()` đếm được, `evaluate_sync_health()` PASS vì so
+    sánh đĩa-với-đĩa — hoàn toàn không đụng tới git) nhưng đã bị `git rm
+    --cached` khỏi git index. Một checkout mới/clone mới sẽ KHÔNG có file đó —
+    mất trắng một agent — mà không cổng nào từng bắt được, vì
+    `check_tracked_contract_files()` chỉ canh một danh sách nhỏ file hạ tầng
+    CỐ ĐỊNH (AGENTS.md, CLAUDE.md, clinical_runtime/*...), không canh từng
+    file agent riêng lẻ (số lượng thay đổi mỗi khi thêm/bớt agent)."""
+    tracked = _git_ls_files()
+    disk_paths = sync.source_agent_paths() + sync.source_infra_paths()
+    untracked = sorted(
+        p.relative_to(ROOT).as_posix()
+        for p in disk_paths
+        if p.relative_to(ROOT).as_posix() not in tracked
+    )
+    return {
+        "name": "agent_files_git_tracked",
+        "status": "PASS" if not untracked else "FAIL",
+        "untracked_files": untracked,
+    }
+
+
 def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
     path = ROOT / "tools" / "upgrade_verify.py"
     required = [
@@ -210,6 +235,7 @@ def run_verification() -> dict[str, Any]:
         check_medical_docs(),
         check_tracked_contract_files(),
         check_agent_sync_health(),
+        check_agent_files_git_tracked(),
         check_upgrade_verify_wires_alignment(),
     ]
     # «NGOAI-PHAM-VI» (chỉ phát khi bản sao trần) không phải FAIL: phần kiểm được
