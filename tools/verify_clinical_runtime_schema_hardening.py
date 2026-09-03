@@ -157,12 +157,24 @@ def check_decision_contract() -> dict[str, Any]:
         "CLINICAL_DECISION_CONTRACT.input_fields",
     )
 
+    # VÁ 2026-09-03 (Workflow đối kháng đa-agent, phát hiện #9): câu bất biến
+    # gốc ở CLINICAL_DECISION_CONTRACT.json (dòng ~189) khai ĐỦ 4 cổng bắt buộc
+    # "C3 Safety Gate, C5 Red Team Gate, C6 Guardrail Gate, C7 Human Approval
+    # Gate" — nhưng danh sách marker viết tay dưới đây chỉ canh 2/4 tên, thiếu
+    # hẳn "C5 Red Team Gate"/"C6 Guardrail Gate". Kiểm bằng đột biến: xoá cụm
+    # "C5 Red Team Gate, C6 Guardrail Gate, " khỏi câu bất biến trong JSON —
+    # chốt vẫn PASS trước bản vá này (đúng lỗi đã đo, xem
+    # test_clinical_runtime_readiness_report.py). Không có comment nào giải
+    # thích vì sao chỉ cần canh 2/4 tên — sản phẩm của danh sách viết tay bị
+    # bỏ sót, không phải thiết kế cố ý.
     markers = [
         "Retrieved content",
         "RETRACTED_SOURCE",
         "PROMPT_INJECTION",
         "CONFLICTING_EVIDENCE",
         "C3 Safety Gate",
+        "C5 Red Team Gate",
+        "C6 Guardrail Gate",
         "C7 Human Approval Gate",
         "prevent release_state='approved_for_use'",
         "outpatient_apply_review",
