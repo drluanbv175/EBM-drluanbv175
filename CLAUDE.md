@@ -243,6 +243,31 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   📌 **Việc vận hành còn lại, thẩm quyền bác sĩ:** phát khoá Ed25519 cho `DATA_MANAGER` (G5) —
   vai duy nhất chưa có khoá, và nó thiếu vì lỗi công cụ đã vá 02/09, không phải bác sĩ quên.
   Hướng dẫn: `HUONG-DAN-PHAT-KHOA-ED25519.md`.
+- **🔴 MỘT MODULE THIẾU LÀM MÙ CẢ BỘ KIỂM CANONICAL — vá 03/09/2026 (BH100).**
+  `tools/verify_controlled_research_automation.py` — công cụ mà CHÍNH mục này chỉ đích danh
+  để kiểm WHO TRDS 1.3.1, ICMJE 1/2026, 6 cổng cứng canonical và QUADAS-3 — **chết ngay lúc
+  nạp** ở `import annex2_quality_gate` (dòng 74). Module đó **chưa bao giờ tồn tại**: không có
+  trong cây làm việc, không có trên `origin/master` của CẢ HAI repo, và chuỗi «annex2» xuất
+  hiện ĐÚNG **0 lần** trong toàn bộ repo y khoa. Hệ quả: **không một trục nào trong 764 dòng
+  từng chạy** — mọi lần ai đó «đã chạy verifier» chỉ nhận về một traceback.
+  **Tầng thiệt hại thứ hai nặng hơn:** `dao-duc-dang-ky.md` khai đây là *«hợp đồng CHẠY ĐƯỢC
+  tại G1/G2 … Thiếu trường thật hoặc còn nhãn [CẦN…] → **BLOCK**, không được mở G1/G2»* và chỉ
+  đích danh file. Tức doctrine mô tả **một cổng không có thật**, còn thử nghiệm
+  decentralised/pragmatic/RWD thì đi qua G1/G2 mà máy không kiểm một trường Annex 2 nào —
+  đúng họ **BH27**, và nguy hiểm hơn không có cổng vì nó làm người đọc thôi tự kiểm.
+  **Đã vá:** rào lời gọi `import`; thiếu module ⇒ trục Annex 2 báo
+  `ich_e6_r3_annex2.trang_thai = KHONG_CO_BO_THI_HANH` và **FAIL** — ⚠️ **FAIL chứ KHÔNG phải
+  ⚪**, vì ⚪ dành cho thiếu NGUYÊN LIỆU trên máy đang chạy (BH08/BH85), còn ở đây doctrine
+  KHẲNG ĐỊNH cổng đang chặn nên thiếu bộ thi hành là KHIẾM KHUYẾT. Doctrine ở cả
+  `dao-duc-dang-ky.md` lẫn `dieu-phoi-nghien-cuu.md` đã đính chính: đặc tả GIỮ NGUYÊN (nó có
+  giá trị), chỉ bỏ lời khai rằng máy đang thi hành.
+  **Đo sau khi vá:** 5/6 trục nay CHẠY THẬT và PASS (guardrail thẩm định · kiểm soát bình
+  duyệt — automation không tự duyệt được · 6 cổng cứng lọc đúng vai, PI không thay được
+  IRB/phản biện · readiness fail-closed · DATA LOCK ở G6); trục thứ 6 FAIL đúng sự thật.
+  📌 **Việc còn lại thuộc PI/methodologist:** bộ tiêu chí ICH E6(R3) Annex 2 là chuẩn QUY PHẠM
+  — **agent KHÔNG được tự bịa để «cho có cổng»**. Chưa có module thì xử lý TAY, và đừng đọc
+  doctrine như đã có cổng. Đột biến kiểm 2 phép (import trần ⇒ mù cả bộ · fail-open im lặng
+  ⇒ trục xanh giả), cả hai đỏ đúng chỗ.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời

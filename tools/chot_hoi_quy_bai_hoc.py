@@ -5015,6 +5015,66 @@ def bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap():
         sys.modules.update(cu_modules)
 
 
+def bh100_verifier_khong_duoc_mu_vi_mot_module_thieu():
+    """03/09 — `tools/verify_controlled_research_automation.py` CHẾT NGAY LÚC NẠP vì
+    `import annex2_quality_gate` ở dòng 74, và module đó **chưa bao giờ tồn tại**: không có
+    trong cây làm việc, không có trên `origin/master` của CẢ HAI repo, chuỗi «annex2» xuất
+    hiện ĐÚNG 0 lần trong repo y khoa.
+
+    Hai tầng thiệt hại, và tầng thứ hai mới là tầng nặng:
+      ① **Doctrine khai một cổng KHÔNG CÓ THẬT.** `dao-duc-dang-ky.md` từng viết «ICH E6(R3)
+         Annex 2 — hợp đồng CHẠY ĐƯỢC tại G1/G2 … Thiếu trường thật → BLOCK, không được mở
+         G1/G2», chỉ đích danh `annex2_quality_gate.py`. Không có mã nào chặn ⇒ thử nghiệm
+         decentralised/pragmatic/RWD đi qua G1/G2 mà máy không kiểm một trường nào. Họ BH27.
+      ② **MỘT module thiếu làm MÙ CẢ bộ kiểm.** Verifier dài 764 dòng với 6 trục; CLAUDE.md
+         chỉ đích danh nó là cách kiểm WHO TRDS 1.3.1, ICMJE 1/2026, 6 cổng cứng canonical và
+         QUADAS-3. Chết ở dòng import nghĩa là **không trục nào từng chạy**. Sau khi rào
+         import: 5 trục chạy và PASS thật, 1 trục FAIL đúng sự thật.
+
+    Chốt kiểm HÀNH VI: nạp verifier (phải nạp được) rồi gọi `check_current_standards_control()`
+    và đòi — khi thiếu bộ thi hành — status FAIL kèm `ich_e6_r3_annex2.trang_thai =
+    KHONG_CO_BO_THI_HANH`. ⚠️ FAIL chứ KHÔNG phải ⚪: ⚪ dành cho thiếu NGUYÊN LIỆU trên máy
+    đang chạy; ở đây doctrine KHẲNG ĐỊNH cổng đang chặn, nên thiếu bộ thi hành là KHIẾM KHUYẾT.
+    Có module thật ⇒ chốt chỉ đòi verifier nạp được và trục được chấm (không giả vờ biết kết quả).
+    """
+    import importlib.util as _iu
+
+    vf = REPO / "tools" / "verify_controlled_research_automation.py"
+    if not vf.exists():
+        return True, "⚪ thiếu verifier — không kiểm được (không suy đoán)"
+    if not (REPO / "medical-ebm-automation" / "tools" / "gate_contract.py").exists():
+        return True, "⚪ repo y khoa vắng mặt — verifier tự thoát sớm, không kiểm được"
+    ten = "_bh100_vcra"
+    sys.modules.pop(ten, None)
+    try:
+        spec = _iu.spec_from_file_location(ten, vf)
+        m = _iu.module_from_spec(spec)
+        sys.modules[ten] = m
+        spec.loader.exec_module(m)
+    except BaseException as e:  # noqa: BLE001
+        if isinstance(e, (KeyboardInterrupt, SystemExit)):
+            raise
+        return False, (f"verifier KHÔNG NẠP ĐƯỢC ({type(e).__name__}: {str(e)[:70]}) — một module "
+                       "thiếu làm MÙ cả 6 trục; rào lời gọi lại thay vì import trần")
+    try:
+        r = m.check_current_standards_control()
+    except BaseException as e:  # noqa: BLE001
+        if isinstance(e, (KeyboardInterrupt, SystemExit)):
+            raise
+        return False, f"trục current_standards_control ném {type(e).__name__} — chưa rào đủ"
+    finally:
+        sys.modules.pop(ten, None)
+    khoi = r.get("ich_e6_r3_annex2") or {}
+    if khoi.get("trang_thai") == "KHONG_CO_BO_THI_HANH":
+        if r.get("status") != "FAIL":
+            return False, ("thiếu annex2_quality_gate mà trục vẫn KHÔNG đỏ — doctrine khai cổng "
+                           "đang chặn, thiếu bộ thi hành phải là FAIL, không được cho qua")
+        return True, "đúng: thiếu bộ thi hành Annex 2 ⇒ FAIL có nêu tên module, 5 trục kia vẫn chạy"
+    if not khoi:
+        return False, "trục Annex 2 không báo gì — không đọc được đã chấm hay chưa"
+    return True, f"annex2_quality_gate đã có; trục được chấm thật (status={r.get('status')})"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5122,6 +5182,7 @@ BAI_HOC = [
     ("BH97", "02/09", "SAP RỖNG không được khoá bằng chữ ký G4 — vắng sạch mục bắt buộc là tài liệu hỏng, không phải biến thể thiết kế", bh97_sap_rong_khong_duoc_khoa_bang_chu_ky),
     ("BH98", "02/09", "Biên nhận guardrail lâm sàng: bịa thì bị bắt, thật thì thông, không có sổ thì KHÔNG kết luận", bh98_bien_nhan_guardrail_lam_sang),
     ("BH99", "03/09", "Module test nhập thư viện gốc hỏng phải SKIP, không được kéo sập cả lượt thu thập", bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap),
+    ("BH100", "03/09", "Một module thiếu không được làm MÙ cả verifier; doctrine không được khai cổng không có bộ thi hành", bh100_verifier_khong_duoc_mu_vi_mot_module_thieu),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

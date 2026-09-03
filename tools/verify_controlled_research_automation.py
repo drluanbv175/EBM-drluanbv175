@@ -71,7 +71,18 @@ import g2_quality_gate as G2Q  # noqa: E402
 import g9_quality_gate as G9Q  # noqa: E402
 import gate_contract as GC  # noqa: E402
 import skill_standards as STANDARDS  # noqa: E402
-import annex2_quality_gate as ANNEX2  # noqa: E402
+try:  # noqa: E402
+    import annex2_quality_gate as ANNEX2
+except ImportError:
+    # VÁ 03/09/2026 — `medical-ebm-automation/tools/annex2_quality_gate.py` KHÔNG TỒN TẠI:
+    # không có trong cây làm việc, không có trên `origin/master` của CẢ HAI repo, và chuỗi
+    # "annex2" xuất hiện ĐÚNG 0 lần trong toàn bộ repo y khoa. Trước bản vá này, dòng
+    # `import` trần làm CHẾT verifier ngay khi nạp ⇒ **toàn bộ 764 dòng chưa từng chạy**,
+    # kể cả các trục không liên quan (WHO TRDS 1.3.1, ICMJE 1/2026, 6 cổng cứng canonical,
+    # QUADAS-3). Trong khi CLAUDE.md chỉ đích danh công cụ này là cách kiểm những trục đó.
+    # Một khiếm khuyết ở MỘT trục không được phép làm mù toàn bộ bộ kiểm — cùng họ BH99.
+    ANNEX2 = None
+
 from orchestrator.guardrail_bridge import make_run_eval_verdict  # noqa: E402
 from runtime.approval_ledger import ApprovalLedger  # noqa: E402
 from research_project.project_config import (  # noqa: E402
@@ -534,11 +545,33 @@ def check_current_standards_control() -> dict[str, Any]:
             "data_governance": "Sponsor chịu trách nhiệm; service provider có RACI/audit.",
         }}}
     }
-    annex2_missing_g1 = ANNEX2.evaluate(annex2_missing, "rct", "G1")
-    annex2_missing_g2 = ANNEX2.evaluate(annex2_missing, "rct", "G2")
-    annex2_complete_g1 = ANNEX2.evaluate(annex2_complete, "rct", "G1")
-    annex2_complete_g2 = ANNEX2.evaluate(annex2_complete, "rct", "G2")
-    annex2_behavior = (
+    if ANNEX2 is None:
+        # ⚠️ FAIL, KHÔNG phải ⚪ «chưa kiểm được» — và phân biệt này là CỐ Ý.
+        # ⚪ dành cho thiếu NGUYÊN LIỆU trên máy đang chạy (BH08/BH85). Ở đây khác hẳn:
+        # doctrine `dao-duc-dang-ky.md` §"ICH E6(R3) Annex 2 — hợp đồng CHẠY ĐƯỢC tại G1/G2"
+        # KHẲNG ĐỊNH một cổng đang CHẶN ("Thiếu trường thật hoặc còn nhãn [CẦN...] → BLOCK,
+        # không được mở G1/G2") và chỉ đích danh file thi hành. File đó chưa bao giờ tồn tại
+        # ⇒ đây là LỜI KHAI VỀ MỘT CỔNG KHÔNG CÓ THẬT, đúng họ BH27 — phải đỏ.
+        annex2_missing_g1 = annex2_missing_g2 = {"status": "KHONG_CO_BO_THI_HANH"}
+        annex2_complete_g1 = annex2_complete_g2 = {"status": "KHONG_CO_BO_THI_HANH"}
+        annex2_behavior = False
+        annex2_bao_cao = {
+            "trang_thai": "KHONG_CO_BO_THI_HANH",
+            "module_thieu": "medical-ebm-automation/tools/annex2_quality_gate.py",
+            "hai": ("doctrine khai đây là hợp đồng CHẠY ĐƯỢC chặn G1/G2 cho thử nghiệm "
+                    "decentralised/pragmatic/RWD, nhưng KHÔNG có mã nào thi hành — "
+                    "thử nghiệm loại này hiện KHÔNG được máy chặn ở G1/G2."),
+            "viec_cua_nguoi": ("nội dung ICH E6(R3) Annex 2 là chuẩn quy phạm — bộ tiêu chí "
+                               "phải do PI/methodologist ấn định, agent KHÔNG được tự bịa. "
+                               "Trong lúc chưa có: xử lý tay và đừng đọc doctrine như đã có cổng."),
+        }
+    else:
+        annex2_missing_g1 = ANNEX2.evaluate(annex2_missing, "rct", "G1")
+        annex2_missing_g2 = ANNEX2.evaluate(annex2_missing, "rct", "G2")
+        annex2_complete_g1 = ANNEX2.evaluate(annex2_complete, "rct", "G1")
+        annex2_complete_g2 = ANNEX2.evaluate(annex2_complete, "rct", "G2")
+        annex2_bao_cao = None
+    annex2_behavior = annex2_behavior if ANNEX2 is None else (
         ANNEX2.ADOPTED_DATE == "2026-06-03"
         and annex2_missing_g1["status"] == "BLOCK"
         and annex2_missing_g2["status"] == "BLOCK"
@@ -584,7 +617,7 @@ def check_current_standards_control() -> dict[str, Any]:
         "default_access_attestation_fails_closed": access_default_ok is False,
         "complete_access_attestation_passes": access_complete_ok is True,
         "canonical_hard_gates": list(hard_gates),
-        "ich_e6_r3_annex2": {
+        "ich_e6_r3_annex2": annex2_bao_cao if ANNEX2 is None else {
             "version": ANNEX2.VERSION,
             "adopted_date": ANNEX2.ADOPTED_DATE,
             "missing_g1_blocks": annex2_missing_g1["status"] == "BLOCK",
@@ -593,7 +626,7 @@ def check_current_standards_control() -> dict[str, Any]:
             "complete_g2_passes": annex2_complete_g2["status"] == "PASS",
         },
         "quadas3_operational_mapping": quadas3_operational,
-        "proves": "WHO TRDS 1.3.1 lấy dữ kiện PI đã pin và thiếu 13/14/19/20 bị phát hiện; G9 thực thi quyền tác giả truy cập dữ liệu theo ICMJE 1/2026; ICH E6(R3) Annex 2 chặn G1/G2 khi thử nghiệm decentralised/pragmatic/RWD thiếu kiểm soát; nguồn chuẩn khớp sáu cổng ký runtime.",
+        "proves": "WHO TRDS 1.3.1 lấy dữ kiện PI đã pin và thiếu 13/14/19/20 bị phát hiện; G9 thực thi quyền tác giả truy cập dữ liệu theo ICMJE 1/2026; ICH E6(R3) Annex 2 chặn G1/G2 khi thử nghiệm decentralised/pragmatic/RWD thiếu kiểm soát (CHỈ khi annex2_quality_gate.py tồn tại — xem khoá ich_e6_r3_annex2 để biết trục này đã thật sự được chấm hay đang KHONG_CO_BO_THI_HANH); nguồn chuẩn khớp sáu cổng ký runtime.",
     }
 
 
