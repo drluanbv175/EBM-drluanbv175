@@ -10,8 +10,8 @@ Tám năng lực (mỗi năng lực = một module):
   7. Điều phối plugin       → plugin_ownership.py + plugin_ownership_registry.json
   8. Vòng khép kín          → worker_inventory.py + guardrail_bridge.py
 
-Thiết kế: deterministic control plane, CHẠY & KIỂM ĐƯỢC OFFLINE (chế độ dry-run/plan),
-có seam cắm LLM adapter (Codex wrapper) cho thực thi agent thật. Grounded vào registry
+Thiết kế: deterministic control plane, CHẠY & KIỂM ĐƯỢC OFFLINE (dry-run) và thực thi
+agent thật qua Codex CLI chỉ-đọc khi bật ``--execute``. Grounded vào registry
 `.claude/agents/*.md` THẬT — không hardcode danh sách agent.
 
 "Cần bác sĩ kiểm chứng." — orchestrator chỉ ĐỀ XUẤT + dừng ở cổng bác sĩ duyệt.
@@ -25,4 +25,4 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 __all__ = ["ROOT"]
-__version__ = "1.2.0"
+__version__ = "2.0.0"

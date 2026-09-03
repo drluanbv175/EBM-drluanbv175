@@ -60,7 +60,7 @@ CLINICAL_FLOW: tuple[FlowStep, ...] = (
              (sa("chan-doan-xac-suat", "is_diagnostic"),
               sa("tham-dinh-do-chinh-xac-chan-doan", "is_diagnostic"),
               sa("thang-diem-nguy-co", "needs_risk_score")),
-             note="nếu câu hỏi chẩn đoán: Bayes + QUADAS-2 + GRADE-cho-test; thang nguy cơ nếu cần"),
+             note="nếu câu hỏi chẩn đoán: Bayes + QUADAS-3 hiện hành + GRADE-cho-test; thang nguy cơ nếu cần"),
     FlowStep("4", "Áp dụng", (sa("ke-don-an-toan"),
                               sa("quan-ly-khang-dong", "anticoag"),
                               sa("quyet-dinh-chung")),

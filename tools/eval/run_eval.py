@@ -1027,10 +1027,9 @@ APPRAISAL_REPEATS = _ROOT / "observability" / "APPRAISAL_REPEATS.json"
 # chỉ gắn cờ để BÁC SĨ quyết (giữ human-gate). Nguồn ⭐ 'tỷ lệ tái phạm'.
 REPEAT_PROMOTE_THRESHOLD = 3
 # Nguồn KHÔNG tính vào bộ đếm tái phạm (chấm hàng loạt corpus/CI làm nhiễu tín hiệu thật).
-# SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): thêm "orchestrator"
-# — tools/orchestrator/ hiện HOÀN TOÀN dry-run (chưa nối thực thi thật, xem CLAUDE.md), nên
-# mọi appraisal source=orchestrator hiện tại là dữ liệu self-test, không phải lỗi lâm sàng
-# tái diễn thật. PHẢI bỏ khỏi set này khi orchestrator được nối vào thực thi thật.
+# SỬA 2026-09-02: nguồn `orchestrator` chỉ thuộc đường dry-run/đầu vào tĩnh nên là dữ liệu
+# self-test; đường chạy thật dùng source riêng `orchestrator-live` và không bị loại khỏi
+# bộ đếm tái phạm.
 _REPEAT_EXCLUDE_SOURCES = {"corpus", "test", "batch", "ci", "orchestrator"}
 
 

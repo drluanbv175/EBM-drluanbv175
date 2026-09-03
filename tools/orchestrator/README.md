@@ -2,8 +2,8 @@
 
 Vá đúng khoảng trống hệ tự đánh giá: *"nhánh LÂM SÀNG (dieu-phoi-lam-sang) là prose — chưa có
 orchestrator chạy được"*. Đây là **control plane deterministic**: định tuyến → dựng plan → chạy
-từng bước → dừng ở cổng bác sĩ → chốt guardrail — **chạy & kiểm được OFFLINE** (dry-run), có seam
-cắm LLM để thực thi agent thật. Grounded vào registry `.claude/agents/*.md` THẬT và registry quyền
+từng bước → dừng ở cổng bác sĩ → chốt guardrail — **chạy & kiểm được OFFLINE** (dry-run) hoặc
+thực thi agent thật qua Codex CLI chỉ-đọc bằng `--execute`. Grounded vào registry `.claude/agents/*.md` THẬT và registry quyền
 sở hữu plugin (một owner/capability; plugin chỉ là worker).
 
 ## Tám năng lực (mỗi năng lực = một module)
@@ -11,13 +11,13 @@ sở hữu plugin (một owner/capability; plugin chỉ là worker).
 | # | Năng lực | Module | Điểm chính |
 |---|---|---|---|
 | 1 | **Điều phối agent** | `orchestrator.py` · `flows.py` · `agent_adapter.py` · `signals.py` | Flow lâm sàng 8 bước / nghiên cứu G0–G10; **mỗi agent trong bước mang điều kiện RIÊNG** (không chạy mù cả nhánh) |
-| 2 | **Quản lý ngữ cảnh** | `context.py` | `Session` + checkpoint + **resume** (`~/.ebm-orchestrator/sessions/`) |
+| 2 | **Quản lý ngữ cảnh** | `context.py` | `Session` + checkpoint + **resume** + artifact revision (`~/.ebm-orchestrator/sessions/`) |
 | 3 | **Định tuyến intent** | `intent.py` | `clinical_case` / `research_topic` / `single_task` / `unknown` (ma trận README) |
 | 4 | **Tích hợp tri thức** | `knowledge.py` | Thứ bậc nguồn Cấp 0/0.5/1 + thuốc; thứ tự tra cứu §2bis; quy tắc PARTIAL |
-| 5 | **Tích hợp công cụ** | `tools_registry.py` | 9 công cụ THẬT (clinical_calc grade/nnt, health_econ, run_g*, checkpoint, verify_dashboard…) |
+| 5 | **Tích hợp công cụ** | `tools_registry.py` · `evidence_prefetch.py` | 13 công cụ THẬT; biên lai PubMed/Europe PMC/Crossref + chuỗi A12 kiểm rút bài; `validate()` fail-closed nếu script thiếu |
 | 6 | **Quản lý vòng đời** | `lifecycle.py` | `routed→planned→running→gate→guardrail→released/returned`; retry ≤3; **4 mã thoát** |
 | 7 | **Điều phối plugin** | `plugin_ownership.py` · `plugin_ownership_registry.json` | Một owner nội bộ/capability; allowlist worker theo stage; plugin không được mở cổng người |
-| 8 | **Vòng khép kín** | `worker_inventory.py` · `guardrail_bridge.py` | Định tuyến phân cấp từng bước; chọn worker theo cue; kiểm skill thật; LOCAL_FALLBACK; re-route tối đa 3 vòng |
+| 8 | **Vòng khép kín** | `worker_inventory.py` · `guardrail_bridge.py` | Artifact sống có revision; re-route tối đa 3 vòng; rule-based R + critic Q1–Q7 ở phiên Codex tách biệt |
 
 ## Chạy (dry-run mặc định — không cần API)
 
@@ -31,6 +31,7 @@ python tools/run_orchestrator.py --resolve-capability research_lifecycle --json
 python tools/run_orchestrator.py --validate         # tự kiểm điều phối ⇄ registry (0 = sạch)
 python tools/run_orchestrator.py --resume <id>      # khôi phục phiên
 python tools/run_orchestrator.py --list             # liệt kê phiên
+python tools/run_orchestrator.py "<yêu cầu>" --execute --output /tmp/ebm-draft.md
 # thêm --json để in máy đọc
 ```
 
@@ -41,8 +42,8 @@ Có **hai** thứ trông giống "orchestrator nghiên cứu" trong repo, KHÔNG
 
 | | `tools/orchestrator/` (ở đây) | `medical-ebm-automation/tools/run_pipeline.py` |
 |---|---|---|
-| Vai trò | **Bản thiết kế/định tuyến** — xác định intent, owner/plugin worker, dựng plan 28-agent theo G0–G10, dừng đúng cổng | **Orchestrator SẢN XUẤT thật** — chạy thật chuỗi G0–G10 |
-| Thực thi | `DryRunExecutor` — chỉ in "sẽ gọi agent nào", KHÔNG chạy | Subprocess thật vào `run_g0_auto.py`…`run_g10_assemble.py`: PubMed thật (G0), công thức cỡ mẫu thật (G3), sinh checkpoint/DOCX thật |
+| Vai trò | Control-plane agent/plugin: dry-run hoặc sinh/tự sửa bản nháp qua Codex chỉ-đọc; không thay pipeline artifact | **Orchestrator SẢN XUẤT thật** — chạy chuỗi G0–G10 |
+| Thực thi | `DryRunExecutor` mặc định; `LLMExecutor` khi `--execute`; không tự chạy tool có dữ liệu thật | Subprocess thật vào `run_g0_auto.py`…`run_g10_assemble.py`: PubMed thật (G0), công thức cỡ mẫu thật (G3), sinh checkpoint/DOCX thật |
 | Tự sửa/chờ cổng | Đánh dấu gate_pending rồi dừng (tĩnh) | **Freshness guard** (phát hiện cổng cũ/lệch) + **retry có trần** + đọc `study_meta.json` (tham số bác sĩ PIN) + 4 mã thoát `gate_contract.py` (0 OK · 1 lỗi tạm-thời retry · 2 BLOCKED chờ input thật, KHÔNG retry · 3 vi phạm liêm chính) |
 | Dùng khi nào | Xem trước NHANH agent nào sẽ chạy, nhánh nào áp dụng, cổng nào sẽ chặn — trước khi bắt tay làm thật | **Chạy đề tài thật**: `python tools/run_pipeline.py --study "<MÃ>" --topic "<chủ đề>"` |
 
@@ -67,10 +68,9 @@ prognostic_model · economic · international_journal`.
 ## Kiểm thử
 
 ```bash
-python tools/orchestrator/tests/test_orchestrator.py    # 41 test (đếm thật 2026-07-15), chạy offline
-python -m unittest discover -s tools/orchestrator/tests # 46 test (đếm thật 2026-07-15; +5 test
-                                                         # appraisal_bridge riêng; gồm 1 canary mới
-                                                         # đối chiếu tập cổng cứng flows.py ⇄ doctrine)
+python tools/orchestrator/tests/test_orchestrator.py
+python -m unittest discover -s tools/orchestrator/tests # toàn bộ kiểm thử offline + fake-client;
+                                                        # canary Codex thật chạy riêng với --execute
 ```
 
 ## Quyền sở hữu plugin
@@ -92,14 +92,25 @@ Kiểm cứng:
 python tools/verify_plugin_orchestration.py
 ```
 
-## Thực thi agent THẬT (seam LLM)
+## Thực thi agent thật
 
 `agent_adapter.py` có 2 executor:
 - **`DryRunExecutor`** (mặc định) — trả *kế hoạch* (agent sẽ làm gì + công cụ nào), không gọi LLM →
   plan/test/CI chạy được ngay, không cần API.
-- **`LLMExecutor`** — seam cho thực thi thật qua wrapper **Codex/LLM** (cần API key + môi trường).
-  CHƯA bật (trung thực về kỹ thuật `[CẦN MÔI TRƯỜNG HỖ TRỢ]`); cắm client vào là chạy agent thật,
-  toàn bộ control plane (định tuyến/cổng/guardrail/ngữ cảnh) giữ nguyên.
+- **`LLMExecutor`** — đã nối `CodexCliClient`; mỗi agent chạy phiên `codex exec --ephemeral`
+  trong thư mục tạm + sandbox `read-only`, không nhận environment bí mật, nhận artifact revision
+  hiện tại và trả JSON theo schema.
+- **Biên lai công cụ** — trước agent `kiem-chung-trich-dan`, parent chỉ lấy PMID/DOI rõ ràng
+  rồi tra PubMed/Europe PMC/Crossref với retry và gọi đúng chuỗi A12 Retraction Watch→NCBI→Europe PMC;
+  metadata/cờ rút bài và lỗi nguồn được gắn provenance vào
+  prompt. Không gửi toàn bộ ca lâm sàng và không biến việc phân giải metadata thành phê duyệt.
+- **Critic độc lập ngữ cảnh** — `IndependentClinicalGrader` chạy một phiên Codex khác, chỉ nhận
+  bản nháp và rubric Q1–Q7. Q2/Q5 đỏ leo thang ngay; output sai schema/lỗi runtime đóng cổng.
+- **Vòng tự sửa thật** — agent được re-route nhận mã lỗi + bản nháp hiện tại, sinh revision mới;
+  cổng đọc lại revision mới ở mỗi vòng. Tối đa 3 vòng, sau đó chuyển bác sĩ.
+
+Giới hạn: critic vẫn cùng họ mô hình và không phải hội đồng bác sĩ; `--execute` không tự ký cổng,
+không chạy dữ liệu thật và không thay `medical-ebm-automation/tools/run_pipeline.py`.
 
 ## Bất biến (không nới an toàn/liêm chính)
 

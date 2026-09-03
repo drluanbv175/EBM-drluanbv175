@@ -197,7 +197,15 @@ RESEARCH_CHECKS = (check_reporting_standard, check_stat_mismatch, check_ai_discl
 
 def research_checks(text: str, gold: dict | None = None) -> list[tuple[str, bool, str]]:
     """Trả list (id, ok, detail) — dán thẳng vào `checks` của run_eval.py::evaluate()."""
-    return [fn(text, gold) for fn in RESEARCH_CHECKS]
+    must = (gold or {}).get("must_have", {})
+    rows = []
+    for fn in RESEARCH_CHECKS:
+        check_id = fn.__name__.removeprefix("check_")
+        if must.get(check_id, True) is False:
+            rows.append((check_id, True, "n/a — không áp dụng theo profile loại sản phẩm"))
+        else:
+            rows.append(fn(text, gold))
+    return rows
 
 
 # ── WIRING (dán vào run_eval.py khi file rảnh — 3 chỗ) ───────────────────────

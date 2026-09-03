@@ -35,6 +35,12 @@ class Tool:
 
 
 TOOLS: tuple[Tool, ...] = (
+    Tool("citation-resolve", "tools/orchestrator/evidence_prefetch.py", "",
+         "Xác minh PMID/DOI qua PubMed + Crossref và kiểm cờ rút bài, chỉ đọc",
+         ("kiem-chung-trich-dan",)),
+    Tool("citation-retraction", "medical-ebm-automation/tools/check_citation_retraction.py", "",
+         "Chuỗi A12 Retraction Watch → NCBI → Europe PMC cho PMID",
+         ("kiem-chung-trich-dan",)),
     Tool("grade", "medical-ebm-automation/tools/clinical_calc.py", "grade",
          "Tổng hợp GRADE theo thuật toán chính thức (agent chấm domain)",
          ("tham-dinh-grade-nnt",)),
@@ -59,7 +65,7 @@ TOOLS: tuple[Tool, ...] = (
     Tool("upgrade-verify", "tools/upgrade_verify.py", "",
          "Một lệnh kiểm+đồng bộ toàn hệ (enforce→sync→check→routing→assess→audit)",
          ("(hệ thống)",)),
-    Tool("gen-docx", "tools/gen_research_docx.py", "",
+    Tool("gen-docx", "medical-ebm-automation/tools/gen_research_docx.py", "",
          "Xuất Word cho artifact (gói quyết định/GRADE-EtD/…)",
          ("dieu-phoi-lam-sang", "dieu-phoi-nghien-cuu")),
     Tool("research-pipeline", "medical-ebm-automation/tools/run_pipeline.py", "",
@@ -118,3 +124,11 @@ class ToolRegistry:
     def inventory(self) -> list[dict]:
         return [{"id": t.tool_id, "exists": t.exists, "path": t.rel_path,
                  "used_by": list(t.used_by)} for t in self.tools.values()]
+
+    def validate(self) -> list[str]:
+        """Fail-closed nếu registry quảng bá công cụ nhưng script không tồn tại."""
+        return [
+            f"Công cụ `{tool.tool_id}` trỏ tới script không tồn tại: {tool.rel_path}"
+            for tool in self.tools.values()
+            if not tool.exists
+        ]

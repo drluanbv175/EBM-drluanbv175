@@ -4,7 +4,7 @@
 Hệ thống tự động hóa cho bác sĩ ngoại trú thực hành EBM, gồm 3 module:
 Research (nghiên cứu), Clinical (lâm sàng), Knowledge (quản lý kiến thức).
 
-## Điều phối Agent — hành vi MẶC ĐỊNH (đội `.claude/agents`, 50 agent: 21 lâm sàng + 28 nghiên cứu + 1 guardrail dùng chung; +3 lâm sàng 2026-06-16 (dau-man-tinh·cham-soc-giam-nhe·tram-cam-lo-au); +2 lâm sàng 2026-07-04 (quan-ly-khang-dong — kháng đông trọn vòng; tham-dinh-do-chinh-xac-chan-doan — thẩm định độ chính xác chẩn đoán QUADAS-2/GRADE-cho-test, lấp khoảng trống audit))
+## Điều phối Agent — hành vi MẶC ĐỊNH (đội `.claude/agents`, 50 agent: 21 lâm sàng + 28 nghiên cứu + 1 guardrail dùng chung; +3 lâm sàng 2026-06-16 (dau-man-tinh·cham-soc-giam-nhe·tram-cam-lo-au); +2 lâm sàng 2026-07-04 (quan-ly-khang-dong — kháng đông trọn vòng; tham-dinh-do-chinh-xac-chan-doan — thẩm định độ chính xác chẩn đoán, nay dùng QUADAS-3/GRADE-cho-test))
 Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định tuyến tới "nhạc trưởng" phù hợp và để nó **tự chạy tuần tự theo Giao thức tự động** (không hỏi vặt từng bước):
 - **Nêu một CA/tình huống lâm sàng** ("tôi có bệnh nhân…", "khám ca này", hỏi chẩn đoán/điều trị) → `dieu-phoi-lam-sang`: tự chạy 5 bước EBM (Hỏi→Tìm→Thẩm định→Áp dụng→Theo dõi); **cờ đỏ nêu NGAY**; dừng ở **Cổng A** (áp dụng cho BN) + **Cổng B** (ghi sổ cái).
 - **Nêu một ĐỀ TÀI/câu hỏi nghiên cứu** (chỉ cần tên đề tài) → `dieu-phoi-nghien-cuu`: tự khôi phục trạng thái từ sổ cái → suy loại thiết kế → march G0→G10; dừng ở 6 cổng cứng (G2 đạo đức · G4 khóa SAP · G5 khóa dữ liệu thật · **G8 bình duyệt độc lập** · G9 liêm chính tác giả · G10 PI khóa gói phát hành) + nơi cần dữ liệu/phê duyệt thật. Mỗi cổng fail-closed theo ĐÚNG role (IRB/thống kê viên hoặc PI/quản lý dữ liệu hoặc PI/phản biện độc lập/PI/PI — xem `tools/gate_contract.py`), không chỉ "có ai đó ký".
@@ -704,8 +704,9 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   Clinical safety 6 · Operations 4 · AI 1) —
   hiện KHÔNG ghi DB thật, KHÔNG có code AI/LLM nào (`AI_DRAFTS_ENABLED=false` mới chỉ là biến khai
   trong `.env.example`, chưa có chỗ nào trong code đọc nó). `tools/orchestrator/` (control plane 6
-  năng lực, xem mục Lệnh) cũng **tách rời khỏi luồng agent thật** — chỉ là bộ dry-run/self-audit song
-  song, bác sĩ không cần đụng tới khi làm việc qua Claude/Codex agent bình thường.
+  năng lực, xem mục Lệnh) có hai chế độ: dry-run mặc định để kiểm/lập kế hoạch và `--execute`
+  để chạy Codex trong phiên tạm thời chỉ-đọc. Đây vẫn là control plane hỗ trợ, không thay
+  các pipeline nghiên cứu đã kiểm soát hoặc cổng bác sĩ/IRB/PI.
 - **5 nhánh mồ côi khác trong `medical-ebm-automation/`, phát hiện qua audit cổng 2026-07-14 —
   cùng kiểu "tách rời" như `tools/orchestrator/`, KHÔNG do doctrine/agent nào gọi tới, ĐỪNG nhầm là
   cổng thật đang bảo vệ pipeline:** (1) `runtime/policy_gate_engine.py` + `runtime/controlled_orchestrator.py`
@@ -1718,7 +1719,7 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   thử commit thật file hỏng → hook chặn, HEAD không đổi. **Phạm vi cố ý hẹp:** chỉ bắt dấu hiệu
   hỏng máy đọc được, KHÔNG chấm chất lượng khoa học, KHÔNG thay quality gate G0-G10.
 - **Chạy chu trình tự động có kiểm soát:** `python3 tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
-- **Orchestrator chạy được (control plane 6 năng lực, dry-run):** `python3 tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` — định tuyến intent → dựng plan theo flow → dừng ở cổng bác sĩ → chốt guardrail. `--capabilities`/`--validate`/`--resume`. Tài liệu + 43 test (gồm cầu THẬT `guardrail_bridge.py`→`tools/eval/run_eval.py` vá dead-code `guardrail_fail` — xem `orchestrator.py::_guardrail_reroute_loop`; `appraisal_bridge.py` là seam mô phỏng riêng, CHƯA cắm vào orchestrator.py, 5/43 test): `tools/orchestrator/`.
+- **Orchestrator chạy được (control plane 8 năng lực):** `python3 tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` chạy dry-run mặc định; thêm `--execute` để agent tạo/sửa artifact thật trong các phiên Codex tạm thời chỉ-đọc, có revision và re-route tối đa 3 vòng. Trước phát hành, Lớp 1 rule-based chấm revision hiện tại; gói lâm sàng còn có critic Q1–Q7 ở phiên tách biệt, Q2/Q5 đỏ leo thang ngay. `--capabilities`/`--validate`/`--resume`; thiếu đầu vào thật hoặc lỗi runtime đều fail-closed. Giới hạn: cùng họ mô hình không phải hội đồng bác sĩ; mọi Cổng A/B/G và pipeline nghiên cứu canonical vẫn giữ nguyên. Tài liệu/test: `tools/orchestrator/`.
 - **"Đề tài này THỰC SỰ đang ở đâu, còn gì phải làm?" (mới 2026-07-27):**
   `python3 tools/study_readiness.py --study <mã>` (hoặc `--all`). Trả lời đúng câu hỏi mà
   `list_studies.py` KHÔNG trả lời được: nó đếm **việc CHƯA làm** từ chính tài liệu của đề tài

@@ -433,7 +433,7 @@ const DATA = {
     frame:'PICO rõ ràng trước khi chọn nguồn; nếu là chẩn đoán/tiên lượng/tác hại thì đổi sang PIRD/PECO/PROGRESS phù hợp.',
     sourceHierarchy:'Ưu tiên guideline sống hoặc guideline chính thức, SR/MA chất lượng cao, RCT then chốt, nghiên cứu quan sát khi câu hỏi không thể RCT.',
     reporting:'Đối chiếu chuẩn báo cáo CONSORT, STROBE, PRISMA, STARD hoặc TRIPOD tùy thiết kế nguồn.',
-    appraisal:'Thẩm định bằng AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI tùy loại nghiên cứu.',
+    appraisal:'Thẩm định bằng AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-3 v1.2, PROBAST hoặc JBI tùy loại nghiên cứu; QUADAS-2 chỉ dùng để đọc nghiên cứu lịch sử.',
     currency:'Nguồn ví dụ cập nhật đến 2026-06-07; dashboard thật phải ghi ngày tìm kiếm và chạy lại trước khi áp dụng.',
     searchSources:['PubMed','Cochrane','Guideline society','Drug label/safety source'],
     sourceVerification:'Chỉ phát hành khi cổng verify_dashboard.py --online --strict-sources PASS: PMID/DOI phân giải, tiêu đề/năm khớp, nguồn còn mới và hợp đồng standards đầy đủ.',
@@ -509,7 +509,7 @@ const STANDARD_GATES=[
   {label:'Câu hỏi có cấu trúc',status:'need',note:'Khai báo PICO/PECO/PIRD/PROGRESS trước khi sinh dashboard thật.'},
   {label:'Thứ bậc nguồn',status:'need',note:'Ghi rõ guideline/SR-MA/RCT/quan sát và lý do chọn nguồn.'},
   {label:'Chuẩn báo cáo',status:'need',note:'Đối chiếu CONSORT, STROBE, PRISMA, STARD, TRIPOD theo thiết kế.'},
-  {label:'Công cụ thẩm định',status:'need',note:'Đối chiếu AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI.'},
+  {label:'Công cụ thẩm định',status:'need',note:'Đối chiếu AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-3 v1.2, PROBAST hoặc JBI; QUADAS-2 chỉ để tương thích nghiên cứu lịch sử.'},
   {label:'Liêm chính phát hành',status:'need',note:'Không PII, có nguồn truy nguyên, tách độ chắc chắn với sức mạnh khuyến cáo.'}
 ];
 
@@ -638,7 +638,7 @@ function qualityView(){
       ${box('Độ cập nhật',s.currency||DATA.meta.updated,`Nguồn tìm kiếm: ${src}`)}
       ${box('Xác minh tự động nguồn',s.sourceVerification||'Chưa ghi trạng thái xác minh nguồn',`Cổng yêu cầu: ${s.verificationTool||'verify_dashboard.py --online --strict-sources'} · Lần xác minh: ${s.lastVerified||'chưa ghi'}`)}
       ${box('Chuẩn báo cáo',s.reporting||'CONSORT · STROBE · PRISMA · STARD · TRIPOD','Chọn chuẩn theo thiết kế nghiên cứu của từng nguồn.')}
-      ${box('Công cụ thẩm định',s.appraisal||'AGREE II · AMSTAR 2 · RoB 2 · ROBINS-I · QUADAS-2 · PROBAST · JBI','Không dùng RoB 2 cho nghiên cứu không phải RCT.')}
+      ${box('Công cụ thẩm định',s.appraisal||'AGREE II · AMSTAR 2 · RoB 2 · ROBINS-I · QUADAS-3 v1.2 · PROBAST · JBI','Không dùng RoB 2 cho nghiên cứu không phải RCT; QUADAS-2 chỉ để đọc nghiên cứu lịch sử.')}
       ${box('An toàn & Việt Nam',`${s.safety||'Chưa khai báo an toàn'} ${s.vietnamFit?` · ${s.vietnamFit}`:''}`,'Bắt buộc rà thuốc, chống chỉ định, tương tác, chuyển tuyến, chi phí/BHYT và năng lực theo dõi.')}
       <div class="qbox wide"><h4>Cổng liêm chính trước phát hành</h4><div class="qcheck">${gateHtml}</div></div>
       <div class="qbox wide"><h4>Truy nguyên từng item</h4><div class="trace-list">${traces}</div></div>

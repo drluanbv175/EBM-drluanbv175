@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""run_orchestrator.py — CLI cho Orchestrator EBM (chế độ dry-run/plan mặc định).
+"""CLI cho Orchestrator EBM (dry-run mặc định; ``--execute`` chạy Codex thật).
 
 Dùng:
   python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 tuổi ĐTĐ2 + eGFR 40, thêm thuốc gì?"
@@ -11,6 +11,7 @@ Dùng:
   python tools/run_orchestrator.py --validate            # tự kiểm điều phối ⇄ registry
   python tools/run_orchestrator.py --resume <session_id> # khôi phục một phiên
   python tools/run_orchestrator.py --list                # liệt kê phiên đã lưu
+  python tools/run_orchestrator.py "..." --execute       # agent thật + cổng 2 lớp
   thêm --json để in máy đọc.
 
 Mã thoát = mã hợp đồng DỪNG (0 released · 1 returned · 2 gate_pending · 3 blocked · 4 unknown).
@@ -28,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from orchestrator.context import ContextStore  # noqa: E402
+from orchestrator.agent_adapter import LLMExecutor  # noqa: E402
 from orchestrator.orchestrator import Orchestrator  # noqa: E402
 
 # Ép stdout/stderr UTF-8 an toàn (kể cả Python cũ hơn không có PYTHONUTF8=1) — vá crash
@@ -46,7 +48,8 @@ BAR = "─" * 68
 def _print_session(session, orch) -> None:
     it = session.intent
     print("═" * 68)
-    print("  ORCHESTRATOR EBM · dry-run/plan")
+    mode = getattr(session, "execution_mode", "dry-run")
+    print(f"  ORCHESTRATOR EBM · {mode}")
     print("═" * 68)
     print(f"  Request : {session.request[:90]}")
     print(f"  Intent  : {it.get('kind')} → `{it.get('target')}`")
@@ -83,7 +86,9 @@ def _print_session(session, orch) -> None:
     print(f"  Vòng đời: {' → '.join(lc.get('history', []))}")
     print(f"  KẾT: {session.status}  (mã thoát {session.exit_code})")
     print(f"  Phiên đã lưu: {session.session_id}")
-    if it.get("kind") == "research_topic":
+    if session.current_output:
+        print(f"  Artifact: revision {session.draft_revision} · {len(session.current_output)} ký tự")
+    if it.get("kind") == "research_topic" and mode == "dry-run":
         print(BAR)
         print("  ℹ Đây là KẾ HOẠCH (dry-run) — chưa chạy thật. Để tự động chạy THẬT chuỗi")
         print("    G0→G10 (PubMed thật, tính cỡ mẫu, checkpoint, freshness guard, dừng")
@@ -95,7 +100,7 @@ def _print_session(session, orch) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Orchestrator EBM (dry-run)")
+    ap = argparse.ArgumentParser(description="Orchestrator EBM (dry-run mặc định)")
     ap.add_argument("request", nargs="?", default="", help="Câu yêu cầu (ca / đề tài / câu hỏi)")
     ap.add_argument("--json", action="store_true", help="In JSON máy đọc")
     ap.add_argument("--capabilities", action="store_true", help="In 8 năng lực")
@@ -110,6 +115,15 @@ def main() -> int:
     ap.add_argument("--gate-output", metavar="FILE",
                     help="Chấm output THẬT (.md) qua cổng rule-based → cắt bản ghi APPRAISAL "
                          "+ re-route nếu TRẢ-VỀ-SỬA (D1+D3 operational, không cần LLM)")
+    ap.add_argument("--execute", action="store_true",
+                    help="Chạy agent thật qua Codex CLI chỉ-đọc + critic Q1–Q7 độc lập")
+    ap.add_argument("--model", help="Model cho agent sinh nội dung (mặc định theo cấu hình Codex)")
+    ap.add_argument("--grader-model",
+                    help="Model cho phiên critic độc lập (mặc định theo cấu hình Codex)")
+    ap.add_argument("--timeout-seconds", type=int, default=600,
+                    help="Timeout mỗi lượt Codex CLI; mặc định 600 giây")
+    ap.add_argument("--output", metavar="FILE",
+                    help="Ghi artifact cuối; chỉ ghi khi phiên không bị blocked")
     ap.add_argument("--no-persist", action="store_true",
                     help="không lưu Session ra ~/.ebm-orchestrator (dùng cho CI/sandbox)")
     args = ap.parse_args()
@@ -175,6 +189,7 @@ def main() -> int:
     # D1+D3 operational: nếu có --gate-output, chấm nội dung THẬT bằng cổng rule-based →
     # cắt bản ghi APPRAISAL bền + re-route thật khi TRẢ-VỀ-SỬA (không cần LLM).
     verdict_fn = None
+    initial_output = ""
     if args.gate_output:
         gp = Path(args.gate_output)
         if not gp.exists():
@@ -182,16 +197,36 @@ def main() -> int:
             return 4
         from datetime import datetime
         from orchestrator.guardrail_bridge import make_run_eval_verdict
-        verdict_fn = make_run_eval_verdict(
-            gp.read_text(encoding="utf-8", errors="ignore"),
-            target=args.gate_output, source="orchestrator",
-            at=datetime.now().isoformat(timespec="seconds"))
+        initial_output = gp.read_text(encoding="utf-8", errors="ignore")
+        if not args.execute:
+            verdict_fn = make_run_eval_verdict(
+                initial_output,
+                target=args.gate_output, source="orchestrator",
+                at=datetime.now().isoformat(timespec="seconds"))
+
+    executor = None
+    if args.execute:
+        # Hai client/phiên tách biệt: generator và critic không chia hội thoại.
+        from orchestrator.guardrail_bridge import IndependentClinicalGrader, make_live_guardrail_verdict
+        executor = LLMExecutor(model=args.model, timeout_seconds=args.timeout_seconds)
+        grader = IndependentClinicalGrader(
+            model=args.grader_model,
+            timeout_seconds=args.timeout_seconds,
+        )
+        verdict_fn = make_live_guardrail_verdict(grader)
 
     session = orch.handle(
         args.request,
+        executor=executor,
         guardrail_verdict=verdict_fn,
+        initial_output=initial_output,
         persist=not args.no_persist,
     )
+    if args.output:
+        if session.exit_code == 3 or not session.current_output:
+            print("Không ghi --output vì phiên bị chặn hoặc không có artifact.", file=sys.stderr)
+        else:
+            Path(args.output).write_text(session.current_output, encoding="utf-8")
     if args.json:
         print(json.dumps(session.as_dict(), ensure_ascii=False, indent=2))
     else:

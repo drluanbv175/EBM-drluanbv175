@@ -308,13 +308,13 @@ STATUS_ICON = {"strong": "🟢", "partial": "🟡", "gap": "🔴", "absent": "�
 # GIỚI HẠN TRƯỞNG THÀNH trung thực (không thổi điểm) — cơ chế có thể TỒN TẠI +
 # CHẠY nhưng chưa TRƯỞNG THÀNH đủ. Nêu rõ để bác sĩ biết mức thật.
 CAVEATS: Dict[str, List[str]] = {
-    "A2": ["2026-08-01 (cập nhật): đã dựng `tools/orchestrator/` — control-plane CHẠY ĐƯỢC cho CẢ HAI "
+    "A2": ["2026-09-02 (cập nhật): `tools/orchestrator/` là control-plane CHẠY ĐƯỢC cho CẢ HAI "
            "nhánh (lâm sàng 8 bước có nhánh điều kiện + nghiên cứu G0–G10), grounded vào registry "
-           "50 agent .md THẬT (không hardcode), bộ test offline PASS. GIỚI HẠN CÒN LẠI (trung "
-           "thực, không thổi phồng): đây là lớp ĐỊNH TUYẾN + LẬP KẾ HOẠCH + CỔNG quyết định "
-           "(dry-run) — nó CHƯA tự gọi LLM để agent thực thi thật; seam `LLMExecutor` đã có sẵn "
-           "nhưng cần cắm wrapper Codex/API `[CẦN MÔI TRƯỜNG HỖ TRỢ]`. Việc thực thi agent thật "
-           "hiện vẫn qua Agent/Task tool của phiên Claude Code, không phải orchestrator tự chạy."],
+           "50 agent .md THẬT (không hardcode), bộ test offline PASS. `--execute` đã nối "
+           "`LLMExecutor` với Codex CLI ở phiên `--ephemeral` chỉ-đọc, artifact có revision và "
+           "critic Q1–Q7 chạy phiên tách biệt; output sai schema/lỗi runtime fail-closed. GIỚI HẠN "
+           "CÒN LẠI: cùng họ mô hình không thay hội đồng bác sĩ; đường này không tự chạy dữ liệu "
+           "thật, không tự ký Cổng A/B/G và không thay research pipeline sản xuất."],
     "S2": ["2026-07-04 (vá): orchestrator control-plane nay tham chiếu THẲNG 50 agent .md qua "
            "registry (không phải script cổng run_g*_auto.py) — `--validate` xác nhận 0 tham "
            "chiếu treo giữa flow ⇄ registry. Bàn giao agent↔agent trong plan là DETERMINISTIC "

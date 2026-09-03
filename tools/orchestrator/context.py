@@ -38,10 +38,16 @@ class Session:
     entry_agent: str = ""
     plugin_routing: dict = field(default_factory=dict)
     status: str = "received"
+    execution_mode: str = "dry-run"
     trace: list[dict] = field(default_factory=list)       # mỗi bước/agent đã (dry-)chạy
     checkpoints: list[dict] = field(default_factory=list)
     gates_pending: list[str] = field(default_factory=list)  # cổng đang chờ bác sĩ
     guardrail: dict = field(default_factory=dict)
+    tool_receipts: dict = field(default_factory=dict)  # biên lai máy-kiểm dùng chung cho critic/reroute
+    executed_tools: list[str] = field(default_factory=list)
+    current_output: str = ""               # artifact sống để agent sau sửa/tích hợp
+    draft_revision: int = 0                 # tăng chỉ khi nội dung thật thay đổi
+    output_history: list[dict] = field(default_factory=list)
     exit_code: int = 0
     retries: int = 0
     created_at: str = field(default_factory=_now)
@@ -54,6 +60,21 @@ class Session:
     def checkpoint(self, stage: str, gate: str | None, summary: str, data: dict | None = None) -> None:
         self.checkpoints.append(asdict(Checkpoint(stage=stage, gate=gate, summary=summary, data=data or {})))
         self.updated_at = _now()
+
+    def update_output(self, agent: str, content: str) -> bool:
+        """Ghi một revision mới khi nội dung thay đổi; không nhân bản bản nháp giống nhau."""
+        cleaned = str(content or "").strip()
+        if not cleaned or cleaned == self.current_output.strip():
+            return False
+        self.current_output = cleaned
+        self.draft_revision += 1
+        self.output_history.append({
+            "revision": self.draft_revision,
+            "agent": agent,
+            "at": _now(),
+        })
+        self.updated_at = _now()
+        return True
 
     def as_dict(self) -> dict:
         return asdict(self)

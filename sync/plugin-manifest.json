@@ -16,7 +16,7 @@
         "Windows",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Worker VIẾT/SOÁT cho tuyến nghiên cứu: registry bind 10 lệnh ars-* (plan · outline · lit-review · full · abstract · revision · reviewer · rebuttal-audit · citation-check) ở stage G0/G1/G7/G8/G9, priority 60, may_own=false. Chủ vẫn là agent nội bộ theo bảng _PLUGIN-ROUTING-CONTRACT.md: viet-ban-thao · kiem-chung-trich-dan · binh-duyet · thiet-ke-nghien-cuu; ARS không xác nhận authorship/COI/AI và không phải chữ ký G8. Đang có ở CẢ HAI máy vì đề tài chạy ở cả hai. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -35,7 +35,7 @@
         "Windows",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -55,7 +55,7 @@
         "Windows",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Cấp bộ quy trình harness (harness-plan · -work · -review · -sync · -accept · -loop · -release · -setup) dùng cho repo medical-ebm-automation (CLAUDE.md của repo đó, §4). Trong v5.13.1 chúng là SKILL, không phải lệnh: gọi /claude-code-harness:harness-plan. Bác sĩ yêu cầu bổ sung sang Windows 26/08/2026 — trước đó máy Windows KHÔNG có gì (không clone, không skill, không agent). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -73,7 +73,7 @@
         "Mac",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Cầu nối gọi Codex CLI từ Claude Code — 3 skill NỘI BỘ (codex-cli-runtime · codex-result-handling · gpt-5-4-prompting). Registry: provider `codex` priority 20, may_own=false, ghi chú «lượt chẩn đoán/cài đặt thứ hai cho việc kỹ thuật» — chỉ cho việc lập trình repo, KHÔNG chạm quyết định y khoa/nghiên cứu. Chỉ có ở Mac. [CẦN BÁC SĨ] xác nhận có cần ở Windows không (Codex CLI chưa cài ở đó). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -90,7 +90,7 @@
         "Mac",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Worker văn phong. CẤM chạy trên nội dung y khoa ĐÃ QUA CỔNG — nó sửa câu chữ, đủ để làm lệch một mệnh đề điều kiện («ngoài thai kỳ», «nếu không chống chỉ định») mà không ai thấy (CLAUDE.md, luật nền 3 của bảng định tuyến). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -104,7 +104,7 @@
     },
     "medsci-analysis@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -113,7 +113,7 @@
     },
     "medsci-data@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -122,7 +122,7 @@
     },
     "medsci-literature@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -131,7 +131,7 @@
     },
     "medsci-modeling@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -140,7 +140,7 @@
     },
     "medsci-presentation@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -153,7 +153,7 @@
         "Windows",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Bản GIỮ LẠI trong 9 plugin medsci-* có bộ 58 skill BYTE-IDENTICAL (đã so md5). 8 bản trùng đã tắt 10/08/2026 — danh sách Windows 1405 → 941 mục, 0 năng lực mất. Tiền tố lệnh là /medsci-project:*. Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -168,7 +168,7 @@
     },
     "medsci-review@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -177,7 +177,7 @@
     },
     "medsci-submission@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -186,7 +186,7 @@
     },
     "medsci-writing@medsci-skills": {
       "can_o_may": [],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "TẮT CÓ CHỦ Ý 10/08/2026: 9 plugin medsci-* mang CÙNG một bộ 58 skill byte-identical (đã so md5). Giữ duy nhất medsci-project; 8 bản trùng tắt bằng `false` TƯỜNG MINH trong enabledPlugins — không gỡ mục (vắng mặt = BẬT; bài học 11/08: gỡ mục làm Claude Code cài lại 278 MB). App xoá cờ định kỳ → kiem_co_tat_plugin_trung.py khôi phục (BH69). Trên Mac cache đã dọn nên bật lại = cài lại qua mạng. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true)",
       "do_duoc_luc_ghi": {
@@ -198,7 +198,7 @@
         "Mac",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Worker tổng quan/gộp TỪNG BƯỚC: registry bind 3 skill ma-search-bibliography (SEARCH_PLAN) · ma-screening-quality (SCREENING_DRAFT) · ma-meta-analysis (SYNTHESIS_DRAFT) dưới chủ tong-quan-y-van / meta-phan-tich; ma-end-to-end BỊ CẤM làm chủ (registry note + bảng định tuyến CLAUDE.md). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -215,7 +215,7 @@
         "Mac",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Worker NLP lâm sàng. Skill khử định danh của nó KHÔNG thay quan-ly-du-lieu — khử định danh/PII là việc CÓ CỔNG, chủ là agent EBM (bảng định tuyến). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
@@ -233,7 +233,7 @@
         "Mac",
         "Cloud"
       ],
-      "da_xac_nhan": false,
+      "da_xac_nhan": true,
       "chieu_sang_codex": false,
       "ly_do": "Worker tra PubMed: registry bind 2 skill pubmed-quick-search (DISCOVERY · METADATA) · pubmed-systematic-search (SEARCH_PLAN) dưới chủ tra-cuu-chung-cu / thu-thu-tai-lieu. Đo 10/08/2026: 0 lượt dùng trong 2712 phiên — tầng tạo giá trị thật là MCP PubMed (1322 lượt); giữ theo quyết định 10/08 (không gỡ nhóm 0 lượt). Chỉ có ở Mac. (dự thảo 02/09/2026 rút từ registry/doctrine đã ghi — bác sĩ duyệt rồi đặt da_xac_nhan: true) Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {

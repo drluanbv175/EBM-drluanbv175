@@ -67,6 +67,16 @@ class TestIntent(unittest.TestCase):
         self.assertEqual(r.kind, "single_task")
         self.assertEqual(r.target, "tra-cuu-chung-cu")
 
+    def test_natural_citation_verification_phrase(self):
+        r = route("Kiểm chứng trích dẫn học thuật PMID 41698208")
+        self.assertEqual(r.kind, "single_task")
+        self.assertEqual(r.target, "kiem-chung-trich-dan")
+
+    def test_identifier_only_citation_verification_phrase(self):
+        r = route("Kiểm chứng PMID 41698208")
+        self.assertEqual(r.kind, "single_task")
+        self.assertEqual(r.target, "kiem-chung-trich-dan")
+
     def test_unknown(self):
         r = route("xin chào buổi sáng")
         self.assertEqual(r.kind, "unknown")
@@ -346,6 +356,18 @@ class TestKnowledgeAndTools(unittest.TestCase):
         # dry-run trả về lệnh, không chạy thật
         res = tr.invoke("grade", ["--design", "rct"], dry_run=True)
         self.assertIn("cmd", res)
+        self.assertEqual(tr.validate(), [], "mọi tool đã đăng ký phải có script thật")
+        self.assertTrue(tr.get("gen-docx").exists)
+
+    def test_orchestrator_validate_catches_missing_tool(self):
+        from orchestrator.tools_registry import Tool
+        tr = ToolRegistry()
+        tr.tools["fixture-missing"] = Tool(
+            "fixture-missing", "tools/khong-ton-tai.py", "", "fixture", ("(hệ thống)",)
+        )
+        orch = Orchestrator(tools=tr)
+        warnings = orch.validate()
+        self.assertTrue(any("fixture-missing" in warning for warning in warnings))
 
 
 class TestGuardrailReroute(unittest.TestCase):

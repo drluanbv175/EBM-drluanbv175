@@ -71,6 +71,7 @@ import g2_quality_gate as G2Q  # noqa: E402
 import g9_quality_gate as G9Q  # noqa: E402
 import gate_contract as GC  # noqa: E402
 import skill_standards as STANDARDS  # noqa: E402
+import annex2_quality_gate as ANNEX2  # noqa: E402
 from orchestrator.guardrail_bridge import make_run_eval_verdict  # noqa: E402
 from runtime.approval_ledger import ApprovalLedger  # noqa: E402
 from research_project.project_config import (  # noqa: E402
@@ -442,7 +443,7 @@ def check_stakeholder_gate_control() -> dict[str, Any]:
 
 
 def check_current_standards_control() -> dict[str, Any]:
-    """WHO TRDS và ICMJE 1/2026 phải chạy thành hợp đồng, không chỉ là nhãn."""
+    """WHO TRDS, ICMJE 1/2026 và ICH Annex 2 phải là hợp đồng hành vi."""
     meta = {
         "gate_params": {
             "G0": {
@@ -508,6 +509,54 @@ def check_current_standards_control() -> dict[str, Any]:
         for row in G9Q.STANDARDS_BASIS
     )
     hard_gates = tuple(STANDARDS.PIPELINE_HARD_GATES)
+    annex2_missing = {
+        "gate_params": {"G1": {"annex2": {
+            "applicable": True, "methodologies": ["decentralised", "rwd"],
+        }}}
+    }
+    annex2_complete = {
+        "gate_params": {"G1": {"annex2": {
+            "applicable": True,
+            "methodologies": ["decentralised", "rwd"],
+            "fit_for_purpose_justification": "Phương pháp phù hợp mục tiêu và quần thể.",
+            "participant_burden_and_access": "Có thiết bị mượn và lựa chọn khám trực tiếp.",
+            "roles_and_oversight": "PI giám sát theo mức trọng yếu của dữ liệu.",
+            "safety_information_flow": "Cảnh báo DHT chuyển tới investigator theo SLA.",
+            "remote_data_collection_plan": "DHT đã thẩm định; lịch và hỗ trợ được tiền định.",
+            "data_provenance_and_quality": "Nguồn RWD, lineage và fitness-for-use đã mô tả.",
+            "data_variability_and_sap": "SAP tiền định biến thiên theo nguồn và sensitivity.",
+            "irb_information_plan": "IRB nhận mô tả đầy đủ mọi phương pháp Annex 2.",
+            "privacy_confidentiality_security": "Mã hóa, phân quyền và lưu vết truy cập.",
+            "remote_consent_and_identity": "Xác minh danh tính và quy trình eConsent tiền định.",
+            "alternative_access_path": "Có bản giấy/khám trực tiếp khi người tham gia yêu cầu.",
+            "dht_validation_and_support": "Kiểm định DHT, đào tạo và hỗ trợ kỹ thuật.",
+            "access_and_permissions": "Quyền truy cập và phạm vi consent RWD đã xác định.",
+            "data_governance": "Sponsor chịu trách nhiệm; service provider có RACI/audit.",
+        }}}
+    }
+    annex2_missing_g1 = ANNEX2.evaluate(annex2_missing, "rct", "G1")
+    annex2_missing_g2 = ANNEX2.evaluate(annex2_missing, "rct", "G2")
+    annex2_complete_g1 = ANNEX2.evaluate(annex2_complete, "rct", "G1")
+    annex2_complete_g2 = ANNEX2.evaluate(annex2_complete, "rct", "G2")
+    annex2_behavior = (
+        ANNEX2.ADOPTED_DATE == "2026-06-03"
+        and annex2_missing_g1["status"] == "BLOCK"
+        and annex2_missing_g2["status"] == "BLOCK"
+        and annex2_complete_g1["status"] == "PASS"
+        and annex2_complete_g2["status"] == "PASS"
+    )
+    quadas_map = (ROOT / ".claude/agents/_BAN-DO-KET-NOI.md").read_text(encoding="utf-8")
+    quadas_agent = (ROOT / ".claude/agents/tham-dinh-do-chinh-xac-chan-doan.md").read_text(
+        encoding="utf-8"
+    )
+    quadas3_operational = (
+        "chẩn đoán/QUADAS-3+STARD" in quadas_map
+        and "QUADAS-2+STARD" not in quadas_map
+        and "QUADAS-3 — 6 pha" in quadas_agent
+        and "Participants · Index Test · Target Condition · Analysis" in quadas_agent
+        and "đánh giá theo từng ước lượng" in quadas_agent
+        and "PMID 41698208" in quadas_agent
+    )
     ok = all(
         (
             G2Q.WHO_TRDS_VERSION == "1.3.1",
@@ -519,6 +568,8 @@ def check_current_standards_control() -> dict[str, Any]:
             access_default_ok is False,
             access_complete_ok is True,
             hard_gates == ("G2", "G4", "G5", "G8", "G9", "G10"),
+            annex2_behavior,
+            quadas3_operational,
         )
     )
     return {
@@ -533,7 +584,16 @@ def check_current_standards_control() -> dict[str, Any]:
         "default_access_attestation_fails_closed": access_default_ok is False,
         "complete_access_attestation_passes": access_complete_ok is True,
         "canonical_hard_gates": list(hard_gates),
-        "proves": "WHO TRDS 1.3.1 lấy dữ kiện PI đã pin và thiếu 13/14/19/20 bị phát hiện; G9 thực thi quyền tác giả truy cập dữ liệu theo ICMJE 1/2026; nguồn chuẩn khớp sáu cổng ký runtime.",
+        "ich_e6_r3_annex2": {
+            "version": ANNEX2.VERSION,
+            "adopted_date": ANNEX2.ADOPTED_DATE,
+            "missing_g1_blocks": annex2_missing_g1["status"] == "BLOCK",
+            "missing_g2_blocks": annex2_missing_g2["status"] == "BLOCK",
+            "complete_g1_passes": annex2_complete_g1["status"] == "PASS",
+            "complete_g2_passes": annex2_complete_g2["status"] == "PASS",
+        },
+        "quadas3_operational_mapping": quadas3_operational,
+        "proves": "WHO TRDS 1.3.1 lấy dữ kiện PI đã pin và thiếu 13/14/19/20 bị phát hiện; G9 thực thi quyền tác giả truy cập dữ liệu theo ICMJE 1/2026; ICH E6(R3) Annex 2 chặn G1/G2 khi thử nghiệm decentralised/pragmatic/RWD thiếu kiểm soát; nguồn chuẩn khớp sáu cổng ký runtime.",
     }
 
 

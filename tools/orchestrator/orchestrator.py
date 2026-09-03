@@ -58,9 +58,17 @@ class Orchestrator:
     # ── Năng lực 1: điều phối ────────────────────────────────────────
     def handle(self, request: str, executor: AgentExecutor | None = None,
                store: ContextStore | None = None, persist: bool = True,
-               guardrail_verdict: Callable[[Session], dict] | None = None) -> Session:
+               guardrail_verdict: Callable[[Session], dict] | None = None,
+               initial_output: str = "") -> Session:
         ex = executor or DryRunExecutor()
-        session = Session(request=request)
+        session = Session(
+            request=request,
+            current_output=initial_output.strip(),
+            execution_mode="dry-run" if isinstance(ex, DryRunExecutor) else "live-read-only",
+        )
+        if session.current_output:
+            session.draft_revision = 1
+            session.output_history.append({"revision": 1, "agent": "input", "at": session.created_at})
         lc = Lifecycle()
 
         # Năng lực 3: định tuyến intent
@@ -111,6 +119,35 @@ class Orchestrator:
             if step.gate and step is not GUARDRAIL_STEP:
                 session.gates_pending.append(step.gate)
                 session.checkpoint(step.step_id, step.gate, GATES.get(step.gate, step.gate))
+            if not isinstance(ex, DryRunExecutor):
+                waiting = [row for row in session.trace if row.get("status") == "needs_input"]
+                if waiting:
+                    first = waiting[0]
+                    reason = str(first.get("needs_input") or first.get("summary") or "thiếu đầu vào thật")
+                    if session.gates_pending:
+                        gate = session.gates_pending[0]
+                        lc.hit_gate(gate)
+                        session.status = f"gate_pending · {gate} · cần đầu vào thật"
+                    else:
+                        lc.to("blocked", f"agent `{first.get('agent')}` cần đầu vào thật")
+                        session.status = "needs_clarification · không tự suy đoán đầu vào"
+                    session.checkpoint(
+                        "needs_input", session.gates_pending[0] if session.gates_pending else None,
+                        reason[:500], {"agent": first.get("agent")},
+                    )
+                    return self._finish(session, lc, store, persist)
+
+        # Thực thi thật phải fail-closed nếu bất kỳ agent nào lỗi. Dry-run vẫn chỉ lập kế hoạch.
+        execution_errors = [row for row in session.trace if row.get("status") == "error"]
+        if execution_errors and not isinstance(ex, DryRunExecutor):
+            first = execution_errors[0]
+            lc.to("blocked", f"agent `{first.get('agent')}` thực thi lỗi")
+            session.status = "blocked · lỗi thực thi agent — không chấm/không phát hành"
+            session.checkpoint(
+                "execution_error", None, "fail-closed khi agent thực thi lỗi",
+                {"agents": [row.get("agent") for row in execution_errors]},
+            )
+            return self._finish(session, lc, store, persist)
 
         # Năng lực 6: chốt guardrail 2 lớp (đã là bước cuối trong flow)
         lc.to("guardrail", "chốt kiểm 2 lớp qua `tham-dinh-dau-ra` (R1–R14 + Q1–Q7)")
@@ -173,11 +210,34 @@ class Orchestrator:
                 stage=stage,
             )
             scoped_data = self._routing_with_availability(scoped)
-            res = ex.execute(agent.name, self.registry, self.tools)
+            res = ex.execute(
+                agent.name,
+                self.registry,
+                self.tools,
+                task_context={
+                    "request": session.request,
+                    "kind": session.kind,
+                    "step": step.step_id,
+                    "current_output": session.current_output,
+                    "draft_revision": session.draft_revision,
+                    "worker_routing": scoped_data,
+                    "tool_receipts": session.tool_receipts,
+                    "executed_tools": session.executed_tools,
+                },
+            )
+            new_receipts = res.provenance.get("tool_receipts") or {}
+            if isinstance(new_receipts, dict):
+                session.tool_receipts.update(new_receipts)
+            for tool_id in res.provenance.get("executed_tools") or []:
+                if tool_id not in session.executed_tools:
+                    session.executed_tools.append(tool_id)
+            # `tham-dinh-dau-ra` là critic, không được đè artifact đang được chấm.
+            revised = agent.name != "tham-dinh-dau-ra" and session.update_output(agent.name, res.content)
             session.record({
                 "step": step.step_id, "title": step.title, "gate": step.gate,
                 "condition": agent.condition, "signal_matched": bool(agent.condition),
-                "worker_routing": scoped_data,
+                "worker_routing": scoped_data, "draft_revised": revised,
+                "draft_revision": session.draft_revision,
                 **res.as_dict(),
             })
 
@@ -247,12 +307,35 @@ class Orchestrator:
                 })
                 return False
             reroute = verdict.get("reroute_to") or REROUTE_DEFAULT.get(code, "tra-cuu-chung-cu")
-            res = ex.execute(reroute, self.registry, self.tools)
+            previous_revision = session.draft_revision
+            res = ex.execute(
+                reroute,
+                self.registry,
+                self.tools,
+                task_context={
+                    "request": session.request,
+                    "kind": session.kind,
+                    "step": "reroute",
+                    "current_output": session.current_output,
+                    "draft_revision": session.draft_revision,
+                    "fix_request": verdict,
+                    "tool_receipts": session.tool_receipts,
+                    "executed_tools": session.executed_tools,
+                },
+            )
+            new_receipts = res.provenance.get("tool_receipts") or {}
+            if isinstance(new_receipts, dict):
+                session.tool_receipts.update(new_receipts)
+            for tool_id in res.provenance.get("executed_tools") or []:
+                if tool_id not in session.executed_tools:
+                    session.executed_tools.append(tool_id)
+            revised = session.update_output(reroute, res.content)
             # L1: KHÔNG che `status:'error'` của agent treo bằng 'reroute' — giữ để guard bắt được.
-            rr_status = "error" if res.status == "error" else "reroute"
+            rr_status = res.status if res.status in {"error", "needs_input"} else "reroute"
             session.record({
                 "step": "reroute", "title": f"Re-route sửa lỗi guardrail [{code}]", "gate": None,
                 "condition": None, "signal_matched": False, "reroute_for": code, "retry": lc.retries,
+                "draft_revised": revised, "draft_revision": session.draft_revision,
                 **res.as_dict(),
                 "summary": f"guardrail TRẢ-VỀ-SỬA [{code}] → re-route `{reroute}` "
                            f"(vòng {lc.retries}/{MAX_RETRIES}): {res.summary}",
@@ -260,7 +343,14 @@ class Orchestrator:
             })
             session.checkpoint("reroute", None,
                                f"re-route [{code}] → {reroute} (vòng {lc.retries}/{MAX_RETRIES})",
-                               {"code": code, "reroute_to": reroute, "retry": lc.retries})
+                               {"code": code, "reroute_to": reroute, "retry": lc.retries,
+                                "from_revision": previous_revision,
+                                "to_revision": session.draft_revision,
+                                "content_changed": revised})
+            if res.status == "needs_input":
+                lc.to("blocked", f"agent sửa `{reroute}` cần đầu vào thật")
+                session.status = "needs_clarification · guardrail không thể tự sửa khi thiếu đầu vào"
+                return False
             # lặp: verdict_fn gọi lại (production: sau khi agent sửa; test: lượt sau trả pass)
 
     def _finish(self, session: Session, lc: Lifecycle, store: ContextStore | None, persist: bool) -> Session:
@@ -290,6 +380,7 @@ class Orchestrator:
                 warns.append(f"Flow/việc lẻ/gate-hint/reroute tham chiếu agent KHÔNG có trong registry: `{name}`")
         warns += self.registry.validate()
         warns += self.plugin_ownership.validate(set(self.registry.agents))
+        warns += self.tools.validate()
         if check_runtime:
             for availability in self.worker_inventory.audit(self.plugin_ownership):
                 if not availability.available:

@@ -283,7 +283,7 @@ RESEARCH = [
     {"cat": "Thẩm định nguy cơ sai lệch (Risk of Bias)", "agent": "tham-dinh-phe-binh", "tools": [
         {"name": "RoB 2", "for": "RCT", "purpose": "Nguy cơ sai lệch trong thử nghiệm ngẫu nhiên (5 miền)"},
         {"name": "ROBINS-I", "for": "Can thiệp không ngẫu nhiên", "purpose": "Nguy cơ sai lệch ở nghiên cứu quan sát có can thiệp"},
-        {"name": "QUADAS-2", "for": "Độ chính xác chẩn đoán", "purpose": "Nguy cơ sai lệch ở nghiên cứu xét nghiệm chẩn đoán"},
+        {"name": "QUADAS-3", "for": "Độ chính xác chẩn đoán", "purpose": "Nguy cơ sai lệch và tính áp dụng ở mức từng ước lượng; QUADAS-2 chỉ tương thích ngược"},
         {"name": "AMSTAR-2", "for": "Tổng quan hệ thống", "purpose": "Đánh giá chất lượng phương pháp của SR/MA"},
         {"name": "PROBAST", "for": "Mô hình dự báo", "purpose": "Nguy cơ sai lệch của mô hình tiên lượng/chẩn đoán"},
     ]},
