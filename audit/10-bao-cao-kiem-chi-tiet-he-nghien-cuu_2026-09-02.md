@@ -395,11 +395,12 @@ trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
    không có bản sao (schema khác). Đồng thời hạ `dau-nguc.dan_benh_nhan_quay_lai.trang_thai`
    từ `co-nguon` xuống `chua-dien` cho đúng thực trạng — không tự điền mốc thời gian (cần đọc
    toàn văn AHA/ACC 2021, không được bịa). Commit `7e68378` (repo gốc).
-9. `clinical_runtime/CLINICAL_DECISION_CONTRACT.json` (repo gốc, cùng đính chính đường dẫn như
-   mục 8) khai 4 cổng bắt buộc "C3/C5/C6/C7" nhưng
+9. **[ĐÃ VÁ]** `clinical_runtime/CLINICAL_DECISION_CONTRACT.json` (repo gốc, cùng đính chính
+   đường dẫn như mục 8) khai 4 cổng bắt buộc "C3/C5/C6/C7" nhưng
    `verify_clinical_runtime_schema_hardening.py::check_decision_contract()` chỉ canh 2/4 tên
    ("C3 Safety Gate", "C7 Human Approval Gate") — thiếu hẳn "C5 Red Team Gate"/"C6 Guardrail
-   Gate" trong danh sách marker viết tay.
+   Gate" trong danh sách marker viết tay. Vá: thêm 2 marker còn thiếu; JSON đã sẵn cả 4 tên nên
+   kết luận PASS không đổi, chỉ đóng khoảng hở kiểm tra. Commit `597e410` (repo gốc).
 10. `tools/orchestrator/worker_inventory.py` (repo gốc) — đường dò cache của provider `bio-research`
     (`"claude-cowork/bio-research"`) không khớp khuôn `<marketplace>/<plugin>/<version>` của
     BẤT KỲ plugin thật nào từng cài trên máy này, và chưa từng được đối chiếu dữ liệu thật ở
