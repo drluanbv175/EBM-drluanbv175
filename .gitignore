@@ -33,6 +33,11 @@
 # đo 01/09/2026: venv có sẵn cryptography mà nút vẫn báo thiếu). Đi qua git để hai máy
 # cùng nhận đúng một bản; đây chính là lớp bẫy BH70 (/* nuốt file gốc im lặng).
 !/Phat Khoa Ed25519.command
+# Hướng dẫn đi KÈM nút trên. Bản đầu (02/09/2026) rơi đúng bẫy BH70 mà chính dòng chú thích
+# ngay trên đã cảnh báo: `git add -A` BỎ QUA file bị ignore trong IM LẶNG, nên commit 69fd108
+# mang tiêu đề "docs: step-by-step guide..." mà bên trong CHỈ có file .command — hướng dẫn
+# sống duy nhất trong container cloud tạm và sẽ mất khi container bị thu hồi.
+!/HUONG-DAN-PHAT-KHOA-ED25519.md
 # Hồ sơ kiểm kê/kiện toàn hệ thống (PHA 1 của prompt điều khiển 15/08/2026) — là tài
 # liệu hệ thống, cần theo repo sang máy Windows như CLAUDE.md
 !/audit/

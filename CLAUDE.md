@@ -190,12 +190,26 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   thử, không phải bằng chứng chốt yếu*). Không hồi quy: cùng bộ chọn `-k "approve or g4 or
   ledger or gate"` fail ĐÚNG 18 test trước và sau (đều có sẵn trong container vì thiếu
   numpy/pandas), 944 passed.
-  🔑 **Ed25519 — hạ tầng ĐÃ ĐỦ, chỉ còn việc của bác sĩ.** Đã kiểm: `gate_contract.py` có
-  `sign_approval_ed25519()`, scheme `ed1:role:<hex>`, khoá riêng ngoài repo, khoá công
-  `config/gate_ed25519_pubkeys/` (hiện **trống** — chưa phát khoá nào). Nút `Phat Khoa Ed25519.command`
-  tự ghi rõ *"★ CHỈ BÁC SĨ TỰ BẤM — không nhờ agent chạy hộ: khoá riêng phải sinh ngoài tầm với
-  của agent thì chữ ký mới là bằng chứng độc lập thật."* ⇒ **agent KHÔNG được làm bước này**, và
-  đó là lý do đúng, không phải hạn chế kỹ thuật.
+  🔑 **Ed25519 — hạ tầng ĐÃ ĐỦ; và 4/5 vai ĐÃ CÓ KHOÁ THẬT.** `gate_contract.py` có
+  `sign_approval_ed25519()`, scheme `ed1:role:<hex>`, khoá riêng ngoài repo, khoá công trong
+  `config/gate_ed25519_pubkeys/`. Nút `Phat Khoa Ed25519.command` tự ghi rõ *"★ CHỈ BÁC SĨ TỰ
+  BẤM — không nhờ agent chạy hộ: khoá riêng phải sinh ngoài tầm với của agent thì chữ ký mới là
+  bằng chứng độc lập thật."* ⇒ **agent KHÔNG được làm bước này**, và đó là lý do đúng, không
+  phải hạn chế kỹ thuật. Hướng dẫn từng bước: `HUONG-DAN-PHAT-KHOA-ED25519.md`.
+  ⛔ **ĐÍNH CHÍNH 03/09/2026 — câu cũ ở đây («hiện trống — chưa phát khoá nào») là SAI.** Bác sĩ
+  đã phát **4 khoá công** ngày 01/09/2026 (commit `4eeb0c8` trên `master`): `IRB` ·
+  `INDEPENDENT_PEER_REVIEWER` · `STATISTICIAN` · `PI`. Tôi viết sai vì đo trên cây
+  `medical-ebm-automation` **lạc hậu 55 commit** — đúng **BH93**, và trớ trêu là chốt
+  `kiem_cay_lam_viec.py` **đã báo 🔴 «LẠC HẬU 55 commit» ngay phiên đó**; tôi đọc, báo lại, rồi
+  vẫn kết luận trên cây cũ. *Luật rút ra: cảnh báo lạc hậu phải chặn việc RÚT KẾT LUẬN, không
+  chỉ để in ra báo cáo.*
+  🔴 **Vai còn thiếu là `DATA_MANAGER` (cổng G5) — và nó thiếu vì LỖI CÔNG CỤ, không phải bác sĩ
+  quên.** `setup_gate_approval_key._ROLE_GROUPS` không khai `DATA_MANAGER`, mà `--role` dùng
+  `choices=_ROLE_GROUPS` ⇒ argparse **từ chối thẳng**, trong khi
+  `_GATE_REQUIRED_STAKEHOLDERS["G5"] = ("DATA_MANAGER", "PI")` vẫn đòi đúng vai đó. Nghĩa là bác
+  sĩ đã phát khoá cho MỌI vai công cụ chịu nhận, và G5 là cổng cứng duy nhất không thể có khoá
+  Ed25519 — im lặng. Đã vá 02/09; `--role DATA_MANAGER` nay chạy được, việc phát khoá vẫn là của
+  bác sĩ.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời
