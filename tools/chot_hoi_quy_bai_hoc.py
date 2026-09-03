@@ -4937,6 +4937,84 @@ def bh98_bien_nhan_guardrail_lam_sang():
                   "không tìm thấy sổ ⇒ không kết luận (BH08)")
 
 
+def bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap():
+    """03/09 — một module test nhập thư viện gốc (native) KHÔNG RÀO có thể giết CẢ lượt
+    thu thập, không chỉ chính nó.
+
+    Đo trên container phiên cloud: `cryptography` cài HỎNG NỬA CHỪNG (có gói, thiếu
+    `_cffi_backend`) ném `pyo3_runtime.PanicException` từ tầng Rust. Lớp đó kế thừa THẲNG
+    `BaseException`, KHÔNG qua `Exception`, nên:
+      • `pytest.importorskip("cryptography")` KHÔNG cứu được — nó chỉ bắt ImportError;
+      • pytest xếp thành lỗi collection, và lượt chạy dừng với
+        «Interrupted: N errors during collection» — TOÀN BỘ bộ test từ chối chạy.
+    Tức một thư viện tuỳ chọn hỏng làm mất luôn 3176 test không liên quan, và người đọc chỉ
+    thấy một backtrace Rust. Cùng họ với rào `cryptography` trong `gate_contract.py` vá cùng
+    ngày, nhưng ở tầng bộ kiểm thử.
+
+    Chốt này kiểm HÀNH VI, không đếm chuỗi: tiêm một `cryptography` giả luôn ném một
+    BaseException KHÔNG phải Exception (mô phỏng đúng PanicException), rồi đòi module test
+    Ed25519 kết thúc bằng `Skipped` của pytest — tức bỏ qua ĐÚNG MỘT module — thay vì để
+    ngoại lệ lọt ra ngoài.
+
+    ⚠️ Bỏ qua ở mức module là ĐÚNG MỨC, không phải nới: pytest vẫn đếm vào cột `skipped`,
+    không lẫn vào `passed` — thiếu/hỏng thư viện là CHƯA KIỂM ĐƯỢC (BH08), không phải ĐẠT.
+    """
+    import importlib.util as _iu
+    import importlib.machinery as _im
+
+    tf = REPO / "medical-ebm-automation" / "tests" / "test_gate_ed25519_20260815.py"
+    if not tf.exists():
+        return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
+    try:
+        import pytest as _pt
+    except Exception as e:  # noqa: BLE001
+        return True, f"⚪ không có pytest để kiểm ({type(e).__name__})"
+
+    class _GiaPanic(BaseException):
+        """Mô phỏng pyo3_runtime.PanicException: KHÔNG kế thừa Exception."""
+
+    class _ChanCrypto:
+        """Meta-path finder ném panic giả cho MỌI tên bắt đầu bằng 'cryptography'."""
+
+        def find_spec(self, ten, duong=None, muc_tieu=None):
+            if ten == "cryptography" or ten.startswith("cryptography."):
+                raise _GiaPanic("gia lap _cffi_backend hong")
+            return None
+
+    chan = _ChanCrypto()
+    cu_modules = {k: v for k, v in sys.modules.items() if k.startswith("cryptography")}
+    for k in list(cu_modules):
+        del sys.modules[k]
+    sys.meta_path.insert(0, chan)
+    ten_mod = "_bh99_ed25519_test"
+    sys.modules.pop(ten_mod, None)
+    try:
+        spec = _iu.spec_from_file_location(ten_mod, tf)
+        m = _iu.module_from_spec(spec)
+        sys.modules[ten_mod] = m
+        try:
+            spec.loader.exec_module(m)
+        except _pt.skip.Exception as e:
+            return True, f"đúng: module tự bỏ qua thay vì kéo sập lượt thu thập ({str(e)[:60]}…)"
+        except _GiaPanic:
+            return False, ("module test Ed25519 để PANIC lọt ra ngoài — pytest sẽ dừng CẢ lượt "
+                           "thu thập («Interrupted: N errors during collection»), mất luôn hàng "
+                           "nghìn test không liên quan. Phải bắt BaseException rồi "
+                           "pytest.skip(allow_module_level=True).")
+        except BaseException as e:  # noqa: BLE001
+            return False, (f"module test Ed25519 ném {type(e).__name__} ra ngoài thay vì skip — "
+                           "lượt thu thập vẫn bị kéo sập")
+        return False, ("module test Ed25519 nạp SẠCH dù cryptography đã bị chặn — chốt không "
+                       "còn kiểm đúng thứ nó nhắm (nhập đã bị dời đi đâu đó?)")
+    finally:
+        try:
+            sys.meta_path.remove(chan)
+        except ValueError:
+            pass
+        sys.modules.pop(ten_mod, None)
+        sys.modules.update(cu_modules)
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5043,6 +5121,7 @@ BAI_HOC = [
     ("BH96", "02/09", "Cổng B2 của ops/orchestrator phải bật --strict-sources — hai tuyến xuất bản không được lệch", bh96_orchestrator_b2_phai_bat_strict_sources),
     ("BH97", "02/09", "SAP RỖNG không được khoá bằng chữ ký G4 — vắng sạch mục bắt buộc là tài liệu hỏng, không phải biến thể thiết kế", bh97_sap_rong_khong_duoc_khoa_bang_chu_ky),
     ("BH98", "02/09", "Biên nhận guardrail lâm sàng: bịa thì bị bắt, thật thì thông, không có sổ thì KHÔNG kết luận", bh98_bien_nhan_guardrail_lam_sang),
+    ("BH99", "03/09", "Module test nhập thư viện gốc hỏng phải SKIP, không được kéo sập cả lượt thu thập", bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
@@ -5081,6 +5160,7 @@ def _dung_lai_mirror_codex(tran: bool) -> None:
                        capture_output=True, timeout=120, check=False)
     except (OSError, subprocess.SubprocessError):
         return  # dựng lại thất bại ⇒ để chốt báo đỏ như cũ, không nuốt lỗi
+
 
 
 def main() -> int:
