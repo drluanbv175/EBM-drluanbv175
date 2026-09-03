@@ -385,16 +385,22 @@ trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
 7. `sync_agents_to_codex.py::check_target()` không có set-diff hai chiều cho file `.md` hạ
    tầng (chỉ có cho `*.toml` agent) — xóa/đổi tên một file hạ tầng nguồn để lại bản mirror mồ
    côi vĩnh viễn ở phía Codex mà không cờ nào báo.
-8. `kiem_safety_net.py` — luật R4/R5/R6 (nguồn truy được, tiêu chí đo được, cấm placeholder)
-   chỉ áp cho khối `co_do_cho_bac_si`, không áp cho khối `dan_benh_nhan_quay_lai` — dữ liệu
-   sống hiện có (`dau-nguc`) đang khai `trang_thai:"co-nguon"` nhưng còn nguyên
-   `[CẦN BÁC SĨ ĐIỀN]` bên trong mà chốt không bắt được. Ưu tiên cao nhất trong 8 mục còn lại
-   vì chạm tầng an toàn bệnh nhân.
-9. `clinical_runtime/CLINICAL_DECISION_CONTRACT.json` khai 4 cổng bắt buộc "C3/C5/C6/C7" nhưng
+8. **[ĐÃ VÁ]** `kiem_safety_net.py` — luật R4/R5/R6 (nguồn truy được, tiêu chí đo được, cấm
+   placeholder) chỉ áp cho khối `co_do_cho_bac_si`, không áp cho khối `dan_benh_nhan_quay_lai`
+   — dữ liệu sống (`dau-nguc`) đang khai `trang_thai:"co-nguon"` nhưng còn nguyên
+   `[CẦN BÁC SĨ ĐIỀN]` bên trong mà chốt không bắt được. **File này thật ra thuộc REPO GỐC**
+   (`tools/kiem_safety_net.py` + `clinical_runtime/`), không phải `medical-ebm-automation` như
+   briefing chung của Workflow ghi — đính chính lại ở đây vì ảnh hưởng tới việc biết vá ở đâu.
+   Vá: thêm R10 (mirror R4, xử lý đúng 2 hình dạng dữ liệu thật) + R11 (mirror R6); R5 cố ý
+   không có bản sao (schema khác). Đồng thời hạ `dau-nguc.dan_benh_nhan_quay_lai.trang_thai`
+   từ `co-nguon` xuống `chua-dien` cho đúng thực trạng — không tự điền mốc thời gian (cần đọc
+   toàn văn AHA/ACC 2021, không được bịa). Commit `7e68378` (repo gốc).
+9. `clinical_runtime/CLINICAL_DECISION_CONTRACT.json` (repo gốc, cùng đính chính đường dẫn như
+   mục 8) khai 4 cổng bắt buộc "C3/C5/C6/C7" nhưng
    `verify_clinical_runtime_schema_hardening.py::check_decision_contract()` chỉ canh 2/4 tên
    ("C3 Safety Gate", "C7 Human Approval Gate") — thiếu hẳn "C5 Red Team Gate"/"C6 Guardrail
    Gate" trong danh sách marker viết tay.
-10. `tools/orchestrator/worker_inventory.py` — đường dò cache của provider `bio-research`
+10. `tools/orchestrator/worker_inventory.py` (repo gốc) — đường dò cache của provider `bio-research`
     (`"claude-cowork/bio-research"`) không khớp khuôn `<marketplace>/<plugin>/<version>` của
     BẤT KỲ plugin thật nào từng cài trên máy này, và chưa từng được đối chiếu dữ liệu thật ở
     lần vá BH85/BH89 cùng họ — cùng một khoảng trống "đo đúng nhưng đo nhầm chỗ", trường hợp
