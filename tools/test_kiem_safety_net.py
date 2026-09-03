@@ -150,6 +150,122 @@ class TrangThaiPhaiKhopNoiDung(unittest.TestCase):
         self.assertTrue(any(x.startswith("R2") for x in loi), loi)
 
 
+def hc_ld_co_nguon(ld_override: dict, **ghi_de) -> dict:
+    """Biến thể của hc_co_nguon() với `dan_benh_nhan_quay_lai` tự khai `co-nguon`
+    — dùng để bài test R10/R11 (mirror R4/R6 cho khối lời dặn, thêm 2026-09-03)."""
+    goc = hc_co_nguon(**ghi_de)
+    goc["dan_benh_nhan_quay_lai"] = ld_override
+    return goc
+
+
+class KhoiLoiDanCungPhaiCoNguon(unittest.TestCase):
+    """R10 — mirror của R4, nhưng cho ĐÚNG hai hình dạng dữ liệu thật của
+    `dan_benh_nhan_quay_lai` (xem docstring `_nguon_truy_duoc_ld`)."""
+
+    def test_khong_nguon_o_dau_ca_bi_chan(self):
+        hc = hc_ld_co_nguon({"trang_thai": "co-nguon",
+                             "noi_dung": [{"cau": "đi khám nếu nặng hơn"}]})
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R10") for x in loi), loi)
+
+    def test_nguon_cap_khoi_hop_le_thi_qua(self):
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "nguon": {"pmid": "30587518"},
+            "noi_dung": [{"cau": "đi khám nếu nặng hơn"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertFalse(any(x.startswith("R10") for x in loi), loi)
+
+    def test_moi_muc_co_ma_nguon_thi_qua(self):
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "noi_dung": [{"cau": "đi khám nếu nặng hơn", "ma_nguon": "O1"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertFalse(any(x.startswith("R10") for x in loi), loi)
+
+    def test_moi_muc_co_nguon_goc_chua_pmid_thi_qua(self):
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "noi_dung": [{"cau": "đi khám nếu nặng hơn",
+                          "nguon_goc": "Bài gốc — PMID 30587518, doi:10.1212/WNL.0000000000006697"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertFalse(any(x.startswith("R10") for x in loi), loi)
+
+    def test_nguon_goc_van_xuoi_khong_pmid_bi_chan(self):
+        """★ Ca thật đã bắt được trên dữ liệu sống (dau-nguc trước khi hạ trạng
+        thái): nguon_goc là văn xuôi không PMID/DOI, hoặc thiếu hẳn — R10 phải
+        chặn, không được ngầm chấp nhận vì đã có `ma_nguon`/`nguon_goc` KEY."""
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "noi_dung": [{"cau": "đi khám nếu nặng hơn",
+                          "nguon_goc": "theo kinh nghiệm lâm sàng"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R10") for x in loi), loi)
+
+    def test_mot_muc_thieu_nguon_giua_nhieu_muc_hop_le_van_bi_chan(self):
+        """Không được chỉ cần MỘT mục có nguồn là qua cả khối — mọi mục đều
+        phải tự đủ điều kiện (trừ khi có `nguon` cấp khối bao trùm)."""
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "noi_dung": [
+                {"cau": "câu A", "ma_nguon": "O1"},
+                {"cau": "câu B"},
+            ],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R10") for x in loi), loi)
+
+    def test_trang_thai_chua_dien_khong_ap_R10(self):
+        """Đối chứng: chua-dien không bị đòi nguồn — đúng bất biến cũ."""
+        loi, _, _ = chay({"dau-dau": hc_co_nguon()})
+        self.assertFalse(any(x.startswith("R10") for x in loi), loi)
+
+
+class KhoiLoiDanCungCamPlaceholder(unittest.TestCase):
+    """R11 — mirror của R6. Ca THẬT bắt được trên dữ liệu sống 2026-09-03:
+    dau-nguc.dan_benh_nhan_quay_lai khai co-nguon mà một mục còn nguyên
+    [CẦN BÁC SĨ ĐIỀN] — công cụ trước bản vá này không hề kiểm khối này."""
+
+    def test_placeholder_trong_cau_bi_chan(self):
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "nguon": {"pmid": "30587518"},
+            "noi_dung": [{"cau": f"{ks.PLACEHOLDER} — mốc gọi cấp cứu"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R11") for x in loi), loi)
+
+    def test_khong_placeholder_thi_khong_bi_chan(self):
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "nguon": {"pmid": "30587518"},
+            "noi_dung": [{"cau": "đi khám nếu đau tăng khi gắng sức"}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertFalse(any(x.startswith("R11") for x in loi), loi)
+
+    def test_placeholder_o_truong_khac_cung_bi_chan(self):
+        """R11 quét TOÀN khối (json.dumps), không chỉ trường `cau` — khớp
+        đúng cách R6 đã làm với `cd`."""
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "nguon": {"pmid": "30587518"},
+            "noi_dung": [{"cau": "đi khám", "nguon_goc": ks.PLACEHOLDER}],
+        })
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R11") for x in loi), loi)
+
+    def test_trang_thai_chua_dien_khong_ap_R11(self):
+        """Đối chứng: chua-dien được PHÉP chứa placeholder — đó là ý nghĩa
+        đúng của trạng thái này, không phải lỗi."""
+        loi, _, _ = chay({"dau-dau": hc_co_nguon()})
+        self.assertFalse(any(x.startswith("R11") for x in loi), loi)
+
+
 class GioiHanNguonPhaiNoiRa(unittest.TestCase):
     def test_thieu_gioi_han_thi_canh_bao(self):
         hc = hc_co_nguon()
@@ -200,6 +316,26 @@ class FileThatTrongRepo(unittest.TestCase):
                / "safety_net_templates.json").read_text(encoding="utf-8")
         for cam in ("@", "CCCD", "CMND", "ngày sinh"):
             self.assertNotIn(cam, raw, f"file mẫu không được chứa {cam!r}")
+
+    def test_file_that_khong_con_loi_R10_R11(self):
+        """★ Hồi quy trực tiếp cho ca thật 2026-09-03: dau-nguc.dan_benh_nhan_
+        quay_lai khai co-nguon mà còn placeholder — nay đã hạ về chua-dien. Nếu
+        ai đó khai lại co-nguon mà chưa điền nốt/chưa gỡ placeholder, test này
+        phải đỏ NGAY trên chính dữ liệu sống, không chỉ trên fixture giả lập."""
+        d = json.loads((Path(__file__).parent.parent / "clinical_runtime"
+                        / "safety_net_templates.json").read_text(encoding="utf-8"))
+        co = json.loads((Path(__file__).parent.parent / "clinical_runtime"
+                         / "CLINICAL_RUNTIME_FLAGS.json").read_text(encoding="utf-8"))
+        loi, _, _ = ks.kiem(d, co, dt.date(2026, 9, 3))
+        r10_r11 = [x for x in loi if x.startswith("R10") or x.startswith("R11")]
+        self.assertEqual(r10_r11, [], r10_r11)
+
+    def test_file_that_dau_nguc_dan_benh_nhan_la_chua_dien(self):
+        d = json.loads((Path(__file__).parent.parent / "clinical_runtime"
+                        / "safety_net_templates.json").read_text(encoding="utf-8"))
+        ld = d["hoi_chung"]["dau-nguc"]["dan_benh_nhan_quay_lai"]
+        self.assertEqual(ld["trang_thai"], "chua-dien")
+        self.assertIn(ks.PLACEHOLDER, json.dumps(ld, ensure_ascii=False))
 
 
 if __name__ == "__main__":
