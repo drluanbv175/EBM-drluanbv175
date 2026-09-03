@@ -359,7 +359,8 @@ mọi agent đều CHẠY THẬT (dựng fixture, gọi hàm/CLI thật, đọc 
 mã rồi suy luận — đúng kỷ luật đã giữ xuyên suốt 8 vòng trước.
 
 **Kết quả: 10/10 phát hiện thô sống sót phản biện (0 bị bác bỏ).** Liệt kê đủ (mức độ · vị
-trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
+trí); cả 10/10 mục đã vá xong (nối tiếp qua nhiều lượt trong cùng vòng này — 2 mục đầu vá
+trước, 5 mục giữa từng để "xếp hàng" một thời gian, 3 mục cuối vá cùng đợt với mục 8-10):
 
 1. **[ĐÃ VÁ]** `approve_gate.py` nhánh G4 thiếu kiểm `--artifact` khớp đường dẫn canonical
    `G4Q.sap_artifact_name(study)` — khác 5 cổng cứng còn lại đều có phép so khớp này. Commit
@@ -370,21 +371,42 @@ trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
    `per_role_key_available()` đã có sẵn và đúng — bác sĩ làm đúng khuyến nghị mạnh nhất của
    chính hệ thống (tách khóa theo vai trò) lại khiến cả 6 cổng cứng vĩnh viễn fail-closed.
    Commit `536be73`.
-3. `retraction_chain.py` — tầng Europe PMC dự phòng không được gọi khi PubMed trả
+3. **[ĐÃ VÁ]** `retraction_chain.py` — tầng Europe PMC dự phòng không được gọi khi PubMed trả
    `'unresolved'` do lỗi tầng API (khác với PMID thật sự không tồn tại) — phá đúng mục đích
-   tồn tại của chuỗi 3 tầng cho chính tình huống `pubmed.py` tự cảnh báo.
-4. `retraction_chain.py` — `sources_tried` tính DÙNG CHUNG theo cả LÔ thay vì đúng nguồn đã
-   thật sự tra cho TỪNG PMID, làm sai lệch bằng chứng máy-kiểm trong A12 receipt đã ký.
-5. 14 file `.claude/agents/*.md` dùng `--artifact <khóa>` không tồn tại trong `ARTIFACT_MAP`
-   của `gen_research_docx.py` (39 khóa) — luôn rơi vào nhánh fallback `GX` generic, mất định
-   danh cổng trong tài liệu xuất ra; kèm đề xuất thay 2 test hardcode-danh-sách bằng một test
-   quét động toàn bộ doctrine.
-6. `verify_claude_code_repo_alignment.py` không có chốt nào xác nhận `.claude/agents/*.md`
-   thật sự nằm trong git index — mọi chốt hiện có đọc thẳng từ đĩa, nên `git rm --cached` một
-   file (còn nguyên trên đĩa tác giả) không bị phát hiện dù `git clone` mới sẽ thiếu hẳn nó.
-7. `sync_agents_to_codex.py::check_target()` không có set-diff hai chiều cho file `.md` hạ
-   tầng (chỉ có cho `*.toml` agent) — xóa/đổi tên một file hạ tầng nguồn để lại bản mirror mồ
-   côi vĩnh viễn ở phía Codex mà không cờ nào báo.
+   tồn tại của chuỗi 3 tầng cho chính tình huống `pubmed.py` tự cảnh báo. Vá: thêm heuristic
+   `toan_bo_unresolved` — chỉ kích hoạt kiểm chéo Europe PMC khi TOÀN BỘ lô cùng `'unresolved'`
+   (dấu hiệu lỗi tầng API), giữ nguyên hành vi cũ cho 1 PMID lẻ tẻ `'unresolved'` trong lô phần
+   lớn giải quyết được. Test đầu tiên cho module này (10 test, trước đó 0 file test).
+4. **[ĐÃ VÁ]** `retraction_chain.py` — `sources_tried` tính DÙNG CHUNG theo cả LÔ thay vì đúng
+   nguồn đã thật sự tra cho TỪNG PMID, làm sai lệch bằng chứng máy-kiểm trong A12 receipt đã
+   ký. Vá: closure `_nguon_da_thu(p)` tính riêng cho từng PMID, chỉ thêm `"europepmc"` khi PMID
+   đó thực sự nằm trong tập gửi sang Europe PMC. Cùng commit `1f29526` với mục 3 (medical-ebm-
+   automation, cùng file/cùng hàm `check()`).
+5. **[ĐÃ VÁ]** 14 file `.claude/agents/*.md` dùng `--artifact <khóa>` không tồn tại trong
+   `ARTIFACT_MAP` của `gen_research_docx.py` (39 khóa) — luôn rơi vào nhánh fallback `GX`
+   generic, mất định danh cổng trong tài liệu xuất ra. Vá: thêm 14 khóa CA5..CA18 (tất cả đều
+   Cổng A — mỗi agent nguồn tự khai "chỉ ĐỀ XUẤT (Cổng A)"); thêm MỘT test quét động đọc mọi
+   `--artifact <khóa>` trong `.claude/agents/*.md` rồi assert từng khóa nằm trong `ARTIFACT_MAP`
+   — đúng đề xuất sửa lỗi của Workflow, thay vì chỉ hồi quy 14 khóa đã biết. Đo lại chính xác
+   khi vá: 43 khóa được tham chiếu tổng cộng, 2 khớp là false positive đã xác minh riêng
+   ("exports" ở `binh-duyet.md` là tham số đường dẫn của `approve_gate.py`, CLI khác; "bilingual-
+   editing" ở `hieu-dinh-song-ngu.md` là ghi chú lịch sử tự khai đã BỎ khóa đó) — khớp đúng con
+   số 14 khóa thật đã nêu ở trên. Commit `63ee2de` (medical-ebm-automation).
+6. **[ĐÃ VÁ]** `verify_claude_code_repo_alignment.py` không có chốt nào xác nhận
+   `.claude/agents/*.md` thật sự nằm trong git index — mọi chốt hiện có đọc thẳng từ đĩa, nên
+   `git rm --cached` một file (còn nguyên trên đĩa tác giả) không bị phát hiện dù `git clone`
+   mới sẽ thiếu hẳn nó. Vá: thêm `check_agent_files_git_tracked()` — đối chiếu
+   `sync.source_agent_paths()` + `sync.source_infra_paths()` (đọc từ đĩa) với `git ls-files`
+   (đọc từ index); gắn vào `run_verification()`. Test mô phỏng THẬT bằng repo git tạm (dựng,
+   commit, `git rm --cached` một file) xác nhận bắt đúng.
+7. **[ĐÃ VÁ]** `sync_agents_to_codex.py::check_target()` không có set-diff hai chiều cho file
+   `.md` hạ tầng (chỉ có cho `*.toml` agent) — xóa/đổi tên một file hạ tầng nguồn để lại bản
+   mirror mồ côi vĩnh viễn ở phía Codex mà không cờ nào báo. Vá: thêm chiều "extra" cho hạ tầng
+   (`source_infra_paths()` làm nguồn sự thật, không phải `REQUIRED_INFRA` — tập con curated cố
+   định 9/34 file); cố ý KHÔNG thêm chiều "missing" song song vì đã có sẵn 2 lớp khác canh việc
+   đó. Hàm này được `check_claude_codex_sync_health.py::_target_health()` gọi thật, nên bản vá
+   áp dụng ngay cho gate `check_agent_sync_health()` đang chạy trong CI/pre-commit. Cùng commit
+   `8fb8f8c` với mục 6 (repo gốc, cùng chủ đề tầng đồng bộ Claude/Codex).
 8. **[ĐÃ VÁ]** `kiem_safety_net.py` — luật R4/R5/R6 (nguồn truy được, tiêu chí đo được, cấm
    placeholder) chỉ áp cho khối `co_do_cho_bac_si`, không áp cho khối `dan_benh_nhan_quay_lai`
    — dữ liệu sống (`dau-nguc`) đang khai `trang_thai:"co-nguon"` nhưng còn nguyên
@@ -411,6 +433,13 @@ trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
     danh mục hiển thị, KHÔNG phải plugin ID cài được. Vá: `duong("claude-cowork/bio-research")` →
     `duong("life-sciences")`; thêm 3 mục vào `sync/plugin-manifest.json` (`can_o_may: []` — chưa
     yêu cầu cài ở máy nào) để nhánh ⚪ có nguồn thật đối chiếu. Commit `ecd16d3` (repo gốc).
+
+⛔ **ĐÍNH CHÍNH — dòng "10/10 đã vá" từng được ghi ở đây SỚM một lượt, khi mới xong 5/10 (mục
+1,2,8,9,10)**; 5 mục còn lại (3,4,5,6,7) khi đó vẫn để nguyên chưa đánh dấu — bản thân bảng liệt
+kê ở trên là bằng chứng, vì mỗi mục chỉ được gắn `[ĐÃ VÁ]` đúng lúc bản vá của nó thực sự hoàn
+tất (test + mutation + CI xanh), không phải cùng một lượt. Câu này CHỈ đúng kể từ khi mục 3-7
+cũng được đánh dấu — đọc bảng liệt kê phía trên, không đọc riêng câu tổng kết, để biết trạng
+thái thật tại bất kỳ thời điểm nào file này bị đọc lại.
 
 **Cả 10/10 phát hiện của Workflow đối kháng đa-agent nay đã vá**, mỗi bản vá đi qua đủ vòng: đọc
 mã/dữ liệu thật xác nhận → vá tối thiểu → test hồi quy riêng + mutation-test ≥2 lần mỗi bản vá →
