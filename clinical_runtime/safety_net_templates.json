@@ -1,6 +1,6 @@
 {
-  "phien_ban": "2.2.0",
-  "ngay_cap_nhat": "2026-08-29",
+  "phien_ban": "2.2.1",
+  "ngay_cap_nhat": "2026-09-03",
   "kiem_bang": "python3 tools/kiem_safety_net.py",
   "vi_sao_co": [
     "Bản 1.x của file này là ba mẫu tiếng Anh chung chung ('Recommend follow-up within 4-6 weeks',",
@@ -194,7 +194,7 @@
         "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "co-nguon",
+        "trang_thai": "chua-dien",
         "noi_dung": [
           {
             "cau": "Đau ngực xuất hiện hoặc tăng lên khi gắng sức → đi khám sớm",
@@ -205,7 +205,8 @@
             "nguon_goc": "Nguồn đề xuất để rút ngưỡng: AHA/ACC 2021 Guideline for the Evaluation and Diagnosis of Chest Pain — PMID 34709879, doi:10.1161/CIR.0000000000001029 (Practice Guideline; TÓM TẮT không nêu ngưỡng cụ thể — phải lấy từ toàn văn, không được bịa)"
           }
         ],
-        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng."
+        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng.",
+        "sua_2026_09_03": "Hạ `trang_thai` từ `co-nguon` xuống `chua-dien` — công cụ tools/kiem_safety_net.py (luật R11 mới thêm) phát hiện khối này khai `co-nguon` trong khi vẫn còn nguyên `[CẦN BÁC SĨ ĐIỀN]` ở mục thứ hai. Câu đầu ĐÃ có nguồn đầy đủ (Marburg M4); mục thứ hai còn thiếu MỐC THỜI GIAN cụ thể mà tóm tắt AHA/ACC 2021 không nêu — không tự suy ra số từ toàn văn chưa đọc. Giữ nguyên cả hai mục, chỉ đổi trạng thái cho ĐÚNG THỰC TRẠNG; bác sĩ tra toàn văn AHA/ACC 2021 điền nốt mốc thời gian rồi khai lại `co-nguon`."
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
       "ngay_ra_soat": "2026-08-29"
@@ -582,6 +583,10 @@
     {
       "ngay": "2026-08-29",
       "noi_dung": "Bác sĩ duyệt cả 7 khối cờ đỏ de_xuat (nay da_duyet); yêu cầu bổ sung nguồn cho lời dặn bệnh nhân — 8 khối lời dặn được ghi với nguồn tra sống PubMed 29/08/2026, câu chữ cuối chờ bác sĩ chuẩn y (nhãn de_xuat trong từng khối)."
+    },
+    {
+      "ngay": "2026-09-03",
+      "noi_dung": "Workflow đối kháng đa-agent phát hiện: tools/kiem_safety_net.py chưa kiểm nội dung khối dan_benh_nhan_quay_lai (chỉ đếm độ phủ) — dau-nguc khai co-nguon mà còn nguyên [CẦN BÁC SĨ ĐIỀN]. Vá công cụ thêm R10/R11 (mirror R4/R6 cho khối này) và hạ trang_thai của dau-nguc.dan_benh_nhan_quay_lai về chua-dien cho đúng thực trạng — KHÔNG tự điền mốc thời gian gọi cấp cứu (cần đọc toàn văn AHA/ACC 2021, không được bịa)."
     }
   ]
 }
