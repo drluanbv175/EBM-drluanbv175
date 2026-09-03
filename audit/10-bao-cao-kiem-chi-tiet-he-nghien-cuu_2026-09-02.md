@@ -338,6 +338,84 @@ STUDY_INDEX.md đã có, và thêm dòng `study_meta.json` (file thật có sinh
 nào đọc chuỗi này để quyết định hành vi (grep xác nhận 0 test tham chiếu). `ruff check`
 sạch; nhóm test liên quan (26 test) vẫn xanh không đổi.
 
+## 2-nonies. VÒNG RÀ 9 — chuyển sang Workflow đối kháng đa-agent (10 phát hiện, đang vá)
+
+Vòng rà 8 (thủ công, cùng phương pháp vòng 1–7) không tìm thêm được lỗi thật nào và đã
+báo cáo trung thực là "sạch" — không có gì để ghi thêm ở đây. Bác sĩ sau đó gọi
+`/workflow-authoring` kèm "Tiếp tục kiểm tra toàn diện và hoàn thiện hệ thống", cùng lúc
+hệ báo **Ultracode đang bật** ("dùng Workflow tool cho mọi việc thực chất, không giới hạn
+token"). Đọc đúng tín hiệu đó: audit thủ công từng file/module đã cạn (8 vòng liên tiếp,
+vòng cuối trắng tay) — cần đổi CÁCH TÌM, không phải cố tìm thêm bằng cùng một phương pháp.
+
+**Thiết kế:** một Workflow quét đa phương thức (multi-modal sweep) — 7 agent tìm kiếm độc
+lập, mỗi agent một tầng con khác hẳn nhau (lớp ký/ledger `gate_contract.py`+`approve_gate.py`
+· dây nối quality-gate G5/G9/G10 · chuỗi kiểm rút bài 3 tầng · Streamlit dashboard runtime ·
+đồng bộ doctrine↔Codex+guardrail · công cụ tầng cuộc gặp lâm sàng), mỗi agent được brief rõ
+lãnh thổ ĐÃ rà kỹ ở vòng 1–8 (`gen_research_docx.py`/`scaffold_research_project.py`/
+`kiem_chi_tiet_he_nghien_cuu.py`) để không lặp lại, và được dặn rõ 3 nhánh nghiên cứu mồ côi
+đã có test canh gác (đừng báo giả). Sau đó MỖI phát hiện thô qua vòng phản biện đối kháng
+3-phiếu-độc-lập (default-to-refute — nghi ngờ trước, đa số bác bỏ thì loại). Không suy đoán:
+mọi agent đều CHẠY THẬT (dựng fixture, gọi hàm/CLI thật, đọc log/output thật) thay vì chỉ đọc
+mã rồi suy luận — đúng kỷ luật đã giữ xuyên suốt 8 vòng trước.
+
+**Kết quả: 10/10 phát hiện thô sống sót phản biện (0 bị bác bỏ).** Liệt kê đủ (mức độ · vị
+trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
+
+1. **[ĐÃ VÁ]** `approve_gate.py` nhánh G4 thiếu kiểm `--artifact` khớp đường dẫn canonical
+   `G4Q.sap_artifact_name(study)` — khác 5 cổng cứng còn lại đều có phép so khớp này. Commit
+   `b50d19c`.
+2. **[ĐÃ VÁ]** `gate_contract.py` — cờ toàn cục "máy có khóa ký không" (`_diagnose_gate_
+   records()`, `write_ledger_seal()`, `verify_ledger_seal()`) chỉ kiểm khóa CHUNG
+   (`signing_key_configured(None)`), không nhận diện khóa RIÊNG theo vai trò dù
+   `per_role_key_available()` đã có sẵn và đúng — bác sĩ làm đúng khuyến nghị mạnh nhất của
+   chính hệ thống (tách khóa theo vai trò) lại khiến cả 6 cổng cứng vĩnh viễn fail-closed.
+   Commit `536be73`.
+3. `retraction_chain.py` — tầng Europe PMC dự phòng không được gọi khi PubMed trả
+   `'unresolved'` do lỗi tầng API (khác với PMID thật sự không tồn tại) — phá đúng mục đích
+   tồn tại của chuỗi 3 tầng cho chính tình huống `pubmed.py` tự cảnh báo.
+4. `retraction_chain.py` — `sources_tried` tính DÙNG CHUNG theo cả LÔ thay vì đúng nguồn đã
+   thật sự tra cho TỪNG PMID, làm sai lệch bằng chứng máy-kiểm trong A12 receipt đã ký.
+5. 14 file `.claude/agents/*.md` dùng `--artifact <khóa>` không tồn tại trong `ARTIFACT_MAP`
+   của `gen_research_docx.py` (39 khóa) — luôn rơi vào nhánh fallback `GX` generic, mất định
+   danh cổng trong tài liệu xuất ra; kèm đề xuất thay 2 test hardcode-danh-sách bằng một test
+   quét động toàn bộ doctrine.
+6. `verify_claude_code_repo_alignment.py` không có chốt nào xác nhận `.claude/agents/*.md`
+   thật sự nằm trong git index — mọi chốt hiện có đọc thẳng từ đĩa, nên `git rm --cached` một
+   file (còn nguyên trên đĩa tác giả) không bị phát hiện dù `git clone` mới sẽ thiếu hẳn nó.
+7. `sync_agents_to_codex.py::check_target()` không có set-diff hai chiều cho file `.md` hạ
+   tầng (chỉ có cho `*.toml` agent) — xóa/đổi tên một file hạ tầng nguồn để lại bản mirror mồ
+   côi vĩnh viễn ở phía Codex mà không cờ nào báo.
+8. `kiem_safety_net.py` — luật R4/R5/R6 (nguồn truy được, tiêu chí đo được, cấm placeholder)
+   chỉ áp cho khối `co_do_cho_bac_si`, không áp cho khối `dan_benh_nhan_quay_lai` — dữ liệu
+   sống hiện có (`dau-nguc`) đang khai `trang_thai:"co-nguon"` nhưng còn nguyên
+   `[CẦN BÁC SĨ ĐIỀN]` bên trong mà chốt không bắt được. Ưu tiên cao nhất trong 8 mục còn lại
+   vì chạm tầng an toàn bệnh nhân.
+9. `clinical_runtime/CLINICAL_DECISION_CONTRACT.json` khai 4 cổng bắt buộc "C3/C5/C6/C7" nhưng
+   `verify_clinical_runtime_schema_hardening.py::check_decision_contract()` chỉ canh 2/4 tên
+   ("C3 Safety Gate", "C7 Human Approval Gate") — thiếu hẳn "C5 Red Team Gate"/"C6 Guardrail
+   Gate" trong danh sách marker viết tay.
+10. `tools/orchestrator/worker_inventory.py` — đường dò cache của provider `bio-research`
+    (`"claude-cowork/bio-research"`) không khớp khuôn `<marketplace>/<plugin>/<version>` của
+    BẤT KỲ plugin thật nào từng cài trên máy này, và chưa từng được đối chiếu dữ liệu thật ở
+    lần vá BH85/BH89 cùng họ — cùng một khoảng trống "đo đúng nhưng đo nhầm chỗ", trường hợp
+    thứ ba chưa đóng.
+
+**Ngoài lề nhưng cần ghi lại vì ảnh hưởng trực tiếp tới nhánh làm việc:** trong lúc vòng này
+đang chạy, bác sĩ tự đẩy một commit độc lập lên `feat/r1-1-2-design-gap-remediation`
+("Nâng chuẩn Annex 2 và QUADAS-3 cho vòng đời nghiên cứu") — phát hiện qua bước kiểm drift
+thường lệ trước khi push. Đã `git merge` sạch (không đụng file nào chung với 2 bản vá của
+vòng này), chạy lại toàn bộ pytest sau merge (3249 passed), rồi mới push đồng bộ cả 3 nhánh.
+
+Cả 2 bản vá đã vá trong vòng này đều theo đúng kỷ luật cũ: đọc mã thật trước khi tin phát
+hiện của Workflow (không tin lời agent suông) → vá tối thiểu → test hồi quy riêng cho từng bản
+vá (14 + 5 = 19 test mới) → **mutation-test ≥2 lần mỗi bản vá, mỗi lần đều bắt được** (kể cả
+một lần mutation-test tự bắt lỗi trong chính bộ test tôi mới viết — 4/5 test ban đầu bị "che"
+bởi một lý do chặn khác của `G4Q.evaluate_study()`, phải cô lập lại bằng monkeypatch trước khi
+mutation thật sự chứng minh được điều cần chứng minh) → toàn bộ pytest repo (3254 passed, 0
+fail sau bản vá #1) → `ruff check` sạch → commit riêng từng bản vá → push đồng bộ 3 nhánh →
+xác nhận CI 2 lane (ubuntu+windows) xanh trên cả 3 nhánh cho từng commit trước khi chuyển bản
+vá tiếp theo.
+
 ## 3. Giới hạn cố ý — để không nói quá
 
 - Vòng 2 cho thấy chính công cụ này cũng phải bị rà lại bằng dữ liệu thật, không chỉ bằng test.
