@@ -76,7 +76,22 @@ class WorkerInventory:
             "meta-pipe": duong("meta-pipe"),
             "pubmed-search": duong("pubmed-search"),
             "claude-code-harness": duong("claude-code-harness-marketplace/claude-code-harness"),
-            "bio-research": duong("claude-cowork/bio-research"),
+            # SỬA 2026-09-03 (Workflow đối kháng đa-agent, phát hiện #10): đường cũ
+            # "claude-cowork/bio-research" KHÔNG khớp khuôn marketplace/plugin của bất
+            # kỳ plugin thật nào từng cài trên máy này (grep known_marketplaces.json/
+            # installed_plugins.json: chuỗi "claude-cowork" chỉ xuất hiện ở CHÍNH hai
+            # dòng này trong toàn repo) và chưa từng được đối chiếu dữ liệu thật — cùng
+            # họ lỗi BH85/BH89 nhưng chưa vá. Xác minh qua WebFetch (2026-09-03, không
+            # cần cài thật): 3 unit registry của provider này (nextflow-development ·
+            # single-cell-rna-qc · scvi-tools) khớp CHÍNH XÁC 3 skill riêng biệt trong
+            # marketplace CHÍNH THỨC `anthropics/life-sciences` (mỗi skill một plugin
+            # con, không gộp thành một plugin "bio-research" — nhãn "bio-research" trên
+            # claude.com chỉ là DANH MỤC hiển thị, không phải plugin ID cài được). Local
+            # cache dir suy từ tên marketplace ("life-sciences") theo đúng quy ước CLI
+            # — CHƯA quan sát được trên máy thật (plugin này chưa cài ở đâu, xem
+            # sync/plugin-manifest.json). rglob() tự tìm SKILL.md ở BẤT KỲ độ sâu nào
+            # bên dưới nên không cần biết tên thư mục con của từng skill.
+            "bio-research": duong("life-sciences"),
             "openmed-skills": duong("openmed-skills"),
             "medsci-project": duong("medsci-skills/medsci-project"),
             "humanizer": duong("humanizer"),

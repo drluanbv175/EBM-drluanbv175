@@ -210,6 +210,18 @@
         "ghi_chu": "kho không có marketplace.json — tools/cap_nhat_plugin_tay.py CAU_HINH['meta-pipe'] giữ url + cách sinh manifest (14 skill)"
       }
     },
+    "nextflow-development@life-sciences": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Thêm 03/09/2026 (Workflow đối kháng đa-agent, phát hiện #10) — CHƯA yêu cầu cài ở máy nào, mục này chỉ để tools/orchestrator/worker_inventory.py có nguồn thật để đối chiếu ý định (trước đó provider 'bio-research' hoàn toàn vắng mặt khỏi sổ khai). registry bind 1 skill (nextflow-development) dưới provider 'bio-research' (kind=plugin, may_own=false) — cùng nhóm với single-cell-rna-qc, scvi-tools bên dưới. KHÔNG có plugin cài được tên 'bio-research' — đó là nhãn DANH MỤC hiển thị trên claude.com, không phải plugin ID; 3 skill này là 3 plugin CON RIÊNG BIỆT, đều thuộc CÙNG marketplace life-sciences.",
+      "do_duoc_luc_ghi": {},
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/anthropics/life-sciences",
+        "ghi_chu": "xác minh 03/09/2026 qua WebFetch (KHÔNG phải cài thật/marketplace.json — file đó 404 khi thử fetch trực tiếp): trang GitHub liệt kê thư mục nextflow-development/ ở gốc repo, khớp tên skill trong registry; cài bằng `/plugin marketplace add anthropics/life-sciences` rồi `/plugin install nextflow-development@life-sciences`."
+      }
+    },
     "openmed-skills@openmed-skills": {
       "can_o_may": [
         "Mac",
@@ -243,6 +255,30 @@
         "loai": "git-thu-cong",
         "cau_hinh": "pubmed-search",
         "ghi_chu": "kho mang 26 skill, chỉ giữ 10 skill tra y văn theo CAU_HINH['pubmed-search'].giu_skill — đúng bản 10 skill trên Mac"
+      }
+    },
+    "scvi-tools@life-sciences": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Thêm 03/09/2026, cùng đợt với nextflow-development@life-sciences — xem ghi chú đầy đủ ở mục đó. registry bind 1 skill (scvi-tools) dưới provider 'bio-research'.",
+      "do_duoc_luc_ghi": {},
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/anthropics/life-sciences",
+        "ghi_chu": "xác minh 03/09/2026 qua WebFetch: trang GitHub liệt kê thư mục scvi-tools/ ở gốc repo, khớp tên skill trong registry."
+      }
+    },
+    "single-cell-rna-qc@life-sciences": {
+      "can_o_may": [],
+      "da_xac_nhan": false,
+      "chieu_sang_codex": false,
+      "ly_do": "Thêm 03/09/2026, cùng đợt với nextflow-development@life-sciences — xem ghi chú đầy đủ ở mục đó. registry bind 1 skill (single-cell-rna-qc) dưới provider 'bio-research'.",
+      "do_duoc_luc_ghi": {},
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/anthropics/life-sciences",
+        "ghi_chu": "xác minh 03/09/2026 qua WebFetch: trang GitHub liệt kê thư mục single-cell-rna-qc/ ở gốc repo, khớp tên skill trong registry."
       }
     }
   }
