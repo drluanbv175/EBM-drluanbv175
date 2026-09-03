@@ -401,11 +401,21 @@ trí), 2 mục đã vá xong trong vòng này, 8 mục còn xếp hàng:
    ("C3 Safety Gate", "C7 Human Approval Gate") — thiếu hẳn "C5 Red Team Gate"/"C6 Guardrail
    Gate" trong danh sách marker viết tay. Vá: thêm 2 marker còn thiếu; JSON đã sẵn cả 4 tên nên
    kết luận PASS không đổi, chỉ đóng khoảng hở kiểm tra. Commit `597e410` (repo gốc).
-10. `tools/orchestrator/worker_inventory.py` (repo gốc) — đường dò cache của provider `bio-research`
-    (`"claude-cowork/bio-research"`) không khớp khuôn `<marketplace>/<plugin>/<version>` của
-    BẤT KỲ plugin thật nào từng cài trên máy này, và chưa từng được đối chiếu dữ liệu thật ở
-    lần vá BH85/BH89 cùng họ — cùng một khoảng trống "đo đúng nhưng đo nhầm chỗ", trường hợp
-    thứ ba chưa đóng.
+10. **[ĐÃ VÁ]** `tools/orchestrator/worker_inventory.py` (repo gốc) — đường dò cache của provider
+    `bio-research` (`"claude-cowork/bio-research"`) không khớp khuôn `<marketplace>/<plugin>/
+    <version>` của BẤT KỲ plugin thật nào từng cài trên máy này, và chưa từng được đối chiếu dữ
+    liệu thật ở lần vá BH85/BH89 cùng họ — cùng một khoảng trống "đo đúng nhưng đo nhầm chỗ",
+    trường hợp thứ ba chưa đóng. Xác minh qua WebSearch + WebFetch (GitHub, không cài thật): 3
+    unit registry (nextflow-development · single-cell-rna-qc · scvi-tools) khớp CHÍNH XÁC 3 thư
+    mục skill trong marketplace CHÍNH THỨC `anthropics/life-sciences` — "bio-research" là nhãn
+    danh mục hiển thị, KHÔNG phải plugin ID cài được. Vá: `duong("claude-cowork/bio-research")` →
+    `duong("life-sciences")`; thêm 3 mục vào `sync/plugin-manifest.json` (`can_o_may: []` — chưa
+    yêu cầu cài ở máy nào) để nhánh ⚪ có nguồn thật đối chiếu. Commit `ecd16d3` (repo gốc).
+
+**Cả 10/10 phát hiện của Workflow đối kháng đa-agent nay đã vá**, mỗi bản vá đi qua đủ vòng: đọc
+mã/dữ liệu thật xác nhận → vá tối thiểu → test hồi quy riêng + mutation-test ≥2 lần mỗi bản vá →
+chạy đủ bộ kiểm (pytest toàn repo, ruff, compileall, chốt hồi quy bài học, verifier liên quan) →
+commit riêng từng bản vá → push đồng bộ → xác nhận CI xanh trước khi chuyển bản vá tiếp theo.
 
 **Ngoài lề nhưng cần ghi lại vì ảnh hưởng trực tiếp tới nhánh làm việc:** trong lúc vòng này
 đang chạy, bác sĩ tự đẩy một commit độc lập lên `feat/r1-1-2-design-gap-remediation`
