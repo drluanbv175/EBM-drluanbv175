@@ -5048,12 +5048,48 @@ BAI_HOC = [
 ]
 
 
+def _dung_lai_mirror_codex(tran: bool) -> None:
+    """Dựng lại mirror Codex nếu thiếu — CHỐNG BÁO ĐỘNG ĐỎ GIẢ trên bản sao trần.
+
+    VÁ 03/09/2026, đo được: chạy bộ chốt trên một `git clone` tươi cho ĐÚNG 2 mục đỏ —
+    BH83 và BH91 — và **cả hai đều giả**. Nguyên nhân chung: `.Codex/agents` / `.codex/agents`
+    là bản sinh tự động TỪ `.claude/agents/*.md` và bị gitignore, nên clone tươi không có;
+    `sync_agents_to_codex.py --check` báo «thiếu thư mục», kéo theo
+    `verify_claude_code_repo_alignment` FAIL `agent_sync_health`. Sinh lại mirror rồi chạy lại:
+    cả hai XANH ngay, không sửa một dòng nội dung nào.
+
+    Vì sao KHÔI PHỤC chứ không hạ xuống ⚪: mirror là HÀM THUẦN của `.claude/agents/*.md` và
+    dựng lại mất ~0,1 giây, nên thiếu nó là thiếu NGUYÊN LIỆU, không phải thiếu năng lực kiểm.
+    Hạ xuống ⚪ sẽ mất luôn phép canh drift mirror — thứ hai chốt đó sinh ra để làm. Khôi phục
+    giữ đủ răng mà bỏ được đỏ giả; đúng khuôn `.claude/hooks/session-start.sh` đã dùng cho cây
+    sống, và cùng lý do nó CỐ Ý không gọi `enforce_agent_guardrails` (cái đó sửa file TRACKED —
+    ở đây chỉ ghi bản sinh đã gitignore).
+
+    Hai đỏ giả mỗi lượt chạy là đúng cơ chế BH08: bức tường đỏ dạy người ta bỏ qua cảnh báo,
+    và khi ấy cảnh báo THẬT chìm theo.
+    """
+    if not tran:
+        return  # cây sống: hook SessionStart đã lo, đừng ghi đè bản người dùng đang có
+    if (REPO / ".Codex" / "agents").is_dir() and (REPO / ".codex" / "agents").is_dir():
+        return
+    bo = REPO / "tools" / "sync_agents_to_codex.py"
+    if not bo.exists():
+        return  # thiếu công cụ thì để chốt tự báo — KHÔNG che (BH08: chưa biết ≠ đạt)
+    import subprocess
+    try:
+        subprocess.run([sys.executable, str(bo)], cwd=str(REPO),
+                       capture_output=True, timeout=120, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return  # dựng lại thất bại ⇒ để chốt báo đỏ như cũ, không nuốt lỗi
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Chốt hồi quy trên các lỗi đã từng xảy ra")
     ap.add_argument("--im-khi-on", action="store_true", help="chỉ nói khi có mục tái phát")
     a = ap.parse_args()
 
     tran = ban_sao_git_tran()
+    _dung_lai_mirror_codex(tran)
     ket: list[tuple[str, str, str, str, str]] = []
     for ma, ngay, ten, ham in BAI_HOC:
         try:
