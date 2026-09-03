@@ -210,6 +210,39 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   sĩ đã phát khoá cho MỌI vai công cụ chịu nhận, và G5 là cổng cứng duy nhất không thể có khoá
   Ed25519 — im lặng. Đã vá 02/09; `--role DATA_MANAGER` nay chạy được, việc phát khoá vẫn là của
   bác sĩ.
+- **🩹 BỐN CHỖ HỞ LỘ RA KHI HỢP NHẤT NHÁNH LÀM VIỆC — vá 03/09/2026 (BH99 + 3 bản vá tại chỗ).**
+  Nhánh `claude/multi-platform-plugin-sync-cslwb0` của repo y khoa **lạc hậu 55 commit** với
+  **8 xung đột**, 4 nằm ở máy cổng. Hợp nhất xong: 0 hồi quy. Bốn thứ lộ ra trên đường:
+  **(A) Rào `cryptography` là fail-CRASH, không phải fail-closed.** Thư viện cài HỎNG NỬA
+  CHỪNG (có gói, thiếu `_cffi_backend`) ném `pyo3_runtime.PanicException` — kế thừa **THẲNG
+  `BaseException`**, KHÔNG qua `Exception` — nên `except Exception` ở
+  `gate_contract._load_ed_public()` **không bắt được** và làm CHẾT tiến trình, ngay trong hàm
+  mà chú thích tự khai «fail-closed» (họ BH27: phạm vi rào không khớp lời khai). Đáng vá NGAY
+  vì master vừa công bố 4 khoá công ⇒ hàm này nằm trên đường xác minh SỐNG của G2/G4/G8/G9/G10.
+  Vá 4 rào trong `gate_contract.py` + 1 trong `setup_gate_approval_key.py`; bắt `BaseException`
+  nhưng LUÔN ném lại `KeyboardInterrupt`/`SystemExit`. Nút phát khoá nay phân biệt «thiếu hẳn»
+  (`pip install cryptography`) với «cài hỏng» (`pip install --force-reinstall cffi cryptography`)
+  — hai loại sửa khác nhau.
+  **(B) ESD02/ESD04 chặn MỌI commit ở máy không có OneDrive.** Hai mục báo FAIL chỉ vì thiếu
+  file ngoài git ⇒ `--contract-check` trả 1 ⇒ pre-commit chặn, dù không có drift nào. **Không
+  phải nới cổng** — tiền lệ nằm ngay trong chính file đó: ESD05 đã đổi FAIL→HUMAN_GATE ngày
+  03/08 với lý do y hệt («chặn mọi commit trên máy Windows chỉ vì không phải macOS»).
+  `deployment_allowed` **vẫn `False`**; chỉ mã thoát contract-check mở, đúng phạm vi hook tự
+  khai. Ranh giới: hash lệch · file THUỘC GIT biến mất · đọc không được ⇒ vẫn FAIL.
+  **(C) Một module test kéo sập CẢ lượt thu thập (BH99).** `test_gate_ed25519_20260815.py` nhập
+  `cryptography` ở mức module không rào ⇒ panic ⇒ «Interrupted: 12 errors during collection»,
+  mất luôn **3176 test** không liên quan. ⚠️ `pytest.importorskip` **KHÔNG cứu được** (chỉ bắt
+  `ImportError`) — phải bắt `BaseException` rồi `pytest.skip(allow_module_level=True)`. Sau vá:
+  bỏ `--ignore` vẫn thu thập đủ 3176, module hiện đúng 1 dòng SKIPPED (đếm vào `skipped`, không
+  lẫn `passed` — thiếu thư viện là CHƯA KIỂM ĐƯỢC, không phải ĐẠT).
+  **(D) Bộ chốt tự sinh 2 đỏ GIẢ trên bản sao trần.** BH83 + BH91 đỏ ở MỌI lượt chạy trên
+  `git clone` tươi, vì mirror Codex là bản sinh đã gitignore. Nay `chot_hoi_quy_bai_hoc` dựng
+  lại mirror trước khi chấm (chỉ khi ĐANG ở bản trần; cây sống giữ nguyên bản người dùng).
+  KHÔI PHỤC chứ không hạ ⚪ vì mirror là hàm thuần của `.claude/agents/*.md` — hạ ⚪ sẽ mất luôn
+  phép canh drift. Đo: 2 đỏ → 0; làm hỏng mirror trên cây sống ⇒ BH91 vẫn ĐỎ (còn răng).
+  📌 **Việc vận hành còn lại, thẩm quyền bác sĩ:** phát khoá Ed25519 cho `DATA_MANAGER` (G5) —
+  vai duy nhất chưa có khoá, và nó thiếu vì lỗi công cụ đã vá 02/09, không phải bác sĩ quên.
+  Hướng dẫn: `HUONG-DAN-PHAT-KHOA-ED25519.md`.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời
