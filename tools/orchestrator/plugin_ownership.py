@@ -249,6 +249,30 @@ class PluginOwnershipRegistry:
                 owner_unit=entry_agent,
                 rules=self.global_rules,
             )
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện HIGH): kind `cong_cu`
+        # (chủ là LỆNH/SKILL/công cụ, không phải agent — xem VIEC_CONG_CU trong
+        # intent.py) chưa từng khai `intent_kinds`/`entry_agents` trong registry, và
+        # nhánh single_task ở trên chỉ khớp đúng `kind == "single_task"` nên KHÔNG
+        # cứu được `cong_cu`. Trước bản vá, MỌI request `cong_cu` rơi thẳng xuống
+        # BLOCKED_UNKNOWN_CAPABILITY bên dưới ngay trong `handle()` (kiểm tra
+        # `plugin_decision.status.startswith("BLOCKED")` ở orchestrator.py) — đóng
+        # session TRƯỚC KHI `_plan()` chạy tới nhánh `if kind == "cong_cu":
+        # return [GUARDRAIL_STEP]` vốn đã viết đúng nhưng không bao giờ được gọi tới.
+        # Nghĩa là toàn bộ nhóm việc-có-chủ-là-công-cụ (BH88, 3 mục trong
+        # VIEC_CONG_CU) bị chặn nhầm 100% dù hệ biết rõ chủ của chúng — đúng kiểu
+        # lỗi "luật CÓ MẶT mà KHÔNG BAO GIỜ chạy tới" đã lặp lại nhiều lần trong hệ
+        # này. Không có quyền sở hữu PLUGIN nào cần phân xử ở đây (công cụ không
+        # phải plugin, không tranh chấp worker) nên cùng nhánh READY_LOCAL_* như
+        # single_task là đúng, không phải BLOCKED.
+        if kind == "cong_cu" and entry_agent:
+            return PluginRoutingDecision(
+                status="READY_LOCAL_TOOL_ONLY",
+                capability_id="local_tool_task",
+                risk="contextual",
+                owner_provider="local-tool",
+                owner_unit=entry_agent,
+                rules=self.global_rules,
+            )
         return PluginRoutingDecision(
             status="BLOCKED_UNKNOWN_CAPABILITY",
             capability_id="unknown",
