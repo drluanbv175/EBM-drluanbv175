@@ -61,40 +61,58 @@ def kiem(so_path: Path = SO, dash_dir: Path = DASH) -> tuple[list[str], list[str
     mu: list[str] = []
     cache: dict[str, list[str]] = {}
     for qd in du_lieu.get("quyet_dinh", []):
-        ten = qd["file"]
-        nhan = f"{ten} · {qd.get('item') or 'PMID ' + qd.get('pmid', '?')}"
-        f = dash_dir / ten
-        if not f.exists():
-            mu.append(f"{nhan} — FILE không còn (đổi tên? xoá?)")
-            continue
-        if ten not in cache:
-            try:
-                blk = vd.extract_data_block(f.read_text(encoding="utf-8", errors="replace"))
-                cache[ten] = vd.split_items(blk)
-            except Exception as e:  # noqa: BLE001 — khối DATA hỏng là «không kiểm được», không phải «lệch»
-                cache[ten] = []
-                mu.append(f"{nhan} — khối DATA không đọc được: {e}")
+        ten = qd.get("file") or "(thiếu tên file)"
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2, phát hiện MEDIUM-HIGH)
+        # — `qd.get('pmid', '?')` chỉ trả default khi THIẾU key, không áp dụng khi
+        # pmid được khai TƯỜNG MINH là null (item cũng null). Xác nhận bằng thực
+        # nghiệm: qd={'item': None, 'pmid': None} làm `'PMID ' + qd.get('pmid','?')`
+        # ném TypeError vì cộng chuỗi với None — và trước bản vá, lỗi này KHÔNG có
+        # try/except nào bọc quanh, văng thẳng ra ngoài kiem()/main(), giết chết
+        # chốt cho MỌI bản ghi khác trong sổ thay vì chỉ báo "⚪ không kiểm được"
+        # cho riêng bản ghi hỏng — đúng chốt này sinh ra để canh việc bác sĩ đã
+        # tự tay khai (lỗi nhập liệu, không phải tấn công).
+        muc_id = qd.get("item")
+        pmid_kv = qd.get("pmid")
+        nhan = f"{ten} · {muc_id or (('PMID ' + pmid_kv) if pmid_kv else '(thiếu cả item lẫn pmid)')}"
+        # Bọc TOÀN BỘ xử lý một bản ghi — đúng nguyên tắc đã áp dụng sẵn cho lỗi
+        # đọc khối DATA ngay bên dưới: một bản ghi trong sổ bị hỏng dữ liệu (thiếu
+        # trường, sai kiểu) là "⚪ không kiểm được" cho RIÊNG bản ghi đó, không phải
+        # lý do dừng cả chốt.
+        try:
+            f = dash_dir / ten
+            if not f.exists():
+                mu.append(f"{nhan} — FILE không còn (đổi tên? xoá?)")
                 continue
-        items = cache[ten]
-        muc = None
-        if qd.get("item"):
-            muc = next((c for c in items if vd.field(c, "id") == qd["item"]), None)
-        elif qd.get("pmid"):
-            muc = next((c for c in items if (vd.field(c, "pmid") or "").strip() == qd["pmid"]), None)
-        if muc is None:
-            mu.append(f"{nhan} — ITEM biến mất khỏi gói")
-            continue
-        loi_muc = []
-        for truong, ky_vong in qd["ky_vong"].items():
-            thuc = (vd.field(muc, truong) or "").strip()
-            dat = thuc in ky_vong if isinstance(ky_vong, list) else thuc == ky_vong
-            if not dat:
-                mong = " | ".join(ky_vong) if isinstance(ky_vong, list) else ky_vong
-                loi_muc.append(f"{truong}='{thuc or '(rỗng)'}' ≠ đã duyệt '{mong}'")
-        if loi_muc:
-            lech.append(f"{nhan} — {'; '.join(loi_muc)} (duyệt {qd['duyet']}: {qd['ly_do'][:60]})")
-        else:
-            khop.append(nhan)
+            if ten not in cache:
+                try:
+                    blk = vd.extract_data_block(f.read_text(encoding="utf-8", errors="replace"))
+                    cache[ten] = vd.split_items(blk)
+                except Exception as e:  # noqa: BLE001 — khối DATA hỏng là «không kiểm được», không phải «lệch»
+                    cache[ten] = []
+                    mu.append(f"{nhan} — khối DATA không đọc được: {e}")
+                    continue
+            items = cache[ten]
+            muc = None
+            if muc_id:
+                muc = next((c for c in items if vd.field(c, "id") == muc_id), None)
+            elif pmid_kv:
+                muc = next((c for c in items if (vd.field(c, "pmid") or "").strip() == pmid_kv), None)
+            if muc is None:
+                mu.append(f"{nhan} — ITEM biến mất khỏi gói")
+                continue
+            loi_muc = []
+            for truong, ky_vong in qd["ky_vong"].items():
+                thuc = (vd.field(muc, truong) or "").strip()
+                dat = thuc in ky_vong if isinstance(ky_vong, list) else thuc == ky_vong
+                if not dat:
+                    mong = " | ".join(ky_vong) if isinstance(ky_vong, list) else ky_vong
+                    loi_muc.append(f"{truong}='{thuc or '(rỗng)'}' ≠ đã duyệt '{mong}'")
+            if loi_muc:
+                lech.append(f"{nhan} — {'; '.join(loi_muc)} (duyệt {qd['duyet']}: {qd['ly_do'][:60]})")
+            else:
+                khop.append(nhan)
+        except Exception as e:  # noqa: BLE001 — bản ghi sổ hỏng là «không kiểm được», không giết cả lượt
+            mu.append(f"{nhan} — bản ghi trong sổ hỏng, không đọc được: {e}")
     return khop, lech, mu
 
 
