@@ -167,6 +167,33 @@ def doc_muc(vd, p: Path) -> dict[str, list[tuple]]:
     return out
 
 
+def _co_xung_dot_quyet_dinh(muc_cu: dict, muc_moi: dict) -> bool:
+    """True nếu có ÍT NHẤT MỘT PMID chung mà hai bản kết luận KHÁC NHAU (so được
+    đơn trị ở cả hai bên — mỗi bên đúng một item cho PMID đó).
+
+    THÊM 2026-09-04 (Workflow đối kháng đa-agent) — trước bản vá, nhánh "chỉ
+    thiếu" (bên dưới, xây `chi_thieu`) chỉ so TẬP HỢP KHÓA PMID
+    (`set(muc_cu) - set(muc_moi)`), hoàn toàn không đọc GIÁ TRỊ `decision`.
+    Một cặp bản có thể vừa là siêu tập PMID (mọi PMID của bản cũ đều có mặt
+    ở bản mới) VỪA đổi `decision` cho một PMID chung — ca thật: hai bản cùng
+    lát cắt, cùng PMID, bản cũ `apply` → bản mới `consider`. `chi_thieu` cũ
+    sẽ dán nhãn cặp đó "CHỈ THIẾU, không nói sai", ĐÚNG LÚC `tim_mau_thuan()`
+    (so mọi cặp trong cùng chủ đề gốc — cùng lát cắt khác ngày CŨNG nằm
+    trong `theo_goc`) dán nhãn 🔴 "nói ngược nhau" cho CHÍNH cặp đó — hai
+    nhãn mâu thuẫn nhau cho cùng một cặp bản, đúng lúc bác sĩ cần phân biệt
+    rạch ròi nhất hai tình huống này (xem docstring đầu file, dòng 11-20).
+
+    Bỏ qua PMID mang NHIỀU item ở một trong hai bên (không so được đơn trị)
+    — nhánh đó đã có `tim_mau_thuan()` báo riêng qua `khong_so_duoc`, ở đây
+    chỉ cần biết có xung đột ĐƠN TRỊ hay không để loại khỏi "chỉ thiếu".
+    """
+    for pm in set(muc_cu) & set(muc_moi):
+        a, b = muc_cu[pm], muc_moi[pm]
+        if len(a) == 1 and len(b) == 1 and a[0][0] != b[0][0]:
+            return True
+    return False
+
+
 def quet_kho(dash: Path | None = None):
     """Quét kho dashboard → (vd, theo_lat_cat, theo_goc).
 
@@ -350,7 +377,8 @@ def main() -> int:
         muc_moi = doc_muc(vd, v[-1][1])
         for ngay_cu, p_cu in v[:-1]:
             muc_cu = doc_muc(vd, p_cu)
-            if muc_cu and not (set(muc_cu) - set(muc_moi)):
+            if (muc_cu and not (set(muc_cu) - set(muc_moi))
+                    and not _co_xung_dot_quyet_dinh(muc_cu, muc_moi)):
                 chi_thieu.append((lc, ngay_cu, v[-1][0], len(set(muc_moi) - set(muc_cu))))
 
     mau_thuan, khong_so_duoc = tim_mau_thuan(vd, theo_goc)
