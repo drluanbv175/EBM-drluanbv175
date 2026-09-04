@@ -108,10 +108,45 @@ def lay_toan_van(pmid: str) -> str | None:
     return ra
 
 
-def co_so(van_ban: str, x: float) -> bool:
-    """Số x có xuất hiện như MỘT SỐ RIÊNG trong văn bản không (không phải phần của số khác)."""
+def _khop_so_doc_lap(van_ban: str, x: float):
+    """Sinh các match của x như MỘT SỐ RIÊNG trong văn bản (không phải phần của
+    số khác, và không phải bị ĐỔI DẤU bởi một dấu trừ đứng ngay trước) — logic
+    ranh giới DÙNG CHUNG cho `co_so()` và `nhan_lech()`.
+
+    SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — hai lỗ ranh
+    giới, cùng một họ với chính mục đích của công cụ này (bắt số bị chép sai):
+    (1) lookbehind cũ (loại trừ chữ số/dấu chấm đứng trước) không loại trừ DẤU
+    TRỪ đứng trước, nên tra x=0.72 khớp NHẦM bên trong "-0.72" — một số khác
+    hẳn, đổi cả CHIỀU tác dụng lâm sàng (bảo vệ ↔ có hại). (2) lookahead cũ
+    (chỉ loại trừ chữ số theo sau) không loại trừ DẤU CHẤM theo sau, nên tra
+    x=5 khớp nhầm bên trong "5.2".
+    Vá (2) đơn giản: thêm "." vào lookahead. Vá (1) cần tinh hơn vì "-" đứng
+    trước một số có HAI nghĩa khác nhau — dấu ÂM ("-0.72", cần loại) hay RANH
+    GIỚI khoảng ("0.60-0.86", cần GIỮ để không mất khả năng khớp cận CI) — phân
+    biệt bằng: dấu "-" có đứng ngay SAU MỘT CHỮ SỐ khác không (nếu có → ranh
+    giới khoảng, giữ; nếu không → dấu âm, loại). Chỉ áp cho x KHÔNG ÂM — khi x
+    âm, `s` đã tự mang dấu "-" nên khớp đúng nguyên văn, không cần lọc thêm.
+    Đúng chiều an toàn đã ghi trong docstring module: thà bỏ sót (⚪ KHÔNG THẤY,
+    không kết luận sai) còn hơn báo ✓ KHỚP nhầm cho một số đã đổi dấu.
+
+    Lỗi giống hệt này từng nằm THÊM ở `nhan_lech()` (bên dưới) — cùng biểu thức
+    regex cũ, khiến nhãn đo lường (HR/RR/OR/MD/SMD) quanh một số KHÔNG THẬT SỰ
+    có trong văn bản (vd "5" khớp nhầm bên trong "5.2", hoặc bên trong "-5.0")
+    bị báo LỆCH — báo động giả về một trị số không hề tồn tại. Tách chung một
+    hàm để không còn hai bản sao của cùng một lỗi ranh giới trong file này."""
     s = f"{x:g}"
-    return re.search(r"(?<![\d.])" + re.escape(s) + r"(?![\d])", van_ban) is not None
+    for m in re.finditer(r"(?<![\d.])" + re.escape(s) + r"(?![\d.])", van_ban):
+        if x >= 0 and m.start() > 0 and van_ban[m.start() - 1] == "-":
+            truoc_dau_tru = van_ban[m.start() - 2] if m.start() > 1 else ""
+            if not truoc_dau_tru.isdigit():
+                continue  # dấu trừ đứng một mình → số ÂM, không phải x không âm
+        yield m
+
+
+def co_so(van_ban: str, x: float) -> bool:
+    """Số x có xuất hiện như MỘT SỐ RIÊNG trong văn bản không — xem
+    `_khop_so_doc_lap()` cho logic ranh giới đầy đủ."""
+    return next(_khop_so_doc_lap(van_ban, x), None) is not None
 
 
 def doc_effect(chunk: str) -> tuple[float, float, float] | None:
@@ -147,7 +182,7 @@ def nhan_lech(van_ban: str, measure: str | None, x: float) -> str | None:
     if not measure or measure.lower() not in NHAN_DO:
         return None
     vb = _chuan_hoa(van_ban)
-    m = re.search(r"(?<![\d.])" + re.escape(f"{x:g}") + r"(?![\d])", vb)
+    m = next(_khop_so_doc_lap(vb, x), None)
     if not m:
         return None
     cua_so = vb[max(0, m.start() - 80):m.start() + 20].lower()
