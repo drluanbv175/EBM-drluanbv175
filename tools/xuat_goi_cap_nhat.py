@@ -276,11 +276,39 @@ def main() -> int:
             if rc == 0:
                 verified = True
                 result["cong_liem_chinh"] = "PASS"
-            else:
-                result["cong_liem_chinh"] = "FAIL"
+            elif rc == 2:
+                # VÁ 2026-09-04 (Workflow đối kháng đa-agent, CRITICAL) — trước đây MỌI
+                # rc != 0 (kể cả rc=1) chỉ hạ câu chữ rồi vẫn chạy tiếp ②③④⑤, nên một lỗi
+                # NỘI DUNG THẬT — vd kiem_khoa_summary() bắt khoá `notDo` thay vì `dontDo`
+                # (BH61, xoá mất cả panel "Không nên/giới hạn" của MỌI sản phẩm phái sinh),
+                # hay kiem_nguon_da_rut() bắt một trích dẫn ĐÃ BỊ RÚT — vẫn cho ra đủ bản
+                # đọc/Word/PDF kèm dòng "── Bộ năm đã sẵn sàng ──" như không có gì xảy ra.
+                # verify_dashboard.py TỰ phân biệt rc=1 (≥1 lỗi cứng KHÔNG do mạng — nội
+                # dung/an toàn/cấu trúc dữ liệu thật sự sai) với rc=2 (TOÀN BỘ lỗi cứng là
+                # do MÁY/MẠNG — xem _canh_bao_loi_mang/report() trong chính file đó); dùng
+                # lại đúng ranh giới đã có thay vì tự đặt luật mới. rc=2 vẫn xuất như cũ
+                # (đây KHÔNG phải kết luận về nguồn — chạy lại khi mạng ổn).
+                result["cong_liem_chinh"] = "CHƯA XÁC MINH ĐƯỢC (mạng)"
                 rc_final = 1
-                print("   ⚠ Cổng KHÔNG đạt — vẫn xuất file nhưng bản Word sẽ KHÔNG"
-                      " khẳng định 'đã xác minh'.")
+                print("   ⚠ Cổng CHƯA xác minh được do MÁY/MẠNG (không phải lỗi nguồn) —"
+                      " vẫn xuất file nhưng bản Word sẽ KHÔNG khẳng định 'đã xác minh'.")
+            else:
+                # rc=1: ≥1 lỗi cứng THẬT (nội dung/an toàn/cấu trúc dữ liệu) — CHẶN XUẤT
+                # ngay ở đây, không để lọt xuống ②③④⑤ rồi báo "Bộ năm đã sẵn sàng" sai sự
+                # thật (đúng HỌ lỗi với nhánh loi_an_toan bên dưới, chỉ khác chỗ nhánh đó
+                # chỉ bắt được đúng MỘT mẫu văn bản "decision='apply'").
+                result["cong_liem_chinh"] = "CHẶN BỞI CỔNG LIÊM CHÍNH"
+                loi = [ln.strip() for ln in out.splitlines() if ln.strip().startswith("✗")]
+                print(f"   ⛔ CHẶN XUẤT — cổng liêm chính có {len(loi)} lỗi cứng KHÔNG "
+                      "phải do mạng (nội dung/an toàn/cấu trúc dữ liệu):")
+                for ln in loi[:8]:
+                    print("      " + ln)
+                if len(loi) > 8:
+                    print(f"      … và {len(loi)-8} mục nữa")
+                print("   Sửa dashboard rồi chạy lại — KHÔNG có đường nào né được cổng này.")
+                if a.json:
+                    print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 3
 
             # ── ①-bis Cổng NGUỒN NGHIÊM NGẶT (thêm 2026-08-11) ────────────────
             # `DESIGN-SPEC.md` §6 đòi `--online --strict-sources` từ đầu, nhưng dây
