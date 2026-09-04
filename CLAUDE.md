@@ -744,7 +744,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   phương án **mirror tóm tắt qua git** (thay vì track toàn bộ cây — chưa rõ dung lượng thật,
   có video/zip; hoặc nối connector Microsoft 365/OneDrive — cần OAuth tương tác bác sĩ tự làm).
   **Cơ chế:** `python3 tools/xuat_trang_thai_cloud.py` (chạy trên Mac/Windows, nơi có
-  `EBM-Dashboards/` thật) gọi lại 3 bộ đếm ĐÃ CÓ SẴN (`kiem_do_tuoi_chung_cu.py` ·
+  `EBM-Dashboards/` thật — hoặc bấm đúp `sync/xuat-mirror-chung-cu-cloud.command` trên Mac,
+  `.cmd` trên Windows, cùng khuôn `dong-bo-tat-ca.command`: chỉ ghi file, KHÔNG tự
+  commit/push, in sẵn 3 lệnh git để bác sĩ tự soát rồi chạy tay) gọi lại 3 bộ đếm ĐÃ CÓ SẴN
+  (`kiem_do_tuoi_chung_cu.py` ·
   `kiem_quyet_dinh_da_duyet.py` · `tu_de_xuat_viec.py --gon`) cộng nội dung 2 sổ máy-đọc
   (`quyet-dinh-da-duyet.json` · `mau-thuan-da-duyet.json`), đóng gói thành MỘT JSON nhỏ ghi vào
   `cloud-mirror/trang-thai-chung-cu.json` — thư mục MỚI, được un-ignore tường minh trong
