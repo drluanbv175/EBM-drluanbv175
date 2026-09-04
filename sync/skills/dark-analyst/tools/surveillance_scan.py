@@ -280,7 +280,19 @@ def search(query: str, days: int, retmax: int, *,
     try:
         result = fetch_json(url).get("esearchresult", {})
     except RuntimeError:
-        return search_europe_pmc(query, days, retmax)
+        # SỬA (vá "fallback Europe PMC bỏ tham số gốc", 2026-09-04): trước đây gọi
+        # search_europe_pmc(query, days, retmax) TRƠN — bỏ mất mindate/maxdate/
+        # loc_thiet_ke mà caller vừa truyền vào search() ở trên. Hai hậu quả thật:
+        # (1) CON TRỎ TĂNG DẦN (K8, comment ở đầu hàm): mindate/maxdate mã hoá cửa
+        #     sổ NGÀY HẸP mà cursor đang quét tới — bỏ chúng khiến fallback quay về
+        #     cửa sổ `days`-lùi-từ-hôm-nay RỘNG HƠN NHIỀU, tái xuất ứng viên ĐÃ
+        #     duyệt ở lượt quét trước vào hàng chờ mỗi khi PubMed tình cờ lỗi.
+        # (2) tầng "moi_vao_pubmed" (loc_thiet_ke=False, xem comment run_scan()) —
+        #     bỏ loc_thiet_ke khiến fallback ÂM THẦM lọc lại theo publication type,
+        #     tái diễn ĐÚNG lỗi BH38 (bài mới chưa kịp gán loại bị vứt) mà tầng này
+        #     sinh ra để tránh, chỉ khác là do PubMed lỗi thay vì do quên tham số.
+        return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
+                                 mindate=mindate, maxdate=maxdate)
     ids = result.get("idlist", [])
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
@@ -291,13 +303,31 @@ def search_europe_pmc(
     retmax: int,
     *,
     fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+    loc_thiet_ke: bool = True,
+    mindate: str = "",
+    maxdate: str = "",
 ) -> list[str]:
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
-    today = datetime.now(timezone.utc).date().isoformat()
+    # mindate/maxdate (khi có) đến từ search() theo khuôn PubMed "YYYY/MM/DD" —
+    # Europe PMC cần ISO "YYYY-MM-DD". "3000" là sentinel PubMed dùng cho "không
+    # có trần trên" (xem search()); ở đây đổi thành hôm nay vì tương lai không
+    # có gì để tìm.
+    if mindate:
+        since = mindate.replace("/", "-")
+        today = (maxdate.replace("/", "-") if maxdate and maxdate != "3000"
+                 else datetime.now(timezone.utc).date().isoformat())
+    else:
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
+    # loc_thiet_ke=False (tầng "moi_vao_pubmed") = KHÔNG lọc publication type —
+    # đúng ngữ nghĩa của search() (xem BH38, comment ở search()); khớp bộ lọc
+    # PUB_TYPE thay vì luôn áp nó vô điều kiện như bản trước bản vá này.
+    pub_type_clause = (
+        ' AND (PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR '
+        'PUB_TYPE:"meta-analysis" OR PUB_TYPE:"randomized controlled trial" '
+        'OR TITLE:"guideline")'
+    ) if loc_thiet_ke else ""
     term = (
-        f'({query}) AND (SRC:MED OR HAS_FT:Y) AND '
-        '(PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
-        'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline") '
+        f'({query}) AND (SRC:MED OR HAS_FT:Y){pub_type_clause} '
         f'AND FIRST_PDATE:[{since} TO {today}]'
     )
     params = {
