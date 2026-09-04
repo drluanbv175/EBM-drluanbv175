@@ -62,17 +62,39 @@ PLACEHOLDER = "[CẦN BÁC SĨ ĐIỀN]"
 TRANG_THAI_HOP_LE = {"co-nguon", "chua-dien"}
 HAN_RA_SOAT_NGAY = 365
 
+# SỬA (vá "R4 chấp nhận nguồn không định danh được", 2026-09-04): mốc chuẩn dùng
+# ĐÚNG ngưỡng đã canonical trong hệ — khớp
+# `medical-ebm-automation/app/evidence/citation_validator.py::_PMID`/`_DOI`
+# (`^\d{4,9}$` / `^10\.\d{4,9}/\S+$`) — không phát minh ngưỡng mới. Riêng "toàn
+# số 0" (`"00000"`) khớp `\d{4,9}` nhưng KHÔNG phải PMID thật (PubMed đánh số
+# từ 1, không có PMID 0) nên loại thêm bằng kiểm tra giá trị > 0 ở nơi dùng.
+_PMID_HOP_LE = re.compile(r"^\d{4,9}$")
+_DOI_HOP_LE = re.compile(r"^10\.\d{4,9}/\S+$", re.IGNORECASE)
+_NAM_HOP_LE = re.compile(r"^(19|20)\d{2}$")
+
 
 def _nguon_truy_duoc(nguon: object) -> bool:
-    """Nguồn phải phân giải được: PMID, hoặc DOI, hoặc guideline kèm năm."""
+    """Nguồn phải phân giải được: PMID, hoặc DOI, hoặc guideline kèm năm.
+
+    SỬA (vá "R4 chấp nhận nguồn không định danh được", 2026-09-04): trước bản vá
+    `pmid` chỉ đòi `.isdigit()` — không giới hạn độ dài, nên `"0"`/`"00000"`/một
+    chuỗi số bất kỳ đều qua dù không phải PMID thật. `doi` chỉ đòi
+    `.startswith("10.")` — một DOI thật LUÔN có mã đăng ký (4-9 chữ số) VÀ hậu
+    tố sau dấu gạch chéo; chuỗi trơn `"10."` không trỏ tới bài nào cũng qua được.
+    `nam` chỉ đòi khác rỗng — `"y"` cũng qua. Cả ba lỗ đều khiến `trang_thai:
+    "co-nguon"` + R4 PASS cho một nguồn không ai tra ngược lại được, đúng nghĩa
+    "không định danh được" của phát hiện. Đã kiểm bằng dữ liệu THẬT trong
+    `safety_net_templates.json` (8/8 hội chứng `co-nguon`, PMID 8 chữ số/DOI
+    `10.xxxx/...`/năm 4 chữ số) — không mục nào bị chặn oan bởi bản vá này."""
     if not isinstance(nguon, dict):
         return False
-    if str(nguon.get("pmid", "")).strip().isdigit():
+    pmid = str(nguon.get("pmid", "")).strip()
+    if _PMID_HOP_LE.match(pmid) and int(pmid) > 0:
         return True
-    if str(nguon.get("doi", "")).strip().startswith("10."):
+    if _DOI_HOP_LE.match(str(nguon.get("doi", "")).strip()):
         return True
     return bool(str(nguon.get("guideline", "")).strip()
-                and str(nguon.get("nam", "")).strip())
+                and _NAM_HOP_LE.match(str(nguon.get("nam", "")).strip()))
 
 
 _MAU_PMID_DOI = re.compile(r"PMID\s*[:\s]?\d{5,9}|doi\s*:\s*10\.\d{4,9}/", re.IGNORECASE)
