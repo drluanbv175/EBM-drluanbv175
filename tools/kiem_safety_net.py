@@ -100,7 +100,20 @@ def _nguon_truy_duoc(nguon: object) -> bool:
 _MAU_PMID_DOI = re.compile(r"PMID\s*[:\s]?\d{5,9}|doi\s*:\s*10\.\d{4,9}/", re.IGNORECASE)
 
 
-def _nguon_truy_duoc_ld(ld: dict) -> bool:
+def _ma_hop_le_tieu_chi(cd: object) -> set[str]:
+    """Tập hợp mã `tieu_chi[].ma` THẬT của `co_do_cho_bac_si` — nguồn sự thật
+    DUY NHẤT để đối chiếu `ma_nguon` (xem `_nguon_truy_duoc_ld`/R10). Đo trực
+    tiếp trên `safety_net_templates.json`: mỗi tiêu chí cờ đỏ mang một `ma`
+    ngắn (S, N1, N2, O1, P8, Q1, W1…) mà `dan_benh_nhan_quay_lai.noi_dung[]`
+    tham chiếu ngược lại qua `ma_nguon`."""
+    tieu_chi = cd.get("tieu_chi") if isinstance(cd, dict) else None
+    if not isinstance(tieu_chi, list):
+        return set()
+    return {str(t.get("ma", "")).strip() for t in tieu_chi
+            if isinstance(t, dict) and str(t.get("ma", "")).strip()}
+
+
+def _nguon_truy_duoc_ld(ld: dict, ma_hop_le: set[str]) -> bool:
     """Nguồn của khối `dan_benh_nhan_quay_lai` truy được — biến thể của
     `_nguon_truy_duoc()` cho đúng HAI hình dạng dữ liệu THẬT đang tồn tại song
     song trong `safety_net_templates.json` (đo trực tiếp trên file, không suy
@@ -109,7 +122,19 @@ def _nguon_truy_duoc_ld(ld: dict) -> bool:
     `noi_dung[]` tự mang nguồn riêng qua `ma_nguon` (mã tham chiếu ngược về
     `tieu_chi` của `co_do_cho_bac_si` — đã được R4 xác minh nguồn CHUNG) hoặc
     `nguon_goc` (chuỗi tự do nhúng PMID/DOI, dau-nguc/dau-bung/dau-lung/
-    chong-mat). Chấp nhận (a) HOẶC mọi mục đều đạt (b) — không đòi cả hai."""
+    chong-mat). Chấp nhận (a) HOẶC mọi mục đều đạt (b) — không đòi cả hai.
+
+    SỬA (vá "R10 chấp nhận mã nguồn bịa", 2026-09-04): `ma_nguon` trước bản vá
+    chỉ đòi khác rỗng — một mã BỊA (vd `"ma_nguon": "XYZ999"`, không khớp bất
+    kỳ `tieu_chi[].ma` nào của CHÍNH hội chứng đó) vẫn qua R10 như thể đã tham
+    chiếu tới một tiêu chí có nguồn thật, dù nó không tham chiếu tới đâu cả.
+    Nay đối chiếu với `ma_hop_le` — tập `ma` THẬT của `co_do_cho_bac_si` CÙNG
+    hội chứng, do `kiem()` truyền vào qua `_ma_hop_le_tieu_chi(cd)` (tham số
+    bắt buộc, không có mặc định — thiếu tập đối chiếu thì không cách nào phân
+    biệt mã thật với mã bịa, gọi hàm mà không truyền là lỗi lập trình, không
+    phải một trạng thái hợp lệ cần dung thứ). Chấp nhận danh sách nhiều mã
+    cách nhau bằng dấu phẩy (dữ liệu THẬT có `"ma_nguon": "P1, P5"`) — TẤT CẢ
+    các mã trong danh sách phải khớp `ma_hop_le`, không phải chỉ một."""
     if _nguon_truy_duoc(ld.get("nguon")):
         return True
     noi_dung = ld.get("noi_dung")
@@ -118,8 +143,12 @@ def _nguon_truy_duoc_ld(ld: dict) -> bool:
     for muc in noi_dung:
         if not isinstance(muc, dict):
             return False
-        if str(muc.get("ma_nguon", "")).strip():
-            continue
+        ma_nguon = str(muc.get("ma_nguon", "")).strip()
+        if ma_nguon:
+            ma_list = [m.strip() for m in ma_nguon.split(",") if m.strip()]
+            if ma_list and all(m in ma_hop_le for m in ma_list):
+                continue
+            return False
         if _MAU_PMID_DOI.search(str(muc.get("nguon_goc", ""))):
             continue
         return False
@@ -209,10 +238,13 @@ def kiem(mau: dict, co: dict, hom_nay: dt.date) -> tuple[list[str], list[str], d
         if ld.get("trang_thai") == "co-nguon":
             co_loi_dan += 1
             # R10 — mirror của R4: nguồn phải truy được (xem _nguon_truy_duoc_ld).
-            if not _nguon_truy_duoc_ld(ld):
+            # ma_hop_le = tập `tieu_chi[].ma` THẬT của CÙNG hội chứng — đối
+            # chiếu `ma_nguon` với đây, không chấp nhận mã bịa (xem docstring).
+            if not _nguon_truy_duoc_ld(ld, _ma_hop_le_tieu_chi(cd)):
                 loi.append(f"R10 {nhan}: `dan_benh_nhan_quay_lai` khai `co-nguon` "
                            f"nhưng nguồn không truy được (cần `nguon` cấp khối, hoặc "
-                           f"mỗi mục trong `noi_dung` tự mang `ma_nguon`/`nguon_goc` "
+                           f"mỗi mục trong `noi_dung` tự mang `ma_nguon` KHỚP một "
+                           f"`tieu_chi[].ma` thật của hội chứng này, hoặc `nguon_goc` "
                            f"có PMID/DOI).")
             # R11 — mirror của R6: không placeholder trong khối đã khai có nguồn.
             if PLACEHOLDER in json.dumps(ld, ensure_ascii=False):
