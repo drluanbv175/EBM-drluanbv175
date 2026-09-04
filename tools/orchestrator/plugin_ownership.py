@@ -62,6 +62,14 @@ class CapabilitySpec:
     entry_agents: tuple[str, ...] = ()
     hard_gates: tuple[str, ...] = ()
     workers: tuple[WorkerSpec, ...] = ()
+    # capability_for() chi khop qua intent_kinds (intent nhieu tu) hoac
+    # entry_agents (intent single_task) — mot capability rong ca hai truong
+    # nay vinh vien khong the ai to den qua duong dinh tuyen tu dong, ke ca
+    # bac si goi dich danh worker cua no (Workflow doi khang da-agent vong 2,
+    # 2026-09-04). Danh dau manual_only=True de validate() phan biet "co
+    # chu y, chi goi tay qua --resolve-capability" voi "quen khai intent_kinds/
+    # entry_agents khi them capability moi".
+    manual_only: bool = False
 
     @classmethod
     def from_dict(cls, capability_id: str, data: dict[str, Any]) -> "CapabilitySpec":
@@ -76,6 +84,7 @@ class CapabilitySpec:
             entry_agents=tuple(str(x) for x in data.get("entry_agents", [])),
             hard_gates=tuple(str(x) for x in data.get("hard_gates", [])),
             workers=tuple(WorkerSpec.from_dict(x) for x in data.get("workers", [])),
+            manual_only=bool(data.get("manual_only", False)),
         )
 
 
@@ -282,6 +291,14 @@ class PluginOwnershipRegistry:
                     errors.append(f"{capability_id}: owner agent khong ton tai: {cap.owner_unit}")
             if cap.runtime and not (ROOT / cap.runtime).exists():
                 errors.append(f"{capability_id}: runtime khong ton tai: {cap.runtime}")
+
+            if not cap.intent_kinds and not cap.entry_agents and not cap.manual_only:
+                errors.append(
+                    f"{capability_id}: rong ca intent_kinds lan entry_agents — "
+                    "capability_for() khong bao gio khop duoc, chi con duong "
+                    "--resolve-capability. Khai manual_only:true neu day la co "
+                    "y (chi goi tay), hoac them intent_kinds/entry_agents."
+                )
 
             for kind in cap.intent_kinds:
                 if kind in intent_owners:
