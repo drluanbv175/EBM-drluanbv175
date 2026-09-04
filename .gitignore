@@ -52,6 +52,11 @@
 # quy tắc /* ở trên loại mọi thư mục gốc mới, nên thiếu dòng này thì cả thư mục bị
 # ignore IM LẶNG — đúng họ lỗi BH70 đã gặp với sync/plugin-manifest.json.
 !/lam-sang/
+# Mirror TÓM TẮT trạng thái hệ cập nhật chứng cứ y khoa (04/09/2026, bác sĩ yêu cầu
+# đồng bộ tự động Cloud↔cục bộ). CHỈ chứa JSON nhỏ do tools/xuat_trang_thai_cloud.py
+# sinh ra (độ tươi + quyết định đã duyệt + việc-còn-lại) — KHÔNG chứa dashboard HTML/
+# derivatives/video/zip (những thứ đó vẫn ở nguyên OneDrive, đúng kiến trúc gốc).
+!/cloud-mirror/
 
 # 3) Bên trong .claude/: track agents/ + hook chuẩn bị phiên CLOUD.
 #    (bỏ session/state/settings.local/launch — runtime cục bộ)

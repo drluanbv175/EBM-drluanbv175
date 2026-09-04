@@ -737,6 +737,46 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   không phải lệnh chạy); máy thật nhận bản sửa khi chạy `tools/dong_bo_hook_sessionstart.py --ap-dung`
   (lane ⑥ của `dong_bo_tat_ca.py` sẽ báo LỆCH cho tới lúc đó).
 
+- **🔁 MIRROR TÓM TẮT HỆ CHỨNG CỨ Y KHOA Cloud↔cục bộ — dựng 04/09/2026, bác sĩ yêu cầu.**
+  `EBM-Dashboards/`/`EBM_MASTER/` nằm ngoài git CÓ CHỦ Ý (§ trên) nên phiên Cloud KHÔNG BAO GIỜ
+  có dữ liệu dashboard thật, dù có đủ mã nguồn — đã đo trực tiếp: `ls EBM-Dashboards` báo
+  "No such file or directory" trên container Cloud, không phải thư mục rỗng. Bác sĩ chọn
+  phương án **mirror tóm tắt qua git** (thay vì track toàn bộ cây — chưa rõ dung lượng thật,
+  có video/zip; hoặc nối connector Microsoft 365/OneDrive — cần OAuth tương tác bác sĩ tự làm).
+  **Cơ chế:** `python3 tools/xuat_trang_thai_cloud.py` (chạy trên Mac/Windows, nơi có
+  `EBM-Dashboards/` thật) gọi lại 3 bộ đếm ĐÃ CÓ SẴN (`kiem_do_tuoi_chung_cu.py` ·
+  `kiem_quyet_dinh_da_duyet.py` · `tu_de_xuat_viec.py --gon`) cộng nội dung 2 sổ máy-đọc
+  (`quyet-dinh-da-duyet.json` · `mau-thuan-da-duyet.json`), đóng gói thành MỘT JSON nhỏ ghi vào
+  `cloud-mirror/trang-thai-chung-cu.json` — thư mục MỚI, được un-ignore tường minh trong
+  `.gitignore` (`!/cloud-mirror/`, theo đúng khuôn BH70: quy tắc `/*` loại mọi thư mục gốc mới,
+  thiếu dòng un-ignore thì thư mục bị bỏ qua ÂM THẦM). **CHỈ mirror phần TÓM TẮT/QUYẾT ĐỊNH —
+  không nhân bản dashboard HTML/derivatives/video/zip** (đúng lý do các thứ đó bị loại khỏi git
+  từ đầu). Script an toàn khi chạy trên máy KHÔNG có `EBM-Dashboards/` (đã đo trên Cloud: 3 bộ
+  đếm đều thoát trong vài giây, báo ⚪/🟡 "chưa có dữ liệu", không crash) — nhưng lúc đó mirror
+  chỉ ghi được trạng thái rỗng, vô nghĩa để commit; **mirror có GIÁ TRỊ THẬT chỉ khi chạy trên
+  máy có OneDrive**.
+  **Tự động hoá bước ghi:** `tools/xuat_goi_cap_nhat.py` (lệnh MẶC ĐỊNH sau mỗi lần cập nhật
+  dashboard) nay có thêm **bước ⑥** gọi script trên NGAY SAU bộ năm gốc — best-effort, KHÔNG
+  đổi mã thoát và KHÔNG làm hỏng 5 sản phẩm kia nếu lỗi (cùng nguyên tắc bước ⑤ PDF). Nghĩa là
+  mỗi lần bác sĩ cập nhật một dashboard, mirror tự làm mới — chỉ còn thiếu bước bác sĩ tự
+  `git add cloud-mirror/ && git commit && git push` (công cụ KHÔNG tự commit/push, đúng luật nền
+  của `dong_bo_tat_ca.py`: đẩy hộ là quyết định thay bác sĩ về thứ được công bố).
+  ⚠️ **Giới hạn CHƯA đóng, cần bác sĩ tự làm — không phải tôi quên:** hiển thị mirror lúc MỞ
+  PHIÊN Cloud (đọc `cloud-mirror/trang-thai-chung-cu.json` trong `.claude/hooks/session-start.sh`)
+  **không thể làm từ phiên agent** — runtime chặn thẳng: *"file write to a protected path is not
+  allowed... destructive hook entrypoint"*. Đây là ranh giới ĐÚNG (cùng lý do agent không được tự
+  phát khoá Ed25519): hook chạy tự động mỗi phiên là bề mặt nhạy cảm, sửa nó phải do người thật.
+  Bác sĩ tự thêm đoạn đọc `cloud-mirror/trang-thai-chung-cu.json` vào `.claude/hooks/
+  session-start.sh` (đọc JSON, in `sinh_luc`/`may`/dòng đầu mỗi `bo_dem`) nếu muốn thấy ngay lúc
+  mở phiên; trong lúc chưa có, `cat cloud-mirror/trang-thai-chung-cu.json` bất kỳ lúc nào trong
+  phiên Cloud vẫn đọc được — mirror ĐÃ đồng bộ qua git, chỉ chưa được ĐỌC TỰ ĐỘNG lúc mở phiên.
+  **Chưa kiểm được TRỌN chuỗi 5→6 bước trên Cloud** (bước ①-⑤ của `xuat_goi_cap_nhat.py` đòi
+  `EBM-Dashboards/tools/` — không có trên Cloud nên không dựng nổi dashboard thật để chạy hết
+  pipeline); đã kiểm ĐỘC LẬP: script mirror chạy đúng cả hai nhánh (có/không `EBM-Dashboards/`),
+  cú pháp bước ⑥ đã thêm vào `xuat_goi_cap_nhat.py` hợp lệ và đúng vị trí (sau bước ⑤, không
+  đổi `rc_final`). Bác sĩ nên tự chạy thử `python3 tools/xuat_goi_cap_nhat.py <dashboard>.html`
+  một lần trên Mac/Windows để xác nhận bước ⑥ in ra đúng như kỳ vọng.
+
 ## Bản đồ dự án (đọc trước khi sửa code)
 - **`medical-ebm-automation/` = DỰ ÁN SỐNG (chính).** Bản đầy đủ: pipeline EBM + research
   tracker + dashboard 12 tab + Evidence Workbench + scheduler + scoring (32 thang có nguồn trích dẫn

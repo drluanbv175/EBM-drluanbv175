@@ -430,6 +430,22 @@ def main() -> int:
             print("   ⚠ Bỏ qua: " + result["pdf_ly_do"])
             # PDF là tiện ích đọc, KHÔNG phải cổng chất lượng → không đổi mã thoát
 
+    # ── ⑥ Mirror trạng thái đi qua git, để phiên Cloud thấy được (04/09/2026) ──
+    # Best-effort NHƯ bước ⑤: đây là tiện ích ĐỒNG BỘ, không phải cổng chất lượng —
+    # lỗi ở đây KHÔNG được đổi rc_final và KHÔNG được làm hỏng 5 sản phẩm trên.
+    print("⑥ Mirror trạng thái cho Cloud…")
+    XUAT_CLOUD = ROOT / "tools" / "xuat_trang_thai_cloud.py"
+    if not XUAT_CLOUD.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/xuat_trang_thai_cloud.py")
+    else:
+        rc, out = run([py, str(XUAT_CLOUD)])
+        if rc == 0 and out.strip():
+            for l in out.splitlines():
+                if l.strip():
+                    print("   " + l.strip())
+        else:
+            print("   ⚠ Bỏ qua (không chặn 5 sản phẩm trên): " + (out.strip().splitlines() or ["không rõ"])[-1][:160])
+
     # VÁ 13/08/2026 — TIÊU ĐỀ PHẢI NÓI ĐÚNG SỰ THẬT.
     # Bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể cả khi chỉ sinh được 3/5.
     # Ca thật cùng ngày: `AnToanThuoc_EMA_PRAC_20260614` hỏng bước ③ nên mất cả ④ và
