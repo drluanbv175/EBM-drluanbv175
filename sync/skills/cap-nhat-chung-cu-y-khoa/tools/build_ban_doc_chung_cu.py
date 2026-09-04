@@ -521,6 +521,43 @@ def khoi_mau_thuan(src: Path) -> str:
             f'<ul>{hang}</ul></div>')
 
 
+# Khoá cấp 1 HỢP LỆ của DATA.summary — PHẢI khớp verify_dashboard.py::KHOA_SUMMARY_HOP_LE.
+# Sửa danh sách này mà không sửa CẢ HAI nơi là tái lập đúng lỗi mà nó sinh ra để chặn.
+KHOA_SUMMARY_HOP_LE = {"conclusion", "doNow", "dontDo", "redFlags"}
+
+
+def khoi_khoa_summary_la(summary: dict) -> str:
+    """Dải cảnh báo: DATA.summary có khoá LẠ — nội dung dưới khoá đó bị VỨT ÂM THẦM.
+
+    VÌ SAO Ở ĐÂY (2026-09-04, Workflow đối kháng đa-agent vòng 3). verify_dashboard.py
+    đã CHẶN CỨNG lỗi này từ 18/08/2026 (kiem_khoa_summary, BH61) — nhưng bản chặn đó
+    chỉ chạy trong dây chuyền CÓ QUA CỔNG (`xuat_goi_cap_nhat.py --online`). File này
+    tự nó KHÔNG kiểm gì cả: `summary.get('redFlags', [])`/`get('doNow', [])`/
+    `get('dontDo', [])` coi khoá SAI TÊN (vd `notDo` thay vì `dontDo`) y hệt khoá VẮNG
+    MẶT — trả về [] êm ru, không lỗi/cảnh báo nào — nên khi công cụ này được gọi
+    ĐỘC LẬP (không qua cổng, vd chạy tay để soát lại một bản đã xuất), nó vẫn có thể
+    sinh trang "bản đọc" với panel an toàn RỖNG mà không một dấu hiệu nào lộ ra.
+    Ca thật đã xảy ra HAI LẦN (BH61): mất "KHÔNG ngừng opioid ĐỘT NGỘT ở người dùng
+    dài hạn" và một cảnh báo ESA-hemoglobin.
+
+    Đây là lớp phòng thủ THỨ HAI, không thay cổng — cổng vẫn là nơi CHẶN XUẤT.
+    """
+    la = sorted(set(summary) - KHOA_SUMMARY_HOP_LE)
+    if not la:
+        return ""
+    ds = "".join(f"<li><b>{esc(k)}</b></li>" for k in la)
+    return (
+        '<div class="rutbai"><h3>DATA.summary có khoá LẠ — nội dung có thể đã bị vứt âm thầm '
+        f'({len(la)} khoá)</h3>'
+        '<p class="sub">Khoá hợp lệ CHỈ gồm conclusion/doNow/dontDo/redFlags — nội dung nằm '
+        'dưới một khoá SAI TÊN (vd gõ nhầm <code>notDo</code> thay vì <code>dontDo</code>) '
+        'không hiện ra ở đâu trên trang này, kể cả panel "Không nên, hoặc chưa nên đổi" bên '
+        'dưới có thể đang RỖNG dù dữ liệu gốc có nội dung. Sửa lại đúng tên khoá trong '
+        'dashboard rồi xuất lại — máy không tự đoán khoá đúng.</p>'
+        f'<ul>{ds}</ul></div>'
+    )
+
+
 def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
     meta = data.get("meta", {})
     summary = data.get("summary", {})
@@ -631,6 +668,7 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
   </div>
 </header>
 
+{khoi_khoa_summary_la(summary)}
 {khoi_rut_bai(src) if src else ''}
 {khoi_mau_thuan(src) if src else ''}
 
