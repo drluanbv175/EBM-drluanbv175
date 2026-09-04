@@ -104,7 +104,15 @@ def nap_ban_chup() -> tuple[list[dict], dict[str, str]]:
             khoa = m.get("id") or f"{m.get('kind')}:{m.get('plugin')}:{m.get('name')}"
             # Lớp phủ THẮNG mô tả đọc từ file: file có thể vừa bị bản cập nhật của
             # plugin trả về tiếng Anh, còn lớp phủ là bản dịch bác sĩ đã duyệt.
-            vi = lop_phu.get(khoa)
+            # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện MEDIUM) —
+            # thiếu fallback khoá `name:<tên>` mà apply_vi.py/verify_vi.py đã có
+            # (bản dịch DÙNG CHUNG cho mọi bản sao cùng tên, vd bmad-method lặp
+            # nguyên bộ skill ở 6 plugin con). Xác nhận trên chính catalog thật
+            # của repo: 75/1070 mục ở Linux.json chỉ tra được bản dịch qua khoá
+            # `name:`, không có khoá `id` trực tiếp trong vi_descriptions.json —
+            # 75 mục này trước đây luôn hiện tiếng Anh trên trang tra cứu dù đã
+            # có bản dịch sẵn trong từ điển.
+            vi = lop_phu.get(khoa) or lop_phu.get(f"name:{m.get('name')}")
             cu = gom.get(khoa)
             if cu is None:
                 gom[khoa] = {**m, "may": {may}, **({"desc_en": vi} if vi else {})}
@@ -374,7 +382,15 @@ def sinh_html(muc: list[dict], viec: list[dict], ngay: dict[str, str]) -> str:
         for v in viec)
 
     quet = " · ".join(f"{m}: {n}" for m, n in sorted(ngay.items()))
-    js = JS.replace("__DATA__", json.dumps(data, ensure_ascii=False))
+    # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — DATA nhúng
+    # thẳng vào <script> không thoát chuỗi "</" — mô tả plugin bên thứ ba (chưa
+    # qua kiểm duyệt như vi_descriptions.json) chứa literal "</script>" sẽ ĐÓNG
+    # thẻ script sớm, phá JS và chèn phần còn lại của mô tả thành HTML thô ngay
+    # trong trang. Latent trên dữ liệu hiện có (đã kiểm cả vi_descriptions.json
+    # lẫn catalog_may/*.json — chưa mục nào có), nhưng mô tả plugin là nội dung
+    # KHÔNG kiểm soát được. `\/` vẫn là "/" hợp lệ trong cả JSON lẫn JS, nên
+    # thoát KHÔNG đổi giá trị dữ liệu.
+    js = JS.replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
 
     return f"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8">
