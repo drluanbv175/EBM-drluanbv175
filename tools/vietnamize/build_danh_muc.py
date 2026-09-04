@@ -97,6 +97,24 @@ def nap_danh_muc() -> tuple[list[dict], list[str], dict[str, str], dict[str, set
     return list(gop.values()), may_ds, ngay, nhom_da_quet
 
 
+def mo_ta_vi(vi: dict, item: dict) -> str:
+    """Bản dịch tiếng Việt cho MỘT mục catalog — tra khoá `id` trước, rồi
+    fallback khoá `name:<tên>`, cuối cùng mới rơi về mô tả tiếng Anh gốc.
+
+    SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — trước
+    đây chỉ tra `vi.get(item["id"])`, thiếu fallback `name:<tên>` mà
+    apply_vi.py/verify_vi.py đã có (bản dịch DÙNG CHUNG cho mọi bản sao cùng
+    tên, vd bmad-method lặp nguyên bộ skill ở 6 plugin con). Xác nhận trên
+    chính catalog thật: 75/1070 mục ở `catalog_may/Linux.json` chỉ tra được
+    bản dịch qua khoá `name:`, không có khoá `id` trực tiếp trong
+    `vi_descriptions.json` — trước bản vá, các mục này luôn rơi về
+    `desc_en` (tiếng Anh) dù đã có bản dịch sẵn. `id` luôn thắng fallback,
+    khớp đúng thứ tự ưu tiên của `apply_vi.py`."""
+    entry_id = vi.get(item["id"])
+    entry_name = vi.get(f"name:{item['name']}")
+    return ((entry_id or entry_name or {}).get("vi")) or item["desc_en"]
+
+
 def nhan_may(may: list[str], tat_ca: list[str], nhom: str = "",
              nhom_theo_may: dict[str, set[str]] | None = None) -> str:
     """Nhãn máy hiển thị — chỉ nói rõ khi mục KHÔNG có đủ trên mọi máy.
@@ -241,7 +259,7 @@ def main() -> int:
             dong.append("| Gọi bằng | Loại | Máy | Làm gì |")
             dong.append("|---|---|---|---|")
             for i in ds:
-                mo_ta = vi.get(i["id"], {}).get("vi") or i["desc_en"]
+                mo_ta = mo_ta_vi(vi, i)
                 mo_ta = " ".join(mo_ta.split())
                 if len(mo_ta) > 240:
                     mo_ta = mo_ta[:237] + "…"
