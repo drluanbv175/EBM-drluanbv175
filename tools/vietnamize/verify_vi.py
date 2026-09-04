@@ -53,6 +53,23 @@ except ImportError:
 VN = re.compile(r"[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]",
                 re.IGNORECASE)
 
+# SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2) — CỐ Ý khai lại danh sách này
+# (không import từ apply_vi.py, cùng lý do VN ở trên). Phải khớp cùng bộ từ và
+# ngưỡng ≥3 mà apply_vi.py dùng để nhận "giữ-bản-việt-tự-viết" — nếu không, một mô
+# tả không dấu apply_vi.py ĐÚNG khi bỏ qua (giữ nguyên) sẽ bị verify_vi.py báo
+# NHẦM là lỗi (vì mô tả trên đĩa khác bản dịch từ điển, và VN không bắt được chữ
+# không dấu).
+_TU_TIENG_VIET_KHONG_DAU = frozenset({
+    "khong", "duoc", "cua", "nhung", "benh", "nhan", "kham", "thuoc",
+    "dieu", "doan", "nghien", "cuu", "chung", "truoc", "hoac", "trong",
+    "ngoai", "danh", "quyet", "dinh", "huong", "phuong", "phap", "nguoi",
+})
+
+
+def _co_dau_hieu_tieng_viet_khong_dau(text: str) -> bool:
+    tu = re.findall(r"[a-z]+", text.lower())
+    return sum(1 for t in tu if t in _TU_TIENG_VIET_KHONG_DAU) >= 3
+
 
 def split(text: str):
     """Tách (frontmatter, thân) — cùng quy ước với công cụ đọc skill."""
@@ -127,11 +144,17 @@ def main() -> int:
         # 2. mô tả đúng bản tiếng Việt
         if (data.get("description") or "").strip() != entry["vi"].strip():
             # Ngoại lệ DUY NHẤT, khớp luật "giữ-bản-việt-tự-viết" của apply_vi.py:
-            # bản dịch chỉ khớp qua TÊN, mà mô tả đang có đã là tiếng Việt do người
-            # viết tay (không mang dấu `description-src`) → cố ý không đè. Kiểm điều
+            # mô tả đang có đã là tiếng Việt (có dấu HOẶC không dấu) do người viết
+            # tay (không mang dấu `description-src`) → cố ý không đè. Kiểm điều
             # kiện tại đây bằng dữ liệu đọc được, KHÔNG hỏi apply_vi.py, để nếu công
             # cụ kia đè nhầm thật thì chỗ này vẫn bắt được.
-            if (qua_ten and VN.search(data.get("description") or "")
+            # SỬA 2026-09-04: apply_vi.py đã BỎ điều kiện `qua_ten` từ 24/08/2026
+            # (luật áp cho mọi cách khớp — id lẫn tên — không chỉ khớp qua tên); giữ
+            # `qua_ten` ở đây là lệch khỏi hành vi thật của apply_vi.py, khiến một
+            # file khớp qua ID (không phải tên) mà apply_vi.py ĐÚNG khi bỏ qua bị
+            # verify_vi.py báo NHẦM thành lỗi.
+            mo_ta_hien_tai = data.get("description") or ""
+            if ((VN.search(mo_ta_hien_tai) or _co_dau_hieu_tieng_viet_khong_dau(mo_ta_hien_tai))
                     and "description-src" not in data):
                 giu.append(f"{key}: giữ mô tả tiếng Việt tự viết trong file")
                 continue
