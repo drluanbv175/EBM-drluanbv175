@@ -179,6 +179,21 @@ def route(request: str) -> IntentResult:
     # Cue nghiên cứu ('đề tài/đề cương/protocol') là tín hiệu MẠNH → kiểm TRƯỚC cue lâm sàng
     # ('bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu, nên không được thắng 'đề tài').
     if _any(t, RESEARCH_TOPIC_CUES) or _khao_sat_co_thiet_ke(t):
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 3, CRITICAL): CỜ ĐỎ LUÔN THẮNG
+        # cue đề tài, kể cả khi cue đề tài đến từ một từ TRUNG TÍNH như "protocol" (rất phổ
+        # biến trong ca thật: "đang trong protocol hoá trị", "chạy protocol hồi sức"). Trước
+        # đây "manh" bên dưới chỉ giải cứu VIEC_LE_MANH (agent nghiên cứu thuần) —
+        # "sang-loc-co-do" KHÔNG nằm trong tập đó (đúng ý, xem comment VIEC_LE_MANH ngay
+        # dưới nó), nên một ca cấp cứu THẬT ("bệnh nhân ngừng tim, chạy protocol hồi sức thế
+        # nào, cần chuyển cấp cứu ngay?") vẫn lọt xuống research_topic mà KHÔNG một bước
+        # sàng lọc cờ đỏ nào chạy — RESEARCH_FLOW không có bước nào tương đương BƯỚC 0 của
+        # CLINICAL_FLOW. Cùng nguyên tắc bất đối xứng đã ghi ở VIEC_LE_MANH: over-route sang
+        # nơi CÓ sàng lọc cờ đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không.
+        if any(a == "sang-loc-co-do" for a, _ in single_hits):
+            return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
+                                "khớp CỜ ĐỎ ('sang-loc-co-do') cùng lúc với cue đề tài — cờ đỏ "
+                                "luôn thắng, over-route sang nhạc trưởng lâm sàng (có sàng lọc "
+                                "cờ đỏ ở BƯỚC 0) là chiều an toàn", match_labels)
         # Việc lẻ MẠNH thắng cue đề tài: xin một sản phẩm cụ thể ≠ khởi động vòng đời.
         manh = [(a, n) for a, n in single_hits if a in VIEC_LE_MANH]
         if manh:
