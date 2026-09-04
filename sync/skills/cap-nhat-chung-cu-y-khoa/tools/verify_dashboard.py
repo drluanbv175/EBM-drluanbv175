@@ -386,8 +386,41 @@ NORMATIVE_DESIGN_PREFIXES = ("guideline", "nhãn thuốc", "nhan thuoc")
 # và cách diễn đạt tiếng Việt đã dùng trong kho.
 _MANH_RE = re.compile(
     r"we recommend|strong(ly)? recommend|strong recommendation|khuyến cáo mạnh|"
-    r"mức độ mạnh|grade\s*1[abc]?\b|class\s*i\b|loại\s*i\b|(?<![a-z])1[abc](?![a-z])",
+    r"mức độ mạnh|grade\s*1[abc]?\b|\bcor\s*[:=]?\s*i\b",
     re.I)
+# VÁ 2026-09-04 (Workflow đối kháng đa-agent vòng 3, HIGH) — "class\s*i\b"/"loại\s*i\b"/
+# "1[abc]" TRẦN (không đòi ngữ cảnh) từng nằm trong _MANH_RE ở trên và khớp NHẦM mọi hệ
+# phân loại lâm sàng khác dùng cùng chữ số La Mã/chữ cái ("NYHA class I" — độ suy tim,
+# "ASA class I", "Killip class", bảng/phụ lục đánh số "Bảng 1A"/"Phụ lục 1C"…) — không
+# liên quan gì tới ĐỘ MẠNH khuyến cáo. Ca thật: gradeSource ghi "NYHA class I" + TỰ KHAI
+# "guideline không nêu rõ mức khuyến cáo" vẫn được normative_exemption() coi là ĐÃ có
+# bằng chứng khuyến cáo mạnh — miễn oan luật gradeLevel cho một trích dẫn KHÔNG hề nói gì
+# về độ mạnh.
+#
+# "Class I"/"loại I" CHỈ được tính là dấu hiệu thật khi từ "recommendation"/"khuyến cáo"
+# nằm NGAY TRONG cùng cụm — ĐÒI KHỚP LIỀN MẠCH, không dùng cửa sổ khoảng cách rời rạc
+# (vd "±N ký tự bất kỳ trong câu"): bản nháp đầu của bản vá này dùng cửa sổ ±40 ký tự và
+# VẪN dính false positive — "NYHA class I; guideline không nêu rõ mức khuyến cáo cho
+# khuyến cáo này" có "khuyến cáo" đứng đủ gần "class I" để lọt qua cửa sổ, dù câu đang
+# PHỦ ĐỊNH ("KHÔNG nêu rõ") chứ không hề khẳng định độ mạnh. Khớp liền mạch (chỉ cho
+# khoảng trắng/dấu hai chấm/ngoặc đơn ngắn xen giữa) buộc "khuyến cáo" phải thuộc VỀ
+# cùng cụm danh từ với "class I", không phải một từ tình cờ xuất hiện đâu đó trong câu.
+_CLASS_I_RE = re.compile(
+    r"class(?:\s+of)?\s+recommendation\s*[:=]?\s*i\b"          # "Class (of) Recommendation: I"
+    r"|class\s*i\b\s*(?:\([^)]{0,20}\)\s*)?recommendation"     # "Class I (…) recommendation"
+    r"|(?:loại\s*khuyến\s*cáo|khuyến\s*cáo\s*loại)\s*[:=]?\s*i\b"  # "loại khuyến cáo I"/"khuyến cáo loại I"
+    r"|\bcor\s*[:=]?\s*i\b",                                    # "COR I" (viết tắt ACC/AHA)
+    re.I)
+
+
+def _co_class_i_khuyen_cao(text):
+    """True nếu 'class I'/'loại I' đứng LIỀN MẠCH với từ 'recommendation'/'khuyến cáo'
+    (cùng một cụm, không phải chỉ 'gần' trong câu) — loại trừ mention rời rạc không
+    liên quan (NYHA/ASA/Killip class, số bảng/phụ lục) VÀ trường hợp 'khuyến cáo' xuất
+    hiện ở một mệnh đề khác (kể cả mệnh đề PHỦ ĐỊNH độ mạnh)."""
+    return bool(_CLASS_I_RE.search(text))
+
+
 # Dấu hiệu NGƯỢC LẠI — nguồn tự nói CÓ ĐIỀU KIỆN/YẾU. Xuất hiện là KHÔNG miễn, kể
 # cả khi câu khác trong cùng trường có chữ "recommend".
 _CO_DIEU_KIEN_RE = re.compile(
@@ -406,7 +439,7 @@ def _co_bang_chung_khuyen_cao_manh(grade_source):
         return False
     if _CO_DIEU_KIEN_RE.search(t):
         return False
-    return bool(_MANH_RE.search(t))
+    return bool(_MANH_RE.search(t)) or _co_class_i_khuyen_cao(t)
 
 
 def normative_exemption(design, grade, normative_basis, grade_source):
