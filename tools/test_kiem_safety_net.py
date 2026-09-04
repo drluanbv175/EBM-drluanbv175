@@ -177,13 +177,33 @@ class KhoiLoiDanCungPhaiCoNguon(unittest.TestCase):
         loi, _, _ = chay({"dau-dau": hc})
         self.assertFalse(any(x.startswith("R10") for x in loi), loi)
 
-    def test_moi_muc_co_ma_nguon_thi_qua(self):
+    def test_moi_muc_co_ma_nguon_khop_tieu_chi_thi_qua(self):
+        """SỬA 2026-09-04 (vá "R10 chấp nhận mã nguồn bịa"): `ma_nguon` giờ
+        phải KHỚP một `tieu_chi[].ma` thật — fixture phải khai `ma` tương ứng,
+        không còn đủ chỉ có mặt `ma_nguon` như trước bản vá."""
         hc = hc_ld_co_nguon({
             "trang_thai": "co-nguon",
             "noi_dung": [{"cau": "đi khám nếu nặng hơn", "ma_nguon": "O1"}],
         })
+        hc["co_do_cho_bac_si"]["tieu_chi"] = [
+            {"ma": "O1", "mo_ta": "Khởi phát sau 65 tuổi", "do_duoc": True},
+        ]
         loi, _, _ = chay({"dau-dau": hc})
         self.assertFalse(any(x.startswith("R10") for x in loi), loi)
+
+    def test_ma_nguon_bia_khong_khop_tieu_chi_nao_bi_chan(self):
+        """★★ Ca chính của phát hiện "R10 chấp nhận mã nguồn bịa": một
+        `ma_nguon` không khớp bất kỳ `tieu_chi[].ma` nào của CHÍNH hội chứng
+        đó phải bị chặn — trước bản vá, chỉ cần khác rỗng là qua."""
+        hc = hc_ld_co_nguon({
+            "trang_thai": "co-nguon",
+            "noi_dung": [{"cau": "đi khám nếu nặng hơn", "ma_nguon": "XYZ999-BIA"}],
+        })
+        hc["co_do_cho_bac_si"]["tieu_chi"] = [
+            {"ma": "O1", "mo_ta": "Khởi phát sau 65 tuổi", "do_duoc": True},
+        ]
+        loi, _, _ = chay({"dau-dau": hc})
+        self.assertTrue(any(x.startswith("R10") for x in loi), loi)
 
     def test_moi_muc_co_nguon_goc_chua_pmid_thi_qua(self):
         hc = hc_ld_co_nguon({
