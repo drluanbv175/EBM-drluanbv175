@@ -24,16 +24,36 @@ def block(html):
     return html[i:html.find("HẾT KHỐI DATA", i)] if i != -1 else html
 
 
+# VÁ 2026-09-04 (Workflow đối kháng đa-agent vòng 3, HIGH) — meta()/arr()/items() trước đây
+# dùng `['\"]([^'\"]*)['\"]`: DỪNG ở dấu nháy loại KIA nằm bên trong chuỗi, y hệt bug đã vá ở
+# verify_dashboard.py::field() ngày 12/08/2026 (xem docstring của hàm đó). Ca thật:
+# `title:'Chống chỉ định "tuyệt đối" ở bệnh nhân suy gan nặng, trừ khi đã ghép gan'` bị cắt
+# cụt thành "Chống chỉ định " — cả mệnh đề ngoại lệ lâm sàng biến mất, không báo lỗi. `arr()`
+# còn tệ hơn: cùng lỗi khiến MỘT bullet bị TÁCH thành HAI bullet rời rạc, mất luôn liên từ
+# điều kiện. Dùng lại CHÍNH quy ước đã chứng minh đúng ở field(): bám đúng dấu nháy MỞ, cho
+# phép dấu nháy loại kia nằm trong, có xử lý ký tự thoát.
+_QUOTED_VALUE = r"""(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")"""
+
+
+def _lay_gia_tri_nhay(m):
+    if not m:
+        return ""
+    return m.group(1) if m.group(1) is not None else m.group(2)
+
+
 def meta(b, name):
-    m = re.search(name + r"\s*:\s*['\"]([^'\"]*)['\"]", b)
-    return m.group(1) if m else ""
+    return _lay_gia_tri_nhay(re.search(name + r"\s*:\s*" + _QUOTED_VALUE, b))
 
 
 def arr(b, name):
     m = re.search(name + r"\s*:\s*\[(.*?)\]", b, re.S)
     if not m:
         return []
-    return [x.group(1) for x in re.finditer(r"['\"]((?:[^'\"\\]|\\.)*)['\"]", m.group(1))]
+    return [_lay_gia_tri_nhay(x) for x in re.finditer(_QUOTED_VALUE, m.group(1))]
+
+
+def _field(name, chunk):
+    return _lay_gia_tri_nhay(re.search(name + r"\s*:\s*" + _QUOTED_VALUE, chunk))
 
 
 def items(b):
@@ -44,7 +64,7 @@ def items(b):
     for k, s in enumerate(starts):
         e = starts[k + 1] if k + 1 < len(starts) else len(seg)
         ch = seg[s:e]
-        f = lambda n: (re.search(n + r"\s*:\s*['\"]([^'\"]*)['\"]", ch) or [None, ""])[1] if re.search(n + r"\s*:\s*['\"]([^'\"]*)['\"]", ch) else ""
+        f = lambda n: _field(n, ch)  # noqa: E731 — tiện dụng cho 6 field ngay dưới, dùng lại chunk
         out.append({
             "title": f("title"), "source": f("source"), "pmid": f("pmid"),
             "effectText": f("effectText"), "grade": f("gradeLevel"), "decision": f("decision"),
