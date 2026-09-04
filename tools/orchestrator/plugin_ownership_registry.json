@@ -818,6 +818,8 @@
     },
     "software_delivery": {
       "risk": "medium",
+      "manual_only": true,
+      "_manual_only_ly_do": "khong khai intent_kinds/entry_agents co y — CLAUDE.md gioi han capability nay CHI cho viec LAP TRINH (repo medical-ebm-automation), khong duoc tu dong dinh tuyen tu mot cau hoi/ca lam sang tieng Viet. Goi qua --resolve-capability software_delivery khi that su can worker nay.",
       "owner": {
         "provider": "local-runtime",
         "unit": "repo-engineering-workflow"
@@ -838,6 +840,8 @@
     },
     "bioinformatics_specialist": {
       "risk": "high",
+      "manual_only": true,
+      "_manual_only_ly_do": "khong khai intent_kinds/entry_agents co y — day la loi thoat chuyen gia hep (Nextflow/scRNA-QC/scvi-tools), khong phai duong dinh tuyen tu dong tu mot y dinh lam sang/nghien cuu y khoa. Goi qua --resolve-capability bioinformatics_specialist khi that su can worker nay.",
       "owner": {
         "provider": "local-runtime",
         "unit": "specialist-escalation"
