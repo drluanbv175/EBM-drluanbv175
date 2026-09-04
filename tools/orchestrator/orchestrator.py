@@ -121,6 +121,21 @@ class Orchestrator:
         # `signals` đã tính ở trên (trước nhánh 'unknown') — không tính lại.
         session.checkpoint("signals", None, "tín hiệu ngữ cảnh đã khớp", signals.as_dict())
 
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện HIGH — cùng họ với vá
+        # BH88/vòng 2 cho nhánh 'unknown'): RESEARCH_FLOW (G0→G10) KHÔNG có bước nào
+        # tương đương BƯỚC 0 cờ đỏ của CLINICAL_FLOW. intent.py's luật "sang-loc-co-do"
+        # (vòng 3) chỉ cứu được khi câu khớp ĐÚNG cụm hẹp ("cấp cứu"/"chuyển viện"/
+        # "cờ đỏ"/"có nguy hiểm"/"đừng bỏ sót") — một đề tài mô tả quần thể vẫn có thể
+        # lồng mô tả lâm sàng nguy hiểm mà không dùng đúng cụm đó. Đo sống: "Nghiên cứu
+        # cắt ngang tỷ lệ đau đầu dữ dội kèm sốt cao ở phụ nữ mang thai..." chạy trọn
+        # G0→G10 (25 bước) mà KHÔNG MỘT LẦN nào sang-loc-co-do được gọi. Cùng nguyên tắc
+        # bất biến BH88: over-route sang nơi CÓ sàng lọc cờ đỏ là chiều an toàn. Chạy
+        # BƯỚC 0 như một LỚP PHÒNG THỦ BỔ SUNG cho research_topic — KHÔNG đổi kind/
+        # routing/cổng, chỉ thêm một bước sàng lọc trước khi vào G0 (agent tự quyết định
+        # có gì đáng ngại hay không, giống hệt cách 'unknown' đã dùng).
+        if intent.kind == "research_topic":
+            self._run_step(session, CLINICAL_FLOW[0], ex, signals)
+
         # Năng lực 1: dựng plan (flow) theo loại intent
         steps = self._plan(intent.kind, intent.target)
         lc.to("planned", f"{len(steps)} bước · điểm vào `{intent.target}`")
