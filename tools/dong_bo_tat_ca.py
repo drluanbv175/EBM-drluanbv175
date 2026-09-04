@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import platform
 import shutil
 import subprocess
 import sys
@@ -56,6 +55,25 @@ for _s in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 PY = sys.executable                     # KHÔNG dùng chuỗi "python3": Windows không có lệnh đó
+
+
+def ten_may() -> str:
+    """Uỷ quyền cho tools/nhan_dien_may.py — MỘT nguồn duy nhất (cloud = «Cloud»).
+
+    SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2, MEDIUM) — trước bản vá,
+    main() tự tính `may` bằng {"Darwin": "Mac", "Windows": "Windows"}.get(platform.
+    system(), platform.system()) — đúng bản chép ten_may() mà nhan_dien_may.py
+    (dựng 02/09/2026) sinh ra để THAY THẾ, vì hai bản chép giống hệt nhau ở
+    dong_bo_plugin_claude_codex.py/kiem_plugin_day_du.py từng phân kỳ. Bản chép ở
+    đây là bản chép THỨ BA chưa ai bắt được: không nhận diện phiên Claude Code
+    trên web (biến môi trường CLAUDE_CODE_REMOTE=true) — đo sống trên chính phiên
+    cloud đang chạy: bản chép cũ trả 'Linux' trong khi nguồn chuẩn trả 'Cloud'. Một
+    máy Linux thật (không phải phiên cloud) vẫn nhận đúng tên hệ điều hành như cũ.
+    """
+    import importlib.util as _ilu
+    _spec = _ilu.spec_from_file_location("nhan_dien_may", Path(__file__).resolve().parent / "nhan_dien_may.py")
+    _m = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_m)
+    return _m.ten_may()
 
 
 @dataclass
@@ -243,7 +261,7 @@ def main() -> int:
                 print(f"  {i}. {t}")
         return 0
     im = a.im_khi_on or a.json
-    may = {"Darwin": "Mac", "Windows": "Windows"}.get(platform.system(), platform.system())
+    may = ten_may()
 
     if not im:
         print("=" * 64)
