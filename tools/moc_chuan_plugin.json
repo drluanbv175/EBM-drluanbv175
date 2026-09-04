@@ -59,5 +59,45 @@
         "phien_ban": "5.13.1"
       }
     }
+  },
+  "Cloud": {
+    "plugin": {
+      "claude-code-harness@claude-code-harness-marketplace": {
+        "so_skill": 73,
+        "phien_ban": "5.14.1"
+      },
+      "aipoch-medical-research@aipoch-medical-research": {
+        "so_skill": 605,
+        "phien_ban": "99d48538eb74"
+      },
+      "openmed-skills@openmed-skills": {
+        "so_skill": 72,
+        "phien_ban": "d901f8e4d08d"
+      },
+      "humanizer@humanizer": {
+        "so_skill": 1,
+        "phien_ban": "2.11.2"
+      },
+      "codex@openai-codex": {
+        "so_skill": 3,
+        "phien_ban": "1.0.6"
+      },
+      "meta-pipe@meta-pipe": {
+        "so_skill": 14,
+        "phien_ban": "0fb4d92b6a2f"
+      },
+      "pubmed-search@pubmed-search": {
+        "so_skill": 10,
+        "phien_ban": "7d8e5b65fde5"
+      },
+      "academic-research-skills@academic-research-skills": {
+        "so_skill": 4,
+        "phien_ban": "3.21.1"
+      },
+      "medsci-project@medsci-skills": {
+        "so_skill": 60,
+        "phien_ban": "912f7e880aaa"
+      }
+    }
   }
 }
