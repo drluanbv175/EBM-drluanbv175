@@ -77,14 +77,27 @@ def la_lien_ket(p: Path) -> bool:
     return p.is_symlink() or la_junction(p)
 
 
+_TIEN_TO_DUONG_DAN_MO_RONG = "\\\\?\\"
+
+
 def dich_cua(p: Path) -> Path | None:
-    """Đích thật mà liên kết trỏ tới; None nếu p không phải liên kết hoặc đã gãy."""
+    """Đích thật mà liên kết trỏ tới; None nếu p không phải liên kết hoặc đã gãy.
+
+    Trên Windows, ``os.readlink`` cho junction trả về đường dẫn có tiền tố
+    mở-rộng ``\\\\?\\`` (vd ``\\\\?\\C:\\...``), trong khi ``Path.resolve()`` của
+    một đường dẫn thường KHÔNG có tiền tố này. Không cắt bỏ thì ``tro_dung()`` so
+    hai chuỗi khác dạng và LUÔN trả False — kể cả khi junction đang trỏ ĐÚNG nơi
+    (đo được thật 05/09/2026: mọi junction đã nối đúng đều bị báo "trỏ nơi khác").
+    """
     if not la_lien_ket(p):
         return None
     try:
-        return Path(os.readlink(p)).resolve()
+        dich = os.readlink(p)
     except OSError:
         return None
+    if dich.startswith(_TIEN_TO_DUONG_DAN_MO_RONG):
+        dich = dich[len(_TIEN_TO_DUONG_DAN_MO_RONG):]
+    return Path(dich).resolve()
 
 
 def tro_dung(p: Path, nguon: Path) -> bool:

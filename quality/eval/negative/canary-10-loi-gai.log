@@ -11,7 +11,11 @@
   ✓ hợp đồng item: máy tự APPROVED + tự gán mức → BẮT
   ✓ khoá quét: tiến trình thứ hai bị chặn rõ ràng
   ✓ PMID không tra được → 'chua_kiem', KHÔNG mặc định 'ok'
+  ✓ làn preprint → chua_binh_duyet=True + tầng riêng
+  ✓ ứng viên NCT trong báo cáo: không «mới vào PubMed», không PMID-rỗng
+  ✓ rút-và-thay khai ĐỦ → cảnh báo; khai THIẾU (apply) → vẫn chặn
+  ✓ ed1: ký khoá riêng tạm → verify CHỈ bằng khoá công; sửa nội dung → trượt
 ----------------------------------------------------------------------
-🟢 10/10 lỗi gài đều bị bắt.
+🟢 14/14 lỗi gài đều bị bắt.
    Canary kiểm DÂY CHUYỀN CÔNG CỤ — KHÔNG chứng minh agent đã GỌI cổng lúc chạy
    thật. Cần bác sĩ kiểm chứng.

@@ -1,20 +1,18 @@
 {
  "9500320": {
   "status": "retracted",
-  "retraction_notice": {
-   "pmid": "20137807",
-   "citation": "Lancet. 2010 Feb 6;375(9713):445. doi: 10.1016/S0140-6736(10)60175-4."
-  },
+  "nature": "Retraction",
+  "retraction_date": "2/6/2010 0:00",
+  "reason": "Falsification/Fabrication of Data;Investigation by Company/Institution;Investigation by Third Party;Lack of Approval from Company/Institution;Lack of IRB/IACUC Approval and/or Compliance;Manipulation of Results;Upgrade/Update of Prior Notice(s);",
+  "journal": "Lancet",
+  "notice_pmid": "20137807",
+  "notice_doi": "10.1016/S0140-6736(10)60175-4",
   "sources_tried": [
    "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
-  "source": "pubmed",
-  "retraction_watch": {
-   "nature": "Retraction",
-   "retraction_date": "2/6/2010 0:00",
-   "reason": "Falsification/Fabrication of Data;Investigation by Company/Institution;Investigation by Third Party;Lack of Approval from Company/Institution;Lack of IRB/IACUC Approval and/or Compliance;Manipulation of Results;Upgrade/Update of Prior Notice(s);"
-  }
+  "source": "retraction_watch"
  },
  "30267080": {
   "status": "retracted",
@@ -26,18 +24,20 @@
   "notice_doi": "10.1001/jamaoncol.2019.0576",
   "sources_tried": [
    "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
   "source": "retraction_watch",
   "retract_and_replace": true
  },
  "99999999": {
-  "status": "unresolved",
-  "reason": "PubMed không trả về bản ghi cho PMID này trong lô truy vấn (PMID có thể sai/không tồn tại, HOẶC lỗi tầng API khiến cả lô bị bỏ sót — nghi lỗi API nếu NHIỀU PMID cùng lô đều 'unresolved')",
+  "status": "unknown_fetch_error",
+  "reason": "NCBI đang CHẶN máy/IP này (WWW Error Blocked Diagnostic). Đăng ký NCBI_API_KEY miễn phí và đặt vào .env để nâng hạn mức; KHÔNG kết luận gì về PMID. | dự phòng Europe PMC cũng KHÔNG kết luận được: không gọi được Europe PMC (503 Server Error: Service Temporarily Unavailable for url: https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=%28EXT_ID%3A",
   "sources_tried": [
    "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
-  "source": "pubmed"
+  "source": null
  }
 }

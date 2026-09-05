@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-15",
+ "updated": "2026-09-01",
  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
  "sources": [
   {
@@ -20,9 +20,9 @@
    "measured_latency_days": 2,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-08-15",
+   "last_success_at": "2026-09-01",
    "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-01"
   },
   {
    "id": "SRC-002",
@@ -42,9 +42,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-08-15",
+   "last_success_at": "2026-09-01",
    "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-01"
   },
   {
    "id": "SRC-003",
@@ -85,9 +85,9 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-08-15",
+   "last_success_at": "2026-09-01",
    "known_gap": null,
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-01"
   },
   {
    "id": "SRC-005",
@@ -106,8 +106,8 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A4",
-   "status": "active",
-   "last_success_at": "2026-08-15",
+   "status": "degraded",
+   "last_success_at": "2026-08-24",
    "known_gap": null,
    "last_probe_at": "2026-08-15"
   },
@@ -129,9 +129,9 @@
    "measured_latency_days": null,
    "owner": "weekly_safety.sh",
    "status": "active",
-   "last_success_at": "2026-08-13",
+   "last_success_at": "2026-09-01",
    "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-01"
   },
   {
    "id": "SRC-007",
@@ -151,9 +151,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-08-15",
+   "last_success_at": "2026-09-01",
    "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-01"
   },
   {
    "id": "SRC-010",
@@ -172,9 +172,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 21
+   }
   },
   {
    "id": "SRC-011",
@@ -193,9 +198,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 14
+   }
   },
   {
    "id": "SRC-012",
@@ -214,9 +224,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 4
+   }
   },
   {
    "id": "SRC-013",
@@ -235,9 +250,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 14
+   }
   },
   {
    "id": "SRC-014",
@@ -256,9 +276,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (ESC Clinical Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần)."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (ESC Clinical Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần).",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 34
+   }
   },
   {
    "id": "SRC-015",
@@ -298,9 +323,14 @@
    "detection_method": "feed-item",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (MHRA Drug Safety Update (GOV.UK; EMA RSS xác minh đợt sau)) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần)."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (MHRA Drug Safety Update (GOV.UK; EMA RSS xác minh đợt sau)) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần).",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 25
+   }
   },
   {
    "id": "SRC-017",
@@ -321,9 +351,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
+   "status": "active",
    "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (IDSA A-Z Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần)."
+   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (IDSA A-Z Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần).",
+   "kich_hoat": {
+    "ngay": "2026-09-01",
+    "bang": "giam_sat_to_chuc --bat-neu-ok",
+    "so_tieu_de_luc_do": 19
+   }
   },
   {
    "id": "SRC-020",
