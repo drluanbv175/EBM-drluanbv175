@@ -107,12 +107,21 @@ def duong_dan_cache(plugin_key: str) -> pathlib.Path | None:
 
 
 def sinh_manifest_quet(kho: pathlib.Path, ten: str, mo_ta: str, chu: str) -> int:
+    """CHỈ sinh marketplace.json — KHÔNG sinh thêm plugin.json (vá 05/09/2026).
+
+    `strict: false` trong mục plugin của marketplace.json nghĩa là "mục này là ĐỊNH
+    NGHĨA DUY NHẤT" (tài liệu Claude Code chính thức); nếu cùng thư mục còn có
+    `.claude-plugin/plugin.json` cũng khai `skills` thì xung đột — CẢ PLUGIN KHÔNG
+    NẠP ĐƯỢC, im lặng (cache vẫn đủ file nên đếm-file vẫn báo đủ). Bắt được đúng lỗi
+    này ở meta-pipe/pubmed-search (phiên bản cũ của hàm này để lại trong kho của họ).
+    aipoch-medical-research — plugin DUY NHẤT KHÔNG có plugin.json — là bản đang chạy
+    đúng; hàm này nay khuôn theo đúng bản đó."""
     skills = sorted("./" + str(p.parent.relative_to(kho))
                     for p in kho.rglob("SKILL.md") if ".git" not in p.parts)
     (kho / ".claude-plugin").mkdir(exist_ok=True)
-    (kho / ".claude-plugin/plugin.json").write_text(
-        json.dumps({"name": ten, "description": mo_ta, "skills": skills},
-                   ensure_ascii=False, indent=2), encoding="utf-8")
+    cu = kho / ".claude-plugin/plugin.json"
+    if cu.is_file():
+        cu.unlink()
     (kho / ".claude-plugin/marketplace.json").write_text(json.dumps({
         "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
         "name": ten, "description": mo_ta, "owner": {"name": chu},

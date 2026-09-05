@@ -279,6 +279,43 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   này** ⇒ ⚪ có khai báo (ý định «cần ở máy nào» nằm ở `sync/plugin-manifest.json`, lane ⑤ đối chiếu);
   provider **có mà thiếu đúng skill đã khai** ⇒ FAIL. Trước đó gộp làm một nên pre-commit đỏ ở mọi
   máy không phải Mac (cloud đo 10 binding «không tìm thấy» chỉ vì thiếu thư mục cache).
+- **🔴 HAI PLUGIN `git-thu-cong` HOÀN TOÀN KHÔNG NẠP ĐƯỢC — vá 05/09/2026, phát hiện qua
+  chính triệu chứng bác sĩ báo trên Mac ("gọi `/meta-pi` không ra gì").** Đo trực tiếp
+  trên phiên Cloud (danh sách skill thật mà hệ thống cho model thấy, không phải đếm file):
+  **`meta-pipe` và `pubmed-search` — đúng 2 plugin loại `git-thu-cong` — vắng mặt HOÀN
+  TOÀN** (0/14 và 0/10 skill), trong khi 7 plugin còn lại (loại `git` hoặc `thu-muc-phien`)
+  đều đủ. `kiem_plugin_day_du.py`/`verify_plugin_orchestration.py` không bắt được vì cả
+  hai chỉ đếm file `SKILL.md` trên đĩa — cache vẫn đủ 14/10 file, chỉ là Claude Code
+  không bao giờ nạp NỔI plugin đó.
+  **Nguyên nhân xác minh qua tài liệu Claude Code chính thức** (`plugin-marketplaces.md`):
+  `tools/cai_plugin_phien_cloud.py::sinh_manifest()` (và bản song sinh
+  `tools/cap_nhat_plugin_tay.py::sinh_manifest_quet()`) ghi CẢ HAI
+  `.claude-plugin/plugin.json` LẪN `.claude-plugin/marketplace.json`, cả hai cùng khai
+  `skills`, mà mục plugin trong marketplace.json còn đặt `"strict": false`. Theo tài
+  liệu, `strict: false` nghĩa **"mục marketplace là ĐỊNH NGHĨA DUY NHẤT"** — một
+  `plugin.json` cùng thư mục CŨNG khai component (ở đây là `skills`) là xung đột, và
+  hệ quả là **CẢ PLUGIN KHÔNG NẠP ĐƯỢC**, hoàn toàn im lặng (không log, không cảnh báo).
+  `aipoch-medical-research` — plugin DUY NHẤT trong kho KHÔNG có `plugin.json`, chỉ có
+  `marketplace.json` — là bằng chứng đối chứng: nó hoạt động đúng (605 skill đủ).
+  **Đã vá:** cả hai hàm sinh manifest nay CHỈ ghi `marketplace.json`, tự xoá
+  `plugin.json` cũ nếu còn sót từ trước — khuôn đúng theo bản aipoch đang chạy tốt.
+  Áp trực tiếp cho 4 vị trí đã hỏng trên Cloud (staging `nguon-thu-cong/` + cache thật,
+  cho cả hai plugin). Kiểm hồi quy: `tools/test_cai_plugin_phien_cloud.py` (4 test,
+  mutation-tested — ca "dọn plugin.json sót lại từ bản trước" là quan trọng nhất vì đó
+  đúng tình trạng thật của Mac/Cloud lúc phát hiện lỗi).
+  ⚠️ **Việc còn lại, cần bác sĩ tự làm trên Mac** (tôi không có quyền truy cập máy đó):
+  1. `git pull` để lấy bản vá này.
+  2. Xoá 2 file `plugin.json` cũ tương ứng (tìm bằng
+     `find ~/.claude/plugins -path "*meta-pipe*/.claude-plugin/plugin.json" -o -path
+     "*pubmed-search*/.claude-plugin/plugin.json"` rồi xoá từng file tìm được — KHÔNG
+     đụng `marketplace.json` cùng thư mục).
+  3. Khởi động lại Claude Code (đóng hẳn, mở lại) để nó nạp lại marketplace — sửa file
+     khi tiến trình đang chạy không tự áp dụng ngay, đúng như trên Cloud tôi cũng cần
+     phiên mới để xác nhận `/meta-pipe:*`/`/pubmed-search:*` đã gọi được.
+  📌 **Chưa xác nhận được TRỌN VẸN trong CHÍNH phiên này**: tôi đã sửa đúng 4 file trên
+  đĩa và có bằng chứng tài liệu + đối chứng (aipoch) rất mạnh, nhưng phiên Cloud hiện tại
+  đã "chốt" danh sách skill lúc mở phiên — cần một phiên MỞ LẠI (resume/mới) để tự kiểm
+  `meta-pipe`/`pubmed-search` có xuất hiện chưa. Đừng coi đây là "đã xác nhận xong".
 - **🔴 CATALOG ROUTER (`plugin-router-chatgpt`) KHÔNG TỰ LÀM MỚI ĐƯỢC TRÊN MÁY KHÔNG CÓ
   CODEX — vá 05/09/2026, theo yêu cầu bác sĩ "đảm bảo điều phối đáp ứng tiêu chuẩn xuất
   sắc nhất".** `route_skill.py` + `references/plugin-catalog.{json,md}` là cơ chế điều

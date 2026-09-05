@@ -134,8 +134,19 @@ def _cau_hinh_thu_cong(ten: str) -> dict:
 
 def sinh_manifest(kho: Path, ten_marketplace: str, ten_plugin: str, mo_ta: str,
                   giu_skill: set[str] | None) -> int:
-    """Sinh .claude-plugin/{plugin,marketplace}.json liệt kê đúng các thư mục có SKILL.md
-    (lọc theo `giu_skill` trên TÊN thư mục ngay chứa SKILL.md). Trả số skill khai."""
+    """Sinh .claude-plugin/marketplace.json liệt kê đúng các thư mục có SKILL.md
+    (lọc theo `giu_skill` trên TÊN thư mục ngay chứa SKILL.md). Trả số skill khai.
+
+    CHỈ sinh marketplace.json — KHÔNG sinh thêm plugin.json (vá 05/09/2026). Tài liệu
+    Claude Code chính thức: `strict: false` trong mục plugin của marketplace.json nghĩa
+    là "mục này là ĐỊNH NGHĨA DUY NHẤT"; nếu CÙNG thư mục còn có `.claude-plugin/
+    plugin.json` cũng khai component (như `skills` ở đây) thì đó là xung đột và
+    **CẢ PLUGIN KHÔNG NẠP ĐƯỢC** — im lặng, cache vẫn giữ đủ file nên mọi phép đếm
+    file (kiem_plugin_day_du.py) vẫn báo đủ, chỉ có model không bao giờ thấy skill nào.
+    Bắt được đúng lỗi này ở meta-pipe/pubmed-search: cả hai vắng mặt hoàn toàn khỏi
+    danh sách skill thật của Claude Code dù cache có đủ 14/10 SKILL.md. Khuôn theo
+    aipoch-medical-research — plugin DUY NHẤT trong kho đang hoạt động đúng, và nó
+    KHÔNG có plugin.json, chỉ có marketplace.json với `strict: false` + `skills`."""
     skills: list[str] = []
     for p in sorted(kho.rglob("SKILL.md")):
         if ".git" in p.parts or "node_modules" in p.parts:
@@ -144,9 +155,9 @@ def sinh_manifest(kho: Path, ten_marketplace: str, ten_plugin: str, mo_ta: str,
             continue
         skills.append("./" + p.parent.relative_to(kho).as_posix())
     (kho / ".claude-plugin").mkdir(exist_ok=True)
-    (kho / ".claude-plugin" / "plugin.json").write_text(json.dumps(
-        {"name": ten_plugin, "description": mo_ta, "skills": skills},
-        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    cu = kho / ".claude-plugin" / "plugin.json"
+    if cu.is_file():
+        cu.unlink()
     (kho / ".claude-plugin" / "marketplace.json").write_text(json.dumps({
         "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
         "name": ten_marketplace, "description": mo_ta, "owner": {"name": "EBM-drluanbv175"},
