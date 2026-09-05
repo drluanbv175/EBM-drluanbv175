@@ -28,6 +28,21 @@ CLINICAL_CASE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(bé|cháu)\s*(trai|gái|bé)"),     # "bé trai", "cháu bé", "cháu gái"
     re.compile(r"phụ nữ (mang thai|có thai)"),    # thai kỳ
 ]
+# SỬA 2026-09-05 (Workflow đối kháng đa-agent vòng 4, HIGH): tập CON của
+# CLINICAL_CASE_PATTERNS — CHỈ hai mẫu ĐẦU (tuổi+giới cụ thể, giới tính trẻ em) — dùng RIÊNG
+# cho nhánh "cờ đỏ luôn thắng cue đề tài" trong route() bên dưới. CỐ Ý LOẠI mẫu thai kỳ (mẫu
+# thứ 3): xác nhận bằng thực nghiệm — bản vá đầu tiên dùng CẢ BA mẫu làm hỏng chính CA_CHINH
+# của test_orchestrator_workflow_20260904_research_topic_step0.py ("Nghiên cứu cắt ngang tỷ lệ
+# đau đầu dữ dội kèm sốt cao ở phụ nữ mang thai tại phòng khám" — một ĐỀ TÀI THẬT mô tả QUẦN
+# THỂ nghiên cứu, không phải một ca cụ thể) bị misroute ngược thành clinical_case — tái phát
+# đúng lỗi vòng 10 mà RESEARCH_TOPIC_CUES sinh ra để chặn. "phụ nữ mang thai" một mình KHÔNG
+# phải tín hiệu an toàn để phân biệt "một bệnh nhân cụ thể" khỏi "mô tả quần thể", khác
+# "nữ 60 tuổi,"/"bé trai..." (số tuổi/giới GẮN VÀO một chủ ngữ số ít, đúng khuôn trình bày ca
+# lâm sàng — không có tiền lệ dùng để mô tả quần thể trong toàn bộ test suite hiện có). Đây là
+# đánh đổi CÓ CHỦ Ý, cùng tinh thần giới hạn đã ghi nhận ở R5 của guardrail_check_g0 — một cấp
+# cứu sản khoa (tiền sản giật…) mô tả BẰNG "protocol" mà KHÔNG kèm tuổi/giới cụ thể vẫn có thể
+# lọt qua override này; ghi nhận ở đây để không bị coi là "đã đóng hoàn toàn".
+_INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS = CLINICAL_CASE_PATTERNS[:2]
 # Cụm từ báo hiệu một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu
 # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): whitelist cũ chỉ có
 # 8 cụm hẹp — một đề tài diễn đạt TỰ NHIÊN ("Nghiên cứu hồi cứu hiệu quả metformin trên bệnh
@@ -189,11 +204,25 @@ def route(request: str) -> IntentResult:
         # sàng lọc cờ đỏ nào chạy — RESEARCH_FLOW không có bước nào tương đương BƯỚC 0 của
         # CLINICAL_FLOW. Cùng nguyên tắc bất đối xứng đã ghi ở VIEC_LE_MANH: over-route sang
         # nơi CÓ sàng lọc cờ đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không.
-        if any(a == "sang-loc-co-do" for a, _ in single_hits):
+        #
+        # SỬA 2026-09-05 (Workflow đối kháng đa-agent vòng 4, HIGH): bản vá vòng 3 CHỈ giải
+        # cứu khi câu chứa một TỪ KHOÁ cờ đỏ tường minh ("cấp cứu"/"chuyển viện"/"cờ đỏ"…).
+        # Một ca cấp cứu THẬT có thể mang dấu hiệu RÕ RÀNG là mô tả MỘT bệnh nhân cụ thể (theo
+        # đúng khuôn trình bày ca lâm sàng "nữ 60 tuổi,"/"bé trai...") mà không dùng đúng từ nào
+        # trong số đó — xác nhận bằng thực nghiệm: "nữ 60 tuổi, tiền sử ung thư vú, đang trong
+        # protocol hoá trị, nay sốt cao 39 độ, rét run" (giảm bạch cầu hạt sốt — cấp cứu ung thư
+        # thật) khớp RESEARCH_TOPIC_CUES qua "protocol" nhưng KHÔNG khớp "sang-loc-co-do" → vẫn
+        # lọt xuống research_topic trước bản vá này. Dùng ĐÚNG `_INDIVIDUAL_PATIENT_OVERRIDE_
+        # PATTERNS` (xem comment tại định nghĩa — CỐ Ý hẹp hơn CLINICAL_CASE_PATTERNS đầy đủ, đã
+        # loại mẫu thai kỳ vì nó gây báo động giả cho mô tả QUẦN THỂ nghiên cứu, xác nhận bằng
+        # chính hồi quy có sẵn của task #57).
+        if (any(a == "sang-loc-co-do" for a, _ in single_hits)
+                or any(p.search(t) for p in _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS)):
             return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
-                                "khớp CỜ ĐỎ ('sang-loc-co-do') cùng lúc với cue đề tài — cờ đỏ "
-                                "luôn thắng, over-route sang nhạc trưởng lâm sàng (có sàng lọc "
-                                "cờ đỏ ở BƯỚC 0) là chiều an toàn", match_labels)
+                                "khớp CỜ ĐỎ hoặc mô tả CA lâm sàng cụ thể (tuổi+giới/trẻ em) "
+                                "cùng lúc với cue đề tài — an toàn luôn thắng, over-route sang "
+                                "nhạc trưởng lâm sàng (có sàng lọc cờ đỏ ở BƯỚC 0) là chiều an "
+                                "toàn", match_labels)
         # Việc lẻ MẠNH thắng cue đề tài: xin một sản phẩm cụ thể ≠ khởi động vòng đời.
         manh = [(a, n) for a, n in single_hits if a in VIEC_LE_MANH]
         if manh:
