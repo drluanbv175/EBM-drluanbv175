@@ -312,10 +312,12 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   3. Khởi động lại Claude Code (đóng hẳn, mở lại) để nó nạp lại marketplace — sửa file
      khi tiến trình đang chạy không tự áp dụng ngay, đúng như trên Cloud tôi cũng cần
      phiên mới để xác nhận `/meta-pipe:*`/`/pubmed-search:*` đã gọi được.
-  📌 **Chưa xác nhận được TRỌN VẸN trong CHÍNH phiên này**: tôi đã sửa đúng 4 file trên
-  đĩa và có bằng chứng tài liệu + đối chứng (aipoch) rất mạnh, nhưng phiên Cloud hiện tại
-  đã "chốt" danh sách skill lúc mở phiên — cần một phiên MỞ LẠI (resume/mới) để tự kiểm
-  `meta-pipe`/`pubmed-search` có xuất hiện chưa. Đừng coi đây là "đã xác nhận xong".
+  ✅ **ĐÃ XÁC NHẬN — cùng ngày, cả hai nơi.** Trên Cloud: danh sách skill của CHÍNH phiên
+  này tự làm mới ở lượt sau (không cần mở phiên mới như dự đoán ban đầu) và hiện đủ
+  `meta-pipe:*` 14/14 + `pubmed-search:*` 10/10. Trên Mac: bác sĩ tự `git pull` + xoá 2
+  `plugin.json` cũ theo hướng dẫn rồi xác nhận trực tiếp "Đã gọi được rồi". Bài học thêm:
+  Claude Code quét lại marketplace **định kỳ trong phiên đang chạy**, không chỉ một lần
+  lúc mở phiên — nên không phải mọi bản vá cấu hình plugin đều cần khởi động lại mới thấy.
 - **🔴 CATALOG ROUTER (`plugin-router-chatgpt`) KHÔNG TỰ LÀM MỚI ĐƯỢC TRÊN MÁY KHÔNG CÓ
   CODEX — vá 05/09/2026, theo yêu cầu bác sĩ "đảm bảo điều phối đáp ứng tiêu chuẩn xuất
   sắc nhất".** `route_skill.py` + `references/plugin-catalog.{json,md}` là cơ chế điều
