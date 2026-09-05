@@ -1,31 +1,54 @@
-BenhThanMan_CKD (20260607) có 3 mục · BenhThanMan_BenhKem_DoiTuongDacBiet (20260813) có 1 mục → bác sĩ đọc tay
-     • MachMauNao: PMID 34024117 — MachMauNao_DongMachCanh (20260610) có 5 mục · MachMauNao_TiepCanTongQuat (20260724) có 1 mục → bác sĩ đọc tay
-     • ViemGanB: PMID 41186418 — ViemGanB_DieuTri (20260716) có 3 mục · ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet (20260811) có 5 mục → bác sĩ đọc tay
-  🔴 5 MỤC HAI BẢN NÓI NGƯỢC NHAU — cùng PMID, khác quyết định
+ỆN HÀNH
+
+  ── LÁT CẮT KHÁC NHAU CỦA CÙNG CHỦ ĐỀ (BỔ SUNG, không thay nhau) ──
+  ▸ BenhThanMan: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260607  BenhThanMan_CKD
+      20260813  BenhThanMan_BenhKem_DoiTuongDacBiet
+      20260816  BenhThanMan_ThieuMau
+
+  ▸ COPD: 4 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260610  COPD
+      20260709  COPD_TimMachNoiTiet
+      20260710  COPD_TimThanChuyenHoa
+      20260805  COPD_DoiTuongDacBiet_DaBenh
+
+  ▸ DauDau: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260718  DauDau
+      20260811  DauDau_TongHop
+
+  ▸ MachMauNao: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260610  MachMauNao_DongMachCanh
+      20260724  MachMauNao_TiepCanTongQuat
+
+  ▸ RA: 4 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260628  RA_EULAR2024
+      20260630  RA_Than
+      20260630  RA_TimMach
+      20260705  RA_TimMachChuyenHoaNoiTiet
+
+  ▸ SuyTim: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260630  SuyTim_NoiTiet
+      20260718  SuyTim_ChanDoan_DieuTri_DongMac
+      20260804  SuyTim_TongHop
+      20260805  SuyTim_TongHop
+      20260811  SuyTim_TongHop
+
+  ▸ VKDT: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260717  VKDT_TongHop
+      20260811  VKDT_TamThanKinh
+
+  ▸ ViemGanB: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+      20260716  ViemGanB_DieuTri
+      20260811  ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet
+
+  ── Bản cũ CHỈ THIẾU, không nói sai (bản mới bao trọn) ──
+     SuyTim_TongHop: bản 20260804 nằm gọn trong bản 20260811 (+17 nguồn mới)
+     SuyTim_TongHop: bản 20260805 nằm gọn trong bản 20260811 (+12 nguồn mới)
+     ViemDaDay_TongHop: bản 20260811 nằm gọn trong bản 20260816 (+8 nguồn mới)
+
 ======================================================================
-  Đây là rủi ro thật: mở bản cũ sẽ đọc một kết luận mà bản mới đã bác.
-
-  ▸ BenhThanMan:  BenhThanMan_CKD (20260607)   ⟷   BenhThanMan_BenhKem_DoiTuongDacBiet (20260813)
-      PMID 32970396: 'apply' → 'consider'
-        [apply    ] SGLT2i (dapagliflozin) làm chậm tiến triển CKD — DAPA-CKD
-        [consider ] DAPA-CKD — dapagliflozin giảm tiến triển bệnh thận ở người
-      PMID 33264825: 'apply' → 'consider'
-        [apply    ] Finerenone ở CKD do ĐTĐ type 2 — FIDELIO-DKD
-        [consider ] FIDELIO-DKD — finerenone giảm tiến triển bệnh thận ở đái t
-      PMID 36331190: 'apply' → 'consider'
-        [apply    ] SGLT2i (empagliflozin) làm chậm tiến triển CKD — EMPA-KIDN
-        [consider ] EMPA-KIDNEY — empagliflozin giảm tiến triển thận hoặc tử v
-
-  ▸ RA:  RA_Than (20260630)   ⟷   RA_TimMachChuyenHoaNoiTiet (20260705)
-      PMID 27697765: 'apply' → 'consider'
-        [apply    ] NSAID: thận trọng tim mạch và thận; hạn chế ở nhóm nguy cơ
-        [consider ] RA/viêm khớp viêm có nguy cơ tim mạch tăng — cần đánh giá 
-
-  ▸ RA:  RA_TimMach (20260630)   ⟷   RA_TimMachChuyenHoaNoiTiet (20260705)
-      PMID 27697765: 'apply' → 'consider'
-        [apply    ] Bác sĩ điều trị RA chịu trách nhiệm quản lý nguy cơ tim mạ
-        [consider ] RA/viêm khớp viêm có nguy cơ tim mạch tăng — cần đánh giá 
-
-  Công cụ này KHÔNG tự sửa và KHÔNG tự nâng decision — nâng làm một
-  khuyến cáo MẠNH hơn, đó là quyết định lâm sàng của bác sĩ.
+  🟢 KHÔNG có mục nào hai bản nói ngược nhau.
+======================================================================
+  Lưu ý: chỉ so các mục CÙNG PMID. Khác biệt về mục không có PMID
+  (guideline chỉ có URL) không đo được ở đây.
   Cần bác sĩ kiểm chứng.
