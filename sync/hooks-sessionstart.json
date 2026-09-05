@@ -52,6 +52,12 @@
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_khoi_dong.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/tu_khoi_dong.py --phong --im-khi-on || python tools/tu_khoi_dong.py --phong --im-khi-on; }; else echo \"⚠ CHỐT tu_khoi_dong KHÔNG CHẠY — không thấy $D/tools/tu_khoi_dong.py\"; fi; true",
           "timeout": 30,
           "statusMessage": "Tự khởi động giám sát nếu quá hạn…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/xuat_trang_thai_cloud.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/xuat_trang_thai_cloud.py --im-khi-on || python tools/xuat_trang_thai_cloud.py --im-khi-on; }; else echo \"⚠ CHỐT xuat_trang_thai_cloud KHÔNG CHẠY — không thấy $D/tools/xuat_trang_thai_cloud.py\"; fi; true",
+          "timeout": 60,
+          "statusMessage": "Làm mới mirror chứng cứ cho Cloud…"
         }
       ]
     }

@@ -120,6 +120,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(
         description="Xuất trạng thái hệ cập nhật chứng cứ y khoa vào mirror đi qua git")
     ap.add_argument("--in-thu", action="store_true", help="chỉ in ra xem trước, không ghi file")
+    ap.add_argument("--im-khi-on", action="store_true",
+                    help="chỉ ghi file, không in gì khi có dữ liệu dashboard thật — dùng cho"
+                         " hook SessionStart (bảng đề xuất tự động mỗi khi mở phiên trên Mac/"
+                         "Windows). Vẫn in cảnh báo khi máy KHÔNG có EBM-Dashboards/ thật, vì đó"
+                         " là tín hiệu bác sĩ cần biết (mirror chỉ ghi được trạng thái rỗng).")
     a = ap.parse_args()
 
     trang_thai = xay_trang_thai()
@@ -131,7 +136,9 @@ def main() -> int:
 
     MIRROR_DIR.mkdir(parents=True, exist_ok=True)
     MIRROR_FILE.write_text(noi_dung + "\n", encoding="utf-8")
-    print(f"✓ Đã ghi {MIRROR_FILE}")
+    im = a.im_khi_on and trang_thai["co_du_lieu_dashboard_that"]
+    if not im:
+        print(f"✓ Đã ghi {MIRROR_FILE}")
     if not trang_thai["co_du_lieu_dashboard_that"]:
         print("  ⚪ Máy này KHÔNG có EBM-Dashboards/ thật — mirror chỉ ghi được trạng thái"
               " 'chưa có dữ liệu'. Chạy lại trên máy có OneDrive (Mac/Windows) để mirror"
