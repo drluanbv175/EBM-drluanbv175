@@ -303,6 +303,43 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   khi không phải cloud (máy thật không bao giờ bị cài qua mạng — bài học 11/08), 8 medsci trùng có
   `can_o_may: []` nên không vào cloud, plugin trên cloud vẫn chỉ là worker (bảng định tuyến ở mục Điều phối
   không đổi). 38 skill mồ côi trong `~/.claude/skills` của Mac không nằm trong git nên cloud không có.
+  ☁️ **PHIÊN CLOUD NHIỀU REPO — HOOK KHÔNG TỰ CHẠY KHI REPO NÀY KHÔNG PHẢI "PRIMARY" (BH99,
+  05/09/2026).** Đo được: một phiên Claude Code Remote đính kèm ĐỒNG THỜI `medical-ebm-automation`
+  VÀ repo này qua `add_repo` — `echo $CLAUDE_PROJECT_DIR` rỗng, `~/.claude/settings.json` không
+  tồn tại, `~/.codex` không tồn tại, `~/.claude/skills` chỉ 2 mục, python-docx/beautifulsoup4/lxml
+  chưa cài, mirror `.codex/agents`+`.Codex/agents` không sinh — tức **hook `SessionStart` của repo
+  này CHƯA TỪNG chạy** dù `.claude/settings.json` đã khai đúng và đi qua git (BH84). Sau khi chạy
+  TAY `bash .claude/hooks/session-start.sh` (đã `cd` vào repo này trước) thì mọi bước chạy đúng
+  thiết kế — tức script không hỏng, nó chỉ **không được gọi**.
+  **Nguyên nhân đã xác nhận (tài liệu Anthropic, `worktrees.md`):** `CLAUDE_PROJECT_DIR` "stays
+  put" = gốc dự án **nơi phiên bắt đầu** — tức repo PRIMARY của phiên (repo nguồn lúc tạo session
+  hoặc repo đầu tiên), không đổi theo. Tài liệu Claude Code hiện hành (`hooks.md`, `settings.md`,
+  `claude-code-on-the-web.md`) **không hề mô tả** cơ chế nào để phát hiện/khai `.claude/settings.json`
+  của một repo được `add_repo` gắn thêm SAU — đây là khoảng trống tài liệu, không phải lỗi cấu hình
+  phía repo. Do đó khi repo này không phải primary của phiên, hook `SessionStart` của nó **không có
+  đường tự kích hoạt**, bất kể nội dung script đúng đến đâu.
+  **Phát hiện thêm, tự đo trong chính việc vá BH99:** `add_repo` nhân bản repo thành THƯ MỤC LIỀN KỀ
+  phẳng dưới `/home/user/` (VD `/home/user/medical-ebm-automation` và `/home/user/ebm-drluanbv175`
+  là hai anh em ngang hàng) — KHÁC cấu trúc LỒNG NHAU thật trên OneDrive của bác sĩ (repo này ở gốc,
+  `medical-ebm-automation/` là thư mục con bên trong). Sự phẳng hoá này làm hỏng MỌI tham chiếu
+  `../` trong `medical-ebm-automation/CLAUDE.md` (Session Routine `python ../tools/audit_ebm_system.py`
+  · `python ../tools/sync_agents_to_codex.py --check`…), không chỉ hook: đã tái hiện trực tiếp —
+  chạy đúng lệnh đó từ `/home/user/medical-ebm-automation` ném `FileNotFoundError` vì
+  `/home/user/tools` không tồn tại; đường đúng trong phiên nhiều-repo phẳng là
+  `../ebm-drluanbv175/tools/audit_ebm_system.py` (thêm một khúc tên repo).
+  **Đã vá phần sửa được — KHÔNG vá được phần còn lại:** script `session-start.sh` nay tự định vị
+  gốc repo qua `dirname "${BASH_SOURCE[0]}"` thay vì chỉ tin `${CLAUDE_PROJECT_DIR:-$PWD}`, nên gọi
+  TAY bằng đường dẫn tuyệt đối từ một `$PWD` thuộc repo khác vẫn `cd` đúng chỗ (trước đây sẽ nhảy
+  sai và lặng lẽ báo "thiếu tools/…"). Việc **không vá được** vì nằm ngoài repo: nền tảng Claude Code
+  không có cơ chế nào (đã kiểm tài liệu) để tự phát hiện/chạy hook của repo không phải primary — đây
+  là giới hạn của host, không sửa được từ phía cấu hình repo.
+  **Việc BẮT BUỘC làm TAY mỗi phiên cloud nhiều-repo khi repo này không phải primary:** (1) `ls
+  /home/user/` để biết tên thư mục sibling thật (đừng giả định đúng tên repo); (2) chạy
+  `bash /home/user/<tên-thư-mục-repo-này>/.claude/hooks/session-start.sh`; (3) khi làm việc từ
+  `medical-ebm-automation`, thay mọi `../tools/...` / `../.claude/agents/...` trong CLAUDE.md/AGENTS.md
+  bằng `../<tên-thư-mục-repo-này>/tools/...` tương ứng — KHÔNG chạy nguyên văn lệnh cũ và tin kết
+  quả im lặng là "đã kiểm xong". Việc này không đụng máy Mac/Windows (ranh giới `CLAUDE_CODE_REMOTE`
+  ở đầu script không đổi).
   🔴 **CÀI THẬT LẦN ĐẦU LỘ LỖI REGISTRY CHƯA TỪNG CHẠM DỮ LIỆU THẬT (BH89).** `academic-research-skills`
   trước 02/09 luôn ⚪ "chưa cài" trên MỌI máy đã kiểm — nhánh đối chiếu binding-registry↔plugin-thật CHƯA
   TỪNG chạy tới dữ liệu thật của provider này. Cài xong lộ ra: 9/9 worker registry bind vào provider này
