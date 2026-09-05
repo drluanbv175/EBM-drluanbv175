@@ -94,8 +94,14 @@ def ensure_link(source: Path, destination: Path, apply: bool) -> LinkResult:
     if LK.la_lien_ket(target):
         if LK.tro_dung(target, source):
             return LinkResult(label, source.name, "KHOP")
-        return LinkResult(label, source.name, "XUNG_DOT",
-                          f"{LK.kieu()} đang trỏ nơi khác: {target}")
+        if not apply:
+            return LinkResult(label, source.name, "XUNG_DOT",
+                              f"{LK.kieu()} đang trỏ nơi khác: {target}")
+        truoc = LK.dich_cua(target)
+        LK.go(target)
+        LK.tao(source, target)
+        return LinkResult(label, source.name, "DA_NOI",
+                          f"đã sửa {LK.kieu()} trỏ sai (trước trỏ: {truoc})")
     if target.exists():
         if not apply:
             return LinkResult(label, source.name, "CAN_NOI", "đang là thư mục/file thật")
