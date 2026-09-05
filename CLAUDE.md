@@ -758,6 +758,55 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   không chứng minh được gì.* Khoá bằng **BH84**, kiểm bằng 3 đột biến (bỏ đọc `.local` ·
   đảo chiều đè · bám cứng đường dẫn) — cả ba đều nổ đúng.
 
+  🔴 **VÒNG BỐN 05/09/2026 — một giả thuyết SAI suýt bị ghi vào code, tự bắt được TRƯỚC khi
+  commit nhờ tra lại tài liệu chính thức.** Bác sĩ báo "Việt hóa các Skill của tôi bị lỗi cả
+  cục bộ và Cloud". Giả thuyết đầu tiên (dựng trong phiên trước, trước khi bị nén ngữ cảnh):
+  `installed_plugins.json::installPath` (cache) KHÔNG phải nơi Claude Code thật sự đọc, mà là
+  `known_marketplaces.json::installLocation` (bản git clone của marketplace) — dựa trên quan
+  sát aipoch/openmed có cache đã dịch nhưng bản ở installLocation vẫn tiếng Anh. Đã SỬA
+  `extract_catalog.py` theo hướng đó và viết xong test hồi quy (mutation-tested, TỰ NÓ đúng).
+  **Trước khi commit, tra lại bằng agent `claude-code-guide` đối chiếu tài liệu chính thức
+  (`plugins-reference.md`, `plugin-marketplaces.md`) — giả thuyết trên SAI, ngược hẳn:**
+  > "For security and verification purposes, Claude Code copies marketplace plugins to the
+  > user's local plugin cache (`~/.claude/plugins/cache`) rather than using them in place."
+
+  **`installPath` (cache) MỚI là nơi thật sự phục vụ; `installLocation` (marketplace clone)
+  chỉ để `git pull` xem có bản mới, KHÔNG tự động chép vào cache** — phải qua lệnh
+  `/plugin update <plugin>` riêng. Nên aipoch/humanizer có cache-đã-dịch ≠ installLocation-còn-
+  Anh không phải bằng chứng cache "không được dùng" — mà đúng ngược lại: installLocation đơn
+  giản là bản `git pull` về sau, CHƯA BAO GIỜ được chép đè vào cache, nên nó không ảnh hưởng gì
+  tới thứ Claude Code phục vụ. Xác minh trực tiếp thêm: cache của `claude-code-harness` (skill
+  `harness-plan-brief`) và của `academic-research-skills` (lệnh `/ars-plan`) đều có `description`
+  tiếng Việt NGAY BÂY GIỜ, còn bản installLocation của chúng vẫn tiếng Anh gốc — đúng khớp mô
+  hình tài liệu, không phải lỗi.
+  **Đã HOÀN NGUYÊN `extract_catalog.py` về đúng bản gốc (đọc `installPath`) và xoá test vừa viết
+  — KHÔNG có commit sai nào lọt ra ngoài.** Chạy lại bản gốc: **944/945 mục Tầng 1 đã Việt hoá**
+  — khớp đúng con số cũ, tức dòng "aipoch đã Việt hoá đủ 604/604" (mục dưới) **KHÔNG cần đính
+  chính** — nó vẫn đúng.
+  **Hỏi lại bác sĩ bằng AskUserQuestion để khoanh đúng vị trí** (vì cache đã xác minh lành, đoán
+  thêm sẽ lặp lại đúng sai lầm vừa mắc) — trả lời: **menu gõ "/" trong Claude Code (CLI)**.
+  **Một phát hiện MỚI, có giá trị, từ chính đợt tra tài liệu này** (khác thẳng với giả định cũ
+  "phải khởi động lại mới thấy bản dịch"): tài liệu xác nhận *"Changes you make to a skill's
+  `SKILL.md` take effect immediately in the current session"* — sửa `SKILL.md` (đúng thứ
+  `apply_vi.py` ghi) có hiệu lực NGAY LẬP TỨC trong phiên đang chạy, KHÔNG cần `/reload-plugins`
+  (lệnh đó chỉ cần cho `hooks/`, `.mcp.json`, `agents/`, `output-styles/`, `.lsp.json` — cấu hình
+  plugin, không phải nội dung skill) và KHÔNG cần khởi động lại. Điều này củng cố cơ chế
+  `tu_sua_chua.py` đang chạy: nếu bác sĩ vẫn thấy tiếng Anh ở menu "/", nhiều khả năng nhất là
+  đúng mẫu **BH73/74 đã biết** (một plugin vừa tự cập nhật, chép đè cache về tiếng Anh gốc, và
+  máy CHƯA chạy lại `apply_vi.py --tu-quet` kể từ lần cập nhật đó) — **và theo tài liệu vừa tra,
+  chạy lệnh đó NGAY TRONG phiên đang mở là đủ, không cần đóng mở lại Claude Code**:
+  `~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py --tu-quet`.
+  📌 **Việc còn lại, cần bác sĩ xác nhận:** chạy lệnh trên (không cần khởi động lại) rồi cho biết
+  skill/plugin CỤ THỂ nào vẫn còn tiếng Anh sau đó — nếu còn, đó là dấu hiệu một cơ chế MỚI, khác
+  BH73/74, cần điều tra riêng cho đúng mục đó thay vì đoán lại trên toàn hệ.
+  *Bài học nền, thêm vào danh sách "đo đúng nhưng đo nhầm chỗ" đã lặp nhiều lần trong file này:
+  một quan sát TRỰC TIẾP (cache khác installLocation) vẫn có thể dẫn tới kết luận SAI nếu không
+  tra xem tài liệu chính thức nói CÁI NÀO trong hai cái mới là cái được dùng — quan sát đúng,
+  suy luận hướng sai. Việc tự tra lại TRƯỚC khi commit (không phải sau khi bác sĩ báo lỗi) là
+  đúng thứ đợt "kiểm tra-hoàn thiện" này lẽ ra phải làm; lần này làm được vì rào tự-mutation-test
+  đã có sẵn khiến việc dừng lại tra thêm — trước khi tin ngay bản vá của chính mình — trở thành
+  phản xạ.
+
   ## ☁️ LOCAL ⇄ CLOUD — Việt hoá tự động tới đâu, và ranh giới ở đâu (chốt 02/09/2026)
   Kho skill nằm trên **ba loại mặt**, và chỉ hai loại đầu ta ghi được:
   | Mặt | Ai làm chủ | Việt hoá | Cơ chế giữ |
