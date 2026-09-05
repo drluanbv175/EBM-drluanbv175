@@ -133,19 +133,35 @@ def co_codex_tren_may() -> bool:
     return (Path.home() / ".codex/config.toml").is_file()
 
 
+def co_the_dung_cache_claude_code() -> bool:
+    """Máy này có cache Claude Code để build_catalog.py dùng làm TẦNG BA dự phòng không
+    (thêm 05/09/2026, cùng lúc build_catalog.py học cách đọc thẳng cache này).
+
+    Chỉ hỏi NGUYÊN LIỆU tối thiểu (installed_plugins.json tồn tại) — không tự đoán nó
+    còn ĐỦ plugin hay không, việc đó để build_catalog.py tự fail-closed nếu thiếu.
+    """
+    return (Path.home() / ".claude/plugins/installed_plugins.json").is_file()
+
+
 def rebuild_router(source_root: Path, quiet: bool) -> int:
-    """Dựng lại catalog từ trạng thái plugin Codex thật."""
+    """Dựng lại catalog từ trạng thái plugin thật — Codex trước, cache Claude Code sau."""
 
     script = source_root / ROUTER_NAME / "scripts/build_catalog.py"
-    if script.is_file() and not co_codex_tren_may():
-        # Cùng luật với nhánh dưới, lùi thêm một bậc (02/09/2026): catalog được dựng TỪ
-        # kho plugin Codex của máy đang chạy; máy KHÔNG có Codex (phiên cloud, máy mới)
-        # thì không có gì để dựng — bản catalog đã commit (từ máy Mac) là nguyên liệu
-        # đúng để đóng gói. Đo trên cloud: build_catalog ném «Không đọc được cấu hình
-        # Codex dự phòng» và làn skill THÀNH CÔNG (42+42 liên kết, ZIP đủ) bị trả mã 1
-        # ở mọi phiên. Có Codex mà dựng lỗi thì vẫn fail-closed như cũ.
+    if script.is_file() and not co_codex_tren_may() and not co_the_dung_cache_claude_code():
+        # Máy không có CẢ Codex LẪN cache Claude Code (installed_plugins.json) thì
+        # build_catalog.py chắc chắn không dựng được gì — bản catalog đã commit là
+        # nguyên liệu đúng để đóng gói. Trước 05/09/2026, nhánh này bỏ qua bất cứ khi nào
+        # KHÔNG có Codex, kể cả khi máy hoàn toàn có thể tự dựng qua cache Claude Code
+        # (build_catalog.py lúc đó chưa biết đọc cache này) — nghĩa là mọi phiên cloud
+        # đều giữ nguyên bản catalog đã commit dù kho thật đã đổi khác, và không ai biết.
+        # Đo được cùng ngày: catalog cam kết 828 skill trong khi cloud đo thật 842, lệch
+        # ở academic-research-skills (17→4, đã cắt từ trước) và pubmed-search (31→10,
+        # đã cắt từ trước) — hai lần cắt tỉa THẬT chưa từng tới catalog. Nay: có cache
+        # Claude Code thì vẫn GỌI build_catalog.py (nó tự chọn tầng đọc phù hợp); chỉ khi
+        # THIẾU CẢ HAI mới giữ nguyên bản đã commit như cũ.
         if not quiet:
-            print("⚠ Máy này không có Codex — giữ catalog router đã commit, không dựng lại.")
+            print("⚠ Máy này không có Codex lẫn cache Claude Code — giữ catalog router đã "
+                  "commit, không dựng lại.")
         return 0
     if not script.is_file():
         # THIẾU NGUYÊN LIỆU ≠ HỎNG. Nguồn router hiện chỉ có trên máy Mac và chưa

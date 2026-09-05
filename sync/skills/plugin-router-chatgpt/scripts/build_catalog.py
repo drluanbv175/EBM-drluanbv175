@@ -172,19 +172,85 @@ def read_configured_plugins_from_cache(
     return records
 
 
+def read_claude_code_cache_plugins(
+    installed_path: Path | None = None,
+) -> list[PluginRecord]:
+    """Dự phòng TẦNG BA — đọc thẳng cache của CLAUDE CODE, không cần Codex CLI hay bất
+    kỳ file cấu hình Codex nào.
+
+    Vì sao cần (05/09/2026): hai tầng trên đều đòi ít nhất ``~/.codex/config.toml`` hoặc
+    lệnh ``codex`` — một phiên Claude Code không cài Codex (xác nhận trên Cloud: không có
+    ``~/.codex/config.toml`` lẫn ``~/.codex/plugins/cache``, dù plugin `codex@openai-codex`
+    — bản thân MỘT plugin Claude Code — vẫn cài bình thường) khiến CẢ HAI tầng trên luôn
+    ``RuntimeError``, nên trên máy đó catalog không bao giờ tự làm mới được. Hậu quả đo
+    được: catalog cam kết 828 skill/9 plugin nhưng máy này đo trực tiếp ra 842 — lệch nặng
+    nhất ở `claude-code-harness` (catalog ghi 25, thật 73, do plugin cập nhật nhiều lần kể
+    từ lúc catalog được dựng 01/09) và giảm ở `academic-research-skills` (17→4) cùng
+    `pubmed-search` (31→10, đúng ý đồ cắt tỉa còn 10 skill tra y văn đã ghi trong
+    CLAUDE.md — catalog cũ chưa bao giờ thấy bản đã cắt).
+
+    Đọc CÙNG nguồn dữ liệu với ``tools/kiem_plugin_day_du.py::quet()``
+    (``installed_plugins.json`` + trường ``installPath`` của chính Claude Code) để hai
+    phép đọc không lệch nhau — không tự suy đường dẫn theo quy ước tên/phiên bản.
+    """
+
+    installed_path = installed_path or Path.home() / ".claude/plugins/installed_plugins.json"
+    try:
+        payload = json.loads(installed_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Không đọc được {installed_path}: {exc}") from exc
+
+    plugins = payload.get("plugins") if isinstance(payload, dict) else None
+    if not isinstance(plugins, dict):
+        raise RuntimeError(f"{installed_path} không có bảng plugins.")
+
+    records: list[PluginRecord] = []
+    missing: list[str] = []
+    for plugin_id in PLUGIN_IDS:
+        name, marketplace = plugin_id.split("@", 1)
+        entries = plugins.get(plugin_id)
+        entry = entries[0] if isinstance(entries, list) and entries else None
+        install_path = entry.get("installPath") if isinstance(entry, dict) else None
+        if not install_path or not Path(str(install_path)).is_dir():
+            missing.append(plugin_id)
+            continue
+        records.append(
+            PluginRecord(
+                plugin_id=plugin_id,
+                name=name,
+                marketplace=marketplace,
+                version=str(entry.get("version", "local")),
+                source_path=Path(str(install_path)),
+            )
+        )
+    if missing:
+        raise RuntimeError("Plugin thiếu trong cache Claude Code: " + ", ".join(missing))
+    return records
+
+
 def load_plugin_records() -> list[PluginRecord]:
-    """Ưu tiên CLI chính thức; hạ xuống cache chỉ đọc khi CLI không thể liệt kê."""
+    """Ưu tiên CLI chính thức; hạ xuống cache Codex; cuối cùng hạ xuống cache Claude Code
+    trực tiếp khi máy không cài Codex ở bất kỳ dạng nào (vd phiên Cloud)."""
 
     try:
         return select_plugins(read_installed_plugins())
     except RuntimeError as cli_error:
-        records = read_configured_plugins_from_cache()
-        print(
-            "CẢNH BÁO: Codex CLI không liệt kê được marketplace; "
-            f"đã đối chiếu config+cache cục bộ ({cli_error}).",
-            file=sys.stderr,
-        )
-        return records
+        try:
+            records = read_configured_plugins_from_cache()
+            print(
+                "CẢNH BÁO: Codex CLI không liệt kê được marketplace; "
+                f"đã đối chiếu config+cache cục bộ ({cli_error}).",
+                file=sys.stderr,
+            )
+            return records
+        except RuntimeError as codex_cache_error:
+            records = read_claude_code_cache_plugins()
+            print(
+                "CẢNH BÁO: Không có Codex CLI lẫn cấu hình/cache Codex; "
+                f"đã đọc thẳng cache Claude Code ({codex_cache_error}).",
+                file=sys.stderr,
+            )
+            return records
 
 
 def resolve_scan_root(record: PluginRecord) -> Path:

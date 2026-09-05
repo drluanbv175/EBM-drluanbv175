@@ -87,6 +87,41 @@ class TestPluginRouterSkill(unittest.TestCase):
         self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
         self.assertEqual(len(records), 9)
 
+    def test_catalog_falls_back_to_claude_code_cache_when_codex_absent(self):
+        """05/09/2026: máy chạy phiên Claude Code có thể KHÔNG có Codex ở bất kỳ dạng
+        nào (đã xác nhận trên Cloud: không ~/.codex/config.toml, không ~/.codex/plugins/
+        cache, không lệnh `codex`) — trước bản vá này, cả hai tầng dự phòng phía trên
+        đều RuntimeError nên build_catalog.py không bao giờ tự làm mới được ở đó, và
+        catalog bị lệch thật (đo được: academic-research-skills 17→4,
+        pubmed-search 31→10 — hai lần cắt tỉa thật chưa từng tới catalog)."""
+        module = load_catalog_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            installed_path = root / "installed_plugins.json"
+            cache_root = root / "claude-cache"
+            payload = {"version": 1, "plugins": {}}
+            for plugin_id in module.PLUGIN_IDS:
+                name, marketplace = plugin_id.split("@", 1)
+                version = "9.9.9"
+                install_path = cache_root / marketplace / name / version
+                install_path.mkdir(parents=True)
+                (install_path / "SKILL.md").write_text(
+                    f"---\nname: {name}-mau\ndescription: mau\n---\n", encoding="utf-8"
+                )
+                payload["plugins"][plugin_id] = [
+                    {"scope": "user", "installPath": str(install_path), "version": version}
+                ]
+            installed_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            records = module.read_claude_code_cache_plugins(installed_path)
+
+            # PHẢI kiểm is_dir() TRONG khi thư mục tạm còn sống — kiểm sau khi
+            # TemporaryDirectory đã dọn sẽ luôn False bất kể hàm đúng hay sai.
+            self.assertTrue(all(record.source_path.is_dir() for record in records))
+
+        self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
+        self.assertEqual(len(records), 9)
+
 
 if __name__ == "__main__":
     unittest.main()

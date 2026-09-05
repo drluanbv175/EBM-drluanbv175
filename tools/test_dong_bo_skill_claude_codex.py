@@ -77,5 +77,62 @@ class TestEnsureLinkSuaJunctionTroSai(unittest.TestCase):
         self.assertEqual(ket_qua.status, "KHOP")
 
 
+class TestCoTheDungCacheClaudeCode(unittest.TestCase):
+    """Bối cảnh (05/09/2026): trước bản vá này, `rebuild_router()` bỏ qua
+    build_catalog.py bất cứ khi nào máy không có Codex — kể cả trên máy hoàn toàn
+    có thể tự dựng catalog qua cache Claude Code (sau khi build_catalog.py học đọc
+    tầng đó cùng ngày). Hậu quả thật: catalog cam kết 828 skill trong khi phiên
+    Cloud đo được 842, và hai lần cắt tỉa thật (academic-research-skills 17→4,
+    pubmed-search 31→10) chưa từng tới catalog dù đã xảy ra từ lâu. Ca thử ở đây
+    kiểm ĐÚNG hàm quyết định có gọi build_catalog.py hay không, không đếm chuỗi."""
+
+    def test_true_khi_co_installed_plugins_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "installed_plugins.json"
+            p.write_text('{"version": 1, "plugins": {}}', encoding="utf-8")
+            import unittest.mock as mock
+            with mock.patch.object(Path, "home", return_value=Path(tmp)):
+                p2 = Path(tmp) / ".claude" / "plugins"
+                p2.mkdir(parents=True)
+                (p2 / "installed_plugins.json").write_text("{}", encoding="utf-8")
+                self.assertTrue(DB.co_the_dung_cache_claude_code())
+
+    def test_false_khi_khong_co_gi(self) -> None:
+        import unittest.mock as mock
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(Path, "home", return_value=Path(tmp)):
+                self.assertFalse(DB.co_the_dung_cache_claude_code())
+
+    def test_rebuild_router_khong_bo_qua_khi_co_cache_claude_code_du_thieu_codex(self) -> None:
+        """Đây là hành vi TRỌNG TÂM của bản vá: máy không Codex nhưng CÓ cache Claude
+        Code phải vẫn được GỌI build_catalog.py (để nó tự chọn tầng đọc), không còn bị
+        chặn ngay từ vòng ngoài như trước 05/09/2026.
+
+        Cố ý KHÔNG chỉ kiểm mã thoát == 0 — nhánh "bỏ qua, giữ nguyên" CŨNG trả 0, nên
+        một đột biến gỡ điều kiện `co_the_dung_cache_claude_code()` vẫn để test đó xanh
+        (đã tự bắt được lỗi này khi viết: mutation-test đầu tiên KHÔNG đỏ). Thay vào đó
+        script giả GHI MỘT FILE ĐÁNH DẤU — chỉ nhánh THỰC SỰ GỌI subprocess mới tạo ra nó,
+        nên đây là bằng chứng trực tiếp "đã gọi", không suy luận qua mã thoát."""
+        import unittest.mock as mock
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = root / "sync" / "skills"
+            router_dir = source_root / DB.ROUTER_NAME / "scripts"
+            router_dir.mkdir(parents=True)
+            marker = root / "da-goi.marker"
+            (router_dir / "build_catalog.py").write_text(
+                f"from pathlib import Path\nPath({str(marker)!r}).write_text('x')\n",
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(DB, "co_codex_tren_may", return_value=False),
+                mock.patch.object(DB, "co_the_dung_cache_claude_code", return_value=True),
+            ):
+                rc = DB.rebuild_router(source_root, quiet=True)
+            self.assertEqual(rc, 0)
+            self.assertTrue(marker.is_file(),
+                             "build_catalog.py giả PHẢI được gọi (file đánh dấu phải xuất hiện)")
+
+
 if __name__ == "__main__":
     unittest.main()

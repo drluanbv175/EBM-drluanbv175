@@ -279,6 +279,42 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   này** ⇒ ⚪ có khai báo (ý định «cần ở máy nào» nằm ở `sync/plugin-manifest.json`, lane ⑤ đối chiếu);
   provider **có mà thiếu đúng skill đã khai** ⇒ FAIL. Trước đó gộp làm một nên pre-commit đỏ ở mọi
   máy không phải Mac (cloud đo 10 binding «không tìm thấy» chỉ vì thiếu thư mục cache).
+- **🔴 CATALOG ROUTER (`plugin-router-chatgpt`) KHÔNG TỰ LÀM MỚI ĐƯỢC TRÊN MÁY KHÔNG CÓ
+  CODEX — vá 05/09/2026, theo yêu cầu bác sĩ "đảm bảo điều phối đáp ứng tiêu chuẩn xuất
+  sắc nhất".** `route_skill.py` + `references/plugin-catalog.{json,md}` là cơ chế điều
+  phối SKILL TỔNG QUÁT NHẤT hiện có — phủ CẢ 9 plugin (khác `dieu-phoi-aipoch` chỉ phủ
+  một plugin) bằng thuật toán xếp hạng từ khoá minh bạch, ngoại tuyến; đã đo lại: khớp
+  đúng `km-survival-curve` cho "vẽ Kaplan-Meier" và đúng
+  `mendelian-randomization-protocol-designer` cho câu hỏi MR — **cơ chế này chạy TỐT**,
+  không cần thay. Chỗ hỏng nằm ở khâu LÀM MỚI: `build_catalog.py::load_plugin_records()`
+  chỉ có hai tầng đọc, cả hai đều đòi ít nhất `~/.codex/config.toml` hoặc lệnh `codex` —
+  **một phiên Claude Code không cài Codex** (xác nhận trên Cloud 05/09: không file
+  `~/.codex/config.toml`, không thư mục `~/.codex/plugins/cache`, không lệnh `codex`
+  trong PATH, dù bản thân plugin `codex@openai-codex` — MỘT plugin CỦA Claude Code — vẫn
+  cài bình thường) khiến CẢ HAI tầng luôn `RuntimeError`, và `dong_bo_skill_claude_codex.py`
+  vì thế **cố ý bỏ qua** bước dựng lại catalog trên máy đó (nhánh `co_codex_tren_may()`,
+  thêm 02/09 để tránh biến một lượt nối skill THÀNH CÔNG thành báo lỗi giả). Hệ quả đo
+  được: catalog cam kết **828 skill/9 plugin** (dựng 01/09) trong khi kho THẬT trên Cloud
+  đã đổi khác — `academic-research-skills` 17→4 và `pubmed-search` 31→10 (hai lần cắt
+  tỉa THẬT đã ghi trong CLAUDE.md từ trước nhưng chưa từng tới catalog). *(Đính chính
+  luôn một phép so sánh sai của chính tôi trong lúc điều tra: catalog ghi
+  `claude-code-harness` = 25 trông như "thiếu 48 so với 73 file trên đĩa" — nhưng 73 là
+  SỐ FILE, không phải số NĂNG LỰC: harness đóng gói CÙNG 25 skill dưới BỐN cây thư mục
+  song song `skills/` · `codex/.codex/skills/` · `opencode/skills/` · `skills-codex/` để
+  tương thích nhiều công cụ AI khác nhau — 25 là con số ĐÚNG cho mục đích định tuyến, catalog
+  không hề sai ở plugin này.)*
+  **Đã vá:** thêm tầng đọc THỨ BA `read_claude_code_cache_plugins()` — đọc thẳng
+  `~/.claude/plugins/installed_plugins.json` (trường `installPath`, CÙNG nguồn dữ liệu
+  `tools/kiem_plugin_day_du.py::quet()` dùng, để hai phép đọc không lệch nhau) — và nới
+  `co_codex_tren_may()` thành `co_the_dung_cache_claude_code()` OR: có MỘT trong hai
+  (Codex hoặc cache Claude Code) là đủ để gọi `build_catalog.py`, chỉ giữ nguyên bản đã
+  commit khi THIẾU CẢ HAI. Đo sau khi vá: catalog **792 skill**, khớp đúng số liệu thật
+  ở mọi plugin (dedup theo tên, cùng quy ước aipoch đã dùng cho `dieu-phoi-aipoch`).
+  Kiểm hồi quy: `tools/orchestrator/tests/test_plugin_router_skill.py` (+1 test tầng ba)
+  + `tools/test_dong_bo_skill_claude_codex.py` (+3 test cổng gọi `build_catalog.py`) —
+  **cả hai đều mutation-tested**: test đầu tiên viết cho cổng gọi chỉ kiểm mã thoát == 0
+  đã KHÔNG bắt được đột biến (nhánh "bỏ qua, giữ nguyên" cũng trả 0) — sửa lại bằng file
+  đánh dấu do chính script con ghi ra, mới bắt đúng.
 
 ### Định tuyến khi NHIỀU công cụ cùng nhận một việc — LUẬT BẮT BUỘC (rà 2026-08-10)
 
@@ -411,6 +447,13 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   bảng "Định tuyến khi NHIỀU công cụ cùng nhận một việc" ở trên vẫn nguyên giá trị; router chỉ
   ích lợi khi bác sĩ cần một trong các thế mạnh RIÊNG của aipoch (MR, FAERS, đơn tế bào, đa-omics,
   tái định vị thuốc, QTL…) mà hệ agent EBM không có sẵn.
+  ⚠️ **QUAN HỆ với `plugin-router-chatgpt` (route_skill.py + plugin-catalog.md) — ĐỪNG coi là hai
+  cơ chế cạnh tranh.** Router kia TỔNG QUÁT hơn (phủ CẢ 9 plugin bằng xếp hạng từ khoá tự động,
+  đã đo khớp tốt) nhưng cần CHẠY SCRIPT; `dieu-phoi-aipoch` là văn bản thuần, luôn đọc được kể cả
+  khi không thực thi được lệnh, và phân nhóm theo NGỮ NGHĨA thay vì từ khoá — dùng cái nào cũng
+  hợp lệ, không cái nào thay được cái kia hoàn toàn. Đừng xây thêm router kiểu này cho các plugin
+  khác (openmed/harness) — footprint của chúng nhỏ hơn nhiều (≤73 skill so với 605 của aipoch)
+  nên router chung đã đủ.
   ⚠️ **KHÔNG giải quyết ngân sách** (đã đính chính ở trên) — 605 skill gốc của aipoch vẫn liệt kê
   y nguyên trong danh sách gửi model, router chỉ THÊM một lối vào tiện hơn khi mô tả gốc bị rụng.
   🔴 **KIỂM CHÉO SAU KHI THÊM ROUTER LỘ RA MỘT BUG KHÁC trong chính `do_ky_tu_can()` (05/09/2026).**
