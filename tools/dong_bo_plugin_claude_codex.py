@@ -47,6 +47,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lien_ket_da_nen as LK           # noqa: E402  (cần sau khi chỉnh sys.path)
+from doc_settings import doc_settings as _doc_settings  # noqa: E402
 
 for _s in (sys.stdout, sys.stderr):
     try:
@@ -91,9 +92,20 @@ def quet_claude() -> dict:
 
     Giữ NGUYÊN quy ước «vắng mặt trong enabledPlugins = BẬT»: chỉ mục ghi RÕ
     `false` mới là tắt. Đảo quy ước này là tái diễn sự cố 11/08 (cài lại 278 MB).
+
+    SỬA 2026-09-05 (Workflow đối kháng đa-agent, task #82, HIGH) — bản gốc đọc THẲNG
+    `settings.json` bằng `doc_json(SETTINGS)`, bỏ qua hẳn `settings.local.json` — nơi
+    doctrine tự khai «8 cờ `false`» của bác sĩ thực sự sống (BH86, 02/09/2026). Bốn
+    công cụ chị em cùng đọc `enabledPlugins` (`extract_catalog.py`,
+    `don_bong_tieng_anh.py`, `kiem_plugin_day_du.py`, `kiem_co_tat_plugin_trung.py`)
+    đều đã chuyển sang `doc_settings()` cùng ngày 02/09 vì đúng lý do này — file này
+    (dựng 21/08, TRƯỚC BH86) bị bỏ sót. Hậu quả: mỗi khi `settings.json` không mang
+    `enabledPlugins` (đúng tình huống app xoá định kỳ mà BH86 mô tả), `khai` rỗng ⇒
+    `tat` rỗng ⇒ báo cáo "plugin đang bật" cho MỌI plugin, kể cả 8 plugin doctrine đã
+    tắt hẳn trong `settings.local.json`.
     """
     reg = doc_json(REG)
-    cfg = doc_json(SETTINGS)
+    cfg = _doc_settings(nghiem=False, goc=SETTINGS)
     khai = cfg.get("enabledPlugins") or {}
     tat = {k for k, v in khai.items() if v is False}
 
