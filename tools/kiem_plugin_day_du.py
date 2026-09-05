@@ -188,7 +188,12 @@ def do_ky_tu_can(hien: dict) -> tuple[int, int]:
         if not thu_muc.is_dir():
             continue
         if hau_to:
-            for root, _d, fs in os.walk(thu_muc):
+            # followlinks=True: MỖI skill riêng của bác sĩ trong sync/skills/ được nối vào đây
+            # bằng SYMLINK (dong_bo_skill_claude_codex.py), không phải thư mục thật. os.walk mặc
+            # định KHÔNG đi vào thư mục symlink ⇒ thiếu followlinks nghĩa là vòng lặp này không
+            # bao giờ thấy SKILL.md của bất kỳ skill riêng nào — đo ra 0/43, dù hook đã báo nối
+            # thành công (phát hiện 05/09/2026 khi kiểm chéo sau khi thêm dieu-phoi-aipoch).
+            for root, _d, fs in os.walk(thu_muc, followlinks=True):
                 if hau_to in fs:
                     can += len(f"- {os.path.basename(root)}\n"); tong_skill += 1
         else:

@@ -365,11 +365,66 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   tên+mô tả ≤80 là 112.469 (~28k) · tên+mô tả đầy đủ 216.449 (~54k). Mô tả tiếng Việt đầy đủ đã
   có sẵn ở `TRA-CUU-CONG-CU.html` — **tra ở đó không tốn ngữ cảnh nào**, nên không cần mua mô tả
   đầy đủ bằng token.
-  **Muốn rẻ hơn mà không mất năng lực:** dùng `skillOverrides` đặt các plugin ít dùng thành
-  `"user-invocable-only"` — ẩn khỏi danh sách gửi cho model nhưng **vẫn gõ `/tên` gọi được**. Hợp
-  với lối làm việc của bác sĩ: tra ở `TRA-CUU-CONG-CU.html` rồi gõ thẳng lệnh.
-  ⚠️ Đây là khoá cấp NGƯỜI DÙNG (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải
-  đặt lại bằng tay**, nếu không ở đó vẫn hỏng y như cũ.
+  ⛔ **ĐÍNH CHÍNH 05/09/2026 — câu cũ ở đây ("dùng `skillOverrides` đặt PLUGIN ít dùng thành
+  user-invocable-only") SAI, chưa từng kiểm bằng tài liệu chính thức trước khi ghi.** Tra lại
+  `code.claude.com/docs` (skills.md · settings-reference.md · plugins-reference.md) xác nhận
+  ba điều: (1) `skillOverrides` khoá theo TỪNG SKILL, không phải plugin/`marketplace@plugin`;
+  (2) tài liệu nói THẲNG *"Plugin skills are not affected by `skillOverrides`. Manage those
+  through `/plugin` instead"* — nghĩa là cờ này **không tác dụng gì với skill của plugin**,
+  chỉ áp cho skill bác sĩ tự viết (`sync/skills/`); (3) cơ chế còn lại phía skill-tác-giả
+  (`disable-model-invocation: true` trong YAML của chính SKILL.md) cũng KHÔNG ẩn được TÊN khỏi
+  ngân sách — chỉ ẩn MÔ TẢ, tên vẫn tính vào `skillListingBudgetFraction` như cũ; và `/plugin`
+  chỉ bật/tắt CẢ plugin, không có nút ẩn từng skill riêng lẻ. **Kết luận: không có cách nào
+  "giấu N skill của một plugin, chỉ hiện 1 skill điều phối" trong Claude Code hiện tại** — muốn
+  giấu thật thì phải tắt HẲN plugin (`enabledPlugins:false`, mất luôn khả năng gọi, không chỉ ẩn
+  khỏi danh sách).
+  🔎 **Số đo 10/08 ở trên (`112.469`/`216.449`) và số đo NAME-ONLY của `do_ky_tu_can()` (hiện
+  49.215/982 mục, dư 14.785) đo HAI THỨ KHÁC NHAU, không mâu thuẫn nhau:** `do_ky_tu_can()` cố ý
+  chỉ đếm dòng `- plugin:ten\n` (TÊN, cận dưới an toàn) — số đó ĐỦ ngân sách, không skill nào bị
+  giấu TÊN. Nhưng Claude Code thật ra cố gắng gửi TÊN+MÔ TẢ (≤80 ký tự) trước, và tổng đó
+  (~112-128 nghìn ký tự cho kho hiện tại) VƯỢT ngân sách 64.000 → **rụng mô tả** (đúng cơ chế đã
+  ghi ở dòng "Vượt thì Claude Code CẮT: rụng mô tả trước, rồi rụng luôn skill" phía trên) cho phần
+  lớn trong 982 mục, dù TÊN vẫn còn. Đây mới là lý do thật của "cài rồi mà gọi không được": model
+  thấy TÊN skill nhưng không thấy MÔ TẢ nên không biết khi nào nên chọn nó — khác hẳn "skill biến
+  mất hoàn toàn" mà tôi từng suy diễn.
+  **Việc khả thi duy nhất còn lại — không tiết kiệm ngân sách, chỉ CHỮA hậu quả mất mô tả:** dựng
+  một skill ĐIỀU PHỐI riêng cho plugin nặng nhất (aipoch, 605 skill, ~30.000/49.215 ký tự TÊN của
+  cả kho) — bản thân skill điều phối có MÔ TẢ ngắn (luôn hiện đủ vì nhẹ), bên trong chứa bảng tra
+  đầy đủ tên+nhóm mà chỉ nạp vào ngữ cảnh KHI được gọi thật. Xem mục "Skill điều phối
+  `dieu-phoi-aipoch`" ngay dưới. Tiền lệ `medsci-project:orchestrate` cùng mẫu hình nhưng
+  **KHÔNG hề ẩn 58 skill kia khỏi danh sách** — nó chỉ là một lối vào THÊM, không thay thế; router
+  mới cũng vậy, không hứa hẹn gì hơn thế.
+  ⚠️ Hai khoá `skillListingBudgetFraction`/`skillListingMaxDescChars` vẫn là khoá cấp NGƯỜI DÙNG
+  (`~/.claude/settings.json`, NGOÀI OneDrive) ⇒ **máy Windows phải đặt lại bằng tay**, nếu không ở
+  đó vẫn hỏng y như cũ.
+
+  **✅ Skill điều phối `dieu-phoi-aipoch` (05/09/2026, xây trên phiên Cloud).**
+  `sync/skills/dieu-phoi-aipoch/SKILL.md` — router THUẦN cho 605 skill của
+  `aipoch-medical-research`, theo đúng ý bác sĩ đề xuất *"gọi Plugin, để nó tự điều phối Skill"*.
+  Mô tả frontmatter ngắn (~250 ký tự, gần như không tốn ngân sách); bên trong là bảng 35 nhóm
+  chuyên môn phủ đủ 604/604 tên duy nhất (605 file, 1 trùng tên thật `cover-letter-drafter`) —
+  đã đối chiếu ĐỘC LẬP bằng script so trực tiếp với `name:` trích từ toàn bộ SKILL.md trên đĩa:
+  0 thiếu, 0 thừa, 0 trùng ngoài dự kiến. 24.903 ký tự, chỉ nạp khi bác sĩ (hoặc mô hình) gọi
+  đích danh `/dieu-phoi-aipoch` hoặc khi mô hình tự quyết định việc cần "một chuyên môn aipoch".
+  **KHÔNG làm việc chuyên môn** — chỉ khớp yêu cầu vào đúng nhóm/skill rồi invoke skill đó bằng
+  tên đầy đủ `aipoch-medical-research:<ten-skill>`. **KHÔNG thay quyền CHỦ của việc có cổng** —
+  bảng "Định tuyến khi NHIỀU công cụ cùng nhận một việc" ở trên vẫn nguyên giá trị; router chỉ
+  ích lợi khi bác sĩ cần một trong các thế mạnh RIÊNG của aipoch (MR, FAERS, đơn tế bào, đa-omics,
+  tái định vị thuốc, QTL…) mà hệ agent EBM không có sẵn.
+  ⚠️ **KHÔNG giải quyết ngân sách** (đã đính chính ở trên) — 605 skill gốc của aipoch vẫn liệt kê
+  y nguyên trong danh sách gửi model, router chỉ THÊM một lối vào tiện hơn khi mô tả gốc bị rụng.
+  🔴 **KIỂM CHÉO SAU KHI THÊM ROUTER LỘ RA MỘT BUG KHÁC trong chính `do_ky_tu_can()` (05/09/2026).**
+  Đo lại ngay sau khi thêm `dieu-phoi-aipoch`: tổng vẫn `982` — TÊN skill mới không được đếm. Lý
+  do: hàm dùng `os.walk(HOME/".claude/skills")` KHÔNG có `followlinks=True`, mà MỌI skill riêng của
+  bác sĩ được nối vào đó bằng SYMLINK cấp thư mục (`dong_bo_skill_claude_codex.py`) — `os.walk` mặc
+  định không đi vào thư mục symlink, nên vòng lặp này **không bao giờ thấy `SKILL.md` của bất kỳ
+  skill riêng nào** (kiểm trực tiếp: 0/43). Nghĩa là con số "48.607/49.215 ký tự" đã ghi ở nhiều chỗ
+  phía trên (10/08 → 05/09) **luôn thiếu phần đóng góp của toàn bộ skill riêng bác sĩ**, dù tác động
+  nhỏ (tên skill riêng ngắn hơn nhiều so với aipoch). Đã vá `followlinks=True`; đo lại:
+  **1025 skill/lệnh, 50.178 ký tự, dư 13.822** — kết luận "còn đủ ngân sách TÊN" KHÔNG đổi, chỉ con
+  số chính xác hơn. Cùng họ lỗi "đo đúng, nhưng đo nhầm chỗ" đã lặp nhiều lần trong repo này —
+  ghi lại theo đúng kỷ luật của các mục BH khác, dù chưa đặt mã BH riêng (tác động thấp, không phải
+  lỗi an toàn).
   🔁 **KHOÁ NÀY CŨNG BỊ APP XOÁ ĐỊNH KỲ — nay có công cụ khôi phục (22/08/2026, BH81).**
   Cùng đợt ghi đè `settings.json` đã xoá 8 cờ `false` (mục dưới) thì nó xoá LUÔN bản vá ngân
   sách này. Khác nhau ở chỗ: cờ `false` đã có `kiem_co_tat_plugin_trung.py` khôi phục, còn khoá
