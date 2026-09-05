@@ -64,6 +64,22 @@ def doc_settings(nghiem: bool = True, goc: Path | None = None) -> dict:
 
     nghiem=True  → file hỏng thì ném lỗi (mặc định: thà dừng còn hơn đo trên dict rỗng).
     nghiem=False → bỏ qua file hỏng, dùng cho chốt chỉ-cảnh-báo.
+
+    SỬA 2026-09-05 (Workflow đối kháng đa-agent, task #81, HIGH) — `gop.update(d)` cũ là
+    gộp NÔNG: khi một khoá cấp một (vd `enabledPlugins`, `hooks`) có mặt ở CẢ HAI file,
+    `.local` KHÔNG merge theo từng khoá con mà THAY THẾ TOÀN BỘ giá trị của file trước —
+    mọi khoá con chỉ có ở `settings.json` (vd một plugin app vừa thêm) biến mất câm lặng,
+    dù bản thân file đó đọc được và hợp lệ. Đây đúng lớp lỗi mà 4 công cụ tiêu thụ
+    `enabledPlugins` (`extract_catalog.py`, `don_bong_tieng_anh.py`,
+    `kiem_plugin_day_du.py`, `kiem_co_tat_plugin_trung.py`) đều có thể dính, và đúng vấn
+    đề mà `chot_hoi_quy_bai_hoc.py::bh16_...()` đã phải tự viết logic CỘNG DỒN riêng
+    (nối mảng `hooks.SessionStart` của cả hai file) thay vì dùng `doc_settings()` — vì
+    hàm này chưa từng gộp đúng cho khoá lồng nhau.
+
+    Sửa: gộp lồng MỘT CẤP cho giá trị kiểu dict — khoá con nào chỉ có ở một file thì GIỮ,
+    khoá con trùng cả hai file thì `.local` thắng (giữ đúng "`.local` đè" ở cấp con thay
+    vì cấp khoá). Giá trị không phải dict (số/chuỗi/list) hành vi KHÔNG đổi: file sau vẫn
+    thắng toàn bộ, đúng ngữ nghĩa "đè" cho giá trị vô hướng.
     """
     gop: dict = {}
     for f in duong_dan_doc(goc):
@@ -74,7 +90,11 @@ def doc_settings(nghiem: bool = True, goc: Path | None = None) -> dict:
                 raise
             continue
         if isinstance(d, dict):
-            gop.update(d)
+            for k, v in d.items():
+                if isinstance(v, dict) and isinstance(gop.get(k), dict):
+                    gop[k].update(v)
+                else:
+                    gop[k] = v
     return gop
 
 
