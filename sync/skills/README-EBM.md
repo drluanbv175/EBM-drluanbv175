@@ -9,6 +9,14 @@
 > `tiep-can-chan-doan-co-do-chuyen-tuyen`, `tuan-thu-dieu-tri`...) là skill **VN-native**, viết
 > riêng cho dự án này — KHÔNG thuộc phạm vi tài liệu này, xem `.claude/agents/_THU-VIEN-KY-NANG.md`.
 
+> **Cập nhật tên (2026-09-06):** 7 skill trong bảng Đợt 1 dưới đây — `citation-management`,
+> `literature-review`, `paper-lookup`, `peer-review`, `research-lookup`, `scientific-writing`,
+> `statistical-analysis` — thật ra TRÙNG TÊN với 7 skill EBM-VN bác sĩ tự viết trong
+> `sync/skills/`. Đã tách: bản K-Dense mô tả ở bảng dưới nay nằm ở `sync/skills/<tên>-kdense/`;
+> tên trần `sync/skills/<tên>/` giờ là bản EBM-VN thật (mô tả khác — xem `description` trong
+> `SKILL.md` tương ứng, KHÔNG phải nội dung ở bảng dưới). Mô tả trong bảng Đợt 1 dưới đây vẫn
+> đúng, chỉ đổi cột "Skill" — đọc là `<tên>-kdense`.
+
 Bộ skill này được chọn lọc & điều chỉnh từ **scientific-agent-skills** của K-Dense Inc.
 (148 skill gốc, bản v2.53.0) cho **bác sĩ EBM ngoại trú Việt Nam**, theo quy ước trong `CLAUDE.md`.
 
@@ -18,16 +26,16 @@ Bộ skill này được chọn lọc & điều chỉnh từ **scientific-agent-
 
 | Skill | Công dụng | Nguồn dữ liệu |
 |---|---|---|
-| `research-lookup` | Tra cứu nhanh y văn | **PubMed E-utilities (miễn phí)** — đã viết lại |
-| `paper-lookup` | Tìm bài đa CSDL mở | PubMed/PMC/bioRxiv/OpenAlex... (REST miễn phí) |
-| `citation-management` | Quản lý trích dẫn, BibTeX | PubMed + Google Scholar (miễn phí) |
-| `literature-review` | Tổng quan có hệ thống (PICO/PRISMA) | PubMed (đã chuyển từ parallel-cli trả phí) |
+| `research-lookup-kdense` | Tra cứu nhanh y văn | **PubMed E-utilities (miễn phí)** — đã viết lại |
+| `paper-lookup-kdense` | Tìm bài đa CSDL mở | PubMed/PMC/bioRxiv/OpenAlex... (REST miễn phí) |
+| `citation-management-kdense` | Quản lý trích dẫn, BibTeX | PubMed + Google Scholar (miễn phí) |
+| `literature-review-kdense` | Tổng quan có hệ thống (PICO/PRISMA) | PubMed (đã chuyển từ parallel-cli trả phí) |
 | `clinical-decision-support` | Tài liệu hỗ trợ quyết định (GRADE) | LaTeX/PDF |
 | `clinical-reports` | Case report (CARE), SOAP, báo cáo | template |
 | `treatment-plans` | Kế hoạch điều trị ngắn gọn | LaTeX/PDF |
-| `scientific-writing` | Viết bản thảo IMRAD | CONSORT/STROBE/PRISMA |
-| `statistical-analysis` | Chọn test, cỡ mẫu, báo cáo APA | hướng dẫn |
-| `peer-review` | Bình duyệt theo checklist | hướng dẫn |
+| `scientific-writing-kdense` | Viết bản thảo IMRAD | CONSORT/STROBE/PRISMA |
+| `statistical-analysis-kdense` | Chọn test, cỡ mẫu, báo cáo APA | hướng dẫn |
+| `peer-review-kdense` | Bình duyệt theo checklist | hướng dẫn |
 
 ### Đợt 2 (2026-07-04) — phương pháp nghiên cứu, bổ sung cho cụm agent G0–G9
 
