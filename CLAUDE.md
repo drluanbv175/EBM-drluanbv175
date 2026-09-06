@@ -2407,8 +2407,8 @@ Kiểm hồi quy: `tests/test_sap_13_15_rct_conditional_20260906.py` (9 test) kh
 (`approve_gate._g4_sections_still_draft`, chỉ §1/§2/§5/§10) không đổi hành vi. 3 phép đột biến (bỏ
 điều kiện RCT · xoá §14 · chèn khối trước §12 thay vì sau) đều đỏ đúng chỗ rồi phục hồi xanh; 101
 test G4/ledger liên quan không hồi quy. Đề tài C1a là `cross_sectional`, không bị ảnh hưởng.
-📌 Vẫn chưa làm, chờ bác sĩ: mục riêng **«Can thiệp và đối chứng»** cho RCT (SPIRIT 15a–15d hiện gộp
-vào §6 Thiết kế).
+✅ **ĐÃ LÀM (06/09/2026, cùng ngày, bác sĩ tiếp tục yêu cầu "hoàn thiện"):** mục riêng cho SPIRIT
+15a-15d — xem mục (H) ngay dưới.
 
 **(G) Đề tài THẬT C1a đã lắp lại và vẫn sạch:** 18/18 mục · **P01–P23** · R1–R17 PASS ·
 R18 = `N/A` (cắt ngang — thiết kế quan sát **không có** checklist đề cương theo mục, STROBE là chuẩn
@@ -2428,5 +2428,57 @@ chưa chắc là bằng chứng chốt yếu* — làm lại trên đúng nhánh
 luận bản thảo G7 **thiếu** khai báo AI và tính có sẵn dữ liệu (đếm 0/0). Đọc lại khối «KHAI BÁO» thật
 thì cả hai **đã có sẵn**, và regex `_AI_TOOL_NAME_RE` của G8 nhận đúng câu mặc định. *Đếm 0 bằng từ
 khoá sai là bằng chứng về từ khoá, không phải về hệ thống.*
+
+**(H) §6.2-§6.5 CÓ ĐIỀU KIỆN, CHỈ RCT — can thiệp/đối chứng, ngẫu nhiên hoá, làm mù, lịch trình, PPI
+(06/09/2026, cùng ngày, bác sĩ tiếp tục "đảm bảo hoàn thiện... đạt tiêu chuẩn quốc tế").** Đối chiếu
+53 dòng SPIRIT 2025 với khuôn 18 mục: **12 mục** (9b/11/15a/15d/18/21a/21b/22/23/24a/24b/24c) đều
+trỏ vào MỘT MÌNH §6 "Thiết kế và bối cảnh", trong khi `sec_thietke()` trước đó chỉ có tên thiết kế +
+bối cảnh — **KHÔNG MỘT DÒNG** về can thiệp/ngẫu nhiên hoá/làm mù, dù đây là nội dung IRB và tạp chí
+luôn đòi ở một RCT. Đã thêm 4 tiểu mục **CHỈ khi `design_code == "rct"`**: §6.2 Can thiệp và đối
+chứng (TIDieR) · §6.3 Ngẫu nhiên hoá, phân bổ và làm mù · §6.4 Lịch trình nghiên cứu · §6.5 Sự tham
+gia của bệnh nhân/cộng đồng (PPI). Số tiểu mục PHÁI SINH từ vị trí HIỆN TẠI của §6 qua hàm mới
+`de_cuong_dynamic_sub_heading()` — §6 đổi số thì tự theo, không viết cứng "6.x". Thêm **P24** vào ma
+trận bao phủ (24 thành phần lõi từ 06/09/2026, trước đó 23); thiết kế khác RCT tự ĐẠT qua
+`not_applicable_rationale` SUY TRỰC TIẾP từ `design_code` (sự thật cấu trúc, không phải nội dung
+lâm sàng bịa) — cùng khuôn với `theory.not_applicable_rationale` (P22).
+🔴 **Phát hiện phụ NGHIÊM TRỌNG HƠN dự kiến khi đo trước khi sửa.** `exposure_intervention`/
+`design_specific` đã tồn tại SẴN trong StudySpec để nuôi "quyết định còn treo" R01-R03
+(`_DESIGN_FIELD_REQUIREMENTS["rct"]`), nhưng **KHÔNG builder nào render chúng vào văn bản đề cương
+thật** — bác sĩ điền dữ liệu xong ở `study_meta.json` vẫn KHÔNG thấy gì thay đổi trong tài liệu
+(đúng họ lỗi "hai module viết cho nhau mà chưa từng nối" của G3 PREVALENCE 31/07). Đã tái dùng
+CHÍNH các trường đó (không tạo namespace mới) — điền qua cơ chế "quyết định còn treo" giờ CŨNG làm
+đổi §6 thật.
+🔴 **Lỗi thứ hai bắt được NGAY khi vá lỗi thứ nhất, trong cùng phiên debug.** `meta_for_render()`'s
+luật "chỉ điền khi khoá vắng mặt trong meta thô" khiến bản `design_specific` ĐÃ LÀM GIÀU (thêm alias
++ not_applicable_rationale) KHÔNG BAO GIỜ tới nơi render — vì khoá `design_specific` HẦU NHƯ LUÔN đã
+tồn tại sẵn trong `study_meta.json` thật (bác sĩ đặt trực tiếp), nên điều kiện "if key not in out"
+luôn SAI, và builder mãi mãi đọc bản THÔ chưa qua enrichment. Bắt được bằng CHÍNH bộ test mới (đo
+dữ liệu THẬT có xuất hiện trong văn bản hay không, không chỉ kiểm khung rỗng) — trước khi có test đó
+tôi tưởng đã sửa xong. Sửa: ghi đè VÔ ĐIỀU KIỆN cho hai khoá này (an toàn vì `spec[...]` luôn là
+SUPERSET của bản thô, chỉ CỘNG thêm, không bao giờ bớt).
+Kiểm hồi quy: `tests/test_de_cuong_6_2_6_5_rct_intervention_20260906.py` (8 test) — RCT nhận đủ 4
+tiểu mục + trích SPIRIT · dữ liệu THẬT xuất hiện trong văn bản (không chỉ khung) · thiết kế khác giữ
+nguyên §6 như cũ, P24 tự ĐẠT · số tiểu mục đúng vị trí §6 hiện tại. 3 phép đột biến (bỏ điều kiện
+RCT · bỏ P24 · bỏ ghi đè `meta_for_render`) đều đỏ đúng chỗ rồi phục hồi xanh.
+
+**(I) Phát hiện TÌNH CỜ khi viết test cho (H) — R8 "minh bạch" chỉ PASS được cho 2/8 thiết kế vì lý
+do SAI, và giả thuyết đầu của tôi về nguyên nhân CŨNG SAI (tự bắt bằng đột biến).** Test mới của (H)
+gọi `check_de_cuong.validate()` trên fixture RCT và bất ngờ FAIL R8: *"MA TRẬN TUÂN THỦ thiếu thuật
+ngữ bắt buộc: minh bạch"*. Điều tra: dòng lưu ý UNCONDITIONAL của `build_international_compliance()`
+viết **"transparency"** (tiếng Anh) thay vì "minh bạch". Giả thuyết ĐẦU TIÊN của tôi — "6/8 thiết kế
+thiếu, chỉ cohort/cross_sectional có sẵn qua `reporting_standards_for(...)['protocol']`" — **bị
+chính phép đột biến bác bỏ**: hoá ra `build_protocol_checklist()`'s nhánh FALLBACK (thêm CÙNG SÁNG
+NAY với tính năng SPIRIT) cũng TÌNH CỜ chứa "minh bạch", che thêm case_control/diagnostic/prediction/
+qualitative. Chỉ **rct** (nhánh SPIRIT riêng) và **systematic_review** (nhánh "PRISMA-P thiếu" riêng)
+— hai thiết kế bỏ qua CẢ HAI nguồn tình cờ — thật sự phụ thuộc dòng lưu ý này.
+Đã sửa: "transparency và reproducibility" → "minh bạch (transparency) và khả năng tái lập
+(reproducibility)" trong dòng lưu ý unconditional. Kiểm: `tests/test_r8_minh_bach_all_designs_
+20260906.py` (3 test) — "minh bạch" xuất hiện cho cả 8 thiết kế; R8 PASS cho cả 8; đột biến (revert
+dòng lưu ý qua monkeypatch) ⇒ ĐÚNG {rct, systematic_review} quay lại thiếu, không phải 6 thiết kế
+khác như giả thuyết ban đầu.
+*Bài học nền, thêm vào danh sách "đo đúng nhưng đo nhầm số" đã lặp nhiều lần trong file này: một
+giả thuyết ban đầu về NGUYÊN NHÂN của một bug — dù bug đó có thật và cách sửa đúng — vẫn cần bị chính
+phép đột biến kiểm chứng lại trước khi ghi vào tài liệu, vì "nó FAIL đúng chỗ tôi sửa" không tự động
+suy ra "lý do tôi nghĩ là đúng".*
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
