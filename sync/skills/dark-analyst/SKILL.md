@@ -297,7 +297,7 @@ Mỗi dashboard thật phải khai báo `DATA.standards` để hiển thị:
 - khung câu hỏi đã dùng: PICO/PECO/PIRD/PROGRESS hoặc khung phù hợp khác;
 - thứ bậc nguồn và ngày/nguồn tìm kiếm;
 - chuẩn báo cáo cần đối chiếu: CONSORT, STROBE, PRISMA, STARD, TRIPOD theo thiết kế;
-- công cụ thẩm định: AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-2, PROBAST hoặc JBI;
+- công cụ thẩm định: AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-3 v1.2, PROBAST hoặc JBI; QUADAS-2 chỉ để đọc nghiên cứu lịch sử;
 - cổng liêm chính trước phát hành: truy nguyên nguồn, tách độ chắc chắn với quyết định thực hành, không PII, an toàn, tính phù hợp tại Việt Nam;
 - truy nguyên từng `ITEM-xx` bằng PMID/DOI/URL/tài liệu tham khảo.
 
@@ -388,7 +388,7 @@ Trước khi tổng hợp, **tự nhận diện loại câu hỏi lâm sàng** v
 |---|---|---|---|---|---|
 | Điều trị/can thiệp | **PICO(T)(S)** | P·I·C·O (+Time/Setting) | RCT/SR-MA | RoB 2, AMSTAR-2, GRADE | RR/OR/HR/ARR/**NNT** |
 | Tác hại/nguyên nhân | **PECO** | P·Phơi nhiễm·C·O | Cohort/case-control | ROBINS-I | RR/OR/HR/**NNH** |
-| Chẩn đoán (độ chính xác) | **PIRT** | P·Index test·Chuẩn tham chiếu·Bệnh đích | Cross-sectional độ chính xác | QUADAS-2, STARD | **Sn/Sp/LR**, AUC |
+| Chẩn đoán (độ chính xác) | **PIRT** | P·Index test·Chuẩn tham chiếu·Bệnh đích | Cross-sectional độ chính xác | QUADAS-3 v1.2, STARD; QUADAS-2 chỉ cho nghiên cứu lịch sử | **Sn/Sp/LR**, AUC |
 | Tiên lượng | **PROGRESS/PICOTS** | P·Yếu tố TL·(so sánh)·Kết cục·Thời gian | Cohort dọc | QUIPS, PROBAST | HR, C-statistic |
 | Tầm soát/dự phòng | **PICO mở rộng** | P·Test/biện pháp·C·Kết cục lâm sàng | RCT/SR | GRADE, USPSTF | giảm biến cố, NNT |
 | Tần suất/dịch tễ | **CoCoPop** | Condition·Context·Population | Cross-sectional | JBI prevalence | tỷ lệ (CI) |

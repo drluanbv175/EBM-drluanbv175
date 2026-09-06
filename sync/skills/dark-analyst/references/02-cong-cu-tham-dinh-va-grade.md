@@ -18,7 +18,7 @@ Không trộn lẫn:
 | RCT | RoB 2 | Khi RCT là bằng chứng then chốt |
 | Nghiên cứu không ngẫu nhiên | ROBINS-I phiên bản hiện hành đã xác minh | Khi kết luận dựa trên nghiên cứu can thiệp không RCT |
 | Nghiên cứu phơi nhiễm/quan sát | ROBINS-E hoặc công cụ phù hợp được xác minh | Khi đánh giá tác hại/yếu tố nguy cơ |
-| Chẩn đoán | QUADAS-2 | Khi kết luận về độ chính xác xét nghiệm |
+| Chẩn đoán | QUADAS-3 v1.2 | Khi kết luận về độ chính xác xét nghiệm; QUADAS-2 chỉ để đọc nghiên cứu lịch sử |
 | Tiên lượng | QUIPS/PROBAST tùy câu hỏi | Khi dùng mô hình hoặc yếu tố tiên lượng |
 | Mô hình dự đoán/AI | PROBAST/PROBAST-AI phiên bản hiện hành | Khi công cụ dự báo ảnh hưởng quyết định |
 

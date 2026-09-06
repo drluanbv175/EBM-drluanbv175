@@ -6,7 +6,7 @@
 - [ ] Nội dung chưa đủ để thay đổi được tách riêng, không gắn nhãn áp dụng.
 - [ ] Không đưa liều, cut-off, thời gian điều trị hoặc cảnh báo nhãn chưa xác minh.
 - [ ] Khối `DATA.standards` khai báo khung câu hỏi, thứ bậc nguồn, ngày/nguồn tìm kiếm, chuẩn báo cáo và công cụ thẩm định.
-- [ ] Tab `Chuẩn & chất lượng` hiển thị CONSORT/STROBE/PRISMA/STARD/TRIPOD khi phù hợp và AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI cho thẩm định.
+- [ ] Tab `Chuẩn & chất lượng` hiển thị CONSORT/STROBE/PRISMA/STARD/TRIPOD khi phù hợp và AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-3 v1.2/PROBAST/JBI cho thẩm định; QUADAS-2 chỉ để đọc nghiên cứu lịch sử.
 - [ ] Cổng liêm chính trước phát hành ghi rõ truy nguyên nguồn, tách độ chắc chắn với quyết định thực hành, không PII, an toàn và tính phù hợp Việt Nam.
 - [ ] `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources` PASS: PMID/DOI phân giải, nguồn còn mới, ≥2 nguồn tìm kiếm, references[] đủ, không `apply` trên chứng cứ yếu/không phân hạng/chỉ đồng thuận.
 

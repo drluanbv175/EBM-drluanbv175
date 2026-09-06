@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -68,6 +69,34 @@ def loi_ngoai_pham_vi_tran(error: str) -> bool:
     """Lỗi CHỈ vì nguyên liệu nằm trong repo y khoa (đường dẫn/binding trỏ sang đó)."""
     return ("medical-ebm-automation" in error
             or error.startswith("thieu production tool binding"))
+
+
+def _git_common_dir(cay: Path) -> Path | None:
+    """git-common-dir tuyệt đối của `cay`, hoặc None nếu không phải cây git.
+
+    Hai worktree của CÙNG một repo trỏ về CÙNG một `.git` thật (common dir) dù
+    đường làm việc khác nhau — đây là cách xác nhận "cùng repo" không thể giả
+    mạo bằng một thư mục bất kỳ trỏ nhầm vào, khác hẳn so sánh path bằng mắt.
+    """
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(cay), "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    ra = (r.stdout or "").strip()
+    if not ra:
+        return None
+    p = Path(ra)
+    if not p.is_absolute():
+        p = cay / p
+    try:
+        return p.resolve()
+    except OSError:
+        return None
 
 
 def phan_loai_binding(item: WorkerAvailability) -> str:
@@ -203,12 +232,23 @@ def verify() -> dict[str, Any]:
     for path in missing_router:
         errors.append(f"router thieu file: {path.relative_to(ROOT)}")
 
+    worktree_khac_repo: list[str] = []
     for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
         target = runtime / "plugin-router-chatgpt"
         if not target.exists():
             errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
         elif target.resolve() != ROUTER_SOURCE.resolve():
-            errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
+            target_common_dir = _git_common_dir(target.resolve())
+            root_common_dir = _git_common_dir(ROOT)
+            if (root_common_dir is not None
+                    and target_common_dir is not None
+                    and target_common_dir == root_common_dir):
+                worktree_khac_repo.append(
+                    f"router runtime tro ve worktree KHAC cua CUNG repo: "
+                    f"{target} -> {target.resolve()}"
+                )
+            else:
+                errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
 
     if not ROUTER_ZIP.is_file():
         errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
@@ -260,6 +300,7 @@ def verify() -> dict[str, Any]:
         "errors": errors,
         "ngoai_pham_vi": ngoai_pham_vi,
         "chua_cai": chua_cai,
+        "worktree_khac_repo": worktree_khac_repo,
     }
 
 
@@ -286,6 +327,11 @@ def main() -> int:
         if report.get("chua_cai"):
             print("  ⚪ KHONG phai dat — plugin cai theo tung may; y dinh o sync/plugin-manifest.json,"
                   " doi chieu bang tools/dong_bo_plugin_claude_codex.py (lane 5).")
+        for muc in report.get("worktree_khac_repo", []):
+            print(f"- ⚪ WORKTREE-KHAC-CUNG-REPO {muc}")
+        if report.get("worktree_khac_repo"):
+            print("  ⚪ KHONG phai loi — xac nhan bang git-common-dir, khong phai so path bang mat;"
+                  " symlink tro sang repo KHAC that su van bi FAIL nhu cu.")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 
