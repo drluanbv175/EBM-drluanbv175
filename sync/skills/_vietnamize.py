@@ -17,9 +17,21 @@ from pathlib import Path
 HUB = Path(__file__).resolve().parent
 MARKER = "<!-- EBM-VN-GUARD -->"
 
+# ĐỔI TÊN KHOÁ 06/09/2026 — ĐỌC TRƯỚC KHI SỬA
+# Bảy skill K-Dense (citation-management, literature-review, paper-lookup,
+# peer-review, research-lookup, scientific-writing, statistical-analysis) đã được
+# đổi thư mục thành "<tên>-kdense", nhường tên gốc cho bảy skill EBM bản tài khoản
+# (bản đang chạy trong Routine và mọi phiên claude.ai). Hai họ skill này TRÙNG TÊN
+# nhưng nội dung chỉ giống nhau 6-19% — chúng là hai skill khác nhau.
+#
+# Vì `process()` chỉ xử lý thư mục có tên nằm trong DESCRIPTIONS, khoá ở đây PHẢI
+# mang hậu tố -kdense. Nếu bỏ hậu tố đi, lần chạy `_vietnamize.py` kế tiếp sẽ ghi đè
+# mô tả và chèn khối EBM-VN-GUARD lên bảy skill EBM bản tài khoản — tức phá đúng
+# những skill mang cổng liêm chính của hệ.
+
 # Mô tả tiếng Việt cho từng skill (trường `description` của frontmatter)
 DESCRIPTIONS = {
-    "literature-review":
+    "literature-review-kdense":
         "Thực hiện tổng quan y văn có hệ thống (systematic review, tổng quan, "
         "meta-analysis) bằng các CSDL học thuật MIỄN PHÍ (PubMed E-utilities, PMC, "
         "bioRxiv, medRxiv, OpenAlex, Crossref, Semantic Scholar). Dùng khi cần tổng "
@@ -27,18 +39,18 @@ DESCRIPTIONS = {
         "tổng quan. Tạo tài liệu Markdown/PDF có trích dẫn đã kiểm chứng "
         "(Vancouver/APA), kèm PMID/DOI và disclaimer 'Cần bác sĩ kiểm chứng'. "
         "KHÔNG dùng API trả phí.",
-    "paper-lookup":
+    "paper-lookup-kdense":
         "Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC "
         "(toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, "
         "CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy "
         "abstract/toàn văn, tìm bản open access, đồ thị trích dẫn hoặc tìm theo tác "
         "giả. Mọi kết quả ghi rõ PMID/DOI.",
-    "citation-management":
+    "citation-management-kdense":
         "Quản lý trích dẫn học thuật: tìm bài trên PubMed (E-utilities miễn phí) và "
         "Google Scholar, trích xuất metadata chính xác, kiểm chứng trích dẫn, sinh "
         "BibTeX đúng chuẩn. Dùng khi cần tìm bài, xác minh thông tin trích dẫn, đổi "
         "DOI→BibTeX hoặc bảo đảm độ chính xác tài liệu tham khảo. Luôn kèm PMID/DOI.",
-    "research-lookup":
+    "research-lookup-kdense":
         "Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, "
         "không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm "
         "chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả "
@@ -62,17 +74,17 @@ DESCRIPTIONS = {
         "chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý "
         "bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng "
         "chứng. Kèm nguồn PMID/DOI, disclaimer 'Cần bác sĩ kiểm chứng', KHÔNG lưu PII.",
-    "scientific-writing":
+    "scientific-writing-kdense":
         "Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch (không gạch "
         "đầu dòng), trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo "
         "(CONSORT/STROBE/PRISMA). Dùng khi viết bài báo nghiên cứu hoặc bản thảo nộp "
         "tạp chí. Quy trình 2 bước: dàn ý → văn xuôi. Trích dẫn kèm PMID/DOI.",
-    "statistical-analysis":
+    "statistical-analysis-kdense":
         "Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả "
         "định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn "
         "kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ "
         "thể bằng code, dùng statsmodels.)",
-    "peer-review":
+    "peer-review-kdense":
         "Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp "
         "lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây "
         "dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp.",

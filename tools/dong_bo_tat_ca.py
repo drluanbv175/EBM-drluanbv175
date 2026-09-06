@@ -18,6 +18,9 @@ THỨ TỰ Ở ĐÂY LÀ THỨ TỰ PHỤ THUỘC, KHÔNG PHẢI DANH SÁCH:
   ② GIT — kênh vận chuyển bác sĩ đã chọn (21/08). Việc đã commit mà chưa đẩy thì
      máy kia không thấy; đây là chỗ hở mà không làn nào khác nhìn tới.
   ③–⑧ các làn nội dung: skill · agent · plugin · hook · bộ nhớ · kho công cụ.
+  ⑨ CLOUD ↔ REPO — làn duy nhất chạm bundle skill của tài khoản, tức thứ mà
+     Routine và mọi phiên claude.ai/code thật sự nạp. Chỉ đọc. 🔴 ở đây nghĩa là
+     có skill TRÙNG TÊN mà khác nội dung: đừng chép đè bên nào.
 
 BA LUẬT GIỮ CHO BÁO CÁO KHÔNG NÓI QUÁ:
   · **Thiếu NGUYÊN LIỆU ≠ HỎNG.** Làn không có nguyên liệu trên máy này (chưa có
@@ -188,6 +191,42 @@ def phai_dung_som(an_toan: KetQua) -> bool:
     return an_toan.ma >= 2 and not an_toan.bo_qua
 
 
+def lan_ba_ben(im: bool) -> KetQua:
+    """Cloud ↔ repo — làn DUY NHẤT chạm bundle skill của tài khoản.
+
+    VÌ SAO CÓ (06/09/2026): tám làn trước đó phủ repo -> máy (link-skills.sh) và
+    repo -> Claude Desktop (dong_bo_skill.py), nhưng KHÔNG làn nào đối chiếu với
+    bundle tài khoản — thứ mà Routine và mọi phiên claude.ai/code thật sự nạp.
+    Đo lần đầu: 20/26 skill dùng chung tên đang lệch, trong đó 7 cái TRÙNG TÊN mà
+    là hai skill khác nhau (đã giải quyết bằng hậu tố -kdense).
+
+    Làn này CHỈ ĐỌC, không ghi gì ở bất kỳ bên nào.
+
+    MÃ THOÁT 3 = KHÔNG ĐO ĐƯỢC, và ở đây nó thành «bỏ qua» chứ không tô đỏ — đúng
+    luật của lệnh này: thiếu NGUYÊN LIỆU thì ghi bỏ qua. Máy chưa đồng bộ skill tài
+    khoản thì không có bundle để so, đó không phải lỗi cấu hình. Nhưng nó cũng KHÔNG
+    được đọc thành 🟢: ◌ nói rõ là làn này chưa chạy.
+    """
+    ten = "Cloud ↔ repo (bundle tài khoản)"
+    f = REPO / "tools" / "doi_chieu_ba_ben.py"
+    if not f.is_file():
+        return KetQua(ten, bo_qua="chưa có tools/doi_chieu_ba_ben.py")
+    if not im:
+        print(f"\n── {ten} " + "─" * max(0, 56 - len(ten)))
+    ma, ra = chay([PY, str(f)], im)
+    if ma == 3:
+        ly_do = "máy này không có bundle cloud để so"
+        if "có 2 bundle" in ra or "bundle trong" in ra:
+            ly_do = "có nhiều bundle cloud — chạy tay với --cloud để chỉ rõ"
+        return KetQua(ten, bo_qua=ly_do)
+    kq = KetQua(ten, ma=ma)
+    if ma >= 2:
+        kq.ghi_chu.append("có skill TRÙNG TÊN mà khác nội dung — ĐỪNG chép đè bên nào")
+    elif ma == 1:
+        kq.ghi_chu.append("lệch phiên bản hoặc thiếu/thừa skill giữa cloud và repo")
+    return kq
+
+
 def cac_lan(ap_dung: bool = False, im: bool = False) -> list[tuple[str, object]]:
     """Bộ làn — NGUỒN DUY NHẤT, trả (tên, hàm chạy) theo đúng thứ tự phụ thuộc.
 
@@ -214,6 +253,7 @@ def cac_lan(ap_dung: bool = False, im: bool = False) -> list[tuple[str, object]]
         ("Bộ nhớ Claude", cong_cu("Bộ nhớ Claude", "sync_memory.py",
                                   [] if ap_dung else ["--dry-run"])),
         ("Kho công cụ", cong_cu("Kho công cụ", "kiem_plugin_day_du.py", khi_im)),
+        ("Cloud ↔ repo (bundle tài khoản)", lambda: lan_ba_ben(im)),
     ]
 
 
