@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -138,12 +139,28 @@ def go(p: Path) -> None:
     """Gỡ MỘT liên kết, giữ nguyên đích nó trỏ tới.
 
     Từ chối cứng khi p không phải liên kết: gọi nhầm vào thư mục thật ở đây chính
-    là lối mất `sync/skills/<tên>` (lý do 3 ở đầu file). Junction gỡ bằng `os.rmdir`
-    — thao tác này chỉ tháo điểm nối, KHÔNG đụng nội dung bên trong.
+    là lối mất `sync/skills/<tên>` (lý do 3 ở đầu file). Junction/symlink-thư-mục
+    gỡ bằng `os.rmdir` — thao tác này chỉ tháo điểm nối, KHÔNG đụng nội dung bên
+    trong.
+
+    Windows phân biệt liên kết THƯ MỤC (gỡ bằng rmdir/RemoveDirectory) với liên
+    kết FILE (gỡ bằng unlink/DeleteFile) ngay TỪ LÚC TẠO — không phụ thuộc đích
+    có còn tồn tại hay không. Vì vậy dùng ``os.lstat`` (đọc thuộc tính của CHÍNH
+    liên kết, không theo nó tới đích) để biết liên kết thuộc loại nào, KHÔNG
+    dùng ``Path.is_dir()``: is_dir() theo liên kết rồi stat() đích — với liên
+    kết TREO (đích không còn tồn tại): trên Python 3.9–3.11 (chưa có
+    ``os.path.isjunction``, xem nhánh lùi của ``la_junction``), một liên kết
+    FILE bị treo lại bị fallback đó coi NHẦM là junction (readlink đọc được ⇒
+    coi là junction, không phân biệt symlink thường), nên vẫn rơi vào nhánh cũ
+    `la_junction(p) or (WINDOWS and p.is_dir())` rồi gọi `os.rmdir` sai loại,
+    ném WinError 267 (đo thật trên GitHub Actions windows-latest/Python 3.11,
+    06/09/2026; Python 3.12 không dính vì có `os.path.isjunction` chính xác).
+    Cách này cũng khỏi cần gọi riêng ``la_junction`` — junction luôn mang thuộc
+    tính thư mục, ``os.lstat`` đã bắt đúng cả hai, và đúng trên mọi bản Python.
     """
     if not la_lien_ket(p):
         raise ValueError(f"từ chối gỡ: {p} không phải liên kết (có thể là dữ liệu thật)")
-    if la_junction(p) or (WINDOWS and p.is_dir()):
+    if WINDOWS and stat.S_ISDIR(os.lstat(p).st_mode):
         os.rmdir(p)
     else:
         p.unlink()

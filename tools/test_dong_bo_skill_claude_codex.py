@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -26,7 +27,9 @@ def test_ensure_link_dry_run_reports_conflict_without_touching_symlink(tmp_path)
     result = S.ensure_link(source, destination, apply=False)
 
     assert result.status == "XUNG_DOT"
-    assert LK.dich_cua(destination / source.name) == stray.resolve()
+    # samefile(), khong so chuoi resolve(): tren Windows hai lan resolve() doc
+    # lap tren CUNG mot thu muc co the ra hai chuoi khac nhau (xem tro_dung()).
+    assert os.path.samefile(LK.dich_cua(destination / source.name), stray)
 
 
 def test_ensure_link_self_heals_symlink_pointing_to_wrong_real_dir(tmp_path):

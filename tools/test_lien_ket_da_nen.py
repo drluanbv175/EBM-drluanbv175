@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import sys
 from pathlib import Path
 
@@ -72,3 +73,50 @@ def test_tro_dung_false_when_samefile_raises_for_nonexistent_source(tmp_path):
     link.symlink_to(thuc, target_is_directory=True)
 
     assert not LK.tro_dung(link, nguon)
+
+
+def _stat_voi_st_mode(st_mode):
+    trong = (st_mode,) + (0,) * 9
+    return os.stat_result(trong)
+
+
+def test_go_rmdir_khi_lstat_bao_thu_muc_tren_windows(tmp_path, monkeypatch):
+    r"""Tai hien dung bug do that tren GitHub Actions windows-latest/Python
+    3.11 (06/09/2026, workflow kiem-tinh-da-nen commit 1ed2487): mot lien ket
+    TREO (dich khong con ton tai) nhung duoc TAO la loai thu muc phai go bang
+    os.rmdir(), khong duoc go bang p.unlink() -- Windows tu choi unlink() tren
+    reparse point loai thu muc. Ban cu dung Path.is_dir() (theo lien ket toi
+    dich) + la_junction() (fallback readlink tren 3.9-3.11 coi NHAM moi lien
+    ket doc duoc la junction) -- ca hai deu sai voi lien ket TREO. Gia lap
+    WINDOWS=True + os.lstat vi khong tao duoc reparse point that cua Windows
+    tren Linux."""
+    p = tmp_path / "link"
+    p.symlink_to(tmp_path / "khong-ton-tai")
+
+    monkeypatch.setattr(LK, "WINDOWS", True)
+    monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFDIR))
+    calls = []
+    monkeypatch.setattr(LK.os, "rmdir", lambda path: calls.append("rmdir"))
+    monkeypatch.setattr(Path, "unlink", lambda self, *a, **kw: calls.append("unlink"))
+
+    LK.go(p)
+
+    assert calls == ["rmdir"]
+
+
+def test_go_unlink_khi_lstat_bao_file_tren_windows(tmp_path, monkeypatch):
+    """Doi xung voi test tren: lien ket TREO loai FILE phai go bang unlink(),
+    khong duoc go bang os.rmdir() (Windows tu choi rmdir tren reparse point
+    loai file)."""
+    p = tmp_path / "link"
+    p.symlink_to(tmp_path / "khong-ton-tai")
+
+    monkeypatch.setattr(LK, "WINDOWS", True)
+    monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFREG))
+    calls = []
+    monkeypatch.setattr(LK.os, "rmdir", lambda path: calls.append("rmdir"))
+    monkeypatch.setattr(Path, "unlink", lambda self, *a, **kw: calls.append("unlink"))
+
+    LK.go(p)
+
+    assert calls == ["unlink"]
