@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -64,6 +65,34 @@ def ban_sao_tran() -> bool:
     return mod.ban_sao_git_tran(ROOT)
 
 
+def _git_common_dir(path: Path) -> Path | None:
+    """Tra .git-common-dir tuyet doi cua repo chua `path`, hoac None neu khong phai git repo.
+
+    Hai worktree cua CUNG mot repo tro chung MOT .git-common-dir (thu muc .git that,
+    khac voi .git rieng cua tung worktree) — day la cach duy nhat de biet "hai duong
+    dan khac nhau" co phai chi la hai checkout cua CUNG mot lich su git hay khong,
+    ma khong can doc noi dung file (tranh nham lan voi mot repo hoan toan khac)."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, timeout=5, cwd=str(path),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    out = result.stdout.strip()
+    if not out:
+        return None
+    resolved = Path(out)
+    if not resolved.is_absolute():
+        resolved = path / resolved
+    try:
+        return resolved.resolve()
+    except OSError:
+        return None
+
+
 def loi_ngoai_pham_vi_tran(error: str) -> bool:
     """Lỗi CHỈ vì nguyên liệu nằm trong repo y khoa (đường dẫn/binding trỏ sang đó)."""
     return ("medical-ebm-automation" in error
@@ -87,6 +116,7 @@ def phan_loai_binding(item: WorkerAvailability) -> str:
 def verify() -> dict[str, Any]:
     errors: list[str] = []
     checks: list[str] = []
+    worktree_khac: list[str] = []
 
     agents = Registry.load()
     plugins = PluginOwnershipRegistry.load()
@@ -208,7 +238,23 @@ def verify() -> dict[str, Any]:
         if not target.exists():
             errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
         elif target.resolve() != ROUTER_SOURCE.resolve():
-            errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
+            resolved = target.resolve()
+            # Chay tu mot git worktree (nhanh feature tach biet khoi checkout chinh):
+            # symlink song ~/.claude|.codex/skills chi tro duoc vao MOT checkout tai
+            # 1 thoi diem, va checkout dang song co the la MOT worktree KHAC cua
+            # CUNG repo (phien khac dang lam viec song song tren cung may). Do KHONG
+            # phai loi that -- canonical thuc su nam o nguon git, khong phai o duong
+            # dan tuyet doi cua mot worktree cu the. Chi ha xuong canh bao khi da xac
+            # minh ca hai phia CUNG mot .git-common-dir (cung lich su git); khac repo
+            # hoan toan (hoac khong doc duoc git) van la loi that nhu cu.
+            common_here = _git_common_dir(ROOT)
+            common_target = _git_common_dir(resolved)
+            if common_here is not None and common_here == common_target:
+                worktree_khac.append(
+                    f"router runtime tro sang worktree khac cung repo: {target} -> {resolved}"
+                )
+            else:
+                errors.append(f"router runtime tro sai nguon: {target} -> {resolved}")
 
     if not ROUTER_ZIP.is_file():
         errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
@@ -260,6 +306,7 @@ def verify() -> dict[str, Any]:
         "errors": errors,
         "ngoai_pham_vi": ngoai_pham_vi,
         "chua_cai": chua_cai,
+        "worktree_khac": worktree_khac,
     }
 
 
@@ -286,6 +333,12 @@ def main() -> int:
         if report.get("chua_cai"):
             print("  ⚪ KHONG phai dat — plugin cai theo tung may; y dinh o sync/plugin-manifest.json,"
                   " doi chieu bang tools/dong_bo_plugin_claude_codex.py (lane 5).")
+        for muc in report.get("worktree_khac", []):
+            print(f"- ⚪ WORKTREE-KHAC-CUNG-REPO {muc}")
+        if report.get("worktree_khac"):
+            print("  ⚪ KHONG phai dat — dang chay tu git worktree; symlink song ~/.claude|.codex/skills"
+                  " chi tro duoc vao MOT checkout tai 1 thoi diem, checkout dang song la worktree KHAC"
+                  " cua CUNG repo (phien khac dang lam viec song song tren cung may), khong phai loi that.")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 
