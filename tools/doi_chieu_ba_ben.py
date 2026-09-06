@@ -39,6 +39,16 @@ import sys
 import unicodedata
 from pathlib import Path
 
+# Bẫy cp1252: stdout/stderr trên Windows không mặc định UTF-8, và mọi thông điệp
+# ở đây là tiếng Việt có dấu. Không reconfigure thì `print()` chết UnicodeEncodeError
+# ngay khi gặp ký tự ngoài-ASCII đầu tiên — đúng họ lỗi mà tools/kiem_tuong_thich_da_nen.py
+# của repo này dò riêng cho việc này (luật R4).
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # Dưới ngưỡng này coi là HAI SKILL KHÁC NHAU chứ không phải hai phiên bản.
 # 0.35 chọn theo đo thực tế trên bộ EBM: các cặp lệch-phiên-bản thật đều > 0.55;
 # các cặp trùng tên khác skill (Việt vs K-Dense tiếng Anh) đều < 0.15.
