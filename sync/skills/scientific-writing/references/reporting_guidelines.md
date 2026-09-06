@@ -186,7 +186,7 @@ The EQUATOR Network (Enhancing the QUAlity and Transparency Of health Research) 
 
 **When to use:** Protocols for randomized trials and other planned intervention studies
 
-**Latest version:** SPIRIT 2013
+**Latest version:** SPIRIT 2025 — 34 minimum items + schedule diagram (Chan AW et al. JAMA 2025;334(5):435-443, doi:10.1001/jama.2025.4486, PMID 40294593; co-published in BMJ/Lancet/Nat Med/PLOS Med). SPIRIT 2013 is superseded.
 
 **Purpose:** Ensure trial protocols contain complete descriptions before trial begins
 

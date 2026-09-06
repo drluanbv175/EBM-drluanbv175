@@ -1,10 +1,16 @@
 # Manifest
 
 - Tên gói: `nghien-cuu-y-khoa-chuan-quoc-te`
-- Phiên bản nội dung: 5.3
-- Ngày chỉnh sửa: 2026-07-06
+- Phiên bản nội dung: 5.4
+- Ngày chỉnh sửa: 2026-09-06
 - Ngôn ngữ: Tiếng Việt
 - Phạm vi: Nghiên cứu y khoa đa thiết kế, từ G0 đến G9.
+
+## Thay đổi của bản 5.4 (2026-09-06)
+
+1. `templates/01_mau_de_cuong_tong_the.md` nâng **16 → 18 mục cấp 1**: thêm **§3 Tổng quan tài liệu và khung lý thuyết** (hội đồng trong nước và SPIRIT 2025 "Background and rationale" đều đòi; khung lý thuyết/mô hình khái niệm bắt buộc với đề tài HSR/hành vi/định tính) và **§13 Dự kiến kết quả và khung bảng trống** (quy ước đề cương trong nước; không số liệu — luật R6). Mục cũ "Sai lệch và kiểm soát" thành **§14 Sai lệch, hạn chế và kiểm soát** (thêm phạm vi/hạn chế dự kiến). Toàn bộ tham chiếu "xem mục N" trong template đã đánh số lại; khối kiểm soát nhắc Danh mục chữ viết tắt + Mục lục.
+2. Canon máy đọc (`tools/skill_standards.py` của repo y khoa) đồng bộ: `DE_CUONG_SECTIONS` 18 mục, `PROTOCOL_CORE_ITEMS` 20 → 23 (P21 tổng quan · P22 khung lý thuyết · P23 dự kiến kết quả — mã P chỉ thêm cuối, không đánh số lại). G10 lắp ráp lấy số mục qua `de_cuong_heading()`, validator R1/R14 đọc số từ canon. Xem `CHANGELOG_V10.md`.
+3. Lý do có thật (đo trên đề tài C1a): bản đề cương viết tay đã có đủ Tổng quan/khung lý thuyết/dự kiến kết quả, bản G10 lắp ráp theo khuôn 16 mục thì không — hai bản "sống" song song, đúng thứ khối kiểm soát của chính template này cảnh báo.
 
 ## Thay đổi của bản 5.3 (2026-07-06)
 

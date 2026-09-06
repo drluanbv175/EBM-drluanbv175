@@ -71,6 +71,10 @@
 !/.claude/hooks/
 # 3b) .claude/agents/.claude/ là thư mục rác thừa kế (sessions/state cũ), không phải nội dung agent
 /.claude/agents/.claude/
+# 3c) Cùng loại rác nhưng nằm TRONG cây skill (06/09/2026: sync/skills/nghien-cuu-y-khoa-chuan-quoc-te/
+#     .claude/state/*.jsonl do phiên làm việc sinh ra). Quy tắc /.claude/* ở trên chỉ áp cho GỐC,
+#     nên thư mục lồng phải khai riêng — state phiên là runtime từng máy, không phải nội dung skill.
+sync/skills/**/.claude/
 
 # 4) Bên trong sync/: track skills/ + HẠ TẦNG CÀI ĐẶT CHO MÁY KIA.
 #    Loại trừ đúng một thứ: memory/ (bộ nhớ cá nhân, đi riêng qua OneDrive).

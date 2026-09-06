@@ -2327,4 +2327,92 @@ thêm nhưng bản sống KHÔNG có") · mẫu cập nhật chứng cứ (5 das
 · tầng agent doctrine (74/74 bài học BH01-74 không tái phát, 0 tham chiếu hỏng, mọi phân công
 công cụ khớp đúng bảng phân công đã ghi ở các mục trên).
 
+## 📐 KHUÔN ĐỀ CƯƠNG 16→18 MỤC · CHECKLIST SPIRIT 2025 · MỤC LỤC .docx (06/09/2026)
+
+> Bác sĩ đưa một infographic hướng dẫn viết luận văn (ResWay) và hỏi *«cấu trúc đề cương của hệ
+> đã theo chuẩn tốt nhất chưa»*, sau đó yêu cầu **«đảm bảo một hệ thống với mẫu đề cương, bài báo
+> và mọi thứ đạt chuẩn»**. Đo trước khi sửa: khuôn G10 mạnh hơn hẳn infographic ở phần phương
+> pháp/quản trị, nhưng **thiếu bốn thứ mà mọi hội đồng đều đòi** — và đó là việc thật, không phải
+> ý kiến về thẩm mỹ.
+
+**(A) Khuôn đề cương 16 → 18 mục, thành phần lõi 20 → 23.** Thêm **§3 Tổng quan tài liệu và
+khung lý thuyết** và **§13 Dự kiến kết quả và khung bảng trống** (dummy tables, KHÔNG số liệu —
+§13 tự nhắc luật R6). Ba thành phần lõi mới: **P21** tổng quan/đồng thuận/bất đồng · **P22** khung
+lý thuyết *(hoặc nêu rõ không áp dụng, có lý do — «không áp dụng» là câu trả lời hợp lệ)* · **P23**
+dự kiến kết quả + bảng trống; **P16** đổi tên thành «Sai lệch, hạn chế dự kiến và biện pháp giảm
+thiểu». Thêm **danh mục chữ viết tắt** và **MỤC LỤC tự động trong .docx**.
+⚠️ **Đánh số mục nay đi qua KHOÁ BỀN, không viết cứng:** `skill_standards.DE_CUONG_SECTION_KEYS` +
+`de_cuong_heading(key)`/`de_cuong_sub_heading(key, i)`. Trước đó 18 lời gọi trong `run_g10_assemble.py`
+đều viết cứng `"# 8. Cỡ mẫu"` — chèn một mục ở giữa là lệch số ở mọi nơi tiêu thụ, im lặng. Chốt
+`test_h1_sequence_equals_canon_exactly` so DÃY H1 của đề cương lắp ráp với canon, không đếm chuỗi.
+
+**(B) `check_de_cuong` R1/R14 hết viết cứng số, thêm R18.** R1 đổi khoá từ `R1_16_sections` sang
+`R1_sections` (khoá cũ khai con số vào TÊN — sửa khuôn là khoá nói dối). R18 kiểm bảng checklist
+theo từng mục, **CHỈ CẢNH BÁO không chặn**: đề cương lắp trước 06/09 chưa có bảng, nội dung không
+vì thế sai (BH08).
+
+**(C) `tools/protocol_checklist_items.py` — danh mục SPIRIT 2025 nguyên văn, SINH TỰ ĐỘNG.**
+34 mục / **53 dòng**, tiếng Anh nguyên văn, trích bằng script từ toàn văn PMC bài **Explanation &
+Elaboration** chính thức (BMJ 2025, doi:10.1136/bmj-2024-081660 · PMID **40294956** · PMC12128891);
+statement: Chan AW và cs., JAMA 2025;334(5):435-443, doi:10.1001/jama.2025.4486 · PMID **40294593**.
+**Không gõ tay, không dịch** (dịch một dòng checklist là sửa chuẩn). G10 in bảng cho RCT kèm cột «vị
+trí gợi ý» — nói rõ đó là DIỄN GIẢI của hệ, và **G10 không tự tick dòng nào**.
+🔴 **PRISMA-P 2015 (17 mục/26 dòng): CHƯA có, và đây là trạng thái TRUNG THỰC.** Toàn văn PMC của
+statement (PMC4320440) **rụng bảng checklist**, bài E&E (PMID 25555855) không có bản PMC, còn
+`prisma-statement.org` và `equator-network.org` đều **bị chặn egress** ở phiên cloud. Thiết kế SR/MA
+vì thế nhận một dòng nói thẳng «kho CHƯA có danh mục item, điền từ bản gốc — KHÔNG dùng danh mục tự
+nhớ». Bịa 17 mục từ trí nhớ là đúng thứ doctrine cấm.
+⚠️ **Chính test bắt được một lỗi tôi vừa tạo:** bản đầu khoá lý do PRISMA-P theo **bí danh** `sr_ma`,
+trong khi G10 chuẩn hoá mã về `systematic_review` TRƯỚC khi tra ⇒ nhánh đó **không bao giờ chạy tới**,
+gói SR nhận nhầm câu «thiết kế này không có checklist». Nay mọi tra cứu đi qua
+`canonical_design_code()` và có `assert` khoá của cả hai bảng phải là mã canon. Cùng họ «hai module
+viết cho nhau mà chưa từng nối» của lỗi `PREVALENCE` 31/07.
+
+**(D) MỤC LỤC .docx — và một lỗi ĂN MẤT trường Word do bộ làm sạch 01/09.** `md2docx_vn._add_toc()`
+chèn trường `TOC \o "1-3"` + bật `w:updateFields` (Word tự dựng khi mở), chỉ cho tài liệu CÓ trang
+bìa. Khi thêm mới lộ ra: `chuan_trinh_bay.lam_sach_tai_lieu` gán `run.text` cho **MỌI** run, mà
+setter của python-docx **DỰNG LẠI run** — xoá sạch `fldChar`/`instrText` ⇒ trường Mục lục biến mất
+ngay sau khi vừa chèn. Trường số trang ở footer sống sót **chỉ vì** bộ làm sạch không quét footer.
+Nay bộ làm sạch bỏ qua run mang mã trường và chỉ gán khi văn bản THẬT SỰ đổi.
+
+**(E) Cảnh báo glyph .docx từng mô tả bản THÔ, không mô tả file người đọc mở.** Mỗi lần lắp đề cương
+C1a đều in «còn '🚧' (U+1F6A7) x1» trong khi .docx cuối chỉ có «[Đang dừng]» — bộ làm sạch đã đổi
+trước khi lưu. Nhưng **im hẳn cũng sai**, vì chốt 03/08 sinh ra để người soạn biết nguồn Markdown có
+ký tự font không có. Nay **tách hai bộ đếm**: còn trong file cuối ⇒ **CẢNH BÁO** (như cũ) · đã được
+đổi/gỡ trước khi lưu ⇒ **GHI CHÚ**, không phải lỗi. Chốt 03/08 (`test_md2docx_glyph_safety_20260803`)
+**vẫn xanh nguyên** — sửa báo động giả mà làm câm một chốt an toàn thì không phải sửa.
+
+**(F) Đo SAP 12 mục so với SPIRIT 2025 — CHỈ ĐO, không đổi cấu trúc đã ký.** SAP của
+`run_g4_auto.py` (§1 quần thể · §2 kết cục · §3 mô tả · §4 phân tích chính · §5 đa biến · §6 dữ liệu
+thiếu · §7 nhóm nhỏ · §8 đa so sánh · §9 độ nhạy · §10 phần mềm+seed · §11 dummy tables · §12
+alpha+power) **phủ đủ SPIRIT 27a-d cho nghiên cứu quan sát**. Với **RCT** còn bốn khoảng trống đo
+được bằng grep trên chính file đó (**0 lần** nhắc): **28b** phân tích giữa kỳ + quy tắc dừng ·
+**28a** hội đồng theo dõi dữ liệu (DMC) hoặc lý do không cần · **17** cách ĐỊNH NGHĨA và đánh giá
+tổn hại (§2 mới chỉ có một dòng «Kết cục an toàn: [CẦN]») · **15b/15c** ngừng/đổi can thiệp và tuân
+thủ. Trớ trêu: bảng gợi ý vị trí của chính module SPIRIT trỏ **28b → §12**, mà §12 chỉ có alpha/power.
+⚠️ **KHÔNG tự sửa.** SAP là tài liệu **được KÝ và KHOÁ** ở G4, và `G4-AUTO-03` đọc **§12 bằng regex**
+— đánh số lại là làm vỡ cổng đang chạy. Đề xuất để bác sĩ/thống kê viên quyết: thêm **§13–§15 CÓ
+ĐIỀU KIỆN, chỉ cho RCT, nối SAU §12** (giữ nguyên số cũ). Chưa làm gì thêm.
+📌 Cũng chưa làm, chờ bác sĩ: mục riêng **«Can thiệp và đối chứng»** cho RCT (SPIRIT 15a–15d hiện gộp
+vào §6 Thiết kế).
+
+**(G) Đề tài THẬT C1a đã lắp lại và vẫn sạch:** 18/18 mục · **P01–P23** · R1–R17 PASS ·
+R18 = `N/A` (cắt ngang — thiết kế quan sát **không có** checklist đề cương theo mục, STROBE là chuẩn
+BÁO CÁO; nói «N/A» là sự thật, không phải thiếu sót) · `verify_exports_integrity` sạch · .docx có
+Mục lục · **hết cảnh báo glyph giả**. `STUDY_INDEX.md` tự làm mới theo checkpoint THẬT nên vài dòng
+đổi trạng thái — đó là bản trên đĩa sinh ngày 01/09 đã **lạc hậu so với mã master vừa hợp nhất**,
+không phải thay đổi nội dung khoa học.
+
+**Kiểm đột biến (7 phép, đều đỏ đúng chỗ rồi phục hồi xanh):** viết cứng số mục ở builder · bỏ mục
+mới khỏi `SECTION_BUILDERS` · bỏ rào run-mang-mã-trường · R18 không bao giờ cảnh báo · bỏ yêu cầu
+D17 · bỏ chuẩn hoá bí danh thiết kế · ghi nhận glyph trên bản thô.
+⚠️ **Phép đầu tiên KHÔNG bắt được ở lượt đầu** — tôi chỉ đột biến MỘT trong HAI nhánh `return` của
+`sec_comau`, mà fixture đi nhánh còn lại. *Một đột biến không bị bắt có thể là lỗi của phép thử, chứ
+chưa chắc là bằng chứng chốt yếu* — làm lại trên đúng nhánh thì đỏ ngay.
+
+🔎 **Một báo động giả của chính tôi, ghi lại để không lặp:** grep bằng từ khoá tự đoán khiến tôi kết
+luận bản thảo G7 **thiếu** khai báo AI và tính có sẵn dữ liệu (đếm 0/0). Đọc lại khối «KHAI BÁO» thật
+thì cả hai **đã có sẵn**, và regex `_AI_TOOL_NAME_RE` của G8 nhận đúng câu mặc định. *Đếm 0 bằng từ
+khoá sai là bằng chứng về từ khoá, không phải về hệ thống.*
+
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
