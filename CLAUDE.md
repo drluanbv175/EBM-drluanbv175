@@ -2390,10 +2390,24 @@ alpha+power) **phủ đủ SPIRIT 27a-d cho nghiên cứu quan sát**. Với **R
 **28a** hội đồng theo dõi dữ liệu (DMC) hoặc lý do không cần · **17** cách ĐỊNH NGHĨA và đánh giá
 tổn hại (§2 mới chỉ có một dòng «Kết cục an toàn: [CẦN]») · **15b/15c** ngừng/đổi can thiệp và tuân
 thủ. Trớ trêu: bảng gợi ý vị trí của chính module SPIRIT trỏ **28b → §12**, mà §12 chỉ có alpha/power.
-⚠️ **KHÔNG tự sửa.** SAP là tài liệu **được KÝ và KHOÁ** ở G4, và `G4-AUTO-03` đọc **§12 bằng regex**
-— đánh số lại là làm vỡ cổng đang chạy. Đề xuất để bác sĩ/thống kê viên quyết: thêm **§13–§15 CÓ
-ĐIỀU KIỆN, chỉ cho RCT, nối SAU §12** (giữ nguyên số cũ). Chưa làm gì thêm.
-📌 Cũng chưa làm, chờ bác sĩ: mục riêng **«Can thiệp và đối chứng»** cho RCT (SPIRIT 15a–15d hiện gộp
+⚠️ SAP là tài liệu **được KÝ và KHOÁ** ở G4, và `G4-AUTO-03` đọc **§12 bằng regex**
+— đánh số lại là làm vỡ cổng đang chạy, nên đề xuất ban đầu là §13–§15 CÓ ĐIỀU KIỆN, chỉ cho RCT,
+nối SAU §12 (giữ nguyên số cũ).
+✅ **BÁC SĨ ĐÃ DUYỆT (06/09/2026: "thêm mục 13–15 có điều kiện") — ĐÃ LÀM.** `run_g4_auto.generate()`
+nay in thêm, **CHỈ khi `design_code == "rct"`**, nối SAU §12: **§13 PHÂN TÍCH GIỮA KỲ VÀ QUY TẮC
+DỪNG** (28b) · **§14 HỘI ĐỒNG THEO DÕI DỮ LIỆU** DMC/DSMB (28a) · **§15 TỔN HẠI; NGỪNG/ĐỔI CAN
+THIỆP VÀ TUÂN THỦ** (17, 15b, 15c) — mỗi trường là placeholder `[CẦN...]` để bác sĩ/thống kê
+viên/DMC điền, không bịa nội dung. Tiêu đề "## PHẦN 3" đổi ĐỘNG theo `design_code` ("SAP 15 MỤC
+CUỐI" cho RCT, giữ nguyên "SAP 12 MỤC CUỐI" cho thiết kế khác — 0 thay đổi byte nào ở nhánh không
+phải RCT). **§13-15 CỐ Ý KHÔNG đưa vào `_G4_REQUIRED_SECTIONS`** — không đổi ngưỡng chặn ký hiện
+có; đó là quyết định RIÊNG, khác với việc chỉ "thêm mục", và chưa được yêu cầu.
+Kiểm hồi quy: `tests/test_sap_13_15_rct_conditional_20260906.py` (9 test) khoá 4 việc — RCT nhận đủ
+3 mục kèm trích SPIRIT · thiết kế khác giữ nguyên như cũ · biên §12 (đọc bằng regex ở
+`g4_quality_gate._section_body`/`parse_signed_numbers`) không bị lệch · chốt gác trước-ký
+(`approve_gate._g4_sections_still_draft`, chỉ §1/§2/§5/§10) không đổi hành vi. 3 phép đột biến (bỏ
+điều kiện RCT · xoá §14 · chèn khối trước §12 thay vì sau) đều đỏ đúng chỗ rồi phục hồi xanh; 101
+test G4/ledger liên quan không hồi quy. Đề tài C1a là `cross_sectional`, không bị ảnh hưởng.
+📌 Vẫn chưa làm, chờ bác sĩ: mục riêng **«Can thiệp và đối chứng»** cho RCT (SPIRIT 15a–15d hiện gộp
 vào §6 Thiết kế).
 
 **(G) Đề tài THẬT C1a đã lắp lại và vẫn sạch:** 18/18 mục · **P01–P23** · R1–R17 PASS ·
