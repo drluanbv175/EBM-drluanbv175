@@ -88,11 +88,25 @@ def dich_cua(p: Path) -> Path | None:
 
 
 def tro_dung(p: Path, nguon: Path) -> bool:
-    """Liên kết p có đang trỏ đúng vào nguon không (so sau khi giải đường dẫn)."""
+    """Liên kết p có đang trỏ đúng vào nguon không.
+
+    Ưu tiên ``os.path.samefile`` — so bằng định danh file thật (inode trên
+    POSIX, file ID qua GetFileInformationByHandle trên Windows), KHÔNG so
+    chuỗi hai ``Path.resolve()`` độc lập. Đã đo thật trên GitHub Actions
+    windows-latest (06/09/2026): cùng một thư mục tồn tại, hai lần resolve()
+    độc lập (một lần trong hàm này, một lần ở nơi gọi) có thể ra hai chuỗi
+    KHÁC NHAU (một bên có tiền tố đường dẫn mở rộng ``\\\\?\\``, một bên
+    không) — so chuỗi báo sai KHÔNG khớp dù liên kết trỏ ĐÚNG. Nguy cơ này
+    không chỉ riêng CI: OneDrive cũng dựng file placeholder bằng reparse
+    point, cùng cơ chế gây lệch chuỗi. Lùi về so chuỗi khi một trong hai
+    đường dẫn không tồn tại (liên kết treo — ``samefile`` sẽ ném lỗi).
+    """
     dich = dich_cua(p)
     if dich is None:
         return False
     try:
+        if dich.exists() and nguon.exists():
+            return os.path.samefile(dich, nguon)
         return dich == nguon.resolve()
     except OSError:
         return False
