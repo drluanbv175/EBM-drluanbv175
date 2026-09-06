@@ -2481,4 +2481,21 @@ giả thuyết ban đầu về NGUYÊN NHÂN của một bug — dù bug đó c�
 phép đột biến kiểm chứng lại trước khi ghi vào tài liệu, vì "nó FAIL đúng chỗ tôi sửa" không tự động
 suy ra "lý do tôi nghĩ là đúng".*
 
+**(J) Khoảng "còn treo" của (H) đã đóng — SAP §1 nay trỏ NGƯỢC sang đề cương §6.2 (06/09/2026,
+bác sĩ theo dõi "Điền phần Can thiệp và đối chứng").** Sau khi (H) đưa TIDieR/ngẫu nhiên hoá/làm
+mù vào đề cương, `run_g4_auto.generate()` §1 QUẦN THỂ PHÂN TÍCH vẫn chỉ ghi nhãn quần thể
+("Nhóm can thiệp vs nhóm chứng") mà không mô tả can thiệp LÀ GÌ — đúng khoảng trống tôi tự ghi
+lại là "chưa làm" ở cuối mục (H). **Không nhân đôi nội dung** (SAP là tài liệu thống kê, không
+phải nơi mô tả lâm sàng, và hai chỗ cùng một sự thật sẽ lệch nhau khi sửa một bên — đúng lý do
+15b/15c ở §13-15 chỉ trỏ sang §1, không lặp): thêm **một dòng tham chiếu tĩnh**, CHỈ RCT, ngay
+sau "Quần thể chính" — *"Mô tả can thiệp/đối chứng (TIDieR): xem đề cương thống nhất §6.2 …"*.
+Dòng này KHÔNG mang nhãn `[CẦN...]` nên không đổi danh sách "còn thiếu" của `_g4_sections_still_draft`
+và không chạm biên §12 mà `g4_quality_gate._section_body`/`parse_signed_numbers` đọc bằng regex.
+Kiểm hồi quy: thêm lớp `TestSection1PointsToProtocolIntervention` (4 test) vào
+`tests/test_sap_13_15_rct_conditional_20260906.py` — RCT có dòng tham chiếu đúng "§6.2"/"TIDieR" ·
+thiết kế khác không có · §1 vẫn bị `_g4_sections_still_draft` gắn cờ vì "Tiêu chí nhận/loại" còn
+`[CẦN]` (dòng mới không vô tình làm §1 "biến mất" khỏi danh sách còn thiếu) · biên §12 không lệch.
+2 phép đột biến (bỏ điều kiện RCT-only · gõ sai "§6.2"→"§6.9") đều đỏ đúng test tương ứng rồi phục
+hồi xanh. Toàn repo `pytest` không hồi quy.
+
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ để tham chiếu)._
