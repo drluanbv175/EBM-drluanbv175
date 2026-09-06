@@ -273,7 +273,8 @@ GRADE (Grading of Recommendations Assessment, Development and Evaluation) assess
 - Newcastle-Ottawa Scale
 
 **Diagnostic Studies:**
-- QUADAS-2 (Quality Assessment of Diagnostic Accuracy Studies)
+- QUADAS-3 v1.2 (Quality Assessment of Diagnostic Accuracy Studies — current standard)
+- Legacy: QUADAS-2 (historical; prefer QUADAS-3 v1.2 for new reviews)
 
 **Systematic Reviews:**
 - PRISMA 2020 checklist (reporting standard for systematic reviews)

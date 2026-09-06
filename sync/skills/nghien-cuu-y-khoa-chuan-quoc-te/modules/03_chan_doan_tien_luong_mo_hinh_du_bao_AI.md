@@ -9,7 +9,7 @@ Dùng STARD cho báo cáo. Xác định:
 - Blinding giữa index test và reference standard.
 - Sensitivity, specificity, likelihood ratios, predictive values với CI.
 - Indeterminate/missing results và flow.
-- Nguy cơ sai lệch/áp dụng: QUADAS-2 khi thẩm định hoặc tổng hợp.
+- Nguy cơ sai lệch/áp dụng: QUADAS-3 v1.2 khi thẩm định hoặc tổng hợp (QUADAS-2 chỉ để đọc nghiên cứu lịch sử).
 
 ## 2. Mô hình dự báo/tiên lượng
 

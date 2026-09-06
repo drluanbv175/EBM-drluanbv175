@@ -157,7 +157,7 @@ Chỉ số đặc thù phải trích đúng nguồn; không tự gán GRADE; kh�
 | 16 | `references/16_cham_soc_giam_nhe.md` | Bệnh nặng/giai đoạn cuối — kiểm soát triệu chứng, thảo luận mục tiêu chăm sóc |
 | 17 | `references/17_tram_cam_lo_au.md` | Nghi trầm cảm/lo âu — sàng lọc PHQ-9/GAD-7, chăm sóc theo bậc (stepped care) |
 | 18 | `references/18_quan_ly_khang_dong.md` | Rung nhĩ/VTE/van cơ học cần kháng đông — chọn thuốc, chỉnh liều DOAC, bắc cầu quanh thủ thuật |
-| 19 | `references/19_tham_dinh_do_chinh_xac_chan_doan.md` | Câu hỏi về ĐỘ TIN CẬY của một xét nghiệm/test chẩn đoán (QUADAS-2, Se/Sp/LR có vững không) |
+| 19 | `references/19_tham_dinh_do_chinh_xac_chan_doan.md` | Câu hỏi về ĐỘ TIN CẬY của một xét nghiệm/test chẩn đoán (QUADAS-3 v1.2, Se/Sp/LR có vững không) |
 
 ## 8. Nối tiếp sang skill khác (gợi ý, hỏi bác sĩ trước)
 

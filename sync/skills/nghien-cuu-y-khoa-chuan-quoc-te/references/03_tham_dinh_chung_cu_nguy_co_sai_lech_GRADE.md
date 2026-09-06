@@ -30,7 +30,7 @@ Dùng khi:
 |---|---|
 | RCT | Cochrane RoB 2 |
 | Can thiệp không ngẫu nhiên | ROBINS-I, kiểm tra phiên bản hiện hành |
-| Chẩn đoán | QUADAS-2 hoặc công cụ cập nhật phù hợp |
+| Chẩn đoán | QUADAS-3 v1.2 (QUADAS-2 chỉ để đọc nghiên cứu lịch sử) |
 | Mô hình dự báo/AI | PROBAST+AI |
 | Systematic review | ROBIS/AMSTAR 2 tùy mục đích |
 | Nghiên cứu định tính | Công cụ thẩm định phù hợp mục tiêu và truyền thống phương pháp |
