@@ -117,7 +117,7 @@
 ## 14. Sai lệch, hạn chế và kiểm soát
 *Hướng dẫn:* liệt kê có hệ thống theo 3 nhóm — sai lệch lựa chọn (selection bias), sai lệch thông tin (đo lường/phân loại/hồi tưởng/người đánh giá), yếu tố gây nhiễu (confounding) — mỗi loại nêu biện pháp phòng ngừa cụ thể từ khâu thiết kế (chuẩn hóa quy trình đo, làm mù người đánh giá, phân tầng/hiệu chỉnh đa biến, phân tích nhạy). Tránh viết chung chung kiểu "sẽ kiểm soát bằng thống kê" hay "sẽ cố gắng hạn chế sai lệch" mà không kèm biện pháp cụ thể — hội đồng thẩm định thường yêu cầu bổ sung ngay ở mục này.
 - Thiên lệch phần-toàn thể (khi kết cục tính từ các mục chồng lấn nội dung với biến phơi nhiễm) nêu tường minh ở đây, tham chiếu lại quyết định đã khóa ở mục 8.
-- Nếu RCT/can thiệp: thêm sai lệch do làm mù/phân bổ; chọn công cụ đánh giá nguy cơ sai lệch phù hợp thiết kế (RoB 2 cho RCT, ROBINS-I cho quan sát, QUADAS-2 cho nghiên cứu chẩn đoán...).
+- Nếu RCT/can thiệp: thêm sai lệch do làm mù/phân bổ; chọn công cụ đánh giá nguy cơ sai lệch phù hợp thiết kế (RoB 2 cho RCT, ROBINS-I cho quan sát, QUADAS-3 v1.2 cho nghiên cứu chẩn đoán — QUADAS-2 chỉ để đọc nghiên cứu lịch sử...).
 - **Phạm vi và hạn chế dự kiến:** nêu rõ giới hạn ngoại suy (một trung tâm, cắt ngang không suy diễn nhân quả, đo tự báo cáo, cỡ mẫu chỉ đủ cho kết cục chính…) và những câu hỏi đề tài KHÔNG trả lời — hội đồng đọc mục này để đối chiếu với câu kết luận sau này; kết luận sau khi có dữ liệu không được vượt quá phạm vi đã khai ở đây.
 
 ## 15. Đạo đức nghiên cứu

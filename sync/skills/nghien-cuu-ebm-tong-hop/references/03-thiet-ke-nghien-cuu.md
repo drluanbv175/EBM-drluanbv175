@@ -12,7 +12,7 @@ sample-size-and-power-planning-assistant, feasibility-aware-study-planner, valid
 ## 2. Chọn loại thiết kế (theo câu hỏi)
 - Hiệu quả can thiệp → RCT (nếu khả thi/đạo đức) hoặc real-world/quan sát có kiểm soát nhiễu.
 - Tiên lượng/yếu tố nguy cơ → cohort. Bệnh hiếm/kết cục hiếm → case-control. Tần suất → cắt ngang.
-- Chẩn đoán → nghiên cứu độ chính xác (so với chuẩn vàng, QUADAS-2).
+- Chẩn đoán → nghiên cứu độ chính xác (so với chuẩn vàng, QUADAS-3 v1.2; QUADAS-2 chỉ để đọc nghiên cứu lịch sử).
 
 ## 3. Tiêu chí chọn/loại
 - Chọn: định nghĩa rõ dân số đích, chẩn đoán xác định, dải tuổi, mốc thời gian.

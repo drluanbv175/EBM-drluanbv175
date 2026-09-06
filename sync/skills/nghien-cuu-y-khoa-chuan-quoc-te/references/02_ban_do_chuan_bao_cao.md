@@ -11,11 +11,11 @@ Reporting guidelines giúp mô tả nghiên cứu đầy đủ và minh bạch; 
 | Dữ liệu bệnh án/HIS/EMR/registry | Protocol và data extraction plan | STROBE + RECORD | Mô tả thuật toán chọn ca, mã hóa, linkage và validation |
 | RCT/thử nghiệm ngẫu nhiên | SPIRIT 2025; đăng ký trial trước tuyển mẫu; ICH GCP nếu áp dụng | CONSORT 2025 + extension thích hợp | TIDieR cho mô tả can thiệp; harms; pragmatic/pilot/cluster/AI extension nếu phù hợp |
 | Can thiệp không ngẫu nhiên | Protocol định trước | TREND hoặc chuẩn phù hợp; STROBE nếu quan sát | ROBINS-I; mô tả can thiệp |
-| Độ chính xác chẩn đoán | Protocol định trước/đăng ký nếu thích hợp | STARD | QUADAS-2/QUADAS-C khi tổng hợp hoặc đánh giá sai lệch |
+| Độ chính xác chẩn đoán | Protocol định trước/đăng ký nếu thích hợp | STARD | QUADAS-3 v1.2/QUADAS-C khi tổng hợp hoặc đánh giá sai lệch (QUADAS-2 chỉ để đọc nghiên cứu lịch sử) |
 | Mô hình dự báo/tiên lượng/diagnostic prediction | Protocol + SAP; đăng ký nếu phù hợp | TRIPOD+AI (áp dụng cho hồi quy hoặc ML theo phạm vi statement) | PROBAST+AI; calibration, discrimination, clinical utility |
-| Systematic review/meta-analysis | PRISMA-P; PROSPERO/OSF nếu phù hợp | PRISMA 2020 và extension | RoB 2/ROBINS-I/QUADAS-2/AMSTAR 2/ROBIS; GRADE cho certainty |
+| Systematic review/meta-analysis | PRISMA-P; PROSPERO/OSF nếu phù hợp | PRISMA 2020 và extension | RoB 2/ROBINS-I/QUADAS-3 v1.2/AMSTAR 2/ROBIS; QUADAS-2 chỉ để đọc nghiên cứu lịch sử; GRADE cho certainty |
 | Scoping review | Protocol định trước/OSF nếu phù hợp | PRISMA-ScR | JBI methods nếu áp dụng |
-| Tổng quan độ chính xác chẩn đoán | Protocol/PROSPERO nếu phù hợp | PRISMA-DTA | QUADAS-2; GRADE-DTA nếu áp dụng |
+| Tổng quan độ chính xác chẩn đoán | Protocol/PROSPERO nếu phù hợp | PRISMA-DTA | QUADAS-3 v1.2 (QUADAS-2 chỉ để đọc nghiên cứu lịch sử); GRADE-DTA nếu áp dụng |
 | Nghiên cứu định tính | Protocol/reflexivity plan | COREQ cho phỏng vấn/focus group; SRQR rộng hơn | Audit trail, reflexivity, saturation/information power |
 | Mixed methods | Protocol tích hợp | Chuẩn từng nhánh + hướng dẫn mixed-method phù hợp | Integration/joint display |
 | Cải tiến chất lượng | Charter/PDSA/logic model | SQUIRE 2.0 | Run/SPC charts, context, sustainability |

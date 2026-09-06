@@ -390,7 +390,7 @@ Peer review ensures that clinical manuscripts meet standards for scientific rigo
 - Appropriate quality assessment tool used
   - RCTs: Cochrane Risk of Bias tool
   - Observational: Newcastle-Ottawa Scale
-  - Diagnostic: QUADAS-2
+  - Diagnostic: QUADAS-3 v1.2 (QUADAS-2: legacy)
 - Independent quality assessment
 - Results of quality assessment reported
 - Quality incorporated into synthesis

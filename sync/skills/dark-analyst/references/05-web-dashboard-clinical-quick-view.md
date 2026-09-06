@@ -69,7 +69,7 @@ Trường cốt lõi:
 ## Hành vi giao diện
 
 - Tab mặc định là `Clinical Quick View` (cột giữa), có băng tóm tắt cố định phía trên.
-- Tab `Chuẩn & chất lượng` bắt buộc có để rà PICO/PECO/PIRD/PROGRESS, nguồn tìm kiếm, CONSORT/STROBE/PRISMA/STARD/TRIPOD, AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-2/PROBAST/JBI, trạng thái `verify_dashboard.py --online --strict-sources` và truy nguyên từng item.
+- Tab `Chuẩn & chất lượng` bắt buộc có để rà PICO/PECO/PIRD/PROGRESS, nguồn tìm kiếm, CONSORT/STROBE/PRISMA/STARD/TRIPOD, AGREE II/AMSTAR 2/RoB 2/ROBINS-I/QUADAS-3 v1.2/PROBAST/JBI (QUADAS-2 chỉ để đọc nghiên cứu lịch sử), trạng thái `verify_dashboard.py --online --strict-sources` và truy nguyên từng item.
 - Bộ lọc facet (cột trái) theo Quyết định / Nhóm đặc biệt / Thiết kế / Mức chứng cứ, có số đếm.
 - Tìm kiếm toàn cục hoạt động trên tình huống, thuốc, hành động, nhóm nguy cơ và nguồn.
 - Click một dòng `ITEM-xx` → mở panel `Evidence Detail View` ở cột phải.

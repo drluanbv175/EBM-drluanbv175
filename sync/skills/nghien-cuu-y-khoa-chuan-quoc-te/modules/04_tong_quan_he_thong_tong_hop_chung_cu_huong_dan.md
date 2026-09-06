@@ -9,7 +9,7 @@
 
 ## B. Risk of bias và certainty
 
-- Chọn công cụ phù hợp loại nghiên cứu: RoB 2, ROBINS-I, QUADAS-2, PROBAST+AI, ROBIS/AMSTAR 2.
+- Chọn công cụ phù hợp loại nghiên cứu: RoB 2, ROBINS-I, QUADAS-3 v1.2 (QUADAS-2 chỉ để đọc nghiên cứu lịch sử), PROBAST+AI, ROBIS/AMSTAR 2.
 - Dùng GRADE để đánh giá certainty theo kết cục khi thích hợp.
 - Tạo Summary of Findings khi phù hợp.
 - Không tự biến systematic review thành khuyến cáo nếu chưa có quy trình Evidence-to-Decision.

@@ -1,6 +1,6 @@
 # Thẩm định GRADE + NNT/NNH
 
-*Đọc file này khi ca lâm sàng đang bàn cần: chấm độ tin cậy chứng cứ (GRADE) cho một/nhiều nghiên cứu đã có, tính ARR/NNT/NNH để lượng hóa lợi ích–tác hại, đánh giá nguy cơ sai lệch (RoB 2 / ROBINS-I / ROBINS-E / AMSTAR-2 / QUADAS-2) theo đúng thiết kế nghiên cứu, hoặc dựng khối Evidence-to-Decision (EtD) trước khi đề xuất áp dụng cho bệnh nhân — ví dụ câu hỏi "bài này đáng tin không", "NNT/NNH bao nhiêu", "nguy cơ sai lệch của nghiên cứu này thế nào", "GRADE mức nào", "kết quả có ý nghĩa thống kê hay ý nghĩa lâm sàng".*
+*Đọc file này khi ca lâm sàng đang bàn cần: chấm độ tin cậy chứng cứ (GRADE) cho một/nhiều nghiên cứu đã có, tính ARR/NNT/NNH để lượng hóa lợi ích–tác hại, đánh giá nguy cơ sai lệch (RoB 2 / ROBINS-I / ROBINS-E / AMSTAR-2 / QUADAS-3 v1.2 — QUADAS-2 chỉ để đọc nghiên cứu lịch sử) theo đúng thiết kế nghiên cứu, hoặc dựng khối Evidence-to-Decision (EtD) trước khi đề xuất áp dụng cho bệnh nhân — ví dụ câu hỏi "bài này đáng tin không", "NNT/NNH bao nhiêu", "nguy cơ sai lệch của nghiên cứu này thế nào", "GRADE mức nào", "kết quả có ý nghĩa thống kê hay ý nghĩa lâm sàng".*
 
 ## Mục tiêu
 
@@ -24,7 +24,7 @@ Câu hỏi PICO + (các) nguồn nghiên cứu đã có sẵn từ bước tìm 
 | Quan sát về CAN THIỆP (NRSI/cohort điều trị) | **ROBINS-I** — ưu tiên bản **V2** (vẫn là DRAFT, bản sửa đổi mới nhất 20/11/2025 theo riskofbias.info, hiện CHỈ phủ thiết kế cohort/theo dõi); quan sát khác cohort dùng ROBINS-I gốc (Sterne JA et al., BMJ 2016;355:i4919) |
 | Quan sát về PHƠI NHIỄM/nguyên nhân | **ROBINS-E** |
 | Tổng quan hệ thống | **AMSTAR-2** |
-| Độ chính xác chẩn đoán | **QUADAS-2** |
+| Độ chính xác chẩn đoán | **QUADAS-3 v1.2** (QUADAS-2 chỉ cho nghiên cứu lịch sử) |
 
 ### 2.2 GRADE theo từng kết cục quan trọng — GỌI CÔNG CỤ (không tự cộng/trừ bậc bằng tay)
 
@@ -54,7 +54,7 @@ python medical-ebm-automation/tools/clinical_calc.py grade --design <rct|observa
     [--json]
 ```
 
-**Câu hỏi chẩn đoán/test** → dùng `--design dta`: khởi điểm CAO (giống RCT, KHÔNG phải thấp như "observational") — xác minh qua Schünemann HJ et al., "GRADE guidelines: 21 part 1", J Clin Epidemiol 2020;122:129-141, PMID 32060007 (nghiên cứu cắt ngang/đoàn hệ so sánh trực tiếp index test với reference standard "start as high certainty"). `risk_of_bias` chấm bằng **QUADAS-2** (không phải RoB 2); KHÔNG áp yếu tố nâng bậc quan sát (large_effect/dose_response/confounding — GRADE-DTA không định nghĩa các yếu tố này). Trình bày kèm khung đầy đủ Schünemann 21 phần 1+2 (PMID 32060007 + 32058069) khi cần diễn giải sâu hơn kết quả công cụ.
+**Câu hỏi chẩn đoán/test** → dùng `--design dta`: khởi điểm CAO (giống RCT, KHÔNG phải thấp như "observational") — xác minh qua Schünemann HJ et al., "GRADE guidelines: 21 part 1", J Clin Epidemiol 2020;122:129-141, PMID 32060007 (nghiên cứu cắt ngang/đoàn hệ so sánh trực tiếp index test với reference standard "start as high certainty"). `risk_of_bias` chấm bằng **QUADAS-3 v1.2** (QUADAS-2 chỉ để đọc nghiên cứu lịch sử; không phải RoB 2); KHÔNG áp yếu tố nâng bậc quan sát (large_effect/dose_response/confounding — GRADE-DTA không định nghĩa các yếu tố này). Trình bày kèm khung đầy đủ Schünemann 21 phần 1+2 (PMID 32060007 + 32058069) khi cần diễn giải sâu hơn kết quả công cụ.
 
 ### 2.3 Lượng hóa — GỌI CÔNG CỤ
 
@@ -151,7 +151,7 @@ Khi bác sĩ đưa ảnh chụp/scan bảng biểu, forest plot, bảng kết qu
 
 - KHÔNG tự bịa nguồn mới ngoài danh sách đã có sẵn cho ca này; thiếu nguồn → nói rõ và nêu cần tìm thêm trước khi chấm.
 - KHÔNG kê đơn thuốc, KHÔNG tự ghi vào sổ theo dõi bệnh nhân — đầu ra ở đây là input cho quyết định lâm sàng của bác sĩ, không phải lệnh điều trị.
-- Nếu trọng tâm câu hỏi chỉ là chất lượng PHƯƠNG PHÁP của một nghiên cứu độ chính xác chẩn đoán (Se/Sp/LR, QUADAS-2) mà chưa cần chuyển thành GRADE/quyết định lâm sàng đầy đủ, có thể dừng ở đánh giá QUADAS-2 + trình bày Se/Sp/LR, không nhất thiết phải đi hết quy trình GRADE-DTA.
+- Nếu trọng tâm câu hỏi chỉ là chất lượng PHƯƠNG PHÁP của một nghiên cứu độ chính xác chẩn đoán (Se/Sp/LR, QUADAS-3 v1.2 — QUADAS-2 chỉ để đọc nghiên cứu lịch sử) mà chưa cần chuyển thành GRADE/quyết định lâm sàng đầy đủ, có thể dừng ở đánh giá QUADAS-3 v1.2 + trình bày Se/Sp/LR, không nhất thiết phải đi hết quy trình GRADE-DTA.
 - Nếu khuyến cáo nền không có bản guideline mới nhất để đối chiếu, nêu rõ giới hạn này và gắn nhãn `[CẦN CẬP NHẬT GUIDELINE]`, không tự suy đoán mức khuyến cáo.
 
 **Cần bác sĩ kiểm chứng.**

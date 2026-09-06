@@ -66,7 +66,7 @@ BẢNG BAYES:
 Hai ngưỡng: test=[..%] · điều trị=[..%] (căn cứ/giả định: ____)
 Hậu nghiệm rơi vào: [dưới test / giữa / trên điều trị]
 → KHUYẾN NGHỊ HÀNH ĐỘNG: [trấn an+safety-netting / test ___ / điều trị]
-Độ tin cậy chỉ số (BẮT BUỘC nhận xét): [QUADAS-2 cho nghiên cứu nguồn Se/Sp/LR — có / CẦN NGUỒN] | tham số thiếu: [CẦN NGUỒN]
+Độ tin cậy chỉ số (BẮT BUỘC nhận xét): [QUADAS-3 v1.2 cho nghiên cứu nguồn Se/Sp/LR — có / CẦN NGUỒN; QUADAS-2 chỉ nếu review cũ đã khóa công cụ] | tham số thiếu: [CẦN NGUỒN]
 ```
 Kết: **"Cần bác sĩ kiểm chứng."**
 
@@ -91,6 +91,6 @@ Khi bác sĩ đưa ảnh X-quang/ECG/ảnh tổn thương: chỉ **MÔ TẢ** d�
 - Chỉ số test (Se/Sp/LR) dùng ở đây phải đã có nguồn (PMID/DOI) sẵn — việc **tìm/tra cứu** chứng cứ gốc là công việc khác, không nằm trong file này.
 - **Đọc–mô tả có hệ thống một panel xét nghiệm/ECG** là việc khác; nội dung này chỉ NHẬN kết quả đã diễn giải để áp Bayes (pretest→LR→hậu nghiệm→ngưỡng test–treat), KHÔNG tự đọc/gom panel.
 - File này **KHÔNG hướng dẫn kê đơn, KHÔNG chấm GRADE chứng cứ điều trị, KHÔNG ghi sổ theo dõi bệnh án** — đó là các bước khác trong khung 5 bước EBM.
-- File này **KHÔNG thẩm định CHẤT LƯỢNG một nghiên cứu độ chính xác chẩn đoán** (QUADAS-2/QUADAS-C/GRADE-cho-test) — đó là việc khác với việc ÁP Se/Sp/LR đã có sẵn mà file này hướng dẫn.
+- File này **KHÔNG thẩm định CHẤT LƯỢNG một nghiên cứu độ chính xác chẩn đoán** (QUADAS-3 v1.2/QUADAS-C/GRADE-cho-test; QUADAS-2 chỉ để đọc nghiên cứu lịch sử) — đó là việc khác với việc ÁP Se/Sp/LR đã có sẵn mà file này hướng dẫn.
 
 **Cần bác sĩ kiểm chứng.**
