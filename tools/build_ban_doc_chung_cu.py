@@ -64,6 +64,23 @@ def configure_utf8_stdio() -> None:
 # ───────────────────────── đọc khối DATA của dashboard ─────────────────────────
 
 
+def _tim_goc_repo(bat_dau: Path) -> Path:
+    """Tìm gốc repo bằng cách đi lên tìm thư mục có `.git` — ĐỘC LẬP với độ sâu.
+
+    File này (build_ban_doc_chung_cu.py) có HAI bản byte-identical
+    (`tools/` ở gốc và `sync/skills/cap-nhat-chung-cu-y-khoa/tools/`), nằm ở
+    hai độ sâu KHÁC NHAU so với gốc repo (1 vs 4 cấp). Một `parents[N]` cố
+    định chỉ đúng cho MỘT bản — bản kia sẽ trỏ vào đường dẫn không tồn tại
+    mà không hề báo lỗi rõ ràng cho tới khi dùng (chính là lỗi đã xảy ra:
+    bản mirror gọi `tools/tuyen_bo_do_phu.py` NGAY TRONG thư mục của chính
+    nó, trong khi tệp thật chỉ có ở `tools/` gốc repo).
+    """
+    for p in (bat_dau, *bat_dau.parents):
+        if (p / ".git").exists():
+            return p
+    return bat_dau.parents[1]  # dự phòng nếu không tìm thấy .git
+
+
 def khoi_do_phu() -> str:
     """Tuyên bố ĐỘ PHỦ NGUỒN — LÔ I PHA 4 phải hiện ở NƠI BÁC SĨ ĐỌC, không chỉ
     nằm trong reports/. Sinh sống từ data/sources.json qua tools/tuyen_bo_do_phu;
@@ -71,7 +88,7 @@ def khoi_do_phu() -> str:
     import importlib.util as _ilu
     import sys as _sys
     try:
-        duong = Path(__file__).resolve().parents[1] / "tools" / "tuyen_bo_do_phu.py"
+        duong = _tim_goc_repo(Path(__file__).resolve()) / "tools" / "tuyen_bo_do_phu.py"
         spec = _ilu.spec_from_file_location("tbdp_bd", duong)
         m = _ilu.module_from_spec(spec)
         _sys.modules["tbdp_bd"] = m
