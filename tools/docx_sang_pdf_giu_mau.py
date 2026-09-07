@@ -87,7 +87,14 @@ def tim_trinh_duyet() -> str | None:
       2) bản cài theo NGƯỜI DÙNG trên Windows (%LOCALAPPDATA%) — Chrome rất hay
          nằm ở đây khi máy không cho cài vào Program Files, như máy công sở;
       3) PATH, với đủ tên gọi của cả hai hệ (Windows dùng chrome/msedge, Unix
-         dùng chromium/google-chrome).
+         dùng chromium/google-chrome);
+      4) kho trình duyệt của Playwright (`PLAYWRIGHT_BROWSERS_PATH`) — thêm
+         07/09/2026. VÌ SAO: phiên đám mây (claude.ai/code) có sẵn Chromium
+         nhưng nằm NGOÀI PATH và ngoài mọi đường dẫn ở lớp 1-3, nên bước ⑤ báo
+         "không thấy Chrome/Edge/Chromium" ở MỌI phiên cloud dù máy có đủ. Đo
+         trực tiếp cùng ngày: in tay bằng chính binary đó ra PDF 957 KB thành
+         công ⇒ đây là lỗi DÒ TÌM, không phải thiếu năng lực. Cùng họ lỗi đã vá
+         12/08 cho Windows (dò theo đường dẫn macOS nên không bao giờ in được).
     """
     for p in TRINH_DUYET:
         if pathlib.Path(p).exists():
@@ -106,6 +113,20 @@ def tim_trinh_duyet() -> str | None:
         found = shutil.which(ten)
         if found:
             return found
+
+    # Lớp 4 — kho Playwright. Đọc biến môi trường TRƯỚC, chỉ lùi về đường dẫn mặc
+    # định của Playwright khi biến vắng mặt; glob theo bố cục thật của kho
+    # (<kho>/<chromium*>/chrome-linux/chrome, và bản headless_shell nhẹ hơn).
+    kho_pw = os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or "/opt/pw-browsers"  # da-nen: bo-qua (đường dẫn mặc định CỦA PLAYWRIGHT, không phải của một máy cụ thể; biến môi trường vẫn được ưu tiên)
+    goc = pathlib.Path(kho_pw)
+    if goc.is_dir():
+        for mau in ("chromium*/chrome-linux/chrome",
+                    "chromium*/chrome-linux/headless_shell",
+                    "chromium*/chrome-mac/Chromium.app/Contents/MacOS/Chromium",
+                    "chromium*/chrome-win/chrome.exe"):
+            for ung_vien in sorted(goc.glob(mau), reverse=True):
+                if ung_vien.exists():
+                    return str(ung_vien)
     return None
 
 
@@ -251,10 +272,21 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         nguon = pathlib.Path(tmp) / "in.html"
         nguon.write_text(html, encoding="utf-8")
-        r = subprocess.run([trinh_duyet, "--headless", "--disable-gpu",
-                            "--no-pdf-header-footer", "--print-background",
-                            f"--print-to-pdf={ra_pdf}", f"file://{nguon}"],
-                           capture_output=True, text=True, timeout=300)
+        # `--no-sandbox` CHỈ khi đang chạy bằng root (thêm 07/09/2026): Chromium từ
+        # chối khởi động dưới root nếu thiếu cờ này, và phiên đám mây chạy đúng
+        # như vậy — đo được: "Running as root without --no-sandbox is not
+        # supported", PDF không ra, mã thoát 3. CỐ Ý KHÔNG thêm vô điều kiện:
+        # trên máy Mac/Windows của bác sĩ (không phải root) sandbox vẫn nguyên,
+        # nên bản vá cho cloud không được phép hạ mức an toàn của máy thật.
+        # `getattr` vì Windows không có `geteuid` — bài học 12/08: gọi thẳng
+        # `os.getuid()` từng làm chết cả một chốt trên Windows.
+        lenh = [trinh_duyet, "--headless", "--disable-gpu",
+                "--no-pdf-header-footer", "--print-background"]
+        _euid = getattr(os, "geteuid", None)
+        if _euid is not None and _euid() == 0:
+            lenh.append("--no-sandbox")
+        lenh += [f"--print-to-pdf={ra_pdf}", f"file://{nguon}"]
+        r = subprocess.run(lenh, capture_output=True, text=True, timeout=300)
     if not ra_pdf.exists():
         print(f"✗ không in được PDF: {r.stderr.strip()[:200]}", file=sys.stderr)
         return 3
