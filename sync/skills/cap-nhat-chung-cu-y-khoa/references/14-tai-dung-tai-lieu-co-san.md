@@ -106,9 +106,30 @@ trường hợp này:
   sử dụng trí nhớ huấn luyện làm bằng chứng, kể cả với các thử nghiệm rất nổi tiếng) — cùng
   nguyên tắc XÁC MINH TRƯỚC — KHÔNG bịa đã áp cho toàn skill.
 
+## Trang đọc thiết kế kiểu Artifact (tuỳ chọn, khi bác sĩ cần đọc ngay trong khung chat)
+
+Bác sĩ không mở được `.docx` trực tiếp trong khung chat (chỉ ra thẻ tải về). Khi cần một trang
+đọc được ngay — có mục lục, màu theo mức chứng cứ, bảng dễ đọc — dùng
+`tools/build_trang_doc_artifact.py <src.html> <out.html> --title "..."` trên bản HTML thô xuất từ
+`.docx` (vd bằng `tools/docx_sang_html_khong_pandoc.py`), rồi xuất bản bằng công cụ Artifact.
+
+Công cụ này ra đời 07/09/2026 sau khi bản đầu (làm tay, một lần, cho một tài liệu Suy tim) bị bác
+sĩ phản hồi "thiết kế chưa cân đối, bảng trình bày, các chứng cứ chưa có điểm nhấn rõ rệt" — đã
+sửa (giới hạn đọc chỉ áp cho văn xuôi chứ không cả cột, để bảng/callout dùng trọn bề ngang; bọc
+mọi cụm HR/RR/OR/Rate Ratio/Risk Ratio + KTC 95%/p thành "chip" màu xanh ngọc tách biệt khỏi màu
+trích dẫn `[n]`; huy hiệu màu cho mức Class/Level; bảng có header dính khi cuộn) rồi mới đóng gói
+thành công cụ dùng lại được, KHÔNG chỉ sửa một lần cho một file.
+
+**Phần dùng lại AN TOÀN cho mọi tài liệu:** bảng màu, quy tắc bọc chip chứng cứ, huy hiệu
+Class/Level, khung CSS 3-theme. **Phần CẦN đối chiếu lại mỗi tài liệu mới** (giả định bố cục 4
+đoạn mở đầu + 1 bảng cảnh báo ngay sau) — xem "GIỚI HẠN" trong docstring của công cụ. Đây là bước
+BỔ SUNG, không bắt buộc như 6 bước ở trên; không thay thế bản `.docx`/`.pdf` vẫn là bản lưu trữ
+chuẩn.
+
 ## Liên kết
 
 - Quy trình 4 lượt tìm nguồn + kiểm rút bài: mục 4, `SKILL.md`.
 - Ghi nguồn sạch, cấm artifact trích dẫn thô: mục 5B, `SKILL.md`.
 - Mẫu chuyên sâu (đích đến của quy trình này): `templates/mau-cap-nhat-chuyen-sau.md`.
+- Trang đọc kiểu Artifact (tuỳ chọn): `tools/build_trang_doc_artifact.py`.
 - Checklist trước khi bàn giao: `quality/acceptance-checklist.md`.

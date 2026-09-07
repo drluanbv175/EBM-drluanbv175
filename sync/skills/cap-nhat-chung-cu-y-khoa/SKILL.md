@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.49.0
+  version: 1.50.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -1038,6 +1038,14 @@ PMID riêng cho từng ô mà không kéo dài việc tra cứu không tương x
 `templates/mau-cap-nhat-chuyen-sau.md` (đã bổ sung mục 1 "Tóm tắt điều hành" 6 khối và cột "Cấp
 nguồn" ở bảng điều trị, cùng ngày).
 
+**Muốn có bản đọc ngay trong khung chat (bác sĩ không mở được `.docx` trực tiếp):** dùng
+`tools/build_trang_doc_artifact.py` để dựng một trang HTML có thiết kế (mục lục, chip chứng cứ
+HR/RR/OR màu riêng, huy hiệu Class/Level, bảng có header dính) rồi xuất bản qua Artifact — xem
+mục "Trang đọc thiết kế kiểu Artifact" trong `references/14-tai-dung-tai-lieu-co-san.md`. Công cụ
+này ra đời sau khi ca thật ở trên (tài liệu Suy tim) được rà lại và bác sĩ phản hồi bản đọc đầu
+tiên "thiết kế chưa cân đối" — đã sửa rồi đóng gói lại thành công cụ dùng cho MỌI lần sau, không
+chỉ sửa một lần cho một file.
+
 > **Luật rút ra:** khi rà một tài liệu có sẵn, câu hỏi không phải *"còn thiếu nguồn nào chưa tìm
 > không"* mà là *"mỗi khẳng định đã có ở đây có THẬT SỰ đúng như nó tự nhận không"* — ba câu hỏi
 > con: nguồn có tồn tại thật? có dấu vết công cụ khác chưa xử lý xong? con số có đúng quần thể nó
@@ -1157,6 +1165,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/12-direct-practice-readiness.md` (cổng phân loại READY_FOR_PHYSICIAN_DIRECT_USE / REVIEW_REQUIRED / BLOCKED_FOR_DIRECT_USE; nối với `medical-ebm-automation/tools/verify_direct_clinical_practice_readiness.py`)
 - `references/13-source-universe.md` (ma trận lớp nguồn bắt buộc: bibliographic core · guideline/HTA · high-impact journals · trial registries · drug safety · retraction/integrity · full-text/citation context)
 - `references/14-tai-dung-tai-lieu-co-san.md` (mới 07/09/2026 — quy trình 6 bước rà lại/dựng lại MỘT TÀI LIỆU ĐÃ SOẠN SẴN do bác sĩ/AI khác/nguồn ngoài viết; khác luồng mặc định vì rủi ro nằm ở nguồn giả tưởng hợp lý, artifact công cụ khác, hiệu số gán sai quần thể — xem 5G)
+- `tools/build_trang_doc_artifact.py` (mới 07/09/2026 — dựng trang đọc kiểu Artifact có thiết kế/mục lục/chip chứng cứ từ bản HTML thô của luồng "tài liệu có sẵn"; xem mục cùng tên trong `references/14-tai-dung-tai-lieu-co-san.md` để biết phần dùng lại an toàn vs. phần cần đối chiếu bố cục)
 - `quality/acceptance-checklist.md`
 - `quality/web-dashboard-acceptance-checklist.md`
 
