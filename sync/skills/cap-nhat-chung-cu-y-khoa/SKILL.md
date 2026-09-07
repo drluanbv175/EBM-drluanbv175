@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.48.4
+  version: 1.49.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -25,6 +25,12 @@ Không tự động biến một câu hỏi cụ thể thành:
 - bản ghi Dashboard Master hoặc WebApp Master;
 - tác vụ định kỳ;
 - mã ID quản trị.
+
+**Kích hoạt riêng khi bác sĩ đính kèm MỘT TÀI LIỆU ĐÃ SOẠN SẴN** (Word/PDF/Markdown, do chính bác
+sĩ, một AI khác, hoặc nguồn ngoài viết) và yêu cầu rà lại/chuẩn hoá/cập nhật — không phải tổng hợp
+từ đầu. Đây là quy trình 6 bước riêng, khác luồng mặc định vì rủi ro nằm ở lớp khác (nguồn giả
+tưởng hợp lý, artifact công cụ soạn thảo khác để lại, hiệu số bị gán sai quần thể) chứ không phải
+"chưa tìm đủ nguồn". Đọc `references/14-tai-dung-tai-lieu-co-san.md` trước khi bắt đầu.
 
 **Web Dashboard lâm sàng độc lập theo vấn đề cụ thể là đầu ra bắt buộc** khi môi trường hỗ trợ tạo file. Web Dashboard này chỉ giúp tra cứu nhanh nội dung vừa tổng hợp, không đồng nghĩa nội dung đã được duyệt vào Master. Chỉ tạo bản ghi quản trị, PATCH, CỔNG A/CỔNG B hoặc đồng bộ Master khi người dùng yêu cầu riêng.
 
@@ -1000,6 +1006,43 @@ không đổi, chỉ có **cảnh báo tắt đi**.
 *Đã kiểm bằng đột biến từng chốt:* tái hiện lỗi cũ ⇒ BH30/BH31/BH32 đỏ; khôi phục bản vá ⇒ xanh.
 
 
+## 5G. Tái dựng tài liệu cập nhật chứng cứ ĐÃ CÓ SẴN (mới 07/09/2026)
+
+**Ca thật mở đầu mục này.** Bác sĩ tải lên một file `.docx` chuyên luận về suy tim (do một công
+cụ AI khác soạn) và nói: "Tạo file thì đúng nhưng cấu trúc tóm tắt cập nhật chứng cứ chưa đúng
+chuẩn... chứng cứ chưa phải là mới nhất". Trích xuất toàn văn bằng `python-docx` (không tóm lược)
+lộ ra ba lỗi thuộc BA LỚP KHÁC HẲN nhau, và không lớp nào là "chưa tìm đủ nguồn":
+
+1. **Nguồn không có thật.** Danh mục 43 tài liệu tham khảo có mục "2026 ESC Guidelines for the
+   management of heart failure" — tra PubMed: không tồn tại. Guideline HF mới nhất thật là 2023
+   ESC Focused Update (PMID 38169072).
+2. **Artifact công cụ soạn thảo khác chưa xử lý xong.** Nhiều ô bảng còn nguyên chuỗi thô
+   `[cite: 2, 8]` — dấu hiệu bước "resolve trích dẫn" của công cụ trước chưa chạy tới nơi.
+3. **Toàn bộ số liệu định lượng bị xoá mất** trong cả văn xuôi lẫn 4 bảng (liều thuốc, ngưỡng
+   LVEF, HR/RR/CI) — câu văn còn nguyên cấu trúc, chỉ thiếu con số.
+
+Dựng lại bằng cách xác minh từng con số qua `mcp__PubMed__get_article_metadata` (không dùng trí
+nhớ huấn luyện) còn bắt được một lỗi thứ tư nghiêm trọng hơn cả ba lỗi trên: tài liệu gốc gán
+nhầm HR 0,65 (tử vong do mọi nguyên nhân, TOÀN BỘ quần thể HELIOS-B, PMID 39213194) cho phân nhóm
+"đơn trị liệu" — con số thật của phân nhóm đó là HR 0,67 cho một tiêu chí khác (biến cố gộp). Đây
+KHÔNG phải nguồn giả hay artifact hiển thị; đó là một hiệu số CÓ THẬT bị gán sai quần thể do cấu
+trúc câu trong bản đang rà khiến việc gán nhầm trông hợp lý.
+
+**Không lỗi nào trong bốn lỗi này là "thiếu nguồn mới"** — tất cả đều nằm ở việc RÀ LẠI một văn
+bản đã tồn tại, đúng loại rủi ro mà luồng mặc định (tổng hợp từ một câu hỏi trống) không gặp phải
+vì mọi con số ở đó đều đi qua Bước 2/3 của mục 4 trước khi được viết ra.
+
+**Quy trình đầy đủ, các bước, và quy ước "Cấp nguồn" cho bảng nhiều giá trị (khi không thể trích
+PMID riêng cho từng ô mà không kéo dài việc tra cứu không tương xứng):**
+`references/14-tai-dung-tai-lieu-co-san.md`. Đích đến của quy trình là
+`templates/mau-cap-nhat-chuyen-sau.md` (đã bổ sung mục 1 "Tóm tắt điều hành" 6 khối và cột "Cấp
+nguồn" ở bảng điều trị, cùng ngày).
+
+> **Luật rút ra:** khi rà một tài liệu có sẵn, câu hỏi không phải *"còn thiếu nguồn nào chưa tìm
+> không"* mà là *"mỗi khẳng định đã có ở đây có THẬT SỰ đúng như nó tự nhận không"* — ba câu hỏi
+> con: nguồn có tồn tại thật? có dấu vết công cụ khác chưa xử lý xong? con số có đúng quần thể nó
+> tự gán không?
+
 ## 6. Biến thể đầu ra theo chủ đề
 
 ### An toàn thuốc
@@ -1084,6 +1127,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã nêu cả hai chiều khi chứng cứ không đồng nhất, và đánh dấu `[CẦN BỔ SUNG]` khi chỉ có đồng thuận/nguyên lý chưa?
 - Đã ghi nguồn dạng văn bản thường (tác giả/tổ chức + năm + tạp chí) và rà soát để KHÔNG còn thẻ markup trích dẫn/mã kỹ thuật thô lẫn trong câu trả lời chưa?
 - Nếu là giám sát định kỳ: `source_health=PASS`, runtime status, canary online và deployment gate đã đủ chưa? Nếu chưa, đã giữ nhãn `BLOCKED_FOR_DEPLOYMENT`/`PARTIAL`, giữ watermark và chặn Hub chưa?
+- Nếu điểm khởi đầu là MỘT TÀI LIỆU BÁC SĨ ĐÃ TẢI LÊN: đã đi hết 6 bước của `references/14-tai-dung-tai-lieu-co-san.md` chưa (trích toàn văn · khoảng trống bất thường · nguồn tồn tại thật · artifact công cụ khác · đúng quần thể cho từng hiệu số · khai báo Cấp nguồn khi không trích PMID riêng từng ô)? Đã liệt kê rõ "Đã sửa gì so với bản gốc" ở đầu tài liệu ra chưa?
 
 ## 9. Tài nguyên kèm theo
 
@@ -1112,6 +1156,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/11-guideline-bo-y-te-vn.md` (bản địa hóa Bộ Y tế VN)
 - `references/12-direct-practice-readiness.md` (cổng phân loại READY_FOR_PHYSICIAN_DIRECT_USE / REVIEW_REQUIRED / BLOCKED_FOR_DIRECT_USE; nối với `medical-ebm-automation/tools/verify_direct_clinical_practice_readiness.py`)
 - `references/13-source-universe.md` (ma trận lớp nguồn bắt buộc: bibliographic core · guideline/HTA · high-impact journals · trial registries · drug safety · retraction/integrity · full-text/citation context)
+- `references/14-tai-dung-tai-lieu-co-san.md` (mới 07/09/2026 — quy trình 6 bước rà lại/dựng lại MỘT TÀI LIỆU ĐÃ SOẠN SẴN do bác sĩ/AI khác/nguồn ngoài viết; khác luồng mặc định vì rủi ro nằm ở nguồn giả tưởng hợp lý, artifact công cụ khác, hiệu số gán sai quần thể — xem 5G)
 - `quality/acceptance-checklist.md`
 - `quality/web-dashboard-acceptance-checklist.md`
 

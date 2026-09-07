@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.49.0 — 2026-09-07 (mẫu cập nhật chứng cứ tốt nhất — bác sĩ yêu cầu «cập nhật vào hệ thống»)
+
+**Ca thật mở đầu (5G):** bác sĩ tải lên một `.docx` do AI khác soạn, nói "cấu trúc tóm tắt cập
+nhật chứng cứ chưa đúng chuẩn... chứng cứ chưa phải mới nhất". Rà toàn văn lộ 4 lỗi thuộc 4 LỚP
+khác hẳn nhau — nguồn không có thật ("2026 ESC Guidelines" không tồn tại) · artifact trích dẫn
+thô `[cite: N]` chưa xử lý · toàn bộ số liệu định lượng bị xoá trong văn xuôi lẫn 4 bảng ·
+HR 0,65 của HELIOS-B (PMID 39213194) bị gán nhầm quần thể (thật thuộc TOÀN BỘ nghiên cứu, không
+phải phân nhóm đơn trị liệu). Không lỗi nào là "thiếu nguồn mới" — cả bốn chỉ lộ ra khi RÀ LẠI
+một văn bản đã tồn tại, khác hẳn rủi ro của luồng tổng hợp-từ-đầu.
+
+**Đã thêm vào hệ thống:**
+- `references/14-tai-dung-tai-lieu-co-san.md` — quy trình 6 bước rà lại/dựng lại một tài liệu đã
+  soạn sẵn (trích toàn văn · khoảng trống bất thường · nguồn tồn tại thật · artifact công cụ
+  khác · đúng quần thể cho từng hiệu số · khai báo Cấp nguồn khi không trích PMID riêng từng ô).
+- `templates/mau-cap-nhat-chuyen-sau.md` — từ khung trống 18 dòng thành mẫu đầy đủ nội dung: mục
+  1 "Tóm tắt điều hành" 6 khối (câu hỏi cốt lõi · điều gì thay đổi · bảng khuyến cáo hành động ·
+  cờ đỏ · điểm mới nhất · giới hạn tài liệu), cột "Cấp nguồn" ở bảng điều trị mục 6.
+- `templates/mau-cap-nhat-nhanh.md` — thêm mục "Giới hạn" (bản rút gọn của Tóm tắt điều hành).
+- `SKILL.md` §5G (ca thật + liên kết quy trình), §1 (trigger khi có tài liệu đính kèm), §8/§9
+  (checklist + tài nguyên) — `quality/acceptance-checklist.md` thêm 2 nhóm mục kiểm tương ứng.
+
+**Cố ý KHÔNG đụng:** schema `DATA` của Web Dashboard, `verify_dashboard.py`, ba bộ dựng phái
+sinh — đây là thay đổi tầng MARKDOWN/tài liệu (mục 5G/14 nói rõ luồng tài liệu-có-sẵn không bắt
+buộc ép ra Web Dashboard), không phải thay đổi hợp đồng dữ liệu dashboard vốn đòi đồng bộ 2 mẫu +
+3 bộ dựng + cổng liêm chính + test đột biến (xem CLAUDE.md mục "BỐ CỤC/CSS = SỬA TEMPLATE").
+
+
 ## v1.48.0 — 2026-08-15 (đề xuất #6 — bác sĩ duyệt «làm #6»)
 
 **Làn ĐỐI CHIẾU OpenAlex** `tools/doi_chieu_openalex.py`: corpus lớp AnswerThis
