@@ -41,9 +41,18 @@ GOC = pathlib.Path(__file__).resolve().parent.parent
 RA = GOC / "luu-tru-kho"
 HOME = pathlib.Path.home()
 
+# VÁ 07/09/2026: `GOC / "medical-ebm-automation"` giả định LỒNG — sai trên phiên
+# cloud (anh em của GOC). Dùng duong_goc() — xem tools/ban_sao_tran.py.
+import importlib.util as _ilu_ltk  # noqa: E402
+_sp_ltk = _ilu_ltk.spec_from_file_location(
+    "_bst_ltk", pathlib.Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_ltk = _ilu_ltk.module_from_spec(_sp_ltk)
+_sp_ltk.loader.exec_module(_bst_ltk)
+_MEA_GOC = _bst_ltk.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
+
 KHO = [
     ("Claude-AI",               GOC),
-    ("medical-ebm-automation",  GOC / "medical-ebm-automation"),
+    ("medical-ebm-automation",  _MEA_GOC),
     ("medical-research-skills", HOME / "Documents/GitHub/medical-research-skills"),
     ("meta-pipe",               HOME / "Documents/GitHub/meta-pipe"),
     ("pubmed-search-mcp",       HOME / "Documents/GitHub/pubmed-search-mcp"),

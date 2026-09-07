@@ -33,6 +33,14 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 GOC = Path(__file__).resolve().parents[1]
+# VÁ 07/09/2026: `GOC / "medical-ebm-automation"` giả định LỒNG — sai trên phiên
+# cloud (anh em của GOC). Dùng duong_goc() — xem tools/ban_sao_tran.py.
+import importlib.util as _ilu_sh  # noqa: E402
+_sp_sh = _ilu_sh.spec_from_file_location(
+    "_bst_sh", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_sh = _ilu_sh.module_from_spec(_sp_sh)
+_sp_sh.loader.exec_module(_bst_sh)
+_MEA_GOC = _bst_sh.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
 SO = GOC / "data" / "sources.json"
 # Điểm thăm rẻ nhất của từng API (đều đã phê duyệt egress từ trước):
 DIEM_THAM = {
@@ -84,7 +92,7 @@ def lay_thanh_cong_that(sid: str) -> str | None:
                 return datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ung)).date().isoformat()
         if sid == "SRC-003":
-            d = GOC / "medical-ebm-automation" / "data" / "retraction_watch"
+            d = _MEA_GOC / "data" / "retraction_watch"
             if d.exists():
                 return datetime.fromtimestamp(d.stat().st_mtime).date().isoformat()
         if sid in ("SRC-004", "SRC-005"):
@@ -97,7 +105,7 @@ def lay_thanh_cong_that(sid: str) -> str | None:
             if moc:
                 return max(moc)[:10]
         if sid == "SRC-006":
-            log = (GOC / "medical-ebm-automation" / "data" / "archive"
+            log = (_MEA_GOC / "data" / "archive"
                    / "launchd_weekly.log")
             if log.exists():
                 for dong in reversed(log.read_text(encoding="utf-8",
