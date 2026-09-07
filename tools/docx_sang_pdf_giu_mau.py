@@ -248,13 +248,23 @@ def main() -> int:
         html = CSS_IN + html
 
     # 4) In PDF
+    # Chromium's zygote sandbox từ chối chạy khi tiến trình gọi nó là ROOT (thường gặp
+    # trong container CI/cloud, không bao giờ xảy ra trên máy Mac/Windows của bác sĩ vì
+    # ở đó không ai chạy Claude Code bằng root). Không thêm cờ này thì lệnh in PDF LUÔN
+    # thoát mã khác 0 với thông báo "Running as root without --no-sandbox is not
+    # supported" — đo thật trên phiên cloud 07/09/2026. An toàn vì HTML nguồn do CHÍNH
+    # script này vừa dựng từ .docx cục bộ, không phải nội dung duyệt web bất kỳ.
     with tempfile.TemporaryDirectory() as tmp:
         nguon = pathlib.Path(tmp) / "in.html"
         nguon.write_text(html, encoding="utf-8")
-        r = subprocess.run([trinh_duyet, "--headless", "--disable-gpu",
-                            "--no-pdf-header-footer", "--print-background",
-                            f"--print-to-pdf={ra_pdf}", f"file://{nguon}"],
-                           capture_output=True, text=True, timeout=300)
+        lenh = [trinh_duyet, "--headless", "--disable-gpu",
+                "--no-pdf-header-footer", "--print-background"]
+        # os.geteuid() không tồn tại trên Windows — chỉ gọi khi os.name là "posix"
+        # (Windows là "nt"), tránh AttributeError chết cả bước in PDF trên máy bác sĩ.
+        if os.name == "posix" and os.geteuid() == 0:
+            lenh.append("--no-sandbox")
+        lenh += [f"--print-to-pdf={ra_pdf}", f"file://{nguon}"]
+        r = subprocess.run(lenh, capture_output=True, text=True, timeout=300)
     if not ra_pdf.exists():
         print(f"✗ không in được PDF: {r.stderr.strip()[:200]}", file=sys.stderr)
         return 3
