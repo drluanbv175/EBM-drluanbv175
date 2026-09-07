@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -82,9 +83,29 @@ def test_core_checks_include_blocking_repo_lint():
 
 
 def test_upgrade_verify_wires_blocking_repo_lint():
+    """Bước 27 (lint medical-ebm-automation) phải còn BLOCKING (`True`).
+
+    VÁ 07/09/2026: trước đây kiểm bằng SO KHỚP CHUỖI đúng nguyên văn dòng args,
+    kể cả chuỗi "medical-ebm-automation" hardcode — nhưng chuỗi đó đã đổi thành
+    biểu thức `str(_MEA_GOC_UV)` (đường dẫn TUYỆT ĐỐI qua duong_goc(), vì
+    "medical-ebm-automation" tương đối chỉ đúng khi repo LỒNG trong ROOT — sai
+    trên phiên cloud, xem tools/ban_sao_tran.py). Kiểm lại bằng regex khớp
+    CẤU TRÚC dòng (nhãn · lệnh ruff check · biến đường dẫn đã resolve · blocking
+    True) thay vì đúng-nguyên-văn chuỗi thư mục.
+    """
     upgrade = (E.ROOT / "tools" / "upgrade_verify.py").read_text(encoding="utf-8")
 
-    assert '("27. Lint repo sống", ["-m", "ruff", "check", "medical-ebm-automation"], True)' in upgrade
+    match = re.search(
+        r'\("27\. Lint repo sống",\s*\["-m",\s*"ruff",\s*"check",\s*(\S+)\],\s*(True|False)\)',
+        upgrade,
+    )
+    assert match, "Không tìm thấy dòng bước 27 (lint medical-ebm-automation) trong upgrade_verify.py"
+    path_expr, blocking = match.group(1), match.group(2)
+    assert blocking == "True"
+    assert "MEA_GOC" in path_expr, (
+        "Đường dẫn bước 27 phải qua biến resolve động (duong_goc()), "
+        "không hardcode chuỗi tương đối 'medical-ebm-automation'."
+    )
 
 
 def test_full_pytest_uses_project_python(monkeypatch):

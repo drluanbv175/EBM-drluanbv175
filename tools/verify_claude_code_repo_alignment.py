@@ -223,7 +223,14 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
         "Repo/Claude Code alignment",
         "tools/check_claude_codex_sync_health.py",
         "tools/verify_clinical_runtime_schema_hardening.py",
-        '"-m", "ruff", "check", "medical-ebm-automation"',
+        # VÁ 07/09/2026: trước đây khớp chuỗi ĐÚNG-NGUYÊN-VĂN
+        # '"-m", "ruff", "check", "medical-ebm-automation"' — hardcode đường dẫn
+        # TƯƠNG ĐỐI, sai trên phiên cloud (medical-ebm-automation là ANH EM của
+        # ROOT, không LỒNG — xem tools/ban_sao_tran.py). upgrade_verify.py nay
+        # resolve đường dẫn qua duong_goc() (biến _MEA_GOC_UV); kiểm 2 mảnh rời
+        # thay vì 1 chuỗi cứng để không tái phạm đúng lỗi vừa vá.
+        '"-m", "ruff", "check"',
+        "_MEA_GOC_UV",
         "Lint repo sống",
     ]
     missing = _missing_markers(path, required)

@@ -1,9 +1,9 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 3,
-    "partial": 7,
-    "weak": 3,
+    "strong": 9,
+    "partial": 4,
+    "weak": 0,
     "total": 13
   },
   "criteria": [
@@ -11,21 +11,21 @@
       "id": "A1",
       "name": "Nhận biết môi trường",
       "level": "agent",
-      "status": "gap",
-      "passed": 1,
+      "status": "strong",
+      "passed": 4,
       "total": 4,
       "probes": [
         {
-          "ok": false,
-          "detail": "Freshness guard (phát hiện checkpoint cũ): THIẾU (pipeline_freshness.py)"
+          "ok": true,
+          "detail": "Freshness guard (phát hiện checkpoint cũ): có (pipeline_freshness.py)"
         },
         {
-          "ok": false,
-          "detail": "Đọc/PIN trạng thái study_meta: THIẾU file gate_contract.py"
+          "ok": true,
+          "detail": "Đọc/PIN trạng thái study_meta: ✓ (gate_contract.py)"
         },
         {
-          "ok": false,
-          "detail": "Nhận diện ngữ cảnh VN/EN: THIẾU file run_g0_auto.py"
+          "ok": true,
+          "detail": "Nhận diện ngữ cảnh VN/EN: ✓ (run_g0_auto.py)"
         },
         {
           "ok": true,
@@ -39,12 +39,12 @@
       "name": "Lập kế hoạch",
       "level": "agent",
       "status": "partial",
-      "passed": 2,
+      "passed": 3,
       "total": 4,
       "probes": [
         {
-          "ok": false,
-          "detail": "Kế hoạch cổng G0→G10: THIẾU file run_pipeline.py"
+          "ok": true,
+          "detail": "Kế hoạch cổng G0→G10: ✓ (run_pipeline.py)"
         },
         {
           "ok": true,
@@ -67,8 +67,8 @@
       "id": "A3",
       "name": "Suy luận",
       "level": "agent",
-      "status": "partial",
-      "passed": 3,
+      "status": "strong",
+      "passed": 6,
       "total": 6,
       "probes": [
         {
@@ -84,16 +84,16 @@
           "detail": "Suy luận Bàyes (LR): ✓ (chan-doan-xac-suat.md)"
         },
         {
-          "ok": false,
-          "detail": "Công thức thống kê THẬT (cỡ mẫu NC): THIẾU file run_g3_auto.py"
+          "ok": true,
+          "detail": "Công thức thống kê THẬT (cỡ mẫu NC): ✓ (run_g3_auto.py)"
         },
         {
-          "ok": false,
-          "detail": "Máy tính lâm sàng chạy được (Bayes/ngưỡng/NNT/GRADE): THIẾU file clinical_calc.py"
+          "ok": true,
+          "detail": "Máy tính lâm sàng chạy được (Bayes/ngưỡng/NNT/GRADE): ✓ (clinical_calc.py)"
         },
         {
-          "ok": false,
-          "detail": "Engine phân tích gộp xuất effect size/CI/PI: THIẾU file meta_analysis_calc.py"
+          "ok": true,
+          "detail": "Engine phân tích gộp xuất effect size/CI/PI: ✓ (meta_analysis_calc.py; 4/4 marker)"
         }
       ],
       "caveats": []
@@ -102,25 +102,25 @@
       "id": "A4",
       "name": "Dùng công cụ",
       "level": "agent",
-      "status": "gap",
-      "passed": 1,
+      "status": "strong",
+      "passed": 4,
       "total": 4,
       "probes": [
         {
-          "ok": false,
-          "detail": "Công cụ cổng G0–G10: 0 khớp 'run_g*_auto.py' (≥10)"
+          "ok": true,
+          "detail": "Công cụ cổng G0–G10: 10 khớp 'run_g*_auto.py' (≥10)"
         },
         {
-          "ok": false,
-          "detail": "Engine thống kê Python: THIẾU (run_stats_analysis.py)"
+          "ok": true,
+          "detail": "Engine thống kê Python: có (run_stats_analysis.py)"
         },
         {
           "ok": true,
           "detail": "Công cụ tự sinh agent: có (generate_agent.py)"
         },
         {
-          "ok": false,
-          "detail": "Công cụ import/compile được: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Công cụ import/compile được: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": []
@@ -130,7 +130,7 @@
       "name": "Bộ nhớ dài hạn + ngắn hạn",
       "level": "agent",
       "status": "partial",
-      "passed": 2,
+      "passed": 3,
       "total": 4,
       "probes": [
         {
@@ -146,8 +146,8 @@
           "detail": "Schema sổ trạng thái (resume): có (_SO-TRANG-THAI-CHECKPOINT.md)"
         },
         {
-          "ok": false,
-          "detail": "PIN tham số bền qua phiên: THIẾU file gate_contract.py"
+          "ok": true,
+          "detail": "PIN tham số bền qua phiên: ✓ (gate_contract.py)"
         }
       ],
       "caveats": []
@@ -156,8 +156,8 @@
       "id": "A6",
       "name": "Tự đánh giá và sửa lỗi",
       "level": "agent",
-      "status": "partial",
-      "passed": 3,
+      "status": "strong",
+      "passed": 6,
       "total": 6,
       "probes": [
         {
@@ -169,20 +169,20 @@
           "detail": "Kiểm duyệt độc lập: có (_KIEM-DUYET-DOC-LAP.md)"
         },
         {
-          "ok": false,
-          "detail": "Vòng tự sửa retry_loop CHẠY THẬT: exit=2 (cần 0) ✗"
+          "ok": true,
+          "detail": "Vòng tự sửa retry_loop CHẠY THẬT: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Hợp đồng DỪNG (tự phát hiện thiếu input): THIẾU file run_pipeline.py"
+          "ok": true,
+          "detail": "Hợp đồng DỪNG (tự phát hiện thiếu input): ✓ (run_pipeline.py)"
         },
         {
           "ok": true,
           "detail": "retry_loop nối vào run_eval.py --classify (production, qua cafes_suite): ✓ (run_eval.py)"
         },
         {
-          "ok": false,
-          "detail": "Audit cổng sinh action queue + resume contract: THIẾU file audit_research_gates.py"
+          "ok": true,
+          "detail": "Audit cổng sinh action queue + resume contract: ✓ (audit_research_gates.py; 3/3 marker)"
         }
       ],
       "caveats": []
@@ -192,7 +192,7 @@
       "name": "An toàn, ổn định, kiểm chứng",
       "level": "agent",
       "status": "partial",
-      "passed": 3,
+      "passed": 4,
       "total": 5,
       "probes": [
         {
@@ -204,8 +204,8 @@
           "detail": "Chuẩn chất lượng Med-PaLM: có (_CHUAN-CHAT-LUONG-MEDPALM.md)"
         },
         {
-          "ok": false,
-          "detail": "Bộ test tự động (file): 0 khớp 'test_*.py' (≥40)"
+          "ok": true,
+          "detail": "Bộ test tự động (file): 443 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": false,
@@ -253,8 +253,8 @@
       "id": "S2",
       "name": "Phối hợp giữa các agent",
       "level": "system",
-      "status": "partial",
-      "passed": 5,
+      "status": "strong",
+      "passed": 6,
       "total": 6,
       "probes": [
         {
@@ -274,8 +274,8 @@
           "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -290,13 +290,13 @@
       "id": "S3",
       "name": "Pipeline xử lý nhiệm vụ",
       "level": "system",
-      "status": "partial",
-      "passed": 3,
+      "status": "strong",
+      "passed": 5,
       "total": 5,
       "probes": [
         {
-          "ok": false,
-          "detail": "Pipeline G0→G10 (code): THIẾU file run_pipeline.py"
+          "ok": true,
+          "detail": "Pipeline G0→G10 (code): ✓ (run_pipeline.py)"
         },
         {
           "ok": true,
@@ -307,8 +307,8 @@
           "detail": "Vòng lặp khép kín: có (_VONG-LAP-KHEP-KIN.md)"
         },
         {
-          "ok": false,
-          "detail": "Hợp đồng phát hành từng cổng nghiên cứu: THIẾU file audit_research_gates.py"
+          "ok": true,
+          "detail": "Hợp đồng phát hành từng cổng nghiên cứu: ✓ (audit_research_gates.py; 4/4 marker)"
         },
         {
           "ok": true,
@@ -350,8 +350,8 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "gap",
-      "passed": 5,
+      "status": "partial",
+      "passed": 11,
       "total": 14,
       "probes": [
         {
@@ -363,32 +363,32 @@
           "detail": "Cấy guardrail bắt buộc: có (enforce_agent_guardrails.py)"
         },
         {
-          "ok": false,
-          "detail": "Cổng cứng + báo trung thực: THIẾU file run_pipeline.py"
+          "ok": true,
+          "detail": "Cổng cứng + báo trung thực: ✓ (run_pipeline.py)"
         },
         {
-          "ok": false,
-          "detail": "Giám sát định kỳ (morning brief): THIẾU (gen_morning_brief.py)"
+          "ok": true,
+          "detail": "Giám sát định kỳ (morning brief): có (gen_morning_brief.py)"
         },
         {
-          "ok": false,
-          "detail": "Cổng nghiên cứu chặn downstream khi thiếu bằng chứng thật: THIẾU file audit_research_gates.py"
+          "ok": true,
+          "detail": "Cổng nghiên cứu chặn downstream khi thiếu bằng chứng thật: ✓ (audit_research_gates.py; 3/3 marker)"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test hợp đồng cổng nghiên cứu PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test hợp đồng cổng nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test thẩm định/phản biện/thống kê có kiểm soát PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -403,8 +403,8 @@
           "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=1 (cần 0) ✗"
         },
         {
-          "ok": true,
-          "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "Repo/Claude Code/Codex alignment PASS: exit=1 (cần 0) ✗"
         },
         {
           "ok": true,
