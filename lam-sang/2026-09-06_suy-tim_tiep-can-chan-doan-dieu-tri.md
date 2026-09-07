@@ -22,9 +22,31 @@ lời đó **đúng tại thời điểm đó** và **không còn đúng hôm na
 | Điều | Trạng thái xác minh trong phiên này |
 |---|---|
 | ESC 2026 **tồn tại**, tiêu đề, ngày, tác giả, DOI | ✅ **CHẮC CHẮN** — tra trực tiếp PubMed [1] |
-| **Nội dung khuyến cáo** của ESC 2026 (ngưỡng, Class/Level, thành phần điều trị nền tảng) | 🔴 **CHƯA ĐỌC ĐƯỢC** — toàn văn bị chặn truy cập trong môi trường này |
-| Định nghĩa Toàn cầu lần hai 2026 — nội dung | ✅ **ĐÃ ĐỌC TOÀN VĂN** (bản *Global Heart* truy cập mở) [2] |
+| **Nội dung khuyến cáo** của ESC 2026 (ngưỡng, Class/Level, thành phần điều trị nền tảng) | 🔴 **CHƯA ĐỌC ĐƯỢC** — đã đo trên **ba tuyến độc lập**, xem khối ngay dưới |
+| Định nghĩa Toàn cầu lần hai 2026 — nội dung | ✅ **ĐÃ ĐỌC TOÀN VĂN** (PMC13330914, 51.871 ký tự / 7.063 từ) [2] |
 | Mức **COR/LOE** cụ thể của từng khuyến cáo ESC 2026 | 🔴 **KHÔNG trích được mục nào** — xem mục 🔴 cuối bài |
+| **Bao nhiêu nguồn của gói này đọc được toàn văn** | **23/91 PMID có bản PMC** (25%) — đã đo bằng máy 07/09/2026 |
+
+📏 **ĐO LẠI 07/09/2026 — vì sao KHÔNG đọc được ESC 2026, và đó KHÔNG phải giới hạn của môi trường.**
+Bản đầu của mục này ghi *"toàn văn bị chặn truy cập trong môi trường này"*. Câu đó **sai trọng
+lượng** và đã được sửa: nó gợi ý rằng chạy công cụ trên máy của bác sĩ sẽ lấy được — **không**.
+Đã đo trên **ba tuyến đọc toàn văn độc lập**, cùng một ngày:
+
+| Tuyến | Lệnh thật | Kết quả đo |
+|---|---|---|
+| **PMC** (đường mà `gom_toan_van_dashboard.py` và `doc_sau_toan_van.py` dùng) | tra PMCID của PMID 42661420 | **không có PMCID** — bài không nằm trong PMC |
+| **Scite** đọc theo DOI | `read_fulltext` trên `10.1093/eurheartj/ehag100` | `totalChars: 0` — **không có cả tóm tắt** |
+| **Amass BiomedCore** | lấy bản ghi kèm toàn văn | `hasFulltext: false` · `abstract: ""` |
+
+⇒ **Nguyên nhân là bản quyền + chưa đánh chỉ mục, không phải mạng.** ESC 2026 nằm sau tường phí của
+*European Heart Journal* và chưa vào PMC Open Access; chuỗi công cụ toàn văn của hệ (**PMC-OA →
+Unpaywall**, theo đúng luật P5 *"chỉ PMC Open Access — không cào nguồn trả phí"*) sẽ trả đúng câu
+**"không có bản PMC"** trên **mọi** máy, kể cả máy Mac/Windows của bác sĩ. Đường duy nhất là **quyền
+truy cập của chính bác sĩ** (tài khoản ESC, thư viện bệnh viện, hoặc bản in).
+⚠️ Ghi thêm cho đúng bối cảnh: phiên đám mây này **không có lối ra HTTP trực tiếp** (đo được:
+`eutils`, `pmc`, `api.unpaywall.org` đều trả HTTP 000) và **không có kho `EBM-Dashboards/toan_van_oa/`**,
+nên năm công cụ toàn văn của repo **không chạy được ở đây** — nhưng với riêng ESC 2026 thì điều đó
+**không thay đổi kết quả**, vì cả ba tuyến MCP còn sống đều đã trả lời "không có toàn văn".
 
 ⇒ **Toàn bộ phần điều trị dưới đây neo vào thử nghiệm gốc và thế hệ guideline trước.**
 Trước khi đổi phác đồ tại đơn vị, **bác sĩ phải tự đọc toàn văn ESC 2026** [1].
@@ -99,6 +121,15 @@ không được dùng "53%" làm mốc khởi trị.
 - **HỒI PHỤC** — bình thường hoá **bền vững** cả cấu trúc, chức năng, dấu ấn sinh học và triệu
   chứng; tài liệu ghi rõ **chỉ một thiểu số** đạt mức này (không cho con số phần trăm) [2].
 
+📌 **Bổ sung 07/09/2026 — CON SỐ của "suy tim có phân suất tống máu cải thiện" vẫn được giữ, trích
+nguyên văn toàn văn** [2]: *"…characterized by antecedent HF with reduced EF and a subsequent
+**≥10-point increase in LVEF to a new LVEF >40%**"* — tức **tăng ≥10 điểm phần trăm LVEF VÀ đạt LVEF
+mới >40%**, trên nền trước đó là suy tim phân suất tống máu giảm.
+⚠️ Đọc cho đúng hai vế, đừng gộp: văn bản **bỏ ngưỡng cứng để PHÂN NHÓM kiểu hình**, nhưng **giữ
+ngưỡng số để MÔ TẢ đường diễn tiến "cải thiện"**. Và chính nó cảnh báo ngay sau đó rằng định nghĩa
+thuần theo LVEF *"phản ánh chưa đủ kiểu hình suy tim rộng hơn"* vì LVEF đo dao động, và bất thường
+cấu trúc, dấu ấn sinh học tăng hay triệu chứng tồn dư **thường vẫn còn** [2].
+
 🔴 **Hệ quả an toàn quan trọng nhất của mục này, trích nguyên văn** [2]: *"Cải thiện LVEF đơn thuần
 không đồng nghĩa bệnh đã khỏi. Người bệnh vẫn dễ tái phát rối loạn chức năng thất trái và do đó
 CẦN TIẾP TỤC điều trị nội khoa theo guideline và theo dõi lâm sàng lâu dài."*
@@ -119,7 +150,30 @@ Yếu tố nguy cơ giai đoạn A được nêu đích danh: tăng huyết áp,
 sinh, đái tháo đường, béo phì, phơi nhiễm chất độc với tim, tiền sử gia đình bệnh cơ tim, hoặc mang
 biến thể gen nguy cơ bệnh cơ tim [2].
 ⚠️ Danh sách tiêu chí con của **giai đoạn B** bị cắt trong bản trích đọc được — **[CẦN KIỂM CHỨNG]**
-từ Bảng 1 bản gốc trước khi dùng để phân giai đoạn.
+từ Bảng 1 bản gốc trước khi dùng để phân giai đoạn. *(Bảng nằm trong phần bảng biểu mà bản trích PMC
+không dựng ra; đọc lại toàn văn 07/09 vẫn không lấy được bảng này.)*
+
+📌 **Bổ sung 07/09/2026, đọc lại toàn văn** [2] — ba điểm mà bản đầu chưa nêu:
+
+- **Có GIAI ĐOẠN 0**, không chỉ A–D: văn bản viết *"phần lớn dân số là **không có yếu tố nguy cơ
+  (giai đoạn 0)**, có nguy cơ (giai đoạn A), hoặc tiền suy tim (giai đoạn B)"*, trong khi **hầu hết
+  guideline hiện hành chỉ bàn giai đoạn C/D**. Với phòng khám ngoại trú, đây là lời nhắc rằng phần
+  việc lớn nhất nằm **trước** khi bệnh nhân có triệu chứng.
+- **Giai đoạn B đã có việc để làm, không phải chỉ theo dõi**: *"cần chiến lược chủ động tích cực hơn
+  ở người giai đoạn B, chẳng hạn điều trị bằng **một số thuốc ức chế hệ renin-angiotensin-aldosterone
+  và chẹn beta** ở người **rối loạn chức năng thất trái không triệu chứng**"*; và **peptide lợi niệu
+  natri kết hợp yếu tố nguy cơ** có thể nhận diện người hưởng lợi từ điều trị **ngay ở giai đoạn tiền
+  triệu chứng**. Troponin lưu hành và tỷ số albumin/creatinin niệu được nêu là chỉ dấu **có thể** tăng
+  thêm hiệu quả sàng lọc.
+  ⚠️ Văn bản **không nêu ngưỡng số** nào cho peptide lợi niệu natri ở vai trò sàng lọc này, và tự ghi
+  *"chiến lược sàng lọc tối ưu chưa được xác lập rõ"* — **[CẦN KIỂM CHỨNG]** trước khi dựng quy trình
+  sàng lọc tại đơn vị.
+- 🔴 **Định nghĩa 2026 TỰ KHAI KHÔNG phải guideline**, trích nguyên văn: *"This document is not a
+  clinical practice guideline, nor is it a clinical decision support document. Treatment
+  recommendations will remain reserved for the current and future professional society HF guidelines
+  documents."* ⇒ **Không được dùng văn bản này làm căn cứ khuyến cáo điều trị.** Nó chuẩn hoá *cách
+  gọi tên và phân loại*; phần *nên làm gì* vẫn thuộc ESC 2026 [1] và AHA/ACC/HFSA 2022 [3]. Đây cũng
+  là lý do khoảng trống "chưa đọc được ESC 2026" **không** được lấp bằng văn bản này.
 
 **Chuyển dịch kiểu hình cần biết khi làm dự phòng:** tuyên bố khoa học HFA/EAPC-ESC 08/2026 ghi
 rằng vai trò của **bệnh động mạch vành đang giảm**, trong khi **bệnh thận và rối loạn chuyển hoá
@@ -964,7 +1018,13 @@ Watch/Crossref, NCBI E-utilities và Europe PMC đều bị chính sách mạng 
 ### 🔴 DANH SÁCH BẮT BUỘC CÒN THIẾU (điều kiện chặn "đủ")
 
 1. **Toàn văn ESC 2026 [1]** — chưa đọc được. **Mọi mức Class/Level trong gói này đều KHÔNG có.**
-   Đây là thiếu sót lớn nhất và không khắc phục được trong môi trường hiện tại.
+   Đây là thiếu sót lớn nhất. **Sửa lời khai 07/09/2026:** câu cũ *"không khắc phục được trong môi
+   trường hiện tại"* **nói chưa đúng nguyên nhân**. Đã đo trên **ba tuyến** (PMC · Scite · Amass —
+   bảng ở đầu bài): bài **không có bản PMC**, Scite trả `totalChars: 0`, Amass trả
+   `hasFulltext: false`. ⇒ Đây là **tường phí + chưa đánh chỉ mục**, không phải hạn chế của môi
+   trường chạy — công cụ toàn văn của hệ trên máy bác sĩ **cũng** sẽ trả "không có bản PMC".
+   **Đường khắc phục thật, và chỉ có một: bác sĩ dùng quyền truy cập của mình** (tài khoản ESC / thư
+   viện bệnh viện) tải toàn văn về, rồi đưa lại đây để trích COR/LOE.
 1b. **Ngưỡng kali cụ thể** để giảm liều/ngừng tạm thời kháng thụ thể mineralocorticoid (Bước 8bis.1)
    — chỉ tra được từ tổng quan tường thuật và giao thức nghiên cứu, **không trích số**.
 2. **KHÔNG có bảng liều thuốc.** Gói cố ý **không nêu liều khởi đầu/liều đích** của bất kỳ thuốc
@@ -978,7 +1038,10 @@ Watch/Crossref, NCBI E-utilities và Europe PMC đều bị chính sách mạng 
    nhân [74] (Bước 8.1), và kết luận đã được **sửa lại** cho đúng.
 6. **Văn bản Việt Nam** (Bước 10.4) — không tra được, đã đánh dấu `[CẦN XÁC NHẬN TẠI ĐƠN VỊ]`.
    ✅ **Đã đóng một phần** — dịch tễ Việt Nam nay có **4 nghiên cứu có PMID** [85–88] thay vì bỏ trống.
-7. **Tiêu chí giai đoạn B** của Định nghĩa 2026 — bản trích bị cắt (Bước 0b).
+7. **Tiêu chí giai đoạn B** của Định nghĩa 2026 — bản trích bị cắt (Bước 0b). ⚠️ **Vẫn CÒN MỞ sau
+   khi đọc lại toàn văn 07/09/2026**: tiêu chí con nằm trong **bảng biểu**, mà bản trích PMC không
+   dựng bảng. Đã lấy thêm được **phần văn xuôi** về giai đoạn B (đã bổ sung ở Bước 0b) nhưng **danh
+   sách tiêu chí thì chưa** — cần bản PDF gốc.
 8. **Mốc "tăng 2 kg trong 3 ngày"** (Bước 9.3) — không truy được nguồn gốc nguyên thuỷ.
 
 ---
@@ -1000,6 +1063,24 @@ Watch/Crossref, NCBI E-utilities và Europe PMC đều bị chính sách mạng 
 > nhìn thấy lỗi của chính mình** (điều này đã được đo nhiều lần trong hệ). Đây là **thiếu sót đã
 > biết của gói**, không phải điều bỏ qua được: **khuyến nghị chạy lại lượt thẩm định độc lập ở
 > phiên khác trước khi dùng tài liệu cho đào tạo hoặc làm phác đồ đơn vị.**
+>
+> 🔴 **MỘT LỖI CỦA CHÍNH TÔI, BÁC SĨ CHỈ RA — ghi lại vì nó thuộc họ lỗi hệ đã đặt tên (BH74:
+> "đo đúng, nhưng đo nhầm chỗ").** Khi soạn bản đầu, tôi kết luận **"toàn văn không đọc được"** sau
+> khi thử **WebFetch và HTTP trực tiếp** — cả hai đều hỏng ở phiên đám mây này. Nhưng tôi **chưa hề
+> thử ba tuyến đọc toàn văn qua MCP** vốn có sẵn suốt phiên. Bác sĩ hỏi lại đúng chỗ đó, và phép đo
+> ngày 07/09 cho thấy **tuyến PMC CHẠY ĐƯỢC**: đã đọc **51.871 ký tự** toàn văn Định nghĩa Toàn cầu
+> 2026 [2] và **23/91 nguồn** của gói này có bản PMC đọc được.
+>
+> Hệ quả cụ thể: **kết luận về ESC 2026 vẫn đúng** (đo ba tuyến, không tuyến nào có toàn văn) —
+> nhưng **lý do tôi đưa ra thì sai**, và cái sai đó có hại thật: nó quy trách nhiệm cho môi trường
+> chạy, tức gợi ý rằng chạy lại trên máy bác sĩ sẽ được. Nó cũng khiến tôi **không đi lấy** những
+> toàn văn thật ra đọc được — bốn chi tiết ở Bước 0b (ngưỡng ≥10 điểm của "phân suất tống máu cải
+> thiện", giai đoạn 0, việc phải làm ở giai đoạn B, và lời tự khai "văn bản này KHÔNG phải
+> guideline") chỉ có mặt trong bản này **sau khi** bác sĩ chất vấn.
+>
+> **Bài học vận hành, để lần sau không lặp:** *"không đọc được"* chỉ được viết ra sau khi đã đo
+> **hết** các tuyến có mặt, và phải nói rõ **đo tuyến nào**. Một tuyến hỏng không phải bằng chứng
+> cho mọi tuyến — đúng luật nền của hệ: **biến CHƯA THỬ thành KHÔNG CÓ là báo động sai** (BH08).
 >
 > Chốt cứng cuối cùng vẫn là **bác sĩ duyệt (Cổng A)**.
 
