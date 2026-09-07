@@ -389,6 +389,18 @@ def plot_row(item: dict, ax: LogAxis) -> str:
         m = esc(eff.get("measure", "HR"))
         sub_bits.append(
             f'<span class="num">{m} {vn_num(hr)} ({vn_num(lo)}–{vn_num(hi)})</span>')
+    # Định danh truy nguyên (PMID ưu tiên, rồi DOI, rồi URL) PHẢI hiện ra ở đây —
+    # đây là nơi bác sĩ thật sự đọc. Trước bản vá này, plot_row() chỉ ĐẾM
+    # item.get("pmid") cho thống kê đầu trang ("N/N mục có định danh truy
+    # nguyên") mà không bao giờ IN nó ra: trang tự nhận có định danh truy
+    # nguyên nhưng không một dòng nào trong 6 mục thật sự cho thấy định danh
+    # đó — phát hiện khi dựng dashboard Suy tim HFnrEF 2026-09-07 (0/6 PMID
+    # xuất hiện trong bản đọc dù cả 6 item đều khai đủ). Vi phạm bất biến
+    # "mỗi đầu ra kèm PMID/DOI" của CLAUDE.md.
+    ident = item.get("pmid") or item.get("doi") or item.get("url")
+    if ident:
+        label_id = "PMID" if item.get("pmid") else ("DOI" if item.get("doi") else "URL")
+        sub_bits.append(esc(f"{label_id} {ident}"))
     sub = " · ".join(sub_bits)
 
     if hr and lo and hi:
@@ -625,11 +637,21 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
         def _src(r):
             # Mục không có hiệu số định lượng chỉ hiện tiêu đề + nguồn, nên nhãn
             # «mới thẩm định trên tóm tắt» phải gắn ngay ở đây — nếu không nó
-            # biến mất khỏi đúng trang mà bác sĩ đọc.
+            # biến mất khỏi đúng trang mà bác sĩ đọc. Cùng lý do, định danh
+            # truy nguyên (PMID/DOI/URL) cũng phải gắn ở đây — đường render
+            # riêng cho mục "không có hiệu số" (guideline/consensus) này KHÔNG
+            # đi qua plot_row(), nên bản vá PMID của plot_row() không tự lan
+            # sang đây (phát hiện khi dựng dashboard Suy tim HFnrEF 2026-09-07:
+            # ITEM-01 là guideline, đi qua đúng nhánh này, vẫn thiếu PMID sau
+            # khi plot_row() đã được vá).
             s = esc(r.get("source", ""))
             if r.get("appraisalCompleteness") == "partial":
                 s += (' · <span class="partial">thẩm định trên tóm tắt — '
                       'chưa đọc toàn văn</span>')
+            ident = r.get("pmid") or r.get("doi") or r.get("url")
+            if ident:
+                label_id = "PMID" if r.get("pmid") else ("DOI" if r.get("doi") else "URL")
+                s += f" · {esc(f'{label_id} {ident}')}"
             return s
         lis = "".join(
             f'<li><b>{esc(normalize_title(r.get("title","")))}</b>'

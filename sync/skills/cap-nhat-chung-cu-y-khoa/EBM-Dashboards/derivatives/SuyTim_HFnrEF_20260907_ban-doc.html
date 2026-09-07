@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suy tim EF không giảm (HFnrEF, LVEF &gt; 40%) — 4 nhóm thuốc nền tảng nào có RCT hỗ trợ, t</title>
+<style>
+:root{--ground:#F5F7F6;--surface:#FFF;--ink:#111A1C;--ink-2:#47575B;--ink-3:#7B8A8D;
+--rule:#DDE4E3;--rule-strong:#C0CBCA;--benefit:#0F7A68;--benefit-soft:#E2F0ED;
+--caution:#B0731A;--caution-soft:#F7EEDE;--harm:#9E2F2F;--harm-soft:#F6E7E5;
+--null:#5F7280;--null-soft:#ECEFF1;--axis:#40607F;
+--sans:"Times New Roman",Times,"Liberation Serif","Nimbus Roman",serif;
+--mono:"Times New Roman",Times,"Liberation Serif",serif;--measure:70ch}
+@media (prefers-color-scheme:dark){:root{--ground:#0F1618;--surface:#161F21;--ink:#E9EFEE;
+--ink-2:#A3B4B5;--ink-3:#748688;--rule:#263234;--rule-strong:#3A4B4E;--benefit:#4FC0A7;
+--benefit-soft:#12302A;--caution:#DCA64E;--caution-soft:#332614;--harm:#E28079;
+--harm-soft:#341B19;--null:#93A5AE;--null-soft:#1E282B;--axis:#82A6CA}}
+:root[data-theme=dark]{--ground:#0F1618;--surface:#161F21;--ink:#E9EFEE;--ink-2:#A3B4B5;
+--ink-3:#748688;--rule:#263234;--rule-strong:#3A4B4E;--benefit:#4FC0A7;--benefit-soft:#12302A;
+--caution:#DCA64E;--caution-soft:#332614;--harm:#E28079;--harm-soft:#341B19;--null:#93A5AE;
+--null-soft:#1E282B;--axis:#82A6CA}
+:root[data-theme=light]{--ground:#F5F7F6;--surface:#FFF;--ink:#111A1C;--ink-2:#47575B;
+--ink-3:#7B8A8D;--rule:#DDE4E3;--rule-strong:#C0CBCA;--benefit:#0F7A68;--benefit-soft:#E2F0ED;
+--caution:#B0731A;--caution-soft:#F7EEDE;--harm:#9E2F2F;--harm-soft:#F6E7E5;--null:#5F7280;
+--null-soft:#ECEFF1;--axis:#40607F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+font-size:17.5px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(28px,5vw,64px) clamp(20px,4vw,48px) 72px}
+a{color:inherit}a:focus-visible{outline:2px solid var(--axis);outline-offset:3px}
+.eyebrow{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--axis)}
+h1{font-size:clamp(28px,3.9vw,40px);line-height:1.2;font-weight:700;letter-spacing:0;
+margin:14px 0 0;max-width:34ch;text-wrap:balance}
+.deck{max-width:var(--measure);color:var(--ink-2);font-size:16.5px;margin:18px 0 0;text-wrap:pretty}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px 28px;
+margin:32px 0 0;padding:22px 0 0;border-top:1px solid var(--rule)}
+.readout div{display:flex;flex-direction:column;gap:3px}
+.readout b{font-family:var(--mono);font-size:27px;font-weight:700;letter-spacing:0;
+font-variant-numeric:tabular-nums;color:var(--ink)}
+.readout b.ok{color:var(--benefit)}
+.readout span{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.nav{position:sticky;top:0;z-index:20;margin-top:32px;padding:12px 0;background:var(--ground);
+border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:20px}
+.nav a{font-size:13px;color:var(--ink-3);text-decoration:none;border-bottom:1px solid transparent}
+.nav a:hover{color:var(--ink);border-bottom-color:var(--rule-strong)}
+.sec{margin-top:56px;scroll-margin-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:12px;
+border-bottom:1px solid var(--rule-strong)}
+.sec-head h2{font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;
+color:var(--ink);margin:0}
+.sec-head p{margin:0;color:var(--ink-3);font-size:13.5px}
+.redflags{margin-top:24px;background:var(--harm-soft);border-top:3px solid var(--harm);padding:22px 26px}
+.redflags h3{margin:0 0 4px;font-size:16.5px;font-weight:700;color:var(--harm)}
+.redflags .sub{margin:0 0 14px;font-size:13.5px;color:var(--ink-2)}
+.redflags ul{margin:0;padding:0;list-style:none;display:grid;
+grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px 30px}
+.redflags li{position:relative;padding-left:18px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.redflags li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;
+border-radius:50%;background:var(--harm)}
+/* Dải RÚT BÀI — nặng nhất trong các cảnh báo về độ tin cậy của tài liệu, nên dùng
+   tông đỏ và đứng trên dải mâu thuẫn. Vẫn khác cờ đỏ lâm sàng ở chỗ nằm ngoài
+   phần nội dung, ngay dưới đầu trang. */
+.rutbai{background:var(--harm-soft);border-left:4px solid var(--harm);
+padding:20px 24px;margin:26px 0 0}
+.rutbai h3{margin:0 0 6px;font-size:16px;font-weight:700;color:var(--harm)}
+.rutbai .sub{margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.rutbai ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.rutbai li{font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.rutbai li b{color:var(--ink)}
+.rutbai li em{font-style:normal;font-weight:700;color:var(--harm);text-transform:uppercase;
+font-size:12.5px;letter-spacing:.04em}
+.rutbai .doi{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+/* Dải mâu thuẫn giữa các bản — đặt ngay dưới đầu trang, trước mục lục, vì đây là
+   cảnh báo về ĐỘ TIN CẬY của chính tài liệu đang đọc. Dùng tông cảnh báo (cam)
+   chứ KHÔNG dùng tông cờ đỏ: cờ đỏ là nguy cấp lâm sàng của người bệnh, hai thứ
+   không được trông giống nhau. */
+.xungdot{background:var(--caution-soft);border-left:4px solid var(--caution);
+padding:20px 24px;margin:26px 0 0}
+.xungdot h3{margin:0 0 6px;font-size:16px;font-weight:700;color:var(--caution)}
+.xungdot .sub{margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.xungdot ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.xungdot li{font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.xungdot li b{color:var(--ink)}.xungdot li em{font-style:normal;font-weight:700;color:var(--caution)}
+.xungdot .doi{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+.xungdot.chuakiem{background:var(--ground);border-left-color:var(--rule-strong)}
+.xungdot.chuakiem h3{color:var(--ink-2)}
+.xungdot code{font-size:12.5px;background:var(--surface);padding:1px 5px;border-radius:3px}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1px;
+margin-top:24px;background:var(--rule)}
+.act{background:var(--ground);padding:22px 24px}
+.act h3{margin:0 0 14px;font-size:16px;font-weight:700}
+.act.go h3{color:var(--benefit)}.act.stop h3{color:var(--caution)}
+.act ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px}
+.act li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.act.go li::before,.act.stop li::before{content:"";position:absolute;left:0;top:6px;width:9px;
+height:9px;border-radius:2px}
+.act.go li::before{background:var(--benefit)}.act.stop li::before{background:var(--caution)}
+.field{margin-top:22px;overflow-x:auto}.field-inner{min-width:700px}
+.axis-head{display:grid;grid-template-columns:minmax(240px,1.05fr) minmax(300px,1.3fr) 104px;
+gap:20px;align-items:end;padding-bottom:10px}
+.scale{position:relative;height:18px}
+.scale i{position:absolute;top:4px;transform:translateX(-50%);font-style:normal;
+font-family:var(--mono);font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.scale i.mark{color:var(--axis);font-weight:700}
+.colcap{font-size:12px;color:var(--ink-3);text-align:right}
+.band{display:flex;align-items:center;gap:14px;margin:24px 0 2px}
+.band span{font-size:13.5px;font-weight:700}
+.band s{flex:1;height:1px;background:var(--rule-strong);text-decoration:none}
+.band.b-benefit span{color:var(--benefit)}.band.b-harm span{color:var(--harm)}
+.trial{display:grid;grid-template-columns:minmax(240px,1.05fr) minmax(300px,1.3fr) 104px;
+gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);
+transition:background .18s ease}
+.trial:hover{background:var(--surface)}
+.trial .name{font-size:15.5px;font-weight:700;line-height:1.35;text-wrap:pretty}
+.trial .name small{display:block;font-weight:400;font-size:13px;color:var(--ink-3);margin-top:4px}
+.trial .name .num{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.plot{position:relative;height:26px}
+.gl{position:absolute;top:2px;bottom:2px;width:1px;background:var(--rule)}
+.nline{position:absolute;top:-4px;bottom:-4px;width:1.5px;background:var(--axis);opacity:.85}
+.ci{position:absolute;top:12px;height:2.5px;border-radius:2px}
+.wh{position:absolute;top:7px;height:12px;width:1.5px;opacity:.75}
+.dot{position:absolute;top:7.5px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;
+border:2.5px solid var(--surface)}
+.trial:hover .dot{transform:scale(1.2);transition:transform .18s ease}
+.benefit .ci,.benefit .dot,.benefit .wh{background:var(--benefit)}
+.caution .ci,.caution .dot,.caution .wh{background:var(--caution)}
+.neutral .ci,.neutral .dot,.neutral .wh{background:var(--null)}
+.harm .ci,.harm .dot,.harm .wh{background:var(--harm)}
+.plot .na{font-size:12.5px;color:var(--ink-3);line-height:26px}
+.tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:3px;white-space:nowrap}
+.t-benefit{background:var(--benefit-soft);color:var(--benefit)}
+.t-caution{background:var(--caution-soft);color:var(--caution)}
+.t-neutral{background:var(--null-soft);color:var(--null)}
+.t-harm{background:var(--harm-soft);color:var(--harm)}
+.trial .tagcell{text-align:right}
+.legend{display:flex;flex-wrap:wrap;gap:24px;margin-top:20px;font-size:12.5px;color:var(--ink-3)}
+.legend div{display:flex;align-items:center;gap:8px}
+.k-dot{width:10px;height:10px;border-radius:50%;background:var(--ink-3)}
+.k-bar{width:22px;height:2.5px;border-radius:2px;background:var(--ink-3)}
+.k-nl{width:1.5px;height:14px;background:var(--axis)}
+.noeffs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;
+margin-top:22px;background:var(--rule)}
+.noeff{background:var(--ground);padding:20px 22px}
+.noeff h3{margin:0 0 12px;font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+.noeff .cnt{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--ink-3)}
+.noeff.benefit h3{color:var(--benefit)}
+.noeff.caution h3{color:var(--caution)}
+.noeff.neutral h3{color:var(--null)}
+.noeff ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.noeff li{font-size:14px;line-height:1.5;color:var(--ink-2)}
+.noeff li b{display:block;font-weight:700;color:var(--ink);margin-bottom:2px;text-wrap:pretty}
+.noeff li span{display:block;font-size:12.5px;color:var(--ink-3)}
+.flags{margin-top:22px;padding:20px 24px;background:var(--caution-soft);border-top:2px solid var(--caution)}
+.flags h3{margin:0 0 10px;font-size:16px;font-weight:700;color:var(--caution)}
+.flags ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14.5px;line-height:1.7}
+.flags li{margin-bottom:8px}.flags li::marker{color:var(--caution)}
+.flags b{font-weight:700;color:var(--ink)}
+.trial .name small .partial{color:var(--caution);font-weight:700}
+.noeff li span .partial{color:var(--caution);font-weight:700}
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--rule)}
+footer p{margin:0;max-width:var(--measure);font-size:12.5px;line-height:1.65;color:var(--ink-3)}
+footer .stamp{margin-top:10px;font-family:var(--mono);font-size:11.5px}
+@media (max-width:640px){.nav{gap:14px}}
+@media (prefers-reduced-motion:reduce){.trial,.trial .dot{transition:none}
+.trial:hover .dot{transform:none}}
+@media print{:root{--ground:#fff;--surface:#fff;--ink:#000;--ink-2:#333;--ink-3:#666;
+--rule:#ccc;--rule-strong:#999}
+.nav{display:none}.wrap{max-width:none;padding:0}.field{overflow:visible}
+.field-inner{min-width:0}.sec{margin-top:26px;page-break-inside:avoid}
+.trial,.flags,.redflags,.act{page-break-inside:avoid}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">Bản đọc sau cập nhật chứng cứ · 2026-09-07</p>
+  <h1>Suy tim EF không giảm (HFnrEF, LVEF &gt; 40%) — 4 nhóm thuốc nền tảng nào có RCT hỗ trợ, theo guideline CCS/CHFS 2025?</h1>
+  <p class="deck">Bản rút gọn để đọc ngay tại phòng khám: việc cần làm đứng trước, chứng cứ đặt
+  sau. Mọi hiệu số nằm trên cùng một trục thang log, vạch 1,0 ở giữa — bên trái là có lợi,
+  bên phải là bất lợi.</p>
+  <div class="readout">
+    <div><b>6</b><span>mục đã xác minh</span></div>
+    <div><b class="ok">0</b><span>áp dụng ngay</span></div>
+    <div><b class="ok">6/6</b><span>mục có định danh truy nguyên</span></div>
+    <div><b class="ok">5</b><span>mục có hiệu số định lượng</span></div>
+  </div>
+</header>
+
+
+<div class="xungdot chuakiem"><h3>Chưa kiểm được tình trạng rút bài</h3><p>Không đọc được sổ xác minh nguồn (ModuleNotFoundError). Đây là “chưa biết”, không phải “không có”. Chạy <code>python tools/so_xac_minh_nguon.py --quet &lt;file&gt;</code>.</p></div>
+<div class="xungdot chuakiem"><h3>Chưa kiểm được mâu thuẫn giữa các bản</h3><p>Không quét được kho dashboard (ModuleNotFoundError). Đây là “chưa biết”, không phải “không có”. Chạy <code>python tools/dang_ky_chu_de.py</code> để kiểm tay.</p></div>
+
+<nav class="nav" aria-label="Mục lục">
+  <a href="#lam">1. Việc cần làm</a>
+  <a href="#ungho">2. Chứng cứ ủng hộ</a>
+  <a href="#khong">3. Không ủng hộ hoặc gây hại</a>
+  <a href="#khac">4. Khuyến cáo và đồng thuận</a>
+  <a href="#vn">5. Áp dụng tại Việt Nam</a>
+</nav>
+
+<section class="sec" id="lam">
+  <div class="sec-head"><h2>1. Việc cần làm</h2><p>đọc trước, chi tiết chứng cứ ở các mục sau</p></div>
+  <div class="redflags">
+    <h3>Cờ đỏ — chuyển cấp cứu, không trì hoãn để tra cứu</h3>
+    <p class="sub">Xử trí an toàn đi trước mọi bước thẩm định chứng cứ.</p>
+    <ul><li>Tăng kali máu có triệu chứng/thay đổi ECG khi dùng finerenone hoặc phối hợp ARNI + lợi tiểu giữ kali — ngừng thuốc, xử trí cấp</li><li>Nhiễm toan ceton do đái tháo đường (DKA) khi dùng SGLT2i dù đường huyết không cao — cấp cứu</li><li>Tụt huyết áp có triệu chứng hoặc phù mạch (angioedema) khi dùng ARNI — ngừng thuốc, xử trí cấp</li></ul>
+  </div>
+  <div class="acts">
+    <div class="act go"><h3>Nên làm hiện nay</h3><ul><li>Đọc toàn văn 5 RCT + guideline CCS/CHFS 2025 (PMID kèm từng mục) trước khi đổi phác đồ dựa trên bản tóm tắt này</li><li>Với bệnh nhân HFnrEF còn triệu chứng dù đã điều trị chuẩn, có thể thảo luận thêm SGLT2i (bằng chứng nhất quán nhất — 2 RCT lớn, HR ~0,8) như một lựa chọn hợp lý trong khi chờ đọc toàn văn/hội chẩn tim mạch</li></ul></div>
+    <div class="act stop"><h3>Không nên, hoặc chưa nên đổi</h3><ul><li>Không dùng bản tóm tắt (chỉ đọc abstract) này để tự động "áp dụng ngay" bất kỳ thuốc nào — thẩm định mới ở mức một phần, chưa có toàn văn</li><li>Không xem sacubitril-valsartan (ARNI) là chứng cứ dương tính rõ ràng — kết cục chính PARAGON-HF không đạt ý nghĩa thống kê (rate ratio 0,87; KTC95% 0,75–1,01; P=0,06)</li><li>Không ngoại suy hiệu quả semaglutide sang bệnh nhân HFpEF không béo phì — STEP-HFpEF chỉ tuyển bệnh nhân BMI≥30</li></ul></div>
+  </div>
+</section>
+
+<section class="sec" id="ungho">
+  <div class="sec-head"><h2>2. Chứng cứ ủng hộ thay đổi</h2><p>hiệu số và khoảng tin cậy 95%, trích đúng như nguồn báo cáo</p></div>
+  <div class="field"><div class="field-inner"><div class="axis-head"><div class="colcap" style="text-align:left">Thử nghiệm · can thiệp</div><div class="scale"><i class="" style="left:7.52%">0,7</i><i class="mark" style="left:35.03%">1,0</i><i class="" style="left:52.24%">1,25</i><i class="" style="left:66.30%">1,5</i><i class="" style="left:88.49%">2</i></div><div class="colcap">Quyết định</div></div><div class="band b-benefit"><span>Khoảng tin cậy nằm trọn bên trái vạch 1,0</span><s></s></div><div class="trial caution"><div class="name">Finerenone (MRA thế hệ mới) giảm biến cố suy tim ở HFmrEF/HFpEF (FINEARTS-HF)<small>RCT · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · <span class="num">Rate ratio (kết cục gộp: tổng biến cố suy tim + tử vong TM) 0,84 (0,74–0,95)</span> · PMID 39225278</small></div><div class="plot" aria-hidden="true"><div class="gl" style="left:7.52%"></div><div class="gl" style="left:52.24%"></div><div class="gl" style="left:66.30%"></div><div class="gl" style="left:88.49%"></div><div class="nline" style="left:35.03%"></div><div class="ci" style="left:11.80%;width:19.27%"></div><div class="wh" style="left:11.80%"></div><div class="wh" style="left:31.07%"></div><div class="dot" style="left:21.58%"></div></div><div class="tagcell"><span class="tag t-caution">Cân nhắc</span></div></div><div class="trial caution"><div class="name">Dapagliflozin giảm biến cố suy tim + tử vong TM ở HFmrEF/HFpEF (DELIVER)<small>RCT · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · <span class="num">HR 0,82 (0,73–0,92)</span> · PMID 36027570</small></div><div class="plot" aria-hidden="true"><div class="gl" style="left:7.52%"></div><div class="gl" style="left:52.24%"></div><div class="gl" style="left:66.30%"></div><div class="gl" style="left:88.49%"></div><div class="nline" style="left:35.03%"></div><div class="ci" style="left:10.75%;width:17.84%"></div><div class="wh" style="left:10.75%"></div><div class="wh" style="left:28.59%"></div><div class="dot" style="left:19.72%"></div></div><div class="tagcell"><span class="tag t-caution">Cân nhắc</span></div></div><div class="trial caution"><div class="name">Empagliflozin giảm tử vong TM + nhập viện suy tim ở HFpEF (EMPEROR-Preserved)<small>RCT · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · <span class="num">HR 0,79 (0,69–0,90)</span> · PMID 34449189</small></div><div class="plot" aria-hidden="true"><div class="gl" style="left:7.52%"></div><div class="gl" style="left:52.24%"></div><div class="gl" style="left:66.30%"></div><div class="gl" style="left:88.49%"></div><div class="nline" style="left:35.03%"></div><div class="ci" style="left:6.41%;width:20.49%"></div><div class="wh" style="left:6.41%"></div><div class="wh" style="left:26.90%"></div><div class="dot" style="left:16.85%"></div></div><div class="tagcell"><span class="tag t-caution">Cân nhắc</span></div></div></div></div>
+  <div class="legend">
+    <div><span class="k-dot"></span>ước lượng điểm</div>
+    <div><span class="k-bar"></span>khoảng tin cậy 95%</div>
+    <div><span class="k-nl"></span>vạch 1,0 — không khác biệt</div>
+    <div>Thanh càng dài, độ chắc chắn càng thấp</div>
+  </div>
+</section>
+
+<section class="sec" id="khong">
+  <div class="sec-head"><h2>3. Chứng cứ không ủng hộ, hoặc gây hại</h2><p>chú ý phần vượt sang phải vạch 1,0</p></div>
+  <div class="field"><div class="field-inner"><div class="axis-head"><div class="colcap" style="text-align:left">Thử nghiệm · can thiệp</div><div class="scale"><i class="" style="left:7.52%">0,7</i><i class="mark" style="left:35.03%">1,0</i><i class="" style="left:52.24%">1,25</i><i class="" style="left:66.30%">1,5</i><i class="" style="left:88.49%">2</i></div><div class="colcap">Quyết định</div></div><div class="band b-harm"><span>Khoảng tin cậy chạm hoặc vượt vạch 1,0</span><s></s></div><div class="trial harm"><div class="name">Semaglutide cải thiện triệu chứng/cân nặng ở HFpEF kèm béo phì (STEP-HFpEF) — dân số hẹp<small>RCT · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · <span class="num">Win ratio (kết cục hỗn hợp phân cấp: tử vong, biến cố suy tim, thay đổi KCCQ, thay đổi 6MWD) 1,72 (1,37–2,15)</span> · PMID 37622681</small></div><div class="plot" aria-hidden="true"><div class="gl" style="left:7.52%"></div><div class="gl" style="left:52.24%"></div><div class="gl" style="left:66.30%"></div><div class="gl" style="left:88.49%"></div><div class="nline" style="left:35.03%"></div><div class="ci" style="left:59.31%;width:34.76%"></div><div class="wh" style="left:59.31%"></div><div class="wh" style="left:94.06%"></div><div class="dot" style="left:76.85%"></div></div><div class="tagcell"><span class="tag t-harm">Gây hại</span></div></div><div class="trial caution"><div class="name">Sacubitril-valsartan (ARNI) ở HFpEF — kết cục chính không đạt ý nghĩa thống kê (PARAGON-HF)<small>RCT · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · <span class="num">Rate ratio 0,87 (0,75–1,01)</span> · PMID 31475794</small></div><div class="plot" aria-hidden="true"><div class="gl" style="left:7.52%"></div><div class="gl" style="left:52.24%"></div><div class="gl" style="left:66.30%"></div><div class="gl" style="left:88.49%"></div><div class="nline" style="left:35.03%"></div><div class="ci" style="left:12.84%;width:22.96%"></div><div class="wh" style="left:12.84%"></div><div class="wh" style="left:35.79%"></div><div class="dot" style="left:24.28%"></div></div><div class="tagcell"><span class="tag t-caution">Cân nhắc</span></div></div></div></div>
+</section>
+
+<section class="sec" id="khac">
+  <div class="sec-head"><h2>4. Khuyến cáo và đồng thuận</h2><p>mục không có hiệu số định lượng để đặt lên trục</p></div>
+  <div class="noeffs"><div class="noeff caution"><h3>Cân nhắc chọn lọc <span class="cnt">1</span></h3><ul><li><b>Guideline CCS/CHFS 2025 hợp nhất khái niệm HFnrEF, nêu khung 4 nhóm thuốc nền tảng</b><span>Virani S, et al. Can J Cardiol 2025 (CCS/CHFS Guideline Update) · <span class="partial">thẩm định trên tóm tắt — chưa đọc toàn văn</span> · PMID 41110921</span></li></ul></div></div>
+</section>
+
+<section class="sec vn" id="vn">
+  <div class="sec-head"><h2>5. Áp dụng tại Việt Nam</h2><p>mục cần đối chiếu nguồn lực và quy trình tại đơn vị</p></div>
+  <div class="flags">
+    <h3>Cần xác nhận tại đơn vị trước khi áp dụng</h3>
+    <ul><li><b>Guideline CCS/CHFS 2025 hợp nhất khái niệm HFnrEF, nêu khung 4 nhóm thuốc nền tảng</b> — Khái niệm HFnrEF còn mới (10/2025); guideline/Hội Tim mạch học Việt Nam CHƯA chính thức áp dụng thuật ngữ này — [CẦN XÁC NHẬN TẠI ĐƠN VỊ] khi trình bày hồ sơ bệnh án.</li><li><b>Finerenone (MRA thế hệ mới) giảm biến cố suy tim ở HFmrEF/HFpEF (FINEARTS-HF)</b> — Finerenone (Kerendia) mới đăng ký — [CẦN XÁC NHẬN TẠI ĐƠN VỊ] về sẵn có/BHYT trước khi kê.</li><li><b>Dapagliflozin giảm biến cố suy tim + tử vong TM ở HFmrEF/HFpEF (DELIVER)</b> — Sẵn có tại Việt Nam (Forxiga); có BHYT chi trả theo chỉ định ĐTĐ — [CẦN XÁC NHẬN TẠI ĐƠN VỊ] chi trả cho chỉ định suy tim đơn thuần.</li><li><b>Semaglutide cải thiện triệu chứng/cân nặng ở HFpEF kèm béo phì (STEP-HFpEF) — dân số HẸP</b> — Semaglutide liều tim mạch-chuyển hoá (2,4 mg, Wegovy) — [CẦN XÁC NHẬN TẠI ĐƠN VỊ] về sẵn có/BHYT tại Việt Nam, chi phí cao.</li></ul>
+  </div>
+</section>
+
+<footer>
+  <pre class="stamp" style="white-space:pre-wrap;border:1px solid #d1d5db;padding:8px;border-radius:6px;background:#f8fafc">[CHƯA SINH ĐƯỢC TUYÊN BỐ ĐỘ PHỦ: [Errno 2] No such file or directory: '/home/user/EBM-drluanbv175/sync/skills/cap-nhat-chung-cu-y-khoa/tools/tuyen_bo_do_phu.py' — chạy python3 tools/tuyen_bo_do_phu.py]</pre>
+  <p>Hiệu số trích đúng như nguồn gốc báo cáo. Nguồn nào không tự phân hạng GRADE thì không gán
+  thay. Tài liệu không chứa thông tin định danh người bệnh. Cần bác sĩ kiểm chứng toàn văn trước
+  khi áp dụng cho người bệnh cụ thể.</p>
+  <p class="stamp">Sinh từ WebDashboard_EBM_VanDeCuThe_SuyTim_HFnrEF_20260907.html</p>
+</footer>
+</div>
+</body>
+</html>
