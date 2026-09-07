@@ -38,6 +38,20 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parent.parent          # tools/ -> "Claude AI"
 NOW = time.time()
 
+# VÁ 07/09/2026: trước đây GIT_REPOS chỉ ghi tên tương đối rồi ghép `ROOT / rel`
+# — giả định medical-ebm-automation nằm LỒNG trong ROOT (đúng máy thật). Trên
+# phiên cloud (medical-ebm-automation là ANH EM của ROOT), `ROOT / rel` trỏ vào
+# thư mục không tồn tại → check_git_health() lặng lẽ báo "không phải git repo
+# (bỏ qua)" thay vì thật sự kiểm sức khỏe git của repo đó — đúng việc công cụ
+# này (kiểm tra AN TOÀN đồng bộ, chạy MẶC ĐỊNH trước khi làm việc) sinh ra để
+# bắt. Dùng duong_goc() — xem tools/ban_sao_tran.py.
+import importlib.util as _ilu_ssc  # noqa: E402
+_sp_ssc = _ilu_ssc.spec_from_file_location(
+    "_bst_ssc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_ssc = _ilu_ssc.module_from_spec(_sp_ssc)
+_sp_ssc.loader.exec_module(_bst_ssc)
+_MEA_GOC = _bst_ssc.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
+
 # Thư mục BỎ QUA khi quét (nặng/không liên quan)
 PRUNE_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache",
               "_archive", "_reskin_backup", "pycache", "worktrees",
@@ -53,8 +67,8 @@ CORE_FILES = [
     "tools/eval/research_checks.py",
 ]
 
-# 2 repo git lồng nhau cần kiểm
-GIT_REPOS = [".", "medical-ebm-automation"]
+# 2 repo git cần kiểm (lồng trên máy thật, anh em trên phiên cloud — xem duong_goc() ở trên)
+GIT_REPOS = [(".", ROOT), ("medical-ebm-automation", _MEA_GOC)]
 
 # ── tiện ích ─────────────────────────────────────────────────────────────────
 def _run_git(args: list[str], cwd: Path, timeout: int = 40):
@@ -157,8 +171,7 @@ def check_conflict_copies() -> tuple[str, list[str]]:
 def check_git_health() -> tuple[str, list[str]]:
     """Kiểm 2 repo lồng: HEAD giải được, status chạy được (không treo), không khóa/merge dở."""
     notes, worst = [], "GREEN"
-    for rel in GIT_REPOS:
-        repo = ROOT / rel
+    for rel, repo in GIT_REPOS:
         gdir = repo / ".git"
         if not gdir.exists():
             notes.append(f"[{rel}] không phải git repo (bỏ qua)")
