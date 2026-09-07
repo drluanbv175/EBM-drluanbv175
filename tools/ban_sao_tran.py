@@ -16,6 +16,22 @@ Ngữ nghĩa: bản sao trần = KHÔNG MỘT gốc dữ liệu ngoài-git nào 
 nghĩa là đây là máy thật (hoặc máy thật đang hỏng dở) — mọi thiếu hụt phải ĐỎ như cũ.
 Mất cả ba gốc cùng lúc trên máy thật là sự cố cây OneDrive — việc của
 sync_safety_check (làn ①), không phải của các chốt dùng helper này.
+
+VÁ 07/09/2026 — SIBLING CHECKOUT TRÊN PHIÊN CLOUD KHÔNG ĐƯỢC NHẬN DIỆN (mục #105
+còn treo từ đợt audit 148 mục). Bản đầu chỉ kiểm `repo / goc` (LỒNG bên trong repo)
+— trên phiên cloud, `add_repo` dựng các repo ở CÙNG một thư mục cha dưới dạng ANH EM
+(sibling), không lồng vào nhau. Đo trực tiếp trên chính phiên phát hiện lỗi này:
+`/home/user/EBM-drluanbv175` (repo gốc) và `/home/user/medical-ebm-automation`
+(clone thật, `git remote` xác nhận `drluanbv175/medical-ebm-automation`, cây làm
+việc sạch, đã đồng bộ `origin`) là HAI THƯ MỤC ANH EM dưới `/home/user/` — kiểm
+`repo / "medical-ebm-automation"` mãi mãi rỗng dù dữ liệu thật đang nằm ngay cạnh.
+Hệ quả: `ban_sao_git_tran()` báo "bản trần" SAI trên một phiên có đủ dữ liệu thật,
+khiến hàng loạt verifier (qua `upgrade_verify.py` bước 9-24) tự hạ xuống ⚪ NGOÀI
+PHẠM VI thay vì chạy kiểm thật — chiều SAI của BH08 (biến "có dữ liệu" thành "coi
+như không biết"), không phải chiều báo-động-giả nhưng vẫn làm mù mọi cổng phụ
+thuộc. Đã vá: kiểm CẢ `repo / goc` (lồng) LẪN `repo.parent / goc` (anh em cùng
+thư mục cha) — chỉ THÊM một đường phát hiện, không bớt đường cũ, nên không làm
+yếu lại phép thử "vắng cả ba gốc" mà BH82/BH83 đã khoá.
 """
 from __future__ import annotations
 
@@ -28,5 +44,26 @@ GOC_DU_LIEU_NGOAI_GIT = ("EBM-Dashboards", "medical-ebm-automation", "EBM_MASTER
 
 
 def ban_sao_git_tran(repo: Path = REPO) -> bool:
-    """True CHỈ khi cả BA gốc dữ liệu ngoài-git đều vắng mặt (clone tươi/CI/cloud)."""
-    return not any((repo / goc).exists() for goc in GOC_DU_LIEU_NGOAI_GIT)
+    """True CHỈ khi cả BA gốc dữ liệu ngoài-git đều vắng mặt (clone tươi/CI/cloud).
+
+    Kiểm cả vị trí LỒNG (`repo/goc` — máy thật, kiến trúc OneDrive cây chung) lẫn
+    vị trí ANH EM (`repo.parent/goc` — phiên cloud, các repo được `add_repo` dựng
+    cạnh nhau dưới cùng một thư mục cha) — xem "VÁ 07/09/2026" ở docstring module.
+    """
+    return all(duong_goc(goc, repo) is None for goc in GOC_DU_LIEU_NGOAI_GIT)
+
+
+def duong_goc(ten: str, repo: Path = REPO) -> Path | None:
+    """Đường dẫn THẬT của một gốc dữ liệu ngoài-git (`ten` ∈ GOC_DU_LIEU_NGOAI_GIT).
+
+    Ưu tiên vị trí LỒNG (`repo/ten`), rồi tới vị trí ANH EM (`repo.parent/ten`);
+    `None` nếu không có ở đâu. MỘT nơi giải quyết đường dẫn — mọi chốt/verifier
+    cần mở file bên trong `medical-ebm-automation`/`EBM-Dashboards`/`EBM_MASTER`
+    PHẢI gọi hàm này thay vì tự ghép `repo / "medical-ebm-automation"` (đúng lỗi
+    đã gây fail-open/fail-closed-sai được vá 07/09/2026 — xem docstring module).
+    """
+    for base in (repo, repo.parent):
+        candidate = base / ten
+        if candidate.exists():
+            return candidate
+    return None

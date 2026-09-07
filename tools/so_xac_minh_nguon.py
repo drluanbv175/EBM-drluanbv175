@@ -400,7 +400,11 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
     if not can:
         return
 
-    mea = REPO / "medical-ebm-automation"
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_sxmn1", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    mea = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
     if not (mea / "app" / "sources" / "crossref_retraction.py").exists():
         print(f"\n⚠ {len(can)} DOI CHƯA kiểm được rút bài: thiếu "
               f"app/sources/crossref_retraction.py — giữ nguyên trạng thái CHƯA kiểm.")
@@ -460,7 +464,11 @@ def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
     """
     if not pmids:
         return {}
-    mea = REPO / "medical-ebm-automation"
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_sxmn2", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    mea = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
     if not (mea / "app" / "sources" / "retraction_chain.py").exists():
         return {}
     sys.path.insert(0, str(mea))
@@ -549,7 +557,11 @@ def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
             else:
                 print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
     if doi_can:
-        mea = REPO / "medical-ebm-automation"
+        import importlib.util as _ilu_mea
+        _sp_mea = _ilu_mea.spec_from_file_location("_bst_sxmn3", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+        _sp_mea.loader.exec_module(_bst_mea)
+        mea = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
         sys.path.insert(0, str(mea))
         try:
             from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
@@ -785,8 +797,12 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
             # nay SAI, vì kiểm rút bài đã đi qua chuỗi 3 tầng — nền Retraction Watch ngoại
             # tuyến và Europe PMC đều không cần khoá. Chỉ đường tới cách sửa THẬT SỰ có tác
             # dụng, đúng tinh thần BH14 (đừng khuyên việc chắc chắn vô ích).
-            nen_rw = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
-                      / "retraction_watch.csv")
+            import importlib.util as _ilu_mea4
+            _sp_mea4 = _ilu_mea4.spec_from_file_location("_bst_sxmn4", Path(__file__).resolve().parent / "ban_sao_tran.py")
+            _bst_mea4 = _ilu_mea4.module_from_spec(_sp_mea4)
+            _sp_mea4.loader.exec_module(_bst_mea4)
+            nen_rw = ((_bst_mea4.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation"))
+                      / "data" / "retraction_watch" / "retraction_watch.csv")
             print(f"     • {len(chua_rut)} mục: CHƯA kiểm được RÚT BÀI.")
             if not nen_rw.exists():
                 print("       → CHƯA tải nền ngoại tuyến. Tải MỘT LẦN (không cần khoá API):")

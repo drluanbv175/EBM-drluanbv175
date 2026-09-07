@@ -34,7 +34,12 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_tdxv", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 
 def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
@@ -185,7 +190,7 @@ def main() -> int:
 
     # ⑥ Đề tài thật — việc người gần nhất (đọc readiness C1a)
     out = _chay(["~/.ebm-venv/bin/python".replace("~", str(Path.home())),
-                 str(REPO / "medical-ebm-automation" / "tools" / "study_readiness.py"),
+                 str(_GOC_MEA / "tools" / "study_readiness.py"),
                  "--study", "hai-long-benh-nhan-C1a-BVQY175"])
     if "CHƯA được bác sĩ chốt" in out:
         de_xuat.append((1, "👤", "C1a: G0 chờ 5 cờ FINER — một cú đúp",
@@ -199,7 +204,7 @@ def main() -> int:
     # khi thiếu gh/mạng. Sửa cùng ngày: bản đầu chạy gh với cwd repo GỐC cho
     # workflow của repo Y KHOA ⇒ HTTP 404 đội lốt «mạng chập chờn» — dòng nhắc
     # «thấy: HTTP» dai dẳng nhiều lượt bảng thật ra là hỏi NHẦM REPO.
-    for ten_ci, cwd_ci, wf in (("y khoa", REPO / "medical-ebm-automation", "offline-ci.yml"),
+    for ten_ci, cwd_ci, wf in (("y khoa", _GOC_MEA, "offline-ci.yml"),
                                ("gốc", REPO, "kiem-tinh-da-nen.yml")):
         if not (cwd_ci / ".github" / "workflows" / wf).exists():
             continue
@@ -219,7 +224,7 @@ def main() -> int:
 
     # ⑦c GIÁC QUAN GIT (bài «40 file chưa commit mà tưởng cây sạch»): đếm file
     # bẩn + commit chưa đẩy ở cả hai repo. Chỉ ĐẾM và BÁO — không tự add của ai.
-    for ten_repo, duong in (("gốc", REPO), ("y khoa", REPO / "medical-ebm-automation")):
+    for ten_repo, duong in (("gốc", REPO), ("y khoa", _GOC_MEA)):
         if not (duong / ".git").exists():
             continue  # máy/cây thiếu repo (CI checkout đơn-repo) — stderr của git
             # sẽ bị _chay gộp vào stdout và đếm nhầm thành "1 file chưa commit"
@@ -238,7 +243,7 @@ def main() -> int:
     # tuần sau, không lastRunAt — không bộ đếm nào nhìn thấy). Đo ĐẦU RA THẬT
     # trong log (bài học launchd: đăng ký ≠ nổ), không đọc đăng ký lịch.
     for uu, dong in giac_quan_lich_nen(
-            REPO / "medical-ebm-automation" / "data" / "archive" / "launchd_weekly.log"):
+            _GOC_MEA / "data" / "archive" / "launchd_weekly.log"):
         de_xuat.append((uu, "🤖" if uu < 2 else "👤", dong,
                         "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
                         if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "

@@ -107,7 +107,11 @@ def _tra_rut_bai(pmids: list[str]) -> dict[str, str]:
     nhan = {p: "⚠️ chưa kiểm rút bài" for p in pmids}
     if not pmids:
         return nhan
-    cli = REPO / "medical-ebm-automation" / "tools" / "check_citation_retraction.py"
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_dccm", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    cli = (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "check_citation_retraction.py"
     venv_py = Path.home() / ".ebm-venv" / "bin" / "python"
     py = str(venv_py) if venv_py.exists() else sys.executable
     if not cli.exists():

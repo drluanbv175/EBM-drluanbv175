@@ -48,7 +48,11 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_tdcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 # PMID 30267080 — Choi và cs., JAMA Oncology. Đáp án BIẾT TRƯỚC: đã rút (retract-and-replace),
 # và đáng giá làm ca thử vì CẢ PubMed LẪN Europe PMC đều trả 'ok'; chỉ nền Retraction Watch
@@ -246,7 +250,7 @@ def main() -> int:
             from cryptography.hazmat.primitives.serialization import (
                 Encoding, NoEncryption, PrivateFormat, PublicFormat,
             )
-            gc_mod = _nap(REPO / "medical-ebm-automation" / "tools" / "gate_contract.py",
+            gc_mod = _nap((_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "gate_contract.py",
                           "gc_canary")
             priv = Ed25519PrivateKey.generate()
             (tmp / "priv").mkdir()

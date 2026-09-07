@@ -21,6 +21,7 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
+from orchestrator import duong_that  # noqa: E402
 from orchestrator.flows import RESEARCH_FLOW  # noqa: E402
 from orchestrator.plugin_ownership import PluginOwnershipRegistry  # noqa: E402
 from orchestrator.registry import Registry  # noqa: E402
@@ -38,12 +39,21 @@ ROUTER_SOURCE = ROOT / "sync/skills/plugin-router-chatgpt"
 ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 
 
+def _hien_thi(path: Path) -> str:
+    """Đường dẫn ngắn để in — tương đối ROOT nếu trong cây, tuyệt đối nếu là
+    sibling (medical-ebm-automation qua duong_that() có thể nằm ngoài ROOT)."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
     if not path.exists():
-        return [f"thieu file {path.relative_to(ROOT)}"]
+        return [f"thieu file {_hien_thi(path)}"]
     text = path.read_text(encoding="utf-8", errors="ignore")
     return [
-        f"{path.relative_to(ROOT)} thieu marker {marker}"
+        f"{_hien_thi(path)} thieu marker {marker}"
         for marker in markers
         if marker not in text
     ]
@@ -135,11 +145,11 @@ def verify() -> dict[str, Any]:
         ROOT / ".claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER, "G2/G4/G5/G8/G9/G10"),
         ROOT / ".githooks/pre-commit": ("verify_plugin_orchestration.py",),
         ROOT / "tools/sync_agents_to_codex.py": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/CLAUDE.md": (CONTRACT_MARKER, REGISTRY_MARKER),
-        ROOT / "medical-ebm-automation/.claude/agents/dieu-phoi-nghien-cuu.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/dieu-phoi-lam-sang.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/_PLUGIN-ROUTING-CONTRACT.md": (
+        duong_that("medical-ebm-automation/CLAUDE.md"): (CONTRACT_MARKER, REGISTRY_MARKER),
+        duong_that("medical-ebm-automation/.claude/agents/dieu-phoi-nghien-cuu.md"): (CONTRACT_MARKER,),
+        duong_that("medical-ebm-automation/.claude/agents/dieu-phoi-lam-sang.md"): (CONTRACT_MARKER,),
+        duong_that("medical-ebm-automation/.claude/agents/tham-dinh-dau-ra.md"): (CONTRACT_MARKER,),
+        duong_that("medical-ebm-automation/.claude/agents/_PLUGIN-ROUTING-CONTRACT.md"): (
             "HỢP ĐỒNG ĐIỀU PHỐI PLUGIN",
         ),
     }

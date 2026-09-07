@@ -42,7 +42,11 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-EXPORTS = REPO / "medical-ebm-automation" / "exports"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_cnncls", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+EXPORTS = (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "exports"
 BO_QUA = re.compile(r"^(ZZ|PYTEST|TEST|DEMO)", re.I)
 
 
@@ -82,7 +86,7 @@ def main() -> int:
     muc = so["muc"]
     chain = None
     try:
-        sys.path.insert(0, str(REPO / "medical-ebm-automation"))
+        sys.path.insert(0, str(_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")))
         from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
         chain = RetractionChain()
     except Exception as e:  # noqa: BLE001

@@ -45,7 +45,11 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
-GATE_CONTRACT_TOOLS_DIR = ROOT / "medical-ebm-automation" / "tools"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_hgc_early", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+GATE_CONTRACT_TOOLS_DIR = (_bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")) / "tools"
 
 # 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
 # thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).

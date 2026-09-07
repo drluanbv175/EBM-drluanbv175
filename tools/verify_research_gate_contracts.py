@@ -29,7 +29,11 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
         pass
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT / "medical-ebm-automation"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_vrgc_early", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+REPO = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 REPO_TOOLS = REPO / "tools"
 sys.path.insert(0, str(REPO_TOOLS))
 

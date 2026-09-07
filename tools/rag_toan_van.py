@@ -39,7 +39,12 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-KHO_CHUNG = REPO / "EBM-Dashboards" / "toan_van_oa"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_rtv", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
+KHO_CHUNG = _GOC_DASH / "toan_van_oa"
 MODEL_ID = "minishlab/potion-multilingual-128M"
 CO_DOAN, CHONG_LAN = 110, 25          # từ mỗi đoạn · từ gối nhau
 
@@ -76,7 +81,7 @@ def _chunks(vb: str) -> list[str]:
 
 def _kho(study: str | None) -> Path:
     if study:
-        return REPO / "medical-ebm-automation" / "exports" / study / "toan_van_oa"
+        return (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "exports" / study / "toan_van_oa"
     return KHO_CHUNG
 
 

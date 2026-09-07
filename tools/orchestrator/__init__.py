@@ -24,5 +24,27 @@ from pathlib import Path
 # ROOT = thư mục gốc "Claude AI" (orchestrator → tools → ROOT)
 ROOT = Path(__file__).resolve().parents[2]
 
-__all__ = ["ROOT"]
+
+def duong_that(rel_path: str) -> Path:
+    """Giải quyết một đường dẫn tương đối ROOT, ưu tiên sibling cho nhánh
+    medical-ebm-automation/... — vá 07/09/2026 cùng tools/ban_sao_tran.py.
+
+    Trên phiên cloud, add_repo dựng medical-ebm-automation làm ANH EM của repo
+    gốc (`ROOT.parent/medical-ebm-automation`), không LỒNG bên trong (`ROOT/
+    medical-ebm-automation`). `ROOT / rel_path` một mình không bao giờ tìm ra
+    sibling — mọi rel_path bắt đầu bằng "medical-ebm-automation/" phải đi qua
+    đây thay vì tự ghép `ROOT / rel_path`.
+    """
+    if rel_path.startswith("medical-ebm-automation/"):
+        import importlib.util
+        duong_bst = Path(__file__).resolve().parents[1] / "ban_sao_tran.py"
+        spec = importlib.util.spec_from_file_location("_bst_orch", duong_bst)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        goc = mod.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
+        return goc / rel_path[len("medical-ebm-automation/"):]
+    return ROOT / rel_path
+
+
+__all__ = ["ROOT", "duong_that"]
 __version__ = "1.2.0"

@@ -37,8 +37,15 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-CAY_QUET = [REPO / "tools", REPO / "medical-ebm-automation" / "tools",
-            REPO / "EBM-Dashboards" / "tools", REPO / "EBM_MASTER" / "tools",
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_ktdn", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+_GOC_DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
+_GOC_MASTER = _bst_mea.duong_goc("EBM_MASTER", REPO) or (REPO / "EBM_MASTER")
+CAY_QUET = [REPO / "tools", _GOC_MEA / "tools",
+            _GOC_DASH / "tools", _GOC_MASTER / "tools",
             REPO / "ops"]
 BO_QUA_TEN = {"__pycache__"}
 MIEN_TRU = "da-nen: bo-qua"
@@ -149,9 +156,9 @@ def main() -> int:
     # LƯỢT R6-RIÊNG cho phần còn lại của vùng chuỗi-ký (runtime/tests/scripts —
     # nằm trong VUNG_KY nhưng ngoài CAY_QUET; áp cả R1-R5 vào 3 cây này sẽ tạo
     # trăm cảnh báo R4 nhiễu từ test in tiếng Việt, nên chỉ soi đúng luật hash).
-    for cay in (REPO / "medical-ebm-automation" / "runtime",
-                REPO / "medical-ebm-automation" / "tests",
-                REPO / "medical-ebm-automation" / "scripts"):
+    for cay in (_GOC_MEA / "runtime",
+                _GOC_MEA / "tests",
+                _GOC_MEA / "scripts"):
         if not cay.exists():
             continue
         for p in sorted(cay.rglob("*.py")):

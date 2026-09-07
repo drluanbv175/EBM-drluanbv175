@@ -81,6 +81,22 @@ def _nap(duong_dan: Path, ten: str):
     return m
 
 
+def _goc_mea() -> Path:
+    """Đường dẫn THẬT của medical-ebm-automation — lồng hoặc anh em thư mục cha.
+
+    VÁ 07/09/2026 (mục #105 còn treo từ đợt audit 148 mục): 9 chỗ trong file này
+    từng tự ghép `REPO / "medical-ebm-automation"`, chỉ nhận vị trí LỒNG. Trên
+    phiên cloud, `add_repo` dựng `medical-ebm-automation` làm ANH EM của repo gốc
+    (cùng thư mục cha) — ghép cứng khiến 9 chốt này tự ⚪/FAIL sai dù dữ liệu thật
+    đang nằm ngay cạnh (`ban_sao_git_tran()` cũng có đúng lỗi này, đã vá cùng lúc).
+    Nay uỷ quyền cho định nghĩa DUY NHẤT ở `tools/ban_sao_tran.py::duong_goc()`.
+    Không có ở đâu thì trả về vị trí lồng như cũ (để `.exists()` sau đó vẫn đúng
+    là False, không đổi hành vi trên máy/CI thật sự bare).
+    """
+    return (_nap(REPO / "tools" / "ban_sao_tran.py", "bst_goc_mea")
+            .duong_goc("medical-ebm-automation", REPO)) or (REPO / "medical-ebm-automation")
+
+
 # ---------------------------------------------------------------------------
 # Mỗi hàm trả (đạt, chi_tiết). Ném ngoại lệ = coi như KHÔNG đạt (chốt phải nói
 # ra khi chính nó hỏng, thay vì im lặng trả xanh).
@@ -433,7 +449,7 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     if "CHƯA kiểm được RÚT BÀI" not in out:
         return True, "không còn mục nào hết hiệu lực vì chưa kiểm rút bài"
 
-    co_nen = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
+    co_nen = (_goc_mea() / "data" / "retraction_watch"
               / "retraction_watch.csv").exists()
     can = "CAN_NCBI_API_KEY" if co_nen else "CAN_TAI_RETRACTION_WATCH"
     if can not in out:
@@ -889,7 +905,7 @@ def bh27_khong_kiem_duoc_phai_la_van_de():
     """
     import ast
 
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_mea()
     f_tieu_thu = mea / "tools/check_citation_retraction.py"
     # Khai ĐÍCH DANH hàm nào thuộc hợp đồng rút bài. Đổi tên hàm mà quên sửa đây thì
     # chốt đỏ — đúng ý: nghĩa là nó đã thôi canh phần mã mà nó tưởng đang canh.
@@ -1277,7 +1293,7 @@ def bh34_canh_bao_phai_noi_dung_muc():
     Kiểm HÀNH VI: bản ghi mang cờ rút-và-thay phải sinh thông điệp khác hẳn bản ghi
     rút bỏ hẳn, và cả hai đều phải là LỖI CỨNG.
     """
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_mea()
     if str(mea) not in sys.path:
         sys.path.insert(0, str(mea))  # module dùng `from app.utils...`
     cr = _nap(mea / "app" / "sources" / "crossref_retraction.py", "cr_bh34")
@@ -1576,7 +1592,7 @@ def bh41_cong_cu_chung_cu_khong_duoc_mo_coi():
                     for p in thu_muc.glob("*.md"))
     mo_coi = [t for t in CONG_CU
               if (REPO / "tools" / f"{t}.py").exists()
-              or (REPO / "medical-ebm-automation" / "tools" / f"{t}.py").exists()]
+              or (_goc_mea() / "tools" / f"{t}.py").exists()]
     mo_coi = [t for t in mo_coi if t not in van]
     if mo_coi:
         return False, (f"{len(mo_coi)} công cụ chứng cứ KHÔNG agent nào gọi tên "
@@ -1681,7 +1697,7 @@ def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
     """
     import subprocess
 
-    tp = REPO / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
+    tp = _goc_mea() / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
     if not tp.exists():
         return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
     r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
@@ -1955,7 +1971,7 @@ def bh51_ledger_synthetic_dung_pham_vi():
     import shutil
     import sys as _sys
     import tempfile
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_mea()
     sap = mea / "exports/ZZPHA-R-AUTO-DEMO/G4_A5_SAP_FINAL_ZZPHA-R-AUTO-DEMO.md"
     if not sap.exists():
         return True, "đề tài demo không còn — chốt bỏ qua có khai báo"
@@ -2663,7 +2679,7 @@ def bh53_elink_chi_nhan_pubmed_pmc():
     _parse_linksets với fixture mang CẢ HAI linkname — nhận nhầm refs là đỏ.
     """
     import importlib.util
-    duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
+    duong = _goc_mea() / "tools" / "gom_toan_van_oa.py"
     if not duong.exists():
         return False, "gom_toan_van_oa.py biến mất"
     sp = importlib.util.spec_from_file_location("gom_tv", duong)
@@ -2728,14 +2744,14 @@ def bh52_g0_kiem_rut_bai_tai_cua():
           "print(json.dumps(m.guardrail_check_g0('',{'all_pmids':['9500320']}),"
           "ensure_ascii=False))")
     r = subprocess.run([str(venv), "-c", ma], capture_output=True, text=True,
-                       cwd=REPO / "medical-ebm-automation", timeout=180)
+                       cwd=_goc_mea(), timeout=180)
     if r.returncode != 0:
         return False, f"guardrail_check_g0 không chạy được: {r.stderr.strip()[-120:]}"
     goi = r.stdout
     if "R1C" not in goi:
         return False, "R1C biến mất — G0 lại tin PMID còn hiệu lực mà không kiểm"
     if "9500320" not in goi:
-        nen_rw = REPO / "medical-ebm-automation" / "data" / "retraction_watch" / "retraction_watch.csv"
+        nen_rw = _goc_mea() / "data" / "retraction_watch" / "retraction_watch.csv"
         if not nen_rw.exists():
             return False, ("CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không: nền Retraction Watch NGOẠI "
                            "TUYẾN chưa tải (data/retraction_watch/retraction_watch.csv — gitignore). "

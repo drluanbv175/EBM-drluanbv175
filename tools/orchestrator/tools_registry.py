@@ -13,7 +13,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import ROOT
+from . import ROOT, duong_that
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,7 @@ class Tool:
 
     @property
     def path(self) -> Path:
-        return ROOT / self.rel_path
+        return duong_that(self.rel_path)
 
     @property
     def exists(self) -> bool:

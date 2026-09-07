@@ -46,7 +46,14 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
 # tools/eval/ này) — import chéo AN TOÀN qua sys.path (try/except): nếu cây đó vắng
 # mặt (chạy eval harness tách rời), --classify degrade rõ ràng, KHÔNG ảnh hưởng
 # đường mặc định evaluate()/CLI vốn KHÔNG đổi (backward-compatible tuyệt đối).
-_RETRY_LOOP_DIR = Path(__file__).resolve().parents[2] / "medical-ebm-automation" / "tools"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location(
+    "_bst_run_eval", Path(__file__).resolve().parents[1] / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_REPO_GOC = Path(__file__).resolve().parents[2]
+_RETRY_LOOP_DIR = (_bst_mea.duong_goc("medical-ebm-automation", _REPO_GOC)
+                   or (_REPO_GOC / "medical-ebm-automation")) / "tools"
 _retry_loop = None
 _retry_loop_import_error = None
 try:

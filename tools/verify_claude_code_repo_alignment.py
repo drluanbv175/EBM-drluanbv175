@@ -39,9 +39,14 @@ ROOT_DOCS = {
     "AGENTS.md": ROOT / "AGENTS.md",
     "CLAUDE.md": ROOT / "CLAUDE.md",
 }
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_vccra_early", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 MEDICAL_DOCS = {
-    "medical-ebm-automation/AGENTS.md": ROOT / "medical-ebm-automation" / "AGENTS.md",
-    "medical-ebm-automation/CLAUDE.md": ROOT / "medical-ebm-automation" / "CLAUDE.md",
+    "medical-ebm-automation/AGENTS.md": _GOC_MEA / "AGENTS.md",
+    "medical-ebm-automation/CLAUDE.md": _GOC_MEA / "CLAUDE.md",
 }
 
 ROOT_CONTRACT_MARKERS = [
