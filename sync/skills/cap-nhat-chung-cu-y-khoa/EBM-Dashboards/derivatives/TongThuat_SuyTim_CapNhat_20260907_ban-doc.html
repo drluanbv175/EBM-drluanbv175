@@ -24,6 +24,9 @@
   --warn-ink: #8A3E06;
   --cite: #2563EB;
   --cite-soft: #EAF1FE;
+  --data: #0F766E;
+  --data-soft: #E4F5F3;
+  --data-ink: #0B5C56;
   --shadow: 0 1px 2px rgba(16,27,45,.04), 0 8px 24px -12px rgba(16,27,45,.18);
   --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --sans: "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
@@ -53,6 +56,9 @@
     --warn-ink: #F9D8A0;
     --cite: #8EB2FB;
     --cite-soft: #131F38;
+    --data: #5EEAD4;
+    --data-soft: #0D2B28;
+    --data-ink: #9BF3E4;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
   }
 }
@@ -79,6 +85,9 @@
   --warn-ink: #F9D8A0;
   --cite: #8EB2FB;
   --cite-soft: #131F38;
+  --data: #5EEAD4;
+  --data-soft: #0D2B28;
+  --data-ink: #9BF3E4;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
 }
 * { box-sizing: border-box; }
@@ -99,9 +108,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
 .masthead {
   background: var(--accent);
   color: var(--accent-ink);
-  padding: 3.4rem 1.5rem 2.6rem;
+  padding: 3.2rem 1.5rem 2.4rem;
 }
-.masthead-inner { max-width: 880px; margin: 0 auto; }
+.masthead-inner { max-width: 900px; margin: 0 auto; }
 .eyebrow {
   font-family: var(--sans);
   font-size: .72rem;
@@ -114,19 +123,19 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
 .masthead h1 {
   font-family: var(--serif);
   font-weight: 700;
-  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
   line-height: 1.16;
   margin: 0 0 .7rem;
   text-wrap: balance;
-  max-width: 20ch;
+  max-width: 22ch;
 }
 .masthead .subtitle {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   opacity: .92;
   margin: 0 0 1.3rem;
-  max-width: 46ch;
+  max-width: 52ch;
 }
 .meta-row {
   display: flex;
@@ -146,8 +155,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
 
 /* ---------- callout ---------- */
 .callout {
-  max-width: 880px;
-  margin: -1.4rem auto 0;
+  max-width: 900px;
+  margin: 1.8rem auto 0;
   padding: 0 1.5rem;
 }
 .callout-box {
@@ -156,7 +165,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   border-left: 4px solid var(--danger);
   border-radius: 10px;
   padding: 1.1rem 1.3rem 1.2rem;
-  box-shadow: var(--shadow);
 }
 .callout-box .callout-title {
   font-family: var(--sans);
@@ -182,12 +190,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
 
 /* ---------- layout ---------- */
 .layout {
-  max-width: 1180px;
-  margin: 2.4rem auto 4rem;
+  max-width: 1220px;
+  margin: 2.6rem auto 4rem;
   padding: 0 1.5rem;
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr);
-  gap: 2.8rem;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 2.6rem;
   align-items: start;
 }
 .toc {
@@ -229,13 +237,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   flex-shrink: 0;
 }
 
-.content { min-width: 0; max-width: 72ch; }
+.content { min-width: 0; }
+/* reading measure applies to TEXT, not to the column — so tables, the
+   masthead-width callout, and full-bleed elements can use the whole
+   available track instead of leaving an empty gutter on wide screens. */
+.content > p, .content > ul { max-width: 68ch; }
 
 /* ---------- typography inside content ---------- */
 .content h1 {
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 1.7rem;
+  font-size: 1.65rem;
   line-height: 1.25;
   color: var(--accent);
   margin: 3rem 0 1.1rem;
@@ -243,6 +255,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   border-top: 1px solid var(--line);
   text-wrap: balance;
   scroll-margin-top: 1.2rem;
+  max-width: 40ch;
 }
 .content h1:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 .content h2 {
@@ -253,6 +266,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   margin: 2.1rem 0 .8rem;
   padding-bottom: .5rem;
   border-bottom: 2px solid var(--accent-soft);
+  max-width: 68ch;
 }
 .content h3 {
   font-family: var(--sans);
@@ -262,6 +276,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   color: var(--ink-2);
   letter-spacing: .01em;
   margin: 1.7rem 0 .6rem;
+  max-width: 68ch;
 }
 .content h3 em { font-style: normal; }
 .content h4 {
@@ -273,9 +288,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
   color: var(--ink-3);
   margin: 1.6rem 0 .6rem;
 }
-.content p { margin: 0 0 1rem; color: var(--ink); }
+.content p { margin: 0 0 1.05rem; color: var(--ink); }
 .content ul { margin: 0 0 1.2rem; padding-left: 1.3rem; }
-.content li { margin-bottom: .55rem; }
+.content li { margin-bottom: .55rem; max-width: 68ch; }
 .content li::marker { color: var(--accent); }
 .content strong { font-weight: 600; color: var(--ink); }
 .content em { font-style: italic; }
@@ -296,70 +311,115 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cite); outline-
 }
 .content .c-onaccent { color: var(--accent-ink); }
 
-/* PMID/DOI mono treatment inside references */
-.content p:has(> strong):is([data-ref]) {}
+/* ---------- evidence emphasis: the point of this revision ---------- */
+.content .stat {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: .82em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--data-ink);
+  background: var(--data-soft);
+  border: 1px solid color-mix(in srgb, var(--data) 32%, transparent);
+  padding: .08em .5em;
+  border-radius: 5px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.content .stat-compare {
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--data) 45%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.grade-badge {
+  display: inline-block;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: .78rem;
+  padding: .28em .65em;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.grade-badge.grade-strong {
+  background: var(--good-soft); color: var(--good-ink);
+  border: 1px solid color-mix(in srgb, var(--good) 40%, transparent);
+}
+.grade-badge.grade-moderate {
+  background: var(--warn-soft); color: var(--warn-ink);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+}
+.grade-badge.grade-info {
+  background: var(--data-soft); color: var(--data-ink);
+  border: 1px solid color-mix(in srgb, var(--data) 40%, transparent);
+}
 
 /* ---------- tables ---------- */
 .table-wrap {
   overflow-x: auto;
-  margin: 0 0 1.6rem;
+  margin: 0 0 1.8rem;
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: var(--shadow);
   background: var(--surface);
+  max-height: 560px;
+  overflow-y: auto;
 }
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-family: var(--sans);
-  font-size: .86rem;
+  font-size: .85rem;
 }
 th, td {
-  padding: .68rem .85rem;
+  padding: .72rem .9rem;
   text-align: left;
   vertical-align: top;
   border-bottom: 1px solid var(--line);
+  line-height: 1.5;
 }
 th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-weight: 700;
-  font-size: .74rem;
-  letter-spacing: .04em;
+  font-size: .72rem;
+  letter-spacing: .05em;
   text-transform: uppercase;
   background: var(--surface-2);
   color: var(--ink-2);
   white-space: nowrap;
+  box-shadow: inset 0 -1px 0 var(--line-strong);
 }
-th.bg-accent { background: var(--accent); color: var(--accent-ink); }
+th.bg-accent { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
 tr:last-child td { border-bottom: none; }
-tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
-td.bg-cite-soft, td.bg-good-soft { background: var(--good-soft) !important; }
+tbody tr:nth-child(even) td { background: var(--surface-2); }
+tr:hover td { background: var(--accent-soft) !important; }
+td.bg-good-soft { background: var(--good-soft) !important; }
 td.bg-cite-soft { background: var(--cite-soft) !important; }
-td p { margin: 0 0 .35em; }
+td p { margin: 0 0 .4em; }
 td p:last-child { margin-bottom: 0; }
 table strong { font-weight: 700; }
 td.row-label {
   background: var(--accent-soft) !important;
   font-family: var(--sans);
   font-weight: 700;
-  font-size: .78rem;
-  letter-spacing: .01em;
+  font-size: .76rem;
+  letter-spacing: .02em;
   color: var(--accent);
   border-bottom: none;
-  padding-bottom: .4rem;
+  padding: .55rem .9rem .3rem;
 }
+tr:has(> td.row-label) + tr:hover td { background: var(--accent-soft) !important; }
 tr:has(> td.row-label) + tr td { padding-top: .35rem; }
-
-/* ---------- references ---------- */
-.content h1#nguon-trich-dan + p {
-  font-family: var(--sans);
-  font-size: .85rem;
-  font-style: italic;
-  color: var(--ink-3);
-}
+tr:has(> td.row-label) + tr td:first-child { padding-left: 1.6rem; }
 
 /* ---------- footer ---------- */
 .pagefoot {
-  max-width: 72ch;
+  max-width: 900px;
   margin: 3rem auto 0;
   padding: 1.4rem 1.5rem 0;
   border-top: 1px solid var(--line);
@@ -384,7 +444,7 @@ tr:has(> td.row-label) + tr td { padding-top: .35rem; }
   }
   .toc-label { width: 100%; }
   .toc a { padding: .3rem .55rem; font-size: .78rem; background: var(--surface-2); }
-  .content { max-width: none; }
+  .content > p, .content > ul, .content li { max-width: none; }
 }
 </style>
 
@@ -439,15 +499,15 @@ tr:has(> td.row-label) + tr td { padding-top: .35rem; }
 <p><span class="c-warn"><strong>•  </strong></span><strong>Hạn chế muối</strong>: từ khuyến cáo hạn chế nghiêm ngặt &lt;1500 mg/ngày cho mọi bệnh nhân → bằng chứng trung tính từ SODIUM-HF khiến khuyến cáo chuyển sang mức vừa phải 2000-2300 mg/ngày <span class="c-cite">[8]</span>.</p>
 <p><span class="c-warn"><strong>•  </strong></span><strong>ATTR-CM</strong>: từ bệnh "hiếm gặp bị bỏ sót" → có lưu đồ chẩn đoán không xâm lấn bằng xạ hình xương và 2 nhóm thuốc đã chứng minh hiệu quả (ổn định tetramer, can thiệp RNA); tuy nhiên thử nghiệm mới nhất (CARDIO-TTRansform, 8/2026) cho thấy KHÔNG PHẢI mọi thuốc hạ TTR đều có lợi — xem mục 5.1.</p>
 <h3><span class="c-muted2"><em><strong>③ Khuyến cáo hành động chính (theo mức độ chứng cứ mạnh nhất)</strong></em></span></h3>
-<div class="table-wrap"><table><tr><th class="bg-accent"><p><span class="c-onaccent"><strong>Tình huống</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Hành động</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Mức chứng cứ</strong></span></p></th></tr><tr><td class="row-label" colspan="3"><p><strong>HFrEF (LVEF ≤40%)</strong></p></td></tr><tr><td> </td><td><p>Khởi trị đồng thời ARNI/ACEi + chẹn beta + MRA + SGLT2i, tăng liều trong 2-6 tuần đầu sau xuất viện</p></td><td><p>I, A</p></td></tr><tr><td class="row-label" colspan="3"><p><strong>HFmrEF/HFpEF (LVEF ≥41%)</strong></p></td></tr><tr><td> </td><td><p>SGLT2i (dapagliflozin hoặc empagliflozin) 10 mg/ngày cho mọi bệnh nhân đủ tiêu chuẩn, không phân biệt đái tháo đường</p></td><td><p>I, A</p></td></tr><tr><td class="row-label" colspan="3"><p><strong>Sung huyết kháng lợi tiểu quai</strong></p></td></tr><tr><td> </td><td><p>Phối hợp acetazolamide IV 500 mg/ngày với lợi tiểu quai liều cao (ức chế nephron nối tiếp)</p></td><td><p>I, B (ADVOR)</p></td></tr><tr><td class="row-label" colspan="3"><p><strong>Thiếu sắt có triệu chứng</strong></p></td></tr><tr><td> </td><td><p>Bổ sung sắt tĩnh mạch (Ferric carboxymaltose/derisomaltose) — KHÔNG dùng đường uống</p></td><td><p>I, A</p></td></tr><tr><td class="row-label" colspan="3"><p><strong>ATTR-CM đã xác lập chẩn đoán</strong></p></td></tr><tr><td> </td><td><p>Tafamidis (ổn định tetramer) hoặc Vutrisiran (siRNA); cân nhắc phối hợp — thận trọng, không ngoại suy sang eplontersen (âm tính 2026)</p></td><td><p>Có RCT dương tính</p></td></tr></table></div>
+<div class="table-wrap"><table><tr><th class="bg-accent"><p><span class="c-onaccent"><strong>Tình huống</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Hành động</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Mức chứng cứ</strong></span></p></th></tr><tr><td class="row-label" colspan="3"><p><strong>HFrEF (LVEF ≤40%)</strong></p></td></tr><tr><td> </td><td><p>Khởi trị đồng thời ARNI/ACEi + chẹn beta + MRA + SGLT2i, tăng liều trong 2-6 tuần đầu sau xuất viện</p></td><td><p><span class="grade-badge grade-strong">I, A</span></p></td></tr><tr><td class="row-label" colspan="3"><p><strong>HFmrEF/HFpEF (LVEF ≥41%)</strong></p></td></tr><tr><td> </td><td><p>SGLT2i (dapagliflozin hoặc empagliflozin) 10 mg/ngày cho mọi bệnh nhân đủ tiêu chuẩn, không phân biệt đái tháo đường</p></td><td><p><span class="grade-badge grade-strong">I, A</span></p></td></tr><tr><td class="row-label" colspan="3"><p><strong>Sung huyết kháng lợi tiểu quai</strong></p></td></tr><tr><td> </td><td><p>Phối hợp acetazolamide IV 500 mg/ngày với lợi tiểu quai liều cao (ức chế nephron nối tiếp)</p></td><td><p><span class="grade-badge grade-strong">I, B</span> (ADVOR)</p></td></tr><tr><td class="row-label" colspan="3"><p><strong>Thiếu sắt có triệu chứng</strong></p></td></tr><tr><td> </td><td><p>Bổ sung sắt tĩnh mạch (Ferric carboxymaltose/derisomaltose) — KHÔNG dùng đường uống</p></td><td><p><span class="grade-badge grade-strong">I, A</span></p></td></tr><tr><td class="row-label" colspan="3"><p><strong>ATTR-CM đã xác lập chẩn đoán</strong></p></td></tr><tr><td> </td><td><p>Tafamidis (ổn định tetramer) hoặc Vutrisiran (siRNA); cân nhắc phối hợp — thận trọng, không ngoại suy sang eplontersen (âm tính 2026)</p></td><td><p><span class="grade-badge grade-info">Có RCT dương tính</span></p></td></tr></table></div>
 <h3><span class="c-muted2"><em><strong>④ Cờ đỏ / điều cần nhớ để tránh hại</strong></em></span></h3>
 <p><span class="c-danger"><strong>•  </strong></span>Chuyển ACEi → ARNI: bắt buộc khoảng nghỉ (washout) tối thiểu 36 giờ để tránh phù mạch do tích tụ bradykinin <span class="c-cite">[2]</span>.</p>
 <p><span class="c-danger"><strong>•  </strong></span>Không dùng sắt đường uống trong suy tim — hepcidin do viêm hệ thống mạn tính ngăn hấp thu, không hiệu quả lâm sàng.</p>
 <p><span class="c-warn"><strong>•  </strong></span>STRONG-HF cho thấy tăng liều nhanh AN TOÀN nhưng có tỷ lệ tác dụng phụ thoáng qua (hạ huyết áp, tăng kali) cao hơn — cần theo dõi sát lâm sàng, huyết áp, điện giải, NT-proBNP <span class="c-cite">[6]</span>.</p>
 <p><span class="c-warn"><strong>•  </strong></span>Hạn chế natri quá mức (&lt;1500 mg/ngày) có thể phản tác dụng (kích hoạt RAAS/giao cảm bù trừ) — không còn là mục tiêu mặc định cho mọi bệnh nhân <span class="c-cite">[8]</span>.</p>
 <h3><span class="c-muted2"><em><strong>⑤ Điểm mới nhất — cập nhật tháng 8-9/2026 (ESC Congress 2026, xem Mục 8)</strong></em></span></h3>
-<p><span class="c-accent"><strong>•  </strong></span><strong>TRIC-I-HF</strong> (PMID 42670975, NEJM 30/8/2026): sửa van ba lá qua ống thông cải thiện tiêu chí gộp tử vong/nhập viện qua 3 năm ở bệnh nhân hở van ba lá nặng có nguy cơ suy tim cao (HR 0,40; KTC 95%: 0,29–0,55).</p>
-<p><span class="c-accent"><strong>•  </strong></span><strong>PADN-HF-PH</strong> (PMID 42670986, NEJM 30/8/2026): triệt bỏ thần kinh giao cảm động mạch phổi giảm biến cố lâm sàng xấu đi ở bệnh nhân tăng áp phổi do bệnh tim trái kèm suy tim (HR 0,49; KTC 95%: 0,30–0,82).</p>
+<p><span class="c-accent"><strong>•  </strong></span><strong>TRIC-I-HF</strong> (PMID 42670975, NEJM 30/8/2026): sửa van ba lá qua ống thông cải thiện tiêu chí gộp tử vong/nhập viện qua 3 năm ở bệnh nhân hở van ba lá nặng có nguy cơ suy tim cao (<span class="stat">HR 0,40; KTC 95%: 0,29–0,55</span>).</p>
+<p><span class="c-accent"><strong>•  </strong></span><strong>PADN-HF-PH</strong> (PMID 42670986, NEJM 30/8/2026): triệt bỏ thần kinh giao cảm động mạch phổi giảm biến cố lâm sàng xấu đi ở bệnh nhân tăng áp phổi do bệnh tim trái kèm suy tim (<span class="stat">HR 0,49; KTC 95%: 0,30–0,82</span>).</p>
 <p><span class="c-warn"><strong>•  </strong></span><strong>CARDIO-TTRansform/Eplontersen</strong> (PMID 42663301, NEJM 28/8/2026): thuốc antisense oligonucleotide hạ TTR KHÔNG đạt tiêu chí chính ở ATTR-CM (rate ratio 0,89; KTC 95%: 0,73–1,09; p=0,28) — trái ngược HELIOS-B (vutrisiran) — cho thấy hiệu quả nhóm thuốc hạ TTR KHÔNG đồng nhất giữa các phân tử.</p>
 <h3><span class="c-muted2"><em><strong>⑥ Giới hạn của tài liệu</strong></em></span></h3>
 <p><span class="c-muted"><strong>•  </strong></span>Đây là tổng thuật giáo dục, KHÔNG phải tổng quan hệ thống (không có quy trình sàng lọc PRISMA, không đánh giá nguy cơ sai lệch RoB 2 hệ thống cho từng nghiên cứu trích dẫn).</p>
@@ -482,7 +542,7 @@ tr:has(> td.row-label) + tr td { padding-top: .35rem; }
 <h1 id="4-đieu-tri-noi-khoa-toi-uu-suy-tim-phan-suat-tong-mau-giam-h"><span class="c-accent"><strong>4. Điều Trị Nội Khoa Tối Ưu Suy Tim Phân Suất Tống Máu Giảm (HFrEF)</strong></span></h1>
 <h2><span class="c-accent"><strong>4.1 Chiến Lược Bốn Trụ Cột Nền Tảng (GDMT)</strong></span></h2>
 <p>Mô hình điều trị HFrEF đã chuyển dịch từ việc chuẩn độ tuần tự từng bước kéo dài sang chiến lược khởi trị kết hợp sớm cả bốn nhóm thuốc trụ cột (The Four Pillars) nhằm phong tỏa toàn diện các con đường bệnh học thần kinh thể dịch và chuyển hóa. Bốn nhóm thuốc này đã được kiểm chứng qua các thử nghiệm lâm sàng ngẫu nhiên lớn về khả năng giảm tỷ lệ tử vong do mọi nguyên nhân, tử vong do tim mạch và ngăn ngừa tái nhập viện.</p>
-<p><strong>ARNI (Sacubitril/Valsartan).</strong> Cơ chế tác động kép: ức chế men neprilysin để bảo tồn các peptide bài niệu nội sinh, đồng thời phong tỏa thụ thể AT₁ của Angiotensin II. Thử nghiệm kinh điển <strong>PARADIGM-HF</strong> (N=8.442) chứng minh ARNI giảm biến cố gộp tử vong tim mạch hoặc nhập viện do suy tim so với Enalapril liều chuẩn (21,8% so với 26,5%; HR: 0,80; KTC 95%: 0,73–0,87; p&lt;0,001), tương đương giảm nguy cơ nhập viện vì suy tim riêng lẻ 21% <span class="c-cite">[5]</span>. Thử nghiệm PIONEER-HF tiếp tục khẳng định tính an toàn và lợi ích lâm sàng khi khởi trị ARNI sớm ngay trong đợt nằm viện vì suy tim cấp một khi huyết động đã ổn định. ARNI được khuyến cáo là lựa chọn ưu tiên hàng đầu để thay thế nhóm ức chế men chuyển (ACEi) hoặc ức chế thụ thể (ARB). Khi chuyển đổi từ thuốc ức chế men chuyển sang ARNI, bắt buộc phải tuân thủ khoảng nghỉ (washout period) tối thiểu <strong>36 giờ</strong> để tránh nguy cơ tích tụ bradykinin gây phù mạch đe dọa tính mạng.</p>
+<p><strong>ARNI (Sacubitril/Valsartan).</strong> Cơ chế tác động kép: ức chế men neprilysin để bảo tồn các peptide bài niệu nội sinh, đồng thời phong tỏa thụ thể AT₁ của Angiotensin II. Thử nghiệm kinh điển <strong>PARADIGM-HF</strong> (N=8.442) chứng minh ARNI giảm biến cố gộp tử vong tim mạch hoặc nhập viện do suy tim so với Enalapril liều chuẩn (21,8% so với 26,5%; <span class="stat">HR: 0,80; KTC 95%: 0,73–0,87; p&lt;0,001</span>), tương đương giảm nguy cơ nhập viện vì suy tim riêng lẻ 21% <span class="c-cite">[5]</span>. Thử nghiệm PIONEER-HF tiếp tục khẳng định tính an toàn và lợi ích lâm sàng khi khởi trị ARNI sớm ngay trong đợt nằm viện vì suy tim cấp một khi huyết động đã ổn định. ARNI được khuyến cáo là lựa chọn ưu tiên hàng đầu để thay thế nhóm ức chế men chuyển (ACEi) hoặc ức chế thụ thể (ARB). Khi chuyển đổi từ thuốc ức chế men chuyển sang ARNI, bắt buộc phải tuân thủ khoảng nghỉ (washout period) tối thiểu <strong>36 giờ</strong> để tránh nguy cơ tích tụ bradykinin gây phù mạch đe dọa tính mạng.</p>
 <p><strong>Chẹn beta giao cảm.</strong> Có vai trò đảo ngược những tác động có hại của tình trạng cường giao cảm mạn tính, bảo vệ tế bào cơ tim khỏi hiện tượng chết theo chương trình và giảm nguy cơ loạn nhịp thất ác tính. Chỉ có bốn thuốc chẹn beta được chứng minh hiệu quả giảm tử vong trong HFrEF gồm: Bisoprolol (thử nghiệm CIBIS-II), Carvedilol (COPERNICUS), Metoprolol succinate giải phóng kéo dài (MERIT-HF) và Nebivolol ở bệnh nhân cao tuổi (SENIORS). Việc khởi trị chẹn beta phải bắt đầu từ liều rất thấp khi người bệnh đã đạt trạng thái dịch ổn định, sau đó tăng dần liều sau mỗi 2 đến 4 tuần.</p>
 <p><strong>MRA (Spironolactone hoặc Eplerenone).</strong> Phong tỏa tác dụng bất lợi của aldosterone, ức chế quá trình xơ hóa kẽ cơ tim, giảm tái cấu trúc mạch máu và ngăn chặn mất kali qua thận. Thử nghiệm RALES và EMPHASIS-HF đã xác lập vai trò giảm tử vong rõ rệt của MRA ở bệnh nhân suy tim có triệu chứng. Khi khởi trị và tăng liều, cần theo dõi định kỳ nồng độ kali huyết thanh và chức năng lọc cầu thận để phòng ngừa biến chứng tăng kali máu nguy hiểm.</p>
 <p><strong>SGLT2i (Dapagliflozin và Empagliflozin).</strong> Phát huy hiệu quả bảo vệ tim mạch thông qua bài niệu thẩm thấu kẽ chọn lọc, giảm tiền tải, tái thiết lập cơ chế phản hồi cầu - ống thận làm giảm áp lực nội cầu thận, và tối ưu hóa chuyển hóa năng lượng cơ tim qua thể ketone. Thử nghiệm DAPA-HF và EMPEROR-Reduced cho thấy SGLT2i giúp giảm nhanh chóng nguy cơ tử vong tim mạch và tái nhập viện suy tim chỉ sau vài tuần điều trị, bất kể bệnh nhân có kèm theo đái tháo đường hay không. Thuốc có ưu thế lớn trong thực hành lâm sàng nhờ sử dụng một liều cố định hàng ngày (<strong>10 mg/ngày</strong>, cả hai phân tử), không cần giai đoạn chỉnh liều phức tạp và ít gây tụt huyết áp hệ thống.</p>
@@ -491,31 +551,31 @@ tr:has(> td.row-label) + tr td { padding-top: .35rem; }
 <div class="table-wrap"><table><tr><th class="bg-accent"><p><span class="c-onaccent"><strong>Nhóm thuốc GDMT</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Phân tử khuyến cáo</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Liều khởi đầu lâm sàng</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Liều đích mục tiêu thử nghiệm</strong></span></p></th></tr><tr><td class="bg-good-soft"><p>ARNI (*)</p></td><td class="bg-good-soft"><p>Sacubitril/Valsartan</p></td><td class="bg-good-soft"><p>24/26 mg hoặc 49/51 mg (uống 2 lần/ngày, tùy nguy cơ tụt HA/eGFR)</p></td><td class="bg-good-soft"><p>97/103 mg (uống 2 lần/ngày) — PARADIGM-HF <span class="c-cite">[5]</span></p></td></tr><tr><td><p>ACEi (khi có chống chỉ định/không dung nạp ARNI)</p></td><td><p>Enalapril / Ramipril / Lisinopril</p></td><td><p>2,5 mg (2 lần/ngày) / 2,5 mg (1 lần/ngày) / 2,5–5 mg (1 lần/ngày)</p></td><td><p>10–20 mg (2 lần/ngày) / 10 mg (1 lần/ngày) / 20–35 mg (1 lần/ngày)</p></td></tr><tr><td class="bg-good-soft"><p>ARB (khi ho khan do ACEi và không dung nạp ARNI)</p></td><td class="bg-good-soft"><p>Candesartan (*) / Valsartan / Losartan</p></td><td class="bg-good-soft"><p>4–8 mg (1 lần/ngày) / 40 mg (2 lần/ngày) / 50 mg (1 lần/ngày)</p></td><td class="bg-good-soft"><p>32 mg (1 lần/ngày) — CHARM [nguồn 2] / 160 mg (2 lần/ngày) / 150 mg (1 lần/ngày)</p></td></tr><tr><td><p>Chẹn beta giao cảm</p></td><td><p>Bisoprolol / Carvedilol (*) / Metoprolol succinate CR/XL / Nebivolol</p></td><td><p>1,25 mg (1 lần/ngày) / 3,125 mg (2 lần/ngày) / 12,5–25 mg (1 lần/ngày) / 1,25 mg (1 lần/ngày)</p></td><td><p>10 mg (1 lần/ngày) / 25–50 mg (2 lần/ngày, theo cân nặng) / 200 mg (1 lần/ngày) / 10 mg (1 lần/ngày)</p></td></tr><tr><td><p>MRA</p></td><td><p>Spironolactone / Eplerenone</p></td><td><p>12,5–25 mg (1 lần/ngày) / 25 mg (1 lần/ngày)</p></td><td><p>25–50 mg (1 lần/ngày) / 50 mg (1 lần/ngày)</p></td></tr><tr><td class="bg-good-soft"><p>SGLT2i (*)</p></td><td class="bg-good-soft"><p>Dapagliflozin / Empagliflozin</p></td><td class="bg-good-soft"><p>10 mg (1 lần/ngày) — liều cố định</p></td><td class="bg-good-soft"><p>10 mg (1 lần/ngày) — DAPA-HF / EMPEROR-Reduced (nguồn 2)</p></td></tr></table></div>
 <h2><span class="c-accent"><strong>4.2 Đột Phá Về Chiến Lược Tối Ưu Hóa Liều Nhanh (Thử Nghiệm STRONG-HF)</strong></span></h2>
 <p>Trước đây, quá trình dò liều các thuốc ức chế thần kinh thể dịch thường diễn ra chậm trễ trong nhiều tháng ngoại trú, vô tình để lại khoảng trống điều trị trong giai đoạn dễ bị tổn thương ngay sau xuất viện. Thử nghiệm lâm sàng đa trung tâm <strong>STRONG-HF</strong> (N=1.078, 87 bệnh viện, 14 quốc gia) đã mang lại bước ngoặt mang tính phương pháp luận khi so sánh chiến lược tăng liều nhanh và theo dõi tích cực với quy trình chăm sóc thường quy ở bệnh nhân nhập viện vì suy tim cấp. Theo đó, các nhóm thuốc GDMT được khởi trị và chuẩn độ thần tốc nhằm đạt <strong>100%</strong> liều mục tiêu trong vòng 2 tuần sau xuất viện dưới sự giám sát chặt chẽ về mặt lâm sàng, huyết áp, điện giải và nồng độ NT-proBNP, với 4 lần tái khám trong 2 tháng đầu <span class="c-cite">[6]</span>.</p>
-<p>Kết quả từ STRONG-HF ghi nhận chiến lược tăng liều nhanh giúp giảm có ý nghĩa thống kê nguy cơ biến cố gộp tử vong do mọi nguyên nhân hoặc tái nhập viện vì suy tim tại thời điểm 180 ngày (<strong>15,2% so với 23,3%</strong>; khác biệt nguy cơ tuyệt đối đã hiệu chỉnh 8,1%, KTC 95%: 2,9–13,2, p=0,0021; Risk Ratio: 0,66, KTC 95%: 0,50–0,86) <span class="c-cite">[6]</span>. Mặc dù nhóm tăng liều nhanh có tỷ lệ tác dụng phụ thoáng qua cao hơn (41% so với 29% trong 90 ngày đầu) liên quan đến tụt huyết áp và tăng nhẹ kali, tỷ lệ biến cố nghiêm trọng và biến cố tử vong lại tương đương giữa hai nhóm, cho thấy các tác dụng phụ này nhìn chung dung nạp tốt. Từ nền tảng dữ liệu này, Hướng dẫn cập nhật ESC 2023 và Khuyến cáo của Hội Tim mạch Quốc gia Việt Nam 2024 đã chính thức nâng mức khuyến cáo chiến lược khởi trị tích cực và tăng liều nhanh các thuốc GDMT trước xuất viện và trong 6 tuần đầu lên <strong>Khuyến cáo Loại I, Mức chứng cứ B</strong>, với mục tiêu đưa bệnh nhân đạt liều dung nạp tối ưu trong vòng không quá 3 tháng <span class="c-cite">[3]</span>.</p>
+<p>Kết quả từ STRONG-HF ghi nhận chiến lược tăng liều nhanh giúp giảm có ý nghĩa thống kê nguy cơ biến cố gộp tử vong do mọi nguyên nhân hoặc tái nhập viện vì suy tim tại thời điểm 180 ngày (<strong class="stat-compare">15,2% so với 23,3%</strong>; khác biệt nguy cơ tuyệt đối đã hiệu chỉnh 8,1%, KTC 95%: 2,9–13,2, p=0,0021; <span class="stat">Risk Ratio: 0,66, KTC 95%: 0,50–0,86</span>) <span class="c-cite">[6]</span>. Mặc dù nhóm tăng liều nhanh có tỷ lệ tác dụng phụ thoáng qua cao hơn (41% so với 29% trong 90 ngày đầu) liên quan đến tụt huyết áp và tăng nhẹ kali, tỷ lệ biến cố nghiêm trọng và biến cố tử vong lại tương đương giữa hai nhóm, cho thấy các tác dụng phụ này nhìn chung dung nạp tốt. Từ nền tảng dữ liệu này, Hướng dẫn cập nhật ESC 2023 và Khuyến cáo của Hội Tim mạch Quốc gia Việt Nam 2024 đã chính thức nâng mức khuyến cáo chiến lược khởi trị tích cực và tăng liều nhanh các thuốc GDMT trước xuất viện và trong 6 tuần đầu lên <strong>Khuyến cáo Loại I, Mức chứng cứ B</strong>, với mục tiêu đưa bệnh nhân đạt liều dung nạp tối ưu trong vòng không quá 3 tháng <span class="c-cite">[3]</span>.</p>
 <h2><span class="c-accent"><strong>4.3 Kiểm Soát Tình Trạng Ứ Dịch và Chiến Lược Ức Chế Nephron Nối Tiếp</strong></span></h2>
 <p>Thuốc lợi tiểu là công cụ thiết yếu để giải trừ tình trạng quá tải thể tích và duy trì trạng thái thể dịch cân bằng, dù bản thân chúng không tác động trực tiếp lên tỷ lệ tử vong dài hạn. Thuốc lợi tiểu quai (Furosemide, Bumetanide, Torsemide) tác động ức chế kênh đồng vận chuyển <strong>Na⁺-K⁺-2Cl⁻ (NKCC2)</strong> tại nhánh lên quai Henle, được xem là nền tảng điều trị triệu chứng đầu tay. Trong thực hành suy tim cấp, liều khởi đầu tĩnh mạch của Furosemide nên bằng 1 đến 2 lần liều uống hàng ngày của bệnh nhân, sau đó đánh giá đáp ứng natri niệu sau 2 giờ (<strong>Na niệu spot &gt;50–70 mmol/L</strong>) hoặc thể tích nước tiểu sau 6 giờ (<strong>&gt;100–150 mL/giờ</strong>) để kịp thời gấp đôi liều nếu không đạt đích bài niệu.</p>
-<p>Khi đáp ứng lợi tiểu quai bị suy giảm do hiện tượng kháng lợi tiểu—vốn xuất phát từ sự phì đại bù trừ của các tế bào biểu mô ống lượn xa tăng tái hấp thu muối nước—chiến lược ức chế nephron nối tiếp (Sequential Nephron Blockade) phải được thiết lập. Thử nghiệm lâm sàng bản lề <strong>ADVOR</strong> (NEJM 2022, N=519) đã chứng minh vai trò của việc phối hợp Acetazolamide đường tĩnh mạch (<strong>500 mg/ngày</strong>)—một thuốc ức chế men carbonic anhydrase tại ống lượn gần—vào phác đồ lợi tiểu quai liều cao ở bệnh nhân suy tim mất bù cấp có ứ dịch nặng <span class="c-cite">[7]</span>. Sự phối hợp này làm tăng tỷ lệ giảm ứ dịch hoàn toàn sau 3 ngày lên <strong>42,2% so với 30,5%</strong> ở nhánh dùng giả dược (Risk Ratio: 1,46; KTC 95%: 1,17–1,82; p&lt;0,001) mà không gây gia tăng các biến cố suy giảm chức năng thận hay hạ kali máu nặng; tuy nhiên khác biệt về tiêu chí gộp tử vong/tái nhập viện tại 3 tháng KHÔNG đạt ý nghĩa thống kê (29,7% so với 27,8%; HR: 1,07) <span class="c-cite">[7]</span>. Ngoài Acetazolamide, việc phối hợp lợi tiểu nhóm Thiazide hoặc Thiazide-like (như Metolazone, Hydrochlorothiazide) giúp phong tỏa tái hấp thu natri tại ống lượn xa, tạo ra hiệu ứng bài niệu hiệp đồng mạnh mẽ trên những bệnh nhân kháng trị với lợi tiểu quai đơn độc.</p>
+<p>Khi đáp ứng lợi tiểu quai bị suy giảm do hiện tượng kháng lợi tiểu—vốn xuất phát từ sự phì đại bù trừ của các tế bào biểu mô ống lượn xa tăng tái hấp thu muối nước—chiến lược ức chế nephron nối tiếp (Sequential Nephron Blockade) phải được thiết lập. Thử nghiệm lâm sàng bản lề <strong>ADVOR</strong> (NEJM 2022, N=519) đã chứng minh vai trò của việc phối hợp Acetazolamide đường tĩnh mạch (<strong>500 mg/ngày</strong>)—một thuốc ức chế men carbonic anhydrase tại ống lượn gần—vào phác đồ lợi tiểu quai liều cao ở bệnh nhân suy tim mất bù cấp có ứ dịch nặng <span class="c-cite">[7]</span>. Sự phối hợp này làm tăng tỷ lệ giảm ứ dịch hoàn toàn sau 3 ngày lên <strong class="stat-compare">42,2% so với 30,5%</strong> ở nhánh dùng giả dược (<span class="stat">Risk Ratio: 1,46; KTC 95%: 1,17–1,82; p&lt;0,001</span>) mà không gây gia tăng các biến cố suy giảm chức năng thận hay hạ kali máu nặng; tuy nhiên khác biệt về tiêu chí gộp tử vong/tái nhập viện tại 3 tháng KHÔNG đạt ý nghĩa thống kê (29,7% so với 27,8%; <span class="stat">HR: 1,07</span>) <span class="c-cite">[7]</span>. Ngoài Acetazolamide, việc phối hợp lợi tiểu nhóm Thiazide hoặc Thiazide-like (như Metolazone, Hydrochlorothiazide) giúp phong tỏa tái hấp thu natri tại ống lượn xa, tạo ra hiệu ứng bài niệu hiệp đồng mạnh mẽ trên những bệnh nhân kháng trị với lợi tiểu quai đơn độc.</p>
 <h1 id="5-đieu-tri-suy-tim-phan-suat-tong-mau-giam-nhe-hfmref-va-bao"><span class="c-accent"><strong>5. Điều Trị Suy Tim Phân Suất Tống Máu Giảm Nhẹ (HFmrEF) và Bảo Tồn (HFpEF)</strong></span></h1>
 <h2><span class="c-accent"><strong>5.1 Vai Trò Nền Tảng Của Nhóm Ức Chế SGLT2</strong></span></h2>
 <p>Trước đây, HFmrEF và HFpEF là những phân nhóm suy tim thiếu vắng các biện pháp can thiệp có bằng chứng cải thiện dự hậu tử vong và tái nhập viện rõ ràng. Tình thế này đã thay đổi căn bản nhờ kết quả từ hai thử nghiệm lâm sàng ngẫu nhiên đa trung tâm quy mô lớn là <strong>EMPEROR-Preserved</strong> (đánh giá Empagliflozin, N=5.988) và <strong>DELIVER</strong> (đánh giá Dapagliflozin, N=6.263). Cả hai nghiên cứu đều thu nhận những bệnh nhân suy tim có LVEF &gt;40%, có tăng peptide bài niệu và có bằng chứng bệnh tim cấu trúc.</p>
-<p>Thử nghiệm EMPEROR-Preserved cho thấy Empagliflozin làm giảm nguy cơ của tiêu chí gộp chính gồm tử vong do tim mạch hoặc nhập viện vì suy tim (<strong>13,8% so với 17,1%</strong>; HR: 0,79; KTC 95%: 0,69–0,90; p&lt;0,001), tương đương giảm nguy cơ tương đối 21% <span class="c-cite">[9]</span>. Tương tự, thử nghiệm DELIVER ghi nhận Dapagliflozin làm giảm biến cố chính tương đương (<strong>16,4% so với 19,5%</strong>; HR: 0,82; KTC 95%: 0,73–0,92; p&lt;0,001), tương đương giảm 18% <span class="c-cite">[10]</span>. Hiệu quả giảm biến cố này thể hiện tính nhất quán xuyên suốt các phân tầng LVEF (bao gồm cả nhóm LVEF ≥60% và &lt;60%), bất kể tình trạng đái tháo đường đi kèm hay bối cảnh khởi trị nội trú hoặc ngoại trú. Trên cơ sở đó, Bản Cập nhật Hướng dẫn ESC 2023 <span class="c-cite">[3]</span>, Khuyến cáo ACC/AHA 2022 và Cập nhật Khuyến cáo Hội Tim mạch Quốc gia Việt Nam 2024 <span class="c-cite">[4]</span> đã đồng thuận xếp Dapagliflozin và Empagliflozin ở vị trí <strong>Khuyến cáo Loại I, Mức chứng cứ A</strong> cho cả hai nhóm HFmrEF và HFpEF. Cho đến FINEARTS-HF (2024, xem mục 5.2), SGLT2i là nhóm thuốc duy nhất đạt được mức độ khuyến cáo cao nhất này trong điều trị cải thiện biến cố tim mạch ở bệnh nhân suy tim phân suất tống máu bảo tồn.</p>
+<p>Thử nghiệm EMPEROR-Preserved cho thấy Empagliflozin làm giảm nguy cơ của tiêu chí gộp chính gồm tử vong do tim mạch hoặc nhập viện vì suy tim (<strong class="stat-compare">13,8% so với 17,1%</strong>; <span class="stat">HR: 0,79; KTC 95%: 0,69–0,90; p&lt;0,001</span>), tương đương giảm nguy cơ tương đối 21% <span class="c-cite">[9]</span>. Tương tự, thử nghiệm DELIVER ghi nhận Dapagliflozin làm giảm biến cố chính tương đương (<strong class="stat-compare">16,4% so với 19,5%</strong>; <span class="stat">HR: 0,82; KTC 95%: 0,73–0,92; p&lt;0,001</span>), tương đương giảm 18% <span class="c-cite">[10]</span>. Hiệu quả giảm biến cố này thể hiện tính nhất quán xuyên suốt các phân tầng LVEF (bao gồm cả nhóm LVEF ≥60% và &lt;60%), bất kể tình trạng đái tháo đường đi kèm hay bối cảnh khởi trị nội trú hoặc ngoại trú. Trên cơ sở đó, Bản Cập nhật Hướng dẫn ESC 2023 <span class="c-cite">[3]</span>, Khuyến cáo ACC/AHA 2022 và Cập nhật Khuyến cáo Hội Tim mạch Quốc gia Việt Nam 2024 <span class="c-cite">[4]</span> đã đồng thuận xếp Dapagliflozin và Empagliflozin ở vị trí <strong>Khuyến cáo Loại I, Mức chứng cứ A</strong> cho cả hai nhóm HFmrEF và HFpEF. Cho đến FINEARTS-HF (2024, xem mục 5.2), SGLT2i là nhóm thuốc duy nhất đạt được mức độ khuyến cáo cao nhất này trong điều trị cải thiện biến cố tim mạch ở bệnh nhân suy tim phân suất tống máu bảo tồn.</p>
 <h2><span class="c-accent"><strong>5.2 Chứng Cứ Đột Phá Từ Thuốc Đối Kháng Thụ Thể Mineralocorticoid Không Steroid (FINEARTS-HF)</strong></span></h2>
 <p>Các thuốc MRA dạng steroid truyền thống như Spironolactone từng không đạt được ý nghĩa thống kê về tiêu chí giảm tử vong trên toàn bộ quần thể bệnh nhân HFpEF trong thử nghiệm TOPCAT. Năm 2024, thử nghiệm lâm sàng quốc tế mù đôi quy mô lớn <strong>FINEARTS-HF</strong> công bố trên New England Journal of Medicine đã đánh giá hiệu quả của Finerenone – một chất đối kháng thụ thể mineralocorticoid không steroid có tính chọn lọc rất cao – trên <strong>3.003 bệnh nhân dùng Finerenone và 2.998 bệnh nhân dùng giả dược</strong> (N=6.001) có LVEF ≥40%.</p>
-<p>Qua thời gian theo dõi trung vị 32 tháng, Finerenone liều đích <strong>20 mg hoặc 40 mg/ngày</strong> (theo eGFR) làm giảm có ý nghĩa thống kê tổng số các biến cố suy tim tăng nặng (gồm nhập viện hoặc khám cấp cứu khẩn vì suy tim, tính cả biến cố lặp lại) và tử vong do tim mạch so với giả dược (1.083 biến cố ở nhóm Finerenone so với 1.283 biến cố ở nhóm giả dược; Rate Ratio: 0,84; KTC 95%: 0,74–0,95; p=0,007) <span class="c-cite">[11]</span>. Riêng thành phần biến cố suy tim tăng nặng: Rate Ratio 0,82 (KTC 95%: 0,71–0,94). Tử vong do tim mạch đơn thuần KHÔNG đạt ý nghĩa thống kê riêng lẻ (8,1% so với 8,7%; HR: 0,93; KTC 95%: 0,78–1,11) — lợi ích chủ yếu đến từ giảm biến cố suy tim tăng nặng, không phải giảm tử vong tim mạch. Thuốc cũng cho thấy tín hiệu cải thiện điểm số triệu chứng trên thang đo KCCQ; mức giảm nguy cơ khởi phát đái tháo đường týp 2 mới được báo cáo trong các phân tích thứ cấp nhưng con số phần trăm cụ thể cần đối chiếu thêm với báo cáo đầy đủ, do đó không nêu số liệu định lượng ở đây để tránh trích dẫn không chắc chắn. Mặc dù tỷ lệ tăng kali máu ở nhóm dùng Finerenone cao hơn nhóm giả dược, hầu hết đều ở mức độ kiểm soát được. Dữ liệu từ FINEARTS-HF định vị Finerenone trở thành một trụ cột mới có giá trị trong việc làm giảm gánh nặng biến cố lâm sàng cho phân nhóm suy tim có phân suất tống máu giảm nhẹ và bảo tồn.</p>
+<p>Qua thời gian theo dõi trung vị 32 tháng, Finerenone liều đích <strong>20 mg hoặc 40 mg/ngày</strong> (theo eGFR) làm giảm có ý nghĩa thống kê tổng số các biến cố suy tim tăng nặng (gồm nhập viện hoặc khám cấp cứu khẩn vì suy tim, tính cả biến cố lặp lại) và tử vong do tim mạch so với giả dược (1.083 biến cố ở nhóm Finerenone so với 1.283 biến cố ở nhóm giả dược; <span class="stat">Rate Ratio: 0,84; KTC 95%: 0,74–0,95; p=0,007</span>) <span class="c-cite">[11]</span>. Riêng thành phần biến cố suy tim tăng nặng: <span class="stat">Rate Ratio 0,82 (KTC 95%: 0,71–0,94)</span>. Tử vong do tim mạch đơn thuần KHÔNG đạt ý nghĩa thống kê riêng lẻ (8,1% so với 8,7%; <span class="stat">HR: 0,93; KTC 95%: 0,78–1,11</span>) — lợi ích chủ yếu đến từ giảm biến cố suy tim tăng nặng, không phải giảm tử vong tim mạch. Thuốc cũng cho thấy tín hiệu cải thiện điểm số triệu chứng trên thang đo KCCQ; mức giảm nguy cơ khởi phát đái tháo đường týp 2 mới được báo cáo trong các phân tích thứ cấp nhưng con số phần trăm cụ thể cần đối chiếu thêm với báo cáo đầy đủ, do đó không nêu số liệu định lượng ở đây để tránh trích dẫn không chắc chắn. Mặc dù tỷ lệ tăng kali máu ở nhóm dùng Finerenone cao hơn nhóm giả dược, hầu hết đều ở mức độ kiểm soát được. Dữ liệu từ FINEARTS-HF định vị Finerenone trở thành một trụ cột mới có giá trị trong việc làm giảm gánh nặng biến cố lâm sàng cho phân nhóm suy tim có phân suất tống máu giảm nhẹ và bảo tồn.</p>
 <h2><span class="c-accent"><strong>5.3 Tiếp Cận Đa Cơ Chế và Điều Trị Theo Kiểu Hình</strong></span></h2>
-<p>Chiến lược điều trị HFpEF hiện đại đòi hỏi phải cá thể hóa can thiệp theo từng kiểu hình bệnh học cụ thể. Đối với kiểu hình chuyển hóa liên quan đến béo phì, thử nghiệm <strong>STEP-HFpEF</strong> (N=529, BMI ≥30) chứng minh rằng Semaglutide (thuốc đồng vận thụ thể GLP-1 liều <strong>2,4 mg</strong> tiêm dưới da mỗi tuần) không chỉ giúp giảm cân bền vững (thay đổi cân nặng −13,3% so với −2,6% ở nhóm giả dược) mà còn cải thiện vượt trội điểm số chất lượng cuộc sống KCCQ-CSS (khác biệt +7,8 điểm; KTC 95%: 4,8–10,9; p&lt;0,001), quãng đường đi bộ 6 phút (khác biệt +20,3 m; KTC 95%: 8,6–32,1) và giảm nồng độ CRP viêm mạch máu (khác biệt tỷ lệ điều trị 0,61; KTC 95%: 0,51–0,72) <span class="c-cite">[12]</span>. Đối với phân nhóm HFmrEF, phân tích tổng hợp và thử nghiệm PARAGON-HF (ARNI, N=4.822, LVEF ≥45%) cho thấy các thuốc ức chế hệ RAA cổ điển gồm ARNI (Sacubitril/Valsartan) và ARB (Candesartan) mang lại xu hướng lợi ích giảm biến cố ở những bệnh nhân có LVEF nằm ở nửa dưới của phổ phân suất tống máu bảo tồn (dưới khoảng 55-60%), dù kết quả chung của PARAGON-HF không đạt ý nghĩa thống kê toàn quần thể (Rate Ratio: 0,87; KTC 95%: 0,75–1,01; p=0,06) <span class="c-cite">[13]</span> — do đó nhóm thuốc này vẫn chỉ được xếp ở <strong>Khuyến cáo Loại IIb</strong> trong thực hành lâm sàng. Việc kiểm soát chặt chẽ huyết áp theo mục tiêu, điều trị thiếu máu cơ tim cục bộ và kiểm soát thể tích dịch bằng thuốc lợi tiểu vẫn là những thành phần bổ trợ bắt buộc xuyên suốt.</p>
+<p>Chiến lược điều trị HFpEF hiện đại đòi hỏi phải cá thể hóa can thiệp theo từng kiểu hình bệnh học cụ thể. Đối với kiểu hình chuyển hóa liên quan đến béo phì, thử nghiệm <strong>STEP-HFpEF</strong> (N=529, BMI ≥30) chứng minh rằng Semaglutide (thuốc đồng vận thụ thể GLP-1 liều <strong>2,4 mg</strong> tiêm dưới da mỗi tuần) không chỉ giúp giảm cân bền vững (thay đổi cân nặng −13,3% so với −2,6% ở nhóm giả dược) mà còn cải thiện vượt trội điểm số chất lượng cuộc sống KCCQ-CSS (khác biệt +7,8 điểm; KTC 95%: 4,8–10,9; p&lt;0,001), quãng đường đi bộ 6 phút (khác biệt +20,3 m; KTC 95%: 8,6–32,1) và giảm nồng độ CRP viêm mạch máu (khác biệt tỷ lệ điều trị 0,61; KTC 95%: 0,51–0,72) <span class="c-cite">[12]</span>. Đối với phân nhóm HFmrEF, phân tích tổng hợp và thử nghiệm PARAGON-HF (ARNI, N=4.822, LVEF ≥45%) cho thấy các thuốc ức chế hệ RAA cổ điển gồm ARNI (Sacubitril/Valsartan) và ARB (Candesartan) mang lại xu hướng lợi ích giảm biến cố ở những bệnh nhân có LVEF nằm ở nửa dưới của phổ phân suất tống máu bảo tồn (dưới khoảng 55-60%), dù kết quả chung của PARAGON-HF không đạt ý nghĩa thống kê toàn quần thể (<span class="stat">Rate Ratio: 0,87; KTC 95%: 0,75–1,01; p=0,06</span>) <span class="c-cite">[13]</span> — do đó nhóm thuốc này vẫn chỉ được xếp ở <strong>Khuyến cáo Loại IIb</strong> trong thực hành lâm sàng. Việc kiểm soát chặt chẽ huyết áp theo mục tiêu, điều trị thiếu máu cơ tim cục bộ và kiểm soát thể tích dịch bằng thuốc lợi tiểu vẫn là những thành phần bổ trợ bắt buộc xuyên suốt.</p>
 <h1 id="6-lieu-phap-can-thiep-bang-thiet-bi-va-ho-tro-co-hoc-tuan-ho"><span class="c-accent"><strong>6. Liệu Pháp Can Thiệp Bằng Thiết Bị và Hỗ Trợ Cơ Học Tuần Hoàn Nâng Cao</strong></span></h1>
 <p>Chỉ định can thiệp thiết bị tim mạch được đặt ra khi người bệnh vẫn còn triệu chứng suy tim và có rối loạn dẫn truyền hoặc rối loạn chức năng thất trái nặng dù đã được điều trị nội khoa tối ưu (GDMT) bằng thuốc liều dung nạp tối đa trong thời gian tối thiểu 3 đến 6 tháng.</p>
 <h3><span class="c-muted2"><em><strong>Bảng 4. Các liệu pháp can thiệp thiết bị và hỗ trợ cơ học trong suy tim</strong></em></span></h3>
-<div class="table-wrap"><table><tr><th class="bg-accent"><p><span class="c-onaccent"><strong>Liệu pháp can thiệp</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Tiêu chuẩn lựa chọn bệnh nhân theo khuyến cáo</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Lợi ích lâm sàng và Bằng chứng khoa học</strong></span></p></th></tr><tr><td class="bg-cite-soft"><p>Máy khử rung tự động cấy được (ICD)</p></td><td class="bg-cite-soft"><p>Dự phòng thứ phát: Ngừng tuần hoàn do rung thất hoặc nhịp nhanh thất có rối loạn huyết động. Dự phòng nguyên phát: LVEF ≤35%, NYHA II–III sau ≥3 tháng dùng GDMT tối ưu; do bệnh tim thiếu máu cục bộ (sau NMCT ≥40 ngày) hoặc bệnh cơ tim giãn không do thiếu máu; kỳ vọng sống thêm &gt;1 năm với tình trạng chức năng tốt.</p></td><td class="bg-cite-soft"><p>Giảm đột tử do loạn nhịp thất ác tính; kéo dài thời gian sống còn toàn bộ (thử nghiệm MADIT-II, SCD-HeFT).</p></td></tr><tr><td><p>Tái đồng bộ cơ tim (CRT-P / CRT-D)</p></td><td><p>Bệnh nhân suy tim có triệu chứng, LVEF ≤35% dù đã điều trị GDMT ≥3 tháng; nhịp xoang kèm phức bộ QRS rộng: Class I — dạng block nhánh trái hoàn toàn (LBBB) với bề rộng QRS ≥150 ms; Class IIa — dạng LBBB với QRS 130–149 ms, hoặc không có dạng LBBB với QRS ≥150 ms.</p></td><td><p>Khắc phục hiện tượng mất đồng bộ co bóp nhĩ - thất và giữa hai tâm thất, thúc đẩy tái cấu trúc cơ tim đảo ngược, cải thiện LVEF và giảm tử vong (COMPANION, CARE-HF).</p></td></tr><tr><td class="bg-cite-soft"><p>Triệt đốt Rung nhĩ bằng Năng lượng Catheter</p></td><td class="bg-cite-soft"><p>Bệnh nhân suy tim có rung nhĩ kịch phát hoặc dai dẳng nhằm kiểm soát nhịp khi thuốc thất bại hoặc nghi ngờ bệnh cơ tim qua trung gian nhịp nhanh. Suy tim giai đoạn tiến triển (CASTLE-HTx – NEJM 2023): bệnh nhân suy tim nặng có chỉ định ghép tim hoặc cấy ghép LVAD.</p></td><td class="bg-cite-soft"><p>Thử nghiệm CASTLE-HTx (N=194) chứng minh triệt đốt rung nhĩ giúp giảm tới 76% tiêu chí gộp chính (tử vong do mọi nguyên nhân, cấy LVAD khẩn cấp hoặc ghép tim cấp cứu: 8% so với 30%; HR: 0,24; KTC 95%: 0,11–0,52; p&lt;0,001) so với điều trị nội khoa; tử vong do mọi nguyên nhân riêng lẻ: 6% so với 20% (HR: 0,29; KTC 95%: 0,12–0,72) <span class="c-cite">[14]</span>.</p></td></tr><tr><td><p>Thiết bị hỗ trợ thất trái dòng liên tục (cf-LVAD)</p></td><td><p>Suy tim giai đoạn tiến triển (Giai đoạn D, phân độ INTERMACS 2–4) phụ thuộc inotrope liên tục hoặc sốc tim tái diễn. Áp dụng theo hai chiến lược: liệu pháp cầu nối chờ ghép tim (Bridge to Transplant) hoặc liệu pháp đích lâu dài (Destination Therapy).</p></td><td><p>Thiết bị bơm máu hỗ trợ cơ học dòng liên tục kiểu từ trường (như HeartMate 3) giúp duy trì cung lượng tuần hoàn; tại 2 năm đạt tỷ lệ sống còn không biến cố (không đột quỵ tàn phế, không hỏng/thay thiết bị) là 79,5% so với 60,2% ở nhóm bơm trục cơ học thế hệ trước (HeartMate II) (HR: 0,46; KTC 95%: 0,31–0,69) — thử nghiệm MOMENTUM-3 <span class="c-cite">[15]</span>.</p></td></tr><tr><td class="bg-cite-soft"><p>Ghép tim đồng loại (Heart Transplantation)</p></td><td class="bg-cite-soft"><p>Biện pháp cuối cùng cho bệnh nhân suy tim giai đoạn cuối kháng trị mọi phương thức nội - ngoại khoa, không có các chống chỉ định cố định (như tăng áp lực mạch phổi cố định, nhiễm trùng tiến triển hoặc ung thư hoạt động).</p></td><td class="bg-cite-soft"><p>Tiêu chuẩn vàng giúp cải thiện sống còn lâu dài; theo dữ liệu sổ bộ quốc tế ISHLT, tỷ lệ sống sau 1 năm đạt khoảng 90%, khôi phục khả năng dung nạp gắng sức và chất lượng cuộc sống (số liệu sổ bộ, không phải một RCT đơn lẻ).</p></td></tr></table></div>
+<div class="table-wrap"><table><tr><th class="bg-accent"><p><span class="c-onaccent"><strong>Liệu pháp can thiệp</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Tiêu chuẩn lựa chọn bệnh nhân theo khuyến cáo</strong></span></p></th><th class="bg-accent"><p><span class="c-onaccent"><strong>Lợi ích lâm sàng và Bằng chứng khoa học</strong></span></p></th></tr><tr><td class="bg-cite-soft"><p>Máy khử rung tự động cấy được (ICD)</p></td><td class="bg-cite-soft"><p>Dự phòng thứ phát: Ngừng tuần hoàn do rung thất hoặc nhịp nhanh thất có rối loạn huyết động. Dự phòng nguyên phát: LVEF ≤35%, NYHA II–III sau ≥3 tháng dùng GDMT tối ưu; do bệnh tim thiếu máu cục bộ (sau NMCT ≥40 ngày) hoặc bệnh cơ tim giãn không do thiếu máu; kỳ vọng sống thêm &gt;1 năm với tình trạng chức năng tốt.</p></td><td class="bg-cite-soft"><p>Giảm đột tử do loạn nhịp thất ác tính; kéo dài thời gian sống còn toàn bộ (thử nghiệm MADIT-II, SCD-HeFT).</p></td></tr><tr><td><p>Tái đồng bộ cơ tim (CRT-P / CRT-D)</p></td><td><p>Bệnh nhân suy tim có triệu chứng, LVEF ≤35% dù đã điều trị GDMT ≥3 tháng; nhịp xoang kèm phức bộ QRS rộng: Class I — dạng block nhánh trái hoàn toàn (LBBB) với bề rộng QRS ≥150 ms; Class IIa — dạng LBBB với QRS 130–149 ms, hoặc không có dạng LBBB với QRS ≥150 ms.</p></td><td><p>Khắc phục hiện tượng mất đồng bộ co bóp nhĩ - thất và giữa hai tâm thất, thúc đẩy tái cấu trúc cơ tim đảo ngược, cải thiện LVEF và giảm tử vong (COMPANION, CARE-HF).</p></td></tr><tr><td class="bg-cite-soft"><p>Triệt đốt Rung nhĩ bằng Năng lượng Catheter</p></td><td class="bg-cite-soft"><p>Bệnh nhân suy tim có rung nhĩ kịch phát hoặc dai dẳng nhằm kiểm soát nhịp khi thuốc thất bại hoặc nghi ngờ bệnh cơ tim qua trung gian nhịp nhanh. Suy tim giai đoạn tiến triển (CASTLE-HTx – NEJM 2023): bệnh nhân suy tim nặng có chỉ định ghép tim hoặc cấy ghép LVAD.</p></td><td class="bg-cite-soft"><p>Thử nghiệm CASTLE-HTx (N=194) chứng minh triệt đốt rung nhĩ giúp giảm tới 76% tiêu chí gộp chính (tử vong do mọi nguyên nhân, cấy LVAD khẩn cấp hoặc ghép tim cấp cứu: 8% so với 30%; <span class="stat">HR: 0,24; KTC 95%: 0,11–0,52; p&lt;0,001</span>) so với điều trị nội khoa; tử vong do mọi nguyên nhân riêng lẻ: 6% so với 20% (<span class="stat">HR: 0,29; KTC 95%: 0,12–0,72</span>) <span class="c-cite">[14]</span>.</p></td></tr><tr><td><p>Thiết bị hỗ trợ thất trái dòng liên tục (cf-LVAD)</p></td><td><p>Suy tim giai đoạn tiến triển (Giai đoạn D, phân độ INTERMACS 2–4) phụ thuộc inotrope liên tục hoặc sốc tim tái diễn. Áp dụng theo hai chiến lược: liệu pháp cầu nối chờ ghép tim (Bridge to Transplant) hoặc liệu pháp đích lâu dài (Destination Therapy).</p></td><td><p>Thiết bị bơm máu hỗ trợ cơ học dòng liên tục kiểu từ trường (như HeartMate 3) giúp duy trì cung lượng tuần hoàn; tại 2 năm đạt tỷ lệ sống còn không biến cố (không đột quỵ tàn phế, không hỏng/thay thiết bị) là 79,5% so với 60,2% ở nhóm bơm trục cơ học thế hệ trước (HeartMate II) (<span class="stat">HR: 0,46; KTC 95%: 0,31–0,69</span>) — thử nghiệm MOMENTUM-3 <span class="c-cite">[15]</span>.</p></td></tr><tr><td class="bg-cite-soft"><p>Ghép tim đồng loại (Heart Transplantation)</p></td><td class="bg-cite-soft"><p>Biện pháp cuối cùng cho bệnh nhân suy tim giai đoạn cuối kháng trị mọi phương thức nội - ngoại khoa, không có các chống chỉ định cố định (như tăng áp lực mạch phổi cố định, nhiễm trùng tiến triển hoặc ung thư hoạt động).</p></td><td class="bg-cite-soft"><p>Tiêu chuẩn vàng giúp cải thiện sống còn lâu dài; theo dữ liệu sổ bộ quốc tế ISHLT, tỷ lệ sống sau 1 năm đạt khoảng 90%, khôi phục khả năng dung nạp gắng sức và chất lượng cuộc sống (số liệu sổ bộ, không phải một RCT đơn lẻ).</p></td></tr></table></div>
 <p><span class="c-accent"><strong>Cập nhật mới (2026):</strong></span><span class="c-accent"><em> thử nghiệm TRIC-I-HF (sửa van ba lá qua ống thông ở bệnh nhân hở van ba lá nặng nguy cơ suy tim cao) và PADN-HF-PH (triệt bỏ thần kinh giao cảm động mạch phổi ở tăng áp phổi do bệnh tim trái) mở rộng thêm lựa chọn can thiệp thiết bị ngoài phạm vi bảng trên — xem chi tiết tại Mục 8.</em></span></p>
 <h1 id="7-quan-ly-benh-đong-mac-chuyen-sau-can-thiep-loi-song-va-cha"><span class="c-accent"><strong>7. Quản Lý Bệnh Đồng Mắc Chuyên Sâu, Can Thiệp Lối Sống và Chăm Sóc Chuyển Tiếp</strong></span></h1>
 <h2><span class="c-accent"><strong>7.1 Bước Ngoặt Phân Tử Trong Bệnh Cơ Tim Nhiễm Bột Transthyretin (ATTR-CM)</strong></span></h2>
 <p>Bệnh cơ tim thoái hóa dạng tinh bột Transthyretin (ATTR-CM) là nguyên nhân gây suy tim do thâm nhiễm cơ tim dẫn đến phì đại thành thất và hạn chế đổ đầy. Quá trình bệnh học khởi phát từ sự phân ly tetramer của protein transthyretin do gan tổng hợp thành các đơn phân cuộn gập sai, sau đó kết tụ thành các sợi amyloid lắng đọng tại mô kẽ cơ tim. Về mặt điều trị, ba chiến lược trúng đích phân tử đã được thử nghiệm lâm sàng pha 3 — hai chiến lược cho kết quả dương tính, một chiến lược mới nhất (2026) cho kết quả âm tính, một nhắc nhở quan trọng rằng cơ chế tác động tương tự KHÔNG bảo đảm hiệu quả lâm sàng đồng nhất giữa các phân tử.</p>
-<p><strong>Chiến lược ổn định phân tử tetramer</strong> sử dụng Tafamidis hoặc Acoramidis thông qua việc gắn chọn lọc vào các túi gắn kết thyroxine trên phân tử TTR, làm bền vững cấu trúc bậc bốn và ngăn chặn quá trình phân ly phân tử. Thử nghiệm <strong>ATTR-ACT</strong> (N=441, tỷ lệ phân bổ 2:1:2 giữa tafamidis 80mg, tafamidis 20mg và giả dược, theo dõi 30 tháng) đã chứng minh Tafamidis làm giảm tỷ lệ tử vong do mọi nguyên nhân (<strong>29,5% so với 42,9%</strong>; HR: 0,70; KTC 95%: 0,51–0,96) và giảm tần suất nhập viện do nguyên nhân tim mạch (Relative Risk Ratio: 0,68; KTC 95%: 0,56–0,81; 0,48 đợt/năm so với 0,70 đợt/năm) ở bệnh nhân ATTR-CM <span class="c-cite">[16]</span>.</p>
+<p><strong>Chiến lược ổn định phân tử tetramer</strong> sử dụng Tafamidis hoặc Acoramidis thông qua việc gắn chọn lọc vào các túi gắn kết thyroxine trên phân tử TTR, làm bền vững cấu trúc bậc bốn và ngăn chặn quá trình phân ly phân tử. Thử nghiệm <strong>ATTR-ACT</strong> (N=441, tỷ lệ phân bổ 2:1:2 giữa tafamidis 80mg, tafamidis 20mg và giả dược, theo dõi 30 tháng) đã chứng minh Tafamidis làm giảm tỷ lệ tử vong do mọi nguyên nhân (<strong class="stat-compare">29,5% so với 42,9%</strong>; <span class="stat">HR: 0,70; KTC 95%: 0,51–0,96</span>) và giảm tần suất nhập viện do nguyên nhân tim mạch (<span class="stat">Relative Risk Ratio: 0,68; KTC 95%: 0,56–0,81</span>; 0,48 đợt/năm so với 0,70 đợt/năm) ở bệnh nhân ATTR-CM <span class="c-cite">[16]</span>.</p>
 <p><strong>Chiến lược can thiệp RNA (RNA interference)</strong> sử dụng các chuỗi oligonucleotide can thiệp nhỏ (siRNA) tác động trực tiếp vào giai đoạn phiên mã tại tế bào gan. Thử nghiệm lâm sàng pha 3 <strong>HELIOS-B</strong> (NEJM 2024) đã khảo sát phân tử siRNA Vutrisiran (tiêm dưới da <strong>25 mg</strong> mỗi 12 tuần) trên 655 bệnh nhân ATTR-CM (326 nhóm Vutrisiran, 329 nhóm giả dược), theo dõi tới 36 tháng <span class="c-cite">[17]</span>. Kết quả được đánh giá tách biệt ở <strong>toàn bộ quần thể nghiên cứu</strong> và ở <strong>nhóm bệnh nhân đơn trị liệu</strong> (không dùng kèm Tafamidis lúc nền), theo thứ tự phân cấp:</p>
-<p><span class="c-accent"><strong>•  </strong></span><strong>Trong toàn bộ quần thể nghiên cứu</strong>: Vutrisiran làm giảm nguy cơ biến cố gộp gồm tử vong do mọi nguyên nhân và biến cố tim mạch tái phát so với nhóm chứng (HR: 0,72; KTC 95%: 0,56–0,93; p=0,01), và giảm nguy cơ tử vong do mọi nguyên nhân riêng lẻ tính tới tháng thứ 42 (HR: 0,65; KTC 95%: 0,46–0,90; p=0,01).</p>
-<p><span class="c-danger"><strong>•  </strong></span><strong>Ở nhóm bệnh nhân đơn trị liệu</strong> (không dùng kèm Tafamidis): Vutrisiran giúp giảm nguy cơ biến cố gộp tử vong/biến cố tim mạch tái phát (HR: 0,67; KTC 95%: 0,49–0,93; p=0,02). Bản gốc tài liệu trước đây gán nhầm con số HR 0,65 (tử vong đơn thuần tháng 42) cho phân nhóm đơn trị liệu — số liệu chính xác theo tóm tắt công bố là HR 0,65 thuộc về TOÀN BỘ quần thể nghiên cứu, không phải riêng nhóm đơn trị liệu; đã sửa lại trong bản này.</p>
+<p><span class="c-accent"><strong>•  </strong></span><strong>Trong toàn bộ quần thể nghiên cứu</strong>: Vutrisiran làm giảm nguy cơ biến cố gộp gồm tử vong do mọi nguyên nhân và biến cố tim mạch tái phát so với nhóm chứng (<span class="stat">HR: 0,72; KTC 95%: 0,56–0,93; p=0,01</span>), và giảm nguy cơ tử vong do mọi nguyên nhân riêng lẻ tính tới tháng thứ 42 (<span class="stat">HR: 0,65; KTC 95%: 0,46–0,90; p=0,01</span>).</p>
+<p><span class="c-danger"><strong>•  </strong></span><strong>Ở nhóm bệnh nhân đơn trị liệu</strong> (không dùng kèm Tafamidis): Vutrisiran giúp giảm nguy cơ biến cố gộp tử vong/biến cố tim mạch tái phát (<span class="stat">HR: 0,67; KTC 95%: 0,49–0,93; p=0,02</span>). Bản gốc tài liệu trước đây gán nhầm con số <span class="stat">HR 0,65</span> (tử vong đơn thuần tháng 42) cho phân nhóm đơn trị liệu — số liệu chính xác theo tóm tắt công bố là <span class="stat">HR 0,65</span> thuộc về TOÀN BỘ quần thể nghiên cứu, không phải riêng nhóm đơn trị liệu; đã sửa lại trong bản này.</p>
 <p>Thuốc đồng thời bảo tồn có ý nghĩa thống kê khoảng cách đi bộ 6 phút (khác biệt bình phương tối thiểu +26,5 m) và điểm số chất lượng sống KCCQ-OS (khác biệt +5,8 điểm) so với giả dược, với tính dung nạp an toàn cao <span class="c-cite">[17]</span>.</p>
 <p><strong>Cập nhật mới — thử nghiệm CARDIO-TTRansform (2026).</strong> Eplontersen, một antisense oligonucleotide khác cùng nhóm hạ TTR gan (cơ chế khác siRNA), đã được thử nghiệm pha 3 quốc tế trên <strong>1.432 bệnh nhân ATTR-CM</strong> (715 nhóm eplontersen 45mg tiêm dưới da mỗi 4 tuần, 717 nhóm giả dược, theo dõi tới 140 tuần), công bố NEJM 28/8/2026. Kết quả tiêu chí chính (biến cố gộp tử vong tim mạch và biến cố tim mạch tái phát tích lũy) <strong>KHÔNG đạt ý nghĩa thống kê</strong> (rate ratio 0,89; KTC 95%: 0,73–1,09; p=0,28) <span class="c-cite">[23]</span>. Đây là một phát hiện quan trọng cần lưu ý khi tư vấn bệnh nhân: hiệu quả của liệu pháp hạ TTR bằng công nghệ RNA/antisense KHÔNG đồng nhất giữa các phân tử trong nhóm — kết quả dương tính của Vutrisiran (HELIOS-B) KHÔNG NÊN được ngoại suy sang Eplontersen hay các phân tử khác chưa có RCT dương tính riêng.</p>
 <h2><span class="c-accent"><strong>7.2 Liệu Pháp Bổ Sung Sắt Đường Tĩnh Mạch</strong></span></h2>
@@ -523,16 +583,16 @@ tr:has(> td.row-label) + tr td { padding-top: .35rem; }
 <p>Bản cập nhật Hướng dẫn Điều trị ESC 2023 <span class="c-cite">[3]</span> đã nâng mức khuyến cáo bổ sung sắt đường tĩnh mạch (bằng các phức hợp sắt có trọng lượng phân tử cao như Ferric Carboxymaltose hoặc Ferric Derisomaltose) lên <strong>Khuyến cáo Loại I, Mức chứng cứ A</strong> nhằm làm dịu triệu chứng suy tim, gia tăng khả năng dung nạp thể lực và cải thiện chất lượng cuộc sống cho bệnh nhân HFrEF và HFmrEF có triệu chứng. Bên cạnh đó, việc truyền sắt tĩnh mạch được xếp ở <strong>Khuyến cáo Loại IIa, Mức chứng cứ A</strong> nhằm mục tiêu giảm thiểu tỷ lệ tái nhập viện vì suy tim dựa trên phân tích tổng hợp từ các thử nghiệm AFFIRM-AHF và HEART-FID. Đáng chú ý, các dạng bổ sung sắt bằng đường uống hoàn toàn không có hiệu quả lâm sàng trong suy tim do tình trạng viêm hệ thống mạn tính làm tăng nồng độ hormone hepcidin, ngăn cản sự hấp thu sắt qua tế bào niêm mạc tá tràng.</p>
 <h2><span class="c-accent"><strong>7.3 Tái Định Hình Hướng Dẫn Về Hạn Chế Muối Ăn (Thử Nghiệm SODIUM-HF)</strong></span></h2>
 <p>Biện pháp hạn chế natri trong khẩu phần ăn một cách khắt khe từng được xem là tiêu chuẩn chăm sóc bắt buộc đối với người bệnh suy tim. Tuy nhiên, thử nghiệm lâm sàng thực chứng ngẫu nhiên đa quốc gia <strong>SODIUM-HF</strong> (công bố trên The Lancet 2022, 26 trung tâm tại 6 quốc gia) đã mang lại các bằng chứng phản biện quan trọng. Nghiên cứu tiến hành ngẫu nhiên trên 806 bệnh nhân suy tim mạn tính ngoại trú (NYHA II-III) đang được điều trị nội khoa tối ưu, so sánh chế độ ăn hạn chế natri nghiêm ngặt (<strong>&lt;1500 mg natri/ngày</strong>, tương đương khoảng <strong>&lt;3,75 g muối ăn/ngày</strong>) với chế độ dinh dưỡng thông thường theo khuyến nghị chung <span class="c-cite">[8]</span>.</p>
-<p>Sau 12 tháng can thiệp, kết quả cho thấy không có sự khác biệt có ý nghĩa thống kê về tiêu chí gộp chính gồm tử vong do mọi nguyên nhân, nhập viện do tim mạch hoặc khám cấp cứu khẩn cấp giữa hai nhóm điều trị (<strong>15% so với 17%</strong>; HR: 0,89; KTC 95%: 0,63–1,26; p=0,53) <span class="c-cite">[8]</span>. Các phân tích tổng hợp tiếp sau đó cảnh báo rằng việc hạn chế natri quá mức có thể phản tác dụng do gây co mạch phản xạ, kích hoạt trục RAAS và hệ giao cảm tăng hoạt bù trừ, làm suy giảm lưu lượng tưới máu qua nephron và tăng nguy cơ suy kiệt dinh dưỡng ở bệnh nhân suy tim. Hướng dẫn thực hành lâm sàng hiện nay đã chuyển hướng sang tiếp cận cân bằng: tránh chế độ ăn hạn chế natri quá mức (&lt;1500 mg natri/ngày), thay vào đó khuyến nghị mức hấp thu natri vừa phải trong khoảng <strong>2000–2300 mg natri/ngày</strong> (tương ứng <strong>5–6 g muối ăn/ngày</strong>) và tập trung nhiều hơn vào việc tránh các bữa ăn quá mặn gây giữ nước cấp tính.</p>
+<p>Sau 12 tháng can thiệp, kết quả cho thấy không có sự khác biệt có ý nghĩa thống kê về tiêu chí gộp chính gồm tử vong do mọi nguyên nhân, nhập viện do tim mạch hoặc khám cấp cứu khẩn cấp giữa hai nhóm điều trị (<strong class="stat-compare">15% so với 17%</strong>; <span class="stat">HR: 0,89; KTC 95%: 0,63–1,26; p=0,53</span>) <span class="c-cite">[8]</span>. Các phân tích tổng hợp tiếp sau đó cảnh báo rằng việc hạn chế natri quá mức có thể phản tác dụng do gây co mạch phản xạ, kích hoạt trục RAAS và hệ giao cảm tăng hoạt bù trừ, làm suy giảm lưu lượng tưới máu qua nephron và tăng nguy cơ suy kiệt dinh dưỡng ở bệnh nhân suy tim. Hướng dẫn thực hành lâm sàng hiện nay đã chuyển hướng sang tiếp cận cân bằng: tránh chế độ ăn hạn chế natri quá mức (&lt;1500 mg natri/ngày), thay vào đó khuyến nghị mức hấp thu natri vừa phải trong khoảng <strong>2000–2300 mg natri/ngày</strong> (tương ứng <strong>5–6 g muối ăn/ngày</strong>) và tập trung nhiều hơn vào việc tránh các bữa ăn quá mặn gây giữ nước cấp tính.</p>
 <h2><span class="c-accent"><strong>7.4 Phục Hồi Chức Năng Tim Mạch và Chăm Sóc Chuyển Tiếp Sau Xuất Viện</strong></span></h2>
 <p>Phục hồi chức năng tim mạch thông qua các bài tập thể lực có cấu trúc và được giám sát y khoa mang lại lợi ích sinh lý đa cơ chế: tăng mật độ ty thể trong cơ vân, cải thiện khả năng trích xuất oxy tại mô ngoại biên, tái lập chức năng giãn mạch qua trung gian nội mạc và điều hòa trương lực giao cảm. Các chương trình tập luyện gắng sức mức độ trung bình (aerobic kết hợp kháng trở nhẹ) được chứng minh giúp cải thiện đáng kể phân độ chức năng NYHA, gia tăng quãng đường đi bộ 6 phút và giảm số ngày nằm viện.</p>
 <p>Chiến lược chăm sóc chuyển tiếp (Transitional Care) trong khoảng thời gian nhạy cảm 30 ngày đầu sau xuất viện đóng vai trò then chốt trong việc giảm tỷ lệ tái nhập viện. Mô hình quản lý bệnh nhân ngoại trú liên chuyên khoa bao gồm việc thiết lập lịch tái khám sớm trong vòng 7 đến 14 ngày, theo dõi sát các chỉ số sinh tồn và chức năng thận, hướng dẫn bệnh nhân quy trình tự cân hàng ngày vào buổi sáng để chủ động điều chỉnh liều thuốc lợi tiểu quai theo phác đồ viết sẵn khi có dấu hiệu tăng trên <strong>1–1,5 kg</strong> trong 2 đến 3 ngày liên tiếp. Việc kết hợp các hệ thống theo dõi từ xa (telemonitoring) và các ứng dụng kỹ thuật số giúp phát hiện sớm các bất thường về huyết động, bảo đảm duy trì sự tuân thủ điều trị và tối ưu hóa kết quả lâm sàng dài hạn.</p>
 <h1 id="8-cap-nhat-chung-cu-thang-92026-esc-congress-2026"><span class="c-accent"><strong>8. Cập Nhật Chứng Cứ Tháng 9/2026 (ESC Congress 2026)</strong></span></h1>
 <p><span class="c-muted"><em>Mục này được thêm mới vào bản dựng lại — bản tài liệu gốc bác sĩ tải lên KHÔNG có phần này, dù chủ đề "suy tim" luôn có tốc độ ra chứng cứ mới rất nhanh. Ba thử nghiệm dưới đây công bố trên New England Journal of Medicine trong khoảng 28-30/8/2026, trùng thời điểm Đại hội ESC 2026, đã được xác minh trực tiếp qua PubMed (ngày kiểm: 07/09/2026).</em></span></p>
 <h2><span class="c-accent"><strong>8.1 TRIC-I-HF — Sửa Van Ba Lá Qua Ống Thông Trong Suy Tim</strong></span></h2>
-<p>Thử nghiệm ngẫu nhiên 2:1 trên 360 bệnh nhân (tuổi trung bình 80,3±6,4; 56,4% nữ) hở van ba lá nặng có triệu chứng và nguy cơ cao xuất hiện biến cố suy tim, so sánh sửa van ba lá qua ống thông cộng điều trị nội khoa với điều trị nội khoa đơn thuần. Tiêu chí chính thứ nhất (win ratio, phối hợp tử vong/nhập viện suy tim/cải thiện chất lượng sống tại 1 năm) đạt 2,42 (KTC 95%: 1,76–3,33; p&lt;0,001) nghiêng về nhóm can thiệp. Tiêu chí chính thứ hai (tử vong do mọi nguyên nhân hoặc nhập viện vì suy tim tới 3 năm) cũng có lợi rõ rệt (HR: 0,40; KTC 95%: 0,29–0,55; p&lt;0,001); tỷ lệ sống không biến cố tại 3 năm ước tính 52,4% (nhóm can thiệp) so với 21,0% (nhóm nội khoa) <span class="c-cite">[21]</span>.</p>
+<p>Thử nghiệm ngẫu nhiên 2:1 trên 360 bệnh nhân (tuổi trung bình 80,3±6,4; 56,4% nữ) hở van ba lá nặng có triệu chứng và nguy cơ cao xuất hiện biến cố suy tim, so sánh sửa van ba lá qua ống thông cộng điều trị nội khoa với điều trị nội khoa đơn thuần. Tiêu chí chính thứ nhất (win ratio, phối hợp tử vong/nhập viện suy tim/cải thiện chất lượng sống tại 1 năm) đạt 2,42 (KTC 95%: 1,76–3,33; p&lt;0,001) nghiêng về nhóm can thiệp. Tiêu chí chính thứ hai (tử vong do mọi nguyên nhân hoặc nhập viện vì suy tim tới 3 năm) cũng có lợi rõ rệt (<span class="stat">HR: 0,40; KTC 95%: 0,29–0,55; p&lt;0,001</span>); tỷ lệ sống không biến cố tại 3 năm ước tính 52,4% (nhóm can thiệp) so với 21,0% (nhóm nội khoa) <span class="c-cite">[21]</span>.</p>
 <h2><span class="c-accent"><strong>8.2 PADN-HF-PH — Triệt Bỏ Thần Kinh Giao Cảm Động Mạch Phổi</strong></span></h2>
-<p>Thử nghiệm đa trung tâm tại Trung Quốc trên 264 bệnh nhân tăng áp phổi do bệnh tim trái kèm suy tim, ngẫu nhiên 1:1 giữa triệt bỏ thần kinh giao cảm động mạch phổi qua ống thông cộng GDMT so với GDMT đơn thuần. Tỷ lệ tích lũy 2 năm của tiêu chí chính (biến cố xấu đi lâm sàng: tử vong, ghép tim/phổi, nhập viện vì suy tim, suy tim nặng lên ngoại trú, hoặc giảm quãng đường đi bộ 6 phút) là 25,7% ở nhóm can thiệp so với 51,5% ở nhóm chứng (HR: 0,49; KTC 95%: 0,30–0,82; p=0,006), với tỷ lệ biến chứng thủ thuật rất thấp <span class="c-cite">[22]</span>.</p>
+<p>Thử nghiệm đa trung tâm tại Trung Quốc trên 264 bệnh nhân tăng áp phổi do bệnh tim trái kèm suy tim, ngẫu nhiên 1:1 giữa triệt bỏ thần kinh giao cảm động mạch phổi qua ống thông cộng GDMT so với GDMT đơn thuần. Tỷ lệ tích lũy 2 năm của tiêu chí chính (biến cố xấu đi lâm sàng: tử vong, ghép tim/phổi, nhập viện vì suy tim, suy tim nặng lên ngoại trú, hoặc giảm quãng đường đi bộ 6 phút) là 25,7% ở nhóm can thiệp so với 51,5% ở nhóm chứng (<span class="stat">HR: 0,49; KTC 95%: 0,30–0,82; p=0,006</span>), với tỷ lệ biến chứng thủ thuật rất thấp <span class="c-cite">[22]</span>.</p>
 <h2><span class="c-accent"><strong>8.3 CARDIO-TTRansform/Eplontersen — Kết Quả Âm Tính Cần Lưu Ý</strong></span></h2>
 <p>Đã trình bày chi tiết ở Mục 7.1. Đây là một trong ba thử nghiệm mới nhất nhưng mang tính chất <strong>cảnh báo</strong> hơn là khuyến cáo áp dụng: thuốc antisense oligonucleotide hạ TTR gan KHÔNG đạt tiêu chí chính ở ATTR-CM (rate ratio 0,89; KTC 95%: 0,73–1,09; p=0,28) trên 1.432 bệnh nhân theo dõi 140 tuần. Kết quả này nhắc nhở rằng "lớp thuốc" tương tự về cơ chế không đảm bảo cùng hiệu quả lâm sàng — quyết định lựa chọn thuốc hạ TTR cụ thể cho bệnh nhân phải dựa trên RCT dương tính của chính phân tử đó (như HELIOS-B cho Vutrisiran), không suy diễn liên nhóm <span class="c-cite">[23]</span>.</p>
 <p><span class="c-warn"><strong>Ý nghĩa thực hành:</strong></span><span class="c-warn"><em> cả ba thử nghiệm đều CHƯA được tích hợp vào bất kỳ hướng dẫn thực hành chính thức nào (ESC/ACC-AHA/Bộ Y tế Việt Nam) tại thời điểm dựng tài liệu này do mới công bố trong vòng 1-2 tuần. Nêu ở đây với mục đích cập nhật thông tin, KHÔNG phải khuyến cáo áp dụng ngay vào thực hành thường quy — cần chờ hướng dẫn chính thức thẩm định và tích hợp.</em></span></p>
