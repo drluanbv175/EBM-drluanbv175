@@ -26,6 +26,18 @@ from typing import Callable, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# VÁ 07/09/2026: control_steps() dưới đây từng ghi command "medical-ebm-
+# automation/tools/..." là ĐƯỜNG DẪN TƯƠNG ĐỐI, chạy với cwd=str(ROOT)
+# (_default_runner) — giả định medical-ebm-automation nằm LỒNG trong ROOT
+# (đúng máy thật), SAI trên phiên cloud (anh em của ROOT) khiến bước đó luôn
+# FileNotFoundError. Dùng duong_goc() để có đường dẫn TUYỆT ĐỐI, không phụ
+# thuộc cwd — xem tools/ban_sao_tran.py.
+import importlib.util as _ilu_rcac  # noqa: E402
+_sp_rcac = _ilu_rcac.spec_from_file_location(
+    "_bst_rcac", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_rcac = _ilu_rcac.module_from_spec(_sp_rcac)
+_sp_rcac.loader.exec_module(_bst_rcac)
+_MEA_GOC_RCAC = _bst_rcac.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 DEFAULT_JSON = ROOT / "reports" / "CONTROLLED_AUTOMATION_CYCLE.json"
 DEFAULT_MD = ROOT / "reports" / "CONTROLLED_AUTOMATION_CYCLE.md"
 DISCLAIMER = (
@@ -147,7 +159,7 @@ def control_steps() -> list[ControlStep]:
         ControlStep(
             step_id="personal_production_hardening",
             phase="production_hardening",
-            command=["medical-ebm-automation/tools/verify_personal_production_hardening.py"],
+            command=[str(_MEA_GOC_RCAC / "tools" / "verify_personal_production_hardening.py")],
             proves="7 miền hardening cá nhân được kiểm: blocker production, actor thật, dữ liệu thật, SOP, UAT, backup/rollback và tách mode.",
             limitation="Không thay evidence package, signoff, UAT, bảo mật hoặc go-live thật.",
             human_gate=True,
