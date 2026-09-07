@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.50.0 — 2026-09-07 (đóng gói trang đọc Artifact thành công cụ dùng lại — bác sĩ hỏi «cho những cập nhật sau chưa»)
+
+**Bối cảnh.** Sau v1.49.0 (rà lại tài liệu Suy tim có sẵn), bác sĩ yêu cầu thêm một trang đọc
+được ngay trong khung chat (không mở được `.docx` trực tiếp) → dựng bằng một script BeautifulSoup
+làm-tay-một-lần trong scratchpad, gắn cứng đường dẫn/tiêu đề cho đúng tài liệu đó. Bác sĩ phản
+hồi bản đầu "thiết kế chưa cân đối, bảng trình bày, các chứng cứ chưa có điểm nhấn rõ rệt" → sửa
+tại chỗ. Khi bác sĩ hỏi tiếp "cho những cập nhật sau chưa", rà lại phát hiện: bản sửa CHỈ tồn tại
+trong scratchpad (mất khi hết phiên), gắn cứng cho một file, và KHÔNG được ghi vào bất kỳ tài
+nguyên nào của skill — nên câu trả lời trung thực lúc đó là "tài liệu này: có; lần sau: không tự
+động".
+
+**Đã thêm vào hệ thống:**
+- `tools/build_trang_doc_artifact.py` — tổng quát hoá script scratchpad thành công cụ CLI dùng
+  lại được (`--title`/`--eyebrow-date`/`--footer-date`), tách rõ phần TỔNG QUÁT an toàn dùng lại
+  (bảng màu, quy tắc bọc chip HR/RR/OR + KTC 95%/p, huy hiệu Class/Level, khung CSS 3-theme) khỏi
+  phần GIẢ ĐỊNH BỐ CỤC (4 đoạn mở đầu + 1 bảng cảnh báo) cần đối chiếu lại mỗi tài liệu mới — nêu
+  rõ trong docstring, không hứa "tự động hoàn toàn" quá những gì đã kiểm chứng được. Đã chạy lại
+  trên đúng tài liệu Suy tim để đối chiếu: cùng 25 chip chứng cứ, cùng cấu trúc HTML với bản đã
+  xuất bản (chỉ khác các dòng comment được dịch sang tiếng Việt).
+- `references/14-tai-dung-tai-lieu-co-san.md` — mục mới "Trang đọc thiết kế kiểu Artifact" nêu
+  khi nào dùng, phần dùng lại an toàn vs. phần cần đối chiếu.
+- `SKILL.md` §5G (trỏ tới công cụ ngay tại ca thật đã kể) + §9 (mục tài nguyên).
+
+**Cố ý KHÔNG đụng:** `build_ban_doc_chung_cu.py` (bản đọc CHÍNH THỨC của luồng Web Dashboard
+`items[]`) — công cụ đó đã có cơ chế điểm nhấn chứng cứ RIÊNG phù hợp dữ liệu có cấu trúc
+(forest-plot theo từng mục, trục log, huy hiệu tone màu theo quyết định), không phải "thiếu điểm
+nhấn" như tài liệu chuyên luận dài — hai loại nội dung khác nhau (items có cấu trúc vs. văn xuôi
+liền mạch) cần hai cách trình bày khác nhau; gộp chung sẽ là ép một thiết kế không hợp bối cảnh.
+
+
 ## v1.49.0 — 2026-09-07 (mẫu cập nhật chứng cứ tốt nhất — bác sĩ yêu cầu «cập nhật vào hệ thống»)
 
 **Ca thật mở đầu (5G):** bác sĩ tải lên một `.docx` do AI khác soạn, nói "cấu trúc tóm tắt cập
