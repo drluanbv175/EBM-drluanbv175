@@ -82,12 +82,19 @@ CSS_IN = """
 def tim_trinh_duyet() -> str | None:
     """Tìm một trình duyệt nhân Chromium để in PDF (Chrome/Edge/Chromium).
 
-    Dò theo 3 lớp cho chạy được trên CẢ macOS lẫn Windows:
+    Dò theo 4 lớp cho chạy được trên CẢ macOS lẫn Windows lẫn phiên đám mây:
       1) các đường dẫn cài đặt chuẩn (hằng TRINH_DUYET);
       2) bản cài theo NGƯỜI DÙNG trên Windows (%LOCALAPPDATA%) — Chrome rất hay
          nằm ở đây khi máy không cho cài vào Program Files, như máy công sở;
       3) PATH, với đủ tên gọi của cả hai hệ (Windows dùng chrome/msedge, Unix
-         dùng chromium/google-chrome).
+         dùng chromium/google-chrome);
+      4) kho trình duyệt của Playwright (`PLAYWRIGHT_BROWSERS_PATH`) — thêm
+         07/09/2026. VÌ SAO: phiên đám mây (claude.ai/code) có sẵn Chromium
+         nhưng nằm NGOÀI PATH và ngoài mọi đường dẫn ở lớp 1-3, nên bước ⑤ báo
+         "không thấy Chrome/Edge/Chromium" ở MỌI phiên cloud dù máy có đủ. Đo
+         trực tiếp cùng ngày: in tay bằng chính binary đó ra PDF 957 KB thành
+         công ⇒ đây là lỗi DÒ TÌM, không phải thiếu năng lực. Cùng họ lỗi đã vá
+         12/08 cho Windows (dò theo đường dẫn macOS nên không bao giờ in được).
     """
     for p in TRINH_DUYET:
         if pathlib.Path(p).exists():
@@ -106,6 +113,20 @@ def tim_trinh_duyet() -> str | None:
         found = shutil.which(ten)
         if found:
             return found
+
+    # Lớp 4 — kho Playwright. Đọc biến môi trường TRƯỚC, chỉ lùi về đường dẫn mặc
+    # định của Playwright khi biến vắng mặt; glob theo bố cục thật của kho
+    # (<kho>/<chromium*>/chrome-linux/chrome, và bản headless_shell nhẹ hơn).
+    kho_pw = os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or "/opt/pw-browsers"  # da-nen: bo-qua (đường dẫn mặc định CỦA PLAYWRIGHT, không phải của một máy cụ thể; biến môi trường vẫn được ưu tiên)
+    goc = pathlib.Path(kho_pw)
+    if goc.is_dir():
+        for mau in ("chromium*/chrome-linux/chrome",
+                    "chromium*/chrome-linux/headless_shell",
+                    "chromium*/chrome-mac/Chromium.app/Contents/MacOS/Chromium",
+                    "chromium*/chrome-win/chrome.exe"):
+            for ung_vien in sorted(goc.glob(mau), reverse=True):
+                if ung_vien.exists():
+                    return str(ung_vien)
     return None
 
 
