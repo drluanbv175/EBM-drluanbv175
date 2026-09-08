@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 13,
-    "partial": 0,
+    "strong": 12,
+    "partial": 1,
     "weak": 0,
     "total": 13
   },
@@ -135,7 +135,7 @@
       "probes": [
         {
           "ok": true,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1313 (ngưỡng ≥1)"
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1322 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -205,7 +205,7 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 268 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 442 khớp 'test_*.py' (≥40)"
         },
         {
           "ok": true,
@@ -350,8 +350,8 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "strong",
-      "passed": 14,
+      "status": "partial",
+      "passed": 13,
       "total": 14,
       "probes": [
         {
@@ -383,8 +383,8 @@
           "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": true,
-          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
+          "ok": false,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=1 (cần 0) ✗"
         },
         {
           "ok": true,

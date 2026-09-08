@@ -277,3 +277,45 @@ cấu hình thật vẫn nguyên ở `~/.claude/settings.local.json`. Các chố
 (`tools/doc_settings.py`) nên không còn báo động đỏ giả. Nếu Windows cũng mất file đó,
 **không cần hoảng**: kiểm bằng `python tools\kiem_cau_hinh_nguoi_dung.py`; chỉ khi nó
 báo thiếu THẬT mới chạy `--ap-dung`.
+
+## 08/09/2026 — 2 lỗ hổng cổng nghiên cứu vá xong (thuộc `medical-ebm-automation`), kèm khôi phục 7 skill mất khối tiếng Việt bắt buộc
+
+**Kéo về (bắt buộc, đúng nhánh):**
+```
+cd %USERPROFILE%\OneDrive\Claude AI
+git checkout claude/multi-platform-plugin-sync-cslwb0
+git pull
+cd medical-ebm-automation
+git checkout feat/r1-1-2-design-gap-remediation
+git pull
+cd ..
+```
+
+**Vì sao quan trọng — đo được, không phải suy đoán:** CLAUDE.md gốc từng khai hai lỗ hổng cổng
+G4/guardrail lâm sàng "đã vá 02/09", nhưng đo trực tiếp trên cả nhánh làm việc LẪN
+`origin/master` của `medical-ebm-automation` thì bản vá CHƯA TỪNG landed — chỉ phần giải thích
+được viết vào chú thích. Đã vá thật hôm nay:
+- `tools/approve_gate.py` — SAP **HOÀN TOÀN RỖNG** (0/4 mục §1/§2/§5/§10) trước đây đi qua sạch
+  chốt trước-khi-ký của G4, khoá được bằng chữ ký một tài liệu không có nội dung gì.
+- `tools/clinical_checkpoint.py` — khối `guardrail_dau_ra: ĐẠT` là LỜI TỰ KHAI, không phân biệt
+  được với guardrail bị bỏ qua rồi ghi ĐẠT im lặng. Nay đối chiếu `observability/APPRAISALS.jsonl`
+  khi có trích dẫn biên nhận; biên nhận bịa (không có trong sổ) bị chặn.
+- `tests/test_gate_ed25519_20260815.py` — import `cryptography` không rào khiến một thư viện cài
+  hỏng nửa chừng kéo sập CẢ lượt thu thập test (không riêng module đó).
+
+**Song song, ở repo gốc (nhánh `claude/multi-platform-plugin-sync-cslwb0`):** 7 skill
+(`citation-management`, `literature-review`, `paper-lookup`, `peer-review`, `research-lookup`,
+`scientific-writing`, `statistical-analysis`) có nội dung MỚI (thay thế cho 7 skill "-kdense" mới
+thêm) nhưng bị mất khối `<!-- EBM-VN-GUARD -->` bắt buộc — đã chèn lại.
+
+**Sau khi kéo về, kiểm trên Windows:**
+```
+python tools\chot_hoi_quy_bai_hoc.py
+python tools\vietnamize\apply_vi.py --tu-quet --im-khi-on
+```
+Cả hai phải sạch (0 bài học tái phát, mã thoát 0). Nếu `tools\chot_hoi_quy_bai_hoc.py` còn đỏ ở
+BH97/BH98/BH99/BH55/BH77, nghĩa là `git pull` chưa lấy đúng 2 nhánh ở trên — kiểm lại bước 1.
+
+⚠️ **Chưa merge vào `master` của cả hai repo** — nhánh làm việc đang đi trước `master` (0 sau, 25
+trước ở repo gốc), fast-forward được, không xung đột. Quyết định merge/mở PR là của bác sĩ, chưa
+tự làm.
