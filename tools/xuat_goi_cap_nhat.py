@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import re
 import shutil
@@ -58,8 +59,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
 BAN_DOC = ROOT / "tools" / "build_ban_doc_chung_cu.py"
-VERIFY = DASH_TOOLS / "verify_dashboard.py"
-DOCX = DASH_TOOLS / "build_dashboard_docx.py"
+
+_spec_bst = importlib.util.spec_from_file_location(
+    "_bst_xgcn", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = importlib.util.module_from_spec(_spec_bst)
+_spec_bst.loader.exec_module(_bst)
+
+# VÁ 08/09/2026 — trước đây VERIFY/DOCX chỉ tìm ở EBM-Dashboards/tools/, nơi
+# doctrine-canonical nhưng KHÔNG BAO GIỜ tồn tại trên một checkout thuần git
+# (worktree không lồng cây OneDrive, clone tươi, CI, phiên cloud). Lệnh «một
+# cửa» này bị chặn ngay ở bước đầu dù các bản GIT-VENDOR của chính hai tool
+# này (sync/skills/cap-nhat-chung-cu-y-khoa/tools/) chạy tốt trên máy đó —
+# xem tools/ban_sao_tran.py::duong_cong_cu_pipeline(). Vẫn giữ mặc định cũ
+# làm phương án lùi để không đổi hành vi trên máy thật đã có EBM-Dashboards/.
+VERIFY = _bst.duong_cong_cu_pipeline("verify_dashboard.py", ROOT) or (DASH_TOOLS / "verify_dashboard.py")
+DOCX = _bst.duong_cong_cu_pipeline("build_dashboard_docx.py", ROOT) or (DASH_TOOLS / "build_dashboard_docx.py")
 
 # CSS nhúng thẳng vào file Python (KHÔNG tách ra file asset riêng) để bước ④ không
 # tạo thêm một thứ phải đồng bộ tay giữa Mac và Windows.
@@ -134,7 +148,7 @@ def ghi_sidecar_hash_data(dash: Path, word_path: str) -> None:
     Lỗi khi ghi sidecar KHÔNG được làm hỏng lượt xuất chính — đây là tiện ích tối
     ưu cho một cảm biến khác, không phải một trong bộ năm sản phẩm đã hứa."""
     try:
-        sys.path.insert(0, str(DASH_TOOLS))
+        sys.path.insert(0, str(VERIFY.parent))
         import verify_dashboard as vd  # noqa: E402 — cần sys.path.insert trước
         html = dash.read_text(encoding="utf-8", errors="replace")
         data_block = vd.extract_data_block(html)
@@ -250,8 +264,9 @@ def main() -> int:
     missing = [p.name for p in (BAN_DOC, DOCX) if not p.exists()]
     if missing:
         print(f"✗ Thiếu tool: {', '.join(missing)}", file=sys.stderr)
-        print("  Tool trong EBM-Dashboards/tools/ đồng bộ qua OneDrive, không qua git —"
-              " đợi OneDrive xanh rồi chạy lại.", file=sys.stderr)
+        print("  Tool trong EBM-Dashboards/tools/ đồng bộ qua OneDrive (không qua git);"
+              " bản vendor qua git ở sync/skills/cap-nhat-chung-cu-y-khoa/tools/ cũng"
+              " không thấy — đợi OneDrive xanh, hoặc kiểm tra checkout git.", file=sys.stderr)
         return 2
 
     py = sys.executable
@@ -270,7 +285,10 @@ def main() -> int:
             rc_final = 1
         else:
             print("① Cổng liêm chính (--online)…")
-            rc, out = run([py, VERIFY, dash, "--online"], cwd=DASH_TOOLS.parent)
+            # cwd = thư mục cha của chính bản VERIFY đang dùng — đúng cả khi đó là
+            # EBM-Dashboards (máy thật) lẫn sync/skills/cap-nhat-chung-cu-y-khoa
+            # (bản vendor qua git, dùng trên checkout thuần git — xem duong_cong_cu_pipeline()).
+            rc, out = run([py, VERIFY, dash, "--online"], cwd=VERIFY.parent.parent)
             tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or [""]
             print("   " + tail[0].strip())
             if rc == 0:
@@ -296,7 +314,7 @@ def main() -> int:
             #     "áp dụng ngay" tựa trên chứng cứ chưa đủ mạnh.
             # Nên: lỗi an toàn thì CHẶN xuất; thiếu siêu dữ liệu thì cảnh báo.
             rc_s, out_s = run([py, VERIFY, dash, "--online", "--strict-sources"],
-                              cwd=DASH_TOOLS.parent)
+                              cwd=VERIFY.parent.parent)
             if rc_s == 0:
                 result["cong_nguon_nghiem"] = "PASS"
             else:
@@ -367,7 +385,7 @@ def main() -> int:
         cmd.append("--verified")
     if a.parts:
         cmd += ["--parts", str(Path(a.parts).resolve())]
-    rc, out = run(cmd, cwd=DASH_TOOLS.parent)
+    rc, out = run(cmd, cwd=DOCX.parent.parent)
     if rc != 0:
         print(out.strip(), file=sys.stderr)
         rc_final = 1

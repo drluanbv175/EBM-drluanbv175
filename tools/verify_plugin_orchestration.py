@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -62,6 +63,48 @@ def ban_sao_tran() -> bool:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.ban_sao_git_tran(ROOT)
+
+
+def worktree_roots(root: Path = ROOT) -> list[Path]:
+    """Mọi worktree HỢP LỆ của CHÍNH repo này, theo `git worktree list` — không đoán.
+
+    VÁ 08/09/2026: phiên Claude Code chạy trong một git WORKTREE riêng
+    (`.claude/worktrees/<tên>`), dùng chung `.git` với cây chính nhưng ở một
+    đường dẫn khác. Symlink runtime của máy thật (`~/.claude/skills/…`,
+    `~/.codex/skills/…`) là tài nguyên TOÀN MÁY — luôn trỏ về MỘT cây cố định
+    (thường là cây chính bác sĩ dùng hằng ngày), không lồng theo worktree đang
+    chạy. So `target.resolve()` với `ROOT`-của-worktree-đang-chạy do đó luôn
+    lệch, kể cả khi cây chính hoàn toàn đúng — chặn được XÁC NHẬN bằng
+    `git stash`: lỗi giống hệt khi không có thay đổi nào đang chờ commit.
+
+    `git worktree list` là nguồn XÁC THỰC duy nhất cho "đâu là worktree thật
+    của repo này" (không thể giả mạo bằng cách tạo thư mục trùng tên) — dùng
+    nó để mở rộng tập so khớp, KHÔNG bỏ qua việc so khớp."""
+    try:
+        out = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=root, capture_output=True, text=True, timeout=10, check=True,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return [root]
+    roots = [Path(line[len("worktree "):])
+             for line in out.splitlines() if line.startswith("worktree ")]
+    return roots or [root]
+
+
+def router_source_candidates(root: Path = ROOT) -> set[Path]:
+    """Tập đường dẫn `sync/skills/plugin-router-chatgpt` mà symlink runtime của
+    máy ĐƯỢC PHÉP trỏ tới — hợp nhất từ MỌI worktree thật của repo (xem
+    `worktree_roots()`), không chỉ worktree đang chạy verifier. Chỉ nhận
+    thư mục THẬT SỰ tồn tại; không worktree nào có thư mục này thì lùi về
+    đúng `ROUTER_SOURCE` của worktree đang chạy (giữ hành vi cũ, không nới
+    lỏng thêm khi không có gì để mở rộng)."""
+    candidates = {
+        (wt / "sync" / "skills" / "plugin-router-chatgpt").resolve()
+        for wt in worktree_roots(root)
+        if (wt / "sync" / "skills" / "plugin-router-chatgpt").exists()
+    }
+    return candidates or {(root / "sync" / "skills" / "plugin-router-chatgpt").resolve()}
 
 
 def loi_ngoai_pham_vi_tran(error: str) -> bool:
@@ -203,11 +246,12 @@ def verify() -> dict[str, Any]:
     for path in missing_router:
         errors.append(f"router thieu file: {path.relative_to(ROOT)}")
 
+    valid_router_sources = router_source_candidates(ROOT)
     for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
         target = runtime / "plugin-router-chatgpt"
         if not target.exists():
             errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
-        elif target.resolve() != ROUTER_SOURCE.resolve():
+        elif target.resolve() not in valid_router_sources:
             errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
 
     if not ROUTER_ZIP.is_file():

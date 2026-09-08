@@ -1601,6 +1601,42 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   khuyên sai; (b) khung chat không có cột "kết cục" nên số liệu phải tự gắn đúng kết cục nó đo (vd RR 0,72 của
   sắt tĩnh mạch là kết cục GỘP nhập viện + tử vong tim mạch, KHÔNG phải "giảm nhập viện"). Chưa tự động hoá:
   bước tiếp là thêm đầu ra thứ 4 cho `make_derivatives.py` — chờ bác sĩ duyệt vì tool này có 3 bản đồng bộ.
+- **✅ ĐÓNG KHOẢNG TRỐNG "checkout git-only không xuất được bước ③④⑤" (08/09/2026).** `audit/04` (22/08)
+  ghi nhận `xuat_goi_cap_nhat.py` dừng ngay ở bước ①② trên một checkout thuần git với thông báo
+  `✗ Thiếu tool: build_dashboard_docx.py` — `build_dashboard_docx.py` chưa từng được đưa vào git,
+  chỉ tồn tại ở `EBM-Dashboards/tools/` (đồng bộ qua OneDrive), trong khi 3 file anh em của nó
+  (`build_ban_doc_chung_cu.py`, `docx_sang_html_khong_pandoc.py`, `docx_sang_pdf_giu_mau.py`) đều
+  đã có bản vendor qua git từ trước. Đã vá bằng resolver dùng chung
+  `tools/ban_sao_tran.py::duong_cong_cu_pipeline()` (ưu tiên `EBM-Dashboards/tools/` trên máy thật,
+  lùi về bản vendor `sync/skills/cap-nhat-chung-cu-y-khoa/tools/` trên mọi checkout git-only) và
+  vendor lần đầu `build_dashboard_docx.py` byte-identical vào CẢ hai skill
+  (`cap-nhat-chung-cu-y-khoa` lẫn `dark-analyst`). `xuat_goi_cap_nhat.py` nay dùng resolver cho cả
+  `VERIFY` lẫn `DOCX`; `cwd` của mỗi lệnh con theo ĐÚNG thư mục cha của bản tool đang dùng (không còn
+  giả định cứng `EBM-Dashboards/tools/`). Kèm theo: phát hiện 5 tool dùng chung khác
+  (`build_library.py`, `check_topic_relevance.py`, `dashboard_content_audit.py`,
+  `drug_safety_scan.py`, `make_derivatives.py`) đã LỆCH BẢN giữa hai skill (thiếu bản vá UTF-8
+  stdout của `cap-nhat-chung-cu-y-khoa`) — đã đồng bộ byte-identical và thêm
+  `tools/test_skill_pipeline_tools_mirror_parity_20260908.py` canh cả 8 tool dùng chung, không chỉ
+  `surveillance_scan.py` như trước. Đã kiểm end-to-end trên chính một checkout git-only (worktree
+  không lồng cây OneDrive): `xuat_goi_cap_nhat.py` in đúng `── Bộ năm đã sẵn sàng (5/5) ──`.
+- **🔴 CỔNG `verify_plugin_orchestration.py` CHẶN OAN MỌI COMMIT TỪ GIT WORKTREE — vá cùng ngày
+  08/09/2026.** Đúng lúc đi commit bản vá trên, hook pre-commit chặn với lỗi `router runtime tro
+  sai nguon`. Điều tra: symlink runtime toàn máy (`~/.claude/skills/plugin-router-chatgpt`,
+  `~/.codex/skills/plugin-router-chatgpt`) luôn trỏ về MỘT cây cố định (cây chính bác sĩ dùng hằng
+  ngày), còn `ROUTER_SOURCE` của verifier lại tính từ `ROOT` = worktree ĐANG CHẠY nó — hai đường
+  dẫn tuyệt đối khác nhau dù nội dung giống hệt. Xác nhận bằng `git stash`: lỗi giống hệt khi
+  KHÔNG có thay đổi nào đang chờ commit ⇒ **mọi commit từ bất kỳ worktree nào (ngoài đúng cái đang
+  giữ symlink) trên máy này đều bị chặn**, không liên quan gì tới nội dung đang sửa.
+  **Đã vá bằng `worktree_roots()` + `router_source_candidates()`** (dùng `git worktree list
+  --porcelain` — nguồn xác thực DUY NHẤT, không thể giả mạo bằng cách tạo thư mục trùng tên): tập
+  đường dẫn hợp lệ cho symlink runtime nay là HỢP NHẤT `sync/skills/plugin-router-chatgpt` của MỌI
+  worktree thật của repo, không chỉ worktree đang chạy. Không đổi các luật khác của router (file
+  tồn tại, ZIP còn mới, catalog hợp lệ) — những luật đó vẫn neo vào `ROUTER_SOURCE` của chính
+  worktree đang chạy, đúng vì chúng kiểm NỘI DUNG đang được commit, không kiểm định danh symlink.
+  Không tìm được `git` hoặc không phải repo git ⇒ lùi về đúng hành vi CŨ (chỉ so với `ROOT`), không
+  bao giờ "mở" thành chấp nhận mọi đường dẫn. Kiểm: `tools/test_verify_plugin_orchestration_worktree_router_20260908.py`
+  (6 test dựng repo git thật trong `tmp_path` với 2 worktree; mutation-tested — tắt phần mở rộng
+  tập hợp lệ thì 2/6 test đỏ đúng chỗ). `pytest tools/` 298→304 passed, 0 hồi quy.
 
 ## 🩺 TẦNG CUỘC GẶP — hai công cụ đầu tiên phục vụ PHÒNG KHÁM, không phải kho chứng cứ (22/08/2026)
 
