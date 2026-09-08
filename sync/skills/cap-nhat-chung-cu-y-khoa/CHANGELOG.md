@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.48.5 — 2026-09-08 (bác sĩ báo: mỗi lần một kiểu, không đọc trực tiếp được trong chat)
+
+**Nguyên nhân xác định qua đối chiếu lịch sử CHANGELOG:** v1.1.0 (2026-06-02) từng "Không bắt buộc
+Dashboard... trong câu trả lời EBM thông thường" và có 2 template nhanh/chuyên sâu làm khung chat
+CHÍNH. Từ v1.2.0 → v1.10.0, Web Dashboard trở thành "đầu ra bắt buộc" + "TỰ ĐỘNG chạy trọn dây
+chuyền" mỗi lần gọi skill — nhưng KHÔNG chỗ nào nói rõ câu trả lời văn xuôi trong chat vẫn phải
+viết ĐẦY ĐỦ dù có tạo file hay không (mục 5A cũ chỉ bắt buộc điều đó KHI "môi trường không tạo file
+được" — một điều kiện gần như không bao giờ đúng trong Claude Code). Đồng thời "Chế độ chuyên sâu"
+(mục 3) mô tả bằng LỜI VĂN không trích khung mục cụ thể, khác với khung 8 mục nội tuyến của mục 5
+("Cấu trúc đầu ra mặc định") VÀ khác cả khung 11 mục của chính `templates/mau-cap-nhat-chuyen-sau.md`
+— ba khung gần giống nhưng không giống hệt nhau cho cùng một khái niệm, không có luật nào nói dùng
+khung nào — đúng nguyên nhân "mỗi lần một kiểu".
+
+**Đã vá — không đổi nội dung 2 file template, chỉ nối dây rõ ràng:**
+- Mục 3: thêm câu mở đầu bắt buộc — bất kể chế độ nào, bất kể có tạo Dashboard/bộ năm hay không,
+  câu trả lời văn xuôi LUÔN viết đầy đủ trực tiếp trong chat trước; Dashboard/file là bổ sung.
+- "Chế độ nhanh" trỏ đích danh `templates/mau-cap-nhat-nhanh.md` làm khung DUY NHẤT.
+- "Chế độ chuyên sâu" trỏ đích danh `templates/mau-cap-nhat-chuyen-sau.md` làm khung DUY NHẤT
+  (liệt kê đủ 11 mục nguyên văn ngay trong mục 3, không phải đoán/đọc file riêng), và nói rõ
+  KHÔNG dùng khung 8 mục của mục 5 cho chế độ này.
+- Mục 5: ghi chú khung 8 mục chỉ dành cho "Chế độ mặc định", trỏ hai template kia cho hai chế độ còn lại.
+- Mục 1 + 5A "Mục đích": bỏ điều kiện "nếu môi trường không tạo file được" — nội dung EBM đầy đủ
+  trong chat nay là mặc định KHÔNG điều kiện; Dashboard nói rõ là sản phẩm bổ sung, không phải nơi
+  duy nhất chứa nội dung.
+
+Chưa sửa (ngoài phạm vi vá lần này): 4 lần bump version không ghi changelog (v1.48.1→v1.48.4).
+
 ## v1.48.0 — 2026-08-15 (đề xuất #6 — bác sĩ duyệt «làm #6»)
 
 **Làn ĐỐI CHIẾU OpenAlex** `tools/doi_chieu_openalex.py`: corpus lớp AnswerThis

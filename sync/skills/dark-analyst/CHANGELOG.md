@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.12.12 — 2026-09-08 (bác sĩ báo: mỗi lần một kiểu, không đọc trực tiếp được trong chat)
+
+Đồng bộ bản vá của `sync/skills/cap-nhat-chung-cu-y-khoa` (skill song sinh, cùng mục 1/3/5/5A) —
+xem CHANGELOG của skill đó (mục v1.48.5) để đọc nguyên nhân đầy đủ. Tóm tắt: mục 3 nay bắt buộc
+câu trả lời văn xuôi luôn viết trực tiếp trong chat trước, không điều kiện theo việc có tạo file
+hay không; "Chế độ nhanh"/"Chế độ chuyên sâu" trỏ đích danh đúng một template mỗi chế độ
+(`mau-cap-nhat-nhanh.md`/`mau-cap-nhat-chuyen-sau.md`), không còn ba khung khác nhau cho cùng một
+khái niệm; mục 5A "Mục đích" bỏ điều kiện "nếu môi trường không tạo file được".
+
 ## v1.12.2 — 2026-07-15
 
 - **Siết cổng nguồn chứng cứ để giảm nhu cầu bác sĩ tự dò từng nguồn.** Đồng bộ `--strict-sources`

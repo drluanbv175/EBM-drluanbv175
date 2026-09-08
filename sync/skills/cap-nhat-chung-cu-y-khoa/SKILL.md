@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.48.4
+  version: 1.48.5
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -26,7 +26,7 @@ Không tự động biến một câu hỏi cụ thể thành:
 - tác vụ định kỳ;
 - mã ID quản trị.
 
-**Web Dashboard lâm sàng độc lập theo vấn đề cụ thể là đầu ra bắt buộc** khi môi trường hỗ trợ tạo file. Web Dashboard này chỉ giúp tra cứu nhanh nội dung vừa tổng hợp, không đồng nghĩa nội dung đã được duyệt vào Master. Chỉ tạo bản ghi quản trị, PATCH, CỔNG A/CỔNG B hoặc đồng bộ Master khi người dùng yêu cầu riêng.
+**Web Dashboard lâm sàng độc lập theo vấn đề cụ thể là đầu ra bắt buộc** khi môi trường hỗ trợ tạo file — nhưng đây là sản phẩm BỔ SUNG để tra cứu lại, KHÔNG thay cho câu trả lời văn xuôi đầy đủ luôn được viết trực tiếp trong khung chat trước (xem mục 3). Web Dashboard này chỉ giúp tra cứu nhanh nội dung vừa tổng hợp, không đồng nghĩa nội dung đã được duyệt vào Master. Chỉ tạo bản ghi quản trị, PATCH, CỔNG A/CỔNG B hoặc đồng bộ Master khi người dùng yêu cầu riêng.
 
 ## 2. Mục tiêu
 
@@ -44,23 +44,19 @@ Không tự động biến một câu hỏi cụ thể thành:
 
 ## 3. Chế độ đầu ra
 
+**Bất kể chế độ nào và bất kể có tạo thêm Web Dashboard/bộ năm export (mục 5A/5D) hay không, câu trả lời văn xuôi theo đúng khung mục của chế độ đó LUÔN được viết ĐẦY ĐỦ TRỰC TIẾP trong khung chat trước tiên.** Web Dashboard/file là sản phẩm BỔ SUNG để tra cứu lại sau — không bao giờ thay thế, rút gọn hay hoãn câu trả lời trong hội thoại (xem thêm mục 5A "Mục đích").
+
 ### Chế độ mặc định: Cập nhật thực hành có trọng tâm
 
-Dùng khi bác sĩ hỏi một bệnh/vấn đề/thuốc mà không quy định độ dài. Trả lời đủ để ra quyết định ngoại trú, không biến thành chuyên luận dài.
+Dùng khi bác sĩ hỏi một bệnh/vấn đề/thuốc mà không quy định độ dài. Trả lời đủ để ra quyết định ngoại trú, không biến thành chuyên luận dài. Dùng khung 8 mục ở mục 5 ("Cấu trúc đầu ra mặc định").
 
 ### Chế độ nhanh
 
-Kích hoạt khi người dùng nói “tóm tắt nhanh”, “điểm cần làm”, “tra nhanh”, hoặc cần áp dụng ngay cho ca bệnh. Trả lời theo cấu trúc:
-
-- Việc cần làm hiện nay.
-- Điều cần tránh hoặc chưa nên làm.
-- Cờ đỏ/chuyển tuyến.
-- Nhóm đặc biệt.
-- Nguồn chính mới nhất đã xác minh.
+Kích hoạt khi người dùng nói “tóm tắt nhanh”, “điểm cần làm”, “tra nhanh”, hoặc cần áp dụng ngay cho ca bệnh. Dùng ĐÚNG khung mục của `templates/mau-cap-nhat-nhanh.md` (Làm ngay · Không nên làm/Chưa nên thay đổi · Cờ đỏ và chuyển tuyến · Nhóm cần thận trọng · Điểm mới đã xác minh · Nguồn chủ chốt) — không tự ý đổi tên mục hay thêm/bớt mục giữa các lần trả lời.
 
 ### Chế độ chuyên sâu
 
-Kích hoạt khi người dùng yêu cầu “đầy đủ”, “chuyên sâu”, “đề cương”, “bài giảng”, “theo guideline”, hoặc cần phục vụ đào tạo/nghiên cứu. Bổ sung thẩm định nguồn, bảng điều trị, phân tích khác biệt guideline và thích ứng Việt Nam.
+Kích hoạt khi người dùng yêu cầu “đầy đủ”, “chuyên sâu”, “đề cương”, “bài giảng”, “theo guideline”, hoặc cần phục vụ đào tạo/nghiên cứu. **Mẫu chốt (khung mục bắt buộc, dùng ĐÚNG NGUYÊN VĂN, không tự đổi thứ tự/tên mục giữa các lần trả lời) là `templates/mau-cap-nhat-chuyen-sau.md`** (11 mục: Tóm tắt thực hành nhanh · Điểm mới có thể thay đổi xử trí · Chẩn đoán và chẩn đoán phân biệt · Phân tầng nguy cơ; nhập viện/chuyển tuyến · Điều trị không dùng thuốc và dùng thuốc · Bảng điều trị · Điều trị theo nhóm đặc biệt · Thực hành không còn phù hợp hoặc chưa đủ để thay đổi · Áp dụng tại Việt Nam · Thẩm định nguồn chính khi cần · Tài liệu tham khảo Vancouver/NLM). Đây là khung DUY NHẤT cho chế độ chuyên sâu — không dùng khung 8 mục của mục 5 (khung đó dành cho Chế độ mặc định) cho chế độ này, để tránh mỗi lần trả lời một cấu trúc khác nhau.
 
 ### Chế độ PICO (chứng cứ tốt nhất theo can thiệp)
 
@@ -192,6 +188,8 @@ Luôn xem xét khi liên quan:
 
 ## 5. Cấu trúc đầu ra mặc định
 
+Khung 8 mục dưới đây dùng cho **Chế độ mặc định** (mục 3). Chế độ nhanh dùng `templates/mau-cap-nhat-nhanh.md`; chế độ chuyên sâu dùng `templates/mau-cap-nhat-chuyen-sau.md` — không trộn ba khung này trong cùng một câu trả lời.
+
 # Cập nhật thực hành: [Vấn đề cụ thể]
 
 ## 1. Kết luận thực hành nhanh
@@ -273,7 +271,7 @@ Ví dụ:
 - `WebDashboard_EBM_VanDeCuThe_SuyTimHFpEF_20260602.html`
 - `WebDashboard_EBM_VanDeCuThe_Duloxetine_DauThanKinh_20260602.html`
 
-Nếu môi trường không tạo file được, phải nói rõ và vẫn cung cấp đầy đủ nội dung EBM trong trả lời.
+**Dashboard là sản phẩm BỔ SUNG, không phải nơi duy nhất chứa nội dung.** Bất kể môi trường có tạo file được hay không, đầy đủ nội dung EBM theo đúng khung mục của chế độ đang dùng (mục 3) luôn được viết trực tiếp trong khung chat trước, để bác sĩ đọc được ngay không cần mở file. Nếu môi trường không tạo file được, chỉ cần nói rõ điều đó — không được coi đây là lý do rút gọn câu trả lời trong hội thoại.
 
 ### Nguyên tắc dữ liệu
 
