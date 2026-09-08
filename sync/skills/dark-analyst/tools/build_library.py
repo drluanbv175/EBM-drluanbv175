@@ -16,7 +16,29 @@ Dữ liệu lưu trong `library.json`; trang xuất `evidence-library.html` (cù
 """
 import sys, os, re, json, glob
 
+# Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
+# ném UnicodeEncodeError và GIẾT tiến trình, thường SAU KHI công việc đã xong. Đo thật
+# ngày 12/08/2026 trên dây chuyền cập nhật chứng cứ: bản Word 82 KB đã ghi ra đĩa nhưng
+# tool thoát mã 1 ở đúng dòng print cuối ⇒ caller đọc mã thoát, tưởng hỏng, bỏ luôn 2
+# bước sau. Cùng lớp lỗi đã vá cho tools/vietnamize/.
+import sys as _sys_utf8
+for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
 VALID_DECISION = {"apply", "consider", "notyet"}
+
+
+def configure_utf8_stdio():
+    """Giúp thông báo tiếng Việt không lỗi trên Windows console cp1252."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError, ValueError):
+            pass
 
 
 def parse_dashboard(path):
@@ -112,7 +134,8 @@ const LIB=/*LIBRARY*/[]/*END*/;
    metadata dashboard (tiêu đề/eyebrow/tên file) vốn có nguồn NGOÀI — trước đây nội
    suy thẳng, nên một tiêu đề chứa <img src=x onerror=...> là chạy được mã trong
    trang thư viện. esc() cho nội dung văn bản; escUrl() chặn href kiểu javascript:
-   (chỉ cho phép đường dẫn tương đối/http/https). */
+   (chỉ cho phép đường dẫn tương đối/http/https). Cùng cơ chế escHtml/escUrl mà
+   template Evidence Workbench đã dùng — nay áp cho cả trang thư viện. */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function escUrl(u){/* VA 2026-07-26 vong 2 (red-team doc lap): phai BO ky tu dieu khien
   TRUOC khi do scheme - trinh duyet loai bo TAB/LF/CR khi phan tich URL, nen
@@ -141,11 +164,14 @@ render();
 
 
 def build_html(lib, outpath):
-    # VA 2026-07-26 (audit bao mat doc lap - cung lop XSS voi assemble_dashboard.py):
-    # json.dumps() KHONG escape "<", ma khoi JSON nay duoc chen GIUA mot khoi <script>.
-    # Mot tieu de dashboard chua "</script>" (nguon ngoai qua metadata) se dong som khoi
-    # script va phan sau bi doc nhu HTML. Trinh duyet cat khoi script khi gap "</script"
-    # bat ke no nam trong chuoi JS hop le hay khong.
+    # VÁ 2026-07-26 (audit bảo mật độc lập — cùng lớp XSS với assemble_dashboard.py):
+    # json.dumps() KHÔNG escape "<", mà khối JSON này được chèn vào GIỮA một khối
+    # <script> (xem cuối hằng HTML: "...render();</script></body></html>"). Một tiêu đề
+    # dashboard chứa "</script>" — đến từ nguồn ngoài qua metadata dashboard — sẽ đóng
+    # sớm khối script và phần sau bị đọc như HTML. Trình duyệt cắt khối script khi gặp
+    # "</script" bất kể nó nằm trong chuỗi JS hợp lệ hay không.
+    # Escape "<"/">" thành </>: JS giải mã ngược lúc phân tích nên nội dung
+    # hiển thị KHÔNG đổi. U+2028/U+2029 là ký tự xuống dòng với JS → cũng phải escape.
     data = (json.dumps(lib, ensure_ascii=False, indent=1)
             .replace("<", "\\u003c")
             .replace(">", "\\u003e")
@@ -156,6 +182,7 @@ def build_html(lib, outpath):
 
 
 def main():
+    configure_utf8_stdio()
     if len(sys.argv) < 2:
         print(__doc__); return 1
     cmd = sys.argv[1]

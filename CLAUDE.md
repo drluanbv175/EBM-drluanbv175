@@ -2015,6 +2015,44 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   khuyên sai; (b) khung chat không có cột "kết cục" nên số liệu phải tự gắn đúng kết cục nó đo (vd RR 0,72 của
   sắt tĩnh mạch là kết cục GỘP nhập viện + tử vong tim mạch, KHÔNG phải "giảm nhập viện"). Chưa tự động hoá:
   bước tiếp là thêm đầu ra thứ 4 cho `make_derivatives.py` — chờ bác sĩ duyệt vì tool này có 3 bản đồng bộ.
+- **✅ ĐÓNG KHOẢNG TRỐNG "checkout git-only không xuất được bước ③④⑤" (08/09/2026).** `audit/04` (22/08)
+  ghi nhận `xuat_goi_cap_nhat.py` dừng ngay ở bước ①② trên một checkout thuần git với thông báo
+  `✗ Thiếu tool: build_dashboard_docx.py` — `build_dashboard_docx.py` chưa từng được đưa vào git,
+  chỉ tồn tại ở `EBM-Dashboards/tools/` (đồng bộ qua OneDrive), trong khi 3 file anh em của nó
+  (`build_ban_doc_chung_cu.py`, `docx_sang_html_khong_pandoc.py`, `docx_sang_pdf_giu_mau.py`) đều
+  đã có bản vendor qua git từ trước. Đã vá bằng resolver dùng chung
+  `tools/ban_sao_tran.py::duong_cong_cu_pipeline()` (ưu tiên `EBM-Dashboards/tools/` trên máy thật,
+  lùi về bản vendor `sync/skills/cap-nhat-chung-cu-y-khoa/tools/` trên mọi checkout git-only) và
+  vendor lần đầu `build_dashboard_docx.py` byte-identical vào CẢ hai skill
+  (`cap-nhat-chung-cu-y-khoa` lẫn `dark-analyst`). `xuat_goi_cap_nhat.py` nay dùng resolver cho cả
+  `VERIFY` lẫn `DOCX`; `cwd` của mỗi lệnh con theo ĐÚNG thư mục cha của bản tool đang dùng (không còn
+  giả định cứng `EBM-Dashboards/tools/`). Kèm theo: phát hiện 5 tool dùng chung khác
+  (`build_library.py`, `check_topic_relevance.py`, `dashboard_content_audit.py`,
+  `drug_safety_scan.py`, `make_derivatives.py`) đã LỆCH BẢN giữa hai skill (thiếu bản vá UTF-8
+  stdout của `cap-nhat-chung-cu-y-khoa`) — đã đồng bộ byte-identical và thêm
+  `tools/test_skill_pipeline_tools_mirror_parity_20260908.py` canh cả 8 tool dùng chung, không chỉ
+  `surveillance_scan.py` như trước. Đã kiểm end-to-end trên chính một checkout git-only (worktree
+  không lồng cây OneDrive): `xuat_goi_cap_nhat.py` in đúng `── Bộ năm đã sẵn sàng (5/5) ──`.
+- **🔴 CỔNG `verify_plugin_orchestration.py` CHẶN OAN MỌI COMMIT TỪ GIT WORKTREE — và SÁU PHIÊN
+  vá cùng một lỗi (06–12/09/2026, hợp nhất 14/09/2026).** Symlink runtime toàn máy
+  (`~/.claude/skills/plugin-router-chatgpt`, `~/.codex/skills/plugin-router-chatgpt`) luôn trỏ về
+  MỘT cây cố định (cây chính bác sĩ dùng hằng ngày), còn `ROUTER_SOURCE` của verifier tính từ
+  `ROOT` = worktree ĐANG CHẠY nó ⇒ hai đường dẫn tuyệt đối khác nhau dù nội dung giống hệt, và
+  **mọi commit từ một git worktree phụ đều bị chặn**, không liên quan gì tới nội dung đang sửa.
+  **Bản CÓ HIỆU LỰC là `cac_goc_worktree_git()`** (commit `b60298b`, 12/09 — dùng `git worktree
+  list --porcelain`; lệnh git thất bại ⇒ trả `[root]`, đúng hành vi cũ, không bao giờ "mở" thành
+  chấp nhận mọi đường dẫn). Kiểm: `tools/test_verify_plugin_orchestration_worktree.py` (7 test).
+  ⚠️ **Năm biến thể song song KHÔNG hợp nhất, có chủ ý** — mỗi phiên worktree tự gặp lỗi khi đi
+  commit rồi tự vá theo một kiểu: `_git_common_dir` (`0809045` · `45b7fa9`, 06/09) ·
+  `worktree_roots`/`router_source_candidates` (`b32b386`, 08/09) · `_resolve_main_repo_root`
+  (`47fccb6`, 10/09) · `_resolve_repo_root` (`72df6d4`, 10/09). Chúng vẫn nằm nguyên trên các nhánh
+  `claude/*` cũ; gộp thêm bất kỳ bản nào là hai cơ chế cùng giải một việc trong một file.
+  *Bài học vận hành:* trước khi vá một cổng chặn commit từ worktree, `git log origin/<nhánh tích
+  hợp> -- <file>` xem nhánh tích hợp đã vá chưa — lỗi chặn commit là thứ MỌI phiên song song đều
+  đụng phải cùng lúc, nên cũng là thứ dễ bị vá trùng nhất.
+  (Lưu ý đo lường: chạy verifier từ một worktree phụ CŨ còn có thể FAIL vì thiếu mirror Codex
+  `.Codex/agents/*.toml` — file sinh, gitignored — chứ không phải vì lỗi dò gốc repo; sinh lại
+  mirror bằng `tools/sync_agents_to_codex.py` trước khi kết luận.)
 
 ## 🩺 TẦNG CUỘC GẶP — hai công cụ đầu tiên phục vụ PHÒNG KHÁM, không phải kho chứng cứ (22/08/2026)
 
