@@ -1,11 +1,11 @@
 {
-  "sinh_luc": "2026-09-05T18:40:53",
+  "sinh_luc": "2026-09-08T17:44:48",
   "may": "Mac",
   "co_du_lieu_dashboard_that": true,
   "bo_dem": {
     "do_tuoi_chung_cu": {
       "ma_thoat": 0,
-      "stdout": "🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất 18/08/2026\n   63 chủ đề · trung vị 67 ngày kể từ lần xem lại · 47 chủ đề quá 35 ngày\n   Lâu nhất: BienChungThanKinh_DTD (90ng) · AnToanThuoc_MHRA (90ng) · Uptodate (90ng) · BenhThanMan_CKD (90ng) · W24 (89ng)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)",
+      "stdout": "🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất 18/08/2026\n   63 chủ đề · trung vị 70 ngày kể từ lần xem lại · 48 chủ đề quá 35 ngày\n   Lâu nhất: BienChungThanKinh_DTD (93ng) · AnToanThuoc_MHRA (93ng) · Uptodate (93ng) · BenhThanMan_CKD (93ng) · W24 (92ng)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)",
       "stderr": ""
     },
     "quyet_dinh_da_duyet": {
@@ -15,7 +15,7 @@
     },
     "tu_de_xuat_viec": {
       "ma_thoat": 0,
-      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-05 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🔴 🤖 CI repo y khoa FAILURE — đọc log, sửa tới xanh, đừng để đỏ qua đêm\n       → cd \"medical-ebm-automation\" && gh run view --log-failed\n  🔴 🤖 CI repo gốc FAILURE — đọc log, sửa tới xanh, đừng để đỏ qua đêm\n       → cd \"Claude AI\" && gh run view --log-failed\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 13 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 67 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Repo gốc: 1 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 Kỳ lịch T7 vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi (PASS 2026-09-01, 4 ngày), nhưng lịch nền đang không tự chạy\n       → bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc hoặc đổi giờ sang lúc máy thường thức\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
+      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-08 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 16 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 70 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Chưa đọc được phán quyết CI repo y khoa (thấy: feat/r1-1-2-design-gap-remediation) — kiểm tay khi tiện\n       → gh run list --workflow offline-ci.yml --limit 3\n  🟡 🤖 Repo gốc: 10 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
       "stderr": ""
     }
   },

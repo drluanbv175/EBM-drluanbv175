@@ -3,12 +3,12 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 1856 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 1858 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 > **Gộp danh mục của cả 2 máy** — bộ plugin trên Mac và Windows khác nhau, nên cột **Máy** cho biết mục đó gọi được ở đâu. Mục ghi tên một máy sẽ KHÔNG hiện khi bác sĩ đang ngồi máy kia.
 
-> - **Mac**: 1175 mục (quét ngày 2026-09-02)
+> - **Mac**: 1177 mục (quét ngày 2026-09-08)
 > - **Windows**: 1659 mục (quét ngày 2026-08-28)
 > - có ở **cả 2 máy**: 978 mục
 
@@ -69,10 +69,10 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1756 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (1758 mục)
 
 
-### user-skills  (708)
+### user-skills  (709)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -169,7 +169,7 @@
 | `/circos-plot-generator` | kỹ năng | Windows | Generate Circos configuration files for circular genomics data visualization. Supports genomic variations (SNPs, CNVs, structural variants), cell-cell communication networks, and custom track configurations for publication-ready circular… |
 | `/citation-chasing-mapping` | kỹ năng | Windows | Use when identifying seminal papers in a research field, mapping research lineage and intellectual heritage, discovering related work through reference tracking, or finding potential collaborators through co-citation analysis. Maps citat… |
 | `/citation-formatter` | kỹ năng | Windows | Use when formatting references for journal submission, converting between citation styles (APA, MLA, Vancouver, Chicago), generating bibliographies for manuscripts, or ensuring consistent reference formatting. Automatically formats citat… |
-| `/citation-management` | kỹ năng | cả 2 máy | Quản lý trích dẫn học thuật: tìm bài trên PubMed (E-utilities miễn phí) và Google Scholar, trích xuất metadata chính xác, kiểm chứng trích dẫn, sinh BibTeX đúng chuẩn. Dùng khi cần tìm bài, xác minh thông tin trích dẫn, đổi DOI→BibTeX ho… |
+| `/citation-management` | kỹ năng | cả 2 máy | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
 | `/citation-network` | kỹ năng | Windows | Build and visualize a citation network from a source/target CSV to identify key papers, communities, and emerging hotspots; use when you have citation pairs and need fast literature review or trend analysis. |
 | `/claim-strength-calibrator` | kỹ năng | Windows | Calibrates manuscript claim strength so wording matches the actual evidence level, study design, and validation status. |
 | `/clean-data` | kỹ năng | Windows | Interactive data profiling and cleaning assistant for medical research. Three-stage workflow (profile, flag, code-generate) with user approval gates at each step. Handles missing values, outliers, duplicates, and type mismatches in CSV/E… |
@@ -245,6 +245,7 @@
 | `/diagnostic-study-quality-assessment-quadas` | kỹ năng | Windows | Analyzes clinical diagnostic accuracy studies for bias using the QUADAS-2 tool. Use when Claude needs to assess the quality, risk of bias, or applicability of diagnostic accuracy studies (e.g., \"Assess this paper using QUADAS-2\"). |
 | `/diagnostic-study-quality-assessment-quadas-2` | kỹ năng | Windows | Analyzes clinical diagnostic accuracy studies for bias using the QUADAS-2 tool. Use when Claude needs to assess the quality, risk of bias, or applicability of diagnostic accuracy studies (e.g., "Assess this paper using QUADAS-2"). |
 | `/dicom-anonymizer` | kỹ năng | Windows | De-identify DICOM medical images by removing PHI tags for research sharing, with audit logging and study-linkage preservation support. |
+| `/dieu-phoi-aipoch` | kỹ năng | Mac | Định tuyến yêu cầu nghiên cứu/lâm sàng tới đúng skill trong 605 skill của plugin aipoch-medical-research, theo 35 nhóm chuyên môn. Dùng khi bác sĩ mô tả một việc nhưng KHÔNG biết tên skill cụ thể trong bộ aipoch. |
 | `/diffdock` | kỹ năng | Windows | > Predict small-molecule binding poses with DiffDock-L (Corso et al. 2023/2024, github.com/gcorso/DiffDock) — blind diffusion docking that places a ligand into a protein pocket without a predefined search box and ranks the samples with a… |
 | `/diffdock-molecular-docking` | kỹ năng | Windows | Diffusion-based molecular docking to predict 3D ligand–protein binding poses (blind docking) with confidence scoring; use when you need pose prediction for drug discovery or virtual screening. |
 | `/differential-expression-analysis` | kỹ năng | Windows | Use when analyzing bulk RNA-seq or microarray expression data to identify differentially expressed genes between two biological groups (case vs control), with volcano plots and heatmap visualization. NOT for:single-cell RNA-seq, methylat… |
@@ -417,7 +418,7 @@
 | `/literature-extensive-read` | kỹ năng | Windows | Rapidly skim and summarize academic papers (default:PDF-to-Markdown full text with `## Page XX` pagination and image references) and output a structured extensive-reading summary in Markdown when you need to quickly understand research q… |
 | `/literature-filtering` | kỹ năng | Windows | Filter literature by publication year, journal, and predefined screening rules to produce inclusion/exclusion lists; use when conducting preliminary screening or systematic review screening to narrow the literature scope. |
 | `/literature-management` | kỹ năng | Windows | Import local literature into a managed library; trigger when you need offline deduplication, tagging, and a searchable index. |
-| `/literature-review` | kỹ năng | cả 2 máy | Thực hiện tổng quan y văn có hệ thống (systematic review, tổng quan, meta-analysis) bằng các CSDL học thuật MIỄN PHÍ (PubMed E-utilities, PMC, bioRxiv, medRxiv, OpenAlex, Crossref, Semantic Scholar). Dùng khi cần tổng hợp bằng chứng cho … |
+| `/literature-review` | kỹ năng | cả 2 máy | Quy trình TỔNG QUAN Y VĂN HỆ THỐNG theo PRISMA 2020 — câu hỏi PICO → đăng ký PROSPERO → chiến lược tìm tái lặp → sàng lọc (sơ đồ dòng chảy) → trích xuất → đánh giá nguy cơ sai lệch → tổng hợp định tính/meta + GRADE. Dùng khi cần làm tổng… |
 | `/literature-statistics` | kỹ năng | Windows | Generate statistics for publication-year and journal distributions from local references or PDFs; use when you need standardized Year/Journal tables and a summary without any network access. |
 | `/literatureimages-interpretation` | kỹ năng | Windows | Interpret figures in academic papers and their captions when the input is a PDF-to-Markdown document with page markers and image links, producing a structured Markdown report for extracting variables, trends, and conclusions. |
 | `/lncrna-regulatory-network-construction-analysis` | kỹ năng | Windows | Use this bioinformatics data analysis skill to construct a database-driven lncRNA-mRNA regulatory network from target lncRNA and/or gene lists by projecting shared miRNA evidence from local ceRNA reference tables. It does not infer netwo… |
@@ -534,7 +535,7 @@
 | `/orchestrate` | kỹ năng | Windows | > General-purpose research orchestrator. Routes ambiguous or multi-step requests to the right skill(s) from the medsci-skills bundle. Use when the user describes a research goal without naming a specific skill, or when a task spans multi… |
 | `/outcome-extraction-for-clinical-trials` | kỹ năng | Windows | Clinical research outcome extraction for meta-analysis. Use when users need to extract outcome measures (binary, continuous, or survival data) from clinical research papers for systematic review and meta-analysis. Handles both database l… |
 | `/outlier-detection-handler` | kỹ năng | Windows | Use outlier detection handler for data analysis workflows that need structured execution, explicit assumptions, and clear output boundaries. |
-| `/paper-lookup` | kỹ năng | cả 2 máy | Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC (toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy abstract/toàn văn,… |
+| `/paper-lookup` | kỹ năng | cả 2 máy | Tra cứu bài báo y khoa qua API MIỄN PHÍ (PubMed E-utilities, Crossref, Europe PMC) — tìm theo PICO/từ khóa/MeSH, phân giải và xác minh PMID/DOI, lấy metadata gốc. Dùng khi cần tìm bài cho một câu hỏi, kiểm một PMID/DOI có thật, hoặc lấy … |
 | `/paper-sprint-review` | kỹ năng | Windows | Scrum-inspired paper review, revision, and R&R workflow. Handles docx/tex/md/PDF in English or Chinese. Auto-detects manuscript stage, estimates sprint count, runs multi-lens review (Contribution/Rigor/Writing/Editor), generates prioriti… |
 | `/paper-to-claim-verifier` | kỹ năng | Windows | Verifies whether a scientific or biomedical claim is actually supported by the cited original papers rather than by citation drift, overstatement, selective citation, or correlation-to-causation inflation. Use this skill whenever a user … |
 | `/paper-tweet-generator` | kỹ năng | Windows | Generates a structured reading tweet from an academic paper (PDF, Word, or Text), highlighting specific product advantages. Use when the user wants to turn a document into a social media post or reading summary. |
@@ -555,7 +556,7 @@
 | `/pdf-ppt` | kỹ năng | Windows | Create literature-report PPTX decks from PDF papers. Use when you must extract a paper’s metadata, summarize the study, interpret Results/Figures/Tables, and generate slides with 1:1 figure-to-text alignment and layout rules (triggered b… |
 | `/pdf-processor` | kỹ năng | Windows | Perform basic local PDF operations (merge, split, extract pages/text/tables, create) when users request offline PDF processing without external services. |
 | `/pdf-to-ppt-pack` | kỹ năng | Windows | Convert research paper PDFs into literature-report PPTX decks using a fully offline workflow (extract text/figures, map captions, summarize findings, and generate slides). Use when you need to turn a PDF into a presentation deck, especia… |
-| `/peer-review` | kỹ năng | cả 2 máy | Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp. |
+| `/peer-review` | kỹ năng | cả 2 máy | Bình duyệt bản thảo khoa học có CẤU TRÚC — đánh giá tính hợp lệ (validity), phương pháp, thống kê, đạo đức/đăng ký, trình bày & chuẩn báo cáo, trích dẫn; soạn nhận xét đối kháng đa lăng kính + thư phản biện cho tác giả. Dùng trước khi nộ… |
 | `/peer-review-response-drafter` | kỹ năng | Windows | Assist in drafting professional peer review response letters. Trigger. |
 | `/personal-statement` | kỹ năng | Windows | Use when writing medical school personal statements, residency application essays, fellowship statements, or graduate school admissions essays. Crafts compelling narratives highlighting clinical experiences, research achievements, and ca… |
 | `/phenotype-introduction` | kỹ năng | Windows | Expert system for generating comprehensive biomedical phenotype introductions with structured academic content. Use when users request detailed explanations of cellular phenotypes including concept, mechanism, regulation, and detection m… |
@@ -637,7 +638,7 @@
 | `/research-article-weekly` | kỹ năng | Windows | Generates a weekly academic literature report based on keywords using PubMed. Use when the user wants to track recent research progress on a specific topic, automatically retrieving, classifying, and summarizing relevant papers from the … |
 | `/research-grants` | kỹ năng | Windows | Write competitive research proposals for NSF, NIH, DOE, DARPA, and Taiwan's NSTC when you need agency-compliant narratives, budgets, and review-criteria alignment for a specific solicitation/FOA/BAA. |
 | `/research-hotspot-analysis` | kỹ năng | Windows | Analyze research hotspots for a disease or topic and recommend representative literature. Use when users need to identify trending directions, topic clusters, or generate hotspot review reports. Input is a disease name or research topic;… |
-| `/research-lookup` | kỹ năng | cả 2 máy | Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả phí (parallel.a… |
+| `/research-lookup` | kỹ năng | cả 2 máy | Tra cứu NGHIÊN CỨU & ĐĂNG KÝ THỬ NGHIỆM qua nguồn mở — ClinicalTrials.gov (API v2), WHO ICTRP, PROSPERO. Dùng khi cần kiểm một thử nghiệm đã đăng ký chưa, tìm nghiên cứu đang tiến hành/đã hoàn tất, đối chiếu kết cục đăng ký vs công bố (c… |
 | `/research-paper-downloader` | kỹ năng | Windows | Download academic papers from open-access sources when the user provides a DOI/arXiv ID or requests a keyword-based paper search, and return the saved PDF path. |
 | `/research-proposal-generator` | kỹ năng | Windows | Generates a comprehensive research proposal design based on input literature, including hypothesis, mechanism verification, and budget. Use when the user wants to design a research project from a paper. |
 | `/residency-interview-prep` | kỹ năng | Windows | Mock interview preparation tool for residency Match interviews. Generates. |
@@ -670,7 +671,7 @@
 | `/scientific-critical-thinking` | kỹ năng | cả 2 máy | Khung THẨM ĐỊNH chất lượng chứng cứ và tính hợp lệ của thiết kế nghiên cứu — áp dụng GRADE, Cochrane Risk of Bias, nhận diện thiên kiến/nhiễu/ngụy biện logic và các lỗi thống kê thường gặp. Dùng để dạy hoặc tự kiểm tra tư duy phản biện k… |
 | `/scientific-podcast-summary` | kỹ năng | Windows | Automatically summarize scientific podcasts like Huberman Lab and Nature. |
 | `/scientific-schematics` | kỹ năng | Windows | Automates publication-quality scientific diagrams (e.g., flowcharts, architectures, pathways) when you need journal/poster-ready visuals from a natural-language description. |
-| `/scientific-writing` | kỹ năng | cả 2 máy | Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch (không gạch đầu dòng), trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA). Dùng khi viết bài báo nghiên cứu hoặc bản thảo nộp tạp chí. Quy trình 2 bư… |
+| `/scientific-writing` | kỹ năng | cả 2 máy | Viết bản thảo khoa học y khoa theo cấu trúc IMRAD, văn xuôi liền mạch, khớp CHUẨN BÁO CÁO đúng thiết kế (CONSORT/STROBE/PRISMA/SPIRIT/STARD/TRIPOD+AI; COREQ/SRQR cho định tính; SQUIRE cho QI). Dùng khi cần viết bài báo, protocol, hoặc bá… |
 | `/scikit-bio` | kỹ năng | Windows | A Python bioinformatics toolkit for sequence, phylogeny, and microbiome/community-ecology analysis; use it when you need to compute diversity/ordination/statistics from biological data and standard formats (FASTA/FASTQ/Newick/BIOM). |
 | `/scikit-survival` | kỹ năng | cả 2 máy | Phân tích SỐNG CÒN / thời gian-đến-biến-cố (time-to-event) bằng scikit-survival: mô hình Cox, Random Survival Forest, Gradient Boosting, Survival SVM; xử lý dữ liệu KIỂM DUYỆT (censoring) và NGUY CƠ CẠNH TRANH (competing risks); đánh giá… |
 | `/scite-database` | kỹ năng | Windows | Access Scite.ai Smart Citations to classify how a paper is cited (supporting, contrasting, mentioning) and assess scientific claims; use it when you need to evaluate a paper’s reliability or its acceptance in the literature. |
@@ -707,7 +708,7 @@
 | `/spatial-transcriptomics-mapper` | kỹ năng | Windows | Map spatial transcriptomics data from 10x Genomics Visium/Xenium onto. |
 | `/spreadsheet-ops` | kỹ năng | Windows | Spreadsheet processing and analysis for CSV/Excel; trigger when users ask to merge/clean tabular data, run statistics, add/edit Excel formulas, apply formatting, generate charts, or force workbook recalculation. |
 | `/ssgsea-immune-infiltration-analysis` | kỹ năng | Windows | Use when estimating immune infiltration from bulk RNA-seq expression matrices with ssGSEA/GSVA, comparing case versus control groups, and generating downstream immune-score visualizations. NOT for single-cell RNA-seq, absolute cell propo… |
-| `/statistical-analysis` | kỹ năng | cả 2 máy | Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ thể bằng code,… |
+| `/statistical-analysis` | kỹ năng | cả 2 máy | Quy trình phân tích thống kê lâm sàng/nghiên cứu y khoa — mô tả dữ liệu, chọn kiểm định theo loại biến + thiết kế + giả định, hồi quy/sống còn/ROC/hiệu chỉnh, báo cáo ước lượng + 95% CI. Dùng khi cần chạy/đọc phân tích thống kê cho một đ… |
 | `/statistical-analysis-advisor` | kỹ năng | Windows | Recommends appropriate statistical methods (T-test vs ANOVA, etc.) based. |
 | `/statistical-power` | kỹ năng | cả 2 máy | Tính CỠ MẪU / LỰC THỐNG KÊ (power analysis) TRƯỚC khi thu thập dữ liệu — bằng công thức đóng (t-test, ANOVA, tỷ lệ, tương quan, chi-square, hồi quy) VÀ mô phỏng Monte Carlo cho thiết kế không có công thức chuẩn (hồi quy logistic/Poisson,… |
 | `/statsmodels` | kỹ năng | cả 2 máy | Chạy mô hình thống kê THẬT bằng thư viện statsmodels: OLS, GLM, mô hình hỗn hợp (mixed-effects), ARIMA/chuỗi thời gian — kèm bảng hệ số, chẩn đoán giả định, phân tích residual. Dùng khi ĐÃ có dữ liệu và cần fit một mô hình cụ thể (khác s… |
@@ -1394,7 +1395,7 @@
 | `/aipoch-medical-research:xgboost-analysis` | kỹ năng | cả 2 máy | [Học máy] Dựng mô hình XGBoost trên dữ liệu bảng cho phân loại nhị phân hoặc hồi quy, tự chia tập huấn luyện và kiểm tra, xuất bảng hiệu năng và xếp hạng tầm quan trọng biến. Dùng khi cần mô hình tăng cường mạnh. Từ khoá: XGBoost. |
 | `/aipoch-medical-research:zinc-database` | kỹ năng | cả 2 máy | [Thiết kế thuốc] Tra ZINC với hơn 230 triệu hợp chất mua được: tìm theo mã ZINC hoặc SMILES, tìm chất tương tự, tải cấu trúc 3D sẵn sàng docking. Dùng khi sàng lọc ảo. Từ khoá: ZINC, virtual screening. |
 
-### anthropic-skills  (90)
+### anthropic-skills  (91)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
@@ -1419,6 +1420,7 @@
 | `/anthropic-skills:dark-analyst` | kỹ năng | cả 2 máy | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
 | `/anthropic-skills:dashboard-master-ebm-ngoai-tru` | kỹ năng | cả 2 máy | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
 | `/anthropic-skills:database-lookup` | kỹ năng | Mac | Truy vấn 78+ CƠ SỞ DỮ LIỆU khoa học/y khoa công khai qua API đã tài liệu hóa rõ endpoint, bộ lọc, phân trang và nguồn gốc dữ liệu (PubChem, ChEMBL, UniProt, ClinicalTrials.gov, FDA, dbSNP, ClinVar, COSMIC, GWAS Catalog, OMIM... phần lớn … |
+| `/anthropic-skills:dieu-phoi-aipoch` | kỹ năng | Mac | Định tuyến yêu cầu nghiên cứu/lâm sàng tới đúng skill trong 605 skill của plugin aipoch-medical-research, theo 35 nhóm chuyên môn. Dùng khi bác sĩ mô tả một việc nhưng KHÔNG biết tên skill cụ thể trong bộ aipoch. |
 | `/anthropic-skills:diffdock` | kỹ năng | Mac | [Sinh học cấu trúc] Dự đoán tư thế gắn của phân tử nhỏ vào protein bằng DiffDock-L. Dùng khi sàng lọc thuốc tiền lâm sàng. Từ khoá: DiffDock. |
 | `/anthropic-skills:doc-coauthoring` | kỹ năng | cả 2 máy | Đồng soạn tài liệu theo quy trình có cấu trúc (tài liệu kỹ thuật, đề xuất, hướng dẫn). Dùng khi viết tài liệu dài cần thống nhất bố cục. Từ khoá: doc co-authoring. |
 | `/anthropic-skills:docx` | kỹ năng | cả 2 máy | [Tài liệu] Tạo, đọc và sửa file Word (.docx) cùng mẫu Word (.dotx): mục lục, đề mục, số trang, tiêu đề thư, bảng, chèn hoặc thay ảnh, tìm-thay hàng loạt, theo dõi thay đổi. Dùng khi bác sĩ nhắc tới file Word, .docx, .dotx, hoặc cần xuất … |
