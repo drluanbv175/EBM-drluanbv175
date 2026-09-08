@@ -351,7 +351,7 @@
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
       "status": "partial",
-      "passed": 11,
+      "passed": 12,
       "total": 14,
       "probes": [
         {
@@ -403,8 +403,8 @@
           "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=1 (cần 0) ✗"
         },
         {
-          "ok": false,
-          "detail": "Repo/Claude Code/Codex alignment PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Repo/Claude Code/Codex alignment PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
