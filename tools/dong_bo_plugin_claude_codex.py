@@ -42,6 +42,7 @@ import argparse
 import json
 import os
 import platform
+import subprocess
 import sys
 from pathlib import Path
 
@@ -54,8 +55,31 @@ for _s in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
+def _resolve_repo_root(start_dir: Path | None = None) -> Path:
+    """Tìm gốc repo CHÍNH — cùng cơ chế/lý do đã vá ở
+    `tools/dong_bo_skill_claude_codex.py` (08/09/2026): công cụ này CŨNG đọc
+    một sổ khai dùng chung (`sync/plugin-manifest.json`) rồi ghi vào các đường
+    dẫn plugin DÙNG CHUNG cho cả máy (`~/.claude/plugins/...`, `~/.codex/skills`)
+    — chạy TRONG một git worktree phụ mà không quy về repo chính sẽ đọc bản
+    `plugin-manifest.json` RIÊNG của worktree đó (có thể cũ hơn nhánh chính) rồi
+    áp lên trạng thái plugin DÙNG CHUNG, cùng họ lỗi với bản vá skill.
+    """
+    here = start_dir if start_dir is not None else Path(__file__).resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10, check=True,
+        )
+        git_common_dir = Path(result.stdout.strip())
+        if git_common_dir.is_dir():
+            return git_common_dir.parent
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return here.parent
+
+
 HOME = Path.home()
-REPO = Path(__file__).resolve().parents[1]
+REPO = _resolve_repo_root()
 REG = HOME / ".claude/plugins/installed_plugins.json"
 SETTINGS = HOME / ".claude/settings.json"
 CODEX_SKILLS = HOME / ".codex/skills"
