@@ -25,6 +25,7 @@ Chạy:  python3 tools/test_dong_bo_skill_claude_codex.py   (2 lớp unittest �
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -246,3 +247,97 @@ def test_ensure_link_self_heal_does_not_create_a_backup(tmp_path):
     DB.ensure_link(source, destination, apply=True)
 
     assert not (destination.parent / f"{destination.name}-backup").exists()
+
+
+# =============================================================================
+# _resolve_repo_root() — thêm 08/09/2026, họ lỗi RỘNG hơn cả hai lớp ca trên.
+#
+# Ca thử ở trên chứng minh ensure_link() TỰ PHỤC HỒI một liên kết trỏ sai —
+# nhưng "phục hồi" nghĩa là quay về ĐÚNG `source` được TRUYỀN VÀO. Chúng không
+# hề chạm tới câu hỏi nguồn gốc: `source` mặc định (`DEFAULT_SOURCE`, dùng khi
+# gọi `--ap-dung` mà không truyền `--source`) được tính THẾ NÀO?
+#
+# Trước bản vá này: `REPO = Path(__file__).resolve().parents[1]`. Một PHIÊN
+# đang chạy TRONG một git worktree phụ (`.claude/worktrees/<tên>` — Claude Code
+# tự dựng để cô lập agent/subagent) thực thi file .py CỦA CHÍNH worktree đó, nên
+# `__file__` trỏ vào worktree, KHÔNG phải repo chính — REPO/DEFAULT_SOURCE theo
+# đó cũng lệch vào `sync/skills` của worktree (một bản sao độc lập, thường CŨ
+# hơn nhánh chính). Gọi `ensure_link(nguồn_sai, ~/.claude/skills, apply=True)`
+# thì chính cơ chế "tự phục hồi" ở trên sẽ NHIỆT TÌNH ép symlink DÙNG CHUNG cho
+# CẢ MÁY về phía worktree đó — tệ hơn hẳn XUNG_DOT không tự sửa, vì giờ nó CHỦ
+# ĐỘNG lan lỗi sang mọi phiên khác đang dùng chung `~/.claude/skills`.
+#
+# Ca thật đo được 08/09/2026: 2 skill (`cap-nhat-chung-cu-y-khoa`, `dark-analyst`)
+# hoàn toàn vắng mặt khỏi danh sách skill chào ra ở một phiên KHÁC trên CÙNG máy,
+# vì runtime bị một phiên worktree ghi đè sang bản snapshot cũ của chính nó —
+# đúng nguyên nhân bác sĩ báo "mỗi lần thực hiện một kiểu, không đọc trực tiếp
+# được trên khung chat".
+# =============================================================================
+
+
+def _run_git(args, cwd):
+    subprocess.run(
+        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True,
+        env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+             "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+    )
+
+
+def _make_git_repo_with_worktree(tmp_path):
+    """Dựng một repo git thật + một worktree phụ thật, độc lập với repo của
+    chính dự án này (để test không đụng vào `.git` sống)."""
+    main_repo = tmp_path / "repo-chinh"
+    main_repo.mkdir()
+    _run_git(["init", "-q", "-b", "main"], main_repo)
+    (main_repo / "sync").mkdir()
+    (main_repo / "sync" / "skills").mkdir()
+    (main_repo / "README.md").write_text("gốc\n", encoding="utf-8")
+    _run_git(["add", "-A"], main_repo)
+    _run_git(["commit", "-q", "-m", "khoi tao"], main_repo)
+
+    worktree_dir = main_repo / ".claude" / "worktrees" / "worktree-phu"
+    worktree_dir.parent.mkdir(parents=True)
+    _run_git(["worktree", "add", "-q", "-b", "nhanh-phu", str(worktree_dir)], main_repo)
+
+    (worktree_dir / "tools").mkdir(parents=True, exist_ok=True)
+    return main_repo, worktree_dir
+
+
+def test_resolve_repo_root_from_inside_worktree_returns_main_repo(tmp_path):
+    """Bug thật: gọi TỪ BÊN TRONG worktree phụ phải trả về gốc repo CHÍNH,
+    không phải gốc worktree — kể cả khi worktree đó có sẵn thư mục
+    `sync/skills` riêng (bản sao cũ, dễ gây nhầm là "nguồn hợp lệ")."""
+    main_repo, worktree_dir = _make_git_repo_with_worktree(tmp_path)
+    (worktree_dir / "sync").mkdir()
+    (worktree_dir / "sync" / "skills").mkdir()  # bản sao RIÊNG của worktree
+
+    resolved = DB._resolve_repo_root(start_dir=worktree_dir / "tools")
+
+    assert resolved == main_repo, (
+        f"Phải quy về repo CHÍNH ({main_repo}), không phải worktree phụ "
+        f"({worktree_dir}) — nếu không, DEFAULT_SOURCE sẽ trỏ nhầm sang bản "
+        f"sao cũ và lan ra ~/.claude/skills dùng chung cho mọi phiên."
+    )
+
+
+def test_resolve_repo_root_from_main_repo_returns_itself(tmp_path):
+    """Đối chứng: gọi từ CHÍNH repo (không phải worktree) không được đổi hành
+    vi — vẫn phải trả về đúng gốc repo đó."""
+    main_repo, _worktree_dir = _make_git_repo_with_worktree(tmp_path)
+    tools_dir = main_repo / "tools"
+    tools_dir.mkdir()
+
+    resolved = DB._resolve_repo_root(start_dir=tools_dir)
+
+    assert resolved == main_repo
+
+
+def test_resolve_repo_root_falls_back_when_not_a_git_repo(tmp_path):
+    """Không phải git repo (hoặc git không gọi được) thì lùi về cách cũ
+    (đi lên một cấp từ thư mục chứa file) thay vì ném lỗi làm chết lệnh."""
+    lone_dir = tmp_path / "khong-phai-git" / "tools"
+    lone_dir.mkdir(parents=True)
+
+    resolved = DB._resolve_repo_root(start_dir=lone_dir)
+
+    assert resolved == lone_dir.parent

@@ -45,7 +45,41 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 
-REPO = Path(__file__).resolve().parents[1]
+def _resolve_repo_root(start_dir: Path | None = None) -> Path:
+    """Tìm gốc repo CHÍNH, không phải nơi file này đang nằm.
+
+    Nếu phiên đang chạy TRONG một git worktree phụ (``.claude/worktrees/<tên>``
+    — Claude Code tự dựng khi cô lập một phiên/agent), ``Path(__file__).resolve()``
+    trỏ vào worktree đó, không phải repo chính. Trước bản vá này, "gốc repo" được
+    suy trực tiếp từ vị trí file (``parents[1]``) — nghĩa là chạy lệnh đồng bộ
+    TRONG một worktree phụ sẽ lấy ``sync/skills`` của CHÍNH worktree đó (một bản
+    sao độc lập, có thể cũ hơn nhánh chính) rồi nối nó vào ``~/.claude/skills`` và
+    ``~/.codex/skills`` — hai đường dẫn DÙNG CHUNG cho MỌI phiên trên máy. Kết quả
+    đo được thật (08/09/2026): 2 skill hoàn toàn vắng mặt khỏi danh sách được chào
+    ra ở một phiên KHÁC, vì runtime bị một phiên worktree ghi đè sang bản cũ của
+    chính nó — đúng nguyên nhân "mỗi lần một kiểu" bác sĩ báo.
+
+    ``git rev-parse --git-common-dir`` luôn trả về đường dẫn ``.git`` của repo
+    CHÍNH dù gọi từ worktree nào (khác ``--git-dir``, vốn trả về thư mục quản trị
+    RIÊNG của từng worktree) — dùng nó để luôn quy về đúng một gốc, bất kể phiên
+    đang đứng ở worktree nào. Git không gọi được (thiếu binary, không phải repo
+    git) thì lùi về cách cũ, không làm chết lệnh.
+    """
+    here = start_dir if start_dir is not None else Path(__file__).resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10, check=True,
+        )
+        git_common_dir = Path(result.stdout.strip())
+        if git_common_dir.is_dir():
+            return git_common_dir.parent
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return here.parent
+
+
+REPO = _resolve_repo_root()
 DEFAULT_SOURCE = REPO / "sync/skills"
 ROUTER_NAME = "plugin-router-chatgpt"
 
