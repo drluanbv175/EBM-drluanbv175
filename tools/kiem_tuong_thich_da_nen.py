@@ -170,7 +170,14 @@ def main() -> int:
             except OSError:
                 continue
             code = _mask_khong_phai_code(dong)
-            ten = str(p.relative_to(REPO))
+            # VÁ 08/09/2026: _GOC_MEA là SIBLING của REPO trên phiên cloud (không
+            # lồng bên trong) — `p.relative_to(REPO)` ném ValueError và giết cả
+            # lượt quét R6 giữa chừng. Cùng lỗi đã có guard đúng ở dòng 118 cho
+            # vòng lặp CAY_QUET; áp lại y hệt cho vòng lặp R6-riêng này.
+            try:
+                ten = str(p.relative_to(REPO))
+            except ValueError:
+                ten = str(p)
             for i, ln in enumerate(code, 1):
                 if MIEN_TRU in dong[i - 1]:
                     continue

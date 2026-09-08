@@ -97,9 +97,19 @@ def main() -> int:
                     help="không in gì khi mọi lỗi gài đều bị bắt (dùng cho hook)")
     a = ap.parse_args()
 
-    vd = _nap(DASH / "tools" / "verify_dashboard.py", "vd_canary")
+    # VÁ 08/09/2026: DASH/"tools"/X chỉ tồn tại trên máy thật (OneDrive) — trên phiên
+    # cloud/CI, resolver mới tìm được bản GIT-VENDOR tương đương ở sync/skills/
+    # cap-nhat-chung-cu-y-khoa/tools/ (xem tools/ban_sao_tran.py::duong_cong_cu_pipeline).
+    _p_vd = _bst_mea.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    _p_ss = _bst_mea.duong_cong_cu_pipeline("surveillance_scan.py", REPO)
+    if _p_vd is None or _p_ss is None:
+        thieu = [n for n, p in (("verify_dashboard.py", _p_vd), ("surveillance_scan.py", _p_ss)) if p is None]
+        print(f"⚪ Không tìm thấy {', '.join(thieu)} ở EBM-Dashboards/tools/ lẫn bản git-vendor "
+              "— không dựng được canary trên máy này.")
+        return 1
+    vd = _nap(_p_vd, "vd_canary")
     dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_canary")
-    ss = _nap(DASH / "tools" / "surveillance_scan.py", "ss_canary")
+    ss = _nap(_p_ss, "ss_canary")
 
     tmp = Path(tempfile.mkdtemp(prefix="canary-chungcu-"))
     ket: list[tuple[str, bool, str]] = []

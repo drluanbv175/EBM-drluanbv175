@@ -43,8 +43,19 @@ if hasattr(sys.stdout, "reconfigure"):
 
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
-LOG_TUAN = REPO / "medical-ebm-automation/data/archive/launchd_weekly.log"
-LOG_THANG = REPO / "medical-ebm-automation/data/archive/launchd_monthly.log"
+
+import importlib.util as _ilu_kdtcc  # noqa: E402
+_sp_kdtcc = _ilu_kdtcc.spec_from_file_location(
+    "_bst_kdtcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_kdtcc = _ilu_kdtcc.module_from_spec(_sp_kdtcc)
+_sp_kdtcc.loader.exec_module(_bst_kdtcc)
+# VÁ 08/09/2026: medical-ebm-automation là SIBLING trên phiên cloud (add_repo dựng
+# cạnh repo gốc, không lồng bên trong) — ghép cứng REPO/"medical-ebm-automation" từng
+# khiến chốt luôn kết luận "giám sát chưa từng chạy" ngay cả khi log thật tồn tại ở
+# vị trí sibling. Xem tools/ban_sao_tran.py::duong_goc.
+_MEA_KDTCC = _bst_kdtcc.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+LOG_TUAN = _MEA_KDTCC / "data" / "archive" / "launchd_weekly.log"
+LOG_THANG = _MEA_KDTCC / "data" / "archive" / "launchd_monthly.log"
 
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
 HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần
@@ -212,7 +223,7 @@ def main() -> int:
                      "hai job launchd chỉ tồn tại trên MacBook, nên ở đây luôn phải chạy tay")
         canh_bao.append(
             f"Giám sát AN TOÀN THUỐC hằng tuần CHƯA TỪNG chạy{ly_do}. Chạy tay khi tiện:\n"
-            f"     bash medical-ebm-automation/scripts/weekly_safety.sh\n"
+            f"     bash {_MEA_KDTCC}/scripts/weekly_safety.sh\n"
             f"     (kiểm nhanh nguồn, không ghi gì: thêm `--canary`)")
     else:
         cach = (hom_nay - chay_tuan).days

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Xuất ĐỒNG THỜI bộ bốn sản phẩm của một lần cập nhật chứng cứ.
+"""Xuất ĐỒNG THỜI bộ NĂM sản phẩm của một lần cập nhật chứng cứ.
 
 Một lệnh duy nhất, từ file Dashboard đã dựng xong:
 
@@ -8,6 +8,7 @@ Một lệnh duy nhất, từ file Dashboard đã dựng xong:
                           ② Bản đọc (.html)  — trang đọc ngay tại phòng khám
                           ③ Bản Word (.docx) — tài liệu lưu trữ đầy đủ
                           ④ Bản Word dạng HTML — để ĐỌC THẲNG trong khung chat
+                          ⑤ Bản PDF giữ màu — thêm 10/08/2026, xem KHOI_BO_NAM
 
 Cách dùng:
     python3 tools/xuat_goi_cap_nhat.py <dashboard>.html [--online] [--parts parts.json]
@@ -58,7 +59,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
 BAN_DOC = ROOT / "tools" / "build_ban_doc_chung_cu.py"
-VERIFY = DASH_TOOLS / "verify_dashboard.py"
+
+import importlib.util as _ilu_xgcn  # noqa: E402
+_sp_xgcn = _ilu_xgcn.spec_from_file_location("_bst_xgcn", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_xgcn = _ilu_xgcn.module_from_spec(_sp_xgcn)
+_sp_xgcn.loader.exec_module(_bst_xgcn)
+
+# VÁ 08/09/2026 (CRITICAL) — trước đây VERIFY chỉ tìm ở EBM-Dashboards/tools/, nơi
+# doctrine-canonical nhưng KHÔNG BAO GIỜ tồn tại trên checkout git-only (cloud/CI).
+# Lệnh «một cửa» này bị chặn ngay ở bước đầu dù bản GIT-VENDOR của verify_dashboard.py
+# (sync/skills/cap-nhat-chung-cu-y-khoa/tools/) chạy tốt trên chính máy đó — xem
+# tools/ban_sao_tran.py::duong_cong_cu_pipeline(). `build_dashboard_docx.py` KHÔNG có
+# bản vendor nào (chưa từng được đưa vào git — xem CLAUDE.md/audit) nên vẫn phải tìm
+# đúng ở EBM-Dashboards/tools/; không giả vờ có resolver cho một file không tồn tại.
+VERIFY = _bst_xgcn.duong_cong_cu_pipeline("verify_dashboard.py", ROOT) or (DASH_TOOLS / "verify_dashboard.py")
 DOCX = DASH_TOOLS / "build_dashboard_docx.py"
 
 # CSS nhúng thẳng vào file Python (KHÔNG tách ra file asset riêng) để bước ④ không
@@ -270,7 +284,9 @@ def main() -> int:
             rc_final = 1
         else:
             print("① Cổng liêm chính (--online)…")
-            rc, out = run([py, VERIFY, dash, "--online"], cwd=DASH_TOOLS.parent)
+            # cwd = thư mục cha của chính bản VERIFY đang dùng — đúng cả khi đó là
+            # EBM-Dashboards (máy thật) lẫn sync/skills/cap-nhat-chung-cu-y-khoa (vendor).
+            rc, out = run([py, VERIFY, dash, "--online"], cwd=VERIFY.parent.parent)
             tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or [""]
             print("   " + tail[0].strip())
             if rc == 0:
@@ -324,7 +340,7 @@ def main() -> int:
             #     "áp dụng ngay" tựa trên chứng cứ chưa đủ mạnh.
             # Nên: lỗi an toàn thì CHẶN xuất; thiếu siêu dữ liệu thì cảnh báo.
             rc_s, out_s = run([py, VERIFY, dash, "--online", "--strict-sources"],
-                              cwd=DASH_TOOLS.parent)
+                              cwd=VERIFY.parent.parent)
             if rc_s == 0:
                 result["cong_nguon_nghiem"] = "PASS"
             else:

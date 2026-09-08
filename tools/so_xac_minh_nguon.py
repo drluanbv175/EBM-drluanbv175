@@ -888,8 +888,21 @@ def quet_ledger_hub(vong: int = 1) -> None:
     THÀNH CÔNG, thất bại giữ nguyên KHÔNG BIẾT (bất biến của sổ).
     """
     from datetime import datetime as _dt, timedelta as _td
-    hub = json.loads((DASH.parent / "EBM_MASTER" / "EBM_MASTER.json")
-                     .read_text(encoding="utf-8"))
+    import importlib.util as _ilu_qlh
+    _sp_qlh = _ilu_qlh.spec_from_file_location(
+        "_bst_sxmn_qlh", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_qlh = _ilu_qlh.module_from_spec(_sp_qlh)
+    _sp_qlh.loader.exec_module(_bst_qlh)
+    # VÁ 08/09/2026: EBM_MASTER là gốc dữ liệu ngoài git (không bao giờ có trên
+    # checkout git-only) — trước đây đọc thẳng gây FileNotFoundError thô. Nay báo
+    # ⚪ rõ ràng thay vì crash, đúng bất biến "không kiểm được ≠ có vấn đề" của
+    # chính sổ này.
+    hub_json = _bst_qlh.duong_goc("EBM_MASTER", REPO)
+    if hub_json is None or not (hub_json / "EBM_MASTER.json").exists():
+        print("⚪ Không tìm thấy EBM_MASTER/EBM_MASTER.json trên máy này — bỏ qua "
+              "quét ledger hub (đây là 'chưa kiểm được', KHÔNG phải 'không có gì').")
+        return
+    hub = json.loads((hub_json / "EBM_MASTER.json").read_text(encoding="utf-8"))
     so = doc_so()
     muc = so.setdefault("muc", {})
     bay_gio = _dt.now().isoformat(timespec="seconds")
@@ -910,7 +923,8 @@ def quet_ledger_hub(vong: int = 1) -> None:
     can_pmid, can_doi = sorted(set(can_pmid)), sorted(set(can_doi))
     print(f"HUB: cần kiểm {len(can_pmid)} PMID + {len(can_doi)} DOI (chưa có phán quyết còn hạn)")
 
-    sys.path.insert(0, str(DASH.parent / "medical-ebm-automation"))
+    sys.path.insert(0, str(_bst_qlh.duong_goc("medical-ebm-automation", REPO)
+                           or (REPO / "medical-ebm-automation")))
     from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
     from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
     chain, cr = RetractionChain(), CrossrefRetraction()

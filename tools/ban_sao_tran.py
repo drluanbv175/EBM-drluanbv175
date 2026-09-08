@@ -53,6 +53,35 @@ def ban_sao_git_tran(repo: Path = REPO) -> bool:
     return all(duong_goc(goc, repo) is None for goc in GOC_DU_LIEU_NGOAI_GIT)
 
 
+def duong_cong_cu_pipeline(ten_file: str, repo: Path = REPO) -> Path | None:
+    """Đường dẫn THẬT của một tool trong dây chuyền dashboard (verify_dashboard.py,
+    build_library.py, make_derivatives.py, surveillance_scan.py…).
+
+    VÁ 08/09/2026 — CRITICAL: `tools/xuat_goi_cap_nhat.py` (lệnh «một cửa» CLAUDE.md
+    dạy bác sĩ chạy) và canary `tools/thu_dau_cuoi_chung_cu.py` chỉ từng tìm các tool
+    này ở ĐÚNG MỘT nơi — `EBM-Dashboards/tools/` (doctrine-canonical, đồng bộ qua
+    OneDrive, KHÔNG BAO GIỜ có trong bất kỳ git checkout nào) — nên trên phiên cloud
+    (hay bất kỳ clone git-only nào) cả hai đều dừng ngay ở bước ĐẦU TIÊN dù các bản
+    VENDOR QUA GIT của CHÍNH những tool đó (`sync/skills/cap-nhat-chung-cu-y-khoa/
+    tools/`, giữ đồng bộ bằng `dong_bo_scanner_giam_sat.py`) chạy TỐT trên máy này.
+
+    Ưu tiên bản doctrine-canonical (máy thật); vắng mặt thì lùi về bản git-vendor
+    (LUÔN có trên mọi checkout kể cả cloud/CI). `None` nếu không có ở đâu — một số
+    tool (vd `build_dashboard_docx.py`) chưa từng được vendor qua git, xem
+    CLAUDE.md/audit về khoảng trống đó; gọi nơi cần dùng phải tự báo rõ, không giả
+    định resolver này luôn trả về một đường dẫn.
+    """
+    goc = duong_goc("EBM-Dashboards", repo)
+    if goc is not None:
+        ung_vien = goc / "tools" / ten_file
+        if ung_vien.exists():
+            return ung_vien
+    vendor = repo / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / ten_file
+    if vendor.exists():
+        return vendor
+    return None
+
+
 def duong_goc(ten: str, repo: Path = REPO) -> Path | None:
     """Đường dẫn THẬT của một gốc dữ liệu ngoài-git (`ten` ∈ GOC_DU_LIEU_NGOAI_GIT).
 

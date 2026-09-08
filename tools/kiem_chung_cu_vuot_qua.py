@@ -63,6 +63,11 @@ for _s in (sys.stdout, sys.stderr):
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+
+import importlib.util as _ilu_kcvq  # noqa: E402
+_sp_kcvq = _ilu_kcvq.spec_from_file_location("_bst_kcvq", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_kcvq = _ilu_kcvq.module_from_spec(_sp_kcvq)
+_sp_kcvq.loader.exec_module(_bst_kcvq)
 # Publication type được coi là "có thể vượt qua" một nghiên cứu đơn lẻ.
 PT_CAO = ("systematic review", "meta-analysis", "practice guideline", "guideline")
 
@@ -146,7 +151,17 @@ def main() -> int:
     _pham_vi = {"apply", "consider"} if a.gom_consider else {"apply"}
     _nhan_pham_vi = "'apply'+'consider'" if a.gom_consider else "'apply'"
 
-    spec = importlib.util.spec_from_file_location("vd_vq", DASH / "tools" / "verify_dashboard.py")
+    # VÁ 08/09/2026 — trước đây nạp thẳng DASH/"tools"/verify_dashboard.py, ném
+    # FileNotFoundError thô khi EBM-Dashboards vắng (mọi checkout git-only). Lùi về
+    # bản git-vendor tương đương ở sync/skills/cap-nhat-chung-cu-y-khoa/tools/ trước
+    # khi báo ⚪ (xem tools/ban_sao_tran.py::duong_cong_cu_pipeline); một dashboard
+    # thật vẫn cần tồn tại nên vòng lặp bên dưới rỗng là kết quả đúng trên máy này.
+    duong_vd = _bst_kcvq.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    if duong_vd is None:
+        print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
+              "git-vendor — không dò được trên máy này.")
+        return 0
+    spec = importlib.util.spec_from_file_location("vd_vq", duong_vd)
     vd = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(vd)
 

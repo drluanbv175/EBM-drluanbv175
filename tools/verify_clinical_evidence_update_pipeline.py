@@ -30,9 +30,20 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
-VERIFY_DASHBOARD = DASH_TOOLS / "verify_dashboard.py"
-BUILD_LIBRARY = DASH_TOOLS / "build_library.py"
-MAKE_DERIVATIVES = DASH_TOOLS / "make_derivatives.py"
+
+import importlib.util as _ilu_vceup  # noqa: E402
+_sp_vceup = _ilu_vceup.spec_from_file_location("_bst_vceup", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_vceup = _ilu_vceup.module_from_spec(_sp_vceup)
+_sp_vceup.loader.exec_module(_bst_vceup)
+
+# VÁ 08/09/2026: ba tool này chỉ từng tìm ở EBM-Dashboards/tools/ (doctrine-canonical,
+# KHÔNG BAO GIỜ có trên checkout git-only) — nay lùi về bản git-vendor tương đương ở
+# sync/skills/cap-nhat-chung-cu-y-khoa/tools/ khi máy thật vắng mặt (xem
+# tools/ban_sao_tran.py::duong_cong_cu_pipeline). Giữ nguyên fallback về đường cũ khi
+# resolver không tìm thấy ở đâu, để thông điệp lỗi vẫn trỏ đúng đường doctrine-canonical.
+VERIFY_DASHBOARD = _bst_vceup.duong_cong_cu_pipeline("verify_dashboard.py", ROOT) or (DASH_TOOLS / "verify_dashboard.py")
+BUILD_LIBRARY = _bst_vceup.duong_cong_cu_pipeline("build_library.py", ROOT) or (DASH_TOOLS / "build_library.py")
+MAKE_DERIVATIVES = _bst_vceup.duong_cong_cu_pipeline("make_derivatives.py", ROOT) or (DASH_TOOLS / "make_derivatives.py")
 SYNC_ALL = ROOT / "EBM_MASTER" / "tools" / "sync_all.py"
 EW_TEMPLATE = ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html"
 EW_HUB_ASSET = ROOT / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html"
