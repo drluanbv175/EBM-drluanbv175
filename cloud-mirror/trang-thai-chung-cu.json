@@ -1,5 +1,5 @@
 {
-  "sinh_luc": "2026-09-08T17:44:48",
+  "sinh_luc": "2026-09-08T18:45:05",
   "may": "Mac",
   "co_du_lieu_dashboard_that": true,
   "bo_dem": {
@@ -15,7 +15,7 @@
     },
     "tu_de_xuat_viec": {
       "ma_thoat": 0,
-      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-08 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 16 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 70 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Chưa đọc được phán quyết CI repo y khoa (thấy: feat/r1-1-2-design-gap-remediation) — kiểm tay khi tiện\n       → gh run list --workflow offline-ci.yml --limit 3\n  🟡 🤖 Repo gốc: 10 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
+      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-08 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 16 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 70 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Chưa đọc được phán quyết CI repo y khoa (thấy: feat/r1-1-2-design-gap-remediation) — kiểm tay khi tiện\n       → gh run list --workflow offline-ci.yml --limit 3\n  🟡 🤖 Repo gốc: 2 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 🤖 Repo y khoa: 91 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"medical-ebm-automation\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
       "stderr": ""
     }
   },
