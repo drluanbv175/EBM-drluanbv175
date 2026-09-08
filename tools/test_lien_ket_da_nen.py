@@ -89,12 +89,23 @@ def test_go_rmdir_khi_lstat_bao_thu_muc_tren_windows(tmp_path, monkeypatch):
     dich) + la_junction() (fallback readlink tren 3.9-3.11 coi NHAM moi lien
     ket doc duoc la junction) -- ca hai deu sai voi lien ket TREO. Gia lap
     WINDOWS=True + os.lstat vi khong tao duoc reparse point that cua Windows
-    tren Linux."""
+    tren Linux.
+
+    VA 08/09/2026: tren Python 3.12+ (may nay: 3.14), la_junction() di qua
+    nhanh os.path.isjunction() that cua thu vien chuan -- ham nay TU CHOI
+    tra True tren POSIX bat ke os.lstat bi gia lap the nao (junction la khai
+    niem rieng cua Windows, CPython hardcode `return False` tren nen khac).
+    Gia mao os.lstat khong du -- phai gia mao ca os.path.isjunction() de mo
+    phong dung "Windows bao day la mot junction". Thieu dong nay, la_lien_ket()
+    tra False (vi is_symlink() cung bi keo theo False boi cung mot os.lstat
+    gia mao dung chung), go() tu choi cung o buoc dau tien, chua bao gio toi
+    duoc nhanh rmdir/unlink can kiem."""
     p = tmp_path / "link"
     p.symlink_to(tmp_path / "khong-ton-tai")
 
     monkeypatch.setattr(LK, "WINDOWS", True)
     monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFDIR))
+    monkeypatch.setattr(LK.os.path, "isjunction", lambda path: True)
     calls = []
     monkeypatch.setattr(LK.os, "rmdir", lambda path: calls.append("rmdir"))
     monkeypatch.setattr(Path, "unlink", lambda self, *a, **kw: calls.append("unlink"))
@@ -107,12 +118,22 @@ def test_go_rmdir_khi_lstat_bao_thu_muc_tren_windows(tmp_path, monkeypatch):
 def test_go_unlink_khi_lstat_bao_file_tren_windows(tmp_path, monkeypatch):
     """Doi xung voi test tren: lien ket TREO loai FILE phai go bang unlink(),
     khong duoc go bang os.rmdir() (Windows tu choi rmdir tren reparse point
-    loai file)."""
+    loai file).
+
+    VA 08/09/2026: mot symlink Windows THAT tro toi file (khac junction) duoc
+    os.lstat() bao S_IFLNK, KHONG PHAI S_IFREG -- windows chi dung S_IFDIR cho
+    junction, con symlink (ca loai file lan thu muc) luon mang bit S_ISLNK.
+    Ban cu gia mao S_IFREG vo tinh lam is_symlink() tra False (vi is_symlink()
+    doc lai chinh os.lstat da bi gia mao dung chung), khien la_lien_ket() tra
+    False va go() tu choi cung o buoc dau tien -- chua bao gio toi duoc nhanh
+    can kiem (unlink, khong phai rmdir). Doi sang S_IFLNK vua dung that voi
+    Windows vua giu is_symlink()==True, ma stat.S_ISDIR(S_IFLNK) van False nen
+    go() van di dung nhanh unlink()."""
     p = tmp_path / "link"
     p.symlink_to(tmp_path / "khong-ton-tai")
 
     monkeypatch.setattr(LK, "WINDOWS", True)
-    monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFREG))
+    monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFLNK))
     calls = []
     monkeypatch.setattr(LK.os, "rmdir", lambda path: calls.append("rmdir"))
     monkeypatch.setattr(Path, "unlink", lambda self, *a, **kw: calls.append("unlink"))
