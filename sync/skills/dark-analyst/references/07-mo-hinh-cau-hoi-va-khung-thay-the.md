@@ -12,7 +12,7 @@ Mục tiêu: trước khi tổng hợp chứng cứ, **tự nhận diện loại
 |---|---|---|---|---|---|
 | **Điều trị / can thiệp** | **PICO(T)(S)** | P · I · C · O (+Time, +Setting/Study design) | RCT, SR-MA | RoB 2, AMSTAR-2, GRADE | RR, OR, HR, ARR, **NNT** |
 | **Tác hại / nguyên nhân** | **PECO** | P · Phơi nhiễm (Exposure) · C · O | Cohort, case-control | ROBINS-I, GRADE | RR, OR, HR, **NNH** |
-| **Chẩn đoán (độ chính xác)** | **PIRT** (Index–Reference–Target) | P · Index test · Chuẩn tham chiếu (=C) · Bệnh đích (O) | Cross-sectional độ chính xác | **QUADAS-2**, chuẩn báo cáo STARD | **Sn, Sp, LR+, LR−**, PPV/NPV, AUC |
+| **Chẩn đoán (độ chính xác)** | **PIRT** (Index–Reference–Target) | P · Index test · Chuẩn tham chiếu (=C) · Bệnh đích (O) | Cross-sectional độ chính xác | **QUADAS-3 v1.2**, chuẩn báo cáo STARD; QUADAS-2 chỉ cho nghiên cứu lịch sử | **Sn, Sp, LR+, LR−**, PPV/NPV, AUC |
 | **Tiên lượng** | **PICOTS tiên lượng / PROGRESS** | P · Yếu tố tiên lượng · (so sánh) · Kết cục · Thời gian | Cohort dọc | QUIPS; mô hình: **PROBAST/TRIPOD** | HR, C-statistic, hiệu chuẩn |
 | **Tầm soát / dự phòng** | **PICO mở rộng** | P · Test/biện pháp · C · Kết cục lâm sàng (không chỉ thay thế) | RCT, SR | GRADE, khung USPSTF | giảm tử vong/biến cố, NNT, tác hại tầm soát |
 | **Tần suất / dịch tễ** | **CoCoPop** | Condition · Context · Population | Cross-sectional | JBI prevalence | tỷ lệ hiện mắc/mới mắc (CI) |
@@ -78,7 +78,7 @@ Nếu **không** đặt `frame`/`frameLabels`, panel hiển thị mặc định 
 | Systematic review / meta-analysis | **AMSTAR-2** |
 | RCT | **RoB 2** (Cochrane Risk of Bias 2) |
 | Quan sát (cohort/case-control) | **ROBINS-I** / Newcastle-Ottawa |
-| Nghiên cứu độ chính xác chẩn đoán | **QUADAS-2** |
+| Nghiên cứu độ chính xác chẩn đoán | **QUADAS-3 v1.2** (QUADAS-2 chỉ để đọc nghiên cứu lịch sử) |
 | Nghiên cứu/Mô hình tiên lượng | **QUIPS** / **PROBAST** |
 | Tổng thể độ chắc chắn theo kết cục | **GRADE** (giữ nguyên grading của nguồn nếu có) |
 
@@ -99,7 +99,7 @@ Mức độ thẩm định **tương xứng nhu cầu** (xem `references/02`): t
 ## 6. Ví dụ nhận diện nhanh
 
 - "Metformin có gây thiếu B12 không?" → **PECO** (phơi nhiễm metformin).
-- "HbA1c có chẩn đoán ĐTĐ chính xác không so với đường huyết đói?" → **PIRT/chẩn đoán** (QUADAS-2, Sn/Sp).
+- "HbA1c có chẩn đoán ĐTĐ chính xác không so với đường huyết đói?" → **PIRT/chẩn đoán** (QUADAS-3 v1.2, Sn/Sp).
 - "Microalbumin niệu có tiên lượng biến cố thận ở ĐTĐ?" → **Tiên lượng/PROGRESS** (HR).
 - "Tỷ lệ bệnh thần kinh ngoại biên ở bệnh nhân ĐTĐ tại ngoại trú?" → **CoCoPop**.
 - "Trải nghiệm tuân thủ insulin của người bệnh?" → **SPIDER/định tính**.

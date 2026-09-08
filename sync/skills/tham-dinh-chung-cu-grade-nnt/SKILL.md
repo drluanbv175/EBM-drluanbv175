@@ -21,7 +21,7 @@ metadata:
 |---|---|---|---|
 | Điều trị/can thiệp | RCT, SR/MA | RoB 2, AMSTAR-2, GRADE | RR/OR/HR, ARR, **NNT** |
 | Tác hại/nguyên nhân | Cohort/bệnh-chứng | ROBINS-I | RR/OR/HR, **NNH** |
-| Chẩn đoán | Cắt ngang độ chính xác | QUADAS-2, STARD | **Sn/Sp, LR+, LR−** |
+| Chẩn đoán | Cắt ngang độ chính xác | QUADAS-3 v1.2, STARD; QUADAS-2: lịch sử | **Sn/Sp, LR+, LR−** |
 | Tiên lượng | Cohort dọc | QUIPS, PROBAST | HR, C-statistic |
 | Guideline | — | AGREE II | tính chính thức/cập nhật |
 

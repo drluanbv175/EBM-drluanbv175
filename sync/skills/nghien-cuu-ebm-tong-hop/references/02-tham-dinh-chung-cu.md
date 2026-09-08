@@ -16,7 +16,7 @@ thời điểm đo kết cục, nguồn dữ liệu, có ngẫu nhiên/mù khôn
 
 ## 3. Kiểm độ tin cậy kết quả (risk of bias)
 - Công cụ theo thiết kế: RoB 2 (RCT), ROBINS-I (phi ngẫu nhiên), Newcastle-Ottawa (quan sát),
-  AMSTAR-2/ROBIS (SR), QUADAS-2 (chẩn đoán).
+  AMSTAR-2/ROBIS (SR), QUADAS-3 v1.2 (chẩn đoán; QUADAS-2 chỉ để đọc nghiên cứu lịch sử).
 - Soi: cỡ mẫu/power, đa so sánh, mất theo dõi, kết cục surrogate, p-hacking, CI rộng, COI/tài trợ.
 
 ## 4. Đối chiếu khẳng định ↔ dữ liệu (paper-to-claim verify)
