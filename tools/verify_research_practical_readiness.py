@@ -258,6 +258,15 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     study = "VERIFY-PRACTICAL-PSEUDO"
     raw_sha_before = INTAKE._sha256_file(raw_path)
 
+    # Viết dictionary TRƯỚC pseudonymize (đảo thứ tự 08/09/2026) — trước đây
+    # dictionary chỉ được viết SAU, ngay trước clean_dataset(), nên pseudonymize
+    # (chạy TRƯỚC) không hề biết `visit_date` đã khai "type": "date" và xoá luôn
+    # giá trị bằng mẫu PII "date" (thêm 04/09, đúng để bắt ngày rò rỉ trong ghi
+    # chú tự do — nhưng áp nhầm cả lên biến ngày NGHIÊN CỨU đã khai tường minh).
+    out_dir = exports_root / study
+    out_dir.mkdir(parents=True, exist_ok=True)
+    dictionary = _write_dictionary(out_dir / "data_dictionary.json")
+
     report = PSEUDO.pseudonymize_dataset(
         study,
         raw_path,
@@ -265,8 +274,8 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
         mapping_root=mapping_root,
         then_import=True,
         id_prefix="PRAC",
+        dictionary_path=dictionary,
     )
-    out_dir = exports_root / study
     report_text = _read(out_dir / PSEUDO.REPORT_NAME)
 
     _assert(INTAKE._sha256_file(raw_path) == raw_sha_before, "Không được sửa file nguồn khi pseudonymize")
@@ -289,8 +298,23 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert((mapping_dir / PSEUDO.LINKAGE_MAP_NAME).exists(),
             "Mapping bảo vệ phải có linkage_map.csv")
 
+    # Hành vi TRỌNG TÂM của bản vá 08/09/2026: cột đã khai "type": "date" trong
+    # dictionary phải được BÁO RA (không âm thầm) và giá trị THẬT SỰ còn nguyên
+    # trong file đã pseudonymize — khác hẳn PII thật (tên/SĐT/email ở trên) vẫn
+    # phải bị xoá. Kiểm cả hai chiều để không lặp lại lỗi cũ theo hướng ngược lại
+    # (nới lỏng quá tay, để lọt PII thật qua đường "cột đã khai là ngày").
+    _assert("visit_date" in report.get("date_columns_exempted_from_date_pattern", []),
+            "Report phải khai RÕ cột 'visit_date' được miễn mẫu date — không được im lặng")
     raw_readonly = out_dir / report["then_import"]["raw_readonly_path"]
-    dictionary = _write_dictionary(out_dir / "data_dictionary.json")
+    pseudonymized_text = _read(raw_readonly)
+    for visit_date in ("2026-07-01", "2026-07-02", "2026-07-03"):
+        _assert(visit_date in pseudonymized_text,
+                f"Cột visit_date đã khai kiểu date phải GIỮ NGUYÊN giá trị ({visit_date}), "
+                "không bị xoá như PII thật")
+    for token in ("0912345678", "0987654321", "0900000000", "c@example.com"):
+        _assert(token not in pseudonymized_text,
+                f"PII thật lẫn trong ghi chú tự do vẫn phải bị xoá dù có dictionary ({token})")
+
     clean = CLEAN.clean_dataset(
         study,
         raw_readonly,
@@ -317,11 +341,17 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert(any(item.startswith("missing_confirmation:") for item in blocked_lock["blockers"]),
             "Data lock phải nêu rõ thiếu xác nhận")
 
+    dictionary_dates = frozenset(
+        INTAKE._normalize_header(str(rule["name"]))
+        for rule in (CLEAN._load_dictionary(dictionary).get("variables") or [])
+        if isinstance(rule, dict) and rule.get("type") == "date" and rule.get("name")
+    )
     locked_path, quality = prepare_locked_g5_study(
         study,
         raw_readonly,
         exports_root=exports_root,
         repo_root=exports_root.parent,
+        extra_date_columns=dictionary_dates,
     )
     locked = json.loads(
         (out_dir / "DATA_LOCK_manifest.json").read_text(encoding="utf-8")

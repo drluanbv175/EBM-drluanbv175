@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 12,
-    "partial": 1,
+    "strong": 13,
+    "partial": 0,
     "weak": 0,
     "total": 13
   },
@@ -350,8 +350,8 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "partial",
-      "passed": 13,
+      "status": "strong",
+      "passed": 14,
       "total": 14,
       "probes": [
         {
@@ -383,8 +383,8 @@
           "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
