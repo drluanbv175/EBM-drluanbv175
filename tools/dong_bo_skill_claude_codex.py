@@ -87,6 +87,13 @@ def ensure_link(source: Path, destination: Path, apply: bool) -> LinkResult:
     junction không phải symlink nên ``is_symlink()`` trả False, và bản cũ vì thế
     coi junction đã nối là «thư mục thật» → sao lưu rồi nối lại ở MỌI lượt chạy.
     Với hook ``SessionStart`` thì đó là một bản .bak mỗi phiên mở máy.
+
+    Liên kết đã có nhưng TRỎ SAI/TREO (dangling) tự phục hồi khi ``apply=True``:
+    gỡ điểm nối cũ bằng ``LK.go`` (không đụng dữ liệu đích, chỉ tháo liên kết) rồi
+    tạo lại bằng ``LK.tao``. Thiếu nhánh này thì hook ``SessionStart`` kẹt vĩnh
+    viễn ở ``XUNG_DOT`` (mã thoát 2) mỗi lần mở máy nếu liên kết từng lệch một lần
+    — dời chỗ clone repo, OneDrive ghi đè, cài tay — vì bản thân hook không có
+    cách nào khác để tự sửa.
     """
 
     target = destination / source.name

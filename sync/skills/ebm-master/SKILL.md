@@ -37,10 +37,10 @@ Support protocol development, ethics review, data collection, SPSS workflows, re
 # Inherited Skills
 
 
-# MODULE: citation-management
+# MODULE: citation-management-kdense
 
 ---
-name: citation-management
+name: citation-management-kdense
 description: 'Quản lý trích dẫn học thuật: tìm bài trên PubMed (E-utilities miễn phí) và Google Scholar, trích xuất metadata chính xác, kiểm chứng trích dẫn, sinh BibTeX đúng chuẩn. Dùng khi cần tìm bài, xác minh thông tin trích dẫn, đổi DOI→BibTeX hoặc bảo đảm độ chính xác tài liệu tham khảo. Luôn kèm PMID/DOI.'
 allowed-tools: Read Write Edit Bash
 license: MIT License
@@ -2850,10 +2850,10 @@ Before finalizing any clinical report, verify:
 
 
 
-# MODULE: literature-review
+# MODULE: literature-review-kdense
 
 ---
-name: literature-review
+name: literature-review-kdense
 description: 'Thực hiện tổng quan y văn có hệ thống (systematic review, tổng quan, meta-analysis) bằng các CSDL học thuật MIỄN PHÍ (PubMed E-utilities, PMC, bioRxiv, medRxiv, OpenAlex, Crossref, Semantic Scholar). Dùng khi cần tổng hợp bằng chứng cho một câu hỏi lâm sàng/PICO, rà soát y văn hoặc viết phần tổng quan. Tạo tài liệu Markdown/PDF có trích dẫn đã kiểm chứng (Vancouver/APA), kèm PMID/DOI và disclaimer ''Cần bác sĩ kiểm chứng''. KHÔNG dùng API trả phí.'
 allowed-tools: Read Write Edit Bash
 license: MIT license
@@ -3573,10 +3573,10 @@ Conduct thorough, rigorous literature reviews that meet academic standards and p
 
 
 
-# MODULE: paper-lookup
+# MODULE: paper-lookup-kdense
 
 ---
-name: paper-lookup
+name: paper-lookup-kdense
 description: 'Tra cứu bài báo khoa học qua REST API MIỄN PHÍ của nhiều CSDL: PubMed, PMC (toàn văn), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Dùng khi cần tìm bài theo chủ đề, tra DOI/PMID, lấy abstract/toàn văn, tìm bản open access, đồ thị trích dẫn hoặc tìm theo tác giả. Mọi kết quả ghi rõ PMID/DOI.'
 metadata:
   version: "1.0"
@@ -3786,10 +3786,10 @@ Read the relevant reference file before making any API call.
 
 
 
-# MODULE: peer-review
+# MODULE: peer-review-kdense
 
 ---
-name: peer-review
+name: peer-review-kdense
 description: 'Bình duyệt bản thảo/đề cương theo checklist: đánh giá phương pháp, tính hợp lệ thống kê, tuân thủ chuẩn báo cáo (CONSORT/STROBE) và góp ý mang tính xây dựng. Dùng khi viết phản biện chính thức hoặc rà soát bản thảo trước khi nộp.'
 allowed-tools: Read Write Edit Bash
 license: MIT license
@@ -4375,10 +4375,10 @@ Before finalizing the review, verify:
 
 
 
-# MODULE: research-lookup
+# MODULE: research-lookup-kdense
 
 ---
-name: research-lookup
+name: research-lookup-kdense
 description: 'Tra cứu thông tin nghiên cứu hiện hành qua PubMed E-utilities (MIỄN PHÍ, không cần API key). Dùng để tìm bài báo, thu thập dữ liệu nghiên cứu, kiểm chứng thông tin khoa học cho câu hỏi lâm sàng. Đã LOẠI BỎ mọi backend trả phí (parallel.ai/Perplexity/OpenRouter). Kết quả kèm PMID/DOI và disclaimer ''Cần bác sĩ kiểm chứng''.'
 allowed-tools: Read Write Edit Bash
 license: MIT license
@@ -4506,10 +4506,10 @@ python scripts/pubmed_lookup.py "..." -o sources/research_<chu_de>.md
 
 
 
-# MODULE: scientific-writing
+# MODULE: scientific-writing-kdense
 
 ---
-name: scientific-writing
+name: scientific-writing-kdense
 description: 'Viết bản thảo khoa học theo cấu trúc IMRAD, văn xuôi liền mạch (không gạch đầu dòng), trích dẫn Vancouver/APA/AMA, tuân thủ chuẩn báo cáo (CONSORT/STROBE/PRISMA). Dùng khi viết bài báo nghiên cứu hoặc bản thảo nộp tạp chí. Quy trình 2 bước: dàn ý → văn xuôi. Trích dẫn kèm PMID/DOI.'
 allowed-tools: Read Write Edit Bash
 license: MIT license
@@ -5243,10 +5243,10 @@ Load these references as needed when working on specific aspects of scientific w
 
 
 
-# MODULE: statistical-analysis
+# MODULE: statistical-analysis-kdense
 
 ---
-name: statistical-analysis
+name: statistical-analysis-kdense
 description: 'Hướng dẫn phân tích thống kê: chọn test phù hợp với dữ liệu, kiểm tra giả định, tính cỡ mẫu (power), trình bày kết quả chuẩn APA. Dùng khi cần chọn kiểm định hoặc báo cáo thống kê cho nghiên cứu y khoa. (Để chạy mô hình cụ thể bằng code, dùng statsmodels.)'
 license: MIT license
 metadata:
@@ -5403,7 +5403,7 @@ All tests have Bayesian versions that provide:
 
 **ALWAYS check assumptions before interpreting test results.**
 
-Use the bundled `scripts/assumption_checks.py` module for automated checking. Run Python from the skill directory (`skills/statistical-analysis/`) or add `scripts/` to `sys.path`:
+Use the bundled `scripts/assumption_checks.py` module for automated checking. Run Python from the skill directory (`skills/statistical-analysis-kdense/`) or add `scripts/` to `sys.path`:
 
 ```python
 from assumption_checks import comprehensive_assumption_check

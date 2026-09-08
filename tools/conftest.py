@@ -73,6 +73,12 @@ _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
         "test_validate_catches_dangling_single_task_reference",
         "test_validate_clean",
         "test_registry_is_fail_closed_and_valid",
+        # Thiếu ở lượt khai 28/08 — cùng nguyên nhân với 3 test trên: TOOLS liệt kê
+        # 11 tool trỏ vào medical-ebm-automation/ (10) và EBM-Dashboards/ (1); trên
+        # bản sao trần validate() luôn trả về đúng 11 lỗi đó, không phụ thuộc commit
+        # nào. Đo 06/09/2026: 4 job CI của PR #1 (drluanbv175/EBM-drluanbv175) đều đỏ
+        # ở đúng test này, và cùng một lỗi tái hiện y hệt trên master (ce0d83c2).
+        "test_tools_registered",
     },
     "test_assess_agent_system.py": {
         "test_scorecard_checks_research_gate_contract_surface",

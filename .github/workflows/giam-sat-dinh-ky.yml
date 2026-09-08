@@ -1,0 +1,127 @@
+# giam-sat-dinh-ky.yml — NHỊP TIM chạy ngoài máy bác sĩ.
+#
+# VÌ SAO CÓ (05/09/2026). Đo trực tiếp: `launchctl print` cho
+# com.medicalebm.weeklysafety và com.medicalebm.monthlyupdate đều `runs = 0` —
+# chưa từng nổ vì máy không thức đúng giờ. Bản vá 13/08 (tools/tu_khoi_dong.py)
+# chuyển nhịp sang hook SessionStart, nhưng nhịp đó chỉ đập khi bác sĩ MỞ PHIÊN
+# trên máy mình. Không mở phiên hai tuần = không kiểm gì hai tuần, không ai báo.
+# Workflow này đập trên máy GitHub: đúng giờ, không cần máy bác thức, không cần CLI.
+#
+# PHẠM VI — nói rõ để «xanh ở đây» không bị đọc quá:
+#   LÀM ĐƯỢC : 14 verifier tất định trên tệp CÓ TRONG GIT + gương .codex.
+#   KHÔNG LÀM: giám sát chứng cứ thật (weekly_safety.sh / monthly_update.sh
+#              KHÔNG nằm trong git; EBM_MASTER và EBM-Dashboards bị .gitignore
+#              CỐ Ý). Việc đó vẫn thuộc máy bác sĩ — xem Routine ở HUONG-DAN.
+#
+# Thiếu secret SIBLING_REPO_TOKEN thì 3 verifier cần repo anh em tự bỏ qua,
+# 11 verifier còn lại vẫn chạy. Chạy được ngay ngày đầu, không cần cấu hình gì.
+
+name: giam-sat-dinh-ky
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"     # 07:00 thứ Hai giờ VN — nhịp TUẦN
+    - cron: "0 0 1 * *"     # 07:00 mùng 1 giờ VN  — nhịp THÁNG
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write             # để báo ĐỘNG khi đỏ, thay vì hỏng trong im lặng
+
+jobs:
+  giam-sat:
+    runs-on: ubuntu-latest
+    env:
+      # `secrets` KHÔNG nằm trong ngữ cảnh `if` của bước — phải mượn đường `env`,
+      # nếu không điều kiện luôn sai và repo anh em không bao giờ được lấy về.
+      SIBLING_TOKEN: ${{ secrets.SIBLING_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # KHÔNG có bước `pip install` — đã đo, không phải đoán. Chạy lại toàn bộ 11
+      # verifier và bước gương bằng `python3 -S` (bỏ site-packages, mô phỏng máy
+      # GitHub trần): 11/11 + gương đều xanh, 0 lỗi ModuleNotFound. Chúng chỉ dùng
+      # thư viện chuẩn cộng module anh em cùng thư mục tools/.
+      # sync_agents_to_codex.py:24 thử `tomllib` (chuẩn từ 3.11) trước rồi mới lùi về
+      # `tomli`; vì ghim 3.11 ở đây nên nhánh cần `tomli` không bao giờ chạy.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"      # SÀN KHAI BÁO trong CLAUDE.md
+
+      # Repo anh em nằm LỒNG trong repo này trên máy thật:
+      # verify_research_gate_contracts.py:32 -> REPO = ROOT / "medical-ebm-automation"
+      - name: Lấy repo anh em (nếu có token)
+        if: env.SIBLING_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          repository: drluanbv175/medical-ebm-automation
+          token: ${{ env.SIBLING_TOKEN }}
+          path: medical-ebm-automation
+
+      - name: 11 verifier chạy được trên bản sao trần
+        run: |
+          set -u; do_=0
+          for t in kiem_cau_hinh_nguoi_dung kiem_cay_lam_viec kiem_co_tat_plugin_trung \
+                   kiem_dieu_phoi kiem_o_nhiem_artifact kiem_safety_net \
+                   verify_agent_routing verify_clinical_practice_apply_gate \
+                   verify_clinical_runtime_schema_hardening \
+                   verify_hard_gate_count_consistency verify_mcp_live_sync; do
+            if timeout 300 python3 "tools/$t.py"; then echo "✅ $t"
+            else echo "🔴 $t"; do_=$((do_+1)); fi
+          done
+          echo "verifier_do=$do_" >> "$GITHUB_ENV"
+          [ "$do_" -eq 0 ]
+
+      - name: 3 verifier cần repo anh em
+        if: ${{ hashFiles('medical-ebm-automation/tools/audit_research_gates.py') != '' }}
+        run: |
+          set -u; do_=0
+          for t in verify_research_gate_contracts verify_controlled_research_automation \
+                   verify_lessons_rubric_alignment; do
+            if timeout 300 python3 "tools/$t.py"; then echo "✅ $t"
+            else echo "🔴 $t"; do_=$((do_+1)); fi
+          done
+          [ "$do_" -eq 0 ]
+
+      # `.codex/` bị .gitignore (dòng 13) — đây là SẢN PHẨM SINH, cố ý không track,
+      # được tái tạo ở session-start.sh:114 và trong kiem-tinh-da-nen.yml:76. Bản sao
+      # trần có 0 tệp là ĐÚNG TRẠNG THÁI, không phải lỗi. Nên KHÔNG kiểm bằng
+      # `git diff -- .codex`: trên đường dẫn bị ignore, lệnh đó luôn báo "không lệch"
+      # và cổng này sẽ xanh giả mãi mãi. Thứ đáng kiểm là bộ sinh có chạy nổi không
+      # và gương sinh ra có qua được cổng sức khoẻ không.
+      - name: Gương .codex sinh được và qua cổng sức khoẻ
+        run: |
+          python3 tools/sync_agents_to_codex.py
+          python3 tools/check_claude_codex_sync_health.py
+          n=$(ls .codex/agents 2>/dev/null | wc -l)
+          [ "$n" -gt 0 ] || { echo "🔴 Bộ sinh chạy xong nhưng .codex/agents rỗng"; exit 1; }
+          echo "✅ Gương .codex: $n tệp, qua cổng sức khoẻ"
+
+      - name: Báo động khi đỏ
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Nhãn `giam-sat` KHÔNG tồn tại sẵn trong repo (đã kiểm 05/09/2026 qua API).
+          # `gh issue create --label` với nhãn chưa có sẽ LỖI — tức là đúng lúc giám sát
+          # đỏ thì chính bước báo động cũng chết, và bác sĩ không nhận được gì. `--force`
+          # làm lệnh này chạy được cả lần đầu lẫn các lần sau.
+          gh label create giam-sat --force \
+            --description "Nhịp giám sát định kỳ" --color B60205
+          CU=$(gh issue list --label giam-sat --state open --limit 1 \
+                 --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$CU" ]; then
+            gh issue comment "$CU" --body "Lượt chạy $(date +%d/%m/%Y) vẫn đỏ. Nhật ký: $URL"
+            exit 0
+          fi
+          {
+            echo "Nhịp giám sát định kỳ thất bại. Nhật ký: $URL"
+            echo
+            echo "Đây là chốt TẤT ĐỊNH trên tệp có trong git — KHÔNG gồm giám sát"
+            echo "chứng cứ thật (dữ liệu nằm ngoài git, trên máy bác sĩ)."
+            echo
+            echo "Cần bác sĩ kiểm chứng."
+          } > /tmp/than.md
+          gh issue create --title "🔴 Giám sát định kỳ đỏ — $(date +%d/%m/%Y)" \
+            --label giam-sat --body-file /tmp/than.md
