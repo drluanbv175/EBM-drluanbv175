@@ -49,6 +49,7 @@ class Khoa:
         self.duong = Path(duong_dan)
         self.han_giay = han_giay
         self._cua_minh = False
+        self._token = None  # (pid, epoch) đã ghi lúc giành — dùng để tự-xác-nhận trước khi xoá
 
     # ------------------------------------------------------------------
     def _doc(self) -> dict:
@@ -68,11 +69,13 @@ class Khoa:
         lúc chỉ một bên thắng; bên thua chỉ được chiếm lại khi khoá đã QUÁ HẠN.
         """
         self.duong.parent.mkdir(parents=True, exist_ok=True)
+        pid = os.getpid()
+        epoch = time.time()
         noi_dung = json.dumps({
-            "pid": os.getpid(),
+            "pid": pid,
             "host": socket.gethostname(),
             "luc": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "epoch": time.time(),
+            "epoch": epoch,
         })
         try:
             fd = os.open(self.duong, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -85,20 +88,36 @@ class Khoa:
             # thu hẹp cửa sổ đua giữa hai bên cùng phát hiện mồ côi).
             self.duong.write_text(noi_dung, encoding="utf-8")
             self._cua_minh = True
+            self._token = (pid, epoch)
             return True
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(noi_dung)
         self._cua_minh = True
+        self._token = (pid, epoch)
         return True
 
     def tra(self) -> None:
-        """Trả khoá — chỉ xoá khi chính mình đang giữ (không phá khoá người khác)."""
+        """Trả khoá — chỉ xoá khi chính mình đang giữ (không phá khoá người khác).
+
+        Tự xác nhận nội dung TRÊN ĐĨA vẫn đúng token đã ghi lúc giành trước khi
+        unlink — không tin suông cờ `_cua_minh` trong bộ nhớ. Lý do: nếu tiến
+        trình này giữ khoá QUÁ han_giay (vd một bước B4 chậm hơn dự kiến), một
+        tiến trình khác có thể đã coi khoá là mồ côi và chiếm lại — lúc đó
+        unlink vô điều kiện sẽ xoá NHẦM khoá của bên đang giữ hợp lệ, đúng thứ
+        module này sinh ra để ngăn (BH: tự-xác-nhận trước-xoá, 2026-09-08)."""
         if self._cua_minh:
             try:
+                if self._token is not None:
+                    hien_tai = self._doc()
+                    if (hien_tai.get("pid"), hien_tai.get("epoch")) != self._token:
+                        self._cua_minh = False
+                        self._token = None
+                        return
                 self.duong.unlink()
             except OSError:
                 pass
             self._cua_minh = False
+            self._token = None
 
     # ------------------------------------------------------------------
     def __enter__(self) -> "Khoa":
@@ -154,6 +173,26 @@ def _self_test() -> int:
     except KhoaBanRon:
         print("✓ context manager nổ KhoaBanRon khi bận")
     k4.tra()
+
+    # Tự-xác-nhận trước-xoá: A giữ khoá quá hạn (mô phỏng bước chậm), B chiếm
+    # lại đúng thiết kế mồ côi — A gọi tra() SAU đó KHÔNG được xoá khoá của B.
+    k5 = Khoa(p)
+    assert k5.gianh(), "k5 giành ban đầu phải được"
+    gia = json.loads(p.read_text(encoding="utf-8"))
+    gia["epoch"] = time.time() - 31 * 60  # giả lập k5 đã giữ quá 31 phút
+    p.write_text(json.dumps(gia), encoding="utf-8")
+    k6 = Khoa(p)
+    assert k6.gianh(), "k6 phải chiếm lại được khoá của k5 (đã quá hạn)"
+    token_k6 = k6._token
+    k5.tra()  # k5 KHÔNG còn biết mình đã bị chiếm lại — tra() phải tự nhận ra
+    con = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    if con is not None and (con.get("pid"), con.get("epoch")) == token_k6:
+        print("✓ tra() của khoá đã-bị-chiếm-lại KHÔNG xoá khoá hiện hành của bên khác")
+    else:
+        print("✗ tra() của khoá đã-bị-chiếm-lại đã XOÁ/GHI ĐÈ NHẦM khoá của bên khác — SAI")
+        loi += 1
+    k6.tra()
+    assert not p.exists(), "k6 tự trả khoá của chính mình phải xoá file"
 
     print("🟢 lock self-test ĐẠT" if not loi else f"🔴 {loi} lỗi")
     return 1 if loi else 0
