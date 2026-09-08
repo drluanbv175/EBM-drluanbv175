@@ -3866,10 +3866,21 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         P = Path(td) / "du-an"
         home = Path(td) / "home"
         shim = Path(td) / "shim"
-        for d in (P / "sync/skills/skill-thu", P / "tools", home, shim):
+        for d in (P / "sync/skills/skill-thu", P / "tools", P / ".claude/hooks", home, shim):
             d.mkdir(parents=True)
         (P / "sync/skills/skill-thu/SKILL.md").write_text(
             "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
+        # VÁ 08/09/2026 (BH99): hook nay TỰ ĐỊNH VỊ qua BASH_SOURCE của CHÍNH NÓ trước
+        # khi lùi về CLAUDE_PROJECT_DIR/$PWD — nên phải chép CHÍNH file hook thật vào
+        # ĐÚNG vị trí .claude/hooks/ bên trong cây giả `P`, không được gọi thẳng bản ở
+        # REPO thật nữa. Gọi bản ở REPO thật (như trước 08/09) khiến self-location
+        # nhận nhầm REPO thật là gốc (vì REPO thật CŨNG có đúng file này ở đúng vị
+        # trí đó) ⇒ hook `cd` sang REPO thật thay vì cây giả `P`, đọc nhầm
+        # tools/sync_agents_to_codex.py THẬT thay vì bản stub — chốt báo sai "hook
+        # không sinh mirror" dù hook hoàn toàn đúng, chỉ là fixture lỗi thời.
+        hook = P / ".claude/hooks/session-start.sh"
+        shutil.copy2(REPO / ".claude/hooks/session-start.sh", hook)
+        hook.chmod(0o755)
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
         shutil.copy2(REPO / "tools/kiem_cau_hinh_nguoi_dung.py", P / "tools/kiem_cau_hinh_nguoi_dung.py")
         # 02/09/2026 — kiem_cau_hinh_nguoi_dung nay import `doc_settings` (đọc gộp
