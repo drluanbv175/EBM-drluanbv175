@@ -21,7 +21,7 @@ from .plugin_ownership import PluginOwnershipRegistry
 from .registry import Registry
 from .signals import SIGNAL_CUES, Signals, detect as detect_signals
 from .tools_registry import ToolRegistry
-from .worker_inventory import WorkerInventory
+from .worker_inventory import LY_DO_CHUA_CAI, WorkerInventory
 
 # Cổng cho VIỆC LẺ (agent đơn phát ra khuyến cáo / vượt cổng cứng)
 GATE_HINTS: dict[str, str] = {
@@ -329,7 +329,18 @@ class Orchestrator:
         if check_runtime:
             for availability in self.worker_inventory.audit(self.plugin_ownership):
                 if not availability.available:
-                    warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
+                    if availability.reason == LY_DO_CHUA_CAI:
+                        # ⚪ KHÔNG phải lỗi thật — plugin third-party chưa cài trên MÁY
+                        # ĐANG CHẠY, khác binding treo/cấu hình sai. Cùng phân loại đã
+                        # dùng ở verify_plugin_orchestration.py (BH08/BH85): gộp chung
+                        # vào `warns` không tiền tố sẽ biến "chưa biết/chưa cài" thành
+                        # "có vấn đề" — đúng anti-pattern BH08 đã vá nhiều lần trong repo
+                        # này. Tiền tố ⚪ để caller (run_orchestrator.py --validate) tách
+                        # khỏi quyết định exit-code mà KHÔNG mất khả năng hiển thị.
+                        warns.append(
+                            f"⚪ worker binding chưa kiểm được: {availability.worker} — {availability.reason}")
+                    else:
+                        warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
         warns += self.knowledge.verify_against_ssot()
         return warns
 

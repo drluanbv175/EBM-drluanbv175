@@ -109,6 +109,35 @@ class TestOrchestration(unittest.TestCase):
             orchestrator_mod.REROUTE_DEFAULT.update(orig_reroute)
         self.assertEqual(self.orch.validate(), [], "phải sạch lại sau khi khôi phục")
 
+    def test_validate_check_runtime_tach_chua_cai_khoi_loi_that(self):
+        """Regression 08/09/2026: validate(check_runtime=True) từng gộp «plugin chưa cài
+        trên máy này» (LY_DO_CHUA_CAI) chung với binding treo thật vào MỘT danh sách
+        warns không phân biệt — khiến `run_orchestrator.py --validate` (return 0 if not
+        warns else 1) báo FAIL vĩnh viễn trên bất kỳ máy nào thiếu plugin third-party
+        (đo thật: phiên cloud thiếu bio-research:*), dù điều phối ⇄ registry của CHÍNH
+        kho này hoàn toàn sạch. Cùng phân loại ⚪/lỗi thật mà verify_plugin_orchestration.py
+        đã áp dụng (BH08/BH85) — item LY_DO_CHUA_CAI phải mang tiền tố "⚪ " để caller
+        tách được, item lý do khác thì KHÔNG được mang tiền tố đó."""
+        from orchestrator.worker_inventory import LY_DO_CHUA_CAI, LY_DO_THIEU_SKILL, WorkerAvailability
+
+        fake = [
+            WorkerAvailability("provA:unitA", False, reason=LY_DO_CHUA_CAI),
+            WorkerAvailability("provB:unitB", False, reason=LY_DO_THIEU_SKILL),
+        ]
+        orig_audit = self.orch.worker_inventory.audit
+        self.orch.worker_inventory.audit = lambda *_a, **_kw: fake
+        try:
+            warns = self.orch.validate(check_runtime=True)
+        finally:
+            self.orch.worker_inventory.audit = orig_audit
+
+        chua_cai = [w for w in warns if w.startswith("⚪")]
+        loi_that = [w for w in warns if not w.startswith("⚪")]
+        self.assertTrue(any("provA:unitA" in w for w in chua_cai),
+                         f"LY_DO_CHUA_CAI phải mang tiền tố ⚪: {warns}")
+        self.assertTrue(any("provB:unitB" in w for w in loi_that),
+                         f"lý do KHÁC LY_DO_CHUA_CAI không được mang tiền tố ⚪: {warns}")
+
     def test_clinical_stops_at_gate_A_and_B(self):
         s = self.orch.handle("Tôi có bệnh nhân nam 68, ĐTĐ2, thêm thuốc gì?", persist=False)
         self.assertEqual(s.kind, "clinical_case")

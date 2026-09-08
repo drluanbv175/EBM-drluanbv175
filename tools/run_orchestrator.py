@@ -145,12 +145,26 @@ def main() -> int:
 
     if args.validate:
         warns = orch.validate(check_runtime=True)
+        # ⚪ = "plugin third-party chưa cài trên máy đang chạy" (LY_DO_CHUA_CAI trong
+        # worker_inventory.py) — KHÔNG phải tham chiếu treo/binding sai, cùng phân loại
+        # verify_plugin_orchestration.py đã dùng (BH08/BH85). Trước bản vá này, mọi mục
+        # trong `warns` — kể cả ⚪ — đều làm exit code = 1, nên máy KHÔNG cài đủ plugin
+        # third-party (ví dụ phiên cloud thiếu bio-research:*) không bao giờ đạt được
+        # "sạch", dù điều phối ⇄ registry của CHÍNH kho này không có gì treo thật.
+        loi_that = [w for w in warns if not w.startswith("⚪")]
+        chua_cai = [w for w in warns if w.startswith("⚪")]
         if args.json:
-            print(json.dumps({"ok": not warns, "warnings": warns}, ensure_ascii=False, indent=2))
+            print(json.dumps({"ok": not loi_that, "warnings": loi_that, "chua_cai": chua_cai},
+                              ensure_ascii=False, indent=2))
         else:
-            print("✅ Điều phối ⇄ registry SẠCH — không tham chiếu treo." if not warns
-                  else "⚠ CẢNH BÁO:\n" + "\n".join("  - " + w for w in warns))
-        return 0 if not warns else 1
+            if not warns:
+                print("✅ Điều phối ⇄ registry SẠCH — không tham chiếu treo.")
+            else:
+                if loi_that:
+                    print("⚠ CẢNH BÁO:\n" + "\n".join("  - " + w for w in loi_that))
+                if chua_cai:
+                    print("\n".join("  " + w for w in chua_cai))
+        return 0 if not loi_that else 1
 
     if args.list:
         ids = ContextStore().list_ids()
