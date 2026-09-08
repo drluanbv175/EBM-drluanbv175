@@ -1,43 +1,29 @@
 {
  "9500320": {
-  "status": "retracted",
-  "retraction_notice": {
-   "pmid": "20137807",
-   "citation": "Lancet. 2010 Feb 6;375(9713):445. doi: 10.1016/S0140-6736(10)60175-4."
-  },
+  "status": "unknown_mock_or_no_email",
+  "reason": "USE_MOCK_SOURCES=true — KHÔNG tra cứu PubMed thật, không được coi là 'ok' | dự phòng Europe PMC cũng KHÔNG kết luận được: USE_MOCK_SOURCES=true — KHÔNG tra cứu Europe PMC thật, không được coi là 'ok' | CHƯA tải nền ngoại tuyến — chạy `python tools/tai_retraction_watch.py` để kiểm được mà không cần mạng/khoá",
   "sources_tried": [
-   "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
-  "source": "pubmed",
-  "retraction_watch": {
-   "nature": "Retraction",
-   "retraction_date": "2/6/2010 0:00",
-   "reason": "Falsification/Fabrication of Data;Investigation by Company/Institution;Investigation by Third Party;Lack of Approval from Company/Institution;Lack of IRB/IACUC Approval and/or Compliance;Manipulation of Results;Upgrade/Update of Prior Notice(s);"
-  }
+  "source": null
  },
  "30267080": {
-  "status": "retracted",
-  "nature": "Retraction",
-  "retraction_date": "4/25/2019 0:00",
-  "reason": "Error in Data;Retract and Replace;",
-  "journal": "JAMA Oncology",
-  "notice_pmid": "31021386",
-  "notice_doi": "10.1001/jamaoncol.2019.0576",
+  "status": "unknown_mock_or_no_email",
+  "reason": "USE_MOCK_SOURCES=true — KHÔNG tra cứu PubMed thật, không được coi là 'ok' | dự phòng Europe PMC cũng KHÔNG kết luận được: USE_MOCK_SOURCES=true — KHÔNG tra cứu Europe PMC thật, không được coi là 'ok' | CHƯA tải nền ngoại tuyến — chạy `python tools/tai_retraction_watch.py` để kiểm được mà không cần mạng/khoá",
   "sources_tried": [
-   "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
-  "source": "retraction_watch",
-  "retract_and_replace": true
+  "source": null
  },
  "99999999": {
-  "status": "unresolved",
-  "reason": "PubMed không trả về bản ghi cho PMID này trong lô truy vấn (PMID có thể sai/không tồn tại, HOẶC lỗi tầng API khiến cả lô bị bỏ sót — nghi lỗi API nếu NHIỀU PMID cùng lô đều 'unresolved')",
+  "status": "unknown_mock_or_no_email",
+  "reason": "USE_MOCK_SOURCES=true — KHÔNG tra cứu PubMed thật, không được coi là 'ok' | dự phòng Europe PMC cũng KHÔNG kết luận được: USE_MOCK_SOURCES=true — KHÔNG tra cứu Europe PMC thật, không được coi là 'ok' | CHƯA tải nền ngoại tuyến — chạy `python tools/tai_retraction_watch.py` để kiểm được mà không cần mạng/khoá",
   "sources_tried": [
-   "retraction_watch",
-   "pubmed"
+   "pubmed",
+   "europepmc"
   ],
-  "source": "pubmed"
+  "source": null
  }
 }

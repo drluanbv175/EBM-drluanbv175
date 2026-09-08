@@ -34,6 +34,20 @@ GOC = Path(__file__).resolve().parents[2]
 NEG = GOC / "quality" / "eval" / "negative"
 PY = sys.executable
 
+# VÁ 08/09/2026: `GOC / "medical-ebm-automation"` giả định LỒNG — sai trên phiên
+# cloud (anh em của GOC, không phải thư mục con). Dùng duong_goc() — cùng bản vá
+# 07/09/2026 đã áp cho tools/luu_tru_kho.py, provenance_ledger.py, sources_health.py,
+# doi_chieu_openalex.py, tools/eval/run_eval.py — file này (quality/eval/run_eval.py,
+# TÊN GIỐNG nhưng KHÁC đường dẫn với tools/eval/run_eval.py) bị bỏ sót khỏi đợt đó,
+# nên `from app.sources.retraction_chain import RetractionChain` crash
+# ModuleNotFoundError trên MỌI lần chạy máy chấm gold-set trên phiên cloud.
+_sp_re = importlib.util.spec_from_file_location(
+    "_bst_re", GOC / "tools" / "ban_sao_tran.py")
+_bst_re = importlib.util.module_from_spec(_sp_re)
+_sp_re.loader.exec_module(_bst_re)
+_MEA_GOC = _bst_re.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
+_DASH_GOC = _bst_re.duong_goc("EBM-Dashboards", GOC)  # None nếu genuinely-absent (cloud)
+
 
 def _nap(duong: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong)
@@ -75,7 +89,7 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     _ghi_neg("canary-10-loi-gai", r.stdout[-3000:])
 
     # ── Khối 2: RÚT BÀI ngoại tuyến — hai MỨC khác nhau phải ra hai nhãn ─────
-    sys.path.insert(0, str(GOC / "medical-ebm-automation"))
+    sys.path.insert(0, str(_MEA_GOC))
     from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
     chain = RetractionChain()
     kq = chain.check(["9500320", "30267080", "99999999"])
@@ -117,14 +131,20 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     _ghi_neg("pii-email-gai", json.dumps(kq_pii["chan"], ensure_ascii=False))
 
     # ── Khối 4: MÃ THOÁT + MÂU THUẪN + ORCHESTRATOR ──────────────────────────
-    vd = _nap(GOC / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_eval")
-    import contextlib
-    import io
-    with contextlib.redirect_stdout(io.StringIO()):
-        rc_mang = vd.report(["x (lỗi mạng: timeout)"], [], [])
-        rc_noi_dung = vd.report(["ITEM-01 apply trên chứng cứ yếu"], [], [])
-    ca(4, "cổng tách «chưa xác minh» (exit 2) khỏi «gói sai» (exit 1) — BH48",
-       rc_mang == 2 and rc_noi_dung == 1)
+    duong_vd = _bst_re.duong_cong_cu_pipeline("verify_dashboard.py", GOC)
+    if duong_vd is None:
+        ca(4, "cổng tách «chưa xác minh» (exit 2) khỏi «gói sai» (exit 1) — BH48", None,
+           "CHƯA CÓ NGUYÊN LIỆU — verify_dashboard.py không có ở EBM-Dashboards/tools/ "
+           "lẫn bản vendor sync/skills/cap-nhat-chung-cu-y-khoa/tools/")
+    else:
+        vd = _nap(duong_vd, "vd_eval")
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc_mang = vd.report(["x (lỗi mạng: timeout)"], [], [])
+            rc_noi_dung = vd.report(["ITEM-01 apply trên chứng cứ yếu"], [], [])
+        ca(4, "cổng tách «chưa xác minh» (exit 2) khỏi «gói sai» (exit 1) — BH48",
+           rc_mang == 2 and rc_noi_dung == 1)
 
     r3 = subprocess.run([PY, str(GOC / "tools" / "dang_ky_chu_de.py")],
                         capture_output=True, text=True, cwd=GOC)
@@ -132,27 +152,46 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
        r3.returncode in (0, 1) and "lát cắt" in r3.stdout.lower() or "mâu thuẫn" in r3.stdout.lower())
     _ghi_neg("mau-thuan-quet-that", r3.stdout[-2000:])
 
-    p1 = subprocess.run([PY, str(GOC / "ops" / "orchestrator.py"),
-                         "--topic", "Suy tim", "--dry-run"],
-                        capture_output=True, text=True, cwd=GOC).stdout
-    p2 = subprocess.run([PY, str(GOC / "ops" / "orchestrator.py"),
-                         "--topic", "Suy tim", "--dry-run"],
-                        capture_output=True, text=True, cwd=GOC).stdout
-    khop = [ln for ln in p1.splitlines() if "▸" in ln] == \
-           [ln for ln in p2.splitlines() if "▸" in ln]
-    ca(7, "orchestrator dry-run idempotent + chạy TỪNG lát cắt", khop and "[SuyTim_TongHop]" in p1)
+    if _DASH_GOC is None or not (_DASH_GOC / "WebDashboard_EBM_VanDeCuThe_SuyTim_TongHop_20260609.html").exists():
+        # `ops/orchestrator.py::_dashboards_cua_chu_de()` glob trên EBM-Dashboards —
+        # CHƯA CÓ NGUYÊN LIỆU trên checkout không có cây dữ liệu này (cloud), khác
+        # hẳn "orchestrator hỏng"; đếm dòng ▸ rỗng là kết quả ĐÚNG của input rỗng.
+        ca(7, "orchestrator dry-run idempotent + chạy TỪNG lát cắt", None,
+           "CHƯA CÓ NGUYÊN LIỆU — EBM-Dashboards/ vắng mặt trên checkout này")
+    else:
+        p1 = subprocess.run([PY, str(GOC / "ops" / "orchestrator.py"),
+                             "--topic", "Suy tim", "--dry-run"],
+                            capture_output=True, text=True, cwd=GOC).stdout
+        p2 = subprocess.run([PY, str(GOC / "ops" / "orchestrator.py"),
+                             "--topic", "Suy tim", "--dry-run"],
+                            capture_output=True, text=True, cwd=GOC).stdout
+        khop = [ln for ln in p1.splitlines() if "▸" in ln] == \
+               [ln for ln in p2.splitlines() if "▸" in ln]
+        ca(7, "orchestrator dry-run idempotent + chạy TỪNG lát cắt", khop and "[SuyTim_TongHop]" in p1)
 
     # ── Khối 5: AN TOÀN THUỐC (cấu hình + dây nối) ───────────────────────────
-    flags = json.loads((GOC / "EBM-Dashboards" / "data" / "drug_flags.json")
-                       .read_text(encoding="utf-8"))
-    goi = json.dumps(flags, ensure_ascii=False).lower()
-    co_aware = "aware" in goi and "azithromycin" in goi
-    ca(11, "AWaRe: azithromycin mang cờ Watch trong drug_flags + consumer tồn tại",
-       co_aware and (GOC / "EBM-Dashboards" / "tools" / "drug_safety_scan.py").exists(),
-       "kiểm CẤU HÌNH + dây nối — hành vi đầy đủ chạy trong weekly_safety")
-    co_beers = "beers" in goi
-    ca(10, "Beers/STOPP hiện diện trong lớp cờ an toàn", co_beers if co_beers else None,
-       "" if co_beers else "CHƯA có mục beers trong drug_flags — khoảng trống ghi nhận")
+    # duong_cong_cu_pipeline() chỉ phủ tools/ — drug_flags.json nằm ở data/, nên
+    # tự dò thêm nhánh vendor data/ tại đây (cùng nguyên tắc, phạm vi hẹp không
+    # đáng tổng quát hoá vào ban_sao_tran.py cho một file dùng chung).
+    duong_flags = (_DASH_GOC / "data" / "drug_flags.json") if _DASH_GOC else None
+    if duong_flags is None or not duong_flags.exists():
+        duong_flags = GOC / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "data" / "drug_flags.json"
+    if not duong_flags.exists():
+        ca(11, "AWaRe: azithromycin mang cờ Watch trong drug_flags + consumer tồn tại", None,
+           "CHƯA CÓ NGUYÊN LIỆU — drug_flags.json không có ở EBM-Dashboards/data/ lẫn bản vendor")
+        ca(10, "Beers/STOPP hiện diện trong lớp cờ an toàn", None,
+           "CHƯA CÓ NGUYÊN LIỆU — cùng file drug_flags.json ở trên")
+    else:
+        flags = json.loads(duong_flags.read_text(encoding="utf-8"))
+        goi = json.dumps(flags, ensure_ascii=False).lower()
+        co_aware = "aware" in goi and "azithromycin" in goi
+        duong_dss = _bst_re.duong_cong_cu_pipeline("drug_safety_scan.py", GOC)
+        ca(11, "AWaRe: azithromycin mang cờ Watch trong drug_flags + consumer tồn tại",
+           co_aware and duong_dss is not None,
+           "kiểm CẤU HÌNH + dây nối — hành vi đầy đủ chạy trong weekly_safety")
+        co_beers = "beers" in goi
+        ca(10, "Beers/STOPP hiện diện trong lớp cờ an toàn", co_beers if co_beers else None,
+           "" if co_beers else "CHƯA có mục beers trong drug_flags — khoảng trống ghi nhận")
 
     # ── Khối 6: nhóm CẦN MẠNG / CHƯA TỰ ĐỘNG — khai đúng trạng thái ─────────
     ca(1, "guideline mới thay khuyến cáo (kiem_chung_cu_vuot_qua — quét quý)", None,

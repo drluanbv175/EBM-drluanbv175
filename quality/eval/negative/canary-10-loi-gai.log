@@ -7,11 +7,15 @@
   ✓ gradeLevel khác 'na' không khai gradeBy → CẢNH BÁO
   ✓ khai provenanceUnknown KHÔNG tắt luật an toàn cấp item
   ✓ hai bản cùng chủ đề nói ngược nhau → PHÁT HIỆN
-  ✓ ứng viên PMID 30267080 (đã rút) → BẮT ở khâu nhận
+  ✗ ứng viên PMID 30267080 (đã rút) → BẮT ở khâu nhận
+      → trạng thái=chua_kiem
   ✓ hợp đồng item: máy tự APPROVED + tự gán mức → BẮT
   ✓ khoá quét: tiến trình thứ hai bị chặn rõ ràng
   ✓ PMID không tra được → 'chua_kiem', KHÔNG mặc định 'ok'
+  ✓ làn preprint → chua_binh_duyet=True + tầng riêng
+  ✓ ứng viên NCT trong báo cáo: không «mới vào PubMed», không PMID-rỗng
+  ✓ rút-và-thay khai ĐỦ → cảnh báo; khai THIẾU (apply) → vẫn chặn
+  ✓ ed1: ký khoá riêng tạm → verify CHỈ bằng khoá công; sửa nội dung → trượt
 ----------------------------------------------------------------------
-🟢 10/10 lỗi gài đều bị bắt.
-   Canary kiểm DÂY CHUYỀN CÔNG CỤ — KHÔNG chứng minh agent đã GỌI cổng lúc chạy
-   thật. Cần bác sĩ kiểm chứng.
+🔴 1/14 lỗi gài KHÔNG bị bắt — đây là lỗ hổng THẬT, không phải
+   chuyện câu chữ. Sửa đúng chỗ đó trước khi tin dây chuyền.
