@@ -119,6 +119,39 @@ class TestOrchestration(unittest.TestCase):
             orchestrator_mod.REROUTE_DEFAULT.update(orig_reroute)
         self.assertEqual(self.orch.validate(), [], "phải sạch lại sau khi khôi phục")
 
+    def test_validate_runtime_ignores_benign_not_installed_plugin(self):
+        # Regression 2026-09-10: validate(check_runtime=True) trộn lẫn "plugin chưa cài
+        # trên máy này" (LY_DO_CHUA_CAI — theo đúng docstring của worker_inventory.py là
+        # THIẾU NGUYÊN LIỆU, không phải binding treo thật) với lỗi wiring thật, khiến
+        # `run_orchestrator.py --validate` trả mã thoát 1 chỉ vì một plugin chưa cài —
+        # đúng họ lỗi BH85/BH08 đã vá ở verify_plugin_orchestration.py::phan_loai_binding()
+        # nhưng chưa từng được áp cho chính Orchestrator.validate().
+        from orchestrator.worker_inventory import LY_DO_CHUA_CAI, LY_DO_THIEU_SKILL, WorkerAvailability
+
+        def fake_audit(_plugin_ownership):
+            return [
+                WorkerAvailability(worker="bio-research:scvi-tools", available=False,
+                                    reason=LY_DO_CHUA_CAI),
+                WorkerAvailability(worker="ars:treo-that", available=False,
+                                    reason=LY_DO_THIEU_SKILL),
+            ]
+
+        orig_audit = self.orch.worker_inventory.audit
+        self.orch.worker_inventory.audit = fake_audit
+        try:
+            warns = self.orch.validate(check_runtime=True)
+        finally:
+            self.orch.worker_inventory.audit = orig_audit
+
+        self.assertFalse(
+            any("bio-research:scvi-tools" in w for w in warns),
+            "plugin chưa cài trên máy này (LY_DO_CHUA_CAI) không được làm validate() FAIL",
+        )
+        self.assertTrue(
+            any("ars:treo-that" in w for w in warns),
+            "binding treo thật (LY_DO_THIEU_SKILL) vẫn phải bị bắt",
+        )
+
     def test_clinical_stops_at_gate_A_and_B(self):
         s = self.orch.handle("Tôi có bệnh nhân nam 68, ĐTĐ2, thêm thuốc gì?", persist=False)
         self.assertEqual(s.kind, "clinical_case")

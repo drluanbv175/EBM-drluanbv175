@@ -21,7 +21,7 @@ from .plugin_ownership import PluginOwnershipRegistry
 from .registry import Registry
 from .signals import SIGNAL_CUES, Signals, detect as detect_signals
 from .tools_registry import ToolRegistry
-from .worker_inventory import WorkerInventory
+from .worker_inventory import LY_DO_CHUA_CAI, WorkerInventory
 
 # Cổng cho VIỆC LẺ (agent đơn phát ra khuyến cáo / vượt cổng cứng)
 GATE_HINTS: dict[str, str] = {
@@ -382,8 +382,12 @@ class Orchestrator:
         warns += self.plugin_ownership.validate(set(self.registry.agents))
         warns += self.tools.validate()
         if check_runtime:
+            # "Plugin chưa cài trên máy này" (LY_DO_CHUA_CAI) là THIẾU NGUYÊN LIỆU, không
+            # phải binding treo thật — cùng phân biệt đã áp ở verify_plugin_orchestration.py
+            # ::phan_loai_binding() (BH85/BH08). Gộp chung sẽ làm validate() (và mã thoát của
+            # `run_orchestrator.py --validate`) FAIL chỉ vì một plugin không cài trên máy này.
             for availability in self.worker_inventory.audit(self.plugin_ownership):
-                if not availability.available:
+                if not availability.available and availability.reason != LY_DO_CHUA_CAI:
                     warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
         warns += self.knowledge.verify_against_ssot()
         return warns
