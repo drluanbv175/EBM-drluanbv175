@@ -5,6 +5,9 @@ description: Bình duyệt bản thảo khoa học có CẤU TRÚC — đánh gi
 
 # Skill: Bình duyệt bản thảo (peer-review)
 
+<!-- EBM-VN-GUARD -->
+> **⚕️ Bản điều chỉnh cho bác sĩ EBM ngoại trú (Việt Nam).** Skill gốc của K-Dense Inc. đã được chỉnh để phù hợp quy ước trong `CLAUDE.md` của người dùng.
+
 Dùng cho `binh-duyet`. Bình duyệt đối kháng, xây dựng, có bằng chứng.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

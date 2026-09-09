@@ -5,6 +5,9 @@ description: Tra cứu NGHIÊN CỨU & ĐĂNG KÝ THỬ NGHIỆM qua nguồn m�
 
 # Skill: Tra cứu nghiên cứu & đăng ký thử nghiệm (research-lookup)
 
+<!-- EBM-VN-GUARD -->
+**QUY TẮC EBM BẮT BUỘC:** đầu ra tiếng Việt; **KHÔNG bịa mã đăng ký/NCT/PROSPERO ID** — không tra ra thì ghi rõ; chỉ dùng nguồn mở; kèm disclaimer "⚠️ Cần bác sĩ kiểm chứng"; **KHÔNG lưu PII**.
+
 Dùng cho `thu-thu-tai-lieu`, `tra-cuu-chung-cu`. Bổ trợ `paper-lookup` (bài báo) — skill này lo phần **đăng ký nghiên cứu**.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

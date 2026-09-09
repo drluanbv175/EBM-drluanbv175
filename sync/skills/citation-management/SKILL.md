@@ -5,6 +5,9 @@ description: Quản lý & kiểm chứng trích dẫn học thuật — phân gi
 
 # Skill: Quản lý & kiểm chứng trích dẫn (citation-management)
 
+<!-- EBM-VN-GUARD -->
+**QUY TẮC EBM BẮT BUỘC:** đầu ra tiếng Việt; **KHÔNG bịa trích dẫn** — PMID/DOI chưa phân giải được thì ghi rõ, không "sửa cho hợp lý"; chỉ dùng nguồn/API miễn phí; kèm disclaimer "⚠️ Cần bác sĩ kiểm chứng"; **KHÔNG lưu PII**.
+
 Dùng cho `kiem-chung-trich-dan`, `binh-duyet`, `thu-thu-tai-lieu`, `tong-quan-y-van`. Cổng liêm chính chống trích dẫn ma.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

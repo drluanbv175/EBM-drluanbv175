@@ -5,6 +5,9 @@ description: Quy trình TỔNG QUAN Y VĂN HỆ THỐNG theo PRISMA 2020 — câ
 
 # Skill: Tổng quan y văn hệ thống (literature-review)
 
+<!-- EBM-VN-GUARD -->
+> **⚕️ Bản điều chỉnh cho bác sĩ EBM ngoại trú (Việt Nam).** Skill gốc của K-Dense Inc. đã được chỉnh để phù hợp quy ước trong `CLAUDE.md` của người dùng.
+
 Dùng cho `tong-quan-y-van`, `thu-thu-tai-lieu`. Khung chuẩn **PRISMA 2020**.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

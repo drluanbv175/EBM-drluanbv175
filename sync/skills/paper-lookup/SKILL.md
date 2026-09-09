@@ -5,6 +5,9 @@ description: Tra cứu bài báo y khoa qua API MIỄN PHÍ (PubMed E-utilities,
 
 # Skill: Tra cứu bài báo qua API miễn phí (paper-lookup)
 
+<!-- EBM-VN-GUARD -->
+**QUY TẮC EBM BẮT BUỘC:** đầu ra tiếng Việt; **KHÔNG bịa bài/PMID/DOI** — không tra ra thì nói rõ, không đoán; chỉ dùng API miễn phí; kèm disclaimer "⚠️ Cần bác sĩ kiểm chứng"; **KHÔNG lưu PII**.
+
 Dùng cho `tra-cuu-chung-cu`, `thu-thu-tai-lieu`, `tong-quan-y-van`, `kiem-chung-trich-dan`.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

@@ -5,6 +5,9 @@ description: Viết bản thảo khoa học y khoa theo cấu trúc IMRAD, văn 
 
 # Skill: Viết bản thảo khoa học (scientific-writing)
 
+<!-- EBM-VN-GUARD -->
+**QUY TẮC EBM BẮT BUỘC:** đầu ra tiếng Việt; **KHÔNG bịa trích dẫn/số liệu** — mỗi khẳng định kèm PMID/DOI, số chưa có ghi `[CẦN BỔ SUNG]`; kèm disclaimer "⚠️ Cần bác sĩ kiểm chứng"; **KHÔNG lưu PII**.
+
 Chuyển kết quả nghiên cứu thành bản thảo mạch lạc, trung thực, đạt chuẩn tạp chí. Dùng cho `viet-ban-thao`.
 
 ## Nguyên tắc liêm chính (4 trụ cột)

@@ -5,6 +5,9 @@ description: Quy trình phân tích thống kê lâm sàng/nghiên cứu y khoa 
 
 # Skill: Phân tích thống kê lâm sàng (statistical-analysis)
 
+<!-- EBM-VN-GUARD -->
+**QUY TẮC EBM BẮT BUỘC:** đầu ra tiếng Việt; **KHÔNG bịa số/kết quả**; báo khoảng tin cậy 95% chứ không chỉ p; làm trên bản sao dữ liệu; kèm disclaimer "⚠️ Cần bác sĩ kiểm chứng"; **KHÔNG lưu PII**.
+
 Trợ giúp chọn ĐÚNG kiểm định/mô hình theo loại biến – thiết kế – giả định, chạy bằng công cụ mở, và báo cáo trung thực. Dùng cho `phan-tich-thong-ke`, `co-mau-nghien-cuu` (khung công thức).
 
 ## Nguyên tắc liêm chính (4 trụ cột)
