@@ -143,8 +143,22 @@ def ban_sao_tran() -> bool:
     return mod.ban_sao_git_tran(ROOT)
 
 
+def _thieu_medical_ebm_automation() -> bool:
+    """Kiểm TRỰC TIẾP sự có mặt của medical-ebm-automation/ — KHÔNG qua ban_sao_tran()
+    chung. Vá 09/09/2026: ban_sao_tran() (ủy quyền cho tools/ban_sao_tran.py) từ vòng 5
+    trở đi CLOUD-AWARE — trên cloud chỉ đòi EBM-Dashboards/EBM_MASTER vắng, không còn
+    đòi medical-ebm-automation vắng. Nhưng check_medical_docs() đọc tài liệu NẰM TRONG
+    medical-ebm-automation/ (xem MEDICAL_DOCS) — câu hỏi thật của nó luôn là "repo y
+    khoa có mặt để đọc không", không phải "đây có phải bản sao trần nói chung không".
+    Ủy quyền cho ban_sao_tran() (như bản cũ) khiến test_medical_repo_docs_keep_
+    claude_code_completion_contract regressed từ PASS sang NGOAI-PHAM-VI trên cloud dù
+    medical-ebm-automation/ CÓ MẶT và đọc được thật — đúng loại lỗi mà chính bản vá
+    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py)."""
+    return not (ROOT / "medical-ebm-automation").exists()
+
+
 def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:
-    tran = ban_sao_tran() if tran is None else tran
+    tran = _thieu_medical_ebm_automation() if tran is None else tran
     if tran:
         return {
             "name": "medical_repo_docs",

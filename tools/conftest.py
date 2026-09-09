@@ -27,13 +27,36 @@ REPO = Path(__file__).resolve().parents[1]
 
 def _ban_sao_tran() -> bool:
     """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (vòng 4 — trong một
-    PR năm bản sao của phép thử này đã phân kỳ thành hai ngữ nghĩa; hết nhân bản)."""
+    PR năm bản sao của phép thử này đã phân kỳ thành hai ngữ nghĩa; hết nhân bản).
+
+    VÒNG 5 (09/09/2026): định nghĩa này nay CLOUD-AWARE — trên cloud chỉ đòi
+    EBM-Dashboards/EBM_MASTER vắng, KHÔNG còn đòi medical-ebm-automation vắng (xem
+    docstring ban_sao_tran.py). Vì vậy nó KHÔNG còn dùng được cho _MODULE_CAN_REPO_Y_KHOA
+    ngay dưới — nhóm đó cần biết ĐÚNG một điều: medical-ebm-automation có import được
+    hay không, bất kể cloud hay không. Dùng hàm này CHO _TEST_CAN_NGUYEN_LIEU (đa số
+    entry ở đó là về EBM-Dashboards/EBM_MASTER, xem chú thích từng entry)."""
     import importlib.util
     spec = importlib.util.spec_from_file_location(
         "_bst_conftest", Path(__file__).resolve().parent / "ban_sao_tran.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.ban_sao_git_tran(REPO)
+
+
+def _thieu_medical_ebm_automation() -> bool:
+    """Kiểm TRỰC TIẾP, không qua ban_sao_git_tran(): 4 module dưới đây import thẳng
+    mã của medical-ebm-automation/ NGAY LÚC THU THẬP — câu hỏi thật của chúng là
+    "medical-ebm-automation/ có import được không", KHÔNG phải "đây có phải bản sao
+    trần không". Hai câu hỏi từng trùng nhau (bản sao trần cũ đòi CẢ BA gốc vắng,
+    nên medical-ebm-automation vắng ⇒ bản sao trần), nhưng tách nhau kể từ khi
+    ban_sao_git_tran() học cách CLOUD-AWARE (vòng 5): trên cloud với kiến trúc lồng
+    nhau đúng, medical-ebm-automation CÓ MẶT mà ban_sao_git_tran() vẫn trả True (vì
+    chỉ còn đòi EBM-Dashboards/EBM_MASTER vắng) — nếu vẫn uỷ quyền cho nó, 4 module
+    này bị SKIP OAN dù nhập được thật, đúng như đã đo bằng --collect-only sau khi
+    vá ban_sao_tran.py: test_research_practical_readiness.py biến mất khỏi danh sách
+    thu thập trong khi module đó CHẠY ĐƯỢC và đang canh một lỗi thật (dictionary_path/
+    extra_date_columns, vá 09/09/2026)."""
+    return not (REPO / "medical-ebm-automation").exists()
 
 
 # 4 module import thẳng mã của repo y khoa NGAY LÚC THU THẬP — thiếu repo là
@@ -45,7 +68,7 @@ _MODULE_CAN_REPO_Y_KHOA = [
     "test_verify_hard_gate_count_consistency.py",
 ]
 
-collect_ignore = list(_MODULE_CAN_REPO_Y_KHOA) if _ban_sao_tran() else []
+collect_ignore = list(_MODULE_CAN_REPO_Y_KHOA) if _thieu_medical_ebm_automation() else []
 
 _LY_DO_TRAN = ("bản sao git trần — nguyên liệu (medical-ebm-automation/ · "
                "EBM-Dashboards/ · EBM_MASTER/) nằm ngoài git; chạy trên máy có đủ cây dữ liệu")
@@ -55,48 +78,35 @@ _LY_DO_TRAN = ("bản sao git trần — nguyên liệu (medical-ebm-automation/
 # bản đầu dùng None = cả file cho test_classify và skip oan 81/92 test vẫn chạy
 # được không cần repo y khoa (chỉ 11 test đòi retry_loop). Đo rồi mới khai.
 _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
-    # 11 test trong test_classify cần retry_loop.py của repo y khoa; 81 test còn lại chạy được
-    "test_classify.py": {
-        "test_classify_available",
-        "test_classify_maps_known_checks_to_rcodes",
-        "test_classify_passes_when_no_mapped_failures",
-        "test_classify_pii_triggers_must_escalate",
-        "test_format_dispatch_matches_house_style",
-        "test_unmapped_checks_are_skipped_not_guessed",
-        "test_r8_bare_pvalue_without_ci_fails",
-        "test_r1b_label_gaming_flagged_when_no_real_source",
-        "test_r13_s1_suicide_screen_missing_escalates",
-        "test_r13_s3_antidepressant_suicide_screen_missing_escalates",
-        "test_r14_prescribing_without_safety_review_escalates",
-    },
+    # VÒNG 5 (09/09/2026): sau khi ban_sao_git_tran() học CLOUD-AWARE (chỉ đòi
+    # EBM-Dashboards/EBM_MASTER vắng trên cloud, không còn đòi medical-ebm-automation
+    # vắng), đo lại TOÀN BỘ danh sách này bằng cách tắt skip rồi chạy thật (không suy
+    # đoán): 18/24 test trước đây bị khai ở đây thật ra ĐÃ PASS với
+    # medical-ebm-automation/ có mặt — trong đó CẢ 11 test của test_classify.py (cần
+    # retry_loop.py — chính là file NẰM TRONG medical-ebm-automation/tools/, nên đúng
+    # ra phải theo _thieu_medical_ebm_automation(), và trên cloud với repo y khoa
+    # NẰM TRONG kiến trúc lồng nhau thật thì file đó CÓ, test PASS chứ không cần
+    # skip). Đã gỡ 18 test đó khỏi bảng dưới — giữ chúng ở đây sau vòng 5 sẽ SKIP OAN
+    # test đang chạy tốt, đúng lớp lỗi mà bản vá ban_sao_tran.py hôm nay vừa sinh ra
+    # ở _MODULE_CAN_REPO_Y_KHOA và ở check_medical_docs() của
+    # verify_claude_code_repo_alignment.py (cả hai đã vá cùng ngày).
+    # CHỈ CÒN 5 test dưới đây — đã xác nhận lại bằng chạy thật: cả 5 đều fail vì
+    # EBM-Dashboards/tools/verify_dashboard.py hoặc pipeline phụ thuộc EBM-Dashboards,
+    # KHÔNG phải vì medical-ebm-automation — đúng nhóm _ban_sao_tran() (cloud-aware)
+    # vẫn phải gate.
     "test_orchestrator.py": {
         "test_validate_catches_dangling_single_task_reference",
         "test_validate_clean",
-        "test_registry_is_fail_closed_and_valid",
-        # Thiếu ở lượt khai 28/08 — cùng nguyên nhân với 3 test trên: TOOLS liệt kê
-        # 11 tool trỏ vào medical-ebm-automation/ (10) và EBM-Dashboards/ (1); trên
-        # bản sao trần validate() luôn trả về đúng 11 lỗi đó, không phụ thuộc commit
-        # nào. Đo 06/09/2026: 4 job CI của PR #1 (drluanbv175/EBM-drluanbv175) đều đỏ
-        # ở đúng test này, và cùng một lỗi tái hiện y hệt trên master (ce0d83c2).
+        # TOOLS đăng ký `verify-dashboard` trỏ EBM-Dashboards/tools/verify_dashboard.py
+        # — gốc DUY NHẤT còn gây lỗi ở test này từ khi medical-ebm-automation/ có mặt
+        # (đo thật 09/09: chỉ còn ĐÚNG 1 lỗi, không phải 11 như lượt khai 28/08 mô tả
+        # — con số đó đúng cho topology CŨ khi medical-ebm-automation/ còn vắng).
         "test_tools_registered",
     },
-    "test_assess_agent_system.py": {
-        "test_scorecard_checks_research_gate_contract_surface",
-    },
-    "test_claude_code_repo_alignment.py": {
-        "test_claude_code_repo_alignment_overall_passes",
-        "test_medical_repo_docs_keep_claude_code_completion_contract",
-    },
     "test_clinical_evidence_update_pipeline.py": {
+        # verify_clinical_evidence_update_pipeline.py cần
+        # dashboard_mockups/templates/*.html + EBM-Dashboards/tools/*.py.
         "test_clinical_evidence_update_pipeline_passes_offline",
-    },
-    "test_clinical_runtime_readiness_report.py": {
-        "test_readiness_report_unlocks_21_of_37_repo_controls_without_production",
-        "test_unlocked_rows_are_still_human_gated_and_control_linked",
-        "test_markdown_names_21_of_37_and_keeps_safety_boundary",
-    },
-    "test_lessons_rubric_alignment.py": {
-        "test_current_lessons_rubric_alignment_passes",
     },
 }
 
