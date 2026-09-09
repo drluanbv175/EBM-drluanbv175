@@ -258,6 +258,15 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     study = "VERIFY-PRACTICAL-PSEUDO"
     raw_sha_before = INTAKE._sha256_file(raw_path)
 
+    # Dựng dictionary TRƯỚC pseudonymize (09/09/2026): dictionary khai visit_date
+    # là "type": "date" — phải truyền dictionary_path ngay tại bước pseudonymize
+    # (tham số thêm 08/09/2026) để mẫu PII "date" (bắt MỌI chuỗi dạng ngày, thêm
+    # 04/09 để chặn ngày rò rỉ trong ghi chú tự do) KHÔNG áp nhầm lên chính cột
+    # ngày hợp lệ này. Thiếu bước này, visit_date bị redact thành placeholder
+    # trước khi tới clean_dataset() ⇒ toàn bộ 3 dòng bị gắn cờ "invalid_date" —
+    # không phải lỗi của clean_dataset(), mà do verifier chưa dùng tham số mới.
+    (exports_root / study).mkdir(parents=True, exist_ok=True)
+    dictionary = _write_dictionary(exports_root / study / "data_dictionary.json")
     report = PSEUDO.pseudonymize_dataset(
         study,
         raw_path,
@@ -265,6 +274,7 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
         mapping_root=mapping_root,
         then_import=True,
         id_prefix="PRAC",
+        dictionary_path=dictionary,
     )
     out_dir = exports_root / study
     report_text = _read(out_dir / PSEUDO.REPORT_NAME)
@@ -290,7 +300,6 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
             "Mapping bảo vệ phải có linkage_map.csv")
 
     raw_readonly = out_dir / report["then_import"]["raw_readonly_path"]
-    dictionary = _write_dictionary(out_dir / "data_dictionary.json")
     clean = CLEAN.clean_dataset(
         study,
         raw_readonly,
@@ -317,11 +326,20 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert(any(item.startswith("missing_confirmation:") for item in blocked_lock["blockers"]),
             "Data lock phải nêu rõ thiếu xác nhận")
 
+    # Cùng lý do dictionary_path ở bước pseudonymize trên: prepare_locked_g5_study()
+    # chạy LẠI một vòng intake/clean/lock riêng (dùng dictionary REDCap canonical
+    # của nó), nên cũng cần biết visit_date là cột "date" hợp lệ qua
+    # extra_date_columns — nếu không, PII scan ở đây lại chặn nhầm y hệt.
+    date_columns = frozenset(
+        var["name"] for var in json.loads(dictionary.read_text(encoding="utf-8"))["variables"]
+        if var.get("type") == "date" and var.get("name")
+    )
     locked_path, quality = prepare_locked_g5_study(
         study,
         raw_readonly,
         exports_root=exports_root,
         repo_root=exports_root.parent,
+        extra_date_columns=date_columns,
     )
     locked = json.loads(
         (out_dir / "DATA_LOCK_manifest.json").read_text(encoding="utf-8")
