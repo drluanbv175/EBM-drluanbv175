@@ -433,6 +433,25 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   (b) **Vận hành, mạnh hơn (a):** khi cần hook TỰ ĐỘNG chắc chắn — không phụ thuộc mô hình có
   đọc/làm theo hay không — tách `EBM-drluanbv175` ra một phiên/task RIÊNG (chỉ một repo). Khi
   đó cơ chế quét dự án của Claude Code hoạt động đúng như skill `session-start-hook` mô tả.
+  ✅ **(b) ĐÃ KIỂM THỰC NGHIỆM, không còn là suy luận lý thuyết — 09/09/2026, cùng ngày.** Tạo
+  phiên con THẬT chỉ đính kèm MỘT repo (`session_01SBuDdwRoiGjJxrW8eyUi8p`, nguồn duy nhất
+  `github.com/drluanbv175/EBM-drluanbv175@claude/happy-allen-brlssn` — xác nhận qua
+  `session_context.sources` của chính nền tảng, KHÔNG phải lời tự khai của phiên con, nên đây
+  là dữ kiện cứng). Phiên con báo cáo (qua `post_turn_summary`, ~64 giây sau khi tạo): hook
+  `.claude/hooks/session-start.sh` của repo này **tự chạy KHÔNG cần nhắc**, sinh
+  `~/.claude/settings.json` (365 byte), khởi động cài plugin nền (1/9 xong tại thời điểm báo
+  cáo — đúng nhịp "~60 giây cho lần đầu" đã đo ở BH86, không phải dấu hiệu lỗi). Đã `archive_session`
+  sau khi ghi nhận.
+  ⚠️ **Giới hạn trung thực của phép kiểm này, không phóng đại:** kết luận "hook tự chạy" là
+  BÁO CÁO CỦA PHIÊN CON qua kiểm mtime/kích thước file — CÙNG phương pháp luận đã dùng để tìm
+  ra chính lỗi BH99 ở phiên đa-repo, nhưng phiên hiện tại **không có công cụ đọc lại nhật ký
+  chẩn đoán thô** (`hook_spawn_started`/`hook_spawn_completed`) **của một phiên khác** để tự tay
+  đối chiếu lần hai — bộ công cụ đang có không có `list_events`/đọc transcript phiên khác, và
+  gửi tin cho phiên cloud không nhận được hồi đáp ngược. Đây là **MỘT lần kiểm thực nghiệm đã
+  xác nhận đúng giả thuyết**, không phải bằng chứng lặp lại nhiều lần hay tự tay soi log thô —
+  mức bảo đảm cao hơn hẳn suy luận thuần túy từ tài liệu, nhưng thấp hơn một chốt máy-kiểm-được
+  nhiều lần. Kết luận thực dụng cho bác sĩ: biện pháp (b) — tách phiên một-repo — nay là đường
+  có **bằng chứng thực nghiệm**, không chỉ lý thuyết "nên đúng theo thiết kế nền tảng".
   **Việc CHỦ Ý KHÔNG làm:** không cấy khoá `"hooks"` thủ công vào `~/.claude/settings.json`
   (file container-local do `kiem_cau_hinh_nguoi_dung.py` quản) — chưa kiểm chứng được Claude
   Code có đọc khoá đó từ ĐÚNG file này hay chỉ từ `launcher-settings.json` do nền tảng tự sinh
