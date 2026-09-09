@@ -4937,6 +4937,42 @@ def bh98_bien_nhan_guardrail_lam_sang():
                   "không tìm thấy sổ ⇒ không kết luận (BH08)")
 
 
+def bh99_chi_thi_tu_bat_hook_cloud_da_khai():
+    """09/09 — nguyên nhân gốc đo được: khi một phiên claude.ai/code đính kèm ≥2 repo, hook
+    `SessionStart` cấp DỰ ÁN (`.claude/settings.json` trong từng repo) KHÔNG được nền tảng quét
+    tới — bằng chứng là nhật ký chẩn đoán của chính Claude Code cho thấy đúng 8 hook chạy mỗi
+    phiên, cả 8 đều ở cấp NGƯỜI DÙNG/PLUGIN, không cái nào là `.claude/hooks/session-start.sh`
+    của repo này (`$CLAUDE_PROJECT_DIR` rỗng xuyên suốt). Không có gì trong repo để sửa — hook
+    và settings.json ĐÚNG khuôn skill `session-start-hook` của Anthropic.
+
+    Biện pháp duy nhất còn lại nằm ngoài shell hook: một CHỈ THỊ VĂN BẢN trong CLAUDE.md, dựa
+    trên kênh đã đo là CHẮC CHẮN tới nơi (toàn văn CLAUDE.md được nạp mỗi phiên qua
+    `user_context_completed`, khác hẳn shell hook không được spawn). Chốt này CHỈ kiểm được
+    chữ chỉ thị đó CÓ MẶT trong file tracked — không kiểm được một phiên cụ thể có LÀM THEO hay
+    không (giới hạn của kiểm tra doctrine-text, cùng họ BH39/BH42). Mất chữ chỉ thị = quay lại
+    hoàn toàn dựa vào bác sĩ tự nhớ chạy tay mỗi phiên nhiều-repo — đúng tình trạng trước khi
+    tìm ra nguyên nhân gốc.
+    """
+    claude_md = REPO / "CLAUDE.md"
+    if not claude_md.exists():
+        return False, "CLAUDE.md của repo này biến mất — mất luôn chỉ thị tự bắn hook cloud"
+    noi_dung = claude_md.read_text(encoding="utf-8", errors="replace")
+    CAN_CO = (
+        "NGUYÊN NHÂN GỐC vì sao hook cloud KHÔNG tự bắn khi phiên có ≥2 REPO",
+        ".claude/hooks/session-start.sh` NGAY ĐẦU PHIÊN",
+        "CLAUDE_CODE_REMOTE=true",
+    )
+    thieu = [c for c in CAN_CO if c not in noi_dung]
+    if thieu:
+        return False, ("mất chỉ thị tự bắn hook cloud trong CLAUDE.md — thiếu đoạn: "
+                       + "; ".join(thieu))
+    hook_that = REPO / ".claude" / "hooks" / "session-start.sh"
+    if not hook_that.exists():
+        return False, ("CLAUDE.md vẫn chỉ tay vào .claude/hooks/session-start.sh nhưng file đó "
+                       "không còn tồn tại — chỉ thị trỏ vào khoảng không")
+    return True, "chỉ thị tự bắn hook cloud còn nguyên trong CLAUDE.md, và mục tiêu nó trỏ tới vẫn tồn tại"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5043,6 +5079,7 @@ BAI_HOC = [
     ("BH96", "02/09", "Cổng B2 của ops/orchestrator phải bật --strict-sources — hai tuyến xuất bản không được lệch", bh96_orchestrator_b2_phai_bat_strict_sources),
     ("BH97", "02/09", "SAP RỖNG không được khoá bằng chữ ký G4 — vắng sạch mục bắt buộc là tài liệu hỏng, không phải biến thể thiết kế", bh97_sap_rong_khong_duoc_khoa_bang_chu_ky),
     ("BH98", "02/09", "Biên nhận guardrail lâm sàng: bịa thì bị bắt, thật thì thông, không có sổ thì KHÔNG kết luận", bh98_bien_nhan_guardrail_lam_sang),
+    ("BH99", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh99_chi_thi_tu_bat_hook_cloud_da_khai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

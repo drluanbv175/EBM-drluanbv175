@@ -394,6 +394,51 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   **hai file CỘNG DỒN** (cả hai đều chạy), nên không mất chốt nào. `dong_bo_hook_sessionstart.py` phạm
   vi `du-an` từ nay ghi/đọc `settings.local.json`; gặp bản cũ nó **in đúng lệnh `mv` trên, không tự dời**.
   BH16 đọc cả hai file để không mất phủ 8 chốt.
+  🔴 **NGUYÊN NHÂN GỐC vì sao hook cloud KHÔNG tự bắn khi phiên có ≥2 REPO — đo 09/09/2026 (BH99).**
+  Câu "hook tự chạy khi mở phiên cloud" (BH84) đúng cho phiên MỘT repo, nhưng **sai khi một
+  phiên (một "task" trên claude.ai/code) đính kèm ≥2 repo cùng lúc** — đúng cấu hình của mọi
+  phiên đồng bộ `medical-ebm-automation` + `EBM-drluanbv175` chung (environment
+  `env_01XCNp1Cw1JTvCJ9GkN3gag4` "Default"). Bằng chứng lấy TRỰC TIẾP từ nhật ký chẩn đoán của
+  chính Claude Code (`hook_spawn_started`/`hook_spawn_completed`), không suy đoán: mỗi lần mở/
+  resume phiên có **8 hook SessionStart chạy, cả 8 đều thoát mã 0** — nhưng đối chiếu dấu vết
+  phụ (mtime `ebm-cai-plugin-cloud.log` không đổi, `.codex/.Codex/agents` không được sinh lại)
+  xác nhận **không hook nào trong 8 cái là `.claude/hooks/session-start.sh` của repo này**. Cả
+  8 đều ở cấp NGƯỜI DÙNG (`session-start-git-identity.sh` trong `~/.claude/launcher-settings.json`,
+  do nền tảng tự sinh) hoặc cấp PLUGIN (harness, codex…) — hai cấp KHÔNG phụ thuộc "thư mục dự
+  án". Hook cấp DỰ ÁN (`.claude/settings.json` trong từng repo) đơn giản **chưa từng được liệt
+  vào danh sách quét** khi phiên có nhiều nguồn — không phải chạy rồi lỗi, mà chưa từng được
+  spawn; `$CLAUDE_PROJECT_DIR` rỗng xuyên suốt phiên xác nhận điều này (`settings_load_completed`
+  báo `source_count: 4`, cả 4 nguồn đều không phải `.claude/settings.json` của repo này/kia).
+  Đã đối chiếu với skill dựng sẵn `session-start-hook` của Anthropic (`/root/.claude/skills/
+  session-start-hook/`): tài liệu đó dùng số ít "Repository root path"/"their repo" xuyên suốt —
+  đúng thiết kế MỘT repo mỗi phiên; không có mục nào nói về phiên nhiều repo.
+  **KHÔNG có cách vá bằng cách sửa file trong repo — đã kiểm: không có gì sai để sửa.**
+  `.claude/settings.json` + `.claude/hooks/session-start.sh` của repo này ĐÚNG theo đúng khuôn
+  skill Anthropic; cơ chế quét dự án đơn giản chưa từng chạm tới đường dẫn của repo khi có ≥2
+  nguồn. Đây là hành vi NỀN TẢNG, không phải lỗi cấu hình repo.
+  **Biện pháp đang áp dụng, nói rõ giới hạn từng cái — KHÔNG cái nào là "đã đóng gốc":**
+  (a) **Chỉ thị đứng cho Claude Code, đọc dòng này ở MỌI phiên (đây chính là chỉ thị đó):** nếu
+  phiên hiện tại là CLOUD (`CLAUDE_CODE_REMOTE=true`) VÀ có ≥2 repo trong phiên (kiểm bằng
+  `session_context.sources` qua `mcp__Claude_Code_Remote__get_session` nếu tool đó có, hoặc đơn
+  giản là thấy nhiều thư mục repo dưới cùng cha) — **tự chạy** `bash <đường-dẫn>/EBM-drluanbv175/
+  .claude/hooks/session-start.sh` NGAY ĐẦU PHIÊN, không đợi hook tự bắn, TRỪ KHI đã thấy bằng
+  chứng nó vừa chạy (vd `~/.claude/ebm-cai-plugin-cloud.log` không rỗng và mới). Kênh CLAUDE.md
+  này CHẮC CHẮN tới nơi (đo được: `user_context_completed` trong nhật ký nạp đủ ~189.000 ký tự
+  mỗi phiên, khác hẳn shell hook) — nhưng đây là chỉ thị VĂN BẢN cho mô hình, KHÔNG phải cơ chế
+  máy fail-closed; một phiên bỏ qua chỉ thị này (mô hình không đọc kỹ, hoặc phiên bị cắt trước
+  khi kịp làm) vẫn có thể lọt — **BH99 chỉ kiểm được chữ chỉ thị này CÓ MẶT trong file tracked,
+  KHÔNG kiểm được liệu một phiên cụ thể có LÀM THEO hay không** (giới hạn giống hệt cách BH39
+  kiểm "cổng bắt buộc trường nào thì doctrine phải nhắc trường đó" — kiểm sự có mặt của chữ,
+  không kiểm hành vi runtime của một phiên đã qua).
+  (b) **Vận hành, mạnh hơn (a):** khi cần hook TỰ ĐỘNG chắc chắn — không phụ thuộc mô hình có
+  đọc/làm theo hay không — tách `EBM-drluanbv175` ra một phiên/task RIÊNG (chỉ một repo). Khi
+  đó cơ chế quét dự án của Claude Code hoạt động đúng như skill `session-start-hook` mô tả.
+  **Việc CHỦ Ý KHÔNG làm:** không cấy khoá `"hooks"` thủ công vào `~/.claude/settings.json`
+  (file container-local do `kiem_cau_hinh_nguoi_dung.py` quản) — chưa kiểm chứng được Claude
+  Code có đọc khoá đó từ ĐÚNG file này hay chỉ từ `launcher-settings.json` do nền tảng tự sinh
+  (không thể kiểm mà không có một phiên SessionStart mới để đối chiếu), và dù có đọc thì cũng
+  chỉ sống hết vòng đời container hiện tại, không giải quyết gốc. Thêm một khoá chưa kiểm chứng
+  vào đây là tạo niềm tin sai — đúng loại lỗi BH08.
   ☁️ **CLOUD ĐỦ PLUGIN NHƯ LOCAL — 02/09/2026 (BH86), quyết định của bác sĩ sau khi nghe lý do không cài.**
   Câu cũ «plugin marketplace không đi theo repo» hết hiệu lực. Cơ chế: `sync/plugin-manifest.json` v2 khai
   máy thứ ba **«Cloud»** (`tools/nhan_dien_may.py` — MỘT nguồn nhận diện máy, `CLAUDE_CODE_REMOTE=true` ⇒
