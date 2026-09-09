@@ -56,6 +56,47 @@ VUNG_KY = ("medical-ebm-automation/tools", "medical-ebm-automation/runtime",
            "medical-ebm-automation/tests", "medical-ebm-automation/scripts")
 
 
+def _che_chu_thich_dong(s: str) -> str:
+    """Cắt bỏ phần CHÚ THÍCH `#...` cuối dòng — CHỈ khi `#` nằm NGOÀI chuỗi
+    ký tự (nháy đơn/kép/ba-nháy). Vá 09/09/2026 (BH55 tái phát, tự phát hiện
+    khi xử lý chính bài học này): bản cũ (`if "#" in s: s = s.split("#",
+    1)[0]`) cắt tại '#' ĐẦU TIÊN bất kể trong/ngoài chuỗi — một dòng THẬT
+    trong repo, `md.write_text(head + ("# " + tail if tail else ""),
+    encoding="utf-8")`, có literal `"# "` chứa `#` ⇒ bị cắt cụt TRƯỚC
+    `encoding="utf-8"`, làm luật R6 (đang tìm đúng chuỗi đó) không thấy gì
+    để so khớp — ÂM TÍNH GIẢ, và không chỉ cho R6: MỌI luật R1-R6 đều đọc
+    từ cùng bản `code` đã che, nên bug này có thể giấu vi phạm của bất kỳ
+    luật nào trên bất kỳ dòng nào có `#` bên trong một chuỗi ký tự (rất phổ
+    biến trong test — regex, markdown, mô tả). Xác nhận bằng thực nghiệm:
+    dòng trên qua bản cũ mất `encoding=\"utf-8\"`, R6.search() → False."""
+    trong_chuoi: str | None = None  # None | "'" | '"' | "'''" | '\"\"\"'
+    i, n = 0, len(s)
+    while i < n:
+        if trong_chuoi:
+            if s.startswith(trong_chuoi, i):
+                i += len(trong_chuoi)
+                trong_chuoi = None
+                continue
+            if len(trong_chuoi) == 1 and s[i] == "\\":
+                i += 2
+                continue
+            i += 1
+            continue
+        if s.startswith('"""', i) or s.startswith("'''", i):
+            trong_chuoi = s[i:i + 3]
+            i += 3
+            continue
+        c = s[i]
+        if c in ("'", '"'):
+            trong_chuoi = c
+            i += 1
+            continue
+        if c == "#":
+            return s[:i]
+        i += 1
+    return s
+
+
 def _mask_khong_phai_code(dong: list[str]) -> list[str]:
     """Trả bản sao các dòng với CHÚ THÍCH và DOCSTRING đã che — bẫy đo thật ngay
     lượt quét đầu: 6/12 «phát hiện» là docstring/chú thích ĐANG KỂ về chính bài
@@ -73,9 +114,8 @@ def _mask_khong_phai_code(dong: list[str]) -> list[str]:
             else:
                 ra.append("")
                 continue
-        # che chú thích (an toàn đủ dùng: '#' trong chuỗi hiếm gặp ở luật đang quét)
-        if "#" in s:
-            s = s.split("#", 1)[0]
+        # che chú thích — xem docstring _che_chu_thich_dong (không cắt '#' bên trong chuỗi)
+        s = _che_chu_thich_dong(s)
         # docstring/chuỗi ba-nháy mở trên dòng này
         for dau in ('"""', "'''"):
             while dau in s:

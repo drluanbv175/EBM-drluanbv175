@@ -54,10 +54,17 @@ AG = REPO / ".claude" / "agents"
 SKILL_DUNG_SAN = {
     "algorithmic-art", "brand-guidelines", "canvas-design", "consolidate-memory",
     "doc-coauthoring", "docx", "explain-usage", "import-memory", "internal-comms", "learn",
-    "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-cowork",
+    "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude", "setup-cowork",
     "skill-creator", "slack-gif-creator", "theme-factory", "web-artifacts-builder",
     "xlsx",
 }
+# "setup-claude" thêm 09/09/2026 (BH44 tái phát) — kiểm trực tiếp runtime: cả
+# "setup-claude" LẪN "setup-cowork" cùng tồn tại song song, description GIỐNG
+# HỆT nhau nguyên văn ("Guided setup — install role-matched plugins, connect
+# your tools, try a skill.") ⇒ đây là skill dựng sẵn KẾ NHIỆM/anh em của
+# setup-cowork trong một đợt đổi tên sản phẩm, KHÔNG phải nội dung bác sĩ tự
+# viết cần cứu về sync/skills/. Không xoá "setup-cowork" — vẫn còn tồn tại
+# thật ở runtime, xoá khỏi allowlist sẽ tạo báo động giả ngược lại.
 # Tên chỉ còn trong GHI CHÚ LỊCH SỬ về routine đã RETIRE / taskId đã đính chính —
 # doctrine tự ghi rõ chúng "không tồn tại" (xem _BAN-DO-KET-NOI.md dòng 104,
 # _LO-TRINH-HA-TANG.md dòng 22). Không phải điều phối hỏng; xoá chúng khỏi ghi chú
