@@ -119,6 +119,35 @@ class TestOrchestration(unittest.TestCase):
             orchestrator_mod.REROUTE_DEFAULT.update(orig_reroute)
         self.assertEqual(self.orch.validate(), [], "phải sạch lại sau khi khôi phục")
 
+    def test_validate_check_runtime_ignores_not_installed_but_catches_real_dangling_binding(self):
+        # Regression 09/09/2026: validate(check_runtime=True) từng gộp CẢ HAI lý do
+        # unavailable làm một cảnh báo chặn — đúng lỗi BH85 mô tả (worker_inventory.py)
+        # nhưng tái diễn ở một nơi TIÊU THỤ khác. Đo được trên container thiếu
+        # `bio-research`: `run_orchestrator.py --validate` báo đỏ 3 dòng "chưa cài trên
+        # máy này" trong khi verify_plugin_orchestration.py — chốt canonical cho đúng
+        # phân biệt này — PASS cùng lúc cho đúng 3 binding đó. Test này không phụ thuộc
+        # plugin nào có/thiếu trên máy chạy test: tự dựng cả hai loại lý do bằng
+        # monkeypatch để không bao giờ ăn may theo môi trường.
+        from orchestrator.worker_inventory import LY_DO_CHUA_CAI, LY_DO_THIEU_SKILL, WorkerAvailability
+
+        fake = [
+            WorkerAvailability(worker="fake-provider:chua-cai", available=False,
+                               source="test", reason=LY_DO_CHUA_CAI),
+            WorkerAvailability(worker="fake-provider:treo-that", available=False,
+                               source="test", reason=LY_DO_THIEU_SKILL),
+        ]
+        original_audit = self.orch.worker_inventory.audit
+        self.orch.worker_inventory.audit = lambda *_a, **_k: fake
+        try:
+            warns = self.orch.validate(check_runtime=True)
+        finally:
+            self.orch.worker_inventory.audit = original_audit
+
+        self.assertFalse(any("fake-provider:chua-cai" in w for w in warns),
+                         "plugin 'chưa cài trên máy này' không được chặn validate — BH85")
+        self.assertTrue(any("fake-provider:treo-that" in w and LY_DO_THIEU_SKILL in w for w in warns),
+                        "binding TREO thật (provider có mà thiếu skill) vẫn phải bị bắt")
+
     def test_clinical_stops_at_gate_A_and_B(self):
         s = self.orch.handle("Tôi có bệnh nhân nam 68, ĐTĐ2, thêm thuốc gì?", persist=False)
         self.assertEqual(s.kind, "clinical_case")

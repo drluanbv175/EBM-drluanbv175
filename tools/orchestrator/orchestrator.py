@@ -21,7 +21,7 @@ from .plugin_ownership import PluginOwnershipRegistry
 from .registry import Registry
 from .signals import SIGNAL_CUES, Signals, detect as detect_signals
 from .tools_registry import ToolRegistry
-from .worker_inventory import WorkerInventory
+from .worker_inventory import LY_DO_CHUA_CAI, WorkerInventory
 
 # Cổng cho VIỆC LẺ (agent đơn phát ra khuyến cáo / vượt cổng cứng)
 GATE_HINTS: dict[str, str] = {
@@ -383,8 +383,19 @@ class Orchestrator:
         warns += self.tools.validate()
         if check_runtime:
             for availability in self.worker_inventory.audit(self.plugin_ownership):
-                if not availability.available:
-                    warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
+                if availability.available:
+                    continue
+                if availability.reason == LY_DO_CHUA_CAI:
+                    # BH85 (worker_inventory.py): plugin cài THEO TỪNG MÁY — vắng mặt vì
+                    # "chưa cài trên máy này" là trạng thái BÌNH THƯỜNG, không phải binding
+                    # treo thật. verify_plugin_orchestration.py đã là chốt CANONICAL cho
+                    # đúng phân biệt này (⚪ CHUA-CAI-TREN-MAY-NAY, không tính vào PASS/FAIL);
+                    # gộp nó vào cảnh báo chặn ở đây là lặp lại chính lỗi BH85 mô tả — đo
+                    # đúng, đo đúng chỗ, nhưng ÁP SAI chỗ khác (đã tái hiện được: cloud thiếu
+                    # bio-research → `run_orchestrator.py --validate` đỏ dù
+                    # verify_plugin_orchestration.py cùng lúc PASS cho đúng 3 binding này).
+                    continue
+                warns.append(f"worker binding không khả dụng: {availability.worker} — {availability.reason}")
         warns += self.knowledge.verify_against_ssot()
         return warns
 
