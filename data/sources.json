@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-01",
+ "updated": "2026-09-09",
  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
  "sources": [
   {
@@ -20,9 +20,9 @@
    "measured_latency_days": 2,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-01",
+   "last_success_at": "2026-09-07",
    "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
-   "last_probe_at": "2026-09-01"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-002",
@@ -42,9 +42,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-01",
+   "last_success_at": "2026-09-07",
    "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
-   "last_probe_at": "2026-09-01"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-003",
@@ -87,7 +87,7 @@
    "status": "active",
    "last_success_at": "2026-09-01",
    "known_gap": null,
-   "last_probe_at": "2026-09-01"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-005",
@@ -106,10 +106,10 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A4",
-   "status": "degraded",
+   "status": "active",
    "last_success_at": "2026-08-24",
    "known_gap": null,
-   "last_probe_at": "2026-08-15"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-006",
@@ -129,9 +129,9 @@
    "measured_latency_days": null,
    "owner": "weekly_safety.sh",
    "status": "active",
-   "last_success_at": "2026-09-01",
+   "last_success_at": "2026-09-07",
    "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
-   "last_probe_at": "2026-09-01"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-007",
@@ -151,9 +151,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-01",
+   "last_success_at": "2026-09-07",
    "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
-   "last_probe_at": "2026-09-01"
+   "last_probe_at": "2026-09-09"
   },
   {
    "id": "SRC-010",
@@ -302,9 +302,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (AHA Guidelines and Statements) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần)."
+   "status": "active",
+   "known_gap": "ĐÃ ACTIVE 09/09/2026 qua kênh Browser thật (urllib bị Cloudflare bot-challenge chặn — 403 kèm cookie __cf_bm, đã xác nhận cả với User-Agent trình duyệt thật). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-015 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (vd get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+   "last_success_at": "2026-09-09",
+   "kich_hoat": {
+    "ngay": "2026-09-09",
+    "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
+    "so_tieu_de_luc_do": 8
+   }
   },
   {
    "id": "SRC-016",

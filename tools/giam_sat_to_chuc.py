@@ -52,27 +52,80 @@ RE_TIEU_DE = re.compile(
     r"(?:20\d{2}|guideline|report|update|standards|statement|recommendation)", re.I)
 
 
+def _loc_tieu_de_hop_le(ung_vien: "list[str] | set[str]") -> set[str]:
+    """Bộ lọc DÙNG CHUNG cho cả hai đường trích (HTML thô và văn bản thuần) — một
+    luật lọc, không phân nhánh, để hai đường không lệch tiêu chí «tiêu đề đáng
+    giá» theo thời gian (bài học lặp lại của repo: hai module viết cho nhau mà
+    không dùng chung một hàm sẽ trôi lệch)."""
+    ket: set[str] = set()
+    for x in ung_vien:
+        sach = re.sub(r"<[^>]+>", " ", x)
+        sach = re.sub(r"\s+", " ", sach).strip()
+        if 12 <= len(sach) <= 220 and RE_TIEU_DE.search(sach):
+            ket.add(sach)
+    return ket
+
+
 def rut_tieu_de(html: str) -> set[str]:
     """Rút tập tiêu đề chuẩn hoá từ HTML/feed — so NỘI DUNG, không so vị trí."""
     # feed: <title>…</title>; html: nội dung <a>/<h1..h4>
     tho = re.findall(r"<title[^>]*>(.*?)</title>|<a[^>]*>(.*?)</a>|<h[1-4][^>]*>(.*?)</h[1-4]>",
                      html, re.S | re.I)
-    ket: set[str] = set()
-    for bo in tho:
-        for x in bo:
-            if not x:
-                continue
-            sach = re.sub(r"<[^>]+>", " ", x)
-            sach = re.sub(r"\s+", " ", sach).strip()
-            if 12 <= len(sach) <= 220 and RE_TIEU_DE.search(sach):
-                ket.add(sach)
-    return ket
+    phang = [x for bo in tho for x in bo if x]
+    return _loc_tieu_de_hop_le(phang)
 
 
-def quet_mot_nguon(s: dict, noi_dung: str, state: dict) -> tuple[list[str], bool]:
-    """So với state cũ. Trả (tiêu đề MỚI, có_thay_đổi_thuần_giao_diện)."""
+_DONG_KHUNG_GET_PAGE_TEXT = re.compile(
+    r"^(Title:|URL:|Source element:|Tab Context:|-{3,}$|-\s+Executed on|"
+    r"•\s*tabId|Available tabs:)", re.I)
+# Dòng CHỈ LÀ ngày-tháng kèm/không kèm tên tạp chí (vd «Sep 08, 2026 | Circulation»,
+# «Aug 31, 2026») — mẫu nhật ký bài viết, không phải tiêu đề. Đo trên trang ACC/AHA
+# thật: đây là 2/9 mẫu rác KHÔNG bị chặn bởi sàn số-từ vì đủ dài (5 từ).
+_DONG_CHI_NGAY_THANG = re.compile(
+    r"^[A-Z][a-z]{2}\s+\d{1,2},?\s+20\d{2}(\s*\|.*)?$")
+
+
+def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
+    """Rút tiêu đề từ VĂN BẢN THUẦN (không có thẻ HTML) — dùng khi nội dung tới
+    từ một trình duyệt thật (Browser tool của phiên agent, get_page_text) thay
+    vì fetch HTML thô bằng urllib. Ra đời 09/09/2026 khi SRC-015 (ACC/AHA)
+    xác nhận: trang bị Cloudflare bot-challenge chặn MỌI request urllib (kể cả
+    đổi User-Agent trình duyệt thật — 403 kèm cookie __cf_bm), nhưng một phiên
+    Browser THẬT (thực thi JS) tải được nội dung đầy đủ.
+
+    HAI LỚP LỌC RIÊNG cho đường này (khác _loc_tieu_de_hop_le dùng chung với
+    HTML — KHÔNG sửa hàm dùng chung, vì self-test HTML có fixture 4-từ hợp
+    lệ "2026 GOLD Report — NEW"; siết chung sẽ làm nó đỏ oan):
+    (1) bỏ dòng KHUNG do chính get_page_text in ra (Title:/URL:/---/Tab
+        Context:…) — không phải nội dung trang, đưa vào sẽ tự sinh «tiêu đề
+        giả» từ chính công cụ đọc trang.
+    (2) đo LẦN ĐẦU trên trang ACC/AHA thật (09/09/2026): tách dòng thuần
+        (không có thẻ HTML để phân biệt heading/link khỏi văn xuôi/breadcrumb)
+        cho 20/20 dòng "qua" bộ lọc nội dung — 17/20 là rác (ngày tháng đơn
+        độc kiểu «Sep 08, 2026 | Circulation», breadcrumb «Home Guidelines
+        and Statements», nút «Search Guidelines and Statements»…). Vá bằng
+        HAI luật cộng thêm: sàn ĐỘ DÀI ≥5 từ (loại 7/9 mẫu rác đo được) +
+        mẫu riêng cho «chỉ ngày-tháng [kèm tạp chí]» (loại nốt 2/9 mẫu rác
+        còn lại — đủ dài để qua sàn từ nhưng KHÔNG phải tiêu đề). Không phải
+        bộ lọc hoàn hảo (còn lọt vài CTA như «Read the AHA/ASA Guideline in
+        Stroke») nhưng cắt phần lớn rác mà không cần biết cấu trúc DOM của
+        riêng trang này (đúng nguyên tắc «so nội dung, không so vị trí» của
+        module — cả hai luật đều là tiêu chí NỘI DUNG, không phải toạ độ)."""
+    dong = [d.strip() for d in text.splitlines() if d.strip()
+            and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())
+            and not _DONG_CHI_NGAY_THANG.match(d.strip())
+            and len(d.strip().split()) >= 5]
+    return _loc_tieu_de_hop_le(dong)
+
+
+def quet_mot_nguon(s: dict, noi_dung: str, state: dict, *,
+                    la_van_ban_thuan: bool = False) -> tuple[list[str], bool]:
+    """So với state cũ. Trả (tiêu đề MỚI, có_thay_đổi_thuần_giao_diện).
+    `la_van_ban_thuan=True` khi `noi_dung` là văn bản đã tải qua Browser thật
+    (xem `rut_tieu_de_tu_van_ban`), không phải HTML thô."""
     cu = state.get(s["id"], {})
-    tieu_de = rut_tieu_de(noi_dung)
+    tieu_de = (rut_tieu_de_tu_van_ban(noi_dung) if la_van_ban_thuan
+               else rut_tieu_de(noi_dung))
     moi = sorted(tieu_de - set(cu.get("titles", [])))
     hash_moi = hashlib.sha256(noi_dung.encode("utf-8", "replace")).hexdigest()
     chi_giao_dien = (not moi) and cu.get("hash") and cu["hash"] != hash_moi
@@ -132,6 +185,95 @@ def bat_neu_ok(du: dict, kq: dict[str, dict]) -> list[str]:
     return bat
 
 
+def _duong_dan_hien_thi(f: Path) -> str:
+    """In đường dẫn NGẮN (tương đối GOC) khi có thể, tuyệt đối khi không — việc
+    HIỂN THỊ một đường dẫn cho người đọc không bao giờ được phép làm crash cả
+    hàm (bắt được qua test dùng tmp_path: RA trỏ ngoài GOC khiến relative_to
+    ném ValueError)."""
+    try:
+        return str(f.relative_to(GOC))
+    except ValueError:
+        return str(f)
+
+
+def _ghi_ung_vien(phat_hien: list[str]) -> Path | None:
+    """Ghi file ứng viên, DÙNG CHUNG định dạng với luồng quét chính (main()) —
+    tách hàm để _nap_van_ban() không chép lại logic ghi file."""
+    if not phat_hien:
+        return None
+    RA.mkdir(exist_ok=True)
+    f = RA / f"to-chuc-{date.today().isoformat()}.md"
+    f.write_text("# ỨNG VIÊN TỪ TRẠM TỔ CHỨC — " + date.today().isoformat()
+                 + "\n\n" + "\n".join(phat_hien)
+                 + "\n\n> Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
+    return f
+
+
+def _nap_van_ban(sid: str, duong_dan: str) -> int:
+    """Hoàn tất MỘT chu kỳ quét cho một trạm bằng nội dung đã tải qua Browser
+    thật (xem docstring `rut_tieu_de_tu_van_ban`). Chạy CÙNG logic so-sánh/
+    ghi-state/ghi-ứng-viên với luồng quét chính trong main() — chỉ khác nguồn
+    nội dung (file văn bản thay vì fetch urllib trực tiếp), để hai đường
+    không lệch hành vi theo thời gian."""
+    try:
+        du = json.loads(SO_NGUON.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"🔴 Sổ nguồn hỏng: {exc}")
+        return 2
+    s = next((x for x in du["sources"] if x["id"] == sid), None)
+    if s is None:
+        print(f"🔴 Không thấy trạm {sid} trong data/sources.json")
+        return 2
+    try:
+        van_ban = Path(duong_dan).read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"🔴 Không đọc được {duong_dan}: {exc}")
+        return 2
+    if len(van_ban.strip()) < 200:
+        print(f"🔴 Nội dung quá ngắn ({len(van_ban)} ký tự) — nghi trang chưa tải "
+              f"xong hoặc bị chặn; KHÔNG ghi gì để tránh coi 'chặn' là 'không có tin mới'.")
+        return 2
+
+    state = {}
+    if STATE.exists():
+        try:
+            state = json.loads(STATE.read_text(encoding="utf-8"))
+        except ValueError:
+            state = {}
+    moi, giao_dien = quet_mot_nguon(s, van_ban, state, la_van_ban_thuan=True)
+    STATE.parent.mkdir(exist_ok=True)
+    STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    so_tieu_de_tong = len(state.get(sid, {}).get("titles", []))
+    s["last_success_at"] = date.today().isoformat()
+    da_bat = False
+    if s.get("status") == "not-covered" and so_tieu_de_tong >= 1:
+        s["status"] = "active"
+        s["kich_hoat"] = {"ngay": date.today().isoformat(),
+                          "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, "
+                                  "urllib bị chặn bot-challenge)",
+                          "so_tieu_de_luc_do": so_tieu_de_tong}
+        da_bat = True
+    du["updated"] = date.today().isoformat()
+    SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n",
+                        encoding="utf-8")
+
+    phat_hien = [f"- **{s['org']}** · phát hiện {date.today().isoformat()} · "
+                 f"source.type=guideline · «{t}» — [CẦN KIỂM CHỨNG] đối chiếu "
+                 f"trang gốc trước khi vào hàng ứng viên (nạp qua Browser thật)"
+                 for t in moi]
+    f = _ghi_ung_vien(phat_hien)
+    if da_bat:
+        print(f"🟢 {sid} {s['org']}: BẬT not-covered→active ({so_tieu_de_tong} tiêu đề)")
+    if giao_dien:
+        print("  (trang đổi thuần giao diện, 0 tiêu đề mới)")
+    if f:
+        print(f"🟠 {len(phat_hien)} tiêu đề mới → {_duong_dan_hien_thi(f)}")
+    elif not moi:
+        print(f"◌ {sid}: {so_tieu_de_tong} tiêu đề đã biết, 0 tiêu đề MỚI so với lần trước.")
+    return 1 if phat_hien else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Trạm quan sát guideline theo tổ chức")
     ap.add_argument("--self-test", action="store_true")
@@ -139,9 +281,17 @@ def main() -> int:
                     help="dò sống mọi trạm có endpoint (kể cả not-covered), chỉ đo không ghi")
     ap.add_argument("--bat-neu-ok", action="store_true",
                     help="dò sống rồi BẬT (not-covered→active) trạm nào dò đạt; sao lưu sổ trước khi ghi")
+    ap.add_argument("--nap-van-ban", nargs=2, metavar=("ID", "FILE"),
+                    help="nạp nội dung ĐÃ TẢI SẴN qua Browser thật (văn bản thuần, "
+                         "vd get_page_text) cho một trạm — dùng khi urllib bị "
+                         "chặn (Cloudflare bot-challenge) nhưng trình duyệt thật "
+                         "tải được; ĐẠT lần đầu ⇒ tự bật not-covered→active")
     a = ap.parse_args()
     if a.self_test:
         return _self_test()
+
+    if a.nap_van_ban:
+        return _nap_van_ban(*a.nap_van_ban)
 
     if a.kiem_tra or a.bat_neu_ok:
         try:
@@ -221,13 +371,9 @@ def main() -> int:
     du["updated"] = date.today().isoformat()
     SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n",
                         encoding="utf-8")
-    if phat_hien:
-        RA.mkdir(exist_ok=True)
-        f = RA / f"to-chuc-{date.today().isoformat()}.md"
-        f.write_text("# ỨNG VIÊN TỪ TRẠM TỔ CHỨC — " + date.today().isoformat()
-                     + "\n\n" + "\n".join(phat_hien)
-                     + "\n\n> Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
-        print(f"🟠 {len(phat_hien)} tiêu đề mới → {f.relative_to(GOC)}")
+    f = _ghi_ung_vien(phat_hien)
+    if f:
+        print(f"🟠 {len(phat_hien)} tiêu đề mới → {_duong_dan_hien_thi(f)}")
     for h in hong:
         print("  ✗ " + h)
     return 1 if (phat_hien or hong) else 0
