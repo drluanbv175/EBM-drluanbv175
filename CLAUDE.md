@@ -15,7 +15,8 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   watchlist; (b) «cập nhật chứng cứ chủ đề X» → `python3 ops/orchestrator.py --topic "X"
   --online` (A2 quét→A4 truy nguyên→B2 cổng→B5 hàng chờ; chủ đề chưa có dashboard thì
   orchestrator tự dừng ở bước PHIÊN NGƯỜI = gọi skill `cap-nhat-chung-cu-y-khoa`);
-  (c) gói duyệt tuần TỰ nằm sẵn thứ Bảy 07:07 (tác vụ lịch `goi-duyet-tuan-ebm`).
+  (c) gói duyệt tuần TỰ nằm sẵn thứ Hai 18:30 (tác vụ lịch `goi-duyet-tuan-ebm` — đổi từ
+  thứ Bảy 07:07 ngày 17/08/2026, xem ghi chú Lịch nền bên dưới).
   Mọi nhánh dừng ở CANDIDATE — Cổng A/B của bác sĩ nguyên vẹn.
 - **Việc lẻ** (tra 1 câu hỏi, soát 1 danh mục TLTK, tính cỡ mẫu, đặc tả biến…) → gọi thẳng agent chuyên trách.
 - **🚪 CỬA VÀO NHẠC TRƯỞNG — đo 02/09/2026, vá cùng ngày (BH88).** Đo 30 câu bác sĩ nói TỰ
@@ -1265,11 +1266,28 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   - **Đặt-cạnh chứng cứ:** `tools/dat_canh_chung_cu_moi.py` (2 tuần/lần trong gói tuần) — mục
     `apply` có tổng quan/guideline MỚI HƠN được đặt cạnh kết luận nguyên văn abstract, ĐÃ tra rút
     bài, KHÔNG phán chiều (đã đo: cosine title không phân tách lạc/đúng — không lọc máy).
-  - **Lịch nền = 2 tác vụ Claude** (`thu-thap-tuan-an-toan-thuoc` T7 06:30 · `cap-nhat-thang-ebm`
-    mùng 1 18:30; launchd đã nghỉ hưu — chưa từng nổ thật). ⚠️ Kỳ đầu 16/08 ĐÃ LỠ (máy không thức);
-    lưới đỡ: `tu_khoi_dong` khi mở phiên + giác quan ⑦d. Muốn nổ đúng hẹn: máy thức giờ đó hoặc
-    bác sĩ đổi giờ/bấm «Run now».
-  - **CI: HAI repo × 2 lane (ubuntu+windows), cả hai xanh.** Repo gốc lần đầu có CI
+  - **Lịch nền — ĐÍNH CHÍNH 09/09/2026 (đo trực tiếp qua `mcp__scheduled-tasks__list_scheduled_tasks`,
+    câu cũ "2 tác vụ, T7 06:30" đã lỗi thời).** Nay có **4 tác vụ**, cả 4 `enabled=true`, cron hợp lệ,
+    có lịch sử chạy đúng hẹn: `thu-thap-tuan-an-toan-thuoc` (18:00 **thứ Hai**, đổi từ T7 06:30 ngày
+    17/08/2026 vì máy thường không thức đúng giờ cũ — SKILL.md của chính task tự ghi chú) ·
+    `goi-duyet-tuan-ebm` (18:30 thứ Hai, nối tiếp 30 phút sau, cùng đợt đổi giờ) · `cap-nhat-thang-ebm`
+    (mùng 1 hàng tháng 18:30, không đổi) · **`giam-sat-acc-aha-quy`** (mới thêm 09/09/2026, quý —
+    0 19 1 1,4,7,10 *, quét ACC/AHA qua Browser thật vì Cloudflare chặn urllib, xem mục ACC/AHA ở
+    trên). launchd đã nghỉ hưu; lưới đỡ `tu_khoi_dong` khi mở phiên + giác quan ⑦d vẫn còn giá trị
+    cho trường hợp máy không thức đúng giờ.
+  - **🔴 CI hiện KHÔNG chạy ở CẢ HAI repo — đo 09/09/2026, KHÁC hẳn câu "cả hai xanh" từng ghi ở
+    đây.** `gh api .../actions/permissions` trả `enabled:false` cho CẢ hai repo (GitHub Actions bị
+    tắt ở cấp cài đặt repo, không phải lỗi nội dung workflow) — mọi run gần đây `queued` vô thời hạn
+    (một run ở repo y khoa kẹt >73 giờ) hoặc `completed/failure` trong vài giây với `runner_id:0`
+    (không job nào thật sự chạy bước nào). Nguyên nhân khả dĩ nhất: hết phút Actions miễn phí/giới
+    hạn chi tiêu của tài khoản `drluanbv175` (khối lượng run rất lớn: ma trận ubuntu+windows × 2
+    repo suốt nhiều tuần). **Việc CHỈ bác sĩ làm được** (giao diện web GitHub, ngoài tầm agent):
+    Settings → Actions → General → bật lại "Allow all actions"; nếu vẫn `false` thì kiểm
+    Settings (cấp tài khoản) → Billing and plans → Plans and usage/Spending limits. Sau khi bật lại,
+    cancel rồi re-run hai run đang kẹt để xác nhận CI chạy sạch trở lại — trước đó KHÔNG thể khẳng
+    định "CI xanh" cho bất kỳ commit nào từ 06/09/2026 trở đi, vì không job nào thực sự thi hành.
+  - **CI: HAI repo × 2 lane (ubuntu+windows) — cấu hình workflow không đổi, chỉ mất khả năng CHẠY (xem
+    mục 🔴 ngay trên).** Repo gốc lần đầu có CI
     (`.github/workflows/kiem-tinh-da-nen.yml`: compileall + chốt đa nền R1–R6 + smoke bảng);
     repo y khoa thêm bước `tools/kiem_newline_vung_ky.py` (miễn trừ `# da-nen: bo-qua` kèm lý do).
   - **Ed25519 «ed1»** đã sẵn trong lõi ký (`gate_contract.py`): khoá công trong repo ⇒ verify
