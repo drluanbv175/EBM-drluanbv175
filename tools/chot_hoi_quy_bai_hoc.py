@@ -97,6 +97,21 @@ def _goc_mea() -> Path:
             .duong_goc("medical-ebm-automation", REPO)) or (REPO / "medical-ebm-automation")
 
 
+def _goc_dash() -> Path | None:
+    """Đường dẫn THẬT của EBM-Dashboards/ — lồng hoặc anh em thư mục cha, hoặc None.
+
+    VÁ 09/09/2026: BH30/BH39 tự ghép cứng `REPO / "EBM-Dashboards"` — cùng lỗi
+    BH #105 đã vá cho `_goc_mea()`. Trên máy THẬT (kiến trúc OneDrive: cây gốc
+    "Claude AI" vừa là repo git vừa chứa `EBM-Dashboards/` làm thư mục con
+    không track) ghép cứng vẫn đúng; trên phiên cloud (`add_repo` dựng các repo
+    làm ANH EM dưới cùng thư mục cha) nó luôn rỗng dù không liên quan gì tới
+    nội dung đang kiểm. `duong_goc()` đã tự kiểm cả hai vị trí nên dùng nó thay
+    vì tự đoán một vị trí. Trả None khi thật sự vắng ở cả hai — gọi nơi dùng
+    phải tự xử lý, không giả định luôn có giá trị.
+    """
+    return _nap(REPO / "tools" / "ban_sao_tran.py", "bst_goc_dash").duong_goc("EBM-Dashboards", REPO)
+
+
 # ---------------------------------------------------------------------------
 # Mỗi hàm trả (đạt, chi_tiết). Ném ngoại lệ = coi như KHÔNG đạt (chốt phải nói
 # ra khi chính nó hỏng, thay vì im lặng trả xanh).
@@ -1048,10 +1063,10 @@ def bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat():
     import shutil as _sh
     import tempfile as _tmp
     dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_bh30")
-    dash = REPO / "EBM-Dashboards"
-    goc = sorted(dash.glob("WebDashboard_*.html"))
+    dash = _goc_dash()
+    goc = sorted(dash.glob("WebDashboard_*.html")) if dash else []
     if len(goc) < 1:
-        return False, "kho dashboard rỗng — không dựng được ca thử"
+        return False, "EBM-Dashboards/ rỗng hoặc vắng mặt — không dựng được ca thử"
     vd = dk.nap_vd()
     mau = None
     for p in goc:
@@ -1507,10 +1522,18 @@ def bh39_doctrine_khong_duoc_troi_sau_cong():
     Kiểm HÀNH VI: mọi trường mà cổng ĐANG bắt buộc phải xuất hiện trong ít nhất một
     doctrine agent. Thêm luật ở cổng thì phải dạy agent — nếu không, chốt này đỏ.
     """
-    cong = (REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py")
+    # VÁ 09/09/2026: bản đầu chỉ tìm bản doctrine-canonical (REPO/EBM-Dashboards/tools/…),
+    # không lùi về bản vendor-qua-git — cùng khoảng trống mà duong_cong_cu_pipeline()
+    # (tools/ban_sao_tran.py) đã lấp cho xuat_goi_cap_nhat.py/canary 08/09/2026, chỉ là
+    # BH39 chưa từng được nối dây theo. Dùng resolver chung: máy thật vẫn thấy bản
+    # canonical như cũ; phiên cloud/CI lùi về sync/skills/cap-nhat-chung-cu-y-khoa/tools/
+    # (LUÔN có qua git) — cổng ĐƯỢC KIỂM THẬT thay vì chỉ ⚪ "không thấy".
+    bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh39")
+    cong = bst.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
     thu_muc = REPO / ".claude" / "agents"
-    if not cong.exists() or not thu_muc.is_dir():
-        return False, "không thấy cổng hoặc thư mục agent"
+    if cong is None or not thu_muc.is_dir():
+        return False, ("không thấy cổng verify_dashboard.py (cả EBM-Dashboards/ lẫn bản "
+                       "vendor sync/skills/ đều vắng) hoặc thư mục .claude/agents")
     van_cong = cong.read_text(encoding="utf-8", errors="replace")
     # Trường mà cổng thực sự đọc từ item và có thể sinh lỗi/cảnh báo.
     truong = [t for t in ("normativeBasis", "gradeBy", "provenanceUnknown")

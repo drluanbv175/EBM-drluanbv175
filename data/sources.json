@@ -1,6 +1,6 @@
 {
- "updated": "2026-08-15",
- "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
+ "updated": "2026-09-09",
+ "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ). | 09/09/2026 (phiên cloud, tiếp tục kiểm tra 'nguồn chứng cứ tốt nhất'): chạy lại tools/sources_health.py → 1 active/7 broken, y hệt kết luận 29/08 (đối chiếu $HTTPS_PROXY/__agentproxy/status: recentRelayFailures ghi đúng 6 CONNECT 403 tới eutils/crossref/ebi/openfda/openalex) ⇒ đây là chính sách mạng ỔN ĐỊNH của sandbox, không phải flake, không cần điều tra lại mỗi phiên. PHÁT HIỆN MỚI: kênh MCP mcp__PubMed__* (get_article_metadata/search_articles) của CHÍNH phiên chat có đường mạng RIÊNG, không đi qua urllib egress bị chặn ⇒ verify PMID/DOI/article_types(retraction) SỐNG được từ cloud dù app/sources/pubmed.py vẫn bị chặn. Đã dùng kênh này xác minh 10 PMID của 2 tài liệu SuyTim dựng 07/09 (WebDashboard_EBM_VanDeCuThe_SuyTim_HFnrEF_20260907: 6/6 PMID/DOI đúng · TongThuat_SuyTim_CapNhat_20260907: mẫu 4/22 gồm 3 PMID mới nhất 42663301/42670975/42670986 (NEJM, 28-30/08/2026) + PMID HELIOS-B 39213194 từng bị sửa lỗi gán quần thể ở v1.49.0) — cả 10 đều đúng tiêu đề/DOI, KHÔNG mang article_type Retracted/Expression of Concern; tra thêm guideline HF toàn diện mới hơn 2025 CCS/CHFS (PMID 41110921, T10/2025) trong ESC/ACC-AHA/HFSA Practice Guideline[ptyp] 09/2025-09/2026 → KHÔNG có, guideline đó vẫn là bản mới nhất cho HFnrEF tính đến hôm nay. GIỚI HẠN: kênh MCP chỉ gọi được ở TẦNG AGENT (lời gọi công cụ của phiên chat), KHÔNG gọi được từ code Python chạy dưới tools/*.py hay app/*.py ⇒ KHÔNG nối được vào sources_health.py/verify_dashboard.py --online/surveillance_scan.py để tự động hoá — đây là lối kiểm THỦ CÔNG cho phiên đang chat, không phải một cách sửa cổng tự động.",
  "sources": [
   {
    "id": "SRC-001",
@@ -19,7 +19,7 @@
    "detection_method": "api-query",
    "measured_latency_days": 2,
    "owner": "agent-A2",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-15",
    "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
    "last_probe_at": "2026-08-15"
@@ -41,7 +41,7 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-15",
    "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
    "last_probe_at": "2026-08-15"
@@ -63,7 +63,7 @@
    "detection_method": "version-field",
    "measured_latency_days": null,
    "owner": "agent-A4",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-14",
    "known_gap": "làm mới 30 ngày/lần bằng tools/tai_retraction_watch.py; chỉ tra được PMID, không DOI"
   },
@@ -84,7 +84,7 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A4",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-15",
    "known_gap": null,
    "last_probe_at": "2026-08-15"
@@ -106,7 +106,7 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A4",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-15",
    "known_gap": null,
    "last_probe_at": "2026-08-15"
@@ -128,7 +128,7 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "weekly_safety.sh",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-13",
    "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
    "last_probe_at": "2026-08-15"
@@ -150,7 +150,7 @@
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "active",
+   "status": "broken",
    "last_success_at": "2026-08-15",
    "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
    "last_probe_at": "2026-08-15"
