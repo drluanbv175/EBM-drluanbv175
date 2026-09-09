@@ -134,6 +134,11 @@ tools/vietnamize/catalog_may/
 # PHA 5 — gói triển khai + bàn giao (tài liệu hệ, theo repo)
 !/implementation/
 !/HANDOVER.md
+# Harness v4 (09/09/2026) — kế hoạch/cấu hình điều phối, khớp quy ước
+# medical-ebm-automation/{Plans.md,harness.toml} (repo đó CŨNG track 2 file này ở gốc).
+# Đây là tài liệu hệ thống (như audit/, contracts/), không phải dữ liệu sinh ra.
+!/Plans.md
+!/harness.toml
 
 # Bản lưu trữ kho git (git bundle) — 287 MB, đi qua OneDrive chứ không qua GitHub;
 # commit vào git là lồng lịch sử git trong git.

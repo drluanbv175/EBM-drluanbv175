@@ -1,0 +1,30 @@
+# Harness v4 Configuration
+# Edit this file, then run `harness sync` to generate CC plugin files.
+
+[project]
+name = "EBM-drluanbv175"
+version = "0.1.0"
+description = "Sổ nguồn + trạm giám sát chứng cứ lâm sàng đa nguồn (Python), song song medical-ebm-automation"
+
+[agent]
+# default = "security-reviewer"
+
+[env]
+# EBM_WORKSPACE_ROOT phải export trước mọi `git commit` trong repo này (pre-commit hook cần nó)
+# export EBM_WORKSPACE_ROOT=/home/user/EBM-drluanbv175
+
+[safety.permissions]
+deny = [
+  "Bash(sudo:*)",
+]
+ask = [
+  "Bash(rm -r:*)",
+  "Bash(git push --force:*)",
+]
+
+[safety.sandbox]
+failIfUnavailable = false
+
+[safety.sandbox.filesystem]
+denyRead = [".env", ".env.bak.*", "secrets/**"]
+allowRead = [".env.example"]
