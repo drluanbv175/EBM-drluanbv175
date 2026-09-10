@@ -224,6 +224,26 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   nhưng LUÔN ném lại `KeyboardInterrupt`/`SystemExit`. Nút phát khoá nay phân biệt «thiếu hẳn»
   (`pip install cryptography`) với «cài hỏng» (`pip install --force-reinstall cffi cryptography`)
   — hai loại sửa khác nhau.
+  ⛔ **ĐÍNH CHÍNH 10/09/2026 — "Vá 4 rào... + 1 trong setup_gate_approval_key.py" ở trên CHƯA
+  TỪNG LANDED trên mã sống.** Audit toàn diện hệ nghiên cứu 10/09/2026 đo lại bằng
+  `git log -S "BaseException" -- tools/gate_contract.py tools/setup_gate_approval_key.py`
+  trên MỌI nhánh (kể cả `master` và nhánh làm việc) → **0 kết quả** — chỉ phần (C) (rào module
+  test) từng thật sự landed (qua commit `534fec11`, 08/09/2026), còn 4 rào sản xuất trong
+  `gate_contract.py` + 1 trong `setup_gate_approval_key.py` vẫn nguyên `except Exception` cho
+  tới hôm nay, dù dòng trên đã khai "đã vá". Đúng lớp lỗi "tài liệu nói một đằng, mã sống chạy
+  một nẻo" mà chính file này cảnh báo lặp lại nhiều lần. **Đã vá THẬT hôm nay:** cả 5 điểm
+  (`_load_ed_private`/`_load_ed_public`/`sign_approval_ed25519`/nhánh verify ed1 trong
+  `gate_contract.py`, và `Ed25519PrivateKey.generate()` trong `setup_gate_approval_key.py`) nay
+  bắt `except BaseException`, luôn ném lại `KeyboardInterrupt`/`SystemExit` qua helper chung
+  `_fail_closed_on_crypto_error()`; nút phát khoá phân biệt đúng thông điệp «thiếu hẳn» vs «cài
+  hỏng» như dự định ban đầu. Kiểm hồi quy:
+  `tests/test_gate_contract_baseexception_hardening_20260910.py` (12 test) — mỗi điểm rào có cặp
+  test (BaseException giả bị bắt trả None/False · KeyboardInterrupt/SystemExit KHÔNG bị nuốt) +
+  1 test đối chứng InvalidSignature thường vẫn trả False như cũ. Kiểm đột biến trực tiếp trên mã
+  sống: đảo `except BaseException` → `except Exception` tại `_load_ed_private` ⇒ test đỏ đúng
+  (panic giả lọt ra làm crash test thay vì assert được); khôi phục ⇒ xanh lại, diff khớp tuyệt
+  đối bản trước đột biến. 157 test liên quan gate_contract/Ed25519/setup_gate_approval_key/
+  approval_ledger PASS sau vá.
   **(B) ESD02/ESD04 chặn MỌI commit ở máy không có OneDrive.** Hai mục báo FAIL chỉ vì thiếu
   file ngoài git ⇒ `--contract-check` trả 1 ⇒ pre-commit chặn, dù không có drift nào. **Không
   phải nới cổng** — tiền lệ nằm ngay trong chính file đó: ESD05 đã đổi FAIL→HUMAN_GATE ngày
@@ -2383,6 +2403,28 @@ thêm nhưng bản sống KHÔNG có") · mẫu cập nhật chứng cứ (5 das
 66/67 dashboard lệch VỎ CSS/HTML — không phải nội dung — cần chạy lại `reskin_dashboards.py`)
 · tầng agent doctrine (74/74 bài học BH01-74 không tái phát, 0 tham chiếu hỏng, mọi phân công
 công cụ khớp đúng bảng phân công đã ghi ở các mục trên).
+
+**🔴 TAUTOLOGY G5-AUTO-03 TỰ THÚ TỪ 30/07/2026, VÁ THẬT 10/09/2026 (audit toàn diện hệ nghiên
+cứu, theo yêu cầu bác sĩ "giải quyết các phát hiện đỏ").** `tools/g5_quality_gate.py::G5-AUTO-03`
+("DMP phủ vòng đời dữ liệu theo ICH E6(R3)") chỉ hỏi "11 nhãn bắt buộc
+(`_REQUIRED_DMP_TOKENS`) có xuất hiện ĐÂU ĐÓ trong toàn văn bản DMP không" — mà
+`run_g5_auto.py::generate_artifact()` LUÔN in đủ 11 nhãn đó vô điều kiện, nên luật này KHÔNG
+BAO GIỜ có thể BLOCK về cấu trúc: một DMP chỉ toàn 11 nhãn trần, thân mục hoàn toàn rỗng, vẫn
+PASS. Đúng họ lỗi tautology đã gặp ở G3/G8 (guardrail soi văn bản do CHÍNH mình vừa sinh).
+**Đã vá:** thêm `_dmp_noi_dung_thieu_duoi_nhan()` — với mỗi nhãn đã xuất hiện, trích đoạn văn
+bản NGAY SAU nhãn đó tới nhãn kế tiếp (theo vị trí thật trong văn bản), bỏ mọi placeholder
+`[CẦN...]`, đòi phần còn lại ≥20 ký tự nội dung thật; khuôn theo đúng tiền lệ BH97
+(`approve_gate._g4_sections_still_draft`: phân biệt "thiếu nhãn" khỏi "có nhãn nhưng thân mục
+rỗng"). DMP THẬT do `run_g5_auto.py` sinh vẫn PASS (đã kiểm bằng cách gọi lại chính bộ sinh,
+không chỉ đọc code); một DMP tautology tự dựng (11 nhãn trần) nay BLOCK đúng cả 11/11 nhãn.
+Sửa kèm fixture chung `tests/g5_test_helpers.py` (dùng bởi ~150 test G5 khác) — bản cũ chỉ liệt
+11 nhãn trần liên tiếp nên vỡ ngay dưới luật mới; đã thêm nội dung thật cho từng mục, **không
+nới lỏng luật để fixture cũ qua được** (đúng tiền lệ BH97 "sửa fixture cho hợp lệ"). Kiểm hồi
+quy: `tests/test_g5_auto03_content_check_20260910.py` (5 test, gồm 1 test tái tạo LẠI đúng luật
+cũ trên cùng dữ liệu để chứng minh thực nghiệm — không chỉ suy diễn — rằng luật cũ sẽ báo PASS
+sai). Kiểm đột biến trên mã sống: cho `_dmp_noi_dung_thieu_duoi_nhan()` luôn trả `[]` (mô phỏng
+gỡ bản vá) ⇒ 3 test đỏ đúng chỗ; khôi phục ⇒ xanh lại, diff khớp tuyệt đối. 151 test liên quan
+G5 PASS sau vá.
 
 ## 📐 KHUÔN ĐỀ CƯƠNG 16→18 MỤC · CHECKLIST SPIRIT 2025 · MỤC LỤC .docx (06/09/2026)
 
