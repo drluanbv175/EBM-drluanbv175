@@ -11,13 +11,10 @@
   nội dung đã XÁC MINH. KHÔNG cần đụng HTML/CSS/engine. Chrome (tiêu đề, PICO chips,
   KPI, verdict, Quick View) TỰ SINH từ DATA.
 
-  ⚠️ KHÁC BIỆT VỚI evidence-workbench-template.html, ĐỪNG BỎ QUA: template này KHÔNG
-  có tab "Chuẩn & chất lượng" và KHÔNG đọc field `standards` ở bất kỳ đâu — field đó
-  bị bỏ qua hoàn toàn nếu có trong DATA. Cần hiển thị Lớp 4 (chuẩn cập nhật chứng cứ,
-  cổng liêm chính, truy nguyên từng item) tại điểm chăm sóc thì dùng Evidence Workbench.
-
-  SCHEMA (DÙNG CHUNG với evidence-workbench-template.html cho các field dưới đây — 1
-  DATA chạy được cả hai, TRỪ `standards` chỉ Evidence Workbench render):
+  SCHEMA (DÙNG CHUNG với evidence-workbench-template.html — 1 DATA chạy được cả hai,
+  kể cả `standards` — Lớp 4 "Chuẩn & chất lượng" nay hiển thị ở CẢ HAI mẫu, đặt trong
+  vùng cuộn của trang, thu gọn mặc định, bấm để mở; ẩn hoàn toàn nếu DATA.standards
+  không khai báo — vá 10/09/2026, xem SKILL.md mục 5A "ĐÍNH CHÍNH LẦN HAI"):
     meta:    { eyebrow, question, pico:{P,I,C,O}, updated }
     summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }     // Clinical Quick View
     standards?: {                                                    // Lớp 4: chuẩn cập nhật chứng cứ

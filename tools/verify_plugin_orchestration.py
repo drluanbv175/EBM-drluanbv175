@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -34,8 +35,38 @@ from orchestrator.worker_inventory import (  # noqa: E402
 CONTRACT_MARKER = "_PLUGIN-ROUTING-CONTRACT.md"
 REGISTRY_MARKER = "plugin_ownership_registry.json"
 CANONICAL_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
-ROUTER_SOURCE = ROOT / "sync/skills/plugin-router-chatgpt"
-ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
+
+
+def _resolve_repo_root(start_dir: Path | None = None) -> Path:
+    """Quy gốc repo CHÍNH qua git, cùng khuôn với dong_bo_skill_claude_codex.py.
+
+    Cổng router (dòng dưới) so sánh nơi symlink ``~/.claude/skills/plugin-router-chatgpt``
+    trỏ tới với "nguồn canonical" — nhưng ``dong_bo_skill_claude_codex.py`` (bên ghi
+    symlink đó) đã quy gốc qua ``git rev-parse --git-common-dir`` từ 08/09/2026 (commit
+    418aea9), nên symlink LUÔN trỏ vào ``sync/skills`` của repo CHÍNH, bất kể chạy từ
+    worktree nào. Hàm ROOT cũ (``Path(__file__).resolve().parents[1]``) của CHÍNH file
+    này thì KHÔNG — chạy cổng này từ một worktree phụ sẽ so "nguồn canonical" với bản
+    sao của worktree đó, lệch khỏi những gì symlink thật sự trỏ tới, và báo FAIL giả dù
+    symlink hoàn toàn đúng. Đây là đúng lỗ hổng "đo đúng, nhưng đo nhầm chỗ" đã lặp
+    nhiều lần trong repo — vá bằng cách quy gốc y hệt bên ghi, không phải bên đọc.
+    """
+    here = start_dir if start_dir is not None else Path(__file__).resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10, check=True,
+        )
+        git_common_dir = Path(result.stdout.strip())
+        if git_common_dir.is_dir():
+            return git_common_dir.parent
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return here.parent
+
+
+REPO_ROOT = _resolve_repo_root()
+ROUTER_SOURCE = REPO_ROOT / "sync/skills/plugin-router-chatgpt"
+ROUTER_ZIP = REPO_ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 
 
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
@@ -201,7 +232,7 @@ def verify() -> dict[str, Any]:
     )
     missing_router = [path for path in router_files if not path.is_file()]
     for path in missing_router:
-        errors.append(f"router thieu file: {path.relative_to(ROOT)}")
+        errors.append(f"router thieu file: {path.relative_to(REPO_ROOT)}")
 
     for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
         target = runtime / "plugin-router-chatgpt"
@@ -211,7 +242,7 @@ def verify() -> dict[str, Any]:
             errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
 
     if not ROUTER_ZIP.is_file():
-        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
+        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(REPO_ROOT)}")
     elif not missing_router:
         source_files = [
             path

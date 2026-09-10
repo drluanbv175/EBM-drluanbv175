@@ -1079,7 +1079,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã nêu hành động, monitoring, cờ đỏ/chuyển tuyến khi cần chưa?
 - Đã phân tích nhóm đặc biệt liên quan chưa?
 - Đã ghi rõ nội dung chưa đủ để thay đổi chưa?
-- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu) với `DATA.standards` đã điền đủ, và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa? (tab `Chuẩn & chất lượng` để rà nội dung này chỉ hiện trên Evidence Workbench — xem đính chính ở 5A)
+- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu) với `DATA.standards` đã điền đủ, và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa? (tab/khối `Chuẩn & chất lượng` để rà nội dung này hiện trên CẢ HAI mẫu từ 10/09/2026 — xem "ĐÍNH CHÍNH LẦN HAI" ở 5A)
 - Đã tránh tạo ID quản trị hoặc cập nhật Dashboard Master khi người dùng không yêu cầu chưa?
 - Đã dùng tài liệu tham khảo có thể truy nguyên chưa?
 - Nếu câu hỏi về hiệu quả can thiệp: đã trình bày khối PICO đủ 5 dòng và trích hiệu số đúng như nguồn (point estimate + CI/p) chưa?
