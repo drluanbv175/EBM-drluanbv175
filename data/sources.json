@@ -441,13 +441,13 @@
    "auth_required": false,
    "terms_ok": true,
    "terms_note": null,
-   "scan_frequency": "theo lượt quét A2",
+   "scan_frequency": "weekly",
    "detection_method": "api-query",
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
    "last_success_at": "2026-08-28",
-   "known_gap": "CỐ Ý chưa nối vào routine lâm sàng (quyết định 14/08): thêm dòng chưa-bình-duyệt khi nhãn tin cậy vừa ổn định sẽ hỏng mục tiêu; MCP có sẵn cho tra tay",
+   "known_gap": "CỐ Ý chưa nối vào routine lâm sàng (quyết định 14/08): thêm dòng chưa-bình-duyệt khi nhãn tin cậy vừa ổn định sẽ hỏng mục tiêu; MCP có sẵn cho tra tay. scan_frequency ghi 'weekly' vì bám nhịp quét của agent-A2 (ops/schedule.md) — không có nhịp riêng độc lập; SỬA 10/09/2026, giá trị cũ 'theo lượt quét A2' không khớp enum của contracts/sources.schema.json (bắt bởi tools/kiem_hop_dong_nguon.py mới).",
    "ghi_chu_kich_hoat": "ĐÍNH CHÍNH SỔ 29/08/2026 — mục này LỖI THỜI so với code: hai làn đã được nối vào run_scan từ 15/08/2026 (surveillance_scan.py::search_trials_lane — ClinicalTrials.gov API v2; ::search_preprint_lane — Europe PMC PPR + Crossref, fail-soft từng làn). Bằng chứng chạy thật: CI run #89 ngày 28/08/2026 — hai làn kéo ứng viên THẬT về khiến unit test đỏ (nay đã stub trong test; làn thật vẫn chạy trong quét thật). last_success_at lấy từ chính sự kiện CI đó."
   }
  ]

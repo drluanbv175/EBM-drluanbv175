@@ -5075,6 +5075,36 @@ def bh100_verifier_khong_duoc_mu_vi_mot_module_thieu():
     return True, f"annex2_quality_gate đã có; trục được chấm thật (status={r.get('status')})"
 
 
+def bh101_hop_dong_nguon_thi_hanh_duoc_bang_may():
+    """10/09 — vòng 2: `contracts/sources.schema.json` khai luật cho
+    `data/sources.json` (19 nguồn, đang duy trì thật, updated 09/09/2026) nhưng
+    TRƯỚC công cụ `kiem_hop_dong_nguon.py`, KHÔNG nơi nào đối chiếu hai file —
+    đúng họ lỗi "hợp đồng có, không ai thi hành" (cùng lớp BH46 canh
+    evidence-item.schema.json, nhưng sổ NGUỒN chưa từng có bản song sinh).
+
+    Chạy thử lần đầu bắt được NGAY một vi phạm THẬT, không phải giả định:
+    SRC-031 khai `scan_frequency: "theo lượt quét A2"` — không khớp enum
+    {daily,weekly,monthly,quarterly,ad-hoc} của chính hợp đồng. Đã sửa thành
+    "weekly" (đúng nhịp thật của agent-A2 theo ops/schedule.md), giữ nguyên
+    ngữ nghĩa "chạy theo A2" trong known_gap thay vì bịa thêm giá trị enum mới.
+
+    Kiểm HÀNH VI: chạy self-test của validator — sổ tốt PASS, cả 5 ca xấu bị bắt.
+    """
+    import subprocess
+    vd = REPO / "tools" / "kiem_hop_dong_nguon.py"
+    for f in (vd, REPO / "contracts" / "sources.schema.json", REPO / "data" / "sources.json"):
+        if not f.exists():
+            return False, f"mất {f.name} — hợp đồng nguồn lại chỉ còn trên giấy"
+    r = subprocess.run([sys.executable, str(vd), "--self-test"],
+                       capture_output=True, text=True, timeout=60)
+    if r.returncode != 0 or "LỌT" in (r.stdout or ""):
+        return False, "validator không bắt đủ 5 ca xấu — hợp đồng nguồn thành lời khuyên"
+    r2 = subprocess.run([sys.executable, str(vd)], capture_output=True, text=True, timeout=60)
+    if r2.returncode != 0:
+        return False, f"data/sources.json thật đang vi phạm hợp đồng: {(r2.stdout or '').strip()[:200]}"
+    return True, "hợp đồng nguồn thi hành được bằng máy + data/sources.json thật đang sạch"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5183,6 +5213,7 @@ BAI_HOC = [
     ("BH98", "02/09", "Biên nhận guardrail lâm sàng: bịa thì bị bắt, thật thì thông, không có sổ thì KHÔNG kết luận", bh98_bien_nhan_guardrail_lam_sang),
     ("BH99", "03/09", "Module test nhập thư viện gốc hỏng phải SKIP, không được kéo sập cả lượt thu thập", bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap),
     ("BH100", "03/09", "Một module thiếu không được làm MÙ cả verifier; doctrine không được khai cổng không có bộ thi hành", bh100_verifier_khong_duoc_mu_vi_mot_module_thieu),
+    ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
