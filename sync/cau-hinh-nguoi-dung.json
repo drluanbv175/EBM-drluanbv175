@@ -5,8 +5,8 @@
   "_ranh_gioi": "Công cụ kiem_cau_hinh_nguoi_dung.py CHỈ ghi đúng các khoá liệt kê ở đây, luôn sao lưu trước, và KHÔNG bao giờ đụng enabledPlugins hay khoá nào khác.",
   "khoa": {
     "skillListingBudgetFraction": {
-      "gia_tri": 0.08,
-      "ly_do": "0,08 = 64.000 ký tự (cửa sổ 200k token). Đo thật: 933 mục cần 48.607 ký tự để hiện đủ tên — đủ, còn dư biên."
+      "gia_tri": 0.1,
+      "ly_do": "Nâng 0,08→0,1 ngày 2026-09-10 (kiem_plugin_day_du.py báo 🔴 vượt 1,1 lần): kho đã lớn thành 1668 mục, cần ~67.970 ký tự để hiện đủ tên, trong khi 0,08 chỉ cho 64.000 (thiếu biên). 0,1 = 80.000 ký tự — còn dư ~18% so với nhu cầu đo được, cùng logic 'chừa biên' của giá trị gốc chứ không chỉ vá vừa đủ."
     },
     "skillListingMaxDescChars": {
       "gia_tri": 80,

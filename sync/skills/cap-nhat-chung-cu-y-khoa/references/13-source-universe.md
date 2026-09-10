@@ -68,3 +68,31 @@ liên quan bệnh nhân đái tháo đường).
 **Nguyên tắc an toàn của bộ lọc: KHÔNG CHẮC thì giữ là THUỐC.** Bỏ sót một cảnh báo thuốc nguy
 hiểm hơn nhiều so với để lọt một mục nhiễu. Đã có phép thử chống bỏ sót cho domperidone,
 morphine, valsartan/NDMA và montelukast — cả bốn giữ nguyên trong nhóm thuốc.
+
+## ĐÍNH CHÍNH 10/09/2026 (kiểm độc lập BAO PHỦ NGUỒN) — mục "Thực thi THẬT" ở trên đã CŨ, đọc kèm sổ đăng ký nguồn thật
+
+Mục "Thực thi THẬT trên máy này — đo ngày 13/08/2026" phía trên mô tả các connector của
+`app/sources/__init__.py` **trong `medical-ebm-automation/`** — đó là một app RIÊNG (pipeline
+giám sát định kỳ toàn hệ), không phải chính bộ quét mà skill này dùng ở Bước 2/mục 5D
+(`tools/surveillance_scan.py` + `tools/check_citation_retraction.py` của skill này). Từ
+15/08/2026 (PHA 4), skill có thêm **sổ đăng ký nguồn máy-đọc THẬT và MỚI HƠN** mà trước bản vá
+này chưa reference nào trong `sync/skills/cap-nhat-chung-cu-y-khoa/` trỏ tới:
+
+- `<gốc dự án>/data/sources.json` — danh sách nguồn kèm `status` (active/not-covered/manual),
+  `known_gap`, `last_success_at`, độ trễ đo được. Nguồn thật hiện tại (khác bảng "Kênh đang
+  chạy" ở trên): PubMed E-utilities · kênh gọi tên Cochrane/NICE/USPSTF/WHO · **Retraction
+  Watch ngoại tuyến** (30.851 PMID, không cần mạng) · Crossref (`updated-by` cho rút bài theo
+  DOI) · Europe PMC · openFDA · OpenAlex (làn đối chiếu) · ClinicalTrials.gov + preprint
+  (medRxiv/bioRxiv) · 8 trạm web hội (GOLD/GINA/KDIGO/ADA/ESC/ACC-AHA/EMA-MHRA/IDSA, dựng xong,
+  bác sĩ tự bật trên máy thật bằng `tools/giam_sat_to_chuc.py --kiem-tra` rồi `--bat-neu-ok`).
+- `<gốc dự án>/tools/tuyen_bo_do_phu.py` — sinh "TUYÊN BỐ ĐỘ PHỦ" TRUNG THỰC từ chính
+  `data/sources.json` (tự cấm các cụm "bao phủ toàn diện"/"mọi nguồn uy tín"); đã nối vào bản
+  đọc qua `tools/build_ban_doc_chung_cu.py::khoi_do_phu()` nên mỗi bản đọc xuất ra đều mang
+  khối này ở footer — không cần bác sĩ tự hỏi "đã đủ nguồn chưa", khối đó tự trả lời bằng số.
+- `<gốc dự án>/tools/sources_health.py` — báo nguồn hỏng liên tục >2 chu kỳ.
+- Toàn cảnh có phân quyền việc còn lại: `<gốc dự án>/audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md`.
+
+Ba tool trên nằm NGOÀI thư mục skill (dùng chung như `tools/xuat_goi_cap_nhat.py` ở mục 9) nên
+không nhân bản vào đây — chỉ tham chiếu. Bảng "Ma trận nguồn bắt buộc" ở đầu file này (khái
+niệm) và "Luật fail-closed" vẫn đúng và không đổi; phần bị lỗi thời chỉ là bảng THỰC THI liệt kê
+connector của app khác.

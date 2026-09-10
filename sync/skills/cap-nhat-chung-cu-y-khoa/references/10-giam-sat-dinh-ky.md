@@ -18,6 +18,14 @@ ghi Markdown + audit JSON. Bộ quét có retry/backoff, User-Agent, kiểm sche
 PMID và ghi lỗi từng chủ đề. `PARTIAL/FAIL` trả mã khác 0; chủ đề lỗi không được ghi
 "không có cập nhật".
 
+**Sổ đăng ký nguồn (thêm 15/08/2026, PHA 4):** `<gốc dự án>/data/sources.json` ghi trạng thái
+từng nguồn máy-đọc (active/not-covered/manual, `known_gap`, độ trễ đo được) — nguồn của số liệu
+"độ phủ" trong `tools/tuyen_bo_do_phu.py`. `tools/sources_health.py` báo nguồn hỏng liên tục >2
+chu kỳ; `tools/giam_sat_to_chuc.py --kiem-tra`/`--bat-neu-ok` bật trạm web hội (chạy trên máy
+thật, ngoài sandbox — mọi host hội bị chính sách mạng sandbox chặn). Xem
+`references/13-source-universe.md` §ĐÍNH CHÍNH 10/09/2026 và
+`audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md` để biết trạng thái đầy đủ.
+
 ```bash
 cd EBM-Dashboards
 python3 tools/surveillance_scan.py --days 30 \

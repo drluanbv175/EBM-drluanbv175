@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.48.5
+  version: 1.48.6
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -371,7 +371,8 @@ Màu loại thiết kế (badge): RCT `#2563eb` · Meta `#7c3aed` · Cohort `#08
 **Sử dụng template MẶC ĐỊNH:** `templates/web-dashboard-evidence-workbench.html` (mẫu **"Evidence Workbench"** — nền sáng, 3 cột; có khối **GRADE Evidence-to-Decision** và tab **Chuẩn & chất lượng**; mặc định từ 2026-06-07 theo lựa chọn của bác sĩ, nâng chuẩn 2026-07-15).
 Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa HTML/CSS. Chrome (tiêu đề, PICO chips, KPI, băng Clinical Quick View, EtD, standards/quality) **tự sinh từ `DATA`**.
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
-Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
+Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO) và `etd` (GRADE Evidence-to-Decision).
+⚠️ **ĐÍNH CHÍNH — `standards` (Lớp 4, tab `Chuẩn & chất lượng`) KHÔNG cùng schema giữa hai mẫu, khác câu cũ ở đây.** Chỉ Evidence Workbench render field này (hàm `qualityView()` đọc `DATA.standards`, có CSS/tab riêng); Dark Analyst **không có tab `Chuẩn & chất lượng`** và không đọc `DATA.standards` ở đâu cả trong file (đã kiểm bằng grep `DATA\.` trên cả hai template: EW có `DATA.standards`, Dark Analyst thì không) — schema đã khai ở đầu file Dark Analyst (`meta/summary/items/etd`) cũng không liệt kê `standards`. Vẫn khai `DATA.standards` khi dùng Dark Analyst — cổng `tools/verify_dashboard.py --strict-sources` đọc thẳng field này bất kể template, không phụ thuộc việc có render hay không — nhưng bác sĩ sẽ KHÔNG thấy tab đó trên dashboard; dùng Evidence Workbench (mặc định) khi cần rà "Chuẩn & chất lượng" ngay tại điểm chăm sóc.
 
 **TỰ ĐỘNG khi gọi skill — BỘ NĂM, MỘT LỆNH:** mỗi lần skill được gọi cho một vấn đề → dựng Dashboard (mẫu Evidence Workbench; Dark Analyst CHỈ khi bác sĩ yêu cầu) rồi chạy **một lệnh duy nhất**:
 
@@ -628,9 +629,18 @@ Nay báo cáo TÁCH lý do và chỉ đúng cách sửa cho từng loại:
 
 | Lý do hết hiệu lực | Cách sửa | Mã |
 |---|---|---|
-| PMID chưa kiểm được rút bài | **chạy lại KHÔNG sửa được** — cần `NCBI_API_KEY` | `CAN_NCBI_API_KEY` |
+| PMID chưa kiểm được rút bài, **chưa tải nền Retraction Watch ngoại tuyến** | tải MỘT LẦN, không cần khoá API: `python medical-ebm-automation/tools/tai_retraction_watch.py` rồi chạy lại — **SẼ** sửa được | `CAN_TAI_RETRACTION_WATCH` |
+| PMID chưa kiểm được rút bài, **nền ngoại tuyến ĐÃ tải mà vẫn tắc** | chạy lại thêm vòng có thể sửa (chuỗi 3 tầng); phần còn sót cần thêm `NCBI_API_KEY` vào `~/.ebm-secrets/medical-ebm-automation.env` để mở tầng NCBI | `CAN_NCBI_API_KEY` |
 | xác minh tồn tại quá 180 ngày | chạy lại thêm vòng **SẼ** sửa được | `CAN_CHAY_THEM_VONG` |
 | lý do khác | xem tay | `CAN_XEM_TAY` |
+
+⚠️ **ĐÍNH CHÍNH 10/09/2026 (đợt kiểm độc lập tuyến ĐỘ TIN CẬY):** bản trước của bảng này chỉ
+có MỘT dòng cho "PMID chưa kiểm được rút bài" và ghi cứng *"chạy lại KHÔNG sửa được — cần
+NCBI_API_KEY"* — đúng lời khuyên mà chính mục BH14 này sinh ra để cấm, và mâu thuẫn với chuỗi
+3 tầng đã mô tả ở Bước 2 (dòng ~118) và ở mục *"HẾT PHỤ THUỘC NCBI API KEY"* của `CLAUDE.md`.
+Mã nguồn thật (`tools/so_xac_minh_nguon.py`, đổi 14/08/2026, khoá hồi quy bằng
+`chot_hoi_quy_bai_hoc.py::bh14_khong_khuyen_viec_chac_chan_vo_ich`) đã tách hai nhánh từ lâu;
+chỉ riêng bảng doctrine ở đây chưa theo kịp. Đã sửa lại cho khớp mã đang chạy.
 
 > **Luật:** trước khi in một lời khuyên, hỏi *"làm theo lời này có thật sự đổi được trạng thái
 > không?"*. Nếu không, phải nói rõ điều gì mới đổi được.
@@ -1069,7 +1079,7 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - Đã nêu hành động, monitoring, cờ đỏ/chuyển tuyến khi cần chưa?
 - Đã phân tích nhóm đặc biệt liên quan chưa?
 - Đã ghi rõ nội dung chưa đủ để thay đổi chưa?
-- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu — CÙNG schema `DATA`) với `DATA.standards`/tab `Chuẩn & chất lượng`, và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa?
+- Đã tạo Web Dashboard độc lập từ template MẶC ĐỊNH `web-dashboard-evidence-workbench.html` (Evidence Workbench; hoặc `web-dashboard-dark-analyst.html` khi bác sĩ yêu cầu) với `DATA.standards` đã điền đủ, và chạy TRỌN dây chuyền tự động (cổng liêm chính → thư viện → phái sinh) chưa? (tab `Chuẩn & chất lượng` để rà nội dung này chỉ hiện trên Evidence Workbench — xem đính chính ở 5A)
 - Đã tránh tạo ID quản trị hoặc cập nhật Dashboard Master khi người dùng không yêu cầu chưa?
 - Đã dùng tài liệu tham khảo có thể truy nguyên chưa?
 - Nếu câu hỏi về hiệu quả can thiệp: đã trình bày khối PICO đủ 5 dòng và trích hiệu số đúng như nguồn (point estimate + CI/p) chưa?
@@ -1116,6 +1126,8 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 Ngoài thư mục skill (dùng chung với các skill/quy trình EBM khác — KHÔNG nhân bản vào đây, chỉ tham chiếu):
 - `tools/xuat_goi_cap_nhat.py` — **lệnh duy nhất** của chuỗi tự động: sinh đồng thời bộ năm (dashboard · bản đọc · Word · Word-dạng-HTML · PDF giữ màu) từ cùng một khối `DATA`
 - `tools/docx_sang_pdf_giu_mau.py` — bước ⑤: đọc màu từ chính `.docx` rồi in PDF bằng Chrome headless (pandoc bỏ hết màu nền ô nên bước ④ không dùng được cho việc này)
+- `data/sources.json` + `tools/tuyen_bo_do_phu.py` — sổ đăng ký nguồn máy-đọc thật (PubMed · Retraction Watch ngoại tuyến · Crossref · Europe PMC · openFDA · OpenAlex · ClinicalTrials.gov+preprint · trạm web hội) và bộ sinh khối "TUYÊN BỐ ĐỘ PHỦ" trung thực từ chính sổ đó; `build_ban_doc_chung_cu.py` tự nhúng khối này vào footer bản đọc — xem `references/13-source-universe.md` §ĐÍNH CHÍNH 10/09/2026
+- `tools/sources_health.py` · `tools/giam_sat_to_chuc.py` — kiểm sức khoẻ định kỳ và bật trạm web hội (chỉ chạy trên máy thật, ngoài sandbox)
 - `EBM_MASTER/tools/sync_all.py` — **KHÔNG còn tự chạy** (đổi 2026-08-05); chỉ khi bác sĩ yêu cầu
 - `EBM-Dashboards/tools/reskin_dashboards.py` — áp lại vỏ template chuẩn (EW/DA) cho MỌI dashboard đã xuất bản khi bố cục/CSS template đổi (bóc khối `DATA`, bọc vỏ mới, giữ nguyên dữ liệu, tự backup).
 
