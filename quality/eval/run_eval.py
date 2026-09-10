@@ -66,6 +66,27 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     print("GOLD SET — máy chấm 12 nhóm (ngoại tuyến)")
     print("═" * 60)
 
+    # VÁ 10/09/2026 (vòng 3) — trước đây thiếu chốt này, máy chấm CHẠY MỘT PHẦN
+    # rồi chết bằng traceback thô trên bản sao trần (worktree/CI/clone tươi):
+    # đo thật ngay khối 1 — `thu_dau_cuoi_chung_cu.py` bản thân nó cũng crash vì
+    # thiếu EBM-Dashboards/tools/verify_dashboard.py, nên returncode != 0, và
+    # máy chấm đọc NHẦM đó là "CÓ LỖ HỔNG" (canary phát hiện lỗ hổng thật) thay
+    # vì "chưa chạy được vì thiếu hạ tầng" — đúng lớp lỗi BH08/BH99/BH100 đã vá
+    # ở chỗ khác trong repo (gộp "không biết" với "có vấn đề"), lần này ở chính
+    # máy chấm Gold Set. `chot_hoi_quy_bai_hoc.py` đã xử lý đúng việc này cho
+    # BH43 (hạ ⚪ trên bản trần) — run_eval.py gọi lại canary đó SONG SONG mà
+    # KHÔNG thừa hưởng cùng lớp bảo vệ, nên bản vá dùng ĐÚNG một định nghĩa
+    # "bản sao trần" (tools/ban_sao_tran.py) thay vì tự đoán lại lần nữa.
+    bst = _nap(GOC / "tools" / "ban_sao_tran.py", "bst_eval")
+    if bst.ban_sao_git_tran(GOC):
+        print("⚠ BẢN SAO GIT TRẦN — thiếu EBM-Dashboards/ · medical-ebm-automation/ · "
+              "EBM_MASTER/.")
+        print("  Máy chấm Gold Set cần CẢ HAI cây dữ liệu đó (RetractionChain, "
+              "verify_dashboard.py, drug_flags.json…) — chạy trên máy có đủ hai repo.")
+        print("  Đây là HẠ TẦNG THIẾU (mã thoát 2), KHÔNG phải ca nào trượt (mã thoát 1) —")
+        print("  không được đọc thành 'có lỗ hổng'.")
+        return 2
+
     # ── Khối 1: CANARY đầu-cuối (10 ca gài sẵn — nhóm 3/4/7/9/10 một phần) ────
     r = subprocess.run([PY, str(GOC / "tools" / "thu_dau_cuoi_chung_cu.py")],
                        capture_output=True, text=True, cwd=GOC)
