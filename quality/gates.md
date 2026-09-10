@@ -14,7 +14,13 @@
 | **E5** Sổ cái & phái sinh | ledger chờ-duyệt, BỘ NĂM, tờ dặn không liều | `build_library` + `sync_all` (khi yêu cầu) + `xuat_goi_cap_nhat` | rollback lô (.bak-*) |
 | **E6 (NGƯỜI)** Bác sĩ duyệt | Cổng A/B; `human_review.reviewed_by` bắt buộc cho APPROVED/APPLIED | hàng chờ EBM_MASTER + `kiem_hop_dong_item.py` (I4) + `trinh_muc_can_duyet.py` | giữ CANDIDATE vô thời hạn |
 
-Chứng minh cổng CHẶN được: canary `thu_dau_cuoi_chung_cu.py` — 10 lỗi gài/10 bị bắt,
-tự chạy mỗi phiên (BH43). Rubric chi tiết: `_RUBRIC-EVALUATE-CUNG-QA-GATE.md` (.claude/agents).
+Chứng minh cổng CHẶN được: canary `thu_dau_cuoi_chung_cu.py` — MỌI lỗi gài sẵn trong
+chính file `.py` đó đều phải bị bắt, tự chạy mỗi phiên (BH43). (SỬA 10/09/2026, vòng
+3: dòng cũ ghi cứng "10 lỗi gài/10 bị bắt" — mã nguồn hiện có 15 ca, bằng chứng gần
+nhất trong `quality/eval/negative/canary-10-loi-gai.log` ghi 14/14 từ một đợt trước
+khi thêm ca thứ 15; một con số hardcode trong tài liệu sẽ LUÔN trôi mỗi lần thêm ca
+mới, đúng họ lỗi "con số không đo thứ nó tự nhận" đã gặp nhiều lần trong repo — nên
+câu chữ ở đây không còn chốt một con số, số ca thật xem trực tiếp ở file `.py` hoặc
+log bằng chứng.) Rubric chi tiết: `_RUBRIC-EVALUATE-CUNG-QA-GATE.md` (.claude/agents).
 
 *Cần bác sĩ kiểm chứng.*
