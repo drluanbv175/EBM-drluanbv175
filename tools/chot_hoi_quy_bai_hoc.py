@@ -5105,6 +5105,46 @@ def bh101_hop_dong_nguon_thi_hanh_duoc_bang_may():
     return True, "hợp đồng nguồn thi hành được bằng máy + data/sources.json thật đang sạch"
 
 
+def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
+    """10/09 — vòng 3: `quality/eval/run_eval.py` (máy chấm Gold Set 12 nhóm)
+    chạy TRÊN bản sao trần thì CHẠY MỘT PHẦN rồi chết bằng traceback thô
+    (ModuleNotFoundError: 'app') — và TRƯỚC ĐÓ còn tệ hơn: Khối 1 gọi
+    `thu_dau_cuoi_chung_cu.py` (canary C1) — canary đó CŨNG crash vì thiếu
+    EBM-Dashboards/tools/verify_dashboard.py — nên máy chấm đọc SAI
+    returncode != 0 thành "CÓ LỖ HỔNG" (N09 ✗) thay vì "chưa chạy được vì
+    thiếu hạ tầng". Đúng họ lỗi BH08/BH99/BH100 (gộp "không biết" với "có vấn
+    đề"), lần này ở chính máy chấm — nguy hiểm hơn nơi khác vì chính máy chấm
+    là thứ đo các chốt kia có còn hoạt động không.
+
+    Đã vá bằng `tools/ban_sao_tran.py` (định nghĩa DUY NHẤT "bản sao trần"
+    trong repo) chặn sớm, thoát mã 2 (hạ tầng thiếu) TRƯỚC khi gọi canary.
+
+    Kiểm HÀNH VI: chạy `run_eval.py` thật trên máy đang chạy chốt này. Bản sao
+    trần → phải thoát mã 2, không traceback, không chữ "CÓ LỖ HỔNG". Máy có đủ
+    dữ liệu thật → nhánh chặn sớm không chạy tới, chốt này COI LÀ ĐẠT (không
+    đủ căn cứ để chấm gì thêm ở đây — kiểm nội dung Gold Set thật là việc của
+    chính run_eval.py, không phải của bộ chốt này).
+    """
+    import subprocess
+    vd = REPO / "quality" / "eval" / "run_eval.py"
+    bst_mod = REPO / "tools" / "ban_sao_tran.py"
+    for f in (vd, bst_mod):
+        if not f.exists():
+            return False, f"mất {f.name} — chốt chặn hạ tầng cho máy chấm lại chỉ còn trên giấy"
+    bst = _nap(bst_mod, "bst_bh102")
+    if not bst.ban_sao_git_tran(REPO):
+        return True, "máy có đủ dữ liệu thật — nhánh chặn sớm không chạy tới, không kiểm thêm ở đây"
+    r = subprocess.run([sys.executable, str(vd)], cwd=str(REPO),
+                       capture_output=True, text=True, timeout=60)
+    if r.returncode != 2:
+        return False, f"bản sao trần phải thoát mã 2 (hạ tầng thiếu), thực tế mã {r.returncode}"
+    if "Traceback (most recent call last)" in (r.stderr or ""):
+        return False, "vẫn lộ traceback thô ra ngoài — chưa chặn kịp trước khi crash"
+    if "CÓ LỖ HỔNG" in (r.stdout or ""):
+        return False, "hạ tầng thiếu vẫn bị đọc thành 'canary phát hiện lỗ hổng thật'"
+    return True, "bản sao trần: thoát mã 2 sạch, không traceback, không báo nhầm 'có lỗ hổng'"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5214,6 +5254,7 @@ BAI_HOC = [
     ("BH99", "03/09", "Module test nhập thư viện gốc hỏng phải SKIP, không được kéo sập cả lượt thu thập", bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap),
     ("BH100", "03/09", "Một module thiếu không được làm MÙ cả verifier; doctrine không được khai cổng không có bộ thi hành", bh100_verifier_khong_duoc_mu_vi_mot_module_thieu),
     ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
+    ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
