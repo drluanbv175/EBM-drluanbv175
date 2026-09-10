@@ -1,7 +1,10 @@
 # A10 — impact-classifier
 
 ## 1. Định danh & vai trò
-**Hiện thân thật:** gan_do_tin_cay() trong surveillance_scan.py (chạy TẠI CỬA NHẬN — BH37)
+**Hiện thân thật:** `gan_do_tin_cay()` trong `sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py`
+— NGUỒN CHUẨN (git-tracked; sửa TẠI ĐÂY, đồng bộ 3 bản qua
+`tools/dong_bo_scanner_giam_sat.py`); chạy TẠI CỬA NHẬN ở bản runtime
+`EBM-Dashboards/tools/surveillance_scan.py` (BH37, ngoài git).
 
 ## 2. Đầu vào
 ứng viên A2

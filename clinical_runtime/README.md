@@ -2,7 +2,7 @@
 
 **Status:** DRAFT — Governance schemas + static hardening verifier. No production runtime integration yet.
 **Created:** 2026-06-28
-**Updated:** 2026-07-15
+**Updated:** 2026-09-10
 **Owner:** Doctor (clinical PI) + Developer
 
 ---
@@ -28,13 +28,13 @@ These files are **read-only governance documents**. They do NOT yet run in produ
 | `HUMAN_APPROVAL_SCHEMA.json` | Structure for doctor approval records |
 | `ROLLBACK_SCHEMA.json` | Structure for rollback/retraction events |
 | `VALIDATION_CASE_SCHEMA.json` | Structure for DEMO_TEST validation cases |
-| `VALIDATION_CASE_LIBRARY/` | 10 synthetic test cases (see below) |
+| `VALIDATION_CASE_LIBRARY/` | 11 synthetic test cases (see below) |
 
 ---
 
 ## Validation Case Library
 
-10 DEMO_TEST cases covering all mandatory test categories:
+11 DEMO_TEST cases covering all mandatory test categories:
 
 | Case ID | Category | Tests |
 |---|---|---|
@@ -48,6 +48,9 @@ These files are **read-only governance documents**. They do NOT yet run in produ
 | TC-008 | source_integrity | Retracted source triggers quarantine + rollback proposal |
 | TC-009 | missing_data | Unavailable drug triggers local alternative |
 | TC-010 | injection_attack | Prompt injection in source text does NOT alter output |
+| TC-011 | outpatient_apply_gate | Outpatient apply review blocks release when strict source, safety-netting, follow-up, or human approval is incomplete |
+
+(TC-011 was added after the initial "10 cases" count was written; `tools/verify_clinical_runtime_schema_hardening.py::check_validation_cases()` checks all 11 files as of 2026-09-10 — previously only TC-007/008/010/011 had markers, so TC-001–006/009 could silently break without the verifier noticing.)
 
 ---
 
@@ -86,7 +89,7 @@ See `reports/CLINICAL_V2_IMPLEMENTATION_PLAN.md` for full plan.
 2. **Phase 2B** (safety rules): Migrate existing ke-don-an-toan rules to SAFETY_RULES_SCHEMA format
 3. **Phase 2C** (approval workflow): Add HUMAN_APPROVAL_SCHEMA record creation to dieu-phoi-lam-sang
 4. **Phase 2D** (rollback): Wire ROLLBACK_SCHEMA to RETRACTION_AND_CORRECTION_WATCH.jsonl watch
-5. **Phase 2E** (testing): Run all 10 TC cases against integrated system; all must PASS before Clinical V2 goes live
+5. **Phase 2E** (testing): Run all 11 TC cases against integrated system; all must PASS before Clinical V2 goes live
 
 ---
 

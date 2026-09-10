@@ -1,7 +1,12 @@
 # A9 — safety-overlay
 
 ## 1. Định danh & vai trò
-**Hiện thân thật:** EBM-Dashboards/data/drug_flags.json + tools/run_retraction_and_med_safety.py + weekly_safety.sh
+**Hiện thân thật:** EBM-Dashboards/data/drug_flags.json + HAI công cụ theo bối cảnh (SỬA
+10/09/2026 — trước chỉ nêu 1/2, gây tưởng nhầm là doctrine "chưa wire"): (a) quét ĐỘC LẬP/toàn
+kho — `tools/run_retraction_and_med_safety.py` (repo gốc) + `weekly_safety.sh`; (b) quét TẠI
+THỜI ĐIỂM dựng MỘT dashboard cụ thể — `drug_safety_scan.py` trong `tools/` của skill
+(`sync/skills/cap-nhat-chung-cu-y-khoa/tools/drug_safety_scan.py`, đối chiếu
+`data/drug_flags.json` Beers 2023/STOPP-START v3), gọi từ `cap-nhat-chung-cu-y-khoa/SKILL.md`.
 
 ## 2. Đầu vào
 thuốc xuất hiện trong khuyến cáo

@@ -32,8 +32,26 @@ CERTAINTY = {"high", "mod", "low", "vlow", "na"}
 BASIS = {"contraindication", "drug-label", "official-classification",
          "guideline-strong-rec", "guideline-explicit-criteria", None}
 
+_FLAGS_PATH = Path(__file__).resolve().parents[1] / "clinical_runtime" / "CLINICAL_RUNTIME_FLAGS.json"
 
-def kiem(item: dict) -> list[str]:
+
+def _require_human_approval_flag() -> bool:
+    """Đọc cờ `require_human_approval` — thiếu file/lỗi đọc thì MẶC ĐỊNH True
+    (fail-closed): validator I4 không được vì thiếu cờ mà nới lỏng luật.
+
+    VÌ SAO THÊM (10/09/2026): I4 vốn thi hành CỨNG, không đọc cờ này — nghĩa
+    là `CLINICAL_RUNTIME_FLAGS.json.require_human_approval` chỉ là lời hứa
+    suông (đúng họ lỗi 'cờ nói dối' đã vá ở nơi khác trong repo). Nối đọc thật
+    vào đây; giá trị hiện tại là true nên HÀNH VI KHÔNG ĐỔI — chỉ khi bác sĩ
+    tự đặt false thì I4 mới thật sự lùi thành khuyến nghị.
+    """
+    try:
+        return bool(json.loads(_FLAGS_PATH.read_text(encoding="utf-8")).get("require_human_approval", True))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return True
+
+
+def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]:
     """Trả danh sách vi phạm — rỗng nghĩa là hợp lệ."""
     loi: list[str] = []
     for k in ("id", "topic", "source", "status", "decision"):
@@ -55,7 +73,9 @@ def kiem(item: dict) -> list[str]:
         loi.append(f"source.retracted=true mà status={st} — điều kiện dừng khẩn (cấm #3)")
 
     # I4 — MÁY KHÔNG ĐƯỢC ĐẶT APPROVED/APPLIED: hai trạng thái này đòi người duyệt thật.
-    if st in ("APPROVED", "APPLIED"):
+    doi_hoi_duyet = (require_human_approval if require_human_approval is not None
+                     else _require_human_approval_flag())
+    if st in ("APPROVED", "APPLIED") and doi_hoi_duyet:
         hr = item.get("human_review") or {}
         if not hr.get("reviewed_by"):
             loi.append(f"status={st} mà human_review.reviewed_by rỗng — chỉ bác sĩ được đặt (I4)")

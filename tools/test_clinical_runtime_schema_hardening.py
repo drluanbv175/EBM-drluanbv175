@@ -16,6 +16,7 @@ def test_clinical_runtime_hardening_overall_passes():
         "output_schema",
         "decision_contract",
         "validation_cases",
+        "runtime_flags",
         "outpatient_apply_gate",
     }
 
@@ -46,6 +47,31 @@ def test_validation_cases_pin_expected_hardening_outputs():
 
     assert check["status"] == "PASS"
     assert check["missing_markers"] == {}
+
+
+def test_validation_cases_covers_all_11_not_just_4():
+    """10/09/2026: bản trước chỉ soi TC-007/008/010/011 (4/11) — 7 file còn lại
+    không script nào kiểm dù README tự khai '10 (nay 11) DEMO_TEST... all must
+    PASS'. Khoá số lượng để không tụt lại nếu ai rút bớt case_checks."""
+    library = V.CLINICAL_RUNTIME / "VALIDATION_CASE_LIBRARY"
+    so_file_that = len(list(library.glob("TC-*.json")))
+    assert so_file_that == 11
+
+    check = V.check_validation_cases()
+    assert check["details"] == ["11 validation cases checked"]
+
+
+def test_runtime_flags_reports_enforcement_site_for_every_true_flag():
+    """10/09/2026: cờ TRUE mà không điểm thi hành nào đọc là cờ nói dối (họ lỗi
+    BH94/BH98/BH61 vá ở nơi khác trong repo). Sau bản vá đi kèm
+    (ensure_strict_source.py + kiem_hop_dong_item.py + kiem_safety_net.py đều
+    đọc cờ thật), cả 3 cờ hiện có trong CLINICAL_RUNTIME_FLAGS.json phải có
+    điểm thi hành — nếu ai gỡ một trong ba, test này đỏ trước khi CI đỏ."""
+    check = V.check_runtime_flags()
+
+    assert check["status"] == "PASS"
+    assert check["missing_markers"] == []
+    assert len(check["details"][0].split("->")) >= 2  # có ít nhất 1 cờ enforced
 
 
 def test_outpatient_apply_gate_blocks_uncontrolled_practice_release():
