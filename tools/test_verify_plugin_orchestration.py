@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Hồi quy cho `_resolve_main_repo_root()` trong verify_plugin_orchestration.py.
 
-Bối cảnh (09/09/2026): commit ở phiên worktree `focused-jang-fead23` bị chặn vĩnh
+Bối cảnh (10/09/2026): commit ở phiên worktree `focused-jang-fead23` bị chặn vĩnh
 viễn bởi chính cổng này — router runtime (`~/.claude/skills/plugin-router-chatgpt`,
 `~/.codex/skills/plugin-router-chatgpt`) trỏ ĐÚNG về repo CHÍNH (đúng theo bản vá
 08/09/2026 của `dong_bo_skill_claude_codex._resolve_repo_root()`), nhưng cổng này

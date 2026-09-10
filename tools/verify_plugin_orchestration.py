@@ -40,7 +40,7 @@ CANONICAL_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
 def _resolve_main_repo_root(start_dir: Path | None = None) -> Path:
     """Gốc repo CHÍNH — quy về cùng MỘT nơi dù cổng này chạy từ worktree nào.
 
-    VÌ SAO CÓ (09/09/2026, phát hiện qua báo lỗi commit bị chặn ở phiên worktree
+    VÌ SAO CÓ (10/09/2026, phát hiện qua báo lỗi commit bị chặn ở phiên worktree
     `focused-jang-fead23`): ``~/.claude/skills/plugin-router-chatgpt`` và
     ``~/.codex/skills/plugin-router-chatgpt`` — cả hai đều DÙNG CHUNG cho MỌI
     worktree trên máy — và gói ``CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip``
