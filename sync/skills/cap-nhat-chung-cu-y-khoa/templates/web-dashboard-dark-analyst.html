@@ -20,6 +20,12 @@
   DATA chạy được cả hai, TRỪ `standards` chỉ Evidence Workbench render):
     meta:    { eyebrow, question, pico:{P,I,C,O}, updated }
     summary: { conclusion, doNow:[…], dontDo:[…], redFlags:[…] }     // Clinical Quick View
+    standards?: {                                                    // Lớp 4: chuẩn cập nhật chứng cứ
+      frame, sourceHierarchy, reporting, appraisal, currency, safety, vietnamFit,     // (ẩn cả khối nếu không khai báo — tương thích ngược)
+      sourceVerification, lastVerified, verificationTool,
+      searchSources:[…],
+      gates:[{label, status:'ok'|'warn'|'need', note}]
+    }
     items:   [ {
       id:'ITEM-01', title, source, org, dateVersion, pmid?, doi?, url?,
       design:'Guideline'|'Meta'|'RCT'|'Cohort'|'Consensus',
@@ -115,6 +121,35 @@
   .etd-rec .rh{font-size:10px;font-weight:800;color:var(--g-high);text-transform:uppercase;letter-spacing:.5px;display:flex;gap:8px;align-items:center;margin-bottom:4px}
   .etd-rec .rh .str{font-size:9px;color:#06121f;background:var(--g-high);border-radius:4px;padding:1px 7px}
   .etd-rec .rv{font-size:12px;color:var(--ink);line-height:1.5}
+
+  /* Lớp 4 — STANDARDS / QUALITY: chuẩn cập nhật chứng cứ, thẩm định và truy nguyên.
+     Dùng chung khối chrome collapsible với .etd/.etd-d (section nền + tam giác thu gọn);
+     chỉ định nghĩa thêm phần nội dung riêng (lưới hộp, cổng liêm chính, bảng truy nguyên).
+     Đặt BÊN TRONG .main (cuộn được) thay vì phần chrome cố định trên đầu trang — gates +
+     bảng truy nguyên có thể dài hơn 1 màn hình; đặt ở phần chrome (như .etd) sẽ bị
+     .app{overflow:hidden} cắt mất khi mở, vì .app không tự cuộn (chỉ .main mới cuộn). */
+  .qual-wrap{border-top:1px solid var(--line);margin-top:2px}
+  .qual-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+  .qbox{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0}
+  .qbox.wide{grid-column:1/-1}
+  .qbox h4{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800;margin-bottom:6px}
+  .qbox .v{font-size:11px;color:var(--ink-2);line-height:1.5}
+  .qbox .hint{font-size:10px;color:var(--faint);line-height:1.4;margin-top:5px}
+  .qgate{display:flex;flex-direction:column;gap:6px}
+  .gate{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:start;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:7px 9px}
+  .gate .s{display:inline-flex;justify-content:center;border-radius:999px;font-size:9px;font-weight:800;padding:2px 6px;text-transform:uppercase;letter-spacing:.3px}
+  .gate.ok .s{background:rgba(52,211,153,.16);color:var(--g-high)}
+  .gate.warn .s{background:rgba(251,191,36,.16);color:var(--g-mod)}
+  .gate.need .s{background:rgba(248,113,113,.16);color:var(--g-vlow)}
+  .gate .t{font-size:11px;color:var(--ink);font-weight:700;line-height:1.35}
+  .gate .g{font-size:10px;color:var(--muted);line-height:1.4;margin-top:1px}
+  .qtrace{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+  .qtrace .row{display:grid;grid-template-columns:74px minmax(0,1fr) 118px;gap:9px;align-items:start;border-bottom:1px solid var(--line);padding:7px 0}
+  .qtrace .id{font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+  .qtrace .name{font-size:11px;color:var(--ink);font-weight:600;line-height:1.35}
+  .qtrace .srcx{font-size:10px;color:var(--muted);line-height:1.4;margin-top:2px}
+  .qtrace .ok2{font-size:9.5px;font-weight:800;color:var(--g-high);white-space:nowrap}
+  .qtrace .need2{font-size:9.5px;font-weight:800;color:var(--g-vlow);white-space:nowrap}
 
   /* Clinical Quick View band */
   .qv{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
@@ -212,6 +247,7 @@
     .kpis{grid-template-columns:repeat(4,1fr)}
     .kpis .kp{border-top:1px solid var(--line)}
     .etd-grid{grid-template-columns:repeat(3,1fr)}
+    .qual-grid{grid-template-columns:repeat(2,1fr)}
   }
   @media (max-width:860px){
     .kpis{grid-template-columns:repeat(3,1fr)}
@@ -219,6 +255,8 @@
     .etd-grid{grid-template-columns:repeat(2,1fr)}
     .exp-in{grid-template-columns:1fr}              /* chi tiết bung DỌC cho dễ đọc */
     .exp-col{border-right:0;border-bottom:1px solid var(--line)}
+    .qual-grid{grid-template-columns:1fr}
+    .qtrace .row{grid-template-columns:1fr}
   }
   @media (max-width:540px){
     .kpis{grid-template-columns:repeat(2,1fr)}
@@ -260,6 +298,7 @@
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
+    <section class="etd qual-wrap" id="qual" style="display:none"></section>
   </div>
 
   <footer class="disclaimer">
@@ -370,6 +409,55 @@ const GRADE_META={high:['g-high','Cao',4],mod:['g-mod','TB',3],low:['g-low','Th�
 const DEC_META={apply:['d-apply','Áp dụng ngay'],consider:['d-consider','Cân nhắc'],notyet:['d-notyet','Chưa đủ']};
 const GROUP_META={'cao-tuoi':'Người cao tuổi','thai-ky':'Thai kỳ · phụ nữ có khả năng mang thai','tre-em':'Trẻ em · vị thành niên','ckd':'CKD','gan':'Bệnh gan','dtd':'Đái tháo đường','tim-mach':'Tim mạch','da-thuoc':'Đa thuốc'};
 const RM={l:['rl','✓'],s:['rs','!'],h:['rh','✕']};
+/* Nội dung DATA.standards có thể chứa văn bản trích nguyên văn từ nguồn (tiêu đề, ghi chú
+   cổng…) — escHtml()/escUrl() thoát trước khi ghép vào innerHTML, cùng khuôn với
+   evidence-workbench-template.html (chặn XSS/"javascript:" URI). */
+function escHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?encodeURI(u).replace(/"/g,'%22'):'';}
+const QUAL_STANDARD_GATES=[
+  {label:'Câu hỏi có cấu trúc',status:'need',note:'Khai báo PICO/PECO/PIRD/PROGRESS trước khi sinh dashboard thật.'},
+  {label:'Thứ bậc nguồn',status:'need',note:'Ghi rõ guideline/SR-MA/RCT/quan sát và lý do chọn nguồn.'},
+  {label:'Chuẩn báo cáo',status:'need',note:'Đối chiếu CONSORT, STROBE, PRISMA, STARD, TRIPOD theo thiết kế.'},
+  {label:'Công cụ thẩm định',status:'need',note:'Đối chiếu AGREE II, AMSTAR 2, RoB 2, ROBINS-I, QUADAS-3 v1.2, PROBAST hoặc JBI; QUADAS-2 chỉ để tương thích nghiên cứu lịch sử.'},
+  {label:'Liêm chính phát hành',status:'need',note:'Không PII, có nguồn truy nguyên, tách độ chắc chắn với sức mạnh khuyến cáo.'}
+];
+function gateState(status){
+  const s=String(status||'need').toLowerCase();
+  if(['ok','pass','done','dat','đạt'].includes(s)) return ['ok','Đạt'];
+  if(['warn','partial','review','canh-bao','cảnh-báo'].includes(s)) return ['warn','Rà'];
+  return ['need','Cần'];
+}
+/* Lớp 4 — STANDARDS / QUALITY (schema DÙNG CHUNG với evidence-workbench-template.html,
+   khoá DATA.standards). CHỈ gọi khi DATA.standards có khai báo — không tự bịa nội dung
+   cho dashboard cũ chưa khai (renderStatic() giữ ẩn cả section thay vì hiện khung rỗng). */
+function qualityView(s){
+  const src=Array.isArray(s.searchSources)?s.searchSources.join(' · '):(s.searchSources||'Chưa khai báo nguồn tìm kiếm');
+  const gates=(Array.isArray(s.gates)&&s.gates.length?s.gates:QUAL_STANDARD_GATES);
+  const box=(h,v,hint)=>`<div class="qbox"><h4>${h}</h4><div class="v">${escHtml(v||'Chưa khai báo')}</div>${hint?`<div class="hint">${escHtml(hint)}</div>`:''}</div>`;
+  const gateHtml=gates.map(g=>{const st=gateState(g.status);return `<div class="gate ${st[0]}"><span class="s">${st[1]}</span><div><div class="t">${escHtml(g.label||'Cổng kiểm')}</div><div class="g">${escHtml(g.note||'—')}</div></div></div>`;}).join('');
+  const traces=(DATA.items||[]).map(e=>{
+    const ok=Boolean(e.pmid||e.doi||escUrl(e.url)||(Array.isArray(e.references)&&e.references.length));
+    const trace=[e.pmid?`PMID ${e.pmid}`:'',e.doi?`DOI ${e.doi}`:'',escUrl(e.url)?'URL':'',Array.isArray(e.references)&&e.references.length?'Refs':''].filter(Boolean).join(' · ')||'Thiếu định danh';
+    return `<div class="row">
+      <div class="id">${escHtml(e.id||'ITEM')}</div>
+      <div><div class="name">${escHtml(e.title||'—')}</div><div class="srcx">${escHtml(e.source||'—')} · ${escHtml(e.dateVersion||'—')}</div></div>
+      <div class="${ok?'ok2':'need2'}">${escHtml(trace)}</div>
+    </div>`;
+  }).join('')||'<div style="padding:12px;text-align:center;color:var(--muted)">Chưa có item chứng cứ.</div>';
+  return `<details class="etd-d"><summary class="eh">▣ Chuẩn &amp; chất lượng cập nhật chứng cứ <span class="note">— bấm để mở/đóng · khoá các yêu cầu tối thiểu trước khi dùng cho thực hành lâm sàng</span></summary>
+    <div class="qual-grid">
+      ${box('Khung câu hỏi',s.frame||DATA.meta.question,'PICO/PECO/PIRD/PROGRESS phải khớp mục tiêu thực hành.')}
+      ${box('Thứ bậc nguồn',s.sourceHierarchy,'Ưu tiên nguồn tổng hợp đáng tin cậy trước nghiên cứu đơn lẻ.')}
+      ${box('Độ cập nhật',s.currency||DATA.meta.updated,`Nguồn tìm kiếm: ${src}`)}
+      ${box('Xác minh tự động nguồn',s.sourceVerification||'Chưa ghi trạng thái xác minh nguồn',`Cổng yêu cầu: ${s.verificationTool||'verify_dashboard.py --online --strict-sources'} · Lần xác minh: ${s.lastVerified||'chưa ghi'}`)}
+      ${box('Chuẩn báo cáo',s.reporting||'CONSORT · STROBE · PRISMA · STARD · TRIPOD','Chọn chuẩn theo thiết kế nghiên cứu của từng nguồn.')}
+      ${box('Công cụ thẩm định',s.appraisal||'AGREE II · AMSTAR 2 · RoB 2 · ROBINS-I · QUADAS-3 v1.2 · PROBAST · JBI','Không dùng RoB 2 cho nghiên cứu không phải RCT; QUADAS-2 chỉ để đọc nghiên cứu lịch sử.')}
+      ${box('An toàn &amp; Việt Nam',`${s.safety||'Chưa khai báo an toàn'}${s.vietnamFit?` · ${s.vietnamFit}`:''}`,'Bắt buộc rà thuốc, chống chỉ định, tương tác, chuyển tuyến, chi phí/BHYT và năng lực theo dõi.')}
+      <div class="qbox wide"><h4>Cổng liêm chính trước phát hành</h4><div class="qgate">${gateHtml}</div></div>
+      <div class="qbox wide"><h4>Truy nguyên từng item</h4><div class="qtrace">${traces}</div></div>
+    </div>
+  </details>`;
+}
 let state={open:null, q:'', filter:'all'};
 
 const FMIN=0.4,FMAX=2.0;
@@ -444,6 +532,13 @@ function renderStatic(){
       </div>
       ${etd.recommendation?`<div class="etd-rec"><div class="rh">➤ Khuyến cáo (đánh giá vận hành)${etd.strength?`<span class="str">${etd.strength==='strong'?'Mạnh':'Có điều kiện'}</span>`:''}</div><div class="rv">${etd.recommendation}</div></div>`:''}</details>`;
     etdEl.style.display='';
+  }
+  // Lớp 4 — Chuẩn & chất lượng: chỉ hiện khi DATA.standards có khai báo (tương thích ngược
+  // với dashboard cũ chưa có field này — không bịa khung rỗng, không crash).
+  const st=DATA.standards, qualEl=document.getElementById('qual');
+  if(st){
+    qualEl.innerHTML=qualityView(st);
+    qualEl.style.display='';
   }
   document.getElementById('verdict').textContent='✓ '+c('apply')+' áp dụng ngay · '+c('consider')+' cân nhắc · '+c('notyet')+' chưa đủ';
   buildFilters();
