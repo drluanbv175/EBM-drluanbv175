@@ -923,6 +923,21 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   **Đã sửa 02/09/2026** trong `sync/hooks-sessionstart.json` (chỉ nằm ở thông điệp `|| echo` của chốt #1,
   không phải lệnh chạy); máy thật nhận bản sửa khi chạy `tools/dong_bo_hook_sessionstart.py --ap-dung`
   (lane ⑥ của `dong_bo_tat_ca.py` sẽ báo LỆCH cho tới lúc đó).
+  ⛔ **ĐÍNH CHÍNH 10/09/2026 — dòng "38 skill MỒ CÔI được GIỮ LẠI" ở trên KHÔNG còn đúng, đã kiểm
+  trực tiếp.** `ls -d ~/.claude/skills/*/` hôm nay ra **50 mục, cả 50 đều là SYMLINK** trỏ vào
+  `sync/skills/` (khớp cơ chế `dong_bo_skill_claude_codex.py --dong-bo-plugin` đã mô tả ở mục
+  "SKILL DÙNG NGUỒN CHUNG" phía trên) — **0/14 tên mồ côi đã liệt** (`alphafold2` · `boltz` ·
+  `borzoi` · `chai1` · `diffdock` · `esmfold2` · `evo2` · `openfold3` · `proteinmpnn` · `scgpt` ·
+  `playwright` · `pptx-skill` · `neurokit` · `pydeseq`) còn tồn tại dưới bất kỳ hình thức nào
+  (không phải thư mục, không phải symlink); thư mục sao lưu hàng loạt
+  `~/.claude/skills-backup/bong-tieng-anh-20260826/` nhắc ở trên cũng không còn. **Chưa xác định
+  được nguyên nhân** (không tìm thấy lệnh xoá đệ quy nào trong `lien_ket_da_nen.py` — module đó tự
+  khai "bất biến: không bao giờ xoá đệ quy" và test cho thấy `~/.claude/skills` giờ CHỈ còn quản lý
+  bởi cơ chế symlink-từ-`sync/skills`, có vẻ đã thay thế toàn bộ nội dung thư mục tại một thời điểm
+  nào đó giữa 26/08 và 10/09 — không rõ do một lần chạy tool, một lần dọn tay, hay app tự dựng lại
+  thư mục). Nếu bác sĩ cần các skill sinh-tin học đó, chúng không còn ở máy này nữa — cần cài lại
+  từ plugin gốc nếu còn nhớ tên, hoặc chấp nhận đã mất. Đây là quan sát TRUNG THỰC về hiện trạng,
+  không phải khẳng định biết nguyên nhân.
 
 - **🔁 MIRROR TÓM TẮT HỆ CHỨNG CỨ Y KHOA Cloud↔cục bộ — dựng 04/09/2026, bác sĩ yêu cầu.**
   `EBM-Dashboards/`/`EBM_MASTER/` nằm ngoài git CÓ CHỦ Ý (§ trên) nên phiên Cloud KHÔNG BAO GIỜ
@@ -1286,6 +1301,22 @@ Phase 3: Module Clinical (RAG guideline + drug check)
     Settings (cấp tài khoản) → Billing and plans → Plans and usage/Spending limits. Sau khi bật lại,
     cancel rồi re-run hai run đang kẹt để xác nhận CI chạy sạch trở lại — trước đó KHÔNG thể khẳng
     định "CI xanh" cho bất kỳ commit nào từ 06/09/2026 trở đi, vì không job nào thực sự thi hành.
+  - **⛔ ĐÍNH CHÍNH 10/09/2026 — đã bật lại, và lộ thêm một khoảng hở KHÁC ở repo y khoa.**
+    `gh api .../actions/permissions` nay trả `enabled:true` cho **CẢ HAI** repo — vế "đang tắt" ở
+    trên đã hết hiệu lực. **Repo gốc (EBM-drluanbv175): CI đã chạy THẬT và PASS** cho commit mới
+    nhất trên nhánh `claude/multi-platform-plugin-sync-cslwb0` — 8/8 check-run `kiem-tinh` (2 OS ×
+    2 Python, có lặp) đều `success`. **Repo y khoa (medical-ebm-automation): KHÔNG PASS mà cũng
+    KHÔNG FAIL — CHƯA TỪNG CHẠY.** Nhánh `feat/r1-1-2-design-gap-remediation` (đồng thời là
+    default branch) có 6 commit liên tiếp (`1bcd6e4`→`5aa2e94`, 06/09 04:09 đến 09/09 20:16 giờ
+    VN, đều đã lên `origin` — `git ls-remote` khớp `HEAD` cục bộ) mà `commits/<sha>/check-runs`
+    trả `total_count:0` và `commits/<sha>/status` trả `state:"pending"` — nghĩa là sự kiện `push`
+    chưa từng kích hoạt workflow `offline-ci-hermetic` cho dù workflow (`state:"active"`, trigger
+    `on: push branches: ["**"]`) không đổi, không có branch protection/ruleset nào chặn, và lần
+    chạy gần nhất của repo (09/09 13:41, SHA khác trên `master`) là `workflow_dispatch` — tức bấm
+    tay, không phải do một push tự động kích hoạt. **Nguyên nhân CHƯA xác định được từ phía
+    agent** (endpoint billing trả 404 thiếu scope `user`, agent không xem được Settings → Billing
+    qua `gh api`) — cần bác sĩ tự kiểm Settings → Billing and plans (Actions) và thử đẩy một
+    commit thử hoặc bấm "Re-run all jobs" để xem `push` có kích hoạt lại được không.
   - **CI: HAI repo × 2 lane (ubuntu+windows) — cấu hình workflow không đổi, chỉ mất khả năng CHẠY (xem
     mục 🔴 ngay trên).** Repo gốc lần đầu có CI
     (`.github/workflows/kiem-tinh-da-nen.yml`: compileall + chốt đa nền R1–R6 + smoke bảng);
@@ -1701,6 +1732,14 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   `tu_sua_chua`. Vì **BH43 gọi canary từ bên trong** `chot_hoi_quy_bai_hoc`, canary đã tự chạy
   mỗi phiên — nên KHÔNG thêm hook riêng (thêm sẽ chạy hai lần và hai chỗ cùng báo một việc).
   *Số đo: canary 2 giây · trọn bộ 43 chốt 19 giây.*
+  ⛔ **ĐÍNH CHÍNH 10/09/2026 — con số "7" ở trên đã LỖI THỜI, không phải sai lúc viết.** Đọc
+  trực tiếp `hooks.SessionStart` trong `.claude/settings.local.json` (project-level, máy thật)
+  hôm nay cho **9** lệnh, không phải 7: thêm `dong_bo_skill_claude_codex` (nối dây ~21/08, BH70
+  — đồng bộ skill/plugin Claude↔Codex, timeout 300s) và `xuat_trang_thai_cloud` (nối dây ~04/09
+  — xuất mirror trạng thái chứng cứ cho Cloud, timeout 60s), cả hai đều KHÔNG có trong danh sách
+  7 tên đã liệt ở trên. Đây là hệ quả tự nhiên của việc thêm hook mới theo thời gian, không phải
+  một lỗi cần vá — chỉ ghi lại để "7 chốt" không bị đọc như một con số cố định. Đếm nhanh:
+  `python3 -c "import json; d=json.load(open('.claude/settings.local.json')); print(len(d['hooks']['SessionStart'][0]['hooks']))"`.
 
   ## 🕸️ TẦNG ĐIỀU PHỐI AGENT — đo lần đầu 15/08/2026, chốt `kiem_dieu_phoi.py` (BH44)
   Tầng duy nhất chưa từng được đo. Kết quả: **đồ thị điều phối LÀNH** — `dieu-phoi-lam-sang`
