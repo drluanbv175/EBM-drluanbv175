@@ -3362,18 +3362,32 @@ def bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la() -> tuple[bool, str]:
 
     Kiểm HÀNH VI: quét toàn bộ 23 skill đã biết mang khối EBM-VN-GUARD (chốt
     tại thời điểm phát hiện sự cố), xác nhận CẢ 22 vẫn còn khối này trong bản
-    nguồn hiện tại. Không cái nào tái phát ⇒ ĐẠT."""
+    nguồn hiện tại. Không cái nào tái phát ⇒ ĐẠT.
+
+    VÁ 10/09/2026 — TÁI PHÁT GIẢ do chính chốt này lạc hậu, không phải hồi quy
+    thật: commit 952ba1a1 (06/09/2026, "đóng cặp cloud <-> repo") đã CHỦ Ý tách
+    7 skill trùng tên thành hai họ khác nhau — họ TÀI KHOẢN ngắn (2,8-4,6 KB, do
+    bác sĩ tự viết, giữ NGUYÊN tên gốc vì CLAUDE.md/lệnh Việt đang trỏ vào đó) và
+    họ K-DENSE dài (6,9-33 KB, mang khối EBM-VN-GUARD, đổi tên thêm hậu tố
+    `-kdense`). Bản thân khối guard KHÔNG mất — nó nằm đúng chỗ, chỉ khác ĐƯỜNG
+    DẪN. Chốt này chưa cập nhật theo tên mới nên tiếp tục tìm ở tên cũ và báo
+    "mất" một khối vẫn còn nguyên. Đã xác nhận: cả 7 file `<tên>-kdense/SKILL.md`
+    đều có EBM-VN-GUARD trước khi sửa danh sách dưới đây — không phải chỉ đổi
+    tên qua loa để chốt im lặng."""
     # Danh sách 23 skill mang EBM-VN-GUARD, chốt tại thời điểm phát hiện sự cố
     # 26/08/2026 (grep -rl "EBM-VN-GUARD" sync/skills/*/SKILL.md). Danh sách mới
     # thêm sau này không tự động vào đây — đây là chốt HỒI QUY (không tái phát
     # trên skill ĐàN biết mang guard), không phải kiểm kê skill nào NÊN mang guard.
+    # 10/09/2026: 7 mục đổi sang hậu tố `-kdense` theo đúng rename thật của
+    # commit 952ba1a1 — xem "VÁ 10/09/2026" ở docstring trên.
     SKILL_CO_GUARD = [
-        "antifacts", "citation-management", "clinical-decision-support",
+        "antifacts", "citation-management-kdense", "clinical-decision-support",
         "clinical-reports", "database-lookup", "exploratory-data-analysis",
         "experimental-design", "ebm-master", "hypothesis-generation",
-        "literature-review", "paper-lookup", "peer-review", "research-lookup",
-        "scholar-evaluation", "scientific-writing", "scikit-survival", "pyhealth",
-        "statistical-analysis", "statsmodels", "scientific-critical-thinking",
+        "literature-review-kdense", "paper-lookup-kdense", "peer-review-kdense",
+        "research-lookup-kdense",
+        "scholar-evaluation", "scientific-writing-kdense", "scikit-survival", "pyhealth",
+        "statistical-analysis-kdense", "statsmodels", "scientific-critical-thinking",
         "treatment-plans", "statistical-power", "venue-templates",
     ]
     mat = []

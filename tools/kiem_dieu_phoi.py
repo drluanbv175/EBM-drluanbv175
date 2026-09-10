@@ -51,10 +51,20 @@ AG = REPO / ".claude" / "agents"
 # 20 là skill DỰNG SẴN của Anthropic (docx, pdf, pptx…), không phải của bác sĩ và
 # không cần nguồn cục bộ; chỉ 2 là skill thật cần cứu. Khai báo thay vì suy đoán
 # (BH28): skill lạ mới xuất hiện ở runtime mà không nguồn → vẫn ĐỎ, đúng như cần.
+#
+# VÁ 10/09/2026 (tái phát BH44): lần chạy lại báo 2 skill runtime không nguồn —
+# `dieu-phoi-aipoch` (router tiếng Việt do bác sĩ/phiên trước tự viết cho plugin
+# aipoch-medical-research, KHÔNG có bản dựng sẵn nào giống — đã cứu về
+# sync/skills/dieu-phoi-aipoch/) và `setup-claude` (mô tả tiếng Anh "Guided
+# setup — install role-matched plugins…", đúng khuôn SKILL_DUNG_SAN như
+# `setup-cowork` đã có sẵn — có vẻ là tên mới của chính skill onboarding đó sau
+# một bản cập nhật app, không phải skill riêng của dự án này). Thêm vào đây,
+# không cứu vào sync/skills/, để không nhận nhầm skill của Anthropic là tài sản
+# cần bảo vệ của bác sĩ.
 SKILL_DUNG_SAN = {
     "algorithmic-art", "brand-guidelines", "canvas-design", "consolidate-memory",
     "doc-coauthoring", "docx", "explain-usage", "import-memory", "internal-comms", "learn",
-    "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-cowork",
+    "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude", "setup-cowork",
     "skill-creator", "slack-gif-creator", "theme-factory", "web-artifacts-builder",
     "xlsx",
 }
