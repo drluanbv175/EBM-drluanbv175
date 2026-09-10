@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -34,8 +35,54 @@ from orchestrator.worker_inventory import (  # noqa: E402
 CONTRACT_MARKER = "_PLUGIN-ROUTING-CONTRACT.md"
 REGISTRY_MARKER = "plugin_ownership_registry.json"
 CANONICAL_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
+
+
+def _resolve_main_repo_root(start_dir: Path | None = None) -> Path:
+    """Gốc repo CHÍNH — quy về cùng MỘT nơi dù cổng này chạy từ worktree nào.
+
+    VÌ SAO CÓ (09/09/2026, phát hiện qua báo lỗi commit bị chặn ở phiên worktree
+    `focused-jang-fead23`): ``~/.claude/skills/plugin-router-chatgpt`` và
+    ``~/.codex/skills/plugin-router-chatgpt`` — cả hai đều DÙNG CHUNG cho MỌI
+    worktree trên máy — và gói ``CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip``
+    — bị gitignore nên KHÔNG bao giờ có mặt trong một worktree phụ — đều là tài
+    nguyên gắn với repo CHÍNH, không phải nơi file này đang chạy. Trước bản vá
+    này, ROOT được suy trực tiếp từ vị trí file (``parents[1]``): chạy cổng này
+    TỪ MỘT WORKTREE PHỤ sẽ so sánh runtime (đúng, trỏ về repo chính, do
+    ``dong_bo_skill_claude_codex.py`` đã tự vá đúng chỗ này ngày 08/09/2026) với
+    một "nguồn đúng" bị tính SAI (gốc worktree) — cổng báo "trỏ sai nguồn" cho
+    một runtime đang trỏ ĐÚNG, và báo "thiếu gói ZIP" cho một gói THẬT SỰ tồn
+    tại ở repo chính. Đây là CÙNG một lớp lỗi mà ``_resolve_repo_root()`` của
+    ``dong_bo_skill_claude_codex.py``/``dong_bo_plugin_claude_codex.py`` đã sửa
+    — verifier này chưa từng nhận bản vá tương ứng.
+
+    ⚠️ CHỈ dùng cho phần "runtime dùng chung máy" (symlink + gói ZIP) — KHÔNG
+    dùng cho các kiểm tra NỘI DUNG file router (``missing_router``, catalog.json)
+    vì những file đó PHẢI đọc từ chính worktree đang commit, không phải bản cũ
+    ở repo chính (nếu không, một lần sửa SKILL.md/catalog trong worktree sẽ
+    không bao giờ được cổng này soát tới).
+
+    ``git rev-parse --git-common-dir`` luôn trả về ``.git`` của repo CHÍNH dù
+    gọi từ worktree nào; git không gọi được (thiếu binary, không phải repo git)
+    thì lùi về ROOT như hành vi cũ — không làm chết cổng.
+    """
+    here = start_dir if start_dir is not None else Path(__file__).resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10, check=True,
+        )
+        git_common_dir = Path(result.stdout.strip())
+        if git_common_dir.is_dir():
+            return git_common_dir.parent
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return ROOT
+
+
+MAIN_REPO_ROOT = _resolve_main_repo_root()
 ROUTER_SOURCE = ROOT / "sync/skills/plugin-router-chatgpt"
-ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
+CANONICAL_ROUTER_SOURCE = MAIN_REPO_ROOT / "sync/skills/plugin-router-chatgpt"
+ROUTER_ZIP = MAIN_REPO_ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 
 
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
@@ -203,22 +250,30 @@ def verify() -> dict[str, Any]:
     for path in missing_router:
         errors.append(f"router thieu file: {path.relative_to(ROOT)}")
 
+    # So khớp với CANONICAL_ROUTER_SOURCE (gốc repo CHÍNH), KHÔNG phải ROUTER_SOURCE
+    # (gốc của worktree đang chạy cổng này) — symlink ~/.claude|.codex/skills dùng
+    # chung cho MỌI worktree trên máy, nên "đúng" nghĩa là trỏ về repo chính, không
+    # phải trỏ về bất kỳ worktree cụ thể nào (xem docstring _resolve_main_repo_root).
     for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
         target = runtime / "plugin-router-chatgpt"
         if not target.exists():
-            errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
-        elif target.resolve() != ROUTER_SOURCE.resolve():
+            errors.append(f"router runtime khong ton tai/lien ket gay: {target}")
+        elif target.resolve() != CANONICAL_ROUTER_SOURCE.resolve():
             errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
 
     if not ROUTER_ZIP.is_file():
-        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
+        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(MAIN_REPO_ROOT)}")
     elif not missing_router:
+        # Gói ZIP luôn được dựng TỪ CANONICAL_ROUTER_SOURCE (package_router() trong
+        # dong_bo_skill_claude_codex.py cũng ghi vào REPO, tức cùng gốc này) — so mtime
+        # với ROUTER_SOURCE (worktree) sẽ luôn lệch giả vì hai thư mục khác đường dẫn
+        # dù nội dung git-tracked giống hệt nhau.
         source_files = [
             path
-            for path in ROUTER_SOURCE.rglob("*")
+            for path in CANONICAL_ROUTER_SOURCE.rglob("*")
             if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
         ]
-        newest_source = max(path.stat().st_mtime for path in source_files)
+        newest_source = max((path.stat().st_mtime for path in source_files), default=0.0)
         if ROUTER_ZIP.stat().st_mtime < newest_source:
             errors.append("goi plugin-router-chatgpt.zip cu hon nguon canonical")
         try:
