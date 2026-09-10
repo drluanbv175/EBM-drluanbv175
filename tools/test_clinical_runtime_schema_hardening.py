@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -17,6 +18,7 @@ def test_clinical_runtime_hardening_overall_passes():
         "decision_contract",
         "validation_cases",
         "runtime_flags",
+        "cache_freshness",
         "outpatient_apply_gate",
     }
 
@@ -72,6 +74,32 @@ def test_runtime_flags_reports_enforcement_site_for_every_true_flag():
     assert check["status"] == "PASS"
     assert check["missing_markers"] == []
     assert len(check["details"][0].split("->")) >= 2  # có ít nhất 1 cờ enforced
+
+
+def test_cache_freshness_is_advisory_not_blocking():
+    """10/09/2026 (vòng 3): 3 file cache trong clinical_runtime/ đã cũ 29-47
+    ngày — check phải BÁO nhưng KHÔNG được chặn overall_status (bác sĩ mới
+    biết ngưỡng nào hợp lý, không phải máy tự đoán)."""
+    check = V.check_runtime_flags()
+    assert check["status"] == "PASS"  # đối chứng: cờ vẫn PASS như cũ (không bị đụng)
+
+    check2 = V.check_cache_freshness()
+    assert check2["status"] == "ADVISORY"
+    assert V.run_verification()["overall_status"] == "PASS"
+
+
+def test_cache_freshness_doc_theo_noi_dung_khong_theo_mtime(tmp_path, monkeypatch):
+    """BH76: 'Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime'. Dựng
+    file có mtime HÔM NAY nhưng trường `generated` bên trong ghi ngày CŨ — nếu
+    check đọc mtime thay vì nội dung, nó sẽ báo sai '0 ngày trước'."""
+    gia = tmp_path / "retraction_med_safety_report.json"
+    gia.write_text(json.dumps({"generated": "2020-01-01T00:00:00Z"}), encoding="utf-8")
+    # mtime của file vừa ghi luôn là "bây giờ" — đúng kịch bản worktree/clone mới.
+    ket = V._ngay_that_cua_file(gia, "content:generated")
+    assert ket is not None
+    ngay, tuoi = ket
+    assert ngay == "2020-01-01"
+    assert tuoi > 2000  # nếu lỡ đọc mtime sẽ ra ~0, không phải hàng nghìn ngày
 
 
 def test_outpatient_apply_gate_blocks_uncontrolled_practice_release():

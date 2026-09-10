@@ -11,7 +11,9 @@ runtime integration, bác sĩ, pháp lý và bảo mật duyệt.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -319,6 +321,77 @@ def check_runtime_flags() -> dict[str, Any]:
     }
 
 
+# Với mỗi file cache, khai nơi lấy NGÀY THẬT — ưu tiên trường nội dung
+# ("generated"), KHÔNG BAO GIỜ dùng mtime hệ thống (BH76: "Độ tươi phái sinh
+# phải đo theo NỘI DUNG, không theo mtime" — đo thật 10/09/2026 xác nhận đúng
+# rủi ro BH76 cảnh báo: mtime của CẢ BA file đều là giờ checkout worktree này
+# — "Sep 10 18:31" — dù nội dung thật cũ 12-47 ngày; dùng mtime sẽ luôn báo
+# "vừa mới" trên MỌI worktree/clone mới, sai hoàn toàn).
+_CACHE_NGAY: dict[str, str] = {
+    "retraction_med_safety_report.json": "content:generated",
+    "strict_source_report.json": "content:generated",
+    "apply_gate_verifier_output.txt": "git-log",
+}
+
+
+def _ngay_that_cua_file(path: Path, nguon: str) -> tuple[str, int] | None:
+    """Trả (ngày ISO, tuổi tính bằng ngày) hoặc None nếu không đọc được."""
+    if not path.is_file():
+        return None
+    try:
+        if nguon == "content:generated":
+            sinh = json.loads(path.read_text(encoding="utf-8")).get("generated")
+            if not sinh:
+                return None
+            dt = datetime.fromisoformat(sinh.replace("Z", "+00:00"))
+        elif nguon == "git-log":
+            r = subprocess.run(
+                ["git", "-C", str(ROOT), "log", "-1", "--format=%aI", "--", str(path)],
+                capture_output=True, text=True, timeout=10, check=True,
+            )
+            out = r.stdout.strip()
+            if not out:
+                return None
+            dt = datetime.fromisoformat(out)
+        else:
+            return None
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError):
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    tuoi = (datetime.now(timezone.utc) - dt).days
+    return dt.date().isoformat(), tuoi
+
+
+def check_cache_freshness() -> dict[str, Any]:
+    """ADVISORY — báo tuổi THẬT của các file "báo cáo lần chạy trước" nằm sẵn
+    trong clinical_runtime/, và nói rõ KHÔNG có gì tự làm mới chúng.
+
+    VÌ SAO CÓ (vòng 3, 10/09/2026): ba file này (`apply_gate_verifier_output.txt`
+    · `retraction_med_safety_report.json` · `strict_source_report.json`) là
+    ẢNH CHỤP một lần chạy thủcông trước đây (`ensure_strict_source.py`,
+    `run_retraction_and_med_safety.py`) — không CI nào, không hook nào tái
+    tạo chúng. Một người đọc lướt qua thư mục có thể tưởng đó là trạng thái
+    HIỆN TẠI. Đây CHỈ báo tuổi — KHÔNG tự đặt ngưỡng "quá cũ" (bác sĩ mới biết
+    nhịp cập nhật nào là hợp lý cho từng loại báo cáo) và KHÔNG chặn build.
+    """
+    dong: list[str] = []
+    for ten, nguon in _CACHE_NGAY.items():
+        ket = _ngay_that_cua_file(CLINICAL_RUNTIME / ten, nguon)
+        if ket is None:
+            dong.append(f"{ten}: không đọc được ngày thật (thiếu file hoặc trường 'generated')")
+        else:
+            ngay, tuoi = ket
+            dong.append(f"{ten}: {ngay} ({tuoi} ngày trước)")
+    return {
+        "name": "cache_freshness",
+        "status": "ADVISORY",
+        "details": dong + ["không có CI/hook nào tự tái tạo 3 file này — đây là ảnh chụp "
+                            "thủ công, không phải trạng thái sống"],
+        "missing_markers": [],
+    }
+
+
 def check_outpatient_apply_gate() -> dict[str, Any]:
     import verify_clinical_practice_apply_gate as apply_gate
 
@@ -352,6 +425,7 @@ def run_verification() -> dict[str, Any]:
         check_decision_contract(),
         check_validation_cases(),
         check_runtime_flags(),
+        check_cache_freshness(),
         check_outpatient_apply_gate(),
     ]
     overall = "PASS" if all(check["status"] in _KHONG_CHAN for check in checks) else "FAIL"
