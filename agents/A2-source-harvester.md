@@ -1,7 +1,13 @@
 # A2 — source-harvester
 
 ## 1. Định danh & vai trò
-**Hiện thân thật:** EBM-Dashboards/tools/surveillance_scan.py (chạy: python3 tools/surveillance_scan.py --topic <tên>)
+**Hiện thân thật:** `sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py` — NGUỒN
+CHUẨN (git-tracked; sửa TẠI ĐÂY). Đồng bộ 3 bản (nguồn + biến thể dark-analyst + bản
+runtime `EBM-Dashboards/tools/surveillance_scan.py`, ngoài git) qua
+`tools/dong_bo_scanner_giam_sat.py`. Chạy: `python3 tools/surveillance_scan.py --topic <tên>`
+tại thư mục runtime. SỬA 10/09/2026: trước ghi thẳng đường dẫn EBM-Dashboards —
+đúng nơi CHẠY nhưng SAI nơi SỬA, nên một lần sửa đúng ở đó không tự lan sang 2
+bản kia (chính lỗi mà `dong_bo_scanner_giam_sat.py` sinh ra để tự vá).
 
 ## 2. Đầu vào
 watchlist.json (4 tầng truy vấn) + cursor + RetractionChain tại cửa nhận

@@ -2,5 +2,5 @@
   "require_human_approval": true,
   "require_strict_source": true,
   "enforce_safety_net_templates": true,
-  "notes": "Minimal flags to enable gating checks and require explicit human approval for any APPLY decisions. These flags are advisory; integrating code paths to enforce them (hooks/UI) is next step."
+  "notes": "Minimal flags to enable gating checks and require explicit human approval for any APPLY decisions. As of 2026-09-10 all three flags are read by real code (tools/kiem_hop_dong_item.py::_require_human_approval_flag, tools/ensure_strict_source.py::require_strict_source_flag, tools/kiem_safety_net.py R9) and are checked for a live enforcement site by tools/verify_clinical_runtime_schema_hardening.py::check_runtime_flags(). Flipping any flag to false is a clinical-safety decision for the physician, not for automated code."
 }

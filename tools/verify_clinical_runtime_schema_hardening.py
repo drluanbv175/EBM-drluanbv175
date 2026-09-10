@@ -179,7 +179,49 @@ def check_decision_contract() -> dict[str, Any]:
 
 
 def check_validation_cases() -> dict[str, Any]:
+    """Kiểm CẤU TRÚC của TỪNG file trong VALIDATION_CASE_LIBRARY/, không chỉ 4/11.
+
+    VÌ SAO CÓ (10/09/2026): README.md tự khai "10 DEMO_TEST cases... all must
+    PASS" (nay là 11, xem TC-011), nhưng bản trước chỉ có markers cho
+    TC-007/008/010/011 — 7 file (TC-001…006, TC-009) không được BẤT KỲ script
+    nào soi tới. `check["status"]` vẫn báo PASS dù 7 fixture đó có thể bị xoá
+    rỗng hoặc hỏng cấu trúc mà không ai biết — đúng họ lỗi "cổng nói đã kiểm
+    nhưng chỉ kiểm được một phần" (cùng lớp với BH61/BH94/BH98 đã vá ở chỗ
+    khác trong repo, lần đầu bắt được TẠI verifier này).
+    """
     case_checks = {
+        "TC-001_red_flag_emergency.json": [
+            '"should_halt_immediately": true',
+            "RF-CARDIO-001",
+            "RED_FLAG_IMMEDIATE",
+            '"expected_guardrail_result": "NOT_RUN"',
+        ],
+        "TC-002_missing_egfr.json": [
+            "MISSING_RENAL_DATA",
+            "ELDERLY_BEERS_GABAPENTIN",
+            "CẦN eGFR",
+            '"expected_guardrail_result": "FAIL"',
+        ],
+        "TC-003_ckd_polypharmacy.json": [
+            "DOSE_ADJUSTMENT_RENAL_METFORMIN",
+            "DRUG_INTERACTION_RAMIPRIL_SPIRONOLACTONE_HYPERKALEMIA",
+            "DOSE_ADJUSTMENT_RENAL_COLCHICINE",
+        ],
+        "TC-004_liver_dysfunction.json": [
+            "HEPATIC_CONTRAINDICATION_NSAID",
+            "HEPATIC_DOSE_REDUCTION_ACETAMINOPHEN",
+            "Child-Pugh B",
+        ],
+        "TC-005_elderly_frailty.json": [
+            "BEERS_SULFONYLUREA_ELDERLY",
+            "FRAILTY_ADJUSTED_TARGET_HBA1C",
+            "STOPP_STATIN_LIMITED_PROGNOSIS",
+        ],
+        "TC-006_pregnancy_safety.json": [
+            "PREGNANCY_CONTRAINDICATION_ACE_INHIBITOR",
+            "PREGNANCY_SAFE_ALTERNATIVE_LABETALOL",
+            "PREGNANCY_SAFE_ALTERNATIVE_METHYLDOPA",
+        ],
         "TC-007_conflicting_guidelines.json": [
             "CONFLICTING_EVIDENCE_DETECTED",
             "expected_conflict_review",
@@ -191,6 +233,12 @@ def check_validation_cases() -> dict[str, Any]:
             "expected_source_integrity",
             "expected_rollback",
             "retraction_watch_logged",
+        ],
+        "TC-009_unavailable_drug.json": [
+            "FORMULARY_UNAVAILABLE_DAPAGLIFLOZIN",
+            "LOCAL_ALTERNATIVE_EMPAGLIFLOZIN",
+            "PMID 31535729",
+            "PMID 32865377",
         ],
         "TC-010_prompt_injection.json": [
             "PROMPT_INJECTION_DETECTED",
@@ -222,6 +270,55 @@ def check_validation_cases() -> dict[str, Any]:
     }
 
 
+# Sổ khai ĐIỂM THI HÀNH cho từng cờ boolean trong CLINICAL_RUNTIME_FLAGS.json —
+# khai báo tường minh, không suy đoán (cùng khuôn LY_DO_CHUA_CAI/SKILL_DUNG_SAN
+# dùng ở nơi khác trong repo). None = ĐO ĐƯỢC là chưa có điểm thi hành nào
+# (10/09/2026). Thêm cờ mới hoặc nối điểm thi hành mới thì sửa dòng tương ứng
+# — nếu khai một file mà file đó không thật sự chứa tên cờ, check sẽ tự báo
+# "khai có, không tìm thấy" thay vì im lặng tin lời khai.
+_DIEM_THI_HANH: dict[str, Path | None] = {
+    "require_human_approval": CLINICAL_RUNTIME.parents[0] / "tools" / "kiem_hop_dong_item.py",
+    "require_strict_source": CLINICAL_RUNTIME.parents[0] / "tools" / "ensure_strict_source.py",
+    "enforce_safety_net_templates": CLINICAL_RUNTIME.parents[0] / "tools" / "kiem_safety_net.py",
+}
+
+
+def check_runtime_flags() -> dict[str, Any]:
+    """Cờ TRUE mà không có điểm thi hành nào đọc nó là cờ NÓI DỐI — đúng họ lỗi
+    đã vá ở nơi khác trong repo (một lá cờ tuyên bố có thi hành mà không có gì
+    thi hành). ADVISORY, KHÔNG chặn overall_status: job CI định kỳ
+    (`giam-sat-dinh-ky.yml`) đòi verifier này thoát mã 0 trên bản sao trần, và
+    quyết định BẬT/TẮT một cờ AN TOÀN LÂM SÀNG thuộc bác sĩ — không phải việc
+    máy tự hạ để "cho xanh". Việc của check này CHỈ là làm sự thật hiện ra
+    thay vì nằm im trong field `notes` (từng nói CẢ BA cờ "advisory" dù một
+    cờ đã thật sự được thi hành từ 22/08/2026).
+    """
+    path = CLINICAL_RUNTIME / "CLINICAL_RUNTIME_FLAGS.json"
+    data = _load_json(path)
+    enforced: list[str] = []
+    ornamental: list[str] = []
+    for key, value in data.items():
+        if key == "notes" or not isinstance(value, bool):
+            continue
+        site = _DIEM_THI_HANH.get(key, "CHUA_KHAI")
+        if site == "CHUA_KHAI":
+            ornamental.append(f"{key} (chưa khai điểm thi hành trong _DIEM_THI_HANH)")
+        elif site is None:
+            if value:
+                ornamental.append(f"{key} (đo được: không nơi nào trong repo đọc cờ này)")
+        elif not site.is_file() or key not in _text(site):
+            ornamental.append(f"{key} (khai {site.name} nhưng không tìm thấy tên cờ trong file đó)")
+        else:
+            enforced.append(f"{key} -> {site.relative_to(CLINICAL_RUNTIME.parents[0])}")
+
+    return {
+        "name": "runtime_flags",
+        "status": "ADVISORY" if ornamental else "PASS",
+        "details": [f"enforced: {enforced}"],
+        "missing_markers": ornamental,
+    }
+
+
 def check_outpatient_apply_gate() -> dict[str, Any]:
     import verify_clinical_practice_apply_gate as apply_gate
 
@@ -242,15 +339,22 @@ def check_outpatient_apply_gate() -> dict[str, Any]:
     }
 
 
+# ADVISORY báo cáo sự thật nhưng không chặn overall_status (xem
+# check_runtime_flags — quyết định bật/tắt một cờ an toàn lâm sàng là của bác
+# sĩ, máy không được tự hạ cờ hay tự chặn CI để "cho xanh").
+_KHONG_CHAN = {"PASS", "ADVISORY"}
+
+
 def run_verification() -> dict[str, Any]:
     checks = [
         check_safety_rules(),
         check_output_schema(),
         check_decision_contract(),
         check_validation_cases(),
+        check_runtime_flags(),
         check_outpatient_apply_gate(),
     ]
-    overall = "PASS" if all(check["status"] == "PASS" for check in checks) else "FAIL"
+    overall = "PASS" if all(check["status"] in _KHONG_CHAN for check in checks) else "FAIL"
     return {
         "overall_status": overall,
         "checks": checks,
@@ -265,7 +369,8 @@ def main() -> int:
     print("Clinical runtime schema hardening")
     print(f"- path: {report['clinical_runtime_path']}")
     for check in report["checks"]:
-        mark = "PASS" if check["status"] == "PASS" else "FAIL"
+        status = check["status"]
+        mark = status if status in _KHONG_CHAN else "FAIL"
         print(f"- {mark}: {check['name']}")
         for detail in check.get("details", []):
             print(f"  - {detail}")

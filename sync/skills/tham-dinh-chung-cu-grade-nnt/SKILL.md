@@ -7,6 +7,12 @@ metadata:
 
 # Skill: Thẩm định nhanh chứng cứ (GRADE · NNT · LR)
 
+> **Bản đầy đủ = agent `tham-dinh-grade-nnt`** (`.claude/agents/tham-dinh-grade-nnt.md`) — giàu
+> hơn, có RoB 2/ROBINS-I/QUADAS-3/AMSTAR-2 theo đúng thiết kế và dựng khối Evidence-to-Decision.
+> Skill này là bản NHANH ~10 phút, bổ trợ khi chỉ cần xoáy vào một nguồn tại điểm khám (K13,
+> đóng 10/09/2026: trước có hai nguồn chân lý — skill v1.0 và agent — không nói rõ cái nào là
+> bản đầy đủ).
+
 ## 1. Phạm vi
 Đọc & thẩm định nhanh một nguồn (RCT, systematic review/meta-analysis, guideline, nghiên cứu chẩn đoán, cohort) để trả lời: **đáng tin tới đâu? áp dụng được cho bệnh nhân VN của tôi không?** Bổ trợ `cap-nhat-chung-cu-y-khoa` (khi cần xoáy vào thẩm định một nguồn cụ thể).
 
