@@ -59,7 +59,7 @@ def _la_vo_tri(tt: str) -> bool:
 
 def _git(*args: str, cay: Path = REPO) -> tuple[int, str]:
     try:
-        r = subprocess.run(["git", *args], cwd=cay, capture_output=True, text=True, timeout=60)
+        r = subprocess.run(["git", *args], cwd=cay, capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
         return r.returncode, r.stdout or ""
     except (OSError, subprocess.SubprocessError):
         return 99, ""

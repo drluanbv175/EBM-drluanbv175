@@ -88,7 +88,7 @@ def _ten_may() -> str:
 def _chay_bo_dem(ten_script: str, doi_them: list) -> dict:
     cmd = [sys.executable, str(REPO / "tools" / ten_script)] + doi_them
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=90, cwd=REPO)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=90, cwd=REPO, encoding="utf-8", errors="replace")
         return {"ma_thoat": p.returncode, "stdout": p.stdout.strip(),
                 "stderr": p.stderr.strip()[:2000]}
     except Exception as exc:  # noqa: BLE001 — một bộ đếm lỗi không được làm sập cả báo cáo

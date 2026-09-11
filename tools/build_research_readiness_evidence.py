@@ -57,7 +57,7 @@ def _project_python() -> str:
 
 
 def _current_principal_suffix() -> str:
-    result = subprocess.run(["whoami"], capture_output=True, text=True, check=False)
+    result = subprocess.run(["whoami"], capture_output=True, text=True, check=False, encoding="utf-8", errors="replace")
     principal = (result.stdout or "").strip()
     if result.returncode != 0 or not principal:
         principal = os.environ.get("USERNAME") or "current-user"

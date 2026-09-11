@@ -32,6 +32,7 @@ def _loaded_working_directory(label: str) -> tuple[bool, str]:
         p = subprocess.run(
             ["launchctl", "print", f"gui/{uid}/{label}"],
             capture_output=True, text=True, timeout=10,
+            encoding="utf-8", errors="replace",
         )
     except Exception as e:  # noqa: BLE001
         print(f"  ⚠ Không chạy được 'launchctl print' cho {label}: {e}")
@@ -82,11 +83,12 @@ def main() -> int:
         print(f"🟡 {label}: {reason} — nạp lại từ {plist_path}…")
         uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
         subprocess.run(["launchctl", "bootout", f"gui/{uid}/{label}"],
-                       capture_output=True, text=True, timeout=15)
+                       capture_output=True, text=True, timeout=15, encoding="utf-8", errors="replace")
         boot = subprocess.run(
             uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
             ["launchctl", "bootstrap", f"gui/{uid}", str(plist_path)],
             capture_output=True, text=True, timeout=15,
+            encoding="utf-8", errors="replace",
         )
         if boot.returncode != 0:
             print(f"  ⛔ bootstrap lỗi: {boot.stderr.strip() or boot.returncode}")

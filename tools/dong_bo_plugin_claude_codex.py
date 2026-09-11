@@ -69,6 +69,7 @@ def _resolve_repo_root(start_dir: Path | None = None) -> Path:
         result = subprocess.run(
             ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
             capture_output=True, text=True, timeout=10, check=True,
+            encoding="utf-8", errors="replace",
         )
         git_common_dir = Path(result.stdout.strip())
         if git_common_dir.is_dir():

@@ -75,6 +75,7 @@ def _git_hooks_path(repo: Path) -> str | None:
         out = subprocess.run(
             ["git", "config", "--get", "core.hooksPath"],
             cwd=str(repo), capture_output=True, text=True, check=False,
+            encoding="utf-8", errors="replace",
         )
     except OSError:
         return _git_hooks_path_from_local_config(repo)
@@ -134,6 +135,7 @@ def _launchd_job_loaded(label: str) -> bool:
         result = subprocess.run(
             ["launchctl", "print", f"gui/{uid}/{label}"],
             capture_output=True, text=True, check=False,
+            encoding="utf-8", errors="replace",
         )
     except OSError:
         return False

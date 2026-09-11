@@ -81,7 +81,7 @@ def chay(lenh: list[str], im: bool) -> tuple[int, str]:
     """Chạy một công cụ con, trả (mã thoát, đầu ra gộp)."""
     try:
         kq = subprocess.run(lenh, cwd=REPO, check=False, capture_output=True,
-                            text=True, timeout=900)
+                            text=True, timeout=900, encoding="utf-8", errors="replace")
     except (OSError, subprocess.SubprocessError) as exc:
         return 2, f"không chạy được: {exc}"
     ra = ((kq.stdout or "") + (kq.stderr or "")).strip()
@@ -115,7 +115,7 @@ def lan_git(im: bool) -> KetQua:
 
     def g(*a: str) -> tuple[int, str]:
         r = subprocess.run([git, *a], cwd=REPO, check=False,
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         return r.returncode, (r.stdout or "").strip()
 
     _, nhanh = g("rev-parse", "--abbrev-ref", "HEAD")

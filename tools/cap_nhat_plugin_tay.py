@@ -90,7 +90,7 @@ CAU_HINH = {
 
 
 def chay(lenh: list[str], cwd: pathlib.Path | None = None) -> tuple[int, str]:
-    r = subprocess.run(lenh, cwd=cwd, capture_output=True, text=True)
+    r = subprocess.run(lenh, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return r.returncode, (r.stdout + r.stderr).strip()
 
 

@@ -59,7 +59,7 @@ PY_YAML = str(_VENV) if _VENV.exists() else PY
 
 def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
     try:
-        r = subprocess.run(lenh, cwd=REPO, capture_output=True, text=True, timeout=900)
+        r = subprocess.run(lenh, cwd=REPO, capture_output=True, text=True, timeout=900, encoding="utf-8", errors="replace")
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except (OSError, subprocess.SubprocessError) as e:
         return 99, f"{nhan}: không chạy được ({e})"

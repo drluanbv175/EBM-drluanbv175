@@ -291,7 +291,7 @@ def main() -> int:
         # không còn đúng. Quét lại tốn ~1,3 giây — rẻ hơn nhiều so với hỏng im lặng.
         import subprocess
         r = subprocess.run([_sys.executable, str(HERE / "extract_catalog.py")],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             print("✗ Quét lại catalog thất bại:", (r.stderr or r.stdout)[-400:])
             return 2

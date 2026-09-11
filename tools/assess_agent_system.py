@@ -87,7 +87,7 @@ def p_run(cmd: List[str], label: str, timeout: int = 300,
         env.setdefault("PYTHONIOENCODING", "utf-8")
         env.setdefault("PYTHONPYCACHEPREFIX", str(Path(tempfile.gettempdir()) / "ebm_pycache"))
         proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True,
-                              text=True, timeout=timeout, env=env)
+                              text=True, timeout=timeout, env=env, encoding="utf-8", errors="replace")
         ok = proc.returncode == need_rc
         return (ok, f"{label}: exit={proc.returncode} (cần {need_rc}) {'✓' if ok else '✗'}")
     except Exception as e:  # noqa: BLE001

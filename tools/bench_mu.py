@@ -140,7 +140,7 @@ def _kiem_trich_dan(vb: str, tdd) -> dict:
                 [_python_venv(),
                  "medical-ebm-automation/tools/check_citation_retraction.py",
                  "--pmids", ",".join(pmids)],
-                cwd=REPO, capture_output=True, text=True, timeout=300)
+                cwd=REPO, capture_output=True, text=True, timeout=300, encoding="utf-8", errors="replace")
             for m in re.finditer(r"PMID (\d+):\s*(🔴|⚠️|❗)?\s*(ĐÃ BỊ RÚT|EXPRESSION|"
                                  r"KHÔNG KIỂM ĐƯỢC)", r.stdout):
                 kq["rut_bai"].append(f"{m.group(1)} ({m.group(3)})")

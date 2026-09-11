@@ -426,7 +426,7 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     import subprocess
     try:
         r = subprocess.run([sys.executable, str(REPO / "tools/so_xac_minh_nguon.py"), "--bao-cao"],
-                           cwd=REPO, capture_output=True, text=True, timeout=180)
+                           cwd=REPO, capture_output=True, text=True, timeout=180, encoding="utf-8", errors="replace")
     except (OSError, subprocess.SubprocessError) as e:
         return False, f"không chạy được báo cáo sổ: {e}"
     out = r.stdout + r.stderr
@@ -515,7 +515,7 @@ def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
                 continue
             try:
                 r = subprocess.run(["bash", "-c", c], capture_output=True, text=True,
-                                   env=env, cwd=rong, timeout=30)
+                                   env=env, cwd=rong, timeout=30, encoding="utf-8", errors="replace")
             except (OSError, subprocess.SubprocessError) as e:
                 im.append(f"chạy lỗi: {e}")
                 continue
@@ -1650,7 +1650,7 @@ def bh43_canary_dau_cuoi_phai_chay_va_phai_bat_duoc():
     tp = REPO / "tools" / "thu_dau_cuoi_chung_cu.py"
     if not tp.exists():
         return False, "mất canary đầu-cuối — không còn gì chứng minh dây chuyền CHẠY đúng"
-    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=300)
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=300, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         dong = [d.strip() for d in (r.stdout or "").splitlines() if d.strip().startswith("✗")]
         return False, ("canary ĐỎ — lỗ hổng thật ở dây chuyền: "
@@ -1685,7 +1685,7 @@ def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
     if not tp.exists():
         return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
     r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
-                       timeout=300, cwd=str(tp.parent.parent))
+                       timeout=300, cwd=str(tp.parent.parent), encoding="utf-8", errors="replace")
     if r.returncode != 0:
         dong = [d.strip() for d in (r.stdout or "").splitlines() if "LỌT" in d]
         return False, ("canary cổng nghiên cứu ĐỎ — lỗi gài KHÔNG bị cổng nào bắt: "
@@ -1716,7 +1716,7 @@ def bh44_dieu_phoi_agent_phai_sach():
     tp = REPO / "tools" / "kiem_dieu_phoi.py"
     if not tp.exists():
         return False, "mất kiem_dieu_phoi.py — tầng điều phối lại không ai đo"
-    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=120)
+    r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         dong = [d.strip() for d in (r.stdout or "").splitlines() if d.strip().startswith("🔴")]
         return False, ("điều phối KHÔNG sạch: "
@@ -1776,7 +1776,7 @@ def bh46_hop_dong_item_va_may_trang_thai():
         if not f.exists():
             return False, f"mất {f.name} — máy trạng thái lại chỉ còn trên giấy"
     r = subprocess.run([sys.executable, str(vd), "--self-test"],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
     if r.returncode != 0 or "LỌT" in (r.stdout or ""):
         return False, "validator không bắt đủ 5 ca xấu — luật cấm thành lời khuyên"
     return True, "4 luật cấm của máy trạng thái đều thi hành được bằng máy"
@@ -1883,7 +1883,7 @@ const DATA = { meta: { title: 'bh49', dateUpdated: '2026-08-15' },
         r = subprocess.run([_sys.executable,
                             str(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"),
                             str(fx), "--strict-sources"],
-                           capture_output=True, text=True, cwd=REPO, timeout=120)
+                           capture_output=True, text=True, cwd=REPO, timeout=120, encoding="utf-8", errors="replace")
     finally:
         fx.unlink(missing_ok=True)
     if "appraisalCompleteness='partial'" not in r.stdout:
@@ -1980,7 +1980,7 @@ def bh51_ledger_synthetic_dung_pham_vi():
     import subprocess
     r = subprocess.run([_sys.executable, str(mea / "tools/g6_quality_gate.py"),
                         "--study", "ZZPHA-R-AUTO-DEMO"],
-                       capture_output=True, text=True, cwd=mea, timeout=120)
+                       capture_output=True, text=True, cwd=mea, timeout=120, encoding="utf-8", errors="replace")
     if "chữ ký thật" not in r.stdout:
         return False, ("G6-AUTO-01 không còn lấy bằng chứng từ ledger — điểm gọi "
                        "ledger_approved trong g6_quality_gate hỏng (đảo tham số?)")
@@ -2339,7 +2339,7 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
         with tempfile.TemporaryDirectory() as tam:
             kq = subprocess.run([bash, str(sh)], check=False, capture_output=True,
                                 text=True, timeout=120,
-                                env={"HOME": tam, "PATH": _os.environ.get("PATH", "")})
+                                env={"HOME": tam, "PATH": _os.environ.get("PATH", "")}, encoding="utf-8", errors="replace")
             if kq.returncode != 0:
                 return False, f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
             for runtime in (".claude", ".codex"):
@@ -2359,7 +2359,7 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
             moi_truong = dict(_os.environ, USERPROFILE=tam, HOME=tam)
             kq = subprocess.run([pwsh, "-ExecutionPolicy", "Bypass", "-File", str(ps)],
                                 check=False, capture_output=True, text=True,
-                                timeout=180, env=moi_truong)
+                                timeout=180, env=moi_truong, encoding="utf-8", errors="replace")
             if kq.returncode != 0:
                 return False, f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
             for runtime in (".claude", ".codex"):
@@ -2465,7 +2465,7 @@ def bh71_lenh_gop_phu_du_lan_va_dung_khi_nguy_hiem():
                               check=False, capture_output=True, timeout=60).returncode == 0:
                 return False, f"{ten} bị .gitignore loại — nút bấm không đi sang máy kia"
         ra = subprocess.run([git, "check-attr", "eol", "--", "sync/dong-bo-tat-ca.cmd"],
-                            cwd=REPO, check=False, capture_output=True, text=True, timeout=60)
+                            cwd=REPO, check=False, capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
         if "crlf" not in (ra.stdout or ""):
             return False, ".cmd không được ép CRLF — batch LF-only hỏng thất thường trên Windows"
     return True, (f"dừng đúng khi nguy hiểm · {len(khai)} làn khai khớp main() · "
@@ -2605,7 +2605,7 @@ def bh55_khong_duong_dan_cung_mot_may():
     if not duong.exists():
         return False, "kiem_tuong_thich_da_nen.py biến mất"
     r = subprocess.run([sys.executable, str(duong)], capture_output=True,
-                       text=True, cwd=REPO, timeout=180)
+                       text=True, cwd=REPO, timeout=180, encoding="utf-8", errors="replace")
     if r.returncode == 2:
         dong_do = [x.strip() for x in r.stdout.splitlines() if "🔴" in x][:3]
         return False, "tool viết-cho-một-máy quay lại: " + " | ".join(dong_do)
@@ -2639,7 +2639,7 @@ def bh54_ma_thoat_rut_bai_ba_muc():
         "print('HAN=%d THAY=%d' % (lam(han), lam(thay)))"
     )
     r = subprocess.run([sys.executable, "-c", ma], capture_output=True, text=True,
-                       cwd=REPO, timeout=120)
+                       cwd=REPO, timeout=120, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return False, f"bao_cao không chạy được: {r.stderr.strip()[-120:]}"
     dong = [x for x in r.stdout.splitlines() if x.startswith("HAN=")]
@@ -2728,7 +2728,7 @@ def bh52_g0_kiem_rut_bai_tai_cua():
           "print(json.dumps(m.guardrail_check_g0('',{'all_pmids':['9500320']}),"
           "ensure_ascii=False))")
     r = subprocess.run([str(venv), "-c", ma], capture_output=True, text=True,
-                       cwd=REPO / "medical-ebm-automation", timeout=180)
+                       cwd=REPO / "medical-ebm-automation", timeout=180, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return False, f"guardrail_check_g0 không chạy được: {r.stderr.strip()[-120:]}"
     goi = r.stdout
@@ -3786,7 +3786,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
     # ① đi qua git — bẫy ignore im lặng đã vấp ≥3 lần trong cùng đợt (BH70)
     r = subprocess.run([git, "ls-files", "--error-unmatch", str(cfg), str(hook)],
-                       cwd=REPO, capture_output=True, text=True)
+                       cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return False, "settings.json / hooks/session-start.sh KHÔNG đi qua git — phiên cloud lại trắng tay"
     r = subprocess.run([git, "check-ignore", "-q", ".claude/settings.local.json"],
@@ -3794,7 +3794,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
     if r.returncode != 0:
         return False, "settings.local.json KHÔNG còn bị ignore — 8 chốt trỏ đường dẫn riêng từng máy sẽ lọt vào git"
     r = subprocess.run([git, "ls-files", "-s", ".claude/hooks/session-start.sh"],
-                       cwd=REPO, capture_output=True, text=True)
+                       cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if not r.stdout.startswith("100755"):
         return False, "hook mất bit thực thi trong index — Claude Code sẽ không chạy được"
     try:
@@ -3813,7 +3813,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
     with tempfile.TemporaryDirectory() as home:
         env = dict(env_goc, HOME=home, USERPROFILE=home, CLAUDE_PROJECT_DIR=str(REPO))
         r = subprocess.run(["bash", str(hook)], cwd=REPO, env=env,
-                           capture_output=True, text=True, timeout=60)
+                           capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} khi KHÔNG remote"
         if any(Path(home).iterdir()):
@@ -3861,7 +3861,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
         (P / "medical-ebm-automation").mkdir()
         r = subprocess.run(["bash", str(hook)], cwd=P, env=env,
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} ở chế độ remote: {(r.stdout + r.stderr)[-300:]}"
         if dau.exists():
@@ -3889,7 +3889,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         # ④b bản trần ⇒ chốt bài học PHẢI được gọi
         (P / "medical-ebm-automation").rmdir()
         subprocess.run(["bash", str(hook)], cwd=P, env=env,
-                       capture_output=True, text=True, timeout=120)
+                       capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if not dau.exists():
             return False, "bản trần mà hook không gọi chốt bài học — cloud mất giác quan hồi quy"
 
@@ -4010,7 +4010,7 @@ def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
                             "import importlib.util,sys;from pathlib import Path;"
                             f"s=importlib.util.spec_from_file_location('m', {str(REPO / 'tools' / ten)!r});"
                             "m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.ten_may())"],
-                           env=dict(env_goc, CLAUDE_CODE_REMOTE="true"), capture_output=True, text=True)
+                           env=dict(env_goc, CLAUDE_CODE_REMOTE="true"), capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.stdout.strip() != "Cloud":
             return False, f"{ten}: ten_may() dưới CLAUDE_CODE_REMOTE=true trả {r.stdout.strip()!r}, không phải 'Cloud'"
 
@@ -4050,13 +4050,13 @@ def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
         lenh = [sys.executable, str(tool), "--ap-dung", "--so-khai", str(T / "so-khai.json")]
 
         # ③ không remote ⇒ không làm gì
-        r = subprocess.run(lenh, cwd=REPO, env=env, capture_output=True, text=True, timeout=60)
+        r = subprocess.run(lenh, cwd=REPO, env=env, capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
         if r.returncode != 0 or any(home.iterdir()) or goi.exists():
             return False, "KHÔNG remote mà --ap-dung vẫn chạy/ghi HOME/gọi CLI — máy bác sĩ sẽ bị cài qua mạng"
 
         # ④ remote (qua cờ fixture) ⇒ add + install đúng mục; chua-ro ⚪; tắt không cài
         r = subprocess.run(lenh + ["--toi-biet-day-la-cloud", "--json"], cwd=REPO, env=env,
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"remote fixture thoát {r.returncode}: {(r.stdout + r.stderr)[-300:]}"
         loi_goi = goi.read_text(encoding="utf-8").splitlines() if goi.exists() else []
@@ -4072,7 +4072,7 @@ def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
             return False, "mục chua-ro không ra ⚪ có khai báo — sẽ thành đỏ giả trên cloud"
         n1 = len(loi_goi)
         r = subprocess.run(lenh + ["--toi-biet-day-la-cloud"], cwd=REPO, env=env,
-                           capture_output=True, text=True, timeout=120)
+                           capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         n2 = len(goi.read_text(encoding="utf-8").splitlines())
         if r.returncode != 0 or n2 != n1:
             return False, f"chạy lần hai gọi thêm {n2 - n1} lệnh CLI — không idempotent, hook sẽ cài lại mỗi phiên"
@@ -4479,7 +4479,7 @@ def bh91_dieu_phoi_lam_sang_co_tu_sinh_agent():
         return False, "đoạn TỰ SINH AGENT không nói rõ điều kiện LẶP LẠI — rủi ro sinh cho ca đơn lẻ"
 
     r = subprocess.run([sys.executable, str(REPO / "tools" / "sync_agents_to_codex.py"), "--check"],
-                        capture_output=True, text=True, timeout=60, cwd=REPO)
+                        capture_output=True, text=True, timeout=60, cwd=REPO, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         out = (r.stdout or "") + (r.stderr or "")
         return False, f"sync_agents_to_codex.py --check FAIL sau khi sửa dieu-phoi-lam-sang.md: {out[-300:]}"
@@ -4569,7 +4569,7 @@ def bh93_cay_lac_hau_sinh_am_tinh_gia():
         return False, "thiếu tools/kiem_cay_lam_viec.py — mất chốt canh cây lạc hậu"
 
     def _g(cay, *a):
-        return subprocess.run(["git", *a], cwd=cay, capture_output=True, text=True, timeout=30)
+        return subprocess.run(["git", *a], cwd=cay, capture_output=True, text=True, timeout=30, encoding="utf-8", errors="replace")
 
     with tempfile.TemporaryDirectory() as td:
         goc, ban = Path(td) / "goc", Path(td) / "ban"

@@ -452,7 +452,7 @@ def main() -> int:
 
     try:
         r = subprocess.run([sys.executable, "tools/tu_de_xuat_viec.py", "--gon"],
-                           capture_output=True, text=True, timeout=300, cwd=REPO)
+                           capture_output=True, text=True, timeout=300, cwd=REPO, encoding="utf-8", errors="replace")
         loc, giu = [], False
         for ln in (r.stdout or "").splitlines():
             if "👤" in ln:

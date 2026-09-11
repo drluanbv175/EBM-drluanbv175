@@ -197,7 +197,7 @@ def _restore_temp_cleanup_access(path: Path) -> None:
     if not path.exists():
         return
     if os.name == "nt":
-        result = subprocess.run(["whoami"], capture_output=True, text=True, check=False)
+        result = subprocess.run(["whoami"], capture_output=True, text=True, check=False, encoding="utf-8", errors="replace")
         principal = (result.stdout or "").strip()
         if result.returncode != 0 or "\\" not in principal:
             user = os.environ.get("USERNAME", "")
@@ -210,7 +210,7 @@ def _restore_temp_cleanup_access(path: Path) -> None:
             ["icacls", str(path), "/inheritance:e", "/T", "/C"],
         ]
         for command in commands:
-            subprocess.run(command, capture_output=True, text=True, check=False)
+            subprocess.run(command, capture_output=True, text=True, check=False, encoding="utf-8", errors="replace")
         return
 
     for item in sorted(path.rglob("*"), key=lambda p: len(p.parts), reverse=True):

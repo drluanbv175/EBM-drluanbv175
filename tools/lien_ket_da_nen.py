@@ -142,6 +142,7 @@ def tao(nguon: Path, lien_ket: Path) -> None:
     ket_qua = subprocess.run(
         ["cmd", "/c", "mklink", "/J", str(lien_ket), str(nguon)],
         check=False, capture_output=True, text=True, timeout=60,
+        encoding="utf-8", errors="replace",
     )
     if ket_qua.returncode != 0 or not la_lien_ket(lien_ket):
         loi = (ket_qua.stderr or ket_qua.stdout or "").strip()

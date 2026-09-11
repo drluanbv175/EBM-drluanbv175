@@ -229,7 +229,7 @@ def main() -> int:
                 tam = pathlib.Path(tmp) / "x.html"
                 r = subprocess.run([pandoc, "-f", "docx", "-t", "html5", "--standalone",
                                     "--embed-resources", str(dx), "-o", str(tam)],
-                                   capture_output=True, text=True)
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace")
                 if r.returncode != 0:
                     print(f"✗ pandoc lỗi: {r.stderr.strip()[:160]}", file=sys.stderr)
                     return 3
@@ -254,7 +254,7 @@ def main() -> int:
         r = subprocess.run([trinh_duyet, "--headless", "--disable-gpu",
                             "--no-pdf-header-footer", "--print-background",
                             f"--print-to-pdf={ra_pdf}", f"file://{nguon}"],
-                           capture_output=True, text=True, timeout=300)
+                           capture_output=True, text=True, timeout=300, encoding="utf-8", errors="replace")
     if not ra_pdf.exists():
         print(f"✗ không in được PDF: {r.stderr.strip()[:200]}", file=sys.stderr)
         return 3

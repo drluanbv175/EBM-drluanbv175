@@ -547,6 +547,7 @@ def launchd_registration_drift() -> list[str]:
             p = subprocess.run(
                 ["launchctl", "print", f"gui/{uid}/{label}"],
                 capture_output=True, text=True, timeout=10,
+                encoding="utf-8", errors="replace",
             )
         except Exception as e:  # noqa: BLE001
             drift.append(f"{label}: không chạy được 'launchctl print' để đối chiếu ({e})")

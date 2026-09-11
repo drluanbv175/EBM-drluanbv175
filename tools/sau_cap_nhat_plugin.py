@@ -76,7 +76,7 @@ def main() -> int:
             sk_cu = sum(v.get("so_skill", 0) for v in cu.values())
             # đếm nhanh theo cùng nguồn kiem_plugin_day_du dùng (SKILL.md trên đĩa)
             r = subprocess.run([sys.executable, "tools/kiem_plugin_day_du.py"],
-                               capture_output=True, text=True, cwd=REPO, timeout=60)
+                               capture_output=True, text=True, cwd=REPO, timeout=60, encoding="utf-8", errors="replace")
             import re
             m = re.search(r"(\d+) plugin, (\d+) skill", r.stdout or "")
             if m and n_cu:

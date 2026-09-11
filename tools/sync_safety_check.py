@@ -61,7 +61,7 @@ def _run_git(args: list[str], cwd: Path, timeout: int = 40):
     """Chạy 1 lệnh git có timeout. Trả (ok, stdout, ghi_chú). Timeout/treo = ok=False."""
     try:
         p = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True,
-                           text=True, timeout=timeout)
+                           text=True, timeout=timeout, encoding="utf-8", errors="replace")
         return (p.returncode == 0, p.stdout.strip(), p.stderr.strip())
     except subprocess.TimeoutExpired:
         return (False, "", f"TIMEOUT sau {timeout}s (git treo — OneDrive có thể đang tải file)")

@@ -79,7 +79,7 @@ def main() -> int:
             [sys.executable, str(DASH / "tools" / "surveillance_scan.py"),
              "--days", str(a.ngay), "--max", str(a.max),
              "--json-report", str(out), "--report", str(out.with_suffix(".md"))],
-            capture_output=True, text=True)
+            capture_output=True, text=True, encoding="utf-8", errors="replace")
         if not out.exists():
             print("✗ Quét không tạo được báo cáo — KHÔNG kết luận gì về độ ưu tiên.")
             print((r.stderr or r.stdout or "")[-400:])

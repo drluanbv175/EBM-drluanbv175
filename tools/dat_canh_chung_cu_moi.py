@@ -115,7 +115,7 @@ def _tra_rut_bai(pmids: list[str]) -> dict[str, str]:
     try:
         r = subprocess.run([py, str(cli), "--pmids", ",".join(pmids), "--json"],
                            capture_output=True, text=True, timeout=240,
-                           cwd=cli.parent.parent)
+                           cwd=cli.parent.parent, encoding="utf-8", errors="replace")
         du_lieu = json.loads(r.stdout or "{}")
         for p, kq in du_lieu.items():
             st = (kq or {}).get("status", "")

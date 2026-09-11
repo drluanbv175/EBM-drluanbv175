@@ -52,7 +52,7 @@ KHO = [
 
 
 def git(d: pathlib.Path, *a: str) -> tuple[int, str]:
-    r = subprocess.run(["git", "-C", str(d), *a], capture_output=True, text=True)
+    r = subprocess.run(["git", "-C", str(d), *a], capture_output=True, text=True, encoding="utf-8", errors="replace")
     return r.returncode, (r.stdout + r.stderr).strip()
 
 
@@ -84,7 +84,7 @@ def main() -> int:
                 loi += 1
                 continue
             ma, _ = subprocess.run(["git", "bundle", "verify", str(out)],
-                                   capture_output=True, text=True).returncode, None
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace").returncode, None
             with tempfile.TemporaryDirectory() as tmp:
                 kho_tam = pathlib.Path(tmp) / "x.git"
                 subprocess.run(["git", "clone", "--mirror", "-q", str(out), str(kho_tam)],

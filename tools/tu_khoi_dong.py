@@ -122,7 +122,7 @@ def _con_song(pid: int) -> bool:
     if sys.platform == "win32":
         try:
             r = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
-                               capture_output=True, text=True, timeout=10)
+                               capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace")
             return str(pid) in r.stdout
         except Exception:  # noqa: BLE001 — chốt không được làm chết phiên
             return False

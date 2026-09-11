@@ -118,7 +118,7 @@ def launchd_runs(nhan: str) -> int | None:
     try:
         uid = getattr(os, "getuid", lambda: 0)()   # PEP 701 chỉ có từ 3.12; sàn khai là 3.11
         r = subprocess.run(["launchctl", "print", f"gui/{uid}/{nhan}"],
-                           capture_output=True, text=True, timeout=10)
+                           capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace")
         m = re.search(r"runs = (\d+)", r.stdout)
         return int(m.group(1)) if m else None
     except Exception:  # noqa: BLE001 — chốt nhắc không được phép làm chết phiên

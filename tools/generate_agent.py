@@ -225,7 +225,7 @@ def _append_registry(spec: Dict[str, Any], path: Path) -> None:
 
 
 def _run(cmd: List[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=300)
+    return subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=300, encoding="utf-8", errors="replace")
 
 
 def register_and_sync() -> Dict[str, Any]:

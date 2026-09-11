@@ -56,7 +56,7 @@ def _git(cay: Path, *args: str) -> tuple[int, str]:
     """Chạy git trong `cay`, trả (mã thoát, stdout đã strip). Không bao giờ ném."""
     try:
         r = subprocess.run(["git", *args], cwd=cay, capture_output=True,
-                           text=True, timeout=30)
+                           text=True, timeout=30, encoding="utf-8", errors="replace")
         return r.returncode, (r.stdout or "").strip()
     except (OSError, subprocess.SubprocessError):
         return 99, ""

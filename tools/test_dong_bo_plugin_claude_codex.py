@@ -34,6 +34,7 @@ def _run_git(args, cwd):
         ["git", *args], cwd=cwd, check=True, capture_output=True, text=True,
         env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
              "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"},
+             encoding="utf-8", errors="replace",
     )
 
 
