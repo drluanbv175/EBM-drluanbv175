@@ -64,6 +64,42 @@ def _sh_which(ten: str):
     return shutil.which(ten)
 
 
+def _tim_bash() -> str | None:
+    """Tìm đường dẫn bash.exe PORTABLE, không tin PATH của tiến trình gọi.
+
+    `shutil.which("bash")` chỉ thấy khi thư mục chứa bash.exe nằm trong PATH của
+    tiến trình ĐANG CHẠY. Trên Windows, PATH hệ thống (Machine/User, đăng ký
+    trong registry — thứ mọi tiến trình KHÔNG khởi động từ Git Bash kế thừa)
+    thường chỉ có `Git\\cmd` (có git.exe, KHÔNG có bash.exe), còn bash.exe thật
+    nằm ở `Git\\bin` hoặc `Git\\usr\\bin`. Gọi hàm này từ PowerShell/cmd thuần
+    (không qua Git Bash) sẽ luôn nhận `shutil.which("bash") is None` dù máy có
+    cài Git for Windows đầy đủ — cùng họ lỗi "viết cho một nền tảng" đã vá ở
+    `docx_sang_pdf_giu_mau.py` (dò trình duyệt chỉ theo đường dẫn macOS).
+    """
+    import os
+    import shutil
+    tim = shutil.which("bash")
+    if tim:
+        return tim
+    if os.name != "nt":
+        return None
+    ung_vien = []
+    for goc_env in ("ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"):
+        goc = os.environ.get(goc_env)
+        if goc:
+            ung_vien += [Path(goc) / "Git" / "bin" / "bash.exe",
+                         Path(goc) / "Git" / "usr" / "bin" / "bash.exe"]
+    git_exe = shutil.which("git")
+    if git_exe:
+        # git.exe thường ở <gốc-Git>\\cmd\\git.exe hoặc <gốc-Git>\\bin\\git.exe
+        goc_git = Path(git_exe).resolve().parent.parent
+        ung_vien += [goc_git / "bin" / "bash.exe", goc_git / "usr" / "bin" / "bash.exe"]
+    for u in ung_vien:
+        if u.exists():
+            return str(u)
+    return None
+
+
 def _nap(duong_dan: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong_dan)
     m = importlib.util.module_from_spec(spec)
@@ -506,6 +542,9 @@ def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
             return False, f"không đọc được hook SessionStart ở {ten}: {e}"
     if not lenhs:
         return False, "không còn chốt SessionStart nào (cả settings.json lẫn settings.local.json)"
+    bash = _tim_bash()
+    if bash is None:
+        return False, "không tìm thấy bash.exe (PATH lẫn các vị trí Git-for-Windows quen thuộc) — không có gì để mô phỏng hook"
     with tempfile.TemporaryDirectory() as rong:
         env = dict(os.environ, CLAUDE_PROJECT_DIR=rong)
         im = []
@@ -514,7 +553,7 @@ def bh16_hook_neo_vao_thu_muc_du_an_va_bao_to():
                 im.append("có chốt KHÔNG neo vào $CLAUDE_PROJECT_DIR")
                 continue
             try:
-                r = subprocess.run(["bash", "-c", c], capture_output=True, text=True,
+                r = subprocess.run([bash, "-c", c], capture_output=True, text=True,
                                    env=env, cwd=rong, timeout=30, encoding="utf-8", errors="replace")
             except (OSError, subprocess.SubprocessError) as e:
                 im.append(f"chạy lỗi: {e}")
@@ -2002,7 +2041,15 @@ def bh56_cong_cu_moi_phai_co_day():
                     goc / ".claude" / "agents" / "tong-quan-y-van.md",
                     goc / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
                     Path.home() / ".claude" / "scheduled-tasks" / "goi-duyet-tuan-ebm"
-                    / "SKILL.md"]
+                    / "SKILL.md",
+                    # Bản chạy thật ở trên nằm NGOÀI OneDrive (machine-local) và
+                    # KHÔNG tự đồng bộ — sync/scheduled-tasks/README.md tự khai
+                    # "chưa có tool tự động", chỉ chép tay. Trên máy chưa từng
+                    # chép tay (hoặc runtime đã bị app dọn), đường trên vắng mặt
+                    # dù bản NGUỒN canonical (git-tracked, đọc được trên mọi máy
+                    # kể cả Windows) vẫn có đủ dây gọi — thêm nó để chốt không
+                    # phụ thuộc vào việc MỘT máy cụ thể đã chép tay hay chưa.
+                    goc / "sync" / "scheduled-tasks" / "goi-duyet-tuan-ebm" / "SKILL.md"]
     van_ban = " ".join(p.read_text(encoding="utf-8", errors="replace")
                        for p in noi_tieu_thu if p.exists())
     for tool in ("rag_toan_van", "do_tac_dong", "dat_canh_chung_cu_moi", "dung_hom_thu"):
@@ -3783,6 +3830,15 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
     git = _sh_which("git")
     if not git:
         return False, "không có git để kiểm file có đi qua git không"
+    # `["bash", ...]` chỉ resolve được khi PATH của tiến trình ĐANG CHẠY có sẵn thư
+    # mục chứa bash.exe (PowerShell/cmd thuần trên Windows thường KHÔNG — PATH hệ
+    # thống chỉ có `Git\cmd`, không có `Git\bin`/`Git\usr\bin`). `_tim_bash()` đã
+    # được viết đúng cho việc này (dùng ở dòng ~545) nhưng ba lời gọi bash bên dưới
+    # từng bỏ sót — BH41: công cụ không ai gọi thì không tồn tại.
+    bash = _tim_bash()
+    if bash is None:
+        return False, ("không tìm thấy bash.exe (PATH lẫn các vị trí Git-for-Windows quen "
+                       "thuộc) — không mô phỏng được hook")
 
     # ① đi qua git — bẫy ignore im lặng đã vấp ≥3 lần trong cùng đợt (BH70)
     r = subprocess.run([git, "ls-files", "--error-unmatch", str(cfg), str(hook)],
@@ -3812,7 +3868,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
     # Windows đọc USERPROFILE — chỉ đổi HOME là chốt ghi thẳng vào hồ sơ thật của bác sĩ.
     with tempfile.TemporaryDirectory() as home:
         env = dict(env_goc, HOME=home, USERPROFILE=home, CLAUDE_PROJECT_DIR=str(REPO))
-        r = subprocess.run(["bash", str(hook)], cwd=REPO, env=env,
+        r = subprocess.run([bash, str(hook)], cwd=REPO, env=env,
                            capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} khi KHÔNG remote"
@@ -3860,7 +3916,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
         (P / "medical-ebm-automation").mkdir()
-        r = subprocess.run(["bash", str(hook)], cwd=P, env=env,
+        r = subprocess.run([bash, str(hook)], cwd=P, env=env,
                            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} ở chế độ remote: {(r.stdout + r.stderr)[-300:]}"
@@ -3888,7 +3944,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④b bản trần ⇒ chốt bài học PHẢI được gọi
         (P / "medical-ebm-automation").rmdir()
-        subprocess.run(["bash", str(hook)], cwd=P, env=env,
+        subprocess.run([bash, str(hook)], cwd=P, env=env,
                        capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if not dau.exists():
             return False, "bản trần mà hook không gọi chốt bài học — cloud mất giác quan hồi quy"
@@ -4029,9 +4085,15 @@ def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
                            "nguon": {"loai": "git", "url": "https://example.invalid/tat.git"}},
         }}
         (T / "so-khai.json").write_text(json.dumps(khai, ensure_ascii=False), encoding="utf-8")
-        # CLI giả: ghi lời gọi; `install` dựng cache + installed_plugins.json như CLI thật
-        (shim / "claude").write_text(
-            "#!/usr/bin/env python3\n"
+        # CLI giả: ghi lời gọi; `install` dựng cache + installed_plugins.json như CLI thật.
+        # Thân Python DÙNG CHUNG cho cả hai nền — chỉ vỏ thực thi khác nhau. `shutil.which()`
+        # của Windows CHỈ khớp PATHEXT (.COM/.EXE/.BAT/.CMD…), KHÔNG BAO GIỜ khớp một file
+        # TRẦN không đuôi như "claude" (khác POSIX, nơi file có quyền thực thi + shebang là đủ
+        # — đúng máy Cloud thật, Linux). Thiếu vỏ .cmd thì chốt này tự nổ trên máy phát triển
+        # Windows dù cai_plugin_phien_cloud.py không có lỗi gì (nó đúng đắn báo "không có CLI
+        # `claude` trong PATH" — sự thật trên chính máy giả lập này). Đây là lỗi FIXTURE của
+        # bài học này, không phải lỗi mã sản xuất — vá KHÔNG đổi hành vi POSIX.
+        than_shim = (
             "import json,os,sys\nfrom pathlib import Path\n"
             f"open({str(goi)!r},'a').write(' '.join(sys.argv[1:])+'\\n')\n"
             "h=Path(os.environ['HOME'])/'.claude/plugins'\n"
@@ -4042,9 +4104,15 @@ def bh87_cloud_cai_plugin_theo_so_khai_khong_dung_may_that():
             "    j['plugins'][k]=[{'scope':'user','installPath':str(d),'version':'1.0'}]; f.write_text(json.dumps(j))\n"
             "elif sys.argv[1:4]==['plugin','marketplace','add']:\n"
             "    h.mkdir(parents=True,exist_ok=True); f=h/'known_marketplaces.json'\n"
-            "    j=json.loads(f.read_text()) if f.exists() else {}; j['gia-mk']={'source':{'source':'git','url':sys.argv[4]}}; f.write_text(json.dumps(j))\n",
-            encoding="utf-8")
+            "    j=json.loads(f.read_text()) if f.exists() else {}; j['gia-mk']={'source':{'source':'git','url':sys.argv[4]}}; f.write_text(json.dumps(j))\n"
+        )
+        (shim / "claude").write_text("#!/usr/bin/env python3\n" + than_shim, encoding="utf-8")
         (shim / "claude").chmod(0o755)
+        if os.name == "nt":
+            (shim / "claude_than.py").write_text(than_shim, encoding="utf-8")
+            (shim / "claude.cmd").write_text(
+                f'@echo off\r\n"{sys.executable}" "{shim / "claude_than.py"}" %*\r\n',
+                encoding="utf-8")
         env = dict(env_goc, HOME=str(home), USERPROFILE=str(home),
                    PATH=f"{shim}{os.pathsep}{env_goc.get('PATH', '')}")
         lenh = [sys.executable, str(tool), "--ap-dung", "--so-khai", str(T / "so-khai.json")]
@@ -4214,11 +4282,15 @@ def bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that():
             goc = wi.WorkerInventory().provider_roots["humanizer"]
         finally:
             Path.home = cu                                   # type: ignore[assignment]
-    if not any(".claude/plugins/cache" in str(g) for g in goc):
+    # .as_posix() — KHÔNG dùng str(): trên Windows str(Path) render bằng "\", nên so khớp
+    # literal "/" sẽ luôn trượt dù đường dẫn thực chất trỏ đúng thư mục (đo được 10/09/2026:
+    # goc đúng cả hai kho nhưng bản str() cũ báo lỗi giả trên Windows). Cùng họ "viết/kiểm chỉ
+    # trên Unix, vỡ im lặng trên Windows" đã lặp nhiều lần trong dự án.
+    if not any(".claude/plugins/cache" in g.as_posix() for g in goc):
         return False, ("WorkerInventory không tra ~/.claude/plugins/cache — nơi "
                        "`claude plugin install` GHI; mọi worker sẽ báo «chưa cài» và "
                        "nhạc trưởng không bao giờ dùng plugin đã cài")
-    if not any(".codex/plugins/cache" in str(g) for g in goc):
+    if not any(".codex/plugins/cache" in g.as_posix() for g in goc):
         return False, "WorkerInventory bỏ mất kho Codex — máy có Codex CLI sẽ mất worker"
     return True, (f"{len(CAU_BAC_SI_NOI)} câu bác sĩ nói đều vào đúng cửa; đích việc lẻ/công cụ "
                   "phân giải được; việc lẻ mạnh không vượt cờ đỏ; inventory tra cả hai kho")

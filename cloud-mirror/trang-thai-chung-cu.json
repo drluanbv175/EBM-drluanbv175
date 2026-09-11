@@ -1,11 +1,11 @@
 {
-  "sinh_luc": "2026-09-10T19:07:26",
-  "may": "Mac",
+  "sinh_luc": "2026-09-11T14:21:32",
+  "may": "Windows",
   "co_du_lieu_dashboard_that": true,
   "bo_dem": {
     "do_tuoi_chung_cu": {
       "ma_thoat": 0,
-      "stdout": "🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất 09/09/2026\n   63 chủ đề · trung vị 72 ngày kể từ lần xem lại · 50 chủ đề quá 35 ngày\n   Lâu nhất: BienChungThanKinh_DTD (95ng) · AnToanThuoc_MHRA (95ng) · Uptodate (95ng) · BenhThanMan_CKD (95ng) · W24 (94ng)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)",
+      "stdout": "🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất 09/09/2026\n   63 chủ đề · trung vị 73 ngày kể từ lần xem lại · 50 chủ đề quá 35 ngày\n   Lâu nhất: Uptodate (96ng) · AnToanThuoc_MHRA (96ng) · BenhThanMan_CKD (96ng) · BienChungThanKinh_DTD (96ng) · W24 (95ng)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)",
       "stderr": ""
     },
     "quyet_dinh_da_duyet": {
@@ -15,7 +15,7 @@
     },
     "tu_de_xuat_viec": {
       "ma_thoat": 0,
-      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-10 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 33 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 72 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Repo gốc: 1 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
+      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-11 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟡 🤖 Phủ sổ xác minh: 33 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 73 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Chưa đọc được phán quyết CI repo y khoa (thấy: feat/r1-1-2-design-gap-remediation) — kiểm tay khi tiện\n       → gh run list --workflow offline-ci.yml --limit 3\n  🟡 🤖 Repo gốc: 3 file chưa commit · 1 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
       "stderr": ""
     }
   },

@@ -57,6 +57,10 @@
 # sinh ra (độ tươi + quyết định đã duyệt + việc-còn-lại) — KHÔNG chứa dashboard HTML/
 # derivatives/video/zip (những thứ đó vẫn ở nguyên OneDrive, đúng kiến trúc gốc).
 !/cloud-mirror/
+# Bản conflict-copy OneDrive bị CÁCH LY (không xoá — đúng luật nền chung của repo)
+# khi 2 máy cùng ghi trang-thai-chung-cu.json gần như đồng thời — rác đồng bộ, không
+# phải dữ liệu cần lưu qua git (bản mới nhất đã có sẵn ở cloud-mirror/*.json).
+/cloud-mirror/_quarantine-conflict-copy/
 
 # 3) Bên trong .claude/: track agents/ + hook chuẩn bị phiên CLOUD.
 #    (bỏ session/state/settings.local/launch — runtime cục bộ)
