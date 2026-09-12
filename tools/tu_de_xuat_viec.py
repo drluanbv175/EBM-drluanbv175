@@ -5,7 +5,8 @@
 Vì sao: suốt các vòng «đề xuất để tôi chọn», danh sách việc luôn do NGƯỜI/agent
 ngồi gom tay từ hàng chục bộ đếm. Các bộ đếm đã sống sẵn — mảnh thiếu là một chỗ
 ĐỌC CHÚNG CÙNG LÚC và xếp hạng thành việc kèm LỆNH chạy ngay. Từ nay «hệ còn gì
-để hoàn thiện?» có câu trả lời tự động, chạy được mỗi sáng thứ Bảy trong gói tuần.
+để hoàn thiện?» có câu trả lời tự động, chạy được mỗi tối thứ Hai trong gói tuần
+(cron "0 18 * * 1" — đổi từ sáng thứ Bảy ngày 17/08/2026).
 
 Ba luật của bảng đề xuất — kế thừa toàn bộ bài học BH:
   1. Mỗi dòng phải có SỐ ĐO THẬT đứng sau (không đề xuất từ cảm giác).
@@ -49,13 +50,23 @@ def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
 
 
 def giac_quan_lich_nen(log_tuan: Path,
-                       hom_nay: dt.date | None = None) -> list[tuple[int, str]]:
+                       hom_nay: dt.date | None = None,
+                       ngay_lich_tuan: int = 0) -> list[tuple[int, str]]:
     """Kỳ lịch tuần có NỔ thật không — đọc dòng «KẾT THÚC … tổng thể=PASS» trong log.
 
-    Trả [(ưu tiên, mô tả)]. Ba mức theo tuổi lượt PASS cuối: ≤7 ngày mà kỳ T7
-    06:30 vừa qua không nổ → 2 (nhắc, dữ liệu vẫn tươi nhờ watchdog mở-phiên);
+    Trả [(ưu tiên, mô tả)]. Ba mức theo tuổi lượt PASS cuối: ≤7 ngày mà kỳ lịch
+    tuần vừa qua không nổ → 2 (nhắc, dữ liệu vẫn tươi nhờ watchdog mở-phiên);
     8–10 ngày → 1 (chạy bù); >10 hoặc không đọc được lượt PASS nào → 0.
     Hàm thuần nhận đường log + ngày để chốt BH đột biến được bằng file tạm.
+
+    `ngay_lich_tuan` (thứ trong tuần, T2=0…CN=6) PHẢI khớp cron THẬT của tác vụ
+    `thu-thap-tuan-an-toan-thuoc` — mặc định 0 (thứ Hai, cron "0 18 * * 1").
+    ĐÍNH CHÍNH 12/09/2026 (BH-lịch-nền): hằng số cũ viết cứng 5 (thứ Bảy) từ
+    16/08/2026 — MỘT NGÀY TRƯỚC khi lịch đổi sang thứ Hai (17/08/2026) — và
+    chưa từng được cập nhật theo, khiến hàm báo "KHÔNG nổ" GIẢ mỗi thứ Bảy dù
+    kỳ thứ Hai thật đã chạy PASS đúng hẹn. Đổi từ hằng số ẩn sang tham số có
+    tên, để lần đổi lịch sau chỉ cần sửa MỘT chỗ thay vì một số không giải
+    thích được ý nghĩa.
     """
     hom_nay = hom_nay or dt.date.today()
     try:
@@ -72,15 +83,15 @@ def giac_quan_lich_nen(log_tuan: Path,
     if ngay_pass is None:
         return [(0, "Log tuần không có lượt PASS nào — giám sát chưa từng chạy trọn")]
     tuoi = (hom_nay - ngay_pass).days
-    # thứ Bảy gần nhất đã qua (weekday: T2=0 … T7=5); đúng T7 thì chính hôm nay
-    t7 = hom_nay - dt.timedelta(days=(hom_nay.weekday() - 5) % 7)
-    lo_ky = ngay_pass < t7 <= hom_nay
+    # ngày lịch tuần gần nhất đã qua; đúng ngày đó thì chính hôm nay
+    ky_gan_nhat = hom_nay - dt.timedelta(days=(hom_nay.weekday() - ngay_lich_tuan) % 7)
+    lo_ky = ngay_pass < ky_gan_nhat <= hom_nay
     if tuoi > 10:
         return [(0, f"Giám sát tuần quá hạn {tuoi} ngày (PASS cuối {ngay_pass}) — chạy bù NGAY")]
     if tuoi > 7:
         return [(1, f"Giám sát tuần {tuoi} ngày tuổi (PASS cuối {ngay_pass}) — kỳ lịch đã lỡ, chạy bù")]
     if lo_ky:
-        return [(2, f"Kỳ lịch T7 vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi "
+        return [(2, f"Kỳ lịch thứ Hai vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi "
                     f"(PASS {ngay_pass}, {tuoi} ngày), nhưng lịch nền đang không tự chạy")]
     return []
 
@@ -237,12 +248,17 @@ def main() -> int:
     # tác vụ Claude 06:30 T7 không nổ vì máy/app không chạy, nextRunAt nhảy thẳng
     # tuần sau, không lastRunAt — không bộ đếm nào nhìn thấy). Đo ĐẦU RA THẬT
     # trong log (bài học launchd: đăng ký ≠ nổ), không đọc đăng ký lịch.
+    # ĐÍNH CHÍNH 12/09/2026: lịch đã đổi sang thứ Hai 18:00 (17/08/2026) và
+    # chạy qua mcp scheduled-tasks (cloud, KHÔNG cần máy/phiên local đang mở —
+    # khác hẳn launchd cũ) — 4/4 lần chạy gần nhất đều PASS đúng hẹn, không hề
+    # lỡ kỳ nào kể từ khi đổi. giac_quan_lich_nen() đã cập nhật theo lịch mới.
     for uu, dong in giac_quan_lich_nen(
             REPO / "medical-ebm-automation" / "data" / "archive" / "launchd_weekly.log"):
         de_xuat.append((uu, "🤖" if uu < 2 else "👤", dong,
                         "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
                         if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "
-                        "hoặc đổi giờ sang lúc máy thường thức"))
+                        "(mcp__scheduled-tasks__run_scheduled_task) hoặc kiểm lịch sử qua "
+                        "list_task_runs"))
 
     # ⑦e GIÁC QUAN QUYẾT ĐỊNH ĐÃ DUYỆT (16/08): dashboard sinh lại/sửa hàng loạt
     # có thể lật ngược im lặng quyết định bác sĩ 13–14/08 (đã xảy ra: 5 mục Đau

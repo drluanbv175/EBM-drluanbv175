@@ -2075,10 +2075,19 @@ def bh57_ky_lich_lo_phai_nhin_thay():
     đạt-giả 13/08 (đăng ký ≠ nổ): đăng ký lịch đúng mà kỳ trôi qua im lặng thì
     hệ quay về «chạy khi mở phiên» không ai hay.
 
+    ĐÍNH CHÍNH 12/09/2026: fixture cũ dùng ngày 2026-08-16 (thật ra là CHỦ
+    NHẬT, dù chú thích cũ ghi "thứ Bảy") và hằng số weekday=5 viết cứng trong
+    giac_quan_lich_nen() — cả hai đều thuộc lịch CŨ (trước khi đổi sang thứ
+    Hai ngày 17/08/2026). Bác sĩ phát hiện bug thật: chốt/hàm không cập nhật
+    theo lịch mới nên báo "KHÔNG nổ" GIẢ mỗi thứ Bảy dù kỳ thứ Hai đã PASS.
+    Nay dùng đúng ngày hôm phát hiện bug (2026-09-12, thứ Bảy) làm hom_nay,
+    khớp kỳ lịch thứ Hai gần nhất THẬT (2026-09-07) — tái hiện đúng ca lỗi
+    thật thay vì một fixture trừu tượng.
+
     Chốt kiểm HÀNH VI giac_quan_lich_nen (tu_de_xuat_viec) bằng log giả:
-    PASS 12 ngày → mức 0; PASS 3 ngày nhưng kỳ T7 vừa qua không nổ → mức 2;
-    PASS đúng sáng T7 → im. Giác quan đọc ĐẦU RA THẬT trong log, không đọc
-    đăng ký lịch — đó chính là bài học."""
+    PASS 12 ngày → mức 0; PASS 7 ngày nhưng kỳ thứ Hai vừa qua không nổ →
+    mức 2; PASS đúng kỳ thứ Hai → im. Giác quan đọc ĐẦU RA THẬT trong log,
+    không đọc đăng ký lịch — đó chính là bài học."""
     import datetime as _dt
     import importlib.util as _ilu
     duong = REPO / "tools" / "tu_de_xuat_viec.py"
@@ -2092,22 +2101,27 @@ def bh57_ky_lich_lo_phai_nhin_thay():
     if not hasattr(mod, "giac_quan_lich_nen"):
         return False, "giac_quan_lich_nen BIẾN MẤT khỏi tu_de_xuat_viec (giác quan bị tháo)"
     import tempfile
-    t7 = _dt.date(2026, 8, 16)  # một thứ Bảy cố định — không dùng date.today()
+    # 2026-09-12 = thứ Bảy thật (ngày phát hiện bug); kỳ thứ Hai gần nhất
+    # trước đó (weekday=0) là 2026-09-07 — cả hai đều xác nhận bằng
+    # date.weekday(), không đoán tay.
+    hom_nay = _dt.date(2026, 9, 12)
+    assert hom_nay.weekday() == 5, "fixture lệch — 2026-09-12 phải là thứ Bảy"
+    assert _dt.date(2026, 9, 7).weekday() == 0, "fixture lệch — 2026-09-07 phải là thứ Hai"
     with tempfile.TemporaryDirectory() as td:
         log = Path(td) / "log_gia.log"
-        log.write_text("===== 2026-08-04 06:35:00 : KẾT THÚC — tổng thể=PASS =====\n",
+        log.write_text("===== 2026-08-31 18:20:00 : KẾT THÚC — tổng thể=PASS =====\n",
                        encoding="utf-8", newline="\n")
-        qua_han = mod.giac_quan_lich_nen(log, t7)
+        qua_han = mod.giac_quan_lich_nen(log, hom_nay)
         if not qua_han or qua_han[0][0] != 0:
             return False, "log PASS 12 ngày mà giác quan KHÔNG báo mức 0 — mù quá hạn"
-        log.write_text("===== 2026-08-13 17:36:22 : KẾT THÚC — tổng thể=PASS =====\n",
+        log.write_text("===== 2026-09-05 18:20:00 : KẾT THÚC — tổng thể=PASS =====\n",
                        encoding="utf-8", newline="\n")
-        lo_ky = mod.giac_quan_lich_nen(log, t7)
+        lo_ky = mod.giac_quan_lich_nen(log, hom_nay)
         if not lo_ky or lo_ky[0][0] != 2:
-            return False, "kỳ T7 lỡ (PASS 3 ngày) mà giác quan im — mù lỡ-kỳ"
-        log.write_text("===== 2026-08-16 06:35:00 : KẾT THÚC — tổng thể=PASS =====\n",
+            return False, "kỳ thứ Hai lỡ (PASS 7 ngày) mà giác quan im — mù lỡ-kỳ"
+        log.write_text("===== 2026-09-07 18:20:00 : KẾT THÚC — tổng thể=PASS =====\n",
                        encoding="utf-8", newline="\n")
-        if mod.giac_quan_lich_nen(log, t7):
+        if mod.giac_quan_lich_nen(log, hom_nay):
             return False, "kỳ NỔ đúng hẹn mà vẫn báo — báo động giả dạy người ta bỏ qua"
     return True, "giác quan lịch-nền bắt đúng 3 ca: quá hạn · lỡ-kỳ · nổ-đúng-hẹn"
 
