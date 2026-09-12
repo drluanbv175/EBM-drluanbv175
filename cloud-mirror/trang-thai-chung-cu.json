@@ -1,5 +1,5 @@
 {
-  "sinh_luc": "2026-09-12T14:38:59",
+  "sinh_luc": "2026-09-12T16:31:03",
   "may": "Mac",
   "co_du_lieu_dashboard_that": true,
   "bo_dem": {
@@ -15,7 +15,7 @@
     },
     "tu_de_xuat_viec": {
       "ma_thoat": 0,
-      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-12 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 33 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 74 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Chưa đọc được phán quyết CI repo y khoa (thấy: feat/r1-1-2-design-gap-remediation) — kiểm tay khi tiện\n       → gh run list --workflow offline-ci.yml --limit 3\n  🟡 🤖 Repo gốc: 1 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 Kỳ lịch T7 vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi (PASS 2026-09-07, 5 ngày), nhưng lịch nền đang không tự chạy\n       → bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc hoặc đổi giờ sang lúc máy thường thức\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md",
+      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-09-12 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  🟠 👤 C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ G2 nộp IRB thật\n       → xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md\n  🟡 🤖 Phủ sổ xác minh: 16 mục chưa/hết hạn\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3\n  🟡 🤖 Trung vị tuổi gói 74 ngày — chạy cập nhật chủ đề lâu nhất\n       → python3 ops/orchestrator.py --topic <chủ đề> --online\n  🟡 🤖 Repo gốc: 4 file chưa commit · 0 commit chưa đẩy — soi rồi commit/push (file của phiên khác thì ĐỂ NGUYÊN)\n       → git -C \"Claude AI\" status -sb\n  🟡 👤 114 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-08-27.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-08-27.md\n  🟡 🤖 Plugin đổi phiên bản/kho lệch nhẹ so với mốc — chạy nghi thức sau-cập-nhật để danh mục+trang tra+mốc khớp thực tế\n       → python3 tools/sau_cap_nhat_plugin.py --ghi-moc",
       "stderr": ""
     }
   },

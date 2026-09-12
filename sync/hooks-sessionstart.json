@@ -58,6 +58,12 @@
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/xuat_trang_thai_cloud.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/xuat_trang_thai_cloud.py --im-khi-on || python tools/xuat_trang_thai_cloud.py --im-khi-on; }; else echo \"⚠ CHỐT xuat_trang_thai_cloud KHÔNG CHẠY — không thấy $D/tools/xuat_trang_thai_cloud.py\"; fi; true",
           "timeout": 60,
           "statusMessage": "Làm mới mirror chứng cứ cho Cloud…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dat_canh_diem_tin_xoay.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/dat_canh_diem_tin_xoay.py || python tools/dat_canh_diem_tin_xoay.py; }; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không thấy $D/tools/dat_canh_diem_tin_xoay.py\"; fi; true",
+          "timeout": 15,
+          "statusMessage": "Xoay vòng đặt-cạnh chứng cứ mới…"
         }
       ]
     }
