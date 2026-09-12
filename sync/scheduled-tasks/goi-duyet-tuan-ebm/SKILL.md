@@ -23,7 +23,15 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    chưa có bản OA trên PMC (sổ 30 ngày tự thử lại)"* và giữ `partial`. LUẬT: partial
    → tối đa "Cân nhắc" như cũ; toàn văn KHÔNG tự động nâng đề xuất — chỉ ghi dữ kiện,
    nâng/hạ là thẩm quyền bác sĩ lúc duyệt.
-5. Xuất `queue/tuan-<ISO-week>.md` đúng định dạng 6 dòng/thẻ của Phụ lục A PHA 3 (xem mẫu W33): [ID] chủ đề — đề xuất (Áp dụng ngay|Cân nhắc|Chưa đủ, ghi rõ là ĐỀ XUẤT để bác sĩ phản bác) / Điều gì thay đổi / Nguồn + PMID·DOI đã phân giải / Hiệu số như nguồn / Ai bị ảnh hưởng / Rủi ro nếu áp dụng sai | nếu bỏ qua. Cuối gói: dòng tổng "Đã quét N chủ đề · M nguồn mới · K thẻ trình · L giữ lại" + tuyên bố độ phủ (`python3 tools/tuyen_bo_do_phu.py`).
+5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
+   lỗi thời "6 dòng/xem mẫu W33" — định dạng thật đã tăng lên 8 khối qua W35-W37 mà chưa từng được
+   viết lại): `sync/scheduled-tasks/goi-duyet-tuan-ebm/MAU-THE-CHUNG-CU-TUAN.md`. Mỗi thẻ: tiêu đề
+   [ID] chủ đề — loại nguồn — đề xuất (Áp dụng ngay|Cân nhắc|Chưa đủ, ghi rõ là ĐỀ XUẤT để bác sĩ
+   phản bác) + 8 khối (Điều gì thay đổi / Nguồn / Hiệu số như nguồn / Ai bị ảnh hưởng / Rủi ro nếu
+   áp dụng sai | nếu bỏ qua / ⚠️ giới hạn / Thẩm định toàn văn). Sau khi xuất, chạy
+   `python3 tools/kiem_mau_the_chung_cu_tuan.py queue/tuan-<ISO-week>.md` — 🔴 (mã thoát 2) thì SỬA
+   TRƯỚC khi gửi, 🟡 chỉ cảnh báo không chặn. Cuối gói: dòng tổng "Đã quét N chủ đề · M nguồn mới ·
+   K thẻ trình · L giữ lại" + tuyên bố độ phủ (`python3 tools/tuyen_bo_do_phu.py`).
 6. Có sự kiện khẩn (ứng viên đã rút, cổng FAIL, cảnh báo an toàn thuốc mới) → thêm dòng vào alerts/<ngày>.md (idempotent, không nhân đôi).
 7. Không có thẻ đạt ngưỡng → vẫn xuất queue ghi "0 thẻ — đã quét N chủ đề, M nguồn mới, không đủ ngưỡng đổi thực hành". TUYỆT ĐỐI không hạ tiêu chuẩn.
 
