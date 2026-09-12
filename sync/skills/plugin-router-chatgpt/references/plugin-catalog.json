@@ -11,13 +11,13 @@
       "plugin_id": "humanizer@humanizer",
       "name": "humanizer",
       "marketplace": "humanizer",
-      "version": "2.11.2"
+      "version": "3.0.0"
     },
     {
       "plugin_id": "academic-research-skills@academic-research-skills",
       "name": "academic-research-skills",
       "marketplace": "academic-research-skills",
-      "version": "3.21.1"
+      "version": "3.21.2"
     },
     {
       "plugin_id": "openmed-skills@openmed-skills",
@@ -29,7 +29,7 @@
       "plugin_id": "claude-code-harness@claude-code-harness-marketplace",
       "name": "claude-code-harness",
       "marketplace": "claude-code-harness-marketplace",
-      "version": "5.14.1"
+      "version": "5.15.0"
     },
     {
       "plugin_id": "medsci-project@medsci-skills",
