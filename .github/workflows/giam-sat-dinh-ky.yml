@@ -36,7 +36,7 @@ jobs:
       # nếu không điều kiện luôn sai và repo anh em không bao giờ được lấy về.
       SIBLING_TOKEN: ${{ secrets.SIBLING_REPO_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # KHÔNG có bước `pip install` — đã đo, không phải đoán. Chạy lại toàn bộ 11
       # verifier và bước gương bằng `python3 -S` (bỏ site-packages, mô phỏng máy
@@ -44,7 +44,7 @@ jobs:
       # thư viện chuẩn cộng module anh em cùng thư mục tools/.
       # sync_agents_to_codex.py:24 thử `tomllib` (chuẩn từ 3.11) trước rồi mới lùi về
       # `tomli`; vì ghim 3.11 ở đây nên nhánh cần `tomli` không bao giờ chạy.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"      # SÀN KHAI BÁO trong CLAUDE.md
 
@@ -52,7 +52,7 @@ jobs:
       # verify_research_gate_contracts.py:32 -> REPO = ROOT / "medical-ebm-automation"
       - name: Lấy repo anh em (nếu có token)
         if: env.SIBLING_TOKEN != ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: drluanbv175/medical-ebm-automation
           token: ${{ env.SIBLING_TOKEN }}
