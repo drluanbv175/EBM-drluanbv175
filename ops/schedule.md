@@ -16,15 +16,23 @@
 | Rút bài toàn sổ | THÁNG (hạn 30ng có sẵn trong sổ xác minh) | `so_xac_minh_nguon --quet` | sổ + alerts |
 | Đo độ trễ | MỖI lượt quét (tự động trong báo cáo) | `surveillance_scan` | khối `do_tre` |
 
-## 6 tác vụ claude.ai web (Q2: CÓ tồn tại) — bảng hợp nhất
-| Tác vụ web | Trùng vai với | Đề xuất |
+## 6 tác vụ claude.ai web — ĐÃ XOÁ HẾT (13/09/2026)
+Bảng dưới đây là TRẠNG THÁI LỊCH SỬ (Q2, 15/08/2026) — giữ lại để biết vì sao từng có 6 tác
+vụ này và tại sao bị xoá, KHÔNG phải mô tả hiện trạng.
+
+| Tác vụ web (đã xoá) | Từng trùng vai với | Lý do xoá |
 |---|---|---|
-| Updateebm | routine `uptodate` + skill cập nhật | GIỮ 1: web gọi ĐÚNG skill `cap-nhat-chung-cu-y-khoa` (v1.42.0) để ăn cùng cổng; nội dung là ỨNG VIÊN |
-| Guideline | `giam-sat-chung-cu` + quét quý mới | web chỉ TỔNG HỢP, không thu thập song song (owner thu thập duy nhất) |
-| Updatethuoc | `drug-safety-daily` + weekly_safety | như trên |
-| Thangdiemls | RAG 32 thang điểm | giữ, tần suất thấp |
-| Tonghopcapnhat | `tong-hop-chung-cu-hang-tuan` | hợp nhất một bản |
-| Ebmdakhoa | bản tin đa khoa | giữ nếu bác sĩ còn đọc |
-⚠ Chi tiết prompt/lịch của 6 tác vụ nằm phía claude.ai — `[CẦN XÁC NHẬN TẠI ĐƠN VỊ]`
-từng cái khi bác sĩ mở trang Tasks; nguyên tắc hợp nhất: **web = người tiêu thụ ứng viên,
-KHÔNG là bộ thu thập thứ hai** (doctrine owner duy nhất).
+| Updateebm | `goi-duyet-tuan-ebm` (tuần, ra thẻ CANDIDATE) | Trùng lặp thu thập — vi phạm nguyên tắc owner duy nhất |
+| Guideline | `giam-sat-acc-aha-quy` (quý) + `kiem-tra-hoan-thien-he-thong-thang` (tháng) | Trùng lặp thu thập |
+| Updatethuoc | `thu-thap-tuan-an-toan-thuoc` (tuần, chạy `weekly_safety.sh`) | Trùng lặp 100% |
+| Thangdiemls | Không trùng — mảng RAG 32 thang điểm không có tác vụ thật nào khác phủ | Bác sĩ chủ động xoá dù không trùng — **để lại khoảng trống giám sát mảng thang điểm, ghi nhận ở đây để không quên** |
+| Tonghopcapnhat | Có thể trùng phần tổng hợp tuần của `goi-duyet-tuan-ebm` | Bác sĩ tự xác nhận trùng, xoá |
+| Ebmdakhoa | Không trùng — lựa chọn cá nhân (bản tin đa khoa) | Bác sĩ không còn đọc |
+
+**Trạng thái hiện hành:** tự động hoá chạy DUY NHẤT qua 5 `scheduled-tasks` nội bộ
+(`goi-duyet-tuan-ebm` · `thu-thap-tuan-an-toan-thuoc` · `cap-nhat-thang-ebm` ·
+`giam-sat-acc-aha-quy` · `kiem-tra-hoan-thien-he-thong-thang`) — xem
+`mcp__scheduled-tasks__list_scheduled_tasks` để đối chiếu trạng thái thật bất kỳ lúc nào.
+Không còn tác vụ nào ở tầng claude.ai web song song với tầng này — nguyên tắc "web = người
+tiêu thụ ứng viên, KHÔNG là bộ thu thập thứ hai" nay đơn giản là không còn tầng web nào để áp
+dụng nguyên tắc đó nữa.
