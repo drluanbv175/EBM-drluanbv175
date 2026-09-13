@@ -667,6 +667,68 @@ def search_trials_lane(topic: str, days: int, retmax: int,
     return ra
 
 
+def search_scopus_lane(topic: str, days: int, retmax: int,
+                       *, client_factory: Callable[[], object] | None = None,
+                       ) -> list[Candidate]:
+    """LÀN SCOPUS (Elsevier) — thêm 13/09/2026, bác sĩ yêu cầu nối vào tầng giám
+    sát lâm sàng ngay sau khi xác nhận key hoạt động thật ở tầng nghiên cứu.
+
+    TÁI DÙNG `medical-ebm-automation/app/sources/scopus.py::ScopusClient` qua
+    cross-import (CÙNG khuôn `gan_do_tin_cay()` đã dùng cho RetractionChain) —
+    không viết lại logic gọi API/xử lý lỗi mạng/giới hạn PUBYEAR ở đây, vì bản
+    đó đã có 14 test (mutation-tested) ở phía nghiên cứu. Import kéo theo
+    `from app.config import settings`, có tác dụng phụ nạp `.env` qua
+    `load_dotenv()` — nên `SCOPUS_API_KEY`/`ENABLE_SCOPUS` đọc đúng dù tiến
+    trình gọi file này không tự set biến môi trường trước.
+
+    BA MỨC "không có kết quả", CỐ Ý PHÂN BIỆT:
+      • thiếu `app/sources/scopus.py` (bản sync/skills/* không có `../../tools`)
+        hoặc `ENABLE_SCOPUS` chưa bật → trả `[]` NGAY, KHÔNG coi là lỗi (đúng ý
+        "bác sĩ chưa bật thì im lặng", giống mọi cờ enable_* khác).
+      • thiếu `SCOPUS_API_KEY` dù đã bật cờ → `ScopusClient.search()` tự ném
+        RuntimeError rõ ràng (thiết kế fail-closed sẵn có) — hàm này CỐ Ý
+        KHÔNG nuốt lỗi đó, để `run_scan()` ghi vào `ghi_chu_lan` cho bác sĩ
+        thấy đây là CẤU HÌNH THIẾU, khác với "không có gì mới".
+      • lỗi mạng/Cloudflare khi ĐÃ có key → `ScopusClient.search()` tự bắt và
+        trả `[]` (đã kiểm ở tầng nghiên cứu) — lane này chỉ truyền nguyên vẹn,
+        không thêm một lớp nuốt lỗi khác đè lên.
+
+    `client_factory` CÓ SẴN (test truyền vào) bỏ qua toàn bộ 3 bước dò môi
+    trường thật ở trên (đường dẫn/cờ bật/import) — ý định của việc truyền một
+    factory là "giả lập Scopus sẵn sàng", không phải kiểm lại cổng đó.
+    """
+    if client_factory is None:
+        mea = Path(__file__).resolve().parents[2] / "medical-ebm-automation"
+        if not (mea / "app" / "sources" / "scopus.py").exists():
+            return []
+        import sys as _sys  # noqa: PLC0415
+        if str(mea) not in _sys.path:
+            _sys.path.insert(0, str(mea))
+        from app.config import settings  # noqa: PLC0415
+        if not settings.enable_scopus:
+            return []
+        from app.sources.scopus import ScopusClient  # noqa: PLC0415
+        client_factory = ScopusClient
+    client = client_factory()
+    client.use_mock = False
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    records = client.search(topic, max_results=min(retmax, 25), since_date=since)
+    ra: list[Candidate] = []
+    for rec in records:
+        url = rec.url or (f"https://doi.org/{rec.doi}" if rec.doi else "")
+        ra.append(Candidate(
+            pmid=rec.pmid or "",
+            publication_date=rec.publication_date or "",
+            title=(rec.title or "")[:300],
+            url=url,
+            source="Scopus (Elsevier)",
+            journal_or_organization=rec.journal_or_organization or "",
+            tang="scopus_bo_sung",
+            rut_bai="chua_kiem",  # gan_do_tin_cay() sẽ ghi đè nếu có pmid thật
+        ))
+    return ra
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -714,12 +776,29 @@ def run_scan(
                         continue
                     all_pmids.add(candidate.pmid)
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
+            # LÀN SCOPUS (Elsevier) — thêm 13/09/2026, bác sĩ yêu cầu nối vào tầng
+            # giám sát lâm sàng sau khi đã tích hợp bên nghiên cứu. CHẠY TRƯỚC
+            # gan_do_tin_cay() — khác preprint/trials ở dưới — vì ứng viên Scopus
+            # THƯỜNG CÓ pmid thật (Scopus phần lớn trùng chỉ mục PubMed cho y văn
+            # lâm sàng), nên phải được kiểm rút bài giống ứng viên PubMed chính,
+            # không được mãi mãi "chua_kiem" như preprint/trials (cấu trúc không
+            # có pmid để tra). FAIL-SOFT: thiếu key/thư viện/mạng lỗi đều không
+            # được kéo cả chủ đề FAIL.
+            ghi_chu_lan: list[str] = []
+            try:
+                for candidate in search_scopus_lane(row["topic"], days, max_results):
+                    khoa_c = candidate.pmid or candidate.url
+                    if khoa_c in all_pmids:
+                        continue
+                    all_pmids.add(khoa_c)
+                    unique.append(candidate)
+            except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
+                ghi_chu_lan.append(f"làn scopus lỗi: {type(exc).__name__}")
             unique = gan_do_tin_cay(unique)
-            # HAI LÀN MỚI (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì
+            # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì
             # tự khai nhãn riêng (preprint không có PMID để tra rút bài; NCT không
             # phải y văn). FAIL-SOFT TỪNG LÀN: làn phụ hỏng không được kéo cả chủ
             # đề FAIL — mất tín hiệu sớm không tệ bằng mất cả lượt quét chính.
-            ghi_chu_lan: list[str] = []
             for lane_fn, ten_lan in ((search_preprint_lane, "preprint"),
                                      (search_trials_lane, "clinicaltrials")):
                 try:
@@ -821,7 +900,8 @@ def markdown_report(report: dict) -> str:
                 # nhận chú «mới vào PubMed» (nói sai về một bản ghi không phải PubMed)
                 # và không in «PMID <rỗng>».
                 ngoai_pubmed = item.get("tang") in ("preprint_chua_binh_duyet",
-                                                    "thu_nghiem_dang_ky")
+                                                    "thu_nghiem_dang_ky",
+                                                    "scopus_bo_sung")
                 pts = [x for x in (item.get("pubtype") or []) if x != "Journal Article"]
                 if pts:
                     nhan.append("loại: " + ", ".join(pts[:3]))

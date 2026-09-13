@@ -1158,6 +1158,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   trần trên cloud). Không hardcode, không commit, không in ra.
 - Codex API cho mọi tác vụ AI (wrapper dùng chung)
 - Nguồn miễn phí: PubMed E-utilities, Europe PMC, Crossref, OpenAlex, openFDA… (không key)
+- Nguồn có key (mặc định TẮT, bật khi có key thật): Semantic Scholar; **Scopus (Elsevier) — thêm
+  13/09/2026**, `app/sources/scopus.py`, đòi `SCOPUS_API_KEY` bắt buộc thật (khác Semantic Scholar
+  vẫn chạy được không key) — xem `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để biết
+  giới hạn (Search API không trả abstract đầy đủ, không tham gia chuỗi kiểm rút bài).
 - Email: SMTP (Gmail App Password)
 
 ## Nguyên tắc bắt buộc
@@ -1624,6 +1628,25 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   ~~Chưa làm, có chủ ý: preprint (medRxiv/bioRxiv) và ClinicalTrials.gov chưa nối vào routine
   dù đã có MCP. Lý do: thêm một dòng tài liệu chưa bình duyệt khi nhãn độ tin cậy vừa mới có
   sẽ làm hỏng chính mục tiêu — phải để nhãn chạy ổn định trước.~~
+
+  ➕ **LÀN THỨ BA — Scopus (Elsevier), thêm 13/09/2026, bác sĩ yêu cầu ngay sau khi xác nhận
+  key hoạt động thật ở tầng nghiên cứu.** `search_scopus_lane()` TÁI DÙNG
+  `medical-ebm-automation/app/sources/scopus.py::ScopusClient` qua cross-import (cùng khuôn
+  `gan_do_tin_cay()` đã dùng cho `RetractionChain`) — không viết lại logic gọi API ở đây.
+  **KHÁC hai làn trên ở một điểm quan trọng:** chạy TRƯỚC `gan_do_tin_cay()`, không phải sau —
+  vì ứng viên Scopus THƯỜNG CÓ pmid thật (trùng chỉ mục PubMed cho y văn lâm sàng) nên phải
+  được kiểm rút bài giống ứng viên PubMed chính, không được mãi mãi `chua_kiem` như preprint/
+  trials (cấu trúc không có pmid để tra). Im lặng nếu `ENABLE_SCOPUS` chưa bật (giống mọi cờ
+  enable_* khác); báo lỗi rõ trong `ghi_chu_lan` nếu bật cờ mà thiếu `SCOPUS_API_KEY` (không
+  âm thầm coi là "không có gì mới"). Tag `scopus_bo_sung` — đã thêm vào danh sách "ngoài
+  PubMed" của `markdown_report()` để không bị gắn nhầm nhãn "⚡ mới vào PubMed".
+  **BẪY ĐÃ GẶP KHI XÂY:** ba bản đồng bộ `surveillance_scan.py` (`sync/skills/cap-nhat-chung-cu-
+  y-khoa/` = NGUỒN CHUẨN · `sync/skills/dark-analyst/` · `EBM-Dashboards/tools/` = bản runtime
+  NGOÀI git) — sửa nhầm bản runtime trước, phải chép lại vào nguồn chuẩn rồi chạy
+  `tools/dong_bo_scanner_giam_sat.py` để lan ra đúng cả ba (nếu không ESD02 sẽ chặn commit lần
+  sau). 12 test ở `tools/test_evidence_surveillance_scan.py` (mutation-tested 1 phép); fixture
+  `_chan_lan_goi_mang` (chặn gọi mạng thật trong test) đã thêm `search_scopus_lane` vào danh
+  sách bị chặn — quên bước này sẽ khiến bộ test "ngoại tuyến" âm thầm gọi API Elsevier thật.
 
   🔧 **Vá kèm — lỗi của chính bộ chốt:** `_nap()` trong `chot_hoi_quy_bai_hoc.py` không đăng ký
   module vào `sys.modules` trước khi `exec_module`, nên **mọi module có `@dataclass` đều nạp
