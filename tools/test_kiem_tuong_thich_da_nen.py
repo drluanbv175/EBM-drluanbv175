@@ -40,6 +40,7 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kiem_tuong_thich_da_nen as ktd  # noqa: E402
@@ -139,6 +140,28 @@ class TestKhongBaoDongGiaTrenChuoiMotNhayBaKyTuNhay(unittest.TestCase):
         do, _vang = ktd.quet_file(p)
         r6 = [x for x in do if "R6" in x]
         self.assertEqual(len(r6), 1, f"phải bắt đúng 1 vi phạm R6 thật, được: {r6}")
+
+    def test_r6_nhan_dung_vung_ky_khi_duong_dan_goc_la_windows(self):
+        """Khoá lỗi CI 13/09/2026: ``str(Path)`` trên Windows dùng dấu
+        ``\\`` nên không khớp ``VUNG_KY`` vốn dùng dấu ``/``. Mô phỏng riêng
+        kết quả ``relative_to`` để ca này tái hiện được trên mọi hệ điều hành."""
+        p = _dung_file_trong_vung_ky(self.tmp_path, "co_loi_windows.py",
+                                      _NOI_DUNG_VI_PHAM_THAT)
+        ktd.REPO = self.tmp_path
+
+        class _DuongDanWindowsMoPhong:
+            def __str__(self) -> str:
+                return r"medical-ebm-automation\tools\co_loi_windows.py"
+
+            def as_posix(self) -> str:
+                return "medical-ebm-automation/tools/co_loi_windows.py"
+
+        with mock.patch.object(Path, "relative_to",
+                               return_value=_DuongDanWindowsMoPhong()):
+            do, _vang = ktd.quet_file(p)
+
+        r6 = [x for x in do if "R6" in x]
+        self.assertEqual(len(r6), 1, f"đường dẫn Windows làm lọt R6: {r6}")
 
     def test_mien_tru_da_nen_bo_qua_van_hoat_dong_tren_vi_pham_that(self):
         """R6 vẫn tôn trọng miễn trừ tường minh `# da-nen: bo-qua` — bản vá

@@ -298,9 +298,12 @@ def quet_file(p: Path) -> tuple[list[str], list[str]]:
     biet_nen_tang = ("sys.platform" in text or "os.name" in text
                      or "platform.system" in text)
     try:
-        ten = str(p.relative_to(REPO))
+        # Luật R6 đối chiếu với VUNG_KY dùng dấu "/" cố định. `str(Path)`
+        # trên Windows sinh dấu "\\" nên mọi file trong vùng ký đều lọt chốt.
+        # `as_posix()` cho một biểu diễn ổn định trên cả hai nền tảng.
+        ten = p.relative_to(REPO).as_posix()
     except ValueError:
-        ten = str(p)
+        ten = p.as_posix()
     for i, ln in enumerate(code, 1):
         if MIEN_TRU in dong[i - 1]:
             continue
@@ -353,7 +356,7 @@ def main() -> int:
             except OSError:
                 continue
             code = _mask_khong_phai_code(dong)
-            ten = str(p.relative_to(REPO))
+            ten = p.relative_to(REPO).as_posix()
             for i, ln in enumerate(code, 1):
                 if MIEN_TRU in dong[i - 1]:
                     continue
