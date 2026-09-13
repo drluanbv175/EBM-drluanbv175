@@ -2456,7 +2456,19 @@ Elaboration** chính thức (BMJ 2025, doi:10.1136/bmj-2024-081660 · PMID **402
 statement: Chan AW và cs., JAMA 2025;334(5):435-443, doi:10.1001/jama.2025.4486 · PMID **40294593**.
 **Không gõ tay, không dịch** (dịch một dòng checklist là sửa chuẩn). G10 in bảng cho RCT kèm cột «vị
 trí gợi ý» — nói rõ đó là DIỄN GIẢI của hệ, và **G10 không tự tick dòng nào**.
-🔴 **PRISMA-P 2015 (17 mục/26 dòng): CHƯA có, và đây là trạng thái TRUNG THỰC.** Toàn văn PMC của
+⛔ **ĐÍNH CHÍNH 13/09/2026 — PRISMA-P 2015 ĐÃ CÓ, câu "CHƯA có" dưới đây đã lỗi thời.** Phiên
+06/09 kết luận "toàn văn PMC rụng bảng checklist" khi tải NGUYÊN VĂN đầy đủ; phiên 13/09 đọc
+TRỰC TIẾP trang PMC (PMC4320440, PMID **25554246** — statement gốc, không phải bản E&E PMID
+25555855 vốn không có bản PMC) qua WebFetch thì bảng Table 3 hiện đủ 17 mục/26 dòng, không cần
+`prisma-statement.org`/`equator-network.org` nữa. Nguyên văn tiếng Anh đã thêm vào
+`PRISMA_P_2015_ITEMS`/`PRISMA_P_2015_PROVENANCE` cùng khuôn `SPIRIT_2025_ITEMS`, `_NO_ITEM_LIST_
+REASON` nay rỗng; sửa 3 test từng khoá đúng hành vi "chưa có" sang khoá hành vi mới (không nới
+assertion, đúng tiền lệ BH97). *Bài học: "bị chặn ở một kênh cụ thể" (toàn văn/website) không
+đồng nghĩa "không lấy được bằng bất kỳ cách nào" — đáng thử lại kênh khác (ở đây: đọc thẳng
+trang thay vì toàn văn) trước khi kết luận bịt kín, nhất là khi mạng phiên đã đổi.*
+
+Đoạn dưới đây giữ nguyên làm dấu vết lịch sử (tại sao từng bị chặn, và bug `sr_ma` đã vá):
+🔴 ~~PRISMA-P 2015 (17 mục/26 dòng): CHƯA có, và đây là trạng thái TRUNG THỰC.~~ Toàn văn PMC của
 statement (PMC4320440) **rụng bảng checklist**, bài E&E (PMID 25555855) không có bản PMC, còn
 `prisma-statement.org` và `equator-network.org` đều **bị chặn egress** ở phiên cloud. Thiết kế SR/MA
 vì thế nhận một dòng nói thẳng «kho CHƯA có danh mục item, điền từ bản gốc — KHÔNG dùng danh mục tự
