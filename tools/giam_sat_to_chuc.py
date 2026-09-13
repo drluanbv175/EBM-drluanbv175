@@ -91,6 +91,21 @@ _DONG_CHI_NGAY_THANG = re.compile(
 # hai dòng liền kề mới ra một tiêu đề hợp lệ (xem vòng lặp merge bên dưới).
 _DONG_CHI_THANG_NAM = re.compile(r"^[A-Z][a-z]{2}\s+20\d{2}$")
 
+# Số dòng LIÊN TIẾP tối thiểu để một chuỗi dòng ALL-CAPS ≥2 từ được coi là "khối
+# danh mục chủ đề" (xem _la_toan_hoa_nhieu_tu) thay vì trùng ngẫu nhiên với một
+# nút/khối điều hướng. Đo trên trang KDIGO thật 13/09/2026: khối chủ đề dài 18
+# dòng liên tiếp; chuỗi ALL-CAPS ≥2-từ DÀI NHẤT ngoài khối đó (nút kêu gọi hành
+# động "JOIN THE KDIGO MAILING LIST"/"SIGN UP"/"IMPROVING GLOBAL OUTCOMES") chỉ
+# dài 3 — chọn 4 để tách rõ hai nhóm với đúng 1 đơn vị biên an toàn đo được.
+_NGUONG_CHUOI_TOAN_HOA = 4
+
+
+def _la_toan_hoa_nhieu_tu(dong: str) -> bool:
+    """Dòng ALL-CAPS (mọi chữ cái đều viết hoa) có ≥2 từ — tín hiệu heading/nhãn
+    danh mục, khác văn xuôi (có chữ thường) và khác nút điều hướng đơn từ
+    (ABOUT/EVENTS/NEWS…) vốn không đủ ≥2 từ để bị coi là ứng viên."""
+    return bool(re.search(r"[A-Za-z]", dong)) and dong == dong.upper() and len(dong.split()) >= 2
+
 
 def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
     """Rút tiêu đề từ VĂN BẢN THUẦN (không có thẻ HTML) — dùng khi nội dung tới
@@ -123,7 +138,20 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
         khác ACC/AHA gộp ngày+tạp chí trên MỘT dòng. Không dòng nào một mình
         đủ điều kiện (tiêu đề thiếu năm/từ khoá, ngày chỉ 2 từ) nên phải GHÉP
         cặp dòng liền kề khi dòng sau khớp _DONG_CHI_THANG_NAM trước khi lọc,
-        để không đổi hành vi ACC/AHA (nơi ngày luôn đứng riêng, không cần ghép)."""
+        để không đổi hành vi ACC/AHA (nơi ngày luôn đứng riêng, không cần ghép).
+    (4) vá 13/09/2026 (SRC-012 KDIGO): trang này liệt kê 18 chủ đề guideline
+        bằng TÊN BỆNH VIẾT HOA («ANEMIA IN CKD», «TRANSPLANT CANDIDATE»…) —
+        KHÔNG năm, KHÔNG từ khoá guideline/report/…, nên rớt RE_TIEU_DE dù là
+        tiêu đề thật; đo sống: 0/18 lọt qua bộ lọc cũ, chỉ 3 dòng văn xuôi giới
+        thiệu (không đổi bao giờ) bị nhận nhầm thành "tiêu đề". Không thể chỉ
+        nhận diện "dòng ALL-CAPS ≥2 từ" một mình — nút CTA cuối trang («JOIN
+        THE KDIGO MAILING LIST») cũng ALL-CAPS ≥2 từ. Khác biệt THẬT đo được:
+        18 dòng chủ đề đứng LIÊN TIẾP nhau, còn mọi dòng ALL-CAPS ≥2 từ khác
+        trên trang (điều hướng, CTA) chỉ đứng đơn lẻ hoặc thành chuỗi ngắn ≤3.
+        Nhận khối bằng NGƯỠNG ĐỘ DÀI CHUỖI liên tiếp (_NGUONG_CHUOI_TOAN_HOA),
+        bỏ qua RE_TIEU_DE cho các dòng trong khối — vẫn là tiêu chí NỘI DUNG
+        (hình thức chữ + vị trí trong DÒNG CHẢY văn bản, không phải toạ độ
+        DOM), không sửa _loc_tieu_de_hop_le dùng chung."""
     dong_tho = [d.strip() for d in text.splitlines() if d.strip()
                 and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())]
 
@@ -150,7 +178,20 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
             if not _DONG_CHI_NGAY_THANG.match(d)
             and not _DONG_CHI_THANG_NAM.match(d)
             and len(d.split()) >= 5]
-    return _loc_tieu_de_hop_le(dong)
+    ket = _loc_tieu_de_hop_le(dong)
+
+    khoi: list[str] = []
+    for d in ung_vien + [None]:
+        if d is not None and _la_toan_hoa_nhieu_tu(d):
+            khoi.append(d)
+            continue
+        if len(khoi) >= _NGUONG_CHUOI_TOAN_HOA:
+            for tieu_de in khoi:
+                sach = re.sub(r"\s+", " ", tieu_de).strip()
+                if 8 <= len(sach) <= 220:
+                    ket.add(sach)
+        khoi = []
+    return ket
 
 
 def quet_mot_nguon(s: dict, noi_dung: str, state: dict, *,

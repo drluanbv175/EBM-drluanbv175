@@ -203,6 +203,132 @@ def test_rut_tieu_de_tu_van_ban_khong_ghep_khi_khong_can_uspstf() -> None:
     assert G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_USPSTF) == G.rut_tieu_de_tu_van_ban(da_ghep_tay)
 
 
+# Trang thật KDIGO 13/09/2026 (rút gọn, lấy qua Browser tool thật — get_page_text
+# tại https://kdigo.org/guidelines/ SAU KHI cuộn xuống — khối 18 chủ đề chỉ render
+# lười biếng, không có trong lượt chụp đầu tiên trước khi cuộn). 18 tên bệnh VIẾT
+# HOA không năm/từ khoá; boilerplate đứng cạnh (nút CTA cuối trang) cũng ALL-CAPS
+# ≥2 từ nhưng chỉ thành chuỗi liên tiếp ngắn (3), khác khối chủ đề (18).
+VAN_BAN_TRANG_THAT_KDIGO = """Title: Guidelines – KDIGO
+URL: https://kdigo.org
+Source element: <body>
+---
+ABOUT
+GUIDELINES
+CONTROVERSIES CONFERENCES
+EVENTS
+RESOURCES
+NEWS
+SEARCH
+ Guidelines
+
+KDIGO guidelines focus on topics related to the prevention or management of individuals with kidney diseases.
+
+Criteria used by KDIGO for topic prioritization include the burden of illness based on prevalence and scope of the condition or clinical problem; amenability of a particular condition to prevention or treatment and expected impact; existence of a body of evidence of sufficient breadth and depth to enable the development of evidence-based guidelines; potential of guidelines to reduce variations in practices, improve health outcomes, or lower treatment costs.
+
+ KDIGO Guidelines KDIGO guidelines are created, reviewed, published following a rigorous scientific process.
+ACUTE KIDNEY INJURY (AKI) AND ACUTE KIDNEY DISEASE (AKD)
+ANEMIA IN CKD
+ANTINEUTROPHILIC CYTOPLASMIC ANTIBODY (ANCA)-ASSOCIATED VASCULITIS
+AUTOSOMAL DOMINANT POLYCYSTIC KIDNEY DISEASE (ADPKD)
+BLOOD PRESSURE IN CKD
+CKD EVALUATION AND MANAGEMENT
+CKD-MINERAL AND BONE DISORDER (CKD-MBD)
+DIABETES AND CKD
+GLOMERULAR DISEASES (GD)
+HEART FAILURE IN CKD
+HEPATITIS C IN CKD
+IGA NEPHROPATHY (IGAN) / IGA VASCULITIS (IGAV)
+LIPIDS IN CKD
+LIVING KIDNEY DONOR
+LUPUS NEPHRITIS (LN)
+NEPHROTIC SYNDROME IN CHILDREN
+TRANSPLANT CANDIDATE
+TRANSPLANT RECIPIENT
+
+Interested in providing feedback on KDIGO guidelines before publication?
+
+Sign up for our newsletter!
+
+ JOIN THE KDIGO MAILING LIST
+
+SIGN UP
+
+IMPROVING GLOBAL OUTCOMES
+
+ABOUT
+GUIDELINES
+CONTROVERSIES CONFERENCES
+EVENTS
+RESOURCES
+NEWS
+CONTACT
+
+TWITTER
+
+FACEBOOK
+
+INSTAGRAM
+
+LINKEDIN
+© 2016 KDIGO
+
+Tab Context:
+- Executed on tabId: tab-1
+- Available tabs:
+  • tabId tab-1: "Guidelines – KDIGO" (https://kdigo.org)
+"""
+
+_18_TIEU_DE_KDIGO_THAT = {
+    "ACUTE KIDNEY INJURY (AKI) AND ACUTE KIDNEY DISEASE (AKD)",
+    "ANEMIA IN CKD",
+    "ANTINEUTROPHILIC CYTOPLASMIC ANTIBODY (ANCA)-ASSOCIATED VASCULITIS",
+    "AUTOSOMAL DOMINANT POLYCYSTIC KIDNEY DISEASE (ADPKD)",
+    "BLOOD PRESSURE IN CKD",
+    "CKD EVALUATION AND MANAGEMENT",
+    "CKD-MINERAL AND BONE DISORDER (CKD-MBD)",
+    "DIABETES AND CKD",
+    "GLOMERULAR DISEASES (GD)",
+    "HEART FAILURE IN CKD",
+    "HEPATITIS C IN CKD",
+    "IGA NEPHROPATHY (IGAN) / IGA VASCULITIS (IGAV)",
+    "LIPIDS IN CKD",
+    "LIVING KIDNEY DONOR",
+    "LUPUS NEPHRITIS (LN)",
+    "NEPHROTIC SYNDROME IN CHILDREN",
+    "TRANSPLANT CANDIDATE",
+    "TRANSPLANT RECIPIENT",
+}
+
+
+def test_rut_tieu_de_tu_van_ban_nhan_khoi_toan_hoa_kdigo() -> None:
+    """Vá 13/09/2026: 18 tên chủ đề guideline VIẾT HOA (không năm/từ khoá) phải
+    được nhận diện đủ qua ngưỡng chuỗi liên tiếp — kể cả 2 tên chỉ 2 từ
+    ("TRANSPLANT CANDIDATE"/"TRANSPLANT RECIPIENT", dưới sàn ≥5 từ của luật
+    khác trong cùng hàm) và các tên chứa dấu gạch ngang/ngoặc/dấu gạch chéo."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_KDIGO)
+    assert _18_TIEU_DE_KDIGO_THAT <= ket
+
+
+def test_rut_tieu_de_tu_van_ban_khong_nhan_cta_toan_hoa_ngan_kdigo() -> None:
+    """CTA cuối trang ("JOIN THE KDIGO MAILING LIST"/"SIGN UP"/
+    "IMPROVING GLOBAL OUTCOMES") cũng ALL-CAPS ≥2 từ nhưng chỉ thành chuỗi
+    liên tiếp NGẮN (3, dưới ngưỡng 4) — không được lẫn vào tiêu đề thật."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_KDIGO)
+    rac = {"JOIN THE KDIGO MAILING LIST", "SIGN UP", "IMPROVING GLOBAL OUTCOMES",
+           "CONTROVERSIES CONFERENCES"}
+    assert not (ket & rac)
+
+
+def test_la_toan_hoa_nhieu_tu_phan_biet_van_xuoi_va_nut_don_tu() -> None:
+    """Đơn vị: dòng có chữ thường (văn xuôi) hoặc chỉ 1 từ (nút điều hướng)
+    không được coi là ứng viên khối ALL-CAPS."""
+    assert G._la_toan_hoa_nhieu_tu("ANEMIA IN CKD") is True
+    assert G._la_toan_hoa_nhieu_tu("TRANSPLANT CANDIDATE") is True
+    assert G._la_toan_hoa_nhieu_tu("Anemia in CKD") is False
+    assert G._la_toan_hoa_nhieu_tu("EVENTS") is False
+    assert G._la_toan_hoa_nhieu_tu("123") is False
+
+
 def _don_dep(monkeypatch, tmp_path: Path) -> Path:
     """Trỏ 3 đường dẫn module-level (SO_NGUON/STATE/RA) vào tmp_path — không
     đụng file dự án thật khi chạy test."""
