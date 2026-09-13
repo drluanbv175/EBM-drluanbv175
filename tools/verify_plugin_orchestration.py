@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -36,6 +37,93 @@ REGISTRY_MARKER = "plugin_ownership_registry.json"
 CANONICAL_GATES = {"G2", "G4", "G5", "G8", "G9", "G10"}
 ROUTER_SOURCE = ROOT / "sync/skills/plugin-router-chatgpt"
 ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
+ROUTER_ZIP_REL = "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
+
+
+def cac_goc_worktree_git(root: Path) -> list[Path]:
+    """Danh sách đường dẫn GỐC của MỌI git worktree thuộc CÙNG repo với `root`
+    (kể cả chính `root`) — dùng `git worktree list --porcelain` để không phụ
+    thuộc định dạng in-cho-người-đọc của `git worktree list` thường.
+
+    VÌ SAO CÓ (12/09/2026): symlink runtime máy-toàn-cục
+    (`~/.claude/skills/plugin-router-chatgpt`) và gói ZIP build cục bộ
+    (`CHATGPT_SKILLS/dist/...zip`, gitignored) thuộc về ĐÚNG MỘT nơi vật lý
+    trên đĩa — nơi bác sĩ thật sự làm việc hằng ngày. Khi công cụ này chạy từ
+    một `git worktree add` PHỤ (một checkout KHÁC của CÙNG repo, ví dụ phiên
+    làm việc tạm thời), `ROOT` tính theo `__file__` trỏ vào worktree phụ đó —
+    khác hẳn nơi symlink/ZIP thật đang trỏ tới — nên so sánh path TUYỆT ĐỐI
+    với `ROOT` báo lỗi giả dù cấu hình máy hoàn toàn đúng.
+
+    Trả về `[root]` khi lệnh git thất bại (không phải repo git, hoặc `git`
+    không có trong PATH) — an toàn: một repo bình thường (một checkout duy
+    nhất, không dùng worktree) vẫn cho đúng kết quả như trước khi có hàm này."""
+    try:
+        ra = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=root, capture_output=True, text=True, timeout=10, check=True,
+        )
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return [root]
+    goc = [
+        Path(dong[len("worktree "):])
+        for dong in ra.stdout.splitlines()
+        if dong.startswith("worktree ")
+    ]
+    return goc or [root]
+
+
+def kiem_router_runtime_va_zip(
+    root: Path,
+    router_zip: Path,
+    router_zip_rel: str,
+    goc_worktree: list[Path],
+    thu_muc_runtime: tuple[Path, ...] | None = None,
+) -> tuple[list[str], list[str]]:
+    """Kiểm HAI thứ máy-toàn-cục của router ChatGPT: symlink runtime
+    (`~/.claude/skills/plugin-router-chatgpt`, `~/.codex/skills/...`) và gói
+    ZIP phân phối (`CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip`, gitignored).
+    Tách khỏi `verify()` để test được ĐỘC LẬP, không cần dựng toàn bộ registry
+    agent/plugin của repo — chỉ cần một `root` + danh sách `goc_worktree` giả.
+
+    Trả về `(errors, worktree_phu)`. `errors` là lỗi cấu hình THẬT (symlink
+    trỏ ra ngoài MỌI worktree của repo, hoặc gói ZIP vắng mặt ở MỌI nơi).
+    `worktree_phu` là quan sát KHÔNG PHẢI lỗi — riêng gói ZIP vì nó là artifact
+    cục bộ (gitignored) nên không nhân bản được sang worktree phụ; xem
+    `cac_goc_worktree_git` để biết vì sao đây là bẫy KHÁC với «bản sao trần»
+    (BH82) dù triệu chứng bề ngoài giống nhau."""
+    if thu_muc_runtime is None:
+        thu_muc_runtime = (Path.home() / ".claude/skills", Path.home() / ".codex/skills")
+
+    errors: list[str] = []
+    worktree_phu: list[str] = []
+
+    nguon_router_hop_le = {
+        (goc / "sync/skills/plugin-router-chatgpt").resolve() for goc in goc_worktree
+    }
+    for runtime in thu_muc_runtime:
+        target = runtime / "plugin-router-chatgpt"
+        if not target.exists():
+            errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
+        elif target.resolve() not in nguon_router_hop_le:
+            errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
+
+    if not router_zip.is_file():
+        # Gói ZIP là artifact CỤC BỘ (gitignored, tự sinh bằng
+        # scripts/build_catalog.py) — KHÔNG đi qua git nên không được nhân
+        # bản sang worktree phụ. Nếu một worktree KHÁC của CÙNG repo đã build
+        # hợp lệ, đây không phải lỗi cấu hình router, chỉ là worktree NÀY
+        # chưa từng build tại chỗ — ghi thông tin thay vì FAIL.
+        da_build_o_worktree_khac = any(
+            (goc / router_zip_rel).is_file() for goc in goc_worktree if goc != root
+        )
+        if da_build_o_worktree_khac:
+            worktree_phu.append(
+                f"gói ZIP router chưa build ở worktree này (đã có ở worktree "
+                f"khác của cùng repo): {router_zip_rel}")
+        else:
+            errors.append(f"thieu goi router ChatGPT: {router_zip.relative_to(root)}")
+
+    return errors, worktree_phu
 
 
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
@@ -87,6 +175,7 @@ def phan_loai_binding(item: WorkerAvailability) -> str:
 def verify() -> dict[str, Any]:
     errors: list[str] = []
     checks: list[str] = []
+    worktree_phu: list[str] = []
 
     agents = Registry.load()
     plugins = PluginOwnershipRegistry.load()
@@ -203,16 +292,17 @@ def verify() -> dict[str, Any]:
     for path in missing_router:
         errors.append(f"router thieu file: {path.relative_to(ROOT)}")
 
-    for runtime in (Path.home() / ".claude/skills", Path.home() / ".codex/skills"):
-        target = runtime / "plugin-router-chatgpt"
-        if not target.exists():
-            errors.append(f"router runtime khong ton tai/liên ket gay: {target}")
-        elif target.resolve() != ROUTER_SOURCE.resolve():
-            errors.append(f"router runtime tro sai nguon: {target} -> {target.resolve()}")
+    # Chấp nhận symlink trỏ vào `sync/skills/plugin-router-chatgpt` của BẤT KỲ
+    # worktree nào thuộc CÙNG repo — không chỉ đúng ROOT của lần chạy này (xem
+    # docstring `cac_goc_worktree_git`). Với repo không dùng worktree, danh
+    # sách chỉ có [ROOT] nên hành vi giữ nguyên như trước khi vá.
+    goc_worktree = cac_goc_worktree_git(ROOT)
+    router_errors, router_worktree_phu = kiem_router_runtime_va_zip(
+        ROOT, ROUTER_ZIP, ROUTER_ZIP_REL, goc_worktree)
+    errors.extend(router_errors)
+    worktree_phu.extend(router_worktree_phu)
 
-    if not ROUTER_ZIP.is_file():
-        errors.append(f"thieu goi router ChatGPT: {ROUTER_ZIP.relative_to(ROOT)}")
-    elif not missing_router:
+    if ROUTER_ZIP.is_file() and not missing_router:
         source_files = [
             path
             for path in ROUTER_SOURCE.rglob("*")
@@ -260,6 +350,7 @@ def verify() -> dict[str, Any]:
         "errors": errors,
         "ngoai_pham_vi": ngoai_pham_vi,
         "chua_cai": chua_cai,
+        "worktree_phu": worktree_phu,
     }
 
 
@@ -286,6 +377,11 @@ def main() -> int:
         if report.get("chua_cai"):
             print("  ⚪ KHONG phai dat — plugin cai theo tung may; y dinh o sync/plugin-manifest.json,"
                   " doi chieu bang tools/dong_bo_plugin_claude_codex.py (lane 5).")
+        for muc in report.get("worktree_phu", []):
+            print(f"- ⚪ WORKTREE-PHU {muc}")
+        if report.get("worktree_phu"):
+            print("  ⚪ KHONG phai loi cau hinh — day la artifact CUC BO (gitignored) o mot")
+            print("     worktree KHAC cua CUNG repo; dung build lai hay tro lai symlink tu day.")
         print("Cần bác sĩ kiểm chứng.")
     return 0 if report["status"] == "PASS" else 1
 
