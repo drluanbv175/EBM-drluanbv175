@@ -162,6 +162,47 @@ def test_rut_tieu_de_tu_van_ban_loc_rac_trang_that_09_09() -> None:
     assert not (ket & rac)
 
 
+# Trang thật USPSTF 13/09/2026 (rút gọn, lấy qua Browser tool thật — get_page_text
+# tại https://www.uspreventiveservicestaskforce.org/uspstf/recommendation-topics).
+# Khác ACC/AHA: mỗi tiêu đề khuyến cáo và ngày cập nhật nằm TRÊN HAI DÒNG RIÊNG,
+# ngày không có số ngày (chỉ "Mon YYYY") — cả hai dòng đều KHÔNG đủ điều kiện một
+# mình, phải ghép mới ra tiêu đề hợp lệ.
+VAN_BAN_TRANG_THAT_USPSTF = (
+    "Latest Final Recommendations\n"
+    "Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening\n"
+    "Jun 2025\n"
+    "Syphilis Infection During Pregnancy: Screening\n"
+    "May 2025\n"
+    "Breastfeeding: Primary Care Behavioral Counseling Interventions\n"
+    "Apr 2025\n"
+)
+
+
+def test_rut_tieu_de_tu_van_ban_ghep_tieu_de_va_ngay_rieng_dong_uspstf() -> None:
+    """Vá 13/09/2026: tiêu đề + "Mon YYYY" trên hai dòng liền kề phải được GHÉP
+    thành một tiêu đề hợp lệ (mang năm nên qua RE_TIEU_DE); dòng tiêu đề trang
+    "Latest Final Recommendations" (3 từ, không năm/từ khoá) phải bị loại."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_USPSTF)
+    assert ket == {
+        "Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025",
+        "Syphilis Infection During Pregnancy: Screening May 2025",
+        "Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025",
+    }
+    assert "Latest Final Recommendations" not in ket
+
+
+def test_rut_tieu_de_tu_van_ban_khong_ghep_khi_khong_can_uspstf() -> None:
+    """Đối kháng bản vá: nếu gỡ bước ghép (mô phỏng bằng cách tự cắt văn bản
+    thành các dòng đã ghép sẵn thủ công) thì kết quả PHẢI giống hệt — chứng
+    minh _loc_tieu_de_hop_le không tự "sửa hộ" thiếu sót của bước tách dòng."""
+    da_ghep_tay = (
+        "Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025\n"
+        "Syphilis Infection During Pregnancy: Screening May 2025\n"
+        "Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025\n"
+    )
+    assert G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_USPSTF) == G.rut_tieu_de_tu_van_ban(da_ghep_tay)
+
+
 def _don_dep(monkeypatch, tmp_path: Path) -> Path:
     """Trỏ 3 đường dẫn module-level (SO_NGUON/STATE/RA) vào tmp_path — không
     đụng file dự án thật khi chạy test."""

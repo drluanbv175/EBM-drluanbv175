@@ -83,6 +83,13 @@ _DONG_KHUNG_GET_PAGE_TEXT = re.compile(
 # thật: đây là 2/9 mẫu rác KHÔNG bị chặn bởi sàn số-từ vì đủ dài (5 từ).
 _DONG_CHI_NGAY_THANG = re.compile(
     r"^[A-Z][a-z]{2}\s+\d{1,2},?\s+20\d{2}(\s*\|.*)?$")
+# Dòng CHỈ LÀ "Mon YYYY" — KHÔNG có số ngày, KHÔNG có tên tạp chí — khác hẳn
+# _DONG_CHI_NGAY_THANG ở trên. Đo trên trang USPSTF thật 13/09/2026: mỗi tiêu đề
+# khuyến cáo nằm MỘT MÌNH trên một dòng (đủ ≥5 từ nhưng không có năm/từ khoá nên
+# rớt RE_TIEU_DE), NGAY SAU đó là một dòng ngày-tháng kiểu này (vd «Jun 2025» —
+# chỉ 2 từ nên rớt sàn số-từ). Không dòng nào một mình lọt qua bộ lọc; phải GHÉP
+# hai dòng liền kề mới ra một tiêu đề hợp lệ (xem vòng lặp merge bên dưới).
+_DONG_CHI_THANG_NAM = re.compile(r"^[A-Z][a-z]{2}\s+20\d{2}$")
 
 
 def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
@@ -110,11 +117,39 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
         bộ lọc hoàn hảo (còn lọt vài CTA như «Read the AHA/ASA Guideline in
         Stroke») nhưng cắt phần lớn rác mà không cần biết cấu trúc DOM của
         riêng trang này (đúng nguyên tắc «so nội dung, không so vị trí» của
-        module — cả hai luật đều là tiêu chí NỘI DUNG, không phải toạ độ)."""
-    dong = [d.strip() for d in text.splitlines() if d.strip()
-            and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())
-            and not _DONG_CHI_NGAY_THANG.match(d.strip())
-            and len(d.strip().split()) >= 5]
+        module — cả hai luật đều là tiêu chí NỘI DUNG, không phải toạ độ).
+    (3) vá 13/09/2026 (SRC-019 USPSTF): trang này tách tiêu đề khuyến cáo và
+        ngày cập nhật ra HAI dòng liền kề («…: Screening» rồi «Jun 2025») —
+        khác ACC/AHA gộp ngày+tạp chí trên MỘT dòng. Không dòng nào một mình
+        đủ điều kiện (tiêu đề thiếu năm/từ khoá, ngày chỉ 2 từ) nên phải GHÉP
+        cặp dòng liền kề khi dòng sau khớp _DONG_CHI_THANG_NAM trước khi lọc,
+        để không đổi hành vi ACC/AHA (nơi ngày luôn đứng riêng, không cần ghép)."""
+    dong_tho = [d.strip() for d in text.splitlines() if d.strip()
+                and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())]
+
+    ung_vien: list[str] = []
+    i = 0
+    while i < len(dong_tho):
+        hien_tai = dong_tho[i]
+        ke_tiep = dong_tho[i + 1] if i + 1 < len(dong_tho) else None
+        neu_ghep_duoc = (
+            ke_tiep is not None
+            and not _DONG_CHI_NGAY_THANG.match(hien_tai)
+            and not _DONG_CHI_THANG_NAM.match(hien_tai)
+            and _DONG_CHI_THANG_NAM.match(ke_tiep)
+            and len(hien_tai.split()) >= 5
+        )
+        if neu_ghep_duoc:
+            ung_vien.append(f"{hien_tai} {ke_tiep}")
+            i += 2
+            continue
+        ung_vien.append(hien_tai)
+        i += 1
+
+    dong = [d for d in ung_vien
+            if not _DONG_CHI_NGAY_THANG.match(d)
+            and not _DONG_CHI_THANG_NAM.match(d)
+            and len(d.split()) >= 5]
     return _loc_tieu_de_hop_le(dong)
 
 
