@@ -729,6 +729,73 @@ def search_scopus_lane(topic: str, days: int, retmax: int,
     return ra
 
 
+def search_dynamed_lane(topic: str, days: int, retmax: int,
+                        *, client_factory: Callable[[], object] | None = None,
+                        ) -> list[Candidate]:
+    """LÀN DYNAMED (EBSCO) — thêm 13/09/2026, bác sĩ yêu cầu nối vào tầng giám
+    sát lâm sàng ngay sau khi tích hợp connector bên nghiên cứu.
+
+    TÁI DÙNG `medical-ebm-automation/app/sources/dynamed.py::DynaMedClient`
+    qua cross-import (CÙNG khuôn `search_scopus_lane()` ở trên) — không viết
+    lại logic OAuth2 client_credentials/xử lý lỗi mạng ở đây, vì bản đó đã có
+    19 test (mutation-tested, gồm 1 phép gọi thật xác nhận endpoint EBSCO có
+    thật và trả 401 khi thiếu credential) ở phía nghiên cứu.
+
+    ⚠️ KHÁC `search_scopus_lane()` Ở MỘT ĐIỂM QUAN TRỌNG: DynaMed là nội dung
+    tổng hợp thứ cấp tại điểm khám (Condition/Drug Monograph…), KHÔNG BAO GIỜ
+    có pmid (khác Scopus, phần lớn trùng chỉ mục PubMed cho y văn lâm sàng) —
+    nên làn này KHÔNG chạy trước `gan_do_tin_cay()` như Scopus, mà chạy CÙNG
+    nhóm với preprint/trials (SAU `gan_do_tin_cay()` trong `run_scan()`), và
+    `rut_bai` giữ nguyên "chua_kiem" VĨNH VIỄN — không có PMID để tra rút bài,
+    đúng thiết kế đã ghi trong `app/sources/dynamed.py`.
+
+    BA MỨC "không có kết quả", CỐ Ý PHÂN BIỆT — giống hệt `search_scopus_lane()`:
+      • thiếu `app/sources/dynamed.py` hoặc `ENABLE_DYNAMED` chưa bật → trả `[]`
+        NGAY, KHÔNG coi là lỗi (bác sĩ chưa có credential EBSCO thì im lặng).
+      • thiếu `DYNAMED_CLIENT_ID`/`DYNAMED_CLIENT_SECRET` dù đã bật cờ →
+        `DynaMedClient.search()` tự ném RuntimeError rõ ràng (thiết kế
+        fail-closed sẵn có) — hàm này CỐ Ý KHÔNG nuốt lỗi đó.
+      • lỗi mạng/OAuth khi ĐÃ có credential → `DynaMedClient.search()` tự bắt
+        và trả `[]` (đã kiểm ở tầng nghiên cứu) — lane này chỉ truyền nguyên
+        vẹn, không thêm một lớp nuốt lỗi khác đè lên.
+
+    `client_factory` CÓ SẴN (test truyền vào) bỏ qua toàn bộ 3 bước dò môi
+    trường thật ở trên — ý định của việc truyền một factory là "giả lập
+    DynaMed sẵn sàng", không phải kiểm lại cổng đó.
+    """
+    if client_factory is None:
+        mea = Path(__file__).resolve().parents[2] / "medical-ebm-automation"
+        if not (mea / "app" / "sources" / "dynamed.py").exists():
+            return []
+        import sys as _sys  # noqa: PLC0415
+        if str(mea) not in _sys.path:
+            _sys.path.insert(0, str(mea))
+        from app.config import settings  # noqa: PLC0415
+        if not settings.enable_dynamed:
+            return []
+        from app.sources.dynamed import DynaMedClient  # noqa: PLC0415
+        client_factory = DynaMedClient
+    client = client_factory()
+    client.use_mock = False
+    # KHÔNG truyền since_date: DynaMedClient.search() cố ý bỏ qua tham số này
+    # (nội dung được CẬP NHẬT liên tục trên cùng article, không xuất bản rời
+    # rạc theo ngày — xem app/sources/dynamed.py).
+    records = client.search(topic, max_results=min(retmax, 25))
+    ra: list[Candidate] = []
+    for rec in records:
+        ra.append(Candidate(
+            pmid="",
+            publication_date="",
+            title=(rec.title or "")[:300],
+            url=rec.url or "",
+            source="DynaMed (EBSCO)",
+            journal_or_organization=rec.journal_or_organization or "",
+            tang="dynamed_diem_kham",
+            rut_bai="chua_kiem",
+        ))
+    return ra
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -795,12 +862,14 @@ def run_scan(
             except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                 ghi_chu_lan.append(f"làn scopus lỗi: {type(exc).__name__}")
             unique = gan_do_tin_cay(unique)
-            # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì
-            # tự khai nhãn riêng (preprint không có PMID để tra rút bài; NCT không
-            # phải y văn). FAIL-SOFT TỪNG LÀN: làn phụ hỏng không được kéo cả chủ
-            # đề FAIL — mất tín hiệu sớm không tệ bằng mất cả lượt quét chính.
+            # BA LÀN (nâng cấp C, 15/08/2026; +DynaMed 13/09/2026) — chạy SAU
+            # gan_do_tin_cay vì tự khai nhãn riêng (preprint/DynaMed không có
+            # PMID để tra rút bài; NCT không phải y văn). FAIL-SOFT TỪNG LÀN:
+            # làn phụ hỏng không được kéo cả chủ đề FAIL — mất tín hiệu sớm
+            # không tệ bằng mất cả lượt quét chính.
             for lane_fn, ten_lan in ((search_preprint_lane, "preprint"),
-                                     (search_trials_lane, "clinicaltrials")):
+                                     (search_trials_lane, "clinicaltrials"),
+                                     (search_dynamed_lane, "dynamed")):
                 try:
                     for candidate in lane_fn(row["topic"], days, max_results):
                         khoa_c = candidate.pmid or candidate.url
@@ -901,7 +970,8 @@ def markdown_report(report: dict) -> str:
                 # và không in «PMID <rỗng>».
                 ngoai_pubmed = item.get("tang") in ("preprint_chua_binh_duyet",
                                                     "thu_nghiem_dang_ky",
-                                                    "scopus_bo_sung")
+                                                    "scopus_bo_sung",
+                                                    "dynamed_diem_kham")
                 pts = [x for x in (item.get("pubtype") or []) if x != "Journal Article"]
                 if pts:
                     nhan.append("loại: " + ", ".join(pts[:3]))

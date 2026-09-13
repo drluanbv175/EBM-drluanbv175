@@ -18,6 +18,8 @@ SPEC.loader.exec_module(S)
 # S.search_scopus_lane thành lambda: []. Test kiểm HÀNH VI THẬT của lane phải
 # gọi tham chiếu này, không phải S.search_scopus_lane (đã bị chặn cho mọi test).
 _SEARCH_SCOPUS_LANE_GOC = S.search_scopus_lane
+# Cùng lý do — thêm 13/09/2026 cho search_dynamed_lane.
+_SEARCH_DYNAMED_LANE_GOC = S.search_dynamed_lane
 
 import pytest
 
@@ -34,10 +36,15 @@ def _chan_lan_goi_mang(monkeypatch):
     THÊM 13/09/2026 — search_scopus_lane: khác hai làn kia, làn này có thể THẬT SỰ gọi
     mạng (Elsevier) nếu máy đang chạy test đã có ENABLE_SCOPUS=true + SCOPUS_API_KEY
     thật trong .env (đúng tình trạng máy bác sĩ sau khi xác nhận key hoạt động) — phải
-    chặn tuyệt đối, nếu không bộ test "ngoại tuyến" sẽ âm thầm gọi API trả phí thật."""
+    chặn tuyệt đối, nếu không bộ test "ngoại tuyến" sẽ âm thầm gọi API trả phí thật.
+
+    Cùng lý do, cùng ngày — search_dynamed_lane: máy đã bật ENABLE_DYNAMED=true +
+    DYNAMED_CLIENT_ID/SECRET thật cũng sẽ khiến bộ test gọi OAuth2 EBSCO thật nếu
+    không chặn."""
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "search_dynamed_lane", lambda *a, **k: [])
 
 
 def test_watchlist_schema_rejects_duplicate_queries() -> None:
@@ -277,6 +284,166 @@ def test_markdown_report_scopus_candidate_not_mislabeled_as_new_in_pubmed():
                 pmid="", publication_date="2026", title="Từ Scopus",
                 url="https://scopus/1", source="Scopus (Elsevier)",
                 tang="scopus_bo_sung",
+            ))],
+        }],
+    }
+    md = S.markdown_report(report)
+    assert "mới vào PubMed" not in md
+    assert "không PMID — xem link" in md
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# LÀN DYNAMED (EBSCO) — thêm 13/09/2026, nối vào tầng giám sát lâm sàng
+# ════════════════════════════════════════════════════════════════════════════
+
+class _FakeDynaMedRecord:
+    """Đứng thay cho app.sources.base.RawRecord — chỉ cần đúng thuộc tính mà
+    search_dynamed_lane() đọc, không phụ thuộc import chéo medical-ebm-automation."""
+
+    def __init__(self, *, title="", url="", journal_or_organization=""):
+        self.title = title
+        self.url = url
+        self.journal_or_organization = journal_or_organization
+
+
+class _FakeDynaMedClient:
+    """client_factory giả — không gọi mạng, không cần ENABLE_DYNAMED/credential thật."""
+
+    def __init__(self, records=None, loi=None):
+        self._records = records or []
+        self._loi = loi
+        self.use_mock = True  # search_dynamed_lane() phải tự đặt False
+
+    def search(self, query, *, max_results=20):
+        if self._loi:
+            raise self._loi
+        self.dieu_kien_da_goi = {"query": query, "max_results": max_results}
+        return self._records
+
+
+def test_search_dynamed_lane_maps_record_fields_to_candidate():
+    rec = _FakeDynaMedRecord(
+        title="Complications of Myocardial Infarction",
+        url="https://www.dynamed.com/condition/myocardial-infarction-complications",
+        journal_or_organization="DynaMed",
+    )
+    client = _FakeDynaMedClient(records=[rec])
+    out = _SEARCH_DYNAMED_LANE_GOC("myocardial infarction", 30, 10, client_factory=lambda: client)
+    assert len(out) == 1
+    c = out[0]
+    assert c.title == "Complications of Myocardial Infarction"
+    assert c.url == "https://www.dynamed.com/condition/myocardial-infarction-complications"
+    assert c.source == "DynaMed (EBSCO)"
+    assert c.journal_or_organization == "DynaMed"
+    assert c.tang == "dynamed_diem_kham"
+    assert c.rut_bai == "chua_kiem"
+    # search_dynamed_lane() PHẢI tự ép use_mock=False — nếu không, một client
+    # thật sẽ trả dữ liệu minh hoạ thay vì lỗi rõ ràng khi thiếu credential.
+    assert client.use_mock is False
+
+
+def test_search_dynamed_lane_pmid_always_empty_string_not_none():
+    """DynaMed KHÔNG BAO GIỜ có pmid (nội dung tổng hợp thứ cấp, không phải bài
+    báo gốc) — Candidate.pmid không phải Optional nên phải là chuỗi rỗng, khớp
+    khuôn search_trials_lane()/search_scopus_lane() đã dùng."""
+    rec = _FakeDynaMedRecord(title="X", url="https://dynamed/x")
+    client = _FakeDynaMedClient(records=[rec])
+    out = _SEARCH_DYNAMED_LANE_GOC("q", 30, 10, client_factory=lambda: client)
+    assert out[0].pmid == ""
+
+
+def test_search_dynamed_lane_does_not_pass_since_date(monkeypatch):
+    """DynaMedClient.search() cố ý bỏ qua since_date (nội dung cập nhật liên
+    tục, không xuất bản rời rạc theo ngày) — lane không được tự chế tham số đó."""
+    client = _FakeDynaMedClient(records=[])
+    _SEARCH_DYNAMED_LANE_GOC("q", days=10, retmax=999, client_factory=lambda: client)
+    assert "since_date" not in client.dieu_kien_da_goi
+    assert client.dieu_kien_da_goi["max_results"] == 25  # trần an toàn, không phải 999
+
+
+def test_search_dynamed_lane_propagates_client_errors_not_swallowed():
+    """Thiếu DYNAMED_CLIENT_ID/SECRET dù đã bật cờ -> DynaMedClient.search() tự
+    ném RuntimeError -- search_dynamed_lane() KHÔNG được nuốt lỗi đó (khác lỗi
+    mạng, vốn đã được DynaMedClient tự bắt); run_scan() ở lớp ngoài mới là nơi
+    ghi chú minh bạch, không phải hàm này im lặng trả []."""
+    client = _FakeDynaMedClient(loi=RuntimeError("thiếu DYNAMED_CLIENT_ID"))
+    with pytest.raises(RuntimeError, match="DYNAMED_CLIENT_ID"):
+        _SEARCH_DYNAMED_LANE_GOC("q", 30, 10, client_factory=lambda: client)
+
+
+def test_run_scan_merges_dynamed_candidate_and_dedupes_by_url(monkeypatch):
+    """Ứng viên DynaMed không có pmid nên khoá dedup rơi về URL.
+
+    LƯU Ý QUAN TRỌNG (bắt được khi viết chính test này): `all_pmids` trong
+    `run_scan()` chỉ nhận PMID THÔ từ làn PubMed chính (`candidate.pmid`,
+    KHÔNG phải `pmid or url`) — nên một ứng viên DynaMed vô tình mang URL
+    dạng `pubmed.ncbi.nlm.nih.gov/<pmid>/` KHÔNG bị coi là trùng với chính
+    PMID đó (chuỗi URL không khớp chuỗi PMID trần). Dedup theo URL chỉ có
+    hiệu lực GIỮA các làn dùng chung khoá `pmid or url` (preprint/trials/
+    scopus/dynamed — nhóm "BA LÀN" chạy sau `gan_do_tin_cay()`), đúng như
+    kiểm ở đây: làn trials chạy TRƯỚC làn dynamed (thứ tự khai trong
+    `run_scan()`), nên một URL đã được trials thêm vào `all_pmids` sẽ khiến
+    dynamed lane bị loại nếu trùng — cùng luật `all_pmids` áp cho preprint/
+    trials/scopus."""
+    monkeypatch.setattr(
+        S, "search_trials_lane",
+        lambda *a, **k: [S.Candidate("", "", "Từ ClinicalTrials.gov",
+                                     "https://vi-du/trung", tang="thu_nghiem_dang_ky")])
+    monkeypatch.setattr(
+        S, "search_dynamed_lane",
+        lambda *a, **k: [
+            S.Candidate("", "", "Bản trùng", "https://vi-du/trung",
+                       source="DynaMed (EBSCO)", tang="dynamed_diem_kham"),
+            S.Candidate("", "", "Bản mới từ DynaMed", "https://dynamed/moi",
+                       source="DynaMed (EBSCO)", tang="dynamed_diem_kham"),
+        ])
+
+    def fake_search(_q, _d, _m):
+        return []
+
+    def fake_summary(_ids):
+        return []
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    titles = [c["title"] for c in report["topics"][0]["candidates"]]
+    assert "Bản mới từ DynaMed" in titles
+    assert titles.count("Bản trùng") == 0  # URL trùng với ứng viên trials, loại bản DynaMed
+    assert report["candidate_count"] == 2  # trials (giữ bản đầu) + DynaMed (mới)
+
+
+def test_run_scan_dynamed_lane_failure_does_not_fail_topic(monkeypatch):
+    def loi(*a, **k):
+        raise RuntimeError("thiếu DYNAMED_CLIENT_ID")
+    monkeypatch.setattr(S, "search_dynamed_lane", loi)
+
+    def fake_search(_q, _d, _m):
+        return ["1"]
+
+    def fake_summary(_ids):
+        return [S.Candidate("1", "2026", "T", "https://pubmed.ncbi.nlm.nih.gov/1/")]
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    assert "làn dynamed lỗi" in report["topics"][0]["error"]
+    assert len(report["topics"][0]["candidates"]) == 1
+
+
+def test_markdown_report_dynamed_candidate_not_mislabeled_as_new_in_pubmed():
+    """dynamed_diem_kham phải nằm trong danh sách «ngoài PubMed» của
+    markdown_report, giống preprint/trials/scopus — nếu không, một mục DynaMed
+    (luôn không có pubtype) sẽ bị gắn nhầm nhãn «⚡ mới vào PubMed»."""
+    report = {
+        "days": 30, "status": "PASS", "successful_topics": 1, "failed_topics": 0,
+        "candidate_count": 1, "disclaimer": S.DISCLAIMER,
+        "topics": [{
+            "topic": "A", "query": "a", "status": "PASS", "error": "",
+            "candidates": [S.asdict(S.Candidate(
+                pmid="", publication_date="", title="Từ DynaMed",
+                url="https://dynamed/1", source="DynaMed (EBSCO)",
+                tang="dynamed_diem_kham",
             ))],
         }],
     }
