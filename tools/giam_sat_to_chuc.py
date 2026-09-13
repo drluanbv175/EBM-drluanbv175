@@ -99,6 +99,12 @@ _DONG_CHI_THANG_NAM = re.compile(r"^[A-Z][a-z]{2}\s+20\d{2}$")
 # dài 3 — chọn 4 để tách rõ hai nhóm với đúng 1 đơn vị biên an toàn đo được.
 _NGUONG_CHUOI_TOAN_HOA = 4
 
+# Dòng KẾT THÚC bằng năm 19xx/20xx (không phải chỉ CHỨA năm ở đâu đó — «ESC 2026
+# Science News» không khớp vì năm không đứng cuối). Dùng để NỚI sàn ≥5 từ (vốn
+# thiết kế cho rác ACC/AHA) cho các nguồn đặt tên tài liệu NGẮN + năm ở cuối
+# (vd IDSA: «MRSA 2011», «Vancomycin 2020», «AMR Guidance 2026» — 2-4 từ).
+_DONG_KET_THUC_BANG_NAM = re.compile(r"(?:19|20)\d{2}$")
+
 
 def _la_toan_hoa_nhieu_tu(dong: str) -> bool:
     """Dòng ALL-CAPS (mọi chữ cái đều viết hoa) có ≥2 từ — tín hiệu heading/nhãn
@@ -151,7 +157,19 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
         Nhận khối bằng NGƯỠNG ĐỘ DÀI CHUỖI liên tiếp (_NGUONG_CHUOI_TOAN_HOA),
         bỏ qua RE_TIEU_DE cho các dòng trong khối — vẫn là tiêu chí NỘI DUNG
         (hình thức chữ + vị trí trong DÒNG CHẢY văn bản, không phải toạ độ
-        DOM), không sửa _loc_tieu_de_hop_le dùng chung."""
+        DOM), không sửa _loc_tieu_de_hop_le dùng chung.
+    (5) vá 13/09/2026 (SRC-017 IDSA): sàn ≥5 từ ở (2) đúng cho ACC/AHA nhưng
+        SAI cho trang này — IDSA đặt tên tài liệu NGẮN + năm cuối dòng («MRSA
+        2011», «Vancomycin 2020», «AMR Guidance 2026»: 2-4 từ). Đo sống trên
+        đúng văn bản trang thật: sàn ≥5 từ làm rớt 47/114 tiêu đề thật (41%),
+        toàn bộ đều 2-4 từ, không cái nào là rác đã biết. NỚI sàn bằng luật
+        OR: chấp nhận <5 từ nếu dòng KẾT THÚC bằng năm (_DONG_KET_THUC_BANG_NAM)
+        — khác «CHỨA năm ở giữa» của rác ACC/AHA «ESC 2026 Science News» (năm
+        không đứng cuối, vẫn rớt đúng như cũ, test khoá hành vi này không đổi).
+        Không nới cho MỌI dòng ngắn — chỉ dòng có năm cuối, một tín hiệu hẹp
+        và mạnh hơn hẳn "ngắn = rác". Vẫn còn 1/47 lọt lưới do sàn ĐỘ DÀI KÝ TỰ
+        ≥12 của _loc_tieu_de_hop_le dùng chung («MRSA 2011» chỉ 9 ký tự) — chấp
+        nhận, không sửa hàm dùng chung để đổi một trường hợp biên."""
     dong_tho = [d.strip() for d in text.splitlines() if d.strip()
                 and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())]
 
@@ -177,7 +195,7 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
     dong = [d for d in ung_vien
             if not _DONG_CHI_NGAY_THANG.match(d)
             and not _DONG_CHI_THANG_NAM.match(d)
-            and len(d.split()) >= 5]
+            and (len(d.split()) >= 5 or _DONG_KET_THUC_BANG_NAM.search(d))]
     ket = _loc_tieu_de_hop_le(dong)
 
     khoi: list[str] = []

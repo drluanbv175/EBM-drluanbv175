@@ -329,6 +329,80 @@ def test_la_toan_hoa_nhieu_tu_phan_biet_van_xuoi_va_nut_don_tu() -> None:
     assert G._la_toan_hoa_nhieu_tu("123") is False
 
 
+# Trích đoạn thật trang IDSA A-Z List 13/09/2026 (get_page_text qua Browser
+# tool — trang này KHÔNG cần cuộn, tải đủ ngay). Giữ nguyên cấu trúc thật: mục
+# lục chữ cái đơn (A/B/C), NHIỀU nhãn trạng thái xếp chồng trước một tiêu đề
+# ("Archived\nIn Development\n<tên>"), và các tiêu đề NGẮN 2-4 từ + năm cuối
+# dòng — đúng ca bị sàn ≥5 từ cũ loại oan.
+VAN_BAN_TRANG_THAT_IDSA = """Title: All Practice Guidelines: A-Z List
+URL: https://idsociety.org
+Source element: <body>
+---
+IDSA clinical practice guidelines are developed by a panel of experts who perform a systematic review of the available evidence and use the GRADE process to develop evidence-based recommendations to assist practitioners and patients in making decisions about appropriate health care for specific clinical circumstances.
+
+A
+Current
+Acute Bacterial Arthritis in Pediatrics 2023
+Current
+AMR Guidance 2026
+Archived
+In Development
+Antimicrobial Prophylaxis in Surgery 2013
+Current
+In Development
+Aspergillosis 2016
+B
+Current
+Babesiosis 2020
+Archived
+Bacterial Meningitis 2004
+Archived
+Blastomycosis 2008
+M
+Archived
+MRSA 2011
+V
+Current
+Vancomycin 2020
+
+©2026 Infectious Diseases Society of America
+"""
+
+_TIEU_DE_NGAN_IDSA_CAN_TRICH = {
+    "AMR Guidance 2026",
+    "Antimicrobial Prophylaxis in Surgery 2013",
+    "Aspergillosis 2016",
+    "Babesiosis 2020",
+    "Bacterial Meningitis 2004",
+    "Blastomycosis 2008",
+    "Vancomycin 2020",
+}
+
+
+def test_rut_tieu_de_tu_van_ban_nhan_tieu_de_ngan_ket_thuc_bang_nam_idsa() -> None:
+    """Vá 13/09/2026: tiêu đề NGẮN (2-4 từ) + năm ở CUỐI DÒNG phải được nhận,
+    dù dưới sàn ≥5 từ cũ — đo sống trên trang IDSA thật: sàn cũ làm rớt 47/114
+    tiêu đề thật (41%), toàn bộ đều thuộc dạng này."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_IDSA)
+    assert _TIEU_DE_NGAN_IDSA_CAN_TRICH <= ket
+
+
+def test_rut_tieu_de_tu_van_ban_khong_nhan_muc_luc_va_trang_thai_idsa() -> None:
+    """Chữ cái mục lục đơn (A/B/M/V) và nhãn trạng thái (Current/Archived/
+    In Development) — kể cả khi XẾP CHỒNG nhiều nhãn liên tiếp trước một tiêu
+    đề — không được lẫn vào kết quả."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_IDSA)
+    rac = {"A", "B", "M", "V", "Current", "Archived", "In Development"}
+    assert not (ket & rac)
+
+
+def test_rut_tieu_de_tu_van_ban_van_loai_tieu_de_ket_thuc_bang_nam_giua_dong_idsa() -> None:
+    """Đối chứng: nới sàn ≥5 từ CHỈ áp cho dòng KẾT THÚC bằng năm — dòng chứa
+    năm ở GIỮA (không phải cuối, kiểu «ESC 2026 Science News» của ACC/AHA) vẫn
+    phải rớt như cũ, không được nới oan."""
+    assert G.rut_tieu_de_tu_van_ban("ESC 2026 Science News") == set()
+
+
 def _don_dep(monkeypatch, tmp_path: Path) -> Path:
     """Trỏ 3 đường dẫn module-level (SO_NGUON/STATE/RA) vào tmp_path — không
     đụng file dự án thật khi chạy test."""
