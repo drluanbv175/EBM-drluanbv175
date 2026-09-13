@@ -1163,8 +1163,10 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
   vẫn chạy được không key); **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026**,
   `app/sources/dynamed.py`, OAuth2 `client_credentials` (KHÁC key đơn giản của Scopus — cần Customer
   ID + Group ID do đại diện EBSCO cấp để đăng ký app, chưa chắc mọi tài khoản DynaMed cá nhân đều có
-  quyền này), **CHƯA xác nhận chạy thật, đang chờ credential từ bác sĩ** — xem
-  `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để biết chi tiết + giới hạn của cả hai.
+  quyền này) — đã nối CẢ tầng nghiên cứu lẫn tầng giám sát lâm sàng (`search_dynamed_lane()` trong
+  `sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py`), **CHƯA xác nhận chạy thật,
+  đang chờ credential từ bác sĩ** — xem `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để
+  biết chi tiết + giới hạn của cả hai.
 - Email: SMTP (Gmail App Password)
 
 ## Nguyên tắc bắt buộc
