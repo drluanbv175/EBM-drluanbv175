@@ -1613,9 +1613,17 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   15 chủ đề từng báo "không có chứng cứ mới" thực ra CÓ — RA · viêm gan B · hen phế quản ·
   đột quỵ dự phòng thứ phát · lão khoa · GDMT nội trú…
 
-  ⚠️ **Chưa làm, có chủ ý:** preprint (medRxiv/bioRxiv) và ClinicalTrials.gov **chưa** nối vào
-  routine dù đã có MCP. Lý do: thêm một dòng tài liệu **chưa bình duyệt** khi nhãn độ tin cậy
-  vừa mới có sẽ làm hỏng chính mục tiêu — phải để nhãn chạy ổn định trước.
+  ⛔ **ĐÍNH CHÍNH 13/09/2026 — dòng "chưa làm, có chủ ý" dưới đây đã LỖI THỜI, việc này đã
+  xong từ 15/08/2026.** Đọc trực tiếp `EBM-Dashboards/tools/surveillance_scan.py` xác nhận CẢ
+  HAI làn đã nối thật: `search_preprint_lane()` (Europe PMC, gắn nhãn `chua_binh_duyet`/
+  `⚠️ CHƯA BÌNH DUYỆT (preprint)`, có đối chiếu `is-preprint-of` sang bản đã bình duyệt qua
+  Crossref) và `search_trials_lane()` (ClinicalTrials.gov API v2 `studies?...`, gắn `NCT`) —
+  cả hai chạy trong `LAN_NGOAI_PUBMED` cùng làn PubMed 3 tầng, có test riêng
+  `tests/test_surveillance_scan_europepmc_fallback.py`. Giữ nguyên câu cũ dưới đây làm dấu vết
+  lịch sử (lý do TỪNG trì hoãn), không phải mô tả hiện trạng:
+  ~~Chưa làm, có chủ ý: preprint (medRxiv/bioRxiv) và ClinicalTrials.gov chưa nối vào routine
+  dù đã có MCP. Lý do: thêm một dòng tài liệu chưa bình duyệt khi nhãn độ tin cậy vừa mới có
+  sẽ làm hỏng chính mục tiêu — phải để nhãn chạy ổn định trước.~~
 
   🔧 **Vá kèm — lỗi của chính bộ chốt:** `_nap()` trong `chot_hoi_quy_bai_hoc.py` không đăng ký
   module vào `sys.modules` trước khi `exec_module`, nên **mọi module có `@dataclass` đều nạp

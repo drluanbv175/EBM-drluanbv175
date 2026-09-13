@@ -9,8 +9,14 @@
 # Cài đầy đủ:
 #   pip install -r requirements.txt --break-system-packages
 #
-numpy>=1.24                  # bắt buộc (mọi backend dùng numpy)
-scikit-learn>=1.3            # backend TF-IDF (MỚI) — nhẹ, KHÔNG cần torch. Ưu tiên cài trước.
-sentence-transformers>=2.2   # backend NGỮ NGHĨA neural (tải model all-MiniLM-L6-v2 ~80MB lần đầu)
-chromadb>=0.5                # (tùy chọn) vector store local bền (PersistentClient)
+# GHIM == thay vì >= (13/09/2026): trước đó cả 4 gói dùng ràng buộc mở, khiến
+# GitHub Dependency Graph/SBOM báo "Exact versions could not be resolved" và vì
+# thế Dependabot KHÔNG có version cụ thể để đối chiếu CVE — "0 alert" của repo
+# này một phần do THIẾU DỮ LIỆU để quét, không hẳn là đã sạch. Phiên bản dưới là
+# bản mới nhất khả dụng trên PyPI tại thời điểm ghim (13/09/2026); nới >= trở lại
+# nếu một bản ghim tạo xung đột dựng môi trường thật.
+numpy==2.4.6                  # bắt buộc (mọi backend dùng numpy)
+scikit-learn==1.9.1           # backend TF-IDF (MỚI) — nhẹ, KHÔNG cần torch. Ưu tiên cài trước.
+sentence-transformers==6.0.1  # backend NGỮ NGHĨA neural (tải model all-MiniLM-L6-v2 ~80MB lần đầu)
+chromadb==1.5.9               # (tùy chọn) vector store local bền (PersistentClient)
 # Ghi chú: thiếu scikit-learn -> tự lùi hashing; thiếu sentence-transformers -> tự lùi TF-IDF.
