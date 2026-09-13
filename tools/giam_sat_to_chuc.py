@@ -78,18 +78,35 @@ def rut_tieu_de(html: str) -> set[str]:
 _DONG_KHUNG_GET_PAGE_TEXT = re.compile(
     r"^(Title:|URL:|Source element:|Tab Context:|-{3,}$|-\s+Executed on|"
     r"•\s*tabId|Available tabs:)", re.I)
+# Tên tháng — CẢ viết tắt 3 chữ (Sep/Jul/Jun…) LẪN đầy đủ (September/July/June…).
+# Vá 13/09/2026: ba mẫu ngày-tháng dưới đây trước đó chỉ nhận dạng viết tắt;
+# WHO ("10 September 2026") và GINA ("July 21, 2026") dùng tên tháng ĐẦY ĐỦ nên
+# lọt qua cả ba, rồi bị chính luật OR-kết-thúc-bằng-năm (vá IDSA cùng ngày, xem
+# _DONG_KET_THUC_BANG_NAM) nhận NHẦM thành tiêu đề — hồi quy tự gây ra khi vá
+# IDSA, bắt được ngay khi khảo sát tiếp WHO/GINA.
+_TEN_THANG = (r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+              r"Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|"
+              r"Dec(?:ember)?)")
+
 # Dòng CHỈ LÀ ngày-tháng kèm/không kèm tên tạp chí (vd «Sep 08, 2026 | Circulation»,
-# «Aug 31, 2026») — mẫu nhật ký bài viết, không phải tiêu đề. Đo trên trang ACC/AHA
-# thật: đây là 2/9 mẫu rác KHÔNG bị chặn bởi sàn số-từ vì đủ dài (5 từ).
+# «Aug 31, 2026», «July 21, 2026» — GINA) — mẫu nhật ký bài viết, không phải tiêu
+# đề. Đo trên trang ACC/AHA thật: đây là 2/9 mẫu rác KHÔNG bị chặn bởi sàn số-từ
+# vì đủ dài (5 từ) — nay còn phải chặn cả khi ≥5 từ đổi thành OR-kết-thúc-bằng-năm.
 _DONG_CHI_NGAY_THANG = re.compile(
-    r"^[A-Z][a-z]{2}\s+\d{1,2},?\s+20\d{2}(\s*\|.*)?$")
-# Dòng CHỈ LÀ "Mon YYYY" — KHÔNG có số ngày, KHÔNG có tên tạp chí — khác hẳn
-# _DONG_CHI_NGAY_THANG ở trên. Đo trên trang USPSTF thật 13/09/2026: mỗi tiêu đề
-# khuyến cáo nằm MỘT MÌNH trên một dòng (đủ ≥5 từ nhưng không có năm/từ khoá nên
-# rớt RE_TIEU_DE), NGAY SAU đó là một dòng ngày-tháng kiểu này (vd «Jun 2025» —
-# chỉ 2 từ nên rớt sàn số-từ). Không dòng nào một mình lọt qua bộ lọc; phải GHÉP
-# hai dòng liền kề mới ra một tiêu đề hợp lệ (xem vòng lặp merge bên dưới).
-_DONG_CHI_THANG_NAM = re.compile(r"^[A-Z][a-z]{2}\s+20\d{2}$")
+    rf"^{_TEN_THANG}\s+\d{{1,2}},?\s+20\d{{2}}(\s*\|.*)?$")
+# Dòng CHỈ LÀ "Mon/Month YYYY" — KHÔNG có số ngày, KHÔNG có tên tạp chí — khác
+# hẳn _DONG_CHI_NGAY_THANG ở trên. Đo trên trang USPSTF thật 13/09/2026: mỗi
+# tiêu đề khuyến cáo nằm MỘT MÌNH trên một dòng (đủ ≥5 từ nhưng không có năm/từ
+# khoá nên rớt RE_TIEU_DE), NGAY SAU đó là một dòng ngày-tháng kiểu này (vd «Jun
+# 2025» — chỉ 2 từ nên rớt sàn số-từ). Không dòng nào một mình lọt qua bộ lọc;
+# phải GHÉP hai dòng liền kề mới ra một tiêu đề hợp lệ (xem vòng lặp merge bên dưới).
+_DONG_CHI_THANG_NAM = re.compile(rf"^{_TEN_THANG}\s+20\d{{2}}$")
+# Dòng CHỈ LÀ "DD Month YYYY" — ngày ĐỨNG TRƯỚC tên tháng, không dấu phẩy — thứ
+# tự khác hẳn hai mẫu trên. Đo trên trang WHO thật 13/09/2026 (khối "Latest WHO
+# guidelines approved…"): mỗi tiêu đề khuyến cáo có một dòng ngày kiểu này đứng
+# NGAY TRƯỚC nó (vd «10 September 2026», «18 December 2025» — 3 từ, kết thúc
+# bằng năm nên bị luật OR-kết-thúc-bằng-năm của IDSA nhận nhầm nếu không chặn ở đây).
+_DONG_NGAY_THANG_KIEU_WHO = re.compile(rf"^\d{{1,2}}\s+{_TEN_THANG}\s+20\d{{2}}$")
 
 # Số dòng LIÊN TIẾP tối thiểu để một chuỗi dòng ALL-CAPS ≥2 từ được coi là "khối
 # danh mục chủ đề" (xem _la_toan_hoa_nhieu_tu) thay vì trùng ngẫu nhiên với một
@@ -169,7 +186,24 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
         Không nới cho MỌI dòng ngắn — chỉ dòng có năm cuối, một tín hiệu hẹp
         và mạnh hơn hẳn "ngắn = rác". Vẫn còn 1/47 lọt lưới do sàn ĐỘ DÀI KÝ TỰ
         ≥12 của _loc_tieu_de_hop_le dùng chung («MRSA 2011» chỉ 9 ký tự) — chấp
-        nhận, không sửa hàm dùng chung để đổi một trường hợp biên."""
+        nhận, không sửa hàm dùng chung để đổi một trường hợp biên.
+    (6) vá 13/09/2026 (HỒI QUY do (5) tự gây ra, bắt được khi khảo sát tiếp
+        SRC-022 WHO/SRC-011 GINA): luật OR ở (5) chỉ loại trừ dòng ngày-tháng
+        VIẾT TẮT 3 chữ («Sep»/«Jun»…), nhưng WHO dùng «DD Month YYYY» đầy đủ
+        không dấu phẩy («10 September 2026») còn GINA dùng «Month DD, YYYY»
+        đầy đủ («July 21, 2026») — cả hai đều 3 từ, kết thúc bằng năm, KHÔNG
+        khớp _DONG_CHI_NGAY_THANG/_DONG_CHI_THANG_NAM cũ (chỉ nhận viết tắt)
+        nên lọt qua rồi bị chính luật OR-kết-thúc-bằng-năm nhận NHẦM thành tiêu
+        đề. Đo sống: 6/8 dòng ngày trên trang WHO thật bị nhận nhầm. Vá bằng
+        cách MỞ RỘNG _TEN_THANG cho cả viết tắt lẫn đầy đủ (áp dụng lại cho
+        CẢ _DONG_CHI_NGAY_THANG lẫn _DONG_CHI_THANG_NAM, không chỉ chỗ mới)
+        và thêm mẫu thứ ba _DONG_NGAY_THANG_KIEU_WHO cho thứ tự «ngày trước
+        tháng» mà hai mẫu cũ chưa từng phủ. KHÔNG vá vấn đề riêng «tiêu đề
+        NGẮN mà ngày nằm ở dòng KHÁC» (vd «WHO guidelines for malaria» 4 từ,
+        ngày đứng dòng TRƯỚC nó) — đó là lỗ hổng ĐỘ PHỦ (recall) có mức nguy
+        hại thấp hơn hẳn báo động giả hàng loạt đang vá ở đây, và cần đo thêm
+        trước khi thiết kế đúng (chưa đủ bằng chứng để vá an toàn trong lượt
+        này)."""
     dong_tho = [d.strip() for d in text.splitlines() if d.strip()
                 and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())]
 
@@ -182,6 +216,7 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
             ke_tiep is not None
             and not _DONG_CHI_NGAY_THANG.match(hien_tai)
             and not _DONG_CHI_THANG_NAM.match(hien_tai)
+            and not _DONG_NGAY_THANG_KIEU_WHO.match(hien_tai)
             and _DONG_CHI_THANG_NAM.match(ke_tiep)
             and len(hien_tai.split()) >= 5
         )
@@ -195,6 +230,7 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
     dong = [d for d in ung_vien
             if not _DONG_CHI_NGAY_THANG.match(d)
             and not _DONG_CHI_THANG_NAM.match(d)
+            and not _DONG_NGAY_THANG_KIEU_WHO.match(d)
             and (len(d.split()) >= 5 or _DONG_KET_THUC_BANG_NAM.search(d))]
     ket = _loc_tieu_de_hop_le(dong)
 

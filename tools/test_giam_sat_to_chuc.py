@@ -403,6 +403,75 @@ def test_rut_tieu_de_tu_van_ban_van_loai_tieu_de_ket_thuc_bang_nam_giua_dong_ids
     assert G.rut_tieu_de_tu_van_ban("ESC 2026 Science News") == set()
 
 
+# Trích đoạn thật trang WHO Guidelines 13/09/2026 (get_page_text qua Browser
+# tool, khối "Latest WHO guidelines approved…") — mỗi tiêu đề có một dòng ngày
+# kiểu "DD Month YYYY" (tên tháng ĐẦY ĐỦ, ngày đứng TRƯỚC) đứng ngay trước nó.
+# Đây là HỒI QUY do chính bản vá IDSA (mục (5) ở trên) gây ra: 6 dòng ngày này
+# đều 3 từ + kết thúc bằng năm nên bị luật OR-kết-thúc-bằng-năm nhận nhầm.
+VAN_BAN_TRANG_THAT_WHO = """Title: WHO Guidelines
+URL: https://who.int
+Source element: <section>
+---
+Latest WHO guidelines approved by the Guidelines Review Committee
+All →
+10 September 2026
+WHO guidelines for malaria
+Download Read More
+22 July 2026
+Consolidated HIV guidelines: service delivery
+Download Read More
+18 December 2025
+WHO guidelines on the management of advanced HIV disease
+Download Read More
+3 November 2025
+Selected practice recommendations for contraceptive use, 4th ed.
+Download Read More
+"""
+
+_NGAY_RAC_WHO = {"10 September 2026", "22 July 2026", "18 December 2025", "3 November 2025"}
+
+
+def test_rut_tieu_de_tu_van_ban_loai_ngay_kieu_who_ngay_truoc_thang() -> None:
+    """Vá 13/09/2026 (hồi quy tự gây ra khi vá IDSA): dòng ngày «DD Month
+    YYYY» tên tháng đầy đủ (WHO) không được nhận nhầm thành tiêu đề, dù 3 từ
+    và kết thúc bằng năm — đúng dạng lẽ ra bị luật OR bắt nhầm."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_WHO)
+    assert not (ket & _NGAY_RAC_WHO)
+    assert "Consolidated HIV guidelines: service delivery" in ket
+    assert "WHO guidelines on the management of advanced HIV disease" in ket
+    assert "Selected practice recommendations for contraceptive use, 4th ed." in ket
+
+
+# Trích đoạn thật trang GINA Reports 13/09/2026 — dòng ngày kiểu "Month DD,
+# YYYY" tên tháng đầy đủ (khác WHO: có dấu phẩy, tháng đứng TRƯỚC ngày).
+VAN_BAN_TRANG_THAT_GINA = """Title: Reports - Global Initiative for Asthma - GINA
+URL: https://ginasthma.org
+Source element: <div>
+---
+News
+GINA 2026 SUMMARY GUIDE – NOW AVAILABLE!
+
+July 21, 2026
+
+    The 2026 update of the Summary Guide for Asthma Management and Prevention is now available for FREE. Click HERE[...]
+
+GINA 2026 Severe Asthma Guide – Now Available!
+
+June 23, 2026
+
+    The 2026 update of the Difficult-to-Treat & Severe Asthma in adolescent and adult patients: Diagnosis and Management Guide,[...]
+"""
+
+_NGAY_RAC_GINA = {"July 21, 2026", "June 23, 2026"}
+
+
+def test_rut_tieu_de_tu_van_ban_loai_ngay_thang_day_du_thang_truoc_ngay_gina() -> None:
+    """Vá 13/09/2026 (cùng hồi quy, dạng thứ hai): dòng ngày «Month DD, YYYY»
+    tên tháng đầy đủ có dấu phẩy (GINA) cũng không được nhận nhầm."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_GINA)
+    assert not (ket & _NGAY_RAC_GINA)
+
+
 def _don_dep(monkeypatch, tmp_path: Path) -> Path:
     """Trỏ 3 đường dẫn module-level (SO_NGUON/STATE/RA) vào tmp_path — không
     đụng file dự án thật khi chạy test."""
