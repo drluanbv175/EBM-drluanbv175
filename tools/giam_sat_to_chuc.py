@@ -198,13 +198,27 @@ def _duong_dan_hien_thi(f: Path) -> str:
 
 def _ghi_ung_vien(phat_hien: list[str]) -> Path | None:
     """Ghi file ứng viên, DÙNG CHUNG định dạng với luồng quét chính (main()) —
-    tách hàm để _nap_van_ban() không chép lại logic ghi file."""
+    tách hàm để _nap_van_ban() không chép lại logic ghi file.
+
+    GỘP với file CÙNG NGÀY đã có, không ghi đè (vá 13/09/2026): trước đây
+    f.write_text() ghi đè thẳng, nên gọi --nap-van-ban nhiều trạm khác nhau
+    trong CÙNG một ngày làm mất sạch ứng viên của các trạm chạy trước — chỉ
+    trạm chạy CUỐI CÙNG còn xuất hiện trong file, dù state/giam-sat-to-chuc.json
+    (theo dõi trùng lặp cho lần quét sau) vẫn lưu đúng cho từng trạm. Lỗi im
+    lặng: không báo động gì, chỉ đơn giản là bác sĩ không bao giờ thấy được
+    ứng viên của các trạm chạy trước trong ngày đó."""
     if not phat_hien:
         return None
     RA.mkdir(exist_ok=True)
     f = RA / f"to-chuc-{date.today().isoformat()}.md"
+    da_co: list[str] = []
+    if f.exists():
+        for dong in f.read_text(encoding="utf-8").splitlines():
+            if dong.startswith("- **") and dong not in da_co:
+                da_co.append(dong)
+    gop = da_co + [dong for dong in phat_hien if dong not in da_co]
     f.write_text("# ỨNG VIÊN TỪ TRẠM TỔ CHỨC — " + date.today().isoformat()
-                 + "\n\n" + "\n".join(phat_hien)
+                 + "\n\n" + "\n".join(gop)
                  + "\n\n> Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
     return f
 

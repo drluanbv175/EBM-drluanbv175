@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-09",
+ "updated": "2026-09-13",
  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
  "sources": [
   {
@@ -173,8 +173,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-010 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
@@ -199,8 +199,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-011 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
@@ -225,8 +225,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-012 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 3 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
@@ -251,8 +251,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt trong app 15/08/2026 (bác sĩ duyệt QĐ1). Egress python vẫn bị chặn ở tầng máy ⇒ trạm content-hash quét qua PHIÊN tuần (trình duyệt, approvals lưu trên tác vụ lịch) — bấm «Run now» tác vụ goi-duyet-tuan-ebm một lần để pre-approve origin.",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-013 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 6 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
@@ -277,8 +277,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (ESC Clinical Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần).",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-014 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 17 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
@@ -357,8 +357,8 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": null,
-   "known_gap": "URL ĐÃ XÁC MINH SỐNG qua trình duyệt 15/08/2026 (IDSA A-Z Guidelines) — QĐ1 đủ 8/8. Egress python vẫn chặn ⇒ trạm content-hash quét qua PHIÊN tuần (approvals lưu trên tác vụ lịch — bấm «Run now» một lần).",
+   "last_success_at": "2026-09-13",
+   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật cho endpoint IDSA A-Z Guidelines (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-017 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA (09/09) và SRC-010..014 (13/09). 67 tiêu đề ghi nhận lần này. LƯU Ý: endpoint_or_url hiện chỉ trỏ IDSA — 4 tổ chức còn lại trong tên gộp (AGS Beers · USPSTF web · WHO web · NICE web) CHƯA có endpoint riêng để dò content-hash, nên trạm này mới chỉ phủ được IDSA, KHÔNG phủ đủ cả 5 như tên gợi ý — cần bác sĩ xác nhận URL cho 4 tổ chức còn lại nếu muốn phủ đúng tên. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",

@@ -39,5 +39,5 @@ Chạy: `python3 tools/manage_ledger.py <lệnh>`
 
 ## Liên hệ
 - Tạo cập nhật mới: skill `cap-nhat-chung-cu-y-khoa`.
-- Engine tự đổ thẻ vào: launchd `weeklysafety` (Thứ 7) + `monthlyupdate` (ngày 1) qua cầu nối `bridge_to_ebm_master.py`.
+- Engine tự đổ thẻ vào qua cầu nối `bridge_to_ebm_master.py`, kích hoạt bằng scheduled-task `thu-thap-tuan-an-toan-thuoc`/`cap-nhat-thang-ebm` (launchd `weeklysafety`/`monthlyupdate` cũ đã TẮT từ 15/08/2026).
 - Bản đồ hệ thống: `Claude AI/HE-THONG-EBM.md`; cách dùng nhanh: `Claude AI/CACH-DUNG.md`.

@@ -223,6 +223,33 @@ def test_nap_van_ban_bat_not_covered_va_ghi_ung_vien(monkeypatch, tmp_path: Path
     assert "ACC/AHA" in noi_dung_file and "nạp qua Browser thật" in noi_dung_file
 
 
+def test_nap_van_ban_nhieu_tram_cung_ngay_khong_de_ghi_de(monkeypatch, tmp_path: Path) -> None:
+    """Vá 13/09/2026: gọi --nap-van-ban cho HAI trạm khác nhau trong CÙNG một
+    ngày (ca thật xảy ra khi nạp lần lượt GOLD/GINA/KDIGO/ADA/ESC cùng buổi)
+    trước đây làm file to-chuc-<ngày>.md bị GHI ĐÈ — chỉ trạm chạy SAU CÙNG
+    còn xuất hiện, dù state/giam-sat-to-chuc.json vẫn lưu đúng cho cả hai.
+    Nay file phải GIỮ ứng viên của CẢ HAI trạm."""
+    so_nguon = _don_dep(monkeypatch, tmp_path)
+    du = {"sources": [_nguon("SRC-A", status="not-covered"),
+                      _nguon("SRC-B", status="not-covered")]}
+    du["sources"][0]["org"] = "GOLD"
+    du["sources"][1]["org"] = "ESC"
+    so_nguon.write_text(json.dumps(du), encoding="utf-8")
+    fa = tmp_path / "a.txt"
+    fa.write_text(VAN_BAN_CO_TIEU_DE * 5, encoding="utf-8")
+    fb = tmp_path / "b.txt"
+    fb.write_text(VAN_BAN_TRANG_THAT_LAN_ACC_AHA * 5, encoding="utf-8")
+
+    G._nap_van_ban("SRC-A", str(fa))
+    G._nap_van_ban("SRC-B", str(fb))
+
+    file_ung_vien = list(G.RA.glob("to-chuc-*.md"))
+    assert len(file_ung_vien) == 1
+    noi_dung_file = file_ung_vien[0].read_text()
+    assert "GOLD" in noi_dung_file, "ứng viên của trạm CHẠY TRƯỚC bị mất — đúng lỗi đã vá"
+    assert "ESC" in noi_dung_file
+
+
 def test_nap_van_ban_da_active_khong_ghi_de_kich_hoat(monkeypatch, tmp_path: Path) -> None:
     """Trạm ĐÃ active thì lần nạp sau chỉ cập nhật state, KHÔNG được tự thêm
     khối kich_hoat mới (đó là bằng chứng của LẦN BẬT ĐẦU TIÊN, không phải mỗi

@@ -1023,9 +1023,9 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - **`Antifacts.html` (gốc) = MẶT TIỀN EBM theo CHUYÊN KHOA.** Gom mọi cập nhật chứng cứ + 45
   thang điểm + công cụ NC theo chuyên khoa; sinh bằng `tools/build_antifacts.py`. **TỰ TÍCH LŨY:**
   bước cuối `EBM_MASTER/tools/sync_all.py` chạy `build_library.py add` (làm giàu badge) →
-  `build_antifacts.py`; 2 lịch launchd (`com.medicalebm.weeklysafety`/`com.medicalebm.monthlyupdate`
-  — nhãn KHÔNG có gạch dưới, khác tên file script `weekly_safety.sh`/`monthly_update.sh` bên trong,
-  dễ nhầm khi grep/tra log) cũng gọi. Nối 2 chiều với hub
+  `build_antifacts.py`; scheduled-task `ebm-antifacts-weekly` (thay 2 lịch launchd
+  `com.medicalebm.weeklysafety`/`com.medicalebm.monthlyupdate` đã TẮT từ 15/08/2026, runs=0) cũng
+  gọi. Nối 2 chiều với hub
   (nút "🛡️ Antifacts ↗" trên 3 trang hub ⇄ "↩ Hub EBM" trên Antifacts). Sửa bố cục = sửa generator,
   KHÔNG sửa tay HTML. Đã wired vào hệ agent: `.claude/agents/_BAN-DO-KET-NOI.md` §9; có skill `antifacts`.
 - **Thư mục "phụ" ở gốc — chưa từng liệt kê ở đây trước 2026-07-12, phát hiện qua audit toàn diện:**
@@ -1929,8 +1929,8 @@ Phase 3: Module Clinical (RAG guideline + drug check)
 - **(3) KHÔNG còn tự đồng bộ lên Antifacts/hub (đổi mặc định 2026-08-05 theo yêu cầu bác sĩ).**
   Trước đây bước này chạy `EBM_MASTER/tools/sync_all.py` mặc định; nay **chỉ chạy khi bác sĩ yêu cầu riêng**.
   ⚠️ **Bỏ chạy `sync_all.py` là KHÔNG ĐỦ để giữ một gói ngoài Antifacts:** `tools/build_antifacts.py` quét
-  `EBM-Dashboards/WebDashboard_*.html` bằng **glob**, và hai lịch launchd (`com.medicalebm.weeklysafety` /
-  `com.medicalebm.monthlyupdate`) vẫn dựng lại Antifacts từ chính thư mục đó — nên gói mới sẽ tự lên hub.
+  `EBM-Dashboards/WebDashboard_*.html` bằng **glob**, và scheduled-task `ebm-antifacts-weekly`
+  (thay hai lịch launchd đã TẮT 15/08/2026) vẫn dựng lại Antifacts từ chính thư mục đó — nên gói mới sẽ tự lên hub.
   Muốn giữ ngoài hub thì **phải khai tên file** vào `EBM-Dashboards/antifacts-exclude.txt` (mỗi dòng một tên
   file; `#` là chú thích), rồi chạy lại `python3 tools/build_antifacts.py`.
   Nội dung mục (3) cũ giữ lại dưới đây để dùng khi bác sĩ yêu cầu đồng bộ:

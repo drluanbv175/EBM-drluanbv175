@@ -51,7 +51,7 @@
     "ten_viet": "Đặt lịch chạy tự động",
     "vi": "Tạo tác vụ chạy theo lịch trên máy chủ (theo giờ, theo ngày trong tuần), hoặc hẹn chạy một lần vào thời điểm định trước.",
     "dung_khi": "Khi muốn một việc tự chạy định kỳ mà không cần bác sĩ mở máy — ví dụ quét cập nhật guideline hằng tuần.",
-    "luu_y": "Hệ EBM của bác sĩ đã có lịch riêng bằng launchd (com.medicalebm.weeklysafety / monthlyupdate) — đừng đặt trùng hai nơi."
+    "luu_y": "Hệ EBM của bác sĩ đã có lịch riêng bằng scheduled-tasks Claude (thu-thap-tuan-an-toan-thuoc, cap-nhat-thang-ebm, goi-duyet-tuan-ebm... — thay launchd đã tắt từ 15/08/2026) — đừng đặt trùng hai nơi."
   },
   "claude-api": {
     "ten_viet": "Tra cứu Claude API",

@@ -36,11 +36,30 @@ def tra_khoi() -> str:
            if s.get("measured_latency_days") is not None]
     dc = GOC / "quality" / "eval" / "doi-chung" / "2026-Q3.md"
     uoc = "7/10 (Q3/2026)" if dc.exists() else "[CHƯA CHẠY VÒNG NÀO]"
+    # Trạm "web hội" = access html-watch (GOLD/GINA/KDIGO/ADA/ESC/ACC-AHA…). Đo THẬT
+    # từ last_success_at thay vì câu chữ cố định — vá 13/09/2026: câu cũ hardcode
+    # "CHƯA CHẠY (chờ phê duyệt egress)" cho MỌI lần sinh báo cáo, kể cả sau khi
+    # nhiều trạm đã chạy thật qua kênh Browser (--nap-van-ban), khiến báo cáo nói
+    # sai một sự thật đã đổi.
+    web_hoi = [s for s in src if s.get("access") == "html-watch"]
+    da_chay = [s for s in web_hoi if s.get("last_success_at")]
+    chua_chay = [s for s in web_hoi if not s.get("last_success_at")]
+    if not web_hoi:
+        dong_web_hoi = "trạm web hội: [CHƯA CÓ TRẠM NÀO KHAI TRONG SỔ NGUỒN]"
+    elif not chua_chay:
+        dong_web_hoi = (f"trạm web hội {len(da_chay)}/{len(web_hoi)} đã chạy thật qua kênh "
+                         f"Browser (egress Python cho tiến trình sandbox/cloud vẫn bị chặn — "
+                         f"xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md)")
+    else:
+        dong_web_hoi = (f"trạm web hội {len(da_chay)}/{len(web_hoi)} đã chạy thật qua kênh Browser; "
+                         f"còn {len(chua_chay)} trạm CHƯA CHẠY "
+                         f"({', '.join(s['name'].split('—')[0].strip() for s in chua_chay)}) — "
+                         f"egress Python vẫn chặn, chưa áp workaround Browser cho các trạm này")
     khoi = f"""ĐỘ PHỦ NGUỒN (cập nhật {du.get('updated', date.today().isoformat())})
 Đang giám sát tự động: {len(active)} nguồn — {"; ".join(s['name'].split('—')[0].strip() for s in active)}; nhịp tuần/tháng.
 Nhập thủ công (VN): {len(manual)} làn (BYT · Cục QLD) — số văn bản đã nhập: {sum(1 for s in manual if s.get('last_success_at')) or 0}; còn [CẦN XÁC NHẬN TẠI ĐƠN VỊ].
 KHÔNG phủ ({len(khong)} nhóm, khai rõ): {"; ".join(s['name'].split('—')[0].strip() for s in khong)}.
-Độ trễ đo được: PubMed-lane trung vị {lat[0] if lat else '[CHƯA ĐO]'} ngày (W33); trạm web hội CHƯA CHẠY (chờ phê duyệt egress) — guideline web-first hiện chịu trễ theo PubMed.
+Độ trễ đo được: PubMed-lane trung vị {lat[0] if lat else '[CHƯA ĐO]'} ngày (W33); {dong_web_hoi} — guideline web-first hiện chịu trễ theo PubMed cho tới khi trạm được nối vào lịch tự động.
 Ước lượng bắt được (đối chứng ngoài, quý gần nhất): {uoc} — ước lượng CÓ THIÊN LỆCH, không phải độ phủ.
 Giới hạn: hệ thống không đo được cái chưa từng thấy; thẩm định thiếu toàn văn bị gắn nhãn «thẩm định một phần» và chặn khỏi mức 'áp dụng ngay'."""
     thap = khoi.lower()
