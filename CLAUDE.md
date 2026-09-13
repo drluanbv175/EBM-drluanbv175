@@ -2064,12 +2064,20 @@ không tiêu chí đo được, không nguồn. Tức **một lá cờ tuyên b�
 R7 phải NÓI RA giới hạn nguyên văn của nguồn · R8 hạn rà soát 365 ngày ·
 **R9 — luật mạnh nhất: cờ bật mà 0 hội chứng có nguồn ⇒ LỖI CỨNG.** Thiếu file cờ ⇒ fail-closed
 (giả định cờ đang bật), không đọc thành "cờ đang tắt".
-**Độ phủ hiện tại, nói thẳng: 1/8 hội chứng có nguồn · 0/8 có lời dặn bệnh nhân.** Mục duy nhất đã
-điền là `dau-dau`, chép NGUYÊN 15 mục **SNNOOP10** (Do TP và cs., Neurology 2019;92(3):134-144 ·
+⛔ **ĐÍNH CHÍNH 13/09/2026 — câu "1/8 · 0/8" dưới đây đã LỖI THỜI, giữ làm dấu vết lịch sử.** Đo lại
+trực tiếp bằng `python3 tools/kiem_safety_net.py`: bản `clinical_runtime/safety_net_templates.json`
+đã lên **v2.2.0** (`ngay_cap_nhat: 2026-08-29`) — **8/8 hội chứng có nguồn, 8/8 có lời dặn bệnh
+nhân**, chốt báo 🟢. `lich_su_duyet` tự ghi rõ tiến trình thật: bác sĩ đã duyệt cả 7 khối cờ đỏ còn
+lại (`de_xuat` → `da_duyet`) ngày 29/08/2026, và yêu cầu bổ sung nguồn cho lời dặn bệnh nhân — 8
+khối lời dặn được ghi kèm nguồn tra sống PubMed cùng ngày, nhãn `de_xuat` (câu chữ cuối vẫn CHỜ bác
+sĩ chuẩn y, khác "đã khoá"). Vì cây làm việc của phiên này có nhiều worktree song song
+(`.claude/worktrees/*`), bản đã đo là bản ở **CÂY CHÍNH** (`Path(__file__)` của chính
+`tools/kiem_safety_net.py`, không phải bản sao trong worktree nào) — không suy đoán.
+~~Độ phủ hiện tại, nói thẳng: 1/8 hội chứng có nguồn · 0/8 có lời dặn bệnh nhân.~~ Mục đầu tiên
+được điền là `dau-dau`, chép NGUYÊN 15 mục **SNNOOP10** (Do TP và cs., Neurology 2019;92(3):134-144 ·
 PMID **30587518** · doi:10.1212/WNL.0000000000006697) kèm **giới hạn nguyên văn của chính bài gốc**
-("một công cụ sàng lọc đã kiểm định VẪN CHƯA CÓ") — không được trình bày như thang đã kiểm định.
-7 hội chứng còn lại để `chua-dien` + `[CẦN BÁC SĨ ĐIỀN]`: **trạng thái TRUNG THỰC, không phải lỗi**
-— bịa ngưỡng cờ đỏ cho 7 hội chứng là đúng thứ doctrine cấm tuyệt đối.
+("một công cụ sàng lọc đã kiểm định VẪN CHƯA CÓ") — không được trình bày như thang đã kiểm định; 7
+hội chứng còn lại theo sau cùng khuôn đó.
 Hồi quy: `python3 tools/test_kiem_safety_net.py` (21 test, mutation-tested).
 🔎 **Chính test bắt được một fail-open trong bản đầu của chốt:** `hc.get("dan_benh_nhan_quay_lai", {})`
 — `{}` LÀ dict nên `isinstance` luôn đúng ⇒ hội chứng **thiếu hẳn** khối lời dặn vẫn lọt R3. Mặc định
@@ -2101,9 +2109,9 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   `g0_quality_gate.refresh_checkpoint` nay gỡ cờ, giữ truy vết) và 2 bản `.docx` đề cương còn ký tự trang
   trí/12pt (render lại bằng `xuat_docx_chuan.py --file`). Luật màu BH08: 🟡 KHÔNG phải lỗi; cảnh báo độ tươi
   chỉ theo mtime — nội dung có khớp hay không xem trục ② chấm sống. Không ký, không sinh lại artifact.
-- **Sổ việc chưa đóng (tầng cuộc gặp):** `python3 tools/so_viec_chua_dong.py` — mặc định in việc
+- **Sổ việc chưa đóng (tầng cuộc gặp):** `python3 ../tools/so_viec_chua_dong.py` — mặc định in việc
   quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
-- **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
+- **Chốt safety-netting:** `python3 ../tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
   lời dặn (9 luật, R9 chặn cứng khi lá cờ `enforce_safety_net_templates` nói hộ).
 - **Kiểm rút bài + độ tươi 32 thang điểm verified — QUÝ (mới 13/09/2026, sau audit toàn diện):**
   `python3 tools/kiem_do_tuoi_thang_diem.py` (`--nhanh` chỉ đọc sổ, không gọi mạng; `--json`).
@@ -2121,7 +2129,7 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   `scripts/quarterly_clinical_scores_check.sh` — owner DUY NHẤT, KHÔNG nối trùng qua
   `tu_khoi_dong.py`. Test: `pytest tests/test_kiem_do_tuoi_thang_diem.py` (18 test, mutation-tested
   2 phép — bỏ KHONG_BIET khỏi tập vấn đề · để lọt văn bản thừa vào chế độ `--json`).
-- **Markdown → Word, font mặc định TIMES NEW ROMAN:** `python3 tools/md_sang_docx_times.py <file>.md
+- **Markdown → Word, font mặc định TIMES NEW ROMAN:** `python3 ../tools/md_sang_docx_times.py <file>.md
   [--ra <ra>.docx] [--co-chu 12]`. Lấp khoảng trống mà `build_dashboard_docx.py` không phủ (công cụ
   đó chỉ đọc khối `DATA` của dashboard, không chuyển được tài liệu Markdown thường). Bản `.docx`
   sinh TỪ CHÍNH file `.md` nguồn — cùng nguyên tắc "một nguồn, nhiều bản phái sinh" của bộ năm, để
@@ -2129,11 +2137,11 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   *nghiêng* · `mã` · liên kết (in kèm URL để bản giấy tra được nguồn). Đoạn mã GIỮ Times New Roman,
   phân biệt bằng nền xám — không đổi font, vì mặc định đã được ấn định. **KHÔNG commit file `.docx`
   sinh ra**: nó tái tạo được từ `.md` bằng một lệnh, giống mọi dữ liệu phái sinh khác của repo.
-- **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
-- **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 tools/check_claude_codex_sync_health.py`.
-- **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
-- **Kiểm riêng clinical runtime governance:** `python3 tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
-- **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python3 tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
+- **Kiểm + đồng bộ toàn hệ một lệnh:** `python3 ../tools/upgrade_verify.py` (hoặc bấm đúp "Nâng cấp & Kiểm tra EBM") — chạy trọn enforce→sync→check→routing→assess→audit→orchestrator(validate+test).
+- **Kiểm riêng repo/Claude Code/Codex alignment:** `python3 ../tools/verify_claude_code_repo_alignment.py` — bắt lệch `AGENTS.md`/`CLAUDE.md`, file governance chưa track Git, hoặc sync health đỏ. Nếu cần soi riêng mirror agent, chạy `python3 ../tools/check_claude_codex_sync_health.py`.
+- **Kiểm riêng rubric QA ↔ LESSONS taxonomy:** `python3 ../tools/verify_lessons_rubric_alignment.py` — bắt mọi mã lỗi rubric thiếu hàng taxonomy/bridge để vòng Evaluate→Learn không hở.
+- **Kiểm riêng clinical runtime governance:** `python3 ../tools/verify_clinical_runtime_schema_hardening.py` — chốt source integrity, prompt injection, conflicting evidence trong schema.
+- **Kiểm riêng pipeline cập nhật chứng cứ lâm sàng:** `python3 ../tools/verify_clinical_evidence_update_pipeline.py` — kiểm Evidence Workbench→verify_dashboard→library→derivatives→hợp đồng sync_all bằng fixture offline không PII.
 - **Kiểm cổng triển khai giám sát ngoại trú:** `python3 medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online` — PASS cuối chỉ khi đủ runtime + UAT thật; pre-commit/audit dùng `--contract-check` để kiểm fail-closed mà không giả lập phê duyệt.
 - **Kiểm LIÊM CHÍNH NỘI DUNG tài liệu nghiên cứu (mới 2026-07-31):**
   `python3 tools/verify_exports_integrity.py` (trong `medical-ebm-automation/`; `--staged` cho hook,
@@ -2148,8 +2156,8 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   CHẶN; bản đã sửa → sạch; 42 tài liệu `exports/` → 0 lỗi chặn, 1 cảnh báo (không dương tính giả);
   thử commit thật file hỏng → hook chặn, HEAD không đổi. **Phạm vi cố ý hẹp:** chỉ bắt dấu hiệu
   hỏng máy đọc được, KHÔNG chấm chất lượng khoa học, KHÔNG thay quality gate G0-G10.
-- **Chạy chu trình tự động có kiểm soát:** `python3 tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
-- **Orchestrator chạy được (control plane 8 năng lực):** `python3 tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` chạy dry-run mặc định; thêm `--execute` để agent tạo/sửa artifact thật trong các phiên Codex tạm thời chỉ-đọc, có revision và re-route tối đa 3 vòng. Trước phát hành, Lớp 1 rule-based chấm revision hiện tại; gói lâm sàng còn có critic Q1–Q7 ở phiên tách biệt, Q2/Q5 đỏ leo thang ngay. `--capabilities`/`--validate`/`--resume`; thiếu đầu vào thật hoặc lỗi runtime đều fail-closed. Giới hạn: cùng họ mô hình không phải hội đồng bác sĩ; mọi Cổng A/B/G và pipeline nghiên cứu canonical vẫn giữ nguyên. Tài liệu/test: `tools/orchestrator/`.
+- **Chạy chu trình tự động có kiểm soát:** `python3 ../tools/run_controlled_automation_cycle.py` — gom sync/routing/gate/dữ liệu/phản biện-thống kê/clinical governance thành một quyết định fail-closed hoặc human-gated.
+- **Orchestrator chạy được (control plane 8 năng lực):** `python3 ../tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` chạy dry-run mặc định; thêm `--execute` để agent tạo/sửa artifact thật trong các phiên Codex tạm thời chỉ-đọc, có revision và re-route tối đa 3 vòng. Trước phát hành, Lớp 1 rule-based chấm revision hiện tại; gói lâm sàng còn có critic Q1–Q7 ở phiên tách biệt, Q2/Q5 đỏ leo thang ngay. `--capabilities`/`--validate`/`--resume`; thiếu đầu vào thật hoặc lỗi runtime đều fail-closed. Giới hạn: cùng họ mô hình không phải hội đồng bác sĩ; mọi Cổng A/B/G và pipeline nghiên cứu canonical vẫn giữ nguyên. Tài liệu/test: `../tools/orchestrator/`.
 - **"Đề tài này THỰC SỰ đang ở đâu, còn gì phải làm?" (mới 2026-07-27):**
   `python3 tools/study_readiness.py --study <mã>` (hoặc `--all`). Trả lời đúng câu hỏi mà
   `list_studies.py` KHÔNG trả lời được: nó đếm **việc CHƯA làm** từ chính tài liệu của đề tài
