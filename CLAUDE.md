@@ -1160,8 +1160,11 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - Nguồn miễn phí: PubMed E-utilities, Europe PMC, Crossref, OpenAlex, openFDA… (không key)
 - Nguồn có key (mặc định TẮT, bật khi có key thật): Semantic Scholar; **Scopus (Elsevier) — thêm
   13/09/2026**, `app/sources/scopus.py`, đòi `SCOPUS_API_KEY` bắt buộc thật (khác Semantic Scholar
-  vẫn chạy được không key) — xem `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để biết
-  giới hạn (Search API không trả abstract đầy đủ, không tham gia chuỗi kiểm rút bài).
+  vẫn chạy được không key); **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026**,
+  `app/sources/dynamed.py`, OAuth2 `client_credentials` (KHÁC key đơn giản của Scopus — cần Customer
+  ID + Group ID do đại diện EBSCO cấp để đăng ký app, chưa chắc mọi tài khoản DynaMed cá nhân đều có
+  quyền này), **CHƯA xác nhận chạy thật, đang chờ credential từ bác sĩ** — xem
+  `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để biết chi tiết + giới hạn của cả hai.
 - Email: SMTP (Gmail App Password)
 
 ## Nguyên tắc bắt buộc
