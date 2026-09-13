@@ -164,7 +164,7 @@
     "hô hấp"
    ],
    "access": "html-watch",
-   "endpoint_or_url": "https://goldcopd.org/gold-reports/",
+   "endpoint_or_url": "https://goldcopd.org/2026-gold-report-and-pocket-guide/",
    "auth_required": false,
    "terms_ok": true,
    "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
@@ -174,7 +174,7 @@
    "owner": "agent-A2",
    "status": "active",
    "last_success_at": "2026-09-13",
-   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-010 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+   "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).",
    "kich_hoat": {
     "ngay": "2026-09-01",
     "bang": "giam_sat_to_chuc --bat-neu-ok",
