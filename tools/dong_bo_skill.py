@@ -86,15 +86,47 @@ def tim_runtime() -> Path | None:
     return ung_vien[0] if ung_vien else None
 
 
+def duong_dan_sao_luu(runtime: Path, ten_skill: str, stamp: str) -> Path:
+    """Đường dẫn sao lưu NẰM NGOÀI thư mục skill mà Claude Desktop quét — cùng
+    khuôn `dong_bo_skill_claude_codex.py::backup_path()` đã dùng cho đường
+    symlink `~/.claude/skills`/`~/.codex/skills` (docstring hàm đó: "Tạo đường
+    dẫn sao lưu nằm ngoài thư mục skill đang được quét").
+
+    VÌ SAO CÓ (13/08/2026 tạo bug, vá 13/09/2026): trước bản vá này, `--ap-dung`
+    gọi `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)` — sao lưu
+    NGAY TRONG `runtime` (chính thư mục Claude Desktop coi mỗi thư mục con là
+    MỘT skill ứng viên). Mỗi lần đẩy tạo thêm một "skill" rác tên
+    `<ten_skill>.bak-<stamp>` (Claude hiển thị thành
+    `<ten_skill>-bak-<stamp>` trong danh sách skill gọi được, dấu chấm đổi
+    thành gạch ngang) — đo thật 13/09/2026: 3 mục rác
+    (`cap-nhat-chung-cu-y-khoa.bak-20260913-174830` và 2 mục khác) lọt vào danh
+    sách skill của phiên model, gây nhầm lẫn cho cả bác sĩ lẫn Claude. Bug này
+    ĐÃ được vá cho đường symlink (`ensure_link`/`backup_path`) từ trước nhưng bị
+    bỏ sót ở đường Cowork runtime — cùng họ lỗi «vá một nơi, quên nơi kia» đã
+    lặp lại nhiều lần trong repo này.
+
+    Thư mục sao lưu là SIBLING của `runtime` (`<runtime>-backup`, không phải
+    `<runtime>/...`), nên KHÔNG khớp glob `*/*/skills` mà `tim_runtime()` dùng
+    và KHÔNG nằm trong `runtime.iterdir()` mà Claude Desktop quét làm skill."""
+    thu_muc = runtime.parent / f"{runtime.name}-backup"
+    thu_muc.mkdir(parents=True, exist_ok=True)
+    return thu_muc / f"{ten_skill}.bak-{stamp}"
+
+
 def don_bak(runtime: Path) -> int:
-    """Dọn mọi mục tên `*.bak-*` (BH22) khỏi thư mục skill đang chạy — TÁCH theo
-    is_dir()/is_file() vì từ khi dong_bo_skill_claude_codex.py sao lưu NGUYÊN THƯ
-    MỤC skill (`shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)`) thay vì
-    từng file rời, rglob("*.bak-*") trả về cả DIRECTORY khớp mẫu tên. Gọi
-    `.unlink()` lên một thư mục trên macOS ném `PermissionError` (không phải
-    `IsADirectoryError` — dễ đọc nhầm thành lỗi quyền hệ thống) và giết cả lượt dọn
-    giữa chừng (VÁ 25/08/2026, BH75 — đo được 17 mục rác tồn đọng từ 13/08 vì mọi
-    lần gọi `--don-bak` trước đó đều chết ngay ở thư mục `.bak-*` đầu tiên).
+    """Dọn mọi mục tên `*.bak-*` (BH22) còn SÓT trong thư mục skill đang chạy —
+    TÁCH theo is_dir()/is_file() vì bản CŨ của `--ap-dung` (trước 13/09/2026, xem
+    `duong_dan_sao_luu`) từng sao lưu NGUYÊN THƯ MỤC skill vào chính `runtime`
+    bằng `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)`, nên
+    rglob("*.bak-*") trả về cả DIRECTORY khớp mẫu tên. Gọi `.unlink()` lên một
+    thư mục trên macOS ném `PermissionError` (không phải `IsADirectoryError` —
+    dễ đọc nhầm thành lỗi quyền hệ thống) và giết cả lượt dọn giữa chừng (VÁ
+    25/08/2026, BH75 — đo được 17 mục rác tồn đọng từ 13/08 vì mọi lần gọi
+    `--don-bak` trước đó đều chết ngay ở thư mục `.bak-*` đầu tiên).
+
+    Từ 13/09/2026, `--ap-dung` KHÔNG còn tạo `.bak-*` mới trong `runtime` (đã
+    chuyển sang `duong_dan_sao_luu`, ghi ra thư mục ngoài) — hàm này nay chỉ còn
+    cần cho dọn TÀN DƯ từ trước bản vá, không phải thao tác bảo trì định kỳ nữa.
     Trả về số mục đã xoá."""
     rac = list(runtime.rglob("*.bak-*"))
     for f in rac:
@@ -264,19 +296,21 @@ def main() -> int:
     for k in can_day:
         src, dst = NGUON / k, runtime / k
         if dst.exists():
-            shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", dirs_exist_ok=True)
+            shutil.copytree(dst, duong_dan_sao_luu(runtime, k, stamp), dirs_exist_ok=True)
         for rel in (ket[k]["day"] or [p.relative_to(src) for p in src.rglob("*") if p.is_file()]):
             f, d = src / rel, dst / rel
             d.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, d)
             da_day += 1
-    print(f"\n✓ Đã đẩy {da_day} file cho {len(can_day)} skill (sao lưu đuôi .bak-{stamp}).")
+    print(f"\n✓ Đã đẩy {da_day} file cho {len(can_day)} skill "
+          f"(sao lưu ở {runtime.name}-backup/*.bak-{stamp}, KHÔNG nằm trong "
+          "thư mục skill đang chạy).")
     if phan_ky and not a.nguon_la_chuan:
         print(f"⚠ Bỏ qua {len(phan_ky)} skill phân kỳ hai chiều — chưa đụng tới.")
         return 2
     if phan_ky:
         print(f"  Trong đó {len(phan_ky)} skill phân kỳ đã bị nguồn ghi đè theo "
-              f"--nguon-la-chuan; bản runtime cũ nằm ở .bak-{stamp}.")
+              f"--nguon-la-chuan; bản runtime cũ nằm ở {runtime.name}-backup/*.bak-{stamp}.")
     return 0
 
 
