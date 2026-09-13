@@ -26,8 +26,10 @@ Mã thoát: 0 sạch 🔴 · 1 chỉ 🟡 · 2 có 🔴. Cần bác sĩ kiểm c
 """
 from __future__ import annotations
 
+import io
 import re
 import sys
+import tokenize
 from pathlib import Path
 
 for _s in (sys.stdout, sys.stderr):
@@ -97,12 +99,78 @@ def _che_chu_thich_dong(s: str) -> str:
     return s
 
 
-def _mask_khong_phai_code(dong: list[str]) -> list[str]:
-    """Trả bản sao các dòng với CHÚ THÍCH và DOCSTRING đã che — bẫy đo thật ngay
-    lượt quét đầu: 6/12 «phát hiện» là docstring/chú thích ĐANG KỂ về chính bài
-    học cũ (ensure_strict_source mô tả bug đã vá; chot_hoi_quy liệt kê bài học;
-    chính file này nêu ví dụ). Chốt bắt lời kể về lỗi thì chốt thành máy tạo
-    báo động giả. Máy trạng thái ''' / \"\"\" đơn giản — đủ cho kho tool này."""
+_TIEN_TO_CHUOI_RE = re.compile(r"^[a-zA-Z]*")
+
+# Python ≥3.12 (PEP 701) tách f-string ba-nháy thành FSTRING_START/MIDDLE/END
+# thay vì MỘT token STRING duy nhất như <3.12. `getattr(..., None)` để tương
+# thích ngược: trên <3.12 hai hằng số này không tồn tại, nhánh so sánh
+# `tok.type == _FSTRING_START` không bao giờ khớp (tok.type luôn là số
+# nguyên ≥0, không thể == None) nên tự động không chạy — đúng ý, vì trên
+# <3.12 f-string ba-nháy đã là MỘT token STRING, được `_la_chuoi_ba_nhay` xử
+# lý đủ rồi.
+_FSTRING_START = getattr(tokenize, "FSTRING_START", None)
+_FSTRING_END = getattr(tokenize, "FSTRING_END", None)
+
+
+def _la_chuoi_ba_nhay(nguyen_van_token: str) -> bool:
+    """True nếu một token `tokenize.STRING` (hay `FSTRING_START`) là chuỗi BA
+    NHÁY kiểu docstring (`'''...'''` hay `\"\"\"...\"\"\"`, có thể mang tiền tố
+    r/b/f/u) — xét trên NGUYÊN VĂN token đã tokenize, không phải khớp chuỗi
+    con trần trên văn bản thô. Nhờ vậy một chuỗi MỘT nháy có NỘI DUNG là ba
+    ký tự nháy giống hệt dấu docstring — ví dụ `'\"\"\"'` (đúng dòng mã đã gây
+    báo động giả 12/09/2026, xem docstring `_mask_khong_phai_code`) — KHÔNG
+    bị coi là mở/đóng docstring: `tok.string` của nó là `'\"\"\"'` (bắt đầu
+    bằng `'`, không phải ba dấu `\"`), nên hàm này trả `False` đúng."""
+    phan_con_lai = _TIEN_TO_CHUOI_RE.sub("", nguyen_van_token, count=1)
+    return phan_con_lai.startswith('"""') or phan_con_lai.startswith("'''")
+
+
+def _che_khoang(dong_ky_tu: list[list[str]], bd: tuple[int, int], kt: tuple[int, int]) -> None:
+    """Thay ký tự trong khoảng [bd, kt) (toạ độ (dòng 1-based, cột 0-based)
+    của `tokenize`) bằng khoảng trắng, KHÔNG xoá — giữ nguyên số dòng và độ
+    dài từng dòng để chỉ số dòng báo cáo ở `quet_file()`/`main()` không lệch
+    so với `dong` (danh sách dòng GỐC chưa che, dùng để tra miễn trừ
+    `# da-nen: bo-qua`)."""
+    (dong_dau, cot_dau), (dong_cuoi, cot_cuoi) = bd, kt
+    for so_dong in range(dong_dau, dong_cuoi + 1):
+        idx = so_dong - 1
+        if not (0 <= idx < len(dong_ky_tu)):
+            continue
+        ky_tu = dong_ky_tu[idx]
+        c0 = cot_dau if so_dong == dong_dau else 0
+        c1 = cot_cuoi if so_dong == dong_cuoi else len(ky_tu)
+        for k in range(c0, min(c1, len(ky_tu))):
+            ky_tu[k] = " "
+
+
+def _mask_khong_phai_code_ngay_tho(dong: list[str]) -> list[str]:
+    """Bản CŨ (che bằng TÁCH CHUỖI CON THÔ trên `\"\"\"`/`'''`, không qua
+    `tokenize`) — CHỈ dùng khi `tokenize` không đọc được văn bản (file lỗi cú
+    pháp Python từ trước), còn hơn không che gì cả. KHÔNG dùng cho đường đi
+    bình thường: đây CHÍNH LÀ nguồn của một báo động giả đã vá 12/09/2026 —
+    xem `_mask_khong_phai_code` để biết cơ chế thay thế.
+
+    Bằng chứng thực nghiệm (không phải giả định — dò bằng cách in trạng thái
+    `trong_ds` qua từng dòng của chính file bị báo động giả): file
+    `medical-ebm-automation/tools/kiem_newline_vung_ky.py`, hàm
+    `_la_chuoi_ba_nhay()`, có dòng MÃ THẬT
+    `return phan_con_lai.startswith('\"\"\"') or phan_con_lai.startswith("'''")`
+    — `'\"\"\"'` là một chuỗi MỘT NHÁY có NỘI DUNG là ba ký tự nháy kép. Hàm
+    này chỉ tìm chuỗi con `\"\"\"`/`'''` bằng `in`/`.split()` trên văn bản thô,
+    không phân biệt được "ba ký tự nháy đó là DẤU MỞ/ĐÓNG docstring thật" với
+    "ba ký tự nháy đó chỉ là NỘI DUNG của một chuỗi một-nháy khác" — nên dòng
+    mã trên bị hiểu nhầm là MỞ một docstring mới, làm trạng thái "đang ở
+    trong docstring" LỆCH PHA cho TOÀN BỘ phần còn lại của file: docstring
+    thật của hàm `_mask_ngay_tho()` ngay sau đó (chứa câu ví dụ minh hoạ
+    `.write_text(..., encoding=\"utf-8\")` cho một bug CŨ đã vá) bị coi là MÃ
+    THẬT (không được che), khiến luật R6 của `quet_file()` khớp trúng câu ví
+    dụ trong văn xuôi thay vì một lời gọi `write_text()` thật đang thiếu
+    `newline=`.
+
+    `tokenize` (bản thay thế) không mắc lỗi này: nó là chính bộ phân tích cú
+    pháp Python, nên `'\"\"\"'` LUÔN được nhận diện đúng là MỘT token STRING
+    trọn vẹn mở/đóng bằng `'` — không bao giờ bị lẫn với dấu mở của một chuỗi
+    ba-nháy khác (xem `_la_chuoi_ba_nhay`)."""
     ra: list[str] = []
     trong_ds = None  # dấu docstring đang mở (''' hoặc \"\"\") hoặc None
     for ln in dong:
@@ -130,6 +198,88 @@ def _mask_khong_phai_code(dong: list[str]) -> list[str]:
     return ra
 
 
+def _mask_khong_phai_code(dong: list[str]) -> list[str]:
+    """Trả bản sao các dòng với CHÚ THÍCH và DOCSTRING (chuỗi ba-nháy) đã che,
+    dùng `tokenize` chuẩn của Python — thay cho bản cũ tách-chuỗi-con-thô
+    (`_mask_khong_phai_code_ngay_tho`, nay chỉ còn là dự phòng khi tokenize
+    thất bại; xem docstring của nó để có bằng chứng chi tiết về lỗi đã vá).
+
+    Vá 12/09/2026: bản cũ tìm `\"\"\"`/`'''` bằng khớp CHUỖI CON trần trên văn
+    bản thô, nên một dòng MÃ THẬT chứa chuỗi một-nháy có NỘI DUNG là ba ký tự
+    nháy — ví dụ `'\"\"\"'` trong chính
+    `medical-ebm-automation/tools/kiem_newline_vung_ky.py::_la_chuoi_ba_nhay()`
+    — bị hiểu nhầm là MỞ một docstring mới, làm lệch pha trạng thái "đang
+    trong docstring" cho TOÀN BỘ phần còn lại của file. Hậu quả đo được: một
+    docstring thật ở xa hơn trong cùng file (chứa câu ví dụ minh hoạ
+    `.write_text(..., encoding=\"utf-8\")` cho một bug CŨ đã vá) bị coi là MÃ
+    THẬT nên không được che, khiến luật R6 báo 🔴 tại một dòng văn xuôi giải
+    thích bug cũ, không phải một lời gọi `write_text()` thật đang thiếu
+    `newline=`.
+
+    `tokenize` không mắc lỗi này: nó là chính bộ phân tích cú pháp Python,
+    nên một chuỗi một-nháy như `'\"\"\"'` LUÔN là một token STRING trọn vẹn —
+    không bao giờ bị lẫn với DẤU MỞ/ĐÓNG của một chuỗi ba-nháy khác. Chỉ token
+    COMMENT và token STRING dạng ba-nháy (`_la_chuoi_ba_nhay`) mới bị che;
+    chuỗi một/hai nháy (kể cả chứa `#`/`\"\"\"`/`'''` làm nội dung, hay giá trị
+    thật của `encoding=`) được GIỮ NGUYÊN VĂN để các luật R1-R6 vẫn so khớp
+    được trên mã thật.
+
+    F-STRING BA NHÁY (PEP 701, Python 3.12+): `tokenize` tách thành
+    FSTRING_START/MIDDLE/(token biểu thức lồng trong `{...}`)/FSTRING_END
+    thay vì một token STRING duy nhất — dò cặp START…END khớp (đếm độ sâu, vì
+    có thể lồng f-string khác bên trong biểu thức) rồi che TRỌN khoảng đó,
+    cùng khuôn với
+    `medical-ebm-automation/tools/kiem_newline_vung_ky.py::_mask()` (đã giải
+    quyết đúng lớp lỗi này từ 16/08/2026, cho chính họ lỗi đang vá ở đây).
+
+    Chỉ THAY ký tự bị che bằng khoảng trắng (không xoá, không nối dòng) — giữ
+    nguyên số dòng và độ dài từng dòng để chỉ số dòng ở `quet_file()`/
+    `main()` không bị lệch. Nếu văn bản không tokenize được (file đã lỗi cú
+    pháp Python từ trước), hạ về `_mask_khong_phai_code_ngay_tho()` — còn hơn
+    không che được gì."""
+    nguon = "\n".join(dong)
+    dong_ky_tu = [list(ln) for ln in dong]
+    try:
+        cac_token = list(tokenize.generate_tokens(io.StringIO(nguon).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        return _mask_khong_phai_code_ngay_tho(dong)
+
+    so_token = len(cac_token)
+    i = 0
+    while i < so_token:
+        tok = cac_token[i]
+        if tok.type == tokenize.COMMENT:
+            _che_khoang(dong_ky_tu, tok.start, tok.end)
+            i += 1
+            continue
+        if tok.type == tokenize.STRING and _la_chuoi_ba_nhay(tok.string):
+            _che_khoang(dong_ky_tu, tok.start, tok.end)
+            i += 1
+            continue
+        if (
+            _FSTRING_START is not None
+            and tok.type == _FSTRING_START
+            and _la_chuoi_ba_nhay(tok.string)
+        ):
+            do_sau = 1
+            j = i + 1
+            ket_thuc = tok.end
+            while j < so_token and do_sau > 0:
+                tk = cac_token[j]
+                if tk.type == _FSTRING_START:
+                    do_sau += 1
+                elif tk.type == _FSTRING_END:
+                    do_sau -= 1
+                ket_thuc = tk.end
+                j += 1
+            _che_khoang(dong_ky_tu, tok.start, ket_thuc)
+            i = j
+            continue
+        i += 1
+
+    return ["".join(ky_tu) for ky_tu in dong_ky_tu]
+
+
 def quet_file(p: Path) -> tuple[list[str], list[str]]:
     do, vang = [], []
     try:
@@ -148,9 +298,12 @@ def quet_file(p: Path) -> tuple[list[str], list[str]]:
     biet_nen_tang = ("sys.platform" in text or "os.name" in text
                      or "platform.system" in text)
     try:
-        ten = str(p.relative_to(REPO))
+        # Luật R6 đối chiếu với VUNG_KY dùng dấu "/" cố định. `str(Path)`
+        # trên Windows sinh dấu "\\" nên mọi file trong vùng ký đều lọt chốt.
+        # `as_posix()` cho một biểu diễn ổn định trên cả hai nền tảng.
+        ten = p.relative_to(REPO).as_posix()
     except ValueError:
-        ten = str(p)
+        ten = p.as_posix()
     for i, ln in enumerate(code, 1):
         if MIEN_TRU in dong[i - 1]:
             continue
@@ -203,7 +356,7 @@ def main() -> int:
             except OSError:
                 continue
             code = _mask_khong_phai_code(dong)
-            ten = str(p.relative_to(REPO))
+            ten = p.relative_to(REPO).as_posix()
             for i, ln in enumerate(code, 1):
                 if MIEN_TRU in dong[i - 1]:
                     continue
