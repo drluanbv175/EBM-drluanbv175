@@ -2077,6 +2077,22 @@ trong mẫu SOAP là đổi THÓI QUEN chứ không phải code; ④ "tờ quy�
   quá hạn; `--them`/`--dong`/`--huy`/`--ds`/`--tuan`. Chỉ ĐO và NHẮC, không PII, ngoại tuyến.
 - **Chốt safety-netting:** `python3 tools/kiem_safety_net.py` — kiểm CẤU TRÚC ngân hàng cờ đỏ /
   lời dặn (9 luật, R9 chặn cứng khi lá cờ `enforce_safety_net_templates` nói hộ).
+- **Kiểm rút bài + độ tươi 32 thang điểm verified — QUÝ (mới 13/09/2026, sau audit toàn diện):**
+  `python3 tools/kiem_do_tuoi_thang_diem.py` (`--nhanh` chỉ đọc sổ, không gọi mạng; `--json`).
+  **Vì sao có:** PMID/DOI nguồn gốc của 32 thang điểm (`app/clinical_scores/verified.py`) chỉ được
+  xác minh MỘT LẦN (2026-06-14); `tests/test_verified_identifiers_online.py` là test opt-in không
+  có lịch chạy và KHÔNG kiểm rút bài (chỉ kiểm tồn tại) — trước ngày này kho 32 thang điểm có **0
+  cơ chế tự động tái-kiểm định kỳ**, dù một PMID nền tảng công thức/ngưỡng lâm sàng (CURB-65,
+  CHA2DS2-VASc, qSOFA, MELD-Na…) có thể bị rút mà không ai biết. Chạy CHUỖI 3 TẦNG rút bài
+  (`app/sources/retraction_chain.py`, cùng cơ chế cổng A12) cho PMID + Crossref `updated-by`
+  (BH33) cho thang chỉ có DOI; thang không có định danh nào (báo cáo/sách) ghi ⚪ — không phải lỗi
+  (BH08). Ghi sổ `state/kiem-thang-diem-quy.json`. Mã thoát **0** sạch · **1** có phát hiện cần
+  đọc (rút bài/EoC/không xác minh được — theo đúng bài học BH27 "không kiểm được PHẢI là một vấn
+  đề") · **2** lỗi công cụ. **KHÔNG bao giờ tự đổi cut-off/decision** dù phát hiện rút bài thật —
+  chỉ đo và báo. Lịch: tác vụ cloud `kiem-thang-diem-quy` (quý, ngày 2 tháng 1/4/7/10, 18:00) qua
+  `scripts/quarterly_clinical_scores_check.sh` — owner DUY NHẤT, KHÔNG nối trùng qua
+  `tu_khoi_dong.py`. Test: `pytest tests/test_kiem_do_tuoi_thang_diem.py` (18 test, mutation-tested
+  2 phép — bỏ KHONG_BIET khỏi tập vấn đề · để lọt văn bản thừa vào chế độ `--json`).
 - **Markdown → Word, font mặc định TIMES NEW ROMAN:** `python3 tools/md_sang_docx_times.py <file>.md
   [--ra <ra>.docx] [--co-chu 12]`. Lấp khoảng trống mà `build_dashboard_docx.py` không phủ (công cụ
   đó chỉ đọc khối `DATA` của dashboard, không chuyển được tài liệu Markdown thường). Bản `.docx`
