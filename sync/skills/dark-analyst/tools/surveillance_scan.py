@@ -49,7 +49,12 @@ TRUSTED_SOURCE_ALIASES = {
     "Annals of Internal Medicine": ("ann intern med", "annals of internal medicine"),
     "Nature Medicine": ("nature medicine", "nat med"),
     "NICE": ("nice", "national institute for health and care excellence"),
-    "USPSTF": ("uspstf", "u.s. preventive services task force"),
+    # Vá 14/09/2026 (workflow kiểm tra toàn diện): trang PubMed/JAMA thật viết
+    # "US Preventive Services Task Force" — KHÔNG dấu chấm — nên alias cũ "u.s.
+    # preventive services task force" (có dấu chấm) KHÔNG BAO GIỜ khớp; giữ cả
+    # hai dạng, không bỏ dạng cũ (vài nguồn/thời kỳ khác có thể vẫn viết có chấm).
+    "USPSTF": ("uspstf", "u.s. preventive services task force",
+               "us preventive services task force"),
     "WHO": ("who", "world health organization"),
     "CDC": ("cdc", "mmwr", "centers for disease control"),
     "FDA": ("fda", "food and drug administration"),
@@ -78,6 +83,30 @@ TRUSTED_SOURCE_ALIASES = {
 }
 AMBIGUOUS_SHORT_ALIASES = {"who", "ada", "acc", "aha", "esc", "acr", "ema", "ash", "ags", "gold", "gut",
                            "stroke", "neurology"}
+
+# Vá 14/09/2026 (workflow kiểm tra toàn diện, xác nhận sống qua Europe PMC:
+# 14/15 USPSTF Recommendation Statement thật đăng trên JAMA). detect_authority_source()
+# duyệt TRUSTED_SOURCE_ALIASES theo THỨ TỰ DICT và trả về khớp ĐẦU TIÊN — vì "JAMA"
+# đứng trước "USPSTF" trong dict, MỌI USPSTF Statement đăng trên JAMA (gần như toàn
+# bộ từ 2017) bị gán nhãn "JAMA", KHÔNG BAO GIỜ "USPSTF", dù alias "uspstf"/"u.s.
+# preventive services task force" có mặt trong dict — chuỗi khớp tồn tại nhưng
+# KHÔNG THỂ ĐƯỢC CHỌN vì lỗi thứ tự ưu tiên, không phải thiếu alias.
+# Các tạp chí trong nhóm này là NƠI ĐĂNG CHUNG cho nhiều tổ chức khác nhau (một
+# guideline JAMA có thể là của USPSTF, ACC/AHA, hoặc chính JAMA) nên chỉ được dùng
+# làm nhãn DỰ PHÒNG — kiểm SAU khi không alias TỔ CHỨC nào khớp. Cochrane KHÔNG nằm
+# trong nhóm này: "Cochrane Database of Systematic Reviews" là ấn phẩm CỦA CHÍNH
+# Cochrane, không phải nơi tổ chức khác đăng nhờ.
+_TAP_CHI_DA_NANG = frozenset({"NEJM", "The Lancet", "JAMA", "The BMJ", "Annals of Internal Medicine",
+                              "Nature Medicine"})
+# Tiền tố alias của CHÍNH các tạp chí đa năng — dùng để nhường vòng 1 khi tên
+# tạp chí (primary) đã rõ ràng thuộc một họ tạp chí đa năng, vd "JAMA Neurology"
+# bắt đầu bằng "jama". Không có nhường này thì alias MƠ HỒ của một tổ chức khác
+# (vd "neurology" của AAN/Neurology, chỉ so trên `primary`) sẽ khớp CHÍNH primary
+# đó ở vòng 1 trước khi vòng 2 kịp nhận đúng "JAMA Neurology" thuộc họ JAMA —
+# bắt được thật khi test_ba_nhan_tap_chi_bac_si_duyet_30_08 đỏ sau bản vá đầu.
+_TAP_CHI_DA_NANG_TIEN_TO = tuple(
+    alias.casefold() for name in _TAP_CHI_DA_NANG for alias in TRUSTED_SOURCE_ALIASES[name]
+)
 
 
 def _tls_context() -> ssl.SSLContext:
@@ -150,13 +179,34 @@ def _alias_match(alias: str, blob: str) -> bool:
 
 
 def detect_authority_source(journal_or_org: str = "", title: str = "") -> str:
-    """Gan nhan nguon uy tin loi de loc queue; khong phai phe duyet ap dung."""
+    """Gan nhan nguon uy tin loi de loc queue; khong phai phe duyet ap dung.
+
+    Vá 14/09/2026: kiểm alias TỔ CHỨC trước, alias TẠP CHÍ ĐA NĂNG
+    (_TAP_CHI_DA_NANG) sau — xem chú thích tại _TAP_CHI_DA_NANG. Không đổi cách
+    khớp từng alias (_alias_match/AMBIGUOUS_SHORT_ALIASES giữ nguyên), chỉ đổi
+    THỨ TỰ DUYỆT để nhãn tổ chức đặc hiệu không bị nhãn tạp chí chung che khuất."""
     primary = str(journal_or_org or "")
     combined = " | ".join(part for part in (primary, str(title or "")) if part)
     if not combined:
         return ""
+    primary_cf = primary.casefold()
     for name, aliases in TRUSTED_SOURCE_ALIASES.items():
+        if name in _TAP_CHI_DA_NANG:
+            continue
         for alias in aliases:
+            if alias in AMBIGUOUS_SHORT_ALIASES:
+                # Nhường vòng 2 khi chính tên tạp chí đã rõ ràng thuộc một họ tạp
+                # chí đa năng (vd "JAMA Neurology" bắt đầu bằng "jama") — xem chú
+                # thích tại _TAP_CHI_DA_NANG_TIEN_TO.
+                if primary_cf and primary_cf.startswith(_TAP_CHI_DA_NANG_TIEN_TO):
+                    continue
+                blob = primary
+            else:
+                blob = combined
+            if blob and _alias_match(alias, blob):
+                return name
+    for name in _TAP_CHI_DA_NANG:
+        for alias in TRUSTED_SOURCE_ALIASES[name]:
             blob = primary if alias in AMBIGUOUS_SHORT_ALIASES else combined
             if blob and _alias_match(alias, blob):
                 return name
@@ -280,7 +330,10 @@ def search(query: str, days: int, retmax: int, *,
     try:
         result = fetch_json(url).get("esearchresult", {})
     except RuntimeError:
-        return search_europe_pmc(query, days, retmax)
+        # Vá 14/09/2026: PHẢI chuyển tiếp loc_thiet_ke — thiếu dòng này thì tầng
+        # "mới nhất" (loc_thiet_ke=False) im lặng biến thành tầng có lọc ngay khi
+        # rơi xuống dự phòng, tái diễn đúng lỗi BH38 qua một đường khác.
+        return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke)
     ids = result.get("idlist", [])
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
@@ -291,13 +344,28 @@ def search_europe_pmc(
     retmax: int,
     *,
     fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+    loc_thiet_ke: bool = True,
 ) -> list[str]:
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện): trước đây bộ lọc PUB_TYPE
+    LUÔN áp dụng vô điều kiện, kể cả khi search() gọi hàm này làm DỰ PHÒNG cho
+    tầng "bắt cái mới nhất" (loc_thiet_ke=False, datetype='edat' — chính tầng
+    BH38 vá để không bỏ sót bài chưa được MEDLINE gán publication type). Đo sống
+    14/09/2026: NCBI đang chặn IP dùng chung (xác nhận trực tiếp — esearch trả
+    trang "Access Denied... blocked for possible abuse" thay vì JSON) — đúng
+    điều kiện khiến search() rơi xuống dự phòng này; khi đó bài mới vào PubMed
+    chưa kịp đánh chỉ mục bị Europe PMC lọc mất lần thứ hai, hoàn toàn im lặng
+    (TopicResult vẫn status='PASS'). Nay nhận đúng cờ loc_thiet_ke như search()
+    và chỉ áp PUB_TYPE khi True — tầng "mới nhất" giữ đúng ý nghĩa dù đi qua
+    đường dự phòng nào."""
     since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
     today = datetime.now(timezone.utc).date().isoformat()
+    loc = (
+        ' AND (PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
+        'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline")'
+        if loc_thiet_ke else ""
+    )
     term = (
-        f'({query}) AND (SRC:MED OR HAS_FT:Y) AND '
-        '(PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
-        'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline") '
+        f'({query}) AND (SRC:MED OR HAS_FT:Y){loc} '
         f'AND FIRST_PDATE:[{since} TO {today}]'
     )
     params = {
