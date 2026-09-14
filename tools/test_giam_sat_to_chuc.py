@@ -472,6 +472,138 @@ def test_rut_tieu_de_tu_van_ban_loai_ngay_thang_day_du_thang_truoc_ngay_gina() -
     assert not (ket & _NGAY_RAC_GINA)
 
 
+# Trích đoạn thật trang gov.uk/drug-safety-update (SRC-016 MHRA) 14/09/2026 —
+# mỗi cảnh báo an toàn thuốc in ĐÚNG 3 dòng liên tiếp: tiêu đề, mô tả, rồi
+# «Therapeutic area: … Published: DD Month YYYY» — xác nhận 14/14 cảnh báo
+# thật trên trang, không ngoại lệ.
+VAN_BAN_TRANG_THAT_MHRA = """Title: Drug Safety Update - GOV.UK
+URL: https://gov.uk
+Source element: <main>
+---
+Drug Safety Update
+From:
+Medicines and Healthcare products Regulatory Agency
+Alerts, recalls and safety information: medicines and medical devices
+Search
+Drug Safety Update
+Search
+Filter
+ results
+Skip to results
+867 updates
+Skip to results
+Filters should be used during the administration of Parenteral Nutrition for patients in all care settings
+
+Administration of parenteral nutrition without a filter has been associated with a number of adverse incidents including an embolism which resulted in a fatal outcome.
+
+Therapeutic area: Anaesthesia and intensive care and 12 others Published: 2 September 2026
+Domperidone: new contraindication in patients with phaeochromocytoma due to the risk of severe hypertension
+
+The product information has been updated for all domperidone products, to include a contraindication for patients with confirmed or suspected phaeochromocytoma (a rare tumour of the adrenal gland), due to the risk of episode...
+
+Therapeutic area: Cardiovascular disease and lipidology and 6 others Published: 21 July 2026
+Botulinum toxin type A products: updated warnings regarding risk of iatrogenic botulism
+
+Cases of iatrogenic botulism have been reported following the therapeutic or cosmetic use of botulinum toxin containing products where the toxin's effect extends beyond the area of treatment. Patients should seek immediate m...
+
+Therapeutic area: Cosmetic surgery and 4 others Published: 15 July 2026
+ACE-inhibitors: Be aware of the distinction between bradykinin- and histamine-mediated angioedema, as treatment strategies differ significantly
+
+Healthcare professionals should be aware of the potential for delayed onset of angioedema and the distinction between bradykinin- and histamine-mediated cases, as treatment strategies differ significantly and bradykinin-medi...
+
+Therapeutic area: Cardiovascular disease and lipidology and 4 others Published: 16 June 2026
+Amiodarone: reminder of risks of treatment and need for patient monitoring and supervision
+
+Amiodarone has been associated with serious and potentially life-threatening side effects, particularly of the lung, liver, and thyroid gland. We remind healthcare professionals that patients should be supervised and reviewe...
+
+Therapeutic area: Cardiovascular disease and lipidology and 1 others Published: 15 March 2022
+Finasteride and Dutasteride - updated safety warnings for psychiatric side effects and sexual dysfunction
+
+The MHRA has reviewed the evidence for finasteride and dutasteride and the risk of suicidal thoughts and behaviours and has recommended further measures to minimise this risk.
+
+Therapeutic area: Dermatology and 7 others Published: 11 May 2026
+Nasal decongestant sprays and drops containing xylometazoline hydrochloride / oxymetazoline hydrochloride: increased risk of rebound congestion, rhinitis medicamentosa, and tachyphylaxis with overuse
+
+There have been reports of worsening nasal congestion (rebound congestion) when the effects of nasal decongestant sprays or drops containing xylometazoline hydrochloride and oxymetazoline hydrochloride, wear off.
+
+Therapeutic area: Dispensing GP practices and 5 others Published: 30 April 2026
+Falsified Mounjaro KwikPen 15mg pre-filled pens
+
+A falsified version of Mounjaro (tirzepatide) KwikPen 15mg solution for injection has been found supplied through one online pharmacy in the UK. The falsified product is labelled with batch D873576 and applies to Mounjaro Kw...
+
+Therapeutic area: Dispensing GP practices and 5 others Published: 24 February 2026
+IXCHIQ Chikungunya vaccine: temporary suspension in people aged 65 years or older
+
+The Commission on Human Medicines (CHM) has temporarily restricted use of the IXCHIQ Chikungunya vaccine in people aged 65 years and over following very rare fatal reactions reported globally. This is a precautionary measure...
+
+Therapeutic area: Immunology and vaccination and 2 others Published: 18 June 2025
+IXCHIQ Chikungunya vaccine: updates to restrictions of use following safety review
+
+Following the completion of a safety review and the recommendations of the Commission on Human Medicines (CHM), the IXCHIQ Chikungunya vaccine is no longer indicated for adults over the age of 60 years, and is contraindicate...
+
+Therapeutic area: Immunology and vaccination and 2 others Published: 11 February 2026
+Semaglutide (Wegovy, Ozempic and Rybelsus): risk of Non-arteritic Anterior Ischemic Optic Neuropathy (NAION)
+
+Non-arteritic anterior ischemic optic neuropathy (NAION), a condition that can cause sudden deterioration in vision, usually in one eye at a time, has been very rarely reported in association with semaglutide in the treatmen...
+
+Therapeutic area: Emergency medicine and 5 others Published: 5 February 2026
+GLP-1 receptor agonists and dual GLP-1/GIP receptor agonists: strengthened warnings on acute pancreatitis, including necrotising and fatal cases
+
+The product information for all Glucagon-Like Peptide-1 (GLP-1) receptor agonists and dual GLP-1/glucose-dependent insulinotropic polypeptide (GIP) receptor agonists has been further updated to highlight the potential risk o...
+
+Therapeutic area: Emergency medicine and 5 others Published: 29 January 2026
+Isotretinoin - changes to prescribing guidance and additional risk minimisation measures
+
+The Commission on Human Medicines (CHM) has endorsed changes to the risk minimisation measures for isotretinoin, following a review of the impact of the measures implemented in 2023. We ask healthcare professionals to review...
+
+Therapeutic area: Dermatology and 4 others Published: 22 January 2026
+Improving Information Supplied with Gabapentinoids (Pregabalin/Gabapentin), Benzodiazepines and Z-Drugs
+
+The MHRA has reviewed the warnings regarding addiction, dependence, withdrawal, and tolerance for gabapentin, pregabalin, benzodiazepines, and z-drugs. The findings (detailed in the Public Assessment Report) were that it wa...
+
+Therapeutic area: General practice and 2 others Published: 8 January 2026
+"""
+
+_14_TIEU_DE_MHRA_THAT = {
+    "Filters should be used during the administration of Parenteral Nutrition for patients in all care settings",
+    "Domperidone: new contraindication in patients with phaeochromocytoma due to the risk of severe hypertension",
+    "Botulinum toxin type A products: updated warnings regarding risk of iatrogenic botulism",
+    "ACE-inhibitors: Be aware of the distinction between bradykinin- and histamine-mediated angioedema, as treatment strategies differ significantly",
+    "Amiodarone: reminder of risks of treatment and need for patient monitoring and supervision",
+    "Finasteride and Dutasteride - updated safety warnings for psychiatric side effects and sexual dysfunction",
+    "Nasal decongestant sprays and drops containing xylometazoline hydrochloride / oxymetazoline hydrochloride: increased risk of rebound congestion, rhinitis medicamentosa, and tachyphylaxis with overuse",
+    "Falsified Mounjaro KwikPen 15mg pre-filled pens",
+    "IXCHIQ Chikungunya vaccine: temporary suspension in people aged 65 years or older",
+    "IXCHIQ Chikungunya vaccine: updates to restrictions of use following safety review",
+    "Semaglutide (Wegovy, Ozempic and Rybelsus): risk of Non-arteritic Anterior Ischemic Optic Neuropathy (NAION)",
+    "GLP-1 receptor agonists and dual GLP-1/GIP receptor agonists: strengthened warnings on acute pancreatitis, including necrotising and fatal cases",
+    "Isotretinoin - changes to prescribing guidance and additional risk minimisation measures",
+    "Improving Information Supplied with Gabapentinoids (Pregabalin/Gabapentin), Benzodiazepines and Z-Drugs",
+}
+
+_METADATA_RAC_MHRA = {
+    "Therapeutic area: Anaesthesia and intensive care and 12 others Published: 2 September 2026",
+    "Therapeutic area: Cardiovascular disease and lipidology and 6 others Published: 21 July 2026",
+    "Therapeutic area: Dermatology and 7 others Published: 11 May 2026",
+}
+
+
+def test_rut_tieu_de_tu_van_ban_nhan_du_14_tieu_de_mhra() -> None:
+    """Vá 14/09/2026: 14/14 tiêu đề cảnh báo an toàn thuốc thật trên trang MHRA
+    phải được nhận đủ — trước bản vá, hầu hết bị rớt vì không chứa năm/từ khoá
+    (chỉ 1/14 lọt qua tình cờ nhờ chứa "updated")."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_MHRA)
+    assert _14_TIEU_DE_MHRA_THAT <= ket
+
+
+def test_rut_tieu_de_tu_van_ban_khong_nhan_metadata_therapeutic_area_mhra() -> None:
+    """Dòng metadata «Therapeutic area: … Published: …» kết thúc bằng năm nên
+    trước bản vá lọt qua RE_TIEU_DE thành "tiêu đề" giả — không được lẫn vào
+    kết quả dù đứng ngay sau mỗi tiêu đề thật."""
+    ket = G.rut_tieu_de_tu_van_ban(VAN_BAN_TRANG_THAT_MHRA)
+    assert not (ket & _METADATA_RAC_MHRA)
+
+
 def _don_dep(monkeypatch, tmp_path: Path) -> Path:
     """Trỏ 3 đường dẫn module-level (SO_NGUON/STATE/RA) vào tmp_path — không
     đụng file dự án thật khi chạy test."""
