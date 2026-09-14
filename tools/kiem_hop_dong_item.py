@@ -51,6 +51,24 @@ def _require_human_approval_flag() -> bool:
         return True
 
 
+def _lay_object(item: dict, khoa: str, loi: list[str]) -> dict:
+    """Lấy trường con dạng object; nếu CÓ MẶT nhưng không phải object (chuỗi/mảng
+    — lỗi soạn thảo rất dễ mắc, vd `"source": "RCT — Smith 2024"` thay vì
+    `{type, title, year, ...}`) thì báo VI PHẠM RÕ RÀNG thay vì để `.get()` phía
+    sau crash AttributeError (vá 14/09/2026, phát hiện qua workflow kiểm tra
+    toàn diện: bản cũ `item.get(k) or {}` chỉ lọc falsy, một chuỗi/mảng KHÔNG
+    rỗng vẫn lọt qua rồi crash — làm CLI thoát mã 1 TRÙNG với mã "có vi phạm",
+    và làm migrate_ledger.py (gọi kiem() không try/except trong vòng lặp) crash
+    CẢ LƯỢT di trú vì một thẻ lỗi, thay vì chỉ báo đúng thẻ đó)."""
+    gia_tri = item.get(khoa)
+    if gia_tri is None:
+        return {}
+    if not isinstance(gia_tri, dict):
+        loi.append(f"`{khoa}` phải là object, nhận {type(gia_tri).__name__}: {gia_tri!r}")
+        return {}
+    return gia_tri
+
+
 def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]:
     """Trả danh sách vi phạm — rỗng nghĩa là hợp lệ."""
     loi: list[str] = []
@@ -63,7 +81,7 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
     if item.get("decision") and item["decision"] not in DECISION:
         loi.append(f"decision={item['decision']!r} không hợp lệ")
 
-    src = item.get("source") or {}
+    src = _lay_object(item, "source", loi)
     if st not in ("UNRESOLVED", "NEW", None) and not (src.get("pmid") or src.get("doi")
                                                        or src.get("alt_id")):
         loi.append(f"status={st} nhưng KHÔNG có PMID/DOI/alt_id — chưa truy nguyên thì chưa qua NEW (I1)")
@@ -76,22 +94,22 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
     doi_hoi_duyet = (require_human_approval if require_human_approval is not None
                      else _require_human_approval_flag())
     if st in ("APPROVED", "APPLIED") and doi_hoi_duyet:
-        hr = item.get("human_review") or {}
+        hr = _lay_object(item, "human_review", loi)
         if not hr.get("reviewed_by"):
             loi.append(f"status={st} mà human_review.reviewed_by rỗng — chỉ bác sĩ được đặt (I4)")
 
     # I2/BH36 — không tự gán mức
-    ct = item.get("certainty") or {}
+    ct = _lay_object(item, "certainty", loi)
     if ct.get("reported_by_source") is False and ct.get("level") not in ("na", None):
         loi.append(f"certainty: nguồn KHÔNG chấm mà level={ct.get('level')!r} — tự gán mức (I2)")
     if ct.get("level") and ct["level"] not in CERTAINTY:
         loi.append(f"certainty.level={ct['level']!r} không hợp lệ")
 
-    sr = item.get("source_recommendation") or {}
+    sr = _lay_object(item, "source_recommendation", loi)
     if sr.get("normativeBasis") not in BASIS:
         loi.append(f"normativeBasis={sr.get('normativeBasis')!r} không hợp lệ")
 
-    ef = item.get("effect") or {}
+    ef = _lay_object(item, "effect", loi)
     if ef and (ef.get("point_estimate") is not None) and ef.get("as_reported") is not True \
             and not ef.get("derivation"):
         loi.append("effect có số mà as_reported≠true và KHÔNG ghi derivation — số ở đâu ra? (I1)")
@@ -106,7 +124,7 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
             loi.append("apply + hiệu số mà thiếu effect.source_location (bảng/hình nào?) "
                        "— không đối chiếu ngược được (LÔ H 9.1)")
 
-    oa = item.get("operational_assessment") or {}
+    oa = _lay_object(item, "operational_assessment", loi)
     if oa and oa.get("label") != "đánh giá vận hành — không phải phân hạng của nguồn":
         loi.append("operational_assessment thiếu nhãn bắt buộc — lớp 3 phải tự xưng danh (I3)")
     return loi

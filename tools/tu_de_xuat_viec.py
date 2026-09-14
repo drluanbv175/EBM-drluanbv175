@@ -23,6 +23,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -35,6 +36,20 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
+# Vá 14/09/2026 (workflow kiểm tra toàn diện): mục ⑥ trước đây hardcode
+# "~/.ebm-venv/bin/python" (bố cục POSIX) để chạy study_readiness.py — trên
+# Windows venv có bố cục "Scripts\python.exe", không có "bin/python", nên
+# subprocess.run ném FileNotFoundError, bị _chay() bắt và trả CHUỖI RỖNG một
+# cách IM LẶNG (không log, không cảnh báo). Hệ quả: mục ⑥ (nhắc bác sĩ về đề
+# tài C1a — G0 chờ 5 cờ FINER, hoặc 0/4 cổng cứng có chữ ký) vĩnh viễn vắng
+# mặt khỏi bảng đề xuất trên Windows — một trong hai máy chính bác sĩ dùng.
+# Khuôn theo đúng VENV_PY đã dùng ở audit_ebm_system.py/upgrade_verify.py/
+# chot_hoi_quy_bai_hoc.py — không phát minh cách mới.
+VENV_PY = (
+    Path.home() / ".ebm-venv" / "Scripts" / "python.exe"
+    if os.name == "nt"
+    else Path.home() / ".ebm-venv" / "bin" / "python"
+)
 DASH = REPO / "EBM-Dashboards"
 
 
@@ -195,7 +210,7 @@ def main() -> int:
                         "~/.ebm-venv/bin/python tools/rag_toan_van.py --dung-index"))
 
     # ⑥ Đề tài thật — việc người gần nhất (đọc readiness C1a)
-    out = _chay(["~/.ebm-venv/bin/python".replace("~", str(Path.home())),
+    out = _chay([str(VENV_PY),
                  str(REPO / "medical-ebm-automation" / "tools" / "study_readiness.py"),
                  "--study", "hai-long-benh-nhan-C1a-BVQY175"])
     if "CHƯA được bác sĩ chốt" in out:

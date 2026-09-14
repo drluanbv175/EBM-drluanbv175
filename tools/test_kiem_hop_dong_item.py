@@ -92,6 +92,48 @@ def test_flags_gia_co_false_thi_mac_dinh_tat_that(tmp_path, monkeypatch):
     assert not any("I4" in l for l in loi)
 
 
+def test_source_la_chuoi_bao_vi_pham_khong_crash():
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện): `source` là CHUỖI thay vì
+    object (lỗi soạn thảo rất dễ mắc) trước đây làm kiem() crash
+    AttributeError tại src.get(...) — CLI thoát mã 1 TRÙNG với mã "có vi
+    phạm", và migrate_ledger.py (gọi kiem() không try/except) crash cả lượt
+    di trú vì một thẻ lỗi. Nay phải báo vi phạm rõ ràng, không crash."""
+    item = {"id": "ITEM-01", "topic": "t", "status": "NEW", "decision": "consider",
+            "source": "RCT — Smith 2024"}
+    loi = K.kiem(item)
+    assert any("source" in l and "object" in l for l in loi)
+
+
+def test_cac_truong_object_khac_la_mang_bao_vi_pham_khong_crash():
+    """Cùng lỗi, 5 trường còn lại dùng mẫu `item.get(k) or {}` — certainty,
+    effect, operational_assessment, source_recommendation đều crash tương tự
+    khi giá trị là mảng/chuỗi thay vì object."""
+    goc = {"id": "ITEM-01", "topic": "t", "status": "NEW", "decision": "consider",
+           "source": {"type": "SR-MA", "title": "x", "year": 2026}}
+    for khoa in ("certainty", "effect", "operational_assessment", "source_recommendation"):
+        item = {**goc, khoa: ["mảng thay vì object"]}
+        loi = K.kiem(item)  # không được raise
+        assert any(f"`{khoa}`" in l and "object" in l for l in loi), (khoa, loi)
+
+
+def test_human_review_la_mang_bao_vi_pham_khong_crash():
+    """human_review chỉ được kiểm khi status APPROVED/APPLIED — cần đúng
+    nhánh đó mới chạm tới _lay_object cho trường này."""
+    item = {**APPROVED_KHONG_NGUOI_DUYET, "human_review": ["mảng thay vì object"]}
+    loi = K.kiem(item, require_human_approval=True)
+    assert any("`human_review`" in l and "object" in l for l in loi)
+
+
+def test_truong_object_dung_dan_van_kiem_binh_thuong():
+    """Đối chứng: object hợp lệ vẫn phải chạy đúng logic cũ, không bị vá làm
+    nới lỏng luật đã có (retracted vẫn phải bị bắt)."""
+    item = {"id": "ITEM-01", "topic": "t", "status": "CANDIDATE", "decision": "consider",
+            "source": {"type": "SR-MA", "title": "x", "year": 2026, "pmid": "1",
+                       "resolved": True, "retracted": True}}
+    loi = K.kiem(item)
+    assert any("điều kiện dừng khẩn" in l for l in loi)
+
+
 if __name__ == "__main__":
     import pytest
 
