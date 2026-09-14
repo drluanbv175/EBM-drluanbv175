@@ -33,7 +33,7 @@ Dùng cho `tong-quan-y-van`, `thu-thu-tai-lieu`. Khung chuẩn **PRISMA 2020**.
 3. **Chiến lược tìm:** chuỗi tìm nguyên văn cho TỪNG CSDL (tái lặp) + ngày tra (dùng skill `paper-lookup`/`research-lookup`).
 4. **Sàng lọc:** lưu số lượng từng bước → **sơ đồ dòng chảy PRISMA** (nhận diện → sàng lọc → đủ điều kiện → đưa vào); 2 người sàng độc lập nếu có (ghi κ đồng thuận).
 5. **Trích xuất dữ liệu:** bảng đặc điểm (thiết kế, n, dân số, can thiệp, kết cục, hiệu ứng) — dùng skill trích xuất nếu có.
-6. **Nguy cơ sai lệch:** RoB 2 (RCT)/ROBINS-I (quan sát)/QUADAS-2 (chẩn đoán)/AMSTAR-2 (SR).
+6. **Nguy cơ sai lệch:** RoB 2 (RCT)/ROBINS-I (quan sát)/QUADAS-3 v1.2 (chẩn đoán — QUADAS-2 chỉ tương thích ngược cho review cũ đã khoá công cụ)/AMSTAR-2 (SR).
 7. **Tổng hợp:** định tính; nếu đồng nhất đủ → meta (skill `statistical-analysis`: pooled + I²/forest/funnel); **GRADE** Summary of Findings.
 
 ## Mẫu đầu ra

@@ -29,7 +29,7 @@ Dùng cho `binh-duyet`. Bình duyệt đối kháng, xây dựng, có bằng ch�
 ## Quy trình (6 lăng kính)
 **BƯỚC 0 — Tiền đề:** xác định loại thiết kế → chuẩn báo cáo tương ứng; đọc trọn bản thảo trước khi chấm.
 1. **Tính hợp lệ & tầm quan trọng:** câu hỏi rõ? khoảng trống thật? đóng góp gì?
-2. **Phương pháp:** thiết kế phù hợp câu hỏi? chọn mẫu/cỡ mẫu/đối chứng/làm mù; nguy cơ sai lệch (RoB 2/ROBINS-I/QUADAS-2).
+2. **Phương pháp:** thiết kế phù hợp câu hỏi? chọn mẫu/cỡ mẫu/đối chứng/làm mù; nguy cơ sai lệch (RoB 2/ROBINS-I/QUADAS-3 v1.2 cho nghiên cứu chẩn đoán — QUADAS-2 chỉ tương thích ngược).
 3. **Thống kê:** test/mô hình đúng giả định? báo CI không chỉ p? phân tích định trước vs thăm dò? dữ liệu thiếu xử lý ra sao? (đối chiếu skill `statistical-analysis`).
 4. **Đạo đức & minh bạch:** phê duyệt IRB + ICF + mã đăng ký; COI/tài trợ; khai báo dùng AI; tuân chuẩn báo cáo.
 5. **Trình bày & chuẩn báo cáo:** **tiêu đề** có nêu thiết kế + quần thể + kết cục? **tóm tắt** đủ 5 phần, độc lập, mọi số khớp Results? **từ khóa** có bổ sung từ ngoài tiêu đề? IMRAD mạch lạc; Results không lẫn diễn giải; Conclusion không vượt dữ liệu; bảng/hình rõ; checklist CONSORT/STROBE/PRISMA/STARD/TRIPOD đủ mục — kể cả mục Title-and-abstract của chuẩn đó.
