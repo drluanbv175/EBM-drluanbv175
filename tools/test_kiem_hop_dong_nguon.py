@@ -23,7 +23,7 @@ TOT = {
     "sources": [
         {"id": "SRC-001", "name": "x", "org": "y", "tier": 1, "domain": ["d"],
          "access": "api", "scan_frequency": "weekly", "detection_method": "api-query",
-         "owner": "agent-A2", "status": "active"},
+         "owner": "agent-A2", "status": "active", "endpoint_or_url": "https://vi.du/api"},
     ],
 }
 
@@ -66,6 +66,37 @@ def test_bat_thieu_truong_bat_buoc():
 
 def test_khong_bao_dong_gia_khi_du_lieu_dung():
     assert K.kiem(TOT) == []
+
+
+def test_bat_active_khong_co_endpoint():
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện): status=active mà
+    endpoint_or_url rỗng hoàn toàn — 'đang hoạt động' để quét cái gì? — trước
+    bản vá lọt qua sạch (đo trên bản sao data/sources.json thật: cấy SRC-004
+    active + xoá endpoint vẫn '🟢 Hợp lệ')."""
+    du = {**TOT, "sources": [{**TOT["sources"][0], "endpoint_or_url": None}]}
+    loi = K.kiem(du)
+    assert any("status=active" in l and "endpoint_or_url rỗng" in l for l in loi)
+
+
+def test_bat_not_covered_khong_endpoint_khong_known_gap():
+    """Vá 14/09/2026: not-covered KHÔNG endpoint LẪN không known_gap (hoàn
+    toàn không giải thích vì sao chưa phủ) — luật cũ chỉ bắt ca 'có endpoint
+    mà thiếu known_gap', ca này lọt qua sạch (đo trên bản sao SRC-020 thật:
+    known_gap=null + endpoint=null vẫn '🟢 Hợp lệ')."""
+    du = {**TOT, "sources": [{**TOT["sources"][0], "status": "not-covered",
+                              "endpoint_or_url": None, "known_gap": None}]}
+    loi = K.kiem(du)
+    assert any("status=not-covered mà không có known_gap" in l for l in loi)
+
+
+def test_khong_bao_dong_gia_not_covered_co_known_gap_khong_endpoint():
+    """Đối chứng: not-covered không endpoint NHƯNG có known_gap giải thích rõ
+    thì hợp lệ — không được nới hẹp oan ca đã đúng từ trước (vd SRC-020/021
+    thật: manual, không endpoint, có known_gap)."""
+    du = {**TOT, "sources": [{**TOT["sources"][0], "status": "not-covered",
+                              "endpoint_or_url": None,
+                              "known_gap": "thu công, chưa có API"}]}
+    assert K.kiem(du) == []
 
 
 def test_thieu_file_thi_ma_thoat_2(tmp_path, monkeypatch, capsys):

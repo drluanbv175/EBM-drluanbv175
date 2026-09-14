@@ -104,9 +104,29 @@ def kiem(data: dict) -> list[str]:
         # P6 (chính schema tự khai): endpoint chưa xác minh → null, không bịa URL
         # kèm known_gap giải thích — cấm URL "để đó" không kèm lý do khi status
         # không phải active.
-        if s.get("status") == "not-covered" and eu is not None and not s.get("known_gap"):
-            loi.append(f"{nhan}: status=not-covered có endpoint nhưng thiếu known_gap "
-                       "(P6 — vì sao chưa phủ phải nói rõ, không để URL đơn độc)")
+        if s.get("status") == "not-covered" and not s.get("known_gap"):
+            if eu is not None:
+                loi.append(f"{nhan}: status=not-covered có endpoint nhưng thiếu known_gap "
+                           "(P6 — vì sao chưa phủ phải nói rõ, không để URL đơn độc)")
+            else:
+                # Vá 14/09/2026 (workflow kiểm tra toàn diện): luật cũ chỉ bắt ca
+                # "có endpoint mà thiếu known_gap" — một nguồn not-covered KHÔNG
+                # endpoint LẪN không known_gap (hoàn toàn không giải thích vì sao
+                # chưa phủ) trước đây lọt qua sạch, dù chính description của
+                # contracts/sources.schema.json nói thẳng "nguồn KHÔNG phủ được
+                # cũng phải có... known_gap — độ phủ chỉ trung thực khi khoảng
+                # trống được ghi thành chữ". Đo trên 21 nguồn thật (14/09/2026):
+                # 0 nguồn hiện có rơi vào ca này — khoảng hở tiềm ẩn, chưa gây
+                # hại trên dữ liệu hiện tại.
+                loi.append(f"{nhan}: status=not-covered mà không có known_gap — độ phủ "
+                           "chỉ trung thực khi khoảng trống được ghi thành chữ (P6)")
+
+        # Vá 14/09/2026 (cùng đợt workflow): một nguồn status=active mà HOÀN
+        # TOÀN không có endpoint_or_url là vô lý — "đang hoạt động" quét cái gì?
+        # Đo trên 21 nguồn thật: 0 nguồn hiện có rơi vào ca này.
+        if s.get("status") == "active" and not eu:
+            loi.append(f"{nhan}: status=active nhưng endpoint_or_url rỗng — "
+                       "không có URL nào để quét")
 
     trung = sorted(sid for sid, n in dem_id.items() if n > 1)
     if trung:
@@ -120,7 +140,7 @@ def _self_test() -> int:
         "sources": [
             {"id": "SRC-001", "name": "x", "org": "y", "tier": 1, "domain": ["d"],
              "access": "api", "scan_frequency": "weekly", "detection_method": "api-query",
-             "owner": "agent-A2", "status": "active"},
+             "owner": "agent-A2", "status": "active", "endpoint_or_url": "https://vi.du/api"},
         ],
     }
     ca_xau = [
