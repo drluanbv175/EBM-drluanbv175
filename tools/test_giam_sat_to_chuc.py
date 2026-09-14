@@ -533,6 +533,20 @@ def test_nap_van_ban_bat_not_covered_va_ghi_ung_vien(monkeypatch, tmp_path: Path
     assert "ACC/AHA" in noi_dung_file and "nạp qua Browser thật" in noi_dung_file
 
 
+def test_ghi_ung_vien_tu_tao_thu_muc_cha_con_thieu(monkeypatch, tmp_path: Path) -> None:
+    """Vá 14/09/2026: RA.mkdir() cũ dùng exist_ok=True nhưng KHÔNG parents=True
+    — chỉ tạo được cấp lá, còn thư mục CHA (EBM-Dashboards/) vắng mặt thì crash
+    FileNotFoundError. Bắt được thật khi kích hoạt SRC-019 trên một checkout
+    git-thuần (EBM-Dashboards/ nằm ngoài git, không tồn tại): sources.json/
+    state ĐÃ ghi đúng nhưng lệnh thoát mã lỗi ở bước ghi ứng viên cuối cùng.
+    Test cũ (test_nap_van_ban_bat_not_covered_va_ghi_ung_vien) không bắt được
+    vì trỏ RA = tmp_path/"surveillance" — cha của nó (tmp_path) LUÔN có sẵn do
+    pytest tự tạo, che mất đúng tình huống lỗi thật (thư mục cha vắng mặt)."""
+    monkeypatch.setattr(G, "RA", tmp_path / "EBM-Dashboards-chua-tung-tao" / "surveillance")
+    f = G._ghi_ung_vien(["- test candidate"])
+    assert f is not None and f.exists()
+
+
 def test_nap_van_ban_nhieu_tram_cung_ngay_khong_de_ghi_de(monkeypatch, tmp_path: Path) -> None:
     """Vá 13/09/2026: gọi --nap-van-ban cho HAI trạm khác nhau trong CÙNG một
     ngày (ca thật xảy ra khi nạp lần lượt GOLD/GINA/KDIGO/ADA/ESC cùng buổi)

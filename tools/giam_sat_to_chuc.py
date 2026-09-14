@@ -339,7 +339,7 @@ def _ghi_ung_vien(phat_hien: list[str]) -> Path | None:
     ứng viên của các trạm chạy trước trong ngày đó."""
     if not phat_hien:
         return None
-    RA.mkdir(exist_ok=True)
+    RA.mkdir(parents=True, exist_ok=True)
     f = RA / f"to-chuc-{date.today().isoformat()}.md"
     da_co: list[str] = []
     if f.exists():

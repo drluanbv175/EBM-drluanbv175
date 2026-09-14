@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-13",
+ "updated": "2026-09-14",
  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
  "sources": [
   {
@@ -468,9 +468,14 @@
    "detection_method": "content-hash",
    "measured_latency_days": null,
    "owner": "agent-A2",
-   "status": "not-covered",
-   "known_gap": "URL DA XAC MINH SONG qua Browser that 13/09/2026 (trang tai binh thuong, co muc \"Latest Final Recommendations\"). NHUNG bo loc tieu de dung chung cua giam_sat_to_chuc.py (rut_tieu_de_tu_van_ban: doi >=5 tu VA co nam 20xx/tu khoa guideline|report|update|standards|statement|recommendation TRONG CUNG MOT DONG) khong khop cau truc trang nay -- moi de muc chi ghi \"Ten chu de: Loai\" tren mot dong va nam xuat ban tren dong RIENG ke tiep (vd \"...: Screening\" roi \"Jun 2025\" o dong sau), nen 0/7 dong qua duoc ca hai dieu kien cung luc. Da chay --nap-van-ban that (last_success_at cap nhat) nhung KHONG kich hoat duoc vi 0 tieu de hop le -- day la GIOI HAN CUA HEURISTIC TRICH XUAT, khong phai loi mang/egress. USPSTF van duoc phu GIAN TIEP qua kenh PubMed (TRUSTED_SOURCE_ALIASES trong surveillance_scan.py). Muon phu TRUC TIEP web hoi that su can bac si quyet: (a) chap nhan giu khong phu truc tiep, dua vao PubMed-lane; hoac (b) cung cap 1 trang USPSTF khac co dinh dang \"tieu de + nam cung dong\" (vd trang tin tuc/thong bao thay vi danh sach chu de); hoac (c) nho vien/agent noi luat trich xuat rieng cho trang nay (KHONG sua luat dung chung -- se anh huong moi tram khac da kiem chung).",
-   "last_success_at": "2026-09-13"
+   "status": "active",
+   "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — known_gap cũ ở đây mô tả một bug ĐÃ VÁ (commit 32b5589, 13/09/2026): rut_tieu_de_tu_van_ban() lúc đó chưa ghép được cặp dòng «tiêu đề» + «Mon YYYY» đứng liền kề, nên 0/7 dòng qua được cả hai điều kiện cùng lúc. Bug này đã vá, nhưng known_gap chưa cập nhật và không ai chạy lại --nap-van-ban với code mới để kích hoạt.\nĐÃ KÍCH HOẠT THẬT hôm nay: lấy nội dung trang qua Browser tool (không phải suy đoán), chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-019 <file>` với đúng mã đã vá — kết quả 3/3 tiêu đề thật trích được (\"Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025\", \"Syphilis Infection During Pregnancy: Screening May 2025\", \"Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025\") — status chuyển not-covered → active.\nPhát hiện PHỤ trong lúc kích hoạt: _ghi_ung_vien() dùng RA.mkdir(exist_ok=True) THIẾU parents=True — crash FileNotFoundError trên bất kỳ checkout git-thuần nào (EBM-Dashboards/ nằm ngoài git, không tồn tại) ngay khi có ≥1 tiêu đề mới cần ghi ứng viên, dù sources.json/state đã ghi đúng TRƯỚC bước đó. Đã vá (parents=True) + thêm test hồi quy test_ghi_ung_vien_tu_tao_thu_muc_cha_con_thieu (mutation-tested: gỡ vá → đỏ đúng FileNotFoundError, phục hồi → xanh, 21 test khác không hồi quy).",
+   "last_success_at": "2026-09-14",
+   "kich_hoat": {
+    "ngay": "2026-09-14",
+    "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
+    "so_tieu_de_luc_do": 3
+   }
   },
   {
    "id": "SRC-022",
