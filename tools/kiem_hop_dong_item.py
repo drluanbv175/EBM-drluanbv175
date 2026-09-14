@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -31,6 +32,19 @@ DECISION = {"apply", "consider", "notyet"}
 CERTAINTY = {"high", "mod", "low", "vlow", "na"}
 BASIS = {"contraindication", "drug-label", "official-classification",
          "guideline-strong-rec", "guideline-explicit-criteria", None}
+
+# Vá 14/09/2026 (workflow kiểm tra toàn diện): 3 mẫu này LẤY ĐÚNG NGUYÊN VĂN
+# từ contracts/evidence-item.schema.json (đã đọc trực tiếp field "pattern" của
+# từng trường, không tự bịa) — trước bản vá, kiem() chỉ kiểm SỰ HIỆN DIỆN của
+# id/pmid/doi (I1: `not (src.get("pmid") or ...)`) chứ không kiểm ĐỊNH DẠNG.
+# Một id="xyz-khong-hop-le" hay pmid="PMID-khong-so-KAKA" đều lọt qua "đã truy
+# nguyên" (I1 pass) trong khi không bao giờ tra được thật ở PubMed cho chuỗi
+# kiểm rút bài — đúng trụ an toàn mà BH27 sinh ra để bảo vệ. Sibling validator
+# kiem_hop_dong_nguon.py đã có ID_RE tương đương cho id nguồn từ trước; validator
+# này chưa từng có luật tương ứng cho id/pmid/doi của MỘT MỤC CHỨNG CỨ.
+_ID_RE = re.compile(r"^(ITEM-\d{2}|EBM-\d{4}-\d{4})$")
+_PMID_RE = re.compile(r"^\d{1,9}$")
+_DOI_RE = re.compile(r"^10\.\d{4,9}/")
 
 _FLAGS_PATH = Path(__file__).resolve().parents[1] / "clinical_runtime" / "CLINICAL_RUNTIME_FLAGS.json"
 
@@ -75,6 +89,9 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
     for k in ("id", "topic", "source", "status", "decision"):
         if not item.get(k):
             loi.append(f"thiếu trường bắt buộc `{k}`")
+    if item.get("id") and not _ID_RE.match(str(item["id"])):
+        loi.append(f"id={item['id']!r} không khớp mẫu hợp đồng "
+                    r"(^(ITEM-\d{2}|EBM-\d{4}-\d{4})$)")
     st = item.get("status")
     if st and st not in STATUS:
         loi.append(f"status={st!r} ngoài máy trạng thái")
@@ -85,6 +102,12 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
     if st not in ("UNRESOLVED", "NEW", None) and not (src.get("pmid") or src.get("doi")
                                                        or src.get("alt_id")):
         loi.append(f"status={st} nhưng KHÔNG có PMID/DOI/alt_id — chưa truy nguyên thì chưa qua NEW (I1)")
+    if src.get("pmid") and not _PMID_RE.match(str(src["pmid"])):
+        loi.append(f"source.pmid={src['pmid']!r} không khớp mẫu hợp đồng "
+                    r"(^\d{1,9}$) — chưa chắc tra được thật ở PubMed (I1)")
+    if src.get("doi") and not _DOI_RE.match(str(src["doi"])):
+        loi.append(f"source.doi={src['doi']!r} không khớp mẫu hợp đồng "
+                    r"(^10\.\d{4,9}/) — chưa chắc phân giải được thật (I1)")
     if st in ("CANDIDATE", "APPROVED", "APPLIED") and src.get("resolved") is not True:
         loi.append(f"status={st} nhưng source.resolved != true — nhảy cóc qua truy nguyên (cấm #2)")
     if src.get("retracted") is True and st in ("CANDIDATE", "APPROVED", "APPLIED"):

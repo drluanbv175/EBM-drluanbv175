@@ -134,6 +134,46 @@ def test_truong_object_dung_dan_van_kiem_binh_thuong():
     assert any("điều kiện dừng khẩn" in l for l in loi)
 
 
+def test_id_khong_khop_mau_hop_dong_bi_bat():
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện): trước bản vá, id không
+    khớp mẫu contracts/evidence-item.schema.json (^(ITEM-\\d{2}|EBM-\\d{4}-
+    \\d{4})$) vẫn được coi là hợp lệ vì kiem() chỉ kiểm SỰ HIỆN DIỆN."""
+    item = {"id": "xyz-khong-hop-le", "topic": "t", "status": "CANDIDATE", "decision": "consider",
+            "source": {"type": "SR-MA", "title": "x", "year": 2026, "pmid": "123", "resolved": True}}
+    loi = K.kiem(item)
+    assert any("id=" in l and "mẫu hợp đồng" in l for l in loi)
+
+
+def test_pmid_khong_phai_so_bi_bat():
+    """pmid 'đã truy nguyên' (qua luật I1 cũ, chỉ kiểm có mặt) mà không phải
+    chuỗi số thì không bao giờ tra được thật ở PubMed — phải bị bắt."""
+    item = {"id": "ITEM-01", "topic": "t", "status": "CANDIDATE", "decision": "consider",
+            "source": {"type": "SR-MA", "title": "x", "year": 2026,
+                       "pmid": "PMID-khong-so-KAKA", "resolved": True}}
+    loi = K.kiem(item)
+    assert any("source.pmid=" in l and "mẫu hợp đồng" in l for l in loi)
+
+
+def test_doi_khong_dung_dinh_dang_bi_bat():
+    """doi không bắt đầu bằng '10.<4-9 số>/' — đúng dạng ca thật đã gặp (ITEM-05
+    ViemGanB) khiến một trích dẫn ma lọt qua vì đổi định danh."""
+    item = {"id": "ITEM-01", "topic": "t", "status": "CANDIDATE", "decision": "consider",
+            "source": {"type": "SR-MA", "title": "x", "year": 2026,
+                       "doi": "khong-phai-doi-hop-le", "resolved": True}}
+    loi = K.kiem(item)
+    assert any("source.doi=" in l and "mẫu hợp đồng" in l for l in loi)
+
+
+def test_id_pmid_doi_dung_dinh_dang_khong_bi_bat_oan():
+    """Đối chứng: id/pmid/doi ĐÚNG định dạng (kể cả id dạng EBM-YYYY-NNNN,
+    khác dạng ITEM-NN đã dùng ở các test khác) không được báo vi phạm oan."""
+    item = {"id": "EBM-2026-0042", "topic": "t", "status": "CANDIDATE", "decision": "consider",
+            "source": {"type": "SR-MA", "title": "x", "year": 2026, "pmid": "30267080",
+                       "doi": "10.1001/jamaoncol.2018.4070", "resolved": True}}
+    loi = K.kiem(item)
+    assert not any("mẫu hợp đồng" in l for l in loi)
+
+
 if __name__ == "__main__":
     import pytest
 
