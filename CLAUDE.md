@@ -1160,13 +1160,15 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - Nguồn miễn phí: PubMed E-utilities, Europe PMC, Crossref, OpenAlex, openFDA… (không key)
 - Nguồn có key (mặc định TẮT, bật khi có key thật): Semantic Scholar; **Scopus (Elsevier) — thêm
   13/09/2026**, `app/sources/scopus.py`, đòi `SCOPUS_API_KEY` bắt buộc thật (khác Semantic Scholar
-  vẫn chạy được không key); **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026**,
-  `app/sources/dynamed.py`, OAuth2 `client_credentials` (KHÁC key đơn giản của Scopus — cần Customer
-  ID + Group ID do đại diện EBSCO cấp để đăng ký app, chưa chắc mọi tài khoản DynaMed cá nhân đều có
-  quyền này) — đã nối CẢ tầng nghiên cứu lẫn tầng giám sát lâm sàng (`search_dynamed_lane()` trong
-  `sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py`), **CHƯA xác nhận chạy thật,
-  đang chờ credential từ bác sĩ** — xem `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu" để
-  biết chi tiết + giới hạn của cả hai.
+  vẫn chạy được không key). **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026, GỠ BỎ cùng ngày:**
+  đăng ký app MedsAPI bắt buộc Customer ID + Group ID do đại diện EBSCO cấp theo hợp đồng TỔ CHỨC,
+  tài khoản DynaMed cá nhân không tự cấp được — giới hạn của loại tài khoản, không phải lỗi cấu
+  hình. Đã gỡ ở tầng nghiên cứu (`app/sources/dynamed.py` + test + khoá `DYNAMED_*`, merge `b74dd68`
+  của repo y khoa) và ở tầng giám sát lâm sàng (`search_dynamed_lane()` khỏi cả 3 bản
+  `surveillance_scan.py`; phía repo gốc hợp nhất 14/09/2026 — trước đó bản gỡ nằm trên nhánh
+  `claude/wonderful-lumiere-861c69` chưa hợp nhất, nên bản runtime `EBM-Dashboards/tools/` đã bị
+  đồng bộ NGƯỢC lại có DynaMed). Scopus giữ nguyên. Muốn nối lại: cần EBSCO cấp hai ID theo hợp đồng
+  tổ chức — xem `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu".
 - Email: SMTP (Gmail App Password)
 
 ## Nguyên tắc bắt buộc
