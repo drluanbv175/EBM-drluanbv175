@@ -260,6 +260,13 @@ def main() -> int:
     print("🟡 GIÁM SÁT CHỨNG CỨ QUÁ HẠN")
     for c in canh_bao:
         print(f"   • {c}")
+    # Vá 14/09/2026 (workflow kiểm tra toàn diện): in_bang_tuoi() trước đây chỉ
+    # được gọi bên trong nhánh `if not canh_bao:` — tức bảng median/phân bố tuổi
+    # bị NUỐT MẤT mỗi khi có BẤT KỲ cảnh báo nào khác (vd "giám sát an toàn thuốc
+    # chưa từng chạy"), dù chính bảng đó mới trả lời "chủ đề nào lâu chưa xem lại
+    # NHẤT". Ở nhịp làm việc thật gần như luôn có ít nhất một cảnh báo khác, nên
+    # bảng này gần như không bao giờ hiện ra. Nay in cả ở nhánh 🟡.
+    in_bang_tuoi(lau)
     print("   (Chốt này chỉ NHẮC — quét chứng cứ phải do bác sĩ chủ động và duyệt kết quả.)")
     return 1
 
