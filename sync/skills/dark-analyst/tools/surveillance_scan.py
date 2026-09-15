@@ -863,10 +863,11 @@ def run_scan(
             except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                 ghi_chu_lan.append(f"làn scopus lỗi: {type(exc).__name__}")
             unique = gan_do_tin_cay(unique)
-            # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì
-            # tự khai nhãn riêng (preprint không có PMID để tra rút bài; NCT không
-            # phải y văn). FAIL-SOFT TỪNG LÀN: làn phụ hỏng không được kéo cả chủ
-            # đề FAIL — mất tín hiệu sớm không tệ bằng mất cả lượt quét chính.
+            # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì tự
+            # khai nhãn riêng (preprint không có PMID để tra rút bài; NCT
+            # không phải y văn). FAIL-SOFT TỪNG LÀN: làn phụ hỏng không được
+            # kéo cả chủ đề FAIL — mất tín hiệu sớm không tệ bằng mất cả lượt
+            # quét chính.
             for lane_fn, ten_lan in ((search_preprint_lane, "preprint"),
                                      (search_trials_lane, "clinicaltrials")):
                 try:

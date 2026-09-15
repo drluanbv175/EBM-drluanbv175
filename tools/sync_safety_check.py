@@ -108,7 +108,21 @@ def _is_generated_conflict_artifact(rel: str) -> bool:
         return True
     if "/data/archive/" in low or "/data/processed/" in low or "/data/reports/" in low:
         return True
-    return low.startswith("medical-ebm-automation/results/knowledge_pack_update_queue-")
+    if low.startswith("medical-ebm-automation/results/knowledge_pack_update_queue-"):
+        return True
+    # .claude/sessions/ + .claude/state/ là sổ bookkeeping NỘI BỘ của chính Claude Code
+    # (active session tracker, instructions-loaded log…) — hoàn toàn nằm ngoài git
+    # (/.claude/* bị .gitignore loại, xem dòng 67 file đó) và được app tự sinh lại mỗi
+    # phiên. check_recent_writes() đã coi 2 đường dẫn này là NOISE (dòng ~211) từ trước;
+    # trước bản vá này riêng check_conflict_copies() lại chấm chúng là hard_hits, khiến
+    # RED giả mỗi khi nhiều phiên/máy cùng chạy — đúng việc thường trực của dự án này —
+    # và báo động giả dạy người ta bỏ qua cả cảnh báo thật (bài học lặp lại nhiều lần
+    # trong CLAUDE.md). Quarantine an toàn: xem cloud-mirror/_quarantine-conflict-copy/.
+    if low.startswith(".claude/sessions/") or "/.claude/sessions/" in low:
+        return True
+    if low.startswith(".claude/state/") or "/.claude/state/" in low:
+        return True
+    return False
 
 
 def _add_conflict_hit(hard_hits: list[str], generated_hits: list[str], f: Path, note: str = "") -> None:
