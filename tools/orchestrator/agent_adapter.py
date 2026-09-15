@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -88,13 +89,29 @@ class CodexCliClient:
     dùng phiên Codex hiện có của máy. ``output_schema`` chỉ dùng cho lượt chấm cấu trúc.
     """
 
-    _APP_BINARY = Path("/Applications/ChatGPT.app/Contents/Resources/codex")
+    # Vá 15/09/2026 (workflow kiểm tra toàn diện): đường dẫn app bundle CHỈ có
+    # ý nghĩa trên macOS — trước bản vá không có guard `sys.platform` nào trong
+    # cả file, nên tools/kiem_tuong_thich_da_nen.py (R5) báo vàng ở MỌI lần quét
+    # dù hành vi thật không sai (đây chỉ là phương án lùi SAU khi shutil.which
+    # thất bại, có kiểm .exists() + RuntimeError rõ ràng ngay bên dưới). Thêm
+    # guard tường minh để chốt đa nền hạ đúng mức và người đọc biết ngay đường
+    # dẫn này không áp dụng ngoài macOS.
+    _APP_BINARY_MACOS = Path("/Applications/ChatGPT.app/Contents/Resources/codex")
 
     def __init__(self, *, model: str | None = None, timeout_seconds: int = 600) -> None:
         self.model = model
         self.timeout_seconds = timeout_seconds
         found = shutil.which("codex")
-        self.binary = Path(found) if found else self._APP_BINARY
+        if found:
+            self.binary = Path(found)
+        elif sys.platform == "darwin":
+            self.binary = self._APP_BINARY_MACOS
+        else:
+            # Không có vị trí cài đặt cố định ngoài PATH trên Windows/Linux —
+            # bản ChatGPT desktop gắn kèm CLI codex chỉ có đường dẫn ổn định
+            # trên macOS. Đường dẫn dưới đây chắc chắn không .exists() nên
+            # thông điệp lỗi rõ ràng ở generate() vẫn kích hoạt bình thường.
+            self.binary = Path("codex")
 
     def generate(self, prompt: str, *, output_schema: dict[str, Any] | None = None) -> str | dict:
         if not self.binary.exists():
