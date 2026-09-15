@@ -38,9 +38,18 @@ def _ep_co_canh_bao(monkeypatch, tmp_path, lau):
     không có dashboard nào ⇒ mục (1) im lặng; log tuần/tháng không tồn tại
     ⇒ mục (2) LUÔN cảnh báo 'chưa từng chạy' (đúng nhánh phổ biến nhất trong
     thực tế — máy nào cũng có log này). `lau` được ép trực tiếp qua
-    `lau_chua_xem_lai` để không phụ thuộc dữ liệu dashboard thật."""
+    `lau_chua_xem_lai` để không phụ thuộc dữ liệu dashboard thật.
+
+    Vá 15/09/2026: mục (2) nay gate qua `_bst.duong_goc("medical-ebm-automation",
+    REPO)` (BH08 — không đo được ≠ có vấn đề). Muốn mô phỏng đúng ca "MÁY THẬT
+    có medical-ebm-automation/ nhưng log giám sát bên trong không tồn tại" (khác
+    hẳn "máy không có repo y khoa"), phải dựng REPO giả có thư mục con đó, không
+    chỉ trỏ LOG_TUAN/LOG_THANG ra ngoài."""
     dash_rong = tmp_path / "EBM-Dashboards-rong"
     dash_rong.mkdir()
+    goc_gia = tmp_path / "repo-gia"
+    (goc_gia / "medical-ebm-automation").mkdir(parents=True)
+    monkeypatch.setattr(K, "REPO", goc_gia)
     monkeypatch.setattr(K, "DASH", dash_rong)
     monkeypatch.setattr(K, "LOG_TUAN", tmp_path / "khong-ton-tai-tuan.log")
     monkeypatch.setattr(K, "LOG_THANG", tmp_path / "khong-ton-tai-thang.log")
@@ -60,6 +69,43 @@ def test_bang_tuoi_van_hien_khi_co_canh_bao_khac(monkeypatch, tmp_path, capsys):
     assert "🟡 GIÁM SÁT CHỨNG CỨ QUÁ HẠN" in out
     assert "trung vị 40 ngày" in out
     assert "2 chủ đề quá" in out
+
+
+def test_ban_sao_tran_khong_bao_dong_gia_giam_sat_chua_tung_chay(monkeypatch, tmp_path, capsys):
+    """Vá 15/09/2026 (workflow kiểm tra toàn diện): trên bản sao git trần (thư mục
+    medical-ebm-automation/ hoàn toàn không có — đúng mọi phiên cloud/clone tươi/CI),
+    trước bản vá công cụ LUÔN kết luận «CHƯA TỪNG chạy» chỉ vì log không tồn tại,
+    dù nguyên nhân thật là thiếu cả thư mục cha (BH08: không đo được ≠ có vấn đề).
+    Đo trên chính worktree này: medical-ebm-automation/ không tồn tại."""
+    goc_khong_co_yk = tmp_path / "repo-tran"
+    goc_khong_co_yk.mkdir()
+    dash_rong = tmp_path / "EBM-Dashboards-rong"
+    dash_rong.mkdir()
+    monkeypatch.setattr(K, "REPO", goc_khong_co_yk)
+    monkeypatch.setattr(K, "DASH", dash_rong)
+    monkeypatch.setattr(K, "LOG_TUAN", tmp_path / "khong-ton-tai-tuan.log")
+    monkeypatch.setattr(K, "LOG_THANG", tmp_path / "khong-ton-tai-thang.log")
+    monkeypatch.setattr(K, "lau_chua_xem_lai", lambda: [])
+    monkeypatch.setattr(sys, "argv", ["kiem_do_tuoi_chung_cu.py"])
+
+    rc = K.main()
+    out = capsys.readouterr().out
+    assert rc == 0, f"không được báo 🟡 khi chỉ thiếu nguyên liệu, thực tế: {out!r}"
+    assert "CHƯA TỪNG chạy" not in out
+    assert "🟢" in out
+    assert "⚪" in out and "KHÔNG đo được" in out
+
+
+def test_may_that_co_medical_ebm_automation_van_bao_dong_dung(monkeypatch, tmp_path, capsys):
+    """Đối chứng: máy THẬT có medical-ebm-automation/ (không phải bản sao trần)
+    nhưng log giám sát tuần thật sự không tồn tại — vẫn phải báo 🟡 'CHƯA TỪNG
+    chạy' như hành vi gốc. Bản vá 15/09/2026 không được làm câm cảnh báo THẬT."""
+    _ep_co_canh_bao(monkeypatch, tmp_path, [])
+    rc = K.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "CHƯA TỪNG chạy" in out
+    assert "⚪" not in out
 
 
 def test_bang_tuoi_van_hien_khi_canh_bao_va_lau_rong():

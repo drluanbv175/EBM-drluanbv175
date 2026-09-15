@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import importlib.util
 import re
 import subprocess
 import sys
@@ -45,6 +46,19 @@ REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 LOG_TUAN = REPO / "medical-ebm-automation/data/archive/launchd_weekly.log"
 LOG_THANG = REPO / "medical-ebm-automation/data/archive/launchd_monthly.log"
+
+# Vá 15/09/2026 (workflow kiểm tra toàn diện): mục (2) bên dưới đọc log giám sát
+# hằng tuần dưới medical-ebm-automation/ — trên bản sao git trần (mọi phiên
+# cloud, clone tươi, CI) thư mục đó KHÔNG TỒN TẠI, nên trước bản vá này công cụ
+# luôn kết luận "CHƯA TỪNG chạy" — đúng lớp lỗi BH08 (gộp KHÔNG BIẾT với CÓ VẤN
+# ĐỀ) mà các chốt anh em (kiem_nguon_that, chot_hoi_quy_bai_hoc, verify_*) đã
+# tránh bằng cách tra tools/ban_sao_tran.py trước khi kết luận. Nạp động (không
+# `import` thẳng) theo đúng khuôn đã dùng ở xuat_goi_cap_nhat.py/chot_hoi_quy_
+# bai_hoc.py, vì file này chạy như script độc lập (python3 tools/<tên>.py).
+_spec_bst = importlib.util.spec_from_file_location(
+    "_bst_kdtcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = importlib.util.module_from_spec(_spec_bst)
+_spec_bst.loader.exec_module(_bst)
 
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
 HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần
@@ -183,6 +197,7 @@ def main() -> int:
 
     hom_nay = dt.date.today()
     canh_bao: list[str] = []
+    ngoai_pham_vi: list[str] = []
 
     # 1) Gói chứng cứ mới nhất — thước đo trực tiếp nhất của "hệ có đang sống không"
     ngays = [d for d in (ngay_tu_ten(p) for p in DASH.glob("WebDashboard_*.html")) if d]
@@ -195,11 +210,69 @@ def main() -> int:
                 f"(ngưỡng {HAN_CAP_NHAT_NGAY}). Chạy `/cap-nhat-chung-cu <vấn đề>` "
                 f"cho chủ đề đang cần.")
 
-    # 2) Giám sát an toàn thuốc hằng tuần
+    # 2) Giám sát an toàn thuốc hằng tuần — CỐ Ý bỏ qua khi medical-ebm-automation/
+    # hoàn toàn vắng mặt (bản sao git trần: mọi phiên cloud, clone tươi, CI). Thiếu
+    # NGUYÊN LIỆU để đo (thư mục cha không tồn tại) KHÔNG được kết luận thành "chưa
+    # từng chạy" — đó là câu trả lời cho máy CÓ dữ liệu nhưng job không nổ, khác hẳn
+    # câu trả lời đúng ở đây là "không đo được" (BH08).
+    if _bst.duong_goc("medical-ebm-automation", REPO) is None:
+        ngoai_pham_vi.append(
+            "Giám sát an toàn thuốc hằng tuần: KHÔNG đo được — thư mục "
+            "medical-ebm-automation/ không có trên máy này (bản sao git trần). "
+            "Chạy trên máy có đủ cây dữ liệu OneDrive để canh mục này.")
+    else:
+        _kiem_giam_sat_tuan(canh_bao, hom_nay, sys.platform)
+
+    # 3) TUỔI TỪNG CHỦ ĐỀ — thứ mà `max()` ở mục (1) không nói được.
+    lau = lau_chua_xem_lai()
+    rat_lau = [x for x in lau if x[1] > HAN_RAT_LAU_NGAY]
+    if rat_lau:
+        ten = ", ".join(f"{k} ({t}ng)" for k, t in rat_lau[:3])
+        canh_bao.append(
+            f"{len(rat_lau)} chủ đề chưa xem lại quá {HAN_RAT_LAU_NGAY} ngày: {ten}"
+            + (f" và {len(rat_lau) - 3} chủ đề nữa" if len(rat_lau) > 3 else "")
+            + ". Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
+
+    if not canh_bao:
+        if not a.im_khi_on:
+            # NÓI ĐÚNG THỨ ĐÃ ĐO. Câu cũ "CHỨNG CỨ còn hạn" suy từ `max(ngày)` — tức
+            # chỉ cần MỘT gói mới là cả kho trông còn hạn. Đo 14/08/2026: gói mới nhất
+            # 1 ngày tuổi trong khi 37/59 chủ đề đã quá 35 ngày, trung vị 45 ngày. Một
+            # dòng 🟢 đọc thành "mọi chủ đề đều mới" là lời bảo đảm không có cơ sở —
+            # cùng lớp lỗi BH15/BH30: con số không đo thứ nó tự nhận là đang đo.
+            print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
+                  if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
+            in_bang_tuoi(lau)
+            for x in ngoai_pham_vi:
+                print(f"   ⚪ {x}")
+        return 0
+
+    if a.im_khi_on:
+        print("")
+    print("🟡 GIÁM SÁT CHỨNG CỨ QUÁ HẠN")
+    for c in canh_bao:
+        print(f"   • {c}")
+    # Vá 14/09/2026 (workflow kiểm tra toàn diện): in_bang_tuoi() trước đây chỉ
+    # được gọi bên trong nhánh `if not canh_bao:` — tức bảng median/phân bố tuổi
+    # bị NUỐT MẤT mỗi khi có BẤT KỲ cảnh báo nào khác (vd "giám sát an toàn thuốc
+    # chưa từng chạy"), dù chính bảng đó mới trả lời "chủ đề nào lâu chưa xem lại
+    # NHẤT". Ở nhịp làm việc thật gần như luôn có ít nhất một cảnh báo khác, nên
+    # bảng này gần như không bao giờ hiện ra. Nay in cả ở nhánh 🟡.
+    in_bang_tuoi(lau)
+    for x in ngoai_pham_vi:
+        print(f"   ⚪ {x}")
+    print("   (Chốt này chỉ NHẮC — quét chứng cứ phải do bác sĩ chủ động và duyệt kết quả.)")
+    return 1
+
+
+def _kiem_giam_sat_tuan(canh_bao: list[str], hom_nay: dt.date, platform: str) -> None:
+    """Tách khỏi main() khi vá 15/09/2026 để nhánh «medical-ebm-automation vắng
+    mặt» ở trên không phải chép lại logic — hành vi giữ NGUYÊN như trước bản vá
+    cho máy THẬT có repo y khoa."""
     chay_tuan, tt_tuan = lan_chay_cuoi(LOG_TUAN)
     runs = launchd_runs("com.medicalebm.weeklysafety")
     if chay_tuan is None:
-        if sys.platform == "darwin":
+        if platform == "darwin":
             n = "" if runs is None else f" (launchd runs = {runs})"
             ly_do = (f"{n}. Lịch launchd đòi máy thức lúc 19:00 thứ Bảy nên hay lỡ")
         else:
@@ -207,7 +280,7 @@ def main() -> int:
             # Nói rõ điều này, thay vì để bác sĩ tưởng có lịch nền đang chạy hộ.
             # 28/08/2026: không ghi cứng "(Windows)" — chạy trên Linux (phiên cloud/CI)
             # mà tự xưng là Windows là nói sai về chính máy đang đứng.
-            ten_nen = {"win32": "Windows", "linux": "Linux"}.get(sys.platform, sys.platform)
+            ten_nen = {"win32": "Windows", "linux": "Linux"}.get(platform, platform)
             ly_do = (f". Máy này ({ten_nen}) KHÔNG có lịch nền nào chạy giám sát — "
                      "hai job launchd chỉ tồn tại trên MacBook, nên ở đây luôn phải chạy tay")
         canh_bao.append(
@@ -232,43 +305,6 @@ def main() -> int:
             canh_bao.append(
                 f"Giám sát an toàn thuốc chạy lần cuối {chay_tuan:%d/%m/%Y} — "
                 f"cách đây {cach} ngày (ngưỡng {HAN_AN_TOAN_NGAY}).")
-
-    # 3) TUỔI TỪNG CHỦ ĐỀ — thứ mà `max()` ở mục (1) không nói được.
-    lau = lau_chua_xem_lai()
-    rat_lau = [x for x in lau if x[1] > HAN_RAT_LAU_NGAY]
-    if rat_lau:
-        ten = ", ".join(f"{k} ({t}ng)" for k, t in rat_lau[:3])
-        canh_bao.append(
-            f"{len(rat_lau)} chủ đề chưa xem lại quá {HAN_RAT_LAU_NGAY} ngày: {ten}"
-            + (f" và {len(rat_lau) - 3} chủ đề nữa" if len(rat_lau) > 3 else "")
-            + ". Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
-
-    if not canh_bao:
-        if not a.im_khi_on:
-            # NÓI ĐÚNG THỨ ĐÃ ĐO. Câu cũ "CHỨNG CỨ còn hạn" suy từ `max(ngày)` — tức
-            # chỉ cần MỘT gói mới là cả kho trông còn hạn. Đo 14/08/2026: gói mới nhất
-            # 1 ngày tuổi trong khi 37/59 chủ đề đã quá 35 ngày, trung vị 45 ngày. Một
-            # dòng 🟢 đọc thành "mọi chủ đề đều mới" là lời bảo đảm không có cơ sở —
-            # cùng lớp lỗi BH15/BH30: con số không đo thứ nó tự nhận là đang đo.
-            print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
-                  if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
-            in_bang_tuoi(lau)
-        return 0
-
-    if a.im_khi_on:
-        print("")
-    print("🟡 GIÁM SÁT CHỨNG CỨ QUÁ HẠN")
-    for c in canh_bao:
-        print(f"   • {c}")
-    # Vá 14/09/2026 (workflow kiểm tra toàn diện): in_bang_tuoi() trước đây chỉ
-    # được gọi bên trong nhánh `if not canh_bao:` — tức bảng median/phân bố tuổi
-    # bị NUỐT MẤT mỗi khi có BẤT KỲ cảnh báo nào khác (vd "giám sát an toàn thuốc
-    # chưa từng chạy"), dù chính bảng đó mới trả lời "chủ đề nào lâu chưa xem lại
-    # NHẤT". Ở nhịp làm việc thật gần như luôn có ít nhất một cảnh báo khác, nên
-    # bảng này gần như không bao giờ hiện ra. Nay in cả ở nhánh 🟡.
-    in_bang_tuoi(lau)
-    print("   (Chốt này chỉ NHẮC — quét chứng cứ phải do bác sĩ chủ động và duyệt kết quả.)")
-    return 1
 
 
 if __name__ == "__main__":
