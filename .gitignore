@@ -132,6 +132,11 @@ tools/vietnamize/catalog_raw.json
 # Biến thể tên máy cũ (trước khi có catalog_may/<Máy>.json) — cùng loại dữ liệu
 # sinh lại được, đã thấy lọt vào working tree từ máy khác qua OneDrive (26/08/2026)
 tools/vietnamize/catalog_raw-*.json
+# Bản conflict-copy đã cách ly (16/09/2026) — cùng luật "không xoá, cách ly" của
+# cloud-mirror/_quarantine-conflict-copy/ ở trên; đây là nơi DUY NHẤT dưới tools/
+# (thư mục tracked bởi git) từng hứng conflict-copy thật, phát hiện sau khi vá
+# _iter_files() không còn bỏ sót ~65% cây (xem tools/sync_safety_check.py).
+tools/vietnamize/_quarantine-conflict-copy/
 
 # Bản lưu mô tả gốc do tools/vietnamize/apply_vi.py tạo — sinh lại được, không commit
 *.vi-bak
