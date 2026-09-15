@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -238,7 +239,22 @@ def run_verification() -> dict[str, Any]:
     }
 
 
+def _configure_utf8_stdio() -> None:
+    """In tiếng Việt ổn định trên console Windows (mặc định cp1252) — cùng khuôn
+    `audit_ebm_system.configure_utf8_stdio()`. Thiếu bước này, dòng disclaimer
+    tiếng Việt ở cuối `main()` ném `UnicodeEncodeError` DÙ MỌI check đã PASS —
+    tool thoát mã khác 0 vì lỗi in ấn, không phải vì repo thật sự lệch (phát hiện
+    16/09/2026 khi chạy trực tiếp trên Windows: 5/5 check PASS nhưng process
+    crash ngay dòng in cuối cùng)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main() -> int:
+    _configure_utf8_stdio()
     report = run_verification()
     print("Claude Code / Codex repo alignment:", report["overall_status"])
     for check in report["checks"]:
