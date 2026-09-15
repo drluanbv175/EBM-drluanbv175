@@ -1740,6 +1740,48 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   agent nào gọi. Đó đúng là việc chốt sinh ra để làm — một công cụ không agent nào gọi thì với
   dây chuyền hằng ngày nó **không tồn tại**, dù chạy đúng và có test.
 
+  📋 **7 công cụ trong `tools/` — 0 lượt tham chiếu ở BẤT KỲ đâu trong repo (đo 15/09/2026,
+  workflow kiểm tra toàn diện 2 hệ thống).** Đối chiếu 119 file `tools/*.py` không phải test
+  với toàn bộ nội dung CLAUDE.md + grep tên module trong mọi file `.py/.md/.sh/.yml/.json`
+  khác — 7 file dưới đây cho **0 kết quả tuyệt đối** (không CLAUDE.md, không AGENTS.md, không
+  test, không CI, không được import/gọi từ file `.py` nào khác). Đây KHÔNG phải lỗi bảo mật/
+  đúng-sai — là khoảng trống tài liệu/bảo trì đúng luật nền BH41. Ghi lại ở đây để lần audit
+  sau không báo nhầm là "phát hiện mới":
+  - `build_antifacts_qv.py` (147 dòng) — sinh bản Quick View gọn của Antifacts để nhúng làm
+    Claude Artifact (bản snapshot, không tự cập nhật). Công cụ chạy TAY khi cần, không kỳ
+    vọng có lượt gọi tự động — hợp lệ để giữ nguyên, không phải orphan thật.
+  - `cau_noi_nghien_cuu_lam_sang.py` (158 dòng, 15/08/2026) — cầu nối 2 chiều Nghiên cứu ⇄
+    Lâm sàng (gom PMID nền đề tài vào sổ xác minh nguồn + báo đề tài khi guideline vượt qua).
+    Có giá trị thật nhưng CHƯA được nối vào routine định kỳ nào — ứng viên tốt để thêm vào
+    lịch nền nếu bác sĩ muốn tự động hoá; hiện phải chạy tay.
+  - `ecosystem_status.py` (266 dòng) — tổng hợp một-cửa-nhìn trạng thái hệ sinh thái EBM
+    (agent · sổ cái · dashboard · lịch), chỉ đọc, sinh 2 file phái sinh. Công cụ chẩn đoán
+    chạy tay, hợp lệ để giữ nguyên.
+  - `luu_tru_kho.py` (126 dòng) — đóng gói MỌI kho git thành `.bundle` tĩnh trong
+    `luu-tru-kho/` để OneDrive đồng bộ an toàn (đúng bài học 9 sự cố OneDrive làm hỏng `.git`
+    sống đã ghi ở nơi khác trong file này). Công cụ sao lưu, chạy tay theo nhu cầu — hợp lệ.
+  - `verify_dashboard_xss_hardening.py` (265 dòng) — kiểm HỒI QUY lớp chống XSS cho HTML sinh
+    từ dữ liệu ngoài (PubMed/agent), đã từng bắt 2 đợt lỗi XSS thật (11/07 và 26/07/2026).
+    ⚠️ **Khác nhóm trên — đây là công cụ AN TOÀN có giá trị thật, KHÔNG chỉ là "chạy tay khi
+    cần".** Chạy thử 15/09/2026 trên bản sao git trần: công cụ **BÁO FAIL** vì các file nó
+    kiểm (`EBM-Dashboards/tools/assemble_dashboard.py`, `EBM_MASTER/tools/gen_links_html.py`…)
+    nằm trong 3 thư mục dữ liệu ngoài git — đúng lớp lỗi BH08 (không phân biệt "không đo
+    được" với "có vấn đề") mà nhiều tool khác trong repo đã vá bằng `tools/ban_sao_tran.py`,
+    nhưng tool này CHƯA áp dụng. **Đề xuất còn treo, cần bác sĩ quyết định**: (a) nối vào
+    `tools/kiem_tuong_thich_da_nen.py` hoặc CI như một chốt hồi quy an toàn thật sự chạy định
+    kỳ, và (b) vá nhận diện bản sao trần trước khi báo FAIL. Chưa làm trong đợt này vì đây là
+    thay đổi HÀNH VI công cụ, ngoài phạm vi "chỉ ghi chú" đã được duyệt.
+  - `validate_traceability.py` (327 dòng, "MRAQ-100 V3 Phase 3") — kiểm nhất quán artifact
+    `synthetic_end_to_end/A01–A15`. **Thư mục đích `synthetic_end_to_end/` không tồn tại ở
+    BẤT KỲ đâu trong repo** (`find . -iname synthetic_end_to_end*` rỗng) — công cụ này gần
+    như chắc chắn thuộc một khung MRAQ-100 đã bị bỏ/đổi tên mà không dọn theo. KHÔNG xoá
+    (có thể vẫn dùng ở nơi khác ngoài repo này, hoặc là tài liệu tham khảo cho khung cũ) —
+    chỉ ghi nhận đây là công cụ **chắc chắn không chạy được** với cấu trúc thư mục hiện tại.
+  - `verify_evidence_pack.py` (581 dòng, "MRAQ-100 Evidence Pack Verifier V3.2") — cùng họ
+    MRAQ-100 với `validate_traceability.py` ở trên, đọc `SOURCE_MANIFEST`/
+    `source_snapshot.tar.gz` theo cấu trúc pack riêng không thấy ở đâu khác trong repo. Cùng
+    tình trạng: không xoá, chỉ ghi nhận khả năng đã lỗi thời so với cấu trúc hiện tại.
+
   ## 🌍 CHUẨN QUỐC TẾ CÒN THIẾU Ở TẦNG AGENT (rà 14/08/2026)
   Đo trên 84 file `.claude/agents/`. Năm chuẩn ở mức **0 agent** (hoặc chỉ nằm ở rubric nội bộ):
 
