@@ -122,6 +122,18 @@ _NGUONG_CHUOI_TOAN_HOA = 4
 # (vd IDSA: «MRSA 2011», «Vancomycin 2020», «AMR Guidance 2026» — 2-4 từ).
 _DONG_KET_THUC_BANG_NAM = re.compile(r"(?:19|20)\d{2}$")
 
+# Dòng metadata «Therapeutic area: … Published: DD Month YYYY» — mẫu RIÊNG của
+# gov.uk/drug-safety-update (SRC-016 MHRA). Đo trên trang thật 14/09/2026: dòng
+# này đứng SAU MỖI cảnh báo an toàn thuốc, ≥5 từ VÀ kết thúc bằng năm ⇒ tự lọt
+# qua RE_TIEU_DE (khớp "20\d{2}") dù là rác, trong khi TIÊU ĐỀ THẬT của cảnh báo
+# (vd «Domperidone: new contraindication…») hiếm khi chứa năm/từ khoá guideline|
+# report|update|standards|statement|recommendation nên bị RỚT — kết quả đo được
+# trên 13 cảnh báo thật: 4/13 dòng metadata lọt vào làm "tiêu đề" giả, chỉ 1/13
+# tiêu đề thật lọt qua (nhờ tình cờ chứa "updated"), 12/13 tiêu đề thật bị bỏ sót.
+# Nguy hiểm hơn các trạm guideline khác vì đây là kênh AN TOÀN THUỐC — vừa báo
+# động giả vừa bỏ sót cảnh báo thật.
+_DONG_THERAPEUTIC_PUBLISHED = re.compile(r"^Therapeutic area:.*\bPublished:\s")
+
 
 def _la_toan_hoa_nhieu_tu(dong: str) -> bool:
     """Dòng ALL-CAPS (mọi chữ cái đều viết hoa) có ≥2 từ — tín hiệu heading/nhãn
@@ -203,7 +215,22 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
         ngày đứng dòng TRƯỚC nó) — đó là lỗ hổng ĐỘ PHỦ (recall) có mức nguy
         hại thấp hơn hẳn báo động giả hàng loạt đang vá ở đây, và cần đo thêm
         trước khi thiết kế đúng (chưa đủ bằng chứng để vá an toàn trong lượt
-        này)."""
+        này).
+    (7) vá 14/09/2026 (SRC-016 MHRA/gov.uk): cấu trúc trang này khác HẲN mọi
+        trang đã vá — mỗi cảnh báo an toàn thuốc in ra ĐÚNG 3 dòng liên tiếp
+        (sau khi lọc dòng trống): tiêu đề, đoạn mô tả, rồi dòng metadata
+        «Therapeutic area: … Published: DD Month YYYY». Đo trên 13 cảnh báo
+        thật: dòng metadata LUÔN đứng cách tiêu đề ĐÚNG 2 vị trí — xác nhận
+        13/13, không có ngoại lệ. Vì dòng metadata kết thúc bằng năm nên tự
+        lọt RE_TIEU_DE (rác), còn tiêu đề thật hiếm khi chứa năm/từ khoá nên
+        bị rớt (thiếu). Vá bằng CẢ HAI chiều: loại bỏ dòng metadata khỏi kết
+        quả (thêm _DONG_THERAPEUTIC_PUBLISHED vào danh sách loại trừ), VÀ mỗi
+        khi gặp dòng metadata thì LẤY LẠI dòng đứng trước nó 2 vị trí làm tiêu
+        đề thật — bỏ qua RE_TIEU_DE cho dòng này (cùng nguyên tắc bỏ qua đã
+        dùng cho khối ALL-CAPS của KDIGO), chỉ cần ≥5 từ và không tự là dòng
+        metadata. Khác các mẫu trước ở chỗ đây là tín hiệu THEO CẤU TRÚC TRANG
+        cụ thể (Therapeutic area/Published là cụm từ RIÊNG của gov.uk), không
+        áp dụng cho nguồn khác."""
     dong_tho = [d.strip() for d in text.splitlines() if d.strip()
                 and not _DONG_KHUNG_GET_PAGE_TEXT.match(d.strip())]
 
@@ -231,8 +258,18 @@ def rut_tieu_de_tu_van_ban(text: str) -> set[str]:
             if not _DONG_CHI_NGAY_THANG.match(d)
             and not _DONG_CHI_THANG_NAM.match(d)
             and not _DONG_NGAY_THANG_KIEU_WHO.match(d)
+            and not _DONG_THERAPEUTIC_PUBLISHED.match(d)
             and (len(d.split()) >= 5 or _DONG_KET_THUC_BANG_NAM.search(d))]
     ket = _loc_tieu_de_hop_le(dong)
+
+    for idx, d in enumerate(ung_vien):
+        if idx >= 2 and _DONG_THERAPEUTIC_PUBLISHED.match(d):
+            tieu_de = ung_vien[idx - 2]
+            if (not _DONG_THERAPEUTIC_PUBLISHED.match(tieu_de)
+                    and len(tieu_de.split()) >= 5):
+                sach = re.sub(r"\s+", " ", tieu_de).strip()
+                if 12 <= len(sach) <= 220:
+                    ket.add(sach)
 
     khoi: list[str] = []
     for d in ung_vien + [None]:
@@ -339,7 +376,7 @@ def _ghi_ung_vien(phat_hien: list[str]) -> Path | None:
     ứng viên của các trạm chạy trước trong ngày đó."""
     if not phat_hien:
         return None
-    RA.mkdir(exist_ok=True)
+    RA.mkdir(parents=True, exist_ok=True)
     f = RA / f"to-chuc-{date.today().isoformat()}.md"
     da_co: list[str] = []
     if f.exists():

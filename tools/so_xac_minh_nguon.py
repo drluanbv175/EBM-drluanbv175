@@ -419,10 +419,18 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
         [d for _k, d in can])
     bay_gio = dt.datetime.now().isoformat(timespec="seconds")
     chua = 0
+    # WHITELIST ĐÓNG, không phải blacklist mở (vá 14/09/2026, phát hiện qua
+    # workflow kiểm tra toàn diện): bản trước chỉ loại trừ đúng 2 chuỗi
+    # "unknown_fetch_error"/"" — một trạng thái Crossref LẠ (chưa từng liệt kê)
+    # vẫn lọt xuống, được ghi kiem_rut_luc/ghi_chu_rut coi như ĐÃ KIỂM XONG dù
+    # không khớp nhánh if/elif nào bên dưới — đúng luật bất đối xứng bị ĐẢO
+    # NGƯỢC mà kiem_rut_lai_dich_danh() (khoảng dòng 541-550) đã làm ĐÚNG bằng
+    # whitelist đóng. Nay chỉ 4 trạng thái đã biết mới được coi là đã phân xử.
+    TRANG_THAI_DOI_DA_BIET = ("ok", "retracted", "expression_of_concern", "unresolved")
     for khoa, doi in can:
         info = kq.get(doi) or {}
         tt = info.get("status", "")
-        if tt in ("unknown_fetch_error", ""):
+        if tt not in TRANG_THAI_DOI_DA_BIET:
             chua += 1
             continue
         muc[khoa]["kiem_rut_luc"] = bay_gio
@@ -690,11 +698,22 @@ def lenh_quet(files: list[Path], vong: int) -> int:
             # NCBI_EMAIL nên PubMed trả 'unknown_mock_or_no_email' (= KHÔNG BIẾT).
             # Đó chính là lỗi "cổng nói sai về dữ liệu đúng" — báo động giả về rút
             # bài còn tệ hơn không kiểm, vì nó khiến người ta mất tin vào cảnh báo thật.
-            if trang_thai in ("unknown_mock_or_no_email", "unknown_fetch_error"):
+            #
+            # VÁ 14/09/2026 (phát hiện qua workflow kiểm tra toàn diện): bản trước
+            # là BLACKLIST MỞ — chỉ loại trừ đúng 2 chuỗi "unknown_mock_or_no_email"/
+            # "unknown_fetch_error". Một trạng thái LẠ (module RetractionChain thêm
+            # loại lỗi mới, hoặc info thiếu hẳn khoá "status" ⇒ "") vẫn lọt xuống,
+            # được ghi kiem_rut_luc/ghi_chu_rut coi như ĐÃ KIỂM XONG dù không khớp
+            # nhánh if/elif nào bên dưới — đúng luật bất đối xứng bị ĐẢO NGƯỢC, trong
+            # khi kiem_rut_lai_dich_danh() (khoảng dòng 541-550, cùng file) đã làm
+            # ĐÚNG bằng whitelist đóng từ trước. Nay đổi sang WHITELIST: chỉ 4 trạng
+            # thái đã biết ("ok"/"retracted"/"expression_of_concern"/"unresolved")
+            # mới được coi là đã phân xử; mọi chuỗi khác (kể cả rỗng, kể cả mã lỗi
+            # mới chưa từng đặt tên) đều rơi vào "chưa kiểm", không còn cần liệt kê
+            # từng mã lỗi biết trước.
+            TRANG_THAI_PMID_DA_BIET = ("ok", "retracted", "expression_of_concern", "unresolved")
+            if trang_thai not in TRANG_THAI_PMID_DA_BIET:
                 # KHÔNG ghi kiem_rut_luc: mục này vẫn phải tính là CHƯA kiểm.
-                # 'unknown_fetch_error' = gọi được nhưng không đọc được phản hồi
-                # (mạng cắt giữa chừng / NCBI trả trang chặn). KHÔNG có cơ sở nào
-                # để nghi trích dẫn ma — khác hẳn 'unresolved'.
                 chua_tra_duoc += 1
                 ly_do_chua_tra[trang_thai] = (info or {}).get("reason", "")
                 continue

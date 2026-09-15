@@ -289,6 +289,27 @@ Khi bác sĩ nêu việc lâm sàng hoặc nghiên cứu, MẶC ĐỊNH định 
   — **agent KHÔNG được tự bịa để «cho có cổng»**. Chưa có module thì xử lý TAY, và đừng đọc
   doctrine như đã có cổng. Đột biến kiểm 2 phép (import trần ⇒ mù cả bộ · fail-open im lặng
   ⇒ trục xanh giả), cả hai đỏ đúng chỗ.
+  ⛔ **ĐÍNH CHÍNH 15/09/2026 — câu "Module đó chưa bao giờ tồn tại" ở trên đã LỖI THỜI.**
+  Xác minh qua `gh api` trực tiếp vào repo GitHub `drluanbv175/medical-ebm-automation`
+  (worktree cloud này không có checkout của repo y khoa, nên KHÔNG dùng grep cây làm việc như
+  câu gốc — đúng bài học BH93 "trước khi kết luận mã X không tồn tại phải đối chiếu nguồn
+  thật"): `tools/annex2_quality_gate.py` **thực sự tồn tại**, 5.729 byte, nội dung thật (không
+  phải stub) — khung `COMMON_G1_FIELDS`/`METHOD_G1_FIELDS`/`COMMON_G2_FIELDS`/
+  `METHOD_G2_FIELDS` cho ba nhóm phương pháp `decentralised`/`pragmatic`/`rwd`, trích dẫn
+  nguồn "ICH E6(R3) Annex 2, Step 4, thông qua 03/06/2026", đọc cấu hình từ
+  `study_meta.gate_params.G1.annex2` (đúng khuôn "PI/methodologist khai rõ, hệ không suy đoán
+  từ khoá" mà mục này đòi hỏi). Tạo trong chính commit vá BH100 (`6d66acfb`, 03/09/2026,
+  "Nâng chuẩn Annex 2 và QUADAS-3 cho vòng đời nghiên cứu") — cùng ngày với đoạn "vá" ở trên,
+  nên nhiều khả năng bản vá THẬT SỰ đã đi xa hơn mô tả bằng chữ. Xác nhận thêm module có được
+  **DÙNG THẬT**: `gh api search/code?q=annex2_quality_gate+repo:...` trả về đúng
+  `tools/g1_quality_gate.py` và `tools/g2_quality_gate.py` import nó (khớp doctrine "hợp đồng
+  CHẠY ĐƯỢC tại G1/G2") + `tests/test_annex2_quality_gate_20260902.py`.
+  ⚠️ **Giới hạn của đính chính này:** đã xác nhận module tồn tại + được G1/G2 import, NHƯNG
+  CHƯA chạy lại được `tools/verify_controlled_research_automation.py` (file gốc BH100 nói tới)
+  để xác nhận verifier đó tự nó cũng đã hết crash — cần bác sĩ/phiên có checkout thật của
+  medical-ebm-automation chạy lại verifier này một lần để đóng hẳn khoảng trống. Đoạn mô tả
+  gốc phía trên GIỮ NGUYÊN làm dấu vết lịch sử (đúng vấn đề đã có tại thời điểm 03/09), không
+  xoá.
 - **Điều phối plugin (MỘT OWNER):** quyền sở hữu canonical nằm ở
   `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` +
   `tools/orchestrator/plugin_ownership_registry.json`. `dieu-phoi-nghien-cuu` sở hữu vòng đời

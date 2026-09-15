@@ -87,12 +87,20 @@ def _nam(s: str) -> int | None:
     return int(m.group(0)) if m else None
 
 
-def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> list[dict]:
-    """Bài tổng quan/gộp/guideline MỚI HƠN bài đang trích. [] nếu không có/không hỏi được."""
+def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> list[dict] | None:
+    """Bài tổng quan/gộp/guideline MỚI HƠN bài đang trích.
+
+    Trả `[]` khi ĐÃ HỎI ĐƯỢC PubMed mà không có bài nào; trả `None` khi KHÔNG HỎI ĐƯỢC
+    (mạng lỗi, NCBI trả trang chặn). VÁ 14/09/2026: bản cũ trả `[]` cho CẢ HAI, nên `main()`
+    có sẵn nhánh `if moi is None: hong += 1` mà nhánh đó không bao giờ chạy tới — và khi
+    NCBI chặn IP, mọi PMID đều "không có bài mới" ⇒ in 🟢. Đúng họ BH27: không kiểm được
+    bị trình bày thành đã kiểm và sạch. `dat_canh_chung_cu_moi.py` dùng `if moi:` nên
+    `None` không làm gãy nơi tiêu thụ đó.
+    """
     j = _goi(f"{EUTILS}elink.fcgi?dbfrom=pubmed&db=pubmed&retmode=json"
              f"&linkname=pubmed_pubmed_reviews&id={pmid}")
-    if not j:
-        return []
+    if j is None:
+        return None
     ids: list[str] = []
     for ls in (j.get("linksets") or []):
         for db in (ls.get("linksetdbs") or []):
@@ -101,8 +109,8 @@ def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> lis
     if not ids:
         return []
     s = _goi(f"{EUTILS}esummary.fcgi?db=pubmed&retmode=json&id=" + ",".join(ids))
-    if not s:
-        return []
+    if s is None:
+        return None
     ra = []
     for i in ids:
         m = (s.get("result") or {}).get(i)
@@ -122,6 +130,23 @@ def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> lis
                    "journal": m.get("source", ""), "pubtype": m.get("pubtype") or []})
     ra.sort(key=lambda x: -x["nam"])
     return ra[:4]
+
+
+def phan_loai(so_pmid: int, so_co: int, so_hong: int) -> str:
+    """Kết luận được phép in, xét theo SỐ PMID thật sự hỏi được.
+
+    CHUA_DO · KHONG_HOI_DUOC (mọi PMID đều hỏng) · CO_BAI_MOI · MOT_PHAN (có PMID hỏng,
+    phần hỏi được thì sạch) · SACH. Chỉ SACH mới được in 🟢.
+    """
+    if so_pmid == 0:
+        return "CHUA_DO"
+    if so_hong >= so_pmid:
+        return "KHONG_HOI_DUOC"
+    if so_co > 0:
+        return "CO_BAI_MOI"
+    if so_hong > 0:
+        return "MOT_PHAN"
+    return "SACH"
 
 
 def main() -> int:
@@ -194,6 +219,16 @@ def main() -> int:
         print("     'consider' (vd mới thẩm định trên tóm tắt) sẽ luôn rơi vào đây.")
         print("     Chạy lại với --gom-consider để thật sự dò. Cần bác sĩ kiểm chứng.")
         return 0
+    loai = phan_loai(len(ds), len(ket), hong)
+    if loai == "KHONG_HOI_DUOC":
+        print("  🟡 KHÔNG HỎI ĐƯỢC PubMed cho %d/%d PMID (mạng lỗi hoặc NCBI đang chặn)." % (hong, len(ds)))
+        print("     Đây KHÔNG phải kết luận 'không có chứng cứ mới hơn' — CHƯA kiểm được gì.")
+        print("     Chạy lại khi NCBI trả lời được. Cần bác sĩ kiểm chứng.")
+        return 2
+    if loai == "MOT_PHAN":
+        print("  🟡 Dò được %d/%d PMID, không thấy bài mới hơn trong số dò được;" % (len(ds) - hong, len(ds)))
+        print("     %d PMID KHÔNG hỏi được — phần đó CHƯA kiểm. Cần bác sĩ kiểm chứng." % hong)
+        return 2
     if not ket:
         print("  🟢 Đã dò %d PMID, không thấy tổng quan/gộp/guideline nào MỚI HƠN." % len(ds))
         print("     (Không chứng minh chứng cứ còn đúng — chỉ nghĩa là PubMed không trả bài")
@@ -210,6 +245,8 @@ def main() -> int:
         for m in moi:
             print(f"      {m['nam']}  PMID {m['pmid']}  {m['journal'][:26]:28} {m['title'][:70]}")
         print()
+    if hong:
+        print(f"  ⚠️ Còn {hong} PMID KHÔNG hỏi được PubMed — các mục đó CHƯA kiểm.")
     print("  Công cụ KHÔNG tự đổi decision/gradeLevel. Cần bác sĩ kiểm chứng.")
     return 1
 

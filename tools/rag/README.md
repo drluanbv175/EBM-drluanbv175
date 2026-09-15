@@ -63,6 +63,10 @@ python3 compare_backends.py   # SO SÁNH TF-IDF vs hashing (top-1 · MRR · marg
 - **Ép chọn backend để kiểm thử:** `get_embedder(prefer="tfidf"|"hashing"|"st")`.
 - **Nâng cấp Chroma:** sau khi `pip install chromadb`, thay `get_store()` trả adapter Chroma
   (`PersistentClient(path=store/chroma)`) — khung đã chừa sẵn ở `_backend._try_chroma()`.
+  ⚠️ **Đã gỡ khỏi `requirements.txt` mặc định (15/09/2026)** — bản ghim `chromadb==1.5.9` mang
+  4 lỗ hổng Dependabot đang mở (2 critical, 2 high), chưa có bản vá thượng nguồn tại thời
+  điểm gỡ. Cài tay vẫn chạy được nếu thật sự cần, nhưng hãy tự kiểm CVE mới nhất của phiên
+  bản định cài trước khi bật lại.
 
 ## Nạp từ sổ cái thật (CHỈ sau khi BS duyệt governance)
 ```bash

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -31,6 +32,19 @@ DECISION = {"apply", "consider", "notyet"}
 CERTAINTY = {"high", "mod", "low", "vlow", "na"}
 BASIS = {"contraindication", "drug-label", "official-classification",
          "guideline-strong-rec", "guideline-explicit-criteria", None}
+
+# Vá 14/09/2026 (workflow kiểm tra toàn diện): 3 mẫu này LẤY ĐÚNG NGUYÊN VĂN
+# từ contracts/evidence-item.schema.json (đã đọc trực tiếp field "pattern" của
+# từng trường, không tự bịa) — trước bản vá, kiem() chỉ kiểm SỰ HIỆN DIỆN của
+# id/pmid/doi (I1: `not (src.get("pmid") or ...)`) chứ không kiểm ĐỊNH DẠNG.
+# Một id="xyz-khong-hop-le" hay pmid="PMID-khong-so-KAKA" đều lọt qua "đã truy
+# nguyên" (I1 pass) trong khi không bao giờ tra được thật ở PubMed cho chuỗi
+# kiểm rút bài — đúng trụ an toàn mà BH27 sinh ra để bảo vệ. Sibling validator
+# kiem_hop_dong_nguon.py đã có ID_RE tương đương cho id nguồn từ trước; validator
+# này chưa từng có luật tương ứng cho id/pmid/doi của MỘT MỤC CHỨNG CỨ.
+_ID_RE = re.compile(r"^(ITEM-\d{2}|EBM-\d{4}-\d{4})$")
+_PMID_RE = re.compile(r"^\d{1,9}$")
+_DOI_RE = re.compile(r"^10\.\d{4,9}/")
 
 _FLAGS_PATH = Path(__file__).resolve().parents[1] / "clinical_runtime" / "CLINICAL_RUNTIME_FLAGS.json"
 
@@ -51,22 +65,49 @@ def _require_human_approval_flag() -> bool:
         return True
 
 
+def _lay_object(item: dict, khoa: str, loi: list[str]) -> dict:
+    """Lấy trường con dạng object; nếu CÓ MẶT nhưng không phải object (chuỗi/mảng
+    — lỗi soạn thảo rất dễ mắc, vd `"source": "RCT — Smith 2024"` thay vì
+    `{type, title, year, ...}`) thì báo VI PHẠM RÕ RÀNG thay vì để `.get()` phía
+    sau crash AttributeError (vá 14/09/2026, phát hiện qua workflow kiểm tra
+    toàn diện: bản cũ `item.get(k) or {}` chỉ lọc falsy, một chuỗi/mảng KHÔNG
+    rỗng vẫn lọt qua rồi crash — làm CLI thoát mã 1 TRÙNG với mã "có vi phạm",
+    và làm migrate_ledger.py (gọi kiem() không try/except trong vòng lặp) crash
+    CẢ LƯỢT di trú vì một thẻ lỗi, thay vì chỉ báo đúng thẻ đó)."""
+    gia_tri = item.get(khoa)
+    if gia_tri is None:
+        return {}
+    if not isinstance(gia_tri, dict):
+        loi.append(f"`{khoa}` phải là object, nhận {type(gia_tri).__name__}: {gia_tri!r}")
+        return {}
+    return gia_tri
+
+
 def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]:
     """Trả danh sách vi phạm — rỗng nghĩa là hợp lệ."""
     loi: list[str] = []
     for k in ("id", "topic", "source", "status", "decision"):
         if not item.get(k):
             loi.append(f"thiếu trường bắt buộc `{k}`")
+    if item.get("id") and not _ID_RE.match(str(item["id"])):
+        loi.append(f"id={item['id']!r} không khớp mẫu hợp đồng "
+                    r"(^(ITEM-\d{2}|EBM-\d{4}-\d{4})$)")
     st = item.get("status")
     if st and st not in STATUS:
         loi.append(f"status={st!r} ngoài máy trạng thái")
     if item.get("decision") and item["decision"] not in DECISION:
         loi.append(f"decision={item['decision']!r} không hợp lệ")
 
-    src = item.get("source") or {}
+    src = _lay_object(item, "source", loi)
     if st not in ("UNRESOLVED", "NEW", None) and not (src.get("pmid") or src.get("doi")
                                                        or src.get("alt_id")):
         loi.append(f"status={st} nhưng KHÔNG có PMID/DOI/alt_id — chưa truy nguyên thì chưa qua NEW (I1)")
+    if src.get("pmid") and not _PMID_RE.match(str(src["pmid"])):
+        loi.append(f"source.pmid={src['pmid']!r} không khớp mẫu hợp đồng "
+                    r"(^\d{1,9}$) — chưa chắc tra được thật ở PubMed (I1)")
+    if src.get("doi") and not _DOI_RE.match(str(src["doi"])):
+        loi.append(f"source.doi={src['doi']!r} không khớp mẫu hợp đồng "
+                    r"(^10\.\d{4,9}/) — chưa chắc phân giải được thật (I1)")
     if st in ("CANDIDATE", "APPROVED", "APPLIED") and src.get("resolved") is not True:
         loi.append(f"status={st} nhưng source.resolved != true — nhảy cóc qua truy nguyên (cấm #2)")
     if src.get("retracted") is True and st in ("CANDIDATE", "APPROVED", "APPLIED"):
@@ -76,22 +117,22 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
     doi_hoi_duyet = (require_human_approval if require_human_approval is not None
                      else _require_human_approval_flag())
     if st in ("APPROVED", "APPLIED") and doi_hoi_duyet:
-        hr = item.get("human_review") or {}
+        hr = _lay_object(item, "human_review", loi)
         if not hr.get("reviewed_by"):
             loi.append(f"status={st} mà human_review.reviewed_by rỗng — chỉ bác sĩ được đặt (I4)")
 
     # I2/BH36 — không tự gán mức
-    ct = item.get("certainty") or {}
+    ct = _lay_object(item, "certainty", loi)
     if ct.get("reported_by_source") is False and ct.get("level") not in ("na", None):
         loi.append(f"certainty: nguồn KHÔNG chấm mà level={ct.get('level')!r} — tự gán mức (I2)")
     if ct.get("level") and ct["level"] not in CERTAINTY:
         loi.append(f"certainty.level={ct['level']!r} không hợp lệ")
 
-    sr = item.get("source_recommendation") or {}
+    sr = _lay_object(item, "source_recommendation", loi)
     if sr.get("normativeBasis") not in BASIS:
         loi.append(f"normativeBasis={sr.get('normativeBasis')!r} không hợp lệ")
 
-    ef = item.get("effect") or {}
+    ef = _lay_object(item, "effect", loi)
     if ef and (ef.get("point_estimate") is not None) and ef.get("as_reported") is not True \
             and not ef.get("derivation"):
         loi.append("effect có số mà as_reported≠true và KHÔNG ghi derivation — số ở đâu ra? (I1)")
@@ -106,7 +147,7 @@ def kiem(item: dict, *, require_human_approval: bool | None = None) -> list[str]
             loi.append("apply + hiệu số mà thiếu effect.source_location (bảng/hình nào?) "
                        "— không đối chiếu ngược được (LÔ H 9.1)")
 
-    oa = item.get("operational_assessment") or {}
+    oa = _lay_object(item, "operational_assessment", loi)
     if oa and oa.get("label") != "đánh giá vận hành — không phải phân hạng của nguồn":
         loi.append("operational_assessment thiếu nhãn bắt buộc — lớp 3 phải tự xưng danh (I3)")
     return loi

@@ -283,3 +283,84 @@ def test_markdown_report_scopus_candidate_not_mislabeled_as_new_in_pubmed():
     md = S.markdown_report(report)
     assert "mới vào PubMed" not in md
     assert "không PMID — xem link" in md
+
+
+def test_detect_authority_source_uspstf_khong_bi_jama_che_khuat():
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện, xác nhận sống qua Europe PMC:
+    14/15 USPSTF Recommendation Statement thật đăng trên JAMA): trước bản vá,
+    detect_authority_source duyệt TRUSTED_SOURCE_ALIASES theo thứ tự dict và trả
+    khớp ĐẦU TIÊN — "jama" đứng trước "uspstf" nên MỌI USPSTF Statement đăng trên
+    JAMA (gần như toàn bộ từ 2017) luôn bị gán nhãn "JAMA", không bao giờ
+    "USPSTF". Đồng thời alias cũ "u.s. preventive services task force" (có dấu
+    chấm) không khớp cách viết thật "US..." (không dấu chấm) trên PubMed/JAMA."""
+    titre_that = [
+        "Screening for Breast Cancer: US Preventive Services Task Force Recommendation Statement",
+        "Screening for Colorectal Cancer: US Preventive Services Task Force Recommendation Statement",
+        "Screening for Syphilis Infection During Pregnancy: US Preventive Services Task Force Recommendation Statement",
+    ]
+    for t in titre_that:
+        assert S.detect_authority_source("JAMA", t) == "USPSTF"
+    # Tiêu đề không nhắc USPSTF thì JAMA vẫn phải là JAMA — không nới lỏng oan.
+    assert S.detect_authority_source("JAMA", "Some random cardiology trial results") == "JAMA"
+
+
+def test_detect_authority_source_to_chuc_uu_tien_truoc_tap_chi_da_nang():
+    """Đối kháng: NEJM/Lancet/BMJ/Annals/Nature Medicine — mọi tạp chí trong
+    _TAP_CHI_DA_NANG — cũng không được che khuất tổ chức thật sự phát hành, khi
+    tiêu đề dẫn tên tổ chức đầy đủ (alias KHÔNG mơ hồ, so trên combined)."""
+    assert S.detect_authority_source(
+        "N Engl J Med",
+        "A Statement From the American Heart Association on Heart Failure",
+    ) == "ACC/AHA"
+    assert S.detect_authority_source(
+        "N Engl J Med", "NICE Guidance on Heart Failure Management",
+    ) == "NICE"
+    # Không nhắc tổ chức nào thì tạp chí đa năng vẫn phải trả đúng tên nó.
+    assert S.detect_authority_source("N Engl J Med", "A trial of a new anticoagulant") == "NEJM"
+
+
+def test_detect_authority_source_jama_neurology_khong_bi_gan_nham_aan():
+    """Đối kháng: reordering ở trên không được làm "JAMA Neurology" (một tạp chí
+    thuộc HỌ JAMA) bị alias mơ hồ "neurology" của AAN/Neurology giành mất — nếu
+    không sẽ hồi quy đúng test_ba_nhan_tap_chi_bac_si_duyet_30_08 đã có từ trước."""
+    assert S.detect_authority_source("JAMA Neurology", "BE-FAST validation") == "JAMA"
+
+
+def test_search_europe_pmc_fallback_giu_dung_loc_thiet_ke(monkeypatch):
+    """Vá 14/09/2026 (workflow kiểm tra toàn diện, tái hiện điều kiện lỗi THẬT —
+    NCBI chặn IP dùng chung ngay trong lúc kiểm): search() rơi xuống
+    search_europe_pmc() khi NCBI lỗi PHẢI chuyển tiếp loc_thiet_ke — thiếu dòng
+    đó thì tầng "bắt cái mới nhất" (loc_thiet_ke=False, đúng tầng BH38 vá) im
+    lặng biến thành tầng có lọc PUB_TYPE ngay khi đi qua đường dự phòng, tái
+    diễn đúng lỗi BH38 (vứt bài chưa được MEDLINE gán publication type) qua một
+    đường khác."""
+    goi = {}
+
+    def fake_fetch_json(_url):
+        raise RuntimeError("simulate NCBI blocked")
+
+    def fake_europe_pmc(query, days, retmax, loc_thiet_ke=True):
+        goi["loc_thiet_ke"] = loc_thiet_ke
+        return []
+
+    monkeypatch.setattr(S, "search_europe_pmc", fake_europe_pmc)
+    S.search("heart failure", 3, 10, fetch_json=fake_fetch_json,
+             datetype="edat", loc_thiet_ke=False)
+    assert goi == {"loc_thiet_ke": False}
+
+
+def test_search_europe_pmc_ap_dung_dung_loc_thiet_ke_trong_truy_van():
+    """search_europe_pmc(loc_thiet_ke=False) không được chèn cụm PUB_TYPE vào
+    truy vấn gửi Europe PMC — trước bản vá, cụm này LUÔN có mặt vô điều kiện."""
+    thay = {}
+
+    def fake_fetch_json(url):
+        thay["url"] = url
+        return {"resultList": {"result": []}}
+
+    S.search_europe_pmc("heart failure", 3, 10, fetch_json=fake_fetch_json, loc_thiet_ke=False)
+    assert "PUB_TYPE" not in thay["url"]
+
+    thay.clear()
+    S.search_europe_pmc("heart failure", 3, 10, fetch_json=fake_fetch_json, loc_thiet_ke=True)
+    assert "PUB_TYPE" in thay["url"]
