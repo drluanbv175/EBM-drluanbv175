@@ -2,7 +2,7 @@
 #
 # Tối thiểu (fallback hashing): chỉ cần numpy.
 # Khuyến nghị (semantic NHẸ, KHÔNG cần torch/CUDA): thêm scikit-learn -> bật backend TF-IDF.
-# Đầy đủ (semantic neural): thêm sentence-transformers (+ tùy chọn chromadb).
+# Đầy đủ (semantic neural): thêm sentence-transformers.
 #
 # Cài nhanh backend TF-IDF (đủ để vượt "trần" khóa-từ, nhẹ):
 #   pip install --break-system-packages numpy scikit-learn
@@ -15,8 +15,22 @@
 # này một phần do THIẾU DỮ LIỆU để quét, không hẳn là đã sạch. Phiên bản dưới là
 # bản mới nhất khả dụng trên PyPI tại thời điểm ghim (13/09/2026); nới >= trở lại
 # nếu một bản ghim tạo xung đột dựng môi trường thật.
+#
+# ĐÃ GỠ chromadb (15/09/2026, workflow kiểm tra toàn diện). Đúng việc ghim ở trên
+# sinh ra để làm: lần quét CVE đầu tiên có version cụ thể phát hiện 4 lỗ hổng đang
+# mở trên chromadb==1.5.9 (2 critical: CVE-2026-45829 pre-auth code injection,
+# CVE-2026-45833 code injection qua trust_remote_code; 2 high: CVE-2026-45830/
+# 45831, RBAC đa-tenant lỗi) — cả 4 đều KHÔNG có bản vá thượng nguồn
+# (first_patched_version=null). Đối chiếu cách dùng thật trong tools/rag/_backend.py:
+# `get_store()` LUÔN trả `_JsonStore()` — adapter Chroma chưa từng được nối vào
+# đường chạy thật, `_try_chroma()` chỉ dùng để in một dòng chẩn đoán
+# ("chromadb import được" hay không) trong backend_info(), không phục vụ chức
+# năng nào khác. Gỡ một phụ thuộc mang lỗ hổng nghiêm trọng chưa có bản vá mà
+# KHÔNG mất chức năng thật nào là lựa chọn an toàn duy nhất hợp lý lúc này.
+# `_try_chroma()` GIỮ NGUYÊN trong _backend.py (đã có except Exception: return None
+# từ trước) — cài tay chromadb vẫn chạy được nếu bác sĩ tự quyết định chấp nhận
+# rủi ro cho một nhu cầu cụ thể, chỉ là không còn nằm trong requirements.txt mặc định.
 numpy==2.4.6                  # bắt buộc (mọi backend dùng numpy)
 scikit-learn==1.9.1           # backend TF-IDF (MỚI) — nhẹ, KHÔNG cần torch. Ưu tiên cài trước.
 sentence-transformers==6.0.1  # backend NGỮ NGHĨA neural (tải model all-MiniLM-L6-v2 ~80MB lần đầu)
-chromadb==1.5.9               # (tùy chọn) vector store local bền (PersistentClient)
 # Ghi chú: thiếu scikit-learn -> tự lùi hashing; thiếu sentence-transformers -> tự lùi TF-IDF.
