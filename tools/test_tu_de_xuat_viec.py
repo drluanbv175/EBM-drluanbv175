@@ -12,8 +12,11 @@ tồn tại trước khi phát hiện."""
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tdxv_test_mod", ROOT / "tools" / "tu_de_xuat_viec.py")
@@ -36,9 +39,23 @@ def test_venv_py_dung_bo_cuc_windows_khi_os_name_nt() -> None:
     # os.name == "nt" ⇒ .ebm-venv/Scripts/python.exe — khớp bố cục venv Windows thật.
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="đối chứng CHỈ cho bố cục venv POSIX (bin/python) — trên Windows "
+           "VENV_PY thật sự là Scripts/python.exe, xem test _windows_khi_os_name_nt ở trên",
+)
 def test_venv_py_dung_bo_cuc_posix_mac_linux() -> None:
     """Đối chứng: trên máy đang chạy test (macOS/Linux), VENV_PY phải giữ
-    đúng bố cục bin/python như hành vi cũ — vá không được đổi hành vi macOS."""
+    đúng bố cục bin/python như hành vi cũ — vá không được đổi hành vi macOS.
+
+    Vá 15/09/2026 (workflow kiểm tra toàn diện): test này tự khai trong chính
+    docstring là "đối chứng cho macOS/Linux" nhưng trước đó chạy VÔ ĐIỀU KIỆN
+    trên runner Windows — xác nhận qua CI thật (gh run view, lane
+    kiem-tinh windows-latest/3.12 trên nhánh làm việc): assert
+    T.VENV_PY.name == "python" nhận "python.exe" và fail, vì trên Windows
+    T.VENV_PY được TÍNH bằng os.name == "nt" (đúng nhánh test ngay phía trên)
+    nên tự nó không có bố cục POSIX nào để so — không phải hồi quy của
+    tu_de_xuat_viec.py."""
     assert T.VENV_PY.name == "python"
     assert "bin" in T.VENV_PY.parts
 

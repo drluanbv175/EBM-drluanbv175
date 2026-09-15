@@ -105,7 +105,15 @@ def test_go_rmdir_khi_lstat_bao_thu_muc_tren_windows(tmp_path, monkeypatch):
 
     monkeypatch.setattr(LK, "WINDOWS", True)
     monkeypatch.setattr(LK.os, "lstat", lambda path: _stat_voi_st_mode(stat.S_IFDIR))
-    monkeypatch.setattr(LK.os.path, "isjunction", lambda path: True)
+    # Vá 15/09/2026 (workflow kiểm tra toàn diện): `raising=False` bắt buộc trên
+    # Python 3.11 — os.path.isjunction() chỉ có từ 3.12, nên monkeypatch.setattr
+    # KHÔNG raising=False sẽ tự ném AttributeError ("posixpath has no attribute
+    # isjunction") NGAY TẠI DÒNG NÀY, trước khi test kịp chạm code cần kiểm. Đây
+    # đúng nguyên nhân CI lane 3.11 (ubuntu+windows) đỏ thật trên cả master lẫn
+    # nhánh làm việc (xác nhận qua gh api check-runs, 14-15/09/2026) — không phải
+    # lỗi ngẫu nhiên. Trên 3.12+, raising=False không đổi hành vi (thuộc tính đã
+    # có thật, patch đè bình thường).
+    monkeypatch.setattr(LK.os.path, "isjunction", lambda path: True, raising=False)
     calls = []
     monkeypatch.setattr(LK.os, "rmdir", lambda path: calls.append("rmdir"))
     monkeypatch.setattr(Path, "unlink", lambda self, *a, **kw: calls.append("unlink"))
