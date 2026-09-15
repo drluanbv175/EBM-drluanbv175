@@ -71,11 +71,28 @@ def _run_git(args: list[str], cwd: Path, timeout: int = 40):
         return (False, "", f"lỗi: {e}")
 
 
-def _iter_files(cap: int = 60000):
-    """Duyệt file trong ROOT, prune thư mục nặng, có trần an toàn chống chạy vô tận."""
+def _iter_files(cap: int = 1_000_000, time_budget_s: float = 25.0):
+    """Duyệt file trong ROOT, prune thư mục nặng, có trần an toàn chống chạy vô tận.
+
+    SỬA 16/09/2026: cap cũ 60.000 là ĐIỂM MÙ THẬT, không phải phòng ngừa lý thuyết —
+    đo trực tiếp trên cây làm việc này (os.walk không sort, không đảm bảo thứ tự):
+    172.400 file (đã prune) và thư mục `state/` (chứa conflict-copy thật, xem
+    _quarantine-conflict-copy/) chỉ được os.walk() chạm tới ở file thứ 150.679 — SAU
+    cap cũ rất xa. Nghĩa là 3 trong 4 cổng của chốt này (conflict-copy · file lõi ·
+    phiên khác vừa ghi) chưa từng soi tới ~65% cây, im lặng, mọi phiên. Cùng họ lỗi
+    "báo động giả còn tệ hơn không kiểm" đã lặp nhiều lần trong CLAUDE.md, nhưng
+    ngược chiều: đây là ÂM TÍNH GIẢ (báo 🟢 sạch trong khi thật ra chưa hề nhìn tới).
+    Đo lại: walk KHÔNG prune, đủ 172.400 file mất 1,68 giây trên máy này — cap theo
+    SỐ LƯỢNG không cần thiết để chống treo; trần THẬT phải là THỜI GIAN (ổ mạng/
+    OneDrive đang tải file cloud-only mới là nguy cơ treo thật). `cap` giữ lại chỉ
+    làm hàng rào cuối cùng chống vòng lặp symlink bệnh lý chưa nằm trong PRUNE_DIRS.
+    """
     n = 0
+    t0 = time.monotonic()
     for dp, dns, fns in os.walk(ROOT):
         dns[:] = [d for d in dns if d not in PRUNE_DIRS]
+        if time.monotonic() - t0 > time_budget_s:
+            return
         for fn in fns:
             n += 1
             if n > cap:
@@ -217,15 +234,23 @@ def check_core_materialized() -> tuple[str, list[str]]:
     return ("GREEN", [])
 
 
-def check_recent_writes(window_min: int = 3) -> tuple[str, list[str]]:
-    """Nhiều file vừa đổi trong ~3 phút → có thể PHIÊN KHÁC/máy kia đang chạy (đừng chồng lên)."""
+def check_recent_writes(window_min: int = 3, time_budget_s: float = 8.0) -> tuple[str, list[str]]:
+    """Nhiều file vừa đổi trong ~3 phút → có thể PHIÊN KHÁC/máy kia đang chạy (đừng chồng lên).
+
+    `time_budget_s` NHỎ HƠN mặc định của `_iter_files()` có chủ ý: kiểm này gọi
+    `f.stat()` cho MỌI file (172.400 lượt trên cây thật, ~25s hết ngân sách mặc định)
+    trong khi bản thân nó chỉ là tín hiệu 🟡 THAM KHẢO (khác conflict-copy là 🔴 chặn
+    cứng) — không đáng trả phí đầy đủ 25s mỗi phiên cho một cảnh báo mềm. Quét được
+    một phần lớn vẫn tốt hơn hẳn cap cũ 60.000 (luôn cùng một tập con cố định do thứ
+    tự os.walk không đổi giữa các lần chạy), và tín hiệu bỏ sót ở đây không nguy hiểm
+    bằng bỏ sót conflict-copy — không có sạch tuyệt đối, có xu hướng đủ dùng."""
     cutoff = NOW - window_min * 60
     # Nhiễu LUÔN thay đổi (macOS + bookkeeping của chính Claude Code phiên NÀY) → bỏ,
     # nếu không mục này không bao giờ về 🟢. Còn lại = ghi vào FILE HỆ THỐNG thật.
     NOISE = ("/.claude/sessions/", "/.claude/state/", "sync_safety_check")
     NOISE_NAMES = (".ds_store", "changed-files.jsonl", "active.json", "broadcast.md")
     recent = []
-    for f in _iter_files():
+    for f in _iter_files(time_budget_s=time_budget_s):
         try:
             if f.stat().st_mtime < cutoff:
                 continue
