@@ -132,7 +132,16 @@ def main() -> int:
     ap.add_argument("--im-khi-on", action="store_true", help="chỉ nói khi có ô nhiễm")
     a = ap.parse_args()
 
-    ma, ra = _git("diff", "--cached" if a.staged else "", "--name-only", "--diff-filter=M")
+    # Vá 15/09/2026 (workflow kiểm tra toàn diện): bản cũ truyền "--cached" if a.staged
+    # else "" — khi KHÔNG có --staged, chuỗi RỖNG lọt vào làm một ARGUMENT thật của git
+    # diff, khiến lệnh thành `git diff "" --name-only ...` → git từ chối với "ambiguous
+    # argument ''" (exit 128). Lỗi đó bị đọc nhầm thành "thiếu công cụ" ở dòng dưới, nên
+    # nhánh gọi tay KHÔNG --staged chưa từng thực sự soi được file nào — chỉ nhánh
+    # --staged (dùng trong pre-commit) là còn chạy đúng. Nay chỉ thêm "--cached" khi
+    # a.staged, không nhét chuỗi rỗng vào danh sách tham số.
+    dso = ["diff", "--cached", "--name-only", "--diff-filter=M"] if a.staged \
+        else ["diff", "--name-only", "--diff-filter=M"]
+    ma, ra = _git(*dso)
     if ma != 0:
         if not a.im_khi_on:
             print("⚠ không chạy được git diff — bỏ qua (thiếu công cụ KHÔNG phải bằng chứng nguy hiểm)")
