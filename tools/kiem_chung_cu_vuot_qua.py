@@ -68,6 +68,16 @@ PT_CAO = ("systematic review", "meta-analysis", "practice guideline", "guideline
 
 
 def _goi(url: str, cho: int = 25) -> dict | None:
+    # Lưới bắt phải gồm CẢ http.client.HTTPException/OSError — SỬA 2026-09-04
+    # (Workflow đối kháng đa-agent, phát hiện MEDIUM), cùng lỗi 15/08 đã vá ở
+    # sibling `kiem_so_lieu.py::lay_tom_tat()`: một IncompleteRead đơn lẻ nổ
+    # TRONG r.read() thoát lưới URLError (IncompleteRead kế thừa từ
+    # http.client.HTTPException, không phải URLError) và không try/except nào
+    # ở main() bọc quanh vòng lặp `tong_quan_moi_hon()` — nên lỗi mạng ở MỘT
+    # PMID sẽ giết TRỌN lượt dò còn lại. Bài lỗi trả None = «chưa hỏi được»,
+    # caller (`tong_quan_moi_hon`) đã coi None là "không có gì mới" một cách
+    # AN TOÀN (⚪ KHÔNG THẤY, không phải "đã xác nhận không có bài mới hơn").
+    import http.client
     req = urllib.request.Request(url, headers={"User-Agent": "EBM-Copilot/1.0"})
     for lan in range(3):
         try:
@@ -76,7 +86,8 @@ def _goi(url: str, cho: int = 25) -> dict | None:
             if raw.lstrip().startswith("<"):
                 raise ValueError("NCBI trả HTML (có thể đang chặn)")
             return json.loads(raw)
-        except (urllib.error.URLError, ValueError, json.JSONDecodeError):
+        except (urllib.error.URLError, ValueError, json.JSONDecodeError,
+                http.client.HTTPException, OSError):
             if lan < 2:
                 time.sleep(1.5 * (lan + 1))
     return None

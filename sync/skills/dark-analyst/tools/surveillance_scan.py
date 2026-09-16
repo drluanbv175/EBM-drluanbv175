@@ -333,7 +333,14 @@ def search(query: str, days: int, retmax: int, *,
         # Vá 14/09/2026: PHẢI chuyển tiếp loc_thiet_ke — thiếu dòng này thì tầng
         # "mới nhất" (loc_thiet_ke=False) im lặng biến thành tầng có lọc ngay khi
         # rơi xuống dự phòng, tái diễn đúng lỗi BH38 qua một đường khác.
-        return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke)
+        # Vá 04/09/2026 (workflow đối kháng đa-agent): cũng PHẢI chuyển tiếp
+        # mindate/maxdate — thiếu chúng thì CON TRỎ TĂNG DẦN (K8, xem comment
+        # ở đầu hàm) mất tác dụng ngay khi rơi xuống dự phòng: fallback quay về
+        # cửa sổ `days`-lùi-từ-hôm-nay RỘNG HƠN NHIỀU thay vì cửa sổ HẸP mà
+        # cursor đang quét, khiến ứng viên ĐÃ duyệt tái xuất vào hàng chờ mỗi
+        # khi PubMed tình cờ lỗi.
+        return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
+                                 mindate=mindate, maxdate=maxdate)
     ids = result.get("idlist", [])
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
@@ -345,6 +352,8 @@ def search_europe_pmc(
     *,
     fetch_json: Callable[[str], dict] = get_europe_pmc_json,
     loc_thiet_ke: bool = True,
+    mindate: str = "",
+    maxdate: str = "",
 ) -> list[str]:
     """Vá 14/09/2026 (workflow kiểm tra toàn diện): trước đây bộ lọc PUB_TYPE
     LUÔN áp dụng vô điều kiện, kể cả khi search() gọi hàm này làm DỰ PHÒNG cho
@@ -356,9 +365,25 @@ def search_europe_pmc(
     chưa kịp đánh chỉ mục bị Europe PMC lọc mất lần thứ hai, hoàn toàn im lặng
     (TopicResult vẫn status='PASS'). Nay nhận đúng cờ loc_thiet_ke như search()
     và chỉ áp PUB_TYPE khi True — tầng "mới nhất" giữ đúng ý nghĩa dù đi qua
-    đường dự phòng nào."""
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
-    today = datetime.now(timezone.utc).date().isoformat()
+    đường dự phòng nào.
+
+    Vá 04/09/2026 (workflow đối kháng đa-agent): cũng nhận mindate/maxdate —
+    thiếu chúng thì CON TRỎ TĂNG DẦN (K8, xem comment ở search()) mất tác dụng
+    ngay khi rơi xuống nhánh dự phòng này, quay về cửa sổ `days`-lùi-từ-hôm-nay
+    RỘNG hơn hẳn cửa sổ hẹp mà cursor đang quét — ứng viên ĐÃ duyệt tái xuất
+    vào hàng chờ mỗi khi PubMed tình cờ lỗi.
+    """
+    # mindate/maxdate (khi có) đến từ search() theo khuôn PubMed "YYYY/MM/DD" —
+    # Europe PMC cần ISO "YYYY-MM-DD". "3000" là sentinel PubMed dùng cho "không
+    # có trần trên" (xem search()); ở đây đổi thành hôm nay vì tương lai không
+    # có gì để tìm.
+    if mindate:
+        since = mindate.replace("/", "-")
+        today = (maxdate.replace("/", "-") if maxdate and maxdate != "3000"
+                 else datetime.now(timezone.utc).date().isoformat())
+    else:
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
     loc = (
         ' AND (PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
         'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline")'

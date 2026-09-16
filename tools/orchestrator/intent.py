@@ -6,6 +6,7 @@ khớp để minh bạch. Không phán đoán mù: nếu không khớp → 'unkn
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 # Cụm từ báo hiệu một CA lâm sàng trọn vẹn → nhạc trưởng lâm sàng
@@ -13,6 +14,35 @@ CLINICAL_CASE_CUES = [
     "bệnh nhân", "tôi có bn", "tôi có một", "ca này", "khám ca", "người bệnh",
     "bn nam", "bn nữ", "nam ~", "nữ ~", "nam,", "nữ,", "cụ ông", "cụ bà",
 ]
+# SỬA 2026-09-03 (Workflow đối kháng đa-agent vòng 2, phát hiện CRITICAL cùng nhóm với
+# BƯỚC 0 cờ đỏ ở orchestrator.py): CLINICAL_CASE_CUES liệt kê hữu hạn không tổng quát hoá
+# cho cách diễn đạt tự nhiên khác — đo được bằng chạy sống: "Phụ nữ mang thai 32 tuần bị
+# đau đầu dữ dội..." và "Bé trai 8 tuổi khó thở về đêm..." đều rơi 'unknown'. Thêm regex
+# HẸP, chỉ khớp các mô tả tuổi/giới/thai kỳ đặc trưng của một CA — CỐ Ý không dùng một
+# mẫu \d+\s*tuổi trần (quá rộng, sẽ khớp cả câu nhắc tuổi trong mô tả quần thể nghiên cứu
+# như "nghiên cứu ở người trên 65 tuổi" — dù thứ tự kiểm RESEARCH_TOPIC_CUES trước vẫn xử
+# lý đúng khi có đủ từ khoá thiết kế, quy tắc AN TOÀN vẫn là: rộng hơn CHỈ khi thu hẹp có
+# chủ đích, không phải mặc định).
+CLINICAL_CASE_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(r"(nam|nữ)\s*\d+\s*tuổi"),        # "nữ 60 tuổi" (không dấu phẩy/dấu ~)
+    re.compile(r"(bé|cháu)\s*(trai|gái|bé)"),     # "bé trai", "cháu bé", "cháu gái"
+    re.compile(r"phụ nữ (mang thai|có thai)"),    # thai kỳ
+]
+# SỬA 2026-09-05 (Workflow đối kháng đa-agent vòng 4, HIGH): tập CON của
+# CLINICAL_CASE_PATTERNS — CHỈ hai mẫu ĐẦU (tuổi+giới cụ thể, giới tính trẻ em) — dùng RIÊNG
+# cho nhánh "cờ đỏ luôn thắng cue đề tài" trong route() bên dưới. CỐ Ý LOẠI mẫu thai kỳ (mẫu
+# thứ 3): xác nhận bằng thực nghiệm — bản vá đầu tiên dùng CẢ BA mẫu làm hỏng chính CA_CHINH
+# của test_orchestrator_workflow_20260904_research_topic_step0.py ("Nghiên cứu cắt ngang tỷ lệ
+# đau đầu dữ dội kèm sốt cao ở phụ nữ mang thai tại phòng khám" — một ĐỀ TÀI THẬT mô tả QUẦN
+# THỂ nghiên cứu, không phải một ca cụ thể) bị misroute ngược thành clinical_case — tái phát
+# đúng lỗi vòng 10 mà RESEARCH_TOPIC_CUES sinh ra để chặn. "phụ nữ mang thai" một mình KHÔNG
+# phải tín hiệu an toàn để phân biệt "một bệnh nhân cụ thể" khỏi "mô tả quần thể", khác
+# "nữ 60 tuổi,"/"bé trai..." (số tuổi/giới GẮN VÀO một chủ ngữ số ít, đúng khuôn trình bày ca
+# lâm sàng — không có tiền lệ dùng để mô tả quần thể trong toàn bộ test suite hiện có). Đây là
+# đánh đổi CÓ CHỦ Ý, cùng tinh thần giới hạn đã ghi nhận ở R5 của guardrail_check_g0 — một cấp
+# cứu sản khoa (tiền sản giật…) mô tả BẰNG "protocol" mà KHÔNG kèm tuổi/giới cụ thể vẫn có thể
+# lọt qua override này; ghi nhận ở đây để không bị coi là "đã đóng hoàn toàn".
+_INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS = CLINICAL_CASE_PATTERNS[:2]
 # Cụm từ báo hiệu một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu
 # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): whitelist cũ chỉ có
 # 8 cụm hẹp — một đề tài diễn đạt TỰ NHIÊN ("Nghiên cứu hồi cứu hiệu quả metformin trên bệnh
@@ -33,6 +63,22 @@ RESEARCH_TOPIC_CUES = [
     "khảo sát cắt ngang", "khảo sát hồi cứu", "khảo sát mô tả",
     "thử nghiệm lâm sàng", "thử nghiệm ngẫu nhiên",
 ]
+# SỬA 2026-09-03 (Workflow đối kháng đa-agent vòng 2): "khảo sát cắt ngang"/"khảo sát mô
+# tả"... ở trên đòi cụm liền kề — câu diễn đạt tự nhiên có từ chen giữa ("khảo sát tỷ lệ
+# trầm cảm sau sinh tại phòng khám, thiết kế cắt ngang mô tả") không khớp, rồi bị
+# SINGLE_TASK_RULES nuốt mất vì chỉ cần khớp một từ đơn lẻ ("trầm cảm") ở bất kỳ đâu →
+# misroute sang agent lâm sàng đơn lẻ thay vì mở đề tài G0-G10. Thêm luật RIÊNG cho
+# "khảo sát" (không mở rộng cho "nghiên cứu" trần — xem comment RESEARCH_TOPIC_CUES phía
+# trên: "nghiên cứu" một mình dễ khớp nhầm câu hỏi tra cứu chứng cứ tại điểm khám): "khảo
+# sát" + bất kỳ từ THIẾT KẾ nào xuất hiện Ở ĐÂU ĐÓ trong câu (không cần liền kề).
+_RESEARCH_DESIGN_WORDS = (
+    "hồi cứu", "tiến cứu", "cắt ngang", "so sánh", "thuần tập",
+    "bệnh chứng", "can thiệp", "quan sát", "mô tả",
+)
+
+
+def _khao_sat_co_thiet_ke(text: str) -> bool:
+    return "khảo sát" in text and any(w in text for w in _RESEARCH_DESIGN_WORDS)
 
 # Luật việc lẻ: (keywords, agent, ghi chú). Thứ tự = độ ưu tiên (đặc thù trước).
 SINGLE_TASK_RULES: list[tuple[list[str], str, str]] = [
@@ -149,7 +195,36 @@ def route(request: str) -> IntentResult:
 
     # Cue nghiên cứu ('đề tài/đề cương/protocol') là tín hiệu MẠNH → kiểm TRƯỚC cue lâm sàng
     # ('bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu, nên không được thắng 'đề tài').
-    if _any(t, RESEARCH_TOPIC_CUES):
+    if _any(t, RESEARCH_TOPIC_CUES) or _khao_sat_co_thiet_ke(t):
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 3, CRITICAL): CỜ ĐỎ LUÔN THẮNG
+        # cue đề tài, kể cả khi cue đề tài đến từ một từ TRUNG TÍNH như "protocol" (rất phổ
+        # biến trong ca thật: "đang trong protocol hoá trị", "chạy protocol hồi sức"). Trước
+        # đây "manh" bên dưới chỉ giải cứu VIEC_LE_MANH (agent nghiên cứu thuần) —
+        # "sang-loc-co-do" KHÔNG nằm trong tập đó (đúng ý, xem comment VIEC_LE_MANH ngay
+        # dưới nó), nên một ca cấp cứu THẬT ("bệnh nhân ngừng tim, chạy protocol hồi sức thế
+        # nào, cần chuyển cấp cứu ngay?") vẫn lọt xuống research_topic mà KHÔNG một bước
+        # sàng lọc cờ đỏ nào chạy — RESEARCH_FLOW không có bước nào tương đương BƯỚC 0 của
+        # CLINICAL_FLOW. Cùng nguyên tắc bất đối xứng đã ghi ở VIEC_LE_MANH: over-route sang
+        # nơi CÓ sàng lọc cờ đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không.
+        #
+        # SỬA 2026-09-05 (Workflow đối kháng đa-agent vòng 4, HIGH): bản vá vòng 3 CHỈ giải
+        # cứu khi câu chứa một TỪ KHOÁ cờ đỏ tường minh ("cấp cứu"/"chuyển viện"/"cờ đỏ"…).
+        # Một ca cấp cứu THẬT có thể mang dấu hiệu RÕ RÀNG là mô tả MỘT bệnh nhân cụ thể (theo
+        # đúng khuôn trình bày ca lâm sàng "nữ 60 tuổi,"/"bé trai...") mà không dùng đúng từ nào
+        # trong số đó — xác nhận bằng thực nghiệm: "nữ 60 tuổi, tiền sử ung thư vú, đang trong
+        # protocol hoá trị, nay sốt cao 39 độ, rét run" (giảm bạch cầu hạt sốt — cấp cứu ung thư
+        # thật) khớp RESEARCH_TOPIC_CUES qua "protocol" nhưng KHÔNG khớp "sang-loc-co-do" → vẫn
+        # lọt xuống research_topic trước bản vá này. Dùng ĐÚNG `_INDIVIDUAL_PATIENT_OVERRIDE_
+        # PATTERNS` (xem comment tại định nghĩa — CỐ Ý hẹp hơn CLINICAL_CASE_PATTERNS đầy đủ, đã
+        # loại mẫu thai kỳ vì nó gây báo động giả cho mô tả QUẦN THỂ nghiên cứu, xác nhận bằng
+        # chính hồi quy có sẵn của task #57).
+        if (any(a == "sang-loc-co-do" for a, _ in single_hits)
+                or any(p.search(t) for p in _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS)):
+            return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
+                                "khớp CỜ ĐỎ hoặc mô tả CA lâm sàng cụ thể (tuổi+giới/trẻ em) "
+                                "cùng lúc với cue đề tài — an toàn luôn thắng, over-route sang "
+                                "nhạc trưởng lâm sàng (có sàng lọc cờ đỏ ở BƯỚC 0) là chiều an "
+                                "toàn", match_labels)
         # Việc lẻ MẠNH thắng cue đề tài: xin một sản phẩm cụ thể ≠ khởi động vòng đời.
         manh = [(a, n) for a, n in single_hits if a in VIEC_LE_MANH]
         if manh:
@@ -160,7 +235,8 @@ def route(request: str) -> IntentResult:
         return IntentResult("research_topic", RESEARCH_ORCHESTRATOR,
                             "phát hiện một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu (G0→G10)",
                             match_labels)
-    if _any(t, CLINICAL_CASE_CUES):
+    pattern_hits = [p.pattern for p in CLINICAL_CASE_PATTERNS if p.search(t)]
+    if _any(t, CLINICAL_CASE_CUES) or pattern_hits:
         return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
                             "phát hiện mô tả một CA lâm sàng → nhạc trưởng lâm sàng (5 bước EBM)",
                             match_labels)

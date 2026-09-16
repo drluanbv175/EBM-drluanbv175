@@ -6,6 +6,10 @@ Bản đọc là trang HTML độc lập để bác sĩ đọc NGAY sau khi ch�
 nhật chứng cứ: việc cần làm và cờ đỏ đứng trước, chứng cứ đặt trên MỘT trục thang
 log dùng chung (vạch 1,0 ở giữa — trái là có lợi, phải là bất lợi).
 
+Hiệu số dạng CHÊNH LỆCH (SMD, MD, RD — giá trị "không khác biệt" là 0) KHÔNG được
+đặt lên trục log đó (sửa 16/09/2026, xem `effect_scale`): chúng có mục riêng trên
+thang TUYẾN TÍNH, vạch 0. Trang không có hiệu số chênh lệch giữ nguyên bố cục cũ.
+
 Khác dashboard (công cụ tra cứu, lọc theo mặt) và khác bản Word (tài liệu lưu trữ
 đầy đủ): bản đọc CHỈ giữ phần đổi được thực hành.
 
@@ -16,7 +20,7 @@ Mặc định ghi vào EBM-Dashboards/derivatives/<mã>_ban-doc.html
 
 QUY ƯỚC TRÌNH BÀY (chuẩn cho tài liệu cập nhật chứng cứ khoa học — bác sĩ chốt 2026-08-05):
   - Font mặc định TIMES NEW ROMAN cho toàn trang, đồng bộ với bản Word xuất kèm.
-  - ĐỀ MỤC (mục 1…5) IN HOA và IN ĐẬM. Tiêu đề khối con in đậm, không in hoa —
+  - ĐỀ MỤC (mục 1…5; 1…6 khi có mục hiệu số chênh lệch) IN HOA và IN ĐẬM. Tiêu đề khối con in đậm, không in hoa —
     giữ đúng bậc dưới đề mục. Tiêu đề trang in đậm, không in hoa vì câu quá dài.
   - Trong VĂN XUÔI thì viết hoa theo câu: KHÔNG dùng VIẾT HOA TOÀN BỘ để nhấn mạnh
     (nhấn mạnh bằng độ đậm và màu). Giữ nguyên viết hoa cho tên riêng, tên thử
@@ -33,6 +37,7 @@ import json
 import math
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 # Windows: stdout mặc định là cp1252 → mọi print() tiếng Việt hoặc ký hiệu (✓ ⚠ →)
@@ -266,9 +271,138 @@ class LogAxis:
         return sorted(kept)
 
 
+# ─────────── thang hiệu số: TỶ SỐ (log, vạch 1,0) hay CHÊNH LỆCH (tuyến tính, vạch 0) ───────────
+#
+# SỬA 16/09/2026. Trục log ở trên chỉ đúng cho TỶ SỐ. Bộ lọc cũ `_ratio()` chỉ loại hiệu số có
+# giá trị âm, nên chênh lệch TOÀN DƯƠNG vẫn lên trục log. Đo thật trên bản VKDT tâm thần kinh
+# 11/08: "SMD đau" 0,69 (0,54–0,84) rơi vào dải "ủng hộ" vì cận trên < 1,0, còn "Chênh DAS28"
+# 1,24 (1,10–1,37) bị gắn nhãn "Gây hại" vì cận dưới > 1,0 — cả hai sai bản chất, vì vạch
+# "không khác biệt" của chênh lệch là 0 chứ không phải 1.
+#
+# Luật dùng CHUNG với template Evidence Workbench (`effectScale` trong
+# templates/web-dashboard-evidence-workbench.html); ba danh sách dưới PHẢI trùng khít bản JS —
+# test canh: tools/test_ew_template_ho_thiet_ke_thang_hieu_so.py.
+#   • effect.scale 'ratio'|'difference' khai tường minh ⇒ dùng đúng giá trị đó;
+#   • không khai ⇒ suy từ effect.measure: cụm từ nhận ra ĐẦU TIÊN theo vị trí quyết định (cùng
+#     vị trí thì cụm dài hơn thắng). Khớp NGUYÊN TỪ — "RD" nằm trong "DMARD" không tính; "tỷ số
+#     chênh"/"tỷ suất chênh" là odds ratio nên cụm tỷ số đứng trước thắng chữ "chênh". Từ ĐẦU
+#     TIÊN bắt đầu bằng Δ hoặc β (ΔHbA1c, hệ số β) ⇒ chênh lệch;
+#   • không nhận ra gì ⇒ 'ratio' — tương thích ngược với mọi dashboard cũ.
+SCALE_RATIO_TERMS = (
+    "hr", "rr", "or", "irr", "ahr", "aor", "shr", "cshr", "ror", "rom",
+    "tỷ số", "ty so", "tỷ suất chênh", "ty suat chenh", "nguy cơ tương đối",
+    "hazard ratio", "odds ratio", "risk ratio", "rate ratio", "relative risk",
+)
+SCALE_DIFF_TERMS = (
+    "smd", "md", "wmd", "rd", "chênh", "chenh",
+    "hiệu số trung bình", "hiệu số trung bình chuẩn hoá", "hiệu số trung bình chuẩn hóa",
+    "hiệu số rủi ro", "hiệu số nguy cơ", "khác biệt trung bình",
+    "mean difference", "standardized mean difference", "standardised mean difference",
+    "risk difference", "hedges", "cohen",
+)
+SCALE_DIFF_FIRST_TOKEN_PREFIXES = ("δ", "β")
+# Chỉ bản đọc dùng: chênh lệch CHUẨN HOÁ không mang đơn vị nên so được với nhau ⇒ chung MỘT trục.
+# MD/RD/Δ/β mang đơn vị riêng của từng kết cục (điểm, mmHg, %) ⇒ mỗi mục một trục riêng, để
+# không ai so độ dài thanh giữa hai thang khác đơn vị.
+STANDARDIZED_DIFF_TERMS = frozenset({
+    "smd", "hiệu số trung bình chuẩn hoá", "hiệu số trung bình chuẩn hóa",
+    "standardized mean difference", "standardised mean difference", "hedges", "cohen",
+})
+
+_SCALE_TOKEN_RE = re.compile(r"[^\W_]+")
+
+
+def _scale_tokens(text) -> list[str]:
+    """Tách từ giống `scaleTokens` bên JS: NFC, chữ thường, chuỗi chữ/số liền nhau."""
+    s = "" if text is None else str(text)
+    s = unicodedata.normalize("NFC", s.replace("∆", "Δ")).lower()
+    return _SCALE_TOKEN_RE.findall(s)
+
+
+_SCALE_TERM_TOKENS = ([(_scale_tokens(t), "ratio", t) for t in SCALE_RATIO_TERMS]
+                      + [(_scale_tokens(t), "difference", t) for t in SCALE_DIFF_TERMS])
+
+
+def measure_scale_match(measure) -> tuple[str, str | None]:
+    """Trả (thang, cụm từ đã khớp); cụm từ là None khi rơi về mặc định 'ratio'."""
+    tokens = _scale_tokens(measure)
+    if tokens and any(tokens[0].startswith(p) for p in SCALE_DIFF_FIRST_TOKEN_PREFIXES):
+        return "difference", tokens[0][0]
+    for i in range(len(tokens)):
+        best = None
+        for words, kind, term in _SCALE_TERM_TOKENS:
+            n = len(words)
+            if n and (best is None or n > best[0]) and tokens[i:i + n] == words:
+                best = (n, kind, term)
+        if best:
+            return best[1], best[2]
+    return "ratio", None
+
+
+def measure_scale(measure) -> str:
+    """'ratio' | 'difference' suy từ nhãn thước đo (`effect.measure`)."""
+    return measure_scale_match(measure)[0]
+
+
+def effect_scale(effect) -> str:
+    """'ratio' | 'difference' cho khối `effect` của một item — khai tường minh thắng suy luận."""
+    e = effect if isinstance(effect, dict) else {}
+    khai = e.get("scale")
+    s = ("" if khai is None else str(khai)).strip().lower()
+    if s in ("ratio", "difference"):
+        return s
+    return measure_scale(e.get("measure"))
+
+
+class LinearAxis:
+    """Trục TUYẾN TÍNH đối xứng quanh 0 cho hiệu số CHÊNH LỆCH.
+
+    Đối xứng là có chủ ý: vạch 0 luôn nằm giữa nên chiều của ước lượng đọc được ngay,
+    tương tự vị trí vạch 1,0 trên trục log.
+    """
+
+    MIN_TICK_GAP = LogAxis.MIN_TICK_GAP
+
+    def __init__(self, nice: float):
+        self.nice = nice            # số tròn bao trọn |giá trị| lớn nhất
+        self.ext = nice * 1.1       # biên trục: chừa lề 10% để nhãn mép không bị cắt
+
+    def pos(self, v: float) -> float:
+        return (v + self.ext) / (2 * self.ext) * 100
+
+    @staticmethod
+    def _nice(x: float) -> float:
+        """Số tròn nhỏ nhất ≥ x trong dãy 1 · 2 · 2,5 · 5 × 10^k."""
+        k = math.floor(math.log10(x))
+        for m in (1, 2, 2.5, 5, 10):
+            if m * 10 ** k >= x - 1e-12:
+                return m * 10 ** k
+        return 10 ** (k + 1)
+
+    @classmethod
+    def fit(cls, values) -> "LinearAxis":
+        vals = [abs(v) for v in values
+                if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)]
+        top = max(vals) if vals and max(vals) > 0 else 1.0
+        return cls(cls._nice(top))
+
+    def ticks(self) -> list[float]:
+        """Nhãn tại 0, ±nửa số tròn, ±số tròn — lọc theo khoảng cách thật như LogAxis."""
+        kept = [0.0]
+        for t in (-self.nice, -self.nice / 2, self.nice / 2, self.nice):
+            if all(abs(self.pos(t) - self.pos(k)) >= self.MIN_TICK_GAP for k in kept):
+                kept.append(t)
+        return sorted(kept)
+
+
 def vn_num(x: float) -> str:
     """Số thập phân theo chuẩn tiếng Việt: dấu phẩy."""
     return f"{x:.2f}".replace(".", ",")
+
+
+def vn_signed(x: float) -> str:
+    """Số có dấu cho hiệu số chênh lệch: dấu trừ thật (−) và dấu phẩy thập phân."""
+    return ("−" if x < 0 else "") + vn_num(abs(x))
 
 
 # ───────────────────────────── dựng HTML ─────────────────────────────
@@ -410,6 +544,46 @@ def plot_row(item: dict, ax: LogAxis) -> str:
             f'<div class="tagcell"><span class="tag t-{tone}">{esc(label)}</span></div></div>')
 
 
+def plot_row_diff(item: dict, ax: LinearAxis) -> str:
+    """Một dòng hiệu số CHÊNH LỆCH trên trục tuyến tính, vạch 0.
+
+    Chiều có lợi của chênh lệch tuỳ KẾT CỤC — điểm đau giảm là tốt, điểm chất lượng sống tăng
+    là tốt — nên KHÔNG suy từ phía của vạch 0 như nhánh tỷ số suy từ vạch 1,0. Nhãn "Gây hại"
+    chỉ gắn khi nguồn khai rõ `favors` = false VÀ khoảng tin cậy không chạm vạch 0.
+    """
+    eff = item["effect"]
+    tone, label = DECISION.get(item.get("decision"), ("neutral", "Chưa đủ đổi"))
+    hr, lo, hi = eff["hr"], eff["lo"], eff["hi"]
+    if eff.get("favors") is False and (lo > 0 or hi < 0):
+        tone, label = "harm", "Gây hại"
+
+    name = esc(normalize_title(item.get("title", "")))
+    sub_bits = []
+    if item.get("design"):
+        sub_bits.append(esc(item["design"]))
+    if item.get("appraisalCompleteness") == "partial":
+        sub_bits.append('<span class="partial">thẩm định trên tóm tắt — '
+                        'chưa đọc toàn văn</span>')
+    m = esc(eff.get("measure") or "Hiệu số chênh lệch")
+    sub_bits.append(f'<span class="num">{m} {vn_signed(hr)} '
+                    f'({vn_signed(lo)} đến {vn_signed(hi)})</span>')
+    sub = " · ".join(sub_bits)
+
+    gl = "".join(f'<div class="gl" style="left:{ax.pos(t):.2f}%"></div>'
+                 for t in ax.ticks() if t != 0)
+    plot = (
+        f'<div class="plot" aria-hidden="true">{gl}'
+        f'<div class="nline" style="left:{ax.pos(0):.2f}%"></div>'
+        f'<div class="ci" style="left:{ax.pos(lo):.2f}%;width:{ax.pos(hi)-ax.pos(lo):.2f}%"></div>'
+        f'<div class="wh" style="left:{ax.pos(lo):.2f}%"></div>'
+        f'<div class="wh" style="left:{ax.pos(hi):.2f}%"></div>'
+        f'<div class="dot" style="left:{ax.pos(hr):.2f}%"></div></div>')
+
+    return (f'<div class="trial {tone}">'
+            f'<div class="name">{name}<small>{sub}</small></div>{plot}'
+            f'<div class="tagcell"><span class="tag t-{tone}">{esc(label)}</span></div></div>')
+
+
 def li_list(items, cls="") -> str:
     """Danh sách việc cần làm / cờ đỏ — cũng chuẩn hoá viết hoa như tiêu đề.
 
@@ -521,20 +695,70 @@ def khoi_mau_thuan(src: Path) -> str:
             f'<ul>{hang}</ul></div>')
 
 
+# Khoá cấp 1 HỢP LỆ của DATA.summary — PHẢI khớp verify_dashboard.py::KHOA_SUMMARY_HOP_LE.
+# Sửa danh sách này mà không sửa CẢ HAI nơi là tái lập đúng lỗi mà nó sinh ra để chặn.
+KHOA_SUMMARY_HOP_LE = {"conclusion", "doNow", "dontDo", "redFlags"}
+
+
+def khoi_khoa_summary_la(summary: dict) -> str:
+    """Dải cảnh báo: DATA.summary có khoá LẠ — nội dung dưới khoá đó bị VỨT ÂM THẦM.
+
+    VÌ SAO Ở ĐÂY (2026-09-04, Workflow đối kháng đa-agent vòng 3). verify_dashboard.py
+    đã CHẶN CỨNG lỗi này từ 18/08/2026 (kiem_khoa_summary, BH61) — nhưng bản chặn đó
+    chỉ chạy trong dây chuyền CÓ QUA CỔNG (`xuat_goi_cap_nhat.py --online`). File này
+    tự nó KHÔNG kiểm gì cả: `summary.get('redFlags', [])`/`get('doNow', [])`/
+    `get('dontDo', [])` coi khoá SAI TÊN (vd `notDo` thay vì `dontDo`) y hệt khoá VẮNG
+    MẶT — trả về [] êm ru, không lỗi/cảnh báo nào — nên khi công cụ này được gọi
+    ĐỘC LẬP (không qua cổng, vd chạy tay để soát lại một bản đã xuất), nó vẫn có thể
+    sinh trang "bản đọc" với panel an toàn RỖNG mà không một dấu hiệu nào lộ ra.
+    Ca thật đã xảy ra HAI LẦN (BH61): mất "KHÔNG ngừng opioid ĐỘT NGỘT ở người dùng
+    dài hạn" và một cảnh báo ESA-hemoglobin.
+
+    Đây là lớp phòng thủ THỨ HAI, không thay cổng — cổng vẫn là nơi CHẶN XUẤT.
+    """
+    la = sorted(set(summary) - KHOA_SUMMARY_HOP_LE)
+    if not la:
+        return ""
+    ds = "".join(f"<li><b>{esc(k)}</b></li>" for k in la)
+    return (
+        '<div class="rutbai"><h3>DATA.summary có khoá LẠ — nội dung có thể đã bị vứt âm thầm '
+        f'({len(la)} khoá)</h3>'
+        '<p class="sub">Khoá hợp lệ CHỈ gồm conclusion/doNow/dontDo/redFlags — nội dung nằm '
+        'dưới một khoá SAI TÊN (vd gõ nhầm <code>notDo</code> thay vì <code>dontDo</code>) '
+        'không hiện ra ở đâu trên trang này, kể cả panel "Không nên, hoặc chưa nên đổi" bên '
+        'dưới có thể đang RỖNG dù dữ liệu gốc có nội dung. Sửa lại đúng tên khoá trong '
+        'dashboard rồi xuất lại — máy không tự đoán khoá đúng.</p>'
+        f'<ul>{ds}</ul></div>'
+    )
+
+
 def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
     meta = data.get("meta", {})
     summary = data.get("summary", {})
     items = data.get("items", [])
 
-    # CHỈ nhận hiệu số dạng TỶ SỐ (dương) lên trục log. Hiệu số dạng chênh lệch
-    # trung bình có thể âm (vd −2,13 điểm) — đặt lên trục tỷ số là sai về bản chất,
-    # nên những mục đó xuống danh sách không-biểu-đồ và hiển thị bằng chữ.
+    # CHỈ nhận hiệu số dạng TỶ SỐ lên trục log. SỬA 16/09/2026: "ba giá trị dương" KHÔNG đủ để
+    # là tỷ số — chênh lệch toàn dương (SMD 0,69) từng lọt lên trục này. Nay còn phải được xếp
+    # thang TỶ SỐ theo `effect_scale` (khai tường minh hoặc suy từ nhãn thước đo). Tỷ số có giá
+    # trị ≤ 0 không tồn tại trên thang log nên vẫn xuống danh sách không-biểu-đồ như cũ.
     def _ratio(it: dict) -> bool:
         e = it.get("effect") or {}
+        if effect_scale(e) != "ratio":
+            return False
         vals = [e.get("hr"), e.get("lo"), e.get("hi")]
         return all(isinstance(v, (int, float)) and v > 0 for v in vals)
 
+    # Hiệu số CHÊNH LỆCH đủ ba giá trị hữu hạn ⇒ mục riêng trên thang tuyến tính, vạch 0.
+    def _diff(it: dict) -> bool:
+        e = it.get("effect") or {}
+        if effect_scale(e) != "difference":
+            return False
+        vals = [e.get("hr"), e.get("lo"), e.get("hi")]
+        return all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+                   for v in vals)
+
     eff_items = [i for i in items if _ratio(i)]
+    diff_items = [i for i in items if _diff(i)]
     bounds = []
     for i in eff_items:
         e = i["effect"]
@@ -553,7 +777,7 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
             against.append(i)
 
     # Mục không có hiệu số (guideline, đồng thuận, chiến lược…) liệt kê riêng, gọn.
-    no_eff = [i for i in items if not _ratio(i)]
+    no_eff = [i for i in items if not _ratio(i) and not _diff(i)]
     by_dec: dict[str, list] = {"apply": [], "consider": [], "notyet": []}
     for i in no_eff:
         by_dec.setdefault(i.get("decision", "consider"), []).append(i)
@@ -606,7 +830,70 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
         dec_block("notyet", "Chưa đủ để đổi thực hành"),
     ])
 
-    css = CSS
+    # ── Hiệu số CHÊNH LỆCH: mục riêng, thang tuyến tính, vạch 0 ──
+    # Trang KHÔNG có chênh lệch thì mọi phần dưới đây rỗng và trang giữ nguyên từng byte như
+    # trước bản sửa (mục lục 5 mục, lời dẫn cũ, CSS cũ).
+    def diff_tick_label(t: float) -> str:
+        if t == 0:
+            return "0"
+        return ("−" if t < 0 else "") + vn_num(abs(t)).rstrip("0").rstrip(",")
+
+    def diff_field(rows: list, band_label: str) -> str:
+        vals = [r["effect"][k] for r in rows for k in ("hr", "lo", "hi")]
+        dax = LinearAxis.fit(vals)
+        dticks = "".join(
+            f'<i class="{"mark" if t == 0 else ""}" style="left:{dax.pos(t):.2f}%">{diff_tick_label(t)}</i>'
+            for t in dax.ticks())
+        head = ('<div class="axis-head"><div class="colcap" style="text-align:left">Nghiên cứu · so sánh</div>'
+                f'<div class="scale">{dticks}</div>'
+                '<div class="colcap">Quyết định</div></div>')
+        body = "".join(plot_row_diff(r, dax) for r in rows)
+        return (f'<div class="field"><div class="field-inner">{head}'
+                f'<div class="band b-diff"><span>{esc(band_label)}</span><s></s></div>'
+                f'{body}</div></div>')
+
+    diff_html = ""
+    if diff_items:
+        # Chênh lệch CHUẨN HOÁ (SMD) không mang đơn vị ⇒ chung MỘT thang, so được với nhau.
+        # Chênh lệch có đơn vị (điểm, mmHg, %) ⇒ mỗi mục MỘT thang riêng.
+        chuan_hoa, rieng = [], []
+        for i in diff_items:
+            cum = measure_scale_match((i.get("effect") or {}).get("measure"))[1]
+            (chuan_hoa if cum in STANDARDIZED_DIFF_TERMS else rieng).append(i)
+        khung = []
+        if chuan_hoa:
+            khung.append(diff_field(chuan_hoa, "Chênh lệch chuẩn hoá (SMD) — các mục dùng chung một thang"))
+        for i in rieng:
+            nhan = i["effect"].get("measure") or "Hiệu số chênh lệch"
+            khung.append(diff_field([i], f"{nhan} — thang riêng của mục này"))
+        diff_html = f"""<section class="sec" id="chenhlech">
+  <div class="sec-head"><h2>4. Hiệu số dạng chênh lệch</h2><p>SMD, MD, RD — thang tuyến tính, vạch 0 ở giữa</p></div>
+  <p class="diffnote">Hiệu số chênh lệch không đặt được lên trục log ở mục 2 và 3: giá trị «không khác
+  biệt» của chúng là 0, không phải 1,0. Các chênh lệch chuẩn hoá (SMD) dùng chung một khung nên so
+  được với nhau; chênh lệch có đơn vị (điểm, mmHg, %) thì mỗi mục một thang riêng — đừng so độ dài
+  thanh giữa hai khung. Chiều có lợi tuỳ kết cục (điểm đau giảm là tốt, điểm chất lượng sống tăng là
+  tốt), nên đọc theo chú thích của nguồn, không suy từ phía trái hay phải của vạch.</p>
+  {"".join(khung)}
+  <div class="legend">
+    <div><span class="k-dot"></span>ước lượng điểm</div>
+    <div><span class="k-bar"></span>khoảng tin cậy 95%</div>
+    <div><span class="k-nl"></span>vạch 0 — không khác biệt</div>
+  </div>
+</section>
+
+"""
+
+    deck_truc = ("Mọi hiệu số nằm trên cùng một trục thang log, vạch 1,0 ở giữa — bên trái là có lợi,\n"
+                 "  bên phải là bất lợi.")
+    if diff_items:
+        deck_truc = ("Hiệu số dạng tỷ số (HR, RR, OR) nằm trên cùng một trục thang log, vạch 1,0 ở giữa —\n"
+                     "  bên trái là có lợi, bên phải là bất lợi. Hiệu số dạng chênh lệch (SMD, MD, RD) có\n"
+                     "  mục riêng trên thang tuyến tính, vạch 0.")
+    nav_chenh = '  <a href="#chenhlech">4. Hiệu số dạng chênh lệch</a>\n' if diff_items else ""
+    so_khac = 5 if diff_items else 4
+    so_vn = so_khac + 1
+
+    css = CSS + (CSS_CHENH_LECH if diff_items else "")
     parts = [f"""<!doctype html>
 <html lang="vi">
 <head>
@@ -621,16 +908,16 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
   <p class="eyebrow">Bản đọc sau cập nhật chứng cứ · {esc(meta.get('updated', ''))}</p>
   <h1>{esc(normalize_title(meta.get('question', '')))}</h1>
   <p class="deck">Bản rút gọn để đọc ngay tại phòng khám: việc cần làm đứng trước, chứng cứ đặt
-  sau. Mọi hiệu số nằm trên cùng một trục thang log, vạch 1,0 ở giữa — bên trái là có lợi,
-  bên phải là bất lợi.</p>
+  sau. {deck_truc}</p>
   <div class="readout">
     <div><b>{len(items)}</b><span>mục đã xác minh</span></div>
     <div><b class="ok">{n_apply}</b><span>áp dụng ngay</span></div>
     <div><b class="ok">{n_pmid}/{len(items)}</b><span>mục có định danh truy nguyên</span></div>
-    <div><b class="ok">{len(eff_items)}</b><span>mục có hiệu số định lượng</span></div>
+    <div><b class="ok">{len(eff_items) + len(diff_items)}</b><span>mục có hiệu số định lượng</span></div>
   </div>
 </header>
 
+{khoi_khoa_summary_la(summary)}
 {khoi_rut_bai(src) if src else ''}
 {khoi_mau_thuan(src) if src else ''}
 
@@ -638,8 +925,8 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
   <a href="#lam">1. Việc cần làm</a>
   <a href="#ungho">2. Chứng cứ ủng hộ</a>
   <a href="#khong">3. Không ủng hộ hoặc gây hại</a>
-  <a href="#khac">4. Khuyến cáo và đồng thuận</a>
-  <a href="#vn">5. Áp dụng tại Việt Nam</a>
+{nav_chenh}  <a href="#khac">{so_khac}. Khuyến cáo và đồng thuận</a>
+  <a href="#vn">{so_vn}. Áp dụng tại Việt Nam</a>
 </nav>
 
 <section class="sec" id="lam">
@@ -671,13 +958,13 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
   {field(against, 'Khoảng tin cậy chạm hoặc vượt vạch 1,0', 'harm')}
 </section>
 
-<section class="sec" id="khac">
-  <div class="sec-head"><h2>4. Khuyến cáo và đồng thuận</h2><p>mục không có hiệu số định lượng để đặt lên trục</p></div>
+{diff_html}<section class="sec" id="khac">
+  <div class="sec-head"><h2>{so_khac}. Khuyến cáo và đồng thuận</h2><p>mục không có hiệu số định lượng để đặt lên trục</p></div>
   <div class="noeffs">{noeff_html}</div>
 </section>
 
 <section class="sec vn" id="vn">
-  <div class="sec-head"><h2>5. Áp dụng tại Việt Nam</h2><p>mục cần đối chiếu nguồn lực và quy trình tại đơn vị</p></div>
+  <div class="sec-head"><h2>{so_vn}. Áp dụng tại Việt Nam</h2><p>mục cần đối chiếu nguồn lực và quy trình tại đơn vị</p></div>
   <div class="flags">
     <h3>Cần xác nhận tại đơn vị trước khi áp dụng</h3>
     <ul>{''.join(f"<li><b>{esc(i.get('title',''))}</b> — {esc(i.get('vn',''))}</li>" for i in vn_checks) or '<li>Không có mục nào cần xác nhận tại đơn vị.</li>'}</ul>
@@ -863,6 +1150,12 @@ footer .stamp{margin-top:10px;font-family:var(--mono);font-size:11.5px}
 .nav{display:none}.wrap{max-width:none;padding:0}.field{overflow:visible}
 .field-inner{min-width:0}.sec{margin-top:26px;page-break-inside:avoid}
 .trial,.flags,.redflags,.act{page-break-inside:avoid}h1{font-size:28px}}
+"""
+
+# Chỉ nối vào trang CÓ hiệu số chênh lệch — trang không có giữ nguyên CSS cũ từng byte.
+CSS_CHENH_LECH = """
+.band.b-diff span{color:var(--axis)}
+.diffnote{margin:12px 0 0;max-width:78ch;font-size:14px;line-height:1.6;color:var(--ink-2)}
 """
 
 

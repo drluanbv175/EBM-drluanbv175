@@ -25,6 +25,16 @@ cờ đỏ có đúng hay không — nó chỉ bảo đảm: có nguồn truy đ
 chí ĐO ĐƯỢC · hai trục (cờ đỏ cho bác sĩ ≠ lời dặn cho bệnh nhân) không bị gộp ·
 và **độ phủ thật được nói ra** thay vì để một lá cờ `true` nói hộ.
 
+VÁ 2026-09-03 (Workflow đối kháng đa-agent, phát hiện #8): R4/R5/R6 trước đây
+CHỈ áp cho khối `co_do_cho_bac_si`, không áp cho `dan_benh_nhan_quay_lai` — dù
+trục thứ hai này cũng tự khai `trang_thai: "co-nguon"` và được tính vào độ phủ
+báo cho bác sĩ. Ca thật bắt được ngay trên dữ liệu sống: `dau-nguc` khai
+`co-nguon` mà vẫn còn nguyên `[CẦN BÁC SĨ ĐIỀN]` bên trong. Nay thêm R10 (nguồn
+truy được — biến thể của R4 cho đúng schema của `ld`, xem `_nguon_truy_duoc_ld`)
+và R11 (cấm placeholder — mirror trực tiếp của R6). R5 (đo được) CỐ Ý không có
+bản sao: `ld.noi_dung[].cau` là câu dặn trực tiếp cho bệnh nhân, khác hẳn
+`tieu_chi[].do_duoc` của `cd` — ép cùng luật là đo nhầm chỗ.
+
 Dùng:
     python3 tools/kiem_safety_net.py             # in bảng độ phủ
     python3 tools/kiem_safety_net.py --im-khi-on # chỉ nói khi có lỗi (hook)
@@ -37,6 +47,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -51,17 +62,97 @@ PLACEHOLDER = "[CẦN BÁC SĨ ĐIỀN]"
 TRANG_THAI_HOP_LE = {"co-nguon", "chua-dien"}
 HAN_RA_SOAT_NGAY = 365
 
+# SỬA (vá "R4 chấp nhận nguồn không định danh được", 2026-09-04): mốc chuẩn dùng
+# ĐÚNG ngưỡng đã canonical trong hệ — khớp
+# `medical-ebm-automation/app/evidence/citation_validator.py::_PMID`/`_DOI`
+# (`^\d{4,9}$` / `^10\.\d{4,9}/\S+$`) — không phát minh ngưỡng mới. Riêng "toàn
+# số 0" (`"00000"`) khớp `\d{4,9}` nhưng KHÔNG phải PMID thật (PubMed đánh số
+# từ 1, không có PMID 0) nên loại thêm bằng kiểm tra giá trị > 0 ở nơi dùng.
+_PMID_HOP_LE = re.compile(r"^\d{4,9}$")
+_DOI_HOP_LE = re.compile(r"^10\.\d{4,9}/\S+$", re.IGNORECASE)
+_NAM_HOP_LE = re.compile(r"^(19|20)\d{2}$")
+
 
 def _nguon_truy_duoc(nguon: object) -> bool:
-    """Nguồn phải phân giải được: PMID, hoặc DOI, hoặc guideline kèm năm."""
+    """Nguồn phải phân giải được: PMID, hoặc DOI, hoặc guideline kèm năm.
+
+    SỬA (vá "R4 chấp nhận nguồn không định danh được", 2026-09-04): trước bản vá
+    `pmid` chỉ đòi `.isdigit()` — không giới hạn độ dài, nên `"0"`/`"00000"`/một
+    chuỗi số bất kỳ đều qua dù không phải PMID thật. `doi` chỉ đòi
+    `.startswith("10.")` — một DOI thật LUÔN có mã đăng ký (4-9 chữ số) VÀ hậu
+    tố sau dấu gạch chéo; chuỗi trơn `"10."` không trỏ tới bài nào cũng qua được.
+    `nam` chỉ đòi khác rỗng — `"y"` cũng qua. Cả ba lỗ đều khiến `trang_thai:
+    "co-nguon"` + R4 PASS cho một nguồn không ai tra ngược lại được, đúng nghĩa
+    "không định danh được" của phát hiện. Đã kiểm bằng dữ liệu THẬT trong
+    `safety_net_templates.json` (8/8 hội chứng `co-nguon`, PMID 8 chữ số/DOI
+    `10.xxxx/...`/năm 4 chữ số) — không mục nào bị chặn oan bởi bản vá này."""
     if not isinstance(nguon, dict):
         return False
-    if str(nguon.get("pmid", "")).strip().isdigit():
+    pmid = str(nguon.get("pmid", "")).strip()
+    if _PMID_HOP_LE.match(pmid) and int(pmid) > 0:
         return True
-    if str(nguon.get("doi", "")).strip().startswith("10."):
+    if _DOI_HOP_LE.match(str(nguon.get("doi", "")).strip()):
         return True
     return bool(str(nguon.get("guideline", "")).strip()
-                and str(nguon.get("nam", "")).strip())
+                and _NAM_HOP_LE.match(str(nguon.get("nam", "")).strip()))
+
+
+_MAU_PMID_DOI = re.compile(r"PMID\s*[:\s]?\d{5,9}|doi\s*:\s*10\.\d{4,9}/", re.IGNORECASE)
+
+
+def _ma_hop_le_tieu_chi(cd: object) -> set[str]:
+    """Tập hợp mã `tieu_chi[].ma` THẬT của `co_do_cho_bac_si` — nguồn sự thật
+    DUY NHẤT để đối chiếu `ma_nguon` (xem `_nguon_truy_duoc_ld`/R10). Đo trực
+    tiếp trên `safety_net_templates.json`: mỗi tiêu chí cờ đỏ mang một `ma`
+    ngắn (S, N1, N2, O1, P8, Q1, W1…) mà `dan_benh_nhan_quay_lai.noi_dung[]`
+    tham chiếu ngược lại qua `ma_nguon`."""
+    tieu_chi = cd.get("tieu_chi") if isinstance(cd, dict) else None
+    if not isinstance(tieu_chi, list):
+        return set()
+    return {str(t.get("ma", "")).strip() for t in tieu_chi
+            if isinstance(t, dict) and str(t.get("ma", "")).strip()}
+
+
+def _nguon_truy_duoc_ld(ld: dict, ma_hop_le: set[str]) -> bool:
+    """Nguồn của khối `dan_benh_nhan_quay_lai` truy được — biến thể của
+    `_nguon_truy_duoc()` cho đúng HAI hình dạng dữ liệu THẬT đang tồn tại song
+    song trong `safety_net_templates.json` (đo trực tiếp trên file, không suy
+    đoán): (a) một `nguon` cấp KHỐI giống hệt `co_do_cho_bac_si` (dau-dau,
+    kho-tho, sot, sut-can); (b) KHÔNG có `nguon` cấp khối, mỗi mục trong
+    `noi_dung[]` tự mang nguồn riêng qua `ma_nguon` (mã tham chiếu ngược về
+    `tieu_chi` của `co_do_cho_bac_si` — đã được R4 xác minh nguồn CHUNG) hoặc
+    `nguon_goc` (chuỗi tự do nhúng PMID/DOI, dau-nguc/dau-bung/dau-lung/
+    chong-mat). Chấp nhận (a) HOẶC mọi mục đều đạt (b) — không đòi cả hai.
+
+    SỬA (vá "R10 chấp nhận mã nguồn bịa", 2026-09-04): `ma_nguon` trước bản vá
+    chỉ đòi khác rỗng — một mã BỊA (vd `"ma_nguon": "XYZ999"`, không khớp bất
+    kỳ `tieu_chi[].ma` nào của CHÍNH hội chứng đó) vẫn qua R10 như thể đã tham
+    chiếu tới một tiêu chí có nguồn thật, dù nó không tham chiếu tới đâu cả.
+    Nay đối chiếu với `ma_hop_le` — tập `ma` THẬT của `co_do_cho_bac_si` CÙNG
+    hội chứng, do `kiem()` truyền vào qua `_ma_hop_le_tieu_chi(cd)` (tham số
+    bắt buộc, không có mặc định — thiếu tập đối chiếu thì không cách nào phân
+    biệt mã thật với mã bịa, gọi hàm mà không truyền là lỗi lập trình, không
+    phải một trạng thái hợp lệ cần dung thứ). Chấp nhận danh sách nhiều mã
+    cách nhau bằng dấu phẩy (dữ liệu THẬT có `"ma_nguon": "P1, P5"`) — TẤT CẢ
+    các mã trong danh sách phải khớp `ma_hop_le`, không phải chỉ một."""
+    if _nguon_truy_duoc(ld.get("nguon")):
+        return True
+    noi_dung = ld.get("noi_dung")
+    if not isinstance(noi_dung, list) or not noi_dung:
+        return False
+    for muc in noi_dung:
+        if not isinstance(muc, dict):
+            return False
+        ma_nguon = str(muc.get("ma_nguon", "")).strip()
+        if ma_nguon:
+            ma_list = [m.strip() for m in ma_nguon.split(",") if m.strip()]
+            if ma_list and all(m in ma_hop_le for m in ma_list):
+                continue
+            return False
+        if _MAU_PMID_DOI.search(str(muc.get("nguon_goc", ""))):
+            continue
+        return False
+    return True
 
 
 def kiem(mau: dict, co: dict, hom_nay: dt.date) -> tuple[list[str], list[str], dict]:
@@ -135,8 +226,30 @@ def kiem(mau: dict, co: dict, hom_nay: dt.date) -> tuple[list[str], list[str], d
                 loi.append(f"R2 {nhan}: khai `chua-dien` mà không có nhãn {PLACEHOLDER} "
                            f"— trạng thái và nội dung nói hai thứ khác nhau.")
 
+        # THÊM 2026-09-03 (Workflow đối kháng đa-agent, phát hiện #8): R4/R5/R6
+        # trên `cd` KHÔNG có bản sao cho `ld` — trước bản vá này, một khối
+        # `dan_benh_nhan_quay_lai` khai `co-nguon` nhưng còn nguyên
+        # `[CẦN BÁC SĨ ĐIỀN]` bên trong (ca THẬT: dau-nguc, tra được ngay trên
+        # dữ liệu sống) lọt qua hoàn toàn — chỉ bị đếm vào độ phủ, không hề bị
+        # kiểm nội dung. R5 (đo được — `tieu_chi[].do_duoc`) CỐ Ý không có bản
+        # sao cho `ld`: hai khối khác schema (`ld.noi_dung[].cau` là câu dặn
+        # trực tiếp cho bệnh nhân, không phải danh sách tiêu chí cho bác sĩ
+        # chấm) nên ép cùng một luật là đo nhầm chỗ.
         if ld.get("trang_thai") == "co-nguon":
             co_loi_dan += 1
+            # R10 — mirror của R4: nguồn phải truy được (xem _nguon_truy_duoc_ld).
+            # ma_hop_le = tập `tieu_chi[].ma` THẬT của CÙNG hội chứng — đối
+            # chiếu `ma_nguon` với đây, không chấp nhận mã bịa (xem docstring).
+            if not _nguon_truy_duoc_ld(ld, _ma_hop_le_tieu_chi(cd)):
+                loi.append(f"R10 {nhan}: `dan_benh_nhan_quay_lai` khai `co-nguon` "
+                           f"nhưng nguồn không truy được (cần `nguon` cấp khối, hoặc "
+                           f"mỗi mục trong `noi_dung` tự mang `ma_nguon` KHỚP một "
+                           f"`tieu_chi[].ma` thật của hội chứng này, hoặc `nguon_goc` "
+                           f"có PMID/DOI).")
+            # R11 — mirror của R6: không placeholder trong khối đã khai có nguồn.
+            if PLACEHOLDER in json.dumps(ld, ensure_ascii=False):
+                loi.append(f"R11 {nhan}: khối `dan_benh_nhan_quay_lai` khai `co-nguon` "
+                           f"mà vẫn còn {PLACEHOLDER}.")
 
         # R8 — hạn rà soát
         ngay = str(hc.get("ngay_ra_soat", "")).strip()

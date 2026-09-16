@@ -62,6 +62,14 @@ class CapabilitySpec:
     entry_agents: tuple[str, ...] = ()
     hard_gates: tuple[str, ...] = ()
     workers: tuple[WorkerSpec, ...] = ()
+    # capability_for() chi khop qua intent_kinds (intent nhieu tu) hoac
+    # entry_agents (intent single_task) — mot capability rong ca hai truong
+    # nay vinh vien khong the ai to den qua duong dinh tuyen tu dong, ke ca
+    # bac si goi dich danh worker cua no (Workflow doi khang da-agent vong 2,
+    # 2026-09-04). Danh dau manual_only=True de validate() phan biet "co
+    # chu y, chi goi tay qua --resolve-capability" voi "quen khai intent_kinds/
+    # entry_agents khi them capability moi".
+    manual_only: bool = False
 
     @classmethod
     def from_dict(cls, capability_id: str, data: dict[str, Any]) -> "CapabilitySpec":
@@ -76,6 +84,7 @@ class CapabilitySpec:
             entry_agents=tuple(str(x) for x in data.get("entry_agents", [])),
             hard_gates=tuple(str(x) for x in data.get("hard_gates", [])),
             workers=tuple(WorkerSpec.from_dict(x) for x in data.get("workers", [])),
+            manual_only=bool(data.get("manual_only", False)),
         )
 
 
@@ -240,6 +249,30 @@ class PluginOwnershipRegistry:
                 owner_unit=entry_agent,
                 rules=self.global_rules,
             )
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện HIGH): kind `cong_cu`
+        # (chủ là LỆNH/SKILL/công cụ, không phải agent — xem VIEC_CONG_CU trong
+        # intent.py) chưa từng khai `intent_kinds`/`entry_agents` trong registry, và
+        # nhánh single_task ở trên chỉ khớp đúng `kind == "single_task"` nên KHÔNG
+        # cứu được `cong_cu`. Trước bản vá, MỌI request `cong_cu` rơi thẳng xuống
+        # BLOCKED_UNKNOWN_CAPABILITY bên dưới ngay trong `handle()` (kiểm tra
+        # `plugin_decision.status.startswith("BLOCKED")` ở orchestrator.py) — đóng
+        # session TRƯỚC KHI `_plan()` chạy tới nhánh `if kind == "cong_cu":
+        # return [GUARDRAIL_STEP]` vốn đã viết đúng nhưng không bao giờ được gọi tới.
+        # Nghĩa là toàn bộ nhóm việc-có-chủ-là-công-cụ (BH88, 3 mục trong
+        # VIEC_CONG_CU) bị chặn nhầm 100% dù hệ biết rõ chủ của chúng — đúng kiểu
+        # lỗi "luật CÓ MẶT mà KHÔNG BAO GIỜ chạy tới" đã lặp lại nhiều lần trong hệ
+        # này. Không có quyền sở hữu PLUGIN nào cần phân xử ở đây (công cụ không
+        # phải plugin, không tranh chấp worker) nên cùng nhánh READY_LOCAL_* như
+        # single_task là đúng, không phải BLOCKED.
+        if kind == "cong_cu" and entry_agent:
+            return PluginRoutingDecision(
+                status="READY_LOCAL_TOOL_ONLY",
+                capability_id="local_tool_task",
+                risk="contextual",
+                owner_provider="local-tool",
+                owner_unit=entry_agent,
+                rules=self.global_rules,
+            )
         return PluginRoutingDecision(
             status="BLOCKED_UNKNOWN_CAPABILITY",
             capability_id="unknown",
@@ -282,6 +315,14 @@ class PluginOwnershipRegistry:
                     errors.append(f"{capability_id}: owner agent khong ton tai: {cap.owner_unit}")
             if cap.runtime and not (ROOT / cap.runtime).exists():
                 errors.append(f"{capability_id}: runtime khong ton tai: {cap.runtime}")
+
+            if not cap.intent_kinds and not cap.entry_agents and not cap.manual_only:
+                errors.append(
+                    f"{capability_id}: rong ca intent_kinds lan entry_agents — "
+                    "capability_for() khong bao gio khop duoc, chi con duong "
+                    "--resolve-capability. Khai manual_only:true neu day la co "
+                    "y (chi goi tay), hoac them intent_kinds/entry_agents."
+                )
 
             for kind in cap.intent_kinds:
                 if kind in intent_owners:
