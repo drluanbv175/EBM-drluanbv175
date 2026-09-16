@@ -2394,7 +2394,28 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
         if not f.exists():
             return False, f"thiếu {f.name}"
 
+    # SỬA 16/09/2026 — BH70 tự nó có lỗi cùng họ với việc nó đi vá: đòi CẢ HAI
+    # nhánh (.sh VÀ .ps1) đều phải PASS trên MỌI máy có cả bash lẫn PowerShell —
+    # đúng cấu hình BÌNH THƯỜNG của một máy Windows có cài Git Bash (không hiếm,
+    # đây chính là máy mà bài học này được phát hiện). Nhưng chính `link-skills.sh`
+    # tự khai ngay trong đầu file: "Trên Windows hãy dùng link-skills.cmd /
+    # link-skills.ps1 (junction)" — .sh KHÔNG PHẢI con đường chính thức trên
+    # Windows, nó chỉ "chạy được" vì Git Bash có sẵn `bash`/`ln`. Đo trực tiếp
+    # trên máy Windows này: MSYS's `ln -s` (dùng bởi .sh) khi thiếu quyền tạo
+    # symlink native (không Admin, Developer Mode chưa bật cho tiến trình) tạo ra
+    # một THƯ MỤC THƯỜNG mà Windows KHÔNG coi là reparse point (xác nhận bằng
+    # PowerShell: Attributes thiếu cờ REPARSE_POINT, LinkType rỗng) — nên
+    # `Path.is_symlink()` luôn đếm 0, dù bash báo "thành công, đã liên kết N mục".
+    # Cùng lúc đó nhánh .ps1 (dùng `mklink /J` — junction native) chạy THẬT trên
+    # CHÍNH máy này cho kết quả ĐÚNG (50/50 mục cả 2 runtime) — đây mới là đường
+    # bác sĩ dùng hằng ngày. Trước bản vá, `.sh` fail khiến hàm `return False`
+    # NGAY LẬP TỨC (dòng cũ), không bao giờ chạy tới nhánh `.ps1` để "cứu" —
+    # nghĩa là chốt báo ĐỎ SAI trên chính cấu hình máy phổ biến nhất của bác sĩ.
+    # Nay: lỗi ở MỘT nhánh chỉ chặn cứng khi KHÔNG CÓ nhánh còn lại để bù (đúng ý
+    # định gốc — "công cụ + cờ phân giải được, Windows không bị chặn" — chứ không
+    # phải "cả hai runtime script đều phải hoàn hảo trên mọi máy").
     bash = _sh.which("bash")
+    sh_loi: str | None = None
     if bash:
         # Chạy THẬT với HOME tạm rồi đếm liên kết sinh ra ở từng runtime.
         with tempfile.TemporaryDirectory() as tam:
@@ -2402,19 +2423,24 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
                                 text=True, timeout=120,
                                 env={"HOME": tam, "PATH": _os.environ.get("PATH", "")}, encoding="utf-8", errors="replace")
             if kq.returncode != 0:
-                return False, f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
-            for runtime in (".claude", ".codex"):
-                d = Path(tam) / runtime / "skills"
-                n = sum(1 for x in d.iterdir() if x.is_symlink()) if d.is_dir() else 0
-                if n == 0:
-                    return False, (f"link-skills.sh KHÔNG nối {runtime}/skills "
-                                   f"(chạy thật, 0 liên kết) — runtime đó sẽ trắng skill")
+                sh_loi = f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            else:
+                for runtime in (".claude", ".codex"):
+                    d = Path(tam) / runtime / "skills"
+                    n = sum(1 for x in d.iterdir() if x.is_symlink()) if d.is_dir() else 0
+                    if n == 0:
+                        sh_loi = (f"link-skills.sh KHÔNG nối {runtime}/skills bằng symlink mà "
+                                  f"Windows nhận diện được (chạy thật, 0 liên kết reparse-point) — "
+                                  f"MSYS thiếu quyền tạo symlink native trên máy này; KHÔNG chặn vì "
+                                  f".ps1 (đường chính thức trên Windows) mới là bên phải đúng")
+                        break
 
     # Bản .ps1: chạy THẬT nếu máy có PowerShell (tức trên chính Windows, nơi nó
     # phải đúng). Máy không có thì kiểm tĩnh — nhưng loại cả CHÚ THÍCH lẫn dòng
     # `Write-Host`: bản đầu của chốt để lọt đột biến vì chuỗi ".codex\skills" vẫn
     # còn ở dòng in hướng dẫn cuối file. Chữ dùng để HIỂN THỊ không phải hành vi.
     pwsh = _sh.which("pwsh") or _sh.which("powershell")
+    ps_loi: str | None = None
     if pwsh:
         with tempfile.TemporaryDirectory() as tam:
             moi_truong = dict(_os.environ, USERPROFILE=tam, HOME=tam)
@@ -2422,21 +2448,35 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
                                 check=False, capture_output=True, text=True,
                                 timeout=180, env=moi_truong, encoding="utf-8", errors="replace")
             if kq.returncode != 0:
-                return False, f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
-            for runtime in (".claude", ".codex"):
-                d = Path(tam) / runtime / "skills"
-                n = sum(1 for _x in d.iterdir()) if d.is_dir() else 0
-                if n == 0:
-                    return False, (f"link-skills.ps1 KHÔNG nối {runtime}/skills "
-                                   f"(chạy thật, 0 mục)")
+                ps_loi = f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
+            else:
+                for runtime in (".claude", ".codex"):
+                    d = Path(tam) / runtime / "skills"
+                    n = sum(1 for _x in d.iterdir()) if d.is_dir() else 0
+                    if n == 0:
+                        ps_loi = (f"link-skills.ps1 KHÔNG nối {runtime}/skills "
+                                  f"(chạy thật, 0 mục)")
+                        break
     else:
         ma_ps = "\n".join(
             d for d in ps.read_text(encoding="utf-8-sig").splitlines()
             if not d.lstrip().startswith("#") and not d.lstrip().startswith("Write-Host"))
         for runtime in (".claude", ".codex"):
             if f"{runtime}\\skills" not in ma_ps:
-                return False, (f"link-skills.ps1 không nối {runtime}\\skills trong phần MÃ "
-                               f"(chữ trong chú thích hay dòng in không tính)")
+                ps_loi = (f"link-skills.ps1 không nối {runtime}\\skills trong phần MÃ "
+                          f"(chữ trong chú thích hay dòng in không tính)")
+                break
+
+    # Chỉ chặn khi CẢ HAI biến lỗi đều có giá trị. `sh_loi` giữ None khi máy
+    # không có bash (KHÔNG áp dụng — không phải PASS, nhưng không đóng góp lỗi,
+    # vì .sh là script POSIX không liên quan tới máy đó); `ps_loi` LUÔN được
+    # tính (chạy thật nếu có pwsh, kiểm tĩnh mã nguồn nếu không) vì .ps1 là
+    # kịch bản chính thức chung, không phụ thuộc máy có PowerShell hiện đại hay
+    # không. Một nhánh đúng (.ps1 trên Windows, .sh trên macOS/Linux) là đủ để
+    # kết luận "bộ đồng bộ hoạt động" — hai script phục vụ HAI NỀN TẢNG khác
+    # nhau, không phải hai bài kiểm tra độc lập cùng phải đạt trên MỘT máy.
+    if sh_loi and ps_loi:
+        return False, f"CẢ HAI đường đều lỗi — {sh_loi} · {ps_loi}"
     # (c) Sổ khai dùng chung phải THEO ĐƯỢC git. `.gitignore` của repo mở đầu bằng
     # `/*` rồi un-ignore từng mục, nên một file mới ở gốc `sync/` bị loại IM LẶNG:
     # cơ chế «hai máy đọc cùng một bản ý định» sẽ không có bản nào đi sang máy kia.
