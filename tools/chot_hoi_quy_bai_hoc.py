@@ -5527,6 +5527,97 @@ def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> 
     return True, "từ worktree: nguồn + công cụ ghi nơi chạy Cowork đều là của repo chính"
 
 
+def bh106_hook_python_chi_goi_mot_lan():
+    """16/09 — `A && B || C` KHÔNG PHẢI if/else khi B tự trả mã khác 0 CÓ CHỦ Ý.
+
+    ĐÁNH SỐ LẠI 17/09/2026 (workflow kiểm tra toàn diện): commit gốc đặt lỗi này là
+    "BH104", nhưng số đó đã bị BH104 khác chiếm trước (trần kiến trúc Cowork, xem
+    `bh104_cowork_orphan_cleanup_da_khai` ở trên), và BH105 cũng đã bị chiếm cùng đợt
+    (worktree lạc hậu ghi vào Cowork) — số kế tiếp còn trống là BH106. Nội dung bài
+    học và chốt kiểm giữ nguyên, chỉ đổi số + tên hàm.
+    8/10 lệnh trong `sync/hooks-sessionstart.json` dùng mẫu
+    `command -v python3 >/dev/null 2>&1 && python3 X --im-khi-on || python X --im-khi-on`.
+    Nhưng các công cụ `--im-khi-on` CỐ Ý trả mã 1/2 để báo «có việc/có lệch»
+    (`dong_bo_skill.py` trả 1 khi có skill cần đẩy; `tu_sua_chua.py` trả 2 khi còn việc cần
+    bác sĩ) — nên `||` đọc nhầm mã đó thành «python3 lỗi» và CHẠY LẠI công cụ bằng `python`.
+    Trên máy có cả hai lệnh (thường gặp trên Windows/Git Bash): chạy 2 lần/phiên, kể cả
+    `tu_sua_chua.py --ap-dung` (có ghi). Trên Mac không có lệnh `python`: chỉ in
+    `command not found` ra stderr — đúng dấu vết thấy thật ở transcript phiên resume
+    16/09/2026 (worktree vigorous-maxwell-5e5075, 17:08:59).
+
+    Đã vá: chọn `PY=$(command -v python3 || command -v python)` MỘT LẦN rồi gọi `"$PY"`
+    đúng một lần trong nhánh if/else lồng — khuôn giống lệnh #1
+    (dong_bo_skill_claude_codex) vốn đã đúng từ đầu. Xem
+    `tools/dong_bo_hook_sessionstart.py` mục "VÁ CÚ PHÁP 16/09/2026".
+
+    Kiểm HÀNH VI thật, không đếm chuỗi: nạp trình thông dịch GIẢ (chỉ ghi `$0` vào log rồi
+    thoát theo mã đã định — KHÔNG chạy Python thật, không side effect) làm CẢ `python3` lẫn
+    `python`, đặt lên đầu PATH, ép `HOME` vào thư mục tạm rỗng (né nhánh venv tuyệt đối của
+    lệnh kiem_nguon_that — nếu không né, `$HOME/.ebm-venv/bin/python` thật trên máy bác sĩ sẽ
+    được gọi thay vì trình giả). Chạy TỪNG lệnh của sync/hooks-sessionstart.json với
+    `CLAUDE_PROJECT_DIR=REPO` thật (mọi file `tools/*.py` mà các lệnh đó `[ -f ... ]` kiểm
+    đều tồn tại thật trong repo → nhánh guard luôn pass, đi vào nhánh gọi PY) và ba mã thoát
+    giả 0/1/2. Với MỌI mã, trình thông dịch phải được gọi ĐÚNG MỘT LẦN.
+
+    Đã kiểm ngược trên bản GỐC (trước vá, `git show HEAD~1:sync/hooks-sessionstart.json`):
+    chốt bắt đúng 16/30 lượt vi phạm (8 lệnh lỗi × 2 mã thoát 1/2 = "có việc" bị đọc nhầm
+    thành lỗi) — không phải suy đoán.
+    """
+    import os
+    import subprocess
+    import tempfile
+    p = REPO / "sync" / "hooks-sessionstart.json"
+    if not p.exists():
+        return False, "mất sync/hooks-sessionstart.json — không có gì để kiểm"
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return False, f"không đọc được sync/hooks-sessionstart.json: {e}"
+    lenhs = [h["command"] for m in cfg.get("SessionStart") or [] for h in m.get("hooks") or []]
+    if not lenhs:
+        return False, "sync/hooks-sessionstart.json không còn lệnh nào — mất luôn nội dung kiểm"
+    bash = _tim_bash()
+    if bash is None:
+        return False, "không tìm thấy bash (PATH lẫn Git-for-Windows quen thuộc) — không mô phỏng được"
+    with tempfile.TemporaryDirectory() as bin_gia, tempfile.TemporaryDirectory() as lam_viec:
+        import shutil as _sh2
+        gia = Path(bin_gia) / "gia.sh"
+        gia.write_text('#!/bin/sh\necho "$0" >> "$LOG"\nexit "${MA_THOAT:-0}"\n', encoding="utf-8")
+        gia.chmod(0o755)
+        for ten in ("python3", "python"):
+            dich = Path(bin_gia) / ten
+            _sh2.copy2(gia, dich)
+            dich.chmod(0o755)
+        home_gia = Path(lam_viec) / "home"
+        home_gia.mkdir()
+        log = Path(lam_viec) / "log.txt"
+        vi_pham: list[str] = []
+        for ma in ("0", "1", "2"):
+            for c in lenhs:
+                log.write_text("", encoding="utf-8")
+                env = dict(os.environ)
+                env["PATH"] = f"{bin_gia}{os.pathsep}{env.get('PATH', '')}"
+                env["CLAUDE_PROJECT_DIR"] = str(REPO)
+                env["MA_THOAT"] = ma
+                env["LOG"] = str(log)
+                env["HOME"] = str(home_gia)
+                try:
+                    subprocess.run([bash, "-c", c], capture_output=True, text=True,
+                                   env=env, cwd=str(REPO), timeout=15,
+                                   encoding="utf-8", errors="replace")
+                except (OSError, subprocess.SubprocessError) as e:
+                    vi_pham.append(f"chạy lỗi (mã {ma}): {e}")
+                    continue
+                so_lan = len([d for d in log.read_text(encoding="utf-8").splitlines() if d.strip()])
+                if so_lan != 1:
+                    vi_pham.append(f"mã thoát {ma}: trình thông dịch bị gọi {so_lan} lần "
+                                   f"(kỳ vọng 1) — lệnh: {c[:70]}…")
+    if vi_pham:
+        return False, f"{len(vi_pham)} vi phạm: {vi_pham[0]}"
+    return True, (f"{len(lenhs)} lệnh × 3 mã thoát (0/1/2) — trình thông dịch được gọi "
+                  f"đúng 1 lần mỗi lượt, không lặp khi công cụ báo 'có việc'")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5640,6 +5731,7 @@ BAI_HOC = [
     ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
     ("BH104", "16/09", "Trần kiến trúc Cowork (chỉ mirror danh sách Custom Skills tài khoản) phải ghi rõ trong dong_bo_skill.py", bh104_cowork_orphan_cleanup_da_khai),
     ("BH105", "16/09", "Worktree không được chạy mã/nguồn của mình lên nơi chạy Cowork dùng chung", bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung),
+    ("BH106", "16/09", "Mẫu hook `A && B || C` không được chạy lại công cụ khi B tự trả mã 1/2 = «có việc»", bh106_hook_python_chi_goi_mot_lan),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
