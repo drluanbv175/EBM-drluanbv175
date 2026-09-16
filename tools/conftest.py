@@ -78,35 +78,62 @@ _LY_DO_TRAN = ("bản sao git trần — nguyên liệu (medical-ebm-automation/
 # bản đầu dùng None = cả file cho test_classify và skip oan 81/92 test vẫn chạy
 # được không cần repo y khoa (chỉ 11 test đòi retry_loop). Đo rồi mới khai.
 _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
-    # VÒNG 5 (09/09/2026): sau khi ban_sao_git_tran() học CLOUD-AWARE (chỉ đòi
-    # EBM-Dashboards/EBM_MASTER vắng trên cloud, không còn đòi medical-ebm-automation
-    # vắng), đo lại TOÀN BỘ danh sách này bằng cách tắt skip rồi chạy thật (không suy
-    # đoán): 18/24 test trước đây bị khai ở đây thật ra ĐÃ PASS với
-    # medical-ebm-automation/ có mặt — trong đó CẢ 11 test của test_classify.py (cần
-    # retry_loop.py — chính là file NẰM TRONG medical-ebm-automation/tools/, nên đúng
-    # ra phải theo _thieu_medical_ebm_automation(), và trên cloud với repo y khoa
-    # NẰM TRONG kiến trúc lồng nhau thật thì file đó CÓ, test PASS chứ không cần
-    # skip). Đã gỡ 18 test đó khỏi bảng dưới — giữ chúng ở đây sau vòng 5 sẽ SKIP OAN
-    # test đang chạy tốt, đúng lớp lỗi mà bản vá ban_sao_tran.py hôm nay vừa sinh ra
-    # ở _MODULE_CAN_REPO_Y_KHOA và ở check_medical_docs() của
-    # verify_claude_code_repo_alignment.py (cả hai đã vá cùng ngày).
-    # CHỈ CÒN 5 test dưới đây — đã xác nhận lại bằng chạy thật: cả 5 đều fail vì
-    # EBM-Dashboards/tools/verify_dashboard.py hoặc pipeline phụ thuộc EBM-Dashboards,
-    # KHÔNG phải vì medical-ebm-automation — đúng nhóm _ban_sao_tran() (cloud-aware)
-    # vẫn phải gate.
+    # ĐÍNH CHÍNH 16/09/2026 (workflow kiểm tra toàn diện, khi cherry-pick commit
+    # 4dbcc2f): bản "VÒNG 5 (09/09/2026)" từng thu hẹp bảng này xuống chỉ 5 test, dựa
+    # trên giả định "trên cloud, medical-ebm-automation/ LUÔN được nối lồng vào repo
+    # nên 18 test kia đã PASS thật" — giả định đó CHỈ đúng cho phiên cloud CỤ THỂ hôm
+    # đó (một phiên đã được nối kiến trúc lồng nhau thủ công). Xác minh lại 16/09 trên
+    # MỘT phiên cloud khác (container không có medical-ebm-automation/ nào cả, kể cả
+    # dạng sibling) VÀ trên CI (GitHub Actions runner — không hề set CLAUDE_CODE_REMOTE,
+    # không hề có medical-ebm-automation/): cả 18 test đó FAIL THẬT (không phải PASS),
+    # đúng như bảng gốc trước vòng 5 đã khai. Merge nguyên trạng "vòng 5" vào master sẽ
+    # làm ĐỎ CI ngay từ commit tiếp theo — chưa từng được xác minh trên CI/container
+    # trơn trước khi kết luận "đã PASS". Khôi phục ĐỦ danh sách gốc; giữ nguyên phần còn
+    # lại của bản vá cloud-aware (ban_sao_tran.py, _thieu_medical_ebm_automation(),
+    # _MODULE_CAN_REPO_Y_KHOA/collect_ignore) vì các phần đó kiểm TRỰC TIẾP sự có mặt
+    # của thư mục, không suy đoán theo biến môi trường "đang ở cloud hay không".
+    # 11 test trong test_classify cần retry_loop.py của repo y khoa; 81 test còn lại chạy được
+    "test_classify.py": {
+        "test_classify_available",
+        "test_classify_maps_known_checks_to_rcodes",
+        "test_classify_passes_when_no_mapped_failures",
+        "test_classify_pii_triggers_must_escalate",
+        "test_format_dispatch_matches_house_style",
+        "test_unmapped_checks_are_skipped_not_guessed",
+        "test_r8_bare_pvalue_without_ci_fails",
+        "test_r1b_label_gaming_flagged_when_no_real_source",
+        "test_r13_s1_suicide_screen_missing_escalates",
+        "test_r13_s3_antidepressant_suicide_screen_missing_escalates",
+        "test_r14_prescribing_without_safety_review_escalates",
+    },
     "test_orchestrator.py": {
         "test_validate_catches_dangling_single_task_reference",
         "test_validate_clean",
-        # TOOLS đăng ký `verify-dashboard` trỏ EBM-Dashboards/tools/verify_dashboard.py
-        # — gốc DUY NHẤT còn gây lỗi ở test này từ khi medical-ebm-automation/ có mặt
-        # (đo thật 09/09: chỉ còn ĐÚNG 1 lỗi, không phải 11 như lượt khai 28/08 mô tả
-        # — con số đó đúng cho topology CŨ khi medical-ebm-automation/ còn vắng).
+        "test_registry_is_fail_closed_and_valid",
+        # TOOLS liệt kê 11 tool trỏ vào medical-ebm-automation/ (10) và
+        # EBM-Dashboards/ (1); trên bản sao trần validate() luôn trả về đúng 11 lỗi
+        # đó, không phụ thuộc commit nào.
         "test_tools_registered",
+    },
+    "test_assess_agent_system.py": {
+        "test_scorecard_checks_research_gate_contract_surface",
+    },
+    "test_claude_code_repo_alignment.py": {
+        "test_claude_code_repo_alignment_overall_passes",
+        "test_medical_repo_docs_keep_claude_code_completion_contract",
     },
     "test_clinical_evidence_update_pipeline.py": {
         # verify_clinical_evidence_update_pipeline.py cần
         # dashboard_mockups/templates/*.html + EBM-Dashboards/tools/*.py.
         "test_clinical_evidence_update_pipeline_passes_offline",
+    },
+    "test_clinical_runtime_readiness_report.py": {
+        "test_readiness_report_unlocks_21_of_37_repo_controls_without_production",
+        "test_unlocked_rows_are_still_human_gated_and_control_linked",
+        "test_markdown_names_21_of_37_and_keeps_safety_boundary",
+    },
+    "test_lessons_rubric_alignment.py": {
+        "test_current_lessons_rubric_alignment_passes",
     },
 }
 
