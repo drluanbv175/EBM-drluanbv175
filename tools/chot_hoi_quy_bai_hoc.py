@@ -5231,6 +5231,48 @@ def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
     return True, "bản sao trần: thoát mã 2 sạch, không traceback, không báo nhầm 'có lỗ hổng'"
 
 
+def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
+    """09/09 — nguyên nhân gốc đo được: khi một phiên claude.ai/code đính kèm ≥2 repo, hook
+    `SessionStart` cấp DỰ ÁN (`.claude/settings.json` trong từng repo) KHÔNG được nền tảng quét
+    tới — bằng chứng là nhật ký chẩn đoán của chính Claude Code cho thấy đúng 8 hook chạy mỗi
+    phiên, cả 8 đều ở cấp NGƯỜI DÙNG/PLUGIN, không cái nào là `.claude/hooks/session-start.sh`
+    của repo này (`$CLAUDE_PROJECT_DIR` rỗng xuyên suốt). Không có gì trong repo để sửa — hook
+    và settings.json ĐÚNG khuôn skill `session-start-hook` của Anthropic.
+
+    Biện pháp duy nhất còn lại nằm ngoài shell hook: một CHỈ THỊ VĂN BẢN trong CLAUDE.md, dựa
+    trên kênh đã đo là CHẮC CHẮN tới nơi (toàn văn CLAUDE.md được nạp mỗi phiên qua
+    `user_context_completed`, khác hẳn shell hook không được spawn). Chốt này CHỈ kiểm được
+    chữ chỉ thị đó CÓ MẶT trong file tracked — không kiểm được một phiên cụ thể có LÀM THEO hay
+    không (giới hạn của kiểm tra doctrine-text, cùng họ BH39/BH42). Mất chữ chỉ thị = quay lại
+    hoàn toàn dựa vào bác sĩ tự nhớ chạy tay mỗi phiên nhiều-repo — đúng tình trạng trước khi
+    tìm ra nguyên nhân gốc.
+
+    ĐÁNH SỐ LẠI 16/09/2026 (workflow kiểm tra toàn diện): commit gốc đặt lỗi này là "BH99",
+    nhưng nhánh cherry-pick trước đó đã dùng "BH99" cho một lỗi KHÁC (module test kéo sập cả
+    lượt thu thập, xem `bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap` ở trên) và
+    `master` sau đó còn cấp thêm BH100-BH102 cho các lỗi khác nữa — nên số kế tiếp còn trống
+    là BH103, không phải BH99. Nội dung bài học và chốt kiểm giữ nguyên, chỉ đổi số + tên hàm.
+    """
+    claude_md = REPO / "CLAUDE.md"
+    if not claude_md.exists():
+        return False, "CLAUDE.md của repo này biến mất — mất luôn chỉ thị tự bắn hook cloud"
+    noi_dung = claude_md.read_text(encoding="utf-8", errors="replace")
+    CAN_CO = (
+        "NGUYÊN NHÂN GỐC vì sao hook cloud KHÔNG tự bắn khi phiên có ≥2 REPO",
+        ".claude/hooks/session-start.sh` NGAY ĐẦU PHIÊN",
+        "CLAUDE_CODE_REMOTE=true",
+    )
+    thieu = [c for c in CAN_CO if c not in noi_dung]
+    if thieu:
+        return False, ("mất chỉ thị tự bắn hook cloud trong CLAUDE.md — thiếu đoạn: "
+                       + "; ".join(thieu))
+    hook_that = REPO / ".claude" / "hooks" / "session-start.sh"
+    if not hook_that.exists():
+        return False, ("CLAUDE.md vẫn chỉ tay vào .claude/hooks/session-start.sh nhưng file đó "
+                       "không còn tồn tại — chỉ thị trỏ vào khoảng không")
+    return True, "chỉ thị tự bắn hook cloud còn nguyên trong CLAUDE.md, và mục tiêu nó trỏ tới vẫn tồn tại"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5341,6 +5383,7 @@ BAI_HOC = [
     ("BH100", "03/09", "Một module thiếu không được làm MÙ cả verifier; doctrine không được khai cổng không có bộ thi hành", bh100_verifier_khong_duoc_mu_vi_mot_module_thieu),
     ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
     ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
+    ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
