@@ -339,14 +339,16 @@ def test_search_europe_pmc_fallback_giu_dung_loc_thiet_ke(monkeypatch):
     def fake_fetch_json(_url):
         raise RuntimeError("simulate NCBI blocked")
 
-    def fake_europe_pmc(query, days, retmax, loc_thiet_ke=True):
+    def fake_europe_pmc(query, days, retmax, loc_thiet_ke=True, mindate="", maxdate=""):
         goi["loc_thiet_ke"] = loc_thiet_ke
+        goi["mindate"] = mindate
+        goi["maxdate"] = maxdate
         return []
 
     monkeypatch.setattr(S, "search_europe_pmc", fake_europe_pmc)
     S.search("heart failure", 3, 10, fetch_json=fake_fetch_json,
              datetype="edat", loc_thiet_ke=False)
-    assert goi == {"loc_thiet_ke": False}
+    assert goi == {"loc_thiet_ke": False, "mindate": "", "maxdate": ""}
 
 
 def test_search_europe_pmc_ap_dung_dung_loc_thiet_ke_trong_truy_van():

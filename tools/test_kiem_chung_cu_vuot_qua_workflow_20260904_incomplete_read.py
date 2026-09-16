@@ -78,13 +78,24 @@ class TestIncompleteReadKhongLamChetCaLuot:
         """★★ Đối chứng quan trọng nhất — hàm gọi TỪ main() (`tong_quan_moi_hon`)
         cũng phải sống sót, vì chính main() KHÔNG bọc try/except quanh lời gọi
         này (xác nhận bằng đọc mã: vòng lặp `for k, pm in enumerate(ds, 1):`
-        gọi thẳng, không try/except)."""
+        gọi thẳng, không try/except).
+
+        Kỳ vọng cập nhật 16/09/2026: bản vá 04/09 (test này) viết khi
+        `tong_quan_moi_hon()` còn trả `[]` cho CẢ HAI trường hợp "đã hỏi, không có
+        gì" và "chưa hỏi được". Một bản vá ĐỘC LẬP sau đó (14/09/2026, cùng họ
+        BH27) tách hai nghĩa: `[]` = đã hỏi PubMed thành công mà không có bài
+        mới, `None` = KHÔNG hỏi được (mạng lỗi/NCBI chặn) — không kiểm được
+        không được trình bày như đã kiểm và sạch. `_goi()` trả `None` khi
+        IncompleteRead vẫn đúng ý bản vá 04/09 (không ném lỗi ra ngoài); cái
+        đổi chỉ là `tong_quan_moi_hon()` giờ CHUYỂN TIẾP trung thực None đó
+        thay vì âm thầm quy thành []. Cốt lõi cần giữ — vòng lặp main() không
+        chết — vẫn đúng."""
         loi = http.client.IncompleteRead(partial=b"", expected=10)
         with mock.patch.object(kcv.time, "sleep", lambda *_: None), \
              mock.patch.object(urllib.request, "urlopen",
                                 return_value=_RaiseOnReadResponse(loi)):
             ket_qua = kcv.tong_quan_moi_hon("30267080", 2018, None)
-        assert ket_qua == []
+        assert ket_qua is None
 
 
 class TestPhanLoaiKieuLoiThucNghiem:
