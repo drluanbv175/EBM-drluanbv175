@@ -80,7 +80,11 @@ def test_claude_session_state_conflict_copies_do_not_hard_block(monkeypatch, tmp
     NOISE từ trước; test này khoá cho check_conflict_copies() khớp đúng tiền lệ đó
     (trước bản vá, hai đường dẫn này rơi vào hard_hits ⇒ RED giả)."""
     root = tmp_path / "Claude AI"
-    sess = root / ".claude" / "sessions" / "active-TESTHOST-2.json"
+    # Tên phải khớp ĐÚNG một nhánh nhận diện conflict-copy thật của check_conflict_copies()
+    # (hậu tố "-<tên-máy>", không phải "-<tên-máy>-2" — hậu tố số kiểu OneDrive dùng dấu
+    # cách "tên 2.ext", không phải gạch nối, nên "active-TESTHOST-2.json" KHÔNG khớp
+    # nhánh nào cả và bị bỏ qua hoàn toàn — bài học tự bắt được khi chạy lại test này).
+    sess = root / ".claude" / "sessions" / "active-TESTHOST.json"
     sess.parent.mkdir(parents=True)
     sess.write_text("{}", encoding="utf-8")
     state = root / ".claude" / "state" / "instructions-loaded-TESTHOST.jsonl"
