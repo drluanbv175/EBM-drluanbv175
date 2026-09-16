@@ -27,13 +27,36 @@ REPO = Path(__file__).resolve().parents[1]
 
 def _ban_sao_tran() -> bool:
     """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (vòng 4 — trong một
-    PR năm bản sao của phép thử này đã phân kỳ thành hai ngữ nghĩa; hết nhân bản)."""
+    PR năm bản sao của phép thử này đã phân kỳ thành hai ngữ nghĩa; hết nhân bản).
+
+    VÒNG 5 (09/09/2026): định nghĩa này nay CLOUD-AWARE — trên cloud chỉ đòi
+    EBM-Dashboards/EBM_MASTER vắng, KHÔNG còn đòi medical-ebm-automation vắng (xem
+    docstring ban_sao_tran.py). Vì vậy nó KHÔNG còn dùng được cho _MODULE_CAN_REPO_Y_KHOA
+    ngay dưới — nhóm đó cần biết ĐÚNG một điều: medical-ebm-automation có import được
+    hay không, bất kể cloud hay không. Dùng hàm này CHO _TEST_CAN_NGUYEN_LIEU (đa số
+    entry ở đó là về EBM-Dashboards/EBM_MASTER, xem chú thích từng entry)."""
     import importlib.util
     spec = importlib.util.spec_from_file_location(
         "_bst_conftest", Path(__file__).resolve().parent / "ban_sao_tran.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.ban_sao_git_tran(REPO)
+
+
+def _thieu_medical_ebm_automation() -> bool:
+    """Kiểm TRỰC TIẾP, không qua ban_sao_git_tran(): 4 module dưới đây import thẳng
+    mã của medical-ebm-automation/ NGAY LÚC THU THẬP — câu hỏi thật của chúng là
+    "medical-ebm-automation/ có import được không", KHÔNG phải "đây có phải bản sao
+    trần không". Hai câu hỏi từng trùng nhau (bản sao trần cũ đòi CẢ BA gốc vắng,
+    nên medical-ebm-automation vắng ⇒ bản sao trần), nhưng tách nhau kể từ khi
+    ban_sao_git_tran() học cách CLOUD-AWARE (vòng 5): trên cloud với kiến trúc lồng
+    nhau đúng, medical-ebm-automation CÓ MẶT mà ban_sao_git_tran() vẫn trả True (vì
+    chỉ còn đòi EBM-Dashboards/EBM_MASTER vắng) — nếu vẫn uỷ quyền cho nó, 4 module
+    này bị SKIP OAN dù nhập được thật, đúng như đã đo bằng --collect-only sau khi
+    vá ban_sao_tran.py: test_research_practical_readiness.py biến mất khỏi danh sách
+    thu thập trong khi module đó CHẠY ĐƯỢC và đang canh một lỗi thật (dictionary_path/
+    extra_date_columns, vá 09/09/2026)."""
+    return not (REPO / "medical-ebm-automation").exists()
 
 
 # 4 module import thẳng mã của repo y khoa NGAY LÚC THU THẬP — thiếu repo là
@@ -45,7 +68,7 @@ _MODULE_CAN_REPO_Y_KHOA = [
     "test_verify_hard_gate_count_consistency.py",
 ]
 
-collect_ignore = list(_MODULE_CAN_REPO_Y_KHOA) if _ban_sao_tran() else []
+collect_ignore = list(_MODULE_CAN_REPO_Y_KHOA) if _thieu_medical_ebm_automation() else []
 
 _LY_DO_TRAN = ("bản sao git trần — nguyên liệu (medical-ebm-automation/ · "
                "EBM-Dashboards/ · EBM_MASTER/) nằm ngoài git; chạy trên máy có đủ cây dữ liệu")
@@ -55,6 +78,20 @@ _LY_DO_TRAN = ("bản sao git trần — nguyên liệu (medical-ebm-automation/
 # bản đầu dùng None = cả file cho test_classify và skip oan 81/92 test vẫn chạy
 # được không cần repo y khoa (chỉ 11 test đòi retry_loop). Đo rồi mới khai.
 _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
+    # ĐÍNH CHÍNH 16/09/2026 (workflow kiểm tra toàn diện, khi cherry-pick commit
+    # 4dbcc2f): bản "VÒNG 5 (09/09/2026)" từng thu hẹp bảng này xuống chỉ 5 test, dựa
+    # trên giả định "trên cloud, medical-ebm-automation/ LUÔN được nối lồng vào repo
+    # nên 18 test kia đã PASS thật" — giả định đó CHỈ đúng cho phiên cloud CỤ THỂ hôm
+    # đó (một phiên đã được nối kiến trúc lồng nhau thủ công). Xác minh lại 16/09 trên
+    # MỘT phiên cloud khác (container không có medical-ebm-automation/ nào cả, kể cả
+    # dạng sibling) VÀ trên CI (GitHub Actions runner — không hề set CLAUDE_CODE_REMOTE,
+    # không hề có medical-ebm-automation/): cả 18 test đó FAIL THẬT (không phải PASS),
+    # đúng như bảng gốc trước vòng 5 đã khai. Merge nguyên trạng "vòng 5" vào master sẽ
+    # làm ĐỎ CI ngay từ commit tiếp theo — chưa từng được xác minh trên CI/container
+    # trơn trước khi kết luận "đã PASS". Khôi phục ĐỦ danh sách gốc; giữ nguyên phần còn
+    # lại của bản vá cloud-aware (ban_sao_tran.py, _thieu_medical_ebm_automation(),
+    # _MODULE_CAN_REPO_Y_KHOA/collect_ignore) vì các phần đó kiểm TRỰC TIẾP sự có mặt
+    # của thư mục, không suy đoán theo biến môi trường "đang ở cloud hay không".
     # 11 test trong test_classify cần retry_loop.py của repo y khoa; 81 test còn lại chạy được
     "test_classify.py": {
         "test_classify_available",
@@ -73,11 +110,9 @@ _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
         "test_validate_catches_dangling_single_task_reference",
         "test_validate_clean",
         "test_registry_is_fail_closed_and_valid",
-        # Thiếu ở lượt khai 28/08 — cùng nguyên nhân với 3 test trên: TOOLS liệt kê
-        # 11 tool trỏ vào medical-ebm-automation/ (10) và EBM-Dashboards/ (1); trên
-        # bản sao trần validate() luôn trả về đúng 11 lỗi đó, không phụ thuộc commit
-        # nào. Đo 06/09/2026: 4 job CI của PR #1 (drluanbv175/EBM-drluanbv175) đều đỏ
-        # ở đúng test này, và cùng một lỗi tái hiện y hệt trên master (ce0d83c2).
+        # TOOLS liệt kê 11 tool trỏ vào medical-ebm-automation/ (10) và
+        # EBM-Dashboards/ (1); trên bản sao trần validate() luôn trả về đúng 11 lỗi
+        # đó, không phụ thuộc commit nào.
         "test_tools_registered",
     },
     "test_assess_agent_system.py": {
@@ -88,6 +123,8 @@ _TEST_CAN_NGUYEN_LIEU: dict[str, set[str]] = {
         "test_medical_repo_docs_keep_claude_code_completion_contract",
     },
     "test_clinical_evidence_update_pipeline.py": {
+        # verify_clinical_evidence_update_pipeline.py cần
+        # dashboard_mockups/templates/*.html + EBM-Dashboards/tools/*.py.
         "test_clinical_evidence_update_pipeline_passes_offline",
     },
     "test_clinical_runtime_readiness_report.py": {
