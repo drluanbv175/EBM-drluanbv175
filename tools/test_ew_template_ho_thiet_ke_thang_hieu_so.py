@@ -544,3 +544,132 @@ def test_js_panel_chi_tiet_noi_ro_thang(js):
     assert "vạch 0 · thang tuyến tính" in js["chiTietSmd"]
     assert "ngưỡng 1.0 · thang log" in js["chiTietHr"]
     assert "SMD triệu chứng trầm cảm" in js["chiTietSmd"]
+
+
+# ─────────────── 5. HÀNH VI JS — RoB không phải object hợp lệ (16/09/2026) ───────────────
+# Ca thật đã tái hiện được (cả template cũ ở 07f684d lẫn template mới của PR #8):
+# WebDashboard_EBM_VanDeCuThe_CKM_TimThanChuyenHoa_20260628.html ITEM-02/03/04 (design RCT) có
+# `rob` là CHUỖI văn xuôi thay vì object {miền:'l'|'s'|'h'}. Bản cũ luôn coi `rob` là object và
+# lặp Object.values(e.rob)/Object.keys(e.rob) — với chuỗi, mỗi KÝ TỰ thành một "mã miền" giả,
+# RM[ký tự] undefined ⇒ TypeError ngay khi đọc RM[r][0] ⇒ SẬP tableView()/renderDetail() cho
+# TOÀN BỘ trang, không chỉ mục lỗi.
+
+_DU_LIEU_ROB = {
+    "meta": {"eyebrow": "Fixture", "question": "Fixture rob", "updated": "2026-09-16",
+              "pico": {"P": "p", "I": "i", "C": "c", "O": "o"}},
+    "summary": {"conclusion": "Fixture offline, không phải khuyến cáo.", "doNow": ["Chỉ để kiểm thử"],
+                "dontDo": ["Không áp dụng cho người bệnh"], "redFlags": ["Không có"]},
+    "items": [
+        # ca thật CKM_TimThanChuyenHoa: rob là chuỗi văn xuôi
+        {"id": "R-STR", "title": "RCT — rob dạng chuỗi", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {},
+         "rob": "Mù đôi, phân bổ ngẫu nhiên che giấu, phân tích ITT — nguy cơ sai lệch thấp."},
+        {"id": "R-OBJ", "title": "RCT — rob object hợp lệ đủ 3 miền", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {},
+         "rob": {"D1 Ngẫu nhiên hoá": "l", "D2 Sai lệch can thiệp": "s", "D5 Báo cáo chọn lọc": "h"}},
+        {"id": "R-MIX", "title": "RCT — rob object có mã lạ lẫn mã hợp lệ", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {},
+         "rob": {"D1 Ngẫu nhiên hoá": "khong-xac-dinh", "D2 Sai lệch can thiệp": "l"}},
+        {"id": "R-EMPTYOBJ", "title": "RCT — rob object rỗng", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {}, "rob": {}},
+        {"id": "R-EMPTYSTR", "title": "RCT — rob chuỗi toàn khoảng trắng", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {}, "rob": "   "},
+        {"id": "R-NONE", "title": "RCT — không có rob", "source": "S", "design": "RCT",
+         "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {}},
+    ],
+}
+
+_KHAI_THAC_ROB = r"""
+;(()=>{
+  const out={bang: tableView(DATA.items), detail:{}};
+  for (const it of DATA.items) { state.selected = it.id; renderDetail(); out.detail[it.id] = document.getElementById('detail').innerHTML; }
+  console.log(JSON.stringify(out));
+})();
+"""
+
+
+@pytest.fixture(scope="module")
+def js_rob():
+    if not NODE:
+        pytest.skip("không có node trong PATH — CHƯA KIỂM ĐƯỢC hành vi JS của template (không phải ĐẠT)")
+    html = _template_under_test()
+    scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
+    assert len(scripts) == 1, "template phải có đúng một khối <script> engine"
+    s = scripts[0]
+    dau, moc = s.index("const DATA = {"), s.index("HẾT KHỐI DATA")
+    s = s[:dau] + "const DATA = " + json.dumps(_DU_LIEU_ROB, ensure_ascii=False) + ";\n" + s[s.rfind("/*", 0, moc):]
+    chuong_trinh = _DOM_GIA + s + _KHAI_THAC_ROB
+    kq = subprocess.run([NODE, "-"], input=chuong_trinh, capture_output=True, text=True,
+                        encoding="utf-8", timeout=120)
+    assert kq.returncode == 0, f"engine template lỗi khi chạy (rob không phải object hợp lệ làm sập trang):\n{kq.stderr[-3000:]}"
+    return json.loads(kq.stdout.strip().splitlines()[-1])
+
+
+def _o_bang(js_rob, id_: str) -> str:
+    """Trích ô cột RoB (`<div class="robmini">…</div>`) của MỘT dòng trong bảng trung tâm."""
+    m = re.search(
+        r"select\('%s'\).*?<td>(<div class=\"robmini\">.*?</div>)</td>" % re.escape(id_),
+        js_rob["bang"], re.S,
+    )
+    assert m, f"không tìm thấy ô RoB của {id_} trong bảng — hàng có thể đã bị bỏ sót"
+    return m.group(1)
+
+
+def test_js_rob_chuoi_khong_lam_sap_bang_va_hien_nguyen_van(js_rob):
+    o = _o_bang(js_rob, "R-STR")
+    assert "<i class=" not in o, "chuỗi không phải object — không được vẽ chấm màu miền"
+    van = "Mù đôi, phân bổ ngẫu nhiên che giấu, phân tích ITT — nguy cơ sai lệch thấp."
+    assert van in o, "ô bảng phải hiện nguyên văn chuỗi (không phải dấu '—' hay rỗng)"
+
+
+def test_js_rob_object_hop_le_ve_du_diem_trong_bang(js_rob):
+    o = _o_bang(js_rob, "R-OBJ")
+    assert o.count("<i class=") == 3, "object đủ 3 miền hợp lệ phải vẽ đủ 3 chấm"
+
+
+def test_js_rob_object_ma_la_bi_bo_qua_khong_lam_sap(js_rob):
+    o = _o_bang(js_rob, "R-MIX")
+    assert o.count("<i class=") == 1, "chỉ mã hợp lệ được vẽ; mã lạ bị bỏ qua, không làm sập/không giả '?'"
+
+
+def test_js_rob_rong_hoac_vang_mat_hien_gach_ngang(js_rob):
+    for id_ in ("R-EMPTYOBJ", "R-EMPTYSTR", "R-NONE"):
+        o = _o_bang(js_rob, id_)
+        assert "<i class=" not in o and "robnote" not in o, f"{id_}: object rỗng/chuỗi trắng/vắng mặt phải như cũ ('—')"
+        assert "—" in o
+
+
+def test_js_rob_panel_chi_tiet_chuoi_hien_nguyen_van_khong_sap(js_rob):
+    html = js_rob["detail"]["R-STR"]
+    assert 'class="robtext"' in html
+    assert "Mù đôi, phân bổ ngẫu nhiên che giấu, phân tích ITT — nguy cơ sai lệch thấp." in html
+    assert 'class="robfull"' not in html
+
+
+def _khoi_robfull(html: str) -> str:
+    """Trích riêng nội dung `<div class="robfull">…</div>` — panel chi tiết còn NHIỀU khối khác
+    cũng dùng `class="r"` (kvline nguồn, hành động…), đếm trên cả `html` sẽ đếm nhầm."""
+    m = re.search(r'<div class="robfull">(.*?)</div></div>', html, re.S)
+    assert m, "panel chi tiết phải có khối robfull khi rob là object hợp lệ"
+    return m.group(1)
+
+
+def test_js_rob_panel_chi_tiet_object_ve_day_du(js_rob):
+    html = js_rob["detail"]["R-OBJ"]
+    assert 'class="robfull"' in html
+    assert _khoi_robfull(html).count('class="r"') == 3
+    assert "D1 Ngẫu nhiên hoá" in html and "D5 Báo cáo chọn lọc" in html
+    assert 'class="robtext"' not in html
+
+
+def test_js_rob_panel_chi_tiet_ma_la_chi_ve_muc_hop_le(js_rob):
+    html = js_rob["detail"]["R-MIX"]
+    assert 'class="robfull"' in html
+    assert _khoi_robfull(html).count('class="r"') == 1, "mã lạ bị bỏ qua ở panel chi tiết, không sập, không giả '?'"
+    assert "D2 Sai lệch can thiệp" in html
+
+
+def test_js_rob_rong_hoac_vang_mat_khong_co_muc_rob_o_panel(js_rob):
+    for id_ in ("R-EMPTYOBJ", "R-EMPTYSTR", "R-NONE"):
+        html = js_rob["detail"][id_]
+        assert "Nguy cơ sai lệch" not in html, f"{id_}: object rỗng/chuỗi trắng/vắng mặt không được có mục RoB"
