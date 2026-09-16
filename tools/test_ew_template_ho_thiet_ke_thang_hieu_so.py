@@ -384,6 +384,113 @@ def test_trang_khong_co_chenh_lech_giu_bo_cuc_cu(bd):
     assert "Mọi hiệu số nằm trên cùng một trục thang log" in trang
 
 
+# ─────────── 3b. FAVORS trên thang TỶ SỐ (log, vạch 1,0) — sửa 16/09/2026 ───────────
+#
+# Bug thật (đo trên kho 72 dashboard, 16/09/2026): `plot_row()`/`build_page()` suy nhãn
+# "Gây hại" và dải xếp mục (2 «ủng hộ» / 3 «không ủng hộ, hoặc gây hại») THUẦN theo vị trí
+# so với vạch 1,0 — không hề đọc `effect.favors`, dù `plot_row_diff` đã có luật này cho thang
+# chênh lệch từ trước. Với kết cục mà tỷ số CAO là TỐT (tỷ lệ đáp ứng, OR ngưng một thuốc
+# không phù hợp…), 12 mục `favors:true` với CI hoàn toàn > 1,0 (như OR đáp ứng đau ≥50% của
+# duloxetine 1,91 (1,69–2,17)) bị gắn oan "Gây hại" và rơi nhầm vào mục 3.
+#
+# Bảng chân lý của `_ratio_favors_decided` — kiểm TRỰC TIẾP hàm dùng chung, độc lập với HTML.
+BANG_FAVORS_QUYET = [
+    (True, 1.69, 2.17, True),    # CI hoàn toàn PHẢI, favors=true ⇒ quyết được: True
+    (False, 0.40, 0.75, False),  # CI hoàn toàn TRÁI, favors=false ⇒ quyết được: False
+    (True, 0.65, 0.85, True),    # CI hoàn toàn TRÁI, favors=true ⇒ vẫn quyết được: True
+    (False, 1.03, 1.39, False),  # CI hoàn toàn PHẢI, favors=false ⇒ vẫn quyết được: False
+    (True, 0.9, 1.3, None),      # CI CHẠM vạch 1,0 ⇒ favors chưa đủ để quyết
+    (False, 0.9, 1.3, None),     # như trên, favors=false
+    (None, 1.2, 1.8, None),      # favors vắng mặt ⇒ luôn None dù CI có ý nghĩa
+]
+
+
+@pytest.mark.parametrize("favors,lo,hi,ky_vong", BANG_FAVORS_QUYET)
+def test_ratio_favors_decided(bd, favors, lo, hi, ky_vong):
+    eff = {"lo": lo, "hi": hi}
+    if favors is not None:
+        eff["favors"] = favors
+    assert bd._ratio_favors_decided(eff) is ky_vong
+
+
+def test_favors_true_ben_phai_khong_bi_gan_gay_hai(bd):
+    """Ca lỗi thật đã đo: OR đáp ứng đau ≥50% 1,91 (1,69–2,17), favors=true — TRƯỚC bản vá bị
+    gắn "Gây hại" và rơi mục 3 chỉ vì lo > 1,0."""
+    item = _item("R-FAVT-PHAI", "OR đáp ứng đau ≥50%", 1.91, 1.69, 2.17,
+                 favors=True, decision="apply", design="RCT")
+    trang = bd.build_page(dict(DU_LIEU_BAN_DOC, items=[item]), "fixture-favt.html")
+    khoi = _dong(trang, "OR đáp ứng đau ≥50%")
+    assert _nhan(khoi) != "Gây hại", (
+        "OR 1,91 (1,69–2,17) khai favors=true — CI bên phải vạch 1,0 KHÔNG được gắn «Gây hại»")
+    assert "OR đáp ứng đau ≥50%" in _muc(trang, "ungho"), "favors=true ⇒ mục 2 «ủng hộ»"
+    assert "OR đáp ứng đau ≥50%" not in _muc(trang, "khong")
+
+
+def test_favors_false_ben_trai_van_bi_gan_gay_hai(bd):
+    """Đối xứng: favors=false nhưng CI nằm hoàn toàn bên TRÁI vạch 1,0 — TRƯỚC bản vá không
+    bị gắn "Gây hại" (chỉ suy `lo > 1,0`) và rơi nhầm vào mục 2 «ủng hộ»."""
+    item = _item("R-FAVF-TRAI", "HR biến cố nặng", 0.55, 0.40, 0.75,
+                 favors=False, decision="apply", design="RCT")
+    trang = bd.build_page(dict(DU_LIEU_BAN_DOC, items=[item]), "fixture-favf.html")
+    khoi = _dong(trang, "HR biến cố nặng")
+    assert _nhan(khoi) == "Gây hại", (
+        "favors=false và CI không chạm vạch 1,0 ⇒ luôn «Gây hại», bất kể CI nằm bên nào")
+    assert "HR biến cố nặng" in _muc(trang, "khong"), "favors=false ⇒ mục 3"
+    assert "HR biến cố nặng" not in _muc(trang, "ungho")
+
+
+def _ty_so_gay_hai_cu(effect: dict) -> bool:
+    """Bản sao Y HỆT luật CŨ (thuần vị trí, không đọc `favors`) — mốc so sánh để chứng minh
+    các mục KHÔNG bị ảnh hưởng (favors vắng mặt, hoặc favors khớp sẵn với vị trí) vẫn ra đúng
+    nhãn như trước bản vá 16/09/2026 (task «giữ nguyên đầu ra từng byte»)."""
+    lo = effect.get("lo")
+    return bool(lo and lo > 1.0)
+
+
+def _ty_so_ung_ho_cu(effect: dict, decision: str) -> bool:
+    hi = effect.get("hi")
+    return bool(hi and hi < 1.0 and decision != "notyet")
+
+
+@pytest.mark.parametrize("measure,hr,lo,hi,favors,decision", [
+    ("HR tử vong (khớp sẵn trái)", 0.74, 0.65, 0.85, True, "apply"),
+    ("OR lo âu mới mắc (khớp sẵn phải)", 1.2, 1.03, 1.39, False, "consider"),
+    ("RR biến cố vắng favors (phải)", 1.5, 1.2, 1.8, None, "consider"),
+    ("RR biến cố vắng favors (trái)", 0.6, 0.4, 0.8, None, "consider"),
+])
+def test_muc_khong_bi_anh_huong_giu_nguyen_nhu_luat_cu(bd, measure, hr, lo, hi, favors, decision):
+    """Mục KHÔNG rơi vào ca lệch (favors vắng mặt, hoặc favors đã khớp sẵn với vị trí cũ) phải
+    ra đúng nhãn/dải NHƯ LUẬT CŨ — bản vá 16/09/2026 chỉ sửa ca LỆCH, không đổi ca còn lại."""
+    item = _item("X", measure, hr, lo, hi, favors=favors, decision=decision)
+    trang = bd.build_page(dict(DU_LIEU_BAN_DOC, items=[item]), "fixture-x.html")
+    khoi = _dong(trang, measure)
+    gay_hai_cu = _ty_so_gay_hai_cu(item["effect"])
+    assert (_nhan(khoi) == "Gây hại") == gay_hai_cu
+    if _ty_so_ung_ho_cu(item["effect"], decision):
+        assert measure in _muc(trang, "ungho")
+    else:
+        assert measure in _muc(trang, "khong")
+
+
+def test_dot_bien_bo_nhanh_favors_tai_hien_dung_loi_cu(bd, monkeypatch):
+    """Kiểm đột biến: ép `_ratio_favors_decided` luôn trả None — mô phỏng ĐÚNG việc bỏ nhánh
+    favors (quay lại luật thuần vị trí của bản trước 16/09/2026). Hai test bắt lỗi thật ở
+    trên phải chuyển sang tái hiện đúng lỗi cũ khi đột biến này có mặt."""
+    monkeypatch.setattr(bd, "_ratio_favors_decided", lambda effect: None)
+
+    item_phai = _item("M-PHAI", "OR đột biến", 1.91, 1.69, 2.17, favors=True, decision="apply")
+    trang = bd.build_page(dict(DU_LIEU_BAN_DOC, items=[item_phai]), "fixture-mut1.html")
+    assert _nhan(_dong(trang, "OR đột biến")) == "Gây hại", (
+        "đột biến (bỏ nhánh favors) phải tái hiện đúng lỗi cũ: favors=true vẫn bị gắn oan")
+
+    item_trai = _item("M-TRAI", "HR đột biến", 0.55, 0.40, 0.75, favors=False, decision="apply")
+    trang2 = bd.build_page(dict(DU_LIEU_BAN_DOC, items=[item_trai]), "fixture-mut2.html")
+    assert _nhan(_dong(trang2, "HR đột biến")) != "Gây hại", (
+        "đột biến (bỏ nhánh favors) phải tái hiện đúng lỗi cũ: favors=false bên trái không "
+        "được gắn")
+
+
+
 # ───────────────────────────── 4. HÀNH VI JS của template ─────────────────────────────
 
 _DOM_GIA = r"""

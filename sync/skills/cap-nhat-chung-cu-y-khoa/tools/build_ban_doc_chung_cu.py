@@ -4,7 +4,9 @@
 
 Bản đọc là trang HTML độc lập để bác sĩ đọc NGAY sau khi chạy xong dây chuyền cập
 nhật chứng cứ: việc cần làm và cờ đỏ đứng trước, chứng cứ đặt trên MỘT trục thang
-log dùng chung (vạch 1,0 ở giữa — trái là có lợi, phải là bất lợi).
+log dùng chung (vạch 1,0 ở giữa — mặc định trái là có lợi, phải là bất lợi; khi
+nguồn khai rõ chiều ngược lại qua `effect.favors`, mục được xếp dải và gắn nhãn
+theo đúng khai báo đó, KHÔNG theo vị trí — sửa 16/09/2026, xem `_ratio_favors_decided`).
 
 Hiệu số dạng CHÊNH LỆCH (SMD, MD, RD — giá trị "không khác biệt" là 0) KHÔNG được
 đặt lên trục log đó (sửa 16/09/2026, xem `effect_scale`): chúng có mục riêng trên
@@ -501,14 +503,42 @@ DECISION = {
 }
 
 
+# SỬA 16/09/2026 (tiếp nối bản vá `plot_row_diff` ngày trước): nhánh TỶ SỐ (log, vạch 1,0)
+# từng suy "Gây hại" THUẦN theo vị trí — `lo > 1.0` — không hề đọc `effect.favors`. Với kết
+# cục mà tỷ số CAO là TỐT (tỷ lệ đáp ứng, OR ngưng một thuốc không phù hợp…), nguồn khai
+# `favors:true` mà vẫn bị gắn "Gây hại" chỉ vì CI nằm bên phải vạch 1,0 — sai bản chất, cùng
+# họ lỗi mà `plot_row_diff` đã vá cho thang chênh lệch. Đo thật trên kho 16/09/2026: 12 mục
+# `favors:true` với `lo > 1,0` bị gắn oan (duloxetine OR giảm đau ≥50% 1,91 (1,69–2,17)…).
+#
+# Hàm dùng CHUNG cho cả nhãn "Gây hại" (plot_row) lẫn dải xếp mục 2/3 (build_page) — một mục
+# không được label một đằng, xếp dải một nẻo.
+def _ratio_favors_decided(effect: dict) -> bool | None:
+    """True/False khi `favors` khai tường minh VÀ khoảng tin cậy KHÔNG chạm vạch 1,0 (đủ để
+    đọc chiều mà không cần suy từ vị trí). None khi chưa đủ để quyết bằng favors — `favors`
+    vắng mặt, hoặc CI còn chạm vạch 1,0 (lo ≤ 1,0 ≤ hi) — khi đó GIỮ NGUYÊN luật vị trí cũ ở
+    nơi gọi, để không đổi hành vi của mọi dashboard đã xuất bản chưa khai `favors`."""
+    favors = effect.get("favors")
+    if favors not in (True, False):
+        return None
+    lo, hi = effect.get("lo"), effect.get("hi")
+    if not (lo and hi) or not (lo > 1.0 or hi < 1.0):
+        return None
+    return favors
+
+
 def plot_row(item: dict, ax: LogAxis) -> str:
     eff = item.get("effect") or {}
     tone, label = DECISION.get(item.get("decision"), ("neutral", "Chưa đủ đổi"))
     hr, lo, hi = eff.get("hr"), eff.get("lo"), eff.get("hi")
-    # Chứng cứ gây hại: toàn bộ khoảng tin cậy nằm bên phải vạch 1,0
-    if lo and lo > 1.0:
-        tone = "harm"
-        label = "Gây hại"
+    decided = _ratio_favors_decided(eff)
+    if decided is False:
+        # Nguồn khai rõ: chiều đã quan sát của tỷ số này BẤT LỢI, và CI không chạm vạch 1,0.
+        tone, label = "harm", "Gây hại"
+    elif decided is None and lo and lo > 1.0:
+        # `favors` vắng mặt (hoặc CI chạm vạch 1,0) — luật vị trí cũ, tương thích ngược.
+        tone, label = "harm", "Gây hại"
+    # decided is True: nguồn khai rõ chiều này CÓ LỢI — giữ nguyên tone/label theo quyết định,
+    # KHÔNG BAO GIỜ gắn "Gây hại" chỉ vì tỷ số nằm bên phải vạch 1,0.
 
     name = esc(normalize_title(item.get("title", "")))
     sub_bits = []
@@ -765,13 +795,21 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
         bounds += [e.get("lo"), e.get("hi")]
     ax = LogAxis.fit([b for b in bounds if b])
 
-    # Chỉ mục CÓ hiệu số định lượng mới lên biểu đồ; chia theo phía của khoảng tin
-    # cậy so với vạch 1,0 (không chia theo quyết định — quyết định là kết luận của
-    # người tổng hợp, còn vị trí trên trục là dữ kiện của nguồn).
+    # Chỉ mục CÓ hiệu số định lượng mới lên biểu đồ. SỬA 16/09/2026: khi nguồn khai rõ
+    # `favors` VÀ khoảng tin cậy không chạm vạch 1,0, xếp mục THEO ĐÚNG `favors` (dùng
+    # CHUNG `_ratio_favors_decided` với `plot_row` — nhãn "Gây hại" và dải xếp mục phải khớp
+    # nhau, không được label một đằng xếp một nẻo). Khi `favors` vắng mặt (hoặc CI còn chạm
+    # vạch 1,0), GIỮ NGUYÊN luật vị trí cũ — chia theo phía của khoảng tin cậy so với vạch
+    # 1,0 — để không đổi hành vi của mọi dashboard đã xuất bản chưa khai `favors`.
     support, against = [], []
     for i in eff_items:
         e = i["effect"]
-        if e.get("hi") and e["hi"] < 1.0 and i.get("decision") != "notyet":
+        decided = _ratio_favors_decided(e)
+        if decided is True:
+            support.append(i)
+        elif decided is False:
+            against.append(i)
+        elif e.get("hi") and e["hi"] < 1.0 and i.get("decision") != "notyet":
             support.append(i)
         else:
             against.append(i)
@@ -883,12 +921,14 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
 
 """
 
-    deck_truc = ("Mọi hiệu số nằm trên cùng một trục thang log, vạch 1,0 ở giữa — bên trái là có lợi,\n"
-                 "  bên phải là bất lợi.")
+    deck_truc = ("Mọi hiệu số nằm trên cùng một trục thang log, vạch 1,0 ở giữa — mặc định bên trái là\n"
+                 "  có lợi, bên phải là bất lợi; khi nguồn khai rõ chiều ngược lại, mục xếp và gắn nhãn\n"
+                 "  theo đúng khai báo đó, không theo vị trí.")
     if diff_items:
         deck_truc = ("Hiệu số dạng tỷ số (HR, RR, OR) nằm trên cùng một trục thang log, vạch 1,0 ở giữa —\n"
-                     "  bên trái là có lợi, bên phải là bất lợi. Hiệu số dạng chênh lệch (SMD, MD, RD) có\n"
-                     "  mục riêng trên thang tuyến tính, vạch 0.")
+                     "  mặc định bên trái là có lợi, bên phải là bất lợi (theo đúng khai báo của nguồn khi\n"
+                     "  chiều ngược lại). Hiệu số dạng chênh lệch (SMD, MD, RD) có mục riêng trên thang\n"
+                     "  tuyến tính, vạch 0.")
     nav_chenh = '  <a href="#chenhlech">4. Hiệu số dạng chênh lệch</a>\n' if diff_items else ""
     so_khac = 5 if diff_items else 4
     so_vn = so_khac + 1
@@ -944,7 +984,7 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
 
 <section class="sec" id="ungho">
   <div class="sec-head"><h2>2. Chứng cứ ủng hộ thay đổi</h2><p>hiệu số và khoảng tin cậy 95%, trích đúng như nguồn báo cáo</p></div>
-  {field(support, 'Khoảng tin cậy nằm trọn bên trái vạch 1,0', 'benefit')}
+  {field(support, 'Chiều có lợi theo nguồn báo cáo — mặc định bên trái vạch 1,0 khi chưa khai favors', 'benefit')}
   <div class="legend">
     <div><span class="k-dot"></span>ước lượng điểm</div>
     <div><span class="k-bar"></span>khoảng tin cậy 95%</div>
@@ -954,8 +994,8 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
 </section>
 
 <section class="sec" id="khong">
-  <div class="sec-head"><h2>3. Chứng cứ không ủng hộ, hoặc gây hại</h2><p>chú ý phần vượt sang phải vạch 1,0</p></div>
-  {field(against, 'Khoảng tin cậy chạm hoặc vượt vạch 1,0', 'harm')}
+  <div class="sec-head"><h2>3. Chứng cứ không ủng hộ, hoặc gây hại</h2><p>chiều bất lợi theo nguồn báo cáo — mặc định bên phải vạch 1,0 khi chưa khai favors</p></div>
+  {field(against, 'Chiều bất lợi theo nguồn báo cáo, hoặc chạm/vượt vạch 1,0 khi chưa khai favors', 'harm')}
 </section>
 
 {diff_html}<section class="sec" id="khac">
