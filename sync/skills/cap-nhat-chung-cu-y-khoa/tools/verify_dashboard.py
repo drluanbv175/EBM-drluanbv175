@@ -77,6 +77,15 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 VALID_GRADE = {"high", "mod", "low", "vlow", "na"}
 VALID_DECISION = {"apply", "consider", "notyet"}
+# Mã miền RoB 2 hợp lệ — PHẢI TRÙNG KHÍT `RM` trong template (web-dashboard-evidence-
+# workbench.html): l=thấp/s=một số lo ngại/h=cao. Thêm 2026-09-16 cùng đợt làm cứng
+# template chống `rob` dạng chuỗi (ca thật CKM_TimThanChuyenHoa 28/06 — thấy ở
+# CLAUDE.md, mục "Dashboard lâm sàng"): template nay KHÔNG sập nữa khi `rob` không
+# phải object hợp lệ, nhưng cổng liêm chính vẫn chưa nói gì về việc đó — dashboard
+# xuất bản với `rob` chuỗi hoặc mã miền lạ vẫn lọt cổng sạch sẽ. Xem kiem_rob() bên
+# dưới: CHỈ cảnh báo (không chặn xuất) vì `rob` chuỗi vẫn là nội dung hợp lệ, chỉ khác
+# hình thức trình bày so với chấm màu theo miền.
+ROB_MA_HOP_LE = {"l", "s", "h"}
 # Audit 2026-07-11: docstring hứa "DOI kiểm định dạng" nhưng trước đây chỉ kiểm
 # doi không rỗng — DOI bịa/gõ sai vẫn qua cổng nếu không kèm pmid. Regex chuẩn
 # DOI (registrant 4+ số + '/' + suffix bất kỳ, theo chuẩn doi.org).
@@ -245,6 +254,76 @@ def object_after_key(text, key):
     start = text.find("{", m.end() - 1)
     end = _find_matching_brace(text, start)
     return text[start:end + 1] if end != -1 else None
+
+
+_ROB_ENTRY_RE = re.compile(
+    r"""(?:^\{|[{,])\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|([A-Za-z_$][\w$]*))\s*:\s*"""
+    r"""(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""",
+    re.S,
+)
+
+
+def rob_entries(chunk):
+    """Trích entries {miền: mã} từ `rob:{…}` của MỘT item, khuôn RÚT GỌN như `field()`/
+    `object_after_key()` — không cần parser JSON đầy đủ, vì RoB 2 theo template luôn PHẲNG
+    {khoá:'mã ngắn'} (xem RM trong web-dashboard-evidence-workbench.html).
+
+    Trả `(None, None)` khi `rob` KHÔNG phải object (vắng mặt hoặc là chuỗi — kiem_rob() tự
+    đọc `field(chunk, 'rob')` cho trường hợp chuỗi). Trả `(block, entries)` khi LÀ object;
+    `entries` là `list[(khoá, mã)]`, mã CHƯA lọc theo `ROB_MA_HOP_LE` (việc lọc thuộc kiem_rob()
+    — hàm này chỉ trích, không phán đúng/sai, đúng nguyên tắc field()/object_after_key() khác)."""
+    block = object_after_key(chunk, "rob")
+    if block is None:
+        return None, None
+    entries = []
+    for m in _ROB_ENTRY_RE.finditer(block):
+        key = m.group(1) if m.group(1) is not None else (m.group(2) if m.group(2) is not None else m.group(3))
+        val = m.group(4) if m.group(4) is not None else m.group(5)
+        if key is not None and val is not None:
+            entries.append((key, val))
+    return block, entries
+
+
+def kiem_rob(chunk, iid, warns):
+    """CẢNH BÁO (không chặn xuất) khi `rob` không phải object hợp lệ theo `ROB_MA_HOP_LE`.
+
+    VÌ SAO CHỈ CẢNH BÁO, KHÔNG CHẶN: template (từ 2026-09-16) đã làm cứng để `rob` dạng
+    chuỗi KHÔNG còn làm sập bảng/panel — nó hiện NGUYÊN VĂN, vẫn là nội dung hợp lệ, chỉ
+    khác hình thức so với chấm màu theo miền. Trước bản vá đó, cổng này hoàn toàn im lặng
+    về trường `rob` — một dashboard có `rob` chuỗi (ca thật: CKM_TimThanChuyenHoa
+    ITEM-02/03/04) hay object mang mã miền lạ đều lọt cổng sạch sẽ dù template khi đó SẼ
+    SẬP khi mở trong trình duyệt. Cảnh báo này KHÔNG hồi tố phát hiện lỗi cũ — chỉ giúp
+    bản mới không lặp lại."""
+    block, entries = rob_entries(chunk)
+    if block is not None:
+        ma_la = sorted({m for _, m in entries if m not in ROB_MA_HOP_LE})
+        if ma_la:
+            warns.append(
+                "[%s] rob có mã miền LẠ %s (chỉ %s hợp lệ theo RM của template) — template "
+                "BỎ QUA miền mang mã lạ khi vẽ (không sập trang, nhưng miền đó KHÔNG hiện được "
+                "ở bảng/panel). Sửa lại mã hoặc bỏ khoá thừa."
+                % (iid, ", ".join(repr(m) for m in ma_la), ", ".join(sorted(ROB_MA_HOP_LE)))
+            )
+        elif not entries:
+            warns.append(
+                "[%s] rob là object nhưng không đọc được mã miền nào (cú pháp lạ hoặc rỗng) — "
+                "template hiện dấu '—' như không có RoB. RÀ TAY nếu đây là nhầm lẫn." % iid
+            )
+        return
+    rob_str = field(chunk, "rob")
+    if rob_str and rob_str.strip():
+        design = (field(chunk, "design") or "").strip().lower()
+        goi_y = (
+            " Đây là design RCT — cân nhắc chuẩn hoá về object {miền:mã} nếu muốn có chấm "
+            "màu RoB 2 theo từng miền thay vì một đoạn văn."
+            if design.startswith("rct") else ""
+        )
+        rut_gon = rob_str if len(rob_str) <= 70 else rob_str[:70] + "…"
+        warns.append(
+            "[%s] rob là CHUỖI (%r), không phải object {miền:mã} — dashboard vẫn xuất được "
+            "(template hiện nguyên văn, không sập), nhưng không có chấm màu theo miền RoB 2.%s"
+            % (iid, rut_gon, goi_y)
+        )
 
 
 def _cat_mang_theo_trang_thai_chuoi(block, name):
@@ -1276,6 +1355,7 @@ def main():
             errors.append("[%s] decision không hợp lệ: %r (cần %s)." % (iid, dec, VALID_DECISION))
         if "references" not in ch:
             warns.append("[%s] không thấy references[]." % iid)
+        kiem_rob(ch, iid, warns)
 
     if a.strict_sources:
         se, sw, so = strict_source_checks(data, items)

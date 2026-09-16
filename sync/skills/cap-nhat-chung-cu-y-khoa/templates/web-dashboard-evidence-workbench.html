@@ -196,6 +196,13 @@
   .robfull{display:flex;flex-direction:column;gap:6px}
   .robfull .r{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ink-2)}
   .robfull .r i{width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:8px;font-weight:800;color:#fff;font-style:normal}
+  /* rob KHÔNG phải object {miền:mã} (chuỗi văn xuôi) — xem robEntries() trong ENGINE, thêm
+     2026-09-16. Ô bảng: chấm mờ + nguyên văn cắt gọn, tooltip giữ đủ chữ. Panel chi tiết: nguyên
+     văn xuống dòng tự nhiên, không cắt. */
+  .robnote{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);max-width:150px}
+  .robnote .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+  .robnote span.tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .robtext{font-size:11.5px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap}
   .flag-mini{display:inline-block;font-size:9px;font-weight:700;color:var(--notyet);background:#fff7ed;border:1px solid #fed7aa;border-radius:5px;padding:1px 5px;margin-top:4px}
 
   /* generic section cards used in non-table tabs */
@@ -427,6 +434,12 @@
                                          // LỆCH (SMD/MD/RD/'Chênh…'/'Hiệu số trung bình…') vẽ
                                          // thang tuyến tính, vạch 0. Không khai `scale` thì suy
                                          // từ `measure`; nhãn lạ ⇒ 'ratio' (tương thích ngược).
+     rob?:{miền:'l'|'s'|'h'} | 'nguyên văn tự do',
+                                         // RoB 2 — CHỈ RCT. Đúng chuẩn là OBJECT {tên miền: mã}
+                                         // (l=thấp/s=một số lo ngại/h=cao, xem RM) → vẽ chấm màu
+                                         // mini + đầy đủ. Một CHUỖI văn xuôi (design≠RCT hoặc
+                                         // người soạn tóm gọn thay vì chấm từng miền) → hiện
+                                         // NGUYÊN VĂN, không quy về màu (xem robEntries()).
      gradeSource,                        // nguyên văn của nguồn, vd 'GRADE Cao' / 'Khuyến cáo I·A'
      gradeLevel:'high'|'mod'|'low'|'vlow'|'na',  // để tô màu; 'na' nếu nguồn không cung cấp
      decision:'apply'|'consider'|'notyet',
@@ -556,6 +569,20 @@ const GRADE_META={high:['g-high','Cao',4],mod:['g-mod','Trung bình',3],low:['g-
 const DEC_META={apply:['d-apply','Áp dụng ngay','--apply'],consider:['d-consider','Cân nhắc chọn lọc','--consider'],notyet:['d-notyet','Chưa đủ thay đổi','--notyet']};
 const GROUP_META={'cao-tuoi':'Người cao tuổi','ckd':'CKD','gan':'Bệnh gan','dtd':'Đái tháo đường','tim-mach':'Tim mạch','da-thuoc':'Đa thuốc'};
 const RM={l:['rl','✓'],s:['rs','!'],h:['rh','✕']};
+/* rob — sửa 2026-09-16. Schema đòi object {miền:'l'|'s'|'h'} (xem RM), nhưng dashboard thật
+   (vd CKM_TimThanChuyenHoa 28/06) từng ghi `rob` là CHUỖI VĂN XUÔI ("Mù đôi, phân bổ ngẫu nhiên
+   che giấu, phân tích ITT — nguy cơ sai lệch thấp."). Bản cũ luôn coi `rob` là object và lặp
+   Object.values(e.rob)/Object.keys(e.rob) — với chuỗi, mỗi KÝ TỰ trở thành một "mã miền" giả,
+   RM[ký tự] undefined ⇒ TypeError ngay khi đọc RM[r][0], làm SẬP tableView()/renderDetail() cho
+   TOÀN BỘ trang (không chỉ mục lỗi). robEntries() chỉ trả về entries khi `rob` THỰC SỰ là object
+   (không phải mảng/chuỗi/null) VÀ có ít nhất một mã hợp lệ trong RM; mã lạ trong object bị bỏ qua
+   (không giả '?') thay vì làm sập trang. Object không còn mã hợp lệ nào, hoặc `rob` là chuỗi/kiểu
+   khác ⇒ trả null — nơi gọi tự quyết định hiển thị (chuỗi hiện nguyên văn, còn lại hiện '—'). */
+function robEntries(rob){
+  if(rob==null||typeof rob!=='object'||Array.isArray(rob))return null;
+  const es=Object.entries(rob).filter(([,r])=>RM[r]);
+  return es.length?es:null;
+}
 const STANDARD_GATES=[
   {label:'Câu hỏi có cấu trúc',status:'need',note:'Khai báo PICO/PECO/PIRD/PROGRESS trước khi sinh dashboard thật.'},
   {label:'Thứ bậc nguồn',status:'need',note:'Ghi rõ guideline/SR-MA/RCT/quan sát và lý do chọn nguồn.'},
@@ -816,7 +843,10 @@ function tableView(arr){
     const dm=DESIGN_META[designFamily(e.design)], gm=GRADE_META[e.gradeLevel]||GRADE_META.na, dec=DEC_META[e.decision]||DEC_META.consider;
     const eff=e.effect?`<span class="effect ${e.effect.favors?'fav':(e.effect.favors===false?'harm':'ns')}">${e.effect.hr!=null?e.effect.hr.toFixed(2):escHtml(e.effect.measure||'')}</span> <span class="ci">${e.effect.ci?'('+escHtml(e.effect.ci)+')':''}</span>`:(e.effectText?`<span class="effect ns" style="font-size:10.5px">${escHtml(e.effectText)}</span>`:'<span class="effect ns">—</span>');
     const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
-    const robm=e.rob?Object.values(e.rob).map(r=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join(''):'<span style="color:var(--faint);font-size:10px">—</span>';
+    const robEs=robEntries(e.rob);
+    const robm=robEs?robEs.map(([,r])=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join('')
+      :(typeof e.rob==='string'&&e.rob.trim())?`<span class="robnote"><span class="dot"></span><span class="tx" title="${escHtml(e.rob)}">${escHtml(e.rob)}</span></span>`
+      :'<span style="color:var(--faint);font-size:10px">—</span>';
     return `<tr class="${e.id===state.selected?'sel':''}" onclick="select('${escJs(e.id)}')">
       <td><span class="ttl">${escHtml(e.title)}<span class="auth">${escHtml(e.source)} · <span class="idtag">${escHtml(e.id)}</span>${e.pmid?` · PMID <span class="pmid">${escHtml(e.pmid)}</span>`:''}</span>${e.flag?`<span class="flag-mini">⚑ ${escHtml(e.flag)}</span>`:''}</span></td>
       <td><span class="badge ${dm[0]}" title="${escHtml(e.design||'')}"><span class="d"></span>${dm[1]}</span></td>
@@ -879,8 +909,11 @@ function renderDetail(){
       <div class="stat"><div class="l">${escHtml(eff?(eff.measure||'Hiệu số'):'Hiệu số')}</div><div class="n" style="color:${eff&&eff.favors?'var(--g-high)':'var(--ink)'}">${eff&&eff.hr!=null?eff.hr.toFixed(2):escHtml(e.effectText||'—')}</div><div class="x">${eff?'95% CI '+escHtml(eff.ci||'—'):''}</div></div>
       ${eff?`<div class="stat"><div class="l">Forest</div><div style="margin-top:6px">${miniForest(eff)}</div><div class="x">${effectScale(eff)==='difference'?'vạch 0 · thang tuyến tính':'ngưỡng 1.0 · thang log'}</div></div>`:''}
     </div></div>`:'';
-  const robFull=e.rob?Object.keys(e.rob).map(d=>{const r=RM[e.rob[d]];return `<div class="r"><span>${d}</span><i class="${r[0]}">${r[1]}</i></div>`;}).join(''):'';
-  const robHtml=e.rob?`<div class="dsec"><h3>◉ Nguy cơ sai lệch (RoB 2)</h3><div class="robfull">${robFull}</div></div>`:'';
+  const robEsFull=robEntries(e.rob);
+  const robFull=robEsFull?robEsFull.map(([d,r])=>`<div class="r"><span>${escHtml(d)}</span><i class="${RM[r][0]}">${RM[r][1]}</i></div>`).join(''):'';
+  const robHtml=robEsFull?`<div class="dsec"><h3>◉ Nguy cơ sai lệch (RoB 2)</h3><div class="robfull">${robFull}</div></div>`
+    :(typeof e.rob==='string'&&e.rob.trim())?`<div class="dsec"><h3>◉ Nguy cơ sai lệch</h3><div class="robtext">${escHtml(e.rob)}</div></div>`
+    :'';
   el.innerHTML=`
     <div class="dhead">
       <button class="detail-close" onclick="closeDetail()" title="Đóng">✕</button>
