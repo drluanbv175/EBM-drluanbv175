@@ -17,6 +17,7 @@ thuốc khi liên quan và được bác sĩ duyệt trước khi áp dụng cho
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -299,19 +300,44 @@ def _check_templates() -> CheckResult:
         "gradeLevel",
         "decision",
         "etd",
+        # 16/09/2026: họ thiết kế theo tiền tố + thang hiệu số tỷ số/chênh lệch — thiếu một trong
+        # hai là template đã bị ghi đè bằng bản cũ (huy hiệu trống, SMD vẽ trên thang log).
+        "DESIGN_FAMILIES",
+        "designFamily(",
+        "SCALE_DIFF_TERMS",
+        "effectScale(",
+        "data-scale",
     ]
     details = []
     ok_all = True
-    for path in (EW_TEMPLATE, EW_HUB_ASSET, EW_SKILL_TEMPLATE, EW_DARK_SKILL_TEMPLATE):
+    paths = (EW_TEMPLATE, EW_HUB_ASSET, EW_SKILL_TEMPLATE, EW_DARK_SKILL_TEMPLATE)
+    for path in paths:
         ok, detail = _contains_all(path, required)
         ok_all = ok_all and ok
         details.append(f"{path.name}: {detail}")
+    # CLAUDE.md «BỐ CỤC/CSS = SỬA TEMPLATE»: bốn bản phải KHỚP BYTE. Marker không đủ — một bản vẫn
+    # có đủ marker trong khi đã tụt lại một lần sửa so với các bản kia.
+    present = [p for p in paths if p.exists()]
+    variants = {p.read_bytes() for p in present}
+    if len(variants) > 1:
+        ok_all = False
+
+        def _ten(p: Path) -> str:
+            try:
+                return str(p.relative_to(ROOT))
+            except ValueError:
+                return str(p)
+
+        details.append("LỆCH BYTE giữa các bản template: " + ", ".join(
+            f"{_ten(p)}={hashlib.sha256(p.read_bytes()).hexdigest()[:10]}" for p in present))
+    elif present:
+        details.append(f"{len(present)} bản template khớp byte")
     return CheckResult(
         "Evidence Workbench template contract",
         "PASS" if ok_all else "FAIL",
         "; ".join(details),
-        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ, gồm lớp standards/chất lượng và strict source gate.",
-        "Không kiểm visual bằng Playwright; chỉ kiểm marker cấu trúc tĩnh.",
+        "Template nguồn và asset hub cùng giữ các điều khiển/tabs/schema tối thiểu cho cập nhật chứng cứ, gồm lớp standards/chất lượng, strict source gate, họ thiết kế theo tiền tố, thang hiệu số tỷ số/chênh lệch; bốn bản khớp byte.",
+        "Không kiểm visual bằng Playwright; marker tĩnh + khớp byte. Hành vi JS kiểm ở tools/test_ew_template_ho_thiet_ke_thang_hieu_so.py.",
     )
 
 
