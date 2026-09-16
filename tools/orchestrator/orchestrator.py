@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 from .agent_adapter import AgentExecutor, DryRunExecutor
 from .context import ContextStore, Session
-from .flows import FlowStep, GUARDRAIL_STEP, all_agents_in_flows, flow_for, sa
+from .flows import CLINICAL_FLOW, FlowStep, GUARDRAIL_STEP, all_agents_in_flows, flow_for, sa
 from .intent import SINGLE_TASK_RULES, route
 from .knowledge import KnowledgeLayer
 from .lifecycle import GATES, MAX_RETRIES, Lifecycle
@@ -78,10 +78,31 @@ class Orchestrator:
         session.entry_agent = intent.target
         lc.to("routed", intent.reason)
 
+        # Tín hiệu ngữ cảnh cần có TRƯỚC nhánh 'unknown' bên dưới (BƯỚC 0 cờ đỏ dùng nó
+        # qua _run_step) — tách khỏi vị trí gốc (Năng lực 4, ngay sau nhánh unknown cũ).
+        signals = detect_signals(request)
+
         if intent.kind == "unknown" or not intent.target:
+            # SỬA 2026-09-03 (Workflow đối kháng đa-agent vòng 2, phát hiện CRITICAL):
+            # trước đây nhánh này trả needs_clarification NGAY LẬP TỨC — 0 bước, 0 bản ghi
+            # trace — nghĩa là BƯỚC 0 cờ đỏ (sang-loc-co-do) KHÔNG BAO GIỜ chạy khi router
+            # không nhận diện được câu, kể cả khi câu mô tả một ca có dấu hiệu nguy hiểm
+            # thật (đo được bằng chạy sống: "Phụ nữ mang thai 32 tuần bị đau đầu dữ dội
+            # kèm phù chân, huyết áp 160/100" — gợi ý tiền sản giật — và "Bé trai 8 tuổi
+            # khó thở về đêm, nghi hen" đều rơi 'unknown' và bỏ qua sàng lọc hoàn toàn).
+            # Đúng tinh thần bất biến BH88 đã tuyên bố ("over-route sang nơi CÓ sàng lọc
+            # cờ đỏ là chiều an toàn, under-route bỏ qua cờ đỏ thì không") — 'unknown' còn
+            # tệ hơn under-route vì nó là KHÔNG định tuyến gì cả. Nay LUÔN chạy BƯỚC 0 cờ
+            # đỏ (agent tự quyết định có gì đáng ngại hay không) TRƯỚC KHI trả lời "cần
+            # làm rõ" cho bác sĩ — không đổi kết cục needs_clarification, chỉ đảm bảo an
+            # toàn không bị bỏ qua trong lúc chờ làm rõ.
+            self._run_step(session, CLINICAL_FLOW[0], ex, signals)
             session.status = "needs_clarification"
             lc.to("blocked", intent.reason)
-            session.checkpoint("routed", None, "cần làm rõ intent")
+            session.checkpoint(
+                "routed", None,
+                "cần làm rõ intent — đã chạy sàng lọc cờ đỏ (BƯỚC 0) trước khi hỏi lại",
+            )
             return self._finish(session, lc, store, persist)
 
         # Plugin khong tu tranh quyen voi nhac truong. Moi request duoc gan mot owner
@@ -104,9 +125,24 @@ class Orchestrator:
             return self._finish(session, lc, store, persist)
 
         # Năng lực 4 (một phần): tín hiệu ngữ cảnh — quyết định nhánh nào THỰC SỰ áp dụng
-        # (vá lỗ hổng cũ: trước đây plan chạy mù mọi nhánh dù request không đúng bối cảnh)
-        signals = detect_signals(request)
+        # (vá lỗ hổng cũ: trước đây plan chạy mù mọi nhánh dù request không đúng bối cảnh).
+        # `signals` đã tính ở trên (trước nhánh 'unknown') — không tính lại.
         session.checkpoint("signals", None, "tín hiệu ngữ cảnh đã khớp", signals.as_dict())
+
+        # SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện HIGH — cùng họ với vá
+        # BH88/vòng 2 cho nhánh 'unknown'): RESEARCH_FLOW (G0→G10) KHÔNG có bước nào
+        # tương đương BƯỚC 0 cờ đỏ của CLINICAL_FLOW. intent.py's luật "sang-loc-co-do"
+        # (vòng 3) chỉ cứu được khi câu khớp ĐÚNG cụm hẹp ("cấp cứu"/"chuyển viện"/
+        # "cờ đỏ"/"có nguy hiểm"/"đừng bỏ sót") — một đề tài mô tả quần thể vẫn có thể
+        # lồng mô tả lâm sàng nguy hiểm mà không dùng đúng cụm đó. Đo sống: "Nghiên cứu
+        # cắt ngang tỷ lệ đau đầu dữ dội kèm sốt cao ở phụ nữ mang thai..." chạy trọn
+        # G0→G10 (25 bước) mà KHÔNG MỘT LẦN nào sang-loc-co-do được gọi. Cùng nguyên tắc
+        # bất biến BH88: over-route sang nơi CÓ sàng lọc cờ đỏ là chiều an toàn. Chạy
+        # BƯỚC 0 như một LỚP PHÒNG THỦ BỔ SUNG cho research_topic — KHÔNG đổi kind/
+        # routing/cổng, chỉ thêm một bước sàng lọc trước khi vào G0 (agent tự quyết định
+        # có gì đáng ngại hay không, giống hệt cách 'unknown' đã dùng).
+        if intent.kind == "research_topic":
+            self._run_step(session, CLINICAL_FLOW[0], ex, signals)
 
         # Năng lực 1: dựng plan (flow) theo loại intent
         steps = self._plan(intent.kind, intent.target)
