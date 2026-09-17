@@ -64,6 +64,11 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
+import importlib.util as _ilu_dkcd  # noqa: E402
+_sp_dkcd = _ilu_dkcd.spec_from_file_location("_bst_dkcd", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_dkcd = _ilu_dkcd.module_from_spec(_sp_dkcd)
+_sp_dkcd.loader.exec_module(_bst_dkcd)
+
 # Hậu tố mô tả "lát cắt" của cùng một chủ đề (bệnh kèm, đối tượng, tiên lượng…).
 # Bỏ chúng đi để gom về chủ đề gốc.
 HAU_TO = re.compile(
@@ -72,18 +77,23 @@ HAU_TO = re.compile(
 
 
 def nap_vd():
-    duong = DASH / "tools" / "verify_dashboard.py"
-    # 28/08/2026 — trên bản sao git TRẦN (phiên cloud/CI) cây EBM-Dashboards nằm
-    # ngoài git nên file này không bao giờ có; chết traceback ở đây làm bước ⑤ của
-    # chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu nguyên liệu.
-    # Vòng 4 (bình duyệt đối kháng): KHÔNG ném SystemExit từ hàm thư viện — nó
-    # xuyên qua mọi guard `except Exception` của caller trong-tiến-trình (bộ chốt
+    # VÁ 08/09/2026: ưu tiên EBM-Dashboards/tools/ (máy thật); lùi về bản GIT-VENDOR ở
+    # sync/skills/cap-nhat-chung-cu-y-khoa/tools/ (LUÔN có trên mọi checkout, kể cả
+    # cloud/CI) — trước đây chỉ nhìn một nơi nên trên phiên cloud lời gọi này CHẾT dù
+    # bản vendor chạy tốt (xem tools/ban_sao_tran.py::duong_cong_cu_pipeline).
+    duong = _bst_dkcd.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    # 28/08/2026 — trên bản sao git TRẦN THẬT (không có ở đâu cả, kể cả bản vendor) cây
+    # EBM-Dashboards nằm ngoài git nên file này không bao giờ có; chết traceback ở đây
+    # làm bước ⑤ của chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu
+    # nguyên liệu. Vòng 4 (bình duyệt đối kháng): KHÔNG ném SystemExit từ hàm thư viện —
+    # nó xuyên qua mọi guard `except Exception` của caller trong-tiến-trình (bộ chốt
     # bài học, build_ban_doc) và giết cả lượt chạy của họ giữa chừng. Ném
     # FileNotFoundError mang thông điệp rõ; main() bắt và in sạch cho người chạy CLI.
-    if not duong.exists():
+    if duong is None:
         raise FileNotFoundError(
-            f"⚪ Không kiểm được trên máy này: thiếu {duong} — EBM-Dashboards nằm "
-            "ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
+            f"⚪ Không kiểm được trên máy này: thiếu {DASH / 'tools' / 'verify_dashboard.py'} "
+            "lẫn bản git-vendor sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py "
+            "— EBM-Dashboards nằm ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
     spec = importlib.util.spec_from_file_location("vd_chu_de", duong)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

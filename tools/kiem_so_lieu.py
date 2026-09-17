@@ -52,6 +52,11 @@ for _s in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
+
+import importlib.util as _ilu_ksl  # noqa: E402
+_sp_ksl = _ilu_ksl.spec_from_file_location("_bst_ksl", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_ksl = _ilu_ksl.module_from_spec(_sp_ksl)
+_sp_ksl.loader.exec_module(_bst_ksl)
 EFETCH = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
           "?db=pubmed&rettype=abstract&retmode=text&id=")
 
@@ -220,7 +225,15 @@ def main() -> int:
     if a.self_test:
         return _self_test_nhan()
 
-    spec = importlib.util.spec_from_file_location("vd_so", DASH / "tools" / "verify_dashboard.py")
+    # VÁ 08/09/2026: lùi về bản git-vendor khi EBM-Dashboards vắng (mọi checkout
+    # git-only) thay vì ném FileNotFoundError thô — xem
+    # tools/ban_sao_tran.py::duong_cong_cu_pipeline.
+    duong_vd = _bst_ksl.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    if duong_vd is None:
+        print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
+              "git-vendor — không đối chiếu được trên máy này.")
+        return 0
+    spec = importlib.util.spec_from_file_location("vd_so", duong_vd)
     vd = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(vd)
 

@@ -3842,13 +3842,37 @@ def ban_sao_git_tran() -> bool:
 _LOI_THIEU_NGUYEN_LIEU = ("FileNotFoundError", "ModuleNotFoundError", "NotADirectoryError")
 
 
-def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "") -> str:
-    """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪."""
+def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "", bst=None) -> str:
+    """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪.
+
+    VÁ 08/09/2026 (cherry-pick 6f40471) — «2-trong-3 gốc vắng» (phiên cloud:
+    medical-ebm-automation có mặt dạng sibling, EBM-Dashboards/EBM_MASTER KHÔNG BAO
+    GIỜ có trong bất kỳ git checkout nào) không được `tran` (đòi CẢ BA gốc vắng)
+    nhận diện — đo thật: 30/34 mục "tái phát" trên phiên cloud chỉ vì `tran=False`
+    toàn cục, dù đối tượng chúng soi (một file cụ thể dưới EBM-Dashboards/EBM_MASTER)
+    THẬT SỰ vắng mặt. Nay: nếu thông điệp lỗi (`ct`, do chính `except BaseException`
+    hoặc hàm bh*_ tự ghi) nêu ĐÍCH DANH một trong ba tên gốc, chỉ cần ĐÚNG gốc đó
+    vắng là đủ ⚪ — không cần cả ba. `ct` rỗng hoặc không nêu tên gốc nào ⇒ lùi về
+    `tran` toàn cục như cũ (KHÔNG bớt đường cũ, chỉ THÊM — cùng nguyên tắc
+    `duong_goc()` đã áp ở tools/ban_sao_tran.py). `bst` là module `ban_sao_tran` đã
+    nạp sẵn (main() nạp MỘT lần); truyền None thì tự nạp khi cần — giữ mọi lời gọi
+    trực tiếp (test) không đổi hành vi.
+    """
     if ok:
         return "dat"
-    if tran and ma in _CAN_NGUYEN_LIEU_NGOAI_REPO:
-        if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
-            return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+    if ma not in _CAN_NGUYEN_LIEU_NGOAI_REPO:
+        return "tai_phat"
+    if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
+        return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+    if ct:
+        if bst is None:
+            bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_phan_loai")
+        goc_neu_ten = [g for g in bst.GOC_DU_LIEU_NGOAI_GIT if g in ct]
+        if goc_neu_ten:
+            if all(bst.duong_goc(g, REPO) is None for g in goc_neu_ten):
+                return "ngoai_pham_vi"
+            return "tai_phat"  # gốc mà ct nêu tên LẠI đang có mặt — lỗi thật, không ⚪ hoá
+    if tran:
         return "ngoai_pham_vi"
     return "tai_phat"
 
@@ -5791,6 +5815,7 @@ def main() -> int:
 
     tran = ban_sao_git_tran()
     _dung_lai_mirror_codex(tran)
+    bst_main = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_main")
     ket: list[tuple[str, str, str, str, str]] = []
     for ma, ngay, ten, ham in BAI_HOC:
         try:
@@ -5802,7 +5827,7 @@ def main() -> int:
         # mọi chốt sau không được kiểm, và hook `; true` nuốt sạch không một dòng báo.
         except BaseException as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
             ok, ct = False, f"chốt lỗi: {type(e).__name__}: {e}"
-        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct), ct))
+        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct, bst_main), ct))
 
     do = [k for k in ket if k[3] == "tai_phat"]
     ngoai = [k for k in ket if k[3] == "ngoai_pham_vi"]
