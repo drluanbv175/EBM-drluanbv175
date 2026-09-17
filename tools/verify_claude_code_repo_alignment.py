@@ -245,7 +245,11 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
         "Repo/Claude Code alignment",
         "tools/check_claude_codex_sync_health.py",
         "tools/verify_clinical_runtime_schema_hardening.py",
-        '"-m", "ruff", "check", "medical-ebm-automation"',
+        # VÁ 17/09/2026 (cascade duong_goc): mốc cũ neo vào chuỗi ghép cứng
+        # '"-m", "ruff", "check", "medical-ebm-automation"' — chuỗi đó mất khi bước 27 đổi
+        # sang dùng _MEA_GOC_UV (duong_goc(), dò được cả bố cục sibling trên cloud). Đổi
+        # mốc sang neo vào việc lệnh ruff CÒN GỌI ĐÚNG resolver, không phải chuỗi cứng cũ.
+        '"-m", "ruff", "check", str(_MEA_GOC_UV)',
         "Lint repo sống",
     ]
     missing = _missing_markers(path, required)

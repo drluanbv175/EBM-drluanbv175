@@ -84,7 +84,13 @@ def test_core_checks_include_blocking_repo_lint():
 def test_upgrade_verify_wires_blocking_repo_lint():
     upgrade = (E.ROOT / "tools" / "upgrade_verify.py").read_text(encoding="utf-8")
 
-    assert '("27. Lint repo sống", ["-m", "ruff", "check", "medical-ebm-automation"], True)' in upgrade
+    # ĐÍNH CHÍNH 17/09/2026 (cascade duong_goc): mốc cũ neo vào chuỗi ghép cứng
+    # '"-m", "ruff", "check", "medical-ebm-automation"' — chuỗi đó mất khi bước 27 đổi
+    # sang dùng _MEA_GOC_UV (duong_goc(), dò được cả bố cục sibling trên cloud). Đổi
+    # mốc sang khớp đúng lệnh mới, vẫn giữ nguyên Ý NGHĨA phép thử: bước 27 phải BLOCK
+    # (True) và phải lint đúng cây medical-ebm-automation (qua resolver, không phải
+    # đường ghép cứng).
+    assert '("27. Lint repo sống", ["-m", "ruff", "check", str(_MEA_GOC_UV)], True)' in upgrade
 
 
 def test_full_pytest_uses_project_python(monkeypatch):
