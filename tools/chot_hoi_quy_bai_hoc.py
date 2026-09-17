@@ -5273,6 +5273,42 @@ def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
     return True, "chỉ thị tự bắn hook cloud còn nguyên trong CLAUDE.md, và mục tiêu nó trỏ tới vẫn tồn tại"
 
 
+def bh104_cowork_orphan_cleanup_da_khai():
+    """16/09 — điều tra `~/Library/Application Support/Claude/local-agent-mode-sessions/
+    skills-plugin/.../skills/` sau khi 23 thư mục `.bak-20260916-170912` xuất hiện rồi
+    biến mất trong đó (đúng ca BH22/BH103). Đo trực tiếp lúc 18:08:00 (đỉnh chu kỳ 20
+    phút): app xoá "25 orphans cleaned" — quét sạch mọi skill vừa được
+    `dong_bo_skill.py --ap-dung` đẩy vào phút trước, chỉ chừa skill ĐÃ CÓ trong
+    `manifest.json` (`creatorType:"user"`).
+
+    Đọc thẳng `app.asar` xác nhận danh sách "N enabled skills" tới từ gọi API thật
+    `GET /api/organizations/{org}/skills/list-skills?...&entrypoint=local-agent` — danh
+    sách Custom Skills của TÀI KHOẢN claude.ai (Customize → Skills), không phải file
+    trên đĩa. Một agent `claude-code-guide` tra độc lập bằng tài liệu chính thức xác
+    nhận đúng: *"Cowork loads the ones enabled for your claude.ai account, synced at
+    session start, and doesn't read the Claude Code CLI's ~/.claude directory on your
+    machine."* (https://claude.com/docs/cowork/overview.md) — tức đây là TRẦN KIẾN
+    TRÚC, không phải lỗi phân kỳ nội dung của `dong_bo_skill.py` để sửa bằng cách so
+    sánh kỹ hơn. Chốt này canh đúng phát hiện đó CÒN NẰM trong docstring — mất đoạn
+    này thì một phiên sau dễ quay lại coi "THIEU_HAN tái diễn mỗi 20 phút" là hồi quy
+    của công cụ đồng bộ và tốn công vá lại một thứ không sửa được ở tầng công cụ."""
+    tep = REPO / "tools" / "dong_bo_skill.py"
+    if not tep.exists():
+        return False, "tools/dong_bo_skill.py biến mất — mất luôn phát hiện trần kiến trúc Cowork"
+    noi_dung = tep.read_text(encoding="utf-8", errors="replace")
+    CAN_CO = (
+        "TRẦN KIẾN TRÚC ĐÃ XÁC NHẬN BẰNG TÀI LIỆU CHÍNH THỨC",
+        "skills/list-skills",
+        "https://claude.com/docs/cowork/overview.md",
+        "Custom Skills do not sync across surfaces",
+    )
+    thieu = [c for c in CAN_CO if c not in noi_dung]
+    if thieu:
+        return False, ("mất đoạn ghi trần kiến trúc Cowork trong docstring "
+                        "tools/dong_bo_skill.py — thiếu: " + "; ".join(thieu))
+    return True, "docstring tools/dong_bo_skill.py còn ghi đúng trần kiến trúc Cowork + nguồn tài liệu"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5384,6 +5420,7 @@ BAI_HOC = [
     ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
     ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
     ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
+    ("BH104", "16/09", "Trần kiến trúc Cowork (chỉ mirror danh sách Custom Skills tài khoản) phải ghi rõ trong dong_bo_skill.py", bh104_cowork_orphan_cleanup_da_khai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

@@ -39,6 +39,60 @@ Dùng:
     python3 tools/dong_bo_skill.py --im-khi-on  # chỉ nói khi lệch (dùng cho hook)
 
 Mã thoát: 0 = mọi skill khớp · 1 = có skill lệch · 2 = có skill phân kỳ hai chiều.
+
+🔴 TRẦN KIẾN TRÚC ĐÃ XÁC NHẬN BẰNG TÀI LIỆU CHÍNH THỨC (16/09/2026) — nhánh
+COWORK CỦA CÔNG CỤ NÀY CHỈ ĐẨY ĐƯỢC, KHÔNG GIỮ ĐƯỢC.
+=====================================================
+Đo trực tiếp: 18:08:00 (đúng đỉnh chu kỳ 20 phút) app xoá "25 orphans cleaned"
+— quét sạch mọi skill vừa được lệnh này đẩy vào phút trước, chỉ chừa lại đúng
+những skill ĐÃ CÓ SẴN trong `manifest.json` của app (`creatorType:"user"`).
+Đọc thẳng mã ứng dụng (`app.asar`, hàm nội bộ lấy "N enabled skills") xác nhận
+danh sách đó tới từ gọi API thật:
+`GET /api/organizations/{org}/skills/list-skills?...&entrypoint=local-agent` —
+TỨC LÀ danh sách **Custom Skills đã đăng ký ở tài khoản claude.ai**
+(Customize → Skills), KHÔNG PHẢI file trên đĩa. Tài liệu chính thức xác nhận
+đúng điều này: *"Cowork loads the ones enabled for your claude.ai account,
+synced at session start, and doesn't read the Claude Code CLI's ~/.claude
+directory on your machine. To use a skill or plugin that exists only in
+~/.claude, add it in Customize."* — https://claude.com/docs/cowork/overview.md
+
+**Hệ quả: mọi skill được `--ap-dung` đẩy vào nơi chạy Cowork mà KHÔNG có mặt
+trong danh sách tài khoản chỉ tồn tại tới lượt đồng bộ định kỳ kế tiếp**
+(`skillsSyncIntervalMs`, mặc định 1.200.000 ms = 20 phút, đo qua log
+`[SkillsPlugin] Starting periodic sync`). Đây KHÔNG phải lỗi phân kỳ nội dung
+để sửa bằng cách so sánh kỹ hơn — sao lưu đúng chỗ, lọc đúng file, đẩy đúng
+nội dung đều không đổi kết quả, vì app coi thư mục này là TẤM GƯƠNG của tài
+khoản, không phải nơi ghi tự do. Việc dời `*.bak-*` ra ngoài
+(`doi_sao_luu_ra_ngoai`) vẫn đúng và nên giữ — nó chỉ không giải quyết được
+trần kiến trúc này.
+
+**Đường CHÍNH THỐNG để một skill riêng sống sót qua mọi chu kỳ Cowork** —
+không cái nào tự động hoá được thẳng từ `sync/skills/` bằng CLI/API: tài liệu
+nói rõ *"Custom Skills do not sync across surfaces"* và *"Skills uploaded
+through the API are not available on claude.ai"* —
+https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
+  (a) tải tay từng skill dạng ZIP ở **Customize → Skills** trên claude.ai/
+      Desktop (https://support.claude.com/en/articles/12512180-use-skills-in-claude)
+      — cho đúng `/anthropic-skills:<tên>`, nhưng KHÔNG API/CLI để tự đẩy lại
+      sau mỗi lần sửa `sync/skills/`, phải tải lại tay;
+  (b) gói CẢ BỘ thành một plugin trong repo Git, thêm bằng **Customize →
+      Plugins → Add marketplace** (owner/repo) — gần mô hình "một nguồn Git,
+      cập nhật bằng git push" hơn, và đường plugin CÓ cảnh báo trước khi ghi
+      đè sửa cục bộ (đường skill-sync KHÔNG có) —
+      https://claude.com/docs/cowork/guide/plugins.md — nhưng CHƯA xác nhận
+      marketplace tự thêm có theo được sang máy khác hay phải thêm lại từng máy;
+  (c) tài khoản Team/Enterprise: admin cấp phát skill/plugin tổ chức, tới
+      được cả Cowork —
+      https://support.claude.com/en/articles/13119606-provision-and-manage-skills-for-your-organization
+
+**Kênh KHÔNG bị ảnh hưởng, đã đo còn nguyên:** `~/.claude/skills/` (Claude Code
+CLI/tab Code) là symlink trỏ thẳng `sync/skills/` — cơ chế hoàn toàn khác, do
+`dong_bo_skill_claude_codex.py` phụ trách; tài liệu xác nhận Cowork "doesn't
+read... ~/.claude" còn Code tab đọc thư mục đó "for local sessions". Giới hạn
+ở trên CHỈ áp cho nhánh Cowork của chính file này — không đổi hành vi/luật
+ĐẨY-hay-CHẶN đã có, chỉ đổi mức kỳ vọng: một skill "CẦN ĐẨY" thành công vẫn
+CẦN ĐẨY LẠI mỗi khi hết hạn khung ≤20 phút, trừ khi cũng được đăng ký ở một
+trong ba đường trên. Xem chốt BH104 (`chot_hoi_quy_bai_hoc.py`).
 """
 from __future__ import annotations
 
