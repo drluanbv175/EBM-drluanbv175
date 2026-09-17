@@ -11,6 +11,7 @@ Cần bác sĩ kiểm chứng: đây là kiểm cấu trúc mã lỗi, không th
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import sys
@@ -20,9 +21,30 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH khi `ROOT` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). `RETRY_LOOP_DIR`
+    (medical-ebm-automation/tools, ngoài-git) chỉ tồn tại bên cạnh checkout chính;
+    `RUBRIC`/`TAXONOMY`/`reports/` GIỮ NGUYÊN `ROOT` — file GIT-TRACKED. Vắng nguyên
+    liệu hoặc không xác định được ⇒ giữ NGUYÊN `ROOT` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_vlra_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
 RUBRIC = ROOT / ".claude" / "agents" / "_RUBRIC-EVALUATE-CUNG-QA-GATE.md"
 TAXONOMY = ROOT / ".claude" / "agents" / "_LESSONS-LEDGER-TAXONOMY.md"
-RETRY_LOOP_DIR = ROOT / "medical-ebm-automation" / "tools"
+RETRY_LOOP_DIR = ROOT_DU_LIEU / "medical-ebm-automation" / "tools"
 DEFAULT_MD = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.md"
 DEFAULT_JSON = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.json"
 

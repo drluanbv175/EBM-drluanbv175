@@ -9,6 +9,7 @@ provenance để LLM không phải suy đoán metadata hoặc trạng thái rút
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -31,7 +32,30 @@ USER_AGENT = "EBM-Orchestrator-Citation-Resolver/1.0"
 _PMID_RE = re.compile(r"\bPMID\s*[:#]?\s*(\d{6,9})\b", re.IGNORECASE)
 _DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
 ROOT = Path(__file__).resolve().parents[2]
-CANONICAL_RETRACTION_TOOL = ROOT / "medical-ebm-automation" / "tools" / "check_citation_retraction.py"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH để đọc `medical-ebm-automation/` (ngoài-git) khi `ROOT` là một
+    git worktree phụ — xem `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026,
+    vòng 6). Nạp bằng đường dẫn file (module này cũng chạy standalone qua
+    subprocess, không phải lúc nào cũng là một phần của package `tools.orchestrator`,
+    nên KHÔNG dùng `from . import`). Vắng nguyên liệu/không xác định được ⇒ giữ
+    NGUYÊN `ROOT` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parents[1] / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_ep_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+CANONICAL_RETRACTION_TOOL = (
+    _root_du_lieu_ngoai_git() / "medical-ebm-automation" / "tools" / "check_citation_retraction.py"
+)
 
 
 def _request_bytes(url: str, *, timeout: int = 20, attempts: int = 2) -> bytes:

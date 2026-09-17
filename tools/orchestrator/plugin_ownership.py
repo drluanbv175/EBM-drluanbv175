@@ -12,10 +12,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from . import ROOT
+from . import ROOT, ROOT_DU_LIEU
 
 DEFAULT_REGISTRY_PATH = Path(__file__).with_name("plugin_ownership_registry.json")
 HIGH_RISK = {"high", "critical"}
+
+# `cap.runtime` bắt đầu bằng một trong hai tiền tố này là ngoài-git (chỉ tồn tại
+# bên cạnh checkout CHÍNH — VÁ 16/09/2026, vòng 6 của tools/ban_sao_tran.py); còn
+# lại (vd "tools/...") là GIT-TRACKED, dùng ROOT thẳng.
+_TIEN_TO_NGOAI_GIT = ("EBM-Dashboards/", "medical-ebm-automation/")
+
+
+def _goc_runtime(rel_path: str) -> Path:
+    return ROOT_DU_LIEU if rel_path.startswith(_TIEN_TO_NGOAI_GIT) else ROOT
 
 
 @dataclass(frozen=True)
@@ -313,7 +322,7 @@ class PluginOwnershipRegistry:
             if cap.owner_provider == "local-agent" and local_agents is not None:
                 if cap.owner_unit not in local_agents:
                     errors.append(f"{capability_id}: owner agent khong ton tai: {cap.owner_unit}")
-            if cap.runtime and not (ROOT / cap.runtime).exists():
+            if cap.runtime and not (_goc_runtime(cap.runtime) / cap.runtime).exists():
                 errors.append(f"{capability_id}: runtime khong ton tai: {cap.runtime}")
 
             if not cap.intent_kinds and not cap.entry_agents and not cap.manual_only:

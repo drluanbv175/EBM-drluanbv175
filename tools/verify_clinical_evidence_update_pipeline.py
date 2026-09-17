@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -30,13 +31,46 @@ from pathlib import Path
 from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
-DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH để đọc ba gốc ngoài-git khi `ROOT` là một git worktree phụ.
+
+    VÁ 16/09/2026 (vòng 6 của `tools/ban_sao_tran.py`) — `ROOT` tính bằng
+    `Path(__file__).resolve().parents[1]` là đúng khi chạy từ checkout chính, SAI
+    khi `__file__` nằm trong một worktree phụ (`.claude/worktrees/<tên>/`): ba gốc
+    `EBM-Dashboards`/`EBM_MASTER`/`dashboard_mockups` chỉ tồn tại bên cạnh checkout
+    chính, không bên cạnh worktree — nên `_check_templates()` báo "THIẾU file" một
+    cách SAI SỰ THẬT khi vá template từ một worktree.
+
+    Nạp `ban_sao_tran.py` bằng đường dẫn file (tự-chứa, không phụ thuộc sys.path
+    của nơi gọi). Vắng nguyên liệu hoặc không xác định được checkout chính ⇒ giữ
+    NGUYÊN `ROOT` — không đoán liều (BH08).
+    """
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_vcep_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+# CHỈ dùng cho ba gốc dữ liệu NGOÀI-GIT (EBM-Dashboards/EBM_MASTER/dashboard_mockups).
+# Mọi đường dẫn GIT-TRACKED (`sync/skills/…`, `reports/`…) vẫn dùng `ROOT` thẳng —
+# worktree luôn có bản checkout riêng của các file đó, và đó chính là bản CẦN đọc.
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+
+DASH_TOOLS = ROOT_DU_LIEU / "EBM-Dashboards" / "tools"
 VERIFY_DASHBOARD = DASH_TOOLS / "verify_dashboard.py"
 BUILD_LIBRARY = DASH_TOOLS / "build_library.py"
 MAKE_DERIVATIVES = DASH_TOOLS / "make_derivatives.py"
-SYNC_ALL = ROOT / "EBM_MASTER" / "tools" / "sync_all.py"
-EW_TEMPLATE = ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html"
-EW_HUB_ASSET = ROOT / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html"
+SYNC_ALL = ROOT_DU_LIEU / "EBM_MASTER" / "tools" / "sync_all.py"
+EW_TEMPLATE = ROOT_DU_LIEU / "dashboard_mockups" / "templates" / "evidence-workbench-template.html"
+EW_HUB_ASSET = ROOT_DU_LIEU / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html"
 EW_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-evidence-workbench.html"
 EW_DARK_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-evidence-workbench.html"
 DEFAULT_MD = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.md"

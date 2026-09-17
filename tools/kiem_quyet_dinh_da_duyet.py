@@ -40,7 +40,26 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _checkout_chinh() -> Path:
+    """Checkout CHÍNH khi `REPO` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). `EBM-Dashboards/`
+    chỉ tồn tại bên cạnh checkout chính, không bên cạnh worktree. Vắng nguyên liệu
+    hoặc không xác định được ⇒ giữ NGUYÊN `REPO` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return REPO
+    spec = importlib.util.spec_from_file_location("_kqdd_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(REPO) or REPO
+    except Exception:  # noqa: BLE001
+        return REPO
+
+
+DASH = _checkout_chinh() / "EBM-Dashboards"
 SO = DASH / "quyet-dinh-da-duyet.json"
 
 

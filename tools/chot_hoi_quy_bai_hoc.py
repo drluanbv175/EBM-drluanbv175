@@ -55,7 +55,48 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH để đọc ba gốc ngoài-git khi `REPO` là một git worktree phụ.
+
+    VÁ 16/09/2026 (vòng 6 của `tools/ban_sao_tran.py`) — file này tính `REPO` bằng
+    `Path(__file__).resolve().parents[1]` rồi cộng thẳng tên `EBM-Dashboards`/
+    `medical-ebm-automation` ở HÀNG CHỤC chỗ. Đúng khi chạy từ checkout chính, SAI
+    khi `__file__` nằm trong một worktree phụ (`.claude/worktrees/<tên>/`) — ba gốc
+    đó chỉ tồn tại bên cạnh checkout chính, không bên cạnh worktree. Đo được: hook
+    `SessionStart` chạy CHÍNH FILE này mỗi phiên bằng `REPO` = thư mục worktree; vá
+    `ban_sao_git_tran()` cho worktree (đúng) mà không vá luôn đây thì 24 mục dùng
+    `EBM-Dashboards`/`medical-ebm-automation` NGỪNG được xếp ⚪ "ngoài phạm vi bản
+    sao trần" (vì worktree nay đúng là KHÔNG PHẢI bản sao trần) và biến thành ✗
+    "TÁI PHÁT" giả — một cơn bão cảnh báo sai mỗi khi mở phiên từ bất kỳ worktree
+    nào, dù mã đang canh (ở `EBM-Dashboards/`/`medical-ebm-automation/` — luôn nằm
+    NGOÀI git) không hề đổi.
+
+    Nạp `ban_sao_tran.py` bằng đường dẫn file (không `import` thường) — đúng khuôn
+    `_nap()` ngay dưới, tự-chứa, không phụ thuộc sys.path của nơi gọi. Vắng mặt
+    hoặc không xác định được checkout chính (worktree dị dạng) ⇒ giữ NGUYÊN `REPO`
+    — không đoán liều (BH08); hành vi cũ vẫn áp dụng nguyên vẹn trong trường hợp đó.
+    """
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return REPO
+    spec = importlib.util.spec_from_file_location("_chb_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(REPO) or REPO
+    except Exception:  # noqa: BLE001 — thiếu nguyên liệu/hàm cũ ⇒ giữ REPO, không đoán
+        return REPO
+
+
+# CHỈ dùng cho ba gốc dữ liệu NGOÀI-GIT (EBM-Dashboards/medical-ebm-automation/
+# EBM_MASTER). Mọi đường dẫn GIT-TRACKED (`.claude/agents`, `tools/`, `sync/`…)
+# vẫn phải dùng `REPO` thẳng — worktree luôn có bản checkout riêng của các file đó,
+# và đó chính là bản CẦN kiểm (bản đang sửa trong phiên), không phải bản ở checkout
+# chính (có thể cũ hơn).
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+DASH = ROOT_DU_LIEU / "EBM-Dashboards"
 
 
 def _sh_which(ten: str):
@@ -240,7 +281,7 @@ def bh07_doc_secrets_ngoai_onedrive():
     Đây là phát hiện nghiêm trọng nhất ngày 12/08. Chốt canh: `app/config.py`
     phải đọc kho secrets NGOÀI OneDrive trước `.env` trong repo.
     """
-    t = (REPO / "medical-ebm-automation/app/config.py").read_text(encoding="utf-8",
+    t = (ROOT_DU_LIEU / "medical-ebm-automation/app/config.py").read_text(encoding="utf-8",
                                                                  errors="replace")
     if ".ebm-secrets" not in t:
         return False, "config.py không còn đọc ~/.ebm-secrets — Windows sẽ chạy dữ liệu giả"
@@ -256,7 +297,7 @@ def bh08_khong_gop_khong_biet_voi_co_van_de():
     bị báo là trích dẫn ma. Báo động giả tệ hơn không kiểm: nó giết niềm tin vào
     cảnh báo thật.
     """
-    t = (REPO / "medical-ebm-automation/app/sources/pubmed.py").read_text(
+    t = (ROOT_DU_LIEU / "medical-ebm-automation/app/sources/pubmed.py").read_text(
         encoding="utf-8", errors="replace")
     if "unknown_fetch_error" not in t:
         return False, "mất trạng thái 'unknown_fetch_error' — lại gộp KHÔNG BIẾT với CÓ VẤN ĐỀ"
@@ -469,7 +510,7 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     if "CHƯA kiểm được RÚT BÀI" not in out:
         return True, "không còn mục nào hết hiệu lực vì chưa kiểm rút bài"
 
-    co_nen = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
+    co_nen = (ROOT_DU_LIEU / "medical-ebm-automation" / "data" / "retraction_watch"
               / "retraction_watch.csv").exists()
     can = "CAN_NCBI_API_KEY" if co_nen else "CAN_TAI_RETRACTION_WATCH"
     if can not in out:
@@ -928,7 +969,7 @@ def bh27_khong_kiem_duoc_phai_la_van_de():
     """
     import ast
 
-    mea = REPO / "medical-ebm-automation"
+    mea = ROOT_DU_LIEU / "medical-ebm-automation"
     f_tieu_thu = mea / "tools/check_citation_retraction.py"
     # Khai ĐÍCH DANH hàm nào thuộc hợp đồng rút bài. Đổi tên hàm mà quên sửa đây thì
     # chốt đỏ — đúng ý: nghĩa là nó đã thôi canh phần mã mà nó tưởng đang canh.
@@ -1072,7 +1113,7 @@ def bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat():
     import shutil as _sh
     import tempfile as _tmp
     dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_bh30")
-    dash = REPO / "EBM-Dashboards"
+    dash = ROOT_DU_LIEU / "EBM-Dashboards"
     goc = sorted(dash.glob("WebDashboard_*.html"))
     if len(goc) < 1:
         return False, "kho dashboard rỗng — không dựng được ca thử"
@@ -1141,7 +1182,7 @@ def bh31_nguon_da_rut_phai_chan_duoc_o_cong():
          bảo đảm mà dữ liệu không đỡ nổi (BH08/BH27);
       3. tra cứu hỏng ⇒ phải vào `warns` (lộ ra), không được bỏ qua im lặng.
     """
-    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh31")
+    vd = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh31")
     ham = getattr(vd, "kiem_nguon_da_rut", None)
     if ham is None:
         return False, "verify_dashboard.py không còn hàm kiem_nguon_da_rut — cổng rút bài đã mất"
@@ -1316,7 +1357,7 @@ def bh34_canh_bao_phai_noi_dung_muc():
     Kiểm HÀNH VI: bản ghi mang cờ rút-và-thay phải sinh thông điệp khác hẳn bản ghi
     rút bỏ hẳn, và cả hai đều phải là LỖI CỨNG.
     """
-    mea = REPO / "medical-ebm-automation"
+    mea = ROOT_DU_LIEU / "medical-ebm-automation"
     if str(mea) not in sys.path:
         sys.path.insert(0, str(mea))  # module dùng `from app.utils...`
     cr = _nap(mea / "app" / "sources" / "crossref_retraction.py", "cr_bh34")
@@ -1327,7 +1368,7 @@ def bh34_canh_bao_phai_noi_dung_muc():
     if cr.la_rut_va_thay("Retraction: Fabricated data"):
         return False, "nhận nhầm một bài RÚT BỎ HẲN thành rút-và-thay — hạ mức cảnh báo sai"
 
-    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh34")
+    vd = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh34")
     nen = {"khoa": "doi:x", "loai": "doi", "gia_tri": "10.x/y", "tinh_trang": "retracted",
            "tieu_de": "t", "kiem_luc": "2026-08-14", "nguon": "crossref", "thong_bao": "10.x/z"}
     e1, w1, o1 = [], [], []
@@ -1361,7 +1402,7 @@ def bh35_khai_chua_biet_khong_duoc_tat_luat_an_toan():
     Kiểm HÀNH VI: gói khai provenanceUnknown mà có `apply` trên chứng cứ yếu ⇒ VẪN CHẶN.
     Và khai mà KHÔNG nêu lý do ⇒ lỗi cứng (miễn trừ phải có người chịu trách nhiệm).
     """
-    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh35")
+    vd = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh35")
     khoi = ('const DATA = {standards:{provenanceUnknown:true,'
             'provenanceUnknownLyDo:"bản cũ, không dựng lại được"},'
             'items:[{id:"ITEM-01",pmid:"1",design:"RCT",gradeLevel:"low",'
@@ -1402,7 +1443,7 @@ def bh36_grade_phai_khai_ai_cham():
 
     Kiểm HÀNH VI: thiếu `gradeBy` phải LỘ RA; có `gradeBy` thì im.
     """
-    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh36")
+    vd = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh36")
     nen = ('const DATA = {standards:{provenanceUnknown:true,provenanceUnknownLyDo:"x"},'
            'items:[{id:"ITEM-01",pmid:"1",design:"RCT",gradeLevel:"high",'
            'decision:"consider",gradeSource:"RCT đa trung tâm"%s}]}')
@@ -1432,7 +1473,7 @@ def bh37_ung_vien_phai_mang_do_tin_cay_ngay_luc_nhan():
     Kiểm HÀNH VI: `gan_do_tin_cay()` phải gắn đủ 4 trường, và khi không kiểm được rút
     bài thì để `chua_kiem` — TUYỆT ĐỐI không mặc định 'ok' (BH08/BH27/BH31).
     """
-    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh37")
+    ss = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh37")
     for ten in ("gan_do_tin_cay", "_pmid_da_co_trong_kho"):
         if not hasattr(ss, ten):
             return False, f"mất {ten} — khâu nhận lại không gắn độ tin cậy"
@@ -1480,8 +1521,8 @@ def bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim():
     Kiểm HÀNH VI: watchlist phải có tầng không-lọc, và `search()` phải tôn trọng cờ đó.
     """
     import json as _json
-    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh38")
-    wl = REPO / "EBM-Dashboards" / "watchlist.json"
+    ss = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh38")
+    wl = ROOT_DU_LIEU / "EBM-Dashboards" / "watchlist.json"
     if not wl.exists():
         return False, "không thấy watchlist.json"
     tp = _json.loads(wl.read_text(encoding="utf-8")).get("topics", [])
@@ -1531,7 +1572,7 @@ def bh39_doctrine_khong_duoc_troi_sau_cong():
     Kiểm HÀNH VI: mọi trường mà cổng ĐANG bắt buộc phải xuất hiện trong ít nhất một
     doctrine agent. Thêm luật ở cổng thì phải dạy agent — nếu không, chốt này đỏ.
     """
-    cong = (REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py")
+    cong = (ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py")
     thu_muc = REPO / ".claude" / "agents"
     if not cong.exists() or not thu_muc.is_dir():
         return False, "không thấy cổng hoặc thư mục agent"
@@ -1615,7 +1656,7 @@ def bh41_cong_cu_chung_cu_khong_duoc_mo_coi():
                     for p in thu_muc.glob("*.md"))
     mo_coi = [t for t in CONG_CU
               if (REPO / "tools" / f"{t}.py").exists()
-              or (REPO / "medical-ebm-automation" / "tools" / f"{t}.py").exists()]
+              or (ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / f"{t}.py").exists()]
     mo_coi = [t for t in mo_coi if t not in van]
     if mo_coi:
         return False, (f"{len(mo_coi)} công cụ chứng cứ KHÔNG agent nào gọi tên "
@@ -1720,7 +1761,7 @@ def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
     """
     import subprocess
 
-    tp = REPO / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
+    tp = ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
     if not tp.exists():
         return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
     r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
@@ -1832,7 +1873,7 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     (c) ALERT: sự kiện KHẨN phải có kênh riêng `alerts/` — trộn với tín hiệu thường là
         dạy người đọc bỏ qua màu đỏ (BH32). Không có sự kiện ⇒ KHÔNG sinh file.
     """
-    ss = _nap(REPO / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh47")
+    ss = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "surveillance_scan.py", "ss_bh47")
     for ten in ("gianh_khoa", "tra_khoa", "doc_cursor", "ghi_cursor", "ghi_alert"):
         if not hasattr(ss, ten):
             return False, f"mất {ten} — LÔ 1 bị tháo"
@@ -1874,7 +1915,7 @@ def bh48_ma_thoat_tach_noi_dung_va_ha_tang():
     """
     import contextlib
     import io
-    vd = _nap(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh48")
+    vd = _nap(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py", "vd_bh48")
     if not hasattr(vd, "_DAU_HIEU_LOI_MANG"):
         return False, "mất _DAU_HIEU_LOI_MANG — bộ phân loại lỗi mạng bị tháo"
     dau = next(iter(vd._DAU_HIEU_LOI_MANG))
@@ -1904,7 +1945,7 @@ def bh49_toan_van_va_rut_bai_theo_dinh_danh():
     """
     import subprocess
     import sys as _sys
-    fx = REPO / "EBM-Dashboards" / ".bh49-fixture.html"
+    fx = ROOT_DU_LIEU / "EBM-Dashboards" / ".bh49-fixture.html"
     fx.write_text("""<script>
 const DATA = { meta: { title: 'bh49', dateUpdated: '2026-08-15' },
   provenanceUnknown: true, provenanceUnknownLyDo: 'fixture chốt BH49',
@@ -1920,7 +1961,7 @@ const DATA = { meta: { title: 'bh49', dateUpdated: '2026-08-15' },
 </script><p>Cần bác sĩ kiểm chứng.</p>""", encoding="utf-8")
     try:
         r = subprocess.run([_sys.executable,
-                            str(REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"),
+                            str(ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py"),
                             str(fx), "--strict-sources"],
                            capture_output=True, text=True, cwd=REPO, timeout=120, encoding="utf-8", errors="replace")
     finally:
@@ -1994,7 +2035,7 @@ def bh51_ledger_synthetic_dung_pham_vi():
     import shutil
     import sys as _sys
     import tempfile
-    mea = REPO / "medical-ebm-automation"
+    mea = ROOT_DU_LIEU / "medical-ebm-automation"
     sap = mea / "exports/ZZPHA-R-AUTO-DEMO/G4_A5_SAP_FINAL_ZZPHA-R-AUTO-DEMO.md"
     if not sap.exists():
         return True, "đề tài demo không còn — chốt bỏ qua có khai báo"
@@ -2039,7 +2080,9 @@ def bh56_cong_cu_moi_phai_co_day():
     goc = REPO
     noi_tieu_thu = [goc / ".claude" / "agents" / "tra-cuu-chung-cu.md",
                     goc / ".claude" / "agents" / "tong-quan-y-van.md",
-                    goc / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
+                    # ngoài-git (VÁ 16/09/2026, vòng 6): dùng ROOT_DU_LIEU, không phải
+                    # `goc` — trên worktree, thư mục này chỉ tồn tại ở checkout chính.
+                    ROOT_DU_LIEU / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
                     Path.home() / ".claude" / "scheduled-tasks" / "goi-duyet-tuan-ebm"
                     / "SKILL.md",
                     # Bản chạy thật ở trên nằm NGOÀI OneDrive (machine-local) và
@@ -2055,7 +2098,7 @@ def bh56_cong_cu_moi_phai_co_day():
     for tool in ("rag_toan_van", "do_tac_dong", "dat_canh_chung_cu_moi", "dung_hom_thu"):
         if tool not in van_ban:
             return False, f"{tool} MỒ CÔI — không doctrine/nhịp nào gọi (họ BH41)"
-    kho = goc / "EBM-Dashboards" / "toan_van_oa"
+    kho = ROOT_DU_LIEU / "EBM-Dashboards" / "toan_van_oa"
     vec = kho / ".rag" / "vec.npy"
     xmls = list(kho.glob("PMID-*.xml"))
     if xmls and vec.exists():
@@ -2137,7 +2180,7 @@ def bh59_khoi_data_phai_parse_duoc_nhu_js():
     canary; hai biến thể đã gặp («đưa về 'na'» · «giữ 'na'») nhắc rằng quét
     theo MẪU CHUỖI sẽ luôn sót — phải parse thật."""
     import importlib.util as _ilu
-    duong = REPO / "EBM-Dashboards" / "tools" / "build_dashboard_docx.py"
+    duong = ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "build_dashboard_docx.py"
     spec = _ilu.spec_from_file_location("_bdd_bh59", duong)
     mod = _ilu.module_from_spec(spec)
     sys.modules["_bdd_bh59"] = mod
@@ -2146,7 +2189,7 @@ def bh59_khoi_data_phai_parse_duoc_nhu_js():
     except Exception as e:  # noqa: BLE001 — chốt nhắc không được làm chết bộ chạy
         return False, f"không nạp được build_dashboard_docx: {e}"
     hong = []
-    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+    for f in sorted((ROOT_DU_LIEU / "EBM-Dashboards").glob("WebDashboard_*.html")):
         if ".bak" in f.name:
             continue
         try:
@@ -2184,7 +2227,7 @@ def bh60_goi_tuan_phai_doc_toan_van():
     tt = REPO / "sync" / "skills" / "tong-thuat-chung-cu" / "SKILL.md"
     if not tt.exists() or "tra_nguon_chuan" not in tt.read_text(encoding="utf-8"):
         return False, "skill tổng thuật mất làn NGUỒN CHUẨN (tra_nguon_chuan) — trôi doctrine"
-    if not (REPO / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json").exists():
+    if not (ROOT_DU_LIEU / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json").exists():
         return False, "thiếu danh bạ nguồn chuẩn (EBM-Dashboards/nguon_chuan/)"
     import importlib.util as _ilu
     spec = _ilu.spec_from_file_location("_dstv_bh60", tool_doc)
@@ -2250,7 +2293,7 @@ def bh65_dinh_danh_guideline_phai_khai_ai_xac_nhan():
     hẹp về xét nghiệm acid nucleic; Maastricht ra bản IV/V thay vì VI). Nếu danh bạ
     không phân biệt máy-khớp với người-chốt thì bài tổng thuật sẽ trích guideline
     lệch mà không ai biết. Chốt: mọi nguồn có PMID phải khai `xac_nhan`."""
-    f = REPO / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json"
+    f = ROOT_DU_LIEU / "EBM-Dashboards" / "nguon_chuan" / "danh-ba-nguon-chuan.json"
     if not f.exists():
         return True, "chưa có danh bạ nguồn chuẩn (bỏ qua)"
     db = json.loads(f.read_text(encoding="utf-8"))
@@ -2724,7 +2767,7 @@ def bh53_elink_chi_nhan_pubmed_pmc():
     _parse_linksets với fixture mang CẢ HAI linkname — nhận nhầm refs là đỏ.
     """
     import importlib.util
-    duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
+    duong = ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
     if not duong.exists():
         return False, "gom_toan_van_oa.py biến mất"
     sp = importlib.util.spec_from_file_location("gom_tv", duong)
@@ -2789,14 +2832,14 @@ def bh52_g0_kiem_rut_bai_tai_cua():
           "print(json.dumps(m.guardrail_check_g0('',{'all_pmids':['9500320']}),"
           "ensure_ascii=False))")
     r = subprocess.run([str(venv), "-c", ma], capture_output=True, text=True,
-                       cwd=REPO / "medical-ebm-automation", timeout=180, encoding="utf-8", errors="replace")
+                       cwd=ROOT_DU_LIEU / "medical-ebm-automation", timeout=180, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return False, f"guardrail_check_g0 không chạy được: {r.stderr.strip()[-120:]}"
     goi = r.stdout
     if "R1C" not in goi:
         return False, "R1C biến mất — G0 lại tin PMID còn hiệu lực mà không kiểm"
     if "9500320" not in goi:
-        nen_rw = REPO / "medical-ebm-automation" / "data" / "retraction_watch" / "retraction_watch.csv"
+        nen_rw = ROOT_DU_LIEU / "medical-ebm-automation" / "data" / "retraction_watch" / "retraction_watch.csv"
         if not nen_rw.exists():
             return False, ("CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không: nền Retraction Watch NGOẠI "
                            "TUYẾN chưa tải (data/retraction_watch/retraction_watch.csv — gitignore). "
@@ -2828,7 +2871,7 @@ def bh60_array_field_khong_gay_o_ngoac_vuong():
     """
     import importlib.util
     kq = []
-    for ten, duong in (("runtime", REPO / "EBM-Dashboards/tools/verify_dashboard.py"),
+    for ten, duong in (("runtime", ROOT_DU_LIEU / "EBM-Dashboards/tools/verify_dashboard.py"),
                        ("nguồn", REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py")):
         if not duong.exists():
             return False, f"thiếu bản {ten}: {duong}"
@@ -2876,7 +2919,7 @@ def bh61_khoa_summary_sai_ten_phai_bi_bat():
     kiểm. Chốt gọi THẲNG kiem_khoa_summary() nên nó kiểm HÀNH VI, không đếm chuỗi.
     """
     import importlib.util as _ilu
-    duong = REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
+    duong = ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
     spec = _ilu.spec_from_file_location("_vd_bh61", duong)
     mod = _ilu.module_from_spec(spec)
     sys.modules["_vd_bh61"] = mod
@@ -2903,7 +2946,7 @@ def bh61_khoa_summary_sai_ten_phai_bi_bat():
 
     # (c) toàn kho thật phải sạch
     ban_hong = []
-    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+    for f in sorted((ROOT_DU_LIEU / "EBM-Dashboards").glob("WebDashboard_*.html")):
         if ".bak" in f.name:
             continue
         t = f.read_text(encoding="utf-8", errors="replace")
@@ -2935,7 +2978,7 @@ def bh62_cong_phai_tu_parse_chat_khoi_data():
           lúc đó không ai biết bên nào đúng).
     """
     import importlib.util as _ilu
-    thu_muc = REPO / "EBM-Dashboards" / "tools"
+    thu_muc = ROOT_DU_LIEU / "EBM-Dashboards" / "tools"
     spec = _ilu.spec_from_file_location("_vd_bh62", thu_muc / "verify_dashboard.py")
     vd = _ilu.module_from_spec(spec)
     sys.modules["_vd_bh62"] = vd
@@ -2979,7 +3022,7 @@ def bh62_cong_phai_tu_parse_chat_khoi_data():
 
     # toàn kho phải parse sạch
     hong = []
-    for f in sorted((REPO / "EBM-Dashboards").glob("WebDashboard_*.html")):
+    for f in sorted((ROOT_DU_LIEU / "EBM-Dashboards").glob("WebDashboard_*.html")):
         if ".bak" in f.name:
             continue
         e3, w3, o3 = [], [], []
@@ -3345,7 +3388,7 @@ def bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime() -> tuple[bool, str]:
     import tempfile
 
     m = _nap(REPO / "tools/tu_de_xuat_viec.py", "tdxv_bh76")
-    vd_src = REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
+    vd_src = ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py"
     vd_mod = _nap(vd_src, "vd_bh76")
 
     def _html(data_noi_dung: str) -> str:
@@ -4918,7 +4961,7 @@ def bh97_sap_rong_khong_duoc_khoa_bang_chu_ky():
     """
     import importlib.util as _iu
 
-    ag = REPO / "medical-ebm-automation" / "tools" / "approve_gate.py"
+    ag = ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / "approve_gate.py"
     if not ag.exists():
         return True, "⚪ repo y khoa vắng mặt trên cây này — không kiểm được (không suy đoán)"
 
@@ -4970,7 +5013,7 @@ def bh98_bien_nhan_guardrail_lam_sang():
     import os
     import tempfile
 
-    cc = REPO / "medical-ebm-automation" / "tools" / "clinical_checkpoint.py"
+    cc = ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / "clinical_checkpoint.py"
     if not cc.exists():
         return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
     spec = _iu.spec_from_file_location("_bh98_cc", cc)
@@ -5048,7 +5091,7 @@ def bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap():
     import importlib.util as _iu
     import importlib.machinery as _im
 
-    tf = REPO / "medical-ebm-automation" / "tests" / "test_gate_ed25519_20260815.py"
+    tf = ROOT_DU_LIEU / "medical-ebm-automation" / "tests" / "test_gate_ed25519_20260815.py"
     if not tf.exists():
         return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
     try:
@@ -5128,7 +5171,7 @@ def bh100_verifier_khong_duoc_mu_vi_mot_module_thieu():
     vf = REPO / "tools" / "verify_controlled_research_automation.py"
     if not vf.exists():
         return True, "⚪ thiếu verifier — không kiểm được (không suy đoán)"
-    if not (REPO / "medical-ebm-automation" / "tools" / "gate_contract.py").exists():
+    if not (ROOT_DU_LIEU / "medical-ebm-automation" / "tools" / "gate_contract.py").exists():
         return True, "⚪ repo y khoa vắng mặt — verifier tự thoát sớm, không kiểm được"
     ten = "_bh100_vcra"
     sys.modules.pop(ten, None)

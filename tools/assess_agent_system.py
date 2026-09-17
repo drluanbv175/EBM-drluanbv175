@@ -26,6 +26,7 @@ Mã thoát: 0 nếu KHÔNG tiêu chí nào 'gap/absent'; 1 nếu có lỗ thật
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import subprocess
@@ -37,9 +38,30 @@ from typing import Dict, List, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS = ROOT / ".claude" / "agents"
 TOOLS = ROOT / "tools"
-MT = ROOT / "medical-ebm-automation" / "tools"
-TESTS = ROOT / "medical-ebm-automation" / "tests"
-MASTER = ROOT / "EBM_MASTER"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH khi `ROOT` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). CHỈ dùng cho
+    `medical-ebm-automation/`/`EBM_MASTER/` (ngoài-git); `AGENTS`/`TOOLS` ở trên vẫn
+    dùng `ROOT` thẳng vì đó là file GIT-TRACKED. Vắng nguyên liệu hoặc không xác
+    định được ⇒ giữ NGUYÊN `ROOT` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_aas_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+MT = ROOT_DU_LIEU / "medical-ebm-automation" / "tools"
+TESTS = ROOT_DU_LIEU / "medical-ebm-automation" / "tests"
+MASTER = ROOT_DU_LIEU / "EBM_MASTER"
 
 # (ok, detail) — một probe khách quan.
 Probe = Tuple[bool, str]

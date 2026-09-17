@@ -13,7 +13,12 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import ROOT
+from . import ROOT, ROOT_DU_LIEU
+
+# rel_path bắt đầu bằng một trong hai tiền tố này là ngoài-git (chỉ tồn tại bên
+# cạnh checkout CHÍNH — xem ROOT_DU_LIEU); còn lại (vd "tools/...") là GIT-TRACKED,
+# dùng ROOT thẳng (worktree có bản checkout riêng, và đó là bản cần kiểm).
+_TIEN_TO_NGOAI_GIT = ("EBM-Dashboards/", "medical-ebm-automation/")
 
 
 @dataclass(frozen=True)
@@ -27,7 +32,8 @@ class Tool:
 
     @property
     def path(self) -> Path:
-        return ROOT / self.rel_path
+        goc = ROOT_DU_LIEU if self.rel_path.startswith(_TIEN_TO_NGOAI_GIT) else ROOT
+        return goc / self.rel_path
 
     @property
     def exists(self) -> bool:

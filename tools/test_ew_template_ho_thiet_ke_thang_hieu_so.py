@@ -40,22 +40,40 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
+
+
+def _nap_ban_sao_tran():
+    spec = importlib.util.spec_from_file_location("_bst_ew", REPO / "tools" / "ban_sao_tran.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_BST = _nap_ban_sao_tran()
+# VÁ 16/09/2026 (vòng 6 của tools/ban_sao_tran.py) — hai gốc ngoài-git chỉ tồn tại
+# bên cạnh CHECKOUT CHÍNH, không bên cạnh một git worktree phụ. Trên worktree,
+# `REPO / "dashboard_mockups"`/`REPO / "EBM_MASTER"`/`REPO / "EBM-Dashboards"` luôn
+# vắng mặt dù máy thật có đủ — dò checkout chính TRƯỚC khi dựng hai bộ đường dẫn
+# ngoài-git dưới đây. `TEMPLATE`/`TEMPLATE_BAN_SAO_GIT`/`CONG_GIT`/`BAN_DOC*` GIỮ
+# NGUYÊN `REPO` — đó là file GIT-TRACKED, worktree có bản checkout riêng của chúng.
+ROOT_DU_LIEU = _BST.checkout_chinh(REPO) or REPO
+
 TEMPLATE = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-evidence-workbench.html"
 TEMPLATE_BAN_SAO_GIT = (
     REPO / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-evidence-workbench.html",
 )
 # Hai bản ngoài git (đồng bộ qua OneDrive) — chỉ có trên máy thật.
 TEMPLATE_BAN_SAO_NGOAI_GIT = (
-    REPO / "dashboard_mockups" / "templates" / "evidence-workbench-template.html",
-    REPO / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html",
+    ROOT_DU_LIEU / "dashboard_mockups" / "templates" / "evidence-workbench-template.html",
+    ROOT_DU_LIEU / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html",
 )
 CONG_GIT = (
     REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py",
     REPO / "sync" / "skills" / "dark-analyst" / "tools" / "verify_dashboard.py",
 )
 CONG_NGOAI_GIT = (
-    REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py",
-    REPO / "EBM_MASTER" / "skill_assets" / "verify_dashboard.py",
+    ROOT_DU_LIEU / "EBM-Dashboards" / "tools" / "verify_dashboard.py",
+    ROOT_DU_LIEU / "EBM_MASTER" / "skill_assets" / "verify_dashboard.py",
 )
 BAN_DOC = REPO / "tools" / "build_ban_doc_chung_cu.py"
 BAN_DOC_VENDOR = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "build_ban_doc_chung_cu.py"
@@ -69,11 +87,19 @@ def _doc(p: Path) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def _ten(p: Path) -> str:
+    """Tên hiển thị ngắn cho thông điệp lỗi — thử REPO trước, ROOT_DU_LIEU sau
+    (đường ngoài-git có thể nằm ngoài `REPO` khi REPO là một worktree phụ)."""
+    for goc in (REPO, ROOT_DU_LIEU):
+        try:
+            return str(p.relative_to(goc))
+        except ValueError:
+            continue
+    return str(p)
+
+
 def _ban_sao_git_tran() -> bool:
-    spec = importlib.util.spec_from_file_location("_bst_ew", REPO / "tools" / "ban_sao_tran.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.ban_sao_git_tran(REPO)
+    return _BST.ban_sao_git_tran(REPO)
 
 
 def _template_under_test() -> str:
@@ -171,8 +197,8 @@ def test_ban_sao_template_ngoai_git_khop_byte():
         pytest.skip("bản sao git trần — dashboard_mockups/ và EBM_MASTER/ nằm ngoài git; "
                     "chạy trên máy có cây OneDrive")
     goc = TEMPLATE.read_bytes()
-    thieu = [str(p.relative_to(REPO)) for p in TEMPLATE_BAN_SAO_NGOAI_GIT if not p.exists()]
-    lech = [str(p.relative_to(REPO)) for p in TEMPLATE_BAN_SAO_NGOAI_GIT
+    thieu = [_ten(p) for p in TEMPLATE_BAN_SAO_NGOAI_GIT if not p.exists()]
+    lech = [_ten(p) for p in TEMPLATE_BAN_SAO_NGOAI_GIT
             if p.exists() and p.read_bytes() != goc]
     assert not thieu, f"thiếu bản sao template ngoài git: {thieu}"
     assert not lech, ("bản sao template ngoài git lệch byte — sửa template rồi ĐỒNG BỘ Y HỆT "
@@ -218,7 +244,7 @@ def test_tien_to_ho_thiet_ke_trung_khit_cong_lien_chinh():
     for duong in _cong_hien_co():
         cong = set(_hang_so_py(duong, "DESIGN_FAMILIES"))
         assert set(tien_to) == cong, (
-            f"template và {duong.relative_to(REPO)} lệch danh sách họ: "
+            f"template và {_ten(duong)} lệch danh sách họ: "
             f"thiếu ở template {sorted(cong - set(tien_to))}, thừa ở template {sorted(set(tien_to) - cong)}")
 
 

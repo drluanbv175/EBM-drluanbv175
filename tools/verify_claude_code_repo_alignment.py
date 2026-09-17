@@ -8,6 +8,7 @@ này chỉ đọc file và git index; không tự sửa/sync.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 from pathlib import Path
@@ -17,6 +18,22 @@ import check_claude_codex_sync_health as sync_health
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _nap_ban_sao_tran():
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    spec = importlib.util.spec_from_file_location("_bst_alignment", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_BST = _nap_ban_sao_tran()
+# VÁ 16/09/2026 (vòng 6) — `medical-ebm-automation/` là gốc NGOÀI-GIT, chỉ tồn tại
+# bên cạnh checkout CHÍNH; trên một git worktree phụ nó vắng mặt bên cạnh `ROOT` dù
+# máy thật có đủ. `ROOT_DOCS`/`_git_ls_files`/`tools/upgrade_verify.py` GIỮ NGUYÊN
+# `ROOT` — đó là file GIT-TRACKED, worktree có bản checkout riêng cần kiểm.
+ROOT_DU_LIEU = _BST.checkout_chinh(ROOT) or ROOT
 
 # Khi script nay chay tu hook pre-commit cua mot repo con long ben trong
 # (vd medical-ebm-automation/.githooks/pre-commit goi ra day), git da set
@@ -39,8 +56,8 @@ ROOT_DOCS = {
     "CLAUDE.md": ROOT / "CLAUDE.md",
 }
 MEDICAL_DOCS = {
-    "medical-ebm-automation/AGENTS.md": ROOT / "medical-ebm-automation" / "AGENTS.md",
-    "medical-ebm-automation/CLAUDE.md": ROOT / "medical-ebm-automation" / "CLAUDE.md",
+    "medical-ebm-automation/AGENTS.md": ROOT_DU_LIEU / "medical-ebm-automation" / "AGENTS.md",
+    "medical-ebm-automation/CLAUDE.md": ROOT_DU_LIEU / "medical-ebm-automation" / "CLAUDE.md",
 }
 
 ROOT_CONTRACT_MARKERS = [
@@ -135,12 +152,7 @@ def ban_sao_tran() -> bool:
     (medical-ebm-automation/) — trên máy thật còn EBM-Dashboards/EBM_MASTER mà
     thiếu riêng repo y khoa (sự cố OneDrive đã gặp), hook lặng lẽ PASS = fail-open.
     Nay đòi cả BA gốc vắng mặt, cùng ngữ nghĩa với bộ chốt bài học/conftest."""
-    import importlib.util
-    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
-    spec = importlib.util.spec_from_file_location("_bst_alignment", duong)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.ban_sao_git_tran(ROOT)
+    return _BST.ban_sao_git_tran(ROOT)
 
 
 def _thieu_medical_ebm_automation() -> bool:
@@ -153,8 +165,12 @@ def _thieu_medical_ebm_automation() -> bool:
     Ủy quyền cho ban_sao_tran() (như bản cũ) khiến test_medical_repo_docs_keep_
     claude_code_completion_contract regressed từ PASS sang NGOAI-PHAM-VI trên cloud dù
     medical-ebm-automation/ CÓ MẶT và đọc được thật — đúng loại lỗi mà chính bản vá
-    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py)."""
-    return not (ROOT / "medical-ebm-automation").exists()
+    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py).
+
+    VÁ 16/09/2026 (vòng 6) — dùng `ROOT_DU_LIEU` (checkout chính khi ROOT là một
+    worktree phụ), không phải `ROOT` thẳng: trên worktree, medical-ebm-automation/
+    vắng mặt bên cạnh ROOT dù máy thật có đủ bên cạnh checkout chính."""
+    return not (ROOT_DU_LIEU / "medical-ebm-automation").exists()
 
 
 def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:

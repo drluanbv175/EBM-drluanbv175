@@ -62,7 +62,27 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _checkout_chinh() -> Path:
+    """Checkout CHÍNH khi `REPO` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). Trên worktree,
+    `EBM-Dashboards/` chỉ tồn tại bên cạnh checkout chính, không bên cạnh worktree.
+    Nạp bằng đường dẫn file (tự-chứa, không phụ thuộc sys.path); vắng nguyên liệu
+    hoặc không xác định được ⇒ giữ NGUYÊN `REPO` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return REPO
+    spec = importlib.util.spec_from_file_location("_dktd_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(REPO) or REPO
+    except Exception:  # noqa: BLE001
+        return REPO
+
+
+DASH = _checkout_chinh() / "EBM-Dashboards"
 
 # Hậu tố mô tả "lát cắt" của cùng một chủ đề (bệnh kèm, đối tượng, tiên lượng…).
 # Bỏ chúng đi để gom về chủ đề gốc.

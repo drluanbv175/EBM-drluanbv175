@@ -8,6 +8,7 @@ review, clinical signoff, approval record, and go-live attestation.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import sys
@@ -18,7 +19,27 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT / "medical-ebm-automation"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH khi `ROOT` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). `REPO` ở dưới
+    (medical-ebm-automation/, ngoài-git) chỉ tồn tại bên cạnh checkout chính; vắng
+    nguyên liệu hoặc không xác định được ⇒ giữ NGUYÊN `ROOT` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_crr_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+REPO = ROOT_DU_LIEU / "medical-ebm-automation"
 OS_DIR = REPO / "chronic-care-clinic-os"
 REPORTS = ROOT / "reports"
 OUT = REPORTS / "clinical_runtime_readiness_latest.md"

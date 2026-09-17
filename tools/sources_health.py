@@ -19,6 +19,7 @@ Mã thoát: 0 = mọi nguồn active khoẻ · 1 = có degraded/broken · 2 = s�
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 import urllib.error
@@ -34,6 +35,27 @@ for _s in (sys.stdout, sys.stderr):
 
 GOC = Path(__file__).resolve().parents[1]
 SO = GOC / "data" / "sources.json"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH khi `GOC` là một git worktree phụ — xem
+    `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026, vòng 6). CHỈ dùng cho
+    đọc `EBM-Dashboards/`/`medical-ebm-automation/` (ngoài-git); `SO` ở trên vẫn dùng
+    `GOC` thẳng vì `data/sources.json` là file GIT-TRACKED. Vắng nguyên liệu hoặc
+    không xác định được ⇒ giữ NGUYÊN `GOC` (không đoán liều, BH08)."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return GOC
+    spec = importlib.util.spec_from_file_location("_sh_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(GOC) or GOC
+    except Exception:  # noqa: BLE001
+        return GOC
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
 # Điểm thăm rẻ nhất của từng API (đều đã phê duyệt egress từ trước):
 DIEM_THAM = {
     "SRC-001": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?retmode=json",
@@ -72,23 +94,23 @@ def lay_thanh_cong_that(sid: str) -> str | None:
     """
     try:
         if sid in ("SRC-001", "SRC-002"):
-            ung = list((GOC / "EBM-Dashboards" / "surveillance").glob("*.json")) + \
-                  [GOC / "EBM-Dashboards" / ".quet-cursor.json"]
+            ung = list((ROOT_DU_LIEU / "EBM-Dashboards" / "surveillance").glob("*.json")) + \
+                  [ROOT_DU_LIEU / "EBM-Dashboards" / ".quet-cursor.json"]
             ung = [p for p in ung if p.exists()]
             if ung:
                 return datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ung)).date().isoformat()
         if sid == "SRC-007":
-            ung = list((GOC / "EBM-Dashboards" / "surveillance").glob("openalex-*.md"))
+            ung = list((ROOT_DU_LIEU / "EBM-Dashboards" / "surveillance").glob("openalex-*.md"))
             if ung:
                 return datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ung)).date().isoformat()
         if sid == "SRC-003":
-            d = GOC / "medical-ebm-automation" / "data" / "retraction_watch"
+            d = ROOT_DU_LIEU / "medical-ebm-automation" / "data" / "retraction_watch"
             if d.exists():
                 return datetime.fromtimestamp(d.stat().st_mtime).date().isoformat()
         if sid in ("SRC-004", "SRC-005"):
-            so = json.loads((GOC / "EBM-Dashboards" / ".so-xac-minh-nguon.json")
+            so = json.loads((ROOT_DU_LIEU / "EBM-Dashboards" / ".so-xac-minh-nguon.json")
                             .read_text(encoding="utf-8")).get("muc", {})
             nhan = {"SRC-004": ("crossref",), "SRC-005": ("europepmc", "pubmed")}[sid]
             moc = [m.get("kiem_rut_luc") or m.get("xac_minh_luc") for m in so.values()
@@ -97,7 +119,7 @@ def lay_thanh_cong_that(sid: str) -> str | None:
             if moc:
                 return max(moc)[:10]
         if sid == "SRC-006":
-            log = (GOC / "medical-ebm-automation" / "data" / "archive"
+            log = (ROOT_DU_LIEU / "medical-ebm-automation" / "data" / "archive"
                    / "launchd_weekly.log")
             if log.exists():
                 for dong in reversed(log.read_text(encoding="utf-8",
@@ -146,7 +168,7 @@ def main() -> int:
             s["last_success_at"] = that
         # (2) nguồn file: tuổi so với chu kỳ
         if s["access"] == "file" and s.get("endpoint_or_url"):
-            f = GOC / s["endpoint_or_url"]
+            f = ROOT_DU_LIEU / s["endpoint_or_url"]
             if f.exists():
                 tuoi = (datetime.now() - datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ([f] if f.is_file() else list(f.iterdir()) or [f])))).days

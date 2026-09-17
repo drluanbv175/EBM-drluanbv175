@@ -32,9 +32,24 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT / "medical-ebm-automation"
 TOOLS = ROOT / "tools"
 EVAL_TOOLS = TOOLS / "eval"
+
+# VÁ 16/09/2026 (vòng 6 của tools/ban_sao_tran.py) — `medical-ebm-automation/` là
+# một gốc NGOÀI-GIT, chỉ tồn tại bên cạnh checkout CHÍNH. Trên một git worktree phụ
+# (`.claude/worktrees/<tên>/`), `ROOT / "medical-ebm-automation"` luôn vắng mặt dù
+# máy thật có đủ repo y khoa bên cạnh checkout chính — dò checkout chính TRƯỚC khi
+# tính `REPO`, để verifier không tự kết luận sai "repo y khoa hỏng/đồng bộ dở" chỉ
+# vì đang chạy từ worktree. `TOOLS`/`EVAL_TOOLS` ở trên GIỮ NGUYÊN `ROOT` — đó là
+# file GIT-TRACKED, worktree có bản checkout riêng và đó chính là bản cần kiểm.
+import importlib.util as _ilu
+_sp_bst = _ilu.spec_from_file_location(
+    "_bst_vcra", pathlib.Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = _ilu.module_from_spec(_sp_bst)
+_sp_bst.loader.exec_module(_bst)
+_ROOT_DU_LIEU = _bst.checkout_chinh(ROOT) or ROOT
+
+REPO = _ROOT_DU_LIEU / "medical-ebm-automation"
 MT = REPO / "tools"
 
 for path in (str(TOOLS), str(EVAL_TOOLS), str(REPO), str(MT)):
@@ -49,11 +64,6 @@ if not (MT / "gate_contract.py").exists():
     # bằng định nghĩa DUY NHẤT ở tools/ban_sao_tran.py; CẢ HAI đều thoát ≠0 vì toàn bộ
     # đối tượng của verifier này nằm trong repo y khoa — không có gì kiểm được thì
     # không được đọc thành «đã kiểm» (khác nhóm hook vốn còn phần trong-repo kiểm đủ).
-    import importlib.util as _ilu
-    _sp = _ilu.spec_from_file_location(
-        "_bst_vcra", pathlib.Path(__file__).resolve().parent / "ban_sao_tran.py")
-    _bst = _ilu.module_from_spec(_sp)
-    _sp.loader.exec_module(_bst)
     if _bst.ban_sao_git_tran(ROOT):
         _LY_DO = ("⚪ NGOÀI PHẠM VI BẢN SAO TRẦN: thiếu medical-ebm-automation/tools/ — "
                   "toàn bộ đối tượng của verifier này nằm trong repo y khoa nên không có phần "

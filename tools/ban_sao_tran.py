@@ -34,6 +34,22 @@ trên cloud), chỉ đòi EBM-Dashboards + EBM_MASTER vắng mặt — medical-e
 có mặt hay không không còn là tín hiệu đáng tin ở đây. Trên máy KHÔNG PHẢI cloud
 (CI/Mac/Windows thật), giữ NGUYÊN ngữ nghĩa ba-gốc cũ không nới lỏng — đây vẫn là
 nơi duy nhất bắt được máy thật đang hỏng dở cây OneDrive (sự cố gốc mà vòng 4 vá).
+
+VÒNG 6 (16/09/2026) — `Path(__file__).resolve().parents[1]` SAI khi `__file__` nằm
+trong một GIT WORKTREE PHỤ (`git worktree add`, ví dụ `.claude/worktrees/<tên>/`).
+Worktree chỉ có bản checkout riêng của các file GIT-TRACKED; ba gốc dữ liệu ngoài-git
+(`EBM-Dashboards`/`EBM_MASTER`/`medical-ebm-automation`) chỉ tồn tại bên cạnh
+CHECKOUT CHÍNH trên đĩa, không bên cạnh thư mục worktree. Đo được khi vá template
+Dark Analyst từ một worktree: cả ba gốc đều "vắng mặt" theo `ROOT` của worktree dù
+máy thật có đủ cả ba — `ban_sao_git_tran()` (nhánh máy-thật) và mọi verifier tính
+ROOT rồi cộng thẳng tên ba gốc đều báo SAI SỰ THẬT.
+
+`checkout_chinh()` dò checkout chính bằng CHÍNH cơ chế git dùng cho worktree
+(`.git` là FILE trỏ `gitdir:`, rồi đọc `commondir` bên trong) — không suy đoán từ
+tên thư mục. `ban_sao_git_tran()` nay kiểm ba gốc CẢ ở `repo` LẪN ở checkout chính
+(khi khác `repo`) trước khi kết luận "bản sao trần"; `duong_goc()`/
+`duong_cong_cu_pipeline()` KHÔNG đổi (đã có phương án lùi riêng, không nằm trong lỗi
+báo cáo lần này).
 """
 from __future__ import annotations
 
@@ -67,6 +83,54 @@ def _la_phien_cloud() -> bool:
     return bool(mod.la_phien_cloud())
 
 
+def checkout_chinh(repo: Path = REPO) -> Path | None:
+    """Thư mục checkout CHÍNH khi `repo` đang là một git WORKTREE PHỤ.
+
+    VÌ SAO CÓ (16/09/2026, vòng 6) — xem docstring module. Trả về `repo` KHÔNG ĐỔI
+    khi `.git` ở gốc là một THƯ MỤC bình thường (repo đã LÀ checkout chính, không
+    phải worktree). Khi `.git` là một FILE dạng `gitdir: <path>/.git/worktrees/
+    <tên>` — dấu hiệu DUY NHẤT của git cho một worktree phụ — đọc file `commondir`
+    bên trong thư mục đó (thường ghi tương đối, kiểu `../..`) để suy ra `.git`
+    CHUNG, rồi lấy cha của nó làm checkout chính.
+
+    Trả về `None` khi KHÔNG xác định được (file `.git` dị dạng, `commondir` thiếu
+    hoặc trỏ tới nơi không còn tồn tại) — KHÔNG đoán liều (BH08): nơi gọi phải tự
+    quyết định cách xử lý "chưa biết", không được coi `None` là "không phải
+    worktree" hay ngầm định repo đã là checkout chính.
+    """
+    git_marker = repo / ".git"
+    if git_marker.is_dir():
+        return repo
+    if not git_marker.is_file():
+        return None
+    try:
+        noi_dung = git_marker.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    tien_to = "gitdir:"
+    if not noi_dung.startswith(tien_to):
+        return None
+    duong_gitdir_worktree = Path(noi_dung[len(tien_to):].strip())
+    if not duong_gitdir_worktree.is_absolute():
+        duong_gitdir_worktree = (repo / duong_gitdir_worktree).resolve()
+    commondir_file = duong_gitdir_worktree / "commondir"
+    if not commondir_file.is_file():
+        return None
+    try:
+        commondir_raw = commondir_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not commondir_raw:
+        return None
+    duong_git_chung = Path(commondir_raw)
+    if not duong_git_chung.is_absolute():
+        duong_git_chung = (duong_gitdir_worktree / duong_git_chung).resolve()
+    if not duong_git_chung.is_dir():
+        return None
+    ket_qua = duong_git_chung.parent
+    return ket_qua if ket_qua.is_dir() else None
+
+
 def ban_sao_git_tran(repo: Path = REPO) -> bool:
     """True khi bản sao KHÔNG có hạ tầng chỉ-sống-trong-OneDrive (clone tươi/CI/cloud).
 
@@ -74,20 +138,37 @@ def ban_sao_git_tran(repo: Path = REPO) -> bool:
     NẰM TRONG repo là chuyện BÌNH THƯỜNG trên cloud (đúng kiến trúc lồng nhau thật),
     không phải dấu hiệu máy thật hỏng OneDrive. Nơi khác (CI/máy thật ngoài cloud):
     giữ NGUYÊN đòi CẢ BA gốc vắng — xem "VÒNG 5" trong docstring module.
+
+    VÒNG 6 — khi `repo` là một worktree phụ, ba gốc chỉ tồn tại bên cạnh checkout
+    CHÍNH (`checkout_chinh(repo)`), không bên cạnh `repo`. Kiểm CẢ HAI nơi trước
+    khi kết luận "bản sao trần", để không báo nhầm một worktree của máy thật thành
+    bản sao trần chỉ vì `repo` tự nó không lồng sẵn ba gốc.
     """
+    goc_chinh = checkout_chinh(repo)
+    thu_muc_kiem = (repo,) if goc_chinh is None or goc_chinh == repo else (repo, goc_chinh)
     if _la_phien_cloud():
-        return not any((repo / goc).exists() for goc in _GOC_LUON_NGOAI_GIT_TREN_CLOUD)
-    return not any((repo / goc).exists() for goc in GOC_DU_LIEU_NGOAI_GIT)
+        goc_can_kiem = _GOC_LUON_NGOAI_GIT_TREN_CLOUD
+    else:
+        goc_can_kiem = GOC_DU_LIEU_NGOAI_GIT
+    return not any((base / goc).exists() for base in thu_muc_kiem for goc in goc_can_kiem)
 
 
 def duong_goc(ten: str, repo: Path = REPO) -> Path | None:
     """Đường dẫn THẬT của một gốc dữ liệu ngoài-git (`ten` ∈ GOC_DU_LIEU_NGOAI_GIT).
 
-    Ưu tiên vị trí LỒNG (`repo/ten` — kiến trúc OneDrive cây chung của máy thật),
-    rồi tới vị trí ANH EM (`repo.parent/ten` — một số phiên dựng các repo cạnh
-    nhau dưới cùng một thư mục cha); `None` nếu không có ở đâu.
+    Thứ tự ưu tiên: `repo/ten` (lồng theo cây đang chạy — kiến trúc OneDrive cây
+    chung của máy thật) → `checkout_chinh(repo)/ten` (VÒNG 6, 16/09/2026 — chỉ
+    khác `repo` khi đang ở một git worktree phụ; ba gốc ngoài-git chỉ tồn tại bên
+    cạnh checkout CHÍNH, không bên cạnh worktree) → `repo.parent/ten` (anh em —
+    một số phiên dựng các repo cạnh nhau dưới cùng một thư mục cha); `None` nếu
+    không có ở đâu.
     """
-    for base in (repo, repo.parent):
+    goc_chinh = checkout_chinh(repo)
+    ung_vien: list[Path] = [repo]
+    if goc_chinh is not None and goc_chinh != repo:
+        ung_vien.append(goc_chinh)
+    ung_vien.append(repo.parent)
+    for base in ung_vien:
         candidate = base / ten
         if candidate.exists():
             return candidate

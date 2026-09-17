@@ -53,7 +53,31 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH để đọc `EBM-Dashboards/` (ngoài-git) khi `REPO` là một git
+    worktree phụ — xem `tools/ban_sao_tran.py::checkout_chinh()` (VÁ 16/09/2026,
+    vòng 6). Đo được: hook `SessionStart` chạy công cụ này mỗi phiên bằng `REPO`
+    = thư mục worktree; thiếu bản vá này thì `DASH.is_dir()` báo SAI
+    `co_du_lieu_dashboard_that=False` trên MỌI worktree của máy thật — mirror
+    (file git-tracked, dùng chung mọi phiên) bị GHI ĐÈ về trạng thái nghèo dù
+    máy có đủ dữ liệu. `REPO / "tools" / …`/`MIRROR_DIR` GIỮ NGUYÊN `REPO` — đó
+    là file GIT-TRACKED, worktree có bản checkout riêng cần chạy/ghi vào."""
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return REPO
+    spec = _ilu.spec_from_file_location("_xttc_ban_sao_tran", duong)
+    mod = _ilu.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(REPO) or REPO
+    except Exception:  # noqa: BLE001
+        return REPO
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+DASH = ROOT_DU_LIEU / "EBM-Dashboards"
 MIRROR_DIR = REPO / "cloud-mirror"
 MIRROR_FILE = MIRROR_DIR / "trang-thai-chung-cu.json"
 

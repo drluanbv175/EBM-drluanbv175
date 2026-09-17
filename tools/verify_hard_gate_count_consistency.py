@@ -45,7 +45,20 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
-GATE_CONTRACT_TOOLS_DIR = ROOT / "medical-ebm-automation" / "tools"
+
+# Nạp ban_sao_tran.py KHÔNG ĐIỀU KIỆN (trước khi tính GATE_CONTRACT_TOOLS_DIR) —
+# VÁ 16/09/2026 (vòng 6): `medical-ebm-automation/` là gốc NGOÀI-GIT, chỉ tồn
+# tại bên cạnh checkout CHÍNH. Trên một git worktree phụ, `ROOT / "medical-ebm-
+# automation"` luôn vắng mặt dù máy thật có đủ bên cạnh checkout chính — dò
+# checkout chính TRƯỚC khi tính đường dẫn, để không tự kết luận "repo y khoa
+# không có" khi thật ra chỉ đang chạy từ worktree (đúng lỗi từng chặn commit).
+import importlib.util as _ilu
+_sp_bst = _ilu.spec_from_file_location(
+    "_bst_hgc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = _ilu.module_from_spec(_sp_bst)
+_sp_bst.loader.exec_module(_bst)
+_ROOT_DU_LIEU = _bst.checkout_chinh(ROOT) or ROOT
+GATE_CONTRACT_TOOLS_DIR = _ROOT_DU_LIEU / "medical-ebm-automation" / "tools"
 
 # 28/08/2026 — repo y khoa nằm ngoài bản sao git gốc; thiếu thì khai báo rõ
 # thay vì ModuleNotFoundError trần (trông như lỗi mã, thật ra thiếu nguyên liệu).
@@ -60,11 +73,6 @@ if not (GATE_CONTRACT_TOOLS_DIR / "gate_contract.py").exists():
         #     nguồn sự thật để đối chiếu ⇒ ⚪ bỏ qua CÓ KHAI BÁO, thoát 0 — để hook
         #     pre-commit chạy được trên bản trần thay vì buộc commit KHÔNG QUA CỔNG nào.
         # (b) máy thật (còn ≥1 gốc dữ liệu) mà thiếu gate_contract.py ⇒ đỏ như cũ.
-        import importlib.util as _ilu
-        _sp = _ilu.spec_from_file_location(
-            "_bst_hgc", Path(__file__).resolve().parent / "ban_sao_tran.py")
-        _bst = _ilu.module_from_spec(_sp)
-        _sp.loader.exec_module(_bst)
         if _bst.ban_sao_git_tran(ROOT):
             print("⚪ BỎ QUA CÓ KHAI BÁO: repo y khoa không có trên bản sao git trần — "
                   "chốt đếm-cổng-cứng cần gate_contract.py làm nguồn sự thật; "

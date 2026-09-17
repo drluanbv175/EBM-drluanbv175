@@ -43,9 +43,6 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
-LOG_TUAN = REPO / "medical-ebm-automation/data/archive/launchd_weekly.log"
-LOG_THANG = REPO / "medical-ebm-automation/data/archive/launchd_monthly.log"
 
 # Vá 15/09/2026 (workflow kiểm tra toàn diện): mục (2) bên dưới đọc log giám sát
 # hằng tuần dưới medical-ebm-automation/ — trên bản sao git trần (mọi phiên
@@ -59,6 +56,16 @@ _spec_bst = importlib.util.spec_from_file_location(
     "_bst_kdtcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
 _bst = importlib.util.module_from_spec(_spec_bst)
 _spec_bst.loader.exec_module(_bst)
+
+# VÁ 16/09/2026 (vòng 6 của ban_sao_tran.py) — `DASH`/`LOG_TUAN`/`LOG_THANG` đọc
+# thư mục NGOÀI-GIT, chỉ tồn tại bên cạnh checkout CHÍNH; trên một git worktree
+# phụ chúng vắng mặt bên cạnh `REPO` dù máy thật có đủ. Không dùng `_bst.duong_goc()`
+# trực tiếp ở đây vì các hằng số này còn bị test monkeypatch thẳng (K.DASH,
+# K.LOG_TUAN…) — chỉ đổi NGUỒN TÍNH lúc nạp module, không đổi cách các test ghi đè.
+_ROOT_DU_LIEU = _bst.checkout_chinh(REPO) or REPO
+DASH = _ROOT_DU_LIEU / "EBM-Dashboards"
+LOG_TUAN = _ROOT_DU_LIEU / "medical-ebm-automation/data/archive/launchd_weekly.log"
+LOG_THANG = _ROOT_DU_LIEU / "medical-ebm-automation/data/archive/launchd_monthly.log"
 
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
 HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần

@@ -40,6 +40,30 @@ ROUTER_ZIP = ROOT / "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 ROUTER_ZIP_REL = "CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip"
 
 
+def _root_du_lieu_ngoai_git() -> Path:
+    """Checkout CHÍNH để đọc `medical-ebm-automation/` (ngoài-git) khi `ROOT` là
+    một git worktree phụ — xem `tools/ban_sao_tran.py::checkout_chinh()` (VÁ
+    16/09/2026, vòng 6). KHÁC `cac_goc_worktree_git()` ở trên: đó liệt kê MỌI
+    worktree cho artifact CỤC BỘ-mỗi-worktree (ROUTER_ZIP, gitignored); đây tìm
+    MỘT checkout chính cho gốc dữ liệu NGOÀI-GIT dùng chung mọi worktree
+    (medical-ebm-automation/, giống EBM-Dashboards/EBM_MASTER). Vắng nguyên
+    liệu/không xác định được ⇒ giữ NGUYÊN `ROOT` (không đoán liều, BH08)."""
+    import importlib.util
+    duong = Path(__file__).resolve().parent / "ban_sao_tran.py"
+    if not duong.is_file():
+        return ROOT
+    spec = importlib.util.spec_from_file_location("_vpo_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(ROOT) or ROOT
+    except Exception:  # noqa: BLE001
+        return ROOT
+
+
+ROOT_DU_LIEU = _root_du_lieu_ngoai_git()
+
+
 def cac_goc_worktree_git(root: Path) -> list[Path]:
     """Danh sách đường dẫn GỐC của MỌI git worktree thuộc CÙNG repo với `root`
     (kể cả chính `root`) — dùng `git worktree list --porcelain` để không phụ
@@ -126,12 +150,23 @@ def kiem_router_runtime_va_zip(
     return errors, worktree_phu
 
 
+def _ten_hien_thi(path: Path) -> str:
+    """Tên hiển thị ngắn cho thông điệp lỗi — thử ROOT trước, ROOT_DU_LIEU sau
+    (đường ngoài-git có thể nằm ngoài `ROOT` khi ROOT là một worktree phụ)."""
+    for goc in (ROOT, ROOT_DU_LIEU):
+        try:
+            return str(path.relative_to(goc))
+        except ValueError:
+            continue
+    return str(path)
+
+
 def _contains(path: Path, markers: tuple[str, ...]) -> list[str]:
     if not path.exists():
-        return [f"thieu file {path.relative_to(ROOT)}"]
+        return [f"thieu file {_ten_hien_thi(path)}"]
     text = path.read_text(encoding="utf-8", errors="ignore")
     return [
-        f"{path.relative_to(ROOT)} thieu marker {marker}"
+        f"{_ten_hien_thi(path)} thieu marker {marker}"
         for marker in markers
         if marker not in text
     ]
@@ -224,11 +259,11 @@ def verify() -> dict[str, Any]:
         ROOT / ".claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER, "G2/G4/G5/G8/G9/G10"),
         ROOT / ".githooks/pre-commit": ("verify_plugin_orchestration.py",),
         ROOT / "tools/sync_agents_to_codex.py": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/CLAUDE.md": (CONTRACT_MARKER, REGISTRY_MARKER),
-        ROOT / "medical-ebm-automation/.claude/agents/dieu-phoi-nghien-cuu.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/dieu-phoi-lam-sang.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER,),
-        ROOT / "medical-ebm-automation/.claude/agents/_PLUGIN-ROUTING-CONTRACT.md": (
+        ROOT_DU_LIEU / "medical-ebm-automation/CLAUDE.md": (CONTRACT_MARKER, REGISTRY_MARKER),
+        ROOT_DU_LIEU / "medical-ebm-automation/.claude/agents/dieu-phoi-nghien-cuu.md": (CONTRACT_MARKER,),
+        ROOT_DU_LIEU / "medical-ebm-automation/.claude/agents/dieu-phoi-lam-sang.md": (CONTRACT_MARKER,),
+        ROOT_DU_LIEU / "medical-ebm-automation/.claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER,),
+        ROOT_DU_LIEU / "medical-ebm-automation/.claude/agents/_PLUGIN-ROUTING-CONTRACT.md": (
             "HỢP ĐỒNG ĐIỀU PHỐI PLUGIN",
         ),
     }

@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -46,7 +47,26 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
 # tools/eval/ này) — import chéo AN TOÀN qua sys.path (try/except): nếu cây đó vắng
 # mặt (chạy eval harness tách rời), --classify degrade rõ ràng, KHÔNG ảnh hưởng
 # đường mặc định evaluate()/CLI vốn KHÔNG đổi (backward-compatible tuyệt đối).
-_RETRY_LOOP_DIR = Path(__file__).resolve().parents[2] / "medical-ebm-automation" / "tools"
+#
+# VÁ 16/09/2026 (vòng 6 của tools/ban_sao_tran.py) — `medical-ebm-automation/` là
+# gốc NGOÀI-GIT, chỉ tồn tại bên cạnh checkout CHÍNH. Trên một git worktree phụ,
+# `parents[2] / "medical-ebm-automation"` luôn vắng mặt dù máy thật có đủ bên cạnh
+# checkout chính — dò checkout chính trước khi tính đường dẫn.
+def _run_eval_checkout_chinh() -> Path:
+    goc_tools = Path(__file__).resolve().parents[1]  # …/tools
+    duong = goc_tools / "ban_sao_tran.py"
+    if not duong.is_file():
+        return goc_tools.parent
+    spec = importlib.util.spec_from_file_location("_run_eval_ban_sao_tran", duong)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        return mod.checkout_chinh(goc_tools.parent) or goc_tools.parent
+    except Exception:  # noqa: BLE001
+        return goc_tools.parent
+
+
+_RETRY_LOOP_DIR = _run_eval_checkout_chinh() / "medical-ebm-automation" / "tools"
 _retry_loop = None
 _retry_loop_import_error = None
 try:
