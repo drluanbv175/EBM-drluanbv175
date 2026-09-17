@@ -31,8 +31,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import verify_vi as VV  # noqa: E402
+# SỬA 17/09/2026 — BH99 tái diễn: verify_vi.py tự `raise SystemExit(1)` ở MỨC
+# MODULE khi thiếu PyYAML (dòng ~48, "Cần PyYAML để kiểm"). CI hermetic chỉ
+# `pip install pytest` (không PyYAML) nên import module này lúc thu thập test
+# giết CẢ LƯỢT pytest bằng INTERNALERROR — không phải lỗi của riêng file test
+# này. `pytest.importorskip` KHÔNG cứu được (chỉ bắt ImportError, ở đây là
+# SystemExit) — phải bắt BaseException rồi skip ở mức module, đúng khuôn đã
+# dùng cho `test_gate_ed25519_20260815.py` (BH99).
+try:
+    import verify_vi as VV  # noqa: E402
+except SystemExit as _e:
+    # verify_vi.py tự `raise SystemExit(1)` khi thiếu PyYAML — CHỈ bắt đúng tín
+    # hiệu "thiếu nguyên liệu môi trường" này, không nuốt lỗi mã thật khác.
+    pytest.skip(f"verify_vi.py không nạp được (thiếu PyYAML?): {_e}", allow_module_level=True)
 
 
 def _chay(td: Path, catalog: list, vi_map: dict) -> tuple[int, str]:
