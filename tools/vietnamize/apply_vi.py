@@ -54,6 +54,29 @@ FM_KEY = re.compile(r"^([a-zA-Z_][\w-]*):", re.MULTILINE)
 # Dấu tiếng Việt — dùng chung định nghĩa với extract_catalog.py (cùng thư mục)
 from extract_catalog import VN_CHARS  # noqa: E402
 
+# SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2, MEDIUM) — VN_CHARS chỉ bắt
+# ký tự CÓ DẤU, nên một mô tả tiếng Việt KHÔNG DẤU do bác sĩ tự gõ tay (cách gõ
+# nhanh phổ biến, và CHÍNH `bo_dau.py` trong thư mục này sinh ra unaccented
+# Vietnamese có chủ đích khi font không vẽ được dấu) bị đọc nhầm thành "chưa dịch"
+# ở luật giữ-bản-tự-viết bên dưới — apply_vi.py sẽ ĐÈ bản không dấu tự viết bằng
+# bản dịch từ điển (có dấu), mất nội dung gốc mà không một cảnh báo nào. Danh sách
+# đủ ĐẶC HIỆU (không lẫn từ tiếng Anh thông thường) + đòi ≥3 khớp để không báo
+# nhầm một câu tiếng Anh chỉ tình cờ chứa MỘT từ trùng ngẫu nhiên. Cố ý LOẠI các
+# từ ngắn trùng từ/tên tiếng Anh thật (theo→"Theo", dan→"Dan", thong/tin→từ tiếng
+# Anh thật, si→mượn tiếng Tây Ban Nha, bac→viết tắt "BAC", chan→từ hiếm nhưng có
+# thật, moi/gia→dễ trùng tên riêng) để giảm rủi ro dương tính giả.
+_TU_TIENG_VIET_KHONG_DAU = frozenset({
+    "khong", "duoc", "cua", "nhung", "benh", "nhan", "kham", "thuoc",
+    "dieu", "doan", "nghien", "cuu", "chung", "truoc", "hoac", "trong",
+    "ngoai", "danh", "quyet", "dinh", "huong", "phuong", "phap", "nguoi",
+})
+
+
+def _co_dau_hieu_tieng_viet_khong_dau(text: str) -> bool:
+    """True nếu văn bản có ≥3 từ trong danh sách đặc trưng tiếng Việt không dấu."""
+    tu = re.findall(r"[a-z]+", text.lower())
+    return sum(1 for t in tu if t in _TU_TIENG_VIET_KHONG_DAU) >= 3
+
 
 def digest(text: str) -> str:
     """Vân tay của mô tả gốc — để phát hiện plugin đã đổi mô tả sau khi ta dịch."""
@@ -167,8 +190,21 @@ def trong_repo_git(path: Path) -> Path | None:
 
     Đi ngược lên tìm `.git`. Cố ý KHÔNG gọi lệnh `git` — repo nguồn của aipoch nặng
     778 MB, `git status` ở đó mất hơn 2 phút; kiểm sự tồn tại thư mục thì tức thì.
+
+    SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2, MEDIUM→cao hơn dự kiến) —
+    PHẢI đi ngược từ đường dẫn ĐÃ RESOLVE SYMLINK, không phải đường dẫn cho trước.
+    `~/.claude/skills/<skill>/SKILL.md` (43 skill của bác sĩ, đo thật 2026-09-04)
+    là SYMLINK trỏ thẳng vào `sync/skills/<skill>/SKILL.md` — một file NẰM TRONG
+    repo git đã track. Đi ngược từ đường dẫn SYMLINK thì tổ tiên của nó
+    (`~/.claude/skills`, `~/.claude`, `~`) không hề chứa `.git`, nên hàng rào
+    "skip-git-repo" (dựng 10/08/2026 để chặn CHÍNH kịch bản ghi tiếng Việt vào
+    nguồn git-tracked) bị SYMLINK VÔ HIỆU HOÁ HOÀN TOÀN cho toàn bộ 43 skill này
+    — đúng lớp nguy hiểm mà hàng rào đó sinh ra để chặn, chỉ khác cơ chế bỏ qua.
+    `Path.resolve()` chỉ là syscall đọc symlink/stat, không phải lệnh git, nên
+    không tái phạm vấn đề hiệu năng đã ghi ở trên.
     """
-    for cha in [path, *path.parents]:
+    that = path.resolve()
+    for cha in [that, *that.parents]:
         if (cha / ".git").exists():
             return cha
     return None
@@ -240,7 +276,8 @@ def process(item: dict, vi_entry: dict, *, restore: bool, dry: bool,
     # nó đã đè mất mô tả tự viết của 3 skill (clinical-evidence-rag, ebm-master,
     # literature-review). Bỏ điều kiện `qua_ten`: nguồn gốc của khoá không đổi được
     # sự thật rằng mô tả đang có là do người viết.
-    if VN_CHARS.search(cur_desc) and read_field(block, "description-src") is None:
+    if ((VN_CHARS.search(cur_desc) or _co_dau_hieu_tieng_viet_khong_dau(cur_desc))
+            and read_field(block, "description-src") is None):
         return "giữ-bản-việt-tự-viết"
 
     original_en = saved_en if saved_en is not None else cur_desc

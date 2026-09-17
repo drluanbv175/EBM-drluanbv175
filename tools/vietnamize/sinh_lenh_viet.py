@@ -43,11 +43,25 @@ BANG = HERE / "lenh_viet.json"
 RA = REPO / "sync/commands-vi"
 
 MAU = """---
-description: "{mo_ta}"
+description: {mo_ta}
 ---
 
 {than}
 """
+
+
+def sinh_noi_dung(mo_ta: str, than: str) -> str:
+    """Nội dung file lệnh — frontmatter YAML + thân lệnh.
+
+    SỬA 2026-09-04 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — bản cũ
+    ghi `"{mo_ta}"` vào frontmatter bằng `.format()` thuần, không thoát dấu
+    ngoặc kép trong mo_ta — một mô tả chứa dấu " sẽ làm hỏng cú pháp YAML
+    (đóng chuỗi sớm), nặng hơn có thể chèn được khoá YAML mới nếu phần còn
+    lại tình cờ/cố ý hợp cú pháp. Dùng `json.dumps()` — JSON là tập con của
+    YAML nên an toàn với dấu tiếng Việt/hai chấm/ngoặc — đúng khuôn
+    `apply_vi.py::replace_field()` đã dùng cho đúng vấn đề này. `json.dumps`
+    tự thêm cặp ngoặc kép nên template không còn ngoặc kép viết cứng."""
+    return MAU.format(mo_ta=json.dumps(mo_ta, ensure_ascii=False), than=than.strip())
 
 
 def main() -> int:
@@ -67,7 +81,7 @@ def main() -> int:
         if dich and dich not in co_tren_may:
             bo_qua.append(f"{ten} → {dich}")
             continue
-        noi_dung = MAU.format(mo_ta=v["mo_ta"], than=v["than"].strip())
+        noi_dung = sinh_noi_dung(v["mo_ta"], v["than"])
         f = RA / f"{ten}.md"
         if f.exists() and f.read_text("utf-8") == noi_dung:
             giu += 1

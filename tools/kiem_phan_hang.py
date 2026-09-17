@@ -53,6 +53,11 @@ for _s in (sys.stdout, sys.stderr):
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
+import importlib.util as _ilu_kph  # noqa: E402
+_sp_kph = _ilu_kph.spec_from_file_location("_bst_kph", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_kph = _ilu_kph.module_from_spec(_sp_kph)
+_sp_kph.loader.exec_module(_bst_kph)
+
 # CHỈ để xếp thứ tự việc cho người đọc — KHÔNG phải căn cứ của cổng.
 TU_CHAM = ("đa trung tâm", "mù đôi", "mù người đánh giá", "chất lượng cao", "nhãn mở",
            "đánh giá vận hành", "nghiên cứu quan sát", "cỡ mẫu", "hồi cứu", "tiến cứu",
@@ -62,8 +67,13 @@ NOI_KHONG_CHAM = ("không nêu grade", "không phân hạng", "chưa phân hạn
 
 
 def _nap_vd():
-    spec = importlib.util.spec_from_file_location(
-        "vd_phan_hang", DASH / "tools" / "verify_dashboard.py")
+    # VÁ 08/09/2026: lùi về bản git-vendor khi EBM-Dashboards vắng (mọi checkout
+    # git-only) thay vì ném FileNotFoundError thô — xem
+    # tools/ban_sao_tran.py::duong_cong_cu_pipeline.
+    duong = _bst_kph.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    if duong is None:
+        return None
+    spec = importlib.util.spec_from_file_location("vd_phan_hang", duong)
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m
@@ -88,6 +98,11 @@ def main() -> int:
     a = ap.parse_args()
 
     vd = _nap_vd()
+    if vd is None:
+        if not a.im_khi_on:
+            print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
+                  "git-vendor — không dò được trên máy này.")
+        return 0
     files = [Path(a.file)] if a.file else sorted(DASH.glob("WebDashboard_*.html"))
     thieu: list[tuple] = []
     tong_co_muc = 0

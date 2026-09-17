@@ -71,6 +71,23 @@ def configure_utf8_stdio() -> None:
 # ───────────────────────── đọc khối DATA của dashboard ─────────────────────────
 
 
+def _tim_goc_repo(bat_dau: Path) -> Path:
+    """Tìm gốc repo bằng cách đi lên tìm thư mục có `.git` — ĐỘC LẬP với độ sâu.
+
+    File này (build_ban_doc_chung_cu.py) có HAI bản byte-identical
+    (`tools/` ở gốc và `sync/skills/cap-nhat-chung-cu-y-khoa/tools/`), nằm ở
+    hai độ sâu KHÁC NHAU so với gốc repo (1 vs 4 cấp). Một `parents[N]` cố
+    định chỉ đúng cho MỘT bản — bản kia sẽ trỏ vào đường dẫn không tồn tại
+    mà không hề báo lỗi rõ ràng cho tới khi dùng (chính là lỗi đã xảy ra:
+    bản mirror gọi `tools/tuyen_bo_do_phu.py` NGAY TRONG thư mục của chính
+    nó, trong khi tệp thật chỉ có ở `tools/` gốc repo).
+    """
+    for p in (bat_dau, *bat_dau.parents):
+        if (p / ".git").exists():
+            return p
+    return bat_dau.parents[1]  # dự phòng nếu không tìm thấy .git
+
+
 def khoi_do_phu() -> str:
     """Tuyên bố ĐỘ PHỦ NGUỒN — LÔ I PHA 4 phải hiện ở NƠI BÁC SĨ ĐỌC, không chỉ
     nằm trong reports/. Sinh sống từ data/sources.json qua tools/tuyen_bo_do_phu;
@@ -78,7 +95,7 @@ def khoi_do_phu() -> str:
     import importlib.util as _ilu
     import sys as _sys
     try:
-        duong = Path(__file__).resolve().parents[1] / "tools" / "tuyen_bo_do_phu.py"
+        duong = _tim_goc_repo(Path(__file__).resolve()) / "tools" / "tuyen_bo_do_phu.py"
         spec = _ilu.spec_from_file_location("tbdp_bd", duong)
         m = _ilu.module_from_spec(spec)
         _sys.modules["tbdp_bd"] = m
@@ -553,6 +570,18 @@ def plot_row(item: dict, ax: LogAxis) -> str:
         m = esc(eff.get("measure", "HR"))
         sub_bits.append(
             f'<span class="num">{m} {vn_num(hr)} ({vn_num(lo)}–{vn_num(hi)})</span>')
+    # Định danh truy nguyên (PMID ưu tiên, rồi DOI, rồi URL) PHẢI hiện ra ở đây —
+    # đây là nơi bác sĩ thật sự đọc. Trước bản vá này, plot_row() chỉ ĐẾM
+    # item.get("pmid") cho thống kê đầu trang ("N/N mục có định danh truy
+    # nguyên") mà không bao giờ IN nó ra: trang tự nhận có định danh truy
+    # nguyên nhưng không một dòng nào trong 6 mục thật sự cho thấy định danh
+    # đó — phát hiện khi dựng dashboard Suy tim HFnrEF 2026-09-07 (0/6 PMID
+    # xuất hiện trong bản đọc dù cả 6 item đều khai đủ). Vi phạm bất biến
+    # "mỗi đầu ra kèm PMID/DOI" của CLAUDE.md.
+    ident = item.get("pmid") or item.get("doi") or item.get("url")
+    if ident:
+        label_id = "PMID" if item.get("pmid") else ("DOI" if item.get("doi") else "URL")
+        sub_bits.append(esc(f"{label_id} {ident}"))
     sub = " · ".join(sub_bits)
 
     if hr and lo and hi:
@@ -850,11 +879,21 @@ def build_page(data: dict, source_name: str, src: Path | None = None) -> str:
         def _src(r):
             # Mục không có hiệu số định lượng chỉ hiện tiêu đề + nguồn, nên nhãn
             # «mới thẩm định trên tóm tắt» phải gắn ngay ở đây — nếu không nó
-            # biến mất khỏi đúng trang mà bác sĩ đọc.
+            # biến mất khỏi đúng trang mà bác sĩ đọc. Cùng lý do, định danh
+            # truy nguyên (PMID/DOI/URL) cũng phải gắn ở đây — đường render
+            # riêng cho mục "không có hiệu số" (guideline/consensus) này KHÔNG
+            # đi qua plot_row(), nên bản vá PMID của plot_row() không tự lan
+            # sang đây (phát hiện khi dựng dashboard Suy tim HFnrEF 2026-09-07:
+            # ITEM-01 là guideline, đi qua đúng nhánh này, vẫn thiếu PMID sau
+            # khi plot_row() đã được vá).
             s = esc(r.get("source", ""))
             if r.get("appraisalCompleteness") == "partial":
                 s += (' · <span class="partial">thẩm định trên tóm tắt — '
                       'chưa đọc toàn văn</span>')
+            ident = r.get("pmid") or r.get("doi") or r.get("url")
+            if ident:
+                label_id = "PMID" if r.get("pmid") else ("DOI" if r.get("doi") else "URL")
+                s += f" · {esc(f'{label_id} {ident}')}"
             return s
         lis = "".join(
             f'<li><b>{esc(normalize_title(r.get("title","")))}</b>'

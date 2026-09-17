@@ -7,6 +7,27 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sync_agents_to_codex as S  # noqa: E402
 
 
+def _init_isolated_source(tmp_path: Path, monkeypatch) -> Path:
+    """Dựng một .claude/agents/ giả lập tối giản, tách khỏi repo thật — vô
+    hiệu REQUIRED_AGENTS/REQUIRED_INFRA (đòi đúng tên agent/hạ tầng THẬT của
+    repo, không liên quan tới điều đang kiểm) để check_target() chỉ còn phản
+    ánh đúng phần logic đang test."""
+    source_dir = tmp_path / "source" / ".claude" / "agents"
+    source_dir.mkdir(parents=True)
+    (source_dir / "vi-du-agent.md").write_text(
+        "---\nname: vi-du-agent\ndescription: agent giả lập cho test\n---\nNội dung.\n",
+        encoding="utf-8",
+    )
+    (source_dir / "_GHI-CHU-HA-TANG.md").write_text("# Ghi chú hạ tầng giả lập\n", encoding="utf-8")
+    monkeypatch.setattr(S, "SOURCE_DIR", source_dir)
+    monkeypatch.setattr(S, "REQUIRED_AGENTS", set())
+    monkeypatch.setattr(S, "REQUIRED_INFRA", set())
+    # write_target()/check_target() dùng .relative_to(ROOT) khi ghi thông
+    # điệp lỗi — phải trỏ ROOT vào tmp_path để đường dẫn giả lập nằm trong đó.
+    monkeypatch.setattr(S, "ROOT", tmp_path)
+    return source_dir
+
+
 def test_active_targets_dedups_on_case_insensitive_fs_even_when_neither_dir_exists(
     tmp_path, monkeypatch
 ):
@@ -89,3 +110,52 @@ def test_real_checkout_active_targets_dedups_to_single_canonical_entry():
     active = S.active_targets()
     labels = [label for _, label in active]
     assert labels == [".Codex/agents"]
+
+
+class TestCheckTargetCatchesOrphanedInfraMirror:
+    """Phát hiện của Workflow đối kháng đa-agent (2026-09-03, #7):
+    check_target() kiểm hai chiều (missing + extra) cho agent .toml (dòng
+    299-306) nhưng chỉ kiểm một chiều (missing, qua REQUIRED_INFRA và vòng
+    expected.items()) cho hạ tầng .md — một file mirror hạ tầng MỒ CÔI (source
+    đã đổi tên/xóa, bản .md cũ còn nằm lại trong .Codex/agents hoặc
+    .codex/agents) không bao giờ bị bắt."""
+
+    def test_passes_when_target_exactly_mirrors_source(self, tmp_path, monkeypatch):
+        _init_isolated_source(tmp_path, monkeypatch)
+        target_dir = tmp_path / "target"
+        S.write_target(target_dir, "target-gia-lap")
+
+        errors = S.check_target(target_dir, "target-gia-lap")
+
+        assert errors == []
+
+    def test_catches_orphaned_infra_md_left_behind_after_source_rename(self, tmp_path, monkeypatch):
+        _init_isolated_source(tmp_path, monkeypatch)
+        target_dir = tmp_path / "target"
+        S.write_target(target_dir, "target-gia-lap")
+
+        # Mô phỏng: file hạ tầng nguồn đã bị xóa/đổi tên (source_infra_paths()
+        # không còn trả về nó), nhưng bản mirror .md CŨ vẫn còn nằm lại trong
+        # thư mục đích — đúng kịch bản "git rm oan phần đã đổi tên" của #7.
+        orphan = target_dir / "_HA-TANG-DA-XOA.md"
+        orphan.write_text("# Bản mirror mồ côi\n", encoding="utf-8")
+
+        errors = S.check_target(target_dir, "target-gia-lap")
+
+        assert any("so ha tang mo coi" in e and "_HA-TANG-DA-XOA.md" in e for e in errors), errors
+
+    def test_orphaned_toml_agent_mirror_is_unaffected_by_the_new_infra_check(
+        self, tmp_path, monkeypatch
+    ):
+        """Đối chứng: nhánh .toml (agent thừa) đã có sẵn từ trước — chốt bổ
+        sung cho hạ tầng KHÔNG được lấn/che nhánh đó."""
+        _init_isolated_source(tmp_path, monkeypatch)
+        target_dir = tmp_path / "target"
+        S.write_target(target_dir, "target-gia-lap")
+        (target_dir / "agent-mo-coi.toml").write_text(
+            'name = "agent-mo-coi"\ndescription = "x"\n', encoding="utf-8"
+        )
+
+        errors = S.check_target(target_dir, "target-gia-lap")
+
+        assert any("agent thua" in e and "agent-mo-coi" in e for e in errors), errors

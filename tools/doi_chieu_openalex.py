@@ -38,6 +38,15 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 GOC = Path(__file__).resolve().parents[1]
+# VÁ 07/09/2026: `GOC / "medical-ebm-automation"` (dòng sys.path.insert bên dưới)
+# giả định LỒNG — sai trên phiên cloud (anh em của GOC). Dùng duong_goc() — xem
+# tools/ban_sao_tran.py.
+import importlib.util as _ilu_doa  # noqa: E402
+_sp_doa = _ilu_doa.spec_from_file_location(
+    "_bst_doa", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_doa = _ilu_doa.module_from_spec(_sp_doa)
+_sp_doa.loader.exec_module(_bst_doa)
+_MEA_GOC = _bst_doa.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
 DASH = GOC / "EBM-Dashboards"
 MAILTO = "bsluanbv175@gmail.com"  # polite pool OpenAlex — chỉ email liên hệ, không phải secret
 API = "https://api.openalex.org/works"
@@ -90,7 +99,7 @@ def _nap_rut_bai():
     hợp đồng mà đọc thành lỗi mạng là đúng lớp «không biết bị báo thành thứ
     khác» (BH08/BH34).
     """
-    sys.path.insert(0, str(GOC / "medical-ebm-automation"))
+    sys.path.insert(0, str(_MEA_GOC))
     try:
         from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
         return CrossrefRetraction().check

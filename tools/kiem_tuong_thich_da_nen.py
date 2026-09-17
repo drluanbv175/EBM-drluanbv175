@@ -356,7 +356,14 @@ def main() -> int:
             except OSError:
                 continue
             code = _mask_khong_phai_code(dong)
-            ten = p.relative_to(REPO).as_posix()
+            # VÁ 08/09/2026: medical-ebm-automation có thể là SIBLING của REPO trên
+            # phiên cloud (không lồng bên trong) — p.relative_to(REPO) ném ValueError
+            # và giết cả lượt quét R6 giữa chừng. Cùng guard đã có ở vòng lặp chính
+            # (dòng ~304-306); áp lại y hệt cho vòng lặp R6-riêng này.
+            try:
+                ten = p.relative_to(REPO).as_posix()
+            except ValueError:
+                ten = p.as_posix()
             for i, ln in enumerate(code, 1):
                 if MIEN_TRU in dong[i - 1]:
                     continue
