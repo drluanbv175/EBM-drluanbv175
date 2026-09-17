@@ -263,6 +263,21 @@ def test_group_meta_du_nhom_moi():
         assert f"'{khoa}'" in gm.group(1), f"GROUP_META thiếu nhóm {khoa!r} (thêm 2026-09-16)"
 
 
+def test_rob_entries_dinh_nghia_dung_va_khong_gia_dinh_object():
+    """robEntries() — thêm 16/09/2026 (cùng ngày với PR #10 trên evidence-workbench-template.html)
+    để khớp lỗi thật: `rob` từng được ghi là CHUỖI VĂN XUÔI thay vì object {miền:'l'|'s'|'h'}
+    (schema đòi), khiến `Object.values(chuỗi)`/`Object.keys(chuỗi)` lặp theo TỪNG KÝ TỰ và
+    `RM[ký tự]` undefined ⇒ TypeError SẬP TOÀN BỘ render()/expandRow(). robEntries() phải từ
+    chối chuỗi/mảng/null và chỉ trả entries khi có ít nhất một mã hợp lệ trong RM."""
+    html = _template_under_test()
+    m = re.search(r"function robEntries\(rob\)\{.*?\n\}", html, re.S)
+    assert m, "template không còn hàm robEntries() — nghi tái diễn lỗi rob-là-chuỗi làm sập trang"
+    than = m.group(0)
+    assert "typeof rob!=='object'" in than or 'typeof rob!=="object"' in than
+    assert "Array.isArray(rob)" in than
+    assert "RM[r]" in than or "RM[" in than
+
+
 def test_lop4_qualityview_dung_escaping():
     """qualityView() — khối MỚI nhất — phải escape mọi giá trị lấy từ DATA.standards/DATA.items,
     không được là chỗ DUY NHẤT còn escape trong khi phần lõi (title/source/effect) đã mất."""
@@ -314,6 +329,8 @@ _KHAI_THAC = r"""
   out.qualHtml=document.getElementById('qual').innerHTML;
   state.open='J-XS'; render();
   out.rowsHtml=document.getElementById('rows').innerHTML;
+  state.open='J-ROB-STR'; render(); out.rowsRobStr=document.getElementById('rows').innerHTML;
+  state.open='J-ROB-OBJ'; render(); out.rowsRobObj=document.getElementById('rows').innerHTML;
   console.log(JSON.stringify(out));
 })();
 """
@@ -328,6 +345,15 @@ DU_LIEU_JS = {
     "items": [
         {"id": "J-GL", "title": "Mục J-GL", "source": "Nguồn giả", "design": "Guideline",
          "gradeLevel": "na", "decision": "consider", "groups": [], "pico": {}},
+        # Ca lỗi thật PR #10: `rob` là CHUỖI VĂN XUÔI thay vì object — nếu robEntries() bị gỡ,
+        # render() sập ngay TỪ BOOTSTRAP (renderStatic();render(); cuối script) trước khi kịp
+        # chạy tới _KHAI_THAC, khiến kq.returncode != 0 — tự nó đã là một phép thử.
+        {"id": "J-ROB-STR", "title": "Mục rob chuỗi", "source": "Nguồn giả", "design": "RCT",
+         "gradeLevel": "na", "decision": "apply", "groups": [], "pico": {},
+         "rob": "Mù đôi, phân bổ ngẫu nhiên che giấu, phân tích ITT — nguy cơ sai lệch thấp."},
+        {"id": "J-ROB-OBJ", "title": "Mục rob object", "source": "Nguồn giả", "design": "RCT",
+         "gradeLevel": "na", "decision": "apply", "groups": [], "pico": {},
+         "rob": {"Ngẫu nhiên hóa": "l", "Miền <script>alert(1)</script>": "s", "Mã lạ": "x"}},
     ],
 }
 
@@ -384,6 +410,20 @@ def test_js_forest_ty_so_khong_duong_khong_ve(js):
 def test_js_qualityview_escape_that(js):
     assert "onerror=alert(1)" not in js["qualHtml"] or "&lt;img" in js["qualHtml"]
     assert "<img src=x onerror=alert(1)>" not in js["qualHtml"]
+
+
+def test_js_khong_sap_khi_rob_la_chuoi_van_xuoi(js):
+    """`js` fixture tự nó ĐÃ là phép thử chính: nếu robEntries() bị gỡ, subprocess node sập
+    ngay từ bootstrap (renderStatic();render(); cuối script, TRƯỚC _KHAI_THAC) vì J-ROB-STR
+    có `rob` là chuỗi — fixture không bao giờ tới được dòng console.log. Ở đây kiểm thêm
+    NỘI DUNG hiển thị đúng: chuỗi hiện nguyên văn (đã escape), không phải mã miền giả."""
+    assert "Mù đôi" in js["rowsRobStr"] or "M&#249; đ\xf4i" in js["rowsRobStr"]
+    assert "robnote" in js["rowsRobStr"], "rob dạng chuỗi phải hiện qua .robnote, không phải chấm màu giả"
+
+
+def test_js_rob_object_ten_mien_duoc_escape(js):
+    assert "<script>alert(1)</script>" not in js["rowsRobObj"], "tên miền RoB chưa escape — lỗ XSS"
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in js["rowsRobObj"]
 
 
 def test_js_bang_khong_thuc_thi_script_nhung_giu_design_goc(js):

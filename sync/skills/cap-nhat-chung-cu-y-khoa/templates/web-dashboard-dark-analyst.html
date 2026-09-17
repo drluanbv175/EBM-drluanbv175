@@ -223,6 +223,10 @@
   .flag{font-size:9px;font-weight:700;color:var(--g-low);border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.1);border-radius:4px;padding:1px 5px;margin-left:6px}
   .robmini{display:flex;gap:3px}.robmini i{width:11px;height:11px;border-radius:50%}
   .rl{background:var(--g-high)}.rs{background:var(--g-mod)}.rh{background:var(--g-vlow)}
+  .robnote{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);max-width:150px}
+  .robnote .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+  .robnote span.tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .robtext{font-size:11.5px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap}
 
   tr.exp td{padding:0;background:var(--bg-2);border-bottom:1px solid var(--line-2)}
   .exp-in{display:grid;grid-template-columns:1.1fr 1fr 1.2fr;gap:0;border-top:1px solid var(--line)}
@@ -463,6 +467,21 @@ const GRADE_META={high:['g-high','Cao',4],mod:['g-mod','TB',3],low:['g-low','Th�
 const DEC_META={apply:['d-apply','Áp dụng ngay'],consider:['d-consider','Cân nhắc'],notyet:['d-notyet','Chưa đủ']};
 const GROUP_META={'cao-tuoi':'Người cao tuổi','thai-ky':'Thai kỳ · phụ nữ có khả năng mang thai','tre-em':'Trẻ em · vị thành niên','ckd':'CKD','gan':'Bệnh gan','dtd':'Đái tháo đường','tim-mach':'Tim mạch','da-thuoc':'Đa thuốc'};
 const RM={l:['rl','✓'],s:['rs','!'],h:['rh','✕']};
+/* rob — thêm 16/09/2026, cùng khuôn evidence-workbench-template.html. Schema đòi object
+   {miền:'l'|'s'|'h'} (xem RM), nhưng dashboard thật (vd CKM_TimThanChuyenHoa 28/06) từng ghi
+   `rob` là CHUỖI VĂN XUÔI ("Mù đôi, phân bổ ngẫu nhiên che giấu, phân tích ITT — nguy cơ sai
+   lệch thấp."). Bản cũ luôn coi `rob` là object và lặp Object.values(e.rob)/Object.keys(e.rob)
+   — với chuỗi, mỗi KÝ TỰ trở thành một "mã miền" giả, RM[ký tự] undefined ⇒ TypeError ngay khi
+   đọc RM[r][0], làm SẬP render()/expandRow() cho TOÀN BỘ trang (không chỉ mục lỗi). robEntries()
+   chỉ trả về entries khi `rob` THỰC SỰ là object (không phải mảng/chuỗi/null) VÀ có ít nhất một
+   mã hợp lệ trong RM; mã lạ trong object bị bỏ qua (không giả '?') thay vì làm sập trang. Object
+   không còn mã hợp lệ nào, hoặc `rob` là chuỗi/kiểu khác ⇒ trả null — nơi gọi tự quyết định hiển
+   thị (chuỗi hiện nguyên văn, còn lại hiện '—'/thông điệp cũ). */
+function robEntries(rob){
+  if(rob==null||typeof rob!=='object'||Array.isArray(rob))return null;
+  const es=Object.entries(rob).filter(([,r])=>RM[r]);
+  return es.length?es:null;
+}
 const QUAL_STANDARD_GATES=[
   {label:'Câu hỏi có cấu trúc',status:'need',note:'Khai báo PICO/PECO/PIRD/PROGRESS trước khi sinh dashboard thật.'},
   {label:'Thứ bậc nguồn',status:'need',note:'Ghi rõ guideline/SR-MA/RCT/quan sát và lý do chọn nguồn.'},
@@ -676,7 +695,10 @@ function render(){
   arr.forEach(e=>{
     const dm=DESIGN_META[designFamily(e.design)],gm=GRADE_META[e.gradeLevel]||GRADE_META.na,dec=DEC_META[e.decision]||DEC_META.consider;
     const pips=Array.from({length:4},(_,i)=>`<span class="pip ${i<gm[2]?'on':''}"></span>`).join('');
-    const robm=e.rob?Object.values(e.rob).map(r=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join(''):'<span style="color:var(--faint);font-size:10px">—</span>';
+    const robEs=robEntries(e.rob);
+    const robm=robEs?robEs.map(([,r])=>`<i class="${RM[r][0]}" title="${RM[r][1]}"></i>`).join('')
+      :(typeof e.rob==='string'&&e.rob.trim())?`<span class="robnote"><span class="dot"></span><span class="tx" title="${escHtml(e.rob)}">${escHtml(e.rob)}</span></span>`
+      :'<span style="color:var(--faint);font-size:10px">—</span>';
     rows.push(`<tr class="main-row ${state.open===e.id?'open':''}" onclick="toggle('${escJs(e.id)}')">
       <td><span class="twist">▸</span></td>
       <td><div class="ttl">${escHtml(e.title)}${e.flag?`<span class="flag">⚑ ${escHtml(e.flag)}</span>`:''}<div class="sub">${escHtml(e.source)} · <span class="idtag">${escHtml(e.id)}</span>${e.pmid?` · PMID <span class="pmid">${escHtml(e.pmid)}</span>`:''}</div></div></td>
@@ -694,7 +716,10 @@ function expandRow(e){
   const FL=e.frameLabels||{P:'P',I:'I',C:'C',O:'O'};
   const picoRows=['P','I','C','O'].map(k=>{const d=(e.pico||{})[k]||['—','match'];return `<div class="pico-r"><span class="k k${k}">${escHtml(FL[k]||k)}</span><span class="v">${escHtml(d[0])} ${d[1]==='match'?'<span class="ok">✓</span>':'<span class="no">⚠</span>'}</span></div>`;}).join('');
   const f=e.effect, fSc=f?effectScale(f):'ratio';
-  const robFull=e.rob?Object.keys(e.rob).map(d=>{const r=RM[e.rob[d]];return `<div class="r"><span>${d}</span><i class="${r[0]}">${r[1]}</i></div>`;}).join(''):'<div class="r" style="color:var(--faint)">RoB 2 chỉ áp dụng cho RCT — không chấm cho guideline/tổng quan.</div>';
+  const robEsFull=robEntries(e.rob);
+  const robFull=robEsFull?robEsFull.map(([d,r])=>`<div class="r"><span>${escHtml(d)}</span><i class="${RM[r][0]}">${RM[r][1]}</i></div>`).join('')
+    :(typeof e.rob==='string'&&e.rob.trim())?`<div class="robtext">${escHtml(e.rob)}</div>`
+    :'<div class="r" style="color:var(--faint)">RoB 2 chỉ áp dụng cho RCT — không chấm cho guideline/tổng quan.</div>';
   const forestBox=(f&&f.hr!=null)?`<h5 style="margin-top:14px">⊞ Forest (${fSc==='difference'?'vạch 0 = không khác biệt':'vs ngưỡng 1.0'})</h5><div style="background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center">${forest(f,200,26)}<div style="font-size:9px;color:var(--faint);margin-top:4px;font-family:var(--mono)">${fSc==='difference'?'◄ ủng hộ điều trị · thang tuyến tính, vạch 0 · bất lợi ►':`◄ ủng hộ điều trị · ${FMIN} — 1.0 — ${FMAX} · bất lợi ►`}</div></div>`:'';
   return `<tr class="exp"><td colspan="7"><div class="exp-in">
     <div class="exp-col">
