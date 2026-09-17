@@ -270,8 +270,8 @@ def bh07_doc_secrets_ngoai_onedrive():
     Đây là phát hiện nghiêm trọng nhất ngày 12/08. Chốt canh: `app/config.py`
     phải đọc kho secrets NGOÀI OneDrive trước `.env` trong repo.
     """
-    t = (REPO / "medical-ebm-automation/app/config.py").read_text(encoding="utf-8",
-                                                                 errors="replace")
+    t = (_goc_mea() / "app/config.py").read_text(encoding="utf-8",
+                                                errors="replace")
     if ".ebm-secrets" not in t:
         return False, "config.py không còn đọc ~/.ebm-secrets — Windows sẽ chạy dữ liệu giả"
     i_sec, i_env = t.find(".ebm-secrets"), t.find('load_dotenv(".env"')
@@ -286,7 +286,7 @@ def bh08_khong_gop_khong_biet_voi_co_van_de():
     bị báo là trích dẫn ma. Báo động giả tệ hơn không kiểm: nó giết niềm tin vào
     cảnh báo thật.
     """
-    t = (REPO / "medical-ebm-automation/app/sources/pubmed.py").read_text(
+    t = (_goc_mea() / "app/sources/pubmed.py").read_text(
         encoding="utf-8", errors="replace")
     if "unknown_fetch_error" not in t:
         return False, "mất trạng thái 'unknown_fetch_error' — lại gộp KHÔNG BIẾT với CÓ VẤN ĐỀ"
@@ -2157,7 +2157,7 @@ def bh56_cong_cu_moi_phai_co_day():
     goc = REPO
     noi_tieu_thu = [goc / ".claude" / "agents" / "tra-cuu-chung-cu.md",
                     goc / ".claude" / "agents" / "tong-quan-y-van.md",
-                    goc / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
+                    _goc_mea() / "scripts" / "weekly_safety.sh",
                     Path.home() / ".claude" / "scheduled-tasks" / "goi-duyet-tuan-ebm"
                     / "SKILL.md",
                     # Bản chạy thật ở trên nằm NGOÀI OneDrive (machine-local) và
