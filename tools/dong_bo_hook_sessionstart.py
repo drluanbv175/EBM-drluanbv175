@@ -38,6 +38,23 @@ chối («untracked working tree file would be overwritten»). Cách xử lý M�
     mv .claude/settings.json .claude/settings.local.json && git pull
 Công cụ này phát hiện tình huống đó và in đúng lệnh trên, không tự dời file hộ (dời cấu
 hình của máy là việc bác sĩ phải thấy tận mắt).
+
+VÁ CÚ PHÁP 16/09/2026 (BH106) — `A && B || C` KHÔNG PHẢI if/else khi B tự trả mã khác 0
+có chủ ý. 8/10 lệnh trong `sync/hooks-sessionstart.json` dùng mẫu
+`command -v python3 >/dev/null 2>&1 && python3 X --im-khi-on || python X --im-khi-on`.
+Các công cụ `--im-khi-on` CỐ Ý trả mã 1/2 để báo «có việc/có lệch» (`dong_bo_skill.py` trả 1
+khi có skill cần đẩy; `tu_sua_chua.py` trả 2 khi còn việc cần bác sĩ) — nên `||` đọc nhầm mã
+đó thành «python3 lỗi» và CHẠY LẠI công cụ bằng `python`. Trên máy có cả hai lệnh: chạy 2 lần
+mỗi phiên (kể cả `tu_sua_chua.py --ap-dung`, vốn có ghi). Trên Mac không có lệnh `python`:
+chỉ in `command not found` ra stderr — dấu vết đã thấy ở transcript phiên resume 16/09/2026.
+Đã sửa TRỰC TIẾP trong `sync/hooks-sessionstart.json` (ngoại lệ có chủ ý với nguyên tắc «KHÔNG
+soạn tay» ở trên — đây là lỗi cú pháp shell CHUNG cho cả 8 lệnh, không phải nội dung nghiệp vụ
+riêng máy nào): chọn `PY=$(command -v python3 || command -v python)` MỘT LẦN rồi gọi `"$PY"`
+đúng một lần trong nhánh if/else lồng — đúng khuôn lệnh #1 (dong_bo_skill_claude_codex) vốn đã
+viết đúng từ đầu. Hàm `xuat()`/`ap_dung()` ở dưới KHÔNG đổi — bug nằm trong NỘI DUNG bản nguồn,
+không phải trong cơ chế export/apply. ⚠ Máy nào còn giữ bản CŨ trong `.claude/settings.local.json`
+phải `--ap-dung` để nhận bản vá TRƯỚC khi lỡ chạy `--xuat` lần nữa; `--xuat` từ máy chưa vá sẽ
+ghi bản lỗi đè lên bản đã vá trong git. Kiểm hồi quy: BH106 trong `tools/chot_hoi_quy_bai_hoc.py`.
 """
 from __future__ import annotations
 

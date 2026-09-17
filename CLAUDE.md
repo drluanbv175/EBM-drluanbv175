@@ -1490,6 +1490,64 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   chỉ ra cách sửa. Test: `pytest tests/test_check_citation_retraction.py` (27 test).
   **Bài học chung: báo động giả còn tệ hơn không kiểm, vì nó làm mất niềm tin vào cảnh báo thật.**
   Mỗi khi công cụ báo bất thường HÀNG LOẠT, kiểm chứng chéo trước khi tin.
+  ⚠️ **ĐÍNH CHÍNH 16/09/2026 — vế "khi không có API key" ở trên KHÔNG được coi là "có key thì hết
+  chặn".** Đo trực tiếp trên máy Windows này: sau khi thêm `NCBI_API_KEY` thật (xác nhận đã nạp đúng
+  36 ký tự vào `settings.ncbi_api_key`) và bật `ENABLE_...`, `run.py test-live pubmed` vẫn lỗi Y HỆT
+  (`Expecting value: line 1 column 1 (char 0)`, 2 lần thử liên tiếp cách nhau vài phút) trong khi
+  CÙNG LÚC ĐÓ Scopus và CORE (hai domain khác) gọi thành công bình thường qua cùng mạng — tức chặn
+  nhắm riêng domain `eutils.ncbi.nlm.nih.gov`, không phải lỗi mạng chung, và KHÔNG hết khi thêm key.
+  Không đủ dữ kiện để nói "key vô ích" (có thể mạng bệnh viện chặn ở tầng thấp hơn cả logic xác thực
+  của NCBI — giống ca Scopus+VPN/Cloudflare ở mục dưới — hoặc IP đã bị đánh dấu từ trước, key mới cần
+  thời gian mới có hiệu lực). Ghi lại làm dấu vết đo được, không suy diễn xa hơn; chuỗi rút bài 3 tầng
+  vẫn không bị ảnh hưởng vì Europe PMC/Retraction Watch offline là tầng dự phòng độc lập với NCBI.
+  🔎 **TÌM RA NGUYÊN NHÂN CHÍNH XÁC cùng ngày 16/09/2026** — gọi trực tiếp bằng `requests` (không qua
+  lớp retry của `HttpClient`) để xem đúng response: NCBI **CHỦ ĐỘNG CHUYỂN HƯỚNG (redirect)** mọi
+  request `eutils.ncbi.nlm.nih.gov` sang `https://misuse.ncbi.nlm.nih.gov/error/abuse.shtml?orig_args=
+  /entrez/eutils/esearch.fcgi` — đây là **trang cảnh báo lạm dụng CHÍNH THỨC của NCBI**, không phải
+  chặn mạng bệnh viện hay lỗi code. Nghĩa là IP dùng chung của mạng này đã bị NCBI đánh dấu vượt
+  ngưỡng tần suất truy cập TỪ TRƯỚC (rất có thể do nhiều máy/nhiều phiên trong viện cùng gọi
+  E-utilities suốt thời gian dài, cộng dồn qua IP NAT chung) — và việc thêm `NCBI_API_KEY` HÔM NAY
+  không xoá được nhãn "misuse" đã gắn từ trước đó trên phía NCBI. `misuse.ncbi.nlm.nih.gov` (đích
+  chuyển hướng) bản thân nó cũng không phân giải được lúc đo (`NameResolutionError` tầng thứ hai) nên
+  không đọc được nguyên văn thông điệp của họ. **Không có gì trong repo có thể tự sửa việc này** —
+  đây là trạng thái phía SERVER của NCBI, không phải cấu hình máy. Đường xử lý thực tế: (a) chờ (nhãn
+  misuse thường có thời hạn, tự hết sau một khoảng không hoạt động), hoặc (b) liên hệ NCBI qua địa chỉ
+  ghi trên chính trang abuse.shtml (đọc được khi DNS cho phép) để xin gỡ, hoặc (c) chấp nhận PubMed
+  tạm thời chỉ dùng được qua Europe PMC (đã có sẵn, đang phủ đủ metadata + kiểm rút bài Tầng 2).
+
+  🔧 **BUG THẬT ĐÃ VÁ CÙNG NGÀY 16/09/2026 — không gỡ được chặn NCBI, nhưng dừng lãng phí ~46
+  giây MỖI TRUY VẤN khi nó xảy ra.** `misuse.ncbi.nlm.nih.gov` (đích chuyển hướng) HÔM NAY LẠI
+  phân giải được (khác câu "không phân giải được lúc đo" ở trên — DNS chập chờn theo thời điểm,
+  không phải bất biến), đọc được nguyên văn trang: *"Your access to the NCBI website... has been
+  temporarily blocked due to a possible misuse/abuse situation... please have your system
+  administrator contact info@ncbi.nlm.nih.gov"* — xác nhận lại: chặn IP phía SERVER, gỡ được
+  bằng cách liên hệ `info@ncbi.nlm.nih.gov`, KHÔNG có cách nào trong repo tự gỡ được.
+  **Điều CÓ vá được:** trang chặn trả **HTTP 200** (không phải 4xx/5xx) kèm thân HTML thay vì
+  JSON — `app/utils/http.py::HttpClient._request()` vì thế KHÔNG coi đây là lỗi vĩnh viễn; nó
+  chỉ bị bắt muộn ở `resp.json()` (ValueError) rồi bị đối xử như lỗi TẠM THỜI, retry đủ
+  `http_max_retries` (mặc định 4) lần với backoff mũ — ~46 giây bị lãng phí CHO MỖI truy vấn dù
+  chặn này không bao giờ tự hết bằng cách gọi lại. Với pipeline gọi hàng chục truy vấn PubMed
+  liên tiếp (CLINICAL_AREAS) hoặc `so_xac_minh_nguon.py` quét hàng trăm PMID, hành vi cũ có thể
+  ngốn hàng chục phút vô ích trước khi Europe PMC/Retraction Watch được thử.
+  **Đã vá:** thêm một nhánh phát hiện ĐÍCH DANH `urlparse(resp.url).netloc == "misuse.ncbi.nlm.nih.gov"`
+  ngay sau khi có response — raise ngay, KHÔNG retry, thông điệp lỗi nói rõ đây là chặn phía
+  server (không phải lỗi mạng) kèm địa chỉ liên hệ gỡ chặn. **Đo trước/sau:** một lượt
+  `run.py test-live pubmed` đi từ **~53 giây → 1,3 giây**; chuỗi kiểm rút bài 3 tầng (PMID
+  9500320/Wakefield, tầng 1 NCBI câm → tầng 2 Europe PMC xác nhận `retracted`) đi từ ước tính
+  ~90+ giây/PMID (2 lệnh efetch × ~46s) xuống **15,5 giây trọn chuỗi**. Kiểm hồi quy:
+  `tests/test_http_ncbi_misuse_block_fast_fail_20260916.py` (7 test) + toàn bộ
+  `tests/test_http_*.py` hiện có (47 test, 0 hồi quy) — mutation-tested (tắt nhánh phát hiện ⇒
+  5/7 test đỏ đúng chỗ, phục hồi ⇒ xanh lại). Một bẫy đã gặp khi viết: nhánh mới đọc `resp.url`
+  trần làm vỡ TOÀN BỘ test cũ dùng `_FakeResponse` tối giản (không có `.url`) — sửa bằng
+  `getattr(resp, "url", "")`, đúng bài học nền "response giả trong test không nhất thiết có mọi
+  thuộc tính của `requests.Response` thật".
+  **Scopus (Elsevier) — đã kiểm sống, KHÔNG có bug, không cần vá:** `run.py test-live scopus`
+  trả dữ liệu thật (`live=true`, DOI thật, không phải mock) — `SCOPUS_API_KEY` +
+  `ENABLE_SCOPUS=true` trong `~/.ebm-secrets/medical-ebm-automation.env` đã đúng từ trước.
+  **Giới hạn còn lại, nói rõ:** bản vá này KHÔNG khôi phục được kết nối NCBI trực tiếp — chỉ làm
+  hệ THẤT BẠI NHANH và TỰ ĐỘNG chuyển sang nguồn dự phòng thay vì treo. Muốn PubMed trực tiếp
+  (không qua Europe PMC) hoạt động lại, vẫn cần bác sĩ/quản trị mạng liên hệ NCBI như đã ghi ở
+  trên, hoặc chờ nhãn misuse tự hết.
 
   ✅ **HẾT PHỤ THUỘC NCBI API KEY (14/08/2026) — kiểm rút bài nay đi qua CHUỖI 3 TẦNG.**
   Ghi chú cũ ở đây nói "NCBI chặn ⇒ chưa tra cứu rút bài thật được, phải có API key" — **nay
