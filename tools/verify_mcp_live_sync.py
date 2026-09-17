@@ -37,7 +37,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MIRROR = ROOT / "medical-ebm-automation"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_mls", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+MIRROR = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 TUNNEL_LABEL = "vn.drluan.ebm-copilot-tunnel"
 WATCH_LABEL = "vn.drluan.ebm-mcp-code-watch"
 WATCHER_SOURCE = MIRROR / "tools/watch_restart_ebm_tunnel.sh"

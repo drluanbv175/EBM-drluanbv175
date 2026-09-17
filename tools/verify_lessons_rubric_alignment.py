@@ -22,7 +22,11 @@ from typing import Iterable, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 RUBRIC = ROOT / ".claude" / "agents" / "_RUBRIC-EVALUATE-CUNG-QA-GATE.md"
 TAXONOMY = ROOT / ".claude" / "agents" / "_LESSONS-LEDGER-TAXONOMY.md"
-RETRY_LOOP_DIR = ROOT / "medical-ebm-automation" / "tools"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_lra", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+RETRY_LOOP_DIR = (_bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")) / "tools"
 DEFAULT_MD = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.md"
 DEFAULT_JSON = ROOT / "reports" / "LESSONS_RUBRIC_ALIGNMENT.json"
 
