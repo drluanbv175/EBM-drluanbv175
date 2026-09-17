@@ -4023,8 +4023,19 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         P = Path(td) / "du-an"
         home = Path(td) / "home"
         shim = Path(td) / "shim"
-        for d in (P / "sync/skills/skill-thu", P / "tools", home, shim):
+        for d in (P / "sync/skills/skill-thu", P / "tools", P / ".claude/hooks", home, shim):
             d.mkdir(parents=True)
+        # SỬA 17/09/2026: `.claude/hooks/session-start.sh` từ 9420883 tự định vị gốc
+        # qua BASH_SOURCE[0] (chống $PWD sai khi phiên nhiều-repo trỏ CLAUDE_PROJECT_DIR
+        # lệch) — nên nếu vẫn gọi bản THẬT (nằm trong REPO) với `cwd=P`, script sẽ tự
+        # định vị VỀ LẠI REPO thay vì P, bỏ qua CLAUDE_PROJECT_DIR=P mà fixture set bên
+        # dưới, và chạy tools/tu_sua_chua.py + chot_hoi_quy_bai_hoc.py THẬT của REPO —
+        # đúng dẫn tới đệ quy (chốt tự gọi lại chính nó) và treo tới hết timeout 120s.
+        # Copy script vào ĐÚNG vị trí trong P để tự định vị resolve về P như một hook
+        # thật sự nằm trong repo đó — khớp đúng cách nó chạy trong đời thật, không phải
+        # một mẹo giả lập nữa.
+        shutil.copy2(REPO / ".claude/hooks/session-start.sh", P / ".claude/hooks/session-start.sh")
+        (P / ".claude/hooks/session-start.sh").chmod(0o755)
         (P / "sync/skills/skill-thu/SKILL.md").write_text(
             "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
@@ -4059,7 +4070,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
         (P / "medical-ebm-automation").mkdir()
-        r = subprocess.run([bash, str(hook)], cwd=P, env=env,
+        r = subprocess.run([bash, str(P / ".claude/hooks/session-start.sh")], cwd=P, env=env,
                            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} ở chế độ remote: {(r.stdout + r.stderr)[-300:]}"
@@ -4087,7 +4098,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④b bản trần ⇒ chốt bài học PHẢI được gọi
         (P / "medical-ebm-automation").rmdir()
-        subprocess.run([bash, str(hook)], cwd=P, env=env,
+        subprocess.run([bash, str(P / ".claude/hooks/session-start.sh")], cwd=P, env=env,
                        capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if not dau.exists():
             return False, "bản trần mà hook không gọi chốt bài học — cloud mất giác quan hồi quy"
