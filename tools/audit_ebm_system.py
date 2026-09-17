@@ -28,7 +28,11 @@ AGENTS_CODEX = ROOT / ".Codex" / "agents"
 DASH = ROOT / "EBM-Dashboards"
 MASTER = ROOT / "EBM_MASTER"
 HUB_DASH = MASTER / "WEB_DASHBOARDS"
-REPO = ROOT / "medical-ebm-automation"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_aes", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+REPO = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 CHATGPT_EXPORT = ROOT / "CHATGPT_EXPORT"
 VENV_PY = (
     Path.home() / ".ebm-venv" / "Scripts" / "python.exe"

@@ -37,8 +37,13 @@ from typing import Dict, List, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS = ROOT / ".claude" / "agents"
 TOOLS = ROOT / "tools"
-MT = ROOT / "medical-ebm-automation" / "tools"
-TESTS = ROOT / "medical-ebm-automation" / "tests"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_aas", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
+MT = _GOC_MEA / "tools"
+TESTS = _GOC_MEA / "tests"
 MASTER = ROOT / "EBM_MASTER"
 
 # (ok, detail) — một probe khách quan.

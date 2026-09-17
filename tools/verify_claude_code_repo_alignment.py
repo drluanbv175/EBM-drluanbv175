@@ -40,9 +40,14 @@ ROOT_DOCS = {
     "AGENTS.md": ROOT / "AGENTS.md",
     "CLAUDE.md": ROOT / "CLAUDE.md",
 }
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_vccra_early", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 MEDICAL_DOCS = {
-    "medical-ebm-automation/AGENTS.md": ROOT / "medical-ebm-automation" / "AGENTS.md",
-    "medical-ebm-automation/CLAUDE.md": ROOT / "medical-ebm-automation" / "CLAUDE.md",
+    "medical-ebm-automation/AGENTS.md": _GOC_MEA / "AGENTS.md",
+    "medical-ebm-automation/CLAUDE.md": _GOC_MEA / "CLAUDE.md",
 }
 
 ROOT_CONTRACT_MARKERS = [
@@ -155,8 +160,15 @@ def _thieu_medical_ebm_automation() -> bool:
     Ủy quyền cho ban_sao_tran() (như bản cũ) khiến test_medical_repo_docs_keep_
     claude_code_completion_contract regressed từ PASS sang NGOAI-PHAM-VI trên cloud dù
     medical-ebm-automation/ CÓ MẶT và đọc được thật — đúng loại lỗi mà chính bản vá
-    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py)."""
-    return not (ROOT / "medical-ebm-automation").exists()
+    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py).
+
+    VÁ 17/09/2026 (cascade duong_goc): bản 09/09 ở trên tự SỬA một lỗi cloud-aware
+    bằng cách quay lại `.exists()` LỒNG THUẦN TUÝ — đúng lớp lỗi «sibling checkout»
+    mà chính duong_goc() (tools/ban_sao_tran.py) sinh ra để giải quyết. Trên cloud
+    với bố cục ANH EM (repo.parent/medical-ebm-automation), hàm này sẽ báo «thiếu»
+    dù repo có mặt và đọc được — lặp lại chính triệu chứng đã ghi trong docstring.
+    Dùng duong_goc() (dò cả lồng lẫn anh em) thay vì tự ghép đường dẫn."""
+    return _bst_mea.duong_goc("medical-ebm-automation", ROOT) is None
 
 
 def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:

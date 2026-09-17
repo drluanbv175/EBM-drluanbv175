@@ -58,7 +58,11 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 REPO = Path(__file__).resolve().parents[1]
-PROJ = REPO / "medical-ebm-automation"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_tkd", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+PROJ = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
 KHOA = REPO / ".tu-khoi-dong.json"
 CONG_TAC_TAT = REPO / ".tu-khoi-dong-tat"
 NHAT_KY = PROJ / "data/archive/tu_khoi_dong.log"

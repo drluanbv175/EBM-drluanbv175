@@ -241,7 +241,11 @@ def _pmc_cua(pmid: str) -> str | None:
 
 
 def _nap_gom():
-    duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_ngp", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    duong = (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "gom_toan_van_oa.py"
     sp = importlib.util.spec_from_file_location("gom_tv_gl", duong)
     m = importlib.util.module_from_spec(sp)
     sys.modules["gom_tv_gl"] = m
