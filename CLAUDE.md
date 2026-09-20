@@ -1670,6 +1670,11 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   thông điệp: bài THẬT bị rút phải giữ câu «không dùng kết luận»). 4 bản `verify_dashboard.py` khớp byte.
   ⚠️ Việc còn lại của bác sĩ cho ITEM-11: mở hai Author Correction (10.1016/j.cjca.2025.12.030 ·
   10.1016/j.cjca.2026.03.026) — máy KHÔNG đọc được (trả phí) — rồi quyết định giữ/hạ và ký.
+  🧾 **Mẫu chờ ký sinh tự động (20/09/2026):** `python3 tools/mau_ky_rut_bai.py` ghi
+  `EBM-Dashboards/rut-bai-da-xem-xet.cho-ky.json` (KHÁC tệp cổng đọc) — máy điền `khoa` + `thong_bao_ids`,
+  để TRỐNG `da_xem_boi`/`ngay`/`ly_do`; bảng `tu_de_xuat_viec` tự hiện dòng 👤 khi còn mục chờ. Công cụ
+  KHÔNG BAO GIỜ ghi `rut-bai-da-xem-xet.json` (test `tools/test_mau_ky_rut_bai.py`, đột biến «ghi thẳng
+  vào sổ cổng» bị bắt): chép nguyên xi mẫu trống thì cổng vẫn chặn.
 
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và

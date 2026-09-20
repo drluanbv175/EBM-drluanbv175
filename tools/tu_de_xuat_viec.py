@@ -178,6 +178,14 @@ def main() -> int:
     if re.search(r"ĐÃ BỊ RÚT\s*:\s*[1-9]", out):
         de_xuat.append((0, "👤", "CÓ nguồn rút-bỏ-hẳn đang được trích — xử lý trước "
                         "khi dùng gói chứa nó", "python3 tools/so_xac_minh_nguon.py --bao-cao"))
+    # ①-bis (BH109, 20/09/2026): nguồn bị cờ «rút bài» mà thông báo là BẢN ĐÍNH CHÍNH bị rút. Cổng vẫn
+    # CHẶN; chỉ bác sĩ ký được. Máy đã dựng mẫu chờ ký — dòng này để việc đó tự hiện ra, khỏi phải
+    # đọc terminal rồi tự chép khoá + tập thông báo (chép sai vân tay thì miễn trừ im lặng vô hiệu).
+    out = _chay([sys.executable, "tools/mau_ky_rut_bai.py", "--dem"]).strip()
+    if out.isdigit() and int(out):
+        de_xuat.append((0, "👤", f"{out} nguồn bị cờ «rút bài» nhưng thông báo là BẢN ĐÍNH CHÍNH bị rút — "
+                        "đọc thông báo + Author Correction rồi ký hoặc hạ mục (máy đã dựng mẫu chờ ký, "
+                        "KHÔNG ký thay)", "python3 tools/mau_ky_rut_bai.py"))
 
     # ② gradeBy tồn kho — ĐÓNG 16/08 theo duyệt bác sĩ: mọi đường máy đã vét
     # (nhóm tổ chức · tra sống pubtype · toàn văn PMC-OA); 'na' là khai báo
