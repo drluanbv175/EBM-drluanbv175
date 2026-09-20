@@ -44,6 +44,10 @@ cũng thiết kế tương tự". SerpApi Scholar được HẠ từ nguồn qu�
   khi khớp bản ghi thật ở Crossref/PubMed (nghiêm ngặt: tiêu đề, năm, tác giả đầu, token phân biệt).
 - Consensus: trần tháng bền 10 và 5/lượt chạy (gói Free 30/tháng dùng chung MCP). Scite: chỉ lớp xác minh công khai,
   không khoá. `HttpClient._redact` mở rộng che `x-api-key`/`Authorization`.
+- Hoàn thiện cùng ngày: trần THÁNG bền cho SerpApi (`SERPAPI_MAX_CALLS_PER_MONTH`, mặc định 200/250; tệp
+  `data/raw/_state/serpapi_usage.json`, fail-closed, chia sẻ giữa ingest/dossier/manager) — trước đó chỉ có trần theo
+  TIẾN TRÌNH nên N tiến trình = N lần ngân sách; `.env.example` đã có đủ dòng mẫu; ghim `anyio 4.14.2` và
+  `soupsieve 2.9.0` trong `requirements.lock.txt` (đóng 5 cảnh báo Dependabot: 1 nghiêm trọng, 1 cao, 3 trung bình).
 - Kiểm: 98 + 230 + 156 + 86 + 67 test mới đạt, bộ test toàn engine 5549 đạt / 0 đỏ (sau khi khôi phục 194 file
   `sync/skills/**` bị thiếu trong working tree — không liên quan mã này). **Kiểm THẬT 20/09/2026:** SerpApi chạy
   được (5 kết quả thật; khoá bị dán đôi từng gây 401 — nút nhập khoá nay tự gộp); lớp xác minh Crossref/Scite
