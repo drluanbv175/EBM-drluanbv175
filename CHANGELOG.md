@@ -34,6 +34,10 @@ này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi
 - `README.md` (engine) — thêm 1 dòng nguồn SerpApi ở mục tiêu và 1 dòng biến môi trường
   `SERPAPI_API_KEY` / `ENABLE_SERPAPI_SCHOLAR` / `SERPAPI_MAX_CALLS_PER_RUN` ở bảng `.env`.
 
+### 2026-09-20 — Lane guideline nối trực tiếp, miễn phí (engine): Europe PMC, WHO IRIS, kcb.vn, hiệp hội trên tạp chí
+
+Theo yêu cầu «kết nối các nguồn guideline chưa có connector». 33 lane mới (33/33 trả mục thật): Europe PMC (Practice Guideline toàn cầu, USPSTF, WHO, CDC MMWR R&R — có PMID, độc lập NCBI), WHO IRIS (OAI-PMH chính thức), Bộ Y tế VN (kcb.vn/phac-do), Crossref theo tiêu đề cho 21 hiệp hội (ACC/AHA, ESC, ADA, IDSA, EULAR, AASLD, KDIGO, ATS, ERS, BTS, AGS, ACP, ASCO, ESMO, ASH, AGA, ACG, AAN, ACR) và RSS trực tiếp GOLD/GINA/KDIGO/EASL/AASLD/CDC. Coverage báo phủ gián tiếp ở `healthy_via_lane`, liệt kê `not_connected`. Chưa có: NICE (API chỉ cấp cho tổ chức) và USPSTF API (xin duyệt qua email — thư nháp ở docs). Lane khám phá theo tiêu đề, không phải nguồn đã duyệt.
+
 ### 2026-09-20 — Phủ nguồn: 31 feed tạp chí/guideline qua Crossref, nút CORE/Epistemonikos/NICE, thư nháp xin quyền (engine)
 
 Sau đánh giá hệ: chỉ 15/29 feed RSS trả mục thật. Engine thêm chế độ Crossref theo ISSN cho `RSSFeedClient` — 14 feed lỗi (họ BMJ 429, Springer 406, `bmj_recent` 403) chuyển sang Crossref + 17 tạp chí nơi hiệp hội đăng guideline; đo thật 31/31 trả bài thật. Thêm nút `Nhap Khoa CORE/Epistemonikos/NICE.command` và mở rộng `Bat Tat SerpApi Du Phong.command` (mã o/e/n). Thư nháp xin token Epistemonikos, tư vấn NICE (API chỉ cấp cho tổ chức), gỡ chặn NCBI: `medical-ebm-automation/docs/xin-cap-quyen-nguon-chung-cu.md`.
