@@ -74,10 +74,13 @@ def main() -> int:
         du = json.loads(Path(a.tu_json).read_text(encoding="utf-8"))
     else:
         out = Path(tempfile.mkdtemp()) / "quet.json"
-        print(f"Đang quét {a.ngay} ngày gần nhất (gọi mạng, có thể mất vài phút)…")
+        # `--khong-cursor` (T1-02, 20/09/2026): cửa sổ «75 ngày» phải ĐÚNG 75 ngày, không phụ thuộc/không ghi đè
+        # con trỏ tăng dần dùng chung với tác vụ tuần `goi-duyet-tuan-ebm`. Trước đó mỗi lần chạy A3 «tiêu thụ»
+        # ứng viên (cursor nhích về hôm nay, đo 17/09: 36 chủ đề) mà kết quả bị vứt vào thư mục tạm không ai đọc.
+        print(f"Đang quét {a.ngay} ngày gần nhất (gọi mạng, có thể mất vài phút) — báo cáo: {out}")
         r = subprocess.run(
             [sys.executable, str(DASH / "tools" / "surveillance_scan.py"),
-             "--days", str(a.ngay), "--max", str(a.max),
+             "--days", str(a.ngay), "--max", str(a.max), "--khong-cursor",
              "--json-report", str(out), "--report", str(out.with_suffix(".md"))],
             capture_output=True, text=True, encoding="utf-8", errors="replace")
         if not out.exists():

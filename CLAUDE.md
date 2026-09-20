@@ -1676,6 +1676,49 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   KHÔNG BAO GIỜ ghi `rut-bai-da-xem-xet.json` (test `tools/test_mau_ky_rut_bai.py`, đột biến «ghi thẳng
   vào sổ cổng» bị bắt): chép nguyên xi mẫu trống thì cổng vẫn chặn.
 
+  🧭 **KHẢO SÁT ĐIỀU PHỐI 20/09/2026 (workflow 5 tầng chỉ-đọc + 1 phản biện; BH110/BH111).** Kết luận có số đo, KHÔNG phải
+  cảm giác. **ĐÍNH CHÍNH một khẳng định của chính tôi (audit/11 §5 bản đầu):** «5 chủ đề lâu nhất không có mục trong
+  `watchlist.json`» là SAI với 3/5 — `BienChungThanKinh`/`AnToanThuoc`/`BenhThanMan` ĐÃ ánh xạ sang watchlist trong
+  `giam-sat-chu-de.json`; 2/5 (`Uptodate`, `W24`) khai `khong_can` (bản tin tuần gộp). Lỗi thật: orchestrator KHÔNG đọc ánh xạ đó.
+  **Đã sửa (có test + chốt):** (1) `tools/chu_de_resolver.py` — MỘT cửa phân giải tên lát cắt/chủ đề gốc/tên watchlist/chuỗi con
+  (gấp `đ→d`, chỉ tin ánh xạ NGƯỜI khai, không đoán); `ops/orchestrator.py` viết lại: A2 luôn nhận TÊN WATCHLIST, lưu ứng viên
+  ở `logs/<run>.A2-*.{md,json}`, A3 (quét toàn kho ~70 phút, từng nuốt cursor 36 chủ đề) chỉ chạy khi `--uu-tien`, mã thoát phân
+  loại THEO BƯỚC (A2 rc=2 tham số ≠ hạ tầng; A4 rc=2 = nguồn ĐÃ BỊ RÚT, không phải mạng; sai tên ⇒ 64), lát cắt độc lập
+  (B2 chặn X ⇒ chỉ bỏ B4 của X), `--resume` giữ cờ cũ, timeout từng bước, chế độ lô `--cu-nhat N` (trần 8), phiếu
+  `logs/<run>.phieu.md` có lệnh `/cap-nhat-chung-cu` cụ thể hoặc dòng 👤 «ký/hạ» cho gói chỉ chờ chữ ký. (2) `tools/kiem_lich_nen.py` +
+  `sync/lich-nen-ky-vong.json` — CẢM BIẾN NGƯỜI CHẾT theo TỪNG kỳ (chạy tay chen giữa không che kỳ lỡ): đo thật ra đúng ca
+  14/09 («goi-duyet» thiếu `queue/tuan-2026-W38.md` 🔴; «thu-thap» chỉ có lượt trễ 16/09 🟠). (3) Hòm thư: `dung_hom_thu.doc_canh_bao()`
+  đọc khuôn `alerts/` hiện hành (bộ đọc cũ NUỐT 12 bullet «CỔNG QUÉT FAIL» 17/09); nhãn 🛎 (máy làm được nhưng chưa ai chạy) luôn hiện
+  ở hòm thư — lỡ lịch NẶNG từng bị gán 🤖 nên bị lọc mất. (4) `tu_de_xuat_viec`: in «Giác quan đo được M/N», KHÔNG in xanh «đủ rồi»
+  khi còn giác quan chết. (5) `kiem_do_tuoi_chung_cu` loại bản tin gộp `khong_can` khỏi «lâu nhất»/ngưỡng 120 ngày (từ ~06/10 sẽ
+  nhắc mỗi phiên một mục không bao giờ gỡ được). (6) `trinh_muc_can_duyet` (B5) không báo xanh khi còn gói chờ ký. (7) Cổng miễn trừ
+  rút bài từ chối chuỗi giữ chỗ/«điền cho có» (T4-03). (8) `tools/orchestrator/intent.py`: câu gõ KHÔNG dấu dùng bảng đã gấp dấu
+  (7/7 câu không dấu từng rơi `unknown`, kể cả ca cần sàng lọc cờ đỏ) + 5 năng lực mới có cửa vào (RxNorm/EMA, nguồn bị rút, làm mới chứng
+  cứ, độ tươi thang điểm, lịch nền). (9) `uu_tien_cap_nhat` thêm `--khong-cursor`; **đã KHÔI PHỤC** cửa sổ quét bị A3 nuốt (36 chủ đề
+  từ 17/09 về 07/09, sao lưu `.quet-cursor.json.bak-20260920-truoc-khoi-phuc-A3`) để tác vụ tuần 21/09 quét lại khoảng đó.
+  ⚠️ **Sai sót của chính tôi, ghi để không lặp:** khi tạo lại tác vụ `goi-duyet-tuan-ebm` tôi chép nguyên `SKILL.md` runtime CŨ,
+  trong khi bản git đã có mẫu chính thức 12/09 + cổng `kiem_mau_the_chung_cu_tuan` — đã khôi phục từ `sync/scheduled-tasks/` (README
+  của thư mục đó ghi đúng chiều). Luật: khôi phục tác vụ lịch phải chép từ NGUỒN GIT, không chép lại bản runtime.
+  🔎 **VÒNG PHẢN BIỆN ĐỐI KHÁNG SAU KHI DỰNG (20/09/2026 tối) — tự tìm ra 40+ lỗi của chính bản vá, đã vá phần lớn.** Nổi bật:
+  (a) **cổng miễn trừ BH109 bị lách** bằng giá trị «đã đọc»/«N/A»/khoảng trắng/ngày tương lai/mẫu `<tên>` — nay `_khai_that_su` đòi nội dung
+  thật (≥ 2 từ với tên, ≥ 20 ký tự khác nhau, ngày ≤ hôm nay); bản sửa đầu **chặn oan ký hợp lệ** vì `_GIU_CHO_KY` quá rộng — đã thu hẹp
+  (BH109 nay có ca «lý do thật PHẢI qua»). (b) **orchestrator**: tên gõ lệch → rc 64 kèm «Có phải»; chuỗi con < 4 ký tự không còn coi là khớp
+  duy nhất; nhiều mục khớp KHÔNG truyền chuỗi thô cho A2 (bộ khớp của A2 khác — «dau» khớp 4 mục ở resolver, 0 ở A2); lỗi nạp kho/ánh xạ
+  ⇒ rc 2 «HẠ TẦNG» thay vì đoán rồi in «CHƯA có dashboard» sai; `--resume` nay nhớ CẢ lệnh (`--online`) + dấu mtime dashboard nên nâng cờ
+  hoặc dashboard đổi ⇒ chạy lại, đọc lại ứng viên A2 từ JSON (không rơi thành «sạch»), không ghi đè phiếu lượt trước; B1 «chưa có
+  dashboard» vào phiếu + kết luận; thiếu tệp ⇒ «lệnh sai», không đọc thành «nguồn bị rút»; cờ xung đột (`--cu-nhat 0`, `--cu-nhat`+`--topic`)
+  bị từ chối; B2 offline được NÓI RA. `main()` nay có test thật (đường khoá/log/phiếu/mã thoát/resume) — trước đó 29 test + BH96/BH110 xanh
+  trong khi 14 đột biến của `main()` sống sót; 8 phép đột biến mới đều đỏ đúng chỗ (một phép sống sót lần đầu vì test chỉ kiểm chuỗi
+  đã có ở lượt 1 — siết bằng cách đọc RIÊNG phần phiếu của lượt resume). (c) **kênh cảnh báo**: `doc_canh_bao` nay nối bullet nhiều dòng
+  (cảnh báo 07/09 dài 12 dòng từng chỉ lấy dòng đầu — mất số đo và «việc của bác sĩ»); `tu_khoi_dong` in cảnh báo lịch lỡ kỳ ngay lúc mở
+  phiên (đo thật: kỳ 14/09 `goi-duyet` **chưa có** `queue/tuan-2026-W38.md`, kỳ `thu-thap` chạy trễ 16/09); dòng «rút-bỏ-hẳn» của
+  `tu_de_xuat_viec` trừ theo TỔNG số đính chính bị rút (`mau_ky_rut_bai --dem-tat-ca`) để ký xong không sinh báo động giả.
+  (d) **router `intent.py`**: gấp dấu chỉ theo ranh giới từ, va chạm «có mẫu/có đỏ» khi không dấu, NFC, cue rút bài không bắt «retraction».
+  **CHƯA làm, cần bác sĩ hoặc phiên khác** (đã nêu trong báo cáo khảo sát): nối hook `UserPromptSubmit` cho router (cấu hình chạy mỗi lượt);
+  chạy `dong_bo_hook_sessionstart.py --ap-dung` (hook Mac còn mẫu cũ `&&…||` chạy 2 lần); ký sổ miễn trừ bằng Ed25519 (P-06);
+  sửa `weekly_safety.sh`/`monthly_update.sh` để lỗi bước phụ tự sinh cảnh báo (T2-10/T2-11, nằm trong engine); đổi ESD05 sang đòi dấu vết chạy
+  (T2-04); bộ câu held-out cho router (T3-02); doctrine Annex 2 còn ở 2 file agent (P-09); khoá tu_khoi_dong chưa xét host (P-04).
+
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và
   **cam "Bản khác cùng chủ đề đang kết luận ngược"**. Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận —

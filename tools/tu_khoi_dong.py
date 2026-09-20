@@ -243,6 +243,29 @@ def phong(ma: str) -> tuple[bool, str]:
     return True, f"đã phóng ở nền (pid {p.pid}), ghi vào {NHAT_KY.relative_to(REPO)}"
 
 
+def _canh_lich_nen() -> None:
+    """In cảnh báo khi tác vụ lịch nền LỠ kỳ (dấu vết đầu ra không có) — nối cảm biến `kiem_lich_nen` vào lúc mở phiên.
+
+    Trước đó cảm biến chỉ nằm trong `tu_de_xuat_viec` (chỉ chạy khi có người hỏi «còn gì để làm») nên tuần 14/09 lỡ
+    lịch mà lúc mở phiên không ai nói gì. Lỗi của chính cảm biến được nói ra (KHÔNG im lặng) nhưng không bao giờ
+    làm hỏng việc phóng giám sát; không kết luận «ổn» khi không đo được.
+    """
+    cong_cu = REPO / "tools" / "kiem_lich_nen.py"
+    if not cong_cu.exists():
+        return
+    try:
+        r = subprocess.run([sys.executable, str(cong_cu), "--im-khi-on"], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=30)
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"⚠ Cảm biến lịch nền KHÔNG chạy được ({type(exc).__name__}) — không biết tác vụ nền có lỡ kỳ không.")
+        return
+    if r.returncode not in (0, 1):
+        print(f"⚠ Cảm biến lịch nền lỗi (mã {r.returncode}) — không biết tác vụ nền có lỡ kỳ không.")
+        return
+    if (r.stdout or "").strip():
+        print(r.stdout.rstrip())
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Tự khởi động giám sát chứng cứ")
     ap.add_argument("--phong", action="store_true", help="thật sự phóng ở nền")
@@ -260,6 +283,7 @@ def main() -> int:
         CONG_TAC_TAT.unlink(missing_ok=True)
         print("✓ ĐÃ BẬT lại tự khởi động.")
         return 0
+    _canh_lich_nen()  # chỉ ĐỌC, luôn chạy — cảm biến người chết không phụ thuộc công tắc phóng (P2-01)
     if CONG_TAC_TAT.exists():
         if not a.im_khi_on:
             print("⏸ Tự khởi động ĐANG TẮT (có file .tu-khoi-dong-tat).")

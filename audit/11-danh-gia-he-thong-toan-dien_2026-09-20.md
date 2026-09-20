@@ -99,3 +99,10 @@
 | 5 | Độ tươi | Retraction Watch làm mới; sổ xác minh còn hiệu lực **92% → 99%** (1387/1390). | 5 chủ đề lâu nhất (BienChungThanKinh_DTD · AnToanThuoc_MHRA · Uptodate · BenhThanMan_CKD · W24) là **gói dashboard đơn lẻ, không có mục trong `watchlist.json`** ⇒ `ops/orchestrator.py --topic` không quét được (thử: lỗi tham số ngay, không đổi gì). Muốn làm mới phải chạy skill `cap-nhat-chung-cu-y-khoa` cho từng chủ đề. |
 
 Ghi chú công cụ: orchestrator in «FAIL HẠ TẦNG — chạy lại khi mạng ổn» cho cả lỗi tham số `--topic` không có trong watchlist — thông điệp gây hiểu nhầm là lỗi mạng (chưa sửa).
+
+### ⛔ ĐÍNH CHÍNH (20/09/2026 tối, sau phản biện độc lập) — dòng 5 của bảng §5 ở trên SAI một nửa
+«5 chủ đề lâu nhất … là gói dashboard đơn lẻ, không có mục trong `watchlist.json`» **không đúng với 3/5**: `BienChungThanKinh`, `AnToanThuoc`,
+`BenhThanMan` đều đã ánh xạ sang mục watchlist trong `EBM-Dashboards/giam-sat-chu-de.json`; 2/5 (`Uptodate`, `W24`) là `khong_can` (bản tin tuần gộp,
+cố ý không canh). Nguyên nhân thật của 5 lượt fail: orchestrator không đọc ánh xạ đó và A2 nhận TÊN WATCHLIST chứ không phải tên lát cắt. Đã sửa bằng
+`tools/chu_de_resolver.py` + orchestrator mới (`--cu-nhat 3` phân giải được cả ba chủ đề). Việc làm mới thật vẫn cần phiên skill `cap-nhat-chung-cu-y-khoa`
+cho từng chủ đề (bác sĩ chốt phạm vi). Dòng 2 cũng cần đọc kèm: tác vụ `goi-duyet-tuan-ebm` lần tạo lại đầu dùng prompt cũ — đã khôi phục từ bản git.

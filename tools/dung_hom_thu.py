@@ -354,6 +354,39 @@ def render_goi_tuan(md: str) -> str:
                f'độ phủ và việc tồn đọng</h4>{phu_luc}</div>' if phu_luc.strip() else ""))
 
 
+_DAU_CB = "🔴🟠🟡⚠️"
+
+
+def doc_canh_bao(van_ban: str) -> list[tuple[str, str]]:
+    r"""[(ngày, nội dung)] từ MỘT file `alerts/*.md` — hiểu CẢ hai khuôn (T2-03, 20/09/2026).
+
+    Khuôn CŨ: một dòng `# CẢNH BÁO KHẨN — 2026-08-17 - 🔴 <tiêu đề> — <chi tiết>`.
+    Khuôn HIỆN HÀNH: tiêu đề `# CẢNH BÁO KHẨN — 2026-09-17` rồi các dòng bullet `- 🔴 <nội dung>`.
+    Bộ đọc cũ chỉ biết khuôn cũ và dùng `([\d-]+)\s*-\s*(.+)`; áp lên tiêu đề khuôn mới, regex lùi (backtrack) cho
+    ngày = '2026-09' và nội dung = '17' — hòm thư hiển thị «2026-09 — 17.» và NUỐT MẤT mọi bullet thật (đo: 12 bullet
+    «CỔNG QUÉT FAIL» ngày 17/09 không tới HOM-THU-BAC-SI.html). Cảnh báo tới được nơi bác sĩ đọc là toàn bộ ý nghĩa của
+    thư mục `alerts/` — kênh gãy im lặng thì mọi cảnh báo khẩn đều vô hiệu.
+    """
+    ra: list[tuple[str, str]] = []
+    ngay: str | None = None
+    for dong in van_ban.splitlines():
+        d = dong.strip()
+        m = re.match(r"#\s*CẢNH BÁO KHẨN\s*—\s*(\d{4}-\d{2}-\d{2})\s*(?:-\s*[" + _DAU_CB + r"\s]*(.+))?$", d)
+        if m:
+            ngay = m.group(1)
+            if m.group(2):  # khuôn cũ: nội dung nằm ngay trên dòng tiêu đề
+                ra.append((ngay, m.group(2).strip()))
+            continue
+        b = re.match(r"^[-*]\s*[" + _DAU_CB + r"\s]*(.+)$", dong.lstrip()) if not dong[:1].isspace() else None
+        if b and ngay:
+            ra.append((ngay, b.group(1).strip()))
+        elif ngay and ra and d and dong[:1].isspace() and ra[-1][0] == ngay:
+            # DÒNG TIẾP của bullet nhiều dòng (thụt lề): nối vào mục trước. Cảnh báo 07/09 dài 12 dòng thụt lề —
+            # bộ đọc cũ chỉ lấy dòng đầu nên mất luôn con số đo, hạn sửa và «việc thuộc thẩm quyền bác sĩ» (P2-02).
+            ra[-1] = (ngay, ra[-1][1] + " " + d)
+    return ra
+
+
 def main() -> int:
     hom_nay = dt.datetime.now()
     khoi: list[str] = []
@@ -380,11 +413,7 @@ def main() -> int:
     for f in sorted((REPO / "alerts").glob("*.md"), reverse=True):
         if (hom_nay.date() - dt.date.fromtimestamp(f.stat().st_mtime)).days > 14:
             continue
-        for dong_cb in f.read_text(encoding="utf-8", errors="replace").splitlines():
-            m = re.match(r"#\s*CẢNH BÁO KHẨN\s*—\s*([\d-]+)\s*-\s*[🔴🟠🟡⚠️\s]*(.+)", dong_cb.strip())
-            if not m:
-                continue
-            ngay_cb, than = m.group(1), m.group(2).strip()
+        for ngay_cb, than in doc_canh_bao(f.read_text(encoding="utf-8", errors="replace")):
             ve = re.split(r"\s+—\s+", than, maxsplit=1)
             tieu_de_cb = _hoa_dau(_inline(ve[0].strip().rstrip(".")))
             chi_tiet = _hoa_dau(_rut_duong_dan(_inline(ve[1].strip()))) if len(ve) > 1 else ""
@@ -455,7 +484,7 @@ def main() -> int:
                            capture_output=True, text=True, timeout=300, cwd=REPO, encoding="utf-8", errors="replace")
         loc, giu = [], False
         for ln in (r.stdout or "").splitlines():
-            if "👤" in ln:
+            if "👤" in ln or "🛎" in ln:  # 🛎 = máy làm được nhưng chưa ai chạy — lỡ lịch NẶNG không được lọt (T2-02)
                 loc.append(f"<div class='li'>{_inline(ln.strip())}</div>")
                 giu = True
             elif giu and "→" in ln:

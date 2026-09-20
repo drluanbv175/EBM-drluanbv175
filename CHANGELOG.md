@@ -8,6 +8,15 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+### 2026-09-20 (tối) — Vòng phản biện đối kháng sau khi dựng điều phối/cổng rút bài
+
+- **Sửa:** `ops/orchestrator.py` (resume nhớ lệnh+mtime dashboard, đọc lại ứng viên A2, không ghi đè phiếu, B1 vào phiếu, thiếu tệp ⇒ lệnh sai,
+  cờ xung đột ⇒ 64, lỗi nạp kho ⇒ rc 2, B2 offline được nói ra) · `tools/chu_de_resolver.py` (chuỗi con ≥ 4 ký tự, nhiều mục khớp không truyền
+  chuỗi thô cho A2, không nuốt lỗi nạp) · `verify_dashboard.py` ×4 bản (`_khai_that_su` đòi nội dung thật, `_GIU_CHO_KY` thu hẹp) ·
+  `tools/dung_hom_thu.py` (bullet nhiều dòng) · `tools/tu_khoi_dong.py` (cảnh báo lịch nền lỡ kỳ lúc mở phiên) ·
+  `tools/tu_de_xuat_viec.py` + `tools/mau_ky_rut_bai.py --dem-tat-ca` (hết báo động giả «rút-bỏ-hẳn» sau khi ký) · `tools/orchestrator/intent.py`.
+- **Test:** `test_orchestrator_ops.py` 45 (14 test `main()` thật) · `test_kiem_lich_nen.py` 13 · router 185 · bộ chốt BH01–BH111 xanh.
+
 ### 2026-09-20 — Nguồn SerpApi Google Scholar (engine `medical-ebm-automation`, mới kiểm OFFLINE)
 
 Bối cảnh: theo yêu cầu "tích hợp Google Scholar API qua SerpApi để hoàn thiện hệ thống". Mã và
@@ -37,6 +46,10 @@ này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi
 ### 2026-09-20 — Lane guideline nối trực tiếp, miễn phí (engine): Europe PMC, WHO IRIS, kcb.vn, hiệp hội trên tạp chí
 
 Theo yêu cầu «kết nối các nguồn guideline chưa có connector». 33 lane mới (33/33 trả mục thật): Europe PMC (Practice Guideline toàn cầu, USPSTF, WHO, CDC MMWR R&R — có PMID, độc lập NCBI), WHO IRIS (OAI-PMH chính thức), Bộ Y tế VN (kcb.vn/phac-do), Crossref theo tiêu đề cho 21 hiệp hội (ACC/AHA, ESC, ADA, IDSA, EULAR, AASLD, KDIGO, ATS, ERS, BTS, AGS, ACP, ASCO, ESMO, ASH, AGA, ACG, AAN, ACR) và RSS trực tiếp GOLD/GINA/KDIGO/EASL/AASLD/CDC. Coverage báo phủ gián tiếp ở `healthy_via_lane`, liệt kê `not_connected`. Chưa có: NICE (API chỉ cấp cho tổ chức) và USPSTF API (xin duyệt qua email — thư nháp ở docs). Lane khám phá theo tiêu đề, không phải nguồn đã duyệt.
+
+### 2026-09-20 — Khảo sát điều phối 5 tầng → orchestrator phân giải tên chủ đề, cảm biến lịch nền, hòm thư đọc đúng, cửa vào không dấu (BH110/BH111)
+
+Workflow khảo sát chỉ-đọc (5 tầng + phản biện) tìm 60+ chỗ điều phối chưa tự động/im lặng hỏng. Đã sửa phần máy làm được: `tools/chu_de_resolver.py` + `ops/orchestrator.py` viết lại (tên lát cắt/gốc/watchlist, mã thoát theo bước, lát cắt độc lập, lô `--cu-nhat`, A3 tắt mặc định); `tools/kiem_lich_nen.py` cảm biến người chết theo từng kỳ; `dung_hom_thu` đọc khuôn `alerts/` hiện hành; giác quan chết không in xanh; bản tin gộp loại khỏi nhắc độ tươi; B5 không xanh khi chờ ký; cổng miễn trừ chặn điền-cho-có; router gấp dấu + 5 năng lực mới; khôi phục cửa sổ quét 36 chủ đề bị A3 nuốt. Đính chính audit/11 §5 (3/5 chủ đề cũ ĐÃ có watchlist). Tác vụ `goi-duyet-tuan-ebm` khôi phục từ bản git (bản tạo lại lần đầu dùng prompt cũ).
 
 ### 2026-09-20 — Thông báo rút bài là BẢN ĐÍNH CHÍNH: nhận diện câu chữ, chặn tới khi bác sĩ ký đúng vân tay (BH109)
 

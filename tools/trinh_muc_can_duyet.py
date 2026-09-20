@@ -146,6 +146,34 @@ def phan_nhom(m: dict) -> str:
     return "CHƯA RÕ"
 
 
+def cho_ky_rut_bai(files: list[Path]) -> list[str]:
+    """Dashboard (trong `files`) đang bị cổng chặn CHỈ vì chờ bác sĩ ký miễn trừ «đính chính bị rút» (BH109).
+
+    T4-04 (20/09/2026): công cụ này chỉ gọi `strict_source_checks` (luật `apply` trên chứng cứ yếu), KHÔNG gọi
+    `kiem_nguon_da_rut`, nên với `TienLuongSuyTim_20260914` — cổng verify FAIL với 2 lỗi cứng — nó in «🟢 Không có
+    mục nào bị cổng nguồn chặn». Hàng chờ bác sĩ (bước B5 của orchestrator) là nơi bác sĩ ĐỌC kết luận: xanh sai ở đây
+    nghĩa là gói bị chặn mà bác sĩ tin rằng không có gì cần làm. Không đọc được ⇒ rỗng (không đoán).
+    """
+    try:
+        spec = importlib.util.spec_from_file_location("mau_ky_trinh", REPO / "tools" / "mau_ky_rut_bai.py")
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        ten = {f.name for f in files}
+        return sorted({n for e in m.muc_cho_ky() for n in (e.get("_ngu_canh", {}).get("dashboard") or [])} & ten)
+    except Exception:  # noqa: BLE001 — công cụ phụ không được làm chết hàng chờ
+        return []
+
+
+def dong_khi_khong_co_muc(cho_ky: list[str]) -> str:
+    """Câu kết khi KHÔNG có mục `apply`-chứng-cứ-yếu nào bị chặn — không được nói «xanh» nếu còn gói chờ ký."""
+    if cho_ky:
+        return ("🟠 Không có mục 'apply' nào bị chặn vì chứng cứ yếu — NHƯNG %d dashboard đang bị cổng chặn vì nguồn có "
+                "thông báo rút là bản đính chính, CHỜ BÁC SĨ KÝ: %s. Chạy `python3 tools/mau_ky_rut_bai.py`."
+                % (len(cho_ky), ", ".join(cho_ky)))
+    return ("🟢 Không có mục 'apply' nào bị chặn vì chứng cứ yếu (chỉ xét luật này — lỗi cứng khác: chạy "
+            "verify_dashboard.py).")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Chuẩn bị hồ sơ mục cần bác sĩ duyệt")
     ap.add_argument("--dashboard", help="chỉ một dashboard (khớp tên gần đúng)")
@@ -160,9 +188,13 @@ def main() -> int:
             return 1
 
     muc = thu_thap(nap_vd(), files)
+    cho_ky = cho_ky_rut_bai(files)
     if not muc:
-        print("🟢 Không có mục nào bị cổng nguồn chặn.")
-        return 0
+        print(dong_khi_khong_co_muc(cho_ky))
+        return 1 if cho_ky else 0
+    if cho_ky:
+        print(f"🟠 Ngoài bảng dưới, {len(cho_ky)} dashboard chờ bác sĩ KÝ miễn trừ đính chính bị rút: "
+              + ", ".join(cho_ky) + " (`python3 tools/mau_ky_rut_bai.py`)\n")
 
     from collections import Counter
     nhom = Counter(phan_nhom(m) for m in muc)

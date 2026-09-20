@@ -58,14 +58,35 @@ VENV_PY = (
 DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 
+# Giác quan CHẾT (T4-08, 20/09/2026): `_chay` trả chuỗi RỖNG khi công cụ không chạy được và các regex phía trên
+# không khớp chuỗi rỗng ⇒ không dòng nào được thêm ⇒ cuối bảng in «🟢 KHÔNG CÒN VIỆC NÀO» — sự im lặng của một cảm
+# biến hỏng bị đọc thành «đủ rồi». Nay mỗi lệnh chạy hỏng (không khởi động được / quá giờ / traceback) được GHI
+# NHẬN, và bảng không bao giờ in xanh khi còn giác quan không đo được.
+_SO_GIAC_QUAN = {"chay": 0}
+_GIAC_QUAN_CHET: list[str] = []
+
+
+def _ghi_chet(lenh: list[str], ly_do: str) -> None:
+    ten = " ".join(str(x) for x in lenh[1:3])[:70] or str(lenh[0])
+    _GIAC_QUAN_CHET.append(f"{ten} ({ly_do})")
+
+
 def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
+    _SO_GIAC_QUAN["chay"] += 1
     try:
         # encoding tường minh: Windows mặc định cp1252 → thread đọc output chết
         # UnicodeDecodeError với tiếng Việt/UTF-8 (lớp lỗi đã ghi ở CLAUDE.md)
         r = subprocess.run(lenh, capture_output=True, text=True, timeout=giay,
                            cwd=cwd or REPO, encoding="utf-8", errors="replace")
-        return (r.stdout or "") + (r.stderr or "")
+        ra = (r.stdout or "") + (r.stderr or "")
+        if "Traceback (most recent call last)" in ra:
+            _ghi_chet(lenh, "công cụ văng traceback")
+        return ra
+    except subprocess.TimeoutExpired:
+        _ghi_chet(lenh, f"quá {giay}s")
+        return ""
     except (OSError, subprocess.SubprocessError):
+        _ghi_chet(lenh, "không chạy được")
         return ""
 
 
@@ -175,15 +196,22 @@ def main() -> int:
     if m and int(m.group(1)):
         de_xuat.append((2, "🤖", f"Phủ sổ xác minh: {m.group(1)} mục chưa/hết hạn",
                         "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3"))
-    if re.search(r"ĐÃ BỊ RÚT\s*:\s*[1-9]", out):
+    # Nguồn «ĐÃ BỊ RÚT» trong sổ gồm CẢ ca thông báo-là-bản-đính-chính (BH109). Tách hai nhóm để dòng «rút-bỏ-hẳn»
+    # không cảnh báo sai về ca chỉ cần bác sĩ ký (T4-05: gọi nó «rút-bỏ-hẳn/không dùng» dạy người đọc bỏ qua cảnh báo).
+    dem_dinh_chinh = _chay([sys.executable, "tools/mau_ky_rut_bai.py", "--dem"]).strip()
+    n_dc = int(dem_dinh_chinh) if dem_dinh_chinh.isdigit() else 0            # CÒN chờ bác sĩ ký
+    dem_tat_ca = _chay([sys.executable, "tools/mau_ky_rut_bai.py", "--dem-tat-ca"]).strip()
+    n_dc_tong = int(dem_tat_ca) if dem_tat_ca.isdigit() else n_dc           # loại đính chính, đã ký lẫn chưa
+    m_rut = re.search(r"ĐÃ BỊ RÚT\s*:\s*(\d+)", out)
+    n_rut = int(m_rut.group(1)) if m_rut else 0
+    if n_rut - max(n_dc, n_dc_tong) > 0:  # đã ký xong KHÔNG được biến thành «rút-bỏ-hẳn» (P2-03)
         de_xuat.append((0, "👤", "CÓ nguồn rút-bỏ-hẳn đang được trích — xử lý trước "
                         "khi dùng gói chứa nó", "python3 tools/so_xac_minh_nguon.py --bao-cao"))
     # ①-bis (BH109, 20/09/2026): nguồn bị cờ «rút bài» mà thông báo là BẢN ĐÍNH CHÍNH bị rút. Cổng vẫn
     # CHẶN; chỉ bác sĩ ký được. Máy đã dựng mẫu chờ ký — dòng này để việc đó tự hiện ra, khỏi phải
     # đọc terminal rồi tự chép khoá + tập thông báo (chép sai vân tay thì miễn trừ im lặng vô hiệu).
-    out = _chay([sys.executable, "tools/mau_ky_rut_bai.py", "--dem"]).strip()
-    if out.isdigit() and int(out):
-        de_xuat.append((0, "👤", f"{out} nguồn bị cờ «rút bài» nhưng thông báo là BẢN ĐÍNH CHÍNH bị rút — "
+    if n_dc:
+        de_xuat.append((0, "👤", f"{n_dc} nguồn bị cờ «rút bài» nhưng thông báo là BẢN ĐÍNH CHÍNH bị rút — "
                         "đọc thông báo + Author Correction rồi ký hoặc hạ mục (máy đã dựng mẫu chờ ký, "
                         "KHÔNG ký thay)", "python3 tools/mau_ky_rut_bai.py"))
 
@@ -212,7 +240,8 @@ def main() -> int:
     m = re.search(r"trung vị\s*(\d+)", out)
     if m and int(m.group(1)) > 60:
         de_xuat.append((2, "🤖", f"Trung vị tuổi gói {m.group(1)} ngày — chạy cập nhật "
-                        "chủ đề lâu nhất", "python3 ops/orchestrator.py --topic <chủ đề> --online"))
+                        "chủ đề lâu nhất (máy làm A2/A4/B2, rồi mở phiên /cap-nhat-chung-cu theo phiếu)",
+                        "python3 ops/orchestrator.py --cu-nhat 3 --online"))
 
     # ⑤ Kho toàn văn + chỉ mục RAG
     kho = DASH / "toan_van_oa"
@@ -282,11 +311,25 @@ def main() -> int:
     # lỡ kỳ nào kể từ khi đổi. giac_quan_lich_nen() đã cập nhật theo lịch mới.
     for uu, dong in giac_quan_lich_nen(
             _GOC_MEA / "data" / "archive" / "launchd_weekly.log"):
-        de_xuat.append((uu, "🤖" if uu < 2 else "👤", dong,
+        de_xuat.append((uu, "🛎" if uu < 2 else "👤", dong,
                         "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
                         if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "
                         "(mcp__scheduled-tasks__run_scheduled_task) hoặc kiểm lịch sử qua "
                         "list_task_runs"))
+
+    # ⑦f CẢM BIẾN NGƯỜI CHẾT (T2-01, 20/09/2026): mỗi KỲ lịch nền phải để lại dấu vết đầu ra ĐÚNG HẸN. ⑦d ở trên chỉ so
+    # «PASS cuối» nên một lượt chạy tay chen giữa làm kỳ lỡ vô hình (đúng ca 14/09: 3/4 tác vụ bị xoá, không cảm biến nào
+    # báo). Nhãn 🛎 = máy làm được (chạy bù) nhưng chưa ai chạy — luôn hiện ở hòm thư bác sĩ (T2-02).
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        _sp_kln = _ilu_mea.spec_from_file_location("_kln_tdxv", Path(__file__).resolve().parent / "kiem_lich_nen.py")
+        _kln = _ilu_mea.module_from_spec(_sp_kln)
+        _sp_kln.loader.exec_module(_kln)
+        for _p in _kln.kiem()["phat_hien"]:
+            de_xuat.append((_p["uu"], "🛎", _p["thong_diep"],
+                            "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»"))
+    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
+        _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
 
     # ⑦e GIÁC QUAN QUYẾT ĐỊNH ĐÃ DUYỆT (16/08): dashboard sinh lại/sửa hàng loạt
     # có thể lật ngược im lặng quyết định bác sĩ 13–14/08 (đã xảy ra: 5 mục Đau
@@ -386,17 +429,26 @@ def main() -> int:
     print("=" * 66)
     print(f"  HỆ TỰ ĐỀ XUẤT VIỆC — {hom_nay} (sinh từ bộ đếm sống, không cảm giác)")
     print("=" * 66)
-    if not de_xuat:
+    n_chay, n_chet = _SO_GIAC_QUAN["chay"], len(_GIAC_QUAN_CHET)
+    print(f"  Giác quan đo được: {n_chay - n_chet}/{n_chay}"
+          + (f" — {n_chet} KHÔNG đo được (xem cuối bảng)" if n_chet else ""))
+    if not de_xuat and not n_chet:
         print("  🟢 KHÔNG CÒN VIỆC NÀO các bộ đếm nhìn thấy — «đủ rồi» là kết quả")
         print("     hợp lệ; nghỉ cũng là một trạng thái đúng của hệ.")
-    else:
+    elif not de_xuat:
+        print("  ⚪ KHÔNG THỂ nói «đủ rồi»: còn giác quan không đo được — im lặng của cảm biến hỏng")
+        print("     KHÔNG phải bằng chứng không có việc (BH08/BH27).")
+    if de_xuat:
         de_xuat.sort(key=lambda x: x[0])
         for uu, ai, viec, lenh in de_xuat:
             print(f"  {'🔴' if uu == 0 else '🟠' if uu == 1 else '🟡'} {ai} {viec}")
             print(f"       → {lenh}")
+    for x in _GIAC_QUAN_CHET:
+        print(f"  ⚪ giác quan KHÔNG đo được: {x}")
     if not a.gon:
         print("-" * 66)
         print("  👤 = thẩm quyền bác sĩ, máy không tự làm · 🤖 = máy chạy được ngay")
+        print("  🛎 = máy làm được nhưng CHƯA CÓ AI chạy — cần một phiên chạy hộ (luôn hiện ở hòm thư)")
         print("  Mỗi dòng đều có SỐ ĐO đứng sau. Cần bác sĩ kiểm chứng.")
     return 0
 

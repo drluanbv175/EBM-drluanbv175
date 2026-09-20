@@ -59,7 +59,7 @@ def test_mau_chep_nguyen_xi_KHONG_co_hieu_luc_cho_toi_khi_bac_si_dien(tmp_path):
     (tmp_path / "rut-bai-da-xem-xet.json").write_text(json.dumps({"muc": cho}), encoding="utf-8")
     e, _w = _chay_cong(tmp_path, _ban_ghi_cong("pmid:1", BG))
     assert e, "mẫu trống mà cổng đã miễn — máy ký thay bác sĩ"
-    ky = dict(cho[0], da_xem_boi="BS thử", ngay="2026-09-21", ly_do="Đã đọc thông báo và hai Author Correction; không đổi.")
+    ky = dict(cho[0], da_xem_boi="BS thử", ngay=__import__("datetime").date.today().isoformat(), ly_do="Đã đọc thông báo và hai Author Correction; không đổi.")
     ky.pop("_ngu_canh")
     (tmp_path / "rut-bai-da-xem-xet.json").write_text(json.dumps({"muc": [ky]}), encoding="utf-8")
     e, w = _chay_cong(tmp_path, _ban_ghi_cong("pmid:1", BG))
@@ -78,3 +78,16 @@ def test_main_khong_bao_gio_ghi_so_ky_that(tmp_path, monkeypatch, capsys):
     assert mau.main() == 1
     assert (tmp_path / mau.MAU).exists()
     assert not (tmp_path / mau.SO_KY).exists(), "công cụ ghi vào sổ mà cổng đọc — vượt thẩm quyền bác sĩ"
+
+
+def test_dem_tat_ca_tinh_ca_da_ky():
+    """P2-03: tổng loại «đính chính bị rút» KHÔNG giảm khi bác sĩ ký (mục rời hàng chờ, vẫn nằm trong «ĐÃ BỊ RÚT»)."""
+    import importlib.util as u_, sys as s_
+    from pathlib import Path as P_
+    sp = u_.spec_from_file_location("mkrb_t2", P_(__file__).resolve().parents[1] / "tools" / "mau_ky_rut_bai.py")
+    m = u_.module_from_spec(sp); s_.modules["mkrb_t2"] = m; sp.loader.exec_module(m)
+    so = {"muc": {"pmid:1": {"da_rut": True, "sua_loi_bi_rut": True, "thong_bao_ids": ["9"]},
+                  "doi:x": {"da_rut": True, "sua_loi_bi_rut": True, "thong_bao_ids": ["10.1/a"]},
+                  "pmid:2": {"da_rut": True},                       # rút bỏ hẳn thật — KHÔNG được tính
+                  "pmid:3": {"sua_loi_bi_rut": True}}}              # chưa rút — không tính
+    assert m.dem_dinh_chinh_bi_rut(lambda: so) == 2

@@ -96,10 +96,28 @@ def muc_cho_ky(dash: Path = DASH, doc_so=None, cong=None) -> list[dict]:
     return ra
 
 
+def dem_dinh_chinh_bi_rut(doc_so=None) -> int:
+    """Số nguồn thuộc loại «thông báo là bản đính chính bị rút» — ĐÃ ký hay CHƯA ký, đều tính.
+
+    Cần cho `tu_de_xuat_viec` (P2-03): dòng «có nguồn rút-bỏ-hẳn» lấy «ĐÃ BỊ RÚT − số chờ ký». Sau khi bác sĩ KÝ,
+    mục rời khỏi hàng chờ nhưng vẫn nằm trong «ĐÃ BỊ RÚT» của sổ xác minh ⇒ hiệu số > 0 và dòng «rút-bỏ-hẳn»
+    báo động GIẢ đúng vào lúc việc thật đã xong. Trừ theo TỔNG số mục loại này (không theo số còn chờ) thì hết.
+    """
+    if doc_so is None:
+        doc_so = _nap(GOC / "tools" / "so_xac_minh_nguon.py", "sx_mau_ky2").doc_so
+    muc = ((doc_so() or {}).get("muc") or {})
+    return sum(1 for bg in muc.values() if bg.get("da_rut") and bg.get("sua_loi_bi_rut"))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Sinh MẪU CHỜ KÝ cho sổ miễn trừ rút bài (không bao giờ ký)")
     ap.add_argument("--dem", action="store_true", help="chỉ in số mục chờ ký")
+    ap.add_argument("--dem-tat-ca", action="store_true",
+                    help="chỉ in TỔNG số nguồn loại «đính chính bị rút» (đã ký lẫn chưa ký)")
     a = ap.parse_args()
+    if a.dem_tat_ca:
+        print(dem_dinh_chinh_bi_rut())
+        return 0
     cho = muc_cho_ky()
     if a.dem:
         print(len(cho))

@@ -5184,11 +5184,18 @@ def bh96_orchestrator_b2_phai_bat_strict_sources():
     if "--online" not in lenh:
         return False, "B2 mất --online — không còn xác minh nguồn sống"
 
-    # ② mã thoát khác 0 ở B2 phải DỪNG (không cho gói bị chặn đi tiếp sang B4 xuất bản)
-    src = ops.read_text(encoding="utf-8")
-    if 'b["buoc"].startswith("B2")' not in src or "return 1" not in src:
-        return False, ("mất nhánh DỪNG khi B2 fail — gói bị cổng chặn vẫn có thể đi tiếp "
-                       "sang B4 xuất bộ năm tới tay bác sĩ")
+    # ② B2 fail (rc=1 nội dung HOẶC rc=3 chặn) thì gói bị chặn KHÔNG được đi tiếp sang B4 xuất bộ năm.
+    #    Kiểm HÀNH VI qua `thuc_thi()` với bộ chạy giả (từ 20/09/2026 không còn dừng CẢ lượt — lát cắt độc
+    #    lập, BH30 — nhưng B4 của CHÍNH lát cắt bị chặn vẫn phải bị bỏ).
+    for rc_b2 in (1, 3):
+        da_chay: list = []
+        ke_b = [{"buoc": "B2-cong-liem-chinh[X]", "lat": "X", "lenh": ["py", "b2x"]},
+                {"buoc": "B4-bo-nam[X]", "lat": "X", "lenh": ["py", "b4x"]}]
+        m.thuc_thi(ke_b, chay=lambda l, _t, _r=rc_b2: (da_chay.append(l[1]) or (_r if l[1] == "b2x" else 0)),
+                   in_=lambda *_a: None)
+        if "b4x" in da_chay:
+            return False, (f"B2 rc={rc_b2} mà B4 xuất bộ năm VẪN chạy — gói bị cổng chặn đi tiếp tới "
+                           "tay bác sĩ")
 
     # ③ tuyến kia không được tụt lại
     xuat = REPO / "tools" / "xuat_goi_cap_nhat.py"
@@ -5864,7 +5871,7 @@ def bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky():
     nen = {"khoa": "pmid:1", "loai": "pmid", "gia_tri": "1", "tinh_trang": "retracted", "tieu_de": "t",
            "kiem_luc": "2026-09-20", "nguon": "pubmed", "thong_bao": "", "rut_va_thay": False,
            "sua_loi_bi_rut": True, "thong_bao_ids": ["41422828"]}
-    ky = {"khoa": "pmid:1", "thong_bao_ids": ["41422828"], "da_xem_boi": "BS thử nghiệm", "ngay": "2026-09-21",
+    ky = {"khoa": "pmid:1", "thong_bao_ids": ["41422828"], "da_xem_boi": "BS thử nghiệm", "ngay": __import__("datetime").date.today().isoformat(),
           "ly_do": "Đã đọc thông báo và hai Author Correction; khuyến cáo không đổi."}
 
     def _chay(ban_ghi, so=None):
@@ -5878,6 +5885,10 @@ def bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky():
     e, w = _chay(nen)
     if not e or "CẦN BÁC SĨ XEM" not in e[0]:
         return False, "chưa ký mà không còn là LỖI CỨNG mang nhãn «CẦN BÁC SĨ XEM»"
+    ky_that = dict(ky, ly_do="Đã đọc thông báo và cả hai Author Correction ... p<0.05 giữ nguyên; cần bác sĩ tim mạch tái đánh giá sau 6 tháng.")
+    e, w = _chay(nen, {"muc": [ky_that]})
+    if e:
+        return False, "lý do CHÂN THẬT có «...», «p<0.05», «cần bác sĩ …» bị chặn oan — cổng miễn trừ quá tay"
     e, w = _chay(nen, {"muc": [ky]})
     if e or not any("đã xem xét" in x for x in w):
         return False, "đã ký đúng vân tay nhưng cổng vẫn chặn (hoặc không nói rõ miễn trừ)"
@@ -5889,6 +5900,15 @@ def bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky():
         ("khoá khác", nen, {"muc": [dict(ky, khoa="pmid:2")]}),
         ("máy không đánh cờ (bài thật bị rút)", dict(nen, sua_loi_bi_rut=False), {"muc": [ky]}),
         ("sổ hỏng", nen, "không phải json"),
+        ("ly_do là chuỗi giữ chỗ", nen, {"muc": [dict(ky, ly_do="[CẦN BÁC SĨ ĐIỀN LÝ DO XEM XÉT]")]}),
+        ("da_xem_boi là giữ chỗ", nen, {"muc": [dict(ky, da_xem_boi="[CẦN BÁC SĨ ĐIỀN]")]}),
+        ("ly_do lặp một ký tự cho đủ dài", nen, {"muc": [dict(ky, ly_do="a" * 30)]}),
+        ("ngày còn YYYY-MM-DD", nen, {"muc": [dict(ky, ngay="YYYY-MM-DD")]}),
+        ("ngày vô lý 2099-13-45", nen, {"muc": [dict(ky, ngay="2099-13-45")]}),
+        ("ngày ở tương lai", nen, {"muc": [dict(ky, ngay="2099-01-01")]}),
+        ("da_xem_boi «N/A»", nen, {"muc": [dict(ky, da_xem_boi="N/A")]}),
+        ("ly_do đệm khoảng trắng qua ngưỡng", nen, {"muc": [dict(ky, ly_do="đã xem" + " " * 40)]}),
+        ("ly_do chỉ 2 từ", nen, {"muc": [dict(ky, ly_do="khongthaydoi-khuyencao khongdoi")]}),
     ):
         try:
             e, w = _chay(ban_ghi, so)
@@ -5909,6 +5929,163 @@ def bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky():
     if bg["sua_loi_bi_rut"] or bg["thong_bao_ids"] != ["7"]:
         return False, "sổ xác minh giữ cờ/vân tay CŨ khi bằng chứng mới không còn — cờ sống lâu hơn nguồn gốc của nó"
     return True, "nhận diện chặt · cờ chỉ khi mọi thông báo là đính chính · chặn tới khi bác sĩ ký đúng vân tay · sổ không dính"
+
+
+def bh110_orchestrator_ten_chu_de_va_ma_thoat_dung_nghia():
+    """20/09 — `ops/orchestrator.py --topic BenhThanMan_CKD` (gợi ý của chính hệ) fail 0,1 giây và in «FAIL HẠ TẦNG — chạy
+    lại khi mạng ổn», trong khi đó là lỗi THAM SỐ: A2 nhận TÊN WATCHLIST, còn bảng tuổi/gợi ý đưa TÊN LÁT CẮT. Ánh xạ
+    người-khai `giam-sat-chu-de.json` có sẵn mà không công cụ nào dùng. Hệ quả đo được: 5 lượt fail liên tiếp; 20/28 chủ
+    đề CÓ dashboard bị in sai «CHƯA có dashboard»; tên watchlist chỉ tìm được 8/52 lát cắt. Và «rc=2» mang HAI nghĩa
+    khác hẳn (A2: tham số/quét không PASS; A4: có NGUỒN ĐÃ BỊ RÚT) nhưng luôn bị đọc thành lỗi mạng — một nguồn bị rút
+    được khuyên «chạy lại khi mạng ổn».
+
+    Kiểm HÀNH VI: (1) resolver nối tên lát cắt/chủ đề gốc/tên gõ không dấu tới ĐÚNG tên watchlist và KHÔNG bịa cho gốc
+    chưa khai hay bản tin gộp; (2) mã thoát phân loại THEO BƯỚC: A2 rc=2 không có JSON không-PASS ⇒ `tham_so` (không nhắc
+    mạng), A4 rc=2 ⇒ `rut`, A2 rc=3 ⇒ dừng; (3) B2 fail của một lát cắt không dừng cả lượt nhưng chặn B4 của nó;
+    (4) A3 (~70 phút, toàn kho) không chạy mặc định; (5) B2 luôn `--strict-sources` kể cả offline; (6) tên không phân
+    giải được thoát 64, không phải 2.
+    """
+    import importlib.util as _iu
+
+    def _n(rel, ten):
+        sp = _iu.spec_from_file_location(ten, REPO / rel)
+        mm = _iu.module_from_spec(sp); sys.modules[ten] = mm; sp.loader.exec_module(mm)
+        return mm
+    rs = _n("tools/chu_de_resolver.py", "_bh110_rs")
+    op = _n("ops/orchestrator.py", "_bh110_op")
+
+    wl = ["Biến chứng thần kinh do ĐTĐ", "Bệnh thận mạn (CKD)"]
+    du = {"watchlist": wl, "muc": {"BienChungThanKinh": wl[0]}, "khong_can": {"Uptodate": "bản tin gộp"},
+          "theo_goc": {"BienChungThanKinh": [("20260607", "BienChungThanKinh_DTD", Path("a_20260607.html"))],
+                       "Uptodate": [("20260607", "Uptodate", Path("u_20260607.html"))],
+                       "ChuaKhai": [("20260101", "ChuaKhai_X", Path("c_20260101.html"))]}}
+    if rs.resolve("BienChungThanKinh_DTD", du)["a2_arg"] != wl[0]:
+        return False, "tên lát cắt không được nối tới TÊN WATCHLIST — A2 lại nhận tên sai và fail rc=2"
+    if rs.resolve("bien chung than kinh do DTD", du)["a2_arg"] != wl[0]:
+        return False, "gõ không dấu («đ»→d) không khớp — 20/47 tên watchlist có «đ»"
+    r_gop = rs.resolve("Uptodate", du)
+    if r_gop["a2_arg"] is not None or r_gop["loai"] != "khong_can":
+        return False, ("bản tin gộp `khong_can` bị gán A2 hoặc mất nhãn — máy tự bịa truy vấn giám sát (BH10) "
+                       "hoặc gói tin gộp bị coi là «chưa khai»")
+    if rs.resolve("ChuaKhai_X", du)["a2_arg"] is not None:
+        return False, "gốc CHƯA khai ánh xạ bị đoán hộ — dấu ✓ rỗng (BH28)"
+    if rs.resolve("hoan toan la", du)["lat_cat"]:
+        return False, "tên không khớp mà vẫn trả lát cắt"
+    du_trung = {"watchlist": ["COPD — điều trị"], "muc": {"COPD": "COPD — điều trị"}, "khong_can": {},
+                "theo_goc": {"COPD": [("20260601", "COPD", Path("a_20260601.html")),
+                                      ("20260602", "COPD_TimMach", Path("b_20260602.html")),
+                                      ("20260603", "COPD_DoiTuongDacBiet", Path("c_20260603.html"))]}}
+    if len(rs.resolve("COPD", du_trung)["lat_cat"]) != 3:
+        return False, ("tên gõ trùng CẢ chủ đề gốc lẫn một lát cắt (COPD/DauDau) mà chỉ lấy MỘT lát cắt — A4/B2 bỏ "
+                       "sót các lát cắt anh em (phản biện 20/09, P-01)")
+
+    mu, msg = op.phan_loai("A2-quet", 2, a2_json_khong_pass=False)
+    if mu != "tham_so" or "mạng" in msg.replace("không phải lỗi mạng", ""):
+        return False, f"A2 rc=2 (tham số) vẫn bị đọc thành lỗi mạng: {mu} / {msg[:80]}"
+    mu, msg = op.phan_loai("A4-so-xac-minh[X]", 2)
+    if mu != "rut" or "mạng ổn" in msg:
+        return False, "A4 rc=2 (NGUỒN ĐÃ BỊ RÚT) bị khuyên «chạy lại khi mạng ổn»"
+    if op.phan_loai("A2-quet", 3)[0] != "khoa_ban" or "khoa_ban" not in op.DUNG_HET:
+        return False, "A2 rc=3 (khoá quét bận) lọt thành «đi tiếp»"
+
+    da_chay: list = []
+    ke_b = [{"buoc": "B2-cong-liem-chinh[X]", "lat": "X", "lenh": ["py", "b2x"]},
+            {"buoc": "B4-bo-nam[X]", "lat": "X", "lenh": ["py", "b4x"]},
+            {"buoc": "B2-cong-liem-chinh[Y]", "lat": "Y", "lenh": ["py", "b2y"]},
+            {"buoc": "B4-bo-nam[Y]", "lat": "Y", "lenh": ["py", "b4y"]}]
+    op.thuc_thi(ke_b, chay=lambda l, _t: (da_chay.append(l[1]) or (1 if l[1] == "b2x" else 0)), in_=lambda *_a: None)
+    if "b4x" in da_chay or "b2y" not in da_chay or "b4y" not in da_chay:
+        return False, f"lát cắt không độc lập: đã chạy {da_chay}"
+
+    op._phan_giai = lambda _t: {"loai": "watchlist", "a2_arg": wl[0], "lat_cat": [], "ly_do": ""}
+    op._dashboards_cua_chu_de = lambda _t: [Path("WebDashboard_EBM_VanDeCuThe_X_20260101.html")]
+    cac = op.ke_hoach("x", online=False, xuat=False)
+    if any(b["buoc"].startswith("A3") for b in cac):
+        return False, "A3 (quét TOÀN KHO ~70 phút, ghi đè cursor dùng chung) chạy mặc định trong lượt một chủ đề"
+    b2 = next(b for b in cac if b["buoc"].startswith("B2"))["lenh"]
+    if "--strict-sources" not in b2:
+        return False, "B2 offline THIẾU --strict-sources — nhóm luật mạnh nhất nằm im (BH96)"
+
+    op._phan_giai = lambda _t: {"q": "zzz", "loai": "khong_ro", "wl_topics": [], "a2_arg": None, "goc": [],
+                                "lat_cat": [], "ly_do": "x", "gan_dung": [], "cach": ""}
+    sav = sys.argv
+    sys.argv = ["orchestrator.py", "--topic", "zzz", "--dry-run"]
+    try:
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = op.main()
+    finally:
+        sys.argv = sav
+    if rc != 64:
+        return False, f"tên không phân giải được thoát {rc} (phải 64 — tham số sai, không phải hạ tầng rc=2)"
+    return True, "tên lát cắt/gốc/không dấu nối đúng watchlist; rc phân loại theo bước; lát cắt độc lập; A3 tắt mặc định; sai tên ⇒ 64"
+
+
+def bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau():
+    """20/09 — ba kênh «cảnh báo không tới bác sĩ» tìm ra trong một lượt khảo sát điều phối, cùng họ BH27 (chạy đúng, in kết quả
+    hợp lệ, nhưng thứ cần kiểm thì không bao giờ tới nơi):
+
+      (1) LỊCH NỀN: 3/4 tác vụ bị xoá từ 07/09 và kỳ thứ Hai 14/09 không nổ — không cảm biến nào báo, vì `giac_quan_lich_nen`
+          chỉ so «PASS cuối» nên lượt chạy TAY 16/09 (Thứ Tư) che kỳ lỡ, và ESD05 chấm PASS chỉ vì `SKILL.md` còn tồn tại.
+      (2) HÒM THƯ: `dung_hom_thu` đọc `alerts/*.md` bằng regex khuôn CŨ; áp lên khuôn hiện hành (`# CẢNH BÁO KHẨN — 2026-09-17`
+          + bullet) nó backtrack thành ngày «2026-09»/nội dung «17» và NUỐT 12 bullet «CỔNG QUÉT FAIL» thật.
+      (3) CỬA VÀO: câu gõ KHÔNG dấu («benh nhan nam 60 tuoi dau nguc 2 gio») luôn rơi `unknown`, kể cả ca cần sàng lọc cờ đỏ.
+
+    Kiểm HÀNH VI: (1) `kiem_lich_nen.kiem()` trên log/queue giả — lượt chạy trễ ngoài hạn KHÔNG xoá kỳ lỡ (mức «tre» ≠ xanh),
+    kỳ không dấu vết là 🔴, thiếu nguyên liệu là «không đo được» chứ không đỏ; (2) `doc_canh_bao()` trên đúng khuôn hiện hành
+    đọc đủ bullet với ngày đúng, và vẫn đọc được khuôn cũ; (3) `route()` trả `clinical_case` cho câu không dấu.
+    """
+    import datetime as _dt
+    import importlib.util as _iu
+    import tempfile
+
+    def _n(rel, ten):
+        sp = _iu.spec_from_file_location(ten, REPO / rel)
+        mm = _iu.module_from_spec(sp); sys.modules[ten] = mm; sp.loader.exec_module(mm)
+        return mm
+    kln = _n("tools/kiem_lich_nen.py", "_bh111_kln")
+    khai = {"cua_so_ngay": 21, "tac_vu": [
+        {"id": "tuan", "cron": "0 18 * * 1", "tu_ngay": "2026-08-17", "grace_gio": 30,
+         "dau_vet": {"loai": "log-ket-thuc", "path": "data/w.log"}},
+        {"id": "queue", "cron": "30 18 * * 1", "tu_ngay": "2026-08-17", "grace_gio": 30,
+         "dau_vet": {"loai": "file-tuan-iso", "path": "queue/tuan-{iso_nam}-W{iso_tuan:02d}.md"}}]}
+    with tempfile.TemporaryDirectory() as td:
+        g = Path(td)
+        (g / "data").mkdir(); (g / "queue").mkdir()
+        # đúng ca 16/09: kỳ 14/09 KHÔNG nổ; lượt chạy tay Thứ Tư chen vào
+        (g / "data" / "w.log").write_text(
+            "\n".join(f"===== {e} : KẾT THÚC — tổng thể=PASS ====="
+                       for e in ("2026-08-31 19:05:00", "2026-09-07 19:10:00", "2026-09-16 08:19:05")) + "\n", encoding="utf-8")
+        for w in ("2026-W36", "2026-W37"):
+            (g / "queue" / f"tuan-{w}.md").write_text("x", encoding="utf-8")
+        kq = kln.kiem(_dt.datetime(2026, 9, 20, 19), khai, g)
+        ds = {(x["id"], x["ky"][:10]): x for x in kq["phat_hien"]}
+        a = ds.get(("tuan", "2026-09-14"))
+        if not a or a["muc"] != "tre" or a["uu"] > 1:
+            return False, "lượt chạy TAY sau kỳ lỡ đã che kỳ lịch không nổ — cảm biến lại im như 14/09"
+        b = ds.get(("queue", "2026-09-14"))
+        if not b or b["uu"] != 0:
+            return False, "kỳ 14/09 thiếu queue/tuan-2026-W38.md mà không bị báo 🔴 (gói duyệt tuần biến mất im lặng)"
+    with tempfile.TemporaryDirectory() as td:
+        kq = kln.kiem(_dt.datetime(2026, 9, 20, 19), khai, Path(td))  # bản sao trần: không log, không queue/
+        if kq["phat_hien"] or len(kq["khong_do_duoc"]) != 2:
+            return False, "thiếu NGUYÊN LIỆU (bản sao trần) bị đọc thành 🔴 — gộp KHÔNG BIẾT với CÓ VẤN ĐỀ (BH08)"
+
+    dht = _n("tools/dung_hom_thu.py", "_bh111_dht")
+    moi = ("# CẢNH BÁO KHẨN — 2026-09-17\n\n(chỉ sự kiện khẩn.)\n\n"
+           "- 🔴 CỔNG QUÉT FAIL: chủ đề «A» — `RuntimeError: x`\n- 🔴 CỔNG QUÉT FAIL: chủ đề «B» — `RuntimeError: y`\n")
+    dong = dht.doc_canh_bao(moi)
+    if len(dong) != 2 or any(n != "2026-09-17" for n, _t in dong) or "CỔNG QUÉT FAIL" not in dong[0][1]:
+        return False, f"khuôn alerts hiện hành bị đọc sai/nuốt bullet: {dong[:2]}"
+    cu = dht.doc_canh_bao("# CẢNH BÁO KHẨN — 2026-08-17 - 🔴 Tiêu đề — chi tiết\n")
+    if cu != [("2026-08-17", "Tiêu đề — chi tiết")]:
+        return False, f"khuôn alerts CŨ không còn đọc được: {cu}"
+
+    it = _n("tools/orchestrator/intent.py", "_bh111_it")
+    r = it.route("benh nhan nam 60 tuoi dau nguc 2 gio")
+    if r.kind != "clinical_case":
+        return False, f"câu gõ KHÔNG dấu vẫn rơi {r.kind} — ca có thể có cờ đỏ mà không vào nhạc trưởng lâm sàng"
+    return True, "kỳ lịch lỡ không bị chạy tay che · alerts hiện hành tới hòm thư đủ bullet · câu không dấu vào đúng cửa"
 
 
 def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> tuple[bool, str]:
@@ -6208,6 +6385,8 @@ BAI_HOC = [
     ("BH107", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh107_mcp_consensus_scite_phai_di_qua_cong),
     ("BH108", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
     ("BH109", "20/09", "Thông báo rút bài là BẢN ĐÍNH CHÍNH: máy chỉ nhận diện câu chữ, cổng vẫn chặn tới khi bác sĩ ký đúng vân tay", bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky),
+    ("BH110", "20/09", "Orchestrator: tên lát cắt/gốc nối đúng tên watchlist; mã thoát phân loại theo bước; sai tên ⇒ 64 (không phải «lỗi mạng»)", bh110_orchestrator_ten_chu_de_va_ma_thoat_dung_nghia),
+    ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

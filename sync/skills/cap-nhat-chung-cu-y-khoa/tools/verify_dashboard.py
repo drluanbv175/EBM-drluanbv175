@@ -1699,6 +1699,46 @@ def _dau_van_tay_thong_bao(ids):
     return sorted({str(x).strip().lower() for x in (ids or []) if str(x).strip()})
 
 
+# Giữ chỗ / điền cho có (T4-03·P-06, siết lại sau phản biện đối kháng 20/09/2026). Sổ này là JSON thường, không chữ ký mật mã —
+# rào MỀM duy nhất là làm cho «điền cho có» không lọt, KHÔNG được chặn oan lý do chân thật:
+#   • giữ chỗ RÕ: «[CẦN…», «CẦN BÁC SĨ ĐIỀN», TODO, YYYY, «<tên>/<ngày>/<lý do>…» — KHÔNG chặn «...» hay «<…>» thông thường
+#     (một lý do thật có thể viết «p<0.05 … OR>1» hoặc «cần bác sĩ tim mạch tái đánh giá»);
+#   • chuẩn hoá khoảng trắng + ký tự vô hình (zero-width) TRƯỚC khi đếm độ dài — đệm để qua ngưỡng 20 ký tự là đường lách;
+#   • da_xem_boi không được là từ điền-cho-có thường gặp (N/A, TBD, none, abc, test…) và phải có ≥ 3 chữ cái;
+#   • ly_do cần ≥ 20 ký tự, ≥ 8 ký tự khác nhau, ≥ 3 TỪ có chữ cái;
+#   • ngay phải là NGÀY THẬT (không 2099-13-45, 0000-00-00, 2026-02-30) và không ở tương lai.
+_GIU_CHO_KY = re.compile(r"\[\s*CẦN|CẦN\s+BÁC\s+SĨ\s+ĐIỀN|\bTODO\b|YYYY|<\s*(?:tên|ngày|lý do|điền)[^>]{0,40}>", re.IGNORECASE)
+_TU_DIEN_CHO_CO = re.compile(r"^(?:n/?a|tbd|none|null|nil|unknown|abc|xyz|test|todo|to do|tên|name|bs|x+)$", re.IGNORECASE)
+_VO_HINH = re.compile(r"[\s\u200b-\u200f\u2060\ufeff]+")
+
+
+def _chuan_khai(gia_tri):
+    return _VO_HINH.sub(" ", str(gia_tri or "")).strip()
+
+
+def _khai_that_su(gia_tri, toi_thieu, toi_thieu_ky_tu_khac_nhau, toi_thieu_tu=1, la_ten=False):
+    x = _chuan_khai(gia_tri)
+    chu_cai = re.findall(r"[^\W\d_]", x)
+    tu = [t for t in x.split(" ") if re.search(r"[^\W\d_]", t)]
+    if not (len(x) >= toi_thieu and not _GIU_CHO_KY.search(x) and len(set(x.lower())) >= toi_thieu_ky_tu_khac_nhau
+            and len(tu) >= toi_thieu_tu and chu_cai):
+        return False
+    if la_ten and (len(chu_cai) < 3 or _TU_DIEN_CHO_CO.match(x)):
+        return False
+    return True
+
+
+def _ngay_that(gia_tri):
+    x = _chuan_khai(gia_tri)
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", x):
+        return False
+    try:
+        d = date.fromisoformat(x)
+    except ValueError:
+        return False
+    return date(2020, 1, 1) <= d <= date.today()
+
+
 def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
     """Bản ghi MIỄN TRỪ do bác sĩ ký cho ca «thông báo bị rút là bản đính chính», hoặc ``None``.
 
@@ -1733,11 +1773,11 @@ def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
             continue
         if _dau_van_tay_thong_bao(e.get("thong_bao_ids")) != van_tay:
             continue
-        if len(str(e.get("da_xem_boi") or "").strip()) < 3:
+        if not _khai_that_su(e.get("da_xem_boi"), 3, 2, la_ten=True):
             continue
-        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(e.get("ngay") or "").strip()):
+        if not _ngay_that(e.get("ngay")):
             continue
-        if len(str(e.get("ly_do") or "").strip()) < 20:
+        if not _khai_that_su(e.get("ly_do"), 20, 8, toi_thieu_tu=3):
             continue
         return e
     return None
@@ -1856,7 +1896,8 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
             nhan, viec = ("CẦN BÁC SĨ XEM (thông báo rút bài là bản ĐÍNH CHÍNH bị rút)",
                           "chưa chắc bài chính bị rút; CHẶN cho tới khi bác sĩ đọc thông báo + các "
                           "đính chính còn hiệu lực rồi ký %s (khoa=%s, thong_bao_ids=%s, da_xem_boi, "
-                          "ngay, ly_do)" % (SO_RUT_BAI_DA_XEM_XET, r.get("khoa"),
+                          "ngay, ly_do). Đã điền mà vẫn chặn? kiểm: không còn giữ chỗ, ngay là ngày THẬT "
+                          "YYYY-MM-DD ≤ hôm nay, ly_do ≥ 20 ký tự và ≥ 3 từ, khoa + thong_bao_ids khớp" % (SO_RUT_BAI_DA_XEM_XET, r.get("khoa"),
                                             _dau_van_tay_thong_bao(r.get("thong_bao_ids"))))
         elif r["tinh_trang"] == "retracted":
             nhan, viec = "ĐÃ BỊ RÚT", "không dùng kết luận của bài này"
