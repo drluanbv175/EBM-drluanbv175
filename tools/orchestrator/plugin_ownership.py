@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from . import ROOT
+from . import duong_that
 
 DEFAULT_REGISTRY_PATH = Path(__file__).with_name("plugin_ownership_registry.json")
 HIGH_RISK = {"high", "critical"}
@@ -313,7 +313,7 @@ class PluginOwnershipRegistry:
             if cap.owner_provider == "local-agent" and local_agents is not None:
                 if cap.owner_unit not in local_agents:
                     errors.append(f"{capability_id}: owner agent khong ton tai: {cap.owner_unit}")
-            if cap.runtime and not (ROOT / cap.runtime).exists():
+            if cap.runtime and not duong_that(cap.runtime).exists():
                 errors.append(f"{capability_id}: runtime khong ton tai: {cap.runtime}")
 
             if not cap.intent_kinds and not cap.entry_agents and not cap.manual_only:

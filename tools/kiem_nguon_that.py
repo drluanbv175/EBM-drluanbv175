@@ -100,7 +100,11 @@ if __name__ == "__main__":
 
 
 REPO = Path(__file__).resolve().parents[1]
-MEA = REPO / "medical-ebm-automation"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_knt", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+MEA = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
 
 # Nguồn y văn mà dây chuyền thật sự gọi tới.
 HOST_NGUON = [

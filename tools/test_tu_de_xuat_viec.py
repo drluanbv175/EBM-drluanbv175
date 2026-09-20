@@ -69,8 +69,13 @@ def test_muc_6_khong_con_hardcode_duong_dan_posix() -> None:
     # nhắc "study_readiness.py") để lấy đúng đoạn quanh mục ⑥, không bắt nhầm
     # 2 chuỗi gợi ý hiển thị (mục ④/⑤ vẫn in gợi ý dạng văn bản cho bác sĩ tự
     # gõ, không phải lệnh thực thi — nằm ngoài phạm vi phát hiện này).
+    # ĐÍNH CHÍNH 17/09/2026 (cascade duong_goc, BH task #105): mốc kết thúc cũ
+    # neo vào chuỗi ghép cứng `"medical-ebm-automation" / "tools" / ...` — chuỗi
+    # đó đã mất khi mục ⑥ đổi sang gọi qua `_GOC_MEA` (duong_goc(), dò được cả
+    # bố cục sibling trên cloud). Đổi mốc sang `"tools" / "study_readiness.py"`
+    # — vẫn duy nhất trong lời gọi thật, không đổi PHẠM VI hay Ý NGHĨA phép thử.
     bat_dau = nguon.index("⑥ Đề tài thật")
-    ket_thuc = nguon.index('"medical-ebm-automation" / "tools" / "study_readiness.py"')
+    ket_thuc = nguon.index('"tools" / "study_readiness.py"')
     doan_quanh_goi_lenh = nguon[bat_dau:ket_thuc]
     assert "~/.ebm-venv/bin/python" not in doan_quanh_goi_lenh
     assert "VENV_PY" in doan_quanh_goi_lenh

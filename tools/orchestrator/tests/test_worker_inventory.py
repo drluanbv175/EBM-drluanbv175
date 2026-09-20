@@ -61,5 +61,45 @@ class TestWorkerInventory(unittest.TestCase):
         self.assertEqual(mod.phan_loai_binding(la), "loi")
 
 
+class TestBioResearchDefaultRoots(unittest.TestCase):
+    """★ Phát hiện #10 của Workflow đối kháng đa-agent 2026-09-03: đường dò cache
+    mặc định của provider `bio-research` từng là "claude-cowork/bio-research" —
+    không khớp khuôn marketplace/plugin thật nào (grep xác nhận: chuỗi
+    "claude-cowork" chỉ xuất hiện ở đúng 2 dòng trong worker_inventory.py, không
+    đâu khác trong repo hay trong known_marketplaces.json/installed_plugins.json
+    thật). Xác minh qua WebFetch 03/09/2026: 3 unit registry của provider này
+    (nextflow-development · single-cell-rna-qc · scvi-tools) khớp CHÍNH XÁC 3
+    thư mục skill riêng biệt trong marketplace THẬT `anthropics/life-sciences`."""
+
+    def test_bio_research_default_roots_point_to_life_sciences_not_claude_cowork(self):
+        inv = wi.WorkerInventory()
+        roots = inv.provider_roots["bio-research"]
+        self.assertTrue(roots, "provider bio-research phải có ít nhất 1 root")
+        for root in roots:
+            self.assertNotIn("claude-cowork", root.parts,
+                             f"đường dò cũ đã sai vẫn còn sót: {root}")
+            self.assertEqual(root.name, "life-sciences", root)
+        # Đúng 2 root — một cho mỗi kho cache (Claude + Codex), khớp khuôn duong().
+        self.assertEqual(len(roots), 2, roots)
+
+    def test_bio_research_skills_found_recursively_under_life_sciences(self):
+        """Mô phỏng CẤU TRÚC ĐÃ VÁ (chưa quan sát được trên máy thật vì plugin
+        này chưa cài ở đâu — xem sync/plugin-manifest.json): mỗi skill nằm
+        trong một thư mục con tuỳ ý dưới marketplace life-sciences, có thể lồng
+        thêm cấp phiên bản. rglob() phải tìm thấy CẢ BA bất kể độ sâu/tên thư
+        mục con cụ thể — đây chính là lý do chỉ cần trỏ đúng CẤP MARKETPLACE,
+        không cần biết/đoán tên thư mục từng skill."""
+        with tempfile.TemporaryDirectory() as td:
+            life_sciences = Path(td) / "life-sciences"
+            for skill in ("nextflow-development", "single-cell-rna-qc", "scvi-tools"):
+                d = life_sciences / skill / "1.0.0"
+                d.mkdir(parents=True)
+                (d / "SKILL.md").write_text(f"---\nname: {skill}\n---\n", encoding="utf-8")
+            inv = wi.WorkerInventory(provider_roots={"bio-research": (life_sciences,)})
+            for skill in ("nextflow-development", "single-cell-rna-qc", "scvi-tools"):
+                found = inv.locate(_spec("bio-research", skill))
+                self.assertTrue(found.available, f"{skill}: {found.reason}")
+
+
 if __name__ == "__main__":
     unittest.main()

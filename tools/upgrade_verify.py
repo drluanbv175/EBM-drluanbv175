@@ -59,6 +59,18 @@ VENV_PY = (
 )
 PY = str(VENV_PY) if VENV_PY.exists() else sys.executable
 
+# VÁ 17/09/2026 (cascade duong_goc, phần còn sót của 5ab59ad/BH task #105): 5 bước dưới đây
+# (17/20/21/22/27) từng ghép cứng "medical-ebm-automation/..." giả định LỒNG — sai trên phiên
+# cloud (anh em thư mục cha, không phải thư mục con). Trên bố cục đó, mỗi bước chạy
+# `python medical-ebm-automation/tools/....py` với cwd=ROOT sẽ nhận "No such file or
+# directory" và thoát mã khác 0 — bị `run()` đọc thành BƯỚC FAIL THẬT, dù công cụ đích chưa
+# hề chạy tới. Đúng lớp lỗi BH08 lặp lại: hạ tầng thiếu bị báo thành nội dung sai.
+import importlib.util as _ilu_uv  # noqa: E402
+_sp_uv = _ilu_uv.spec_from_file_location("_bst_upgrade_verify", TOOLS / "ban_sao_tran.py")
+_bst_uv = _ilu_uv.module_from_spec(_sp_uv)
+_sp_uv.loader.exec_module(_bst_uv)
+_MEA_GOC_UV = _bst_uv.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
+
 
 def _configure_utf8_stdio() -> None:
     """Keep the one-shot verifier printable on Windows legacy consoles."""
@@ -125,13 +137,13 @@ def main() -> int:
         ("14. Idempotency sync_all", ["tools/check_sync_all_idempotent.py"], True),
         ("15. Tự đánh giá 13 tiêu chí", ["tools/assess_agent_system.py", "--deep"], True),
         ("16. Readiness clinical runtime", ["tools/clinical_runtime_readiness_report.py"], True),
-        ("17. Hardening cá nhân 7 miền", ["medical-ebm-automation/tools/verify_personal_production_hardening.py"], True),
+        ("17. Hardening cá nhân 7 miền", [str(_MEA_GOC_UV / "tools" / "verify_personal_production_hardening.py")], True),
         ("18. Clinical schema hardening", ["tools/verify_clinical_runtime_schema_hardening.py"], True),
         ("19. Pipeline cập nhật chứng cứ LS", ["tools/verify_clinical_evidence_update_pipeline.py"], True),
         (
             "20. Evidence surveillance deploy gate",
             [
-                "medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py",
+                str(_MEA_GOC_UV / "tools" / "verify_evidence_surveillance_deployment.py"),
                 "--contract-check",
                 "--no-write",
             ],
@@ -139,19 +151,19 @@ def main() -> int:
         ),
         (
             "21. Clinical evidence agent standards",
-            ["medical-ebm-automation/tools/verify_clinical_evidence_agent_standards.py"],
+            [str(_MEA_GOC_UV / "tools" / "verify_clinical_evidence_agent_standards.py")],
             True,
         ),
         (
             "22. Clinical production control-plane",
-            ["medical-ebm-automation/tools/verify_clinical_production_control_plane.py"],
+            [str(_MEA_GOC_UV / "tools" / "verify_clinical_production_control_plane.py")],
             True,
         ),
         ("23. Audit tổng thể", ["tools/audit_ebm_system.py"], True),
         ("24. Bảng chứng cứ thực tiễn", ["tools/build_research_readiness_evidence.py", "--include-full-pytest"], True),
         ("25. Orchestrator (validate)", ["tools/run_orchestrator.py", "--validate"], True),
         ("26. Orchestrator tests", ["tools/orchestrator/tests/test_orchestrator.py"], True),
-        ("27. Lint repo sống", ["-m", "ruff", "check", "medical-ebm-automation"], True),
+        ("27. Lint repo sống", ["-m", "ruff", "check", str(_MEA_GOC_UV)], True),
         ("28. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
     ]
 

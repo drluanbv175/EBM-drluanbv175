@@ -1,5 +1,61 @@
 # Changelog
 
+## v1.50.0 — 2026-09-07 (đóng gói trang đọc Artifact thành công cụ dùng lại — bác sĩ hỏi «cho những cập nhật sau chưa»)
+
+**Bối cảnh.** Sau v1.49.0 (rà lại tài liệu Suy tim có sẵn), bác sĩ yêu cầu thêm một trang đọc
+được ngay trong khung chat (không mở được `.docx` trực tiếp) → dựng bằng một script BeautifulSoup
+làm-tay-một-lần trong scratchpad, gắn cứng đường dẫn/tiêu đề cho đúng tài liệu đó. Bác sĩ phản
+hồi bản đầu "thiết kế chưa cân đối, bảng trình bày, các chứng cứ chưa có điểm nhấn rõ rệt" → sửa
+tại chỗ. Khi bác sĩ hỏi tiếp "cho những cập nhật sau chưa", rà lại phát hiện: bản sửa CHỈ tồn tại
+trong scratchpad (mất khi hết phiên), gắn cứng cho một file, và KHÔNG được ghi vào bất kỳ tài
+nguyên nào của skill — nên câu trả lời trung thực lúc đó là "tài liệu này: có; lần sau: không tự
+động".
+
+**Đã thêm vào hệ thống:**
+- `tools/build_trang_doc_artifact.py` — tổng quát hoá script scratchpad thành công cụ CLI dùng
+  lại được (`--title`/`--eyebrow-date`/`--footer-date`), tách rõ phần TỔNG QUÁT an toàn dùng lại
+  (bảng màu, quy tắc bọc chip HR/RR/OR + KTC 95%/p, huy hiệu Class/Level, khung CSS 3-theme) khỏi
+  phần GIẢ ĐỊNH BỐ CỤC (4 đoạn mở đầu + 1 bảng cảnh báo) cần đối chiếu lại mỗi tài liệu mới — nêu
+  rõ trong docstring, không hứa "tự động hoàn toàn" quá những gì đã kiểm chứng được. Đã chạy lại
+  trên đúng tài liệu Suy tim để đối chiếu: cùng 25 chip chứng cứ, cùng cấu trúc HTML với bản đã
+  xuất bản (chỉ khác các dòng comment được dịch sang tiếng Việt).
+- `references/14-tai-dung-tai-lieu-co-san.md` — mục mới "Trang đọc thiết kế kiểu Artifact" nêu
+  khi nào dùng, phần dùng lại an toàn vs. phần cần đối chiếu.
+- `SKILL.md` §5G (trỏ tới công cụ ngay tại ca thật đã kể) + §9 (mục tài nguyên).
+
+**Cố ý KHÔNG đụng:** `build_ban_doc_chung_cu.py` (bản đọc CHÍNH THỨC của luồng Web Dashboard
+`items[]`) — công cụ đó đã có cơ chế điểm nhấn chứng cứ RIÊNG phù hợp dữ liệu có cấu trúc
+(forest-plot theo từng mục, trục log, huy hiệu tone màu theo quyết định), không phải "thiếu điểm
+nhấn" như tài liệu chuyên luận dài — hai loại nội dung khác nhau (items có cấu trúc vs. văn xuôi
+liền mạch) cần hai cách trình bày khác nhau; gộp chung sẽ là ép một thiết kế không hợp bối cảnh.
+
+
+## v1.49.0 — 2026-09-07 (mẫu cập nhật chứng cứ tốt nhất — bác sĩ yêu cầu «cập nhật vào hệ thống»)
+
+**Ca thật mở đầu (5G):** bác sĩ tải lên một `.docx` do AI khác soạn, nói "cấu trúc tóm tắt cập
+nhật chứng cứ chưa đúng chuẩn... chứng cứ chưa phải mới nhất". Rà toàn văn lộ 4 lỗi thuộc 4 LỚP
+khác hẳn nhau — nguồn không có thật ("2026 ESC Guidelines" không tồn tại) · artifact trích dẫn
+thô `[cite: N]` chưa xử lý · toàn bộ số liệu định lượng bị xoá trong văn xuôi lẫn 4 bảng ·
+HR 0,65 của HELIOS-B (PMID 39213194) bị gán nhầm quần thể (thật thuộc TOÀN BỘ nghiên cứu, không
+phải phân nhóm đơn trị liệu). Không lỗi nào là "thiếu nguồn mới" — cả bốn chỉ lộ ra khi RÀ LẠI
+một văn bản đã tồn tại, khác hẳn rủi ro của luồng tổng hợp-từ-đầu.
+
+**Đã thêm vào hệ thống:**
+- `references/14-tai-dung-tai-lieu-co-san.md` — quy trình 6 bước rà lại/dựng lại một tài liệu đã
+  soạn sẵn (trích toàn văn · khoảng trống bất thường · nguồn tồn tại thật · artifact công cụ
+  khác · đúng quần thể cho từng hiệu số · khai báo Cấp nguồn khi không trích PMID riêng từng ô).
+- `templates/mau-cap-nhat-chuyen-sau.md` — từ khung trống 18 dòng thành mẫu đầy đủ nội dung: mục
+  1 "Tóm tắt điều hành" 6 khối (câu hỏi cốt lõi · điều gì thay đổi · bảng khuyến cáo hành động ·
+  cờ đỏ · điểm mới nhất · giới hạn tài liệu), cột "Cấp nguồn" ở bảng điều trị mục 6.
+- `templates/mau-cap-nhat-nhanh.md` — thêm mục "Giới hạn" (bản rút gọn của Tóm tắt điều hành).
+- `SKILL.md` §5G (ca thật + liên kết quy trình), §1 (trigger khi có tài liệu đính kèm), §8/§9
+  (checklist + tài nguyên) — `quality/acceptance-checklist.md` thêm 2 nhóm mục kiểm tương ứng.
+
+**Cố ý KHÔNG đụng:** schema `DATA` của Web Dashboard, `verify_dashboard.py`, ba bộ dựng phái
+sinh — đây là thay đổi tầng MARKDOWN/tài liệu (mục 5G/14 nói rõ luồng tài liệu-có-sẵn không bắt
+buộc ép ra Web Dashboard), không phải thay đổi hợp đồng dữ liệu dashboard vốn đòi đồng bộ 2 mẫu +
+3 bộ dựng + cổng liêm chính + test đột biến (xem CLAUDE.md mục "BỐ CỤC/CSS = SỬA TEMPLATE").
+
 ## v1.48.5 — 2026-09-08 (bác sĩ báo: mỗi lần một kiểu, không đọc trực tiếp được trong chat)
 
 **Nguyên nhân xác định qua đối chiếu lịch sử CHANGELOG:** v1.1.0 (2026-06-02) từng "Không bắt buộc

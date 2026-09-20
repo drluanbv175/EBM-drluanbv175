@@ -1,5 +1,6 @@
 {
   "_ghi_chu": "BẢN NGUỒN của hook SessionStart — chép từ máy đang chạy đúng bằng `python3 tools/dong_bo_hook_sessionstart.py --xuat`, KHÔNG soạn tay. Máy kia cài bằng `--ap-dung`. File này tồn tại vì .gitignore loại trừ .claude/settings.json, nên trước 21/08/2026 cơ chế tự động của hệ không có đường nào đi sang máy thứ hai.",
+  "_dinh_chinh_16_09_2026": "8/10 lệnh dùng mẫu `command -v python3 >/dev/null 2>&1 && python3 X --im-khi-on || python X --im-khi-on` — nhưng các công cụ --im-khi-on CỐ Ý trả mã 1/2 để báo «có việc», nên `&&`…`||` đọc nhầm thành lỗi và CHẠY LẠI công cụ bằng `python` (2 lần/phiên trên máy có cả python3 lẫn python; trên Mac không có lệnh `python` thì chỉ in `command not found` ra stderr — đúng dấu vết thấy ở phiên resume 16/09/2026). Đã sửa TRỰC TIẾP (ngoại lệ với «KHÔNG soạn tay» — đây là lỗi cú pháp shell CHUNG, không phải nội dung riêng máy): chọn PY = python3 hoặc python MỘT LẦN bằng `command -v`, rồi gọi PY đúng một lần trong nhánh if/else lồng — khuôn giống lệnh #1 (dong_bo_skill_claude_codex) vốn đã đúng từ đầu. Kiểm bằng BH106 (tools/chot_hoi_quy_bai_hoc.py). ⚠ Máy nào còn `.claude/settings.local.json` bản CŨ: phải `--ap-dung` để nhận bản vá TRƯỚC khi lỡ `--xuat` lần nữa — `--xuat` từ máy chưa vá sẽ ghi đè bản vá này bằng bản lỗi.",
   "_pham_vi": "du-an",
   "_xuat_luc": "2026-08-23 11:52",
   "SessionStart": [
@@ -13,13 +14,13 @@
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_plugin_day_du.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/kiem_plugin_day_du.py --im-khi-on || python tools/kiem_plugin_day_du.py --im-khi-on; }; else echo \"⚠ CHỐT kiem_plugin_day_du KHÔNG CHẠY — không thấy $D/tools/kiem_plugin_day_du.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_plugin_day_du.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/kiem_plugin_day_du.py --im-khi-on; else echo \"⚠ CHỐT kiem_plugin_day_du KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT kiem_plugin_day_du KHÔNG CHẠY — không thấy $D/tools/kiem_plugin_day_du.py\"; fi; true",
           "timeout": 20,
           "statusMessage": "Kiểm kho plugin/skill…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_do_tuoi_chung_cu.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/kiem_do_tuoi_chung_cu.py --im-khi-on || python tools/kiem_do_tuoi_chung_cu.py --im-khi-on; }; else echo \"⚠ CHỐT kiem_do_tuoi_chung_cu KHÔNG CHẠY — không thấy $D/tools/kiem_do_tuoi_chung_cu.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/kiem_do_tuoi_chung_cu.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/kiem_do_tuoi_chung_cu.py --im-khi-on; else echo \"⚠ CHỐT kiem_do_tuoi_chung_cu KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT kiem_do_tuoi_chung_cu KHÔNG CHẠY — không thấy $D/tools/kiem_do_tuoi_chung_cu.py\"; fi; true",
           "timeout": 20,
           "statusMessage": "Kiểm độ tươi chứng cứ…"
         },
@@ -31,37 +32,37 @@
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/dong_bo_skill.py --im-khi-on || python tools/dong_bo_skill.py --im-khi-on; }; else echo \"⚠ CHỐT dong_bo_skill KHÔNG CHẠY — không thấy $D/tools/dong_bo_skill.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dong_bo_skill.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dong_bo_skill.py --im-khi-on; else echo \"⚠ CHỐT dong_bo_skill KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT dong_bo_skill KHÔNG CHẠY — không thấy $D/tools/dong_bo_skill.py\"; fi; true",
           "timeout": 25,
           "statusMessage": "Kiểm skill đang chạy có khớp nguồn…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_sua_chua.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/tu_sua_chua.py --ap-dung --bo-qua-lam-sang --im-khi-on || python tools/tu_sua_chua.py --ap-dung --bo-qua-lam-sang --im-khi-on; }; else echo \"⚠ CHỐT tu_sua_chua KHÔNG CHẠY — không thấy $D/tools/tu_sua_chua.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_sua_chua.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/tu_sua_chua.py --ap-dung --bo-qua-lam-sang --im-khi-on; else echo \"⚠ CHỐT tu_sua_chua KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT tu_sua_chua KHÔNG CHẠY — không thấy $D/tools/tu_sua_chua.py\"; fi; true",
           "timeout": 60,
           "statusMessage": "Tự sửa lỗi máy móc của hệ chứng cứ…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/chot_hoi_quy_bai_hoc.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/chot_hoi_quy_bai_hoc.py --im-khi-on || python tools/chot_hoi_quy_bai_hoc.py --im-khi-on; }; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không thấy $D/tools/chot_hoi_quy_bai_hoc.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/chot_hoi_quy_bai_hoc.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/chot_hoi_quy_bai_hoc.py --im-khi-on; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không thấy $D/tools/chot_hoi_quy_bai_hoc.py\"; fi; true",
           "timeout": 30,
           "statusMessage": "Kiểm bài học cũ có tái phát không…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_khoi_dong.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/tu_khoi_dong.py --phong --im-khi-on || python tools/tu_khoi_dong.py --phong --im-khi-on; }; else echo \"⚠ CHỐT tu_khoi_dong KHÔNG CHẠY — không thấy $D/tools/tu_khoi_dong.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/tu_khoi_dong.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/tu_khoi_dong.py --phong --im-khi-on; else echo \"⚠ CHỐT tu_khoi_dong KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT tu_khoi_dong KHÔNG CHẠY — không thấy $D/tools/tu_khoi_dong.py\"; fi; true",
           "timeout": 30,
           "statusMessage": "Tự khởi động giám sát nếu quá hạn…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/xuat_trang_thai_cloud.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/xuat_trang_thai_cloud.py --im-khi-on || python tools/xuat_trang_thai_cloud.py --im-khi-on; }; else echo \"⚠ CHỐT xuat_trang_thai_cloud KHÔNG CHẠY — không thấy $D/tools/xuat_trang_thai_cloud.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/xuat_trang_thai_cloud.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/xuat_trang_thai_cloud.py --im-khi-on; else echo \"⚠ CHỐT xuat_trang_thai_cloud KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT xuat_trang_thai_cloud KHÔNG CHẠY — không thấy $D/tools/xuat_trang_thai_cloud.py\"; fi; true",
           "timeout": 60,
           "statusMessage": "Làm mới mirror chứng cứ cho Cloud…"
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dat_canh_diem_tin_xoay.py\" ]; then cd \"$D\" && { command -v python3 >/dev/null 2>&1 && python3 tools/dat_canh_diem_tin_xoay.py || python tools/dat_canh_diem_tin_xoay.py; }; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không thấy $D/tools/dat_canh_diem_tin_xoay.py\"; fi; true",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dat_canh_diem_tin_xoay.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dat_canh_diem_tin_xoay.py; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không thấy $D/tools/dat_canh_diem_tin_xoay.py\"; fi; true",
           "timeout": 15,
           "statusMessage": "Xoay vòng đặt-cạnh chứng cứ mới…"
         }

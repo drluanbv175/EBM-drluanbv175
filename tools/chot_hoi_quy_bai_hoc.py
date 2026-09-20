@@ -100,6 +100,20 @@ def _tim_bash() -> str | None:
     return None
 
 
+def _goc_dash() -> Path | None:
+    """Đường dẫn THẬT của EBM-Dashboards/ — lồng hoặc anh em thư mục cha, hoặc None.
+
+    VÁ 09/09/2026 (cherry-pick 6f3bb21): BH30/BH39 tự ghép cứng `REPO / "EBM-Dashboards"`.
+    Trên máy THẬT (kiến trúc OneDrive: cây gốc "Claude AI" vừa là repo git vừa chứa
+    `EBM-Dashboards/` làm thư mục con không track) ghép cứng vẫn đúng; trên phiên cloud
+    (`add_repo` dựng các repo làm ANH EM dưới cùng thư mục cha) nó luôn rỗng dù không
+    liên quan gì tới nội dung đang kiểm. `duong_goc()` (tools/ban_sao_tran.py) đã tự
+    kiểm cả hai vị trí nên dùng nó thay vì tự đoán một vị trí. Trả None khi thật sự
+    vắng ở cả hai — gọi nơi dùng phải tự xử lý, không giả định luôn có giá trị.
+    """
+    return _nap(REPO / "tools" / "ban_sao_tran.py", "bst_goc_dash").duong_goc("EBM-Dashboards", REPO)
+
+
 def _nap(duong_dan: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong_dan)
     m = importlib.util.module_from_spec(spec)
@@ -115,6 +129,22 @@ def _nap(duong_dan: Path, ten: str):
         sys.modules.pop(ten, None)
         raise
     return m
+
+
+def _goc_mea() -> Path:
+    """Đường dẫn THẬT của medical-ebm-automation — lồng hoặc anh em thư mục cha.
+
+    VÁ 07/09/2026 (mục #105 còn treo từ đợt audit 148 mục): 9 chỗ trong file này
+    từng tự ghép `REPO / "medical-ebm-automation"`, chỉ nhận vị trí LỒNG. Trên
+    phiên cloud, `add_repo` dựng `medical-ebm-automation` làm ANH EM của repo gốc
+    (cùng thư mục cha) — ghép cứng khiến 9 chốt này tự ⚪/FAIL sai dù dữ liệu thật
+    đang nằm ngay cạnh (`ban_sao_git_tran()` cũng có đúng lỗi này, đã vá cùng lúc).
+    Nay uỷ quyền cho định nghĩa DUY NHẤT ở `tools/ban_sao_tran.py::duong_goc()`.
+    Không có ở đâu thì trả về vị trí lồng như cũ (để `.exists()` sau đó vẫn đúng
+    là False, không đổi hành vi trên máy/CI thật sự bare).
+    """
+    return (_nap(REPO / "tools" / "ban_sao_tran.py", "bst_goc_mea")
+            .duong_goc("medical-ebm-automation", REPO)) or (REPO / "medical-ebm-automation")
 
 
 # ---------------------------------------------------------------------------
@@ -240,8 +270,8 @@ def bh07_doc_secrets_ngoai_onedrive():
     Đây là phát hiện nghiêm trọng nhất ngày 12/08. Chốt canh: `app/config.py`
     phải đọc kho secrets NGOÀI OneDrive trước `.env` trong repo.
     """
-    t = (REPO / "medical-ebm-automation/app/config.py").read_text(encoding="utf-8",
-                                                                 errors="replace")
+    t = (_goc_mea() / "app/config.py").read_text(encoding="utf-8",
+                                                errors="replace")
     if ".ebm-secrets" not in t:
         return False, "config.py không còn đọc ~/.ebm-secrets — Windows sẽ chạy dữ liệu giả"
     i_sec, i_env = t.find(".ebm-secrets"), t.find('load_dotenv(".env"')
@@ -256,7 +286,7 @@ def bh08_khong_gop_khong_biet_voi_co_van_de():
     bị báo là trích dẫn ma. Báo động giả tệ hơn không kiểm: nó giết niềm tin vào
     cảnh báo thật.
     """
-    t = (REPO / "medical-ebm-automation/app/sources/pubmed.py").read_text(
+    t = (_goc_mea() / "app/sources/pubmed.py").read_text(
         encoding="utf-8", errors="replace")
     if "unknown_fetch_error" not in t:
         return False, "mất trạng thái 'unknown_fetch_error' — lại gộp KHÔNG BIẾT với CÓ VẤN ĐỀ"
@@ -469,7 +499,7 @@ def bh14_khong_khuyen_viec_chac_chan_vo_ich():
     if "CHƯA kiểm được RÚT BÀI" not in out:
         return True, "không còn mục nào hết hiệu lực vì chưa kiểm rút bài"
 
-    co_nen = (REPO / "medical-ebm-automation" / "data" / "retraction_watch"
+    co_nen = (_goc_mea() / "data" / "retraction_watch"
               / "retraction_watch.csv").exists()
     can = "CAN_NCBI_API_KEY" if co_nen else "CAN_TAI_RETRACTION_WATCH"
     if can not in out:
@@ -737,7 +767,25 @@ def bh22_khong_day_file_sao_luu_vao_noi_chay():
     tên file vs thành phần đường dẫn.
 
     Kiểm HÀNH VI: bộ lọc phải bắt tên file sao lưu, và không đụng file thật.
+
+    MỞ RỘNG 16/09/2026 — TÁI PHÁT, và chốt này XANH suốt lúc đó. Lượt 17:09:12 để lại
+    23 THƯ MỤC `<tên>.bak-20260916-170912` ngay trong nơi chạy (Claude chào ra 23 skill
+    trùng `anthropic-skills:<tên>-bak-…`), trong khi bản cũ chỉ đếm `is_file()` và chỉ
+    thử BỘ LỌC, chưa từng chạy ĐƯỜNG ĐẨY. Nay gọi thẳng `main()` thật trên nơi chạy
+    TẠM, theo đúng hai cách hook gọi:
+      ① bộ lọc bắt tên file sao lưu, và lọc theo đường dẫn TƯƠNG ĐỐI — mọi worktree nằm
+         dưới `.claude/worktrees/`, bản cũ lọc sạch 505/505 file nguồn (so rỗng ⇒ «KHOP»);
+      ② `--ap-dung` (đường `tu_sua_chua`) rồi `--ap-dung --nguon-la-chuan` (đường
+         `dong_bo_skill_claude_codex`): sau MỖI lượt, nơi chạy không còn mục nào tên
+         chứa `.bak`/`bak-20`, kể cả file `.bak-*` sẵn trong NGUỒN của skill đẩy trọn;
+      ③ tàn dư do cây KHÁC để lại (thư mục + file lồng) được DỜI sang `<runtime>-backup/`,
+         còn nguyên nội dung; bản sao lưu của lượt đẩy cũng nằm ở đó;
+      ④ nơi chạy THẬT của máy này không chứa mục `*.bak-*` — thư mục lẫn file.
     """
+    import contextlib
+    import io
+    import tempfile
+
     m = _nap(REPO / "tools/dong_bo_skill.py", "dbs_bh22")
     f = getattr(m, "_bi_bo_qua", None)
     if f is None:
@@ -751,12 +799,73 @@ def bh22_khong_day_file_sao_luu_vao_noi_chay():
     for p, mong in ca:
         if f(p, goc) != mong:
             return False, f"lọc sai {p.name!r}: {f(p, goc)} (cần {mong})"
-    rt = m.tim_runtime()
-    if rt is not None:
-        con = [p for p in rt.rglob("*.bak-*") if p.is_file()]
+    goc_wt = Path("/x/.claude/worktrees/w/sync/skills/k")
+    for p, mong in ((goc_wt / "SKILL.md", False), (goc_wt / "tools" / "x.py", False),
+                    (goc_wt / ".claude" / "settings.local.json", True)):
+        if f(p, goc_wt) != mong:
+            return False, (f"lọc theo đường dẫn TUYỆT ĐỐI: {p.relative_to(goc_wt)} → {f(p, goc_wt)} "
+                           f"(cần {mong}) — chạy từ worktree sẽ so rỗng, mọi skill «KHOP» giả")
+
+    rt_that = m.tim_runtime()
+    if rt_that is not None:
+        con = sorted(p.name for p in rt_that.rglob("*.bak-*"))
         if con:
-            return False, f"{len(con)} file sao lưu vẫn nằm trong nơi chạy"
-    return True, "lọc đúng theo tên file; nơi chạy sạch file sao lưu"
+            return False, (f"{len(con)} mục sao lưu (thư mục/file) đang nằm TRONG nơi chạy thật: "
+                           f"{', '.join(con[:3])} — `python3 tools/dong_bo_skill.py --don-bak` để DỜI ra ngoài")
+
+    def _rac(rt: Path) -> list[str]:
+        return sorted(str(p.relative_to(rt)) for p in rt.rglob("*")
+                      if ".bak" in p.name or "bak-20" in p.name)
+
+    with tempfile.TemporaryDirectory() as d:
+        goc_tam = Path(d)
+        src = goc_tam / "nguon"
+        rt = goc_tam / "u1" / "u2" / "skills"
+        (src / "da-co").mkdir(parents=True)
+        (src / "da-co" / "SKILL.md").write_text("---\nname: da-co\n---\nchung\nmoi\n", encoding="utf-8")
+        (rt / "da-co" / "tools").mkdir(parents=True)
+        (rt / "da-co" / "SKILL.md").write_text("---\nname: da-co\n---\nchung\n", encoding="utf-8")
+        (src / "phan-ky").mkdir(parents=True)
+        (src / "phan-ky" / "SKILL.md").write_text("---\nname: phan-ky\n---\nban nguon\n", encoding="utf-8")
+        (rt / "phan-ky").mkdir(parents=True)
+        (rt / "phan-ky" / "SKILL.md").write_text("---\nname: phan-ky\n---\nrieng noi chay\n", encoding="utf-8")
+        (src / "moi" / "tools").mkdir(parents=True)
+        (src / "moi" / "SKILL.md").write_text("---\nname: moi\n---\nx\n", encoding="utf-8")
+        (src / "moi" / "tools" / "a.py.bak-20260916-170912").write_text("cu trong nguon", encoding="utf-8")
+        (rt / "da-co.bak-20260916-170912").mkdir()
+        (rt / "da-co.bak-20260916-170912" / "SKILL.md").write_text("ban cu con sot", encoding="utf-8")
+        (rt / "da-co" / "tools" / "b.py.bak-20260916-170912").write_text("file cu con sot", encoding="utf-8")
+
+        # Cô lập TUYỆT ĐỐI khỏi nơi chạy thật trước khi gọi main(): sai một chỗ ở đây
+        # là đẩy skill giả vào máy của bác sĩ.
+        m.NGUON = src
+        m.GOC_RUNTIME = goc_tam
+        m.tim_runtime = lambda: rt
+        if m.tim_runtime() != rt or not str(m.NGUON).startswith(d):
+            return False, "không cô lập được nơi chạy tạm — dừng, không chạy đường đẩy"
+        for tham_so in (["--ap-dung"], ["--ap-dung", "--nguon-la-chuan", "--im-khi-on"]):
+            with contextlib.redirect_stdout(io.StringIO()):
+                m.main(tham_so)
+            rac = _rac(rt)
+            if rac:
+                return False, (f"`dong_bo_skill.py {' '.join(tham_so)}` để lại {len(rac)} mục sao lưu "
+                               f"TRONG nơi chạy: {', '.join(rac[:3])}")
+        kho = rt.parent / "skills-backup"
+        con_nguyen = (
+            (kho / "da-co.bak-20260916-170912" / "SKILL.md", "ban cu con sot"),
+            (kho / "da-co" / "tools" / "b.py.bak-20260916-170912", "file cu con sot"),
+        )
+        for p, noi_dung in con_nguyen:
+            if not p.is_file() or p.read_text(encoding="utf-8") != noi_dung:
+                return False, (f"tàn dư `.bak` không được DỜI nguyên vẹn sang {kho.name}/ "
+                               f"({p.relative_to(kho)}) — bị xoá hoặc để lại")
+        if not any(kho.glob("phan-ky.bak-*")) or (rt / "phan-ky" / "SKILL.md").read_text(encoding="utf-8") != \
+                (src / "phan-ky" / "SKILL.md").read_text(encoding="utf-8"):
+            return False, "đường --nguon-la-chuan không đẩy được skill phân kỳ kèm sao lưu ra ngoài"
+        if not (rt / "moi" / "SKILL.md").is_file():
+            return False, "skill thiếu hẳn ở nơi chạy không được đẩy trọn"
+    return True, ("lọc đúng tên file + đường dẫn tương đối; hai đường đẩy không để .bak trong nơi chạy; "
+                  "tàn dư được dời ra ngoài; nơi chạy thật sạch")
 
 
 def bh23_khong_dashboard_nao_bi_loai_im_lang():
@@ -928,7 +1037,7 @@ def bh27_khong_kiem_duoc_phai_la_van_de():
     """
     import ast
 
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_mea()
     f_tieu_thu = mea / "tools/check_citation_retraction.py"
     # Khai ĐÍCH DANH hàm nào thuộc hợp đồng rút bài. Đổi tên hàm mà quên sửa đây thì
     # chốt đỏ — đúng ý: nghĩa là nó đã thôi canh phần mã mà nó tưởng đang canh.
@@ -1072,10 +1181,10 @@ def bh30_khoa_gom_nhom_phai_dinh_danh_duy_nhat():
     import shutil as _sh
     import tempfile as _tmp
     dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_bh30")
-    dash = REPO / "EBM-Dashboards"
-    goc = sorted(dash.glob("WebDashboard_*.html"))
+    dash = _goc_dash()
+    goc = sorted(dash.glob("WebDashboard_*.html")) if dash else []
     if len(goc) < 1:
-        return False, "kho dashboard rỗng — không dựng được ca thử"
+        return False, "EBM-Dashboards/ rỗng hoặc vắng mặt — không dựng được ca thử"
     vd = dk.nap_vd()
     mau = None
     for p in goc:
@@ -1316,7 +1425,7 @@ def bh34_canh_bao_phai_noi_dung_muc():
     Kiểm HÀNH VI: bản ghi mang cờ rút-và-thay phải sinh thông điệp khác hẳn bản ghi
     rút bỏ hẳn, và cả hai đều phải là LỖI CỨNG.
     """
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_mea()
     if str(mea) not in sys.path:
         sys.path.insert(0, str(mea))  # module dùng `from app.utils...`
     cr = _nap(mea / "app" / "sources" / "crossref_retraction.py", "cr_bh34")
@@ -1531,10 +1640,19 @@ def bh39_doctrine_khong_duoc_troi_sau_cong():
     Kiểm HÀNH VI: mọi trường mà cổng ĐANG bắt buộc phải xuất hiện trong ít nhất một
     doctrine agent. Thêm luật ở cổng thì phải dạy agent — nếu không, chốt này đỏ.
     """
-    cong = (REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py")
+    # VÁ 09/09/2026 (cherry-pick 6f3bb21): bản đầu chỉ tìm bản doctrine-canonical
+    # (REPO/EBM-Dashboards/tools/…), không lùi về bản vendor-qua-git — cùng khoảng
+    # trống mà duong_cong_cu_pipeline() (tools/ban_sao_tran.py) đã lấp cho
+    # xuat_goi_cap_nhat.py/canary, chỉ là BH39 chưa từng được nối dây theo. Dùng
+    # resolver chung: máy thật vẫn thấy bản canonical như cũ; phiên cloud/CI lùi về
+    # sync/skills/cap-nhat-chung-cu-y-khoa/tools/ (LUÔN có qua git) — cổng ĐƯỢC KIỂM
+    # THẬT thay vì chỉ ⚪ "không thấy".
+    bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh39")
+    cong = bst.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
     thu_muc = REPO / ".claude" / "agents"
-    if not cong.exists() or not thu_muc.is_dir():
-        return False, "không thấy cổng hoặc thư mục agent"
+    if cong is None or not thu_muc.is_dir():
+        return False, ("không thấy cổng verify_dashboard.py (cả EBM-Dashboards/ lẫn bản "
+                       "vendor sync/skills/ đều vắng) hoặc thư mục .claude/agents")
     van_cong = cong.read_text(encoding="utf-8", errors="replace")
     # Trường mà cổng thực sự đọc từ item và có thể sinh lỗi/cảnh báo.
     truong = [t for t in ("normativeBasis", "gradeBy", "provenanceUnknown")
@@ -1615,7 +1733,7 @@ def bh41_cong_cu_chung_cu_khong_duoc_mo_coi():
                     for p in thu_muc.glob("*.md"))
     mo_coi = [t for t in CONG_CU
               if (REPO / "tools" / f"{t}.py").exists()
-              or (REPO / "medical-ebm-automation" / "tools" / f"{t}.py").exists()]
+              or (_goc_mea() / "tools" / f"{t}.py").exists()]
     mo_coi = [t for t in mo_coi if t not in van]
     if mo_coi:
         return False, (f"{len(mo_coi)} công cụ chứng cứ KHÔNG agent nào gọi tên "
@@ -1720,7 +1838,7 @@ def bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc():
     """
     import subprocess
 
-    tp = REPO / "medical-ebm-automation" / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
+    tp = _goc_mea() / "tools" / "thu_dau_cuoi_cong_nghien_cuu.py"
     if not tp.exists():
         return False, "mất canary cổng nghiên cứu — không còn gì chứng minh chuỗi G0–G10 CHẶN thật"
     r = subprocess.run([sys.executable, str(tp)], capture_output=True, text=True,
@@ -2052,7 +2170,11 @@ def bh51_ledger_synthetic_dung_pham_vi():
     điểm gọi G6). Đạt ở chế độ đó thì ghi RÕ là kiểm yếu hơn (chưa kiểm phần chữ ký); vẫn lệch thì vẫn ✗.
     Lý do lệch KHÁC (không phải khoá máy này) ⇒ ✗ như cũ, không bao giờ bị hạ.
     """
-    mea = REPO / "medical-ebm-automation"
+    import importlib.util
+    import shutil
+    import sys as _sys
+    import tempfile
+    mea = _goc_mea()
     sap = mea / "exports/ZZPHA-R-AUTO-DEMO/G4_A5_SAP_FINAL_ZZPHA-R-AUTO-DEMO.md"
     if not sap.exists():
         return True, "đề tài demo không còn — chốt bỏ qua có khai báo"
@@ -2086,7 +2208,7 @@ def bh56_cong_cu_moi_phai_co_day():
     goc = REPO
     noi_tieu_thu = [goc / ".claude" / "agents" / "tra-cuu-chung-cu.md",
                     goc / ".claude" / "agents" / "tong-quan-y-van.md",
-                    goc / "medical-ebm-automation" / "scripts" / "weekly_safety.sh",
+                    _goc_mea() / "scripts" / "weekly_safety.sh",
                     Path.home() / ".claude" / "scheduled-tasks" / "goi-duyet-tuan-ebm"
                     / "SKILL.md",
                     # Bản chạy thật ở trên nằm NGOÀI OneDrive (machine-local) và
@@ -2811,7 +2933,7 @@ def bh53_elink_chi_nhan_pubmed_pmc():
     _parse_linksets với fixture mang CẢ HAI linkname — nhận nhầm refs là đỏ.
     """
     import importlib.util
-    duong = REPO / "medical-ebm-automation" / "tools" / "gom_toan_van_oa.py"
+    duong = _goc_mea() / "tools" / "gom_toan_van_oa.py"
     if not duong.exists():
         return False, "gom_toan_van_oa.py biến mất"
     sp = importlib.util.spec_from_file_location("gom_tv", duong)
@@ -2876,14 +2998,14 @@ def bh52_g0_kiem_rut_bai_tai_cua():
           "print(json.dumps(m.guardrail_check_g0('',{'all_pmids':['9500320']}),"
           "ensure_ascii=False))")
     r = subprocess.run([str(venv), "-c", ma], capture_output=True, text=True,
-                       cwd=REPO / "medical-ebm-automation", timeout=180, encoding="utf-8", errors="replace")
+                       cwd=_goc_mea(), timeout=180, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         return False, f"guardrail_check_g0 không chạy được: {r.stderr.strip()[-120:]}"
     goi = r.stdout
     if "R1C" not in goi:
         return False, "R1C biến mất — G0 lại tin PMID còn hiệu lực mà không kiểm"
     if "9500320" not in goi:
-        nen_rw = REPO / "medical-ebm-automation" / "data" / "retraction_watch" / "retraction_watch.csv"
+        nen_rw = _goc_mea() / "data" / "retraction_watch" / "retraction_watch.csv"
         if not nen_rw.exists():
             return False, ("CHƯA KẾT LUẬN ĐƯỢC R1C hỏng hay không: nền Retraction Watch NGOẠI "
                            "TUYẾN chưa tải (data/retraction_watch/retraction_watch.csv — gitignore). "
@@ -3378,7 +3500,11 @@ def bh75_don_bak_phai_xu_ly_ca_thu_muc() -> tuple[bool, str]:
 
     Kiểm HÀNH VI trên đĩa tạm bằng cách gọi THẲNG `don_bak()` thật (không viết lại
     logic riêng — tránh lệch với bản đang chạy): dựng cả THƯ MỤC lẫn FILE tên
-    `.bak-*`, xác nhận không crash và cả hai loại đều bị xoá sạch."""
+    `.bak-*`, xác nhận không crash và cả hai loại đều ra khỏi nơi chạy.
+
+    16/09/2026: `don_bak()` nay DỜI sang `<runtime>-backup/` thay vì `rmtree` — thư mục
+    sao lưu là bản duy nhất của nội dung runtime trước một lượt đẩy. Chốt đòi thêm:
+    nội dung còn NGUYÊN ở kho sao lưu (xoá thay vì dời là đỏ)."""
     import tempfile
 
     m = _nap(REPO / "tools/dong_bo_skill.py", "dbs_bh75")
@@ -3397,12 +3523,18 @@ def bh75_don_bak_phai_xu_ly_ca_thu_muc() -> tuple[bool, str]:
         except OSError as exc:
             return False, f"don_bak() crash trên thư mục .bak: {exc}"
         if n != 2:
-            return False, f"don_bak() báo xoá {n} mục, mong đợi 2 (1 thư mục + 1 file)"
+            return False, f"don_bak() báo xử lý {n} mục, mong đợi 2 (1 thư mục + 1 file)"
         if thu_muc_bak.exists():
-            return False, "thư mục .bak vẫn còn sau khi dọn"
+            return False, "thư mục .bak vẫn còn trong nơi chạy sau khi dọn"
         if file_bak.exists():
-            return False, "file .bak vẫn còn sau khi dọn"
-    return True, "don_bak() xử lý đúng cả thư mục lẫn file, không crash"
+            return False, "file .bak vẫn còn trong nơi chạy sau khi dọn"
+        kho = rt.parent / "skills-backup"
+        for p, noi_dung in ((kho / "mot-skill.bak-20260101-000000" / "tools" / "x.py", "pass cu"),
+                            (kho / "mot-skill" / "tools" / "x.py.bak-20260101-000000", "pass cu 2")):
+            if not p.is_file() or p.read_text(encoding="utf-8") != noi_dung:
+                return False, (f"don_bak() XOÁ thay vì dời ({p.relative_to(kho)} không còn ở "
+                               f"{kho.name}/) — mất bản sao lưu duy nhất")
+    return True, "don_bak() xử lý đúng cả thư mục lẫn file, không crash, dời ra ngoài còn nguyên nội dung"
 
 
 def bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime() -> tuple[bool, str]:
@@ -3800,13 +3932,37 @@ def ban_sao_git_tran() -> bool:
 _LOI_THIEU_NGUYEN_LIEU = ("FileNotFoundError", "ModuleNotFoundError", "NotADirectoryError")
 
 
-def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "") -> str:
-    """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪."""
+def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "", bst=None) -> str:
+    """'dat' | 'tai_phat' | 'ngoai_pham_vi' — chỉ bản sao trần mới có ⚪.
+
+    VÁ 08/09/2026 (cherry-pick 6f40471) — «2-trong-3 gốc vắng» (phiên cloud:
+    medical-ebm-automation có mặt dạng sibling, EBM-Dashboards/EBM_MASTER KHÔNG BAO
+    GIỜ có trong bất kỳ git checkout nào) không được `tran` (đòi CẢ BA gốc vắng)
+    nhận diện — đo thật: 30/34 mục "tái phát" trên phiên cloud chỉ vì `tran=False`
+    toàn cục, dù đối tượng chúng soi (một file cụ thể dưới EBM-Dashboards/EBM_MASTER)
+    THẬT SỰ vắng mặt. Nay: nếu thông điệp lỗi (`ct`, do chính `except BaseException`
+    hoặc hàm bh*_ tự ghi) nêu ĐÍCH DANH một trong ba tên gốc, chỉ cần ĐÚNG gốc đó
+    vắng là đủ ⚪ — không cần cả ba. `ct` rỗng hoặc không nêu tên gốc nào ⇒ lùi về
+    `tran` toàn cục như cũ (KHÔNG bớt đường cũ, chỉ THÊM — cùng nguyên tắc
+    `duong_goc()` đã áp ở tools/ban_sao_tran.py). `bst` là module `ban_sao_tran` đã
+    nạp sẵn (main() nạp MỘT lần); truyền None thì tự nạp khi cần — giữ mọi lời gọi
+    trực tiếp (test) không đổi hành vi.
+    """
     if ok:
         return "dat"
-    if tran and ma in _CAN_NGUYEN_LIEU_NGOAI_REPO:
-        if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
-            return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+    if ma not in _CAN_NGUYEN_LIEU_NGOAI_REPO:
+        return "tai_phat"
+    if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
+        return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+    if ct:
+        if bst is None:
+            bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_phan_loai")
+        goc_neu_ten = [g for g in bst.GOC_DU_LIEU_NGOAI_GIT if g in ct]
+        if goc_neu_ten:
+            if all(bst.duong_goc(g, REPO) is None for g in goc_neu_ten):
+                return "ngoai_pham_vi"
+            return "tai_phat"  # gốc mà ct nêu tên LẠI đang có mặt — lỗi thật, không ⚪ hoá
+    if tran:
         return "ngoai_pham_vi"
     return "tai_phat"
 
@@ -3981,8 +4137,19 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         P = Path(td) / "du-an"
         home = Path(td) / "home"
         shim = Path(td) / "shim"
-        for d in (P / "sync/skills/skill-thu", P / "tools", home, shim):
+        for d in (P / "sync/skills/skill-thu", P / "tools", P / ".claude/hooks", home, shim):
             d.mkdir(parents=True)
+        # SỬA 17/09/2026: `.claude/hooks/session-start.sh` từ 9420883 tự định vị gốc
+        # qua BASH_SOURCE[0] (chống $PWD sai khi phiên nhiều-repo trỏ CLAUDE_PROJECT_DIR
+        # lệch) — nên nếu vẫn gọi bản THẬT (nằm trong REPO) với `cwd=P`, script sẽ tự
+        # định vị VỀ LẠI REPO thay vì P, bỏ qua CLAUDE_PROJECT_DIR=P mà fixture set bên
+        # dưới, và chạy tools/tu_sua_chua.py + chot_hoi_quy_bai_hoc.py THẬT của REPO —
+        # đúng dẫn tới đệ quy (chốt tự gọi lại chính nó) và treo tới hết timeout 120s.
+        # Copy script vào ĐÚNG vị trí trong P để tự định vị resolve về P như một hook
+        # thật sự nằm trong repo đó — khớp đúng cách nó chạy trong đời thật, không phải
+        # một mẹo giả lập nữa.
+        shutil.copy2(REPO / ".claude/hooks/session-start.sh", P / ".claude/hooks/session-start.sh")
+        (P / ".claude/hooks/session-start.sh").chmod(0o755)
         (P / "sync/skills/skill-thu/SKILL.md").write_text(
             "---\nname: skill-thu\ndescription: thử\n---\n# thử\n", encoding="utf-8")
         shutil.copy2(REPO / "sync/cau-hinh-nguoi-dung.json", P / "sync/cau-hinh-nguoi-dung.json")
@@ -4017,7 +4184,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④a còn một gốc dữ liệu ⇒ chốt bài học KHÔNG được gọi (sẽ toàn đỏ giả)
         (P / "medical-ebm-automation").mkdir()
-        r = subprocess.run([bash, str(hook)], cwd=P, env=env,
+        r = subprocess.run([bash, str(P / ".claude/hooks/session-start.sh")], cwd=P, env=env,
                            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             return False, f"hook thoát {r.returncode} ở chế độ remote: {(r.stdout + r.stderr)[-300:]}"
@@ -4045,7 +4212,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
 
         # ④b bản trần ⇒ chốt bài học PHẢI được gọi
         (P / "medical-ebm-automation").rmdir()
-        subprocess.run([bash, str(hook)], cwd=P, env=env,
+        subprocess.run([bash, str(P / ".claude/hooks/session-start.sh")], cwd=P, env=env,
                        capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace")
         if not dau.exists():
             return False, "bản trần mà hook không gọi chốt bài học — cloud mất giác quan hồi quy"
@@ -5005,7 +5172,7 @@ def bh97_sap_rong_khong_duoc_khoa_bang_chu_ky():
     """
     import importlib.util as _iu
 
-    ag = REPO / "medical-ebm-automation" / "tools" / "approve_gate.py"
+    ag = _goc_mea() / "tools" / "approve_gate.py"
     if not ag.exists():
         return True, "⚪ repo y khoa vắng mặt trên cây này — không kiểm được (không suy đoán)"
 
@@ -5057,7 +5224,7 @@ def bh98_bien_nhan_guardrail_lam_sang():
     import os
     import tempfile
 
-    cc = REPO / "medical-ebm-automation" / "tools" / "clinical_checkpoint.py"
+    cc = _goc_mea() / "tools" / "clinical_checkpoint.py"
     if not cc.exists():
         return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
     spec = _iu.spec_from_file_location("_bh98_cc", cc)
@@ -5135,7 +5302,7 @@ def bh99_module_test_khong_duoc_keo_sap_ca_luot_thu_thap():
     import importlib.util as _iu
     import importlib.machinery as _im
 
-    tf = REPO / "medical-ebm-automation" / "tests" / "test_gate_ed25519_20260815.py"
+    tf = _goc_mea() / "tests" / "test_gate_ed25519_20260815.py"
     if not tf.exists():
         return True, "⚪ repo y khoa vắng mặt — không kiểm được (không suy đoán)"
     try:
@@ -5215,7 +5382,7 @@ def bh100_verifier_khong_duoc_mu_vi_mot_module_thieu():
     vf = REPO / "tools" / "verify_controlled_research_automation.py"
     if not vf.exists():
         return True, "⚪ thiếu verifier — không kiểm được (không suy đoán)"
-    if not (REPO / "medical-ebm-automation" / "tools" / "gate_contract.py").exists():
+    if not (_goc_mea() / "tools" / "gate_contract.py").exists():
         return True, "⚪ repo y khoa vắng mặt — verifier tự thoát sớm, không kiểm được"
     ten = "_bh100_vcra"
     sys.modules.pop(ten, None)
@@ -5318,7 +5485,7 @@ def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
     return True, "bản sao trần: thoát mã 2 sạch, không traceback, không báo nhầm 'có lỗ hổng'"
 
 
-def bh104_mcp_consensus_scite_phai_di_qua_cong():
+def bh107_mcp_consensus_scite_phai_di_qua_cong():
     """20/09 — bác sĩ chốt «MCP vẫn đi qua cổng»: Consensus/Scite ở phía MCP của tác nhân KHÔNG được là đường tắt quanh
     bậc thang dự phòng có cổng của engine (cổng đủ-chứng-cứ → Consensus → SerpApi → xác minh Crossref/PubMed → Scite).
 
@@ -5401,7 +5568,7 @@ def bh104_mcp_consensus_scite_phai_di_qua_cong():
     return True, "MCP Consensus/Scite đi qua cổng dự phòng (Scite search = tầng 2, có trần), Cochrane Cấp 0 có §2quater, bản đồ agent trỏ đúng"
 
 
-def bh105_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
+def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
     """20/09 — bác sĩ yêu cầu «chọn lọc `JamesANZ/medical-mcp` phù hợp, đưa vào hệ thống». Kết luận (doctrine §1ter): KHÔNG cài
     máy chủ MCP bên thứ ba; lấy đúng hai khoảng trống thật (RxNorm chuẩn hoá tên, danh mục EMA) bằng mã của ta gọi thẳng API
     công khai, và chỉ dẫn WHO GHO tới tài liệu đã có.
@@ -5542,6 +5709,222 @@ def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
     return True, "chỉ thị tự bắn hook cloud còn nguyên trong CLAUDE.md, và mục tiêu nó trỏ tới vẫn tồn tại"
 
 
+def bh104_cowork_orphan_cleanup_da_khai():
+    """16/09 — điều tra `~/Library/Application Support/Claude/local-agent-mode-sessions/
+    skills-plugin/.../skills/` sau khi 23 thư mục `.bak-20260916-170912` xuất hiện rồi
+    biến mất trong đó (đúng ca BH22/BH103). Đo trực tiếp lúc 18:08:00 (đỉnh chu kỳ 20
+    phút): app xoá "25 orphans cleaned" — quét sạch mọi skill vừa được
+    `dong_bo_skill.py --ap-dung` đẩy vào phút trước, chỉ chừa skill ĐÃ CÓ trong
+    `manifest.json` (`creatorType:"user"`).
+
+    Đọc thẳng `app.asar` xác nhận danh sách "N enabled skills" tới từ gọi API thật
+    `GET /api/organizations/{org}/skills/list-skills?...&entrypoint=local-agent` — danh
+    sách Custom Skills của TÀI KHOẢN claude.ai (Customize → Skills), không phải file
+    trên đĩa. Một agent `claude-code-guide` tra độc lập bằng tài liệu chính thức xác
+    nhận đúng: *"Cowork loads the ones enabled for your claude.ai account, synced at
+    session start, and doesn't read the Claude Code CLI's ~/.claude directory on your
+    machine."* (https://claude.com/docs/cowork/overview.md) — tức đây là TRẦN KIẾN
+    TRÚC, không phải lỗi phân kỳ nội dung của `dong_bo_skill.py` để sửa bằng cách so
+    sánh kỹ hơn. Chốt này canh đúng phát hiện đó CÒN NẰM trong docstring — mất đoạn
+    này thì một phiên sau dễ quay lại coi "THIEU_HAN tái diễn mỗi 20 phút" là hồi quy
+    của công cụ đồng bộ và tốn công vá lại một thứ không sửa được ở tầng công cụ."""
+    tep = REPO / "tools" / "dong_bo_skill.py"
+    if not tep.exists():
+        return False, "tools/dong_bo_skill.py biến mất — mất luôn phát hiện trần kiến trúc Cowork"
+    noi_dung = tep.read_text(encoding="utf-8", errors="replace")
+    CAN_CO = (
+        "TRẦN KIẾN TRÚC ĐÃ XÁC NHẬN BẰNG TÀI LIỆU CHÍNH THỨC",
+        "skills/list-skills",
+        "https://claude.com/docs/cowork/overview.md",
+        "Custom Skills do not sync across surfaces",
+    )
+    thieu = [c for c in CAN_CO if c not in noi_dung]
+    if thieu:
+        return False, ("mất đoạn ghi trần kiến trúc Cowork trong docstring "
+                        "tools/dong_bo_skill.py — thiếu: " + "; ".join(thieu))
+    return True, "docstring tools/dong_bo_skill.py còn ghi đúng trần kiến trúc Cowork + nguồn tài liệu"
+
+
+def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> tuple[bool, str]:
+    """16/09/2026 — một git worktree LẠC HẬU ghi vào nơi chạy Cowork DÙNG CHUNG.
+
+    ĐÁNH SỐ LẠI 17/09/2026 (workflow kiểm tra toàn diện): commit gốc đặt lỗi này là
+    "BH103", nhưng số đó đã bị BH103 khác chiếm trước (chỉ thị tự bắn hook cloud,
+    xem `bh103_chi_thi_tu_bat_hook_cloud_da_khai` ở trên) — số kế tiếp còn trống là
+    BH105, không phải BH103. Nội dung bài học và chốt kiểm giữ nguyên, chỉ đổi số
+    + tên hàm.
+
+    Nơi chạy Cowork (và `~/.claude/skills`) dùng chung cho MỌI phiên trên máy, nhưng
+    phiên mở trong `.claude/worktrees/<tên>` chạy hook SessionStart bằng `tools/*.py`
+    CỦA worktree đó. Bản vá 08/09 chỉ đưa đường `dong_bo_skill_claude_codex.sync_cowork`
+    về repo chính; đường `tu_sua_chua.py` → `dong_bo_skill.py` vẫn chạy mã + nguồn của
+    worktree. Ca thật 17:09:12: phiên resume ở worktree HEAD `0ec62fc` (trước bản vá sao
+    lưu 13/09) → `tu_sua_chua.py` → `dong_bo_skill.py` CŨ → chép bản cũ đè lên nơi chạy
+    và để lại 23 thư mục `.bak` trong đó ⇒ 23 skill trùng `…-bak-20260916-170912`. Chín
+    giây sau, đường `sync_cowork` (đã vá) sao lưu ĐÚNG chỗ — hai đường, hai hành vi.
+
+    Kiểm HÀNH VI trên repo git THẬT dựng tạm (repo chính + 1 worktree dưới
+    `.claude/worktrees/`), chép đúng bản `tools/*.py` đang sống, rồi NẠP module TỪ
+    worktree trong tiến trình con — không dùng module đã nạp của phiên này:
+      ① `dong_bo_skill.NGUON` = `sync/skills` của repo CHÍNH, không phải của worktree;
+      ② lệnh kiểm + lệnh sửa của mục đồng bộ Cowork trong `tu_sua_chua.VIEC_MAY` trỏ
+         `tools/dong_bo_skill.py` của repo CHÍNH.
+    Tiến trình con CHỈ nạp module và in đường dẫn, không bao giờ gọi `main()` — nơi chạy
+    thật không bị chạm. Máy không có git thì không thể có worktree: bỏ qua có khai báo."""
+    import json as _json
+    import os
+    import shutil as _shutil
+    import subprocess
+    import tempfile
+
+    if _sh_which("git") is None:
+        return True, "máy không có git — không thể có worktree, bỏ qua"
+    for ten in ("tu_sua_chua.py", "dong_bo_skill.py"):
+        if not (REPO / "tools" / ten).is_file():
+            return False, f"thiếu tools/{ten}"
+    moi_truong = {**os.environ, "GIT_AUTHOR_NAME": "chot", "GIT_AUTHOR_EMAIL": "chot@local",
+                  "GIT_COMMITTER_NAME": "chot", "GIT_COMMITTER_EMAIL": "chot@local"}
+
+    def _git(*tham_so: str, cwd: Path) -> None:
+        subprocess.run(["git", *tham_so], cwd=str(cwd), check=True, capture_output=True,
+                       text=True, encoding="utf-8", errors="replace", env=moi_truong, timeout=60)
+
+    with tempfile.TemporaryDirectory() as d:
+        chinh = Path(d) / "repo-chinh"
+        (chinh / "tools").mkdir(parents=True)
+        (chinh / "sync" / "skills" / "mau").mkdir(parents=True)
+        (chinh / "sync" / "skills" / "mau" / "SKILL.md").write_text("---\nname: mau\n---\n", encoding="utf-8")
+        for ten in ("tu_sua_chua.py", "dong_bo_skill.py"):
+            _shutil.copy2(REPO / "tools" / ten, chinh / "tools" / ten)
+        wt = chinh / ".claude" / "worktrees" / "phu"
+        try:
+            _git("init", "-q", cwd=chinh)
+            _git("add", "-A", cwd=chinh)
+            _git("commit", "-q", "-m", "khoi tao", cwd=chinh)
+            wt.parent.mkdir(parents=True)
+            _git("worktree", "add", "-q", "-b", "nhanh-phu", str(wt), cwd=chinh)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return False, f"chốt lỗi: không dựng được repo git tạm ({type(exc).__name__})"
+
+        ma = ("import json, sys\n"
+              "sys.path.insert(0, sys.argv[1])\n"
+              "import dong_bo_skill as d, tu_sua_chua as t\n"
+              "lenh = [str(x) for v in t.VIEC_MAY for khoi in (v[1], v[2] or []) for x in khoi\n"
+              "        if str(x).replace('\\\\', '/').endswith('dong_bo_skill.py')]\n"
+              "print(json.dumps({'nguon': str(d.NGUON), 'lenh': lenh}))\n")
+        r = subprocess.run([sys.executable, "-c", ma, str(wt / "tools")], cwd=str(wt),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=60)
+        if r.returncode != 0 or not (r.stdout or "").strip():
+            return False, f"nạp tu_sua_chua/dong_bo_skill từ worktree thất bại: {(r.stderr or '')[-200:]}"
+        kq = _json.loads(r.stdout.strip().splitlines()[-1])
+
+        nguon_mong = (chinh / "sync" / "skills").resolve()
+        if Path(kq["nguon"]).resolve() != nguon_mong:
+            return False, (f"dong_bo_skill.NGUON từ worktree = {kq['nguon']} — không phải sync/skills "
+                           "của repo chính: worktree sẽ đẩy nguồn CỦA NÓ vào nơi chạy dùng chung")
+        if len(kq["lenh"]) < 2:
+            return False, f"tu_sua_chua.VIEC_MAY không còn đủ lệnh kiểm + sửa đồng bộ Cowork: {kq['lenh']}"
+        cong_cu_mong = (chinh / "tools" / "dong_bo_skill.py").resolve()
+        for x in kq["lenh"]:
+            that = Path(x) if Path(x).is_absolute() else wt / x
+            if that.resolve() != cong_cu_mong:
+                return False, (f"tu_sua_chua từ worktree chạy {x} — không phải bản của repo chính: "
+                               "worktree lạc hậu sẽ chạy MÃ CŨ lên nơi chạy dùng chung (ca 16/09 17:09:12)")
+    return True, "từ worktree: nguồn + công cụ ghi nơi chạy Cowork đều là của repo chính"
+
+
+def bh106_hook_python_chi_goi_mot_lan():
+    """16/09 — `A && B || C` KHÔNG PHẢI if/else khi B tự trả mã khác 0 CÓ CHỦ Ý.
+
+    ĐÁNH SỐ LẠI 17/09/2026 (workflow kiểm tra toàn diện): commit gốc đặt lỗi này là
+    "BH104", nhưng số đó đã bị BH104 khác chiếm trước (trần kiến trúc Cowork, xem
+    `bh104_cowork_orphan_cleanup_da_khai` ở trên), và BH105 cũng đã bị chiếm cùng đợt
+    (worktree lạc hậu ghi vào Cowork) — số kế tiếp còn trống là BH106. Nội dung bài
+    học và chốt kiểm giữ nguyên, chỉ đổi số + tên hàm.
+    8/10 lệnh trong `sync/hooks-sessionstart.json` dùng mẫu
+    `command -v python3 >/dev/null 2>&1 && python3 X --im-khi-on || python X --im-khi-on`.
+    Nhưng các công cụ `--im-khi-on` CỐ Ý trả mã 1/2 để báo «có việc/có lệch»
+    (`dong_bo_skill.py` trả 1 khi có skill cần đẩy; `tu_sua_chua.py` trả 2 khi còn việc cần
+    bác sĩ) — nên `||` đọc nhầm mã đó thành «python3 lỗi» và CHẠY LẠI công cụ bằng `python`.
+    Trên máy có cả hai lệnh (thường gặp trên Windows/Git Bash): chạy 2 lần/phiên, kể cả
+    `tu_sua_chua.py --ap-dung` (có ghi). Trên Mac không có lệnh `python`: chỉ in
+    `command not found` ra stderr — đúng dấu vết thấy thật ở transcript phiên resume
+    16/09/2026 (worktree vigorous-maxwell-5e5075, 17:08:59).
+
+    Đã vá: chọn `PY=$(command -v python3 || command -v python)` MỘT LẦN rồi gọi `"$PY"`
+    đúng một lần trong nhánh if/else lồng — khuôn giống lệnh #1
+    (dong_bo_skill_claude_codex) vốn đã đúng từ đầu. Xem
+    `tools/dong_bo_hook_sessionstart.py` mục "VÁ CÚ PHÁP 16/09/2026".
+
+    Kiểm HÀNH VI thật, không đếm chuỗi: nạp trình thông dịch GIẢ (chỉ ghi `$0` vào log rồi
+    thoát theo mã đã định — KHÔNG chạy Python thật, không side effect) làm CẢ `python3` lẫn
+    `python`, đặt lên đầu PATH, ép `HOME` vào thư mục tạm rỗng (né nhánh venv tuyệt đối của
+    lệnh kiem_nguon_that — nếu không né, `$HOME/.ebm-venv/bin/python` thật trên máy bác sĩ sẽ
+    được gọi thay vì trình giả). Chạy TỪNG lệnh của sync/hooks-sessionstart.json với
+    `CLAUDE_PROJECT_DIR=REPO` thật (mọi file `tools/*.py` mà các lệnh đó `[ -f ... ]` kiểm
+    đều tồn tại thật trong repo → nhánh guard luôn pass, đi vào nhánh gọi PY) và ba mã thoát
+    giả 0/1/2. Với MỌI mã, trình thông dịch phải được gọi ĐÚNG MỘT LẦN.
+
+    Đã kiểm ngược trên bản GỐC (trước vá, `git show HEAD~1:sync/hooks-sessionstart.json`):
+    chốt bắt đúng 16/30 lượt vi phạm (8 lệnh lỗi × 2 mã thoát 1/2 = "có việc" bị đọc nhầm
+    thành lỗi) — không phải suy đoán.
+    """
+    import os
+    import subprocess
+    import tempfile
+    p = REPO / "sync" / "hooks-sessionstart.json"
+    if not p.exists():
+        return False, "mất sync/hooks-sessionstart.json — không có gì để kiểm"
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return False, f"không đọc được sync/hooks-sessionstart.json: {e}"
+    lenhs = [h["command"] for m in cfg.get("SessionStart") or [] for h in m.get("hooks") or []]
+    if not lenhs:
+        return False, "sync/hooks-sessionstart.json không còn lệnh nào — mất luôn nội dung kiểm"
+    bash = _tim_bash()
+    if bash is None:
+        return False, "không tìm thấy bash (PATH lẫn Git-for-Windows quen thuộc) — không mô phỏng được"
+    with tempfile.TemporaryDirectory() as bin_gia, tempfile.TemporaryDirectory() as lam_viec:
+        import shutil as _sh2
+        gia = Path(bin_gia) / "gia.sh"
+        gia.write_text('#!/bin/sh\necho "$0" >> "$LOG"\nexit "${MA_THOAT:-0}"\n', encoding="utf-8")
+        gia.chmod(0o755)
+        for ten in ("python3", "python"):
+            dich = Path(bin_gia) / ten
+            _sh2.copy2(gia, dich)
+            dich.chmod(0o755)
+        home_gia = Path(lam_viec) / "home"
+        home_gia.mkdir()
+        log = Path(lam_viec) / "log.txt"
+        vi_pham: list[str] = []
+        for ma in ("0", "1", "2"):
+            for c in lenhs:
+                log.write_text("", encoding="utf-8")
+                env = dict(os.environ)
+                env["PATH"] = f"{bin_gia}{os.pathsep}{env.get('PATH', '')}"
+                env["CLAUDE_PROJECT_DIR"] = str(REPO)
+                env["MA_THOAT"] = ma
+                env["LOG"] = str(log)
+                env["HOME"] = str(home_gia)
+                try:
+                    subprocess.run([bash, "-c", c], capture_output=True, text=True,
+                                   env=env, cwd=str(REPO), timeout=15,
+                                   encoding="utf-8", errors="replace")
+                except (OSError, subprocess.SubprocessError) as e:
+                    vi_pham.append(f"chạy lỗi (mã {ma}): {e}")
+                    continue
+                so_lan = len([d for d in log.read_text(encoding="utf-8").splitlines() if d.strip()])
+                if so_lan != 1:
+                    vi_pham.append(f"mã thoát {ma}: trình thông dịch bị gọi {so_lan} lần "
+                                   f"(kỳ vọng 1) — lệnh: {c[:70]}…")
+    if vi_pham:
+        return False, f"{len(vi_pham)} vi phạm: {vi_pham[0]}"
+    return True, (f"{len(lenhs)} lệnh × 3 mã thoát (0/1/2) — trình thông dịch được gọi "
+                  f"đúng 1 lần mỗi lượt, không lặp khi công cụ báo 'có việc'")
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -5620,7 +6003,7 @@ BAI_HOC = [
     ("BH72", "22/08", "Chuỗi cổng NGHIÊN CỨU cũng phải có canary đầu-cuối, như chuỗi chứng cứ", bh70_canary_cong_nghien_cuu_phai_chay_va_phai_bat_duoc),
     ("BH73", "23/08", "Việt hoá phải tự phục hồi sau khi plugin cập nhật — và phải CÓ NGƯỜI GỌI", bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin),
     ("BH74", "24/08", "Catalog phải đo ĐÚNG mặt đang phục vụ, quét lại trước khi kiểm, và không đè chữ bác sĩ tự viết", bh74_catalog_phai_do_dung_mat_dang_phuc_vu),
-    ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file", bh75_don_bak_phai_xu_ly_ca_thu_muc),
+    ("BH75", "25/08", "Dọn .bak phải xử lý cả thư mục, không chỉ file — và dời chứ không xoá", bh75_don_bak_phai_xu_ly_ca_thu_muc),
     ("BH76", "25/08", "Độ tươi phái sinh phải đo theo NỘI DUNG, không theo mtime", bh76_do_tuoi_phai_sinh_theo_noi_dung_khong_theo_mtime),
     ("BH77", "26/08", "Skill đã Việt hoá không được mất khối EBM-VN-GUARD", bh77_skill_da_viet_hoa_khong_bi_thay_boi_noi_dung_la),
     # Ba mục dưới ra đời trên nhánh outpatient 22/08 với số 70/71/72 — trùng với ba
@@ -5653,8 +6036,11 @@ BAI_HOC = [
     ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
     ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
     ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
-    ("BH104", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh104_mcp_consensus_scite_phai_di_qua_cong),
-    ("BH105", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh105_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
+    ("BH104", "16/09", "Trần kiến trúc Cowork (chỉ mirror danh sách Custom Skills tài khoản) phải ghi rõ trong dong_bo_skill.py", bh104_cowork_orphan_cleanup_da_khai),
+    ("BH105", "16/09", "Worktree không được chạy mã/nguồn của mình lên nơi chạy Cowork dùng chung", bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung),
+    ("BH106", "16/09", "Mẫu hook `A && B || C` không được chạy lại công cụ khi B tự trả mã 1/2 = «có việc»", bh106_hook_python_chi_goi_mot_lan),
+    ("BH107", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh107_mcp_consensus_scite_phai_di_qua_cong),
+    ("BH108", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
@@ -5703,6 +6089,7 @@ def main() -> int:
 
     tran = ban_sao_git_tran()
     _dung_lai_mirror_codex(tran)
+    bst_main = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_main")
     ket: list[tuple[str, str, str, str, str]] = []
     for ma, ngay, ten, ham in BAI_HOC:
         try:
@@ -5714,7 +6101,7 @@ def main() -> int:
         # mọi chốt sau không được kiểm, và hook `; true` nuốt sạch không một dòng báo.
         except BaseException as e:  # noqa: BLE001 — chốt hỏng phải LỘ RA, không im lặng xanh
             ok, ct = False, f"chốt lỗi: {type(e).__name__}: {e}"
-        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct), ct))
+        ket.append((ma, ngay, ten, phan_loai(ma, ok, tran, ct, bst_main), ct))
 
     do = [k for k in ket if k[3] == "tai_phat"]
     ngoai = [k for k in ket if k[3] == "ngoai_pham_vi"]

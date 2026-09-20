@@ -53,11 +53,17 @@ AG = REPO / ".claude" / "agents"
 # (BH28): skill lạ mới xuất hiện ở runtime mà không nguồn → vẫn ĐỎ, đúng như cần.
 SKILL_DUNG_SAN = {
     "algorithmic-art", "brand-guidelines", "canvas-design", "consolidate-memory",
-    "doc-coauthoring", "docs", "docx", "explain-usage", "import-memory", "internal-comms", "learn",
-    "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude", "setup-cowork",
-    "skill-creator", "slack-gif-creator", "theme-factory", "web-artifacts-builder",
-    "xlsx",
+    "doc-coauthoring", "docs", "docx", "explain-usage", "import-memory", "internal-comms",
+    "learn", "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude",
+    "setup-cowork", "skill-creator", "slack-gif-creator", "theme-factory",
+    "web-artifacts-builder", "xlsx",
 }
+# "docs" thêm 17/09/2026 (BH44 tái phát lần 2) — kiểm trực tiếp file SKILL.md tại runtime:
+# frontmatter tự khai "Everything about docs is served by the docs connector — follow its
+# instructions" — đây là skill hạ tầng CỦA ANTHROPIC (tích hợp docs connector, cùng họ với
+# "consolidate-memory"/"morning"/"schedule" đã có sẵn trong danh sách này), không phải nội
+# dung bác sĩ tự viết. "Cứu" bằng `cp -R` vào sync/skills/ sẽ trộn mã nguồn của Anthropic
+# vào cây skill riêng của bác sĩ — sai hướng xử lý, đúng bài học đã ghi cho "setup-claude".
 # "setup-claude" thêm 09/09/2026 (BH44 tái phát) — kiểm trực tiếp runtime: cả
 # "setup-claude" LẪN "setup-cowork" cùng tồn tại song song, description GIỐNG
 # HỆT nhau nguyên văn ("Guided setup — install role-matched plugins, connect

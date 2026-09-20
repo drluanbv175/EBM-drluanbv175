@@ -35,3 +35,20 @@ Trước khi bàn giao, kiểm tra:
 - [ ] Tài liệu tham khảo chỉ gồm nguồn đã kiểm tra.
 - [ ] Nguồn ghi dạng văn bản thường (tác giả/tổ chức + năm + tạp chí) và Vancouver/NLM.
 - [ ] Đã rà soát: KHÔNG còn thẻ markup trích dẫn thô hay mã kỹ thuật lẫn trong câu trả lời.
+- [ ] Nếu bản chuyên sâu: có mục 1 "Tóm tắt điều hành" đủ 6 khối (câu hỏi cốt lõi · điều gì thay
+      đổi · khuyến cáo hành động chính · cờ đỏ · điểm mới nhất · giới hạn tài liệu)?
+- [ ] Nếu bảng có ≥10 giá trị số không thể trích PMID riêng từng ô: đã khai báo quy ước "Cấp
+      nguồn" tường minh (ô nào trực tiếp từ RCT, ô nào theo hướng dẫn tổng hợp), không để trống
+      và không gán PMID không thật sự hỗ trợ giá trị đó?
+
+## Khi rà lại một tài liệu bác sĩ đã tải lên (xem `references/14-tai-dung-tai-lieu-co-san.md`)
+- [ ] Đã trích xuất TOÀN VĂN (mọi đoạn, mọi bảng kể cả ô trống), không tóm lược trước khi rà.
+- [ ] Mỗi PMID/DOI trong bản gốc đã được phân giải lại thật, không tin vì đúng định dạng.
+- [ ] Mỗi tên guideline/hướng dẫn được nêu trong bản gốc đã được kiểm tra TỒN TẠI THẬT, kể cả khi
+      nghe hợp lý.
+- [ ] Đã rà và loại bỏ artifact công cụ soạn thảo khác (`[cite: N]` và tương tự) chưa xử lý xong.
+- [ ] Với mỗi hiệu số mà nguồn báo cáo TÁCH RIÊNG theo nhiều quần thể/phân nhóm: đã đối chiếu
+      nguyên văn abstract để gán ĐÚNG con số cho ĐÚNG quần thể, không suy đoán theo vị trí câu
+      trong bản gốc.
+- [ ] Đầu tài liệu ra có khối "Đã sửa gì so với bản gốc" (nguồn giả đã loại · nguồn thay thế · ô
+      số liệu đã điền lại · trường hợp gán-sai-quần-thể đã sửa) chưa?

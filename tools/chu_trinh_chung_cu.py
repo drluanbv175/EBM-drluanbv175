@@ -157,8 +157,22 @@ def main() -> int:
     rc, out = chay([PY, "tools/dang_ky_chu_de.py", "--mau-thuan"],
                    "⑤ Có hai bản nào nói ngược nhau không?")
     if rc == 1:
-        viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
-                            "quyết bản nào đúng (xem phần ⑤).")
+        # VÁ 04/09/2026 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — rc=1 của
+        # dang_ky_chu_de.py mang HAI NGHĨA HOÀN TOÀN KHÁC NHAU: (a) tìm thấy mâu
+        # thuẫn thật (dòng cuối main() của nó), hoặc (b) KHÔNG QUÉT ĐƯỢC vì thiếu
+        # EBM-Dashboards/ (FileNotFoundError bắt ở đầu main(), in "⚪ Không kiểm
+        # được trên máy này" rồi CŨNG trả về 1). Bản cũ gộp cả hai thành một lời
+        # cảnh báo "🔴 CÓ mâu thuẫn" — xác nhận bằng thực nghiệm trên chính bản
+        # sao trần này (EBM-Dashboards/ không tồn tại): rc=1 vì KHÔNG QUÉT ĐƯỢC,
+        # nhưng chu trình vẫn báo "🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau"
+        # — một báo động giả về nội dung lâm sàng trong khi sự thật chỉ là thiếu
+        # nguyên liệu. Đọc `out` để phân biệt, đúng khuôn mẫu bước ③④ đã dùng.
+        if "Không kiểm được trên máy này" in out:
+            viec_can_lam.append("Chưa quét được mâu thuẫn hai bản — thiếu EBM-Dashboards/ "
+                                "trên máy này (xem phần ⑤). KHÔNG phải đã tìm thấy mâu thuẫn.")
+        else:
+            viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
+                                "quyết bản nào đúng (xem phần ⑤).")
 
     # ── 6. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
     rc, out = chay([PY, "tools/verify_clinical_evidence_update_pipeline.py"],

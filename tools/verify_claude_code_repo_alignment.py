@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import check_claude_codex_sync_health as sync_health
+import sync_agents_to_codex as sync
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,9 +40,14 @@ ROOT_DOCS = {
     "AGENTS.md": ROOT / "AGENTS.md",
     "CLAUDE.md": ROOT / "CLAUDE.md",
 }
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_vccra_early", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+_GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 MEDICAL_DOCS = {
-    "medical-ebm-automation/AGENTS.md": ROOT / "medical-ebm-automation" / "AGENTS.md",
-    "medical-ebm-automation/CLAUDE.md": ROOT / "medical-ebm-automation" / "CLAUDE.md",
+    "medical-ebm-automation/AGENTS.md": _GOC_MEA / "AGENTS.md",
+    "medical-ebm-automation/CLAUDE.md": _GOC_MEA / "CLAUDE.md",
 }
 
 ROOT_CONTRACT_MARKERS = [
@@ -154,8 +160,15 @@ def _thieu_medical_ebm_automation() -> bool:
     Ủy quyền cho ban_sao_tran() (như bản cũ) khiến test_medical_repo_docs_keep_
     claude_code_completion_contract regressed từ PASS sang NGOAI-PHAM-VI trên cloud dù
     medical-ebm-automation/ CÓ MẶT và đọc được thật — đúng loại lỗi mà chính bản vá
-    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py)."""
-    return not (ROOT / "medical-ebm-automation").exists()
+    ban_sao_tran.py hôm nay sinh ra ở một nơi khác (tools/conftest.py).
+
+    VÁ 17/09/2026 (cascade duong_goc): bản 09/09 ở trên tự SỬA một lỗi cloud-aware
+    bằng cách quay lại `.exists()` LỒNG THUẦN TUÝ — đúng lớp lỗi «sibling checkout»
+    mà chính duong_goc() (tools/ban_sao_tran.py) sinh ra để giải quyết. Trên cloud
+    với bố cục ANH EM (repo.parent/medical-ebm-automation), hàm này sẽ báo «thiếu»
+    dù repo có mặt và đọc được — lặp lại chính triệu chứng đã ghi trong docstring.
+    Dùng duong_goc() (dò cả lồng lẫn anh em) thay vì tự ghép đường dẫn."""
+    return _bst_mea.duong_goc("medical-ebm-automation", ROOT) is None
 
 
 def check_medical_docs(tran: bool | None = None) -> dict[str, Any]:
@@ -201,6 +214,30 @@ def check_agent_sync_health() -> dict[str, Any]:
     }
 
 
+def check_agent_files_git_tracked() -> dict[str, Any]:
+    """Bắt lỗ hổng mà `check_agent_sync_health()`/`check_tracked_contract_files()`
+    không canh: một file `.claude/agents/*.md` có mặt trên đĩa (nên
+    `sync.source_agent_paths()` đếm được, `evaluate_sync_health()` PASS vì so
+    sánh đĩa-với-đĩa — hoàn toàn không đụng tới git) nhưng đã bị `git rm
+    --cached` khỏi git index. Một checkout mới/clone mới sẽ KHÔNG có file đó —
+    mất trắng một agent — mà không cổng nào từng bắt được, vì
+    `check_tracked_contract_files()` chỉ canh một danh sách nhỏ file hạ tầng
+    CỐ ĐỊNH (AGENTS.md, CLAUDE.md, clinical_runtime/*...), không canh từng
+    file agent riêng lẻ (số lượng thay đổi mỗi khi thêm/bớt agent)."""
+    tracked = _git_ls_files()
+    disk_paths = sync.source_agent_paths() + sync.source_infra_paths()
+    untracked = sorted(
+        p.relative_to(ROOT).as_posix()
+        for p in disk_paths
+        if p.relative_to(ROOT).as_posix() not in tracked
+    )
+    return {
+        "name": "agent_files_git_tracked",
+        "status": "PASS" if not untracked else "FAIL",
+        "untracked_files": untracked,
+    }
+
+
 def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
     path = ROOT / "tools" / "upgrade_verify.py"
     required = [
@@ -208,7 +245,11 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
         "Repo/Claude Code alignment",
         "tools/check_claude_codex_sync_health.py",
         "tools/verify_clinical_runtime_schema_hardening.py",
-        '"-m", "ruff", "check", "medical-ebm-automation"',
+        # VÁ 17/09/2026 (cascade duong_goc): mốc cũ neo vào chuỗi ghép cứng
+        # '"-m", "ruff", "check", "medical-ebm-automation"' — chuỗi đó mất khi bước 27 đổi
+        # sang dùng _MEA_GOC_UV (duong_goc(), dò được cả bố cục sibling trên cloud). Đổi
+        # mốc sang neo vào việc lệnh ruff CÒN GỌI ĐÚNG resolver, không phải chuỗi cứng cũ.
+        '"-m", "ruff", "check", str(_MEA_GOC_UV)',
         "Lint repo sống",
     ]
     missing = _missing_markers(path, required)
@@ -225,6 +266,7 @@ def run_verification() -> dict[str, Any]:
         check_medical_docs(),
         check_tracked_contract_files(),
         check_agent_sync_health(),
+        check_agent_files_git_tracked(),
         check_upgrade_verify_wires_alignment(),
     ]
     # «NGOAI-PHAM-VI» (chỉ phát khi bản sao trần) không phải FAIL: phần kiểm được

@@ -48,7 +48,11 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+import importlib.util as _ilu_mea  # noqa: E402
+_sp_mea = _ilu_mea.spec_from_file_location("_bst_tdcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+_sp_mea.loader.exec_module(_bst_mea)
+DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 # PMID 30267080 — Choi và cs., JAMA Oncology. Đáp án BIẾT TRƯỚC: đã rút (retract-and-replace),
 # và đáng giá làm ca thử vì CẢ PubMed LẪN Europe PMC đều trả 'ok'; chỉ nền Retraction Watch
@@ -93,9 +97,19 @@ def main() -> int:
                     help="không in gì khi mọi lỗi gài đều bị bắt (dùng cho hook)")
     a = ap.parse_args()
 
-    vd = _nap(DASH / "tools" / "verify_dashboard.py", "vd_canary")
+    # VÁ 08/09/2026: DASH/"tools"/X chỉ tồn tại trên máy thật (OneDrive) — trên phiên
+    # cloud/CI, resolver mới tìm được bản GIT-VENDOR tương đương ở sync/skills/
+    # cap-nhat-chung-cu-y-khoa/tools/ (xem tools/ban_sao_tran.py::duong_cong_cu_pipeline).
+    _p_vd = _bst_mea.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    _p_ss = _bst_mea.duong_cong_cu_pipeline("surveillance_scan.py", REPO)
+    if _p_vd is None or _p_ss is None:
+        thieu = [n for n, p in (("verify_dashboard.py", _p_vd), ("surveillance_scan.py", _p_ss)) if p is None]
+        print(f"⚪ Không tìm thấy {', '.join(thieu)} ở EBM-Dashboards/tools/ lẫn bản git-vendor "
+              "— không dựng được canary trên máy này.")
+        return 1
+    vd = _nap(_p_vd, "vd_canary")
     dk = _nap(REPO / "tools" / "dang_ky_chu_de.py", "dk_canary")
-    ss = _nap(DASH / "tools" / "surveillance_scan.py", "ss_canary")
+    ss = _nap(_p_ss, "ss_canary")
 
     tmp = Path(tempfile.mkdtemp(prefix="canary-chungcu-"))
     ket: list[tuple[str, bool, str]] = []
@@ -246,7 +260,7 @@ def main() -> int:
             from cryptography.hazmat.primitives.serialization import (
                 Encoding, NoEncryption, PrivateFormat, PublicFormat,
             )
-            gc_mod = _nap(REPO / "medical-ebm-automation" / "tools" / "gate_contract.py",
+            gc_mod = _nap((_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "gate_contract.py",
                           "gc_canary")
             priv = Ed25519PrivateKey.generate()
             (tmp / "priv").mkdir()

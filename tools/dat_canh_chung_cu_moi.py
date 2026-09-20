@@ -50,6 +50,12 @@ REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 
+import importlib.util as _ilu_dccm_top  # noqa: E402
+_sp_dccm_top = _ilu_dccm_top.spec_from_file_location(
+    "_bst_dccm_top", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_dccm_top = _ilu_dccm_top.module_from_spec(_sp_dccm_top)
+_sp_dccm_top.loader.exec_module(_bst_dccm_top)
+
 
 def _nap(ten: str, duong: Path):
     spec = importlib.util.spec_from_file_location(ten, duong)
@@ -107,7 +113,11 @@ def _tra_rut_bai(pmids: list[str]) -> dict[str, str]:
     nhan = {p: "⚠️ chưa kiểm rút bài" for p in pmids}
     if not pmids:
         return nhan
-    cli = REPO / "medical-ebm-automation" / "tools" / "check_citation_retraction.py"
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_dccm", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    cli = (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "check_citation_retraction.py"
     venv_py = Path.home() / ".ebm-venv" / "bin" / "python"
     py = str(venv_py) if venv_py.exists() else sys.executable
     if not cli.exists():
@@ -156,7 +166,15 @@ def main() -> int:
     ap.add_argument("--gioi-han", type=int, default=0, help="chỉ quét N mục apply đầu (thử nhanh)")
     a = ap.parse_args()
 
-    vd = _nap("_vd_dc", DASH / "tools" / "verify_dashboard.py")
+    # VÁ 08/09/2026: lùi về bản git-vendor khi EBM-Dashboards vắng (mọi checkout
+    # git-only) thay vì ném FileNotFoundError thô — xem
+    # tools/ban_sao_tran.py::duong_cong_cu_pipeline.
+    duong_vd = _bst_dccm_top.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    if duong_vd is None:
+        print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
+              "git-vendor — không đặt cạnh được trên máy này.")
+        return 0
+    vd = _nap("_vd_dc", duong_vd)
     kcv = _nap("_kcv_dc", REPO / "tools" / "kiem_chung_cu_vuot_qua.py")
 
     # ① gom mục apply có PMID (mỗi PMID một lần, nhớ mọi nơi nó xuất hiện)

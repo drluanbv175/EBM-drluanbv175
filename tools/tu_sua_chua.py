@@ -57,6 +57,32 @@ _VENV = Path.home() / ".ebm-venv" / "bin" / "python"
 PY_YAML = str(_VENV) if _VENV.exists() else PY
 
 
+def _cong_cu_ghi_cowork() -> str:
+    """Bản `dong_bo_skill.py` mà mục «Skill đang chạy lệch nguồn» được phép chạy.
+
+    VÌ SAO KHÔNG DÙNG `tools/dong_bo_skill.py` TƯƠNG ĐỐI (16/09/2026): `chay()` chạy
+    với `cwd=REPO`, mà REPO là cây chứa CHÍNH file này — trong một git worktree phụ
+    thì đó là mã + nguồn CỦA worktree, trong khi nơi chạy Cowork dùng chung cho mọi
+    phiên. Ca thật 16/09 17:09:12: phiên resume ở worktree HEAD `0ec62fc` (trước bản
+    vá sao lưu 13/09) → mục này chạy `dong_bo_skill.py` CŨ của worktree → sao lưu
+    NGAY TRONG nơi chạy ⇒ Claude chào ra 23 skill trùng `…-bak-20260916-170912`.
+    Bản vá 08/09 chỉ đưa đường `dong_bo_skill_claude_codex.sync_cowork` về repo chính
+    và quên đường này. Nay cả hai đường chạy CÙNG một bản: bản của repo chính.
+    Không nạp được thì lùi về cách cũ — tự sửa chữa không được chết vì bước phụ;
+    chốt BH105 canh để lối lùi đó không âm thầm thành mặc định."""
+    thu_muc = str(Path(__file__).resolve().parent)
+    try:
+        if thu_muc not in sys.path:
+            sys.path.insert(0, thu_muc)
+        import dong_bo_skill as _dbs
+        return str(_dbs.cong_cu_dong_bo_cowork())
+    except Exception:  # noqa: BLE001
+        return "tools/dong_bo_skill.py"
+
+
+DONG_BO_COWORK = _cong_cu_ghi_cowork()
+
+
 def chay(lenh: list[str], nhan: str) -> tuple[int, str]:
     try:
         r = subprocess.run(lenh, cwd=REPO, capture_output=True, text=True, timeout=900, encoding="utf-8", errors="replace")
@@ -93,8 +119,8 @@ VIEC_MAY = [
      [PY, "tools/phuc_hoi_skill_guard.py", "--im-khi-on"],
      [PY, "tools/phuc_hoi_skill_guard.py", "--ap-dung"], True),
     ("Skill đang chạy lệch nguồn",
-     [PY, "tools/dong_bo_skill.py", "--im-khi-on"],
-     [PY, "tools/dong_bo_skill.py", "--ap-dung"], True),
+     [PY, DONG_BO_COWORK, "--im-khi-on"],
+     [PY, DONG_BO_COWORK, "--ap-dung"], True),
     # Thêm 01/09/2026 — ca thật: bác sĩ bị hook pre-commit CHẶN commit khoá công
     # Ed25519 vì ESD02 đỏ (bản EBM-Dashboards/tools/surveillance_scan.py lệch hash
     # với 2 bản sync/skills). Bộ ba này trước đó được giữ khớp BẰNG TAY — tức với

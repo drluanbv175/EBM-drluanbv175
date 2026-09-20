@@ -31,14 +31,33 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 DASH_TOOLS = ROOT / "EBM-Dashboards" / "tools"
-VERIFY_DASHBOARD = DASH_TOOLS / "verify_dashboard.py"
-BUILD_LIBRARY = DASH_TOOLS / "build_library.py"
-MAKE_DERIVATIVES = DASH_TOOLS / "make_derivatives.py"
+
+import importlib.util as _ilu_vceup  # noqa: E402
+_sp_vceup = _ilu_vceup.spec_from_file_location("_bst_vceup", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_vceup = _ilu_vceup.module_from_spec(_sp_vceup)
+_sp_vceup.loader.exec_module(_bst_vceup)
+
+# VÁ 08/09/2026: ba tool này chỉ từng tìm ở EBM-Dashboards/tools/ (doctrine-canonical,
+# KHÔNG BAO GIỜ có trên checkout git-only) — nay lùi về bản git-vendor tương đương ở
+# sync/skills/cap-nhat-chung-cu-y-khoa/tools/ khi máy thật vắng mặt (xem
+# tools/ban_sao_tran.py::duong_cong_cu_pipeline). Giữ nguyên fallback về đường cũ khi
+# resolver không tìm thấy ở đâu, để thông điệp lỗi vẫn trỏ đúng đường doctrine-canonical.
+VERIFY_DASHBOARD = _bst_vceup.duong_cong_cu_pipeline("verify_dashboard.py", ROOT) or (DASH_TOOLS / "verify_dashboard.py")
+BUILD_LIBRARY = _bst_vceup.duong_cong_cu_pipeline("build_library.py", ROOT) or (DASH_TOOLS / "build_library.py")
+MAKE_DERIVATIVES = _bst_vceup.duong_cong_cu_pipeline("make_derivatives.py", ROOT) or (DASH_TOOLS / "make_derivatives.py")
 SYNC_ALL = ROOT / "EBM_MASTER" / "tools" / "sync_all.py"
 EW_TEMPLATE = ROOT / "dashboard_mockups" / "templates" / "evidence-workbench-template.html"
 EW_HUB_ASSET = ROOT / "EBM_MASTER" / "skill_assets" / "web-dashboard-evidence-workbench.html"
 EW_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-evidence-workbench.html"
 EW_DARK_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-evidence-workbench.html"
+# Mẫu Dark Analyst (mẫu THAY THẾ, nền tối) — cùng 4 vị trí như EW ở trên. Thêm 16/09/2026 sau
+# khi phát hiện 2/3 bản git-tracked đã mất lớp chống XSS (escHtml/escUrl/escJs) từ một lần
+# "rebuild history root after OneDrive/Mac-worktree object loss" — khoảng trống này chưa từng
+# được verifier nào canh trước đó (chỉ EW có _check_templates()).
+DA_TEMPLATE = ROOT / "dashboard_mockups" / "templates" / "dark-analyst-template.html"
+DA_HUB_ASSET = ROOT / "EBM_MASTER" / "skill_assets" / "web-dashboard-dark-analyst.html"
+DA_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "templates" / "web-dashboard-dark-analyst.html"
+DA_DARK_SKILL_TEMPLATE = ROOT / "sync" / "skills" / "dark-analyst" / "templates" / "web-dashboard-dark-analyst.html"
 DEFAULT_MD = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.md"
 DEFAULT_JSON = ROOT / "reports" / "CLINICAL_EVIDENCE_UPDATE_PIPELINE.json"
 
@@ -341,6 +360,56 @@ def _check_templates() -> CheckResult:
     )
 
 
+def _check_dark_analyst_templates() -> CheckResult:
+    """Mẫu Dark Analyst — cùng khuôn `_check_templates()` ở trên nhưng với danh sách marker
+    RIÊNG của DA (không dùng chung với EW: DA không có tiêu đề "EVIDENCE WORKBENCH", không có
+    nút xuất `exportData(...)`, không có "Kiểm chứng thao tác" — chép nguyên danh sách marker
+    EW sang đây sẽ FAIL SAI trên một mẫu vốn khác thiết kế UI).
+
+    Thêm 16/09/2026: cả 4 vị trí ĐÃ TỪNG lệch byte thật (2/3 bản git-tracked mất hoàn toàn
+    escHtml/escUrl/escJs — xem tools/test_dark_analyst_xss_va_ho_thiet_ke_20260916.py để đọc
+    đầy đủ bối cảnh và bằng chứng git log). Marker `escHtml(` / `escUrl(` / `escJs(` ở đây
+    canh đúng lỗi đó tái diễn; bộ test riêng canh sâu hơn (số lượt gọi tối thiểu, hành vi JS
+    thật qua node, byte-parity 4 bản)."""
+    required = [
+        "DARK ANALYST",
+        "Chuẩn &amp; chất lượng cập nhật chứng cứ",
+        "qualityView",
+        "standards",
+        "sourceHierarchy",
+        "searchSources",
+        "DESIGN_FAMILIES",
+        "designFamily",
+        "effectScale",
+        "measureScale",
+        "function escHtml(",
+        "function escUrl(",
+        "function escJs(",
+        "rel=\"noopener\"",
+        "encodeURIComponent",
+        "Truy nguyên từng item",
+        DISCLAIMER,
+        "gradeLevel",
+        "decision",
+        "RoB",
+    ]
+    details = []
+    ok_all = True
+    for path in (DA_TEMPLATE, DA_HUB_ASSET, DA_SKILL_TEMPLATE, DA_DARK_SKILL_TEMPLATE):
+        ok, detail = _contains_all(path, required)
+        ok_all = ok_all and ok
+        details.append(f"{path.name}: {detail}")
+    return CheckResult(
+        "Dark Analyst template contract",
+        "PASS" if ok_all else "FAIL",
+        "; ".join(details),
+        "Cả 4 vị trí của mẫu thay thế (nền tối) đều còn lớp chống XSS, họ thiết kế theo tiền tố, "
+        "thang hiệu số đúng và schema standards/RoB tối thiểu.",
+        "Không kiểm visual; chỉ kiểm marker cấu trúc tĩnh. Byte-parity 4 bản và hành vi JS thật "
+        "canh ở tools/test_dark_analyst_xss_va_ho_thiet_ke_20260916.py, không lặp lại ở đây.",
+    )
+
+
 def _check_sync_all_contract() -> CheckResult:
     required = [
         "def _passes_offline_gate",
@@ -365,6 +434,7 @@ def _check_sync_all_contract() -> CheckResult:
 def run_verification(*, online_dashboard_gate: bool = False) -> dict:
     rows: list[CheckResult] = []
     rows.append(_check_templates())
+    rows.append(_check_dark_analyst_templates())
     rows.append(_check_sync_all_contract())
 
     with tempfile.TemporaryDirectory(prefix="clinical-evidence-pipeline-") as tmp:

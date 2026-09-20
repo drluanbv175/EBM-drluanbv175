@@ -64,6 +64,11 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
 
+import importlib.util as _ilu_dkcd  # noqa: E402
+_sp_dkcd = _ilu_dkcd.spec_from_file_location("_bst_dkcd", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_dkcd = _ilu_dkcd.module_from_spec(_sp_dkcd)
+_sp_dkcd.loader.exec_module(_bst_dkcd)
+
 # Hậu tố mô tả "lát cắt" của cùng một chủ đề (bệnh kèm, đối tượng, tiên lượng…).
 # Bỏ chúng đi để gom về chủ đề gốc.
 HAU_TO = re.compile(
@@ -72,18 +77,23 @@ HAU_TO = re.compile(
 
 
 def nap_vd():
-    duong = DASH / "tools" / "verify_dashboard.py"
-    # 28/08/2026 — trên bản sao git TRẦN (phiên cloud/CI) cây EBM-Dashboards nằm
-    # ngoài git nên file này không bao giờ có; chết traceback ở đây làm bước ⑤ của
-    # chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu nguyên liệu.
-    # Vòng 4 (bình duyệt đối kháng): KHÔNG ném SystemExit từ hàm thư viện — nó
-    # xuyên qua mọi guard `except Exception` của caller trong-tiến-trình (bộ chốt
+    # VÁ 08/09/2026: ưu tiên EBM-Dashboards/tools/ (máy thật); lùi về bản GIT-VENDOR ở
+    # sync/skills/cap-nhat-chung-cu-y-khoa/tools/ (LUÔN có trên mọi checkout, kể cả
+    # cloud/CI) — trước đây chỉ nhìn một nơi nên trên phiên cloud lời gọi này CHẾT dù
+    # bản vendor chạy tốt (xem tools/ban_sao_tran.py::duong_cong_cu_pipeline).
+    duong = _bst_dkcd.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
+    # 28/08/2026 — trên bản sao git TRẦN THẬT (không có ở đâu cả, kể cả bản vendor) cây
+    # EBM-Dashboards nằm ngoài git nên file này không bao giờ có; chết traceback ở đây
+    # làm bước ⑤ của chu_trinh_chung_cu hiện như lỗi mã trong khi thật ra là thiếu
+    # nguyên liệu. Vòng 4 (bình duyệt đối kháng): KHÔNG ném SystemExit từ hàm thư viện —
+    # nó xuyên qua mọi guard `except Exception` của caller trong-tiến-trình (bộ chốt
     # bài học, build_ban_doc) và giết cả lượt chạy của họ giữa chừng. Ném
     # FileNotFoundError mang thông điệp rõ; main() bắt và in sạch cho người chạy CLI.
-    if not duong.exists():
+    if duong is None:
         raise FileNotFoundError(
-            f"⚪ Không kiểm được trên máy này: thiếu {duong} — EBM-Dashboards nằm "
-            "ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
+            f"⚪ Không kiểm được trên máy này: thiếu {DASH / 'tools' / 'verify_dashboard.py'} "
+            "lẫn bản git-vendor sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py "
+            "— EBM-Dashboards nằm ngoài git (bản sao trần). Chạy trên máy có đủ cây OneDrive.")
     spec = importlib.util.spec_from_file_location("vd_chu_de", duong)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -165,6 +175,33 @@ def doc_muc(vd, p: Path) -> dict[str, list[tuple]]:
                 (vd.field(c, "decision"), vd.field(c, "gradeLevel"),
                  vd.field(c, "normativeBasis"), (vd.field(c, "title") or "")[:58]))
     return out
+
+
+def _co_xung_dot_quyet_dinh(muc_cu: dict, muc_moi: dict) -> bool:
+    """True nếu có ÍT NHẤT MỘT PMID chung mà hai bản kết luận KHÁC NHAU (so được
+    đơn trị ở cả hai bên — mỗi bên đúng một item cho PMID đó).
+
+    THÊM 2026-09-04 (Workflow đối kháng đa-agent) — trước bản vá, nhánh "chỉ
+    thiếu" (bên dưới, xây `chi_thieu`) chỉ so TẬP HỢP KHÓA PMID
+    (`set(muc_cu) - set(muc_moi)`), hoàn toàn không đọc GIÁ TRỊ `decision`.
+    Một cặp bản có thể vừa là siêu tập PMID (mọi PMID của bản cũ đều có mặt
+    ở bản mới) VỪA đổi `decision` cho một PMID chung — ca thật: hai bản cùng
+    lát cắt, cùng PMID, bản cũ `apply` → bản mới `consider`. `chi_thieu` cũ
+    sẽ dán nhãn cặp đó "CHỈ THIẾU, không nói sai", ĐÚNG LÚC `tim_mau_thuan()`
+    (so mọi cặp trong cùng chủ đề gốc — cùng lát cắt khác ngày CŨNG nằm
+    trong `theo_goc`) dán nhãn 🔴 "nói ngược nhau" cho CHÍNH cặp đó — hai
+    nhãn mâu thuẫn nhau cho cùng một cặp bản, đúng lúc bác sĩ cần phân biệt
+    rạch ròi nhất hai tình huống này (xem docstring đầu file, dòng 11-20).
+
+    Bỏ qua PMID mang NHIỀU item ở một trong hai bên (không so được đơn trị)
+    — nhánh đó đã có `tim_mau_thuan()` báo riêng qua `khong_so_duoc`, ở đây
+    chỉ cần biết có xung đột ĐƠN TRỊ hay không để loại khỏi "chỉ thiếu".
+    """
+    for pm in set(muc_cu) & set(muc_moi):
+        a, b = muc_cu[pm], muc_moi[pm]
+        if len(a) == 1 and len(b) == 1 and a[0][0] != b[0][0]:
+            return True
+    return False
 
 
 def quet_kho(dash: Path | None = None):
@@ -350,7 +387,8 @@ def main() -> int:
         muc_moi = doc_muc(vd, v[-1][1])
         for ngay_cu, p_cu in v[:-1]:
             muc_cu = doc_muc(vd, p_cu)
-            if muc_cu and not (set(muc_cu) - set(muc_moi)):
+            if (muc_cu and not (set(muc_cu) - set(muc_moi))
+                    and not _co_xung_dot_quyet_dinh(muc_cu, muc_moi)):
                 chi_thieu.append((lc, ngay_cu, v[-1][0], len(set(muc_moi) - set(muc_cu))))
 
     mau_thuan, khong_so_duoc = tim_mau_thuan(vd, theo_goc)

@@ -39,6 +39,60 @@ Dùng:
     python3 tools/dong_bo_skill.py --im-khi-on  # chỉ nói khi lệch (dùng cho hook)
 
 Mã thoát: 0 = mọi skill khớp · 1 = có skill lệch · 2 = có skill phân kỳ hai chiều.
+
+🔴 TRẦN KIẾN TRÚC ĐÃ XÁC NHẬN BẰNG TÀI LIỆU CHÍNH THỨC (16/09/2026) — nhánh
+COWORK CỦA CÔNG CỤ NÀY CHỈ ĐẨY ĐƯỢC, KHÔNG GIỮ ĐƯỢC.
+=====================================================
+Đo trực tiếp: 18:08:00 (đúng đỉnh chu kỳ 20 phút) app xoá "25 orphans cleaned"
+— quét sạch mọi skill vừa được lệnh này đẩy vào phút trước, chỉ chừa lại đúng
+những skill ĐÃ CÓ SẴN trong `manifest.json` của app (`creatorType:"user"`).
+Đọc thẳng mã ứng dụng (`app.asar`, hàm nội bộ lấy "N enabled skills") xác nhận
+danh sách đó tới từ gọi API thật:
+`GET /api/organizations/{org}/skills/list-skills?...&entrypoint=local-agent` —
+TỨC LÀ danh sách **Custom Skills đã đăng ký ở tài khoản claude.ai**
+(Customize → Skills), KHÔNG PHẢI file trên đĩa. Tài liệu chính thức xác nhận
+đúng điều này: *"Cowork loads the ones enabled for your claude.ai account,
+synced at session start, and doesn't read the Claude Code CLI's ~/.claude
+directory on your machine. To use a skill or plugin that exists only in
+~/.claude, add it in Customize."* — https://claude.com/docs/cowork/overview.md
+
+**Hệ quả: mọi skill được `--ap-dung` đẩy vào nơi chạy Cowork mà KHÔNG có mặt
+trong danh sách tài khoản chỉ tồn tại tới lượt đồng bộ định kỳ kế tiếp**
+(`skillsSyncIntervalMs`, mặc định 1.200.000 ms = 20 phút, đo qua log
+`[SkillsPlugin] Starting periodic sync`). Đây KHÔNG phải lỗi phân kỳ nội dung
+để sửa bằng cách so sánh kỹ hơn — sao lưu đúng chỗ, lọc đúng file, đẩy đúng
+nội dung đều không đổi kết quả, vì app coi thư mục này là TẤM GƯƠNG của tài
+khoản, không phải nơi ghi tự do. Việc dời `*.bak-*` ra ngoài
+(`doi_sao_luu_ra_ngoai`) vẫn đúng và nên giữ — nó chỉ không giải quyết được
+trần kiến trúc này.
+
+**Đường CHÍNH THỐNG để một skill riêng sống sót qua mọi chu kỳ Cowork** —
+không cái nào tự động hoá được thẳng từ `sync/skills/` bằng CLI/API: tài liệu
+nói rõ *"Custom Skills do not sync across surfaces"* và *"Skills uploaded
+through the API are not available on claude.ai"* —
+https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
+  (a) tải tay từng skill dạng ZIP ở **Customize → Skills** trên claude.ai/
+      Desktop (https://support.claude.com/en/articles/12512180-use-skills-in-claude)
+      — cho đúng `/anthropic-skills:<tên>`, nhưng KHÔNG API/CLI để tự đẩy lại
+      sau mỗi lần sửa `sync/skills/`, phải tải lại tay;
+  (b) gói CẢ BỘ thành một plugin trong repo Git, thêm bằng **Customize →
+      Plugins → Add marketplace** (owner/repo) — gần mô hình "một nguồn Git,
+      cập nhật bằng git push" hơn, và đường plugin CÓ cảnh báo trước khi ghi
+      đè sửa cục bộ (đường skill-sync KHÔNG có) —
+      https://claude.com/docs/cowork/guide/plugins.md — nhưng CHƯA xác nhận
+      marketplace tự thêm có theo được sang máy khác hay phải thêm lại từng máy;
+  (c) tài khoản Team/Enterprise: admin cấp phát skill/plugin tổ chức, tới
+      được cả Cowork —
+      https://support.claude.com/en/articles/13119606-provision-and-manage-skills-for-your-organization
+
+**Kênh KHÔNG bị ảnh hưởng, đã đo còn nguyên:** `~/.claude/skills/` (Claude Code
+CLI/tab Code) là symlink trỏ thẳng `sync/skills/` — cơ chế hoàn toàn khác, do
+`dong_bo_skill_claude_codex.py` phụ trách; tài liệu xác nhận Cowork "doesn't
+read... ~/.claude" còn Code tab đọc thư mục đó "for local sessions". Giới hạn
+ở trên CHỈ áp cho nhánh Cowork của chính file này — không đổi hành vi/luật
+ĐẨY-hay-CHẶN đã có, chỉ đổi mức kỳ vọng: một skill "CẦN ĐẨY" thành công vẫn
+CẦN ĐẨY LẠI mỗi khi hết hạn khung ≤20 phút, trừ khi cũng được đăng ký ở một
+trong ba đường trên. Xem chốt BH104 (`chot_hoi_quy_bai_hoc.py`).
 """
 from __future__ import annotations
 
@@ -47,15 +101,61 @@ import datetime as dt
 import filecmp
 import hashlib
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-REPO = Path(__file__).resolve().parents[1]
-NGUON = REPO / "sync/skills"
+
+def goc_repo_chinh(tu: Path | None = None) -> Path:
+    """Gốc repo CHÍNH — không phải git worktree phụ đang chứa file này.
+
+    `git rev-parse --git-common-dir` trả `.git` của repo chính dù gọi từ worktree
+    nào; git không gọi được (thiếu binary, không phải repo) thì lùi về thư mục cha
+    của `tu`. Cùng cách với `dong_bo_skill_claude_codex._resolve_repo_root` (08/09).
+
+    VÌ SAO CÔNG CỤ NÀY CŨNG CẦN (16/09/2026): nơi chạy Cowork DÙNG CHUNG cho mọi phiên
+    trên máy, nhưng mỗi phiên mở trong `.claude/worktrees/<tên>` chạy bản
+    `tools/*.py` CỦA worktree đó. Bản vá 08/09 chỉ đưa đường `sync_cowork` về repo
+    chính; đường `tu_sua_chua.py` → `dong_bo_skill.py` vẫn chạy mã + nguồn của
+    worktree. Ca thật 16/09 17:09:12: worktree HEAD `0ec62fc` (trước bản vá 13/09)
+    chép đè bản cũ lên nơi chạy và để lại 23 thư mục `.bak` ngay trong đó."""
+    here = tu if tu is not None else Path(__file__).resolve().parent
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(here), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, timeout=10, check=True,
+            encoding="utf-8", errors="replace",
+        )
+        common = Path(r.stdout.strip())
+        if common.is_dir():
+            return common.parent
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return here.parent
+
+
+REPO = Path(__file__).resolve().parents[1]      # cây chứa CHÍNH file mã đang chạy
+GOC_CHINH = goc_repo_chinh()
+# Nguồn đẩy sang nơi chạy dùng chung = `sync/skills` của repo CHÍNH — cùng nguồn mà
+# `~/.claude/skills`/`~/.codex/skills` đang trỏ tới. Nguồn lấy theo worktree thì hai
+# phiên ở hai cây khác nhau có thể thay nhau đẩy hai phiên bản (dấu hiệu đo được:
+# `dark-analyst` có 8 bản sao lưu trong 14–16/09, hai bản cách nhau 8 giây lúc 17:14).
+# Repo chính không có `sync/skills` (clone trần…) thì lùi về cây của chính file.
+NGUON = (GOC_CHINH / "sync/skills") if (GOC_CHINH / "sync/skills").is_dir() else (REPO / "sync/skills")
 GOC_RUNTIME = Path.home() / "Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin"
+
+
+def cong_cu_dong_bo_cowork() -> Path:
+    """Bản `dong_bo_skill.py` được phép GHI nơi chạy Cowork: bản trong repo CHÍNH.
+
+    `tu_sua_chua.py` gọi hàm này thay vì tự trỏ `tools/dong_bo_skill.py` của cây
+    mình, để một worktree lạc hậu không thể chạy MÃ cũ lên nơi chạy dùng chung (đúng
+    ca 16/09 17:09:12). Repo chính không có công cụ thì trả chính file này."""
+    ung_vien = GOC_CHINH / "tools" / "dong_bo_skill.py"
+    return ung_vien if ung_vien.is_file() else Path(__file__).resolve()
 
 BO_QUA = {".DS_Store", "__pycache__", ".claude"}
 
@@ -70,8 +170,18 @@ BO_QUA_MAU = ("*.bak-*", "*.orig", "*.rej", "*~")
 
 
 def _bi_bo_qua(f: Path, goc: Path) -> bool:
+    """VÁ 16/09/2026 — so `BO_QUA` trên đường dẫn TƯƠNG ĐỐI với `goc`, không trên
+    đường dẫn tuyệt đối. Bản cũ nhận `goc` mà không dùng; `.claude` nằm trong
+    `BO_QUA` (để bỏ thư mục `.claude/` riêng của một skill) nên khớp luôn đoạn
+    `.claude/worktrees/` của MỌI worktree ⇒ chạy từ worktree thì 505/505 file nguồn
+    bị lọc, cả 50 skill báo «KHOP» trên phép so rỗng (BH09 xanh giả), còn nhánh đẩy
+    trọn thì chép không qua lọc."""
     import fnmatch
-    if any(x in f.parts for x in BO_QUA):
+    try:
+        phan = f.relative_to(goc).parts
+    except ValueError:
+        phan = f.parts
+    if any(x in phan for x in BO_QUA):
         return True
     return any(fnmatch.fnmatch(f.name, m) for m in BO_QUA_MAU)
 
@@ -113,28 +223,71 @@ def duong_dan_sao_luu(runtime: Path, ten_skill: str, stamp: str) -> Path:
     return thu_muc / f"{ten_skill}.bak-{stamp}"
 
 
-def don_bak(runtime: Path) -> int:
-    """Dọn mọi mục tên `*.bak-*` (BH22) còn SÓT trong thư mục skill đang chạy —
-    TÁCH theo is_dir()/is_file() vì bản CŨ của `--ap-dung` (trước 13/09/2026, xem
-    `duong_dan_sao_luu`) từng sao lưu NGUYÊN THƯ MỤC skill vào chính `runtime`
-    bằng `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)`, nên
-    rglob("*.bak-*") trả về cả DIRECTORY khớp mẫu tên. Gọi `.unlink()` lên một
-    thư mục trên macOS ném `PermissionError` (không phải `IsADirectoryError` —
-    dễ đọc nhầm thành lỗi quyền hệ thống) và giết cả lượt dọn giữa chừng (VÁ
-    25/08/2026, BH75 — đo được 17 mục rác tồn đọng từ 13/08 vì mọi lần gọi
-    `--don-bak` trước đó đều chết ngay ở thư mục `.bak-*` đầu tiên).
+def muc_sao_luu_sai_cho(runtime: Path) -> list[Path]:
+    """Mọi mục tên `*.bak-*` — THƯ MỤC lẫn FILE — đang nằm TRONG nơi chạy (BH22).
 
-    Từ 13/09/2026, `--ap-dung` KHÔNG còn tạo `.bak-*` mới trong `runtime` (đã
-    chuyển sang `duong_dan_sao_luu`, ghi ra thư mục ngoài) — hàm này nay chỉ còn
-    cần cho dọn TÀN DƯ từ trước bản vá, không phải thao tác bảo trì định kỳ nữa.
-    Trả về số mục đã xoá."""
-    rac = list(runtime.rglob("*.bak-*"))
-    for f in rac:
-        if f.is_dir():
-            shutil.rmtree(f, ignore_errors=True)
-        elif f.is_file():
-            f.unlink()
-    return len(rac)
+    Chỉ trả mục «gốc»: con của một mục đã liệt kê thì bỏ, vì dời thư mục cha là
+    dời luôn con.
+
+    VÌ SAO PHẢI ĐẾM CẢ THƯ MỤC (16/09/2026): BH22 cũ chỉ lọc `is_file()`, nên nó
+    XANH trong khi 23 thư mục `<tên>.bak-20260916-170912` nằm ngay trong nơi chạy
+    và Claude chào ra 23 skill trùng `anthropic-skills:<tên>-bak-20260916-170912`.
+    Thư mục sao lưu mới là thứ app nạp nhầm thành skill — bỏ sót nó là bỏ sót
+    đúng loại gây hại."""
+    goc: list[Path] = []
+    for p in sorted(runtime.rglob("*.bak-*"), key=lambda x: (len(x.parts), str(x))):
+        if any(q in p.parents for q in goc):
+            continue
+        goc.append(p)
+    return goc
+
+
+def doi_sao_luu_ra_ngoai(runtime: Path) -> list[tuple[Path, Path]]:
+    """DỜI (không xoá) mọi mục `*.bak-*` sai chỗ sang `<runtime>-backup/`, giữ
+    nguyên đường dẫn tương đối — đúng thư mục `duong_dan_sao_luu` ghi vào.
+
+    VÌ SAO TỰ LÀM Ở `--ap-dung`, VÀ VÌ SAO DỜI CHỨ KHÔNG XOÁ (16/09/2026):
+    • Mục sai chỗ không chỉ đến từ mã cũ của CHÍNH cây này. Mọi git worktree dựng
+      TRƯỚC bản vá 13/09 vẫn mang `dong_bo_skill.py` cũ, và hook SessionStart của
+      phiên mở trong worktree đó chạy công cụ CỦA worktree. Ca thật 16/09 17:09:12:
+      phiên resume ở worktree HEAD `0ec62fc` → `tu_sua_chua.py` → `dong_bo_skill.py`
+      cũ → 23 thư mục `.bak` ngay trong nơi chạy. Từ đây không sửa được mã của cây
+      khác, nên bản mới phải tự dọn hậu quả mỗi lần được gọi.
+    • Ứng dụng Claude tự xoá mọi thư mục KHÔNG có trong manifest của nó, định kỳ
+      20 phút (`[SkillsPlugin] ... orphans cleaned` — đo 16/09 17:28:00: 48 mục =
+      23 `.bak` + 25 skill riêng). Bản sao lưu để trong nơi chạy vì vậy mất trong
+      ≤20 phút, tức nó CHƯA BAO GIỜ thực sự là bản sao lưu; dời ra ngoài mới giữ
+      được nội dung.
+    Trùng tên ở đích thì thêm hậu tố `.trung-N` — không bao giờ ghi đè."""
+    kho = runtime.parent / f"{runtime.name}-backup"
+    da_doi: list[tuple[Path, Path]] = []
+    for p in muc_sao_luu_sai_cho(runtime):
+        dich = kho / p.relative_to(runtime)
+        n = 1
+        while dich.exists() or dich.is_symlink():
+            dich = dich.with_name(f"{p.name}.trung-{n}")
+            n += 1
+        dich.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(p), str(dich))
+        da_doi.append((p, dich))
+    return da_doi
+
+
+def don_bak(runtime: Path) -> int:
+    """`--don-bak`: đưa mọi mục `*.bak-*` (BH22) ra khỏi thư mục skill đang chạy.
+
+    Từ 16/09/2026 hàm này DỜI sang `<runtime>-backup/` (qua `doi_sao_luu_ra_ngoai`)
+    thay vì `rmtree`: thư mục sao lưu là bản DUY NHẤT của nội dung runtime trước
+    một lượt đẩy — xoá nó là xoá dữ liệu, còn dời thì vừa sạch danh sách skill vừa
+    giữ nội dung.
+
+    Lịch sử giữ lại vì nó giải thích BH75: bản gốc chỉ biết `.unlink()`; gặp THƯ MỤC
+    `.bak-*` (do bản CŨ của `--ap-dung` trước 13/09 sao lưu bằng
+    `shutil.copytree(dst, dst.parent / f"{k}.bak-{stamp}", ...)`) thì macOS ném
+    `PermissionError` — dễ đọc nhầm thành lỗi quyền hệ thống — và cả lượt dọn chết
+    giữa chừng (vá 25/08/2026; đo được 17 mục rác tồn đọng từ 13/08).
+    `shutil.move` xử lý được cả thư mục lẫn file. Trả về số mục đã dời."""
+    return len(doi_sao_luu_ra_ngoai(runtime))
 
 
 def _bam(p: Path) -> str:
@@ -213,15 +366,15 @@ def so_mot_skill(nguon: Path, runtime: Path) -> dict:
     return {"trang_thai": "KHOP", "day": [], "phan_ky": []}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Đồng bộ skill nguồn → nơi chạy")
     ap.add_argument("--ap-dung", action="store_true",
                     help="thật sự ghi (mặc định chỉ xem trước)")
     ap.add_argument("--im-khi-on", action="store_true",
                     help="không in gì khi mọi skill đã khớp (dùng cho hook)")
     ap.add_argument("--don-bak", action="store_true",
-                    help="dọn *.bak-* còn sót trong NƠI CHẠY (BH22: app có thể "
-                         "nạp nhầm; sao lưu đúng chỗ là nguồn/git, không phải runtime)")
+                    help="dời *.bak-* còn sót trong NƠI CHẠY sang <runtime>-backup/ "
+                         "(BH22: app nạp nhầm thành skill; KHÔNG xoá)")
     ap.add_argument("--nguon-la-chuan", action="store_true",
                     help="phân kỳ hai chiều thì NGUỒN thắng (vẫn sao lưu trước khi "
                          "ghi). Mặc định KHÔNG bật: chạy riêng thì phân kỳ phải chặn "
@@ -229,12 +382,12 @@ def main() -> int:
                          "mới truyền cờ này — đúng hợp đồng đã ghi ở AGENTS.md §Đồng bộ "
                          "skill/plugin: «nguồn OneDrive thắng runtime Cowork nhưng bản "
                          "cũ luôn được sao lưu».")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     runtime = tim_runtime()
     if a.don_bak and runtime:
         n = don_bak(runtime)
-        print(f"✓ dọn {n} mục .bak khỏi nơi chạy (BH22)")
+        print(f"✓ dời {n} mục .bak khỏi nơi chạy sang {runtime.name}-backup/ (BH22, không xoá)")
         if not a.ap_dung:
             return 0
     if runtime is None:
@@ -242,6 +395,7 @@ def main() -> int:
             print("⚠ Không tìm thấy thư mục skill đang chạy — bỏ qua.")
         return 0
 
+    sai_cho = muc_sao_luu_sai_cho(runtime)
     ket: dict[str, dict] = {}
     for d in sorted(NGUON.iterdir()):
         if not d.is_dir() or not (d / "SKILL.md").exists():
@@ -256,11 +410,23 @@ def main() -> int:
     can_day = [k for k, v in ket.items() if v["trang_thai"] in ("CAN_DAY", "CAN_DAY_NANG_CAP", "THIEU_HAN")]
     phan_ky = [k for k, v in ket.items() if v["trang_thai"] == "PHAN_KY"]
 
-    if a.im_khi_on and not can_day and not phan_ky:
+    if a.im_khi_on and not can_day and not phan_ky and not sai_cho:
         return 0
 
-    print(f"ĐỒNG BỘ SKILL — nguồn: sync/skills · nơi chạy: …/{runtime.parent.name[:8]}/skills")
-    print(f"  khớp {len(khop)} · cần đẩy {len(can_day)} · phân kỳ hai chiều {len(phan_ky)}")
+    tu_repo_chinh = GOC_CHINH != REPO and NGUON == GOC_CHINH / "sync/skills"
+    print(f"ĐỒNG BỘ SKILL — nguồn: sync/skills{' (repo chính)' if tu_repo_chinh else ''}"
+          f" · nơi chạy: …/{runtime.parent.name[:8]}/skills")
+    print(f"  khớp {len(khop)} · cần đẩy {len(can_day)} · phân kỳ hai chiều {len(phan_ky)}"
+          + (f" · sao lưu nằm sai chỗ {len(sai_cho)}" if sai_cho else ""))
+
+    if sai_cho:
+        print(f"\n▸ {len(sai_cho)} MỤC SAO LƯU nằm TRONG nơi chạy (BH22) — app nạp nhầm "
+              "thành skill «…-bak-…»; --ap-dung sẽ DỜI (không xoá) sang "
+              f"{runtime.name}-backup/:")
+        for p in sai_cho[:5]:
+            print(f"   {p.relative_to(runtime)}")
+        if len(sai_cho) > 5:
+            print(f"   … và {len(sai_cho) - 5} mục khác")
 
     if can_day:
         print("\n▸ CẦN ĐẨY (nguồn bao trùm, runtime không có nội dung riêng):")
@@ -278,11 +444,17 @@ def main() -> int:
                 print(f"   {k}/{rel}: runtime có {mat} dòng sẽ MẤT nếu ghi đè")
 
     if not a.ap_dung:
-        if can_day or phan_ky:
-            print("\n(Chưa ghi gì. Thêm --ap-dung để đẩy nhóm an toàn.)")
-        return 2 if phan_ky else (1 if can_day else 0)
+        if can_day or phan_ky or sai_cho:
+            print("\n(Chưa ghi gì. Thêm --ap-dung để đẩy nhóm an toàn và dời sao lưu sai chỗ.)")
+        return 2 if phan_ky else (1 if (can_day or sai_cho) else 0)
 
     # --- Ghi thật, có sao lưu ---
+    # Dời sao lưu sai chỗ TRƯỚC khi đẩy: copytree sao lưu một skill không được cuốn
+    # theo `.bak-*` con đang nằm lẫn trong nó.
+    da_doi = doi_sao_luu_ra_ngoai(runtime)
+    if da_doi:
+        print(f"\n✓ Đã dời {len(da_doi)} mục sao lưu khỏi nơi chạy sang "
+              f"{runtime.name}-backup/ (không xoá).")
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     da_day = 0
     # Skill phân kỳ chỉ vào danh sách ghi khi bác sĩ (hoặc bộ hợp nhất) đã chọn
@@ -297,14 +469,22 @@ def main() -> int:
         src, dst = NGUON / k, runtime / k
         if dst.exists():
             shutil.copytree(dst, duong_dan_sao_luu(runtime, k, stamp), dirs_exist_ok=True)
-        for rel in (ket[k]["day"] or [p.relative_to(src) for p in src.rglob("*") if p.is_file()]):
+        # Nhánh đẩy TRỌN skill (thiếu hẳn ở nơi chạy, hoặc phân kỳ + --nguon-la-chuan)
+        # PHẢI đi qua CÙNG bộ lọc `_bi_bo_qua` với `so_mot_skill` — trước 16/09/2026
+        # nhánh này chép thẳng `src.rglob("*")`, nên một file `*.bak-*`/`__pycache__`
+        # nằm trong nguồn vẫn bị đẩy vào nơi chạy: đúng lỗi gốc BH22 (14/08), chỉ là
+        # đi đường vòng qua nhánh không ai canh.
+        toan_bo = [p.relative_to(src) for p in src.rglob("*")
+                   if p.is_file() and not _bi_bo_qua(p, src)]
+        for rel in (ket[k]["day"] or toan_bo):
             f, d = src / rel, dst / rel
             d.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, d)
             da_day += 1
-    print(f"\n✓ Đã đẩy {da_day} file cho {len(can_day)} skill "
-          f"(sao lưu ở {runtime.name}-backup/*.bak-{stamp}, KHÔNG nằm trong "
-          "thư mục skill đang chạy).")
+    if can_day:
+        print(f"\n✓ Đã đẩy {da_day} file cho {len(can_day)} skill "
+              f"(sao lưu ở {runtime.name}-backup/*.bak-{stamp}, KHÔNG nằm trong "
+              "thư mục skill đang chạy).")
     if phan_ky and not a.nguon_la_chuan:
         print(f"⚠ Bỏ qua {len(phan_ky)} skill phân kỳ hai chiều — chưa đụng tới.")
         return 2

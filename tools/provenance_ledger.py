@@ -37,6 +37,15 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 GOC = Path(__file__).resolve().parents[1]
+# VÁ 07/09/2026: `GOC / "medical-ebm-automation"` (dòng _nap_rw() dưới) giả định
+# LỒNG — sai trên phiên cloud (anh em của GOC). Dùng duong_goc() — xem
+# tools/ban_sao_tran.py.
+import importlib.util as _ilu_pl  # noqa: E402
+_sp_pl = _ilu_pl.spec_from_file_location(
+    "_bst_pl", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst_pl = _ilu_pl.module_from_spec(_sp_pl)
+_sp_pl.loader.exec_module(_bst_pl)
+_MEA_GOC = _bst_pl.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
 LEDGER = GOC / "EBM_MASTER" / "EBM_MASTER.json"
 SO = GOC / "EBM-Dashboards" / ".so-xac-minh-nguon.json"
 HAN_TON_TAI = 180  # ngày — metadata gần bất biến
@@ -55,7 +64,7 @@ def _tuoi_ngay(iso: str | None) -> float | None:
 
 def _nap_rw():
     """Nạp chỉ mục Retraction Watch ngoại tuyến (đã stdlib-safe từ 15/08)."""
-    sys.path.insert(0, str(GOC / "medical-ebm-automation"))
+    sys.path.insert(0, str(_MEA_GOC))
     try:
         from app.sources.retraction_watch import RetractionWatchIndex  # noqa: PLC0415
         rw = RetractionWatchIndex()

@@ -21,7 +21,21 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0                       # máy cá nhân: không làm gì
 fi
 
-D="${CLAUDE_PROJECT_DIR:-$PWD}"
+# Tự định vị gốc repo qua ĐƯỜNG DẪN CHÍNH SCRIPT NÀY trước, chỉ lùi về
+# CLAUDE_PROJECT_DIR/$PWD khi không tự định vị được (BH99, 05/09/2026). Phiên
+# Claude Code Remote đính kèm NHIỀU repo (add_repo) có thể gọi script này bằng
+# đường dẫn tuyệt đối/tương đối từ một $PWD thuộc repo KHÁC (VD: đang đứng ở
+# medical-ebm-automation — repo LIỀN KỀ dưới /home/user/ trong container cloud,
+# KHÔNG lồng bên trong repo này như trên OneDrive thật của bác sĩ). Nếu chỉ
+# dựa `${CLAUDE_PROJECT_DIR:-$PWD}`, `cd "$D"` nhảy sai chỗ và mọi bước sau lặng
+# lẽ báo "thiếu tools/…" dù file đang nằm ngay cạnh, không có dòng lỗi rõ ràng.
+SRC="${BASH_SOURCE[0]:-$0}"
+SELF_ROOT="$(cd "$(dirname "$SRC")/../.." 2>/dev/null && pwd)"
+if [ -n "$SELF_ROOT" ] && [ -f "$SELF_ROOT/.claude/hooks/session-start.sh" ]; then
+  D="$SELF_ROOT"
+else
+  D="${CLAUDE_PROJECT_DIR:-$PWD}"
+fi
 cd "$D" || exit 0
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
