@@ -280,6 +280,22 @@
         "url": "https://github.com/anthropics/life-sciences",
         "ghi_chu": "xác minh 03/09/2026 qua WebFetch: trang GitHub liệt kê thư mục single-cell-rna-qc/ ở gốc repo, khớp tên skill trong registry."
       }
+    },
+    "cochrane@cochrane-marketplace": {
+      "can_o_may": [
+        "Mac"
+      ],
+      "da_xac_nhan": true,
+      "chieu_sang_codex": false,
+      "ly_do": "Kết nối MCP tới Cochrane Library (cochrane_search · cochrane_get_details · cochrane_suggest_terms). Cấp 0 — nguồn CHÍNH THỐNG (tổng quan hệ thống), KHÔNG qua cổng dự phòng §2ter; cách dùng và các bẫy đo được ở `_CONNECTOR-CHUNG-CU.md` §2quater. Bác sĩ kết nối trên Mac 20/09/2026. Là plugin BÊN THỨ BA (chạy mã điều khiển trình duyệt): lời gọi đầu có thể lỗi điều hướng thoáng qua — thử lại một lần. Chưa cài trên Cloud (chưa kiểm được chạy trong container).",
+      "do_duoc_luc_ghi": {
+        "Mac": 3
+      },
+      "nguon": {
+        "loai": "git",
+        "url": "https://github.com/aliildan/cochrane-mcp",
+        "ghi_chu": "xác minh 20/09/2026 qua known_marketplaces.json: source github aliildan/cochrane-mcp, plugin cochrane 0.3.2 (scope user)"
+      }
     }
   }
 }
