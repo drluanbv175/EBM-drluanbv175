@@ -5401,6 +5401,105 @@ def bh104_mcp_consensus_scite_phai_di_qua_cong():
     return True, "MCP Consensus/Scite đi qua cổng dự phòng (Scite search = tầng 2, có trần), Cochrane Cấp 0 có §2quater, bản đồ agent trỏ đúng"
 
 
+def bh105_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
+    """20/09 — bác sĩ yêu cầu «chọn lọc `JamesANZ/medical-mcp` phù hợp, đưa vào hệ thống». Kết luận (doctrine §1ter): KHÔNG cài
+    máy chủ MCP bên thứ ba; lấy đúng hai khoảng trống thật (RxNorm chuẩn hoá tên, danh mục EMA) bằng mã của ta gọi thẳng API
+    công khai, và chỉ dẫn WHO GHO tới tài liệu đã có.
+
+    Chốt canh BA thứ, mỗi thứ là một cách kết quả tốt đẹp này hỏng im lặng:
+      (1) HÀNH VI — `loi` (không hỏi được) KHÔNG bao giờ thành `khong_thay`; `gan_dung` KHÔNG bao giờ thành `khop_chinh_xac`
+          (đo thật: «metfromin» → merbromin, một thuốc sát khuẩn); danh sách EMA rỗng/bố cục lạ là `loi`, không phải «không có».
+          Cùng họ BH27/BH08: không kiểm được phải là một vấn đề, không phải một cái gật đầu.
+      (2) MA TRẬN ĐÁNH GIÁ — cả 16 công cụ của medical-mcp vẫn có mặt ở §1ter kèm quyết định; cắt bớt một dòng là mất luôn lý do
+          từ chối (lần sau lại đánh giá lại từ đầu, hoặc tệ hơn: cài thẳng máy chủ vì «chưa từng bị từ chối»).
+      (3) BH41 — công cụ không agent nào gọi thì với dây chuyền hằng ngày nó KHÔNG TỒN TẠI: `ke-don-an-toan.md` phải gọi cả hai
+          lệnh con và nhắc luật đọc; `khoang-trong-nghien-cuu.md` phải nhắc «không làm p0».
+    """
+    mea = REPO / "medical-ebm-automation"
+    cn = REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md"
+    kd = REPO / ".claude" / "agents" / "ke-don-an-toan.md"
+    kt = REPO / ".claude" / "agents" / "khoang-trong-nghien-cuu.md"
+    cli = mea / "tools" / "tra_thuoc_quoc_te.py"
+    for p in (cn, kd, kt):
+        if not p.exists():
+            return False, f"{p.name} biến mất"
+
+    # ---- (2) ma trận đánh giá
+    van_ban = cn.read_text(encoding="utf-8")
+    i = van_ban.find("## 1ter. ")
+    if i < 0:
+        return False, "mất mục §1ter «ĐÁNH GIÁ medical-mcp» — mất luôn lý do chọn/bỏ từng công cụ"
+    j = van_ban.find("\n## ", i + 5)
+    muc = van_ban[i:j if j > 0 else len(van_ban)]
+    if "KHÔNG cài/chạy máy chủ MCP này" not in muc:
+        return False, "§1ter không còn nói rõ quyết định KHÔNG cài máy chủ MCP bên thứ ba"
+    for ten in ("search-drugs", "search-drug-nomenclature", "search-drug-safety", "get-health-statistics",
+                "search-medical-literature", "get-article-details", "search-google-scholar", "search-medical-journals",
+                "search-clinical-guidelines", "search-clinical-trials", "list-sources", "search-pediatric-guidelines",
+                "search-pediatric-literature", "search-pediatric-drugs", "health-check", "get-cache-stats"):
+        if ten not in muc:
+            return False, f"§1ter thiếu công cụ «{ten}» — ma trận đánh giá bị cắt, mất lý do chọn/bỏ"
+    for dau_hieu, y_nghia in (("merbromin", "ca đo thật: khớp gần đúng ra thuốc KHÁC"), ("không được tự chấp nhận", "gan_dung không tự chấp nhận"),
+                              ("KHÔNG BIẾT", "loi ≠ khong_thay"), ("KHÔNG kèm lý do", "trạng thái EMA không có lý do"),
+                              ("KHÔNG làm p0", "WHO GHO không làm p0")):
+        if dau_hieu not in muc.replace("KHÔNG được dùng làm p0", "KHÔNG làm p0"):
+            return False, f"§1ter thiếu luật «{y_nghia}» (không thấy «{dau_hieu}»)"
+
+    # ---- (3) BH41: agent phải gọi công cụ
+    if not cli.exists():
+        return False, "tools/tra_thuoc_quoc_te.py biến mất — agent trỏ vào công cụ không tồn tại"
+    ag = kd.read_text(encoding="utf-8")
+    for dau_hieu, y_nghia in (("tra_thuoc_quoc_te.py chuan-hoa", "lệnh chuẩn hoá RxNorm"), ("tra_thuoc_quoc_te.py ema", "lệnh EMA"),
+                              ("`gan_dung`", "luật đọc gan_dung"), ("KHÔNG BIẾT", "loi ≠ không thấy"),
+                              ("KHÔNG kèm lý do", "trạng thái EMA không lý do")):
+        if dau_hieu not in ag:
+            return False, f"ke-don-an-toan.md không còn «{y_nghia}» (không thấy «{dau_hieu}») — công cụ mồ côi (BH41)"
+    if "who.md" not in kt.read_text(encoding="utf-8") or "KHÔNG được dùng làm p0" not in kt.read_text(encoding="utf-8"):
+        return False, "khoang-trong-nghien-cuu.md không còn nêu WHO GHO làm bối cảnh và cấm làm p0"
+
+    # ---- (1) hành vi thật của hai adapter, tiêm HTTP giả (ngoại tuyến)
+    if str(mea) not in sys.path:
+        sys.path.insert(0, str(mea))  # module dùng `from app.utils...`
+    try:
+        rx = _nap(mea / "app" / "sources" / "rxnorm.py", "rx_bh105")
+        ema = _nap(mea / "app" / "sources" / "ema_medicines.py", "ema_bh105")
+    except ImportError as exc:  # thiếu phụ thuộc trên bản sao trần: kiểm yếu hơn, KHÔNG báo đỏ giả (BH08)
+        return True, f"⚪ KIỂM YẾU HƠN (chưa kiểm hành vi adapter — không nạp được mã engine: {type(exc).__name__}); phần doctrine + agent vẫn đạt"
+
+    class Gia:
+        def __init__(self, tuyen, loi=False):
+            self.tuyen, self.loi = tuyen, loi
+
+        def get_json(self, url, params=None, use_cache=True):
+            if self.loi:
+                raise ConnectionError("mất mạng giả lập")
+            for hau_to, ph in self.tuyen.items():
+                if url.endswith(hau_to):
+                    return ph
+            raise AssertionError(url)
+
+    if rx.RxNormClient(Gia({}, loi=True)).chuan_hoa("metformin")["trang_thai"] != "loi":
+        return False, "RxNorm: lỗi mạng KHÔNG còn là `loi` — «không hỏi được» bị đọc thành kết quả khác (họ BH27)"
+    kq = rx.RxNormClient(Gia({"rxcui.json": {"idGroup": {}}, "approximateTerm.json": {"approximateGroup": {"candidate": [
+        {"rxcui": "6762", "score": "9", "rank": "1"}]}}, "rxcui/6762/properties.json": {"properties": {"rxcui": "6762", "name": "merbromin", "tty": "IN"}}})
+    ).chuan_hoa("metfromin")
+    if kq["trang_thai"] != "gan_dung":
+        return False, f"RxNorm: khớp gần đúng trả «{kq['trang_thai']}» thay vì `gan_dung` — có thể nhận nhầm thuốc khác (merbromin)"
+    if rx.RxNormClient(Gia({"rxcui.json": {"idGroup": {}}, "approximateTerm.json": {"approximateGroup": {}}})).chuan_hoa("xyzq")["trang_thai"] != "khong_thay":
+        return False, "RxNorm: không có kết quả không còn là `khong_thay`"
+    for phan_hoi in ({"data": []}, {}, []):
+        if ema.EmaMedicinesClient(Gia({"medicines_json-report_en.json": phan_hoi})).tra("metformin")["trang_thai"] != "loi":
+            return False, "EMA: danh sách rỗng/bố cục lạ bị đọc thành «không thấy» thay vì `loi` (KHÔNG BIẾT)"
+    if ema.EmaMedicinesClient(Gia({}, loi=True)).tra("metformin")["trang_thai"] != "loi":
+        return False, "EMA: lỗi mạng KHÔNG còn là `loi`"
+    ban = {"name_of_medicine": "Avandia", "active_substance": "Rosiglitazone", "category": "Human", "medicine_status": "Expired",
+           "last_updated_date": "08/06/2016"}
+    kq = ema.EmaMedicinesClient(Gia({"medicines_json-report_en.json": {"meta": {}, "data": [ban]}})).tra("rosiglitazone")
+    if kq["trang_thai"] != "co_ket_qua" or not any("cấp phép quốc gia" in c for c in kq["canh_bao"]):
+        return False, "EMA: kết quả thiếu cảnh báo «chỉ cấp phép tập trung» — «không thấy» sẽ bị đọc thành «chưa cấp phép»"
+    return True, "medical-mcp chọn lọc: 16 công cụ có quyết định, RxNorm/EMA fail-closed (loi ≠ không thấy, gan_dung ≠ khớp), agent gọi cả hai lệnh"
+
+
 def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
     """09/09 — nguyên nhân gốc đo được: khi một phiên claude.ai/code đính kèm ≥2 repo, hook
     `SessionStart` cấp DỰ ÁN (`.claude/settings.json` trong từng repo) KHÔNG được nền tảng quét
@@ -5555,6 +5654,7 @@ BAI_HOC = [
     ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
     ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
     ("BH104", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh104_mcp_consensus_scite_phai_di_qua_cong),
+    ("BH105", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh105_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

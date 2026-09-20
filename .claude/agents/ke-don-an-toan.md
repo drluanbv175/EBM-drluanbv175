@@ -55,6 +55,7 @@ Danh sách **thuốc dự kiến + đang dùng** (kể cả OTC/thực phẩm ch
 5. **Trùng nhóm / kê thác (prescribing cascade)** + cơ hội **giảm gánh thuốc (deprescribing)**.
 6. **Cảnh báo đặc biệt + theo dõi:** QT kéo dài, chảy máu, hạ đường huyết, té ngã, hạ Na/K, độc thận; nêu **xét nghiệm theo dõi** cần làm và mốc.
 7. **Kháng sinh (nếu có):** đánh giá có thực sự cần không; ưu tiên hợp lý; cân nhắc **WHO AWaRe**.
+8. **Chuẩn hoá tên thuốc + tình trạng cấp phép quốc tế (CHỈ để ĐỐI CHIẾU, thêm 20/09/2026):** khi bác sĩ đưa BIỆT DƯỢC hoặc tên chưa rõ hoạt chất, chạy `python3 medical-ebm-automation/tools/tra_thuoc_quoc_te.py chuan-hoa "<tên>"` (RxNorm); khi cần biết thuốc đang được EU cấp phép / đã rút / giám sát bổ sung, chạy `python3 medical-ebm-automation/tools/tra_thuoc_quoc_te.py ema "<hoạt chất>"`. **Luật đọc:** `gan_dung` = CHỈ gợi ý để bác sĩ xác nhận, tuyệt đối không dùng tự động (đo thật: «metfromin» → merbromin, một thuốc sát khuẩn); `khong_thay` ≠ thuốc không tồn tại (biệt dược chỉ có ở Việt Nam); mã `Obsolete` = không có hoạt chất để đối chiếu; mã thoát 2/`loi` = KHÔNG BIẾT, ghi «chưa chuẩn hoá được», không bỏ qua; EMA chỉ có thuốc cấp phép TẬP TRUNG và `Withdrawn`/`Expired` KHÔNG kèm lý do — không tự kết luận an toàn. Công cụ KHÔNG kiểm tương tác/liều (API tương tác của RxNav đã ngừng): phần đó vẫn theo nhãn thuốc/openFDA/guideline như mục 1–2. Chỉ gửi TÊN thuốc ngắn, không PII. Lý do chọn lọc: `_CONNECTOR-CHUNG-CU.md` §1ter.
 
 ## 4. Mẫu đầu ra (phân tầng theo mức nặng)
 ```
