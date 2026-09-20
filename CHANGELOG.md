@@ -8,6 +8,55 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+### 2026-09-20 — Nguồn SerpApi Google Scholar (engine `medical-ebm-automation`, mới kiểm OFFLINE)
+
+Bối cảnh: theo yêu cầu "tích hợp Google Scholar API qua SerpApi để hoàn thiện hệ thống". Mã và
+test nằm trong repo y khoa `medical-ebm-automation/` (git riêng, ngoài phạm vi CHANGELOG này); mục
+này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi tiết đầy đủ ở
+`medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu".
+
+### Added
+- `app/sources/serpapi_scholar.py` (`SerpApiScholarClient`) — nguồn KHÁM PHÁ, TẮT mặc định
+  (`ENABLE_SERPAPI_SCHOLAR`), đòi `SERPAPI_API_KEY` bắt buộc thật. Mỗi lần gọi là một search
+  SerpApi TÍNH PHÍ nên có trần `SERPAPI_MAX_CALLS_PER_RUN` (mặc định 8, hết ngân sách thì NỔ TO chứ
+  không trả rỗng im lặng). Không abstract, không DOI/PMID chắc chắn, ngày chỉ có năm, `study_type`
+  luôn `None` (trừ preprint), ngoài chuỗi kiểm rút bài. Đăng ký ở `app/sources/__init__.py`
+  (đặt cuối), `app/main.py::_build_source_map` (`python run.py test-live serpapi_scholar "<từ khoá>"`)
+  và `app/config.py`. 181 test offline ở `tests/test_serpapi_scholar.py`.
+
+### Changed
+- `app/utils/http.py` (`HttpClient`, LÕI DÙNG CHUNG mọi nguồn) — thêm tham số MỚI `max_retries`
+  theo từng client. `None` (mặc định) = dùng `settings.http_max_retries` như cũ nên mọi nguồn khác
+  KHÔNG đổi hành vi; `0` = đúng MỘT request cho mỗi lần gọi, không thử lại, không ngủ backoff vô ích.
+  Lý do: mỗi request tới SerpApi là một search tính phí, vòng retry toàn cục từng nhân một truy vấn lỗi
+  thành 2-5 request. Chỉ `SerpApiScholarClient` dùng `max_retries=0`. 21 test ở
+  `tests/test_http_per_client_max_retries.py`; các test http cũ không đổi và vẫn xanh.
+- `README.md` (engine) — thêm 1 dòng nguồn SerpApi ở mục tiêu và 1 dòng biến môi trường
+  `SERPAPI_API_KEY` / `ENABLE_SERPAPI_SCHOLAR` / `SERPAPI_MAX_CALLS_PER_RUN` ở bảng `.env`.
+
+### 2026-09-20 (bổ sung) — Bậc thang dự phòng có cổng: Consensus → SerpApi Scholar, xác minh Scite (mới kiểm OFFLINE)
+
+Theo yêu cầu "chỉ khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm", rồi "Consensus và Scite
+cũng thiết kế tương tự". SerpApi Scholar được HẠ từ nguồn quét song song xuống tầng dự phòng số 2.
+- Mới trong `medical-ebm-automation/`: `app/services/evidence_sufficiency.py` (cổng), `fallback_ladder.py`,
+  `fallback_verification.py`, `app/sources/consensus_api.py`, `app/sources/scite_public.py`; nối vào
+  `ingestion.py`, `research/dossier.py`, `research/manager.py`. Mọi tầng TẮT mặc định; bản ghi dự phòng chỉ được giữ
+  khi khớp bản ghi thật ở Crossref/PubMed (nghiêm ngặt: tiêu đề, năm, tác giả đầu, token phân biệt).
+- Consensus: trần tháng bền 10 và 5/lượt chạy (gói Free 30/tháng dùng chung MCP). Scite: chỉ lớp xác minh công khai,
+  không khoá. `HttpClient._redact` mở rộng che `x-api-key`/`Authorization`.
+- Kiểm: 98 + 230 + 156 + 86 + 67 test mới đạt, bộ test toàn engine 5549 đạt / 0 đỏ (sau khi khôi phục 194 file
+  `sync/skills/**` bị thiếu trong working tree — không liên quan mã này). **Kiểm THẬT 20/09/2026:** SerpApi chạy
+  được (5 kết quả thật; khoá bị dán đôi từng gây 401 — nút nhập khoá nay tự gộp); lớp xác minh Crossref/Scite
+  4/5 ca đúng đáp án, lộ và vá 1 lỗi phân loại bài bị rút (tiền tố "RETRACTED:"); PubMed vẫn bị NCBI chặn misuse;
+  Consensus CHƯA kiểm thật vì chưa có khoá REST API.
+
+### Known gaps
+- SerpApi đã `test-live` thật 20/09/2026 (cấu trúc phản hồi + chuỗi lỗi 401 đã đối chiếu). CÒN CHƯA đối
+  chiếu: ý nghĩa `as_ylo` "bao gồm năm đó" và việc phản hồi có lặp lại `api_key` hay không.
+- Chưa làm, chờ bác sĩ quyết: luật health cho nguồn ngoài lõi hỏng 100% (hiện vẫn `PASS`, cả
+  Scopus/CORE/Epistemonikos); chọn 8 truy vấn ít phủ nhất (hiện luôn rơi vào 8 truy vấn đầu); dòng mẫu
+  trong `.env.example`; trần theo tháng qua Account API.
+
 ### 2026-08-28 — Rà toàn diện trên bản sao git TRẦN (phiên cloud) + vá «tường đỏ giả»
 
 Bối cảnh: chạy trọn bộ kiểm trên một bản clone git KHÔNG có cây OneDrive

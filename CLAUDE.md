@@ -1247,7 +1247,14 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - Nguồn miễn phí: PubMed E-utilities, Europe PMC, Crossref, OpenAlex, openFDA… (không key)
 - Nguồn có key (mặc định TẮT, bật khi có key thật): Semantic Scholar; **Scopus (Elsevier) — thêm
   13/09/2026**, `app/sources/scopus.py`, đòi `SCOPUS_API_KEY` bắt buộc thật (khác Semantic Scholar
-  vẫn chạy được không key). **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026, GỠ BỎ cùng ngày:**
+  vẫn chạy được không key). **SerpApi Google Scholar — thêm 20/09/2026**,
+  `app/sources/serpapi_scholar.py`: TẮT mặc định, đòi `SERPAPI_API_KEY` bắt buộc thật, mỗi lần gọi là
+  một search SerpApi TÍNH PHÍ (có trần `SERPAPI_MAX_CALLS_PER_RUN`, mặc định 8); chỉ là nguồn KHÁM PHÁ
+  (không abstract, không DOI/PMID chắc chắn, ngoài chuỗi kiểm rút bài) và là TẦNG DỰ PHÒNG số 2, cùng
+  Consensus (tầng số 1) sau một cổng đủ-chứng-cứ: chỉ chạy khi nguồn chính thống chưa đủ bài đáng tin, mọi bản
+  ghi phải qua xác minh Crossref/PubMed (+ Scite công khai kiểm rút bài) mới được giữ; TẤT CẢ đang TẮT; SerpApi và lớp xác minh Crossref/Scite ĐÃ kiểm thật 20/09/2026, Consensus CHƯA (thiếu khoá
+  REST API) — chi tiết ở `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu".
+  **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026, GỠ BỎ cùng ngày:**
   đăng ký app MedsAPI bắt buộc Customer ID + Group ID do đại diện EBSCO cấp theo hợp đồng TỔ CHỨC,
   tài khoản DynaMed cá nhân không tự cấp được — giới hạn của loại tài khoản, không phải lỗi cấu
   hình. Đã gỡ ở tầng nghiên cứu (`app/sources/dynamed.py` + test + khoá `DYNAMED_*`, merge `b74dd68`
