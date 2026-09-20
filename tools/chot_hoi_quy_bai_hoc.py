@@ -5318,6 +5318,60 @@ def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
     return True, "bản sao trần: thoát mã 2 sạch, không traceback, không báo nhầm 'có lỗ hổng'"
 
 
+def bh104_mcp_consensus_scite_phai_di_qua_cong():
+    """20/09 — bác sĩ chốt «MCP vẫn đi qua cổng»: Consensus/Scite ở phía MCP của tác nhân KHÔNG được là đường tắt quanh
+    bậc thang dự phòng có cổng của engine (cổng đủ-chứng-cứ → Consensus → SerpApi → xác minh Crossref/PubMed → Scite).
+
+    Trước đó doctrine chỉ nói Consensus = «discovery-only, quét sơ bộ», không nêu KHI NÀO được gọi, trần lượt (gói Free 30
+    lượt/tháng DÙNG CHUNG với REST của engine) hay xác minh bắt buộc; Scite chưa hề có mặt. Chốt này kiểm CHỮ trong
+    `_CONNECTOR-CHUNG-CU.md` (giới hạn của kiểm doctrine-text, cùng họ BH39/BH42/BH103: kiểm được luật CÓ MẶT, không kiểm
+    được một phiên cụ thể có LÀM THEO hay không): mục §2ter đủ 6 luật, Scite chỉ ở vai XÁC MINH, bước 6 của §2bis, hai dòng
+    bản đồ agent trỏ §2ter, và hai bản (gốc + engine) không lệch nhau.
+    """
+    bien = {
+        "goc": REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
+        "engine": REPO / "medical-ebm-automation" / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
+    }
+    noi_dung = {}
+    for ten, duong_dan in bien.items():
+        if not duong_dan.exists():
+            if ten == "engine":
+                continue  # bản trong engine có thể vắng trên bản sao trần
+            return False, f"{duong_dan.name} biến mất — mất luôn cổng dự phòng MCP"
+        noi_dung[ten] = duong_dan.read_text(encoding="utf-8")
+    for ten, van_ban in noi_dung.items():
+        i = van_ban.find("## 2ter. ")
+        if i < 0:
+            return False, f"[{ten}] mất mục §2ter «CỔNG DỰ PHÒNG CHO MCP» — Consensus/Scite MCP quay lại đường tắt"
+        j = van_ban.find("\n## ", i + 5)
+        muc = van_ban[i:j if j > 0 else len(van_ban)]
+        for dau_hieu, y_nghia in (
+            ("CHƯA ĐỦ chứng cứ đáng tin", "điều kiện leo thang (chỉ khi các tầng trước chưa đủ)"),
+            ("CHƯA KẾT LUẬN", "nguồn lõi lỗi ≠ thiếu chứng cứ (không leo thang)"),
+            ("tối đa **2 lời gọi MCP", "trần lời gọi MCP mỗi câu hỏi"),
+            ("30 lượt/THÁNG", "hạn mức Free dùng CHUNG với REST của engine"),
+            ("GỢI Ý cần tra lại", "kết quả Consensus phải xác minh Crossref/PubMed"),
+            ("LỚP XÁC MINH", "Scite chỉ ở vai xác minh"),
+            ("KHÔNG thay", "Scite bổ sung, không thay chuỗi rút bài 3 tầng"),
+            ("không được ghi «chưa bị rút»", "Scite im lặng ≠ chưa bị rút"),
+            ("KHÔNG chấm mức chứng cứ", "tally Scite không dùng để chấm mức"),
+            ("không đổi `decision`/`gradeLevel`", "MCP không đổi quyết định/mức"),
+        ):
+            if dau_hieu not in muc:
+                return False, f"[{ten}] §2ter thiếu luật «{y_nghia}» (không thấy «{dau_hieu}»)"
+        if "6. **MCP dự phòng (Consensus · Scite) CHỈ qua CỔNG §2ter**" not in van_ban:
+            return False, f"[{ten}] §2bis mất bước 6 trỏ sang cổng MCP — thứ tự tra cứu mặc định không nhắc cổng"
+        if "Consensus *(discovery, CHỈ qua cổng §2ter)*" not in van_ban:
+            return False, f"[{ten}] dòng bản đồ `tra-cuu-chung-cu` không còn trỏ cổng §2ter cho Consensus"
+        if "Scite *(kiểm rút bài/thông báo BỔ SUNG, CHỈ qua cổng §2ter)*" not in van_ban:
+            return False, f"[{ten}] dòng bản đồ `kiem-chung-trich-dan` không còn nêu Scite qua cổng §2ter"
+        if "| **Scite** |" not in van_ban or "**CHỈ XÁC MINH**" not in van_ban:
+            return False, f"[{ten}] bảng connector không còn dòng Scite ở vai CHỈ XÁC MINH"
+    if len(noi_dung) == 2 and noi_dung["goc"] != noi_dung["engine"]:
+        return False, "bản `_CONNECTOR-CHUNG-CU.md` trong engine LỆCH bản gốc — hai bản doctrine nói hai thứ"
+    return True, "MCP Consensus/Scite đi qua cổng dự phòng: §2ter đủ 6 luật, Scite chỉ xác minh, bản đồ agent trỏ đúng"
+
+
 def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
     """09/09 — nguyên nhân gốc đo được: khi một phiên claude.ai/code đính kèm ≥2 repo, hook
     `SessionStart` cấp DỰ ÁN (`.claude/settings.json` trong từng repo) KHÔNG được nền tảng quét
@@ -5471,6 +5525,7 @@ BAI_HOC = [
     ("BH101", "10/09", "Hợp đồng sổ đăng ký nguồn (sources.schema.json) phải thi hành được bằng máy, không chỉ nằm trên giấy", bh101_hop_dong_nguon_thi_hanh_duoc_bang_may),
     ("BH102", "10/09", "Máy chấm Gold Set không được gộp hạ tầng thiếu với thất bại thật", bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai),
     ("BH103", "09/09", "Chỉ thị tự bắn hook cloud (phiên ≥2 repo) phải còn nguyên trong CLAUDE.md", bh103_chi_thi_tu_bat_hook_cloud_da_khai),
+    ("BH104", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh104_mcp_consensus_scite_phai_di_qua_cong),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

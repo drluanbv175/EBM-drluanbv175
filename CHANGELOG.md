@@ -34,6 +34,11 @@ này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi
 - `README.md` (engine) — thêm 1 dòng nguồn SerpApi ở mục tiêu và 1 dòng biến môi trường
   `SERPAPI_API_KEY` / `ENABLE_SERPAPI_SCHOLAR` / `SERPAPI_MAX_CALLS_PER_RUN` ở bảng `.env`.
 
+### 2026-09-20 — MCP Consensus/Scite đi qua cổng dự phòng (BH104) + canary nói rõ PubMed chạy qua bản sao
+
+Bác sĩ chốt «MCP vẫn đi qua cổng». `_CONNECTOR-CHUNG-CU.md` (gốc + bản trong engine) thêm §2ter «CỔNG DỰ PHÒNG CHO MCP»: chỉ gọi Consensus khi kho nội bộ → Cấp 0 → Cấp 0.5 → PubMed/Europe PMC chưa đủ chứng cứ đáng tin (≥3 bài phân biệt có PMID/DOI); nguồn lõi lỗi ⇒ PARTIAL, không leo thang; tối đa 2 lời gọi MCP/câu hỏi (hạn mức Free 30/tháng dùng CHUNG với REST của engine); kết quả Consensus là gợi ý phải xác minh Crossref/PubMed; Scite chỉ XÁC MINH (bổ sung, không thay chuỗi rút bài 3 tầng; tally không chấm mức chứng cứ). Khoá bằng BH104 (4 phép đột biến đều đỏ đúng chỗ). Chốt hồi quy 104/104.
+Canary ESD06 (`verify_evidence_surveillance_deployment.py`): adapter PubMed tự lùi về Europe PMC khi NCBI E-utilities không dùng được (đo thật: mạng này bị NCBI chặn misuse cả esearch/esummary/efetch) nhưng canary vẫn in «found=True,health=ok» — nay in thêm `via=Europe PMC(nguon_goc_khong_dung_duoc)`; PASS giữ nguyên.
+
 ### 2026-09-20 — Chốt BH51 hết báo đỏ giả theo máy
 
 Sổ cái demo `ZZPHA-R-AUTO-DEMO` nằm trong `exports/` (OneDrive đồng bộ, gitignore) còn khoá ký riêng từng máy: máy nào không
