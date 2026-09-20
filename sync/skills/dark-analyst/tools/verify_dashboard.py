@@ -1692,6 +1692,57 @@ def _replacement_acknowledgement(duong_dan, record):
     return None
 
 
+SO_RUT_BAI_DA_XEM_XET = "rut-bai-da-xem-xet.json"
+
+
+def _dau_van_tay_thong_bao(ids):
+    return sorted({str(x).strip().lower() for x in (ids or []) if str(x).strip()})
+
+
+def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
+    """Bản ghi MIỄN TRỪ do bác sĩ ký cho ca «thông báo bị rút là bản đính chính», hoặc ``None``.
+
+    Thêm 20/09/2026 (ca ``TienLuongSuyTim_20260914`` ITEM-11: guideline CCS/CHFS 2025 bị cờ «rút
+    bài» vì thông báo gắn vào nó là của MỘT BẢN ĐÍNH CHÍNH trùng lặp bị rút). Chuỗi 3 tầng không
+    độc lập với lỗi này — cả ba đọc cùng một liên kết NLM — nên máy KHÔNG tự bỏ cờ. Miễn trừ chỉ
+    hợp lệ khi hội đủ MỌI điều kiện, thiếu một ⇒ ``None`` ⇒ cổng tiếp tục chặn (fail-closed):
+      • sổ xác minh đánh cờ ``sua_loi_bi_rut`` (chỉ khi MỌI thông báo đều đọc được tiêu đề và
+        đều là đính chính bị rút, Retraction Watch không có phán quyết dương tính riêng);
+      • ``rut-bai-da-xem-xet.json`` (cùng thư mục dashboard) có mục khớp ``khoa``;
+      • DẤU VÂN TAY khớp: tập ``thong_bao_ids`` bác sĩ ký == tập thông báo rút HIỆN TẠI. Xuất hiện
+        thêm/đổi một thông báo (vd một vụ rút bài THẬT sau này) ⇒ vân tay lệch ⇒ chặn lại;
+      • ``da_xem_boi`` · ``ngay`` (YYYY-MM-DD) · ``ly_do`` (≥ 20 ký tự) đều có — «đã xem xét» phải
+        có người chịu trách nhiệm và có lý do, không phải một dấu tích.
+    Không đọc được sổ miễn trừ ⇒ ``None`` (không bao giờ đọc thành «đã miễn»).
+    """
+    if not record.get("sua_loi_bi_rut"):
+        return None
+    van_tay = _dau_van_tay_thong_bao(record.get("thong_bao_ids"))
+    if not van_tay:
+        return None
+    try:
+        du_lieu = json.loads((Path(duong_dan).resolve().parent / SO_RUT_BAI_DA_XEM_XET)
+                             .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(du_lieu, dict):
+        return None
+    khoa = str(record.get("khoa") or "").strip().lower()
+    for e in du_lieu.get("muc") or []:
+        if not isinstance(e, dict) or str(e.get("khoa") or "").strip().lower() != khoa or not khoa:
+            continue
+        if _dau_van_tay_thong_bao(e.get("thong_bao_ids")) != van_tay:
+            continue
+        if len(str(e.get("da_xem_boi") or "").strip()) < 3:
+            continue
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(e.get("ngay") or "").strip()):
+            continue
+        if len(str(e.get("ly_do") or "").strip()) < 20:
+            continue
+        return e
+    return None
+
+
 def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
     """LỖI CỨNG khi sổ xác minh đã ghi nhận một nguồn của gói này ĐÃ BỊ RÚT.
 
@@ -1788,6 +1839,25 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                     % (acknowledged_item, r["loai"], r["gia_tri"])
                 )
                 continue
+        elif r["tinh_trang"] == "retracted" and r.get("sua_loi_bi_rut"):
+            # KHÔNG phải «đã bị rút — không dùng»: thông báo rút gắn vào nguồn này mang tiêu đề của
+            # MỘT BẢN ĐÍNH CHÍNH bị rút (nhiều khả năng bản trùng lặp), chưa chắc là bài chính. Nhưng
+            # máy không tự bỏ cờ — chuỗi 3 tầng cùng đọc một liên kết NLM nên không độc lập. Chỉ bác
+            # sĩ đã ĐỌC thông báo + các đính chính còn hiệu lực rồi KÝ vào sổ miễn trừ mới hạ được.
+            xem = _da_xem_xet_thong_bao_dinh_chinh(duong_dan, r)
+            if xem:
+                warns.append(
+                    "NGUỒN %s:%s có thông báo rút bài là BẢN ĐÍNH CHÍNH bị rút (thông báo %s) — "
+                    "bác sĩ %s đã xem xét ngày %s: %s. Miễn trừ gắn với đúng tập thông báo này; "
+                    "thêm/đổi thông báo ⇒ chặn lại."
+                    % (r["loai"], r["gia_tri"], ", ".join(_dau_van_tay_thong_bao(r.get("thong_bao_ids"))),
+                       xem.get("da_xem_boi"), xem.get("ngay"), str(xem.get("ly_do"))[:120]))
+                continue
+            nhan, viec = ("CẦN BÁC SĨ XEM (thông báo rút bài là bản ĐÍNH CHÍNH bị rút)",
+                          "chưa chắc bài chính bị rút; CHẶN cho tới khi bác sĩ đọc thông báo + các "
+                          "đính chính còn hiệu lực rồi ký %s (khoa=%s, thong_bao_ids=%s, da_xem_boi, "
+                          "ngay, ly_do)" % (SO_RUT_BAI_DA_XEM_XET, r.get("khoa"),
+                                            _dau_van_tay_thong_bao(r.get("thong_bao_ids"))))
         elif r["tinh_trang"] == "retracted":
             nhan, viec = "ĐÃ BỊ RÚT", "không dùng kết luận của bài này"
         else:

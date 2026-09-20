@@ -5799,6 +5799,118 @@ def bh104_cowork_orphan_cleanup_da_khai():
     return True, "docstring tools/dong_bo_skill.py còn ghi đúng trần kiến trúc Cowork + nguồn tài liệu"
 
 
+def bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky():
+    """20/09 — «nguồn bị rút» có thể là BÁO ĐỘNG GIẢ mà chuỗi 3 tầng không tự gỡ được, và cách gỡ KHÔNG được là để máy tự bỏ cờ.
+
+    Ca thật: `TienLuongSuyTim_20260914` ITEM-11 (decision=apply) dựa guideline CCS/CHFS 2025 (PMID 41110921). PubMed gắn
+    «Retracted Publication» vào nó vì thông báo rút bài (PMID 41422828) mang tiêu đề «WITHDRAWN: Corrigendum to …» — thứ bị rút là
+    MỘT BẢN ĐÍNH CHÍNH TRÙNG LẶP, không phải guideline. Cả 3 tầng (Retraction Watch → NCBI → Europe PMC) đọc cùng một liên kết NLM
+    nên cùng nói «đã rút»: tầng thứ hai/thứ ba KHÔNG độc lập với loại lỗi này. Hai cách sai ngược chiều nhau:
+      • để nguyên: cổng chặn một guideline hợp lệ với thông điệp «không dùng kết luận» ⇒ dạy người đọc bỏ qua cảnh báo (BH08);
+      • máy tự bỏ cờ khi tiêu đề trông như đính chính: một vụ rút bài THẬT lọt qua chỉ vì tiêu đề khớp mẫu.
+    Đường đúng: máy chỉ NHẬN DIỆN CÂU CHỮ (thông điệp «cần bác sĩ xem», trạng thái vẫn `retracted`, cổng vẫn CHẶN); hạ cờ chỉ bằng
+    sổ `rut-bai-da-xem-xet.json` DO BÁC SĨ KÝ, gắn với DẤU VÂN TAY tập thông báo rút — thêm/đổi một thông báo ⇒ mất hiệu lực.
+
+    Kiểm HÀNH VI trên mã sống (không đếm chuỗi): (1) bộ nhận diện chặt — «Correction of hypertension…» và rút bỏ hẳn KHÔNG khớp;
+    (2) chuỗi 3 tầng: cờ chỉ bật khi MỌI thông báo đọc được tiêu đề và đều là đính chính, tắt khi thiếu tiêu đề / có thông báo
+    thật / Retraction Watch dương tính, và trạng thái luôn `retracted`; (3) cổng: chưa ký ⇒ LỖI CỨNG mang nhãn riêng; ký đúng
+    vân tay ⇒ chỉ cảnh báo; vân tay lệch / thiếu lý do / cờ tắt ⇒ vẫn chặn; (4) sổ xác minh gán cờ theo kết quả MỚI, không dính.
+    """
+    import tempfile
+    mea = _goc_mea()
+    if str(mea) not in sys.path:
+        sys.path.insert(0, str(mea))
+    cr = _nap(mea / "app" / "sources" / "crossref_retraction.py", "cr_bh109")
+    dung = ["WITHDRAWN: Corrigendum to \"2025 guideline\" [Can J Cardiol 2025]", "RETRACTED: Erratum for X",
+            "WITHDRAWN: Author Correction: y"]
+    sai = ["WITHDRAWN: Correction of hypertension by exercise", "Retraction: Fabricated data",
+           "Notice of Retraction and Replacement. Choi et al.", "WITHDRAWN: Efficacy of drug", "Corrigendum to X", ""]
+    if not all(cr.la_thong_bao_sua_loi_bi_rut(x) for x in dung):
+        return False, "bộ nhận diện không nhận ra tiêu đề «WITHDRAWN: Corrigendum/Erratum/Author Correction»"
+    lot = [x for x in sai if cr.la_thong_bao_sua_loi_bi_rut(x)]
+    if lot:
+        return False, "bộ nhận diện quá lỏng — nhận nhầm %r là đính chính bị rút" % lot[0]
+
+    rc = _nap(mea / "app" / "sources" / "retraction_chain.py", "rc_bh109")
+    gop = rc.RetractionChain._gop
+    tb1 = {"pmid": "1", "citation": "x"}
+    tb2 = {"pmid": "2", "citation": "y"}
+
+    def _pm(*ds):
+        return {"status": "retracted", "retraction_notice": ds[-1], "retraction_notices": list(ds)}
+    a = gop("9", None, _pm(tb1), None, ["pubmed"], {"1": "WITHDRAWN: Corrigendum to X"})
+    if a.get("status") != "retracted" or not a.get("withdrawn_correction_notice"):
+        return False, "ca đính chính bị rút không được đánh cờ, hoặc trạng thái không còn `retracted`"
+    if a.get("notice_ids") != ["1"]:
+        return False, "thiếu tập thông báo (notice_ids) — không có dấu vân tay cho sổ miễn trừ"
+    ca_chan = {
+        "thiếu tiêu đề thông báo": gop("9", None, _pm(tb1), None, ["pubmed"], {}),
+        "có một thông báo THẬT bên cạnh bản đính chính": gop(
+            "9", None, _pm(tb1, tb2), None, ["pubmed"],
+            {"1": "WITHDRAWN: Corrigendum to X", "2": "RETRACTED: Efficacy of drug"}),
+        "chỉ biết một trong hai thông báo (thiếu tiêu đề cái kia)": gop(
+            "9", None, _pm(tb1, tb2), None, ["pubmed"], {"1": "WITHDRAWN: Corrigendum to X"}),
+        "Retraction Watch dương tính riêng": gop(
+            "9", {"status": "retracted", "reason": "Falsification", "nature": "Retraction"},
+            _pm(tb1), None, ["retraction_watch", "pubmed"], {"1": "WITHDRAWN: Corrigendum to X"}),
+    }
+    for ten, kq in ca_chan.items():
+        if kq.get("status") != "retracted":
+            return False, "%s: trạng thái không còn `retracted` (cổng hết fail-closed)" % ten
+        if kq.get("withdrawn_correction_notice"):
+            return False, "%s: vẫn bị đánh cờ «đính chính bị rút» — đường cho một vụ rút bài thật lọt qua" % ten
+
+    vd = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py", "vd_bh109")
+    nen = {"khoa": "pmid:1", "loai": "pmid", "gia_tri": "1", "tinh_trang": "retracted", "tieu_de": "t",
+           "kiem_luc": "2026-09-20", "nguon": "pubmed", "thong_bao": "", "rut_va_thay": False,
+           "sua_loi_bi_rut": True, "thong_bao_ids": ["41422828"]}
+    ky = {"khoa": "pmid:1", "thong_bao_ids": ["41422828"], "da_xem_boi": "BS thử nghiệm", "ngay": "2026-09-21",
+          "ly_do": "Đã đọc thông báo và hai Author Correction; khuyến cáo không đổi."}
+
+    def _chay(ban_ghi, so=None):
+        with tempfile.TemporaryDirectory() as d:
+            if so is not None:
+                (Path(d) / "rut-bai-da-xem-xet.json").write_text(
+                    so if isinstance(so, str) else json.dumps(so), encoding="utf-8")
+            e, w, o = [], [], []
+            vd.kiem_nguon_da_rut(str(Path(d) / "a.html"), e, w, o, tra_cuu=lambda _t: [ban_ghi])
+            return e, w
+    e, w = _chay(nen)
+    if not e or "CẦN BÁC SĨ XEM" not in e[0]:
+        return False, "chưa ký mà không còn là LỖI CỨNG mang nhãn «CẦN BÁC SĨ XEM»"
+    e, w = _chay(nen, {"muc": [ky]})
+    if e or not any("đã xem xét" in x for x in w):
+        return False, "đã ký đúng vân tay nhưng cổng vẫn chặn (hoặc không nói rõ miễn trừ)"
+    for ten, ban_ghi, so in (
+        ("vân tay lệch (xuất hiện thông báo thứ hai)", dict(nen, thong_bao_ids=["41422828", "99"]), {"muc": [ky]}),
+        ("thiếu lý do", nen, {"muc": [dict(ky, ly_do="ok")]}),
+        ("thiếu người xem", nen, {"muc": [dict(ky, da_xem_boi="")]}),
+        ("ngày sai định dạng", nen, {"muc": [dict(ky, ngay="hôm qua")]}),
+        ("khoá khác", nen, {"muc": [dict(ky, khoa="pmid:2")]}),
+        ("máy không đánh cờ (bài thật bị rút)", dict(nen, sua_loi_bi_rut=False), {"muc": [ky]}),
+        ("sổ hỏng", nen, "không phải json"),
+    ):
+        try:
+            e, w = _chay(ban_ghi, so)
+        except Exception as exc:  # noqa: BLE001
+            return False, "%s: cổng CRASH thay vì chặn (%s)" % (ten, type(exc).__name__)
+        if not e:
+            return False, "%s: miễn trừ vẫn có hiệu lực — đường lách cổng" % ten
+
+    # Bài THẬT bị rút (máy không đánh cờ) phải giữ nguyên thông điệp nặng «không dùng kết luận»: gọi nó
+    # «cần bác sĩ xem (bản đính chính)» là làm nhẹ một vụ rút bài thật chỉ bằng câu chữ, dù cổng vẫn chặn.
+    e, _w = _chay(dict(nen, sua_loi_bi_rut=False, thong_bao_ids=[]), {"muc": [ky]})
+    if not e or "không dùng kết luận" not in e[0] or "CẦN BÁC SĨ XEM" in e[0]:
+        return False, "bài bị rút THẬT nhận thông điệp nhẹ của ca đính chính — làm nhẹ cảnh báo thật"
+
+    sx = _nap(REPO / "tools" / "so_xac_minh_nguon.py", "sx_bh109")
+    bg = {"sua_loi_bi_rut": True, "thong_bao_ids": ["1"]}
+    sx._gan_dau_hieu_thong_bao(bg, {"status": "retracted", "retraction_notice": {"pmid": "7"}})
+    if bg["sua_loi_bi_rut"] or bg["thong_bao_ids"] != ["7"]:
+        return False, "sổ xác minh giữ cờ/vân tay CŨ khi bằng chứng mới không còn — cờ sống lâu hơn nguồn gốc của nó"
+    return True, "nhận diện chặt · cờ chỉ khi mọi thông báo là đính chính · chặn tới khi bác sĩ ký đúng vân tay · sổ không dính"
+
+
 def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> tuple[bool, str]:
     """16/09/2026 — một git worktree LẠC HẬU ghi vào nơi chạy Cowork DÙNG CHUNG.
 
@@ -6095,6 +6207,7 @@ BAI_HOC = [
     ("BH106", "16/09", "Mẫu hook `A && B || C` không được chạy lại công cụ khi B tự trả mã 1/2 = «có việc»", bh106_hook_python_chi_goi_mot_lan),
     ("BH107", "20/09", "MCP Consensus/Scite phải đi qua cổng dự phòng (không đường tắt), Scite chỉ xác minh", bh107_mcp_consensus_scite_phai_di_qua_cong),
     ("BH108", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
+    ("BH109", "20/09", "Thông báo rút bài là BẢN ĐÍNH CHÍNH: máy chỉ nhận diện câu chữ, cổng vẫn chặn tới khi bác sĩ ký đúng vân tay", bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

@@ -1647,6 +1647,30 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   bài đã rút**, và cũng không phải xoá mục. Bản thay thế của ca này là **PMID 31021386 /
   doi:10.1001/jamaoncol.2019.0576** (Notice of Retraction and Replacement).
 
+  🔴 **BH109 — «NGUỒN BỊ RÚT» CÓ THỂ LÀ BÁO ĐỘNG GIẢ MÀ CHUỖI 3 TẦNG KHÔNG TỰ GỠ ĐƯỢC (20/09/2026).**
+  Ca thật: `TienLuongSuyTim_20260914` ITEM-11 (`decision: apply`) dựa guideline CCS/CHFS 2025 (PMID
+  41110921 · doi:10.1016/j.cjca.2025.07.027). PubMed gắn «Retracted Publication» vào nó vì thông báo rút
+  bài (PMID 41422828) mang tiêu đề «WITHDRAWN: **Corrigendum** to …» — thứ bị rút là MỘT BẢN ĐÍNH CHÍNH
+  TRÙNG LẶP, không phải guideline. Cả ba tầng (Retraction Watch → NCBI → Europe PMC) đọc CÙNG một liên
+  kết NLM nên cùng nói «đã rút»: hai tầng sau KHÔNG độc lập với loại lỗi này. Hai cách sai ngược chiều:
+  để nguyên ⇒ cổng nói «không dùng kết luận» về một guideline hợp lệ (dạy người đọc bỏ qua cảnh báo);
+  máy tự bỏ cờ khi tiêu đề «trông giống» đính chính ⇒ một vụ rút bài THẬT lọt qua chỉ vì tiêu đề khớp mẫu.
+  **Đường đúng — máy chỉ NHẬN DIỆN CÂU CHỮ, không phán quyết:** `crossref_retraction.la_thong_bao_sua_loi_bi_rut()`
+  (chặt: «WITHDRAWN|RETRACTED: <Corrigendum|Erratum|Correction|Addendum> to/for …» hoặc «Author/Publisher
+  Correction»; «Correction of hypertension…» KHÔNG khớp). Chuỗi 3 tầng chỉ bật `withdrawn_correction_notice`
+  khi biết MỌI thông báo rút (PubMed/Europe PMC nay trả thêm `retraction_notices`), đã đọc tiêu đề của TỪNG
+  cái, tất cả đều là đính chính, và Retraction Watch không dương tính riêng. Trạng thái VẪN `retracted`, cổng
+  VẪN chặn; chỉ thông điệp đổi thành «CẦN BÁC SĨ XEM». Sổ xác minh lưu `sua_loi_bi_rut` + `thong_bao_ids`
+  (gán theo kết quả MỚI, không dính). **Hạ cờ chỉ bằng `EBM-Dashboards/rut-bai-da-xem-xet.json` DO BÁC SĨ KÝ**
+  — mục `{khoa, thong_bao_ids, da_xem_boi, ngay YYYY-MM-DD, ly_do ≥20 ký tự}` — gắn với DẤU VÂN TAY tập
+  thông báo: thêm/đổi một thông báo ⇒ vân tay lệch ⇒ chặn lại. Sổ hỏng/thiếu trường ⇒ vẫn chặn. Agent
+  KHÔNG được tự ký (cùng ranh giới khoá Ed25519). Một bài có thể có HAI khoá (`pmid:` và `doi:`) — mỗi khoá
+  một mục với `thong_bao_ids` của chính nó. Khoá bằng **BH109** (6 phép đột biến, đều đỏ đúng chỗ; phép
+  đầu tiên «bỏ điều kiện ở chỗ gọi» KHÔNG bị bắt vì còn một lớp rào thứ hai trong hàm — nên siết test bằng
+  thông điệp: bài THẬT bị rút phải giữ câu «không dùng kết luận»). 4 bản `verify_dashboard.py` khớp byte.
+  ⚠️ Việc còn lại của bác sĩ cho ITEM-11: mở hai Author Correction (10.1016/j.cjca.2025.12.030 ·
+  10.1016/j.cjca.2026.03.026) — máy KHÔNG đọc được (trả phí) — rồi quyết định giữ/hạ và ký.
+
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và
   **cam "Bản khác cùng chủ đề đang kết luận ngược"**. Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận —

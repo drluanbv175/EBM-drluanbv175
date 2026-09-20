@@ -38,6 +38,10 @@ này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi
 
 Theo yêu cầu «kết nối các nguồn guideline chưa có connector». 33 lane mới (33/33 trả mục thật): Europe PMC (Practice Guideline toàn cầu, USPSTF, WHO, CDC MMWR R&R — có PMID, độc lập NCBI), WHO IRIS (OAI-PMH chính thức), Bộ Y tế VN (kcb.vn/phac-do), Crossref theo tiêu đề cho 21 hiệp hội (ACC/AHA, ESC, ADA, IDSA, EULAR, AASLD, KDIGO, ATS, ERS, BTS, AGS, ACP, ASCO, ESMO, ASH, AGA, ACG, AAN, ACR) và RSS trực tiếp GOLD/GINA/KDIGO/EASL/AASLD/CDC. Coverage báo phủ gián tiếp ở `healthy_via_lane`, liệt kê `not_connected`. Chưa có: NICE (API chỉ cấp cho tổ chức) và USPSTF API (xin duyệt qua email — thư nháp ở docs). Lane khám phá theo tiêu đề, không phải nguồn đã duyệt.
 
+### 2026-09-20 — Thông báo rút bài là BẢN ĐÍNH CHÍNH: nhận diện câu chữ, chặn tới khi bác sĩ ký đúng vân tay (BH109)
+
+Ca `TienLuongSuyTim_20260914` ITEM-11: guideline CCS/CHFS 2025 bị cờ «rút bài» vì thông báo gắn vào nó (PMID 41422828, «WITHDRAWN: Corrigendum to …») là của một bản đính chính trùng lặp. Ba tầng rút bài cùng đọc một liên kết NLM nên không độc lập. Máy chỉ nhận diện câu chữ (trạng thái vẫn `retracted`, cổng vẫn chặn, thông điệp «CẦN BÁC SĨ XEM»); hạ cờ chỉ bằng `rut-bai-da-xem-xet.json` do bác sĩ ký, gắn dấu vân tay tập thông báo. PubMed/Europe PMC trả thêm `retraction_notices`; sổ xác minh lưu `sua_loi_bi_rut` + `thong_bao_ids`; 4 bản `verify_dashboard.py` khớp byte. Chưa có mục ký nào — ITEM-11 vẫn bị chặn tới khi bác sĩ đọc hai Author Correction.
+
 ### 2026-09-20 — Phủ nguồn: 31 feed tạp chí/guideline qua Crossref, nút CORE/Epistemonikos/NICE, thư nháp xin quyền (engine)
 
 Sau đánh giá hệ: chỉ 15/29 feed RSS trả mục thật. Engine thêm chế độ Crossref theo ISSN cho `RSSFeedClient` — 14 feed lỗi (họ BMJ 429, Springer 406, `bmj_recent` 403) chuyển sang Crossref + 17 tạp chí nơi hiệp hội đăng guideline; đo thật 31/31 trả bài thật. Thêm nút `Nhap Khoa CORE/Epistemonikos/NICE.command` và mở rộng `Bat Tat SerpApi Du Phong.command` (mã o/e/n). Thư nháp xin token Epistemonikos, tư vấn NICE (API chỉ cấp cho tổ chức), gỡ chặn NCBI: `medical-ebm-automation/docs/xin-cap-quyen-nguon-chung-cu.md`.

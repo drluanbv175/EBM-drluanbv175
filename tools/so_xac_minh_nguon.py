@@ -189,6 +189,25 @@ def con_hieu_luc(ban_ghi: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _gan_dau_hieu_thong_bao(bg: dict, info: dict | None) -> None:
+    """Ghi vào bản ghi sổ: cờ «THÔNG BÁO BỊ RÚT LÀ BẢN ĐÍNH CHÍNH» + TẬP thông báo rút.
+
+    Thêm 20/09/2026 (ca `TienLuongSuyTim_20260914` ITEM-11: guideline CCS/CHFS 2025 bị cờ «rút bài» vì
+    thông báo rút bài gắn vào nó là của MỘT BẢN ĐÍNH CHÍNH trùng lặp). Cờ chỉ đổi thông điệp sang «cần
+    bác sĩ xem» và cho phép sổ miễn trừ do bác sĩ ký — trạng thái vẫn `da_rut`, cổng vẫn chặn.
+    `thong_bao_ids` là DẤU VÂN TAY của miễn trừ: thêm/đổi một thông báo rút ⇒ vân tay đổi ⇒ miễn trừ
+    cũ mất hiệu lực, một vụ rút bài THẬT xuất hiện sau này vẫn bị chặn. Gán theo kết quả MỚI NHẤT
+    (không dính): cờ không được sống lâu hơn bằng chứng đã sinh ra nó.
+    """
+    info = info or {}
+    bg["sua_loi_bi_rut"] = bool(info.get("withdrawn_correction_notice"))
+    ids = list(info.get("notice_ids") or []) + list(info.get("notice_dois") or [])
+    if not ids:
+        ids = [x for x in ((info.get("retraction_notice") or {}).get("pmid"),
+                           info.get("notice_doi")) if x]
+    bg["thong_bao_ids"] = sorted({str(x).strip().lower() for x in ids if str(x).strip()})
+
+
 def nguon_da_rut(ten_file: str) -> list[dict]:
     """Nguồn của MỘT dashboard đã được sổ ghi nhận là ĐÃ RÚT / có quan ngại.
 
@@ -224,6 +243,8 @@ def nguon_da_rut(ten_file: str) -> list[dict]:
             "nguon": bg.get("nguon_xac_minh") or "",
             "rut_va_thay": bool(bg.get("rut_va_thay")),
             "thong_bao": bg.get("thong_bao_rut_doi") or "",
+            "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
+            "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
         })
     return ra
 
@@ -254,6 +275,8 @@ def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
                     "nguon": bg.get("nguon_xac_minh") or "",
                     "rut_va_thay": bool(bg.get("rut_va_thay")),
                     "thong_bao": bg.get("thong_bao_rut_doi") or "",
+                    "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
+                    "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
                 })
                 break
     return ra
@@ -446,6 +469,7 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
             # crossref_retraction.la_rut_va_thay(). Gọi chung một tên là nói sai về
             # một trích dẫn hợp lệ, và cảnh báo sai làm hỏng giá trị của cảnh báo đúng.
             muc[khoa]["rut_va_thay"] = bool(info.get("retract_and_replace"))
+            _gan_dau_hieu_thong_bao(muc[khoa], info)
             nhan = "ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA" if info.get("retract_and_replace") else "ĐÃ BỊ RÚT"
             print(f"  🔴 {doi}: {nhan} (thông báo {info.get('notice_doi','')})")
         elif tt == "expression_of_concern":
@@ -543,6 +567,7 @@ def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
                 bg["ghi_chu_rut"] = tt
                 bg["da_rut"] = True
                 bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
+                _gan_dau_hieu_thong_bao(bg, info)
                 if info.get("retraction_notice"):
                     bg["thong_bao_rut"] = (info["retraction_notice"] or {}).get("pmid", "")
                 nhan = ("ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA" if bg["rut_va_thay"] else "ĐÃ BỊ RÚT")
@@ -589,6 +614,7 @@ def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
                 bg["ghi_chu_rut"] = tt
                 bg["da_rut"] = True
                 bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
+                _gan_dau_hieu_thong_bao(bg, info)
                 bg["thong_bao_rut_doi"] = info.get("notice_doi", "")
                 print(f"  🔴 {khoa}: {'ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA' if bg['rut_va_thay'] else 'ĐÃ BỊ RÚT'} — đã cập nhật")
                 thay_doi += 1
@@ -735,6 +761,7 @@ def lenh_quet(files: list[Path], vong: int) -> int:
             if trang_thai == "retracted":
                 muc[khoa]["da_rut"] = True
                 muc[khoa]["rut_va_thay"] = bool((info or {}).get("retract_and_replace"))
+                _gan_dau_hieu_thong_bao(muc[khoa], info)
                 nhan = ("ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA"
                         if (info or {}).get("retract_and_replace") else "ĐÃ BỊ RÚT")
                 print(f"  🔴 {pmid}: {nhan}")
@@ -969,6 +996,8 @@ def quet_ledger_hub(vong: int = 1) -> None:
                         bg["da_rut"] = True
                         if v.get("retract_and_replace"):
                             bg["rut_va_thay"] = True
+                        if tt == "retracted":
+                            _gan_dau_hieu_thong_bao(bg, v)
                     ghi += 1
         for i in range(0, len(can_doi), 20):
             lo = can_doi[i:i + 20]
@@ -990,6 +1019,8 @@ def quet_ledger_hub(vong: int = 1) -> None:
                         bg["da_rut"] = True
                         if v.get("retract_and_replace"):
                             bg["rut_va_thay"] = True
+                        if tt == "retracted":
+                            _gan_dau_hieu_thong_bao(bg, v)
                     ghi += 1
         # các mục đã ghi thành công sẽ bị lọc ở vòng kế nhờ điều kiện còn-hạn
         can_pmid = [p for p in can_pmid
@@ -1069,6 +1100,7 @@ def main() -> int:
                     if tt == "retracted":
                         muc[khoa]["da_rut"] = True
                         muc[khoa]["rut_va_thay"] = bool((info or {}).get("retract_and_replace"))
+                        _gan_dau_hieu_thong_bao(muc[khoa], info)
             ghi_so(so)
         print(f"Xong: +{thanh} xác minh · {len(can)} chưa tra được (giữ CHƯA KIỂM). "
               "Chạy --bao-cao xem độ phủ mới.")
