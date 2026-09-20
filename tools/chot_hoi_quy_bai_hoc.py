@@ -2804,6 +2804,60 @@ def bh81_khoa_cau_hinh_nguoi_dung_duoc_khoi_phuc():
                 return False, (f"khoá KHÁC bị đụng: {ten} — đè cả settings.json là xoá "
                                f"mất cấu hình riêng của máy")
 
+    # (a2) 20/09/2026 — CA THẬT CỦA MÁY BÁC SĨ: có CẢ `settings.local.json` (đè lên bản chung) và settings.json có
+    # khoá riêng. Bản cũ của công cụ ghi cấu hình ĐÃ GỘP vào settings.json: chép nhầm khoá của `.local` sang file chung
+    # (mất đăng ký plugin Cochrane khi chạy tay) và, vì `.local` đè, khoá ngân sách vẫn sai dù báo «đã khôi phục».
+    # Bản (a) ở trên không thấy vì tmp chỉ có MỘT file.
+    import contextlib
+    import io
+    khai_gt = {ten: muc.get("gia_tri") for ten, muc in khai.items()}
+    ten_ns = "skillListingBudgetFraction"
+    with tempfile.TemporaryDirectory() as tam:
+        st = Path(tam) / "settings.json"
+        lc = Path(tam) / "settings.local.json"
+        chung = {"enabledPlugins": {"a@x": True, "chi-co-o-chung@y": True}, "extraKnownMarketplaces": {"m1": 1, "m2": 2}, "theme": "dark"}
+        # `.local` ĐÈ: a@x đổi True→False và có khoá riêng — nếu công cụ ghi bản GỘP vào settings.json thì hai thứ này rò sang file chung
+        local = {"enabledPlugins": {"a@x": False, "chi-co-o-local@z": True}, "extraKnownMarketplaces": {"m1": 1, "m3": 3}, ten_ns: 0.01}
+        st.write_text(json.dumps(chung), encoding="utf-8")
+        lc.write_text(json.dumps(local), encoding="utf-8")
+        m.SETTINGS = st
+        cu_argv = sys.argv
+        try:
+            sys.argv = ["x", "--ap-dung"]
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                m.main()
+        finally:
+            sys.argv = cu_argv
+        sau_chung = json.loads(st.read_text(encoding="utf-8"))
+        sau_local = json.loads(lc.read_text(encoding="utf-8"))
+        for ten in ("enabledPlugins", "extraKnownMarketplaces", "theme"):
+            if sau_chung.get(ten) != chung[ten]:
+                return False, (f"settings.json bị đổi khoá KHÔNG thuộc bản khai: {ten} — công cụ ghi cấu hình ĐÃ GỘP "
+                               f"thay vì nội dung thật (đã từng làm mất đăng ký plugin Cochrane)")
+        for ten in ("enabledPlugins", "extraKnownMarketplaces"):
+            if sau_local.get(ten) != local[ten]:
+                return False, f"settings.local.json bị đổi khoá KHÔNG thuộc bản khai: {ten}"
+        hieu_luc = {**sau_chung, **sau_local}  # `.local` đè lên bản chung
+        for ten, gt in khai_gt.items():
+            if hieu_luc.get(ten) != gt:
+                return False, (f"giá trị HIỆU LỰC của {ten} vẫn sai sau khi «khôi phục» — `.local` đè lên bản chung, "
+                               f"khôi phục chỉ ở settings.json là không có tác dụng")
+    # (a3) file hỏng thì DỪNG, không ghi đè bằng {} + vài khoá
+    with tempfile.TemporaryDirectory() as tam:
+        st = Path(tam) / "settings.json"
+        hong = '{"enabledPlugins": {"quan-trong@z": true}, "theme": "dark", '  # JSON cụt nửa chừng
+        st.write_text(hong, encoding="utf-8")
+        m.SETTINGS = st
+        cu_argv = sys.argv
+        try:
+            sys.argv = ["x", "--ap-dung"]
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                m.main()
+        finally:
+            sys.argv = cu_argv
+        if st.read_text(encoding="utf-8") != hong:
+            return False, "settings.json hỏng nửa chừng bị GHI ĐÈ — mất sạch cấu hình còn lại của máy"
+
     # (b) đã nối vào tự-sửa-chữa
     tsc = (REPO / "tools/tu_sua_chua.py").read_text(encoding="utf-8")
     if "kiem_cau_hinh_nguoi_dung.py" not in tsc:
