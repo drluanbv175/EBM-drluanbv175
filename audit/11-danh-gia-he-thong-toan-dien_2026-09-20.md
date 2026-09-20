@@ -87,3 +87,15 @@
 - Nội dung hai Author Correction của guideline CCS/CHFS (trả phí; trình duyệt tích hợp bị từ chối các trang này).
 - Việc xoá 3 tác vụ nền là chủ ý hay sự cố.
 - Chưa chạy lại toàn bộ 64 chủ đề với `--online` (tốn nhiều lượt gọi); độ tươi ở đây là tuổi gói, không phải tuổi chứng cứ bên trong.
+
+## 5. Kết quả xử lý sau đánh giá (20/09/2026 tối) — cập nhật theo số đo thật
+
+| # | Việc | Kết quả | Còn lại (ai làm) |
+|---|---|---|---|
+| 1 | Báo động giả «bản đính chính bị rút» | Máy nhận diện câu chữ, cổng **vẫn chặn** với thông điệp «CẦN BÁC SĨ XEM»; sổ `rut-bai-da-xem-xet.json` do bác sĩ ký, gắn dấu vân tay tập thông báo. **BH109** kiểm đột biến 6 phép. Đo sống: cả `pmid:41110921` và `doi:10.1016/j.cjca.2025.07.027` được đánh cờ, ITEM-11 vẫn FAIL đúng thiết kế. | 👤 Đọc 2 Author Correction (10.1016/j.cjca.2025.12.030 · 10.1016/j.cjca.2026.03.026), quyết định giữ/hạ ITEM-11 rồi ký hai mục (khoá `pmid:` và `doi:`). |
+| 2 | Tác vụ nền chết | Tạo lại 4 tác vụ từ `SKILL.md` (T2 18:00 · T2 18:30 · mùng 1 · quý ACC/AHA). | 👤 `kiem-tra-hoan-thien-he-thong-thang` chưa tạo lại (chưa biết có chủ ý xoá không). |
+| 3 | Ngân sách skill 0,08 | Hiệu lực **0,1** ở cả `settings.json` lẫn `settings.local.json`; công cụ khôi phục sửa lỗi ghi đè cấu hình hợp nhất; BH81 thêm ca thật. | Mở Claude **trong thư mục repo** để hook tự vá chạy. |
+| 4 | Nhánh phân kỳ | Hợp nhất `origin/master` (giải 3 xung đột), đánh số lại BH104→BH107/BH105→BH108 do trùng số với master; **0 lạc hậu**, 109/109 chốt xanh; đã đẩy nhánh. | Mở PR nhánh → `master` khi bác sĩ muốn (chưa mở). |
+| 5 | Độ tươi | Retraction Watch làm mới; sổ xác minh còn hiệu lực **92% → 99%** (1387/1390). | 5 chủ đề lâu nhất (BienChungThanKinh_DTD · AnToanThuoc_MHRA · Uptodate · BenhThanMan_CKD · W24) là **gói dashboard đơn lẻ, không có mục trong `watchlist.json`** ⇒ `ops/orchestrator.py --topic` không quét được (thử: lỗi tham số ngay, không đổi gì). Muốn làm mới phải chạy skill `cap-nhat-chung-cu-y-khoa` cho từng chủ đề. |
+
+Ghi chú công cụ: orchestrator in «FAIL HẠ TẦNG — chạy lại khi mạng ổn» cho cả lỗi tham số `--topic` không có trong watchlist — thông điệp gây hiểu nhầm là lỗi mạng (chưa sửa).
