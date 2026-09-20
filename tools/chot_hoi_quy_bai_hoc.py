@@ -5325,8 +5325,14 @@ def bh104_mcp_consensus_scite_phai_di_qua_cong():
     Trước đó doctrine chỉ nói Consensus = «discovery-only, quét sơ bộ», không nêu KHI NÀO được gọi, trần lượt (gói Free 30
     lượt/tháng DÙNG CHUNG với REST của engine) hay xác minh bắt buộc; Scite chưa hề có mặt. Chốt này kiểm CHỮ trong
     `_CONNECTOR-CHUNG-CU.md` (giới hạn của kiểm doctrine-text, cùng họ BH39/BH42/BH103: kiểm được luật CÓ MẶT, không kiểm
-    được một phiên cụ thể có LÀM THEO hay không): mục §2ter đủ 6 luật, Scite chỉ ở vai XÁC MINH, bước 6 của §2bis, hai dòng
+    được một phiên cụ thể có LÀM THEO hay không): mục §2ter đủ luật, Scite vẫn có vai XÁC MINH, bước 6 của §2bis, hai dòng
     bản đồ agent trỏ §2ter, và hai bản (gốc + engine) không lệch nhau.
+
+    CẬP NHẬT 20/09 (chiều) — bác sĩ yêu cầu «cập nhật Scite như một nguồn dự phòng» và «có kết nối Cochrane»: (1) Scite
+    `search_literature` thành TẦNG TÌM DỰ PHÒNG số 2 nhưng VẪN qua cổng §2ter — kèm kỷ luật gọi rút từ lượt đo thật (5 kết quả
+    ≈ 65 KB): `limit ≤ 3`, tổng lời gọi tìm dự phòng ≤ 3; vai xác minh giữ nguyên, tally vẫn không chấm mức; (2) Cochrane MCP
+    là Cấp 0, KHÔNG đặt sau cổng (đặt sau sẽ đảo ngược thứ tự §2bis), và §2quater ghi các bẫy đo được: sắp `date-desc` cho kết
+    quả lạc đề, `central` ≠ số tổng quan, `review: 0` ≠ «không có chứng cứ», lỗi điều hướng phải thử lại một lần.
     """
     bien = {
         "goc": REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
@@ -5351,7 +5357,11 @@ def bh104_mcp_consensus_scite_phai_di_qua_cong():
             ("tối đa **2 lời gọi MCP", "trần lời gọi MCP mỗi câu hỏi"),
             ("30 lượt/THÁNG", "hạn mức Free dùng CHUNG với REST của engine"),
             ("GỢI Ý cần tra lại", "kết quả Consensus phải xác minh Crossref/PubMed"),
-            ("LỚP XÁC MINH", "Scite chỉ ở vai xác minh"),
+            ("LỚP XÁC MINH", "Scite vẫn có vai xác minh"),
+            ("TẦNG TÌM DỰ PHÒNG số 2", "Scite search là tầng dự phòng số 2 qua cổng, không phải đường tắt"),
+            ("`limit ≤ 3`", "trần kích thước lời gọi Scite search (5 kết quả ≈ 65 KB)"),
+            ("tổng lời gọi tìm dự phòng (Consensus + Scite) ≤ 3", "trần tổng lời gọi tìm dự phòng mỗi câu hỏi"),
+            ("Cochrane MCP KHÔNG qua cổng này", "Cochrane là Cấp 0, không bị đặt sau cổng"),
             ("KHÔNG thay", "Scite bổ sung, không thay chuỗi rút bài 3 tầng"),
             ("không được ghi «chưa bị rút»", "Scite im lặng ≠ chưa bị rút"),
             ("KHÔNG chấm mức chứng cứ", "tally Scite không dùng để chấm mức"),
@@ -5359,17 +5369,36 @@ def bh104_mcp_consensus_scite_phai_di_qua_cong():
         ):
             if dau_hieu not in muc:
                 return False, f"[{ten}] §2ter thiếu luật «{y_nghia}» (không thấy «{dau_hieu}»)"
+        j2 = van_ban.find("## 2quater. ")
+        if j2 < 0:
+            return False, f"[{ten}] mất mục §2quater «COCHRANE MCP» — quay lại đọc kết quả Cochrane ngây thơ"
+        k2 = van_ban.find("\n## ", j2 + 5)
+        muc2 = van_ban[j2:k2 if k2 > 0 else len(van_ban)]
+        for dau_hieu, y_nghia in (
+            ('orderBy:"relevancy"', "sắp theo độ liên quan (date-desc cho kết quả lạc đề)"),
+            ("`typeCounts.central`", "central ≠ số tổng quan"),
+            ("KHÔNG phải số tổng quan", "central ≠ số tổng quan"),
+            ("chưa có tổng quan cho truy vấn này", "review 0 ≠ không có chứng cứ"),
+            ("thử lại MỘT lần", "lỗi điều hướng thoáng qua phải thử lại một lần"),
+            ("tự nâng/tự chấm lại", "mức chắc chắn là của Cochrane (R4)"),
+        ):
+            if dau_hieu not in muc2:
+                return False, f"[{ten}] §2quater thiếu luật «{y_nghia}» (không thấy «{dau_hieu}»)"
+        if "Cochrane: dùng connector MCP `cochrane_*` — §2quater" not in van_ban:
+            return False, f"[{ten}] §2bis bước 2 không còn trỏ connector Cochrane MCP"
         if "6. **MCP dự phòng (Consensus · Scite) CHỈ qua CỔNG §2ter**" not in van_ban:
             return False, f"[{ten}] §2bis mất bước 6 trỏ sang cổng MCP — thứ tự tra cứu mặc định không nhắc cổng"
         if "Consensus *(discovery, CHỈ qua cổng §2ter)*" not in van_ban:
             return False, f"[{ten}] dòng bản đồ `tra-cuu-chung-cu` không còn trỏ cổng §2ter cho Consensus"
         if "Scite *(kiểm rút bài/thông báo BỔ SUNG, CHỈ qua cổng §2ter)*" not in van_ban:
             return False, f"[{ten}] dòng bản đồ `kiem-chung-trich-dan` không còn nêu Scite qua cổng §2ter"
-        if "| **Scite** |" not in van_ban or "**CHỈ XÁC MINH**" not in van_ban:
-            return False, f"[{ten}] bảng connector không còn dòng Scite ở vai CHỈ XÁC MINH"
+        if "| **Scite** |" not in van_ban or "**XÁC MINH + TẦNG TÌM DỰ PHÒNG số 2**" not in van_ban:
+            return False, f"[{ten}] bảng connector không còn dòng Scite ở vai XÁC MINH + TẦNG TÌM DỰ PHÒNG số 2"
+        if "| **Cochrane Library** |" not in van_ban:
+            return False, f"[{ten}] bảng connector không còn dòng Cochrane MCP"
     if len(noi_dung) == 2 and noi_dung["goc"] != noi_dung["engine"]:
         return False, "bản `_CONNECTOR-CHUNG-CU.md` trong engine LỆCH bản gốc — hai bản doctrine nói hai thứ"
-    return True, "MCP Consensus/Scite đi qua cổng dự phòng: §2ter đủ 6 luật, Scite chỉ xác minh, bản đồ agent trỏ đúng"
+    return True, "MCP Consensus/Scite đi qua cổng dự phòng (Scite search = tầng 2, có trần), Cochrane Cấp 0 có §2quater, bản đồ agent trỏ đúng"
 
 
 def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
