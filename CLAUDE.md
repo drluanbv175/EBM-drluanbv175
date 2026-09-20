@@ -1415,6 +1415,12 @@ Phase 3: Module Clinical (RAG guideline + drug check)
     0 19 1 1,4,7,10 *, quét ACC/AHA qua Browser thật vì Cloudflare chặn urllib, xem mục ACC/AHA ở
     trên). launchd đã nghỉ hưu; lưới đỡ `tu_khoi_dong` khi mở phiên + giác quan ⑦d vẫn còn giá trị
     cho trường hợp máy không thức đúng giờ.
+    ⛔ **ĐÍNH CHÍNH 20/09/2026 — đoạn «cả 4 tác vụ `enabled=true`» ở trên ĐÃ LỖI THỜI.** Đo lại bằng `list_scheduled_tasks` +
+    `list_task_runs`: bộ lập lịch chỉ còn **1** tác vụ (`kiem-thang-diem-quy`, chưa chạy lần nào); `thu-thap-tuan-an-toan-thuoc`,
+    `goi-duyet-tuan-ebm`, `cap-nhat-thang-ebm` đều `taskDeleted: true` (lần chạy cuối 07/09 · 07/09 · 01/09), còn `giam-sat-acc-aha-quy`
+    «not found». Định nghĩa `SKILL.md` của chúng VẪN còn trên đĩa (`~/.claude/scheduled-tasks/`), nên tạo lại rẻ. Hệ quả: chuỗi giám sát tuần
+    **không còn tự chạy** từ sau 07/09 (báo cáo tuần 16/09 và gói 15/09 là do chạy tay/`tu_khoi_dong`). Chưa biết việc xoá là chủ ý hay không —
+    tạo lại tác vụ nền là quyết định của bác sĩ. Chi tiết: `audit/11-danh-gia-he-thong-toan-dien_2026-09-20.md`.
   - **🔴 CI hiện KHÔNG chạy ở CẢ HAI repo — đo 09/09/2026, KHÁC hẳn câu "cả hai xanh" từng ghi ở
     đây.** `gh api .../actions/permissions` trả `enabled:false` cho CẢ hai repo (GitHub Actions bị
     tắt ở cấp cài đặt repo, không phải lỗi nội dung workflow) — mọi run gần đây `queued` vô thời hạn
