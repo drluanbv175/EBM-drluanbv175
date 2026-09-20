@@ -34,6 +34,14 @@ này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi
 - `README.md` (engine) — thêm 1 dòng nguồn SerpApi ở mục tiêu và 1 dòng biến môi trường
   `SERPAPI_API_KEY` / `ENABLE_SERPAPI_SCHOLAR` / `SERPAPI_MAX_CALLS_PER_RUN` ở bảng `.env`.
 
+### 2026-09-20 — Chốt BH51 hết báo đỏ giả theo máy
+
+Sổ cái demo `ZZPHA-R-AUTO-DEMO` nằm trong `exports/` (OneDrive đồng bộ, gitignore) còn khoá ký riêng từng máy: máy nào không
+phải máy ký/niêm phong sau cùng thì `ledger_approved` báo «không xác minh được bằng khóa trên máy này» và BH51 đỏ với lời sai
+(«#8 bị revert / đảo tham số»). Nay lần kiểm đầu vẫn nghiêm như cũ; chỉ khi lệch ĐÚNG vì khoá máy khác thì kiểm lại ở môi trường
+KHÔNG-KHOÁ (HOME tạm — không đụng khoá thật, không ký gì) và ghi rõ «⚪ kiểm yếu hơn». Đã kiểm đột biến: đảo tham số ở điểm gọi
+trong `g6_quality_gate` ⇒ chốt đỏ. Chốt hồi quy 103/103.
+
 ### 2026-09-20 (bổ sung) — Bậc thang dự phòng có cổng: Consensus → SerpApi Scholar, xác minh Scite (mới kiểm OFFLINE)
 
 Theo yêu cầu "chỉ khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm", rồi "Consensus và Scite
