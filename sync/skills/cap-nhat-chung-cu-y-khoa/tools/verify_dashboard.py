@@ -1831,6 +1831,7 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         # tra_cuu tiêm từ ngoài (test/BH31): giữ nguyên hợp đồng cũ, không tự ý
         # mở thêm tầng định danh mà bên tiêm không biết.
         _tra_dinh_danh = None
+        _mod_so = None
     try:
         da_rut = list(tra_cuu(_Path(duong_dan).name))
     except Exception as e:
@@ -1842,6 +1843,7 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
     # Lỗ hổng tìm ra bằng fixture: `nguon_da_rut` lọc theo ánh xạ cac_dashboard,
     # nên dashboard MỚI trích đúng DOI đã rút nhưng chưa từng qua vòng quét A4 sẽ
     # đi qua cổng sạch sẽ. Sổ đã BIẾT bài bị rút thì mọi file trích nó phải nghe.
+    _ids = set()
     if _tra_dinh_danh is not None:
         try:
             _nd = _Path(duong_dan).read_text(encoding="utf-8", errors="replace")
@@ -1855,6 +1857,41 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         except Exception as e:
             warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
                          "KHÔNG phải 'không có'." % e)
+
+    # TẦNG 3 (21/09/2026, việc #2a) — NÓI RA PHẠM VI kiểm rút bài, và hỏi nền Retraction Watch NGOẠI TUYẾN cho
+    # PMID mà sổ CHƯA kiểm. Trước đây, sổ không có bản ghi dương tính thì cổng im lặng hoàn toàn: «sổ im lặng» gồm
+    # cả «đã kiểm, sạch» lẫn «chưa kiểm lần nào» — tái hiện: dashboard mang PMID 9500320 (Wakefield, đã rút) PASS
+    # ngoại tuyến, 0 lỗi cứng. Bất đối xứng giữ nguyên: nền chỉ phát tín hiệu DƯƠNG; vắng mặt ≠ sạch.
+    if _mod_so is not None and _ids and hasattr(_mod_so, "pham_vi_kiem_rut_bai"):
+        try:
+            _pv = _mod_so.pham_vi_kiem_rut_bai(sorted(_ids))
+            _chua = list(_pv["chua"])
+            _pm_chua = [x for x in _chua if x.isdigit()]
+            _pm_tat_ca = [x for x in sorted(_ids) if x.isdigit()]
+            _rw = None
+            if _pm_tat_ca and hasattr(_mod_so, "rut_bai_retraction_watch_ngoai_tuyen"):
+                # Hỏi nền cho MỌI PMID (không chỉ PMID «chưa kiểm»): nền ngoại tuyến rẻ (~0,5 s), và một PMID có bản ghi
+                # sổ `ok` còn hạn vẫn có thể là bài đã bị rút SAU lần kiểm đó — bản trước bỏ qua nhóm này.
+                _rw = _mod_so.rut_bai_retraction_watch_ngoai_tuyen(_pm_tat_ca)
+                da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
+                for r in (_rw or []):
+                    if (r["loai"], r["gia_tri"]) not in da_co:
+                        da_rut.append(r)
+                _dua_ra = {r["gia_tri"] for r in (_rw or [])}
+                _chua = [x for x in _chua if x not in _dua_ra]
+            if _chua:
+                _nen = ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
+                        "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)" if _rw is not None
+                        else "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này" if _pm_chua else "")
+                warns.append(
+                    "Phạm vi kiểm rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ; %d CHƯA KIỂM hoặc quá "
+                    "hạn (vd %s)%s — đây là 'chưa biết', KHÔNG phải 'sạch'. Chạy: python tools/so_xac_minh_nguon.py "
+                    "--quet <file> [--vong 3]" % (len(_pv["co"]), len(_ids), len(_chua), ", ".join(_chua[:4]), _nen))
+            elif _ids and not _rw:
+                oks.append("Rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ (hoặc đã đối chiếu nền ngoại "
+                           "tuyến) — không thấy dương tính chưa xử lý." % (len(_ids), len(_ids)))
+        except Exception as e:
+            warns.append("Chưa nêu được phạm vi kiểm rút bài (%s) — 'chưa biết', KHÔNG phải 'sạch'." % e)
 
     if not da_rut:
         # Cố ý KHÔNG ghi vào oks: sổ không có bản ghi dương tính có thể chỉ vì chưa
@@ -1905,7 +1942,7 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
             nhan, viec = "CÓ QUAN NGẠI (EoC)", "chưa kết luận — đọc lại trước khi dùng"
         tb = f", thông báo {r['thong_bao']}" if r.get("thong_bao") else ""
         errors.append(
-            "NGUỒN %s: %s:%s — %s (sổ ghi %s, nguồn %s%s). %s; KHÔNG tự xoá mục — "
+            "NGUỒN %s: %s:%s — %s (kiểm ngày %s, nguồn %s%s). %s; KHÔNG tự xoá mục — "
             "quyết định là của bác sĩ."
             % (nhan, r["loai"], r["gia_tri"], (r["tieu_de"] or "")[:80],
                r["kiem_luc"], r["nguon"], tb, viec))

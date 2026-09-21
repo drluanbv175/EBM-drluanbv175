@@ -231,8 +231,8 @@ def main() -> int:
     duong_vd = _bst_ksl.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
     if duong_vd is None:
         print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
-              "git-vendor — không đối chiếu được trên máy này.")
-        return 0
+              "git-vendor — KHÔNG đối chiếu được trên máy này (chưa đo, không phải «khớp»).")
+        return 2
     spec = importlib.util.spec_from_file_location("vd_so", duong_vd)
     vd = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(vd)
@@ -255,10 +255,13 @@ def main() -> int:
             if e:
                 viec.append((f.name, vd.field(c, "id"), pm, dec, e,
                              vd.field(c, "measure")))
+    tong_co_so = len(viec)
     if a.gioi_han:
         viec = viec[:a.gioi_han]
-
-    print(f"Đối chiếu {len(viec)} mục có hiệu số định lượng…")
+    la_mau = bool(a.gioi_han and a.gioi_han < tong_co_so) or bool(a.file) or a.chi_apply
+    print(f"Đối chiếu {len(viec)}/{tong_co_so} mục có hiệu số định lượng…")
+    print(f"  tham số: phạm vi={'MỘT FILE' if a.file else 'TOÀN KHO'} · chi-apply={'có' if a.chi_apply else 'không'} · "
+          f"gioi-han={a.gioi_han or 'không'}" + ("  ⇒ KẾT QUẢ CHỈ LÀ MẪU" if la_mau else ""))
     tom_tat: dict[str, str | None] = {}
     khop = khop_tv = mot_phan = khong_thay = hong = 0
     can_doc: list[tuple] = []
@@ -306,9 +309,25 @@ def main() -> int:
     print(f"  ⚪ KHÔNG THẤY : {khong_thay}  (cả tóm tắt lẫn toàn văn ĐANG CÓ đều không nêu — "
           "KHÔNG kết luận là trích sai)")
     if hong:
-        print(f"  ⚠ Không lấy được tóm tắt: {hong} — 'chưa kiểm', không phải 'không sao'")
+        print(f"  ⚠ Không lấy được tóm tắt: {hong}/{len(viec)} — 'chưa kiểm', không phải 'không sao'")
     print("=" * 70)
+    # VÁ 21/09/2026: bản cũ in «🟢 Mọi hiệu số đều tìm thấy đủ» và thoát 0 khi `can_doc` rỗng — kể cả khi MỌI truy vấn
+    # tóm tắt hỏng (hong == tổng) hoặc mới dò một MẪU. «Không có mục nào cần đọc» vì không mục nào ĐƯỢC ĐỌC là chưa đo,
+    # không phải sạch (cùng họ BH27/BH32). Mã thoát: 0 sạch TRỌN · 1 có mục cần đọc · 2 KHÔNG ĐO ĐƯỢC hết/một phần.
+    do_duoc = len(viec) - hong
+    if not viec:
+        print("  ⚪ 0 mục có hiệu số định lượng để đối chiếu — CHƯA đo gì (không phải «khớp hết»; nếu dashboard chắc chắn có "
+              "hiệu số thì kiểm parser `effect{hr,lo,hi}`).")
+        return 2
+    if do_duoc == 0 or hong:
+        print(f"  ⚪ KHÔNG ĐO ĐƯỢC {hong}/{len(viec)} mục (truy vấn tóm tắt hỏng — mạng/NCBI chặn?) — "
+              "KHÔNG kết luận «khớp», KHÔNG in xanh.")
+        if not can_doc:
+            return 2
     if not can_doc:
+        if la_mau:
+            print(f"  ⚪ Mẫu {len(viec)}/{tong_co_so} mục đều khớp — KHÔNG được đọc là «cả kho sạch».")
+            return 0
         print("  🟢 Mọi hiệu số đều tìm thấy đủ trong tóm tắt.")
         return 0
     print("  Danh sách nên đọc lại (ưu tiên decision='apply'):\n")

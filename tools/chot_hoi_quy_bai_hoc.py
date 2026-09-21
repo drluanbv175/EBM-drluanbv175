@@ -6268,6 +6268,384 @@ def bh106_hook_python_chi_goi_mot_lan():
                   f"đúng 1 lần mỗi lượt, không lặp khi công cụ báo 'có việc'")
 
 
+import contextlib as _ctx_argv
+
+
+@_ctx_argv.contextmanager
+def mock_argv(argv):
+    """Đặt sys.argv tạm thời cho hàm main() có argparse (không phụ thuộc unittest.mock trong phạm vi mô-đun)."""
+    cu = sys.argv
+    sys.argv = list(argv)
+    try:
+        yield
+    finally:
+        sys.argv = cu
+
+
+def bh112_diem_kham_khong_tra_the_lac_de():
+    """21/09 — `tra_diem_kham.py` là công cụ DUY NHẤT chạm phòng khám, và đo sống trên 1.100 thẻ cho 6/6 câu thường gặp trả
+    thẻ SAI CHỦ ĐỀ («tăng huyết áp mới chẩn đoán» → thẻ cơn tăng đường huyết/H. pylori; «hen bậc 3» → thẻ chẹn beta; «gút cấp»
+    → thẻ phù mạch; «viêm họng liên cầu» → thẻ viêm túi thừa). Nguy hiểm hơn «chưa giám sát» vì người khám tin thẻ ĐÃ DUYỆT.
+    Ba nguyên nhân: `_bo_dau` không gấp «đ»; khớp CHỨA-CHUỖI trên âm tiết; ngưỡng «một nửa token» + điểm cộng từ khuyến cáo.
+
+    Kiểm HÀNH VI trên thẻ giả (chạy ở mọi máy): «đau đầu» không ra thẻ đau NGỰC (đ→d + «đau»+«ban đầu» không tạo thẻ);
+    khớp theo TỪ NGUYÊN («hen» ⊄ «khen»); «tiền đái tháo đường» không ra thẻ «đái tháo đường… tiền lâm sàng»; cùng khuyến cáo
+    khác quyết định ⇒ CỜ xung đột, không âm thầm chọn bản mới; nhật ký tác động ghi `loai`, không lưu câu hỏi thô, và người tiêu
+    thụ (`do_tac_dong`) không đếm «khớp yếu» như khoảng trống giám sát; --demo không ghi nhật ký. Bộ vàng trên sổ thẻ THẬT nằm
+    ở `tools/test_tra_diem_kham_20260921.py` (⚪ khi máy không có sổ)."""
+    import contextlib
+    import importlib.util as _iu
+    import io
+    import json as _json
+    import tempfile
+
+    def _n(rel, ten):
+        sp = _iu.spec_from_file_location(ten, REPO / rel)
+        mm = _iu.module_from_spec(sp); sys.modules[ten] = mm; sp.loader.exec_module(mm)
+        return mm
+    tk = _n("tools/tra_diem_kham.py", "_bh112_tdk")
+
+    def the(i, topic, rec="", dec="apply", pmid="", ngay="2026-01-01"):
+        return {"id": f"T{i}", "topic": topic, "pico_question": "", "recommendation": rec or topic, "decision": dec,
+                "provenance": "from_doctor_master", "verification_status": "đã xác minh", "date_added": ngay,
+                "source": {"pmid": pmid or str(1000 + i)}, "gradeLevel": "na"}
+    kho = [the(1, "Tiêu chuẩn phân loại đau đầu ICHD-3"), the(2, "Dự phòng migraine nhóm cổ điển (AAN)"),
+           the(3, "ESC 2024: chụp cắt lớp vi tính ban đầu ở bệnh nhân đau ngực ổn định"),
+           the(4, "Đích huyết áp tâm thu dưới 130 mmHg ở người tăng huyết áp", "Đích <130; tránh hạ huyết áp quá thấp"),
+           the(5, "Tăng sinh tuỷ xương và cơn tăng đường huyết ở người dùng corticoid"),
+           the(6, "GINA 2026 — Mọi bệnh nhân hen dùng phác đồ có ICS"),
+           the(7, "Đái tháo đường quanh phẫu thuật: hiệu chỉnh thuốc theo giai đoạn tiền lâm sàng"),
+           the(8, "Đợt khen thưởng tái khám ở người bệnh gút mạn"),
+           the(31, "Xuất huyết tiêu hoá trên: PPI liều cao trước nội soi"), the(32, "Viêm gan B: tenofovir và nguy cơ ung thư gan"),
+           the(33, "Cường giáp → Rung nhĩ / Suy tim cung lượng cao"), the(34, "Ung thư dạ dày: tầm soát và diệt H. pylori"),
+           the(35, "Thang điểm nguy cơ thấp và cao ở bệnh nhân ngoại trú"),
+           # «cường» là từ THƯỜNG (nhiều thẻ) để luật «thẻ chỉ có một vế của từ ghép» phải tự đứng được (không nhờ luật «từ hiếm»)
+           the(40, "Cường giáp: điều trị nội khoa"),
+           # T41: tiêu đề CHỈ có «giáp» (vế sau của «cường giáp»), khuyến cáo có «cường» ⇒ chỉ luật «một vế của từ ghép» loại được
+           the(41, "Suy giáp và bệnh giáp tự miễn ở người lớn", "theo dõi cường độ liều levothyroxine")]
+    # 100 thẻ đệm chứa «cường» để «cường» thành từ THƯỜNG (idf thấp) còn «giáp» là từ HIẾM — tách bạch từng luật câu ngắn
+    kho += [the(100 + i, f"Tăng cường điều trị bệnh mẫu số {i}") for i in range(100)]
+
+    def ids(q):
+        return {c["id"] for c in tk.tra_chi_tiet(q, kho)[0]}
+    if tk._bo_dau("Đau đầu") != "dau dau":
+        return False, "_bo_dau không gấp «đ»→«d» — «đau»/«điều» lại lọt thành token đặc hiệu (nguyên nhân số 1 của thẻ lạc đề)"
+    if "T3" in ids("đau đầu cờ đỏ cần chụp gì"):
+        return False, "«đau đầu» trả thẻ đau NGỰC vì «đau»+«ban đầu» — bag-of-words không đòi từ ghép kề nhau"
+    if "T1" not in ids("đau đầu"):
+        return False, "«đau đầu» không ra thẻ đau đầu thật — vá chặn quá tay, mất độ phủ tối thiểu"
+    if ids("tăng huyết áp mới chẩn đoán chọn thuốc gì") != {"T4"}:
+        return False, "«tăng huyết áp» ra thẻ «tăng sinh»/«tăng đường huyết» — khớp âm tiết thay vì cụm/từ nguyên"
+    if "T8" in ids("hen"):
+        return False, "«hen» khớp chuỗi con của «khen» — phải khớp TỪ NGUYÊN"
+    gut = [the(21, "Gut microbiome và bệnh viêm ruột"), the(22, "Thuốc hạ urat ở người bệnh gút mạn")]
+    if {c["id"] for c in tk.tra_chi_tiet("gút", gut)[0]} != {"T22"}:
+        return False, "«gút» (có dấu) khớp «gut» (tiếng Anh, khác nghĩa) — token ngắn có dấu phải khớp ĐÚNG dấu"
+    if {c["id"] for c in tk.tra_chi_tiet("gut man", gut[1:])[0]} != {"T22"}:
+        return False, "người gõ KHÔNG dấu («gut man») không ra thẻ «gút mạn» — vá chặn quá tay, mất cách dùng bình thường ở phòng khám"
+    if "T7" in ids("tiền đái tháo đường"):
+        return False, "«tiền đái tháo đường» ra thẻ «đái tháo đường… tiền lâm sàng» — tiền tố đổi nghĩa phải kề danh từ"
+    # Từ chức năng CÓ DẤU là từ y khoa; mã 1 ký tự là định danh; câu ngắn phải khớp đủ cụm (phản biện độc lập 21/09)
+    if "T31" in ids("xuất huyết não"):
+        return False, "«não» bị coi từ đệm «nào» — «xuất huyết não» ra thẻ xuất huyết TIÊU HOÁ"
+    if "T32" in ids("viêm gan C"):
+        return False, "mã 1 ký tự («C») bị bỏ — «viêm gan C» ra thẻ viêm gan B"
+    if "T33" in ids("suy giáp"):
+        return False, "«suy giáp» ra thẻ «suy tim … cường giáp» — thẻ chỉ có một vế của từ ghép"
+    if "T41" in ids("cường giáp"):
+        return False, "«cường giáp» ra thẻ «suy giáp…» chỉ có vế «giáp» — luật «một vế của từ ghép» không đứng được"
+    if "T34" in ids("ung thư da"):
+        return False, "«da» (gõ ASCII) khớp «dạ» — «ung thư da» ra thẻ ung thư DẠ dày"
+    if "T4" in ids("huyết áp thấp"):
+        return False, "«thấp» bị coi từ đệm — «huyết áp thấp» ra thẻ đích huyết áp/tăng huyết áp"
+    a = the(11, "Bộ ba ICS/LABA/LAMA giảm đợt cấp COPD", "rec X", "apply", "111", "2026-01-01")
+    b = the(12, "Bộ ba ICS/LABA/LAMA giảm đợt cấp COPD", "rec X", "consider", "111", "2026-03-01")
+    ra, _ = tk.tra_chi_tiet("bộ ba ICS LABA LAMA COPD", [a, b])
+    if len(ra) != 1 or not ra[0].get("_xung_dot"):
+        return False, "cùng khuyến cáo KHÁC quyết định phải gộp kèm CỜ xung đột, không âm thầm chọn một bản"
+    with tempfile.TemporaryDirectory() as td:
+        thuc = tk.STATE
+        tk.STATE = Path(td)
+        try:
+            tk._ghi_nhat_ky_tac_dong([], 0.01, "khop_yeu")
+            dong = [_json.loads(x) for x in (Path(td) / "nhat-ky-tac-dong.jsonl").read_text(encoding="utf-8").splitlines()]
+            if dong[0].get("loai") != "khop_yeu" or "cau_hoi" in dong[0]:
+                return False, "nhật ký tác động thiếu `loai` hoặc lưu câu hỏi thô (PII)"
+            with contextlib.redirect_stdout(io.StringIO()):
+                tk.in_quick_view("q thử", [], set(), 0.0, "khop_yeu", None, ghi=False)
+            if (Path(td) / "cau-hoi-chua-giam-sat.jsonl").exists() or len(
+                    (Path(td) / "nhat-ky-tac-dong.jsonl").read_text(encoding="utf-8").splitlines()) != 1:
+                return False, "chế độ demo (ghi=False) vẫn ghi nhật ký/watchlist — làm nhiễu số đo tác động"
+            dtd = _n("tools/do_tac_dong.py", "_bh112_dtd")
+            log = Path(td) / "log.jsonl"
+            import datetime as _dt
+            luc = _dt.datetime.now().isoformat(timespec="seconds")
+            log.write_text("\n".join(_json.dumps({"luc": luc, "khop": [], "miss": True, "loai": lo, "ms": 5})
+                                     for lo in ("khop_yeu", "khop_yeu", "khop_yeu", "khong_co")) + "\n", encoding="utf-8")
+            dtd.LOG = log
+            ra_ = io.StringIO()
+            with mock_argv(["do_tac_dong.py"]), contextlib.redirect_stdout(ra_):
+                dtd.main()
+            if "miss (ngoài giám sát): 1 " not in ra_.getvalue():
+                return False, "do_tac_dong đếm «khớp yếu» như khoảng trống giám sát — sổ ứng viên watchlist bị nhiễm miss giả"
+        finally:
+            tk.STATE = thuc
+    return True, ""
+
+
+def bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia():
+    """21/09 — khâu THU NHẬN chứng cứ có ba lỗi cùng họ «công cụ vẫn PASS nhưng thứ cần kiểm không được kiểm»:
+      (1) đường dự phòng Europe PMC nhận NGUYÊN cú pháp thẻ PubMed ([pt] [ta] [ti]…) ⇒ tầng guideline/tổng quan/RCT + 4 làn thẩm
+          quyền trả 0 GIẢ (đo sống 0/131 → 62/131 truy vấn có kết quả sau khi dịch);
+      (2) suy giảm một phần vẫn ra PASS và CON TRỎ VẪN TIẾN ⇒ cửa sổ quét mất vĩnh viễn (tuần W36/W37);
+      (3) Europe PMC thi thoảng trả bản RỖNG {"version":"6.9"} — đọc thành «0 kết quả».
+    Kiểm HÀNH VI: bộ dịch (thẻ + từ chối thẻ lạ), chủ đề đi đường dự phòng ⇒ PASS_DEGRADED + con trỏ đứng yên + tổng thể
+    không PASS; bản rỗng bị coi là lỗi; `--khong-cursor` không đọc/ghi con trỏ dùng chung và `--since` vẫn có hiệu lực."""
+    import importlib.util as _iu
+    sp = _iu.spec_from_file_location("_bh113_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp); sys.modules["_bh113_ss"] = S; sp.loader.exec_module(S)
+    for ten in ("search_preprint_lane", "search_trials_lane", "search_scopus_lane"):
+        setattr(S, ten, lambda *a, **k: [])
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._NCBI_CHAN["bi_chan"] = False
+    S._SUY_GIAM.clear()
+    try:
+        d = S.dich_pubmed_sang_europepmc("practice guideline[pt] AND heart failure[tiab]")
+        if "[" in d or 'PUB_TYPE:"practice guideline"' not in d:
+            return False, f"dịch thẻ PubMed sang Europe PMC hỏng: {d!r} — đường dự phòng lại nhận cú pháp thẻ NCBI (trả 0 giả)"
+        try:
+            S.dich_pubmed_sang_europepmc("abc[zzz]")
+            return False, "thẻ PubMed lạ được dịch âm thầm — phải fail-closed (ValueError), không đoán"
+        except ValueError:
+            pass
+
+        def ncbi_hong(_u):
+            raise RuntimeError("NCBI timeout")
+
+        def epmc(_u):
+            return {"hitCount": 1, "resultList": {"result": [{"pmid": "333"}]}}
+
+        def search_fn(query, days, retmax, **kw):
+            if query.startswith("hf"):
+                return S.search(query, days, retmax, fetch_json=ncbi_hong, fallback_fetch_json=epmc, **kw)
+            return ["444"]
+        cursor = {"Suy giảm": "2026-09-07", "Bình thường": "2026-09-07"}
+        rep = S.run_scan([{"topic": "Suy giảm", "query": "hf guideline[pt]"}, {"topic": "Bình thường", "query": "copd"}],
+                         days=90, max_results=5, cursor=cursor, search_fn=search_fn,
+                         summarize_fn=lambda ids: [S.Candidate(i, "2026 Sep 20", f"B{i}", f"u{i}") for i in ids])
+        kq = {t["topic"]: t for t in rep["topics"]}
+        if kq["Suy giảm"]["status"] != "PASS_DEGRADED":
+            return False, f"chủ đề đi đường dự phòng vẫn báo {kq['Suy giảm']['status']!r} — suy giảm bị che thành PASS"
+        if cursor["Suy giảm"] != "2026-09-07":
+            return False, "chủ đề SUY GIẢM vẫn tiến con trỏ — cửa sổ quét mất vĩnh viễn (W36/W37)"
+        if cursor["Bình thường"] == "2026-09-07":
+            return False, "chủ đề bình thường không tiến con trỏ — chặn quá tay"
+        if rep["status"] == "PASS":
+            return False, "một phần chủ đề suy giảm mà tổng thể vẫn PASS"
+        S._NCBI_CHAN["bi_chan"] = False
+        for xau in ('x[pt', '"a b" c[ti]'):
+            try:
+                S.dich_pubmed_sang_europepmc(xau)
+                return False, f"truy vấn méo {xau!r} được dịch âm thầm — bộ dịch phải fail-closed"
+            except ValueError:
+                pass
+        # NCBI trả HTTP 200 kèm bản lỗi ⇒ LỖI (đi đường dự phòng + ghi suy giảm), không phải «0 kết quả»
+        for ban_loi in ({"error": "rate limit"}, {"esearchresult": {"ERROR": "x"}},
+                        {"error": "rate limit", "esearchresult": {"count": "0", "idlist": []}}):
+            S._SUY_GIAM.clear()
+            ids2 = S.search("q[pt]", 30, 5, fetch_json=lambda _u, b=ban_loi: b,
+                            fallback_fetch_json=lambda _u: {"hitCount": 1, "resultList": {"result": [{"pmid": "9"}]}})
+            if ids2 != ["9"] or not S._SUY_GIAM:
+                return False, f"bản lỗi HTTP-200 {ban_loi!r} bị đọc thành «0 kết quả» — không suy giảm, con trỏ vẫn tiến"
+        # Europe PMC trả bản rỗng {"version":…} ⇒ LỖI, không phải «0 kết quả»
+        try:
+            class _R:
+                def __call__(self, *a, **k):
+                    return self
+                def __enter__(self):
+                    return self
+                def __exit__(self, *a):
+                    return False
+                def read(self):
+                    return b'{"version": "6.9"}'
+                status = 200
+            import urllib.request as _ur
+            _goc = _ur.urlopen
+            _ur.urlopen = _R()
+            try:
+                S.get_europe_pmc_json("https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=x&format=json")
+                return False, "bản Europe PMC chỉ có {\"version\"} bị đọc thành «0 kết quả» — 0 giả"
+            except (ValueError, RuntimeError):
+                pass
+            finally:
+                _ur.urlopen = _goc
+        except AttributeError:
+            return False, "thiếu get_europe_pmc_json"
+        # esummary hỏng ⇒ chủ đề PASS_DEGRADED, con trỏ đứng yên
+        cur2 = {"T": "2026-09-01"}
+
+        def sm_hong(ids_):
+            S._SUY_GIAM.append("esummary NCBI lỗi")
+            return []
+        rep2 = S.run_scan([{"topic": "T", "query": "q"}], days=30, max_results=3, cursor=cur2,
+                          search_fn=lambda q, d, m, **k: ["1"], summarize_fn=sm_hong)
+        if rep2["topics"][0]["status"] != "PASS_DEGRADED" or cur2["T"] != "2026-09-01":
+            return False, "mất ứng viên ở khâu TÓM TẮT mà chủ đề vẫn PASS/con trỏ vẫn tiến"
+        # --since hẹp hơn con trỏ không được đẩy con trỏ tiến; --khong-cursor không đọc/ghi con trỏ dùng chung
+        ghi_c = {}
+        S.gianh_khoa = lambda *a, **k: (True, "")
+        S.tra_khoa = lambda: None
+        S.load_watchlist = lambda pth: [{"topic": "T", "query": "q"}]
+        S.ghi_alert = lambda *a, **k: None
+        S.doc_cursor = lambda: {"T": "2026-09-01"}
+        S.ghi_cursor = lambda cur: ghi_c.update(cur)
+
+        def run_gia(topics, **kw):
+            kw["cursor"]["T"] = "2026-09-21"
+            return {"kind": "x", "status": "PASS", "days": 30, "successful_topics": 1, "failed_topics": 0,
+                    "degraded_topics": 0, "topic_count": 1, "candidate_count": 0, "topics": [], "disclaimer": "d"}
+        S.run_scan = run_gia
+        import contextlib as _cl
+        import io as _io
+        with _cl.redirect_stdout(_io.StringIO()):
+            S.main(["--since", "2026-09-20"])
+        if ghi_c.get("T") != "2026-09-01":
+            return False, "--since hẹp hơn con trỏ đẩy con trỏ tiến — khoảng [con trỏ cũ, since) mất vĩnh viễn"
+        ghi_c.clear()
+        S.doc_cursor = lambda: (_ for _ in ()).throw(AssertionError("khong-cursor đọc con trỏ"))
+        with _cl.redirect_stdout(_io.StringIO()):
+            S.main(["--since", "2026-09-20", "--khong-cursor"])
+        if ghi_c:
+            return False, "--khong-cursor vẫn ghi con trỏ dùng chung"
+    finally:
+        S._NCBI_CHAN["bi_chan"] = False
+        S._SUY_GIAM.clear()
+    return True, ""
+
+
+def bh114_cong_khong_xanh_khi_chua_do():
+    """21/09 — bốn cổng cùng họ «xanh khi chưa đo» (BH27/BH32), lộ ra khi đánh giá hoàn thiện:
+      (a) `verify_dashboard.py` chế độ ngoại tuyến: PMID Wakefield 9500320 (ĐÃ RÚT) PASS 0 lỗi cứng vì «sổ im lặng» gồm cả
+          «đã kiểm sạch» lẫn «chưa kiểm lần nào» — nay in K/M định danh có dấu vết kiểm còn hạn và hỏi nền Retraction Watch
+          NGOẠI TUYẾN (chỉ nhận tín hiệu DƯƠNG; vắng nền ⇒ «chưa biết»);
+      (b) `kiem_chung_cu_vuot_qua.py`: NCBI trả JSON HỢP LỆ mang bản LỖI (khoá 'error'/thiếu 'linksets') mà bản 14/09 chỉ vá cho
+          HTML/None ⇒ báo cáo 16/09 dài 476 byte in 🟢 «đã dò 163 PMID», và `tra_diem_kham` lấy đúng tệp đó TẮT mọi cờ 🟠;
+      (c) `kiem_so_lieu.py`: mọi truy vấn tóm tắt hỏng ⇒ `can_doc` rỗng ⇒ in 🟢 + thoát 0; mẫu cũng không được đọc là cả kho;
+      (d) sổ có 298 thẻ from_engine mang gradeLevel do MÁY gán — `validate_ledger` V8 phải BÁO (không sửa, BH10).
+    Kiểm HÀNH VI từng cổng bằng dữ liệu giả/hàm giả tiêm vào."""
+    import contextlib
+    import importlib.util as _iu
+    import io
+    import json as _json
+    import shutil as _sh
+    import tempfile
+    import unittest.mock as _mock
+
+    def _n(rel, ten):
+        sp = _iu.spec_from_file_location(ten, REPO / rel)
+        mm = _iu.module_from_spec(sp); sys.modules[ten] = mm; sp.loader.exec_module(mm)
+        return mm
+    # (b) kiem_chung_cu_vuot_qua
+    kcv = _n("tools/kiem_chung_cu_vuot_qua.py", "_bh114_kcv")
+    for ban_loi in ({"error": "rate limit"}, {"header": {"type": "elink"}}):
+        with _mock.patch.object(kcv, "_goi", lambda url, cho=25, _b=ban_loi: _b):
+            if kcv.tong_quan_moi_hon("11111111", 2020, None) is not None:
+                return False, f"bản lỗi HTTP-200 {ban_loi!r} bị đọc thành «không có tổng quan mới hơn» — đúng lỗi 16/09"
+    with _mock.patch.object(kcv, "_goi", lambda url, cho=25: {"linksets": [{"linksetdbs": [{"links": ["99999999"]}]}]}
+                            if "elink.fcgi" in url else {"result": {"uids": ["99999999"], "99999999": {
+                                "pubdate": "2025 Jan", "title": "T", "source": "J", "pubtype": ["Systematic Review"]}}}):
+        r = kcv.tong_quan_moi_hon("11111111", 2020, None)
+        if not (r and r[0]["pmid"] == "99999999"):
+            return False, "đường dương tính THẬT (có tổng quan mới hơn) bị vá hỏng"
+    # (b2) doc_bao_cao_vuot_qua: manifest THIẾU/THU HẸP không hợp lệ; bản mới nhất hỏng không lùi về bản cũ để nói hợp lệ
+    def _man(**d):
+        m = {"ket_luan": "SACH", "pham_vi": {"toan_kho": True, "tu_nam": None}, "so_pmid_tong": 2, "so_pmid_do": 2,
+             "so_pmid_hong": 0, "pmid_da_do": ["1", "2"], "pmid_co_bai_moi": []}
+        m.update(d)
+        return m
+    with tempfile.TemporaryDirectory() as td:
+        g = Path(td)
+        (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(_json.dumps(_man()), encoding="utf-8")
+        r_ok = kcv.doc_bao_cao_vuot_qua(g)
+        if not (r_ok["hop_le"] and r_ok["da_do"] == {"1", "2"}):
+            return False, "manifest ĐỦ không được nhận hoặc thiếu tập PMID đã dò (tra_diem_kham không biết PMID nào CHƯA dò)"
+        for ten, xau in (("CO_BAI_MOI+hỏng", _man(ket_luan="CO_BAI_MOI", so_pmid_hong=1, pmid_co_bai_moi=["1"])),
+                         ("thu hẹp --tu-nam", _man(pham_vi={"toan_kho": True, "tu_nam": 2026})),
+                         ("thiếu tập đã dò", {k: v for k, v in _man().items() if k != "pmid_da_do"}),
+                         ("dò một phần", _man(so_pmid_tong=9))):
+            (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(_json.dumps(xau), encoding="utf-8")
+            (g / "CHUNG-CU-VUOT-QUA_20260810.json").write_text(_json.dumps(_man()), encoding="utf-8")
+            if kcv.doc_bao_cao_vuot_qua(g)["hop_le"]:
+                return False, f"manifest {ten} vẫn hợp lệ (hoặc âm thầm lùi về bản cũ hợp lệ) — đọc thiếu thành đủ"
+        (g / "CHUNG-CU-VUOT-QUA_20260810.json").unlink()
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / "CHUNG-CU-VUOT-QUA_20260814.txt").write_text("▸ PMID 1 (2020)\n", encoding="utf-8")
+        if kcv.doc_bao_cao_vuot_qua(Path(td))["hop_le"]:
+            return False, "tệp .txt không manifest được nhận hợp lệ — có thể là lượt dò MẪU"
+    # (a) verify_dashboard: PMID đã rút chưa từng qua sổ ⇒ bị nền ngoại tuyến chặn; chưa kiểm ⇒ cảnh báo, không ✓
+    stub = ('_CO = ["34101376"]\n_RUT = ["9500320"]\n'
+            "def nguon_da_rut(ten): return []\ndef dinh_danh_da_rut(ids): return []\n"
+            'def pham_vi_kiem_rut_bai(ids):\n    return {"co": [i for i in ids if i in _CO], "chua": [i for i in ids if i not in _CO]}\n'
+            "def rut_bai_retraction_watch_ngoai_tuyen(pmids):\n"
+            '    return [{"khoa": "pmid:"+p, "loai": "pmid", "gia_tri": p, "tinh_trang": "retracted", "tieu_de": "", '
+            '"kiem_luc": "2026-09-21", "nguon": "Retraction Watch (ngoại tuyến)", "rut_va_thay": False, "thong_bao": "", '
+            '"sua_loi_bi_rut": False, "thong_bao_ids": []} for p in pmids if p in _RUT]\n')
+    with tempfile.TemporaryDirectory() as td:
+        g = Path(td)
+        (g / "tools").mkdir()
+        _sh.copy(REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py", g / "tools" / "verify_dashboard.py")
+        (g / "tools" / "so_xac_minh_nguon.py").write_text(stub, encoding="utf-8")
+        page = g / "WebDashboard_EBM_VanDeCuThe_X_20260921.html"
+        page.write_text("<script>const DATA={items:[{id:'ITEM-01',pmid:'9500320'},{id:'ITEM-02',pmid:'34101376'}]}</script>", encoding="utf-8")
+        sp = _iu.spec_from_file_location("_bh114_vd", g / "tools" / "verify_dashboard.py")
+        vd = _iu.module_from_spec(sp); sys.modules["_bh114_vd"] = vd; sp.loader.exec_module(vd)
+        er, wa, ok = [], [], []
+        vd.kiem_nguon_da_rut(str(page), er, wa, ok)
+        if not any("ĐÃ BỊ RÚT" in e and "9500320" in e for e in er):
+            return False, "PMID đã rút (chưa từng qua sổ) lọt cổng ngoại tuyến — nền Retraction Watch không được hỏi"
+        if any("Rút bài:" in o for o in ok):
+            return False, "vừa in ✗ ĐÃ BỊ RÚT mà vẫn in ✓ «Rút bài … không thấy dương tính» — hai dòng mâu thuẫn"
+        # PMID CÓ dấu vết `ok` còn hạn trong sổ nhưng nền Retraction Watch nói ĐÃ RÚT ⇒ vẫn phải chặn (bản đầu chỉ hỏi nền cho PMID «chưa kiểm»)
+        (g / "tools" / "so_xac_minh_nguon.py").write_text(stub.replace('_CO = ["34101376"]', '_CO = ["34101376", "9500320"]'), encoding="utf-8")
+        sp = _iu.spec_from_file_location("_bh114_vd1", g / "tools" / "verify_dashboard.py")
+        vd1 = _iu.module_from_spec(sp); sys.modules["_bh114_vd1"] = vd1; sp.loader.exec_module(vd1)
+        er1, wa1, ok1 = [], [], []
+        vd1.kiem_nguon_da_rut(str(page), er1, wa1, ok1)
+        if not any("ĐÃ BỊ RÚT" in e and "9500320" in e for e in er1):
+            return False, "PMID có dấu vết ok còn hạn nhưng nền ngoại tuyến nói đã rút lọt cổng — nền chỉ được hỏi cho PMID «chưa kiểm»"
+        (g / "tools" / "so_xac_minh_nguon.py").write_text(stub.replace('_RUT = ["9500320"]', "_RUT = []"), encoding="utf-8")
+        sp = _iu.spec_from_file_location("_bh114_vd2", g / "tools" / "verify_dashboard.py")
+        vd2 = _iu.module_from_spec(sp); sys.modules["_bh114_vd2"] = vd2; sp.loader.exec_module(vd2)
+        er, wa, ok = [], [], []
+        vd2.kiem_nguon_da_rut(str(page), er, wa, ok)
+        if not [w for w in wa if "Phạm vi kiểm rút bài" in w] or any("Rút bài:" in o for o in ok):
+            return False, "định danh CHƯA kiểm rút bài vẫn được in ✓ 'Rút bài' — sổ im lặng đọc thành sạch"
+    # (c) kiem_so_lieu
+    ksl = _n("tools/kiem_so_lieu.py", "_bh114_ksl")
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "WebDashboard_EBM_VanDeCuThe_T_20260921.html"
+        # bh10-mien: fixture giả ghi vào TemporaryDirectory để thử kiem_so_lieu, không phải dashboard thật
+        f.write_text('<script>\nconst DATA = {\n  items: [\n    { id: "ITEM-01", decision: "apply", pmid: "11111111", '
+                     'measure: "hr", effect: { hr: 0.72, lo: 0.6, hi: 0.86 } }\n  ]\n};\n/* ▲▲▲  HẾT KHỐI DATA  ▲▲▲ */\n</script>\n',
+                     encoding="utf-8")
+        ra = io.StringIO()
+        with _mock.patch.object(ksl, "lay_tom_tat", lambda pm: None), _mock.patch.object(ksl.time, "sleep", lambda s: None), \
+             mock_argv(["kiem_so_lieu.py", "--file", str(f)]), contextlib.redirect_stdout(ra):
+            rc = ksl.main()
+        if "🟢" in ra.getvalue() or rc != 2:
+            return False, "mọi truy vấn tóm tắt hỏng mà kiem_so_lieu vẫn in xanh/thoát 0 — «không đọc được» bị coi là «khớp»"
+    # (d) validate_ledger V8
+    vl = _n("tools/validate_ledger.py", "_bh114_vl")
+    c = {"id": "E1", "decision": "consider", "gradeLevel": "high", "provenance": "from_engine",
+         "certainty": "engine (máy chấm, không phải GRADE chính thức)", "verification_status": "đã xác minh", "source": {"pmid": "1"}}
+    kq = vl.cham([dict(c)])
+    if not any(k.startswith("V8") for k in kq["bao_cao"]):
+        return False, "gradeLevel do MÁY gán trên thẻ engine không được BÁO — huy hiệu «high» trông như GRADE của nguồn"
+    if c["gradeLevel"] != "high":
+        return False, "validate_ledger ghi vào gradeLevel — vi phạm BH10"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -6386,6 +6764,9 @@ BAI_HOC = [
     ("BH108", "20/09", "medical-mcp chọn lọc: không cài máy chủ bên thứ ba, RxNorm/EMA fail-closed, agent gọi công cụ", bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi),
     ("BH109", "20/09", "Thông báo rút bài là BẢN ĐÍNH CHÍNH: máy chỉ nhận diện câu chữ, cổng vẫn chặn tới khi bác sĩ ký đúng vân tay", bh109_thong_bao_dinh_chinh_bi_rut_chan_den_khi_bac_si_ky),
     ("BH110", "20/09", "Orchestrator: tên lát cắt/gốc nối đúng tên watchlist; mã thoát phân loại theo bước; sai tên ⇒ 64 (không phải «lỗi mạng»)", bh110_orchestrator_ten_chu_de_va_ma_thoat_dung_nghia),
+    ("BH112", "21/09", "Điểm khám không trả thẻ LẠC ĐỀ: đ→d, từ nguyên, từ ghép kề nhau, xung đột quyết định có cờ, miss yếu không tính là khoảng trống", bh112_diem_kham_khong_tra_the_lac_de),
+    ("BH113", "21/09", "Thu nhận khi NCBI chặn: dịch thẻ PubMed→Europe PMC, PASS_DEGRADED, con trỏ đứng yên (không 0 giả, không mất cửa sổ quét)", bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia),
+    ("BH114", "21/09", "Bốn cổng không xanh khi CHƯA ĐO: bản lỗi HTTP-200, sổ rút bài im lặng, kiem_so_lieu hỏng/mẫu, gradeLevel máy gán", bh114_cong_khong_xanh_khi_chua_do),
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),

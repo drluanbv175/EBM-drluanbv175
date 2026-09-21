@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -39,6 +39,102 @@ DESIGN = (
     'OR "practice guideline"[ptyp] OR randomized controlled trial[ptyp])'
 )
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
+
+
+class NCBIBiChan(RuntimeError):
+    """NCBI trả trang chặn IP (HTTP 200 kèm HTML) — KHÔNG retry, KHÔNG coi là lỗi mạng thoáng qua."""
+
+
+# Trạng thái theo TIẾN TRÌNH (một lượt quét = một tiến trình): đã bị NCBI chặn chưa, và các lần
+# tìm kiếm rơi xuống dự phòng trong truy vấn hiện tại. `run_scan` đặt lại mỗi lượt / mỗi truy vấn.
+_NCBI_CHAN: dict = {"bi_chan": False}
+_SUY_GIAM: list[str] = []
+
+
+def _la_trang_chan_ncbi(payload: str) -> bool:
+    """Trang HTML chặn của NCBI ('WWW Error Blocked Diagnostic' / 'Access Denied ... abuse')."""
+    return bool(re.search(r"blocked|access denied|misuse|abuse", payload[:6000], re.I))
+
+
+# ── DỊCH CÚ PHÁP PUBMED → EUROPE PMC (vá 21/09/2026) ────────────────────────────────────────────
+# Truy vấn watchlist viết bằng thẻ PubMed ([pt] [ta] [ti] [ad] [tw] [tiab] [cn] [mh] [dp]). Europe PMC
+# KHÔNG hiểu các thẻ đó: nhét thô vào thì mệnh đề AND với thẻ trở thành «chữ '[pt]' phải có mặt» và trả
+# 0 GIẢ — đo 21/09: 12/12 truy vấn tầng guideline/tổng quan/RCT trả 0 qua đường dự phòng, trong khi cùng ý
+# viết đúng cú pháp Europe PMC trả 31–269. Trước bản vá, khi NCBI chặn, 4 làn thẩm quyền và 3 tầng chứng
+# cứ mạnh biến mất mà báo cáo vẫn ghi PASS (alerts 01/09, 07/09).
+# Bộ dịch HỮU HẠN: gặp thẻ lạ thì RAISE (fail-closed, chủ đề FAIL rõ ràng) — không đoán, không bỏ thẻ.
+_THE_EPMC_TRUONG = {"pt": "PUB_TYPE", "ptyp": "PUB_TYPE", "ta": "JOURNAL", "ti": "TITLE",
+                    "title": "TITLE", "ad": "AFF", "cn": "AUTH", "mh": "MESH"}
+_THE_EPMC_TIEU_DE_TOM_TAT = {"tiab", "tw"}
+_RE_TOKEN_TRUY_VAN = re.compile(r'\s*("[^"]*"|\(|\)|\[[^\]]*\]|[^\s()\[\]"]+)')
+
+
+def dich_pubmed_sang_europepmc(query: str) -> str:
+    """Dịch một truy vấn viết theo thẻ PubMed sang cú pháp trường của Europe PMC.
+
+    Thẻ gắn vào CỤM đứng ngay trước nó, tính từ toán tử/dấu ngoặc gần nhất (PubMed coi
+    `randomized controlled trial[pt]` là một cụm). Ví dụ:
+      practice guideline[pt]        → PUB_TYPE:"practice guideline"
+      "Lancet"[ta]                  → JOURNAL:"Lancet"
+      Standards[ti]                 → TITLE:Standards
+      "NICE guideline"[tw]          → (TITLE:"NICE guideline" OR ABSTRACT:"NICE guideline")
+      2026[dp]                      → PUB_YEAR:2026
+    Đoạn không gắn thẻ giữ NGUYÊN (Europe PMC tìm toàn văn theo từ). Thẻ không có trong bảng ⇒ ValueError.
+    """
+    if (query or "").count('"') % 2 or (query or "").count("[") != (query or "").count("]") \
+            or (query or "").count("(") != (query or "").count(")"):
+        # Nháy/ngoặc lệch: bộ tách bỏ im lặng ký tự lệch (`x[pt` → `x pt`) ⇒ truy vấn méo mà không ai biết. Fail-closed.
+        raise ValueError(f"truy vấn có nháy/ngoặc không cân: {(query or '')[:120]!r}")
+    out: list[str] = []
+    run: list[str] = []
+
+    def flush() -> None:
+        if run:
+            out.append(" ".join(run))
+            run.clear()
+
+    for tok in _RE_TOKEN_TRUY_VAN.findall(query or ""):
+        if tok in ("(", ")"):
+            flush()
+            out.append(tok)
+        elif tok in ("AND", "OR", "NOT"):
+            flush()
+            out.append(tok)
+        elif tok.startswith("["):
+            the = tok[1:-1].strip().lower()
+            if not run:
+                raise ValueError(f"thẻ PubMed [{the}] không có cụm đứng trước trong truy vấn: {query[:120]!r}")
+            if the == "dp" and len(run) > 1:
+                # [dp] là thẻ NGÀY: chỉ áp cho từ cuối (năm); các từ đứng trước là chữ tìm bình thường
+                # («drug safety alert recall guideline 2026[dp]»). Khác [pt]/[ta]: đó là CỤM nhiều từ.
+                out.append(" ".join(run[:-1]))
+                del run[:-1]
+            cum = " ".join(run).strip()
+            run.clear()
+            if len(cum) >= 2 and cum[0] == '"' and cum[-1] == '"' and '"' not in cum[1:-1]:
+                cum = cum[1:-1]
+            if '"' in cum:
+                # `"a b" c[ti]` = cụm hỗn hợp có nháy lồng ⇒ TITLE:""a b" c" là truy vấn hỏng; không đoán ý người viết.
+                raise ValueError(f"cụm gắn thẻ [{the}] chứa nháy lồng: {cum!r}")
+            if the in _THE_EPMC_TIEU_DE_TOM_TAT:
+                q = f'"{cum}"' if " " in cum else cum
+                out.append(f"(TITLE:{q} OR ABSTRACT:{q})")
+            elif the == "dp":
+                if not re.fullmatch(r"\d{4}", cum):
+                    raise ValueError(f"thẻ [dp] chỉ hỗ trợ năm 4 chữ số, gặp {cum!r}")
+                out.append(f"PUB_YEAR:{cum}")
+            elif the in _THE_EPMC_TRUONG:
+                q = f'"{cum}"' if (" " in cum or the in ("pt", "ptyp", "ta", "ad", "cn", "mh")) else cum
+                out.append(f"{_THE_EPMC_TRUONG[the]}:{q}")
+            else:
+                raise ValueError(f"thẻ PubMed [{the}] chưa có bản dịch sang Europe PMC (truy vấn: {query[:120]!r})")
+        else:
+            run.append(tok)
+    flush()
+    ket = " ".join(out)
+    if re.search(r"\[[A-Za-z ]+\]", ket):  # phòng thủ: còn sót thẻ ⇒ đừng gửi đi
+        raise ValueError(f"còn thẻ PubMed chưa dịch trong: {ket[:160]!r}")
+    return ket
 DEFAULT_WATCHLIST = Path(__file__).resolve().parents[1] / "watchlist.json"
 TRUSTED_SOURCE_ALIASES = {
     "Cochrane": ("cochrane", "cochrane database"),
@@ -156,6 +252,9 @@ class TopicResult:
     status: str
     candidates: list[Candidate]
     error: str = ""
+    # Các truy vấn phải rơi xuống dự phòng (NCBI lỗi/bị chặn): kết quả có thể THIẾU. Không rỗng ⇒ status
+    # = "PASS_DEGRADED" và con trỏ KHÔNG tiến (xem run_scan) — trước đây vẫn "PASS" và mất cửa sổ vĩnh viễn.
+    suy_giam: list[str] = field(default_factory=list)
 
 
 def _retry_wait(exc: BaseException, attempt: int) -> float:
@@ -230,6 +329,10 @@ def get_json(
         try:
             with opener(request, timeout=timeout) as response:
                 payload = response.read().decode("utf-8")
+            if payload.lstrip()[:1] == "<" and _la_trang_chan_ncbi(payload):
+                # Trang chặn trả HTTP 200: retry chỉ tốn ~46 giây/truy vấn mà không bao giờ tự hết.
+                _NCBI_CHAN["bi_chan"] = True
+                raise NCBIBiChan("NCBI chặn IP (trang 'blocked/abuse'), không retry — liên hệ info@ncbi.nlm.nih.gov")
             data = json.loads(payload)
             if not isinstance(data, dict):
                 raise ValueError("Payload JSON không phải object")
@@ -271,6 +374,11 @@ def get_europe_pmc_json(
             data = json.loads(payload)
             if not isinstance(data, dict):
                 raise ValueError("Payload JSON không phải object")
+            if "hitCount" not in data and "resultList" not in data:
+                # Europe PMC thi thoảng trả bản RỖNG chỉ có {"version": "6.9"} (đo 21/09: cùng một truy vấn lúc
+                # trả stub, lúc trả 46.703 kết quả). Đọc stub là «0 kết quả» chính là 0 GIẢ — coi là LỖI để retry,
+                # hết lượt thì báo lỗi rõ ràng (chủ đề FAIL) thay vì im lặng trả rỗng.
+                raise ValueError("Europe PMC trả bản rỗng (chỉ có 'version') — không phải 0 kết quả thật")
             return data
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as exc:
             last_exc = exc
@@ -284,7 +392,8 @@ def get_europe_pmc_json(
 def search(query: str, days: int, retmax: int, *,
            fetch_json: Callable[[str], dict] = get_json,
            datetype: str = "pdat", loc_thiet_ke: bool = True,
-           mindate: str = "", maxdate: str = "") -> list[str]:
+           mindate: str = "", maxdate: str = "",
+           fallback_fetch_json: Callable[[str], dict] | None = None) -> list[str]:
     """Tìm ứng viên. `loc_thiet_ke=False` + `datetype='edat'` = tầng BẮT CÁI MỚI NHẤT.
 
     VÌ SAO CÓ HAI CHẾ ĐỘ (đo thật 14/08/2026)
@@ -327,9 +436,25 @@ def search(query: str, days: int, retmax: int, *,
     else:
         params["reldate"] = str(days)
     url = EUTILS + "esearch.fcgi?" + urllib.parse.urlencode(params)
+    _kw_du_phong = {"fetch_json": fallback_fetch_json} if fallback_fetch_json else {}
+    if fetch_json is get_json and _NCBI_CHAN["bi_chan"]:
+        # Đã bị NCBI chặn trong lượt này: khỏi hỏi lại (mỗi lần hỏi lại là một lần chờ vô ích).
+        _SUY_GIAM.append("NCBI đang chặn IP — truy vấn này chạy bằng Europe PMC dự phòng")
+        return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
+                                 mindate=mindate, maxdate=maxdate, **_kw_du_phong)
     try:
-        result = fetch_json(url).get("esearchresult", {})
-    except RuntimeError:
+        _j = fetch_json(url)
+        # NCBI đôi khi trả HTTP 200 kèm {"error": …} hoặc esearchresult.ERROR: bản cũ đọc thành «0 kết quả» (không suy giảm,
+        # con trỏ vẫn tiến — phản biện 21/09). Bản lỗi là LỖI.
+        if not isinstance(_j, dict) or _j.get("error") or not isinstance(_j.get("esearchresult"), dict) \
+                or _j["esearchresult"].get("ERROR"):
+            raise RuntimeError(f"NCBI trả bản lỗi/thiếu esearchresult: {str(_j)[:80]}")
+        result = _j["esearchresult"]
+    except RuntimeError as exc:
+        # SUY GIẢM (21/09/2026): dự phòng là ĐÚNG khi NCBI lỗi nhưng kết quả có thể THIẾU (Europe PMC
+        # không đánh chỉ mục/gán loại giống PubMed). Ghi lại để run_scan gắn cờ PASS_DEGRADED và KHÔNG
+        # tiến con trỏ — không được để lượt quét suy giảm trông như lượt quét đầy đủ.
+        _SUY_GIAM.append(f"NCBI lỗi ({type(exc).__name__}) — truy vấn này chạy bằng Europe PMC dự phòng")
         # Vá 14/09/2026: PHẢI chuyển tiếp loc_thiet_ke — thiếu dòng này thì tầng
         # "mới nhất" (loc_thiet_ke=False) im lặng biến thành tầng có lọc ngay khi
         # rơi xuống dự phòng, tái diễn đúng lỗi BH38 qua một đường khác.
@@ -340,7 +465,7 @@ def search(query: str, days: int, retmax: int, *,
         # cursor đang quét, khiến ứng viên ĐÃ duyệt tái xuất vào hàng chờ mỗi
         # khi PubMed tình cờ lỗi.
         return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
-                                 mindate=mindate, maxdate=maxdate)
+                                 mindate=mindate, maxdate=maxdate, **_kw_du_phong)
     ids = result.get("idlist", [])
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
@@ -389,8 +514,11 @@ def search_europe_pmc(
         'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline")'
         if loc_thiet_ke else ""
     )
+    # VÁ 21/09/2026: dịch thẻ PubMed sang cú pháp Europe PMC (xem dich_pubmed_sang_europepmc) — trước đây
+    # truyền THÔ nên tầng guideline/tổng quan/RCT và 4 làn thẩm quyền trả 0 giả qua đường dự phòng.
+    query_epmc = dich_pubmed_sang_europepmc(query)
     term = (
-        f'({query}) AND (SRC:MED OR HAS_FT:Y){loc} '
+        f'({query_epmc}) AND (SRC:MED OR HAS_FT:Y){loc} '
         f'AND FIRST_PDATE:[{since} TO {today}]'
     )
     params = {
@@ -419,9 +547,16 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
         "tool": "medical_ebm_surveillance",
     }
     url = EUTILS + "esummary.fcgi?" + urllib.parse.urlencode(params)
+    if fetch_json is get_json and _NCBI_CHAN["bi_chan"]:
+        _SUY_GIAM.append("esummary: NCBI đang chặn — tóm tắt ứng viên bằng Europe PMC")
+        return summarize_europe_pmc(ids)
     try:
-        result = fetch_json(url).get("result", {})
-    except RuntimeError:
+        _j = fetch_json(url)
+        if not isinstance(_j, dict) or _j.get("error") or not isinstance(_j.get("result"), dict):
+            raise RuntimeError(f"NCBI esummary trả bản lỗi/thiếu result: {str(_j)[:80]}")
+        result = _j["result"]
+    except RuntimeError as exc:
+        _SUY_GIAM.append(f"esummary NCBI lỗi ({type(exc).__name__}) — tóm tắt ứng viên bằng Europe PMC")
         return summarize_europe_pmc(ids)
     candidates: list[Candidate] = []
     for pmid in result.get("uids", []):
@@ -440,7 +575,23 @@ def summarize(ids: Sequence[str], *, fetch_json: Callable[[str], dict] = get_jso
             authority_source=detect_authority_source(journal, title),
             pubtype=tuple(str(x) for x in (item.get("pubtype") or [])),
         ))
+    if len(candidates) < len(ids):
+        _SUY_GIAM.append(f"esummary: {len(ids) - len(candidates)}/{len(ids)} PMID không có tóm tắt — ứng viên bị bỏ")
     return candidates
+
+
+def _pubtype_europe_pmc(item: dict) -> tuple[str, ...]:
+    """Loại thiết kế từ bản ghi Europe PMC: `pubTypeList.pubType` (core) hoặc `pubType` chuỗi «a; b» (lite).
+
+    Trước đây đường dự phòng KHÔNG điền pubtype nên mọi ứng viên bị gắn «⚡ mới vào PubMed — CHƯA gán loại»
+    dù đã có loại thật (Systematic Review, Practice Guideline…)."""
+    lst = (item.get("pubTypeList") or {}).get("pubType")
+    if isinstance(lst, list) and lst:
+        return tuple(str(x).strip() for x in lst if str(x).strip())
+    raw = item.get("pubType")
+    if isinstance(raw, str) and raw.strip():
+        return tuple(x.strip() for x in raw.split(";") if x.strip())
+    return ()
 
 
 def summarize_europe_pmc(
@@ -474,7 +625,11 @@ def summarize_europe_pmc(
             source="Europe PMC fallback for PMID",
             journal_or_organization=journal,
             authority_source=detect_authority_source(journal, title),
+            pubtype=_pubtype_europe_pmc(item),
         ))
+    if len(candidates) < len(ids):
+        # Europe PMC chưa lập chỉ mục bài mới trong vài ngày đầu ⇒ ứng viên MỚI NHẤT chính là thứ bị bỏ; không được im lặng.
+        _SUY_GIAM.append(f"Europe PMC: {len(ids) - len(candidates)}/{len(ids)} PMID chưa có bản ghi — ứng viên bị bỏ")
     return candidates
 
 
@@ -835,9 +990,11 @@ def run_scan(
     started = datetime.now(timezone.utc)
     topic_results: list[TopicResult] = []
     all_pmids: set[str] = set()
+    _NCBI_CHAN["bi_chan"] = False   # mỗi lượt quét bắt đầu lại từ «NCBI chưa bị chặn»
     for row in topics:
         try:
             unique: list[Candidate] = []
+            suy_giam: list[str] = []
             # Chạy THEO THỨ TỰ TẦNG: guideline → tổng quan/gộp → RCT. Ứng viên tầng cao
             # vào trước, nên bác sĩ đọc thứ mạnh nhất trước thay vì thứ PubMed trả trước.
             # CON TRỎ theo chủ đề (K8): quét từ max(cursor−3ng, hôm_nay−days) tới nay.
@@ -857,6 +1014,7 @@ def run_scan(
                 # Tầng "moi_vao_pubmed" phải đi bằng edat + KHÔNG lọc loại thiết kế —
                 # nếu không nó lại rơi vào đúng cái bẫy đang vá. Bộ tìm kiếm giả trong
                 # test không nhận tham số phụ, nên lùi êm về chữ ký cũ.
+                _SUY_GIAM.clear()
                 try:
                     ids = search_fn(muc_tang["query"], days, max_results,
                                     datetype=muc_tang.get("datetype", "pdat"),
@@ -864,11 +1022,19 @@ def run_scan(
                                     mindate=md)
                 except TypeError:
                     ids = search_fn(muc_tang["query"], days, max_results)
+                if _SUY_GIAM:
+                    suy_giam.append(f"tầng {muc_tang.get('tang', 'chung')}: {_SUY_GIAM[-1]}")
+                    _SUY_GIAM.clear()
                 for candidate in summarize_fn(ids):
                     if candidate.pmid in all_pmids:
                         continue
                     all_pmids.add(candidate.pmid)
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
+                # Suy giảm ở KHÂU TÓM TẮT (esummary lỗi → Europe PMC, hoặc PMID không có bản ghi) cũng phải làm chủ đề
+                # PASS_DEGRADED — bản trước chỉ đọc _SUY_GIAM sau search() nên khâu này im lặng mất ứng viên.
+                if _SUY_GIAM:
+                    suy_giam.append(f"tầng {muc_tang.get('tang', 'chung')}: {_SUY_GIAM[-1]}")
+                    _SUY_GIAM.clear()
             # LÀN SCOPUS (Elsevier) — thêm 13/09/2026, bác sĩ yêu cầu nối vào tầng
             # giám sát lâm sàng sau khi đã tích hợp bên nghiên cứu. CHẠY TRƯỚC
             # gan_do_tin_cay() — khác preprint/trials ở dưới — vì ứng viên Scopus
@@ -904,10 +1070,16 @@ def run_scan(
                         unique.append(candidate)
                 except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                     ghi_chu_lan.append(f"làn {ten_lan} lỗi: {type(exc).__name__}")
+            # PASS_DEGRADED: có truy vấn rơi xuống dự phòng ⇒ kết quả có thể THIẾU. Con trỏ KHÔNG tiến để
+            # lượt sau quét lại đúng cửa sổ này — trước đây vẫn tiến ⇒ cửa sổ 24/08–07/09 mất vĩnh viễn.
+            trang_thai = "PASS_DEGRADED" if suy_giam else "PASS"
+            ghi_chu = "; ".join(ghi_chu_lan)
+            if suy_giam:
+                ghi_chu = ("SUY GIẢM: " + " | ".join(suy_giam)
+                           + (f" || {ghi_chu}" if ghi_chu else ""))
             topic_results.append(TopicResult(
-                row["topic"], row["query"], "PASS", unique,
-                "; ".join(ghi_chu_lan)))
-            if cursor is not None:
+                row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam))
+            if cursor is not None and trang_thai == "PASS":
                 import datetime as _dt
                 cursor[row["topic"]] = _dt.date.today().isoformat()
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
@@ -917,8 +1089,11 @@ def run_scan(
             ))
 
     success_count = sum(result.status == "PASS" for result in topic_results)
+    degraded_count = sum(result.status == "PASS_DEGRADED" for result in topic_results)
+    # failed_topics = KHÔNG PHẢI PASS (gồm cả suy giảm) — mọi nơi tiêu thụ cũ đọc failed_topics/status≠PASS
+    # đều fail-closed đúng ý; `degraded_topics` tách riêng để người đọc biết đó là suy giảm chứ không phải lỗi.
     failure_count = len(topic_results) - success_count
-    if not topic_results or success_count == 0:
+    if not topic_results or (success_count + degraded_count) == 0:
         status = "FAIL"
     elif failure_count:
         status = "PARTIAL"
@@ -934,6 +1109,7 @@ def run_scan(
         "max_results_per_topic": max_results,
         "topic_count": len(topic_results),
         "successful_topics": success_count,
+        "degraded_topics": degraded_count,
         "failed_topics": failure_count,
         "candidate_count": len(all_pmids),
         "topics": [asdict(result) for result in topic_results],
@@ -948,7 +1124,13 @@ def markdown_report(report: dict) -> str:
         f"# Giám sát định kỳ - chứng cứ mới ({report['days']} ngày gần đây)",
         "",
         f"- Trạng thái: **{report['status']}**",
-        f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}",
+        *([f"- 🟠 **QUÉT SUY GIẢM: {report['degraded_topics']}/{report['topic_count']} chủ đề có truy vấn phải "
+           f"chạy bằng Europe PMC dự phòng vì NCBI lỗi/bị chặn — kết quả có thể THIẾU (nhất là tầng "
+           f"guideline/tổng quan/RCT). KHÔNG được đọc «không có ứng viên» là «không có gì mới». "
+           f"Con trỏ chủ đề suy giảm KHÔNG tiến; chạy lại khi NCBI trả lời được.**"]
+          if report.get("degraded_topics") else []),
+        f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}"
+        + (f" (trong đó {report['degraded_topics']} SUY GIẢM — xem dưới)" if report.get("degraded_topics") else ""),
         f"- Ứng viên không trùng: {report['candidate_count']}",
         (f"- Độ trễ phát hiện: trung vị {report['do_tre']['trung_vi_ngay']} ngày "
          f"({report['do_tre']['n_do_duoc']}/{report['do_tre']['n_tong']} đo được; "
@@ -964,11 +1146,20 @@ def markdown_report(report: dict) -> str:
     ]
     for result in report["topics"]:
         lines.append(f"## {result['topic']}")
-        if result["status"] != "PASS":
+        if result["status"] == "FAIL":
             lines.append(f"- **KHÔNG QUÉT ĐƯỢC:** `{result['error']}`")
             lines.append("- Không được diễn giải là 'không có cập nhật'.")
+        else:
+            if result["status"] == "PASS_DEGRADED":
+                lines.append(f"- 🟠 **SUY GIẢM:** {result['error']} — kết quả dưới đây có thể THIẾU; "
+                             "không được đọc «không có ứng viên» là «không có gì mới».")
+            elif result.get("error"):
+                # Ghi chú làn phụ (scopus/preprint/trials lỗi) — trước đây chỉ in khi status≠PASS nên MẤT.
+                lines.append(f"- ⚪ Ghi chú làn phụ: `{result['error']}`")
+        if result["status"] == "FAIL":
+            pass
         elif not result["candidates"]:
-            lines.append("- Không tìm thấy ứng viên trong cửa sổ đã quét thành công.")
+            lines.append("- Không tìm thấy ứng viên trong cửa sổ đã quét (xem trạng thái ở trên).")
         else:
             for item in result["candidates"]:
                 source_note = f" · nguồn: {item.get('source', 'PubMed E-utilities')}"
@@ -1055,7 +1246,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"🔴 KHÔNG QUÉT: {ly_do}")
         return 3
     try:
-        cursor = None if args.khong_cursor else doc_cursor()
+        # `--khong-cursor` = KHÔNG ĐỌC và KHÔNG GHI con trỏ dùng chung (quét trọn cửa sổ). Con trỏ cục bộ rỗng
+        # vẫn cho phép `--since` hoạt động — trước đây `--since` kèm `--khong-cursor` bị BỎ QUA IM LẶNG
+        # (vì cursor=None) nên cửa sổ quét bù rộng hơn người gõ tưởng.
+        ghi_con_tro = not args.khong_cursor
+        cursor = doc_cursor() if ghi_con_tro else {}
         try:
             topics = load_watchlist(Path(args.watchlist))
         except ValueError as exc:
@@ -1075,14 +1270,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                       if khoa in _bo_dau(t["topic"]) or _bo_dau(t["topic"]) in khoa]
             if not topics:
                 parser.error(f"--topic không khớp chủ đề nào trong watchlist: {args.topic}")
-        if args.since and cursor is not None:
+        con_tro_truoc = dict(cursor)
+        if args.since:
             for t0 in topics:
                 cursor[t0["topic"]] = args.since
         try:
             report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor)
         except ValueError as exc:
             parser.error(str(exc))
-        if cursor is not None:
+        if ghi_con_tro:
+            if args.since:
+                # `--since` HẸP hơn con trỏ đang có (since > con trỏ cũ) bỏ qua khoảng [con trỏ cũ, since): nếu vẫn ghi
+                # «đã quét tới hôm nay» thì khoảng đó mất vĩnh viễn (phản biện 21/09 tái hiện: con trỏ 09-01 + --since 09-20
+                # + chủ đề FAIL ⇒ ghi 09-20). Chỉ được ghi khi since ≤ con trỏ cũ (quét RỘNG hơn = siêu tập).
+                for t0 in topics:
+                    cu = con_tro_truoc.get(t0["topic"])
+                    if cu and args.since > cu:
+                        cursor[t0["topic"]] = cu
             ghi_cursor(cursor)
 
         # ĐO ĐỘ TRỄ (K4) — định nghĩa vận hành của "mới nhất" phải đo được. Chỉ đo
@@ -1109,8 +1313,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         # ALERTS (K7) — chỉ sự kiện KHẨN
         khan: list[str] = []
+        n_suy_giam = report.get("degraded_topics", 0)
+        if n_suy_giam:
+            # MỘT dòng gộp (không mỗi chủ đề một dòng — nhiều bullet đỏ giống nhau dạy người đọc bỏ qua).
+            khan.append(f"- 🟠 QUÉT SUY GIẢM: {n_suy_giam}/{report['topic_count']} chủ đề phải chạy bằng Europe PMC "
+                        "dự phòng (NCBI lỗi/bị chặn) — tầng guideline/tổng quan/RCT có thể THIẾU; con trỏ các chủ đề "
+                        "này KHÔNG tiến, chạy lại khi NCBI thông.")
         for _t in report["topics"]:
-            if _t["status"] != "PASS":
+            if _t["status"] == "FAIL":
                 khan.append(f"- 🔴 CỔNG QUÉT FAIL: chủ đề «{_t['topic']}» — `{_t['error'][:90]}`")
             for _c in _t["candidates"]:
                 if _c.get("rut_bai") == "retracted":

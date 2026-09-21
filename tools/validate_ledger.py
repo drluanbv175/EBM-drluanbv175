@@ -94,6 +94,16 @@ def cham(cards: list[dict]) -> dict:
         elif c.get("decision") == "apply" and c.get("gradeLevel") == "na":
             ghi(bao_cao, "V5b apply trên na (không phân hạng) — cần bác sĩ xem", cid)
 
+        # V8 — chỉ BÁO CÁO (21/09/2026): thẻ từ engine mang gradeLevel do MÁY gán từ «tier/điểm engine» — chính trường
+        # `certainty` của thẻ tự khai «máy chấm, không phải GRADE chính thức». Đo 21/09: 298/298 thẻ from_engine mang «high».
+        # Người đọc dashboard/hub thấy huy hiệu «high» và hiểu là phân hạng GRADE của NGUỒN ⇒ vi phạm R4 (tự gán mức) ở
+        # DỮ LIỆU, dù không công cụ nào hiện còn ghi. Công cụ này KHÔNG sửa (BH10): chuyển về «na» là quyết định dữ liệu
+        # của bác sĩ. tra_diem_kham đã loại from_engine khỏi điểm khám nên trường này chưa tới tay bác sĩ lúc đang khám.
+        if c.get("gradeLevel") not in (None, "na") and (
+                c.get("provenance") == "from_engine" or "máy chấm" in str(c.get("certainty") or "")):
+            ghi(bao_cao, "V8 gradeLevel do MÁY gán (thẻ engine/«máy chấm») — không phải phân hạng của nguồn; "
+                         "bác sĩ quyết có đưa về 'na'", cid)
+
         vs = str(c.get("verification_status") or "")
         if vs.startswith("chưa xác minh"):
             ghi(bao_cao, "V6 chưa xác minh nguồn", cid)

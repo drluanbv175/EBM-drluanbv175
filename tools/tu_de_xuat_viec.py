@@ -397,7 +397,8 @@ def main() -> int:
     if log.exists():
         try:
             dong = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines() if x]
-            miss = sum(1 for r in dong if r.get("miss"))
+            # «khớp yếu» (có thẻ gần chủ đề, dưới ngưỡng) ≠ khoảng trống giám sát — không dồn vào ngưỡng báo động.
+            miss = sum(1 for r in dong if r.get("miss") and r.get("loai") != "khop_yeu")
             if miss >= 3:
                 de_xuat.append((1, "🤖", f"{miss} lượt điểm-khám NGOÀI giám sát — rà "
                                 "ứng viên mở watchlist",

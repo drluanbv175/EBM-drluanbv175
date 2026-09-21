@@ -164,7 +164,11 @@ def ke_hoach(topic: str | None, online: bool, xuat: bool, *, uu_tien: bool = Fal
         elif tt.get("a2_arg"):
             slug = _slug(tt["a2_arg"])[:40]
             buoc.append({"buoc": "A2-quet" + hau_to,
+                         # `--khong-cursor`: làm mới MỘT chủ đề theo yêu cầu KHÔNG được đọc/ghi con trỏ dùng chung của
+                         # gói tuần — nếu không nó nuốt cửa sổ mà gói tuần đáng lẽ quét (đã xảy ra 20/09: A3 nuốt cursor 36
+                         # chủ đề). Kết quả A2 nằm ở logs/<run>.A2-*.{md,json}; con trỏ tuần chỉ do gói tuần điều khiển.
                          "lenh": [PY, str(DASH / "tools" / "surveillance_scan.py"), "--topic", tt["a2_arg"],
+                                  "--khong-cursor",
                                   "--report", str(LOGS / f"{run_id}.A2-{slug}.md"),
                                   "--json-report", str(LOGS / f"{run_id}.A2-{slug}.json")]})
         elif tt["loai"] == "khong_ro":

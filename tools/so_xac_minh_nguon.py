@@ -282,6 +282,79 @@ def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
     return ra
 
 
+def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
+    """Trong danh sách định danh của MỘT gói: cái nào CÓ dấu vết kiểm rút bài còn hạn trong sổ, cái nào CHƯA.
+
+    Vì sao có (21/09/2026, đánh giá hoàn thiện — việc #2a): cổng `verify_dashboard` chạy offline im lặng hoàn toàn
+    về rút bài khi sổ không có bản ghi dương tính — mà «sổ im lặng» gồm CẢ «đã kiểm, sạch» LẪN «chưa kiểm lần nào».
+    Tái hiện: một dashboard mang PMID 9500320 (Wakefield 1998, đã rút) PASS ngoại tuyến 0 lỗi cứng, không một dòng
+    nào nói phạm vi kiểm rút bài. Hàm này tách hai trường hợp đó để cổng NÓI RA con số.
+
+    `co` = có bản ghi trong sổ mà kiểm rút bài CÒN HẠN (hoặc đã biết là bị rút); `chua` = vắng sổ / chưa kiểm /
+    quá hạn. Chỉ ĐỌC sổ, không mạng. Vắng mặt ≠ sạch (BH08/BH27) — nên không có nhánh nào trả «sạch»."""
+    muc = (doc_so() or {}).get("muc", {}) or {}
+    co: list[str] = []
+    chua: list[str] = []
+    for dd in cac_dinh_danh:
+        dd = str(dd).strip()
+        bg = muc.get(f"pmid:{dd}") or muc.get(f"doi:{dd.lower()}")
+        if bg and (bg.get("da_rut") or con_hieu_luc(bg)[0]):
+            co.append(dd)
+        else:
+            chua.append(dd)
+    return {"co": co, "chua": chua}
+
+
+_RW_NGOAI_TUYEN: dict = {"chi_muc": None, "da_thu": False}
+
+
+def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | None:
+    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN cho các PMID — không mạng, ~0,5 giây.
+
+    Trả danh sách bản ghi cùng khuôn `dinh_danh_da_rut` (CHỈ dương tính) hoặc `None` khi máy này không có nền
+    (thiếu CSV/module) — caller phải đọc `None` là «CHƯA KIỂM», tuyệt đối không phải «sạch». Nền im lặng về một PMID
+    KHÔNG có nghĩa PMID sạch (danh mục chỉ ghi cái ĐÃ bị rút) nên hàm này không bao giờ phát tín hiệu âm."""
+    if not cac_pmid:
+        return []
+    if not _RW_NGOAI_TUYEN["da_thu"]:
+        _RW_NGOAI_TUYEN["da_thu"] = True
+        try:
+            import importlib.util as _ilu_rw
+            _sp = _ilu_rw.spec_from_file_location("_bst_rw", Path(__file__).resolve().parent / "ban_sao_tran.py")
+            _bst = _ilu_rw.module_from_spec(_sp)
+            _sp.loader.exec_module(_bst)
+            mea = _bst.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+            if (mea / "app" / "sources" / "retraction_watch.py").exists():
+                if str(mea) not in sys.path:
+                    sys.path.insert(0, str(mea))
+                from app.sources.retraction_watch import RetractionWatchIndex  # noqa: PLC0415
+                chi_muc = RetractionWatchIndex()
+                _RW_NGOAI_TUYEN["chi_muc"] = chi_muc if chi_muc.san_sang() else None
+        except Exception:  # noqa: BLE001 — thiếu nền = CHƯA KIỂM, không được làm chết cổng
+            _RW_NGOAI_TUYEN["chi_muc"] = None
+    chi_muc = _RW_NGOAI_TUYEN["chi_muc"]
+    if chi_muc is None:
+        return None
+    ra: list[dict] = []
+    for pm in cac_pmid:
+        bg = chi_muc.tra(str(pm).strip())
+        if not bg:
+            continue
+        ly_do = str(bg.get("reason") or "")
+        ra.append({
+            "khoa": f"pmid:{pm}", "loai": "pmid", "gia_tri": str(pm).strip(),
+            "tinh_trang": bg.get("status") or "retracted",
+            "tieu_de": "", "kiem_luc": _hom_nay().isoformat(),
+            "nguon": "Retraction Watch (nền ngoại tuyến; lý do: %s)" % (ly_do or "?").strip("; ")[:100],
+            # «Retract and Replace» = bài rút rồi ĐĂNG LẠI bản sửa: cổng phải xử như đường sổ (ba mức, đòi đối chiếu số liệu bản
+            # thay), không được gắn «ĐÃ BỊ RÚT — không dùng» cho một trích dẫn vẫn dùng được (phản biện 21/09).
+            "rut_va_thay": bool(re.search(r"retract(ion)?\s+and\s+replace", ly_do, re.I)),
+            "thong_bao": bg.get("notice_pmid") or "",
+            "sua_loi_bi_rut": False, "thong_bao_ids": [],
+        })
+    return ra
+
+
 def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
     """Gom mọi pmid/doi/url từ các dashboard. Trả {khoá: {file đã dùng}}."""
     nguon: dict[str, set[str]] = {}
