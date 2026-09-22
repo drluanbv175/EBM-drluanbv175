@@ -630,6 +630,28 @@
    "last_success_at": "2026-09-22",
    "known_gap": "Chỉ phủ guideline NICE ĐÃ được tóm tắt lại trên tạp chí có chỉ mục MEDLINE — không phải mọi guidance của NICE đều có bản tóm tắt dạng này. Nối vào GUIDELINE_LANES (app/sources/feeds.py::epmc_nice) + FEED_TO_AUTHORITY (app/sources/authority.py) 22/09/2026, kiểm sống qua RSSFeedClient thật: 5 bản ghi, PMID thật.",
    "last_probe_at": "2026-09-22"
+  },
+  {
+   "id": "SRC-038",
+   "name": "Cochrane Library (CDSR) — connector MCP tương tác qua Claude Code, kiểm sống 22/09/2026",
+   "org": "Cochrane (qua plugin MCP cochrane-marketplace)",
+   "tier": 2,
+   "domain": [
+    "tổng quan hệ thống/SR-MA"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://www.cochranelibrary.com",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "Tóm tắt/plain-language summary/PICO free mọi nơi; toàn văn free tại VN (one-click LMIC) + green OA sau 12 tháng (đã ghi ở _CONNECTOR-CHUNG-CU.md §1bis). Hệ chỉ trích dẫn + link, không cào/tái bản toàn văn sau tường phí (đúng luật bản quyền dùng chung của repo).",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent tương tác (tra-cuu-chung-cu · tong-quan-y-van · cap-nhat-guideline · huong-dan-lam-sang — xem _CONNECTOR-CHUNG-CU.md §2quater)",
+   "status": "active",
+   "last_success_at": "2026-09-22",
+   "known_gap": "KHÔNG tham gia vòng quét tuần tự động (weekly_safety.sh/surveillance_scan.py) — đây là công cụ MCP (mcp__plugin_cochrane_cochrane__cochrane_search/get_details/suggest_terms) chỉ gọi được TỪ TRONG một phiên Claude Code tương tác có plugin Cochrane bật + trình duyệt CDP chạy nền của chính plugin; KHÔNG phải HTTP endpoint mà một script Python độc lập chạy qua cron/scheduled task (owner thu thập duy nhất theo doctrine) có thể gọi trực tiếp. Vòng quét tuần TỰ ĐỘNG vẫn dùng lane Crossref theo ISSN 1465-1858 (app/sources/feeds.py::cochrane_cdsr, đã có từ trước) — nguồn KHÁC, phủ được review CDSR mới nhưng KHÔNG có abstract có cấu trúc/PICO/mức chắc chắn GRADE như MCP. Nguồn này chỉ hữu dụng khi một AGENT đang chạy TRONG phiên tương tác chủ động gọi (tra-cuu-chung-cu/tong-quan-y-van/cap-nhat-guideline/huong-dan-lam-sang, doctrine đã dạy đủ ở _CONNECTOR-CHUNG-CU.md §2quater từ 20/09/2026) — không có cách 'cài đặt' để nó tự chạy định kỳ không người giám sát. Kiểm sống 22/09/2026: cochrane_search (299 review 'heart failure' — lỗi điều hướng tạm thời lượt đầu, thành công lượt 2, đúng hành vi §2quater mục 5) · cochrane_get_details (đủ abstract cấu trúc + tóm tắt cho người bệnh; pico rỗng ở bài này, đúng ghi chú mục 7 — đọc PICO từ objectives/selectionCriteria) · cochrane_suggest_terms — cả ba đều trả dữ liệu thật, không phải mock.",
+   "last_probe_at": "2026-09-22"
   }
  ]
 }
