@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-14",
+ "updated": "2026-09-22",
  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
  "sources": [
   {
@@ -20,9 +20,9 @@
    "measured_latency_days": 2,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-07",
+   "last_success_at": "2026-09-22",
    "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-002",
@@ -42,9 +42,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-07",
+   "last_success_at": "2026-09-22",
    "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-003",
@@ -64,7 +64,7 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-08-14",
+   "last_success_at": "2026-09-20",
    "known_gap": "làm mới 30 ngày/lần bằng tools/tai_retraction_watch.py; chỉ tra được PMID, không DOI"
   },
   {
@@ -85,9 +85,9 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-09-01",
+   "last_success_at": "2026-09-20",
    "known_gap": null,
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-005",
@@ -107,9 +107,9 @@
    "measured_latency_days": null,
    "owner": "agent-A4",
    "status": "active",
-   "last_success_at": "2026-08-24",
+   "last_success_at": "2026-09-20",
    "known_gap": null,
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-006",
@@ -129,9 +129,9 @@
    "measured_latency_days": null,
    "owner": "weekly_safety.sh",
    "status": "active",
-   "last_success_at": "2026-09-07",
+   "last_success_at": "2026-09-21",
    "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-007",
@@ -151,9 +151,9 @@
    "measured_latency_days": null,
    "owner": "agent-A2",
    "status": "active",
-   "last_success_at": "2026-09-07",
+   "last_success_at": "2026-09-22",
    "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
-   "last_probe_at": "2026-09-09"
+   "last_probe_at": "2026-09-22"
   },
   {
    "id": "SRC-010",
@@ -503,6 +503,111 @@
     "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
     "so_tieu_de_luc_do": 17
    }
+  },
+  {
+   "id": "SRC-032",
+   "name": "Scopus (Elsevier) — làn ĐỐI CHIẾU citation database, nối 13/09/2026",
+   "org": "Elsevier",
+   "tier": 2,
+   "domain": [
+    "toàn bộ watchlist"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.elsevier.com/content/search/scopus",
+   "auth_required": true,
+   "terms_ok": true,
+   "terms_note": "SCOPUS_API_KEY bắt buộc thật (ScopusClient chặn cứng khi thiếu). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) vì mỗi lượt gọi tính vào hạn mức trả phí của tổ chức — health-ping định kỳ sẽ tốn quota vô ích. Đối chứng sống dựa vào log lượt quét tuần thật (search_scopus_lane trong surveillance_scan.py) hoặc `run.py test-live scopus` chạy tay.",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-09-13",
+   "known_gap": "Search API không trả abstract đầy đủ và chỉ trả tác giả đầu; KHÔNG tham gia chuỗi 3 tầng kiểm rút bài (giống OpenAlex/Crossref/Semantic Scholar). Đã bật vào làn giám sát tuần 22/09/2026 (search_scopus_lane, TRƯỚC gan_do_tin_cay vì đôi khi có pmid thật). Bị Cloudflare chặn khi VPN cá nhân của bác sĩ đang bật (đối chứng 17/09/2026: PubMed chạy tốt qua CÙNG VPN, chỉ riêng Scopus bị chặn theo IP thoát VPN) — chạy Scopus khi VPN TẮT."
+  },
+  {
+   "id": "SRC-033",
+   "name": "CORE (core.ac.uk) — kho truy cập mở/luận văn/báo cáo xám, nối 22/09/2026",
+   "org": "CORE (Open University, Jisc)",
+   "tier": 2,
+   "domain": [
+    "toàn bộ watchlist"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.core.ac.uk/v3/search/works",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "core.ac.uk tự khai free API access without registration — CORE_API_KEY chỉ tăng nhịp, không bắt buộc (khác Scopus). Bác sĩ đã tự nhập CORE_API_KEY thật 22/09/2026 qua nút bấm đúp 'Nhap Khoa CORE.command' (khoá không đi qua khung chat) + bật ENABLE_CORE=true qua 'Bat Tat SerpApi Du Phong.command' (gõ 'bo'). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) — thử thêm 22/09/2026 rồi phát hiện ngay: probe ẩn danh (không gắn khoá) bị core.ac.uk giới hạn nhịp chặt hơn client có khoá, và một lượt test-live thật ngay trước đó đã đủ khiến probe kế tiếp nhận 429 rồi bị ghi nhầm thành 'degraded'. Đối chứng sống dựa vào log lượt quét tuần thật (search_core_lane) hoặc `run.py test-live core` chạy tay.",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-09-22",
+   "known_gap": "KHÔNG tham gia chuỗi 3 tầng kiểm rút bài trừ khi bản ghi mang pmid thật (trường 'pubmedId' của core.ac.uk — hiếm nhưng có, search_core_lane() giữ nguyên khi có). Đã bật vào làn giám sát tuần 22/09/2026 (search_core_lane, TRƯỚC gan_do_tin_cay cùng vị trí Scopus). Tài liệu Redoc chính thức tự mâu thuẫn camelCase/snake_case ở field response — connector thử cả hai."
+  },
+  {
+   "id": "SRC-034",
+   "name": "Consensus — bậc thang dự phòng (tầng 1), nối phía surveillance 22/09/2026",
+   "org": "Consensus (consensus.app)",
+   "tier": 3,
+   "domain": [
+    "bậc thang dự phòng — chỉ khi thiếu chứng cứ đáng tin cậy"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.consensus.app",
+   "auth_required": true,
+   "terms_ok": true,
+   "terms_note": "CONSENSUS_API_KEY bắt buộc thật, gói Free 30 lượt/tháng DÙNG CHUNG với kết nối MCP của bác sĩ; hệ tự đặt trần riêng CONSENSUS_MAX_CALLS_PER_MONTH=10 + CONSENSUS_MAX_CALLS_PER_RUN=5. KHÔNG thăm sống định kỳ (không có mục DIEM_THAM) — một ping health-check sẽ tốn đúng hạn mức quý giá dành cho câu hỏi thật. KHÔNG phải lane độc lập: chỉ được gọi qua cổng đủ-chứng-cứ evidence_sufficiency.py (app/services/fallback_ladder.py::bo_sung_neu_thieu()), theo đúng nguyên tắc bác sĩ chốt 20/09/2026 \"chỉ khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm\".",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "bậc thang dự phòng (app/services/fallback_ladder.py)",
+   "status": "active",
+   "last_success_at": "2026-09-20",
+   "known_gap": "Chỉ trả 'takeaway' (không phải abstract nguyên văn); nhãn study_type của Consensus chỉ được dùng để HẠ bậc, không được nâng. Nối vào vòng quét tuần qua bo_sung_du_phong_lane() 22/09/2026 — chạy SAU mọi lane chính (Scopus/CORE/preprint/trials) để cổng chấm đúng nhất."
+  },
+  {
+   "id": "SRC-035",
+   "name": "SerpApi Google Scholar — bậc thang dự phòng (tầng 2), nối phía surveillance 22/09/2026",
+   "org": "SerpApi (bóc Google Scholar)",
+   "tier": 3,
+   "domain": [
+    "bậc thang dự phòng — chỉ khi thiếu chứng cứ đáng tin cậy"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://serpapi.com/search.json",
+   "auth_required": true,
+   "terms_ok": true,
+   "terms_note": "SERPAPI_API_KEY bắt buộc thật; gói Free 250 search/tháng, hệ tự đặt trần bền SERPAPI_MAX_CALLS_PER_MONTH=200 (data/raw/_state/serpapi_usage.json) + SERPAPI_MAX_CALLS_PER_RUN=8. MỖI request là MỘT search TÍNH PHÍ — KHÔNG thăm sống định kỳ. KHÔNG phải lane độc lập, cùng cổng đủ-chứng-cứ với Consensus (bo_sung_neu_thieu()).",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "bậc thang dự phòng (app/services/fallback_ladder.py)",
+   "status": "active",
+   "last_success_at": "2026-09-20",
+   "known_gap": "KHÔNG abstract; KHÔNG DOI/PMID chắc chắn (mọi bản ghi phải xác minh qua Crossref/PubMed — đã có ở fallback_ladder.py); ngày chỉ có NĂM, KHÔNG tháng/ngày; study_type LUÔN None trừ tín hiệu preprint. Nối vào vòng quét tuần 22/09/2026 cùng Consensus qua bo_sung_du_phong_lane()."
+  },
+  {
+   "id": "SRC-036",
+   "name": "Epistemonikos — tổng quan hệ thống/SR-MA, đánh giá 22/09/2026",
+   "org": "Epistemonikos Foundation",
+   "tier": 2,
+   "domain": [
+    "tổng quan hệ thống/SR-MA"
+   ],
+   "access": "manual",
+   "endpoint_or_url": "https://api.epistemonikos.org/v1/documents/search",
+   "auth_required": true,
+   "terms_ok": null,
+   "terms_note": "Tài liệu chính thức (api.epistemonikos.org) ghi rõ \"If you want to register your application and try our API, please contact us [dev at epistemonikos.org]\" — KHÔNG có luồng tự-cấp token như CORE. Bác sĩ xác nhận 22/09/2026: KHÔNG khả thi hiện tại (không có đường xin quyền truy cập trong tầm tay), khác SRC-030 (thương mại/cấm cào) — đây là API MIỄN PHÍ nhưng cần một bước xin duyệt qua email mà bác sĩ chọn không theo đuổi lúc này.",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "human",
+   "measured_latency_days": null,
+   "owner": "bác sĩ",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be')."
   }
  ]
 }

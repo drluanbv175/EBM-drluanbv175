@@ -18,6 +18,8 @@ SPEC.loader.exec_module(S)
 # S.search_scopus_lane thành lambda: []. Test kiểm HÀNH VI THẬT của lane phải
 # gọi tham chiếu này, không phải S.search_scopus_lane (đã bị chặn cho mọi test).
 _SEARCH_SCOPUS_LANE_GOC = S.search_scopus_lane
+_SEARCH_CORE_LANE_GOC = S.search_core_lane
+_BO_SUNG_DU_PHONG_LANE_GOC = S.bo_sung_du_phong_lane
 
 import pytest
 
@@ -34,10 +36,18 @@ def _chan_lan_goi_mang(monkeypatch):
     THÊM 13/09/2026 — search_scopus_lane: khác hai làn kia, làn này có thể THẬT SỰ gọi
     mạng (Elsevier) nếu máy đang chạy test đã có ENABLE_SCOPUS=true + SCOPUS_API_KEY
     thật trong .env (đúng tình trạng máy bác sĩ sau khi xác nhận key hoạt động) — phải
-    chặn tuyệt đối, nếu không bộ test "ngoại tuyến" sẽ âm thầm gọi API trả phí thật."""
+    chặn tuyệt đối, nếu không bộ test "ngoại tuyến" sẽ âm thầm gọi API trả phí thật.
+
+    THÊM 22/09/2026 — search_core_lane (miễn phí nhưng vẫn tốn nhịp/hạn mức của
+    core.ac.uk) và bo_sung_du_phong_lane (Consensus + SerpApi Scholar — CẢ HAI ĐỀU
+    TÍNH PHÍ/HẠN MỨC THÁNG RẤT NHỎ: Consensus 10/tháng, SerpApi 200/tháng) — máy bác
+    sĩ đã bật ENABLE_CORE + ENABLE_CONSENSUS + ENABLE_SERPAPI_SCHOLAR thật, nên KHÔNG
+    chặn ở đây sẽ khiến MỖI LẦN chạy `pytest` đốt hạn mức tháng thật một cách âm thầm."""
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
 
 
 def test_watchlist_schema_rejects_duplicate_queries() -> None:
@@ -262,6 +272,247 @@ def test_run_scan_scopus_lane_failure_does_not_fail_topic(monkeypatch):
     assert report["status"] == "PASS"
     assert "làn scopus lỗi" in report["topics"][0]["error"]
     assert len(report["topics"][0]["candidates"]) == 1
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# LÀN CORE (core.ac.uk) — thêm 22/09/2026, khuôn hệt LÀN SCOPUS ở trên
+# ════════════════════════════════════════════════════════════════════════════
+
+class _FakeCoreRecord:
+    """Đứng thay app.sources.base.RawRecord — chỉ cần đúng thuộc tính mà
+    search_core_lane() đọc."""
+
+    def __init__(self, *, pmid="", title="", url="", doi="", publication_date="",
+                journal_or_organization=""):
+        self.pmid = pmid
+        self.title = title
+        self.url = url
+        self.doi = doi
+        self.publication_date = publication_date
+        self.journal_or_organization = journal_or_organization
+
+
+class _FakeCoreClient:
+    """client_factory giả — không gọi mạng, không cần ENABLE_CORE/API key thật."""
+
+    def __init__(self, records=None, loi=None):
+        self._records = records or []
+        self._loi = loi
+        self.use_mock = True  # search_core_lane() phải tự đặt False
+
+    def search(self, query, *, max_results=20, since_date=None):
+        if self._loi:
+            raise self._loi
+        self.dieu_kien_da_goi = {"query": query, "max_results": max_results,
+                                 "since_date": since_date}
+        return self._records
+
+
+def test_search_core_lane_maps_record_fields_to_candidate():
+    rec = _FakeCoreRecord(
+        pmid="", title="Systematic guideline review method", url="",
+        doi="10.1186/1472-6963-9-74", publication_date="2009-01-01",
+        journal_or_organization="BMC Health Services Research",
+    )
+    client = _FakeCoreClient(records=[rec])
+    out = _SEARCH_CORE_LANE_GOC("heart failure", 30, 10, client_factory=lambda: client)
+    assert len(out) == 1
+    c = out[0]
+    assert c.pmid == ""
+    assert c.title == "Systematic guideline review method"
+    assert c.url == "https://doi.org/10.1186/1472-6963-9-74"  # rơi về DOI khi thiếu url
+    assert c.source == "CORE (core.ac.uk)"
+    assert c.journal_or_organization == "BMC Health Services Research"
+    assert c.tang == "core_bo_sung"
+    assert c.rut_bai == "chua_kiem"
+    assert client.use_mock is False
+
+
+def test_search_core_lane_pmid_that_duoc_giu_nguyen_khi_core_tra():
+    """Khác đa số bản ghi CORE (thường không pmid), khi CoreClient trả pmid thật
+    (trường 'pubmedId' của core.ac.uk) thì Candidate phải giữ đúng giá trị đó —
+    để gan_do_tin_cay() kiểm rút bài được, không bị rơi vào nhóm 'chua_kiem' vĩnh viễn."""
+    rec = _FakeCoreRecord(pmid="12345678", title="X", url="https://core.ac.uk/x")
+    client = _FakeCoreClient(records=[rec])
+    out = _SEARCH_CORE_LANE_GOC("q", 30, 10, client_factory=lambda: client)
+    assert out[0].pmid == "12345678"
+
+
+def test_search_core_lane_passes_since_date_and_capped_retmax():
+    client = _FakeCoreClient(records=[])
+    _SEARCH_CORE_LANE_GOC("q", days=10, retmax=999, client_factory=lambda: client)
+    assert client.dieu_kien_da_goi["max_results"] == 20  # trần an toàn, không phải 999
+    assert client.dieu_kien_da_goi["since_date"] is not None
+
+
+def test_run_scan_merges_core_candidate_and_dedupes_by_pmid(monkeypatch):
+    rec_trung = _FakeCoreRecord(pmid="777", title="Bản trùng", url="https://core/1")
+    rec_moi = _FakeCoreRecord(pmid="", title="Bản mới từ CORE", url="https://core/2")
+    monkeypatch.setattr(S, "search_core_lane",
+                        lambda *a, **k: [S.Candidate(r.pmid, "2026", r.title, r.url,
+                                                     source="CORE (core.ac.uk)",
+                                                     tang="core_bo_sung")
+                                        for r in (rec_trung, rec_moi)])
+
+    def fake_search(_q, _d, _m):
+        return ["777"]
+
+    def fake_summary(_ids):
+        return [S.Candidate("777", "2026", "Same paper", "https://pubmed.ncbi.nlm.nih.gov/777/")]
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    titles = [c["title"] for c in report["topics"][0]["candidates"]]
+    assert "Bản mới từ CORE" in titles
+    assert titles.count("Bản trùng") == 0
+    assert report["candidate_count"] == 2
+
+
+def test_run_scan_core_lane_failure_does_not_fail_topic(monkeypatch):
+    def loi(*a, **k):
+        raise RuntimeError("lỗi mạng CORE")
+    monkeypatch.setattr(S, "search_core_lane", loi)
+
+    def fake_search(_q, _d, _m):
+        return ["1"]
+
+    def fake_summary(_ids):
+        return [S.Candidate("1", "2026", "T", "https://pubmed.ncbi.nlm.nih.gov/1/")]
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    assert "làn core lỗi" in report["topics"][0]["error"]
+    assert "core" in report["topics"][0]["lan_phu_loi"]
+    assert len(report["topics"][0]["candidates"]) == 1
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar) — thêm 22/09/2026
+# ════════════════════════════════════════════════════════════════════════════
+
+class _FakeExtraRecord:
+    """Đứng thay app.sources.base.RawRecord cho bản ghi TRẢ VỀ từ bậc thang."""
+
+    def __init__(self, *, pmid="", title="", url="", doi="", publication_date="",
+                journal_or_organization="", source="consensus"):
+        self.pmid = pmid
+        self.title = title
+        self.url = url
+        self.doi = doi
+        self.publication_date = publication_date
+        self.journal_or_organization = journal_or_organization
+        self.source = source
+
+
+def test_bo_sung_du_phong_lane_khong_goi_khi_bo_sung_fn_tra_rong():
+    """Cổng đủ-chứng-cứ ĐÓNG (bo_sung_neu_thieu tự quyết định 'đủ rồi') ⇒ hàm
+    này CHỈ truyền tiếp kết quả rỗng, không tự bịa thêm gì."""
+    goi = {}
+
+    def bo_sung_fn_gia(query, area, records, *, max_results):
+        goi["query"] = query
+        goi["so_ban_ghi_hien_co"] = len(records)
+        return [], {}
+
+    ra, ghi_chu = _BO_SUNG_DU_PHONG_LANE_GOC(
+        "hf guideline", [S.Candidate("1", "2026", "T", "https://x", source="PubMed")],
+        10, bo_sung_fn=bo_sung_fn_gia)
+    assert ra == []
+    assert ghi_chu == ""
+    assert goi["query"] == "hf guideline"
+    assert goi["so_ban_ghi_hien_co"] == 1  # đã CHUYỂN ĐÚNG unique_hien_co sang RawRecord
+
+
+def test_bo_sung_du_phong_lane_map_ban_ghi_moi_dung_tang_va_nguon():
+    rec = _FakeExtraRecord(title="Bài từ Consensus", url="https://doi.org/10.1/x",
+                           source="consensus")
+
+    def bo_sung_fn_gia(query, area, records, *, max_results):
+        return [rec], {}
+
+    ra, ghi_chu = _BO_SUNG_DU_PHONG_LANE_GOC("q", [], 10, bo_sung_fn=bo_sung_fn_gia)
+    assert len(ra) == 1
+    assert ra[0].title == "Bài từ Consensus"
+    assert ra[0].tang == "du_phong_bac_thang"
+    assert ra[0].source == "Dự phòng: consensus"
+    assert ra[0].rut_bai == "chua_kiem"
+    assert ghi_chu == ""
+
+
+def test_bo_sung_du_phong_lane_bao_loi_noi_bo_qua_ghi_chu():
+    """`tom_tat['loi_noi_bo']` (bo_sung_neu_thieu tự bắt exception nội bộ, KHÔNG
+    raise) phải tới được ghi_chu để run_scan() ghi vào lan_phu_loi — nếu không,
+    lỗi bậc thang sẽ CHÌM hoàn toàn, khác hẳn cách các làn khác báo lỗi."""
+    def bo_sung_fn_gia(query, area, records, *, max_results):
+        return [], {"loi_noi_bo": "RuntimeError"}
+
+    ra, ghi_chu = _BO_SUNG_DU_PHONG_LANE_GOC("q", [], 10, bo_sung_fn=bo_sung_fn_gia)
+    assert ra == []
+    assert "RuntimeError" in ghi_chu
+
+
+def test_run_scan_du_phong_lane_ket_qua_duoc_gop_va_dedupe(monkeypatch):
+    rec_moi = _FakeExtraRecord(pmid="", title="Bài dự phòng mới", url="https://doi.org/10.1/y",
+                               source="serpapi_scholar")
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane",
+                        lambda *a, **k: ([S.Candidate("", "2026", rec_moi.title, rec_moi.url,
+                                                      source=f"Dự phòng: {rec_moi.source}",
+                                                      tang="du_phong_bac_thang")], ""))
+
+    def fake_search(_q, _d, _m):
+        return ["1"]
+
+    def fake_summary(_ids):
+        return [S.Candidate("1", "2026", "T", "https://pubmed.ncbi.nlm.nih.gov/1/")]
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    titles = [c["title"] for c in report["topics"][0]["candidates"]]
+    assert "Bài dự phòng mới" in titles
+    assert report["candidate_count"] == 2
+
+
+def test_run_scan_du_phong_lane_loi_khong_lam_hong_chu_de(monkeypatch):
+    def loi(*a, **k):
+        raise RuntimeError("lỗi bậc thang")
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", loi)
+
+    def fake_search(_q, _d, _m):
+        return ["1"]
+
+    def fake_summary(_ids):
+        return [S.Candidate("1", "2026", "T", "https://pubmed.ncbi.nlm.nih.gov/1/")]
+
+    report = S.run_scan([{"topic": "A", "query": "a"}], days=30, max_results=5,
+                        search_fn=fake_search, summarize_fn=fake_summary)
+    assert report["status"] == "PASS"
+    assert "làn du_phong_bac_thang lỗi" in report["topics"][0]["error"]
+    assert "du_phong_bac_thang" in report["topics"][0]["lan_phu_loi"]
+
+
+def test_markdown_report_core_va_du_phong_khong_bi_gan_nham_moi_vao_pubmed():
+    """core_bo_sung/du_phong_bac_thang phải nằm trong danh sách «ngoài PubMed» của
+    markdown_report — cùng luật đã áp cho scopus_bo_sung."""
+    report = {
+        "days": 30, "status": "PASS", "successful_topics": 1, "failed_topics": 0,
+        "candidate_count": 2, "disclaimer": S.DISCLAIMER,
+        "topics": [{
+            "topic": "A", "query": "a", "status": "PASS", "error": "",
+            "candidates": [
+                S.asdict(S.Candidate(pmid="", publication_date="2026", title="Từ CORE",
+                                     url="https://core/1", source="CORE (core.ac.uk)",
+                                     tang="core_bo_sung")),
+                S.asdict(S.Candidate(pmid="", publication_date="2026", title="Từ dự phòng",
+                                     url="https://doi.org/10.1/z", source="Dự phòng: consensus",
+                                     tang="du_phong_bac_thang")),
+            ],
+        }],
+    }
+    md = S.markdown_report(report)
+    assert "mới vào PubMed" not in md
 
 
 def test_markdown_report_scopus_candidate_not_mislabeled_as_new_in_pubmed():
