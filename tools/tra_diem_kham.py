@@ -25,9 +25,25 @@ phủ ≥70% khối lượng IDF VÀ ≥70% số token (hoặc ≥2 token đặc
 «tăng huyết áp», «lợi tiểu») phải KỀ NHAU ở tiêu đề thẻ — không thì «đau»+«ban đầu» ở thẻ đau ngực trả lời câu hỏi đau đầu;
 tiền tố đổi nghĩa «tiền/hậu» luôn phải kề. Thẻ cùng khuyến cáo khác quyết định KHÔNG bị gộp âm thầm (đặt cờ xung đột).
 Không đủ tin cậy ⇒ «CHƯA GIÁM SÁT», KHÔNG bao giờ trả thẻ gần đúng.
-GIỚI HẠN ĐÃ BIẾT (đo bằng bộ vàng `quality/eval/tra-diem-kham/bo-vang.json`, mục `da_biet_chua_dat`): thiên về ĐỘ CHÍNH XÁC hơn độ
-phủ — một số câu CÓ thẻ đúng vẫn ra «chưa giám sát» (bác sĩ tra tay, không nguy hiểm); đồng âm tiếng Việt («hạ đường huyết» =
-hạ-đường-huyết vs thuốc-hạ-đường-huyết) và câu hỏi nhiều ý vẫn có thể ra thẻ gần chủ đề — luôn đọc TIÊU ĐỀ thẻ trước khi dựa vào.
+VÁ 22/09/2026 (phản biện độc lập VÒNG 2, sau khi #1-#3 đã commit) — thêm 6 cơ chế nữa, mỗi cái có tái hiện thật trên kho 1.100
+thẻ: (a) PHỦ ĐỊNH — từ đứng ngay sau «không/chưa» (hoặc cách một từ nối «có/bị/mắc») ở TIÊU ĐỀ thẻ mà câu hỏi KHÔNG phủ định
+cùng từ đó bị loại khỏi phần khớp («KHÔNG lọc máu» không trả lời câu hỏi về người ĐANG lọc máu; «…KHI KHÔNG CÓ HEN» không trả
+lời câu hỏi về hen); (b) VIẾT TẮT IN HOA 2-4 chữ đòi khớp ĐÚNG DẠNG HOA trong tiêu đề gốc (case-sensitive) — phân biệt «DM»
+(tiếng Anh) khỏi «ĐM» (chữ Đ khác D), «MI» khỏi «mì», «PSA» khỏi «PsA»; (c) TIỀN TỐ «u» (khối u) như «tiền/hậu» — «u gan»
+không còn ra thẻ xơ gan chỉ vì «u» bị bỏ như mã lẻ; (d) LUẬT «MỘT VẾ CỦA TỪ GHÉP TRƯỢT» (vd «phổi» của «viêm phổi») nay áp
+cho MỌI độ dài câu, không chỉ ≤3 token — có bảng miễn trừ ĐÓNG cho từ ghép ĐỒNG NGHĨA («chống đông»≈«kháng đông») để không
+loại oan; (e) TOKEN NGẮN GÕ KHÔNG DẤU MƠ HỒ — kho có ≥2 dạng có dấu cạnh tranh (không dạng nào áp đảo ≥70%) thì không dùng
+làm bằng chứng riêng lẻ («ho» → hô/hỗ/hở, không có "ho"=cough thật trong kho); (f) MỎ NEO QUÁ PHỔ BIẾN sau khi loại token mơ
+hồ — không bám vào từ còn lại nếu nó cũng quá chung («ho ra máu» sau khi loại «ho» chỉ còn «máu», quá phổ biến để làm neo).
+Gấp dấu nay TÁCH-TỪ-TRƯỚC-RỒI-MỚI-GẤP (không gấp cả chuỗi rồi tách) — ký hiệu/phân số (℃,½,№…) từng làm 3 mảng song song
+LỆCH ĐỘ DÀI, xoá sạch thông tin dấu («đau chân ℃» từng ra thẻ đau ngực); nay không còn lệch được về cấu trúc.
+GIỚI HẠN THẬT CÒN LẠI, KHÔNG SỬA ĐƯỢC BẰNG LUẬT TỪ VỰNG (đo bằng bộ vàng `quality/eval/tra-diem-kham/bo-vang.json`, mục
+`da_biet_chua_dat`) — thiên về ĐỘ CHÍNH XÁC hơn độ phủ (bác sĩ tra tay là an toàn, không nguy hiểm) — và ĐA NGHĨA THẬT của
+tiếng Việt: «lá» trong «thuốc lá»(điếu thuốc) và «hai lá»(van tim) là CÙNG MỘT TỪ, không phải lỗi gấp dấu; «già» trong «người
+già» và «ruột già» cũng vậy; «hạ kali máu» có thể là TÌNH TRẠNG (hạ kali) hay TÁC DỤNG THUỐC (thuốc làm hạ kali, tức điều trị
+TĂNG kali) — cùng cụm từ, khác vai trò ngữ pháp; và một số fold KHÔNG có dạng có dấu cạnh tranh trong kho («sốt» không hề
+xuất hiện, chỉ có «sót» — cơ chế mơ hồ cần ≥2 dạng để so sánh nên không bắt được). Muốn giải triệt để cần truy hồi ngữ nghĩa
+(embedding + nhãn chủ đề bác sĩ duyệt), không phải thêm luật từ vựng — xem `audit/12-danh-gia-hoan-thien-he-thong_2026-09-21.md`.
 
 Dùng:  python3 tools/tra_diem_kham.py "copd đợt cấp bộ ba"
        python3 tools/tra_diem_kham.py --demo   # 5 câu mô phỏng + đo tốc độ
@@ -65,6 +81,11 @@ def _bo_dau(s: str) -> str:
 
 
 _RE_TU = re.compile(r"\w+", re.UNICODE)
+# Ký hiệu/phân số ĐƠN KÝ TỰ (℃ ℉ № ™ ® © ‰ ½ ¼ ¾ ⅓ ⅔ ⅛ ⅜ ⅝ ⅞) là \w (Unicode coi chúng "alnum") nên `_RE_TU` bắt được, nhưng
+# gấp dấu (NFKD) làm chúng RÃ RA thành CHỮ SỐ/CHỮ CÁI rác («½»→«1⁄2») — không sai lệch số token nữa (đã sửa ở `_tach`/
+# `_phan_tich_cau_hoi`, tách-rồi-gấp), nhưng vẫn để lại một token vô nghĩa có IDF cao (hiếm) VÀ có thể bị chọn làm mỏ neo,
+# khiến MỌI thẻ bị loại (không thẻ nào chứa chuỗi rác đó). Bỏ hẳn cho sạch — đây là bệnh án hay gặp («sốt 39℃»).
+_RE_KY_HIEU_BO = re.compile("[℃℉№™®©‰½¼¾⅓⅔⅛⅜⅝⅞]")
 
 
 # «típ / tuýp / type 2» là MỘT từ ở y văn Việt (đái tháo đường TÝP 2 / type 2) — gộp để câu hỏi «tuýp 2» không rơi «ngoài kho».
@@ -91,8 +112,14 @@ def _gop_cum(tok: list[str]) -> list[str]:
 
 
 def _tach(s: str) -> list[str]:
-    """Các TỪ NGUYÊN đã gấp dấu (không phải chuỗi con), đã gộp đồng nghĩa và cụm cố định."""
-    return _gop_cum([_DONG_NGHIA.get(t, t) for t in _RE_TU.findall(_bo_dau(s))])
+    """Các TỪ NGUYÊN đã gấp dấu (không phải chuỗi con), đã gộp đồng nghĩa và cụm cố định.
+
+    TÁCH TỪ trên NFC TRƯỚC, rồi mới gấp dấu TỪNG TỪ — không gấp dấu cả chuỗi rồi tách lại. Gấp-trước-tách từng làm LỆCH SỐ
+    TOKEN với `_tach_tho`/dạng-hoa khi một ký hiệu (℃, ½, №, ™…) NFKD ra thêm chữ cái mà bản NFC không tách ra (phản biện
+    22/09: «đau chân ℃» → 3 mảng song song có độ dài khác nhau ⇒ MẤT TOÀN BỘ thông tin dấu, «chân» lọt thành «chẩn»/từ đệm).
+    Tách-rồi-gấp loại bỏ khả năng này TẬN GỐC: số token luôn bằng số token của `_tach_tho`/dạng-hoa vì cả ba đều tách từ
+    CÙNG một lượt `_RE_TU.findall` trên CÙNG chuỗi NFC — gấp dấu chỉ đổi NỘI DUNG từng token, không thể đổi SỐ token."""
+    return _gop_cum([_DONG_NGHIA.get(_bo_dau(t), _bo_dau(t)) for t in _RE_TU.findall(unicodedata.normalize("NFC", s or ""))])
 
 
 def _tach_tho(s: str) -> list[str]:
@@ -119,12 +146,21 @@ _TIEN_TO_DOI_NGHIA = frozenset({"tien", "hau"})
 # ra thẻ đau NGỰC, «ung thư da» ra thẻ ung thư DẠ dày (phản biện độc lập 21/09). Quy tắc: gõ CÓ dấu ⇒ theo dạng có dấu;
 # gõ KHÔNG dấu ⇒ chỉ giữ các từ ở `_GIU_KHI_KHONG_DAU` (thà thiếu độ phủ còn hơn trả sai họ).
 _Y_KHOA_CO_DAU = {"co": {"co"}, "nao": {"não"}, "can": {"cân"}, "chan": {"chân"}, "da": {"da", "đa"}, "la": {"lá"}, "thuong": {"thượng"},
-                  "thap": {"thấp"}}
-_GIU_KHI_KHONG_DAU = frozenset({"nao", "da", "thap"})
+                  "thap": {"thấp"}, "doan": {"đoạn"}, "tu": {"tử"}, "gia": {"già"}}
+# Từ ghép «đoạn»/«đoán» gấp cùng thành «doan» (khác dấu, không khác chữ cái) — «giai ĐOẠN 3» khác «chẩn ĐOÁN»; «TỬ» trong
+# «đột tử»/«tương tác thuốc gây độc TÍNH»… khác «tự»/«từ»; «GIÀ» trong «người già»/«suy tim giai đoạn cuối» khác «đã».
+# MỞ RỘNG 22/09/2026 (phản biện độc lập vòng 2): trước chỉ 3 từ (nao/da/thap) được luôn giữ khi gõ KHÔNG DẤU cả câu — quá
+# hẹp, «dau chan» (không dấu) vẫn mất «chân» thành từ đệm dù đã bảo vệ dạng CÓ dấu. Nay: TOÀN BỘ từ trong _Y_KHOA_CO_DAU đều
+# không bao giờ bị coi là từ đệm dù gõ không dấu — thà mất độ phủ (an toàn) còn hơn để một âm tiết rơi thành mồi nhiễu.
+_GIU_KHI_KHONG_DAU = frozenset(_Y_KHOA_CO_DAU)
 # Hướng ngược nhau: «hạ kali máu» KHÔNG được ra thẻ «tăng kali máu».
 _DOI_NGUOC = {"tang": {"ha", "giam"}, "ha": {"tang"}, "giam": {"tang"}}
 _NGUONG_TIEU_DE = 0.5      # khối lượng IDF khớp Ở TIÊU ĐỀ ≥50% tổng — token chỉ khớp ở khuyến cáo không đủ nêu chủ đề
 _TU_PHAN_DO = frozenset({"tip", "doan", "stage", "cap", "nhom", "loai", "do", "he", "class"})
+# Cặp từ ghép ĐỒNG NGHĨA (khác nửa đầu, cùng nghĩa lâm sàng): «chống đông»≈«kháng đông», «chống viêm»≈«kháng viêm» — một thẻ
+# viết theo dạng NÀY vẫn phải trả lời câu hỏi viết theo dạng KIA. Danh sách ĐÓNG, ngắn, chỉ thêm khi chắc chắn đồng nghĩa
+# (khác «cường/suy giáp» — đổi nửa đầu ĐỔI HẲN bệnh, không phải đồng nghĩa).
+_TU_GHEP_DONG_NGHIA = {("chong", "dong"): ("khang", "dong"), ("chong", "viem"): ("khang", "viem")}
 _VIET_TAT_HOA = {"RA": ["viem", "khop", "dang", "thap"]}     # «RA» chỉ nhận khi VIẾT HOA (còn «ra» là từ đệm)
 
 
@@ -145,6 +181,30 @@ def _la_tu_chung(fold: str, raw: str, co_dau: bool = False) -> bool:
     return True
 _VIET_TAT = {"tha": ["tang", "huyet", "ap"], "dtd": ["dai", "thao", "duong"], "nmct": ["nhoi", "mau", "co", "tim"]}
 
+# PHỦ ĐỊNH (22/09/2026, phản biện độc lập vòng 2): tiêu đề thẻ hay dùng «KHÔNG/CHƯA X» để nêu điều KHÔNG làm hoặc tiêu chí
+# LOẠI TRỪ («…khi KHÔNG CÓ HEN», «…KHÔNG lọc máu»), còn câu hỏi tại điểm khám thường mô tả QUẦN THỂ KHẲNG ĐỊNH («đang lọc
+# máu», «đã lọc máu»). Bag-of-words cũ không phân biệt được «X» (chủ đề chính) với «không X»/«chưa X» (điều bị loại trừ) —
+# thẻ hướng dẫn cho quần thể KHÔNG lọc máu trả lời câu hỏi về quần thể ĐANG lọc máu là SAI QUẦN THỂ ở cấp guideline.
+# `_LINK_TU`: từ nối một-bước giữa marker và danh từ thật («không CÓ hen», «chưa CÓ chỉ định») — bỏ qua để tới đúng đích.
+_PHU_DINH_MARKER = frozenset({"khong", "chua"})
+_LINK_TU = frozenset({"co", "bi", "mac"})
+
+
+def _phu_dinh_tu_chuoi(seq: list[str]) -> set[str]:
+    """Từ đứng ngay sau (hoặc cách một `_LINK_TU`) một marker phủ định trong `seq` — dùng CHUNG cho tiêu đề thẻ lẫn câu hỏi."""
+    ra: set[str] = set()
+    for i, w_ in enumerate(seq):
+        if w_ not in _PHU_DINH_MARKER:
+            continue
+        if i + 1 >= len(seq):
+            continue
+        if seq[i + 1] in _LINK_TU and i + 2 < len(seq):
+            ra.add(seq[i + 2])
+        else:
+            ra.add(seq[i + 1])
+    return ra
+
+
 _CHI_MUC: dict = {"khoa": None, "du_lieu": None}
 
 
@@ -159,19 +219,28 @@ def _dung_chi_muc(cards: list[dict]) -> dict:
     df: Counter = Counter()
     df_cap: Counter = Counter()
     df_cap2: Counter = Counter()
+    # BIẾN THỂ DẤU toàn kho (22/09/2026): fold → SỐ LẦN mỗi dạng CÓ DẤU xuất hiện («quan» → {quản:65,quan:46,quần:10,quán:6}).
+    # Đếm (không chỉ tập hợp) để phân biệt MƠ HỒ THẬT (không dạng nào áp đảo, vd «ho»→hô/hỗ/hở gần đều nhau, «hô» KHÔNG
+    # BAO GIỜ đúng nghĩa «ho») khỏi lệch-tần-số-vô-hại (vd «hen»→hen:8/hẹn:2 — «hen» rõ ràng là dạng thường gặp, đo 22/09
+    # trên kho thật: chặn nhầm cả «hen»/«gut» sẽ mất độ phủ cho đúng câu hỏi phổ biến nhất) — xem `tra_chi_tiet`.
+    bien_the_dau: dict[str, Counter] = {}
     the: list[dict] = []
     for c in cards:
         tieu_de = f"{c.get('topic', '')} {c.get('pico_question', '')}"
         dai = _tach(tieu_de)
         rec = set(_tach(str(c.get("recommendation") or "")))
         the.append({"chinh": set(dai), "cap": set(zip(dai, dai[1:])), "cap2": set(zip(dai, dai[2:])), "rec": rec,
-                    "tho": set(_tach_tho(tieu_de)), "rec_tho": set(_tach_tho(str(c.get("recommendation") or "")))})
+                    "tho": set(_tach_tho(tieu_de)), "rec_tho": set(_tach_tho(str(c.get("recommendation") or ""))),
+                    "phu_dinh": _phu_dinh_tu_chuoi(dai), "tieu_de_goc": tieu_de})
         df.update(set(dai) | rec)
         df_cap.update(set(zip(dai, dai[1:])))
         df_cap2.update(set(zip(dai, dai[2:])))
+        for goc_tu in _RE_TU.findall(unicodedata.normalize("NFC", tieu_de)):
+            bien_the_dau.setdefault(_bo_dau(goc_tu), Counter())[goc_tu.lower()] += 1
     n = max(1, len(cards))
     idf = {t: math.log((n + 1) / (k + 0.5)) + 1.0 for t, k in df.items()}
-    du_lieu = {"df": df, "df_cap": df_cap, "df_cap2": df_cap2, "idf": idf, "idf_toi_da": math.log((n + 1) / 0.5) + 1.0, "the": the}
+    du_lieu = {"df": df, "df_cap": df_cap, "df_cap2": df_cap2, "idf": idf, "idf_toi_da": math.log((n + 1) / 0.5) + 1.0,
+               "the": the, "bien_the_dau": bien_the_dau}
     _CHI_MUC.update({"khoa": khoa, "du_lieu": du_lieu})
     return du_lieu
 
@@ -185,17 +254,15 @@ def _phan_tich_cau_hoi(cau_hoi: str) -> dict:
     mọi dạng. Hai token cùng gấp-dấu nhưng khác dạng có dấu («đau đầu») là HAI token — bản cũ gộp thành một.
     Mã 1 ký tự/số đứng ngay sau một từ nội dung («viêm gan C», «vitamin D», «típ 2») là ĐỊNH DANH — bản cũ bỏ mọi token <2 ký
     tự nên «viêm gan C» ra thẻ viêm gan B; nay định danh phải kề từ đứng trước ở tiêu đề thẻ."""
-    nfc = unicodedata.normalize("NFC", cau_hoi or "")
-    hoa = _RE_TU.findall(nfc)
-    tho = _tach_tho(cau_hoi)
-    dau = [_DONG_NGHIA.get(t, t) for t in _RE_TU.findall(_bo_dau(cau_hoi))]
-    khop_do_dai = len(tho) == len(dau) == len(hoa)
-    if not khop_do_dai:                      # chuỗi Unicode lạ làm lệch chỉ số ⇒ mất thông tin dấu, KHÔNG mất token
-        tho = list(dau)
-        hoa = list(dau)
+    # TÁCH TỪ MỘT LẦN trên NFC, rồi suy ba dạng song song từ CÙNG danh sách token — đảm bảo LUÔN cùng độ dài (xem `_tach`).
+    cau_hoi = _RE_KY_HIEU_BO.sub(" ", cau_hoi or "")
+    hoa = _RE_TU.findall(unicodedata.normalize("NFC", cau_hoi))
+    tho = [_DONG_NGHIA_THO.get(t.lower(), t.lower()) for t in hoa]
+    dau = [_DONG_NGHIA.get(_bo_dau(t), _bo_dau(t)) for t in hoa]
     chuoi: list[str] = []
     ket: list[tuple[str, str | None]] = []
     dinh_danh: list[tuple[str, str]] = []
+    hoa_viet_tat: dict[str, str] = {}   # fold → dạng VIẾT HOA nguyên văn (DM, MI, PSA…) — đòi khớp ĐÚNG DẠNG ở thẻ, không lẫn chữ thường
     co_dau = any(a != b for a, b in zip(tho, dau))
     bo_nhap_nhang = False       # đã bỏ một từ nhập nhằng gõ trần («chan», «can») — nội dung còn lại có thể là nửa câu
     k = 0
@@ -231,6 +298,14 @@ def _phan_tich_cau_hoi(cau_hoi: str) -> dict:
                 bo_nhap_nhang = True
             k += 1
             continue
+        # TIỀN TỐ «u» (khối u) — như «tiền/hậu»: một CHỮ đứng TRƯỚC danh từ cơ quan, không phải mã đứng SAU. «u gan»/«u phổi»/
+        # «u tuyến giáp»/«u não» trước đây bỏ «u» rồi để «gan/phổi/giáp/não» trần khớp bất kỳ thẻ nào chứa từ đó (xơ gan, viêm
+        # phổi, suy giáp, nhồi máu não…) — CỜ ĐỎ ngoại trú nghiêm trọng đáng ra phải AN TOÀN hơn (phản biện 22/09).
+        if t == "u" and tho[k] == "u" and k + 1 < len(dau) and dau[k + 1] not in _TU_CHUNG:
+            dinh_danh.append(("u", dau[k + 1]))
+            chuoi.append("u")
+            k += 1
+            continue
         if len(tt) == 1 or tt.isdigit():
             # mã định danh: chỉ nhận khi ngay trước là một từ NỘI DUNG (không phải từ đệm)
             # raw == fold: «ở» (fold «o») là từ đệm, không phải mã «O»; chỉ mã GÕ ĐÚNG ký tự ASCII mới là định danh
@@ -245,9 +320,15 @@ def _phan_tich_cau_hoi(cau_hoi: str) -> dict:
         # từ nhập nhằng gõ ĐÚNG ASCII («da» = da, «nao»…) đòi khớp CHÍNH dạng đó ở thẻ: «ung thư da» không được ra «ung thư dạ dày»
         raw = tho[k] if (len(tt) <= 4 and (tho[k] != tt or tt in _Y_KHOA_CO_DAU)) else None
         ket.append((tt, raw))
+        # VIẾT TẮT IN HOA (DM, MI, PSA, HA…) — chỉ «RA» có bảng bung riêng; mọi viết-tắt-hoa 2-4 chữ KHÁC đều đi qua đường
+        # gấp-dấu thường nên trùng chữ THƯỜNG đồng âm («DM»≈«ĐM», «MI»≈«mì», «PSA»≈«PsA», «HA»≈«hạ»). Ghi lại DẠNG HOA NGUYÊN
+        # VĂN; `tra_chi_tiet` đòi khớp ĐÚNG chuỗi hoa đó (phân biệt hoa/thường) trong tiêu đề thẻ trước khi nhận (phản biện 22/09).
+        if 2 <= len(hoa[k]) <= 4 and hoa[k].isupper() and hoa[k].isalpha():
+            hoa_viet_tat[tt] = hoa[k]
         k += 1
     return {"tk": list(dict.fromkeys(ket)), "chuoi": chuoi, "dinh_danh": list(dict.fromkeys(dinh_danh)),
-            "bo_nhap_nhang": bo_nhap_nhang}
+            "bo_nhap_nhang": bo_nhap_nhang, "so_lan": Counter(t for t, _ in ket), "hoa_viet_tat": hoa_viet_tat,
+            "phu_dinh": _phu_dinh_tu_chuoi(dau)}
 
 
 def _duong_dan_vuot_qua():
@@ -301,9 +382,34 @@ def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
     # NGOÀI PHẠM VI: từ đặc hiệu ≥4 ký tự KHÔNG có ở BẤT KỲ thẻ nào toàn kho (vd «dengue») ⇒ chủ đề chưa được giám sát.
     if any(len(t) >= 4 and t not in df for t in folds):
         return [], "khong_co"
+    def _mo_ho(f: str) -> bool:
+        """MƠ HỒ SAU KHI GẤP DẤU: kho có ≥2 dạng CÓ dấu cho fold này mà KHÔNG dạng nào áp đảo rõ rệt (dạng thứ hai chiếm
+        ≥30% tổng và ≥3 lần) — «ho»→hô 22/hỗ 12/hở 8 (không áp đảo, VÀ «ho»=cough không hề có mặt) là MƠ HỒ THẬT; «hen»→
+        hen 8/hẹn 2 (25%, «hen» áp đảo) KHÔNG mơ hồ — chặn cả hai như nhau sẽ mất độ phủ cho câu hỏi phổ biến nhất."""
+        bt = ci["bien_the_dau"].get(f)
+        if not bt or len(bt) < 2:
+            return False
+        top = bt.most_common()
+        return top[1][1] >= 3 and top[1][1] / top[0][1] >= 0.3
+
+    # Token ngắn (≤4 ký tự) gõ KHÔNG dấu, KHÔNG lặp lại trong câu hỏi (loại «dau dau»=«đau đầu» viết liền — lặp lại là bằng
+    # chứng cụm thật), mà MƠ HỒ theo `_mo_ho` — không biết người hỏi muốn dạng nào. Nếu MỌI token nội dung của câu hỏi đều
+    # mơ hồ kiểu này thì không đủ căn cứ trả thẻ nào — một dạng SAI có thể là cờ đỏ thật bị bỏ lỡ («ho ra máu» ra thẻ «HỒ sơ
+    # chảy máu» của thuốc kháng đông thay vì «chưa giám sát»). Phản biện độc lập 22/09.
+    mo_ho = frozenset(f for f, r in tk_nd
+                      if r is None and len(f) <= 4 and pt["so_lan"].get(f, 1) < 2 and _mo_ho(f))
+    if mo_ho and set(folds) <= mo_ho:
+        return [], "khong_co"
     w = {t: idf.get(t, ci["idf_toi_da"]) for t in folds}          # từ chưa từng thấy (ngắn): nặng nhất và KHÔNG thể khớp
     tong = sum(w.values())
-    neo = max(folds, key=lambda t: w[t])                            # token hiếm nhất = mỏ neo chủ đề
+    _neo_uu_tien = [t for t in folds if t not in mo_ho] or folds     # mỏ neo KHÔNG ưu tiên token mơ hồ (nếu còn lựa chọn khác)
+    neo = max(_neo_uu_tien, key=lambda t: w[t])                     # token hiếm nhất = mỏ neo chủ đề
+    # MỎ NEO QUÁ PHỔ BIẾN SAU KHI ĐÃ LOẠI TOKEN MƠ HỒ: câu hỏi có từ mơ hồ bị loại khỏi vai trò neo (như «ho» trong «ho ra
+    # máu»), và token còn lại làm neo cũng QUÁ CHUNG (ngưỡng TUYỆT ĐỐI, đo trên kho thật 1.100 thẻ: «máu»/«tim»/«quan» đều
+    # >150 thẻ) — không đủ căn cứ. CHỈ áp khi có mo_ho (không áp đại trà: «đau» một mình cũng >150 thẻ nhưng LÀ triệu chứng
+    # chính đáng, không phải hệ quả của việc loại bỏ một token mơ hồ) — phản biện 22/09.
+    if mo_ho and df.get(neo, 0) > 150:
+        return [], "khong_co"
     dac_hieu = math.log((n + 1) / (0.03 * n + 0.5)) + 1.0           # idf của token có mặt ở ≤3% số thẻ
     tap_nd = set(folds)
     goc = pt["chuoi"]
@@ -325,6 +431,16 @@ def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
             return tk[0] in tap and (tk[1] is None or tk[1] in tap_tho)
         kc = [tk for tk in tk_nd if khop(tk, t["chinh"], t["tho"])]
         kr = [tk for tk in tk_nd if tk not in kc and khop(tk, t["rec"], t["rec_tho"])]
+        # PHỦ ĐỊNH: từ được TIÊU ĐỀ nêu ngay sau «không/chưa» (hoặc cách một từ nối) mà câu hỏi KHÔNG phủ định từ đó — thẻ
+        # đang dùng từ này để nói ĐIỀU LOẠI TRỪ/KHÔNG LÀM, không phải chủ đề chính («…khi KHÔNG CÓ HEN» không trả lời câu hỏi
+        # về HEN; «KHÔNG lọc máu» không trả lời câu hỏi về người ĐANG lọc máu). Không đối xứng: mệnh đề phủ định hợp lệ
+        # của CHÍNH thuốc/can thiệp đang hỏi («KHÔNG dùng aspirin…») không bị mất vì marker đứng ngay trước từ ĐỘNG TỪ
+        # («dùng»), không phải trước chủ đề, nên chủ đề vẫn giữ nguyên trong kc (phản biện 22/09).
+        kc = [tk for tk in kc if not (tk[0] in t["phu_dinh"] and tk[0] not in pt["phu_dinh"])]
+        # VIẾT TẮT IN HOA: đòi khớp ĐÚNG chuỗi hoa trong TIÊU ĐỀ GỐC (case-sensitive, biên từ) — phân biệt «DM» (tiếng Anh)
+        # khỏi «ĐM» (động mạch, dùng chữ Đ khác D), «MI» khỏi «mì», «PSA» khỏi «PsA» (khác hoa/thường).
+        kc = [tk for tk in kc if tk[0] not in pt["hoa_viet_tat"]
+              or re.search(r"\b" + re.escape(pt["hoa_viet_tat"][tk[0]]) + r"\b", t["tieu_de_goc"])]
         if not kc:
             continue
         khoi_tieu_de = sum(w[tk[0]] for tk in kc)
@@ -346,15 +462,24 @@ def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
         #  (2) tiền tố đổi nghĩa (tiền/hậu) và mã định danh 1 ký tự/số («gan C», «típ 2») luôn phải kề từ đứng cạnh;
         #  (3) thẻ CHƯA khớp từ hiếm nào ở tiêu đề thì ≥1 cặp kề bất kỳ phải trùng — chặn khớp rải rác toàn từ thường.
         kc_fold = {tk[0] for tk in kc}
+        # «dinh_danh» nay có CẢ hai chiều: (từ_nội_dung, mã) cho hậu tố («gan», «C») lẫn ("u", từ_cơ_quan) cho tiền tố «u» —
+        # chỉ đòi khi vế THUỘC NỘI DUNG (không phải "u"/mã 1 ký tự) có mặt trong kc_fold của thẻ này.
         bat_buoc = [cp for cp in cap_ghep if cp[0] in kc_fold and cp[1] in kc_fold] + \
                    [cp for cp in cap_cau if cp[0] in _TIEN_TO_DOI_NGHIA] + \
-                   [cp for cp in pt["dinh_danh"] if cp[0] in kc_fold]     # «gan C» chỉ đòi khi thẻ có chữ «gan» ở tiêu đề
+                   [cp for cp in pt["dinh_danh"] if cp[0] in kc_fold or cp[1] in kc_fold]
         co_hiem = any(w[tk[0]] >= dac_hieu for tk in kc)              # đã khớp một từ HIẾM ở tiêu đề = tự nó nêu chủ đề
         if any(cp not in t["cap"] for cp in bat_buoc):
             continue
         if any(cp not in t["cap"] and cp not in t["cap2"] for cp in cap_cach if cp[0] in kc_fold and cp[1] in kc_fold):
             continue
         if cap_cau and not co_hiem and not any(cp in t["cap"] for cp in cap_cau):
+            continue
+        # TỪ GHÉP CHỈ MỘT VẾ: thẻ chỉ mang MỘT nửa của một cặp đã biết là từ ghép trong kho («giáp» của «cường giáp», «phổi»
+        # của «viêm phổi»), vế kia cũng có ở câu hỏi nhưng KHÔNG khớp — trước đây chỉ áp cho câu ≤3 token nên câu dài («kháng
+        # sinh viêm PHỔI» → thẻ viêm TÚI THỪA chỉ nhờ «kháng sinh» khớp) vẫn lọt (phản biện 22/09). Miễn trừ CHỈ cho cặp có
+        # trong `_TU_GHEP_DONG_NGHIA` VÀ thẻ có đủ cặp đồng nghĩa đó ở tiêu đề («KHÁNG đông» trả lời «chống đông»).
+        if any((cp[0] in kc_fold) != (cp[1] in kc_fold) and _TU_GHEP_DONG_NGHIA.get(cp) not in t["cap"]
+               for cp in cap_ghep):
             continue
         # Câu NGẮN (≤3 token) là một cụm chủ đề: token không khớp ở tiêu đề chỉ được là từ THƯỜNG và thẻ phải khớp một từ HIẾM
         # («đau đầu MIGRAINE» → thẻ migraine không có chữ «đau» vẫn được). «huyết áp THẤP» (không từ hiếm) không được ra thẻ
@@ -363,9 +488,6 @@ def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
         if len(tk_nd) <= 3:
             khong_khop = [tk for tk in tk_nd if tk not in kc]
             if khong_khop and (not co_hiem or any(w[tk[0]] >= dac_hieu for tk in khong_khop)):
-                continue
-            # từ ghép mà thẻ chỉ có MỘT vế («giáp» của «cường giáp», «áp» của «áp thấp») = thẻ mang danh từ đầu nhưng không phải cụm
-            if any((cp[0] in kc_fold) != (cp[1] in kc_fold) for cp in cap_ghep):
                 continue
         # ĐỐI NGHĨA: câu hỏi «hạ kali» + thẻ chỉ mang «tăng kali» = thẻ ngược chiều.
         nguoc = False

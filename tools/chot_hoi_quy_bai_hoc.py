@@ -6358,6 +6358,44 @@ def bh112_diem_kham_khong_tra_the_lac_de():
         return False, "«da» (gõ ASCII) khớp «dạ» — «ung thư da» ra thẻ ung thư DẠ dày"
     if "T4" in ids("huyết áp thấp"):
         return False, "«thấp» bị coi từ đệm — «huyết áp thấp» ra thẻ đích huyết áp/tăng huyết áp"
+    # VÁ 22/09/2026 (phản biện độc lập vòng 2, sau khi #1-#3 đã commit): phủ định, viết tắt IN HOA, tiền tố «u», một-vế-trượt
+    # mở rộng cho câu DÀI, đồng nghĩa từ ghép, và token mơ hồ không dấu — mỗi mục dưới có tái hiện thật trên kho 1.100 thẻ.
+    loc_may = [the(50, "Bệnh thận mạn KHÔNG lọc máu: đích huyết áp dưới 120 mmHg"),
+               the(51, "Bệnh thận mạn ĐANG lọc máu: kháng đông có nguy cơ đột quỵ tương đương")]
+    ra_lm = {c["id"] for c in tk.tra_chi_tiet("bệnh thận mạn đang lọc máu", loc_may)[0]}
+    if "T50" in ra_lm:
+        return False, "«KHÔNG lọc máu» (tiêu đề) trả lời câu hỏi về người ĐANG lọc máu — sai quần thể ở cấp guideline"
+    if "T51" not in ra_lm:
+        return False, "phủ định chặn quá tay — quần thể ĐÚNG (ĐANG lọc máu) cũng bị loại"
+    viet_hoa = [the(52, "Bệnh ĐM cảnh — hẹp không triệu chứng, theo dõi bằng siêu âm Doppler"),
+                the(53, "OPTION-DM: so sánh ba thuốc cho đau thần kinh đái tháo đường")]
+    if "T52" in {c["id"] for c in tk.tra_chi_tiet("DM", viet_hoa)[0]}:
+        return False, "«DM» (viết hoa, tiếng Anh) khớp «ĐM» (động mạch, chữ Đ khác D) — không đòi khớp ĐÚNG DẠNG HOA"
+    u_kho = [the(54, "Xơ gan mất bù: suy thượng thận tương đối"), the(55, "Khối u gan nguyên phát: sàng lọc AFP mỗi 6 tháng")]
+    ra_u = {c["id"] for c in tk.tra_chi_tiet("u gan", u_kho)[0]}
+    if "T54" in ra_u:
+        return False, "«u» (khối u) bị bỏ như mã lẻ — «u gan» ra thẻ XƠ GAN không liên quan khối u"
+    # «chống đông» cần THẬT SỰ xuất hiện Ở NƠI KHÁC trong kho để cặp («chong»,«dong») được đăng ký là TỪ GHÉP (cap_ghep) —
+    # nếu không, luật một-vế-trượt còn chưa kịp XÉT tới cặp này thì phép miễn trừ đồng nghĩa cũng không có gì để chứng minh.
+    # «chống» cũng cần xuất hiện thêm ở chỗ KHÁC nữa để không tự thành mỏ neo do «hiếm tuyệt đối» trong kho nhỏ.
+    ghep_dn = [the(56, "Kháng đông đường uống cho rung nhĩ (DOAC ưu tiên)"),
+               the(561, "Chống đông dự phòng huyết khối tĩnh mạch sâu sau phẫu thuật chỉnh hình")] + \
+              [the(562 + i, f"Chống viêm tại chỗ cho bệnh khớp số {i}") for i in range(3)]
+    if {c["id"] for c in tk.tra_chi_tiet("chống đông rung nhĩ DOAC", ghep_dn)[0]} != {"T56"}:
+        return False, "«chống đông» (đồng nghĩa «kháng đông») bị luật một-vế-từ-ghép loại oan — mất card đúng chủ đề"
+    mot_ve_dai = [the(57, "ACG 2026: viêm túi thừa cấp không cần kháng sinh thường quy"),
+                  the(58, "Kháng sinh theo kinh nghiệm trong viêm phổi cộng đồng nặng nhập ICU")]
+    ra_dai = {c["id"] for c in tk.tra_chi_tiet("kháng sinh cho người viêm phổi cộng đồng ngoài", mot_ve_dai)[0]}
+    if "T57" in ra_dai:
+        return False, "câu DÀI (>3 token): «viêm phổi» trượt vẫn lọt vì luật một-vế-từ-ghép chỉ áp cho câu ≤3 token"
+    mo_ho_kho = [the(59, "Hồ sơ chảy máu của warfarin so với apixaban ở rung nhĩ kèm bệnh thận"),
+                 the(591, "Hồ sơ theo dõi biến cố chảy máu ở người bệnh thận"),
+                 the(592, "Hồ sơ điện tử cảnh báo tương tác thuốc gây độc máu"),
+                 the(60, "Hô hấp ký chẩn đoán COPD giai đoạn sớm ở người hút thuốc, cỡ mẫu 400"),
+                 the(601, "Hô hấp ký theo dõi sau ghép phổi, cỡ mẫu 250"),
+                 the(602, "Hô hấp ký ở người có bệnh thần kinh cơ, cỡ mẫu 90")]
+    if tk.tra_chi_tiet("ho ra mau", mo_ho_kho)[0]:
+        return False, "«ho» không dấu (hô/hồ/hộ mơ hồ) vẫn ra thẻ — «ho ra máu» (cờ đỏ) phải về «chưa giám sát»"
     a = the(11, "Bộ ba ICS/LABA/LAMA giảm đợt cấp COPD", "rec X", "apply", "111", "2026-01-01")
     b = the(12, "Bộ ba ICS/LABA/LAMA giảm đợt cấp COPD", "rec X", "consider", "111", "2026-03-01")
     ra, _ = tk.tra_chi_tiet("bộ ba ICS LABA LAMA COPD", [a, b])

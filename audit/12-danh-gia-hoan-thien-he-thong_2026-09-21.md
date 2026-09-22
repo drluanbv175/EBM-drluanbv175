@@ -396,3 +396,26 @@ Phần máy làm được gần như đã xong; thông lượng của hệ giờ
 - Đã làm #1 (`tra_diem_kham`), #2 (bốn cổng «xanh khi chưa đo»), #3 (thu nhận khi NCBI chặn) + khoá BH112–BH114; xem mục «ĐÁNH GIÁ HOÀN THIỆN 21/09/2026» trong `CLAUDE.md`.
 - **Chi phí:** hai phản biện đơn ~530k + ~515k token; một Workflow 6 agent (5/6 chiều đã có kết quả trước khi bị dừng) ước ~3 triệu token. **Không mở thêm vòng phản biện nhiều agent** — hiệu suất giảm dần và nó ngốn hạn mức.
 - **Vòng phản biện 2 (68 phát hiện, CHƯA qua kiểm chứng chéo vì workflow bị dừng để tiết kiệm token).** Đã vá phần rẻ và chắc (xem commit). Còn lại là các HỌ lỗi của bộ khớp từ vựng `tra_diem_kham` — không thể vá hết bằng luật từ vựng, chấp nhận và ghi rõ: cụm định ngữ 2 từ tự đủ trả thẻ («thai kỳ», «trẻ em») khi bệnh chính bị bỏ; câu ≥4 token mà một vế từ ghép trượt tiêu đề vẫn qua; chiều tăng/giảm khi thẻ là THUỐC hạ kali; phủ định/tình trạng («đang/đã lọc máu», «chưa lọc máu»); con số/ngưỡng («EF <35%»); nguyên phát↔thứ phát; viết tắt in hoa 2–3 ký tự («DM», «HA»); gõ không dấu 2–3 ký tự khớp mọi biến thể («sot»→«sót», «ho»); thẻ khớp vì cụm bệnh là KẾT CỤC/tác dụng phụ trong tiêu đề. **Hệ quả cho người dùng: đọc TIÊU ĐỀ thẻ trước khi dựa vào; câu hỏi càng ngắn/đúng thuật ngữ thẻ càng chính xác; hệ KHÔNG thay tra tay.** Nếu cần độ chính xác cao hơn nữa, hướng đúng là truy hồi có ngữ nghĩa (embedding + nhãn chủ đề duyệt tay cho từng thẻ), không phải thêm luật từ vựng.
+
+---
+## Phụ lục 22/09/2026 (b) — bác sĩ yêu cầu «sửa và vá lỗi này», đã làm 6 cơ chế nữa
+Sau phụ lục (a) ở trên (68 phát hiện chưa kiểm chứng chéo), bác sĩ yêu cầu sửa trực tiếp các họ lỗi liệt kê. Đã thêm 6 cơ
+chế vào `tools/tra_diem_kham.py` — chi tiết trong docstring đầu file, tóm tắt: (a) phủ định không/chưa vs đang/đã cấp tiêu
+đề; (b) viết tắt in hoa đòi khớp đúng dạng hoa (DM≠ĐM, MI≠mì, PSA≠PsA); (c) tiền tố «u» (khối u) như tiền/hậu; (d) luật
+«một vế từ ghép trượt» áp cho MỌI độ dài câu (trước chỉ ≤3 token), có bảng miễn trừ đồng nghĩa (chống đông≈kháng đông);
+(e) token ngắn không dấu MƠ HỒ (đo tần suất cạnh tranh giữa các dạng có dấu, không phải chỉ đếm số dạng) không dùng làm
+bằng chứng riêng lẻ; (f) mỏ neo quá phổ biến sau khi loại token mơ hồ. Gấp dấu chuyển sang TÁCH-TỪ-TRƯỚC-RỒI-GẤP, xoá tận
+gốc lỗi lệch mảng do ký hiệu/phân số (℃,½,№…).
+**Đo trên kho thật (1.100 thẻ):** bộ vàng tăng 70→**80/80** (100%); phân bố 374 câu phản biện vòng 1: khop 253→241,
+khong_co 58→64 (nhiều ca chuyển từ SAI CHỦ ĐỀ sang chưa-giám-sát/khớp-yếu, đúng hướng an toàn). Bộ chốt 114/114, BH112
+thêm 6 phép đột biến MỚI (tổng 10), tất cả đỏ đúng chỗ.
+**Đã xác nhận SỬA ĐÚNG (không còn ra thẻ sai chủ đề), có trong bộ vàng:** «tăng huyết áp trẻ em», «kháng sinh viêm phổi»,
+«bệnh thận mạn đang lọc máu»/«CKD đã lọc máu», «u gan»/«u phổi», «chống đông rung nhĩ DOAC», «MI», «PSA», «suy tim giai
+đoạn C», «đột quỵ dự phòng thứ phát».
+**KHÔNG sửa được — đa nghĩa thật của tiếng Việt, không phải lỗi gấp dấu (ghi vào `da_biet_chua_dat`, không khẳng định):**
+«thuốc lá»/«hai lá» (cùng một từ «lá», hai nghĩa), «người già»/«ruột già» (cùng một từ «già»), «hạ kali máu» (cùng cụm từ,
+vai trò ngữ pháp khác — tình trạng vs tác dụng thuốc), «sot» (chỉ có MỘT dạng có dấu «sót» trong kho, không có dạng cạnh
+tranh để cơ chế mơ hồ phát hiện). Bốn ca này là ví dụ rõ nhất cho kết luận cũ của audit: cần truy hồi ngữ nghĩa (embedding),
+không phải thêm luật từ vựng — đã thử và các luật thêm vào đều có nguy cơ gây hồi quy ở nơi khác (vd ngưỡng mỏ neo theo %
+làm gãy toàn bộ fixture nhỏ; phải đổi sang ngưỡng tuyệt đối và thu hẹp phạm vi áp dụng qua nhiều vòng thử-sai có kiểm chứng
+bằng bộ vàng + test hồi quy ở mỗi bước).

@@ -1726,6 +1726,18 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   **Khoá:** BH112 (điểm khám) · BH113 (thu nhận) · BH114 (bốn cổng); kiểm ĐỘT BIẾN hai vòng, nhiều phép sống sót ở vòng đầu vì fixture chưa tự đứng được (luật câu ngắn thừa lẫn nhau; cần 100 thẻ đệm để «cường» thành từ thường) — đã bổ sung. ⚠️ **Bẫy đột biến:** bytecode `__pycache__` cũ làm đột biến CÙNG KÍCH THƯỚC trông như sống sót → chạy `python -B` + xoá pycache trước mỗi phép. ⚠️ **Chạy bộ chốt/contract-check ghi đè `medical-ebm-automation/reports/EVIDENCE_SURVEILLANCE_DEPLOYMENT_REPORT.*` bằng bản NGOẠI TUYẾN (hạ «online canary»)** — `git checkout --` hai tệp đó trước khi commit.
   **Việc CHỈ bác sĩ làm được:** duyệt Y/N bộ vàng điểm khám · đọc hai Author Correction rồi ký ITEM-11 (BH109) · quyết chuyển 298 thẻ `from_engine` về `na` · sao lưu (Time Machine chưa cấu hình) · tạo lại tác vụ lịch nền (còn 1 tác vụ).
   ⛔ **ĐÍNH CHÍNH 22/09/2026:** bản đầu của `audit/12` ghi «hai repo GitHub đang PUBLIC» — kiểm sống bằng `gh repo view --json visibility` cả hai đều `PRIVATE`; đã sửa trong báo cáo. Bài học: một khẳng định về trạng thái ngoài máy phải được kiểm sống trước khi đưa thành đề xuất.
+  📌 **Cập nhật 22/09/2026 — bác sĩ yêu cầu «sửa và vá lỗi này» cho các họ lỗi còn lại (hạ natri máu, EF<35%, «sot»→«sót» và các ví dụ khác trong phụ lục).** Đã thêm 6 cơ chế vào `tools/tra_diem_kham.py`: phủ định (không/chưa vs đang/đã) cấp
+  tiêu đề · viết tắt IN HOA đòi khớp đúng dạng (DM≠ĐM, MI≠mì) · tiền tố «u» (khối u) như tiền/hậu · luật «một vế từ ghép
+  trượt» áp cho MỌI độ dài câu (trước chỉ ≤3 token), kèm bảng miễn trừ đồng nghĩa · token ngắn không dấu MƠ HỒ (đo TẦN SUẤT
+  cạnh tranh, không chỉ đếm số dạng) không dùng làm bằng chứng riêng lẻ · mỏ neo quá phổ biến sau khi loại token mơ hồ.
+  Gấp dấu chuyển sang tách-từ-trước-rồi-gấp, hết lỗi lệch mảng do ký hiệu (℃/½/№…). **Đo:** bộ vàng 70→80/80 (100%);
+  «tăng huyết áp trẻ em» · «kháng sinh viêm phổi» · «u gan»/«u phổi» · «MI»/«PSA» · «đang/chưa lọc máu» · «chống đông
+  DOAC» xác nhận hết sai chủ đề. **CÁC VÍ DỤ BÁC SĨ NÊU, đã kiểm KHÔNG sửa được bằng luật từ vựng** (đa nghĩa thật/thiếu
+  dạng cạnh tranh trong kho, không phải lỗi gấp dấu) — ghi vào `da_biet_chua_dat`, không khẳng định: «hạ kali máu»/«hạ natri
+  máu» (cùng cụm từ, vai trò ngữ pháp khác nhau: tình trạng vs tác dụng thuốc) · «EF<35%» (chưa có cơ chế so ngưỡng số trong
+  bất kỳ thẻ nào) · «sot» (kho chỉ có MỘT dạng có dấu «sót», không có «sốt» để so sánh) · «thuốc lá»/«hai lá» và «người
+  già»/«ruột già» (đa nghĩa thật của cùng một từ). Chi tiết đầy đủ + kiểm đột biến (10 phép, BH112) ở `audit/12` phụ lục (b)
+  và docstring `tools/tra_diem_kham.py`.
 
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và
