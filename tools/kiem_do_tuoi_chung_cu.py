@@ -84,7 +84,7 @@ def ngay_tu_ten(p: Path) -> dt.date | None:
 
 
 def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
-    """(ngày lần chạy cuối, trạng thái) — trạng thái ∈ PASS · LỖI · DANG_DO · "".
+    """(ngày lần chạy cuối, trạng thái) — trạng thái ∈ PASS · LỖI · KHONG_CAN_LAP_LAI · DANG_DO · "".
 
     VÁ 13/08/2026 — bản cũ CHỈ đọc `st_mtime` rồi kết luận "còn hạn". Nhưng hai script
     giám sát ghi dòng "BẮT ĐẦU" vào log **NGAY khi khởi động**, trước khi làm bất cứ
@@ -94,6 +94,13 @@ def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
     Từ khi `tu_khoi_dong.py` tự phóng mỗi phiên, điều này thành vòng lặp im lặng:
     phóng → hỏng → mtime tươi → "còn hạn" → không ai biết. Chính log ĐÃ chứa câu trả
     lời (dòng "KẾT THÚC … tổng thể=PASS | CÓ BƯỚC LỖI") — chỉ là chưa ai đọc.
+
+    VÁ 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #8) — thêm nhãn thứ ba
+    `KHONG_CAN_LAP_LAI`, đọc từ "tổng thể=KHÔNG CẦN LẶP LẠI" mà `quarterly_superseded.sh`
+    nay ghi cho ba tình trạng TẤT ĐỊNH (0 mục để dò / lượt bị giới hạn cố ý / thiếu công
+    cụ) — KHÁC "LỖI" thật (mạng hỏng, thiếu PMID). Người tiêu thụ (`tu_khoi_dong.qua_han()`)
+    phải phân biệt được hai nhãn này: "LỖI" đáng phóng lại NGAY bất kể số ngày, còn
+    "KHONG_CAN_LAP_LAI" thì retry ngay không giúp gì — chỉ nên chờ tới hạn ngày như PASS.
     """
     if not (log.exists() and log.stat().st_size > 0):
         return None, ""
@@ -104,7 +111,11 @@ def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
         return ngay, ""
     for d in reversed(dong):
         if "KẾT THÚC" in d:
-            return ngay, ("PASS" if "tổng thể=PASS" in d else "LỖI")
+            if "tổng thể=PASS" in d:
+                return ngay, "PASS"
+            if "tổng thể=KHÔNG CẦN LẶP LẠI" in d:
+                return ngay, "KHONG_CAN_LAP_LAI"
+            return ngay, "LỖI"
         if "BẮT ĐẦU" in d:
             # Gặp BẮT ĐẦU trước KẾT THÚC ⇒ lượt cuối chưa khép lại: đang chạy, hoặc
             # đã chết giữa chừng. Cả hai đều KHÔNG được coi là một lượt giám sát xong.

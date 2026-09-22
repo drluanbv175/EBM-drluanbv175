@@ -367,8 +367,12 @@ def test_since_hep_hon_con_tro_khong_duoc_day_con_tro_tien(monkeypatch):
 
     def run_fake(topics, **kw):
         kw["cursor"]["T"] = "2026-09-21"      # mô phỏng chủ đề PASS ⇒ run_scan tiến con trỏ tới hôm nay
+        # "topics" phải khớp thật (status="PASS" cho T) — main() nay đọc report["topics"] để quyết
+        # định luật A/B (22/09, review:thu-nhan #8), không còn suy đoán thuần từ args.since/cursor.
         return {"kind": "x", "status": "PASS", "days": 30, "successful_topics": 1, "failed_topics": 0,
-                "degraded_topics": 0, "topic_count": 1, "candidate_count": 0, "topics": [], "disclaimer": "d"}
+                "degraded_topics": 0, "topic_count": 1, "candidate_count": 0,
+                "topics": [{"topic": "T", "query": "q", "status": "PASS", "candidates": [], "error": "", "suy_giam": []}],
+                "disclaimer": "d"}
 
     monkeypatch.setattr(S, "run_scan", run_fake)
     assert S.main(["--since", "2026-09-20"]) == 0

@@ -6540,8 +6540,12 @@ def bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia():
 
         def run_gia(topics, **kw):
             kw["cursor"]["T"] = "2026-09-21"
+            # "topics" phải khớp thật (status="PASS") — main() nay đọc report["topics"] để quyết
+            # định luật A/B (22/09, review:thu-nhan #8), không còn suy đoán thuần từ args.since.
             return {"kind": "x", "status": "PASS", "days": 30, "successful_topics": 1, "failed_topics": 0,
-                    "degraded_topics": 0, "topic_count": 1, "candidate_count": 0, "topics": [], "disclaimer": "d"}
+                    "degraded_topics": 0, "topic_count": 1, "candidate_count": 0,
+                    "topics": [{"topic": "T", "query": "q", "status": "PASS", "candidates": [], "error": "", "suy_giam": []}],
+                    "disclaimer": "d"}
         S.run_scan = run_gia
         import contextlib as _cl
         import io as _io
@@ -6559,6 +6563,28 @@ def bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia():
             S.main(["--since", "2026-09-20", "--khong-cursor"])
         if ghi_c:
             return False, "--khong-cursor vẫn ghi con trỏ dùng chung"
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #8): chủ đề CHƯA TỪNG có con trỏ (không
+        # có trong doc_cursor()) + DEGRADED + --since ⇒ TUYỆT ĐỐI không được để lại since/hôm nay —
+        # phải trở về "chưa có" (khoá bị xoá), không phải "2026-09-20". Luật A (21/09, chỉ áp cho
+        # PASS) bỏ sót đúng ca này vì `cu is None` làm điều kiện rollback không bao giờ đúng.
+        ghi_c.clear()
+        S.doc_cursor = lambda: {}  # KHÔNG có "Moi" — mô phỏng chủ đề mới thêm vào watchlist
+        S.load_watchlist = lambda pth: [{"topic": "Moi", "query": "q"}]
+
+        def run_gia_suy_giam(topics, **kw):
+            # DEGRADED: KHÔNG đụng cursor["Moi"] — giữ nguyên giá trị --since đã gán trước khi gọi
+            # (đúng hành vi thật của run_scan cho chủ đề không PASS).
+            return {"kind": "x", "status": "PARTIAL", "days": 30, "successful_topics": 0, "failed_topics": 0,
+                    "degraded_topics": 1, "topic_count": 1, "candidate_count": 0,
+                    "topics": [{"topic": "Moi", "query": "q", "status": "PASS_DEGRADED", "candidates": [],
+                               "error": "", "suy_giam": ["NCBI lỗi"]}],
+                    "disclaimer": "d"}
+        S.run_scan = run_gia_suy_giam
+        with _cl.redirect_stdout(_io.StringIO()):
+            S.main(["--since", "2026-09-20"])
+        if "Moi" in ghi_c:
+            return False, (f"chủ đề CHƯA có con trỏ + DEGRADED vẫn bị ghi cursor={ghi_c.get('Moi')!r} "
+                           "— phải trở về 'chưa có', không phải since/hôm nay")
     finally:
         S._NCBI_CHAN["bi_chan"] = False
         S._SUY_GIAM.clear()

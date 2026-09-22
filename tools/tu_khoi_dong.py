@@ -187,6 +187,15 @@ def qua_han() -> list[tuple[str, int]]:
     và cũng không ai được báo. Đúng vòng lặp im lặng mà BH19 vừa bịt ở đầu kia.
 
     Nay: lượt cuối LỖI hoặc CHƯA KHÉP LẠI ⇒ coi như cần chạy lại, bất kể mtime.
+
+    VÁ 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #8) — nhãn `KHONG_CAN_LAP_LAI`
+    (0 mục để dò / lượt bị giới hạn cố ý / thiếu công cụ, xem `quarterly_superseded.sh`)
+    CỐ Ý KHÔNG rơi vào nhánh "LỖI" — retry ngay không giúp gì vì tình trạng gốc không đổi
+    giữa các lần chạy, và trước khi có nhãn này, `quarterly_superseded.sh` gộp cả ba tình
+    trạng tất định đó chung với lỗi thật, khiến hàm này phóng lại quét ~326 lời gọi NCBI
+    MỖI LẦN MỞ PHIÊN một cách vô ích. Nay xử lý như "PASS" — vẫn chịu ngưỡng `han_ngay`
+    ngày bình thường, không được miễn hạn hoàn toàn (một lượt CHUA_DO/MAU cũ vẫn nên được
+    thử lại sau khi đủ lâu, phòng khi dữ liệu gốc đã đổi).
     """
     ra: list[tuple[str, int]] = []
     hom_nay = dt.date.today()
@@ -202,6 +211,9 @@ def qua_han() -> list[tuple[str, int]]:
         cach = (hom_nay - ngay).days
         if tt == "LỖI":
             ra.append((ma, cach))          # lượt cuối hỏng → phải chạy lại
+        elif tt == "KHONG_CAN_LAP_LAI":
+            if cach > v["han_ngay"]:
+                ra.append((ma, cach))      # tất định nhưng đã lâu → thử lại, không ép ngay
         elif tt == "DANG_DO":
             # Có BẮT ĐẦU mà không có KẾT THÚC: đang chạy dở, hoặc đã chết. Khoá PID
             # ở `dang_chay()` lo trường hợp ĐANG chạy; tới đây nghĩa là tiến trình

@@ -70,6 +70,11 @@ _bst_kcvq = _ilu_kcvq.module_from_spec(_sp_kcvq)
 _sp_kcvq.loader.exec_module(_bst_kcvq)
 # Publication type được coi là "có thể vượt qua" một nghiên cứu đơn lẻ.
 PT_CAO = ("systematic review", "meta-analysis", "practice guideline", "guideline")
+# Hạn dùng cho ÂM TÍNH (manifest SACH/"không có cờ") — vá 22/09/2026, review:cong-rut-bai #7.
+# Khớp nhịp quý đã dùng ở scripts/quarterly_superseded.sh (owner thu thập duy nhất của thư mục
+# này). Chỉ áp cho kết luận «hợp lệ để nói sạch»; dương tính không có hạn (BH33 và các luật bất
+# đối xứng khác trong repo).
+HAN_AM_TINH_NGAY = 92
 
 
 def _goi(url: str, cho: int = 25) -> dict | None:
@@ -139,9 +144,22 @@ def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> lis
     if s is None or s.get("error") or "result" not in s:
         return None
     ra = []
+    loi_tung_id = 0
     for i in ids:
         m = (s.get("result") or {}).get(i)
-        if not m:
+        # VÁ 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #9, LOW): NCBI có thể trả
+        # esummary HỢP LỆ Ở TẦNG NGOÀI (có khoá 'result') nhưng MỘT SỐ uid bên trong lại
+        # là bản lỗi riêng, vd {"uid": "123", "error": "cannot get document summary"} —
+        # khác hẳn "id không tồn tại" hay "không phải bài mới hơn". Bản cũ `if not m:
+        # continue` đọc CẢ HAI trường hợp (id vắng mặt trong 'result' LẪN id có mặt nhưng
+        # mang lỗi) thành "không có gì đáng ghi", nên nếu TOÀN BỘ ứng viên trong một lượt
+        # đều dính lỗi từng-id thì `ra` rỗng ⇒ hàm trả `[]` ⇒ bị đọc là "đã dò, sạch" dù
+        # không một ứng viên nào thật sự được kiểm. Nay đếm riêng và chỉ kết luận "sạch"
+        # khi có TỐI THIỂU một ứng viên đọc được; phát hiện DƯƠNG TÍNH (ra không rỗng) vẫn
+        # được giữ nguyên dù còn id khác lỗi — đúng nguyên tắc bất đối xứng của kho này
+        # (dương tính từ bất kỳ đâu vẫn nhận, chỉ kết luận ÂM TÍNH mới cần đủ độ tin cậy).
+        if not m or m.get("error"):
+            loi_tung_id += 1
             continue
         n = _nam(m.get("pubdate", ""))
         if n is None:
@@ -155,6 +173,11 @@ def tong_quan_moi_hon(pmid: str, nam_goc: int | None, tu_nam: int | None) -> lis
             continue
         ra.append({"pmid": i, "nam": n, "title": (m.get("title") or "")[:120],
                    "journal": m.get("source", ""), "pubtype": m.get("pubtype") or []})
+    if not ra and loi_tung_id:
+        # Mọi ứng viên (hoặc tất cả những cái còn lại) đều lỗi từng-id — CHƯA kiểm được
+        # gì thật, không được đọc là "sạch". Khác `s is None`/thiếu 'result' ở trên
+        # (lỗi TOÀN LƯỢT) — đây là lỗi CỤC BỘ bên trong một phản hồi hợp lệ.
+        return None
     ra.sort(key=lambda x: -x["nam"])
     return ra[:4]
 
@@ -230,6 +253,21 @@ def doc_bao_cao_vuot_qua(thu_muc: Path | None = None) -> dict:
         else:
             ly = _kiem_manifest_hop_le(man) if isinstance(man, dict) else "manifest không phải đối tượng JSON"
         ngay = f.stem.rsplit("_", 1)[-1]
+        # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #7): ÂM TÍNH (hop_le/«không có cờ»)
+        # KHÔNG được có hạn VÔ THỜI HẠN — trước đây một manifest SACH duy nhất, không có báo cáo nào
+        # mới hơn để so sánh (nên không rơi vào nhánh "_lui_ve_cu" đã vá), vẫn được trả `hop_le=True`
+        # dù đã 9+ THÁNG tuổi. Nguyên tắc bất đối xứng KHÔNG bị phá: DƯƠNG TÍNH của manifest quá hạn
+        # (nhánh CO_BAI_MOI ngay dưới) vẫn được giữ nguyên qua `duong_tinh_tu_manifest_khong_hop_le`
+        # bất kể tuổi — chỉ tuyên bố "hợp lệ để kết luận sạch" là cần freshness.
+        if not ly:
+            try:
+                import datetime as _dt_han
+                tuoi_ngay = (_dt_han.date.today()
+                            - _dt_han.date(int(ngay[:4]), int(ngay[4:6]), int(ngay[6:8]))).days
+            except (ValueError, IndexError):
+                tuoi_ngay = None
+            if tuoi_ngay is not None and tuoi_ngay > HAN_AM_TINH_NGAY:
+                ly = f"manifest {tuoi_ngay} ngày tuổi — quá hạn {HAN_AM_TINH_NGAY} ngày cho kết luận «sạch»"
         if not ly:
             pmids_ban_nay = {str(x) for x in man.get("pmid_co_bai_moi") or []} | duong_tinh_tu_manifest_khong_hop_le
             if moi_nhat:

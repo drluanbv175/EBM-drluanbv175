@@ -270,6 +270,15 @@ class TopicResult:
     # Các truy vấn phải rơi xuống dự phòng (NCBI lỗi/bị chặn): kết quả có thể THIẾU. Không rỗng ⇒ status
     # = "PASS_DEGRADED" và con trỏ KHÔNG tiến (xem run_scan) — trước đây vẫn "PASS" và mất cửa sổ vĩnh viễn.
     suy_giam: list[str] = field(default_factory=list)
+    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #10): TRƯỜNG MÁY ĐỌC riêng cho làn phụ hỏng
+    # (preprint/clinicaltrials/scopus) — trước đây thông tin này chỉ nằm trong `error` dạng CHUỖI TỰ
+    # DO ("làn scopus lỗi: RuntimeError"), lẫn với suy_giam khi cả hai cùng xảy ra. Khi CẢ BA làn phụ
+    # cùng hỏng, `status` vẫn "PASS" (làn phụ không dùng con trỏ nên không kéo chủ đề FAIL/DEGRADED),
+    # nên JSON/mã thoát/alert đều "sạch" — bên tiêu thụ (uu_tien_cap_nhat, orchestrator) không có
+    # cách nào phân biệt "0 ứng viên vì không có gì mới" với "0 ứng viên vì cả 3 làn phụ đều hỏng"
+    # nếu không tự phân tích chuỗi `error`. Trường này liệt TÊN làn hỏng (không phải câu văn), rỗng
+    # khi mọi làn phụ chạy được (kể cả khi chúng trả 0 kết quả — đó là tín hiệu THẬT, không phải lỗi).
+    lan_phu_loi: list[str] = field(default_factory=list)
 
 
 def _retry_wait(exc: BaseException, attempt: int) -> float:
@@ -837,18 +846,33 @@ def ghi_cursor(cur: dict) -> None:
 
 def ghi_alert(dong_md: list[str], ngay: str) -> Path | None:
     """Gom SỰ KIỆN KHẨN vào alerts/YYYY-MM-DD.md (K7). CHỈ sự kiện khẩn — trộn mức
-    là dạy người đọc bỏ qua màu đỏ (bài học BH32)."""
+    là dạy người đọc bỏ qua màu đỏ (bài học BH32).
+
+    Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #9): dòng đã CÓ NGUYÊN VĂN trong file hôm
+    nay thì KHÔNG ghi lại — trước đây `ghi_alert` luôn append vô điều kiện, nên chạy `main()`
+    nhiều lần trong cùng ngày (orchestrator A2 chạy TỪNG chủ đề riêng, hoặc bác sĩ chạy tay lặp
+    lại) làm file tích nhiều dòng GIỐNG HỆT nhau — đúng kiểu nhiễu dạy người đọc bỏ qua (BH32),
+    và vi phạm yêu cầu "idempotent, không nhân đôi" của SKILL goi-duyet-tuan-ebm bước 6."""
     if not dong_md:
         return None
     d = DEFAULT_WATCHLIST.parent.parent / "alerts"
     d.mkdir(exist_ok=True)
     f = d / f"{ngay}.md"
     dau = not f.exists()
+    da_co: set[str] = set()
+    if not dau:
+        try:
+            da_co = set(f.read_text(encoding="utf-8").splitlines())
+        except OSError:
+            da_co = set()
+    dong_moi = [d0 for d0 in dong_md if d0 not in da_co]
+    if not dong_moi:
+        return f if f.exists() else None
     with f.open("a", encoding="utf-8") as fh:
         if dau:
             fh.write(f"# CẢNH BÁO KHẨN — {ngay}\n\n(chỉ sự kiện khẩn: rút bài · cổng FAIL"
                      f" · guideline bị vượt. Cần bác sĩ kiểm chứng.)\n\n")
-        fh.write("\n".join(dong_md) + "\n")
+        fh.write("\n".join(dong_moi) + "\n")
     return f
 
 _CHUOI_RUT_BAI = None   # dựng một lần cho cả tiến trình (xem gan_do_tin_cay)
@@ -1105,8 +1129,15 @@ def run_scan(
                 if cu:
                     import datetime as _dt
                     try:
+                        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #11): dùng UTC nhất
+                        # quán với biên cửa sổ thật sự gửi cho NCBI/Europe PMC (search()/
+                        # search_europe_pmc() đều tính `since`/`today` bằng
+                        # datetime.now(timezone.utc)) — trước đây mốc "hôm nay" ở ĐÂY dùng
+                        # date.today() theo GIỜ MÁY, lệch 1 ngày với UTC trong khoảng 00:00-07:00
+                        # giờ Việt Nam (UTC+7), làm `mindate` gửi đi có thể chưa khớp đúng cửa sổ
+                        # UTC mà chính lượt gọi API đang dùng.
                         tu = max(_dt.date.fromisoformat(cu) - _dt.timedelta(days=3),
-                                 _dt.date.today() - _dt.timedelta(days=days))
+                                 datetime.now(timezone.utc).date() - _dt.timedelta(days=days))
                         md = tu.strftime("%Y/%m/%d")
                     except ValueError:
                         md = ""
@@ -1144,6 +1175,7 @@ def run_scan(
             # có pmid để tra). FAIL-SOFT: thiếu key/thư viện/mạng lỗi đều không
             # được kéo cả chủ đề FAIL.
             ghi_chu_lan: list[str] = []
+            lan_phu_loi: list[str] = []  # TÊN làn hỏng — trường máy đọc riêng (review:thu-nhan #10)
             try:
                 for candidate in search_scopus_lane(row["topic"], days, max_results):
                     khoa_c = candidate.pmid or candidate.url
@@ -1153,6 +1185,7 @@ def run_scan(
                     unique.append(candidate)
             except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                 ghi_chu_lan.append(f"làn scopus lỗi: {type(exc).__name__}")
+                lan_phu_loi.append("scopus")
             unique = gan_do_tin_cay(unique)
             # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì tự
             # khai nhãn riêng (preprint không có PMID để tra rút bài; NCT
@@ -1170,6 +1203,7 @@ def run_scan(
                         unique.append(candidate)
                 except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                     ghi_chu_lan.append(f"làn {ten_lan} lỗi: {type(exc).__name__}")
+                    lan_phu_loi.append(ten_lan)
             # PASS_DEGRADED: có truy vấn rơi xuống dự phòng ⇒ kết quả có thể THIẾU. Con trỏ KHÔNG tiến để
             # lượt sau quét lại đúng cửa sổ này — trước đây vẫn tiến ⇒ cửa sổ 24/08–07/09 mất vĩnh viễn.
             trang_thai = "PASS_DEGRADED" if suy_giam else "PASS"
@@ -1178,10 +1212,12 @@ def run_scan(
                 ghi_chu = ("SUY GIẢM: " + " | ".join(suy_giam)
                            + (f" || {ghi_chu}" if ghi_chu else ""))
             topic_results.append(TopicResult(
-                row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam))
+                row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam, lan_phu_loi))
             if cursor is not None and trang_thai == "PASS":
-                import datetime as _dt
-                cursor[row["topic"]] = _dt.date.today().isoformat()
+                # Vá 22/09/2026 (review:thu-nhan #11): UTC — nhất quán với biên `since`/`today`
+                # thật sự gửi tới NCBI/Europe PMC (xem chú thích ở khối tính `md` phía trên); con
+                # trỏ này chính là `cu` mà lượt sau dùng để tính lại mindate UTC.
+                cursor[row["topic"]] = datetime.now(timezone.utc).date().isoformat()
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
             all_pmids &= _pmid_truoc_luot  # gỡ PMID "ma" chủ đề này vừa thêm trước khi hỏng
             topic_results.append(TopicResult(
@@ -1340,6 +1376,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--days phải trong khoảng 1..3650")
     if not 1 <= args.max <= 100:
         parser.error("--max phải trong khoảng 1..100")
+    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #8): --since chưa từng được kiểm dạng ngày
+    # — một chuỗi lạ (gõ nhầm) vẫn bị ghi thẳng vào con trỏ, làm hỏng mọi phép so sánh từ điển
+    # (cu > since) ở các bước sau bằng một giá trị không phải ngày ISO.
+    if args.since:
+        try:
+            import datetime as _dt_check
+            _dt_check.date.fromisoformat(args.since)
+        except ValueError:
+            parser.error(f"--since phải đúng dạng YYYY-MM-DD, nhận được: {args.since!r}")
 
     # KHOÁ chống 2 máy/2 tiến trình cùng quét (K3) — FAIL rõ ràng, không chạy chồng.
     duoc, ly_do = gianh_khoa()
@@ -1385,14 +1430,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         except ValueError as exc:
             parser.error(str(exc))
         if ghi_con_tro:
-            if args.since:
-                # `--since` HẸP hơn con trỏ đang có (since > con trỏ cũ) bỏ qua khoảng [con trỏ cũ, since): nếu vẫn ghi
-                # «đã quét tới hôm nay» thì khoảng đó mất vĩnh viễn (phản biện 21/09 tái hiện: con trỏ 09-01 + --since 09-20
-                # + chủ đề FAIL ⇒ ghi 09-20). Chỉ được ghi khi since ≤ con trỏ cũ (quét RỘNG hơn = siêu tập).
-                for t0 in topics:
-                    cu = con_tro_truoc.get(t0["topic"])
-                    if cu and args.since > cu:
-                        cursor[t0["topic"]] = cu
+            # HAI LUẬT RIÊNG, không được gộp làm một (phản biện vòng 2 22/09 bắt được: bản gộp đầu
+            # tiên làm test PASS-hợp-lệ đỏ oan — run_scan CHỈ tiến cursor cho chủ đề PASS nên hai
+            # luật này không bao giờ chồng lấn nhau trên cùng một chủ đề):
+            #
+            # Luật A (21/09, cho chủ đề PASS): --since HẸP hơn con trỏ CŨ ĐÃ CÓ (since > cu) nghĩa
+            # là khoảng [cu, since) bị CHỦ Ý bỏ qua — dù chủ đề đạt PASS cho cửa sổ hẹp đó, KHÔNG
+            # được để cursor tiến tới hôm nay (sẽ khiến khoảng bị bỏ qua trông như "đã quét"). Chủ
+            # đề CHƯA từng có cursor (cu is None) thì không có khoảng nào bị bỏ qua — cursor tiến
+            # bình thường.
+            #
+            # Luật B (22/09, review:thu-nhan #8, cho chủ đề KHÔNG PASS): phục hồi cursor về ĐÚNG
+            # trạng thái TRƯỚC lượt này — kể cả khi trước đó CHƯA có cursor (revert về "chưa có",
+            # không phải về since/hôm nay). Luật A (21/09) bỏ sót đúng ca này: `if cu and …` không
+            # bao giờ đúng khi `cu` là None ⇒ chủ đề DEGRADED/FAIL chưa từng quét trước đó đi thẳng
+            # từ "chưa quét" sang since/hôm nay, vi phạm bất biến "suy giảm KHÔNG tiến con trỏ".
+            for t in report["topics"]:
+                cu = con_tro_truoc.get(t["topic"])
+                if t["status"] == "PASS":
+                    if args.since and cu and args.since > cu:
+                        cursor[t["topic"]] = cu
+                elif cu is None:
+                    cursor.pop(t["topic"], None)
+                else:
+                    cursor[t["topic"]] = cu
             # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): CHỈ ghi khi NỘI DUNG con trỏ
             # thật sự đổi (có ≥1 chủ đề PASS tiến con trỏ). Trước đây ghi VÔ ĐIỀU KIỆN — một lượt
             # quét lỗi toàn bộ (NCBI + Europe PMC đều hỏng, mọi chủ đề FAIL, nội dung con trỏ không
@@ -1426,12 +1487,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         # ALERTS (K7) — chỉ sự kiện KHẨN
         khan: list[str] = []
-        n_suy_giam = report.get("degraded_topics", 0)
-        if n_suy_giam:
-            # MỘT dòng gộp (không mỗi chủ đề một dòng — nhiều bullet đỏ giống nhau dạy người đọc bỏ qua).
-            khan.append(f"- 🟠 QUÉT SUY GIẢM: {n_suy_giam}/{report['topic_count']} chủ đề phải chạy bằng Europe PMC "
-                        "dự phòng (NCBI lỗi/bị chặn) — tầng guideline/tổng quan/RCT có thể THIẾU; con trỏ các chủ đề "
-                        "này KHÔNG tiến, chạy lại khi NCBI thông.")
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #9): nêu TÊN chủ đề suy giảm — dòng gộp
+        # cũ chỉ có SỐ LƯỢNG ("1/1 chủ đề"), nên khi orchestrator A2 chạy TỪNG chủ đề riêng (mỗi
+        # lần watchlist chỉ 1/1), nhiều lượt trong ngày sinh ra các dòng TRÔNG GIỐNG HỆT NHAU dù
+        # là chủ đề khác nhau — không ai phân biệt được. Nêu tên vừa giải quyết việc đó, vừa cho
+        # ghi_alert() (đã vá cùng đợt) dedup ĐÚNG: hai lượt cùng một chủ đề ⇒ dòng giống hệt ⇒ bị
+        # lọc trùng; hai lượt khác chủ đề ⇒ dòng khác nhau ⇒ cả hai đều được giữ.
+        suy_giam_ten = sorted(_t["topic"] for _t in report["topics"] if _t["status"] == "PASS_DEGRADED")
+        if suy_giam_ten:
+            khan.append(f"- 🟠 QUÉT SUY GIẢM: {len(suy_giam_ten)}/{report['topic_count']} chủ đề phải chạy bằng "
+                        f"Europe PMC dự phòng (NCBI lỗi/bị chặn) — {', '.join(suy_giam_ten)}. Tầng guideline/tổng "
+                        "quan/RCT có thể THIẾU; con trỏ các chủ đề này KHÔNG tiến, chạy lại khi NCBI thông.")
         for _t in report["topics"]:
             if _t["status"] == "FAIL":
                 khan.append(f"- 🔴 CỔNG QUÉT FAIL: chủ đề «{_t['topic']}» — `{_t['error'][:90]}`")
@@ -1443,7 +1509,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     khan.append(f"- 🟠 EoC: PMID {_c['pmid']} ({_t['topic']}) — đọc lại trước khi dùng")
         f_alert = ghi_alert(khan, _dt.date.today().isoformat())
         if f_alert:
-            print(f"[⚠ Đã ghi {len(khan)} cảnh báo khẩn: {f_alert}]")
+            # Không khẳng định "đã ghi N" — ghi_alert() có thể lọc bớt dòng TRÙNG đã có sẵn hôm
+            # nay (vá cùng đợt), nên số dòng THẬT SỰ mới có thể ít hơn len(khan).
+            print(f"[⚠ {len(khan)} cảnh báo khẩn được xét (mới hoặc đã có sẵn hôm nay): {f_alert}]")
     finally:
         tra_khoa()
 

@@ -274,7 +274,7 @@ def main() -> int:
     print(f"  tham số: phạm vi={'MỘT FILE' if a.file else 'TOÀN KHO'} · chi-apply={'có' if a.chi_apply else 'không'} · "
           f"gioi-han={a.gioi_han or 'không'}" + ("  ⇒ KẾT QUẢ CHỈ LÀ MẪU" if la_mau else ""))
     tom_tat: dict[str, str | None] = {}
-    khop = khop_tv = mot_phan = khong_thay = hong = 0
+    khop = khop_tv = mot_phan = khong_thay = hong = nhan_lech_dem = 0
     can_doc: list[tuple] = []
     for k, (fn, iid, pm, dec, (hr, lo, hi), meas) in enumerate(viec, 1):
         if pm not in tom_tat:
@@ -290,6 +290,14 @@ def main() -> int:
         if lech:
             # SỐ khớp mà NHÃN khác = nguy hiểm hơn số sai: trông rất hợp lý (LÔ H).
             can_doc.append(("🔴 NHÃN LỆCH " + lech.upper(), fn, iid, pm, dec, hr, lo, hi))
+            nhan_lech_dem += 1
+            # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #6): KHÔNG cộng mục này vào
+            # khop/khop_tv/mot_phan/khong_thay — trước đây một mục vừa bị gắn "🔴 NHÃN LỆCH" ở
+            # can_doc VẪN được cộng vào "✓ KHỚP đầy đủ" nếu số khớp, khiến bảng tổng kết MÂU
+            # THUẪN cho CÙNG một mục (✓ KHỚP và 🔴 NHÃN LỆCH cùng lúc). Nhãn lệch là loại vấn đề
+            # RIÊNG (đo lường/chiều khác với measure khai), có mức ưu tiên cao hơn "số khớp hay
+            # không" — không được để chồng lấn vào các khối khác.
+            continue
         if c_hr and c_lo and c_hi:
             khop += 1
         else:
@@ -319,6 +327,11 @@ def main() -> int:
     print(f"  🟠 MỘT PHẦN   : {mot_phan}  (thấy ước lượng điểm, không đủ khoảng tin cậy)")
     print(f"  ⚪ KHÔNG THẤY : {khong_thay}  (cả tóm tắt lẫn toàn văn ĐANG CÓ đều không nêu — "
           "KHÔNG kết luận là trích sai)")
+    if nhan_lech_dem:
+        # Vá 22/09/2026 (review:cong-rut-bai #6): dòng RIÊNG, tách khỏi "✓ KHỚP đầy đủ" — mục
+        # nhãn lệch không được tính là "khớp" dù số có trùng, để bảng tổng kết không tự mâu thuẫn.
+        print(f"  🔴 NHÃN LỆCH  : {nhan_lech_dem}  (đo lường/chiều khác 'measure' đã khai — xem "
+              "chi tiết dưới, KHÔNG tính vào ✓ KHỚP)")
     if hong:
         print(f"  ⚠ Không lấy được tóm tắt: {hong}/{len(viec)} — 'chưa kiểm', không phải 'không sao'")
     print("=" * 70)

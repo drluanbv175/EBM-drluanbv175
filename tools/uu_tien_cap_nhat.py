@@ -103,6 +103,12 @@ def main() -> int:
     # PASS_DEGRADED sinh ra để ngăn, và nguy hiểm nhất khi lượt quét toàn cục là PARTIAL (một vài
     # chủ đề PASS che khuất các chủ đề khác đang FAIL/DEGRADED).
     trang_thai = {t["topic"]: t.get("status", "?") for t in du.get("topics", [])}
+    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #10): TRƯỜNG MÁY ĐỌC `lan_phu_loi` (tên làn
+    # phụ preprint/clinicaltrials/scopus hỏng) — một chủ đề có thể "status=PASS" (nguồn PubMed
+    # chính sạch) nhưng vẫn có làn TÍN HIỆU SỚM NHẤT hỏng hoàn toàn; 0 ứng viên trong trường hợp đó
+    # KHÔNG đáng tin bằng 0 ứng viên khi mọi làn đều chạy được, dù không rơi vào nhóm FAIL/DEGRADED
+    # ở trên (làn phụ không dùng con trỏ nên không kéo status xuống).
+    lan_phu_loi = {t["topic"]: (t.get("lan_phu_loi") or []) for t in du.get("topics", [])}
     kt = _nap("kiem_do_tuoi_chung_cu.py", "kt_uu_tien")
     tuoi = dict(kt.lau_chua_xem_lai())
 
@@ -127,8 +133,11 @@ def main() -> int:
         if n == 0:
             continue
         print(f"{n:>4} {t:>5}  {goc:<24} ← {wl[:40]}")
-    im_sach = [g for n, _t, g, w in hang if n == 0 and trang_thai.get(w) == "PASS"]
+    im_sach = [g for n, _t, g, w in hang
+              if n == 0 and trang_thai.get(w) == "PASS" and not lan_phu_loi.get(w)]
     im_chua_do = [g for n, _t, g, w in hang if n == 0 and trang_thai.get(w) != "PASS"]
+    im_lan_phu_hong = [g for n, _t, g, w in hang
+                       if n == 0 and trang_thai.get(w) == "PASS" and lan_phu_loi.get(w)]
     if im_sach:
         print(f"\n{len(im_sach)} chủ đề KHÔNG có chứng cứ mới trong cửa sổ này — cũ nhưng chưa")
         print("cần đụng tới (tuổi tự nó KHÔNG phải lý do cập nhật):")
@@ -139,6 +148,13 @@ def main() -> int:
         print("  mới», đừng bỏ qua:")
         print("   " + " · ".join(f"{g} ({trang_thai.get(w, '?')})"
                                   for n, _t, g, w in hang if n == 0 and trang_thai.get(w) != "PASS"))
+    if im_lan_phu_hong:
+        print(f"\n⚪ {len(im_lan_phu_hong)} chủ đề 0 ứng viên, nguồn PubMed chính SẠCH — nhưng ít "
+              "nhất một làn TÍN HIỆU SỚM NHẤT (preprint/thử nghiệm đăng ký/Scopus) hỏng, nên 0 ở")
+        print("  đây chưa chắc phản ánh đủ các làn:")
+        print("   " + " · ".join(f"{g} ({','.join(lan_phu_loi.get(w, []))})"
+                                  for n, _t, g, w in hang
+                                  if n == 0 and trang_thai.get(w) == "PASS" and lan_phu_loi.get(w)))
     print("\nSố ứng viên là tín hiệu ĐỘNG LỰC, không phải kết luận về chứng cứ: công cụ")
     print("KHÔNG đọc nội dung ứng viên và không phán chúng có đổi thực hành hay không.")
     print("Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục bác sĩ chọn. Cần bác sĩ kiểm chứng.")
