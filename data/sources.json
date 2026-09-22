@@ -655,7 +655,7 @@
   },
   {
    "id": "SRC-039",
-   "name": "Semantic Scholar — quyết định KHÔNG theo đuổi, bác sĩ chọn SerpApi thay thế vai trò, 22/09/2026",
+   "name": "Semantic Scholar — bác sĩ ĐỔI Ý bật lại 22/09/2026, đo sống lộ giới hạn nhịp thật",
    "org": "Allen Institute for AI (Semantic Scholar)",
    "tier": 2,
    "domain": [
@@ -665,14 +665,58 @@
    "endpoint_or_url": "https://api.semanticscholar.org/graph/v1/paper/search",
    "auth_required": false,
    "terms_ok": true,
-   "terms_note": "Connector đã viết sẵn (app/sources/semantic_scholar.py, class SemanticScholarClient) và KHÔNG bắt buộc API key — chạy được ở nhịp thấp không khoá, key chỉ tăng hạn mức (giống CORE, khác Scopus). Không phải rào kỹ thuật.",
+   "terms_note": "Connector không BẮT BUỘC API key về mặt code (app/sources/semantic_scholar.py, class SemanticScholarClient) — key chỉ tăng hạn mức, không phải điều kiện chạy. Nhưng đo sống 22/09/2026 (2 lượt test-live liên tiếp cách nhau 5 giây, KHÔNG có khoá): CẢ HAI đều HTTP 429 ngay lập tức, hết vòng retry của HttpClient. Tầng KHÔNG-khoá của Semantic Scholar đang bị giới hạn nhịp rất chặt trong thực tế — chưa rõ do IP dùng chung của mạng này đã vượt hạn mức công khai, hay hạn mức công khai hiện đã siết chung toàn cầu. KHÔNG kết luận '429 vĩnh viễn' từ 2 lượt đo — có thể đổi theo thời điểm/IP, cần đo lại định kỳ. Muốn dùng ổn định: xin API key miễn phí qua form chính thức của Semantic Scholar (bác sĩ tự làm, chưa xác minh chi tiết quy trình trong phiên này).",
    "scan_frequency": "ad-hoc",
    "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "degraded",
+   "last_success_at": null,
+   "known_gap": "ĐÃ đổi ENABLE_SEMANTIC_SCHOLAR=true (bác sĩ đổi ý sau khi nghe giải thích 'không cần khoá vẫn chạy được'). Nhưng 'chạy được về mặt code' KHÁC 'trả kết quả thật ngay bây giờ' — đo sống 2 lần liên tiếp (query 'heart failure', 'diabetes') đều nhận HTTP 429 (đã thử lại theo backoff chuẩn của HttpClient, vẫn hết hạn mức) — connector đúng thiết kế fail-closed: trả `live:true, count:0, results:[]`, KHÔNG bịa dữ liệu giả khi bị chặn. Vì vậy dù đã BẬT, thực tế sẽ THƯỜNG XUYÊN trả rỗng cho tới khi có API key thật. Ghi status=degraded (không phải active) đúng sự thật đo được, không phải suy đoán. Người đọc: khi thấy Semantic Scholar trong SourceLog toàn 'error'/429, đây là hành vi ĐÃ BIẾT, không phải lỗi mới.",
+   "last_probe_at": "2026-09-22"
+  },
+  {
+   "id": "SRC-040",
+   "name": "Scite — connector MCP tương tác qua Claude Code, kiểm sống 22/09/2026",
+   "org": "scite.ai (Research Solutions)",
+   "tier": 3,
+   "domain": [
+    "xác minh rút bài/tally trích dẫn (bổ sung) · bậc thang dự phòng tầng 2"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://scite.ai",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "Kết nối claude.ai riêng của bác sĩ (không cần khoá phía repo). agAccess trong kết quả gắn với tài khoản Article Galaxy của bác sĩ — chỉ dẫn người đọc tới link họ đã có quyền, KHÔNG tự đặt hàng/tải hộ khi chưa xác nhận (theo đúng chỉ dẫn máy chủ Scite trả về cùng kết quả).",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent tương tác (tra-cuu-chung-cu · kiem-chung-trich-dan — xem _CONNECTOR-CHUNG-CU.md §2ter)",
+   "status": "active",
+   "last_success_at": "2026-09-22",
+   "known_gap": "CÙNG ranh giới với Cochrane MCP (SRC-038) — công cụ MCP chỉ gọi được TỪ TRONG phiên Claude Code tương tác, KHÔNG tham gia vòng quét tuần tự động. RIÊNG BIỆT: Scite còn bị CỔNG §2ter khoá thêm ở lớp doctrine — chỉ được gọi search_literature khi đã tra XONG PubMed/Europe PMC/Cấp 0 mà VẪN CHƯA ĐỦ ≥3 bài PMID/DOI đáng tin (không phải mặc định như Cochrane Cấp 0). Kỷ luật gọi: limit≤3 (payload lớn, đo được ~30KB/2 kết quả); tối đa 2 lời gọi search_literature/câu hỏi; tổng lời gọi tìm dự phòng (Consensus+Scite) ≤3/câu hỏi. Kết quả CÓ DOI, KHÔNG CÓ PMID — phải phân giải qua Crossref/PubMed trước khi dùng, không phân giải được thì BỎ. Vai trò xác minh rút bài (editorialNotices/tally) là BỔ SUNG cho chuỗi 3 tầng check_citation_retraction.py, KHÔNG THAY — Scite không thấy gì thì KHÔNG được ghi 'chưa bị rút'. Kiểm sống 22/09/2026: search_literature('\"heart failure\" AND \"SGLT2 inhibitor\"', limit=2) → 14.893 tổng kết quả, 2 hit thật (DOI/tiêu đề/tạp chí/tally thật, 1 hit có tally trích dẫn ủng hộ/phản bác thật).",
+   "last_probe_at": "2026-09-22"
+  },
+  {
+   "id": "SRC-041",
+   "name": "Wiley — MCP chưa cấp quyền, kiểm 22/09/2026",
+   "org": "Wiley (plugin:bio-research:wiley)",
+   "tier": 2,
+   "domain": [
+    "tạp chí Wiley (toàn văn/metadata)"
+   ],
+   "access": "manual",
+   "endpoint_or_url": null,
+   "auth_required": true,
+   "terms_ok": null,
+   "terms_note": null,
+   "scan_frequency": "ad-hoc",
+   "detection_method": "human",
    "measured_latency_days": null,
    "owner": "bác sĩ",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "TẮT theo quyết định của bác sĩ 22/09/2026 (ENABLE_SEMANTIC_SCHOLAR=false, ghi đè mặc định True trong code) — không phải lỗi cấu hình hay rào kỹ thuật. Bác sĩ nói rõ đây là lựa chọn: chấp nhận SerpApi Google Scholar (SRC-035) đủ dùng, không cần xin thêm. GHI CHÍNH XÁC vai trò để không đọc nhầm thành 'thay thế tương đương': Semantic Scholar là nguồn CHÍNH trong get_enabled_sources() — được gọi ở MỌI lượt quét cùng PubMed/Crossref/OpenAlex, trả abstract + đồ thị trích dẫn + DOI/PMID tin cậy. SerpApi là bậc thang DỰ PHÒNG tầng 2 (app/services/fallback_ladder.py) — CHỈ gọi khi nguồn chính chưa đủ chứng cứ đáng tin, trần 200 lượt/tháng tự đặt, KHÔNG có abstract, KHÔNG DOI/PMID chắc chắn (phải xác minh lại qua Crossref/PubMed), chỉ có năm công bố (không ngày/tháng). Hai nguồn khác tầng, khác nhịp gọi, khác độ tin cậy dữ liệu — SerpApi không lấp được vai trò 'nguồn chính chạy đều mỗi lượt' của Semantic Scholar, chỉ lấp một phần vai trò 'khám phá thêm khi thiếu'. Ảnh hưởng đo được: tầng full_text_and_citation_context trong app/sources/authority.py::EVIDENCE_SOURCE_UNIVERSE vẫn PARTIAL (0/4: unpaywall/semantic_scholar/publisher_full_text/pmc_full_text đều chưa kết nối) — tầng này là discovery_only nên KHÔNG chặn trạng thái PASS tổng thể, nhưng độ phủ toàn văn/trích dẫn mở rộng vẫn còn mỏng. Muốn bật lại: đặt ENABLE_SEMANTIC_SCHOLAR=true trong ~/.ebm-secrets/medical-ebm-automation.env (không cần key), thêm SRC-039 status→active vào sổ này.",
+   "known_gap": "MCP server 'plugin:bio-research:wiley' được liệt trong danh sách máy chủ CẦN XÁC THỰC ngay từ đầu phiên (khác Cochrane/Scite — hai server đó đã kết nối sẵn). Kiểm bằng ToolSearch 22/09/2026: 0 tool tải được (Cochrane/Scite tải được ngay). Đây là việc CHỈ bác sĩ tự làm được — agent không được yêu cầu/nhập mã xác thực, token hay callback URL thay bác sĩ. Cách cấp quyền: mở cài đặt connector của claude.ai (nếu dùng phiên bản MCP claude.ai) hoặc `/mcp` trong một phiên Claude Code tương tác (nếu dùng CLI) — chưa xác minh chính xác đường nào áp dụng cho app desktop bác sĩ đang dùng, cần bác sĩ tự kiểm trong Cài đặt của app. Sau khi cấp quyền xong, đổi status→active và kiểm sống một lượt gọi thật trước khi tin.",
    "last_probe_at": "2026-09-22"
   }
  ]
