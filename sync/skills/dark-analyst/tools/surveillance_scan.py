@@ -1175,6 +1175,23 @@ def search_core_lane(topic: str, days: int, retmax: int,
     return ra
 
 
+@dataclass
+class _BanGhiToiThieu:
+    """Thay thế NHẸ cho `app.sources.base.RawRecord` khi `medical-ebm-automation` không tới
+    được (bản sao trần trên CI, hoặc caller/test tiêm sẵn `bo_sung_fn` để cô lập môi trường
+    khỏi việc phải dò/`sys.path`). CHỈ dùng để DỰNG đầu vào cho `bo_sung_du_phong_lane()`
+    khi `bo_sung_fn` đã được tiêm — KHÔNG dùng ở đường tự dò môi trường thật (ở đó vẫn bắt
+    buộc RawRecord thật). Chỉ giữ đúng các trường hàm đó thực sự đọc/ghi."""
+    source: str = ""
+    title: str = ""
+    journal_or_organization: str | None = None
+    publication_date: str | None = None
+    doi: str | None = None
+    pmid: str | None = None
+    url: str | None = None
+    ingest_query: str | None = None
+
+
 def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retmax: int,
                           *, bo_sung_fn: Callable[..., tuple] | None = None,
                           ) -> tuple[list[Candidate], str]:
@@ -1196,31 +1213,44 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
     Không raise cho các trường hợp trên — CHỈ raise khi lỗi thật ngoài dự kiến
     (import hỏng, lỗi lập trình), để `run_scan()` ghi vào `lan_phu_loi`.
 
-    VÁ 22/09/2026 (bắt bằng kiểm đột biến — không phải suy đoán): bản đầu chỉ
+    VÁ 22/09/2026 vòng 1 (bắt bằng kiểm đột biến — không phải suy đoán): bản đầu chỉ
     nối `mea` vào `sys.path` BÊN TRONG nhánh `if bo_sung_fn is None:`, nhưng
     `from app.sources.base import RawRecord` ở CUỐI hàm chạy VÔ ĐIỀU KIỆN — khi
     test/caller tiêm sẵn `bo_sung_fn` (bỏ qua nhánh dò môi trường, đúng ý định
     của tham số này — xem docstring `search_scopus_lane`), `sys.path` không hề
-    được nối, và `import app...` ném `ModuleNotFoundError`. Lỗi bị CHE trong bộ
-    test đầy đủ vì một test CHẠY TRƯỚC (search_scopus_lane/search_core_lane)
-    tình cờ đã nối `mea` vào `sys.path` như tác dụng phụ — chỉ lộ ra khi chạy
-    RIÊNG các test của hàm này (`pytest -k du_phong`). Nay `mea` được dò và nối
-    vào `sys.path` VÔ ĐIỀU KIỆN, trước cả nhánh `if bo_sung_fn is None:`.
+    được nối, và `import app...` ném `ModuleNotFoundError`.
+
+    VÁ 22/09/2026 vòng 2 (bắt bởi CI thật trên bản sao TRẦN — PR #21, 4 job kiem-tinh đỏ):
+    vòng 1 sửa quá tay — thêm `if mea is None: return [], ""` NGAY ĐẦU HÀM, khiến khi
+    `medical-ebm-automation` không tồn tại (đúng CI của REPO GỐC — bare checkout, không có
+    thư mục anh em đó) thì HÀM TRẢ VỀ RỖNG NGAY LẬP TỨC dù `bo_sung_fn` đã được tiêm sẵn —
+    lại đúng cùng một lớp lỗi vòng 1 vừa vá (tham số tiêm sẵn không còn tác dụng bỏ qua môi
+    trường). Nay tách hẳn: `RawRecord` chỉ BẮT BUỘC là lớp thật khi TỰ DÒ (`bo_sung_fn is
+    None`, cần gọi `bo_sung_neu_thieu()` thật — hàm đó có thể trông cậy vào các trường/khả
+    năng khác của RawRecord thật ngoài truy cập thuộc tính đơn giản). Khi CALLER đã tiêm
+    `bo_sung_fn` (test hoặc caller khác), dùng `_BanGhiToiThieu` — lớp thay thế NHẸ, không
+    cần `medical-ebm-automation` — vì `bo_sung_fn` khi đó là "hộp đen" do caller kiểm soát,
+    chỉ cần đối tượng có ĐÚNG thuộc tính (Python duck-typing; đã soát `fallback_ladder.py`/
+    `fallback_verification.py` không có `isinstance(rec, RawRecord)` nào chặn việc này).
     """
     mea = _tim_medical_ebm_automation()
-    if mea is None or not (mea / "app" / "sources" / "base.py").exists():
-        return [], ""
-    import sys as _sys  # noqa: PLC0415
-    if str(mea) not in _sys.path:
-        _sys.path.insert(0, str(mea))
+    RawRecord = None
+    if mea is not None and (mea / "app" / "sources" / "base.py").exists():
+        import sys as _sys  # noqa: PLC0415
+        if str(mea) not in _sys.path:
+            _sys.path.insert(0, str(mea))
+        from app.sources.base import RawRecord as _RawRecord_that  # noqa: PLC0415
+        RawRecord = _RawRecord_that
     if bo_sung_fn is None:
-        if not (mea / "app" / "services" / "fallback_ladder.py").exists():
+        # Đường TỰ DÒ MÔI TRƯỜNG — bắt buộc cả mea LẪN RawRecord thật, không có đường lùi.
+        if mea is None or RawRecord is None or not (mea / "app" / "services" / "fallback_ladder.py").exists():
             return [], ""
         from app.services.fallback_ladder import bo_sung_neu_thieu, du_phong_dang_bat  # noqa: PLC0415
         if not du_phong_dang_bat():
             return [], ""
         bo_sung_fn = bo_sung_neu_thieu
-    from app.sources.base import RawRecord  # noqa: PLC0415
+    if RawRecord is None:
+        RawRecord = _BanGhiToiThieu
     ban_ghi_hien_co = [RawRecord(
         source=c.source or "surveillance", title=c.title, journal_or_organization=c.journal_or_organization,
         publication_date=c.publication_date, pmid=c.pmid or None, url=c.url, ingest_query=topic,

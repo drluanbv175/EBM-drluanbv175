@@ -406,6 +406,29 @@ class _FakeExtraRecord:
         self.source = source
 
 
+def test_bo_sung_du_phong_lane_van_goi_bo_sung_fn_khi_khong_co_medical_ebm_automation(monkeypatch):
+    """Hồi quy PR #21 (CI thật, 4 job kiem-tinh đỏ trên bản sao TRẦN của repo gốc — không có
+    medical-ebm-automation/ như một thư mục anh em). Bản vá vòng 1 (sửa ModuleNotFoundError) vô
+    tình thêm `if mea is None: return [], ""` NGAY ĐẦU HÀM — khiến `bo_sung_fn` dù đã được TIÊM
+    SẴN (đúng ý định của tham số này: cô lập test khỏi việc dò môi trường) cũng KHÔNG BAO GIỜ
+    được gọi khi không có medical-ebm-automation. Test này mô phỏng ĐÚNG kịch bản CI bằng cách
+    giả `_tim_medical_ebm_automation` trả None — không cần máy CI thật để tái lập."""
+    monkeypatch.setattr(S, "_tim_medical_ebm_automation", lambda: None)
+    goi = {"da_goi": False, "so_ban_ghi": None}
+
+    def bo_sung_fn_gia(query, area, records, *, max_results):
+        goi["da_goi"] = True
+        goi["so_ban_ghi"] = len(records)
+        return [], {}
+
+    ra, ghi_chu = _BO_SUNG_DU_PHONG_LANE_GOC(
+        "hf guideline", [S.Candidate("1", "2026", "T", "https://x", source="PubMed")],
+        10, bo_sung_fn=bo_sung_fn_gia)
+    assert goi["da_goi"] is True, "bo_sung_fn tiêm sẵn PHẢI được gọi dù không có medical-ebm-automation"
+    assert goi["so_ban_ghi"] == 1, "vẫn phải chuyển đổi Candidate -> bản ghi tối thiểu để truyền đi"
+    assert ra == [] and ghi_chu == ""
+
+
 def test_bo_sung_du_phong_lane_khong_goi_khi_bo_sung_fn_tra_rong():
     """Cổng đủ-chứng-cứ ĐÓNG (bo_sung_neu_thieu tự quyết định 'đủ rồi') ⇒ hàm
     này CHỈ truyền tiếp kết quả rỗng, không tự bịa thêm gì."""
