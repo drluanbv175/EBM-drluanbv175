@@ -64,6 +64,17 @@ def doc_json(p: Path) -> dict:
         return {}
 
 
+def doc_json_nghiem(p: Path) -> dict:
+    """Đọc JSON để GHI LẠI: file hỏng/không phải object thì NỔ (ValueError), không trả {}.
+
+    `doc_json` nuốt lỗi thành {} — đúng cho việc ĐỌC/so sánh, nhưng nếu ghi ngược {} + vài khoá ra file thì
+    một settings.json hỏng nửa chừng bị ghi đè mất sạch cấu hình còn lại của máy."""
+    d = json.loads(p.read_text(encoding="utf-8"))
+    if not isinstance(d, dict):
+        raise ValueError(f"{p.name} không phải object JSON")
+    return d
+
+
 def do_ngan_sach() -> tuple[int, int, int] | None:
     """(ký tự CẦN, số skill, ký tự ngân sách ĐÃ KHAI cho) — hoặc None nếu không đo được.
 
@@ -177,14 +188,32 @@ def main() -> int:
         # File vừa do chính lệnh này tạo thì không có gì để sao lưu — sao lưu một
         # file rỗng chỉ tạo rác và làm loãng đống .bak-* thật sự đáng xem.
         luu = None
+        dau_thoi_gian = f"{_dt.datetime.now():%Y%m%d-%H%M%S}"
         if not vua_tao:
-            luu = SETTINGS.with_name(f"settings.json.bak-{_dt.datetime.now():%Y%m%d-%H%M%S}")
+            luu = SETTINGS.with_name(f"settings.json.bak-{dau_thoi_gian}")
             shutil.copy2(SETTINGS, luu)
+        # 20/09/2026 — GHI TRÊN NỘI DUNG THẬT CỦA TỪNG FILE, không phải bản đã gộp.
+        # Bản trước ghi `hien` (= settings.json + settings.local.json đã gộp) vào settings.json: lệnh chạy tay
+        # ngày 20/09 chép nhầm `enabledPlugins`/`extraKnownMarketplaces` của bản .local sang file chung và
+        # làm MẤT đăng ký plugin Cochrane (18→17, 13→12) — trái với lời hứa «chỉ ghi khoá đã khai». Vì
+        # `.local` ĐÈ lên bản chung, khôi phục chỉ ở settings.json còn khiến giá trị HIỆU LỰC không đổi
+        # (công cụ báo «đã khôi phục» mà ngân sách vẫn 0,08): khoá nào `.local` đang giữ thì sửa ở đó luôn.
+        thuc = doc_json_nghiem(SETTINGS) if SETTINGS.exists() else {}
         for ten, _cu, muon in lech:
-            hien[ten] = muon              # CHỈ khoá đã khai; không đụng khoá khác
-        SETTINGS.write_text(json.dumps(hien, ensure_ascii=False, indent=2) + "\n",
+            thuc[ten] = muon              # CHỈ khoá đã khai; không đụng khoá khác
+        SETTINGS.write_text(json.dumps(thuc, ensure_ascii=False, indent=2) + "\n",
                             encoding="utf-8", newline="\n")
-    except OSError as exc:
+        local = SETTINGS.parent / "settings.local.json"
+        if local.is_file():
+            loc = doc_json_nghiem(local)
+            giu = [(ten, muon) for ten, _cu, muon in lech if ten in loc and loc[ten] != muon]
+            if giu:
+                shutil.copy2(local, local.with_name(f"settings.local.json.bak-{dau_thoi_gian}"))
+                for ten, muon in giu:
+                    loc[ten] = muon
+                local.write_text(json.dumps(loc, ensure_ascii=False, indent=2) + "\n",
+                                 encoding="utf-8", newline="\n")
+    except (OSError, ValueError) as exc:
         print(f"✗ Không ghi được {SETTINGS}: {exc}", file=sys.stderr)
         return 2
     print(f"\n✓ Đã khôi phục {len(lech)} khoá"

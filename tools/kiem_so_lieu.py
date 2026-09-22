@@ -72,8 +72,19 @@ def lay_tom_tat(pmid: str) -> str | None:
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
                 t = r.read().decode("utf-8", "replace")
-            if "<html" in t[:200].lower():
+            dau = t.lstrip()[:200].lower()
+            if "<html" in dau:
                 raise ValueError("NCBI trả HTML")
+            # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #5): efetch đôi khi trả HTTP 200
+            # với THÂN RỖNG hoặc một bản lỗi JSON ({"error":"API rate limit exceeded",...}) thay vì
+            # tóm tắt văn bản thật — trước đây chỉ HTML bị bắt, nên hai dạng này bị đọc thành «tóm
+            # tắt đã đọc» (chuỗi rỗng/JSON lỗi đi thẳng vào can_doc phía dưới) và mất-đo hoàn toàn
+            # bị trình bày như ⚪ KHÔNG THẤY bình thường, không vào nhánh hong/mã 2 mà bản vá 21/09
+            # dựng riêng cho trường hợp không đọc được.
+            if not t.strip():
+                raise ValueError("NCBI trả thân rỗng")
+            if dau.startswith("{") and '"error"' in dau:
+                raise ValueError("NCBI trả bản lỗi JSON thay vì tóm tắt")
             return t
         except (urllib.error.URLError, ValueError, http.client.HTTPException, OSError):
             if lan < 2:
@@ -231,8 +242,8 @@ def main() -> int:
     duong_vd = _bst_ksl.duong_cong_cu_pipeline("verify_dashboard.py", REPO)
     if duong_vd is None:
         print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
-              "git-vendor — không đối chiếu được trên máy này.")
-        return 0
+              "git-vendor — KHÔNG đối chiếu được trên máy này (chưa đo, không phải «khớp»).")
+        return 2
     spec = importlib.util.spec_from_file_location("vd_so", duong_vd)
     vd = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(vd)
@@ -255,12 +266,15 @@ def main() -> int:
             if e:
                 viec.append((f.name, vd.field(c, "id"), pm, dec, e,
                              vd.field(c, "measure")))
+    tong_co_so = len(viec)
     if a.gioi_han:
         viec = viec[:a.gioi_han]
-
-    print(f"Đối chiếu {len(viec)} mục có hiệu số định lượng…")
+    la_mau = bool(a.gioi_han and a.gioi_han < tong_co_so) or bool(a.file) or a.chi_apply
+    print(f"Đối chiếu {len(viec)}/{tong_co_so} mục có hiệu số định lượng…")
+    print(f"  tham số: phạm vi={'MỘT FILE' if a.file else 'TOÀN KHO'} · chi-apply={'có' if a.chi_apply else 'không'} · "
+          f"gioi-han={a.gioi_han or 'không'}" + ("  ⇒ KẾT QUẢ CHỈ LÀ MẪU" if la_mau else ""))
     tom_tat: dict[str, str | None] = {}
-    khop = khop_tv = mot_phan = khong_thay = hong = 0
+    khop = khop_tv = mot_phan = khong_thay = hong = nhan_lech_dem = 0
     can_doc: list[tuple] = []
     for k, (fn, iid, pm, dec, (hr, lo, hi), meas) in enumerate(viec, 1):
         if pm not in tom_tat:
@@ -276,6 +290,14 @@ def main() -> int:
         if lech:
             # SỐ khớp mà NHÃN khác = nguy hiểm hơn số sai: trông rất hợp lý (LÔ H).
             can_doc.append(("🔴 NHÃN LỆCH " + lech.upper(), fn, iid, pm, dec, hr, lo, hi))
+            nhan_lech_dem += 1
+            # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #6): KHÔNG cộng mục này vào
+            # khop/khop_tv/mot_phan/khong_thay — trước đây một mục vừa bị gắn "🔴 NHÃN LỆCH" ở
+            # can_doc VẪN được cộng vào "✓ KHỚP đầy đủ" nếu số khớp, khiến bảng tổng kết MÂU
+            # THUẪN cho CÙNG một mục (✓ KHỚP và 🔴 NHÃN LỆCH cùng lúc). Nhãn lệch là loại vấn đề
+            # RIÊNG (đo lường/chiều khác với measure khai), có mức ưu tiên cao hơn "số khớp hay
+            # không" — không được để chồng lấn vào các khối khác.
+            continue
         if c_hr and c_lo and c_hi:
             khop += 1
         else:
@@ -305,10 +327,31 @@ def main() -> int:
     print(f"  🟠 MỘT PHẦN   : {mot_phan}  (thấy ước lượng điểm, không đủ khoảng tin cậy)")
     print(f"  ⚪ KHÔNG THẤY : {khong_thay}  (cả tóm tắt lẫn toàn văn ĐANG CÓ đều không nêu — "
           "KHÔNG kết luận là trích sai)")
+    if nhan_lech_dem:
+        # Vá 22/09/2026 (review:cong-rut-bai #6): dòng RIÊNG, tách khỏi "✓ KHỚP đầy đủ" — mục
+        # nhãn lệch không được tính là "khớp" dù số có trùng, để bảng tổng kết không tự mâu thuẫn.
+        print(f"  🔴 NHÃN LỆCH  : {nhan_lech_dem}  (đo lường/chiều khác 'measure' đã khai — xem "
+              "chi tiết dưới, KHÔNG tính vào ✓ KHỚP)")
     if hong:
-        print(f"  ⚠ Không lấy được tóm tắt: {hong} — 'chưa kiểm', không phải 'không sao'")
+        print(f"  ⚠ Không lấy được tóm tắt: {hong}/{len(viec)} — 'chưa kiểm', không phải 'không sao'")
     print("=" * 70)
+    # VÁ 21/09/2026: bản cũ in «🟢 Mọi hiệu số đều tìm thấy đủ» và thoát 0 khi `can_doc` rỗng — kể cả khi MỌI truy vấn
+    # tóm tắt hỏng (hong == tổng) hoặc mới dò một MẪU. «Không có mục nào cần đọc» vì không mục nào ĐƯỢC ĐỌC là chưa đo,
+    # không phải sạch (cùng họ BH27/BH32). Mã thoát: 0 sạch TRỌN · 1 có mục cần đọc · 2 KHÔNG ĐO ĐƯỢC hết/một phần.
+    do_duoc = len(viec) - hong
+    if not viec:
+        print("  ⚪ 0 mục có hiệu số định lượng để đối chiếu — CHƯA đo gì (không phải «khớp hết»; nếu dashboard chắc chắn có "
+              "hiệu số thì kiểm parser `effect{hr,lo,hi}`).")
+        return 2
+    if do_duoc == 0 or hong:
+        print(f"  ⚪ KHÔNG ĐO ĐƯỢC {hong}/{len(viec)} mục (truy vấn tóm tắt hỏng — mạng/NCBI chặn?) — "
+              "KHÔNG kết luận «khớp», KHÔNG in xanh.")
+        if not can_doc:
+            return 2
     if not can_doc:
+        if la_mau:
+            print(f"  ⚪ Mẫu {len(viec)}/{tong_co_so} mục đều khớp — KHÔNG được đọc là «cả kho sạch».")
+            return 0
         print("  🟢 Mọi hiệu số đều tìm thấy đủ trong tóm tắt.")
         return 0
     print("  Danh sách nên đọc lại (ưu tiên decision='apply'):\n")

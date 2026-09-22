@@ -84,7 +84,7 @@ def ngay_tu_ten(p: Path) -> dt.date | None:
 
 
 def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
-    """(ngày lần chạy cuối, trạng thái) — trạng thái ∈ PASS · LỖI · DANG_DO · "".
+    """(ngày lần chạy cuối, trạng thái) — trạng thái ∈ PASS · LỖI · KHONG_CAN_LAP_LAI · DANG_DO · "".
 
     VÁ 13/08/2026 — bản cũ CHỈ đọc `st_mtime` rồi kết luận "còn hạn". Nhưng hai script
     giám sát ghi dòng "BẮT ĐẦU" vào log **NGAY khi khởi động**, trước khi làm bất cứ
@@ -94,6 +94,13 @@ def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
     Từ khi `tu_khoi_dong.py` tự phóng mỗi phiên, điều này thành vòng lặp im lặng:
     phóng → hỏng → mtime tươi → "còn hạn" → không ai biết. Chính log ĐÃ chứa câu trả
     lời (dòng "KẾT THÚC … tổng thể=PASS | CÓ BƯỚC LỖI") — chỉ là chưa ai đọc.
+
+    VÁ 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #8) — thêm nhãn thứ ba
+    `KHONG_CAN_LAP_LAI`, đọc từ "tổng thể=KHÔNG CẦN LẶP LẠI" mà `quarterly_superseded.sh`
+    nay ghi cho ba tình trạng TẤT ĐỊNH (0 mục để dò / lượt bị giới hạn cố ý / thiếu công
+    cụ) — KHÁC "LỖI" thật (mạng hỏng, thiếu PMID). Người tiêu thụ (`tu_khoi_dong.qua_han()`)
+    phải phân biệt được hai nhãn này: "LỖI" đáng phóng lại NGAY bất kể số ngày, còn
+    "KHONG_CAN_LAP_LAI" thì retry ngay không giúp gì — chỉ nên chờ tới hạn ngày như PASS.
     """
     if not (log.exists() and log.stat().st_size > 0):
         return None, ""
@@ -104,7 +111,11 @@ def lan_chay_cuoi(log: Path) -> tuple[dt.date | None, str]:
         return ngay, ""
     for d in reversed(dong):
         if "KẾT THÚC" in d:
-            return ngay, ("PASS" if "tổng thể=PASS" in d else "LỖI")
+            if "tổng thể=PASS" in d:
+                return ngay, "PASS"
+            if "tổng thể=KHÔNG CẦN LẶP LẠI" in d:
+                return ngay, "KHONG_CAN_LAP_LAI"
+            return ngay, "LỖI"
         if "BẮT ĐẦU" in d:
             # Gặp BẮT ĐẦU trước KẾT THÚC ⇒ lượt cuối chưa khép lại: đang chạy, hoặc
             # đã chết giữa chừng. Cả hai đều KHÔNG được coi là một lượt giám sát xong.
@@ -174,7 +185,23 @@ def lau_chua_xem_lai() -> list[tuple[str, int]]:
                   key=lambda kv: -kv[1])
 
 
-def in_bang_tuoi(lau: list[tuple[str, int]]) -> None:
+def doc_khong_can() -> dict:
+    """Các chủ đề gốc / lát cắt bác sĩ khai «cố ý không canh» (bản tin tuần GỘP) trong giam-sat-chu-de.json."""
+    import json as _json
+    try:
+        return dict(_json.loads((DASH / "giam-sat-chu-de.json").read_text(encoding="utf-8")).get("khong_can") or {})
+    except (OSError, ValueError):
+        return {}
+
+
+def la_khong_can(lat_cat: str, khong_can: dict) -> bool:
+    """Bản tin gộp KHÔNG thể «xem lại» thành một chủ đề (T1-12, 20/09/2026): 12/64 lát cắt là loại này. Không loại
+    thì từ ~06/10 chúng vượt ngưỡng 120 ngày và hook nhắc MỖI phiên một mục không bao giờ gỡ được — đúng kiểu
+    cảnh báo bị bác sĩ học cách bỏ qua, kéo theo cảnh báo thật chìm."""
+    return lat_cat in khong_can or lat_cat.split("_")[0] in khong_can
+
+
+def in_bang_tuoi(lau: list[tuple[str, int]], khong_can: dict | None = None) -> None:
     """In phân bố tuổi để dòng 🟢 ở trên không bị đọc quá rộng."""
     if not lau:
         return
@@ -183,8 +210,11 @@ def in_bang_tuoi(lau: list[tuple[str, int]]) -> None:
     print(f"   {len(lau)} chủ đề · trung vị {sorted(tuoi)[len(tuoi) // 2]} ngày kể từ lần "
           f"xem lại · {qua} chủ đề quá {HAN_CAP_NHAT_NGAY} ngày")
     if qua:
-        ten = " · ".join(f"{k} ({t}ng)" for k, t in lau[:5])
+        lam_moi_duoc = [x for x in lau if not la_khong_can(x[0], khong_can or {})]
+        ten = " · ".join(f"{k} ({t}ng)" for k, t in lam_moi_duoc[:5])
         print(f"   Lâu nhất: {ten}")
+        if khong_can is not None and len(lam_moi_duoc) < len(lau):
+            print(f"   ({len(lau) - len(lam_moi_duoc)} bản tin gộp không tính vào «lâu nhất» — không thể làm mới thành một chủ đề)")
         print("   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi")
         print("    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)")
 
@@ -225,13 +255,15 @@ def main() -> int:
 
     # 3) TUỔI TỪNG CHỦ ĐỀ — thứ mà `max()` ở mục (1) không nói được.
     lau = lau_chua_xem_lai()
-    rat_lau = [x for x in lau if x[1] > HAN_RAT_LAU_NGAY]
+    khong_can = doc_khong_can()
+    rat_lau = [x for x in lau if x[1] > HAN_RAT_LAU_NGAY and not la_khong_can(x[0], khong_can)]
     if rat_lau:
         ten = ", ".join(f"{k} ({t}ng)" for k, t in rat_lau[:3])
         canh_bao.append(
             f"{len(rat_lau)} chủ đề chưa xem lại quá {HAN_RAT_LAU_NGAY} ngày: {ten}"
             + (f" và {len(rat_lau) - 3} chủ đề nữa" if len(rat_lau) > 3 else "")
-            + ". Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
+            + ". Chạy `python3 ops/orchestrator.py --cu-nhat 3 --online` (máy làm phần quét/kiểm) rồi "
+              "`/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
 
     if not canh_bao:
         if not a.im_khi_on:
@@ -242,7 +274,7 @@ def main() -> int:
             # cùng lớp lỗi BH15/BH30: con số không đo thứ nó tự nhận là đang đo.
             print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
                   if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
-            in_bang_tuoi(lau)
+            in_bang_tuoi(lau, khong_can)
             for x in ngoai_pham_vi:
                 print(f"   ⚪ {x}")
         return 0
@@ -258,7 +290,7 @@ def main() -> int:
     # chưa từng chạy"), dù chính bảng đó mới trả lời "chủ đề nào lâu chưa xem lại
     # NHẤT". Ở nhịp làm việc thật gần như luôn có ít nhất một cảnh báo khác, nên
     # bảng này gần như không bao giờ hiện ra. Nay in cả ở nhánh 🟡.
-    in_bang_tuoi(lau)
+    in_bang_tuoi(lau, khong_can)
     for x in ngoai_pham_vi:
         print(f"   ⚪ {x}")
     print("   (Chốt này chỉ NHẮC — quét chứng cứ phải do bác sĩ chủ động và duyệt kết quả.)")

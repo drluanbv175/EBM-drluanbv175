@@ -1,0 +1,811 @@
+{
+ "phien_ban": 1,
+ "sinh_ngay": "2026-09-21",
+ "trang_thai": "NHAP_MAY_CHUA_BAC_SI_DUYET",
+ "cach_dung": "Bộ vàng cho tools/tra_diem_kham.py. Máy soạn nháp; bác sĩ duyệt bằng cách điền «bac_si_duyet»: true/false từng dòng (30–60 phút). ky_vong: 'trung' = phải ra ≥1 thẻ và MỌI thẻ ra phải mang ≥1 từ khoá; 'chua_giam_sat' = KHÔNG được ra thẻ nào; 'khong_tra_the_lac_de' = có ra hay không tuỳ, nhưng KHÔNG thẻ nào được mang cụm cấm. Từ khoá đã gấp dấu (không dấu, chữ thường). Bài test đọc sổ thẻ THẬT (EBM_MASTER.json, ngoài git) và tự bỏ qua (⚪ CHƯA KIỂM) khi máy không có sổ — không phải ĐẠT. Dòng «da_biet_chua_dat» KHÔNG được khẳng định (là khoảng trống độ phủ đã biết, đo để theo dõi) — sửa được thì chuyển lên «cau_hoi».",
+ "cau_hoi": [
+  {
+   "q": "tăng huyết áp mới chẩn đoán chọn thuốc gì",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "huyet ap"
+   ],
+   "ghi_chu": "ca 21/09: từng trả thẻ tăng đường huyết/tân sinh tủy/H. pylori",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đích huyết áp ở người tăng huyết áp",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "huyet ap"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tang huyet ap",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "huyet ap"
+   ],
+   "ghi_chu": "gõ KHÔNG dấu",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "metformin và bệnh thận mạn",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "metformin"
+   ],
+   "ghi_chu": "từ đệm «và» không được làm mất cặp kề nhau",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "bệnh thận mạn có đái tháo đường dùng thuốc gì",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "dai thao duong",
+    "than"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy tim phân suất tống máu giảm điều trị",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "suy tim"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy tim phan suat tong mau giam",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "suy tim"
+   ],
+   "ghi_chu": "gõ KHÔNG dấu",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy tim phân suất tống máu bảo tồn empagliflozin",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "empagliflozin"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "chống đông rung nhĩ DOAC",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "rung nhi"
+   ],
+   "ghi_chu": "«chống đông» ≠ «kháng đông» nhưng cụm rung nhĩ+DOAC đủ chủ đề; cặp ngang ranh giới cụm không bị đòi kề. (Kiểm chặt hơn 22/09: luật một-vế-trượt mở rộng suýt loại oan cặp «chống/kháng đông» — miễn trừ qua _TU_GHEP_DONG_NGHIA.)",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "rung nhĩ kiểm soát tần số",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "rung nhi"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "COPD đợt cấp nhiều lần có nên bộ ba ICS LABA LAMA",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "copd",
+    "ics",
+    "laba",
+    "lama"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "COPD chẹn beta có an toàn không",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "chen beta"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "oxy dài hạn COPD",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "oxy"
+   ],
+   "ghi_chu": "thẻ không có chữ COPD ở tiêu đề vẫn phải được xét",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "hen ICS reliever GINA",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "hen"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm khớp dạng thấp JAK inhibitor người cao tuổi nguy cơ tim mạch",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "jak"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "sàng lọc lao tiềm ẩn trước thuốc sinh học",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "lao tiem an"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau đầu migraine dự phòng",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "migraine"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau đầu do lạm dụng thuốc",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "dau dau"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "dau dau migraine",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "migraine"
+   ],
+   "ghi_chu": "gõ KHÔNG dấu",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau ngực cần chụp CT mạch vành",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "mach vanh",
+    "dau nguc"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau thắt ngực không hẹp mạch vành",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "mach vanh",
+    "dau that nguc"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "allopurinol bệnh thận mạn",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "allopurinol"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "béo phì semaglutide",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "semaglutide"
+   ],
+   "ghi_chu": "cặp có từ hiếm không bị đòi kề nhau",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm gan B ngừng thuốc kháng virus",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "khang virus"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "cường giáp điều trị",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "cuong giap"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy giáp levothyroxine",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "suy giap"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tăng acid uric không triệu chứng",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "acid uric",
+    "urat",
+    "gout"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "ngưng thở khi ngủ",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "ngung tho"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "sau can thiệp mạch vành kháng đông",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "mach vanh"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm khớp vảy nến",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "vay nen"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đợt cấp COPD corticosteroid đường huyết",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "copd"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đái tháo đường SGLT2",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "sglt2"
+   ],
+   "ghi_chu": "sửa 22/09 (phản biện vòng 2): «type 2» nay là ràng buộc kề thật (cùng cơ chế «cường/suy giáp») — thẻ khung quản lý ĐTĐ+CKD không nêu rõ týp không còn được coi là trả lời đủ câu hỏi CÓ NÊU týp; bỏ định ngữ khỏi câu vàng, ý gốc (khớp SGLT2) vẫn được giữ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tăng lipid máu statin",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "lipid",
+    "statin"
+   ],
+   "ghi_chu": "",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm họng liên cầu kháng sinh",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "0 thẻ có «viêm họng»/«liên cầu» — ca 21/09 từng trả thẻ viêm túi thừa",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "sốt xuất huyết dengue ngoại trú dấu hiệu cảnh báo",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "token dengue không có ở BẤT KỲ thẻ nào",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "ung thư vú tầm soát",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "0 thẻ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "thoát vị đĩa đệm",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "0 thẻ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "kháng sinh dự phòng",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "0 thẻ chứa cụm này",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tiền đái tháo đường",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "0 thẻ mang «tiền đái tháo đường» ở tiêu đề; thẻ «đái tháo đường… tiền lâm sàng» KHÔNG phải",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "hậu phẫu đau",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "tiền tố «hậu» phải kề",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "zzzz qqqq xxxx",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "chuỗi vô nghĩa",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "",
+   "ky_vong": "chua_giam_sat",
+   "ghi_chu": "câu rỗng",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau đầu cờ đỏ cần chụp gì",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "dau nguc"
+   ],
+   "ghi_chu": "ca 21/09: từng trả thẻ CT đau NGỰC vì «đau»+«ban đầu»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "gút cấp điều trị",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "phu mach",
+    "hen"
+   ],
+   "ghi_chu": "ca 21/09: từng trả thẻ phù mạch",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "hen phế quản bậc 3 điều trị",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "chen beta khong chon loc"
+   ],
+   "ghi_chu": "ca 21/09: từng trả thẻ chẹn beta",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy tim và thiếu sắt sắt tĩnh mạch",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "sat"
+   ],
+   "ghi_chu": "cùng chủ đề, bỏ chữ «truyền» (mỏ neo phải khớp ở tiêu đề)",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "xuất huyết não",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tieu hoa",
+    "da day"
+   ],
+   "ghi_chu": "phản biện 21/09: «não» bị coi từ đệm «nào» ⇒ ra thẻ xuất huyết tiêu hoá",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "nhồi máu não",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "nhoi mau co tim"
+   ],
+   "ghi_chu": "cùng lỗi «não»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "huyết áp thấp",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tang huyet ap"
+   ],
+   "ghi_chu": "«thấp» từng là từ đệm ⇒ ra thẻ đích huyết áp/tăng huyết áp",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đường huyết thấp",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tang duong huyet"
+   ],
+   "ghi_chu": "«thấp» từng là từ đệm",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tăng cân",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "huyet ap",
+    "mach vanh"
+   ],
+   "ghi_chu": "«cân» ⇒ «cần»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đau chân",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "dau nguc"
+   ],
+   "ghi_chu": "«chân» ⇒ «chẩn» ⇒ ra thẻ đau ngực",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "ung thư da",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "da day"
+   ],
+   "ghi_chu": "«da» ⇒ «đã»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm da",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "da day"
+   ],
+   "ghi_chu": "«da» ⇒ «đã»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "bệnh nhân RA nên tầm soát gì",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tip 1"
+   ],
+   "ghi_chu": "«RA» viết hoa là viêm khớp dạng thấp, không phải từ đệm «ra»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm gan C",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "viem gan b"
+   ],
+   "ghi_chu": "mã 1 ký tự bị bỏ ⇒ ra thẻ viêm gan B",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "viêm gan A",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "viem gan b"
+   ],
+   "ghi_chu": "mã 1 ký tự bị bỏ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "vitamin D",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "b12",
+    "k1"
+   ],
+   "ghi_chu": "mã 1 ký tự bị bỏ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đái tháo đường típ 2",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tip 1"
+   ],
+   "ghi_chu": "«típ 2» ⇒ ra thẻ típ 1",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "THA kháng trị",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "pylori"
+   ],
+   "ghi_chu": "viết tắt THA bung ra nhưng cặp kề dùng chuỗi chưa bung ⇒ lách ràng buộc",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tăng huyết áp thai kỳ",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "dai thao duong"
+   ],
+   "ghi_chu": "token chỉ khớp ở khuyến cáo không đủ nêu chủ đề",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "ung thư phổi",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "jak",
+    "suy tim"
+   ],
+   "ghi_chu": "mỏ neo «phổi» không ở tiêu đề",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy giáp",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "cuong giap"
+   ],
+   "ghi_chu": "«suy tim … cường giáp» ghép hai cụm",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "khó thở",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "kho chiu"
+   ],
+   "ghi_chu": "«khó chịu» ≠ «khó thở»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "phù chân",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "phu hop"
+   ],
+   "ghi_chu": "«phù hợp» ≠ «phù»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "thiếu máu",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "thieu mau cuc bo"
+   ],
+   "ghi_chu": "thiếu máu cục bộ tim ≠ thiếu máu",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "hạ kali máu",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tang kali"
+   ],
+   "ghi_chu": "thẻ NGƯỢC chiều",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "hạ natri máu",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tang kali"
+   ],
+   "ghi_chu": "thẻ NGƯỢC chiều",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tuýp 2 đái tháo đường",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "dai thao duong"
+   ],
+   "ghi_chu": "«tuýp/típ/type» là một từ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đa thuốc người cao tuổi",
+   "ky_vong": "trung",
+   "the_phai_chua_mot_trong": [
+    "dathuoc"
+   ],
+   "ghi_chu": "«đa» có dấu là tiền tố y khoa, không phải «đã»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "tăng huyết áp trẻ em",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "h pylori",
+    "h. pylori"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: câu ≥4 token, «trẻ em» tự đủ trả thẻ H. pylori lạc đề — nay luật một-vế-trượt áp cho MỌI độ dài câu",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "kháng sinh viêm phổi",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "tui thua"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «viêm PHỔI» trượt vẫn lọt vì luật cũ chỉ áp câu ≤3 token — ra thẻ viêm túi thừa",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "bệnh thận mạn đang lọc máu",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "khong loc mau",
+    "khong loc"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: thẻ «KHÔNG lọc máu» không được trả lời câu hỏi về người ĐANG lọc máu — cơ chế phủ định",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "CKD đã lọc máu",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "chua loc mau",
+    "chua loc"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: cùng cơ chế phủ định, chiều CHƯA/ĐÃ",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "u gan",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "xo gan"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «u» (khối u) trước đây bị bỏ như mã lẻ — ra thẻ xơ gan không liên quan khối u",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "u phổi",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "viem phoi",
+    "ra-ild"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: cùng cơ chế tiền tố «u»",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "MI",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "mi la gi",
+    "gluten",
+    "lua mi"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «MI» (nhồi máu cơ tim) viết hoa khớp nhầm «mì» (gluten) — nay đòi khớp ĐÚNG DẠNG HOA",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "PSA",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "psa la gi"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «PSA» viết hoa khớp nhầm «PsA» (viêm khớp vảy nến, khác hoa/thường)",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "suy tim giai đoạn C",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "giai doan b"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «đoạn» từng gấp trùng «đoán» (chẩn đoán) nên bị bỏ như từ đệm — nay bảo vệ trong _Y_KHOA_CO_DAU",
+   "bac_si_duyet": null
+  },
+  {
+   "q": "đột quỵ dự phòng thứ phát",
+   "ky_vong": "khong_tra_the_lac_de",
+   "cam_tra_the_chua": [
+    "nguyen phat"
+   ],
+   "ghi_chu": "phản biện vòng 2 22/09: «tái/thứ/nguyên phát» dùng chung âm tiết «phát» — không được lẫn nguyên phát/thứ phát",
+   "bac_si_duyet": null
+  }
+ ],
+ "da_biet_chua_dat": [
+  {
+   "q": "hen phế quản bậc 3 điều trị",
+   "vi_sao": "có thẻ GINA 2026 (phác đồ hen) nhưng câu hỏi nêu «bậc 3» mà thẻ không nêu ⇒ dưới ngưỡng ⇒ «chưa giám sát» (an toàn, tra tay)"
+  },
+  {
+   "q": "thiếu máu bệnh thận mạn ESA đích hemoglobin",
+   "vi_sao": "có thẻ KDIGO 2026 thiếu máu CKD; nhiều token («hemoglobin», «đích») không ở tiêu đề"
+  },
+  {
+   "q": "người cao tuổi đa thuốc benzodiazepine Beers",
+   "vi_sao": "có thẻ AGS Beers 2023; câu 6 token, nhiều từ không ở tiêu đề"
+  },
+  {
+   "q": "đau thần kinh gabapentin",
+   "vi_sao": "có thẻ NeuPSIG 2025 nhưng đang ra thẻ nhãn FDA gabapentin — KHÔNG phải câu trả lời cho «đau thần kinh»"
+  },
+  {
+   "q": "H. pylori diệt trừ",
+   "vi_sao": "có thẻ H. pylori; «diệt trừ» không ở tiêu đề"
+  },
+  {
+   "q": "hạ đường huyết ở người cao tuổi",
+   "vi_sao": "đồng âm «hạ đường huyết»: trả thẻ thuốc-hạ-đường-huyết COPD + thẻ ADA người cao tuổi; đúng nhất là ADA 2026 Mục 13"
+  },
+  {
+   "q": "đích HbA1c người cao tuổi",
+   "vi_sao": "ra thẻ KDIGO ĐTĐ-thận thay vì ADA 2026 Mục 13 (người cao tuổi)"
+  },
+  {
+   "q": "thuốc lợi tiểu suy tim",
+   "vi_sao": "ra thẻ DIAMOND/finerenone (lợi ích…) — chưa có thẻ lợi tiểu; bag-of-words + «lợi» trong «lợi ích»"
+  },
+  {
+   "q": "chóng mặt tư thế",
+   "vi_sao": "ra thẻ cờ đỏ chèn ép hành tuỷ; đúng nhất là «chưa giám sát» (BPPV)"
+  },
+  {
+   "q": "tiêm vắc xin cúm người cao tuổi",
+   "vi_sao": "ra thẻ vắc-xin cúm trên nền methotrexate/suy tim — liên quan chủ đề, KHÔNG phải người cao tuổi nói chung"
+  },
+  {
+   "q": "bệnh mạch vành ổn định kháng kết tập tiểu cầu",
+   "vi_sao": "có thẻ BMV+rung nhĩ; hiện ra «chưa giám sát»"
+  },
+  {
+   "q": "suy tim và thiếu sắt truyền sắt tĩnh mạch",
+   "vi_sao": "thẻ AFFIRM-AHF/IRONMAN có mặt nhưng «truyền» (token hiếm nhất) không ở tiêu đề ⇒ mỏ neo trượt ⇒ «chưa giám sát»; đã thử nới mỏ neo và bị thẻ sai chủ thể (ung thư PHỔI→thẻ JAKi; …EMPAGLIFLOZIN→thẻ suy tim EF bảo tồn không nói empagliflozin)"
+  },
+  {
+   "q": "suy tim EF giảm chẹn beta",
+   "vi_sao": "sai QUẦN THỂ: ra thẻ chẹn beta sau nhồi máu cơ tim có EF ≥50% («KHÔNG giảm tử vong») — «EF giảm» và «EF bảo tồn» chưa được tách thành hai khái niệm"
+  },
+  {
+   "q": "hạ huyết áp tư thế",
+   "vi_sao": "ra thẻ «Hạ huyết áp TÍCH CỰC ≥75 tuổi» — cụm «hạ huyết áp» ở thẻ là ĐIỀU TRỊ, ở câu hỏi là TRIỆU CHỨNG; đồng âm không giải được bằng từ vựng"
+  },
+  {
+   "q": "hạ natri máu",
+   "vi_sao": "ra thẻ «Natri zirconium cyclosilicate … hạ kali máu» — «natri» là tên thuốc ở thẻ, là chất điện giải ở câu hỏi"
+  },
+  {
+   "q": "thận nhân tạo",
+   "vi_sao": "ra thẻ trí tuệ NHÂN TẠO (AI) — «nhân» là từ đệm ở câu hỏi bệnh nhân nên cặp «nhân tạo» không được xét"
+  },
+  {
+   "q": "dấu hiệu cảnh báo đột quỵ",
+   "vi_sao": "chưa có thẻ «dấu hiệu cảnh báo»; ra thẻ TREAT (darbepoetin tăng đột quỵ) vì «đột quỵ» khớp — liên quan chủ đề nhưng không trả lời câu hỏi"
+  },
+  {
+   "q": "ho mạn tính",
+   "vi_sao": "«ho» gõ không dấu khớp mọi biến thể («hồ», «hố») — chỉ chặn được token có dấu, không chặn được 2 ký tự gõ ASCII"
+  },
+  {
+   "q": "sot",
+   "vi_sao": "kho chỉ có MỘT dạng có dấu hoàn chỉnh cho fold này là «sót» (13 lần, «sốt» không hề xuất hiện làm từ riêng trong tiêu đề) — cơ chế mơ hồ (đòi ≥2 dạng cạnh tranh) không phát hiện được vì không có dạng thứ hai để so sánh; đây là ví dụ rõ nhất cho giới hạn từ vựng thuần tuý mà audit kết luận cần embedding mới giải quyết triệt để"
+  },
+  {
+   "q": "thuốc lá",
+   "vi_sao": "«lá» là CHÍNH XÁC cùng một từ (không phải nhầm dấu) trong «thuốc lá» (thuốc lá điếu) và «van hai lá» (mitral valve) — đa nghĩa thật của tiếng Việt, không sửa được bằng cơ chế dấu/mã; token «thuốc» khớp qua phần khuyến cáo (kr) của thẻ van tim mà không cần kề trong tiêu đề"
+  },
+  {
+   "q": "người già",
+   "vi_sao": "«già» là CHÍNH XÁC cùng một từ trong «người già» (elderly) và «ruột già» (colon) — đa nghĩa thật, «người» bị lọc như từ đệm để lại «già» một mình"
+  },
+  {
+   "q": "hạ kali máu",
+   "vi_sao": "cùng cụm «hạ kali máu» xuất hiện ở CẢ câu hỏi (mô tả TÌNH TRẠNG hạ kali) lẫn tiêu đề thẻ (mô tả TÁC DỤNG của thuốc — thuốc LÀM hạ kali máu, tức điều trị TĂNG kali) — không có xung đột từ vựng để bắt vì cả hai phía dùng ĐÚNG cùng cụm từ với vai trò ngữ pháp khác nhau (tính từ-mô-tả vs động từ-tác-dụng)"
+  }
+ ]
+}

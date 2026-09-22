@@ -1,0 +1,18 @@
+{
+  "_about": "SỔ KHAI «tác vụ lịch nền KỲ VỌNG» — nguồn cho tools/kiem_lich_nen.py (cảm biến người chết, 20/09/2026). Khai Ý ĐỊNH (cron + dấu vết đầu ra mà mỗi kỳ PHẢI để lại), không phải trạng thái. Python không gọi được MCP scheduled-tasks nên cảm biến bắt qua DẤU VẾT ĐẦU RA, tính theo TỪNG KỲ (không so «PASS cuối» — một lượt chạy tay chen vào không được xoá dấu vết một kỳ lịch không nổ). Sửa khi bác sĩ đổi lịch; định nghĩa tác vụ nằm ở sync/scheduled-tasks/<id>/SKILL.md.",
+  "cua_so_ngay": 21,
+  "tac_vu": [
+    {"id": "thu-thap-tuan-an-toan-thuoc", "cron": "0 18 * * 1", "tu_ngay": "2026-08-17", "grace_gio": 30,
+     "dau_vet": {"loai": "log-ket-thuc", "path": "medical-ebm-automation/data/archive/launchd_weekly.log"}},
+    {"id": "goi-duyet-tuan-ebm", "cron": "30 18 * * 1", "tu_ngay": "2026-08-17", "grace_gio": 30,
+     "dau_vet": {"loai": "file-tuan-iso", "path": "queue/tuan-{iso_nam}-W{iso_tuan:02d}.md"}},
+    {"id": "cap-nhat-thang-ebm", "cron": "30 18 1 * *", "tu_ngay": "2026-09-01", "grace_gio": 30,
+     "dau_vet": {"loai": "log-ket-thuc", "path": "medical-ebm-automation/data/archive/launchd_monthly.log"}},
+    {"id": "giam-sat-acc-aha-quy", "cron": "0 19 1 1,4,7,10 *", "tu_ngay": "2026-10-01", "grace_gio": 30,
+     "dau_vet": {"loai": "khong-co"}},
+    {"id": "kiem-thang-diem-quy", "cron": "0 18 2 1,4,7,10 *", "tu_ngay": "2026-10-02", "grace_gio": 30,
+     "dau_vet": {"loai": "khong-co"}},
+    {"id": "kiem-tra-hoan-thien-he-thong-thang", "cron": "0 18 3 * *", "tu_ngay": "2026-10-03", "grace_gio": 30,
+     "dau_vet": {"loai": "khong-co"}}
+  ]
+}

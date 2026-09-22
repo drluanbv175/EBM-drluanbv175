@@ -49,7 +49,7 @@ def main() -> int:
               "(dashboard/bản đọc không đo ở kênh này). Cần bác sĩ kiểm chứng.")
         return 0
     tu = dt.datetime.now() - dt.timedelta(days=a.ngay)
-    luot, miss, ms_tong = 0, 0, 0
+    luot, miss, miss_yeu, ms_tong = 0, 0, 0, 0
     the = Counter()
     theo_gio = Counter()
     for dong in LOG.read_text(encoding="utf-8").splitlines():
@@ -64,7 +64,10 @@ def main() -> int:
         ms_tong += r.get("ms", 0)
         theo_gio[luc.hour] += 1
         if r.get("miss"):
-            miss += 1
+            if r.get("loai") == "khop_yeu":
+                miss_yeu += 1        # có thẻ chạm chủ đề nhưng dưới ngưỡng — KHÔNG đếm như khoảng trống giám sát
+            else:
+                miss += 1
         for t in r.get("khop", []):
             if t:
                 the[t] += 1
@@ -73,6 +76,9 @@ def main() -> int:
         return 0
     print(f"  Lượt tra: {luot} · miss (ngoài giám sát): {miss} "
           f"({miss * 100 // luot}%) · độ trễ TB {ms_tong // luot} ms")
+    if miss_yeu:
+        print(f"  + {miss_yeu} lượt «khớp yếu» (có thẻ gần chủ đề nhưng dưới ngưỡng tin cậy) — KHÔNG tính là khoảng trống "
+              "giám sát; nhiều lượt như vậy nghĩa là cách hỏi lệch từ khoá thẻ, xem bộ vàng tra_diem_kham.")
     if the:
         print("  Thẻ được tra nhiều nhất:")
         for tid, n in the.most_common(8):

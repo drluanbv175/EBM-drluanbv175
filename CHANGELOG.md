@@ -8,6 +8,97 @@ các thư mục dashboard/nội dung khác ở gốc "Claude AI".
 
 ## [Unreleased]
 
+### 2026-09-20 (tối) — Vòng phản biện đối kháng sau khi dựng điều phối/cổng rút bài
+
+- **Sửa:** `ops/orchestrator.py` (resume nhớ lệnh+mtime dashboard, đọc lại ứng viên A2, không ghi đè phiếu, B1 vào phiếu, thiếu tệp ⇒ lệnh sai,
+  cờ xung đột ⇒ 64, lỗi nạp kho ⇒ rc 2, B2 offline được nói ra) · `tools/chu_de_resolver.py` (chuỗi con ≥ 4 ký tự, nhiều mục khớp không truyền
+  chuỗi thô cho A2, không nuốt lỗi nạp) · `verify_dashboard.py` ×4 bản (`_khai_that_su` đòi nội dung thật, `_GIU_CHO_KY` thu hẹp) ·
+  `tools/dung_hom_thu.py` (bullet nhiều dòng) · `tools/tu_khoi_dong.py` (cảnh báo lịch nền lỡ kỳ lúc mở phiên) ·
+  `tools/tu_de_xuat_viec.py` + `tools/mau_ky_rut_bai.py --dem-tat-ca` (hết báo động giả «rút-bỏ-hẳn» sau khi ký) · `tools/orchestrator/intent.py`.
+- **Test:** `test_orchestrator_ops.py` 45 (14 test `main()` thật) · `test_kiem_lich_nen.py` 13 · router 185 · bộ chốt BH01–BH111 xanh.
+
+### 2026-09-20 — Nguồn SerpApi Google Scholar (engine `medical-ebm-automation`, mới kiểm OFFLINE)
+
+Bối cảnh: theo yêu cầu "tích hợp Google Scholar API qua SerpApi để hoàn thiện hệ thống". Mã và
+test nằm trong repo y khoa `medical-ebm-automation/` (git riêng, ngoài phạm vi CHANGELOG này); mục
+này chỉ ghi lại việc đã chạm tài liệu ở gốc (`CLAUDE.md`). Chi tiết đầy đủ ở
+`medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu".
+
+### Added
+- `app/sources/serpapi_scholar.py` (`SerpApiScholarClient`) — nguồn KHÁM PHÁ, TẮT mặc định
+  (`ENABLE_SERPAPI_SCHOLAR`), đòi `SERPAPI_API_KEY` bắt buộc thật. Mỗi lần gọi là một search
+  SerpApi TÍNH PHÍ nên có trần `SERPAPI_MAX_CALLS_PER_RUN` (mặc định 8, hết ngân sách thì NỔ TO chứ
+  không trả rỗng im lặng). Không abstract, không DOI/PMID chắc chắn, ngày chỉ có năm, `study_type`
+  luôn `None` (trừ preprint), ngoài chuỗi kiểm rút bài. Đăng ký ở `app/sources/__init__.py`
+  (đặt cuối), `app/main.py::_build_source_map` (`python run.py test-live serpapi_scholar "<từ khoá>"`)
+  và `app/config.py`. 181 test offline ở `tests/test_serpapi_scholar.py`.
+
+### Changed
+- `app/utils/http.py` (`HttpClient`, LÕI DÙNG CHUNG mọi nguồn) — thêm tham số MỚI `max_retries`
+  theo từng client. `None` (mặc định) = dùng `settings.http_max_retries` như cũ nên mọi nguồn khác
+  KHÔNG đổi hành vi; `0` = đúng MỘT request cho mỗi lần gọi, không thử lại, không ngủ backoff vô ích.
+  Lý do: mỗi request tới SerpApi là một search tính phí, vòng retry toàn cục từng nhân một truy vấn lỗi
+  thành 2-5 request. Chỉ `SerpApiScholarClient` dùng `max_retries=0`. 21 test ở
+  `tests/test_http_per_client_max_retries.py`; các test http cũ không đổi và vẫn xanh.
+- `README.md` (engine) — thêm 1 dòng nguồn SerpApi ở mục tiêu và 1 dòng biến môi trường
+  `SERPAPI_API_KEY` / `ENABLE_SERPAPI_SCHOLAR` / `SERPAPI_MAX_CALLS_PER_RUN` ở bảng `.env`.
+
+### 2026-09-20 — Lane guideline nối trực tiếp, miễn phí (engine): Europe PMC, WHO IRIS, kcb.vn, hiệp hội trên tạp chí
+
+Theo yêu cầu «kết nối các nguồn guideline chưa có connector». 33 lane mới (33/33 trả mục thật): Europe PMC (Practice Guideline toàn cầu, USPSTF, WHO, CDC MMWR R&R — có PMID, độc lập NCBI), WHO IRIS (OAI-PMH chính thức), Bộ Y tế VN (kcb.vn/phac-do), Crossref theo tiêu đề cho 21 hiệp hội (ACC/AHA, ESC, ADA, IDSA, EULAR, AASLD, KDIGO, ATS, ERS, BTS, AGS, ACP, ASCO, ESMO, ASH, AGA, ACG, AAN, ACR) và RSS trực tiếp GOLD/GINA/KDIGO/EASL/AASLD/CDC. Coverage báo phủ gián tiếp ở `healthy_via_lane`, liệt kê `not_connected`. Chưa có: NICE (API chỉ cấp cho tổ chức) và USPSTF API (xin duyệt qua email — thư nháp ở docs). Lane khám phá theo tiêu đề, không phải nguồn đã duyệt.
+
+### 2026-09-20 — Khảo sát điều phối 5 tầng → orchestrator phân giải tên chủ đề, cảm biến lịch nền, hòm thư đọc đúng, cửa vào không dấu (BH110/BH111)
+
+Workflow khảo sát chỉ-đọc (5 tầng + phản biện) tìm 60+ chỗ điều phối chưa tự động/im lặng hỏng. Đã sửa phần máy làm được: `tools/chu_de_resolver.py` + `ops/orchestrator.py` viết lại (tên lát cắt/gốc/watchlist, mã thoát theo bước, lát cắt độc lập, lô `--cu-nhat`, A3 tắt mặc định); `tools/kiem_lich_nen.py` cảm biến người chết theo từng kỳ; `dung_hom_thu` đọc khuôn `alerts/` hiện hành; giác quan chết không in xanh; bản tin gộp loại khỏi nhắc độ tươi; B5 không xanh khi chờ ký; cổng miễn trừ chặn điền-cho-có; router gấp dấu + 5 năng lực mới; khôi phục cửa sổ quét 36 chủ đề bị A3 nuốt. Đính chính audit/11 §5 (3/5 chủ đề cũ ĐÃ có watchlist). Tác vụ `goi-duyet-tuan-ebm` khôi phục từ bản git (bản tạo lại lần đầu dùng prompt cũ).
+
+### 2026-09-20 — Thông báo rút bài là BẢN ĐÍNH CHÍNH: nhận diện câu chữ, chặn tới khi bác sĩ ký đúng vân tay (BH109)
+
+Ca `TienLuongSuyTim_20260914` ITEM-11: guideline CCS/CHFS 2025 bị cờ «rút bài» vì thông báo gắn vào nó (PMID 41422828, «WITHDRAWN: Corrigendum to …») là của một bản đính chính trùng lặp. Ba tầng rút bài cùng đọc một liên kết NLM nên không độc lập. Máy chỉ nhận diện câu chữ (trạng thái vẫn `retracted`, cổng vẫn chặn, thông điệp «CẦN BÁC SĨ XEM»); hạ cờ chỉ bằng `rut-bai-da-xem-xet.json` do bác sĩ ký, gắn dấu vân tay tập thông báo. PubMed/Europe PMC trả thêm `retraction_notices`; sổ xác minh lưu `sua_loi_bi_rut` + `thong_bao_ids`; 4 bản `verify_dashboard.py` khớp byte. Chưa có mục ký nào — ITEM-11 vẫn bị chặn tới khi bác sĩ đọc hai Author Correction.
+
+### 2026-09-20 — Phủ nguồn: 31 feed tạp chí/guideline qua Crossref, nút CORE/Epistemonikos/NICE, thư nháp xin quyền (engine)
+
+Sau đánh giá hệ: chỉ 15/29 feed RSS trả mục thật. Engine thêm chế độ Crossref theo ISSN cho `RSSFeedClient` — 14 feed lỗi (họ BMJ 429, Springer 406, `bmj_recent` 403) chuyển sang Crossref + 17 tạp chí nơi hiệp hội đăng guideline; đo thật 31/31 trả bài thật. Thêm nút `Nhap Khoa CORE/Epistemonikos/NICE.command` và mở rộng `Bat Tat SerpApi Du Phong.command` (mã o/e/n). Thư nháp xin token Epistemonikos, tư vấn NICE (API chỉ cấp cho tổ chức), gỡ chặn NCBI: `medical-ebm-automation/docs/xin-cap-quyen-nguon-chung-cu.md`.
+
+### 2026-09-20 — MCP Consensus/Scite đi qua cổng dự phòng (BH107) + canary nói rõ PubMed chạy qua bản sao
+
+Bác sĩ chốt «MCP vẫn đi qua cổng». `_CONNECTOR-CHUNG-CU.md` (gốc + bản trong engine) thêm §2ter «CỔNG DỰ PHÒNG CHO MCP»: chỉ gọi Consensus khi kho nội bộ → Cấp 0 → Cấp 0.5 → PubMed/Europe PMC chưa đủ chứng cứ đáng tin (≥3 bài phân biệt có PMID/DOI); nguồn lõi lỗi ⇒ PARTIAL, không leo thang; tối đa 2 lời gọi MCP/câu hỏi (hạn mức Free 30/tháng dùng CHUNG với REST của engine); kết quả Consensus là gợi ý phải xác minh Crossref/PubMed; Scite chỉ XÁC MINH (bổ sung, không thay chuỗi rút bài 3 tầng; tally không chấm mức chứng cứ). Khoá bằng BH107 (4 phép đột biến đều đỏ đúng chỗ). Chốt hồi quy 104/104.
+Canary ESD06 (`verify_evidence_surveillance_deployment.py`): adapter PubMed tự lùi về Europe PMC khi NCBI E-utilities không dùng được (đo thật: mạng này bị NCBI chặn misuse cả esearch/esummary/efetch) nhưng canary vẫn in «found=True,health=ok» — nay in thêm `via=Europe PMC(nguon_goc_khong_dung_duoc)`; PASS giữ nguyên.
+
+### 2026-09-20 — Chốt BH51 hết báo đỏ giả theo máy
+
+Sổ cái demo `ZZPHA-R-AUTO-DEMO` nằm trong `exports/` (OneDrive đồng bộ, gitignore) còn khoá ký riêng từng máy: máy nào không
+phải máy ký/niêm phong sau cùng thì `ledger_approved` báo «không xác minh được bằng khóa trên máy này» và BH51 đỏ với lời sai
+(«#8 bị revert / đảo tham số»). Nay lần kiểm đầu vẫn nghiêm như cũ; chỉ khi lệch ĐÚNG vì khoá máy khác thì kiểm lại ở môi trường
+KHÔNG-KHOÁ (HOME tạm — không đụng khoá thật, không ký gì) và ghi rõ «⚪ kiểm yếu hơn». Đã kiểm đột biến: đảo tham số ở điểm gọi
+trong `g6_quality_gate` ⇒ chốt đỏ. Chốt hồi quy 103/103.
+
+### 2026-09-20 (bổ sung) — Bậc thang dự phòng có cổng: Consensus → SerpApi Scholar, xác minh Scite (mới kiểm OFFLINE)
+
+Theo yêu cầu "chỉ khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm", rồi "Consensus và Scite
+cũng thiết kế tương tự". SerpApi Scholar được HẠ từ nguồn quét song song xuống tầng dự phòng số 2.
+- Mới trong `medical-ebm-automation/`: `app/services/evidence_sufficiency.py` (cổng), `fallback_ladder.py`,
+  `fallback_verification.py`, `app/sources/consensus_api.py`, `app/sources/scite_public.py`; nối vào
+  `ingestion.py`, `research/dossier.py`, `research/manager.py`. Mọi tầng TẮT mặc định; bản ghi dự phòng chỉ được giữ
+  khi khớp bản ghi thật ở Crossref/PubMed (nghiêm ngặt: tiêu đề, năm, tác giả đầu, token phân biệt).
+- Consensus: trần tháng bền 10 và 5/lượt chạy (gói Free 30/tháng dùng chung MCP). Scite: chỉ lớp xác minh công khai,
+  không khoá. `HttpClient._redact` mở rộng che `x-api-key`/`Authorization`.
+- Hoàn thiện cùng ngày: trần THÁNG bền cho SerpApi (`SERPAPI_MAX_CALLS_PER_MONTH`, mặc định 200/250; tệp
+  `data/raw/_state/serpapi_usage.json`, fail-closed, chia sẻ giữa ingest/dossier/manager) — trước đó chỉ có trần theo
+  TIẾN TRÌNH nên N tiến trình = N lần ngân sách; `.env.example` đã có đủ dòng mẫu; ghim `anyio 4.14.2` và
+  `soupsieve 2.9.0` trong `requirements.lock.txt` (đóng 5 cảnh báo Dependabot: 1 nghiêm trọng, 1 cao, 3 trung bình).
+- Kiểm: 98 + 230 + 156 + 86 + 67 test mới đạt, bộ test toàn engine 5549 đạt / 0 đỏ (sau khi khôi phục 194 file
+  `sync/skills/**` bị thiếu trong working tree — không liên quan mã này). **Kiểm THẬT 20/09/2026:** SerpApi chạy
+  được (5 kết quả thật; khoá bị dán đôi từng gây 401 — nút nhập khoá nay tự gộp); lớp xác minh Crossref/Scite
+  4/5 ca đúng đáp án, lộ và vá 1 lỗi phân loại bài bị rút (tiền tố "RETRACTED:"); PubMed vẫn bị NCBI chặn misuse;
+  Consensus CHƯA kiểm thật vì chưa có khoá REST API.
+
+### Known gaps
+- SerpApi đã `test-live` thật 20/09/2026 (cấu trúc phản hồi + chuỗi lỗi 401 đã đối chiếu). CÒN CHƯA đối
+  chiếu: ý nghĩa `as_ylo` "bao gồm năm đó" và việc phản hồi có lặp lại `api_key` hay không.
+- Chưa làm, chờ bác sĩ quyết: luật health cho nguồn ngoài lõi hỏng 100% (hiện vẫn `PASS`, cả
+  Scopus/CORE/Epistemonikos); chọn 8 truy vấn ít phủ nhất (hiện luôn rơi vào 8 truy vấn đầu); dòng mẫu
+  trong `.env.example`; trần theo tháng qua Account API.
+
 ### 2026-08-28 — Rà toàn diện trên bản sao git TRẦN (phiên cloud) + vá «tường đỏ giả»
 
 Bối cảnh: chạy trọn bộ kiểm trên một bản clone git KHÔNG có cây OneDrive

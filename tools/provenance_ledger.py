@@ -155,7 +155,17 @@ def main() -> int:
         af.write_text(cu, encoding="utf-8")
 
     # ── Báo cáo ──────────────────────────────────────────────────────────────
-    vq = sorted((GOC / "EBM-Dashboards" / "derivatives").glob("CHUNG-CU-VUOT-QUA_*.txt"))
+    # Báo cáo «bị vượt qua» chỉ được trích khi HỢP LỆ (manifest JSON đi kèm, dò TOÀN KHO, không PMID hỏng) — chỉ đếm
+    # «có tệp .txt» là đúng lỗi 16/09: tệp 476 byte in 🟢 trong khi NCBI đã trả bản lỗi cho cả 163 PMID.
+    try:
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_kcv_pl", GOC / "tools" / "kiem_chung_cu_vuot_qua.py")
+        _kcv = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_kcv)
+        vq_info = _kcv.doc_bao_cao_vuot_qua(GOC / "EBM-Dashboards" / "derivatives")
+    except Exception as e:  # noqa: BLE001 — sổ truy nguyên không được chết vì công cụ phụ
+        vq_info = {"hop_le": False, "ly_do": f"không nạp được công cụ đọc báo cáo: {type(e).__name__}", "pmids": [],
+                   "nguon": None, "ngay": None}
     dong = [f"# TRUY NGUYÊN TOÀN SỔ — {date.today().isoformat()}", "",
             f"- Tổng: **{len(cards)} thẻ** · căn cứ: RW ngoại tuyến "
             f"{'✓' if rw else '✗'} + sổ xác minh {len(so)} mục",
@@ -168,11 +178,15 @@ def main() -> int:
         dong.append(f"- {h['id']} · decision=**{h['decision']}** · "
                     f"PMID {h['pmid']} / DOI {h['doi']} — {h['muc']}: {h['ly_do']}")
     dong += ["", "## Chứng cứ bị vượt qua (quét quý — công cụ riêng)",
-             f"- Bản mới nhất: `{vq[-1].name}`" if vq else "- (chưa có bản quét nào)",
+             (f"- Bản hợp lệ mới nhất: `{vq_info['nguon']}` (ngày {vq_info['ngay']}) — "
+              f"{len(vq_info['pmids'])} PMID có tổng hợp mới hơn"
+              if vq_info.get("hop_le") else
+              f"- ⚪ KHÔNG có báo cáo hợp lệ: {vq_info.get('ly_do')} — 'chưa biết', KHÔNG phải 'không có bài mới hơn'"),
              "", "## Đối chiếu số liệu (mẫu ≥10%)",
              "- Đo gần nhất 14/08/2026 bằng `tools/kiem_so_lieu.py`: 24/25 mục khớp "
-             "abstract (1 ⚪ không kết luận). Chạy lại khi cần: "
-             "`python3 tools/kiem_so_lieu.py --mau 0.1 --online`.",
+             "abstract (1 ⚪ không kết luận) — ĐÓ LÀ MỘT MẪU 25 mục, không phải cả kho. Chạy lại khi cần: "
+             "`python3 tools/kiem_so_lieu.py --chi-apply --gioi-han 25` (mẫu) hoặc không cờ (toàn kho); "
+             "mã thoát 2 = KHÔNG đo được, không phải sạch.",
              "", "> Chỉ ĐỌC và BÁO — không đổi decision nào (BH10). "
              "Cần bác sĩ kiểm chứng."]
     bc = GOC / "reports" / f"provenance-{date.today().isoformat()}.md"

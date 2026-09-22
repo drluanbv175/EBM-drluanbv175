@@ -7,7 +7,9 @@ khớp để minh bạch. Không phán đoán mù: nếu không khớp → 'unkn
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
+from typing import NamedTuple
 
 # Cụm từ báo hiệu một CA lâm sàng trọn vẹn → nhạc trưởng lâm sàng
 CLINICAL_CASE_CUES = [
@@ -94,7 +96,13 @@ SINGLE_TASK_RULES: list[tuple[list[str], str, str]] = [
     (["đau mạn", "đau lưng mạn", "opioid", "giảm đau kéo dài"], "dau-man-tinh", "đau mạn"),
     (["giảm nhẹ", "cuối đời", "mục tiêu chăm sóc"], "cham-soc-giam-nhe", "giảm nhẹ"),
     (["trầm cảm", "lo âu", "phq-9", "gad-7", "sàng lọc tâm thần"], "tram-cam-lo-au", "trầm cảm/lo âu"),
-    (["đơn này an toàn", "thuốc đánh nhau", "tương tác thuốc", "chỉnh liều theo thận", "chống chỉ định"], "ke-don-an-toan", "an toàn kê đơn"),
+    (["đơn này an toàn", "thuốc đánh nhau", "tương tác thuốc", "chỉnh liều theo thận", "chống chỉ định",
+      # 20/09/2026 (T3-05): tra tên thuốc quốc tế qua RxNorm/EMA — trước đó 0 cửa vào trong router
+      # CỐ Ý là CỤM tra cứu, không phải từ trần «biệt dược»/«hoạt chất»: phản biện đối kháng 20/09 (L1) tái hiện — câu mô tả
+      # ca («Bà 70 tuổi uống biệt dược Coversyl, nay khó thở, phù mặt») từ unknown (có BƯỚC 0 cờ đỏ) thành single_task
+      # (KHÔNG BƯỚC 0) chỉ vì nhắc tên thuốc.
+      "tra biệt dược", "tên quốc tế của", "hoạt chất của", "hoạt chất gì", "rxnorm", "tên hoạt chất",
+      "tra tên thuốc", "tên thuốc quốc tế"], "ke-don-an-toan", "an toàn kê đơn"),
     (["giải thích cho bệnh nhân", "trình bày lựa chọn", "cùng quyết"], "quyet-dinh-chung", "quyết định chung"),
     (["lời dặn", "tuân thủ", "tái khám"], "loi-dan-tuan-thu", "lời dặn A5"),
     (["grade", "nnt", "nnh", "evidence-to-decision"], "tham-dinh-grade-nnt", "GRADE/NNT"),
@@ -107,7 +115,11 @@ SINGLE_TASK_RULES: list[tuple[list[str], str, str]] = [
     (["tìm tài liệu", "danh mục tham khảo", "soát danh mục", "tltk"], "thu-thu-tai-lieu", "thủ thư y văn"),
     (["kiểm trích dẫn", "kiểm chứng trích dẫn", "kiểm chứng pmid", "kiểm chứng doi",
       "trích dẫn ma", "verify pmid", "verify doi", "xác minh pmid",
-      "xác minh doi", "bibtex"], "kiem-chung-trich-dan", "kiểm trích dẫn"),
+      "xác minh doi", "bibtex",
+      # 20/09/2026 (T3-05): nguồn bị rút / thông báo đính chính bị rút (BH109) — trước đó không có cửa vào
+      # KHÔNG thêm «retraction»/«corrigendum» trần: agent này thuộc VIEC_LE_MANH nên thắng cue đề tài — một đề tài
+      # nghiên cứu VỀ retraction sẽ bị nuốt khỏi G0–G10 (phản biện 20/09, L5).
+      "bị rút bài", "thông báo rút", "đã bị rút"], "kiem-chung-trich-dan", "kiểm trích dẫn"),
     (["chi phí hiệu quả", "chi phí–hiệu quả", "kinh tế y tế", "tác động ngân sách", "icer"], "kinh-te-y-te", "kinh tế y tế"),
     (["mô hình tiên lượng", "tripod", "điểm dự báo", "validate thang điểm"], "mo-hinh-tien-luong", "mô hình tiên lượng"),
     (["cosmin", "kiểm định thang đo", "prom"], "cong-cu-do-luong", "công cụ đo lường"),
@@ -158,6 +170,14 @@ VIEC_LE_MANH: set[str] = {
 VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
     (["còn gì để hoàn thiện", "còn gì phải làm", "hệ thống còn gì", "còn việc gì"],
      "tools/tu_de_xuat_viec.py", "bảng 8 giác quan — hệ còn gì để hoàn thiện"),
+    # 20/09/2026 (T3-05): năng lực mới CÓ CHỦ nhưng chưa có cửa vào router (đo: unknown).
+    (["làm mới chứng cứ", "cập nhật chứng cứ chủ đề", "chủ đề nào cũ", "chủ đề nào lâu", "độ tươi chứng cứ",
+      "làm mới chủ đề"],
+     "ops/orchestrator.py", "làm mới chứng cứ chủ đề (--cu-nhat N | --topic X; máy làm A2/A4/B2, dừng ở CANDIDATE)"),
+    (["độ tươi thang điểm", "thang điểm bị rút", "thang điểm còn hiệu lực", "kiểm rút bài thang điểm"],
+     "medical-ebm-automation/tools/kiem_do_tuoi_thang_diem.py", "rút bài + độ tươi 32 thang điểm verified"),
+    (["lịch nền", "tác vụ nền", "tác vụ lịch", "giám sát tuần có chạy", "gói duyệt tuần có chạy"],
+     "tools/kiem_lich_nen.py", "cảm biến người chết lịch nền — kỳ nào không nổ"),
     (["icd-10", "icd10", "mã bệnh", "mã chẩn đoán", "mã thủ thuật"],
      "/tra-ma-icd10", "tra mã ICD-10"),
     (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
@@ -183,19 +203,73 @@ def _any(text: str, cues: list[str]) -> list[str]:
     return [c for c in cues if c in text]
 
 
+def _any_ascii(text: str, cues: list[str]) -> list[str]:
+    """Khớp cue đã gấp dấu theo RANH GIỚI TỪ. `in` trần va chạm: «co do» ⊂ «co doi chung» (có đối chứng), «dau man» ⊂ «dau
+    mang» (đau màng phổi), «lo au» ⊂ «hello author» — phản biện đối kháng 20/09 (L2/L3) đã tái hiện."""
+    return [c for c in cues if re.search(r"(?<![a-z0-9])" + re.escape(c) + r"(?![a-z0-9])", text)]
+
+
+# Cue gấp dấu MƠ HỒ ngay cả khi có ranh giới từ ⇒ KHÔNG dùng cho câu ASCII (kèm thay thế cụ thể bên dưới):
+#   «cỡ mẫu»→co mau = «có máu» (phân có máu, ho có máu bị chuyển thành việc cỡ mẫu — mất BƯỚC 0);
+#   «cờ đỏ»→co do = «có đo» (có đo huyết áp 24 giờ).
+_CUE_ASCII_LOAI = {"co mau", "co do"}
+_CUE_ASCII_THEM = {"co-mau-nghien-cuu": ["tinh co mau", "co mau nghien cuu", "co mau cho nghien cuu", "tinh cong thuc co mau"]}
+
+
+def _fold(s: str) -> str:
+    """Bỏ dấu tiếng Việt (KỂ CẢ đ→d, mà NFD không tự tách được) và hạ chữ thường."""
+    s = unicodedata.normalize("NFD", s.replace("đ", "d").replace("Đ", "D"))
+    return "".join(c for c in s if unicodedata.category(c) != "Mn").lower()
+
+
+class _Bang(NamedTuple):
+    khop: object
+    single: list
+    research_cues: list
+    design_words: tuple
+    khao_sat: str
+    individual: list
+    patterns: list
+    case_cues: list
+    cong_cu: list
+
+
+def _gap(x):
+    return [_fold(c) for c in x]
+
+
+# CỬA VÀO MÙ DẤU (T3-01, 20/09/2026): 7/7 câu gõ KHÔNG dấu («benh nhan nam 60 tuoi dau nguc 2 gio») rơi `unknown`, kể
+# cả ca có cờ đỏ — bác sĩ gõ nhanh trên điện thoại thường bỏ dấu. Câu THUẦN ASCII không thể khớp cue có dấu, nên nó dùng
+# bảng đã GẤP DẤU của chính các cue/mẫu đó. Câu CÓ dấu giữ nguyên bảng cũ (để «năm,» không khớp nhầm «nam,»).
+_CO_DAU = _Bang(_any, SINGLE_TASK_RULES, RESEARCH_TOPIC_CUES, _RESEARCH_DESIGN_WORDS, "khảo sát",
+                _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS, CLINICAL_CASE_PATTERNS, CLINICAL_CASE_CUES, VIEC_CONG_CU)
+_ASCII = _Bang(
+    _any_ascii,
+    [([k for k in _gap(kws) if k not in _CUE_ASCII_LOAI] + _CUE_ASCII_THEM.get(a, []), a, n)
+     for kws, a, n in SINGLE_TASK_RULES], _gap(RESEARCH_TOPIC_CUES),
+    tuple(_gap(_RESEARCH_DESIGN_WORDS)), _fold("khảo sát"),
+    [re.compile(_fold(p.pattern)) for p in _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS],
+    [re.compile(_fold(p.pattern)) for p in CLINICAL_CASE_PATTERNS], _gap(CLINICAL_CASE_CUES),
+    [(_gap(kws), c, n) for kws, c, n in VIEC_CONG_CU])
+
+
 def route(request: str) -> IntentResult:
     """Phân loại request. Ưu tiên: ĐỀ TÀI > CA lâm sàng > việc lẻ > unknown (đề tài kiểm trước vì
     'bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu — xem lý do dưới)."""
-    t = (request or "").lower().strip()
+    # NFC trước: chữ chép từ Finder/một số IME là dấu TỔ HỢP (NFD) và không khớp cue nào (L11).
+    t = unicodedata.normalize("NFC", request or "").lower().strip()
     if not t:
         return IntentResult("unknown", "", "request rỗng")
+    # Chọn bảng theo việc câu có DẤU TIẾNG VIỆT hay không — KHÔNG theo `isascii()`: một ký tự phi-ASCII vô hại (°, …, –, NBSP,
+    # emoji trong «sốt 39°C») từng đẩy cả câu không dấu về bảng có dấu và rơi unknown (L4).
+    B = _CO_DAU if _fold(t) != t else _ASCII
 
-    single_hits = [(agent, note) for kws, agent, note in SINGLE_TASK_RULES if _any(t, kws)]
+    single_hits = [(agent, note) for kws, agent, note in B.single if B.khop(t, kws)]
     match_labels = [f"{a} ({n})" for a, n in single_hits]
 
     # Cue nghiên cứu ('đề tài/đề cương/protocol') là tín hiệu MẠNH → kiểm TRƯỚC cue lâm sàng
     # ('bệnh nhân' cũng xuất hiện khi mô tả quần thể nghiên cứu, nên không được thắng 'đề tài').
-    if _any(t, RESEARCH_TOPIC_CUES) or _khao_sat_co_thiet_ke(t):
+    if B.khop(t, B.research_cues) or (B.khop(t, [B.khao_sat]) and B.khop(t, list(B.design_words))):
         # SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 3, CRITICAL): CỜ ĐỎ LUÔN THẮNG
         # cue đề tài, kể cả khi cue đề tài đến từ một từ TRUNG TÍNH như "protocol" (rất phổ
         # biến trong ca thật: "đang trong protocol hoá trị", "chạy protocol hồi sức"). Trước
@@ -219,7 +293,7 @@ def route(request: str) -> IntentResult:
         # loại mẫu thai kỳ vì nó gây báo động giả cho mô tả QUẦN THỂ nghiên cứu, xác nhận bằng
         # chính hồi quy có sẵn của task #57).
         if (any(a == "sang-loc-co-do" for a, _ in single_hits)
-                or any(p.search(t) for p in _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS)):
+                or any(p.search(t) for p in B.individual)):
             return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
                                 "khớp CỜ ĐỎ hoặc mô tả CA lâm sàng cụ thể (tuổi+giới/trẻ em) "
                                 "cùng lúc với cue đề tài — an toàn luôn thắng, over-route sang "
@@ -235,8 +309,8 @@ def route(request: str) -> IntentResult:
         return IntentResult("research_topic", RESEARCH_ORCHESTRATOR,
                             "phát hiện một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu (G0→G10)",
                             match_labels)
-    pattern_hits = [p.pattern for p in CLINICAL_CASE_PATTERNS if p.search(t)]
-    if _any(t, CLINICAL_CASE_CUES) or pattern_hits:
+    pattern_hits = [p.pattern for p in B.patterns if p.search(t)]
+    if B.khop(t, B.case_cues) or pattern_hits:
         return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
                             "phát hiện mô tả một CA lâm sàng → nhạc trưởng lâm sàng (5 bước EBM)",
                             match_labels)
@@ -244,8 +318,8 @@ def route(request: str) -> IntentResult:
         agent, note = single_hits[0]
         return IntentResult("single_task", agent, f"khớp việc lẻ: {note}", match_labels)
 
-    for kws, cong_cu, note in VIEC_CONG_CU:
-        if _any(t, kws):
+    for kws, cong_cu, note in B.cong_cu:
+        if B.khop(t, kws):
             return IntentResult("cong_cu", cong_cu, f"việc có chủ là CÔNG CỤ/SKILL: {note}",
                                 match_labels)
 

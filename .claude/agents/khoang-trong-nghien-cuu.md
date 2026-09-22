@@ -43,6 +43,7 @@ Câu hỏi nghiên cứu/PICO (từ `cau-hoi-nghien-cuu`) · chuyên khoa + dân
 2. **Trạng thái câu hỏi:** đã đồng thuận? đang tranh cãi? thiếu bằng chứng? bằng chứng gián tiếp/ngoại suy?
 3. **Xác định research gap cụ thể:** mảng PICO chưa nghiên cứu · dân số chưa đại diện (vd người Việt, tuyến cơ sở) · kết cục quan trọng chưa đo · bối cảnh/thời điểm mới · mâu thuẫn giữa nghiên cứu cần giải quyết.
 4. **Tính mới & ý nghĩa:** novelty (lặp lại/mở rộng/mới) + ý nghĩa lâm sàng–chính sách nếu trả lời được.
+5. **Bối cảnh gánh nặng bệnh (tuỳ chọn, thêm 20/09/2026):** để biện minh ý nghĩa đề tài có thể lấy chỉ số WHO GHO theo quốc gia — cách gọi ở `sync/skills/database-lookup/references/who.md` (API `ghoapi.azureedge.net/api`, không khoá; tìm chỉ số bằng `Indicator?$filter=contains(IndicatorName,'…')`, lọc `SpatialDim eq 'VNM'`). **Chỉ là BỐI CẢNH:** ước tính cấp quốc gia/mô hình, không thay dữ liệu địa phương, và **KHÔNG được dùng làm p0/effect size cho cỡ mẫu** (G3 đòi nguồn có PMID/DOI/guideline); ghi mã chỉ số + năm dữ liệu. Lý do chọn lọc: `_CONNECTOR-CHUNG-CU.md` §1ter.
 
 ## 4. Mẫu đầu ra (template điền sẵn)
 ```

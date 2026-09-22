@@ -1247,7 +1247,14 @@ riêng PubMed 1322) và **agent tự viết** (~125 lượt), không phải tầ
 - Nguồn miễn phí: PubMed E-utilities, Europe PMC, Crossref, OpenAlex, openFDA… (không key)
 - Nguồn có key (mặc định TẮT, bật khi có key thật): Semantic Scholar; **Scopus (Elsevier) — thêm
   13/09/2026**, `app/sources/scopus.py`, đòi `SCOPUS_API_KEY` bắt buộc thật (khác Semantic Scholar
-  vẫn chạy được không key). **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026, GỠ BỎ cùng ngày:**
+  vẫn chạy được không key). **SerpApi Google Scholar — thêm 20/09/2026**,
+  `app/sources/serpapi_scholar.py`: TẮT mặc định, đòi `SERPAPI_API_KEY` bắt buộc thật, mỗi lần gọi là
+  một search SerpApi TÍNH PHÍ (có trần `SERPAPI_MAX_CALLS_PER_RUN`, mặc định 8); chỉ là nguồn KHÁM PHÁ
+  (không abstract, không DOI/PMID chắc chắn, ngoài chuỗi kiểm rút bài) và là TẦNG DỰ PHÒNG số 2, cùng
+  Consensus (tầng số 1) sau một cổng đủ-chứng-cứ: chỉ chạy khi nguồn chính thống chưa đủ bài đáng tin, mọi bản
+  ghi phải qua xác minh Crossref/PubMed (+ Scite công khai kiểm rút bài) mới được giữ; mặc định trong mã TẮT, nhưng bác sĩ đã BẬT cả hai tầng trên máy Mac ngày 20/09/2026; SerpApi, Consensus và lớp xác minh
+  Crossref/Scite đều ĐÃ kiểm thật 20/09/2026 — chi tiết ở `medical-ebm-automation/CLAUDE.md` mục "Nguồn dữ liệu".
+  **DynaMed/DynaMedex (EBSCO) — thêm 13/09/2026, GỠ BỎ cùng ngày:**
   đăng ký app MedsAPI bắt buộc Customer ID + Group ID do đại diện EBSCO cấp theo hợp đồng TỔ CHỨC,
   tài khoản DynaMed cá nhân không tự cấp được — giới hạn của loại tài khoản, không phải lỗi cấu
   hình. Đã gỡ ở tầng nghiên cứu (`app/sources/dynamed.py` + test + khoá `DYNAMED_*`, merge `b74dd68`
@@ -1408,6 +1415,12 @@ Phase 3: Module Clinical (RAG guideline + drug check)
     0 19 1 1,4,7,10 *, quét ACC/AHA qua Browser thật vì Cloudflare chặn urllib, xem mục ACC/AHA ở
     trên). launchd đã nghỉ hưu; lưới đỡ `tu_khoi_dong` khi mở phiên + giác quan ⑦d vẫn còn giá trị
     cho trường hợp máy không thức đúng giờ.
+    ⛔ **ĐÍNH CHÍNH 20/09/2026 — đoạn «cả 4 tác vụ `enabled=true`» ở trên ĐÃ LỖI THỜI.** Đo lại bằng `list_scheduled_tasks` +
+    `list_task_runs`: bộ lập lịch chỉ còn **1** tác vụ (`kiem-thang-diem-quy`, chưa chạy lần nào); `thu-thap-tuan-an-toan-thuoc`,
+    `goi-duyet-tuan-ebm`, `cap-nhat-thang-ebm` đều `taskDeleted: true` (lần chạy cuối 07/09 · 07/09 · 01/09), còn `giam-sat-acc-aha-quy`
+    «not found». Định nghĩa `SKILL.md` của chúng VẪN còn trên đĩa (`~/.claude/scheduled-tasks/`), nên tạo lại rẻ. Hệ quả: chuỗi giám sát tuần
+    **không còn tự chạy** từ sau 07/09 (báo cáo tuần 16/09 và gói 15/09 là do chạy tay/`tu_khoi_dong`). Chưa biết việc xoá là chủ ý hay không —
+    tạo lại tác vụ nền là quyết định của bác sĩ. Chi tiết: `audit/11-danh-gia-he-thong-toan-dien_2026-09-20.md`.
   - **🔴 CI hiện KHÔNG chạy ở CẢ HAI repo — đo 09/09/2026, KHÁC hẳn câu "cả hai xanh" từng ghi ở
     đây.** `gh api .../actions/permissions` trả `enabled:false` cho CẢ hai repo (GitHub Actions bị
     tắt ở cấp cài đặt repo, không phải lỗi nội dung workflow) — mọi run gần đây `queued` vô thời hạn
@@ -1633,6 +1646,98 @@ Phase 3: Module Clinical (RAG guideline + drug check)
   với bản đã thay** rồi trích đúng bản đó — KHÔNG phải đổi sang một định danh khác của **chính
   bài đã rút**, và cũng không phải xoá mục. Bản thay thế của ca này là **PMID 31021386 /
   doi:10.1001/jamaoncol.2019.0576** (Notice of Retraction and Replacement).
+
+  🔴 **BH109 — «NGUỒN BỊ RÚT» CÓ THỂ LÀ BÁO ĐỘNG GIẢ MÀ CHUỖI 3 TẦNG KHÔNG TỰ GỠ ĐƯỢC (20/09/2026).**
+  Ca thật: `TienLuongSuyTim_20260914` ITEM-11 (`decision: apply`) dựa guideline CCS/CHFS 2025 (PMID
+  41110921 · doi:10.1016/j.cjca.2025.07.027). PubMed gắn «Retracted Publication» vào nó vì thông báo rút
+  bài (PMID 41422828) mang tiêu đề «WITHDRAWN: **Corrigendum** to …» — thứ bị rút là MỘT BẢN ĐÍNH CHÍNH
+  TRÙNG LẶP, không phải guideline. Cả ba tầng (Retraction Watch → NCBI → Europe PMC) đọc CÙNG một liên
+  kết NLM nên cùng nói «đã rút»: hai tầng sau KHÔNG độc lập với loại lỗi này. Hai cách sai ngược chiều:
+  để nguyên ⇒ cổng nói «không dùng kết luận» về một guideline hợp lệ (dạy người đọc bỏ qua cảnh báo);
+  máy tự bỏ cờ khi tiêu đề «trông giống» đính chính ⇒ một vụ rút bài THẬT lọt qua chỉ vì tiêu đề khớp mẫu.
+  **Đường đúng — máy chỉ NHẬN DIỆN CÂU CHỮ, không phán quyết:** `crossref_retraction.la_thong_bao_sua_loi_bi_rut()`
+  (chặt: «WITHDRAWN|RETRACTED: <Corrigendum|Erratum|Correction|Addendum> to/for …» hoặc «Author/Publisher
+  Correction»; «Correction of hypertension…» KHÔNG khớp). Chuỗi 3 tầng chỉ bật `withdrawn_correction_notice`
+  khi biết MỌI thông báo rút (PubMed/Europe PMC nay trả thêm `retraction_notices`), đã đọc tiêu đề của TỪNG
+  cái, tất cả đều là đính chính, và Retraction Watch không dương tính riêng. Trạng thái VẪN `retracted`, cổng
+  VẪN chặn; chỉ thông điệp đổi thành «CẦN BÁC SĨ XEM». Sổ xác minh lưu `sua_loi_bi_rut` + `thong_bao_ids`
+  (gán theo kết quả MỚI, không dính). **Hạ cờ chỉ bằng `EBM-Dashboards/rut-bai-da-xem-xet.json` DO BÁC SĨ KÝ**
+  — mục `{khoa, thong_bao_ids, da_xem_boi, ngay YYYY-MM-DD, ly_do ≥20 ký tự}` — gắn với DẤU VÂN TAY tập
+  thông báo: thêm/đổi một thông báo ⇒ vân tay lệch ⇒ chặn lại. Sổ hỏng/thiếu trường ⇒ vẫn chặn. Agent
+  KHÔNG được tự ký (cùng ranh giới khoá Ed25519). Một bài có thể có HAI khoá (`pmid:` và `doi:`) — mỗi khoá
+  một mục với `thong_bao_ids` của chính nó. Khoá bằng **BH109** (6 phép đột biến, đều đỏ đúng chỗ; phép
+  đầu tiên «bỏ điều kiện ở chỗ gọi» KHÔNG bị bắt vì còn một lớp rào thứ hai trong hàm — nên siết test bằng
+  thông điệp: bài THẬT bị rút phải giữ câu «không dùng kết luận»). 4 bản `verify_dashboard.py` khớp byte.
+  ⚠️ Việc còn lại của bác sĩ cho ITEM-11: mở hai Author Correction (10.1016/j.cjca.2025.12.030 ·
+  10.1016/j.cjca.2026.03.026) — máy KHÔNG đọc được (trả phí) — rồi quyết định giữ/hạ và ký.
+  🧾 **Mẫu chờ ký sinh tự động (20/09/2026):** `python3 tools/mau_ky_rut_bai.py` ghi
+  `EBM-Dashboards/rut-bai-da-xem-xet.cho-ky.json` (KHÁC tệp cổng đọc) — máy điền `khoa` + `thong_bao_ids`,
+  để TRỐNG `da_xem_boi`/`ngay`/`ly_do`; bảng `tu_de_xuat_viec` tự hiện dòng 👤 khi còn mục chờ. Công cụ
+  KHÔNG BAO GIỜ ghi `rut-bai-da-xem-xet.json` (test `tools/test_mau_ky_rut_bai.py`, đột biến «ghi thẳng
+  vào sổ cổng» bị bắt): chép nguyên xi mẫu trống thì cổng vẫn chặn.
+
+  🧭 **KHẢO SÁT ĐIỀU PHỐI 20/09/2026 (workflow 5 tầng chỉ-đọc + 1 phản biện; BH110/BH111).** Kết luận có số đo, KHÔNG phải
+  cảm giác. **ĐÍNH CHÍNH một khẳng định của chính tôi (audit/11 §5 bản đầu):** «5 chủ đề lâu nhất không có mục trong
+  `watchlist.json`» là SAI với 3/5 — `BienChungThanKinh`/`AnToanThuoc`/`BenhThanMan` ĐÃ ánh xạ sang watchlist trong
+  `giam-sat-chu-de.json`; 2/5 (`Uptodate`, `W24`) khai `khong_can` (bản tin tuần gộp). Lỗi thật: orchestrator KHÔNG đọc ánh xạ đó.
+  **Đã sửa (có test + chốt):** (1) `tools/chu_de_resolver.py` — MỘT cửa phân giải tên lát cắt/chủ đề gốc/tên watchlist/chuỗi con
+  (gấp `đ→d`, chỉ tin ánh xạ NGƯỜI khai, không đoán); `ops/orchestrator.py` viết lại: A2 luôn nhận TÊN WATCHLIST, lưu ứng viên
+  ở `logs/<run>.A2-*.{md,json}`, A3 (quét toàn kho ~70 phút, từng nuốt cursor 36 chủ đề) chỉ chạy khi `--uu-tien`, mã thoát phân
+  loại THEO BƯỚC (A2 rc=2 tham số ≠ hạ tầng; A4 rc=2 = nguồn ĐÃ BỊ RÚT, không phải mạng; sai tên ⇒ 64), lát cắt độc lập
+  (B2 chặn X ⇒ chỉ bỏ B4 của X), `--resume` giữ cờ cũ, timeout từng bước, chế độ lô `--cu-nhat N` (trần 8), phiếu
+  `logs/<run>.phieu.md` có lệnh `/cap-nhat-chung-cu` cụ thể hoặc dòng 👤 «ký/hạ» cho gói chỉ chờ chữ ký. (2) `tools/kiem_lich_nen.py` +
+  `sync/lich-nen-ky-vong.json` — CẢM BIẾN NGƯỜI CHẾT theo TỪNG kỳ (chạy tay chen giữa không che kỳ lỡ): đo thật ra đúng ca
+  14/09 («goi-duyet» thiếu `queue/tuan-2026-W38.md` 🔴; «thu-thap» chỉ có lượt trễ 16/09 🟠). (3) Hòm thư: `dung_hom_thu.doc_canh_bao()`
+  đọc khuôn `alerts/` hiện hành (bộ đọc cũ NUỐT 12 bullet «CỔNG QUÉT FAIL» 17/09); nhãn 🛎 (máy làm được nhưng chưa ai chạy) luôn hiện
+  ở hòm thư — lỡ lịch NẶNG từng bị gán 🤖 nên bị lọc mất. (4) `tu_de_xuat_viec`: in «Giác quan đo được M/N», KHÔNG in xanh «đủ rồi»
+  khi còn giác quan chết. (5) `kiem_do_tuoi_chung_cu` loại bản tin gộp `khong_can` khỏi «lâu nhất»/ngưỡng 120 ngày (từ ~06/10 sẽ
+  nhắc mỗi phiên một mục không bao giờ gỡ được). (6) `trinh_muc_can_duyet` (B5) không báo xanh khi còn gói chờ ký. (7) Cổng miễn trừ
+  rút bài từ chối chuỗi giữ chỗ/«điền cho có» (T4-03). (8) `tools/orchestrator/intent.py`: câu gõ KHÔNG dấu dùng bảng đã gấp dấu
+  (7/7 câu không dấu từng rơi `unknown`, kể cả ca cần sàng lọc cờ đỏ) + 5 năng lực mới có cửa vào (RxNorm/EMA, nguồn bị rút, làm mới chứng
+  cứ, độ tươi thang điểm, lịch nền). (9) `uu_tien_cap_nhat` thêm `--khong-cursor`; **đã KHÔI PHỤC** cửa sổ quét bị A3 nuốt (36 chủ đề
+  từ 17/09 về 07/09, sao lưu `.quet-cursor.json.bak-20260920-truoc-khoi-phuc-A3`) để tác vụ tuần 21/09 quét lại khoảng đó.
+  ⚠️ **Sai sót của chính tôi, ghi để không lặp:** khi tạo lại tác vụ `goi-duyet-tuan-ebm` tôi chép nguyên `SKILL.md` runtime CŨ,
+  trong khi bản git đã có mẫu chính thức 12/09 + cổng `kiem_mau_the_chung_cu_tuan` — đã khôi phục từ `sync/scheduled-tasks/` (README
+  của thư mục đó ghi đúng chiều). Luật: khôi phục tác vụ lịch phải chép từ NGUỒN GIT, không chép lại bản runtime.
+  🔎 **VÒNG PHẢN BIỆN ĐỐI KHÁNG SAU KHI DỰNG (20/09/2026 tối) — tự tìm ra 40+ lỗi của chính bản vá, đã vá phần lớn.** Nổi bật:
+  (a) **cổng miễn trừ BH109 bị lách** bằng giá trị «đã đọc»/«N/A»/khoảng trắng/ngày tương lai/mẫu `<tên>` — nay `_khai_that_su` đòi nội dung
+  thật (≥ 2 từ với tên, ≥ 20 ký tự khác nhau, ngày ≤ hôm nay); bản sửa đầu **chặn oan ký hợp lệ** vì `_GIU_CHO_KY` quá rộng — đã thu hẹp
+  (BH109 nay có ca «lý do thật PHẢI qua»). (b) **orchestrator**: tên gõ lệch → rc 64 kèm «Có phải»; chuỗi con < 4 ký tự không còn coi là khớp
+  duy nhất; nhiều mục khớp KHÔNG truyền chuỗi thô cho A2 (bộ khớp của A2 khác — «dau» khớp 4 mục ở resolver, 0 ở A2); lỗi nạp kho/ánh xạ
+  ⇒ rc 2 «HẠ TẦNG» thay vì đoán rồi in «CHƯA có dashboard» sai; `--resume` nay nhớ CẢ lệnh (`--online`) + dấu mtime dashboard nên nâng cờ
+  hoặc dashboard đổi ⇒ chạy lại, đọc lại ứng viên A2 từ JSON (không rơi thành «sạch»), không ghi đè phiếu lượt trước; B1 «chưa có
+  dashboard» vào phiếu + kết luận; thiếu tệp ⇒ «lệnh sai», không đọc thành «nguồn bị rút»; cờ xung đột (`--cu-nhat 0`, `--cu-nhat`+`--topic`)
+  bị từ chối; B2 offline được NÓI RA. `main()` nay có test thật (đường khoá/log/phiếu/mã thoát/resume) — trước đó 29 test + BH96/BH110 xanh
+  trong khi 14 đột biến của `main()` sống sót; 8 phép đột biến mới đều đỏ đúng chỗ (một phép sống sót lần đầu vì test chỉ kiểm chuỗi
+  đã có ở lượt 1 — siết bằng cách đọc RIÊNG phần phiếu của lượt resume). (c) **kênh cảnh báo**: `doc_canh_bao` nay nối bullet nhiều dòng
+  (cảnh báo 07/09 dài 12 dòng từng chỉ lấy dòng đầu — mất số đo và «việc của bác sĩ»); `tu_khoi_dong` in cảnh báo lịch lỡ kỳ ngay lúc mở
+  phiên (đo thật: kỳ 14/09 `goi-duyet` **chưa có** `queue/tuan-2026-W38.md`, kỳ `thu-thap` chạy trễ 16/09); dòng «rút-bỏ-hẳn» của
+  `tu_de_xuat_viec` trừ theo TỔNG số đính chính bị rút (`mau_ky_rut_bai --dem-tat-ca`) để ký xong không sinh báo động giả.
+  (d) **router `intent.py`**: gấp dấu chỉ theo ranh giới từ, va chạm «có mẫu/có đỏ» khi không dấu, NFC, cue rút bài không bắt «retraction».
+  **CHƯA làm, cần bác sĩ hoặc phiên khác** (đã nêu trong báo cáo khảo sát): nối hook `UserPromptSubmit` cho router (cấu hình chạy mỗi lượt);
+  chạy `dong_bo_hook_sessionstart.py --ap-dung` (hook Mac còn mẫu cũ `&&…||` chạy 2 lần); ký sổ miễn trừ bằng Ed25519 (P-06);
+  sửa `weekly_safety.sh`/`monthly_update.sh` để lỗi bước phụ tự sinh cảnh báo (T2-10/T2-11, nằm trong engine); đổi ESD05 sang đòi dấu vết chạy
+  (T2-04); bộ câu held-out cho router (T3-02); doctrine Annex 2 còn ở 2 file agent (P-09); khoá tu_khoi_dong chưa xét host (P-04).
+  🔧 **ĐÁNH GIÁ HOÀN THIỆN 21/09/2026 → BA VIỆC ƯU TIÊN ĐÃ LÀM (BH112/BH113/BH114; `audit/12-danh-gia-hoan-thien-he-thong_2026-09-21.md`).**
+  Bác sĩ hỏi «hệ đã hoàn thiện chưa» → kết luận có số đo: nền máy/độ tin cậy mạnh, nhưng độ phủ · độ mới · giá trị tại điểm khám chưa đạt; 12 đề xuất xếp hạng, bác sĩ chọn làm #1–#3. Hai vòng phản biện độc lập đã tìm và vá tiếp các lỗi do chính bản vá gây ra (vòng 2 là Workflow 6 chiều, **bị dừng trước giai đoạn kiểm chứng chéo để tiết kiệm token** — 68 phát hiện chưa kiểm chứng, phần rẻ và chắc đã vá, phần còn lại là các HỌ lỗi của bộ khớp từ vựng, liệt kê ở phụ lục `audit/12`; **đừng mở thêm vòng phản biện nhiều agent: ~530k token/agent, workflow 6 agent ~3 triệu**).
+  **(#1) `tools/tra_diem_kham.py` — công cụ DUY NHẤT chạm phòng khám — từng trả thẻ SAI CHỦ ĐỀ cho 6/6 câu thường gặp** («tăng huyết áp mới chẩn đoán» → thẻ cơn tăng đường huyết/H. pylori; «hen bậc 3» → thẻ chẹn beta; «gút cấp» → thẻ phù mạch). Gốc: `_bo_dau` không gấp «đ»; khớp chứa-chuỗi trên âm tiết; ngưỡng «một nửa token» + điểm cộng từ khuyến cáo. Nay: gấp đ→d + NFKD (CHA₂DS₂=CHA2DS2) · khớp TỪ NGUYÊN · IDF toàn kho · mỏ neo (token hiếm nhất) PHẢI khớp ở TIÊU ĐỀ · phủ tiêu đề ≥50% · **từ ghép phải kề nhau** («đau đầu» ≠ «đau»+«ban đầu»; cặp kề lấy từ câu GỐC đã bung viết tắt, không bắc cầu qua từ đệm) · tiền tố tiền/hậu luôn kề · mã 1 ký tự/số («viêm gan C», «vitamin D», «típ 2») là ràng buộc kề · **từ chức năng CÓ DẤU là từ y khoa** (não≠nào, chân≠chẩn, da≠dạ, thấp, thượng, «RA» viết hoa = viêm khớp dạng thấp) · cụm cố định (thiếu máu cục bộ, phù hợp, khó chịu, đa thuốc, cân nhắc) · đối nghĩa (hạ↔tăng) · câu ngắn ≤3 token phải khớp đủ cụm · cùng khuyến cáo khác quyết định KHÔNG gộp âm thầm (cờ `_xung_dot`) · loại miss tách `khop_yeu` (cận-trúng thật) khỏi `khong_co` — người tiêu thụ (`do_tac_dong`, `tu_de_xuat_viec`) không đếm `khop_yeu` là khoảng trống giám sát · `--demo` không ghi nhật ký · câu nghi PII không vào sổ watchlist · khoá cache theo NỘI DUNG. **Bộ vàng NHÁP 70 câu** `quality/eval/tra-diem-kham/bo-vang.json` (máy soạn — **bác sĩ CHƯA duyệt Y/N**, điền `bac_si_duyet`) đạt 70/70 trên 1.100 thẻ; 18 câu «đã biết chưa đạt» ghi riêng, KHÔNG khẳng định (recall thấp: mỏ neo trượt khi «truyền» không ở tiêu đề; đồng âm «hạ đường huyết»/«hạ natri máu»; sai quần thể «EF giảm» vs «EF bảo tồn»; «thận nhân tạo»→thẻ AI). **Giới hạn nói thẳng:** thiên về ĐỘ CHÍNH XÁC hơn độ phủ — nhiều câu CÓ thẻ đúng vẫn ra «chưa giám sát» (an toàn, bác sĩ tra tay); từ vựng không giải được đồng âm tiếng Việt, luôn đọc TIÊU ĐỀ thẻ trước khi dựa vào. Đã thử nới mỏ neo hai cách và cả hai làm hỏng độ chính xác («ung thư PHỔI»→thẻ JAKi; «…EMPAGLIFLOZIN»→thẻ suy tim EF bảo tồn).
+  **(#2) Bốn cổng «xanh khi chưa đo» (họ BH27/BH32).** (a) `verify_dashboard` ngoại tuyến: PMID Wakefield 9500320 (ĐÃ RÚT) PASS 0 lỗi cứng vì «sổ im lặng» gồm cả «đã kiểm sạch» lẫn «chưa kiểm lần nào» — nay in K/M định danh có dấu vết kiểm còn hạn và hỏi nền Retraction Watch NGOẠI TUYẾN cho MỌI PMID (chỉ nhận dương tính; «Retract and Replace» gắn nhãn rút-và-thay); 4 bản byte-identical. (b) `kiem_chung_cu_vuot_qua`: NCBI trả JSON HỢP LỆ mang bản LỖI (`error`/thiếu `linksets`) → báo cáo 16/09 dài 476 byte in 🟢 «đã dò 163 PMID» và `tra_diem_kham` lấy đúng tệp đó TẮT mọi cờ 🟠. Nay bản lỗi = không hỏi được; in tham số; **manifest JSON v2** (`--json-ra`: kết luận · phạm vi · số PMID hỏng · **tập PMID ĐÃ DÒ**); `doc_bao_cao_vuot_qua` chỉ tin manifest ĐỦ (toàn kho, không `--tu-nam`, 0 PMID hỏng, tập đã dò khớp tổng) và KHÔNG lùi âm thầm về bản cũ hợp lệ khi bản mới hỏng; manifest cũ bị xoá đầu mỗi lượt và mọi đường thoát đều ghi manifest mới; `tra_diem_kham` in «⚪ CHƯA DÒ» cho thẻ ngoài tập dò (quét quý chỉ dò thẻ `apply`: 163/657 PMID — phần còn lại im lặng nghĩa là CHƯA HỎI, không phải sạch). Script quý lấy kết luận từ manifest (CHUA_DO/MAU/lỗi ≠ PASS). (c) 298 thẻ `from_engine` mang `gradeLevel='high'` do MÁY gán từ điểm engine (thẻ tự khai «máy chấm, không phải GRADE chính thức») — trong repo KHÔNG còn mã sinh chúng; `validate_ledger` luật V8 chỉ BÁO (BH10), **chuyển về `na` là quyết định dữ liệu của bác sĩ**; `tra_diem_kham` đã loại `from_engine` khỏi điểm khám. (d) `kiem_so_lieu`: mọi truy vấn tóm tắt hỏng / 0 mục / thiếu công cụ / lượt mẫu → mã thoát 2 hoặc «MẪU», không in 🟢.
+  **(#3) Khâu THU NHẬN khi NCBI chặn (`surveillance_scan.py`, 3 bản byte-identical).** Đường dự phòng Europe PMC nhận NGUYÊN cú pháp thẻ PubMed (`[pt] [ta] [ti]…`) → tầng guideline/tổng quan/RCT và 4 làn thẩm quyền trả 0 GIẢ (đo: 0/131 → 62/131 truy vấn có kết quả sau dịch) mà báo cáo vẫn PASS và con trỏ vẫn tiến (tuần W36/W37 mất cửa sổ 21/08–07/09). Nay: bộ dịch thẻ fail-closed (thẻ lạ/nháy-ngoặc lệch/nháy lồng ⇒ ValueError) · NCBI HTTP-200 mang `{"error"}`/`esearchresult.ERROR`/thiếu khoá = LỖI · stub Europe PMC `{"version":…}` = lỗi · chủ đề đi đường dự phòng **hoặc mất ứng viên ở khâu tóm tắt** ⇒ `PASS_DEGRADED` (tổng thể PARTIAL) và **con trỏ KHÔNG tiến** · `--since` hẹp hơn con trỏ không được đẩy con trỏ tiến · `--khong-cursor` không đọc/ghi con trỏ dùng chung (bản cũ bỏ `--since` khi có `--khong-cursor`) · `ops/orchestrator.py` A2 dùng `--khong-cursor`. **Quét bù 21/08–07/09** đã chạy (báo cáo riêng `EBM-Dashboards/derivatives/QUET-BU_20260821-0907_ung-vien.*`): 47/47 chủ đề PASS, 244 ứng viên vào hàng chờ duyệt (không tự áp dụng).
+  **Khoá:** BH112 (điểm khám) · BH113 (thu nhận) · BH114 (bốn cổng); kiểm ĐỘT BIẾN hai vòng, nhiều phép sống sót ở vòng đầu vì fixture chưa tự đứng được (luật câu ngắn thừa lẫn nhau; cần 100 thẻ đệm để «cường» thành từ thường) — đã bổ sung. ⚠️ **Bẫy đột biến:** bytecode `__pycache__` cũ làm đột biến CÙNG KÍCH THƯỚC trông như sống sót → chạy `python -B` + xoá pycache trước mỗi phép. ⚠️ **Chạy bộ chốt/contract-check ghi đè `medical-ebm-automation/reports/EVIDENCE_SURVEILLANCE_DEPLOYMENT_REPORT.*` bằng bản NGOẠI TUYẾN (hạ «online canary»)** — `git checkout --` hai tệp đó trước khi commit.
+  **Việc CHỈ bác sĩ làm được:** duyệt Y/N bộ vàng điểm khám · đọc hai Author Correction rồi ký ITEM-11 (BH109) · quyết chuyển 298 thẻ `from_engine` về `na` · sao lưu (Time Machine chưa cấu hình) · tạo lại tác vụ lịch nền (còn 1 tác vụ).
+  ⛔ **ĐÍNH CHÍNH 22/09/2026:** bản đầu của `audit/12` ghi «hai repo GitHub đang PUBLIC» — kiểm sống bằng `gh repo view --json visibility` cả hai đều `PRIVATE`; đã sửa trong báo cáo. Bài học: một khẳng định về trạng thái ngoài máy phải được kiểm sống trước khi đưa thành đề xuất.
+  📌 **Cập nhật 22/09/2026 — bác sĩ yêu cầu «sửa và vá lỗi này» cho các họ lỗi còn lại (hạ natri máu, EF<35%, «sot»→«sót» và các ví dụ khác trong phụ lục).** Đã thêm 6 cơ chế vào `tools/tra_diem_kham.py`: phủ định (không/chưa vs đang/đã) cấp
+  tiêu đề · viết tắt IN HOA đòi khớp đúng dạng (DM≠ĐM, MI≠mì) · tiền tố «u» (khối u) như tiền/hậu · luật «một vế từ ghép
+  trượt» áp cho MỌI độ dài câu (trước chỉ ≤3 token), kèm bảng miễn trừ đồng nghĩa · token ngắn không dấu MƠ HỒ (đo TẦN SUẤT
+  cạnh tranh, không chỉ đếm số dạng) không dùng làm bằng chứng riêng lẻ · mỏ neo quá phổ biến sau khi loại token mơ hồ.
+  Gấp dấu chuyển sang tách-từ-trước-rồi-gấp, hết lỗi lệch mảng do ký hiệu (℃/½/№…). **Đo:** bộ vàng 70→80/80 (100%);
+  «tăng huyết áp trẻ em» · «kháng sinh viêm phổi» · «u gan»/«u phổi» · «MI»/«PSA» · «đang/chưa lọc máu» · «chống đông
+  DOAC» xác nhận hết sai chủ đề. **CÁC VÍ DỤ BÁC SĨ NÊU, đã kiểm KHÔNG sửa được bằng luật từ vựng** (đa nghĩa thật/thiếu
+  dạng cạnh tranh trong kho, không phải lỗi gấp dấu) — ghi vào `da_biet_chua_dat`, không khẳng định: «hạ kali máu»/«hạ natri
+  máu» (cùng cụm từ, vai trò ngữ pháp khác nhau: tình trạng vs tác dụng thuốc) · «EF<35%» (chưa có cơ chế so ngưỡng số trong
+  bất kỳ thẻ nào) · «sot» (kho chỉ có MỘT dạng có dấu «sót», không có «sốt» để so sánh) · «thuốc lá»/«hai lá» và «người
+  già»/«ruột già» (đa nghĩa thật của cùng một từ). Chi tiết đầy đủ + kiểm đột biến (10 phép, BH112) ở `audit/12` phụ lục (b)
+  và docstring `tools/tra_diem_kham.py`.
 
   **Cảnh báo nay nằm ở NƠI BÁC SĨ ĐỌC, không chỉ trong terminal.** Bản đọc
   (`derivatives/<mã>_ban-doc.html`) mang 2 dải ngay dưới đầu trang: **đỏ "Nguồn đã bị rút"** và

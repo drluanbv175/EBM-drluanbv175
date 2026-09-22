@@ -71,6 +71,10 @@ SKILL_DUNG_SAN = {
 # setup-cowork trong một đợt đổi tên sản phẩm, KHÔNG phải nội dung bác sĩ tự
 # viết cần cứu về sync/skills/. Không xoá "setup-cowork" — vẫn còn tồn tại
 # thật ở runtime, xoá khỏi allowlist sẽ tạo báo động giả ngược lại.
+# "docs" thêm 20/09/2026 (BH44 tái phát) — kiểm trực tiếp runtime: thư mục do app Claude
+# thả vào ngày 17/09/2026, SKILL.md chỉ có ~1 KB tiếng Anh và tự khai "Everything about docs is
+# served by the docs connector" (skill mỏng trỏ sang connector Claude Docs), KHÔNG phải nội dung
+# bác sĩ tự viết cần cứu về sync/skills/. Cùng loại với setup-claude/setup-cowork ở trên.
 # Tên chỉ còn trong GHI CHÚ LỊCH SỬ về routine đã RETIRE / taskId đã đính chính —
 # doctrine tự ghi rõ chúng "không tồn tại" (xem _BAN-DO-KET-NOI.md dòng 104,
 # _LO-TRINH-HA-TANG.md dòng 22). Không phải điều phối hỏng; xoá chúng khỏi ghi chú
