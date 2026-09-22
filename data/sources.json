@@ -373,18 +373,18 @@
    "domain": [
     "bản địa hoá VN"
    ],
-   "access": "manual",
-   "endpoint_or_url": null,
+   "access": "html-watch",
+   "endpoint_or_url": "https://kcb.vn/phac-do",
    "auth_required": false,
    "terms_ok": true,
    "terms_note": "văn bản công",
-   "scan_frequency": "quarterly",
-   "detection_method": "human",
+   "scan_frequency": "weekly",
+   "detection_method": "content-hash",
    "measured_latency_days": null,
-   "owner": "bác sĩ",
-   "status": "not-covered",
-   "last_success_at": null,
-   "known_gap": "không API ổn định; làn nhập tay tools/add_vn_source.py (LÔ C) — 0 văn bản đã nhập, 3 khung chờ [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-09-20",
+   "known_gap": "ĐÍNH CHÍNH 22/09/2026 — status cũ 'not-covered' đã LỖI THỜI, không khớp mã sống: kcb_vn_lane() (app/sources/guideline_lanes.py) đã tồn tại và được nối vào GUIDELINE_LANES/GUIDELINE_FEEDS từ 20/09/2026 (1 GET/lượt tới kcb.vn/phac-do, robots.txt cho phép, đã kiểm sống — xem CLAUDE.md mục 'LANE guideline nối trực tiếp'). Sổ đăng ký chỉ chưa được cập nhật theo — không phải khoảng trống thật. Chỉ lấy được DANH SÁCH quyết định ban hành (tiêu đề+ngày), không lấy nội dung đầy đủ của hướng dẫn (cần tải PDF riêng)."
   },
   {
    "id": "SRC-021",
@@ -405,7 +405,7 @@
    "owner": "bác sĩ",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "làn nhập tay LÔ C; chưa có bản ghi nào"
+   "known_gap": "Thử nối 22/09/2026 (đường vòng dav.gov.vn/canh-bao-va-thu-hoi, cùng khuôn kcb_vn_lane) — KHÔNG xác minh được vì dav.gov.vn KHÔNG tới được từ môi trường phiên này qua CẢ BA phương pháp độc lập (urllib timeout, trình duyệt 'denied/failed', WebFetch 'ECONNREFUSED 103.124.60.65:443'). Đây có thể là hạn chế của môi trường (mạng ngoài Việt Nam) chứ không hẳn trang đã chặn — CHƯA đủ căn cứ để viết connector (sẽ phải khẳng định 'robots.txt cho phép' mà không kiểm chứng được — đúng nguyên tắc KHÔNG bịa của hệ này). Việc cần bác sĩ: tự mở https://dav.gov.vn/canh-bao-va-thu-hoi-cn81.html và https://dav.gov.vn/robots.txt từ mạng Việt Nam — nếu tải được, báo lại để tôi viết connector cùng khuôn kcb_vn_lane()."
   },
   {
    "id": "SRC-030",
@@ -607,7 +607,29 @@
    "owner": "bác sĩ",
    "status": "not-covered",
    "last_success_at": null,
-   "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be')."
+   "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be'). ĐỐI CHIẾU 22/09/2026: SR/MA đã có phủ đáng kể qua PubMed/Europe PMC tầng SR/MA + Cochrane MCP (Cấp 0, xem CLAUDE.md §Nguồn dữ liệu) — mất Epistemonikos không phải mất trắng khả năng tìm SR/MA, chỉ mất lớp TỔNG HỢP/phân loại chéo nhiều CSDL riêng của họ."
+  },
+  {
+   "id": "SRC-037",
+   "name": "NICE — tóm tắt guideline trên tạp chí (qua Europe PMC), thêm 22/09/2026",
+   "org": "NICE (qua chỉ mục MEDLINE)",
+   "tier": 1,
+   "domain": [
+    "toàn bộ watchlist"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "NICE Syndication API chính thức cần hợp đồng tổ chức (SRC không mở vì bác sĩ không đăng ký cá nhân được — xem CLAUDE.md). Đường vòng này KHÔNG cần đăng ký: Europe PMC miễn phí, chỉ mục MEDLINE các bài TÓM TẮT guideline NICE đăng trên tạp chí (BMJ, Br J Gen Pract…), lọc AFF=NICE + PUB_TYPE=Practice Guideline. Nguồn RA THƯA — cần window_days=1095 (3 năm) mới có hit, đã đo sống 22/09/2026 (0 hit ở 365/545/730 ngày, 5 hit ở 1095 ngày). Chỉ là TÍN HIỆU có guideline mới + tóm tắt, không phải toàn văn khuyến cáo NICE.",
+   "scan_frequency": "weekly",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "agent-A2",
+   "status": "active",
+   "last_success_at": "2026-09-22",
+   "known_gap": "Chỉ phủ guideline NICE ĐÃ được tóm tắt lại trên tạp chí có chỉ mục MEDLINE — không phải mọi guidance của NICE đều có bản tóm tắt dạng này. Nối vào GUIDELINE_LANES (app/sources/feeds.py::epmc_nice) + FEED_TO_AUTHORITY (app/sources/authority.py) 22/09/2026, kiểm sống qua RSSFeedClient thật: 5 bản ghi, PMID thật.",
+   "last_probe_at": "2026-09-22"
   }
  ]
 }
