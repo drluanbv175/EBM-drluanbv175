@@ -652,6 +652,28 @@
    "last_success_at": "2026-09-22",
    "known_gap": "KHÔNG tham gia vòng quét tuần tự động (weekly_safety.sh/surveillance_scan.py) — đây là công cụ MCP (mcp__plugin_cochrane_cochrane__cochrane_search/get_details/suggest_terms) chỉ gọi được TỪ TRONG một phiên Claude Code tương tác có plugin Cochrane bật + trình duyệt CDP chạy nền của chính plugin; KHÔNG phải HTTP endpoint mà một script Python độc lập chạy qua cron/scheduled task (owner thu thập duy nhất theo doctrine) có thể gọi trực tiếp. Vòng quét tuần TỰ ĐỘNG vẫn dùng lane Crossref theo ISSN 1465-1858 (app/sources/feeds.py::cochrane_cdsr, đã có từ trước) — nguồn KHÁC, phủ được review CDSR mới nhưng KHÔNG có abstract có cấu trúc/PICO/mức chắc chắn GRADE như MCP. Nguồn này chỉ hữu dụng khi một AGENT đang chạy TRONG phiên tương tác chủ động gọi (tra-cuu-chung-cu/tong-quan-y-van/cap-nhat-guideline/huong-dan-lam-sang, doctrine đã dạy đủ ở _CONNECTOR-CHUNG-CU.md §2quater từ 20/09/2026) — không có cách 'cài đặt' để nó tự chạy định kỳ không người giám sát. Kiểm sống 22/09/2026: cochrane_search (299 review 'heart failure' — lỗi điều hướng tạm thời lượt đầu, thành công lượt 2, đúng hành vi §2quater mục 5) · cochrane_get_details (đủ abstract cấu trúc + tóm tắt cho người bệnh; pico rỗng ở bài này, đúng ghi chú mục 7 — đọc PICO từ objectives/selectionCriteria) · cochrane_suggest_terms — cả ba đều trả dữ liệu thật, không phải mock.",
    "last_probe_at": "2026-09-22"
+  },
+  {
+   "id": "SRC-039",
+   "name": "Semantic Scholar — quyết định KHÔNG theo đuổi, bác sĩ chọn SerpApi thay thế vai trò, 22/09/2026",
+   "org": "Allen Institute for AI (Semantic Scholar)",
+   "tier": 2,
+   "domain": [
+    "toàn văn/trích dẫn phụ trợ"
+   ],
+   "access": "api",
+   "endpoint_or_url": "https://api.semanticscholar.org/graph/v1/paper/search",
+   "auth_required": false,
+   "terms_ok": true,
+   "terms_note": "Connector đã viết sẵn (app/sources/semantic_scholar.py, class SemanticScholarClient) và KHÔNG bắt buộc API key — chạy được ở nhịp thấp không khoá, key chỉ tăng hạn mức (giống CORE, khác Scopus). Không phải rào kỹ thuật.",
+   "scan_frequency": "ad-hoc",
+   "detection_method": "api-query",
+   "measured_latency_days": null,
+   "owner": "bác sĩ",
+   "status": "not-covered",
+   "last_success_at": null,
+   "known_gap": "TẮT theo quyết định của bác sĩ 22/09/2026 (ENABLE_SEMANTIC_SCHOLAR=false, ghi đè mặc định True trong code) — không phải lỗi cấu hình hay rào kỹ thuật. Bác sĩ nói rõ đây là lựa chọn: chấp nhận SerpApi Google Scholar (SRC-035) đủ dùng, không cần xin thêm. GHI CHÍNH XÁC vai trò để không đọc nhầm thành 'thay thế tương đương': Semantic Scholar là nguồn CHÍNH trong get_enabled_sources() — được gọi ở MỌI lượt quét cùng PubMed/Crossref/OpenAlex, trả abstract + đồ thị trích dẫn + DOI/PMID tin cậy. SerpApi là bậc thang DỰ PHÒNG tầng 2 (app/services/fallback_ladder.py) — CHỈ gọi khi nguồn chính chưa đủ chứng cứ đáng tin, trần 200 lượt/tháng tự đặt, KHÔNG có abstract, KHÔNG DOI/PMID chắc chắn (phải xác minh lại qua Crossref/PubMed), chỉ có năm công bố (không ngày/tháng). Hai nguồn khác tầng, khác nhịp gọi, khác độ tin cậy dữ liệu — SerpApi không lấp được vai trò 'nguồn chính chạy đều mỗi lượt' của Semantic Scholar, chỉ lấp một phần vai trò 'khám phá thêm khi thiếu'. Ảnh hưởng đo được: tầng full_text_and_citation_context trong app/sources/authority.py::EVIDENCE_SOURCE_UNIVERSE vẫn PARTIAL (0/4: unpaywall/semantic_scholar/publisher_full_text/pmc_full_text đều chưa kết nối) — tầng này là discovery_only nên KHÔNG chặn trạng thái PASS tổng thể, nhưng độ phủ toàn văn/trích dẫn mở rộng vẫn còn mỏng. Muốn bật lại: đặt ENABLE_SEMANTIC_SCHOLAR=true trong ~/.ebm-secrets/medical-ebm-automation.env (không cần key), thêm SRC-039 status→active vào sổ này.",
+   "last_probe_at": "2026-09-22"
   }
  ]
 }
