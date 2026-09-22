@@ -56,6 +56,21 @@ def _la_trang_chan_ncbi(payload: str) -> bool:
     return bool(re.search(r"blocked|access denied|misuse|abuse", payload[:6000], re.I))
 
 
+def _la_host_ncbi(url: str) -> bool:
+    """True khi URL trỏ vào host NCBI (eutils.ncbi.nlm.nih.gov).
+
+    Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #2): `get_json` bị TÁI DÙNG cho
+    ClinicalTrials.gov (search_trials_lane mặc định fetch_json=get_json). Một trang chặn
+    Cloudflare của ClinicalTrials.gov ('Attention Required… blocked') khớp CÙNG regex
+    _la_trang_chan_ncbi — nếu không tách theo host, nó gán nhầm cờ `_NCBI_CHAN['bi_chan']`
+    (vốn chỉ nên bật khi CHÍNH NCBI chặn), khiến mọi chủ đề còn lại trong lượt quét bỏ
+    qua NCBI oan và bị chẩn đoán sai 'NCBI đang chặn IP' trong khi NCBI vẫn hoạt động."""
+    try:
+        return "ncbi.nlm.nih.gov" in urllib.parse.urlparse(url).netloc
+    except ValueError:
+        return False
+
+
 # ── DỊCH CÚ PHÁP PUBMED → EUROPE PMC (vá 21/09/2026) ────────────────────────────────────────────
 # Truy vấn watchlist viết bằng thẻ PubMed ([pt] [ta] [ti] [ad] [tw] [tiab] [cn] [mh] [dp]). Europe PMC
 # KHÔNG hiểu các thẻ đó: nhét thô vào thì mệnh đề AND với thẻ trở thành «chữ '[pt]' phải có mặt» và trả
@@ -330,9 +345,14 @@ def get_json(
             with opener(request, timeout=timeout) as response:
                 payload = response.read().decode("utf-8")
             if payload.lstrip()[:1] == "<" and _la_trang_chan_ncbi(payload):
-                # Trang chặn trả HTTP 200: retry chỉ tốn ~46 giây/truy vấn mà không bao giờ tự hết.
-                _NCBI_CHAN["bi_chan"] = True
-                raise NCBIBiChan("NCBI chặn IP (trang 'blocked/abuse'), không retry — liên hệ info@ncbi.nlm.nih.gov")
+                if _la_host_ncbi(url):
+                    # Trang chặn trả HTTP 200: retry chỉ tốn ~46 giây/truy vấn mà không bao giờ tự hết.
+                    _NCBI_CHAN["bi_chan"] = True
+                    raise NCBIBiChan("NCBI chặn IP (trang 'blocked/abuse'), không retry — liên hệ info@ncbi.nlm.nih.gov")
+                # Nguồn KHÁC NCBI dùng chung get_json (vd ClinicalTrials.gov) — KHÔNG được lây
+                # cờ NCBI sang các chủ đề khác; chỉ báo lỗi cho đúng làn đang gọi (không retry,
+                # trang chặn không tự hết bằng cách hỏi lại).
+                raise RuntimeError(f"Trang chặn/lỗi HTML từ nguồn không phải NCBI: {url[:90]}")
             data = json.loads(payload)
             if not isinstance(data, dict):
                 raise ValueError("Payload JSON không phải object")
@@ -387,6 +407,49 @@ def get_europe_pmc_json(
         sleeper(_retry_wait(last_exc, attempt))
     detail = f"{last_exc.__class__.__name__}: {last_exc}" if last_exc else "unknown error"
     raise RuntimeError(f"Europe PMC fallback thất bại sau {retries + 1} lần: {detail}") from last_exc
+
+
+def get_crossref_json(
+    url: str,
+    *,
+    timeout: float = 20.0,
+    retries: int = 2,
+    opener: Callable[..., object] = _open_url,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> dict:
+    """GET JSON từ Crossref (tra quan hệ `is-preprint-of` cho làn preprint).
+
+    Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #1 — HIGH, do chính bản vá làn
+    preprint 15/08 gây ra). `search_preprint_lane` trước đây TÁI DÙNG `get_europe_pmc_json`
+    (qua tham số `fetch_json` dùng chung) để gọi CẢ Europe PMC LẪN Crossref — nhưng guard
+    "hitCount/resultList" của hàm đó chỉ đúng cho payload Europe PMC; payload Crossref luôn
+    có dạng {status, message-type, message}, KHÔNG BAO GIỜ có hai khoá đó, nên MỌI lần tra
+    is-preprint-of raise ValueError và bị `except Exception: pass` ở search_preprint_lane
+    nuốt im lặng — nhãn "[✅ ĐÃ CÓ BẢN BÌNH DUYỆT]" biến mất ở MỌI preprint có DOI, cộng
+    ~3 giây backoff + 2 lần gọi Crossref thừa mỗi preprint. Hàm riêng này không mang guard đó."""
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "medical-ebm-surveillance/1.0 (Crossref is-preprint-of lookup)",
+            "Accept": "application/json",
+        },
+    )
+    last_exc: BaseException | None = None
+    for attempt in range(retries + 1):
+        try:
+            with opener(request, timeout=timeout) as response:
+                payload = response.read().decode("utf-8")
+            data = json.loads(payload)
+            if not isinstance(data, dict):
+                raise ValueError("Payload JSON không phải object")
+            return data
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as exc:
+            last_exc = exc
+            if attempt >= retries:
+                break
+        sleeper(_retry_wait(last_exc, attempt))
+    detail = f"{last_exc.__class__.__name__}: {last_exc}" if last_exc else "unknown error"
+    raise RuntimeError(f"Crossref request thất bại sau {retries + 1} lần: {detail}") from last_exc
 
 
 def search(query: str, days: int, retmax: int, *,
@@ -450,11 +513,27 @@ def search(query: str, days: int, retmax: int, *,
                 or _j["esearchresult"].get("ERROR"):
             raise RuntimeError(f"NCBI trả bản lỗi/thiếu esearchresult: {str(_j)[:80]}")
         result = _j["esearchresult"]
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #3): esearchresult THIẾU idlist/count
+        # (vd {"header":{},"esearchresult":{}}) trước đây lọt qua — result.get("idlist", []) biến
+        # khoá thiếu thành [] và bản trả về trông y hệt "0 kết quả thật". Đòi cả hai khoá có mặt.
+        if "idlist" not in result or "count" not in result:
+            raise RuntimeError(f"esearchresult thiếu idlist/count: {str(result)[:80]}")
+        # errorlist.fieldsnotfound/phrasesnotfound: NCBI không nhận ra thẻ/cụm trong truy vấn (thẻ gõ
+        # sai hoặc Europe PMC-only lọt vào) — trả 0 kết quả GIẢ, cùng họ với esearchresult.ERROR ở trên.
+        _loi_truong = None
+        for _khoa in ("errorlist", "warninglist"):
+            _muc = result.get(_khoa)
+            if isinstance(_muc, dict):
+                _loi_truong = _muc.get("fieldsnotfound") or _muc.get("phrasesnotfound") or _loi_truong
+        if _loi_truong:
+            raise RuntimeError(f"NCBI không nhận ra thẻ/cụm trong truy vấn: {_loi_truong}")
     except RuntimeError as exc:
         # SUY GIẢM (21/09/2026): dự phòng là ĐÚNG khi NCBI lỗi nhưng kết quả có thể THIẾU (Europe PMC
         # không đánh chỉ mục/gán loại giống PubMed). Ghi lại để run_scan gắn cờ PASS_DEGRADED và KHÔNG
         # tiến con trỏ — không được để lượt quét suy giảm trông như lượt quét đầy đủ.
-        _SUY_GIAM.append(f"NCBI lỗi ({type(exc).__name__}) — truy vấn này chạy bằng Europe PMC dự phòng")
+        # Vá 22/09/2026: giữ NGUYÊN VĂN lý do (không chỉ tên lớp exception) — "thiếu idlist/count"
+        # và "không nhận ra thẻ/cụm" cần phân biệt được với lỗi mạng thường khi đọc lại _SUY_GIAM.
+        _SUY_GIAM.append(f"NCBI lỗi ({exc}) — truy vấn này chạy bằng Europe PMC dự phòng"[:220])
         # Vá 14/09/2026: PHẢI chuyển tiếp loc_thiet_ke — thiếu dòng này thì tầng
         # "mới nhất" (loc_thiet_ke=False) im lặng biến thành tầng có lọc ngay khi
         # rơi xuống dự phòng, tái diễn đúng lỗi BH38 qua một đường khác.
@@ -467,6 +546,20 @@ def search(query: str, days: int, retmax: int, *,
         return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
                                  mindate=mindate, maxdate=maxdate, **_kw_du_phong)
     ids = result.get("idlist", [])
+    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #4): esearch bị CẮT Ở retmax khi count thật
+    # > số id trả về (sort=date desc, chỉ lấy `retmax` bản mới nhất). Vì PASS đẩy con trỏ chủ đề tới
+    # hôm nay, các bản ghi cũ hơn TRONG CÙNG cửa sổ nhưng ngoài retmax không bao giờ được trình ra ở
+    # lượt sau — mất ứng viên có điều kiện dưới danh nghĩa PASS. Ghi vào _SUY_GIAM để run_scan gắn cờ
+    # PASS_DEGRADED và GIỮ con trỏ đứng yên (lượt sau quét lại đúng cửa sổ này).
+    try:
+        _tong = int(result.get("count", len(ids)))
+    except (TypeError, ValueError):
+        _tong = len(ids)
+    if _tong > len(ids):
+        _SUY_GIAM.append(
+            f"esearch bị cắt ở retmax: hiển thị {len(ids)}/{_tong} bản ghi khớp truy vấn "
+            "— cửa sổ có thể còn bản ghi cũ hơn (trong cùng cửa sổ) chưa được lấy"
+        )
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
 
@@ -822,6 +915,7 @@ def gan_do_tin_cay(candidates: Sequence[Candidate]) -> list[Candidate]:
 
 def search_preprint_lane(topic: str, days: int, retmax: int,
                          *, fetch_json: Callable[[str], dict] = get_europe_pmc_json,
+                         fetch_crossref: Callable[[str], dict] = get_crossref_json,
                          ) -> list[Candidate]:
     """LÀN PREPRINT (nâng cấp C, 15/08/2026 — bác sĩ duyệt sau khi nhãn tin cậy
     chạy ổn định, đúng điều kiện «chưa làm, có chủ ý» đặt ra 14/08).
@@ -848,8 +942,8 @@ def search_preprint_lane(topic: str, days: int, retmax: int,
         da_xuat_ban = ""
         if doi:
             try:
-                cr = fetch_json("https://api.crossref.org/works/"
-                                + urllib.parse.quote(doi))
+                cr = fetch_crossref("https://api.crossref.org/works/"
+                                    + urllib.parse.quote(doi))
                 rel = ((cr.get("message") or {}).get("relation") or {})
                 cua = rel.get("is-preprint-of") or []
                 if cua and cua[0].get("id"):
@@ -992,6 +1086,12 @@ def run_scan(
     all_pmids: set[str] = set()
     _NCBI_CHAN["bi_chan"] = False   # mỗi lượt quét bắt đầu lại từ «NCBI chưa bị chặn»
     for row in topics:
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #5): chụp all_pmids TRƯỚC khi xử lý
+        # chủ đề này. Nếu chủ đề hỏng GIỮA CHỪNG (vd tầng 1 đã thêm PMID vào all_pmids rồi tầng 2
+        # mới raise), PMID đó nằm "ma" trong all_pmids — chủ đề đang xử lý bị bỏ (candidates=[]) mà
+        # PMID vẫn coi như "đã thấy" nên MỘT CHỦ ĐỀ KHÁC chia sẻ PMID đó (chạy sau) sẽ bị dedup mất
+        # nó, dù chưa hề xuất hiện trong bất kỳ báo cáo nào. Hỏng ⇒ phục hồi đúng trạng thái trước đó.
+        _pmid_truoc_luot = set(all_pmids)
         try:
             unique: list[Candidate] = []
             suy_giam: list[str] = []
@@ -1083,6 +1183,7 @@ def run_scan(
                 import datetime as _dt
                 cursor[row["topic"]] = _dt.date.today().isoformat()
         except Exception as exc:  # noqa: BLE001 - lỗi được ghi vào audit, không nuốt
+            all_pmids &= _pmid_truoc_luot  # gỡ PMID "ma" chủ đề này vừa thêm trước khi hỏng
             topic_results.append(TopicResult(
                 row["topic"], row["query"], "FAIL", [],
                 f"{exc.__class__.__name__}: {exc}"[:600],
@@ -1275,7 +1376,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             for t0 in topics:
                 cursor[t0["topic"]] = args.since
         try:
-            report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor)
+            # search_fn=search, summarize_fn=summarize TƯỜNG MINH (khớp giá trị mặc định của
+            # run_scan, KHÔNG đổi hành vi) — chỉ để test CLI monkeypatch được S.search/S.summarize;
+            # tham số mặc định của run_scan() gắn với đối tượng hàm lúc ĐỊNH NGHĨA, monkeypatch
+            # thuộc tính module sau đó không có tác dụng nếu gọi không truyền tường minh ở đây.
+            report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor,
+                              search_fn=search, summarize_fn=summarize)
         except ValueError as exc:
             parser.error(str(exc))
         if ghi_con_tro:
@@ -1287,7 +1393,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     cu = con_tro_truoc.get(t0["topic"])
                     if cu and args.since > cu:
                         cursor[t0["topic"]] = cu
-            ghi_cursor(cursor)
+            # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): CHỈ ghi khi NỘI DUNG con trỏ
+            # thật sự đổi (có ≥1 chủ đề PASS tiến con trỏ). Trước đây ghi VÔ ĐIỀU KIỆN — một lượt
+            # quét lỗi toàn bộ (NCBI + Europe PMC đều hỏng, mọi chủ đề FAIL, nội dung con trỏ không
+            # đổi) vẫn làm mtime .quet-cursor.json nhảy, và sources_health.lay_thanh_cong_that() đọc
+            # mtime đó thành «lượt quét THÀNH CÔNG hôm nay» — sai: ngày ghi file không phải bằng
+            # chứng thành công khi nội dung file không hề đổi.
+            if cursor != con_tro_truoc:
+                ghi_cursor(cursor)
 
         # ĐO ĐỘ TRỄ (K4) — định nghĩa vận hành của "mới nhất" phải đo được. Chỉ đo
         # khi tóm tắt cho ngày đủ chi tiết; thiếu thì [CẦN BỔ SUNG], không ước lượng.

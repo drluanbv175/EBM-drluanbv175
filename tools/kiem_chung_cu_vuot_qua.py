@@ -90,7 +90,15 @@ def _goi(url: str, cho: int = 25) -> dict | None:
                 raw = r.read().decode("utf-8", "replace")
             if raw.lstrip().startswith("<"):
                 raise ValueError("NCBI trả HTML (có thể đang chặn)")
-            return json.loads(raw)
+            data = json.loads(raw)
+            # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #1): NCBI đôi khi trả HTTP 200
+            # kèm JSON HỢP LỆ nhưng là bản LỖI (vd {"error":"API rate limit exceeded", ...}) —
+            # trước đây đọc thành THÀNH CÔNG (không có exception ⇒ không retry) nên một lần
+            # rate-limit thoáng qua (~326 lời gọi/lượt dò, 0,34s/2 lời gọi mỗi PMID) làm hong+=1
+            # ngay lập tức, không có cơ hội thử lại như mọi lỗi mạng khác.
+            if isinstance(data, dict) and data.get("error"):
+                raise ValueError(f"NCBI trả bản lỗi: {str(data.get('error'))[:80]}")
+            return data
         except (urllib.error.URLError, ValueError, json.JSONDecodeError,
                 http.client.HTTPException, OSError):
             if lan < 2:
@@ -205,7 +213,16 @@ def doc_bao_cao_vuot_qua(thu_muc: Path | None = None) -> dict:
         ket["ly_do"] = f"báo cáo mới nhất {max(stem_txt)}.txt KHÔNG có manifest (lượt dò dở dang/hỏng)"
         ket["_lui_ve_cu"] = True
     moi_nhat = not ket.get("_lui_ve_cu")
+    # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #1) — NGUYÊN TẮC BẤT ĐỐI XỨNG áp cho cả
+    # hàm này, không chỉ cho chuỗi rút bài 3 tầng: `hop_le` (điều kiện NGHIÊM để kết luận «không có
+    # cờ» cho PMID ngoài danh sách) chỉ cần cho ÂM TÍNH. DƯƠNG TÍNH (ket_luan=CO_BAI_MOI, danh sách
+    # PMID nằm trong tập chính manifest đó tự khai đã dò) không cần hop_le để được NHẬN — một manifest
+    # bị đánh «không hợp lệ» chỉ vì MỘT PMID KHÁC hỏng thoáng qua (rate limit) vẫn phải giữ được các
+    # PMID nó đã dò thành công và tìm ra dương tính thật. Trước đây cổng tất-cả-hoặc-không vứt sạch cả
+    # 117+ cờ 🟠 chỉ vì 1 PMID hỏng trong ~326 lời gọi.
+    duong_tinh_tu_manifest_khong_hop_le: set[str] = set()
     for f in man_files:
+        man = None
         try:
             man = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -214,15 +231,23 @@ def doc_bao_cao_vuot_qua(thu_muc: Path | None = None) -> dict:
             ly = _kiem_manifest_hop_le(man) if isinstance(man, dict) else "manifest không phải đối tượng JSON"
         ngay = f.stem.rsplit("_", 1)[-1]
         if not ly:
+            pmids_ban_nay = {str(x) for x in man.get("pmid_co_bai_moi") or []} | duong_tinh_tu_manifest_khong_hop_le
             if moi_nhat:
-                return {"hop_le": True, "pmids": {str(x) for x in man.get("pmid_co_bai_moi") or []},
+                return {"hop_le": True, "pmids": pmids_ban_nay,
                         "da_do": {str(x) for x in man["pmid_da_do"]}, "nguon": f.name, "ngay": ngay, "cu": False, "ly_do": ""}
-            ket.update({"pmids": {str(x) for x in man.get("pmid_co_bai_moi") or []}, "nguon": f.name, "ngay": ngay, "cu": True})
+            ket.update({"pmids": pmids_ban_nay, "nguon": f.name, "ngay": ngay, "cu": True})
             ket.pop("_lui_ve_cu", None)
             return ket
         if moi_nhat:
             ket["ly_do"] = f"báo cáo mới nhất {f.name} KHÔNG hợp lệ: {ly}"
             moi_nhat = False
+        if isinstance(man, dict) and man.get("ket_luan") == "CO_BAI_MOI":
+            da_do_lo = {str(x) for x in (man.get("pmid_da_do") or [])}
+            co = {str(x) for x in (man.get("pmid_co_bai_moi") or [])}
+            if da_do_lo:  # chỉ nhận dương tính nằm trong tập CHÍNH manifest này tự khai đã dò
+                co &= da_do_lo
+            duong_tinh_tu_manifest_khong_hop_le |= co
+    ket["pmids"] |= duong_tinh_tu_manifest_khong_hop_le
     ket.pop("_lui_ve_cu", None)
     return ket
 

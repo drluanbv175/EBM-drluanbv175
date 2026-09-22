@@ -205,3 +205,59 @@ class TxtMoiHonManifestLaLuotDoDang(unittest.TestCase):
             r = kcv.doc_bao_cao_vuot_qua(g)
         self.assertFalse(r["hop_le"], "lượt mới nhất chết giữa chừng — manifest cũ 9 tháng không được làm nó «hợp lệ»")
         self.assertIn("20260921", r["ly_do"])
+
+
+# ── Vòng phản biện độc lập 22/09: cổng tất-cả-hoặc-không vứt dương tính THẬT của chính lượt mới ─────────
+class DuongTinhKhongMatKhiManifestMoiKhongHopLe(unittest.TestCase):
+    """review:cong-rut-bai #1 (MEDIUM). Một PMID hỏng thoáng qua (vd rate-limit) trong 163 lượt
+    hỏi làm CẢ manifest bị đánh «không hợp lệ» — nhưng 2 PMID dương tính THẬT đã dò được trong
+    CHÍNH lượt đó không được vứt theo. Bất đối xứng: hop_le chỉ cần cho ÂM TÍNH."""
+
+    def test_khong_co_ban_cu_van_giu_duoc_duong_tinh_cua_ban_moi_khong_hop_le(self):
+        with tempfile.TemporaryDirectory() as td:
+            g = Path(td)
+            (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(json.dumps(_man(
+                ket_luan="CO_BAI_MOI", so_pmid_tong=10, so_pmid_do=10, so_pmid_hong=1,
+                pmid_da_do=[str(i) for i in range(1, 11)], pmid_co_bai_moi=["3", "4"],
+            )), encoding="utf-8")
+            r = kcv.doc_bao_cao_vuot_qua(g)
+        self.assertFalse(r["hop_le"], "còn 1 PMID hỏng ⇒ vẫn KHÔNG được coi là đủ để kết luận âm tính")
+        self.assertEqual(r["pmids"], {"3", "4"}, "dương tính của chính lượt này không được vứt theo")
+
+    def test_co_ban_cu_sach_van_hop_nhat_duong_tinh_ban_moi_khong_hop_le(self):
+        with tempfile.TemporaryDirectory() as td:
+            g = Path(td)
+            (g / "CHUNG-CU-VUOT-QUA_20260810.json").write_text(json.dumps(_man()), encoding="utf-8")  # SACH, hợp lệ
+            (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(json.dumps(_man(
+                ket_luan="CO_BAI_MOI", so_pmid_tong=10, so_pmid_do=10, so_pmid_hong=1,
+                pmid_da_do=[str(i) for i in range(1, 11)], pmid_co_bai_moi=["3", "4"],
+            )), encoding="utf-8")
+            r = kcv.doc_bao_cao_vuot_qua(g)
+        self.assertTrue(r["cu"], "bản mới không hợp lệ ⇒ cu=True (dùng bản cũ cho hop_le/da_do)")
+        self.assertEqual(r["pmids"], {"3", "4"}, "dương tính mới hơn của bản KHÔNG hợp lệ vẫn được hợp nhất, "
+                                                 "không bị bản SACH cũ hơn 'xoá' mất")
+
+    def test_pmid_ngoai_tap_da_do_cua_chinh_manifest_bi_loai(self):
+        """Dương tính phải nằm trong tập PMID mà CHÍNH manifest đó tự khai đã dò — không suy đoán
+        rộng hơn những gì manifest nói (chống bịa/khớp lỏng)."""
+        with tempfile.TemporaryDirectory() as td:
+            g = Path(td)
+            (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(json.dumps(_man(
+                ket_luan="CO_BAI_MOI", so_pmid_tong=10, so_pmid_do=10, so_pmid_hong=1,
+                pmid_da_do=["1", "2"], pmid_co_bai_moi=["3", "4"],  # "3","4" KHÔNG nằm trong pmid_da_do
+            )), encoding="utf-8")
+            r = kcv.doc_bao_cao_vuot_qua(g)
+        self.assertEqual(r["pmids"], set(), "dương tính ngoài tập tự khai đã dò không được nhận")
+
+    def test_ket_luan_khong_phai_co_bai_moi_khong_bi_hop_nhat(self):
+        """Đối chứng: manifest không hợp lệ mà ket_luan KHÔNG PHẢI CO_BAI_MOI (vd MOT_PHAN, không có
+        pmid_co_bai_moi thật) không được tự nhiên sinh ra dương tính."""
+        with tempfile.TemporaryDirectory() as td:
+            g = Path(td)
+            (g / "CHUNG-CU-VUOT-QUA_20260921.json").write_text(json.dumps(_man(
+                ket_luan="MOT_PHAN", so_pmid_tong=10, so_pmid_do=9, so_pmid_hong=1,
+                pmid_da_do=[str(i) for i in range(1, 10)], pmid_co_bai_moi=[],
+            )), encoding="utf-8")
+            r = kcv.doc_bao_cao_vuot_qua(g)
+        self.assertFalse(r["hop_le"])
+        self.assertEqual(r["pmids"], set())

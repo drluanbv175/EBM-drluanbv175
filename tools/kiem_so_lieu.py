@@ -72,8 +72,19 @@ def lay_tom_tat(pmid: str) -> str | None:
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
                 t = r.read().decode("utf-8", "replace")
-            if "<html" in t[:200].lower():
+            dau = t.lstrip()[:200].lower()
+            if "<html" in dau:
                 raise ValueError("NCBI trả HTML")
+            # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #5): efetch đôi khi trả HTTP 200
+            # với THÂN RỖNG hoặc một bản lỗi JSON ({"error":"API rate limit exceeded",...}) thay vì
+            # tóm tắt văn bản thật — trước đây chỉ HTML bị bắt, nên hai dạng này bị đọc thành «tóm
+            # tắt đã đọc» (chuỗi rỗng/JSON lỗi đi thẳng vào can_doc phía dưới) và mất-đo hoàn toàn
+            # bị trình bày như ⚪ KHÔNG THẤY bình thường, không vào nhánh hong/mã 2 mà bản vá 21/09
+            # dựng riêng cho trường hợp không đọc được.
+            if not t.strip():
+                raise ValueError("NCBI trả thân rỗng")
+            if dau.startswith("{") and '"error"' in dau:
+                raise ValueError("NCBI trả bản lỗi JSON thay vì tóm tắt")
             return t
         except (urllib.error.URLError, ValueError, http.client.HTTPException, OSError):
             if lan < 2:

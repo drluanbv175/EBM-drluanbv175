@@ -595,11 +595,19 @@ def in_quick_view(cau_hoi: str, ket: list[dict], vq: set[str], giay: float, loai
     for c in ket:
         src = c.get("source") if isinstance(c.get("source"), dict) else {}
         pm = src.get("pmid") or ""
-        co = " 🟠 CÓ BẢN TỔNG HỢP MỚI HƠN CHƯA RÀ (quét quý)" if pm in vq else ""
+        co = " 🟠 CÓ BẢN TỔNG HỢP MỚI HƠN CHƯA RÀ (quét quý)" if pm and pm in vq else ""
         # «Chưa dò» ≠ «không có cờ»: báo cáo quý chỉ dò PMID của thẻ decision='apply' (đo 21/09: 163/657 PMID) — các thẻ còn lại
         # im lặng nghĩa là CHƯA ĐƯỢC HỎI, không phải sạch.
-        if pm and not co and vq_info is not None and vq_info.get("hop_le") and pm not in (vq_info.get("da_do") or set()):
-            co = " ⚪ CHƯA DÒ «bản tổng hợp mới hơn» (quét quý chỉ dò thẻ 'apply')"
+        if not co:
+            if not pm:
+                # Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #3): thẻ KHÔNG có PMID (đo
+                # 21/09: 73/1100 thẻ đã duyệt, gồm 20 decision='apply') trước đây rơi qua điều kiện
+                # `if pm and ...` mà không in gì cả — trông Y HỆT một thẻ đã dò và sạch. Cơ chế quét
+                # quý chỉ khoá theo PMID nên KHÔNG BAO GIỜ đối chiếu được nhóm này, bất kể lượt quét
+                # nào — đây là giới hạn CẤU TRÚC, không phải "chưa tới lượt".
+                co = " ⚪ KHÔNG CÓ PMID — cơ chế «bản tổng hợp mới hơn» (dò theo PMID) không áp dụng được cho thẻ này"
+            elif vq_info is not None and vq_info.get("hop_le") and pm not in (vq_info.get("da_do") or set()):
+                co = " ⚪ CHƯA DÒ «bản tổng hợp mới hơn» (quét quý chỉ dò thẻ 'apply')"
         rec = re.sub(r"\s+", " ", str(c.get("recommendation") or ""))[:220]
         tieu_de = re.sub(r"\s+", " ", str(c.get("topic") or ""))[:110]
         print(f"  ▶ [{str(c.get('decision') or '?').upper()}] {tieu_de}")

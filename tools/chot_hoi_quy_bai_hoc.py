@@ -6547,7 +6547,11 @@ def bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia():
         import io as _io
         with _cl.redirect_stdout(_io.StringIO()):
             S.main(["--since", "2026-09-20"])
-        if ghi_c.get("T") != "2026-09-01":
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): main() nay CHỈ gọi ghi_cursor khi
+        # nội dung thật sự đổi — ở đây "T" bị rollback về đúng giá trị cũ nên KHÔNG đổi, main() có
+        # thể bỏ qua ghi hoàn toàn (đúng ý — tránh mtime nhảy vô ích). Bất biến CỐT LÕI vẫn được
+        # giữ nguyên: NẾU có ghi thì tuyệt đối không được là ngày tiến "2026-09-21".
+        if ghi_c.get("T", "2026-09-01") != "2026-09-01":
             return False, "--since hẹp hơn con trỏ đẩy con trỏ tiến — khoảng [con trỏ cũ, since) mất vĩnh viễn"
         ghi_c.clear()
         S.doc_cursor = lambda: (_ for _ in ()).throw(AssertionError("khong-cursor đọc con trỏ"))

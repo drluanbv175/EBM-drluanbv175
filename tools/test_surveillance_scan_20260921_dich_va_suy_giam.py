@@ -372,5 +372,12 @@ def test_since_hep_hon_con_tro_khong_duoc_day_con_tro_tien(monkeypatch):
 
     monkeypatch.setattr(S, "run_scan", run_fake)
     assert S.main(["--since", "2026-09-20"]) == 0
-    assert ghi["T"] == "2026-09-01", "--since hẹp hơn con trỏ bỏ qua [09-01, 09-20) — không được ghi tiến"
-    assert ghi["Khác"] == "2026-08-01", "chủ đề không thuộc lượt quét giữ nguyên"
+    # Vá 22/09/2026 (review:thu-nhan #7): main() nay CHỈ gọi ghi_cursor khi nội dung thật sự đổi.
+    # Ở kịch bản này "T" bị rollback về đúng 2026-09-01 (không đổi so với trước) và "Khác" không hề
+    # chạm tới ⇒ cursor == con_tro_truoc ⇒ main() có thể bỏ qua ghi HOÀN TOÀN (đúng ý — tránh mtime
+    # nhảy vô ích khi không có gì mới). Bất biến CỐT LÕI vẫn được giữ: NẾU có ghi thì "T" tuyệt đối
+    # không được là "2026-09-21" (giá trị PASS_DEGRADED cũ mô phỏng); ghi_cursor không được gọi ở
+    # đây là bằng chứng TỐT hơn, không phải hồi quy.
+    assert ghi.get("T", "2026-09-01") == "2026-09-01", "--since hẹp hơn con trỏ bỏ qua [09-01, 09-20) — không được ghi tiến"
+    assert ghi.get("Khác", "2026-08-01") == "2026-08-01", "chủ đề không thuộc lượt quét giữ nguyên"
+    assert ghi == {}, "nội dung con trỏ không đổi ⇒ ghi_cursor không được gọi (chốt mtime bất biến)"

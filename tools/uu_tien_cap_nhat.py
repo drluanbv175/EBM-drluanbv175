@@ -96,6 +96,13 @@ def main() -> int:
         print("  nguồn trục trặc, KHÔNG phải vì y văn không có gì mới.")
 
     per = {t["topic"]: len(t.get("candidates") or []) for t in du.get("topics", [])}
+    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #6): trạng thái TỪNG CHỦ ĐỀ, không chỉ
+    # trạng thái toàn cục ở trên — một chủ đề FAIL/PASS_DEGRADED với 0 ứng viên là CHƯA ĐO ĐƯỢC,
+    # khác hẳn một chủ đề PASS với 0 ứng viên là THẬT SỰ không có gì mới. Trước đó cả hai bị gộp
+    # chung vào một dòng "KHÔNG có chứng cứ mới … chưa cần đụng tới" — đúng cách đọc 0 GIẢ mà
+    # PASS_DEGRADED sinh ra để ngăn, và nguy hiểm nhất khi lượt quét toàn cục là PARTIAL (một vài
+    # chủ đề PASS che khuất các chủ đề khác đang FAIL/DEGRADED).
+    trang_thai = {t["topic"]: t.get("status", "?") for t in du.get("topics", [])}
     kt = _nap("kiem_do_tuoi_chung_cu.py", "kt_uu_tien")
     tuoi = dict(kt.lau_chua_xem_lai())
 
@@ -120,11 +127,18 @@ def main() -> int:
         if n == 0:
             continue
         print(f"{n:>4} {t:>5}  {goc:<24} ← {wl[:40]}")
-    im = [g for n, _t, g, _w in hang if n == 0]
-    if im:
-        print(f"\n{len(im)} chủ đề KHÔNG có chứng cứ mới trong cửa sổ này — cũ nhưng chưa")
+    im_sach = [g for n, _t, g, w in hang if n == 0 and trang_thai.get(w) == "PASS"]
+    im_chua_do = [g for n, _t, g, w in hang if n == 0 and trang_thai.get(w) != "PASS"]
+    if im_sach:
+        print(f"\n{len(im_sach)} chủ đề KHÔNG có chứng cứ mới trong cửa sổ này — cũ nhưng chưa")
         print("cần đụng tới (tuổi tự nó KHÔNG phải lý do cập nhật):")
-        print("   " + " · ".join(im))
+        print("   " + " · ".join(im_sach))
+    if im_chua_do:
+        print(f"\n⚠ {len(im_chua_do)} chủ đề 0 ứng viên NHƯNG lượt quét của CHÍNH chủ đề đó không")
+        print("  PASS (FAIL/PASS_DEGRADED) — 0 ở đây là CHƯA ĐO ĐƯỢC, không phải «không có gì")
+        print("  mới», đừng bỏ qua:")
+        print("   " + " · ".join(f"{g} ({trang_thai.get(w, '?')})"
+                                  for n, _t, g, w in hang if n == 0 and trang_thai.get(w) != "PASS"))
     print("\nSố ứng viên là tín hiệu ĐỘNG LỰC, không phải kết luận về chứng cứ: công cụ")
     print("KHÔNG đọc nội dung ứng viên và không phán chúng có đổi thực hành hay không.")
     print("Chạy `/cap-nhat-chung-cu <chủ đề>` cho mục bác sĩ chọn. Cần bác sĩ kiểm chứng.")

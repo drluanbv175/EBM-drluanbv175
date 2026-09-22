@@ -1783,6 +1783,29 @@ def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
     return None
 
 
+def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
+    """Chọn câu ghi thêm vào cảnh báo «Phạm vi kiểm rút bài» — TÁCH RIÊNG thành hàm thuần để
+    kiểm được độc lập, không cần dựng cả `kiem_nguon_da_rut()` (nạp động `so_xac_minh_nguon.py`).
+
+    Vá 22/09/2026 (phản biện vòng 2, review:cong-rut-bai #4): `rw is not None` chỉ phản ánh việc
+    CÓ PMID nào đó trong file được hỏi nền Retraction Watch ngoại tuyến — nó KHÔNG cho biết các
+    mục CÒN LẠI trong `chua` (danh sách "vd ..." được liệt kê ngay sau câu này) có chứa PMID hay
+    không. Trước đây câu "đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm"
+    vẫn in ra dù TOÀN BỘ `chua` là DOI — nền chỉ khoá theo PMID nên KHÔNG hề được hỏi cho bất kỳ
+    DOI nào; người đọc suy ra DOI đã được đối chiếu là SAI."""
+    if not chua:
+        return ""
+    if not any(x.isdigit() for x in chua):
+        return ("; nền Retraction Watch ngoại tuyến CHỈ được hỏi cho PMID — %d DOI trong "
+                "danh sách trên CHƯA được đối chiếu ở đâu cả" % len(chua))
+    if rw is not None:
+        return ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
+                "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)")
+    if pm_chua:
+        return "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này"
+    return ""
+
+
 def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
     """LỖI CỨNG khi sổ xác minh đã ghi nhận một nguồn của gói này ĐÃ BỊ RÚT.
 
@@ -1880,9 +1903,7 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                 _dua_ra = {r["gia_tri"] for r in (_rw or [])}
                 _chua = [x for x in _chua if x not in _dua_ra]
             if _chua:
-                _nen = ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
-                        "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)" if _rw is not None
-                        else "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này" if _pm_chua else "")
+                _nen = _thong_diep_pham_vi_rw(_chua, _rw, _pm_chua)
                 warns.append(
                     "Phạm vi kiểm rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ; %d CHƯA KIỂM hoặc quá "
                     "hạn (vd %s)%s — đây là 'chưa biết', KHÔNG phải 'sạch'. Chạy: python tools/so_xac_minh_nguon.py "
