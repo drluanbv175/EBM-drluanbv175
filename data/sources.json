@@ -736,10 +736,10 @@
       "detection_method": "human",
       "measured_latency_days": null,
       "owner": "bác sĩ (gọi thủ công theo DOI cụ thể khi cần toàn văn, không tham gia vòng quét tuần)",
-      "status": "not-covered",
+      "status": "degraded",
       "last_success_at": null,
-      "known_gap": "CHƯA kiểm sống lúc đăng ký mục này — code (app/sources/wiley_tdm.py) đã dựng xong theo yêu cầu bác sĩ 23/09/2026 nhưng token thật CHƯA được nhập vào ~/.ebm-secrets/medical-ebm-automation.env (agent không được phép nhập hộ). Giới hạn quan trọng nhất đã biết từ README chính thức của WileyLabs/tdm-client, mục Known Limitations: 'Access is IP address based only' — dù token đúng, IP gọi request phải nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền (thường là mạng tổ chức/bệnh viện), nếu không sẽ nhận ACCESS_DENIED cho bài không phải Open Access. KHÔNG kế thừa SourceClient, KHÔNG tham gia get_enabled_sources()/get_fallback_sources() và KHÔNG tham gia chuỗi 3 tầng kiểm rút bài — chỉ dùng khi một quy trình đã có DOI cần tải PDF. Kiểm sau khi có token: `python run.py wiley-tdm-test <DOI Open Access>` rồi một DOI KHÔNG Open Access để biết đúng ranh giới thật của tài khoản, sau đó đổi status→active/degraded theo kết quả đo được.",
-      "last_probe_at": null
+      "known_gap": "ĐÃ KIỂM SỐNG 23/09/2026 (token thật đã nhập qua tools/nhap_khoa_wiley_tdm.py). Hai phát hiện thật: (1) thư viện `wiley-tdm` KHAI trong requirements.txt nhưng THIẾU trong requirements.lock.txt lẫn venv máy này — cùng lỗi đã vá cho pypdf cùng ngày; đã cài + bổ sung vào lock file. (2) Token HỢP LỆ và cơ chế hoạt động ĐÚNG (thư viện gọi API thật, nhận diện đúng IP công cộng của máy) — nhưng CẢ 2 DOI Open Access CC-BY thật (tra qua Crossref, không bịa: 10.1002/jcsm.70385, 10.1002/jcsm.70383) đều nhận 'ACCESS_DENIED' vì IP máy này (149.50.211.33 lúc kiểm) KHÔNG nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền — đúng giới hạn ĐÃ BIẾT TRƯỚC từ README chính thức ('Access is IP address based only'), không phải lỗi cấu hình/token sai. Việc còn treo, thuộc thẩm quyền bác sĩ: chỉ hoạt động được khi gọi từ mạng nằm trong dải IP tổ chức đã đăng ký với Wiley (thường mạng bệnh viện) — kiểm lại từ mạng đó nếu cần dùng thật. ENABLE_WILEY_TDM=true trong ~/.ebm-secrets/medical-ebm-automation.env (máy Mac này); máy Windows cần nhập token RIÊNG (secrets không đồng bộ qua OneDrive theo thiết kế).",
+      "last_probe_at": "2026-09-23"
     },
     {
       "id": "SRC-043",
