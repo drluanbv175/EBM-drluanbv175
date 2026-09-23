@@ -699,24 +699,24 @@
     },
     {
       "id": "SRC-041",
-      "name": "Wiley — MCP cấp quyền MỘT PHẦN (thiếu scope), kiểm 23/09/2026",
+      "name": "Wiley Scholar Gateway — MCP tương tác, kiểm sống THÀNH CÔNG 23/09/2026",
       "org": "Wiley (plugin:bio-research:wiley)",
       "tier": 2,
       "domain": [
         "tạp chí Wiley (toàn văn/metadata)"
       ],
       "access": "manual",
-      "endpoint_or_url": null,
+      "endpoint_or_url": "mcp:wiley-scholar-gateway (semanticSearch)",
       "auth_required": true,
-      "terms_ok": null,
-      "terms_note": null,
+      "terms_ok": true,
+      "terms_note": "Kết nối qua OAuth (claude.ai connector settings — bác sĩ tự Clear authentication rồi Re-authenticate để cấp lại đủ phạm vi sau lần đầu thiếu scope). Mỗi kết quả tự kèm khối 'disclosures' (attribution, ai_generated, content_freshness, content_coverage) — phải giữ nguyên khi trích dẫn, không được lược bỏ.",
       "scan_frequency": "ad-hoc",
       "detection_method": "human",
       "measured_latency_days": null,
       "owner": "bác sĩ",
-      "status": "degraded",
-      "last_success_at": null,
-      "known_gap": "Bác sĩ đã cấp quyền OAuth 23/09/2026 — TIẾN BỘ THẬT so với 22/09 (lúc đó 0 tool tải được qua ToolSearch; nay tool `semanticSearch` tải schema thành công, không còn bị chặn ở bước xác thực). NHƯNG kiểm sống 2 lần với 2 câu hỏi khác nhau đều trả lỗi giống nhau: 'Requested resource was not included in the authorization request' — khác hẳn lỗi xác thực chung chung, đây là dấu hiệu quyền OAuth đã cấp KHÔNG bao gồm đủ phạm vi (scope/resource) mà tool cần để thực thi truy vấn. Tức 'đã cấp quyền' và 'đã hoạt động' là HAI trạng thái khác nhau ở connector này — cần bác sĩ quay lại màn hình cấp quyền (cài đặt connector của claude.ai) và kiểm xem có ô phạm vi/resource nào chưa được tick khi đồng ý, cấp lại đầy đủ, rồi báo để kiểm sống lại. Chưa đủ dữ liệu để nói đây là lỗi phía Wiley/nhà cung cấp MCP hay do bước cấp quyền — không suy đoán thêm khi chưa đo được.",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ HOẠT ĐỘNG THẬT 23/09/2026, sau khi vá lỗi thiếu scope (xem lịch sử known_gap cũ). Bác sĩ Clear authentication → Re-authenticate qua claude.ai connector settings, kiểm sống ngay: câu hỏi lâm sàng thật (momelotinib vs ruxolitinib trong xơ tủy) trả về 3 bài thật — 2 bài tạp chí Wiley (HemaSphere, Am J Hematol) + 1 guideline ONKOPEDIA 2025 (Int J Cancer, PMF) — đủ DOI, ngày xuất bản, trích đoạn văn bản/bảng số liệu thật. Đây là công cụ TÌM KIẾM NGỮ NGHĨA (semanticSearch) trên tạp chí Wiley — khác Wiley TDM API (SRC-042, tải PDF theo DOI đã biết) và khác 5 connector toàn văn guideline theo tổ chức (SRC-043..046) — bổ sung năng lực KHÁM PHÁ chuyên sâu trong hệ Wiley mà Crossref/PubMed không có (tìm theo ý nghĩa câu hỏi, không chỉ từ khóa). Giới hạn: (1) CHỈ nội dung Wiley (đơn vị tự khai 'additional publisher sources will be added soon'); (2) tương tác — chỉ gọi được TỪ TRONG phiên Claude Code có kết nối MCP, KHÔNG tham gia vòng quét tuần tự động, cùng nhóm Cochrane/Scite (SRC-038/040); (3) mỗi kết quả có khối 'disclosures' bắt buộc giữ nguyên khi trích dẫn (attribution, AI-generated warning, content freshness, coverage link) — không được lược bỏ khi đưa vào báo cáo.",
       "last_probe_at": "2026-09-23"
     },
     {

@@ -151,19 +151,20 @@ gửi email xin token (mất thời gian chờ phản hồi, không đảm bảo
 
 ---
 
-## Vấn đề 9 — Wiley MCP (khác Wiley TDM API): cấp quyền MỘT PHẦN, chưa hoạt động
+## Vấn đề 9 — Wiley MCP (khác Wiley TDM API): ✅ HOẠT ĐỘNG THẬT 23/09/2026
 
-**🟡 CẬP NHẬT 23/09/2026 — bác sĩ đã cấp quyền, nhưng kiểm sống lộ ra CHƯA ĐỦ.** Tải
-schema `semanticSearch` thành công (tiến bộ thật so với 22/09 — trước đó 0 tool tải
-được). Gọi thử 2 lần với 2 câu hỏi khác nhau (myelofibrosis/momelotinib, GINA hen) đều
-lỗi GIỐNG NHAU: `"Requested resource was not included in the authorization request"` —
-KHÁC lỗi xác thực chung chung, đây là dấu hiệu quyền OAuth đã cấp **thiếu phạm vi
-(scope/resource)** cần thiết để tool thực thi, không phải "chưa cấp quyền" như trước.
+**✅ ĐÃ XONG.** Bác sĩ Clear authentication → Re-authenticate qua claude.ai connector
+settings (cấp lại từ đầu, không tái dùng phiên cũ thiếu scope). Kiểm sống ngay bằng câu
+hỏi lâm sàng thật (momelotinib vs ruxolitinib trong xơ tủy): trả về **3 bài thật** — 2
+bài tạp chí Wiley (HemaSphere, Am J Hematol) + 1 guideline **ONKOPEDIA 2025** (Int J
+Cancer) — đủ DOI, ngày xuất bản, trích đoạn văn bản/bảng số liệu thật, không rỗng.
 
-**Đề xuất:** bác sĩ quay lại đúng màn hình cấp quyền connector Wiley (claude.ai connector
-settings) — kiểm xem có ô phạm vi/resource nào KHÔNG được tick khi đồng ý lúc trước, cấp
-lại ĐẦY ĐỦ, rồi báo để tôi kiểm sống lại. Nếu vẫn lỗi y hệt sau khi cấp lại đầy đủ, nhiều
-khả năng là vấn đề phía nhà cung cấp MCP, không phải thao tác của bác sĩ.
+**Năng lực thật:** tìm kiếm NGỮ NGHĨA (theo ý câu hỏi, không chỉ từ khóa) trong tạp chí
+Wiley — bổ sung cho Crossref/PubMed (chỉ khớp từ khóa/tiêu đề). Giới hạn: (1) chỉ nội
+dung Wiley, nhà cung cấp tự khai sẽ mở rộng thêm nhà xuất bản khác sau; (2) tương tác —
+cùng nhóm Cochrane/Scite, chỉ gọi được trong phiên Claude Code, KHÔNG vào vòng quét tuần
+tự động; (3) mỗi kết quả kèm khối "disclosures" bắt buộc giữ khi trích dẫn (nguồn AI
+sinh, cần xác minh, độ mới kho dữ liệu). `data/sources.json` SRC-041 → `active`.
 
 **Ai làm:** bác sĩ (thao tác cấp quyền lại); tôi kiểm sống sau khi bác sĩ báo đã làm xong.
 
@@ -211,7 +212,7 @@ không phải kỹ thuật — không đề xuất gì thêm từ phía tôi.
 | 6 | BTS/Thorax/NICE | Chọn: chấp nhận / xin giấy phép NICE | CHỈ bác sĩ |
 | 7 | Cục QL Dược VN | Tự mở thử domain, báo lại | Bác sĩ trước, tôi sau |
 | 8 | Epistemonikos | Xác nhận giữ nguyên hay đổi ý | Bác sĩ |
-| 9 | Wiley MCP | 🟡 Đã cấp quyền nhưng thiếu scope — cấp lại đầy đủ | Bác sĩ |
+| 9 | Wiley MCP | ✅ Hoạt động thật — kiểm sống 3 bài, có cả guideline | Xong |
 | 11 | UpToDate/DynaMed/Embase | Không có việc kỹ thuật | — |
 
 **Cần bác sĩ kiểm chứng.**
