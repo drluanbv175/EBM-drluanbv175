@@ -14,13 +14,23 @@
 - **Dò thay đổi trang** (10 nguồn `html-watch`) — biết "trang đổi", phải người tự mở Browser.
 - **Đọc toàn văn thật** — chỉ **GOLD, GINA** tự động + đã kiểm sống. Wiley TDM đọc được
   nhưng bị chặn IP. PMC/BTS/Thorax/NICE không đọc được (chặn mạng + rào pháp lý).
-- **PubMed MCP tương tác** (mới đo hôm nay) — đọc toàn văn THẬT cho bài nghiên cứu gốc
-  (3/3 bài eLife, 40-102 nghìn ký tự), nhưng **rỗng** cho tài liệu dạng guideline (1/1
-  chương ADA đã thử) — mạnh cho nghiên cứu, CHƯA chắc giúp được guideline lâm sàng.
+- **PubMed MCP tương tác** — đọc toàn văn THẬT cho bài nghiên cứu gốc (3/3 eLife) VÀ cho
+  một phần thật guideline có PMCID (2/5 mẫu thử — xem vấn đề 3, ĐÃ LÀM).
+
+**✅ ĐÃ LÀM trong phiên này (23/09/2026, theo yêu cầu "làm 1,2,3,4"):** vấn đề 1 (vá
+taxonomy), 2 (tạo tác vụ lịch cho 9/10 trạm), 3 (mở rộng mẫu PubMed MCP lên 9 phép thử).
+Vấn đề 4 (điều tra vá PMC) — xem kết luận ở cuối mục đó.
 
 ---
 
 ## Vấn đề 1 — Công cụ đo độ phủ chính thức của hệ đã lạc hậu
+
+**✅ ĐÃ VÁ 23/09/2026.** Thêm tầng `guideline_fulltext` riêng (tách khỏi
+`full_text_and_citation_context`) vào `EVIDENCE_SOURCE_UNIVERSE`, khớp đúng
+`SourceClient.name` của cả 5 connector (xác nhận bằng grep, không suy đoán). Kiểm sống:
+`healthy_sources=[gold_copd_fulltext, gina_asthma_fulltext]` → tầng PASS. +2 test hồi
+quy, sửa 1 test cũ. Toàn bộ 5805 test PASS. Đã commit+push
+(`feat(nguon): thêm tầng guideline_fulltext...`, medical-ebm-automation).
 
 **Hiện trạng:** `app/sources/authority.py::assess_source_universe_coverage()` là hàm
 DUY NHẤT cho ra kết luận PASS/PARTIAL chính thức của hệ, nhưng taxonomy của nó (tầng
@@ -42,49 +52,47 @@ rủi ro thấp, có thể làm ngay.
 
 ## Vấn đề 2 — 10 trạm "dò thay đổi trang" chưa tự động hóa
 
-**Hiện trạng:** GOLD·GINA·KDIGO·ADA·ESC·ACC/AHA·IDSA·USPSTF·WHO·BYT đều `active`, đã
-xác minh sống — nhưng cơ chế `giam_sat_to_chuc.py --nap-van-ban` đòi **người/agent tự
-tay** mở một phiên Browser mỗi lần kiểm. SRC-015 tự ghi rõ: "việc còn lại: nối vào một
-tác vụ lịch (Claude scheduled task, có quyền Browser) để trạm này không cần bác sĩ/agent
-làm tay mỗi lần".
-
-**Đề xuất:** tạo một tác vụ lịch (`mcp__scheduled-tasks__create_scheduled_task`) chạy
-định kỳ (đề xuất: hằng tuần, cùng nhịp `thu-thap-tuan-an-toan-thuoc`), tự mở phiên
-Browser, quét cả 10 trạm, ghi kết quả vào sổ — khớp đúng mẫu 6 tác vụ lịch đã có.
-
-**Ai làm:** cần một phiên Claude Code có quyền tạo tác vụ lịch — tôi có thể soạn script,
-nhưng **tạo tác vụ lịch nền là hành động đứng (standing), nên hỏi bác sĩ xác nhận trước
-khi tạo**, đúng nguyên tắc "hành động khó đảo ngược cần xác nhận".
-
----
-
-## Vấn đề 3 — PMC guideline full-text: chỉ mới thử 1 mẫu cho câu "guideline luôn rỗng"
-
-**Hiện trạng:** kết luận "PubMed MCP đọc rỗng cho guideline" hiện dựa trên **ĐÚNG 1 phép
-thử** (chương ADA). Cỡ mẫu 1 chưa đủ để khẳng định chắc — có thể ADA riêng biệt (PMC chỉ
-lưu PDF, không XML) trong khi guideline khác (vd của hội có tập tin XML đầy đủ) vẫn đọc
-được.
-
-**Đề xuất:** thử thêm 2-3 guideline khác đã có PMCID xác nhận (không đoán — tra qua
-`search_articles`/`get_article_metadata` trước) để có cỡ mẫu đủ tin. Việc rẻ, nên làm.
-
-**Ai làm:** tôi — làm được ngay trong phiên tiếp theo nếu bác sĩ muốn.
+**✅ ĐÃ LÀM 23/09/2026 — nhưng khác kế hoạch ban đầu, vì đo lại lộ ra sự thật rẻ hơn.**
+Trước khi tạo tác vụ lịch, chạy `giam_sat_to_chuc.py --kiem-tra` từ máy Mac thật (không
+phải sandbox) để xác nhận: **9/10 trạm chạy TỐT bằng script thường, KHÔNG cần Browser**
+(GOLD/GINA/KDIGO/ADA/ESC/IDSA/USPSTF/WHO/BYT) — chỉ ACC/AHA (SRC-015) thật sự bị
+Cloudflare chặn (đã có tác vụ lịch riêng `giam-sat-acc-aha-quy` từ trước, quý/Browser).
+Đọc code `giam_sat_to_chuc.py` xác nhận thêm: lệnh KHÔNG tham số đã là chế độ quét-và-ghi
+thật (tự phát hiện tiêu đề mới, tự ghi hàng ứng viên, tự đánh dấu degraded khi hỏng) —
+chỉ là **chưa từng được đưa vào lịch nào** (`grep` xác nhận 0 kết quả ngoài tác vụ
+ACC/AHA). Đã tạo tác vụ lịch mới **`giam-sat-9-tram-web-hoi-tuan`** (thứ Hai 18:50, nối
+tiếp nhịp `thu-thap-tuan-an-toan-thuoc`/`goi-duyet-tuan-ebm`), chỉ gọi
+`python3 tools/giam_sat_to_chuc.py` — không cần Browser, đơn giản hơn nhiều so với đề
+xuất ban đầu. Đã thử `run_now` để kiểm — phiên chạy thử bất thường lâu (55 tin nhắn cho
+1 lệnh Bash đơn giản), chưa xác nhận được kết quả cuối cùng trong phiên này — bác sĩ nên
+kiểm tra lại "Scheduled" → chạy tay lần nữa hoặc đợi lần chạy thật thứ Hai tới.
 
 ---
 
-## Vấn đề 4 — `pmc_guideline_fulltext.py` (SRC-046) có thể vá được không, hay dừng hẳn?
+## Vấn đề 3 — PMC guideline full-text: mở rộng cỡ mẫu
 
-**Hiện trạng:** connector tự viết của tôi bị chặn WAF khi gọi trực tiếp
-`pmc.ncbi.nlm.nih.gov`. Nhưng PubMed MCP (bên thứ ba, không phải code của dự án) đọc
-được toàn văn PMC cho bài nghiên cứu — chứng minh **CÓ tồn tại** một đường hợp pháp,
-không bị WAF. Tôi chưa biết đường đó là gì (không có quyền xem code backend của MCP).
+**✅ ĐÃ LÀM 23/09/2026.** Mở rộng từ 1 lên 9 phép thử (3 nghiên cứu eLife + 5 guideline có
+PMCID, tra qua `search_articles` — không đoán). Kết quả: **2/5 guideline có toàn văn
+thật** (ONKOPEDIA hướng dẫn xơ tủy ~9.000 từ, Korean Thyroid Association 130.334 ký tự),
+3/5 rỗng (ADA, ASFA, CFP deprescribing statins). Kết luận "guideline luôn rỗng" (đính
+chính buổi sáng) đã SAI — sửa lại trong `audit/13` §7. Phát hiện thêm: chỉ 5/18 guideline
+chuyên khoa được tra có PMCID — bản thân việc CÓ bản ghi PMC đã hiếm.
 
-**Đề xuất:** dành một phiên điều tra riêng — thử các endpoint chính thức khác của NCBI
-(FTP bulk OA, PMC Article Datasets trên AWS Open Data — dịch vụ có thật, KHÔNG phải đoán,
-cần tra tài liệu NCBI chính thức trước khi thử) xem có đường nào không bị WAF chặn. Đây
-là việc CÓ RỦI RO THẤT BẠI — không hứa trước sẽ vá được, chỉ là hướng đáng thử.
+---
 
-**Ai làm:** tôi, nếu bác sĩ muốn dành thời gian cho hướng này (không chắc thành công).
+## Vấn đề 4 — `pmc_guideline_fulltext.py` (SRC-046) có vá được không?
+
+**✅ ĐÃ VÁ THẬT 23/09/2026 — thành công, ngoài dự kiến ban đầu.** Đọc tài liệu chính thức
+NCBI (`ftp.ncbi.nlm.nih.gov/pub/pmc/readme.txt`) tìm ra: FTP cũ đang bị khai tử, thay
+bằng **bucket S3 công khai `pmc-oa-opendata`** (PMC Open Access Subset, AWS Open Data
+Registry) — không cần tài khoản AWS, không cùng hạ tầng/WAF với `pmc.ncbi.nlm.nih.gov`.
+Viết lại toàn bộ connector dùng đường này (liệt kê + tải `.txt` qua HTTPS thường). Kiểm
+sống 4 PMCID: khớp 100% với kết quả PubMed MCP (vấn đề 3) — xác nhận đây CHÍNH LÀ nguồn
+dữ liệu mà MCP dùng phía sau. `data/sources.json` SRC-046 → `active`. 10 test viết lại,
+PASS. Đã commit + push cả 2 repo.
+
+**Giới hạn thật, không phải lỗi:** chỉ bài ĐÃ nộp lưu toàn văn cho PMC OA Subset mới đọc
+được — không phải "vá xong thì đọc được mọi guideline".
 
 ---
 
@@ -190,10 +198,10 @@ không phải kỹ thuật — không đề xuất gì thêm từ phía tôi.
 
 | # | Vấn đề | Việc tiếp theo | Ai |
 |---|---|---|---|
-| 1 | Công cụ đo độ phủ lạc hậu | Vá taxonomy 5 tên connector mới | Tôi |
-| 3 | Cỡ mẫu PMC-MCP quá nhỏ | Thử thêm 2-3 guideline khác | Tôi |
-| 2 | 10 trạm html-watch chưa tự động | Tạo tác vụ lịch | Tôi, cần bác sĩ xác nhận trước |
-| 4 | Vá PMC full-text thật? | Điều tra endpoint chính thức NCBI | Tôi, không chắc thành công |
+| 1 | Công cụ đo độ phủ lạc hậu | ✅ ĐÃ VÁ — tầng `guideline_fulltext` mới | Xong |
+| 3 | Cỡ mẫu PMC-MCP quá nhỏ | ✅ ĐÃ LÀM — 9 mẫu, 2/5 guideline có toàn văn | Xong |
+| 2 | 10 trạm html-watch chưa tự động | ✅ ĐÃ TẠO tác vụ lịch (9/10, ACC/AHA có riêng) | Xong, cần bác sĩ xác nhận chạy tốt |
+| 4 | Vá PMC full-text thật? | ✅ ĐÃ VÁ THẬT — dùng bucket S3 chính thức, SRC-046 active | Xong |
 | 10 | 6 hiệp hội chưa có web-hội riêng | Chọn 1 chuyên khoa ưu tiên | Bác sĩ chọn, tôi làm |
 | 5 | Wiley TDM chặn IP | Thử lại từ mạng bệnh viện | CHỈ bác sĩ |
 | 6 | BTS/Thorax/NICE | Chọn: chấp nhận / xin giấy phép NICE | CHỈ bác sĩ |
