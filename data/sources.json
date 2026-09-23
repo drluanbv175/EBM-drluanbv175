@@ -173,7 +173,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -199,7 +199,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-011 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -225,7 +225,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — «3 tiêu đề ghi nhận» ở đợt xác minh cùng ngày là SAI, đã kiểm lại bằng state/giam-sat-to-chuc.json thật: cả 3 dòng đều là văn xuôi giới thiệu tĩnh của trang (\"KDIGO guidelines focus on topics...\", \"Interested in providing feedback...\"), KHÔNG một tên guideline nào trong 18 tên thật (ANEMIA IN CKD, TRANSPLANT CANDIDATE...). Nguyên nhân KÉP: (a) khối 18 chủ đề render lười biếng — lượt get_page_text đầu (trước khi cuộn) không thấy; (b) ngay cả khi có đủ nội dung, rut_tieu_de_tu_van_ban() cũ đòi năm/từ khoá (RE_TIEU_DE) mà tên chủ đề KDIGO không mang cái nào — 0/18 lọt qua dù đã cuộn đúng. Trạm vì thế báo 'active' nhưng chỉ canh 3 dòng KHÔNG BAO GIỜ đổi — mù hoàn toàn với mọi thay đổi guideline thật, yên tâm giả. ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: thêm nhận diện khối ALL-CAPS liên tiếp ≥4 dòng (_la_toan_hoa_nhieu_tu/_NGUONG_CHUOI_TOAN_HOA) cho các trang liệt kê chủ đề không mang năm/từ khoá — đo lại trên đúng văn bản Browser thật (cuộn đủ) cho ĐÚNG 18/18 tên guideline, không lẫn CTA/điều hướng (test_giam_sat_to_chuc.py::test_rut_tieu_de_tu_van_ban_nhan_khoi_toan_hoa_kdigo). CHƯA thể tự ghi lại state/giam-sat-to-chuc.json từ phiên này (file đó nằm ngoài git, mang dữ liệu RIÊNG của máy bác sĩ) — việc còn lại: bác sĩ (hoặc một phiên có Browser thật trên máy sống) chạy lại `tools/giam_sat_to_chuc.py --nap-van-ban SRC-012 <file get_page_text đã cuộn hết trang>` MỘT LẦN để nạp đúng 18 tên vào sổ theo dõi, thay cho 3 dòng boilerplate cũ. Sau đó trạm mới thật sự canh được thay đổi guideline KDIGO. Số 4 tiêu đề ghi lúc kích hoạt 01/09/2026 (kich_hoat.so_tieu_de_luc_do) chưa kiểm lại được — không loại trừ khả năng cùng lỗi (a)/(b) này đã có từ lúc đó.",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -251,7 +251,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-013 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 6 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -277,7 +277,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-014 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 17 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -302,7 +302,7 @@
       "detection_method": "content-hash",
       "measured_latency_days": null,
       "owner": "agent-A2",
-      "status": "active",
+      "status": "degraded",
       "known_gap": "ĐÃ ACTIVE 09/09/2026 qua kênh Browser thật (urllib bị Cloudflare bot-challenge chặn — 403 kèm cookie __cf_bm, đã xác nhận cả với User-Agent trình duyệt thật). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-015 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (vd get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
       "last_success_at": "2026-09-09",
       "kich_hoat": {
@@ -329,7 +329,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-14",
+      "last_success_at": "2026-09-23",
       "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — trạm đang active nhưng bị nhiễm rác đáng kể ở cả HAI chiều, phát hiện qua verify độc lập (Browser tool thật, 14 cảnh báo an toàn thuốc thật trên trang gov.uk/drug-safety-update). Cấu trúc trang: mỗi cảnh báo in 3 dòng liên tiếp — tiêu đề, mô tả, «Therapeutic area: … Published: DD Month YYYY». Dòng metadata kết thúc bằng năm nên tự lọt RE_TIEU_DE dùng chung thành 'tiêu đề' giả (4/14 lọt trong mẫu đo), trong khi TIÊU ĐỀ THẬT hiếm khi chứa năm/từ khoá guideline|report|update|standards|statement|recommendation nên bị RỚT (chỉ 1/14 lọt qua tình cờ nhờ chứa 'updated'). 25 tiêu đề ghi lúc kích hoạt 01/09/2026 nhiều khả năng cũng nhiễm cùng lỗi (không kiểm lại được — state cục bộ theo máy).\nĐÃ VÁ tools/giam_sat_to_chuc.py: loại bỏ dòng metadata khỏi kết quả + dùng nó làm MỐC để lấy lại tiêu đề thật đứng cách 2 vị trí (xác nhận 14/14, không ngoại lệ). Đo lại sau vá: 14/14 tiêu đề thật + 0/14 dòng metadata lọt qua (còn 1 dòng MÔ TẢ lọt qua vì tình cờ chứa 'reports' — hạn chế đã biết của RE_TIEU_DE khớp chuỗi con, không phải hồi quy mới, chấp nhận theo đúng tiền lệ đã ghi ở các nguồn khác).\nĐÃ NẠP THẬT 14/09/2026 (cùng ngày, phiên có Browser thật): chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-016 <file get_page_text>` với nội dung sống của gov.uk/drug-safety-update (867 mục, trang 1) — 21 tiêu đề nạp vào state/giam-sat-to-chuc.json cục bộ (thay 25 tiêu đề nghi nhiễm rác từ 01/09/2026), trong đó 19/21 là tiêu đề cảnh báo thật và 2/21 là câu MÔ TẢ lọt qua (cùng hạn chế RE_TIEU_DE khớp chuỗi con đã ghi ở trên, không phải hồi quy mới). `last_success_at` nay phản ánh lần thu hoạch THẬT này (SUY TỪ ARTIFACT — state file cục bộ vừa ghi — đúng doctrine của tools/sources_health.py, không phải ping/không phải bịa).",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -357,7 +357,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "known_gap": "IDSA (endpoint chinh cua tram nay) da active 13/09/2026 qua Browser that. USPSTF va WHO da TACH thanh nguon rieng SRC-019/SRC-022 (13/09/2026) vi hai to chuc do co trang web ho tro tot cho content-hash va Browser truy cap duoc binh thuong. CON LAI 2/5 to chuc trong ten gop CHUA phu duoc: AGS Beers (geriatricscareonline.org tra 403 Forbidden ngay ca voi Browser that -- chan o TANG TRANG WEB, khong phai egress sandbox; toan van con sau paywall hoi vien theo terms_note) va NICE (nice.org.uk tra 403 Forbidden tuong tu, ca /guidance lan /guidance/published). Day la GIOI HAN KHAC voi egress Python da ghi truoc do -- ngay ca kenh Browser cung khong vuot qua duoc, can bac si tu mo bang trinh duyet ca nhan (co the site chi chan bot/automation) hoac cung cap URL thay the. | ĐÍNH CHÍNH/BỔ SUNG 13/09/2026 (cùng ngày, sau khi verify độc lập qua state/giam-sat-to-chuc.json thật): trạm IDSA nói trên KHÔNG mù như KDIGO (SRC-012), nhưng vẫn hụt đáng kể — đo trên đúng văn bản trang thật (get_page_text, không cần cuộn): 67/114 tiêu đề thật (59%). Nguyên nhân: sàn ≥5 từ trong rut_tieu_de_tu_van_ban() (thiết kế cho rác ACC/AHA) loại luôn 47 tiêu đề IDSA hợp lệ nhưng NGẮN (2-4 từ) + năm ở cuối dòng (\"MRSA 2011\", \"Vancomycin 2020\", \"AMR Guidance 2026\"...). ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: nới sàn ≥5 từ bằng luật OR — chấp nhận dòng ngắn hơn nếu KẾT THÚC bằng năm (không phải chỉ chứa năm ở giữa, để không lẫn rác kiểu \"ESC 2026 Science News\" của ACC/AHA). Đo lại sau vá: 113/114 (99%), chỉ còn \"MRSA 2011\" lọt lưới vì sàn ĐỘ DÀI KÝ TỰ ≥12 của _loc_tieu_de_hop_le dùng chung (chấp nhận, không sửa hàm dùng chung để đổi một trường hợp biên). state/giam-sat-to-chuc.json vẫn còn 67 tiêu đề cũ — chưa tự cập nhật được từ phiên này (file ngoài git); bác sĩ chạy lại --nap-van-ban SRC-017 với văn bản Browser thật MỚI (sau khi kéo bản vá) để nạp đủ 113 tiêu đề.",
       "kich_hoat": {
         "ngay": "2026-09-01",
@@ -383,7 +383,7 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-20",
+      "last_success_at": "2026-09-23",
       "known_gap": "ĐÍNH CHÍNH 22/09/2026 — status cũ 'not-covered' đã LỖI THỜI, không khớp mã sống: kcb_vn_lane() (app/sources/guideline_lanes.py) đã tồn tại và được nối vào GUIDELINE_LANES/GUIDELINE_FEEDS từ 20/09/2026 (1 GET/lượt tới kcb.vn/phac-do, robots.txt cho phép, đã kiểm sống — xem CLAUDE.md mục 'LANE guideline nối trực tiếp'). Sổ đăng ký chỉ chưa được cập nhật theo — không phải khoảng trống thật. Chỉ lấy được DANH SÁCH quyết định ban hành (tiêu đề+ngày), không lấy nội dung đầy đủ của hướng dẫn (cần tải PDF riêng)."
     },
     {
@@ -470,7 +470,7 @@
       "owner": "agent-A2",
       "status": "active",
       "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — known_gap cũ ở đây mô tả một bug ĐÃ VÁ (commit 32b5589, 13/09/2026): rut_tieu_de_tu_van_ban() lúc đó chưa ghép được cặp dòng «tiêu đề» + «Mon YYYY» đứng liền kề, nên 0/7 dòng qua được cả hai điều kiện cùng lúc. Bug này đã vá, nhưng known_gap chưa cập nhật và không ai chạy lại --nap-van-ban với code mới để kích hoạt.\nĐÃ KÍCH HOẠT THẬT hôm nay: lấy nội dung trang qua Browser tool (không phải suy đoán), chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-019 <file>` với đúng mã đã vá — kết quả 3/3 tiêu đề thật trích được (\"Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025\", \"Syphilis Infection During Pregnancy: Screening May 2025\", \"Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025\") — status chuyển not-covered → active.\nPhát hiện PHỤ trong lúc kích hoạt: _ghi_ung_vien() dùng RA.mkdir(exist_ok=True) THIẾU parents=True — crash FileNotFoundError trên bất kỳ checkout git-thuần nào (EBM-Dashboards/ nằm ngoài git, không tồn tại) ngay khi có ≥1 tiêu đề mới cần ghi ứng viên, dù sources.json/state đã ghi đúng TRƯỚC bước đó. Đã vá (parents=True) + thêm test hồi quy test_ghi_ung_vien_tu_tao_thu_muc_cha_con_thieu (mutation-tested: gỡ vá → đỏ đúng FileNotFoundError, phục hồi → xanh, 21 test khác không hồi quy).",
-      "last_success_at": "2026-09-14",
+      "last_success_at": "2026-09-23",
       "kich_hoat": {
         "ngay": "2026-09-14",
         "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
@@ -497,7 +497,7 @@
       "owner": "agent-A2",
       "status": "active",
       "known_gap": "Tách RIÊNG khỏi SRC-017 (13/09/2026) — trước đó WHO chỉ được nhắc trong tên gộp của SRC-017 mà KHÔNG có endpoint riêng (WHO qua PubMed alias vẫn phủ gián tiếp, đây là kênh TRỰC TIẾP web hội, bắt được sớm hơn). URL đã xác minh SỐNG qua Browser thật hôm nay, có mục \"Latest WHO guidelines approved by the Guidelines Review Committee\" dùng được cho content-hash. Chưa --nap-van-ban lần nào.",
-      "last_success_at": "2026-09-13",
+      "last_success_at": "2026-09-23",
       "kich_hoat": {
         "ngay": "2026-09-13",
         "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
