@@ -16,12 +16,13 @@
    nguồn "đọc được về nguyên tắc nhưng bị chặn IP" (Wiley TDM) và 2 nguồn "code xong nhưng
    bị chặn vĩnh viễn ở tầng mạng/pháp lý, không sửa được" (PMC, BTS/Thorax/NICE).
 3. **Tầng ĐỌC TOÀN VĂN TƯƠNG TÁC (cần một phiên Claude Code, người/agent gọi tay):**
-   Cochrane, Scite, và **PubMed full-text MCP — đã kiểm thật, đọc được toàn văn NGHIÊN
-   CỨU GỐC có deposit trên PMC** (3/3 bài eLife thử nghiệm, 40-100 nghìn ký tự/bài, KHÔNG
-   bị chặn WAF như đường scrape trực tiếp SRC-046). Nhưng **chương/tài liệu dạng guideline
-   (đã thử ADA) lại KHÔNG có toàn văn qua đường này** — tức mạnh cho nghiên cứu, CHƯA chắc
-   giúp được đúng loại tài liệu bác sĩ cần nhất. Cả ba KHÔNG tham gia vòng quét tuần tự
-   động, chỉ dùng khi tra cứu trực tiếp trong phiên.
+   Cochrane, Scite, và **PubMed full-text MCP — đã kiểm thật với cỡ mẫu 9 bài (3 nghiên
+   cứu + 5 guideline có PMCID), KHÔNG bị chặn WAF như đường scrape trực tiếp SRC-046.**
+   Nghiên cứu gốc: 3/3 có toàn văn. Guideline: chỉ 5/18 mẫu thử có PMCID, và 2/5 trong số
+   đó có toàn văn thật (ONKOPEDIA, Korean Thyroid Association — không phải 0% như đính
+   chính buổi sáng kết luận vội trên 1 mẫu). Tức đây là công cụ ĐÁNG THỬ cho guideline cụ
+   thể (tỷ lệ trúng thật, không phải giả), nhưng không đủ tin cậy để thay GOLD/GINA. Cả ba
+   KHÔNG tham gia vòng quét tuần tự động, chỉ dùng khi tra cứu trực tiếp trong phiên.
 
 Nói cách khác: **hệ biết RẤT RỘNG "có gì mới", nhưng chỉ ĐỌC ĐƯỢC toàn văn tự động một
 phần rất nhỏ** (2/20 hiệp hội guideline). Đây không phải lỗ hổng thiết kế — là ranh giới
@@ -134,26 +135,33 @@ từng gọi thử. Đã kiểm thật, kết quả khác hẳn — xem chi ti�
 | **PubMed (`get_full_text_article`)** | **đọc toàn văn PMC qua MCP — ĐÃ KIỂM THẬT, HOẠT ĐỘNG, và KHÔNG cùng giới hạn với SRC-046** | Xem đính chính ngay dưới — giới hạn thật khác hẳn giả định ban đầu |
 | Wiley (MCP) | tìm kiếm ngữ nghĩa tạp chí Wiley | `not-covered` — server CẦN XÁC THỰC, bác sĩ chưa cấp quyền |
 
-**Đo thật 23/09/2026 (2 phép thử, không đoán PMCID — cả 2 tra qua chính công cụ PubMed
-trước khi gọi toàn văn):**
-- Chương "Standards of Care in Diabetes—2026" (ADA, PMC12690171 — CHÍNH bài tôi từng thử
-  scrape trực tiếp và bị chặn 403 ở §3): gọi MCP **thành công về mặt kỹ thuật** nhưng
-  `full_text` trả về **CHUỖI RỖNG** — chỉ có metadata + abstract.
-- 3 bài nghiên cứu eLife (Gold Open Access, tra thật qua `search_articles`): CẢ 3 đều trả
-  **toàn văn thật, dài** — 65.812 · 40.865 · 102.005 ký tự.
+**Đo thật 23/09/2026 (cỡ mẫu mở rộng theo audit/14 vấn đề 3 — 9 phép thử, KHÔNG đoán
+PMCID, mọi PMCID tra qua `search_articles`/`get_article_metadata` trước):**
+- 3 bài nghiên cứu eLife (Gold Open Access): CẢ 3 đều trả **toàn văn thật, dài** —
+  65.812 · 40.865 · 102.005 ký tự.
+- 5 guideline lâm sàng thật có PMCID (tra `"Practice Guideline"[Publication Type]`,
+  18 guideline được xem, chỉ 5 có PMCID — tự nó là một phát hiện: **phần lớn guideline
+  chuyên khoa KHÔNG hề có bản ghi PMC**, không riêng gì chuyện toàn văn):
+  - ✅ **CÓ toàn văn thật:** ONKOPEDIA (Đức) hướng dẫn xơ tủy 2025, PMC13432566, ~9.000
+    từ, có bảng so sánh với NCCN · Korean Thyroid Association, quản lý ung thư giáp thể
+    biệt hoá Phần II, PMC13555224, 130.334 ký tự.
+  - ❌ **RỖNG:** ADA Standards of Care 2026 (PMC12690171) · American Society for
+    Apheresis, Tenth Special Issue (PMC13580465) · Canadian Family Physician, cai statin
+    người ≥65 tuổi (PMC13566657).
 
-**Kết luận đúng, thay cho câu cũ:** MCP này dùng một đường truy cập PMC **KHÁC HẲN**
-đường HTML công khai (`pmc.ncbi.nlm.nih.gov`) mà `pmc_guideline_fulltext.py` (SRC-046)
-dùng và bị chặn WAF — nên **KHÔNG bị chặn cùng lý do**. Nó THẬT SỰ đọc được toàn văn cho
-bài nghiên cứu gốc có deposit XML đầy đủ trên PMC (công cụ tự khai "~6 triệu bài có toàn
-văn trong PMC, không phải mọi bài"). NHƯNG: **guideline dạng "chương" (như ADA) — đúng
-loại tài liệu bác sĩ cần nhất — lại KHÔNG có toàn văn qua đường này**, có thể vì PMC chỉ
-lưu bản PDF cho loại tài liệu đó mà không có XML toàn văn song song (research article
-thường có cả hai). Chưa đủ dữ liệu để khẳng định TẤT CẢ guideline đều thất bại kiểu này
-— mới kiểm đúng 1 trường hợp — nhưng đủ để không còn coi công cụ này là "giải pháp cho
-đọc toàn văn guideline lâm sàng" mà chưa kiểm.
+**Kết luận đúng, thay cho câu cũ (đã tự sửa 2 lần trong ngày — đây là bản CUỐI, dựa cỡ
+mẫu đủ lớn để không còn là suy đoán từ 1 ca):** MCP này dùng một đường truy cập PMC
+**KHÁC HẲN** đường HTML công khai (`pmc.ncbi.nlm.nih.gov`) mà `pmc_guideline_fulltext.py`
+(SRC-046) dùng và bị chặn WAF — nên **KHÔNG bị chặn cùng lý do**, và nó **THẬT SỰ đọc
+được toàn văn guideline lâm sàng cho một phần đáng kể trường hợp** — KHÔNG "luôn rỗng"
+như đính chính buổi sáng từng kết luận vội trên 1 mẫu. Bức tranh đúng có 2 tầng lọc:
+(1) guideline có PMCID hay không — chỉ ~1/4 mẫu đã thử có; (2) nếu có PMCID, có toàn văn
+hay không — 2/5 mẫu đã thử có (40%). Không đủ dữ liệu để nói RÕ vì sao 2 bài thành công
+mà 3 bài rỗng (có thể liên quan nhà xuất bản/tạp chí có nộp lưu XML song song với PDF
+hay không) — không suy đoán thêm khi chưa đo được cơ chế thật.
 **Vẫn đúng như đã ghi:** chỉ gọi được TỪ TRONG một phiên Claude Code tương tác, không
-tham gia vòng quét tuần tự động.
+tham gia vòng quét tuần tự động — nên dù tỷ lệ thành công thật (không phải 0%), nó vẫn
+KHÔNG thay được GOLD/GINA cho việc tự động hoá.
 
 ---
 

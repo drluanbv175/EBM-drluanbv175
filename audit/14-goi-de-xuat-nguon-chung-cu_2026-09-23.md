@@ -199,6 +199,58 @@ không phải kỹ thuật — không đề xuất gì thêm từ phía tôi.
 
 ---
 
+## Vấn đề 12 (MỚI, ngoài 11 vấn đề gốc) — BTS/Thorax/NICE không đọc được toàn văn: vẫn
+để trống tay hay có phương án dự phòng?
+
+**Câu hỏi bác sĩ nêu sau khi đọc Vấn đề 6/hiện trạng BTS:** "BTS/Thorax/NICE không đọc
+được toàn văn nhưng hãy thiết kế để hệ thống cung cấp trích dẫn và có một tóm tắt chi
+tiết cho chứng cứ".
+
+**Đã làm:** module mới `app/sources/guideline_citation_summary.py`
+(`lay_trich_dan_tom_tat(doi=..., pmid=...)`) — dự phòng TRÍCH DẪN + TÓM TẮT cho BẤT KỲ
+DOI/PMID nào mà mọi connector toàn văn (GOLD/GINA/BTS/PMC/Wiley) đã thử và thất bại,
+không riêng BTS. Hai tầng, theo thứ tự:
+1. **Europe PMC** — tra CHÍNH XÁC theo DOI hoặc PMID (`EXT_ID:<pmid> AND SRC:MED` hoặc
+   `DOI:"<doi>"`, không phải tìm mờ theo từ khóa).
+2. **Crossref** — tra TRỰC TIẾP `GET /works/{doi}` (khác `CrossrefClient.search()` hiện
+   có, vốn là tìm mờ) — chỉ dùng khi Europe PMC không có bản ghi hoặc thiếu abstract.
+
+**RANH GIỚI PHẢI HIỂU ĐÚNG — không được nhầm với toàn văn:** kết quả trả về là
+**ABSTRACT** (tóm tắt do chính tác giả/nhà xuất bản viết và nộp lúc công bố), KHÔNG PHẢI
+"đọc toàn văn rồi tóm tắt lại". Một abstract 150–350 từ đủ để biết bài nói về CÁI GÌ và
+KẾT LUẬN CHUNG, nhưng KHÔNG đủ để trích số liệu/ngưỡng/liều cụ thể — những thứ đó chỉ có
+trong toàn văn. Mọi kết quả trả về đều tự mang `ghi_chu` nói rõ ranh giới này. Ba kết
+quả có thể xảy ra, không bịa ở bất kỳ trường hợp nào:
+- **Có trích dẫn + có abstract** → dùng được để biết đại khái nội dung, `ghi_chu` nhắc
+  "không phải toàn văn, cần bác sĩ kiểm chứng, muốn chi tiết đầy đủ phải tự đọc toàn văn".
+- **Có trích dẫn thật nhưng KHÔNG có abstract công khai** (thường gặp — Crossref không
+  phải mọi nhà xuất bản đều nộp abstract) → chỉ có tác giả/tạp chí/năm, `ghi_chu` nói rõ
+  không tóm tắt được.
+- **Không tra được ở cả hai nguồn** (DOI/PMID sai hoặc lỗi mạng) → thất bại trung thực,
+  không bịa trích dẫn.
+
+**Đã kiểm sống 23/09/2026, đúng ca BTS đã bị chặn hoàn toàn ở Vấn đề 6:** DOI hướng dẫn
+tràn khí màng phổi BTS (`10.1136/thorax-2022-219784`, chính DOI đã xác nhận bị Cloudflare
+chặn toàn văn) → Europe PMC/Crossref trả trích dẫn thật (tác giả, tạp chí *Thorax*, năm)
+nhưng KHÔNG có abstract công khai — đúng nhánh "có trích dẫn, không có tóm tắt". Một
+guideline khác đã thử (thần kinh, AAN) → có cả trích dẫn lẫn abstract thật.
+
+**Đã dạy 2 agent gọi tới module này** (theo luật BH39 — thêm công cụ ở tầng lập trình
+phải dạy agent cùng lúc, nếu không công cụ tồn tại mà không ai gọi):
+`tra-cuu-chung-cu` (khi tra một câu hỏi điểm khám gặp nguồn bị chặn toàn văn) và
+`huong-dan-lam-sang` (khi đối chiếu khuyến cáo với guideline không đọc được toàn văn).
+
+**Việc CHƯA làm, có chủ ý:** module không tự tìm/đoán DOI/PMID — người gọi (agent/quy
+trình khác) phải đã có định danh trước (từ Crossref title lane, PubMed, hoặc bác sĩ cung
+cấp). Đây KHÔNG phải khoảng trống — module cố ý hẹp phạm vi để tránh trở thành nguồn tra
+cứu mờ (fuzzy search) thứ hai.
+
+**Ai làm:** đã xong về mặt kỹ thuật — không cần bác sĩ làm gì thêm. Vấn đề 6 (chọn chấp
+nhận Cloudflare/xin giấy phép NICE) VẪN còn đó cho toàn văn đầy đủ; đây chỉ là lưới đỡ
+để không "tay không hoàn toàn" khi toàn văn bị chặn.
+
+---
+
 ## Bảng tổng hợp nhanh — ai làm gì trước
 
 | # | Vấn đề | Việc tiếp theo | Ai |
