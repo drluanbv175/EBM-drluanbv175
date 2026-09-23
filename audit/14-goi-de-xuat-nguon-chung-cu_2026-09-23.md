@@ -151,17 +151,21 @@ gửi email xin token (mất thời gian chờ phản hồi, không đảm bảo
 
 ---
 
-## Vấn đề 9 — Wiley MCP (khác Wiley TDM API): chưa cấp quyền
+## Vấn đề 9 — Wiley MCP (khác Wiley TDM API): cấp quyền MỘT PHẦN, chưa hoạt động
 
-**Hiện trạng:** server `plugin:bio-research:wiley` cần xác thực OAuth — khác hẳn
-Wiley TDM API (đã cấp token thành công §5). Đây là công cụ tìm kiếm ngữ nghĩa
-(`semanticSearch`) trên tạp chí Wiley, không phải tải PDF.
+**🟡 CẬP NHẬT 23/09/2026 — bác sĩ đã cấp quyền, nhưng kiểm sống lộ ra CHƯA ĐỦ.** Tải
+schema `semanticSearch` thành công (tiến bộ thật so với 22/09 — trước đó 0 tool tải
+được). Gọi thử 2 lần với 2 câu hỏi khác nhau (myelofibrosis/momelotinib, GINA hen) đều
+lỗi GIỐNG NHAU: `"Requested resource was not included in the authorization request"` —
+KHÁC lỗi xác thực chung chung, đây là dấu hiệu quyền OAuth đã cấp **thiếu phạm vi
+(scope/resource)** cần thiết để tool thực thi, không phải "chưa cấp quyền" như trước.
 
-**Đề xuất:** nếu muốn dùng, bác sĩ tự cấp quyền qua claude.ai connector settings. Giá trị
-thêm so với Wiley TDM đã có: khám phá/tìm kiếm ngữ nghĩa, không phải tải toàn văn — mức
-độ hữu ích thấp hơn so với việc đã có Crossref/PubMed/OpenAlex cho khám phá.
+**Đề xuất:** bác sĩ quay lại đúng màn hình cấp quyền connector Wiley (claude.ai connector
+settings) — kiểm xem có ô phạm vi/resource nào KHÔNG được tick khi đồng ý lúc trước, cấp
+lại ĐẦY ĐỦ, rồi báo để tôi kiểm sống lại. Nếu vẫn lỗi y hệt sau khi cấp lại đầy đủ, nhiều
+khả năng là vấn đề phía nhà cung cấp MCP, không phải thao tác của bác sĩ.
 
-**Ai làm:** bác sĩ, và chỉ nên làm nếu thấy giá trị rõ ràng — không phải việc cấp thiết.
+**Ai làm:** bác sĩ (thao tác cấp quyền lại); tôi kiểm sống sau khi bác sĩ báo đã làm xong.
 
 ---
 
@@ -207,7 +211,7 @@ không phải kỹ thuật — không đề xuất gì thêm từ phía tôi.
 | 6 | BTS/Thorax/NICE | Chọn: chấp nhận / xin giấy phép NICE | CHỈ bác sĩ |
 | 7 | Cục QL Dược VN | Tự mở thử domain, báo lại | Bác sĩ trước, tôi sau |
 | 8 | Epistemonikos | Xác nhận giữ nguyên hay đổi ý | Bác sĩ |
-| 9 | Wiley MCP | Cấp quyền nếu thấy giá trị | Bác sĩ |
+| 9 | Wiley MCP | 🟡 Đã cấp quyền nhưng thiếu scope — cấp lại đầy đủ | Bác sĩ |
 | 11 | UpToDate/DynaMed/Embase | Không có việc kỹ thuật | — |
 
 **Cần bác sĩ kiểm chứng.**

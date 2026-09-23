@@ -699,7 +699,7 @@
     },
     {
       "id": "SRC-041",
-      "name": "Wiley — MCP chưa cấp quyền, kiểm 22/09/2026",
+      "name": "Wiley — MCP cấp quyền MỘT PHẦN (thiếu scope), kiểm 23/09/2026",
       "org": "Wiley (plugin:bio-research:wiley)",
       "tier": 2,
       "domain": [
@@ -714,10 +714,10 @@
       "detection_method": "human",
       "measured_latency_days": null,
       "owner": "bác sĩ",
-      "status": "not-covered",
+      "status": "degraded",
       "last_success_at": null,
-      "known_gap": "MCP server 'plugin:bio-research:wiley' được liệt trong danh sách máy chủ CẦN XÁC THỰC ngay từ đầu phiên (khác Cochrane/Scite — hai server đó đã kết nối sẵn). Kiểm bằng ToolSearch 22/09/2026: 0 tool tải được (Cochrane/Scite tải được ngay). Đây là việc CHỈ bác sĩ tự làm được — agent không được yêu cầu/nhập mã xác thực, token hay callback URL thay bác sĩ. Cách cấp quyền: mở cài đặt connector của claude.ai (nếu dùng phiên bản MCP claude.ai) hoặc `/mcp` trong một phiên Claude Code tương tác (nếu dùng CLI) — chưa xác minh chính xác đường nào áp dụng cho app desktop bác sĩ đang dùng, cần bác sĩ tự kiểm trong Cài đặt của app. Sau khi cấp quyền xong, đổi status→active và kiểm sống một lượt gọi thật trước khi tin.",
-      "last_probe_at": "2026-09-22"
+      "known_gap": "Bác sĩ đã cấp quyền OAuth 23/09/2026 — TIẾN BỘ THẬT so với 22/09 (lúc đó 0 tool tải được qua ToolSearch; nay tool `semanticSearch` tải schema thành công, không còn bị chặn ở bước xác thực). NHƯNG kiểm sống 2 lần với 2 câu hỏi khác nhau đều trả lỗi giống nhau: 'Requested resource was not included in the authorization request' — khác hẳn lỗi xác thực chung chung, đây là dấu hiệu quyền OAuth đã cấp KHÔNG bao gồm đủ phạm vi (scope/resource) mà tool cần để thực thi truy vấn. Tức 'đã cấp quyền' và 'đã hoạt động' là HAI trạng thái khác nhau ở connector này — cần bác sĩ quay lại màn hình cấp quyền (cài đặt connector của claude.ai) và kiểm xem có ô phạm vi/resource nào chưa được tick khi đồng ý, cấp lại đầy đủ, rồi báo để kiểm sống lại. Chưa đủ dữ liệu để nói đây là lỗi phía Wiley/nhà cung cấp MCP hay do bước cấp quyền — không suy đoán thêm khi chưa đo được.",
+      "last_probe_at": "2026-09-23"
     },
     {
       "id": "SRC-042",
