@@ -740,6 +740,94 @@
       "last_success_at": null,
       "known_gap": "CHƯA kiểm sống lúc đăng ký mục này — code (app/sources/wiley_tdm.py) đã dựng xong theo yêu cầu bác sĩ 23/09/2026 nhưng token thật CHƯA được nhập vào ~/.ebm-secrets/medical-ebm-automation.env (agent không được phép nhập hộ). Giới hạn quan trọng nhất đã biết từ README chính thức của WileyLabs/tdm-client, mục Known Limitations: 'Access is IP address based only' — dù token đúng, IP gọi request phải nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền (thường là mạng tổ chức/bệnh viện), nếu không sẽ nhận ACCESS_DENIED cho bài không phải Open Access. KHÔNG kế thừa SourceClient, KHÔNG tham gia get_enabled_sources()/get_fallback_sources() và KHÔNG tham gia chuỗi 3 tầng kiểm rút bài — chỉ dùng khi một quy trình đã có DOI cần tải PDF. Kiểm sau khi có token: `python run.py wiley-tdm-test <DOI Open Access>` rồi một DOI KHÔNG Open Access để biết đúng ranh giới thật của tài khoản, sau đó đổi status→active/degraded theo kết quả đo được.",
       "last_probe_at": null
+    },
+    {
+      "id": "SRC-043",
+      "name": "GOLD (Global Initiative for COPD) — toàn văn báo cáo, connector code-level, xây 23/09/2026",
+      "org": "GOLD",
+      "tier": 1,
+      "domain": [
+        "Hô hấp — COPD, toàn văn báo cáo hằng năm"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://goldcopd.org/archived-reports/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) không chặn bất kỳ đường dẫn nào (chỉ khối Yoast SEO mặc định, Disallow rỗng). Điều khoản sử dụng (goldcopd.org/legal-policy/) cấm sao chép/phân phối lại/đăng công khai khi chưa có phép — connector CHỈ dùng làm nguồn tham chiếu nội bộ để trích câu chữ kèm nguồn, KHÔNG đăng lại toàn văn (xem app/sources/guideline_fulltext_common.py).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "manual",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua GoldCopdFullTextClient khi cần trích toàn văn",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Code (app/sources/gold_copd.py) đã dựng xong 23/09/2026, 9 test offline PASS, nhưng CHƯA kiểm sống lần nào (chưa gọi mạng thật). Tên slug trang landing và tên file PDF đổi mỗi năm (không có mẫu cố định) — tự dò qua trang mục lục archived-reports/, fail-closed khi không tìm thấy link khớp mẫu, KHÔNG đoán URL. ENABLE_GOLD_COPD_FULLTEXT mặc định tắt.",
+      "last_probe_at": null
+    },
+    {
+      "id": "SRC-044",
+      "name": "GINA (Global Initiative for Asthma) — toàn văn báo cáo, connector code-level, xây 23/09/2026",
+      "org": "GINA",
+      "tier": 1,
+      "domain": [
+        "Hô hấp — Hen phế quản, toàn văn báo cáo hằng năm"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://ginasthma.org/reports/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) cho phép mọi bot NHƯNG đòi Crawl-delay: 10 — connector BẮT BUỘC dùng HttpClient(min_interval=10.0), không lách. Điều khoản sử dụng (ginasthma.org/legal-policy/) cấm sao chép/phân phối lại khi chưa có phép — chỉ dùng làm nguồn tham chiếu nội bộ, không đăng lại toàn văn.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "manual",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua GinaAsthmaFullTextClient khi cần trích toàn văn",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Code (app/sources/gina_asthma.py) đã dựng xong 23/09/2026, 8 test offline PASS, CHƯA kiểm sống. GINA từng TẠM ĐÓNG truy cập miễn phí 07-11/2025 vì lý do tài chính — connector phân biệt 'phản hồi không phải PDF thật' (nghi đổi chính sách) với lỗi mạng thường, báo khác nhau. Tên slug/tên file PDF đổi mỗi năm, tự dò qua trang reports/, fail-closed khi không tìm thấy link khớp mẫu. ENABLE_GINA_ASTHMA_FULLTEXT mặc định tắt.",
+      "last_probe_at": null
+    },
+    {
+      "id": "SRC-045",
+      "name": "BTS (British Thoracic Society) — toàn văn hướng dẫn theo URL đã biết, xây 23/09/2026",
+      "org": "BTS",
+      "tier": 2,
+      "domain": [
+        "Hô hấp — hướng dẫn lâm sàng theo từng chủ đề"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.brit-thoracic.org.uk/document-library/guidelines/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) không chặn /clinical-resources/guidelines/ hay /document-library/guidelines/. Điều khoản sử dụng cấm 'reproduce, copy, create derivative work' ngoài mục đích cá nhân phi thương mại — chỉ dùng làm nguồn tham chiếu nội bộ. KHÁC GOLD/GINA: KHÔNG có trang mục lục ổn định liệt kê 'bản mới nhất' theo chủ đề — mỗi bệnh có slug URL riêng, một số hướng dẫn đồng xuất bản với NICE/SIGN và toàn văn thực chất nằm ở domain đó (chưa khảo sát, connector từ chối tải).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "manual",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua BtsGuidelineFullTextClient với URL đã biết",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Code (app/sources/bts_guidelines.py) đã dựng xong 23/09/2026, 6 test offline PASS, CHƯA kiểm sống. KHÔNG có tim_url_bao_cao_moi_nhat() tự động (khác GOLD/GINA) — chỉ nhận URL PDF đã biết, từ chối domain khác (vd trang guideline điều trị quốc gia Anh) vì chưa khảo sát robots.txt/ToU của domain đó. ENABLE_BTS_GUIDELINES_FULLTEXT mặc định tắt.",
+      "last_probe_at": null
+    },
+    {
+      "id": "SRC-046",
+      "name": "PMC (PubMed Central) — toàn văn guideline theo PMCID, connector generic, xây 23/09/2026",
+      "org": "NIH/NLM (PMC)",
+      "tier": 1,
+      "domain": [
+        "Toàn văn guideline đã lưu trữ PMC — ban đầu cho ADA Standards of Care, dùng lại được cho hội khác"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://pmc.ncbi.nlm.nih.gov/articles/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) kiểu allowlist, Allow: /articles/ tường minh, Crawl-delay: 1 — connector dùng HttpClient(min_interval=1.0). Đây là đường thay thế HỢP PHÁP cho việc scrape trực tiếp trang tạp chí ADA (robots.txt của domain đó KHÔNG đọc được — 403/lỗi DNS ở mọi lần thử, KHÔNG được coi là cho phép ngầm). Đã tự tay đọc PMC12690171 (ADA Standards of Care 2026), xác nhận toàn văn đầy đủ, miễn phí, license CC BY-NC-ND (cấm bản phái sinh/đăng lại nguyên văn) — connector chỉ trích câu chữ kèm nguồn, không đăng lại toàn văn.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "manual",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua PmcGuidelineFullTextClient với PMCID đã biết (tra qua pubmed.py/Europe PMC trước)",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Code (app/sources/pmc_guideline_fulltext.py) đã dựng xong 23/09/2026, 8 test offline PASS, CHƯA kiểm sống. KHÔNG tự tìm PMCID — chỉ nhận PMCID đã biết. Domain khác hẳn eutils NCBI (từng bị chặn misuse) nên chưa rõ có cùng rủi ro chặn IP hay không, cần kiểm khi chạy sống lần đầu. ENABLE_PMC_GUIDELINE_FULLTEXT mặc định tắt.",
+      "last_probe_at": null
     }
   ]
 }
