@@ -92,6 +92,13 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
 
 Không chạy được ⇒ ghi **"chưa đối chiếu"**, KHÔNG ghi "không có mâu thuẫn".
 
+3. **Nguồn guideline bị chặn toàn văn (BTS/Thorax/NICE, thêm 23/09/2026):** khi
+   `bts_guidelines.py`/`pmc_guideline_fulltext.py` từ chối mà đã có DOI/PMID, gọi
+   `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat(doi=..., pmid=...)`
+   để lấy trích dẫn xác minh + tóm tắt từ abstract (nếu có) — KHÔNG PHẢI toàn văn,
+   không có số liệu/ngưỡng cụ thể. Không có abstract thì ghi trung thực "chỉ có trích
+   dẫn", không tự bịa nội dung.
+
 <!-- EBM-CHUAN-QUOC-TE-2026 -->
 ## AGREE II — THẨM ĐỊNH CHÍNH GUIDELINE, đừng tin theo thương hiệu
 
