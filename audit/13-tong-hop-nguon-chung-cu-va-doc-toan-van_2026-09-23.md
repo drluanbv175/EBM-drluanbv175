@@ -16,8 +16,12 @@
    nguồn "đọc được về nguyên tắc nhưng bị chặn IP" (Wiley TDM) và 2 nguồn "code xong nhưng
    bị chặn vĩnh viễn ở tầng mạng/pháp lý, không sửa được" (PMC, BTS/Thorax/NICE).
 3. **Tầng ĐỌC TOÀN VĂN TƯƠNG TÁC (cần một phiên Claude Code, người/agent gọi tay):**
-   Cochrane, Scite, PubMed full-text MCP — hoạt động tốt nhưng KHÔNG tham gia vòng quét
-   tuần tự động, chỉ dùng khi tra cứu trực tiếp.
+   Cochrane, Scite, và **PubMed full-text MCP — đã kiểm thật, đọc được toàn văn NGHIÊN
+   CỨU GỐC có deposit trên PMC** (3/3 bài eLife thử nghiệm, 40-100 nghìn ký tự/bài, KHÔNG
+   bị chặn WAF như đường scrape trực tiếp SRC-046). Nhưng **chương/tài liệu dạng guideline
+   (đã thử ADA) lại KHÔNG có toàn văn qua đường này** — tức mạnh cho nghiên cứu, CHƯA chắc
+   giúp được đúng loại tài liệu bác sĩ cần nhất. Cả ba KHÔNG tham gia vòng quét tuần tự
+   động, chỉ dùng khi tra cứu trực tiếp trong phiên.
 
 Nói cách khác: **hệ biết RẤT RỘNG "có gì mới", nhưng chỉ ĐỌC ĐƯỢC toàn văn tự động một
 phần rất nhỏ** (2/20 hiệp hội guideline). Đây không phải lỗ hổng thiết kế — là ranh giới
@@ -119,12 +123,37 @@ nền tảng bắt buộc để mọi trích dẫn khác không bị bịa.
 
 ## 7. Tầng tương tác MCP (cần phiên Claude Code, không tự động)
 
+⛔ **ĐÍNH CHÍNH cùng ngày (ngay sau khi báo cáo này công bố) — dòng "PubMed full-text"
+dưới đây BAN ĐẦU xếp nhầm vào nhóm "giới hạn giống PMC/SRC-046". Đó là SUY LUẬN, chưa
+từng gọi thử. Đã kiểm thật, kết quả khác hẳn — xem chi tiết ngay dưới bảng.**
+
 | Nguồn | Vai trò | Giới hạn |
 |---|---|---|
 | Cochrane Library (CDSR) | tra tổng quan hệ thống Cochrane | Chỉ gọi được TỪ TRONG một phiên Claude Code — không tham gia vòng quét tuần |
 | Scite | kiểm rút bài bổ sung + tally trích dẫn | Cùng giới hạn Cochrane, thêm cổng doctrine riêng |
-| PubMed (`get_full_text_article`) | đọc toàn văn PMC qua MCP tương tác | Cùng cơ chế PMC — có thể gặp cùng giới hạn chặn nếu PMC vẫn đang bị chặn cấp mạng |
+| **PubMed (`get_full_text_article`)** | **đọc toàn văn PMC qua MCP — ĐÃ KIỂM THẬT, HOẠT ĐỘNG, và KHÔNG cùng giới hạn với SRC-046** | Xem đính chính ngay dưới — giới hạn thật khác hẳn giả định ban đầu |
 | Wiley (MCP) | tìm kiếm ngữ nghĩa tạp chí Wiley | `not-covered` — server CẦN XÁC THỰC, bác sĩ chưa cấp quyền |
+
+**Đo thật 23/09/2026 (2 phép thử, không đoán PMCID — cả 2 tra qua chính công cụ PubMed
+trước khi gọi toàn văn):**
+- Chương "Standards of Care in Diabetes—2026" (ADA, PMC12690171 — CHÍNH bài tôi từng thử
+  scrape trực tiếp và bị chặn 403 ở §3): gọi MCP **thành công về mặt kỹ thuật** nhưng
+  `full_text` trả về **CHUỖI RỖNG** — chỉ có metadata + abstract.
+- 3 bài nghiên cứu eLife (Gold Open Access, tra thật qua `search_articles`): CẢ 3 đều trả
+  **toàn văn thật, dài** — 65.812 · 40.865 · 102.005 ký tự.
+
+**Kết luận đúng, thay cho câu cũ:** MCP này dùng một đường truy cập PMC **KHÁC HẲN**
+đường HTML công khai (`pmc.ncbi.nlm.nih.gov`) mà `pmc_guideline_fulltext.py` (SRC-046)
+dùng và bị chặn WAF — nên **KHÔNG bị chặn cùng lý do**. Nó THẬT SỰ đọc được toàn văn cho
+bài nghiên cứu gốc có deposit XML đầy đủ trên PMC (công cụ tự khai "~6 triệu bài có toàn
+văn trong PMC, không phải mọi bài"). NHƯNG: **guideline dạng "chương" (như ADA) — đúng
+loại tài liệu bác sĩ cần nhất — lại KHÔNG có toàn văn qua đường này**, có thể vì PMC chỉ
+lưu bản PDF cho loại tài liệu đó mà không có XML toàn văn song song (research article
+thường có cả hai). Chưa đủ dữ liệu để khẳng định TẤT CẢ guideline đều thất bại kiểu này
+— mới kiểm đúng 1 trường hợp — nhưng đủ để không còn coi công cụ này là "giải pháp cho
+đọc toàn văn guideline lâm sàng" mà chưa kiểm.
+**Vẫn đúng như đã ghi:** chỉ gọi được TỪ TRONG một phiên Claude Code tương tác, không
+tham gia vòng quét tuần tự động.
 
 ---
 
