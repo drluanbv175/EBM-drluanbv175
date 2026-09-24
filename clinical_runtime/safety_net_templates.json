@@ -228,7 +228,11 @@
           }
         ],
         "ghi_chu": "Câu 1–3 và 5: diễn đạt cho người bệnh Việt Nam của trang NHS «Chest pain»; số 999 của Anh đổi thành 115. Trang NHS KHÔNG nêu ngưỡng số phút nên lời dặn cố ý không ghi ngưỡng; ngưỡng «> 15 phút» của NICE CG95 (dành cho bác sĩ) chưa đọc được toàn văn để kiểm (nice.org.uk/bmj.com chặn truy cập tự động 24/09) — không đưa vào. Trang NHS đã quá hạn rà soát kế (08/08/2026) — xem lại khi NHS cập nhật. Câu 4 giữ nguyên câu Marburg M4 đã có nguồn. Chưa đưa «không tự lái xe» và «nhai aspirin» vì nguồn kiểm được hôm nay không nêu — bác sĩ quyết.",
-        "de_xuat": "Do Claude soạn 24/09/2026 theo yêu cầu bác sĩ («viết lời dặn chuẩn nhất»); nguồn tra sống cùng ngày. CÂU CHỮ CUỐI chờ bác sĩ chuẩn y trước khi in cho bệnh nhân (Cổng A). Cần bác sĩ kiểm chứng."
+        "de_xuat": "Do Claude soạn 24/09/2026 theo yêu cầu bác sĩ («viết lời dặn chuẩn nhất»); nguồn tra sống cùng ngày. BÁC SĨ ĐÃ CHUẨN Y câu chữ ngày 24/09/2026 (xem `bac_si_chuan_y`). Cần bác sĩ kiểm chứng.",
+        "bac_si_chuan_y": {
+          "ngay": "2026-09-24",
+          "cach": "Bác sĩ đọc 5 câu trong phiên Claude và trả lời «duyệt 30» (PR #30) — đồng ý nguyên văn."
+        }
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
       "ngay_ra_soat": "2026-08-29"
@@ -613,6 +617,10 @@
     {
       "ngay": "2026-09-24",
       "noi_dung": "Bác sĩ yêu cầu «viết lời dặn chuẩn nhất» cho đau ngực: Claude soạn 5 câu (3 dấu hiệu gọi cấp cứu 115 + 2 dấu hiệu đi khám sớm) từ trang NHS «Chest pain» (kiểm sống 24/09/2026) và Marburg M4; không ghi ngưỡng số phút vì nguồn kiểm được không nêu. Khối lời dặn về co-nguon, câu chữ cuối chờ bác sĩ chuẩn y."
+    },
+    {
+      "ngay": "2026-09-24",
+      "noi_dung": "Bác sĩ chuẩn y nguyên văn 5 câu lời dặn đau ngực («duyệt 30»). Các khối lời dặn khác vẫn ở trạng thái đề xuất chờ chuẩn y."
     }
   ]
 }

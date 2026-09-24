@@ -350,18 +350,20 @@ class FileThatTrongRepo(unittest.TestCase):
         r10_r11 = [x for x in loi if x.startswith("R10") or x.startswith("R11")]
         self.assertEqual(r10_r11, [], r10_r11)
 
-    def test_file_that_dau_nguc_dan_benh_nhan_co_nguon_va_cho_bac_si_chuan_y(self):
+    def test_file_that_dau_nguc_dan_benh_nhan_co_nguon_va_co_dau_vet_chuan_y(self):
         """ĐỔI 24/09/2026: bác sĩ yêu cầu «viết lời dặn chuẩn nhất» cho đau ngực — khối lời dặn nay
-        `co-nguon` (trang NHS «Chest pain» kiểm sống 24/09 + Marburg M4). Trước đó (03/09) khối này là
-        `chua-dien` kèm placeholder và test khoá đúng trạng thái đó. Nay khoá trạng thái MỚI: có nguồn,
-        không còn placeholder, và VẪN mang ghi chú đề xuất chờ bác sĩ chuẩn y câu chữ cuối (Cổng A) —
-        không được lặng lẽ trở thành «đã chuẩn y» mà không có dấu vết."""
+        `co-nguon` (trang NHS «Chest pain» kiểm sống 24/09 + Marburg M4), và bác sĩ đã chuẩn y nguyên văn
+        («duyệt 30»). Trước đó (03/09) khối này là `chua-dien` kèm placeholder và test khoá đúng trạng thái
+        đó. Nay khoá trạng thái MỚI: có nguồn, không còn placeholder, và «đã chuẩn y» phải có DẤU VẾT
+        (`bac_si_chuan_y` kèm ngày ISO + cách chuẩn y) — không được là lời khẳng định trơn (Cổng A)."""
         d = json.loads((Path(__file__).parent.parent / "clinical_runtime"
                         / "safety_net_templates.json").read_text(encoding="utf-8"))
         ld = d["hoi_chung"]["dau-nguc"]["dan_benh_nhan_quay_lai"]
         self.assertEqual(ld["trang_thai"], "co-nguon")
         self.assertNotIn(ks.PLACEHOLDER, json.dumps(ld, ensure_ascii=False))
-        self.assertIn("chuẩn y", ld.get("de_xuat", ""))
+        cy = ld.get("bac_si_chuan_y") or {}
+        dt.date.fromisoformat(cy.get("ngay", ""))
+        self.assertTrue(str(cy.get("cach", "")).strip(), "chuẩn y phải ghi cách chuẩn y")
 
 
 if __name__ == "__main__":
