@@ -142,11 +142,11 @@ def _truy_van(ng: dict) -> list[str]:
     org = ng["to_chuc"].split("/")[0]
     q = []
     if tu:
-        pt = " AND (guideline[pt] OR practice guideline[pt] OR consensus development conference[pt])"
+        pt = " AND (guideline[pt] OR practice guideline[pt] OR \"consensus statement\"[pt])"
         q.append(f"{org}[ti] AND " + " AND ".join(f"{w}[ti]" for w in tu[:3]) + pt)
         q.append(f"{org}[ti] AND " + " AND ".join(f"{w}[ti]" for w in tu[:3]))
         q.append(" AND ".join(f"{w}[ti]" for w in tu[:3])
-                 + " AND (guideline[pt] OR practice guideline[pt] OR consensus development conference[pt])")
+                 + " AND (guideline[pt] OR practice guideline[pt] OR \"consensus statement\"[pt])")
         q.append(" AND ".join(f"{w}[ti]" for w in tu[:4]))
     return q
 
