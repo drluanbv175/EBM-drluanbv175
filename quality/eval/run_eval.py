@@ -48,6 +48,18 @@ _sp_re.loader.exec_module(_bst_re)
 _MEA_GOC = _bst_re.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
 _DASH_GOC = _bst_re.duong_goc("EBM-Dashboards", GOC)  # None nếu genuinely-absent (cloud)
 
+# VÁ 24/09/2026 — BH94 TẠI GỐC. `quality/eval/negative/*.log` là BẰNG CHỨNG được track trong git,
+# sinh từ máy CÓ dữ liệu thật (nền Retraction Watch, secrets, EBM-Dashboards). Trên BẢN SAO TRẦN
+# (phiên cloud/CI/clone tươi) máy chấm từng ghi đè thẳng lên chúng: đo thật trên phiên cloud
+# 24/09 (chạy qua BH102 trong hook mở phiên, MỖI phiên): `canary-10-loi-gai.log` bị làm RỖNG,
+# `rut-bai-3-muc.log` đổi Wakefield 9500320 và Choi 30267080 từ `retracted` sang
+# `unknown_mock_or_no_email` — đúng ca suýt bị commit ngày 02/09. Pre-commit
+# `kiem_o_nhiem_artifact.py` chỉ chặn được NẾU hook đã bật, mà clone tươi trên cloud KHÔNG có
+# `core.hooksPath`. Nay trên bản sao trần log đi vào `reports/` (đã gitignore) và báo cáo ghi rõ
+# đường dẫn đó; máy thật vẫn ghi vào `quality/eval/negative/` như cũ.
+_BAN_SAO_TRAN = _bst_re.ban_sao_git_tran(GOC)
+NEG_GHI = (GOC / "reports" / "eval-negative-ban-sao-tran") if _BAN_SAO_TRAN else NEG
+
 
 def _nap(duong: Path, ten: str):
     spec = importlib.util.spec_from_file_location(ten, duong)
@@ -62,8 +74,8 @@ def _nap(duong: Path, ten: str):
 
 
 def _ghi_neg(ten_ca: str, noi_dung: str) -> None:
-    NEG.mkdir(parents=True, exist_ok=True)
-    (NEG / f"{ten_ca}.log").write_text(noi_dung, encoding="utf-8")
+    NEG_GHI.mkdir(parents=True, exist_ok=True)
+    (NEG_GHI / f"{ten_ca}.log").write_text(noi_dung, encoding="utf-8")
 
 
 KQ: list[dict] = []  # {nhom, ca, dat (bool|None), ghi_chu}
@@ -112,21 +124,41 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     r = subprocess.run([PY, str(GOC / "tools" / "thu_dau_cuoi_chung_cu.py")],
                        capture_output=True, text=True, cwd=GOC)
     canary_ok = r.returncode == 0
+    # Ghi chú lấy NGUYÊN dòng tổng kết của canary (vd «🟢 12/12 … ⚪ 2 bỏ qua CÓ KHAI BÁO») thay vì
+    # chữ cứng «10/10 bắt» — ca bỏ qua vì thiếu nguyên liệu không được trình bày như ca đã bắt (BH08).
+    tom_tat = next((d.strip() for d in (r.stdout or "").splitlines()
+                    if d.strip().startswith(("🟢", "🔴"))), "")
     ca(9, "canary 10 lỗi gài (apply+na/normativeBasis/Consensus/gradeBy/return-sớm…)",
-       canary_ok, "10/10 bắt" if canary_ok else "CÓ LỖ HỔNG — xem thu_dau_cuoi")
+       canary_ok, (tom_tat or "10/10 bắt") if canary_ok else "CÓ LỖ HỔNG — xem thu_dau_cuoi")
     _ghi_neg("canary-10-loi-gai", r.stdout[-3000:])
 
     # ── Khối 2: RÚT BÀI ngoại tuyến — hai MỨC khác nhau phải ra hai nhãn ─────
     sys.path.insert(0, str(_MEA_GOC))
     from app.sources.retraction_chain import RetractionChain  # noqa: PLC0415
+    from app.sources.retraction_watch import RetractionWatchIndex  # noqa: PLC0415
     chain = RetractionChain()
     kq = chain.check(["9500320", "30267080", "99999999"])
+    # VÁ 24/09/2026 (BH08/BH102): không có nền RW ngoại tuyến VÀ không tầng sống nào kết luận được
+    # (mock/thiếu email/proxy chặn) ⇒ đây là CHƯA CÓ NGUYÊN LIỆU, không phải chuỗi rút bài hỏng.
+    # Chỉ áp cho trạng thái `unknown_*` — một tầng sống trả «ok» cho 30267080 khi thiếu nền RW vẫn
+    # là TRƯỢT thật (đó đúng là lỗ hổng đơn nguồn mà tầng RW sinh ra để bịt).
+    rw_san_sang = RetractionWatchIndex().san_sang()
+    thieu_nl = ("CHƯA CÓ NGUYÊN LIỆU — chưa có nền Retraction Watch ngoại tuyến và không tầng sống "
+                "nào kết luận được; chạy: python medical-ebm-automation/tools/tai_retraction_watch.py")
+
+    def _chua_co_nguyen_lieu(ban_ghi: dict) -> bool:
+        return (not rw_san_sang) and str(ban_ghi.get("status", "")).startswith("unknown")
+
     w = kq.get("9500320", {})
     ca(3, "bài rút BỎ HẲN (Wakefield 9500320) → retracted, KHÔNG gắn R&R",
-       w.get("status") == "retracted" and not w.get("retract_and_replace"))
+       None if _chua_co_nguyen_lieu(w) else
+       (w.get("status") == "retracted" and not w.get("retract_and_replace")),
+       thieu_nl if _chua_co_nguyen_lieu(w) else "")
     c = kq.get("30267080", {})
     ca(3, "RÚT-VÀ-THAY (Choi 30267080) → retracted + retract_and_replace (BH34)",
-       c.get("status") == "retracted" and c.get("retract_and_replace") is True)
+       None if _chua_co_nguyen_lieu(c) else
+       (c.get("status") == "retracted" and c.get("retract_and_replace") is True),
+       thieu_nl if _chua_co_nguyen_lieu(c) else "")
     u = kq.get("99999999", {})
     # Hợp đồng đúng phụ thuộc TẦNG đang sống (đo thật 15/08, lượt nền venv):
     #   offline-only (python3)  → unknown_*  («không kết luận được»)
@@ -245,7 +277,9 @@ def main() -> int:  # noqa: PLR0915 — máy chấm tuyến tính, tách nhỏ l
     dong = [f"# GOLD SET — {date.today().isoformat()}", "",
             f"TỰ ĐỘNG **{len(dat)}/{len(tu_dong)}** đạt (cộng 10 ca canary bên trong "
             f"dòng đầu = {len(tu_dong) + 9 + 4} hành vi được chấm). "
-            "Bằng chứng ca âm tính: `quality/eval/negative/*.log`.", "",
+            f"Bằng chứng ca âm tính: `{NEG_GHI.relative_to(GOC).as_posix()}/*.log`"
+            + (" (bản sao trần — KHÔNG ghi đè log bằng chứng tracked)." if _BAN_SAO_TRAN else "."),
+            "",
             "| Nhóm | Ca | Kết quả | Ghi chú |", "|---|---|---|---|"]
     for k in KQ:
         kq_txt = {True: "✅", False: "🔴 TRƯỢT", None: "◌"}[k["dat"]]

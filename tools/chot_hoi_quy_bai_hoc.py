@@ -4570,7 +4570,12 @@ def bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that():
         if dich.startswith("/"):
             co = (REPO / "sync/commands-vi" / f"{dich.lstrip('/')}.md").is_file()
         elif dich.endswith(".py"):
-            co = (REPO / dich).is_file()
+            # VÁ 24/09/2026: đích thuộc engine (`medical-ebm-automation/…`) phải phân giải qua
+            # `_goc_mea()` — trên phiên cloud engine là ANH EM của repo gốc, không lồng; ghép cứng
+            # `REPO / dich` từng làm chốt này ĐỎ GIẢ ở mọi phiên cloud dù file có thật ngay cạnh.
+            dau, _, duoi = dich.partition("/")
+            co = ((_goc_mea() / duoi) if dau == "medical-ebm-automation" and duoi
+                  else (REPO / dich)).is_file()
         else:
             co = (REPO / "sync/skills" / dich / "SKILL.md").is_file()
         if not co:
@@ -5520,12 +5525,24 @@ def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
     Đã vá bằng `tools/ban_sao_tran.py` (định nghĩa DUY NHẤT "bản sao trần"
     trong repo) chặn sớm, thoát mã 2 (hạ tầng thiếu) TRƯỚC khi gọi canary.
 
-    Kiểm HÀNH VI: chạy `run_eval.py` thật trên máy đang chạy chốt này. Bản sao
-    trần → phải thoát mã 2, không traceback, không chữ "CÓ LỖ HỔNG". Máy có đủ
+    Kiểm HÀNH VI: chạy `run_eval.py` thật trên máy đang chạy chốt này. Máy có đủ
     dữ liệu thật → nhánh chặn sớm không chạy tới, chốt này COI LÀ ĐẠT (không
     đủ căn cứ để chấm gì thêm ở đây — kiểm nội dung Gold Set thật là việc của
     chính run_eval.py, không phải của bộ chốt này).
+
+    HỢP ĐỒNG CẬP NHẬT 24/09/2026. Bản 10/09 đòi bản sao trần «thoát mã 2»; ngày 17/09
+    (Gap 2) `run_eval.py` được sửa có chủ ý để CHẠY PHẦN KIỂM ĐƯỢC khi `medical-ebm-automation/`
+    có mặt (chỉ bail mã 2 khi thiếu chính gốc đó) — nhưng chốt này không được cập nhật theo, nên
+    ĐỎ ở MỌI phiên cloud từ đó (đo 24/09: «thực tế mã 1»), và vì hook cloud cắt `| head -20` nên
+    không ai thấy. Hợp đồng đúng với thiết kế hiện hành, trên bản sao trần:
+      • mã thoát ∈ {0, 2} — 0: mọi ca KIỂM ĐƯỢC đều đạt (ca thiếu nguyên liệu khai ◌);
+        2: thiếu hẳn engine. Mã 1 = có ca TRƯỢT thật hoặc hạ tầng thiếu bị đọc thành trượt;
+      • không traceback, không chữ «CÓ LỖ HỔNG»;
+      • KHÔNG ghi đè `quality/eval/negative/*.log` — bằng chứng tracked sinh từ máy có dữ liệu
+        (BH94; đo 24/09: mỗi phiên cloud từng làm rỗng log canary và đổi Wakefield/Choi từ
+        `retracted` sang `unknown_mock_or_no_email`).
     """
+    import hashlib
     import subprocess
     vd = REPO / "quality" / "eval" / "run_eval.py"
     bst_mod = REPO / "tools" / "ban_sao_tran.py"
@@ -5535,15 +5552,32 @@ def bh102_may_cham_gold_set_khong_duoc_gop_ha_tang_voi_that_bai():
     bst = _nap(bst_mod, "bst_bh102")
     if not bst.ban_sao_git_tran(REPO):
         return True, "máy có đủ dữ liệu thật — nhánh chặn sớm không chạy tới, không kiểm thêm ở đây"
+    neg = REPO / "quality" / "eval" / "negative"
+
+    def _dau_van() -> dict:
+        return {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(neg.glob("*.log"))}
+
+    truoc = _dau_van()
     r = subprocess.run([sys.executable, str(vd)], cwd=str(REPO),
-                       capture_output=True, text=True, timeout=60)
-    if r.returncode != 2:
-        return False, f"bản sao trần phải thoát mã 2 (hạ tầng thiếu), thực tế mã {r.returncode}"
+                       capture_output=True, text=True, timeout=240,
+                       encoding="utf-8", errors="replace")
+    sau = _dau_van()
+    if sau != truoc:
+        doi = sorted(k for k in set(truoc) | set(sau) if truoc.get(k) != sau.get(k))
+        return False, (f"máy chấm trên bản sao trần GHI ĐÈ log bằng chứng tracked {doi} — máy thiếu "
+                       "dữ liệu không được ghi đè kết luận của máy có dữ liệu (BH94); "
+                       "khôi phục: git checkout -- quality/eval/negative/")
     if "Traceback (most recent call last)" in (r.stderr or ""):
         return False, "vẫn lộ traceback thô ra ngoài — chưa chặn kịp trước khi crash"
-    if "CÓ LỖ HỔNG" in (r.stdout or ""):
-        return False, "hạ tầng thiếu vẫn bị đọc thành 'canary phát hiện lỗ hổng thật'"
-    return True, "bản sao trần: thoát mã 2 sạch, không traceback, không báo nhầm 'có lỗ hổng'"
+    if r.returncode not in (0, 2):
+        # Từ 24/09 thiếu nguyên liệu được khai ◌ (máy chấm) / ⚪ (canary), nên mã 1 ở đây là ca
+        # TRƯỢT cần đọc — không mặc định coi là hạ tầng (chiều đó từng che lỗi thật).
+        truot = [d.strip() for d in (r.stdout or "").splitlines() if "✗" in d or "TRƯỢT" in d][:3]
+        return False, (f"máy chấm báo ca TRƯỢT trên bản sao trần (mã {r.returncode}): {truot} — thiếu "
+                       "nguyên liệu thì phải khai ◌/⚪, còn lại là lỗi thật: chạy "
+                       "python3 quality/eval/run_eval.py và python3 tools/thu_dau_cuoi_chung_cu.py --chi-tiet")
+    return True, (f"bản sao trần: mã {r.returncode}, không traceback, không báo nhầm 'có lỗ hổng', "
+                  "không ghi đè log bằng chứng tracked")
 
 
 def bh107_mcp_consensus_scite_phai_di_qua_cong():
@@ -5643,7 +5677,9 @@ def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
       (3) BH41 — công cụ không agent nào gọi thì với dây chuyền hằng ngày nó KHÔNG TỒN TẠI: `ke-don-an-toan.md` phải gọi cả hai
           lệnh con và nhắc luật đọc; `khoang-trong-nghien-cuu.md` phải nhắc «không làm p0».
     """
-    mea = REPO / "medical-ebm-automation"
+    # VÁ 24/09/2026: `_goc_mea()` (lồng HOẶC anh em) — ghép cứng `REPO / "medical-ebm-automation"`
+    # làm chốt ĐỎ GIẢ «tra_thuoc_quoc_te.py biến mất» ở mọi phiên cloud (engine là anh em ở đó).
+    mea = _goc_mea()
     cn = REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md"
     kd = REPO / ".claude" / "agents" / "ke-don-an-toan.md"
     kt = REPO / ".claude" / "agents" / "khoang-trong-nghien-cuu.md"
@@ -6904,7 +6940,17 @@ def main() -> int:
         return 0
 
     if a.im_khi_on:
-        print("")
+        # VÁ 24/09/2026: chế độ hook chỉ nói điều cần nói — mục TÁI PHÁT + một dòng tổng. Bản cũ in
+        # đủ 114 dòng ✓/⚪ rồi mới tới tổng kết ở CUỐI, mà hook cloud cắt `| head -20` ⇒ đo thật trên
+        # phiên cloud 24/09: 3 chốt đỏ (BH88/BH102/BH108) và dòng «🔴 3 BÀI HỌC TÁI PHÁT» chưa từng
+        # hiện ra — người đọc chỉ thấy BH01–BH18 toàn ✓/⚪. Chạy không cờ vẫn in đủ như cũ.
+        print(f"\n🔴 CHỐT HỒI QUY: {len(do)} BÀI HỌC TÁI PHÁT"
+              + (f" · ⚪ {len(ngoai)} ngoài phạm vi bản sao trần" if ngoai else ""))
+        for ma, ngay, ten, _loai, ct in do:
+            print(f"  ✗ {ma} [{ngay}] {ten}")
+            print(f"      → {ct}")
+        print("   Chạy đủ: python3 tools/chot_hoi_quy_bai_hoc.py · đọc docstring hàm tương ứng.")
+        return 1
     dat = len(ket) - len(do) - len(ngoai)
     print(f"CHỐT HỒI QUY BÀI HỌC — {dat}/{len(ket)} còn được canh"
           + (f" · ⚪ {len(ngoai)} ngoài phạm vi bản sao trần" if ngoai else ""))
