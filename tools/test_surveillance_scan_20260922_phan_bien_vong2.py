@@ -209,22 +209,31 @@ def test_esearchresult_hop_le_khong_co_errorlist_khong_bi_anh_huong():
     assert S._SUY_GIAM == []
 
 
-def test_esearch_cat_o_retmax_duoc_ghi_suy_giam():
+def test_esearch_vuot_tran_chi_ghi_chu_khong_suy_giam():
+    """ĐỔI 24/09/2026 (phương án B, bác sĩ chọn): luật 22/09 ghi «bị cắt ở retmax» vào _SUY_GIAM ⇒ chủ đề
+    suy giảm + con trỏ đứng yên. Quét lại vẫn chỉ trả các bản MỚI NHẤT nên không thu hồi được gì — chỉ làm
+    chủ đề suy giảm mãi (12/47 chủ đề ở W39) và quét lô dừng. Nay vượt trần chỉ GHI CHÚ (_VUOT_TRAN)."""
+    S._VUOT_TRAN.clear()
+
     def ncbi_cat(_url):
         return {"esearchresult": {"count": "57", "idlist": ["1", "2", "3", "4", "5", "6"]}}
 
     ids = S.search("x", 45, 6, fetch_json=ncbi_cat)
-    assert ids == ["1", "2", "3", "4", "5", "6"], "vẫn trả đủ id nhận được, chỉ THÊM cảnh báo"
-    assert any("cắt ở retmax" in x and "6/57" in x for x in S._SUY_GIAM)
+    assert ids == ["1", "2", "3", "4", "5", "6"], "vẫn trả đủ id nhận được, chỉ THÊM ghi chú"
+    assert any("vượt trần lấy" in x and "6/57" in x for x in S._VUOT_TRAN)
+    assert S._SUY_GIAM == [], "vượt trần KHÔNG được làm chủ đề suy giảm"
 
 
 def test_esearch_khong_cat_thi_khong_ghi_suy_giam():
+    S._VUOT_TRAN.clear()
+
     def ncbi_du(_url):
         return {"esearchresult": {"count": "2", "idlist": ["1", "2"]}}
 
     ids = S.search("x", 45, 6, fetch_json=ncbi_du)
     assert ids == ["1", "2"]
     assert S._SUY_GIAM == []
+    assert S._VUOT_TRAN == []
 
 
 # ── 5. Chủ đề hỏng giữa chừng không được để lại PMID "ma" chiếm chỗ chủ đề khác ────────────────

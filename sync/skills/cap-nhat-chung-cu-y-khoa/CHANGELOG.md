@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.51.0 — 2026-09-24 (cổng fda.gov + khâu thu nhận «lấy đủ rồi chọn mạnh nhất» — bác sĩ duyệt)
+
+**Cổng liêm chính (`tools/verify_dashboard.py`).** www.fda.gov trả HTTP 404 cho trình khách tự động dù trang có
+thật (trang orlistat, trang PCSK9 đường uống mở được đúng tiêu đề trong trình duyệt) ⇒ lỗi cứng giả ở
+`--strict-sources`. Nay miền đã khai báo trong `MIEN_CHAN_TRUY_CAP_TU_DONG` bị 403/404/410 thì cổng tra sổ bằng
+chứng mở bằng trình duyệt thật `EBM-Dashboards/url-xac-minh-trinh-duyet.json` (khớp đúng URL, tiêu đề trang thật,
+hạn 180 ngày); không có bằng chứng ⇒ vẫn «chưa xác minh». Không giả dạng trình duyệt để lách chặn.
+
+**Khâu thu nhận (`tools/surveillance_scan.py`) — phương án B.** Trước đây mỗi tầng chỉ lấy 6 bài MỚI NHẤT, và
+luật 22/09 gắn «suy giảm» + đóng băng con trỏ khi bị cắt (quét lại không thu hồi được gì; W39: 12/47 chủ đề,
+96/608 bài được trình). Nay mỗi tầng lấy tới 300 bài, xếp theo độ mạnh (loại xuất bản thật > suy từ tiêu đề >
+nguồn thẩm quyền > mới hơn), trình `--max` bài đầu; bài đã có trong kho không chiếm chỗ; phần còn lại ghi
+`khong_trinh` trong JSON; vượt trần chỉ ghi chú, không suy giảm.
+
 ## v1.50.0 — 2026-09-07 (đóng gói trang đọc Artifact thành công cụ dùng lại — bác sĩ hỏi «cho những cập nhật sau chưa»)
 
 **Bối cảnh.** Sau v1.49.0 (rà lại tài liệu Suy tim có sẵn), bác sĩ yêu cầu thêm một trang đọc
