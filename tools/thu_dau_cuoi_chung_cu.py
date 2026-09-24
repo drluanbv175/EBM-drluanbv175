@@ -90,6 +90,20 @@ def _nap(duong_dan: Path, ten: str):
     return m
 
 
+def _nen_rw_san_sang() -> bool:
+    """Nền Retraction Watch ngoại tuyến của engine đã tải + nạp được ≥1 phán quyết chưa."""
+    mea = _bst_mea.duong_goc("medical-ebm-automation", REPO)
+    if mea is None:
+        return False
+    if str(mea) not in sys.path:
+        sys.path.insert(0, str(mea))
+    try:
+        from app.sources.retraction_watch import RetractionWatchIndex  # noqa: PLC0415
+        return RetractionWatchIndex().san_sang()
+    except Exception:  # noqa: BLE001 — không dò được thì coi như CHƯA sẵn sàng (không đoán)
+        return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Canary đầu-cuối cho dây chuyền chứng cứ")
     ap.add_argument("--chi-tiet", action="store_true", help="in thông điệp cổng trả về")
@@ -169,8 +183,18 @@ def main() -> int:
                            title="ca thử đã rút", url="u")]
         gan = ss.gan_do_tin_cay(uv)
         tt = gan[0].rut_bai if gan else "?"
-        ket.append((f"ứng viên PMID {PMID_DA_RUT} (đã rút) → BẮT ở khâu nhận",
-                    tt in ("retracted", "expression_of_concern"), f"trạng thái={tt}"))
+        # VÁ 24/09/2026: ca này đo tầng NGOẠI TUYẾN (nền Retraction Watch). Máy CHƯA tải nền đó
+        # (phiên cloud/clone tươi) mà khâu nhận trả `chua_kiem` là hành vi ĐÚNG (fail-closed) —
+        # thiếu nguyên liệu, không phải lỗ hổng; trước đây canary in «lỗ hổng THẬT» cho nó. Chỉ ⚪
+        # khi CẢ HAI điều kiện: nền RW vắng VÀ trạng thái chua_kiem. Nền có mà vẫn không bắt được,
+        # hoặc một tầng sống trả «ok», vẫn là ✗ như cũ.
+        if tt == "chua_kiem" and not _nen_rw_san_sang():
+            ket.append((f"ứng viên PMID {PMID_DA_RUT} (đã rút) → BẮT ở khâu nhận", None,
+                        "bỏ qua CÓ KHAI BÁO — chưa có nền Retraction Watch ngoại tuyến trên máy "
+                        "này; chạy: python medical-ebm-automation/tools/tai_retraction_watch.py"))
+        else:
+            ket.append((f"ứng viên PMID {PMID_DA_RUT} (đã rút) → BẮT ở khâu nhận",
+                        tt in ("retracted", "expression_of_concern"), f"trạng thái={tt}"))
         # ── HỢP ĐỒNG ITEM (LÔ 2): máy tự APPROVED / tự gán mức / số không nguồn ─────
         hd = _nap(REPO / "tools" / "kiem_hop_dong_item.py", "hd_canary")
         xau = {"id": "EBM-2026-9999", "topic": "t", "status": "APPROVED",
@@ -253,7 +277,24 @@ def main() -> int:
         # (14) vòng ed1: ký bằng khoá riêng tạm → xác minh CHỈ bằng khoá công;
         #      thiếu cryptography (python3 hệ thống) → bỏ qua CÓ KHAI BÁO (lượt venv
         #      của bộ chốt vẫn kiểm thật — không phải lượt nào cũng mù).
+        # VÁ 24/09/2026 (BH99 ở canary): gói cryptography cài HỎNG nửa chừng (đo thật: python3 hệ
+        # thống trên phiên cloud, /usr/lib/python3/dist-packages) ném `pyo3_runtime.PanicException`
+        # — con TRỰC TIẾP của BaseException, lọt qua `except ImportError` ⇒ CẢ canary chết, stdout
+        # rỗng, máy chấm Gold Set ghi «CÓ LỖ HỔNG» và làm rỗng log bằng chứng. Dò riêng bước nhập
+        # khẩu; chỉ bước này mới được coi là «thiếu nguyên liệu» — lỗi trong vòng ký-xác minh vẫn
+        # lộ ra như cũ. KeyboardInterrupt/SystemExit luôn được ném lại.
+        _crypto_loi = ""
         try:
+            import cryptography.hazmat.primitives.asymmetric.ed25519  # noqa: F401
+        except ImportError:
+            _crypto_loi = "thiếu cryptography"
+        except BaseException as exc:  # noqa: BLE001
+            if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                raise
+            _crypto_loi = f"cryptography cài HỎNG ({type(exc).__name__})"
+        try:
+            if _crypto_loi:
+                raise ImportError(_crypto_loi)
             from cryptography.hazmat.primitives.asymmetric.ed25519 import (
                 Ed25519PrivateKey,
             )
@@ -288,29 +329,35 @@ def main() -> int:
                          dict(rec, decision="REJECTED"), "CANARY-ED"))
             ket.append(("ed1: ký khoá riêng tạm → verify CHỈ bằng khoá công; sửa nội dung → trượt",
                         ok_ed, (sig or "?")[:40]))
-        except ImportError:
+        except ImportError as exc:
             ket.append(("ed1: vòng ký-xác minh",
-                        True, "bỏ qua CÓ KHAI BÁO — thiếu cryptography ở trình "
+                        None, f"bỏ qua CÓ KHAI BÁO — {exc or 'thiếu cryptography'} ở trình "
                               "thông dịch này; lượt venv của bộ chốt kiểm thật"))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
-    do = [k for k in ket if not k[1]]
+    # Ba trạng thái: True ✓ bắt được · False ✗ lỗ hổng · None ⚪ bỏ qua CÓ KHAI BÁO (thiếu
+    # nguyên liệu trên máy này — không đếm là «bắt được», cũng không đếm là «lỗ hổng»; BH08).
+    do = [k for k in ket if k[1] is False]
+    bo_qua = [k for k in ket if k[1] is None]
+    kiem = len(ket) - len(bo_qua)
     if a.im_khi_on and not do:
         return 0
     print("=" * 70)
     print("  CANARY ĐẦU–CUỐI — gài lỗi đã biết, đòi dây chuyền bắt được")
     print("=" * 70)
     for ten, ok, ct in ket:
-        print(f"  {'✓' if ok else '✗'} {ten}")
+        print(f"  {'⚪' if ok is None else ('✓' if ok else '✗')} {ten}")
         if a.chi_tiet or not ok:
             print(f"      → {ct}")
     print("-" * 70)
     if do:
-        print(f"🔴 {len(do)}/{len(ket)} lỗi gài KHÔNG bị bắt — đây là lỗ hổng THẬT, không phải")
+        print(f"🔴 {len(do)}/{kiem} lỗi gài KHÔNG bị bắt — đây là lỗ hổng THẬT, không phải")
         print("   chuyện câu chữ. Sửa đúng chỗ đó trước khi tin dây chuyền.")
         return 1
-    print(f"🟢 {len(ket)}/{len(ket)} lỗi gài đều bị bắt.")
+    print(f"🟢 {kiem}/{kiem} lỗi gài kiểm được đều bị bắt."
+          + (f" ⚪ {len(bo_qua)} bỏ qua CÓ KHAI BÁO (thiếu nguyên liệu trên máy này)."
+             if bo_qua else ""))
     print("   Canary kiểm DÂY CHUYỀN CÔNG CỤ — KHÔNG chứng minh agent đã GỌI cổng lúc chạy")
     print("   thật. Cần bác sĩ kiểm chứng.")
     return 0
