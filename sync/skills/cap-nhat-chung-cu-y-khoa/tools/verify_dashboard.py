@@ -1144,7 +1144,89 @@ def verify_doi_online(doi, retries=2):
     return None, "lỗi mạng: hết lượt thử lại (%s)" % last_err
 
 
-def verify_url_online(url, retries=2):
+# ── Miền CHẶN trình khách tự động (thêm 24/09/2026) ──────────────────────────────────────────────
+# Khai báo TƯỜNG MINH kèm bằng chứng — không suy đoán theo mã lỗi. Với các miền này, HTTP 403/404/410
+# của lượt kiểm tự động KHÔNG phải bằng chứng link chết: www.fda.gov trả 404 cho urllib (User-Agent
+# SOURCE_GATE_USER_AGENT) với trang Drug Safety Communication về alli/orlistat, trong khi trình duyệt
+# thật mở được đúng trang, đúng tiêu đề (kiểm 24/09/2026). Cổng KHÔNG giả dạng trình duyệt để lách
+# chặn. Thay vào đó nó đòi bằng chứng đã mở bằng TRÌNH DUYỆT THẬT, ghi trong SO_URL_TRINH_DUYET cạnh
+# dashboard, còn hạn URL_TRINH_DUYET_HAN_NGAY ngày (cùng hạn «tồn tại» của sổ xác minh nguồn). Không có
+# bằng chứng ⇒ vẫn «chưa xác minh» (strict-sources: lỗi cứng) — URL bịa hay link chết THẬT trên miền
+# này không được lọt qua chỉ vì miền chặn kiểm tự động. Thêm miền mới: chỉ khi đã có bằng chứng tương tự.
+MIEN_CHAN_TRUY_CAP_TU_DONG = {
+    "www.fda.gov": "24/09/2026 — HTTP 404 với urllib, trình duyệt mở được (trang alli/orlistat)",
+    "fda.gov": "như www.fda.gov",
+}
+MA_CHAN_TU_DONG = (403, 404, 410)
+SO_URL_TRINH_DUYET = "url-xac-minh-trinh-duyet.json"
+URL_TRINH_DUYET_HAN_NGAY = 180
+
+
+def mien_chan_tu_dong(url):
+    """Tên máy chủ (đã khai báo trong MIEN_CHAN_TRUY_CAP_TU_DONG) của `url`; None nếu không thuộc."""
+    try:
+        host = (urllib.parse.urlparse(url).hostname or "").lower()
+    except ValueError:
+        return None
+    return host if host in MIEN_CHAN_TRUY_CAP_TU_DONG else None
+
+
+def xac_minh_url_bang_trinh_duyet(url, duong_dashboard, hom_nay=None):
+    """Tra sổ bằng chứng mở bằng trình duyệt thật (SO_URL_TRINH_DUYET, cùng thư mục dashboard).
+
+    Trả (True, mô tả) khi có ÍT NHẤT một mục hợp lệ còn hạn cho đúng `url`; ngược lại (None, lý do).
+    Không bao giờ trả False: sổ chỉ ghi THÀNH CÔNG, vắng mục nghĩa là CHƯA xác minh, không phải link chết.
+    Mục hợp lệ: `tieu_de` (tiêu đề trang thật, ≥ 10 ký tự) · `cach` (cách kiểm) · `ngay` YYYY-MM-DD
+    không ở tương lai và không quá URL_TRINH_DUYET_HAN_NGAY ngày."""
+    hom_nay = hom_nay or date.today()
+    tep = Path(duong_dashboard).resolve().parent / SO_URL_TRINH_DUYET
+    try:
+        du_lieu = json.loads(tep.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, "chưa có %s cạnh dashboard" % SO_URL_TRINH_DUYET
+    except (OSError, ValueError) as e:
+        return None, "%s đọc không được (%s)" % (SO_URL_TRINH_DUYET, type(e).__name__)
+    ds = du_lieu.get("muc") if isinstance(du_lieu, dict) else None
+    if not isinstance(ds, list):
+        return None, "%s thiếu danh sách 'muc'" % SO_URL_TRINH_DUYET
+    ly_do = "chưa có mục cho URL này trong %s" % SO_URL_TRINH_DUYET
+    for m in ds:
+        if not isinstance(m, dict) or str(m.get("url", "")).strip() != url:
+            continue
+        tieu_de = str(m.get("tieu_de", "")).strip()
+        try:
+            ngay = date.fromisoformat(str(m.get("ngay", "")).strip())
+        except ValueError:
+            ly_do = "mục trong %s có ngày sai định dạng (cần YYYY-MM-DD)" % SO_URL_TRINH_DUYET
+            continue
+        if len(tieu_de) < 10 or not str(m.get("cach", "")).strip():
+            ly_do = "mục trong %s thiếu tiêu đề trang thật (≥ 10 ký tự) hoặc cách kiểm" % SO_URL_TRINH_DUYET
+            continue
+        if ngay > hom_nay:
+            ly_do = "mục trong %s ghi ngày ở tương lai" % SO_URL_TRINH_DUYET
+            continue
+        if (hom_nay - ngay).days > URL_TRINH_DUYET_HAN_NGAY:
+            ly_do = ("bằng chứng trình duyệt ngày %s đã quá %d ngày — mở lại để xác nhận"
+                     % (ngay.isoformat(), URL_TRINH_DUYET_HAN_NGAY))
+            continue
+        return True, "đã mở bằng trình duyệt ngày %s («%s»)" % (ngay.isoformat(), tieu_de[:80])
+    return None, ly_do
+
+
+def _ket_luan_mien_chan(url, mien, ma, duong_dashboard):
+    """Kết luận cho URL thuộc miền chặn kiểm tự động khi lượt kiểm tự động bị trả `ma`."""
+    goc = "%s chặn trình khách tự động (HTTP %d) — KHÔNG phải bằng chứng link chết" % (mien, ma)
+    if duong_dashboard is None:
+        return None, goc + "; mở bằng trình duyệt thật để xác nhận"
+    ok, info = xac_minh_url_bang_trinh_duyet(url, duong_dashboard)
+    if ok:
+        return True, "%s; %s" % (goc, info)
+    return None, ("%s; %s. Mở URL bằng trình duyệt thật: đúng trang thì ghi {url, tieu_de, ngay, cach} vào "
+                  "%s cạnh dashboard; trình duyệt cũng không mở được thì là link chết thật — sửa URL."
+                  % (goc, info, SO_URL_TRINH_DUYET))
+
+
+def verify_url_online(url, retries=2, duong_dashboard=None):
     """Tri-state (True/False/None) — kiểm URL THẬT SỰ mở được (không chỉ đúng định dạng).
 
     SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): trước đây một
@@ -1152,7 +1234,10 @@ def verify_url_online(url, retries=2):
     toàn bộ khối --online chỉ lặp qua `pmids`/`dois`, biến `url` không xuất hiện ở đó. Nay thêm
     nhánh thứ 3 cùng nguyên tắc fail-closed như PMID/DOI: lỗi mạng/timeout KHÔNG được coi là
     "đã xác minh". Chỉ GET nhẹ (không tải toàn bộ nội dung) — đủ để xác nhận URL còn tồn tại,
-    không phải 404/hỏng."""
+    không phải 404/hỏng.
+
+    SỬA 2026-09-24: URL thuộc MIEN_CHAN_TRUY_CAP_TU_DONG bị trả 403/404/410 thì KHÔNG kết luận link
+    chết mà tra bằng chứng trình duyệt thật (`duong_dashboard` = đường dẫn dashboard để tìm sổ)."""
     last_err = None
     for attempt in range(retries + 1):
         try:
@@ -1161,6 +1246,9 @@ def verify_url_online(url, retries=2):
                 status = getattr(r, "status", None) or r.getcode()
             return True, "HTTP %s" % status
         except urllib.error.HTTPError as e:
+            mien = mien_chan_tu_dong(url)
+            if mien and e.code in MA_CHAN_TU_DONG:
+                return _ket_luan_mien_chan(url, mien, e.code, duong_dashboard)
             if e.code in (404, 410):
                 return False, "URL không tồn tại (HTTP %d)" % e.code
             last_err = e
@@ -1488,7 +1576,7 @@ def main():
                 if net_calls_url:
                     time.sleep(0.1)
                 net_calls_url += 1
-                ok, info = verify_url_online(u)
+                ok, info = verify_url_online(u, duong_dashboard=a.file)
                 seen_url[u] = (ok, info)
             if ok is True:
                 oks.append("[%s] url %s ✓ %s" % (iid, u, info))
