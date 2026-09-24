@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.52.0 — 2026-09-24 (bản đọc đọc sổ ký rút bài như cổng — sau khi bác sĩ ký ITEM-11)
+
+**Bản đọc (`tools/build_ban_doc_chung_cu.py`).** Bác sĩ ký miễn trừ ITEM-11 của TienLuongSuyTim_20260914 (thông
+báo rút bài gắn vào guideline CCS/CHFS 2025 là của một BẢN ĐÍNH CHÍNH bị rút). Cổng liêm chính đọc sổ ký và cho
+PASS, nhưng bản đọc vẫn in dải đỏ «Nguồn đã bị rút — không dùng kết luận này», vì `khoi_rut_bai` chưa bao giờ
+đọc sổ ký. Nay bản đọc kiểm chữ ký bằng CHÍNH hàm của cổng (`verify_dashboard._da_xem_xet_thong_bao_dinh_chinh`,
+không chép luật): ký hợp lệ ⇒ rời dải đỏ sang khung trung tính, vẫn liệt kê người ký · ngày · lý do; chưa ký ⇒
+dải đỏ với nhãn «cần bác sĩ xem» như cổng; rút bài THẬT không hạ được qua sổ; không nạp được cổng ⇒ coi như chưa
+ký. Kèm: tiêu đề sổ lưu dạng thực thể HTML («LVEF &gt; 40%») từng bị escape hai lần — nay giải thực thể trước
+khi escape. Khoá bằng BH115 và `tools/test_build_ban_doc_rut_bai_da_xem_xet_20260924.py`.
+
 ## v1.51.0 — 2026-09-24 (cổng fda.gov + khâu thu nhận «lấy đủ rồi chọn mạnh nhất» — bác sĩ duyệt)
 
 **Cổng liêm chính (`tools/verify_dashboard.py`).** www.fda.gov trả HTTP 404 cho trình khách tự động dù trang có

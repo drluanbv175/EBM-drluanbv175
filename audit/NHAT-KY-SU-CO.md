@@ -3131,3 +3131,20 @@ khi bác sĩ sửa hook được bảo vệ (đề xuất F1, audit/15).
 nhánh lùi `tran` ở đó ⚪ hoá cả lỗi doctrine trong repo trên Cloud). **Kiểm:** 4 ca mới trong BH82; 4 đột biến đều đỏ đúng câu.
 **Bài học:** một chốt được tuyên bố «ngoại tuyến» phải được ĐO là ngoại tuyến (proxy từ chối + đếm kết nối), không suy từ ý
 định; thêm một làn gọi mạng vào công cụ dùng chung thì phải rà MỌI nơi gọi `run_scan()` thật, kể cả bộ chốt.
+
+### 24/09/2026 — Bác sĩ đã ký ITEM-11 nhưng bản đọc vẫn in «Nguồn đã bị rút — không dùng kết luận này» (BH115)
+Bác sĩ ký `EBM-Dashboards/rut-bai-da-xem-xet.json` cho hai định danh của guideline CCS/CHFS 2025 (PMID 41110921 ·
+doi:10.1016/j.cjca.2025.07.027; thông báo rút là của một bản đính chính trùng lặp). Cổng liêm chính đọc sổ và cho PASS, bộ
+năm dựng lại đủ 5/5 — nhưng bản đọc, trang bác sĩ thật sự mở, vẫn in dải đỏ «Nguồn đã bị rút — không dùng kết luận này (2
+nguồn)». Nguyên nhân: BH109 (20/09) chỉ nối sổ ký vào CỔNG; `build_ban_doc_chung_cu.py::khoi_rut_bai` chưa bao giờ đọc sổ
+và còn dán nhãn «đã bị rút» cho cả mục chưa ký, trong khi cổng nói «CẦN BÁC SĨ XEM». Lại họ «sửa một chỗ không lan sang chỗ
+khác»: cảnh báo đã được đưa tới nơi bác sĩ đọc (14/08) thì luật hạ cảnh báo cũng phải tới đó.
+**Vá:** bản đọc kiểm chữ ký bằng CHÍNH hàm của cổng (`verify_dashboard._da_xem_xet_thong_bao_dinh_chinh`, không chép luật);
+ký hợp lệ ⇒ rời dải đỏ sang khung trung tính, vẫn liệt kê người ký · ngày · lý do; chưa ký ⇒ đỏ, nhãn «cần bác sĩ xem»; rút
+bài THẬT không hạ được qua sổ; không nạp được cổng ⇒ coi như chưa ký. Kèm: 3/1710 tiêu đề trong sổ lưu dạng thực thể HTML
+(«LVEF &gt; 40%») từng bị escape hai lần. **Kiểm:** `tools/test_build_ban_doc_rut_bai_da_xem_xet_20260924.py` (13 ca) +
+BH115; 6 đột biến đỏ đúng chỗ; trọn bộ chốt 115 ✓. Skill `cap-nhat-chung-cu-y-khoa` v1.52.0; 3 tệp chép thẳng vào nơi Cowork
+chạy sau khi xác minh chúng trùng byte bản git trước khi sửa — công cụ đồng bộ không chọn được một skill, chạy nó sẽ đẩy thêm
+25 skill mà Cowork tự dọn (BH104).
+Cùng ngày: bác sĩ phát khoá Ed25519 cho `DATA_MANAGER` ⇒ đủ 5/5 vai; khoá công vào repo y khoa qua PR #8.
+`HUONG-DAN-PHAT-KHOA-ED25519.md` đã cập nhật bảng trạng thái và ghi quyết định «một người kiêm mọi vai».

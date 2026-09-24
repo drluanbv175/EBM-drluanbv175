@@ -656,6 +656,56 @@ DEC_VN = {"apply": "áp dụng ngay", "consider": "cân nhắc chọn lọc",
           "notyet": "chưa đủ để đổi thực hành"}
 
 
+def _tieu_de_nguon(r) -> str:
+    """Tiêu đề bài từ sổ xác minh, đã escape đúng MỘT lần.
+
+    Sổ lưu một số tiêu đề ở dạng thực thể HTML như nguồn trả về (3/1710 bản ghi, đo 24/09/2026 —
+    vd «(LVEF &gt; 40%)»). `esc()` thẳng lên chuỗi đó thành «&amp;gt;» và trang hiện nguyên chữ
+    «&gt;». Giải thực thể TRƯỚC rồi mới escape: vẫn an toàn trước chèn mã (esc chạy sau cùng).
+    """
+    from html import unescape  # noqa: PLC0415
+    return esc(unescape(str(r.get("tieu_de") or "")))
+
+
+def _ham_kiem_so_ky_rut_bai():
+    """Hàm kiểm sổ ký rút bài CỦA CHÍNH CỔNG liêm chính, hoặc ``None`` nếu không nạp được cổng.
+
+    Thêm 24/09/2026. Bác sĩ ký miễn trừ ITEM-11 của TienLuongSuyTim_20260914 (thông báo rút bài
+    gắn vào guideline CCS/CHFS 2025 là của MỘT BẢN ĐÍNH CHÍNH bị rút). Cổng đọc sổ ký và cho
+    PASS, nhưng bản đọc vẫn in dải đỏ «Nguồn đã bị rút — không dùng kết luận này», vì
+    `khoi_rut_bai` chưa bao giờ đọc sổ ký — đúng cảnh báo sai mà BH109 sinh ra để tránh.
+
+    Dùng lại `verify_dashboard._da_xem_xet_thong_bao_dinh_chinh`, KHÔNG chép luật: điều kiện hợp
+    lệ của một chữ ký (vân tay tập thông báo, chặn giữ chỗ, ngày thật ≤ hôm nay, lý do đủ dài) là
+    phần tinh vi nhất của BH109; hai bản chép sẽ trôi khỏi nhau và bản đọc lại nói khác cổng.
+    Không nạp được cổng ⇒ ``None`` ⇒ nơi gọi coi mọi mục là CHƯA KÝ (fail-closed).
+    """
+    here = Path(__file__).resolve().parent
+    ung_vien = [here / "verify_dashboard.py"]  # bản trong skill: cổng nằm cùng thư mục
+    try:
+        sys.path.insert(0, str(here))
+        from ban_sao_tran import duong_cong_cu_pipeline  # noqa: PLC0415
+        p = duong_cong_cu_pipeline("verify_dashboard.py")
+        if p is not None:
+            ung_vien.append(Path(p))
+    except Exception:  # noqa: BLE001 — bản skill không có ban_sao_tran: chỉ còn ứng viên cùng thư mục
+        pass
+    for p in ung_vien:
+        if not p.exists():
+            continue
+        try:
+            import importlib.util as _ilu  # noqa: PLC0415
+            spec = _ilu.spec_from_file_location("vd_cho_ban_doc", p)
+            mod = _ilu.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except Exception:  # noqa: BLE001 — nạp hỏng = không kiểm được = CHƯA KÝ
+            continue
+        ham = getattr(mod, "_da_xem_xet_thong_bao_dinh_chinh", None)
+        if callable(ham):
+            return ham
+    return None
+
+
 def khoi_rut_bai(src: Path) -> str:
     """Dải cảnh báo: gói này trích một nguồn ĐÃ BỊ RÚT / có quan ngại.
 
@@ -678,36 +728,88 @@ def khoi_rut_bai(src: Path) -> str:
                 '<code>python tools/so_xac_minh_nguon.py --quet &lt;file&gt;</code>.</p></div>')
     if not da_rut:
         return ""
+
+    # Ca «thông báo rút là của một BẢN ĐÍNH CHÍNH bị rút» (BH109): chỉ bác sĩ ký sổ mới hạ được
+    # cờ, và chữ ký được kiểm bằng ĐÚNG hàm của cổng. Mục rút bài thật không bao giờ hạ qua sổ
+    # này — hàm cổng trả None khi thiếu cờ `sua_loi_bi_rut`.
+    can_ky = {id(r) for r in da_rut if r.get("tinh_trang") == "retracted"
+              and r.get("sua_loi_bi_rut") and not r.get("rut_va_thay")}
+    kiem_ky = _ham_kiem_so_ky_rut_bai() if can_ky else None
+    da_xem, con_lai = [], []
+    for r in da_rut:
+        xem = None
+        if kiem_ky is not None and id(r) in can_ky:
+            try:
+                xem = kiem_ky(src, r)
+            except Exception:  # noqa: BLE001 — không kiểm được chữ ký = CHƯA KÝ
+                xem = None
+        if xem:
+            da_xem.append((r, xem))
+        else:
+            con_lai.append(r)
+
     def _nhan(r):
         if r.get("rut_va_thay"):
             return ("đã rút &amp; đăng lại bản sửa",
                     "Trích dẫn vẫn dùng được, nhưng số liệu phải lấy từ BẢN ĐÃ SỬA "
                     "(thường cùng DOI/PMID).")
+        if id(r) in can_ky:
+            return ("cần bác sĩ xem — thông báo rút là của một bản ĐÍNH CHÍNH bị rút",
+                    "Chưa chắc bài chính bị rút. Chưa dùng kết luận cho tới khi bác sĩ đọc thông "
+                    "báo và các đính chính còn hiệu lực rồi ký sổ rut-bai-da-xem-xet.json "
+                    "(mẫu chờ ký: python3 tools/mau_ky_rut_bai.py).")
         if r["tinh_trang"] == "retracted":
             return "đã bị rút", "Không dùng kết luận của bài này."
         return "có quan ngại (EoC)", "Chưa kết luận — đọc lại trước khi dùng."
 
-    hang = ""
-    for r in da_rut:
-        nhan, viec = _nhan(r)
-        tb = (f'<span class="doi">thông báo: {esc(r["thong_bao"])}</span>'
-              if r.get("thong_bao") else "")
-        hang += (f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — <em>{nhan}</em>'
-                 f'<span class="doi">{esc(r["tieu_de"])}</span>'
-                 f'<span class="doi">{viec}</span>{tb}'
-                 f'<span class="doi">sổ ghi {esc(r["kiem_luc"])} · nguồn '
-                 f'{esc(r["nguon"])}</span></li>')
-    # Tiêu đề phải nói ĐÚNG mức nặng. Một gói chỉ chứa bài "rút &amp; đăng lại" mà bị
-    # gắn nhãn "không dùng" là cảnh báo sai về trích dẫn hợp lệ — và cảnh báo sai làm
-    # hỏng giá trị của cảnh báo đúng.
-    chi_rut_va_thay = all(r.get("rut_va_thay") for r in da_rut)
-    tieu_de = ("Nguồn đã rút &amp; đăng lại bản sửa — đối chiếu số liệu trước khi dùng"
-               if chi_rut_va_thay
-               else "Nguồn đã bị rút — không dùng kết luận này trước khi đối chiếu")
-    return (f'<div class="rutbai"><h3>{tieu_de} ({len(da_rut)} nguồn)</h3>'
-            '<p class="sub">“Rút và thay” nghĩa là bài đã được sửa rồi đăng lại: việc cần làm là '
-            'đối chiếu số liệu với bản đã sửa, KHÔNG phải bỏ mục đi. Máy không tự gỡ mục nào.</p>'
-            f'<ul>{hang}</ul></div>')
+    khoi = ""
+    if con_lai:
+        hang = ""
+        for r in con_lai:
+            nhan, viec = _nhan(r)
+            tb = (f'<span class="doi">thông báo: {esc(r["thong_bao"])}</span>'
+                  if r.get("thong_bao") else "")
+            hang += (f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — <em>{nhan}</em>'
+                     f'<span class="doi">{_tieu_de_nguon(r)}</span>'
+                     f'<span class="doi">{viec}</span>{tb}'
+                     f'<span class="doi">sổ ghi {esc(r["kiem_luc"])} · nguồn '
+                     f'{esc(r["nguon"])}</span></li>')
+        # Tiêu đề phải nói ĐÚNG mức nặng. Một gói chỉ chứa bài "rút &amp; đăng lại" mà bị
+        # gắn nhãn "không dùng" là cảnh báo sai về trích dẫn hợp lệ — và cảnh báo sai làm
+        # hỏng giá trị của cảnh báo đúng.
+        if all(r.get("rut_va_thay") for r in con_lai):
+            tieu_de = "Nguồn đã rút &amp; đăng lại bản sửa — đối chiếu số liệu trước khi dùng"
+        elif all(id(r) in can_ky for r in con_lai):
+            tieu_de = "Nguồn có cờ rút bài CẦN BÁC SĨ XEM — chưa dùng kết luận này cho tới khi xem xét"
+        else:
+            tieu_de = "Nguồn đã bị rút — không dùng kết luận này trước khi đối chiếu"
+        khong_kiem_duoc = ('<p class="sub">Không nạp được cổng liêm chính '
+                           '(verify_dashboard.py) nên không kiểm được sổ ký — mọi mục coi như '
+                           'CHƯA KÝ.</p>' if can_ky and kiem_ky is None else "")
+        khoi += (f'<div class="rutbai"><h3>{tieu_de} ({len(con_lai)} nguồn)</h3>'
+                 '<p class="sub">“Rút và thay” nghĩa là bài đã được sửa rồi đăng lại: việc cần làm là '
+                 'đối chiếu số liệu với bản đã sửa, KHÔNG phải bỏ mục đi. Máy không tự gỡ mục nào.</p>'
+                 f'{khong_kiem_duoc}<ul>{hang}</ul></div>')
+
+    # Mục ĐÃ KÝ không bị giấu: vẫn liệt kê kèm người ký, ngày và lý do, để còn rà lại được
+    # (cùng cách xử lý miễn trừ mâu thuẫn ở mau-thuan-da-duyet.json).
+    if da_xem:
+        hang = ""
+        for r, xem in da_xem:
+            ids = ", ".join(str(x) for x in (r.get("thong_bao_ids") or []))
+            hang += (f'<li><b>{esc(r["loai"])}:{esc(r["gia_tri"])}</b> — <em>đã được bác sĩ xem xét</em>'
+                     f'<span class="doi">{_tieu_de_nguon(r)}</span>'
+                     f'<span class="doi">Thông báo rút bài gắn vào nguồn này là của một BẢN ĐÍNH '
+                     f'CHÍNH bị rút (thông báo {esc(ids)}), không phải bài chính.</span>'
+                     f'<span class="doi">Bác sĩ {esc(xem.get("da_xem_boi") or "")} xem xét ngày '
+                     f'{esc(xem.get("ngay") or "")}: {esc(xem.get("ly_do") or "")}</span></li>')
+        khoi += (f'<div class="xungdot daxem"><h3>Cờ rút bài đã được bác sĩ xem xét '
+                 f'({len(da_xem)} định danh)</h3>'
+                 '<p class="sub">Máy không tự hạ loại cờ này: ba tầng kiểm rút bài cùng đọc một liên '
+                 'kết NLM nên không độc lập với nhau. Cờ chỉ hạ khi bác sĩ ký sổ kèm tên, ngày và lý do, '
+                 'và chỉ đúng với tập thông báo hiện tại — có thông báo mới thì dải đỏ quay lại.</p>'
+                 f'<ul>{hang}</ul></div>')
+    return khoi
 
 
 def khoi_mau_thuan(src: Path) -> str:
@@ -1145,6 +1247,8 @@ padding:20px 24px;margin:26px 0 0}
 .xungdot .doi{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
 .xungdot.chuakiem{background:var(--ground);border-left-color:var(--rule-strong)}
 .xungdot.chuakiem h3{color:var(--ink-2)}
+.xungdot.daxem{background:var(--ground);border-left-color:var(--rule-strong)}
+.xungdot.daxem h3,.xungdot.daxem li em{color:var(--ink-2)}
 .xungdot code{font-size:12.5px;background:var(--surface);padding:1px 5px;border-radius:3px}
 .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1px;
 margin-top:24px;background:var(--rule)}

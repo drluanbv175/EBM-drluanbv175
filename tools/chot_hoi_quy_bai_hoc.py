@@ -6814,6 +6814,64 @@ def bh114_cong_khong_xanh_khi_chua_do():
     return True, ""
 
 
+def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
+    """24/09 — bác sĩ ký miễn trừ ITEM-11 (TienLuongSuyTim_20260914: thông báo rút bài là của MỘT BẢN ĐÍNH CHÍNH bị
+    rút). Cổng liêm chính đọc sổ ký và cho PASS, nhưng bản đọc — trang bác sĩ thật sự mở — vẫn in dải đỏ «Nguồn đã bị
+    rút — không dùng kết luận này»: `khoi_rut_bai` chưa bao giờ đọc sổ ký. Đúng cảnh báo sai BH109 sinh ra để tránh.
+    Kiểm HÀNH VI: ký hợp lệ ⇒ rời dải đỏ nhưng vẫn liệt kê người ký/ngày/lý do; chưa ký ⇒ đỏ, nhãn «cần bác sĩ xem»;
+    rút bài THẬT không hạ được qua sổ; hàm kiểm chữ ký là CHÍNH hàm của cổng (không chép luật)."""
+    import importlib.util as _iu
+    import inspect as _insp
+    import json as _json
+    import tempfile
+    import types as _types
+    import unittest.mock as _mock
+
+    sp = _iu.spec_from_file_location("_bh115_ban_doc", REPO / "tools" / "build_ban_doc_chung_cu.py")
+    bd = _iu.module_from_spec(sp); sys.modules["_bh115_ban_doc"] = bd; sp.loader.exec_module(bd)
+    ham = bd._ham_kiem_so_ky_rut_bai()
+    if ham is None:
+        return False, "bản đọc không nạp được hàm kiểm sổ ký của cổng ⇒ mọi chữ ký bác sĩ bị bỏ qua"
+    sp2 = _iu.spec_from_file_location("_bh115_vd", REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py")
+    vd = _iu.module_from_spec(sp2); sp2.loader.exec_module(vd)
+    if _insp.getsource(ham) != _insp.getsource(vd._da_xem_xet_thong_bao_dinh_chinh):
+        return False, "bản đọc kiểm chữ ký bằng luật KHÁC cổng — hai nơi sẽ nói hai điều"
+
+    def _ghi(sua_loi=True):
+        return {"khoa": "pmid:41110921", "loai": "pmid", "gia_tri": "41110921", "tinh_trang": "retracted",
+                "tieu_de": "Guideline", "kiem_luc": "2026-09-20", "nguon": "pubmed", "rut_va_thay": False,
+                "thong_bao": "", "sua_loi_bi_rut": sua_loi, "thong_bao_ids": ["41422828"]}
+    ky = {"khoa": "pmid:41110921", "thong_bao_ids": ["41422828"], "da_xem_boi": "Bác sĩ Kiểm Thử", "ngay": "2026-09-20",
+          "ly_do": "Đã đọc thông báo rút: là bản đính chính trùng lặp, đính chính còn hiệu lực không đổi khuyến cáo."}
+    with tempfile.TemporaryDirectory() as td:
+        src = Path(td) / "WebDashboard_EBM_Thu.html"
+        src.write_text("<html></html>", encoding="utf-8")
+
+        def _chay(ghi, so_ky):
+            so = Path(td) / "rut-bai-da-xem-xet.json"
+            if so_ky is None:
+                so.unlink(missing_ok=True)
+            else:
+                so.write_text(_json.dumps({"muc": so_ky}, ensure_ascii=False), encoding="utf-8")
+            gia = _types.ModuleType("so_xac_minh_nguon")
+            gia.nguon_da_rut = lambda ten: [dict(ghi)]
+            with _mock.patch.dict(sys.modules, {"so_xac_minh_nguon": gia}):
+                return bd.khoi_rut_bai(src)
+
+        h = _chay(_ghi(), [ky])
+        if 'class="rutbai"' in h or "không dùng kết luận" in h:
+            return False, "bác sĩ đã ký hợp lệ mà bản đọc vẫn in dải đỏ «không dùng kết luận» — đúng lỗi 24/09"
+        if "Bác sĩ Kiểm Thử" not in h or "bản đính chính trùng lặp" not in h:
+            return False, "mục đã ký bị GIẤU — phải còn liệt kê người ký, ngày, lý do để rà lại được"
+        h = _chay(_ghi(), None)
+        if 'class="rutbai"' not in h or "CẦN BÁC SĨ XEM" not in h:
+            return False, "chưa ký mà bản đọc không còn dải đỏ «cần bác sĩ xem»"
+        h = _chay(_ghi(sua_loi=False), [ky])
+        if "<em>đã bị rút</em>" not in h or "đã được bác sĩ xem xét" in h:
+            return False, "rút bài THẬT bị hạ qua sổ ký — sổ này chỉ dành cho thông báo là bản đính chính"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -6936,6 +6994,7 @@ BAI_HOC = [
     ("BH113", "21/09", "Thu nhận khi NCBI chặn: dịch thẻ PubMed→Europe PMC, PASS_DEGRADED, con trỏ đứng yên (không 0 giả, không mất cửa sổ quét)", bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia),
     ("BH114", "21/09", "Bốn cổng không xanh khi CHƯA ĐO: bản lỗi HTTP-200, sổ rút bài im lặng, kiem_so_lieu hỏng/mẫu, gradeLevel máy gán", bh114_cong_khong_xanh_khi_chua_do),
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
+    ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

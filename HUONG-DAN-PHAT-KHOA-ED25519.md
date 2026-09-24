@@ -47,7 +47,7 @@ Bảng vai bắt buộc theo cổng (`gate_contract._GATE_REQUIRED_STAKEHOLDERS`
 | **G9** liêm chính tác giả | `PI` | chủ nhiệm đề tài |
 | **G10** khoá gói phát hành | `PI` | chủ nhiệm đề tài |
 
-### ✅ Trạng thái THẬT — 4/5 vai ĐÃ CÓ KHOÁ (đo lại 03/09/2026)
+### ✅ Trạng thái THẬT — 5/5 vai ĐÃ CÓ KHOÁ (đo lại 24/09/2026)
 
 | Vai | Khoá công trong repo | Còn phải làm |
 |---|---|---|
@@ -55,10 +55,17 @@ Bảng vai bắt buộc theo cổng (`gate_contract._GATE_REQUIRED_STAKEHOLDERS`
 | `INDEPENDENT_PEER_REVIEWER` | ✅ đã phát 01/09 | — |
 | `STATISTICIAN` | ✅ đã phát 01/09 | — |
 | `PI` | ✅ đã phát 01/09 | — |
-| **`DATA_MANAGER`** | ❌ **chưa có** | **việc duy nhất còn lại** |
+| `DATA_MANAGER` | ✅ đã phát 24/09 | khoá công vào repo qua drluanbv175/medical-ebm-automation#8 (chờ bác sĩ duyệt) |
 
-Bốn khoá trên nằm ở `config/gate_ed25519_pubkeys/*.pub` trên nhánh `master`, commit `4eeb0c8`
-(01/09/2026). **Việc còn lại đúng MỘT vai: `DATA_MANAGER` — cổng G5 khoá dữ liệu thật.**
+Bốn khoá đầu nằm ở `config/gate_ed25519_pubkeys/*.pub`, commit `4eeb0c8` (01/09/2026). Khoá
+`DATA_MANAGER` do bác sĩ tự phát ngày 24/09/2026. Đo cùng ngày bằng chính `gate_contract.py`: cả 5
+khoá công nạp ra Ed25519 hợp lệ, khoá riêng cả 5 vai có trên máy. **Không còn vai nào thiếu khoá.**
+
+> **Bác sĩ quyết định 24/09/2026: hệ cá nhân, một người kiêm mọi vai** ⇒ mọi khoá riêng giữ trên
+> Mac (lời khuyên chuyển khoá IRB/phản biện cho người khác ở §4 không áp dụng). Hệ quả phải nhớ:
+> **sao lưu mã hoá là điều kiện sống còn** — mất máy hoặc hỏng ổ là mất khả năng ký MỌI cổng cứng;
+> và chữ ký theo vai chỉ ghi lại «đội mũ vai nào», không phải bằng chứng độc lập (cảnh báo ngay dưới
+> vẫn đúng). Với đề tài thật, quyết định Hội đồng Đạo đức và bình duyệt tạp chí vẫn đến từ bên ngoài.
 
 🔍 **Vì sao đúng vai đó bị bỏ sót — không phải bác sĩ quên.** `setup_gate_approval_key.py` khai
 `_ROLE_GROUPS = ("IRB", "STATISTICIAN", "INDEPENDENT_PEER_REVIEWER", "PI")`, và `--role` dùng
