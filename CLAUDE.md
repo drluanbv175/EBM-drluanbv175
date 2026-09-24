@@ -1421,6 +1421,27 @@ Phase 3: Module Clinical (RAG guideline + drug check)
     «not found». Định nghĩa `SKILL.md` của chúng VẪN còn trên đĩa (`~/.claude/scheduled-tasks/`), nên tạo lại rẻ. Hệ quả: chuỗi giám sát tuần
     **không còn tự chạy** từ sau 07/09 (báo cáo tuần 16/09 và gói 15/09 là do chạy tay/`tu_khoi_dong`). Chưa biết việc xoá là chủ ý hay không —
     tạo lại tác vụ nền là quyết định của bác sĩ. Chi tiết: `audit/11-danh-gia-he-thong-toan-dien_2026-09-20.md`.
+    ⛔ **ĐÍNH CHÍNH 22/09/2026 — đoạn ĐÍNH CHÍNH 20/09 ở trên ĐÃ LỖI THỜI, đo lại bằng
+    `list_scheduled_tasks`/`list_task_runs` sống cho kết quả khác hẳn.** Cả **6** tác vụ hiện tồn
+    tại, `enabled:true`: `thu-thap-tuan-an-toan-thuoc` và `goi-duyet-tuan-ebm` mỗi tác vụ **5 lần
+    chạy `succeeded`** liên tục hằng tuần (17/08→21/09, không đứt quãng) — chuỗi giám sát tuần
+    ĐANG tự chạy thật, không phải chạy tay như đính chính 20/09 từng ghi. `cap-nhat-thang-ebm`
+    1 lần chạy `succeeded` (01/09), đúng hạn tháng. `giam-sat-acc-aha-quy` (từng "not found" 20/09)
+    và `kiem-thang-diem-quy` đều tồn tại lại, `enabled:true`, 0 lần chạy (đúng — cả hai là tác vụ
+    QUÝ, cửa sổ đầu tiên 01-02/10/2026 chưa tới). **Không rõ ai/khi nào tạo lại** — không có dấu vết
+    trong phiên này; có thể bác sĩ tự làm hoặc một phiên khác. Bài học lặp lại đúng khuôn đã có ở
+    nhiều nơi trong file này: một phép đo `list_scheduled_tasks` là ẢNH CHỤP một thời điểm, không
+    phải trạng thái sống — phải đo LẠI mỗi lần cần kết luận, không trích dẫn lại kết quả cũ.
+    **THÊM MỚI, chưa từng ghi ở đây:** tác vụ thứ 6 **`kiem-tra-hoan-thien-he-thong-thang`** —
+    quét hoàn thiện KỸ THUẬT hằng tháng (mùng 3, 18:00) cho cả hệ nghiên cứu G0-G10 lẫn hệ cập
+    nhật chứng cứ, KHÁC 4 tác vụ kia (chỉ lo nội dung/an toàn chứng cứ): dây nối 11 cổng · tautology
+    scan luân phiên · doctrine agent có theo kịp cổng mới không (BH39) · sức khỏe từng đề tài thật
+    · đối chiếu 2 repo + CI thật · nhánh mồ côi chưa merge · quét CLAUDE.md tìm khẳng định lỗi thời
+    · chốt hồi quy tổng. Đây chính là cơ chế "kiểm tra và hoàn thiện định kỳ" ở TẦNG HỆ THỐNG mà 4
+    tác vụ nội dung không phủ tới. **CHƯA từng chạy lần nào** (0 lần, lần đầu 03/10/2026) — SKILL.md
+    đặc tả kỹ (`~/.claude/scheduled-tasks/kiem-tra-hoan-thien-he-thong-thang/SKILL.md`), nhưng
+    chưa có bằng chứng THI HÀNH thật; đừng khẳng định nó "đang hoạt động" cho tới khi có ≥1 lần
+    `succeeded` để đối chiếu.
   - **🔴 CI hiện KHÔNG chạy ở CẢ HAI repo — đo 09/09/2026, KHÁC hẳn câu "cả hai xanh" từng ghi ở
     đây.** `gh api .../actions/permissions` trả `enabled:false` cho CẢ hai repo (GitHub Actions bị
     tắt ở cấp cài đặt repo, không phải lỗi nội dung workflow) — mọi run gần đây `queued` vô thời hạn

@@ -40,6 +40,10 @@ def _sach(monkeypatch):
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
+    # 22/09/2026: chặn nốt hai làn mới — có thể gọi mạng thật/tốn hạn mức tháng nếu máy
+    # chạy test đã bật ENABLE_CORE/ENABLE_CONSENSUS/ENABLE_SERPAPI_SCHOLAR thật.
+    monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
     S._NCBI_CHAN["bi_chan"] = False
     S._SUY_GIAM.clear()
     yield

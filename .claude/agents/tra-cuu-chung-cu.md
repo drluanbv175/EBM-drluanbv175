@@ -106,6 +106,13 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
 ```
 
 <!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+- **Toàn văn guideline BỊ CHẶN (Cloudflare/giấy phép NICE — BTS/Thorax, thêm
+  23/09/2026):** khi `bts_guidelines.py`/`pmc_guideline_fulltext.py` từ chối mà đã
+  biết DOI/PMID, gọi `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat
+  (doi=..., pmid=...)` — trả trích dẫn xác minh thật (Europe PMC/Crossref) + tóm tắt
+  từ abstract KHI CÓ. **KHÔNG PHẢI toàn văn** — abstract không có số liệu/ngưỡng/liều
+  cụ thể, chỉ nội dung tổng quát. Không có abstract thì trả trung thực "chỉ có trích
+  dẫn", KHÔNG tự bịa tóm tắt từ trí nhớ.
 - **RAG NGỮ NGHĨA trên toàn văn OA (nâng cấp 16/08/2026):** khi câu hỏi cần TÌM ĐOẠN
   trong bài (không chỉ metadata), chạy `~/.ebm-venv/bin/python tools/rag_toan_van.py
   --tim "<câu hỏi>" [--study <mã>]` — hỏi tiếng Việt trúng đoạn tiếng Anh cùng nghĩa

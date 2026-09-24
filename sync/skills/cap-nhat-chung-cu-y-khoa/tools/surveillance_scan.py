@@ -875,6 +875,32 @@ def ghi_alert(dong_md: list[str], ngay: str) -> Path | None:
         fh.write("\n".join(dong_moi) + "\n")
     return f
 
+def _tim_medical_ebm_automation() -> Path | None:
+    """Đường dẫn tới `medical-ebm-automation/` — DÒ THEO CÂY THƯ MỤC, không dùng
+    một chỉ số `parents[N]` cố định.
+
+    VÁ 22/09/2026 (cùng đợt nối làn CORE): file này sống ở BA vị trí độ sâu khác
+    nhau kể từ gốc repo — `EBM-Dashboards/tools/` (2 cấp) và hai bản vendor
+    `sync/skills/*/tools/` (4 cấp). Bản cũ dùng `parents[2]` cố định — đúng cho
+    vị trí đầu, nhưng SAI cho hai bản vendor (trỏ vào `sync/skills/`, nơi không
+    có gì). Đo thực nghiệm: từ bản vendor, `parents[2] / "medical-ebm-automation"`
+    không tồn tại dù `medical-ebm-automation/` là ANH EM của gốc repo thật —
+    khiến làn Scopus VÀ kiểm rút bài qua RetractionChain im lặng trả `[]`/bỏ
+    qua mỗi khi chạy từ bản vendor, giống hệt "chưa cấu hình" dù thực ra đã bật
+    đủ. Dò lên tối đa 7 cấp, dừng ở thư mục ĐẦU TIÊN có
+    `medical-ebm-automation/app/sources/` — tự đúng ở cả ba vị trí.
+    """
+    p = Path(__file__).resolve().parent
+    for _ in range(7):
+        ung = p / "medical-ebm-automation"
+        if (ung / "app" / "sources").is_dir():
+            return ung
+        if p.parent == p:
+            break
+        p = p.parent
+    return None
+
+
 _CHUOI_RUT_BAI = None   # dựng một lần cho cả tiến trình (xem gan_do_tin_cay)
 
 
@@ -911,8 +937,8 @@ def gan_do_tin_cay(candidates: Sequence[Candidate]) -> list[Candidate]:
         return []
     trong_kho = _pmid_da_co_trong_kho()
     trang_thai: dict[str, str] = {}
-    mea = Path(__file__).resolve().parents[2] / "medical-ebm-automation"
-    if (mea / "app" / "sources" / "retraction_chain.py").exists():
+    mea = _tim_medical_ebm_automation()
+    if mea and (mea / "app" / "sources" / "retraction_chain.py").exists():
         try:
             import sys as _sys  # noqa: PLC0415
             if str(mea) not in _sys.path:
@@ -1064,8 +1090,8 @@ def search_scopus_lane(topic: str, days: int, retmax: int,
     factory là "giả lập Scopus sẵn sàng", không phải kiểm lại cổng đó.
     """
     if client_factory is None:
-        mea = Path(__file__).resolve().parents[2] / "medical-ebm-automation"
-        if not (mea / "app" / "sources" / "scopus.py").exists():
+        mea = _tim_medical_ebm_automation()
+        if mea is None or not (mea / "app" / "sources" / "scopus.py").exists():
             return []
         import sys as _sys  # noqa: PLC0415
         if str(mea) not in _sys.path:
@@ -1093,6 +1119,158 @@ def search_scopus_lane(topic: str, days: int, retmax: int,
             rut_bai="chua_kiem",  # gan_do_tin_cay() sẽ ghi đè nếu có pmid thật
         ))
     return ra
+
+
+def search_core_lane(topic: str, days: int, retmax: int,
+                     *, client_factory: Callable[[], object] | None = None,
+                     ) -> list[Candidate]:
+    """LÀN CORE (core.ac.uk) — thêm 22/09/2026, cùng khuôn `search_scopus_lane()`.
+
+    CORE là nguồn PHỦ RỘNG (>452 triệu bản ghi, luận văn/báo cáo xám mà PubMed/
+    Scopus không phủ) — bác sĩ đã bật `ENABLE_CORE=true` + `CORE_API_KEY` thật
+    22/09/2026, kiểm sống qua `run.py test-live core` (count=5, is_mock:false).
+    Trước bản vá này, CORE đã bật ở tầng nghiên cứu thủ công (research/manager.py,
+    run.py test-live) nhưng KHÔNG có lane ở đây — 43 chủ đề theo dõi hằng tuần
+    sẽ không tự nhận ứng viên từ CORE, chỉ dùng được khi tra cứu MỘT câu hỏi cụ
+    thể. TÁI DÙNG `app/sources/core_api.py::CoreClient`, KHÔNG viết lại logic.
+
+    Đặt TRƯỚC `gan_do_tin_cay()` (cùng vị trí Scopus, khác preprint/trials):
+    `CoreClient` đôi khi trả `pmid` thật (trường `pubmedId` của core.ac.uk), nên
+    phải được kiểm rút bài như ứng viên PubMed chính — không được mãi mãi
+    "chua_kiem" như preprint/trials (cấu trúc của chúng không có pmid để tra).
+
+    KHÁC Scopus ở một điểm: `CoreClient` KHÔNG raise khi thiếu key (CORE chạy
+    được không khoá, ở nhịp thấp hơn) — nên hàm này không cần phân biệt "thiếu
+    key" khỏi "lỗi mạng", cả hai đều đã được `CoreClient.search()` tự nuốt và
+    trả `[]` (đã kiểm ở tầng nghiên cứu, 15 test `tests/test_core_api.py`)."""
+    if client_factory is None:
+        mea = _tim_medical_ebm_automation()
+        if mea is None or not (mea / "app" / "sources" / "core_api.py").exists():
+            return []
+        import sys as _sys  # noqa: PLC0415
+        if str(mea) not in _sys.path:
+            _sys.path.insert(0, str(mea))
+        from app.config import settings  # noqa: PLC0415
+        if not settings.enable_core:
+            return []
+        from app.sources.core_api import CoreClient  # noqa: PLC0415
+        client_factory = CoreClient
+    client = client_factory()
+    client.use_mock = False
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    records = client.search(topic, max_results=min(retmax, 20), since_date=since)
+    ra: list[Candidate] = []
+    for rec in records:
+        url = rec.url or (f"https://doi.org/{rec.doi}" if rec.doi else "")
+        ra.append(Candidate(
+            pmid=rec.pmid or "",
+            publication_date=rec.publication_date or "",
+            title=(rec.title or "")[:300],
+            url=url,
+            source="CORE (core.ac.uk)",
+            journal_or_organization=rec.journal_or_organization or "",
+            tang="core_bo_sung",
+            rut_bai="chua_kiem",  # gan_do_tin_cay() sẽ ghi đè nếu có pmid thật
+        ))
+    return ra
+
+
+@dataclass
+class _BanGhiToiThieu:
+    """Thay thế NHẸ cho `app.sources.base.RawRecord` khi `medical-ebm-automation` không tới
+    được (bản sao trần trên CI, hoặc caller/test tiêm sẵn `bo_sung_fn` để cô lập môi trường
+    khỏi việc phải dò/`sys.path`). CHỈ dùng để DỰNG đầu vào cho `bo_sung_du_phong_lane()`
+    khi `bo_sung_fn` đã được tiêm — KHÔNG dùng ở đường tự dò môi trường thật (ở đó vẫn bắt
+    buộc RawRecord thật). Chỉ giữ đúng các trường hàm đó thực sự đọc/ghi."""
+    source: str = ""
+    title: str = ""
+    journal_or_organization: str | None = None
+    publication_date: str | None = None
+    doi: str | None = None
+    pmid: str | None = None
+    url: str | None = None
+    ingest_query: str | None = None
+
+
+def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retmax: int,
+                          *, bo_sung_fn: Callable[..., tuple] | None = None,
+                          ) -> tuple[list[Candidate], str]:
+    """BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar) cho vòng quét tuần —
+    thêm 22/09/2026, TÁI DÙNG `app/services/fallback_ladder.py::bo_sung_neu_thieu()`
+    NGUYÊN VẸN (không viết lại cổng đủ-chứng-cứ/xác minh Crossref-PubMed/hạn mức).
+
+    CỐ Ý KHÁC Scopus/CORE — KHÔNG phải một lane độc lập chạy vô điều kiện cho cả
+    43 chủ đề. Consensus (Free 10 lượt/tháng) và SerpApi Scholar (Free 200
+    lượt/tháng, khai 250 nhưng chừa biên) sẽ CẠN HẠN MỨC ngay trong MỘT lượt
+    quét nếu gọi vô điều kiện cho từng chủ đề. `bo_sung_neu_thieu()` tự chấm cổng
+    "đã đủ chứng cứ đáng tin chưa" (đọc `unique_hien_co` — mọi ứng viên PubMed/
+    Europe PMC/Crossref/OpenAlex/Scopus/CORE đã tìm được cho chủ đề NÀY) và CHỈ
+    gọi ra bậc thang khi thiếu — đúng nguyên tắc bác sĩ đã chốt 20/09/2026 "chỉ
+    khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm".
+
+    Trả `([], "")` khi: `medical-ebm-automation` không tới được · cờ dự phòng
+    tắt (`du_phong_dang_bat()` False) · cổng đủ-chứng-cứ đóng cho chủ đề này.
+    Không raise cho các trường hợp trên — CHỈ raise khi lỗi thật ngoài dự kiến
+    (import hỏng, lỗi lập trình), để `run_scan()` ghi vào `lan_phu_loi`.
+
+    VÁ 22/09/2026 vòng 1 (bắt bằng kiểm đột biến — không phải suy đoán): bản đầu chỉ
+    nối `mea` vào `sys.path` BÊN TRONG nhánh `if bo_sung_fn is None:`, nhưng
+    `from app.sources.base import RawRecord` ở CUỐI hàm chạy VÔ ĐIỀU KIỆN — khi
+    test/caller tiêm sẵn `bo_sung_fn` (bỏ qua nhánh dò môi trường, đúng ý định
+    của tham số này — xem docstring `search_scopus_lane`), `sys.path` không hề
+    được nối, và `import app...` ném `ModuleNotFoundError`.
+
+    VÁ 22/09/2026 vòng 2 (bắt bởi CI thật trên bản sao TRẦN — PR #21, 4 job kiem-tinh đỏ):
+    vòng 1 sửa quá tay — thêm `if mea is None: return [], ""` NGAY ĐẦU HÀM, khiến khi
+    `medical-ebm-automation` không tồn tại (đúng CI của REPO GỐC — bare checkout, không có
+    thư mục anh em đó) thì HÀM TRẢ VỀ RỖNG NGAY LẬP TỨC dù `bo_sung_fn` đã được tiêm sẵn —
+    lại đúng cùng một lớp lỗi vòng 1 vừa vá (tham số tiêm sẵn không còn tác dụng bỏ qua môi
+    trường). Nay tách hẳn: `RawRecord` chỉ BẮT BUỘC là lớp thật khi TỰ DÒ (`bo_sung_fn is
+    None`, cần gọi `bo_sung_neu_thieu()` thật — hàm đó có thể trông cậy vào các trường/khả
+    năng khác của RawRecord thật ngoài truy cập thuộc tính đơn giản). Khi CALLER đã tiêm
+    `bo_sung_fn` (test hoặc caller khác), dùng `_BanGhiToiThieu` — lớp thay thế NHẸ, không
+    cần `medical-ebm-automation` — vì `bo_sung_fn` khi đó là "hộp đen" do caller kiểm soát,
+    chỉ cần đối tượng có ĐÚNG thuộc tính (Python duck-typing; đã soát `fallback_ladder.py`/
+    `fallback_verification.py` không có `isinstance(rec, RawRecord)` nào chặn việc này).
+    """
+    mea = _tim_medical_ebm_automation()
+    RawRecord = None
+    if mea is not None and (mea / "app" / "sources" / "base.py").exists():
+        import sys as _sys  # noqa: PLC0415
+        if str(mea) not in _sys.path:
+            _sys.path.insert(0, str(mea))
+        from app.sources.base import RawRecord as _RawRecord_that  # noqa: PLC0415
+        RawRecord = _RawRecord_that
+    if bo_sung_fn is None:
+        # Đường TỰ DÒ MÔI TRƯỜNG — bắt buộc cả mea LẪN RawRecord thật, không có đường lùi.
+        if mea is None or RawRecord is None or not (mea / "app" / "services" / "fallback_ladder.py").exists():
+            return [], ""
+        from app.services.fallback_ladder import bo_sung_neu_thieu, du_phong_dang_bat  # noqa: PLC0415
+        if not du_phong_dang_bat():
+            return [], ""
+        bo_sung_fn = bo_sung_neu_thieu
+    if RawRecord is None:
+        RawRecord = _BanGhiToiThieu
+    ban_ghi_hien_co = [RawRecord(
+        source=c.source or "surveillance", title=c.title, journal_or_organization=c.journal_or_organization,
+        publication_date=c.publication_date, pmid=c.pmid or None, url=c.url, ingest_query=topic,
+    ) for c in unique_hien_co]
+    extra, tom_tat = bo_sung_fn(topic, None, ban_ghi_hien_co, max_results=min(retmax, 5))
+    ra: list[Candidate] = []
+    for rec in extra:
+        url = rec.url or (f"https://doi.org/{rec.doi}" if rec.doi else "")
+        ra.append(Candidate(
+            pmid=rec.pmid or "",
+            publication_date=rec.publication_date or "",
+            title=(rec.title or "")[:300],
+            url=url,
+            source=f"Dự phòng: {rec.source}",
+            journal_or_organization=rec.journal_or_organization or "",
+            tang="du_phong_bac_thang",
+            rut_bai="chua_kiem",
+        ))
+    ghi_chu = "" if not tom_tat.get("loi_noi_bo") else f"bậc thang dự phòng lỗi nội bộ: {tom_tat['loi_noi_bo']}"
+    return ra, ghi_chu
 
 
 def run_scan(
@@ -1186,6 +1364,19 @@ def run_scan(
             except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                 ghi_chu_lan.append(f"làn scopus lỗi: {type(exc).__name__}")
                 lan_phu_loi.append("scopus")
+            # LÀN CORE (core.ac.uk) — thêm 22/09/2026, CÙNG vị trí Scopus (trước
+            # gan_do_tin_cay) vì CoreClient đôi khi trả pmid thật (trường
+            # 'pubmedId'). Xem docstring search_core_lane() cho lý do đầy đủ.
+            try:
+                for candidate in search_core_lane(row["topic"], days, max_results):
+                    khoa_c = candidate.pmid or candidate.url
+                    if khoa_c in all_pmids:
+                        continue
+                    all_pmids.add(khoa_c)
+                    unique.append(candidate)
+            except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
+                ghi_chu_lan.append(f"làn core lỗi: {type(exc).__name__}")
+                lan_phu_loi.append("core")
             unique = gan_do_tin_cay(unique)
             # HAI LÀN (nâng cấp C, 15/08/2026) — chạy SAU gan_do_tin_cay vì tự
             # khai nhãn riêng (preprint không có PMID để tra rút bài; NCT
@@ -1204,6 +1395,25 @@ def run_scan(
                 except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                     ghi_chu_lan.append(f"làn {ten_lan} lỗi: {type(exc).__name__}")
                     lan_phu_loi.append(ten_lan)
+            # BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar) — thêm 22/09/2026. CHẠY SAU
+            # mọi lane chính (Scopus/CORE/preprint/trials): cổng đủ-chứng-cứ trong
+            # bo_sung_du_phong_lane() cần `unique` ĐẦY ĐỦ nhất để chấm đúng "chủ đề này còn
+            # thiếu chứng cứ đáng tin không" — chấm sớm hơn sẽ thấy thiếu OAN và gọi tốn hạn
+            # mức Free (Consensus 10/tháng · SerpApi 200/tháng) một cách không cần thiết.
+            try:
+                extra, ghi_chu_du_phong = bo_sung_du_phong_lane(row["topic"], unique, max_results)
+                for candidate in extra:
+                    khoa_c = candidate.pmid or candidate.url
+                    if khoa_c in all_pmids:
+                        continue
+                    all_pmids.add(khoa_c)
+                    unique.append(candidate)
+                if ghi_chu_du_phong:
+                    ghi_chu_lan.append(ghi_chu_du_phong)
+                    lan_phu_loi.append("du_phong_bac_thang")
+            except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
+                ghi_chu_lan.append(f"làn du_phong_bac_thang lỗi: {type(exc).__name__}")
+                lan_phu_loi.append("du_phong_bac_thang")
             # PASS_DEGRADED: có truy vấn rơi xuống dự phòng ⇒ kết quả có thể THIẾU. Con trỏ KHÔNG tiến để
             # lượt sau quét lại đúng cửa sổ này — trước đây vẫn tiến ⇒ cửa sổ 24/08–07/09 mất vĩnh viễn.
             trang_thai = "PASS_DEGRADED" if suy_giam else "PASS"
@@ -1323,7 +1533,9 @@ def markdown_report(report: dict) -> str:
                 # và không in «PMID <rỗng>».
                 ngoai_pubmed = item.get("tang") in ("preprint_chua_binh_duyet",
                                                     "thu_nghiem_dang_ky",
-                                                    "scopus_bo_sung")
+                                                    "scopus_bo_sung",
+                                                    "core_bo_sung",       # thêm 22/09/2026
+                                                    "du_phong_bac_thang")  # thêm 22/09/2026
                 pts = [x for x in (item.get("pubtype") or []) if x != "Journal Article"]
                 if pts:
                     nhan.append("loại: " + ", ".join(pts[:3]))

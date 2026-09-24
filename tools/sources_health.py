@@ -50,6 +50,22 @@ DIEM_THAM = {
     "SRC-005": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
     "SRC-006": "https://api.fda.gov/drug/label.json?limit=1",
     "SRC-007": "https://api.openalex.org/works?per-page=1&mailto=bsluanbv175@gmail.com",
+    # SRC-020 (kcb.vn) và SRC-037 (NICE qua Europe PMC) — thêm 22/09/2026 cùng đợt đóng 4 khoảng
+    # trống nguồn. Cả hai miễn phí, không hạn mức, không cần khoá — đã kiểm reachability RIÊNG
+    # từ chính môi trường chạy chốt này trước khi thêm (khác CORE ở dưới, nơi vấn đề là thiếu
+    # header xác thực chứ không phải reachability): kcb.vn trả HTTP 200 thật; Europe PMC đã dùng
+    # chung ổn định cho SRC-005.
+    "SRC-020": "https://kcb.vn/phac-do",
+    "SRC-037": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
+    # CỐ Ý KHÔNG có SRC-032/033/034/035 (Scopus/CORE/Consensus/SerpApi) — thử thêm CORE
+    # 22/09/2026 (miễn phí, tưởng an toàn để thăm sống định kỳ) rồi PHÁT HIỆN NGAY lỗi: `_tham()`
+    # không gắn header Authorization, nên probe đi ẨN DANH và bị core.ac.uk giới hạn nhịp CHẶT
+    # HƠN nhiều so với khi có khoá thật — một lượt `run.py test-live core` thật ngay trước đó
+    # (dùng khoá) đã đủ để lượt probe ẩn danh kế tiếp nhận HTTP 429, khiến sources_health.py
+    # ghi "degraded" SAI cho một nguồn đang khoẻ. Ba nguồn kia (Scopus/Consensus/SerpApi) vốn
+    # đã tránh DIEM_THAM vì tốn hạn mức trả phí/tháng; CORE bị loại vì LÝ DO KHÁC — probe không
+    # xác thực không phản ánh đúng tình trạng của client CÓ xác thực. Không thêm lại cho tới khi
+    # `_tham()` biết gắn Authorization theo từng nguồn (việc chưa làm).
 }
 CHU_KY_NGAY = {"daily": 1, "weekly": 7, "monthly": 31, "quarterly": 92, "ad-hoc": 3650}
 
