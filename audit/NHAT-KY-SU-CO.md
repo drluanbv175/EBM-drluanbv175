@@ -3090,4 +3090,4 @@ bản tin W30 PASS. **Link chết THẬT phát hiện kèm:** trang DSC gabapent
 -gabapentin-neurontin`) báo «Page Not Found» cả trong trình duyệt — nằm trong dòng trích dẫn của ITEM-18 dashboard
 `DauManTinh_TiepCanToanDien_20260818` (không phải trường `url` nên cổng không kiểm). Trang FDA còn sống cho cùng thông báo:
 `/safety/medical-product-safety-information/neurontin-gralise-horizant-gabapentin-and-lyrica-lyrica-cr-pregabalin-drug-safety-communication`
-(chưa thay — chờ bác sĩ).
+— **đã thay 24/09/2026 theo duyệt của bác sĩ** (sao lưu `…_20260818.html.bak-20260924-truoc-thay-link-gabapentin`; trang mới đã mở bằng trình duyệt và ghi vào `url-xac-minh-trinh-duyet.json`; bộ năm dựng lại 5/5). Hai bản sao trong hub `EBM_MASTER/` (WEB_DASHBOARDS, NOTEBOOKLM_SOURCES) tự cập nhật ở lần đồng bộ hub kế tiếp; hai đoạn trong chỉ mục RAG là danh mục tham khảo NGUYÊN VĂN của bài báo toàn văn (PMID 36327391, 42236659) — giữ nguyên.
