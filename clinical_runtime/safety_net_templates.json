@@ -1,6 +1,6 @@
 {
-  "phien_ban": "2.2.1",
-  "ngay_cap_nhat": "2026-09-03",
+  "phien_ban": "2.2.2",
+  "ngay_cap_nhat": "2026-09-24",
   "kiem_bang": "python3 tools/kiem_safety_net.py",
   "vi_sao_co": [
     "Bản 1.x của file này là ba mẫu tiếng Anh chung chung ('Recommend follow-up within 4-6 weeks',",
@@ -194,19 +194,45 @@
         "da_duyet": "Bác sĩ chuẩn y 29/08/2026 — trả lời «Duyệt cả 7» sau khi xem bảng tóm tắt audit/06-goi-quyet-dinh-bac-si_2026-08-29.md. Nội dung tiêu chí giữ nguyên bản đề xuất 28/08/2026 (nguồn đã tra PubMed). Cần bác sĩ kiểm chứng khi dùng."
       },
       "dan_benh_nhan_quay_lai": {
-        "trang_thai": "chua-dien",
+        "trang_thai": "co-nguon",
+        "nguon": {
+          "ten": "NHS — Chest pain (trang thông tin cho người bệnh của Dịch vụ Y tế Quốc gia Anh)",
+          "guideline": "NHS website — Chest pain",
+          "nam": "2023",
+          "url": "https://www.nhs.uk/conditions/chest-pain/",
+          "ngay_ra_soat_trang": "2023-08-08",
+          "han_ra_soat_trang": "2026-08-08",
+          "kiem_luc": "2026-09-24"
+        },
         "noi_dung": [
           {
-            "cau": "Đau ngực xuất hiện hoặc tăng lên khi gắng sức → đi khám sớm",
+            "cau": "GỌI CẤP CỨU 115 NGAY nếu: đau hoặc khó chịu ở ngực xảy ra ĐỘT NGỘT và KHÔNG HẾT — cảm giác bị bóp chặt, đè nặng, nóng rát hoặc giống khó tiêu",
+            "nguon_goc": "NHS «Chest pain» (rà soát 08/08/2023; kiểm sống 24/09/2026) — https://www.nhs.uk/conditions/chest-pain/ — mục «Call 999 if», ý 1"
+          },
+          {
+            "cau": "… cơn đau LAN ra cánh tay (trái hoặc phải), cổ, hàm, bụng hoặc lưng",
+            "nguon_goc": "NHS «Chest pain» (rà soát 08/08/2023; kiểm sống 24/09/2026) — https://www.nhs.uk/conditions/chest-pain/ — mục «Call 999 if», ý 2"
+          },
+          {
+            "cau": "… đau ngực kèm VÃ MỒ HÔI, BUỒN NÔN, CHOÁNG VÁNG hoặc KHÓ THỞ",
+            "nguon_goc": "NHS «Chest pain» (rà soát 08/08/2023; kiểm sống 24/09/2026) — https://www.nhs.uk/conditions/chest-pain/ — mục «Call 999 if», ý 3"
+          },
+          {
+            "cau": "Đi khám SỚM (trong ngày hoặc ngày hôm sau) nếu: đau ngực xuất hiện hoặc tăng lên khi gắng sức (đi nhanh, leo cầu thang)",
+            "ma_nguon": "M4",
             "nguon_goc": "Marburg M4 — PMID 20603345, doi:10.1503/cmaj.100212"
           },
           {
-            "cau": "[CẦN BÁC SĨ ĐIỀN] — mốc GỌI CẤP CỨU (đau kéo dài bao lâu, dấu đi kèm nào)",
-            "nguon_goc": "Nguồn đề xuất để rút ngưỡng: AHA/ACC 2021 Guideline for the Evaluation and Diagnosis of Chest Pain — PMID 34709879, doi:10.1161/CIR.0000000000001029 (Practice Guideline; TÓM TẮT không nêu ngưỡng cụ thể — phải lấy từ toàn văn, không được bịa)"
+            "cau": "… đau ngực lúc có lúc không, hoặc đã hết nhưng bạn vẫn lo lắng",
+            "nguon_goc": "NHS «Chest pain» (rà soát 08/08/2023; kiểm sống 24/09/2026) — https://www.nhs.uk/conditions/chest-pain/ — mục «See a GP if»"
           }
         ],
-        "de_xuat": "Do Claude soạn 29/08/2026 theo yêu cầu «bổ sung nguồn cho chính xác» của bác sĩ; mỗi câu truy về nguồn ghi kèm (tra sống PubMed 29/08/2026). CÂU CHỮ CUỐI chưa được bác sĩ chuẩn y — chỉ in cho bệnh nhân sau khi bác sĩ duyệt (Cổng A). Cần bác sĩ kiểm chứng.",
-        "sua_2026_09_03": "Hạ `trang_thai` từ `co-nguon` xuống `chua-dien` — công cụ tools/kiem_safety_net.py (luật R11 mới thêm) phát hiện khối này khai `co-nguon` trong khi vẫn còn nguyên `[CẦN BÁC SĨ ĐIỀN]` ở mục thứ hai. Câu đầu ĐÃ có nguồn đầy đủ (Marburg M4); mục thứ hai còn thiếu MỐC THỜI GIAN cụ thể mà tóm tắt AHA/ACC 2021 không nêu — không tự suy ra số từ toàn văn chưa đọc. Giữ nguyên cả hai mục, chỉ đổi trạng thái cho ĐÚNG THỰC TRẠNG; bác sĩ tra toàn văn AHA/ACC 2021 điền nốt mốc thời gian rồi khai lại `co-nguon`."
+        "ghi_chu": "Câu 1–3 và 5: diễn đạt cho người bệnh Việt Nam của trang NHS «Chest pain»; số 999 của Anh đổi thành 115. Trang NHS KHÔNG nêu ngưỡng số phút nên lời dặn cố ý không ghi ngưỡng; ngưỡng «> 15 phút» của NICE CG95 (dành cho bác sĩ) chưa đọc được toàn văn để kiểm (nice.org.uk/bmj.com chặn truy cập tự động 24/09) — không đưa vào. Trang NHS đã quá hạn rà soát kế (08/08/2026) — xem lại khi NHS cập nhật. Câu 4 giữ nguyên câu Marburg M4 đã có nguồn. Chưa đưa «không tự lái xe» và «nhai aspirin» vì nguồn kiểm được hôm nay không nêu — bác sĩ quyết.",
+        "de_xuat": "Do Claude soạn 24/09/2026 theo yêu cầu bác sĩ («viết lời dặn chuẩn nhất»); nguồn tra sống cùng ngày. BÁC SĨ ĐÃ CHUẨN Y câu chữ ngày 24/09/2026 (xem `bac_si_chuan_y`). Cần bác sĩ kiểm chứng.",
+        "bac_si_chuan_y": {
+          "ngay": "2026-09-24",
+          "cach": "Bác sĩ đọc 5 câu trong phiên Claude và trả lời «duyệt 30» (PR #30) — đồng ý nguyên văn."
+        }
       },
       "moc_thoi_gian": "[CẦN BÁC SĨ ĐIỀN]",
       "ngay_ra_soat": "2026-08-29"
@@ -587,6 +613,14 @@
     {
       "ngay": "2026-09-03",
       "noi_dung": "Workflow đối kháng đa-agent phát hiện: tools/kiem_safety_net.py chưa kiểm nội dung khối dan_benh_nhan_quay_lai (chỉ đếm độ phủ) — dau-nguc khai co-nguon mà còn nguyên [CẦN BÁC SĨ ĐIỀN]. Vá công cụ thêm R10/R11 (mirror R4/R6 cho khối này) và hạ trang_thai của dau-nguc.dan_benh_nhan_quay_lai về chua-dien cho đúng thực trạng — KHÔNG tự điền mốc thời gian gọi cấp cứu (cần đọc toàn văn AHA/ACC 2021, không được bịa)."
+    },
+    {
+      "ngay": "2026-09-24",
+      "noi_dung": "Bác sĩ yêu cầu «viết lời dặn chuẩn nhất» cho đau ngực: Claude soạn 5 câu (3 dấu hiệu gọi cấp cứu 115 + 2 dấu hiệu đi khám sớm) từ trang NHS «Chest pain» (kiểm sống 24/09/2026) và Marburg M4; không ghi ngưỡng số phút vì nguồn kiểm được không nêu. Khối lời dặn về co-nguon, câu chữ cuối chờ bác sĩ chuẩn y."
+    },
+    {
+      "ngay": "2026-09-24",
+      "noi_dung": "Bác sĩ chuẩn y nguyên văn 5 câu lời dặn đau ngực («duyệt 30»). Các khối lời dặn khác vẫn ở trạng thái đề xuất chờ chuẩn y."
     }
   ]
 }
