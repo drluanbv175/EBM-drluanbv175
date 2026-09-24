@@ -39,8 +39,11 @@ TRUY_VAN_THAT = [
 
 @pytest.fixture(autouse=True)
 def _ngoai_tuyen(monkeypatch):
-    for ten in ("search_preprint_lane", "search_trials_lane", "search_scopus_lane"):
+    # 22/09/2026: thêm search_core_lane/bo_sung_du_phong_lane vào danh sách bị chặn —
+    # cả ba đều có thể gọi mạng thật/tốn hạn mức tháng nếu máy chạy test đã bật cờ thật.
+    for ten in ("search_preprint_lane", "search_trials_lane", "search_scopus_lane", "search_core_lane"):
         monkeypatch.setattr(S, ten, lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
     monkeypatch.setattr(S, "gan_do_tin_cay", lambda c: list(c))
     S._NCBI_CHAN["bi_chan"] = False
     S._SUY_GIAM.clear()

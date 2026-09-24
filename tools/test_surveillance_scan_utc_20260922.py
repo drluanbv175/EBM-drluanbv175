@@ -38,6 +38,10 @@ def test_cursor_pass_dung_datetime_now_utc(monkeypatch):
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
+    # 22/09/2026: chặn nốt hai làn mới — có thể gọi mạng thật/tốn hạn mức tháng nếu máy
+    # chạy test đã bật ENABLE_CORE/ENABLE_CONSENSUS/ENABLE_SERPAPI_SCHOLAR thật.
+    monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
     monkeypatch.setattr(S, "datetime", _DatetimeCoDinh)
     cursor = {}
     rep = S.run_scan([{"topic": "A", "query": "q"}], days=30, max_results=5, cursor=cursor,
@@ -52,6 +56,10 @@ def test_mindate_tinh_lai_tu_cursor_dung_utc(monkeypatch):
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
+    # 22/09/2026: chặn nốt hai làn mới — có thể gọi mạng thật/tốn hạn mức tháng nếu máy
+    # chạy test đã bật ENABLE_CORE/ENABLE_CONSENSUS/ENABLE_SERPAPI_SCHOLAR thật.
+    monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
     monkeypatch.setattr(S, "datetime", _DatetimeCoDinh)
     thay: list[str] = []
 

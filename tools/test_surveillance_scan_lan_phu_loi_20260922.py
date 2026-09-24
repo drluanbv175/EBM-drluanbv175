@@ -29,7 +29,17 @@ def _summarize_ok(ids):
     return []
 
 
+def _khong_cham_core_va_du_phong(monkeypatch):
+    """22/09/2026 — search_core_lane/bo_sung_du_phong_lane có thể gọi mạng thật/tốn
+    hạn mức tháng nếu máy chạy test đã bật cờ thật (đúng tình trạng máy bác sĩ). Các
+    test trong file này không kiểm hai làn đó, nên phải chặn về [] (thành công rỗng,
+    không lỗi) để không ô nhiễm assertion về preprint/clinicaltrials/scopus."""
+    monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
+
+
 def test_ca_ba_lan_phu_hong_van_ghi_ten_lan_du_status_pass(monkeypatch):
+    _khong_cham_core_va_du_phong(monkeypatch)
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
@@ -42,6 +52,7 @@ def test_ca_ba_lan_phu_hong_van_ghi_ten_lan_du_status_pass(monkeypatch):
 
 
 def test_lan_phu_chay_duoc_thi_lan_phu_loi_rong(monkeypatch):
+    _khong_cham_core_va_du_phong(monkeypatch)
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])
@@ -52,6 +63,7 @@ def test_lan_phu_chay_duoc_thi_lan_phu_loi_rong(monkeypatch):
 
 
 def test_chi_mot_lan_hong_chi_ghi_dung_ten_lan_do(monkeypatch):
+    _khong_cham_core_va_du_phong(monkeypatch)
     monkeypatch.setattr(S, "search_preprint_lane", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     monkeypatch.setattr(S, "search_trials_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "search_scopus_lane", lambda *a, **k: [])

@@ -1,508 +1,833 @@
 {
- "updated": "2026-09-14",
- "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
- "sources": [
-  {
-   "id": "SRC-001",
-   "name": "PubMed E-utilities — 43 chủ đề × 4 tầng (guideline→SR/MA→RCT→edat)",
-   "org": "NCBI/NLM",
-   "tier": 1,
-   "domain": [
-    "toàn bộ watchlist"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "E-utilities public, ≤3 req/s không key",
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": 2,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-07",
-   "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-002",
-   "name": "Kênh gọi tên thẩm quyền qua PubMed (Cochrane[ta] · NICE · USPSTF · WHO)",
-   "org": "nhiều",
-   "tier": 1,
-   "domain": [
-    "đa khoa"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-07",
-   "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-003",
-   "name": "Retraction Watch DB ngoại tuyến (30.851 PMID có phán quyết)",
-   "org": "Crossref/RW (CC0)",
-   "tier": 1,
-   "domain": [
-    "toàn kho"
-   ],
-   "access": "file",
-   "endpoint_or_url": "medical-ebm-automation/data/retraction_watch/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "CC0",
-   "scan_frequency": "monthly",
-   "detection_method": "version-field",
-   "measured_latency_days": null,
-   "owner": "agent-A4",
-   "status": "active",
-   "last_success_at": "2026-08-14",
-   "known_gap": "làm mới 30 ngày/lần bằng tools/tai_retraction_watch.py; chỉ tra được PMID, không DOI"
-  },
-  {
-   "id": "SRC-004",
-   "name": "Crossref REST (phân giải DOI + updated-by retraction)",
-   "org": "Crossref",
-   "tier": 1,
-   "domain": [
-    "toàn kho"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://api.crossref.org/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "polite pool, có mailto",
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "agent-A4",
-   "status": "active",
-   "last_success_at": "2026-09-01",
-   "known_gap": null,
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-005",
-   "name": "Europe PMC REST (dự phòng NCBI + soi MEDLINE)",
-   "org": "EMBL-EBI",
-   "tier": 1,
-   "domain": [
-    "toàn kho"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "agent-A4",
-   "status": "active",
-   "last_success_at": "2026-08-24",
-   "known_gap": null,
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-006",
-   "name": "openFDA (nhãn thuốc + cảnh báo an toàn)",
-   "org": "FDA",
-   "tier": 1,
-   "domain": [
-    "an toàn thuốc"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://api.fda.gov/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "weekly_safety.sh",
-   "status": "active",
-   "last_success_at": "2026-09-07",
-   "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-007",
-   "name": "OpenAlex — làn ĐỐI CHIẾU corpus rộng (đề xuất #6, bác sĩ duyệt 15/08)",
-   "org": "OurResearch (OpenAlex)",
-   "tier": 2,
-   "domain": [
-    "toàn bộ watchlist"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://api.openalex.org/works",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "API mở CC0, polite pool qua mailto — không khoá",
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-07",
-   "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
-   "last_probe_at": "2026-09-09"
-  },
-  {
-   "id": "SRC-010",
-   "name": "GOLD — báo cáo COPD thường niên (web hội)",
-   "org": "GOLD",
-   "tier": 1,
-   "domain": [
-    "hô hấp"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://goldcopd.org/2026-gold-report-and-pocket-guide/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 21
-   }
-  },
-  {
-   "id": "SRC-011",
-   "name": "GINA — báo cáo hen thường niên (web hội)",
-   "org": "GINA",
-   "tier": 1,
-   "domain": [
-    "hô hấp"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://ginasthma.org/reports/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-011 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 14
-   }
-  },
-  {
-   "id": "SRC-012",
-   "name": "KDIGO — guideline thận (web hội)",
-   "org": "KDIGO",
-   "tier": 1,
-   "domain": [
-    "thận"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://kdigo.org/guidelines/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — «3 tiêu đề ghi nhận» ở đợt xác minh cùng ngày là SAI, đã kiểm lại bằng state/giam-sat-to-chuc.json thật: cả 3 dòng đều là văn xuôi giới thiệu tĩnh của trang (\"KDIGO guidelines focus on topics...\", \"Interested in providing feedback...\"), KHÔNG một tên guideline nào trong 18 tên thật (ANEMIA IN CKD, TRANSPLANT CANDIDATE...). Nguyên nhân KÉP: (a) khối 18 chủ đề render lười biếng — lượt get_page_text đầu (trước khi cuộn) không thấy; (b) ngay cả khi có đủ nội dung, rut_tieu_de_tu_van_ban() cũ đòi năm/từ khoá (RE_TIEU_DE) mà tên chủ đề KDIGO không mang cái nào — 0/18 lọt qua dù đã cuộn đúng. Trạm vì thế báo 'active' nhưng chỉ canh 3 dòng KHÔNG BAO GIỜ đổi — mù hoàn toàn với mọi thay đổi guideline thật, yên tâm giả. ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: thêm nhận diện khối ALL-CAPS liên tiếp ≥4 dòng (_la_toan_hoa_nhieu_tu/_NGUONG_CHUOI_TOAN_HOA) cho các trang liệt kê chủ đề không mang năm/từ khoá — đo lại trên đúng văn bản Browser thật (cuộn đủ) cho ĐÚNG 18/18 tên guideline, không lẫn CTA/điều hướng (test_giam_sat_to_chuc.py::test_rut_tieu_de_tu_van_ban_nhan_khoi_toan_hoa_kdigo). CHƯA thể tự ghi lại state/giam-sat-to-chuc.json từ phiên này (file đó nằm ngoài git, mang dữ liệu RIÊNG của máy bác sĩ) — việc còn lại: bác sĩ (hoặc một phiên có Browser thật trên máy sống) chạy lại `tools/giam_sat_to_chuc.py --nap-van-ban SRC-012 <file get_page_text đã cuộn hết trang>` MỘT LẦN để nạp đúng 18 tên vào sổ theo dõi, thay cho 3 dòng boilerplate cũ. Sau đó trạm mới thật sự canh được thay đổi guideline KDIGO. Số 4 tiêu đề ghi lúc kích hoạt 01/09/2026 (kich_hoat.so_tieu_de_luc_do) chưa kiểm lại được — không loại trừ khả năng cùng lỗi (a)/(b) này đã có từ lúc đó.",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 4
-   }
-  },
-  {
-   "id": "SRC-013",
-   "name": "ADA Standards of Care (web-first tháng 12 hằng năm)",
-   "org": "ADA",
-   "tier": 1,
-   "domain": [
-    "nội tiết"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://professional.diabetes.org/standards-of-care",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-013 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 6 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 14
-   }
-  },
-  {
-   "id": "SRC-014",
-   "name": "ESC Clinical Practice Guidelines (web hội)",
-   "org": "ESC",
-   "tier": 1,
-   "domain": [
-    "tim mạch"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://www.escardio.org/Guidelines/Clinical-Practice-Guidelines",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-014 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 17 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 34
-   }
-  },
-  {
-   "id": "SRC-015",
-   "name": "ACC/AHA Guidelines & Statements (web hội)",
-   "org": "ACC/AHA",
-   "tier": 1,
-   "domain": [
-    "tim mạch"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://professional.heart.org/en/guidelines-and-statements",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "known_gap": "ĐÃ ACTIVE 09/09/2026 qua kênh Browser thật (urllib bị Cloudflare bot-challenge chặn — 403 kèm cookie __cf_bm, đã xác nhận cả với User-Agent trình duyệt thật). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-015 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (vd get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
-   "last_success_at": "2026-09-09",
-   "kich_hoat": {
-    "ngay": "2026-09-09",
-    "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
-    "so_tieu_de_luc_do": 8
-   }
-  },
-  {
-   "id": "SRC-016",
-   "name": "EMA news/RSS + MHRA Drug Safety Update (feed)",
-   "org": "EMA · MHRA",
-   "tier": 1,
-   "domain": [
-    "an toàn thuốc"
-   ],
-   "access": "rss",
-   "endpoint_or_url": "https://www.gov.uk/drug-safety-update",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "weekly",
-   "detection_method": "feed-item",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-14",
-   "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — trạm đang active nhưng bị nhiễm rác đáng kể ở cả HAI chiều, phát hiện qua verify độc lập (Browser tool thật, 14 cảnh báo an toàn thuốc thật trên trang gov.uk/drug-safety-update). Cấu trúc trang: mỗi cảnh báo in 3 dòng liên tiếp — tiêu đề, mô tả, «Therapeutic area: … Published: DD Month YYYY». Dòng metadata kết thúc bằng năm nên tự lọt RE_TIEU_DE dùng chung thành 'tiêu đề' giả (4/14 lọt trong mẫu đo), trong khi TIÊU ĐỀ THẬT hiếm khi chứa năm/từ khoá guideline|report|update|standards|statement|recommendation nên bị RỚT (chỉ 1/14 lọt qua tình cờ nhờ chứa 'updated'). 25 tiêu đề ghi lúc kích hoạt 01/09/2026 nhiều khả năng cũng nhiễm cùng lỗi (không kiểm lại được — state cục bộ theo máy).\nĐÃ VÁ tools/giam_sat_to_chuc.py: loại bỏ dòng metadata khỏi kết quả + dùng nó làm MỐC để lấy lại tiêu đề thật đứng cách 2 vị trí (xác nhận 14/14, không ngoại lệ). Đo lại sau vá: 14/14 tiêu đề thật + 0/14 dòng metadata lọt qua (còn 1 dòng MÔ TẢ lọt qua vì tình cờ chứa 'reports' — hạn chế đã biết của RE_TIEU_DE khớp chuỗi con, không phải hồi quy mới, chấp nhận theo đúng tiền lệ đã ghi ở các nguồn khác).\nĐÃ NẠP THẬT 14/09/2026 (cùng ngày, phiên có Browser thật): chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-016 <file get_page_text>` với nội dung sống của gov.uk/drug-safety-update (867 mục, trang 1) — 21 tiêu đề nạp vào state/giam-sat-to-chuc.json cục bộ (thay 25 tiêu đề nghi nhiễm rác từ 01/09/2026), trong đó 19/21 là tiêu đề cảnh báo thật và 2/21 là câu MÔ TẢ lọt qua (cùng hạn chế RE_TIEU_DE khớp chuỗi con đã ghi ở trên, không phải hồi quy mới). `last_success_at` nay phản ánh lần thu hoạch THẬT này (SUY TỪ ARTIFACT — state file cục bộ vừa ghi — đúng doctrine của tools/sources_health.py, không phải ping/không phải bịa).",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 25
-   }
-  },
-  {
-   "id": "SRC-017",
-   "name": "IDSA practice guidelines · AGS Beers · USPSTF web · WHO web · NICE web",
-   "org": "nhiều",
-   "tier": 1,
-   "domain": [
-    "nhiễm",
-    "lão khoa",
-    "đa khoa"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://www.idsociety.org/practice-guideline/alphabetical-guidelines/",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "AGS Beers toàn văn sau paywall hội viên",
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-09-13",
-   "known_gap": "IDSA (endpoint chinh cua tram nay) da active 13/09/2026 qua Browser that. USPSTF va WHO da TACH thanh nguon rieng SRC-019/SRC-022 (13/09/2026) vi hai to chuc do co trang web ho tro tot cho content-hash va Browser truy cap duoc binh thuong. CON LAI 2/5 to chuc trong ten gop CHUA phu duoc: AGS Beers (geriatricscareonline.org tra 403 Forbidden ngay ca voi Browser that -- chan o TANG TRANG WEB, khong phai egress sandbox; toan van con sau paywall hoi vien theo terms_note) va NICE (nice.org.uk tra 403 Forbidden tuong tu, ca /guidance lan /guidance/published). Day la GIOI HAN KHAC voi egress Python da ghi truoc do -- ngay ca kenh Browser cung khong vuot qua duoc, can bac si tu mo bang trinh duyet ca nhan (co the site chi chan bot/automation) hoac cung cap URL thay the. | ĐÍNH CHÍNH/BỔ SUNG 13/09/2026 (cùng ngày, sau khi verify độc lập qua state/giam-sat-to-chuc.json thật): trạm IDSA nói trên KHÔNG mù như KDIGO (SRC-012), nhưng vẫn hụt đáng kể — đo trên đúng văn bản trang thật (get_page_text, không cần cuộn): 67/114 tiêu đề thật (59%). Nguyên nhân: sàn ≥5 từ trong rut_tieu_de_tu_van_ban() (thiết kế cho rác ACC/AHA) loại luôn 47 tiêu đề IDSA hợp lệ nhưng NGẮN (2-4 từ) + năm ở cuối dòng (\"MRSA 2011\", \"Vancomycin 2020\", \"AMR Guidance 2026\"...). ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: nới sàn ≥5 từ bằng luật OR — chấp nhận dòng ngắn hơn nếu KẾT THÚC bằng năm (không phải chỉ chứa năm ở giữa, để không lẫn rác kiểu \"ESC 2026 Science News\" của ACC/AHA). Đo lại sau vá: 113/114 (99%), chỉ còn \"MRSA 2011\" lọt lưới vì sàn ĐỘ DÀI KÝ TỰ ≥12 của _loc_tieu_de_hop_le dùng chung (chấp nhận, không sửa hàm dùng chung để đổi một trường hợp biên). state/giam-sat-to-chuc.json vẫn còn 67 tiêu đề cũ — chưa tự cập nhật được từ phiên này (file ngoài git); bác sĩ chạy lại --nap-van-ban SRC-017 với văn bản Browser thật MỚI (sau khi kéo bản vá) để nạp đủ 113 tiêu đề.",
-   "kich_hoat": {
-    "ngay": "2026-09-01",
-    "bang": "giam_sat_to_chuc --bat-neu-ok",
-    "so_tieu_de_luc_do": 19
-   }
-  },
-  {
-   "id": "SRC-020",
-   "name": "Bộ Y tế VN — hướng dẫn chẩn đoán điều trị (kcb.vn / moh.gov.vn)",
-   "org": "BYT",
-   "tier": 1,
-   "domain": [
-    "bản địa hoá VN"
-   ],
-   "access": "manual",
-   "endpoint_or_url": null,
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": "văn bản công",
-   "scan_frequency": "quarterly",
-   "detection_method": "human",
-   "measured_latency_days": null,
-   "owner": "bác sĩ",
-   "status": "not-covered",
-   "last_success_at": null,
-   "known_gap": "không API ổn định; làn nhập tay tools/add_vn_source.py (LÔ C) — 0 văn bản đã nhập, 3 khung chờ [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
-  },
-  {
-   "id": "SRC-021",
-   "name": "Cục Quản lý Dược VN — công văn/thu hồi/cảnh báo",
-   "org": "DAV",
-   "tier": 1,
-   "domain": [
-    "an toàn thuốc VN"
-   ],
-   "access": "manual",
-   "endpoint_or_url": null,
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "quarterly",
-   "detection_method": "human",
-   "measured_latency_days": null,
-   "owner": "bác sĩ",
-   "status": "not-covered",
-   "last_success_at": null,
-   "known_gap": "làn nhập tay LÔ C; chưa có bản ghi nào"
-  },
-  {
-   "id": "SRC-030",
-   "name": "UpToDate · DynaMed · Embase (thương mại)",
-   "org": "Wolters Kluwer · EBSCO · Elsevier",
-   "tier": 2,
-   "domain": [
-    "tổng hợp thương mại"
-   ],
-   "access": "none",
-   "endpoint_or_url": null,
-   "auth_required": true,
-   "terms_ok": false,
-   "terms_note": "trả phí, CẤM cào (P5)",
-   "scan_frequency": "ad-hoc",
-   "detection_method": "human",
-   "measured_latency_days": null,
-   "owner": "bác sĩ",
-   "status": "not-covered",
-   "last_success_at": null,
-   "known_gap": "ngoài phạm vi hợp pháp của máy; bác sĩ tra tay khi cần, quyền truy cập [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
-  },
-  {
-   "id": "SRC-031",
-   "name": "ClinicalTrials.gov + medRxiv/bioRxiv (preprint)",
-   "org": "NIH · CSHL",
-   "tier": 3,
-   "domain": [
-    "tín hiệu sớm"
-   ],
-   "access": "api",
-   "endpoint_or_url": "https://clinicaltrials.gov/api/v2/studies",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "weekly",
-   "detection_method": "api-query",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "last_success_at": "2026-08-28",
-   "known_gap": "CỐ Ý chưa nối vào routine lâm sàng (quyết định 14/08): thêm dòng chưa-bình-duyệt khi nhãn tin cậy vừa ổn định sẽ hỏng mục tiêu; MCP có sẵn cho tra tay. scan_frequency ghi 'weekly' vì bám nhịp quét của agent-A2 (ops/schedule.md) — không có nhịp riêng độc lập; SỬA 10/09/2026, giá trị cũ 'theo lượt quét A2' không khớp enum của contracts/sources.schema.json (bắt bởi tools/kiem_hop_dong_nguon.py mới).",
-   "ghi_chu_kich_hoat": "ĐÍNH CHÍNH SỔ 29/08/2026 — mục này LỖI THỜI so với code: hai làn đã được nối vào run_scan từ 15/08/2026 (surveillance_scan.py::search_trials_lane — ClinicalTrials.gov API v2; ::search_preprint_lane — Europe PMC PPR + Crossref, fail-soft từng làn). Bằng chứng chạy thật: CI run #89 ngày 28/08/2026 — hai làn kéo ứng viên THẬT về khiến unit test đỏ (nay đã stub trong test; làn thật vẫn chạy trong quét thật). last_success_at lấy từ chính sự kiện CI đó."
-  },
-  {
-   "id": "SRC-019",
-   "name": "USPSTF Recommendation Topics (web-first)",
-   "org": "USPSTF",
-   "tier": 1,
-   "domain": [
-    "dự phòng",
-    "đa khoa"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation-topics",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — known_gap cũ ở đây mô tả một bug ĐÃ VÁ (commit 32b5589, 13/09/2026): rut_tieu_de_tu_van_ban() lúc đó chưa ghép được cặp dòng «tiêu đề» + «Mon YYYY» đứng liền kề, nên 0/7 dòng qua được cả hai điều kiện cùng lúc. Bug này đã vá, nhưng known_gap chưa cập nhật và không ai chạy lại --nap-van-ban với code mới để kích hoạt.\nĐÃ KÍCH HOẠT THẬT hôm nay: lấy nội dung trang qua Browser tool (không phải suy đoán), chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-019 <file>` với đúng mã đã vá — kết quả 3/3 tiêu đề thật trích được (\"Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025\", \"Syphilis Infection During Pregnancy: Screening May 2025\", \"Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025\") — status chuyển not-covered → active.\nPhát hiện PHỤ trong lúc kích hoạt: _ghi_ung_vien() dùng RA.mkdir(exist_ok=True) THIẾU parents=True — crash FileNotFoundError trên bất kỳ checkout git-thuần nào (EBM-Dashboards/ nằm ngoài git, không tồn tại) ngay khi có ≥1 tiêu đề mới cần ghi ứng viên, dù sources.json/state đã ghi đúng TRƯỚC bước đó. Đã vá (parents=True) + thêm test hồi quy test_ghi_ung_vien_tu_tao_thu_muc_cha_con_thieu (mutation-tested: gỡ vá → đỏ đúng FileNotFoundError, phục hồi → xanh, 21 test khác không hồi quy).",
-   "last_success_at": "2026-09-14",
-   "kich_hoat": {
-    "ngay": "2026-09-14",
-    "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
-    "so_tieu_de_luc_do": 3
-   }
-  },
-  {
-   "id": "SRC-022",
-   "name": "WHO Guidelines (web hội)",
-   "org": "WHO",
-   "tier": 1,
-   "domain": [
-    "đa khoa",
-    "y tế công cộng"
-   ],
-   "access": "html-watch",
-   "endpoint_or_url": "https://www.who.int/publications/who-guidelines",
-   "auth_required": false,
-   "terms_ok": true,
-   "terms_note": null,
-   "scan_frequency": "quarterly",
-   "detection_method": "content-hash",
-   "measured_latency_days": null,
-   "owner": "agent-A2",
-   "status": "active",
-   "known_gap": "Tách RIÊNG khỏi SRC-017 (13/09/2026) — trước đó WHO chỉ được nhắc trong tên gộp của SRC-017 mà KHÔNG có endpoint riêng (WHO qua PubMed alias vẫn phủ gián tiếp, đây là kênh TRỰC TIẾP web hội, bắt được sớm hơn). URL đã xác minh SỐNG qua Browser thật hôm nay, có mục \"Latest WHO guidelines approved by the Guidelines Review Committee\" dùng được cho content-hash. Chưa --nap-van-ban lần nào.",
-   "last_success_at": "2026-09-13",
-   "kich_hoat": {
-    "ngay": "2026-09-13",
-    "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
-    "so_tieu_de_luc_do": 17
-   }
-  }
- ]
+  "updated": "2026-09-23",
+  "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
+  "sources": [
+    {
+      "id": "SRC-001",
+      "name": "PubMed E-utilities — 43 chủ đề × 4 tầng (guideline→SR/MA→RCT→edat)",
+      "org": "NCBI/NLM",
+      "tier": 1,
+      "domain": [
+        "toàn bộ watchlist"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "E-utilities public, ≤3 req/s không key",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": 2,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-002",
+      "name": "Kênh gọi tên thẩm quyền qua PubMed (Cochrane[ta] · NICE · USPSTF · WHO)",
+      "org": "nhiều",
+      "tier": 1,
+      "domain": [
+        "đa khoa"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-003",
+      "name": "Retraction Watch DB ngoại tuyến (30.851 PMID có phán quyết)",
+      "org": "Crossref/RW (CC0)",
+      "tier": 1,
+      "domain": [
+        "toàn kho"
+      ],
+      "access": "file",
+      "endpoint_or_url": "medical-ebm-automation/data/retraction_watch/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "CC0",
+      "scan_frequency": "monthly",
+      "detection_method": "version-field",
+      "measured_latency_days": null,
+      "owner": "agent-A4",
+      "status": "active",
+      "last_success_at": "2026-09-20",
+      "known_gap": "làm mới 30 ngày/lần bằng tools/tai_retraction_watch.py; chỉ tra được PMID, không DOI"
+    },
+    {
+      "id": "SRC-004",
+      "name": "Crossref REST (phân giải DOI + updated-by retraction)",
+      "org": "Crossref",
+      "tier": 1,
+      "domain": [
+        "toàn kho"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.crossref.org/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "polite pool, có mailto",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A4",
+      "status": "active",
+      "last_success_at": "2026-09-20",
+      "known_gap": null,
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-005",
+      "name": "Europe PMC REST (dự phòng NCBI + soi MEDLINE)",
+      "org": "EMBL-EBI",
+      "tier": 1,
+      "domain": [
+        "toàn kho"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A4",
+      "status": "active",
+      "last_success_at": "2026-09-20",
+      "known_gap": null,
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-006",
+      "name": "openFDA (nhãn thuốc + cảnh báo an toàn)",
+      "org": "FDA",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.fda.gov/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "weekly_safety.sh",
+      "status": "active",
+      "last_success_at": "2026-09-21",
+      "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-007",
+      "name": "OpenAlex — làn ĐỐI CHIẾU corpus rộng (đề xuất #6, bác sĩ duyệt 15/08)",
+      "org": "OurResearch (OpenAlex)",
+      "tier": 2,
+      "domain": [
+        "toàn bộ watchlist"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.openalex.org/works",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "API mở CC0, polite pool qua mailto — không khoá",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-010",
+      "name": "GOLD — báo cáo COPD thường niên (web hội)",
+      "org": "GOLD",
+      "tier": 1,
+      "domain": [
+        "hô hấp"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://goldcopd.org/2026-gold-report-and-pocket-guide/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 21
+      }
+    },
+    {
+      "id": "SRC-011",
+      "name": "GINA — báo cáo hen thường niên (web hội)",
+      "org": "GINA",
+      "tier": 1,
+      "domain": [
+        "hô hấp"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://ginasthma.org/reports/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-011 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 7 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 14
+      }
+    },
+    {
+      "id": "SRC-012",
+      "name": "KDIGO — guideline thận (web hội)",
+      "org": "KDIGO",
+      "tier": 1,
+      "domain": [
+        "thận"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://kdigo.org/guidelines/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — «3 tiêu đề ghi nhận» ở đợt xác minh cùng ngày là SAI, đã kiểm lại bằng state/giam-sat-to-chuc.json thật: cả 3 dòng đều là văn xuôi giới thiệu tĩnh của trang (\"KDIGO guidelines focus on topics...\", \"Interested in providing feedback...\"), KHÔNG một tên guideline nào trong 18 tên thật (ANEMIA IN CKD, TRANSPLANT CANDIDATE...). Nguyên nhân KÉP: (a) khối 18 chủ đề render lười biếng — lượt get_page_text đầu (trước khi cuộn) không thấy; (b) ngay cả khi có đủ nội dung, rut_tieu_de_tu_van_ban() cũ đòi năm/từ khoá (RE_TIEU_DE) mà tên chủ đề KDIGO không mang cái nào — 0/18 lọt qua dù đã cuộn đúng. Trạm vì thế báo 'active' nhưng chỉ canh 3 dòng KHÔNG BAO GIỜ đổi — mù hoàn toàn với mọi thay đổi guideline thật, yên tâm giả. ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: thêm nhận diện khối ALL-CAPS liên tiếp ≥4 dòng (_la_toan_hoa_nhieu_tu/_NGUONG_CHUOI_TOAN_HOA) cho các trang liệt kê chủ đề không mang năm/từ khoá — đo lại trên đúng văn bản Browser thật (cuộn đủ) cho ĐÚNG 18/18 tên guideline, không lẫn CTA/điều hướng (test_giam_sat_to_chuc.py::test_rut_tieu_de_tu_van_ban_nhan_khoi_toan_hoa_kdigo). CHƯA thể tự ghi lại state/giam-sat-to-chuc.json từ phiên này (file đó nằm ngoài git, mang dữ liệu RIÊNG của máy bác sĩ) — việc còn lại: bác sĩ (hoặc một phiên có Browser thật trên máy sống) chạy lại `tools/giam_sat_to_chuc.py --nap-van-ban SRC-012 <file get_page_text đã cuộn hết trang>` MỘT LẦN để nạp đúng 18 tên vào sổ theo dõi, thay cho 3 dòng boilerplate cũ. Sau đó trạm mới thật sự canh được thay đổi guideline KDIGO. Số 4 tiêu đề ghi lúc kích hoạt 01/09/2026 (kich_hoat.so_tieu_de_luc_do) chưa kiểm lại được — không loại trừ khả năng cùng lỗi (a)/(b) này đã có từ lúc đó.",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 4
+      }
+    },
+    {
+      "id": "SRC-013",
+      "name": "ADA Standards of Care (web-first tháng 12 hằng năm)",
+      "org": "ADA",
+      "tier": 1,
+      "domain": [
+        "nội tiết"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://professional.diabetes.org/standards-of-care",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "trang danh mục công khai, chỉ đọc tiêu đề — không cào toàn văn",
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-013 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 6 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 14
+      }
+    },
+    {
+      "id": "SRC-014",
+      "name": "ESC Clinical Practice Guidelines (web hội)",
+      "org": "ESC",
+      "tier": 1,
+      "domain": [
+        "tim mạch"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://www.escardio.org/Guidelines/Clinical-Practice-Guidelines",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ XÁC MINH SỐNG 2026-09-13 qua kênh Browser thật (egress python cho tiến trình sandbox/cloud vẫn bị chặn — xem audit/07-tong-kiem-do-phu-nguon-chung-cu_2026-08-30.md; QĐ1 duyệt domain đã xong 15/08/2026, không đổi). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-014 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML — khuôn theo đúng cách đã dùng cho SRC-015 ACC/AHA ngày 09/09/2026. 17 tiêu đề ghi nhận lần này. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 34
+      }
+    },
+    {
+      "id": "SRC-015",
+      "name": "ACC/AHA Guidelines & Statements (web hội)",
+      "org": "ACC/AHA",
+      "tier": 1,
+      "domain": [
+        "tim mạch"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://professional.heart.org/en/guidelines-and-statements",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "degraded",
+      "known_gap": "ĐÃ ACTIVE 09/09/2026 qua kênh Browser thật (urllib bị Cloudflare bot-challenge chặn — 403 kèm cookie __cf_bm, đã xác nhận cả với User-Agent trình duyệt thật). Cơ chế: tools/giam_sat_to_chuc.py --nap-van-ban SRC-015 <file> nhận nội dung ĐÃ TẢI SẴN qua phiên Browser (vd get_page_text), chạy CÙNG logic content-hash/so-sánh với đường HTML. Việc còn lại: nối vào một tác vụ lịch (Claude scheduled task, có quyền Browser) chạy theo scan_frequency=quarterly để trạm này không cần bác sĩ/agent làm tay mỗi lần.",
+      "last_success_at": "2026-09-09",
+      "kich_hoat": {
+        "ngay": "2026-09-09",
+        "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
+        "so_tieu_de_luc_do": 8
+      }
+    },
+    {
+      "id": "SRC-016",
+      "name": "EMA news/RSS + MHRA Drug Safety Update (feed)",
+      "org": "EMA · MHRA",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc"
+      ],
+      "access": "rss",
+      "endpoint_or_url": "https://www.gov.uk/drug-safety-update",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "weekly",
+      "detection_method": "feed-item",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — trạm đang active nhưng bị nhiễm rác đáng kể ở cả HAI chiều, phát hiện qua verify độc lập (Browser tool thật, 14 cảnh báo an toàn thuốc thật trên trang gov.uk/drug-safety-update). Cấu trúc trang: mỗi cảnh báo in 3 dòng liên tiếp — tiêu đề, mô tả, «Therapeutic area: … Published: DD Month YYYY». Dòng metadata kết thúc bằng năm nên tự lọt RE_TIEU_DE dùng chung thành 'tiêu đề' giả (4/14 lọt trong mẫu đo), trong khi TIÊU ĐỀ THẬT hiếm khi chứa năm/từ khoá guideline|report|update|standards|statement|recommendation nên bị RỚT (chỉ 1/14 lọt qua tình cờ nhờ chứa 'updated'). 25 tiêu đề ghi lúc kích hoạt 01/09/2026 nhiều khả năng cũng nhiễm cùng lỗi (không kiểm lại được — state cục bộ theo máy).\nĐÃ VÁ tools/giam_sat_to_chuc.py: loại bỏ dòng metadata khỏi kết quả + dùng nó làm MỐC để lấy lại tiêu đề thật đứng cách 2 vị trí (xác nhận 14/14, không ngoại lệ). Đo lại sau vá: 14/14 tiêu đề thật + 0/14 dòng metadata lọt qua (còn 1 dòng MÔ TẢ lọt qua vì tình cờ chứa 'reports' — hạn chế đã biết của RE_TIEU_DE khớp chuỗi con, không phải hồi quy mới, chấp nhận theo đúng tiền lệ đã ghi ở các nguồn khác).\nĐÃ NẠP THẬT 14/09/2026 (cùng ngày, phiên có Browser thật): chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-016 <file get_page_text>` với nội dung sống của gov.uk/drug-safety-update (867 mục, trang 1) — 21 tiêu đề nạp vào state/giam-sat-to-chuc.json cục bộ (thay 25 tiêu đề nghi nhiễm rác từ 01/09/2026), trong đó 19/21 là tiêu đề cảnh báo thật và 2/21 là câu MÔ TẢ lọt qua (cùng hạn chế RE_TIEU_DE khớp chuỗi con đã ghi ở trên, không phải hồi quy mới). `last_success_at` nay phản ánh lần thu hoạch THẬT này (SUY TỪ ARTIFACT — state file cục bộ vừa ghi — đúng doctrine của tools/sources_health.py, không phải ping/không phải bịa).",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 25
+      }
+    },
+    {
+      "id": "SRC-017",
+      "name": "IDSA practice guidelines · AGS Beers · USPSTF web · WHO web · NICE web",
+      "org": "nhiều",
+      "tier": 1,
+      "domain": [
+        "nhiễm",
+        "lão khoa",
+        "đa khoa"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://www.idsociety.org/practice-guideline/alphabetical-guidelines/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "AGS Beers toàn văn sau paywall hội viên",
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "IDSA (endpoint chinh cua tram nay) da active 13/09/2026 qua Browser that. USPSTF va WHO da TACH thanh nguon rieng SRC-019/SRC-022 (13/09/2026) vi hai to chuc do co trang web ho tro tot cho content-hash va Browser truy cap duoc binh thuong. CON LAI 2/5 to chuc trong ten gop CHUA phu duoc: AGS Beers (geriatricscareonline.org tra 403 Forbidden ngay ca voi Browser that -- chan o TANG TRANG WEB, khong phai egress sandbox; toan van con sau paywall hoi vien theo terms_note) va NICE (nice.org.uk tra 403 Forbidden tuong tu, ca /guidance lan /guidance/published). Day la GIOI HAN KHAC voi egress Python da ghi truoc do -- ngay ca kenh Browser cung khong vuot qua duoc, can bac si tu mo bang trinh duyet ca nhan (co the site chi chan bot/automation) hoac cung cap URL thay the. | ĐÍNH CHÍNH/BỔ SUNG 13/09/2026 (cùng ngày, sau khi verify độc lập qua state/giam-sat-to-chuc.json thật): trạm IDSA nói trên KHÔNG mù như KDIGO (SRC-012), nhưng vẫn hụt đáng kể — đo trên đúng văn bản trang thật (get_page_text, không cần cuộn): 67/114 tiêu đề thật (59%). Nguyên nhân: sàn ≥5 từ trong rut_tieu_de_tu_van_ban() (thiết kế cho rác ACC/AHA) loại luôn 47 tiêu đề IDSA hợp lệ nhưng NGẮN (2-4 từ) + năm ở cuối dòng (\"MRSA 2011\", \"Vancomycin 2020\", \"AMR Guidance 2026\"...). ĐÃ VÁ tools/giam_sat_to_chuc.py cùng ngày: nới sàn ≥5 từ bằng luật OR — chấp nhận dòng ngắn hơn nếu KẾT THÚC bằng năm (không phải chỉ chứa năm ở giữa, để không lẫn rác kiểu \"ESC 2026 Science News\" của ACC/AHA). Đo lại sau vá: 113/114 (99%), chỉ còn \"MRSA 2011\" lọt lưới vì sàn ĐỘ DÀI KÝ TỰ ≥12 của _loc_tieu_de_hop_le dùng chung (chấp nhận, không sửa hàm dùng chung để đổi một trường hợp biên). state/giam-sat-to-chuc.json vẫn còn 67 tiêu đề cũ — chưa tự cập nhật được từ phiên này (file ngoài git); bác sĩ chạy lại --nap-van-ban SRC-017 với văn bản Browser thật MỚI (sau khi kéo bản vá) để nạp đủ 113 tiêu đề.",
+      "kich_hoat": {
+        "ngay": "2026-09-01",
+        "bang": "giam_sat_to_chuc --bat-neu-ok",
+        "so_tieu_de_luc_do": 19
+      }
+    },
+    {
+      "id": "SRC-020",
+      "name": "Bộ Y tế VN — hướng dẫn chẩn đoán điều trị (kcb.vn / moh.gov.vn)",
+      "org": "BYT",
+      "tier": 1,
+      "domain": [
+        "bản địa hoá VN"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://kcb.vn/phac-do",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "văn bản công",
+      "scan_frequency": "weekly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÍNH CHÍNH 22/09/2026 — status cũ 'not-covered' đã LỖI THỜI, không khớp mã sống: kcb_vn_lane() (app/sources/guideline_lanes.py) đã tồn tại và được nối vào GUIDELINE_LANES/GUIDELINE_FEEDS từ 20/09/2026 (1 GET/lượt tới kcb.vn/phac-do, robots.txt cho phép, đã kiểm sống — xem CLAUDE.md mục 'LANE guideline nối trực tiếp'). Sổ đăng ký chỉ chưa được cập nhật theo — không phải khoảng trống thật. Chỉ lấy được DANH SÁCH quyết định ban hành (tiêu đề+ngày), không lấy nội dung đầy đủ của hướng dẫn (cần tải PDF riêng)."
+    },
+    {
+      "id": "SRC-021",
+      "name": "Cục Quản lý Dược VN — công văn/thu hồi/cảnh báo",
+      "org": "DAV",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc VN"
+      ],
+      "access": "manual",
+      "endpoint_or_url": null,
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "quarterly",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Thử nối 22/09/2026 (đường vòng dav.gov.vn/canh-bao-va-thu-hoi, cùng khuôn kcb_vn_lane) — KHÔNG xác minh được vì dav.gov.vn KHÔNG tới được từ môi trường phiên này qua CẢ BA phương pháp độc lập (urllib timeout, trình duyệt 'denied/failed', WebFetch 'ECONNREFUSED 103.124.60.65:443'). Đây có thể là hạn chế của môi trường (mạng ngoài Việt Nam) chứ không hẳn trang đã chặn — CHƯA đủ căn cứ để viết connector (sẽ phải khẳng định 'robots.txt cho phép' mà không kiểm chứng được — đúng nguyên tắc KHÔNG bịa của hệ này). Việc cần bác sĩ: tự mở https://dav.gov.vn/canh-bao-va-thu-hoi-cn81.html và https://dav.gov.vn/robots.txt từ mạng Việt Nam — nếu tải được, báo lại để tôi viết connector cùng khuôn kcb_vn_lane()."
+    },
+    {
+      "id": "SRC-030",
+      "name": "UpToDate · DynaMed · Embase (thương mại)",
+      "org": "Wolters Kluwer · EBSCO · Elsevier",
+      "tier": 2,
+      "domain": [
+        "tổng hợp thương mại"
+      ],
+      "access": "none",
+      "endpoint_or_url": null,
+      "auth_required": true,
+      "terms_ok": false,
+      "terms_note": "trả phí, CẤM cào (P5)",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "ngoài phạm vi hợp pháp của máy; bác sĩ tra tay khi cần, quyền truy cập [CẦN XÁC NHẬN TẠI ĐƠN VỊ]"
+    },
+    {
+      "id": "SRC-031",
+      "name": "ClinicalTrials.gov + medRxiv/bioRxiv (preprint)",
+      "org": "NIH · CSHL",
+      "tier": 3,
+      "domain": [
+        "tín hiệu sớm"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://clinicaltrials.gov/api/v2/studies",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-08-28",
+      "known_gap": "CỐ Ý chưa nối vào routine lâm sàng (quyết định 14/08): thêm dòng chưa-bình-duyệt khi nhãn tin cậy vừa ổn định sẽ hỏng mục tiêu; MCP có sẵn cho tra tay. scan_frequency ghi 'weekly' vì bám nhịp quét của agent-A2 (ops/schedule.md) — không có nhịp riêng độc lập; SỬA 10/09/2026, giá trị cũ 'theo lượt quét A2' không khớp enum của contracts/sources.schema.json (bắt bởi tools/kiem_hop_dong_nguon.py mới).",
+      "ghi_chu_kich_hoat": "ĐÍNH CHÍNH SỔ 29/08/2026 — mục này LỖI THỜI so với code: hai làn đã được nối vào run_scan từ 15/08/2026 (surveillance_scan.py::search_trials_lane — ClinicalTrials.gov API v2; ::search_preprint_lane — Europe PMC PPR + Crossref, fail-soft từng làn). Bằng chứng chạy thật: CI run #89 ngày 28/08/2026 — hai làn kéo ứng viên THẬT về khiến unit test đỏ (nay đã stub trong test; làn thật vẫn chạy trong quét thật). last_success_at lấy từ chính sự kiện CI đó."
+    },
+    {
+      "id": "SRC-019",
+      "name": "USPSTF Recommendation Topics (web-first)",
+      "org": "USPSTF",
+      "tier": 1,
+      "domain": [
+        "dự phòng",
+        "đa khoa"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation-topics",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "known_gap": "⛔ ĐÍNH CHÍNH 14/09/2026 — known_gap cũ ở đây mô tả một bug ĐÃ VÁ (commit 32b5589, 13/09/2026): rut_tieu_de_tu_van_ban() lúc đó chưa ghép được cặp dòng «tiêu đề» + «Mon YYYY» đứng liền kề, nên 0/7 dòng qua được cả hai điều kiện cùng lúc. Bug này đã vá, nhưng known_gap chưa cập nhật và không ai chạy lại --nap-van-ban với code mới để kích hoạt.\nĐÃ KÍCH HOẠT THẬT hôm nay: lấy nội dung trang qua Browser tool (không phải suy đoán), chạy `tools/giam_sat_to_chuc.py --nap-van-ban SRC-019 <file>` với đúng mã đã vá — kết quả 3/3 tiêu đề thật trích được (\"Intimate Partner Violence and Caregiver Abuse of Older or Vulnerable Adults: Screening Jun 2025\", \"Syphilis Infection During Pregnancy: Screening May 2025\", \"Breastfeeding: Primary Care Behavioral Counseling Interventions Apr 2025\") — status chuyển not-covered → active.\nPhát hiện PHỤ trong lúc kích hoạt: _ghi_ung_vien() dùng RA.mkdir(exist_ok=True) THIẾU parents=True — crash FileNotFoundError trên bất kỳ checkout git-thuần nào (EBM-Dashboards/ nằm ngoài git, không tồn tại) ngay khi có ≥1 tiêu đề mới cần ghi ứng viên, dù sources.json/state đã ghi đúng TRƯỚC bước đó. Đã vá (parents=True) + thêm test hồi quy test_ghi_ung_vien_tu_tao_thu_muc_cha_con_thieu (mutation-tested: gỡ vá → đỏ đúng FileNotFoundError, phục hồi → xanh, 21 test khác không hồi quy).",
+      "last_success_at": "2026-09-23",
+      "kich_hoat": {
+        "ngay": "2026-09-14",
+        "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
+        "so_tieu_de_luc_do": 3
+      }
+    },
+    {
+      "id": "SRC-022",
+      "name": "WHO Guidelines (web hội)",
+      "org": "WHO",
+      "tier": 1,
+      "domain": [
+        "đa khoa",
+        "y tế công cộng"
+      ],
+      "access": "html-watch",
+      "endpoint_or_url": "https://www.who.int/publications/who-guidelines",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": null,
+      "scan_frequency": "quarterly",
+      "detection_method": "content-hash",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "known_gap": "Tách RIÊNG khỏi SRC-017 (13/09/2026) — trước đó WHO chỉ được nhắc trong tên gộp của SRC-017 mà KHÔNG có endpoint riêng (WHO qua PubMed alias vẫn phủ gián tiếp, đây là kênh TRỰC TIẾP web hội, bắt được sớm hơn). URL đã xác minh SỐNG qua Browser thật hôm nay, có mục \"Latest WHO guidelines approved by the Guidelines Review Committee\" dùng được cho content-hash. Chưa --nap-van-ban lần nào.",
+      "last_success_at": "2026-09-23",
+      "kich_hoat": {
+        "ngay": "2026-09-13",
+        "bang": "giam_sat_to_chuc --nap-van-ban (Browser thật, urllib bị chặn bot-challenge)",
+        "so_tieu_de_luc_do": 17
+      }
+    },
+    {
+      "id": "SRC-032",
+      "name": "Scopus (Elsevier) — làn ĐỐI CHIẾU citation database, nối 13/09/2026",
+      "org": "Elsevier",
+      "tier": 2,
+      "domain": [
+        "toàn bộ watchlist"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.elsevier.com/content/search/scopus",
+      "auth_required": true,
+      "terms_ok": true,
+      "terms_note": "SCOPUS_API_KEY bắt buộc thật (ScopusClient chặn cứng khi thiếu). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) vì mỗi lượt gọi tính vào hạn mức trả phí của tổ chức — health-ping định kỳ sẽ tốn quota vô ích. Đối chứng sống dựa vào log lượt quét tuần thật (search_scopus_lane trong surveillance_scan.py) hoặc `run.py test-live scopus` chạy tay.",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-13",
+      "known_gap": "Search API không trả abstract đầy đủ và chỉ trả tác giả đầu; KHÔNG tham gia chuỗi 3 tầng kiểm rút bài (giống OpenAlex/Crossref/Semantic Scholar). Đã bật vào làn giám sát tuần 22/09/2026 (search_scopus_lane, TRƯỚC gan_do_tin_cay vì đôi khi có pmid thật). Bị Cloudflare chặn khi VPN cá nhân của bác sĩ đang bật (đối chứng 17/09/2026: PubMed chạy tốt qua CÙNG VPN, chỉ riêng Scopus bị chặn theo IP thoát VPN) — chạy Scopus khi VPN TẮT."
+    },
+    {
+      "id": "SRC-033",
+      "name": "CORE (core.ac.uk) — kho truy cập mở/luận văn/báo cáo xám, nối 22/09/2026",
+      "org": "CORE (Open University, Jisc)",
+      "tier": 2,
+      "domain": [
+        "toàn bộ watchlist"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.core.ac.uk/v3/search/works",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "core.ac.uk tự khai free API access without registration — CORE_API_KEY chỉ tăng nhịp, không bắt buộc (khác Scopus). Bác sĩ đã tự nhập CORE_API_KEY thật 22/09/2026 qua nút bấm đúp 'Nhap Khoa CORE.command' (khoá không đi qua khung chat) + bật ENABLE_CORE=true qua 'Bat Tat SerpApi Du Phong.command' (gõ 'bo'). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) — thử thêm 22/09/2026 rồi phát hiện ngay: probe ẩn danh (không gắn khoá) bị core.ac.uk giới hạn nhịp chặt hơn client có khoá, và một lượt test-live thật ngay trước đó đã đủ khiến probe kế tiếp nhận 429 rồi bị ghi nhầm thành 'degraded'. Đối chứng sống dựa vào log lượt quét tuần thật (search_core_lane) hoặc `run.py test-live core` chạy tay.",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "KHÔNG tham gia chuỗi 3 tầng kiểm rút bài trừ khi bản ghi mang pmid thật (trường 'pubmedId' của core.ac.uk — hiếm nhưng có, search_core_lane() giữ nguyên khi có). Đã bật vào làn giám sát tuần 22/09/2026 (search_core_lane, TRƯỚC gan_do_tin_cay cùng vị trí Scopus). Tài liệu Redoc chính thức tự mâu thuẫn camelCase/snake_case ở field response — connector thử cả hai."
+    },
+    {
+      "id": "SRC-034",
+      "name": "Consensus — bậc thang dự phòng (tầng 1), nối phía surveillance 22/09/2026",
+      "org": "Consensus (consensus.app)",
+      "tier": 3,
+      "domain": [
+        "bậc thang dự phòng — chỉ khi thiếu chứng cứ đáng tin cậy"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.consensus.app",
+      "auth_required": true,
+      "terms_ok": true,
+      "terms_note": "CONSENSUS_API_KEY bắt buộc thật, gói Free 30 lượt/tháng DÙNG CHUNG với kết nối MCP của bác sĩ; hệ tự đặt trần riêng CONSENSUS_MAX_CALLS_PER_MONTH=10 + CONSENSUS_MAX_CALLS_PER_RUN=5. KHÔNG thăm sống định kỳ (không có mục DIEM_THAM) — một ping health-check sẽ tốn đúng hạn mức quý giá dành cho câu hỏi thật. KHÔNG phải lane độc lập: chỉ được gọi qua cổng đủ-chứng-cứ evidence_sufficiency.py (app/services/fallback_ladder.py::bo_sung_neu_thieu()), theo đúng nguyên tắc bác sĩ chốt 20/09/2026 \"chỉ khi các nguồn khác chưa đủ chứng cứ đáng tin cậy mới xác minh và tìm thêm\".",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "bậc thang dự phòng (app/services/fallback_ladder.py)",
+      "status": "active",
+      "last_success_at": "2026-09-20",
+      "known_gap": "Chỉ trả 'takeaway' (không phải abstract nguyên văn); nhãn study_type của Consensus chỉ được dùng để HẠ bậc, không được nâng. Nối vào vòng quét tuần qua bo_sung_du_phong_lane() 22/09/2026 — chạy SAU mọi lane chính (Scopus/CORE/preprint/trials) để cổng chấm đúng nhất."
+    },
+    {
+      "id": "SRC-035",
+      "name": "SerpApi Google Scholar — bậc thang dự phòng (tầng 2), nối phía surveillance 22/09/2026",
+      "org": "SerpApi (bóc Google Scholar)",
+      "tier": 3,
+      "domain": [
+        "bậc thang dự phòng — chỉ khi thiếu chứng cứ đáng tin cậy"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://serpapi.com/search.json",
+      "auth_required": true,
+      "terms_ok": true,
+      "terms_note": "SERPAPI_API_KEY bắt buộc thật; gói Free 250 search/tháng, hệ tự đặt trần bền SERPAPI_MAX_CALLS_PER_MONTH=200 (data/raw/_state/serpapi_usage.json) + SERPAPI_MAX_CALLS_PER_RUN=8. MỖI request là MỘT search TÍNH PHÍ — KHÔNG thăm sống định kỳ. KHÔNG phải lane độc lập, cùng cổng đủ-chứng-cứ với Consensus (bo_sung_neu_thieu()).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "bậc thang dự phòng (app/services/fallback_ladder.py)",
+      "status": "active",
+      "last_success_at": "2026-09-20",
+      "known_gap": "KHÔNG abstract; KHÔNG DOI/PMID chắc chắn (mọi bản ghi phải xác minh qua Crossref/PubMed — đã có ở fallback_ladder.py); ngày chỉ có NĂM, KHÔNG tháng/ngày; study_type LUÔN None trừ tín hiệu preprint. Nối vào vòng quét tuần 22/09/2026 cùng Consensus qua bo_sung_du_phong_lane()."
+    },
+    {
+      "id": "SRC-036",
+      "name": "Epistemonikos — tổng quan hệ thống/SR-MA, đánh giá 22/09/2026",
+      "org": "Epistemonikos Foundation",
+      "tier": 2,
+      "domain": [
+        "tổng quan hệ thống/SR-MA"
+      ],
+      "access": "manual",
+      "endpoint_or_url": "https://api.epistemonikos.org/v1/documents/search",
+      "auth_required": true,
+      "terms_ok": null,
+      "terms_note": "Tài liệu chính thức (api.epistemonikos.org) ghi rõ \"If you want to register your application and try our API, please contact us [dev at epistemonikos.org]\" — KHÔNG có luồng tự-cấp token như CORE. Bác sĩ xác nhận 22/09/2026: KHÔNG khả thi hiện tại (không có đường xin quyền truy cập trong tầm tay), khác SRC-030 (thương mại/cấm cào) — đây là API MIỄN PHÍ nhưng cần một bước xin duyệt qua email mà bác sĩ chọn không theo đuổi lúc này.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be'). ĐỐI CHIẾU 22/09/2026: SR/MA đã có phủ đáng kể qua PubMed/Europe PMC tầng SR/MA + Cochrane MCP (Cấp 0, xem CLAUDE.md §Nguồn dữ liệu) — mất Epistemonikos không phải mất trắng khả năng tìm SR/MA, chỉ mất lớp TỔNG HỢP/phân loại chéo nhiều CSDL riêng của họ."
+    },
+    {
+      "id": "SRC-037",
+      "name": "NICE — tóm tắt guideline trên tạp chí (qua Europe PMC), thêm 22/09/2026",
+      "org": "NICE (qua chỉ mục MEDLINE)",
+      "tier": 1,
+      "domain": [
+        "toàn bộ watchlist"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "NICE Syndication API chính thức cần hợp đồng tổ chức (SRC không mở vì bác sĩ không đăng ký cá nhân được — xem CLAUDE.md). Đường vòng này KHÔNG cần đăng ký: Europe PMC miễn phí, chỉ mục MEDLINE các bài TÓM TẮT guideline NICE đăng trên tạp chí (BMJ, Br J Gen Pract…), lọc AFF=NICE + PUB_TYPE=Practice Guideline. Nguồn RA THƯA — cần window_days=1095 (3 năm) mới có hit, đã đo sống 22/09/2026 (0 hit ở 365/545/730 ngày, 5 hit ở 1095 ngày). Chỉ là TÍN HIỆU có guideline mới + tóm tắt, không phải toàn văn khuyến cáo NICE.",
+      "scan_frequency": "weekly",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "Chỉ phủ guideline NICE ĐÃ được tóm tắt lại trên tạp chí có chỉ mục MEDLINE — không phải mọi guidance của NICE đều có bản tóm tắt dạng này. Nối vào GUIDELINE_LANES (app/sources/feeds.py::epmc_nice) + FEED_TO_AUTHORITY (app/sources/authority.py) 22/09/2026, kiểm sống qua RSSFeedClient thật: 5 bản ghi, PMID thật.",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-038",
+      "name": "Cochrane Library (CDSR) — connector MCP tương tác qua Claude Code, kiểm sống 22/09/2026",
+      "org": "Cochrane (qua plugin MCP cochrane-marketplace)",
+      "tier": 2,
+      "domain": [
+        "tổng quan hệ thống/SR-MA"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.cochranelibrary.com",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "Tóm tắt/plain-language summary/PICO free mọi nơi; toàn văn free tại VN (one-click LMIC) + green OA sau 12 tháng (đã ghi ở _CONNECTOR-CHUNG-CU.md §1bis). Hệ chỉ trích dẫn + link, không cào/tái bản toàn văn sau tường phí (đúng luật bản quyền dùng chung của repo).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent tương tác (tra-cuu-chung-cu · tong-quan-y-van · cap-nhat-guideline · huong-dan-lam-sang — xem _CONNECTOR-CHUNG-CU.md §2quater)",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "KHÔNG tham gia vòng quét tuần tự động (weekly_safety.sh/surveillance_scan.py) — đây là công cụ MCP (mcp__plugin_cochrane_cochrane__cochrane_search/get_details/suggest_terms) chỉ gọi được TỪ TRONG một phiên Claude Code tương tác có plugin Cochrane bật + trình duyệt CDP chạy nền của chính plugin; KHÔNG phải HTTP endpoint mà một script Python độc lập chạy qua cron/scheduled task (owner thu thập duy nhất theo doctrine) có thể gọi trực tiếp. Vòng quét tuần TỰ ĐỘNG vẫn dùng lane Crossref theo ISSN 1465-1858 (app/sources/feeds.py::cochrane_cdsr, đã có từ trước) — nguồn KHÁC, phủ được review CDSR mới nhưng KHÔNG có abstract có cấu trúc/PICO/mức chắc chắn GRADE như MCP. Nguồn này chỉ hữu dụng khi một AGENT đang chạy TRONG phiên tương tác chủ động gọi (tra-cuu-chung-cu/tong-quan-y-van/cap-nhat-guideline/huong-dan-lam-sang, doctrine đã dạy đủ ở _CONNECTOR-CHUNG-CU.md §2quater từ 20/09/2026) — không có cách 'cài đặt' để nó tự chạy định kỳ không người giám sát. Kiểm sống 22/09/2026: cochrane_search (299 review 'heart failure' — lỗi điều hướng tạm thời lượt đầu, thành công lượt 2, đúng hành vi §2quater mục 5) · cochrane_get_details (đủ abstract cấu trúc + tóm tắt cho người bệnh; pico rỗng ở bài này, đúng ghi chú mục 7 — đọc PICO từ objectives/selectionCriteria) · cochrane_suggest_terms — cả ba đều trả dữ liệu thật, không phải mock.",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-039",
+      "name": "Semantic Scholar — bác sĩ ĐỔI Ý bật lại 22/09/2026, đo sống lộ giới hạn nhịp thật",
+      "org": "Allen Institute for AI (Semantic Scholar)",
+      "tier": 2,
+      "domain": [
+        "toàn văn/trích dẫn phụ trợ"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.semanticscholar.org/graph/v1/paper/search",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "Connector không BẮT BUỘC API key về mặt code (app/sources/semantic_scholar.py, class SemanticScholarClient) — key chỉ tăng hạn mức, không phải điều kiện chạy. Nhưng đo sống 22/09/2026 (2 lượt test-live liên tiếp cách nhau 5 giây, KHÔNG có khoá): CẢ HAI đều HTTP 429 ngay lập tức, hết vòng retry của HttpClient. Tầng KHÔNG-khoá của Semantic Scholar đang bị giới hạn nhịp rất chặt trong thực tế — chưa rõ do IP dùng chung của mạng này đã vượt hạn mức công khai, hay hạn mức công khai hiện đã siết chung toàn cầu. KHÔNG kết luận '429 vĩnh viễn' từ 2 lượt đo — có thể đổi theo thời điểm/IP, cần đo lại định kỳ. Muốn dùng ổn định: xin API key miễn phí qua form chính thức của Semantic Scholar (bác sĩ tự làm, chưa xác minh chi tiết quy trình trong phiên này).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent-A2",
+      "status": "degraded",
+      "last_success_at": null,
+      "known_gap": "ĐÃ đổi ENABLE_SEMANTIC_SCHOLAR=true (bác sĩ đổi ý sau khi nghe giải thích 'không cần khoá vẫn chạy được'). Nhưng 'chạy được về mặt code' KHÁC 'trả kết quả thật ngay bây giờ' — đo sống 2 lần liên tiếp (query 'heart failure', 'diabetes') đều nhận HTTP 429 (đã thử lại theo backoff chuẩn của HttpClient, vẫn hết hạn mức) — connector đúng thiết kế fail-closed: trả `live:true, count:0, results:[]`, KHÔNG bịa dữ liệu giả khi bị chặn. Vì vậy dù đã BẬT, thực tế sẽ THƯỜNG XUYÊN trả rỗng cho tới khi có API key thật. Ghi status=degraded (không phải active) đúng sự thật đo được, không phải suy đoán. Người đọc: khi thấy Semantic Scholar trong SourceLog toàn 'error'/429, đây là hành vi ĐÃ BIẾT, không phải lỗi mới.",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-040",
+      "name": "Scite — connector MCP tương tác qua Claude Code, kiểm sống 22/09/2026",
+      "org": "scite.ai (Research Solutions)",
+      "tier": 3,
+      "domain": [
+        "xác minh rút bài/tally trích dẫn (bổ sung) · bậc thang dự phòng tầng 2"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://scite.ai",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "Kết nối claude.ai riêng của bác sĩ (không cần khoá phía repo). agAccess trong kết quả gắn với tài khoản Article Galaxy của bác sĩ — chỉ dẫn người đọc tới link họ đã có quyền, KHÔNG tự đặt hàng/tải hộ khi chưa xác nhận (theo đúng chỉ dẫn máy chủ Scite trả về cùng kết quả).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent tương tác (tra-cuu-chung-cu · kiem-chung-trich-dan — xem _CONNECTOR-CHUNG-CU.md §2ter)",
+      "status": "active",
+      "last_success_at": "2026-09-22",
+      "known_gap": "CÙNG ranh giới với Cochrane MCP (SRC-038) — công cụ MCP chỉ gọi được TỪ TRONG phiên Claude Code tương tác, KHÔNG tham gia vòng quét tuần tự động. RIÊNG BIỆT: Scite còn bị CỔNG §2ter khoá thêm ở lớp doctrine — chỉ được gọi search_literature khi đã tra XONG PubMed/Europe PMC/Cấp 0 mà VẪN CHƯA ĐỦ ≥3 bài PMID/DOI đáng tin (không phải mặc định như Cochrane Cấp 0). Kỷ luật gọi: limit≤3 (payload lớn, đo được ~30KB/2 kết quả); tối đa 2 lời gọi search_literature/câu hỏi; tổng lời gọi tìm dự phòng (Consensus+Scite) ≤3/câu hỏi. Kết quả CÓ DOI, KHÔNG CÓ PMID — phải phân giải qua Crossref/PubMed trước khi dùng, không phân giải được thì BỎ. Vai trò xác minh rút bài (editorialNotices/tally) là BỔ SUNG cho chuỗi 3 tầng check_citation_retraction.py, KHÔNG THAY — Scite không thấy gì thì KHÔNG được ghi 'chưa bị rút'. Kiểm sống 22/09/2026: search_literature('\"heart failure\" AND \"SGLT2 inhibitor\"', limit=2) → 14.893 tổng kết quả, 2 hit thật (DOI/tiêu đề/tạp chí/tally thật, 1 hit có tally trích dẫn ủng hộ/phản bác thật).",
+      "last_probe_at": "2026-09-22"
+    },
+    {
+      "id": "SRC-041",
+      "name": "Wiley Scholar Gateway — MCP tương tác, kiểm sống THÀNH CÔNG 23/09/2026",
+      "org": "Wiley (plugin:bio-research:wiley)",
+      "tier": 2,
+      "domain": [
+        "tạp chí Wiley (toàn văn/metadata)"
+      ],
+      "access": "manual",
+      "endpoint_or_url": "mcp:wiley-scholar-gateway (semanticSearch)",
+      "auth_required": true,
+      "terms_ok": true,
+      "terms_note": "Kết nối qua OAuth (claude.ai connector settings — bác sĩ tự Clear authentication rồi Re-authenticate để cấp lại đủ phạm vi sau lần đầu thiếu scope). Mỗi kết quả tự kèm khối 'disclosures' (attribution, ai_generated, content_freshness, content_coverage) — phải giữ nguyên khi trích dẫn, không được lược bỏ.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ HOẠT ĐỘNG THẬT 23/09/2026, sau khi vá lỗi thiếu scope (xem lịch sử known_gap cũ). Bác sĩ Clear authentication → Re-authenticate qua claude.ai connector settings, kiểm sống ngay: câu hỏi lâm sàng thật (momelotinib vs ruxolitinib trong xơ tủy) trả về 3 bài thật — 2 bài tạp chí Wiley (HemaSphere, Am J Hematol) + 1 guideline ONKOPEDIA 2025 (Int J Cancer, PMF) — đủ DOI, ngày xuất bản, trích đoạn văn bản/bảng số liệu thật. Đây là công cụ TÌM KIẾM NGỮ NGHĨA (semanticSearch) trên tạp chí Wiley — khác Wiley TDM API (SRC-042, tải PDF theo DOI đã biết) và khác 5 connector toàn văn guideline theo tổ chức (SRC-043..046) — bổ sung năng lực KHÁM PHÁ chuyên sâu trong hệ Wiley mà Crossref/PubMed không có (tìm theo ý nghĩa câu hỏi, không chỉ từ khóa). Giới hạn: (1) CHỈ nội dung Wiley (đơn vị tự khai 'additional publisher sources will be added soon'); (2) tương tác — chỉ gọi được TỪ TRONG phiên Claude Code có kết nối MCP, KHÔNG tham gia vòng quét tuần tự động, cùng nhóm Cochrane/Scite (SRC-038/040); (3) mỗi kết quả có khối 'disclosures' bắt buộc giữ nguyên khi trích dẫn (attribution, AI-generated warning, content freshness, coverage link) — không được lược bỏ khi đưa vào báo cáo.",
+      "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-042",
+      "name": "Wiley Text and Data Mining (TDM) API — connector code-level, xây 23/09/2026",
+      "org": "Wiley",
+      "tier": 2,
+      "domain": [
+        "tạp chí Wiley — tải toàn văn PDF theo DOI đã biết"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.wiley.com/onlinelibrary/tdm/v1/articles/",
+      "auth_required": true,
+      "terms_ok": true,
+      "terms_note": "KHÁC SRC-041 (MCP claude.ai chưa cấp quyền) — đây là API REST tải TOÀN VĂN PDF THEO DOI ĐÃ BIẾT (không phải nguồn tìm kiếm), dùng thư viện PyPI chính thức `wiley-tdm` (github.com/WileyLabs/tdm-client). WILEY_TDM_API_TOKEN bắt buộc thật (WileyTdmClient chặn cứng khi thiếu, cùng khuôn Scopus/Epistemonikos). Token là UUID lấy từ trang 'Text and Data Mining' trong tài khoản Wiley Online Library của bác sĩ — KHÔNG BAO GIỜ nhập qua Claude Code.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ (gọi thủ công theo DOI cụ thể khi cần toàn văn, không tham gia vòng quét tuần)",
+      "status": "degraded",
+      "last_success_at": null,
+      "known_gap": "ĐÃ KIỂM SỐNG 23/09/2026 (token thật đã nhập qua tools/nhap_khoa_wiley_tdm.py). Hai phát hiện thật: (1) thư viện `wiley-tdm` KHAI trong requirements.txt nhưng THIẾU trong requirements.lock.txt lẫn venv máy này — cùng lỗi đã vá cho pypdf cùng ngày; đã cài + bổ sung vào lock file. (2) Token HỢP LỆ và cơ chế hoạt động ĐÚNG (thư viện gọi API thật, nhận diện đúng IP công cộng của máy) — nhưng CẢ 2 DOI Open Access CC-BY thật (tra qua Crossref, không bịa: 10.1002/jcsm.70385, 10.1002/jcsm.70383) đều nhận 'ACCESS_DENIED' vì IP máy này (149.50.211.33 lúc kiểm) KHÔNG nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền — đúng giới hạn ĐÃ BIẾT TRƯỚC từ README chính thức ('Access is IP address based only'), không phải lỗi cấu hình/token sai. Việc còn treo, thuộc thẩm quyền bác sĩ: chỉ hoạt động được khi gọi từ mạng nằm trong dải IP tổ chức đã đăng ký với Wiley (thường mạng bệnh viện) — kiểm lại từ mạng đó nếu cần dùng thật. ENABLE_WILEY_TDM=true trong ~/.ebm-secrets/medical-ebm-automation.env (máy Mac này); máy Windows cần nhập token RIÊNG (secrets không đồng bộ qua OneDrive theo thiết kế).",
+      "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-043",
+      "name": "GOLD (Global Initiative for COPD) — toàn văn báo cáo, connector code-level, xây 23/09/2026",
+      "org": "GOLD",
+      "tier": 1,
+      "domain": [
+        "Hô hấp — COPD, toàn văn báo cáo hằng năm"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://goldcopd.org/archived-reports/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) không chặn bất kỳ đường dẫn nào (chỉ khối Yoast SEO mặc định, Disallow rỗng). Điều khoản sử dụng (goldcopd.org/legal-policy/) cấm sao chép/phân phối lại/đăng công khai khi chưa có phép — connector CHỈ dùng làm nguồn tham chiếu nội bộ để trích câu chữ kèm nguồn, KHÔNG đăng lại toàn văn (xem app/sources/guideline_fulltext_common.py).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua GoldCopdFullTextClient khi cần trích toàn văn",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ KIỂM SỐNG 23/09/2026, THÀNH CÔNG sau khi vá 1 lỗi thật: kiểm sống lần đầu lấy NHẦM 2025 GOLD Pocket Guide (bản tóm tắt, 31.772 ký tự) thay vì báo cáo đầy đủ — trang mục lục liệt kê MỖI NĂM 2 link .pdf liền nhau (đầy đủ rồi mới tới pocket guide), và chữ 'GOLD' chỉ xuất hiện ở văn bản hiển thị của link pocket guide, KHÔNG xuất hiện ở link báo cáo đầy đủ. Đã sửa: lọc loại 'pocket' (URL hoặc văn bản hiển thị) thay vì lọc theo chữ 'GOLD'. Kiểm lại: lấy đúng https://goldcopd.org/wp-content/uploads/2024/11/GOLD-2025-Report-v1.0-15Nov2024_WMV.pdf, trích được 200.000 ký tự (chạm giới hạn cắt, đúng quy mô báo cáo đầy đủ ~170 trang). 9 test offline cũ + 1 test hồi quy mới (khớp đúng HTML thật đã đo) đều PASS. ENABLE_GOLD_COPD_FULLTEXT đã bật trong ~/.ebm-secrets/medical-ebm-automation.env.",
+      "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-044",
+      "name": "GINA (Global Initiative for Asthma) — toàn văn báo cáo, connector code-level, xây 23/09/2026",
+      "org": "GINA",
+      "tier": 1,
+      "domain": [
+        "Hô hấp — Hen phế quản, toàn văn báo cáo hằng năm"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://ginasthma.org/reports/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) cho phép mọi bot NHƯNG đòi Crawl-delay: 10 — connector BẮT BUỘC dùng HttpClient(min_interval=10.0), không lách. Điều khoản sử dụng (ginasthma.org/legal-policy/) cấm sao chép/phân phối lại khi chưa có phép — chỉ dùng làm nguồn tham chiếu nội bộ, không đăng lại toàn văn.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua GinaAsthmaFullTextClient khi cần trích toàn văn",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "ĐÃ KIỂM SỐNG 23/09/2026, THÀNH CÔNG sau khi vá 1 lỗi thật: trang mục lục https://ginasthma.org/reports/ ĐÃ ĐỔI CẤU TRÚC — không còn link .pdf trực tiếp nào, chỉ liệt kê link LANDING riêng từng ấn phẩm (vd 'https://ginasthma.org/2026-gina-strategy-report/'); PDF thật nằm Ở TRANG LANDING đó. Kiểm sống lần đầu chỉ dò .pdf trên trang mục lục nên luôn trả None (đọc nhầm thành 'GINA có thể đã tạm đóng truy cập'). Đã sửa: điều hướng HAI BƯỚC — dò link landing '{năm}-gina-strategy-report/' trước, rồi dò .pdf trên đúng trang landing. Kiểm lại: lấy đúng https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf (đúng khớp regex .pdf cũ vẫn còn giá trị — chỉ khâu điều hướng sai), trích được 200.000 ký tự (chạm giới hạn cắt). 8 test offline cũ (sửa 2 test cho khớp hành vi 2 bước, không nới lỏng) + 2 test hồi quy mới đều PASS. Đã tôn trọng đúng Crawl-delay: 10 giây khi kiểm sống (2 lượt GET, cách nhau >10s). ENABLE_GINA_ASTHMA_FULLTEXT đã bật trong ~/.ebm-secrets/medical-ebm-automation.env.",
+      "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-045",
+      "name": "BTS (British Thoracic Society) — toàn văn hướng dẫn theo URL đã biết, xây 23/09/2026",
+      "org": "BTS",
+      "tier": 2,
+      "domain": [
+        "Hô hấp — hướng dẫn lâm sàng theo từng chủ đề"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.brit-thoracic.org.uk/document-library/guidelines/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "robots.txt (đọc trực tiếp 23/09/2026) không chặn /clinical-resources/guidelines/ hay /document-library/guidelines/. Điều khoản sử dụng cấm 'reproduce, copy, create derivative work' ngoài mục đích cá nhân phi thương mại — chỉ dùng làm nguồn tham chiếu nội bộ. KHÁC GOLD/GINA: KHÔNG có trang mục lục ổn định liệt kê 'bản mới nhất' theo chủ đề — mỗi bệnh có slug URL riêng, một số hướng dẫn đồng xuất bản với NICE/SIGN và toàn văn thực chất nằm ở domain đó (chưa khảo sát, connector từ chối tải).",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua BtsGuidelineFullTextClient với URL đã biết",
+      "status": "not-covered",
+      "last_success_at": null,
+      "known_gap": "ĐIỀU TRA SÂU THÊM 23/09/2026 theo yêu cầu bác sĩ 'xây connector riêng cho Thorax/BMJ' — KẾT LUẬN: KHÔNG xây được, hai lý do khác hẳn nhau, KHÔNG cái nào là lỗi lập trình có thể vá. (1) thorax.bmj.com/bmjopenrespres.bmj.com (nơi phần lớn guideline BTS hiện nay THẬT SỰ nằm): mọi trang, kể cả trang chủ và robots.txt cho phép, trả về Cloudflare Managed Challenge (Cf-Mitigated: challenge, đòi chạy JavaScript + cookie) — KHÔNG PHẢI 403 thường. Vượt qua bằng code là 'bypass bot-detection', hành vi tuyệt đối không được làm dù được yêu cầu tường minh. (2) Kiểm thêm đường thay thế nice.org.uk (một số guideline BTS đồng xuất bản với NICE): KHÔNG bị chặn kỹ thuật (robots.txt Allow:/, HTML sạch, cấu trúc chương mục rõ — dễ xây hơn PDF nhiều) — NHƯNG điều khoản sử dụng (nice.org.uk/terms-and-conditions mục 18.3, đọc trực tiếp 23/09/2026) nói THẲNG: nội dung NICE dùng cho MỤC ĐÍCH AI (đúng hệ thống này) 'all requests, without exception, are subject to an approval process, licensing arrangement and a fee (for international use)'. Rào PHÁP LÝ/HỢP ĐỒNG, không phải rào kỹ thuật. Kiểm thêm Unpaywall + Europe PMC cho 1 DOI guideline BTS thật (10.1136/thorax-2022-219784, tra Crossref): Unpaywall xác nhận OA nhưng bản duy nhất họ biết CHÍNH LÀ thorax.bmj.com (không có mirror khác); Europe PMC không có bản PMC (isOpenAccess=N, inPMC=N) — không có 'cửa sau' hợp pháp nào khác. connector bts_guidelines.py đã cập nhật: từ chối 2 domain Cloudflare + domain NICE với thông điệp nêu ĐÚNG lý do (không còn nói 'chưa khảo sát' — đã khảo sát xong, kết luận không xây được), để không ai điều tra lại từ đầu việc này. Đường thực tế duy nhất còn lại: bác sĩ tự mở trình duyệt thật khi cần (Cloudflare cho qua bình thường với trình duyệt người dùng thật); muốn dùng nice.org.uk thì bác sĩ tự xin giấy phép AI qua trang chính thức của NICE. ĐÃ BỔ SUNG 23/09/2026: khi trường hợp bị từ chối/không có trong bucket (như 2 domain Cloudflare, NICE, hoặc PMCID không có bản .txt), hệ vẫn cung cấp TRÍCH DẪN xác minh thật + TÓM TẮT (abstract, không phải toàn văn) qua `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat(doi=..., pmid=...)` — tra Europe PMC rồi Crossref theo DOI/PMID đã biết, không bịa. Đây KHÔNG thay được toàn văn nhưng đóng khoảng trống 'không có gì cả' bằng 'có trích dẫn thật + biết đại khái nội dung'.",
+      "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-046",
+      "name": "PMC (PubMed Central) — toàn văn guideline theo PMCID, connector generic, xây 23/09/2026",
+      "org": "NIH/NLM (PMC)",
+      "tier": 1,
+      "domain": [
+        "Toàn văn guideline đã lưu trữ PMC — ban đầu cho ADA Standards of Care, dùng lại được cho hội khác"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://pmc-oa-opendata.s3.amazonaws.com/",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "readme.txt chính thức của NCBI (ftp.ncbi.nlm.nih.gov/pub/pmc/readme.txt, đọc trực tiếp 23/09/2026) khai bucket S3 công khai 'pmc-oa-opendata' (PMC Open Access Subset, AWS Open Data Registry) là kênh CHÍNH THỨC thay thế FTP cũ đang bị khai tử — không cần tài khoản AWS, có Terms and Conditions rõ ràng (cho phép dùng, cấm dùng logo/thương hiệu PMC, cấm phân phối lại dữ liệu không có giấy phép tương ứng). connector CHỈ dùng làm nguồn tham chiếu nội bộ, không đăng lại toàn văn — khớp đúng nguyên tắc đã áp cho GOLD/GINA/BTS.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "human",
+      "measured_latency_days": null,
+      "owner": "bác sĩ / agent gọi thủ công qua PmcGuidelineFullTextClient với PMCID đã biết (tra qua pubmed.py/Europe PMC trước)",
+      "status": "active",
+      "last_success_at": "2026-09-23",
+      "known_gap": "VIẾT LẠI 23/09/2026 (audit/14 vấn đề 4), THAY THẾ HOÀN TOÀN cơ chế cũ (scrape HTML pmc.ncbi.nlm.nih.gov — bị chặn 403 tối giản, đã xác nhận không phải Cloudflare, đo bằng nhiều User-Agent + API OA chính thức + OAI-PMH đều cùng bị chặn — kết luận cũ 'ngoài tầm sửa code' đã LỖI THỜI). Đường mới: bucket S3 công khai 'pmc-oa-opendata' (PMC Open Access Subset, AWS Open Data Registry, tài liệu chính thức tại ftp.ncbi.nlm.nih.gov/pub/pmc/readme.txt) — KHÔNG cùng hạ tầng/WAF với pmc.ncbi.nlm.nih.gov, xác nhận sống 23/09/2026: liệt kê + tải object .txt qua HTTPS thường, KHÔNG bị 403. ĐÃ KIỂM SỐNG với 4 PMCID guideline thật (tra qua PubMed, không đoán): PMC12690171 (ADA Standards of Care, chương guideline) — KHÔNG có trong bucket, báo lỗi trung thực đúng thiết kế; PMC13580465 (ASFA apheresis) — KHÔNG có; PMC13566657 (CFP deprescribing statins) — KHÔNG có; PMC13555224 (Korean Thyroid Association) — CÓ, tải được 130.334 ký tự toàn văn thật. Đối chiếu ĐỘC LẬP với PubMed MCP tương tác (get_full_text_article) cho cùng 4 PMCID: khớp 100% (bài nào MCP đọc được toàn văn thì bucket này cũng có, bài nào MCP rỗng thì bucket cũng không có) — xác nhận đây là CÙNG một nguồn sự thật (PMC Open Access Subset), không phải trùng hợp. Giới hạn THẬT, không phải lỗi công cụ: chỉ bài ĐÃ nộp lưu toàn văn máy-đọc (.txt/.xml) cho PMC OA Subset mới đọc được — ước tính ~1/4 guideline chuyên khoa có PMCID (và bản thân việc có PMCID cũng không phổ biến — chỉ ~5/18 guideline mẫu thử có PMCID). Kiểm hồi quy: tests/test_pmc_guideline_fulltext_20260923.py (10 test, viết lại hoàn toàn theo cơ chế mới, PASS). ĐÃ BỔ SUNG 23/09/2026: khi trường hợp bị từ chối/không có trong bucket (như 2 domain Cloudflare, NICE, hoặc PMCID không có bản .txt), hệ vẫn cung cấp TRÍCH DẪN xác minh thật + TÓM TẮT (abstract, không phải toàn văn) qua `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat(doi=..., pmid=...)` — tra Europe PMC rồi Crossref theo DOI/PMID đã biết, không bịa. Đây KHÔNG thay được toàn văn nhưng đóng khoảng trống 'không có gì cả' bằng 'có trích dẫn thật + biết đại khái nội dung'.",
+      "last_probe_at": "2026-09-23"
+    }
+  ]
 }
