@@ -143,6 +143,12 @@ VIEC_MAY = [
     ("Kho plugin/skill thiếu so với mốc",
      [PY, "tools/kiem_plugin_day_du.py", "--im-khi-on"],
      None, False),                # cài lại plugin cần mạng + quyết định của bác sĩ
+    # Thêm 24/09/2026 (audit/15): container Cloud mới không có nền Retraction Watch (gitignore)
+    # và proxy Cloud chặn NCBI/Europe PMC ⇒ cả 3 tầng kiểm rút bài cùng câm. Tải qua gương GitLab
+    # chính thức của Crossref (~7 giây). Trên máy thật công cụ là no-op (mã 0).
+    ("Phiên Cloud thiếu nền Retraction Watch (kiểm rút bài câm)",
+     [PY, "tools/nap_nen_rut_bai_cloud.py", "--im-khi-on"],
+     [PY, "tools/nap_nen_rut_bai_cloud.py", "--ap-dung"], True),
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
      None, False),                # cấu hình secrets — không tự điền

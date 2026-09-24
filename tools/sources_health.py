@@ -15,11 +15,23 @@ Ba lớp kiểm, tách bạch (BH08 — không gộp «không biết» với «c
 
 Mã thoát: 0 = mọi nguồn active khoẻ · 1 = có degraded/broken · 2 = sổ hỏng.
 `--im-khi-on` cho hook. Kết quả ghi ngược `last_success_at` (chỉ khi THÀNH CÔNG).
+
+VÁ 24/09/2026 — PHIÊN CLOUD (audit/15 §8). Môi trường Cloud «Trusted» cho proxy thoát mạng
+TỪ CHỐI (CONNECT 403, chính sách) mọi host API y văn. Bản cũ đọc 403 của PROXY như nguồn hỏng
+⇒ ghi DEGRADED/BROKEN cho 7–10 nguồn đang khoẻ VÀO SỔ TRACKED `data/sources.json` — một lần
+commit từ Cloud là làm bẩn sổ dùng chung của mọi máy. Nay:
+  • proxy từ chối theo chính sách = KHÔNG ĐO ĐƯỢC (⚪), không đổi `status` (BH08);
+  • trên phiên Cloud KHÔNG ghi sổ (chỉ báo cáo) — trạng thái nguồn do mạng CỦA MÔI TRƯỜNG
+    quyết định, không phải của nguồn; `--khong-ghi` ép cùng hành vi ở máy khác;
+  • nguồn file `medical-ebm-automation/…` phân giải qua `duong_goc()` (Cloud: anh em, không lồng)
+    — bản cũ báo SRC-003 BROKEN trên Cloud dù nền Retraction Watch có mặt.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -70,13 +82,37 @@ DIEM_THAM = {
 CHU_KY_NGAY = {"daily": 1, "weekly": 7, "monthly": 31, "quarterly": 92, "ad-hoc": 3650}
 
 
-def _tham(url: str) -> bool:
+# Proxy thoát mạng của MÔI TRƯỜNG từ chối theo chính sách (vd Cloud «Trusted») — khác hẳn
+# nguồn trả lỗi: request chưa từng tới nguồn.
+_PROXY_TU_CHOI_RE = re.compile(r"Tunnel connection failed:\s*(403|407)\b")
+
+OK, LOI, CHAN_MOI_TRUONG = "ok", "loi", "chan_moi_truong"
+
+
+def la_phien_cloud() -> bool:
+    return os.environ.get("CLAUDE_CODE_REMOTE", "").strip().lower() == "true"
+
+
+def _tham(url: str) -> str:
+    """OK | LOI | CHAN_MOI_TRUONG. Chỉ LOI mới được hạ trạng thái nguồn."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "ebm-sources-health/1.0"})
         with urllib.request.urlopen(req, timeout=12) as r:
-            return 200 <= r.status < 400
-    except (urllib.error.URLError, OSError, ValueError):
-        return False
+            return OK if 200 <= r.status < 400 else LOI
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        ly_do = getattr(exc, "reason", None)
+        if _PROXY_TU_CHOI_RE.search(f"{exc} {ly_do}"):
+            return CHAN_MOI_TRUONG
+        return LOI
+
+
+def _duong_file(rel: str) -> Path:
+    """Nguồn file khai tương đối theo gốc repo gốc; phần `medical-ebm-automation/…` đi qua
+    `duong_goc()` vì trên Cloud engine là thư mục ANH EM, không lồng."""
+    tien_to = "medical-ebm-automation/"
+    if rel.startswith(tien_to):
+        return _MEA_GOC / rel[len(tien_to):]
+    return GOC / rel
 
 
 def lay_thanh_cong_that(sid: str) -> str | None:
@@ -138,7 +174,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Sức khoẻ sổ đăng ký nguồn")
     ap.add_argument("--im-khi-on", action="store_true")
     ap.add_argument("--khong-mang", action="store_true", help="bỏ thăm sống, chỉ đọc sổ")
+    ap.add_argument("--khong-ghi", action="store_true",
+                    help="chỉ báo cáo, không ghi ngược sổ (tự bật trên phiên Cloud)")
     a = ap.parse_args()
+    cloud = la_phien_cloud()
+    ghi_so = not (a.khong_ghi or cloud)
 
     try:
         du = json.loads(SO.read_text(encoding="utf-8"))
@@ -149,6 +189,7 @@ def main() -> int:
     hom_nay = date.today()
     loi: list[str] = []
     dong: list[str] = []
+    khong_do: list[str] = []
     for s in du["sources"]:
         if s["status"] == "not-covered":
             continue
@@ -157,11 +198,15 @@ def main() -> int:
         # last_success_at là chuyện khác hẳn: LẦN CHẠY THẬT, suy từ artifact.
         # Gộp hai thứ này chính là lỗi trung thực đã vá 15/08 (ping ≠ thu hoạch).
         if s["access"] == "api" and s["id"] in DIEM_THAM and not a.khong_mang:
-            if _tham(DIEM_THAM[s["id"]]):
+            kq = _tham(DIEM_THAM[s["id"]])
+            if kq == OK:
                 s["last_probe_at"] = hom_nay.isoformat()
                 if s["status"] != "active":
                     dong.append(f"  ↺ {s['id']} hồi phục → active")
                 s["status"] = "active"
+            elif kq == CHAN_MOI_TRUONG:
+                # request chưa tới nguồn — KHÔNG BIẾT, không phải hỏng (BH08)
+                khong_do.append(s["id"])
             else:
                 # hỏng 1 lần = degraded; quá 2 chu kỳ không thành công = broken
                 s["status"] = "degraded"
@@ -170,7 +215,7 @@ def main() -> int:
             s["last_success_at"] = that
         # (2) nguồn file: tuổi so với chu kỳ
         if s["access"] == "file" and s.get("endpoint_or_url"):
-            f = GOC / s["endpoint_or_url"]
+            f = _duong_file(s["endpoint_or_url"])
             if f.exists():
                 tuoi = (datetime.now() - datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ([f] if f.is_file() else list(f.iterdir()) or [f])))).days
@@ -192,8 +237,18 @@ def main() -> int:
             loi.append(f"{s['id']} {s['name'][:50]} → {s['status'].upper()}"
                        f" (thành công gần nhất: {s.get('last_success_at') or 'chưa từng'})")
 
-    du["updated"] = hom_nay.isoformat()
-    SO.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if ghi_so:
+        du["updated"] = hom_nay.isoformat()
+        SO.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if khong_do:
+        print(f"⚪ {len(khong_do)} nguồn KHÔNG ĐO ĐƯỢC — proxy môi trường từ chối theo chính sách "
+              f"(request chưa tới nguồn, trạng thái giữ nguyên): {', '.join(khong_do)}")
+        if cloud:
+            print("   Cloud: mở Network access → Custom + thêm host (audit/15 §7) để đo được.")
+    if not ghi_so:
+        print("ℹ  KHÔNG ghi sổ data/sources.json "
+              + ("(phiên Cloud — mạng môi trường, không phải nguồn, quyết định kết quả)."
+                 if cloud else "(--khong-ghi)."))
 
     n_active = sum(1 for s in du["sources"] if s["status"] == "active")
     n_nc = sum(1 for s in du["sources"] if s["status"] == "not-covered")
