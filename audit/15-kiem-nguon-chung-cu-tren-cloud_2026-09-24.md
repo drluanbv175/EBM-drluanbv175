@@ -369,12 +369,38 @@ dư có chủ ý). Đo có chủ ý: Scopus ~5 lượt, CORE ~9 lượt.
    `api.openalex.org`, header `Authorization`, prefix `Bearer`. Connector không tự gửi `Authorization` nên không cần sửa mã
    `[CẦN KIỂM CHỨNG — chưa chạy với khoá thật]`.
 3. **Semantic Scholar:** khai khoá (header `x-api-key`, §7ter) để hết 429 chập chờn.
-4. Muốn toàn văn guideline trên Cloud: thêm `ENABLE_PMC_GUIDELINE_FULLTEXT=true` · `ENABLE_GOLD_COPD_FULLTEXT=true` ·
-   `ENABLE_GINA_ASTHMA_FULLTEXT=true` · `ENABLE_BTS_GUIDELINES_FULLTEXT=true`.
+4. Muốn toàn văn guideline trên Cloud: thêm 3 cờ ở mục h (GOLD · GINA · PMC; BTS không cần lúc này).
 5. Duyệt F1–F2 (hook được bảo vệ) và F3/F5/F6 (engine — cần phiên có quyền ghi repo engine).
 6. **Trên Mac `[CẦN KIỂM CHỨNG]`:** nếu `python3` mà hook `SessionStart` dùng để chạy bộ chốt có đủ sqlalchemy + dotenv thì
    trước bản vá #14 mỗi lần mở phiên có thể đã tiêu Consensus/SerpApi — đối chiếu
    `medical-ebm-automation/data/raw/_state/consensus_usage.json` · `serpapi_usage.json` với trang hạn mức của nhà cung cấp.
+
+### h. Toàn văn guideline trên Cloud (bác sĩ yêu cầu, 24/09/2026 tối)
+
+**Đo end-to-end với cờ bật TẠM trong tiến trình đo** (engine `8ffc4ee`):
+
+| Connector | Kết quả | Ghi chú |
+|---|---|---|
+| GOLD (`gold_copd.py`) | ✅ GOLD 2026 v1.3 (8/12/2025) · 200.000 ký tự · 7 giây | trích thử «GOLD 2026 REPORT HIGHLIGHTS» |
+| GINA (`gina_asthma.py`) | ✅ GINA 2026 Strategy Report · 200.000 ký tự · 23 giây | trích thử «Track 1 (preferred): … ICS-formoterol reliever» |
+| PMC (`pmc_guideline_fulltext.py`) | ✅ PMC13555224 · 200.000 ký tự · 0,6 giây | bucket S3 chính thức |
+| BTS (`bts_guidelines.py`) | ❌ URL pleural-disease (URL trong test 23/09) nay 404 — site đổi cấu trúc, gần như không còn PDF; URL nice.org.uk bị từ chối ĐÚNG (giấy phép AI của NICE) | đường lùi `guideline_citation_summary` ✅ (PMID 37433578) |
+
+**Hai giới hạn thật:** (1) bốn connector là CÔNG CỤ MỒ CÔI — chỉ export ở `app/sources/__init__.py`, không lệnh/tool/agent nào
+gọi ⇒ bật cờ xong vẫn chưa ai dùng; (2) `trich_van_ban_tu_pdf` cắt ở 200.000 ký tự ⇒ mất phần sau của báo cáo GINA/GOLD (vài trăm
+trang). **Đã giao cho phiên engine riêng** (`session_01W8uKHisKhxF3tJnR2JDW5y`, theo yêu cầu «mở phiên» của bác sĩ): lệnh
+`tools/toan_van_guideline.py` (khuôn `tra_thuoc_quoc_te.py`, có `--tim`), tìm được trong toàn bộ PDF, thông điệp cờ tắt nói đúng cách
+bật trên Cloud, cùng F3 · F5 · F6. Doctrine agent (`tra-cuu-chung-cu`, `huong-dan-lam-sang`) nối lệnh đó SAU khi PR engine được merge.
+
+**Việc của bác sĩ — bật trên Cloud** (menu môi trường ở thanh tiêu đề phiên → Edit → Environment variables; áp cho phiên MỚI):
+```
+ENABLE_GOLD_COPD_FULLTEXT=true
+ENABLE_GINA_ASTHMA_FULLTEXT=true
+ENABLE_PMC_GUIDELINE_FULLTEXT=true
+```
+`ENABLE_BTS_GUIDELINES_FULLTEXT` không cần lúc này (không còn nội dung tải được). Bật là quyết định của bác sĩ vì bản quyền:
+báo cáo GOLD/GINA chỉ dùng làm nguồn tham chiếu NỘI BỘ để trích câu chữ kèm nguồn — KHÔNG đăng lại toàn văn, KHÔNG phân phối
+lại file (`GHI_CHU_BAN_QUYEN_CHUAN`).
 
 ## 8. Chưa làm, có chủ ý
 
