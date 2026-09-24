@@ -145,8 +145,7 @@ Repo y khoa (engine):
      (chỉ khi có khoá: `api.elsevier.com` · `serpapi.com` · `api.consensus.app` · `api.epistemonikos.org`)
    - *Environment variables*: `USE_MOCK_SOURCES=false`, `NCBI_EMAIL=<email>` (+ `ENABLE_CORE=true`
      nếu muốn). Biến môi trường ai dùng môi trường đó cũng đọc được.
-   - *Khoá API*: connector hiện đòi THẤY khoá trong biến môi trường — tính năng «API credentials»
-     (giấu khoá, proxy tự gắn) chưa dùng được với connector nếu chưa sửa mã. Quyết định đưa khoá
+   - *Khoá API*: từ 24/09 (chiều) DÙNG ĐƯỢC «API credentials» — xem §7ter. Quyết định đưa khoá
      lên Cloud là của bác sĩ; **không dán khoá vào khung chat**.
    - *Setup script* (tuỳ chọn, được cache ~7 ngày): dựng `python3.12 -m venv` + cài
      `requirements.lock.txt` + `python tools/tai_retraction_watch.py --nguon gitlab`.
@@ -185,6 +184,44 @@ exit 0
 ```
 
 Nền Retraction Watch KHÔNG cần đưa vào setup script nữa — hook Cloud tự nạp (vá #11).
+
+## 7ter. Khai khoá API bằng «API credentials» (24/09/2026, chiều)
+
+**Vì sao cần sửa mã:** proxy của môi trường gắn khoá vào HEADER sau khi request rời sandbox — engine
+không bao giờ thấy khoá. Trước bản vá, connector thấy biến khoá rỗng liền tự dừng («thiếu …_API_KEY»).
+Nay biến KHÔNG bí mật `KHOA_QUA_PROXY` báo cho engine biết nguồn nào có khoá do proxy gắn
+(`app/config.py::khoa_do_proxy_gan`); nguồn đó không bị chặn và không gửi header khoá rỗng.
+
+**Chỉ dùng được với nguồn gửi khoá qua HEADER:**
+
+| Nguồn | Allowed websites | Custom header — Name | Prefix | Ghi vào `KHOA_QUA_PROXY` |
+|---|---|---|---|---|
+| Scopus | `api.elsevier.com` | `X-ELS-APIKey` | *(xoá trống)* | `scopus` |
+| CORE | `api.core.ac.uk` | `Authorization` | `Bearer` | `core` |
+| Consensus | `api.consensus.app` | `x-api-key` | *(xoá trống)* | `consensus` |
+| Epistemonikos | `api.epistemonikos.org` | `Authorization` | `Token` — Value nhập dạng `token="<token>"` `[CẦN KIỂM CHỨNG]` | `epistemonikos` |
+| Semantic Scholar | `api.semanticscholar.org` | `x-api-key` | *(xoá trống)* | `semantic_scholar` |
+
+**KHÔNG dùng được** (gửi khoá qua tham số URL, proxy không gắn): SerpApi · NCBI/PubMed · openFDA —
+muốn dùng trên Cloud thì đặt ở *Environment variables* thường (ai dùng môi trường cũng đọc được).
+NCBI và openFDA vẫn chạy không khoá, chỉ nhịp thấp hơn.
+
+**Các bước (bác sĩ tự làm; máy tính, claude.ai/code):**
+1. Nút đám mây trên ô nhập → rê chuột lên **Default** → bánh răng → hộp **Update cloud environment**.
+2. Mục **API credentials** (dưới Environment variables) → **Add credential**, giữ Credential type **Bearer**.
+3. Điền **Name** (vd `Scopus`), **Allowed websites** và **Custom headers** theo bảng trên; dán khoá vào
+   **Value** — trên màn hình đó, KHÔNG dán vào khung chat.
+4. Bấm **Connect** (credential lưu ngay, không cần Save changes). Lặp lại cho từng nguồn.
+5. Ở **Environment variables** thêm một dòng, ví dụ `KHOA_QUA_PROXY=scopus,core,consensus` (chỉ ghi
+   nguồn đã khai), cùng cờ bật nguồn: `ENABLE_SCOPUS=true`, `ENABLE_CORE=true`, `ENABLE_CONSENSUS=true`…
+   rồi **Save changes**.
+6. Mở phiên MỚI, nhắn «đo lại nguồn chứng cứ». Khoá sai ⇒ nhà cung cấp trả 401/403, connector báo lỗi rõ.
+
+**Điều kiện của nền tảng:** API credentials chỉ có ở gói Pro/Max (tài liệu chính thức: Team/Enterprise
+chưa có), cần vai quản trị tổ chức — gói cá nhân thì bác sĩ tự có. Host đã khai credential gọi được
+cả khi Network access chưa mở host đó. Proxy không gắn khoá cho request của **setup script**.
+
+Kiểm: `tests/test_khoa_qua_proxy_20260924.py` (6) + 2 test Consensus; 4 phép đột biến đều đỏ đúng chỗ.
 
 ## 8. Chưa làm, có chủ ý
 
