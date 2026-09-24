@@ -258,6 +258,150 @@ Semantic Scholar 429 (không khoá).
 **Connector MCP:** Cochrane MCP (`cochrane_search`…) KHÔNG có trên phiên Cloud (plugin cài trên máy
 Mac, không phải connector claude.ai) — trên Cloud engine phủ Cochrane bằng làn Crossref ISSN 1465-1858.
 
+## 7quinquies. Đo lại trong phiên Cloud MỚI (24/09/2026, 18:50–19:40 giờ VN) — sau khi bác sĩ mở thêm host
+
+**Điều kiện đo.** Phiên CHỈ-MỘT-REPO (`EBM-drluanbv175`). Biến môi trường có sẵn: `USE_MOCK_SOURCES=false` · `NCBI_EMAIL` ·
+`UNPAYWALL_EMAIL` · `OPENALEX_EMAIL` · `NCBI_API_KEY` · `OPENFDA_API_KEY` · `SERPAPI_API_KEY` ·
+`ENABLE_SCOPUS/CORE/CONSENSUS/SERPAPI_SCHOLAR=true` · `KHOA_QUA_PROXY=scopus,core,consensus`; API credentials do proxy gắn:
+Scopus · CORE · Consensus. Engine KHÔNG có trong phiên ⇒ agent clone `medical-ebm-automation` (công khai, chỉ đọc) cạnh repo
+gốc → `tools/dung_venv_engine_cloud.py --ap-dung` (venv Python 3.12.3, ~2 phút) → `tools/nap_nen_rut_bai_cloud.py --ap-dung`
+(nền Retraction Watch 72.606 dòng từ `api.labs.crossref.org`, 9 giây). Engine đo ở `719b360` (#6); PR #7 (GOLD) hợp nhất
+GIỮA phiên ⇒ cập nhật lên `8ffc4ee` và đo lại GOLD (diff #6→#7 chỉ chạm `gold_copd.py` + test). Repo gốc cập nhật lên
+`0936391` (#27) trước khi sửa mã.
+
+**Kết luận ngắn.**
+1. Engine trên Cloud nay LẤY ĐƯỢC chứng cứ thật: 8/11 nguồn tìm kiếm chạy (Consensus không gọi — giữ hạn mức), 76/80
+   feed/làn, chuỗi rút bài 3 tầng, toàn văn PMC S3 · GOLD 2026 v1.3 · GINA 2026 (khi bật cờ).
+2. Mới so với §7quater: **3/3 feed an toàn thuốc chạy** (FDA MedWatch · FDA Recalls · MHRA DSU — trước 0/3); 11 host
+   web hội/cơ quan đã mở.
+3. Còn hỏng/thiếu — đều có việc cụ thể (g): SerpApi (host `serpapi.com` chưa mở dù khoá đã đặt) · OpenAlex (hết ngân sách
+   ẩn danh theo IP dùng chung — cần khoá miễn phí) · Semantic Scholar (429 chập chờn, không khoá) · Epistemonikos (chưa
+   token) · 4 RSS BMJ (Cloudflare 429) · bioRxiv MCP `search_preprints` (lỗi máy chủ lần 5; làn preprint qua Europe PMC VẪN
+   chạy) · Wiley TDM (`api.wiley.com` bị chặn).
+4. **Hai cảnh báo lúc mở phiên là BÁO ĐỘNG GIẢ do vắng engine:** «⚠ DỮ LIỆU GIẢ (không có secrets)» và 3 chốt đỏ
+   BH88/108/109. Có engine ⇒ `kiem_nguon_that.py` 🟢, bộ chốt 87/114 ✓ · 0 ✗. Đã vá phía công cụ (e, #15–#16); dòng
+   «DỮ LIỆU GIẢ» của hook còn chờ bác sĩ (F1).
+5. **Phát hiện chi phí:** chốt BH113 (chạy mỗi lần mở phiên) gọi THẬT CORE, và Consensus + SerpApi khi Python có
+   sqlalchemy — đã vá (e, #14).
+
+### a. Mạng — 54 host, thăm qua proxy
+
+| Nhóm | Host |
+|---|---|
+| Proxy CHẶN theo chính sách (CONNECT 403) | `serpapi.com` · `api.wiley.com` · `api.biorxiv.org`/`api.medrxiv.org` · `dav.gov.vn` · `link.springer.com` · `europepmc.org` (engine chỉ dùng làm link; API đi `www.ebi.ac.uk` — mở) · `scite.ai` (engine gọi `api.scite.ai` — mở) |
+| Mở MỚI so với §7quater | `www.fda.gov` · `www.gov.uk` · `www.who.int` · `www.nice.org.uk` · `www.cdc.gov` · `www.escardio.org` · `professional.diabetes.org` · `www.idsociety.org` · `www.uspreventiveservicestaskforce.org` · `www.brit-thoracic.org.uk` · `api.epistemonikos.org` |
+| Tới được nhưng MÁY CHỦ từ chối bot ở trang gốc (403/429 — không phải proxy) | `*.bmj.com` · `jamanetwork.com` · `www.nejm.org` · `www.jacc.org` · `professional.heart.org` · `www.cochranelibrary.com` |
+
+### b. 11 nguồn tìm kiếm của engine (`run.py test-live`, venv 3.12)
+
+| Nguồn | Kết quả | Ghi chú |
+|---|---|---|
+| PubMed | ✅ 5/5 thật · 1,6 s | có `NCBI_API_KEY` |
+| Europe PMC · Crossref · ClinicalTrials.gov | ✅ 5 · 5 · 5 | |
+| Scopus | ✅ 5 (DOI 5, PMID 3) | khoá do proxy gắn |
+| CORE | ✅ 5 | khoá do proxy gắn |
+| openFDA | ✅ 5 với «metformin» · khoá «FDA CHẤP NHẬN» | truy vấn mặc định của test-live không phải tên thuốc ⇒ 404 «no match» bị báo thành lỗi mạng (F5) |
+| OpenAlex | ❌ 429 | «This request has no API key, so it counts against the free daily budget shared by everyone on your network's IP address» — IP thoát của Cloud dùng chung; cần khoá miễn phí |
+| Semantic Scholar | ❌ 429 (curl một phút sau: 200) | không khoá ⇒ chập chờn |
+| Epistemonikos | ⚪ chưa có token | xin qua email |
+| SerpApi Scholar | ❌ proxy chặn `serpapi.com` | khoá ĐÃ đặt ở biến môi trường — chỉ thiếu host |
+| Consensus | KHÔNG gọi | giữ hạn mức 30 lượt/tháng dùng chung MCP; máy chủ đã nhận khoá ở §7quater |
+
+### c. Feed/làn, rút bài, toàn văn, khâu thu nhận
+
+- **80 feed/làn: 76 có mục.** An toàn thuốc 3/3 (MỚI) · Crossref-ISSN 31/31 · Crossref-tiêu đề 21/21 (`acp_annals` 429 chỉ
+  khi gọi song song 8 luồng; gọi riêng: 5 mục) · Europe PMC 5/5 · WHO IRIS 1/1 · kcb.vn 1/1 · RSS 14/18 — 4 RSS BMJ
+  (Frontline Gastroenterology · Gut · Heart · Thorax) trả 429 của Cloudflare kể cả gọi tuần tự với UA trình duyệt (§7quater:
+  máy thật cũng 0 mục).
+- **Chuỗi rút bài 3 tầng ✅:** 9500320 `retracted` (PubMed) · 30267080 `retracted` + retract-and-replace (nền RW — PubMed và
+  PubMed MCP KHÔNG gắn cờ) · 33264437 `ok` (PubMed).
+- **Toàn văn guideline:** PMC S3 ✅ · GOLD ✅ **GOLD 2026 v1.3 (8/12/2025)** trên `8ffc4ee` (trên `719b360` vẫn trả GOLD-2025
+  v1.0 — PR #7 sửa đúng) · GINA ✅ link GINA-2026 Strategy Report. **Cả ba chỉ chạy khi bật cờ** — Cloud CHƯA đặt
+  `ENABLE_PMC_GUIDELINE_FULLTEXT` · `ENABLE_GOLD_COPD_FULLTEXT` · `ENABLE_GINA_ASTHMA_FULLTEXT` ·
+  `ENABLE_BTS_GUIDELINES_FULLTEXT` (đo bằng cờ bật TẠM trong tiến trình đo).
+- Unpaywall ✅ · Scite API công khai ✅ (tally Wakefield 1.521) · RxNorm ✅ `khop_chinh_xac` · EMA ✅ 3 kết quả · Wiley TDM ❌
+  host bị chặn.
+- **Khâu thu nhận** (bản vendor `surveillance_scan.py`, 2 chủ đề canary, tắt tạm Consensus/SerpApi, chạy trong thư mục gốc
+  giả để không ghi vào repo): `--max 20` ⇒ PASS, 38 ứng viên (PubMed 11 · Scopus 27), rút bài 21 `ok` / 17 chưa kiểm (Scopus
+  không PMID); làn preprint (Europe PMC `SRC:PPR`) · ClinicalTrials.gov · CORE đều trả ứng viên.
+
+### d. Connector MCP, sổ nguồn, chốt tổng
+
+- PubMed ✅ · ClinicalTrials.gov ✅ (128) · Scite ✅ · Wiley ✅ (kho 09/2026) · Amass ✅ · bioRxiv: `get_categories` ✅,
+  `search_preprints` ❌ (lần 5) · Consensus MCP: không gọi.
+- `sources_health.py --khong-ghi`: 28 active · 4 degraded (SRC-007 OpenAlex · SRC-015 ACC/AHA web · SRC-039 Semantic Scholar
+  · SRC-042 Wiley TDM) · 4 not-covered; băm `data/sources.json` trước = sau.
+- `chu_trinh_chung_cu.py --nhanh`: ① 🟢 · ⑤ 🟢 · ② ③④ ⑥ không đo được trên Cloud (giám sát tuần chưa chạy trên Linux; sổ xác
+  minh trống; `dashboard_mockups/`/`EBM_MASTER/` ngoài git).
+- Canary giám sát của engine (`weekly_safety.sh --canary`): ESD06 nguồn online ✅ (PubMed · Europe PMC · Crossref · openFDA);
+  ESD02/04/07/08 FAIL GIẢ trên Cloud — F3.
+
+### e. Đã vá trong phiên (repo gốc)
+
+| # | Lỗi (đo thật) | Vá | Kiểm |
+|---|---|---|---|
+| 14 | **BH113 không ngoại tuyến.** Chốt gọi `run_scan()` thật nhưng chỉ chặn 3 làn cũ; 2 làn thêm 22/09 (`search_core_lane`, `bo_sung_du_phong_lane`) chạy thật. Đo dưới proxy từ chối mọi kết nối: Python hệ thống ⇒ 3 CONNECT `api.core.ac.uk`; Python có sqlalchemy ⇒ thêm 3 `api.consensus.app` + 3 `serpapi.com` — **mỗi lượt chốt ăn hạn mức tháng Consensus (dùng chung MCP) và SerpApi (trả phí)**. Test pytest đã chặn đủ 5 làn từ 22/09; chốt bị sót | chặn đủ 5 làn; rào TĨNH (mọi hàm `*_lane` mới phải được chặn — đỏ ở MỌI máy); rào ĐỘNG (thân chốt chạy dưới khoá socket — mở kết nối ⇒ đỏ) | 3 đột biến đỏ đúng chỗ (M1 rào tĩnh; M2 gắn lại làn CORE thật ⇒ «chốt mở 15 kết nối»; M3 gắn lại bậc thang thật ⇒ «6 kết nối»); phục hồi xanh, 0 kết nối; trọn bộ 87/114 ✓ · 0 ✗; `pytest tools/` 1091 passed · 30 skipped có khai báo |
+| 15 | `kiem_nguon_that.py` báo «THIẾU THƯ VIỆN (No module named 'app') — cài venv» khi phiên VẮNG engine; hook đọc mã 1 thành «DỮ LIỆU GIẢ» | vắng engine ⇒ 🟡 «KHÔNG ĐO ĐƯỢC», nêu biến môi trường OS khai gì (không in giá trị `NCBI_EMAIL`) và cách gắn engine | `tools/test_kiem_nguon_that_vang_engine_20260924.py` (3 ca, chạy được trên bản sao trần); đột biến ⇒ 2 đỏ, nhánh «thiếu thư viện THẬT» vẫn xanh |
+| 16 | BH88/108/109 đỏ «tái phát» ở mọi phiên một-repo chỉ vì vắng engine (3 dòng đỏ giả lúc mở phiên) | luật phân loại HẸP `_CAN_ENGINE_NEU_TEN`: ⚪ CHỈ KHI thông điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng; lỗi doctrine trong repo, crash thật, engine có mặt ⇒ vẫn ✗ (cố ý KHÔNG dùng `_CAN_NGUYEN_LIEU_NGOAI_REPO` — nhánh lùi `tran` ở đó sẽ ⚪ hoá cả lỗi trong repo trên Cloud); BH108 nêu đủ đường dẫn engine | 4 ca mới trong tự kiểm BH82; 4 đột biến (bỏ luật · bỏ điều kiện vắng · bỏ điều kiện nêu tên · bỏ rào crash) đều đỏ đúng câu; mô phỏng phiên một-repo: 78/114 ✓ · ⚪ 36 · 0 ✗ (trước: 3 ✗) |
+
+**Lượt gọi thật do chính phiên này gây ra (minh bạch):** lượt chạy bộ chốt ĐẦU TIÊN (18:56 giờ VN, trước khi phát hiện #14)
+gọi CORE thật 3 lần (bộ đệm HTTP giữ 3 phản hồi CORE). Consensus/SerpApi KHÔNG bị gọi ở lượt đó (Python hệ thống thiếu
+sqlalchemy ⇒ bậc thang dừng ở import). Mọi phép tái hiện sau đó chạy dưới proxy/khoá socket từ chối; bộ đếm tháng
+Consensus của engine = 0. `serpapi.com` bị proxy chặn ⇒ không lượt SerpApi nào tới máy chủ (bộ đếm cục bộ vẫn tăng — đếm
+dư có chủ ý). Đo có chủ ý: Scopus ~5 lượt, CORE ~9 lượt.
+
+### f. Phát hiện chưa vá — đề xuất
+
+| # | Chỗ | Vấn đề đo được | Đề xuất | Ai |
+|---|---|---|---|---|
+| F1 | Hook Cloud ⑥b (`.claude/hooks/` — được bảo vệ) | mọi mã ≠ 0 ⇒ «DỮ LIỆU GIẢ (không có secrets)»; tiền đề «Cloud không có secrets — BÌNH THƯỜNG VĨNH VIỄN» đã lỗi thời từ khi đặt biến môi trường | tách mã 2 (🔴 dữ liệu giả) với mã 1 (🟡 không đo được), mỗi mức một dòng đúng nghĩa | bác sĩ |
+| F2 | Hook Cloud ⑤ đứng TRƯỚC ⑤b | phiên có engine: bộ chốt chạy trước khi nạp nền RW ⇒ BH52 đỏ «CHƯA KẾT LUẬN» lúc mở phiên | chuyển ⑤ xuống sau ⑤b (hoặc BH52 ⚪ khi nền RW vắng) | bác sĩ |
+| F3 | engine `tools/verify_evidence_surveillance_deployment.py` | ghép cứng bố cục LỒNG (`ROOT/sync/…`, `ROOT/EBM-Dashboards/…`) ⇒ ESD02/04/07/08 FAIL giả trên Cloud (engine là anh em); ESD07 chạy `--max 1` trong khi luật «cắt ở retmax ⇒ PASS_DEGRADED» ⇒ không bao giờ PASS khi chủ đề canary có >1 bài/30 ngày (đo trên bộ quét TRƯỚC PR #28: `--max 1` ⇒ PARTIAL; `--max 20` ⇒ PASS) — **phần ESD07 này hết áp dụng từ `405dc44`**: PR #28 (phương án B) đã bỏ luật «bị cắt ⇒ suy giảm» | phân giải gốc repo như `_goc_mea()` | PR engine (phiên `session_01W8uKHisKhxF3tJnR2JDW5y`) |
+| F4 | bộ quét `surveillance_scan.py` (3 bản) | (i) ~~báo cáo + alert quy MỌI `PASS_DEGRADED` về «NCBI lỗi/bị chặn»~~ — **đã sửa ở master bởi PR #28** (câu suy giảm không còn mặc định đổ cho NCBI); (ii) `ghi_alert()` ghi vào `DEFAULT_WATCHLIST.parent.parent/alerts` — bản vendor ghi sai chỗ `sync/skills/alerts/` (đã dọn tệp do lượt đo sinh ra); (iii) lượt canary `--khong-cursor` vẫn ghi alert vào thư mục dùng chung | (ii)–(iii) còn nguyên sau PR #28: dò gốc repo như `_tim_medical_ebm_automation()`; canary không ghi alert | PR riêng (nguồn chuẩn + đồng bộ 3 bản) |
+| F5 | engine `run.py test-live openfda` | truy vấn mặc định không phải tên thuốc ⇒ 404 «no match» bị báo `loi_goi_mang`, khoá «chưa gọi được lần nào» | mặc định một tên thuốc; 404 NOT_FOUND = 0 kết quả | PR engine |
+| F6 | engine `app/sources/feeds.py` | 4 RSS BMJ bị Cloudflare 429 ở cả Cloud lẫn máy thật | chuyển sang chế độ Crossref-ISSN như `_CROSSREF_THAY_RSS` | PR engine |
+| F7 | test không kín mạng (nguồn miễn phí) | BH43 · BH52 · BH102 và 4 tệp test bộ quét vẫn gọi NCBI/Europe PMC/Crossref thật; `test_surveillance_scan_ghi_alert_20260922.py` ĐỎ 2 ca khi mạng bị từ chối | tiêm bộ lấy dữ liệu giả cho `gan_do_tin_cay` trong các test đó | PR sau |
+
+### g. Việc CỦA BÁC SĨ (theo lợi ích)
+
+1. **Network access → thêm `serpapi.com`** — khoá SerpApi đã đặt nhưng làn SerpApi chết trên Cloud tới khi mở host.
+2. **OpenAlex:** tạo khoá miễn phí (https://help.openalex.org/api/authentication/) → API credentials: Allowed websites
+   `api.openalex.org`, header `Authorization`, prefix `Bearer`. Connector không tự gửi `Authorization` nên không cần sửa mã
+   `[CẦN KIỂM CHỨNG — chưa chạy với khoá thật]`.
+3. **Semantic Scholar:** khai khoá (header `x-api-key`, §7ter) để hết 429 chập chờn.
+4. Muốn toàn văn guideline trên Cloud: thêm 3 cờ ở mục h (GOLD · GINA · PMC; BTS không cần lúc này).
+5. Duyệt F1–F2 (hook được bảo vệ) và F3/F5/F6 (engine — cần phiên có quyền ghi repo engine).
+6. **Trên Mac `[CẦN KIỂM CHỨNG]`:** nếu `python3` mà hook `SessionStart` dùng để chạy bộ chốt có đủ sqlalchemy + dotenv thì
+   trước bản vá #14 mỗi lần mở phiên có thể đã tiêu Consensus/SerpApi — đối chiếu
+   `medical-ebm-automation/data/raw/_state/consensus_usage.json` · `serpapi_usage.json` với trang hạn mức của nhà cung cấp.
+
+### h. Toàn văn guideline trên Cloud (bác sĩ yêu cầu, 24/09/2026 tối)
+
+**Đo end-to-end với cờ bật TẠM trong tiến trình đo** (engine `8ffc4ee`):
+
+| Connector | Kết quả | Ghi chú |
+|---|---|---|
+| GOLD (`gold_copd.py`) | ✅ GOLD 2026 v1.3 (8/12/2025) · 200.000 ký tự · 7 giây | trích thử «GOLD 2026 REPORT HIGHLIGHTS» |
+| GINA (`gina_asthma.py`) | ✅ GINA 2026 Strategy Report · 200.000 ký tự · 23 giây | trích thử «Track 1 (preferred): … ICS-formoterol reliever» |
+| PMC (`pmc_guideline_fulltext.py`) | ✅ PMC13555224 · 200.000 ký tự · 0,6 giây | bucket S3 chính thức |
+| BTS (`bts_guidelines.py`) | ❌ URL pleural-disease (URL trong test 23/09) nay 404 — site đổi cấu trúc, gần như không còn PDF; URL nice.org.uk bị từ chối ĐÚNG (giấy phép AI của NICE) | đường lùi `guideline_citation_summary` ✅ (PMID 37433578) |
+
+**Hai giới hạn thật:** (1) bốn connector là CÔNG CỤ MỒ CÔI — chỉ export ở `app/sources/__init__.py`, không lệnh/tool/agent nào
+gọi ⇒ bật cờ xong vẫn chưa ai dùng; (2) `trich_van_ban_tu_pdf` cắt ở 200.000 ký tự ⇒ mất phần sau của báo cáo GINA/GOLD (vài trăm
+trang). **Đã giao cho phiên engine riêng** (`session_01W8uKHisKhxF3tJnR2JDW5y`, theo yêu cầu «mở phiên» của bác sĩ): lệnh
+`tools/toan_van_guideline.py` (khuôn `tra_thuoc_quoc_te.py`, có `--tim`), tìm được trong toàn bộ PDF, thông điệp cờ tắt nói đúng cách
+bật trên Cloud, cùng F3 · F5 · F6. Doctrine agent (`tra-cuu-chung-cu`, `huong-dan-lam-sang`) nối lệnh đó SAU khi PR engine được merge.
+
+**Việc của bác sĩ — bật trên Cloud** (menu môi trường ở thanh tiêu đề phiên → Edit → Environment variables; áp cho phiên MỚI):
+```
+ENABLE_GOLD_COPD_FULLTEXT=true
+ENABLE_GINA_ASTHMA_FULLTEXT=true
+ENABLE_PMC_GUIDELINE_FULLTEXT=true
+```
+`ENABLE_BTS_GUIDELINES_FULLTEXT` không cần lúc này (không còn nội dung tải được). Bật là quyết định của bác sĩ vì bản quyền:
+báo cáo GOLD/GINA chỉ dùng làm nguồn tham chiếu NỘI BỘ để trích câu chữ kèm nguồn — KHÔNG đăng lại toàn văn, KHÔNG phân phối
+lại file (`GHI_CHU_BAN_QUYEN_CHUAN`).
+
 ## 8. Chưa làm, có chủ ý
 
 - ~~`tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ mọi máy~~ — ĐÃ VÁ (§7bis #10).

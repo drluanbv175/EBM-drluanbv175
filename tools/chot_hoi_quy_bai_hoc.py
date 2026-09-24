@@ -3972,6 +3972,12 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
     "BH52",
 })
 
+# VÁ 24/09/2026 (đo lại nguồn trên Cloud): ba chốt soi mã ENGINE. Phiên Cloud CHỈ-MỘT-REPO không có engine ⇒ cả ba đỏ
+# «tái phát» mỗi lần mở phiên (3 dòng đỏ giả — đúng «bức tường đỏ giả» BH08/BH82 cấm). KHÔNG đưa vào danh sách trên: nhánh
+# lùi `tran` ở đó sẽ ⚪ hoá luôn lỗi TRONG repo (doctrine/agent) của chúng trên mọi phiên Cloud. Luật HẸP: ⚪ CHỈ KHI thông
+# điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng; mọi thất bại khác vẫn ✗ ở mọi máy.
+_CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109"})
+
 
 def ban_sao_git_tran() -> bool:
     """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (đòi cả BA gốc vắng)."""
@@ -4004,6 +4010,15 @@ def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "", bst=None) -> str:
     """
     if ok:
         return "dat"
+    if ma in _CAN_ENGINE_NEU_TEN:
+        if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
+            return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
+        if "medical-ebm-automation" in ct:
+            if bst is None:
+                bst = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_phan_loai")
+            if bst.duong_goc("medical-ebm-automation", REPO) is None:
+                return "ngoai_pham_vi"
+        return "tai_phat"
     if ma not in _CAN_NGUYEN_LIEU_NGOAI_REPO:
         return "tai_phat"
     if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
@@ -4049,6 +4064,19 @@ def bh82_ban_sao_tran_khong_duoc_do_gia():
         return False, "crash trong-repo (TypeError) bị ⚪ hoá trên bản trần — hồi quy ship được từ cloud"
     if phan_loai("BH01", False, True, "chốt lỗi: FileNotFoundError: thiếu file") != "ngoai_pham_vi":
         return False, "thiếu-file trên bản trần không còn ra ⚪ — tường đỏ giả quay lại"
+    # VÁ 24/09/2026: luật HẸP cho chốt soi engine (`_CAN_ENGINE_NEU_TEN`) — ⚪ chỉ khi nêu tên engine VÀ engine vắng.
+    from types import SimpleNamespace as _NS
+    vang = _NS(duong_goc=lambda g, r: None, GOC_DU_LIEU_NGOAI_GIT=("medical-ebm-automation",))
+    co = _NS(duong_goc=lambda g, r: r / g, GOC_DU_LIEU_NGOAI_GIT=("medical-ebm-automation",))
+    tb = "medical-ebm-automation/tools/tra_thuoc_quoc_te.py biến mất"
+    if phan_loai("BH108", False, True, tb, vang) != "ngoai_pham_vi":
+        return False, "phiên vắng engine: chốt soi engine vẫn ✗ «tái phát» — tường đỏ giả lúc mở phiên quay lại"
+    if phan_loai("BH108", False, True, tb, co) != "tai_phat":
+        return False, "engine CÓ MẶT mà công cụ của engine mất vẫn bị ⚪ hoá — chốt mất răng"
+    if phan_loai("BH108", False, True, "ke-don-an-toan.md không còn «lệnh EMA»", vang) != "tai_phat":
+        return False, "lỗi doctrine TRONG repo của chốt soi engine bị ⚪ hoá khi vắng engine"
+    if phan_loai("BH109", False, True, "chốt lỗi: TypeError: x (medical-ebm-automation)", vang) != "tai_phat":
+        return False, "crash thật của chốt soi engine bị ⚪ hoá"
     return True, "bản trần: ⚪ đúng chỗ có khai báo, ✗ giữ nguyên cho lỗi trong-repo và crash"
 
 
@@ -5711,7 +5739,7 @@ def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
 
     # ---- (3) BH41: agent phải gọi công cụ
     if not cli.exists():
-        return False, "tools/tra_thuoc_quoc_te.py biến mất — agent trỏ vào công cụ không tồn tại"
+        return False, "medical-ebm-automation/tools/tra_thuoc_quoc_te.py biến mất — agent trỏ vào công cụ không tồn tại"
     ag = kd.read_text(encoding="utf-8")
     for dau_hieu, y_nghia in (("tra_thuoc_quoc_te.py chuan-hoa", "lệnh chuẩn hoá RxNorm"), ("tra_thuoc_quoc_te.py ema", "lệnh EMA"),
                               ("`gan_dung`", "luật đọc gan_dung"), ("KHÔNG BIẾT", "loi ≠ không thấy"),
@@ -6474,12 +6502,48 @@ def bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia():
       (2) suy giảm một phần vẫn ra PASS và CON TRỎ VẪN TIẾN ⇒ cửa sổ quét mất vĩnh viễn (tuần W36/W37);
       (3) Europe PMC thi thoảng trả bản RỖNG {"version":"6.9"} — đọc thành «0 kết quả».
     Kiểm HÀNH VI: bộ dịch (thẻ + từ chối thẻ lạ), chủ đề đi đường dự phòng ⇒ PASS_DEGRADED + con trỏ đứng yên + tổng thể
-    không PASS; bản rỗng bị coi là lỗi; `--khong-cursor` không đọc/ghi con trỏ dùng chung và `--since` vẫn có hiệu lực."""
+    không PASS; bản rỗng bị coi là lỗi; `--khong-cursor` không đọc/ghi con trỏ dùng chung và `--since` vẫn có hiệu lực.
+
+    VÁ 24/09/2026 (đo lại nguồn trên Cloud): chính chốt này KHÔNG ngoại tuyến. Nó gọi `run_scan()` thật nhưng chỉ chặn 3
+    làn cũ; hai làn thêm 22/09 (`search_core_lane`, `bo_sung_du_phong_lane` = Consensus → SerpApi) vẫn chạy thật khi máy
+    có engine + cờ/khoá đã bật. Đo dưới proxy từ chối mọi kết nối: 3 CONNECT api.core.ac.uk (Python hệ thống), thêm 3
+    api.consensus.app + 3 serpapi.com khi Python có sqlalchemy — mỗi lượt chốt (hook mở phiên) ăn hạn mức THÁNG của
+    Consensus (30 lượt, dùng chung MCP) và SerpApi (trả phí). Test pytest đã chặn đủ 5 làn từ 22/09; chốt này bị sót.
+    Nay: chặn cả 5 làn; mọi hàm `*_lane` MỚI của bộ quét phải được chặn ở đây (thiếu ⇒ đỏ ở MỌI máy, kể cả bản sao
+    trần); và thân chốt chạy dưới khoá socket — mở bất kỳ kết nối mạng nào ⇒ đỏ."""
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH113 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    try:
+        ok, ct = _bh113_than()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, (f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — bộ chốt mở phiên phải NGOẠI TUYẾN; "
+                       "làn nào của surveillance_scan chưa bị chặn sẽ tốn hạn mức Consensus/SerpApi/CORE mỗi phiên")
+    return ok, ct
+
+
+def _bh113_than():
+    """Thân của BH113 — xem docstring `bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia`."""
     import importlib.util as _iu
     sp = _iu.spec_from_file_location("_bh113_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
     S = _iu.module_from_spec(sp); sys.modules["_bh113_ss"] = S; sp.loader.exec_module(S)
-    for ten in ("search_preprint_lane", "search_trials_lane", "search_scopus_lane"):
+    lan_mang = ("search_preprint_lane", "search_trials_lane", "search_scopus_lane", "search_core_lane")
+    for ten in lan_mang:
         setattr(S, ten, lambda *a, **k: [])
+    S.bo_sung_du_phong_lane = lambda *a, **k: ([], "")
+    sot = sorted(t for t in dir(S) if t.endswith("_lane") and callable(getattr(S, t))
+                 and t not in (*lan_mang, "bo_sung_du_phong_lane"))
+    if sot:
+        return False, (f"làn mạng mới {sot} của surveillance_scan chưa bị chặn trong BH113 — chốt mở phiên sẽ gọi mạng "
+                       "thật (tốn hạn mức); thêm vào danh sách chặn")
     S.gan_do_tin_cay = lambda c: list(c)
     S._NCBI_CHAN["bi_chan"] = False
     S._SUY_GIAM.clear()
