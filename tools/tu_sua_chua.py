@@ -149,6 +149,12 @@ VIEC_MAY = [
     ("Phiên Cloud thiếu nền Retraction Watch (kiểm rút bài câm)",
      [PY, "tools/nap_nen_rut_bai_cloud.py", "--im-khi-on"],
      [PY, "tools/nap_nen_rut_bai_cloud.py", "--ap-dung"], True),
+    # Thêm 24/09/2026 (audit/15 §7quater): Python 3.11 của container Cloud không chạy được engine
+    # (thiếu sqlalchemy/dotenv/pypdf/wiley-tdm; lock cần ≥3.12) ⇒ phiên Cloud mới không chạy được
+    # MỘT connector nào. Dựng `~/.ebm-venv` ở NỀN bằng python3.12. Trên máy thật: no-op (mã 0).
+    ("Phiên Cloud thiếu venv engine (connector nguồn chứng cứ không chạy)",
+     [PY, "tools/dung_venv_engine_cloud.py", "--im-khi-on"],
+     [PY, "tools/dung_venv_engine_cloud.py", "--ap-dung"], True),
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
      None, False),                # cấu hình secrets — không tự điền

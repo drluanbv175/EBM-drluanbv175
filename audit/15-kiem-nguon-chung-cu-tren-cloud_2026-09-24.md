@@ -223,6 +223,41 @@ cả khi Network access chưa mở host đó. Proxy không gắn khoá cho reque
 
 Kiểm: `tests/test_khoa_qua_proxy_20260924.py` (6) + 2 test Consensus; 4 phép đột biến đều đỏ đúng chỗ.
 
+## 7quater. Đo lại sau khi bác sĩ mở mạng + khai khoá (24/09/2026, tối) — và 2 lỗ hổng đồng bộ
+
+**Đã chạy thật trên Cloud** (sau `medical-ebm-automation#6` + `EBM-drluanbv175#24`): PubMed · Europe PMC ·
+Crossref · ClinicalTrials.gov · openFDA · CORE · **Scopus qua khoá do proxy gắn** (5 bài, DOI thật) ·
+Consensus (máy chủ nhận khoá) · Unpaywall (khi có email) · RxNorm · EMA · WHO IRIS · kcb.vn · GOLD/GINA
+toàn văn · PMC S3 · nền Retraction Watch · chuỗi rút bài 3 tầng (PubMed bắt PMID 9500320, nền RW bắt
+30267080) · **73/77 feed/làn guideline** (Crossref-ISSN 31/31 · Crossref-tiêu đề 21/21 · Europe PMC 5/5 ·
+WHO IRIS · BYT · RSS 14/18 — 4 RSS BMJ vẫn 0 mục như trên máy thật).
+
+**Lỗ hổng A — phiên Cloud MỚI không chạy được engine** (đã vá). Python mặc định 3.11, thiếu
+`sqlalchemy`/`python-dotenv`/`pypdf`/`wiley-tdm`; `requirements.lock.txt` cần ≥3.12. Venv dùng để đo là
+do agent dựng tay và mất theo container, hook Cloud không dựng lại. Nay
+`tools/dung_venv_engine_cloud.py` (nối `tu_sua_chua.py` · `chay_tren_cloud=True`) dựng `~/.ebm-venv`
+bằng python3.12 **ở nền** (~5 phút lần đầu) khi mở phiên; có `--clear` vì đo được container còn một
+`~/.ebm-venv` Python 3.11 cũ (không clear ⇒ pip chết ở scipy 1.18.0 — lỗi thật gặp khi chạy thử). Máy
+thật: no-op. Test `tools/test_dung_venv_engine_cloud_20260924.py` (9).
+
+**Lỗ hổng B — connector GOLD trả báo cáo CŨ** (đã vá, `medical-ebm-automation`). Chỉ đọc
+`archived-reports/` — trang này theo định nghĩa không có bản năm hiện hành ⇒ trả GOLD-2025 v1.0 trong khi
+GOLD 2026 v1.3 (8/12/2025) đã phát hành. Nay đọc năm từ link trên trang chủ, lấy PDF đầy đủ (loại Pocket
+Guide + «Summary of Changes»), lùi về archived khi lỗi. Test 4 ca, 2 đột biến đều đỏ.
+
+**Host còn bị proxy chặn** (đo từ sổ nguồn + mọi URL mã gọi; bác sĩ thêm ở Network access → Custom nếu
+cần nguồn đó): cảnh báo an toàn thuốc `www.fda.gov` · `www.gov.uk` (MHRA) — **3/3 feed an toàn thuốc đang
+0 mục vì thiếu 2 host này** · web hội `professional.heart.org` · `www.escardio.org` · `professional.diabetes.org`
+· `www.idsociety.org` · `www.uspreventiveservicestaskforce.org` · `www.who.int` · `www.brit-thoracic.org.uk` ·
+`www.nice.org.uk` · `www.cdc.gov` · `www.cochranelibrary.com` · khác: `api.epistemonikos.org` (cần token) ·
+`serpapi.com` (khoá qua URL) · `api.wiley.com` (Wiley TDM, còn giới hạn IP tổ chức) · `dav.gov.vn` (chưa
+kiểm được từ bất kỳ môi trường nào). **Hai host «chặn» khác là lỗi phía máy chủ, không phải mạng:**
+OpenAlex 503 («tạm dừng tìm kiếm ẩn danh» — nay khuyên dùng khoá API miễn phí; mã chưa hỗ trợ khoá này) ·
+Semantic Scholar 429 (không khoá).
+
+**Connector MCP:** Cochrane MCP (`cochrane_search`…) KHÔNG có trên phiên Cloud (plugin cài trên máy
+Mac, không phải connector claude.ai) — trên Cloud engine phủ Cochrane bằng làn Crossref ISSN 1465-1858.
+
 ## 8. Chưa làm, có chủ ý
 
 - ~~`tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ mọi máy~~ — ĐÃ VÁ (§7bis #10).
