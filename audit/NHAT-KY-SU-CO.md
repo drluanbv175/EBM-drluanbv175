@@ -3076,3 +3076,18 @@ phần consensus mà không ai biết).
 Bộ dịch Europe PMC nhận dạng mới (`PUB_TYPE:"consensus statement"`).
 **Bài học:** khi bộ quét báo một thẻ `[pt]` không được nhận, kiểm `query_translation` bằng connector PubMed trước khi
 kết luận cổng quá chặt — danh mục loại xuất bản của NLM thay đổi theo thời gian.
+
+### 24/09/2026 — Cổng liêm chính báo «URL không tồn tại» với trang FDA có thật (bác sĩ duyệt sửa cổng)
+`verify_dashboard.py` kiểm URL bằng urllib + User-Agent `EBM-Copilot-source-verifier/1.0`; **www.fda.gov trả HTTP 404
+cho kiểu truy cập này dù trang có thật** — đo cùng ngày: trang orlistat (đã chuyển sang `/safety/medical-product-safety-information/`)
+và trang PCSK9 đường uống đều mở được đúng tiêu đề trong trình duyệt thật nhưng bị cổng báo 404 ⇒ lỗi cứng giả ở
+`--strict-sources`. **Không** chọn giả dạng trình duyệt (lách cơ chế chặn bot) và **không** hạ xuống cảnh báo (URL fda.gov bịa sẽ
+lọt). Cách sửa: khai báo `MIEN_CHAN_TRUY_CAP_TU_DONG` (www.fda.gov, fda.gov); với miền này 403/404/410 ⇒ tra sổ
+`EBM-Dashboards/url-xac-minh-trinh-duyet.json` (bằng chứng mở bằng trình duyệt thật, khớp đúng URL, tiêu đề ≥ 10 ký tự, ngày
+không tương lai, hạn 180 ngày); không có ⇒ vẫn «chưa xác minh» (strict ⇒ lỗi cứng) kèm hướng dẫn. 4 bản cổng khớp byte; test
+`tools/test_verify_dashboard_mien_chan_tu_dong_20260924.py` (12 ca, đột biến 3 phép đều đỏ). Sau sửa: dashboard Orlistat và
+bản tin W30 PASS. **Link chết THẬT phát hiện kèm:** trang DSC gabapentin 2019 (`/drugs/drug-safety-and-availability/fda-warns-…
+-gabapentin-neurontin`) báo «Page Not Found» cả trong trình duyệt — nằm trong dòng trích dẫn của ITEM-18 dashboard
+`DauManTinh_TiepCanToanDien_20260818` (không phải trường `url` nên cổng không kiểm). Trang FDA còn sống cho cùng thông báo:
+`/safety/medical-product-safety-information/neurontin-gralise-horizant-gabapentin-and-lyrica-lyrica-cr-pregabalin-drug-safety-communication`
+(chưa thay — chờ bác sĩ).
