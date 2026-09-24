@@ -105,6 +105,35 @@ def _missing_markers(path: Path, markers: list[str]) -> list[str]:
     return [marker for marker in markers if marker not in text]
 
 
+# Ngân sách ký tự cho CLAUDE.md gốc (thêm 24/09/2026, đề xuất #12 của audit/12).
+# CLAUDE.md được nạp vào MỌI phiên; trước khi rút gọn nó phình tới 278.003 ký tự vì
+# mỗi sự cố được nối thêm vào như nhật ký (15/08: 147K · 09/09: 189K · 21/09: 268K).
+# Lịch sử nay nằm nguyên văn ở audit/NHAT-KY-SU-CO.md. Vượt ngân sách ⇒ FAIL, để sự cố
+# mới được ghi vào nhật ký thay vì làm CLAUDE.md phình trở lại.
+NGAN_SACH_CLAUDE_MD = 60_000
+
+
+def check_claude_md_budget(path: Path | None = None,
+                           ngan_sach: int = NGAN_SACH_CLAUDE_MD) -> dict[str, Any]:
+    """Chặn CLAUDE.md gốc vượt ngân sách ký tự (đếm ký tự, không đếm byte)."""
+    duong = path or ROOT_DOCS["CLAUDE.md"]
+    if not duong.exists():
+        return {"name": "claude_md_budget", "status": "FAIL",
+                "errors": [f"không thấy {duong}"]}
+    so_ky_tu = len(_read(duong))
+    ket_qua: dict[str, Any] = {
+        "name": "claude_md_budget",
+        "status": "PASS" if so_ky_tu <= ngan_sach else "FAIL",
+        "so_ky_tu": so_ky_tu,
+        "ngan_sach": ngan_sach,
+    }
+    if so_ky_tu > ngan_sach:
+        ket_qua["errors"] = [
+            f"CLAUDE.md có {so_ky_tu} ký tự > ngân sách {ngan_sach}: ghi sự cố/lịch sử vào "
+            "audit/NHAT-KY-SU-CO.md, CLAUDE.md chỉ giữ LUẬT thường trực"]
+    return ket_qua
+
+
 def _git_ls_files() -> set[str]:
     env = {k: v for k, v in os.environ.items() if k not in _GIT_DISCOVERY_ENV_VARS}
     proc = subprocess.run(
@@ -263,6 +292,7 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
 def run_verification() -> dict[str, Any]:
     checks = [
         check_root_docs(),
+        check_claude_md_budget(),
         check_medical_docs(),
         check_tracked_contract_files(),
         check_agent_sync_health(),
@@ -301,6 +331,8 @@ def main() -> int:
     print("Claude Code / Codex repo alignment:", report["overall_status"])
     for check in report["checks"]:
         print(f"- {check['status']}: {check['name']}")
+        if "so_ky_tu" in check:
+            print(f"  - {check['so_ky_tu']}/{check['ngan_sach']} ký tự")
         if check.get("missing_markers"):
             print(f"  - missing_markers: {check['missing_markers']}")
         if check.get("missing_files"):
