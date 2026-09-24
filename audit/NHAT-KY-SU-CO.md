@@ -3091,3 +3091,26 @@ bản tin W30 PASS. **Link chết THẬT phát hiện kèm:** trang DSC gabapent
 `DauManTinh_TiepCanToanDien_20260818` (không phải trường `url` nên cổng không kiểm). Trang FDA còn sống cho cùng thông báo:
 `/safety/medical-product-safety-information/neurontin-gralise-horizant-gabapentin-and-lyrica-lyrica-cr-pregabalin-drug-safety-communication`
 — **đã thay 24/09/2026 theo duyệt của bác sĩ** (sao lưu `…_20260818.html.bak-20260924-truoc-thay-link-gabapentin`; trang mới đã mở bằng trình duyệt và ghi vào `url-xac-minh-trinh-duyet.json`; bộ năm dựng lại 5/5). Hai bản sao trong hub `EBM_MASTER/` (WEB_DASHBOARDS, NOTEBOOKLM_SOURCES) tự cập nhật ở lần đồng bộ hub kế tiếp; hai đoạn trong chỉ mục RAG là danh mục tham khảo NGUYÊN VĂN của bài báo toàn văn (PMID 36327391, 42236659) — giữ nguyên.
+
+### 24/09/2026 — Bộ chốt «ngoại tuyến» chạy mỗi phiên lại gọi THẬT CORE/Consensus/SerpApi (BH113) · cảnh báo «DỮ LIỆU GIẢ» giả khi vắng engine
+Đo lại nguồn chứng cứ trên một phiên Cloud CHỈ-MỘT-REPO (audit/15 §7quinquies). **(1) BH113 không kín mạng.** Chốt gọi
+`run_scan()` thật của `surveillance_scan.py` nhưng chỉ chặn 3 làn cũ (preprint · trials · Scopus); hai làn thêm 22/09
+(`search_core_lane`, `bo_sung_du_phong_lane` = Consensus → SerpApi) vẫn chạy thật khi máy có engine + cờ/khoá. Đo dưới một
+proxy ghi nhật ký TỪ CHỐI mọi kết nối: Python hệ thống ⇒ 3 CONNECT `api.core.ac.uk`; Python có sqlalchemy ⇒ thêm 3
+`api.consensus.app` + 3 `serpapi.com` mỗi lượt chốt — hook `SessionStart` chạy bộ chốt MỖI PHIÊN nên đây là rò hạn mức tháng
+Consensus (30 lượt dùng chung MCP) và SerpApi (trả phí). Các test pytest đã chặn đủ 5 làn từ 22/09; BH113 (21/09) bị sót khi
+thêm làn — lại họ «sửa một chỗ không lan sang chỗ khác». **Vá:** chặn đủ 5 làn; rào TĨNH (mọi hàm `*_lane` mới của bộ quét
+phải được chặn — đỏ ở mọi máy, kể cả bản sao trần); rào ĐỘNG (thân chốt chạy dưới khoá `socket.connect` — mở kết nối ⇒ đỏ).
+**Kiểm:** 3 đột biến đỏ đúng chỗ (bỏ làn CORE khỏi danh sách ⇒ rào tĩnh; gắn lại làn CORE thật ⇒ «chốt mở 15 kết nối»; gắn
+lại bậc thang thật ⇒ «6 kết nối»), phục hồi xanh với 0 kết nối; trọn bộ 87/114 ✓ · 0 ✗. Lượt chốt đầu tiên của phiên (trước
+khi phát hiện) đã gọi CORE thật 3 lần; Consensus/SerpApi không bị gọi (Python hệ thống thiếu sqlalchemy).
+**(2) Cảnh báo giả khi vắng engine.** `kiem_nguon_that.py` đọc «No module named 'app'» thành «THIẾU THƯ VIỆN — cài venv», hook
+Cloud ⑥b đọc mã 1 thành «DỮ LIỆU GIẢ (không có secrets)» — trong khi môi trường đã đặt `USE_MOCK_SOURCES=false` + `NCBI_EMAIL`.
+**Vá:** vắng engine ⇒ 🟡 «KHÔNG ĐO ĐƯỢC», nêu biến môi trường OS khai gì (không in giá trị email). **Kiểm:**
+`tools/test_kiem_nguon_that_vang_engine_20260924.py` (3 ca; đột biến ⇒ 2 đỏ). Dòng «DỮ LIỆU GIẢ» của hook còn nguyên cho tới
+khi bác sĩ sửa hook được bảo vệ (đề xuất F1, audit/15).
+**(3) BH88/108/109 đỏ «tái phát» ở mọi phiên một-repo** chỉ vì vắng engine. **Vá:** luật phân loại HẸP `_CAN_ENGINE_NEU_TEN`
+— ⚪ CHỈ KHI thông điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng (không dùng `_CAN_NGUYEN_LIEU_NGOAI_REPO`:
+nhánh lùi `tran` ở đó ⚪ hoá cả lỗi doctrine trong repo trên Cloud). **Kiểm:** 4 ca mới trong BH82; 4 đột biến đều đỏ đúng câu.
+**Bài học:** một chốt được tuyên bố «ngoại tuyến» phải được ĐO là ngoại tuyến (proxy từ chối + đếm kết nối), không suy từ ý
+định; thêm một làn gọi mạng vào công cụ dùng chung thì phải rà MỌI nơi gọi `run_scan()` thật, kể cả bộ chốt.

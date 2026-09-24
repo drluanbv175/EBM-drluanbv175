@@ -125,6 +125,24 @@ def kiem_env() -> tuple[str, list[str]]:
     """
     do, canh_bao = [], []
 
+    # VÁ 24/09/2026 (đo lại nguồn trên Cloud): phiên Cloud CHỈ-MỘT-REPO không có engine, nên
+    # `from app.config` ném «No module named 'app'» và nhánh ImportError dưới đây báo «THIẾU THƯ
+    # VIỆN — cài venv» (khuyên sai: không có engine thì cài gì cũng vô ích), còn hook Cloud đọc mã 1
+    # thành «DỮ LIỆU GIẢ» — trong khi môi trường đã đặt USE_MOCK_SOURCES=false + NCBI_EMAIL. Vắng
+    # engine = KHÔNG ĐO ĐƯỢC (🟡), không phải «thiếu thư viện», càng không phải «dữ liệu giả».
+    # Chỉ nêu biến môi trường OS khai gì; KHÔNG in giá trị NCBI_EMAIL (thông tin cá nhân).
+    if not (MEA / "app" / "config.py").exists():
+        import os  # noqa: PLC0415
+        mock = os.environ.get("USE_MOCK_SOURCES")
+        return "vang", [
+            f"máy này KHÔNG có repo engine medical-ebm-automation (đã tìm {REPO / 'medical-ebm-automation'} và "
+            f"{REPO.parent / 'medical-ebm-automation'}) — KHÔNG ĐO ĐƯỢC cấu hình nguồn; đây KHÔNG phải kết luận "
+            f"«dữ liệu giả», cũng không phải thiếu thư viện.\n"
+            f"     Biến môi trường OS khai: USE_MOCK_SOURCES={mock if mock is not None else '(không đặt)'} · "
+            f"NCBI_EMAIL={'có' if os.environ.get('NCBI_EMAIL') else '(không đặt)'}.\n"
+            f"     Phiên Cloud một-repo: thêm repo medical-ebm-automation vào phiên (hoặc clone cạnh repo gốc) "
+            f"rồi chạy lại."]
+
     sys.path.insert(0, str(MEA))
     try:
         from app.config import settings  # noqa: PLC0415
