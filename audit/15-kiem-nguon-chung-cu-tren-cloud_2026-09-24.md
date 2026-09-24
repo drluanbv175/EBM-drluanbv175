@@ -154,12 +154,46 @@ Repo y khoa (engine):
    Cloud (tệp hook được bảo vệ — agent không sửa được).
 4. **bioRxiv MCP**: kiểm lại trạng thái connector trong cài đặt connector claude.ai.
 
+## 7bis. Cập nhật sau khi hợp nhất PR #21 · #22 · medical-ebm-automation#4 (24/09/2026, chiều)
+
+Ba PR đã hợp nhất theo yêu cầu bác sĩ; việc 1 ở §7 xong. Vá thêm (repo gốc):
+
+| # | Chỗ chưa hoàn thiện | Vá | Kiểm |
+|---|---|---|---|
+| 10 | `tools/sources_health.py` đọc 403 của PROXY thành nguồn hỏng và GHI DEGRADED vào sổ tracked từ mọi máy (§8 cũ); còn báo SRC-003 BROKEN trên Cloud dù nền RW có mặt (ghép cứng đường lồng) | proxy từ chối theo chính sách = ⚪ «không đo được», giữ nguyên `status`; phiên Cloud KHÔNG ghi sổ (`--khong-ghi` ép ở máy khác); nguồn `medical-ebm-automation/…` phân giải qua `duong_goc()` | 6 test; 3 đột biến đều đỏ; chạy thật trên Cloud: băm sổ không đổi, 7 nguồn ⚪ |
+| 11 | Nền Retraction Watch là tệp gitignore ⇒ container Cloud mới không bao giờ có, dù công cụ tải đã chạy được (vá #9) — không ai gọi nó (BH41) | `tools/nap_nen_rut_bai_cloud.py` nối vào `tu_sua_chua.py::VIEC_MAY` (`chay_tren_cloud=True`) ⇒ hook Cloud ⑤b tự nạp; máy thật no-op | 6 test; 2 đột biến đều đỏ; chạy thật: dời nền đi → `tu_sua_chua --pham-vi-cloud --ap-dung` nạp lại trong 7,8 giây |
+| 12 | `/tra-preprint` ghi cứng tên công cụ plugin Mac `mcp__plugin_bio-research_biorxiv__*` — trên Cloud connector là `mcp__bioRxiv__*` ⇒ bước 1 không nạp được | lệnh thử cả hai tên; lời gọi dữ liệu lỗi ⇒ báo «kênh preprint hỏng», cấm đọc thành «không có preprint» | đo lại bioRxiv MCP: `get_categories` ✅, `search_preprints` ❌ (lần 3) — lỗi phía máy chủ connector |
+| 13 | Doctrine `_CONNECTOR-CHUNG-CU.md` chỉ liệt tiền tố plugin Mac; agent trên Cloud dễ kết luận «connector không có» | thêm khối «Tên công cụ đổi theo nơi chạy» (PubMed · Clinical_Trials · bioRxiv · Consensus · Scite · ChEMBL · ICD-10) + luật PARTIAL khi máy chủ connector lỗi; chép sang bản in-repo của engine (tệp `_` ngoài manifest) | `sync_agents_to_codex --check` sạch |
+
+**Setup script đề xuất cho môi trường Cloud** (bác sĩ dán ở Edit → Setup script; `[CẦN KIỂM CHỨNG]`
+— chưa chạy được trong ngữ cảnh setup thật, vì agent không sửa được môi trường; chỉ kiểm cú pháp):
+
+```bash
+#!/bin/bash
+# Dựng venv Python 3.12 cho engine (requirements.lock.txt ghim scipy 1.18.0, cần >= 3.12).
+# Không có repo/python3.12 lúc chạy ⇒ bỏ qua, không làm hỏng phiên.
+for R in /home/user/medical-ebm-automation "$HOME/medical-ebm-automation"; do
+  [ -f "$R/requirements.lock.txt" ] || continue
+  command -v python3.12 >/dev/null 2>&1 || break
+  if ! "$HOME/.ebm-venv/bin/python" -c 'import sys; sys.exit(sys.version_info < (3, 12))' 2>/dev/null; then
+    python3.12 -m venv --clear "$HOME/.ebm-venv" && \
+      "$HOME/.ebm-venv/bin/pip" install -q -r "$R/requirements.lock.txt"
+  fi
+  break
+done
+exit 0
+```
+
+Nền Retraction Watch KHÔNG cần đưa vào setup script nữa — hook Cloud tự nạp (vá #11).
+
 ## 8. Chưa làm, có chủ ý
 
-- `tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ BẤT KỲ máy nào — chạy trên Cloud
-  sẽ ghi DEGRADED/BROKEN cho 7–10 nguồn khoẻ. Không sửa trong phiên này vì PR #21 cũng sửa tệp đó
-  (tránh xung đột); đề xuất làm ngay sau khi PR #21 hợp nhất.
+- ~~`tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ mọi máy~~ — ĐÃ VÁ (§7bis #10).
 - Không gọi Consensus MCP (hạn mức). Không đo lại sau khi đổi mạng (không đổi được môi trường từ
-  bên trong phiên). Không tự merge PR.
+  bên trong phiên).
+- Engine Python trên Cloud VẪN mù cho tới khi bác sĩ đổi Network access (§7 việc 2) — đây là cấu
+  hình môi trường, mã không vượt được proxy (và không được thử vượt).
+- `_tham()` của `sources_health` vẫn chưa gắn khoá theo nguồn (CORE/Scopus không thăm sống) — giữ
+  nguyên quyết định 22/09.
 
 Cần bác sĩ kiểm chứng.
