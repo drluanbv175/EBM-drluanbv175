@@ -3091,3 +3091,20 @@ bản tin W30 PASS. **Link chết THẬT phát hiện kèm:** trang DSC gabapent
 `DauManTinh_TiepCanToanDien_20260818` (không phải trường `url` nên cổng không kiểm). Trang FDA còn sống cho cùng thông báo:
 `/safety/medical-product-safety-information/neurontin-gralise-horizant-gabapentin-and-lyrica-lyrica-cr-pregabalin-drug-safety-communication`
 — **đã thay 24/09/2026 theo duyệt của bác sĩ** (sao lưu `…_20260818.html.bak-20260924-truoc-thay-link-gabapentin`; trang mới đã mở bằng trình duyệt và ghi vào `url-xac-minh-trinh-duyet.json`; bộ năm dựng lại 5/5). Hai bản sao trong hub `EBM_MASTER/` (WEB_DASHBOARDS, NOTEBOOKLM_SOURCES) tự cập nhật ở lần đồng bộ hub kế tiếp; hai đoạn trong chỉ mục RAG là danh mục tham khảo NGUYÊN VĂN của bài báo toàn văn (PMID 36327391, 42236659) — giữ nguyên.
+
+### 24/09/2026 — Luật «bị cắt ở retmax ⇒ suy giảm» thay bằng phương án B «lấy đủ rồi chọn mạnh nhất» (bác sĩ chọn)
+Luật 22/09 (phản biện vòng 2, review:thu-nhan #4) ghi «esearch bị cắt ở retmax» vào `_SUY_GIAM` ⇒ PASS_DEGRADED + con trỏ
+đứng yên. Nhưng esearch sort theo ngày nên quét lại vẫn chỉ trả các bản MỚI NHẤT — không thu hồi được bản nào; chủ đề nhiều bài
+bị «suy giảm» mãi và `orchestrator --cu-nhat` dừng ở chủ đề đầu. Số đo W39: 12/47 chủ đề có tầng bị cắt (cả 12 chỉ vì bị cắt),
+96 bài được trình / 608 bài khớp; 11/16 lần cắt ở tầng `moi_vao_pubmed`; nặng nhất ĐTĐ + GLP-1/GIP (243 bài khớp).
+Bác sĩ được trình 2 phương án (A: coi bị cắt là giới hạn thiết kế, chỉ ghi chú · B: lấy đủ rồi chọn mạnh nhất) và chọn **B**.
+**Đã làm** (`surveillance_scan.py`, 3 bản khớp byte): mỗi tầng lấy tới `TRAN_LAY_MOI_TANG=300` ID (một lượt esearch), tóm tắt
+theo lô `LO_TOM_TAT=100`, xếp `khoa_manh_nhat` (điểm loại xuất bản THẬT: guideline/consensus 5 · SR/MA 4 · RCT 3 · thử
+nghiệm/quan sát 2 · khác 1 · bài bị rút/đính chính 0; bài chưa gán loại suy từ tiêu đề và xếp SAU bài cùng điểm có loại thật;
+rồi nguồn thẩm quyền; rồi mới hơn), trình `--max` bài đầu; bài đã có trong kho không chiếm chỗ; phần còn lại ghi
+`TopicResult.khong_trinh`. Bài không trình chỉ khử trùng TRONG chủ đề (không vào `all_pmids` chung — bài xếp thấp ở chủ đề này
+có thể đứng đầu ở chủ đề khác). Vượt trần ⇒ `_VUOT_TRAN` (ghi chú), không suy giảm. Câu cảnh báo «suy giảm» không còn mặc định
+đổ cho NCBI. Test `tools/test_surveillance_scan_phuong_an_b_20260924.py` (16 ca) + sửa test khoá luật cũ trong
+`test_surveillance_scan_20260922_phan_bien_vong2.py` sang luật mới; kiểm đột biến 5 phép đều đỏ. Hai bản đích được chép đè
+sau khi xác minh chúng trùng byte với bản gốc TRƯỚC khi sửa (công cụ đồng bộ từ chối vì thấy «dòng riêng» — đúng là các dòng
+vừa thay).

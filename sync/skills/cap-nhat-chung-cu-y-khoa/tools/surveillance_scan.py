@@ -49,6 +49,19 @@ class NCBIBiChan(RuntimeError):
 # tìm kiếm rơi xuống dự phòng trong truy vấn hiện tại. `run_scan` đặt lại mỗi lượt / mỗi truy vấn.
 _NCBI_CHAN: dict = {"bi_chan": False}
 _SUY_GIAM: list[str] = []
+# Truy vấn khớp NHIỀU hơn trần lấy (xem TRAN_LAY_MOI_TANG): chỉ GHI CHÚ, không làm chủ đề suy giảm.
+_VUOT_TRAN: list[str] = []
+
+# PHƯƠNG ÁN B — «lấy đủ rồi chọn mạnh nhất» (bác sĩ chọn 24/09/2026). Trước đây mỗi tầng chỉ lấy `--max`
+# (6) ID MỚI NHẤT rồi trình nguyên: đo kỳ W39, 12/47 chủ đề có tầng bị cắt, 96 bài được trình trên 608 bài
+# khớp — 512 bài không bao giờ tới tay bác sĩ, và thứ tự trình là «mới nhất» chứ không phải «mạnh nhất».
+# Nay mỗi tầng lấy tới TRAN_LAY_MOI_TANG ID (vẫn MỘT lượt esearch), tóm tắt theo lô LO_TOM_TAT, xếp theo
+# độ mạnh chứng cứ (xem khoa_manh_nhat) rồi mới cắt còn `--max` để trình; phần còn lại ghi vào
+# TopicResult.khong_trinh — không bài nào bị bỏ IM LẶNG. Vượt trần chỉ ghi chú: sort theo ngày nên quét
+# lại cũng chỉ trả lại đúng các bài mới nhất — giữ con trỏ đứng yên không thu hồi được gì mà chỉ làm chủ
+# đề «suy giảm» mãi và làm quét lô dừng (luật 22/09 đã gây đúng lỗi đó).
+TRAN_LAY_MOI_TANG = 300
+LO_TOM_TAT = 100
 
 
 def _la_trang_chan_ncbi(payload: str) -> bool:
@@ -279,6 +292,10 @@ class TopicResult:
     # nếu không tự phân tích chuỗi `error`. Trường này liệt TÊN làn hỏng (không phải câu văn), rỗng
     # khi mọi làn phụ chạy được (kể cả khi chúng trả 0 kết quả — đó là tín hiệu THẬT, không phải lỗi).
     lan_phu_loi: list[str] = field(default_factory=list)
+    # Phương án B (24/09/2026): ứng viên ĐÃ QUÉT nhưng KHÔNG trình (ngoài top `--max` của tầng sau khi xếp
+    # theo độ mạnh) — ghi lại để không bài nào bị bỏ im lặng. Mỗi mục: pmid · tang · diem · pubtype · title ·
+    # ngay · tap_chi.
+    khong_trinh: list[dict] = field(default_factory=list)
 
 
 def _retry_wait(exc: BaseException, attempt: int) -> float:
@@ -555,19 +572,18 @@ def search(query: str, days: int, retmax: int, *,
         return search_europe_pmc(query, days, retmax, loc_thiet_ke=loc_thiet_ke,
                                  mindate=mindate, maxdate=maxdate, **_kw_du_phong)
     ids = result.get("idlist", [])
-    # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #4): esearch bị CẮT Ở retmax khi count thật
-    # > số id trả về (sort=date desc, chỉ lấy `retmax` bản mới nhất). Vì PASS đẩy con trỏ chủ đề tới
-    # hôm nay, các bản ghi cũ hơn TRONG CÙNG cửa sổ nhưng ngoài retmax không bao giờ được trình ra ở
-    # lượt sau — mất ứng viên có điều kiện dưới danh nghĩa PASS. Ghi vào _SUY_GIAM để run_scan gắn cờ
-    # PASS_DEGRADED và GIỮ con trỏ đứng yên (lượt sau quét lại đúng cửa sổ này).
+    # esearch khớp NHIỀU hơn `retmax` (sort=date desc ⇒ chỉ lấy `retmax` bản mới nhất). Luật 22/09 ghi việc
+    # này vào _SUY_GIAM (PASS_DEGRADED, con trỏ đứng yên) — nhưng quét lại vẫn chỉ trả các bản MỚI NHẤT nên
+    # không thu hồi được bản nào, chỉ làm chủ đề suy giảm mãi và quét lô dừng. Từ 24/09 (phương án B) run_scan
+    # gọi với retmax = TRAN_LAY_MOI_TANG; vượt trần ⇒ GHI CHÚ minh bạch trong _VUOT_TRAN, không suy giảm.
     try:
         _tong = int(result.get("count", len(ids)))
     except (TypeError, ValueError):
         _tong = len(ids)
     if _tong > len(ids):
-        _SUY_GIAM.append(
-            f"esearch bị cắt ở retmax: hiển thị {len(ids)}/{_tong} bản ghi khớp truy vấn "
-            "— cửa sổ có thể còn bản ghi cũ hơn (trong cùng cửa sổ) chưa được lấy"
+        _VUOT_TRAN.append(
+            f"vượt trần lấy: đã quét {len(ids)}/{_tong} bản ghi mới nhất khớp truy vấn "
+            "— truy vấn quá rộng, nên thu hẹp"
         )
     return [str(pmid) for pmid in ids if str(pmid).isdigit()]
 
@@ -1273,6 +1289,67 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
     return ra, ghi_chu
 
 
+# ── Xếp hạng «mạnh nhất» (phương án B, 24/09/2026) ─────────────────────────────────────────────────────────
+# Loại xuất bản THẬT của PubMed → điểm độ mạnh chứng cứ; bài mang nhiều loại lấy điểm cao nhất.
+_DIEM_LOAI_XUAT_BAN = {
+    "practice guideline": 5, "guideline": 5, "consensus statement": 5,
+    "consensus development conference, nih": 5,
+    "systematic review": 4, "meta-analysis": 4, "network meta-analysis": 4,
+    "randomized controlled trial": 3, "pragmatic clinical trial": 3, "equivalence trial": 3,
+    "clinical trial, phase iii": 3,
+    "clinical trial": 2, "controlled clinical trial": 2, "clinical trial, phase ii": 2,
+    "multicenter study": 2, "observational study": 2, "comparative study": 2,
+}
+# Không phải chứng cứ để trình (thông báo rút bài / đính chính / bài đã bị rút) ⇒ điểm 0, xếp cuối.
+_LOAI_KHONG_PHAI_CHUNG_CU = {"retracted publication", "retraction of publication",
+                             "published erratum", "expression of concern"}
+# CHỈ dùng khi bài CHƯA được gán loại (mới vào PubMed — MEDLINE gán loại sau vài tuần): suy từ TIÊU ĐỀ, và
+# luôn xếp SAU bài cùng điểm mà có loại thật (xem khoa_manh_nhat). Tiêu đề không phải bằng chứng thiết kế.
+_TIEU_DE_MANH = (
+    (re.compile(r"\b(guidelines?|consensus|recommendations?)\b", re.I), 5),
+    (re.compile(r"\b(systematic review|meta-?analys[ie]s|umbrella review)\b", re.I), 4),
+    (re.compile(r"\brandomi[sz]ed\b", re.I), 3),
+)
+
+
+def diem_manh(c: Candidate) -> tuple[int, bool]:
+    """(điểm độ mạnh 0–5, điểm có dựa trên loại xuất bản THẬT không)."""
+    loai = [p.strip().lower() for p in c.pubtype if p and p.strip().lower() != "journal article"]
+    if any(p in _LOAI_KHONG_PHAI_CHUNG_CU for p in loai):
+        return 0, True
+    if loai:
+        return max(_DIEM_LOAI_XUAT_BAN.get(p, 1) for p in loai), True
+    for mau, diem in _TIEU_DE_MANH:
+        if mau.search(c.title or ""):
+            return diem, False
+    return 1, False
+
+
+def khoa_manh_nhat(thu_tu: int, c: Candidate) -> tuple[int, int, int, int]:
+    """Khoá sắp xếp «mạnh nhất trước»: điểm loại thiết kế → loại THẬT trước suy-từ-tiêu-đề → có nguồn thẩm
+    quyền → thứ tự esearch (sort theo ngày ⇒ bài mới hơn đứng trước khi mọi thứ khác bằng nhau)."""
+    diem, that = diem_manh(c)
+    return (-diem, 0 if that else 1, 0 if c.authority_source else 1, thu_tu)
+
+
+def chon_manh_nhat(ung_vien: Sequence[Candidate], so_trinh: int, trong_kho: set[str]
+                   ) -> tuple[list[Candidate], list[Candidate], int]:
+    """(được trình — mạnh nhất trước · đã quét không trình · số bài đã có trong kho bị bỏ qua).
+    Bài đã có trong kho không chiếm chỗ trình: bác sĩ đã đọc nó rồi."""
+    moi = [(i, c) for i, c in enumerate(ung_vien) if c.pmid not in trong_kho]
+    da_co = len(ung_vien) - len(moi)
+    moi.sort(key=lambda cap: khoa_manh_nhat(*cap))
+    return [c for _, c in moi[:so_trinh]], [c for _, c in moi[so_trinh:]], da_co
+
+
+def _ban_ghi_khong_trinh(c: Candidate, tang: str) -> dict:
+    diem, that = diem_manh(c)
+    return {"pmid": c.pmid, "tang": tang, "diem": diem,
+            "diem_theo": "loai_xuat_ban" if that else "tieu_de",
+            "pubtype": list(c.pubtype), "title": (c.title or "")[:200],
+            "ngay": c.publication_date, "tap_chi": c.journal_or_organization}
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -1287,6 +1364,10 @@ def run_scan(
     topic_results: list[TopicResult] = []
     all_pmids: set[str] = set()
     _NCBI_CHAN["bi_chan"] = False   # mỗi lượt quét bắt đầu lại từ «NCBI chưa bị chặn»
+    try:
+        trong_kho = _pmid_da_co_trong_kho()   # đọc sổ cục bộ MỘT lần cho cả lượt (phương án B)
+    except Exception:  # noqa: BLE001 — không đọc được sổ thì không loại bài nào (chỉ tốn chỗ trình)
+        trong_kho = set()
     for row in topics:
         # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #5): chụp all_pmids TRƯỚC khi xử lý
         # chủ đề này. Nếu chủ đề hỏng GIỮA CHỪNG (vd tầng 1 đã thêm PMID vào all_pmids rồi tầng 2
@@ -1297,6 +1378,11 @@ def run_scan(
         try:
             unique: list[Candidate] = []
             suy_giam: list[str] = []
+            ghi_chu_tang: list[str] = []    # phương án B: «quét N · trình 6 mạnh nhất» + vượt trần (chỉ ghi chú)
+            khong_trinh: list[dict] = []    # ứng viên đã quét nhưng không trình — ghi lại, không bỏ im lặng
+            # Khử trùng GIỮA CÁC TẦNG của chủ đề này, gồm cả bài không trình. KHÔNG đưa bài không trình vào
+            # all_pmids (dùng chung mọi chủ đề): bài xếp thấp ở chủ đề này có thể đứng đầu ở chủ đề khác.
+            da_thay_chu_de: set[str] = set()
             # Chạy THEO THỨ TỰ TẦNG: guideline → tổng quan/gộp → RCT. Ứng viên tầng cao
             # vào trước, nên bác sĩ đọc thứ mạnh nhất trước thay vì thứ PubMed trả trước.
             # CON TRỎ theo chủ đề (K8): quét từ max(cursor−3ng, hôm_nay−days) tới nay.
@@ -1323,22 +1409,42 @@ def run_scan(
                 # Tầng "moi_vao_pubmed" phải đi bằng edat + KHÔNG lọc loại thiết kế —
                 # nếu không nó lại rơi vào đúng cái bẫy đang vá. Bộ tìm kiếm giả trong
                 # test không nhận tham số phụ, nên lùi êm về chữ ký cũ.
+                tang = muc_tang.get("tang", "chung")
                 _SUY_GIAM.clear()
+                _VUOT_TRAN.clear()
+                # Phương án B: LẤY tới trần (một lượt esearch), không chỉ `max_results` bản mới nhất.
+                tran_lay = max(max_results, TRAN_LAY_MOI_TANG)
                 try:
-                    ids = search_fn(muc_tang["query"], days, max_results,
+                    ids = search_fn(muc_tang["query"], days, tran_lay,
                                     datetype=muc_tang.get("datetype", "pdat"),
                                     loc_thiet_ke=muc_tang.get("loc_thiet_ke", True),
                                     mindate=md)
                 except TypeError:
-                    ids = search_fn(muc_tang["query"], days, max_results)
+                    ids = search_fn(muc_tang["query"], days, tran_lay)
                 if _SUY_GIAM:
-                    suy_giam.append(f"tầng {muc_tang.get('tang', 'chung')}: {_SUY_GIAM[-1]}")
+                    suy_giam.append(f"tầng {tang}: {_SUY_GIAM[-1]}")
                     _SUY_GIAM.clear()
-                for candidate in summarize_fn(ids):
-                    if candidate.pmid in all_pmids:
-                        continue
+                if _VUOT_TRAN:
+                    ghi_chu_tang.append(f"⚠ tầng {tang}: {_VUOT_TRAN[-1]}")
+                    _VUOT_TRAN.clear()
+                # Tóm tắt THEO LÔ rồi CHỌN MẠNH NHẤT: trình `max_results` bài đầu theo khoa_manh_nhat, phần
+                # còn lại ghi vào khong_trinh (không bỏ im lặng). Bài đã có trong kho không chiếm chỗ trình.
+                ung_vien_tang: list[Candidate] = []
+                for dau in range(0, len(ids), LO_TOM_TAT):
+                    ung_vien_tang.extend(summarize_fn(ids[dau:dau + LO_TOM_TAT]))
+                ung_vien_tang = [c for c in ung_vien_tang
+                                 if c.pmid not in all_pmids and c.pmid not in da_thay_chu_de]
+                da_thay_chu_de.update(c.pmid for c in ung_vien_tang)
+                chon, bo, da_co = chon_manh_nhat(ung_vien_tang, max_results, trong_kho)
+                for candidate in chon:
                     all_pmids.add(candidate.pmid)
                     unique.append(replace(candidate, tang=muc_tang["tang"]))
+                khong_trinh.extend(_ban_ghi_khong_trinh(c, tang) for c in bo)
+                if bo:
+                    ghi_chu_tang.append(
+                        f"tầng {tang}: quét {len(ung_vien_tang)} · trình {len(chon)} mạnh nhất · "
+                        f"{len(bo)} ghi «đã quét, không trình»"
+                        + (f" · {da_co} đã có trong kho" if da_co else ""))
                 # Suy giảm ở KHÂU TÓM TẮT (esummary lỗi → Europe PMC, hoặc PMID không có bản ghi) cũng phải làm chủ đề
                 # PASS_DEGRADED — bản trước chỉ đọc _SUY_GIAM sau search() nên khâu này im lặng mất ứng viên.
                 if _SUY_GIAM:
@@ -1417,12 +1523,13 @@ def run_scan(
             # PASS_DEGRADED: có truy vấn rơi xuống dự phòng ⇒ kết quả có thể THIẾU. Con trỏ KHÔNG tiến để
             # lượt sau quét lại đúng cửa sổ này — trước đây vẫn tiến ⇒ cửa sổ 24/08–07/09 mất vĩnh viễn.
             trang_thai = "PASS_DEGRADED" if suy_giam else "PASS"
-            ghi_chu = "; ".join(ghi_chu_lan)
+            ghi_chu = "; ".join(ghi_chu_tang + ghi_chu_lan)
             if suy_giam:
                 ghi_chu = ("SUY GIẢM: " + " | ".join(suy_giam)
                            + (f" || {ghi_chu}" if ghi_chu else ""))
             topic_results.append(TopicResult(
-                row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam, lan_phu_loi))
+                row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam, lan_phu_loi,
+                khong_trinh))
             if cursor is not None and trang_thai == "PASS":
                 # Vá 22/09/2026 (review:thu-nhan #11): UTC — nhất quán với biên `since`/`today`
                 # thật sự gửi tới NCBI/Europe PMC (xem chú thích ở khối tính `md` phía trên); con
@@ -1471,10 +1578,10 @@ def markdown_report(report: dict) -> str:
         f"# Giám sát định kỳ - chứng cứ mới ({report['days']} ngày gần đây)",
         "",
         f"- Trạng thái: **{report['status']}**",
-        *([f"- 🟠 **QUÉT SUY GIẢM: {report['degraded_topics']}/{report['topic_count']} chủ đề có truy vấn phải "
-           f"chạy bằng Europe PMC dự phòng vì NCBI lỗi/bị chặn — kết quả có thể THIẾU (nhất là tầng "
-           f"guideline/tổng quan/RCT). KHÔNG được đọc «không có ứng viên» là «không có gì mới». "
-           f"Con trỏ chủ đề suy giảm KHÔNG tiến; chạy lại khi NCBI trả lời được.**"]
+        *([f"- 🟠 **QUÉT SUY GIẢM: {report['degraded_topics']}/{report['topic_count']} chủ đề có truy vấn không "
+           f"lấy được đủ (NCBI lỗi/bị chặn phải dùng Europe PMC dự phòng, hoặc thiếu bản tóm tắt — lý do từng "
+           f"chủ đề ở dưới) — kết quả có thể THIẾU. KHÔNG được đọc «không có ứng viên» là «không có gì mới». "
+           f"Con trỏ chủ đề suy giảm KHÔNG tiến; chạy lại khi nguồn trả lời được.**"]
           if report.get("degraded_topics") else []),
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}"
         + (f" (trong đó {report['degraded_topics']} SUY GIẢM — xem dưới)" if report.get("degraded_topics") else ""),
@@ -1501,8 +1608,9 @@ def markdown_report(report: dict) -> str:
                 lines.append(f"- 🟠 **SUY GIẢM:** {result['error']} — kết quả dưới đây có thể THIẾU; "
                              "không được đọc «không có ứng viên» là «không có gì mới».")
             elif result.get("error"):
-                # Ghi chú làn phụ (scopus/preprint/trials lỗi) — trước đây chỉ in khi status≠PASS nên MẤT.
-                lines.append(f"- ⚪ Ghi chú làn phụ: `{result['error']}`")
+                # Ghi chú (xếp hạng theo tầng «quét N · trình 6 mạnh nhất», vượt trần, làn phụ lỗi) — trước
+                # đây chỉ in khi status≠PASS nên MẤT.
+                lines.append(f"- ⚪ Ghi chú: `{result['error']}`")
         if result["status"] == "FAIL":
             pass
         elif not result["candidates"]:
@@ -1707,9 +1815,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         # lọc trùng; hai lượt khác chủ đề ⇒ dòng khác nhau ⇒ cả hai đều được giữ.
         suy_giam_ten = sorted(_t["topic"] for _t in report["topics"] if _t["status"] == "PASS_DEGRADED")
         if suy_giam_ten:
-            khan.append(f"- 🟠 QUÉT SUY GIẢM: {len(suy_giam_ten)}/{report['topic_count']} chủ đề phải chạy bằng "
-                        f"Europe PMC dự phòng (NCBI lỗi/bị chặn) — {', '.join(suy_giam_ten)}. Tầng guideline/tổng "
-                        "quan/RCT có thể THIẾU; con trỏ các chủ đề này KHÔNG tiến, chạy lại khi NCBI thông.")
+            khan.append(f"- 🟠 QUÉT SUY GIẢM: {len(suy_giam_ten)}/{report['topic_count']} chủ đề không lấy được "
+                        f"đủ (NCBI lỗi/bị chặn phải dùng Europe PMC dự phòng, hoặc thiếu bản tóm tắt — lý do từng "
+                        f"chủ đề ở báo cáo quét) — {', '.join(suy_giam_ten)}. Kết quả có thể THIẾU; con trỏ các "
+                        "chủ đề này KHÔNG tiến, chạy lại khi nguồn trả lời được.")
         for _t in report["topics"]:
             if _t["status"] == "FAIL":
                 khan.append(f"- 🔴 CỔNG QUÉT FAIL: chủ đề «{_t['topic']}» — `{_t['error'][:90]}`")
