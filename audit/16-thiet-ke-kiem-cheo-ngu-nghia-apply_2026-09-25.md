@@ -1,4 +1,4 @@
-# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [BÁC SĨ ĐÃ DUYỆT HƯỚNG 25/09/2026 — K3 đã thi công]
+# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [BÁC SĨ ĐÃ DUYỆT HƯỚNG 25/09/2026 — K3, K1, K4 đã thi công]
 
 > Đề xuất #7 trong đợt «đo lại nguồn chứng cứ» 24–25/09/2026. Tài liệu này là **thiết kế**, chưa có mã.
 > Mọi ngưỡng/từ điển dưới đây là đề xuất của máy — cần bác sĩ duyệt trước khi thi công.
@@ -72,7 +72,21 @@ người ta bỏ qua cả cảnh báo thật).
   `EBM-Dashboards/`. Công cụ ghi `quality/eval/kiem-cheo-ngu-nghia/bo-vang.cho-duyet.json`: 20 mục `apply`, chia
   đều giữa các dashboard, mỗi mục có `nhan_bac_si` = null. Công cụ không bao giờ ghi đè tệp đã có nhãn. Trên Cloud
   chưa soạn được vì `EBM-Dashboards/` nằm ngoài git.
-- **Chưa làm:** K1, K2, K4. Nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng. Hiện K3 mới chỉ cảnh
-  báo, chưa phải luật cổng.
+- **K1 + K4 đã có (25/09/2026, chiều):** `tools/kiem_quan_the_chieu.py`, nối vào bước **④-ter** của
+  `tools/xuat_goi_cap_nhat.py`. Bước này chỉ chạy khi có `--online` (cần tóm tắt nguồn) và cùng mức CẢNH BÁO
+  như K3: không đổi mã thoát.
+  - Nguồn văn bản lấy từ `--nguon-json` (tóm tắt đã tải, vd qua connector MCP) và/hoặc `--online`. Chế độ
+    `--online` dùng chính `lay_tom_tat()` của `kiem_so_lieu.py`. Không có nguồn ⇒ ⚪, không bao giờ ✓.
+  - K1 kiểm ngưỡng số của EF, eGFR, tuổi, HbA1c, BMI, LDL. Nó cũng kiểm 5 cặp quần thể loại trừ nhau: vế phủ định
+    («non-dialysis», «ngoài thai kỳ») bị xoá trước khi tìm vế dương.
+  - K4 tìm tín hiệu ngược chiều rõ ràng trong nguồn.
+  - Có 6 test (`tools/test_kiem_quan_the_chieu_20260925.py`); cả 4 phép đột biến đều đỏ đúng chỗ. Một phép
+    («không nguồn vẫn phán») sống sót lần đầu nên đã bổ sung assertion.
+  - Chạy thật `--online` trên template Evidence Workbench (3 mục apply, tóm tắt PubMed tải được): 6 ✓, 0 🟠,
+    2 ⚪. Hai mục ⚪ là của ITEM-01: tóm tắt không nêu EF/HFrEF.
+  - **Giới hạn đã thấy:** K1 chưa hiểu phủ định kiểu «không chuyên HFrEF» (vẫn đọc thành HFrEF). K4 sẽ báo cả kết
+    cục phụ «no significant difference» trong thử nghiệm dương tính. Cả hai là báo động giả mà bộ vàng phải đo.
+- **Chưa làm:** K2 (con số ngoài HR, cỡ mẫu). Nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng.
+  Hiện K1/K3/K4 mới chỉ cảnh báo, chưa phải luật cổng.
 
 _Cần bác sĩ kiểm chứng._
