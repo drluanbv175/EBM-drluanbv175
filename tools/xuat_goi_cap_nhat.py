@@ -473,6 +473,24 @@ def main() -> int:
             print("   🟠 Có cụm điều kiện không thấy nguyên văn — chạy lại lệnh trên để xem từng dòng;"
                   " đọc lại trước khi gửi (không chặn xuất).")
 
+    # ── ④-ter K1 quần thể + K4 chiều khuyến cáo (25/09/2026, audit/16) ──
+    # Cần tóm tắt nguồn ⇒ chỉ chạy khi có --online. CÙNG mức CẢNH BÁO như K3: không đổi
+    # rc_final, không chặn xuất (bác sĩ duyệt 25/09/2026).
+    K1 = ROOT / "tools" / "kiem_quan_the_chieu.py"
+    if not a.online:
+        print("④-ter Bỏ qua K1/K4 (không có --online — cần tóm tắt nguồn).")
+    elif not K1.exists():
+        print("④-ter ⚠ Bỏ qua: thiếu tools/kiem_quan_the_chieu.py")
+    else:
+        print("④-ter Kiểm quần thể + chiều khuyến cáo (K1/K4, chỉ cảnh báo)…")
+        rc, out = run([py, str(K1), str(dash), "--online"])
+        result["k1k4_ma"] = rc
+        tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
+        print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
+        if rc == 1:
+            print("   🟠 Có mục cần đọc lại nguồn gốc (quần thể/chiều) — chạy lại lệnh trên để xem"
+                  " đoạn nguồn; không chặn xuất.")
+
     # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
     # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.
     # Bước này đọc màu TỪ CHÍNH .docx rồi bơm lại vào HTML, sau đó in bằng Chrome
