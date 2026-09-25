@@ -120,3 +120,30 @@ def test_k4_bo_qua_ket_cuc_phu_nhung_giu_ket_cuc_chinh():
     assert M.kiem_chieu(ng2)                          # có «primary» ⇒ vẫn báo
     ng3 = M.chuan_hoa("In the safety subgroup, drug Z is not recommended.")
     assert M.kiem_chieu(ng3)                          # «not recommended» ⇒ luôn báo
+
+
+def test_k2_co_mau_chap_nhan_dau_tach_nghin_va_bat_lech():
+    assert M.trich_co_mau(M.chuan_hoa("HFrEF gộp 2 RCT lớn (n=8,474)")) == ["8474"]
+    assert M.trich_co_mau(M.chuan_hoa("EF ≤ 40%, NYHA II–IV (n = 4744)")) == ["4744"]
+    ng = M.chuan_hoa("A total of 8,474 patients were randomized.")
+    assert M.kiem_co_mau("8474", ng)[0] == "khop"
+    assert M.kiem_co_mau("847", ng)[0] == "can_doc"          # không khớp một phần của 8,474
+    assert M.kiem_co_mau("474", ng)[0] == "can_doc"          # «474» sau dấu phẩy không phải cỡ mẫu 474
+    muc, doan = M.kiem_co_mau("4744", M.chuan_hoa("We enrolled 4304 patients with CKD."))
+    assert muc == "can_doc" and "4304" in doan
+    assert M.kiem_co_mau("4744", M.chuan_hoa("Drug X reduced the outcome."))[0] == "chua_kiem"
+
+
+def test_k2_duoc_dem_vao_tong(tmp_path, capsys):
+    dash = tmp_path / "WebDashboard_K2_20260925.html"
+    dash.write_text(DASH_HTML.replace("population:'HFrEF, EF ≤40%, eGFR ≥ 20'",
+                                      "population:'HFrEF (n=9999)'"), encoding="utf-8", newline="\n")
+    rc = M.main([str(dash), "--nguon-json", _nguon(tmp_path), "--json"])
+    kq = json.loads(capsys.readouterr().out)
+    it1 = kq["muc"][0]
+    assert it1["k2_co_mau"][0]["so"] == "9999" and it1["k2_co_mau"][0]["muc"] in ("can_doc", "chua_kiem")
+    assert rc == 1
+    tong_phan_quyet = sum(len(d["k1_nguong"]) + len(d["k1_cap"]) + len(d["k2_co_mau"]) + 1
+                          for d in kq["muc"] if d["co_nguon"])
+    khong_nguon = sum(1 for d in kq["muc"] if not d["co_nguon"])
+    assert sum(kq["dem"].values()) == tong_phan_quyet + khong_nguon   # K2 phải được đếm vào tổng

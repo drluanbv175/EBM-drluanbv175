@@ -225,6 +225,45 @@ def kiem_chieu(nguon: str) -> list[str]:
     return kiem_chieu_chi_tiet(nguon)[0]
 
 
+# ── K2: cỡ mẫu n= (25/09/2026) ──────────────────────────────────────────────────
+# Mục ghi «n=4744» / «n = 8,474» ⇒ con số đó có trong nguồn không (chấp nhận dấu tách nghìn).
+_MAU_N_MUC = re.compile(r"(?<!\w)n\s*=\s*(\d{1,3}(?:[.,\s]\d{3})+|\d+)(?!\d)")
+_MAU_N_NGUON = re.compile(
+    r"(?:(?<!\w)n\s*=\s*\d[\d.,]*|(?<![\d.,])\d{1,3}(?:[,\s]\d{3})+|(?<![\d.,])\d{3,}(?![\d.,]))"
+    r"(?:\s+(?:patients|participants|adults|subjects|persons|people|women|men|children|individuals))?")
+
+
+def trich_co_mau(van_ban: str) -> list[str]:
+    """Các cỡ mẫu `n=` trong văn bản MỤC (đã chuẩn hoá), dạng chữ số trần: «8,474» → «8474»."""
+    ra: list[str] = []
+    for m in _MAU_N_MUC.finditer(van_ban):
+        so = re.sub(r"[.,\s]", "", m.group(1))
+        if so not in ra:
+            ra.append(so)
+    return ra
+
+
+def _mau_so(so: str) -> re.Pattern:
+    """«8474» khớp «8474», «8,474», «8 474», «8.474» — không khớp «18474» hay «84740»."""
+    nhom = []
+    dau = len(so) % 3 or 3
+    nhom.append(so[:dau])
+    nhom += [so[i:i + 3] for i in range(dau, len(so), 3)]
+    return re.compile(r"(?<![\d.,])" + r"[.,\s]?".join(nhom) + r"(?![\d]|[.,]\d)")
+
+
+def kiem_co_mau(so: str, nguon: str) -> tuple[str, str]:
+    """(mức, đoạn nguồn). ✓ con số có trong nguồn · 🟠 nguồn có nêu cỡ mẫu khác · ⚪ nguồn không nêu số nào."""
+    m = _mau_so(so).search(nguon)
+    if m:
+        return "khop", _doan(nguon, m.start(), m.end())
+    for m2 in _MAU_N_NGUON.finditer(nguon):
+        if re.search(r"patients|participants|adults|subjects|persons|people|women|men|children|individuals|n\s*=",
+                     m2.group(0)):
+            return "can_doc", _doan(nguon, m2.start(), m2.end())
+    return "chua_kiem", ""
+
+
 # ── Nguồn ──────────────────────────────────────────────────────────────────────
 def _khoa_nguon(it: dict) -> list[str]:
     return [str(x).strip() for x in (it.get("pmid"), it.get("doi")) if x and str(x).strip()]
@@ -266,7 +305,7 @@ def _van_ban_muc(it: dict) -> str:
 def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
     muc_tx = chuan_hoa(_van_ban_muc(it))
     dong = {"id": it.get("id") or "?", "pmid": it.get("pmid"), "doi": it.get("doi"),
-            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k4": None}
+            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k2_co_mau": [], "k4": None}
     if nguon_tho is None:
         return dong
     ng = chuan_hoa(nguon_tho)
@@ -274,6 +313,9 @@ def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
         muc, doan = kiem_nguong(khoa, so, ng)
         dong["k1_nguong"].append({"chi_so": khoa, "so": so, "muc": muc, "doan_nguon": doan})
     dong["k1_cap"] = kiem_cap(muc_tx, ng)
+    for so in trich_co_mau(chuan_hoa(f"{_van_ban_muc(it)}. {it.get('title') or ''}")):
+        muc, doan = kiem_co_mau(so, ng)
+        dong["k2_co_mau"].append({"so": so, "muc": muc, "doan_nguon": doan})
     tin_hieu, bo_qua = kiem_chieu_chi_tiet(ng)
     dong["k4"] = {"muc": "can_doc" if tin_hieu else "khop", "cau_nguon": tin_hieu, "cau_bo_qua": bo_qua}
     return dong
@@ -293,7 +335,7 @@ def kiem_dashboard(data: dict, nguon: dict[str, str], online: bool) -> dict:
         if not d["co_nguon"]:
             dem["chua_kiem"] += 1
             continue
-        for x in d["k1_nguong"] + d["k1_cap"] + [d["k4"]]:
+        for x in d["k1_nguong"] + d["k1_cap"] + d["k2_co_mau"] + [d["k4"]]:
             dem[x["muc"]] += 1
     return {"muc": ra, "dem": dem, "so_muc_co_nguon": sum(d["co_nguon"] for d in ra)}
 
@@ -302,7 +344,7 @@ _KH = {"khop": "✓", "can_doc": "🟠", "chua_kiem": "⚪"}
 
 
 def in_bao_cao(ten: str, kq: dict) -> None:
-    print(f"K1 quần thể + K4 chiều khuyến cáo · {ten}")
+    print(f"K1 quần thể + K2 cỡ mẫu + K4 chiều khuyến cáo · {ten}")
     print(f"  mục apply có PMID/DOI: {len(kq['muc'])} · có văn bản nguồn: {kq['so_muc_co_nguon']}")
     for d in kq["muc"]:
         dinh_danh = d["pmid"] or d["doi"]
@@ -316,6 +358,9 @@ def in_bao_cao(ten: str, kq: dict) -> None:
             thong = (f"mục ghi «{x['ve_muc']}», nguồn chỉ nêu «{x['ve_nguon']}»"
                      if x["muc"] == "can_doc" else f"«{x['ve_muc']}»")
             print(f"  {_KH[x['muc']]} [{d['id']}] K1 quần thể {thong}")
+        for x in d["k2_co_mau"]:
+            print(f"  {_KH[x['muc']]} [{d['id']}] K2 cỡ mẫu n={x['so']}"
+                  + (f" — nguồn: «{x['doan_nguon']}»" if x["muc"] == "can_doc" else ""))
         k4 = d["k4"]
         if k4["muc"] == "can_doc":
             for c in k4["cau_nguon"]:
