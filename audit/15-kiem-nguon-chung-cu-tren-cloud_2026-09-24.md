@@ -420,6 +420,18 @@ thu thập mặc định (`ingest_all` → `PubMedClient.search`) sắp PubMed t
 Loại khỏi đề xuất theo quyết định bác sĩ 25/09: khoá Semantic Scholar, token Epistemonikos.
 Kiểm: 5.811 test đạt; 3 phép đột biến trên bộ xếp hạng đều đỏ đúng chỗ.
 
+**Cập nhật 25/09/2026 (chiều): ADA Standards of Care đã lọt top.** Đo sống có hai nguyên nhân.
+(1) Chương 9 «Pharmacologic Approaches to Glycemic Treatment: Standards of Care in Diabetes—2026»
+(PMID 41358900) không có trong 20 bài đầu của làn guideline, vì tiêu đề không ghi «type 2».
+(2) Kể cả có mặt, nó vẫn bị hạ do luật «tiêu đề sát chủ đề» đòi chữ «type».
+Đã vá bằng một **làn chuỗi guideline sống** (`_CHUOI_GUIDELINE_SONG`), chỉ chạy khi truy vấn có «diabetes»
+hoặc «diabetic». Làn lấy các chương ADA trên *Diabetes Care*, chỉ giữ **ấn bản mới nhất** (năm đọc từ tiêu
+đề) và bỏ đính chính, tóm tắt sửa đổi, lời giới thiệu. Làn chọn 2 chương sát nhất theo relevance và coi hai
+chương này là sát chủ đề. Các chương cũ chỉ đến từ làn này thì bị bỏ, để không chiếm chỗ trong top.
+
+Kết quả chuẩn vàng: **8/9 → 9/9**. Với «type 2 diabetes», ADA SoC 2026 ch.9 xếp hạng 8 và ch.2 hạng 7. Với
+«diabetic kidney disease», ch.11 hạng 8. Có 3 test mới; 4 phép đột biến đều làm test đỏ đúng chỗ.
+
 ## 8. Chưa làm, có chủ ý
 
 - ~~`tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ mọi máy~~ — ĐÃ VÁ (§7bis #10).
