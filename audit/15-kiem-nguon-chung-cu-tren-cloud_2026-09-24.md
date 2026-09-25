@@ -402,6 +402,24 @@ ENABLE_PMC_GUIDELINE_FULLTEXT=true
 báo cáo GOLD/GINA chỉ dùng làm nguồn tham chiếu NỘI BỘ để trích câu chữ kèm nguồn — KHÔNG đăng lại toàn văn, KHÔNG phân phối
 lại file (`GHI_CHU_BAN_QUYEN_CHUAN`).
 
+## 7sexies. Chất lượng kết quả, không chỉ kết nối (25/09/2026) — «mới nhất» ≠ «mạnh nhất»
+
+Kết nối đạt (engine tự chạy 9 nguồn thật), nhưng phép thử có đáp án biết trước lộ lỗi chất lượng: đường
+thu thập mặc định (`ingest_all` → `PubMedClient.search`) sắp PubMed theo NGÀY rồi cắt 10 bài ⇒ trả 10 bài
+**mới nhất**. Trên 6 bệnh ngoại trú (THA · suy tim · rung nhĩ · ĐTĐ2 · COPD · CKD): **0/15 guideline chuẩn
+2023–2026** lọt vào; 4/6 chủ đề có 7–8/10 bài tier C. Đã vá (`medical-ebm-automation`):
+
+| Việc | Kết quả đo |
+|---|---|
+| #1 PubMed «lấy đủ rồi chọn mạnh nhất»: vùng 100 bài mới nhất + làn guideline 20 bài theo relevance (5 năm / cửa sổ `since_date`), xếp: độ mạnh → tiêu đề sát chủ đề (có đồng nghĩa «blood pressure», «chronic obstructive»…) → relevance → năm; bài bị rút xếp cuối (không vứt); tắt bằng `PUBMED_CHON_MANH_NHAT=false` | Chuẩn vàng **0/9 → 8/9**; suy tim → AHA/ACC/HFSA 2022 hạng 1; THA → AHA/ACC 2025 hạng 1, ESC 2024 hạng 2; rung nhĩ → ACC/AHA 2023 + ESC 2024; CKD → KDIGO 2024 hạng 1 |
+| #2 `tools/kiem_chuan_vang_guideline.py` + `config/chuan_vang_guideline.json` (9 nhóm guideline, PMID tra thật; mã 0/1/2, «không đo được» ≠ «đạt») | Còn trượt: ADA Standards of Care 2026 (PubMed gắn «Review», tiêu đề không ghi «type 2»). **Bác sĩ cần duyệt danh sách** (`bac_si_duyet`) |
+| #3 Heart/Gut/Frontline Gastro/Thorax (BMJ) sang Crossref ISSN điện tử | Feed/làn guideline **73/77 → 77/77** |
+| #6 Feed thu hồi thuốc FDA bị chặn ⇒ lùi openFDA `drug/enforcement` (API chính thức; không giả dạng trình duyệt); MedWatch không có API tương đương nên vẫn báo lỗi thật | Dự phòng trả bản thu hồi thật (16/09/2026) |
+| #7 Kiểm chéo ngữ nghĩa mục `apply` | Thiết kế ở `audit/16`, **chờ bác sĩ duyệt hướng** |
+
+Loại khỏi đề xuất theo quyết định bác sĩ 25/09: khoá Semantic Scholar, token Epistemonikos.
+Kiểm: 5.811 test đạt; 3 phép đột biến trên bộ xếp hạng đều đỏ đúng chỗ.
+
 ## 8. Chưa làm, có chủ ý
 
 - ~~`tools/sources_health.py` ghi trạng thái ngược vào sổ tracked từ mọi máy~~ — ĐÃ VÁ (§7bis #10).
