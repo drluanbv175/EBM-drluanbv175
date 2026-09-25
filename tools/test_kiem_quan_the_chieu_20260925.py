@@ -96,3 +96,27 @@ def test_khong_nguon_nao_la_ma_2(tmp_path, capsys):
     rc = M.main([str(_dash(tmp_path))])
     assert rc == 2
     assert "chưa kiểm" in capsys.readouterr().out
+
+
+def test_k1_hieu_phu_dinh_o_muc():
+    ng = M.chuan_hoa("adults with reduced ejection fraction")
+    # «không chuyên HFrEF» ⇒ mục KHÔNG mang vế HFrEF ⇒ không phán gì về cặp HFrEF/HFpEF
+    kq = M.kiem_cap(M.chuan_hoa("CKD ± suy tim (không chuyên HFrEF)"), ng)
+    assert all(x["ve_muc"] not in ("HFrEF", "HFpEF") for x in kq)
+    kq2 = M.kiem_cap(M.chuan_hoa("người lớn, loại trừ trẻ em"), M.chuan_hoa("children aged 6 to 12"))
+    assert kq2 == [{"ve_muc": "người lớn", "ve_nguon": "trẻ em", "muc": "can_doc"}]
+    # vế phủ định riêng («không lọc máu») vẫn là một vế mang, không bị xoá nhầm
+    kq3 = M.kiem_cap(M.chuan_hoa("không lọc máu"), M.chuan_hoa("non-dialysis ckd"))
+    assert kq3[0]["muc"] == "khop"
+
+
+def test_k4_bo_qua_ket_cuc_phu_nhung_giu_ket_cuc_chinh():
+    ng = M.chuan_hoa(
+        "Drug X reduced the primary composite outcome. There was no significant difference in the "
+        "secondary outcome of all-cause death. Serious adverse events showed no significant difference.")
+    bao, bo = M.kiem_chieu_chi_tiet(ng)
+    assert bao == [] and len(bo) == 2
+    ng2 = M.chuan_hoa("Drug Y did not significantly reduce the primary outcome or secondary outcomes.")
+    assert M.kiem_chieu(ng2)                          # có «primary» ⇒ vẫn báo
+    ng3 = M.chuan_hoa("In the safety subgroup, drug Z is not recommended.")
+    assert M.kiem_chieu(ng3)                          # «not recommended» ⇒ luôn báo

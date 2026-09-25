@@ -135,6 +135,17 @@ _CAP = (
 )
 
 
+# Tiền tố phủ định ở MỤC: «không chuyên HFrEF», «loại trừ trẻ em», «excluding dialysis»… ⇒ mục KHÔNG
+# mang vế đó. Cho phép tối đa 2 từ chen giữa («không áp dụng cho bệnh nhân HFrEF»).
+_PHU_DINH = (r"(?:không(?: chuyên| phải| chỉ| dành cho| áp dụng cho| gồm| có)?|ngoại trừ|loại trừ|trừ"
+             r"|excluding|without|not)")
+
+
+def _bo_phu_dinh(mau: str, t: str) -> str:
+    """Xoá các lần vế `mau` xuất hiện SAU một tiền tố phủ định (vế phủ định không phải vế mang)."""
+    return re.sub(rf"(?<!\w){_PHU_DINH}\s+(?:[^\s.;,()]+\s+){{0,2}}?(?:{mau})(?!\w)", " ", t)
+
+
 def _co(mau: str, t: str) -> bool:
     return re.search(rf"(?<!\w)(?:{mau})(?!\w)", t) is not None
 
@@ -153,6 +164,7 @@ def kiem_cap(muc: str, nguon: str) -> list[dict]:
         co_muc = {}
         co_nguon = {}
         for ten, m_muc, m_nguon in (a, b):
+            muc_con = _bo_phu_dinh(m_muc, muc_con)
             co_muc[ten] = _co(m_muc, muc_con)
             co_nguon[ten] = _co(m_nguon, nguon_con)
             if co_muc[ten]:
@@ -183,11 +195,34 @@ _NGUOC = re.compile(
 )
 
 
+# Câu «không khác biệt» về kết cục PHỤ/an toàn/phân nhóm là chuyện thường trong thử nghiệm DƯƠNG
+# tính — không phải tín hiệu ngược chiều của khuyến cáo. Bỏ qua trừ khi câu cũng nói tới kết cục
+# CHÍNH; «not recommended»/«Class III»/«should not» thì KHÔNG BAO GIỜ bỏ qua.
+_PHU = re.compile(r"secondary|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety"
+                  r"|tolerab|discontinuation")
+_CHINH = re.compile(r"primary (?:end ?point|outcome|composite)")
+_LUON_BAO = re.compile(r"not recommended|should not be|class iii|net harm|futility")
+
+
+def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
+    """(câu ngược chiều cần đọc lại, câu đã bỏ qua vì chỉ về kết cục phụ/an toàn) — tối đa 3 mỗi loại."""
+    cau = re.split(r"(?<=[.;])\s+", nguon)
+    bao: list[str] = []
+    bo: list[str] = []
+    for c in cau:
+        c = c.strip()
+        if not _NGUOC.search(c):
+            continue
+        if not _LUON_BAO.search(c) and _PHU.search(c) and not _CHINH.search(c):
+            bo.append(c)
+        else:
+            bao.append(c)
+    return bao[:3], bo[:3]
+
+
 def kiem_chieu(nguon: str) -> list[str]:
     """Các câu nguồn chứa tín hiệu ngược chiều (nguyên văn đã chuẩn hoá, tối đa 3)."""
-    cau = re.split(r"(?<=[.;])\s+", nguon)
-    ra = [c.strip() for c in cau if _NGUOC.search(c)]
-    return ra[:3]
+    return kiem_chieu_chi_tiet(nguon)[0]
 
 
 # ── Nguồn ──────────────────────────────────────────────────────────────────────
@@ -239,8 +274,8 @@ def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
         muc, doan = kiem_nguong(khoa, so, ng)
         dong["k1_nguong"].append({"chi_so": khoa, "so": so, "muc": muc, "doan_nguon": doan})
     dong["k1_cap"] = kiem_cap(muc_tx, ng)
-    tin_hieu = kiem_chieu(ng)
-    dong["k4"] = {"muc": "can_doc" if tin_hieu else "khop", "cau_nguon": tin_hieu}
+    tin_hieu, bo_qua = kiem_chieu_chi_tiet(ng)
+    dong["k4"] = {"muc": "can_doc" if tin_hieu else "khop", "cau_nguon": tin_hieu, "cau_bo_qua": bo_qua}
     return dong
 
 
@@ -286,7 +321,8 @@ def in_bao_cao(ten: str, kq: dict) -> None:
             for c in k4["cau_nguon"]:
                 print(f"  🟠 [{d['id']}] K4 tín hiệu ngược chiều trong nguồn: «{c[:200]}»")
         else:
-            print(f"  ✓ [{d['id']}] K4 không thấy tín hiệu ngược chiều rõ ràng")
+            print(f"  ✓ [{d['id']}] K4 không thấy tín hiệu ngược chiều rõ ràng"
+                  + (f" (bỏ qua {len(k4['cau_bo_qua'])} câu chỉ về kết cục phụ/an toàn)" if k4["cau_bo_qua"] else ""))
     e = kq["dem"]
     print(f"Tổng: {e['khop']} ✓ khớp · {e['can_doc']} 🟠 cần đọc lại · {e['chua_kiem']} ⚪ chưa kiểm")
     if e["can_doc"]:
