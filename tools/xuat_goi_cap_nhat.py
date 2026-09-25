@@ -452,6 +452,27 @@ def main() -> int:
             # ích đọc, cố ý KHÔNG đổi mã thoát (đã ghi trong doctrine).
             rc_final = 1
 
+    # ── ④-bis K3: mệnh đề điều kiện có còn nguyên trong bản đọc/Word không (25/09/2026) ──
+    # Bác sĩ duyệt 25/09/2026 (audit/16): MỨC CẢNH BÁO — KHÔNG đổi rc_final, không chặn
+    # xuất; chỉ cân nhắc chặn sau khi đo báo động giả trên bộ vàng do bác sĩ gắn nhãn.
+    print("④-bis Kiểm giữ mệnh đề điều kiện (K3, chỉ cảnh báo)…")
+    K3 = ROOT / "tools" / "kiem_cheo_ngu_nghia.py"
+    if not K3.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/kiem_cheo_ngu_nghia.py")
+    else:
+        cmd = [py, str(K3), str(dash)]
+        if result.get("ban_doc"):
+            cmd += ["--ban-doc", result["ban_doc"]]
+        if result.get("word_html"):
+            cmd += ["--word-html", result["word_html"]]
+        rc, out = run(cmd)
+        result["k3_ma"] = rc
+        tong = [l for l in out.splitlines() if l.startswith("Tổng:")]
+        print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
+        if rc == 1:
+            print("   🟠 Có cụm điều kiện không thấy nguyên văn — chạy lại lệnh trên để xem từng dòng;"
+                  " đọc lại trước khi gửi (không chặn xuất).")
+
     # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
     # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.
     # Bước này đọc màu TỪ CHÍNH .docx rồi bơm lại vào HTML, sau đó in bằng Chrome
