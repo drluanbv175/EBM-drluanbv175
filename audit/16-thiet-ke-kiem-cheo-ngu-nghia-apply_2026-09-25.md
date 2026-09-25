@@ -1,4 +1,4 @@
-# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [BÁC SĨ ĐÃ DUYỆT HƯỚNG 25/09/2026 — K3, K1, K4 đã thi công]
+# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [BÁC SĨ ĐÃ DUYỆT HƯỚNG 25/09/2026 — K1–K4 đã thi công]
 
 > Đề xuất #7 trong đợt «đo lại nguồn chứng cứ» 24–25/09/2026. Tài liệu này là **thiết kế**, chưa có mã.
 > Mọi ngưỡng/từ điển dưới đây là đề xuất của máy — cần bác sĩ duyệt trước khi thi công.
@@ -91,7 +91,14 @@ người ta bỏ qua cả cảnh báo thật).
     - Câu đã bỏ qua được ghi ở `cau_bo_qua` để soi lại. Thêm 2 test; 4 phép đột biến đều đỏ.
   - **Giới hạn còn lại:** khớp từ vựng, không hiểu phủ định phức tạp hơn. «trừ khi có HFrEF» cũng bị đọc là phủ định.
     Tỉ lệ báo động giả thật vẫn phải đo trên bộ vàng.
-- **Chưa làm:** K2 (con số ngoài HR, cỡ mẫu). Nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng.
-  Hiện K1/K3/K4 mới chỉ cảnh báo, chưa phải luật cổng.
+- **K2 đã có (25/09/2026, tối):** phần «ngưỡng số» của K2 trùng với K1 nên đã nằm sẵn trong K1. Phần còn lại là cỡ mẫu
+  `n=` ghi ở `population`/`pico.P`/`title` của mục; K2 kiểm con số đó có trong nguồn không. Chấp nhận dấu tách nghìn
+  «8,474», «8 474». Không khớp một phần («474» trong «8,474»). Nguồn nêu cỡ mẫu khác ⇒ 🟠 kèm đoạn nguồn; nguồn không
+  nêu số nào ⇒ ⚪.
+  - Có 2 test mới; 4 phép đột biến đều đỏ. Một phép («K2 không được đếm vào tổng») sống sót lần đầu nên đã thêm assertion.
+  - Chạy thật trên template: `n=8474` và `n=4744` khớp tóm tắt PubMed. Tổng: 8 ✓ · 0 🟠 · 2 ⚪.
+  - Giới hạn: cỡ mẫu GỘP của phân tích gộp có thể không ghi nguyên văn trong tóm tắt ⇒ 🟠 giả.
+- **Còn lại:** nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng. Hiện K1/K2/K3/K4 mới chỉ cảnh báo,
+  chưa phải luật cổng.
 
 _Cần bác sĩ kiểm chứng._

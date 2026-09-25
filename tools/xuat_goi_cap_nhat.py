@@ -478,11 +478,11 @@ def main() -> int:
     # rc_final, không chặn xuất (bác sĩ duyệt 25/09/2026).
     K1 = ROOT / "tools" / "kiem_quan_the_chieu.py"
     if not a.online:
-        print("④-ter Bỏ qua K1/K4 (không có --online — cần tóm tắt nguồn).")
+        print("④-ter Bỏ qua K1/K2/K4 (không có --online — cần tóm tắt nguồn).")
     elif not K1.exists():
         print("④-ter ⚠ Bỏ qua: thiếu tools/kiem_quan_the_chieu.py")
     else:
-        print("④-ter Kiểm quần thể + chiều khuyến cáo (K1/K4, chỉ cảnh báo)…")
+        print("④-ter Kiểm quần thể + cỡ mẫu + chiều khuyến cáo (K1/K2/K4, chỉ cảnh báo)…")
         rc, out = run([py, str(K1), str(dash), "--online"])
         result["k1k4_ma"] = rc
         tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
