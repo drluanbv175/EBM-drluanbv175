@@ -1,4 +1,4 @@
-# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [DỰ THẢO, CHỜ BÁC SĨ DUYỆT HƯỚNG]
+# 16 · Thiết kế kiểm chéo ngữ nghĩa cho mục `decision:'apply'` (25/09/2026) — [BÁC SĨ ĐÃ DUYỆT HƯỚNG 25/09/2026 — K3 đã thi công]
 
 > Đề xuất #7 trong đợt «đo lại nguồn chứng cứ» 24–25/09/2026. Tài liệu này là **thiết kế**, chưa có mã.
 > Mọi ngưỡng/từ điển dưới đây là đề xuất của máy — cần bác sĩ duyệt trước khi thi công.
@@ -52,11 +52,27 @@ người ta bỏ qua cả cảnh báo thật).
 - Khớp từ vựng không hiểu phủ định phức tạp và đồng nghĩa hiếm; K4 chỉ bắt tín hiệu ngược chiều rõ ràng.
 - Không thay việc bác sĩ đọc nguồn gốc; mục tiêu là **chỉ ra mục đáng đọc lại**, không phán quyết.
 
-## 6. Bác sĩ cần quyết
+## 6. Quyết định của bác sĩ (25/09/2026)
 
-1. Thi công phép nào trước — máy đề xuất **K3** (ngoại tuyến, rẻ, chống đúng lỗi «rụng điều kiện» của kênh
-   chat) rồi **K1**.
-2. Giữ mức CẢNH BÁO vĩnh viễn hay cho phép chặn sau khi đo bộ vàng.
-3. Chọn ~20 mục `apply` cho bộ vàng và gắn nhãn (máy có thể soạn danh sách ứng viên để bác sĩ chọn).
+1. **Thi công K3 trước** (rồi mới tới K1).
+2. **Mức CẢNH BÁO**; chỉ cân nhắc chuyển sang CHẶN sau khi đo tỉ lệ báo động giả trên bộ vàng và bác sĩ
+   duyệt lại.
+3. **Máy soạn ứng viên bộ vàng**, bác sĩ gắn nhãn. Máy không tự gắn nhãn.
+
+## 7. Trạng thái thi công (25/09/2026)
+
+- **K3 đã có:** `tools/kiem_cheo_ngu_nghia.py`, ngoại tuyến. Nối vào bước **④-bis** của
+  `tools/xuat_goi_cap_nhat.py`. Không đổi mã thoát, không chặn xuất. Có 5 test
+  (`tools/test_kiem_cheo_ngu_nghia_20260925.py`), cả 5 phép đột biến đều đỏ đúng chỗ.
+- **Chạy thử trên template Evidence Workbench cùng bản đọc sinh thật: 1 ✓, 1 🟠.** Cụm «khi xây phác đồ khoa»
+  (action của ITEM-02) không có trong bản đọc. Lý do: bản đọc không in `action` của từng mục, và cụm này là bối
+  cảnh sử dụng chứ không phải điều kiện lâm sàng. Đây là loại **báo động giả** mà bộ vàng phải đo trước khi tính
+  chuyện chặn.
+- **Ứng viên bộ vàng:** chạy `python3 tools/kiem_cheo_ngu_nghia.py --ung-vien-bo-vang` trên máy có
+  `EBM-Dashboards/`. Công cụ ghi `quality/eval/kiem-cheo-ngu-nghia/bo-vang.cho-duyet.json`: 20 mục `apply`, chia
+  đều giữa các dashboard, mỗi mục có `nhan_bac_si` = null. Công cụ không bao giờ ghi đè tệp đã có nhãn. Trên Cloud
+  chưa soạn được vì `EBM-Dashboards/` nằm ngoài git.
+- **Chưa làm:** K1, K2, K4. Nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng. Hiện K3 mới chỉ cảnh
+  báo, chưa phải luật cổng.
 
 _Cần bác sĩ kiểm chứng._
