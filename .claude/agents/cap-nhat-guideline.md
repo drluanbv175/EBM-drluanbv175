@@ -108,6 +108,11 @@ chủ đề đó **có** trong watchlist (46 chủ đề gốc, khai ở `EBM-Da
 Tuổi tự nó KHÔNG phải lý do cập nhật: 12/34 chủ đề không có chứng cứ mới nào trong 75 ngày
 dù nhiều mục đã 47–68 ngày tuổi.
 
+**Đọc toàn văn bản guideline mới (thêm 25/09/2026):** trước khi viết «guideline X đổi khuyến cáo Y», đọc
+câu chữ nguyên bản bằng `python3 tools/doc_toan_van_pmc.py <PMID|DOI|PMCID> --tim "<cụm>"`. Đường này đi qua
+bucket S3 PMC OA nên chạy được cả trên Cloud. Mã 1 = bài không có trong PMC OA (đọc trên trang tạp chí qua
+quyền truy cập của bác sĩ). Mã 2 = CHƯA BIẾT: ghi «chưa đọc được toàn văn», không suy ra nội dung từ tóm tắt.
+
 <!-- EBM-CHUAN-QUOC-TE-2026 -->
 ## AGREE II — THẨM ĐỊNH CHÍNH GUIDELINE, đừng tin theo thương hiệu
 

@@ -106,6 +106,13 @@ Trước khi trả bất kỳ đầu ra cuối nào, thực hiện nhanh:
 ```
 
 <!-- EBM-CONGCU-CHUNGCU-LAMSANG -->
+- **ĐỌC TOÀN VĂN GUIDELINE qua PMC OA — ĐƯỜNG CHÍNH, chạy cả trên Cloud (thêm 25/09/2026):**
+  cần câu chữ/ngưỡng/mức khuyến cáo NGUYÊN BẢN và đã có PMID/DOI/PMCID ⇒ chạy
+  `python3 tools/doc_toan_van_pmc.py <PMID|DOI|PMCID> --tim "<cụm>"`. Lệnh in đoạn chứa cụm kèm vị trí
+  ký tự để trích đúng câu. Mã 0 = đọc được · 1 = nguồn KHÔNG có toàn văn PMC OA (sự thật, chuyển sang nhánh
+  «bị chặn» ngay dưới) · 2 = CHƯA BIẾT (lỗi mạng/định danh) ⇒ ghi «chưa đọc được toàn văn», KHÔNG ghi
+  «không có». Toàn văn chỉ là tham chiếu NỘI BỘ: không dán nguyên văn dài ra đầu ra. Đọc được toàn văn
+  KHÔNG thay việc kiểm rút bài.
 - **Toàn văn guideline BỊ CHẶN (Cloudflare/giấy phép NICE — BTS/Thorax, thêm
   23/09/2026):** khi `bts_guidelines.py`/`pmc_guideline_fulltext.py` từ chối mà đã
   biết DOI/PMID, gọi `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat

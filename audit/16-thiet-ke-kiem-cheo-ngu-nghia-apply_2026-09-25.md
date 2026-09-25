@@ -84,8 +84,13 @@ người ta bỏ qua cả cảnh báo thật).
     («không nguồn vẫn phán») sống sót lần đầu nên đã bổ sung assertion.
   - Chạy thật `--online` trên template Evidence Workbench (3 mục apply, tóm tắt PubMed tải được): 6 ✓, 0 🟠,
     2 ⚪. Hai mục ⚪ là của ITEM-01: tóm tắt không nêu EF/HFrEF.
-  - **Giới hạn đã thấy:** K1 chưa hiểu phủ định kiểu «không chuyên HFrEF» (vẫn đọc thành HFrEF). K4 sẽ báo cả kết
-    cục phụ «no significant difference» trong thử nghiệm dương tính. Cả hai là báo động giả mà bộ vàng phải đo.
+  - **Giảm báo động giả (cùng ngày, trước khi bác sĩ gắn nhãn bộ vàng):**
+    - K1 bỏ vế đứng sau tiền tố phủ định («không chuyên HFrEF», «loại trừ trẻ em», «excluding…»), tối đa 2 từ chen giữa.
+    - K4 bỏ qua câu «không khác biệt» chỉ nói về kết cục phụ, an toàn hay phân nhóm. Bỏ qua chỉ khi câu không nhắc
+      kết cục chính. Câu có «not recommended», «should not be», «Class III» thì luôn báo.
+    - Câu đã bỏ qua được ghi ở `cau_bo_qua` để soi lại. Thêm 2 test; 4 phép đột biến đều đỏ.
+  - **Giới hạn còn lại:** khớp từ vựng, không hiểu phủ định phức tạp hơn. «trừ khi có HFrEF» cũng bị đọc là phủ định.
+    Tỉ lệ báo động giả thật vẫn phải đo trên bộ vàng.
 - **Chưa làm:** K2 (con số ngoài HR, cỡ mẫu). Nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng.
   Hiện K1/K3/K4 mới chỉ cảnh báo, chưa phải luật cổng.
 
