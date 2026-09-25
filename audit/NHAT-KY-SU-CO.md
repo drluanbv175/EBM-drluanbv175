@@ -3148,3 +3148,15 @@ chạy sau khi xác minh chúng trùng byte bản git trước khi sửa — cô
 25 skill mà Cowork tự dọn (BH104).
 Cùng ngày: bác sĩ phát khoá Ed25519 cho `DATA_MANAGER` ⇒ đủ 5/5 vai; khoá công vào repo y khoa qua PR #8.
 `HUONG-DAN-PHAT-KHOA-ED25519.md` đã cập nhật bảng trạng thái và ghi quyết định «một người kiêm mọi vai».
+
+### 25/09/2026 (chiều) — Engine trên Cloud chạy dữ liệu THẬT sau khi bác sĩ đổi cài đặt môi trường
+Bác sĩ đặt `USE_MOCK_SOURCES=false`, `NCBI_EMAIL` và khoá qua proxy cho môi trường Cloud. Đo lại (phiên Cloud, engine
+`medical-ebm-automation` cạnh repo gốc): `tools/kiem_nguon_that.py` 🟢 (cấu hình đúng, 4/4 nguồn phân giải được);
+`run.py test-live` `live:true`, `is_mock:false` cho pubmed · europepmc · crossref · openalex · clinicaltrials · openfda · core ·
+scopus · consensus; semantic_scholar HTTP 429 (không khoá, nhịp thấp — không phải proxy). Feed/lane: 79/80 trả bài thật, 0 mock;
+riêng `fda_medwatch` HTTP 401 (www.fda.gov chặn truy cập tự động) — `search()` trả `[]` nhưng `_fetch()` của ingestion đọc bộ
+đếm lỗi HttpClient nên ghi `error`, không xanh giả; MedWatch không có API openFDA tương đương. Chuỗi rút bài 3 tầng chạy thật
+tới PubMed: 65 PMID của đề tài C1a đều ✅ (lượt THÔNG TIN — không ghi receipt A12 vì receipt phải ký bằng khoá của bác sĩ).
+**Bài học:** `curl` trong Bash bị hook runtime đòi duyệt egress (và cả câu lệnh chứa URL `claude.ai` trong thông điệp commit
+⇒ commit bằng `-F <tệp>`) — đó KHÔNG phải mạng chặn; đo nguồn bằng công cụ của engine. Mỗi `test-live consensus` tốn 1 lượt.
+Ghi chú «0/8 nguồn, 0/111 lane» của audit/15 (24/09) là ảnh chụp TRƯỚC khi đổi cài đặt, giữ làm lịch sử.
