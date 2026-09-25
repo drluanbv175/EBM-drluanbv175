@@ -455,7 +455,9 @@ def main() -> int:
     # ── ④-bis K3: mệnh đề điều kiện có còn nguyên trong bản đọc/Word không (25/09/2026) ──
     # Bác sĩ duyệt 25/09/2026 (audit/16): MỨC CẢNH BÁO — KHÔNG đổi rc_final, không chặn
     # xuất; chỉ cân nhắc chặn sau khi đo báo động giả trên bộ vàng do bác sĩ gắn nhãn.
-    print("④-bis Kiểm giữ mệnh đề điều kiện (K3, chỉ cảnh báo)…")
+    # Khi chạy --online, cùng lượt này thêm K1 (quần thể) + K4 (chiều khuyến cáo) đối chiếu
+    # với tóm tắt nguồn — cũng CHỈ CẢNH BÁO (audit/16 §7, «K3 trước, rồi tới K1»).
+    print("④-bis Kiểm chéo ngữ nghĩa (K3" + (" + K1/K4" if a.online else "") + ", chỉ cảnh báo)…")
     K3 = ROOT / "tools" / "kiem_cheo_ngu_nghia.py"
     if not K3.exists():
         print("   ⚠ Bỏ qua: thiếu tools/kiem_cheo_ngu_nghia.py")
@@ -465,13 +467,20 @@ def main() -> int:
             cmd += ["--ban-doc", result["ban_doc"]]
         if result.get("word_html"):
             cmd += ["--word-html", result["word_html"]]
+        if a.online:
+            cmd += ["--nguon"]
         rc, out = run(cmd)
         result["k3_ma"] = rc
-        tong = [l for l in out.splitlines() if l.startswith("Tổng:")]
-        print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
+        tong = [dong for dong in out.splitlines() if dong.startswith("Tổng")]
+        for dong in tong or [(out.strip().splitlines() or ["không rõ"])[-1][:160]]:
+            print("   " + dong)
         if rc == 1:
-            print("   🟠 Có cụm điều kiện không thấy nguyên văn — chạy lại lệnh trên để xem từng dòng;"
-                  " đọc lại trước khi gửi (không chặn xuất).")
+            print("   🟠 Có mục cần đọc lại (cụm điều kiện không thấy nguyên văn, hoặc tóm tắt nguồn nêu "
+                  "quần thể/ngưỡng/chiều khác) — chạy lại lệnh trên để xem từng dòng; đọc lại trước khi "
+                  "gửi (không chặn xuất).")
+        elif rc == 2:
+            print("   ⚪ Một phần chưa đo được (thiếu sản phẩm hoặc không tải được tóm tắt nguồn) — "
+                  "chưa đo ≠ khớp.")
 
     # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
     # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.

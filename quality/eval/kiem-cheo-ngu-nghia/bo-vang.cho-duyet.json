@@ -1,0 +1,706 @@
+{
+  "_mo_ta": "Ứng viên bộ vàng cho kiểm chéo ngữ nghĩa (audit/16). MÁY SOẠN, BÁC SĨ GẮN NHÃN: điền nhan_bac_si.dung_quan_the / dung_chieu / du_dieu_kien = true|false cho từng mục. Máy không tự gắn nhãn; khi nhãn còn null, mọi con số báo động giả là CHƯA ĐO.",
+  "so_muc": 20,
+  "muc": [
+    {
+      "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+      "id": "ITEM-04",
+      "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
+      "population": "Người ≥65 tuổi (ngoại trú, đa thuốc)",
+      "pico": {
+        "P": [
+          "Người ≥65 tuổi, ngoại trú/đa thuốc",
+          "match"
+        ],
+        "I": [
+          "Áp dụng tiêu chí Beers 2023 để rà soát thuốc nên tránh (PIM)",
+          "match"
+        ],
+        "C": [
+          "Kê đơn thường quy không rà soát có hệ thống",
+          "match"
+        ],
+        "O": [
+          "Giảm thuốc không phù hợp & biến cố do thuốc",
+          "match"
+        ]
+      },
+      "action": "Rà soát thuốc theo Beers 2023: cảnh giác benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài; cân nhắc giảm liều/ngưng có kế hoạch.",
+      "pmid": "37139824",
+      "doi": "10.1111/jgs.18372",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+      "id": "ITEM-01",
+      "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+      "population": "Người lớn không triệu chứng, không tiền sử TIA/đột quỵ",
+      "pico": {
+        "P": [
+          "Người lớn không triệu chứng",
+          "match"
+        ],
+        "I": [
+          "Tầm soát (siêu âm Doppler ĐM cảnh)",
+          "match"
+        ],
+        "C": [
+          "Không tầm soát",
+          "match"
+        ],
+        "O": [
+          "Hại > lợi (dương tính giả → thủ thuật không cần thiết)",
+          "match"
+        ]
+      },
+      "action": "Không siêu âm ĐM cảnh thường quy để sàng lọc ở người không triệu chứng. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
+      "pmid": "33528542",
+      "doi": "10.1001/jama.2020.20364",
+      "gradeLevel": "mod",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
+      "id": "ITEM-01",
+      "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
+      "population": "Người lớn chưa từng đột quỵ",
+      "pico": {
+        "P": [
+          "Người lớn chưa đột quỵ",
+          "match"
+        ],
+        "I": [
+          "HA <130/80, statin, lối sống lành mạnh, tầm soát rung nhĩ; GLP-1 RA nếu ĐTĐ/béo phì nguy cơ cao",
+          "match"
+        ],
+        "C": [
+          "Không can thiệp/chăm sóc thường quy",
+          "match"
+        ],
+        "O": [
+          "Đột quỵ lần đầu",
+          "match"
+        ]
+      },
+      "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
+      "pmid": "39429201",
+      "doi": "10.1161/STR.0000000000000475",
+      "gradeLevel": "high",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
+      "id": "ITEM-01",
+      "title": "KDIGO 2024 — phân loại nguyên nhân · mức lọc cầu thận · albumin niệu (hệ CGA) là NỀN cho mọi quyết định về bệnh kết hợp",
+      "population": "Người lớn và trẻ em có bệnh thận mạn ở mọi giai đoạn, mọi nguyên nhân",
+      "pico": {
+        "P": [
+          "Người có bất thường cấu trúc hoặc chức năng thận kéo dài trên 3 tháng",
+          "match"
+        ],
+        "I": [
+          "Phân loại đồng thời theo NGUYÊN NHÂN, mức lọc cầu thận ước tính (G1 đến G5) và mức albumin niệu (A1 đến A3), thay vì chỉ xếp giai đoạn theo eGFR",
+          "match"
+        ],
+        "C": [
+          "Xếp giai đoạn chỉ dựa trên creatinine hoặc eGFR đơn thuần, không đo albumin niệu",
+          "match"
+        ],
+        "O": [
+          "Ước lượng đúng nguy cơ tiến triển tới suy thận, nguy cơ tim mạch và tử vong; từ đó chọn đúng cường độ can thiệp và tần suất theo dõi",
+          "match"
+        ]
+      },
+      "action": "Với MỌI người bệnh thận mạn, ghi đủ ba trục vào bệnh án chứ không chỉ một con số eGFR: (a) nguyên nhân (đái tháo đường, tăng huyết áp, cầu thận, thận đa nang, tắc nghẽn, không rõ); (b) giai đoạn G theo eGFR — G1 từ 90 trở lên, G2 60 đến 89, G3a 45 đến 59, G3b 30 đến 44, G4 15 đến 29, G5 dưới 15; (c) mức albumin niệu A theo tỷ số albumin/creatinine niệu — A1 dưới 30 mg/g, A2 từ 30 đến 300 mg/g, A3 trên 300 mg/g. Chính ô giao nhau giữa G và A quyết định tần suất theo dõi, ngưỡng chuyển thận học và mức độ quyết liệt của điều trị bệnh kết hợp. Đo albumin niệu bằng mẫu nước tiểu bất kỳ (ưu tiên mẫu đầu tiên buổi sáng), lặp lại để xác nhận vì albumin niệu dao động.",
+      "pmid": "38490803",
+      "doi": "10.1016/j.kint.2023.10.018",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+      "id": "ITEM-01",
+      "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
+      "population": "Người lớn nguy cơ/nghi CKD",
+      "pico": {
+        "P": [
+          "Người lớn (ĐTĐ/THA/tim mạch…)",
+          "match"
+        ],
+        "I": [
+          "eGFR (CKD-EPI) + UACR; phân tầng G1–G5 / A1–A3",
+          "match"
+        ],
+        "C": [
+          "Chỉ đo eGFR / không tầm soát",
+          "match"
+        ],
+        "O": [
+          "Phát hiện & phân tầng nguy cơ CKD",
+          "match"
+        ]
+      },
+      "action": "Chẩn đoán CKD khi bất thường cấu trúc/chức năng thận kéo dài ≥3 tháng. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Dùng eGFR creatinine (± cystatin C khi cần xác nhận).",
+      "pmid": "38490803",
+      "doi": "10.1016/j.kint.2023.10.018",
+      "gradeLevel": "high",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+      "id": "ITEM-01",
+      "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+      "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+      "pico": {
+        "P": [
+          "ĐTĐ type 1/2",
+          "match"
+        ],
+        "I": [
+          "Tầm soát lâm sàng định kỳ: monofilament 10 g + rung 128 Hz/đau kim/nhiệt",
+          "match"
+        ],
+        "C": [
+          "Không tầm soát hệ thống",
+          "match"
+        ],
+        "O": [
+          "Phát hiện sớm DSPN & bàn chân nguy cơ loét",
+          "match"
+        ]
+      },
+      "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
+      "pmid": "41358886",
+      "doi": "10.2337/dc26-S012",
+      "gradeLevel": "high",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+      "id": "ITEM-01",
+      "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+      "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+      "pico": {
+        "P": [
+          "Người lớn CAP không nặng (ngoại trú + nhập viện nonsevere)",
+          "match"
+        ],
+        "I": [
+          "Kháng sinh ≥3 ngày, dừng khi đạt ổn định lâm sàng",
+          "match"
+        ],
+        "C": [
+          "Kháng sinh ≥5 ngày (thực hành cũ)",
+          "match"
+        ],
+        "O": [
+          "Chữa khỏi, tái nhập viện, kháng thuốc",
+          "match"
+        ]
+      },
+      "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi đạt ổn định lâm sàng (không còn sốt, SpO2 ổn, không cần IV). Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+      "pmid": "42127879",
+      "doi": "10.1016/j.ajem.2026.05.020",
+      "gradeLevel": "mod",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_CKM_TimThanChuyenHoa_20260628.html",
+      "id": "ITEM-01",
+      "title": "Phân giai đoạn CKM (AHA 2023) — Khung chẩn đoán và phân tầng chiến lược",
+      "population": "Mọi người lớn có ≥ 1 yếu tố nguy cơ chuyển hóa, thận hoặc tim mạch",
+      "pico": {
+        "P": [
+          "Người lớn nguy cơ CKM",
+          "match"
+        ],
+        "I": [
+          "Phân giai đoạn CKM Stage 0–4b — khung tầm soát và can thiệp",
+          "match"
+        ],
+        "C": [
+          "—",
+          "match"
+        ],
+        "O": [
+          "Định tầng chiến lược, can thiệp sớm ngăn tiến triển",
+          "match"
+        ]
+      },
+      "action": "Áp dụng phân giai đoạn CKM Stage 0–4b: Stage 0–1 (lối sống ± cân nhắc GLP-1 RA), Stage 2 (SGLT2i + RAAS), Stage 3–4a (tối ưu đa thuốc), Stage 4b (đa chuyên khoa).",
+      "pmid": "37807924",
+      "doi": "10.1161/CIR.0000000000001184",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+      "id": "ITEM-05",
+      "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+      "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
+      "pico": {
+        "P": [
+          "COPD nguy cơ đợt cấp",
+          "match"
+        ],
+        "I": [
+          "FF/UMEC/VI một bình hít, 1 lần/ngày",
+          "match"
+        ],
+        "C": [
+          "FF/VI hoặc UMEC/VI",
+          "match"
+        ],
+        "O": [
+          "Tỉ suất đợt cấp trung bình/nặng/năm",
+          "match"
+        ]
+      },
+      "action": "Leo thang lên bộ ba cho nhóm E còn đợt cấp dù giãn phế quản kép; ưu tiên thiết bị một-bình.",
+      "pmid": "29668352",
+      "doi": "10.1056/NEJMoa1713901",
+      "gradeLevel": "high",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
+      "id": "ITEM-01",
+      "title": "Bỏ thuốc lá — can thiệp DUY NHẤT đã chứng minh giảm tử vong dài hạn ở người tắc nghẽn đường thở",
+      "population": "5.887 người trung niên có tắc nghẽn đường thở KHÔNG triệu chứng, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
+      "pico": {
+        "P": [
+          "Người tắc nghẽn đường thở, còn hút thuốc",
+          "match"
+        ],
+        "I": [
+          "Chương trình cai thuốc 10 tuần: lời khuyên mạnh của bác sĩ + 12 buổi trị liệu hành vi + kẹo nicotine",
+          "match"
+        ],
+        "C": [
+          "Chăm sóc thường quy",
+          "match"
+        ],
+        "O": [
+          "Tử vong do mọi nguyên nhân sau 14,5 năm",
+          "match"
+        ]
+      },
+      "action": "Đặt cai thuốc lá lên TRƯỚC mọi leo thang thuốc hít. Điểm đáng chú ý: lợi ích tử vong xuất hiện dù chỉ 21,7% người trong nhóm can thiệp bỏ được thuốc ở năm thứ 5 (so với 5,4% nhóm chứng) — nghĩa là chương trình cai thuốc vẫn đáng làm ngay cả khi tỷ lệ thành công khiêm tốn.",
+      "pmid": "15710956",
+      "doi": "10.7326/0003-4819-142-4-200502150-00005",
+      "gradeLevel": "high",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+      "id": "ITEM-03",
+      "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+      "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+      "pico": {
+        "P": [
+          "COPD sau NMCT",
+          "match"
+        ],
+        "I": [
+          "Chẹn beta lúc xuất viện",
+          "match"
+        ],
+        "C": [
+          "Không chẹn beta",
+          "match"
+        ],
+        "O": [
+          "Biến cố phối hợp; đợt cấp COPD",
+          "match"
+        ]
+      },
+      "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+      "pmid": "38771577",
+      "doi": "10.1001/jamanetworkopen.2024.7535",
+      "gradeLevel": "mod",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimThanChuyenHoa_20260710.html",
+      "id": "ITEM-03",
+      "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+      "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+      "pico": {
+        "P": [
+          "COPD sau NMCT",
+          "match"
+        ],
+        "I": [
+          "Chẹn beta lúc xuất viện",
+          "match"
+        ],
+        "C": [
+          "Không chẹn beta",
+          "match"
+        ],
+        "O": [
+          "Biến cố phối hợp; đợt cấp COPD",
+          "match"
+        ]
+      },
+      "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+      "pmid": "38771577",
+      "doi": "10.1001/jamanetworkopen.2024.7535",
+      "gradeLevel": "mod",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_DTD_BeoPhi_GLP1_20260628.html",
+      "id": "ITEM-01",
+      "title": "ACP NMA 2026: semaglutide & tirzepatide tốt nhất về giảm cân & kết cục",
+      "population": "Người lớn thừa cân/béo phì (BMI ≥25), có/không ĐTĐ type 2; 69 RCT, n=112,511",
+      "pico": {
+        "P": [
+          "Người lớn thừa cân/béo phì (BMI ≥25, ± ĐTĐ type 2)",
+          "match"
+        ],
+        "I": [
+          "Semaglutide, tirzepatide, orforglipron, retatrutide, phentermine-topiramate và các thuốc giảm cân khác",
+          "match"
+        ],
+        "C": [
+          "Giả dược ± lối sống",
+          "match"
+        ],
+        "O": [
+          "Giảm cân, tử vong, MACE, chất lượng sống, tác dụng phụ nặng",
+          "match"
+        ]
+      },
+      "action": "Semaglutide giảm tử vong và MACE (dữ liệu SELECT). Tirzepatide dẫn đầu về giảm cân trong mạng NMA. Cả hai vượt giả dược về cân nặng ở 69 RCT. Khuyến cáo ưu tiên semaglutide hoặc tirzepatide cho BN ĐTĐ type 2 kèm béo phì/thừa cân.",
+      "pmid": "42296503",
+      "doi": "10.7326/ANNALS-24-03764",
+      "gradeLevel": "high",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20260706.html",
+      "id": "ITEM-02",
+      "title": "Hướng dẫn HS Bắc Mỹ — Phần I: chẩn đoán, đánh giá & xử trí bổ trợ/thủ thuật",
+      "population": "Người lớn HS — khuyến cáo chẩn đoán/đánh giá",
+      "pico": {
+        "P": [
+          "HS người lớn",
+          "match"
+        ],
+        "I": [
+          "Đánh giá có hệ thống (Hurley, đồng mắc) + xử trí bổ trợ/thủ thuật",
+          "match"
+        ],
+        "C": [
+          "—",
+          "match"
+        ],
+        "O": [
+          "Chọn đúng xét nghiệm/thủ thuật, phát hiện đồng mắc",
+          "match"
+        ]
+      },
+      "action": "Dùng phân độ Hurley (I–III) + tầm soát đồng mắc (hội chứng chuyển hóa, viêm khớp, bệnh viêm ruột, trầm cảm) làm khung đánh giá chuẩn khi chẩn đoán HS.",
+      "pmid": "30872156",
+      "doi": "10.1016/j.jaad.2019.02.067",
+      "gradeLevel": "mod",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+      "id": "ITEM-14",
+      "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
+      "population": "Người đái tháo đường típ 1 và típ 2 trước, trong và sau phẫu thuật chuyển hoá",
+      "pico": {
+        "P": [
+          "Người đái tháo đường có chỉ định phẫu thuật chuyển hoá",
+          "match"
+        ],
+        "I": [
+          "Phác đồ hiệu chỉnh thuốc theo giai đoạn: chế độ ăn giảm thể tích gan, quanh mổ, sau mổ",
+          "match"
+        ],
+        "C": [
+          "Không có phác đồ chuẩn hoá",
+          "match"
+        ],
+        "O": [
+          "Phòng hạ đường huyết và nhiễm toan ceton quanh mổ; theo dõi thuyên giảm",
+          "match"
+        ]
+      },
+      "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
+      "pmid": "41840846",
+      "doi": "10.1111/dme.70281",
+      "gradeLevel": "na",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
+      "id": "ITEM-04",
+      "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+      "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+      "pico": {
+        "P": [
+          "Người lớn đau đầu cần phân loại",
+          "match"
+        ],
+        "I": [
+          "Áp tiêu chuẩn chẩn đoán ICHD-3",
+          "match"
+        ],
+        "C": [
+          "Chẩn đoán theo kinh nghiệm không chuẩn hóa",
+          "match"
+        ],
+        "O": [
+          "Phân loại đúng migraine/TTH/cluster/MOH → dẫn điều trị đúng",
+          "match"
+        ]
+      },
+      "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+      "pmid": "29368949",
+      "doi": "10.1177/0333102417738202",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_TongHop_20260811.html",
+      "id": "ITEM-04",
+      "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+      "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+      "pico": {
+        "P": [
+          "Người lớn đau đầu cần phân loại",
+          "match"
+        ],
+        "I": [
+          "Áp tiêu chuẩn chẩn đoán ICHD-3",
+          "match"
+        ],
+        "C": [
+          "Chẩn đoán theo kinh nghiệm không chuẩn hóa",
+          "match"
+        ],
+        "O": [
+          "Phân loại đúng migraine/TTH/cluster/MOH → dẫn điều trị đúng",
+          "match"
+        ]
+      },
+      "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+      "pmid": "29368949",
+      "doi": "10.1177/0333102417738202",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
+      "id": "ITEM-01",
+      "title": "Hội Tiêu hoá Hoa Kỳ 2021 — dùng CHIẾN LƯỢC CHẨN ĐOÁN DƯƠNG TÍNH theo tiêu chuẩn triệu chứng, thay cho chẩn đoán loại trừ",
+      "population": "Người lớn có triệu chứng gợi ý hội chứng ruột kích thích, chăm sóc ban đầu và chuyên khoa tiêu hoá",
+      "pico": {
+        "P": [
+          "Người lớn nghi hội chứng ruột kích thích, không có dấu hiệu cảnh báo",
+          "match"
+        ],
+        "I": [
+          "Chiến lược chẩn đoán DƯƠNG TÍNH: đối chiếu trực tiếp tiêu chuẩn triệu chứng (Rome IV) + bệnh sử + khám + bộ xét nghiệm tối thiểu",
+          "match"
+        ],
+        "C": [
+          "Chiến lược chẩn đoán bằng LOẠI TRỪ: làm hàng loạt xét nghiệm và thăm dò để gạt dần các bệnh khác",
+          "match"
+        ],
+        "O": [
+          "Rút ngắn thời gian tới khi bắt đầu điều trị đúng",
+          "partial"
+        ]
+      },
+      "action": "Ở người bệnh KHÔNG có cờ đỏ, đối chiếu thẳng tiêu chuẩn Rome IV ngay lần khám đầu: đau bụng tái diễn trung bình ít nhất 1 ngày mỗi tuần trong 3 tháng gần nhất, khởi phát triệu chứng ít nhất 6 tháng trước, kèm ít nhất 2 trong 3 đặc điểm — liên quan tới đại tiện, thay đổi tần suất phân, thay đổi hình dạng phân. Phân thể bằng thang phân Bristol trên những ngày có phân bất thường (thể táo bón, thể tiêu chảy, thể hỗn hợp, thể không phân loại được) vì thể bệnh quyết định lựa chọn thuốc phía sau. Nói rõ với người bệnh đây là chẩn đoán KHẲNG ĐỊNH dựa trên bộ tiêu chuẩn quốc tế, không phải kết luận 'không tìm thấy bệnh gì'.",
+      "pmid": "33315591",
+      "doi": "10.14309/ajg.0000000000001036",
+      "gradeLevel": "na",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_HuyetHoc_ThieuMau_DaHongCau_20260805.html",
+      "id": "ITEM-02",
+      "title": "Chẩn đoán thiếu sắt bằng xét nghiệm - ferritin là chỉ dấu đầu tay nhưng phải đọc kèm tình trạng viêm",
+      "population": "Người lớn (không mang thai) và trẻ em nghi thiếu sắt",
+      "pico": {
+        "P": [
+          "Nghi thiếu sắt",
+          "match"
+        ],
+        "I": [
+          "Ferritin huyết thanh làm xét nghiệm đầu tay, bổ sung độ bão hòa transferrin và CRP khi có viêm",
+          "match"
+        ],
+        "C": [
+          "Chỉ dựa công thức máu và MCV",
+          "match"
+        ],
+        "O": [
+          "Chẩn đoán đúng tình trạng dự trữ sắt",
+          "match"
+        ]
+      },
+      "action": "Làm ferritin cho mọi trường hợp nghi thiếu sắt. Khi có viêm hoặc nhiễm trùng (CRP tăng), ferritin bình thường KHÔNG loại trừ thiếu sắt - phải bổ sung độ bão hòa transferrin. Ở bệnh nhân bệnh thận mạn và bệnh gan, ferritin bị đẩy lên nên ngưỡng diễn giải khác người khỏe.",
+      "pmid": "34693519",
+      "doi": "10.1111/bjh.17900",
+      "gradeLevel": "mod",
+      "co_dieu_kien": true,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    },
+    {
+      "dashboard": "WebDashboard_EBM_VanDeCuThe_LaoKhoa_Deprescribing_20260628.html",
+      "id": "ITEM-01",
+      "title": "AGS Beers Criteria 2023: danh mục thuốc cần tránh ở NCT (≥65 tuổi)",
+      "population": "Người cao tuổi ≥65 tuổi, mọi bệnh cảnh (ngoại trú, nhập viện, dài hạn; trừ chăm sóc cuối đời)",
+      "pico": {
+        "P": [
+          "NCT ≥65, mọi bệnh cảnh trừ chăm sóc cuối đời",
+          "match"
+        ],
+        "I": [
+          "Áp dụng Beers Criteria để phát hiện PIM",
+          "match"
+        ],
+        "C": [
+          "Kê đơn không có công cụ sàng lọc",
+          "match"
+        ],
+        "O": [
+          "Giảm PIM, giảm ADE, giảm nhập viện",
+          "match"
+        ]
+      },
+      "action": "Beers 2023 liệt kê PIM (Potentially Inappropriate Medications) trong 5 bảng: (1) Tránh hầu hết NCT; (2) Tránh theo bệnh/hội chứng; (3) Thận trọng; (4) Tránh phối hợp; (5) Chỉnh liều theo chức năng thận. Nhóm cần tránh: anticholinergic (BZD, diphenhydramine, oxybutynin), NSAID kéo dài, SU thế hệ 1 (glibenclamide), digoxin >0.125mg, antipsychotics cho sa sút trí tuệ.",
+      "pmid": "37139824",
+      "doi": "10.1111/jgs.18372",
+      "gradeLevel": "high",
+      "co_dieu_kien": false,
+      "nhan_bac_si": {
+        "dung_quan_the": null,
+        "dung_chieu": null,
+        "du_dieu_kien": null,
+        "ghi_chu": null
+      }
+    }
+  ]
+}
