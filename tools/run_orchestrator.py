@@ -159,11 +159,17 @@ def main() -> int:
 
     if args.validate:
         warns = orch.validate(check_runtime=True)
+        # Bản sao git trần: công cụ nằm dưới thư mục chỉ-OneDrive không kiểm được sự tồn tại — nói RÕ,
+        # không im lặng gộp vào «SẠCH» (26/09/2026).
+        khong_do = orch.tools.khong_do_duoc()
         if args.json:
-            print(json.dumps({"ok": not warns, "warnings": warns}, ensure_ascii=False, indent=2))
+            print(json.dumps({"ok": not warns, "warnings": warns, "khong_do_duoc": khong_do},
+                             ensure_ascii=False, indent=2))
         else:
             print("✅ Điều phối ⇄ registry SẠCH — không tham chiếu treo." if not warns
                   else "⚠ CẢNH BÁO:\n" + "\n".join("  - " + w for w in warns))
+            if khong_do:
+                print("⚪ không đo được trên bản sao git trần (script chỉ có trên OneDrive): " + ", ".join(khong_do))
         return 0 if not warns else 1
 
     if args.list:

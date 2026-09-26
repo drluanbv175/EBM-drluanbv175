@@ -15,6 +15,17 @@ from pathlib import Path
 
 from . import ROOT, duong_that
 
+# Thư mục CHỈ sống trên OneDrive, không bao giờ đi qua git (xem tools/ban_sao_tran.py).
+_GOC_CHI_ONEDRIVE = ("EBM-Dashboards", "EBM_MASTER", "dashboard_mockups")
+
+
+def _ban_sao_tran() -> bool:
+    import importlib.util
+    sp = importlib.util.spec_from_file_location("_bst_orch", ROOT / "tools" / "ban_sao_tran.py")
+    mod = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(mod)
+    return mod.ban_sao_git_tran(ROOT)
+
 
 @dataclass(frozen=True)
 class Tool:
@@ -125,10 +136,26 @@ class ToolRegistry:
         return [{"id": t.tool_id, "exists": t.exists, "path": t.rel_path,
                  "used_by": list(t.used_by)} for t in self.tools.values()]
 
+    def khong_do_duoc(self) -> list[str]:
+        """Công cụ vắng mặt CHỈ vì đang ở bản sao git trần (26/09/2026).
+
+        Script nằm dưới thư mục chỉ sống trên OneDrive (EBM-Dashboards/, EBM_MASTER/, dashboard_mockups/)
+        không bao giờ có trên phiên Cloud — vắng ở đó là «không đo được», không phải registry trỏ sai.
+        Định nghĩa bản sao trần DUY NHẤT ở tools/ban_sao_tran.py; trên máy thật danh sách này luôn rỗng.
+        """
+        if not _ban_sao_tran():
+            return []
+        return [t.tool_id for t in self.tools.values()
+                if not t.exists and t.rel_path.split("/", 1)[0] in _GOC_CHI_ONEDRIVE]
+
     def validate(self) -> list[str]:
-        """Fail-closed nếu registry quảng bá công cụ nhưng script không tồn tại."""
+        """Fail-closed nếu registry quảng bá công cụ nhưng script không tồn tại.
+
+        Trừ công cụ `khong_do_duoc()` (bản sao trần) — chúng được báo riêng, không bị coi là đạt.
+        """
+        bo_qua = set(self.khong_do_duoc())
         return [
             f"Công cụ `{tool.tool_id}` trỏ tới script không tồn tại: {tool.rel_path}"
             for tool in self.tools.values()
-            if not tool.exists
+            if not tool.exists and tool.tool_id not in bo_qua
         ]

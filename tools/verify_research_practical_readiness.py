@@ -143,7 +143,7 @@ def _write_csv(path: Path, rows: list[dict[str, str]]) -> Path:
     return path
 
 
-def _write_dictionary(path: Path) -> Path:
+def _write_dictionary(path: Path, visit_date_type: str = "text") -> Path:
     # visit_date khai "text", KHÔNG phải "date" — kể từ khi VALUE_PATTERNS thêm
     # regex ngày khám/nhập viện (PII, tác vụ 07/09/2026), pseudonymize_research_
     # dataset.py CỐ Ý redact cột này thành literal "[REDACTED_PII]" (ngày gắn với
@@ -159,7 +159,7 @@ def _write_dictionary(path: Path) -> Path:
             {"name": "age", "type": "integer", "required": True, "min": 18, "max": 110},
             {"name": "sbp", "type": "number", "required": True, "min": 60, "max": 260},
             {"name": "outcome", "type": "category", "required": True, "allowed": ["0", "1"]},
-            {"name": "visit_date", "type": "text", "required": True},
+            {"name": "visit_date", "type": visit_date_type, "required": True},
             {"name": "note", "type": "text", "required": False},
         ],
     }
@@ -265,6 +265,33 @@ def _verify_deidentification_path(exports_root: Path, raw_path: Path) -> Dict[st
     }
 
 
+def _verify_declared_date_exemption(exports_root: Path, mapping_root: Path, raw_path: Path) -> Dict[str, Any]:
+    """Cơ chế miễn mẫu PII "date" cho cột KHAI TƯỜNG MINH "type": "date" (bản vá 08/09/2026).
+
+    Đây là một chỗ NỚI luật an toàn nên phải được canh riêng: cột khai "date" được BÁO RA trong
+    report (không im lặng) và giữ nguyên giá trị, trong khi PII thật lẫn trong ghi chú tự do (SĐT,
+    email) VẪN bị xoá — kiểm cả hai chiều để không nới quá tay.
+    """
+    study = "VERIFY-PRACTICAL-DATE-EXEMPT"
+    out_dir = exports_root / study
+    out_dir.mkdir(parents=True, exist_ok=True)
+    dictionary = _write_dictionary(out_dir / "data_dictionary.json", visit_date_type="date")
+    report = PSEUDO.pseudonymize_dataset(
+        study, raw_path, exports_root=exports_root, mapping_root=mapping_root,
+        then_import=False, id_prefix="PRDX", dictionary_path=dictionary,
+    )
+    _assert(report["status"] == PSEUDO.PSEUDONYMIZED_STATUS, "Pseudonymize có cột khai date phải chạy xong")
+    _assert(report.get("date_columns_exempted_from_date_pattern") == ["visit_date"],
+            "Report phải khai RÕ cột 'visit_date' (khai kiểu date) được miễn mẫu date — không được im lặng")
+    text = _read(out_dir / report["pseudonymized_path"])
+    for visit_date in ("2026-07-01", "2026-07-02", "2026-07-03"):
+        _assert(visit_date in text,
+                f"Cột visit_date đã khai kiểu date phải GIỮ NGUYÊN giá trị ({visit_date})")
+    for token in ("0912345678", "c@example.com", "Nguyen Van A"):
+        _assert(token not in text, f"Miễn mẫu date không được để lọt PII thật ({token})")
+    return {"status": "PASS", "date_columns_exempted": report["date_columns_exempted_from_date_pattern"]}
+
+
 def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
                                     raw_path: Path) -> Dict[str, Any]:
     study = "VERIFY-PRACTICAL-PSEUDO"
@@ -318,19 +345,15 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert((mapping_dir / PSEUDO.LINKAGE_MAP_NAME).exists(),
             "Mapping bảo vệ phải có linkage_map.csv")
 
-    # Hành vi TRỌNG TÂM của bản vá 08/09/2026: cột đã khai "type": "date" trong
-    # dictionary phải được BÁO RA (không âm thầm) và giá trị THẬT SỰ còn nguyên
-    # trong file đã pseudonymize — khác hẳn PII thật (tên/SĐT/email ở trên) vẫn
-    # phải bị xoá. Kiểm cả hai chiều để không lặp lại lỗi cũ theo hướng ngược lại
-    # (nới lỏng quá tay, để lọt PII thật qua đường "cột đã khai là ngày").
-    _assert("visit_date" in report.get("date_columns_exempted_from_date_pattern", []),
-            "Report phải khai RÕ cột 'visit_date' được miễn mẫu date — không được im lặng")
+    # 26/09/2026 — gỡ mâu thuẫn giữa hai bản vá: bản 08/09 kiểm «cột khai "date" được miễn, GIỮ giá
+    # trị» ngay tại đây, còn bản 17/09 đổi visit_date sang "text" (ngày gắn với cá nhân là PHI, CỐ Ý
+    # redact) và thêm kiểm «phải bị redact» ở trên nhưng không gỡ khối 08/09 ⇒ bước 10 FAIL trên MỌI
+    # máy. Luồng này (khai "text") nay kiểm NHẤT QUÁN: không được miễn; cơ chế miễn cho cột khai
+    # "date" vẫn được canh ở `_verify_declared_date_exemption()` với dictionary riêng.
+    _assert("visit_date" not in report.get("date_columns_exempted_from_date_pattern", []),
+            "visit_date khai 'text' KHÔNG được miễn mẫu date (ngày gắn với cá nhân là PHI)")
     raw_readonly = out_dir / report["then_import"]["raw_readonly_path"]
     pseudonymized_text = _read(raw_readonly)
-    for visit_date in ("2026-07-01", "2026-07-02", "2026-07-03"):
-        _assert(visit_date in pseudonymized_text,
-                f"Cột visit_date đã khai kiểu date phải GIỮ NGUYÊN giá trị ({visit_date}), "
-                "không bị xoá như PII thật")
     for token in ("0912345678", "0987654321", "0900000000", "c@example.com"):
         _assert(token not in pseudonymized_text,
                 f"PII thật lẫn trong ghi chú tự do vẫn phải bị xoá dù có dictionary ({token})")
@@ -423,6 +446,7 @@ def run_verification() -> Dict[str, Any]:
 
             deid = _verify_deidentification_path(exports_root, raw_path)
             pseudo = _verify_pseudonymized_lock_path(exports_root, mapping_root, raw_path)
+            date_exempt = _verify_declared_date_exemption(exports_root, mapping_root, raw_path)
             return {
                 "status": "PASS",
                 "kind": "research_practical_readiness_verification",
@@ -430,6 +454,7 @@ def run_verification() -> Dict[str, Any]:
                 "pii_policy": "raw PII blocked; public reports do not store PII values",
                 "deidentification": deid,
                 "pseudonymization_to_g6": pseudo,
+                "declared_date_exemption": date_exempt,
             }
         finally:
             if "old_key" in locals():
