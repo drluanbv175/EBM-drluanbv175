@@ -44,9 +44,17 @@ def _ep_co_canh_bao(monkeypatch, tmp_path, lau):
     REPO)` (BH08 — không đo được ≠ có vấn đề). Muốn mô phỏng đúng ca "MÁY THẬT
     có medical-ebm-automation/ nhưng log giám sát bên trong không tồn tại" (khác
     hẳn "máy không có repo y khoa"), phải dựng REPO giả có thư mục con đó, không
-    chỉ trỏ LOG_TUAN/LOG_THANG ra ngoài."""
+    chỉ trỏ LOG_TUAN/LOG_THANG ra ngoài.
+
+    Sửa FIXTURE 26/09/2026 (#35, không nới assertion): «máy THẬT» phải có ít nhất một gói
+    chứng cứ — từ #35, thư mục dashboard RỖNG là «gói chứng cứ: KHÔNG đo được» (dòng ⚪), nên
+    fixture cũ (thư mục rỗng) không còn mô phỏng đúng máy thật. Thêm một gói mang ngày hôm nay
+    (mục (1) không cảnh báo; `lau` vẫn ép qua lau_chua_xem_lai)."""
+    import datetime as _dt
     dash_rong = tmp_path / "EBM-Dashboards-rong"
     dash_rong.mkdir()
+    (dash_rong / f"WebDashboard_EBM_VanDeCuThe_ChuDe_{_dt.date.today():%Y%m%d}.html").write_text(
+        "x", encoding="utf-8")
     goc_gia = tmp_path / "repo-gia"
     (goc_gia / "medical-ebm-automation").mkdir(parents=True)
     monkeypatch.setattr(K, "REPO", goc_gia)
@@ -92,7 +100,11 @@ def test_ban_sao_tran_khong_bao_dong_gia_giam_sat_chua_tung_chay(monkeypatch, tm
     out = capsys.readouterr().out
     assert rc == 0, f"không được báo 🟡 khi chỉ thiếu nguyên liệu, thực tế: {out!r}"
     assert "CHƯA TỪNG chạy" not in out
-    assert "🟢" in out
+    # CẬP NHẬT HỢP ĐỒNG 26/09/2026 (#35): bản sao trần KHÔNG đo được mục nào (không gói chứng
+    # cứ, không repo y khoa) ⇒ tiêu đề ⚪ «không đo được», không còn 🟢 «còn hoạt động» (xanh
+    # giả). Mã thoát vẫn 0 (chu_trinh_chung_cu đọc rc≠0 là «quá hạn»).
+    assert "🟢" not in out
+    assert "⚪ HỆ GIÁM SÁT: KHÔNG đo được" in out
     assert "⚪" in out and "KHÔNG đo được" in out
 
 

@@ -27,7 +27,15 @@ Dùng:
     python3 tools/kiem_do_tuoi_chung_cu.py            # in trạng thái
     python3 tools/kiem_do_tuoi_chung_cu.py --im-khi-on  # chỉ nói khi quá hạn (hook)
 
-Mã thoát: 0 = còn hạn · 1 = quá hạn.
+Mã thoát: 0 = còn hạn (hoặc KHÔNG đo được — tiêu đề ⚪, xem dưới) · 1 = quá hạn.
+
+VÁ 26/09/2026 (#35): đường log giám sát tuần/tháng từng viết cứng vị trí LỒNG
+(`REPO/medical-ebm-automation/...`) trong khi cổng «repo y khoa có mặt» dùng `duong_goc`
+(nhận cả vị trí ANH EM) ⇒ bố cục anh em luôn báo «CHƯA TỪNG chạy» (đỏ giả, kể cả khi log có
+PASS). Nay log lấy từ `_MEA = duong_goc(...)` (cùng khuôn `tu_khoi_dong.PROJ`). Và khi KHÔNG đo
+được gì (không gói chứng cứ nào + không repo y khoa — bố cục một-repo), tiêu đề là ⚪ «không đo
+được», không còn 🟢 «còn hoạt động» (xanh giả). Mã thoát GIỮ 0 cho ca này: `chu_trinh_chung_cu`
+đọc `rc != 0` là «quá hạn», đổi mã sẽ sinh đỏ giả ở nơi tiêu thụ.
 """
 from __future__ import annotations
 
@@ -43,9 +51,6 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
-LOG_TUAN = REPO / "medical-ebm-automation/data/archive/launchd_weekly.log"
-LOG_THANG = REPO / "medical-ebm-automation/data/archive/launchd_monthly.log"
 
 # Vá 15/09/2026 (workflow kiểm tra toàn diện): mục (2) bên dưới đọc log giám sát
 # hằng tuần dưới medical-ebm-automation/ — trên bản sao git trần (mọi phiên
@@ -59,6 +64,14 @@ _spec_bst = importlib.util.spec_from_file_location(
     "_bst_kdtcc", Path(__file__).resolve().parent / "ban_sao_tran.py")
 _bst = importlib.util.module_from_spec(_spec_bst)
 _spec_bst.loader.exec_module(_bst)
+
+DASH = _bst.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
+# Repo y khoa ở vị trí LỒNG hoặc ANH EM — cùng khuôn tu_khoi_dong.PROJ (26/09/2026, #35).
+# Giữ LOG_TUAN/LOG_THANG là HẰNG MODULE để test monkeypatch được như trước.
+_MEA = _bst.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+LOG_TUAN = _MEA / "data" / "archive" / "launchd_weekly.log"
+LOG_THANG = _MEA / "data" / "archive" / "launchd_monthly.log"
+WEEKLY_SH = _MEA / "scripts" / "weekly_safety.sh"
 
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
 HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần
@@ -232,6 +245,12 @@ def main() -> int:
     # 1) Gói chứng cứ mới nhất — thước đo trực tiếp nhất của "hệ có đang sống không"
     ngays = [d for d in (ngay_tu_ten(p) for p in DASH.glob("WebDashboard_*.html")) if d]
     mới_nhất = max(ngays) if ngays else None
+    if mới_nhất is None:
+        # Không có gói nào để đo ⇒ mục (1) và (3) KHÔNG đo được — nói ra, không im lặng (BH08).
+        ngoai_pham_vi.append(
+            "Gói chứng cứ/tuổi chủ đề: KHÔNG đo được — "
+            + ("EBM-Dashboards/ vắng trên máy này (bản sao git trần)." if not DASH.is_dir()
+               else "không thấy gói WebDashboard_*_YYYYMMDD.html nào trong EBM-Dashboards/."))
     if mới_nhất:
         cach = (hom_nay - mới_nhất).days
         if cach > HAN_CAP_NHAT_NGAY:
@@ -245,7 +264,8 @@ def main() -> int:
     # NGUYÊN LIỆU để đo (thư mục cha không tồn tại) KHÔNG được kết luận thành "chưa
     # từng chạy" — đó là câu trả lời cho máy CÓ dữ liệu nhưng job không nổ, khác hẳn
     # câu trả lời đúng ở đây là "không đo được" (BH08).
-    if _bst.duong_goc("medical-ebm-automation", REPO) is None:
+    do_duoc_giam_sat = _bst.duong_goc("medical-ebm-automation", REPO) is not None
+    if not do_duoc_giam_sat:
         ngoai_pham_vi.append(
             "Giám sát an toàn thuốc hằng tuần: KHÔNG đo được — thư mục "
             "medical-ebm-automation/ không có trên máy này (bản sao git trần). "
@@ -272,8 +292,14 @@ def main() -> int:
             # 1 ngày tuổi trong khi 37/59 chủ đề đã quá 35 ngày, trung vị 45 ngày. Một
             # dòng 🟢 đọc thành "mọi chủ đề đều mới" là lời bảo đảm không có cơ sở —
             # cùng lớp lỗi BH15/BH30: con số không đo thứ nó tự nhận là đang đo.
-            print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
-                  if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
+            # 26/09/2026 (#35): KHÔNG đo được mục nào (không gói, không repo y khoa) ⇒ ⚪, không
+            # phải 🟢 — «còn hoạt động» mà không có số đo nào đứng sau là xanh giả (BH08).
+            if mới_nhất is None and not do_duoc_giam_sat:
+                print("⚪ HỆ GIÁM SÁT: KHÔNG đo được trên bản sao này — không gói chứng cứ, "
+                      "không repo y khoa (không phải bằng chứng hệ còn sống, cũng không phải hỏng)")
+            else:
+                print(f"🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất {mới_nhất:%d/%m/%Y}"
+                      if mới_nhất else "🟢 HỆ GIÁM SÁT còn hoạt động")
             in_bang_tuoi(lau, khong_can)
             for x in ngoai_pham_vi:
                 print(f"   ⚪ {x}")
@@ -317,7 +343,7 @@ def _kiem_giam_sat_tuan(canh_bao: list[str], hom_nay: dt.date, platform: str) ->
                      "hai job launchd chỉ tồn tại trên MacBook, nên ở đây luôn phải chạy tay")
         canh_bao.append(
             f"Giám sát AN TOÀN THUỐC hằng tuần CHƯA TỪNG chạy{ly_do}. Chạy tay khi tiện:\n"
-            f"     bash medical-ebm-automation/scripts/weekly_safety.sh\n"
+            f"     bash \"{WEEKLY_SH}\"\n"
             f"     (kiểm nhanh nguồn, không ghi gì: thêm `--canary`)")
     else:
         cach = (hom_nay - chay_tuan).days
@@ -327,7 +353,7 @@ def _kiem_giam_sat_tuan(canh_bao: list[str], hom_nay: dt.date, platform: str) ->
             canh_bao.append(
                 f"Giám sát an toàn thuốc lượt cuối ({chay_tuan:%d/%m/%Y}) CÓ BƯỚC LỖI — "
                 f"log ghi 'tổng thể=CÓ BƯỚC LỖI'. Chạy lại và đọc "
-                f"medical-ebm-automation/data/archive/launchd_weekly.log để biết bước nào.")
+                f"{LOG_TUAN} để biết bước nào.")
         elif tt_tuan == "DANG_DO":
             canh_bao.append(
                 f"Giám sát an toàn thuốc lượt cuối ({chay_tuan:%d/%m/%Y}) CHƯA KHÉP LẠI — "
