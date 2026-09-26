@@ -3160,3 +3160,14 @@ tới PubMed: 65 PMID của đề tài C1a đều ✅ (lượt THÔNG TIN — kh
 **Bài học:** `curl` trong Bash bị hook runtime đòi duyệt egress (và cả câu lệnh chứa URL `claude.ai` trong thông điệp commit
 ⇒ commit bằng `-F <tệp>`) — đó KHÔNG phải mạng chặn; đo nguồn bằng công cụ của engine. Mỗi `test-live consensus` tốn 1 lượt.
 Ghi chú «0/8 nguồn, 0/111 lane» của audit/15 (24/09) là ảnh chụp TRƯỚC khi đổi cài đặt, giữ làm lịch sử.
+
+### 26/09/2026 — Hai giác quan «không đo được» trên Cloud được nối lại
+(1) `tools/tu_de_xuat_viec.py`: cảm biến CI chỉ gọi `gh`, mà phiên Cloud không có `gh` ⇒ luôn ⚪ «run list (không chạy
+được)» và nhắc «kiểm tay CI» dù CI hai repo đều xanh (đo qua GitHub REST công khai). Vá: thiếu `gh` thì đọc
+`api.github.com/repos/<owner/repo>/actions/workflows/<wf>/runs?per_page=1` (repo suy từ `git remote`, chấp nhận URL proxy
+cục bộ của Cloud); lỗi/không có run ⇒ vẫn ghi GIÁC QUAN CHẾT, không bao giờ đoán «success». Đo: 13/15 → 15/15 giác quan.
+Test `tools/test_tu_de_xuat_ci_api_20260926.py` (7 ca); 3 đột biến đỏ đúng chỗ (lần đầu M3 «sống» là do sed không khớp —
+lỗi PHÉP THỬ, áp lại bằng Python thì đỏ).
+(2) Repo y khoa `tools/verify_evidence_surveillance_deployment.py` (canary giám sát tuần): `ROOT = REPO.parent` sai trên
+bố cục hai repo ĐẶT CẠNH (Cloud) ⇒ ESD04/07/08 FAIL giả; và canary chạy scanner TẠI CHỖ nên khoá `.quet.lock` + cảnh báo
+khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` thật (máy Mac) hoặc vào repo. Vá ở PR repo y khoa cùng ngày.

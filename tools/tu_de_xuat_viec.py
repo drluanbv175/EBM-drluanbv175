@@ -25,6 +25,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -88,6 +89,46 @@ def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
     except (OSError, subprocess.SubprocessError):
         _ghi_chet(lenh, "không chạy được")
         return ""
+
+
+def _owner_repo_tu_remote(duong_repo: Path) -> str:
+    """«owner/repo» suy từ `git remote get-url origin` — chấp nhận https/ssh/URL proxy cục bộ
+    (phiên Cloud trỏ `http://…@127.0.0.1:…/git/owner/repo`). Không suy được ⇒ chuỗi rỗng."""
+    try:
+        r = subprocess.run(["git", "-C", str(duong_repo), "remote", "get-url", "origin"],
+                           capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    m = re.search(r"([\w.-]+)/([\w.-]+?)(?:\.git)?/?$", (r.stdout or "").strip())
+    return f"{m.group(1)}/{m.group(2)}" if m else ""
+
+
+def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
+    """Phán quyết run mới nhất của workflow `wf` qua GitHub REST API công khai — đường LÙI khi máy
+    không có `gh` (phiên Cloud: đo 26/09/2026, `gh` vắng nên cảm biến CI luôn ⚪ «không đo được» dù
+    API đọc được cả hai repo). Trả `conclusion` («success»/«failure»/…) hoặc «» khi đang chạy.
+    Không đọc được (mạng, repo riêng tư, giới hạn nhịp) ⇒ ghi GIÁC QUAN CHẾT, trả «» — không bao giờ
+    đoán «success» (BH08)."""
+    import urllib.request
+    _SO_GIAC_QUAN["chay"] += 1
+    repo = _owner_repo_tu_remote(duong_repo)
+    if not repo:
+        _ghi_chet(["api.github.com", wf], "không suy được owner/repo")
+        return ""
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/{wf}/runs?per_page=1"
+    try:
+        mo = urlopen or urllib.request.urlopen
+        with mo(urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"}),
+                timeout=20) as r:
+            du_lieu = json.loads(r.read().decode("utf-8"))
+        run = (du_lieu.get("workflow_runs") or [None])[0]
+    except Exception as exc:  # noqa: BLE001 — mọi lỗi đều là «không đo được»
+        _ghi_chet(["api.github.com", wf], f"không đọc được ({type(exc).__name__})")
+        return ""
+    if not run:
+        _ghi_chet(["api.github.com", wf], "chưa có run nào")
+        return ""
+    return str(run.get("conclusion") or "")
 
 
 def giac_quan_lich_nen(log_tuan: Path,
@@ -271,10 +312,13 @@ def main() -> int:
                                ("gốc", REPO, "kiem-tinh-da-nen.yml")):
         if not (cwd_ci / ".github" / "workflows" / wf).exists():
             continue
-        out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1",
-                     "--json", "conclusion,headBranch", "--jq",
-                     ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
-        kq_ci = out.strip().split()[0] if out.strip() else ""
+        if shutil.which("gh"):
+            out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1",
+                         "--json", "conclusion,headBranch", "--jq",
+                         ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
+            kq_ci = out.strip().split()[0] if out.strip() else ""
+        else:
+            kq_ci = doc_ci_qua_api(cwd_ci, wf)
         if kq_ci == "failure":
             de_xuat.append((0, "🤖", f"CI repo {ten_ci} FAILURE — đọc log, sửa tới xanh, "
                             "đừng để đỏ qua đêm",
