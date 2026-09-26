@@ -55,6 +55,7 @@ import re
 import ssl
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 from json import JSONDecodeError
@@ -134,6 +135,27 @@ def design_khong_nhan_dien(design):
     if design in KNOWN_DESIGNS:
         return False
     return not any(d.startswith(p) for p in DESIGN_FAMILIES)
+
+
+# HỌ ĐỒNG THUẬN — vá 26/09/2026 (phát hiện #1 của đợt dò nâng cấp).
+# Luật «apply chỉ dựa Consensus ⇒ chặn» trước đây so `design == "Consensus"` — CHÍNH XÁC,
+# phân biệt hoa/thường. Trong khi `design_khong_nhan_dien()` lại nhận 'consensus'/'đồng thuận'
+# là họ HỢP LỆ theo tiền tố, nên các biến thể 'consensus', 'Consensus statement',
+# 'Đồng thuận chuyên gia', 'Đồng thuận đa hội (expert consensus)' (chuỗi cuối có trong dữ liệu
+# thật) mang mức mod/high + apply lọt qua CẢ HAI luật với 0 lỗi — trái luật bất biến CLAUDE.md
+# §6.3 «Consensus không bao giờ đủ». Dùng TIỀN TỐ (startswith), KHÔNG dùng chuỗi con: một design
+# như 'Guideline (dựa đồng thuận)' vẫn thuộc họ guideline, không bị bắt nhầm. Chuẩn hoá NFC chỉ
+# ở đây (chiều CHẶT hơn): chuỗi tổ hợp NFD 'Đồng thuận' vốn đã bị luật «design không nhận diện»
+# chặn khi apply, nay bị chặn thêm đúng tên.
+CONSENSUS_PREFIXES = ("consensus", "đồng thuận")
+
+
+def la_consensus(design):
+    """True nếu `design` thuộc HỌ ĐỒNG THUẬN (khớp tiền tố, không phân biệt hoa/thường, NFC)."""
+    d = unicodedata.normalize("NFC", design or "").strip().lower()
+    return d.startswith(CONSENSUS_PREFIXES)
+
+
 STRICT_SOURCE_MAX_AGE_DAYS = 180
 SOURCE_GATE_USER_AGENT = "EBM-Copilot-source-verifier/1.0"
 _HTTPS_CONTEXT = None
@@ -731,8 +753,9 @@ def strict_source_checks(data_block, items, *, today=None):
             # vẫn mang mức) đã được đưa về `na` ngày 14/08 — đó mới là phần chặn được.
             # Chuyển thành lỗi cứng khi `tools/kiem_phan_hang.py` về 0.
             warns.append(thieu)
-        if dec == "apply" and design == "Consensus":
-            errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
+        if dec == "apply" and la_consensus(design):
+            errors.append("[%s] decision='apply' chỉ dựa Consensus (design=%r, họ đồng thuận) — cần "
+                          "guideline/SR-MA/RCT hoặc hạ quyết định." % (iid, design))
         # TẦNG TOÀN VĂN (PHA 4 LÔ D, 15/08/2026): thẩm định trên abstract KHÔNG
         # ngang thẩm định đầy đủ. Item tự khai `appraisalCompleteness:'partial'`
         # (chưa đọc toàn văn) thì bị CHẶN khỏi mức 'apply' — tối đa 'consider'.
