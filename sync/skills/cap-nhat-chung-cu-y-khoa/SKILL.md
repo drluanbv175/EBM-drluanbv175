@@ -399,7 +399,7 @@ của cùng một thử nghiệm). Không tính được thì in rõ *"chưa ki�
 ④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
 ⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
 
-Cổng liêm chính KHÔNG đạt thì vẫn xuất file nhưng bản Word tự hạ câu chữ thành "CẦN xác minh" — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
+Cổng liêm chính LUÔN chạy — thiếu `--online` thì chạy phần ngoại tuyến (vá 26/09/2026): lỗi cứng THẬT (khoá summary lạ, nguồn đã rút trong sổ, `apply` trên chứng cứ yếu…) ⇒ **CHẶN XUẤT, mã 3** ở cả hai chế độ. Chỉ khi cổng CHƯA kết luận được (lỗi mạng, hoặc chạy không `--online`) mới vẫn xuất, bản Word tự hạ câu chữ thành "CẦN xác minh" và tiêu đề ghi «CHƯA xác minh nguồn sống» — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
 
 **Cổng nguồn ①-bis xử lý HAI loại lỗi khác hẳn nhau — đừng gộp:**
 - `decision='apply'` trên `gradeLevel` na/low, hoặc `apply` chỉ dựa Consensus ⇒ **CHẶN XUẤT, mã thoát 3**.
