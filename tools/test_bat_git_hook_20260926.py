@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 from pathlib import Path
 
@@ -49,6 +50,9 @@ def test_khong_doi_mode_tep_hook_khac(tmp_path):
     post.write_text("#!/bin/sh\n", encoding="utf-8", newline="\n")
     post.chmod(0o644)
     (r / ".githooks" / "pre-commit").chmod(0o644)
+    truoc = post.stat().st_mode
     assert M.bat(r) is True
-    assert post.stat().st_mode & 0o777 == 0o644
-    assert (r / ".githooks" / "pre-commit").stat().st_mode & 0o100
+    assert post.stat().st_mode == truoc                 # mọi nền tảng: không đụng tệp hook khác
+    if os.name != "nt":                                 # Windows không có bit thực thi POSIX
+        assert post.stat().st_mode & 0o777 == 0o644
+        assert (r / ".githooks" / "pre-commit").stat().st_mode & 0o100
