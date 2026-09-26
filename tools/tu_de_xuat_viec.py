@@ -134,15 +134,25 @@ def _nhanh_mac_dinh(duong_repo: Path, urlopen=None, co_gh: bool | None = None) -
     chính khai báo (`kiem_cay_lam_viec.NHANH_CHINH`). Hỏng hết ⇒ «» (bên gọi ghi giác quan chết ⇒ ⚪).
     TUYỆT ĐỐI không viết cứng «main» (repo y khoa CÓ origin/main nhưng đó là nhánh bỏ) và không bao
     giờ để bên gọi lùi về truy vấn KHÔNG lọc nhánh.
+
+    Rào origin/HEAD CŨ (rà phản biện 26/09/2026): `origin/HEAD` là bản chụp CỤC BỘ lúc clone, git
+    không tự cập nhật khi GitHub đổi nhánh mặc định — một clone cũ của repo y khoa có thể còn trỏ
+    `origin/main` (nhánh bỏ, run cuối có thể xanh ⇒ xanh giả). Nên (a) chỉ được dùng NGAY khi repo
+    không có khai báo hoặc KHỚP khai báo; lệch khai báo ⇒ hỏi nguồn có thẩm quyền (gh/API); nguồn
+    đó cũng hỏng ⇒ «» (hai nguồn cục bộ mâu thuẫn, không đoán bên nào đúng).
     """
     import urllib.request
+    khai_bao = _nhanh_khai_bao(duong_repo)
+    lech_khai_bao = ""
     try:
         r = subprocess.run(["git", "-C", str(duong_repo), "symbolic-ref", "--quiet", "--short",
                             "refs/remotes/origin/HEAD"], capture_output=True, text=True, timeout=10,
                            encoding="utf-8", errors="replace")
         ra = (r.stdout or "").strip()
         if r.returncode == 0 and ra.startswith("origin/") and _TEN_NHANH_HOP_LE.fullmatch(ra[7:]):
-            return ra[7:]
+            if not khai_bao or ra[7:] == khai_bao:
+                return ra[7:]
+            lech_khai_bao = ra[7:]
     except (OSError, subprocess.SubprocessError):
         pass
     if co_gh is None:
@@ -170,7 +180,9 @@ def _nhanh_mac_dinh(duong_repo: Path, urlopen=None, co_gh: bool | None = None) -
                 return ra
         except Exception:  # noqa: BLE001 — mạng/giới hạn nhịp/JSON lạ ⇒ thử nấc sau
             pass
-    return _nhanh_khai_bao(duong_repo)
+    if lech_khai_bao:
+        return ""   # origin/HEAD cục bộ ≠ khai báo, không nguồn thẩm quyền nào phân xử ⇒ không đo được
+    return khai_bao
 
 
 def doc_ci_qua_api(duong_repo: Path, wf: str, nhanh: str, urlopen=None) -> str:
