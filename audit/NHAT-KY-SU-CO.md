@@ -3171,3 +3171,8 @@ lỗi PHÉP THỬ, áp lại bằng Python thì đỏ).
 (2) Repo y khoa `tools/verify_evidence_surveillance_deployment.py` (canary giám sát tuần): `ROOT = REPO.parent` sai trên
 bố cục hai repo ĐẶT CẠNH (Cloud) ⇒ ESD04/07/08 FAIL giả; và canary chạy scanner TẠI CHỖ nên khoá `.quet.lock` + cảnh báo
 khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` thật (máy Mac) hoặc vào repo. Vá ở PR repo y khoa cùng ngày.
+
+### 26/09/2026 (chiều) — thi công đề xuất audit/17
+- ESD10 (kênh cảnh báo) không có đường nhập an toàn cho bác sĩ ⇒ thêm `tools/nhap_kenh_canh_bao.py` + nút `Nhap Kenh Canh Bao.command/.bat`; thông điệp ESD10 FAIL chỉ tới nút (repo y khoa). Bài học: một cổng FAIL phải chỉ đường đóng nó, không chỉ nêu tên biến.
+- SRC-045 BTS: sổ ghi `not-covered` từ 23/09 dù connector chạy được — kiểm sống 2/2 PDF ⇒ `active` (lại họ lỗi «sổ nói một đằng, mã sống một nẻo»).
+- ERS/ASCO/ESMO: phiên Cloud trả `EGRESS_BLOCKED` cho cả proxy lẫn WebFetch ⇒ «không đo được do cài đặt mạng», không kết luận khả thi hay không.

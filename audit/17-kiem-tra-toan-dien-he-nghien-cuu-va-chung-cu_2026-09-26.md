@@ -161,6 +161,22 @@ Ký hiệu: 👤 thẩm quyền bác sĩ · 🖥 cần máy thật (Mac/Windows 
 - Không nới cổng để ESD02/04/08 xanh trên Cloud. Đó là ⚪ trung thực vì dữ liệu cố ý nằm ngoài git.
 - Không cài máy chủ MCP bên thứ ba cho nguồn đã có (đã đánh giá ở §1ter của `_CONNECTOR-CHUNG-CU.md`).
 
+## 6bis. Trạng thái thi công từng đề xuất (26/09/2026, cùng ngày)
+
+| # | Đề xuất | Trạng thái | Bằng chứng / bước còn lại |
+|---|---|---|---|
+| 1 | Chạy giám sát tuần lần đầu | 🖥 **Chờ Mac** | Bản đầy đủ ghi sổ cái/hub và có thể gửi email, nên không chạy trên Cloud. Trên Mac: `bash medical-ebm-automation/scripts/weekly_safety.sh`, rồi `python3 medical-ebm-automation/tools/verify_evidence_surveillance_deployment.py --online`. |
+| 2 | Kênh cảnh báo (ESD10) | 🤖 **Đã làm phần máy** · 👤 chờ bác sĩ nhập | Nút mới `Nhap Kenh Canh Bao.command` / `.bat` (`tools/nhap_kenh_canh_bao.py`) cho Gmail (mật khẩu ứng dụng) / SMTP / webhook https. Nhập bằng ô ẩn, ghi nguyên tử vào `~/.ebm-secrets`, không in bí mật. 10 test, 3 đột biến đều đỏ. Khi ESD10 FAIL, thông điệp giờ chỉ thẳng tới nút này (2 test, 2 đột biến đều đỏ). Sau khi nhập: `python run.py notify-test`, và bác sĩ phải thấy thư thử tới nơi (đó là bằng chứng UAT). |
+| 3 | Merge PR canary | ✅ **Xong** | drluanbv175/medical-ebm-automation#16 đã merge (`bb88c7e`). |
+| 4 | Bộ vàng K1–K4 | 🖥👤 Chờ Mac + nhãn bác sĩ | Cần `EBM-Dashboards/`. Trên Mac: `python3 tools/kiem_cheo_ngu_nghia.py --ung-vien-bo-vang`, rồi bác sĩ điền `nhan_bac_si` cho 20 mục. |
+| 5 | Chạy lại trọn bộ chốt trên Mac | 🖥 Chờ Mac | `python3 tools/chot_hoi_quy_bai_hoc.py` · `python3 tools/audit_ebm_system.py` · `python3 tools/kiem_do_tuoi_chung_cu.py` |
+| 6 | Khoá Ed25519 | 👤 Chỉ bác sĩ bấm | Nút `Phat Khoa Ed25519.command` ở gốc repo. Máy không được sinh hay chạm khoá riêng. |
+| 7–8 | C1a: 3 quyết định treo → G3 → hồ sơ G2 | 👤 Thẩm quyền chủ nhiệm/IRB | Theo dõi bằng `python3 tools/study_readiness.py --study hai-long-benh-nhan-C1a-BVQY175`. |
+| 9 | Cục Quản lý Dược | 👤 Chờ bác sĩ mở từ mạng VN | Hai URL ở §6. Tải được thì báo lại, máy viết connector theo khuôn `kcb_vn_lane()`. |
+| 10 | Epistemonikos | 👤 Chờ bác sĩ gửi thư | Thư nháp ở `medical-ebm-automation/docs/xin-cap-quyen-nguon-chung-cu.md`. |
+| 11 | BTS toàn văn | ✅ **Xong — kiểm sống** | 2/2 hướng dẫn tải được qua connector thật: nốt phổi (64 trang, 358.145 ký tự) và giãn phế quản người lớn (80 trang, 471.472 ký tự). SRC-045 chuyển sang `active`. |
+| 12 | ERS/ASCO/ESMO | ⛔ **Bị chặn bởi cài đặt mạng Cloud** | Proxy và WebFetch đều trả `EGRESS_BLOCKED` cho `www.ersnet.org`, `erj.ersjournals.com`, `www.asco.org`, `ascopubs.org`, `www.esmo.org`, `www.annalsofoncology.org`. Đây là cài đặt mạng của môi trường, không phải trang web từ chối. Muốn làm: bác sĩ thêm 6 host vào Network access của môi trường Cloud (menu môi trường → Edit), hoặc chạy khảo sát trên Mac. |
+
 ## 7. Cách tái lập các số đo
 
 ```bash
