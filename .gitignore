@@ -35,6 +35,7 @@
 !/Phat Khoa Ed25519.command
 !/Nhap Kenh Canh Bao.command
 !/Nhap Kenh Canh Bao.bat
+!/Chay Viec Mac.command
 # Hướng dẫn đi KÈM nút trên. Bản đầu (02/09/2026) rơi đúng bẫy BH70 mà chính dòng chú thích
 # ngay trên đã cảnh báo: `git add -A` BỎ QUA file bị ignore trong IM LẶNG, nên commit 69fd108
 # mang tiêu đề "docs: step-by-step guide..." mà bên trong CHỈ có file .command — hướng dẫn

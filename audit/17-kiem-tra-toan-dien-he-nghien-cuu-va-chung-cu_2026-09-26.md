@@ -177,6 +177,11 @@ Ký hiệu: 👤 thẩm quyền bác sĩ · 🖥 cần máy thật (Mac/Windows 
 | 11 | BTS toàn văn | ✅ **Xong — kiểm sống** | 2/2 hướng dẫn tải được qua connector thật: nốt phổi (64 trang, 358.145 ký tự) và giãn phế quản người lớn (80 trang, 471.472 ký tự). SRC-045 chuyển sang `active`. |
 | 12 | ERS/ASCO/ESMO | ⛔ **Bị chặn bởi cài đặt mạng Cloud** | Proxy và WebFetch đều trả `EGRESS_BLOCKED` cho `www.ersnet.org`, `erj.ersjournals.com`, `www.asco.org`, `ascopubs.org`, `www.esmo.org`, `www.annalsofoncology.org`. Đây là cài đặt mạng của môi trường, không phải trang web từ chối. Muốn làm: bác sĩ thêm 6 host vào Network access của môi trường Cloud (menu môi trường → Edit), hoặc chạy khảo sát trên Mac. |
 
+**Gộp mục 1 + 4 + 5 vào MỘT nút:** `Chay Viec Mac.command` ở gốc thư mục OneDrive «Claude AI».
+Nút chạy theo thứ tự: an toàn đồng bộ (🔴 thì dừng) → giám sát tuần → cổng triển khai `--online` → chốt bài học →
+kiểm toàn hệ → độ tươi → ứng viên bộ vàng K1–K4 → «hệ còn gì để làm». Nhật ký ghi ở `~/.ebm-logs/viec-mac-*.log`.
+Nút không commit, không ký, không chạm khoá. Cần merge PR drluanbv175/EBM-drluanbv175#40 và để OneDrive đồng bộ trước.
+
 ## 7. Cách tái lập các số đo
 
 ```bash
