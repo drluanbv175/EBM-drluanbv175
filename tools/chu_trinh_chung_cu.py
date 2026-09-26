@@ -118,12 +118,22 @@ def main() -> int:
     else:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--vong", str(a.vong)],
                        f"③④ Xác minh nguồn + tra rút bài ({a.vong} vòng)")
+    khong_do_duoc = (rc == 3 or "KHONG_DO_DUOC" in out
+                     # chuỗi của bản so_xac_minh_nguon CŨ (trả 2/1 cho hai ca này) — vẫn phải ra ⚪, không ra 🔴
+                     or "Không thấy dashboard nào khớp" in out or "Sổ trống" in out)
     if rc == 2 and "SO_HONG" in out:
         # SỔ HỎNG (26/09/2026, phát hiện #3): so_xac_minh_nguon từ chối đọc/ghi sổ hỏng và trả 2 kèm dòng
         # «[MA] SO_HONG». Vẫn là việc ĐỎ (dương tính rút bài đã biết có thể đã mất) nhưng KHÔNG được gọi là
         # «có nguồn rút bỏ hẳn» — chưa ai thấy bài nào bị rút ở lượt này.
         viec_can_lam.append("🔴 SỔ XÁC MINH NGUỒN HỎNG — dương tính rút bài đã biết có thể bị mất; mọi phát "
                             "hành bị chặn tới khi khôi phục sổ (xem hướng dẫn ở phần ③④). KHÔNG xoá tệp hỏng.")
+    elif khong_do_duoc:
+        # VÁ 26/09/2026 (phát hiện #28): bản sao trần/Cloud không có EBM-Dashboards ⇒ so_xac_minh_nguon trả 3.
+        # BẮT BUỘC thêm một việc ⚪ (không «bỏ qua»): nếu viec_can_lam rỗng, tổng kết sẽ in 🟢 «không thấy bài bị
+        # rút» trong khi chưa đọc nguồn nào — xanh giả nguy hiểm hơn đỏ giả. Đọc MÃ THOÁT/đầu ra, không đoán theo
+        # duong_goc(): so_xac_minh_nguon chỉ tìm REPO/EBM-Dashboards, hai bên sẽ lệch ở bố cục anh em.
+        viec_can_lam.append("⚪ Chưa đo được xác minh nguồn/rút bài — thiếu EBM-Dashboards/ (hoặc sổ xác minh) "
+                            "trên máy này (xem ③④). KHÔNG phải đã thấy bài bị rút, cũng KHÔNG phải đã kiểm là sạch.")
     elif rc == 2:
         # rc=2 từ 15/08 CHỈ còn nghĩa «rút BỎ HẲN đang được dashboard trích» —
         # rút-và-thay đã phân xử trong gói không kéo còi đỏ nữa (nó ở rc=1, phần
@@ -156,6 +166,9 @@ def main() -> int:
         if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH",
                                       "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
             viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
+    elif rc != 0:
+        # Mã lạ (tiến trình bị giết, lỗi chưa đặt tên…) — KHÔNG được rơi im lặng thành 🟢 (vá #28, 26/09/2026).
+        viec_can_lam.append(f"⚪ Bước ③④ thoát mã lạ ({rc}) — chưa đo được xác minh nguồn/rút bài; xem phần ③④.")
 
     # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
     # Đặt SAU phần xác minh vì nó đọc nội dung dashboard, không gọi mạng; và đặt

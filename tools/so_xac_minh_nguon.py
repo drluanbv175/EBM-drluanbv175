@@ -50,7 +50,8 @@ Dùng
 
 Mã thoát: 0 = mọi nguồn của phạm vi đã quét đều còn hiệu lực · 1 = còn thiếu
 · 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng) — HOẶC sổ HỎNG (dòng «[MA] SO_HONG»;
-  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`).
+  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`) · 3 = KHÔNG ĐO ĐƯỢC (không thấy dashboard nào / chưa có
+  sổ; dòng «[MA] KHONG_DO_DUOC») — không phải rút bài, cũng không phải sạch.
 """
 from __future__ import annotations
 
@@ -1065,6 +1066,13 @@ def lenh_quet(files: list[Path], vong: int) -> int:
 
 
 def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
+    if nguon_pham_vi is None and not SO.exists():
+        # VÁ 26/09/2026 (phát hiện #28): sổ VẮNG (bản sao trần/Cloud không có EBM-Dashboards) ⇒ mã 3 «không đo
+        # được», KHÔNG phải mã 1 «còn thiếu» — và càng không phải mã 2 «có nguồn rút bỏ hẳn».
+        print(f"⚪ KHÔNG ĐO ĐƯỢC: chưa có sổ xác minh (thiếu {SO}) — đây là «chưa đo», KHÔNG phải "
+              "«đã thấy bài bị rút» và cũng KHÔNG phải «đã kiểm là sạch».")
+        print("[MA] KHONG_DO_DUOC")
+        return 3
     so = doc_so()
     muc = so["muc"]
     khoas = sorted(nguon_pham_vi) if nguon_pham_vi is not None else sorted(muc)
@@ -1403,8 +1411,13 @@ def _chay_lenh(a) -> int:
         files.extend(Path(p) for p in glob.glob(m))
     files = sorted({f.resolve() for f in files if f.exists()})
     if not files:
-        print("✗ Không thấy dashboard nào khớp.", file=sys.stderr)
-        return 2
+        # VÁ 26/09/2026 (phát hiện #28): trước đây `return 2` — trùng mã «có nguồn ĐÃ BỊ RÚT» nên chu_trinh_chung_cu
+        # kéo còi «🔴 CÓ NGUỒN RÚT BỎ HẲN» trên bản sao trần chỉ vì thiếu dashboard. Mã 2 nay chỉ còn nghĩa rút
+        # bài (hoặc sổ hỏng, có dòng «[MA] SO_HONG»); «không đo được» là mã 3.
+        print("⚪ KHÔNG ĐO ĐƯỢC: Không thấy dashboard nào khớp (thiếu EBM-Dashboards/?) — không nguồn nào được "
+              "đọc; KHÔNG phải «đã thấy bài bị rút», cũng KHÔNG phải «đã kiểm là sạch».", file=sys.stderr)
+        print("[MA] KHONG_DO_DUOC", file=sys.stderr)
+        return 3
     return lenh_quet(files, max(1, a.vong))
 
 
