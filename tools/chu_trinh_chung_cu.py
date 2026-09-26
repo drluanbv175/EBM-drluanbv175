@@ -177,7 +177,12 @@ def main() -> int:
     # ── 6. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
     rc, out = chay([PY, "tools/verify_clinical_evidence_update_pipeline.py"],
                    "⑥ Dây chuyền cập nhật chứng cứ còn nguyên vẹn?")
-    if rc != 0:
+    if rc == 2:
+        # MEASUREMENT_INCOMPLETE (26/09/2026): bản sao git trần thiếu template/hub chỉ có trên OneDrive —
+        # KHÔNG phải dây chuyền hỏng, nhưng cũng chưa được coi là đạt.
+        viec_can_lam.append("⚪ Dây chuyền cập nhật chứng cứ CHƯA đo đủ trên máy này (thiếu tệp chỉ có "
+                            "trên OneDrive) — chạy lại trên máy có cây OneDrive; xem phần ⑥.")
+    elif rc != 0:
         viec_can_lam.append("Dây chuyền cập nhật chứng cứ có lỗi — xem phần ⑥.")
 
     # ── Tổng kết ────────────────────────────────────────────────────────────

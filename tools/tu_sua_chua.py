@@ -155,6 +155,11 @@ VIEC_MAY = [
     ("Phiên Cloud thiếu venv engine (connector nguồn chứng cứ không chạy)",
      [PY, "tools/dung_venv_engine_cloud.py", "--im-khi-on"],
      [PY, "tools/dung_venv_engine_cloud.py", "--ap-dung"], True),
+    # Thêm 26/09/2026: container Cloud dựng mới mỗi phiên ⇒ bước «kích hoạt hook 1 lần/máy» (CLAUDE.md §2)
+    # không bao giờ còn; đo thật cả hai repo core.hooksPath=None ⇒ commit trên Cloud bỏ qua cổng pre-commit.
+    ("Git hook pre-commit chưa bật (core.hooksPath)",
+     [PY, "tools/bat_git_hook.py", "--im-khi-on"],
+     [PY, "tools/bat_git_hook.py", "--ap-dung"], True),
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
      None, False),                # cấu hình secrets — không tự điền

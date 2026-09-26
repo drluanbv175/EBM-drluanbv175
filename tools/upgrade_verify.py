@@ -86,6 +86,38 @@ def _configure_utf8_stdio() -> None:
 _configure_utf8_stdio()
 
 
+# «Không đo được» (26/09/2026) — trên bản sao git trần (Cloud) các thư mục chỉ-OneDrive không bao giờ có.
+# (1) Bước cần tệp chỉ-OneDrive làm ĐẦU VÀO: không chạy, ghi ⚪.
+BUOC_CAN_TEP_ONEDRIVE = {
+    "13.": "EBM_MASTER/tools/sync_all.py",
+    "14.": "EBM_MASTER/tools/sync_all.py",
+}
+# (2) Bước mà công cụ đích ĐÃ theo quy ước «mã 2 = MEASUREMENT_INCOMPLETE / CHƯA KẾT LUẬN». Khai tường minh
+# từng bước — KHÔNG suy rộng: nhiều công cụ khác dùng mã 2 cho lỗi thật.
+BUOC_MA_2_LA_CHUA_DO = ("19.", "21.", "22.", "23.")
+DAT, HONG, CHUA_DO = "dat", "hong", "chua_do"
+
+
+def phan_loai_buoc(label: str, rc: int | None, ban_sao_tran: bool, need_zero: bool = True) -> str:
+    """Trạng thái một bước: DAT · HONG · CHUA_DO. `rc=None` = bước không chạy (thiếu đầu vào chỉ-OneDrive)."""
+    ma = label.split(" ", 1)[0]
+    if rc is None:
+        return CHUA_DO
+    if not need_zero or rc == 0:
+        return DAT
+    if rc == 2 and ban_sao_tran and ma in BUOC_MA_2_LA_CHUA_DO:
+        return CHUA_DO
+    return HONG
+
+
+def thieu_dau_vao_onedrive(label: str, ban_sao_tran: bool) -> str | None:
+    """Đường tệp chỉ-OneDrive mà bước cần nhưng vắng trên bản sao trần; None nếu bước chạy được."""
+    tep = BUOC_CAN_TEP_ONEDRIVE.get(label.split(" ", 1)[0])
+    if ban_sao_tran and tep and not (ROOT / tep).exists():
+        return tep
+    return None
+
+
 def run(label: str, args: list[str], pass_when_returncode_zero: bool = True) -> tuple[bool, str]:
     """Chạy một bước; trả (đạt?, dòng tóm tắt cuối). KHÔNG bịa kết quả — dựa returncode thật."""
     env = dict(
@@ -105,6 +137,7 @@ def run(label: str, args: list[str], pass_when_returncode_zero: bool = True) -> 
     # Lấy dòng cuối có nội dung làm tóm tắt
     lines = [ln.rstrip() for ln in (proc.stdout or "").splitlines() if ln.strip()]
     tail = lines[-1] if lines else (proc.stderr.strip().splitlines() or [""])[-1]
+    run.last_returncode = proc.returncode
     return ok, tail[:120]
 
 
@@ -167,23 +200,39 @@ def main() -> int:
         ("28. Đồng bộ MCP mặc định", ["tools/verify_mcp_live_sync.py"], True),
     ]
 
-    results: list[tuple[str, bool, str]] = []
+    ban_sao_tran = _bst_uv.ban_sao_git_tran(ROOT)
+    results: list[tuple[str, str, str]] = []
     for label, args, need_zero in steps:
-        ok, tail = run(label, args, need_zero)
-        results.append((label, ok, tail))
-        mark = "✅" if ok else "❌"
+        thieu = thieu_dau_vao_onedrive(label, ban_sao_tran)
+        if thieu:
+            rc, tail = None, f"⚪ bản sao git trần — thiếu {thieu} (chỉ có trên OneDrive), không chạy"
+        else:
+            run.last_returncode = None
+            ok, tail = run(label, args, need_zero)
+            rc = getattr(run, "last_returncode", None)
+            if rc is None:          # run() không chạy được tiến trình ⇒ hỏng thật, không phải «chưa đo»
+                rc = 0 if ok else 1
+        trang_thai = phan_loai_buoc(label, rc, ban_sao_tran, need_zero)
+        results.append((label, trang_thai, tail))
+        mark = {DAT: "✅", HONG: "❌", CHUA_DO: "⚪"}[trang_thai]
         print(f"  {mark} {label:<28} {tail}")
 
-    all_ok = all(ok for _, ok, _ in results)
+    fails = [lbl for lbl, tt, _ in results if tt == HONG]
+    chua_do = [lbl for lbl, tt, _ in results if tt == CHUA_DO]
     print("-" * 70)
-    if all_ok:
-        print("  KẾT: ✅ PASS — toàn hệ nhất quán, đã đồng bộ Claude ↔ Codex.")
-    else:
-        fails = [lbl for lbl, ok, _ in results if not ok]
+    if fails:
         print(f"  KẾT: ❌ FAIL — bước lỗi: {', '.join(fails)}")
+    elif chua_do:
+        # «Không đo được» ≠ «ổn» (CLAUDE.md §0.2): không in PASS, mã 2.
+        print("  KẾT: ⚪ CHƯA KẾT LUẬN — mọi bước đo được đều đạt; bước KHÔNG đo được trên bản sao git trần: "
+              + ", ".join(chua_do) + ". Chạy lại trên máy có cây OneDrive để kết luận toàn hệ.")
+    else:
+        print("  KẾT: ✅ PASS — toàn hệ nhất quán, đã đồng bộ Claude ↔ Codex.")
+    if fails and chua_do:
+        print(f"  ⚪ Ngoài ra KHÔNG đo được trên bản sao git trần: {', '.join(chua_do)}")
     print("  → Cần bác sĩ kiểm chứng (đây là kiểm cấu trúc, không thay thẩm định lâm sàng).")
     print("=" * 70)
-    return 0 if all_ok else 1
+    return 1 if fails else (2 if chua_do else 0)
 
 
 if __name__ == "__main__":
