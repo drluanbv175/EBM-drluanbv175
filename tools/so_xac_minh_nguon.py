@@ -378,7 +378,24 @@ def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
                 if loai == "url" and not gt.startswith("http"):
                     continue
                 nguon.setdefault(f"{loai}:{gt}", set()).add(f.name)
+            # VÁ 26/09/2026 (phát hiện #13) — định danh trong references[] của item cũng là nguồn gói
+            # đang trích. Cổng verify_dashboard nay đưa PMID dạng «PMID 12345678» trong references vào
+            # tầng 2/3; nếu sổ không gom chúng thì `--quet` không bao giờ kiểm và cổng in mãi một cảnh
+            # báo «CHƯA KIỂM» mà bác sĩ không gỡ được. Chỉ đọc references[] qua parser của cổng, không
+            # quét cả tệp (ghi chú giải thích việc LOẠI một bài đã rút không phải là trích dẫn).
+            for r in (vd.array_field(ch, "references") or []):
+                for pm in _PMID_THAM_KHAO.findall(r or ""):
+                    if vd.PMID_RE.match(pm):
+                        nguon.setdefault(f"pmid:{pm}", set()).add(f.name)
+                for d in _DOI_THAM_KHAO.findall(r or ""):
+                    d = d.rstrip(".,;'\")”")
+                    if vd.DOI_RE.match(d):
+                        nguon.setdefault(f"doi:{d}", set()).add(f.name)
     return nguon
+
+
+_PMID_THAM_KHAO = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.I)
+_DOI_THAM_KHAO = re.compile(r"10\.\d{4,9}/[^\s'\"<>]+")
 
 
 def dong_bo_lien_ket_dashboard(

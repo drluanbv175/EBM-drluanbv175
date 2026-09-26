@@ -1894,6 +1894,30 @@ def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
     return None
 
 
+_PMID_TRONG_THAM_KHAO = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.I)
+
+
+def pmid_trong_references(html):
+    """PMID viết trong `references[]` của TỪNG item — dạng «PMID 12345678» hoặc «PMID: 12345678».
+
+    Vá 26/09/2026 (phát hiện #13): regex tầng 2/3 cũ (`pmid` + `[:=]`) bắt buộc có ':'/'=' nên
+    dạng «… PMID 34447992.» — ĐÚNG định dạng references của template EW — bị bỏ sót: một RCT hỗ trợ đã
+    rút (Wakefield, PMID 9500320) nằm trong references làm cổng PASS mã 0 và không hiện cả trong đếm phạm
+    vi. CHỈ quét references[] (qua chính parser của cổng), KHÔNG quét cả tệp: một ghi chú giải thích vì sao
+    LOẠI một bài đã rút sẽ bị chặn oan mà không có đường miễn trừ. Chỉ bổ sung định danh cho tầng phát tín
+    hiệu DƯƠNG — không thể làm xanh thêm điều gì."""
+    ra = set()
+    db = extract_data_block(html or "")
+    if not db:
+        return ra
+    for ch in split_items(db):
+        for r in array_field(ch, "references"):
+            for m in _PMID_TRONG_THAM_KHAO.findall(r or ""):
+                if PMID_RE.match(m):
+                    ra.add(m)
+    return ra
+
+
 def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
     """Chọn câu ghi thêm vào cảnh báo «Phạm vi kiểm rút bài» — TÁCH RIÊNG thành hàm thuần để
     kiểm được độc lập, không cần dựng cả `kiem_nguon_da_rut()` (nạp động `so_xac_minh_nguon.py`).
@@ -1982,6 +2006,8 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         try:
             _nd = _Path(duong_dan).read_text(encoding="utf-8", errors="replace")
             _ids = set(re.findall(r"pmid['\"]?\s*[:=]\s*['\"]?(\d{6,9})", _nd, re.I))
+            # PMID dạng «PMID 12345678» trong references[] của từng item (vá #13, 26/09/2026).
+            _ids |= pmid_trong_references(_nd)
             _ids |= {m.rstrip(".,;'\")”") for m in
                      re.findall(r"10\.\d{4,9}/[^\s'\"<>]+", _nd)}
             da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
