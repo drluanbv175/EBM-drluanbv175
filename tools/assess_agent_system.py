@@ -404,27 +404,46 @@ def print_report(rep: Dict) -> None:
     print("=" * 66)
 
 
+SCORECARD_MAC_DINH = AGENTS / "_HE-THONG-SCORECARD.json"
+
+
+def khong_ghi_scorecard_mac_dinh(out_tuong_minh: str | None, ban_sao_tran: bool | None = None) -> bool:
+    """True khi KHÔNG được ghi đè scorecard mặc định: đang ở bản sao git trần và không có --out tường minh."""
+    if out_tuong_minh:
+        return False
+    return _bst_mea.ban_sao_git_tran(ROOT) if ban_sao_tran is None else ban_sao_tran
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Tự đánh giá hệ Agent theo 13 tiêu chí.")
     ap.add_argument("--deep", action="store_true",
                     help="Chạy công cụ THẬT (audit/retry/generate) — chậm hơn, kiểm chứng mạnh")
     ap.add_argument("--json", action="store_true", help="In JSON")
-    ap.add_argument("--out", default=str(AGENTS / "_HE-THONG-SCORECARD.json"),
-                    help="Đường dẫn ghi scorecard JSON")
+    ap.add_argument("--out", default=None,
+                    help="Đường dẫn ghi scorecard JSON (mặc định: .claude/agents/_HE-THONG-SCORECARD.json)")
     args = ap.parse_args()
 
     rep = assess(args.deep)
-    try:
-        Path(args.out).write_text(json.dumps(rep, ensure_ascii=False, indent=2),
-                                  encoding="utf-8")
-        rep["scorecard_json"] = args.out
-    except OSError:
-        pass
+    out = Path(args.out) if args.out else SCORECARD_MAC_DINH
+    if khong_ghi_scorecard_mac_dinh(args.out):
+        # 26/09/2026: scorecard mặc định được TRACK trong git; trên bản sao trần (Cloud) các probe cần
+        # dữ liệu OneDrive rớt xuống «partial» ⇒ ghi đè = nhiễm artifact (đo thật: 13 strong → 8 strong +
+        # 5 partial, suýt bị commit). Chỉ in; muốn ghi thì truyền --out tường minh.
+        rep["scorecard_json"] = None
+        rep["scorecard_bo_qua_ghi"] = "bản sao git trần — số đo thiếu dữ liệu OneDrive, không ghi đè bản trong git"
+    else:
+        try:
+            out.write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
+            rep["scorecard_json"] = str(out)
+        except OSError:
+            pass
 
     if args.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
     else:
         print_report(rep)
+        if rep.get("scorecard_bo_qua_ghi"):
+            print("⚪ Không ghi scorecard: " + rep["scorecard_bo_qua_ghi"])
     return 0 if rep["summary"]["weak"] == 0 else 1
 
 
