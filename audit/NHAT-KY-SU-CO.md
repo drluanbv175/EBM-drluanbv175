@@ -3185,3 +3185,6 @@ khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` th
 ### 26/09/2026 (khuya) — bảng «hệ còn gì để làm» báo đỏ/vàng giả trên Cloud
 - Cảm biến CI lấy run MỚI NHẤT kể cả đang chạy (`conclusion=null`) ⇒ 🟡 «thấy: rỗng» ngay sau mỗi push/merge dù run xong gần nhất xanh. Sửa: `status=completed` (API) + `--status completed` (gh). Đo sau sửa: cả hai repo `success`.
 - Log giám sát tuần chỉ có trên máy chạy lịch ⇒ phiên Cloud luôn 🔴 «chưa từng chạy». Sửa: `giac_quan_lich_nen_theo_noi_chay()` — Cloud vắng log ⇒ ⚪ giác quan không đo được; máy thật vắng log vẫn 🔴. Bài học: một cảm biến phải biết NƠI nó đang chạy trước khi phán «vắng = hỏng».
+
+### 26/09/2026 (khuya, tiếp) — `audit_ebm_system.py` FAIL giả trên mọi phiên Cloud
+- 4 nhóm kiểm có đầu vào CHỈ nằm trên OneDrive (template dashboard, 11 file mặc định ở gốc, `CHATGPT_EXPORT/`, `Antifacts.html` — đều không track trong git) + `EBM_MASTER` ⇒ `KẾT QUẢ: FAIL` trên mọi bản sao trần, che lỗi thật. Sửa: `tach_loi_thieu_dau_vao()` — trên bản sao trần (định nghĩa DUY NHẤT `ban_sao_tran.py`) lỗi THIẾU ĐẦU VÀO ⇒ ⚪; lỗi LỆCH NỘI DUNG vẫn cứng; máy thật giữ nguyên. Kết quả mới «CHƯA KẾT LUẬN» mã thoát 2 (không bao giờ PASS; khác FAIL = 1). Máy thật vắng EBM_MASTER mà không phải bản sao trần ⇒ FAIL kèm gợi ý `sync_safety_check.py`.
