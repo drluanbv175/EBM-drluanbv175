@@ -18,6 +18,8 @@ def test_clinical_practice_apply_gate_overall_passes():
         "blocks_missing_local_confirmation",
         "blocks_weak_apply",
         "blocks_red_flag",
+        # Thêm 26/09/2026 (#33): tự kiểm lối vòng chữ hoa/khoảng trắng/vắng/ngoài enum.
+        "blocks_enum_bypass",
     }
 
 
