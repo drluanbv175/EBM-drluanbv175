@@ -2013,9 +2013,22 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         # mở thêm tầng định danh mà bên tiêm không biết.
         _tra_dinh_danh = None
         _mod_so = None
+    # SỔ HỎNG ≠ CHƯA KIỂM (vá 26/09/2026, phát hiện #3): sổ có trên đĩa mà không đọc được thì các dương tính
+    # rút bài ĐÃ BIẾT có thể đã mất — đó là LỖI CỨNG, không phải cảnh báo «chưa biết». Sổ bản cũ không có lớp
+    # `SoHongLoi` ⇒ tuple rỗng ⇒ giữ hành vi cũ.
+    _loi_so_hong = (getattr(_mod_so, "SoHongLoi", None),) if _mod_so is not None else ()
+    _loi_so_hong = tuple(x for x in _loi_so_hong if isinstance(x, type))
+
+    def _bao_so_hong(e):
+        errors.append("Sổ xác minh nguồn HỎNG — dương tính rút bài đã biết có thể bị mất; khôi phục sổ trước "
+                      "khi phát hành (KHÔNG xoá tệp hỏng): %s" % e)
+
     try:
         da_rut = list(tra_cuu(_Path(duong_dan).name))
     except Exception as e:
+        if _loi_so_hong and isinstance(e, _loi_so_hong):
+            _bao_so_hong(e)
+            return
         warns.append("Chưa kiểm được rút bài (%s) — 'chưa biết', KHÔNG phải 'không có'. "
                      "Chạy: python tools/so_xac_minh_nguon.py --quet <file>" % e)
         return
@@ -2038,8 +2051,11 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                 if (r["loai"], r["gia_tri"]) not in da_co:
                     da_rut.append(r)
         except Exception as e:
-            warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
-                         "KHÔNG phải 'không có'." % e)
+            if _loi_so_hong and isinstance(e, _loi_so_hong):
+                _bao_so_hong(e)
+            else:
+                warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
+                             "KHÔNG phải 'không có'." % e)
 
     # TẦNG 3 (21/09/2026, việc #2a) — NÓI RA PHẠM VI kiểm rút bài, và hỏi nền Retraction Watch NGOẠI TUYẾN cho
     # PMID mà sổ CHƯA kiểm. Trước đây, sổ không có bản ghi dương tính thì cổng im lặng hoàn toàn: «sổ im lặng» gồm
@@ -2084,7 +2100,10 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                 oks.append("Rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ (hoặc đã đối chiếu nền ngoại "
                            "tuyến) — không thấy dương tính chưa xử lý." % (len(_ids), len(_ids)))
         except Exception as e:
-            warns.append("Chưa nêu được phạm vi kiểm rút bài (%s) — 'chưa biết', KHÔNG phải 'sạch'." % e)
+            if _loi_so_hong and isinstance(e, _loi_so_hong):
+                _bao_so_hong(e)
+            else:
+                warns.append("Chưa nêu được phạm vi kiểm rút bài (%s) — 'chưa biết', KHÔNG phải 'sạch'." % e)
 
     if not da_rut:
         # Cố ý KHÔNG ghi vào oks: sổ không có bản ghi dương tính có thể chỉ vì chưa

@@ -49,7 +49,8 @@ Dùng
     python tools/so_xac_minh_nguon.py --bao-cao
 
 Mã thoát: 0 = mọi nguồn của phạm vi đã quét đều còn hiệu lực · 1 = còn thiếu
-· 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng).
+· 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng) — HOẶC sổ HỎNG (dòng «[MA] SO_HONG»;
+  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`).
 """
 from __future__ import annotations
 
@@ -136,19 +137,126 @@ def _nap_verify_dashboard():
     return mod
 
 
+class SoHongLoi(RuntimeError):
+    """Tệp sổ CÓ trên đĩa nhưng không đọc được thành sổ hợp lệ — KHÁC hẳn «chưa có sổ».
+
+    Thêm 26/09/2026 (phát hiện #3). Bản cũ gộp hai trạng thái: sổ hỏng JSON (OneDrive cắt cụt/ghi xung đột,
+    hoặc Ctrl-C giữa lúc ghi không nguyên tử) bị đọc thành sổ RỖNG ⇒ mọi dương tính rút bài biến mất khỏi
+    cổng (PASS mã 0 với DOI đã rút), và lượt `--quet`/`--vong` kế tiếp GHI ĐÈ sổ rỗng lên tệp hỏng — mất
+    vĩnh viễn (EBM-Dashboards nằm ngoài git). Nay: sổ hỏng là LỖI, không ai được ghi đè; khôi phục chỉ qua
+    cờ tường minh `--cuu-so-hong`."""
+
+
+_HUONG_DAN_CUU_SO = (
+    "Khôi phục TRƯỚC khi phát hành: (1) nếu là tệp giữ chỗ 0 byte của OneDrive (Files On-Demand) thì đợi "
+    "OneDrive xanh rồi chạy lại; (2) lấy bản trước qua lịch sử phiên bản OneDrive hoặc chép từ máy kia; "
+    "(3) chỉ khi không còn bản nào: `python tools/so_xac_minh_nguon.py --cuu-so-hong` (giữ nguyên bản hỏng, "
+    "cứu các dương tính rút bài bằng regex). KHÔNG xoá tệp hỏng.")
+
+
 def doc_so() -> dict:
+    """Đọc sổ. Tệp VẮNG ⇒ sổ rỗng (chưa từng quét). Tệp CÓ mà hỏng ⇒ ném `SoHongLoi`, KHÔNG bao giờ trả rỗng."""
     if not SO.exists():
         return {"phien_ban": 1, "muc": {}}
     try:
-        return json.loads(SO.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        print(f"⚠ Sổ hỏng, bắt đầu lại từ đầu ({e})", file=sys.stderr)
-        return {"phien_ban": 1, "muc": {}}
+        tho = SO.read_bytes()
+    except OSError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — không đọc được {SO} ({e}). {_HUONG_DAN_CUU_SO}") from e
+    if not tho.strip():
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} RỖNG ({len(tho)} byte). {_HUONG_DAN_CUU_SO}")
+    try:
+        so = json.loads(tho.decode("utf-8"))
+    except UnicodeDecodeError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} không phải UTF-8 ({e}). {_HUONG_DAN_CUU_SO}") from e
+    except json.JSONDecodeError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} không phải JSON hợp lệ ({e}). {_HUONG_DAN_CUU_SO}") from e
+    if not isinstance(so, dict) or not isinstance(so.get("muc"), dict):
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} sai cấu trúc (cần đối tượng có khoá 'muc' là đối "
+                        f"tượng). {_HUONG_DAN_CUU_SO}")
+    return so
 
 
 def ghi_so(so: dict) -> None:
-    SO.write_text(json.dumps(so, ensure_ascii=False, indent=2, sort_keys=True),
-                  encoding="utf-8")
+    """Ghi sổ NGUYÊN TỬ: tệp tạm CÙNG thư mục → fsync → os.replace (vá 26/09/2026, phát hiện #3).
+
+    Bản cũ `SO.write_text(...)` ghi thẳng: Ctrl-C/máy ngủ giữa chừng (lượt quét ghi mỗi 10 mục) để lại sổ
+    cắt cụt. `os.replace` trên cùng hệ tệp là nguyên tử trên Mac/Linux/Windows — người đọc chỉ thấy bản cũ
+    trọn vẹn hoặc bản mới trọn vẹn."""
+    import os
+    du_lieu = json.dumps(so, ensure_ascii=False, indent=2, sort_keys=True)
+    tam = SO.with_name(SO.name + ".tmp")
+    try:
+        with open(tam, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(du_lieu)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tam, SO)
+    except BaseException:
+        try:
+            tam.unlink()
+        except OSError:
+            pass
+        raise
+
+
+_KHOA_SO_RE = re.compile(r'"((?:pmid|doi|url):[^"\\]+)"\s*:\s*\{')
+
+
+def cuu_so_hong() -> int:
+    """`--cuu-so-hong`: cứu dương tính rút bài từ một sổ HỎNG — CHỈ khi bác sĩ/người vận hành gọi tường minh.
+
+    Không bao giờ xoá bản hỏng: chép nguyên byte sang `.so-xac-minh-nguon.hong-<thời điểm>.json`, rồi dùng regex
+    tìm từng khoá `pmid:/doi:/url:` mà khối của nó mang `"da_rut": true` hoặc dấu EoC, ghi các bản ghi đó vào sổ
+    MỚI (nguyên tử). Mọi thứ khác (ngày xác minh, liên kết dashboard, dấu vết «ok») KHÔNG cứu — phải quét lại.
+    Trả 0 khi đã cứu và ghi sổ mới; 1 khi sổ không hỏng (không làm gì); 2 khi không đọc được byte nào."""
+    if not SO.exists():
+        print(f"Không có sổ tại {SO} — không có gì để cứu.")
+        return 1
+    try:
+        doc_so()
+        print("Sổ đọc được bình thường — KHÔNG cứu gì (cờ này chỉ dành cho sổ hỏng).")
+        return 1
+    except SoHongLoi:
+        pass
+    try:
+        tho = SO.read_bytes()
+    except OSError as e:
+        print(f"✗ Không đọc được byte nào của sổ ({e}) — không cứu được.", file=sys.stderr)
+        return 2
+    moc = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
+    ban_hong = SO.with_name(f"{SO.stem}.hong-{moc}.json")
+    ban_hong.write_bytes(tho)
+    van = tho.decode("utf-8", errors="replace")
+    vi_tri = [(m.start(), m.group(1)) for m in _KHOA_SO_RE.finditer(van)]
+    muc: dict[str, dict] = {}
+    for i, (bat_dau, khoa) in enumerate(vi_tri):
+        doan = van[bat_dau:vi_tri[i + 1][0] if i + 1 < len(vi_tri) else len(van)]
+        da_rut = re.search(r'"da_rut"\s*:\s*true', doan) is not None
+        eoc = (re.search(r'"quan_ngai"\s*:\s*true', doan) is not None
+               or re.search(r'"ghi_chu_rut"\s*:\s*"expression_of_concern"', doan) is not None)
+        if not (da_rut or eoc):
+            continue
+        loai, _, gt = khoa.partition(":")
+        bg = {"loai": loai, "gia_tri": gt, "cac_dashboard": [], "cuu_tu_so_hong": ban_hong.name}
+        if da_rut:
+            bg["da_rut"] = True
+            if re.search(r'"rut_va_thay"\s*:\s*true', doan):
+                bg["rut_va_thay"] = True
+        if eoc:
+            bg["quan_ngai"] = True
+            bg["ghi_chu_rut"] = "expression_of_concern"
+        m_gc = re.search(r'"ghi_chu_rut"\s*:\s*"([^"]*)"', doan)
+        if m_gc and da_rut:
+            bg["ghi_chu_rut"] = m_gc.group(1)
+        muc[khoa] = bg
+    ghi_so({"phien_ban": 1, "muc": muc})
+    print(f"Đã giữ nguyên bản hỏng ở {ban_hong.name}.")
+    print(f"Cứu được {len(muc)} dương tính rút bài/EoC vào sổ mới:")
+    for k in sorted(muc):
+        print(f"   • {k}")
+    print("⚠ Mọi dấu vết khác (xác minh tồn tại, kiểm rút bài «ok», liên kết dashboard) KHÔNG cứu được —")
+    print("  chạy lại `--quet … --vong 3` để tích luỹ lại. Dương tính nằm ở đoạn bị cắt mất thì KHÔNG cứu được.")
+    return 0
 
 
 def _hom_nay() -> dt.date:
@@ -1186,8 +1294,24 @@ def main() -> int:
                          "MỒ CÔI mà --quet không bao giờ chạm tới (định danh chỉ xuất "
                          "hiện ở trường phụ như replacesPmid). Luật bất đối xứng giữ "
                          "nguyên: KHÔNG bao giờ xoá dương tính cũ.")
+    ap.add_argument("--cuu-so-hong", action="store_true",
+                    help="CHỈ cho sổ HỎNG: giữ nguyên bản hỏng (.hong-<thời điểm>.json) rồi cứu các dương tính "
+                         "rút bài bằng regex vào sổ mới. Không bao giờ tự chạy.")
     a = ap.parse_args()
 
+    if a.cuu_so_hong:
+        return cuu_so_hong()
+    try:
+        return _chay_lenh(a)
+    except SoHongLoi as e:
+        # KHÔNG bắt đầu sổ mới, KHÔNG ghi gì: ghi đè lúc này là xoá vĩnh viễn dương tính rút bài đã tích luỹ.
+        print(f"⛔ {e}", file=sys.stderr)
+        print("[MA] SO_HONG — không ghi gì vào sổ.", file=sys.stderr)
+        return 2
+
+
+def _chay_lenh(a) -> int:
+    """Thân lệnh CLI — tách khỏi main() để mọi đường ĐỌC/GHI sổ cùng đi qua một rào `SoHongLoi`."""
     if a.phu_mo_coi:
         vd = _nap_verify_dashboard()
         so = doc_so()

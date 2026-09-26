@@ -118,7 +118,13 @@ def main() -> int:
     else:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--vong", str(a.vong)],
                        f"③④ Xác minh nguồn + tra rút bài ({a.vong} vòng)")
-    if rc == 2:
+    if rc == 2 and "SO_HONG" in out:
+        # SỔ HỎNG (26/09/2026, phát hiện #3): so_xac_minh_nguon từ chối đọc/ghi sổ hỏng và trả 2 kèm dòng
+        # «[MA] SO_HONG». Vẫn là việc ĐỎ (dương tính rút bài đã biết có thể đã mất) nhưng KHÔNG được gọi là
+        # «có nguồn rút bỏ hẳn» — chưa ai thấy bài nào bị rút ở lượt này.
+        viec_can_lam.append("🔴 SỔ XÁC MINH NGUỒN HỎNG — dương tính rút bài đã biết có thể bị mất; mọi phát "
+                            "hành bị chặn tới khi khôi phục sổ (xem hướng dẫn ở phần ③④). KHÔNG xoá tệp hỏng.")
+    elif rc == 2:
         # rc=2 từ 15/08 CHỈ còn nghĩa «rút BỎ HẲN đang được dashboard trích» —
         # rút-và-thay đã phân xử trong gói không kéo còi đỏ nữa (nó ở rc=1, phần
         # 🟠 của báo cáo); thẩm quyền chặn từng gói thuộc verify_dashboard.
