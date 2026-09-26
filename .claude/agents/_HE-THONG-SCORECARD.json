@@ -1,8 +1,8 @@
 {
   "mode": "deep",
   "summary": {
-    "strong": 8,
-    "partial": 5,
+    "strong": 13,
+    "partial": 0,
     "weak": 0,
     "total": 13
   },
@@ -38,8 +38,8 @@
       "id": "A2",
       "name": "Lập kế hoạch",
       "level": "agent",
-      "status": "partial",
-      "passed": 3,
+      "status": "strong",
+      "passed": 4,
       "total": 4,
       "probes": [
         {
@@ -55,8 +55,8 @@
           "detail": "Kế hoạch lâm sàng 5 bước EBM: ✓ (dieu-phoi-lam-sang.md)"
         },
         {
-          "ok": false,
-          "detail": "Orchestrator control-plane validate PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Orchestrator control-plane validate PASS: exit=0 (cần 0) ✓"
         }
       ],
       "caveats": [
@@ -129,13 +129,13 @@
       "id": "A5",
       "name": "Bộ nhớ dài hạn + ngắn hạn",
       "level": "agent",
-      "status": "partial",
-      "passed": 3,
+      "status": "strong",
+      "passed": 4,
       "total": 4,
       "probes": [
         {
-          "ok": false,
-          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 0 (ngưỡng ≥1)"
+          "ok": true,
+          "detail": "Sổ cái dài hạn EBM_MASTER (số thẻ): 1351 (ngưỡng ≥1)"
         },
         {
           "ok": true,
@@ -191,8 +191,8 @@
       "id": "A7",
       "name": "An toàn, ổn định, kiểm chứng",
       "level": "agent",
-      "status": "partial",
-      "passed": 4,
+      "status": "strong",
+      "passed": 5,
       "total": 5,
       "probes": [
         {
@@ -205,11 +205,11 @@
         },
         {
           "ok": true,
-          "detail": "Bộ test tự động (file): 499 khớp 'test_*.py' (≥40)"
+          "detail": "Bộ test tự động (file): 451 khớp 'test_*.py' (≥40)"
         },
         {
-          "ok": false,
-          "detail": "Audit hệ PASS (kiểm chứng): exit=2 (cần 0) ✗"
+          "ok": true,
+          "detail": "Audit hệ PASS (kiểm chứng): exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -253,8 +253,8 @@
       "id": "S2",
       "name": "Phối hợp giữa các agent",
       "level": "system",
-      "status": "partial",
-      "passed": 5,
+      "status": "strong",
+      "passed": 6,
       "total": 6,
       "probes": [
         {
@@ -274,8 +274,8 @@
           "detail": "0 tham chiếu treo (--strict): exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Orchestrator agent/plugin (bàn giao/nhánh điều kiện) PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -350,13 +350,13 @@
       "id": "S5",
       "name": "Giám sát, guardrail, kiểm soát rủi ro",
       "level": "system",
-      "status": "partial",
-      "passed": 11,
+      "status": "strong",
+      "passed": 14,
       "total": 14,
       "probes": [
         {
-          "ok": false,
-          "detail": "Audit registry-aware PASS: exit=2 (cần 0) ✗"
+          "ok": true,
+          "detail": "Audit registry-aware PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -383,8 +383,8 @@
           "detail": "Rubric QA ↔ LESSONS taxonomy PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Smoke-test thực tiễn dữ liệu nghiên cứu PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
@@ -399,8 +399,8 @@
           "detail": "Clinical runtime schema hardening PASS: exit=0 (cần 0) ✓"
         },
         {
-          "ok": false,
-          "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=1 (cần 0) ✗"
+          "ok": true,
+          "detail": "Pipeline cập nhật chứng cứ lâm sàng PASS: exit=0 (cần 0) ✓"
         },
         {
           "ok": true,
