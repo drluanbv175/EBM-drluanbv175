@@ -103,21 +103,99 @@ def _owner_repo_tu_remote(duong_repo: Path) -> str:
     return f"{m.group(1)}/{m.group(2)}" if m else ""
 
 
-def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
-    """Phán quyết run mới nhất của workflow `wf` qua GitHub REST API công khai — đường LÙI khi máy
-    không có `gh` (phiên Cloud: đo 26/09/2026, `gh` vắng nên cảm biến CI luôn ⚪ «không đo được» dù
-    API đọc được cả hai repo). Trả `conclusion` («success»/«failure»/…) của run ĐÃ HOÀN TẤT gần nhất
-    (`status=completed`; sửa 26/09/2026: bản đầu lấy run mới nhất kể cả đang chạy ⇒ `conclusion=null`
-    và bảng báo 🟡 «rỗng» mỗi lần vừa push/merge, dù run xong gần nhất vẫn xanh).
+# Tên nhánh hợp lệ để đưa vào truy vấn (không khoảng trắng/ký tự lạ) — chặn đầu ra lỗi của gh/API
+# bị đọc nhầm thành tên nhánh.
+_TEN_NHANH_HOP_LE = re.compile(r"[\w.][\w./-]*")
+
+
+def _nhanh_khai_bao(duong_repo: Path) -> str:
+    """Nấc lùi CUỐI: nhánh chính khai báo theo CLAUDE.md — MỘT nguồn duy nhất là
+    `kiem_cay_lam_viec.NHANH_CHINH` (khoá theo tên repo suy từ remote, lùi về tên thư mục)."""
+    try:
+        sp = _ilu_mea.spec_from_file_location(
+            "_kcl_tdxv", Path(__file__).resolve().parent / "kiem_cay_lam_viec.py")
+        kcl = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(kcl)
+        bang = dict(kcl.NHANH_CHINH)
+    except Exception:  # noqa: BLE001 — thiếu nguồn khai báo ⇒ không có nấc lùi, không đoán
+        return ""
+    ten = _owner_repo_tu_remote(duong_repo).split("/")[-1] or duong_repo.resolve().name
+    return bang.get(ten, "")
+
+
+def _nhanh_mac_dinh(duong_repo: Path, urlopen=None, co_gh: bool | None = None) -> str:
+    """Nhánh MẶC ĐỊNH của repo để lọc cảm biến CI (26/09/2026).
+
+    Vì sao: cả hai workflow chạy trên MỌI nhánh (`push: branches: ["**"]`), nên «run hoàn tất mới
+    nhất» sau mỗi lần merge gần như luôn là run của nhánh `claude/*` được đẩy lên CÙNG commit — đo
+    thật 26/09: run #838 (claude/*, success) che run #837 (nhánh mặc định repo y khoa, FAILURE).
+    Thứ tự dò: (a) `git symbolic-ref refs/remotes/origin/HEAD` (hỏng thật trên clone Cloud ở CẢ HAI
+    repo) → (b) `gh repo view` rồi API `GET /repos/{owner}/{repo}` → `default_branch` → (c) nhánh
+    chính khai báo (`kiem_cay_lam_viec.NHANH_CHINH`). Hỏng hết ⇒ «» (bên gọi ghi giác quan chết ⇒ ⚪).
+    TUYỆT ĐỐI không viết cứng «main» (repo y khoa CÓ origin/main nhưng đó là nhánh bỏ) và không bao
+    giờ để bên gọi lùi về truy vấn KHÔNG lọc nhánh.
+    """
+    import urllib.request
+    try:
+        r = subprocess.run(["git", "-C", str(duong_repo), "symbolic-ref", "--quiet", "--short",
+                            "refs/remotes/origin/HEAD"], capture_output=True, text=True, timeout=10,
+                           encoding="utf-8", errors="replace")
+        ra = (r.stdout or "").strip()
+        if r.returncode == 0 and ra.startswith("origin/") and _TEN_NHANH_HOP_LE.fullmatch(ra[7:]):
+            return ra[7:]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if co_gh is None:
+        co_gh = bool(shutil.which("gh"))
+    if co_gh:
+        try:
+            r = subprocess.run(["gh", "repo", "view", "--json", "defaultBranchRef", "--jq",
+                                ".defaultBranchRef.name"], capture_output=True, text=True, timeout=30,
+                               cwd=duong_repo, encoding="utf-8", errors="replace")
+            ra = (r.stdout or "").strip()
+            if r.returncode == 0 and _TEN_NHANH_HOP_LE.fullmatch(ra):
+                return ra
+        except (OSError, subprocess.SubprocessError):
+            pass
+    repo = _owner_repo_tu_remote(duong_repo)
+    if repo:
+        try:
+            mo = urlopen or urllib.request.urlopen
+            with mo(urllib.request.Request(f"https://api.github.com/repos/{repo}",
+                                           headers={"Accept": "application/vnd.github+json"}),
+                    timeout=20) as r:
+                du_lieu = json.loads(r.read().decode("utf-8"))
+            ra = str(du_lieu.get("default_branch") or "").strip()
+            if _TEN_NHANH_HOP_LE.fullmatch(ra):
+                return ra
+        except Exception:  # noqa: BLE001 — mạng/giới hạn nhịp/JSON lạ ⇒ thử nấc sau
+            pass
+    return _nhanh_khai_bao(duong_repo)
+
+
+def doc_ci_qua_api(duong_repo: Path, wf: str, nhanh: str, urlopen=None) -> str:
+    """Phán quyết run mới nhất của workflow `wf` TRÊN NHÁNH `nhanh` qua GitHub REST API công khai —
+    đường LÙI khi máy không có `gh` (phiên Cloud: đo 26/09/2026, `gh` vắng nên cảm biến CI luôn ⚪
+    «không đo được» dù API đọc được cả hai repo). Trả `conclusion` («success»/«failure»/…) của run
+    ĐÃ HOÀN TẤT gần nhất (`status=completed`; sửa 26/09/2026: bản đầu lấy run mới nhất kể cả đang
+    chạy ⇒ `conclusion=null` và bảng báo 🟡 «rỗng» mỗi lần vừa push/merge).
+    Lọc `branch=` (26/09/2026): không lọc thì run xanh của nhánh `claude/*` che nhánh mặc định đỏ.
+    Phòng thủ thêm: run trả về mang `head_branch` khác `nhanh` ⇒ không đo được. `nhanh` rỗng ⇒ không
+    đo được, KHÔNG BAO GIỜ gửi truy vấn không lọc nhánh.
     Không đọc được (mạng, repo riêng tư, giới hạn nhịp) ⇒ ghi GIÁC QUAN CHẾT, trả «» — không bao giờ
     đoán «success» (BH08)."""
+    import urllib.parse
     import urllib.request
     _SO_GIAC_QUAN["chay"] += 1
+    if not nhanh:
+        _ghi_chet(["api.github.com", wf], "không có nhánh mặc định để lọc — không đọc run không lọc nhánh")
+        return ""
     repo = _owner_repo_tu_remote(duong_repo)
     if not repo:
         _ghi_chet(["api.github.com", wf], "không suy được owner/repo")
         return ""
-    url = f"https://api.github.com/repos/{repo}/actions/workflows/{wf}/runs?status=completed&per_page=1"
+    tham_so = urllib.parse.urlencode({"status": "completed", "per_page": 1, "branch": nhanh})
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/{wf}/runs?{tham_so}"
     try:
         mo = urlopen or urllib.request.urlopen
         with mo(urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"}),
@@ -128,9 +206,43 @@ def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
         _ghi_chet(["api.github.com", wf], f"không đọc được ({type(exc).__name__})")
         return ""
     if not run:
-        _ghi_chet(["api.github.com", wf], "chưa có run nào hoàn tất")
+        _ghi_chet(["api.github.com", wf], f"chưa có run nào hoàn tất trên nhánh {nhanh}")
+        return ""
+    if run.get("head_branch") != nhanh:
+        _ghi_chet(["api.github.com", wf], f"run trả về nhánh «{run.get('head_branch')}» ≠ «{nhanh}»")
         return ""
     return str(run.get("conclusion") or "")
+
+
+def doc_ci_mot_repo(ten_ci: str, cwd_ci: Path, wf: str, co_gh: bool | None = None,
+                    urlopen=None) -> tuple[str, str]:
+    """Phán quyết CI của NHÁNH MẶC ĐỊNH một repo → (conclusion hoặc «», tên nhánh hoặc «»).
+
+    «» nghĩa là KHÔNG ĐO ĐƯỢC (đã ghi giác quan chết) — bảng hiện ⚪/🟡, không bao giờ xanh.
+    """
+    if co_gh is None:
+        co_gh = bool(shutil.which("gh"))
+    nhanh = _nhanh_mac_dinh(cwd_ci, urlopen=urlopen, co_gh=co_gh)
+    if not nhanh:
+        _SO_GIAC_QUAN["chay"] += 1
+        _ghi_chet(["CI", ten_ci], "không xác định được nhánh mặc định (symbolic-ref, gh/API, khai báo "
+                                  "đều hỏng) — KHÔNG đọc run không lọc nhánh")
+        return "", ""
+    if not co_gh:
+        return doc_ci_qua_api(cwd_ci, wf, nhanh, urlopen=urlopen), nhanh
+    so_chet = len(_GIAC_QUAN_CHET)
+    out = _chay(["gh", "run", "list", "--workflow", wf, "--branch", nhanh, "--limit", "1", "--status", "completed",
+                 "--json", "conclusion,headBranch", "--jq",
+                 ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
+    phan = out.strip().split()
+    kq_ci = phan[0] if phan else ""
+    dau = phan[1] if len(phan) > 1 else ""
+    if dau != nhanh:
+        # Không có run hoàn tất trên nhánh / gh lỗi / trả nhánh khác ⇒ không đo được (một lần ghi).
+        if len(_GIAC_QUAN_CHET) == so_chet:
+            _ghi_chet(["gh", "run list"], f"run trả về nhánh «{dau or '?'}» ≠ «{nhanh}»")
+        kq_ci = ""
+    return kq_ci, nhanh
 
 
 def la_phien_cloud() -> bool:
@@ -328,26 +440,26 @@ def main() -> int:
     # khi thiếu gh/mạng. Sửa cùng ngày: bản đầu chạy gh với cwd repo GỐC cho
     # workflow của repo Y KHOA ⇒ HTTP 404 đội lốt «mạng chập chờn» — dòng nhắc
     # «thấy: HTTP» dai dẳng nhiều lượt bảng thật ra là hỏi NHẦM REPO.
+    # Sửa 26/09/2026: CHỈ đọc run của NHÁNH MẶC ĐỊNH (xem `_nhanh_mac_dinh`) — run xanh của nhánh
+    # `claude/*` từng che nhánh mặc định đỏ sau mỗi lần merge. Dòng đề xuất in tên nhánh.
+    co_gh = bool(shutil.which("gh"))
     for ten_ci, cwd_ci, wf in (("y khoa", _GOC_MEA, "offline-ci.yml"),
                                ("gốc", REPO, "kiem-tinh-da-nen.yml")):
         if not (cwd_ci / ".github" / "workflows" / wf).exists():
             continue
-        if shutil.which("gh"):
-            out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1", "--status", "completed",
-                         "--json", "conclusion,headBranch", "--jq",
-                         ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
-            kq_ci = out.strip().split()[0] if out.strip() else ""
-        else:
-            kq_ci = doc_ci_qua_api(cwd_ci, wf)
+        kq_ci, nhanh = doc_ci_mot_repo(ten_ci, cwd_ci, wf, co_gh=co_gh)
+        nhan = f"[{nhanh}]" if nhanh else "[nhánh mặc định: KHÔNG xác định]"
+        loc = f"--branch {nhanh}" if nhanh else "--branch <nhánh-mặc-định>"
         if kq_ci == "failure":
-            de_xuat.append((0, "🤖", f"CI repo {ten_ci} FAILURE — đọc log, sửa tới xanh, "
+            de_xuat.append((0, "🤖", f"CI repo {ten_ci} {nhan} FAILURE — đọc log, sửa tới xanh, "
                             "đừng để đỏ qua đêm",
-                            f"cd \"{cwd_ci.name}\" && gh run view --log-failed"))
+                            f"cd \"{cwd_ci.name}\" && gh run list --workflow {wf} {loc} --limit 3 "
+                            "&& gh run view <id> --log-failed"))
         elif kq_ci != "success":
             # đang chạy / gh lỗi / mạng — KHÔNG BIẾT ≠ CÓ VẤN ĐỀ (BH08): mức nhắc
-            de_xuat.append((2, "🤖", f"Chưa đọc được phán quyết CI repo {ten_ci} "
+            de_xuat.append((2, "🤖", f"Chưa đọc được phán quyết CI repo {ten_ci} {nhan} "
                             f"(thấy: {kq_ci or 'rỗng'}) — kiểm tay khi tiện",
-                            f"gh run list --workflow {wf} --limit 3"))
+                            f"gh run list --workflow {wf} {loc} --limit 3"))
 
     # ⑦c GIÁC QUAN GIT (bài «40 file chưa commit mà tưởng cây sạch»): đếm file
     # bẩn + commit chưa đẩy ở cả hai repo. Chỉ ĐẾM và BÁO — không tự add của ai.
