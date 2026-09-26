@@ -3181,3 +3181,7 @@ khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` th
 - `tools/toan_van_guideline.py` (repo y khoa) MỒ CÔI: không agent nào gọi ⇒ nối vào `tra-cuu-chung-cu` + `huong-dan-lam-sang`, thêm vào danh sách công cụ BH56. Đột biến gỡ doctrine lộ LỖ PHÂN LOẠI: BH56 thuộc nhóm «cần nguyên liệu ngoài repo» nên mọi FAIL của nó rơi về ⚪ trên bản sao trần, kể cả lỗi «MỒ CÔI» nằm TRONG repo ⇒ thêm `_DAU_HIEU_LOI_TRONG_REPO` (lỗi mồ côi vẫn đỏ trên Cloud). Bài học: nhãn ⚪ theo MÃ chốt quá thô — phải phân loại theo DẤU HIỆU lỗi.
 - BTS: tìm guideline theo chủ đề chỉ chọn khi đúng MỘT ứng viên; >1 ứng viên từng hiện thành «mạng lỗi» ⇒ thêm trạng thái `can_chon`. Năm suy từ nội dung PDF chỉ nhận dòng tiêu đề tạp chí (năm của tài liệu tham khảo không tính).
 - `tests/conftest.py` (repo y khoa) dùng `setdefault("USE_MOCK_SOURCES")` ⇒ khi môi trường Cloud đặt `false` (25/09), bộ test mất tính kín ⇒ ép `true`.
+
+### 26/09/2026 (khuya) — bảng «hệ còn gì để làm» báo đỏ/vàng giả trên Cloud
+- Cảm biến CI lấy run MỚI NHẤT kể cả đang chạy (`conclusion=null`) ⇒ 🟡 «thấy: rỗng» ngay sau mỗi push/merge dù run xong gần nhất xanh. Sửa: `status=completed` (API) + `--status completed` (gh). Đo sau sửa: cả hai repo `success`.
+- Log giám sát tuần chỉ có trên máy chạy lịch ⇒ phiên Cloud luôn 🔴 «chưa từng chạy». Sửa: `giac_quan_lich_nen_theo_noi_chay()` — Cloud vắng log ⇒ ⚪ giác quan không đo được; máy thật vắng log vẫn 🔴. Bài học: một cảm biến phải biết NƠI nó đang chạy trước khi phán «vắng = hỏng».

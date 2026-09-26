@@ -106,7 +106,9 @@ def _owner_repo_tu_remote(duong_repo: Path) -> str:
 def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
     """Phán quyết run mới nhất của workflow `wf` qua GitHub REST API công khai — đường LÙI khi máy
     không có `gh` (phiên Cloud: đo 26/09/2026, `gh` vắng nên cảm biến CI luôn ⚪ «không đo được» dù
-    API đọc được cả hai repo). Trả `conclusion` («success»/«failure»/…) hoặc «» khi đang chạy.
+    API đọc được cả hai repo). Trả `conclusion` («success»/«failure»/…) của run ĐÃ HOÀN TẤT gần nhất
+    (`status=completed`; sửa 26/09/2026: bản đầu lấy run mới nhất kể cả đang chạy ⇒ `conclusion=null`
+    và bảng báo 🟡 «rỗng» mỗi lần vừa push/merge, dù run xong gần nhất vẫn xanh).
     Không đọc được (mạng, repo riêng tư, giới hạn nhịp) ⇒ ghi GIÁC QUAN CHẾT, trả «» — không bao giờ
     đoán «success» (BH08)."""
     import urllib.request
@@ -115,7 +117,7 @@ def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
     if not repo:
         _ghi_chet(["api.github.com", wf], "không suy được owner/repo")
         return ""
-    url = f"https://api.github.com/repos/{repo}/actions/workflows/{wf}/runs?per_page=1"
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/{wf}/runs?status=completed&per_page=1"
     try:
         mo = urlopen or urllib.request.urlopen
         with mo(urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"}),
@@ -126,9 +128,27 @@ def doc_ci_qua_api(duong_repo: Path, wf: str, urlopen=None) -> str:
         _ghi_chet(["api.github.com", wf], f"không đọc được ({type(exc).__name__})")
         return ""
     if not run:
-        _ghi_chet(["api.github.com", wf], "chưa có run nào")
+        _ghi_chet(["api.github.com", wf], "chưa có run nào hoàn tất")
         return ""
     return str(run.get("conclusion") or "")
+
+
+def la_phien_cloud() -> bool:
+    """Phiên claude.ai/code (container Cloud) — nơi dữ liệu OneDrive/log máy thật vắng mặt."""
+    return os.environ.get("CLAUDE_CODE_REMOTE", "").strip().lower() == "true"
+
+
+def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
+    """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
+
+    Phiên Cloud: log thu thập chỉ nằm trên máy chạy lịch (ngoài git) — vắng tệp ở đây là «KHÔNG ĐO
+    ĐƯỢC» (ghi giác quan chết ⇒ ⚪, bảng không in «đủ rồi»), KHÔNG phải «chưa từng chạy» (🔴 giả mỗi
+    phiên Cloud). Trên máy thật, hoặc khi tệp CÓ mặt, giữ nguyên phán quyết của hàm gốc.
+    """
+    if la_phien_cloud() and not log_tuan.exists():
+        _ghi_chet(["", "log giám sát tuần"], "phiên Cloud — log chỉ có trên máy chạy lịch")
+        return []
+    return giac_quan_lich_nen(log_tuan)
 
 
 def giac_quan_lich_nen(log_tuan: Path,
@@ -313,7 +333,7 @@ def main() -> int:
         if not (cwd_ci / ".github" / "workflows" / wf).exists():
             continue
         if shutil.which("gh"):
-            out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1",
+            out = _chay(["gh", "run", "list", "--workflow", wf, "--limit", "1", "--status", "completed",
                          "--json", "conclusion,headBranch", "--jq",
                          ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
             kq_ci = out.strip().split()[0] if out.strip() else ""
@@ -353,7 +373,7 @@ def main() -> int:
     # chạy qua mcp scheduled-tasks (cloud, KHÔNG cần máy/phiên local đang mở —
     # khác hẳn launchd cũ) — 4/4 lần chạy gần nhất đều PASS đúng hẹn, không hề
     # lỡ kỳ nào kể từ khi đổi. giac_quan_lich_nen() đã cập nhật theo lịch mới.
-    for uu, dong in giac_quan_lich_nen(
+    for uu, dong in giac_quan_lich_nen_theo_noi_chay(
             _GOC_MEA / "data" / "archive" / "launchd_weekly.log"):
         de_xuat.append((uu, "🛎" if uu < 2 else "👤", dong,
                         "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
