@@ -250,6 +250,33 @@ def la_phien_cloud() -> bool:
     return os.environ.get("CLAUDE_CODE_REMOTE", "").strip().lower() == "true"
 
 
+def de_xuat_plugin(rc: int, cloud: bool) -> list[tuple[int, str, str, str]]:
+    """Dòng đề xuất từ mã thoát của `kiem_plugin_day_du.py` (26/09/2026, mục ⑨).
+
+    Máy thật: giữ nguyên hành vi cũ (rc=2 thiếu ⇒ 🟠, rc=1 lệch nhẹ ⇒ 🟡, cả hai gợi ý nghi thức
+    sau-cập-nhật). Phiên CLOUD: plugin được cài BẢN MỚI NHẤT mỗi phiên (không ghim phiên bản) nên
+    lệch phiên bản so với mốc là thường trực — KHÔNG sinh mục 🤖 nào; và KHÔNG BAO GIỜ gợi ý
+    `sau_cap_nhat_plugin.py` (trên Cloud nó từng ghi đè DANH-MUC/INDEX gộp hai máy đang track bằng
+    dữ liệu một máy). rc=2 (THIẾU plugin) trên Cloud vẫn cảnh báo, gợi ý cài lại plugin phiên Cloud.
+    """
+    if cloud:
+        if rc == 2:
+            return [(1, "🤖", "Kho plugin phiên Cloud THIẾU so với mốc chuẩn — xem chi tiết rồi cài lại "
+                     "plugin thiếu (KHÔNG chạy nghi thức sau-cập-nhật trên Cloud: nó ghi đè danh mục "
+                     "gộp hai máy đang track)",
+                     "python3 tools/kiem_plugin_day_du.py && python3 tools/cai_plugin_phien_cloud.py --ap-dung")]
+        return []
+    if rc == 2:
+        return [(1, "🤖", "Kho plugin THIẾU so với mốc chuẩn — xem chi tiết rồi "
+                 "chạy nghi thức sau-cập-nhật (hoặc cài lại plugin thiếu)",
+                 "python3 tools/kiem_plugin_day_du.py && python3 tools/sau_cap_nhat_plugin.py --ghi-moc")]
+    if rc == 1:
+        return [(2, "🤖", "Plugin đổi phiên bản/kho lệch nhẹ so với mốc — chạy "
+                 "nghi thức sau-cập-nhật để danh mục+trang tra+mốc khớp thực tế",
+                 "python3 tools/sau_cap_nhat_plugin.py --ghi-moc")]
+    return []
+
+
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -531,17 +558,12 @@ def main() -> int:
     # ⑨ GIÁC QUAN PLUGIN (16/08 — kho không đứng yên: 2 plugin tự đổi bản giữa
     # một resume; danh mục/trang tra/mốc trôi theo mà không ai thấy). Đọc chốt
     # kiem_plugin_day_du: lệch mốc/đổi bản → nhắc chạy nghi thức MỘT lệnh.
+    # Sửa 26/09/2026: phần sinh dòng tách thành `de_xuat_plugin()` — trên Cloud không còn mục 🤖
+    # «ghi mốc» (lệnh đó ghi đè danh mục gộp hai máy đang track bằng dữ liệu chỉ-Cloud).
     r_pl = subprocess.run([sys.executable, "tools/kiem_plugin_day_du.py"],
                           capture_output=True, text=True, timeout=60, cwd=REPO,
                           encoding="utf-8", errors="replace")
-    if r_pl.returncode == 2:
-        de_xuat.append((1, "🤖", "Kho plugin THIẾU so với mốc chuẩn — xem chi tiết rồi "
-                        "chạy nghi thức sau-cập-nhật (hoặc cài lại plugin thiếu)",
-                        "python3 tools/kiem_plugin_day_du.py && python3 tools/sau_cap_nhat_plugin.py --ghi-moc"))
-    elif r_pl.returncode == 1:
-        de_xuat.append((2, "🤖", "Plugin đổi phiên bản/kho lệch nhẹ so với mốc — chạy "
-                        "nghi thức sau-cập-nhật để danh mục+trang tra+mốc khớp thực tế",
-                        "python3 tools/sau_cap_nhat_plugin.py --ghi-moc"))
+    de_xuat.extend(de_xuat_plugin(r_pl.returncode, la_phien_cloud()))
 
     # ⑩ PHÁI SINH LỖI THỜI (16/08 — đo được 45/62 bản Word/bản-đọc CŨ HƠN chính
     # dashboard sau các đợt sửa nội dung: bác sĩ đọc bản lỗi thời mà không biết).
