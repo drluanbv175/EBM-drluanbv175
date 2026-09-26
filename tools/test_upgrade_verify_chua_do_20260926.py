@@ -12,7 +12,7 @@ M = importlib.util.module_from_spec(_sp)
 _sp.loader.exec_module(M)
 
 
-@pytest.mark.parametrize("label", ["19. Pipeline", "21. Standards", "22. CP", "23. Audit tổng thể"])
+@pytest.mark.parametrize("label", ["19. Pipeline", "21. Standards", "22. CP", "23. Audit tổng thể", "24. Bảng chứng cứ"])
 def test_ma_2_cua_buoc_khai_bao_la_chua_do_tren_ban_sao_tran(label):
     assert M.phan_loai_buoc(label, 2, True) == M.CHUA_DO
 

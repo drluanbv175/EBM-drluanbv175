@@ -94,7 +94,7 @@ BUOC_CAN_TEP_ONEDRIVE = {
 }
 # (2) Bước mà công cụ đích ĐÃ theo quy ước «mã 2 = MEASUREMENT_INCOMPLETE / CHƯA KẾT LUẬN». Khai tường minh
 # từng bước — KHÔNG suy rộng: nhiều công cụ khác dùng mã 2 cho lỗi thật.
-BUOC_MA_2_LA_CHUA_DO = ("19.", "21.", "22.", "23.")
+BUOC_MA_2_LA_CHUA_DO = ("19.", "21.", "22.", "23.", "24.")
 DAT, HONG, CHUA_DO = "dat", "hong", "chua_do"
 
 

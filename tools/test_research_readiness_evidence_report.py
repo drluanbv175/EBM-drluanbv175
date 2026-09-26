@@ -96,7 +96,7 @@ def test_upgrade_verify_wires_blocking_repo_lint():
 def test_full_pytest_uses_project_python(monkeypatch):
     seen: list[tuple[str, list[str], str]] = []
 
-    def fake_run_check(check: E.EvidenceCheck, *, python: str) -> E.EvidenceRow:
+    def fake_run_check(check: E.EvidenceCheck, *, python: str, ban_sao_tran: bool = False) -> E.EvidenceRow:
         seen.append((check.domain, check.command, python))
         return E.EvidenceRow(
             domain=check.domain,
