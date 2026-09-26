@@ -61,14 +61,23 @@ def test_doc_phan_quyet_dung_workflow(tmp_path):
     kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml",
                           urlopen=_gia({"workflow_runs": [{"conclusion": "failure"}]}, bat))
     assert kq == "failure"
-    assert bat == ["https://api.github.com/repos/chu/kho/actions/workflows/ci.yml/runs?per_page=1"]
+    assert bat == ["https://api.github.com/repos/chu/kho/actions/workflows/ci.yml/runs?status=completed&per_page=1"]
     assert M._GIAC_QUAN_CHET == [] and M._SO_GIAC_QUAN["chay"] == 1
 
 
-def test_dang_chay_tra_rong_nhung_khong_phai_giac_quan_chet(tmp_path):
+def test_chi_hoi_run_da_hoan_tat_khong_bi_run_dang_chay_che(tmp_path):
+    """Vừa push/merge thì run mới nhất đang chạy (conclusion=null) — cảm biến phải đọc run XONG gần
+    nhất, không báo 🟡 «rỗng» giả."""
+    bat: list[str] = []
     kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml",
-                          urlopen=_gia({"workflow_runs": [{"conclusion": None}]}))
-    assert kq == "" and M._GIAC_QUAN_CHET == []
+                          urlopen=_gia({"workflow_runs": [{"conclusion": "success"}]}, bat))
+    assert kq == "success" and "status=completed" in bat[0]
+
+
+def test_duong_gh_cung_loc_run_da_hoan_tat():
+    nguon = _TEP.read_text(encoding="utf-8")
+    dong = next(x for x in nguon.splitlines() if '"gh", "run", "list"' in x and "_chay(" in x)
+    assert '"--status", "completed"' in dong
 
 
 @pytest.mark.parametrize("payload", [OSError("mang"), {"workflow_runs": []}])
