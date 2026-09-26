@@ -83,6 +83,8 @@ class EvidenceCheck:
     limitation: str
     cwd: str = str(ROOT)
     blocking: bool = True
+    # Công cụ con dùng mã thoát 2 cho «chưa đo đủ» (thiếu dữ liệu chỉ-OneDrive) — chỉ tin khi ĐÚNG là bản sao trần.
+    rc2_la_chua_do: bool = False
 
 
 @dataclass(frozen=True)
@@ -155,6 +157,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
     EvidenceCheck(
         domain="Cập nhật chứng cứ lâm sàng",
         command=["tools/verify_clinical_evidence_update_pipeline.py"],
+        rc2_la_chua_do=True,
         proves="Evidence Workbench template gồm tab standards/chất lượng, strict source gate, dashboard integrity gate, thư viện tích lũy, tài liệu phái sinh và hợp đồng sync_all được kiểm bằng fixture offline không PII.",
         limitation="Không thay lần chạy online PubMed/Crossref trên dashboard thật, rà an toàn thuốc hoặc quyết định áp dụng cho bệnh nhân thật.",
     ),
@@ -167,6 +170,7 @@ CORE_CHECKS: List[EvidenceCheck] = [
     EvidenceCheck(
         domain="Audit tổng thể",
         command=["tools/audit_ebm_system.py"],
+        rc2_la_chua_do=True,
         proves="Guardrail, dashboard/hub, evidence cards và audit vận hành đạt cổng tổng thể.",
         limitation="Không xác nhận mọi thẻ/chứng cứ là phù hợp cho một đề tài cụ thể nếu chưa rà theo protocol.",
     ),
@@ -214,7 +218,31 @@ def _uses_project_python(command: Sequence[str]) -> bool:
     return bool(command) and (command[0].endswith(".py") or command[0] == "-m")
 
 
-def run_check(check: EvidenceCheck, *, python: str) -> EvidenceRow:
+NOT_MEASURED = "NOT_MEASURED"
+
+
+def phan_loai(check: EvidenceCheck, returncode: int, ban_sao_tran: bool) -> str:
+    """PASS · NOT_MEASURED · FAIL/WARN. «Không đo được» ≠ «có vấn đề» và ≠ «ổn».
+
+    NOT_MEASURED chỉ khi: công cụ con đã khai mã 2 = chưa đo đủ, VÀ đây đúng là bản sao git trần.
+    Máy thật đủ dữ liệu mà công cụ trả 2 ⇒ vẫn FAIL (không để mã 2 che lỗi thật).
+    """
+    if returncode == 0:
+        return "PASS"
+    if returncode == 2 and check.rc2_la_chua_do and ban_sao_tran:
+        return NOT_MEASURED
+    return "FAIL" if check.blocking else "WARN"
+
+
+def trang_thai_tong(rows: Sequence[dict]) -> str:
+    if any(r["blocking"] and r["status"] not in ("PASS", NOT_MEASURED) for r in rows):
+        return "FAIL"
+    if any(r["status"] == NOT_MEASURED for r in rows):
+        return "MEASUREMENT_INCOMPLETE"
+    return "PASS"
+
+
+def run_check(check: EvidenceCheck, *, python: str, ban_sao_tran: bool = False) -> EvidenceRow:
     command = [python, *check.command] if _uses_project_python(check.command) else list(check.command)
     proc = subprocess.run(
         command,
@@ -225,7 +253,7 @@ def run_check(check: EvidenceCheck, *, python: str) -> EvidenceRow:
         encoding="utf-8",
         errors="replace",
     )
-    status = "PASS" if proc.returncode == 0 else ("FAIL" if check.blocking else "WARN")
+    status = phan_loai(check, proc.returncode, ban_sao_tran)
     return EvidenceRow(
         domain=check.domain,
         command=_display_command(command, check.cwd),
@@ -244,13 +272,15 @@ def build_report(*, include_full_pytest: bool = False,
     checks = list(CORE_CHECKS)
     if include_full_pytest:
         checks.append(FULL_TEST_CHECK)
-    rows = [run_check(check, python=py) for check in checks]
-    blocking_failures = [row for row in rows if row.blocking and row.status != "PASS"]
+    tran = _bst_mea.ban_sao_git_tran(ROOT)
+    rows = [run_check(check, python=py, ban_sao_tran=tran) for check in checks]
+    blocking_failures = [row for row in rows if row.blocking and row.status not in ("PASS", NOT_MEASURED)]
     return {
         "kind": "research_readiness_evidence_report",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "overall_status": "PASS" if not blocking_failures else "FAIL",
+        "overall_status": trang_thai_tong([asdict(row) for row in rows]),
         "blocking_failure_count": len(blocking_failures),
+        "not_measured_count": sum(row.status == NOT_MEASURED for row in rows),
         "rows": [asdict(row) for row in rows],
         "disclaimer": (
             "Cần bác sĩ kiểm chứng. Đây là bảng chứng cứ kỹ thuật/guardrail, "
@@ -271,6 +301,7 @@ def markdown_report(report: dict) -> str:
         f"- Generated: `{report['generated_at']}`",
         f"- Overall status: `{report['overall_status']}`",
         f"- Blocking failures: `{report['blocking_failure_count']}`",
+        f"- Chưa đo được (thiếu dữ liệu chỉ-OneDrive): `{report.get('not_measured_count', 0)}`",
         "",
         "| Miền kiểm | Kết quả | Lệnh/chứng cứ | Dòng chứng cứ cuối | Chứng minh được | Giới hạn trung thực |",
         "|---|---|---|---|---|---|",
@@ -327,7 +358,7 @@ def main() -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
         _print_summary(report, out_md, out_json)
-    return 0 if report["overall_status"] == "PASS" else 1
+    return {"PASS": 0, "MEASUREMENT_INCOMPLETE": 2}.get(report["overall_status"], 1)
 
 
 if __name__ == "__main__":
