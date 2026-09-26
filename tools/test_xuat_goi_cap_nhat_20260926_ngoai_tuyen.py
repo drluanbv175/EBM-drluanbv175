@@ -71,6 +71,7 @@ DASH_APPLY_NA = _DAU + (
     " gradeLevel:'na', gradeBy:'Tác giả', decision:'apply', pmid:'12345678'}\n  ]") + _CUOI
 
 # Như trên nhưng decision='consider' ⇒ strict chỉ còn lỗi «THIẾU DATA.standards» (chỉ cảnh báo).
+# bh10-mien: fixture chuỗi giả ghi vào thư mục tạm để thử cổng, không phải dashboard thật
 DASH_CHI_THIEU_STANDARDS = DASH_APPLY_NA.replace("decision:'apply'", "decision:'consider'")
 
 

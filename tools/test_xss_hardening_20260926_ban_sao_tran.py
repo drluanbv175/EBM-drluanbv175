@@ -88,6 +88,7 @@ def test_may_that_thieu_tep_onedrive_van_fail(monkeypatch, capsys, tmp_path):
     rc, out = _chay(monkeypatch, capsys, goc)
     assert rc == 1, out
     assert "EBM-Dashboards/tools/build_library.py: KHÔNG TỒN TẠI" in out
+    assert "✗ FAIL  EBM-Dashboards/tools/build_library.py" in out, out
     assert "MEASUREMENT_INCOMPLETE" not in out
 
 
@@ -101,6 +102,9 @@ def test_ban_sao_tran_vendor_bi_go_esc_la_fail_du_co_cho_do(monkeypatch, capsys,
     kq = _dong_ket_qua(out)
     assert kq.startswith("KẾT QUẢ: FAIL") and "⚪ CHƯA ĐO" in kq
     assert "thiếu hàm esc()/escUrl()" in out
+    # Nhãn DÒNG của bản hỏng thật phải là ✗ FAIL — không được lẫn thành ⚪ CHƯA ĐO/✓ PASS
+    # chỉ vì cùng lượt có mục ⚪ (phản biện r4: đột biến nhãn dòng từng sống sót).
+    assert f"✗ FAIL  {VENDOR[0]}" in out, out
 
 
 def test_vendor_trong_git_vang_luon_fail_ke_ca_ban_sao_tran(monkeypatch, capsys, tmp_path):
