@@ -395,6 +395,21 @@ def default_file_failures() -> list[str]:
     return [str(path.relative_to(ROOT)) for path in DEFAULT_FILES if not path.exists()]
 
 
+def tach_loi_thieu_dau_vao(ban_sao_tran: bool, failures: list[str],
+                           la_thieu_dau_vao) -> tuple[list[str], list[str]]:
+    """Tách (lỗi_cứng, không_đo_được) cho một nhóm kiểm có đầu vào CHỈ sống trên OneDrive — 26/09/2026.
+
+    Trên bản sao git trần (phiên Cloud, CI đơn-repo — định nghĩa DUY NHẤT ở `ban_sao_tran.py`), tệp đầu vào
+    vắng mặt là «KHÔNG ĐO ĐƯỢC», không phải hỏng: trước đây mọi phiên Cloud ra `KẾT QUẢ: FAIL` vì 4 nhóm này,
+    che mất lỗi thật. Chỉ lỗi `la_thieu_dau_vao(msg)` mới được hạ; lỗi LỆCH NỘI DUNG (chỉ xảy ra khi tệp có
+    mặt) vẫn cứng. Trên máy thật, mọi lỗi giữ nguyên là lỗi cứng.
+    """
+    if not ban_sao_tran:
+        return list(failures), []
+    cung = [f for f in failures if not la_thieu_dau_vao(f)]
+    return cung, [f for f in failures if la_thieu_dau_vao(f)]
+
+
 def chatgpt_integration_failures() -> list[str]:
     failures = [str(path.relative_to(ROOT)) for path in CHATGPT_REQUIRED_FILES if not path.exists()]
     prompt = CHATGPT_EXPORT / "CHATGPT_EBM_AGENT_SYSTEM_PROMPT.md"
@@ -936,7 +951,12 @@ def main() -> int:
     if dash_failures:
         hard_errors.append("Dashboard offline FAIL: " + ", ".join(dash_failures[:10]))
 
-    template_failures = template_sync_failures()
+    ban_sao_tran = _bst_mea.ban_sao_git_tran(ROOT)
+    khong_do_duoc: list[str] = []
+    template_failures, _kd = tach_loi_thieu_dau_vao(
+        ban_sao_tran, template_sync_failures(), lambda m: m.startswith("thiếu template "))
+    if _kd:
+        khong_do_duoc.append("Template dashboard (dashboard_mockups/ + EBM_MASTER/ ngoài git)")
     if template_failures:
         hard_errors.append("Template dashboard lệch: " + "; ".join(template_failures))
 
@@ -944,11 +964,17 @@ def main() -> int:
     if tool_failures:
         hard_errors.append("Tool skill cap-nhat-chung-cu-y-khoa lệch bản: " + "; ".join(tool_failures))
 
-    missing_default_files = default_file_failures()
+    missing_default_files, _kd = tach_loi_thieu_dau_vao(
+        ban_sao_tran, default_file_failures(), lambda m: True)
+    if _kd:
+        khong_do_duoc.append(f"File đồng bộ mặc định ở gốc OneDrive ({len(_kd)} tệp ngoài git)")
     if missing_default_files:
         hard_errors.append("Thiếu file đồng bộ mặc định: " + ", ".join(missing_default_files))
 
-    chatgpt_failures = chatgpt_integration_failures()
+    chatgpt_failures, _kd = tach_loi_thieu_dau_vao(
+        ban_sao_tran, chatgpt_integration_failures(), lambda m: m.startswith("CHATGPT_EXPORT"))
+    if _kd:
+        khong_do_duoc.append("Tích hợp ChatGPT (CHATGPT_EXPORT/ ngoài git)")
     if chatgpt_failures:
         hard_errors.append("Tích hợp ChatGPT thiếu/chưa chuẩn: " + "; ".join(chatgpt_failures))
 
@@ -963,7 +989,10 @@ def main() -> int:
         hard_errors.append("Lớp routine (Scheduled/) lệch tài liệu: " + "; ".join(routine_failures))
 
     antifacts_ok, antifacts_msg = antifacts_status()
-    if not antifacts_ok:
+    if not antifacts_ok and ban_sao_tran and antifacts_msg == "thiếu Antifacts.html":
+        khong_do_duoc.append("Antifacts.html (sinh trên máy có EBM-Dashboards/, ngoài git)")
+        antifacts_ok, antifacts_msg = True, "SKIP (bản sao git trần — không đo được)"
+    elif not antifacts_ok:
         hard_errors.append("Antifacts FAIL: " + antifacts_msg)
 
     # 28/08/2026 — EBM_MASTER nằm ngoài git; trên bản sao trần subprocess với
@@ -976,10 +1005,12 @@ def main() -> int:
         )
         if integrity_code != 0:
             hard_errors.append("EBM_MASTER integrity_guard FAIL")
+    elif ban_sao_tran:
+        khong_do_duoc.append("EBM_MASTER integrity_guard (EBM_MASTER/ ngoài git)")
     else:
         hard_errors.append(
-            "EBM_MASTER không có trên máy này (ngoài git — bản sao trần): "
-            "audit KHÔNG kết luận được toàn kho; chạy trên máy có cây OneDrive")
+            "EBM_MASTER không có trên máy này dù đây KHÔNG phải bản sao trần — cây OneDrive hỏng dở? "
+            "chạy sync_safety_check.py")
 
     compile_ok, compile_out = repo_compile_status()
     if not compile_ok:
@@ -1114,13 +1145,17 @@ def main() -> int:
         f"disclaimer {guard['source_disclaimer']}/{guard['source_agents']}"
     )
     print(f"Dashboard offline: {checked_dash} kiểm, {len(dash_failures)} lỗi")
-    print("Template sync:", "PASS" if not template_failures else "FAIL")
+    _skip = "SKIP (bản sao git trần — không đo được)"
+    print("Template sync:", "FAIL" if template_failures else (
+        _skip if any(x.startswith("Template") for x in khong_do_duoc) else "PASS"))
     if not tool_sync_ran:
         print("Tool sync: SKIP (< 2/3 thư mục tồn tại — không có bản để đối chiếu, vd đang chạy trong worktree)")
     else:
         print("Tool sync:", "PASS" if not tool_failures else "FAIL: " + "; ".join(tool_failures))
-    print("Default folder:", "PASS" if not missing_default_files else "FAIL")
-    print("ChatGPT integration:", "PASS" if not chatgpt_failures else "FAIL")
+    print("Default folder:", "FAIL" if missing_default_files else (
+        _skip if any(x.startswith("File đồng bộ") for x in khong_do_duoc) else "PASS"))
+    print("ChatGPT integration:", "FAIL" if chatgpt_failures else (
+        _skip if any(x.startswith("Tích hợp ChatGPT") for x in khong_do_duoc) else "PASS"))
     print("Claude/Codex sync health:", sync_health_summary)
     print("Routine layer (Scheduled/):", "PASS" if not routine_failures else "FAIL: " + "; ".join(routine_failures))
     print("Antifacts:", antifacts_msg if antifacts_ok else "FAIL")
@@ -1163,7 +1198,17 @@ def main() -> int:
         print("KẾT QUẢ: FAIL")
         for err in hard_errors:
             print("⛔", err)
+        for x in khong_do_duoc:
+            print("⚪ không đo được:", x)
         return 1
+    if khong_do_duoc:
+        # «Không đo được» ≠ «ổn» (CLAUDE.md §0.2): không in PASS, mã thoát 2 (khác FAIL = 1).
+        print("----------------------------------------------------------------")
+        print("KẾT QUẢ: CHƯA KẾT LUẬN — mọi phần đo được đều đạt, nhưng còn phần KHÔNG đo được trên bản "
+              "sao git trần; chạy lại trên máy có cây OneDrive để kết luận toàn hệ.")
+        for x in khong_do_duoc:
+            print("⚪ không đo được:", x)
+        return 2
     print("----------------------------------------------------------------")
     print("KẾT QUẢ: PASS — đạt chuẩn vận hành an toàn ở mức trợ lý EBM có bác sĩ duyệt.")
     return 0
