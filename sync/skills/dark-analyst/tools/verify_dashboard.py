@@ -2096,7 +2096,9 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                     "Phạm vi kiểm rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ; %d CHƯA KIỂM hoặc quá "
                     "hạn (vd %s)%s — đây là 'chưa biết', KHÔNG phải 'sạch'. Chạy: python tools/so_xac_minh_nguon.py "
                     "--quet <file> [--vong 3]" % (len(_pv["co"]), len(_ids), len(_chua), ", ".join(_chua[:4]), _nen))
-            elif _ids and not _rw and not (_rw_doi and _rw_doi is not _DOI_CHUA_HOI):
+            elif _ids and not da_rut:
+                # `not da_rut` (vá #2, 26/09/2026): KHÔNG in ✓ «không thấy dương tính» khi bất kỳ tầng nào (sổ, nền
+                # ngoại tuyến theo PMID/DOI) vừa phát dương tính — bản cũ in ✓ ngay cạnh lỗi EoC/rút bài của sổ.
                 oks.append("Rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ (hoặc đã đối chiếu nền ngoại "
                            "tuyến) — không thấy dương tính chưa xử lý." % (len(_ids), len(_ids)))
         except Exception as e:

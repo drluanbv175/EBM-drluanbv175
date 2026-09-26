@@ -337,24 +337,59 @@ def nguon_da_rut(ten_file: str) -> list[dict]:
     muc = (doc_so() or {}).get("muc", {}) or {}
     ra: list[dict] = []
     for khoa, bg in sorted(muc.items()):
-        if not bg.get("da_rut"):
+        if not _la_duong_tinh(bg):
             continue
         if ten_file not in (bg.get("cac_dashboard") or []):
             continue
-        ra.append({
-            "khoa": khoa,
-            "loai": bg.get("loai", ""),
-            "gia_tri": bg.get("gia_tri", ""),
-            "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
-            "tieu_de": bg.get("tieu_de") or "",
-            "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
-            "nguon": bg.get("nguon_xac_minh") or "",
-            "rut_va_thay": bool(bg.get("rut_va_thay")),
-            "thong_bao": bg.get("thong_bao_rut_doi") or "",
-            "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
-            "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
-        })
+        ra.append(_ban_ghi_cong(khoa, bg))
     return ra
+
+
+def _la_eoc(bg: dict) -> bool:
+    """Bản ghi mang Expression of Concern — theo CỜ hoặc theo phán quyết cuối (cờ từng bị mất khi xác minh lại)."""
+    return bool(bg.get("quan_ngai")) or bg.get("ghi_chu_rut") == "expression_of_concern"
+
+
+def _la_chua_phan_xu(bg: dict) -> bool:
+    """Lượt kiểm rút bài KHÔNG lấy được bản ghi («nghi ma» / 'unresolved') — CHƯA có phán quyết.
+
+    Phán quyết MỚI NHẤT (`ghi_chu_rut`) quyết định: một lượt sau trả 'ok' thật thì không còn là chưa phân xử
+    dù cờ `nghi_ma` cũ còn sót (cờ này không phải tín hiệu dương nên không «dính» như EoC)."""
+    gc = bg.get("ghi_chu_rut")
+    if gc:
+        return gc == "unresolved"
+    return bool(bg.get("nghi_ma"))
+
+
+def _la_duong_tinh(bg: dict) -> bool:
+    """Dương tính mà cổng phải nghe: ĐÃ RÚT (da_rut) hoặc có Expression of Concern.
+
+    Vá 26/09/2026 (phát hiện #2): đường quét chính (`lenh_quet`, DOI, `--kiem-rut-lai`) chỉ ghi `quan_ngai` cho
+    EoC, KHÔNG đặt `da_rut` — trong khi các hàm cổng chỉ lọc `da_rut` ⇒ nhánh «CÓ QUAN NGẠI (EoC)» sẵn có của
+    verify_dashboard không bao giờ chạy tới từ đường sổ, và cổng còn in ✓. CỐ Ý không đặt `da_rut=True` cho EoC
+    (như `quet_ledger_hub`): khi đó `con_hieu_luc`/`bao_cao` sẽ gọi EoC là «ĐÃ BỊ RÚT»."""
+    return bool(bg.get("da_rut")) or _la_eoc(bg)
+
+
+def _ban_ghi_cong(khoa: str, bg: dict) -> dict:
+    """Khuôn bản ghi dương tính trả cho cổng/bản đọc — EoC chưa rút mang `tinh_trang='expression_of_concern'`."""
+    if bg.get("da_rut"):
+        tinh_trang = bg.get("ghi_chu_rut") or "retracted"
+    else:
+        tinh_trang = "expression_of_concern"
+    return {
+        "khoa": khoa,
+        "loai": bg.get("loai", ""),
+        "gia_tri": bg.get("gia_tri", ""),
+        "tinh_trang": tinh_trang,
+        "tieu_de": bg.get("tieu_de") or "",
+        "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
+        "nguon": bg.get("nguon_xac_minh") or "",
+        "rut_va_thay": bool(bg.get("rut_va_thay")),
+        "thong_bao": bg.get("thong_bao_rut_doi") or "",
+        "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
+        "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
+    }
 
 
 def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
@@ -372,20 +407,8 @@ def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
         dd = str(dd).strip()
         for khoa in (f"pmid:{dd}", f"doi:{dd.lower()}"):
             bg = muc.get(khoa)
-            if bg and bg.get("da_rut"):
-                ra.append({
-                    "khoa": khoa,
-                    "loai": bg.get("loai", ""),
-                    "gia_tri": bg.get("gia_tri", ""),
-                    "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
-                    "tieu_de": bg.get("tieu_de") or "",
-                    "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
-                    "nguon": bg.get("nguon_xac_minh") or "",
-                    "rut_va_thay": bool(bg.get("rut_va_thay")),
-                    "thong_bao": bg.get("thong_bao_rut_doi") or "",
-                    "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
-                    "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
-                })
+            if bg and _la_duong_tinh(bg):
+                ra.append(_ban_ghi_cong(khoa, bg))
                 break
     return ra
 
@@ -406,7 +429,9 @@ def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
     for dd in cac_dinh_danh:
         dd = str(dd).strip()
         bg = muc.get(f"pmid:{dd}") or muc.get(f"doi:{dd.lower()}")
-        if bg and (bg.get("da_rut") or con_hieu_luc(bg)[0]):
+        # «Nghi ma»/'unresolved' = lượt kiểm KHÔNG lấy được bản ghi ⇒ CHƯA có phán quyết rút bài — xếp vào
+        # 'chua' (chỉ CẢNH BÁO; 'unresolved' có thể do lỗi tầng API của NCBI nên không chặn cứng). Vá #2, 26/09.
+        if bg and (bg.get("da_rut") or (con_hieu_luc(bg)[0] and not _la_chua_phan_xu(bg))):
             co.append(dd)
         else:
             chua.append(dd)
@@ -922,8 +947,9 @@ def lenh_quet(files: list[Path], vong: int) -> int:
                 continue
             ban_ghi["cac_dashboard"] = sorted(nguon.get(khoa, []))
             cu = muc.get(khoa) or {}
-            # giữ lại dấu vết kiểm rút bài cũ nếu có, để không mất lịch sử
-            for k in ("kiem_rut_luc", "da_rut", "ghi_chu_rut"):
+            # giữ lại dấu vết kiểm rút bài cũ nếu có, để không mất lịch sử — kể cả cờ EoC/«nghi ma» (vá #2,
+            # 26/09/2026: bản cũ làm MẤT `quan_ngai`/`nghi_ma` sau mỗi lần xác minh lại tồn tại).
+            for k in ("kiem_rut_luc", "da_rut", "ghi_chu_rut", "quan_ngai", "nghi_ma"):
                 if k in cu and k not in ban_ghi:
                     ban_ghi[k] = cu[k]
             muc[khoa] = ban_ghi
