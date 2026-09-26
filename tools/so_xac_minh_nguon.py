@@ -209,7 +209,8 @@ def cuu_so_hong() -> int:
     Không bao giờ xoá bản hỏng: chép nguyên byte sang `.so-xac-minh-nguon.hong-<thời điểm>.json`, rồi dùng regex
     tìm từng khoá `pmid:/doi:/url:` mà khối của nó mang `"da_rut": true` hoặc dấu EoC, ghi các bản ghi đó vào sổ
     MỚI (nguyên tử). Mọi thứ khác (ngày xác minh, liên kết dashboard, dấu vết «ok») KHÔNG cứu — phải quét lại.
-    Trả 0 khi đã cứu và ghi sổ mới; 1 khi sổ không hỏng (không làm gì); 2 khi không đọc được byte nào."""
+    Trả 0 khi đã cứu và ghi sổ mới; 1 khi sổ không hỏng (không làm gì); 2 khi không đọc được byte nào, hoặc
+    tệp rỗng/không có khoá sổ nào (không ghi gì — tránh dựng sổ rỗng hợp lệ đè lên bản thật)."""
     if not SO.exists():
         print(f"Không có sổ tại {SO} — không có gì để cứu.")
         return 1
@@ -224,11 +225,19 @@ def cuu_so_hong() -> int:
     except OSError as e:
         print(f"✗ Không đọc được byte nào của sổ ({e}) — không cứu được.", file=sys.stderr)
         return 2
+    van = tho.decode("utf-8", errors="replace")
+    vi_tri = [(m.start(), m.group(1)) for m in _KHOA_SO_RE.finditer(van)]
+    if not tho.strip() or not vi_tri:
+        # Vá rà phản biện 26/09/2026: tệp RỖNG (thường là tệp giữ chỗ 0 byte của OneDrive Files On-Demand) hoặc
+        # không mang nổi MỘT khoá sổ nào thì KHÔNG có gì để cứu. Ghi một sổ rỗng hợp lệ lúc này là tự dựng lại
+        # đúng lỗ fail-open của #3 — và OneDrive sẽ đồng bộ sổ rỗng đó đè lên bản thật trên đám mây.
+        print(f"✗ Sổ {SO.name} RỖNG hoặc không nhận ra khoá sổ nào ({len(tho)} byte) — KHÔNG cứu, KHÔNG ghi gì. "
+              "Đợi OneDrive xanh (tệp giữ chỗ) hoặc lấy bản trước từ lịch sử phiên bản OneDrive/máy kia.",
+              file=sys.stderr)
+        return 2
     moc = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
     ban_hong = SO.with_name(f"{SO.stem}.hong-{moc}.json")
     ban_hong.write_bytes(tho)
-    van = tho.decode("utf-8", errors="replace")
-    vi_tri = [(m.start(), m.group(1)) for m in _KHOA_SO_RE.finditer(van)]
     muc: dict[str, dict] = {}
     for i, (bat_dau, khoa) in enumerate(vi_tri):
         doan = van[bat_dau:vi_tri[i + 1][0] if i + 1 < len(vi_tri) else len(van)]
