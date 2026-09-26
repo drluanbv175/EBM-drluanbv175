@@ -24,7 +24,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Sequence
@@ -116,6 +116,34 @@ def _run(cmd: Sequence[str], *, cwd: Path) -> tuple[bool, str]:
         errors="replace",
     )
     return proc.returncode == 0, _tail(proc.stdout or "", proc.stderr or "")
+
+
+# «Chưa đo được» (26/09/2026): trên bản sao git trần (Cloud) các thư mục này không bao giờ có — thiếu
+# file dưới chúng KHÔNG phải pipeline hỏng. Cùng quy ước với verify_evidence_surveillance_deployment.py.
+NOT_MEASURED = "NOT_MEASURED"
+GOC_CHI_ONEDRIVE = ("EBM-Dashboards", "EBM_MASTER", "dashboard_mockups")
+_THIEU_FILE = re.compile(r"THIẾU file (\S+)")
+
+
+def chuyen_khong_do_duoc(row: CheckResult, ban_sao_tran: bool) -> CheckResult:
+    """FAIL → NOT_MEASURED khi (và chỉ khi) đang ở bản sao trần VÀ mọi lý do hỏng là thiếu file chỉ-OneDrive.
+
+    Lệch marker / lệch byte / lỗi chạy vẫn là FAIL: chúng chỉ xảy ra khi tệp CÓ mặt.
+    """
+    if not ban_sao_tran or row.status != "FAIL":
+        return row
+    thieu = _THIEU_FILE.findall(row.evidence)
+    if not thieu or any(m in row.evidence for m in ("thiếu marker", "LỆCH BYTE")):
+        return row
+    for duong in thieu:
+        try:
+            dau = Path(duong).resolve().relative_to(ROOT.resolve()).parts[0]
+        except (ValueError, IndexError):
+            return row
+        if dau not in GOC_CHI_ONEDRIVE:
+            return row
+    return replace(row, status=NOT_MEASURED,
+                   evidence=row.evidence + " — ⚪ bản sao git trần: tệp chỉ có trên OneDrive, không đo được")
 
 
 def _contains_all(path: Path, needles: Sequence[str]) -> tuple[bool, str]:
@@ -486,11 +514,13 @@ def run_verification(*, online_dashboard_gate: bool = False) -> dict:
         ))
         rows.append(_check_derivatives(base))
 
-    blocking_failures = [row for row in rows if row.blocking and row.status != "PASS"]
+    rows = [chuyen_khong_do_duoc(row, _bst_vceup.ban_sao_git_tran(ROOT)) for row in rows]
+    blocking_failures = [row for row in rows if row.blocking and row.status not in ("PASS", NOT_MEASURED)]
+    chua_do = [row for row in rows if row.status == NOT_MEASURED]
     return {
         "kind": "clinical_evidence_update_pipeline_verification",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "overall_status": "PASS" if not blocking_failures else "FAIL",
+        "overall_status": ("FAIL" if blocking_failures else "MEASUREMENT_INCOMPLETE" if chua_do else "PASS"),
         "blocking_failure_count": len(blocking_failures),
         "online_dashboard_gate": online_dashboard_gate,
         "rows": [asdict(row) for row in rows],
@@ -566,7 +596,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
         _print_summary(report, out_md, out_json)
-    return 0 if report["overall_status"] == "PASS" else 1
+    return {"PASS": 0, "MEASUREMENT_INCOMPLETE": 2}.get(report["overall_status"], 1)
 
 
 if __name__ == "__main__":
