@@ -3171,3 +3171,13 @@ lỗi PHÉP THỬ, áp lại bằng Python thì đỏ).
 (2) Repo y khoa `tools/verify_evidence_surveillance_deployment.py` (canary giám sát tuần): `ROOT = REPO.parent` sai trên
 bố cục hai repo ĐẶT CẠNH (Cloud) ⇒ ESD04/07/08 FAIL giả; và canary chạy scanner TẠI CHỖ nên khoá `.quet.lock` + cảnh báo
 khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` thật (máy Mac) hoặc vào repo. Vá ở PR repo y khoa cùng ngày.
+
+### 26/09/2026 (chiều) — thi công đề xuất audit/17
+- ESD10 (kênh cảnh báo) không có đường nhập an toàn cho bác sĩ ⇒ thêm `tools/nhap_kenh_canh_bao.py` + nút `Nhap Kenh Canh Bao.command/.bat`; thông điệp ESD10 FAIL chỉ tới nút (repo y khoa). Bài học: một cổng FAIL phải chỉ đường đóng nó, không chỉ nêu tên biến.
+- SRC-045 BTS: sổ ghi `not-covered` từ 23/09 dù connector chạy được — kiểm sống 2/2 PDF ⇒ `active` (lại họ lỗi «sổ nói một đằng, mã sống một nẻo»).
+- ERS/ASCO/ESMO: phiên Cloud trả `EGRESS_BLOCKED` cho cả proxy lẫn WebFetch ⇒ «không đo được do cài đặt mạng», không kết luận khả thi hay không.
+
+### 26/09/2026 (tối) — nâng cấp tự động trên Cloud
+- `tools/toan_van_guideline.py` (repo y khoa) MỒ CÔI: không agent nào gọi ⇒ nối vào `tra-cuu-chung-cu` + `huong-dan-lam-sang`, thêm vào danh sách công cụ BH56. Đột biến gỡ doctrine lộ LỖ PHÂN LOẠI: BH56 thuộc nhóm «cần nguyên liệu ngoài repo» nên mọi FAIL của nó rơi về ⚪ trên bản sao trần, kể cả lỗi «MỒ CÔI» nằm TRONG repo ⇒ thêm `_DAU_HIEU_LOI_TRONG_REPO` (lỗi mồ côi vẫn đỏ trên Cloud). Bài học: nhãn ⚪ theo MÃ chốt quá thô — phải phân loại theo DẤU HIỆU lỗi.
+- BTS: tìm guideline theo chủ đề chỉ chọn khi đúng MỘT ứng viên; >1 ứng viên từng hiện thành «mạng lỗi» ⇒ thêm trạng thái `can_chon`. Năm suy từ nội dung PDF chỉ nhận dòng tiêu đề tạp chí (năm của tài liệu tham khảo không tính).
+- `tests/conftest.py` (repo y khoa) dùng `setdefault("USE_MOCK_SOURCES")` ⇒ khi môi trường Cloud đặt `false` (25/09), bộ test mất tính kín ⇒ ép `true`.

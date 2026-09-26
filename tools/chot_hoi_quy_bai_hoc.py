@@ -2221,7 +2221,8 @@ def bh56_cong_cu_moi_phai_co_day():
                     goc / "sync" / "scheduled-tasks" / "goi-duyet-tuan-ebm" / "SKILL.md"]
     van_ban = " ".join(p.read_text(encoding="utf-8", errors="replace")
                        for p in noi_tieu_thu if p.exists())
-    for tool in ("rag_toan_van", "do_tac_dong", "dat_canh_chung_cu_moi", "dung_hom_thu"):
+    for tool in ("rag_toan_van", "do_tac_dong", "dat_canh_chung_cu_moi", "dung_hom_thu",
+                 "toan_van_guideline"):  # 26/09: CLI toàn văn guideline từng mồ côi 2 ngày
         if tool not in van_ban:
             return False, f"{tool} MỒ CÔI — không doctrine/nhịp nào gọi (họ BH41)"
     kho = goc / "EBM-Dashboards" / "toan_van_oa"
@@ -3978,6 +3979,12 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
 # điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng; mọi thất bại khác vẫn ✗ ở mọi máy.
 _CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109"})
 
+# VÁ 26/09/2026 (đột biến lộ ra): BH56 nằm trong danh sách trên vì nửa «chỉ mục RAG tươi» cần
+# EBM-Dashboards/, nhưng nửa «công cụ MỒ CÔI» soi doctrine agent NẰM TRONG GIT — trên Cloud gỡ dây gọi
+# toan_van_guideline khỏi tra-cuu-chung-cu.md chỉ ra ⚪ thay vì ✗. Thông điệp mang dấu hiệu dưới đây
+# là lỗi trong-repo: luôn «tái phát», ở mọi máy.
+_DAU_HIEU_LOI_TRONG_REPO = {"BH56": "MỒ CÔI"}
+
 
 def ban_sao_git_tran() -> bool:
     """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (đòi cả BA gốc vắng)."""
@@ -4021,6 +4028,8 @@ def phan_loai(ma: str, ok: bool, tran: bool, ct: str = "", bst=None) -> str:
         return "tai_phat"
     if ma not in _CAN_NGUYEN_LIEU_NGOAI_REPO:
         return "tai_phat"
+    if ma in _DAU_HIEU_LOI_TRONG_REPO and _DAU_HIEU_LOI_TRONG_REPO[ma] in ct:
+        return "tai_phat"  # đối tượng soi nằm trong git — không được ⚪ hoá
     if ct.startswith("chốt lỗi:") and not any(t in ct for t in _LOI_THIEU_NGUYEN_LIEU):
         return "tai_phat"  # crash thật trong mã — không được ⚪ hoá
     if ct:
