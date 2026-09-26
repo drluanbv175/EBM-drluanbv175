@@ -118,8 +118,11 @@ def _tra_rut_bai(pmids: list[str]) -> dict[str, str]:
     _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
     _sp_mea.loader.exec_module(_bst_mea)
     cli = (_bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")) / "tools" / "check_citation_retraction.py"
-    venv_py = Path.home() / ".ebm-venv" / "bin" / "python"
-    py = str(venv_py) if venv_py.exists() else sys.executable
+    # VÁ 26/09/2026 (#38): venv đa nền (bin/python rồi Scripts/python.exe) — bản cũ chỉ dò
+    # bố cục POSIX nên trên Windows chạy check_citation_retraction bằng python hệ thống
+    # (thiếu thư viện) ⇒ mọi PMID mang nhãn «chưa kiểm rút bài» dù venv đủ thư viện.
+    venv_py = _bst_mea.venv_python()
+    py = str(venv_py) if venv_py is not None else sys.executable
     if not cli.exists():
         return nhan
     try:

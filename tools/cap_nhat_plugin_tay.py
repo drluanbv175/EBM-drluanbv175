@@ -89,6 +89,19 @@ CAU_HINH = {
 }
 
 
+def _venv_python_ebm() -> pathlib.Path | None:
+    """Trình thông dịch venv EBM theo HOME của module (đa nền: bin/python rồi
+    Scripts/python.exe) — uỷ quyền cho ban_sao_tran.venv_python() (VÁ 26/09/2026, #38:
+    bản cũ chỉ dò `bin/python` nên trên Windows apply_vi/verify_vi chạy bằng python hệ
+    thống thiếu PyYAML). None khi chưa dựng venv."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_bst_cap_nhat_plugin_tay", pathlib.Path(__file__).resolve().parent / "ban_sao_tran.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.venv_python(HOME)
+
+
 def chay(lenh: list[str], cwd: pathlib.Path | None = None) -> tuple[int, str]:
     r = subprocess.run(lenh, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return r.returncode, (r.stdout + r.stderr).strip()
@@ -236,8 +249,8 @@ def main() -> int:
         print("\n── áp lại bản dịch tiếng Việt ──")
         goc = pathlib.Path(__file__).resolve().parent.parent
         # verify_vi.py cần PyYAML — chỉ có trong venv EBM, không có ở Python hệ thống
-        venv_py = HOME / ".ebm-venv" / "bin" / "python"
-        py = str(venv_py) if venv_py.exists() else sys.executable
+        venv_py = _venv_python_ebm()
+        py = str(venv_py) if venv_py is not None else sys.executable
         for buoc in ("extract_catalog.py", "apply_vi.py", "verify_vi.py"):
             ma, out = chay([py, str(goc / "tools/vietnamize" / buoc)], goc)
             cuoi = [d for d in out.splitlines() if d.strip()][-1] if out.strip() else ""

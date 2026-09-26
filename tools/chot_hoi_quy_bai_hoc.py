@@ -3381,11 +3381,16 @@ def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
         return False, f"bước «{nhan}» thiếu --im-khi-on → sẽ ồn mỗi phiên"
     if not sua:
         return False, f"bước «{nhan}» chỉ báo mà không tự sửa"
-    if "yaml" not in Path(sua[0]).name.lower() and ".ebm-venv" not in sua[0]:
-        # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
-        # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
-        if getattr(ts, "_VENV", Path("/")).exists():
-            return False, "lệnh sửa không dùng trình thông dịch có PyYAML"
+    # VÁ 26/09/2026 (#38): dò venv bằng CÙNG hàm hai bố cục `ban_sao_tran.venv_python()` (bin/python rồi
+    # Scripts/python.exe). Bản cũ kiểm `ts._VENV.exists()` — chỉ bố cục POSIX — nên trên Windows chốt luôn đi nhánh
+    # «máy chưa dựng venv» và mù đúng lỗi nó canh; phép so chuỗi «.ebm-venv» cũng xanh giả khi sys.executable tình cờ
+    # nằm trong một venv khác. Nay: có venv EBM thì lệnh sửa PHẢI chạy bằng ĐÚNG trình thông dịch đó.
+    # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
+    # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
+    vp = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh73").venv_python()
+    if vp is not None and Path(sua[0]) != vp:
+        return False, (f"lệnh sửa không dùng trình thông dịch có PyYAML: venv EBM có ở {vp} mà chạy bằng {sua[0]} "
+                       "— trên Windows apply_vi sẽ lặng lẽ không vá")
 
     return True, f"apply_vi bắt+vá đúng; tu_sua_chua đã nối «{nhan}»"
 
@@ -6282,7 +6287,9 @@ def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> 
         (chinh / "tools").mkdir(parents=True)
         (chinh / "sync" / "skills" / "mau").mkdir(parents=True)
         (chinh / "sync" / "skills" / "mau" / "SKILL.md").write_text("---\nname: mau\n---\n", encoding="utf-8")
-        for ten in ("tu_sua_chua.py", "dong_bo_skill.py"):
+        # 26/09/2026 (#38): tu_sua_chua nạp ban_sao_tran.py (venv_python đa nền) NGAY LÚC IMPORT — fixture phải
+        # chép đủ phụ thuộc cùng thư mục như cây thật (bài học BH70/BH84: không trỏ vào thứ không có mặt).
+        for ten in ("tu_sua_chua.py", "dong_bo_skill.py", "ban_sao_tran.py", "nhan_dien_may.py"):
             _shutil.copy2(REPO / "tools" / ten, chinh / "tools" / ten)
         wt = chinh / ".claude" / "worktrees" / "phu"
         try:
