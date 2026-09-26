@@ -38,8 +38,12 @@ def test_claude_code_repo_alignment_overall_passes():
     report = V.run_verification()
 
     assert report["overall_status"] == "PASS"
+    # So BẰNG CHÍNH XÁC (không so tập con): thêm check vào run_verification() mà quên
+    # cập nhật tập này thì test phải đỏ — đúng loại trôi đã xảy ra 24/09 khi
+    # check_claude_md_budget() được thêm mà tập kỳ vọng không đổi (vá 26/09/2026).
     assert {check["name"] for check in report["checks"]} == {
         "root_docs",
+        "claude_md_budget",
         "medical_repo_docs",
         "tracked_contract_files",
         "agent_sync_health",

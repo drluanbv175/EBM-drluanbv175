@@ -131,11 +131,11 @@ _LY_DO_TRAN_REPO_Y_KHOA = (
 #   KHÔNG dùng «`RE._retry_loop is None`» làm điều kiện skip: nếu retry_loop.py có
 #   lỗi thật (SyntaxError/import hỏng) trong khi repo y khoa có mặt, cả nhóm sẽ bị
 #   skip âm thầm — đúng loại xanh giả mà test_classify_available tồn tại để bắt.
+# test_claude_code_repo_alignment_overall_passes KHÔNG còn ở đây (26/09/2026):
+# run_verification() tự hạ phần thiếu nguyên liệu thành NGOAI-PHAM-VI trên bản sao
+# trần nên overall_status vẫn PASS — để test chạy trên Cloud/CI thì lần trôi tập
+# check sau (như claude_md_budget 24/09) bị bắt ngay, không chờ tới máy bác sĩ.
 _TEST_CAN_ONEDRIVE: dict[str, set[str]] = {
-    "test_claude_code_repo_alignment.py": {
-        # Giữ skip tới khi phép so tập check của test được cập nhật (claude_md_budget).
-        "test_claude_code_repo_alignment_overall_passes",
-    },
     "test_clinical_evidence_update_pipeline.py": {
         # verify_clinical_evidence_update_pipeline.py cần
         # dashboard_mockups/templates/*.html + EBM-Dashboards/tools/*.py.
