@@ -175,7 +175,15 @@ def main() -> int:
     # TRƯỚC cổng dây chuyền vì mâu thuẫn nội dung nghiêm trọng hơn lỗi cấu trúc.
     rc, out = chay([PY, "tools/dang_ky_chu_de.py", "--mau-thuan"],
                    "⑤ Có hai bản nào nói ngược nhau không?")
-    if rc == 1:
+    # VÁ 26/09/2026 (phát hiện #17): dang_ky_chu_de nay trả 2 khi «không kiểm được» (0 dashboard / thiếu công cụ)
+    # thay vì in 🟢 + 0. Nhánh này PHẢI sửa CÙNG lúc với công cụ: nếu không, rc=2 rơi qua mọi nhánh và tổng kết
+    # vẫn im lặng — xanh giả. Chuỗi «Không kiểm được trên máy này» giữ cho bản công cụ cũ (trả 1).
+    if rc == 2 or "Không kiểm được trên máy này" in out:
+        viec_can_lam.append("⚪ Chưa quét được mâu thuẫn hai bản — không có dashboard nào để so trên máy này "
+                            "(xem phần ⑤). KHÔNG phải đã tìm thấy mâu thuẫn, cũng KHÔNG phải «không có mâu thuẫn».")
+    elif rc not in (0, 1):
+        viec_can_lam.append(f"⚪ Bước ⑤ thoát mã lạ ({rc}) — chưa quét được mâu thuẫn hai bản; xem phần ⑤.")
+    elif rc == 1:
         # VÁ 04/09/2026 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — rc=1 của
         # dang_ky_chu_de.py mang HAI NGHĨA HOÀN TOÀN KHÁC NHAU: (a) tìm thấy mâu
         # thuẫn thật (dòng cuối main() của nó), hoặc (b) KHÔNG QUÉT ĐƯỢC vì thiếu
@@ -185,13 +193,10 @@ def main() -> int:
         # sao trần này (EBM-Dashboards/ không tồn tại): rc=1 vì KHÔNG QUÉT ĐƯỢC,
         # nhưng chu trình vẫn báo "🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau"
         # — một báo động giả về nội dung lâm sàng trong khi sự thật chỉ là thiếu
-        # nguyên liệu. Đọc `out` để phân biệt, đúng khuôn mẫu bước ③④ đã dùng.
-        if "Không kiểm được trên máy này" in out:
-            viec_can_lam.append("Chưa quét được mâu thuẫn hai bản — thiếu EBM-Dashboards/ "
-                                "trên máy này (xem phần ⑤). KHÔNG phải đã tìm thấy mâu thuẫn.")
-        else:
-            viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
-                                "quyết bản nào đúng (xem phần ⑤).")
+        # nguyên liệu. Đọc `out` để phân biệt, đúng khuôn mẫu bước ③④ đã dùng — phép phân
+        # biệt đó nay nằm ở nhánh ⚪ phía trên (26/09/2026), nhánh này chỉ còn mâu thuẫn THẬT.
+        viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
+                            "quyết bản nào đúng (xem phần ⑤).")
 
     # ── 6. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
     rc, out = chay([PY, "tools/verify_clinical_evidence_update_pipeline.py"],
