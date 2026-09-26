@@ -1918,7 +1918,10 @@ def pmid_trong_references(html):
     return ra
 
 
-def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
+_DOI_CHUA_HOI = object()  # sentinel: DOI CHƯA được hỏi nền (sổ cũ không có hàm tra theo DOI)
+
+
+def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str], rw_doi=_DOI_CHUA_HOI) -> str:
     """Chọn câu ghi thêm vào cảnh báo «Phạm vi kiểm rút bài» — TÁCH RIÊNG thành hàm thuần để
     kiểm được độc lập, không cần dựng cả `kiem_nguon_da_rut()` (nạp động `so_xac_minh_nguon.py`).
 
@@ -1928,17 +1931,37 @@ def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
     không. Trước đây câu "đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm"
     vẫn in ra dù TOÀN BỘ `chua` là DOI — nền chỉ khoá theo PMID nên KHÔNG hề được hỏi cho bất kỳ
     DOI nào; người đọc suy ra DOI đã được đối chiếu là SAI."""
+    # Vá 26/09/2026 (phát hiện #31): nền nay tra được CẢ theo DOI (`rw_doi`). Ba trường hợp cho phần DOI,
+    # TÁCH RIÊNG, không bao giờ in ✓: (a) đã hỏi nền theo DOI mà im lặng — vẫn là CHƯA KIỂM (nền chỉ ghi bài
+    # ĐÃ rút); (b) `rw_doi is None` — nền vắng, DOI KHÔNG được đối chiếu; (c) sentinel — sổ cũ không có hàm tra
+    # theo DOI, giữ nguyên câu cũ. Gọi 3 tham số như trước ⇒ hành vi cũ không đổi.
     if not chua:
         return ""
+    doi_chua = [x for x in chua if not x.isdigit()]
     if not any(x.isdigit() for x in chua):
-        return ("; nền Retraction Watch ngoại tuyến CHỈ được hỏi cho PMID — %d DOI trong "
-                "danh sách trên CHƯA được đối chiếu ở đâu cả" % len(chua))
+        if rw_doi is _DOI_CHUA_HOI:
+            return ("; nền Retraction Watch ngoại tuyến CHỈ được hỏi cho PMID — %d DOI trong "
+                    "danh sách trên CHƯA được đối chiếu ở đâu cả" % len(chua))
+        return _thong_diep_doi_rw(doi_chua, rw_doi)
     if rw is not None:
-        return ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
-                "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)")
-    if pm_chua:
-        return "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này"
-    return ""
+        phan_pmid = ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
+                     "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)")
+    elif pm_chua:
+        phan_pmid = "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này"
+    else:
+        phan_pmid = ""
+    if doi_chua and rw_doi is not _DOI_CHUA_HOI:
+        return phan_pmid + _thong_diep_doi_rw(doi_chua, rw_doi)
+    return phan_pmid
+
+
+def _thong_diep_doi_rw(doi_chua: list[str], rw_doi) -> str:
+    """Câu về phần DOI khi sổ ĐÃ có hàm tra nền theo DOI (xem `_thong_diep_pham_vi_rw`)."""
+    if rw_doi is None:
+        return ("; %d DOI CHƯA được đối chiếu — nền Retraction Watch ngoại tuyến KHÔNG có trên máy này "
+                "(hoặc bản engine chưa tra được theo DOI)" % len(doi_chua))
+    return ("; %d DOI đã đối chiếu nền Retraction Watch NGOẠI TUYẾN theo DOI, không thấy dương tính — nền "
+            "chỉ ghi bài ĐÃ rút nên vẫn là CHƯA KIỂM, im lặng ≠ sạch" % len(doi_chua))
 
 
 def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
@@ -2039,13 +2062,25 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                         da_rut.append(r)
                 _dua_ra = {r["gia_tri"] for r in (_rw or [])}
                 _chua = [x for x in _chua if x not in _dua_ra]
+            # Hỏi nền THEO DOI (vá #31, 26/09/2026) — cùng bài đã rút phải bị chặn dù trích bằng PMID hay DOI. Sổ cũ
+            # không có hàm ⇒ giữ sentinel «chưa hỏi»; `None` ⇒ nền vắng. Chỉ nhận DƯƠNG; DOI im lặng vẫn CHƯA KIỂM.
+            _doi_tat_ca = [x for x in sorted(_ids) if not x.isdigit()]
+            _rw_doi = _DOI_CHUA_HOI
+            if _doi_tat_ca and hasattr(_mod_so, "rut_bai_retraction_watch_ngoai_tuyen_doi"):
+                _rw_doi = _mod_so.rut_bai_retraction_watch_ngoai_tuyen_doi(_doi_tat_ca)
+                da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
+                for r in (_rw_doi or []):
+                    if (r["loai"], r["gia_tri"]) not in da_co:
+                        da_rut.append(r)
+                _dua_ra_doi = {r["gia_tri"] for r in (_rw_doi or [])}
+                _chua = [x for x in _chua if x not in _dua_ra_doi]
             if _chua:
-                _nen = _thong_diep_pham_vi_rw(_chua, _rw, _pm_chua)
+                _nen = _thong_diep_pham_vi_rw(_chua, _rw, _pm_chua, _rw_doi)
                 warns.append(
                     "Phạm vi kiểm rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ; %d CHƯA KIỂM hoặc quá "
                     "hạn (vd %s)%s — đây là 'chưa biết', KHÔNG phải 'sạch'. Chạy: python tools/so_xac_minh_nguon.py "
                     "--quet <file> [--vong 3]" % (len(_pv["co"]), len(_ids), len(_chua), ", ".join(_chua[:4]), _nen))
-            elif _ids and not _rw:
+            elif _ids and not _rw and not (_rw_doi and _rw_doi is not _DOI_CHUA_HOI):
                 oks.append("Rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ (hoặc đã đối chiếu nền ngoại "
                            "tuyến) — không thấy dương tính chưa xử lý." % (len(_ids), len(_ids)))
         except Exception as e:

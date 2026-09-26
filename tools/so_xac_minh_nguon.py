@@ -308,14 +308,8 @@ def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
 _RW_NGOAI_TUYEN: dict = {"chi_muc": None, "da_thu": False}
 
 
-def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | None:
-    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN cho các PMID — không mạng, ~0,5 giây.
-
-    Trả danh sách bản ghi cùng khuôn `dinh_danh_da_rut` (CHỈ dương tính) hoặc `None` khi máy này không có nền
-    (thiếu CSV/module) — caller phải đọc `None` là «CHƯA KIỂM», tuyệt đối không phải «sạch». Nền im lặng về một PMID
-    KHÔNG có nghĩa PMID sạch (danh mục chỉ ghi cái ĐÃ bị rút) nên hàm này không bao giờ phát tín hiệu âm."""
-    if not cac_pmid:
-        return []
+def _nap_nen_rw_ngoai_tuyen():
+    """Nạp (một lần mỗi tiến trình) chỉ mục Retraction Watch NGOẠI TUYẾN của repo y khoa; `None` khi máy không có."""
     if not _RW_NGOAI_TUYEN["da_thu"]:
         _RW_NGOAI_TUYEN["da_thu"] = True
         try:
@@ -332,7 +326,18 @@ def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | No
                 _RW_NGOAI_TUYEN["chi_muc"] = chi_muc if chi_muc.san_sang() else None
         except Exception:  # noqa: BLE001 — thiếu nền = CHƯA KIỂM, không được làm chết cổng
             _RW_NGOAI_TUYEN["chi_muc"] = None
-    chi_muc = _RW_NGOAI_TUYEN["chi_muc"]
+    return _RW_NGOAI_TUYEN["chi_muc"]
+
+
+def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | None:
+    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN cho các PMID — không mạng, ~0,5 giây.
+
+    Trả danh sách bản ghi cùng khuôn `dinh_danh_da_rut` (CHỈ dương tính) hoặc `None` khi máy này không có nền
+    (thiếu CSV/module) — caller phải đọc `None` là «CHƯA KIỂM», tuyệt đối không phải «sạch». Nền im lặng về một PMID
+    KHÔNG có nghĩa PMID sạch (danh mục chỉ ghi cái ĐÃ bị rút) nên hàm này không bao giờ phát tín hiệu âm."""
+    if not cac_pmid:
+        return []
+    chi_muc = _nap_nen_rw_ngoai_tuyen()
     if chi_muc is None:
         return None
     ra: list[dict] = []
@@ -350,6 +355,45 @@ def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | No
             # thay), không được gắn «ĐÃ BỊ RÚT — không dùng» cho một trích dẫn vẫn dùng được (phản biện 21/09).
             "rut_va_thay": bool(re.search(r"retract(ion)?\s+and\s+replace", ly_do, re.I)),
             "thong_bao": bg.get("notice_pmid") or "",
+            "sua_loi_bi_rut": False, "thong_bao_ids": [],
+        })
+    return ra
+
+
+def rut_bai_retraction_watch_ngoai_tuyen_doi(cac_doi: list[str]) -> list[dict] | None:
+    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN, tra THEO DOI — thêm 26/09/2026 (phát hiện #31).
+
+    Vì sao: nền cũ chỉ khoá theo PMID nên 33.294 dòng chỉ-có-DOI bị bỏ, và một bài có PMID mà gói trích bằng DOI
+    không bao giờ được hỏi — cùng một bài đã rút, trích bằng PMID thì bị chặn cứng, trích bằng DOI thì chỉ cảnh báo.
+    Hàm MỚI, không đổi chữ ký hàm PMID. Cùng hợp đồng: chỉ phát tín hiệu DƯƠNG; `None` = nền vắng hoặc engine cũ
+    chưa có `tra_doi()` ⇒ «CHƯA KIỂM», tuyệt đối không phải «sạch». `gia_tri` giữ NGUYÊN chuỗi caller đưa vào (để
+    cổng gạch đúng định danh khỏi danh sách chưa kiểm); `tieu_de` là tiêu đề THEO Retraction Watch — dữ liệu RW có
+    hiếm DOI khớp nhiều bài khác nhau, bác sĩ phải đối chiếu được."""
+    if not cac_doi:
+        return []
+    chi_muc = _nap_nen_rw_ngoai_tuyen()
+    if chi_muc is None or not hasattr(chi_muc, "tra_doi"):
+        return None
+    san_sang_doi = getattr(chi_muc, "san_sang_doi", None)
+    if callable(san_sang_doi) and not san_sang_doi():
+        return None
+    ra: list[dict] = []
+    for goc in cac_doi:
+        goc = str(goc).strip()
+        bg = chi_muc.tra_doi(goc)
+        if not bg:
+            continue
+        ly_do = str(bg.get("reason") or "")
+        tieu_de = str(bg.get("title") or "").strip()
+        ra.append({
+            "khoa": f"doi:{goc.lower()}", "loai": "doi", "gia_tri": goc,
+            "tinh_trang": bg.get("status") or "retracted",
+            "tieu_de": ("tiêu đề theo Retraction Watch: " + tieu_de) if tieu_de else "",
+            "kiem_luc": _hom_nay().isoformat(),
+            "nguon": "Retraction Watch (nền ngoại tuyến, khớp THEO DOI — đối chiếu tiêu đề; lý do: %s)"
+                     % (ly_do or "?").strip("; ")[:100],
+            "rut_va_thay": bool(re.search(r"retract(ion)?\s+and\s+replace", ly_do, re.I)),
+            "thong_bao": bg.get("notice_doi") or bg.get("notice_pmid") or "",
             "sua_loi_bi_rut": False, "thong_bao_ids": [],
         })
     return ra
