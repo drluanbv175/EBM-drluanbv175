@@ -55,6 +55,7 @@ import re
 import ssl
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 from json import JSONDecodeError
@@ -134,6 +135,27 @@ def design_khong_nhan_dien(design):
     if design in KNOWN_DESIGNS:
         return False
     return not any(d.startswith(p) for p in DESIGN_FAMILIES)
+
+
+# HỌ ĐỒNG THUẬN — vá 26/09/2026 (phát hiện #1 của đợt dò nâng cấp).
+# Luật «apply chỉ dựa Consensus ⇒ chặn» trước đây so `design == "Consensus"` — CHÍNH XÁC,
+# phân biệt hoa/thường. Trong khi `design_khong_nhan_dien()` lại nhận 'consensus'/'đồng thuận'
+# là họ HỢP LỆ theo tiền tố, nên các biến thể 'consensus', 'Consensus statement',
+# 'Đồng thuận chuyên gia', 'Đồng thuận đa hội (expert consensus)' (chuỗi cuối có trong dữ liệu
+# thật) mang mức mod/high + apply lọt qua CẢ HAI luật với 0 lỗi — trái luật bất biến CLAUDE.md
+# §6.3 «Consensus không bao giờ đủ». Dùng TIỀN TỐ (startswith), KHÔNG dùng chuỗi con: một design
+# như 'Guideline (dựa đồng thuận)' vẫn thuộc họ guideline, không bị bắt nhầm. Chuẩn hoá NFC chỉ
+# ở đây (chiều CHẶT hơn): chuỗi tổ hợp NFD 'Đồng thuận' vốn đã bị luật «design không nhận diện»
+# chặn khi apply, nay bị chặn thêm đúng tên.
+CONSENSUS_PREFIXES = ("consensus", "đồng thuận")
+
+
+def la_consensus(design):
+    """True nếu `design` thuộc HỌ ĐỒNG THUẬN (khớp tiền tố, không phân biệt hoa/thường, NFC)."""
+    d = unicodedata.normalize("NFC", design or "").strip().lower()
+    return d.startswith(CONSENSUS_PREFIXES)
+
+
 STRICT_SOURCE_MAX_AGE_DAYS = 180
 SOURCE_GATE_USER_AGENT = "EBM-Copilot-source-verifier/1.0"
 _HTTPS_CONTEXT = None
@@ -731,8 +753,9 @@ def strict_source_checks(data_block, items, *, today=None):
             # vẫn mang mức) đã được đưa về `na` ngày 14/08 — đó mới là phần chặn được.
             # Chuyển thành lỗi cứng khi `tools/kiem_phan_hang.py` về 0.
             warns.append(thieu)
-        if dec == "apply" and design == "Consensus":
-            errors.append("[%s] decision='apply' chỉ dựa Consensus — cần guideline/SR-MA/RCT hoặc hạ quyết định." % iid)
+        if dec == "apply" and la_consensus(design):
+            errors.append("[%s] decision='apply' chỉ dựa Consensus (design=%r, họ đồng thuận) — cần "
+                          "guideline/SR-MA/RCT hoặc hạ quyết định." % (iid, design))
         # TẦNG TOÀN VĂN (PHA 4 LÔ D, 15/08/2026): thẩm định trên abstract KHÔNG
         # ngang thẩm định đầy đủ. Item tự khai `appraisalCompleteness:'partial'`
         # (chưa đọc toàn văn) thì bị CHẶN khỏi mức 'apply' — tối đa 'consider'.
@@ -1871,7 +1894,34 @@ def _da_xem_xet_thong_bao_dinh_chinh(duong_dan, record):
     return None
 
 
-def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
+_PMID_TRONG_THAM_KHAO = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.I)
+
+
+def pmid_trong_references(html):
+    """PMID viết trong `references[]` của TỪNG item — dạng «PMID 12345678» hoặc «PMID: 12345678».
+
+    Vá 26/09/2026 (phát hiện #13): regex tầng 2/3 cũ (`pmid` + `[:=]`) bắt buộc có ':'/'=' nên
+    dạng «… PMID 34447992.» — ĐÚNG định dạng references của template EW — bị bỏ sót: một RCT hỗ trợ đã
+    rút (Wakefield, PMID 9500320) nằm trong references làm cổng PASS mã 0 và không hiện cả trong đếm phạm
+    vi. CHỈ quét references[] (qua chính parser của cổng), KHÔNG quét cả tệp: một ghi chú giải thích vì sao
+    LOẠI một bài đã rút sẽ bị chặn oan mà không có đường miễn trừ. Chỉ bổ sung định danh cho tầng phát tín
+    hiệu DƯƠNG — không thể làm xanh thêm điều gì."""
+    ra = set()
+    db = extract_data_block(html or "")
+    if not db:
+        return ra
+    for ch in split_items(db):
+        for r in array_field(ch, "references"):
+            for m in _PMID_TRONG_THAM_KHAO.findall(r or ""):
+                if PMID_RE.match(m):
+                    ra.add(m)
+    return ra
+
+
+_DOI_CHUA_HOI = object()  # sentinel: DOI CHƯA được hỏi nền (sổ cũ không có hàm tra theo DOI)
+
+
+def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str], rw_doi=_DOI_CHUA_HOI) -> str:
     """Chọn câu ghi thêm vào cảnh báo «Phạm vi kiểm rút bài» — TÁCH RIÊNG thành hàm thuần để
     kiểm được độc lập, không cần dựng cả `kiem_nguon_da_rut()` (nạp động `so_xac_minh_nguon.py`).
 
@@ -1881,17 +1931,37 @@ def _thong_diep_pham_vi_rw(chua: list[str], rw, pm_chua: list[str]) -> str:
     không. Trước đây câu "đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm"
     vẫn in ra dù TOÀN BỘ `chua` là DOI — nền chỉ khoá theo PMID nên KHÔNG hề được hỏi cho bất kỳ
     DOI nào; người đọc suy ra DOI đã được đối chiếu là SAI."""
+    # Vá 26/09/2026 (phát hiện #31): nền nay tra được CẢ theo DOI (`rw_doi`). Ba trường hợp cho phần DOI,
+    # TÁCH RIÊNG, không bao giờ in ✓: (a) đã hỏi nền theo DOI mà im lặng — vẫn là CHƯA KIỂM (nền chỉ ghi bài
+    # ĐÃ rút); (b) `rw_doi is None` — nền vắng, DOI KHÔNG được đối chiếu; (c) sentinel — sổ cũ không có hàm tra
+    # theo DOI, giữ nguyên câu cũ. Gọi 3 tham số như trước ⇒ hành vi cũ không đổi.
     if not chua:
         return ""
+    doi_chua = [x for x in chua if not x.isdigit()]
     if not any(x.isdigit() for x in chua):
-        return ("; nền Retraction Watch ngoại tuyến CHỈ được hỏi cho PMID — %d DOI trong "
-                "danh sách trên CHƯA được đối chiếu ở đâu cả" % len(chua))
+        if rw_doi is _DOI_CHUA_HOI:
+            return ("; nền Retraction Watch ngoại tuyến CHỈ được hỏi cho PMID — %d DOI trong "
+                    "danh sách trên CHƯA được đối chiếu ở đâu cả" % len(chua))
+        return _thong_diep_doi_rw(doi_chua, rw_doi)
     if rw is not None:
-        return ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
-                "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)")
-    if pm_chua:
-        return "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này"
-    return ""
+        phan_pmid = ("; đã đối chiếu nền Retraction Watch NGOẠI TUYẾN cho các PMID chưa kiểm (không thấy dương "
+                     "tính — nền chỉ ghi bài ĐÃ rút, im lặng ≠ sạch)")
+    elif pm_chua:
+        phan_pmid = "; nền Retraction Watch ngoại tuyến KHÔNG có trên máy này"
+    else:
+        phan_pmid = ""
+    if doi_chua and rw_doi is not _DOI_CHUA_HOI:
+        return phan_pmid + _thong_diep_doi_rw(doi_chua, rw_doi)
+    return phan_pmid
+
+
+def _thong_diep_doi_rw(doi_chua: list[str], rw_doi) -> str:
+    """Câu về phần DOI khi sổ ĐÃ có hàm tra nền theo DOI (xem `_thong_diep_pham_vi_rw`)."""
+    if rw_doi is None:
+        return ("; %d DOI CHƯA được đối chiếu — nền Retraction Watch ngoại tuyến KHÔNG có trên máy này "
+                "(hoặc bản engine chưa tra được theo DOI)" % len(doi_chua))
+    return ("; %d DOI đã đối chiếu nền Retraction Watch NGOẠI TUYẾN theo DOI, không thấy dương tính — nền "
+            "chỉ ghi bài ĐÃ rút nên vẫn là CHƯA KIỂM, im lặng ≠ sạch" % len(doi_chua))
 
 
 def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
@@ -1943,9 +2013,22 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         # mở thêm tầng định danh mà bên tiêm không biết.
         _tra_dinh_danh = None
         _mod_so = None
+    # SỔ HỎNG ≠ CHƯA KIỂM (vá 26/09/2026, phát hiện #3): sổ có trên đĩa mà không đọc được thì các dương tính
+    # rút bài ĐÃ BIẾT có thể đã mất — đó là LỖI CỨNG, không phải cảnh báo «chưa biết». Sổ bản cũ không có lớp
+    # `SoHongLoi` ⇒ tuple rỗng ⇒ giữ hành vi cũ.
+    _loi_so_hong = (getattr(_mod_so, "SoHongLoi", None),) if _mod_so is not None else ()
+    _loi_so_hong = tuple(x for x in _loi_so_hong if isinstance(x, type))
+
+    def _bao_so_hong(e):
+        errors.append("Sổ xác minh nguồn HỎNG — dương tính rút bài đã biết có thể bị mất; khôi phục sổ trước "
+                      "khi phát hành (KHÔNG xoá tệp hỏng): %s" % e)
+
     try:
         da_rut = list(tra_cuu(_Path(duong_dan).name))
     except Exception as e:
+        if _loi_so_hong and isinstance(e, _loi_so_hong):
+            _bao_so_hong(e)
+            return
         warns.append("Chưa kiểm được rút bài (%s) — 'chưa biết', KHÔNG phải 'không có'. "
                      "Chạy: python tools/so_xac_minh_nguon.py --quet <file>" % e)
         return
@@ -1959,6 +2042,8 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
         try:
             _nd = _Path(duong_dan).read_text(encoding="utf-8", errors="replace")
             _ids = set(re.findall(r"pmid['\"]?\s*[:=]\s*['\"]?(\d{6,9})", _nd, re.I))
+            # PMID dạng «PMID 12345678» trong references[] của từng item (vá #13, 26/09/2026).
+            _ids |= pmid_trong_references(_nd)
             _ids |= {m.rstrip(".,;'\")”") for m in
                      re.findall(r"10\.\d{4,9}/[^\s'\"<>]+", _nd)}
             da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
@@ -1966,8 +2051,11 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                 if (r["loai"], r["gia_tri"]) not in da_co:
                     da_rut.append(r)
         except Exception as e:
-            warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
-                         "KHÔNG phải 'không có'." % e)
+            if _loi_so_hong and isinstance(e, _loi_so_hong):
+                _bao_so_hong(e)
+            else:
+                warns.append("Chưa kiểm được rút bài theo ĐỊNH DANH (%s) — 'chưa biết', "
+                             "KHÔNG phải 'không có'." % e)
 
     # TẦNG 3 (21/09/2026, việc #2a) — NÓI RA PHẠM VI kiểm rút bài, và hỏi nền Retraction Watch NGOẠI TUYẾN cho
     # PMID mà sổ CHƯA kiểm. Trước đây, sổ không có bản ghi dương tính thì cổng im lặng hoàn toàn: «sổ im lặng» gồm
@@ -1990,17 +2078,34 @@ def kiem_nguon_da_rut(duong_dan, errors, warns, oks, tra_cuu=None):
                         da_rut.append(r)
                 _dua_ra = {r["gia_tri"] for r in (_rw or [])}
                 _chua = [x for x in _chua if x not in _dua_ra]
+            # Hỏi nền THEO DOI (vá #31, 26/09/2026) — cùng bài đã rút phải bị chặn dù trích bằng PMID hay DOI. Sổ cũ
+            # không có hàm ⇒ giữ sentinel «chưa hỏi»; `None` ⇒ nền vắng. Chỉ nhận DƯƠNG; DOI im lặng vẫn CHƯA KIỂM.
+            _doi_tat_ca = [x for x in sorted(_ids) if not x.isdigit()]
+            _rw_doi = _DOI_CHUA_HOI
+            if _doi_tat_ca and hasattr(_mod_so, "rut_bai_retraction_watch_ngoai_tuyen_doi"):
+                _rw_doi = _mod_so.rut_bai_retraction_watch_ngoai_tuyen_doi(_doi_tat_ca)
+                da_co = {(r["loai"], r["gia_tri"]) for r in da_rut}
+                for r in (_rw_doi or []):
+                    if (r["loai"], r["gia_tri"]) not in da_co:
+                        da_rut.append(r)
+                _dua_ra_doi = {r["gia_tri"] for r in (_rw_doi or [])}
+                _chua = [x for x in _chua if x not in _dua_ra_doi]
             if _chua:
-                _nen = _thong_diep_pham_vi_rw(_chua, _rw, _pm_chua)
+                _nen = _thong_diep_pham_vi_rw(_chua, _rw, _pm_chua, _rw_doi)
                 warns.append(
                     "Phạm vi kiểm rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ; %d CHƯA KIỂM hoặc quá "
                     "hạn (vd %s)%s — đây là 'chưa biết', KHÔNG phải 'sạch'. Chạy: python tools/so_xac_minh_nguon.py "
                     "--quet <file> [--vong 3]" % (len(_pv["co"]), len(_ids), len(_chua), ", ".join(_chua[:4]), _nen))
-            elif _ids and not _rw:
+            elif _ids and not da_rut:
+                # `not da_rut` (vá #2, 26/09/2026): KHÔNG in ✓ «không thấy dương tính» khi bất kỳ tầng nào (sổ, nền
+                # ngoại tuyến theo PMID/DOI) vừa phát dương tính — bản cũ in ✓ ngay cạnh lỗi EoC/rút bài của sổ.
                 oks.append("Rút bài: %d/%d định danh có dấu vết kiểm CÒN HẠN trong sổ (hoặc đã đối chiếu nền ngoại "
                            "tuyến) — không thấy dương tính chưa xử lý." % (len(_ids), len(_ids)))
         except Exception as e:
-            warns.append("Chưa nêu được phạm vi kiểm rút bài (%s) — 'chưa biết', KHÔNG phải 'sạch'." % e)
+            if _loi_so_hong and isinstance(e, _loi_so_hong):
+                _bao_so_hong(e)
+            else:
+                warns.append("Chưa nêu được phạm vi kiểm rút bài (%s) — 'chưa biết', KHÔNG phải 'sạch'." % e)
 
     if not da_rut:
         # Cố ý KHÔNG ghi vào oks: sổ không có bản ghi dương tính có thể chỉ vì chưa

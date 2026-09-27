@@ -407,6 +407,12 @@ Cổng liêm chính KHÔNG đạt thì vẫn xuất file nhưng bản Word tự 
   `gradeLevel:'na'` vì nguồn không dùng thang GRADE) thì khai `normativeBasis`, **KHÔNG hạ** `decision`
   (hạ một chống chỉ định hay liều theo CrCl xuống "cân nhắc" là làm GIẢM an toàn); chứng cứ **yếu thật**
   thì HẠ `decision` xuống `consider`/`notyet`. **TUYỆT ĐỐI không nâng `gradeLevel`.**
+  **«Chỉ dựa Consensus» là cả HỌ ĐỒNG THUẬN (vá 26/09/2026):** mọi `design` BẮT ĐẦU bằng `consensus`
+  hoặc `đồng thuận` — bất kể hoa/thường, có hậu tố hay không (`consensus`, `Consensus statement`,
+  `Đồng thuận chuyên gia`, `Đồng thuận đa hội (expert consensus)`…) — đi kèm `apply` đều bị CHẶN, kể cả
+  khi `gradeLevel` là `mod`/`high` và đã khai `gradeBy`. Đừng đổi cách viết `design` để lách; nguồn thật
+  là guideline/nhãn thuốc thì sửa `design` cho ĐÚNG loại nguồn, còn đồng thuận thật thì HẠ `decision`
+  (agent chỉ ĐỀ XUẤT, bác sĩ duyệt). `design` như `Guideline (dựa đồng thuận)` vẫn thuộc họ guideline.
 - Thiếu `DATA.standards` ⇒ chỉ **CẢNH BÁO**, vẫn xuất. Nhưng **dashboard MỚI phải luôn khai
   `DATA.standards`** — bỏ trống là tự đánh mất hợp đồng nguồn của chính lần tìm kiếm vừa làm.
 

@@ -33,7 +33,8 @@ Dùng:
     python tools/kiem_phan_hang.py --tat-ca     # cả mục không phải apply
     python tools/kiem_phan_hang.py --file F     # một dashboard
 
-Mã thoát: 0 = mọi mục có gradeLevel đều đã khai `gradeBy` · 1 = còn mục chưa khai.
+Mã thoát: 0 = mọi mục có gradeLevel đều đã khai `gradeBy` · 1 = còn mục chưa khai · 2 = KHÔNG KIỂM ĐƯỢC
+(0 dashboard / thiếu verify_dashboard.py trên máy này).
 """
 from __future__ import annotations
 
@@ -51,12 +52,14 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
 
 import importlib.util as _ilu_kph  # noqa: E402
 _sp_kph = _ilu_kph.spec_from_file_location("_bst_kph", Path(__file__).resolve().parent / "ban_sao_tran.py")
 _bst_kph = _ilu_kph.module_from_spec(_sp_kph)
 _sp_kph.loader.exec_module(_bst_kph)
+
+# VÁ 26/09/2026 (phát hiện #17): dò cả bố cục ANH EM, không chỉ bố cục lồng.
+DASH = _bst_kph.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 # CHỈ để xếp thứ tự việc cho người đọc — KHÔNG phải căn cứ của cổng.
 TU_CHAM = ("đa trung tâm", "mù đôi", "mù người đánh giá", "chất lượng cao", "nhãn mở",
@@ -102,8 +105,16 @@ def main() -> int:
         if not a.im_khi_on:
             print("⚪ Không tìm thấy verify_dashboard.py ở EBM-Dashboards/tools/ lẫn bản "
                   "git-vendor — không dò được trên máy này.")
-        return 0
+        return 2
     files = [Path(a.file)] if a.file else sorted(DASH.glob("WebDashboard_*.html"))
+    if not a.file and not files:
+        # RÀO «0 DASHBOARD» (vá 26/09/2026, phát hiện #17): bản cũ in «🟢 Mọi mức chứng cứ đều truy được về một tổ
+        # chức đã chấm» + thoát 0 khi chưa đọc một dashboard nào. Không đo được ⇒ ⚪ + mã 2 (kể cả dưới
+        # --im-khi-on: im lặng nhưng vẫn không trả 0).
+        if not a.im_khi_on:
+            print(f"⚪ Không kiểm được trên máy này: 0 dashboard ở {DASH} — CHƯA soi được phân hạng, KHÔNG "
+                  "phải «mọi mức đều truy được».")
+        return 2
     thieu: list[tuple] = []
     tong_co_muc = 0
     for f in files:

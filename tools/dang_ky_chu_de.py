@@ -36,7 +36,8 @@ Dùng:
     python tools/dang_ky_chu_de.py              # bảng chủ đề + mâu thuẫn
     python tools/dang_ky_chu_de.py --mau-thuan  # chỉ liệt kê mâu thuẫn
 
-Mã thoát: 0 = không mâu thuẫn · 1 = có mâu thuẫn cần bác sĩ quyết.
+Mã thoát: 0 = không mâu thuẫn · 1 = có mâu thuẫn cần bác sĩ quyết · 2 = KHÔNG KIỂM ĐƯỢC (0 dashboard /
+thiếu công cụ trên máy này — không phải «không có mâu thuẫn»).
 """
 from __future__ import annotations
 
@@ -62,12 +63,14 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
 
 import importlib.util as _ilu_dkcd  # noqa: E402
 _sp_dkcd = _ilu_dkcd.spec_from_file_location("_bst_dkcd", Path(__file__).resolve().parent / "ban_sao_tran.py")
 _bst_dkcd = _ilu_dkcd.module_from_spec(_sp_dkcd)
 _sp_dkcd.loader.exec_module(_bst_dkcd)
+
+# VÁ 26/09/2026 (phát hiện #17): dò cả bố cục ANH EM (repo.parent/EBM-Dashboards), không chỉ bố cục lồng.
+DASH = _bst_dkcd.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 
 # Hậu tố mô tả "lát cắt" của cùng một chủ đề (bệnh kèm, đối tượng, tiên lượng…).
 # Bỏ chúng đi để gom về chủ đề gốc.
@@ -373,12 +376,22 @@ def main() -> int:
     ap.add_argument("--mau-thuan", action="store_true", help="chỉ in phần mâu thuẫn")
     a = ap.parse_args()
 
-    # Thiếu nguyên liệu (bản sao trần) → in một dòng rõ nghĩa, thoát 1 — không traceback.
+    # Thiếu nguyên liệu (bản sao trần) → in một dòng rõ nghĩa, thoát 2 «không kiểm được» — không traceback.
     try:
         vd, theo_lat_cat, theo_goc = quet_kho()
     except FileNotFoundError as e:
         print(e)
-        return 1
+        return 2
+
+    # RÀO «0 DASHBOARD» — vá 26/09/2026 (phát hiện #17). Từ khi nap_vd() lùi về bản git-vendor (08/09), nhánh
+    # FileNotFoundError ở trên gần như không bao giờ chạy nữa, trong khi dữ liệu vẫn vắng: glob trả rỗng và công cụ
+    # in «🟢 KHÔNG có mục nào hai bản nói ngược nhau» + thoát 0 dù CHƯA SO một dashboard nào — xanh giả về chính
+    # điều bác sĩ cần biết. Rào đặt Ở ĐÂY (main), KHÔNG trong quet_kho(): canary thu_dau_cuoi, bản đọc và bộ chốt
+    # gọi quet_kho() với dash riêng trong cùng tiến trình.
+    if sum(len(v) for v in theo_lat_cat.values()) == 0:
+        print(f"⚪ Không kiểm được trên máy này: 0 dashboard ở {DASH} — CHƯA so được, KHÔNG phải "
+              "«không có mâu thuẫn». Chạy trên máy có đủ cây OneDrive.")
+        return 2
 
     # (1) PHIÊN BẢN NỐI TIẾP — cùng lát cắt, khác ngày. Đây mới là "bản cũ bị thay".
     nhieu_phien_ban = {k: sorted(v) for k, v in theo_lat_cat.items() if len(v) > 1}
