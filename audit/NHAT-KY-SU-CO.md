@@ -3254,3 +3254,32 @@ Hidradenitis suppurativa) đã có thể leo thang ngay lượt 28/09. **Vá:** 
 lấp; `year_min` của Consensus gói Free CHƯA xác minh — nếu không được phép sẽ 403 `tinh_nang_khong_cho_phep` (lỗi chốt, hoàn
 lượt cục bộ, SerpApi vẫn chạy). **Kiểm:** test đường thật run_scan → làn → `bo_sung_fn` + BH118; 3 đột biến (làn không truyền ·
 run_scan không truyền `days` · cửa sổ sai) đều đỏ ở cả hai; 105 test scanner đạt.
+
+### 27/09/2026 (chiều) — Cảm biến «commit chưa đẩy» chỉ nhìn nhánh đang đứng (BH119)
+`tu_de_xuat_viec.py` đếm `git rev-list --count @{u}..HEAD`: nhánh đang đứng đã đẩy (hoặc chưa có upstream ⇒ git lỗi ⇒
+đếm thành 0) thì báo «0 commit chưa đẩy». Đo cùng ngày: 8 nhánh cục bộ của repo gốc (06–17/09, của các phiên khác) giữ
+20 commit KHÔNG có trên remote nào — sáng 27/09 chính repo gốc còn đứng ở một nhánh chưa đẩy mà không cảm biến nào báo.
+**Vá:** `dem_commit_chua_co_tren_remote()` — `rev-list --branches --not --remotes` + đỉnh nhánh (đúng 2 lượt gọi git);
+git lỗi ⇒ None «không đo được», không phải 0; khối ⑦c báo số commit + tên nhánh. **Xử lý dữ liệu:** bác sĩ duyệt ⇒ đẩy 8
+bản sao `rescue/<nhánh>` lên GitHub (repo CÔNG KHAI — đã soát 3.846 dòng thêm: 0 khoá/token, 0 đường dẫn máy, 0 SĐT);
+không xoá nhánh/worktree nào. Theo patch-id 14/19 commit chưa có tương đương trong master — phải so theo CHỨC NĂNG trước khi
+dọn. **Bẫy zsh:** `"$b:refs/heads/…"` bị hiểu là bộ biến đổi `:r` ⇒ refspec méo, push hỏng hết — viết `${b}:`.
+**Kiểm:** 3 test repo tạm + BH119; 4 đột biến đều đỏ (M3 «main() thôi gọi hàm» chỉ BH119 bắt — đúng thiết kế).
+
+### 27/09/2026 (chiều) — «Phủ sổ xác minh: 125 mục» đứng yên dù chạy đúng lệnh được gợi ý (BH120)
+`tu_de_xuat_viec` gợi `so_xac_minh_nguon.py --vong 3`; chạy thật: +220 định danh MỚI từ dashboard (phạm vi dashboard
+1606/1612) nhưng toàn sổ vẫn đúng 125 mục chưa/hết hạn — lệnh đó chỉ tái kiểm định danh gom từ dashboard, còn 125 mục là
+bản ghi MỒ CÔI do cầu NC⇄LS/hub tạo trần (62 chưa kiểm rút bài + 63 không có ngày xác minh). `--phu-mo-coi` (có từ 16/08)
+xử lý đúng nhóm đó: +125 xác minh, 0 sót, kiểm rút bài 105 PMID — nhưng KHÔNG quy trình nào gọi nó (họ BH41: công cụ có mà
+không ai gọi thì như không có). **Vá:** `chu_trinh_chung_cu.py` chế độ đầy đủ chạy `--phu-mo-coi` SAU lượt quét dashboard
+(chỉ khi có EBM-Dashboards và lượt quét không «không đo được»; `--nhanh` không gọi mạng); lời gợi ý của `tu_de_xuat_viec`
+đổi sang cặp lệnh đủ phạm vi. **Kiểm:** 3 test (subprocess giả) + BH120; 4 đột biến đều đỏ ở BH120 (M3 «gợi ý mất
+`--phu-mo-coi`» chỉ BH120 bắt — đúng thiết kế).
+**Bổ sung cùng ngày (BH121):** sau lượt phủ mồ côi còn 29 bản ghi hub-only mà chính `--quet-ledger` vừa TẠO (có phán
+quyết rút bài, chưa có ngày xác minh); chạy lại phủ mồ côi thì 10 DOI rơi về «chưa kiểm rút bài lần nào» — `--phu-mo-coi`
+thay nguyên bản ghi bằng kết quả `xac_minh_mot()` (chỉ xác minh TỒN TẠI) nên mất `kiem_rut_luc`/`ghi_chu_rut` (PMID được kiểm
+lại ngay, DOI thì không) ⇒ sổ không bao giờ hội tụ. **Vá:** giữ hai trường đó khi bản ghi mới không có (mục dương tính không
+vào nhánh này); chu trình chạy quét dashboard → `--quet-ledger` → `--phu-mo-coi` (hub cũng chưa quy trình nào gọi). **Kết
+quả sống 27/09:** toàn sổ 1581/1710 (92%, 125 thiếu) → 1955/1959 (99%, **0** thiếu); 4 mục còn lại là trạng thái đã biết (2
+đã rút · 1 rút-và-thay · 1 bản ghi cũ không ai trích); 5 DOI hub Crossref chưa kết luận ⇒ giữ KHÔNG BIẾT. **Kiểm:** 2 test sổ
+tạm + BH121; 3 đột biến (bỏ giữ phán quyết · bỏ lượt hub · đảo thứ tự) đều đỏ.

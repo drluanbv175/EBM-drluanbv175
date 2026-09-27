@@ -1376,6 +1376,13 @@ def _chay_lenh(a) -> int:
                     continue
                 # GIỮ liên kết cũ (NC:*/dashboard) — xác minh không được xoá dấu chân
                 bg_moi["cac_dashboard"] = muc[khoa].get("cac_dashboard", [])
+                # GIỮ phán quyết rút bài đã có (vá 27/09/2026): xac_minh_mot chỉ xác minh TỒN TẠI; thay nguyên bản ghi làm
+                # mất `kiem_rut_luc`/`ghi_chu_rut` mà `--quet-ledger` vừa ghi cho DOI chỉ-có-trong-hub ⇒ mục quay về «chưa
+                # kiểm rút bài lần nào» (đo 27/09: 10 DOI) và sổ không bao giờ hội tụ. PMID được kiểm lại ngay bên dưới,
+                # DOI thì không. Mục dương tính (`da_rut`) không bao giờ vào nhánh này.
+                for truong in ("kiem_rut_luc", "ghi_chu_rut"):
+                    if truong in muc[khoa] and truong not in bg_moi:
+                        bg_moi[truong] = muc[khoa][truong]
                 muc[khoa] = bg_moi
                 thanh += 1
                 if thanh % 25 == 0:

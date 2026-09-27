@@ -62,6 +62,11 @@ REPO = Path(__file__).resolve().parents[1]
 PY = sys.executable
 
 
+def _co_dashboard_that() -> bool:
+    """Máy có EBM-Dashboards thật (nơi `so_xac_minh_nguon` tìm sổ + bộ xác minh của cổng) hay không."""
+    return (REPO / "EBM-Dashboards" / "tools" / "verify_dashboard.py").exists()
+
+
 def chay(cmd: list[str], tieu_de: str) -> tuple[int, str]:
     print("\n" + "─" * 68)
     print(f"  {tieu_de}")
@@ -118,6 +123,19 @@ def main() -> int:
     else:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--vong", str(a.vong)],
                        f"③④ Xác minh nguồn + tra rút bài ({a.vong} vòng)")
+        # ③a/③b PHỦ BẢN GHI MỒ CÔI (vá 27/09/2026): `--vong` chỉ tái kiểm định danh gom TỪ DASHBOARD; bản ghi do cầu NC⇄LS/hub
+        # tạo trần (không ngày xác minh) không bao giờ được chạm ⇒ «Chưa/hết hạn» của TOÀN sổ đứng yên dù chu trình chạy
+        # đều (đo 27/09: `--vong 3` thêm 220 mục mới, 125 mục cũ vẫn nguyên; `--phu-mo-coi` nhắm đúng 125 mục đó). Công cụ
+        # có sẵn từ 16/08 nhưng không quy trình nào gọi (BH41). Bản sao trần/Cloud (mã 3) đã có dòng ⚪ ở trên — bỏ qua.
+        # Mã thoát của lượt này KHÔNG thay phán quyết ③④ — phán quyết vẫn đọc từ lượt quét dashboard.
+        # Thứ tự để sổ HỘI TỤ trong một lượt: quét hub (`--quet-ledger`: phán quyết rút bài cho định danh chỉ-có-trong-hub,
+        # có thể TẠO bản ghi chưa có ngày xác minh) rồi mới phủ mồ côi (xác minh tồn tại cho mọi PMID/DOI còn thiếu, kể cả
+        # bản ghi hub vừa tạo). `--quet-ledger` cũng chưa quy trình nào gọi ⇒ phán quyết rút bài của thẻ hub hết hạn lặng lẽ.
+        if _co_dashboard_that() and rc != 3:
+            chay([PY, "tools/so_xac_minh_nguon.py", "--quet-ledger", "--vong", str(a.vong)],
+                 f"③a Rút bài cho định danh chỉ-có-trong-hub ({a.vong} vòng)")
+            chay([PY, "tools/so_xac_minh_nguon.py", "--phu-mo-coi", "--vong", str(a.vong)],
+                 f"③b Phủ bản ghi mồ côi của sổ ({a.vong} vòng)")
     khong_do_duoc = (rc == 3 or "KHONG_DO_DUOC" in out
                      # chuỗi của bản so_xac_minh_nguon CŨ (trả 2/1 cho hai ca này) — vẫn phải ra ⚪, không ra 🔴
                      or "Không thấy dashboard nào khớp" in out or "Sổ trống" in out)
