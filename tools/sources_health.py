@@ -239,7 +239,10 @@ def main() -> int:
 
     if ghi_so:
         du["updated"] = hom_nay.isoformat()
-        SO.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        # Thụt lề 2 + LF: đúng định dạng MỌI commit của sổ (vá 27/09/2026 — thụt lề 1 làm mỗi lượt
+        # viết lại ~830/833 dòng; cùng lỗi ở giam_sat_to_chuc.py::_ghi_so_nguon).
+        SO.write_text(json.dumps(du, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+                      newline="\n")
     if khong_do:
         print(f"⚪ {len(khong_do)} nguồn KHÔNG ĐO ĐƯỢC — proxy môi trường từ chối theo chính sách "
               f"(request chưa tới nguồn, trạng thái giữ nguyên): {', '.join(khong_do)}")
