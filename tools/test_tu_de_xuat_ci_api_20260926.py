@@ -1,6 +1,11 @@
 """Cảm biến CI của `tu_de_xuat_viec.py` lùi về GitHub REST API khi máy không có `gh` — 26/09/2026.
 
 Ngoại tuyến: `urlopen` giả, remote git dựng trong thư mục tạm.
+
+CẬP NHẬT HỢP ĐỒNG cùng ngày (mục #9, không phải nới test): `doc_ci_qua_api` nay nhận thêm tham số
+`nhanh` và URL mang `branch=` — không lọc nhánh thì run xanh của nhánh `claude/*` che nhánh mặc định
+đỏ. Assertion URL chính xác được sửa cho đúng hợp đồng mới; payload giả mang `head_branch` khớp nhánh.
+Test hồi quy riêng của phần lọc nhánh: test_tu_de_xuat_viec_20260926_ci_nhanh_mac_dinh.py.
 """
 from __future__ import annotations
 
@@ -58,10 +63,12 @@ def test_suy_owner_repo_moi_kieu_remote(tmp_path, url):
 
 def test_doc_phan_quyet_dung_workflow(tmp_path):
     bat: list[str] = []
-    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml",
-                          urlopen=_gia({"workflow_runs": [{"conclusion": "failure"}]}, bat))
+    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml", "master",
+                          urlopen=_gia({"workflow_runs": [{"conclusion": "failure",
+                                                           "head_branch": "master"}]}, bat))
     assert kq == "failure"
-    assert bat == ["https://api.github.com/repos/chu/kho/actions/workflows/ci.yml/runs?status=completed&per_page=1"]
+    assert bat == ["https://api.github.com/repos/chu/kho/actions/workflows/ci.yml/runs"
+                   "?status=completed&per_page=1&branch=master"]
     assert M._GIAC_QUAN_CHET == [] and M._SO_GIAC_QUAN["chay"] == 1
 
 
@@ -69,8 +76,9 @@ def test_chi_hoi_run_da_hoan_tat_khong_bi_run_dang_chay_che(tmp_path):
     """Vừa push/merge thì run mới nhất đang chạy (conclusion=null) — cảm biến phải đọc run XONG gần
     nhất, không báo 🟡 «rỗng» giả."""
     bat: list[str] = []
-    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml",
-                          urlopen=_gia({"workflow_runs": [{"conclusion": "success"}]}, bat))
+    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml", "master",
+                          urlopen=_gia({"workflow_runs": [{"conclusion": "success",
+                                                           "head_branch": "master"}]}, bat))
     assert kq == "success" and "status=completed" in bat[0]
 
 
@@ -82,6 +90,7 @@ def test_duong_gh_cung_loc_run_da_hoan_tat():
 
 @pytest.mark.parametrize("payload", [OSError("mang"), {"workflow_runs": []}])
 def test_khong_doc_duoc_la_khong_do_duoc_khong_bao_gio_success(tmp_path, payload):
-    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml", urlopen=_gia(payload))
+    kq = M.doc_ci_qua_api(_repo(tmp_path, "https://github.com/chu/kho"), "ci.yml", "master",
+                          urlopen=_gia(payload))
     assert kq == ""
     assert len(M._GIAC_QUAN_CHET) == 1                   # bảng không được in xanh

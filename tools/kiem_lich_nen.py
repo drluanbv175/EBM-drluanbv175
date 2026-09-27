@@ -17,7 +17,13 @@ Sổ khai kỳ vọng: `sync/lich-nen-ky-vong.json` (đi qua git). Python không
 
 Mức: 🔴 (0) kỳ gần nhất LỠ hẳn (không dấu vết) · 🟠 (1) chỉ có lượt trễ/chạy bù ngoài hạn (lịch không nổ đúng hẹn)
 · 🟡 (2) kỳ cũ hơn đã lỡ nhưng kỳ sau đã chạy lại (còn trong cửa sổ).
-Mã thoát: 0 = mọi kỳ đến hạn đều có dấu vết đúng hẹn · 1 = có 🔴/🟠.
+Mã thoát: 0 = mọi kỳ đến hạn đều có dấu vết đúng hẹn (hoặc KHÔNG đo được kỳ nào — tiêu đề ⚪) · 1 = có 🔴/🟠.
+
+26/09/2026 (#35): khi KHÔNG tác vụ nào đo được (ok == 0), tiêu đề là ⚪ «không đo được», không
+còn «🟢 Mọi kỳ … đúng hẹn (0 tác vụ có dấu vết)» — đúng mà rỗng, xanh giả. CỐ Ý KHÔNG dò log ở
+repo y khoa ANH EM: bộ lập lịch chỉ sống trên Mac (bố cục lồng), log ở bản anh em trên Cloud chỉ
+chứa lượt chạy tay ⇒ đọc nó sẽ báo «kỳ không nổ đúng hẹn» cho nhầm máy (đỏ giả). Mã thoát giữ 0:
+`tu_khoi_dong._canh_lich_nen` coi mọi mã ngoài {0,1} là «cảm biến lỗi».
 """
 from __future__ import annotations
 
@@ -138,11 +144,11 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
     return ra
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Cảm biến người chết cho lịch nền")
     ap.add_argument("--im-khi-on", action="store_true", help="không in gì khi mọi kỳ đến hạn đều có dấu vết")
     ap.add_argument("--json", action="store_true")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     kq = kiem()
     if a.json:
         print(json.dumps(kq, ensure_ascii=False, indent=2))
@@ -151,7 +157,13 @@ def main() -> int:
         return 1 if hong else 0
     if not kq["phat_hien"]:
         if not a.im_khi_on:
-            print(f"🟢 Mọi kỳ lịch nền đến hạn đều có dấu vết đúng hẹn ({kq['ok']} tác vụ có dấu vết).")
+            if kq["ok"] == 0:
+                # Không tác vụ nào đo được ⇒ không có gì để gọi là «đúng hẹn» (BH08).
+                print("⚪ Lịch nền: KHÔNG đo được kỳ nào trên máy này"
+                      + ("" if kq["khong_do_duoc"] else " (chưa có kỳ nào đến hạn)")
+                      + " — không phải bằng chứng lịch đang nổ đúng hẹn, cũng không phải lỡ kỳ.")
+            else:
+                print(f"🟢 Mọi kỳ lịch nền đến hạn đều có dấu vết đúng hẹn ({kq['ok']} tác vụ có dấu vết).")
             for x in kq["khong_do_duoc"]:
                 print(f"   ⚪ {x}")
         return 0
