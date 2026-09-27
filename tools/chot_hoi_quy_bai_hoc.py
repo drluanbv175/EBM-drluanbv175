@@ -6960,6 +6960,38 @@ def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
     return True, ""
 
 
+def bh116_so_nguon_ghi_dung_dinh_dang_git():
+    """27/09 — `sources_health.py` và `giam_sat_to_chuc.py` ghi `data/sources.json` thụt lề 1 trong khi MỌI commit của
+    sổ thụt lề 2 ⇒ lượt đo trạm 25/09 thành diff 834 dòng chưa commit, chặn chuyển nhánh (phải cất stash). Kiểm DÒNG
+    THI HÀNH bằng cây cú pháp: mọi lệnh ghi sổ phải thụt lề 2 + newline LF; và bản sổ đang có phải đúng định dạng đó."""
+    import ast as _ast
+    import json as _json
+    for ten_tep, ten_so in (("sources_health.py", "SO"), ("giam_sat_to_chuc.py", "SO_NGUON")):
+        cay = _ast.parse((REPO / "tools" / ten_tep).read_text(encoding="utf-8"))
+        ghi = [n for n in _ast.walk(cay) if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Attribute)
+               and n.func.attr == "write_text" and isinstance(n.func.value, _ast.Name) and n.func.value.id == ten_so]
+        if not ghi:
+            return False, f"không thấy lệnh ghi {ten_so} trong {ten_tep} — chốt đang đo nhầm chỗ"
+        for n in ghi:
+            dumps = [c for c in _ast.walk(n) if isinstance(c, _ast.Call) and getattr(c.func, "attr", "") == "dumps"]
+            indent = {k.arg: getattr(k.value, "value", None) for k in (dumps[0].keywords if dumps else [])}.get("indent")
+            nl = {k.arg: getattr(k.value, "value", None) for k in n.keywords}.get("newline")
+            if indent != 2 or nl != "\n":
+                return False, (f"{ten_tep}:{n.lineno} ghi sổ nguồn indent={indent}, newline={nl!r} — lệch định dạng git "
+                               "(thụt lề 2 + LF) ⇒ mỗi lượt viết lại cả tệp")
+    so = REPO / "data" / "sources.json"
+    if so.exists():
+        raw = so.read_bytes()
+        try:
+            dung = b"\r" not in raw and raw.decode("utf-8") == _json.dumps(
+                _json.loads(raw), ensure_ascii=False, indent=2) + "\n"
+        except ValueError:
+            return False, "data/sources.json không đọc được như JSON"
+        if not dung:
+            return False, "data/sources.json đang lệch định dạng (thụt lề 2 + LF) — công cụ nào vừa ghi bằng định dạng khác?"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7083,6 +7115,7 @@ BAI_HOC = [
     ("BH114", "21/09", "Bốn cổng không xanh khi CHƯA ĐO: bản lỗi HTTP-200, sổ rút bài im lặng, kiem_so_lieu hỏng/mẫu, gradeLevel máy gán", bh114_cong_khong_xanh_khi_chua_do),
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
+    ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

@@ -47,6 +47,19 @@ SO_NGUON = GOC / "data" / "sources.json"
 STATE = GOC / "state" / "giam-sat-to-chuc.json"
 RA = GOC / "EBM-Dashboards" / "surveillance"
 
+
+def _ghi_so_nguon(du: dict) -> None:
+    """Ghi sổ nguồn đúng ĐỊNH DẠNG của bản trong git: thụt lề 2, xuống dòng LF.
+
+    Vá 27/09/2026: hai công cụ ghi sổ này (tệp này và `sources_health.py`) từng ghi thụt lề 1,
+    trong khi MỌI commit của `data/sources.json` đều thụt lề 2 ⇒ mỗi lượt chạy viết lại ~830/833
+    dòng dù chỉ đổi vài giá trị: diff không đọc được, chặn chuyển nhánh (bản đo 25/09 phải cất
+    stash ngày 27/09) và dễ xung đột khi hợp nhất. `newline="\\n"` để máy Windows không ghi CRLF.
+    """
+    SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=2) + "\n",
+                        encoding="utf-8", newline="\n")
+
+
 # Tiêu đề «đáng giá»: có năm 20xx HOẶC từ khoá guideline/report/update/statement.
 RE_TIEU_DE = re.compile(
     r"(?:20\d{2}|guideline|report|update|standards|statement|recommendation)", re.I)
@@ -436,8 +449,7 @@ def _nap_van_ban(sid: str, duong_dan: str) -> int:
                           "so_tieu_de_luc_do": so_tieu_de_tong}
         da_bat = True
     du["updated"] = date.today().isoformat()
-    SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n",
-                        encoding="utf-8")
+    _ghi_so_nguon(du)
 
     phat_hien = [f"- **{s['org']}** · phát hiện {date.today().isoformat()} · "
                  f"source.type=guideline · «{t}» — [CẦN KIỂM CHỨNG] đối chiếu "
@@ -496,8 +508,7 @@ def main() -> int:
                 sao_luu.write_text(SO_NGUON.read_text(encoding="utf-8"),
                                    encoding="utf-8")
                 du["updated"] = date.today().isoformat()
-                SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1)
-                                    + "\n", encoding="utf-8")
+                _ghi_so_nguon(du)
                 print(f"🟢 Đã BẬT {len(bat)} trạm: {', '.join(bat)} "
                       f"(sao lưu: {sao_luu.name})")
             else:
@@ -550,8 +561,7 @@ def main() -> int:
     # sẽ lặng lẽ vứt các đánh dấu vừa đặt, tức «nguồn hỏng im lặng» ngay trong
     # công cụ chống nguồn-hỏng-im-lặng.
     du["updated"] = date.today().isoformat()
-    SO_NGUON.write_text(json.dumps(du, ensure_ascii=False, indent=1) + "\n",
-                        encoding="utf-8")
+    _ghi_so_nguon(du)
     f = _ghi_ung_vien(phat_hien)
     if f:
         print(f"🟠 {len(phat_hien)} tiêu đề mới → {_duong_dan_hien_thi(f)}")

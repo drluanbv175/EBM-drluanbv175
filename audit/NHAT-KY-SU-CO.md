@@ -3205,3 +3205,19 @@ App Claude thả `google-workspace` (skill hướng dẫn connector Google Drive
 SKILL.md trước khi «cứu» — skill dựng sẵn thì khai, KHÔNG chép (chép là trộn mã của Anthropic vào cây skill riêng của bác sĩ).
 **Kiểm:** bỏ khai báo ⇒ ③ đỏ kèm dòng nhắc, mã 1; trả lại ⇒ 🟢, mã 0. Giữ thiết kế KHAI BÁO tường minh (BH28): skill lạ thật
 sự không nguồn vẫn phải đỏ.
+
+### 27/09/2026 — `data/sources.json`: công cụ ghi thụt lề 1, mọi commit thụt lề 2 ⇒ mỗi lượt đo viết lại cả tệp (BH116)
+Lượt đo trạm ngày 25/09 (chưa commit) thành diff 834 dòng dù chỉ đổi 10 giá trị, chặn việc chuyển nhánh ngày 27/09 (phải cất
+stash). Nguyên nhân: `sources_health.py` và `giam_sat_to_chuc.py` ghi `json.dumps(indent=1)`, còn mọi commit của sổ thụt lề 2.
+**Vá:** cả hai ghi thụt lề 2 + `newline="\n"` (máy Windows không ghi CRLF); `giam_sat_to_chuc.py` gom 3 chỗ ghi vào
+`_ghi_so_nguon()`. **Đo lại sống 27/09 trên Mac:** 30 active · 3 degraded (ACC/AHA, Semantic Scholar, Wiley TDM — đã biết từ
+trước). 4 trạm bản 25/09 ghi `degraded` (Europe PMC, openFDA, OpenAlex, NICE) nay đều active ⇒ trạng thái 25/09 là trục trặc
+nhất thời; diff sổ còn 10 dòng. Mọi trường bản 25/09 đổi đều đã có giá trị mới bằng/hơn ⇒ bỏ stash; bản sao nguyên byte ở
+`~/ebm-backup-truoc-dong-bo-20260927/` trên Mac. **Kiểm:** `tools/test_so_nguon_dinh_dang_20260927.py` (5 ca; 4 đột biến đỏ
+đúng chỗ) + BH116 (2 đột biến); trọn bộ chốt 116 ✓.
+
+### 27/09/2026 — OneDrive TẢI LẠI tệp mà `git switch` vừa gỡ
+Chuyển từ nhánh cũ về `master`, git gỡ 2 tệp chỉ có trên nhánh; ~16 phút sau OneDrive tải chúng về lại (untracked, trùng byte,
+giữ mtime cũ) và chặn `git merge` («untracked working tree files would be overwritten»). Xử lý: so byte với
+`git show <nhánh>:<tệp>`, trùng thì DỜI ra thư mục sao lưu ngoài OneDrive (không xoá) rồi làm tiếp. Sau mỗi lần chuyển nhánh
+trong cây OneDrive, soi lại `git status` sau ít phút.
