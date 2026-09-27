@@ -53,8 +53,8 @@ AG = REPO / ".claude" / "agents"
 # (BH28): skill lạ mới xuất hiện ở runtime mà không nguồn → vẫn ĐỎ, đúng như cần.
 SKILL_DUNG_SAN = {
     "algorithmic-art", "brand-guidelines", "canvas-design", "consolidate-memory",
-    "doc-coauthoring", "docs", "docx", "explain-usage", "import-memory", "internal-comms",
-    "learn", "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude",
+    "doc-coauthoring", "docs", "docx", "explain-usage", "google-workspace", "import-memory",
+    "internal-comms", "learn", "mcp-builder", "morning", "pdf", "pptx", "schedule", "setup-claude",
     "setup-cowork", "skill-creator", "slack-gif-creator", "theme-factory",
     "web-artifacts-builder", "xlsx",
 }
@@ -75,6 +75,10 @@ SKILL_DUNG_SAN = {
 # thả vào ngày 17/09/2026, SKILL.md chỉ có ~1 KB tiếng Anh và tự khai "Everything about docs is
 # served by the docs connector" (skill mỏng trỏ sang connector Claude Docs), KHÔNG phải nội dung
 # bác sĩ tự viết cần cứu về sync/skills/. Cùng loại với setup-claude/setup-cowork ở trên.
+# "google-workspace" thêm 27/09/2026 (BH44 tái phát lần 4) — kiểm trực tiếp runtime: thư mục do
+# app Claude thả vào lúc 09:08 ngày 27/09, SKILL.md tiếng Anh tự khai "Read this before the first
+# Google Drive, Docs, Sheets or Slides connector call" — skill hướng dẫn connector Google của
+# Anthropic, cùng họ với "docs". Công cụ gợi ý `cp -R` vào sync/skills/ là SAI hướng: không cứu.
 # Tên chỉ còn trong GHI CHÚ LỊCH SỬ về routine đã RETIRE / taskId đã đính chính —
 # doctrine tự ghi rõ chúng "không tồn tại" (xem _BAN-DO-KET-NOI.md dòng 104,
 # _LO-TRINH-HA-TANG.md dòng 22). Không phải điều phối hỏng; xoá chúng khỏi ghi chú
@@ -171,6 +175,9 @@ def main() -> int:
         print("     và dong_bo_skill.py không biết chúng tồn tại:")
         for t in khong_nguon:
             print(f"   · {t}   → cứu: cp -R \"<runtime>/{t}\" sync/skills/")
+        # 4 lần báo giả (09/09 · 17/09 · 20/09 · 27/09) đều là skill DỰNG SẴN app vừa thả vào.
+        print("     ⚠ Trước khi cứu: đọc SKILL.md của nó. Skill dựng sẵn của Anthropic (app vừa thả vào,")
+        print("       mô tả tiếng Anh, thường trỏ sang connector) thì KHÔNG chép — khai vào SKILL_DUNG_SAN.")
     elif rt_path:
         print(f"  ✓ ③ {len(rt)} skill runtime đều có nguồn")
 
