@@ -6992,6 +6992,98 @@ def bh116_so_nguon_ghi_dung_dinh_dang_git():
     return True, ""
 
 
+def bh117_du_phong_tinh_phi_chi_leo_thang_khi_can():
+    """27/09 — bậc thang dự phòng Consensus → SerpApi của vòng quét tuần (thêm 22/09) leo thang ở MỌI chủ đề: cổng
+    đủ-chứng-cứ của engine chấm bản ghi scanner (không mang loại xuất bản) ra tier C, điểm 0–6 ⇒ luôn «thiếu»; leo
+    thang cả khi NCBI đang lỗi; gửi TÊN chủ đề tiếng Việt cho nguồn tiếng Anh. Lượt tuần 28/09 là lượt ĐẦU có làn này,
+    khi trần Consensus tháng 9 chỉ còn 4 lượt. Kiểm HÀNH VI `run_scan` của bản chuẩn, ngoại tuyến (khoá socket như BH113,
+    làn dự phòng là hàm theo dõi; chủ đề nạp qua `load_watchlist`): NCBI lỗi · đủ bài mạnh · tên tiếng Việt không có
+    `truy_van_du_phong` ⇒ KHÔNG gọi; có truy vấn tiếng Anh mà thiếu bài mạnh ⇒ gọi bằng ĐÚNG truy vấn đó (chặn cả chiều
+    «khoá chết» làn dự phòng)."""
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH117 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    try:
+        ok, ct = _bh117_than()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return ok, ct
+
+
+def _bh117_than():
+    """Thân của BH117 — xem docstring `bh117_du_phong_tinh_phi_chi_leo_thang_khi_can`."""
+    import importlib.util as _iu
+    sp = _iu.spec_from_file_location("_bh117_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp); sys.modules["_bh117_ss"] = S; sp.loader.exec_module(S)
+    for ten in dir(S):
+        if ten.endswith("_lane") and ten != "bo_sung_du_phong_lane" and callable(getattr(S, ten)):
+            setattr(S, ten, lambda *a, **k: [])
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._pmid_da_co_trong_kho = lambda: set()
+    da_goi: list = []
+
+    def theo_doi(truy_van, _unique, _retmax, **_kw):
+        da_goi.append(truy_van)
+        return [], ""
+    S.bo_sung_du_phong_lane = theo_doi
+
+    def chay(topic, loai=None, ncbi_loi=False):
+        da_goi.clear()
+        S._NCBI_CHAN["bi_chan"] = False
+        S._SUY_GIAM.clear()
+        S._VUOT_TRAN.clear()
+
+        def search_fn(query, days, retmax, **kw):
+            if ncbi_loi:
+                S._SUY_GIAM.append("NCBI lỗi (HTTP 500) — truy vấn này chạy bằng Europe PMC dự phòng")
+            return ["11", "12", "13"]
+
+        def summarize_fn(ids):
+            return [S.Candidate(pmid=p, publication_date="2026", title="Một bài báo", url=f"u{p}",
+                                pubtype=tuple((loai or {}).get(p, ("Journal Article",)))) for p in ids]
+        rep = S.run_scan([topic], days=30, max_results=6, cursor={}, search_fn=search_fn, summarize_fn=summarize_fn)
+        return rep, list(da_goi)
+
+    # Chủ đề đi qua `load_watchlist` như lượt quét tuần thật — hàm đó dựng lại từng mục, khoá không chép là mất (lần
+    # vá đầu chỉ kiểm `run_scan` nên không thấy `truy_van_du_phong` khai trong watchlist bị vứt trước khi tới cổng).
+    import json as _json
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as _d:
+        wl = Path(_d) / "watchlist.json"
+        wl.write_text(_json.dumps({"topics": [
+            {"topic": "Hypertension", "query": "q1", "truy_van_du_phong": "hypertension treatment"},
+            {"topic": "Đái tháo đường type 2 — điều trị", "query": "q2"},
+            {"topic": "Đái tháo đường type 2 — dự phòng", "query": "q3", "truy_van_du_phong": "type 2 diabetes treatment"},
+        ]}, ensure_ascii=False), encoding="utf-8")
+        chu_de = {r["topic"]: r for r in S.load_watchlist(wl)}
+    anh = chu_de["Hypertension"]
+    rep, goi = chay(anh, ncbi_loi=True)
+    if goi or rep.get("du_phong_khong_leo_thang") != {"ncbi_loi": 1}:
+        return False, (f"NCBI lỗi mà vẫn leo thang (gọi {goi}; lý do {rep.get('du_phong_khong_leo_thang')}) — nguồn lõi "
+                       "sập thì CHƯA KẾT LUẬN được đủ/thiếu, không đốt hạn mức Consensus/SerpApi")
+    manh = {"11": ("Practice Guideline",), "12": ("Systematic Review",), "13": ("Randomized Controlled Trial",)}
+    _rep, goi = chay(anh, manh)
+    if goi:
+        return False, "đã có 3 bài mạnh theo loại xuất bản thật mà vẫn leo thang dự phòng tính phí"
+    _rep, goi = chay(chu_de["Đái tháo đường type 2 — điều trị"])
+    if goi:
+        return False, f"gửi tên chủ đề tiếng Việt {goi} cho nguồn tiếng Anh — đốt hạn mức vô ích"
+    _rep, goi = chay(chu_de["Đái tháo đường type 2 — dự phòng"])
+    if goi != ["type 2 diabetes treatment"]:
+        return False, (f"thiếu bài mạnh + watchlist có truy vấn tiếng Anh mà làn dự phòng nhận {goi} — phải gọi ĐÚNG MỘT "
+                       "lần bằng `truy_van_du_phong` (không gọi = khoá chết làn hoặc `load_watchlist` vứt khoá; gửi tên "
+                       "chủ đề = sai ngôn ngữ)")
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7116,6 +7208,7 @@ BAI_HOC = [
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
+    ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

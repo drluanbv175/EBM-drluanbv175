@@ -793,7 +793,14 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
         if not ds_tang:
             ds_tang = [{"tang": "chung", "query": query,
                         "datetype": "pdat", "loc_thiet_ke": True}]
-        active.append({"topic": topic, "query": query, "queries": ds_tang})
+        muc = {"topic": topic, "query": query, "queries": ds_tang}
+        # `truy_van_du_phong` (tuỳ chọn, 27/09/2026) = truy vấn TIẾNG ANH ngôn ngữ tự nhiên cho bậc thang dự phòng
+        # Consensus → SerpApi (tính phí). Thiếu thì chủ đề tên tiếng Việt KHÔNG leo thang — xem
+        # `_co_nen_leo_thang_du_phong`. Phải chép qua đây: hàm này dựng lại từng mục, khoá không chép là mất.
+        truy_van_du_phong = str(raw.get("truy_van_du_phong") or "").strip()
+        if truy_van_du_phong:
+            muc["truy_van_du_phong"] = truy_van_du_phong
+        active.append(muc)
     if not active:
         raise ValueError("watchlist không có chủ đề active")
     if len(active) > 50:
@@ -1350,6 +1357,46 @@ def _ban_ghi_khong_trinh(c: Candidate, tang: str) -> dict:
             "ngay": c.publication_date, "tap_chi": c.journal_or_organization}
 
 
+# ── Cổng TRƯỚC khi leo thang dự phòng (vá 27/09/2026) ───────────────────────────────────────────────────────
+# Ngưỡng bài MẠNH (loại xuất bản THẬT, điểm ≥ 3: guideline/tổng quan/gộp/RCT) để coi chủ đề đã đủ chứng cứ —
+# cùng ngưỡng mặc định FALLBACK_MIN_TRUSTED (3) của engine.
+NGUONG_BAI_MANH_KHONG_LEO_THANG = 3
+_KY_TU_KHONG_ASCII = re.compile(r"[^\x00-\x7f]")
+
+
+def _co_nen_leo_thang_du_phong(row: dict, unique: Sequence[Candidate],
+                               suy_giam: Sequence[str]) -> tuple[str, str]:
+    """(khoá lý do KHÔNG leo thang — rỗng nếu nên leo thang, truy vấn cho bậc thang dự phòng).
+
+    VÌ SAO CÓ (đo 27/09/2026, trước lượt quét tuần ĐẦU TIÊN có làn dự phòng — thêm 22/09):
+      • cổng đủ-chứng-cứ của engine chấm lại ứng viên bằng `score_item`, nhưng bản ghi scanner chỉ mang tiêu đề ·
+        tạp chí · ngày · PMID · URL (mất loại xuất bản) ⇒ 59/59 ứng viên thật của «hypertension guideline» ra
+        tier C, điểm 0–6 (cần ≥ 60) ⇒ cổng LUÔN «thiếu» ⇒ MỌI chủ đề đều leo thang Consensus (10 lượt/tháng) +
+        SerpApi (trả phí);
+      • leo thang cả khi NCBI đang lỗi — trái nguyên tắc «nguồn lõi sập ⇒ chưa kết luận, không leo thang»;
+      • truy vấn gửi đi là TÊN chủ đề tiếng Việt («Đái tháo đường type 2 — điều trị») cho nguồn tiếng Anh.
+    Nay KHÔNG leo thang khi: (1) chủ đề suy giảm vì NCBI lỗi; (2) đã có ≥ NGUONG bài mạnh theo loại xuất bản
+    thật; (3) không có truy vấn tiếng Anh — `truy_van_du_phong` trong watchlist, hoặc tên chủ đề thuần ASCII.
+    """
+    if suy_giam:
+        return "ncbi_loi", ""
+    so_manh = 0
+    for c in unique:
+        diem, loai_that = diem_manh(c)
+        if loai_that and diem >= 3:
+            so_manh += 1
+    if so_manh >= NGUONG_BAI_MANH_KHONG_LEO_THANG:
+        return "du_bai_manh", ""
+    truy_van = str(row.get("truy_van_du_phong") or "").strip()
+    if not truy_van:
+        ten = str(row.get("topic") or "").strip()
+        if ten and not _KY_TU_KHONG_ASCII.search(ten):
+            truy_van = ten
+    if not truy_van:
+        return "chua_co_truy_van_tieng_anh", ""
+    return "", truy_van
+
+
 def run_scan(
     topics: Iterable[dict[str, str]],
     *,
@@ -1363,6 +1410,7 @@ def run_scan(
     started = datetime.now(timezone.utc)
     topic_results: list[TopicResult] = []
     all_pmids: set[str] = set()
+    du_phong_khong_leo: dict[str, int] = {}   # lý do KHÔNG leo thang dự phòng → số chủ đề (xem _co_nen_leo_thang_du_phong)
     _NCBI_CHAN["bi_chan"] = False   # mỗi lượt quét bắt đầu lại từ «NCBI chưa bị chặn»
     try:
         trong_kho = _pmid_da_co_trong_kho()   # đọc sổ cục bộ MỘT lần cho cả lượt (phương án B)
@@ -1506,8 +1554,17 @@ def run_scan(
             # bo_sung_du_phong_lane() cần `unique` ĐẦY ĐỦ nhất để chấm đúng "chủ đề này còn
             # thiếu chứng cứ đáng tin không" — chấm sớm hơn sẽ thấy thiếu OAN và gọi tốn hạn
             # mức Free (Consensus 10/tháng · SerpApi 200/tháng) một cách không cần thiết.
+            # Cổng TRƯỚC khi leo thang (vá 27/09/2026): NCBI lỗi · đã đủ bài mạnh · thiếu truy vấn tiếng Anh ⇒ không gọi.
+            ly_do_khong_leo, truy_van_du_phong = _co_nen_leo_thang_du_phong(row, unique, suy_giam)
             try:
-                extra, ghi_chu_du_phong = bo_sung_du_phong_lane(row["topic"], unique, max_results)
+                if ly_do_khong_leo:
+                    extra, ghi_chu_du_phong = [], ""
+                    du_phong_khong_leo[ly_do_khong_leo] = du_phong_khong_leo.get(ly_do_khong_leo, 0) + 1
+                    if ly_do_khong_leo == "ncbi_loi":
+                        ghi_chu_lan.append("bậc thang dự phòng: KHÔNG leo thang — NCBI lỗi ở chủ đề này, chưa kết luận"
+                                           " được đủ/thiếu (không đốt hạn mức Consensus/SerpApi)")
+                else:
+                    extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van_du_phong, unique, max_results)
                 for candidate in extra:
                     khoa_c = candidate.pmid or candidate.url
                     if khoa_c in all_pmids:
@@ -1566,6 +1623,8 @@ def run_scan(
         "degraded_topics": degraded_count,
         "failed_topics": failure_count,
         "candidate_count": len(all_pmids),
+        # Số chủ đề KHÔNG leo thang dự phòng theo lý do (ncbi_loi · du_bai_manh · chua_co_truy_van_tieng_anh).
+        "du_phong_khong_leo_thang": dict(sorted(du_phong_khong_leo.items())),
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
         "next_state": "CANDIDATE_REVIEW_QUEUE",
