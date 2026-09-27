@@ -427,8 +427,12 @@ def main() -> int:
     out = _chay([sys.executable, "tools/so_xac_minh_nguon.py", "--bao-cao"])
     m = re.search(r"Chưa/hết hạn\s*:\s*(\d+)", out)
     if m and int(m.group(1)):
-        de_xuat.append((2, "🤖", f"Phủ sổ xác minh: {m.group(1)} mục chưa/hết hạn",
-                        "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3"))
+        # Số đo là của TOÀN sổ; `--vong 3` chỉ quét định danh đang nằm trong dashboard — bản ghi mồ côi (cầu NC⇄LS/hub tạo
+        # trần) chỉ `--quet-ledger` + `--phu-mo-coi` chạm tới. 27/09/2026: chạy đúng lệnh gợi ý cũ, 125 mục đứng yên nguyên vẹn.
+        de_xuat.append((2, "🤖", f"Phủ sổ xác minh: {m.group(1)} mục chưa/hết hạn (đo trên TOÀN sổ)",
+                        "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3 && "
+                        "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --quet-ledger --vong 3 && "
+                        "~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3"))
     # Nguồn «ĐÃ BỊ RÚT» trong sổ gồm CẢ ca thông báo-là-bản-đính-chính (BH109). Tách hai nhóm để dòng «rút-bỏ-hẳn»
     # không cảnh báo sai về ca chỉ cần bác sĩ ký (T4-05: gọi nó «rút-bỏ-hẳn/không dùng» dạy người đọc bỏ qua cảnh báo).
     dem_dinh_chinh = _chay([sys.executable, "tools/mau_ky_rut_bai.py", "--dem"]).strip()

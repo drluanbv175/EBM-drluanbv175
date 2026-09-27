@@ -7202,6 +7202,100 @@ def bh119_cam_bien_commit_chua_day_nhin_moi_nhanh():
     return True, ""
 
 
+
+def bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh():
+    """27/09 — «Phủ sổ xác minh: 125 mục chưa/hết hạn» đứng yên dù chạy đúng lệnh được gợi ý (`so_xac_minh_nguon.py
+    --vong 3` thêm 220 mục MỚI, 125 mục cũ nguyên vẹn): lệnh đó chỉ tái kiểm định danh gom từ dashboard, còn 125 mục là bản
+    ghi MỒ CÔI do cầu NC⇄LS/hub tạo trần. `--phu-mo-coi` (có từ 16/08) xử lý đúng 125 mục đó (+125, 0 sót) nhưng KHÔNG quy
+    trình nào gọi (họ BH41). Kiểm HÀNH VI `chu_trinh_chung_cu.main()` với subprocess giả: chế độ đầy đủ gọi `--phu-mo-coi`
+    SAU lượt quét dashboard; `--nhanh` không gọi; và lời gợi ý của `tu_de_xuat_viec` phải chứa `--phu-mo-coi` (hằng chuỗi
+    trong cây cú pháp của main(), không khớp bình luận)."""
+    import ast as _ast
+    import contextlib as _cl
+    import importlib.util as _iu
+    import io as _io
+    from unittest import mock as _mock
+    sp = _iu.spec_from_file_location("_bh120_ctcc", REPO / "tools" / "chu_trinh_chung_cu.py")
+    C = _iu.module_from_spec(sp)
+    sp.loader.exec_module(C)
+    if not hasattr(C, "_co_dashboard_that"):
+        return False, "chu_trinh_chung_cu mất _co_dashboard_that — lượt phủ mồ côi bị tháo?"
+
+    class _P:
+        def __init__(self, rc):
+            self.returncode, self.stdout, self.stderr = rc, "", ""
+
+    def goi_so(nhanh):
+        lenh = []
+
+        def _goi(cmd, **_kw):
+            lenh.append([str(c) for c in cmd])
+            return _P(0)
+        argv = ["chu_trinh_chung_cu.py"] + (["--nhanh"] if nhanh else [])
+        with _mock.patch.object(sys, "argv", argv), _mock.patch.object(C.subprocess, "run", side_effect=_goi), \
+                _mock.patch.object(C, "_co_dashboard_that", return_value=True), _cl.redirect_stdout(_io.StringIO()):
+            C.main()
+        return [c for c in lenh if len(c) > 1 and "so_xac_minh_nguon.py" in c[1]]
+    day_du = goi_so(False)
+    thu_tu = ["--phu-mo-coi" if "--phu-mo-coi" in c else "--quet-ledger" if "--quet-ledger" in c else "dashboard"
+              for c in day_du]
+    if thu_tu != ["dashboard", "--quet-ledger", "--phu-mo-coi"]:
+        return False, (f"chu trình đầy đủ gọi sổ xác minh theo thứ tự {thu_tu} — phải là quét dashboard → `--quet-ledger` → "
+                       "`--phu-mo-coi`; thiếu lượt mồ côi/hub thì «Chưa/hết hạn» của toàn sổ đứng yên mãi (ca 27/09: 125 mục)")
+    if any("--phu-mo-coi" in c or "--quet-ledger" in c for c in goi_so(True)):
+        return False, "--nhanh gọi lượt mồ côi/hub — chế độ nhanh chỉ được đọc sổ, không gọi mạng"
+    cay = _ast.parse((REPO / "tools" / "tu_de_xuat_viec.py").read_text(encoding="utf-8"))
+    ham_main = [n for n in _ast.walk(cay) if isinstance(n, _ast.FunctionDef) and n.name == "main"]
+    if not ham_main or not any(isinstance(n, _ast.Constant) and isinstance(n.value, str) and "--phu-mo-coi" in n.value
+                               for n in _ast.walk(ham_main[0])):
+        return False, "lời gợi ý «Phủ sổ xác minh» của tu_de_xuat_viec không còn `--phu-mo-coi` — lại gợi lệnh không chạm tới mục mồ côi"
+    return True, ""
+
+
+
+def bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co():
+    """27/09 — `so_xac_minh_nguon.py --phu-mo-coi` THAY NGUYÊN bản ghi bằng kết quả `xac_minh_mot()` (chỉ xác minh TỒN
+    TẠI) ⇒ mất `kiem_rut_luc`/`ghi_chu_rut` mà `--quet-ledger` vừa ghi cho DOI chỉ-có-trong-hub ⇒ 10 DOI quay về «chưa kiểm
+    rút bài lần nào», sổ không bao giờ hội tụ (PMID được kiểm lại ngay, DOI thì không). Kiểm HÀNH VI trên sổ tạm (ngoại
+    tuyến, `xac_minh_mot` giả): sau lượt phủ, bản ghi có CẢ ngày xác minh lẫn phán quyết rút bài cũ và còn hiệu lực."""
+    import argparse as _ap
+    import contextlib as _cl
+    import datetime as _dt
+    import importlib.util as _iu
+    import io as _io
+    import json as _json
+    import tempfile as _tf
+    sp = _iu.spec_from_file_location("_bh121_sx", REPO / "tools" / "so_xac_minh_nguon.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh121_sx"] = M
+    sp.loader.exec_module(M)
+    bay_gio = _dt.datetime.now().isoformat(timespec="seconds")
+    with _tf.TemporaryDirectory() as _d:
+        so = Path(_d) / ".so-xac-minh-nguon.json"
+        so.write_text(_json.dumps({"phien_ban": 1, "muc": {"doi:10.1/x": {
+            "loai": "doi", "gia_tri": "10.1/x", "cac_dashboard": ["(hub-only)"],
+            "kiem_rut_luc": bay_gio, "ghi_chu_rut": "ok"}}}), encoding="utf-8")
+        M.SO = so
+        M._nap_verify_dashboard = lambda: None
+        M.xac_minh_mot = lambda khoa, vd: {"loai": "doi", "gia_tri": "10.1/x", "xac_minh_luc": bay_gio,
+                                           "tieu_de": "t", "nguon_xac_minh": "crossref"}
+        M.kiem_rut_bai = lambda ds: {}
+        a = _ap.Namespace(phu_mo_coi=True, vong=1, kiem_rut_lai=None, quet_ledger=False, bao_cao=False, quet=None,
+                          cuu_so_hong=False)
+        with _cl.redirect_stdout(_io.StringIO()):
+            M._chay_lenh(a)
+        bg = M.doc_so()["muc"]["doi:10.1/x"]
+    if not bg.get("xac_minh_luc"):
+        return False, "lượt phủ mồ côi không ghi ngày xác minh — chốt đang đo nhầm chỗ"
+    if bg.get("kiem_rut_luc") != bay_gio or bg.get("ghi_chu_rut") != "ok":
+        return False, ("lượt phủ mồ côi làm MẤT phán quyết rút bài đã có (kiem_rut_luc/ghi_chu_rut) — DOI hub quay về «chưa "
+                       "kiểm rút bài», sổ không hội tụ (ca 27/09: 10 DOI)")
+    ok, ly_do = M.con_hieu_luc(bg)
+    if not ok:
+        return False, f"sau lượt phủ bản ghi vẫn chưa hiệu lực: {ly_do}"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7329,6 +7423,8 @@ BAI_HOC = [
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
+    ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
+    ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
