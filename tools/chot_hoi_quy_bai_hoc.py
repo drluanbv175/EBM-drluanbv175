@@ -7084,6 +7084,63 @@ def _bh117_than():
     return True, ""
 
 
+
+def bh118_lan_du_phong_quet_tuan_mang_moc_ngay():
+    """27/09 — làn dự phòng Consensus → SerpApi của vòng quét tuần gọi `bo_sung_neu_thieu()` KHÔNG kèm `since_date`
+    (mọi làn khác — Scopus, CORE — đều truyền hôm nay − days) ⇒ hai nguồn tìm MỌI năm ⇒ mỗi tuần nhận lại bài cũ
+    «liên quan nhất mọi thời», tốn hạn mức cho bài không mới và làm nhiễu gói duyệt tuần. Kiểm HÀNH VI trên đường
+    thật run_scan → bo_sung_du_phong_lane → bo_sung_fn (ngoại tuyến, khoá socket như BH113): phải nhận
+    since_date = hôm nay − days (UTC)."""
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH118 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    try:
+        ok, ct = _bh118_than()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return ok, ct
+
+
+def _bh118_than():
+    """Thân của BH118 — xem docstring `bh118_lan_du_phong_quet_tuan_mang_moc_ngay`."""
+    import importlib.util as _iu
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    sp = _iu.spec_from_file_location("_bh118_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp); sys.modules["_bh118_ss"] = S; sp.loader.exec_module(S)
+    for ten in dir(S):
+        if ten.endswith("_lane") and ten != "bo_sung_du_phong_lane" and callable(getattr(S, ten)):
+            setattr(S, ten, lambda *a, **k: [])
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._pmid_da_co_trong_kho = lambda: set()
+    S._NCBI_CHAN["bi_chan"] = False
+    S._SUY_GIAM.clear()
+    S._VUOT_TRAN.clear()
+    nhan: list = []
+
+    def bo_sung_gia(query, _area, _records, *, max_results, since_date=None):
+        nhan.append((query, since_date))
+        return [], {}
+    lan_goc = S.bo_sung_du_phong_lane
+    S.bo_sung_du_phong_lane = lambda *a, **k: lan_goc(*a, bo_sung_fn=bo_sung_gia, **k)
+    S.run_scan([{"topic": "Hypertension", "query": "q", "truy_van_du_phong": "hypertension treatment"}],
+               days=30, max_results=6, cursor={}, search_fn=lambda *a, **k: ["11"],
+               summarize_fn=lambda ids: [S.Candidate(pmid=p, publication_date="2026", title="Một bài báo", url=f"u{p}")
+                                         for p in ids])
+    mong = (_dt.now(_tz.utc) - _td(days=30)).date().isoformat()
+    if nhan != [("hypertension treatment", mong)]:
+        return False, (f"làn dự phòng nhận {nhan} — phải gọi ĐÚNG MỘT lần kèm since_date={mong} (hôm nay − days); "
+                       "thiếu mốc ngày ⇒ Consensus/SerpApi tìm mọi năm, vòng quét tuần nhận lại bài cũ")
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7209,6 +7266,7 @@ BAI_HOC = [
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
+    ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

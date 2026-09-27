@@ -1216,7 +1216,8 @@ class _BanGhiToiThieu:
 
 
 def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retmax: int,
-                          *, bo_sung_fn: Callable[..., tuple] | None = None,
+                          *, days: int | None = None,
+                          bo_sung_fn: Callable[..., tuple] | None = None,
                           ) -> tuple[list[Candidate], str]:
     """BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar) cho vòng quét tuần —
     thêm 22/09/2026, TÁI DÙNG `app/services/fallback_ladder.py::bo_sung_neu_thieu()`
@@ -1278,7 +1279,13 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
         source=c.source or "surveillance", title=c.title, journal_or_organization=c.journal_or_organization,
         publication_date=c.publication_date, pmid=c.pmid or None, url=c.url, ingest_query=topic,
     ) for c in unique_hien_co]
-    extra, tom_tat = bo_sung_fn(topic, None, ban_ghi_hien_co, max_results=min(retmax, 5))
+    # Mốc ngày NHƯ các làn Scopus/CORE (hôm nay − `days`, UTC) — vá 27/09/2026: trước đây không truyền ⇒ Consensus/
+    # SerpApi tìm MỌI năm ⇒ vòng quét TUẦN nhận lại bài cũ «liên quan nhất mọi thời» mỗi tuần, tốn hạn mức cho bài
+    # không mới. Hai nguồn chỉ lọc theo NĂM (`year_min`/`as_ylo`) nên các tuần trong cùng năm vẫn chồng lấp.
+    kw_ngay: dict[str, str] = {}
+    if days is not None:
+        kw_ngay["since_date"] = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    extra, tom_tat = bo_sung_fn(topic, None, ban_ghi_hien_co, max_results=min(retmax, 5), **kw_ngay)
     ra: list[Candidate] = []
     for rec in extra:
         url = rec.url or (f"https://doi.org/{rec.doi}" if rec.doi else "")
@@ -1564,7 +1571,8 @@ def run_scan(
                         ghi_chu_lan.append("bậc thang dự phòng: KHÔNG leo thang — NCBI lỗi ở chủ đề này, chưa kết luận"
                                            " được đủ/thiếu (không đốt hạn mức Consensus/SerpApi)")
                 else:
-                    extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van_du_phong, unique, max_results)
+                    extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van_du_phong, unique, max_results,
+                                                                    days=days)
                 for candidate in extra:
                     khoa_c = candidate.pmid or candidate.url
                     if khoa_c in all_pmids:

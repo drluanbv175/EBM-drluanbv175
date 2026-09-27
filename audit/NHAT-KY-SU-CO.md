@@ -3244,3 +3244,13 @@ trong cây OneDrive, soi lại `git status` sau ít phút.
 - **Bài học:** (a) test gọi thẳng hàm lõi bỏ sót bước nạp cấu hình của đường sản xuất — chốt phải đi đúng đường sản xuất
   (watchlist → `load_watchlist` → `run_scan`); (b) trong zsh, biến chứa nhiều đường dẫn KHÔNG tự tách từ — `pytest $T` báo
   «no tests ran» chứ không báo lỗi, phép đột biến chạy như thế là KHÔNG đo gì; dùng `${=T}`.
+
+### 27/09/2026 (chiều) — Làn dự phòng của vòng quét tuần tìm MỌI năm (BH118)
+Lộ ra khi soạn `truy_van_du_phong` cho watchlist: `bo_sung_du_phong_lane()` gọi `bo_sung_neu_thieu()` KHÔNG kèm
+`since_date`, trong khi làn Scopus/CORE đều truyền hôm nay − `days` ⇒ Consensus/SerpApi tìm mọi năm ⇒ mỗi tuần nhận lại bài
+cũ «liên quan nhất mọi thời», tốn hạn mức cho bài không mới, làm nhiễu gói duyệt tuần. Hai chủ đề tên ASCII (BPH / LUTS,
+Hidradenitis suppurativa) đã có thể leo thang ngay lượt 28/09. **Vá:** tham số `days` → `since_date` = hôm nay − days (UTC);
+`run_scan` truyền `days`. Giới hạn còn lại: hai nguồn chỉ lọc theo NĂM (`year_min`/`as_ylo`) nên các tuần cùng năm vẫn chồng
+lấp; `year_min` của Consensus gói Free CHƯA xác minh — nếu không được phép sẽ 403 `tinh_nang_khong_cho_phep` (lỗi chốt, hoàn
+lượt cục bộ, SerpApi vẫn chạy). **Kiểm:** test đường thật run_scan → làn → `bo_sung_fn` + BH118; 3 đột biến (làn không truyền ·
+run_scan không truyền `days` · cửa sổ sai) đều đỏ ở cả hai; 105 test scanner đạt.
