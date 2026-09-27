@@ -62,6 +62,89 @@ def _tuoi_ngay(iso: str | None) -> float | None:
         return None
 
 
+# Mức rút bài của MỘT thẻ — hợp đồng dùng chung (vá 26/09/2026, #5) giữa sổ truy nguyên
+# này và `tools/tra_diem_kham.py` (điểm khám), để hai nơi KHÔNG BAO GIỜ phân loại lệch nhau.
+MUC_DUONG_TINH = frozenset({"duong", "rut_va_thay", "eoc"})
+MUC_RUT = ("duong", "rut_va_thay", "eoc", "ok_con_han", "ok_qua_han", "khong_biet")
+
+
+def tra_muc_so(src: dict, so: dict) -> dict | None:
+    """Bản ghi sổ xác minh của nguồn: khoá `pmid:` trước, rồi `doi:` (nguyên dạng → chữ thường)."""
+    pmid, doi = src.get("pmid"), src.get("doi")
+    muc_so = so.get(f"pmid:{pmid}") if pmid else None
+    if muc_so is None and doi:
+        muc_so = so.get(f"doi:{doi}") or so.get(f"doi:{str(doi).lower()}")
+    return muc_so if isinstance(muc_so, dict) else None
+
+
+def trang_thai_rut_the(card: dict, rw, so: dict | None) -> dict:
+    """Phân loại trạng thái rút bài của MỘT thẻ từ bằng chứng ĐANG CÓ (không gọi mạng).
+
+    Trả ``{"muc", "ly_do", "nguon", "thong_bao", "muc_so"}`` với ``muc`` ∈ ``MUC_RUT``:
+      • ``duong`` (đã rút) · ``rut_va_thay`` (rút & đăng lại) · ``eoc`` (thông báo quan ngại) —
+        DƯƠNG từ BẤT KỲ lớp nào là nhận: Retraction Watch ngoại tuyến (PMID; DOI nếu nền có
+        ``tra_doi``) HOẶC sổ xác minh (``ghi_chu_rut`` dương tính, hay cờ dính ``da_rut``/
+        ``quan_ngai`` — cờ dính vẫn còn khi một lượt sau ghi đè ``ghi_chu_rut='ok'``).
+      • ``ok_con_han`` — CHỈ khi sổ ghi ``ok`` từ nguồn sống, không có cờ ``nghi_ma``, và
+        ``kiem_rut_luc`` còn trong ``HAN_RUT`` ngày. Retraction Watch KHÔNG BAO GIỜ nói «ok».
+      • ``ok_qua_han`` — sổ ghi ok nhưng quá hạn/không rõ ngày kiểm.
+      • ``khong_biet`` — mọi trường hợp còn lại (fail-closed; không bao giờ đọc thành «sạch»).
+    Chỉ ĐỌC — không đổi decision, không ghi sổ (BH10).
+    """
+    so = so if isinstance(so, dict) else {}
+    src = card.get("source") if isinstance(card.get("source"), dict) else {}
+    pmid, doi = src.get("pmid"), src.get("doi")
+    muc_so = tra_muc_so(src, so)
+    bg = muc_so or {}
+
+    # Lớp 1 — DƯƠNG từ RW ngoại tuyến (PMID; DOI khi nền có chỉ mục DOI).
+    bg_rw = rw.tra(str(pmid)) if (rw and pmid) else None
+    if not bg_rw and rw and doi and callable(getattr(rw, "tra_doi", None)):
+        bg_rw = rw.tra_doi(str(doi))
+    if bg_rw and not isinstance(bg_rw, dict):
+        bg_rw = {"status": ""}  # kết quả lạ nhưng KHÁC rỗng ⇒ vẫn là dương tính (thận trọng)
+    # Lớp 2 — sổ xác minh.
+    ghi_rut = bg.get("ghi_chu_rut")
+    so_duong = ghi_rut in DUONG_TINH or bool(bg.get("da_rut")) or bool(bg.get("quan_ngai"))
+
+    if bg_rw or so_duong:
+        if bg_rw or ghi_rut in DUONG_TINH:
+            ly_do = (bg_rw or {}).get("reason") or ghi_rut   # giữ nguyên công thức cũ
+        else:
+            # Dương tính CHỈ từ cờ dính (ghi_chu_rut có thể đã bị lượt sau ghi 'ok'):
+            # nói rõ nguồn gốc, đừng in «ok» cạnh một nguồn dương tính.
+            ly_do = ("retracted (cờ da_rut của sổ xác minh)" if bg.get("da_rut")
+                     else "expression_of_concern (cờ quan_ngai của sổ xác minh)")
+        # MỨC phải nói đúng (BH34): sổ xác minh đã phân biệt sẵn rút-và-thay
+        # (trường `rut_va_thay` + DOI thông báo) — đọc nó, đừng đoán lại từ chuỗi.
+        rr = ("retract and replace" in str(ly_do).lower() or bool(bg.get("rut_va_thay")))
+        tb = bg.get("thong_bao_rut_doi")
+        if tb:
+            ly_do = f"{ly_do} · thông báo: doi:{tb}"
+        # Mức RÚT khi bất kỳ lớp nào nói rút; RW trả trạng thái lạ (không phải EoC) cũng xếp
+        # mức rút — chiều thận trọng, giữ luật cũ «mọi kết quả RW khác None là dương tính».
+        la_rut = (bool(bg.get("da_rut")) or ghi_rut == "retracted"
+                  or bool(bg_rw and bg_rw.get("status") != "expression_of_concern"))
+        muc = "rut_va_thay" if rr else ("duong" if la_rut else "eoc")
+        nguon = (["Retraction Watch"] if bg_rw else []) + (["sổ xác minh"] if so_duong else [])
+        thong_bao = ""
+        if (bg_rw or {}).get("notice_pmid"):
+            thong_bao = f"PMID {bg_rw['notice_pmid']}"
+        elif (bg_rw or {}).get("notice_doi") or tb:
+            thong_bao = f"doi:{(bg_rw or {}).get('notice_doi') or tb}"
+        return {"muc": muc, "ly_do": str(ly_do)[:120], "nguon": nguon,
+                "thong_bao": thong_bao, "muc_so": muc_so}
+
+    # ÂM «ok» chỉ khi sổ ghi ok TỪ NGUỒN SỐNG, không nghi ma, và còn trong hạn 30 ngày.
+    tuoi_rut = _tuoi_ngay(bg.get("kiem_rut_luc"))
+    if ghi_rut == "ok" and not bg.get("nghi_ma"):
+        muc = "ok_con_han" if (tuoi_rut is not None and tuoi_rut <= HAN_RUT) else "ok_qua_han"
+    else:
+        muc = "khong_biet"
+    return {"muc": muc, "ly_do": str(ghi_rut or "")[:120], "nguon": ["sổ xác minh"] if muc_so else [],
+            "thong_bao": "", "muc_so": muc_so}
+
+
 def _nap_rw():
     """Nạp chỉ mục Retraction Watch ngoại tuyến (đã stdlib-safe từ 15/08)."""
     sys.path.insert(0, str(_MEA_GOC))
@@ -95,39 +178,25 @@ def main() -> int:
     trang_thai = Counter()      # phân loại từng thẻ
     tuoi_qua_han = Counter()
     for c in cards:
-        src = c.get("source") or {}
+        src = c.get("source") if isinstance(c.get("source"), dict) else {}
         pmid, doi = src.get("pmid"), src.get("doi")
-        muc_so = so.get(f"pmid:{pmid}") if pmid else None
-        if muc_so is None and doi:
-            muc_so = so.get(f"doi:{doi}") or so.get(f"doi:{str(doi).lower()}")
+        # Phân loại qua hàm DÙNG CHUNG với tra_diem_kham (vá 26/09/2026, #5) — một luật gộp.
+        kq = trang_thai_rut_the(c, rw, so)
+        muc_so = kq["muc_so"]
 
-        # Lớp 1 — DƯƠNG từ RW ngoại tuyến (chỉ tra được PMID).
-        bg_rw = rw.tra(str(pmid)) if (rw and pmid) else None
-        # Lớp 2 — sổ xác minh.
-        ghi_rut = (muc_so or {}).get("ghi_chu_rut")
-
-        if bg_rw or ghi_rut in DUONG_TINH:
-            ly_do = (bg_rw or {}).get("reason") or ghi_rut
-            # MỨC phải nói đúng (BH34): sổ xác minh đã phân biệt sẵn rút-và-thay
-            # (trường `rut_va_thay` + DOI thông báo) — đọc nó, đừng đoán lại từ chuỗi.
-            rr = ("retract and replace" in str(ly_do).lower()
-                  or bool((muc_so or {}).get("rut_va_thay")))
-            tb = (muc_so or {}).get("thong_bao_rut_doi")
-            if tb:
-                ly_do = f"{ly_do} · thông báo: doi:{tb}"
+        if kq["muc"] in MUC_DUONG_TINH:
             duong.append({"id": c.get("id"), "pmid": pmid, "doi": doi,
                           "decision": c.get("decision"),
-                          "muc": "RÚT & ĐĂNG LẠI (đối chiếu bản đã thay)" if rr
+                          "muc": "RÚT & ĐĂNG LẠI (đối chiếu bản đã thay)" if kq["muc"] == "rut_va_thay"
                                  else "ĐÃ RÚT/EoC (không dùng)",
-                          "ly_do": str(ly_do)[:120]})
+                          "ly_do": kq["ly_do"]})
             trang_thai["dương tính"] += 1
             continue
 
         # ÂM «ok» chỉ khi sổ ghi ok TỪ NGUỒN SỐNG và còn trong hạn 30 ngày.
-        tuoi_rut = _tuoi_ngay((muc_so or {}).get("kiem_rut_luc"))
-        if ghi_rut == "ok" and tuoi_rut is not None and tuoi_rut <= HAN_RUT:
+        if kq["muc"] == "ok_con_han":
             trang_thai["ok (rút bài còn hạn 30d)"] += 1
-        elif ghi_rut == "ok":
+        elif kq["muc"] == "ok_qua_han":
             trang_thai["ok NHƯNG QUÁ HẠN 30d — cần kiểm lại"] += 1
             tuoi_qua_han["rút bài quá 30d"] += 1
         else:
