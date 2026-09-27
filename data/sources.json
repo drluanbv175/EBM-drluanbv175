@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-23",
+  "updated": "2026-09-27",
   "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
   "sources": [
     {
@@ -22,7 +22,7 @@
       "status": "active",
       "last_success_at": "2026-09-22",
       "known_gap": "chỉ thấy thứ ĐÃ vào PubMed — guideline thường lên web hội trước (khoảng trống LÔ B); trễ trung vị 2 ngày đo tuần W33",
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-002",
@@ -44,7 +44,7 @@
       "status": "active",
       "last_success_at": "2026-09-22",
       "known_gap": "cùng giới hạn PubMed-lag như SRC-001",
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-003",
@@ -85,9 +85,9 @@
       "measured_latency_days": null,
       "owner": "agent-A4",
       "status": "active",
-      "last_success_at": "2026-09-20",
+      "last_success_at": "2026-09-25",
       "known_gap": null,
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-005",
@@ -107,9 +107,9 @@
       "measured_latency_days": null,
       "owner": "agent-A4",
       "status": "active",
-      "last_success_at": "2026-09-20",
+      "last_success_at": "2026-09-24",
       "known_gap": null,
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-006",
@@ -131,7 +131,7 @@
       "status": "active",
       "last_success_at": "2026-09-21",
       "known_gap": "độ trễ cảnh báo chưa đo riêng (ngưỡng leo thang 7 ngày — PHA 3 mục 9)",
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-007",
@@ -153,7 +153,7 @@
       "status": "active",
       "last_success_at": "2026-09-22",
       "known_gap": "làn ĐỐI CHIẾU (dedup DOI/PMID với sổ+kho), không thay PubMed-lane; kiểm rút bài theo DOI trong làn nối vòng sau — hiện ghi «chưa kiểm» trung thực; chạy thật 15/08: Suy tim +15 ứng viên, 10 «chỉ-OpenAlex»",
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-010",
@@ -629,7 +629,7 @@
       "status": "active",
       "last_success_at": "2026-09-22",
       "known_gap": "Chỉ phủ guideline NICE ĐÃ được tóm tắt lại trên tạp chí có chỉ mục MEDLINE — không phải mọi guidance của NICE đều có bản tóm tắt dạng này. Nối vào GUIDELINE_LANES (app/sources/feeds.py::epmc_nice) + FEED_TO_AUTHORITY (app/sources/authority.py) 22/09/2026, kiểm sống qua RSSFeedClient thật: 5 bản ghi, PMID thật.",
-      "last_probe_at": "2026-09-22"
+      "last_probe_at": "2026-09-27"
     },
     {
       "id": "SRC-038",
