@@ -3197,3 +3197,11 @@ khẩn của 2 chủ đề GIẢ có thể rơi vào `EBM-Dashboards/alerts/` th
 ### 26/09/2026 (sáng 27/09 UTC) — `upgrade_verify` có trạng thái ⚪; hook pre-commit tự bật trên Cloud
 - **Rủi ro thật:** container Cloud dựng mới mỗi phiên ⇒ bước «kích hoạt hook 1 lần/máy» không bao giờ còn; đo thật cả hai repo `core.hooksPath=None` ⇒ commit trên Cloud bỏ qua cổng pre-commit trừ khi phiên tự nhớ `-c core.hooksPath`. Sửa: `tools/bat_git_hook.py` nối vào `tu_sua_chua.py` (chạy mỗi phiên, cả `--pham-vi-cloud`); không ghi đè hooksPath khác; chỉ bật bit thực thi cho `pre-commit` khi thiếu (lần đầu viết bật cho mọi tệp ⇒ tạo thay đổi mode `.githooks/post-commit` trong git — bắt được trước commit, đã thu hẹp + test).
 - **Không đo được ≠ FAIL:** bước 19 (`verify_clinical_evidence_update_pipeline`), 21/22 (repo y khoa) nay có `NOT_MEASURED`/`MEASUREMENT_INCOMPLETE` (mã 2) khi lý do DUY NHẤT là thiếu tệp chỉ-OneDrive trên bản sao trần; `upgrade_verify` có ⚪ (bước 13/14 không chạy khi thiếu `EBM_MASTER/tools/sync_all.py`; bước 19/21/22/23 mã 2 ⇒ ⚪; khai tường minh từng bước, không suy rộng mã 2) và KẾT «CHƯA KẾT LUẬN» mã 2. `chu_trinh_chung_cu.py` tách câu «chưa đo đủ» khỏi «có lỗi».
+
+### 27/09/2026 — BH44 báo giả lần 4: app thả skill dựng sẵn `google-workspace`
+App Claude thả `google-workspace` (skill hướng dẫn connector Google Drive/Docs/Sheets/Slides của Anthropic) vào runtime lúc
+09:08; `tools/kiem_dieu_phoi.py` ③ báo «skill runtime KHÔNG CÓ NGUỒN» và gợi ý `cp -R … sync/skills/`. Cùng kiểu với
+`setup-claude` (09/09) và `docs` (17/09, 20/09). **Vá:** khai vào `SKILL_DUNG_SAN` kèm bằng chứng; thông điệp ③ nay nhắc đọc
+SKILL.md trước khi «cứu» — skill dựng sẵn thì khai, KHÔNG chép (chép là trộn mã của Anthropic vào cây skill riêng của bác sĩ).
+**Kiểm:** bỏ khai báo ⇒ ③ đỏ kèm dòng nhắc, mã 1; trả lại ⇒ 🟢, mã 0. Giữ thiết kế KHAI BÁO tường minh (BH28): skill lạ thật
+sự không nguồn vẫn phải đỏ.
