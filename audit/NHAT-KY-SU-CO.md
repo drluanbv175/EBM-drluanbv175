@@ -3254,3 +3254,14 @@ Hidradenitis suppurativa) đã có thể leo thang ngay lượt 28/09. **Vá:** 
 lấp; `year_min` của Consensus gói Free CHƯA xác minh — nếu không được phép sẽ 403 `tinh_nang_khong_cho_phep` (lỗi chốt, hoàn
 lượt cục bộ, SerpApi vẫn chạy). **Kiểm:** test đường thật run_scan → làn → `bo_sung_fn` + BH118; 3 đột biến (làn không truyền ·
 run_scan không truyền `days` · cửa sổ sai) đều đỏ ở cả hai; 105 test scanner đạt.
+
+### 27/09/2026 (chiều) — Cảm biến «commit chưa đẩy» chỉ nhìn nhánh đang đứng (BH119)
+`tu_de_xuat_viec.py` đếm `git rev-list --count @{u}..HEAD`: nhánh đang đứng đã đẩy (hoặc chưa có upstream ⇒ git lỗi ⇒
+đếm thành 0) thì báo «0 commit chưa đẩy». Đo cùng ngày: 8 nhánh cục bộ của repo gốc (06–17/09, của các phiên khác) giữ
+20 commit KHÔNG có trên remote nào — sáng 27/09 chính repo gốc còn đứng ở một nhánh chưa đẩy mà không cảm biến nào báo.
+**Vá:** `dem_commit_chua_co_tren_remote()` — `rev-list --branches --not --remotes` + đỉnh nhánh (đúng 2 lượt gọi git);
+git lỗi ⇒ None «không đo được», không phải 0; khối ⑦c báo số commit + tên nhánh. **Xử lý dữ liệu:** bác sĩ duyệt ⇒ đẩy 8
+bản sao `rescue/<nhánh>` lên GitHub (repo CÔNG KHAI — đã soát 3.846 dòng thêm: 0 khoá/token, 0 đường dẫn máy, 0 SĐT);
+không xoá nhánh/worktree nào. Theo patch-id 14/19 commit chưa có tương đương trong master — phải so theo CHỨC NĂNG trước khi
+dọn. **Bẫy zsh:** `"$b:refs/heads/…"` bị hiểu là bộ biến đổi `:r` ⇒ refspec méo, push hỏng hết — viết `${b}:`.
+**Kiểm:** 3 test repo tạm + BH119; 4 đột biến đều đỏ (M3 «main() thôi gọi hàm» chỉ BH119 bắt — đúng thiết kế).

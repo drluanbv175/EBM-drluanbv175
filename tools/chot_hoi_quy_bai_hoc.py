@@ -7141,6 +7141,67 @@ def _bh118_than():
     return True, ""
 
 
+
+def bh119_cam_bien_commit_chua_day_nhin_moi_nhanh():
+    """27/09 — sáng 27/09 repo gốc đứng ở một nhánh CHƯA ĐẨY và 8 nhánh cục bộ (06–17/09) giữ 20 commit không có trên
+    GitHub, trong khi `tu_de_xuat_viec.py` báo «0 commit chưa đẩy»: cảm biến chỉ đếm `@{u}..HEAD` của nhánh ĐANG đứng
+    (nhánh chưa upstream ⇒ git lỗi ⇒ đếm thành 0). Kiểm HÀNH VI `dem_commit_chua_co_tren_remote` trên repo git tạm (remote
+    là repo trần): nhánh khác giữ 2 commit chưa đẩy ⇒ (2, [nhánh]) dù nhánh đang đứng sạch; đẩy bản sao `rescue/` ⇒ (0, []);
+    thư mục không phải repo ⇒ None (không đo được ≠ 0). Và khối ⑦c của `main()` phải GỌI hàm đó (nút gọi thật trong cây cú
+    pháp, không khớp chuỗi/bình luận)."""
+    import ast as _ast
+    import importlib.util as _iu
+    import subprocess as _sp
+    import tempfile as _tf
+    tep = REPO / "tools" / "tu_de_xuat_viec.py"
+    spec = _iu.spec_from_file_location("_bh119_tdx", tep)
+    M = _iu.module_from_spec(spec)
+    spec.loader.exec_module(M)
+    ham = getattr(M, "dem_commit_chua_co_tren_remote", None)
+    if ham is None:
+        return False, "dem_commit_chua_co_tren_remote BIẾN MẤT khỏi tu_de_xuat_viec (giác quan bị tháo)"
+    goi = [n for n in _ast.walk(_ast.parse(tep.read_text(encoding="utf-8")))
+           if isinstance(n, _ast.FunctionDef) and n.name == "main"]
+    if not goi or not any(isinstance(c, _ast.Call) and getattr(c.func, "id", "") == "dem_commit_chua_co_tren_remote"
+                          for c in _ast.walk(goi[0])):
+        return False, "main() không còn GỌI dem_commit_chua_co_tren_remote — khối ⑦c lại chỉ nhìn nhánh đang đứng"
+
+    def g(cay, *a):
+        return _sp.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True).stdout.strip()
+    with _tf.TemporaryDirectory() as _d:
+        goc = Path(_d)
+        g(goc, "init", "--bare", "-q", str(goc / "remote.git"))
+        cay = goc / "cay"
+        cay.mkdir()
+        g(cay, "init", "-q", "-b", "main")
+        g(cay, "config", "user.email", "t@t")
+        g(cay, "config", "user.name", "t")
+        (cay / "a.txt").write_text("a", encoding="utf-8")
+        g(cay, "add", "a.txt")
+        g(cay, "commit", "-q", "-m", "goc")
+        g(cay, "remote", "add", "origin", str(goc / "remote.git"))
+        g(cay, "push", "-q", "-u", "origin", "main")
+        g(cay, "switch", "-q", "-c", "phu")
+        for i in (1, 2):
+            (cay / f"b{i}.txt").write_text(str(i), encoding="utf-8")
+            g(cay, "add", f"b{i}.txt")
+            g(cay, "commit", "-q", "-m", f"phu {i}")
+        g(cay, "switch", "-q", "main")
+        kq = ham(cay)
+        if kq != (2, ["phu"]):
+            return False, (f"nhánh khác giữ 2 commit chưa đẩy mà cảm biến trả {kq} — lại chỉ nhìn nhánh đang đứng "
+                           "(ca 27/09: 20 commit ở 8 nhánh, cảm biến báo 0)")
+        g(cay, "push", "-q", "origin", "phu:refs/heads/rescue/phu")
+        g(cay, "fetch", "-q", "origin")
+        if ham(cay) != (0, []):
+            return False, f"đã đẩy bản sao rescue/ mà cảm biến vẫn trả {ham(cay)}"
+        khong_repo = goc / "khong_repo"
+        khong_repo.mkdir()
+        if ham(khong_repo) != (None, []):
+            return False, f"thư mục không phải repo trả {ham(khong_repo)} — git lỗi phải là KHÔNG ĐO ĐƯỢC (None), không phải 0"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7267,6 +7328,7 @@ BAI_HOC = [
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
+    ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

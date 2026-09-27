@@ -349,6 +349,27 @@ def giac_quan_lich_nen(log_tuan: Path,
     return []
 
 
+def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
+    """(số commit CHỈ có ở nhánh cục bộ — không có trên remote nào, tên các nhánh đang giữ chúng); None = không đo được.
+
+    Vá 27/09/2026: cảm biến cũ chỉ đếm `@{u}..HEAD` của nhánh ĐANG đứng — nhánh chưa có upstream thì git báo lỗi và bị
+    đếm thành 0, còn các nhánh khác không bao giờ được nhìn. Đo cùng ngày: 8 nhánh cục bộ của repo gốc giữ 20 commit
+    không có trên GitHub (06–17/09) trong khi cảm biến báo «0 commit chưa đẩy». Đúng 2 lượt gọi git: danh sách commit
+    chưa có trên remote, rồi đỉnh các nhánh (nhánh giữ commit chưa đẩy ⇔ đỉnh của nó nằm trong danh sách đó).
+    """
+    ra = _chay(["git", "-C", str(duong), "rev-list", "--branches", "--not", "--remotes"], giay=30)
+    dong = [x.strip() for x in ra.splitlines() if x.strip()]
+    if any(not re.fullmatch(r"[0-9a-f]{40,64}", x) for x in dong):
+        return None, []   # git lỗi / đầu ra lạ ⇒ KHÔNG ĐO ĐƯỢC — không được đọc thành 0 (BH08)
+    if not dong:
+        return 0, []
+    chua_day = set(dong)
+    dinh = _chay(["git", "-C", str(duong), "for-each-ref", "--format=%(objectname) %(refname:short)", "refs/heads"],
+                 giay=20)
+    nhanh = sorted(ten for ma, _, ten in (d.strip().partition(" ") for d in dinh.splitlines()) if ma in chua_day and ten)
+    return len(chua_day), nhanh
+
+
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
     """Đếm dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
 
@@ -508,13 +529,20 @@ def main() -> int:
             # sẽ bị _chay gộp vào stdout và đếm nhầm thành "1 file chưa commit"
         st = _chay(["git", "-C", str(duong), "status", "--porcelain"], giay=20)
         n_ban = len([x for x in st.splitlines() if x.strip()])
-        ab = _chay(["git", "-C", str(duong), "rev-list", "--count", "@{u}..HEAD"], giay=20)
-        n_chua_day = int(ab.strip()) if ab.strip().isdigit() else 0
+        n_chua_day, nhanh_chua_day = dem_commit_chua_co_tren_remote(duong)
+        if n_chua_day is None:
+            de_xuat.append((2, "🤖", f"Repo {ten_repo}: KHÔNG đo được commit chưa có trên remote (git lỗi) — kiểm tay",
+                            f"git -C \"{duong.name}\" log --branches --not --remotes --oneline"))
         if n_ban or n_chua_day:
+            o_nhanh = ""
+            if nhanh_chua_day:
+                o_nhanh = (f" (ở {len(nhanh_chua_day)} nhánh cục bộ: {', '.join(nhanh_chua_day[:4])}"
+                           f"{'…' if len(nhanh_chua_day) > 4 else ''})")
             de_xuat.append((2, "🤖", f"Repo {ten_repo}: {n_ban} file chưa commit · "
-                            f"{n_chua_day} commit chưa đẩy — soi rồi commit/push "
-                            "(file của phiên khác thì ĐỂ NGUYÊN)",
-                            f"git -C \"{duong.name}\" status -sb"))
+                            f"{n_chua_day or 0} commit chưa có trên remote nào{o_nhanh} — soi rồi commit/push "
+                            "(file/nhánh của phiên khác thì ĐỂ NGUYÊN — chỉ đẩy bản sao `rescue/<nhánh>`)",
+                            f"git -C \"{duong.name}\" log --branches --not --remotes --oneline"
+                            if nhanh_chua_day else f"git -C \"{duong.name}\" status -sb"))
 
     # ⑦d GIÁC QUAN LỊCH-NỀN (16/08 — ngay kỳ đầu của kiến trúc lịch mới đã LỠ:
     # tác vụ Claude 06:30 T7 không nổ vì máy/app không chạy, nextRunAt nhảy thẳng
