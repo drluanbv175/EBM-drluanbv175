@@ -169,19 +169,23 @@ class TestRunScanCallingConventionStillWorks:
     """search_fn trong run_scan() gọi search_fn(query, days, max_results, datetype=...,
     loc_thiet_ke=..., mindate=...) rồi bắt TypeError để lùi về chữ ký cũ khi cần
     (bộ tìm giả trong test không nhận tham số phụ). Xác nhận search() thật vẫn
-    tương thích với CẢ HAI cách gọi sau bản vá."""
+    tương thích với CẢ HAI cách gọi sau bản vá.
+
+    Fixture có `count` (27/09/2026): từ 22/09 search() coi esearchresult thiếu idlist/count là bản lỗi (chống «0 kết
+    quả giả») ⇒ fixture cũ chỉ có idlist rơi sang Europe PMC và hai test này đỏ âm thầm (thư mục skill không nằm
+    trong CI `pytest tools/`)."""
 
     def test_goi_voi_du_tham_so_phu_khong_loi(self):
         ids = ss.search(
             "x", 30, 5,
-            fetch_json=lambda _u: {"esearchresult": {"idlist": ["1", "2"]}},
+            fetch_json=lambda _u: {"esearchresult": {"idlist": ["1", "2"], "count": "2"}},
             datetype="edat", loc_thiet_ke=False, mindate="",
         )
         assert ids == ["1", "2"]
 
     def test_goi_voi_chu_ky_cu_ba_tham_so_khong_loi(self):
         ids = ss.search("x", 30, 5,
-                        fetch_json=lambda _u: {"esearchresult": {"idlist": ["3"]}})
+                        fetch_json=lambda _u: {"esearchresult": {"idlist": ["3"], "count": "1"}})
         assert ids == ["3"]
 
 

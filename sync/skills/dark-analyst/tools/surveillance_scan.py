@@ -867,6 +867,30 @@ def ghi_cursor(cur: dict) -> None:
     _cursor_path().write_text(_j.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+def _du_phong_path() -> Path:
+    return DEFAULT_WATCHLIST.parent / ".du-phong-trang-thai.json"
+
+
+def doc_trang_thai_du_phong() -> dict:
+    """Sổ của bậc thang dự phòng TÍNH PHÍ (27/09/2026): `lan_cuoi_leo_thang` {chủ đề: ngày} để XOAY VÒNG giữa các
+    lượt quét, `da_trinh` {khoá bài: ngày} để không trình lại bài dự phòng đã trình ở lượt trước. Vắng/hỏng ⇒ sổ rỗng
+    (hệ quả chỉ là xoay vòng lại từ đầu và có thể trình lại bài cũ — không mất gì)."""
+    import json as _j
+    try:
+        so = _j.loads(_du_phong_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        so = {}
+    if not isinstance(so, dict):
+        so = {}
+    return {"lan_cuoi_leo_thang": dict(so.get("lan_cuoi_leo_thang") or {}),
+            "da_trinh": dict(so.get("da_trinh") or {})}
+
+
+def ghi_trang_thai_du_phong(so: dict) -> None:
+    import json as _j
+    write_atomic(_du_phong_path(), _j.dumps(so, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+
+
 def ghi_alert(dong_md: list[str], ngay: str) -> Path | None:
     """Gom SỰ KIỆN KHẨN vào alerts/YYYY-MM-DD.md (K7). CHỈ sự kiện khẩn — trộn mức
     là dạy người đọc bỏ qua màu đỏ (bài học BH32).
@@ -1369,6 +1393,10 @@ def _ban_ghi_khong_trinh(c: Candidate, tang: str) -> dict:
 # cùng ngưỡng mặc định FALLBACK_MIN_TRUSTED (3) của engine.
 NGUONG_BAI_MANH_KHONG_LEO_THANG = 3
 _KY_TU_KHONG_ASCII = re.compile(r"[^\x00-\x7f]")
+# XOAY VÒNG (27/09/2026): mỗi lượt quét tuần chỉ tối đa K chủ đề được leo thang dự phòng tính phí, chủ đề lâu chưa
+# được xét đi trước. Có truy vấn tiếng Anh cho cả watchlist mà leo thang hết trong MỘT lượt thì trần Consensus
+# (5/lượt · 10/tháng) cạn ngay tuần đầu và mọi chủ đề sau chỉ nhận lỗi «hết ngân sách». K=2/tuần ≈ 8–9 lượt/tháng.
+TRAN_LEO_THANG_DU_PHONG_MAC_DINH = 2
 
 
 def _co_nen_leo_thang_du_phong(row: dict, unique: Sequence[Candidate],
@@ -1412,12 +1440,21 @@ def run_scan(
     cursor: dict | None = None,
     search_fn: Callable[[str, int, int], list[str]] = search,
     summarize_fn: Callable[[Sequence[str]], list[Candidate]] = summarize,
+    tran_leo_thang_du_phong: int | None = None,
+    trang_thai_du_phong: dict | None = None,
 ) -> dict:
-    """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL."""
+    """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL.
+
+    `tran_leo_thang_du_phong` (27/09/2026): tối đa bao nhiêu chủ đề được leo thang bậc thang dự phòng TÍNH PHÍ trong
+    lượt này — None = không trần. `trang_thai_du_phong` (sổ `doc_trang_thai_du_phong()`, SỬA TẠI CHỖ): có sổ thì xoay
+    vòng theo ngày leo thang gần nhất và bỏ bài dự phòng đã trình ở lượt trước. `main()` bật cả hai; mặc định None giữ
+    nguyên hành vi cũ cho mọi nơi gọi khác.
+    """
     started = datetime.now(timezone.utc)
     topic_results: list[TopicResult] = []
     all_pmids: set[str] = set()
     du_phong_khong_leo: dict[str, int] = {}   # lý do KHÔNG leo thang dự phòng → số chủ đề (xem _co_nen_leo_thang_du_phong)
+    cho_du_phong: list[tuple[int, str]] = []  # (chỉ số TopicResult, truy vấn tiếng Anh) — leo thang SAU vòng lặp
     _NCBI_CHAN["bi_chan"] = False   # mỗi lượt quét bắt đầu lại từ «NCBI chưa bị chặn»
     try:
         trong_kho = _pmid_da_co_trong_kho()   # đọc sổ cục bộ MỘT lần cho cả lượt (phương án B)
@@ -1562,29 +1599,13 @@ def run_scan(
             # thiếu chứng cứ đáng tin không" — chấm sớm hơn sẽ thấy thiếu OAN và gọi tốn hạn
             # mức Free (Consensus 10/tháng · SerpApi 200/tháng) một cách không cần thiết.
             # Cổng TRƯỚC khi leo thang (vá 27/09/2026): NCBI lỗi · đã đủ bài mạnh · thiếu truy vấn tiếng Anh ⇒ không gọi.
+            # Chủ đề ĐỦ điều kiện chưa leo thang ngay: xếp hàng, leo thang SAU vòng lặp để xoay vòng trên toàn lượt.
             ly_do_khong_leo, truy_van_du_phong = _co_nen_leo_thang_du_phong(row, unique, suy_giam)
-            try:
-                if ly_do_khong_leo:
-                    extra, ghi_chu_du_phong = [], ""
-                    du_phong_khong_leo[ly_do_khong_leo] = du_phong_khong_leo.get(ly_do_khong_leo, 0) + 1
-                    if ly_do_khong_leo == "ncbi_loi":
-                        ghi_chu_lan.append("bậc thang dự phòng: KHÔNG leo thang — NCBI lỗi ở chủ đề này, chưa kết luận"
-                                           " được đủ/thiếu (không đốt hạn mức Consensus/SerpApi)")
-                else:
-                    extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van_du_phong, unique, max_results,
-                                                                    days=days)
-                for candidate in extra:
-                    khoa_c = candidate.pmid or candidate.url
-                    if khoa_c in all_pmids:
-                        continue
-                    all_pmids.add(khoa_c)
-                    unique.append(candidate)
-                if ghi_chu_du_phong:
-                    ghi_chu_lan.append(ghi_chu_du_phong)
-                    lan_phu_loi.append("du_phong_bac_thang")
-            except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
-                ghi_chu_lan.append(f"làn du_phong_bac_thang lỗi: {type(exc).__name__}")
-                lan_phu_loi.append("du_phong_bac_thang")
+            if ly_do_khong_leo:
+                du_phong_khong_leo[ly_do_khong_leo] = du_phong_khong_leo.get(ly_do_khong_leo, 0) + 1
+                if ly_do_khong_leo == "ncbi_loi":
+                    ghi_chu_lan.append("bậc thang dự phòng: KHÔNG leo thang — NCBI lỗi ở chủ đề này, chưa kết luận"
+                                       " được đủ/thiếu (không đốt hạn mức Consensus/SerpApi)")
             # PASS_DEGRADED: có truy vấn rơi xuống dự phòng ⇒ kết quả có thể THIẾU. Con trỏ KHÔNG tiến để
             # lượt sau quét lại đúng cửa sổ này — trước đây vẫn tiến ⇒ cửa sổ 24/08–07/09 mất vĩnh viễn.
             trang_thai = "PASS_DEGRADED" if suy_giam else "PASS"
@@ -1595,6 +1616,8 @@ def run_scan(
             topic_results.append(TopicResult(
                 row["topic"], row["query"], trang_thai, unique, ghi_chu, suy_giam, lan_phu_loi,
                 khong_trinh))
+            if not ly_do_khong_leo:
+                cho_du_phong.append((len(topic_results) - 1, truy_van_du_phong))
             if cursor is not None and trang_thai == "PASS":
                 # Vá 22/09/2026 (review:thu-nhan #11): UTC — nhất quán với biên `since`/`today`
                 # thật sự gửi tới NCBI/Europe PMC (xem chú thích ở khối tính `md` phía trên); con
@@ -1606,6 +1629,57 @@ def run_scan(
                 row["topic"], row["query"], "FAIL", [],
                 f"{exc.__class__.__name__}: {exc}"[:600],
             ))
+
+    # BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar), XOAY VÒNG trên toàn lượt — 27/09/2026. Chủ đề đủ điều kiện
+    # được xét theo ngày leo thang gần nhất (chưa từng ⇒ trước), hoà thì theo thứ tự watchlist; chỉ `tran` chủ đề
+    # đầu được gọi, số còn lại «chờ lượt». Có sổ thì bài dự phòng đã trình ở lượt trước không trình lại.
+    so = trang_thai_du_phong
+    lan_cuoi = so.setdefault("lan_cuoi_leo_thang", {}) if so is not None else {}
+    da_trinh = so.setdefault("da_trinh", {}) if so is not None else {}
+    hom_nay = datetime.now(timezone.utc).date().isoformat()
+    thu_tu = sorted(range(len(cho_du_phong)),
+                    key=lambda j: (str(lan_cuoi.get(topic_results[cho_du_phong[j][0]].topic, "")), j))
+    duoc_leo = set(thu_tu if tran_leo_thang_du_phong is None else thu_tu[:max(0, tran_leo_thang_du_phong)])
+    da_leo_thang: list[str] = []
+    bo_trung_xuyen_tuan = 0
+    for j, (i, truy_van) in enumerate(cho_du_phong):
+        tr = topic_results[i]
+        ghi_them: list[str] = []
+        if j not in duoc_leo:
+            du_phong_khong_leo["cho_luot_xoay_vong"] = du_phong_khong_leo.get("cho_luot_xoay_vong", 0) + 1
+            ghi_them.append(f"bậc thang dự phòng: chờ lượt — mỗi lượt quét chỉ {tran_leo_thang_du_phong} chủ đề "
+                            "được leo thang (xoay vòng, chủ đề lâu chưa xét đi trước)")
+        else:
+            da_leo_thang.append(tr.topic)
+            if so is not None:
+                lan_cuoi[tr.topic] = hom_nay
+            try:
+                extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van, tr.candidates, max_results, days=days)
+                for candidate in extra:
+                    khoa_c = candidate.pmid or candidate.url
+                    if khoa_c in all_pmids:
+                        continue
+                    if so is not None and khoa_c in da_trinh:
+                        bo_trung_xuyen_tuan += 1
+                        continue
+                    all_pmids.add(khoa_c)
+                    tr.candidates.append(candidate)
+                    if so is not None:
+                        da_trinh[khoa_c] = hom_nay
+                if ghi_chu_du_phong:
+                    ghi_them.append(ghi_chu_du_phong)
+                    tr.lan_phu_loi.append("du_phong_bac_thang")
+            except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
+                ghi_them.append(f"làn du_phong_bac_thang lỗi: {type(exc).__name__}")
+                tr.lan_phu_loi.append("du_phong_bac_thang")
+        if ghi_them:
+            topic_results[i] = replace(tr, error="; ".join(x for x in (tr.error, *ghi_them) if x))
+    if so is not None:
+        # Sổ không phình mãi: quên bài đã trình quá 400 ngày (Consensus/SerpApi lọc theo NĂM — sang năm thứ hai bài
+        # cũ không còn quay lại được nữa).
+        moc = (datetime.now(timezone.utc) - timedelta(days=400)).date().isoformat()
+        for khoa_c in [k for k, v in da_trinh.items() if str(v) < moc]:
+            del da_trinh[khoa_c]
 
     success_count = sum(result.status == "PASS" for result in topic_results)
     degraded_count = sum(result.status == "PASS_DEGRADED" for result in topic_results)
@@ -1633,6 +1707,11 @@ def run_scan(
         "candidate_count": len(all_pmids),
         # Số chủ đề KHÔNG leo thang dự phòng theo lý do (ncbi_loi · du_bai_manh · chua_co_truy_van_tieng_anh).
         "du_phong_khong_leo_thang": dict(sorted(du_phong_khong_leo.items())),
+        # Xoay vòng (27/09/2026): chủ đề đã leo thang lượt này · trần mỗi lượt (None = không trần) · số bài dự phòng
+        # bỏ vì đã trình ở lượt trước.
+        "du_phong_da_leo_thang": da_leo_thang,
+        "du_phong_tran_moi_luot": tran_leo_thang_du_phong,
+        "du_phong_bo_trung_xuyen_tuan": bo_trung_xuyen_tuan,
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
         "next_state": "CANDIDATE_REVIEW_QUEUE",
@@ -1657,6 +1736,14 @@ def markdown_report(report: dict) -> str:
          f"({report['do_tre']['n_do_duoc']}/{report['do_tre']['n_tong']} đo được; "
          f"{report['do_tre']['qua_14_ngay']} mục quá ngưỡng 14 ngày)"
          if report.get("do_tre") else "- Độ trễ phát hiện: [CẦN BỔ SUNG] (ngày công bố không đủ chi tiết)"),
+        *([f"- Bậc thang dự phòng tính phí (Consensus → SerpApi): leo thang {len(report['du_phong_da_leo_thang'])} "
+           f"chủ đề ({', '.join(report['du_phong_da_leo_thang'])})"
+           + (f" · {report['du_phong_khong_leo_thang']['cho_luot_xoay_vong']} chủ đề chờ lượt (xoay vòng "
+              f"{report.get('du_phong_tran_moi_luot')}/lượt)"
+              if report.get("du_phong_khong_leo_thang", {}).get("cho_luot_xoay_vong") else "")
+           + (f" · bỏ {report['du_phong_bo_trung_xuyen_tuan']} bài đã trình ở lượt trước"
+              if report.get("du_phong_bo_trung_xuyen_tuan") else "")]
+          if report.get("du_phong_da_leo_thang") else []),
         "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
         "- Trusted-source label: official guideline/regulator bodies, Cochrane, NEJM, Lancet, JAMA, BMJ, Annals, Nature Medicine, and core specialty societies/journals.",
         "- **Nhãn độ tin cậy gắn NGAY lúc nhận:** trạng thái rút bài (chuỗi 3 tầng) · loại "
@@ -1758,7 +1845,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                                         "orchestrator LÔ 4 và chạy tay dùng; bỏ trống = cả watchlist")
     parser.add_argument("--khong-cursor", action="store_true",
                         help="bỏ qua con trỏ tăng dần, quét trọn cửa sổ --days")
+    parser.add_argument("--tran-du-phong", type=int, default=TRAN_LEO_THANG_DU_PHONG_MAC_DINH,
+                        help="tối đa bao nhiêu chủ đề được leo thang dự phòng TÍNH PHÍ mỗi lượt (xoay vòng, chủ đề lâu "
+                             f"chưa xét đi trước; 0 = không leo thang; mặc định {TRAN_LEO_THANG_DU_PHONG_MAC_DINH})")
     args = parser.parse_args(argv)
+    if not 0 <= args.tran_du_phong <= 50:
+        parser.error("--tran-du-phong phải trong khoảng 0..50")
     if not 1 <= args.days <= 3650:
         parser.error("--days phải trong khoảng 1..3650")
     if not 1 <= args.max <= 100:
@@ -1812,10 +1904,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             # run_scan, KHÔNG đổi hành vi) — chỉ để test CLI monkeypatch được S.search/S.summarize;
             # tham số mặc định của run_scan() gắn với đối tượng hàm lúc ĐỊNH NGHĨA, monkeypatch
             # thuộc tính module sau đó không có tác dụng nếu gọi không truyền tường minh ở đây.
+            so_du_phong = doc_trang_thai_du_phong()
+            so_du_phong_truoc = json.loads(json.dumps(so_du_phong))
             report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor,
-                              search_fn=search, summarize_fn=summarize)
+                              search_fn=search, summarize_fn=summarize,
+                              tran_leo_thang_du_phong=args.tran_du_phong, trang_thai_du_phong=so_du_phong)
         except ValueError as exc:
             parser.error(str(exc))
+        if so_du_phong != so_du_phong_truoc:
+            ghi_trang_thai_du_phong(so_du_phong)
         if ghi_con_tro:
             # HAI LUẬT RIÊNG, không được gộp làm một (phản biện vòng 2 22/09 bắt được: bản gộp đầu
             # tiên làm test PASS-hợp-lệ đỏ oan — run_scan CHỈ tiến cursor cho chủ đề PASS nên hai
