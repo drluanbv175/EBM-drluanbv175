@@ -3221,3 +3221,26 @@ Chuyển từ nhánh cũ về `master`, git gỡ 2 tệp chỉ có trên nhánh;
 giữ mtime cũ) và chặn `git merge` («untracked working tree files would be overwritten»). Xử lý: so byte với
 `git show <nhánh>:<tệp>`, trùng thì DỜI ra thư mục sao lưu ngoài OneDrive (không xoá) rồi làm tiếp. Sau mỗi lần chuyển nhánh
 trong cây OneDrive, soi lại `git status` sau ít phút.
+
+### 27/09/2026 — Làn dự phòng TÍNH PHÍ leo thang ở MỌI chủ đề; canary ESD07 tiêu hạn mức; NCBI lỗi máy chủ diện rộng (BH117)
+- **Đo:** ESD07 đỏ vì NCBI trả HTTP 500 «WWW Error 500 Diagnostic» (eutils) cho 5/6 truy vấn tối giản — xác nhận từ máy Mac
+  và connector PubMed của Anthropic (API_ERROR); `X-Ratelimit-Remaining` còn 2 ⇒ không phải giới hạn nhịp. Scanner làm đúng
+  thiết kế (Europe PMC dự phòng, `PASS_DEGRADED`, con trỏ đứng yên) — ESD07 đỏ là ĐÚNG.
+- **Lỗi thật lộ ra khi truy nguyên:** (1) canary ESD07 quét 2 chủ đề GIẢ đã gọi THẬT Consensus + SerpApi mỗi lần chạy cổng
+  `--online` (bộ đếm tháng 9: Consensus 6/10, SerpApi 8/200); (2) bậc thang dự phòng của vòng quét tuần (thêm 22/09) leo thang
+  ở MỌI chủ đề — cổng đủ-chứng-cứ của engine chấm bản ghi scanner (không mang loại xuất bản) ra tier C, điểm 0–6 ⇒ luôn
+  «thiếu»; leo thang cả khi NCBI lỗi; gửi TÊN chủ đề tiếng Việt cho nguồn tiếng Anh; (3) `load_watchlist()` dựng lại từng mục
+  nên khoá mới khai trong watchlist bị vứt trước khi tới cổng — test gọi thẳng `run_scan` không thấy. Lượt tuần 28/09 18:30 là
+  lượt ĐẦU có làn này (47 chủ đề active) trong khi Consensus chỉ còn 4 lượt của tháng 9.
+- **Vá:** repo y khoa — tiến trình canary nhận `ENABLE_CONSENSUS=false` + `ENABLE_SERPAPI_SCHOLAR=false` (`_run(env_them=)`
+  ghi đè biến HĐH) + câu GỢI Ý trong chi tiết ESD07 khi mọi lỗi là «NCBI lỗi». Repo gốc — `_co_nen_leo_thang_du_phong()` trước
+  khi gọi làn: không leo thang khi NCBI lỗi · đã có ≥ 3 bài mạnh theo loại xuất bản THẬT · không có truy vấn tiếng Anh
+  (`truy_van_du_phong` trong watchlist hoặc tên thuần ASCII); JSON có `du_phong_khong_leo_thang`; `load_watchlist` chép
+  `truy_van_du_phong`. Hệ quả hiện tại: 47 chủ đề active, chỉ 2 tên ASCII, 0 có `truy_van_du_phong` ⇒ làn dự phòng gần như
+  không chạy cho tới khi khai truy vấn tiếng Anh cho chủ đề muốn phủ thêm.
+- **Kiểm:** repo y khoa 3 test mới, 43 test chạm cổng triển khai, 3 đột biến đỏ đúng chỗ. Repo gốc 7 test mới (104 test
+  scanner), BH117 bắt đủ 6 đột biến (bỏ luật NCBI · ngưỡng 99 · nhận tên tiếng Việt · gửi tên chủ đề · khoá chết làn ·
+  `load_watchlist` vứt khoá); trọn bộ chốt 117 ✓.
+- **Bài học:** (a) test gọi thẳng hàm lõi bỏ sót bước nạp cấu hình của đường sản xuất — chốt phải đi đúng đường sản xuất
+  (watchlist → `load_watchlist` → `run_scan`); (b) trong zsh, biến chứa nhiều đường dẫn KHÔNG tự tách từ — `pytest $T` báo
+  «no tests ran» chứ không báo lỗi, phép đột biến chạy như thế là KHÔNG đo gì; dùng `${=T}`.
