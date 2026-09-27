@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -105,3 +106,27 @@ def test_hai_bai_manh_chua_du_nguong_van_leo_thang(goi):
     manh = {"11": ("Practice Guideline",), "12": ("Meta-Analysis",)}
     _chay({"topic": "Hypertension", "query": "q", "truy_van_du_phong": "hypertension treatment"}, manh)
     assert goi == ["hypertension treatment"], f"chỉ 2 < {S.NGUONG_BAI_MANH_KHONG_LEO_THANG} bài mạnh — vẫn phải leo thang"
+
+
+def test_lan_du_phong_mang_moc_ngay_nhu_cac_lan_khac(monkeypatch):
+    """Vá 27/09 (lượt 2): làn dự phòng gọi Consensus/SerpApi KHÔNG kèm mốc ngày ⇒ tìm MỌI năm ⇒ vòng quét tuần nhận lại
+    bài cũ «liên quan nhất mọi thời» mỗi tuần. Đi đường thật run_scan → bo_sung_du_phong_lane → bo_sung_fn: phải mang
+    since_date = hôm nay − days (UTC), như làn Scopus/CORE."""
+    for ten in ("search_preprint_lane", "search_trials_lane", "search_scopus_lane", "search_core_lane"):
+        monkeypatch.setattr(S, ten, lambda *a, **k: [])
+    monkeypatch.setattr(S, "gan_do_tin_cay", lambda ds: list(ds))
+    monkeypatch.setattr(S, "_pmid_da_co_trong_kho", lambda: set())
+    S._NCBI_CHAN["bi_chan"] = False
+    S._SUY_GIAM.clear()
+    S._VUOT_TRAN.clear()
+    nhan: list[dict] = []
+
+    def bo_sung_gia(query, area, records, *, max_results, since_date=None):
+        nhan.append({"query": query, "since_date": since_date})
+        return [], {}
+    lan_goc = S.bo_sung_du_phong_lane
+    monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: lan_goc(*a, bo_sung_fn=bo_sung_gia, **k))
+    _chay({"topic": "Hypertension", "query": "q", "truy_van_du_phong": "hypertension treatment"})
+    mong = (datetime.now(timezone.utc) - timedelta(days=30)).date().isoformat()
+    assert nhan == [{"query": "hypertension treatment", "since_date": mong}], \
+        f"làn dự phòng phải mang mốc ngày của cửa sổ quét (days=30 ⇒ {mong}); nhận {nhan}"
