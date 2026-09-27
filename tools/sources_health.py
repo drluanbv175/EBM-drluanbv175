@@ -53,6 +53,10 @@ _sp_sh = _ilu_sh.spec_from_file_location(
 _bst_sh = _ilu_sh.module_from_spec(_sp_sh)
 _sp_sh.loader.exec_module(_bst_sh)
 _MEA_GOC = _bst_sh.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tra_dinh_danh import email_lien_he  # noqa: E402 — email liên hệ lấy từ cấu hình, không viết cứng (27/09/2026)
+
+_MAIL = email_lien_he()
 SO = GOC / "data" / "sources.json"
 # Điểm thăm rẻ nhất của từng API (đều đã phê duyệt egress từ trước):
 DIEM_THAM = {
@@ -61,7 +65,7 @@ DIEM_THAM = {
     "SRC-004": "https://api.crossref.org/works?rows=0",
     "SRC-005": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
     "SRC-006": "https://api.fda.gov/drug/label.json?limit=1",
-    "SRC-007": "https://api.openalex.org/works?per-page=1&mailto=bsluanbv175@gmail.com",
+    "SRC-007": "https://api.openalex.org/works?per-page=1" + (f"&mailto={_MAIL}" if _MAIL else ""),
     # SRC-020 (kcb.vn) và SRC-037 (NICE qua Europe PMC) — thêm 22/09/2026 cùng đợt đóng 4 khoảng
     # trống nguồn. Cả hai miễn phí, không hạn mức, không cần khoá — đã kiểm reachability RIÊNG
     # từ chính môi trường chạy chốt này trước khi thêm (khác CORE ở dưới, nơi vấn đề là thiếu

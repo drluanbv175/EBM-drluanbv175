@@ -180,10 +180,14 @@ def tra_song_g7() -> None:
     print(f"Tra sống loại xuất bản cho {len(pmids)} PMID (lô 100)…")
     ptypes: dict[str, list[str]] = {}
     tieude: dict[str, str] = {}
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from tra_dinh_danh import email_lien_he  # noqa: PLC0415 — email liên hệ từ cấu hình, không viết cứng (27/09/2026)
+    mail = email_lien_he()
+    hau_email = f"&email={mail}" if mail else ""
     for i in range(0, len(pmids), 100):
         lo = pmids[i:i + 100]
         u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed"
-             f"&retmode=json&id={','.join(lo)}&tool=ebm&email=bsluanbv175@gmail.com")
+             f"&retmode=json&id={','.join(lo)}&tool=ebm{hau_email}")
         try:
             d = json.loads(urllib.request.urlopen(
                 urllib.request.Request(u, headers={"User-Agent": "ebm-gradeby"}),

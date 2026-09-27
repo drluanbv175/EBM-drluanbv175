@@ -7383,6 +7383,53 @@ def bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong():
     return True, ""
 
 
+def bh124_khong_email_ca_nhan_viet_cung_trong_ma():
+    """27/09 — hai repo CÔNG KHAI chứa email cá nhân của bác sĩ viết cứng ở 6 công cụ (URL NCBI/OpenAlex, `MAILTO`, và
+    `_DEFAULT_EMAIL` của run_g0/g1_auto — gài vào NCBI_EMAIL TRƯỚC khi nạp app.config nên còn đè giá trị kho secrets, và che
+    việc PubMedClient thiếu email trả GIẢ LẬP). Email liên hệ nay lấy từ cấu hình (`tra_dinh_danh.email_lien_he()` ở repo
+    gốc, `app.config`/kho secrets ở repo y khoa). Kiểm: (1) không địa chỉ thư miễn phí nào trong MÃ được theo dõi của hai
+    repo (test được miễn — địa chỉ giả dùng để thử bộ lọc PII); (2) máy không khai NCBI_EMAIL, không kho secrets ⇒ hàm trả
+    rỗng, KHÔNG có email dự phòng gài sẵn."""
+    import os as _os
+    import re as _re
+    import subprocess
+    import tempfile as _tf
+    mau = _re.compile(r"[A-Za-z0-9._%+-]+@(?:gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|icloud|me|aol|proton"
+                      r"|protonmail|gmx|yandex|zoho)\.[A-Za-z]{2,}")
+    duoi = (".py", ".sh", ".command", ".js", ".mjs", ".ts", ".toml", ".yml", ".yaml", ".ps1", ".bat", ".cmd")
+    vi_pham = []
+    for goc in (REPO, _goc_mea()):
+        if not (goc / ".git").exists():
+            continue
+        r = subprocess.run(["git", "-C", str(goc), "ls-files"], capture_output=True, text=True, check=True)
+        for rel in r.stdout.splitlines():
+            p = Path(rel)
+            if p.suffix not in duoi or p.name.startswith("test_") or "tests" in p.parts:
+                continue
+            try:
+                noi_dung = (goc / p).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            vi_pham += [f"{goc.name}/{rel}:{i}" for i, d in enumerate(noi_dung.splitlines(), 1) if mau.search(d)]
+    if vi_pham:
+        return False, f"email cá nhân viết cứng trong mã repo công khai (lấy từ cấu hình NCBI_EMAIL): {vi_pham[:5]}"
+    cu = {k: _os.environ.get(k) for k in ("NCBI_EMAIL", "HOME", "USERPROFILE")}
+    try:
+        with _tf.TemporaryDirectory() as d:
+            _os.environ.pop("NCBI_EMAIL", None)
+            _os.environ["HOME"] = _os.environ["USERPROFILE"] = d
+            email = _nap(REPO / "tools" / "tra_dinh_danh.py", "_bh124_ttd").email_lien_he()
+    finally:
+        for k, v in cu.items():
+            if v is None:
+                _os.environ.pop(k, None)
+            else:
+                _os.environ[k] = v
+    if email:
+        return False, "không khai NCBI_EMAIL, không kho secrets mà email_lien_he() vẫn trả một địa chỉ — email dự phòng gài sẵn"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7514,6 +7561,7 @@ BAI_HOC = [
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
+    ("BH124", "27/09", "Không email cá nhân viết cứng trong mã repo công khai — email liên hệ API lấy từ cấu hình", bh124_khong_email_ca_nhan_viet_cung_trong_ma),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

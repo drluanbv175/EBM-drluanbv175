@@ -48,7 +48,12 @@ _bst_doa = _ilu_doa.module_from_spec(_sp_doa)
 _sp_doa.loader.exec_module(_bst_doa)
 _MEA_GOC = _bst_doa.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
 DASH = GOC / "EBM-Dashboards"
-MAILTO = "bsluanbv175@gmail.com"  # polite pool OpenAlex — chỉ email liên hệ, không phải secret
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tra_dinh_danh import email_lien_he  # noqa: E402
+
+# polite pool OpenAlex — email liên hệ lấy từ cấu hình (NCBI_EMAIL), không viết cứng trong repo công khai (27/09/2026);
+# rỗng ⇒ bỏ `mailto`, OpenAlex vẫn trả lời.
+MAILTO = email_lien_he()
 API = "https://api.openalex.org/works"
 
 
@@ -85,7 +90,8 @@ def _da_biet() -> set[str]:
 
 
 def _goi(url: str) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": f"EBM-doi-chieu/1.0 ({MAILTO})"})
+    req = urllib.request.Request(url, headers={"User-Agent": f"EBM-doi-chieu/1.0 ({MAILTO})" if MAILTO
+                                               else "EBM-doi-chieu/1.0"})
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode("utf-8", "replace"))
 
@@ -112,7 +118,7 @@ def quet_chu_de(t: dict, ngay: int, toi_da: int, biet: set[str], kiem_doi) -> li
     tu_ngay = (date.today() - timedelta(days=ngay)).isoformat()
     u = (f"{API}?search={urllib.parse.quote(tu)}"
          f"&filter=from_publication_date:{tu_ngay},type:article|review"
-         f"&per-page={toi_da}&sort=publication_date:desc&mailto={MAILTO}")
+         f"&per-page={toi_da}&sort=publication_date:desc" + (f"&mailto={MAILTO}" if MAILTO else ""))
     ket = _goi(u)
     dong: list[str] = []
     da_kiem_rut = 0
