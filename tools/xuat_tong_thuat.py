@@ -33,8 +33,8 @@ from __future__ import annotations
 import argparse
 import html
 import re
-import subprocess
 import sys
+import webbrowser
 from datetime import date
 from pathlib import Path
 
@@ -293,6 +293,28 @@ qua Cổng A của bác sĩ. Cần bác sĩ kiểm chứng.</p>
 </main></body></html>"""
 
 
+def _mo_trinh_duyet(ra: Path) -> bool:
+    """Mở tệp HTML bằng trình duyệt mặc định — chạy được trên Mac/Windows/Linux.
+
+    VÁ 26/09/2026 (#40): bản cũ gọi thẳng lệnh `open` của macOS; trên Windows/Linux
+    (không có `open`) nó ném FileNotFoundError SAU KHI đã ghi HTML ⇒ traceback, mã 1,
+    người gọi tưởng xuất hỏng. `webbrowser` tự chọn cơ chế đúng từng nền tảng. Không mở
+    được chỉ là CẢNH BÁO — việc xuất đã xong, mã thoát không đổi.
+    """
+    try:
+        return bool(webbrowser.open(ra.resolve().as_uri()))
+    except Exception:  # noqa: BLE001 — mở trình duyệt là tiện ích, không phải cổng
+        return False
+
+
+def _hien_duong(ra: Path) -> str:
+    """Đường dẫn để in: tương đối theo repo nếu được, không thì tuyệt đối (không crash)."""
+    try:
+        return str(ra.relative_to(REPO))
+    except ValueError:
+        return str(ra)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Xuất bài tổng thuật chứng cứ (md → HTML học thuật)")
     ap.add_argument("md", help="file markdown tổng thuật")
@@ -309,10 +331,12 @@ def main() -> int:
     RA_DIR.mkdir(parents=True, exist_ok=True)
     ra = RA_DIR / (src.stem + ".html")
     ra.write_text(render(md, src.name), encoding="utf-8", newline="\n")
-    print(f"✓ {ra.relative_to(REPO)}")
-    if a.mo:
-        subprocess.run(["open", str(ra)], check=False)
+    print(f"✓ {_hien_duong(ra)}")
+    # Disclaimer in TRƯỚC nhánh --mo: dòng bắt buộc này không được phụ thuộc vào việc
+    # mở trình duyệt thành công hay không.
     print("Cần bác sĩ kiểm chứng.")
+    if a.mo and not _mo_trinh_duyet(ra):
+        print(f"⚠ Không mở được trình duyệt — mở tay: {ra}")
     return 0
 
 

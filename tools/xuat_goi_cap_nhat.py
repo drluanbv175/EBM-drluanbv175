@@ -16,6 +16,13 @@ Cách dùng:
                Chỉ khi cổng PASS thì bản Word mới được truyền cờ --verified —
                nếu không, tool docx tự hạ câu chữ thành "CẦN xác minh" thay vì
                khẳng định sai là đã xác minh.
+               KHÔNG có --online thì cổng VẪN chạy ở chế độ ngoại tuyến (vá
+               26/09/2026): mọi luật không cần mạng (khoá summary lạ, nguồn đã rút
+               có trong sổ, apply trên na/low…) vẫn CHẶN XUẤT (mã 3); bản Word
+               không bao giờ nhận --verified và tiêu đề ghi «CHƯA xác minh nguồn sống».
+
+Mã thoát: 0 xuất xong · 1 xuất nhưng thiếu sản phẩm/cổng chưa kết luận do mạng hoặc
+thiếu công cụ · 2 thiếu dashboard/công cụ bắt buộc hoặc bước ② hỏng · 3 CHẶN XUẤT bởi cổng.
     --json     in kết quả dạng JSON (đường dẫn các file) để tự động hoá.
 
 Vì sao gộp thành một lệnh: các sản phẩm này phải sinh từ CÙNG một khối DATA và
@@ -236,12 +243,168 @@ def tom_tat_bo_nam(result: dict) -> str:
     Word cũ đi dùng.
 
     Cùng họ với BH14/BH15/BH16: hệ NÓI SAI với bác sĩ mà không sai một phép tính nào.
+
+    VÁ 26/09/2026 (#11): đủ 5 sản phẩm mà cổng liêm chính KHÔNG PASS sống (chạy
+    ngoại tuyến, lỗi mạng, thiếu công cụ…) thì KHÔNG được nói «đã sẵn sàng» — tiêu
+    đề mang hậu tố «CHƯA xác minh nguồn sống». Vắng khoá `cong_liem_chinh` cũng coi
+    là chưa xác minh (thiếu dữ kiện ⇒ không tuyên bố xanh).
     """
     co = [nhan.strip() for nhan, key in KHOI_BO_NAM if result.get(key)]
     thieu = [nhan.strip() for nhan, key in KHOI_BO_NAM if not result.get(key)]
+    cong = result.get("cong_liem_chinh")
+    hau_to = "" if cong == "PASS" else f" — CHƯA xác minh nguồn sống (cổng: {cong or 'không rõ'})"
     if thieu:
-        return f"── Bộ năm: {len(co)}/5 — THIẾU {', '.join(thieu)} ──"
+        return f"── Bộ năm: {len(co)}/5 — THIẾU {', '.join(thieu)}{hau_to} ──"
+    if hau_to:
+        return f"── Bộ năm: 5/5{hau_to} ──"
     return "── Bộ năm đã sẵn sàng (5/5) ──"
+
+
+# ── ① Cổng liêm chính — MỘT hàm cho CẢ hai chế độ (vá 26/09/2026, #11) ──────────
+# Nhãn cổng khi chỉ chạy được phần NGOẠI TUYẾN (không phân giải PMID/DOI sống).
+NHAN_CONG_NGOAI_TUYEN = "NGOẠI TUYẾN — chưa phân giải PMID/DOI sống"
+
+
+def _chay_cong(py: str, dash: Path, co_online: bool, result: dict) -> tuple[int | None, bool, int]:
+    """Chạy cổng liêm chính (verify_dashboard.py thường, rồi --strict-sources).
+
+    Trả về (ma_chan, verified, rc_loi):
+      · ma_chan = 3 ⇒ CHẶN XUẤT (người gọi trả 3 ngay, không chạy ②③④⑤); None ⇒ đi tiếp.
+      · verified = True CHỈ khi chạy --online VÀ lượt thường PASS.
+      · rc_loi = 1 ⇒ người gọi đặt rc_final = 1 (thiếu công cụ, hoặc lỗi do máy/mạng).
+
+    VÌ SAO GỘP THÀNH MỘT HÀM (vá 26/09/2026, phát hiện #11): bản cũ bọc TOÀN BỘ cổng
+    trong `if a.online:`. Chạy không có `--online` (quên cờ, máy mất mạng) thì KHÔNG
+    luật nào chạy — kể cả những luật KHÔNG cần mạng: khoá summary lạ (BH61), nguồn đã
+    rút có trong sổ, `decision='apply'` trên gradeLevel na/low (strict_source_checks)
+    — rồi vẫn in «Bộ năm đã sẵn sàng (5/5)», mã thoát 0. Tuyến ops/orchestrator B2 thì
+    LUÔN chạy --strict-sources cả ngoại tuyến (BH96) ⇒ hai tuyến xuất bản lệch nhau.
+    Nay hai chế độ dùng CHUNG đúng một logic, chỉ khác cờ `--online` truyền xuống, nên
+    không thể trôi lệch nhau lần nữa. Luật ngoại tuyến là TẬP CON của luật --online
+    (đã chặn sẵn) ⇒ không gói nào qua tuyến doctrine bị chặn thêm.
+
+    KHÔNG dùng mã 2 cho «chạy ngoại tuyến»: `ops/orchestrator.py::phan_loai` đọc B4
+    rc=2 là «thiếu công cụ/đường dẫn» ⇒ chẩn đoán sai.
+    """
+    if not VERIFY.exists():
+        print("✗ Thiếu verify_dashboard.py — bỏ qua cổng liêm chính", file=sys.stderr)
+        result["cong_liem_chinh"] = "THIẾU TOOL"
+        return None, False, 1
+
+    co = ["--online"] if co_online else []
+    if co_online:
+        print("① Cổng liêm chính (--online)…")
+    else:
+        print("① Cổng liêm chính NGOẠI TUYẾN (không có --online — chạy mọi luật không cần"
+              " mạng; KHÔNG phân giải PMID/DOI sống, bản Word sẽ ghi 'CẦN xác minh')…")
+    # cwd = thư mục cha của chính bản VERIFY đang dùng — đúng cả khi đó là
+    # EBM-Dashboards (máy thật) lẫn sync/skills/cap-nhat-chung-cu-y-khoa
+    # (bản vendor qua git, dùng trên checkout thuần git — xem duong_cong_cu_pipeline()).
+    rc, out = run([py, VERIFY, dash] + co, cwd=VERIFY.parent.parent)
+    tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or [""]
+    print("   " + tail[0].strip())
+    verified = False
+    rc_loi = 0
+    if rc == 0:
+        if co_online:
+            verified = True
+            result["cong_liem_chinh"] = "PASS"
+        else:
+            # Qua được phần ngoại tuyến KHÔNG có nghĩa là nguồn đã được xác minh.
+            result["cong_liem_chinh"] = NHAN_CONG_NGOAI_TUYEN
+    elif rc == 2:
+        # VÁ 2026-09-04 (Workflow đối kháng đa-agent, CRITICAL) — trước đây MỌI
+        # rc != 0 (kể cả rc=1) chỉ hạ câu chữ rồi vẫn chạy tiếp ②③④⑤, nên một lỗi
+        # NỘI DUNG THẬT — vd kiem_khoa_summary() bắt khoá `notDo` thay vì `dontDo`
+        # (BH61, xoá mất cả panel "Không nên/giới hạn" của MỌI sản phẩm phái sinh),
+        # hay kiem_nguon_da_rut() bắt một trích dẫn ĐÃ BỊ RÚT — vẫn cho ra đủ bản
+        # đọc/Word/PDF kèm dòng "── Bộ năm đã sẵn sàng ──" như không có gì xảy ra.
+        # verify_dashboard.py TỰ phân biệt rc=1 (≥1 lỗi cứng KHÔNG do mạng — nội
+        # dung/an toàn/cấu trúc dữ liệu thật sự sai) với rc=2 (TOÀN BỘ lỗi cứng là
+        # do MÁY/MẠNG — xem _canh_bao_loi_mang/report() trong chính file đó); dùng
+        # lại đúng ranh giới đã có thay vì tự đặt luật mới. rc=2 vẫn xuất như cũ
+        # (đây KHÔNG phải kết luận về nguồn — chạy lại khi mạng ổn).
+        result["cong_liem_chinh"] = "CHƯA XÁC MINH ĐƯỢC (mạng)"
+        rc_loi = 1
+        print("   ⚠ Cổng CHƯA xác minh được do MÁY/MẠNG (không phải lỗi nguồn) —"
+              " vẫn xuất file nhưng bản Word sẽ KHÔNG khẳng định 'đã xác minh'.")
+    else:
+        # rc=1: ≥1 lỗi cứng THẬT (nội dung/an toàn/cấu trúc dữ liệu) — CHẶN XUẤT
+        # ngay ở đây, không để lọt xuống ②③④⑤ rồi báo "Bộ năm đã sẵn sàng" sai sự
+        # thật (đúng HỌ lỗi với nhánh loi_an_toan bên dưới, chỉ khác chỗ nhánh đó
+        # chỉ bắt được đúng MỘT mẫu văn bản "decision='apply'").
+        result["cong_liem_chinh"] = "CHẶN BỞI CỔNG LIÊM CHÍNH"
+        loi = [ln.strip() for ln in out.splitlines() if ln.strip().startswith("✗")]
+        print(f"   ⛔ CHẶN XUẤT — cổng liêm chính có {len(loi)} lỗi cứng KHÔNG "
+              "phải do mạng (nội dung/an toàn/cấu trúc dữ liệu):")
+        for ln in loi[:8]:
+            print("      " + ln)
+        if len(loi) > 8:
+            print(f"      … và {len(loi)-8} mục nữa")
+        print("   Sửa dashboard rồi chạy lại — KHÔNG có đường nào né được cổng này.")
+        return 3, False, rc_loi
+
+    # ── ①-bis Cổng NGUỒN NGHIÊM NGẶT (thêm 2026-08-11) ────────────────
+    # `DESIGN-SPEC.md` §6 đòi `--online --strict-sources` từ đầu, nhưng dây
+    # chuyền chỉ chạy `--online` nên nhóm luật mạnh nhất chưa bao giờ thi
+    # hành. Rà 58 dashboard đã phát hành ngày 11/08 cho thấy vì sao phải
+    # tách hai loại lỗi thay vì chặn tất:
+    #   · 47/52 bản FAIL chỉ vì THIẾU `DATA.standards` — khối siêu dữ liệu
+    #     ra đời SAU những bản đó. Nội dung lâm sàng không sai. Chặn cả
+    #     nhóm này là chặn oan, và "sửa" bằng cách bịa ra hợp đồng nguồn
+    #     cho một lần tìm kiếm đã xảy ra từ lâu chính là bịa provenance.
+    #   · 4 bản mang lỗi THẬT: `decision='apply'` trên `gradeLevel` na/low,
+    #     hoặc apply chỉ dựa Consensus. Đây là lỗi AN TOÀN — một khuyến cáo
+    #     "áp dụng ngay" tựa trên chứng cứ chưa đủ mạnh.
+    # Nên: lỗi an toàn thì CHẶN xuất; thiếu siêu dữ liệu thì cảnh báo.
+    # strict_source_checks() tự hỗ trợ chạy ngoại tuyến (chỉ bỏ phần phân giải sống).
+    rc_s, out_s = run([py, VERIFY, dash] + co + ["--strict-sources"],
+                      cwd=VERIFY.parent.parent)
+    if rc_s == 0:
+        result["cong_nguon_nghiem"] = "PASS"
+        return None, verified, rc_loi
+    loi_an_toan = [ln.strip() for ln in out_s.splitlines()
+                   if "decision='apply'" in ln]
+    if loi_an_toan:
+        result["cong_nguon_nghiem"] = "CHẶN"
+        print(f"   ⛔ CHẶN XUẤT — {len(loi_an_toan)} mục khai"
+              " 'Áp dụng ngay' trên chứng cứ chưa đủ mạnh:")
+        for ln in loi_an_toan[:8]:
+            print("      " + ln)
+        if len(loi_an_toan) > 8:
+            print(f"      … và {len(loi_an_toan)-8} mục nữa")
+        print("   Cách sửa ĐÚNG: HẠ `decision` xuống consider/notyet."
+              " TUYỆT ĐỐI không nâng `gradeLevel` — đó là lỗi tự gán mức.")
+        result["cong_liem_chinh"] = "CHẶN BỞI CỔNG NGUỒN"
+        return 3, False, rc_loi
+    # Nhánh KHÔNG-an-toàn có nhiều nguyên nhân khác nhau; trước 12/08/2026
+    # chỗ này gán CỨNG một nguyên nhân duy nhất là "thiếu DATA.standards".
+    # Đo thật hôm đó: một dashboard CÓ ĐỦ khối standards rớt cổng chỉ vì
+    # DNS gãy khi hỏi Crossref, mà vẫn bị in ra là thiếu siêu dữ liệu ⇒ đẩy
+    # bác sĩ đi bổ sung thứ đã có sẵn, và che mất nguyên nhân thật là mạng.
+    thieu_std = any("THIẾU DATA.standards" in ln or "standards thiếu" in ln
+                    for ln in out_s.splitlines())
+    loi_mang = [ln.strip() for ln in out_s.splitlines()
+                if "CHƯA XÁC MINH ĐƯỢC" in ln or "lỗi mạng" in ln]
+    if thieu_std:
+        result["cong_nguon_nghiem"] = "THIẾU DATA.standards"
+        print("   ⚠ Cổng nguồn nghiêm ngặt không đạt vì thiếu"
+              " `DATA.standards` (bản cũ) — không chặn, nhưng nên bổ sung"
+              " khối hợp đồng nguồn khi cập nhật lần sau.")
+    elif loi_mang:
+        result["cong_nguon_nghiem"] = "CHƯA KẾT LUẬN ĐƯỢC (mạng)"
+        print(f"   ⚠ Cổng nguồn nghiêm ngặt CHƯA kết luận được:"
+              f" {len(loi_mang)} định danh không phân giải được do MẠNG/DNS."
+              " Đây KHÔNG phải kết luận nguồn sai — chạy lại khi mạng ổn,"
+              " hoặc dùng `tools/so_xac_minh_nguon.py` để tích luỹ bằng"
+              " chứng qua nhiều vòng.")
+    else:
+        result["cong_nguon_nghiem"] = "FAIL (lý do khác)"
+        print("   ⚠ Cổng nguồn nghiêm ngặt không đạt — KHÔNG phải lỗi an"
+              " toàn, cũng không phải thiếu `DATA.standards`. Nguyên văn:")
+        for ln in [dong for dong in out_s.splitlines() if dong.strip().startswith("✗")][:8]:
+            print("      " + ln.strip())
+    return None, verified, rc_loi
 
 
 def main() -> int:
@@ -276,122 +439,16 @@ def main() -> int:
               "cong_liem_chinh": "KHÔNG CHẠY", "verified_flag": False}
     rc_final = 0
 
-    # ── ① Cổng liêm chính (tuỳ chọn nhưng nên chạy cho dashboard thật) ──────────
-    verified = False
-    if a.online:
-        if not VERIFY.exists():
-            print("✗ Thiếu verify_dashboard.py — bỏ qua cổng liêm chính", file=sys.stderr)
-            result["cong_liem_chinh"] = "THIẾU TOOL"
-            rc_final = 1
-        else:
-            print("① Cổng liêm chính (--online)…")
-            # cwd = thư mục cha của chính bản VERIFY đang dùng — đúng cả khi đó là
-            # EBM-Dashboards (máy thật) lẫn sync/skills/cap-nhat-chung-cu-y-khoa
-            # (bản vendor qua git, dùng trên checkout thuần git — xem duong_cong_cu_pipeline()).
-            rc, out = run([py, VERIFY, dash, "--online"], cwd=VERIFY.parent.parent)
-            tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or [""]
-            print("   " + tail[0].strip())
-            if rc == 0:
-                verified = True
-                result["cong_liem_chinh"] = "PASS"
-            elif rc == 2:
-                # VÁ 2026-09-04 (Workflow đối kháng đa-agent, CRITICAL) — trước đây MỌI
-                # rc != 0 (kể cả rc=1) chỉ hạ câu chữ rồi vẫn chạy tiếp ②③④⑤, nên một lỗi
-                # NỘI DUNG THẬT — vd kiem_khoa_summary() bắt khoá `notDo` thay vì `dontDo`
-                # (BH61, xoá mất cả panel "Không nên/giới hạn" của MỌI sản phẩm phái sinh),
-                # hay kiem_nguon_da_rut() bắt một trích dẫn ĐÃ BỊ RÚT — vẫn cho ra đủ bản
-                # đọc/Word/PDF kèm dòng "── Bộ năm đã sẵn sàng ──" như không có gì xảy ra.
-                # verify_dashboard.py TỰ phân biệt rc=1 (≥1 lỗi cứng KHÔNG do mạng — nội
-                # dung/an toàn/cấu trúc dữ liệu thật sự sai) với rc=2 (TOÀN BỘ lỗi cứng là
-                # do MÁY/MẠNG — xem _canh_bao_loi_mang/report() trong chính file đó); dùng
-                # lại đúng ranh giới đã có thay vì tự đặt luật mới. rc=2 vẫn xuất như cũ
-                # (đây KHÔNG phải kết luận về nguồn — chạy lại khi mạng ổn).
-                result["cong_liem_chinh"] = "CHƯA XÁC MINH ĐƯỢC (mạng)"
-                rc_final = 1
-                print("   ⚠ Cổng CHƯA xác minh được do MÁY/MẠNG (không phải lỗi nguồn) —"
-                      " vẫn xuất file nhưng bản Word sẽ KHÔNG khẳng định 'đã xác minh'.")
-            else:
-                # rc=1: ≥1 lỗi cứng THẬT (nội dung/an toàn/cấu trúc dữ liệu) — CHẶN XUẤT
-                # ngay ở đây, không để lọt xuống ②③④⑤ rồi báo "Bộ năm đã sẵn sàng" sai sự
-                # thật (đúng HỌ lỗi với nhánh loi_an_toan bên dưới, chỉ khác chỗ nhánh đó
-                # chỉ bắt được đúng MỘT mẫu văn bản "decision='apply'").
-                result["cong_liem_chinh"] = "CHẶN BỞI CỔNG LIÊM CHÍNH"
-                loi = [ln.strip() for ln in out.splitlines() if ln.strip().startswith("✗")]
-                print(f"   ⛔ CHẶN XUẤT — cổng liêm chính có {len(loi)} lỗi cứng KHÔNG "
-                      "phải do mạng (nội dung/an toàn/cấu trúc dữ liệu):")
-                for ln in loi[:8]:
-                    print("      " + ln)
-                if len(loi) > 8:
-                    print(f"      … và {len(loi)-8} mục nữa")
-                print("   Sửa dashboard rồi chạy lại — KHÔNG có đường nào né được cổng này.")
-                if a.json:
-                    print(json.dumps(result, ensure_ascii=False, indent=2))
-                return 3
-
-            # ── ①-bis Cổng NGUỒN NGHIÊM NGẶT (thêm 2026-08-11) ────────────────
-            # `DESIGN-SPEC.md` §6 đòi `--online --strict-sources` từ đầu, nhưng dây
-            # chuyền chỉ chạy `--online` nên nhóm luật mạnh nhất chưa bao giờ thi
-            # hành. Rà 58 dashboard đã phát hành ngày 11/08 cho thấy vì sao phải
-            # tách hai loại lỗi thay vì chặn tất:
-            #   · 47/52 bản FAIL chỉ vì THIẾU `DATA.standards` — khối siêu dữ liệu
-            #     ra đời SAU những bản đó. Nội dung lâm sàng không sai. Chặn cả
-            #     nhóm này là chặn oan, và "sửa" bằng cách bịa ra hợp đồng nguồn
-            #     cho một lần tìm kiếm đã xảy ra từ lâu chính là bịa provenance.
-            #   · 4 bản mang lỗi THẬT: `decision='apply'` trên `gradeLevel` na/low,
-            #     hoặc apply chỉ dựa Consensus. Đây là lỗi AN TOÀN — một khuyến cáo
-            #     "áp dụng ngay" tựa trên chứng cứ chưa đủ mạnh.
-            # Nên: lỗi an toàn thì CHẶN xuất; thiếu siêu dữ liệu thì cảnh báo.
-            rc_s, out_s = run([py, VERIFY, dash, "--online", "--strict-sources"],
-                              cwd=VERIFY.parent.parent)
-            if rc_s == 0:
-                result["cong_nguon_nghiem"] = "PASS"
-            else:
-                loi_an_toan = [ln.strip() for ln in out_s.splitlines()
-                               if "decision='apply'" in ln]
-                if loi_an_toan:
-                    result["cong_nguon_nghiem"] = "CHẶN"
-                    print(f"   ⛔ CHẶN XUẤT — {len(loi_an_toan)} mục khai"
-                          " 'Áp dụng ngay' trên chứng cứ chưa đủ mạnh:")
-                    for ln in loi_an_toan[:8]:
-                        print("      " + ln)
-                    if len(loi_an_toan) > 8:
-                        print(f"      … và {len(loi_an_toan)-8} mục nữa")
-                    print("   Cách sửa ĐÚNG: HẠ `decision` xuống consider/notyet."
-                          " TUYỆT ĐỐI không nâng `gradeLevel` — đó là lỗi tự gán mức.")
-                    result["cong_liem_chinh"] = "CHẶN BỞI CỔNG NGUỒN"
-                    if a.json:
-                        print(json.dumps(result, ensure_ascii=False, indent=2))
-                    return 3
-                # Nhánh KHÔNG-an-toàn có nhiều nguyên nhân khác nhau; trước 12/08/2026
-                # chỗ này gán CỨNG một nguyên nhân duy nhất là "thiếu DATA.standards".
-                # Đo thật hôm đó: một dashboard CÓ ĐỦ khối standards rớt cổng chỉ vì
-                # DNS gãy khi hỏi Crossref, mà vẫn bị in ra là thiếu siêu dữ liệu ⇒ đẩy
-                # bác sĩ đi bổ sung thứ đã có sẵn, và che mất nguyên nhân thật là mạng.
-                thieu_std = any("THIẾU DATA.standards" in ln or "standards thiếu" in ln
-                                for ln in out_s.splitlines())
-                loi_mang = [ln.strip() for ln in out_s.splitlines()
-                            if "CHƯA XÁC MINH ĐƯỢC" in ln or "lỗi mạng" in ln]
-                if thieu_std:
-                    result["cong_nguon_nghiem"] = "THIẾU DATA.standards"
-                    print("   ⚠ Cổng nguồn nghiêm ngặt không đạt vì thiếu"
-                          " `DATA.standards` (bản cũ) — không chặn, nhưng nên bổ sung"
-                          " khối hợp đồng nguồn khi cập nhật lần sau.")
-                elif loi_mang:
-                    result["cong_nguon_nghiem"] = "CHƯA KẾT LUẬN ĐƯỢC (mạng)"
-                    print(f"   ⚠ Cổng nguồn nghiêm ngặt CHƯA kết luận được:"
-                          f" {len(loi_mang)} định danh không phân giải được do MẠNG/DNS."
-                          " Đây KHÔNG phải kết luận nguồn sai — chạy lại khi mạng ổn,"
-                          " hoặc dùng `tools/so_xac_minh_nguon.py` để tích luỹ bằng"
-                          " chứng qua nhiều vòng.")
-                else:
-                    result["cong_nguon_nghiem"] = "FAIL (lý do khác)"
-                    print("   ⚠ Cổng nguồn nghiêm ngặt không đạt — KHÔNG phải lỗi an"
-                          " toàn, cũng không phải thiếu `DATA.standards`. Nguyên văn:")
-                    for ln in [l for l in out_s.splitlines() if l.strip().startswith("✗")][:8]:
-                        print("      " + ln.strip())
-    else:
-        print("① Bỏ qua cổng liêm chính (không có --online) —"
-              " bản Word sẽ ghi 'CẦN xác minh'.")
+    # ── ① Cổng liêm chính — LUÔN chạy (vá 26/09/2026, #11) ──────────────────────
+    # Có --online: đủ luật + phân giải PMID/DOI sống. Không có --online: vẫn chạy
+    # mọi luật KHÔNG cần mạng (xem _chay_cong) — không còn đường xuất bỏ qua cổng.
+    ma_chan, verified, rc_loi = _chay_cong(py, dash, a.online, result)
+    if rc_loi:
+        rc_final = 1
+    if ma_chan is not None:
+        if a.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        return ma_chan
 
     result["verified_flag"] = verified
 
@@ -467,7 +524,7 @@ def main() -> int:
             cmd += ["--word-html", result["word_html"]]
         rc, out = run(cmd)
         result["k3_ma"] = rc
-        tong = [l for l in out.splitlines() if l.startswith("Tổng:")]
+        tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
         print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
         if rc == 1:
             print("   🟠 Có cụm điều kiện không thấy nguyên văn — chạy lại lệnh trên để xem từng dòng;"
@@ -504,12 +561,12 @@ def main() -> int:
         if result.get("word_html"):
             cmd += ["--html-co-san", result["word_html"]]   # khỏi gọi lại pandoc
         rc, out = run(cmd)
-        dong_ok = [l for l in out.splitlines() if l.strip().startswith("✓")]
+        dong_ok = [dong for dong in out.splitlines() if dong.strip().startswith("✓")]
         if rc == 0 and dong_ok:
             result["pdf"] = str(Path(result["word"]).with_suffix(".pdf"))
-            for l in out.splitlines():
-                if l.strip():
-                    print("   " + l.strip())
+            for dong in out.splitlines():
+                if dong.strip():
+                    print("   " + dong.strip())
         else:
             result["pdf_ly_do"] = (out.strip().splitlines() or ["không rõ"])[-1][:120]
             print("   ⚠ Bỏ qua: " + result["pdf_ly_do"])
@@ -525,9 +582,9 @@ def main() -> int:
     else:
         rc, out = run([py, str(XUAT_CLOUD)])
         if rc == 0 and out.strip():
-            for l in out.splitlines():
-                if l.strip():
-                    print("   " + l.strip())
+            for dong in out.splitlines():
+                if dong.strip():
+                    print("   " + dong.strip())
         else:
             print("   ⚠ Bỏ qua (không chặn 5 sản phẩm trên): " + (out.strip().splitlines() or ["không rõ"])[-1][:160])
 
