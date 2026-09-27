@@ -41,6 +41,7 @@ Mã thoát: 0 = mọi chốt đạt · 1 = có việc cần bác sĩ làm · 2 =
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -60,6 +61,18 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 PY = sys.executable
+
+
+def _dem_rut_bai(out: str) -> tuple[int | None, int | None, int | None]:
+    """(số «ĐÃ BỊ RÚT» trong báo cáo sổ, số ca đính-chính-bị-rút CÒN chờ ký, tổng ca đính-chính-bị-rút); None = không đọc được."""
+    m = re.search(r"ĐÃ BỊ RÚT\s*:\s*(\d+)", out)
+
+    def dem(co: str) -> int | None:
+        p = subprocess.run([str(PY), "tools/mau_ky_rut_bai.py", co], cwd=str(REPO), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+        dong = [x.strip() for x in (p.stdout or "").splitlines() if x.strip()]
+        return int(dong[-1]) if p.returncode == 0 and dong and dong[-1].isdigit() else None
+    return (int(m.group(1)) if m else None), dem("--dem"), dem("--dem-tat-ca")
 
 
 def _co_dashboard_that() -> bool:
@@ -96,6 +109,7 @@ def main() -> int:
     print("=" * 68)
 
     viec_can_lam: list[str] = []
+    ghi_chu: list[str] = []   # điều ĐÃ BIẾT, không phải việc — in cạnh tổng kết để câu 🟢 không nói quá
 
     # ── 1. NỀN TẢNG: nguồn có THẬT không ────────────────────────────────────
     rc, _ = chay([PY, "tools/kiem_nguon_that.py"], "① Nguồn có thật không?")
@@ -156,7 +170,20 @@ def main() -> int:
         # rc=2 từ 15/08 CHỈ còn nghĩa «rút BỎ HẲN đang được dashboard trích» —
         # rút-và-thay đã phân xử trong gói không kéo còi đỏ nữa (nó ở rc=1, phần
         # 🟠 của báo cáo); thẩm quyền chặn từng gói thuộc verify_dashboard.
-        viec_can_lam.append("🔴 CÓ NGUỒN RÚT BỎ HẲN đang được trích — xử lý trước khi dùng gói chứa chúng.")
+        # VÁ 27/09/2026: ca «thông báo rút là BẢN ĐÍNH CHÍNH bị rút» (BH109) cũng làm sổ trả 2, kể cả khi bác sĩ ĐÃ KÝ xem
+        # xét (`EBM-Dashboards/rut-bai-da-xem-xet.json`, gắn vân tay thông báo) ⇒ chu trình kéo 🔴 «RÚT BỎ HẲN» giả trong khi
+        # cổng đã cho qua và `tu_de_xuat_viec` đã trừ đúng ca này (P2-03, họ BH115). Chỉ hạ khi ĐỌC ĐƯỢC cả số «ĐÃ BỊ RÚT»
+        # lẫn hai bộ đếm của `mau_ky_rut_bai.py`; đọc không được ⇒ giữ 🔴 (fail-closed).
+        n_rut, n_cho_ky, n_dinh_chinh = _dem_rut_bai(out)
+        if None not in (n_rut, n_cho_ky, n_dinh_chinh) and n_rut <= n_dinh_chinh:
+            if n_cho_ky:
+                viec_can_lam.append(f"👤 {n_cho_ky} nguồn bị cờ rút bài mà thông báo là BẢN ĐÍNH CHÍNH bị rút — đọc "
+                                    "thông báo rồi ký (máy đã dựng mẫu, KHÔNG ký thay): `python3 tools/mau_ky_rut_bai.py`")
+            if n_dinh_chinh - n_cho_ky > 0:
+                ghi_chu.append(f"ℹ {n_dinh_chinh - n_cho_ky} nguồn mang cờ rút bài là BẢN ĐÍNH CHÍNH bị rút — bác sĩ đã ký "
+                               "xem xét (`EBM-Dashboards/rut-bai-da-xem-xet.json`); cổng cho qua. Không phải bài bị rút bỏ.")
+        else:
+            viec_can_lam.append("🔴 CÓ NGUỒN RÚT BỎ HẲN đang được trích — xử lý trước khi dùng gói chứa chúng.")
     elif rc == 1:
         # VÁ 13/08/2026 — đọc MÃ lý do thay vì đưa một lời khuyên chung.
         # Bản cũ luôn nói "chạy lại thêm vòng". Đo thật: 562/1146 mục hết hiệu lực và
@@ -232,7 +259,10 @@ def main() -> int:
     print("  TỔNG KẾT")
     print("=" * 68)
     if not viec_can_lam:
-        print("  🟢 Mọi chốt đạt: nguồn thật · còn hạn · đã xác minh · không thấy bài bị rút.")
+        print("  🟢 Mọi chốt đạt: nguồn thật · còn hạn · đã xác minh · "
+              + ("không có bài bị rút bỏ hẳn." if ghi_chu else "không thấy bài bị rút."))
+        for dong in ghi_chu:
+            print(f"     {dong}")
         print("\n  Lưu ý phạm vi: đây là kết luận về TÍNH TOÀN VẸN KỸ THUẬT của kho —")
         print("  nguồn có thật, chưa bị rút, gói đúng cấu trúc. Nó KHÔNG nói rằng nội")
         print("  dung lâm sàng đã đúng hay đã cập nhật hết mọi guideline mới; việc đó")

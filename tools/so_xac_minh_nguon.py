@@ -648,10 +648,33 @@ def xac_minh_mot(khoa: str, vd) -> dict | None:
             # Không tự hạ thành "không xác minh": HTTP vẫn là bằng chứng thật, chỉ yếu hơn.
         ok, mo_ta, *_ = _goi_linh_hoat(vd.verify_url_online, gt)
         if ok is not True:
-            return None
+            # VÁ 27/09/2026 — MIỀN CHẶN KIỂM TỰ ĐỘNG (vd www.fda.gov): cổng nhận bằng chứng đã mở bằng TRÌNH DUYỆT THẬT,
+            # còn sổ gọi `verify_url_online` KHÔNG kèm đường dashboard nên không bao giờ tra bằng chứng đó ⇒ mục fda.gov
+            # «chưa xác minh» vĩnh viễn, bước A4 của orchestrator đỏ mãi dù cổng B2 cho qua (đo 27/09: Orlistat_AKI_FDA).
+            return _xac_minh_bang_trinh_duyet(gt, vd)
         return {"loai": "url", "gia_tri": gt, "xac_minh_luc": bay_gio,
                 "tieu_de": mo_ta, "nguon_xac_minh": "http"}
     return None
+
+
+def _xac_minh_bang_trinh_duyet(url: str, vd) -> dict | None:
+    """Bản ghi «đã xác minh bằng trình duyệt thật» cho URL thuộc miền chặn kiểm tự động; None nếu không đủ điều kiện.
+
+    Dùng CHÍNH hàm của cổng (`mien_chan_tu_dong`, `xac_minh_url_bang_trinh_duyet`) — một nguồn sự thật, không viết lại
+    luật (miền nào được nhận, tiêu đề ≥ 10 ký tự, không ngày tương lai, hạn 180 ngày). Ngày xác minh = NGÀY CỦA BẰNG
+    CHỨNG, để sổ hết hạn cùng lúc với cổng thay vì kéo dài thêm 180 ngày kể từ lượt quét.
+    """
+    mien = getattr(vd, "mien_chan_tu_dong", None)
+    tra = getattr(vd, "xac_minh_url_bang_trinh_duyet", None)
+    ten_so = getattr(vd, "SO_URL_TRINH_DUYET", None)
+    if not (mien and tra and ten_so) or not mien(url):
+        return None
+    ok, info = tra(url, DASH / ten_so)
+    m = re.search(r"ngày (\d{4}-\d{2}-\d{2})", info or "")
+    if ok is not True or not m:
+        return None
+    return {"loai": "url", "gia_tri": url, "xac_minh_luc": f"{m.group(1)}T00:00:00", "tieu_de": info,
+            "nguon_xac_minh": "trinh_duyet"}
 
 
 def _goi_linh_hoat(ham, gt):
