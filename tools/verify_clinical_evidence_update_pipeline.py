@@ -122,7 +122,9 @@ def _run(cmd: Sequence[str], *, cwd: Path) -> tuple[bool, str]:
 # file dưới chúng KHÔNG phải pipeline hỏng. Cùng quy ước với verify_evidence_surveillance_deployment.py.
 NOT_MEASURED = "NOT_MEASURED"
 GOC_CHI_ONEDRIVE = ("EBM-Dashboards", "EBM_MASTER", "dashboard_mockups")
-_THIEU_FILE = re.compile(r"THIẾU file (\S+)")
+# Đường dẫn có thể chứa DẤU CÁCH (gốc OneDrive «…/Claude AI/…», worktree dưới đó) — `\S+` cắt ngang ⇒ bản sao trần
+# thiếu tệp chỉ-OneDrive bị báo FAIL giả (vá 27/09/2026). Lấy tới dấu phân cách «; » của chuỗi bằng chứng.
+_THIEU_FILE = re.compile(r"THIẾU file (.+?)(?=; |$)")
 
 
 def chuyen_khong_do_duoc(row: CheckResult, ban_sao_tran: bool) -> CheckResult:
