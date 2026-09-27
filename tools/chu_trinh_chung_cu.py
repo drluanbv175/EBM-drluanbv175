@@ -118,7 +118,23 @@ def main() -> int:
     else:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--vong", str(a.vong)],
                        f"③④ Xác minh nguồn + tra rút bài ({a.vong} vòng)")
-    if rc == 2:
+    khong_do_duoc = (rc == 3 or "KHONG_DO_DUOC" in out
+                     # chuỗi của bản so_xac_minh_nguon CŨ (trả 2/1 cho hai ca này) — vẫn phải ra ⚪, không ra 🔴
+                     or "Không thấy dashboard nào khớp" in out or "Sổ trống" in out)
+    if rc == 2 and "SO_HONG" in out:
+        # SỔ HỎNG (26/09/2026, phát hiện #3): so_xac_minh_nguon từ chối đọc/ghi sổ hỏng và trả 2 kèm dòng
+        # «[MA] SO_HONG». Vẫn là việc ĐỎ (dương tính rút bài đã biết có thể đã mất) nhưng KHÔNG được gọi là
+        # «có nguồn rút bỏ hẳn» — chưa ai thấy bài nào bị rút ở lượt này.
+        viec_can_lam.append("🔴 SỔ XÁC MINH NGUỒN HỎNG — dương tính rút bài đã biết có thể bị mất; mọi phát "
+                            "hành bị chặn tới khi khôi phục sổ (xem hướng dẫn ở phần ③④). KHÔNG xoá tệp hỏng.")
+    elif khong_do_duoc:
+        # VÁ 26/09/2026 (phát hiện #28): bản sao trần/Cloud không có EBM-Dashboards ⇒ so_xac_minh_nguon trả 3.
+        # BẮT BUỘC thêm một việc ⚪ (không «bỏ qua»): nếu viec_can_lam rỗng, tổng kết sẽ in 🟢 «không thấy bài bị
+        # rút» trong khi chưa đọc nguồn nào — xanh giả nguy hiểm hơn đỏ giả. Đọc MÃ THOÁT/đầu ra, không đoán theo
+        # duong_goc(): so_xac_minh_nguon chỉ tìm REPO/EBM-Dashboards, hai bên sẽ lệch ở bố cục anh em.
+        viec_can_lam.append("⚪ Chưa đo được xác minh nguồn/rút bài — thiếu EBM-Dashboards/ (hoặc sổ xác minh) "
+                            "trên máy này (xem ③④). KHÔNG phải đã thấy bài bị rút, cũng KHÔNG phải đã kiểm là sạch.")
+    elif rc == 2:
         # rc=2 từ 15/08 CHỈ còn nghĩa «rút BỎ HẲN đang được dashboard trích» —
         # rút-và-thay đã phân xử trong gói không kéo còi đỏ nữa (nó ở rc=1, phần
         # 🟠 của báo cáo); thẩm quyền chặn từng gói thuộc verify_dashboard.
@@ -150,13 +166,24 @@ def main() -> int:
         if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH",
                                       "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
             viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
+    elif rc != 0:
+        # Mã lạ (tiến trình bị giết, lỗi chưa đặt tên…) — KHÔNG được rơi im lặng thành 🟢 (vá #28, 26/09/2026).
+        viec_can_lam.append(f"⚪ Bước ③④ thoát mã lạ ({rc}) — chưa đo được xác minh nguồn/rút bài; xem phần ③④.")
 
     # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
     # Đặt SAU phần xác minh vì nó đọc nội dung dashboard, không gọi mạng; và đặt
     # TRƯỚC cổng dây chuyền vì mâu thuẫn nội dung nghiêm trọng hơn lỗi cấu trúc.
     rc, out = chay([PY, "tools/dang_ky_chu_de.py", "--mau-thuan"],
                    "⑤ Có hai bản nào nói ngược nhau không?")
-    if rc == 1:
+    # VÁ 26/09/2026 (phát hiện #17): dang_ky_chu_de nay trả 2 khi «không kiểm được» (0 dashboard / thiếu công cụ)
+    # thay vì in 🟢 + 0. Nhánh này PHẢI sửa CÙNG lúc với công cụ: nếu không, rc=2 rơi qua mọi nhánh và tổng kết
+    # vẫn im lặng — xanh giả. Chuỗi «Không kiểm được trên máy này» giữ cho bản công cụ cũ (trả 1).
+    if rc == 2 or "Không kiểm được trên máy này" in out:
+        viec_can_lam.append("⚪ Chưa quét được mâu thuẫn hai bản — không có dashboard nào để so trên máy này "
+                            "(xem phần ⑤). KHÔNG phải đã tìm thấy mâu thuẫn, cũng KHÔNG phải «không có mâu thuẫn».")
+    elif rc not in (0, 1):
+        viec_can_lam.append(f"⚪ Bước ⑤ thoát mã lạ ({rc}) — chưa quét được mâu thuẫn hai bản; xem phần ⑤.")
+    elif rc == 1:
         # VÁ 04/09/2026 (Workflow đối kháng đa-agent, phát hiện MEDIUM) — rc=1 của
         # dang_ky_chu_de.py mang HAI NGHĨA HOÀN TOÀN KHÁC NHAU: (a) tìm thấy mâu
         # thuẫn thật (dòng cuối main() của nó), hoặc (b) KHÔNG QUÉT ĐƯỢC vì thiếu
@@ -166,13 +193,10 @@ def main() -> int:
         # sao trần này (EBM-Dashboards/ không tồn tại): rc=1 vì KHÔNG QUÉT ĐƯỢC,
         # nhưng chu trình vẫn báo "🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau"
         # — một báo động giả về nội dung lâm sàng trong khi sự thật chỉ là thiếu
-        # nguyên liệu. Đọc `out` để phân biệt, đúng khuôn mẫu bước ③④ đã dùng.
-        if "Không kiểm được trên máy này" in out:
-            viec_can_lam.append("Chưa quét được mâu thuẫn hai bản — thiếu EBM-Dashboards/ "
-                                "trên máy này (xem phần ⑤). KHÔNG phải đã tìm thấy mâu thuẫn.")
-        else:
-            viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
-                                "quyết bản nào đúng (xem phần ⑤).")
+        # nguyên liệu. Đọc `out` để phân biệt, đúng khuôn mẫu bước ③④ đã dùng — phép phân
+        # biệt đó nay nằm ở nhánh ⚪ phía trên (26/09/2026), nhánh này chỉ còn mâu thuẫn THẬT.
+        viec_can_lam.append("🔴 Có mục hai bản CÙNG CHỦ ĐỀ nói ngược nhau — bác sĩ cần "
+                            "quyết bản nào đúng (xem phần ⑤).")
 
     # ── 6. CỔNG LIÊM CHÍNH trên toàn kho (offline, nhanh) ────────────────────
     rc, out = chay([PY, "tools/verify_clinical_evidence_update_pipeline.py"],

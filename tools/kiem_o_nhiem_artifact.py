@@ -30,6 +30,9 @@ BẤT ĐỐI XỨNG CÓ CHỦ Ý (đừng đảo): đi LÊN thì cho qua, đi XU
 máy vừa quên ⇒ CHẶN. Chặn cả hai chiều sẽ khiến bác sĩ không cập nhật được sổ khi
 chạy trên máy thật, và một cổng cản trở việc đúng là cổng sẽ bị tắt.
 
+Thêm 26/09/2026 (#36): luật RIÊNG cho gương `cloud-mirror/trang-thai-chung-cu.json`
+(xem `soi_guong_cloud`) và soi bản ĐÃ STAGE (thứ thật sự vào commit) khi `--staged`.
+
 Mã thoát: 0 = sạch · 1 = có ô nhiễm (CHẶN commit) · 2 = không chạy được.
 """
 from __future__ import annotations
@@ -126,6 +129,80 @@ def soi_mot_file(ten: str, cu: str, moi: str) -> list[str]:
     return loi
 
 
+# ── Gương trạng thái Cloud (vá 26/09/2026, #36) ──────────────────────────────────
+# `cloud-mirror/trang-thai-chung-cu.json` do tools/xuat_trang_thai_cloud.py ghi (hook
+# SessionStart trên máy thật). Máy KHÔNG có EBM-Dashboards/ (worktree, OneDrive chưa
+# đồng bộ xong, phiên Cloud chạy tay) từng ghi đè nó bằng trạng thái rỗng: tái lập
+# 19.717 → 1.038 byte, mất bản sao 38 quyết định đã duyệt. Ba luật chung ở trên KHÔNG
+# bắt được (soi_mot_file trả [] trên đúng diff đó: tệp không rỗng, không có khoá
+# `status`, không có đường dẫn tuyệt đối) — nên cần luật RIÊNG cho đúng tệp này, và chỉ
+# thêm tiền tố vào VUNG_BANG_CHUNG là không đủ.
+GUONG_CLOUD = "cloud-mirror/trang-thai-chung-cu.json"
+
+
+def _co_gia_tri_so(v) -> bool:
+    """Một mục `so_da_duyet.*` có mang DỮ LIỆU THẬT không (None / lỗi đọc ⇒ không)."""
+    if v is None:
+        return False
+    return not (isinstance(v, dict) and "loi_doc" in v)
+
+
+def soi_guong_cloud(ten: str, cu: str, moi: str) -> list[str]:
+    """So bản HEAD với bản sắp commit của gương Cloud. Chỉ chặn chiều ĐI XUỐNG.
+
+    Chặn khi: bản cũ có `co_du_lieu_dashboard_that: true` mà bản mới không còn true;
+    hoặc một sổ `so_da_duyet.*` từ có dữ liệu thành null/lỗi đọc/mất khoá; hoặc bản
+    mới rỗng/không đọc được JSON trong khi bản cũ mang dữ liệu thật. Cho qua: False→True,
+    null→có, và làm mới bình thường Mac↔Windows (True→True, sổ vẫn có).
+    Bản CŨ không đọc được JSON ⇒ không có gì kiểm chứng được để bảo vệ ⇒ [].
+    """
+    try:
+        d_cu = json.loads(cu)
+    except (json.JSONDecodeError, ValueError):
+        return []
+    if not isinstance(d_cu, dict):
+        return []
+    cu_that = d_cu.get("co_du_lieu_dashboard_that") is True
+    so_cu = d_cu.get("so_da_duyet") if isinstance(d_cu.get("so_da_duyet"), dict) else {}
+    co_gi_de_mat = cu_that or any(_co_gia_tri_so(v) for v in so_cu.values())
+    if not co_gi_de_mat:
+        return []
+
+    try:
+        d_moi = json.loads(moi) if moi.strip() else None
+    except (json.JSONDecodeError, ValueError):
+        d_moi = None
+    if not isinstance(d_moi, dict):
+        return [f"{ten}: gương Cloud mang dữ liệu thật bị ghi thành RỖNG/không đọc được JSON "
+                f"— máy này không được ghi đè gương của máy có EBM-Dashboards/"]
+
+    loi: list[str] = []
+    if cu_that and d_moi.get("co_du_lieu_dashboard_that") is not True:
+        loi.append(f"{ten}: co_du_lieu_dashboard_that ĐI LÙI true → "
+                   f"{d_moi.get('co_du_lieu_dashboard_that')!r} (máy '{d_moi.get('may')}') "
+                   f"— máy không có EBM-Dashboards/ thật đang ghi đè gương của máy có dữ liệu")
+    so_moi = d_moi.get("so_da_duyet") if isinstance(d_moi.get("so_da_duyet"), dict) else {}
+    for khoa, v_cu in so_cu.items():
+        if _co_gia_tri_so(v_cu) and not _co_gia_tri_so(so_moi.get(khoa)):
+            loi.append(f"{ten}: so_da_duyet.{khoa} ĐI LÙI có dữ liệu → "
+                       f"{'null' if so_moi.get(khoa) is None else 'lỗi đọc'} "
+                       f"— mất bản sao sổ bác sĩ đã duyệt (OneDrive chưa đồng bộ xong?)")
+    return loi
+
+
+def _doc_ban_moi(ten: str, staged: bool) -> str | None:
+    """Bản SẮP COMMIT của một tệp: nội dung ĐÃ STAGE khi --staged (đúng thứ vào commit),
+    ngược lại là working tree. Không đọc được ⇒ None (bỏ qua như cũ)."""
+    if staged:
+        ma, noi_dung = _git("show", f":{ten}")
+        if ma == 0:
+            return noi_dung
+    try:
+        return (REPO / ten).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Chặn commit khi artifact bằng chứng bị hạ cấp")
     ap.add_argument("--staged", action="store_true", help="soi thay đổi đã stage (dùng cho pre-commit)")
@@ -148,15 +225,19 @@ def main() -> int:
         return 0
 
     ten_files = [t for t in ra.splitlines() if t.strip()
-                 and any(t.startswith(v) for v in VUNG_BANG_CHUNG)]
+                 and (t == GUONG_CLOUD or any(t.startswith(v) for v in VUNG_BANG_CHUNG))]
     loi: list[str] = []
     for ten in ten_files:
         ma_cu, cu = _git("show", f"HEAD:{ten}")
         if ma_cu != 0:
             continue
-        try:
-            moi = (REPO / ten).read_text(encoding="utf-8", errors="replace")
-        except OSError:
+        moi = _doc_ban_moi(ten, a.staged)
+        if moi is None:
+            continue
+        if ten == GUONG_CLOUD:
+            # Luật RIÊNG (đã gồm cả ca rỗng); ba luật chung không áp — gương có thể mang
+            # đường dẫn khác nhau giữa Mac/Windows mà vẫn là làm mới hợp lệ.
+            loi.extend(soi_guong_cloud(ten, cu, moi))
             continue
         loi.extend(soi_mot_file(ten, cu, moi))
 

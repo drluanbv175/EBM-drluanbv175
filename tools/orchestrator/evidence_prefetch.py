@@ -31,7 +31,38 @@ USER_AGENT = "EBM-Orchestrator-Citation-Resolver/1.0"
 _PMID_RE = re.compile(r"\bPMID\s*[:#]?\s*(\d{6,9})\b", re.IGNORECASE)
 _DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
 ROOT = Path(__file__).resolve().parents[2]
-CANONICAL_RETRACTION_TOOL = ROOT / "medical-ebm-automation" / "tools" / "check_citation_retraction.py"
+_A12_REL = Path("tools") / "check_citation_retraction.py"
+# Trạng thái A12 KẾT LUẬN ĐƯỢC (danh sách TRẮNG — vá 26/09/2026, #14). Trạng thái nào
+# khác (unresolved, unknown_*, hay một trạng thái mới chưa biết) đều là «KHÔNG BIẾT»:
+# dòng PMID đó KHÔNG được tính là đã chạy trọn chuỗi rút bài 3 tầng.
+_A12_KET_LUAN = frozenset({"ok", "retracted", "expression_of_concern"})
+
+
+def _canonical_retraction_tool(root: Path | None = None) -> Path:
+    """Đường dẫn tool A12 canonical, dò cả bố cục LỒNG lẫn ANH EM (vá 26/09/2026, #14).
+
+    Trước đây ghép cứng ``ROOT / "medical-ebm-automation" / ...`` nên trên phiên Cloud
+    (repo y khoa là ANH EM của repo gốc) tool luôn "không tìm thấy", biên lai lùi về MỘT
+    truy vấn pubtype PubMed mà vẫn ghi ``complete=True``. Nay nạp ``tools/ban_sao_tran.py``
+    theo ĐƯỜNG TỆP (đúng khuôn ``orchestrator.duong_that``; không dùng import tương đối vì
+    tệp này còn chạy như script) rồi gọi ``duong_goc`` — ưu tiên vị trí lồng (máy thật
+    Mac/Windows không đổi hành vi), sau đó anh em. Nạp hỏng ⇒ lùi về vị trí lồng cũ; khi
+    tool vắng, biên lai tự hạ ``complete`` (fail-closed), không đoán.
+    """
+    root = ROOT if root is None else root  # đọc ROOT lúc chạy (test thay được bố cục)
+    goc: Path | None = None
+    try:
+        import importlib.util
+
+        duong_bst = Path(__file__).resolve().parents[1] / "ban_sao_tran.py"
+        spec = importlib.util.spec_from_file_location("_bst_evidence_prefetch", duong_bst)
+        if spec is not None and spec.loader is not None:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            goc = mod.duong_goc("medical-ebm-automation", root)
+    except Exception:  # noqa: BLE001 — dò đường hỏng thì lùi về lồng, chuỗi tự báo thiếu
+        goc = None
+    return (goc or (root / "medical-ebm-automation")) / _A12_REL
 
 
 def _request_bytes(url: str, *, timeout: int = 20, attempts: int = 2) -> bytes:
@@ -183,21 +214,24 @@ def _europepmc_retraction_status(pmid: str) -> dict[str, Any]:
     }
 
 
-def _canonical_retraction_results(pmids: list[str]) -> tuple[dict[str, Any], str]:
+def _canonical_retraction_results(
+    pmids: list[str], root: Path | None = None,
+) -> tuple[dict[str, Any], str]:
     """Chạy đúng tool A12 canonical; không truyền request tự do và không ghi receipt đề tài."""
 
-    if not pmids or not CANONICAL_RETRACTION_TOOL.exists():
+    tool = _canonical_retraction_tool(root)
+    if not pmids or not tool.exists():
         return {}, "không tìm thấy tool A12 canonical"
     candidates = [
         Path.home() / ".ebm-venv" / "bin" / "python",
         Path.home() / ".ebm-venv" / "Scripts" / "python.exe",
     ]
     python = next((str(path) for path in candidates if path.exists()), sys.executable)
-    cmd = [python, str(CANONICAL_RETRACTION_TOOL), "--pmids", ",".join(pmids), "--json"]
+    cmd = [python, str(tool), "--pmids", ",".join(pmids), "--json"]
     env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     try:
         proc = subprocess.run(
-            cmd, cwd=str(CANONICAL_RETRACTION_TOOL.parents[1]), env=env,
+            cmd, cwd=str(tool.parents[1]), env=env,
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=120, check=False,
         )
@@ -259,14 +293,18 @@ def prefetch_citation_receipts(agent: str, request: str) -> dict[str, Any] | Non
                     "error": f"PubMed={pubmed_error}; EuropePMC={str(exc)[:220]}",
                 })
         canonical = canonical_retraction.get(pmid)
+        # Chỉ đúng khi tool A12 canonical (chuỗi 3 tầng) trả trạng thái KẾT LUẬN ĐƯỢC cho
+        # CHÍNH PMID này. Bản lùi REST đơn nguồn KHÔNG BAO GIỜ đặt cờ này thành True.
+        row["retraction_chain_complete"] = False
         if isinstance(canonical, dict):
             row["retraction_check"] = {
                 **canonical,
                 "checked_with": "medical-ebm-automation/tools/check_citation_retraction.py",
             }
-            if canonical.get("status") in {
-                "unresolved", "unknown_mock_or_no_email", "unknown_fetch_error",
-            }:
+            if canonical.get("status") in _A12_KET_LUAN:
+                row["retraction_chain_complete"] = True
+            else:
+                # Danh sách TRẮNG: unresolved/unknown_* và mọi trạng thái lạ đều là lỗi.
                 errors.append({
                     "identifier": f"PMID:{pmid}", "source": "A12 retraction chain",
                     "error": str(canonical.get("reason") or canonical.get("status"))[:300],
@@ -297,6 +335,13 @@ def prefetch_citation_receipts(agent: str, request: str) -> dict[str, Any] | Non
                     "identifier": f"PMID:{pmid}", "source": "A12 canonical tool",
                     "warning": f"Tool canonical không dùng được; đã fallback REST: {canonical_error}",
                 })
+            else:
+                # A12 chạy được nhưng không trả kết quả cho PMID này — vẫn là KHÔNG BIẾT.
+                warnings.append({
+                    "identifier": f"PMID:{pmid}", "source": "A12 canonical tool",
+                    "warning": "Tool canonical không trả kết quả cho PMID này; đã fallback REST "
+                               "(chưa chạy trọn chuỗi rút bài 3 tầng).",
+                })
         records.append(row)
 
     all_dois = list(dict.fromkeys(dois + derived_dois))[:20]
@@ -318,6 +363,14 @@ def prefetch_citation_receipts(agent: str, request: str) -> dict[str, Any] | Non
             records.append({"identifier": f"DOI:{doi}", "crossref": crossref_by_doi[doi.casefold()]})
 
     for row in records:
+        if not str(row.get("identifier", "")).startswith("PMID:"):
+            # Dòng chỉ-DOI: chuỗi A12 chỉ nhận PMID; không có phép kiểm rút bài nào chạy.
+            # Ghi rõ «chưa kiểm rút bài» thay vì im lặng (CLAUDE.md §6.4).
+            row["retraction_chain_complete"] = False
+            row.setdefault("retraction_check", {
+                "status": "not_checked",
+                "reason": "Chỉ có DOI — chuỗi rút bài 3 tầng (A12) chỉ nhận PMID; CHƯA kiểm rút bài.",
+            })
         metadata = row.get("pubmed") or row.get("europe_pmc") or {}
         doi = str(metadata.get("doi") or row.get("identifier", "").removeprefix("DOI:"))
         crossref = crossref_by_doi.get(doi.casefold()) if doi else None
@@ -328,6 +381,9 @@ def prefetch_citation_receipts(agent: str, request: str) -> dict[str, Any] | Non
                     _normalized_title(metadata["title"]) == _normalized_title(crossref["title"])
                 )
 
+    retraction_chain_complete = bool(records) and all(
+        row.get("retraction_chain_complete") is True for row in records
+    )
     return {
         "kind": "citation_resolution_receipt",
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -338,11 +394,17 @@ def prefetch_citation_receipts(agent: str, request: str) -> dict[str, Any] | Non
             "citation-resolve",
             *(["citation-retraction"] if canonical_retraction else []),
         ],
-        "complete": bool(records) and not errors,
+        # complete đòi CẢ chuỗi rút bài 3 tầng kết luận được cho MỌI dòng — không dựa
+        # riêng vào canonical_error (A12 chạy mà thiếu một PMID thì canonical_error rỗng).
+        "retraction_chain_complete": retraction_chain_complete,
+        "complete": bool(records) and not errors and retraction_chain_complete,
         "provenance": ["NCBI PubMed E-utilities", "Europe PMC REST API", "Crossref REST API"],
         "limitations": (
             "Biên lai xác minh metadata và cờ PubMed tại thời điểm chạy; không tự chứng minh "
-            "trích dẫn hỗ trợ đúng câu khẳng định và không thay kiểm tra toàn văn/chuyên gia."
+            "trích dẫn hỗ trợ đúng câu khẳng định và không thay kiểm tra toàn văn/chuyên gia. "
+            "complete=True chỉ khi tool A12 (chuỗi rút bài 3 tầng) kết luận được cho MỌI dòng; "
+            "bản lùi truy vấn pubtype PubMed/Europe PMC không đủ để gọi là đã kiểm rút bài. "
+            "Dòng chỉ có DOI (không PMID) CHƯA được kiểm rút bài ⇒ complete=False."
         ),
     }
 

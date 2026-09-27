@@ -45,6 +45,10 @@ TĂNG kali) — cùng cụm từ, khác vai trò ngữ pháp; và một số fol
 xuất hiện, chỉ có «sót» — cơ chế mơ hồ cần ≥2 dạng để so sánh nên không bắt được). Muốn giải triệt để cần truy hồi ngữ nghĩa
 (embedding + nhãn chủ đề bác sĩ duyệt), không phải thêm luật từ vựng — xem `audit/12-danh-gia-hoan-thien-he-thong_2026-09-21.md`.
 
+VÁ 26/09/2026 (#5) — CỜ RÚT BÀI: thẻ [APPLY] đứng trên bài ĐÃ RÚT từng in y hệt thẻ sạch. Nay (chỉ HIỂN THỊ — không ẩn thẻ, không
+đổi decision) mỗi thẻ được phân loại bằng `provenance_ledger.trang_thai_rut_the` từ nền Retraction Watch ngoại tuyến + sổ xác minh
+(chỉ đọc, nạp trễ khi có thẻ khớp): ⛔ ĐÃ RÚT · ⛔ RÚT & ĐĂNG LẠI · 🟠 EoC · ⚪ chưa kiểm rút bài; thiếu mọi căn cứ ⇒ ⚪ đầu phiên.
+
 Dùng:  python3 tools/tra_diem_kham.py "copd đợt cấp bộ ba"
        python3 tools/tra_diem_kham.py --demo   # 5 câu mô phỏng + đo tốc độ
 """
@@ -349,6 +353,109 @@ def _bao_cao_vuot_qua() -> dict:
                 "ly_do": f"không nạp được bộ đọc báo cáo ({type(exc).__name__})"}
 
 
+# ── CỜ RÚT BÀI (vá 26/09/2026, #5) ────────────────────────────────────────────────────────────────────────
+# Điểm khám từng hiện thẻ [APPLY] đứng trên bài ĐÃ RÚT y hệt một thẻ sạch: không tra Retraction Watch ngoại tuyến, không đọc sổ
+# xác minh. Nay CHỈ HIỂN THỊ cờ (không ẩn thẻ, không đổi decision/gradeLevel, không ghi sổ nào — đó là thẩm quyền bác sĩ, BH10).
+# Phân loại đi qua `provenance_ledger.trang_thai_rut_the` — CÙNG một luật gộp bất đối xứng với sổ truy nguyên toàn kho.
+SO_XAC_MINH_REL = Path("EBM-Dashboards") / ".so-xac-minh-nguon.json"
+_MUC_DUONG = {"duong", "rut_va_thay", "eoc"}
+
+
+def _nap_module_tools(ten_tep: str, bi_danh: str):
+    """Nạp một module cùng thư mục tools/ theo ĐƯỜNG TỆP (không phụ thuộc sys.path nơi gọi)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(bi_danh, Path(__file__).resolve().parent / ten_tep)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _nap_nen_rw():
+    """Nền Retraction Watch NGOẠI TUYẾN của repo y khoa (bố cục lồng HOẶC anh em). Trả (chỉ mục | None, lý do khi None)."""
+    bst = _nap_module_tools("ban_sao_tran.py", "_bst_tdk")
+    mea = bst.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
+    if not (mea / "app" / "sources" / "retraction_watch.py").is_file():
+        return None, "không thấy repo y khoa (nền Retraction Watch)"
+    if str(mea) not in sys.path:
+        sys.path.insert(0, str(mea))
+    import logging
+    from app.sources.retraction_watch import RetractionWatchIndex  # noqa: PLC0415 — nạp trễ, chỉ khi có thẻ khớp
+    logging.getLogger("app.sources.retraction_watch").setLevel(logging.WARNING)  # giữ màn hình điểm khám gọn
+    rw = RetractionWatchIndex()
+    if not rw.san_sang():
+        return None, "chưa tải nền Retraction Watch (tools/tai_retraction_watch.py)"
+    return rw, ""
+
+
+def _nap_so_xac_minh():
+    """Sổ xác minh nguồn, CHỈ ĐỌC. Trả (dict mục | None, lý do khi None). Sổ hỏng ≠ sổ rỗng: hỏng ⇒ None kèm lý do."""
+    p = GOC / SO_XAC_MINH_REL
+    if not p.exists():
+        return None, "không có sổ xác minh"
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return None, f"sổ xác minh không đọc được ({type(exc).__name__})"
+    muc = d.get("muc") if isinstance(d, dict) else None
+    if not isinstance(muc, dict):
+        return None, "sổ xác minh sai khuôn (thiếu 'muc')"
+    return muc, ""
+
+
+def dung_tra_rut_bai():
+    """Dựng hàm tra rút bài cho TỪNG thẻ từ căn cứ đang có (không gọi mạng). Trả (hàm | None, [ghi chú lỗi nạp]).
+
+    None khi KHÔNG nạp được căn cứ nào (thiếu cả nền RW lẫn sổ, hoặc bộ phân loại hỏng) — người gọi phải in ⚪, không im lặng.
+    """
+    ghi_chu: list[str] = []
+    try:
+        pl = _nap_module_tools("provenance_ledger.py", "_pl_tdk")
+    except Exception as exc:  # noqa: BLE001 — hỏng thì nói ra (⚪), không làm hỏng câu trả lời điểm khám
+        return None, [f"không nạp được bộ phân loại rút bài ({type(exc).__name__})"]
+    try:
+        rw, ly_do = _nap_nen_rw()
+    except Exception as exc:  # noqa: BLE001
+        rw, ly_do = None, f"nạp nền Retraction Watch lỗi ({type(exc).__name__}: {str(exc)[:80]})"
+    if ly_do:
+        ghi_chu.append(ly_do)
+    so, ly_do_so = _nap_so_xac_minh()
+    if ly_do_so:
+        ghi_chu.append(ly_do_so)
+    if rw is None and so is None:
+        return None, ghi_chu
+
+    def tra_rut(card: dict) -> dict:
+        return pl.trang_thai_rut_the(card, rw, so or {})
+
+    return tra_rut, ghi_chu
+
+
+def _phan_loai_rut(tra_rut, card: dict) -> dict:
+    """Gọi hàm tra, fail-closed: không có hàm / hàm lỗi / kết quả lạ ⇒ 'khong_biet' (⚪), KHÔNG BAO GIỜ thành 'sạch'."""
+    if tra_rut is None:
+        return {"muc": "khong_biet", "ly_do": "không có căn cứ rút bài"}
+    try:
+        kq = tra_rut(card)
+    except Exception as exc:  # noqa: BLE001
+        return {"muc": "khong_biet", "ly_do": f"tra rút bài lỗi ({type(exc).__name__})"}
+    if not isinstance(kq, dict) or kq.get("muc") not in _MUC_DUONG | {"ok_con_han", "ok_qua_han", "khong_biet"}:
+        return {"muc": "khong_biet", "ly_do": "kết quả tra rút bài không hợp lệ"}
+    return kq
+
+
+def _dong_co_rut(kq: dict) -> str | None:
+    """Dòng cờ DƯƠNG TÍNH in ĐẦU thẻ (trước dòng ▶). None khi không dương tính."""
+    nguon = "/".join(kq.get("nguon") or []) or "căn cứ rút bài"
+    tb = f"; thông báo {kq['thong_bao']}" if kq.get("thong_bao") else ""
+    if kq["muc"] == "duong":
+        return f"  ⛔ NGUỒN ĐÃ BỊ RÚT ({nguon}{tb}) — KHÔNG DỰA VÀO, báo bác sĩ phụ trách thẻ"
+    if kq["muc"] == "rut_va_thay":
+        return f"  ⛔ RÚT & ĐĂNG LẠI ({nguon}{tb}) — đối chiếu số liệu với bản đã thay trước khi dựa vào"
+    if kq["muc"] == "eoc":
+        return f"  🟠 CÓ THÔNG BÁO QUAN NGẠI (Expression of Concern — {nguon}{tb}) — đọc lại nguồn trước khi dựa vào"
+    return None
+
+
 def _vuot_qua_pmids() -> set[str]:
     """Tương thích ngược (tập PMID). Dùng `_bao_cao_vuot_qua()` khi cần biết báo cáo có HỢP LỆ không."""
     return set(_bao_cao_vuot_qua()["pmids"])
@@ -559,10 +666,16 @@ def _ghi_nhat_ky_tac_dong(ket: list[dict], giay: float, loai: str = "khong_co") 
 
 
 def in_quick_view(cau_hoi: str, ket: list[dict], vq: set[str], giay: float, loai: str = "khong_co",
-                  vq_info: dict | None = None, ghi: bool = True) -> None:
+                  vq_info: dict | None = None, ghi: bool = True, tra_rut=None,
+                  rut_ghi_chu: list[str] | None = None) -> None:
+    """In kết quả tra. `tra_rut` (card → dict của `provenance_ledger.trang_thai_rut_the`) mặc định None = FAIL-CLOSED:
+    mọi thẻ in ⚪ «chưa kiểm rút bài» kèm một dòng đầu phiên — KHÔNG BAO GIỜ im lặng như thẻ đã kiểm và sạch."""
     if ghi:                                   # --demo KHÔNG ghi: câu mô phỏng không phải lượt tra thật, làm nhiễu số đo tác động
         _ghi_nhat_ky_tac_dong(ket, giay, loai)
     print(f"\n❓ {cau_hoi}   ({giay*1000:.0f} ms)")
+    if ket and tra_rut is None:
+        ly_do = "; ".join(rut_ghi_chu) if rut_ghi_chu else "thiếu nền Retraction Watch lẫn sổ xác minh"
+        print(f"  ⚪ KHÔNG KIỂM ĐƯỢC RÚT BÀI ({ly_do}) — 'chưa biết', không phải 'sạch'.")
     if vq_info is not None and not vq_info.get("hop_le"):
         print(f"  ⚪ Cờ «có bản tổng hợp mới hơn» KHÔNG ĐO ĐƯỢC ({vq_info.get('ly_do')}) — 'chưa biết', không phải 'không có'."
               + (f" Chỉ hiện các cờ DƯƠNG TÍNH từ báo cáo cũ {vq_info.get('ngay')}." if vq_info.get("cu") else ""))
@@ -610,6 +723,10 @@ def in_quick_view(cau_hoi: str, ket: list[dict], vq: set[str], giay: float, loai
                 co = " ⚪ CHƯA DÒ «bản tổng hợp mới hơn» (quét quý chỉ dò thẻ 'apply')"
         rec = re.sub(r"\s+", " ", str(c.get("recommendation") or ""))[:220]
         tieu_de = re.sub(r"\s+", " ", str(c.get("topic") or ""))[:110]
+        rut = _phan_loai_rut(tra_rut, c)
+        dong_rut = _dong_co_rut(rut)
+        if dong_rut:
+            print(dong_rut)                   # cờ rút bài DƯƠNG TÍNH là dòng ĐẦU TIÊN của thẻ — chỉ hiện cờ, không ẩn thẻ
         print(f"  ▶ [{str(c.get('decision') or '?').upper()}] {tieu_de}")
         print(f"    Khuyến cáo: {rec}{co}")
         if c.get("_khop"):
@@ -620,6 +737,10 @@ def in_quick_view(cau_hoi: str, ket: list[dict], vq: set[str], giay: float, loai
         print(f"    Nguồn: {src.get('agency') or src.get('title','')[:40]} · "
               f"PMID {pm or '—'} / DOI {src.get('doi') or '—'} · "
               f"thẻ cập nhật {str(c.get('date_added') or '?')[:10]} · mức {c.get('gradeLevel')}")
+        if rut["muc"] == "ok_qua_han":
+            print("    ⚪ lần kiểm rút bài đã quá 30 ngày — cần kiểm lại")
+        elif rut["muc"] == "khong_biet":
+            print("    ⚪ chưa kiểm rút bài trong 30 ngày — 'chưa biết', không phải 'chưa bị rút'")
         goi = GOC / "implementation" / f"{c.get('id')}.md"
         if goi.exists():
             print(f"    📋 Gói triển khai: implementation/{c.get('id')}.md (cờ đỏ · nhóm đặc biệt · tái khám)")
@@ -644,10 +765,15 @@ def main() -> int:
                "người cao tuổi đa thuốc benzodiazepine Beers",
                "sốt xuất huyết dengue ngoại trú dấu hiệu cảnh báo"]
         print(f"NẠP {len(cards)} thẻ đã duyệt trong {t_nap*1000:.0f} ms (ngoại tuyến)")
+        rut_cache: dict = {}
         for q in cau:
             t1 = time.perf_counter()
             ket, loai = tra_chi_tiet(q, cards)
-            in_quick_view(q, ket, vq, time.perf_counter() - t1, loai, vq_info, ghi=False)
+            giay = time.perf_counter() - t1
+            if ket and "v" not in rut_cache:          # nạp căn cứ rút bài MỘT lần, và chỉ khi có thẻ khớp
+                rut_cache["v"] = dung_tra_rut_bai()
+            tra_rut, rut_gc = rut_cache.get("v", (None, None))
+            in_quick_view(q, ket, vq, giay, loai, vq_info, ghi=False, tra_rut=tra_rut, rut_ghi_chu=rut_gc)
         return 0
     la = [a for a in sys.argv[1:] if a.startswith("--") and a != "--demo"]
     if la:
@@ -659,7 +785,10 @@ def main() -> int:
         return 2
     t1 = time.perf_counter()
     ket, loai = tra_chi_tiet(q, cards)
-    in_quick_view(q, ket, vq, time.perf_counter() - t1, loai, vq_info)
+    giay = time.perf_counter() - t1
+    # Căn cứ rút bài (~1 giây nạp nền RW) CHỈ nạp khi có thẻ khớp — câu «chưa giám sát» không chịu thêm độ trễ.
+    tra_rut, rut_gc = dung_tra_rut_bai() if ket else (None, None)
+    in_quick_view(q, ket, vq, giay, loai, vq_info, tra_rut=tra_rut, rut_ghi_chu=rut_gc)
     return 0
 
 

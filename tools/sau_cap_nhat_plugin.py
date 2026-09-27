@@ -20,12 +20,25 @@ Bước ④ chỉ chạy khi ①–③ sạch VÀ có cờ --ghi-moc (ghi mốc 
 đủ» — chạy sau một đợt cập nhật CÓ CHỦ Ý; không cờ thì chỉ dựng lại và BÁO).
 Mốc ghi RIÊNG từng máy — trên Windows phải chạy lại tool này ở đó.
 
+RÀO «DANH MỤC GỘP HAI MÁY» (26/09/2026). DANH-MUC-CONG-CU.md và INDEX-CONG-CU.md ĐANG TRACK
+là danh mục GỘP Mac+Windows, dựng từ catalog_may/*.json — thư mục bị bỏ qua trong git, chỉ đi
+giữa hai máy qua OneDrive. Trên Cloud nó chỉ có bản chụp của chính container, nên bước ②③ từng
+ghi đè hai tệp track bằng dữ liệu một máy (tái lập: DANH-MUC 1876 → 1032 mục, INDEX 865 → 236
+dòng; commit vào là hỏng `/cong-cu-gi` trên cả hai máy). Nay: phiên Cloud ⇒ dừng TRƯỚC mọi
+bước; máy thật mà catalog_may/ thiếu bản chụp của Mac hoặc Windows (xét trường `may` BÊN TRONG
+tệp) ⇒ dừng sau ①, trước ②③. Cả hai trả mã 2, không ghi tệp track nào. Mốc so «nhảy vọt» ở
+bước ④ lấy đúng máy qua `nhan_dien_may.ten_may()` (bản cũ: mọi máy không phải Darwin đều bị
+so với mốc Windows ⇒ trên Cloud «4→9 plugin» sai máy).
+
 Dùng:  python3 tools/sau_cap_nhat_plugin.py [--ghi-moc]
-Mã thoát: 0 trọn vẹn · 1 có bước lỗi (dừng tại đó, không ghi mốc).
+Mã thoát: 0 trọn vẹn · 1 có bước lỗi (dừng tại đó, không ghi mốc) · 2 nơi này KHÔNG dựng được
+danh mục gộp hai máy (phiên Cloud / thiếu bản chụp máy kia) — không ghi tệp track nào.
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -37,6 +50,46 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
+# Bản chụp kho từng máy (ngoài git, đi qua OneDrive) — nguồn của danh mục GỘP hai máy.
+SNAP_DIR = REPO / "tools" / "vietnamize" / "catalog_may"
+MAY_CAN_GOP = ("Mac", "Windows")
+
+
+def _nhan_dien_may():
+    """Nạp tools/nhan_dien_may.py theo đường dẫn tệp — MỘT nguồn cho «máy này là máy nào»."""
+    duong = Path(__file__).resolve().parent / "nhan_dien_may.py"
+    spec = importlib.util.spec_from_file_location("_scnp_nhan_dien_may", duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def may_trong_catalog(snap_dir: Path | None = None) -> set[str]:
+    """Tên máy có bản chụp trong catalog_may/ — theo trường `may` BÊN TRONG tệp (OneDrive có thể
+    đẻ «Mac-DESKTOP-XYZ.json»), lùi về tên tệp khi thiếu trường; tệp hỏng bị bỏ qua."""
+    snap_dir = SNAP_DIR if snap_dir is None else snap_dir
+    may: set[str] = set()
+    for f in sorted(snap_dir.glob("*.json")) if snap_dir.is_dir() else []:
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        may.add(str((d.get("may") if isinstance(d, dict) else None) or f.stem))
+    return may
+
+
+def ly_do_khong_dung_danh_muc(cloud: bool, snap_dir: Path | None = None) -> str:
+    """Lý do KHÔNG được dựng lại danh mục gộp ở nơi này («» = được dựng)."""
+    if cloud:
+        return ("phiên Cloud — catalog_may/ (ngoài git, chỉ đi qua OneDrive) chỉ có bản chụp của "
+                "container này; dựng ②③ ở đây sẽ ghi đè DANH-MUC/INDEX đang track bằng dữ liệu "
+                "một máy. Danh mục gộp chỉ dựng được trên máy thật (Mac/Windows).")
+    thieu = [m for m in MAY_CAN_GOP if m not in may_trong_catalog(snap_dir)]
+    if thieu:
+        return (f"catalog_may/ thiếu bản chụp của {', '.join(thieu)} — danh mục gộp hai máy dựng từ "
+                "ít máy hơn sẽ ghi đè DANH-MUC/INDEX đang track bằng dữ liệu thiếu. Đợi OneDrive "
+                "xanh (bản chụp máy kia về tới), hoặc chạy ① trên máy kia trước.")
+    return ""
 
 
 def _buoc(ten: str, lenh: list[str]) -> bool:
@@ -48,17 +101,23 @@ def _buoc(ten: str, lenh: list[str]) -> bool:
     return True
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Nghi thức sau-cập-nhật-plugin (4 bước, 1 lệnh)")
     ap.add_argument("--ghi-moc", action="store_true",
                     help="chốt kho hiện tại làm mốc chuẩn mới (sau cập nhật CÓ CHỦ Ý)")
-    a = ap.parse_args()
-    cac_buoc = [
-        ("① chụp kho máy này", ["tools/vietnamize/extract_catalog.py"]),
-        ("② dựng danh mục tiếng Việt", ["tools/vietnamize/build_danh_muc.py"]),
-        ("③ dựng trang tra cứu", ["tools/vietnamize/build_trang_tra_cuu.py"]),
-    ]
-    for ten, lenh in cac_buoc:
+    a = ap.parse_args(argv)
+    ndm = _nhan_dien_may()
+    if ndm.la_phien_cloud():   # Cloud: dừng TRƯỚC mọi bước — không ghi gì cả
+        print(f"⚪ KHÔNG chạy nghi thức ở đây: {ly_do_khong_dung_danh_muc(True)}")
+        return 2
+    if not _buoc("① chụp kho máy này", ["tools/vietnamize/extract_catalog.py"]):
+        return 1
+    ly_do = ly_do_khong_dung_danh_muc(False)
+    if ly_do:   # máy thật: ① vừa ghi bản chụp của máy này; còn thiếu máy kia ⇒ dừng trước ②③
+        print(f"\n⚪ DỪNG trước ②③ (không ghi DANH-MUC/INDEX đang track): {ly_do}")
+        return 2
+    for ten, lenh in (("② dựng danh mục tiếng Việt", ["tools/vietnamize/build_danh_muc.py"]),
+                      ("③ dựng trang tra cứu", ["tools/vietnamize/build_trang_tra_cuu.py"])):
         if not _buoc(ten, lenh):
             return 1
     if a.ghi_moc:
@@ -66,11 +125,9 @@ def main() -> int:
         # medsci trùng bật lại ⇒ kho phồng 9→17 plugin/839→1311 skill, và nghi
         # thức đã TỰ CHỐT MỐC SAI trên trạng thái đó. Ghi mốc là tuyên bố «kho
         # đang đủ» — thay đổi >25% phải có mắt người xem, không tự gật).
-        import json
         moc_p = REPO / "tools" / "moc_chuan_plugin.json"
         try:
-            import platform
-            may = "Mac" if platform.system() == "Darwin" else "Windows"
+            may = ndm.ten_may()   # đúng máy (bản cũ: không phải Darwin ⇒ «Windows», sai trên Cloud/Linux)
             cu = json.loads(moc_p.read_text(encoding="utf-8")).get(may, {}).get("plugin", {})
             n_cu = len(cu)
             sk_cu = sum(v.get("so_skill", 0) for v in cu.values())

@@ -49,7 +49,9 @@ Dùng
     python tools/so_xac_minh_nguon.py --bao-cao
 
 Mã thoát: 0 = mọi nguồn của phạm vi đã quét đều còn hiệu lực · 1 = còn thiếu
-· 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng).
+· 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng) — HOẶC sổ HỎNG (dòng «[MA] SO_HONG»;
+  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`) · 3 = KHÔNG ĐO ĐƯỢC (không thấy dashboard nào / chưa có
+  sổ; dòng «[MA] KHONG_DO_DUOC») — không phải rút bài, cũng không phải sạch.
 """
 from __future__ import annotations
 
@@ -136,19 +138,135 @@ def _nap_verify_dashboard():
     return mod
 
 
+class SoHongLoi(RuntimeError):
+    """Tệp sổ CÓ trên đĩa nhưng không đọc được thành sổ hợp lệ — KHÁC hẳn «chưa có sổ».
+
+    Thêm 26/09/2026 (phát hiện #3). Bản cũ gộp hai trạng thái: sổ hỏng JSON (OneDrive cắt cụt/ghi xung đột,
+    hoặc Ctrl-C giữa lúc ghi không nguyên tử) bị đọc thành sổ RỖNG ⇒ mọi dương tính rút bài biến mất khỏi
+    cổng (PASS mã 0 với DOI đã rút), và lượt `--quet`/`--vong` kế tiếp GHI ĐÈ sổ rỗng lên tệp hỏng — mất
+    vĩnh viễn (EBM-Dashboards nằm ngoài git). Nay: sổ hỏng là LỖI, không ai được ghi đè; khôi phục chỉ qua
+    cờ tường minh `--cuu-so-hong`."""
+
+
+_HUONG_DAN_CUU_SO = (
+    "Khôi phục TRƯỚC khi phát hành: (1) nếu là tệp giữ chỗ 0 byte của OneDrive (Files On-Demand) thì đợi "
+    "OneDrive xanh rồi chạy lại; (2) lấy bản trước qua lịch sử phiên bản OneDrive hoặc chép từ máy kia; "
+    "(3) chỉ khi không còn bản nào: `python tools/so_xac_minh_nguon.py --cuu-so-hong` (giữ nguyên bản hỏng, "
+    "cứu các dương tính rút bài bằng regex). KHÔNG xoá tệp hỏng.")
+
+
 def doc_so() -> dict:
+    """Đọc sổ. Tệp VẮNG ⇒ sổ rỗng (chưa từng quét). Tệp CÓ mà hỏng ⇒ ném `SoHongLoi`, KHÔNG bao giờ trả rỗng."""
     if not SO.exists():
         return {"phien_ban": 1, "muc": {}}
     try:
-        return json.loads(SO.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        print(f"⚠ Sổ hỏng, bắt đầu lại từ đầu ({e})", file=sys.stderr)
-        return {"phien_ban": 1, "muc": {}}
+        tho = SO.read_bytes()
+    except OSError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — không đọc được {SO} ({e}). {_HUONG_DAN_CUU_SO}") from e
+    if not tho.strip():
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} RỖNG ({len(tho)} byte). {_HUONG_DAN_CUU_SO}")
+    try:
+        so = json.loads(tho.decode("utf-8"))
+    except UnicodeDecodeError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} không phải UTF-8 ({e}). {_HUONG_DAN_CUU_SO}") from e
+    except json.JSONDecodeError as e:
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} không phải JSON hợp lệ ({e}). {_HUONG_DAN_CUU_SO}") from e
+    if not isinstance(so, dict) or not isinstance(so.get("muc"), dict):
+        raise SoHongLoi(f"Sổ xác minh nguồn HỎNG — {SO} sai cấu trúc (cần đối tượng có khoá 'muc' là đối "
+                        f"tượng). {_HUONG_DAN_CUU_SO}")
+    return so
 
 
 def ghi_so(so: dict) -> None:
-    SO.write_text(json.dumps(so, ensure_ascii=False, indent=2, sort_keys=True),
-                  encoding="utf-8")
+    """Ghi sổ NGUYÊN TỬ: tệp tạm CÙNG thư mục → fsync → os.replace (vá 26/09/2026, phát hiện #3).
+
+    Bản cũ `SO.write_text(...)` ghi thẳng: Ctrl-C/máy ngủ giữa chừng (lượt quét ghi mỗi 10 mục) để lại sổ
+    cắt cụt. `os.replace` trên cùng hệ tệp là nguyên tử trên Mac/Linux/Windows — người đọc chỉ thấy bản cũ
+    trọn vẹn hoặc bản mới trọn vẹn."""
+    import os
+    du_lieu = json.dumps(so, ensure_ascii=False, indent=2, sort_keys=True)
+    tam = SO.with_name(SO.name + ".tmp")
+    try:
+        with open(tam, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(du_lieu)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tam, SO)
+    except BaseException:
+        try:
+            tam.unlink()
+        except OSError:
+            pass
+        raise
+
+
+_KHOA_SO_RE = re.compile(r'"((?:pmid|doi|url):[^"\\]+)"\s*:\s*\{')
+
+
+def cuu_so_hong() -> int:
+    """`--cuu-so-hong`: cứu dương tính rút bài từ một sổ HỎNG — CHỈ khi bác sĩ/người vận hành gọi tường minh.
+
+    Không bao giờ xoá bản hỏng: chép nguyên byte sang `.so-xac-minh-nguon.hong-<thời điểm>.json`, rồi dùng regex
+    tìm từng khoá `pmid:/doi:/url:` mà khối của nó mang `"da_rut": true` hoặc dấu EoC, ghi các bản ghi đó vào sổ
+    MỚI (nguyên tử). Mọi thứ khác (ngày xác minh, liên kết dashboard, dấu vết «ok») KHÔNG cứu — phải quét lại.
+    Trả 0 khi đã cứu và ghi sổ mới; 1 khi sổ không hỏng (không làm gì); 2 khi không đọc được byte nào, hoặc
+    tệp rỗng/không có khoá sổ nào (không ghi gì — tránh dựng sổ rỗng hợp lệ đè lên bản thật)."""
+    if not SO.exists():
+        print(f"Không có sổ tại {SO} — không có gì để cứu.")
+        return 1
+    try:
+        doc_so()
+        print("Sổ đọc được bình thường — KHÔNG cứu gì (cờ này chỉ dành cho sổ hỏng).")
+        return 1
+    except SoHongLoi:
+        pass
+    try:
+        tho = SO.read_bytes()
+    except OSError as e:
+        print(f"✗ Không đọc được byte nào của sổ ({e}) — không cứu được.", file=sys.stderr)
+        return 2
+    van = tho.decode("utf-8", errors="replace")
+    vi_tri = [(m.start(), m.group(1)) for m in _KHOA_SO_RE.finditer(van)]
+    if not tho.strip() or not vi_tri:
+        # Vá rà phản biện 26/09/2026: tệp RỖNG (thường là tệp giữ chỗ 0 byte của OneDrive Files On-Demand) hoặc
+        # không mang nổi MỘT khoá sổ nào thì KHÔNG có gì để cứu. Ghi một sổ rỗng hợp lệ lúc này là tự dựng lại
+        # đúng lỗ fail-open của #3 — và OneDrive sẽ đồng bộ sổ rỗng đó đè lên bản thật trên đám mây.
+        print(f"✗ Sổ {SO.name} RỖNG hoặc không nhận ra khoá sổ nào ({len(tho)} byte) — KHÔNG cứu, KHÔNG ghi gì. "
+              "Đợi OneDrive xanh (tệp giữ chỗ) hoặc lấy bản trước từ lịch sử phiên bản OneDrive/máy kia.",
+              file=sys.stderr)
+        return 2
+    moc = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
+    ban_hong = SO.with_name(f"{SO.stem}.hong-{moc}.json")
+    ban_hong.write_bytes(tho)
+    muc: dict[str, dict] = {}
+    for i, (bat_dau, khoa) in enumerate(vi_tri):
+        doan = van[bat_dau:vi_tri[i + 1][0] if i + 1 < len(vi_tri) else len(van)]
+        da_rut = re.search(r'"da_rut"\s*:\s*true', doan) is not None
+        eoc = (re.search(r'"quan_ngai"\s*:\s*true', doan) is not None
+               or re.search(r'"ghi_chu_rut"\s*:\s*"expression_of_concern"', doan) is not None)
+        if not (da_rut or eoc):
+            continue
+        loai, _, gt = khoa.partition(":")
+        bg = {"loai": loai, "gia_tri": gt, "cac_dashboard": [], "cuu_tu_so_hong": ban_hong.name}
+        if da_rut:
+            bg["da_rut"] = True
+            if re.search(r'"rut_va_thay"\s*:\s*true', doan):
+                bg["rut_va_thay"] = True
+        if eoc:
+            bg["quan_ngai"] = True
+            bg["ghi_chu_rut"] = "expression_of_concern"
+        m_gc = re.search(r'"ghi_chu_rut"\s*:\s*"([^"]*)"', doan)
+        if m_gc and da_rut:
+            bg["ghi_chu_rut"] = m_gc.group(1)
+        muc[khoa] = bg
+    ghi_so({"phien_ban": 1, "muc": muc})
+    print(f"Đã giữ nguyên bản hỏng ở {ban_hong.name}.")
+    print(f"Cứu được {len(muc)} dương tính rút bài/EoC vào sổ mới:")
+    for k in sorted(muc):
+        print(f"   • {k}")
+    print("⚠ Mọi dấu vết khác (xác minh tồn tại, kiểm rút bài «ok», liên kết dashboard) KHÔNG cứu được —")
+    print("  chạy lại `--quet … --vong 3` để tích luỹ lại. Dương tính nằm ở đoạn bị cắt mất thì KHÔNG cứu được.")
+    return 0
 
 
 def _hom_nay() -> dt.date:
@@ -229,24 +347,59 @@ def nguon_da_rut(ten_file: str) -> list[dict]:
     muc = (doc_so() or {}).get("muc", {}) or {}
     ra: list[dict] = []
     for khoa, bg in sorted(muc.items()):
-        if not bg.get("da_rut"):
+        if not _la_duong_tinh(bg):
             continue
         if ten_file not in (bg.get("cac_dashboard") or []):
             continue
-        ra.append({
-            "khoa": khoa,
-            "loai": bg.get("loai", ""),
-            "gia_tri": bg.get("gia_tri", ""),
-            "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
-            "tieu_de": bg.get("tieu_de") or "",
-            "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
-            "nguon": bg.get("nguon_xac_minh") or "",
-            "rut_va_thay": bool(bg.get("rut_va_thay")),
-            "thong_bao": bg.get("thong_bao_rut_doi") or "",
-            "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
-            "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
-        })
+        ra.append(_ban_ghi_cong(khoa, bg))
     return ra
+
+
+def _la_eoc(bg: dict) -> bool:
+    """Bản ghi mang Expression of Concern — theo CỜ hoặc theo phán quyết cuối (cờ từng bị mất khi xác minh lại)."""
+    return bool(bg.get("quan_ngai")) or bg.get("ghi_chu_rut") == "expression_of_concern"
+
+
+def _la_chua_phan_xu(bg: dict) -> bool:
+    """Lượt kiểm rút bài KHÔNG lấy được bản ghi («nghi ma» / 'unresolved') — CHƯA có phán quyết.
+
+    Phán quyết MỚI NHẤT (`ghi_chu_rut`) quyết định: một lượt sau trả 'ok' thật thì không còn là chưa phân xử
+    dù cờ `nghi_ma` cũ còn sót (cờ này không phải tín hiệu dương nên không «dính» như EoC)."""
+    gc = bg.get("ghi_chu_rut")
+    if gc:
+        return gc == "unresolved"
+    return bool(bg.get("nghi_ma"))
+
+
+def _la_duong_tinh(bg: dict) -> bool:
+    """Dương tính mà cổng phải nghe: ĐÃ RÚT (da_rut) hoặc có Expression of Concern.
+
+    Vá 26/09/2026 (phát hiện #2): đường quét chính (`lenh_quet`, DOI, `--kiem-rut-lai`) chỉ ghi `quan_ngai` cho
+    EoC, KHÔNG đặt `da_rut` — trong khi các hàm cổng chỉ lọc `da_rut` ⇒ nhánh «CÓ QUAN NGẠI (EoC)» sẵn có của
+    verify_dashboard không bao giờ chạy tới từ đường sổ, và cổng còn in ✓. CỐ Ý không đặt `da_rut=True` cho EoC
+    (như `quet_ledger_hub`): khi đó `con_hieu_luc`/`bao_cao` sẽ gọi EoC là «ĐÃ BỊ RÚT»."""
+    return bool(bg.get("da_rut")) or _la_eoc(bg)
+
+
+def _ban_ghi_cong(khoa: str, bg: dict) -> dict:
+    """Khuôn bản ghi dương tính trả cho cổng/bản đọc — EoC chưa rút mang `tinh_trang='expression_of_concern'`."""
+    if bg.get("da_rut"):
+        tinh_trang = bg.get("ghi_chu_rut") or "retracted"
+    else:
+        tinh_trang = "expression_of_concern"
+    return {
+        "khoa": khoa,
+        "loai": bg.get("loai", ""),
+        "gia_tri": bg.get("gia_tri", ""),
+        "tinh_trang": tinh_trang,
+        "tieu_de": bg.get("tieu_de") or "",
+        "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
+        "nguon": bg.get("nguon_xac_minh") or "",
+        "rut_va_thay": bool(bg.get("rut_va_thay")),
+        "thong_bao": bg.get("thong_bao_rut_doi") or "",
+        "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
+        "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
+    }
 
 
 def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
@@ -264,20 +417,8 @@ def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
         dd = str(dd).strip()
         for khoa in (f"pmid:{dd}", f"doi:{dd.lower()}"):
             bg = muc.get(khoa)
-            if bg and bg.get("da_rut"):
-                ra.append({
-                    "khoa": khoa,
-                    "loai": bg.get("loai", ""),
-                    "gia_tri": bg.get("gia_tri", ""),
-                    "tinh_trang": bg.get("ghi_chu_rut") or "retracted",
-                    "tieu_de": bg.get("tieu_de") or "",
-                    "kiem_luc": (bg.get("kiem_rut_luc") or "")[:10],
-                    "nguon": bg.get("nguon_xac_minh") or "",
-                    "rut_va_thay": bool(bg.get("rut_va_thay")),
-                    "thong_bao": bg.get("thong_bao_rut_doi") or "",
-                    "sua_loi_bi_rut": bool(bg.get("sua_loi_bi_rut")),
-                    "thong_bao_ids": list(bg.get("thong_bao_ids") or []),
-                })
+            if bg and _la_duong_tinh(bg):
+                ra.append(_ban_ghi_cong(khoa, bg))
                 break
     return ra
 
@@ -298,7 +439,9 @@ def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
     for dd in cac_dinh_danh:
         dd = str(dd).strip()
         bg = muc.get(f"pmid:{dd}") or muc.get(f"doi:{dd.lower()}")
-        if bg and (bg.get("da_rut") or con_hieu_luc(bg)[0]):
+        # «Nghi ma»/'unresolved' = lượt kiểm KHÔNG lấy được bản ghi ⇒ CHƯA có phán quyết rút bài — xếp vào
+        # 'chua' (chỉ CẢNH BÁO; 'unresolved' có thể do lỗi tầng API của NCBI nên không chặn cứng). Vá #2, 26/09.
+        if bg and (bg.get("da_rut") or (con_hieu_luc(bg)[0] and not _la_chua_phan_xu(bg))):
             co.append(dd)
         else:
             chua.append(dd)
@@ -308,14 +451,8 @@ def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
 _RW_NGOAI_TUYEN: dict = {"chi_muc": None, "da_thu": False}
 
 
-def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | None:
-    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN cho các PMID — không mạng, ~0,5 giây.
-
-    Trả danh sách bản ghi cùng khuôn `dinh_danh_da_rut` (CHỈ dương tính) hoặc `None` khi máy này không có nền
-    (thiếu CSV/module) — caller phải đọc `None` là «CHƯA KIỂM», tuyệt đối không phải «sạch». Nền im lặng về một PMID
-    KHÔNG có nghĩa PMID sạch (danh mục chỉ ghi cái ĐÃ bị rút) nên hàm này không bao giờ phát tín hiệu âm."""
-    if not cac_pmid:
-        return []
+def _nap_nen_rw_ngoai_tuyen():
+    """Nạp (một lần mỗi tiến trình) chỉ mục Retraction Watch NGOẠI TUYẾN của repo y khoa; `None` khi máy không có."""
     if not _RW_NGOAI_TUYEN["da_thu"]:
         _RW_NGOAI_TUYEN["da_thu"] = True
         try:
@@ -332,7 +469,18 @@ def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | No
                 _RW_NGOAI_TUYEN["chi_muc"] = chi_muc if chi_muc.san_sang() else None
         except Exception:  # noqa: BLE001 — thiếu nền = CHƯA KIỂM, không được làm chết cổng
             _RW_NGOAI_TUYEN["chi_muc"] = None
-    chi_muc = _RW_NGOAI_TUYEN["chi_muc"]
+    return _RW_NGOAI_TUYEN["chi_muc"]
+
+
+def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | None:
+    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN cho các PMID — không mạng, ~0,5 giây.
+
+    Trả danh sách bản ghi cùng khuôn `dinh_danh_da_rut` (CHỈ dương tính) hoặc `None` khi máy này không có nền
+    (thiếu CSV/module) — caller phải đọc `None` là «CHƯA KIỂM», tuyệt đối không phải «sạch». Nền im lặng về một PMID
+    KHÔNG có nghĩa PMID sạch (danh mục chỉ ghi cái ĐÃ bị rút) nên hàm này không bao giờ phát tín hiệu âm."""
+    if not cac_pmid:
+        return []
+    chi_muc = _nap_nen_rw_ngoai_tuyen()
     if chi_muc is None:
         return None
     ra: list[dict] = []
@@ -350,6 +498,45 @@ def rut_bai_retraction_watch_ngoai_tuyen(cac_pmid: list[str]) -> list[dict] | No
             # thay), không được gắn «ĐÃ BỊ RÚT — không dùng» cho một trích dẫn vẫn dùng được (phản biện 21/09).
             "rut_va_thay": bool(re.search(r"retract(ion)?\s+and\s+replace", ly_do, re.I)),
             "thong_bao": bg.get("notice_pmid") or "",
+            "sua_loi_bi_rut": False, "thong_bao_ids": [],
+        })
+    return ra
+
+
+def rut_bai_retraction_watch_ngoai_tuyen_doi(cac_doi: list[str]) -> list[dict] | None:
+    """Dương tính rút bài từ nền Retraction Watch NGOẠI TUYẾN, tra THEO DOI — thêm 26/09/2026 (phát hiện #31).
+
+    Vì sao: nền cũ chỉ khoá theo PMID nên 33.294 dòng chỉ-có-DOI bị bỏ, và một bài có PMID mà gói trích bằng DOI
+    không bao giờ được hỏi — cùng một bài đã rút, trích bằng PMID thì bị chặn cứng, trích bằng DOI thì chỉ cảnh báo.
+    Hàm MỚI, không đổi chữ ký hàm PMID. Cùng hợp đồng: chỉ phát tín hiệu DƯƠNG; `None` = nền vắng hoặc engine cũ
+    chưa có `tra_doi()` ⇒ «CHƯA KIỂM», tuyệt đối không phải «sạch». `gia_tri` giữ NGUYÊN chuỗi caller đưa vào (để
+    cổng gạch đúng định danh khỏi danh sách chưa kiểm); `tieu_de` là tiêu đề THEO Retraction Watch — dữ liệu RW có
+    hiếm DOI khớp nhiều bài khác nhau, bác sĩ phải đối chiếu được."""
+    if not cac_doi:
+        return []
+    chi_muc = _nap_nen_rw_ngoai_tuyen()
+    if chi_muc is None or not hasattr(chi_muc, "tra_doi"):
+        return None
+    san_sang_doi = getattr(chi_muc, "san_sang_doi", None)
+    if callable(san_sang_doi) and not san_sang_doi():
+        return None
+    ra: list[dict] = []
+    for goc in cac_doi:
+        goc = str(goc).strip()
+        bg = chi_muc.tra_doi(goc)
+        if not bg:
+            continue
+        ly_do = str(bg.get("reason") or "")
+        tieu_de = str(bg.get("title") or "").strip()
+        ra.append({
+            "khoa": f"doi:{goc.lower()}", "loai": "doi", "gia_tri": goc,
+            "tinh_trang": bg.get("status") or "retracted",
+            "tieu_de": ("tiêu đề theo Retraction Watch: " + tieu_de) if tieu_de else "",
+            "kiem_luc": _hom_nay().isoformat(),
+            "nguon": "Retraction Watch (nền ngoại tuyến, khớp THEO DOI — đối chiếu tiêu đề; lý do: %s)"
+                     % (ly_do or "?").strip("; ")[:100],
+            "rut_va_thay": bool(re.search(r"retract(ion)?\s+and\s+replace", ly_do, re.I)),
+            "thong_bao": bg.get("notice_doi") or bg.get("notice_pmid") or "",
             "sua_loi_bi_rut": False, "thong_bao_ids": [],
         })
     return ra
@@ -378,7 +565,24 @@ def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
                 if loai == "url" and not gt.startswith("http"):
                     continue
                 nguon.setdefault(f"{loai}:{gt}", set()).add(f.name)
+            # VÁ 26/09/2026 (phát hiện #13) — định danh trong references[] của item cũng là nguồn gói
+            # đang trích. Cổng verify_dashboard nay đưa PMID dạng «PMID 12345678» trong references vào
+            # tầng 2/3; nếu sổ không gom chúng thì `--quet` không bao giờ kiểm và cổng in mãi một cảnh
+            # báo «CHƯA KIỂM» mà bác sĩ không gỡ được. Chỉ đọc references[] qua parser của cổng, không
+            # quét cả tệp (ghi chú giải thích việc LOẠI một bài đã rút không phải là trích dẫn).
+            for r in (vd.array_field(ch, "references") or []):
+                for pm in _PMID_THAM_KHAO.findall(r or ""):
+                    if vd.PMID_RE.match(pm):
+                        nguon.setdefault(f"pmid:{pm}", set()).add(f.name)
+                for d in _DOI_THAM_KHAO.findall(r or ""):
+                    d = d.rstrip(".,;'\")”")
+                    if vd.DOI_RE.match(d):
+                        nguon.setdefault(f"doi:{d}", set()).add(f.name)
     return nguon
+
+
+_PMID_THAM_KHAO = re.compile(r"\bPMID\s*:?\s*(\d{1,9})\b", re.I)
+_DOI_THAM_KHAO = re.compile(r"10\.\d{4,9}/[^\s'\"<>]+")
 
 
 def dong_bo_lien_ket_dashboard(
@@ -753,8 +957,9 @@ def lenh_quet(files: list[Path], vong: int) -> int:
                 continue
             ban_ghi["cac_dashboard"] = sorted(nguon.get(khoa, []))
             cu = muc.get(khoa) or {}
-            # giữ lại dấu vết kiểm rút bài cũ nếu có, để không mất lịch sử
-            for k in ("kiem_rut_luc", "da_rut", "ghi_chu_rut"):
+            # giữ lại dấu vết kiểm rút bài cũ nếu có, để không mất lịch sử — kể cả cờ EoC/«nghi ma» (vá #2,
+            # 26/09/2026: bản cũ làm MẤT `quan_ngai`/`nghi_ma` sau mỗi lần xác minh lại tồn tại).
+            for k in ("kiem_rut_luc", "da_rut", "ghi_chu_rut", "quan_ngai", "nghi_ma"):
                 if k in cu and k not in ban_ghi:
                     ban_ghi[k] = cu[k]
             muc[khoa] = ban_ghi
@@ -870,6 +1075,13 @@ def lenh_quet(files: list[Path], vong: int) -> int:
 
 
 def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
+    if nguon_pham_vi is None and not SO.exists():
+        # VÁ 26/09/2026 (phát hiện #28): sổ VẮNG (bản sao trần/Cloud không có EBM-Dashboards) ⇒ mã 3 «không đo
+        # được», KHÔNG phải mã 1 «còn thiếu» — và càng không phải mã 2 «có nguồn rút bỏ hẳn».
+        print(f"⚪ KHÔNG ĐO ĐƯỢC: chưa có sổ xác minh (thiếu {SO}) — đây là «chưa đo», KHÔNG phải "
+              "«đã thấy bài bị rút» và cũng KHÔNG phải «đã kiểm là sạch».")
+        print("[MA] KHONG_DO_DUOC")
+        return 3
     so = doc_so()
     muc = so["muc"]
     khoas = sorted(nguon_pham_vi) if nguon_pham_vi is not None else sorted(muc)
@@ -1125,8 +1337,24 @@ def main() -> int:
                          "MỒ CÔI mà --quet không bao giờ chạm tới (định danh chỉ xuất "
                          "hiện ở trường phụ như replacesPmid). Luật bất đối xứng giữ "
                          "nguyên: KHÔNG bao giờ xoá dương tính cũ.")
+    ap.add_argument("--cuu-so-hong", action="store_true",
+                    help="CHỈ cho sổ HỎNG: giữ nguyên bản hỏng (.hong-<thời điểm>.json) rồi cứu các dương tính "
+                         "rút bài bằng regex vào sổ mới. Không bao giờ tự chạy.")
     a = ap.parse_args()
 
+    if a.cuu_so_hong:
+        return cuu_so_hong()
+    try:
+        return _chay_lenh(a)
+    except SoHongLoi as e:
+        # KHÔNG bắt đầu sổ mới, KHÔNG ghi gì: ghi đè lúc này là xoá vĩnh viễn dương tính rút bài đã tích luỹ.
+        print(f"⛔ {e}", file=sys.stderr)
+        print("[MA] SO_HONG — không ghi gì vào sổ.", file=sys.stderr)
+        return 2
+
+
+def _chay_lenh(a) -> int:
+    """Thân lệnh CLI — tách khỏi main() để mọi đường ĐỌC/GHI sổ cùng đi qua một rào `SoHongLoi`."""
     if a.phu_mo_coi:
         vd = _nap_verify_dashboard()
         so = doc_so()
@@ -1192,8 +1420,13 @@ def main() -> int:
         files.extend(Path(p) for p in glob.glob(m))
     files = sorted({f.resolve() for f in files if f.exists()})
     if not files:
-        print("✗ Không thấy dashboard nào khớp.", file=sys.stderr)
-        return 2
+        # VÁ 26/09/2026 (phát hiện #28): trước đây `return 2` — trùng mã «có nguồn ĐÃ BỊ RÚT» nên chu_trinh_chung_cu
+        # kéo còi «🔴 CÓ NGUỒN RÚT BỎ HẲN» trên bản sao trần chỉ vì thiếu dashboard. Mã 2 nay chỉ còn nghĩa rút
+        # bài (hoặc sổ hỏng, có dòng «[MA] SO_HONG»); «không đo được» là mã 3.
+        print("⚪ KHÔNG ĐO ĐƯỢC: Không thấy dashboard nào khớp (thiếu EBM-Dashboards/?) — không nguồn nào được "
+              "đọc; KHÔNG phải «đã thấy bài bị rút», cũng KHÔNG phải «đã kiểm là sạch».", file=sys.stderr)
+        print("[MA] KHONG_DO_DUOC", file=sys.stderr)
+        return 3
     return lenh_quet(files, max(1, a.vong))
 
 

@@ -26,5 +26,8 @@ Rồi chạy tiếp: `tools/drug_safety_scan.py` nếu có thuốc cho người 
 Gửi cả năm file bằng SendUserFile — `display:"render"` cho dashboard, bản đọc,
 Word-dạng-HTML và PDF; `.docx` đính kèm để tải. Đừng bắt bác sĩ tự tìm trong thư mục.
 
-Cổng liêm chính không đạt thì vẫn xuất, nhưng bản Word tự hạ câu chữ thành "CẦN xác minh".
+Cổng liêm chính LUÔN chạy (thiếu `--online` thì chạy phần ngoại tuyến): lỗi cứng thật —
+khoá summary lạ, nguồn đã rút, `decision='apply'` trên chứng cứ yếu — thì CHẶN XUẤT (mã 3).
+Chỉ khi cổng chưa kết luận được (mạng, hoặc thiếu `--online`) mới vẫn xuất, và bản Word tự hạ
+câu chữ thành "CẦN xác minh".
 Mọi khẳng định kèm PMID/DOI; KHÔNG PII. Cần bác sĩ kiểm chứng.

@@ -54,6 +54,27 @@ REQUIRED_TRUE_FOR_APPROVED = {
 }
 BAD_SOURCE_STATUSES = {"retracted", "quarantined", "unknown"}
 WEAK_APPLY_GRADES = {"low", "vlow", "na"}
+# Enum lấy nguyên văn từ clinical_runtime/OUTPUT_SCHEMA.json (evidence_basis.items +
+# release_state). `check_contract_files()` đối chiếu lại với schema sống để bắt lệch:
+# schema đổi enum mà quên sửa ở đây ⇒ contract_files FAIL (fail-closed), không lặng lẽ
+# nhận giá trị mới. Giá trị ngoài enum KHÔNG BAO GIỜ được "đoán" về giá trị hợp lệ.
+VALID_GRADES = {"high", "mod", "low", "vlow", "na"}
+VALID_DECISIONS = {"apply", "consider", "notyet"}
+VALID_SOURCE_STATUSES = {
+    "active",
+    "corrected",
+    "expression_of_concern",
+    "retracted",
+    "quarantined",
+    "unknown",
+}
+VALID_RELEASE_STATES = {
+    "draft_ai",
+    "guardrail_pending",
+    "doctor_review_required",
+    "approved_for_use",
+    "retired_or_superseded",
+}
 OK_LOCAL_STATUS_FOR_APPROVED = {"confirmed", "not_applicable"}
 OK_ABSOLUTE_EFFECTS_STATUS = {"reported", "not_applicable", "source_not_reported_labeled"}
 
@@ -80,6 +101,21 @@ def _walk_strings(value: Any) -> list[str]:
             out.extend(_walk_strings(v))
         return out
     return []
+
+
+def _norm(value: Any, mac_dinh: str) -> str:
+    """Chuẩn hoá một giá trị enum để so khớp: bỏ khoảng trắng hai đầu + chữ thường.
+
+    Chỉ nhận chuỗi; None, số, chuỗi rỗng/toàn khoảng trắng ⇒ trả `mac_dinh`. Hàm này
+    KHÔNG ánh xạ giá trị lạ sang giá trị hợp lệ (vd 'moderate' vẫn là 'moderate' và bị
+    chặn ở nhánh enum) — chỉ gỡ khác biệt chữ hoa/khoảng trắng vốn làm cổng xanh giả
+    ('Low', ' low', 'Retracted' từng lọt qua phép so khớp đúng từng chữ).
+    """
+    if isinstance(value, str):
+        chuan = value.strip().lower()
+        if chuan:
+            return chuan
+    return mac_dinh
 
 
 def _has_pii(packet: dict[str, Any]) -> list[str]:
@@ -183,7 +219,16 @@ def evaluate_packet(packet: dict[str, Any]) -> dict[str, Any]:
         return {"status": "FAIL", "errors": errors, "warnings": warnings}
 
     release_state = packet.get("release_state")
-    approved = release_state == "approved_for_use"
+    release_state_chuan = _norm(release_state, "")
+    # Chuẩn hoá chữ hoa/khoảng trắng: 'Approved_For_Use' phải chịu ĐỦ luật của gói
+    # actionable, không được rơi âm thầm vào nhánh "không actionable" rồi PASS.
+    approved = release_state_chuan == "approved_for_use"
+    if release_state_chuan not in VALID_RELEASE_STATES:
+        # Không biết gói có actionable hay không ⇒ chặn (fail-closed), không đoán.
+        errors.append(
+            f"release_state={release_state!r} ngoài enum OUTPUT_SCHEMA "
+            f"{sorted(VALID_RELEASE_STATES)} — không xác định được gói có actionable hay không."
+        )
     if not DISCLAIMER_RE.search(str(packet.get("recommendation_summary", ""))):
         errors.append("recommendation_summary thiếu disclaimer 'Cần bác sĩ kiểm chứng'.")
 
@@ -202,11 +247,28 @@ def evaluate_packet(packet: dict[str, Any]) -> dict[str, Any]:
             continue
         source_id = str(item.get("source_id", "")).strip()
         source_type = str(item.get("source_type", "")).strip()
-        status = str(item.get("source_status", "unknown"))
-        decision = str(item.get("decision", ""))
-        grade = str(item.get("grade_level", ""))
+        # Vắng/None/rỗng ⇒ source_status 'unknown' (mặc định của schema, bị chặn khi
+        # approved); decision/grade vắng ⇒ '' (ngoài enum ⇒ bị chặn khi approved).
+        status = _norm(item.get("source_status"), "unknown")
+        decision = _norm(item.get("decision"), "")
+        grade = _norm(item.get("grade_level"), "")
         if not source_id or not source_type:
             errors.append(f"evidence_basis[{idx}] thiếu source_id/source_type.")
+        if approved and status not in VALID_SOURCE_STATUSES:
+            errors.append(
+                f"evidence_basis[{idx}] source_status={item.get('source_status')!r} ngoài enum "
+                "OUTPUT_SCHEMA — chặn approved_for_use."
+            )
+        if approved and decision not in VALID_DECISIONS:
+            errors.append(
+                f"evidence_basis[{idx}] decision={item.get('decision')!r} vắng hoặc ngoài enum "
+                "OUTPUT_SCHEMA — chặn approved_for_use."
+            )
+        if approved and grade not in VALID_GRADES:
+            errors.append(
+                f"evidence_basis[{idx}] grade_level={item.get('grade_level')!r} vắng hoặc ngoài "
+                "enum OUTPUT_SCHEMA — chặn approved_for_use."
+            )
         if approved and status in BAD_SOURCE_STATUSES:
             errors.append(f"evidence_basis[{idx}] source_status={status!r} chặn approved_for_use.")
         if approved and decision == "apply" and grade in WEAK_APPLY_GRADES:
@@ -280,6 +342,37 @@ def evaluate_packet(packet: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _enum_drift_errors(output_schema: dict[str, Any]) -> list[str]:
+    """Đối chiếu enum khai trong tệp này với enum SỐNG của OUTPUT_SCHEMA.
+
+    Thiếu khoá/enum trong schema cũng là lỗi (không đo được ≠ khớp).
+    """
+    errors: list[str] = []
+
+    def _dict(v: Any) -> dict[str, Any]:
+        return v if isinstance(v, dict) else {}
+
+    props = _dict(_dict(output_schema).get("properties"))
+    item_props = _dict(_dict(_dict(props.get("evidence_basis")).get("items")).get("properties"))
+    cap = [
+        ("evidence_basis.items.grade_level", item_props.get("grade_level"), VALID_GRADES),
+        ("evidence_basis.items.decision", item_props.get("decision"), VALID_DECISIONS),
+        ("evidence_basis.items.source_status", item_props.get("source_status"), VALID_SOURCE_STATUSES),
+        ("release_state", props.get("release_state"), VALID_RELEASE_STATES),
+    ]
+    for ten, spec, khai_bao in cap:
+        enum = spec.get("enum") if isinstance(spec, dict) else None
+        if not isinstance(enum, list) or not all(isinstance(x, str) for x in enum):
+            errors.append(f"OUTPUT_SCHEMA thiếu enum (danh sách chuỗi) cho {ten} — không đối chiếu được.")
+            continue
+        if set(enum) != khai_bao:
+            errors.append(
+                f"Enum {ten} lệch OUTPUT_SCHEMA: schema={sorted(enum)} khác "
+                f"verifier={sorted(khai_bao)}."
+            )
+    return errors
+
+
 def check_contract_files() -> dict[str, Any]:
     errors: list[str] = []
     output_schema = _load_json(CLINICAL_RUNTIME / "OUTPUT_SCHEMA.json")
@@ -321,6 +414,8 @@ def check_contract_files() -> dict[str, Any]:
     if missing_markers:
         errors.append("Thiếu marker hợp đồng: " + ", ".join(missing_markers))
 
+    errors.extend(_enum_drift_errors(output_schema))
+
     controls = set(apply_gate.get("required_controls_for_approved_use", []))
     missing_controls = REQUIRED_TRUE_FOR_APPROVED - controls
     if missing_controls:
@@ -332,6 +427,43 @@ def check_contract_files() -> dict[str, Any]:
             errors.append(f"TC-011 thiếu expected_outpatient_apply_review.{field}.")
 
     return {"status": "PASS" if not errors else "FAIL", "errors": errors}
+
+
+_VANG = object()  # đánh dấu "xoá hẳn trường" trong bảng biến thể tự kiểm
+# Mỗi biến thể là một bộ {trường: giá trị} áp lên evidence_basis[0] của approved_fixture().
+ENUM_BYPASS_VARIANTS: list[dict[str, Any]] = [
+    {"grade_level": "Low"},
+    {"grade_level": " low"},
+    {"grade_level": "LOW"},
+    {"grade_level": _VANG},
+    {"grade_level": None},
+    {"grade_level": "xyz"},
+    {"decision": "Apply", "grade_level": "low"},
+    {"decision": _VANG},
+    {"decision": "xyz"},
+    {"source_status": "Retracted"},
+    {"source_status": " retracted "},
+    {"source_status": None},
+    {"source_status": "xyz"},
+]
+
+
+def _ap_bien_the(bien_the: dict[str, Any]) -> dict[str, Any]:
+    """Dựng một gói approved_fixture() rồi áp biến thể (xoá trường khi giá trị là _VANG)."""
+    pkt = approved_fixture()
+    muc = pkt["evidence_basis"][0]
+    for truong, gia_tri in bien_the.items():
+        if gia_tri is _VANG:
+            muc.pop(truong, None)
+        else:
+            muc[truong] = gia_tri
+    return pkt
+
+
+def _mo_ta_bien_the(bien_the: dict[str, Any]) -> str:
+    return ", ".join(
+        f"{t}={'<vắng>' if v is _VANG else repr(v)}" for t, v in bien_the.items()
+    )
 
 
 def run_verification() -> dict[str, Any]:
@@ -349,6 +481,15 @@ def run_verification() -> dict[str, Any]:
     red_flag = approved_fixture()
     red_flag["red_flags_detected"] = [{"flag": "đau ngực kiểu ACS", "urgency": "IMMEDIATE"}]
     red_flag_result = evaluate_packet(red_flag)
+
+    # Tự kiểm lối vòng bằng chữ hoa/khoảng trắng/vắng trường/ngoài enum — mỗi biến thể
+    # PHẢI bị chặn khi approved_for_use (xanh giả cũ: 'Low', ' low', vắng grade_level,
+    # 'Retracted', source_status=None đều PASS).
+    enum_lot = [
+        _mo_ta_bien_the(bien_the) + " không bị chặn"
+        for bien_the in ENUM_BYPASS_VARIANTS
+        if evaluate_packet(_ap_bien_the(bien_the))["status"] != "FAIL"
+    ]
 
     checks = [
         {"name": "contract_files", **contract_check},
@@ -370,6 +511,11 @@ def run_verification() -> dict[str, Any]:
             "status": "PASS" if red_flag_result["status"] == "FAIL" else "FAIL",
             "errors": [] if red_flag_result["status"] == "FAIL" else ["red flag did not block"],
             "blocked_by": red_flag_result["errors"],
+        },
+        {
+            "name": "blocks_enum_bypass",
+            "status": "PASS" if not enum_lot else "FAIL",
+            "errors": enum_lot,
         },
     ]
     overall = "PASS" if all(check["status"] == "PASS" for check in checks) else "FAIL"

@@ -22,8 +22,12 @@ BỐN ĐIỀU CỐ Ý:
   2. AN TOÀN khi chạy trên máy KHÔNG có EBM-Dashboards/ (Cloud, Windows chưa
      có OneDrive…): ba bộ đếm bên dưới đã tự thiết kế để báo ⚪/🟡 "chưa có dữ
      liệu" thay vì crash — đã đo trực tiếp trên máy Cloud (đo 04/09/2026,
-     0 crash, cả ba đều thoát trong vài giây). Script này KHÔNG đòi
-     EBM-Dashboards/ phải tồn tại mới chạy được.
+     0 crash, cả ba đều thoát trong vài giây). Nhưng máy đó KHÔNG ĐƯỢC GHI ĐÈ
+     gương (vá 26/09/2026, #36): tái lập thật — gương 19.717 byte của Mac (có
+     38 quyết định đã duyệt) bị ghi thành 1.038 byte «chưa có dữ liệu», mã 0,
+     không chốt nào canh. Nay vắng EBM-Dashboards/ ⇒ KHÔNG ghi, in ⚪, mã 2
+     (muốn ghi trạng thái rỗng có chủ ý thì phải truyền `--ghi-du-rong`).
+     Tầng thứ hai: tools/kiem_o_nhiem_artifact.py chặn commit bản gương hạ cấp.
   3. KHÔNG PHẢI CỔNG — chỉ đọc và báo cáo, không tự sửa/áp dụng/ghi
      decision·gradeLevel (giữ đúng BH10). Muốn hành động dựa trên báo cáo là
      việc của bác sĩ.
@@ -32,9 +36,12 @@ BỐN ĐIỀU CỐ Ý:
 Dùng:
     python3 tools/xuat_trang_thai_cloud.py           # ghi cloud-mirror/trang-thai-chung-cu.json
     python3 tools/xuat_trang_thai_cloud.py --in-thu  # chỉ in ra xem trước, không ghi file
+    python3 tools/xuat_trang_thai_cloud.py --ghi-du-rong  # ÉP ghi dù thiếu EBM-Dashboards/
 
-Mã thoát: LUÔN 0 — đây là báo cáo, không phải phán quyết (cùng quy ước đã
-dùng ở tools/tu_de_xuat_viec.py).
+Mã thoát: 0 = đã ghi gương (hoặc --in-thu) · 2 = CHƯA ĐO / KHÔNG GHI (máy không có
+EBM-Dashboards/ thật). Không có mã «FAIL» — đây là báo cáo, không phải phán quyết.
+Hai nơi gọi đều chịu được mã 2: hook SessionStart kết thúc bằng `; true`, bước ⑥ của
+tools/xuat_goi_cap_nhat.py coi rc≠0 là bỏ qua best-effort.
 """
 from __future__ import annotations
 
@@ -125,7 +132,18 @@ def main() -> int:
                          " hook SessionStart (bảng đề xuất tự động mỗi khi mở phiên trên Mac/"
                          "Windows). Vẫn in cảnh báo khi máy KHÔNG có EBM-Dashboards/ thật, vì đó"
                          " là tín hiệu bác sĩ cần biết (mirror chỉ ghi được trạng thái rỗng).")
+    ap.add_argument("--ghi-du-rong", action="store_true",
+                    help="ÉP ghi gương dù máy KHÔNG có EBM-Dashboards/ thật (mặc định: không"
+                         " ghi, mã 2 — để không xoá gương giá trị thật của máy có dữ liệu)")
     a = ap.parse_args()
+
+    if not a.in_thu and not DASH.is_dir() and not a.ghi_du_rong:
+        # Vá 26/09/2026 (#36): KHÔNG ghi đè gương đang track bằng trạng thái rỗng. In cả
+        # khi --im-khi-on — đây là tín hiệu bác sĩ cần thấy, không phải tiếng ồn.
+        print(f"⚪ KHÔNG GHI {MIRROR_FILE.parent.name}/{MIRROR_FILE.name} — máy này không có EBM-Dashboards/"
+              " thật (chưa đo được). Gương hiện có được GIỮ NGUYÊN. Chạy lại trên máy có"
+              " OneDrive (Mac/Windows); cố ý ghi trạng thái rỗng thì thêm --ghi-du-rong.")
+        return 2
 
     trang_thai = xay_trang_thai()
     noi_dung = json.dumps(trang_thai, ensure_ascii=False, indent=2)
@@ -135,7 +153,7 @@ def main() -> int:
         return 0
 
     MIRROR_DIR.mkdir(parents=True, exist_ok=True)
-    MIRROR_FILE.write_text(noi_dung + "\n", encoding="utf-8")
+    MIRROR_FILE.write_text(noi_dung + "\n", encoding="utf-8", newline="\n")
     im = a.im_khi_on and trang_thai["co_du_lieu_dashboard_that"]
     if not im:
         print(f"✓ Đã ghi {MIRROR_FILE}")

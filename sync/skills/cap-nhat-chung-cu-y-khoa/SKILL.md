@@ -399,7 +399,7 @@ của cùng một thử nghiệm). Không tính được thì in rõ *"chưa ki�
 ④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
 ⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
 
-Cổng liêm chính KHÔNG đạt thì vẫn xuất file nhưng bản Word tự hạ câu chữ thành "CẦN xác minh" — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
+Cổng liêm chính LUÔN chạy — thiếu `--online` thì chạy phần ngoại tuyến (vá 26/09/2026): lỗi cứng THẬT (khoá summary lạ, nguồn đã rút trong sổ, `apply` trên chứng cứ yếu…) ⇒ **CHẶN XUẤT, mã 3** ở cả hai chế độ. Chỉ khi cổng CHƯA kết luận được (lỗi mạng, hoặc chạy không `--online`) mới vẫn xuất, bản Word tự hạ câu chữ thành "CẦN xác minh" và tiêu đề ghi «CHƯA xác minh nguồn sống» — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
 
 **Cổng nguồn ①-bis xử lý HAI loại lỗi khác hẳn nhau — đừng gộp:**
 - `decision='apply'` trên `gradeLevel` na/low, hoặc `apply` chỉ dựa Consensus ⇒ **CHẶN XUẤT, mã thoát 3**.
@@ -407,6 +407,12 @@ Cổng liêm chính KHÔNG đạt thì vẫn xuất file nhưng bản Word tự 
   `gradeLevel:'na'` vì nguồn không dùng thang GRADE) thì khai `normativeBasis`, **KHÔNG hạ** `decision`
   (hạ một chống chỉ định hay liều theo CrCl xuống "cân nhắc" là làm GIẢM an toàn); chứng cứ **yếu thật**
   thì HẠ `decision` xuống `consider`/`notyet`. **TUYỆT ĐỐI không nâng `gradeLevel`.**
+  **«Chỉ dựa Consensus» là cả HỌ ĐỒNG THUẬN (vá 26/09/2026):** mọi `design` BẮT ĐẦU bằng `consensus`
+  hoặc `đồng thuận` — bất kể hoa/thường, có hậu tố hay không (`consensus`, `Consensus statement`,
+  `Đồng thuận chuyên gia`, `Đồng thuận đa hội (expert consensus)`…) — đi kèm `apply` đều bị CHẶN, kể cả
+  khi `gradeLevel` là `mod`/`high` và đã khai `gradeBy`. Đừng đổi cách viết `design` để lách; nguồn thật
+  là guideline/nhãn thuốc thì sửa `design` cho ĐÚNG loại nguồn, còn đồng thuận thật thì HẠ `decision`
+  (agent chỉ ĐỀ XUẤT, bác sĩ duyệt). `design` như `Guideline (dựa đồng thuận)` vẫn thuộc họ guideline.
 - Thiếu `DATA.standards` ⇒ chỉ **CẢNH BÁO**, vẫn xuất. Nhưng **dashboard MỚI phải luôn khai
   `DATA.standards`** — bỏ trống là tự đánh mất hợp đồng nguồn của chính lần tìm kiếm vừa làm.
 

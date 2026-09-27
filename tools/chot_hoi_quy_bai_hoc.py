@@ -131,7 +131,7 @@ def _nap(duong_dan: Path, ten: str):
     return m
 
 
-def _goc_mea() -> Path:
+def _goc_mea(repo: Path | None = None) -> Path:
     """Đường dẫn THẬT của medical-ebm-automation — lồng hoặc anh em thư mục cha.
 
     VÁ 07/09/2026 (mục #105 còn treo từ đợt audit 148 mục): 9 chỗ trong file này
@@ -142,9 +142,13 @@ def _goc_mea() -> Path:
     Nay uỷ quyền cho định nghĩa DUY NHẤT ở `tools/ban_sao_tran.py::duong_goc()`.
     Không có ở đâu thì trả về vị trí lồng như cũ (để `.exists()` sau đó vẫn đúng
     là False, không đổi hành vi trên máy/CI thật sự bare).
+
+    `repo` (26/09/2026): mặc định REPO; truyền thư mục khác chỉ để chốt TỰ KIỂM trên
+    fixture (vd BH107 dựng bố cục anh em tạm) — mọi lời gọi cũ `_goc_mea()` không đổi.
     """
+    repo = REPO if repo is None else repo
     return (_nap(REPO / "tools" / "ban_sao_tran.py", "bst_goc_mea")
-            .duong_goc("medical-ebm-automation", REPO)) or (REPO / "medical-ebm-automation")
+            .duong_goc("medical-ebm-automation", repo)) or (repo / "medical-ebm-automation")
 
 
 # ---------------------------------------------------------------------------
@@ -3377,11 +3381,16 @@ def bh73_viet_hoa_phai_tu_phuc_hoi_sau_cap_nhat_plugin() -> tuple[bool, str]:
         return False, f"bước «{nhan}» thiếu --im-khi-on → sẽ ồn mỗi phiên"
     if not sua:
         return False, f"bước «{nhan}» chỉ báo mà không tự sửa"
-    if "yaml" not in Path(sua[0]).name.lower() and ".ebm-venv" not in sua[0]:
-        # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
-        # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
-        if getattr(ts, "_VENV", Path("/")).exists():
-            return False, "lệnh sửa không dùng trình thông dịch có PyYAML"
+    # VÁ 26/09/2026 (#38): dò venv bằng CÙNG hàm hai bố cục `ban_sao_tran.venv_python()` (bin/python rồi
+    # Scripts/python.exe). Bản cũ kiểm `ts._VENV.exists()` — chỉ bố cục POSIX — nên trên Windows chốt luôn đi nhánh
+    # «máy chưa dựng venv» và mù đúng lỗi nó canh; phép so chuỗi «.ebm-venv» cũng xanh giả khi sys.executable tình cờ
+    # nằm trong một venv khác. Nay: có venv EBM thì lệnh sửa PHẢI chạy bằng ĐÚNG trình thông dịch đó.
+    # Cho qua khi máy chưa dựng venv (lúc đó PY_YAML lùi về sys.executable);
+    # apply_vi tự từ chối ghi nếu thiếu PyYAML nên không có đường hỏng im lặng.
+    vp = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_bh73").venv_python()
+    if vp is not None and Path(sua[0]) != vp:
+        return False, (f"lệnh sửa không dùng trình thông dịch có PyYAML: venv EBM có ở {vp} mà chạy bằng {sua[0]} "
+                       "— trên Windows apply_vi sẽ lặng lẽ không vá")
 
     return True, f"apply_vi bắt+vá đúng; tu_sua_chua đã nối «{nhan}»"
 
@@ -5633,10 +5642,72 @@ def bh107_mcp_consensus_scite_phai_di_qua_cong():
     là Cấp 0, KHÔNG đặt sau cổng (đặt sau sẽ đảo ngược thứ tự §2bis), và §2quater ghi các bẫy đo được: sắp `date-desc` cho kết
     quả lạc đề, `central` ≠ số tổng quan, `review: 0` ≠ «không có chứng cứ», lỗi điều hướng phải thử lại một lần.
     """
-    bien = {
-        "goc": REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
-        "engine": REPO / "medical-ebm-automation" / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
+    ok, ct = _bh107_kiem_hai_ban(_bh107_duong_dan(REPO))
+    if not ok:
+        return False, ct
+    ok_rang, ct_rang = _bh107_tu_kiem_rang()
+    if not ok_rang:
+        return False, ct_rang
+    return True, ct
+
+
+def _bh107_duong_dan(repo: Path) -> dict[str, Path]:
+    """Hai bản doctrine `_CONNECTOR-CHUNG-CU.md` mà BH107 đối chiếu.
+
+    VÁ 26/09/2026 (synthesis #19): bản engine dò qua `_goc_mea()` — lồng HOẶC anh em, cùng họ bản vá BH108 24/09. Bản cũ
+    ghép cứng `REPO / "medical-ebm-automation"` (vị trí LỒNG) nên trên phiên Cloud (engine là ANH EM) BH107 KHÔNG BAO GIỜ
+    đọc bản engine ⇒ phép «hai bản không lệch» luôn xanh — đã tái lập: nới «tối đa **2 lời gọi MCP» thành 9 ở bản engine
+    anh em mà chốt vẫn đạt. BH107 là chốt DUY NHẤT canh lệch giữa hai bản (manifest engine bỏ qua tệp «_*»)."""
+    return {
+        "goc": repo / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
+        "engine": _goc_mea(repo) / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md",
     }
+
+
+def _bh107_tu_kiem_rang() -> tuple[bool, str]:
+    """Tự kiểm «răng còn» của BH107 trên fixture tạm (khuôn fixture BH84): nhánh bố cục ANH EM không được máy Mac (lồng)
+    lẫn Cloud-một-repo chạy tới, nên phải tự dựng để biết chốt còn cắn.
+
+      (a) anh em + bản engine lệch MỘT dòng ⇒ phải ĐỎ kèm «LỆCH bản gốc»;
+      (b) anh em + hai bản trùng ⇒ phải ĐẠT và KHÔNG mang nhãn ⚪ (tức đã đối chiếu thật);
+      (c) engine vắng ở cả lồng lẫn anh em ⇒ vẫn ĐẠT (không đỏ giả trên bản sao trần) nhưng PHẢI khai ⚪ KIỂM YẾU HƠN."""
+    import shutil
+    import tempfile
+    goc_that = REPO / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md"
+    van_ban = goc_that.read_text(encoding="utf-8")
+    td = Path(tempfile.mkdtemp(prefix="bh107-rang-"))
+    try:
+        repo_gia = td / "cha" / "EBM-drluanbv175"
+        (repo_gia / ".claude" / "agents").mkdir(parents=True)
+        (repo_gia / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").write_text(
+            van_ban, encoding="utf-8", newline="\n")
+        eng_dir = td / "cha" / "medical-ebm-automation" / ".claude" / "agents"
+        eng_dir.mkdir(parents=True)
+        eng = eng_dir / "_CONNECTOR-CHUNG-CU.md"
+
+        eng.write_text(van_ban + "\n<!-- dòng lệch thử của BH107 -->\n", encoding="utf-8", newline="\n")
+        ok, ct = _bh107_kiem_hai_ban(_bh107_duong_dan(repo_gia))
+        if ok or "LỆCH bản gốc" not in ct:
+            return False, ("răng BH107 mất: fixture bố cục ANH EM có bản engine lệch một dòng mà chốt không báo «LỆCH bản "
+                           f"gốc» (trả {ok!r}: {ct[:160]}) — đường engine không dò anh em, trên Cloud hai bản có thể trôi")
+
+        eng.write_text(van_ban, encoding="utf-8", newline="\n")
+        ok, ct = _bh107_kiem_hai_ban(_bh107_duong_dan(repo_gia))
+        if not ok or ct.startswith("⚪"):
+            return False, f"răng BH107 mất: fixture anh em hai bản TRÙNG mà chốt không đối chiếu thật ({ok!r}: {ct[:160]})"
+
+        shutil.rmtree(td / "cha" / "medical-ebm-automation")
+        ok, ct = _bh107_kiem_hai_ban(_bh107_duong_dan(repo_gia))
+        if not ok or not ct.startswith("⚪ KIỂM YẾU HƠN"):
+            return False, ("răng BH107 mất: engine vắng mà chốt không khai «⚪ KIỂM YẾU HƠN» — «đạt» ngầm nói hai bản "
+                           f"không lệch dù CHƯA đối chiếu ({ok!r}: {ct[:160]})")
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
+    return True, "răng còn"
+
+
+def _bh107_kiem_hai_ban(bien: dict[str, Path]) -> tuple[bool, str]:
+    """Phần kiểm CHỮ của BH107 trên hai đường dẫn cho sẵn (thật hoặc fixture)."""
     noi_dung = {}
     for ten, duong_dan in bien.items():
         if not duong_dan.exists():
@@ -5697,7 +5768,13 @@ def bh107_mcp_consensus_scite_phai_di_qua_cong():
             return False, f"[{ten}] bảng connector không còn dòng Cochrane MCP"
     if len(noi_dung) == 2 and noi_dung["goc"] != noi_dung["engine"]:
         return False, "bản `_CONNECTOR-CHUNG-CU.md` trong engine LỆCH bản gốc — hai bản doctrine nói hai thứ"
-    return True, "MCP Consensus/Scite đi qua cổng dự phòng (Scite search = tầng 2, có trần), Cochrane Cấp 0 có §2quater, bản đồ agent trỏ đúng"
+    thong_diep = ("MCP Consensus/Scite đi qua cổng dự phòng (Scite search = tầng 2, có trần), Cochrane Cấp 0 có §2quater, "
+                  "bản đồ agent trỏ đúng")
+    if "engine" not in noi_dung:
+        # Vẫn ĐẠT (không đỏ giả trên bản sao trần không có engine) nhưng KHAI RÕ — «đạt» không được ngầm nói hai bản
+        # không lệch khi chưa hề đối chiếu (khuôn ⚪ KIỂM YẾU HƠN của BH51/BH108).
+        return True, "⚪ KIỂM YẾU HƠN (bản engine vắng — CHƯA đối chiếu hai bản): " + thong_diep
+    return True, thong_diep
 
 
 def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
@@ -6210,7 +6287,9 @@ def bh105_worktree_khong_chay_ma_va_nguon_cua_minh_len_noi_chay_dung_chung() -> 
         (chinh / "tools").mkdir(parents=True)
         (chinh / "sync" / "skills" / "mau").mkdir(parents=True)
         (chinh / "sync" / "skills" / "mau" / "SKILL.md").write_text("---\nname: mau\n---\n", encoding="utf-8")
-        for ten in ("tu_sua_chua.py", "dong_bo_skill.py"):
+        # 26/09/2026 (#38): tu_sua_chua nạp ban_sao_tran.py (venv_python đa nền) NGAY LÚC IMPORT — fixture phải
+        # chép đủ phụ thuộc cùng thư mục như cây thật (bài học BH70/BH84: không trỏ vào thứ không có mặt).
+        for ten in ("tu_sua_chua.py", "dong_bo_skill.py", "ban_sao_tran.py", "nhan_dien_may.py"):
             _shutil.copy2(REPO / "tools" / ten, chinh / "tools" / ten)
         wt = chinh / ".claude" / "worktrees" / "phu"
         try:

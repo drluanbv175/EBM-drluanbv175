@@ -53,8 +53,17 @@ PY = sys.executable
 # lưu SAI bản gốc tiếng Anh — bản gốc sai thì --restore không cứu lại được. Nay
 # apply_vi tự từ chối ghi khi thiếu PyYAML, nên đường dẫn venv này là để việc sửa
 # CHẠY ĐƯỢC, không phải để tránh hỏng.
-_VENV = Path.home() / ".ebm-venv" / "bin" / "python"
-PY_YAML = str(_VENV) if _VENV.exists() else PY
+# VÁ 26/09/2026 (#38): dò venv qua ban_sao_tran.venv_python() — thử `bin/python` rồi
+# `Scripts/python.exe`. Bản cũ chỉ biết bố cục POSIX nên trên Windows PY_YAML rơi về
+# python hệ thống, apply_vi --im-khi-on trả 0 vì thiếu PyYAML ⇒ mục Việt hoá LẶNG LẼ
+# không bao giờ chạy mà bảng tự sửa vẫn báo sạch. `_VENV` là None khi chưa dựng venv.
+import importlib.util as _ilu_bst  # noqa: E402
+_sp_bst = _ilu_bst.spec_from_file_location(
+    "_bst_tu_sua_chua", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = _ilu_bst.module_from_spec(_sp_bst)
+_sp_bst.loader.exec_module(_bst)
+_VENV = _bst.venv_python()
+PY_YAML = str(_VENV) if _VENV is not None else PY
 
 
 def _cong_cu_ghi_cowork() -> str:

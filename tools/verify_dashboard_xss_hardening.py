@@ -14,7 +14,20 @@ khuyến cáo do agent trích, tên file dashboard). Đã có 2 đợt lỗi XSS
 Script này chạy OFFLINE, không mạng, không PII. Chạy:
     python3 tools/verify_dashboard_xss_hardening.py
 
-Exit 0 = tất cả bản đều chặn được payload; exit 1 = có bản còn lọt (in rõ bản nào/payload nào).
+Mã thoát:
+  0 = PASS — MỌI bản đều CÓ MẶT và chặn được payload;
+  1 = FAIL — có bản còn lọt, hoặc tệp vắng mặt trên MÁY THẬT (kể cả khi đồng thời có ⚪);
+  2 = MEASUREMENT_INCOMPLETE — không FAIL nào nhưng có bản ⚪ CHƯA ĐO: tệp chỉ sống trong
+      OneDrive (EBM-Dashboards/, EBM_MASTER/) vắng trên BẢN SAO GIT TRẦN (clone tươi/CI/
+      Cloud). Không bao giờ in chữ PASS khi còn ⚪; nơi gọi phải coi mã 2 là CHƯA ĐO.
+
+VÁ 26/09/2026 (#41): bản cũ báo «FAIL — 4 vấn đề» (mã 1) trên mọi bản sao trần chỉ vì
+bốn tệp OneDrive vắng — đỏ giả làm mất lòng tin vào chốt bảo mật. Nay ⚪ CHỈ khi hội ĐỦ
+hai điều kiện: đường dẫn thuộc gốc chỉ-OneDrive VÀ tools/ban_sao_tran.py::ban_sao_git_tran()
+trả True. Máy thật (còn gốc dữ liệu) thiếu tệp vẫn FAIL; bản vendor trong sync/skills/ vắng
+luôn FAIL. KHÔNG lùi sang bản vendor để đo thay (đo nhầm bản khác rồi báo đạt cho bản thật).
+Cùng đợt vá khe im lặng: gen_catalog_html.py vắng từng bị BỎ QUA — nay xử lý như
+gen_links_html.py (FAIL trên máy thật, ⚪ trên bản sao trần).
 """
 from __future__ import annotations
 
@@ -33,6 +46,28 @@ for _s_r4 in (_sys_r4.stdout, _sys_r4.stderr):
         pass
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# MỘT định nghĩa «bản sao git trần» cho mọi chốt — nạp theo đường dẫn tệp, không tự viết lại.
+_spec_bst = importlib.util.spec_from_file_location(
+    "_bst_xss", Path(__file__).resolve().parent / "ban_sao_tran.py")
+_bst = importlib.util.module_from_spec(_spec_bst)
+_spec_bst.loader.exec_module(_bst)
+
+# Gốc dữ liệu CHỈ sống trong OneDrive (không bao giờ đi qua git trên bất kỳ máy nào).
+TIEN_TO_CHI_ONEDRIVE = ("EBM-Dashboards/", "EBM_MASTER/")
+
+
+class ChuaDo(str):
+    """Một mục «⚪ CHƯA ĐO» — tách khỏi vấn đề FAIL thật bằng KIỂU, không bằng chuỗi."""
+
+
+def _xu_ly_vang(rel: str) -> str:
+    """Thông điệp cho một tệp VẮNG MẶT: ⚪ CHƯA ĐO chỉ khi đồng thời (a) tệp thuộc gốc
+    chỉ-OneDrive và (b) đây là bản sao git trần; mọi trường hợp khác là FAIL."""
+    if rel.startswith(TIEN_TO_CHI_ONEDRIVE) and _bst.ban_sao_git_tran(ROOT):
+        return ChuaDo(f"{rel}: vắng trên bản sao git trần (tệp chỉ sống trong OneDrive)"
+                      " — chưa đo được, KHÔNG phải đạt")
+    return f"{rel}: KHÔNG TỒN TẠI"
 
 # 4 bản sao ĐANG SỐNG của build_library.py (mẫu "sửa 1 chỗ quên 3 chỗ" dự án từng dính)
 BUILD_LIBRARY_COPIES = [
@@ -109,7 +144,7 @@ def check_build_library(rel: str) -> list[str]:
     problems: list[str] = []
     mod = _load(rel)
     if mod is None:
-        return [f"{rel}: KHÔNG TỒN TẠI"]
+        return [_xu_ly_vang(rel)]
 
     src = (ROOT / rel).read_text(encoding="utf-8")
     # 1) Nguồn JS phải có đủ hàng rào (bắt trường hợp ai đó gỡ mất khi sửa vỏ)
@@ -161,7 +196,7 @@ def check_assemble_dashboard() -> list[str]:
     problems: list[str] = []
     mod = _load(ASSEMBLE_DASHBOARD)
     if mod is None:
-        return [f"{ASSEMBLE_DASHBOARD}: KHÔNG TỒN TẠI"]
+        return [_xu_ly_vang(ASSEMBLE_DASHBOARD)]
     for payload in SCRIPT_BREAKOUT_PAYLOADS:
         out = mod.to_js({"title": payload, "n": 1})
         if "</script" in out.lower():
@@ -183,8 +218,28 @@ def check_ebm_master_generators() -> list[str]:
     rel = "EBM_MASTER/tools/gen_links_html.py"
     path = ROOT / rel
     if not path.exists():
-        return [f"{rel}: KHÔNG TỒN TẠI"]
-    src = path.read_text(encoding="utf-8")
+        problems.append(_xu_ly_vang(rel))
+    else:
+        problems += _kiem_gen_links(rel, path.read_text(encoding="utf-8"))
+
+    # 3) gen_catalog_html.py — đã có escape HTML sẵn, chỉ canh không bị gỡ mất.
+    # VÁ 26/09/2026 (#41): bản cũ `if p2.exists():` BỎ QUA IM LẶNG khi tệp vắng — máy
+    # thật mất gen_catalog_html.py vẫn được tính là đạt phần này. Nay vắng = FAIL (⚪ trên
+    # bản sao trần), đúng như gen_links_html.py.
+    rel2 = "EBM_MASTER/tools/gen_catalog_html.py"
+    p2 = ROOT / rel2
+    if not p2.exists():
+        problems.append(_xu_ly_vang(rel2))
+    else:
+        s2 = p2.read_text(encoding="utf-8")
+        if "&lt;" not in s2 or "&quot;" not in s2:
+            problems.append(f"{rel2}: mất bộ escape HTML (&lt;/&quot;) từng có")
+    return problems
+
+
+def _kiem_gen_links(rel: str, src: str) -> list[str]:
+    """Hai phép kiểm của gen_links_html.py (ESC thật sự escape; payload escape '<')."""
+    problems: list[str] = []
 
     # 1) ESC phải THẬT SỰ escape, không chỉ đổi kiểu
     esc_line = next((ln for ln in src.splitlines() if ln.strip().startswith("const ESC=")), "")
@@ -204,14 +259,6 @@ def check_ebm_master_generators() -> list[str]:
         if "\\\\u003c" not in seg:
             problems.append(f"{rel}: payload nhúng vào <script> chưa escape '<' "
                             "— dữ liệu chứa </script> sẽ phá khối script")
-
-    # 3) gen_catalog_html.py — đã có escape HTML sẵn, chỉ canh không bị gỡ mất
-    rel2 = "EBM_MASTER/tools/gen_catalog_html.py"
-    p2 = ROOT / rel2
-    if p2.exists():
-        s2 = p2.read_text(encoding="utf-8")
-        if "&lt;" not in s2 or "&quot;" not in s2:
-            problems.append(f"{rel2}: mất bộ escape HTML (&lt;/&quot;) từng có")
     return problems
 
 
@@ -226,6 +273,15 @@ def check_url_filter() -> list[str]:
     return problems
 
 
+def _nhan_dong(p: list[str]) -> str:
+    """Nhãn một dòng: có FAIL thật ⇒ ✗ FAIL; chỉ ⚪ ⇒ ⚪ CHƯA ĐO; sạch ⇒ ✓ PASS."""
+    if any(not isinstance(x, ChuaDo) for x in p):
+        return "✗ FAIL"
+    if p:
+        return "⚪ CHƯA ĐO"
+    return "✓ PASS"
+
+
 def main() -> int:
     all_problems: list[str] = []
     print("=" * 72)
@@ -234,28 +290,41 @@ def main() -> int:
 
     for rel in BUILD_LIBRARY_COPIES:
         p = check_build_library(rel)
-        print(f"  {'✓ PASS' if not p else '✗ FAIL'}  {rel}")
+        print(f"  {_nhan_dong(p)}  {rel}")
         all_problems += p
 
     p = check_assemble_dashboard()
-    print(f"  {'✓ PASS' if not p else '✗ FAIL'}  {ASSEMBLE_DASHBOARD} (to_js)")
+    print(f"  {_nhan_dong(p)}  {ASSEMBLE_DASHBOARD} (to_js)")
     all_problems += p
 
     p = check_ebm_master_generators()
-    print(f"  {'✓ PASS' if not p else '✗ FAIL'}  EBM_MASTER/tools/gen_links_html.py + gen_catalog_html.py")
+    print(f"  {_nhan_dong(p)}  EBM_MASTER/tools/gen_links_html.py + gen_catalog_html.py")
     all_problems += p
 
     p = check_url_filter()
-    print(f"  {'✓ PASS' if not p else '✗ FAIL'}  escUrl — {len(BAD_URLS)} URL độc / "
+    print(f"  {_nhan_dong(p)}  escUrl — {len(BAD_URLS)} URL độc / "
           f"{len(GOOD_URLS)} link hợp lệ")
     all_problems += p
 
+    that_bai = [x for x in all_problems if not isinstance(x, ChuaDo)]
+    chua_do = [x for x in all_problems if isinstance(x, ChuaDo)]
     print("-" * 72)
-    if all_problems:
-        print(f"KẾT QUẢ: FAIL — {len(all_problems)} vấn đề")
-        for x in all_problems:
+    if that_bai:
+        print(f"KẾT QUẢ: FAIL — {len(that_bai)} vấn đề"
+              + (f" (thêm {len(chua_do)} bản ⚪ CHƯA ĐO)" if chua_do else ""))
+        for x in that_bai:
             print(f"  ⛔ {x}")
+        for x in chua_do:
+            print(f"  ⚪ {x}")
         return 1
+    if chua_do:
+        print(f"KẾT QUẢ: MEASUREMENT_INCOMPLETE — {len(chua_do)} bản không đo được trên bản sao"
+              " git trần; mọi bản CÓ MẶT đều chặn được payload, nhưng đây KHÔNG phải kết luận"
+              " cho các bản vắng.")
+        for x in chua_do:
+            print(f"  ⚪ {x}")
+        print("Chạy lại trên máy có OneDrive (Mac/Windows) để đo đủ.")
+        return 2
     print("KẾT QUẢ: PASS — mọi bản sinh HTML đều chặn được payload thoát <script> và URL độc.")
     print("Lưu ý: đây là kiểm KỸ THUẬT offline; nội dung y khoa vẫn cần bác sĩ kiểm chứng.")
     return 0

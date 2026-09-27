@@ -120,3 +120,23 @@ def duong_cong_cu_pipeline(ten_file: str, repo: Path = REPO) -> Path | None:
     if vendor.exists():
         return vendor
     return None
+
+
+def venv_python(home: Path | None = None) -> Path | None:
+    """Trình thông dịch của venv EBM (`~/.ebm-venv`) — `None` nếu máy chưa dựng venv.
+
+    VÁ 26/09/2026 (synthesis #38): ba nơi (tu_sua_chua · dat_canh_chung_cu_moi ·
+    cap_nhat_plugin_tay) chỉ dò bố cục POSIX `bin/python`; trên Windows venv nằm ở
+    `Scripts/python.exe` nên chúng LẶNG LẼ rơi về python hệ thống (thiếu PyYAML/thư
+    viện) — mục tự Việt hoá plugin không bao giờ chạy mà vẫn báo sạch, cột rút bài
+    luôn «chưa kiểm». Thử LẦN LƯỢT `bin/python` rồi `Scripts/python.exe`, trả đường
+    ĐẦU TIÊN tồn tại. CỐ Ý KHÔNG rẽ nhánh theo `os.name`: hook có thể chạy bằng python
+    kiểu MSYS/Cygwin (`os.name == "posix"`) trên máy Windows có venv `Scripts` — đúng
+    khuôn hook kiem_nguon_that đã dò cả hai. Mac/Linux: `bin/python` được thử trước
+    nên hành vi không đổi. `home` chỉ để kiểm thử (mặc định `Path.home()`).
+    """
+    goc = (Path.home() if home is None else Path(home)) / ".ebm-venv"
+    for ung_vien in (goc / "bin" / "python", goc / "Scripts" / "python.exe"):
+        if ung_vien.exists():
+            return ung_vien
+    return None
