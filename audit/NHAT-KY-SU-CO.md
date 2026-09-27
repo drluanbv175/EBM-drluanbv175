@@ -3283,3 +3283,15 @@ vào nhánh này); chu trình chạy quét dashboard → `--quet-ledger` → `--
 quả sống 27/09:** toàn sổ 1581/1710 (92%, 125 thiếu) → 1955/1959 (99%, **0** thiếu); 4 mục còn lại là trạng thái đã biết (2
 đã rút · 1 rút-và-thay · 1 bản ghi cũ không ai trích); 5 DOI hub Crossref chưa kết luận ⇒ giữ KHÔNG BIẾT. **Kiểm:** 2 test sổ
 tạm + BH121; 3 đột biến (bỏ giữ phán quyết · bỏ lượt hub · đảo thứ tự) đều đỏ.
+
+### 27/09/2026 (tối) — Hai báo động giả LỆCH CỔNG ở hệ chứng cứ (BH122, BH123)
+Lộ ra khi bác sĩ yêu cầu «đảm bảo hệ hoàn thiện» và chạy đo toàn hệ. (1) `chu_trinh_chung_cu.py` kéo «🔴 CÓ NGUỒN RÚT BỎ HẲN
+đang được trích» vì sổ xác minh trả mã 2 cho 2 nguồn cờ rút — cả hai là ca thông báo rút là BẢN ĐÍNH CHÍNH bị rút (BH109),
+bác sĩ ĐÃ KÝ xem xét 24/09; cổng cho qua, `tu_de_xuat_viec` đã trừ đúng (P2-03). **Vá:** đọc «ĐÃ BỊ RÚT» + hai bộ đếm của
+`mau_ky_rut_bai.py`; toàn ca đính chính ⇒ không 🔴 (còn ca chưa ký ⇒ 👤), thêm dòng ℹ để câu 🟢 không nói quá; đọc không
+được ⇒ giữ 🔴. (2) Bước A4 của orchestrator đỏ vĩnh viễn cho gói Orlistat_AKI_FDA: URL fda.gov có bằng chứng mở bằng trình
+duyệt thật (cổng B2 nhận) nhưng sổ gọi `verify_url_online` không kèm đường dashboard nên không bao giờ tra bằng chứng đó.
+**Vá:** dùng chính `mien_chan_tu_dong` + `xac_minh_url_bang_trinh_duyet` của cổng; ngày xác minh = ngày bằng chứng (hết hạn
+cùng cổng); miền không khai báo chặn thì không nhận. Dữ liệu: gói Orlistat 0/1 → 1/1. **Kiểm:** 5 + 4 test; BH122 (4 đột
+biến — lần đầu M4 «bỏ fail-closed» SỐNG vì kịch bản thử chưa đủ, bổ sung ca «sổ không in số bài rút» thì đỏ) + BH123 (3
+đột biến) đều đỏ đúng chỗ.

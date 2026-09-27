@@ -7296,6 +7296,93 @@ def bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co():
     return True, ""
 
 
+
+def bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky():
+    """27/09 — `chu_trinh_chung_cu.py` báo «🔴 CÓ NGUỒN RÚT BỎ HẲN đang được trích» vì sổ xác minh trả mã 2 cho 2 nguồn mang
+    cờ rút bài — cả hai là ca thông báo rút là BẢN ĐÍNH CHÍNH bị rút (BH109) mà bác sĩ đã ký xem xét 24/09; cổng cho qua và
+    `tu_de_xuat_viec` đã trừ đúng ca này (P2-03). Còi đỏ giả dạy người đọc bỏ qua còi đỏ thật (họ BH115). Kiểm HÀNH VI
+    `main(--nhanh)` với subprocess giả: ca đã ký ⇒ không 🔴 và có dòng ℹ nói rõ; còn bài rút thật ngoài ca đính chính ⇒ vẫn
+    🔴; đọc không được bộ đếm ⇒ vẫn 🔴 (fail-closed)."""
+    import contextlib as _cl
+    import importlib.util as _iu
+    import io as _io
+    from unittest import mock as _mock
+    sp = _iu.spec_from_file_location("_bh122_ctcc", REPO / "tools" / "chu_trinh_chung_cu.py")
+    C = _iu.module_from_spec(sp)
+    sp.loader.exec_module(C)
+
+    class _P:
+        def __init__(self, rc, out):
+            self.returncode, self.stdout, self.stderr = rc, out, ""
+
+    def chay(n_rut, cho_ky, tat_ca):
+        def _goi(cmd, **_kw):
+            cmd = [str(c) for c in cmd]
+            if len(cmd) > 1 and "so_xac_minh_nguon.py" in cmd[1]:
+                return _P(2, f"  ĐÃ BỊ RÚT    : {n_rut}  ·  RÚT & ĐĂNG LẠI BẢN SỬA: 0\n" if n_rut is not None else "🔴 …\n")
+            if len(cmd) > 2 and "mau_ky_rut_bai.py" in cmd[1]:
+                return _P(0, {"--dem": cho_ky, "--dem-tat-ca": tat_ca}.get(cmd[2], ""))
+            return _P(0, "")
+        buf = _io.StringIO()
+        with _mock.patch.object(sys, "argv", ["chu_trinh_chung_cu.py", "--nhanh"]), \
+                _mock.patch.object(C.subprocess, "run", side_effect=_goi), _cl.redirect_stdout(buf):
+            C.main()
+        return buf.getvalue()
+    out = chay(2, "0", "2")
+    if "CÓ NGUỒN RÚT BỎ HẲN" in out:
+        return False, ("2 nguồn cờ rút đều là ca đính-chính-bị-rút ĐÃ KÝ mà chu trình vẫn kéo 🔴 «rút bỏ hẳn» — còi đỏ giả "
+                       "(ca 27/09); phải trừ ca đã ký như tu_de_xuat_viec")
+    if "BẢN ĐÍNH CHÍNH" not in out:
+        return False, "ca đính-chính đã ký bị IM LẶNG trong tổng kết — phải có dòng ℹ nói rõ, câu 🟢 không được nói quá"
+    if "CÓ NGUỒN RÚT BỎ HẲN" not in chay(3, "0", "2"):
+        return False, "còn 1 bài rút THẬT ngoài ca đính chính mà chu trình không kéo 🔴 — trừ quá tay"
+    if "CÓ NGUỒN RÚT BỎ HẲN" not in chay(2, "", ""):
+        return False, "không đọc được bộ đếm của mau_ky_rut_bai mà vẫn hạ 🔴 — phải fail-closed"
+    if "CÓ NGUỒN RÚT BỎ HẲN" not in chay(None, "0", "2"):
+        return False, "sổ không in số «ĐÃ BỊ RÚT» mà chu trình vẫn hạ 🔴 — không biết số bài rút thì phải fail-closed"
+    return True, ""
+
+
+
+def bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong():
+    """27/09 — orchestrator `--cu-nhat 5`: bước A4 của gói Orlistat_AKI_FDA ĐỎ vì URL fda.gov «chưa xác minh lần nào», trong
+    khi cổng B2 cho qua nhờ bằng chứng mở bằng TRÌNH DUYỆT THẬT (24/09). Sổ gọi `verify_url_online` KHÔNG kèm đường dashboard
+    nên không bao giờ tra `url-xac-minh-trinh-duyet.json` ⇒ còi đỏ vĩnh viễn, lệch cổng (họ BH115). Kiểm HÀNH VI
+    `xac_minh_mot` với CHÍNH bản cổng trong git (mạng giả «bị chặn», thư mục tạm): miền khai báo chặn + bằng chứng còn hạn ⇒
+    xác minh với ngày = ngày bằng chứng; miền KHÔNG khai báo ⇒ bằng chứng trình duyệt không thay được kiểm mạng."""
+    import datetime as _dt
+    import importlib.util as _iu
+    import json as _json
+    import tempfile as _tf
+
+    def nap(ten, tep):
+        sp = _iu.spec_from_file_location(ten, tep)
+        m = _iu.module_from_spec(sp)
+        sys.modules[ten] = m
+        sp.loader.exec_module(m)
+        return m
+    sx = nap("_bh123_sx", REPO / "tools" / "so_xac_minh_nguon.py")
+    vd = nap("_bh123_vd", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py")
+    vd.verify_url_online = lambda url, *a, **k: (None, "HTTP 404 (bị chặn kiểm tự động)")
+    ngay = (_dt.date.today() - _dt.timedelta(days=3)).isoformat()
+    url_fda, url_khac = "https://www.fda.gov/safety/vi-du-bh123", "https://example.org/vi-du-bh123"
+    with _tf.TemporaryDirectory() as _d:
+        sx.DASH = Path(_d)
+        (Path(_d) / vd.SO_URL_TRINH_DUYET).write_text(_json.dumps({"muc": [
+            {"url": u, "tieu_de": "Trang thật mở bằng trình duyệt", "ngay": ngay, "cach": "trình duyệt thật"}
+            for u in (url_fda, url_khac)]}), encoding="utf-8")
+        bg = sx.xac_minh_mot(f"url:{url_fda}", vd)
+        khac = sx.xac_minh_mot(f"url:{url_khac}", vd)
+    if not bg or bg.get("nguon_xac_minh") != "trinh_duyet":
+        return False, ("URL fda.gov có bằng chứng trình duyệt còn hạn mà sổ vẫn «chưa xác minh» — lệch cổng B2, bước A4 đỏ "
+                       "vĩnh viễn (ca Orlistat 27/09)")
+    if not str(bg.get("xac_minh_luc", "")).startswith(ngay):
+        return False, "ngày xác minh phải là NGÀY CỦA BẰNG CHỨNG (hết hạn cùng cổng), không phải ngày quét"
+    if khac is not None:
+        return False, "miền KHÔNG khai báo chặn tự động mà bằng chứng trình duyệt vẫn thay được kiểm mạng — nới quá tay"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7425,6 +7512,8 @@ BAI_HOC = [
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
     ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
+    ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
+    ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]
