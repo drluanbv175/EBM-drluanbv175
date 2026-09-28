@@ -40,6 +40,9 @@ import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
+# Chỉ lấy TÊN TỆP catalog của máy đang chạy (BH128) — không lấy logic kiểm nào từ công cụ
+# bị kiểm; tên sai thì main() không tìm thấy tệp và lỗi lộ ra ngay, không có gì bị che.
+from extract_catalog import duong_catalog_raw  # noqa: E402
 
 try:
     import yaml
@@ -82,7 +85,7 @@ def split(text: str):
 
 
 def main() -> int:
-    catalog = {i["id"]: i for i in json.loads((HERE / "catalog_raw.json").read_text("utf-8"))}
+    catalog = {i["id"]: i for i in json.loads(duong_catalog_raw(HERE).read_text("utf-8"))}
     vi_map = json.loads((HERE / "vi_descriptions.json").read_text("utf-8"))
 
     loi: list[str] = []

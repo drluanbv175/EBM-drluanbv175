@@ -6992,6 +6992,232 @@ def bh116_so_nguon_ghi_dung_dinh_dang_git():
     return True, ""
 
 
+# ── BH126–BH128 (28/09): ba tệp trạng thái trong cây OneDrive dùng chung đẻ bản sao xung đột «-Dr Luân BV175(-2)» —
+#    chốt sync_safety_check 🔴 ngày 20/09, 23/09, 28/09. Cùng họ BH116 (công cụ viết lại cả tệp mỗi lượt), nặng hơn vì
+#    HAI MÁY cùng viết: tệp chung chỉ được là HÀM THUẦN của đầu vào chung (ghi khi đổi); trạng thái riêng máy phải tách.
+
+def bh126_so_tong_thuat_la_ham_thuan_cua_bai():
+    """28/09 — `EBM-Dashboards/tong_thuat/so-tong-thuat.json` đẻ bản sao xung đột: `dang_ky_tong_thuat.py` (mỗi lượt
+    `tu_de_xuat_viec`, trên CẢ HAI máy) ghi đường dẫn `str(relative_to)` (Windows `\\`, Mac `/`), lưu `tuoi_ngay` (đổi mỗi
+    ngày) và `cap_nhat` (đổi mỗi giây) ⇒ lượt nào cũng viết lại cả tệp. Đo 28/09: bản gốc và bản sao cùng 11 mục, chỉ khác
+    `tuoi_ngay` + dấu phân cách; `\\` còn làm hỏng liên kết hòm thư trên Mac. Kiểm HÀNH VI trên cây tạm: đường Windows ra
+    `/` (PureWindowsPath — bắt được cả khi chạy trên Mac) và không còn `str(…relative_to(…))` ở dòng thi hành; sổ không mang
+    `tuoi_ngay`/`cap_nhat`; chạy lại cùng ngày hay sang NGÀY MAI không chạm tệp; thêm bài thì ghi; thứ tự theo tên (như nhau
+    mọi máy); hòm thư tính tuổi từ `ngay` lúc đọc (không tin `tuoi_ngay` cũ trong sổ) và đổi `\\` của sổ cũ thành `/`."""
+    import ast as _ast
+    import contextlib as _cl
+    import datetime as _dt
+    import io as _io
+    import json as _json
+    import os as _os
+    import tempfile as _tf
+    from pathlib import PureWindowsPath as _PWP
+    from unittest import mock as _mock
+
+    tep = REPO / "tools" / "dang_ky_tong_thuat.py"
+    for n in _ast.walk(_ast.parse(tep.read_text(encoding="utf-8"))):
+        if (isinstance(n, _ast.Call) and getattr(n.func, "id", "") == "str" and n.args
+                and isinstance(n.args[0], _ast.Call) and getattr(n.args[0].func, "attr", "") == "relative_to"):
+            return False, (f"dang_ky_tong_thuat.py:{n.lineno} còn str(…relative_to(…)) — Windows ghi `\\` vào sổ dùng chung "
+                           "⇒ hai máy hai sổ ⇒ bản sao xung đột")
+    dk = _nap(tep, "_bh126_dk")
+    if not callable(getattr(dk, "duong_tuong_doi", None)):
+        return False, "dang_ky_tong_thuat mất duong_tuong_doi() — đường dẫn trong sổ lại theo dấu phân cách của từng máy"
+    rel = dk.duong_tuong_doi(_PWP(r"C:\goc\EBM-Dashboards\tong_thuat\TT_x_20260901.md"), _PWP(r"C:\goc"))
+    if rel != "EBM-Dashboards/tong_thuat/TT_x_20260901.md":
+        return False, f"đường Windows ra {rel!r} — sổ dùng chung phải ghi dấu `/` trên mọi máy"
+
+    class _NgayMai(_dt.date):
+        @classmethod
+        def today(cls):
+            return _dt.date.today() + _dt.timedelta(days=1)
+
+    CU = 1_000_000_000  # mtime «cũ» đặt tay: tệp bị viết lại thì mtime nhảy về hiện tại, không phụ thuộc độ phân giải đồng hồ
+    date_goc = dk.date
+    with _tf.TemporaryDirectory() as _d:
+        goc = Path(_d)
+        tt = goc / "EBM-Dashboards" / "tong_thuat"
+        tt.mkdir(parents=True)
+
+        def bai(ten, tieu_de):
+            (tt / ten).write_text("# " + tieu_de + "\n\nThân bài.\n\n## Nguồn\n1. Tác giả. PMID 12345678\n", encoding="utf-8")
+        bai("TT_a_20260920.md", "Bài a")
+        bai("TT_B_20260921.md", "Bài B")
+        (tt / "TT_a_20260920.html").write_text("<html></html>", encoding="utf-8")
+        so = tt / "so-tong-thuat.json"
+        dk.REPO, dk.THU_MUC, dk.SO, dk.DANH_BA = goc, tt, so, goc / "khong-co-danh-ba.json"
+
+        def chay():
+            with _mock.patch.object(sys, "argv", ["dang_ky_tong_thuat.py"]), _cl.redirect_stdout(_io.StringIO()):
+                dk.main()
+
+        def bi_ghi_lai():
+            return so.stat().st_mtime_ns != CU * 10**9
+        try:
+            chay()
+            d = _json.loads(so.read_text(encoding="utf-8"))
+            ds = d.get("bai", [])
+            if "cap_nhat" in d or any("tuoi_ngay" in b for b in ds):
+                return False, "sổ còn lưu `cap_nhat`/`tuoi_ngay` — giá trị đổi theo giờ/ngày làm mỗi lượt viết lại cả tệp trên cả hai máy"
+            if any("\\" in (b.get("file_md", "") + b.get("file_html", "")) for b in ds):
+                return False, "sổ ghi đường dẫn có `\\` — Windows và Mac ghi hai sổ khác nhau cho cùng một bài"
+            thu_tu = [b.get("file_md", "").rsplit("/", 1)[-1] for b in ds]
+            if thu_tu != ["TT_B_20260921.md", "TT_a_20260920.md"]:
+                return False, (f"thứ tự bài {thu_tu} — phải theo TÊN tệp (so từng ký tự); sort/glob theo Path trên Windows "
+                               "không phân biệt hoa/thường ⇒ hai máy xếp khác nhau rồi thay nhau viết lại")
+            _os.utime(so, (CU, CU))
+            chay()
+            if bi_ghi_lai():
+                return False, "chạy lại cùng ngày, không bài nào đổi, mà sổ bị viết lại — sổ phải chỉ ghi khi nội dung đổi"
+            dk.date = _NgayMai
+            chay()
+            if bi_ghi_lai():
+                return False, "sang ngày mai sổ bị viết lại — sổ đang lưu giá trị đổi theo ngày (tuổi bài phải tính lúc đọc)"
+            dk.date = date_goc
+            bai("TT_c_20260922.md", "Bài c")
+            chay()
+            if not bi_ghi_lai() or "TT_c_20260922.md" not in so.read_text(encoding="utf-8"):
+                return False, "thêm bài mà sổ không ghi — «chỉ ghi khi đổi» nới quá tay, bài mới không vào hòm thư"
+        finally:
+            dk.date = date_goc
+
+        hom = _nap(REPO / "tools" / "dung_hom_thu.py", "_bh126_hom")
+        khoi = getattr(hom, "khoi_bai_tong_thuat", None)
+        if not callable(khoi):
+            return False, "dung_hom_thu mất khoi_bai_tong_thuat() — khối IV hòm thư không kiểm được"
+        hn = _dt.date.today()
+        so_cu = goc / "so-cu.json"
+        so_cu.write_text(_json.dumps({"bai": [
+            {"file_md": "EBM-Dashboards\\tong_thuat\\TT_cu.md", "file_html": "", "tieu_de": "Bài bốn mươi ngày",
+             "ngay": (hn - _dt.timedelta(days=40)).isoformat(), "tuoi_ngay": 5, "so_nguon": 1},
+            {"file_md": "EBM-Dashboards/tong_thuat/TT_moi.md", "file_html": "EBM-Dashboards\\tong_thuat\\TT_moi.html",
+             "tieu_de": "Bài hai ngày", "ngay": (hn - _dt.timedelta(days=2)).isoformat(), "so_nguon": 1},
+        ]}, ensure_ascii=False), encoding="utf-8")
+        ra = khoi(so_cu, hn)
+    if "Bài hai ngày" not in ra:
+        return False, "sổ không mang `tuoi_ngay` thì hòm thư bỏ sót bài 2 ngày tuổi — tuổi phải tính từ `ngay` lúc đọc"
+    if "Bài bốn mươi ngày" in ra:
+        return False, "hòm thư tin `tuoi_ngay` cũ lưu trong sổ (5) thay vì tính từ `ngay` (40 ngày) — bài quá 30 ngày lọt vào"
+    if "\\" in ra or "EBM-Dashboards/tong_thuat/TT_moi.html" not in ra:
+        return False, "liên kết hòm thư còn `\\` từ sổ cũ ghi trên Windows — trình duyệt trên Mac không mở được"
+    return True, ""
+
+
+def bh127_con_tro_dat_canh_nam_ngoai_onedrive():
+    """28/09 — `state/dat-canh-xoay.json` đẻ bản sao xung đột: hook SessionStart («📋 ĐẶT-CẠNH chứng cứ mới hơn») tiến con
+    trỏ xoay vòng và ghi lại tệp MỖI lần mở phiên trên CẢ HAI máy, mà `state/` nằm trong cây OneDrive dùng chung (docstring
+    cũ tự nhận «per-máy» — đúng là ngoài git, nhưng không ngoài OneDrive). Con trỏ hiển thị không cần chia sẻ ⇒ để ngoài
+    OneDrive. Kiểm: đường STATE thật nằm NGOÀI cây repo; `main()` ghi và tiến con trỏ ở đúng STATE (DAT-CANH tạm)."""
+    import contextlib as _cl
+    import io as _io
+    import json as _json
+    import tempfile as _tf
+    from unittest import mock as _mock
+
+    m = _nap(REPO / "tools" / "dat_canh_diem_tin_xoay.py", "_bh127_dcx")
+    st = Path(m.STATE)
+    if st.resolve().is_relative_to(REPO.resolve()):
+        return False, (f"con trỏ đặt-cạnh nằm TRONG cây repo/OneDrive ({st}) — hook SessionStart của hai máy cùng ghi mỗi lần "
+                       "mở phiên ⇒ bản sao xung đột")
+    muc = "".join(f"## {i}. Tiêu đề {i}\n- **Đang dùng:** PMID {100 + i}\n- **Nguồn tổng hợp mới hơn:** bài mới {i}\n\n"
+                  for i in range(1, 6))
+    with _tf.TemporaryDirectory() as _d:
+        dash = Path(_d) / "EBM-Dashboards"
+        (dash / "derivatives").mkdir(parents=True)
+        (dash / "derivatives" / "DAT-CANH-CHUNG-CU-MOI_2026-09-01.md").write_text("# báo cáo\n\n" + muc, encoding="utf-8")
+        m.DASH, m.STATE = dash, Path(_d) / "ngoai-onedrive" / "xoay.json"
+        con_tro = []
+        for _ in range(2):
+            with _mock.patch.object(sys, "argv", ["dat_canh_diem_tin_xoay.py", "--so-muc", "2"]), \
+                    _cl.redirect_stdout(_io.StringIO()):
+                m.main()
+            try:
+                con_tro.append(_json.loads(m.STATE.read_text(encoding="utf-8")).get("con_tro"))
+            except (OSError, ValueError):
+                con_tro.append(None)
+    if con_tro != [2, 4]:
+        return False, f"main() không ghi/tiến con trỏ ở STATE (được {con_tro}, mong [2, 4]) — con trỏ đang ghi vào chỗ khác?"
+    return True, ""
+
+
+def bh128_catalog_tho_rieng_tung_may():
+    """28/09 — `tools/vietnamize/catalog_raw.json` đẻ bản sao xung đột «catalog_raw-Dr Luân BV175(-2).json»: `apply_vi.py
+    --tu-quet` (tu_sua_chua gọi MỖI PHIÊN) chạy `extract_catalog.py` ghi MỘT tên chung trong cây OneDrive, còn nội dung là
+    đường dẫn tuyệt đối vào kho plugin của TỪNG máy (Windows 1527 mục, Mac 1181) ⇒ hai máy thay nhau ghi đè, máy này còn có
+    thể đọc nhầm đường dẫn của máy kia. Kiểm HÀNH VI: tên catalog thô theo máy (Mac ≠ Windows ≠ tên chung);
+    `extract_catalog.main()` (HOME/APP_SUPPORT/REPO/HERE trỏ thư mục tạm) ghi đúng tệp của máy, KHÔNG ghi tên chung, quét lại
+    không đổi thì không chạm tệp; 5 nơi đọc lấy tên qua `duong_catalog_raw` (nút gọi thật trong cây cú pháp, không còn hằng
+    "catalog_raw.json"); git bỏ qua tệp riêng máy (đường dẫn trong đó mang tên người dùng)."""
+    import ast as _ast
+    import contextlib as _cl
+    import io as _io
+    import os as _os
+    import subprocess as _sp
+    import tempfile as _tf
+    from unittest import mock as _mock
+
+    vn = REPO / "tools" / "vietnamize"
+    ec = _nap(vn / "extract_catalog.py", "_bh128_ec")
+    ham = getattr(ec, "duong_catalog_raw", None)
+    if not callable(ham):
+        return False, "extract_catalog mất duong_catalog_raw() — nơi ghi và nơi đọc catalog thô hết chung một nguồn tên"
+    ten = {}
+    for he in ("Darwin", "Windows"):
+        with _mock.patch.object(ec.platform, "system", return_value=he):
+            ten[he] = ham(Path("x")).name
+    if ten["Darwin"] == ten["Windows"] or "catalog_raw.json" in ten.values():
+        return False, f"catalog thô mang tên chung cho mọi máy ({ten}) — hai máy thay nhau ghi đè một tệp trong OneDrive"
+
+    CU = 1_000_000_000
+    goc_ec = {k: getattr(ec, k) for k in ("HOME", "APP_SUPPORT", "REPO", "HERE", "SNAP_DIR")}
+    with _tf.TemporaryDirectory() as _d:
+        d = Path(_d)
+        (d / "nha").mkdir()
+        (d / "app").mkdir()
+        (d / "repo" / ".claude" / "agents").mkdir(parents=True)
+        (d / "repo" / ".claude" / "agents" / "mot-agent.md").write_text(
+            "---\nname: mot-agent\ndescription: Agent thử của BH128\n---\n", encoding="utf-8")
+        here = d / "vn"
+        here.mkdir()
+        try:
+            ec.HOME, ec.APP_SUPPORT, ec.REPO, ec.HERE, ec.SNAP_DIR = d / "nha", d / "app", d / "repo", here, here / "catalog_may"
+            with _cl.redirect_stdout(_io.StringIO()):
+                ec.main()
+            rieng = ec.duong_catalog_raw()
+            if (here / "catalog_raw.json").exists():
+                return False, "extract_catalog vẫn ghi tên CHUNG catalog_raw.json — hai máy lại thay nhau ghi đè trong OneDrive"
+            if not rieng.is_file() or "mot-agent" not in rieng.read_text(encoding="utf-8"):
+                return False, f"quét xong không thấy {rieng.name} mang mục vừa quét — extract_catalog ghi catalog vào chỗ khác"
+            _os.utime(rieng, (CU, CU))
+            with _cl.redirect_stdout(_io.StringIO()):
+                ec.main()
+            if rieng.stat().st_mtime_ns != CU * 10**9:
+                return False, "quét lại khi kho plugin không đổi vẫn viết lại catalog — mỗi phiên OneDrive phải đẩy ~1 MB"
+        finally:
+            for k, v in goc_ec.items():
+                setattr(ec, k, v)
+
+    for ten_tep in ("apply_vi.py", "verify_vi.py", "check_chat_luong.py", "sinh_lenh_viet.py", "build_danh_muc.py"):
+        cay = _ast.parse((vn / ten_tep).read_text(encoding="utf-8"))
+        if any(isinstance(n, _ast.Constant) and n.value == "catalog_raw.json" for n in _ast.walk(cay)):
+            return False, (f'{ten_tep} còn đọc tên CHUNG "catalog_raw.json" — đọc catalog của máy kia (đường dẫn không tồn '
+                           "tại trên máy này) hoặc làm sống lại tệp chung")
+        if not any(isinstance(n, _ast.Call) and "duong_catalog_raw" in (getattr(n.func, "id", ""), getattr(n.func, "attr", ""))
+                   for n in _ast.walk(cay)):
+            return False, f"{ten_tep} không lấy tên catalog qua duong_catalog_raw() — nơi đọc và nơi ghi có thể lệch nhau"
+
+    for ten_may in ("Mac", "Windows"):
+        try:
+            r = _sp.run(["git", "check-ignore", "-q", f"tools/vietnamize/catalog_raw.{ten_may}.json"], cwd=REPO,
+                        capture_output=True, timeout=30)
+        except (OSError, _sp.SubprocessError):
+            break  # máy không có git ⇒ vế này không kiểm được; các vế trên vẫn canh
+        if r.returncode == 1:
+            return False, (f".gitignore không bỏ qua catalog_raw.{ten_may}.json — tệp riêng máy (đường dẫn mang tên người dùng) "
+                           "sẽ hiện thành thay đổi chưa commit và dễ lọt vào commit")
+    return True, ""
+
+
 def bh117_du_phong_tinh_phi_chi_leo_thang_khi_can():
     """27/09 — bậc thang dự phòng Consensus → SerpApi của vòng quét tuần (thêm 22/09) leo thang ở MỌI chủ đề: cổng
     đủ-chứng-cứ của engine chấm bản ghi scanner (không mang loại xuất bản) ra tier C, điểm 0–6 ⇒ luôn «thiếu»; leo
@@ -7516,6 +7742,11 @@ BAI_HOC = [
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
+    # BH124–BH125 thuộc nhánh PR #54 (email liên hệ · xoay vòng dự phòng); ba mục dưới đặt ở CUỐI bảng, cách chỗ #54 chèn,
+    # để hai PR merge theo thứ tự nào cũng không đụng dòng (BH68 canh mã trùng nếu hai bên lỡ cùng số).
+    ("BH126", "28/09", "Sổ tổng thuật là hàm thuần của bài: đường dẫn `/`, không lưu tuổi/giờ, chỉ ghi khi đổi; hòm thư tính tuổi lúc đọc", bh126_so_tong_thuat_la_ham_thuan_cua_bai),
+    ("BH127", "28/09", "Con trỏ xoay vòng đặt-cạnh (riêng máy, hook ghi mỗi phiên) nằm NGOÀI cây OneDrive", bh127_con_tro_dat_canh_nam_ngoai_onedrive),
+    ("BH128", "28/09", "Catalog thô Việt hoá tách tên theo máy, chỉ ghi khi đổi; mọi nơi đọc dùng duong_catalog_raw", bh128_catalog_tho_rieng_tung_may),
 ]
 
 

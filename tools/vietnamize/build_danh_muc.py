@@ -35,7 +35,7 @@ import pathlib
 import re
 from collections import defaultdict
 
-from extract_catalog import nhom_cua      # cùng thư mục — dùng chung cách gom nhóm nguồn
+from extract_catalog import duong_catalog_raw, nhom_cua  # cùng thư mục — gom nhóm nguồn + tên catalog thô (BH128)
 
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE / "DANH-MUC-CONG-CU.md"
@@ -54,11 +54,11 @@ def nap_danh_muc() -> tuple[list[dict], list[str], dict[str, str], dict[str, set
 
     Trả (danh sách mục — mỗi mục thêm khoá `may` là danh sách máy có mục đó,
     danh sách tên máy, ngày quét theo máy). Chưa có bản chụp nào thì lùi về
-    catalog_raw.json của máy đang chạy để công cụ vẫn chạy được như trước.
+    catalog thô của máy đang chạy để công cụ vẫn chạy được như trước.
     """
     snaps = sorted(SNAP_DIR.glob("*.json")) if SNAP_DIR.is_dir() else []
     if not snaps:
-        muc = json.loads((HERE / "catalog_raw.json").read_text("utf-8"))
+        muc = json.loads(duong_catalog_raw(HERE).read_text("utf-8"))
         for i in muc:
             i["may"] = ["máy này"]
         return muc, ["máy này"], {}, {}

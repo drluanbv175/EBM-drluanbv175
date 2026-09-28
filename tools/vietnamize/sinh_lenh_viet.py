@@ -11,7 +11,7 @@ dù mô tả đã Việt hoá. Cách chắc chắn là tạo thêm lệnh MANG T
 Bảng ánh xạ nằm ở `lenh_viet.json` — sửa ở đó rồi chạy lại script này.
 
 KIỂM ĐÍCH: mỗi lệnh khai `dich` (tên skill/agent nó gọi). Script đối chiếu với
-catalog_raw.json và TỪ CHỐI sinh lệnh trỏ vào thứ không có trên máy — một lệnh
+catalog thô của máy này và TỪ CHỐI sinh lệnh trỏ vào thứ không có trên máy — một lệnh
 gọi ra rồi báo "không tìm thấy skill" còn tệ hơn là không có lệnh.
 
 Chạy: python3 tools/vietnamize/sinh_lenh_viet.py [--dry-run]
@@ -38,6 +38,9 @@ import pathlib
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from extract_catalog import duong_catalog_raw  # noqa: E402 — catalog thô của MÁY NÀY (BH128)
+
 REPO = HERE.parents[1]
 BANG = HERE / "lenh_viet.json"
 RA = REPO / "sync/commands-vi"
@@ -67,7 +70,7 @@ def sinh_noi_dung(mo_ta: str, than: str) -> str:
 def main() -> int:
     dry = "--dry-run" in sys.argv
     bang = json.loads(BANG.read_text("utf-8"))
-    muc = json.loads((HERE / "catalog_raw.json").read_text("utf-8"))
+    muc = json.loads(duong_catalog_raw(HERE).read_text("utf-8"))
     co_tren_may = {i["name"] for i in muc} | {i["invoke"] for i in muc}
 
     RA.mkdir(parents=True, exist_ok=True)

@@ -44,6 +44,9 @@ import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from extract_catalog import duong_catalog_raw  # noqa: E402 — catalog thô của MÁY NÀY (BH128)
+
 VN = re.compile(r"[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", re.I)
 # chuỗi ≥6 từ Latin liền nhau, không từ nào có dấu tiếng Việt
 CAU_ANH = re.compile(r"(?:\b[A-Za-z][A-Za-z'-]{1,}\b[ ,]){5,}\b[A-Za-z][A-Za-z'-]{1,}\b")
@@ -57,7 +60,7 @@ PHU_DINH = re.compile(r"không dùng|không áp dụng|không thay|không gọi|
 def _mo_ta_goc(item: dict) -> str:
     """Mô tả tiếng Anh GỐC, đọc từ file .vi-bak mà apply_vi.py lưu lại.
 
-    KHÔNG dùng `desc_en` trong catalog_raw.json: sau khi áp bản dịch, trường đó
+    KHÔNG dùng `desc_en` trong catalog thô: sau khi áp bản dịch, trường đó
     chính là bản TIẾNG VIỆT (danh mục quét lại từ file trên đĩa), nên đối chiếu
     với nó là tự so bản dịch với chính nó.
     """
@@ -70,7 +73,7 @@ def _mo_ta_goc(item: dict) -> str:
 
 
 def main() -> int:
-    items = json.loads((HERE / "catalog_raw.json").read_text("utf-8"))
+    items = json.loads(duong_catalog_raw(HERE).read_text("utf-8"))
     vi = json.loads((HERE / "vi_descriptions.json").read_text("utf-8"))
 
     loi: dict[str, list] = collections.defaultdict(list)
