@@ -13,6 +13,8 @@
     {"id": "kiem-thang-diem-quy", "cron": "0 18 2 1,4,7,10 *", "tu_ngay": "2026-10-02", "grace_gio": 30,
      "dau_vet": {"loai": "khong-co"}},
     {"id": "kiem-tra-hoan-thien-he-thong-thang", "cron": "0 18 3 * *", "tu_ngay": "2026-10-03", "grace_gio": 30,
-     "dau_vet": {"loai": "khong-co"}}
+     "dau_vet": {"loai": "khong-co"}},
+    {"id": "kiem-rut-bai-kho-thang", "cron": "30 18 4 * *", "tu_ngay": "2026-10-04", "grace_gio": 30,
+     "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-rut-bai-kho.log"}}
   ]
 }
