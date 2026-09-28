@@ -25,6 +25,14 @@ def test_thieu_chi_onedrive_tren_ban_sao_tran_la_chua_do():
     assert r.status == M.NOT_MEASURED
 
 
+def test_duong_dan_co_dau_cach_van_nhan_ra_tep_chi_onedrive(monkeypatch, tmp_path):
+    """27/09/2026: gốc «…/Claude AI/…» có dấu cách — regex `\\S+` cắt ngang đường dẫn ⇒ FAIL giả trên Mac/worktree."""
+    monkeypatch.setattr(M, "ROOT", tmp_path / "Claude AI")
+    ev = _thieu("EBM_MASTER/tools/sync_all.py") + "; " + _thieu("dashboard_mockups/templates/a.html")
+    assert M.chuyen_khong_do_duoc(_row(ev), True).status == M.NOT_MEASURED
+    assert M.chuyen_khong_do_duoc(_row(_thieu("tools/upgrade_verify.py")), True).status == "FAIL"
+
+
 def test_may_that_van_fail():
     assert M.chuyen_khong_do_duoc(_row(_thieu("EBM_MASTER/tools/sync_all.py")), False).status == "FAIL"
 

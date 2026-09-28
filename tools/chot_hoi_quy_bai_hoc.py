@@ -7383,6 +7383,129 @@ def bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong():
     return True, ""
 
 
+def bh124_khong_email_ca_nhan_viet_cung_trong_ma():
+    """27/09 — hai repo CÔNG KHAI chứa email cá nhân của bác sĩ viết cứng ở 6 công cụ (URL NCBI/OpenAlex, `MAILTO`, và
+    `_DEFAULT_EMAIL` của run_g0/g1_auto — gài vào NCBI_EMAIL TRƯỚC khi nạp app.config nên còn đè giá trị kho secrets, và che
+    việc PubMedClient thiếu email trả GIẢ LẬP). Email liên hệ nay lấy từ cấu hình (`tra_dinh_danh.email_lien_he()` ở repo
+    gốc, `app.config`/kho secrets ở repo y khoa). Kiểm: (1) không địa chỉ thư miễn phí nào trong MÃ được theo dõi của hai
+    repo (test được miễn — địa chỉ giả dùng để thử bộ lọc PII); (2) máy không khai NCBI_EMAIL, không kho secrets ⇒ hàm trả
+    rỗng, KHÔNG có email dự phòng gài sẵn."""
+    import os as _os
+    import re as _re
+    import subprocess
+    import tempfile as _tf
+    mau = _re.compile(r"[A-Za-z0-9._%+-]+@(?:gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|icloud|me|aol|proton"
+                      r"|protonmail|gmx|yandex|zoho)\.[A-Za-z]{2,}")
+    duoi = (".py", ".sh", ".command", ".js", ".mjs", ".ts", ".toml", ".yml", ".yaml", ".ps1", ".bat", ".cmd")
+    vi_pham = []
+    for goc in (REPO, _goc_mea()):
+        if not (goc / ".git").exists():
+            continue
+        r = subprocess.run(["git", "-C", str(goc), "ls-files"], capture_output=True, text=True, check=True)
+        for rel in r.stdout.splitlines():
+            p = Path(rel)
+            if p.suffix not in duoi or p.name.startswith("test_") or "tests" in p.parts:
+                continue
+            try:
+                noi_dung = (goc / p).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            vi_pham += [f"{goc.name}/{rel}:{i}" for i, d in enumerate(noi_dung.splitlines(), 1) if mau.search(d)]
+    if vi_pham:
+        return False, f"email cá nhân viết cứng trong mã repo công khai (lấy từ cấu hình NCBI_EMAIL): {vi_pham[:5]}"
+    cu = {k: _os.environ.get(k) for k in ("NCBI_EMAIL", "HOME", "USERPROFILE")}
+    try:
+        with _tf.TemporaryDirectory() as d:
+            _os.environ.pop("NCBI_EMAIL", None)
+            _os.environ["HOME"] = _os.environ["USERPROFILE"] = d
+            email = _nap(REPO / "tools" / "tra_dinh_danh.py", "_bh124_ttd").email_lien_he()
+    finally:
+        for k, v in cu.items():
+            if v is None:
+                _os.environ.pop(k, None)
+            else:
+                _os.environ[k] = v
+    if email:
+        return False, "không khai NCBI_EMAIL, không kho secrets mà email_lien_he() vẫn trả một địa chỉ — email dự phòng gài sẵn"
+    return True, ""
+
+
+def bh125_du_phong_xoay_vong_va_khong_trinh_lai():
+    """27/09 — bậc thang dự phòng TÍNH PHÍ của vòng quét tuần: có truy vấn tiếng Anh cho cả watchlist mà mọi chủ đề thiếu
+    bài mạnh đều leo thang trong MỘT lượt thì trần Consensus (5/lượt · 10/tháng) cạn ngay tuần đầu, chủ đề sau chỉ nhận
+    lỗi «hết ngân sách»; Consensus/SerpApi lọc theo NĂM nên bài «liên quan nhất» quay lại mỗi tuần. Kiểm HÀNH VI
+    `run_scan` + `main()` của bản chuẩn, ngoại tuyến (khoá socket, làn dự phòng là hàm theo dõi, watchlist tạm): trần K
+    mặc định của `main()` = 2; chủ đề thứ ba «chờ lượt» rồi được tới lượt ở lượt sau; bài đã trình không trình lại."""
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH125 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    import contextlib as _cl
+    import io as _io
+    try:
+        with _cl.redirect_stdout(_io.StringIO()):   # main() in cả báo cáo quét — không làm rối bảng chốt
+            ok, ct = _bh125_than()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return ok, ct
+
+
+def _bh125_than():
+    """Thân của BH125 — xem docstring `bh125_du_phong_xoay_vong_va_khong_trinh_lai`."""
+    import importlib.util as _iu
+    import json as _json
+    import tempfile as _tf
+    sp = _iu.spec_from_file_location("_bh125_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp); sys.modules["_bh125_ss"] = S; sp.loader.exec_module(S)
+    for ten in dir(S):
+        if ten.endswith("_lane") and ten != "bo_sung_du_phong_lane" and callable(getattr(S, ten)):
+            setattr(S, ten, lambda *a, **k: [])
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._pmid_da_co_trong_kho = lambda: set()
+    S.ghi_alert = lambda *a, **k: None
+    S._NCBI_CHAN["bi_chan"] = False
+    S._SUY_GIAM.clear()
+    S._VUOT_TRAN.clear()
+    da_goi: list = []
+
+    def theo_doi(truy_van, _unique, _retmax, **_kw):
+        da_goi.append(truy_van)
+        return [S.Candidate(pmid="", publication_date="2026", title=f"Bài dự phòng {truy_van}",
+                            url=f"https://doi.org/10.1/{truy_van.split()[0]}", tang="du_phong_bac_thang")], ""
+    S.bo_sung_du_phong_lane = theo_doi
+    S.search = lambda query, days, retmax, **kw: [str(abs(hash(query)) % 10**8)]
+    S.summarize = lambda ids: [S.Candidate(pmid=p, publication_date="2026", title="Bài thường", url=f"u{p}")
+                               for p in ids]
+    chu_de = [{"topic": t, "query": f"q {t}", "truy_van_du_phong": f"{t.lower()} treatment"}
+              for t in ("Alpha", "Beta", "Gamma")]
+    with _tf.TemporaryDirectory() as d:
+        wl = Path(d) / "watchlist.json"
+        wl.write_text(_json.dumps({"topics": chu_de}), encoding="utf-8", newline="\n")
+        S.DEFAULT_WATCHLIST = wl
+        S.main(["--watchlist", str(wl), "--allow-partial"])
+        luot_1 = list(da_goi)
+        if len(luot_1) != 2:
+            return False, (f"lượt quét gọi dự phòng tính phí cho {len(luot_1)} chủ đề — trần mặc định phải là 2/lượt "
+                           "(trần Consensus 5/lượt · 10/tháng cạn ngay tuần đầu)")
+        S.main(["--watchlist", str(wl), "--allow-partial"])
+        if "gamma treatment" not in da_goi[2:]:
+            return False, "chủ đề «chờ lượt» không được tới lượt ở lượt sau — xoay vòng hỏng, chủ đề cuối watchlist bị bỏ đói"
+        so = S.doc_trang_thai_du_phong()
+        rep = S.run_scan(chu_de[:1], days=30, max_results=6, cursor={}, search_fn=S.search,
+                         summarize_fn=S.summarize, trang_thai_du_phong=so)
+    if any(c.get("tang") == "du_phong_bac_thang" for c in rep["topics"][0]["candidates"]) \
+            or rep.get("du_phong_bo_trung_xuyen_tuan") != 1:
+        return False, "bài dự phòng đã trình ở lượt trước lại được trình lần nữa — khử trùng xuyên tuần hỏng"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -7514,6 +7637,8 @@ BAI_HOC = [
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
+    ("BH124", "27/09", "Không email cá nhân viết cứng trong mã repo công khai — email liên hệ API lấy từ cấu hình", bh124_khong_email_ca_nhan_viet_cung_trong_ma),
+    ("BH125", "27/09", "Dự phòng tính phí của vòng quét tuần XOAY VÒNG (tối đa 2 chủ đề/lượt) và không trình lại bài đã trình", bh125_du_phong_xoay_vong_va_khong_trinh_lai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
 ]

@@ -37,7 +37,13 @@ REPO = Path(__file__).resolve().parents[1]
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 
-def _email() -> str:
+def email_lien_he() -> str:
+    """Email liên hệ gửi kèm lời gọi API công khai (NCBI `email=`, Crossref/OpenAlex `mailto=`).
+
+    NGUỒN DUY NHẤT cho các công cụ ở `tools/` (27/09/2026: repo công khai ⇒ không viết cứng email cá nhân trong mã).
+    Thứ tự: biến môi trường `NCBI_EMAIL` → kho secrets ngoài git. Không có ⇒ "" và người gọi BỎ tham số — các API
+    này vẫn trả lời, chỉ không vào «polite pool».
+    """
     import os
     e = os.environ.get("NCBI_EMAIL")
     if e:
@@ -57,7 +63,7 @@ def _tai(url: str) -> bytes:
 
 def ban_ghi(pmids: list[str]) -> list[dict]:
     ds = ",".join(pmids)
-    mail = _email()
+    mail = email_lien_he()
     hau = f"&email={mail}" if mail else ""
     js = json.loads(_tai(f"{EUTILS}/esummary.fcgi?db=pubmed&retmode=json&id={ds}{hau}"))["result"]
     ra = []

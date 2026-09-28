@@ -3295,3 +3295,38 @@ duyệt thật (cổng B2 nhận) nhưng sổ gọi `verify_url_online` không k
 cùng cổng); miền không khai báo chặn thì không nhận. Dữ liệu: gói Orlistat 0/1 → 1/1. **Kiểm:** 5 + 4 test; BH122 (4 đột
 biến — lần đầu M4 «bỏ fail-closed» SỐNG vì kịch bản thử chưa đủ, bổ sung ca «sổ không in số bài rút» thì đỏ) + BH123 (3
 đột biến) đều đỏ đúng chỗ.
+
+### 27/09/2026 (tối) — Email cá nhân viết cứng trong hai repo CÔNG KHAI, và hai lỗi nó đang che (BH124)
+6 công cụ chứa email của bác sĩ trong mã (URL NCBI `email=`, `MAILTO` OpenAlex/PMC, điểm thăm OpenAlex, `_DEFAULT_EMAIL` của
+run_g0/g1_auto). Riêng run_g0/g1 gài email vào NCBI_EMAIL TRƯỚC khi nạp app.config ⇒ đè luôn giá trị kho secrets, và che hai
+lỗi: (1) thiếu NCBI_EMAIL thì `PubMedClient` trả bản ghi GIẢ LẬP mà §3 của A1 vẫn ghi «THẬT — từ PubMed» (nhãn chỉ xét
+`use_mock_sources`), G1 trích effect size từ đó; (2) `--email` chỉ gán biến môi trường SAU khi `settings` đã dựng ⇒ vô tác
+dụng. **Vá:** repo gốc dùng `tra_dinh_danh.email_lien_he()` (env → kho secrets, rỗng thì bỏ tham số); repo y khoa đọc qua
+app.config/kho secrets; `_ly_do_gia_lap()` khớp đúng điều kiện của PubMedClient; G1 không trích effect size khi PubMed chỉ trả
+giả lập; `--email` gán thẳng `settings`. **Kiểm:** 5 + 5 test (9 đột biến đỏ) + chốt quét «không email thư miễn phí trong mã»
+ở cả hai CI + BH124 (2 đột biến đỏ). **Còn lại, ngoài mã (bác sĩ quyết):** email trong `release_evidence/R_GOV_1|2/*.md` (8
+tệp) và `deployment/evidence_surveillance/UAT_EVIDENCE.json` (hồ sơ UAT — máy không tự sửa); lịch sử git vẫn giữ bản cũ.
+
+### 27/09/2026 (tối) — Bộ chấm chất lượng ghi lại checkpoint làm «cổng cũ» trông như mới (repo y khoa)
+Tính tươi đo bằng mtime checkpoint; 8/11 bộ chấm (G0/G2/G3/G4/G5/G8/G9/G10) ghi kết quả chấm vào checkpoint ⇒ mtime nhảy ⇒
+`run_pipeline` bỏ qua cổng cần chạy lại (ca C1a: chấm G2 làm G2 hết «stale» dù bản nháp đăng ký còn từ 31/07). **Vá:**
+`pipeline_freshness.ghi_checkpoint_giu_moc_sinh` (giữ mtime); chốt AST: không bộ chấm nào ghi checkpoint trực tiếp. Cùng đợt:
+`verify_exports_integrity` báo nhầm «62 PMID: kiểm…» là PMID sai (nhãn đếm); test tự viết thiếu `newline='\n'` bị BH55 bắt.
+
+### 27/09/2026 (tối) — Dự phòng tính phí leo thang không trần; `list_studies` báo nhầm thư mục hệ thống (BH125)
+Watchlist nay có 42/47 truy vấn tiếng Anh (37 chép theo lệnh «Hoàn thiện 5», có sao lưu; 5 chủ đề theo nguồn/cơ quan quản
+lý cố ý không đặt). Leo thang hết trong một lượt thì trần Consensus 5/lượt · 10/tháng cạn ngay tuần đầu; Consensus/SerpApi
+lọc theo NĂM nên bài cũ quay lại mỗi tuần. **Vá:** xoay vòng tối đa 2 chủ đề/lượt (chủ đề lâu chưa xét trước) + sổ
+`.du-phong-trang-thai.json` bỏ bài đã trình; mặc định của `run_scan` giữ hành vi cũ. **Kiểm:** 7 test (5 đột biến) + BH125
+(3 đột biến). Kèm: 2 test skill đỏ âm thầm vì fixture esearch thiếu `count` (thư mục skill ngoài CI) — sửa fixture.
+`list_studies` báo `chatgpt_project/`, `phase_2b/` là «không rõ đề tài» dù mã đang dùng ⇒ dễ bị dọn nhầm — nay nhóm «thư mục
+hệ thống». Dọn: 4 thư mục không phải đề tài + `_rac` → `_archive/exports-khong-phai-de-tai-20260927/` (di chuyển).
+**Worktree — HOÃN có chủ ý:** 8 worktree phiên đã lưu trữ chỉ «bẩn» ở tệp sinh `cloud-mirror/trang-thai-chung-cu.json`
+(không mất gì) nhưng mỗi cái 2.000–5.000 tệp TRONG cây OneDrive — xoá hàng loạt chính là thứ sinh hộp thoại «Remove files
+from OneDrive?» làm OneDrive kẹt 5 tuần. Làm khi bác sĩ ngồi máy (`discard_kept_worktree`). **Bẫy mới:** mục worktree
+`adoring-gates-0a1cc5` là worktree ĐANG DÙNG của máy Windows (Mac thấy đường dẫn `C:/…` nên báo «prunable») — `git worktree
+prune` trên Mac sẽ làm hỏng nó; chỉ prune có `--expire` giới hạn (đã làm cho mục chết `/private/tmp/…`).
+**Kèm (lộ ra khi chạy trọn `pytest tools/` trên Mac):** `verify_clinical_evidence_update_pipeline.chuyen_khong_do_duoc` tách
+đường dẫn thiếu bằng `THIẾU file (\S+)` — gốc «…/Claude AI/…» có dấu cách nên bị cắt ngang ⇒ bản sao trần/worktree dưới
+đường dẫn có dấu cách báo FAIL giả thay vì ⚪ «không đo được»; CI Linux (không dấu cách) không bao giờ thấy. Vá regex lấy tới
+«; »; thêm ca test có dấu cách để CI canh được (1 đột biến đỏ).
