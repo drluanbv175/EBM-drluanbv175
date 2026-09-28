@@ -175,7 +175,7 @@ Ký hiệu: 👤 thẩm quyền bác sĩ · 🖥 cần máy thật (Mac/Windows 
 | 9 | Cục Quản lý Dược | 👤 Chờ bác sĩ mở từ mạng VN | Hai URL ở §6. Tải được thì báo lại, máy viết connector theo khuôn `kcb_vn_lane()`. |
 | 10 | Epistemonikos | 👤 Chờ bác sĩ gửi thư | Thư nháp ở `medical-ebm-automation/docs/xin-cap-quyen-nguon-chung-cu.md`. |
 | 11 | BTS toàn văn | ✅ **Xong — kiểm sống** | 2/2 hướng dẫn tải được qua connector thật: nốt phổi (64 trang, 358.145 ký tự) và giãn phế quản người lớn (80 trang, 471.472 ký tự). SRC-045 chuyển sang `active`. |
-| 12 | ERS/ASCO/ESMO | ⛔ **Bị chặn bởi cài đặt mạng Cloud** | Proxy và WebFetch đều trả `EGRESS_BLOCKED` cho `www.ersnet.org`, `erj.ersjournals.com`, `www.asco.org`, `ascopubs.org`, `www.esmo.org`, `www.annalsofoncology.org`. Đây là cài đặt mạng của môi trường, không phải trang web từ chối. Muốn làm: bác sĩ thêm 6 host vào Network access của môi trường Cloud (menu môi trường → Edit), hoặc chạy khảo sát trên Mac. |
+| 12 | ERS/ASCO/ESMO | ✅ **Đã khảo sát 28/09** (mạng Cloud đã mở) | ESMO: toàn văn ở Annals of Oncology chặn tường minh `ClaudeBot`/`anthropic-ai` ⇒ không khả thi. ERS: ERJ trả 403 Cloudflare ⇒ không crawl; bản có PMCID đi đường PMC. ASCO: `asco.org` 403; `ascopubs.org` cho `*`, không nhắc ClaudeBot, điều khoản CHƯA đọc ⇒ chưa viết connector. Chi tiết ở `medical-ebm-automation/CLAUDE.md`. |
 
 **Gộp mục 1 + 4 + 5 vào MỘT nút:** `Chay Viec Mac.command` ở gốc thư mục OneDrive «Claude AI».
 Nút chạy theo thứ tự: an toàn đồng bộ (🔴 thì dừng) → giám sát tuần → cổng triển khai `--online` → chốt bài học →
