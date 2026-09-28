@@ -3349,3 +3349,11 @@ thêm mẫu (BH128). Tệp chung cũ không còn ai ghi/đọc.
 (nghỉ 2 s, 4 s), hết 3 lần mới báo 🟡 (BH129). **Kiểm:** 15 đột biến (BH126: 6 · BH127: 1 · BH128: 4 · BH129: 4) đều đỏ đúng
 chỗ, phục hồi xanh; một đột biến gần tương đương của BH129 (nghỉ thừa sau lần cuối) lọt ở vòng đầu ⇒ thêm vế đếm số lần nghỉ.
 Không nới `sync_safety_check`.
+
+### 28/09/2026 — SKILL tác vụ lịch neo vào một máy Mac (BH130)
+12/14 SKILL trong `sync/scheduled-tasks/` viết cứng `/Users/nguyenluan/Library/CloudStorage/...` (và 2 chỗ `/tmp/...`); README
+lại dặn chép sang Windows ⇒ trên Windows tác vụ chạy vào đường dẫn không tồn tại. Vá: mỗi SKILL có ĐÚNG MỘT khối nền tảng
+(đa nền: thư mục cả hai máy + đổi `py -3`/venv, tệp tạm vào `state/`; hoặc CHỈ-MAC khi gọi `bash *.sh` — 3 tác vụ
+`cap-nhat-thang-ebm`, `thu-thap-tuan-an-toan-thuoc`, `kiem-thang-diem-quy`). Công cụ `tools/kiem_tac_vu_lich_da_nen.py`
+(L1 neo máy/`/tmp/` · L2 khối · L3 bash khai đa nền · L4 CHỈ-MAC thừa) + BH130. Kiểm: 8 đột biến đều đỏ ở CẢ pytest lẫn BH130
+(vòng đầu 3 đột biến chỉ một phía bắt ⇒ bổ sung ca). Bản runtime `~/.claude/scheduled-tasks/` của từng máy vẫn phải chép tay.

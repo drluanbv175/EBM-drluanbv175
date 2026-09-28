@@ -3,8 +3,15 @@ name: kiem-tra-hoan-thien-he-thong-thang
 description: Quét hoàn thiện kỹ thuật hàng tháng cho CẢ hệ nghiên cứu G0-G10 lẫn hệ cập nhật chứng cứ lâm sàng — dây nối cổng, doctrine agent, đối chiếu 2 repo, CI, tài liệu lỗi thời; khác 4 tác vụ hiện có (chỉ lo nội dung/an toàn chứng cứ)
 ---
 
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+- macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
+Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
 Đây là tác vụ nền hằng tháng cho dự án EBM Copilot của bác sĩ Luân — repo gốc
-`/Users/nguyenluan/Library/CloudStorage/OneDrive-Personal/Claude AI` (nhánh làm việc hiện tại;
+(THƯ MỤC LÀM VIỆC ở trên; nhánh làm việc hiện tại;
 kiểm bằng `git branch --show-current`, remote `drluanbv175/EBM-drluanbv175`) và repo nghiên cứu
 sống lồng bên trong `medical-ebm-automation/` (remote `drluanbv175/medical-ebm-automation`,
 venv `~/.ebm-venv`). Đọc kỹ `CLAUDE.md` ở gốc TRƯỚC khi làm gì — đó là doctrine đầy đủ, rất dài,

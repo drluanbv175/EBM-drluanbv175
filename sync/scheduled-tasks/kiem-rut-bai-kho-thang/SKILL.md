@@ -3,12 +3,14 @@ name: kiem-rut-bai-kho-thang
 description: Tái kiểm rút bài HẰNG THÁNG cho mọi PMID/DOI/URL chứng cứ đã có trong kho (dashboard + bản ghi mồ côi) qua chu_trinh_chung_cu.py — chỉ đo và báo, không sửa nội dung
 ---
 
-Bạn đang chạy vòng TÁI KIỂM RÚT BÀI hằng tháng cho KHO CHỨNG CỨ của hệ EBM Copilot.
-
-THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
 - macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
-- Windows: "C:\Users\Admin\OneDrive\Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
 Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
+Bạn đang chạy vòng TÁI KIỂM RÚT BÀI hằng tháng cho KHO CHỨNG CỨ của hệ EBM Copilot.
 
 BỐI CẢNH (vì sao việc này phải chạy định kỳ): sổ xác minh nguồn chỉ coi trạng thái rút bài còn hiệu lực 30 ngày.
 Trước 28/09/2026 không tác vụ lịch nào tái kiểm kho — một bài đã trích có thể bị rút sau khi dashboard phát hành mà
