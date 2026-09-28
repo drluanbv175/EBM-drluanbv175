@@ -47,6 +47,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -154,10 +155,21 @@ def lan_git(im: bool) -> KetQua:
     # Hỏi remote. Không hỏi được là chuyện MẠNG ⇒ 🟡, không phải 🔴: dữ liệu không
     # sai đi vì mạng, chỉ là chưa biết. Gộp hai thứ này sẽ khiến bác sĩ quen bỏ qua
     # màu đỏ vì mạng bệnh viện hay chập chờn.
-    ma_fetch, _ = g("fetch", "--quiet")
+    # 28/09/2026 (BH129): fetch MỘT lần thì mạng chập chờn một nhịp là làn báo 🟡 giả —
+    # thử tối đa 3 lần (nghỉ 2s, 4s), và quá hạn chờ cũng tính là một lần hỏng thay vì
+    # làm chết cả lệnh gộp. Hết 3 lần vẫn hỏng mới kết luận «không hỏi được».
+    so_lan = 3
+    for lan in range(1, so_lan + 1):
+        try:
+            ma_fetch, _ = g("fetch", "--quiet")
+        except subprocess.TimeoutExpired:
+            ma_fetch = -1
+        if ma_fetch == 0 or lan == so_lan:
+            break
+        time.sleep(2 ** lan)
     if ma_fetch != 0:
         kq.ma = max(kq.ma, 1)
-        kq.ghi_chu.append("không hỏi được máy chủ (mạng?) — chưa biết có lệch không")
+        kq.ghi_chu.append(f"không hỏi được máy chủ sau {so_lan} lần thử (mạng?) — chưa biết có lệch không")
         return kq
 
     _, dem = g("rev-list", "--left-right", "--count", "@{u}...HEAD")

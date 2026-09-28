@@ -3330,3 +3330,22 @@ prune` trên Mac sẽ làm hỏng nó; chỉ prune có `--expire` giới hạn (
 đường dẫn thiếu bằng `THIẾU file (\S+)` — gốc «…/Claude AI/…» có dấu cách nên bị cắt ngang ⇒ bản sao trần/worktree dưới
 đường dẫn có dấu cách báo FAIL giả thay vì ⚪ «không đo được»; CI Linux (không dấu cách) không bao giờ thấy. Vá regex lấy tới
 «; »; thêm ca test có dấu cách để CI canh được (1 đột biến đỏ).
+
+### 28/09/2026 — Ba tệp trạng thái trong cây OneDrive dùng chung đẻ bản sao xung đột lần thứ 3 (BH126–BH128); làn Git 🟡 giả (BH129)
+`sync_safety_check` 🔴 trên Windows: 6 bản sao «-Dr Luân BV175(-2)» của 3 tệp gitignore — cùng kiểu 20/09 và 23/09 ⇒ lần
+trước chỉ dọn triệu chứng. Đã so nội dung: bản sao KHÔNG có dữ liệu riêng; DỜI (không xoá) sang
+`C:\Users\Admin\ebm-backup-truoc-dong-bo-20260928\` (mã băm ở `NHAT-KY-DON.json`). Nguyên nhân gốc chung: tệp trong cây dùng
+chung bị HAI máy viết lại mỗi lượt/mỗi phiên (họ BH116, nặng hơn vì hai máy). **Vá:**
+① `so-tong-thuat.json` (`dang_ky_tong_thuat.py`, chạy mỗi lượt `tu_de_xuat_viec`): đường dẫn `as_posix()`+NFC (Windows ghi
+`\`), bỏ `tuoi_ngay`/`cap_nhat` khỏi sổ (tuổi tính LÚC ĐỌC từ `ngay` — hòm thư cũng vậy, và đổi `\` của sổ cũ thành `/`),
+thứ tự theo tên tệp, chỉ ghi khi nội dung đổi ⇒ sổ là hàm thuần của các bài, hai máy ra cùng một chuỗi byte (BH126).
+② `state/dat-canh-xoay.json` (con trỏ hook SessionStart tiến MỖI phiên, cả hai máy): dời ra `~/.claude/ebm-dat-canh-xoay.json`
+— riêng máy, ngoài OneDrive; con trỏ hiển thị không cần chia sẻ (BH127). Tệp cũ ở `state/` không còn ai ghi — bác sĩ dời/xoá
+tay khi tiện (không tự xoá).
+③ `tools/vietnamize/catalog_raw.json` (`apply_vi --tu-quet` mỗi phiên, nội dung là đường dẫn tuyệt đối của TỪNG máy): tách
+`catalog_raw.<Máy>.json` qua `extract_catalog.duong_catalog_raw()`, 5 nơi đọc dùng chung hàm đó, chỉ ghi khi đổi; `.gitignore`
+thêm mẫu (BH128). Tệp chung cũ không còn ai ghi/đọc.
+④ Kèm: `dong_bo_tat_ca.py::lan_git` fetch 1 lần ⇒ mạng chập chờn thành 🟡 giả, quá hạn chờ làm chết lệnh gộp — nay thử 3 lần
+(nghỉ 2 s, 4 s), hết 3 lần mới báo 🟡 (BH129). **Kiểm:** 15 đột biến (BH126: 6 · BH127: 1 · BH128: 4 · BH129: 4) đều đỏ đúng
+chỗ, phục hồi xanh; một đột biến gần tương đương của BH129 (nghỉ thừa sau lần cuối) lọt ở vòng đầu ⇒ thêm vế đếm số lần nghỉ.
+Không nới `sync_safety_check`.

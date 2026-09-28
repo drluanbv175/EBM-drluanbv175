@@ -10,8 +10,9 @@ Quét 4 nguồn thật (không đoán, không hardcode danh sách):
   3. Skill Cowork   : ~/.claude-science/orgs/*/skills/*/SKILL.md
   4. Agent EBM      : <repo>/.claude/agents/*.md  (đã tiếng Việt sẵn)
 
-Xuất catalog_raw.json gồm: mã mục, loại, nguồn, tên, mô tả gốc, đường dẫn file,
-đã-có-tiếng-Việt-chưa, và tầng ưu tiên ĐỀ XUẤT (người duyệt lại, không tin máy).
+Xuất catalog thô `catalog_raw.<Máy>.json` (xem `duong_catalog_raw()`) gồm: mã mục, loại,
+nguồn, tên, mô tả gốc, đường dẫn file, đã-có-tiếng-Việt-chưa, và tầng ưu tiên ĐỀ XUẤT
+(người duyệt lại, không tin máy).
 
 KHÔNG sửa file nào — đây là bước đọc.
 """
@@ -44,13 +45,13 @@ from doc_settings import doc_settings as _doc_settings, duong_dan_ghi as _dd_ghi
 
 
 HOME = Path.home()
+HERE = Path(__file__).resolve().parent
 REPO = Path(__file__).resolve().parents[2]
-OUT = Path(__file__).resolve().parent / "catalog_raw.json"
 # Bản chụp DÙNG CHUNG giữa các máy: chỉ giữ phần độc lập với máy (bỏ đường dẫn tuyệt
 # đối), nhờ vậy track được Git và build_danh_muc.py gộp được danh mục của cả Mac lẫn
 # Windows. Bác sĩ cài bộ plugin KHÁC NHAU trên hai máy (03/08/2026: chung 137 mục,
 # riêng Mac 1405, riêng Windows 293) nên một danh mục một máy luôn sai một nửa.
-SNAP_DIR = Path(__file__).resolve().parent / "catalog_may"
+SNAP_DIR = HERE / "catalog_may"
 
 
 def ten_may() -> str:
@@ -58,6 +59,32 @@ def ten_may() -> str:
     kèm tên người, không nên đẩy lên Git)."""
     return {"Darwin": "Mac", "Windows": "Windows"}.get(platform.system(),
                                                        platform.system() or "Khac")
+
+
+def duong_catalog_raw(thu_muc: Path | None = None) -> Path:
+    """Catalog THÔ của MÁY ĐANG CHẠY: `catalog_raw.<Máy>.json` — nguồn DUY NHẤT của tên tệp
+    cho mọi công cụ đọc/ghi (apply_vi · verify_vi · check_chat_luong · sinh_lenh_viet ·
+    build_danh_muc). `thu_muc` để test trỏ sang thư mục tạm; mặc định là thư mục công cụ.
+
+    28/09/2026 (BH128): bản cũ ghi MỘT tên chung `catalog_raw.json` trong cây OneDrive,
+    trong khi nội dung là đường dẫn tuyệt đối vào kho plugin của TỪNG máy (đo 28/09: Windows
+    1527 mục, Mac 1181) và `apply_vi.py --tu-quet` quét lại MỖI PHIÊN trên cả hai máy ⇒ hai
+    máy thay nhau ghi đè hai nội dung khác nhau ⇒ bản sao xung đột «catalog_raw-Dr Luân
+    BV175.json» (20/09, 23/09, 28/09); máy này còn có thể đọc nhầm đường dẫn của máy kia.
+    Tách tên theo máy, đúng khuôn `catalog_may/<Máy>.json`: mỗi tệp chỉ một máy ghi."""
+    return (thu_muc or HERE) / f"catalog_raw.{ten_may()}.json"
+
+
+def ghi_neu_doi(f: Path, noi_dung: str) -> bool:
+    """Ghi `noi_dung` (LF) CHỈ KHI khác bản trên đĩa; trả True nếu đã ghi. Quét lại mỗi phiên
+    mà kho plugin không đổi thì không chạm tệp ⇒ OneDrive không phải đẩy ~1 MB mỗi phiên."""
+    try:
+        if f.read_text(encoding="utf-8") == noi_dung:
+            return False
+    except OSError:
+        pass  # chưa có / đọc không được ⇒ ghi mới
+    f.write_text(noi_dung, encoding="utf-8", newline="\n")
+    return True
 
 
 # Các NHÓM NGUỒN mà bản công cụ này biết quét. Ghi thẳng vào bản chụp để
@@ -75,15 +102,16 @@ def nhom_cua(source: str) -> str:
 
 
 def ghi_ban_chung(items: list[dict]) -> Path:
-    """Ghi bản chụp danh mục của máy đang chạy, đã bỏ đường dẫn tuyệt đối."""
+    """Ghi bản chụp danh mục của máy đang chạy, đã bỏ đường dẫn tuyệt đối.
+    Chỉ ghi khi đổi — cùng ngày quét, cùng kho plugin thì tệp để yên (tối đa 1 lần/ngày)."""
     SNAP_DIR.mkdir(exist_ok=True)
     f = SNAP_DIR / f"{ten_may()}.json"
-    f.write_text(json.dumps({
+    ghi_neu_doi(f, json.dumps({
         "may": ten_may(),
         "ngay_quet": datetime.date.today().isoformat(),
         "nhom_da_quet": list(NHOM_NGUON),
         "muc": [{k: v for k, v in i.items() if k != "path"} for i in items],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }, ensure_ascii=False, indent=2))
     return f
 
 
@@ -404,7 +432,8 @@ def main() -> int:
         add(items, kind="agent", source="ebm-agents", plugin="", name=nm,
             desc=fm.get("description", ""), path=f, invoke=f"agent {nm}")
 
-    OUT.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+    out = duong_catalog_raw()
+    ghi_neu_doi(out, json.dumps(items, ensure_ascii=False, indent=2))
 
     # --- Báo cáo ----------------------------------------------------------
     print(f"Tổng mục gọi được: {len(items)}")
@@ -419,7 +448,7 @@ def main() -> int:
         print(f"  Tầng {tier}: {len(sub):4d} mục  — đã Việt {vi}, CÒN PHẢI DỊCH {len(sub)-vi}")
     empty = [i for i in items if not i["desc_en"].strip()]
     print(f"\nMục không có mô tả trong frontmatter: {len(empty)}")
-    print(f"→ đã ghi: {OUT}")
+    print(f"→ catalog thô của máy này: {out}")
     print(f"→ bản chụp dùng chung ({ten_may()}): {ghi_ban_chung(items)}")
     return 0
 

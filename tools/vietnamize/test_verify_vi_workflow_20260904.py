@@ -50,7 +50,8 @@ except SystemExit as _e:
 
 
 def _chay(td: Path, catalog: list, vi_map: dict) -> tuple[int, str]:
-    (td / "catalog_raw.json").write_text(json.dumps(catalog), encoding="utf-8")
+    # Catalog thô mang tên theo máy (BH128, 28/09/2026) — lấy tên từ đúng hàm verify_vi dùng.
+    VV.duong_catalog_raw(td).write_text(json.dumps(catalog), encoding="utf-8")
     (td / "vi_descriptions.json").write_text(json.dumps(vi_map), encoding="utf-8")
     buf = io.StringIO()
     old_here = VV.HERE

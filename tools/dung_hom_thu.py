@@ -387,6 +387,48 @@ def doc_canh_bao(van_ban: str) -> list[tuple[str, str]]:
     return ra
 
 
+def _tuoi_bai(b: dict, hom: dt.date) -> int:
+    """Tuổi bài tổng thuật, tính LÚC ĐỌC từ `ngay`. Sổ không còn lưu `tuoi_ngay` (con số đổi
+    mỗi ngày làm sổ bị viết lại mỗi lượt trên cả hai máy ⇒ bản sao xung đột OneDrive, BH126);
+    sổ cũ còn trường đó thì chỉ dùng khi `ngay` hỏng. Không biết tuổi ⇒ 999 (không lên hòm thư)."""
+    try:
+        return (hom - dt.date.fromisoformat(b["ngay"])).days
+    except (KeyError, TypeError, ValueError):
+        return b.get("tuoi_ngay", 999)
+
+
+def khoi_bai_tong_thuat(so_tt: Path, hom: dt.date) -> str:
+    """Khối IV của hòm thư: bài tổng thuật trong 30 ngày; "" khi không có bài nào."""
+    if not so_tt.exists():
+        return ""
+    try:
+        bai = json.loads(so_tt.read_text(encoding="utf-8")).get("bai", [])
+    except json.JSONDecodeError:
+        bai = []
+    gan_day = [b for b in bai if _tuoi_bai(b, hom) <= 30]
+    if not gan_day:
+        return ""
+    o = []
+    for b in sorted(gan_day, key=lambda x: x["ngay"], reverse=True):
+        # Sổ ghi bởi bản cũ trên Windows mang `\` — trình duyệt trên Mac không mở được.
+        lk = (b.get("file_html") or b.get("file_md") or "").replace("\\", "/")
+        qua_han = _tuoi_bai(b, hom) > 90
+        ten_b = html.escape(b["tieu_de"])
+        if len(ten_b) > 88:
+            ten_b = ten_b[:87] + "…"
+        o.append(
+            f"<a class='o-doc' href='{html.escape(lk, quote=True)}'>"
+            f"<span>{_hoa_dau(ten_b)}</span>"
+            f"<span class='mo'>{b.get('so_nguon', 0)} nguồn · "
+            f"{b['ngay'][8:]}/{b['ngay'][5:7]}"
+            + (" ⚠" if qua_han else "") + "</span></a>")
+    return ("<section><div class='dau-muc'><h2 class='muc'><span class='so'>IV.</span>"
+            f"Bài tổng thuật chứng cứ trong 30 ngày ({len(gan_day)})</h2>"
+            "<p class='mo'>Trả lời một chủ đề bằng MỘT bài liền mạch — mọi nguồn đã "
+            "kiểm rút bài; bấm thẻ nguồn trong bài để mở bài gốc</p></div>"
+            f"<div class='luoi-doc'>{''.join(o)}</div></section>")
+
+
 def main() -> int:
     hom_nay = dt.datetime.now()
     khoi: list[str] = []
@@ -451,33 +493,10 @@ def main() -> int:
 
     # ── IV. Bài tổng thuật (đưa vào hòm thư 20/08: sản phẩm không nằm ở đây thì
     #    với bác sĩ nó không tồn tại; và bài không ai canh sẽ cũ đi im lặng).
-    so_tt = REPO / "EBM-Dashboards" / "tong_thuat" / "so-tong-thuat.json"
-    if so_tt.exists():
-        try:
-            bai = json.loads(so_tt.read_text(encoding="utf-8")).get("bai", [])
-        except json.JSONDecodeError:
-            bai = []
-        gan_day = [b for b in bai if b.get("tuoi_ngay", 999) <= 30]
-        if gan_day:
-            o = []
-            for b in sorted(gan_day, key=lambda x: x["ngay"], reverse=True):
-                lk = b.get("file_html") or b.get("file_md")
-                qua_han = b.get("tuoi_ngay", 0) > 90
-                ten_b = html.escape(b["tieu_de"])
-                if len(ten_b) > 88:
-                    ten_b = ten_b[:87] + "…"
-                o.append(
-                    f"<a class='o-doc' href='{html.escape(lk, quote=True)}'>"
-                    f"<span>{_hoa_dau(ten_b)}</span>"
-                    f"<span class='mo'>{b.get('so_nguon', 0)} nguồn · "
-                    f"{b['ngay'][8:]}/{b['ngay'][5:7]}"
-                    + (" ⚠" if qua_han else "") + "</span></a>")
-            khoi.append(
-                "<section><div class='dau-muc'><h2 class='muc'><span class='so'>IV.</span>"
-                f"Bài tổng thuật chứng cứ trong 30 ngày ({len(gan_day)})</h2>"
-                "<p class='mo'>Trả lời một chủ đề bằng MỘT bài liền mạch — mọi nguồn đã "
-                "kiểm rút bài; bấm thẻ nguồn trong bài để mở bài gốc</p></div>"
-                f"<div class='luoi-doc'>{''.join(o)}</div></section>")
+    khoi_tt = khoi_bai_tong_thuat(REPO / "EBM-Dashboards" / "tong_thuat" / "so-tong-thuat.json",
+                                  hom_nay.date())
+    if khoi_tt:
+        khoi.append(khoi_tt)
 
     try:
         r = subprocess.run([sys.executable, "tools/tu_de_xuat_viec.py", "--gon"],
