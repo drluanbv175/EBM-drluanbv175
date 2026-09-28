@@ -41,6 +41,7 @@ Mã thoát: 0 = mọi chốt đạt · 1 = có việc cần bác sĩ làm · 2 =
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import re
 import subprocess
 import sys
@@ -92,7 +93,7 @@ def chay(cmd: list[str], tieu_de: str) -> tuple[int, str]:
     return proc.returncode, out
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:
             s.reconfigure(encoding="utf-8", errors="replace")
@@ -102,8 +103,28 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Chu trình đo độ mới + độ tin cậy của kho chứng cứ")
     ap.add_argument("--vong", type=int, default=2, help="số vòng xác minh (mạng kém thì tăng)")
     ap.add_argument("--nhanh", action="store_true", help="không gọi mạng, chỉ đọc sổ đã có")
-    a = ap.parse_args()
+    ap.add_argument("--ghi-log", metavar="TỆP",
+                    help="nối một dòng «===== <thời điểm> : KẾT THÚC (mã N)» vào TỆP khi xong — dấu vết máy-đọc-được "
+                         "cho tools/kiem_lich_nen.py (tác vụ lịch kiem-rut-bai-kho-thang)")
+    a = ap.parse_args(argv)
+    rc = _chu_trinh(a)
+    if a.ghi_log:
+        ghi_dau_vet(Path(a.ghi_log), rc)
+    return rc
 
+
+def ghi_dau_vet(tep: Path, rc: int, luc: dt.datetime | None = None) -> None:
+    """Nối dòng KẾT THÚC đúng khuôn mà kiem_lich_nen._ket_thuc() đọc. Lỗi ghi chỉ cảnh báo, không đổi mã thoát."""
+    luc = luc or dt.datetime.now()
+    try:
+        tep.parent.mkdir(parents=True, exist_ok=True)
+        with tep.open("a", encoding="utf-8", newline="\n") as f:
+            f.write(f"===== {luc:%Y-%m-%d %H:%M:%S} : KẾT THÚC chu_trinh_chung_cu (mã {rc})\n")
+    except OSError as e:
+        print(f"  ⚠ không ghi được dấu vết vào {tep}: {e}", file=sys.stderr)
+
+
+def _chu_trinh(a: argparse.Namespace) -> int:
     print("=" * 68)
     print("  CHU TRÌNH CHỨNG CỨ — độ mới và độ tin cậy")
     print("=" * 68)
