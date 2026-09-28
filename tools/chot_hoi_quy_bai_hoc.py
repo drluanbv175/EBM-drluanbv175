@@ -7309,6 +7309,40 @@ def bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows():
     return True, f"{len(kq)} SKILL tác vụ lịch khai đúng nền tảng (Mac/Windows hoặc chỉ-Mac có lý do bash)"
 
 
+def bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho():
+    """28/09 — tác vụ tháng `kiem-rut-bai-kho-thang` ghi «KẾT THÚC … (mã N)» vào state/kiem-rut-bai-kho.log, nhưng chỉ
+    `kiem_lich_nen` đọc log đó và chỉ đọc THỜI ĐIỂM (kỳ có chạy không), không đọc MÃ: phát hiện rút bài (mã 1) nằm im.
+    Chốt 2 vế: (a) HÀNH VI `doc_ket_qua_rut_bai_kho.doc()` trên log dựng bằng CHÍNH `chu_trinh_chung_cu.ghi_dau_vet` —
+    dòng CUỐI quyết định (sạch cũ không che phát hiện mới), quá cửa sổ/mã 2/không log ⇒ ⚪ chứ không 🟢;
+    (b) SKILL gói tuần gọi công cụ, đặt 🔴 LÊN ĐẦU và cấm viết «kho sạch» khi ⚪."""
+    import datetime as _dt
+    import tempfile as _tf
+    d = _nap(REPO / "tools" / "doc_ket_qua_rut_bai_kho.py", "_bh131_doc")
+    c = _nap(REPO / "tools" / "chu_trinh_chung_cu.py", "_bh131_ctcc")
+    nay = _dt.datetime(2026, 10, 12, 20, 0, 0)
+    ca = [("sạch cũ rồi phát hiện mới", [(40, 0), (8, 1)], "🔴"), ("phát hiện cũ rồi sạch mới", [(40, 1), (8, 0)], "🟢"),
+          ("quá cửa sổ", [(36, 0)], "⚪"), ("đúng biên cửa sổ", [(35, 0)], "🟢"), ("mã 2 nền tảng", [(1, 2)], "⚪"),
+          ("mã lạ", [(1, 130)], "⚪")]
+    if d.MA_THOAT != {"🟢": 0, "🔴": 1, "⚪": 3}:
+        return False, f"mã thoát lệch hợp đồng 0/1/3: {d.MA_THOAT} — tác vụ đọc mã sẽ bỏ sót 🔴"
+    with _tf.TemporaryDirectory() as td:
+        for ten, dong, ky_vong in ca:
+            tep = Path(td) / ten.replace(" ", "_") / "log"
+            for ngay, ma in dong:
+                c.ghi_dau_vet(tep, ma, nay - _dt.timedelta(days=ngay))
+            muc = d.doc(tep, nay)["muc"]
+            if muc != ky_vong:
+                return False, f"ca «{ten}»: đọc ra {muc}, kỳ vọng {ky_vong}"
+        if d.doc(Path(td) / "khong-co.log", nay)["muc"] != "⚪":
+            return False, "không có log mà không ra ⚪ — sẽ bị viết thành «kho sạch»"
+    skill = REPO / "sync" / "scheduled-tasks" / "goi-duyet-tuan-ebm" / "SKILL.md"
+    vb = skill.read_text(encoding="utf-8") if skill.exists() else ""
+    for can in ("tools/doc_ket_qua_rut_bai_kho.py", "LÊN ĐẦU", "không viết «kho sạch»"):
+        if can not in vb:
+            return False, f"SKILL gói tuần thiếu «{can}» — kết quả rút bài kho không tới tay bác sĩ"
+    return True, "gói tuần đọc MÃ kết quả rút bài kho (dòng cuối; 🔴 lên đầu; ⚪ khi không đo được)"
+
+
 def bh117_du_phong_tinh_phi_chi_leo_thang_khi_can():
     """27/09 — bậc thang dự phòng Consensus → SerpApi của vòng quét tuần (thêm 22/09) leo thang ở MỌI chủ đề: cổng
     đủ-chứng-cứ của engine chấm bản ghi scanner (không mang loại xuất bản) ra tier C, điểm 0–6 ⇒ luôn «thiếu»; leo
@@ -7964,6 +7998,7 @@ BAI_HOC = [
     ("BH128", "28/09", "Catalog thô Việt hoá tách tên theo máy, chỉ ghi khi đổi; mọi nơi đọc dùng duong_catalog_raw", bh128_catalog_tho_rieng_tung_may),
     ("BH129", "28/09", "Làn Git của lệnh gộp thử lại fetch tối đa 3 lần — mạng chập chờn một nhịp không thành 🟡 giả", bh129_lan_git_thu_lai_fetch),
     ("BH130", "28/09", "SKILL tác vụ lịch không neo đường dẫn một máy/`/tmp`; khai rõ đa nền hay chỉ-Mac (bash)", bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows),
+    ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
 ]
 
 

@@ -3357,3 +3357,10 @@ lại dặn chép sang Windows ⇒ trên Windows tác vụ chạy vào đường
 `cap-nhat-thang-ebm`, `thu-thap-tuan-an-toan-thuoc`, `kiem-thang-diem-quy`). Công cụ `tools/kiem_tac_vu_lich_da_nen.py`
 (L1 neo máy/`/tmp/` · L2 khối · L3 bash khai đa nền · L4 CHỈ-MAC thừa) + BH130. Kiểm: 8 đột biến đều đỏ ở CẢ pytest lẫn BH130
 (vòng đầu 3 đột biến chỉ một phía bắt ⇒ bổ sung ca). Bản runtime `~/.claude/scheduled-tasks/` của từng máy vẫn phải chép tay.
+
+### 28/09/2026 — Mã kết quả tái kiểm rút bài kho không ai đọc (BH131)
+`kiem-rut-bai-kho-thang` ghi «KẾT THÚC chu_trinh_chung_cu (mã N)», nhưng `kiem_lich_nen` chỉ đọc THỜI ĐIỂM (kỳ có chạy),
+không đọc MÃ ⇒ một phát hiện rút bài (mã 1) nằm im trong log. Vá: `tools/doc_ket_qua_rut_bai_kho.py` đọc dòng KẾT THÚC
+CUỐI (sạch cũ không che phát hiện mới): 🔴 mã 1 · 🟢 mã 0 · ⚪ không log/quá 35 ngày/mã 2/mã lạ — ⚪ không bao giờ là «kho
+sạch»; mã thoát 0/1/3. Gói tuần (bước 0) chép nguyên dòng, 🔴 lên ĐẦU gói + alerts. Kiểm: log dựng bằng chính
+`ghi_dau_vet`; 7 đột biến đều đỏ ở pytest lẫn BH131 (vòng đầu BH131 hở biên 35 ngày + mã thoát ⇒ bổ sung ca).

@@ -13,6 +13,10 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 Bạn là Người vận hành hệ giám sát chứng cứ EBM ngoại trú (PHA 3, chu trình TUẦN — bác sĩ duyệt lịch này 15/08/2026). Làm việc trong THƯ MỤC LÀM VIỆC ở trên. Trả lời tiếng Việt.
 
 QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
+0. Chạy `python3 tools/doc_ket_qua_rut_bai_kho.py` (đọc dòng KẾT THÚC cuối của `state/kiem-rut-bai-kho.log` do tác vụ
+   tháng `kiem-rut-bai-kho-thang` ghi) và chép NGUYÊN VĂN dòng nó in vào gói tuần: 🔴 (mã thoát 1) ⇒ đặt dòng đó
+   LÊN ĐẦU gói, TRƯỚC cả bảng tự đề xuất, và thêm vào alerts/<ngày>.md; ⚪ (mã thoát 3) ⇒ giữ nguyên chữ «chưa đo
+   được», TUYỆT ĐỐI không viết «kho sạch»; 🟢 (mã thoát 0) ⇒ một dòng trong phần tình trạng.
 1. Chạy `python3 EBM-Dashboards/tools/surveillance_scan.py --json-report state/tuan.json` (con trỏ tăng dần tự lo cửa sổ; tôn trọng khoá .quet.lock — bị khoá thì dừng, báo rõ).
 1b. Chạy làn đối chiếu `python3 tools/doi_chieu_openalex.py --toan-bo --ngay 10 --max 10` — ứng viên «⚡ chỉ-OpenAlex» đáng chú ý thì đưa vào cân nhắc chọn thẻ (vẫn ≤7 tổng).
 1c. Đọc `EBM-Dashboards/surveillance/ung-vien-ngoai-quet.jsonl` (nếu có) — ứng viên do worker/canary/phiên thường phát hiện NGOÀI vòng quét; mục `trang_thai` còn CANDIDATE thì cân nhắc chọn thẻ như 1b (vẫn ≤7 tổng, vẫn kiểm rút bài ở bước 4); đã lên thẻ hoặc bị loại thì cập nhật `trang_thai` kèm tuần xử lý — không xoá dòng (giữ dấu vết).
