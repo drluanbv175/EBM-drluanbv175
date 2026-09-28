@@ -3,10 +3,17 @@ name: ebm-antifacts-weekly
 description: Digest EBM 13 chuyên khoa (PubMed 7 ngày) + rà phiên bản thang điểm/guideline cho Antifacts — Thứ 2 07:00
 ---
 
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+- macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
+Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
 Bạn đang chạy ROUTINE ANTIFACTS WEEKLY cho BS Luân — tự động, KHÔNG hỏi lại, mặc định an toàn, append-only, KHÔNG bịa, KHÔNG PII.
 
 BƯỚC 1 — Đọc và thực thi ĐÚNG file routine canonical (nguồn sự thật duy nhất):
-`/Users/nguyenluan/Library/CloudStorage/OneDrive-Personal/Claude AI/Scheduled/antifacts-weekly-ebm/SKILL.md`
+`Scheduled/antifacts-weekly-ebm/SKILL.md` (trong THƯ MỤC LÀM VIỆC)
 Quét chứng cứ mới 13 chuyên khoa (PubMed 7 ngày) + rà soát phiên bản thang điểm/guideline cho dashboard "Antifacts Live" (`tools/build_antifacts.py`).
 
 ⚠️ Lưu ý còn treo (CẦN BÁC SĨ QUYẾT — chưa tự ý giải quyết): có thư mục trùng nội dung `Scheduled/antifacts-weekly-update` (tên cũ hơn, SKILL.md gần như y hệt). Routine này đăng ký theo tên đã chuẩn hoá `antifacts-weekly-ebm` (theo `_BAN-DO-KET-NOI.md` §8); nếu bác sĩ quyết định hợp nhất/xoá bản trùng, chỉ cần sửa đường dẫn canonical ở BƯỚC 1 — KHÔNG tự hợp nhất mà không hỏi.

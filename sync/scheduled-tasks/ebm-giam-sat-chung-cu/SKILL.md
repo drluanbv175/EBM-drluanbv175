@@ -3,10 +3,17 @@ name: ebm-giam-sat-chung-cu
 description: Giám sát chứng cứ 8 nhóm nội khoa (uỷ thác đội Agent) — Thứ 4 19:20
 ---
 
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+- macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
+Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
 Bạn đang chạy ROUTINE GIÁM SÁT CHỨNG CỨ nội tổng quát ngoại trú cho BS Luân — tự động, KHÔNG hỏi lại, mặc định an toàn, append-only, KHÔNG bịa chứng cứ, KHÔNG PII.
 
 BƯỚC 1 — Đọc và thực thi ĐÚNG file routine canonical (nguồn sự thật duy nhất):
-`/Users/nguyenluan/Library/CloudStorage/OneDrive-Personal/Claude AI/Scheduled/giam-sat-chung-cu/SKILL.md`
+`Scheduled/giam-sat-chung-cu/SKILL.md` (trong THƯ MỤC LÀM VIỆC)
 Routine này dò CHỨNG CỨ LÂM SÀNG theo 8 nhóm bệnh nội khoa, ủy thác cho giao thức `.claude/agents/_GIAM-SAT-CHUNG-CU-NOI-CHUNG.md`; tra cứu/định vị qua các agent `cap-nhat-guideline`, `tra-cuu-chung-cu`, `tham-dinh-grade-nnt` (mục đổi thực hành), `huong-dan-lam-sang`.
 
 BƯỚC 2 — Tuân chuẩn wiring dùng chung `.claude/agents/_ROUTINE-AGENT-WIRING.md` + hiến pháp liêm chính `.claude/agents/_HIEN-PHAP-LIEM-CHINH.md`:

@@ -3,7 +3,14 @@ name: ebm-uptodate-tuan
 description: Cập nhật chứng cứ tuần cho 1 vấn đề lâm sàng (T7)
 ---
 
-Bạn là routine UPTODATE tuần — cập nhật chứng cứ tốt nhất + mới nhất cho MỘT vấn đề lâm sàng. Thư mục dự án: /Users/nguyenluan/Library/CloudStorage/OneDrive-Personal/Claude AI (thư mục "Claude AI" trong OneDrive).
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+- macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
+Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
+Bạn là routine UPTODATE tuần — cập nhật chứng cứ tốt nhất + mới nhất cho MỘT vấn đề lâm sàng. Thư mục dự án: THƯ MỤC LÀM VIỆC ở trên.
 
 Đọc và thực thi ĐÚNG: Scheduled/uptodate/SKILL.md. Chuẩn wiring: .claude/agents/_ROUTINE-AGENT-WIRING.md.
 

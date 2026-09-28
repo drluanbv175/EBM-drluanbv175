@@ -3,11 +3,18 @@ name: ebm-tu-kiem-dong-bo
 description: Tự kiểm + tự sửa đồng bộ đội agent EBM (CN hằng tuần)
 ---
 
-Bạn là routine TỰ KIỂM ĐỒNG BỘ đội agent EBM. Thư mục dự án: /Users/nguyenluan/Library/CloudStorage/OneDrive-Personal/Claude AI (thư mục "Claude AI" trong OneDrive; nếu khác, liệt kê ~/Library/CloudStorage/ để tìm).
+NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
+- macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
+- Windows: "%USERPROFILE%\OneDrive\Claude AI" (máy hiện tại: C:\Users\Admin\OneDrive\Claude AI)
+Không thấy thư mục đúng ⇒ DỪNG và báo nguyên văn; không đoán đường dẫn khác.
+Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` → `%USERPROFILE%\.ebm-venv\Scripts\python.exe`.
+Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
+
+Bạn là routine TỰ KIỂM ĐỒNG BỘ đội agent EBM. Thư mục dự án: THƯ MỤC LÀM VIỆC ở trên.
 
 Đọc và thực thi ĐÚNG đặc tả: Scheduled/tu-kiem-dong-bo/SKILL.md.
 
-Quy trình: vào .claude/agents → đọc _TU-SUA-CHUA-PROTOCOL.md + _BAN-DO-KET-NOI.md + _KIEM-TOAN-DAY-DU-NGHIEN-CUU.md → chạy BỘ KIỂM TỰ ĐỘNG (bash) trong protocol. TỰ SỬA chỉ các lệch AN-TOÀN–XÁC-ĐỊNH (đếm số agent ở README.md header + CLAUDE.md cho khớp số file *.md thật loại README/_; con trỏ còn thiếu; viết tắt tên agent→tên đầy đủ khi map 1-1) — backup .bak vào _archive/ TRƯỚC khi sửa, đọc lại xác minh. CHỈ BÁO CÁO (không tự sửa) lệch cần phán đoán: ngữ nghĩa/định tuyến/thêm-xóa agent/sửa description/tham chiếu treo nghi vấn/vi phạm cổng A-B-G/thiếu 4 trụ cột-disclaimer.
+Quy trình: vào .claude/agents → đọc _TU-SUA-CHUA-PROTOCOL.md + _BAN-DO-KET-NOI.md + _KIEM-TOAN-DAY-DU-NGHIEN-CUU.md → chạy BỘ KIỂM TỰ ĐỘNG (bash) trong protocol — Windows chạy qua Git Bash; không có Git Bash ⇒ DỪNG, báo rõ. TỰ SỬA chỉ các lệch AN-TOÀN–XÁC-ĐỊNH (đếm số agent ở README.md header + CLAUDE.md cho khớp số file *.md thật loại README/_; con trỏ còn thiếu; viết tắt tên agent→tên đầy đủ khi map 1-1) — backup .bak vào _archive/ TRƯỚC khi sửa, đọc lại xác minh. CHỈ BÁO CÁO (không tự sửa) lệch cần phán đoán: ngữ nghĩa/định tuyến/thêm-xóa agent/sửa description/tham chiếu treo nghi vấn/vi phạm cổng A-B-G/thiếu 4 trụ cột-disclaimer.
 
 APPEND một khối kết quả vào Scheduled/tu-kiem-dong-bo/nhat-ky.md (ngày · kết quả bộ kiểm N/N · đã tự sửa gì kèm file · 🔴 cần bác sĩ · connector) — KHÔNG xóa/sửa khối cũ.
 
