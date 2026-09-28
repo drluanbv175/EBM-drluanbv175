@@ -15,10 +15,17 @@ tóm tắt/phán chiều (R28/BH28: nguồn mới có thể CỦNG CỐ hoặc L
 đang dùng, không được đoán hộ). Mã thoát LUÔN 0 — đây là hiển thị, không
 phải phán quyết.
 
-Rotation: con trỏ theo INDEX lưu ở `state/dat-canh-xoay.json` (per-máy,
-ngoài git theo `.gitignore` dòng `/*` — cùng quy ước với
-`state/viec-chua-dong.jsonl`). Mỗi lần chạy lấy N mục kế tiếp rồi advance,
-có wrap-around; đổi tên file DAT-CANH (báo cáo mới ra đời) tự reset về 0.
+Rotation: con trỏ theo INDEX lưu ở `~/.claude/ebm-dat-canh-xoay.json` — RIÊNG TỪNG
+MÁY và NGOÀI cây OneDrive. Mỗi lần chạy lấy N mục kế tiếp rồi advance, có
+wrap-around; đổi tên file DAT-CANH (báo cáo mới ra đời) tự reset về 0.
+
+28/09/2026 (BH127): bản đầu để con trỏ ở `state/dat-canh-xoay.json` — ngoài git
+nhưng VẪN TRONG cây OneDrive dùng chung Mac↔Windows. Hook SessionStart của CẢ HAI
+máy tiến con trỏ và ghi lại tệp mỗi lần mở phiên ⇒ hai máy mở phiên trước khi
+OneDrive kịp đồng bộ là sinh bản sao xung đột «dat-canh-xoay-Dr Luân BV175.json»,
+chốt `sync_safety_check.py` báo 🔴 (20/09, 23/09, 28/09). Con trỏ hiển thị không
+có gì cần chia sẻ giữa hai máy, nên tách hẳn ra khỏi OneDrive. Tệp cũ ở `state/`
+không còn ai ghi; lần đầu chạy bản mới mỗi máy xoay lại từ mục 1.
 """
 from __future__ import annotations
 
@@ -37,7 +44,10 @@ for _s in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 DASH = REPO / "EBM-Dashboards"
-STATE = REPO / "state" / "dat-canh-xoay.json"
+# `~/.claude/` có sẵn ở mọi nơi Claude Code chạy (Mac · Windows · Cloud) và đã chứa các tệp
+# ebm-* riêng máy khác (vd `ebm-venv-engine-cloud.log`). KHÔNG đặt trong REPO: REPO nằm
+# trong OneDrive dùng chung, hai máy cùng ghi là bản sao xung đột (BH127).
+STATE = Path.home() / ".claude" / "ebm-dat-canh-xoay.json"
 
 _MUC_RE = re.compile(
     r"^## (?P<so>\d+)\.\s*(?P<tieu_de>.+?)\s*\n"

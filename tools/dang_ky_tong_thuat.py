@@ -9,8 +9,15 @@ không nối với bộ dò chứng-cứ-vượt-qua. Nó sẽ cũ đi IM LẶNG
 dashboard (một sản phẩm không có ai canh thì với bác sĩ nó thành sai lúc nào không hay).
 
 Tool quét `EBM-Dashboards/tong_thuat/*.md` → sổ máy-đọc `so-tong-thuat.json`:
-tiêu đề · ngày · chủ đề khớp danh bạ · PMID/DOI trong bài · số nguồn · tuổi.
+tiêu đề · ngày · chủ đề khớp danh bạ · PMID/DOI trong bài · số nguồn.
 Chỉ ĐỌC và GHI SỔ — không sửa bài, không phán nội dung.
+
+SỔ NẰM TRONG CÂY ONEDRIVE DÙNG CHUNG Mac↔Windows (28/09/2026, BH126): nội dung sổ phải
+là HÀM THUẦN của các tệp bài — hai máy quét cùng cây phải ra đúng cùng một chuỗi byte,
+và không đổi thì KHÔNG ghi. Bản cũ ghi đường dẫn `\\` trên Windows, lưu `tuoi_ngay`
+(đổi mỗi ngày) và `cap_nhat` (đổi mỗi giây) ⇒ mỗi lượt chạy trên bất kỳ máy nào cũng
+viết lại cả tệp ⇒ bản sao xung đột OneDrive (20/09, 23/09, 28/09). Tuổi bài nay tính
+LÚC ĐỌC từ `ngay` (`tuoi_ngay()` ở dưới; hòm thư tự tính tương tự).
 
 Dùng:  python3 tools/dang_ky_tong_thuat.py            # cập nhật sổ + in bảng
        python3 tools/dang_ky_tong_thuat.py --qua-han 90
@@ -23,8 +30,8 @@ import json
 import re
 import sys
 import unicodedata
-from datetime import date, datetime
-from pathlib import Path
+from datetime import date
+from pathlib import Path, PurePath
 
 for _s in (sys.stdout, sys.stderr):
     try:
@@ -72,9 +79,31 @@ def _chu_de(tieu_de: str, than: str) -> list[str]:
     return ra
 
 
+def duong_tuong_doi(f: PurePath, goc: PurePath) -> str:
+    """Đường dẫn tương đối `goc`, LUÔN dấu `/` và chuẩn NFC — giống nhau trên Mac lẫn Windows.
+
+    `str(f.relative_to(REPO))` ra `EBM-Dashboards\\tong_thuat\\…` trên Windows, `/` trên Mac ⇒
+    hai máy ghi hai sổ khác nhau cho CÙNG một bài (BH126); dấu `\\` còn làm hỏng liên kết của
+    hòm thư khi mở trên Mac. NFC vì tên tệp có dấu tiếng Việt có thể về dạng NFD trên macOS."""
+    return unicodedata.normalize("NFC", f.relative_to(goc).as_posix())
+
+
+def tuoi_ngay(b: dict, hom_nay: date | None = None) -> int | None:
+    """Tuổi (ngày) của một bài, tính LÚC ĐỌC từ trường `ngay` — sổ KHÔNG lưu con số này
+    (đổi mỗi ngày ⇒ sổ bị viết lại mỗi ngày trên mọi máy, BH126). `None` khi `ngay` hỏng."""
+    try:
+        return ((hom_nay or date.today()) - date.fromisoformat(b["ngay"])).days
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def quet() -> list[dict]:
+    # Thứ tự theo TÊN tệp (so từng ký tự, như nhau trên mọi máy): `sorted()` trên Path và
+    # glob của Windows không phân biệt hoa/thường, còn trên Mac thì có ⇒ hai máy có thể xếp
+    # khác nhau / nhận khác nhau rồi thay nhau viết lại sổ.
+    tep = [f for f in THU_MUC.glob("TT_*.md") if f.name.startswith("TT_") and f.name.endswith(".md")]
     ban_ghi = []
-    for f in sorted(THU_MUC.glob("TT_*.md")):
+    for f in sorted(tep, key=lambda p: p.name):
         vb = f.read_text(encoding="utf-8", errors="replace")
         m_td = re.search(r"^#\s+(.+)$", vb, re.M)
         tieu_de = m_td.group(1).strip() if m_td else f.stem
@@ -86,16 +115,30 @@ def quet() -> list[dict]:
         pmids = sorted(set(re.findall(r"PMID (\d{6,9})", nguon_vb)))
         dois = sorted(set(re.findall(r"doi:(10\.\S+?)(?=[\s|,;)\]]|$)", nguon_vb)))
         so_muc = len(re.findall(r"^\d{1,3}\.\s+", nguon_vb, re.M))
-        tuoi = (date.today() - date.fromisoformat(ngay)).days
         ban_ghi.append({
-            "file_md": str(f.relative_to(REPO)),
-            "file_html": str((f.with_suffix(".html")).relative_to(REPO))
+            "file_md": duong_tuong_doi(f, REPO),
+            "file_html": duong_tuong_doi(f.with_suffix(".html"), REPO)
                          if f.with_suffix(".html").exists() else "",
-            "tieu_de": tieu_de, "ngay": ngay, "tuoi_ngay": tuoi,
+            "tieu_de": tieu_de, "ngay": ngay,
             "chu_de": _chu_de(tieu_de, vb), "so_nguon": so_muc,
             "pmids": pmids, "dois": dois,
         })
     return ban_ghi
+
+
+def ghi_so(bg: list[dict]) -> bool:
+    """Ghi sổ CHỈ KHI nội dung đổi; trả True nếu đã ghi.
+
+    Không dấu thời gian, không tuổi: sổ không đổi thì tệp không bị chạm, OneDrive không có gì
+    để đồng bộ; hai máy cùng thấy một thay đổi thật thì cùng ghi ra MỘT chuỗi byte (BH126)."""
+    moi = json.dumps({"bai": bg}, ensure_ascii=False, indent=2) + "\n"
+    try:
+        if SO.read_text(encoding="utf-8") == moi:
+            return False
+    except OSError:
+        pass  # chưa có sổ / đọc không được ⇒ ghi mới
+    SO.write_text(moi, encoding="utf-8", newline="\n")
+    return True
 
 
 def main() -> int:
@@ -108,23 +151,27 @@ def main() -> int:
         print("✗ Chưa có thư mục bài tổng thuật.")
         return 1
     bg = quet()
-    SO.write_text(json.dumps({"cap_nhat": datetime.now().isoformat(timespec="seconds"),
-                              "bai": bg}, ensure_ascii=False, indent=2),
-                  encoding="utf-8", newline="\n")
+    ghi_so(bg)
     if a.json:
-        print(json.dumps(bg, ensure_ascii=False, indent=2))
+        # Đầu ra màn hình (không phải sổ) giữ trường `tuoi_ngay` như trước cho người gọi cũ.
+        print(json.dumps([dict(b, tuoi_ngay=tuoi_ngay(b)) for b in bg], ensure_ascii=False, indent=2))
         return 0
     if not bg:
         print("(chưa có bài tổng thuật nào)")
         return 0
+    def qua_han(b: dict) -> bool:
+        t = tuoi_ngay(b)
+        return t is None or t > a.qua_han  # ngày hỏng ⇒ không biết tuổi ⇒ cần rà (BH08)
+
     print(f"SỔ ĐĂNG KÝ BÀI TỔNG THUẬT — {len(bg)} bài\n")
     for b in bg:
         cd = ", ".join(b["chu_de"]) or "chưa khớp chủ đề danh bạ"
-        cu = "  ⚠ QUÁ HẠN RÀ LẠI" if b["tuoi_ngay"] > a.qua_han else ""
+        cu = "  ⚠ QUÁ HẠN RÀ LẠI" if qua_han(b) else ""
+        t = tuoi_ngay(b)
         print(f"• {b['tieu_de'][:78]}")
-        print(f"  {b['ngay']} ({b['tuoi_ngay']} ngày) · {b['so_nguon']} nguồn · "
+        print(f"  {b['ngay']} ({'?' if t is None else t} ngày) · {b['so_nguon']} nguồn · "
               f"{len(b['pmids'])} PMID · chủ đề: {cd}{cu}")
-    qh = [b for b in bg if b["tuoi_ngay"] > a.qua_han]
+    qh = [b for b in bg if qua_han(b)]
     print(f"\n{len(qh)}/{len(bg)} bài quá {a.qua_han} ngày — cần rà lại nguồn mới hơn.")
     print("Sổ chỉ ĐO tuổi và ghi định danh; KHÔNG tự sửa bài. Cần bác sĩ kiểm chứng.")
     return 0

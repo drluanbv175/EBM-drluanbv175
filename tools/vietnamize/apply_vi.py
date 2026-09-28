@@ -47,12 +47,15 @@ import shutil
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CATALOG = HERE / "catalog_raw.json"
 DICT = HERE / "vi_descriptions.json"
 
 FM_KEY = re.compile(r"^([a-zA-Z_][\w-]*):", re.MULTILINE)
 # Dấu tiếng Việt — dùng chung định nghĩa với extract_catalog.py (cùng thư mục)
-from extract_catalog import VN_CHARS  # noqa: E402
+from extract_catalog import VN_CHARS, duong_catalog_raw  # noqa: E402
+
+# Catalog thô RIÊNG của máy đang chạy (`catalog_raw.<Máy>.json`, BH128) — không đọc tệp của
+# máy kia: đường dẫn tuyệt đối trong đó không tồn tại trên máy này.
+CATALOG = duong_catalog_raw(HERE)
 
 # SỬA 2026-09-04 (Workflow đối kháng đa-agent vòng 2, MEDIUM) — VN_CHARS chỉ bắt
 # ký tự CÓ DẤU, nên một mô tả tiếng Việt KHÔNG DẤU do bác sĩ tự gõ tay (cách gõ
@@ -318,7 +321,7 @@ def main() -> int:
         args.dry_run = True
 
     if args.tu_quet:
-        # 24/08/2026 — VÌ SAO BẮT BUỘC. `catalog_raw.json` ghi ĐƯỜNG DẪN TUYỆT ĐỐI có
+        # 24/08/2026 — VÌ SAO BẮT BUỘC. Catalog thô ghi ĐƯỜNG DẪN TUYỆT ĐỐI có
         # kèm số phiên bản (…/claude-code-harness/5.11.0/…). Plugin cập nhật xong thì
         # thư mục ĐANG DÙNG đổi sang 5.12.0, còn catalog vẫn trỏ 5.11.0 — nơi tiếng
         # Việt vẫn còn nguyên. Chốt --im-khi-on đọc catalog cũ nên báo "sạch", trong
@@ -333,7 +336,7 @@ def main() -> int:
             print("✗ Quét lại catalog thất bại:", (r.stderr or r.stdout)[-400:])
             return 2
     if not CATALOG.exists():
-        print("✗ Chưa có catalog_raw.json — chạy extract_catalog.py trước.")
+        print(f"✗ Chưa có {CATALOG.name} (catalog của máy này) — chạy extract_catalog.py trước.")
         return 1
     if yaml is None and args.im_khi_on:
         # BH08: thiếu NGUYÊN LIỆU không phải bằng chứng có vấn đề. Parser thủ công
