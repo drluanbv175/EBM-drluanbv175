@@ -139,6 +139,15 @@ VIEC_MAY = [
     ("Bộ ba scanner giám sát lệch hash (ESD02 chặn commit)",
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--im-khi-on"],
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"], False),
+    # Thêm 29/09/2026 — đo thật: 13/14 bản chạy SKILL.md của tác vụ lịch tụt hậu nguồn git suốt 6 tuần (luật CLAUDE.md
+    # §9 «chép nguồn git → bản chạy» có mà không ai chạy — BH41), tác vụ mới `kiem-rut-bai-kho-thang` chưa từng được tạo.
+    # Chỉ tự chép khi bản chạy trùng khít MỘT phiên bản cũ của nguồn; có sửa riêng / chưa tạo ⇒ việc của bác sĩ.
+    ("Tác vụ lịch đang chạy bản SKILL cũ (tụt hậu nguồn git)",
+     [PY, "tools/dong_bo_tac_vu_lich.py", "--im-khi-on"],
+     [PY, "tools/dong_bo_tac_vu_lich.py", "--ap-dung"], False),
+    ("Tác vụ lịch chưa tạo trong app / bản chạy có sửa riêng",
+     [PY, "tools/dong_bo_tac_vu_lich.py", "--can-bac-si", "--im-khi-on"],
+     None, False),                # tạo/xoá tác vụ trong app là việc của bác sĩ
     ("Cờ TẮT của plugin trùng bị app xoá",
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"], False),

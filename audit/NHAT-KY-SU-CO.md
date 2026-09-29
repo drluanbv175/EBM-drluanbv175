@@ -3364,3 +3364,36 @@ không đọc MÃ ⇒ một phát hiện rút bài (mã 1) nằm im trong log. V
 CUỐI (sạch cũ không che phát hiện mới): 🔴 mã 1 · 🟢 mã 0 · ⚪ không log/quá 35 ngày/mã 2/mã lạ — ⚪ không bao giờ là «kho
 sạch»; mã thoát 0/1/3. Gói tuần (bước 0) chép nguyên dòng, 🔴 lên ĐẦU gói + alerts. Kiểm: log dựng bằng chính
 `ghi_dau_vet`; 7 đột biến đều đỏ ở pytest lẫn BH131 (vòng đầu BH131 hở biên 35 ngày + mã thoát ⇒ bổ sung ca).
+
+### 29/09/2026 — Hai lượt giám sát tuần chạy CHỒNG khi máy vừa bật; lượt nào cũng sập vì cây chưa kéo bản vá
+Máy tắt từ tối 27/09 ⇒ thứ Hai 28/09 lỡ lịch; 29/09 18:30 máy bật thì cả ba tác vụ thứ Hai (thu thập 18:00, gói duyệt 18:30,
+9 trạm 18:45) nổ bù CÙNG LÚC. 18:31 tác vụ lịch chạy `weekly_safety.sh`; 18:33 hook `tu_khoi_dong` thấy log «BẮT ĐẦU chưa
+KẾT THÚC», khoá PID riêng của nó rỗng (không phải nó phóng) ⇒ tưởng lượt đó đã chết ⇒ phóng lượt thứ hai. Đo được: 429 hàng
+loạt (OpenAlex · CORE · Semantic Scholar), lỗi ghi log (hai tiến trình một tệp). Cả hai lượt sập ở `live-update`
+(`publication_date` kiểu số — đã vá ở y khoa #40/#41 nhưng cây trên máy còn ở nhánh PR cũ, chưa kéo). **Vá:** khoá một lượt
+trong chính 4 script chủ sở hữu (`scripts/_khoa_mot_luot.sh`, khoá ngoài OneDrive, lượt thứ hai «BỎ QUA» mã 75) + `tu_khoi_dong`
+đọc khoá đó (PR gốc #60 + y khoa #45). **Bài học:** «log chưa khép» ≠ «lượt đã chết» khi có nhiều nơi phóng.
+
+### 29/09/2026 — 13/14 tác vụ lịch trên Mac chạy bản SKILL cũ suốt 6 tuần; một tác vụ chưa từng được tạo (BH132)
+Bản chạy `~/.claude/scheduled-tasks/*/SKILL.md` đứng yên ở phiên bản 17/08 (vài cái 12/09, 20/09): PR #58 (tác vụ đa nền),
+BH131 (gói tuần đọc mã rút bài kho)… KHÔNG có hiệu lực trên Mac. `kiem-rut-bai-kho-thang` (PR #57) có nguồn + có trong
+`lich-nen-ky-vong.json` nhưng chưa từng được tạo trong app. Luật «chép nguồn git → bản chạy» (CLAUDE.md §9) có mà không gì
+chạy. **Vá:** `tools/dong_bo_tac_vu_lich.py` (khop · tut_hau · khac_rieng · chua_tao) nối vào `tu_sua_chua` mỗi phiên: chỉ tự
+chép khi bản chạy trùng khít MỘT phiên bản cũ của nguồn (sao lưu cả thư mục trước); sửa riêng/chưa tạo ⇒ chỉ nhắc, không bao
+giờ tự tạo/xoá tác vụ. Đã chép tay 13 bản tụt hậu 29/09 (sao lưu `~/.claude/scheduled-tasks-backup-20260929-191236`).
+**Kiểm:** 5 test (5 đột biến; một đột biến sống lần đầu — thiếu ca «chỉ có tác vụ chưa tạo» — bổ sung thì đỏ) + BH132 (3 đột
+biến). Còn: `giam-sat-9-tram-web-hoi-tuan` đăng ký trong app mà KHÔNG có nguồn git.
+
+### 29/09/2026 — Trần dự phòng tính phí theo LƯỢT ⇒ chạy lại trong ngày đốt thêm hạn mức (BH125)
+Lượt W40 là lượt thật đầu tiên có xoay vòng: đúng thiết kế (2 chủ đề/lượt, 32 chờ lượt, 14 bài dự phòng ghi sổ). Nhưng phiên
+gói tuần quét HAI lần (lần đầu sập) ⇒ 4 chủ đề leo thang trong một ngày, Consensus tháng 9 lên 8/10. **Vá:** có sổ thì trần là
+của cả TUẦN ISO (PR gốc #61). Cùng lúc phiên gói tuần tự vá dở `surveillance_scan.main()` (độ trễ đọc `publication_date` kiểu
+số) — để nguyên cho phiên đó; hai thay đổi nằm ở đoạn khác nhau, bản vận hành EBM-Dashboards chép SAU khi gộp cả hai.
+
+### 29/09/2026 — «1340 tệp bị xoá» thoáng qua ngay sau khi máy bật; và một đột biến chạy khi mất bản sao lưu
+(1) Lượt `sync_safety_check` đầu phiên đọc chỉ mục git đúng lúc OneDrive thay `.git/index` (bản xung đột
+`index-Dr Luân BV175-2` 18:32) ⇒ `git status` báo 1340 «D »; đo lại vài phút sau chỉ mục khớp HEAD, KHÔNG tệp nào mất.
+**Luật:** số liệu bất thường ngay sau khởi động ⇒ ĐO LẠI trước khi khôi phục bất cứ gì (khôi phục vội sinh bản « 2»).
+(2) Thư mục nháp nằm trong `/private/tmp` bị xoá khi khởi động lại; chuỗi lệnh đột biến sao lưu hỏng mà lệnh đột biến kế
+tiếp (heredoc độc lập) VẪN chạy ⇒ để lại `weekly_safety.sh` ở trạng thái đột biến (test bắt, khôi phục, đối chiếu diff).
+**Luật:** mỗi phép đột biến phải ĐIỀU KIỆN theo sao lưu đã `cmp` được, không dựa vào chuỗi `&&` phía trước.
