@@ -11,6 +11,6 @@ Chạy bộ CẬP NHẬT THÁNG của hệ EBM (thay thế launchd com.medicaleb
 Các bước:
 1. cd medical-ebm-automation (trong THƯ MỤC LÀM VIỆC) rồi chạy: bash scripts/monthly_update.sh
 2. Chạy tiếp nhịp liêm chính tháng ở thư mục gốc: cd .. && bash ops/evidence_integrity_monthly.sh (nếu file tồn tại; không có thì bỏ qua và nói rõ).
-3. Đọc log tương ứng trong medical-ebm-automation/data/archive/ — báo cáo TRUNG THỰC mã thoát từng bước, KHÔNG tô hồng; bước lỗi nêu tên + mã thoát + hệ quả (watermark giữ, không nối Hub).
+3. Đọc log tương ứng trong medical-ebm-automation/data/archive/ — báo cáo TRUNG THỰC mã thoát từng bước, KHÔNG tô hồng; bước lỗi nêu tên + mã thoát + hệ quả (watermark giữ, không nối Hub). Mã 75 kèm dòng «BỎ QUA — lượt khác đang chạy» (khoá một lượt, 29/09/2026) = một lượt khác trên máy này ĐANG chạy: báo đúng như vậy, KHÔNG chạy lại, KHÔNG gọi là lỗi.
 
 Ràng buộc bất biến: chỉ THU THẬP/BẢO TRÌ + báo cáo — kết quả vào hàng ứng viên, KHÔNG tự áp dụng lâm sàng, không đổi decision/gradeLevel, Cổng A/B của bác sĩ nguyên vẹn. Mọi đầu ra kèm "Cần bác sĩ kiểm chứng." Trả lời bằng tiếng Việt.
