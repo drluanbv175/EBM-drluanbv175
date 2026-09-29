@@ -98,3 +98,12 @@ def test_chi_co_tac_vu_chua_tao_van_la_viec_cua_bac_si(M, moi_truong, monkeypatc
     assert M.main() == 1
     monkeypatch.setattr(sys, "argv", ["x", "--im-khi-on"])
     assert M.main() == 0, "tác vụ chưa tạo không phải việc máy tự sửa được — không được làm lệnh kiểm tụt hậu đỏ"
+
+
+def test_app_ghi_thieu_dong_trong_cuoi_van_la_khop(M, moi_truong):
+    """29/09: app tạo tác vụ ghi SKILL.md không có dòng trống cuối — so thô báo «sửa riêng» giả."""
+    repo, ban_chay = moi_truong
+    _ghi(ban_chay / "khop" / "SKILL.md", "khop v2")
+    _ghi(ban_chay / "tut-hau" / "SKILL.md", "tut-hau v1\r\n")
+    loai = M.phan_loai(repo, ban_chay)
+    assert loai["khop"] == "khop" and loai["tut-hau"] == "tut_hau"

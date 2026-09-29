@@ -66,6 +66,12 @@ def _phien_ban_cu(repo: Path, rel: str) -> list[bytes] | None:
         return None
 
 
+def _chuan(b: bytes) -> bytes:
+    """So NỘI DUNG, không so cách app ghi tệp: app tạo tác vụ ghi SKILL.md KHÔNG có dòng trống cuối (đo 29/09 với
+    `kiem-rut-bai-kho-thang`) ⇒ so thô sẽ báo «sửa riêng» giả. Bỏ khoảng trắng cuối tệp, CRLF → LF."""
+    return b.replace(b"\r\n", b"\n").rstrip()
+
+
 def phan_loai(repo: Path, ban_chay: Path) -> dict[str, str]:
     """{id tác vụ: khop · tut_hau · khac_rieng · chua_tao · thieu_nguon · khong_do_duoc}."""
     ra: dict[str, str] = {}
@@ -76,14 +82,14 @@ def phan_loai(repo: Path, ban_chay: Path) -> dict[str, str]:
             ra[ma] = "thieu_nguon"
         elif not dich.exists():
             ra[ma] = "chua_tao"
-        elif dich.read_bytes() == nguon.read_bytes():
+        elif _chuan(dich.read_bytes()) == _chuan(nguon.read_bytes()):
             ra[ma] = "khop"
         else:
             cu = _phien_ban_cu(repo, nguon.relative_to(repo).as_posix())
             if cu is None:
                 ra[ma] = "khong_do_duoc"
             else:
-                ra[ma] = "tut_hau" if dich.read_bytes() in cu else "khac_rieng"
+                ra[ma] = "tut_hau" if _chuan(dich.read_bytes()) in {_chuan(b) for b in cu} else "khac_rieng"
     return ra
 
 
