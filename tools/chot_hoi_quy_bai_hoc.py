@@ -7843,8 +7843,17 @@ def _bh125_than():
         S.main(["--watchlist", str(wl), "--allow-partial"])
         luot_1 = list(da_goi)
         if len(luot_1) != 2:
-            return False, (f"lượt quét gọi dự phòng tính phí cho {len(luot_1)} chủ đề — trần mặc định phải là 2/lượt "
+            return False, (f"lượt quét gọi dự phòng tính phí cho {len(luot_1)} chủ đề — trần mặc định phải là 2/tuần "
                            "(trần Consensus 5/lượt · 10/tháng cạn ngay tuần đầu)")
+        S.main(["--watchlist", str(wl), "--allow-partial"])     # lượt thứ hai CÙNG TUẦN (vd chạy lại sau khi sập)
+        if len(da_goi) != 2:
+            return False, ("lượt thứ hai CÙNG TUẦN vẫn leo thang thêm — trần tính theo lượt nên mỗi lần chạy lại đốt thêm "
+                           "hạn mức tính phí (W40 29/09: quét 2 lần ⇒ 4 chủ đề trong một ngày)")
+        import datetime as _dt
+        so_tuan = S.doc_trang_thai_du_phong()                   # giả lập lượt TUẦN SAU: lùi ngày trong sổ 7 ngày
+        so_tuan["lan_cuoi_leo_thang"] = {k: (_dt.date.fromisoformat(v) - _dt.timedelta(days=7)).isoformat()
+                                         for k, v in so_tuan["lan_cuoi_leo_thang"].items()}
+        S.ghi_trang_thai_du_phong(so_tuan)
         S.main(["--watchlist", str(wl), "--allow-partial"])
         if "gamma treatment" not in da_goi[2:]:
             return False, "chủ đề «chờ lượt» không được tới lượt ở lượt sau — xoay vòng hỏng, chủ đề cuối watchlist bị bỏ đói"
@@ -7989,7 +7998,7 @@ BAI_HOC = [
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
     ("BH124", "27/09", "Không email cá nhân viết cứng trong mã repo công khai — email liên hệ API lấy từ cấu hình", bh124_khong_email_ca_nhan_viet_cung_trong_ma),
-    ("BH125", "27/09", "Dự phòng tính phí của vòng quét tuần XOAY VÒNG (tối đa 2 chủ đề/lượt) và không trình lại bài đã trình", bh125_du_phong_xoay_vong_va_khong_trinh_lai),
+    ("BH125", "27/09", "Dự phòng tính phí của vòng quét tuần XOAY VÒNG (tối đa 2 chủ đề/TUẦN — 29/09) và không trình lại bài đã trình", bh125_du_phong_xoay_vong_va_khong_trinh_lai),
 
     ("BH86", "02/09", "Đọc CẢ settings.local.json — thiếu settings.json không được thành báo động đỏ giả", bh86_doc_ca_settings_local_khong_bao_dong_gia),
     # BH126–BH129 (28/09): trạng thái trong cây OneDrive dùng chung đẻ bản sao xung đột + làn Git 🟡 giả.

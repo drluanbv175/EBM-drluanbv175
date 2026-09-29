@@ -2,11 +2,13 @@
 
 Có truy vấn tiếng Anh cho cả watchlist mà mọi chủ đề thiếu bài mạnh đều leo thang trong MỘT lượt thì trần Consensus
 (5/lượt · 10/tháng) cạn ngay tuần đầu, chủ đề sau chỉ nhận lỗi «hết ngân sách». Consensus/SerpApi lọc theo NĂM nên bài
-«liên quan nhất» quay lại mỗi tuần. Nay: tối đa K chủ đề/lượt, chủ đề lâu chưa xét đi trước; bài đã trình không trình
-lại. Test không gọi mạng: làn dự phòng là hàm theo dõi.
+«liên quan nhất» quay lại mỗi tuần. Nay: tối đa K chủ đề mỗi TUẦN ISO khi có sổ (29/09/2026 — trước đó mỗi LƯỢT, lượt
+W40 quét hai lần nên leo thang 4 chủ đề trong một ngày), chủ đề lâu chưa xét đi trước; bài đã trình không trình lại.
+Test không gọi mạng: làn dự phòng là hàm theo dõi.
 """
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import json
 import sys
@@ -58,6 +60,13 @@ def _chay(tran=None, so=None, chu_de=CHU_DE):
                       tran_leo_thang_du_phong=tran, trang_thai_du_phong=so)
 
 
+def _lui_tuan(so: dict, ngay: int = 7) -> dict:
+    """Giả lập «lượt tuần sau»: lùi mọi ngày leo thang trong sổ `ngay` ngày."""
+    so["lan_cuoi_leo_thang"] = {k: (dt.date.fromisoformat(v) - dt.timedelta(days=ngay)).isoformat()
+                                 for k, v in so.get("lan_cuoi_leo_thang", {}).items()}
+    return so
+
+
 def test_mac_dinh_khong_tran_giu_hanh_vi_cu(goi):
     rep = _chay()
     assert goi == ["alpha treatment", "beta treatment", "gamma treatment"]
@@ -85,6 +94,7 @@ def test_ba_luot_lien_tiep_moi_chu_de_deu_den_luot(goi):
     so: dict = {}
     for _ in range(3):
         _chay(tran=1, so=so)
+        _lui_tuan(so)
     assert sorted(goi) == ["alpha treatment", "beta treatment", "gamma treatment"]
 
 
@@ -115,6 +125,17 @@ def test_main_doc_ghi_so_canh_watchlist_va_mac_dinh_tran_2(goi, monkeypatch, tmp
     assert len(goi) == S.TRAN_LEO_THANG_DU_PHONG_MAC_DINH == 2
     so = json.loads((tmp_path / ".du-phong-trang-thai.json").read_text(encoding="utf-8"))
     assert sorted(so["lan_cuoi_leo_thang"]) == ["Alpha", "Beta"] and len(so["da_trinh"]) == 2
-    S.main(["--watchlist", str(wl), "--allow-partial"])
+    (tmp_path / ".du-phong-trang-thai.json").write_text(json.dumps(_lui_tuan(so)), encoding="utf-8", newline="\n")
+    S.main(["--watchlist", str(wl), "--allow-partial"])   # lượt TUẦN SAU
     # Lời gọi đi theo thứ tự watchlist; điều cần kiểm là Gamma (chưa từng xét) có trong 2 suất của lượt sau.
     assert len(goi) == 4 and "gamma treatment" in goi[2:], "lượt sau phải tới chủ đề chưa được xét"
+
+
+def test_hai_luot_cung_tuan_khong_vuot_tran_tuan(goi):
+    """29/09/2026: phiên gói tuần quét HAI lần (lần đầu sập) ⇒ trần theo lượt cho leo thang 4 chủ đề trong một ngày."""
+    so: dict = {}
+    _chay(tran=2, so=so)
+    rep2 = _chay(tran=2, so=so)
+    assert goi == ["alpha treatment", "beta treatment"], "lượt thứ hai CÙNG TUẦN vẫn đốt thêm hạn mức tính phí"
+    assert rep2["du_phong_da_leo_thang"] == [] and rep2["du_phong_da_dung_tuan"] == 2
+    assert all("tuần này đã dùng 2" in t["error"] for t in rep2["topics"])
