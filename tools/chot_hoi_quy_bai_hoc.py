@@ -7866,6 +7866,54 @@ def _bh125_than():
     return True, ""
 
 
+def bh132_tac_vu_lich_ban_chay_theo_nguon_git():
+    """29/09 — 13/14 bản chạy SKILL.md của tác vụ lịch trên Mac (`~/.claude/scheduled-tasks`) tụt hậu nguồn git suốt 6 tuần
+    (phần lớn bản 17/08) nên PR #58 và các sửa sau KHÔNG có hiệu lực; tác vụ mới `kiem-rut-bai-kho-thang` chưa từng được
+    tạo. Luật «chép nguồn git → bản chạy» (CLAUDE.md §9) có mà không gì chạy (họ BH41). Kiểm HÀNH VI `dong_bo_tac_vu_lich`
+    trên repo git tạm: bản chạy tụt hậu ⇒ chép (có sao lưu); có sửa riêng ⇒ KHÔNG chép đè; chưa tạo ⇒ KHÔNG tự tạo và vẫn
+    được nhắc; và `tu_sua_chua` thật sự gọi công cụ này mỗi phiên."""
+    import importlib.util as _iu
+    import json as _json
+    import subprocess
+    import tempfile as _tf
+    ma_tu_sua = (REPO / "tools" / "tu_sua_chua.py").read_text(encoding="utf-8")
+    if "tools/dong_bo_tac_vu_lich.py" not in ma_tu_sua:
+        return False, "tu_sua_chua không gọi dong_bo_tac_vu_lich — bản chạy tác vụ lịch lại tụt hậu âm thầm (BH41)"
+    sp = _iu.spec_from_file_location("_bh132_dbtvl", REPO / "tools" / "dong_bo_tac_vu_lich.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh132_dbtvl"] = M
+    sp.loader.exec_module(M)
+
+    def git(repo, *lenh):
+        subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",
+                        "-c", "commit.gpgsign=false", *lenh], check=True, capture_output=True)
+
+    def ghi(p, nd):
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(nd, encoding="utf-8", newline="\n")
+    with _tf.TemporaryDirectory() as d:
+        repo, bc = Path(d) / "repo", Path(d) / "scheduled-tasks"
+        ghi(repo / "sync" / "lich-nen-ky-vong.json", _json.dumps({"tac_vu": [{"id": m} for m in ("a", "b", "c")]}))
+        git(Path(d), "init", "-q", str(repo))
+        for ban in ("v1", "v2"):
+            for m in ("a", "b", "c"):
+                ghi(repo / "sync" / "scheduled-tasks" / m / "SKILL.md", f"{m} {ban}\n")
+            git(repo, "add", "-A")
+            git(repo, "commit", "-q", "-m", ban)
+        ghi(bc / "a" / "SKILL.md", "a v1\n")
+        ghi(bc / "b" / "SKILL.md", "b v1 + sửa riêng\n")
+        da_chep, _sao_luu = M.ap_dung(repo, bc, M.phan_loai(repo, bc))
+        if (bc / "a" / "SKILL.md").read_text(encoding="utf-8") != "a v2\n":
+            return False, "bản chạy tụt hậu (trùng một phiên bản cũ của nguồn) không được chép bản mới"
+        if "sửa riêng" not in (bc / "b" / "SKILL.md").read_text(encoding="utf-8"):
+            return False, "bản chạy có sửa riêng bị chép đè — mất sửa của bác sĩ"
+        if (bc / "c").exists():
+            return False, "công cụ tự tạo tác vụ — tạo/xoá tác vụ là việc của bác sĩ"
+        if M.phan_loai(repo, bc).get("c") != "chua_tao":
+            return False, "tác vụ có nguồn mà chưa tạo không được nhắc"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -8008,6 +8056,7 @@ BAI_HOC = [
     ("BH129", "28/09", "Làn Git của lệnh gộp thử lại fetch tối đa 3 lần — mạng chập chờn một nhịp không thành 🟡 giả", bh129_lan_git_thu_lai_fetch),
     ("BH130", "28/09", "SKILL tác vụ lịch không neo đường dẫn một máy/`/tmp`; khai rõ đa nền hay chỉ-Mac (bash)", bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows),
     ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
+    ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
 ]
 
 
