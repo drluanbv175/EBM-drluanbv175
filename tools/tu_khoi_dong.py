@@ -105,6 +105,28 @@ OWNER = {
 
 HAN_TREO_GIO = 3       # tiến trình chạy quá ngần này giờ thì coi là treo, cho phóng lại
 
+# Khoá một lượt CỦA CHÍNH SCRIPT chủ sở hữu (`medical-ebm-automation/scripts/_khoa_mot_luot.sh`, 29/09/2026) — HỢP
+# ĐỒNG tên/vị trí với script đó: `$EBM_KHOA_DIR` hoặc `~/.claude/ebm-khoa/<tên script>.khoa/{pid,luc}`, hạn 6 giờ.
+KHOA_SCRIPT_HAN_GIAY = 21600
+
+
+def _khoa_script_dang_giu(ma: str) -> int | None:
+    """PID của lượt script chủ sở hữu ĐANG chạy (do bất kỳ ai phóng: tác vụ lịch, chạy tay, hook), hoặc None.
+
+    29/09/2026: `dang_chay()` chỉ biết lượt do CHÍNH hook này phóng. Tác vụ lịch nổ bù lúc 18:31 (máy vừa bật) ⇒ log
+    «BẮT ĐẦU chưa KẾT THÚC» ⇒ `qua_han()` coi là lượt đã chết ⇒ 18:33 phóng thêm lượt thứ hai chạy chồng.
+    """
+    goc = Path(os.environ.get("EBM_KHOA_DIR") or (Path.home() / ".claude" / "ebm-khoa"))
+    thu_muc = goc / f"{OWNER[ma]['script'].stem}.khoa"
+    try:
+        pid = int((thu_muc / "pid").read_text(encoding="utf-8").strip())
+        luc = int((thu_muc / "luc").read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return None
+    if dt.datetime.now().timestamp() - luc >= KHOA_SCRIPT_HAN_GIAY or not _con_song(pid):
+        return None
+    return pid
+
 
 def _doc_khoa() -> dict:
     try:
@@ -318,6 +340,12 @@ def main() -> int:
     ma, cach = can[0]
     ten = OWNER[ma]["ten"]
     mo_ta = "CHƯA TỪNG chạy" if cach < 0 else f"quá hạn {cach} ngày"
+
+    pid_giu = _khoa_script_dang_giu(ma)
+    if pid_giu:
+        if not a.im_khi_on:
+            print(f"⏳ Đang chạy: {ten} (pid {pid_giu}, do tác vụ lịch hoặc nơi khác phóng) — không phóng chồng.")
+        return 0
 
     if not a.phong:
         print(f"▸ {ten}: {mo_ta} → sẽ phóng ở nền (thêm --phong để làm thật).")

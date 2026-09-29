@@ -10,7 +10,7 @@ Chạy bộ THU THẬP giám sát chứng cứ tuần của hệ EBM (thay thế
 
 Các bước:
 1. cd medical-ebm-automation (trong THƯ MỤC LÀM VIỆC) rồi chạy: bash scripts/weekly_safety.sh
-2. Đọc đuôi data/archive/launchd_weekly.log — báo cáo TRUNG THỰC mã thoát từng bước (1)-(6) và verdict PASS/CÓ BƯỚC LỖI. KHÔNG tô hồng: bước lỗi phải nêu tên + mã thoát.
+2. Đọc đuôi data/archive/launchd_weekly.log — báo cáo TRUNG THỰC mã thoát từng bước (1)-(6) và verdict PASS/CÓ BƯỚC LỖI. KHÔNG tô hồng: bước lỗi phải nêu tên + mã thoát. Script thoát mã 75 kèm dòng «BỎ QUA — lượt khác đang chạy» (khoá một lượt, 29/09/2026) nghĩa là một lượt khác trên máy này ĐANG chạy: báo đúng như vậy, KHÔNG chạy lại, KHÔNG gọi là lỗi; kết quả là của lượt đang chạy.
 3. Nếu status PASS: nói ngắn gọn số ứng viên mới (nếu log có). Nếu PARTIAL/FAIL: liệt kê bước hỏng và nhắc rằng watermark giữ nguyên, không có gì được nối vào Hub (fail-closed đúng thiết kế).
 
 Ràng buộc bất biến: đây chỉ là THU THẬP + báo cáo — kết quả vào hàng ứng viên, KHÔNG tự áp dụng lâm sàng, không đổi decision/gradeLevel, Cổng A/B của bác sĩ nguyên vẹn. Mọi đầu ra kèm "Cần bác sĩ kiểm chứng." Trả lời bằng tiếng Việt.
