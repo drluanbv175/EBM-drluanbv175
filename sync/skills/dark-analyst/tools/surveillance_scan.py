@@ -1393,7 +1393,7 @@ def _ban_ghi_khong_trinh(c: Candidate, tang: str) -> dict:
 # cùng ngưỡng mặc định FALLBACK_MIN_TRUSTED (3) của engine.
 NGUONG_BAI_MANH_KHONG_LEO_THANG = 3
 _KY_TU_KHONG_ASCII = re.compile(r"[^\x00-\x7f]")
-# XOAY VÒNG (27/09/2026): mỗi lượt quét tuần chỉ tối đa K chủ đề được leo thang dự phòng tính phí, chủ đề lâu chưa
+# XOAY VÒNG (27/09/2026; tính theo TUẦN ISO từ 29/09): mỗi tuần chỉ tối đa K chủ đề được leo thang dự phòng tính phí, chủ đề lâu chưa
 # được xét đi trước. Có truy vấn tiếng Anh cho cả watchlist mà leo thang hết trong MỘT lượt thì trần Consensus
 # (5/lượt · 10/tháng) cạn ngay tuần đầu và mọi chủ đề sau chỉ nhận lỗi «hết ngân sách». K=2/tuần ≈ 8–9 lượt/tháng.
 TRAN_LEO_THANG_DU_PHONG_MAC_DINH = 2
@@ -1445,8 +1445,8 @@ def run_scan(
 ) -> dict:
     """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL.
 
-    `tran_leo_thang_du_phong` (27/09/2026): tối đa bao nhiêu chủ đề được leo thang bậc thang dự phòng TÍNH PHÍ trong
-    lượt này — None = không trần. `trang_thai_du_phong` (sổ `doc_trang_thai_du_phong()`, SỬA TẠI CHỖ): có sổ thì xoay
+    `tran_leo_thang_du_phong` (27/09/2026): tối đa bao nhiêu chủ đề được leo thang bậc thang dự phòng TÍNH PHÍ — None =
+    không trần; có sổ thì là trần của cả TUẦN ISO (trừ số chủ đề sổ ghi đã leo thang trong tuần này, 29/09/2026). `trang_thai_du_phong` (sổ `doc_trang_thai_du_phong()`, SỬA TẠI CHỖ): có sổ thì xoay
     vòng theo ngày leo thang gần nhất và bỏ bài dự phòng đã trình ở lượt trước. `main()` bật cả hai; mặc định None giữ
     nguyên hành vi cũ cho mọi nơi gọi khác.
     """
@@ -1633,13 +1633,25 @@ def run_scan(
     # BẬC THANG DỰ PHÒNG (Consensus → SerpApi Scholar), XOAY VÒNG trên toàn lượt — 27/09/2026. Chủ đề đủ điều kiện
     # được xét theo ngày leo thang gần nhất (chưa từng ⇒ trước), hoà thì theo thứ tự watchlist; chỉ `tran` chủ đề
     # đầu được gọi, số còn lại «chờ lượt». Có sổ thì bài dự phòng đã trình ở lượt trước không trình lại.
+    # Có sổ thì `tran` là trần của cả TUẦN ISO (29/09/2026): lượt W40 đầu tiên quét HAI lần trong một phiên (lần đầu sập)
+    # nên leo thang 4 chủ đề trong một ngày — trần theo lượt để mỗi lần chạy lại đốt thêm hạn mức Consensus (10/tháng).
     so = trang_thai_du_phong
     lan_cuoi = so.setdefault("lan_cuoi_leo_thang", {}) if so is not None else {}
     da_trinh = so.setdefault("da_trinh", {}) if so is not None else {}
-    hom_nay = datetime.now(timezone.utc).date().isoformat()
+    hom_nay_d = datetime.now(timezone.utc).date()
+    hom_nay = hom_nay_d.isoformat()
+
+    def _cung_tuan(ngay: object) -> bool:
+        try:
+            return datetime.strptime(str(ngay)[:10], "%Y-%m-%d").date().isocalendar()[:2] == hom_nay_d.isocalendar()[:2]
+        except ValueError:
+            return False
+
+    da_dung_tuan = sum(1 for v in lan_cuoi.values() if _cung_tuan(v))
+    con_lai = None if tran_leo_thang_du_phong is None else max(0, tran_leo_thang_du_phong - da_dung_tuan)
     thu_tu = sorted(range(len(cho_du_phong)),
                     key=lambda j: (str(lan_cuoi.get(topic_results[cho_du_phong[j][0]].topic, "")), j))
-    duoc_leo = set(thu_tu if tran_leo_thang_du_phong is None else thu_tu[:max(0, tran_leo_thang_du_phong)])
+    duoc_leo = set(thu_tu if con_lai is None else thu_tu[:con_lai])
     da_leo_thang: list[str] = []
     bo_trung_xuyen_tuan = 0
     for j, (i, truy_van) in enumerate(cho_du_phong):
@@ -1647,8 +1659,8 @@ def run_scan(
         ghi_them: list[str] = []
         if j not in duoc_leo:
             du_phong_khong_leo["cho_luot_xoay_vong"] = du_phong_khong_leo.get("cho_luot_xoay_vong", 0) + 1
-            ghi_them.append(f"bậc thang dự phòng: chờ lượt — mỗi lượt quét chỉ {tran_leo_thang_du_phong} chủ đề "
-                            "được leo thang (xoay vòng, chủ đề lâu chưa xét đi trước)")
+            ghi_them.append(f"bậc thang dự phòng: chờ lượt — mỗi tuần chỉ {tran_leo_thang_du_phong} chủ đề được leo "
+                            f"thang (xoay vòng, chủ đề lâu chưa xét đi trước; tuần này đã dùng {da_dung_tuan})")
         else:
             da_leo_thang.append(tr.topic)
             if so is not None:
@@ -1711,6 +1723,7 @@ def run_scan(
         # bỏ vì đã trình ở lượt trước.
         "du_phong_da_leo_thang": da_leo_thang,
         "du_phong_tran_moi_luot": tran_leo_thang_du_phong,
+        "du_phong_da_dung_tuan": da_dung_tuan,   # số chủ đề đã leo thang trong tuần ISO này TRƯỚC lượt này (theo sổ)
         "du_phong_bo_trung_xuyen_tuan": bo_trung_xuyen_tuan,
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
@@ -1739,7 +1752,7 @@ def markdown_report(report: dict) -> str:
         *([f"- Bậc thang dự phòng tính phí (Consensus → SerpApi): leo thang {len(report['du_phong_da_leo_thang'])} "
            f"chủ đề ({', '.join(report['du_phong_da_leo_thang'])})"
            + (f" · {report['du_phong_khong_leo_thang']['cho_luot_xoay_vong']} chủ đề chờ lượt (xoay vòng "
-              f"{report.get('du_phong_tran_moi_luot')}/lượt)"
+              f"{report.get('du_phong_tran_moi_luot')}/tuần)"
               if report.get("du_phong_khong_leo_thang", {}).get("cho_luot_xoay_vong") else "")
            + (f" · bỏ {report['du_phong_bo_trung_xuyen_tuan']} bài đã trình ở lượt trước"
               if report.get("du_phong_bo_trung_xuyen_tuan") else "")]
@@ -1846,7 +1859,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--khong-cursor", action="store_true",
                         help="bỏ qua con trỏ tăng dần, quét trọn cửa sổ --days")
     parser.add_argument("--tran-du-phong", type=int, default=TRAN_LEO_THANG_DU_PHONG_MAC_DINH,
-                        help="tối đa bao nhiêu chủ đề được leo thang dự phòng TÍNH PHÍ mỗi lượt (xoay vòng, chủ đề lâu "
+                        help="tối đa bao nhiêu chủ đề được leo thang dự phòng TÍNH PHÍ mỗi TUẦN ISO (xoay vòng, chủ đề lâu "
                              f"chưa xét đi trước; 0 = không leo thang; mặc định {TRAN_LEO_THANG_DU_PHONG_MAC_DINH})")
     args = parser.parse_args(argv)
     if not 0 <= args.tran_du_phong <= 50:
