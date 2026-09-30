@@ -3451,3 +3451,35 @@ pytest lẫn BH135 (vòng đầu đột biến «bỏ qua mã lỗi DNS» chỉ 
 phân giải được (→ 18.234.0.150) nhưng KHÔNG nối được cổng 443» và «Europe PMC — DNS của mạng này KHÔNG phân giải được trong
 khi DNS công cộng phân giải được». **Việc của bác sĩ/IT (cài đặt hệ thống, agent không đổi):** DNS của card mạng và đường ra
 AWS us-east-1; lưu ý đổi sang DNS công cộng có thể làm mất phân giải tên NỘI BỘ bệnh viện.
+
+### 30/09/2026 — Bộ quét tiến con trỏ TRƯỚC khi báo cáo tới nơi; ngày công bố kiểu số chỉ là ngòi nổ (BH136)
+Lượt gói tuần W40 (29/09, phiên goi-duyet) sập ở bước đo độ trễ của `surveillance_scan.main()`: một ứng viên mang
+`publication_date` kiểu int ⇒ `int[:11]` ném TypeError. Phiên đó vá 2 dòng tại nơi tiêu thụ, quét lại với `--since 2026-09-07`, để
+bản vá CHƯA commit. Rà lại 30/09: bản vá đúng nhưng chưa đủ. ① **Gốc rễ** — ba làn lấy bản ghi từ engine (Scopus · CORE · dự
+phòng Consensus/SerpApi) chép thẳng `rec.publication_date` (engine có nguồn chỉ trả NĂM kiểu số) vào `Candidate.publication_date:
+str`. ② **Cấu trúc** — `main()` ghi con trỏ và sổ dự phòng TRƯỚC khâu hậu xử lý (đo trễ · cảnh báo · dựng/in/ghi báo cáo), nên
+BẤT KỲ lỗi nào ở khâu đó đều cho cùng hậu quả: con trỏ 47 chủ đề nhảy tới hôm nay mà không ai thấy ứng viên nào.
+**Vá:** `Candidate.__post_init__` ép ngày về chuỗi tại một điểm nghẽn; tách `do_do_tre()` để lớp phòng thủ 29/09 kiểm được trực
+tiếp; trong `main()` báo cáo được in (có đẩy bộ đệm stdout) và ghi tệp XONG rồi mới ghi «đã trình» và con trỏ, vẫn trong khoá;
+mốc leo thang của sổ dự phòng (hạn mức tính phí đã tiêu) vẫn ghi ngay. Cùng họ, có sẵn từ 27/09: `uu_tien_cap_nhat` chạy bộ quét
+ra thư mục TẠM với `--khong-cursor` nhưng sổ dự phòng không phụ thuộc cờ đó ⇒ lượt đếm tiêu trần 2 chủ đề/tuần và ghi «đã trình»
+cho bài không ai đọc — nay gọi kèm `--tran-du-phong 0`.
+**Đính chính một khẳng định của chính bản vá (phản biện bắt được):** bản nháp ghi «lượt sập 29/09 để lại bài dự phòng mang dấu đã
+trình mà chưa ai thấy». Đo sổ thật `EBM-Dashboards/.du-phong-trang-thai.json`: 14/14 khoá «đã trình» đều có trong báo cáo W40, 0
+khoá mồ côi. Cơ chế là thật (tái hiện được ngoại tuyến) nhưng CHƯA xảy ra ngày 29/09.
+**Giới hạn nói thẳng:** (a) «báo cáo tới nơi» = đã đẩy hết ra stdout và đã ghi tệp `--report`/`--json-report` nếu có; không chứng
+minh có NGƯỜI đã đọc. (b) Lượt sập ⇒ con trỏ nguyên chỗ ⇒ chạy lại là quét đúng cửa sổ đó, không cần `--since`: với CỬA SỔ CON TRỎ
+cái giá là trình lặp, không phải bỏ sót. Riêng bài dự phòng TÍNH PHÍ của lượt sập KHÔNG được trình lại khi chạy lại cùng tuần
+(trần tuần đã tiêu, hạn mức không hoàn) — nó chỉ trở lại khi chủ đề tới lượt xoay vòng (đo với watchlist thật: tới ~17–21 tuần,
+và hai nguồn lọc theo NĂM nên qua năm có thể không trả lại đúng bài đó). Đóng hẳn khe này cần lưu tạm bài đã lấy vào sổ
+(`cho_trinh`) — thay đổi cấu trúc sổ, CHỜ bác sĩ quyết. (c) A2 một-chủ-đề của `ops/orchestrator.py` vẫn trừ vào trần tuần của gói
+tuần (báo cáo của nó có tới `logs/`) — để nguyên, chờ bác sĩ quyết.
+**Triển khai (không tự có sau khi merge):** bản THẬT SỰ chạy là `EBM-Dashboards/tools/surveillance_scan.py` (ngoài git).
+`dong_bo_scanner_giam_sat.py` sẽ từ chối chép vì thấy «dòng riêng» — đó là khối đo trễ/ghi con trỏ của bản 29/09 mà bản này đã
+thay, không có bản vá nào chưa hồi nguồn ⇒ chép TAY nguồn chuẩn sang, rồi kiểm công cụ ✅ và ESD02 (3 hash bằng nhau; lệch thì
+pre-commit cây chính chặn mọi commit).
+**Kiểm:** 23 ca test mới ở `tools/test_surveillance_scan_main_20260930_con_tro_sau_bao_cao.py` + 1 ca ở
+`tools/test_uu_tien_cap_nhat_20260930_khong_tieu_du_phong.py` + ca tái hiện 29/09 (đã làm kín mạng) + BH136; 17 đột biến đều đỏ ở
+pytest, BH136 đỏ đúng chỗ với 7 phép thuộc hành vi nó canh. Phản biện đối kháng 3 lăng kính: 16 phát hiện, 13 có thật (7 vấn đề
+riêng) — gồm một ca test XANH GIẢ của chính bản vá (`write_atomic` nổ ở lần ghi sổ sớm, xanh cả trên mã cũ) và đột biến «ghi đã
+trình trước khi ghi TỆP báo cáo» từng sống sót; đã vá hết trừ hai mục (b)/(c) chờ bác sĩ.
