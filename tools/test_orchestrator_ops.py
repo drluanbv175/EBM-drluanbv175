@@ -499,3 +499,121 @@ def test_gop_khong_ro_co_lat_cat_van_noi_a2_bi_bo():
     m._phan_giai = lambda t: tt
     ke = m.ke_hoach("ChuaKhai", False, False)
     assert any(b["buoc"].startswith("A2-bo-qua") for b in ke)
+
+
+# ── 30/09/2026: trần dự phòng TÍNH PHÍ dùng CHUNG giữa A2 và gói tuần — phải nói ra ở nơi dùng ──────────────
+def _a2(**kw):
+    nen = {"status": "PASS", "topics": [], "du_phong_da_leo_thang": [], "du_phong_loi": [], "du_phong_thu_lai": [],
+           "du_phong_tat_vi": "", "du_phong_tran_moi_luot": 2, "du_phong_da_dung_tuan": 0,
+           "du_phong_da_dung_tuan_sau_luot": 0, "du_phong_khong_leo_thang": {}, "du_phong_trinh_bu": {}}
+    return {**nen, **kw}
+
+
+_A2_DA_TIEU = _a2(du_phong_da_leo_thang=["Suy tim"], du_phong_da_dung_tuan=1, du_phong_da_dung_tuan_sau_luot=2)
+_A2_BI_CHAN = _a2(du_phong_da_dung_tuan=4, du_phong_da_dung_tuan_sau_luot=4,
+                  du_phong_khong_leo_thang={"cho_luot_xoay_vong": 1})
+
+
+def _ghi_a2(tmp_path, du):
+    p = tmp_path / "a2.json"
+    p.write_text(du if isinstance(du, str) else _json.dumps(du), encoding="utf-8")
+    return p
+
+
+def _loai(tmp_path, du):
+    return [x[0] for x in op._du_phong_a2(_ghi_a2(tmp_path, du))]
+
+
+def test_du_phong_a2_chi_noi_dieu_json_chung_minh_duoc(tmp_path):
+    ((loai, cau, _t),) = op._du_phong_a2(_ghi_a2(tmp_path, _A2_DA_TIEU))
+    assert loai == "da_tieu" and "đã gọi Consensus/SerpApi cho «Suy tim»" in cau and "DÙNG CHUNG" in cau
+    # Gọi mà LỖI: không được nói «đã gọi… dùng suất»; phải nói chưa có kết quả và cách thử lại.
+    ((loai, cau, _t),) = op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_da_leo_thang=["Suy tim"], du_phong_loi=["Suy tim"])))
+    assert loai == "loi" and "CHƯA có kết quả" in cau and "đã gọi Consensus" not in cau and "tối đa một lần" in cau
+    # Thử lại THÀNH CÔNG một lần gọi lỗi: có gọi nguồn nhưng không được nói «dùng 1 suất» (bộ đếm tuần không tăng).
+    ((loai, cau, _t),) = op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_da_leo_thang=["Suy tim"], du_phong_thu_lai=["Suy tim"])))
+    assert loai == "thu_lai" and "KHÔNG tính thêm suất" in cau and "dùng 1 suất" not in cau
+    # Thử lại mà vẫn lỗi: chỉ là «loi», không kèm «thu_lai»/«da_tieu».
+    assert _loai(tmp_path, _a2(du_phong_da_leo_thang=["X"], du_phong_thu_lai=["X"], du_phong_loi=["X"])) == ["loi"]
+    assert _loai(tmp_path, _a2(du_phong_khong_leo_thang={"da_leo_thang_tuan_nay": 1})) == ["da_tra_tuan_nay"]
+    assert _loai(tmp_path, _a2(du_phong_khong_leo_thang={"loi_het_luot_thu_lai": 1})) == ["het_thu_lai"]
+    assert _loai(tmp_path, _a2(du_phong_khong_leo_thang={"nguon_khong_goi": 1})) == ["khong_goi"]
+    ((loai, cau, _t),) = op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_trinh_bu={"Suy tim": 2, "X": 1})))
+    assert loai == "trinh_bu" and "trình bù 3 bài" in cau
+    ((loai, cau, _t),) = op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_tat_vi="sổ x không phải JSON hợp lệ")))
+    assert loai == "so_loi" and "TẮT lượt này" in cau and "sổ x không phải JSON hợp lệ" in cau
+
+
+def test_du_phong_a2_bi_tran_chan_goi_y_con_so_lon_hon_so_da_dung_sau_luot(tmp_path):
+    """Sổ thật 30/09: tuần đã dùng 4 với trần 2 ⇒ `--tran-du-phong 3` hay 4 đều vô tác dụng; phải là 5."""
+    ((loai, cau, tran),) = op._du_phong_a2(_ghi_a2(tmp_path, _A2_BI_CHAN))
+    assert loai == "chua_toi_luot" and "đã dùng 4/2" in cau and tran == 5
+    # `--topic` khớp HAI chủ đề, một chủ đề vừa tiêu suất trong chính lượt này: trước lượt 1, sau lượt 2 ⇒ cần 3.
+    kq = op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_da_leo_thang=["A"], du_phong_da_dung_tuan=1,
+                                                du_phong_da_dung_tuan_sau_luot=2,
+                                                du_phong_khong_leo_thang={"cho_luot_xoay_vong": 1})))
+    assert [(x[0], x[2]) for x in kq] == [("da_tieu", None), ("chua_toi_luot", 3)]
+    # Báo cáo cũ chưa có trường «sau lượt»: lùi về số trước lượt + 1.
+    cu = {k: v for k, v in _A2_BI_CHAN.items() if k != "du_phong_da_dung_tuan_sau_luot"}
+    assert op._du_phong_a2(_ghi_a2(tmp_path, cu))[0][2] == 5
+
+
+def test_du_phong_a2_khong_anh_huong_han_muc_thi_im_va_json_hong_khong_sap(tmp_path):
+    assert op._du_phong_a2(_ghi_a2(tmp_path, _a2(du_phong_khong_leo_thang={"du_bai_manh": 1}))) == []
+    assert op._du_phong_a2(_ghi_a2(tmp_path, {"status": "PASS", "topics": []})) == [], "báo cáo cũ chưa có trường"
+    for hong in ("không phải JSON", "[]", '{"du_phong_khong_leo_thang": 7}', '{"du_phong_trinh_bu": {"a": "x"}}',
+                 '{"du_phong_khong_leo_thang": {"cho_luot_xoay_vong": 1}, "du_phong_da_dung_tuan": null}'):
+        assert op._du_phong_a2(_ghi_a2(tmp_path, hong)) == [], hong
+    assert op._du_phong_a2(tmp_path / "khong-co.json") == []
+
+
+def test_thuc_thi_in_va_ghi_log_anh_huong_han_muc_cua_a2(tmp_path):
+    duong = tmp_path / "a2.json"
+    plan = [{"buoc": "A2-quet", "lenh": ["py", "surveillance_scan.py", "--topic", "Suy tim", "--json-report", str(duong)]}]
+    da_in: list[str] = []
+    da_ghi: list[dict] = []
+
+    def chay(lenh, _t):
+        duong.write_text(_json.dumps(_A2_DA_TIEU), encoding="utf-8")
+        return 0
+    res = op.thuc_thi(plan, chay=chay, ghi=da_ghi.append, in_=da_in.append)
+    assert [x[0] for x in res["du_phong"]] == ["da_tieu"]
+    assert any(x.startswith("ⓘ A2-quet: dự phòng tính phí") for x in da_in), "phải nói ra ở nơi dùng"
+    assert da_ghi[-1]["du_phong"][0][0] == "da_tieu", "log máy đọc phải ghi lượt A2 đã tiêu hạn mức"
+    # Resume: A2 đã xong vẫn đọc lại được ảnh hưởng hạn mức từ JSON còn trong logs/.
+    res2 = op.thuc_thi(plan, chay=lambda *_: 1 / 0, da_xong={"A2-quet"}, in_=lambda *_: None)
+    assert [x[0] for x in res2["du_phong"]] == ["da_tieu"]
+
+
+def test_phieu_chi_goi_bac_si_cho_cac_loai_can_quyet():
+    tt = {"loai": "watchlist", "a2_arg": "Suy tim", "lat_cat": []}
+    nen = {"ung_vien": None, "rut": [], "lat_hong": set()}
+    for loai in ("loi", "het_thu_lai", "so_loi"):
+        (dong,) = [v for v in op.phieu_can_phien("Suy tim", tt, [], {**nen, "du_phong": [(loai, f"câu-{loai}", None)]})
+                   if f"câu-{loai}" in v]
+        assert dong.startswith("👤 «Suy tim»")
+    thong_tin = [(k, f"câu-{k}", None) for k in ("da_tieu", "thu_lai", "da_tra_tuan_nay", "khong_goi", "trinh_bu")]
+    viec = op.phieu_can_phien("Suy tim", tt, [], {**nen, "du_phong": thong_tin})
+    assert not any("câu-" in v for v in viec), "đã tiêu/thử lại/đã tra/không gọi/trình bù chỉ là thông tin"
+
+
+def test_phieu_in_lenh_nang_tran_day_du_cho_dung_chu_de():
+    """Thiếu `--topic` ⇒ suất rơi vào chủ đề KHÁC (đầu vòng xoay); thiếu `--khong-cursor` ⇒ ghi con trỏ gói tuần."""
+    tt = {"loai": "watchlist", "a2_arg": "Suy tim — tiên lượng & điều trị", "lat_cat": []}
+    res = {"ung_vien": None, "rut": [], "lat_hong": set(), "du_phong": [("chua_toi_luot", "câu-chặn", 5)]}
+    (dong,) = [v for v in op.phieu_can_phien("Suy tim", tt, [], res) if "câu-chặn" in v]
+    assert ('`python3 EBM-Dashboards/tools/surveillance_scan.py --topic "Suy tim — tiên lượng & điều trị" '
+            '--khong-cursor --tran-du-phong 5`') in dong
+    assert "hạn mức THÁNG" in dong and "lệnh kế phải +1" in dong
+    assert "tuần sau" not in dong and "xoay vòng" in dong, "không hứa «tuần sau tới lượt»: xoay vòng 2 chủ đề/tuần"
+
+
+def test_main_a2_bi_tran_chan_thi_phieu_co_viec_cho_bac_si(tmp_path, monkeypatch, capsys):
+    m = _nap_op("orch_main_du_phong")
+    _khung(tmp_path, monkeypatch, m, a2_json=_A2_BI_CHAN)
+    assert _chay_main(m, monkeypatch, "--topic", "Suy tim") in (0, 1)
+    (phieu,) = (tmp_path / "logs").glob("*.phieu.md")
+    noi_dung = phieu.read_text(encoding="utf-8")
+    assert "dự phòng tính phí CHƯA tới lượt" in noi_dung
+    assert '--topic "Suy tim" --khong-cursor --tran-du-phong 5`' in noi_dung
+    assert "ⓘ A2-quet: dự phòng tính phí CHƯA tới lượt" in capsys.readouterr().out
