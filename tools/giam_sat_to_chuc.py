@@ -19,6 +19,11 @@ Cách dò (chống báo động giả — đúng yêu cầu LÔ B):
   • Chỉ báo khi xuất hiện TIÊU ĐỀ MỚI mang năm/số hiệu, hoặc feed có item mới.
   • Nguồn fetch hỏng → status degraded + in RÕ «chuyên khoa X đang mù» — tuyệt
     đối không im lặng bỏ qua (I7).
+  • Nhãn của trạm đi theo LƯỢT QUÉT GẦN NHẤT (vá 30/09/2026, BH138): lấy được trang
+    VÀ đọc ra ≥1 tiêu đề ⇒ trạm đang degraded/broken trở về active; lấy được trang
+    nhưng 0 tiêu đề ⇒ KHÔNG tính là thành công (không ghi last_success_at, không ghi
+    đè state) và hạ degraded. Trước đó vòng quét chỉ biết HẠ nhãn: một lần trượt
+    mạng làm trạm mang nhãn degraded mãi dù các lượt sau thu hoạch bình thường.
 
 Đầu ra: `EBM-Dashboards/surveillance/to-chuc-<ngày>.md` (ứng viên
 source.type=guideline, kèm ngày phát hiện) · state ở `state/giam-sat-to-chuc.json`.
@@ -539,6 +544,7 @@ def main() -> int:
             state = {}
     phat_hien: list[str] = []
     hong: list[str] = []
+    hoi_phuc: list[str] = []
     for s in muc_tieu:
         nd = _fetch(s["endpoint_or_url"])
         if nd is None:
@@ -546,7 +552,24 @@ def main() -> int:
             hong.append(f"{s['id']} {s['org']} — fetch hỏng ⇒ chuyên khoa "
                         f"{'/'.join(s['domain'])} đang MÙ ở làn web (PubMed-lane vẫn chạy)")
             continue
+        so_tieu_de = len(rut_tieu_de(nd))
+        if so_tieu_de == 0:
+            # VÁ 30/09/2026 (BH138): lấy được trang mà KHÔNG đọc ra tiêu đề nào (trang thử thách chống bot trả
+            # 200, hội đổi bố cục…) thì trạm đang MÙ y như khi fetch hỏng — đúng phán quyết của `kiem_tra_tram`
+            # («fetch OK nhưng 0 tiêu đề»). Bản cũ coi đây là thành công: ghi last_success_at hôm nay và ghi đè
+            # state bằng danh sách RỖNG, nên lượt kế mọi tiêu đề cũ đều hiện lại thành «mới».
+            s["status"] = "degraded"
+            hong.append(f"{s['id']} {s['org']} — lấy được trang nhưng 0 tiêu đề (trang chặn bot hoặc đổi bố cục?) "
+                        f"⇒ chuyên khoa {'/'.join(s['domain'])} đang MÙ ở làn web; state cũ giữ nguyên")
+            continue
         s["last_success_at"] = date.today().isoformat()
+        if s["status"] in ("degraded", "broken"):
+            # VÁ 30/09/2026 (BH138): quét lại ĐƯỢC thì nhãn trở về active. Bản cũ chỉ có chiều HẠ (fetch hỏng ⇒
+            # degraded) — đo thật: lượt 29/09 trượt trang GOLD, nhãn SRC-010 thành degraded; 30/09 trạm đọc 19
+            # tiêu đề mà nhãn vẫn degraded, và `sources_health.py` (chỉ hồi phục nguồn api có điểm thăm) sẽ liệt
+            # kê trạm là DEGRADED mãi. Chỉ đổi degraded/broken: not-covered không bao giờ vào vòng này.
+            s["status"] = "active"
+            hoi_phuc.append(f"{s['id']} {s['org']} — quét lại được ({so_tieu_de} tiêu đề) ⇒ nhãn về active")
         moi, giao_dien = quet_mot_nguon(s, nd, state)
         for t in moi:
             phat_hien.append(f"- **{s['org']}** · phát hiện {date.today().isoformat()} · "
@@ -567,6 +590,8 @@ def main() -> int:
         print(f"🟠 {len(phat_hien)} tiêu đề mới → {_duong_dan_hien_thi(f)}")
     for h in hong:
         print("  ✗ " + h)
+    for h in hoi_phuc:
+        print("  ↺ " + h)
     return 1 if (phat_hien or hong) else 0
 
 
