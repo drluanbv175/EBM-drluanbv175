@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -280,6 +280,29 @@ class Candidate:
         ngay = self.publication_date
         if not isinstance(ngay, str):
             object.__setattr__(self, "publication_date", "" if ngay is None else str(ngay))
+
+
+_TRUONG_UNG_VIEN = frozenset(f.name for f in fields(Candidate))
+_TRUONG_CHUOI_UNG_VIEN = ("pmid", "publication_date", "title", "url", "source", "journal_or_organization",
+                          "authority_source", "rut_bai")
+
+
+def _ung_vien_tu_so(muc: object) -> Candidate | None:
+    """Dựng lại một ứng viên dự phòng từ mục `cho_trinh` của sổ (30/09/2026). Sổ là tệp JSON nằm trong OneDrive — có
+    thể bị sửa tay/ghi dở — nên mục hỏng (không phải dict, thiếu trường bắt buộc, sai kiểu, không có khoá pmid/url)
+    trả `None` để bị BỎ, không làm sập lượt quét. Tầng luôn là `du_phong_bac_thang`: `main()` nhận diện bài còn chờ
+    trình theo đúng nhãn này."""
+    if not isinstance(muc, dict):
+        return None
+    du = {k: v for k, v in muc.items() if k in _TRUONG_UNG_VIEN}
+    try:
+        du["pubtype"] = tuple(str(x) for x in (du.get("pubtype") or ()))
+        c = replace(Candidate(**du), tang="du_phong_bac_thang")
+    except TypeError:
+        return None
+    if not all(isinstance(getattr(c, truong), str) for truong in _TRUONG_CHUOI_UNG_VIEN):
+        return None
+    return c if (c.pmid or c.url) else None
 
 
 @dataclass(frozen=True)
@@ -880,19 +903,60 @@ def _du_phong_path() -> Path:
     return DEFAULT_WATCHLIST.parent / ".du-phong-trang-thai.json"
 
 
-def doc_trang_thai_du_phong() -> dict:
-    """Sổ của bậc thang dự phòng TÍNH PHÍ (27/09/2026): `lan_cuoi_leo_thang` {chủ đề: ngày} để XOAY VÒNG giữa các
-    lượt quét, `da_trinh` {khoá bài: ngày} để không trình lại bài dự phòng đã trình ở lượt trước. Vắng/hỏng ⇒ sổ rỗng
-    (hệ quả chỉ là xoay vòng lại từ đầu và có thể trình lại bài cũ — không mất gì)."""
+def _cho_trinh_hop_le(tho: object) -> dict:
+    """Chuẩn hoá khoá `cho_trinh` đọc từ sổ: {chủ đề: {"ngay": ISO, "ung_vien": [dict ứng viên]}}; mục sai dạng bị bỏ."""
+    ra: dict = {}
+    if isinstance(tho, dict):
+        for chu_de, muc in tho.items():
+            if isinstance(muc, dict) and isinstance(muc.get("ung_vien"), list):
+                bai = [u for u in muc["ung_vien"] if isinstance(u, dict)]
+                if bai:
+                    ra[str(chu_de)] = {"ngay": str(muc.get("ngay") or ""), "ung_vien": bai}
+    return ra
+
+
+def _doc_so_du_phong() -> tuple[dict, str]:
+    """(sổ, lỗi) của bậc thang dự phòng TÍNH PHÍ. Sổ gồm `lan_cuoi_leo_thang` {chủ đề: ngày} để XOAY VÒNG và tính trần
+    tuần, `da_trinh` {khoá bài: ngày} để không trình lại bài đã trình, `cho_trinh` {chủ đề: {ngay, ung_vien}} — bài ĐÃ
+    LẤY (đã tốn hạn mức) mà báo cáo của lượt đó chưa tới nơi, lượt sau trình bù không gọi lại nguồn — và
+    `leo_thang_loi` {chủ đề: ngày} — lần leo thang gần nhất LỖI nên được thử lại trong tuần.
+
+    Tệp VẮNG ⇒ sổ rỗng hợp lệ (lỗi ""). Tệp CÓ mà không đọc được / không phải đối tượng JSON ⇒ (sổ rỗng, mô tả lỗi):
+    nơi gọi phải TẮT làn dự phòng của lượt đó và KHÔNG ghi sổ (vá 30/09/2026). Trước đây mọi lỗi đọc đều thành «sổ
+    rỗng, không mất gì» — đúng khi sổ chỉ là bộ nhớ xoay vòng, sai từ khi sổ giữ trần tuần và bài đã trả phí: một lần
+    đọc lỗi (tệp OneDrive chưa tải về, ghi dở) rồi ghi đè là mất hàng chờ, mất mốc của mọi chủ đề và gọi lại nguồn."""
     import json as _j
+    rong = {"lan_cuoi_leo_thang": {}, "da_trinh": {}, "cho_trinh": {}, "leo_thang_loi": {}}
+    duong = _du_phong_path()
+    # Lối thoát khi tệp ĐỌC ĐƯỢC nhưng HỎNG — phải nói ra, nếu không làn dự phòng tắt vô thời hạn mà không ai biết cách gỡ.
+    loi_thoat = (" — khôi phục bản trước từ lịch sử phiên bản OneDrive, hoặc đổi tên tệp để bắt đầu sổ mới (hệ quả: "
+                 "trần tuần tính lại từ 0, mất «đã trình» và hàng chờ)")
     try:
-        so = _j.loads(_du_phong_path().read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        so = {}
+        so = _j.loads(duong.read_text(encoding="utf-8-sig"))   # utf-8-sig: sổ có BOM (trình soạn thảo Windows) vẫn hợp lệ
+    except FileNotFoundError:
+        return rong, ""
+    except OSError as exc:
+        return rong, (f"không đọc được sổ {duong.name} ({type(exc).__name__}) — kiểm OneDrive đã tải tệp về chưa, "
+                      "có bản xung đột không, rồi chạy lại")
+    except ValueError:
+        return rong, f"sổ {duong.name} không phải JSON hợp lệ{loi_thoat}"
     if not isinstance(so, dict):
-        so = {}
+        return rong, f"sổ {duong.name} không phải đối tượng JSON{loi_thoat}"
+    # Từng khoá: vắng/None ⇒ rỗng; CÓ mà không phải đối tượng ⇒ sổ hỏng (kể cả `[]`, `""`, `0` — không ép kiểu thành
+    # rỗng rồi ghi đè; và không để `dict("x")` ném lỗi làm sập cả lượt quét).
+    for khoa in rong:
+        if so.get(khoa) is not None and not isinstance(so[khoa], dict):
+            return rong, f"sổ {duong.name} có khoá «{khoa}» sai kiểu{loi_thoat}"
     return {"lan_cuoi_leo_thang": dict(so.get("lan_cuoi_leo_thang") or {}),
-            "da_trinh": dict(so.get("da_trinh") or {})}
+            "da_trinh": dict(so.get("da_trinh") or {}),
+            "cho_trinh": _cho_trinh_hop_le(so.get("cho_trinh")),
+            "leo_thang_loi": dict(so.get("leo_thang_loi") or {})}, ""
+
+
+def doc_trang_thai_du_phong() -> dict:
+    """Sổ dự phòng, bỏ qua lỗi đọc (rỗng khi vắng/hỏng) — cho nơi CHỈ ĐỌC. `main()` dùng `_doc_so_du_phong()` để
+    phân biệt «vắng» với «không đọc được» trước khi ghi."""
+    return _doc_so_du_phong()[0]
 
 
 def ghi_trang_thai_du_phong(so: dict) -> None:
@@ -1248,6 +1312,27 @@ class _BanGhiToiThieu:
     ingest_query: str | None = None
 
 
+# Loại lỗi của engine mang nghĩa «hết hạn mức» — nguồn không (còn) tính tiền cho lời gọi đó và thử lại không giúp gì.
+_DU_PHONG_HET_HAN_MUC = frozenset({"het_ngan_sach", "het_quota"})
+# Một lần gọi LỖI được thử lại tối đa chừng này lần trong cùng tuần ISO (không biết lời gọi lỗi đã bị tính tiền chưa).
+TRAN_THU_LAI_DU_PHONG = 1
+
+
+class KetQuaDuPhong(tuple):
+    """Kết quả làn dự phòng: vẫn là cặp `(ứng viên, ghi chú)` như trước, thêm `.so_goi` — số lời gọi nguồn TÍNH PHÍ
+    đã thực hiện (đọc từ tóm tắt của engine). `0` = chắc chắn KHÔNG gọi (engine vắng · cờ tắt · engine thấy đã đủ
+    chứng cứ · hết ngân sách); `None` = không rõ (hàm tiêm sẵn không báo) ⇒ nơi gọi coi như ĐÃ gọi. 30/09/2026: trước
+    đó «được chọn leo thang» bị đồng nhất với «đã gọi nguồn» — máy không có engine vẫn tiêu suất tuần và mốc xoay vòng."""
+    so_goi: int | None
+    canh_bao: str   # lỗi MỘT PHẦN (một tầng hỏng nhưng vẫn có bài) — ghi chú cho chủ đề, không phải «lần gọi lỗi»
+
+    def __new__(cls, ung_vien: list, ghi_chu: str, so_goi: int | None = None, canh_bao: str = "") -> "KetQuaDuPhong":
+        ket_qua = super().__new__(cls, (ung_vien, ghi_chu))
+        ket_qua.so_goi = so_goi
+        ket_qua.canh_bao = canh_bao
+        return ket_qua
+
+
 def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retmax: int,
                           *, days: int | None = None,
                           bo_sung_fn: Callable[..., tuple] | None = None,
@@ -1301,10 +1386,10 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
     if bo_sung_fn is None:
         # Đường TỰ DÒ MÔI TRƯỜNG — bắt buộc cả mea LẪN RawRecord thật, không có đường lùi.
         if mea is None or RawRecord is None or not (mea / "app" / "services" / "fallback_ladder.py").exists():
-            return [], ""
+            return KetQuaDuPhong([], "", 0)
         from app.services.fallback_ladder import bo_sung_neu_thieu, du_phong_dang_bat  # noqa: PLC0415
         if not du_phong_dang_bat():
-            return [], ""
+            return KetQuaDuPhong([], "", 0)
         bo_sung_fn = bo_sung_neu_thieu
     if RawRecord is None:
         RawRecord = _BanGhiToiThieu
@@ -1333,7 +1418,35 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
             rut_bai="chua_kiem",
         ))
     ghi_chu = "" if not tom_tat.get("loi_noi_bo") else f"bậc thang dự phòng lỗi nội bộ: {tom_tat['loi_noi_bo']}"
-    return ra, ghi_chu
+    # Đọc tóm tắt TỪNG TẦNG của engine (`tang[<tên>]`: da_goi · so_loi · loi_cuoi · loi_chot) — 30/09/2026. Trước đó chỉ
+    # `loi_noi_bo` mới thành ghi chú, nên lỗi của CHÍNH NGUỒN (timeout · 5xx · 401 khoá sai) trôi qua im lặng: chủ đề
+    # bị coi là đã tra xong với 0 kết quả. «Hết hạn mức» (het_quota/het_ngan_sach) thì KHÔNG phải lỗi cần thử lại và
+    # KHÔNG phải lời gọi tính tiền (engine vẫn đếm `da_goi` cho `het_quota` do cờ, dù không gửi request) ⇒ trừ ra.
+    # Engine báo không hoạt động (`active` False: mock/không tầng nào bật) ⇒ 0 lời gọi; không có thông tin ⇒ None.
+    tang = tom_tat.get("tang") if isinstance(tom_tat, dict) else None
+    canh_bao = ""
+    if isinstance(tang, dict) and tang:
+        so_goi: int | None = 0
+        tang_loi: list[str] = []
+        for ten, t in tang.items():
+            if not isinstance(t, dict):
+                continue
+            goi, loi = int(t.get("da_goi") or 0), int(t.get("so_loi") or 0)
+            loai = str(t.get("loi_cuoi") or t.get("loi_chot") or "")
+            if loi and loai in _DU_PHONG_HET_HAN_MUC:
+                goi = max(0, goi - loi)
+            elif loi:
+                tang_loi.append(f"{ten}={loai or 'khac'}")
+            so_goi += goi
+        if tang_loi and not ghi_chu:
+            cau = "nguồn dự phòng lỗi: " + "; ".join(tang_loi)
+            if ra:
+                canh_bao = f"bậc thang dự phòng: {cau} (tầng khác vẫn trả bài)"
+            else:
+                ghi_chu = f"bậc thang dự phòng: {cau}"
+    else:
+        so_goi = 0 if isinstance(tom_tat, dict) and tom_tat.get("active") is False else None
+    return KetQuaDuPhong(ra, ghi_chu, so_goi, canh_bao)
 
 
 # ── Xếp hạng «mạnh nhất» (phương án B, 24/09/2026) ─────────────────────────────────────────────────────────
@@ -1451,6 +1564,8 @@ def run_scan(
     summarize_fn: Callable[[Sequence[str]], list[Candidate]] = summarize,
     tran_leo_thang_du_phong: int | None = None,
     trang_thai_du_phong: dict | None = None,
+    luu_so_du_phong: Callable[[dict], None] | None = None,
+    du_phong_tat_vi: str = "",
 ) -> dict:
     """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL.
 
@@ -1644,9 +1759,13 @@ def run_scan(
     # đầu được gọi, số còn lại «chờ lượt». Có sổ thì bài dự phòng đã trình ở lượt trước không trình lại.
     # Có sổ thì `tran` là trần của cả TUẦN ISO (29/09/2026): lượt W40 đầu tiên quét HAI lần trong một phiên (lần đầu sập)
     # nên leo thang 4 chủ đề trong một ngày — trần theo lượt để mỗi lần chạy lại đốt thêm hạn mức Consensus (10/tháng).
-    so = trang_thai_du_phong
+    # `du_phong_tat_vi` (30/09/2026): `main()` không đọc được sổ ⇒ TẮT cả làn dự phòng lượt này (không leo thang, không
+    # trình bù, không đụng sổ) thay vì coi sổ là rỗng rồi ghi đè.
+    so = None if du_phong_tat_vi else trang_thai_du_phong
     lan_cuoi = so.setdefault("lan_cuoi_leo_thang", {}) if so is not None else {}
     da_trinh = so.setdefault("da_trinh", {}) if so is not None else {}
+    cho_trinh = so.setdefault("cho_trinh", {}) if so is not None else {}
+    leo_thang_loi = so.setdefault("leo_thang_loi", {}) if so is not None else {}
     hom_nay_d = datetime.now(timezone.utc).date()
     hom_nay = hom_nay_d.isoformat()
 
@@ -1656,26 +1775,105 @@ def run_scan(
         except ValueError:
             return False
 
+    # HAI BẢN CỦA SỔ (30/09/2026). `so` là bản «báo cáo ĐÃ tới nơi» — `main()` chỉ ghi nó sau khi báo cáo được in/ghi
+    # xong. Bản «CHƯA tới nơi» (`_luu_som`) được ghi NGAY sau mỗi lời gọi nguồn tính phí: mốc leo thang + dấu lỗi hiện
+    # tại (hạn mức đã tiêu, trần tuần phải thấy), «đã trình» như TRƯỚC lượt này, và hàng chờ cũ + bài vừa lấy. Nhờ đó
+    # lượt sập ở khâu sau — kể cả bị ngắt GIỮA hai lời gọi — không mất bài đã trả phí: lượt sau trình bù từ hàng chờ.
+    da_trinh_truoc = dict(da_trinh)
+    cho_trinh_truoc = dict(cho_trinh)
+    vua_lay: dict[str, list[dict]] = {}
+
+    def _luu_som() -> None:
+        if so is None or luu_so_du_phong is None:
+            return
+        cho = dict(cho_trinh_truoc)
+        for chu_de, bai in vua_lay.items():
+            cu = cho.get(chu_de)
+            cho[chu_de] = {"ngay": hom_nay,
+                           "ung_vien": [u for u in (cu.get("ung_vien") if isinstance(cu, dict) else None) or []
+                                        if isinstance(u, dict)] + bai}
+        luu_so_du_phong({"lan_cuoi_leo_thang": dict(lan_cuoi), "da_trinh": dict(da_trinh_truoc), "cho_trinh": cho,
+                         "leo_thang_loi": dict(leo_thang_loi)})
+
+    # TRÌNH BÙ: bài dự phòng đã lấy ở lượt trước mà báo cáo chưa tới nơi nằm ở `cho_trinh` — đưa vào báo cáo lượt này,
+    # KHÔNG gọi lại nguồn tính phí và không tính vào trần tuần (hạn mức đã trừ lúc lấy). Trước đó chúng chỉ trở lại khi
+    # chủ đề tới lượt xoay vòng (~17–21 tuần), có thể không bao giờ. `tran == 0` = lượt này KHÔNG đụng làn dự phòng
+    # (lượt ĐẾM ra thư mục tạm của `uu_tien_cap_nhat`) ⇒ cũng không trình bù, để nguyên sổ. Chủ đề FAIL không hiện ứng
+    # viên trong báo cáo ⇒ giữ bài chờ cho lượt sau. Không phụ thuộc cổng «đủ bài mạnh»: bài đã trả phí thì phải trình.
+    trinh_bu: dict[str, int] = {}
+    if so is not None and tran_leo_thang_du_phong != 0:
+        for i, tr in enumerate(topic_results):
+            muc = cho_trinh.get(tr.topic)
+            if muc is None or tr.status == "FAIL":
+                continue
+            so_bu = 0
+            for tho in (muc.get("ung_vien") if isinstance(muc, dict) else None) or []:
+                candidate = _ung_vien_tu_so(tho)
+                khoa_c = (candidate.pmid or candidate.url) if candidate else ""
+                if not khoa_c or khoa_c in all_pmids or khoa_c in da_trinh:
+                    continue
+                all_pmids.add(khoa_c)
+                tr.candidates.append(candidate)
+                da_trinh[khoa_c] = hom_nay
+                so_bu += 1
+            del cho_trinh[tr.topic]
+            if so_bu:
+                trinh_bu[tr.topic] = so_bu
+                topic_results[i] = replace(tr, error="; ".join(x for x in (
+                    tr.error, f"bậc thang dự phòng: trình bù {so_bu} bài đã lấy ở lượt trước mà báo cáo chưa tới nơi "
+                              "(không gọi lại nguồn tính phí)") if x))
+
     da_dung_tuan = sum(1 for v in lan_cuoi.values() if _cung_tuan(v))
     con_lai = None if tran_leo_thang_du_phong is None else max(0, tran_leo_thang_du_phong - da_dung_tuan)
-    thu_tu = sorted(range(len(cho_du_phong)),
-                    key=lambda j: (str(lan_cuoi.get(topic_results[cho_du_phong[j][0]].topic, "")), j))
-    duoc_leo = set(thu_tu if con_lai is None else thu_tu[:con_lai])
+    # Chủ đề ĐÃ leo thang XONG trong tuần ISO này thì không gọi lại (30/09/2026). Trần tuần đếm số chủ đề KHÁC NHAU,
+    # nên chạy lặp lượt một-chủ-đề (`--topic`, A2 của orchestrator, hay chạy lại sau lượt sập khi còn suất) từng gọi
+    # nguồn tính phí thêm mỗi lần mà bộ đếm không nhúc nhích — đo: 3 lượt cùng chủ đề = 3 lời gọi, kết quả lần 2–3 bị
+    # bỏ vì trùng. «Xong» = lần gần nhất KHÔNG lỗi, hoặc đã lỗi quá số lần thử lại cho phép. Lần lỗi (dấu
+    # `leo_thang_loi` {chủ đề: {ngay, so_lan}}) chưa có kết quả nên được thử lại khi còn suất — nhưng chỉ
+    # `TRAN_THU_LAI_DU_PHONG` lần: không giới hạn thì 5 lượt cùng lỗi = 5 lời gọi có thể đã bị tính tiền, trong khi
+    # bộ đếm tuần vẫn đứng yên. Chỉ áp khi có trần (đường `main()`); gọi thư viện không trần giữ hành vi cũ.
+    def _so_lan_loi_tuan_nay(chu_de: str) -> int:
+        dau = leo_thang_loi.get(chu_de)
+        if not isinstance(dau, dict) or not _cung_tuan(dau.get("ngay")):
+            return 0
+        try:
+            return max(1, int(dau.get("so_lan") or 1))
+        except (TypeError, ValueError):
+            return 1
+
+    def _xong_tuan_nay(chu_de: str) -> bool:
+        return _cung_tuan(lan_cuoi.get(chu_de)) and not 0 < _so_lan_loi_tuan_nay(chu_de) <= TRAN_THU_LAI_DU_PHONG
+
+    da_leo_tuan_nay = ({j for j, (i, _q) in enumerate(cho_du_phong) if _xong_tuan_nay(topic_results[i].topic)}
+                       if so is not None and tran_leo_thang_du_phong is not None else set())
+    thu_tu = [] if du_phong_tat_vi else sorted(
+        (j for j in range(len(cho_du_phong)) if j not in da_leo_tuan_nay),
+        key=lambda j: (str(lan_cuoi.get(topic_results[cho_du_phong[j][0]].topic, "")), j))
     da_leo_thang: list[str] = []
+    du_phong_loi: list[str] = []
+    du_phong_thu_lai: list[str] = []
     bo_trung_xuyen_tuan = 0
-    for j, (i, truy_van) in enumerate(cho_du_phong):
-        tr = topic_results[i]
-        ghi_them: list[str] = []
-        if j not in duoc_leo:
-            du_phong_khong_leo["cho_luot_xoay_vong"] = du_phong_khong_leo.get("cho_luot_xoay_vong", 0) + 1
-            ghi_them.append(f"bậc thang dự phòng: chờ lượt — mỗi tuần chỉ {tran_leo_thang_du_phong} chủ đề được leo "
-                            f"thang (xoay vòng, chủ đề lâu chưa xét đi trước; tuần này đã dùng {da_dung_tuan})")
-        else:
-            da_leo_thang.append(tr.topic)
-            if so is not None:
-                lan_cuoi[tr.topic] = hom_nay
+    ghi_them_theo: dict[int, list[str]] = {}
+    da_xet: set[int] = set()
+    so_suat_da_tieu = 0
+    # Chọn theo ĐỢT: mỗi đợt lấy số chủ đề đầu hàng xoay vòng bằng số suất còn lại, gọi theo thứ tự watchlist. Chủ đề
+    # được chọn mà nguồn KHÔNG được gọi (`so_goi == 0`: engine vắng · cờ tắt · engine thấy đã đủ chứng cứ · hết ngân
+    # sách) không tiêu suất, không ghi mốc ⇒ đợt sau trao suất cho chủ đề kế tiếp. Trước đó «được chọn» = «đã tiêu»:
+    # máy không có engine vẫn đốt 2 suất/tuần và đẩy chủ đề xuống cuối vòng xoay mà không gọi gì.
+    while True:
+        con = None if con_lai is None else con_lai - so_suat_da_tieu
+        ung_cu = [j for j in thu_tu if j not in da_xet]
+        chon = ung_cu if con is None else ung_cu[:max(0, con)]
+        if not chon:
+            break
+        for j in sorted(chon):
+            da_xet.add(j)
+            i, truy_van = cho_du_phong[j]
+            tr = topic_results[i]
+            ghi_them = ghi_them_theo.setdefault(j, [])
             try:
-                extra, ghi_chu_du_phong = bo_sung_du_phong_lane(truy_van, tr.candidates, max_results, days=days)
+                ket_qua = bo_sung_du_phong_lane(truy_van, tr.candidates, max_results, days=days)
+                extra, ghi_chu_du_phong = ket_qua
                 for candidate in extra:
                     khoa_c = candidate.pmid or candidate.url
                     if khoa_c in all_pmids:
@@ -1687,13 +1885,69 @@ def run_scan(
                     tr.candidates.append(candidate)
                     if so is not None:
                         da_trinh[khoa_c] = hom_nay
+                        vua_lay.setdefault(tr.topic, []).append(asdict(candidate))
+                canh_bao_mot_phan = getattr(ket_qua, "canh_bao", "")
                 if ghi_chu_du_phong:
                     ghi_them.append(ghi_chu_du_phong)
                     tr.lan_phu_loi.append("du_phong_bac_thang")
+                    trang_thai_goi = "loi"
+                elif canh_bao_mot_phan:
+                    ghi_them.append(canh_bao_mot_phan)
+                    tr.lan_phu_loi.append("du_phong_bac_thang")
+                    trang_thai_goi = "da_goi"
+                elif getattr(ket_qua, "so_goi", None) == 0 and not extra:
+                    trang_thai_goi = "khong_goi"
+                else:
+                    trang_thai_goi = "da_goi"
             except Exception as exc:  # noqa: BLE001 — làn phụ, ghi chú minh bạch
                 ghi_them.append(f"làn du_phong_bac_thang lỗi: {type(exc).__name__}")
                 tr.lan_phu_loi.append("du_phong_bac_thang")
+                trang_thai_goi = "loi"
+            if trang_thai_goi == "khong_goi":
+                du_phong_khong_leo["nguon_khong_goi"] = du_phong_khong_leo.get("nguon_khong_goi", 0) + 1
+                ghi_them.append("bậc thang dự phòng: được chọn nhưng nguồn tính phí KHÔNG được gọi (engine vắng · cờ "
+                                "tắt · engine thấy đã đủ chứng cứ · hết ngân sách) — không tính suất tuần")
+                continue
+            # Lỗi thì KHÔNG biết lời gọi đã tới nguồn chưa ⇒ vẫn tính suất (không đốt thêm ngoài ý muốn), nhưng đánh
+            # dấu để lượt sau cùng tuần được thử lại: chưa có kết quả thì không được nói «đã tra».
+            so_lan_loi_truoc = _so_lan_loi_tuan_nay(tr.topic)
+            if so_lan_loi_truoc:
+                du_phong_thu_lai.append(tr.topic)   # thử lại lần gọi lỗi: chủ đề đã được tính suất ở lần trước
+            else:
+                so_suat_da_tieu += 1
+            da_leo_thang.append(tr.topic)
+            if trang_thai_goi == "loi":
+                du_phong_loi.append(tr.topic)
+                if so_lan_loi_truoc >= TRAN_THU_LAI_DU_PHONG:
+                    ghi_them.append(f"bậc thang dự phòng: đã lỗi {so_lan_loi_truoc + 1} lần trong tuần này — không thử lại "
+                                    "nữa cho tới tuần sau")
+            if so is not None:
+                lan_cuoi[tr.topic] = hom_nay
+                if trang_thai_goi == "loi":
+                    leo_thang_loi[tr.topic] = {"ngay": hom_nay, "so_lan": so_lan_loi_truoc + 1}
+                else:
+                    leo_thang_loi.pop(tr.topic, None)
+                _luu_som()
+        if con is None:
+            break
+    for j, (i, _truy_van) in enumerate(cho_du_phong):
+        ghi_them = ghi_them_theo.setdefault(j, [])
+        if du_phong_tat_vi:
+            du_phong_khong_leo["so_khong_doc_duoc"] = du_phong_khong_leo.get("so_khong_doc_duoc", 0) + 1
+            ghi_them.append(f"bậc thang dự phòng: TẮT lượt này — {du_phong_tat_vi}")
+        elif j in da_leo_tuan_nay and _so_lan_loi_tuan_nay(topic_results[i].topic):
+            du_phong_khong_leo["loi_het_luot_thu_lai"] = du_phong_khong_leo.get("loi_het_luot_thu_lai", 0) + 1
+            ghi_them.append(f"bậc thang dự phòng: đã lỗi {_so_lan_loi_tuan_nay(topic_results[i].topic)} lần trong tuần "
+                            "này — không thử lại nữa cho tới tuần sau (chưa có kết quả)")
+        elif j in da_leo_tuan_nay:
+            du_phong_khong_leo["da_leo_thang_tuan_nay"] = du_phong_khong_leo.get("da_leo_thang_tuan_nay", 0) + 1
+            ghi_them.append("bậc thang dự phòng: chủ đề đã leo thang trong tuần này — không gọi lại nguồn tính phí")
+        elif j not in da_xet:
+            du_phong_khong_leo["cho_luot_xoay_vong"] = du_phong_khong_leo.get("cho_luot_xoay_vong", 0) + 1
+            ghi_them.append(f"bậc thang dự phòng: chờ lượt — mỗi tuần chỉ {tran_leo_thang_du_phong} chủ đề được leo "
+                            f"thang (xoay vòng, chủ đề lâu chưa xét đi trước; tuần này đã dùng {da_dung_tuan})")
         if ghi_them:
+            tr = topic_results[i]
             topic_results[i] = replace(tr, error="; ".join(x for x in (tr.error, *ghi_them) if x))
     if so is not None:
         # Sổ không phình mãi: quên bài đã trình quá 400 ngày (Consensus/SerpApi lọc theo NĂM — sang năm thứ hai bài
@@ -1701,6 +1955,14 @@ def run_scan(
         moc = (datetime.now(timezone.utc) - timedelta(days=400)).date().isoformat()
         for khoa_c in [k for k, v in da_trinh.items() if str(v) < moc]:
             del da_trinh[khoa_c]
+        for chu_de in [k for k, v in cho_trinh.items()
+                       if isinstance(v, dict) and v.get("ngay") and str(v["ngay"]) < moc]:
+            del cho_trinh[chu_de]  # chủ đề đã rời watchlist: bài chờ trình không bao giờ tới lượt
+        for chu_de in [k for k in leo_thang_loi if not _so_lan_loi_tuan_nay(k)]:
+            del leo_thang_loi[chu_de]  # dấu lỗi chỉ có nghĩa trong tuần nó xảy ra (dấu sai dạng cũng bị dọn)
+    # Số chủ đề đã tiêu suất trong tuần SAU lượt này — con số mà lệnh nâng trần phải vượt qua.
+    da_dung_tuan_sau_luot = (sum(1 for v in lan_cuoi.values() if _cung_tuan(v)) if so is not None
+                             else da_dung_tuan + so_suat_da_tieu)
 
     success_count = sum(result.status == "PASS" for result in topic_results)
     degraded_count = sum(result.status == "PASS_DEGRADED" for result in topic_results)
@@ -1726,14 +1988,21 @@ def run_scan(
         "degraded_topics": degraded_count,
         "failed_topics": failure_count,
         "candidate_count": len(all_pmids),
-        # Số chủ đề KHÔNG leo thang dự phòng theo lý do (ncbi_loi · du_bai_manh · chua_co_truy_van_tieng_anh).
+        # Số chủ đề KHÔNG leo thang dự phòng theo lý do (ncbi_loi · du_bai_manh · chua_co_truy_van_tieng_anh ·
+        # cho_luot_xoay_vong · da_leo_thang_tuan_nay · loi_het_luot_thu_lai · nguon_khong_goi · so_khong_doc_duoc).
         "du_phong_khong_leo_thang": dict(sorted(du_phong_khong_leo.items())),
         # Xoay vòng (27/09/2026): chủ đề đã leo thang lượt này · trần mỗi lượt (None = không trần) · số bài dự phòng
         # bỏ vì đã trình ở lượt trước.
-        "du_phong_da_leo_thang": da_leo_thang,
+        "du_phong_da_leo_thang": da_leo_thang,     # chủ đề ĐÃ TIÊU một suất tuần (đã gọi nguồn, hoặc gọi mà lỗi)
+        "du_phong_loi": du_phong_loi,              # trong số đó: lần gọi LỖI — chưa có kết quả (thử lại có giới hạn)
+        "du_phong_thu_lai": du_phong_thu_lai,      # trong số đó: THỬ LẠI lần gọi lỗi của tuần này — không tính thêm suất
+        "du_phong_da_dung_tuan_sau_luot": da_dung_tuan_sau_luot,
+        "du_phong_tat_vi": du_phong_tat_vi,        # khác rỗng: cả làn dự phòng bị tắt lượt này (sổ không đọc được)
         "du_phong_tran_moi_luot": tran_leo_thang_du_phong,
         "du_phong_da_dung_tuan": da_dung_tuan,   # số chủ đề đã leo thang trong tuần ISO này TRƯỚC lượt này (theo sổ)
         "du_phong_bo_trung_xuyen_tuan": bo_trung_xuyen_tuan,
+        # Trình bù (30/09/2026): {chủ đề: số bài} lấy ở lượt trước mà báo cáo chưa tới nơi, nay đưa vào báo cáo này.
+        "du_phong_trinh_bu": dict(sorted(trinh_bu.items())),
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
         "next_state": "CANDIDATE_REVIEW_QUEUE",
@@ -1766,6 +2035,18 @@ def markdown_report(report: dict) -> str:
            + (f" · bỏ {report['du_phong_bo_trung_xuyen_tuan']} bài đã trình ở lượt trước"
               if report.get("du_phong_bo_trung_xuyen_tuan") else "")]
           if report.get("du_phong_da_leo_thang") else []),
+        *([f"- 🟠 **Bậc thang dự phòng TẮT lượt này: {report['du_phong_tat_vi']}** — không leo thang, không trình bù, "
+           "KHÔNG ghi sổ (sổ giữ trần tuần và bài đã trả phí; coi nó là rỗng rồi ghi đè là mất). Kiểm "
+           "`EBM-Dashboards/.du-phong-trang-thai.json` (OneDrive đã tải về chưa, có bản xung đột không) rồi chạy lại."]
+          if report.get("du_phong_tat_vi") else []),
+        *([f"- 🟠 Bậc thang dự phòng LỖI ở {len(report['du_phong_loi'])} chủ đề ({', '.join(report['du_phong_loi'])}) "
+           f"— chưa có kết quả; suất tuần đã tính, chạy lại trong tuần sẽ thử lại tối đa {TRAN_THU_LAI_DU_PHONG} lần "
+           "khi còn suất"]
+          if report.get("du_phong_loi") else []),
+        *([f"- Bậc thang dự phòng: trình BÙ {sum(report['du_phong_trinh_bu'].values())} bài đã lấy ở lượt trước mà báo "
+           f"cáo chưa tới nơi ({', '.join(f'{k}: {v}' for k, v in report['du_phong_trinh_bu'].items())}) — không gọi "
+           "lại nguồn tính phí"]
+          if report.get("du_phong_trinh_bu") else []),
         "- Nguồn chính: PubMed E-utilities; dự phòng minh bạch: Europe PMC khi NCBI tạm lỗi",
         "- Trusted-source label: official guideline/regulator bodies, Cochrane, NEJM, Lancet, JAMA, BMJ, Annals, Nature Medicine, and core specialty societies/journals.",
         "- **Nhãn độ tin cậy gắn NGAY lúc nhận:** trạng thái rút bài (chuỗi 3 tầng) · loại "
@@ -1954,21 +2235,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             # run_scan, KHÔNG đổi hành vi) — chỉ để test CLI monkeypatch được S.search/S.summarize;
             # tham số mặc định của run_scan() gắn với đối tượng hàm lúc ĐỊNH NGHĨA, monkeypatch
             # thuộc tính module sau đó không có tác dụng nếu gọi không truyền tường minh ở đây.
-            so_du_phong = doc_trang_thai_du_phong()
+            so_du_phong, loi_doc_so = _doc_so_du_phong()
             so_du_phong_truoc = json.loads(json.dumps(so_du_phong))
             report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor,
                               search_fn=search, summarize_fn=summarize,
-                              tran_leo_thang_du_phong=args.tran_du_phong, trang_thai_du_phong=so_du_phong)
+                              tran_leo_thang_du_phong=args.tran_du_phong, trang_thai_du_phong=so_du_phong,
+                              luu_so_du_phong=ghi_trang_thai_du_phong, du_phong_tat_vi=loi_doc_so)
         except ValueError as exc:
             parser.error(str(exc))
-        # HẠN MỨC TÍNH PHÍ đã tiêu ⇒ ghi NGAY mốc leo thang (trần tuần/xoay vòng phải thấy dù lượt này sập về sau).
-        # «Đã trình» thì CHƯA ghi ở đây (vá 30/09/2026): bài chỉ được coi là đã trình khi báo cáo tới nơi — xem cuối
-        # hàm. Trước bản vá, lượt sập SAU khi sổ đã ghi sẽ để lại dấu «đã trình» cho bài chưa ai thấy ⇒ bị lọc 400 ngày
-        # (tái hiện được ngoại tuyến; sổ thật ngày 29/09 đo lại KHÔNG có khoá mồ côi nào). CÁI GIÁ của thiết kế này,
-        # nói thẳng: bài dự phòng của lượt sập không được trình lại ngay khi chạy lại (trần tuần đã tiêu) — nó chỉ trở
-        # lại khi chủ đề tới lượt xoay vòng, và hạn mức đã tiêu không hoàn lại.
-        if so_du_phong.get("lan_cuoi_leo_thang") != so_du_phong_truoc.get("lan_cuoi_leo_thang"):
-            ghi_trang_thai_du_phong({**so_du_phong, "da_trinh": so_du_phong_truoc.get("da_trinh", {})})
+        # Sổ dự phòng: `run_scan` đã tự ghi bản «báo cáo CHƯA tới nơi» ngay sau từng lời gọi nguồn tính phí (mốc leo
+        # thang + bài vừa lấy vào hàng chờ `cho_trinh`, «đã trình» giữ như cũ). Bản «ĐÃ tới nơi» — `so_du_phong` — chỉ
+        # được ghi ở cuối hàm, sau khi báo cáo được in/ghi xong.
         if ghi_con_tro:
             # HAI LUẬT RIÊNG, không được gộp làm một (phản biện vòng 2 22/09 bắt được: bản gộp đầu
             # tiên làm test PASS-hợp-lệ đỏ oan — run_scan CHỈ tiến cursor cho chủ đề PASS nên hai
@@ -2014,6 +2291,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         f"đủ (NCBI lỗi/bị chặn phải dùng Europe PMC dự phòng, hoặc thiếu bản tóm tắt — lý do từng "
                         f"chủ đề ở báo cáo quét) — {', '.join(suy_giam_ten)}. Kết quả có thể THIẾU; con trỏ các "
                         "chủ đề này KHÔNG tiến, chạy lại khi nguồn trả lời được.")
+        if report.get("du_phong_tat_vi"):
+            # Không tự hết: tệp hỏng thì MỌI lượt sau đều tắt làn dự phòng (mã thoát vẫn 0) cho tới khi có người sửa.
+            khan.append(f"- 🟠 BẬC THANG DỰ PHÒNG TẮT: {report['du_phong_tat_vi']}. Lượt này không leo thang, không "
+                        "trình bù, không ghi sổ — và mọi lượt sau cũng vậy cho tới khi sổ đọc được.")
         for _t in report["topics"]:
             if _t["status"] == "FAIL":
                 khan.append(f"- 🔴 CỔNG QUÉT FAIL: chủ đề «{_t['topic']}» — `{_t['error'][:90]}`")
@@ -2044,8 +2325,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         # BÁO CÁO ĐÃ TỚI NƠI ⇒ giờ mới ghi «đã trình» và tiến con trỏ (vá 30/09/2026). Lượt W40 ngày 29/09 sập ở bước
         # đo độ trễ SAU khi con trỏ đã tiến cho 47 chủ đề và TRƯỚC khi có báo cáo ⇒ cửa sổ «đã quét» mà không ai thấy
         # ứng viên nào — đúng kiểu mất im lặng mà con trỏ phải tránh. Nay mọi lỗi trước dòng này (đo trễ, cảnh báo,
-        # dựng/in/ghi báo cáo) để NGUYÊN con trỏ ⇒ lượt sau quét lại đúng cửa sổ đó: với CỬA SỔ CON TRỎ cái giá là có
-        # thể trình lặp, không phải bỏ sót (bài dự phòng tính phí thì xem chú thích chỗ ghi sớm). Vẫn nằm trong khoá.
+        # dựng/in/ghi báo cáo) để NGUYÊN con trỏ ⇒ lượt sau quét lại đúng cửa sổ đó: cái giá là có thể trình lặp,
+        # không phải bỏ sót (bài dự phòng tính phí đã lấy thì nằm ở `cho_trinh`, lượt sau trình bù). Vẫn nằm trong khoá.
         if so_du_phong != so_du_phong_truoc:
             ghi_trang_thai_du_phong(so_du_phong)
         # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): CHỈ ghi khi NỘI DUNG con trỏ thật sự đổi (có ≥1 chủ

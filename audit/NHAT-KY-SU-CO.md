@@ -3584,3 +3584,46 @@ pre-commit cây chính chặn mọi commit).
 pytest, BH136 đỏ đúng chỗ với 7 phép thuộc hành vi nó canh. Phản biện đối kháng 3 lăng kính: 16 phát hiện, 13 có thật (7 vấn đề
 riêng) — gồm một ca test XANH GIẢ của chính bản vá (`write_atomic` nổ ở lần ghi sổ sớm, xanh cả trên mã cũ) và đột biến «ghi đã
 trình trước khi ghi TỆP báo cáo» từng sống sót; đã vá hết trừ hai mục (b)/(c) chờ bác sĩ.
+
+### 30/09/2026 (tối) — Đóng hai mục chờ của BH136: hàng chờ `cho_trinh` và trần tuần dùng chung
+Bác sĩ giao «hoàn thiện 2 mục còn chờ» của mục ngay trên.
+**(1) Bài dự phòng tính phí của lượt sập.** Sau BH136, bài của lượt sập không bị đánh dấu sai nhưng cũng không được trình lại khi
+chạy lại cùng tuần — chờ xoay vòng ~17–21 tuần. Nay sổ `.du-phong-trang-thai.json` có thêm hàng chờ `cho_trinh` {chủ đề: {ngay,
+ung_vien}}: `run_scan` ghi bản «báo cáo CHƯA tới nơi» của sổ NGAY sau TỪNG lời gọi nguồn tính phí (mốc leo thang + bài vừa lấy vào
+hàng chờ, «đã trình» giữ như cũ) — nên cả khi tiến trình bị ngắt giữa hai lời gọi, lời gọi đã xong không mất; lượt sau TRÌNH BÙ
+(không gọi lại nguồn, không tính vào trần), và `main()` chỉ ghi bản «ĐÃ tới nơi» sau khi báo cáo được in/ghi xong. Ranh giới: lượt
+`--tran-du-phong 0` (lượt đếm của `uu_tien_cap_nhat`) không trình bù, để nguyên hàng chờ; chủ đề FAIL giữ bài chờ cho lượt sau;
+lượt `--topic` chỉ trình bù chủ đề đó; trình bù không phụ thuộc cổng «đủ bài mạnh»/suy giảm; bài đã có qua làn chính không trình
+đôi; mục hỏng trong sổ bị bỏ, không làm sập; hàng chờ quá 400 ngày bị tỉa, mục không rõ ngày thì giữ.
+**(2) A2 của orchestrator và trần tuần.** Quyết định: GIỮ một trần dùng chung — chính nó chặn `--cu-nhat N` đốt N lượt Consensus/
+SerpApi trong một ngày — nhưng phải nói ra ở nơi dùng: A2 in, ghi log máy đọc, và đưa vào phiếu 👤 ba loại cần bác sĩ quyết (trần
+chặn — kèm lệnh với CON SỐ cụ thể `--tran-du-phong <số đã dùng + 1>` và cái giá là hạn mức THÁNG; lần gọi lỗi; sổ không đọc được).
+Agent không tự nâng trần.
+**Ba lỗ có sẵn, lộ ra khi làm (đều đo được):** (a) trần tuần đếm số chủ đề KHÁC NHAU ⇒ chạy lặp lượt một-chủ-đề cho cùng chủ đề
+gọi nguồn tính phí mỗi lần mà bộ đếm đứng yên — đo: 3 lượt `--topic Alpha` = 3 lời gọi, kết quả lần 2–3 bị bỏ vì trùng; nay chủ đề
+đã leo thang XONG trong tuần không gọi lại (3 lượt = 1 lời gọi). (b) «Được chọn leo thang» bị đồng nhất với «đã gọi nguồn»: máy
+không có engine (hoặc cờ dự phòng tắt) vẫn ghi mốc và tiêu 2 suất/tuần mà không gọi gì; nay làn báo số lời gọi thật
+(`KetQuaDuPhong.so_goi`, đọc từ tóm tắt TỪNG TẦNG của engine) — không gọi thì không tiêu suất, không ghi mốc, suất chuyển cho chủ
+đề kế tiếp; «hết hạn mức» (`het_quota`, engine vẫn đếm `da_goi` dù không gửi request) bị trừ ra. (c) Sổ đọc lỗi một lần (tệp
+OneDrive chưa tải về, ghi dở) bị coi là rỗng rồi ghi đè ⇒ mất mốc mọi chủ đề, mất hàng chờ, gọi lại nguồn; nay tệp VẮNG mới là sổ
+rỗng, tệp có mà không đọc được (hỏng JSON, khoá sai kiểu kể cả `[]`/`0`/`""`) ⇒ TẮT làn dự phòng lượt đó, không ghi sổ, báo 🟠 trong
+báo cáo và `alerts/`, thông điệp kèm lối thoát; sổ có BOM UTF-8 vẫn hợp lệ.
+**Ba vòng phản biện, mỗi vòng bắt lỗi của bản trước (đều đã sửa trước khi commit):** vòng 1 (14/16 phát hiện có thật): luật (a) bản
+đầu khoá cả tuần một chủ đề mà lần gọi trước LỖI, orchestrator in «đã gọi… kết quả đã nằm ở lượt trước» cho ca đó — sai; phiếu hứa
+«chủ đề tự tới lượt ở tuần sau» (sai với xoay vòng) và gợi ý «số lớn hơn» (phải lớn hơn số ĐÃ DÙNG). Vòng 2 (kiểm chứng độc lập trên
+bản viết lại, 11 lỗi mới trên 2 lăng kính): lỗi của CHÍNH nguồn (timeout/5xx/401) không được nhận là lỗi ⇒ chủ đề bị ghi «xong» với 0
+kết quả và khoá cả tuần; dấu lỗi cho gọi lại KHÔNG giới hạn (5 lượt cùng lỗi = 5 lời gọi, trần 2); lệnh nâng trần in ra thiếu
+`--topic`/`--khong-cursor` (làm nguyên văn thì suất rơi vào chủ đề KHÁC và con trỏ gói tuần bị ghi cho cả watchlist) và con số phải
+tính SAU lượt; sổ có khoá sai kiểu sập cả lượt hoặc bị ép rỗng rồi ghi đè; BOM bị coi là hỏng; sổ hỏng không lên `alerts/`. Nay: thử
+lại lần gọi lỗi đúng MỘT lần mỗi tuần (không tính thêm suất; orchestrator gọi là «thử lại» chứ không phải «dùng suất mới»); lệnh nâng
+trần đầy đủ, chép-dán được, với `du_phong_da_dung_tuan_sau_luot + 1`.
+**Kiểm:** 75 ca test mới (đếm bằng `--collect-only`, gồm 24 ca tham số hoá của «khoá sai kiểu») ở `tools/test_surveillance_scan_20260930_cho_trinh_du_phong.py` + 7 ca ở `tools/test_orchestrator_ops.py`;
+BH136 mở rộng nhánh (d). Đột biến tự chọn: vòng 1 21/21 đỏ; vòng 2 29 phép (27 đỏ ngay, 2 sống sót ⇒ bổ sung ca, chạy lại đỏ); vòng 3
+17/17 đỏ. Ba test cũ đổi kỳ vọng CÓ CHỦ Ý (không phải nới): «chạy lại cùng tuần chưa trình» nay là «trình bù ngay»; câu của hai chủ
+đề đã leo thang đổi từ «chờ lượt» sang «đã leo thang trong tuần này»; số lần ghi sổ trong khoá tăng vì ghi sau từng lời gọi.
+**Giới hạn nói thẳng:** bài trình bù mang trạng thái rút bài «chưa kiểm» như mọi bài dự phòng; sổ là tệp trong OneDrive — hai máy
+cùng ghi vẫn có thể đè nhau; lần gọi LỖI sau khi nguồn đã tính tiền rồi thử lại là trả phí hai lần (không phân biệt được từ phía
+bộ quét — vì vậy chỉ thử lại MỘT lần mỗi tuần; ngân sách tháng của engine vẫn chặn trên); lệnh nâng trần trong phiếu là gợi ý để bác
+sĩ tự chạy (orchestrator không có cờ `--tran-du-phong` để truyền xuống A2); tuần ISO tính theo UTC; chưa có lượt sập thật nào kể từ khi có cơ chế này nên
+đường trình bù mới chỉ được kiểm bằng test và BH136, chưa gặp trên dữ liệu thật. **Triển khai:** như mục trên — bản thật sự chạy
+nằm ở `EBM-Dashboards/tools/` (ngoài git), merge xong phải chép tay và đẩy runtime app.
