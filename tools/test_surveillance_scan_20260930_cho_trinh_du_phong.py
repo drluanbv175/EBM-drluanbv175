@@ -13,6 +13,7 @@ Offline hoàn toàn: làn mạng bị chặn, watchlist/con trỏ/khoá/sổ/ale
 from __future__ import annotations
 
 import datetime as dt
+import errno
 import importlib.util
 import json
 import sys
@@ -429,7 +430,10 @@ def test_so_hong_thi_tat_lan_du_phong_va_khong_ghi_de(kho, capsys, noi_dung):
 
 
 def test_doc_so_loi_he_thong_cung_tat_lan_du_phong(kho, monkeypatch):
-    """Tệp OneDrive chưa tải về: đọc ném OSError (không phải «vắng») ⇒ không được coi là sổ rỗng."""
+    """Tệp OneDrive chưa tải về: đọc ném OSError (không phải «vắng») ⇒ không được coi là sổ rỗng.
+
+    Dùng `errno.EIO`: CÓ mà không có lớp con riêng ở mọi nền tảng. Bản đầu dùng errno 11 — trên macOS là EDEADLK (ra
+    `OSError`) nhưng trên Linux/Windows là EAGAIN, Python đổi thành `BlockingIOError` ⇒ test đỏ trên CI (30/09/2026)."""
     kho.so.write_text(json.dumps({"lan_cuoi_leo_thang": {}, "da_trinh": {"k": "2026-09-29"},
                                   "cho_trinh": {"Gamma": {"ngay": "2026-09-29", "ung_vien": [
                                       {"pmid": "", "url": "https://doi.org/10.1/g", "publication_date": "2026", "title": "G"}]}}}),
@@ -439,12 +443,13 @@ def test_doc_so_loi_he_thong_cung_tat_lan_du_phong(kho, monkeypatch):
 
     def doc(self, *a, **k):
         if self == kho.so:
-            raise OSError(11, "Resource deadlock avoided")
+            raise OSError(errno.EIO, "Input/output error")
         return doc_that(self, *a, **k)
     with monkeypatch.context() as m:
         m.setattr(Path, "read_text", doc)
         assert _chay(kho) == 0
-        assert "OSError" in _bc(kho)["du_phong_tat_vi"]
+        loi = _bc(kho)["du_phong_tat_vi"]
+        assert "không đọc được sổ" in loi and "(OSError)" in loi and "OneDrive" in loi
     assert kho.so.read_bytes() == truoc and kho.goi == []
     assert _chay(kho) == 0 and "Gamma" in _bc(kho)["du_phong_trinh_bu"], "đọc lại được thì hàng chờ còn nguyên"
 
