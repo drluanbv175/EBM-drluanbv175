@@ -8229,6 +8229,322 @@ def _bh136_than():
     return True, ""
 
 
+# ── BH137–BH138 (30/09): sổ nguồn phải nói thật về CÁI GÌ đang tồn tại và nó ĐANG ra sao ──────────────────────────────
+# Lượt đo sống 30/09 đối chiếu `data/sources.json` với thực tế: 3 client nguồn của engine thêm từ 20/09 (RxNorm, EMA
+# medicines, Scite public) chưa từng có mục ⇒ `sources_health.py` không bao giờ thấy chúng (EMA trả 403 cả ngày mà không
+# dòng nào báo); đối chiếu CẢ TẬP module còn lộ Unpaywall (dùng từ 19/08, client engine thì không ai gọi). Hai công cụ đọc
+# sổ cũng làm nó nói sai: tuyên bố độ phủ in MỌI nguồn active dưới «Đang giám sát tự động» (9/30 là công cụ gọi theo yêu
+# cầu), và vòng quét trạm web hội chỉ biết HẠ nhãn nên một lần trượt mạng thành `degraded` vĩnh viễn (GOLD, 29→30/09).
+
+# Module trong `medical-ebm-automation/app/sources/` ↔ mục sổ. Giá trị là tuple mã SRC (≥ 1 mã có thật trong sổ), hoặc chuỗi
+# «miễn: <lý do>» cho tệp không phải nguồn, hoặc «chưa khai: <khoảng trống đã biết>» cho họ module mà sổ mới khai một phần.
+# Thêm module vào engine mà không khai ở đây ⇒ chốt đỏ: nguồn không khai báo thì với hệ nó không tồn tại (P2 của sổ).
+_BH137_MODULE_NGUON = {
+    "pubmed.py": ("SRC-001", "SRC-002"),
+    "europepmc.py": ("SRC-005",),
+    "crossref.py": ("SRC-004",),
+    "crossref_retraction.py": ("SRC-004",),
+    "clinicaltrials.py": ("SRC-031",),
+    "openalex.py": ("SRC-007",),
+    "openfda.py": ("SRC-006",),
+    "semantic_scholar.py": ("SRC-039",),
+    "core_api.py": ("SRC-033",),
+    "scopus.py": ("SRC-032",),
+    "consensus_api.py": ("SRC-034",),
+    "serpapi_scholar.py": ("SRC-035",),
+    "epistemonikos.py": ("SRC-036",),
+    "retraction_watch.py": ("SRC-003",),
+    "retraction_chain.py": ("SRC-003", "SRC-001", "SRC-005", "SRC-004"),
+    "guideline_citation_summary.py": ("SRC-005", "SRC-004"),
+    "gold_copd.py": ("SRC-043",),
+    "gina_asthma.py": ("SRC-044",),
+    "bts_guidelines.py": ("SRC-045",),
+    "pmc_guideline_fulltext.py": ("SRC-046",),
+    "wiley_tdm.py": ("SRC-042",),
+    "rxnorm.py": ("SRC-047",),
+    "ema_medicines.py": ("SRC-048",),
+    "scite_public.py": ("SRC-049",),
+    "unpaywall.py": ("SRC-051",),
+    "feeds.py": "chưa khai: họ feed/lane — sổ mới khai riêng kcb.vn (SRC-020) và NICE qua Europe PMC (SRC-037); các feed "
+                "RSS/Atom và làn tạp chí còn lại chưa có mục, sức khoẻ của chúng chỉ hiện ở khối source_health của lượt tuần",
+    "rss_feed.py": "chưa khai: connector đọc các feed của feeds.py — cùng khoảng trống với feeds.py",
+    "guideline_lanes.py": "chưa khai: các lane guideline — mới có SRC-020 và SRC-037, cùng khoảng trống với feeds.py",
+    "guidelines.py": "miễn: danh mục tổ chức + nhập tay metadata guideline, không gọi nguồn nào",
+    "authority.py": "miễn: bảng phân tầng thẩm quyền của nguồn, không gọi mạng",
+    "classify_meta.py": "miễn: phân loại metadata dùng chung cho các connector",
+    "guideline_fulltext_common.py": "miễn: hạ tầng dùng chung của các connector tải toàn văn",
+    "base.py": "miễn: lớp nền SourceClient/RawRecord",
+    "_fixtures.py": "miễn: dữ liệu mẫu cho chế độ mock",
+    "__init__.py": "miễn: nạp và liệt kê connector",
+    "zotero.py": "miễn: đẩy RA thư viện Zotero (đích xuất tuỳ chọn), không phải nguồn chứng cứ",
+}
+
+
+def _bh137_kiem_bang(bang: dict, ma_so: set) -> tuple[bool, str]:
+    """Bảng ánh xạ tự nó phải lành: mã SRC có thật trong sổ, miễn/chưa khai phải kèm lý do đọc được."""
+    for ten, gia_tri in bang.items():
+        if isinstance(gia_tri, str):
+            dau, _, ly_do = gia_tri.partition(":")
+            if dau not in ("miễn", "chưa khai") or len(ly_do.strip()) < 15:
+                return False, (f"_BH137_MODULE_NGUON[{ten!r}] phải là «miễn: <lý do>» hoặc «chưa khai: <khoảng trống>» có lý "
+                               "do đọc được — miễn không lý do là cách một nguồn lặng lẽ biến khỏi sổ")
+            continue
+        if not gia_tri:
+            return False, f"_BH137_MODULE_NGUON[{ten!r}] rỗng — module nguồn phải trỏ tới ít nhất một mục sổ"
+        la = [m for m in gia_tri if m not in ma_so]
+        if la:
+            return False, (f"module engine `{ten}` trỏ tới mục {', '.join(la)} KHÔNG có trong data/sources.json — mục bị xoá "
+                           "hay đổi mã thì sources_health mất dấu nguồn này")
+    return True, ""
+
+
+def _bh137_kiem_module(thu_muc: Path, bang: dict) -> tuple[bool, str]:
+    """Đối chiếu TẬP tệp `*.py` trong thư mục nguồn của engine với bảng. Engine vắng ⇒ đạt nhưng khai ⚪ KIỂM YẾU HƠN."""
+    if not thu_muc.is_dir():
+        return True, ("⚪ KIỂM YẾU HƠN (medical-ebm-automation vắng — CHƯA đối chiếu module nguồn của engine với sổ): bảng "
+                      "ánh xạ và tuyên bố độ phủ đạt")
+    co = sorted(p.name for p in thu_muc.glob("*.py"))
+    la = [t for t in co if t not in bang]
+    if la:
+        return False, (f"engine có module nguồn CHƯA khai trong sổ: {', '.join(la)} — thêm mục vào data/sources.json rồi khai ở "
+                       "_BH137_MODULE_NGUON (tệp không phải nguồn thì khai «miễn: <lý do>»); nguồn không có mục thì "
+                       "sources_health.py không bao giờ thấy nó (30/09: RxNorm/EMA/Scite public/Unpaywall)")
+    mat = [t for t in bang if t not in co]
+    if mat:
+        return False, (f"_BH137_MODULE_NGUON nhắc module KHÔNG còn trong engine: {', '.join(mat)} — gỡ khỏi bảng và rà lại mục "
+                       "sổ tương ứng (client đã gỡ mà sổ còn ghi active là nhãn lạc hậu)")
+    return True, ""
+
+
+def _bh137_manual_co_endpoint_may(so: list) -> list:
+    """Mục `access: manual` mà `endpoint_or_url` là địa chỉ MÁY gọi (`http…`/`mcp:…`): dấu hiệu một connector/API bị khai
+    nhầm thành làn nhập tay. Làn nhập tay thật không có endpoint (SRC-021: null) — văn bản do người nhập."""
+    return [s.get("id") for s in so if s.get("access") == "manual"
+            and str(s.get("endpoint_or_url") or "").startswith(("http", "mcp:"))]
+
+
+def _bh137_kiem_do_phu() -> tuple[bool, str]:
+    """HÀNH VI của `tuyen_bo_do_phu.tra_khoi()`: nguồn `ad-hoc` không được in dưới «Đang giám sát tự động»; dòng «Nhập thủ
+    công» in TÊN + trạng thái từng làn đọc từ sổ (không nhãn viết cứng); mọi khoảng trống đã khai đều hiện bằng tên."""
+    import json as _json
+    import tempfile as _tf
+    T = _nap(REPO / "tools" / "tuyen_bo_do_phu.py", "tbdp_bh137")
+    goc_that = T.GOC
+
+    def _dong(khoi: str, dau: str) -> str:
+        khop = [d for d in khoi.splitlines() if d.startswith(dau)]
+        return khop[0] if len(khop) == 1 else ""
+
+    def _n(sid, ten, nhip, status="active", access="api", lan_cuoi="2026-09-30"):
+        return {"id": sid, "org": "X", "name": ten, "access": access, "status": status, "scan_frequency": nhip,
+                "last_success_at": lan_cuoi}
+    try:
+        with _tf.TemporaryDirectory(prefix="bh137-") as td:
+            (Path(td) / "data").mkdir()
+            (Path(td) / "data" / "sources.json").write_text(_json.dumps({"updated": "2026-09-30", "sources": [
+                _n("SRC-A", "PubMed — làn tuần", "weekly"), _n("SRC-Q", "GOLD — web hội", "quarterly"),
+                _n("SRC-C", "RxNorm — chuẩn hoá tên thuốc", "ad-hoc"),
+                _n("SRC-E", "EMA medicines — 403", "ad-hoc", status="degraded"),
+                _n("SRC-M", "Cục Quản lý Dược VN — công văn", "quarterly", status="not-covered", access="manual", lan_cuoi=None),
+                _n("SRC-W", "Connector khai nhầm — manual mà active", "ad-hoc", access="manual"),
+                _n("SRC-K", "Epistemonikos — API chờ token", "ad-hoc", status="not-covered", lan_cuoi=None),
+            ]}, ensure_ascii=False), encoding="utf-8")
+            T.GOC = Path(td)
+            khoi = T.tra_khoi()
+            # Sổ KHÔNG có nguồn ad-hoc nào + một nguồn thiếu `scan_frequency` (dữ liệu cũ): không được in dòng «gọi theo
+            # yêu cầu» rỗng, và nguồn thiếu trường vẫn đếm ở nhóm định kỳ như trước bản vá.
+            cu = _n("SRC-B", "Nguồn cũ — không khai nhịp", None)
+            del cu["scan_frequency"]
+            (Path(td) / "data" / "sources.json").write_text(_json.dumps({"updated": "2026-09-30", "sources": [
+                _n("SRC-A", "PubMed — làn tuần", "weekly"), cu]}, ensure_ascii=False), encoding="utf-8")
+            khoi_khong_ad_hoc = T.tra_khoi()
+        if "Gọi theo yêu cầu" in khoi_khong_ad_hoc:
+            return False, "tuyên bố độ phủ in dòng «Gọi theo yêu cầu» dù sổ không có nguồn ad-hoc nào đang active"
+        if not _dong(khoi_khong_ad_hoc, "Đang giám sát tự động").startswith("Đang giám sát tự động: 2 nguồn — PubMed; Nguồn cũ;"):
+            return False, "nguồn thiếu `scan_frequency` bị rút khỏi «Đang giám sát tự động» — bản vá đổi hành vi với dữ liệu cũ"
+        tu_dong, theo_yc = _dong(khoi, "Đang giám sát tự động"), _dong(khoi, "Gọi theo yêu cầu")
+        if not tu_dong.startswith("Đang giám sát tự động: 2 nguồn — PubMed; GOLD;") or "RxNorm" in tu_dong:
+            return False, ("tuyên bố độ phủ in nguồn gọi-theo-yêu-cầu dưới «Đang giám sát tự động» — «active» bị đọc thành «đang "
+                           f"được quét» (đo được: {tu_dong[:140]!r})")
+        if not tu_dong.endswith("; nhịp tuần/quý."):
+            return False, f"tuyên bố độ phủ không in đúng các nhịp ĐANG có trong sổ (đo được: {tu_dong[-40:]!r})"
+        if ": 1 nguồn/công cụ — RxNorm." not in theo_yc or "EMA" in theo_yc:
+            return False, ("dòng «Gọi theo yêu cầu» thiếu, hoặc liệt kê cả nguồn ad-hoc đang degraded như thứ dùng được "
+                           f"(đo được: {theo_yc[:140]!r})")
+        thu_cong = _dong(khoi, "Nhập thủ công")
+        if thu_cong != ("Nhập thủ công: 2 làn — Cục Quản lý Dược VN (CHƯA nhập văn bản nào); Connector khai nhầm (lần nhập "
+                        "gần nhất 2026-09-30); còn [CẦN XÁC NHẬN TẠI ĐƠN VỊ]."):
+            return False, ("dòng «Nhập thủ công» không in TÊN + trạng thái từng làn đọc từ sổ — nhãn viết cứng «(BYT · Cục QLD)» "
+                           "và con số gộp từng in «3 làn … số văn bản đã nhập: 1» khi chưa văn bản Việt Nam nào được nhập "
+                           f"(đo được: {thu_cong[:160]!r})")
+        if "Connector khai nhầm" in tu_dong or "Connector khai nhầm" in theo_yc:
+            return False, "mục `access: manual` đang active bị in như nguồn giám sát tự động/gọi theo yêu cầu — nhập tay không phải giám sát"
+        if "Epistemonikos" not in _dong(khoi, "KHÔNG phủ"):
+            return False, "khoảng trống đã khai (not-covered, không phải làn nhập tay) không hiện ở dòng «KHÔNG phủ»"
+        if _dong(khoi_khong_ad_hoc, "Nhập thủ công") != "Nhập thủ công: không có làn nào khai trong sổ; còn [CẦN XÁC NHẬN TẠI ĐƠN VỊ].":
+            return False, "sổ không có làn nhập tay nào mà dòng «Nhập thủ công» không nói rõ điều đó"
+        T.GOC = goc_that
+        so_that = REPO / "data" / "sources.json"
+        if so_that.exists():
+            so = _json.loads(so_that.read_text(encoding="utf-8"))["sources"]
+            ad_hoc = [T._ten(s) for s in so if s["status"] == "active" and s.get("scan_frequency") == "ad-hoc"]
+            khoi = T.tra_khoi()
+            tu_dong = _dong(khoi, "Đang giám sát tự động")
+            ds = tu_dong.split(" — ", 1)[-1].rsplit("; nhịp ", 1)[0].split("; ")
+            lot = [t for t in ad_hoc if t in ds]
+            if lot:
+                return False, f"trên sổ THẬT, nguồn ad-hoc vẫn nằm dưới «Đang giám sát tự động»: {', '.join(lot[:4])}"
+            thu_cong, khong_phu = _dong(khoi, "Nhập thủ công"), _dong(khoi, "KHÔNG phủ")
+            an = [s["id"] for s in so if s["status"] == "not-covered"
+                  and T._ten(s) not in (thu_cong if s["access"] == "manual" else khong_phu)]
+            if an:
+                return False, (f"trên sổ THẬT, khoảng trống đã khai không hiện tên trong tuyên bố độ phủ: {', '.join(an[:4])} — "
+                               "khai trong sổ mà người đọc bản đọc không thấy")
+            nham = _bh137_manual_co_endpoint_may(so)
+            if nham:
+                return False, (f"trên sổ THẬT, mục khai `access: manual` mà có endpoint máy gọi: {', '.join(nham[:4])} — connector/"
+                               "API khai `manual` bị tuyên bố độ phủ in như làn nhập tay (30/09: Wiley Scholar Gateway và "
+                               "Epistemonikos làm dòng đó thành «3 làn … số văn bản đã nhập: 1»); sửa `access` cho đúng loại")
+            noi_qua = [s["id"] for s in so if s["access"] == "manual" and not s.get("last_success_at")
+                       and f"{T._ten(s)} (CHƯA nhập văn bản nào)" not in thu_cong]
+            if noi_qua:
+                return False, f"trên sổ THẬT, làn nhập tay chưa từng nhập mà tuyên bố không ghi «CHƯA nhập»: {', '.join(noi_qua[:4])}"
+    finally:
+        T.GOC = goc_that
+    return True, ""
+
+
+def _bh137_tu_kiem_rang() -> tuple[bool, str]:
+    """Tự kiểm «răng còn» trên fixture tạm — nhánh có engine không chạy được trên bản sao trần nên phải tự dựng."""
+    import tempfile as _tf
+    ma_so = {m for v in _BH137_MODULE_NGUON.values() if isinstance(v, tuple) for m in v}
+    with _tf.TemporaryDirectory(prefix="bh137-rang-") as td:
+        nguon = Path(td) / "app" / "sources"
+        nguon.mkdir(parents=True)
+        for ten in _BH137_MODULE_NGUON:
+            (nguon / ten).write_text("", encoding="utf-8")
+        ok, ct = _bh137_kiem_module(nguon, _BH137_MODULE_NGUON)
+        if not ok or ct.startswith("⚪"):
+            return False, f"răng BH137 mất: engine khớp đủ bảng mà chốt không đạt thật ({ok!r}: {ct[:120]})"
+        (nguon / "nguon_moi_tinh.py").write_text("", encoding="utf-8")
+        ok, ct = _bh137_kiem_module(nguon, _BH137_MODULE_NGUON)
+        if ok or "nguon_moi_tinh.py" not in ct:
+            return False, "răng BH137 mất: engine thêm module nguồn mới mà chốt không đỏ — nguồn mới lại lọt khỏi sổ"
+        (nguon / "nguon_moi_tinh.py").unlink()
+        (nguon / "rxnorm.py").unlink()
+        ok, ct = _bh137_kiem_module(nguon, _BH137_MODULE_NGUON)
+        if ok or "rxnorm.py" not in ct:
+            return False, "răng BH137 mất: bảng nhắc module đã gỡ khỏi engine mà chốt không đỏ"
+        ok, ct = _bh137_kiem_module(Path(td) / "khong-co", _BH137_MODULE_NGUON)
+        if not ok or not ct.startswith("⚪ KIỂM YẾU HƠN"):
+            return False, "răng BH137 mất: engine vắng mà chốt không khai «⚪ KIỂM YẾU HƠN» — «đạt» ngầm nói đã đối chiếu"
+    ok, _ = _bh137_kiem_bang({**_BH137_MODULE_NGUON, "rxnorm.py": ("SRC-999",)}, ma_so)
+    if ok:
+        return False, "răng BH137 mất: module trỏ tới mã SRC không có trong sổ mà bảng vẫn đạt"
+    ok, _ = _bh137_kiem_bang({**_BH137_MODULE_NGUON, "zotero.py": "miễn:"}, ma_so)
+    if ok:
+        return False, "răng BH137 mất: «miễn» không kèm lý do mà bảng vẫn đạt"
+    return True, ""
+
+
+def bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua():
+    """30/09 — hai cách sổ nguồn nói sai mà không công cụ nào báo: (1) client nguồn có trong engine nhưng sổ KHÔNG có mục
+    (RxNorm · EMA medicines · Scite public từ 20/09; Unpaywall dùng từ 19/08) ⇒ `sources_health.py` không thấy, EMA trả 403
+    mà không ai biết; (2) `tuyen_bo_do_phu.tra_khoi()` in mọi nguồn `active` dưới «Đang giám sát tự động … nhịp tuần/tháng»,
+    kể cả 9/30 nguồn `ad-hoc` chỉ gọi theo yêu cầu — khối này được dán vào gói tuần và bản đọc; (3) cùng khối đó in «Nhập
+    thủ công (VN): 3 làn (BYT · Cục QLD) — số văn bản đã nhập: 1» bằng nhãn viết cứng + con số đếm mọi mục `access: manual`,
+    trong khi hai trong ba mục là connector/API khai nhầm (Wiley Scholar Gateway, Epistemonikos), BYT đã là làn tự động, và
+    chưa văn bản Việt Nam nào được nhập; Epistemonikos (not-covered) vì thế cũng không hiện ở dòng «KHÔNG phủ». Kiểm: bảng
+    module ↔ mục sổ lành (mã có thật, miễn có lý do); mọi `app/sources/*.py` của engine có trong bảng và ngược lại (engine
+    vắng ⇒ ⚪ KIỂM YẾU HƠN, không đỏ giả); HÀNH VI của tuyên bố độ phủ trên sổ tạm lẫn sổ thật (tên + trạng thái từng làn
+    nhập tay, mọi mục not-covered hiện tên, không mục `manual` nào mang endpoint máy gọi). Giới hạn: kiểm ở mức MODULE —
+    từng feed trong `feeds.py` chưa được khai riêng (ghi «chưa khai» ngay trong bảng); ngày nhập của làn nhập tay là số
+    người ghi vào sổ, không có artifact độc lập để đối chiếu."""
+    import json as _json
+    so_path = REPO / "data" / "sources.json"
+    try:
+        ma_so = {s.get("id") for s in _json.loads(so_path.read_text(encoding="utf-8"))["sources"]}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return False, f"data/sources.json không đọc được ({type(exc).__name__}) — không đối chiếu được module engine với sổ"
+    for buoc in (lambda: _bh137_kiem_bang(_BH137_MODULE_NGUON, ma_so), _bh137_kiem_do_phu, _bh137_tu_kiem_rang):
+        ok, ct = buoc()
+        if not ok:
+            return False, ct
+    return _bh137_kiem_module(_goc_mea() / "app" / "sources", _BH137_MODULE_NGUON)
+
+
+def bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat():
+    """30/09 — vòng quét `giam_sat_to_chuc.py` chỉ có chiều HẠ: fetch hỏng ⇒ `degraded`, còn quét lại được thì nhãn đứng
+    yên (và `sources_health.py` chỉ hồi phục nguồn `api` có điểm thăm). Đo thật: lượt 29/09 trượt trang GOLD ⇒ SRC-010
+    `degraded`; 30/09 trạm đọc 19 tiêu đề, nhãn vẫn `degraded`, và bản trạng thái đo sống cùng ngày commit luôn nhãn đó.
+    Cùng vòng quét còn một chiều xanh giả: lấy được trang mà đọc ra 0 tiêu đề vẫn ghi `last_success_at` và ghi đè state
+    bằng danh sách rỗng. Kiểm HÀNH VI `main()` ngoại tuyến (`_fetch` giả, sổ/state/ứng viên trong thư mục tạm): degraded và
+    broken quét được ⇒ active; 0 tiêu đề ⇒ degraded, không tiến `last_success_at`, state cũ nguyên vẹn, KHÔNG hồi phục;
+    fetch hỏng vẫn hạ nhãn; `not-covered` không bị quét."""
+    import contextlib as _cl
+    import io as _io
+    import json as _json
+    import tempfile as _tf
+    G = _nap(REPO / "tools" / "giam_sat_to_chuc.py", "gstc_bh138")
+    co_td = ("<html><body><h2>Global Strategy for Prevention, Diagnosis and Management of COPD: 2026 Report</h2>"
+             "<h2>GOLD Pocket Guide 2026 update for clinicians</h2></body></html>")
+    khong_td = "<html><body><p>Checking your browser before accessing the site.</p></body></html>"
+    ngay_cu = "2026-09-23"
+    giu = (G.SO_NGUON, G.STATE, G.RA, G._fetch, sys.argv)
+
+    def _tram(sid, status, url):
+        return {"id": sid, "name": f"{sid} — thử", "org": sid, "tier": 1, "domain": ["d"], "access": "html-watch",
+                "endpoint_or_url": url, "scan_frequency": "quarterly", "detection_method": "content-hash",
+                "owner": "agent-A2", "status": status, "last_success_at": ngay_cu, "known_gap": None}
+    try:
+        with _tf.TemporaryDirectory(prefix="bh138-") as td:
+            td = Path(td)
+            G.SO_NGUON, G.STATE, G.RA = td / "sources.json", td / "state" / "st.json", td / "ra"
+            sys.argv = ["giam_sat_to_chuc.py"]
+            trang = {"u-degraded": co_td, "u-broken": co_td, "u-rong": khong_td, "u-rong-degraded": khong_td,
+                     "u-hong": None, "u-cho": co_td}
+            da_goi: list = []
+
+            def _gia(url):
+                da_goi.append(url)
+                return trang[url]
+            G._fetch = _gia
+            G.SO_NGUON.write_text(_json.dumps({"updated": "2000-01-01", "sources": [
+                _tram("T-DEGRADED", "degraded", "u-degraded"), _tram("T-BROKEN", "broken", "u-broken"),
+                _tram("T-RONG", "active", "u-rong"), _tram("T-RONG-DEGRADED", "degraded", "u-rong-degraded"),
+                _tram("T-HONG", "active", "u-hong"), _tram("T-CHO", "not-covered", "u-cho"),
+            ]}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            state_cu = {"T-RONG": {"hash": "bam-cu", "titles": ["GOLD Report 2025 đã biết"], "luc": ngay_cu}}
+            G.STATE.parent.mkdir(parents=True)
+            G.STATE.write_text(_json.dumps(state_cu, ensure_ascii=False), encoding="utf-8")
+            ra = _io.StringIO()
+            with _cl.redirect_stdout(ra):
+                G.main()
+            s = {x["id"]: x for x in _json.loads(G.SO_NGUON.read_text(encoding="utf-8"))["sources"]}
+            state = _json.loads(G.STATE.read_text(encoding="utf-8"))
+            hom_nay = G.date.today().isoformat()
+            for sid in ("T-DEGRADED", "T-BROKEN"):
+                if s[sid]["status"] != "active" or s[sid]["last_success_at"] != hom_nay:
+                    return False, (f"trạm đang {sid[2:].lower()} quét lại ĐƯỢC mà nhãn không về active "
+                                   f"(đo được: {s[sid]['status']}) — một lần trượt mạng thành nhãn «đang mù» vĩnh viễn")
+            if "↺ T-DEGRADED" not in ra.getvalue():
+                return False, "trạm hồi phục mà lượt quét không in dòng ↺ — nhãn đổi im lặng"
+            if s["T-RONG"]["status"] != "degraded" or s["T-RONG"]["last_success_at"] != ngay_cu:
+                return False, ("lấy được trang nhưng 0 tiêu đề vẫn được tính là thành công "
+                               f"(nhãn {s['T-RONG']['status']}, last_success_at {s['T-RONG']['last_success_at']}) — xanh giả")
+            if state.get("T-RONG") != state_cu["T-RONG"]:
+                return False, "lượt 0 tiêu đề ghi đè state cũ — lượt kế mọi tiêu đề đã biết sẽ hiện lại thành «mới»"
+            if s["T-RONG-DEGRADED"]["status"] != "degraded" or s["T-RONG-DEGRADED"]["last_success_at"] != ngay_cu:
+                return False, "trạm degraded gặp trang 0 tiêu đề mà vẫn được hồi phục/ghi thành công — «lấy được trang» chưa phải «quét được»"
+            if s["T-HONG"]["status"] != "degraded" or s["T-HONG"]["last_success_at"] != ngay_cu:
+                return False, "fetch hỏng mà trạm không bị hạ degraded (hoặc last_success_at vẫn tiến) — mất chiều hạ nhãn"
+            if "u-cho" in da_goi or s["T-CHO"]["status"] != "not-covered":
+                return False, "vòng quét đụng tới trạm not-covered — chỉ --bat-neu-ok/--nap-van-ban mới được bật trạm"
+    finally:
+        G.SO_NGUON, G.STATE, G.RA, G._fetch, sys.argv = giu
+    return True, ""
+
+
 def bh135_kiem_nguon_that_do_mang_hai_tang():
     """30/09 — `kiem_nguon_that.kiem_mang()` chỉ gọi `gethostbyname`: «phân giải được» bị coi là «tới được». Đo thật trên
     máy Windows: api.crossref.org có địa chỉ mà cổng 443 KHÔNG thông 10/10 lần ⇒ chốt ① của chu trình chứng cứ báo 🟢 «4/4
@@ -8459,6 +8775,8 @@ BAI_HOC = [
     ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
     ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
     ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),
+    ("BH137", "30/09", "Sổ nguồn phủ mọi module nguồn của engine; tuyên bố độ phủ không gộp nguồn gọi-theo-yêu-cầu vào «giám sát tự động», in tên từng làn nhập tay và mọi khoảng trống đã khai", bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua),
+    ("BH138", "30/09", "Trạm web hội: quét lại được thì nhãn về active; 0 tiêu đề không tính là thành công, không ghi đè state", bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat),
 ]
 
 

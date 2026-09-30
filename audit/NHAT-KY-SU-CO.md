@@ -3452,6 +3452,110 @@ phân giải được (→ 18.234.0.150) nhưng KHÔNG nối được cổng 443
 khi DNS công cộng phân giải được». **Việc của bác sĩ/IT (cài đặt hệ thống, agent không đổi):** DNS của card mạng và đường ra
 AWS us-east-1; lưu ý đổi sang DNS công cộng có thể làm mất phân giải tên NỘI BỘ bệnh viện.
 
+### 30/09/2026 — Sổ nguồn và doctrine connector lệch số đo sống: nguồn có client mà không có mục, nhãn lạc hậu, connector đã nối mà không có phạm vi (BH137, BH138)
+Đo sống toàn bộ MCP/API/nguồn trên máy Mac tối 30/09 (VPN Kaspersky đang bật; phiên đánh giá 18:34–18:37, phiên này đo lại
+19:10–19:40 bằng client thật của engine xuất ra thư mục nháp — không ghi gì vào hai cây chính, không gọi nguồn tính phí).
+① **Sổ thiếu mục.** Ba client engine thêm ngày 20/09 chưa từng có mục trong `data/sources.json` nên `sources_health.py` không
+thấy: RxNorm (`chuan_hoa("metformin")` → `khop_chinh_xac`, rxcui 6809), EMA medicines JSON (HTTP 403), Scite public (tally thật:
+total 1647 · supporting 45 · contradicting 9). Đối chiếu CẢ TẬP `app/sources/*.py` với sổ (không chỉ ba cái đã biết) lộ thêm
+Unpaywall: dùng từ 19/08 qua `gom_toan_van_dashboard.py --unpaywall` mà không có mục, còn client engine `unpaywall.py` thì ngoài
+test KHÔNG nơi nào gọi (cờ `ENABLE_UNPAYWALL` bật mà vô tác dụng). Đã đăng ký SRC-047…SRC-051 (SRC-050 là Amass).
+② **EMA 403 — nguyên nhân CHƯA RÕ, đã khoanh được một nửa.** Client engine (đúng MỘT request, không cache), trình duyệt thật
+trên cùng máy/cùng VPN (trang «403 ERROR — Request blocked», `server: CloudFront`, `x-cache: Error from cloudfront`, cho cả trang
+HTML lẫn URL JSON) và WebFetch (đường mạng khác hẳn) đều bị chặn ⇒ KHÔNG phải do User-Agent của client ta. Chưa phân biệt được
+«CDN chặn dải IP (VPN/trung tâm dữ liệu)» với «EMA đang có sự cố»: cả ba đường đo đều không đi từ IP dân dụng Việt Nam. Lần
+thành công gần nhất có bằng chứng: 20/09. Trong lúc này `tra_thuoc_quoc_te.py ema` trả `loi` (mã 2 = KHÔNG BIẾT).
+③ **Cờ «không rút» của bên gộp chỉ là im lặng (đo cùng một DOI).** 10.1001/jamaoncol.2018.4070 (PMID 30267080, «rút và thay»):
+tầng Crossref của chuỗi rút bài trả `retracted` (`updated-by` → 10.1001/jamaoncol.2019.0576) trong khi Scite public trả
+`retracted: false` và Amass trả `isRetracted: false`; với bài không rút, Scite public còn KHÔNG có khoá `retracted` (client trả
+None). Cả hai cờ chỉ dùng theo chiều DƯƠNG — đúng luật gộp bất đối xứng; nay ghi thành chữ ở sổ (SRC-049, SRC-050) và §2sexies.
+④ **Nhãn lạc hậu.** SRC-042 Wiley TDM ghi degraded/«chưa từng thành công» nhưng 30/09 18:37 tải được PDF Open Access thật (DOI
+10.1002/jcsm.70385, 8.913.789 byte trên đĩa, 16 trang) ⇒ active, kèm giới hạn: một bài OA, một IP thoát VPN, chưa rõ vì sao
+23/09 bị `ACCESS_DENIED`; bài không OA và máy Windows chưa đo lại. Lượt rà soát độc lập chỉ ra «active» trơn sẽ bị đọc thành
+«tải được mọi bài Wiley» ⇒ TÊN mục mang luôn phạm vi «(30/09: mới tải được bài Open Access)» — tuyên bố độ phủ in theo tên.
+SRC-033 CORE: lượt tuần 29/09 nhận 3 lần 429 trong phút đầu,
+cầu dao bỏ 20 truy vấn — chỉ 33/53 được gửi mà `source_health` vẫn ghi «ok» («ok» của phần đã gửi, không phải của 53 chủ đề).
+SRC-010 GOLD: lượt trạm 29/09 trượt trang ⇒ degraded; 30/09 `--kiem-tra` đọc 19 tiêu đề mà nhãn vẫn degraded — và bản trạng
+thái đo sống cùng ngày commit luôn nhãn đó (PR #67). **Nguyên nhân gốc (tái lập ngoại tuyến):** vòng quét của
+`giam_sat_to_chuc.py` chỉ có chiều HẠ; quét lại được thì chỉ `last_success_at` tiến, nhãn đứng yên; `sources_health.py` chỉ hồi
+phục nguồn `api` có điểm thăm. Cùng vòng quét còn một chiều xanh giả: lấy được trang mà đọc ra 0 tiêu đề vẫn ghi thành công và
+ghi đè state bằng danh sách rỗng (lượt kế mọi tiêu đề cũ thành «mới»). **Vá (BH138):** quét được ≥ 1 tiêu đề ⇒ degraded/broken
+về active, in dòng ↺; 0 tiêu đề ⇒ degraded, không tiến `last_success_at`, state giữ nguyên. `--nap-van-ban` KHÔNG đổi (xem ⑧).
+Đối chiếu state sống của cây chính (chỉ đọc, 11 trạm): 9 trạm đang active có 4–34 tiêu đề ở lượt gần nhất ⇒ luật «0 tiêu đề»
+không hạ nhầm trạm nào đang khoẻ (ít nhất: KDIGO 4).
+⑤ **Tuyên bố độ phủ nói quá.** `tuyen_bo_do_phu.tra_khoi()` in MỌI nguồn active dưới «Đang giám sát tự động … nhịp tuần/tháng»;
+đo trên sổ trước khi sửa: 9/30 là `ad-hoc` (connector MCP tương tác, connector toàn văn gọi tay, bậc thang dự phòng) — khối này
+được dán vào gói tuần và bản đọc. **Vá (BH137):** tách theo `scan_frequency`: 21 nguồn quét định kỳ (in đúng nhịp tuần/tháng/quý)
+và dòng riêng «Gọi theo yêu cầu hoặc có điều kiện — KHÔNG tự quét định kỳ» (14 sau lượt đăng ký này). BH137 còn buộc mọi module
+`app/sources/*.py` của engine phải trỏ tới một mục sổ hoặc khai «miễn/chưa khai» có lý do — engine vắng thì ⚪ KIỂM YẾU HƠN.
+Chạy lệnh này trong worktree còn lộ một lỗi cũ: `main()` sập FileNotFoundError trên bản sao trần vì `reports/` nằm ngoài git — nay
+tự tạo thư mục. **Cùng khối đó còn một dòng sai hẳn:** «Nhập thủ công (VN): 3 làn (BYT · Cục QLD) — số văn bản đã nhập: 1» — nhãn
+viết cứng, hai con số đếm MỌI mục `access: manual`. Trên sổ: BYT đã là làn tự động từ 22/09 (SRC-020, html-watch); ba mục
+`manual` là Cục QLD (SRC-021, chưa nhập gì), Epistemonikos (SRC-036 — API chờ token) và Wiley Scholar Gateway (SRC-041 —
+connector MCP); «1 văn bản đã nhập» chính là ngày kiểm sống của Wiley — KHÔNG văn bản Việt Nam nào từng được nhập; còn
+Epistemonikos (not-covered) vì khai `manual` nên không hiện ở dòng «KHÔNG phủ». **Vá:** sổ — SRC-041 và SRC-036 về `access: api`
+(khớp Cochrane/Scite/Amass MCP; SRC-041 thêm `owner` là các agent của §2quinquies); công cụ — dòng «Nhập thủ công» in TÊN +
+trạng thái từng làn đọc từ sổ (nay: «1 làn — Cục Quản lý Dược VN (CHƯA nhập văn bản nào)»), mục `manual` không được tính là
+giám sát tự động dù active, «KHÔNG phủ» nay có Epistemonikos; BH137 thêm: mọi mục not-covered phải hiện tên trong tuyên bố,
+không mục `manual` nào mang endpoint máy gọi (`http…`/`mcp:…`).
+⑥ **Connector.** Amass: bác sĩ chốt «có đưa vào doctrine phù hợp» (trả lời ở phiên đánh giá; tối 30/09 bác sĩ xác nhận lại
+mục này trực tiếp ở phiên soạn nó, trước khi merge PR #71) ⇒ §2sexies: bộ gộp bên thứ ba,
+TrialCore lấp registry ngoài Hoa Kỳ (đo: 6/10 bản ghi là JPRN/IRCT/CTRI), RegulatoryCore chỉ đường tới hồ sơ FDA/EMA
+(`therapeuticIndication` null hoặc là khối ghép ba mục nhãn — không trích), BiomedCore là tìm dự phòng số 3 qua cổng §2ter (trần
+tổng vẫn 3); lời «ưu tiên Amass hơn PubMed» của máy chủ không thắng §2bis. Elicit: mọi công cụ `api_access_denied` (gói không có
+API). paper-search: Crossref chạy nhưng tìm thô (hỏi tiêu đề EMPA-KIDNEY trả một bản ghi `component`), Semantic Scholar 403.
+Rà cả tập connector của phiên còn thấy SciSpace và alphaXiv (chưa đo). Bốn cái này ở §3, đều [CẦN BÁC SĨ QUYẾT]. Wiley Scholar
+Gateway: hai kết nối song song trên Mac — bản mới (`search_wiley_fulltext` + `getUsageLimit`) và bản cũ (`semanticSearch`);
+bản cũ trừ CÙNG hạn mức (2 → 3 sau một lời gọi), cả hai mặc định 15 đoạn (≈ 105 KB nếu không truyền `topN`). Hai phiên cùng
+buổi tối thấy khác nhau (phiên thấy schema tham số, phiên không) — chưa rõ cơ chế, ghi thành luật «đọc schema trước khi gọi».
+⑦ **MCP `pubmed-search`** (bác sĩ chốt phê duyệt 30/09). Máy chủ khoẻ (v0.6.0) và từng nạp ở các phiên repo gốc từ 13/08 tới
+19/09 (156 tệp log MCP của Claude Code: 155 «Successfully connected», 1 không rõ); từ đó không phiên repo gốc nào nạp: tệp
+`.claude/settings.local.json` của repo gốc trên Mac có `disabledMcpjsonServers: ["pubmed-search"]` (phiên đánh giá đối chiếu
+bản sao lưu: khoá xuất hiện giữa 19/09 và 20/09, không công cụ nào của hai repo ghi nó), và mỗi worktree mang một bản sao tệp đó. Khoá
+`enabledMcpjsonServers` trong `~/.claude.json` rỗng ở mọi mục dự án — nhưng đó không phải nơi quyết định trên máy này. Phiên mở
+dưới repo Y KHOA thì thử nạp (dò ngược lên thấy `.mcp.json` của repo gốc) và LỖI «Failed to spawn: tools/mcp/chay_pubmed_search_mcp.py
+— No such file»: đường dẫn tương đối tính theo thư mục của phiên (đo 30/09, lần đầu 18:59 — trước mọi thay đổi cài đặt
+trong ngày). Việc sửa `.mcp.json` nằm ở PR riêng của phiên đánh giá (PR #68, BH139). **Cập nhật 20:47:** bác sĩ đã gỡ lời từ
+chối lúc 20:31 — tệp cài đặt cục bộ của repo gốc không còn khoá `disabledMcpjsonServers` (phiên đánh giá đo lại trạng thái máy
+chủ ở repo gốc: «Connected»); bản sao trong worktree của phiên này (tạo 18:59) vẫn mang lời từ chối ⇒ chỉ phiên mở SAU khi gỡ
+mới có thể thấy công cụ. **Đo lại 21:23 qua log MCP của Claude Code:** hai phiên worktree của repo gốc mở lúc 20:50 (sau khi
+gỡ; bản sao cài đặt của chúng không mang lời từ chối) đều ghi «Successfully connected» tới máy chủ này; trước đó trong ngày,
+các phiên mở dưới repo y khoa ghi lỗi spawn (chờ PR #68). Chưa có lời gọi công cụ nào trong một phiên thật — phạm vi chi tiết quyết sau lượt đo đó; 10 skill `pubmed-search:*`
+chỉ chạy ở phiên thấy công cụ.
+⑧ **Còn lại — chưa sửa, nêu để không ai tưởng đã xong.** (a) SRC-015 ACC/AHA vẫn degraded: vòng urllib hằng tuần luôn bị
+Cloudflare chặn trong khi làn thật của trạm là Browser theo quý (`--nap-van-ban`) — nhãn của trạm này đang phản ánh làn sai;
+cần một cách khai «trạm chỉ đi làn Browser» trước khi cho `--nap-van-ban` hồi phục nhãn, nếu không nhãn sẽ đổi qua lại mỗi tuần.
+(b) Tuyên bố độ phủ KHÔNG có dòng nào cho nguồn degraded/broken (hiện SRC-015, SRC-039, SRC-048): nguồn đang mù lặng lẽ
+biến khỏi danh sách thay vì được nêu tên. Chưa thêm, vì nhãn SRC-015 đang phản ánh làn sai (a) — in ra lúc này là đỏ giả ở
+mọi bản đọc; làm sau khi xong (a). (c) Họ feed/lane của engine (`feeds.py`,
+`guideline_lanes.py`) mới có hai mục riêng trong sổ (SRC-020, SRC-037); các feed còn lại — gồm NEJM/ECDC 403 và WHO IRIS không
+nối được ngày 30/09 — chỉ hiện ở khối `source_health` của lượt tuần. (d) `tra_thuoc_quoc_te.py` chưa in dòng miễn trừ mà điều
+khoản RxNav ĐỀ NGHỊ («We request that any application…» — SRC-047; việc ở repo y khoa). (e) Nhãn của các nguồn không có điểm
+thăm vẫn là nhãn KHAI theo lượt đo tay gần nhất; `DIEM_THAM` của `sources_health.py` có 8 mục nhưng nhánh thăm chỉ chạy cho
+`access: api` nên SRC-020 (html-watch) không bao giờ được thăm ở đó — thực thăm 7/41 nguồn (SRC-020 do vòng quét trạm của
+`giam_sat_to_chuc.py` cập nhật, không do điểm thăm). Ngày nhập của làn nhập tay là số người ghi vào sổ — tuyên bố độ phủ in
+theo, không có artifact đối chiếu.
+(f) `sources_health.py` chạy trong một worktree git không có engine báo SRC-003 BROKEN (thư mục Retraction Watch nằm ở engine):
+«không đo được» bị đọc thành «hỏng»; chạy ở đó không kèm `--khong-ghi` sẽ ghi nhãn sai vào sổ của worktree (bản vá 24/09 mới
+che phiên Cloud). (g) MCP `pubmed-search` CHƯA có mục trong sổ nguồn — thêm sau lượt đo đầu tiên bằng lời gọi công cụ trong một
+phiên thật (ghi trước khi đo là khai nhãn không có số đo).
+**Việc của bác sĩ:** đo EMA một lần khi VPN tắt (hoặc quyết có ép thoát qua card mạng vật lý như Scopus); quyết phạm vi
+Elicit/paper-search/SciSpace/alphaXiv; gỡ kết nối Wiley bản cũ; client Unpaywall mồ côi của engine — nối vào dây chuyền hay gỡ;
+quyết phạm vi chi tiết của MCP `pubmed-search` sau lượt đo đầu tiên trong một phiên thật (lời từ chối đã gỡ 20:31).
+**Kiểm:** 12 ca mới ở `tools/test_tuyen_bo_do_phu.py`, 9 ca ở `tools/test_giam_sat_to_chuc_20260930_nhan_theo_luot_quet.py`, 22 ca
+ở `tools/test_chot_bh137_bh138_20260930_so_nguon_noi_that.py` + BH137, BH138. 47 đột biến (15 tuyên bố độ phủ · 10 vòng quét trạm
+· 22 logic chốt và dữ liệu sổ) đều đỏ ở pytest; 24 đột biến về HÀNH VI của hai công cụ (14 + 10; trừ ca `reports/`) và 2 đột
+biến sổ (trả SRC-041/SRC-036 về `manual`) đều đỏ ở CẢ BH137/BH138. Một đột biến cố ý KHÔNG bắt được và không thể bắt: ghi vào
+sổ rằng làn Cục QLD «đã có lần nhập» — tuyên bố độ phủ tin sổ, không có artifact độc lập. Một lượt rà soát độc lập (một agent
+chỉ-đọc, đọc diff + tệp thật): không lỗi mã, không mâu thuẫn trong doctrine; một phát hiện về sổ (SRC-042, xem ④) — đã sửa.
+Vòng đầu 4 đột biến sống
+sót và đều là lỗ của phép thử, không phải của mã: «trạm degraded + trang 0 tiêu đề vẫn hồi phục» (thiếu ca), hai đột biến tuyên
+bố độ phủ BH137 không bắt (thiếu sổ không có nguồn ad-hoc), «bỏ bước tự kiểm răng» (bước có mà không ai kiểm nó được gọi) —
+đã bổ sung ca cho cả bốn. **Bài học:** (1) đối chiếu TẬP với sổ, không đối chiếu danh sách «những cái đã biết là thiếu» — ba
+nguồn được nêu, tập module lộ nguồn thứ tư; (2) «active» là DÙNG ĐƯỢC, không phải ĐANG ĐƯỢC QUÉT — nhãn trạng thái bị đọc
+thành tuyên bố độ phủ; (3) cơ chế chỉ có chiều hạ thì nhãn xấu tích luỹ mãi: mỗi chỗ hạ nhãn phải có chỗ trả nhãn; (4) cờ
+«không rút»/«không có» của bên thứ ba là im lặng, đo bằng một ca đã biết đáp án trước khi tin.
+
 ### 30/09/2026 — Bộ quét tiến con trỏ TRƯỚC khi báo cáo tới nơi; ngày công bố kiểu số chỉ là ngòi nổ (BH136)
 Lượt gói tuần W40 (29/09, phiên goi-duyet) sập ở bước đo độ trễ của `surveillance_scan.main()`: một ứng viên mang
 `publication_date` kiểu int ⇒ `int[:11]` ném TypeError. Phiên đó vá 2 dòng tại nơi tiêu thụ, quét lại với `--since 2026-09-07`, để
