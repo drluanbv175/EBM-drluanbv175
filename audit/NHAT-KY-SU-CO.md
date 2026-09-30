@@ -3415,6 +3415,47 @@ kê. Mục 1 nhận «-<máy>-N» và tên máy kia (`THIET_BI_ONEDRIVE`), so t�
 đều đỏ ở CẢ pytest lẫn BH133 (vòng đầu, đột biến packed-refs chỉ pytest bắt ⇒ bổ sung ca vào BH133). Cùng phiên: token `gh`
 trên Windows hỏng ⇒ giác quan CI ⚪, `gh pr` lỗi (đăng nhập lại là việc của bác sĩ).
 
+### 30/09/2026 — `sources_health.py` trong worktree không mang engine: «không đo được» thành «SRC-003 BROKEN» và được ghi vào sổ (BH140)
+Điểm ⑧(f) của mục «Sổ nguồn và doctrine connector lệch số đo sống» (nhánh `claude/funny-ardinghelli-27f5d2`, chưa vào master
+lúc ghi mục này). Tái hiện 30/09 trong worktree `.claude/worktrees/vigorous-maxwell-5e5075` (HEAD 56e1b7d):
+`ban_sao_git_tran()` = True, `duong_goc("medical-ebm-automation")` = None, `sources_health.py --khong-ghi --khong-mang` in
+«SRC-003 Retraction Watch … → BROKEN», mã 1. **Nguyên nhân:** nhánh «nguồn file» ghép `GOC/medical-ebm-automation/data/
+retraction_watch` (gốc engine lùi về vị trí lồng khi `duong_goc()` trả None), thư mục không có ⇒ `status = "broken"`; và
+`ghi_so` chỉ loại phiên Cloud + `--khong-ghi` ⇒ chạy không cờ trong worktree là GHI nhãn đó vào `data/sources.json` tracked.
+Bản vá 24/09 che đúng MỘT môi trường (Cloud), không che lớp lỗi «cây này không mang nguyên liệu để đo».
+**Vá:** ① ĐỒNG THỜI bản sao trần VÀ không thấy engine ở đâu ⇒ nguồn `access: file` trỏ vào engine là ⚪ «KHÔNG ĐO ĐƯỢC —
+engine vắng»: `status` giữ nguyên, không vào mã thoát 1, không chịu luật «quá 2 chu kỳ» (mốc `last_success_at` của nó suy từ
+chính thư mục vắng), bị TRỪ khỏi số «active khoẻ»; nhãn degraded/broken có sẵn trong sổ vẫn được nêu, kèm «nhãn của SỔ, lượt
+này không đo được». Hai phép dò uỷ quyền cho `ban_sao_tran.py` (`ban_sao_git_tran` · `duong_goc`) — không dò riêng.
+② Thiếu THẬT vẫn đỏ: máy còn ≥ 1 gốc dữ liệu (EBM-Dashboards/EBM_MASTER) mà mất engine, hoặc thấy engine (lồng/anh em) mà
+thiếu đúng thư mục ⇒ BROKEN như cũ, nay in thêm đường dẫn đã tìm. ③ Bản sao trần KHÔNG ghi sổ (như Cloud) — lựa chọn có chủ
+ý: ở đó không artifact nào để suy `last_success_at`, không nguồn file nào đo được, nên mọi lần ghi là số đo MỘT PHẦN đóng dấu
+`updated` hôm nay vào một bản chụp sổ sẽ trôi theo PR của worktree. Sổ sống đo ở cây chính (`evidence_integrity_monthly.sh`
+hoặc chạy tay) rồi mới mang tệp sang nhánh. Không mở cờ «vẫn ghi»: chưa có ca dùng thật. ④ Gốc engine trong tệp nay đọc
+`GOC` lúc GỌI (`_mea_goc()`), thay hằng `_MEA_GOC` chốt lúc import.
+**Việc phụ cùng tệp:** `DIEM_THAM["SRC-020"]` (kcb.vn) là mục CHẾT từ 22/09 — nhánh thăm chỉ chạy cho `access: api`, SRC-020
+là `html-watch`: bảng ghi 8, thực thăm 7/36 nguồn. GỠ thay vì mở nhánh thăm: nhãn trạm html-watch do vòng quét trạm
+`giam_sat_to_chuc.py` giữ; một HTTP 200 không chứng minh trang còn đọc ra tiêu đề (ping ≠ thu hoạch, BH50) và hai công cụ sẽ
+giành nhau một nhãn. Hai test chặn mục chết quay lại (soi sổ · đếm lời gọi `_tham` thật).
+**Kiểm:** 20 ca mới ở `tools/test_sources_health_20260930_engine_vang.py` (cây giả trong tmp; hai phép dò là hàm THẬT) + BH140.
+Hai tệp test cũ: 3 ca đòi «máy thật ghi sổ» nay khai thêm «không phải bản sao trần» ở fixture (không khai thì đỏ trên CI/
+worktree; assertion giữ nguyên), 1 ca đối chiếu thẳng `duong_goc()` thay hằng `_MEA_GOC`. 23 đột biến trên `sources_health.py`:
+23/23 đỏ ở pytest, 12/23 đỏ ở CẢ BH140 (11 phép còn lại — định dạng đầu ra, bảng điểm thăm, đường anh em, luật Cloud 24/09
+— thuộc pytest). Vòng đầu (17 phép) 1 sống sót và là lỗ của PHÉP THỬ: khớp lỏng chữ «bản sao git trần» nên dòng ⚪ làm xanh
+thay cho dòng lý do — siết về khớp đúng dòng; vòng đầu BH140 cũng chưa bắt «⚪ cho mọi nguồn file» và «bản sao trần theo MỘT
+gốc» ⇒ bổ sung ca (e) và gốc `EBM_MASTER/`. Đo sống CHỈ ĐỌC trên cây chính (sổ là bản sao tạm): bản vá và bản master cho
+cùng mã thoát, cùng nhãn, cùng đầu ra (29 active · 4 degraded · 3 not-covered; 0 nguồn lệch); ngày bịa 2099 của BH50 vẫn bị
+sửa về artifact. Chạy không cờ, có mạng, trong worktree: ⚪ SRC-003, sổ không đổi một byte.
+**Còn lại — chưa sửa:** (a) worktree mà một công cụ đã tạo `EBM-Dashboards/` bên trong thì không còn là bản sao trần theo
+định nghĩa ba gốc ⇒ engine vắng ở đó vẫn BROKEN (như máy thật hỏng dở); (b) trên bản sao trần, mốc `last_success_at` của
+SRC-001…007 không làm tươi được nên luật «quá 2 chu kỳ» có thể in BROKEN thay DEGRADED cho nguồn API thăm hỏng — chỉ lệch
+MỨC trong báo cáo, không vào sổ; (c) `--khong-mang` vẫn đếm nguồn API chưa thăm là «active khoẻ»; (d) dòng «↺ hồi phục →
+active» chỉ in khi còn nguồn đỏ khác — hồi phục trong lượt toàn xanh thì im.
+**Bài học:** (1) vá theo LỚP («cây này không mang nguyên liệu để đo»), không theo tên một môi trường — bản vá 24/09 đúng cho
+Cloud và để nguyên lỗi ở worktree; (2) công cụ vừa ĐO vừa GHI tệp tracked phải hỏi «ở cây này tôi đo được bao nhiêu phần»
+TRƯỚC khi ghi; (3) mục cấu hình mà nhánh thi hành không bao giờ chạm tới là mục chết — kiểm bằng đếm lời gọi, không bằng đọc
+bảng.
+
 ### 30/09/2026 — Cảm biến CI ⚪ «run trả về nhánh «connecting»»: mạng trượt một nhịp, chữ lỗi bị đọc thành tên nhánh (BH134)
 Hai «giác quan» CI của `tu_de_xuat_viec` ⚪ suốt 28–30/09 trên máy Windows. Chẩn đoán đầu («token gh hỏng») chỉ đúng MỘT NỬA:
 token hỏng thật (bác sĩ đăng nhập lại 30/09 qua luồng mã thiết bị), nhưng đăng nhập xong VẪN ⚪. Đo 8 lần liên tiếp: DNS nội

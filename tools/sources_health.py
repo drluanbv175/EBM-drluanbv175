@@ -13,8 +13,10 @@ Ba lớp kiểm, tách bạch (BH08 — không gộp «không biết» với «c
   • not-covered          → KHÔNG thăm (P2/P5): chỉ đếm và in known_gap — khoảng
     trống phải HIỆN RA mỗi lần chạy, không được chìm.
 
-Mã thoát: 0 = mọi nguồn active khoẻ · 1 = có degraded/broken · 2 = sổ hỏng.
-`--im-khi-on` cho hook. Kết quả ghi ngược `last_success_at` (chỉ khi THÀNH CÔNG).
+Mã thoát: 0 = không nguồn nào degraded/broken · 1 = có degraded/broken · 2 = sổ hỏng. Nguồn
+⚪ KHÔNG ĐO ĐƯỢC không làm đổi mã thoát — nó được nêu tên ở dòng ⚪ và bị TRỪ khỏi số «active
+khoẻ» (không đo được ≠ ổn). `--im-khi-on` cho hook. Kết quả ghi ngược `last_success_at` (chỉ khi
+THÀNH CÔNG).
 
 VÁ 24/09/2026 — PHIÊN CLOUD (audit/15 §8). Môi trường Cloud «Trusted» cho proxy thoát mạng
 TỪ CHỐI (CONNECT 403, chính sách) mọi host API y văn. Bản cũ đọc 403 của PROXY như nguồn hỏng
@@ -25,6 +27,19 @@ commit từ Cloud là làm bẩn sổ dùng chung của mọi máy. Nay:
     quyết định, không phải của nguồn; `--khong-ghi` ép cùng hành vi ở máy khác;
   • nguồn file `medical-ebm-automation/…` phân giải qua `duong_goc()` (Cloud: anh em, không lồng)
     — bản cũ báo SRC-003 BROKEN trên Cloud dù nền Retraction Watch có mặt.
+
+VÁ 30/09/2026 — BẢN SAO GIT TRẦN TRÊN MÁY THẬT (BH140). Một worktree git của repo gốc không mang
+`medical-ebm-automation/` (không lồng, không anh em). Bản cũ đọc thư mục Retraction Watch vắng mặt
+thành «SRC-003 → BROKEN», và — không kèm `--khong-ghi` — GHI nhãn đó vào sổ tracked của worktree.
+Bản vá 24/09 chỉ che phiên Cloud. Nay:
+  • bản sao trần VÀ không thấy gốc engine ở đâu ⇒ nguồn file của engine là ⚪ «KHÔNG ĐO ĐƯỢC —
+    engine vắng»: `status` giữ nguyên, không tính vào mã thoát 1. Cả hai phép dò uỷ quyền cho
+    `tools/ban_sao_tran.py` (`ban_sao_git_tran` · `duong_goc`) — không dò riêng ở đây;
+  • máy còn ≥ 1 gốc dữ liệu ngoài-git (máy thật, kể cả hỏng dở), hoặc thấy engine mà thiếu đúng
+    thư mục nguồn ⇒ vẫn BROKEN: thiếu THẬT không được ⚪ hoá;
+  • bản sao trần KHÔNG ghi sổ (như phiên Cloud): ở đó chỉ đo được MỘT PHẦN — không artifact nào để
+    suy `last_success_at`, không nguồn file nào — và sổ của worktree là bản chụp sẽ trôi vào PR.
+    Sổ sống đo ở cây chính của máy thật.
 """
 from __future__ import annotations
 
@@ -52,7 +67,29 @@ _sp_sh = _ilu_sh.spec_from_file_location(
     "_bst_sh", Path(__file__).resolve().parent / "ban_sao_tran.py")
 _bst_sh = _ilu_sh.module_from_spec(_sp_sh)
 _sp_sh.loader.exec_module(_bst_sh)
-_MEA_GOC = _bst_sh.duong_goc("medical-ebm-automation", GOC) or (GOC / "medical-ebm-automation")
+_TEN_ENGINE = "medical-ebm-automation"
+_TIEN_TO_ENGINE = _TEN_ENGINE + "/"
+
+
+def _goc_engine() -> Path | None:
+    """Gốc engine THẬT — vị trí lồng (máy thật) rồi anh em (Cloud); `None` khi không có ở đâu.
+
+    Uỷ quyền cho định nghĩa DUY NHẤT `ban_sao_tran.duong_goc()`. Đọc `GOC` lúc GỌI, không chốt
+    lúc import: phép thử dựng cây giả bằng cách đổi `GOC`, và mọi nơi trong tệp thấy CÙNG một gốc."""
+    return _bst_sh.duong_goc(_TEN_ENGINE, GOC)
+
+
+def _mea_goc() -> Path:
+    """Gốc engine để GHÉP đường dẫn: gốc thật nếu có, không thì vị trí lồng (để `.exists()` ra False)."""
+    return _goc_engine() or (GOC / _TEN_ENGINE)
+
+
+def la_ban_sao_tran() -> bool:
+    """Cây này KHÔNG có gốc dữ liệu ngoài-git nào (worktree · clone tươi · CI · Cloud) — uỷ quyền cho
+    định nghĩa DUY NHẤT `ban_sao_tran.ban_sao_git_tran()`. Còn ≥ 1 gốc = máy thật, kể cả hỏng dở."""
+    return _bst_sh.ban_sao_git_tran(GOC)
+
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tra_dinh_danh import email_lien_he  # noqa: E402 — email liên hệ lấy từ cấu hình, không viết cứng (27/09/2026)
 
@@ -66,13 +103,17 @@ DIEM_THAM = {
     "SRC-005": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
     "SRC-006": "https://api.fda.gov/drug/label.json?limit=1",
     "SRC-007": "https://api.openalex.org/works?per-page=1" + (f"&mailto={_MAIL}" if _MAIL else ""),
-    # SRC-020 (kcb.vn) và SRC-037 (NICE qua Europe PMC) — thêm 22/09/2026 cùng đợt đóng 4 khoảng
-    # trống nguồn. Cả hai miễn phí, không hạn mức, không cần khoá — đã kiểm reachability RIÊNG
-    # từ chính môi trường chạy chốt này trước khi thêm (khác CORE ở dưới, nơi vấn đề là thiếu
-    # header xác thực chứ không phải reachability): kcb.vn trả HTTP 200 thật; Europe PMC đã dùng
-    # chung ổn định cho SRC-005.
-    "SRC-020": "https://kcb.vn/phac-do",
+    # SRC-037 (NICE qua Europe PMC) — thêm 22/09/2026 cùng đợt đóng 4 khoảng trống nguồn. Miễn phí,
+    # không hạn mức, không cần khoá — đã kiểm reachability RIÊNG từ chính môi trường chạy chốt này
+    # trước khi thêm (khác CORE ở dưới, nơi vấn đề là thiếu header xác thực chứ không phải
+    # reachability): Europe PMC đã dùng chung ổn định cho SRC-005.
     "SRC-037": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMID:1&format=json&pageSize=1",
+    # CỐ Ý KHÔNG có SRC-020 (kcb.vn). Mục này nằm ở đây từ 22/09 tới 30/09/2026 mà CHƯA LẦN NÀO được
+    # thăm: nhánh thăm trong main() chỉ chạy cho `access: api`, còn SRC-020 là `html-watch` — bảng
+    # ghi 8 điểm thăm, thực thăm 7. Gỡ thay vì mở nhánh thăm cho nó: nhãn của trạm html-watch/rss do
+    # vòng quét trạm `giam_sat_to_chuc.py` giữ (trang có còn đọc ra tiêu đề hay không); một HTTP 200
+    # ở đây không chứng minh điều đó (ping ≠ thu hoạch — BH50) và hai công cụ sẽ giành nhau một
+    # nhãn. `test_moi_diem_tham_la_nguon_api_trong_so` chặn mục chết quay lại.
     # CỐ Ý KHÔNG có SRC-032/033/034/035 (Scopus/CORE/Consensus/SerpApi) — thử thêm CORE
     # 22/09/2026 (miễn phí, tưởng an toàn để thăm sống định kỳ) rồi PHÁT HIỆN NGAY lỗi: `_tham()`
     # không gắn header Authorization, nên probe đi ẨN DANH và bị core.ac.uk giới hạn nhịp CHẶT
@@ -113,9 +154,8 @@ def _tham(url: str) -> str:
 def _duong_file(rel: str) -> Path:
     """Nguồn file khai tương đối theo gốc repo gốc; phần `medical-ebm-automation/…` đi qua
     `duong_goc()` vì trên Cloud engine là thư mục ANH EM, không lồng."""
-    tien_to = "medical-ebm-automation/"
-    if rel.startswith(tien_to):
-        return _MEA_GOC / rel[len(tien_to):]
+    if rel.startswith(_TIEN_TO_ENGINE):
+        return _mea_goc() / rel[len(_TIEN_TO_ENGINE):]
     return GOC / rel
 
 
@@ -148,7 +188,7 @@ def lay_thanh_cong_that(sid: str) -> str | None:
                 return datetime.fromtimestamp(
                     max(p.stat().st_mtime for p in ung)).date().isoformat()
         if sid == "SRC-003":
-            d = _MEA_GOC / "data" / "retraction_watch"
+            d = _mea_goc() / "data" / "retraction_watch"
             if d.exists():
                 return datetime.fromtimestamp(d.stat().st_mtime).date().isoformat()
         if sid in ("SRC-004", "SRC-005"):
@@ -161,7 +201,7 @@ def lay_thanh_cong_that(sid: str) -> str | None:
             if moc:
                 return max(moc)[:10]
         if sid == "SRC-006":
-            log = (_MEA_GOC / "data" / "archive"
+            log = (_mea_goc() / "data" / "archive"
                    / "launchd_weekly.log")
             if log.exists():
                 for dong in reversed(log.read_text(encoding="utf-8",
@@ -179,10 +219,14 @@ def main() -> int:
     ap.add_argument("--im-khi-on", action="store_true")
     ap.add_argument("--khong-mang", action="store_true", help="bỏ thăm sống, chỉ đọc sổ")
     ap.add_argument("--khong-ghi", action="store_true",
-                    help="chỉ báo cáo, không ghi ngược sổ (tự bật trên phiên Cloud)")
+                    help="chỉ báo cáo, không ghi ngược sổ (tự bật trên phiên Cloud và trên bản sao git trần)")
     a = ap.parse_args()
     cloud = la_phien_cloud()
-    ghi_so = not (a.khong_ghi or cloud)
+    tran = la_ban_sao_tran()
+    # Nguồn file của engine chỉ «không đo được» khi ĐỒNG THỜI: bản sao trần VÀ không thấy engine ở
+    # đâu. Thiếu một trong hai vế (máy còn gốc dữ liệu khác · engine có mặt) thì thiếu là THẬT.
+    engine_vang = tran and _goc_engine() is None
+    ghi_so = not (a.khong_ghi or cloud or tran)
 
     try:
         du = json.loads(SO.read_text(encoding="utf-8"))
@@ -193,7 +237,8 @@ def main() -> int:
     hom_nay = date.today()
     loi: list[str] = []
     dong: list[str] = []
-    khong_do: list[str] = []
+    khong_do: list[str] = []          # proxy môi trường từ chối — request chưa tới nguồn
+    khong_do_engine: list[str] = []   # nguồn file của engine trên bản sao trần không mang engine
     for s in du["sources"]:
         if s["status"] == "not-covered":
             continue
@@ -218,19 +263,28 @@ def main() -> int:
         if that:
             s["last_success_at"] = that
         # (2) nguồn file: tuổi so với chu kỳ
+        file_khong_do = False
         if s["access"] == "file" and s.get("endpoint_or_url"):
-            f = _duong_file(s["endpoint_or_url"])
-            if f.exists():
-                tuoi = (datetime.now() - datetime.fromtimestamp(
-                    max(p.stat().st_mtime for p in ([f] if f.is_file() else list(f.iterdir()) or [f])))).days
-                if tuoi > chu_ky:
-                    s["status"] = "degraded"
-                    dong.append(f"  ⚠ {s['id']} file {tuoi} ngày tuổi > chu kỳ {chu_ky}ng — chạy làm mới")
+            if engine_vang and s["endpoint_or_url"].startswith(_TIEN_TO_ENGINE):
+                # Thư mục nằm trong engine mà cây này không mang engine: tuổi file KHÔNG đo được ở
+                # đây. KHÔNG BIẾT ≠ hỏng (BH08) — `status` của sổ giữ nguyên.
+                file_khong_do = True
+                khong_do_engine.append(s["id"])
             else:
-                s["status"] = "broken"
-        # (3) quá 2 chu kỳ kể từ last_success → broken (nguồn hỏng không được im)
+                f = _duong_file(s["endpoint_or_url"])
+                if f.exists():
+                    tuoi = (datetime.now() - datetime.fromtimestamp(
+                        max(p.stat().st_mtime for p in ([f] if f.is_file() else list(f.iterdir()) or [f])))).days
+                    if tuoi > chu_ky:
+                        s["status"] = "degraded"
+                        dong.append(f"  ⚠ {s['id']} file {tuoi} ngày tuổi > chu kỳ {chu_ky}ng — chạy làm mới")
+                else:
+                    s["status"] = "broken"
+                    dong.append(f"  ⚠ {s['id']} không thấy {f} — nguồn file mất THẬT (không phải bản sao trần vắng engine)")
+        # (3) quá 2 chu kỳ kể từ last_success → broken (nguồn hỏng không được im). Bỏ qua với nguồn
+        # file không đo được: mốc `last_success_at` của nó suy từ chính thư mục đang vắng.
         ls = s.get("last_success_at")
-        if ls:
+        if ls and not file_khong_do:
             try:
                 tre = (hom_nay - date.fromisoformat(ls[:10])).days
                 if tre > 2 * chu_ky and s["status"] != "active":
@@ -239,7 +293,8 @@ def main() -> int:
                 pass
         if s["status"] in ("degraded", "broken"):
             loi.append(f"{s['id']} {s['name'][:50]} → {s['status'].upper()}"
-                       f" (thành công gần nhất: {s.get('last_success_at') or 'chưa từng'})")
+                       f" (thành công gần nhất: {s.get('last_success_at') or 'chưa từng'})"
+                       + (" — nhãn của SỔ, lượt này không đo được" if file_khong_do else ""))
 
     if ghi_so:
         du["updated"] = hom_nay.isoformat()
@@ -252,15 +307,30 @@ def main() -> int:
               f"(request chưa tới nguồn, trạng thái giữ nguyên): {', '.join(khong_do)}")
         if cloud:
             print("   Cloud: mở Network access → Custom + thêm host (audit/15 §7) để đo được.")
+    if khong_do_engine:
+        print(f"⚪ {len(khong_do_engine)} nguồn file KHÔNG ĐO ĐƯỢC — engine vắng (bản sao git trần: không thấy "
+              f"{_TIEN_TO_ENGINE} ở vị trí lồng lẫn anh em; trạng thái trong sổ giữ nguyên): "
+              f"{', '.join(khong_do_engine)}")
+        print("   Đo được ở cây có engine: cây chính của máy thật, hoặc phiên Cloud đã nối engine.")
     if not ghi_so:
-        print("ℹ  KHÔNG ghi sổ data/sources.json "
-              + ("(phiên Cloud — mạng môi trường, không phải nguồn, quyết định kết quả)."
-                 if cloud else "(--khong-ghi)."))
+        if cloud:
+            ly_do = "(phiên Cloud — mạng môi trường, không phải nguồn, quyết định kết quả)."
+        elif a.khong_ghi:
+            ly_do = "(--khong-ghi)."
+        else:
+            ly_do = ("(bản sao git trần — cây này không có gốc dữ liệu ngoài git nên chỉ đo được MỘT PHẦN; "
+                     "sổ sống đo ở cây chính của máy thật).")
+        print("ℹ  KHÔNG ghi sổ data/sources.json " + ly_do)
 
     n_active = sum(1 for s in du["sources"] if s["status"] == "active")
     n_nc = sum(1 for s in du["sources"] if s["status"] == "not-covered")
+    # Không đo được ≠ ổn: nguồn ⚪ còn mang nhãn active của sổ thì KHÔNG được đếm là «khoẻ».
+    chua_do = set(khong_do) | set(khong_do_engine)
+    n_chua_do = sum(1 for s in du["sources"] if s["status"] == "active" and s["id"] in chua_do)
+    ghi_chu_chua_do = f" · ⚪ {n_chua_do} active KHÔNG đo được lượt này (nhãn theo sổ)" if n_chua_do else ""
     if loi:
-        print(f"🟠 SỔ NGUỒN: {n_active} active · {len(loi)} degraded/broken · {n_nc} not-covered")
+        print(f"🟠 SỔ NGUỒN: {n_active - n_chua_do} active{ghi_chu_chua_do} · {len(loi)} degraded/broken"
+              f" · {n_nc} not-covered")
         for x in loi:
             print("  ✗ " + x)
         for x in dong:
@@ -268,7 +338,8 @@ def main() -> int:
         print("  → nguồn hỏng = chuyên khoa đó đang MÙ; không được để im (LÔ F nguyên nhân gốc #4)")
         return 1
     if not a.im_khi_on:
-        print(f"🟢 SỔ NGUỒN: {n_active} active khoẻ · {n_nc} not-covered (khoảng trống CÓ khai báo):")
+        print(f"🟢 SỔ NGUỒN: {n_active - n_chua_do} active khoẻ{ghi_chu_chua_do} · {n_nc} not-covered"
+              " (khoảng trống CÓ khai báo):")
         for s in du["sources"]:
             if s["status"] == "not-covered":
                 print(f"  ◌ {s['id']} {s['name'][:58]} — {(s.get('known_gap') or '')[:70]}")

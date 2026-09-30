@@ -6992,6 +6992,101 @@ def bh116_so_nguon_ghi_dung_dinh_dang_git():
     return True, ""
 
 
+def bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong():
+    """30/09 — `sources_health.py` chạy trong một worktree git của repo gốc trên máy thật (bản sao trần: không gốc dữ
+    liệu ngoài-git nào, engine không lồng không anh em) báo «SRC-003 … → BROKEN» vì thư mục Retraction Watch nằm trong
+    engine; không kèm `--khong-ghi` thì nhãn sai đó được GHI vào sổ tracked của worktree. Bản vá 24/09 chỉ che phiên
+    Cloud. «Không đo được» bị đọc thành «hỏng» (cùng họ BH08/BH82). Kiểm HÀNH VI `main()` trên cây tạm, ngoại tuyến
+    (khoá socket, `--khong-mang`); hai phép dò vẫn là hàm THẬT của `ban_sao_tran.py`:
+    (a) bản sao trần, không engine ⇒ mã 0, dòng ⚪ «KHÔNG ĐO ĐƯỢC — engine vắng» nêu đúng nguồn, sổ không đổi một byte;
+    (b) máy còn MỘT gốc dữ liệu bất kỳ (`EBM-Dashboards/` hoặc `EBM_MASTER/`) mà mất engine ⇒ BROKEN thật, mã 1, nhãn
+        được ghi vào sổ;
+    (c) thấy engine (anh em) mà thiếu đúng thư mục nguồn ⇒ BROKEN thật — nhưng cây vẫn là bản sao trần nên không ghi sổ;
+    (d) nhãn degraded có sẵn trong sổ không bị ⚪ che và không leo thành broken khi lượt này không đo được;
+    (e) ⚪ chỉ dành cho nguồn trỏ vào ENGINE: nguồn file nằm trong phần git track mà mất vẫn là BROKEN ở mọi cây."""
+    import contextlib as _cl
+    import io as _io
+    import json as _json
+    import os as _os
+    import socket as _so
+    import tempfile as _tf
+    sh = _nap(REPO / "tools" / "sources_health.py", "sh_bh140")
+    if not all(hasattr(sh, t) for t in ("la_ban_sao_tran", "_goc_engine")):
+        return False, "sources_health không còn hai phép dò uỷ quyền cho ban_sao_tran.py (bản sao trần · gốc engine)"
+    muc = {"id": "SRC-003", "name": "Retraction Watch ngoại tuyến", "access": "file", "scan_frequency": "monthly",
+           "endpoint_or_url": "medical-ebm-automation/data/retraction_watch/", "status": "active",
+           "last_success_at": "2026-09-20"}
+
+    def chay(goc: Path, **ghi_de):
+        so = goc / "data" / "sources.json"
+        so.parent.mkdir(parents=True, exist_ok=True)
+        so.write_text(_json.dumps({"updated": "2000-01-01", "sources": [dict(muc, **ghi_de)]}, ensure_ascii=False,
+                                  indent=2) + "\n", encoding="utf-8", newline="\n")
+        truoc = so.read_bytes()
+        sh.GOC, sh.SO = goc, so
+        sys.argv = ["sources_health", "--khong-mang"]
+        ra = _io.StringIO()
+        with _cl.redirect_stdout(ra):
+            ma = sh.main()
+        sau = so.read_bytes()
+        return ma, ra.getvalue(), sau != truoc, _json.loads(sau)["sources"][0]["status"]
+
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH140 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    giu_goc, giu_so, giu_argv = sh.GOC, sh.SO, sys.argv
+    # Chốt mô phỏng MÁY THẬT: trên phiên Cloud biến này đổi cả định nghĩa «bản sao trần» lẫn luật ghi sổ.
+    giu_cloud = _os.environ.pop("CLAUDE_CODE_REMOTE", None)
+    _so.socket.connect = _cam_mang
+    try:
+        with _tf.TemporaryDirectory() as d:
+            ma, ra, da_ghi, _nhan = chay(Path(d) / "a" / "repo")
+            if ma != 0 or "BROKEN" in ra:
+                return False, ("bản sao trần không mang engine mà nguồn file của engine bị báo BROKEN / mã thoát 1 — "
+                               "«không đo được» lại bị đọc thành «hỏng»")
+            if "KHÔNG ĐO ĐƯỢC — engine vắng" not in ra or "SRC-003" not in ra:
+                return False, "engine vắng mà không có dòng ⚪ «KHÔNG ĐO ĐƯỢC — engine vắng» nêu tên nguồn — im lặng là xanh giả"
+            if da_ghi:
+                return False, "bản sao trần mà vẫn GHI sổ tracked — nhãn đo một phần sẽ trôi vào PR của worktree"
+
+            for ten_goc in ("EBM-Dashboards", "EBM_MASTER"):
+                that = Path(d) / f"b-{ten_goc}" / "repo"
+                (that / ten_goc).mkdir(parents=True)
+                ma, ra, da_ghi, nhan = chay(that)
+                if ma != 1 or nhan != "broken" or not da_ghi or "KHÔNG ĐO ĐƯỢC" in ra:
+                    return False, (f"máy còn gốc dữ liệu ({ten_goc}/) mà mất engine không còn là BROKEN được ghi vào sổ — "
+                                   "thiếu THẬT bị ⚪ hoá")
+
+            anh_em = Path(d) / "c" / "repo"
+            (anh_em.parent / "medical-ebm-automation").mkdir(parents=True)
+            ma, ra, da_ghi, _nhan = chay(anh_em)
+            if ma != 1 or "→ BROKEN" not in ra or "KHÔNG ĐO ĐƯỢC" in ra:
+                return False, "thấy engine (anh em) mà thiếu đúng thư mục nguồn lại bị ⚪ hoá — chốt mất răng"
+            if da_ghi:
+                return False, "bản sao trần (engine anh em, không gốc dữ liệu nào) mà vẫn ghi sổ"
+
+            ma, ra, da_ghi, _nhan = chay(Path(d) / "d" / "repo", status="degraded", last_success_at="2020-01-01")
+            if ma != 1 or "→ DEGRADED" not in ra or "→ BROKEN" in ra or da_ghi:
+                return False, ("nhãn degraded có sẵn trong sổ bị che, hoặc bị leo thành broken theo mốc "
+                               "`last_success_at` không làm tươi được trên bản sao trần")
+
+            ma, ra, _da_ghi, _nhan = chay(Path(d) / "e" / "repo", endpoint_or_url="data/kho-trong-git/")
+            if ma != 1 or "→ BROKEN" not in ra or "KHÔNG ĐO ĐƯỢC" in ra:
+                return False, "nguồn file nằm TRONG git mà mất lại bị ⚪ hoá theo lý do «engine vắng» — lỗi trong-repo bị che"
+    finally:
+        sh.GOC, sh.SO, sys.argv = giu_goc, giu_so, giu_argv
+        _so.socket.connect = goc_connect
+        if giu_cloud is not None:
+            _os.environ["CLAUDE_CODE_REMOTE"] = giu_cloud
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return True, ""
+
+
 # ── BH126–BH128 (28/09): ba tệp trạng thái trong cây OneDrive dùng chung đẻ bản sao xung đột «-Dr Luân BV175(-2)» —
 #    chốt sync_safety_check 🔴 ngày 20/09, 23/09, 28/09. Cùng họ BH116 (công cụ viết lại cả tệp mỗi lượt), nặng hơn vì
 #    HAI MÁY cùng viết: tệp chung chỉ được là HÀM THUẦN của đầu vào chung (ghi khi đổi); trạng thái riêng máy phải tách.
@@ -8862,6 +8957,8 @@ BAI_HOC = [
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
+    # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
+    ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),

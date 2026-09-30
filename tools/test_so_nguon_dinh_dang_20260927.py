@@ -42,6 +42,7 @@ def test_sources_health_ghi_giu_thut_le_2(monkeypatch, tmp_path):
     monkeypatch.setattr(mod, "SO", so)
     monkeypatch.setattr(mod, "lay_thanh_cong_that", lambda sid: None)
     monkeypatch.setattr(mod, "la_phien_cloud", lambda: False)
+    monkeypatch.setattr(mod, "la_ban_sao_tran", lambda: False)  # máy thật — bản sao trần không ghi sổ (30/09/2026)
     monkeypatch.setattr(sys, "argv", ["sources_health", "--khong-mang"])
     mod.main()
     raw = so.read_bytes()
