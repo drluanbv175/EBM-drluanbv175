@@ -41,6 +41,9 @@ def sh(monkeypatch, tmp_path):
     ]}, ensure_ascii=False), encoding="utf-8", newline="\n")
     monkeypatch.setattr(mod, "SO", so)
     monkeypatch.setattr(mod, "lay_thanh_cong_that", lambda sid: None)
+    # Các ca ở đây so MÁY THẬT với PHIÊN CLOUD. Từ 30/09/2026 bản sao git trần (CI, worktree) cũng không
+    # ghi sổ — luật riêng, kiểm ở test_sources_health_20260930_engine_vang.py; ở đây khai rõ «máy thật».
+    monkeypatch.setattr(mod, "la_ban_sao_tran", lambda: False)
     return mod, so
 
 
@@ -97,5 +100,6 @@ def test_khong_ghi_ep_o_may_that(sh, monkeypatch):
 def test_nguon_file_engine_phan_giai_qua_duong_goc():
     mod = _nap()
     f = mod._duong_file("medical-ebm-automation/data/retraction_watch/")
-    assert f == mod._MEA_GOC / "data/retraction_watch/"
+    goc_engine = mod._bst_sh.duong_goc("medical-ebm-automation", mod.GOC) or mod.GOC / "medical-ebm-automation"
+    assert f == goc_engine / "data/retraction_watch/"
     assert mod._duong_file("EBM-Dashboards/x.json") == mod.GOC / "EBM-Dashboards/x.json"
