@@ -7914,6 +7914,242 @@ def bh132_tac_vu_lich_ban_chay_theo_nguon_git():
     return True, ""
 
 
+def bh133_chot_an_toan_soi_ban_sao_trong_git():
+    """30/09 — `sync_safety_check` prune `.git` nên mục bản sao xung đột KHÔNG BAO GIỜ soi tới `.git` (lỗ hổng ghi nhận từ
+    03/08): đo 30/09 có 36 bản sao OneDrive trong `.git` hai repo — `config-C010000PK16BSL`, index/FETCH_HEAD/reflog… và MỘT
+    ref ma `origin/master-C010000PK16BSL` hiện trong `git for-each-ref` — chốt vẫn 🟢. Kèm hai điểm mù dò tên ở cây làm việc:
+    bản lặp «-<máy>-2» không khớp (15 bản sao thật lọt), và máy này mù trước bản sao do máy KIA đẻ. Kiểm HÀNH VI trên repo
+    git tạm: rác trong .git được liệt kê mà không chặn; ref ma (và bản sao packed-refs) giữ commit nhánh thật không có ⇒ 🔴,
+    đã nằm trong nhánh thật ⇒ không 🔴; `main()` thật sự chạy mục mới; cây làm việc bắt «-<máy này>-2» và «-C010000PK16BSL»
+    khi đang ở máy khác."""
+    import importlib.util as _iu
+    import inspect as _ins
+    import socket as _socket
+    import subprocess
+    import tempfile as _tf
+    sp = _iu.spec_from_file_location("_bh133_ssc", REPO / "tools" / "sync_safety_check.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh133_ssc"] = M
+    sp.loader.exec_module(M)
+    if not hasattr(M, "check_git_conflict_copies"):
+        return False, "sync_safety_check không còn mục soi bản sao xung đột trong .git"
+    if "check_git_conflict_copies" not in _ins.getsource(M.main):
+        return False, "main() không gọi mục soi .git — có hàm mà chốt đầu phiên không chạy (họ BH41)"
+
+    def git(repo, *lenh):
+        return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",
+                               "-c", "commit.gpgsign=false", *lenh],
+                              check=True, capture_output=True, text=True).stdout.strip()
+
+    goc_hostname = _socket.gethostname
+    _socket.gethostname = lambda: "MAYTHU"
+    try:
+        with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+            repo = Path(d) / "Claude AI"
+            repo.mkdir()
+            git(repo, "init", "-q", "-b", "main")
+            for i in (1, 2):
+                (repo / "a.txt").write_text(str(i), encoding="utf-8")
+                git(repo, "add", "-A")
+                git(repo, "commit", "-q", "-m", f"c{i}")
+            c1, c2 = git(repo, "rev-parse", "HEAD~1"), git(repo, "rev-parse", "HEAD")
+            M.ROOT, M.GIT_REPOS = repo, [(".", repo)]
+            g = repo / ".git"
+            (g / "index-MAYTHU-3").write_text("x", encoding="utf-8")
+            (g / "FETCH_HEAD-Dr Luân BV175-2").write_text("x", encoding="utf-8")
+            muc, ct = M.check_git_conflict_copies()
+            if muc == "RED":
+                return False, "rác trong .git (index/FETCH_HEAD) bị 🔴 — báo động giả dạy người ta bỏ qua chốt"
+            if not any("2 tệp rác" in x for x in ct):
+                return False, "bản sao rác trong .git (bản lặp «-N», tên máy Mac) không được liệt kê — lại mù trước .git"
+            git(repo, "update-ref", "refs/heads/main", c1)
+            ma = g / "refs" / "heads" / "main-C010000PK16BSL"
+            ma.write_text(c2 + "\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] != "RED":
+                return False, "ref ma giữ commit mà nhánh thật không có KHÔNG bị 🔴 — dời nó là mất commit"
+            ma.write_text(c1 + "\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] == "RED":
+                return False, "ref ma mà commit đã nằm trong nhánh thật vẫn bị 🔴 — phải 🟡 «dời được»"
+            ma.unlink()
+            (g / "packed-refs-C010000PK16BSL").write_text(f"{c2} refs/heads/main\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] != "RED":
+                return False, "bản sao packed-refs giữ nhánh mà bản đang dùng không có KHÔNG bị 🔴 — dời là mất commit"
+            (repo / "docs").mkdir()
+            for ten in ("x-MAYTHU-2.md", "y-C010000PK16BSL.md"):
+                (repo / "docs" / ten).write_text("x", encoding="utf-8")
+            muc, ct = M.check_conflict_copies()
+            thay = {Path(x.split("  ")[0].replace("\\", "/")).name for x in ct}
+            if muc != "RED" or not {"x-MAYTHU-2.md", "y-C010000PK16BSL.md"} <= thay:
+                return False, "cây làm việc không bắt bản lặp «-<máy>-2» hoặc bản sao do máy KIA đẻ"
+    finally:
+        _socket.gethostname = goc_hostname
+    return True, ""
+
+
+def bh134_cam_bien_ci_chiu_mang_chap_chon():
+    """30/09 — cảm biến CI của `tu_de_xuat_viec` ⚪ «run trả về nhánh «connecting»» suốt 28–30/09 trên máy Windows, kể cả
+    SAU khi bác sĩ đăng nhập lại gh: DNS nội bộ trượt lần phân giải đầu ⇒ `gh run list` in «error connecting to
+    api.github.com»; `_chay` gộp stderr nên chữ «connecting» bị đọc thành TÊN NHÁNH; có gh mà gọi trượt MỘT nhịp là ⚪ —
+    không thử lại, không lùi sang API công khai (cùng họ BH129). Kiểm HÀNH VI với `_chay`/`urlopen` giả: lỗi kết nối rồi
+    được ⇒ đo được, vẫn đếm MỘT giác quan; lỗi kết nối mọi lần ⇒ «» kèm đúng nguyên nhân, không có «nhánh «connecting»»;
+    token hỏng ⇒ lùi sang API và đo được; câu trả lời thật «run nhánh khác» không bị thử lại, không thành success; và trần
+    thời gian (mạng đã hỏng ⇒ repo sau thử một lần; gh treo hết hạn ⇒ không thử lại, không gọi thêm API)."""
+    import importlib.util as _iu
+    import io as _io
+    import json as _json
+    sp = _iu.spec_from_file_location("_bh134_tdxv", REPO / "tools" / "tu_de_xuat_viec.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh134_tdxv"] = M
+    sp.loader.exec_module(M)
+    if not hasattr(M, "_MANG_GH"):
+        return False, "cảm biến CI đường gh không còn cơ chế thử lại khi mạng chập chờn"
+    nhanh = "master"
+    M._nhanh_mac_dinh = lambda *a, **k: nhanh
+    M._owner_repo_tu_remote = lambda d: "chu/kho"
+    loi_mang = "error connecting to api.github.com\ncheck your internet connection or https://githubstatus.com\n"
+
+    class _Resp(_io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    goi_api: list[str] = []
+
+    def mo(req, timeout=0):
+        goi_api.append(req.full_url)
+        return _Resp(_json.dumps({"workflow_runs": [{"conclusion": "failure", "head_branch": nhanh}]}).encode())
+
+    def do(kich_ban, mang_hong=False, ghi_chet=""):
+        M._GIAC_QUAN_CHET.clear()
+        M._SO_GIAC_QUAN["chay"] = 0
+        M._MANG_GH["hong"] = mang_hong
+        goi_api.clear()
+        goi = []
+
+        def chay_gia(lenh, giay=120, cwd=None):
+            M._SO_GIAC_QUAN["chay"] += 1
+            goi.append(lenh)
+            if ghi_chet:                                     # như `_chay` thật khi gh treo hết hạn
+                M._ghi_chet(lenh, ghi_chet)
+                return ""
+            return kich_ban[min(len(goi), len(kich_ban)) - 1]
+        M._chay = chay_gia
+        kq = M.doc_ci_mot_repo("gốc", REPO, "kiem-tinh-da-nen.yml", co_gh=True, urlopen=mo, ngu=lambda s: None)
+        return kq, len(goi)
+
+    kq, so_goi = do([loi_mang, f"success {nhanh}\n"])
+    if kq != ("success", nhanh) or so_goi != 2:
+        return False, "gh trượt kết nối MỘT nhịp là ⚪ ngay — không thử lại (mạng chập chờn thành «không đo được»)"
+    if M._GIAC_QUAN_CHET or M._SO_GIAC_QUAN["chay"] != 1:
+        return False, "thử lại làm lệch bảng «x/y giác quan» (mỗi lần thử bị đếm là một giác quan, hoặc còn ghi chết)"
+    kq, so_goi = do([loi_mang])
+    if kq != ("", nhanh) or len(M._GIAC_QUAN_CHET) != 1 or goi_api:
+        return False, "gh trượt kết nối mọi lần mà không ra «không đo được» với ĐÚNG MỘT lý do (hoặc tốn thêm lượt API)"
+    if "«connecting»" in M._GIAC_QUAN_CHET[0] or "error connecting" not in M._GIAC_QUAN_CHET[0]:
+        return False, "chữ trong thông báo lỗi của gh lại bị đọc thành tên nhánh, hoặc mất nguyên nhân thật"
+    # Trần thời gian: bên gọi cho cả công cụ 90 s, mỗi lần gh trượt DNS ~12 s, treo thì 30 s.
+    if M._MANG_GH["hong"] is not True:
+        return False, "mạng hỏng ở repo này mà không ghi nhớ — repo sau lại thử đủ số lần, vượt hạn 90 s của bên gọi"
+    kq, so_goi = do([loi_mang], mang_hong=True)
+    if so_goi != 1:
+        return False, "mạng đã hỏng ở repo trước mà repo sau vẫn thử lại — vượt hạn 90 s của bên gọi"
+    kq, so_goi = do([], ghi_chet="quá 30s")
+    if kq != ("", nhanh) or so_goi != 1 or goi_api or len(M._GIAC_QUAN_CHET) != 1:
+        return False, "gh treo hết 30 s mà còn thử lại/gọi thêm API — vượt hạn 90 s của bên gọi"
+    kq, so_goi = do(["HTTP 401: Bad credentials (https://api.github.com/graphql)\n"])
+    if kq != ("failure", nhanh) or so_goi != 1 or len(goi_api) != 1:
+        return False, "gh hỏng KHÔNG vì mạng (token) mà không lùi sang API công khai — CI đỏ nằm im dưới ⚪"
+    kq, so_goi = do(["success claude/nhanh-khac\n"])
+    if kq != ("", nhanh) or so_goi != 1 or goi_api:
+        return False, "câu trả lời thật của gh (run nhánh khác) bị coi là lỗi mạng hoặc thành «success»"
+    return True, ""
+
+
+def bh135_kiem_nguon_that_do_mang_hai_tang():
+    """30/09 — `kiem_nguon_that.kiem_mang()` chỉ gọi `gethostbyname`: «phân giải được» bị coi là «tới được». Đo thật trên
+    máy Windows: api.crossref.org có địa chỉ mà cổng 443 KHÔNG thông 10/10 lần ⇒ chốt ① của chu trình chứng cứ báo 🟢 «4/4
+    nguồn phân giải được» trong khi Crossref không tới được; còn DNS nội bộ hết hạn (DNS công cộng trả lời ~45 ms) thì bị
+    báo chung «không phân giải được», không ai biết lỗi nằm ở máy chủ DNS. Kiểm HÀNH VI với ba hàm đo giả: có địa chỉ mà
+    không nối được ⇒ 🟡 «cổng 443… không phải DNS» (một nhịp rớt thì không báo động); DNS của máy hỏng mà DNS công cộng
+    được ⇒ chỉ đúng máy chủ DNS, kèm cả đường truyền nếu nối thẳng IP cũng không thông; không hỏi được DNS công cộng ⇒
+    không đổ lỗi; DNS chậm/chập chờn lộ ra; mạng hỏng toàn phần vẫn chỉ 🟡; qua proxy thì không thử nối trực tiếp; gói trả
+    lời DNS sai mã truy vấn bị bỏ."""
+    import importlib.util as _iu
+    import os as _os
+    import struct as _st
+    sp = _iu.spec_from_file_location("_bh135_knt", REPO / "tools" / "kiem_nguon_that.py")
+    K = _iu.module_from_spec(sp)
+    sys.modules["_bh135_knt"] = K
+    sp.loader.exec_module(K)
+    if not all(hasattr(K, t) for t in ("_phan_giai", "_noi_duoc", "_hoi_dns_cong_cong", "_doc_tra_loi_dns")):
+        return False, "kiem_nguon_that không còn đo mạng hai tầng (DNS + nối cổng 443)"
+    dau, ip = K.HOST_NGUON[0][0], "203.0.113.7"
+
+    def do(dns=None, noi=None, cc=None):
+        dem, goi_noi = {}, []
+
+        def phan_giai(h):
+            ds = (dns or {}).get(h, [("198.51.100.9", 0.01)])
+            dem[h] = dem.get(h, 0) + 1
+            return ds[min(dem[h], len(ds)) - 1]
+
+        def noi_duoc(dia_chi, cong=443, han=5.0):
+            goi_noi.append(dia_chi)
+            ds = (noi or {}).get(dia_chi, [True])
+            return ds[min(goi_noi.count(dia_chi), len(ds)) - 1]
+
+        K._phan_giai, K._noi_duoc = phan_giai, noi_duoc
+        K._hoi_dns_cong_cong = lambda h, m, han=3.0: (cc or {}).get(h)
+        muc, tin = K.kiem_mang()
+        return muc, tin, goi_noi
+
+    giu = {k: _os.environ.pop(k) for k in ("HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy") if k in _os.environ}
+    try:
+        if do()[:2] != ("xanh", []):
+            return False, "mọi nguồn phân giải và nối được mà không ra 🟢"
+        muc, tin, _ = do({dau: [(ip, 0.2)]}, {ip: [False, False]})
+        if muc != "vang" or not tin or "cổng 443" not in tin[0] or "KHÔNG phải DNS" not in tin[0]:
+            return False, "nguồn có địa chỉ mà KHÔNG nối được vẫn được coi là ổn — «phân giải được» lại thành «tới được»"
+        if do({dau: [(ip, 0.2)]}, {ip: [False, True]})[0] != "xanh":
+            return False, "một nhịp rớt khi nối (lần hai thông) đã bị báo động — phải thử lại một lần rồi mới kết luận"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, None, {dau: ip})
+        if muc != "vang" or "DNS công cộng phân giải được" not in tin[0] or "máy chủ DNS đang dùng" not in tin[0] \
+                or "đường truyền" in tin[0]:
+            return False, "DNS của máy hỏng trong khi DNS công cộng trả lời mà không chỉ đúng lỗi ở máy chủ DNS đang dùng"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, {ip: [False]}, {dau: ip})
+        if "cũng KHÔNG thông" not in tin[0]:
+            return False, "DNS hỏng VÀ nối thẳng IP cũng không thông mà chỉ báo DNS — bỏ sót lỗi đường truyền"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, None, {})
+        if muc != "vang" or "máy chủ DNS đang dùng" in tin[0]:
+            return False, "không hỏi được DNS công cộng mà vẫn đổ lỗi cho DNS của máy — kết luận không có bằng chứng"
+        muc, tin, _ = do({dau: [(None, 12.0), (ip, 9.0), (ip, 0.01)]})
+        if muc != "vang" or "2/3" not in tin[0]:
+            return False, "DNS chập chờn (2/3 lần) không lộ ra"
+        muc, tin, _ = do({dau: [(ip, 8.0)]})
+        if muc != "vang" or "chậm" not in tin[0]:
+            return False, "DNS trả lời sau 8 s mà không bị gọi tên — lời gọi nguồn hết hạn ở lần đầu sẽ thành «mạng chập chờn»"
+        muc, tin, _ = do({h: [(None, 12.0)] for h, _ in K.HOST_NGUON}, None, {})
+        if muc != "vang":
+            return False, "mạng hỏng toàn phần bị xếp 🔴 — 🔴 chỉ dành cho dữ liệu GIẢ (mạng hỏng không làm dữ liệu sai)"
+        _os.environ["HTTPS_PROXY"] = "http://127.0.0.1:1"
+        muc, tin, goi = do(None, {"198.51.100.9": [False]})
+        if muc != "xanh" or goi:
+            return False, "đi qua proxy (phiên Cloud) mà vẫn thử nối trực tiếp — báo động giả trên Cloud"
+        tra_loi = (_st.pack(">HHHHHH", 0x9999, 0x8180, 1, 1, 0, 0) + b"\x01a\x00" + _st.pack(">HH", 1, 1)
+                   + b"\xc0\x0c" + _st.pack(">HHIH", 1, 1, 60, 4) + bytes([1, 2, 3, 4]))
+        if K._doc_tra_loi_dns(tra_loi, 0x1234) is not None or K._doc_tra_loi_dns(tra_loi, 0x9999) != "1.2.3.4":
+            return False, "gói trả lời DNS sai mã truy vấn được nhận (hoặc gói đúng bị bỏ) — đối chiếu DNS công cộng sai"
+        loi_ten = _st.pack(">HHHHHH", 0x9999, 0x8183, 1, 1, 0, 0) + tra_loi[12:]
+        if K._doc_tra_loi_dns(loi_ten, 0x9999) is not None:
+            return False, "gói trả lời DNS mang mã lỗi (NXDOMAIN) vẫn được đọc ra địa chỉ"
+    finally:
+        _os.environ.pop("HTTPS_PROXY", None)
+        _os.environ.update(giu)
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -8057,6 +8293,9 @@ BAI_HOC = [
     ("BH130", "28/09", "SKILL tác vụ lịch không neo đường dẫn một máy/`/tmp`; khai rõ đa nền hay chỉ-Mac (bash)", bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows),
     ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
     ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
+    ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
+    ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
+    ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
 ]
 
 

@@ -28,6 +28,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 for _s in (sys.stdout, sys.stderr):
@@ -226,11 +227,42 @@ def doc_ci_qua_api(duong_repo: Path, wf: str, nhanh: str, urlopen=None) -> str:
     return str(run.get("conclusion") or "")
 
 
+# Phán quyết hợp lệ của một run ĐÃ HOÀN TẤT (`conclusion` của GitHub Actions) — để phân biệt CÂU TRẢ LỜI của gh với
+# THÔNG BÁO LỖI của gh. `_chay` gộp stderr vào stdout, nên «error connecting to api.github.com» từng bị tách thành
+# conclusion=«error», nhánh=«connecting» rồi in «run trả về nhánh «connecting»» (đo 28–30/09/2026 trên máy Windows).
+_KET_LUAN_CI = frozenset({"success", "failure", "cancelled", "skipped", "timed_out", "action_required",
+                          "neutral", "stale", "startup_failure"})
+# Lỗi KẾT NỐI của gh — đáng thử lại: DNS nội bộ hay trượt lần phân giải ĐẦU sau khi bộ đệm nguội (đo 30/09: lần 1 lỗi sau
+# 12 s, lần 2 được, các lần sau < 1 s). Lỗi khác (token hỏng, HTTP 4xx, gh không chạy) thử lại vô ích ⇒ lùi sang API.
+_LOI_KET_NOI_GH = re.compile(r"error connecting|could not resolve|no such host|dial tcp|timed? ?out|"
+                             r"connection (?:reset|refused)|TLS handshake|unexpected EOF", re.I)
+_NGHI_THU_LAI_GH = 2.0           # giây nghỉ trước lần thử thứ hai
+# Repo trước đã trượt kết nối ở MỌI lần thử ⇒ repo sau chỉ thử một lần: bên gọi (`xuat_trang_thai_cloud`) cho cả công cụ
+# 90 s, mà mỗi lần gh trượt DNS mất ~12 s.
+_MANG_GH = {"hong": False}
+
+
+def _doc_tra_loi_gh(out: str) -> tuple[bool, str, str]:
+    """(đây có phải CÂU TRẢ LỜI của `gh run list` không, conclusion, nhánh). Rỗng = chưa có run hoàn tất trên nhánh —
+    vẫn là câu trả lời. Mọi dạng khác (nhiều dòng, nhiều chữ, conclusion lạ) là thông báo lỗi, KHÔNG đọc thành nhánh."""
+    dong = [d for d in out.strip().splitlines() if d.strip()]
+    if not dong:
+        return True, "", ""
+    phan = dong[0].split()
+    if len(dong) == 1 and len(phan) == 2 and phan[0] in _KET_LUAN_CI and _TEN_NHANH_HOP_LE.fullmatch(phan[1]):
+        return True, phan[0], phan[1]
+    return False, "", ""
+
+
 def doc_ci_mot_repo(ten_ci: str, cwd_ci: Path, wf: str, co_gh: bool | None = None,
-                    urlopen=None) -> tuple[str, str]:
+                    urlopen=None, ngu=None) -> tuple[str, str]:
     """Phán quyết CI của NHÁNH MẶC ĐỊNH một repo → (conclusion hoặc «», tên nhánh hoặc «»).
 
     «» nghĩa là KHÔNG ĐO ĐƯỢC (đã ghi giác quan chết) — bảng hiện ⚪/🟡, không bao giờ xanh.
+
+    Vá 30/09/2026 (BH134): có `gh` mà gọi trượt MỘT nhịp là ⚪ ngay — không thử lại, không lùi sang API công khai, còn
+    chữ trong thông báo lỗi bị đọc thành tên nhánh. Nay: lỗi kết nối ⇒ thử lại một lần; gh hỏng vì lý do khác ⇒ lùi
+    sang `doc_ci_qua_api`; mọi đường hỏng vẫn là «» kèm ĐÚNG nguyên nhân, và vẫn chỉ tính MỘT giác quan.
     """
     if co_gh is None:
         co_gh = bool(shutil.which("gh"))
@@ -242,19 +274,45 @@ def doc_ci_mot_repo(ten_ci: str, cwd_ci: Path, wf: str, co_gh: bool | None = Non
         return "", ""
     if not co_gh:
         return doc_ci_qua_api(cwd_ci, wf, nhanh, urlopen=urlopen), nhanh
-    so_chet = len(_GIAC_QUAN_CHET)
-    out = _chay(["gh", "run", "list", "--workflow", wf, "--branch", nhanh, "--limit", "1", "--status", "completed",
-                 "--json", "conclusion,headBranch", "--jq",
-                 ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
-    phan = out.strip().split()
-    kq_ci = phan[0] if phan else ""
-    dau = phan[1] if len(phan) > 1 else ""
-    if dau != nhanh:
-        # Không có run hoàn tất trên nhánh / gh lỗi / trả nhánh khác ⇒ không đo được (một lần ghi).
-        if len(_GIAC_QUAN_CHET) == so_chet:
-            _ghi_chet(["gh", "run list"], f"run trả về nhánh «{dau or '?'}» ≠ «{nhanh}»")
-        kq_ci = ""
-    return kq_ci, nhanh
+    so_chet, dem = len(_GIAC_QUAN_CHET), _SO_GIAC_QUAN["chay"]
+    nhan = ["gh", f"run list · CI {ten_ci}"]
+    loi_gh, loi_mang, lan = "", False, 0
+    for lan in range(1 if _MANG_GH["hong"] else 2):
+        if lan:
+            (ngu or time.sleep)(_NGHI_THU_LAI_GH)
+        chet_truoc = len(_GIAC_QUAN_CHET)
+        out = _chay(["gh", "run", "list", "--workflow", wf, "--branch", nhanh, "--limit", "1", "--status", "completed",
+                     "--json", "conclusion,headBranch", "--jq",
+                     ".[0].conclusion + \" \" + .[0].headBranch"], giay=30, cwd=cwd_ci)
+        khong_chay = len(_GIAC_QUAN_CHET) > chet_truoc       # `_chay` tự ghi: quá giờ / không khởi động được / traceback
+        la_tra_loi, kq_ci, dau = (False, "", "") if khong_chay else _doc_tra_loi_gh(out)
+        if la_tra_loi:
+            _SO_GIAC_QUAN["chay"] = dem + 1                  # MỘT giác quan, dù thử mấy lần
+            if dau != nhanh:
+                _ghi_chet(nhan, f"run trả về nhánh «{dau}» ≠ «{nhanh}»" if dau
+                          else f"chưa có run nào hoàn tất trên nhánh {nhanh}")
+                return "", nhanh
+            return kq_ci, nhanh
+        if khong_chay:
+            loi_gh = _GIAC_QUAN_CHET[-1]
+            loi_mang = "quá " in loi_gh                      # treo hết 30 s ⇒ coi như mạng; «không chạy được» ⇒ gh hỏng
+            break                                            # đằng nào cũng không thử lại gh
+        loi_gh = (out.strip().splitlines() or ["?"])[0][:120]
+        loi_mang = bool(_LOI_KET_NOI_GH.search(out))
+        if not loi_mang:
+            break                                            # token hỏng / HTTP 4xx: thử lại vô ích ⇒ lùi sang API
+    del _GIAC_QUAN_CHET[so_chet:]
+    _SO_GIAC_QUAN["chay"] = dem
+    if loi_mang:
+        # Cùng máy chủ api.github.com vừa trượt ⇒ không gọi API thêm (chỉ tốn thêm ~12 s); ghi ĐÚNG nguyên nhân.
+        _MANG_GH["hong"] = True
+        _SO_GIAC_QUAN["chay"] += 1
+        _ghi_chet(nhan, f"gh không gọi được GitHub sau {lan + 1} lần ({loi_gh}) — mạng/DNS, KHÔNG phải CI đỏ")
+        return "", nhanh
+    kq = doc_ci_qua_api(cwd_ci, wf, nhanh, urlopen=urlopen)  # tự đếm 1 giác quan, tự ghi chết nếu cũng hỏng
+    if not kq and len(_GIAC_QUAN_CHET) > so_chet:
+        _GIAC_QUAN_CHET[-1] += f" — trước đó gh lỗi: {loi_gh}"
+    return kq, nhanh
 
 
 def la_phien_cloud() -> bool:

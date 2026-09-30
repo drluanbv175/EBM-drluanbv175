@@ -3397,3 +3397,57 @@ số) — để nguyên cho phiên đó; hai thay đổi nằm ở đoạn khác
 (2) Thư mục nháp nằm trong `/private/tmp` bị xoá khi khởi động lại; chuỗi lệnh đột biến sao lưu hỏng mà lệnh đột biến kế
 tiếp (heredoc độc lập) VẪN chạy ⇒ để lại `weekly_safety.sh` ở trạng thái đột biến (test bắt, khôi phục, đối chiếu diff).
 **Luật:** mỗi phép đột biến phải ĐIỀU KIỆN theo sao lưu đã `cmp` được, không dựa vào chuỗi `&&` phía trước.
+
+### 30/09/2026 — 36 bản sao xung đột nằm TRONG `.git` mà chốt an toàn vẫn 🟢; một ref ma hiện trong `git for-each-ref` (BH133)
+Đầu phiên Windows: `sync_safety_check` 🔴 vì 4 bản sao ở cây làm việc — 3 tệp trạng thái quay lại + bản mới
+`medical-ebm-automation/CLAUDE-C010000PK16BSL.md`. So nội dung: không dữ liệu riêng (sổ tổng thuật chỉ khác `tuoi_ngay`;
+con trỏ và catalog giống từng byte; bản CLAUDE = blob đã commit ở `2fe2518`) ⇒ DỜI sang
+`C:\Users\Admin\ebm-backup-truoc-dong-bo-20260930\`. Ba tệp trạng thái quay lại vì cây dùng chung đứng ở nhánh PR #54 tới
+29/09 18:38: BH126–BH128 đã gộp 28/09 17:09 nhưng CHƯA có hiệu lực lúc 18:30 (bản vá gộp ≠ bản vá chạy, khi cây còn ở nhánh
+cũ). Soi tiếp `.git`: 36 bản sao OneDrive trong `.git` hai repo (`config-C010000PK16BSL`, index ×7, FETCH_HEAD ×7, reflog
+×13, commit-graph-chain ×2, ORIG_HEAD ×2…) cùng ref ma `refs/remotes/origin/master-C010000PK16BSL` — chốt vẫn 🟢 vì mục 1
+prune `.git` (lỗ hổng ghi từ 03/08; phiên Mac 29/09 đã gặp `index-Dr Luân BV175-2` mà không vá chốt). Kèm hai điểm mù dò
+tên: nhánh «-<máy này>» không khớp bản lặp «-<máy>-N» (15 bản sao thật lọt), và máy này mù trước bản sao do máy KIA đẻ.
+Cấu hình đang dùng vẫn giữ `hooksPath`/`fsmonitor`, ref ma là tổ tiên của origin/master ⇒ dời 36 tệp (1,9 MB).
+**Vá:** mục 5 «Bản sao xung đột TRONG .git»: ref ma/bản sao packed-refs giữ commit nhánh thật không có ⇒ 🔴 (cứu bằng
+`rescue/…` trước khi dời); đã nằm trong nhánh thật hoặc là ref máy chủ ⇒ 🟡; config/HEAD ⇒ 🟡; rác git không đọc ⇒ chỉ liệt
+kê. Mục 1 nhận «-<máy>-N» và tên máy kia (`THIET_BI_ONEDRIVE`), so tên sau NFC. **Kiểm:** 7 test mới + BH133; 8 đột biến
+đều đỏ ở CẢ pytest lẫn BH133 (vòng đầu, đột biến packed-refs chỉ pytest bắt ⇒ bổ sung ca vào BH133). Cùng phiên: token `gh`
+trên Windows hỏng ⇒ giác quan CI ⚪, `gh pr` lỗi (đăng nhập lại là việc của bác sĩ).
+
+### 30/09/2026 — Cảm biến CI ⚪ «run trả về nhánh «connecting»»: mạng trượt một nhịp, chữ lỗi bị đọc thành tên nhánh (BH134)
+Hai «giác quan» CI của `tu_de_xuat_viec` ⚪ suốt 28–30/09 trên máy Windows. Chẩn đoán đầu («token gh hỏng») chỉ đúng MỘT NỬA:
+token hỏng thật (bác sĩ đăng nhập lại 30/09 qua luồng mã thiết bị), nhưng đăng nhập xong VẪN ⚪. Đo 8 lần liên tiếp: DNS nội
+bộ (192.1.1.214) trượt lần phân giải ĐẦU sau khi bộ đệm nguội (lần 1 lỗi sau 12 s, lần 2 được, sau đó < 1 s); có lúc im hơn
+25 s. `gh` in «error connecting to api.github.com», `_chay` gộp stderr vào stdout ⇒ chữ «connecting» bị tách thành TÊN NHÁNH
+(28/09 là «get»); có gh mà trượt MỘT nhịp là ⚪ — không thử lại, không lùi sang API công khai (cùng họ BH129).
+**Vá:** `_doc_tra_loi_gh` chỉ coi «<conclusion hợp lệ> <nhánh>» hoặc rỗng là CÂU TRẢ LỜI; lỗi kết nối ⇒ thử lại một lần (nghỉ
+2 s); gh hỏng vì lý do khác (token, không khởi động được) ⇒ lùi `doc_ci_qua_api`; hỏng hết ⇒ «» kèm đúng nguyên nhân («mạng/
+DNS, KHÔNG phải CI đỏ»), vẫn đếm MỘT giác quan. Trần thời gian (bên gọi cho cả công cụ 90 s): mạng đã hỏng ở repo trước ⇒ repo
+sau thử một lần; gh treo hết 30 s ⇒ không thử lại, không gọi thêm API. **Kiểm:** 17 ca test mới + BH134; 10 đột biến đều đỏ ở
+CẢ pytest lẫn BH134 (vòng đầu, 3 đột biến «trần thời gian» chỉ pytest bắt ⇒ bổ sung ca vào BH134). Đo thật: DNS im ⇒ ⚪ với lý
+do thật (25 s + 0,3 s); DNS trả lời ⇒ hai repo «success», 3/3 lượt. **Bài học:** một triệu chứng có thể có HAI nguyên nhân
+chồng nhau — chữa một cái rồi phải ĐO LẠI (đã hứa «đăng nhập xong thì hết ⚪» trước khi đo). Giới hạn còn lại: DNS im lâu hơn
+~25 s thì vẫn ⚪ — đúng sự thật, không phải lỗi mã.
+
+### 30/09/2026 — Mạng máy Windows có HAI lỗi khác nhau; chốt «nguồn thật» coi «phân giải được» là «tới được» (BH135)
+Đo tách tầng trên máy Windows (mạng bệnh viện, cổng 10.176.24.1, DNS 192.1.1.214), 14:20–14:30:
+① **DNS nội bộ chậm/hết hạn:** github.com hết hạn 12 s, api.crossref.org 11,6 s, api.github.com 8,4 s, onlinelibrary.wiley.com
+7,5 s — trong khi hỏi thẳng DNS công cộng (8.8.8.8) cả sáu tên đều trả lời trong 43–84 ms. ② **Đường truyền tới một số máy
+chủ không thông dù đã có IP:** `api.crossref.org` (18.234.0.150/34.195.76.45) và `api.wiley.com` (3.230.122.215/52.44.37.37) —
+cùng cụm AWS us-east-1 — bắt tay TCP 443 thất bại 10/10 lần trong 2,5 phút; github.com và eutils.ncbi.nlm.nih.gov thông 8/10.
+Hệ quả đã gặp: git/gh «Could not resolve host» từng nhịp (BH129, BH134), và **Wiley TDM không đo được từ máy này** — 9/9 lượt
+tải (DOI 10.1002/ehf2.13822 · 10.1111/jgs.18372 · 10.1002/art.41752) đều `NETWORK_ERROR` «connect timeout», KHÔNG phải Wiley
+từ chối. Dữ kiện đã có về Wiley TDM (bác sĩ tự chạy 23/09): token hợp lệ — API trả 403 `ACCESS_DENIED` «TDM access denied from
+IP 113.161.43.75» cho bài không OA (10.1002/phar.2839); bài OA hôm đó `NETWORK_ERROR` từ IP 14.241.242.239 ⇒ ranh giới «OA tải
+được từ mọi IP» VẪN CHƯA xác nhận; cần đo từ mạng thông tới api.wiley.com (Mac/VPN).
+`tools/kiem_nguon_that.py::kiem_mang()` chỉ gọi `gethostbyname` ⇒ Crossref có lúc phân giải được là 🟢 «4/4 nguồn phân giải
+được» dù cổng 443 không thông (xanh giả ở chốt ① của `chu_trinh_chung_cu`), còn DNS hết hạn thì báo chung «không phân giải
+được». **Vá:** đo HAI tầng — DNS 3 lần (có đo giây) rồi bắt tay TCP 443 (thử lại một lần); DNS của máy im thì hỏi thẳng DNS công
+cộng (UDP 53, tự dựng/đọc gói RFC 1035, không đổi cài đặt nào) để nói «lỗi ở máy chủ DNS đang dùng, không phải nguồn sập»,
+kèm cả đường truyền nếu nối thẳng IP cũng không thông; không hỏi được DNS công cộng ⇒ không kết luận thêm; DNS > 3 s ⇒ «chậm»;
+mạng vẫn tối đa 🟡; có proxy (phiên Cloud) ⇒ không thử nối trực tiếp. **Kiểm:** 17 ca test mới + BH135; 11 đột biến đều đỏ ở CẢ
+pytest lẫn BH135 (vòng đầu đột biến «bỏ qua mã lỗi DNS» chỉ pytest bắt ⇒ bổ sung ca). Đo thật hai lượt (23–34 s): «Crossref —
+phân giải được (→ 18.234.0.150) nhưng KHÔNG nối được cổng 443» và «Europe PMC — DNS của mạng này KHÔNG phân giải được trong
+khi DNS công cộng phân giải được». **Việc của bác sĩ/IT (cài đặt hệ thống, agent không đổi):** DNS của card mạng và đường ra
+AWS us-east-1; lưu ý đổi sang DNS công cộng có thể làm mất phân giải tên NỘI BỘ bệnh viện.
