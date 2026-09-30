@@ -17,7 +17,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
@@ -271,6 +271,15 @@ class Candidate:
     rut_bai: str = "chua_kiem"         # ok · retracted · expression_of_concern · chua_kiem
     da_co_trong_kho: bool = False      # đã được một dashboard trích rồi → khỏi trình lại
     chua_binh_duyet: bool = False      # preprint (medRxiv/bioRxiv) — chưa qua bình duyệt
+
+    def __post_init__(self) -> None:
+        # Vá 30/09/2026 — GỐC RỄ của lượt W40 sập (29/09): engine có nguồn chỉ trả NĂM kiểu số, và ba làn Scopus/CORE/
+        # dự phòng chép thẳng `rec.publication_date` vào trường khai là `str` này ⇒ mọi nơi cắt chuỗi về sau nhận int.
+        # Ép về chuỗi tại MỘT điểm nghẽn: mọi cách dựng ứng viên (làn mới, `replace()`, summarize_fn do caller tiêm)
+        # đều đi qua đây — thay vì vá từng nơi tiêu thụ.
+        ngay = self.publication_date
+        if not isinstance(ngay, str):
+            object.__setattr__(self, "publication_date", "" if ngay is None else str(ngay))
 
 
 @dataclass(frozen=True)
@@ -1845,6 +1854,34 @@ def write_atomic(path: Path, content: str) -> None:
             os.unlink(temp_name)
 
 
+def do_do_tre(report: dict, hom_nay: date | None = None) -> dict | None:
+    """ĐO ĐỘ TRỄ (K4) — định nghĩa vận hành của «mới nhất» phải đo được. Chỉ đo khi ngày đủ chi tiết
+    (`YYYY Mon DD`); thiếu thì [CẦN BỔ SUNG], không ước lượng. Không ứng viên nào đo được ⇒ `None`.
+
+    Vá 29/09/2026: ngày kiểu int (chỉ có NĂM) ⇒ `int[:11]` ném TypeError làm SẬP cả lượt quét. Nay ép về chuỗi và
+    coi mọi dạng không đọc được (số, None, thiếu khoá) là «không đo được». Hàm nhận báo cáo dạng dict (không chỉ từ
+    `Candidate`) nên lớp phòng thủ này vẫn cần dù `Candidate` đã tự chuẩn hoá ngày."""
+    hom_nay = hom_nay or date.today()
+    tre: list[int] = []
+    for chu_de in report.get("topics") or []:
+        for ung_vien in chu_de.get("candidates") or []:
+            try:
+                d0 = datetime.strptime(str(ung_vien.get("publication_date") or "")[:11].strip(), "%Y %b %d").date()
+            except ValueError:  # sau str() chỉ còn ValueError: ngày thiếu chi tiết/không đúng dạng
+                continue
+            tre.append((hom_nay - d0).days)
+    if not tre:
+        return None
+    tre.sort()
+    return {
+        "n_do_duoc": len(tre), "n_tong": report.get("candidate_count"),
+        "trung_vi_ngay": tre[len(tre) // 2],
+        "qua_14_ngay": sum(1 for x in tre if x > 14),
+        "ghi_chu": ("trễ = hôm_nay − ngày công bố; chỉ tính ứng viên có ngày đủ "
+                    "chi tiết, phần còn lại [CẦN BỔ SUNG]"),
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--watchlist", default=str(DEFAULT_WATCHLIST))
@@ -1924,8 +1961,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                               tran_leo_thang_du_phong=args.tran_du_phong, trang_thai_du_phong=so_du_phong)
         except ValueError as exc:
             parser.error(str(exc))
-        if so_du_phong != so_du_phong_truoc:
-            ghi_trang_thai_du_phong(so_du_phong)
+        # HẠN MỨC TÍNH PHÍ đã tiêu ⇒ ghi NGAY mốc leo thang (trần tuần/xoay vòng phải thấy dù lượt này sập về sau).
+        # «Đã trình» thì CHƯA ghi ở đây (vá 30/09/2026): bài chỉ được coi là đã trình khi báo cáo tới nơi — xem cuối
+        # hàm. Trước bản vá, lượt sập SAU khi sổ đã ghi sẽ để lại dấu «đã trình» cho bài chưa ai thấy ⇒ bị lọc 400 ngày
+        # (tái hiện được ngoại tuyến; sổ thật ngày 29/09 đo lại KHÔNG có khoá mồ côi nào). CÁI GIÁ của thiết kế này,
+        # nói thẳng: bài dự phòng của lượt sập không được trình lại ngay khi chạy lại (trần tuần đã tiêu) — nó chỉ trở
+        # lại khi chủ đề tới lượt xoay vòng, và hạn mức đã tiêu không hoàn lại.
+        if so_du_phong.get("lan_cuoi_leo_thang") != so_du_phong_truoc.get("lan_cuoi_leo_thang"):
+            ghi_trang_thai_du_phong({**so_du_phong, "da_trinh": so_du_phong_truoc.get("da_trinh", {})})
         if ghi_con_tro:
             # HAI LUẬT RIÊNG, không được gộp làm một (phản biện vòng 2 22/09 bắt được: bản gộp đầu
             # tiên làm test PASS-hợp-lệ đỏ oan — run_scan CHỈ tiến cursor cho chủ đề PASS nên hai
@@ -1951,36 +1994,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                     cursor.pop(t["topic"], None)
                 else:
                     cursor[t["topic"]] = cu
-            # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): CHỈ ghi khi NỘI DUNG con trỏ
-            # thật sự đổi (có ≥1 chủ đề PASS tiến con trỏ). Trước đây ghi VÔ ĐIỀU KIỆN — một lượt
-            # quét lỗi toàn bộ (NCBI + Europe PMC đều hỏng, mọi chủ đề FAIL, nội dung con trỏ không
-            # đổi) vẫn làm mtime .quet-cursor.json nhảy, và sources_health.lay_thanh_cong_that() đọc
-            # mtime đó thành «lượt quét THÀNH CÔNG hôm nay» — sai: ngày ghi file không phải bằng
-            # chứng thành công khi nội dung file không hề đổi.
-            if cursor != con_tro_truoc:
-                ghi_cursor(cursor)
+            # Ở đây chỉ TÍNH con trỏ mới; việc GHI dời xuống cuối hàm, sau khi báo cáo đã tới nơi (vá 30/09/2026).
 
-        # ĐO ĐỘ TRỄ (K4) — định nghĩa vận hành của "mới nhất" phải đo được. Chỉ đo
-        # khi tóm tắt cho ngày đủ chi tiết; thiếu thì [CẦN BỔ SUNG], không ước lượng.
-        import datetime as _dt
-        tre: list[int] = []
-        for _t in report["topics"]:
-            for _c in _t["candidates"]:
-                try:
-                    d0 = _dt.datetime.strptime(_c["publication_date"][:11].strip(),
-                                               "%Y %b %d").date()
-                    tre.append((_dt.date.today() - d0).days)
-                except ValueError:
-                    pass
-        if tre:
-            tre.sort()
-            report["do_tre"] = {
-                "n_do_duoc": len(tre), "n_tong": report["candidate_count"],
-                "trung_vi_ngay": tre[len(tre) // 2],
-                "qua_14_ngay": sum(1 for x in tre if x > 14),
-                "ghi_chu": ("trễ = hôm_nay − ngày công bố; chỉ tính ứng viên có ngày đủ "
-                            "chi tiết, phần còn lại [CẦN BỔ SUNG]"),
-            }
+        do_tre = do_do_tre(report)
+        if do_tre:
+            report["do_tre"] = do_tre
 
         # ALERTS (K7) — chỉ sự kiện KHẨN
         khan: list[str] = []
@@ -2005,22 +2023,40 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 f"({_t['topic']}) — KHÔNG dùng")
                 elif _c.get("rut_bai") == "expression_of_concern":
                     khan.append(f"- 🟠 EoC: PMID {_c['pmid']} ({_t['topic']}) — đọc lại trước khi dùng")
-        f_alert = ghi_alert(khan, _dt.date.today().isoformat())
+        f_alert = ghi_alert(khan, date.today().isoformat())
         if f_alert:
             # Không khẳng định "đã ghi N" — ghi_alert() có thể lọc bớt dòng TRÙNG đã có sẵn hôm
             # nay (vá cùng đợt), nên số dòng THẬT SỰ mới có thể ít hơn len(khan).
             print(f"[⚠ {len(khan)} cảnh báo khẩn được xét (mới hoặc đã có sẵn hôm nay): {f_alert}]")
+
+        markdown = markdown_report(report)
+        print(markdown)
+        if args.report:
+            write_atomic(Path(args.report), markdown)
+            print(f"[Đã lưu báo cáo: {args.report}]")
+        if args.json_report:
+            write_atomic(Path(args.json_report), json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+            print(f"[Đã lưu audit JSON: {args.json_report}]")
+        # `print` chỉ nạp bộ đệm (≈128 KB): stdout là ống đã đóng/đĩa đầy thì lỗi chỉ lộ lúc ĐẨY. Đẩy NGAY ở đây để lỗi
+        # đó nổ TRƯỚC khi ghi «đã trình»/con trỏ — nếu không, 0 byte báo cáo rời tiến trình mà con trỏ vẫn tiến.
+        _sys_utf8.stdout.flush()
+
+        # BÁO CÁO ĐÃ TỚI NƠI ⇒ giờ mới ghi «đã trình» và tiến con trỏ (vá 30/09/2026). Lượt W40 ngày 29/09 sập ở bước
+        # đo độ trễ SAU khi con trỏ đã tiến cho 47 chủ đề và TRƯỚC khi có báo cáo ⇒ cửa sổ «đã quét» mà không ai thấy
+        # ứng viên nào — đúng kiểu mất im lặng mà con trỏ phải tránh. Nay mọi lỗi trước dòng này (đo trễ, cảnh báo,
+        # dựng/in/ghi báo cáo) để NGUYÊN con trỏ ⇒ lượt sau quét lại đúng cửa sổ đó: với CỬA SỔ CON TRỎ cái giá là có
+        # thể trình lặp, không phải bỏ sót (bài dự phòng tính phí thì xem chú thích chỗ ghi sớm). Vẫn nằm trong khoá.
+        if so_du_phong != so_du_phong_truoc:
+            ghi_trang_thai_du_phong(so_du_phong)
+        # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #7): CHỈ ghi khi NỘI DUNG con trỏ thật sự đổi (có ≥1 chủ
+        # đề PASS tiến con trỏ). Trước đây ghi VÔ ĐIỀU KIỆN — một lượt quét lỗi toàn bộ vẫn làm mtime
+        # .quet-cursor.json nhảy, và sources_health.lay_thanh_cong_that() đọc mtime đó thành «lượt quét THÀNH CÔNG
+        # hôm nay» — sai: ngày ghi file không phải bằng chứng thành công khi nội dung file không hề đổi.
+        if ghi_con_tro and cursor != con_tro_truoc:
+            ghi_cursor(cursor)
     finally:
         tra_khoa()
 
-    markdown = markdown_report(report)
-    print(markdown)
-    if args.report:
-        write_atomic(Path(args.report), markdown)
-        print(f"[Đã lưu báo cáo: {args.report}]")
-    if args.json_report:
-        write_atomic(Path(args.json_report), json.dumps(report, ensure_ascii=False, indent=2) + "\n")
-        print(f"[Đã lưu audit JSON: {args.json_report}]")
     if report["status"] == "PASS" or args.allow_partial:
         return 0
     return 2

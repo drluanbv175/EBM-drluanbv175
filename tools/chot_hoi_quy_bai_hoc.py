@@ -8067,6 +8067,127 @@ def bh134_cam_bien_ci_chiu_mang_chap_chon():
     return True, ""
 
 
+def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
+    """29/09 — lượt quét tuần W40 SẬP ở bước đo độ trễ vì một ứng viên mang `publication_date` kiểu số (engine chỉ trả
+    NĂM). Lỗi nổ SAU khi con trỏ đã tiến cho 47 chủ đề và sổ dự phòng đã ghi «đã trình», TRƯỚC khi có báo cáo ⇒ cửa sổ
+    «đã quét» mà không ai thấy ứng viên nào. Kiểm HÀNH VI `main()` của bản chuẩn, ngoại tuyến (khoá socket, kho tạm):
+    (a) `Candidate` tự ép ngày về chuỗi; (b) khâu dựng báo cáo hỏng ⇒ con trỏ KHÔNG tiến, khoá được trả, «đã trình»
+    chưa ghi nhưng mốc leo thang (hạn mức tính phí đã tiêu) đã ghi; (c) lượt lành thì con trỏ chỉ được ghi SAU khi
+    báo cáo JSON đã nằm trên đĩa."""
+    import contextlib as _cl
+    import io as _io
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH136 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    try:
+        with _cl.redirect_stdout(_io.StringIO()), _cl.redirect_stderr(_io.StringIO()):
+            ok, ct = _bh136_than()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return ok, ct
+
+
+def _bh136_than():
+    """Thân của BH136 — xem docstring `bh136_bao_cao_toi_noi_roi_moi_tien_con_tro`."""
+    import importlib.util as _iu
+    import json as _json
+    import tempfile as _tf
+    sp = _iu.spec_from_file_location("_bh136_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp)
+    sys.modules["_bh136_ss"] = S
+    sp.loader.exec_module(S)
+    ngay = S.Candidate("1", 2026, "Bài năm-số", "").publication_date
+    if ngay != "2026":
+        return False, f"`Candidate` không ép ngày kiểu số về chuỗi (nhận {ngay!r}) — làn engine trả NĂM kiểu int lại làm sập nơi cắt chuỗi"
+    for ten in dir(S):
+        if ten.endswith("_lane") and ten != "bo_sung_du_phong_lane" and callable(getattr(S, ten)):
+            setattr(S, ten, lambda *a, **k: [])
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._pmid_da_co_trong_kho = lambda: set()
+    S._NCBI_CHAN["bi_chan"] = False
+    S._SUY_GIAM.clear()
+    S._VUOT_TRAN.clear()
+    S.bo_sung_du_phong_lane = lambda truy_van, _u, _r, **_k: ([S.Candidate(
+        pmid="", publication_date=2026, title=f"Bài dự phòng {truy_van}", url=f"https://doi.org/10.1/{truy_van.split()[0]}",
+        tang="du_phong_bac_thang")], "")
+    S.search = lambda query, days, retmax, **kw: ["555"]
+    S.summarize = lambda ids: [S.Candidate(pmid=p, publication_date=2026, title="Bài thường", url=f"u{p}") for p in ids]
+    with _tf.TemporaryDirectory() as d:
+        kho = Path(d) / "kho"
+        kho.mkdir()
+        wl = kho / "watchlist.json"
+        wl.write_text(_json.dumps({"topics": [{"topic": "Alpha", "query": "q", "truy_van_du_phong": "alpha treatment"}]}),
+                      encoding="utf-8", newline="\n")
+        S.DEFAULT_WATCHLIST = wl
+        con_tro, so, bao_cao = kho / ".quet-cursor.json", kho / ".du-phong-trang-thai.json", Path(d) / "ra" / "bc.json"
+        lenh = ["--watchlist", str(wl), "--days", "30", "--json-report", str(bao_cao)]
+
+        dung_bao_cao = S.markdown_report
+
+        def _hong(_report):
+            raise RuntimeError("khâu dựng báo cáo hỏng")
+        S.markdown_report = _hong
+        try:
+            S.main(lenh)
+            return False, "khâu dựng báo cáo hỏng mà `main()` không nổi lỗi — lượt mất trắng trong im lặng"
+        except RuntimeError:
+            pass
+        finally:
+            S.markdown_report = dung_bao_cao
+        if con_tro.exists():
+            return False, "báo cáo chưa tới nơi mà con trỏ ĐÃ tiến — cửa sổ «đã quét» nhưng không ai thấy ứng viên (đúng sự cố W40)"
+        if (kho / ".quet.lock").exists():
+            return False, "lượt sập không trả khoá — lượt sau bị chặn tới khi khoá hết hạn"
+        so_sau_sap = _json.loads(so.read_text(encoding="utf-8")) if so.exists() else {}
+        if so_sau_sap.get("da_trinh"):
+            return False, "lượt sập vẫn ghi «đã trình» — bài dự phòng chưa ai đọc sẽ không bao giờ được trình lại"
+        if "Alpha" not in (so_sau_sap.get("lan_cuoi_leo_thang") or {}):
+            return False, "lượt sập không ghi mốc leo thang — hạn mức tính phí đã tiêu mà trần tuần không thấy"
+
+        # Hỏng ĐÚNG ở khâu ghi TỆP báo cáo (khác khâu dựng ở trên): «đã trình» và con trỏ vẫn chưa được ghi.
+        ghi_tep_that = S.write_atomic
+
+        def _ghi_tep(path, content):
+            if Path(path) == bao_cao:
+                raise OSError("đĩa đầy")
+            ghi_tep_that(path, content)
+        S.write_atomic = _ghi_tep
+        try:
+            S.main(lenh)
+            return False, "ghi tệp báo cáo hỏng mà `main()` không nổi lỗi"
+        except OSError:
+            pass
+        finally:
+            S.write_atomic = ghi_tep_that
+        so_sau_hong_tep = _json.loads(so.read_text(encoding="utf-8")) if so.exists() else {}
+        if con_tro.exists() or so_sau_hong_tep.get("da_trinh"):
+            return False, "tệp báo cáo CHƯA ghi được mà con trỏ đã tiến hoặc bài dự phòng đã mang dấu «đã trình»"
+
+        thay: list = []
+        ghi_that = S.ghi_cursor
+
+        def _ghi_theo_doi(cur):
+            thay.append(bao_cao.exists())
+            ghi_that(cur)
+        S.ghi_cursor = _ghi_theo_doi
+        if S.main(lenh) != 0:
+            return False, "lượt lành sau lượt sập không PASS"
+        if thay != [True]:
+            return False, f"con trỏ phải được ghi đúng MỘT lần, SAU khi báo cáo JSON đã nằm trên đĩa (đo được: {thay})"
+        pmid = {c["pmid"] for t in _json.loads(bao_cao.read_text(encoding="utf-8"))["topics"] for c in t["candidates"]}
+        if "555" not in pmid:
+            return False, "lượt sau không quét lại cửa sổ của lượt sập — ứng viên mất"
+    return True, ""
+
+
 def bh135_kiem_nguon_that_do_mang_hai_tang():
     """30/09 — `kiem_nguon_that.kiem_mang()` chỉ gọi `gethostbyname`: «phân giải được» bị coi là «tới được». Đo thật trên
     máy Windows: api.crossref.org có địa chỉ mà cổng 443 KHÔNG thông 10/10 lần ⇒ chốt ① của chu trình chứng cứ báo 🟢 «4/4
@@ -8296,6 +8417,7 @@ BAI_HOC = [
     ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
     ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
     ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
+    ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),
 ]
 
 
