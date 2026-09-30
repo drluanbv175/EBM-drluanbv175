@@ -8067,6 +8067,89 @@ def bh134_cam_bien_ci_chiu_mang_chap_chon():
     return True, ""
 
 
+def bh135_kiem_nguon_that_do_mang_hai_tang():
+    """30/09 — `kiem_nguon_that.kiem_mang()` chỉ gọi `gethostbyname`: «phân giải được» bị coi là «tới được». Đo thật trên
+    máy Windows: api.crossref.org có địa chỉ mà cổng 443 KHÔNG thông 10/10 lần ⇒ chốt ① của chu trình chứng cứ báo 🟢 «4/4
+    nguồn phân giải được» trong khi Crossref không tới được; còn DNS nội bộ hết hạn (DNS công cộng trả lời ~45 ms) thì bị
+    báo chung «không phân giải được», không ai biết lỗi nằm ở máy chủ DNS. Kiểm HÀNH VI với ba hàm đo giả: có địa chỉ mà
+    không nối được ⇒ 🟡 «cổng 443… không phải DNS» (một nhịp rớt thì không báo động); DNS của máy hỏng mà DNS công cộng
+    được ⇒ chỉ đúng máy chủ DNS, kèm cả đường truyền nếu nối thẳng IP cũng không thông; không hỏi được DNS công cộng ⇒
+    không đổ lỗi; DNS chậm/chập chờn lộ ra; mạng hỏng toàn phần vẫn chỉ 🟡; qua proxy thì không thử nối trực tiếp; gói trả
+    lời DNS sai mã truy vấn bị bỏ."""
+    import importlib.util as _iu
+    import os as _os
+    import struct as _st
+    sp = _iu.spec_from_file_location("_bh135_knt", REPO / "tools" / "kiem_nguon_that.py")
+    K = _iu.module_from_spec(sp)
+    sys.modules["_bh135_knt"] = K
+    sp.loader.exec_module(K)
+    if not all(hasattr(K, t) for t in ("_phan_giai", "_noi_duoc", "_hoi_dns_cong_cong", "_doc_tra_loi_dns")):
+        return False, "kiem_nguon_that không còn đo mạng hai tầng (DNS + nối cổng 443)"
+    dau, ip = K.HOST_NGUON[0][0], "203.0.113.7"
+
+    def do(dns=None, noi=None, cc=None):
+        dem, goi_noi = {}, []
+
+        def phan_giai(h):
+            ds = (dns or {}).get(h, [("198.51.100.9", 0.01)])
+            dem[h] = dem.get(h, 0) + 1
+            return ds[min(dem[h], len(ds)) - 1]
+
+        def noi_duoc(dia_chi, cong=443, han=5.0):
+            goi_noi.append(dia_chi)
+            ds = (noi or {}).get(dia_chi, [True])
+            return ds[min(goi_noi.count(dia_chi), len(ds)) - 1]
+
+        K._phan_giai, K._noi_duoc = phan_giai, noi_duoc
+        K._hoi_dns_cong_cong = lambda h, m, han=3.0: (cc or {}).get(h)
+        muc, tin = K.kiem_mang()
+        return muc, tin, goi_noi
+
+    giu = {k: _os.environ.pop(k) for k in ("HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy") if k in _os.environ}
+    try:
+        if do()[:2] != ("xanh", []):
+            return False, "mọi nguồn phân giải và nối được mà không ra 🟢"
+        muc, tin, _ = do({dau: [(ip, 0.2)]}, {ip: [False, False]})
+        if muc != "vang" or not tin or "cổng 443" not in tin[0] or "KHÔNG phải DNS" not in tin[0]:
+            return False, "nguồn có địa chỉ mà KHÔNG nối được vẫn được coi là ổn — «phân giải được» lại thành «tới được»"
+        if do({dau: [(ip, 0.2)]}, {ip: [False, True]})[0] != "xanh":
+            return False, "một nhịp rớt khi nối (lần hai thông) đã bị báo động — phải thử lại một lần rồi mới kết luận"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, None, {dau: ip})
+        if muc != "vang" or "DNS công cộng phân giải được" not in tin[0] or "máy chủ DNS đang dùng" not in tin[0] \
+                or "đường truyền" in tin[0]:
+            return False, "DNS của máy hỏng trong khi DNS công cộng trả lời mà không chỉ đúng lỗi ở máy chủ DNS đang dùng"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, {ip: [False]}, {dau: ip})
+        if "cũng KHÔNG thông" not in tin[0]:
+            return False, "DNS hỏng VÀ nối thẳng IP cũng không thông mà chỉ báo DNS — bỏ sót lỗi đường truyền"
+        muc, tin, _ = do({dau: [(None, 12.0)]}, None, {})
+        if muc != "vang" or "máy chủ DNS đang dùng" in tin[0]:
+            return False, "không hỏi được DNS công cộng mà vẫn đổ lỗi cho DNS của máy — kết luận không có bằng chứng"
+        muc, tin, _ = do({dau: [(None, 12.0), (ip, 9.0), (ip, 0.01)]})
+        if muc != "vang" or "2/3" not in tin[0]:
+            return False, "DNS chập chờn (2/3 lần) không lộ ra"
+        muc, tin, _ = do({dau: [(ip, 8.0)]})
+        if muc != "vang" or "chậm" not in tin[0]:
+            return False, "DNS trả lời sau 8 s mà không bị gọi tên — lời gọi nguồn hết hạn ở lần đầu sẽ thành «mạng chập chờn»"
+        muc, tin, _ = do({h: [(None, 12.0)] for h, _ in K.HOST_NGUON}, None, {})
+        if muc != "vang":
+            return False, "mạng hỏng toàn phần bị xếp 🔴 — 🔴 chỉ dành cho dữ liệu GIẢ (mạng hỏng không làm dữ liệu sai)"
+        _os.environ["HTTPS_PROXY"] = "http://127.0.0.1:1"
+        muc, tin, goi = do(None, {"198.51.100.9": [False]})
+        if muc != "xanh" or goi:
+            return False, "đi qua proxy (phiên Cloud) mà vẫn thử nối trực tiếp — báo động giả trên Cloud"
+        tra_loi = (_st.pack(">HHHHHH", 0x9999, 0x8180, 1, 1, 0, 0) + b"\x01a\x00" + _st.pack(">HH", 1, 1)
+                   + b"\xc0\x0c" + _st.pack(">HHIH", 1, 1, 60, 4) + bytes([1, 2, 3, 4]))
+        if K._doc_tra_loi_dns(tra_loi, 0x1234) is not None or K._doc_tra_loi_dns(tra_loi, 0x9999) != "1.2.3.4":
+            return False, "gói trả lời DNS sai mã truy vấn được nhận (hoặc gói đúng bị bỏ) — đối chiếu DNS công cộng sai"
+        loi_ten = _st.pack(">HHHHHH", 0x9999, 0x8183, 1, 1, 0, 0) + tra_loi[12:]
+        if K._doc_tra_loi_dns(loi_ten, 0x9999) is not None:
+            return False, "gói trả lời DNS mang mã lỗi (NXDOMAIN) vẫn được đọc ra địa chỉ"
+    finally:
+        _os.environ.pop("HTTPS_PROXY", None)
+        _os.environ.update(giu)
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -8212,6 +8295,7 @@ BAI_HOC = [
     ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
     ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
     ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
+    ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
 ]
 
 

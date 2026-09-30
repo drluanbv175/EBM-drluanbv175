@@ -3429,3 +3429,25 @@ CẢ pytest lẫn BH134 (vòng đầu, 3 đột biến «trần thời gian» ch
 do thật (25 s + 0,3 s); DNS trả lời ⇒ hai repo «success», 3/3 lượt. **Bài học:** một triệu chứng có thể có HAI nguyên nhân
 chồng nhau — chữa một cái rồi phải ĐO LẠI (đã hứa «đăng nhập xong thì hết ⚪» trước khi đo). Giới hạn còn lại: DNS im lâu hơn
 ~25 s thì vẫn ⚪ — đúng sự thật, không phải lỗi mã.
+
+### 30/09/2026 — Mạng máy Windows có HAI lỗi khác nhau; chốt «nguồn thật» coi «phân giải được» là «tới được» (BH135)
+Đo tách tầng trên máy Windows (mạng bệnh viện, cổng 10.176.24.1, DNS 192.1.1.214), 14:20–14:30:
+① **DNS nội bộ chậm/hết hạn:** github.com hết hạn 12 s, api.crossref.org 11,6 s, api.github.com 8,4 s, onlinelibrary.wiley.com
+7,5 s — trong khi hỏi thẳng DNS công cộng (8.8.8.8) cả sáu tên đều trả lời trong 43–84 ms. ② **Đường truyền tới một số máy
+chủ không thông dù đã có IP:** `api.crossref.org` (18.234.0.150/34.195.76.45) và `api.wiley.com` (3.230.122.215/52.44.37.37) —
+cùng cụm AWS us-east-1 — bắt tay TCP 443 thất bại 10/10 lần trong 2,5 phút; github.com và eutils.ncbi.nlm.nih.gov thông 8/10.
+Hệ quả đã gặp: git/gh «Could not resolve host» từng nhịp (BH129, BH134), và **Wiley TDM không đo được từ máy này** — 9/9 lượt
+tải (DOI 10.1002/ehf2.13822 · 10.1111/jgs.18372 · 10.1002/art.41752) đều `NETWORK_ERROR` «connect timeout», KHÔNG phải Wiley
+từ chối. Dữ kiện đã có về Wiley TDM (bác sĩ tự chạy 23/09): token hợp lệ — API trả 403 `ACCESS_DENIED` «TDM access denied from
+IP 113.161.43.75» cho bài không OA (10.1002/phar.2839); bài OA hôm đó `NETWORK_ERROR` từ IP 14.241.242.239 ⇒ ranh giới «OA tải
+được từ mọi IP» VẪN CHƯA xác nhận; cần đo từ mạng thông tới api.wiley.com (Mac/VPN).
+`tools/kiem_nguon_that.py::kiem_mang()` chỉ gọi `gethostbyname` ⇒ Crossref có lúc phân giải được là 🟢 «4/4 nguồn phân giải
+được» dù cổng 443 không thông (xanh giả ở chốt ① của `chu_trinh_chung_cu`), còn DNS hết hạn thì báo chung «không phân giải
+được». **Vá:** đo HAI tầng — DNS 3 lần (có đo giây) rồi bắt tay TCP 443 (thử lại một lần); DNS của máy im thì hỏi thẳng DNS công
+cộng (UDP 53, tự dựng/đọc gói RFC 1035, không đổi cài đặt nào) để nói «lỗi ở máy chủ DNS đang dùng, không phải nguồn sập»,
+kèm cả đường truyền nếu nối thẳng IP cũng không thông; không hỏi được DNS công cộng ⇒ không kết luận thêm; DNS > 3 s ⇒ «chậm»;
+mạng vẫn tối đa 🟡; có proxy (phiên Cloud) ⇒ không thử nối trực tiếp. **Kiểm:** 17 ca test mới + BH135; 11 đột biến đều đỏ ở CẢ
+pytest lẫn BH135 (vòng đầu đột biến «bỏ qua mã lỗi DNS» chỉ pytest bắt ⇒ bổ sung ca). Đo thật hai lượt (23–34 s): «Crossref —
+phân giải được (→ 18.234.0.150) nhưng KHÔNG nối được cổng 443» và «Europe PMC — DNS của mạng này KHÔNG phân giải được trong
+khi DNS công cộng phân giải được». **Việc của bác sĩ/IT (cài đặt hệ thống, agent không đổi):** DNS của card mạng và đường ra
+AWS us-east-1; lưu ý đổi sang DNS công cộng có thể làm mất phân giải tên NỘI BỘ bệnh viện.
