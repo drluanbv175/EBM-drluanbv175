@@ -304,6 +304,75 @@ def _ung_vien_a2(duong_json: Path) -> tuple[int | None, bool]:
     return n, du.get("status") not in (None, "PASS")
 
 
+def _du_phong_a2(duong_json: Path) -> list[tuple[str, str, int | None]]:
+    """[(loại, câu, trần gợi ý)] về bậc thang dự phòng TÍNH PHÍ của một lượt A2 — đọc từ JSON; không đọc được/sai dạng ⇒ [].
+
+    Quyết định 30/09/2026 (bác sĩ giao hoàn thiện): trần «N chủ đề/tuần» của bộ quét là MỘT hạn mức DÙNG CHUNG cho mọi
+    lượt có sổ — gói tuần lẫn A2 một-chủ-đề ở đây. Chính trần chung này chặn `--cu-nhat N` đốt N lượt Consensus/
+    SerpApi trong một ngày (Consensus 10 lượt/tháng). Nhưng dùng chung thì phải NÓI RA ở nơi dùng: trước đây A2 lặng
+    lẽ tiêu lượt của gói tuần, hoặc lặng lẽ bị chặn mà người đọc tưởng đã tra hết nguồn. Câu chỉ khẳng định điều
+    JSON chứng minh được. Loại:
+      · `da_tieu`         — đã gọi nguồn tính phí, dùng một suất MỚI của trần chung;
+      · `thu_lai`         — gọi lại vì lần trước trong tuần LỖI: có gọi nguồn, KHÔNG tính thêm suất;
+      · `loi`             — lần gọi LỖI: chưa có kết quả (vào phiếu);
+      · `chua_toi_luot`   — chủ đề thiếu bài mạnh nhưng trần tuần đã hết ⇒ CHƯA gọi (vào phiếu, kèm trần gợi ý);
+      · `da_tra_tuan_nay` — chủ đề đã leo thang xong trong tuần này ⇒ không gọi lại;
+      · `het_thu_lai`     — đã lỗi quá số lần thử lại của tuần ⇒ không gọi nữa, chưa có kết quả (vào phiếu);
+      · `khong_goi`       — được chọn nhưng nguồn không được gọi (engine vắng · cờ tắt · engine thấy đã đủ) — không tốn suất;
+      · `trinh_bu`        — trình bù bài đã lấy ở lượt trước mà báo cáo chưa tới nơi (không tốn thêm);
+      · `so_loi`          — sổ dự phòng không đọc được ⇒ cả làn bị tắt lượt này (vào phiếu).
+    «Trần gợi ý» chỉ có ở `chua_toi_luot`: số chủ đề đã tiêu suất trong tuần SAU lượt này + 1 — phải LỚN HƠN số đã dùng
+    chứ không phải lớn hơn trần (sổ thật 30/09: đã dùng 4 với trần 2 ⇒ 3 hay 4 đều vô tác dụng).
+    """
+    try:
+        du = json.loads(duong_json.read_text(encoding="utf-8"))
+        if not isinstance(du, dict):
+            return []
+        ra: list[tuple[str, str, int | None]] = []
+        tran, da_dung = du.get("du_phong_tran_moi_luot"), du.get("du_phong_da_dung_tuan")
+        khong_leo = du.get("du_phong_khong_leo_thang") or {}
+        if du.get("du_phong_tat_vi"):
+            ra.append(("so_loi", f"bậc thang dự phòng TẮT lượt này — {du['du_phong_tat_vi']}", None))
+        loi = [str(x) for x in (du.get("du_phong_loi") or [])]
+        thu_lai = [str(x) for x in (du.get("du_phong_thu_lai") or [])]
+        da_leo = [str(x) for x in (du.get("du_phong_da_leo_thang") or [])]
+        suat_moi = [x for x in da_leo if x not in loi and x not in thu_lai]
+        if suat_moi:
+            ra.append(("da_tieu", f"dự phòng tính phí: đã gọi Consensus/SerpApi cho «{', '.join(suat_moi)}» — dùng "
+                                  f"{len(suat_moi)} suất của trần {tran} chủ đề/tuần DÙNG CHUNG với gói tuần (trước lượt "
+                                  f"này tuần đã dùng {da_dung})", None))
+        thu_lai_duoc = [x for x in thu_lai if x not in loi]
+        if thu_lai_duoc:
+            ra.append(("thu_lai", f"dự phòng tính phí: thử lại lần gọi lỗi cho «{', '.join(thu_lai_duoc)}» — có gọi "
+                                  "Consensus/SerpApi, KHÔNG tính thêm suất tuần", None))
+        if loi:
+            ra.append(("loi", f"dự phòng tính phí LỖI cho «{', '.join(loi)}» — CHƯA có kết quả; suất tuần đã tính. Chạy "
+                              "lại A2 sẽ thử lại (tối đa một lần thử lại mỗi tuần, cần còn suất; không tính thêm suất)",
+                       None))
+        if khong_leo.get("cho_luot_xoay_vong"):
+            sau_luot = du.get("du_phong_da_dung_tuan_sau_luot")
+            can = int(da_dung if sau_luot is None else sau_luot) + 1
+            ra.append(("chua_toi_luot", f"dự phòng tính phí CHƯA tới lượt: chủ đề thiếu bài mạnh nhưng tuần này đã dùng "
+                                        f"{da_dung}/{tran} suất (trần dùng chung với gói tuần) ⇒ chưa gọi Consensus/"
+                                        "SerpApi", can))
+        if khong_leo.get("da_leo_thang_tuan_nay"):
+            ra.append(("da_tra_tuan_nay", "dự phòng tính phí: chủ đề đã leo thang xong trong tuần này — không gọi lại "
+                                          "Consensus/SerpApi", None))
+        if khong_leo.get("loi_het_luot_thu_lai"):
+            ra.append(("het_thu_lai", "dự phòng tính phí: chủ đề đã LỖI quá số lần thử lại của tuần này — không gọi "
+                                      "nữa cho tới tuần sau; CHƯA có kết quả", None))
+        if khong_leo.get("nguon_khong_goi"):
+            ra.append(("khong_goi", "dự phòng tính phí: chủ đề được chọn nhưng nguồn KHÔNG được gọi (engine vắng · cờ "
+                                    "tắt · engine thấy đã đủ chứng cứ · hết ngân sách) — không tốn suất tuần", None))
+        bu = du.get("du_phong_trinh_bu") or {}
+        if bu:
+            ra.append(("trinh_bu", f"dự phòng: trình bù {sum(int(v) for v in bu.values())} bài đã lấy ở lượt trước mà "
+                                   "báo cáo chưa tới nơi (không tốn thêm hạn mức)", None))
+        return ra
+    except (OSError, ValueError, TypeError, AttributeError):
+        return []   # báo cáo cũ/sai dạng: không có gì để nói — không được làm sập bước A2
+
+
 def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: frozenset | set | dict = frozenset(),
              in_=print, topic: str | None = None) -> dict:
     """Chạy các bước; trả {tong_rc, dung, ket_qua{buoc: (mức, rc)}, lat_hong, rut, ung_vien}.
@@ -314,16 +383,18 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
     """
     chay = chay or _chay_that  # tra lúc GỌI (không phải lúc định nghĩa) để test main() thay được bộ chạy
     res = {"tong_rc": 0, "dung": None, "ket_qua": {}, "lat_hong": set(), "rut": [], "ung_vien": None,
-           "phien": [], "a2_bao_cao": [], "b2_offline": False}
+           "phien": [], "a2_bao_cao": [], "b2_offline": False, "du_phong": []}
     for b in cac_buoc:
         ten = b["buoc"]
         if _la_da_xong(b, da_xong):
             if ten.startswith("A2") and "--json-report" in b.get("lenh", []):
                 # Resume: A2 đã xong thì ĐỌC LẠI kết quả từ tệp JSON còn nằm trong logs/ — không được để số ứng viên
                 # rơi mất rồi kết luận «sạch» (P1-03).
-                n, _kp = _ung_vien_a2(Path(b["lenh"][b["lenh"].index("--json-report") + 1]))
+                duong_json_cu = Path(b["lenh"][b["lenh"].index("--json-report") + 1])
+                n, _kp = _ung_vien_a2(duong_json_cu)
                 if n is not None:
                     res["ung_vien"] = (res["ung_vien"] or 0) + n
+                res["du_phong"] += _du_phong_a2(duong_json_cu)
                 if "--report" in b["lenh"]:
                     res["a2_bao_cao"].append(b["lenh"][b["lenh"].index("--report") + 1])
             continue
@@ -346,18 +417,23 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
         if ten.startswith("B2") and "--online" not in b["lenh"]:
             res["b2_offline"] = True
         a2_khong_pass = False
+        du_phong_buoc: list[tuple[str, str, int | None]] = []
         if ten.startswith("A2"):
             duong_json = Path(b["lenh"][b["lenh"].index("--json-report") + 1]) if "--json-report" in b["lenh"] else None
             if duong_json is not None:
                 n, khong_pass = _ung_vien_a2(duong_json)
                 res["ung_vien"] = (res["ung_vien"] or 0) + (n or 0) if n is not None else res["ung_vien"]
                 a2_khong_pass = khong_pass
+                du_phong_buoc = _du_phong_a2(duong_json)
+                res["du_phong"] += du_phong_buoc
+                for _loai, cau, _tran in du_phong_buoc:
+                    in_(f"ⓘ {ten}: {cau}")
             if "--report" in b["lenh"]:
                 res["a2_bao_cao"].append(b["lenh"][b["lenh"].index("--report") + 1])
         muc, msg = phan_loai(ten, rc, a2_json_khong_pass=a2_khong_pass)
         res["ket_qua"][ten] = (muc, rc)
         ghi({"buoc": ten, "lenh": b["lenh"][1:], "rc": rc, "muc": muc, "giay": round(time.time() - t0, 1),
-             "dau_tep": _dau_tep(b["lenh"])})
+             "dau_tep": _dau_tep(b["lenh"]), **({"du_phong": [list(x) for x in du_phong_buoc]} if du_phong_buoc else {})})
         if muc == "ok":
             continue
         if msg:
@@ -398,6 +474,18 @@ def phieu_can_phien(topic: str | None, tt: dict, cac_db: list[Path], res: dict,
     if tt.get("loai") == "khong_ro" and tt.get("lat_cat"):
         viec.append(f"👤 khai ánh xạ «{topic}» vào EBM-Dashboards/giam-sat-chu-de.json (hoặc `khong_can` kèm lý do) "
                     "— chưa khai nên A2 KHÔNG quét chứng cứ mới cho chủ đề này")
+    for loai, cau, tran_goi_y in res.get("du_phong") or ():
+        # Chỉ bốn loại là VIỆC của bác sĩ: trần tuần chặn (không tự vượt trần — hạn mức tính phí là quyết định của bác
+        # sĩ), lần gọi lỗi/hết lượt thử lại (chưa có kết quả), và sổ không đọc được. Còn lại chỉ là thông tin.
+        if loai == "chua_toi_luot":
+            # LỆNH ĐẦY ĐỦ, chép-dán được: thiếu `--topic` thì suất rơi vào chủ đề đứng đầu vòng xoay (chủ đề KHÁC);
+            # thiếu `--khong-cursor` thì con trỏ của gói tuần bị ghi cho cả watchlist.
+            viec.append(f"👤 «{goi_y}»: {cau}. Cần ngay thì chạy `python3 EBM-Dashboards/tools/surveillance_scan.py "
+                        f"--topic \"{goi_y}\" --khong-cursor --tran-du-phong {tran_goi_y}` (tốn hạn mức THÁNG; con số "
+                        "đúng tại lúc in — mỗi lệnh nâng trần đã chạy thì lệnh kế phải +1); không thì chủ đề chờ tới lượt "
+                        "xoay vòng của gói tuần (chủ đề lâu chưa tra đi trước — có thể nhiều tuần)")
+        elif loai in ("loi", "het_thu_lai", "so_loi"):
+            viec.append(f"👤 «{goi_y}»: {cau}")
     ten_ky = {_ten_lat(p) for p in cac_db if p.name in cho_ky}
     if ten_ky & set(res.get("lat_hong") or ()):
         viec.append("👤 KÝ hoặc HẠ mục (không cần dựng lại): " + ", ".join(sorted(ten_ky & set(res["lat_hong"])))

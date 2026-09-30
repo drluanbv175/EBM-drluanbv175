@@ -8101,7 +8101,8 @@ def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
     «đã quét» mà không ai thấy ứng viên nào. Kiểm HÀNH VI `main()` của bản chuẩn, ngoại tuyến (khoá socket, kho tạm):
     (a) `Candidate` tự ép ngày về chuỗi; (b) khâu dựng báo cáo hỏng ⇒ con trỏ KHÔNG tiến, khoá được trả, «đã trình»
     chưa ghi nhưng mốc leo thang (hạn mức tính phí đã tiêu) đã ghi; (c) lượt lành thì con trỏ chỉ được ghi SAU khi
-    báo cáo JSON đã nằm trên đĩa."""
+    báo cáo JSON đã nằm trên đĩa; (d) bài dự phòng đã lấy ở lượt sập nằm ở hàng chờ `cho_trinh` và được TRÌNH BÙ ở
+    lượt chạy lại mà KHÔNG gọi lại nguồn tính phí (30/09 tối — trước đó phải chờ chủ đề tới lượt xoay vòng)."""
     import contextlib as _cl
     import io as _io
     import socket as _so
@@ -8143,9 +8144,13 @@ def _bh136_than():
     S._NCBI_CHAN["bi_chan"] = False
     S._SUY_GIAM.clear()
     S._VUOT_TRAN.clear()
-    S.bo_sung_du_phong_lane = lambda truy_van, _u, _r, **_k: ([S.Candidate(
-        pmid="", publication_date=2026, title=f"Bài dự phòng {truy_van}", url=f"https://doi.org/10.1/{truy_van.split()[0]}",
-        tang="du_phong_bac_thang")], "")
+    goi_tinh_phi: list = []
+
+    def _lan_du_phong(truy_van, _u, _r, **_k):
+        goi_tinh_phi.append(truy_van)
+        return [S.Candidate(pmid="", publication_date=2026, title=f"Bài dự phòng {truy_van}",
+                            url=f"https://doi.org/10.1/{truy_van.split()[0]}", tang="du_phong_bac_thang")], ""
+    S.bo_sung_du_phong_lane = _lan_du_phong
     S.search = lambda query, days, retmax, **kw: ["555"]
     S.summarize = lambda ids: [S.Candidate(pmid=p, publication_date=2026, title="Bài thường", url=f"u{p}") for p in ids]
     with _tf.TemporaryDirectory() as d:
@@ -8179,6 +8184,8 @@ def _bh136_than():
             return False, "lượt sập vẫn ghi «đã trình» — bài dự phòng chưa ai đọc sẽ không bao giờ được trình lại"
         if "Alpha" not in (so_sau_sap.get("lan_cuoi_leo_thang") or {}):
             return False, "lượt sập không ghi mốc leo thang — hạn mức tính phí đã tiêu mà trần tuần không thấy"
+        if "Alpha" not in (so_sau_sap.get("cho_trinh") or {}):
+            return False, "lượt sập không cất bài dự phòng đã lấy vào hàng chờ `cho_trinh` — đã tốn hạn mức mà bài mất"
 
         # Hỏng ĐÚNG ở khâu ghi TỆP báo cáo (khác khâu dựng ở trên): «đã trình» và con trỏ vẫn chưa được ghi.
         ghi_tep_that = S.write_atomic
@@ -8210,9 +8217,15 @@ def _bh136_than():
             return False, "lượt lành sau lượt sập không PASS"
         if thay != [True]:
             return False, f"con trỏ phải được ghi đúng MỘT lần, SAU khi báo cáo JSON đã nằm trên đĩa (đo được: {thay})"
-        pmid = {c["pmid"] for t in _json.loads(bao_cao.read_text(encoding="utf-8"))["topics"] for c in t["candidates"]}
-        if "555" not in pmid:
+        ung_vien = [c for t in _json.loads(bao_cao.read_text(encoding="utf-8"))["topics"] for c in t["candidates"]]
+        if "555" not in {c["pmid"] for c in ung_vien}:
             return False, "lượt sau không quét lại cửa sổ của lượt sập — ứng viên mất"
+        if not any(c["tang"] == "du_phong_bac_thang" for c in ung_vien):
+            return False, "bài dự phòng đã lấy ở lượt sập không được trình bù ở lượt chạy lại"
+        if len(goi_tinh_phi) != 1:
+            return False, f"chạy lại sau lượt sập đã gọi lại nguồn TÍNH PHÍ ({len(goi_tinh_phi)} lời gọi, chỉ được 1)"
+        if (_json.loads(so.read_text(encoding="utf-8")).get("cho_trinh") or {}):
+            return False, "báo cáo đã tới nơi mà bài vẫn nằm trong hàng chờ — lượt sau sẽ trình lặp"
     return True, ""
 
 

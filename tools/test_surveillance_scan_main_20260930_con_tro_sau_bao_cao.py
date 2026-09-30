@@ -200,7 +200,8 @@ def test_moi_lan_ghi_so_va_con_tro_deu_nam_trong_khoa(kho, monkeypatch):
     monkeypatch.setattr(S, "ghi_trang_thai_du_phong", lambda so: (thay.append(("so", kho.khoa.exists())), ghi_so(so))[1])
     monkeypatch.setattr(S, "ghi_cursor", lambda cur: (thay.append(("con_tro", kho.khoa.exists())), ghi_con_tro(cur))[1])
     assert _chay(kho) == 0
-    assert thay == [("so", True), ("so", True), ("con_tro", True)], "ghi sớm mốc leo thang · ghi «đã trình» · ghi con trỏ"
+    # Từ 30/09 (tối): sổ được ghi NGAY sau TỪNG lời gọi nguồn tính phí (2 chủ đề leo thang ⇒ 2 lần), rồi bản cuối.
+    assert thay == [("so", True)] * 3 + [("con_tro", True)], "2 lần ghi sớm · ghi «đã trình» · ghi con trỏ"
 
 
 def test_lan_ghi_som_giu_nguyen_da_trinh_da_co(kho, monkeypatch):
@@ -230,17 +231,13 @@ def test_luot_sap_khong_danh_dau_da_trinh_nhung_van_ghi_han_muc_da_tieu(kho, mon
     assert sorted(so["lan_cuoi_leo_thang"]) == ["Alpha", "Beta"], "hạn mức tính phí đã tiêu ⇒ mốc leo thang phải ghi"
     assert so["da_trinh"] == {}, "báo cáo chưa tới nơi ⇒ chưa bài nào được coi là «đã trình»"
 
-    # Cùng tuần: trần tuần đã hết (không đốt thêm hạn mức), bài dự phòng chưa được trình.
-    assert _chay(kho) == 0
-    assert _du_phong_trong(kho.bao_cao) == []
-    # Tuần sau tới lượt lại ⇒ bài dự phòng của lượt sập PHẢI được trình (trước bản vá: bị lọc vì «đã trình»).
-    so = json.loads(kho.so.read_text(encoding="utf-8"))
-    so["lan_cuoi_leo_thang"] = {k: (dt.date.fromisoformat(v) - dt.timedelta(days=7)).isoformat()
-                                for k, v in so["lan_cuoi_leo_thang"].items()}
-    kho.so.write_text(json.dumps(so), encoding="utf-8", newline="\n")
+    # Bài đã lấy (đã tốn hạn mức) nằm chờ ở `cho_trinh` — chạy lại CÙNG tuần là trình bù ngay (từ 30/09 tối; trước đó
+    # phải chờ chủ đề tới lượt xoay vòng). Chi tiết ở `test_surveillance_scan_20260930_cho_trinh_du_phong.py`.
+    assert sorted(so["cho_trinh"]) == ["Alpha", "Beta"]
     assert _chay(kho) == 0
     assert sorted(_du_phong_trong(kho.bao_cao)) == ["Bài dự phòng alpha treatment", "Bài dự phòng beta treatment"]
-    assert len(json.loads(kho.so.read_text(encoding="utf-8"))["da_trinh"]) == 2, "trình xong mới ghi «đã trình»"
+    so = json.loads(kho.so.read_text(encoding="utf-8"))
+    assert len(so["da_trinh"]) == 2 and so["cho_trinh"] == {}, "trình xong mới ghi «đã trình» và gỡ khỏi hàng chờ"
 
 
 def test_luot_thanh_cong_ghi_du_so_va_con_tro(kho):

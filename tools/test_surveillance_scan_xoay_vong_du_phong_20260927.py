@@ -138,4 +138,7 @@ def test_hai_luot_cung_tuan_khong_vuot_tran_tuan(goi):
     rep2 = _chay(tran=2, so=so)
     assert goi == ["alpha treatment", "beta treatment"], "lượt thứ hai CÙNG TUẦN vẫn đốt thêm hạn mức tính phí"
     assert rep2["du_phong_da_leo_thang"] == [] and rep2["du_phong_da_dung_tuan"] == 2
-    assert all("tuần này đã dùng 2" in t["error"] for t in rep2["topics"])
+    # 30/09/2026: hai chủ đề đã leo thang tuần này được nói đúng lý do (không gọi lại); chủ đề thứ ba mới là «chờ lượt».
+    loi = {t["topic"]: t["error"] for t in rep2["topics"]}
+    assert all("đã leo thang trong tuần này" in loi[k] for k in ("Alpha", "Beta")) and "tuần này đã dùng 2" in loi["Gamma"]
+    assert rep2["du_phong_khong_leo_thang"] == {"cho_luot_xoay_vong": 1, "da_leo_thang_tuan_nay": 2}
