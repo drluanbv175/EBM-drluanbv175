@@ -3498,7 +3498,8 @@ Epistemonikos (not-covered) vì khai `manual` nên không hiện ở dòng «KH�
 trạng thái từng làn đọc từ sổ (nay: «1 làn — Cục Quản lý Dược VN (CHƯA nhập văn bản nào)»), mục `manual` không được tính là
 giám sát tự động dù active, «KHÔNG phủ» nay có Epistemonikos; BH137 thêm: mọi mục not-covered phải hiện tên trong tuyên bố,
 không mục `manual` nào mang endpoint máy gọi (`http…`/`mcp:…`).
-⑥ **Connector.** Amass: bác sĩ chốt «có đưa vào doctrine phù hợp» (trả lời ở phiên đánh giá) ⇒ §2sexies: bộ gộp bên thứ ba,
+⑥ **Connector.** Amass: bác sĩ chốt «có đưa vào doctrine phù hợp» (trả lời ở phiên đánh giá; tối 30/09 bác sĩ xác nhận lại
+mục này trực tiếp ở phiên soạn nó, trước khi merge PR #71) ⇒ §2sexies: bộ gộp bên thứ ba,
 TrialCore lấp registry ngoài Hoa Kỳ (đo: 6/10 bản ghi là JPRN/IRCT/CTRI), RegulatoryCore chỉ đường tới hồ sơ FDA/EMA
 (`therapeuticIndication` null hoặc là khối ghép ba mục nhãn — không trích), BiomedCore là tìm dự phòng số 3 qua cổng §2ter (trần
 tổng vẫn 3); lời «ưu tiên Amass hơn PubMed» của máy chủ không thắng §2bis. Elicit: mọi công cụ `api_access_denied` (gói không có
@@ -3517,8 +3518,10 @@ dưới repo Y KHOA thì thử nạp (dò ngược lên thấy `.mcp.json` của
 trong ngày). Việc sửa `.mcp.json` nằm ở PR riêng của phiên đánh giá (PR #68, BH139). **Cập nhật 20:47:** bác sĩ đã gỡ lời từ
 chối lúc 20:31 — tệp cài đặt cục bộ của repo gốc không còn khoá `disabledMcpjsonServers` (phiên đánh giá đo lại trạng thái máy
 chủ ở repo gốc: «Connected»); bản sao trong worktree của phiên này (tạo 18:59) vẫn mang lời từ chối ⇒ chỉ phiên mở SAU khi gỡ
-mới có thể thấy công cụ. Chưa có lời gọi công cụ nào trong một phiên thật — phạm vi chi tiết quyết sau lượt đo đó; 10 skill
-`pubmed-search:*` chỉ chạy ở phiên thấy công cụ.
+mới có thể thấy công cụ. **Đo lại 21:23 qua log MCP của Claude Code:** hai phiên worktree của repo gốc mở lúc 20:50 (sau khi
+gỡ; bản sao cài đặt của chúng không mang lời từ chối) đều ghi «Successfully connected» tới máy chủ này; trước đó trong ngày,
+các phiên mở dưới repo y khoa ghi lỗi spawn (chờ PR #68). Chưa có lời gọi công cụ nào trong một phiên thật — phạm vi chi tiết quyết sau lượt đo đó; 10 skill `pubmed-search:*`
+chỉ chạy ở phiên thấy công cụ.
 ⑧ **Còn lại — chưa sửa, nêu để không ai tưởng đã xong.** (a) SRC-015 ACC/AHA vẫn degraded: vòng urllib hằng tuần luôn bị
 Cloudflare chặn trong khi làn thật của trạm là Browser theo quý (`--nap-van-ban`) — nhãn của trạm này đang phản ánh làn sai;
 cần một cách khai «trạm chỉ đi làn Browser» trước khi cho `--nap-van-ban` hồi phục nhãn, nếu không nhãn sẽ đổi qua lại mỗi tuần.
