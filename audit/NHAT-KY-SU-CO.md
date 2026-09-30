@@ -3471,7 +3471,9 @@ tầng Crossref của chuỗi rút bài trả `retracted` (`updated-by` → 10.1
 None). Cả hai cờ chỉ dùng theo chiều DƯƠNG — đúng luật gộp bất đối xứng; nay ghi thành chữ ở sổ (SRC-049, SRC-050) và §2sexies.
 ④ **Nhãn lạc hậu.** SRC-042 Wiley TDM ghi degraded/«chưa từng thành công» nhưng 30/09 18:37 tải được PDF Open Access thật (DOI
 10.1002/jcsm.70385, 8.913.789 byte trên đĩa, 16 trang) ⇒ active, kèm giới hạn: một bài OA, một IP thoát VPN, chưa rõ vì sao
-23/09 bị `ACCESS_DENIED`; bài không OA và máy Windows chưa đo lại. SRC-033 CORE: lượt tuần 29/09 nhận 3 lần 429 trong phút đầu,
+23/09 bị `ACCESS_DENIED`; bài không OA và máy Windows chưa đo lại. Lượt rà soát độc lập chỉ ra «active» trơn sẽ bị đọc thành
+«tải được mọi bài Wiley» ⇒ TÊN mục mang luôn phạm vi «(30/09: mới tải được bài Open Access)» — tuyên bố độ phủ in theo tên.
+SRC-033 CORE: lượt tuần 29/09 nhận 3 lần 429 trong phút đầu,
 cầu dao bỏ 20 truy vấn — chỉ 33/53 được gửi mà `source_health` vẫn ghi «ok» («ok» của phần đã gửi, không phải của 53 chủ đề).
 SRC-010 GOLD: lượt trạm 29/09 trượt trang ⇒ degraded; 30/09 `--kiem-tra` đọc 19 tiêu đề mà nhãn vẫn degraded — và bản trạng
 thái đo sống cùng ngày commit luôn nhãn đó (PR #67). **Nguyên nhân gốc (tái lập ngoại tuyến):** vòng quét của
@@ -3511,8 +3513,12 @@ buổi tối thấy khác nhau (phiên thấy schema tham số, phiên không) �
 bản sao lưu: khoá xuất hiện giữa 19/09 và 20/09, không công cụ nào của hai repo ghi nó), và mỗi worktree mang một bản sao tệp đó. Khoá
 `enabledMcpjsonServers` trong `~/.claude.json` rỗng ở mọi mục dự án — nhưng đó không phải nơi quyết định trên máy này. Phiên mở
 dưới repo Y KHOA thì thử nạp (dò ngược lên thấy `.mcp.json` của repo gốc) và LỖI «Failed to spawn: tools/mcp/chay_pubmed_search_mcp.py
-— No such file»: đường dẫn tương đối tính theo thư mục của phiên (đo 30/09, lần đầu 18:59 — trước mọi thay đổi cài đặt trong ngày). Việc sửa `.mcp.json`
-nằm ở PR riêng của phiên đánh giá (PR #68, BH139). Cho tới khi bác sĩ gỡ lời từ chối ở repo gốc, 10 skill `pubmed-search:*` không có công cụ.
+— No such file»: đường dẫn tương đối tính theo thư mục của phiên (đo 30/09, lần đầu 18:59 — trước mọi thay đổi cài đặt
+trong ngày). Việc sửa `.mcp.json` nằm ở PR riêng của phiên đánh giá (PR #68, BH139). **Cập nhật 20:47:** bác sĩ đã gỡ lời từ
+chối lúc 20:31 — tệp cài đặt cục bộ của repo gốc không còn khoá `disabledMcpjsonServers` (phiên đánh giá đo lại trạng thái máy
+chủ ở repo gốc: «Connected»); bản sao trong worktree của phiên này (tạo 18:59) vẫn mang lời từ chối ⇒ chỉ phiên mở SAU khi gỡ
+mới có thể thấy công cụ. Chưa có lời gọi công cụ nào trong một phiên thật — phạm vi chi tiết quyết sau lượt đo đó; 10 skill
+`pubmed-search:*` chỉ chạy ở phiên thấy công cụ.
 ⑧ **Còn lại — chưa sửa, nêu để không ai tưởng đã xong.** (a) SRC-015 ACC/AHA vẫn degraded: vòng urllib hằng tuần luôn bị
 Cloudflare chặn trong khi làn thật của trạm là Browser theo quý (`--nap-van-ban`) — nhãn của trạm này đang phản ánh làn sai;
 cần một cách khai «trạm chỉ đi làn Browser» trước khi cho `--nap-van-ban` hồi phục nhãn, nếu không nhãn sẽ đổi qua lại mỗi tuần.
@@ -3524,18 +3530,22 @@ nối được ngày 30/09 — chỉ hiện ở khối `source_health` của lư
 khoản RxNav ĐỀ NGHỊ («We request that any application…» — SRC-047; việc ở repo y khoa). (e) Nhãn của các nguồn không có điểm
 thăm vẫn là nhãn KHAI theo lượt đo tay gần nhất; `DIEM_THAM` của `sources_health.py` có 8 mục nhưng nhánh thăm chỉ chạy cho
 `access: api` nên SRC-020 (html-watch) không bao giờ được thăm ở đó — thực thăm 7/41 nguồn (SRC-020 do vòng quét trạm của
-`giam_sat_to_chuc.py` cập nhật, không do điểm thăm). Ngày nhập của làn nhập tay là số người ghi vào sổ — tuyên bố độ phủ in theo, không có artifact đối chiếu.
+`giam_sat_to_chuc.py` cập nhật, không do điểm thăm). Ngày nhập của làn nhập tay là số người ghi vào sổ — tuyên bố độ phủ in
+theo, không có artifact đối chiếu.
 (f) `sources_health.py` chạy trong một worktree git không có engine báo SRC-003 BROKEN (thư mục Retraction Watch nằm ở engine):
 «không đo được» bị đọc thành «hỏng»; chạy ở đó không kèm `--khong-ghi` sẽ ghi nhãn sai vào sổ của worktree (bản vá 24/09 mới
-che phiên Cloud).
+che phiên Cloud). (g) MCP `pubmed-search` CHƯA có mục trong sổ nguồn — thêm sau lượt đo đầu tiên bằng lời gọi công cụ trong một
+phiên thật (ghi trước khi đo là khai nhãn không có số đo).
 **Việc của bác sĩ:** đo EMA một lần khi VPN tắt (hoặc quyết có ép thoát qua card mạng vật lý như Scopus); quyết phạm vi
-Elicit/paper-search/SciSpace/alphaXiv; gỡ kết nối Wiley bản cũ; gỡ lời từ chối `pubmed-search` ở repo gốc; client Unpaywall mồ
-côi của engine — nối vào dây chuyền hay gỡ.
+Elicit/paper-search/SciSpace/alphaXiv; gỡ kết nối Wiley bản cũ; client Unpaywall mồ côi của engine — nối vào dây chuyền hay gỡ;
+quyết phạm vi chi tiết của MCP `pubmed-search` sau lượt đo đầu tiên trong một phiên thật (lời từ chối đã gỡ 20:31).
 **Kiểm:** 12 ca mới ở `tools/test_tuyen_bo_do_phu.py`, 9 ca ở `tools/test_giam_sat_to_chuc_20260930_nhan_theo_luot_quet.py`, 22 ca
 ở `tools/test_chot_bh137_bh138_20260930_so_nguon_noi_that.py` + BH137, BH138. 47 đột biến (15 tuyên bố độ phủ · 10 vòng quét trạm
 · 22 logic chốt và dữ liệu sổ) đều đỏ ở pytest; 24 đột biến về HÀNH VI của hai công cụ (14 + 10; trừ ca `reports/`) và 2 đột
 biến sổ (trả SRC-041/SRC-036 về `manual`) đều đỏ ở CẢ BH137/BH138. Một đột biến cố ý KHÔNG bắt được và không thể bắt: ghi vào
-sổ rằng làn Cục QLD «đã có lần nhập» — tuyên bố độ phủ tin sổ, không có artifact độc lập. Vòng đầu 4 đột biến sống
+sổ rằng làn Cục QLD «đã có lần nhập» — tuyên bố độ phủ tin sổ, không có artifact độc lập. Một lượt rà soát độc lập (một agent
+chỉ-đọc, đọc diff + tệp thật): không lỗi mã, không mâu thuẫn trong doctrine; một phát hiện về sổ (SRC-042, xem ④) — đã sửa.
+Vòng đầu 4 đột biến sống
 sót và đều là lỗ của phép thử, không phải của mã: «trạm degraded + trang 0 tiêu đề vẫn hồi phục» (thiếu ca), hai đột biến tuyên
 bố độ phủ BH137 không bắt (thiếu sổ không có nguồn ad-hoc), «bỏ bước tự kiểm răng» (bước có mà không ai kiểm nó được gọi) —
 đã bổ sung ca cho cả bốn. **Bài học:** (1) đối chiếu TẬP với sổ, không đối chiếu danh sách «những cái đã biết là thiếu» — ba
