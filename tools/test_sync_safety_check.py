@@ -156,6 +156,103 @@ def test_ban_sao_lap_lai_va_ban_sao_cua_may_kia_deu_bi_bat(monkeypatch, tmp_path
     ]
 
 
+# ── thư mục cách ly `_quarantine-conflict-copy/` (30/09/2026) ────────────────
+# Tên tệp + tên máy ĐÚNG ca đo: LocalHostName của Mac là «Dr-Luan-BV175-2» nên luật «-<máy>-N» đọc ngày «-20260916» thành
+# số bản lặp ⇒ tệp cách ly từ 16/09 bị chấm là bản sao xung đột mới.
+_TEN_CACH_LY = "so-tong-thuat-Dr-Luan-BV175-2-20260916.json"
+_MAY_MAC = "Dr-Luan-BV175-2.local"
+
+
+def _dat_tep(root: Path, *rel: str) -> None:
+    for r in rel:
+        p = root / r
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x", encoding="utf-8")
+
+
+def _quet_muc_1(monkeypatch, root: Path, may: str = _MAY_MAC) -> tuple[str, list[str]]:
+    monkeypatch.setattr(S, "ROOT", root)
+    monkeypatch.setattr(S.socket, "gethostname", lambda: may)
+    level, details = S.check_conflict_copies()
+    return level, [d.replace("\\", "/") for d in details]
+
+
+def test_tep_trong_thu_muc_cach_ly_khong_chan(monkeypatch, tmp_path):
+    """Cách ly là cách xử lý ĐÃ DUYỆT cho bản sao xung đột (CLAUDE.md §2.1) — tệp nằm ở đó không được làm mục 1 🔴
+    (đo 30/09: 4 tệp cách ly từ 16/09 chặn cả chốt đầu phiên), nhưng vẫn phải THẤY ở mức thông tin. Thư mục cách ly nằm
+    sâu mấy tầng cũng vậy, và nhánh « 2»/«-dr-luan có bản gốc» đi qua cùng một cửa."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root,
+             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_CACH_LY}",
+             "reports/_quarantine-conflict-copy/cu/BAO-CAO-C010000PK16BSL-3.md",
+             "state/_quarantine-conflict-copy/so.json",
+             "state/_quarantine-conflict-copy/so 2.json")
+
+    level, details = _quet_muc_1(monkeypatch, root)
+
+    assert level == "GREEN", details
+    assert len(details) == 3, details
+    assert all("đã cách ly" in d and "không chặn" in d for d in details), details
+
+
+def test_cung_ten_tep_ngoai_thu_muc_cach_ly_van_chan(monkeypatch, tmp_path):
+    """Luật miễn KHÔNG được làm yếu việc bắt bản sao thật: đúng tên tệp ấy, đặt ngay cạnh thư mục cách ly ⇒ vẫn 🔴;
+    có tệp cách ly nằm bên cạnh cũng không hạ được mức chung."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root,
+             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_CACH_LY}",
+             f"EBM-Dashboards/tong_thuat/{_TEN_CACH_LY}")
+
+    level, details = _quet_muc_1(monkeypatch, root)
+
+    assert level == "RED", details
+    assert details[0] == f"EBM-Dashboards/tong_thuat/{_TEN_CACH_LY}", details   # bản ngoài cách ly: chặn, không gắn nhãn miễn
+    assert len(details) == 2 and "đã cách ly" in details[1], details
+
+
+def test_ban_lap_va_ban_may_kia_ngoai_cach_ly_van_chan(monkeypatch, tmp_path):
+    """BH133 giữ nguyên: bản lặp «-<máy>-N» và bản do máy KIA đẻ, nằm NGOÀI thư mục cách ly ⇒ 🔴."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root,
+             ".claude/agents/dieu-phoi-lam-sang-TESTHOST-2.md",
+             "medical-ebm-automation/CLAUDE-C010000PK16BSL.md",
+             "cloud-mirror/_quarantine-conflict-copy/trang-thai-C010000PK16BSL.json")
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "RED", details
+    assert sorted(d for d in details if "đã cách ly" not in d) == [
+        ".claude/agents/dieu-phoi-lam-sang-TESTHOST-2.md",
+        "medical-ebm-automation/CLAUDE-C010000PK16BSL.md",
+    ]
+
+
+def test_mien_cach_ly_chi_theo_dung_ten_thu_muc(monkeypatch, tmp_path):
+    """Miễn quá tay là mở lại lỗ BH133. Không được miễn khi: chuỗi «_quarantine-conflict-copy» chỉ nằm trong TÊN TỆP;
+    thư mục chỉ có tên GẦN giống; hay chính ROOT nằm dưới một thư mục tên cách ly (khi đó cả cây sẽ được miễn)."""
+    root = tmp_path / "_quarantine-conflict-copy" / "Claude AI"
+    ngoai = ["docs/_quarantine-conflict-copy-ghi-chu-TESTHOST.md",
+             "docs/_quarantine-conflict-copy-cu/a-TESTHOST.md",
+             "docs/quarantine/b-TESTHOST-2.md",
+             "docs/c-C010000PK16BSL.md"]
+    _dat_tep(root, *ngoai)
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "RED", details
+    assert sorted(details) == sorted(ngoai), details
+
+
+def test_tep_cach_ly_trong_claude_state_van_khong_chan(monkeypatch, tmp_path):
+    """`.claude/state/_quarantine-conflict-copy/` vừa là artefact sinh vừa là cách ly — nhãn nào cũng được, miễn không 🔴."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root, ".claude/state/_quarantine-conflict-copy/session-Dr-Luan-BV175-2-20260916.json")
+
+    level, details = _quet_muc_1(monkeypatch, root)
+
+    assert level == "GREEN" and len(details) == 1, details
+
+
 # ── mục 5: bản sao xung đột NẰM TRONG .git (30/09/2026) ──────────────────────
 def _git(repo: Path, *lenh: str) -> str:
     p = subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",
