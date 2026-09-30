@@ -7921,7 +7921,9 @@ def bh133_chot_an_toan_soi_ban_sao_trong_git():
     bản lặp «-<máy>-2» không khớp (15 bản sao thật lọt), và máy này mù trước bản sao do máy KIA đẻ. Kiểm HÀNH VI trên repo
     git tạm: rác trong .git được liệt kê mà không chặn; ref ma (và bản sao packed-refs) giữ commit nhánh thật không có ⇒ 🔴,
     đã nằm trong nhánh thật ⇒ không 🔴; `main()` thật sự chạy mục mới; cây làm việc bắt «-<máy này>-2» và «-C010000PK16BSL»
-    khi đang ở máy khác."""
+    khi đang ở máy khác. Bổ sung cùng ngày: tệp ĐÃ cách ly trong `_quarantine-conflict-copy/` chỉ liệt kê, không 🔴 (tên
+    máy «Dr-Luan-BV175-2» khiến luật «-N» đọc ngày «-20260916» thành số bản lặp); cùng tên tệp ở NGOÀI, thư mục tên gần
+    giống, hay tên tệp chứa chuỗi ấy ⇒ vẫn 🔴."""
     import importlib.util as _iu
     import inspect as _ins
     import socket as _socket
@@ -7945,8 +7947,10 @@ def bh133_chot_an_toan_soi_ban_sao_trong_git():
     _socket.gethostname = lambda: "MAYTHU"
     try:
         with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
-            repo = Path(d) / "Claude AI"
-            repo.mkdir()
+            # Gốc repo cố ý nằm DƯỚI một thư mục tên cách ly: miễn cách ly phải tính từ ROOT, không theo đường dẫn tuyệt đối
+            # (nếu không, mọi ca 🔴 của cây làm việc bên dưới đều thành «đã cách ly»).
+            repo = Path(d) / "_quarantine-conflict-copy" / "Claude AI"
+            repo.mkdir(parents=True)
             git(repo, "init", "-q", "-b", "main")
             for i in (1, 2):
                 (repo / "a.txt").write_text(str(i), encoding="utf-8")
@@ -7981,6 +7985,30 @@ def bh133_chot_an_toan_soi_ban_sao_trong_git():
             thay = {Path(x.split("  ")[0].replace("\\", "/")).name for x in ct}
             if muc != "RED" or not {"x-MAYTHU-2.md", "y-C010000PK16BSL.md"} <= thay:
                 return False, "cây làm việc không bắt bản lặp «-<máy>-2» hoặc bản sao do máy KIA đẻ"
+            # Nhánh cách ly (30/09, cùng ngày): tên máy Mac «Dr-Luan-BV175-2» + luật «-<máy>-N» ⇒ tệp ĐÃ cách ly từ 16/09
+            # bị đọc thành bản sao mới, chốt đầu phiên 🔴 giả. Miễn theo đúng TÊN THƯ MỤC, không nới ra ngoài.
+            for ten in ("x-MAYTHU-2.md", "y-C010000PK16BSL.md"):
+                (repo / "docs" / ten).unlink()
+            _socket.gethostname = lambda: "Dr-Luan-BV175-2.local"
+            ten_cl = "so-Dr-Luan-BV175-2-20260916.json"
+            cach_ly = repo / "docs" / "_quarantine-conflict-copy"
+            cach_ly.mkdir()
+            for ten in (ten_cl, "y-C010000PK16BSL-2.md"):
+                (cach_ly / ten).write_text("x", encoding="utf-8")
+            muc, ct = M.check_conflict_copies()
+            if muc == "RED":
+                return False, "tệp ĐÃ cách ly trong _quarantine-conflict-copy/ vẫn làm mục 1 🔴 — báo động giả ở chốt đầu phiên"
+            if sum("_quarantine-conflict-copy/" in x.replace("\\", "/") for x in ct) != 2:
+                return False, "tệp đã cách ly không còn được liệt kê ở mức thông tin"
+            gan = repo / "docs" / "_quarantine-conflict-copy-cu"
+            gan.mkdir()
+            for p in (repo / "docs" / ten_cl, gan / ten_cl, repo / "docs" / "_quarantine-conflict-copy-C010000PK16BSL.md"):
+                p.write_text("x", encoding="utf-8")
+                muc, ct = M.check_conflict_copies()
+                p.unlink()
+                if muc != "RED":
+                    return False, (f"miễn cách ly quá tay: «{p.relative_to(repo).as_posix()}» nằm NGOÀI thư mục cách ly "
+                                   "mà không bị 🔴 — mở lại lỗ BH133")
     finally:
         _socket.gethostname = goc_hostname
     return True, ""
@@ -8427,7 +8455,7 @@ BAI_HOC = [
     ("BH130", "28/09", "SKILL tác vụ lịch không neo đường dẫn một máy/`/tmp`; khai rõ đa nền hay chỉ-Mac (bash)", bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows),
     ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
     ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
-    ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
+    ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia; tệp ĐÃ cách ly chỉ liệt kê", bh133_chot_an_toan_soi_ban_sao_trong_git),
     ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
     ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
     ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),

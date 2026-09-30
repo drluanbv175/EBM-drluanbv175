@@ -3526,3 +3526,19 @@ bộ quét — vì vậy chỉ thử lại MỘT lần mỗi tuần; ngân sách
 sĩ tự chạy (orchestrator không có cờ `--tran-du-phong` để truyền xuống A2); tuần ISO tính theo UTC; chưa có lượt sập thật nào kể từ khi có cơ chế này nên
 đường trình bù mới chỉ được kiểm bằng test và BH136, chưa gặp trên dữ liệu thật. **Triển khai:** như mục trên — bản thật sự chạy
 nằm ở `EBM-Dashboards/tools/` (ngoài git), merge xong phải chép tay và đẩy runtime app.
+
+### 30/09/2026 — Chốt an toàn 🔴 giả trên Mac: tệp ĐÃ cách ly từ 16/09 bị đọc thành bản sao xung đột mới (bổ sung BH133)
+Tối 30/09 trên Mac, `sync_safety_check` mục 1 🔴 dù không có bản sao mới: 4 tệp bị nêu đều nằm sẵn trong
+`_quarantine-conflict-copy/` từ 16/09 (`EBM-Dashboards/tong_thuat/…/so-tong-thuat-Dr-Luan-BV175-2-20260916.json`,
+`state/…/dat-canh-xoay-…`, `reports/…/CLINICAL_EVIDENCE_UPDATE_PIPELINE-….json` và `.md`); 29/09 cùng mục còn 🟢. Cần ĐỦ hai
+điều kiện (đo bằng ma trận luật × tên máy, chỉ một ô khớp): luật «-<máy>-N» của BH133 (sáng 30/09) VÀ LocalHostName của Mac
+là `Dr-Luan-BV175-2` (ComputerName «Dr Luân BV175») — khi đó `-dr-luan-bv175-2` khớp tên máy, còn ngày `-20260916` bị đọc
+thành số bản lặp. Luật cũ (`stem.endswith("-<máy>")`) hay tên máy không có «-2» đều không khớp. Thư mục cách ly chưa từng
+được miễn — trước đó chỉ tình cờ không khớp. **Vá:** tệp nằm DƯỚI thư mục tên đúng `_quarantine-conflict-copy` (một thành
+phần đường dẫn, tính từ ROOT, so sau NFC) chỉ liệt kê «đã cách ly — không chặn»; bản sao ngoài thư mục ấy giữ nguyên 🔴.
+**Kiểm:** 5 test mới + nhánh mới trong BH133 (gốc repo thử đặt dưới một thư mục tên cách ly); 10 đột biến đều đỏ ở CẢ pytest
+lẫn BH133 — bỏ luật miễn, miễn tất cả, miễn theo chuỗi con / tiền tố / chữ «quarantine» / đường dẫn tuyệt đối, gắn nhãn mà
+vẫn chặn, nuốt không liệt kê, và hai đột biến BH133 cũ (mù máy kia, mù «-N»). Đo trên cây thật: mục 1 🟢, 7 tệp «đã cách
+ly», 0 tệp chặn. Không xoá/dời tệp cách ly nào. **Việc của bác sĩ (cài đặt hệ thống, agent không đổi):** tên máy Mac đang
+mang hậu tố «-2» (macOS thường tự thêm khi thấy trùng tên trên mạng — nguyên nhân ở máy này chưa xác minh); bản vá không
+phụ thuộc việc đổi lại tên.

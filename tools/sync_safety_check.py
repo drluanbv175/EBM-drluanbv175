@@ -7,7 +7,8 @@ mất việc / hỏng .git do OneDrive sync dở hoặc phiên khác đang chạ
 
 Soi 6 nguy cơ (đều là thứ đã gặp thật trong dự án này):
   1. CONFLICT-COPY của OneDrive (dấu hiệu #1 của mất việc; conflict trên file
-     sinh/ignored chỉ liệt kê, không hard-block như source/hồ sơ chính)
+     sinh/ignored và bản sao ĐÃ cách ly trong `_quarantine-conflict-copy/` chỉ liệt kê,
+     không hard-block như source/hồ sơ chính)
   2. Sức khỏe git 2 repo lồng (Claude AI + medical-ebm-automation): HEAD giải được? status
      chạy được (không treo như fsck)? có khóa/đang merge dở?
   3. File lõi ĐÃ TẢI THẬT (không phải placeholder "cloud-only" chưa tải về của OneDrive)
@@ -69,6 +70,12 @@ PRUNE_DIRS = {".git", "__pycache__", "node_modules", ".pytest_cache",
 THIET_BI_ONEDRIVE = ("c010000pk16bsl",)
 # Trong `.git` không tệp hợp lệ nào mang tên người ⇒ nhận luôn tên máy Mac, không cần bản gốc song song.
 THIET_BI_TRONG_GIT = (*THIET_BI_ONEDRIVE, "dr luân bv175")
+
+# Thư mục CÁCH LY: nơi đã duyệt để cất bản sao xung đột sau khi đối chiếu (CLAUDE.md §2.1) — tệp nằm ở đó là bản sao ĐÃ
+# XỬ LÝ, không phải nguy cơ mất việc. Đo 30/09/2026: 4 tệp cách ly từ 16/09 kiểu «…-Dr-Luan-BV175-2-20260916.json» làm
+# mục 1 🔴 dù không có bản sao mới, vì LocalHostName của Mac đo được là «Dr-Luan-BV175-2» nên luật «-<máy>-N» đọc ngày
+# «-20260916» thành số bản lặp. Chỉ miễn theo đúng TÊN THƯ MỤC (một thành phần đường dẫn, tính từ ROOT) — không theo chuỗi con.
+THU_MUC_CACH_LY = "_quarantine-conflict-copy"
 
 
 def _nfc_thuong(s: str) -> str:
@@ -183,10 +190,19 @@ def _is_generated_conflict_artifact(rel: str) -> bool:
     return False
 
 
+def _nam_trong_cach_ly(rel: str) -> bool:
+    """Tệp nằm DƯỚI một thư mục tên đúng `_quarantine-conflict-copy`. `rel` là đường dẫn TƯƠNG ĐỐI so với ROOT: thư mục
+    cha của chính ROOT không được tính (nếu không, cả cây sẽ được miễn), và tên TỆP cũng không được tính."""
+    cac_thu_muc = rel.replace("\\", "/").split("/")[:-1]
+    return any(_nfc_thuong(p) == THU_MUC_CACH_LY for p in cac_thu_muc)
+
+
 def _add_conflict_hit(hard_hits: list[str], generated_hits: list[str], f: Path, note: str = "") -> None:
     rel = str(f.relative_to(ROOT))
     detail = rel + note
-    if _is_generated_conflict_artifact(rel):
+    if _nam_trong_cach_ly(rel):
+        generated_hits.append(detail + f"  (đã cách ly trong {THU_MUC_CACH_LY}/ — không chặn)")
+    elif _is_generated_conflict_artifact(rel):
         generated_hits.append(detail + "  (artefact sinh/ignored — không chặn source sync)")
     else:
         hard_hits.append(detail)
