@@ -8067,6 +8067,79 @@ def bh134_cam_bien_ci_chiu_mang_chap_chon():
     return True, ""
 
 
+def bh139_mcp_json_khoi_chay_khong_phu_thuoc_thu_muc_chay():
+    """30/09 — `.mcp.json` gọi máy chủ `pubmed-search` bằng ĐƯỜNG DẪN TƯƠNG ĐỐI (`uv run --no-project
+    tools/mcp/chay_pubmed_search_mcp.py`), mà Claude Code khởi chạy máy chủ ở thư mục của PHIÊN. Phiên mở dưới
+    `medical-ebm-automation/` (repo lồng trong cây này) dò ngược lên vẫn thấy `.mcp.json` của repo gốc ⇒ spawn rồi chết
+    «Failed to spawn … No such file», `claude mcp get pubmed-search` ra «✘ Failed to connect». Lỗi nằm im vì trước 30/09
+    chưa phiên nào mở dưới repo lồng (việc ở repo y khoa làm trong `~/.ebm-worktrees`, nơi không dò thấy `.mcp.json` này);
+    30/09 năm phiên app đầu tiên mở dưới `medical-ebm-automation/.claude/worktrees/` thì cả năm đều hỏng lúc spawn (log MCP),
+    và cây nháp tái lập được với đối chứng: bản cũ hỏng ở repo lồng, bản mới nối được ở cả gốc lẫn repo lồng.
+    Kiểm HÀNH VI: chạy đúng đoạn mã khai trong `.mcp.json` (bằng trình thông dịch đang chạy thay cho `uv run --no-project
+    python` — ngoại tuyến) trên cây tạm: từ gốc, từ thư mục lồng 4 tầng và từ thư mục giữa đều phải chạy ĐÚNG lớp bọc nằm
+    cạnh `.mcp.json` (không phải bản lạc ở thư mục giữa) với `__name__ == "__main__"`; ngoài cây thì thoát ≠ 0, báo ở
+    stderr và KHÔNG in gì ra stdout (kênh JSON-RPC của MCP)."""
+    import subprocess
+    import tempfile as _tf
+    try:
+        khai = json.loads((REPO / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]["pubmed-search"]
+        lenh = [khai["command"], *khai["args"]]
+    except (OSError, ValueError, KeyError, TypeError) as loi:
+        return False, (f".mcp.json không còn khai máy chủ pubmed-search đọc được ({type(loi).__name__}) — "
+                       "cố ý gỡ máy chủ thì gỡ luôn chốt này")
+    tuong_doi = [a for a in lenh[1:] if isinstance(a, str) and a.lower().endswith(".py") and not Path(a).is_absolute()]
+    if tuong_doi:
+        return False, (f".mcp.json lại gọi script bằng đường dẫn tương đối ({tuong_doi[0]}) — phiên mở dưới repo lồng "
+                       "(medical-ebm-automation/) spawn là chết «No such file»")
+    if lenh[:5] != ["uv", "run", "--no-project", "python", "-c"] or len(lenh) != 6:
+        return False, ("pubmed-search không còn khởi chạy bằng `uv run --no-project python -c <mã dò ngược>` — tên "
+                       "`python3`/`python` trần không giống nhau giữa Mac và Windows; đổi cách khởi chạy thì sửa chốt cùng lúc")
+    ma = lenh[5]
+    if not ma.isascii():
+        return False, ("đoạn mã khởi chạy có ký tự ngoài ASCII — thông báo lỗi in ra stderr cp1252 của Windows sẽ ném "
+                       "UnicodeEncodeError (họ BH55)")
+    gia = "import sys\nprint('DA-CHAY:{ten}:' + __name__, file=sys.stderr)\nraise SystemExit(0)\n"
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+        goc = Path(d) / "Claude AI gốc"                      # dấu cách + dấu tiếng Việt như cây thật trên OneDrive
+        giua = goc / "medical-ebm-automation"                # có bản lạc của lớp bọc nhưng KHÔNG có .mcp.json
+        long_ = giua / ".claude" / "worktrees" / "phien-x"
+        ngoai = Path(d) / "ngoai-cay"
+        for p in (long_, ngoai, goc / "tools" / "mcp", giua / "tools" / "mcp"):
+            p.mkdir(parents=True, exist_ok=True)
+        (goc / ".mcp.json").write_text("{}", encoding="utf-8")
+        (goc / "tools" / "mcp" / "chay_pubmed_search_mcp.py").write_text(gia.format(ten="GOC"), encoding="utf-8")
+        (giua / "tools" / "mcp" / "chay_pubmed_search_mcp.py").write_text(gia.format(ten="LAC"), encoding="utf-8")
+
+        def chay(cwd):
+            # stdin đóng sẵn: lỡ đoạn mã chạm một lớp bọc THẬT thì máy chủ nhận EOF và thoát, chốt không treo.
+            return subprocess.run([sys.executable, "-B", "-c", ma], cwd=str(cwd), stdin=subprocess.DEVNULL,
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+
+        for ten, cwd in (("gốc", goc), ("thư mục lồng 4 tầng", long_), ("thư mục giữa", giua)):
+            kq = chay(cwd)
+            if "DA-CHAY:LAC" in kq.stderr:
+                return False, (f"từ {ten}: chạy bản lạc ở thư mục giữa thay vì lớp bọc nằm cạnh .mcp.json — mã chạy phải "
+                               "thuộc đúng repo khai máy chủ")
+            if kq.returncode != 0 or "DA-CHAY:GOC:__main__" not in kq.stderr:
+                return False, (f"từ {ten}: không khởi chạy được lớp bọc nằm cạnh .mcp.json (mã thoát {kq.returncode}) — "
+                               "phiên mở dưới repo lồng lại «Failed to connect»")
+            if kq.stdout:
+                return False, f"từ {ten}: đoạn khởi chạy in ra stdout — phá kênh JSON-RPC của MCP"
+        # Ca «ngoài cây» chỉ dựng được khi thư mục tạm KHÔNG nằm trong một cây có sẵn cặp .mcp.json + lớp bọc thật
+        # (TMPDIR trỏ vào trong repo) — khi đó dò ngược sẽ thấy lớp bọc thật, đúng thiết kế, không phải lỗi.
+        if any((p / ".mcp.json").is_file() and (p / "tools" / "mcp" / "chay_pubmed_search_mcp.py").is_file()
+               for p in ngoai.resolve().parents):
+            return True, ""
+        kq = chay(ngoai)
+        if kq.returncode == 0:
+            return False, "ngoài cây (không có lớp bọc) mà vẫn thoát 0 — hỏng im lặng, phiên tưởng máy chủ đã chạy"
+        if kq.stdout:
+            return False, "không tìm thấy lớp bọc mà in ra stdout — phá kênh JSON-RPC; thông báo phải đi stderr"
+        if "chay_pubmed_search_mcp" not in kq.stderr:
+            return False, "không tìm thấy lớp bọc mà stderr không nói thiếu tệp nào — người đọc log MCP không biết vì sao"
+    return True, ""
+
+
 def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
     """29/09 — lượt quét tuần W40 SẬP ở bước đo độ trễ vì một ứng viên mang `publication_date` kiểu số (engine chỉ trả
     NĂM). Lỗi nổ SAU khi con trỏ đã tiến cho 47 chủ đề và sổ dự phòng đã ghi «đã trình», TRƯỚC khi có báo cáo ⇒ cửa sổ
@@ -8417,6 +8490,7 @@ BAI_HOC = [
     ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
     ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
     ("BH135", "30/09", "Kiểm nguồn thật đo mạng HAI tầng: «phân giải được» ≠ «tới được»; DNS của máy hỏng thì chỉ đúng chỗ", bh135_kiem_nguon_that_do_mang_hai_tang),
+    ("BH139", "30/09", "`.mcp.json` khởi chạy pubmed-search không phụ thuộc thư mục chạy: phiên mở dưới repo lồng vẫn tìm đúng lớp bọc cạnh .mcp.json", bh139_mcp_json_khoi_chay_khong_phu_thuoc_thu_muc_chay),
     ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),
 ]
 

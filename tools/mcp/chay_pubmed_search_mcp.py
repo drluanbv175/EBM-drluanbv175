@@ -12,6 +12,10 @@ Lớp bọc đọc khoá từ `~/.ebm-secrets/medical-ebm-automation.env` (NGOÀ
 git) rồi mới khởi động server. File này an toàn để commit vì KHÔNG chứa giá trị nào.
 
 Chạy được nguyên văn trên cả Mac lẫn Windows nhờ gọi qua `uv run` — xem `.mcp.json`.
+Từ 30/09/2026 `.mcp.json` KHÔNG gọi tệp này bằng đường dẫn tương đối nữa: đoạn mã `-c` ở đó dò
+từ thư mục của phiên ngược lên tới thư mục có CẢ `.mcp.json` LẪN `tools/mcp/chay_pubmed_search_mcp.py`
+rồi chạy tệp này (phiên mở dưới repo lồng `medical-ebm-automation/` từng spawn hỏng — chốt BH139).
+Đổi tên/dời tệp này thì phải sửa chuỗi đường dẫn trong `.mcp.json` và chốt BH139 cùng lúc.
 
 QUAN TRỌNG: stdout là kênh JSON-RPC của MCP, TUYỆT ĐỐI không in gì ra đó.
 Mọi thông báo đi stderr.

@@ -159,9 +159,17 @@ Ba điều đã biết trước, khỏi mất công dò lại:
 Kho `u9401066/pubmed-search-mcp` là loại **lai**: vừa là MCP server vừa mang sẵn skill.
 
 **Phần MCP server: Windows gần như không phải làm gì** — `.mcp.json` về theo `git pull` và gọi
-`uv run --no-project tools/mcp/chay_pubmed_search_mcp.py`, dùng nguyên văn được trên cả hai máy
+lớp bọc `tools/mcp/chay_pubmed_search_mcp.py` qua `uv run --no-project python -c <mã dò ngược>`
 (Windows đã có `uv` từ phiên 03/08). Lớp bọc tự ưu tiên venv `~/.pubmed-mcp-venv` nếu có, không
 thì rơi về `uvx` — nên máy chưa cài gì vẫn chạy.
+
+> **Đổi 30/09/2026 (chốt BH139):** trước đó `.mcp.json` gọi lớp bọc bằng đường dẫn TƯƠNG ĐỐI, mà
+> Claude Code khởi chạy máy chủ ở thư mục của phiên — phiên mở dưới `medical-ebm-automation/` vẫn
+> thấy `.mcp.json` này nhưng spawn là chết («Failed to connect»). Nay đoạn mã `-c` dò từ thư mục
+> phiên ngược lên tới thư mục có CẢ `.mcp.json` LẪN lớp bọc rồi mới chạy. Đã đo trên Mac (từ gốc,
+> từ repo lồng và từ worktree của repo lồng đều «✔ Connected»); **CHƯA đo trên Windows** — sau
+> `git pull` chạy `claude mcp get pubmed-search` một lần ở thư mục repo, phải ra «✔ Connected»
+> (ra «⏸ Pending approval» là chưa phê duyệt trên máy đó, không phải lỗi khởi chạy).
 
 > **Một điều kiện Windows PHẢI có:** file `~/.ebm-secrets/medical-ebm-automation.env` với dòng
 > `NCBI_EMAIL=…`. Kho secrets nằm ngoài OneDrive nên **không tự sang máy khác**. Thiếu nó thì
