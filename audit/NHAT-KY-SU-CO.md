@@ -3397,3 +3397,20 @@ số) — để nguyên cho phiên đó; hai thay đổi nằm ở đoạn khác
 (2) Thư mục nháp nằm trong `/private/tmp` bị xoá khi khởi động lại; chuỗi lệnh đột biến sao lưu hỏng mà lệnh đột biến kế
 tiếp (heredoc độc lập) VẪN chạy ⇒ để lại `weekly_safety.sh` ở trạng thái đột biến (test bắt, khôi phục, đối chiếu diff).
 **Luật:** mỗi phép đột biến phải ĐIỀU KIỆN theo sao lưu đã `cmp` được, không dựa vào chuỗi `&&` phía trước.
+
+### 30/09/2026 — 36 bản sao xung đột nằm TRONG `.git` mà chốt an toàn vẫn 🟢; một ref ma hiện trong `git for-each-ref` (BH133)
+Đầu phiên Windows: `sync_safety_check` 🔴 vì 4 bản sao ở cây làm việc — 3 tệp trạng thái quay lại + bản mới
+`medical-ebm-automation/CLAUDE-C010000PK16BSL.md`. So nội dung: không dữ liệu riêng (sổ tổng thuật chỉ khác `tuoi_ngay`;
+con trỏ và catalog giống từng byte; bản CLAUDE = blob đã commit ở `2fe2518`) ⇒ DỜI sang
+`C:\Users\Admin\ebm-backup-truoc-dong-bo-20260930\`. Ba tệp trạng thái quay lại vì cây dùng chung đứng ở nhánh PR #54 tới
+29/09 18:38: BH126–BH128 đã gộp 28/09 17:09 nhưng CHƯA có hiệu lực lúc 18:30 (bản vá gộp ≠ bản vá chạy, khi cây còn ở nhánh
+cũ). Soi tiếp `.git`: 36 bản sao OneDrive trong `.git` hai repo (`config-C010000PK16BSL`, index ×7, FETCH_HEAD ×7, reflog
+×13, commit-graph-chain ×2, ORIG_HEAD ×2…) cùng ref ma `refs/remotes/origin/master-C010000PK16BSL` — chốt vẫn 🟢 vì mục 1
+prune `.git` (lỗ hổng ghi từ 03/08; phiên Mac 29/09 đã gặp `index-Dr Luân BV175-2` mà không vá chốt). Kèm hai điểm mù dò
+tên: nhánh «-<máy này>» không khớp bản lặp «-<máy>-N» (15 bản sao thật lọt), và máy này mù trước bản sao do máy KIA đẻ.
+Cấu hình đang dùng vẫn giữ `hooksPath`/`fsmonitor`, ref ma là tổ tiên của origin/master ⇒ dời 36 tệp (1,9 MB).
+**Vá:** mục 5 «Bản sao xung đột TRONG .git»: ref ma/bản sao packed-refs giữ commit nhánh thật không có ⇒ 🔴 (cứu bằng
+`rescue/…` trước khi dời); đã nằm trong nhánh thật hoặc là ref máy chủ ⇒ 🟡; config/HEAD ⇒ 🟡; rác git không đọc ⇒ chỉ liệt
+kê. Mục 1 nhận «-<máy>-N» và tên máy kia (`THIET_BI_ONEDRIVE`), so tên sau NFC. **Kiểm:** 7 test mới + BH133; 8 đột biến
+đều đỏ ở CẢ pytest lẫn BH133 (vòng đầu, đột biến packed-refs chỉ pytest bắt ⇒ bổ sung ca vào BH133). Cùng phiên: token `gh`
+trên Windows hỏng ⇒ giác quan CI ⚪, `gh pr` lỗi (đăng nhập lại là việc của bác sĩ).

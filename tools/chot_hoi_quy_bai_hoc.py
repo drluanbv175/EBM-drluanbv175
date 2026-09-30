@@ -7914,6 +7914,78 @@ def bh132_tac_vu_lich_ban_chay_theo_nguon_git():
     return True, ""
 
 
+def bh133_chot_an_toan_soi_ban_sao_trong_git():
+    """30/09 — `sync_safety_check` prune `.git` nên mục bản sao xung đột KHÔNG BAO GIỜ soi tới `.git` (lỗ hổng ghi nhận từ
+    03/08): đo 30/09 có 36 bản sao OneDrive trong `.git` hai repo — `config-C010000PK16BSL`, index/FETCH_HEAD/reflog… và MỘT
+    ref ma `origin/master-C010000PK16BSL` hiện trong `git for-each-ref` — chốt vẫn 🟢. Kèm hai điểm mù dò tên ở cây làm việc:
+    bản lặp «-<máy>-2» không khớp (15 bản sao thật lọt), và máy này mù trước bản sao do máy KIA đẻ. Kiểm HÀNH VI trên repo
+    git tạm: rác trong .git được liệt kê mà không chặn; ref ma (và bản sao packed-refs) giữ commit nhánh thật không có ⇒ 🔴,
+    đã nằm trong nhánh thật ⇒ không 🔴; `main()` thật sự chạy mục mới; cây làm việc bắt «-<máy này>-2» và «-C010000PK16BSL»
+    khi đang ở máy khác."""
+    import importlib.util as _iu
+    import inspect as _ins
+    import socket as _socket
+    import subprocess
+    import tempfile as _tf
+    sp = _iu.spec_from_file_location("_bh133_ssc", REPO / "tools" / "sync_safety_check.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh133_ssc"] = M
+    sp.loader.exec_module(M)
+    if not hasattr(M, "check_git_conflict_copies"):
+        return False, "sync_safety_check không còn mục soi bản sao xung đột trong .git"
+    if "check_git_conflict_copies" not in _ins.getsource(M.main):
+        return False, "main() không gọi mục soi .git — có hàm mà chốt đầu phiên không chạy (họ BH41)"
+
+    def git(repo, *lenh):
+        return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",
+                               "-c", "commit.gpgsign=false", *lenh],
+                              check=True, capture_output=True, text=True).stdout.strip()
+
+    goc_hostname = _socket.gethostname
+    _socket.gethostname = lambda: "MAYTHU"
+    try:
+        with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+            repo = Path(d) / "Claude AI"
+            repo.mkdir()
+            git(repo, "init", "-q", "-b", "main")
+            for i in (1, 2):
+                (repo / "a.txt").write_text(str(i), encoding="utf-8")
+                git(repo, "add", "-A")
+                git(repo, "commit", "-q", "-m", f"c{i}")
+            c1, c2 = git(repo, "rev-parse", "HEAD~1"), git(repo, "rev-parse", "HEAD")
+            M.ROOT, M.GIT_REPOS = repo, [(".", repo)]
+            g = repo / ".git"
+            (g / "index-MAYTHU-3").write_text("x", encoding="utf-8")
+            (g / "FETCH_HEAD-Dr Luân BV175-2").write_text("x", encoding="utf-8")
+            muc, ct = M.check_git_conflict_copies()
+            if muc == "RED":
+                return False, "rác trong .git (index/FETCH_HEAD) bị 🔴 — báo động giả dạy người ta bỏ qua chốt"
+            if not any("2 tệp rác" in x for x in ct):
+                return False, "bản sao rác trong .git (bản lặp «-N», tên máy Mac) không được liệt kê — lại mù trước .git"
+            git(repo, "update-ref", "refs/heads/main", c1)
+            ma = g / "refs" / "heads" / "main-C010000PK16BSL"
+            ma.write_text(c2 + "\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] != "RED":
+                return False, "ref ma giữ commit mà nhánh thật không có KHÔNG bị 🔴 — dời nó là mất commit"
+            ma.write_text(c1 + "\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] == "RED":
+                return False, "ref ma mà commit đã nằm trong nhánh thật vẫn bị 🔴 — phải 🟡 «dời được»"
+            ma.unlink()
+            (g / "packed-refs-C010000PK16BSL").write_text(f"{c2} refs/heads/main\n", encoding="utf-8")
+            if M.check_git_conflict_copies()[0] != "RED":
+                return False, "bản sao packed-refs giữ nhánh mà bản đang dùng không có KHÔNG bị 🔴 — dời là mất commit"
+            (repo / "docs").mkdir()
+            for ten in ("x-MAYTHU-2.md", "y-C010000PK16BSL.md"):
+                (repo / "docs" / ten).write_text("x", encoding="utf-8")
+            muc, ct = M.check_conflict_copies()
+            thay = {Path(x.split("  ")[0].replace("\\", "/")).name for x in ct}
+            if muc != "RED" or not {"x-MAYTHU-2.md", "y-C010000PK16BSL.md"} <= thay:
+                return False, "cây làm việc không bắt bản lặp «-<máy>-2» hoặc bản sao do máy KIA đẻ"
+    finally:
+        _socket.gethostname = goc_hostname
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -8057,6 +8129,7 @@ BAI_HOC = [
     ("BH130", "28/09", "SKILL tác vụ lịch không neo đường dẫn một máy/`/tmp`; khai rõ đa nền hay chỉ-Mac (bash)", bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows),
     ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
     ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
+    ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
 ]
 
 
