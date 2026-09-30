@@ -157,9 +157,12 @@ def test_ban_sao_lap_lai_va_ban_sao_cua_may_kia_deu_bi_bat(monkeypatch, tmp_path
 
 
 # ── thư mục cách ly `_quarantine-conflict-copy/` (30/09/2026) ────────────────
-# Tên tệp + tên máy ĐÚNG ca đo: LocalHostName của Mac là «Dr-Luan-BV175-2» nên luật «-<máy>-N» đọc ngày «-20260916» thành
-# số bản lặp ⇒ tệp cách ly từ 16/09 bị chấm là bản sao xung đột mới.
-_TEN_CACH_LY = "so-tong-thuat-Dr-Luan-BV175-2-20260916.json"
+# Tên máy ĐÚNG ca đo: LocalHostName của Mac là «Dr-Luan-BV175-2». `_TEN_BAN_SAO` là tên mà luật hậu tố máy NHẬN trên máy ấy
+# («tên-<máy>.ext») — dùng để thử luật MIỄN theo thư mục. Tên tệp của chính ca đo (`_TEN_CO_NGAY`: tệp cách ly từ 16/09, đổi
+# tên kèm ngày) từng bị đọc thành bản lặp vì ngày «-20260916» khớp «-N»; từ tối 30/09 nó không còn là tên bản sao ở bất cứ
+# đâu — xem khối «số bản lặp ≠ ngày» bên dưới.
+_TEN_BAN_SAO = "so-tong-thuat-Dr-Luan-BV175-2.json"
+_TEN_CO_NGAY = "so-tong-thuat-Dr-Luan-BV175-2-20260916.json"
 _MAY_MAC = "Dr-Luan-BV175-2.local"
 
 
@@ -183,7 +186,7 @@ def test_tep_trong_thu_muc_cach_ly_khong_chan(monkeypatch, tmp_path):
     sâu mấy tầng cũng vậy, và nhánh « 2»/«-dr-luan có bản gốc» đi qua cùng một cửa."""
     root = tmp_path / "Claude AI"
     _dat_tep(root,
-             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_CACH_LY}",
+             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_BAN_SAO}",
              "reports/_quarantine-conflict-copy/cu/BAO-CAO-C010000PK16BSL-3.md",
              "state/_quarantine-conflict-copy/so.json",
              "state/_quarantine-conflict-copy/so 2.json")
@@ -200,13 +203,13 @@ def test_cung_ten_tep_ngoai_thu_muc_cach_ly_van_chan(monkeypatch, tmp_path):
     có tệp cách ly nằm bên cạnh cũng không hạ được mức chung."""
     root = tmp_path / "Claude AI"
     _dat_tep(root,
-             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_CACH_LY}",
-             f"EBM-Dashboards/tong_thuat/{_TEN_CACH_LY}")
+             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_BAN_SAO}",
+             f"EBM-Dashboards/tong_thuat/{_TEN_BAN_SAO}")
 
     level, details = _quet_muc_1(monkeypatch, root)
 
     assert level == "RED", details
-    assert details[0] == f"EBM-Dashboards/tong_thuat/{_TEN_CACH_LY}", details   # bản ngoài cách ly: chặn, không gắn nhãn miễn
+    assert details[0] == f"EBM-Dashboards/tong_thuat/{_TEN_BAN_SAO}", details   # bản ngoài cách ly: chặn, không gắn nhãn miễn
     assert len(details) == 2 and "đã cách ly" in details[1], details
 
 
@@ -246,11 +249,61 @@ def test_mien_cach_ly_chi_theo_dung_ten_thu_muc(monkeypatch, tmp_path):
 def test_tep_cach_ly_trong_claude_state_van_khong_chan(monkeypatch, tmp_path):
     """`.claude/state/_quarantine-conflict-copy/` vừa là artefact sinh vừa là cách ly — nhãn nào cũng được, miễn không 🔴."""
     root = tmp_path / "Claude AI"
-    _dat_tep(root, ".claude/state/_quarantine-conflict-copy/session-Dr-Luan-BV175-2-20260916.json")
+    _dat_tep(root, ".claude/state/_quarantine-conflict-copy/session-Dr-Luan-BV175-2.json")
 
     level, details = _quet_muc_1(monkeypatch, root)
 
     assert level == "GREEN" and len(details) == 1, details
+
+
+# ── số bản lặp ≠ ngày (30/09/2026, tối) ──────────────────────────────────────
+def test_ngay_sau_ten_may_khong_bi_doc_thanh_so_ban_lap(monkeypatch, tmp_path):
+    """GỐC của 🔴 giả tối 30/09: tệp cách ly đổi tên kiểu «tên-Dr-Luan-BV175-2-20260916.json» gặp tên máy «Dr-Luan-BV175-2»
+    ⇒ luật «-<máy>-N» (N dài bao nhiêu cũng nhận) đọc ngày 8 chữ số thành số bản lặp. OneDrive không đặt tên như thế: ngày/giờ
+    sau tên máy là do người hay agent gắn khi đổi tên. Ở ĐÂU cũng không chấm — trong hay ngoài thư mục cách ly, máy này hay
+    máy kia, 4 chữ số (năm) cũng vậy."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root,
+             f"EBM-Dashboards/tong_thuat/_quarantine-conflict-copy/{_TEN_CO_NGAY}",     # đúng tên + đúng chỗ của ca đo
+             f"EBM-Dashboards/tong_thuat/{_TEN_CO_NGAY}",                               # cùng tên, NGOÀI cách ly
+             "cloud-mirror/trang-thai-chung-cu-Dr-Luan-BV175-2-20260914-185600.json",   # ngày + giờ
+             "reports/BAO-CAO-C010000PK16BSL-20260916.md",                              # máy kia + ngày
+             "docs/ke-hoach-C010000PK16BSL-2026.md",                                    # máy kia + năm
+             "state/so-Dr-Luan-BV175-2-20260916")                                       # không đuôi
+
+    level, details = _quet_muc_1(monkeypatch, root)
+
+    assert (level, details) == ("GREEN", []), details
+
+
+def test_so_ban_lap_that_mot_den_ba_chu_so_van_bi_bat(monkeypatch, tmp_path):
+    """Siết «-N» không được làm mù bản lặp THẬT. Đo 30/09 trên cây thật: số lặp lớn nhất «-14» (`app-Dr Luân BV175-14.log`)
+    ⇒ 2 chữ số là có thật, chừa tới 3 chữ số. Từ 4 chữ số trở lên (năm, ngày, giờ) không còn là số bản lặp."""
+    root = tmp_path / "Claude AI"
+    bat = ["docs/a-TESTHOST-2.md",
+           "docs/b-C010000PK16BSL-14.md",
+           "docs/c-C010000PK16BSL-999.md",
+           "docs/d-TESTHOST-107"]                           # không đuôi, 3 chữ số
+    _dat_tep(root, *bat, "docs/e-C010000PK16BSL-1000.md")
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "RED", details
+    assert sorted(details) == sorted(bat), details
+
+
+def test_ban_doi_ten_kem_ngay_nam_canh_ban_goc_van_bi_bat(monkeypatch, tmp_path):
+    """Siết «-N» không đụng nhánh «-dr-luan có bản gốc»: bản đổi tên kèm ngày mà còn nằm NGAY CẠNH bản gốc, ngoài thư mục
+    cách ly, vẫn là bản sao chưa dọn ⇒ 🔴 — hành vi có từ trước BH133, không phụ thuộc tên máy đang chạy."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root,
+             "EBM-Dashboards/tong_thuat/so-tong-thuat.json",
+             f"EBM-Dashboards/tong_thuat/{_TEN_CO_NGAY}")
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "RED", details
+    assert len(details) == 1 and details[0].startswith(f"EBM-Dashboards/tong_thuat/{_TEN_CO_NGAY}"), details
 
 
 # ── mục 5: bản sao xung đột NẰM TRONG .git (30/09/2026) ──────────────────────
@@ -357,6 +410,33 @@ def test_ban_sao_config_la_vang(monkeypatch, tmp_path):
 
     assert level == "YELLOW"
     assert any("config-C010000PK16BSL" in d and "git config -f" in d for d in details), details
+
+
+def test_nhanh_that_ten_co_ten_may_va_ngay_khong_phai_ref_ma(monkeypatch, tmp_path):
+    """Nhánh THẬT tên kiểu «moc-plugin-c010000pk16bsl-20260930» (tên máy + ngày) không phải bản sao xung đột của một nhánh
+    «moc-plugin» nào cả. Luật «-N» không giới hạn đọc ngày thành số lặp ⇒ «ref ma giữ commit mà nhánh thật KHÔNG có» ⇒ 🔴
+    giả, kèm lời khuyên dời một nhánh đang dùng."""
+    repo, _c1, c2 = _repo_hai_commit(tmp_path)
+    _git(repo, "branch", "moc-plugin-c010000pk16bsl-20260930", c2)
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert (level, details) == ("GREEN", []), details
+
+
+def test_ref_ma_so_lap_ba_chu_so_van_la_do(monkeypatch, tmp_path):
+    """Số lặp 3 chữ số vẫn là bản sao: phải DÒ được và GỠ được hậu tố để so với `main` thật. Gỡ trượt thì ref ma bị so với
+    chính nó ⇒ 🟡 «dời được» trong khi commit chỉ còn ref ma giữ."""
+    repo, c1, c2 = _repo_hai_commit(tmp_path)
+    _git(repo, "update-ref", "refs/heads/main", c1)
+    (repo / ".git" / "refs" / "heads" / "main-C010000PK16BSL-100").write_text(c2 + "\n", encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "RED"
+    assert any("main-C010000PK16BSL-100" in d and "`refs/heads/main`" in d and "rescue/" in d for d in details), details
 
 
 def test_main_that_su_chay_muc_ban_sao_trong_git(monkeypatch, capsys):

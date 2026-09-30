@@ -3499,3 +3499,28 @@ vẫn chặn, nuốt không liệt kê, và hai đột biến BH133 cũ (mù má
 ly», 0 tệp chặn. Không xoá/dời tệp cách ly nào. **Việc của bác sĩ (cài đặt hệ thống, agent không đổi):** tên máy Mac đang
 mang hậu tố «-2» (macOS thường tự thêm khi thấy trùng tên trên mạng — nguyên nhân ở máy này chưa xác minh); bản vá không
 phụ thuộc việc đổi lại tên.
+
+### 30/09/2026 — Gốc của 🔴 giả ở chốt an toàn: ngày sau tên máy bị đọc thành SỐ BẢN LẶP (bổ sung BH133, xếp trên mục trên)
+Mục ngay trên miễn thư mục cách ly nên 4 tệp hết chặn, nhưng luật gây lỗi còn nguyên: `_hau_to_thiet_bi` nhận «-<máy>-N» với N
+DÀI BAO NHIÊU CŨNG ĐƯỢC (`-\d+`). Trong tên tệp cách ly, `Dr-Luan-BV175` là tên thiết bị OneDrive, «-2/-3/-4» là số bản lặp
+GỐC, «-20260916» là ngày gắn khi cách ly — cùng thư mục có đủ bốn anh em `so-tong-thuat-Dr-Luan-BV175-20260916.json`,
+`…-2-20260916`, `…-3-20260916`, `…-4-20260916`, chỉ bản «-2-» bị chấm vì LocalHostName `Dr-Luan-BV175-2` tình cờ trùng «thiết
+bị + số lặp 2». **ĐÍNH CHÍNH mục trên** («tên máy không có «-2» đều không khớp» chỉ đúng với 4 tệp ấy): đo trên cây thật (chỉ
+đọc, giả tên máy), luật sáng 30/09 chặn 4 tệp với `Dr-Luan-BV175-2`, **7 tệp** với `Dr-Luan-BV175`, 1 tệp với
+`Dr-Luan-BV175-3`, 0 với `C010000PK16BSL` — đổi lại tên máy KHÔNG chữa được, chỉ đổi tệp bị chấm. Cùng cách đọc ấy ở mục 5:
+nhánh THẬT tên «…-c010000pk16bsl-20260930» bị coi là ref ma của một nhánh cụt tên ⇒ 🔴 «giữ commit mà nhánh thật KHÔNG có»,
+kèm lời khuyên dời một nhánh đang dùng (tái hiện trên repo tạm; cây thật chưa có nhánh nào tên như vậy). **Vá:** số bản lặp
+chỉ 1–3 chữ số (`_HAU_TO_SO_LAP`, dùng CHUNG cho dò và gỡ hậu tố — lệch nhau thì ref ma bị so với chính nó ⇒ 🟡 «dời được»
+sai). Đo trên cây thật: số lặp lớn nhất «-14» (`app-Dr Luân BV175-14.log`), máy kia «-8»; dãy ≥ 4 chữ số là năm/ngày/giờ.
+Đề bài gợi ý 1–2 chữ số; chọn 3 vì 2 chữ số đã có thật, mà vượt trần là MÙ IM LẶNG. Nhánh «-dr-luan có bản gốc song song»
+không đổi: bản đổi tên kèm ngày còn nằm cạnh bản gốc, ngoài cách ly, vẫn 🔴. Luật miễn thư mục cách ly vẫn cần cho bản sao giữ
+nguyên tên OneDrive khi dời vào đó. **Kiểm:** 5 test mới (24/24 đạt; trọn `tools/` 1668 đạt, 30 bỏ qua có khai báo) + 3 phép
+thử mới trong BH133; 3 test và 1 phép thử của mục trên vốn dùng chính tên có ngày làm «bản sao» được đổi sang tên bản sao thật
+(`…-Dr-Luan-BV175-2.json`), giữ nguyên điều chúng canh. 20 đột biến (`python -B`, xoá `__pycache__`, phục hồi khớp SHA-256):
+19 đỏ đúng chỗ ở CẢ pytest lẫn BH133 — 10 về số lặp (trả luật cũ · 1–2 · 1–4 · 1–8 chữ số · bỏ nhánh lặp · tối thiểu 2 chữ
+số · gỡ hậu tố hẹp hơn luật dò · gỡ hậu tố không gỡ số lặp · cây làm việc tách luật riêng 1–2 chữ số · tách luật riêng
+«-\d+») và 9 phép còn lại của mục trên chạy lại (phép thứ 10 «mù -N» chính là «bỏ nhánh lặp»); 1 sống sót CÓ CHỦ Ý vì tương
+đương (gỡ hậu tố rộng hơn luật dò — chỉ chạy trên tên luật dò đã nhận). Trọn bộ chốt trên bản sao trần: 99 ✓ / 0 ✗ / 37 ⚪ (⚪
+không phải đạt). Đo trên cây thật so với master: mục 1 🔴→🟢, thôi nêu ĐÚNG 7 tệp có ngày (4 từng chặn + 3 trong `.claude/`),
+66 bản sao thật vẫn nêu đủ, mục 5 không đổi; với cả bốn tên máy thử ở trên kết quả giống hệt nhau (66 tệp nêu, 0 chặn) —
+phán quyết không còn phụ thuộc hậu tố trùng tên của máy. Không xoá/dời tệp cách ly nào.

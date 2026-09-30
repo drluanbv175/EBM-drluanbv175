@@ -75,7 +75,19 @@ THIET_BI_TRONG_GIT = (*THIET_BI_ONEDRIVE, "dr luân bv175")
 # XỬ LÝ, không phải nguy cơ mất việc. Đo 30/09/2026: 4 tệp cách ly từ 16/09 kiểu «…-Dr-Luan-BV175-2-20260916.json» làm
 # mục 1 🔴 dù không có bản sao mới, vì LocalHostName của Mac đo được là «Dr-Luan-BV175-2» nên luật «-<máy>-N» đọc ngày
 # «-20260916» thành số bản lặp. Chỉ miễn theo đúng TÊN THƯ MỤC (một thành phần đường dẫn, tính từ ROOT) — không theo chuỗi con.
+# (Gốc «ngày bị đọc thành số lặp» sửa riêng ở `_HAU_TO_SO_LAP` bên dưới; luật miễn này vẫn cần cho bản sao giữ NGUYÊN tên
+# OneDrive đặt khi được dời vào đây, vd `…/_quarantine-conflict-copy/trang-thai-C010000PK16BSL.json`.)
 THU_MUC_CACH_LY = "_quarantine-conflict-copy"
+
+# Số BẢN LẶP OneDrive gắn sau tên thiết bị khi cùng một tệp xung đột nhiều lần: «-2», «-3»… Đo 30/09/2026 trên cây thật: lớn
+# nhất «-14» (`app-Dr Luân BV175-14.log` của repo y khoa), máy kia tới «-8» ⇒ nhận 1–3 chữ số (2 chữ số là có thật, chừa thêm
+# một bậc để không lặng lẽ mù khi số lặp lớn dần). Dãy số DÀI HƠN đứng sau tên thiết bị là ngày/giờ do người hay agent gắn
+# khi đổi tên lúc cách ly («…-Dr-Luan-BV175-2-20260916.json»), hoặc ngày trong tên nhánh («moc-c010000pk16bsl-20260930») —
+# KHÔNG phải số bản lặp. Luật cũ «-\d+» nhận mọi độ dài: tên máy Mac «Dr-Luan-BV175-2» tình cờ trùng «thiết bị + số lặp 2»
+# trong tên tệp cách ly nên ngày «-20260916» bị đọc thành số lặp ⇒ 🔴 giả ở chốt đầu phiên (tối 30/09/2026).
+# Dùng CHUNG cho dò (`_hau_to_thiet_bi`) và gỡ hậu tố (`_bo_hau_to`): hai nơi lệch nhau thì ref ma không gỡ được hậu tố,
+# bị so với CHÍNH NÓ ⇒ 🟡 «dời được» sai trong khi commit chỉ còn ref ma giữ.
+_HAU_TO_SO_LAP = r"(?:-\d{1,3})?"
 
 
 def _nfc_thuong(s: str) -> str:
@@ -85,9 +97,10 @@ def _nfc_thuong(s: str) -> str:
 
 
 def _hau_to_thiet_bi(ten_thuong: str, cac_thiet_bi) -> str | None:
-    """Tên thiết bị nếu tên tệp kết thúc «-<thiết bị>» hoặc «-<thiết bị>-<N>», có thể kèm MỘT đuôi «.ext»."""
+    """Tên thiết bị nếu tên tệp kết thúc «-<thiết bị>» hoặc «-<thiết bị>-<N>», có thể kèm MỘT đuôi «.ext». N là số bản
+    lặp (1–3 chữ số, xem `_HAU_TO_SO_LAP`) — ngày «-20260916» sau tên thiết bị không tính."""
     for tb in dict.fromkeys(cac_thiet_bi):
-        if tb and re.search(rf"-{re.escape(tb)}(?:-\d+)?(?:\.[^.\s]+)?$", ten_thuong):
+        if tb and re.search(rf"-{re.escape(tb)}{_HAU_TO_SO_LAP}(?:\.[^.\s]+)?$", ten_thuong):
             return tb
     return None
 
@@ -307,7 +320,7 @@ def _quet_ban_sao_git(git_dir: Path, cac_thiet_bi, time_budget_s: float) -> tupl
 def _bo_hau_to(rel: str, tb: str) -> str:
     """'refs/heads/x-<máy>-2' → 'refs/heads/x' (chỉ đụng phần tên cuối)."""
     dau, _, cuoi = rel.rpartition("/")
-    goc = re.sub(rf"-{re.escape(tb)}(?:-\d+)?(?=(?:\.[^.\s]+)?$)", "", cuoi, flags=re.IGNORECASE)
+    goc = re.sub(rf"-{re.escape(tb)}{_HAU_TO_SO_LAP}(?=(?:\.[^.\s]+)?$)", "", cuoi, flags=re.IGNORECASE)
     return f"{dau}/{goc}" if dau else goc
 
 
