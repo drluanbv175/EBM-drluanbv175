@@ -3430,6 +3430,34 @@ do thật (25 s + 0,3 s); DNS trả lời ⇒ hai repo «success», 3/3 lượt.
 chồng nhau — chữa một cái rồi phải ĐO LẠI (đã hứa «đăng nhập xong thì hết ⚪» trước khi đo). Giới hạn còn lại: DNS im lâu hơn
 ~25 s thì vẫn ⚪ — đúng sự thật, không phải lỗi mã.
 
+### 30/09/2026 — Máy chủ MCP `pubmed-search` tắt 11 ngày vì một lời từ chối trong cài đặt cục bộ; `.mcp.json` gọi lớp bọc bằng đường dẫn tương đối nên phiên mở dưới repo y khoa spawn hỏng (BH139)
+Đợt đo MCP/API 30/09 (Mac) thấy máy chủ `pubmed-search` (45 công cụ) khoẻ mà không phiên nào nạp. **Đo:** log MCP của Claude
+Code — repo gốc nạp 156 lần từ 14/08 tới 19/09 12:22 giờ máy (155 nối được) rồi tắt hẳn; `claude mcp get pubmed-search` ⇒ «✘ Rejected
+(see disabledMcpjsonServers in settings)». Khoá `disabledMcpjsonServers: ["pubmed-search"]` nằm ở `.claude/settings.local.json`
+của repo gốc, xuất hiện trong khoảng 19/09 12:22 → 20/09 19:01 (bản sao lưu `.bak-20260912` chưa có, `.bak-20260923` đã có).
+KHÔNG công cụ/hook/plugin nào của hệ ghi khoá này (grep hai repo + `~/.claude/plugins`) ⇒ chính Claude Code ghi; ai bấm từ
+chối thì chưa xác định được. Cơ chế, đo trên repo NHÁP (không đụng repo gốc): ① «disabled» thắng mọi danh sách cho phép — thêm
+`enabledMcpjsonServers` ở cài đặt cấp người dùng không gỡ được; ② lời từ chối gộp từ CẢ tệp của repo gốc LẪN bản sao
+`settings.local.json` trong từng worktree app (app chép tệp gốc vào worktree lúc tạo) ⇒ gỡ ở gốc thì chỉ phiên MỚI nạp;
+③ `claude mcp reset-project-choices` chạy trên bản sao tệp thật (268 KB) chỉ bỏ đúng 3 dòng của khoá đó, giữ nguyên 2.148 luật
+quyền + hook. Phiên worktree bị hook chặn sửa tệp cài đặt của repo gốc — đúng thiết kế: phê duyệt/từ chối máy chủ MCP là lựa
+chọn của bác sĩ. **Việc của bác sĩ (đã chốt «phê duyệt» 30/09):** chạy `claude mcp reset-project-choices` tại repo gốc.
+**Lỗi thứ hai, lộ cùng ngày:** 30/09 là lần đầu có phiên app mở dưới `medical-ebm-automation/.claude/worktrees/` (trước đó việc
+repo y khoa làm ở `~/.ebm-worktrees`, nơi không dò thấy `.mcp.json` này). Phiên ở đó dò ngược lên vẫn thấy `.mcp.json` của repo
+gốc, và phiên desktop TỰ thử nạp máy chủ chưa bị từ chối ⇒ 5/5 phiên hỏng lúc spawn «Failed to spawn:
+`tools/mcp/chay_pubmed_search_mcp.py` — No such file» (đường dẫn tương đối tính theo thư mục của PHIÊN). Hai lần hỏng đầu
+(18:59) xảy ra TRƯỚC khi khoá cấp người dùng được thêm (19:05) ⇒ không phải do khoá đó.
+**Vá:** `.mcp.json` khởi chạy bằng `uv run --no-project python -c <mã>`; đoạn mã dò từ thư mục phiên ngược lên tới thư mục có
+CẢ `.mcp.json` LẪN lớp bọc rồi `runpy` lớp bọc (không thấy ⇒ thoát 1, báo ở stderr, stdout sạch vì đó là kênh JSON-RPC).
+**Kiểm:** cây nháp với lớp bọc THẬT — bản mới «✔ Connected» từ gốc, repo lồng và worktree của repo lồng; đối chứng bản cũ trên
+cùng cây: gốc nối được, repo lồng «✘ Failed to connect». BH139 chạy đúng đoạn mã khai trong `.mcp.json` trên cây tạm; 9/9 đột
+biến đỏ đúng chỗ rồi xanh lại (đường dẫn tương đối · không dò thư mục cha · bỏ điều kiện nằm cạnh `.mcp.json` · thoát 0 khi
+không thấy · in ra stdout · `python3` trần · ký tự ngoài ASCII · `run_name` khác `__main__` · thông báo không nêu tệp thiếu).
+**Giới hạn nói thẳng:** CHƯA đo trên Windows (lệnh kiểm ở `sync/WINDOWS-LAM-TIEP.md` mục 6c); phiên mở ở `~/.ebm-worktrees` vẫn
+không có máy chủ này (không dò thấy `.mcp.json` — không đổi); BH139 thay `uv run --no-project python` bằng trình thông dịch
+đang chạy nên không kiểm lớp `uv`; khoá `enabledMcpjsonServers` cấp người dùng chưa khai trong `sync/cau-hinh-nguoi-dung.json`
+(app ghi đè cài đặt thì CLI lùi về «Pending»; phiên desktop không phụ thuộc khoá này).
+
 ### 30/09/2026 — Mạng máy Windows có HAI lỗi khác nhau; chốt «nguồn thật» coi «phân giải được» là «tới được» (BH135)
 Đo tách tầng trên máy Windows (mạng bệnh viện, cổng 10.176.24.1, DNS 192.1.1.214), 14:20–14:30:
 ① **DNS nội bộ chậm/hết hạn:** github.com hết hạn 12 s, api.crossref.org 11,6 s, api.github.com 8,4 s, onlinelibrary.wiley.com
