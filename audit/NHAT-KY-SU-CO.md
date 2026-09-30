@@ -3414,3 +3414,18 @@ Cấu hình đang dùng vẫn giữ `hooksPath`/`fsmonitor`, ref ma là tổ ti�
 kê. Mục 1 nhận «-<máy>-N» và tên máy kia (`THIET_BI_ONEDRIVE`), so tên sau NFC. **Kiểm:** 7 test mới + BH133; 8 đột biến
 đều đỏ ở CẢ pytest lẫn BH133 (vòng đầu, đột biến packed-refs chỉ pytest bắt ⇒ bổ sung ca vào BH133). Cùng phiên: token `gh`
 trên Windows hỏng ⇒ giác quan CI ⚪, `gh pr` lỗi (đăng nhập lại là việc của bác sĩ).
+
+### 30/09/2026 — Cảm biến CI ⚪ «run trả về nhánh «connecting»»: mạng trượt một nhịp, chữ lỗi bị đọc thành tên nhánh (BH134)
+Hai «giác quan» CI của `tu_de_xuat_viec` ⚪ suốt 28–30/09 trên máy Windows. Chẩn đoán đầu («token gh hỏng») chỉ đúng MỘT NỬA:
+token hỏng thật (bác sĩ đăng nhập lại 30/09 qua luồng mã thiết bị), nhưng đăng nhập xong VẪN ⚪. Đo 8 lần liên tiếp: DNS nội
+bộ (192.1.1.214) trượt lần phân giải ĐẦU sau khi bộ đệm nguội (lần 1 lỗi sau 12 s, lần 2 được, sau đó < 1 s); có lúc im hơn
+25 s. `gh` in «error connecting to api.github.com», `_chay` gộp stderr vào stdout ⇒ chữ «connecting» bị tách thành TÊN NHÁNH
+(28/09 là «get»); có gh mà trượt MỘT nhịp là ⚪ — không thử lại, không lùi sang API công khai (cùng họ BH129).
+**Vá:** `_doc_tra_loi_gh` chỉ coi «<conclusion hợp lệ> <nhánh>» hoặc rỗng là CÂU TRẢ LỜI; lỗi kết nối ⇒ thử lại một lần (nghỉ
+2 s); gh hỏng vì lý do khác (token, không khởi động được) ⇒ lùi `doc_ci_qua_api`; hỏng hết ⇒ «» kèm đúng nguyên nhân («mạng/
+DNS, KHÔNG phải CI đỏ»), vẫn đếm MỘT giác quan. Trần thời gian (bên gọi cho cả công cụ 90 s): mạng đã hỏng ở repo trước ⇒ repo
+sau thử một lần; gh treo hết 30 s ⇒ không thử lại, không gọi thêm API. **Kiểm:** 17 ca test mới + BH134; 10 đột biến đều đỏ ở
+CẢ pytest lẫn BH134 (vòng đầu, 3 đột biến «trần thời gian» chỉ pytest bắt ⇒ bổ sung ca vào BH134). Đo thật: DNS im ⇒ ⚪ với lý
+do thật (25 s + 0,3 s); DNS trả lời ⇒ hai repo «success», 3/3 lượt. **Bài học:** một triệu chứng có thể có HAI nguyên nhân
+chồng nhau — chữa một cái rồi phải ĐO LẠI (đã hứa «đăng nhập xong thì hết ⚪» trước khi đo). Giới hạn còn lại: DNS im lâu hơn
+~25 s thì vẫn ⚪ — đúng sự thật, không phải lỗi mã.

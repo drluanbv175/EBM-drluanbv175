@@ -7986,6 +7986,87 @@ def bh133_chot_an_toan_soi_ban_sao_trong_git():
     return True, ""
 
 
+def bh134_cam_bien_ci_chiu_mang_chap_chon():
+    """30/09 — cảm biến CI của `tu_de_xuat_viec` ⚪ «run trả về nhánh «connecting»» suốt 28–30/09 trên máy Windows, kể cả
+    SAU khi bác sĩ đăng nhập lại gh: DNS nội bộ trượt lần phân giải đầu ⇒ `gh run list` in «error connecting to
+    api.github.com»; `_chay` gộp stderr nên chữ «connecting» bị đọc thành TÊN NHÁNH; có gh mà gọi trượt MỘT nhịp là ⚪ —
+    không thử lại, không lùi sang API công khai (cùng họ BH129). Kiểm HÀNH VI với `_chay`/`urlopen` giả: lỗi kết nối rồi
+    được ⇒ đo được, vẫn đếm MỘT giác quan; lỗi kết nối mọi lần ⇒ «» kèm đúng nguyên nhân, không có «nhánh «connecting»»;
+    token hỏng ⇒ lùi sang API và đo được; câu trả lời thật «run nhánh khác» không bị thử lại, không thành success; và trần
+    thời gian (mạng đã hỏng ⇒ repo sau thử một lần; gh treo hết hạn ⇒ không thử lại, không gọi thêm API)."""
+    import importlib.util as _iu
+    import io as _io
+    import json as _json
+    sp = _iu.spec_from_file_location("_bh134_tdxv", REPO / "tools" / "tu_de_xuat_viec.py")
+    M = _iu.module_from_spec(sp)
+    sys.modules["_bh134_tdxv"] = M
+    sp.loader.exec_module(M)
+    if not hasattr(M, "_MANG_GH"):
+        return False, "cảm biến CI đường gh không còn cơ chế thử lại khi mạng chập chờn"
+    nhanh = "master"
+    M._nhanh_mac_dinh = lambda *a, **k: nhanh
+    M._owner_repo_tu_remote = lambda d: "chu/kho"
+    loi_mang = "error connecting to api.github.com\ncheck your internet connection or https://githubstatus.com\n"
+
+    class _Resp(_io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    goi_api: list[str] = []
+
+    def mo(req, timeout=0):
+        goi_api.append(req.full_url)
+        return _Resp(_json.dumps({"workflow_runs": [{"conclusion": "failure", "head_branch": nhanh}]}).encode())
+
+    def do(kich_ban, mang_hong=False, ghi_chet=""):
+        M._GIAC_QUAN_CHET.clear()
+        M._SO_GIAC_QUAN["chay"] = 0
+        M._MANG_GH["hong"] = mang_hong
+        goi_api.clear()
+        goi = []
+
+        def chay_gia(lenh, giay=120, cwd=None):
+            M._SO_GIAC_QUAN["chay"] += 1
+            goi.append(lenh)
+            if ghi_chet:                                     # như `_chay` thật khi gh treo hết hạn
+                M._ghi_chet(lenh, ghi_chet)
+                return ""
+            return kich_ban[min(len(goi), len(kich_ban)) - 1]
+        M._chay = chay_gia
+        kq = M.doc_ci_mot_repo("gốc", REPO, "kiem-tinh-da-nen.yml", co_gh=True, urlopen=mo, ngu=lambda s: None)
+        return kq, len(goi)
+
+    kq, so_goi = do([loi_mang, f"success {nhanh}\n"])
+    if kq != ("success", nhanh) or so_goi != 2:
+        return False, "gh trượt kết nối MỘT nhịp là ⚪ ngay — không thử lại (mạng chập chờn thành «không đo được»)"
+    if M._GIAC_QUAN_CHET or M._SO_GIAC_QUAN["chay"] != 1:
+        return False, "thử lại làm lệch bảng «x/y giác quan» (mỗi lần thử bị đếm là một giác quan, hoặc còn ghi chết)"
+    kq, so_goi = do([loi_mang])
+    if kq != ("", nhanh) or len(M._GIAC_QUAN_CHET) != 1 or goi_api:
+        return False, "gh trượt kết nối mọi lần mà không ra «không đo được» với ĐÚNG MỘT lý do (hoặc tốn thêm lượt API)"
+    if "«connecting»" in M._GIAC_QUAN_CHET[0] or "error connecting" not in M._GIAC_QUAN_CHET[0]:
+        return False, "chữ trong thông báo lỗi của gh lại bị đọc thành tên nhánh, hoặc mất nguyên nhân thật"
+    # Trần thời gian: bên gọi cho cả công cụ 90 s, mỗi lần gh trượt DNS ~12 s, treo thì 30 s.
+    if M._MANG_GH["hong"] is not True:
+        return False, "mạng hỏng ở repo này mà không ghi nhớ — repo sau lại thử đủ số lần, vượt hạn 90 s của bên gọi"
+    kq, so_goi = do([loi_mang], mang_hong=True)
+    if so_goi != 1:
+        return False, "mạng đã hỏng ở repo trước mà repo sau vẫn thử lại — vượt hạn 90 s của bên gọi"
+    kq, so_goi = do([], ghi_chet="quá 30s")
+    if kq != ("", nhanh) or so_goi != 1 or goi_api or len(M._GIAC_QUAN_CHET) != 1:
+        return False, "gh treo hết 30 s mà còn thử lại/gọi thêm API — vượt hạn 90 s của bên gọi"
+    kq, so_goi = do(["HTTP 401: Bad credentials (https://api.github.com/graphql)\n"])
+    if kq != ("failure", nhanh) or so_goi != 1 or len(goi_api) != 1:
+        return False, "gh hỏng KHÔNG vì mạng (token) mà không lùi sang API công khai — CI đỏ nằm im dưới ⚪"
+    kq, so_goi = do(["success claude/nhanh-khac\n"])
+    if kq != ("", nhanh) or so_goi != 1 or goi_api:
+        return False, "câu trả lời thật của gh (run nhánh khác) bị coi là lỗi mạng hoặc thành «success»"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -8130,6 +8211,7 @@ BAI_HOC = [
     ("BH131", "28/09", "Gói tuần đọc MÃ kết quả tái kiểm rút bài kho (dòng cuối, 🔴 lên đầu, ⚪ khi không đo được)", bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho),
     ("BH132", "29/09", "Bản chạy tác vụ lịch theo nguồn git: tụt hậu thì tự chép, sửa riêng/chưa tạo thì chỉ nhắc", bh132_tac_vu_lich_ban_chay_theo_nguon_git),
     ("BH133", "30/09", "Chốt an toàn soi bản sao xung đột TRONG .git (ref ma giữ commit ⇒ 🔴) + bản lặp «-N»/máy kia", bh133_chot_an_toan_soi_ban_sao_trong_git),
+    ("BH134", "30/09", "Cảm biến CI đường gh: lỗi kết nối thì thử lại, gh hỏng thì lùi API, không đọc chữ lỗi thành tên nhánh", bh134_cam_bien_ci_chiu_mang_chap_chon),
 ]
 
 
