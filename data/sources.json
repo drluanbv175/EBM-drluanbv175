@@ -172,14 +172,15 @@
       "detection_method": "content-hash",
       "measured_latency_days": null,
       "owner": "agent-A2",
-      "status": "degraded",
+      "status": "active",
       "last_success_at": "2026-09-23",
-      "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).",
+      "known_gap": "⛔ ĐÍNH CHÍNH 13/09/2026 — endpoint cũ (https://goldcopd.org/gold-reports/) TRỎ SAI, đã kiểm sống qua Browser thật: trang đó có tiêu đề tab \"2020 Gold Reports\" và nội dung mở đầu \"2020 Global Strategy for Prevention, Diagnosis and Management of COPD\" — ẤN BẢN LỖI THỜI 6 NĂM, không phải tên một ấn bản vẫn còn hiệu lực tham chiếu. known_gap cũ ghi \"7 tiêu đề ghi nhận\" (kích hoạt 01/09/2026, 21 tiêu đề) — cả hai lần đều là tiêu đề 2020, nghĩa là trạm status=active suốt từ đầu nhưng CHƯA BAO GIỜ thấy báo cáo GOLD thật đang hiện hành (2026), dù vẫn báo 'thành công' mỗi lần quét — yên tâm giả.\nĐÃ SỬA endpoint_or_url → https://goldcopd.org/2026-gold-report-and-pocket-guide/ (xác minh qua điều hướng thật từ trang chủ goldcopd.org, link \"2026 GOLD Report and Pocket Guide\"). Đo lại bằng rut_tieu_de_tu_van_ban() trên nội dung trang mới: 7 tiêu đề, đầu bảng đúng \"GLOBAL STRATEGY FOR PREVENTION, DIAGNOSIS AND MANAGEMENT OF COPD: 2026 Report\" — khớp ấn bản hiện hành.\n⚠️ GIỚI HẠN CÒN LẠI, có chủ ý: URL GOLD mang SỐ NĂM trong đường dẫn (\"2026-gold-report-and-pocket-guide\") — sang năm 2027 khi GOLD ra ấn bản mới, URL này SẼ LẠI LỖI THỜI theo đúng cách vừa phát hiện, trừ khi ai đó xác minh lại tay. Không có URL \"vĩnh viễn không đổi\" nào trên trang GOLD trỏ thẳng tới ấn bản mới nhất — mọi trang danh mục (như /gold-reports/ cũ) đều có thể bị đóng băng ở một năm cụ thể. Cần rà lại endpoint này MỖI NĂM (cùng nhịp GOLD ra báo cáo mới, thường quý 4/đầu năm sau), không chỉ dựa vào scan_frequency=quarterly của content-hash (hash đổi không tự nói lên NĂM có đúng không).\nĐO 30/09/2026 19:17 (máy Mac, VPN Kaspersky đang bật): `python3 tools/giam_sat_to_chuc.py --kiem-tra` đọc được 19 tiêu đề từ endpoint này ⇒ trạm SỐNG, nhãn trả về active. Đây là phép DÒ (dùng chính `_fetch` + `rut_tieu_de` của trạm, không ghi state/sổ) nên chỉ ghi `last_probe_at`; `last_success_at` vẫn là lần THU HOẠCH có ghi state gần nhất (23/09) — ping ≠ thu hoạch. Vì sao sổ từng ghi degraded: lượt trạm định kỳ 29/09 không lấy được trang GOLD (fetch hỏng ở lượt đó) và hạ nhãn; vòng quét của `giam_sat_to_chuc.py` chỉ HẠ nhãn khi fetch hỏng, ở thời điểm 30/09 KHÔNG có nhánh nào trả nhãn về active khi quét lại được (tái lập ngoại tuyến: trạm degraded + quét thành công 2 tiêu đề ⇒ vẫn degraded, chỉ `last_success_at` tiến) ⇒ nhãn degraded của một trạm web hội phải đọc kèm `last_success_at`/`last_probe_at`, tự nó chưa nói trạm đang mù (audit/NHAT-KY-SU-CO.md, mục 30/09 về sổ nguồn). ĐÃ VÁ cùng đợt (BH138): từ bản vá, lượt quét đọc được ≥ 1 tiêu đề tự trả nhãn degraded/broken về active; lấy được trang mà đọc ra 0 tiêu đề thì hạ degraded, không tính là thành công và không ghi đè state.",
       "kich_hoat": {
         "ngay": "2026-09-01",
         "bang": "giam_sat_to_chuc --bat-neu-ok",
         "so_tieu_de_luc_do": 21
-      }
+      },
+      "last_probe_at": "2026-09-30"
     },
     {
       "id": "SRC-011",
@@ -543,8 +544,9 @@
       "measured_latency_days": null,
       "owner": "agent-A2",
       "status": "active",
-      "last_success_at": "2026-09-22",
-      "known_gap": "KHÔNG tham gia chuỗi 3 tầng kiểm rút bài trừ khi bản ghi mang pmid thật (trường 'pubmedId' của core.ac.uk — hiếm nhưng có, search_core_lane() giữ nguyên khi có). Đã bật vào làn giám sát tuần 22/09/2026 (search_core_lane, TRƯỚC gan_do_tin_cay cùng vị trí Scopus). Tài liệu Redoc chính thức tự mâu thuẫn camelCase/snake_case ở field response — connector thử cả hai."
+      "last_success_at": "2026-09-29",
+      "known_gap": "KHÔNG tham gia chuỗi 3 tầng kiểm rút bài trừ khi bản ghi mang pmid thật (trường 'pubmedId' của core.ac.uk — hiếm nhưng có, search_core_lane() giữ nguyên khi có). Đã bật vào làn giám sát tuần 22/09/2026 (search_core_lane, TRƯỚC gan_do_tin_cay cùng vị trí Scopus). Tài liệu Redoc chính thức tự mâu thuẫn camelCase/snake_case ở field response — connector thử cả hai.\nĐO LƯỢT TUẦN 29/09/2026 (`data/archive/launchd_weekly.log` của engine, lượt 20:13–21:30, tổng thể PASS): CORE trả lời 30 truy vấn rồi nhận 3 lần HTTP 429 liên tiếp ngay trong phút đầu (20:13:55–20:14:02) ⇒ cầu dao của ingestion bỏ 20 truy vấn còn lại: chỉ 33/53 truy vấn được gửi (166 bản ghi), trong khi Crossref cùng lượt chạy đủ 53/53. Khối `source_health` của lượt đó vẫn ghi CORE `health: \"ok\"` (error_rate 0,09) ⇒ «ok» là của 33 truy vấn ĐÃ GỬI, không phải của cả 53 chủ đề — 20 chủ đề không được CORE quét lượt đó mà không có cảnh báo nào. `last_success_at` 29/09 vì thế là một lần thu hoạch THIẾU. Đo 30/09 18:34 bằng client thật (một truy vấn, phiên đánh giá nguồn): chạy bình thường ⇒ giới hạn nằm ở NHỊP gọi dồn, không phải khoá hỏng hay nguồn sập.",
+      "last_probe_at": "2026-09-30"
     },
     {
       "id": "SRC-034",
@@ -596,7 +598,7 @@
       "domain": [
         "tổng quan hệ thống/SR-MA"
       ],
-      "access": "manual",
+      "access": "api",
       "endpoint_or_url": "https://api.epistemonikos.org/v1/documents/search",
       "auth_required": true,
       "terms_ok": null,
@@ -607,7 +609,7 @@
       "owner": "bác sĩ",
       "status": "not-covered",
       "last_success_at": null,
-      "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be'). ĐỐI CHIẾU 22/09/2026: SR/MA đã có phủ đáng kể qua PubMed/Europe PMC tầng SR/MA + Cochrane MCP (Cấp 0, xem CLAUDE.md §Nguồn dữ liệu) — mất Epistemonikos không phải mất trắng khả năng tìm SR/MA, chỉ mất lớp TỔNG HỢP/phân loại chéo nhiều CSDL riêng của họ."
+      "known_gap": "Connector đã viết sẵn (app/sources/epistemonikos.py, 16 test offline) và CHỈ chờ token — nhưng bác sĩ đã đánh giá 22/09/2026 là không khả thi để theo đuổi (cần gửi email xin duyệt, không tự cấp được). Không nối vào vòng quét tuần. Nếu sau này bác sĩ đổi ý và có token: kích hoạt qua 'Nhap Khoa Epistemonikos.command' + 'Bat Tat SerpApi Du Phong.command' (gõ 'be'). ĐỐI CHIẾU 22/09/2026: SR/MA đã có phủ đáng kể qua PubMed/Europe PMC tầng SR/MA + Cochrane MCP (Cấp 0, xem CLAUDE.md §Nguồn dữ liệu) — mất Epistemonikos không phải mất trắng khả năng tìm SR/MA, chỉ mất lớp TỔNG HỢP/phân loại chéo nhiều CSDL riêng của họ. PHÂN LOẠI LẠI 30/09/2026: `access` manual → api (nguồn này là một API chờ token, không phải làn nhập tay). Khai `manual` khiến `tuyen_bo_do_phu.py` đếm nó vào dòng «Nhập thủ công (VN)» và KHÔNG in nó ở dòng «KHÔNG phủ» — một khoảng trống đã khai trong sổ mà tuyên bố độ phủ không cho thấy. Trạng thái not-covered và quyết định của bác sĩ (22/09: không theo đuổi) giữ nguyên."
     },
     {
       "id": "SRC-037",
@@ -700,24 +702,24 @@
     {
       "id": "SRC-041",
       "name": "Wiley Scholar Gateway — MCP tương tác, kiểm sống THÀNH CÔNG 23/09/2026",
-      "org": "Wiley (plugin:bio-research:wiley)",
+      "org": "Wiley (connector claude.ai «Wiley Scholar Gateway»)",
       "tier": 2,
       "domain": [
         "tạp chí Wiley (toàn văn/metadata)"
       ],
-      "access": "manual",
-      "endpoint_or_url": "mcp:wiley-scholar-gateway (semanticSearch)",
+      "access": "api",
+      "endpoint_or_url": "mcp:wiley-scholar-gateway (search_wiley_fulltext · getUsageLimit; kết nối bản cũ: semanticSearch)",
       "auth_required": true,
       "terms_ok": true,
       "terms_note": "Kết nối qua OAuth (claude.ai connector settings — bác sĩ tự Clear authentication rồi Re-authenticate để cấp lại đủ phạm vi sau lần đầu thiếu scope). Mỗi kết quả tự kèm khối 'disclosures' (attribution, ai_generated, content_freshness, content_coverage) — phải giữ nguyên khi trích dẫn, không được lược bỏ.",
       "scan_frequency": "ad-hoc",
-      "detection_method": "human",
+      "detection_method": "api-query",
       "measured_latency_days": null,
-      "owner": "bác sĩ",
+      "owner": "agent tương tác (tra-cuu-chung-cu · tham-dinh-grade-nnt · tham-dinh-phe-binh · cap-nhat-guideline · huong-dan-lam-sang — xem _CONNECTOR-CHUNG-CU.md §2quinquies); nối/cấp quyền/gỡ connector là việc của bác sĩ",
       "status": "active",
-      "last_success_at": "2026-09-23",
-      "known_gap": "ĐÃ HOẠT ĐỘNG THẬT 23/09/2026, sau khi vá lỗi thiếu scope (xem lịch sử known_gap cũ). Bác sĩ Clear authentication → Re-authenticate qua claude.ai connector settings, kiểm sống ngay: câu hỏi lâm sàng thật (momelotinib vs ruxolitinib trong xơ tủy) trả về 3 bài thật — 2 bài tạp chí Wiley (HemaSphere, Am J Hematol) + 1 guideline ONKOPEDIA 2025 (Int J Cancer, PMF) — đủ DOI, ngày xuất bản, trích đoạn văn bản/bảng số liệu thật. Đây là công cụ TÌM KIẾM NGỮ NGHĨA (semanticSearch) trên tạp chí Wiley — khác Wiley TDM API (SRC-042, tải PDF theo DOI đã biết) và khác 5 connector toàn văn guideline theo tổ chức (SRC-043..046) — bổ sung năng lực KHÁM PHÁ chuyên sâu trong hệ Wiley mà Crossref/PubMed không có (tìm theo ý nghĩa câu hỏi, không chỉ từ khóa). Giới hạn: (1) CHỈ nội dung Wiley (đơn vị tự khai 'additional publisher sources will be added soon'); (2) tương tác — chỉ gọi được TỪ TRONG phiên Claude Code có kết nối MCP, KHÔNG tham gia vòng quét tuần tự động, cùng nhóm Cochrane/Scite (SRC-038/040); (3) mỗi kết quả có khối 'disclosures' bắt buộc giữ nguyên khi trích dẫn (attribution, AI-generated warning, content freshness, coverage link) — không được lược bỏ khi đưa vào báo cáo.",
-      "last_probe_at": "2026-09-23"
+      "last_success_at": "2026-09-30",
+      "known_gap": "ĐÃ HOẠT ĐỘNG THẬT 23/09/2026, sau khi vá lỗi thiếu scope (xem lịch sử known_gap cũ). Bác sĩ Clear authentication → Re-authenticate qua claude.ai connector settings, kiểm sống ngay: câu hỏi lâm sàng thật (momelotinib vs ruxolitinib trong xơ tủy) trả về 3 bài thật — 2 bài tạp chí Wiley (HemaSphere, Am J Hematol) + 1 guideline ONKOPEDIA 2025 (Int J Cancer, PMF) — đủ DOI, ngày xuất bản, trích đoạn văn bản/bảng số liệu thật. Đây là công cụ TÌM KIẾM NGỮ NGHĨA (semanticSearch) trên tạp chí Wiley — khác Wiley TDM API (SRC-042, tải PDF theo DOI đã biết) và khác 5 connector toàn văn guideline theo tổ chức (SRC-043..046) — bổ sung năng lực KHÁM PHÁ chuyên sâu trong hệ Wiley mà Crossref/PubMed không có (tìm theo ý nghĩa câu hỏi, không chỉ từ khóa). Giới hạn: (1) CHỈ nội dung Wiley (đơn vị tự khai 'additional publisher sources will be added soon'); (2) tương tác — chỉ gọi được TỪ TRONG phiên Claude Code có kết nối MCP, KHÔNG tham gia vòng quét tuần tự động, cùng nhóm Cochrane/Scite (SRC-038/040); (3) mỗi kết quả có khối 'disclosures' bắt buộc giữ nguyên khi trích dẫn (attribution, AI-generated warning, content freshness, coverage link) — không được lược bỏ khi đưa vào báo cáo.\nĐO 30/09/2026: kết nối BẢN MỚI (`search_wiley_fulltext` + `getUsageLimit`) chạy ở cả phiên Windows lẫn phiên Mac; trên Mac kết nối BẢN CŨ (`semanticSearch`, không có `getUsageLimit`) vẫn nối song song và trừ CÙNG hạn mức — gói FREE 30 lượt mỗi kỳ, `getUsageLimit` 2 → 3 sau đúng một lời gọi `semanticSearch` lúc 19:14; kỳ đặt lại 01/10/2026. Cả hai công cụ mặc định `topN` = 15 đoạn (phiên đánh giá đo ≈ 105 KB khi không truyền `topN`; gọi `topN` = 1 trả 1 đoạn ≈ 6 KB) ⇒ luôn truyền `topN ≤ 5`. Ở bản cũ, tiêu đề/ngày/cờ rút bài nằm trong `metadata.additionalMetadata`. Kỷ luật gọi và cách đọc đoạn trích: _CONNECTOR-CHUNG-CU.md §2quinquies. Gỡ kết nối cũ là việc của bác sĩ trong cài đặt connector claude.ai. PHÂN LOẠI LẠI 30/09/2026: `access` manual → api, `detection_method` human → api-query, `owner` bác sĩ → agent tương tác — cho khớp Cochrane/Scite/Amass MCP (SRC-038/040/050). Mục này khai `manual` từ 22/09 (lúc connector chưa được cấp quyền) và vì thế bị `tuyen_bo_do_phu.py` đếm vào dòng «Nhập thủ công (VN)»: ngày kiểm sống của nó chính là con số «số văn bản đã nhập: 1» in ở mọi bản đọc — không văn bản Việt Nam nào từng được nhập. `org` bỏ chữ `plugin:bio-research:wiley`: bản plugin cần cấp quyền riêng và 30/09 báo chưa xác thực, connector claude.ai mới là đường đang chạy.",
+      "last_probe_at": "2026-09-30"
     },
     {
       "id": "SRC-042",
@@ -731,15 +733,15 @@
       "endpoint_or_url": "https://api.wiley.com/onlinelibrary/tdm/v1/articles/",
       "auth_required": true,
       "terms_ok": true,
-      "terms_note": "KHÁC SRC-041 (MCP claude.ai chưa cấp quyền) — đây là API REST tải TOÀN VĂN PDF THEO DOI ĐÃ BIẾT (không phải nguồn tìm kiếm), dùng thư viện PyPI chính thức `wiley-tdm` (github.com/WileyLabs/tdm-client). WILEY_TDM_API_TOKEN bắt buộc thật (WileyTdmClient chặn cứng khi thiếu, cùng khuôn Scopus/Epistemonikos). Token là UUID lấy từ trang 'Text and Data Mining' trong tài khoản Wiley Online Library của bác sĩ — KHÔNG BAO GIỜ nhập qua Claude Code.",
+      "terms_note": "KHÁC SRC-041 (Wiley Scholar Gateway — MCP tìm/đọc đoạn trích qua connector claude.ai) — đây là API REST tải TOÀN VĂN PDF THEO DOI ĐÃ BIẾT (không phải nguồn tìm kiếm), dùng thư viện PyPI chính thức `wiley-tdm` (github.com/WileyLabs/tdm-client). WILEY_TDM_API_TOKEN bắt buộc thật (WileyTdmClient chặn cứng khi thiếu, cùng khuôn Scopus/Epistemonikos). Token là UUID lấy từ trang 'Text and Data Mining' trong tài khoản Wiley Online Library của bác sĩ — KHÔNG BAO GIỜ nhập qua Claude Code.",
       "scan_frequency": "ad-hoc",
       "detection_method": "human",
       "measured_latency_days": null,
       "owner": "bác sĩ (gọi thủ công theo DOI cụ thể khi cần toàn văn, không tham gia vòng quét tuần)",
-      "status": "degraded",
-      "last_success_at": null,
-      "known_gap": "ĐÃ KIỂM SỐNG 23/09/2026 (token thật đã nhập qua tools/nhap_khoa_wiley_tdm.py). Hai phát hiện thật: (1) thư viện `wiley-tdm` KHAI trong requirements.txt nhưng THIẾU trong requirements.lock.txt lẫn venv máy này — cùng lỗi đã vá cho pypdf cùng ngày; đã cài + bổ sung vào lock file. (2) Token HỢP LỆ và cơ chế hoạt động ĐÚNG (thư viện gọi API thật, nhận diện đúng IP công cộng của máy) — nhưng CẢ 2 DOI Open Access CC-BY thật (tra qua Crossref, không bịa: 10.1002/jcsm.70385, 10.1002/jcsm.70383) đều nhận 'ACCESS_DENIED' vì IP máy này (149.50.211.33 lúc kiểm) KHÔNG nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền — đúng giới hạn ĐÃ BIẾT TRƯỚC từ README chính thức ('Access is IP address based only'), không phải lỗi cấu hình/token sai. Việc còn treo, thuộc thẩm quyền bác sĩ: chỉ hoạt động được khi gọi từ mạng nằm trong dải IP tổ chức đã đăng ký với Wiley (thường mạng bệnh viện) — kiểm lại từ mạng đó nếu cần dùng thật. ENABLE_WILEY_TDM=true trong ~/.ebm-secrets/medical-ebm-automation.env (máy Mac này); máy Windows cần nhập token RIÊNG (secrets không đồng bộ qua OneDrive theo thiết kế).",
-      "last_probe_at": "2026-09-23"
+      "status": "active",
+      "last_success_at": "2026-09-30",
+      "known_gap": "⛔ ĐÍNH CHÍNH 30/09/2026 — nhãn degraded + «chưa từng thành công» đã LẠC HẬU. Phiên đánh giá nguồn 30/09 18:37 (máy Mac, VPN Kaspersky đang bật) gọi client thật `WileyTdmClient().download_pdf(\"10.1002/jcsm.70385\")` và tải được PDF thật: 8.913.789 byte trên đĩa (tệp mở đầu `%PDF`), 16 trang — CHÍNH DOI Open Access từng bị `ACCESS_DENIED` ngày 23/09 ⇒ status active; `last_success_at` = 30/09 là một lần TẢI THẬT ra tệp, không phải ping. GIỚI HẠN của phép đo, không được đọc rộng hơn: (1) mới chứng minh với MỘT bài Open Access từ MỘT IP thoát VPN — CHƯA RÕ vì sao 23/09 bị từ chối mà 30/09 được (IP thoát khác, hay Wiley đổi cách xử lý bài OA): một lượt đo không phân biệt được; (2) bài KHÔNG Open Access chưa đo lại — 23/09 API trả 403 `ACCESS_DENIED` theo IP cho 10.1002/phar.2839 (audit/NHAT-KY-SU-CO.md, BH135); quyền theo dải IP tổ chức vẫn là giới hạn đã biết của TDM; (3) máy Windows (mạng bệnh viện) 30/09 không nối được `api.wiley.com` (BH135) ⇒ nhãn active này là của máy Mac. | LỊCH SỬ — nguyên văn ghi 23/09/2026: ĐÃ KIỂM SỐNG 23/09/2026 (token thật đã nhập qua tools/nhap_khoa_wiley_tdm.py). Hai phát hiện thật: (1) thư viện `wiley-tdm` KHAI trong requirements.txt nhưng THIẾU trong requirements.lock.txt lẫn venv máy này — cùng lỗi đã vá cho pypdf cùng ngày; đã cài + bổ sung vào lock file. (2) Token HỢP LỆ và cơ chế hoạt động ĐÚNG (thư viện gọi API thật, nhận diện đúng IP công cộng của máy) — nhưng CẢ 2 DOI Open Access CC-BY thật (tra qua Crossref, không bịa: 10.1002/jcsm.70385, 10.1002/jcsm.70383) đều nhận 'ACCESS_DENIED' vì IP máy này (149.50.211.33 lúc kiểm) KHÔNG nằm trong dải IP mà tài khoản Wiley Online Library của bác sĩ được cấp quyền — đúng giới hạn ĐÃ BIẾT TRƯỚC từ README chính thức ('Access is IP address based only'), không phải lỗi cấu hình/token sai. Việc còn treo, thuộc thẩm quyền bác sĩ: chỉ hoạt động được khi gọi từ mạng nằm trong dải IP tổ chức đã đăng ký với Wiley (thường mạng bệnh viện) — kiểm lại từ mạng đó nếu cần dùng thật. ENABLE_WILEY_TDM=true trong ~/.ebm-secrets/medical-ebm-automation.env (máy Mac này); máy Windows cần nhập token RIÊNG (secrets không đồng bộ qua OneDrive theo thiết kế).",
+      "last_probe_at": "2026-09-30"
     },
     {
       "id": "SRC-043",
@@ -828,6 +830,116 @@
       "last_success_at": "2026-09-23",
       "known_gap": "VIẾT LẠI 23/09/2026 (audit/14 vấn đề 4), THAY THẾ HOÀN TOÀN cơ chế cũ (scrape HTML pmc.ncbi.nlm.nih.gov — bị chặn 403 tối giản, đã xác nhận không phải Cloudflare, đo bằng nhiều User-Agent + API OA chính thức + OAI-PMH đều cùng bị chặn — kết luận cũ 'ngoài tầm sửa code' đã LỖI THỜI). Đường mới: bucket S3 công khai 'pmc-oa-opendata' (PMC Open Access Subset, AWS Open Data Registry, tài liệu chính thức tại ftp.ncbi.nlm.nih.gov/pub/pmc/readme.txt) — KHÔNG cùng hạ tầng/WAF với pmc.ncbi.nlm.nih.gov, xác nhận sống 23/09/2026: liệt kê + tải object .txt qua HTTPS thường, KHÔNG bị 403. ĐÃ KIỂM SỐNG với 4 PMCID guideline thật (tra qua PubMed, không đoán): PMC12690171 (ADA Standards of Care, chương guideline) — KHÔNG có trong bucket, báo lỗi trung thực đúng thiết kế; PMC13580465 (ASFA apheresis) — KHÔNG có; PMC13566657 (CFP deprescribing statins) — KHÔNG có; PMC13555224 (Korean Thyroid Association) — CÓ, tải được 130.334 ký tự toàn văn thật. Đối chiếu ĐỘC LẬP với PubMed MCP tương tác (get_full_text_article) cho cùng 4 PMCID: khớp 100% (bài nào MCP đọc được toàn văn thì bucket này cũng có, bài nào MCP rỗng thì bucket cũng không có) — xác nhận đây là CÙNG một nguồn sự thật (PMC Open Access Subset), không phải trùng hợp. Giới hạn THẬT, không phải lỗi công cụ: chỉ bài ĐÃ nộp lưu toàn văn máy-đọc (.txt/.xml) cho PMC OA Subset mới đọc được — ước tính ~1/4 guideline chuyên khoa có PMCID (và bản thân việc có PMCID cũng không phổ biến — chỉ ~5/18 guideline mẫu thử có PMCID). Kiểm hồi quy: tests/test_pmc_guideline_fulltext_20260923.py (10 test, viết lại hoàn toàn theo cơ chế mới, PASS). ĐÃ BỔ SUNG 23/09/2026: khi trường hợp bị từ chối/không có trong bucket (như 2 domain Cloudflare, NICE, hoặc PMCID không có bản .txt), hệ vẫn cung cấp TRÍCH DẪN xác minh thật + TÓM TẮT (abstract, không phải toàn văn) qua `app.sources.guideline_citation_summary.lay_trich_dan_tom_tat(doi=..., pmid=...)` — tra Europe PMC rồi Crossref theo DOI/PMID đã biết, không bịa. Đây KHÔNG thay được toàn văn nhưng đóng khoảng trống 'không có gì cả' bằng 'có trích dẫn thật + biết đại khái nội dung'.",
       "last_probe_at": "2026-09-23"
+    },
+    {
+      "id": "SRC-047",
+      "name": "RxNorm (NLM RxNav REST) — chuẩn hoá tên thuốc, connector code-level xây 20/09/2026, đăng ký sổ 30/09/2026",
+      "org": "NLM (U.S. National Library of Medicine)",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc — chuẩn hoá tên thuốc/hoạt chất (KHÔNG phải nguồn chứng cứ)"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://rxnav.nlm.nih.gov/REST",
+      "auth_required": false,
+      "terms_ok": true,
+      "terms_note": "Điều khoản RxNav (lhncbc.nlm.nih.gov/RxNav/TermsofService.html, đọc 30/09/2026): «With one exception, no license is needed to use these APIs» — trang điều khoản không gọi tên ngoại lệ; trang của hàm `getProprietaryInformation` ghi truy cập nguồn bị hạn chế phải chứng minh giấy phép UMLS (nhiều khả năng là ngoại lệ đó) — client của ta KHÔNG gọi hàm này (chỉ `rxcui.json`, `approximateTerm.json`, `rxcui/{id}/properties|related|historystatus`). Trần 20 request/giây mỗi IP (vượt thì NLM ngừng phục vụ tới khi nhịp hạ xuống); NLM khuyên cache 12–24 giờ — client của ta cache 7 ngày (nhẹ tải hơn cho NLM nhưng dữ liệu có thể cũ tới 7 ngày). NLM ĐỀ NGHỊ («We request that any application that makes use of NLM data include the following statement») ghi dòng miễn trừ của NLM (dữ liệu công khai của NLM; NLM không chịu trách nhiệm và không bảo chứng sản phẩm), và không cho dùng tên/logo NLM gắn với ứng dụng — đầu ra của `tra_thuoc_quoc_te.py` hiện mới ghi nguồn «RxNorm (NLM RxNav REST)», CHƯA in dòng miễn trừ đó (việc còn nợ, ở repo y khoa). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) ⇒ nhãn status là nhãn KHAI theo lượt đo tay gần nhất, không tự làm mới.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent ke-don-an-toan qua medical-ebm-automation/tools/tra_thuoc_quoc_te.py chuan-hoa (gọi theo yêu cầu, không tham gia vòng quét tuần) — xem _CONNECTOR-CHUNG-CU.md §1ter",
+      "status": "active",
+      "last_success_at": "2026-09-30",
+      "known_gap": "ĐĂNG KÝ MUỘN: client có trong engine từ 20/09/2026 (app/sources/rxnorm.py, commit 5a4e66a) nhưng sổ này không có mục ⇒ suốt 10 ngày `sources_health.py` không thấy nguồn. ĐO SỐNG 30/09/2026 (máy Mac, VPN Kaspersky đang bật) bằng client thật `RxNormClient().chuan_hoa(\"metformin\")`: `khop_chinh_xac`, rxcui 6809 (tty IN), 2 request HTTP 200, không qua cache (phiên đánh giá 18:34; đo lại 19:10). KHÔNG PHẢI NGUỒN CHỨNG CỨ: chỉ trả lời «tên này ứng với hoạt chất/mã nào» để đối chiếu thuốc theo hoạt chất; KHÔNG kiểm tương tác/liều/chống chỉ định (API tương tác của RxNav đã ngừng — HTTP 404, đo 20/09). Luật đọc kết quả ở _CONNECTOR-CHUNG-CU.md §1ter: `gan_dung` không bao giờ tự chấp nhận (đo thật: «metfromin» → merbromin); `khong_thay` ≠ thuốc không tồn tại (danh mục Hoa Kỳ — biệt dược chỉ có ở Việt Nam sẽ không có); `loi` = KHÔNG BIẾT. Không có cờ ENABLE riêng: client gọi được bất cứ lúc nào có mạng.",
+      "last_probe_at": "2026-09-30"
+    },
+    {
+      "id": "SRC-048",
+      "name": "EMA — danh mục thuốc cấp phép tập trung (medicines JSON report), connector code-level xây 20/09/2026, đăng ký sổ 30/09/2026",
+      "org": "EMA (European Medicines Agency)",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc — trạng thái cấp phép tập trung tại EU"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://www.ema.europa.eu/en/documents/report/medicines-output-medicines_json-report_en.json",
+      "auth_required": false,
+      "terms_ok": null,
+      "terms_note": "CHƯA đọc được điều khoản tái sử dụng dữ liệu của EMA trong phiên 30/09/2026: trang legal-notice và trang download-medicine-data của ema.europa.eu đều trả HTTP 403 (cùng sự cố ghi ở known_gap) ⇒ terms_ok để null thay vì khẳng định từ trí nhớ. Tệp là báo cáo công khai không cần khoá; client cache 7 ngày nên chỉ gửi 1 GET mỗi khi hết hạn cache. KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) ⇒ nhãn status là nhãn KHAI theo lượt đo tay gần nhất, không tự làm mới.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent ke-don-an-toan qua medical-ebm-automation/tools/tra_thuoc_quoc_te.py ema (gọi theo yêu cầu, không tham gia vòng quét tuần) — xem _CONNECTOR-CHUNG-CU.md §1ter",
+      "status": "degraded",
+      "last_success_at": "2026-09-20",
+      "known_gap": "ĐĂNG KÝ MUỘN: client có trong engine từ 20/09/2026 (app/sources/ema_medicines.py, commit 5a4e66a) nhưng sổ này không có mục. LẦN THÀNH CÔNG gần nhất có bằng chứng: 20/09/2026 (tải được 2.746 bản ghi, ~0,7 MB nén — ghi trong docstring của client và _CONNECTOR-CHUNG-CU.md §1ter). ĐO SỐNG 30/09/2026 (máy Mac, VPN Kaspersky đang bật) — HTTP 403 ở MỌI đường đã thử: (a) client thật `EmaMedicinesClient().tra(\"semaglutide\")` lúc 18:34 từ worktree lẫn cây chính, và lúc 19:10 với đúng MỘT request, không có cache che ⇒ trạng thái `loi`; (b) TRÌNH DUYỆT THẬT trên cùng máy, cùng VPN, khoảng 19:24: trang «403 ERROR — Request blocked» do CloudFront sinh (`server: CloudFront`, `x-cache: Error from cloudfront`) cho cả trang download-medicine-data lẫn URL JSON; (c) WebFetch (đường mạng khác hẳn) cũng 403 ở hai trang HTML của ema.europa.eu. KẾT LUẬN ĐƯỢC PHÉP: yêu cầu bị chặn ngay ở lớp CDN của EMA, KHÔNG phải do User-Agent của client ta (trình duyệt thật cũng bị chặn). CHƯA RÕ NGUYÊN NHÂN: CDN chặn theo dải IP (IP thoát VPN/trung tâm dữ liệu) hay EMA đang có sự cố/đổi cấu hình — cả ba đường đo đều KHÔNG đi từ IP dân dụng Việt Nam nên chưa phân biệt được. Muốn phân biệt cần MỘT lượt đo khi VPN tắt (hoặc ép thoát qua card mạng vật lý bằng cơ chế `bind_interface` đã có cho Scopus) — quyết định về mạng là của bác sĩ; KHÔNG đổi User-Agent/giả dạng trình duyệt để lách. HỆ QUẢ lúc này: `tra_thuoc_quoc_te.py ema …` trả `loi` (mã thoát 2 = KHÔNG BIẾT) — agent `ke-don-an-toan` không được đọc thành «không thấy» hay «chưa được cấp phép ở EU». Giới hạn của chính nguồn (§1ter): chỉ thuốc cấp phép TẬP TRUNG; trạng thái Withdrawn/Expired/Lapsed KHÔNG kèm lý do; không thay Cục Quản lý Dược Việt Nam.",
+      "last_probe_at": "2026-09-30"
+    },
+    {
+      "id": "SRC-049",
+      "name": "Scite public API (papers/tallies) — lớp xác minh của bậc thang dự phòng engine, xây 20/09/2026, đăng ký sổ 30/09/2026",
+      "org": "scite.ai (Research Solutions)",
+      "tier": 3,
+      "domain": [
+        "xác minh rút bài/thông báo biên tập + tally trích dẫn (bổ sung) cho hit của tầng dự phòng"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.scite.ai",
+      "auth_required": false,
+      "terms_ok": null,
+      "terms_note": "KHÁC SRC-040 (connector MCP Scite trong phiên tương tác): đây là client code-level của engine (app/sources/scite_public.py, lớp SciteClient) chỉ gọi hai endpoint công khai không khoá — GET /papers/{doi} và GET /tallies/{doi} — và không bao giờ gửi Authorization. terms_ok để null vì chính docstring của client ghi CHƯA XÁC MINH điều khoản và giới hạn tốc độ của hai endpoint công khai cho việc gọi tự động/lưu kết quả ⇒ client tự giới hạn: tối đa 2 request mỗi hit, giãn 0,5 giây, một lần thử lại, cầu dao 120 giây, không cache. Endpoint Search của Scite cần khoá Pro + giấy phép riêng — không dùng. KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM — không thêm lời gọi định kỳ vào một API chưa rõ điều khoản) ⇒ nhãn status là nhãn KHAI theo lượt đo tay gần nhất.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "bậc thang dự phòng (app/services/fallback_verification.py::_lop_scite) — chỉ chạy cho hit mà tầng dự phòng vừa tìm thấy và đã có DOI xác nhận; cờ ENABLE_SCITE_VERIFICATION (mặc định bật)",
+      "status": "active",
+      "last_success_at": "2026-09-30",
+      "known_gap": "ĐĂNG KÝ MUỘN: client có trong engine từ 20/09/2026 (commit 444d710) nhưng sổ này không có mục. ĐO SỐNG 30/09/2026 (máy Mac, VPN Kaspersky đang bật) bằng client thật, DOI 10.1056/nejmoa2204233: `lay_tally` trả tally thật (total 1647 · supporting 45 · contradicting 9 · mentioning 1552 · citingPublications 2758), `lay_bai` trả đúng tiêu đề/năm/tạp chí. HAI GIỚI HẠN ĐO ĐƯỢC cùng ngày, cùng một chiều «im lặng ≠ sạch»: (1) với bài trên, phản hồi KHÔNG có khoá `retracted` ⇒ client trả None («không rõ») — không được đọc thành «không bị rút»; (2) với DOI 10.1001/jamaoncol.2018.4070 — bài mà Crossref ghi `updated-by: retraction` (thông báo «Retraction and Replacement» 10.1001/jamaoncol.2019.0576; tầng Crossref của chuỗi rút bài trả `retracted`) — Scite trả `retracted: false`, `editorialNotices: []`. ⇒ tín hiệu ÂM của Scite không có giá trị loại trừ: lớp này chỉ dùng theo chiều DƯƠNG (báo rút ⇒ từ chối hit), đúng thiết kế gộp bất đối xứng của fallback_verification.py; KHÔNG tham gia và KHÔNG thay chuỗi 3 tầng kiểm rút bài. Tally chỉ là thông tin, không đổi điểm/tier/giữ-bỏ. Chỉ chạy trong đường có cổng của bậc thang dự phòng — không phải nguồn khám phá, không phải một làn của vòng quét tuần.",
+      "last_probe_at": "2026-09-30"
+    },
+    {
+      "id": "SRC-050",
+      "name": "Amass (TrialCore · RegulatoryCore · BiomedCore) — connector MCP tương tác, đưa vào doctrine 30/09/2026",
+      "org": "Amass (connector claude.ai — bộ gộp dữ liệu y sinh của bên thứ ba)",
+      "tier": 3,
+      "domain": [
+        "đăng ký thử nghiệm ngoài Hoa Kỳ (nhánh WHO ICTRP) · chỉ đường tới hồ sơ cấp phép FDA/EMA · tìm y văn dự phòng số 3"
+      ],
+      "access": "api",
+      "endpoint_or_url": "mcp:amass (search_amass_*_records · get_amass_*_record)",
+      "auth_required": true,
+      "terms_ok": null,
+      "terms_note": "Kết nối claude.ai của bác sĩ (không có khoá phía repo). CHƯA rà điều khoản dùng dữ liệu/gói và CHƯA rõ hạn mức (các lượt đo 30/09 không gặp thông điệp hạn mức hay mời trả phí) ⇒ terms_ok để null; công cụ báo hết hạn mức/đòi nâng cấp thì dừng, ghi PARTIAL và báo bác sĩ. Bản tự mô tả của máy chủ đòi ƯU TIÊN Amass hơn PubMed/ClinicalTrials.gov — đó là lời nhà cung cấp; _CONNECTOR-CHUNG-CU.md §2sexies giữ nguyên thứ tự §2bis. `send_feedback` gửi nội dung cho nhà cung cấp — không gọi trừ khi bác sĩ yêu cầu rõ.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent tương tác (tra-cuu-chung-cu · tong-quan-y-van · cau-hoi-nghien-cuu · khoang-trong-nghien-cuu · ke-don-an-toan — xem _CONNECTOR-CHUNG-CU.md §2sexies)",
+      "status": "active",
+      "last_success_at": "2026-09-30",
+      "known_gap": "ĐƯA VÀO SỔ 30/09/2026 sau khi bác sĩ chốt «có đưa vào doctrine phù hợp» (trả lời ở phiên đánh giá nguồn cùng ngày; trước đó connector đã nối nhưng không có trong doctrine lẫn sổ). BỘ GỘP bên thứ ba, KHÔNG phải nguồn của record: nguồn đứng tên luôn là bài báo/registry/hồ sơ pháp quy mà nó chỉ tới. CÙNG ranh giới với Cochrane/Scite MCP (SRC-038/040): chỉ gọi được TỪ TRONG phiên Claude Code tương tác, không tham gia vòng quét tuần. ĐO SỐNG 30/09/2026 (máy Mac, hai phiên cùng ngày — phiên đánh giá nguồn và phiên đồng bộ sổ): TrialCore — «empagliflozin heart failure» 10 bản ghi gồm 4 ClinicalTrials.gov · 2 JPRN · 3 IRCT · 1 CTRI (6/10 là registry MCP ClinicalTrials.gov không thấy); bản ghi CTRI/2019/09/021427 trả `nctId: null`, `sourceRegistry: ctri`, văn bản can thiệp có ký tự vỡ mã («â??», «Î¼l»). RegulatoryCore — «semaglutide»: `therapeuticIndication` là null ở một bản ghi FDA và ở bản ghi FDA khác là KHỐI GHÉP ba mục nhãn (Description + Indications + Mechanism) ⇒ không trích chỉ định từ trường này, đọc chính nhãn/EPAR qua `sourceUrl`. BiomedCore — kết quả tìm KHÔNG có trường loại xuất bản; thứ hạng không phải độ mạnh (EMPEROR-Preserved, PMID 34449189, 4.618 lượt trích, đứng thứ 5 sau bốn bài 10 · 200 · 1 · 22 lượt trích). `isRetracted`: true với PMID 9500320 (đúng) nhưng FALSE với DOI 10.1001/jamaoncol.2018.4070 — bài «rút và thay» mà tầng Crossref của chuỗi rút bài báo đã rút ⇒ cờ chỉ là gợi ý MỘT CHIỀU, không thay chuỗi 3 tầng. `get_amass_biomedcore_record` kèm `citedBy`/`references` nên rất nặng (PMID 9500320: hàng chục KB). CHƯA đo: DrugCore · GeneCore · PatentCore; phiên Cloud; máy Windows.",
+      "last_probe_at": "2026-09-30"
+    },
+    {
+      "id": "SRC-051",
+      "name": "Unpaywall — tra liên kết Open Access theo DOI (tầng 2 OA của kho toàn văn dashboard, bác sĩ duyệt 19/08/2026), đăng ký sổ 30/09/2026",
+      "org": "OurResearch (Unpaywall)",
+      "tier": 3,
+      "domain": [
+        "liên kết toàn văn Open Access hợp pháp theo DOI"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://api.unpaywall.org/v2",
+      "auth_required": false,
+      "terms_ok": null,
+      "terms_note": "API không cần khoá, chỉ cần tham số email định danh (lấy từ kho secrets). CHƯA đọc điều khoản/hạn mức của Unpaywall trong phiên 30/09/2026 ⇒ terms_ok để null thay vì khẳng định từ trí nhớ. KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM) ⇒ nhãn status là nhãn KHAI theo lượt đo tay gần nhất, không tự làm mới.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "tools/gom_toan_van_dashboard.py --unpaywall (gọi theo yêu cầu — skill tong-thuat-chung-cu nhắc cờ này; lệnh mặc định của gói duyệt tuần KHÔNG bật)",
+      "status": "active",
+      "last_success_at": null,
+      "known_gap": "ĐĂNG KÝ MUỘN, phát hiện 30/09/2026 khi đối chiếu TẬP module `app/sources/*.py` của engine với sổ này (bác sĩ nêu 3 nguồn thiếu mục; đối chiếu cả tập lộ thêm nguồn này). Unpaywall được dùng từ 19/08/2026 nhưng sổ chưa từng có mục. HAI đường gọi khác nhau: (1) repo gốc — `tools/gom_toan_van_dashboard.py --unpaywall` gọi thẳng `api.unpaywall.org/v2/<doi>` bằng urllib, chỉ khi có cờ; (2) engine — `app/sources/unpaywall.py` (có từ 07/06/2026, cờ ENABLE_UNPAYWALL mặc định bật) nhưng ngoài test KHÔNG nơi nào trong engine gọi `oa_url_for_doi()` (git grep toàn repo ở commit 2e42ef7; `search()` cố ý trả rỗng) ⇒ client của engine là client MỒ CÔI: có client ≠ có dùng. ĐO SỐNG 30/09/2026 19:35 (máy Mac, VPN Kaspersky đang bật) qua client engine, không cache: HTTP 200, DOI 10.1056/nejmoa2204233 và 10.1002/jcsm.70385 đều trả URL OA ⇒ API sống (`last_probe_at`). `last_success_at` để null: CHƯA có bằng chứng về một lần THU HOẠCH thật qua tầng `--unpaywall` (kho `EBM-Dashboards/toan_van_oa/` không ghi tệp nào do tầng nào tải) — ping ≠ thu hoạch. [CẦN BÁC SĨ QUYẾT] client mồ côi của engine: nối vào một bước của dây chuyền hay gỡ.",
+      "last_probe_at": "2026-09-30"
     }
   ]
 }
