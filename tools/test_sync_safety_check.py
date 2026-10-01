@@ -306,6 +306,62 @@ def test_ban_doi_ten_kem_ngay_nam_canh_ban_goc_van_bi_bat(monkeypatch, tmp_path)
     assert len(details) == 1 and details[0].startswith(f"EBM-Dashboards/tong_thuat/{_TEN_CO_NGAY}"), details
 
 
+# ── quét chưa hết cây (01/10/2026) ───────────────────────────────────────────
+# Lỗ hổng ĐỌC THẤY trong mã, chưa đo được lần nào xảy ra: `_iter_files` chạm trần thời gian/số tệp thì dừng IM LẶNG nên mục 1
+# vẫn 🟢 dù chưa nhìn tới phần cây còn lại; mục 5 gặp đúng tình huống ấy thì đã báo 🟡 «chưa soi hết».
+def _dong_ho(*moc: float):
+    """Đồng hồ giả cho `time.monotonic`: trả lần lượt từng mốc, hết mốc thì đứng ở mốc cuối."""
+    it = iter(moc)
+    return lambda: next(it, moc[-1])
+
+
+def test_iter_files_bao_co_di_het_cay_hay_khong(monkeypatch, tmp_path):
+    """`trang_thai["du"]` chỉ True khi os.walk đi HẾT cây; bị cắt vì trần số tệp hay trần thời gian ⇒ False, kèm lý do."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root, *(f"sub/f{i}.txt" for i in range(5)))
+    monkeypatch.setattr(S, "ROOT", root)
+
+    het: dict = {}
+    assert len(list(S._iter_files(trang_thai=het))) == 5
+    assert het["du"] is True, het
+
+    cat_cap: dict = {}
+    assert len(list(S._iter_files(cap=3, trang_thai=cat_cap))) == 3
+    assert cat_cap["du"] is False and cat_cap["ly_do"] == "quá 3 tệp", cat_cap
+
+    cat_gio: dict = {}
+    monkeypatch.setattr(S.time, "monotonic", _dong_ho(0.0, 100.0))   # lần đo thứ 2 (khi vào ROOT) đã quá hạn
+    assert list(S._iter_files(time_budget_s=25.0, trang_thai=cat_gio)) == []
+    assert cat_gio["du"] is False and cat_gio["ly_do"] == "quá 25s", cat_gio
+
+
+def test_muc_1_quet_chua_het_khong_bao_sach(monkeypatch, tmp_path):
+    """Quét bị cắt vì trần thời gian (OneDrive đang tải tệp cloud-only, máy bận) mà mục 1 vẫn 🟢 là ÂM TÍNH GIẢ — chưa thấy
+    ≠ không có: ở đây bản sao thật nằm đúng phần chưa kịp quét. Phải 🟡 kèm lý do, như mục 5."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root, "docs/x-TESTHOST-2.md")
+    monkeypatch.setattr(S.time, "monotonic", _dong_ho(0.0, 100.0))
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "YELLOW", details
+    assert len(details) == 1 and "CHƯA soi hết" in details[0] and "quá 25s" in details[0], details
+
+
+def test_muc_1_quet_chua_het_ma_da_thay_ban_sao_van_do(monkeypatch, tmp_path):
+    """Phần ĐÃ quét có bản sao chặn ⇒ vẫn 🔴 (quét chưa hết không được hạ mức xuống 🟡), bản sao đứng đầu, và vẫn nói rõ
+    là chưa soi hết."""
+    root = tmp_path / "Claude AI"
+    _dat_tep(root, "x-TESTHOST-2.md", "sub/y.md")                     # os.walk đi ROOT trước, thư mục con sau
+    monkeypatch.setattr(S.time, "monotonic", _dong_ho(0.0, 0.0, 100.0))  # hết giờ đúng lúc sang thư mục con
+
+    level, details = _quet_muc_1(monkeypatch, root, may="TESTHOST")
+
+    assert level == "RED", details
+    assert details[0] == "x-TESTHOST-2.md", details
+    assert len(details) == 2 and "CHƯA soi hết" in details[1], details
+
+
 # ── mục 5: bản sao xung đột NẰM TRONG .git (30/09/2026) ──────────────────────
 def _git(repo: Path, *lenh: str) -> str:
     p = subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",

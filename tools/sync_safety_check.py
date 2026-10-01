@@ -8,7 +8,8 @@ mất việc / hỏng .git do OneDrive sync dở hoặc phiên khác đang chạ
 Soi 6 nguy cơ (đều là thứ đã gặp thật trong dự án này):
   1. CONFLICT-COPY của OneDrive (dấu hiệu #1 của mất việc; conflict trên file
      sinh/ignored và bản sao ĐÃ cách ly trong `_quarantine-conflict-copy/` chỉ liệt kê,
-     không hard-block như source/hồ sơ chính)
+     không hard-block như source/hồ sơ chính; quét KHÔNG hết cây trong trần thời gian/số
+     tệp ⇒ 🟡 «chưa soi hết», không báo sạch — 01/10/2026)
   2. Sức khỏe git 2 repo lồng (Claude AI + medical-ebm-automation): HEAD giải được? status
      chạy được (không treo như fsck)? có khóa/đang merge dở?
   3. File lõi ĐÃ TẢI THẬT (không phải placeholder "cloud-only" chưa tải về của OneDrive)
@@ -132,7 +133,7 @@ def _run_git(args: list[str], cwd: Path, timeout: int = 40):
         return (False, "", f"lỗi: {e}")
 
 
-def _iter_files(cap: int = 1_000_000, time_budget_s: float = 25.0):
+def _iter_files(cap: int = 1_000_000, time_budget_s: float = 25.0, trang_thai: dict | None = None):
     """Duyệt file trong ROOT, prune thư mục nặng, có trần an toàn chống chạy vô tận.
 
     SỬA 16/09/2026: cap cũ 60.000 là ĐIỂM MÙ THẬT, không phải phòng ngừa lý thuyết —
@@ -147,18 +148,32 @@ def _iter_files(cap: int = 1_000_000, time_budget_s: float = 25.0):
     SỐ LƯỢNG không cần thiết để chống treo; trần THẬT phải là THỜI GIAN (ổ mạng/
     OneDrive đang tải file cloud-only mới là nguy cơ treo thật). `cap` giữ lại chỉ
     làm hàng rào cuối cùng chống vòng lặp symlink bệnh lý chưa nằm trong PRUNE_DIRS.
+
+    THÊM 01/10/2026 — `trang_thai` (dict, tuỳ chọn) cho bên gọi biết lượt duyệt có ĐI HẾT cây không. Trước đây chạm trần
+    thời gian/số tệp thì hàm `return` IM LẶNG, nên mục 1 không phân biệt «quét hết, sạch» với «chưa quét tới» — cùng họ
+    ÂM TÍNH GIẢ ở trên, chỉ khác loại trần. Lỗ hổng đọc thấy trong mã, CHƯA đo được lần nào xảy ra (Mac 01/10: 180.498
+    tệp trong ~3 s, trần 25 s). Fail-closed: `du=True` CHỈ được đặt khi os.walk kết thúc tự nhiên; bị cắt — hay dừng giữa
+    chừng vì bất cứ lý do gì — thì `du` vẫn False, kèm `ly_do`.
     """
+    if trang_thai is not None:
+        trang_thai.update(du=False, ly_do="dừng giữa chừng")
     n = 0
     t0 = time.monotonic()
     for dp, dns, fns in os.walk(ROOT):
         dns[:] = [d for d in dns if d not in PRUNE_DIRS]
         if time.monotonic() - t0 > time_budget_s:
+            if trang_thai is not None:
+                trang_thai["ly_do"] = f"quá {time_budget_s:.0f}s"
             return
         for fn in fns:
             n += 1
             if n > cap:
+                if trang_thai is not None:
+                    trang_thai["ly_do"] = f"quá {cap:,} tệp".replace(",", ".")
                 return
             yield Path(dp) / fn
+    if trang_thai is not None:
+        trang_thai.update(du=True, ly_do="")
 
 
 # ── các cổng kiểm ────────────────────────────────────────────────────────────
@@ -222,13 +237,15 @@ def _add_conflict_hit(hard_hits: list[str], generated_hits: list[str], f: Path, 
 
 
 def check_conflict_copies() -> tuple[str, list[str]]:
-    """Tìm file có dấu hiệu conflict-copy của OneDrive (mất việc)."""
+    """Tìm file có dấu hiệu conflict-copy của OneDrive (mất việc). Quét KHÔNG hết cây (chạm trần thời gian/số tệp) thì
+    không được báo 🟢 — chưa thấy ≠ không có ⇒ 🟡 như mục 5; phần đã quét có bản sao chặn thì vẫn 🔴."""
     hard_hits = []
     generated_hits = []
+    quet: dict = {}
     host_stem = socket.gethostname().split(".")[0].lower()  # tên máy đang chạy
     cac_thiet_bi = (host_stem, *THIET_BI_ONEDRIVE)          # máy này + máy đã biết (bản sao do máy KIA đẻ)
     dup_re = re.compile(r"^(.*?) (\d+)(\.[^.]+)?$")         # "tên 2.ext" (bản OneDrive nhân đôi)
-    for f in _iter_files():
+    for f in _iter_files(trang_thai=quet):
         name = unicodedata.normalize("NFC", f.name)
         low = name.lower()
         # Dấu hiệu conflict-copy THẬT của OneDrive — KHÔNG chỉ vì tên chứa chữ "conflict"
@@ -248,8 +265,13 @@ def check_conflict_copies() -> tuple[str, list[str]]:
             base = f.with_name(f"{m.group(1)}{m.group(3) or ''}")
             if base.exists():
                 _add_conflict_hit(hard_hits, generated_hits, f, "  (nghi bản OneDrive nhân đôi)")
+    chua_het = [] if quet.get("du") else [
+        f"🟡 quét cây {quet.get('ly_do') or 'dừng giữa chừng'} — CHƯA soi hết, không đủ căn cứ báo sạch "
+        "(OneDrive đang tải/máy bận?) → đợi OneDrive xanh rồi chạy lại"]
     if hard_hits:
-        return ("RED", [*hard_hits, *generated_hits])
+        return ("RED", [*hard_hits, *chua_het, *generated_hits])
+    if chua_het:
+        return ("YELLOW", [*chua_het, *generated_hits])
     if generated_hits:
         return ("GREEN", generated_hits)
     return ("GREEN", [])
