@@ -1,4 +1,5 @@
 # NHẬT KÝ SỰ CỐ & LỊCH SỬ HỆ THỐNG EBM (lưu trữ nguyên văn)
+> **⛔ ĐÓNG BĂNG từ 01/10/2026 — KHÔNG ghi thêm vào tệp này** (chốt băm trong `tools/verify_claude_code_repo_alignment.py` chặn commit). Sự cố/bài học mới: mỗi sự cố MỘT TỆP `audit/nhat-ky/YYYY-MM-DD-<slug>.md` theo quy ước `audit/nhat-ky/README.md`; hướng dẫn «ghi vào mục SAU 24/09/2026» bên dưới đã hết hiệu lực. Tra cả hai: `grep -rn "<từ khoá>" audit/NHAT-KY-SU-CO.md audit/nhat-ky/`.
 
 > **Tệp này KHÔNG được nạp tự động vào mỗi phiên.** Đây là toàn văn `CLAUDE.md` tại commit
 > `f559e0a` (24/09/2026, 278.003 ký tự) — trước khi `CLAUDE.md` được rút về bản gọn chỉ chứa
