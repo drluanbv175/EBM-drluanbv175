@@ -104,6 +104,26 @@ def _nen_rw_san_sang() -> bool:
         return False
 
 
+def thu_khoa_quet_co_lap(ss, tmp: Path) -> tuple[bool, bool]:
+    """Giành khoá quét HAI lần trên khoá TẠM — trả (lần 1, lần 2); đúng thiết kế là (True, False).
+
+    CÔ LẬP (01/10/2026): `ss.gianh_khoa()` ghi `.quet.lock` cạnh `DEFAULT_WATCHLIST`, tức `EBM-Dashboards/.quet.lock` THẬT
+    — tệp OneDrive đồng bộ sang máy kia — và `ss.tra_khoa()` xoá nó KHÔNG hỏi chủ. Canary chạy trên một máy khi lượt quét
+    thật đang giữ khoá (máy này hoặc máy kia) thì (a) báo «khoá không chặn được tiến trình thứ hai» giả vì lần 1 không
+    giành được, và (b) nhả MẤT khoá của lượt quét thật ⇒ hai lượt cùng ghi sổ, đúng điều khoá sinh ra để chặn. Nên đổi
+    `DEFAULT_WATCHLIST` sang thư mục tạm của canary (khoá và con trỏ đều suy ra từ đó) rồi trả lại nguyên trạng.
+    """
+    goc = ss.DEFAULT_WATCHLIST
+    ss.DEFAULT_WATCHLIST = tmp / "watchlist.json"
+    try:
+        ok1, _ = ss.gianh_khoa()
+        ok2, _ = ss.gianh_khoa()
+        ss.tra_khoa()
+    finally:
+        ss.DEFAULT_WATCHLIST = goc
+    return ok1, ok2
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Canary đầu-cuối cho dây chuyền chứng cứ")
     ap.add_argument("--chi-tiet", action="store_true", help="in thông điệp cổng trả về")
@@ -208,9 +228,7 @@ def main() -> int:
                     " | ".join(vi_pham)[:110]))
 
         # ── KHOÁ GHI (LÔ 1): giành lần 2 phải FAIL, không lặng lẽ chạy chồng ───────
-        ok1, _ = ss.gianh_khoa()
-        ok2, _ly = ss.gianh_khoa()
-        ss.tra_khoa()
+        ok1, ok2 = thu_khoa_quet_co_lap(ss, tmp)
         ket.append(("khoá quét: tiến trình thứ hai bị chặn rõ ràng",
                     ok1 and not ok2, f"lần1={ok1} lần2={ok2}"))
 

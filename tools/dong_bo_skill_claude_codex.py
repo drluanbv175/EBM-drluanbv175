@@ -27,7 +27,9 @@ Riêng bước phụ HỎNG (chạy nhưng trả lỗi) vẫn fail-closed như c
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
@@ -83,6 +85,7 @@ def _resolve_repo_root(start_dir: Path | None = None) -> Path:
 REPO = _resolve_repo_root()
 DEFAULT_SOURCE = REPO / "sync/skills"
 ROUTER_NAME = "plugin-router-chatgpt"
+SO_KHAI = REPO / "sync/plugin-manifest.json"
 
 
 @dataclass(frozen=True)
@@ -185,6 +188,84 @@ def co_the_dung_cache_claude_code() -> bool:
     return (Path.home() / ".claude/plugins/installed_plugins.json").is_file()
 
 
+def _ten_may() -> str:
+    """'Mac' | 'Windows' | 'Cloud' | … — MỘT nguồn duy nhất là tools/nhan_dien_may.py (cùng sổ khai plugin)."""
+    import nhan_dien_may as NM             # cùng thư mục tools/ (sys.path đã chỉnh ở đầu tệp)
+    return NM.ten_may()
+
+
+def plugin_id_router(script: Path) -> tuple[str, ...]:
+    """Danh sách plugin mà build_catalog.py đòi — đọc TĨNH hằng ``PLUGIN_IDS`` bằng ``ast``, không chạy mã của nó.
+
+    Trả ``()`` khi không đọc được: không biết ≠ không thiếu — nơi gọi coi ``()`` là «không quyết được»
+    và KHÔNG bỏ qua gì (build_catalog.py vẫn chạy và tự fail-closed).
+    """
+    try:
+        cay = ast.parse(script.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError, UnicodeDecodeError, ValueError):
+        return ()
+    for nut in cay.body:
+        if isinstance(nut, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "PLUGIN_IDS" for t in nut.targets):
+            try:
+                gia_tri = ast.literal_eval(nut.value)
+            except ValueError:
+                return ()
+            if isinstance(gia_tri, (tuple, list)) and all(isinstance(x, str) for x in gia_tri):
+                return tuple(gia_tri)
+    return ()
+
+
+def plugin_thieu_tren_may(ids: tuple[str, ...]) -> list[str] | None:
+    """Trong ``ids``, plugin nào máy này KHÔNG có trong cache Claude Code (không có mục, hoặc ``installPath`` không
+    phải thư mục). Đọc CÙNG nguồn với build_catalog.py tầng ba: ``~/.claude/plugins/installed_plugins.json``.
+
+    ``None`` = không đọc được tệp (không biết) — nơi gọi KHÔNG được bỏ qua dựa trên ``None``.
+    """
+    tep = Path.home() / ".claude/plugins/installed_plugins.json"
+    try:
+        payload = json.loads(tep.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError):
+        return None
+    bang = payload.get("plugins") if isinstance(payload, dict) else None
+    if not isinstance(bang, dict):
+        return None
+    thieu: list[str] = []
+    for pid in ids:
+        muc = bang.get(pid)
+        entry = muc[0] if isinstance(muc, list) and muc else None
+        duong = entry.get("installPath") if isinstance(entry, dict) else None
+        if not duong or not Path(str(duong)).is_dir():
+            thieu.append(pid)
+    return thieu
+
+
+def plugin_thieu_ma_may_nay_khong_can(script: Path) -> list[str]:
+    """Plugin router thiếu trên máy này mà sổ khai ``sync/plugin-manifest.json`` xác nhận máy này KHÔNG cần.
+
+    Chỉ trả danh sách khác rỗng khi MỌI plugin thiếu đều như vậy. ``[]`` = không bỏ qua được — một trong:
+    không thiếu gì · có plugin thiếu mà máy này ĐƯỢC KHAI là cần (mất thật) · plugin không có trong sổ khai
+    (chưa ai khai ý định) · ``can_o_may`` rỗng/không đọc được · không đọc được danh sách/cache/sổ khai.
+    Mọi trường hợp «không biết» đều rơi về ``[]`` ⇒ build_catalog.py vẫn chạy và tự fail-closed như trước.
+    """
+    ids = plugin_id_router(script)
+    if not ids:
+        return []
+    thieu = plugin_thieu_tren_may(ids)
+    if not thieu:
+        return []
+    try:
+        muc_khai = (json.loads(SO_KHAI.read_text(encoding="utf-8")) or {}).get("plugin") or {}
+    except (OSError, UnicodeDecodeError, ValueError, AttributeError):
+        return []
+    may = _ten_may()
+    for pid in thieu:
+        muc = muc_khai.get(pid)
+        can = muc.get("can_o_may") if isinstance(muc, dict) else None
+        if not (isinstance(can, list) and can and may not in can):
+            return []
+    return thieu
+
+
 def rebuild_router(source_root: Path, quiet: bool) -> int:
     """Dựng lại catalog từ trạng thái plugin thật — Codex trước, cache Claude Code sau."""
 
@@ -214,6 +295,21 @@ def rebuild_router(source_root: Path, quiet: bool) -> int:
         if not quiet:
             print(f"⚠ Bỏ qua làn ChatGPT: chưa có {ROUTER_NAME} trong sync/skills/ "
                   f"(cần commit bản nguồn từ máy Mac vào repo).")
+        return 0
+    khong_can = plugin_thieu_ma_may_nay_khong_can(script)
+    if khong_can:
+        # THIẾU PLUGIN MÀ SỔ KHAI NÓI MÁY NÀY KHÔNG CẦN ≠ HỎNG (01/10/2026). Catalog router cần đủ 9 plugin; máy Windows
+        # chỉ được khai 4 (sync/plugin-manifest.json: codex · humanizer · openmed-skills · meta-pipe · pubmed-search
+        # là `can_o_may: [Mac, Cloud]`). build_catalog.py ở đó LUÔN ném «Plugin thiếu trong cache» ⇒ mã 1 ⇒ hook
+        # SessionStart in «⚠ Đồng bộ Claude–Codex còn lỗi» ở MỌI phiên dù nối skill 50×2 đạt, agent khớp 50/50 —
+        # đúng kiểu báo động giả làm người ta quen bỏ qua màu đỏ (nhánh `not script.is_file()` ở trên đã nói thế).
+        # Dựng bản thiếu còn tệ hơn: nó GHI ĐÈ catalog đầy đủ đã commit từ Mac bằng bản 4 plugin. Nên giữ catalog đã
+        # commit và trả 0. Chỉ bỏ qua khi MỌI plugin thiếu đều được sổ khai xác nhận không cần ở máy này; thiếu một
+        # plugin máy này ĐƯỢC KHAI là cần (mất thật, vd 12 plugin biến mất im lặng 05/08) thì vẫn chạy và fail-closed.
+        if not quiet:
+            print(f"⚪ Bỏ qua dựng catalog router: máy {_ten_may()} không cài {len(khong_can)} plugin router "
+                  f"({', '.join(khong_can)}) và sổ khai sync/plugin-manifest.json xác nhận máy này KHÔNG cần chúng — "
+                  "giữ catalog đã commit, không dựng bản thiếu đè lên.")
         return 0
     proc = subprocess.run(
         [sys.executable, str(script)],

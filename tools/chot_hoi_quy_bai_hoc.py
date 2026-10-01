@@ -1958,10 +1958,19 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     for ten in ("gianh_khoa", "tra_khoa", "doc_cursor", "ghi_cursor", "ghi_alert"):
         if not hasattr(ss, ten):
             return False, f"mất {ten} — LÔ 1 bị tháo"
-    # (a) khoá
-    ok1, _ = ss.gianh_khoa()
-    ok2, _ = ss.gianh_khoa()
-    ss.tra_khoa()
+    # (a) khoá — trên khoá TẠM (01/10/2026): khoá thật là `EBM-Dashboards/.quet.lock`, tệp OneDrive đồng bộ sang máy kia, và
+    # `tra_khoa()` xoá nó không hỏi chủ. Chạy chốt này khi một lượt quét thật đang giữ khoá thì lần 1 không giành được ⇒
+    # ✗ giả (đã đỏ nhất thời trên cây thật 01/10), và `tra_khoa()` nhả mất khoá của lượt quét thật.
+    import tempfile as _tf
+    goc_wl = ss.DEFAULT_WATCHLIST
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as tam:
+        ss.DEFAULT_WATCHLIST = Path(tam) / "watchlist.json"
+        try:
+            ok1, _ = ss.gianh_khoa()
+            ok2, _ = ss.gianh_khoa()
+            ss.tra_khoa()
+        finally:
+            ss.DEFAULT_WATCHLIST = goc_wl
     if not (ok1 and not ok2):
         return False, "khoá không chặn tiến trình thứ hai — 2 máy sẽ ghi chồng"
     # (b) cursor → mindate
@@ -1969,8 +1978,15 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
 
     def _fetch(u):
         urls.append(u)
-        return {"esearchresult": {"idlist": []}}
+        # ĐÚNG HÌNH NCBI (01/10/2026): từ 22/09 `search()` đòi CẢ `idlist` LẪN `count` (vá «esearchresult thiếu khoá = 0 kết
+        # quả giả»). Bản giả cũ `{"idlist": []}` thiếu `count` ⇒ bị coi là LỖI ⇒ `search()` lùi sang Europe PMC bằng MẠNG
+        # THẬT: chốt xanh nhờ mạng sống và âm thầm gọi dịch vụ ngoài mỗi lần chạy, đỏ («getaddrinfo failed») khi DNS trượt.
+        return {"esearchresult": {"count": "0", "idlist": []}}
 
+    def _khong_mang(*_a, **_k):
+        raise AssertionError("BH47 chạm Europe PMC bằng MẠNG THẬT — phản hồi NCBI giả của chốt đã lệch hợp đồng esearchresult")
+
+    ss.search_europe_pmc = _khong_mang           # dự phòng mà bị gọi là chốt PHẢI nổ to, không được lặng lẽ ra mạng
     ss.search("abc", 30, 5, fetch_json=_fetch, mindate="2026/08/01")
     if "mindate=2026%2F08%2F01" not in urls[-1] or "reldate" in urls[-1]:
         return False, "search() có mindate mà vẫn hỏi reldate — cursor không tác dụng"
@@ -1981,6 +1997,99 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     if ss.ghi_alert([], "2099-01-01") is not None:
         return False, "ghi_alert sinh file cho danh sách RỖNG — nhiễu kênh khẩn"
     return True, "khoá chặn chồng · cursor ra mindate · alert chỉ khi có sự kiện"
+
+
+def bh142_chot_va_canary_khong_cham_khoa_quet_that():
+    """01/10 — chốt BH47 và canary đầu–cuối (`thu_dau_cuoi_chung_cu.py`) giành rồi xoá khoá quét THẬT. Khoá thật là
+    `EBM-Dashboards/.quet.lock`, tệp OneDrive đồng bộ sang máy kia, và `tra_khoa()` xoá nó KHÔNG hỏi chủ. Hậu quả:
+    (a) lượt quét thật đang giữ khoá ⇒ lần 1 của chốt không giành được ⇒ ✗ «khoá không chặn tiến trình thứ hai» GIẢ (đỏ
+    nhất thời trên cây thật 01/10 sau lượt gộp PR); (b) `tra_khoa()` nhả MẤT khoá của lượt quét thật ⇒ hai lượt cùng ghi
+    sổ — đúng điều khoá sinh ra để chặn; (c) chạy chốt/canary ở Windows tạo `.quet.lock` sang Mac chặn lượt quét tuần;
+    (d) cùng ngày đo ra đỏ nhất thời còn một gốc KHÁC: phần (b) của BH47 đưa vào `search()` phản hồi giả thiếu `count`
+    (từ 22/09 `search()` đòi cả `idlist` lẫn `count`) ⇒ bị coi là lỗi ⇒ lùi sang Europe PMC bằng MẠNG THẬT — xanh khi mạng
+    sống (và âm thầm gọi dịch vụ ngoài mỗi lần chạy), đỏ «getaddrinfo failed» khi DNS trượt (lượt chạy chậm 15→45 giây).
+    Kiểm HÀNH VI trên cây tạm có sẵn một `.quet.lock` tươi của «máy khác» (bản chuẩn của bộ quét chép vào `EBM-Dashboards/
+    tools/`), MẠNG BỊ CHẶN (socket nổ nếu bị chạm): BH47 phải xanh, khoá phải còn NGUYÊN từng byte; `thu_khoa_quet_co_lap`
+    của canary phải trả (True, False), không chạm khoá, và trả `DEFAULT_WATCHLIST` về nguyên trạng kể cả khi giành khoá nổ
+    lỗi; cây chưa có khoá thì chốt không để lại khoá."""
+    global REPO
+    import shutil
+    import socket
+    import tempfile as _tf
+    import time as _t
+    from unittest import mock
+
+    def chan_mang():
+        """Mọi lần phân giải tên/nối socket trong khối `with` đều nổ AssertionError — chạm mạng là lỗi, không phải «lùi dự phòng»."""
+        return mock.patch.multiple(socket, getaddrinfo=mock.Mock(side_effect=AssertionError("chạm MẠNG THẬT")),
+                                   create_connection=mock.Mock(side_effect=AssertionError("chạm MẠNG THẬT")))
+
+    repo_goc = REPO
+    chuan = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py"
+    canary = REPO / "tools" / "thu_dau_cuoi_chung_cu.py"
+    for p in (chuan, canary):
+        if not p.is_file():
+            return False, f"thiếu {p.relative_to(REPO)} — nguồn được git theo dõi phải có ở mọi cây"
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+        d = Path(d)
+
+        def dung(co_khoa):
+            dash = d / ("co" if co_khoa else "chua") / "EBM-Dashboards"
+            (dash / "tools").mkdir(parents=True)
+            shutil.copy(chuan, dash / "tools" / "surveillance_scan.py")
+            (dash / "watchlist.json").write_text('{"topics": []}', encoding="utf-8")
+            khoa = dash / ".quet.lock"
+            if co_khoa:
+                khoa.write_text(json.dumps({"pid": 4242, "may": "may-khac", "luc": _t.time()}), encoding="utf-8")
+            return dash, khoa
+
+        dash, khoa = dung(True)
+        truoc = khoa.read_bytes()
+        REPO = dash.parent
+        try:
+            with chan_mang():
+                ok, ct = bh47_quet_phai_co_khoa_cursor_va_alert()
+        except AssertionError as loi:
+            REPO = repo_goc
+            return False, f"BH47 chạm mạng thật ({loi}) — phản hồi NCBI giả của chốt lệch hợp đồng esearchresult của bộ quét"
+        finally:
+            REPO = repo_goc
+        if not ok:
+            return False, f"BH47 đỏ giả khi một lượt quét thật đang giữ khoá: {ct}"
+        if not khoa.exists() or khoa.read_bytes() != truoc:
+            return False, "BH47 đã xoá/ghi đè KHOÁ THẬT của lượt quét đang chạy — hai lượt sẽ ghi sổ chồng nhau"
+        dash2, khoa2 = dung(False)
+        REPO = dash2.parent
+        try:
+            with chan_mang():
+                ok, ct = bh47_quet_phai_co_khoa_cursor_va_alert()
+        except AssertionError as loi:
+            REPO = repo_goc
+            return False, f"BH47 chạm mạng thật ({loi}) khi cây chưa có khoá"
+        finally:
+            REPO = repo_goc
+        if not ok or khoa2.exists():
+            return False, (f"BH47 {'đỏ' if not ok else 'để lại khoá THẬT'} khi cây chưa có khoá ({ct}) — "
+                           "khoá lọt qua OneDrive có thể chặn lượt quét tuần bên máy kia")
+        tdc = _nap(canary, "_tdc_bh142")
+        ss = _nap(dash / "tools" / "surveillance_scan.py", "_ss_bh142")
+        wl_goc = ss.DEFAULT_WATCHLIST
+        tam = d / "canary"
+        tam.mkdir()
+        if tdc.thu_khoa_quet_co_lap(ss, tam) != (True, False):
+            return False, "canary: khoá tạm không cho kết quả (lần 1 giành được, lần 2 bị chặn)"
+        if not khoa.exists() or khoa.read_bytes() != truoc:
+            return False, "canary đã xoá/ghi đè KHOÁ THẬT của lượt quét đang chạy"
+        if ss.DEFAULT_WATCHLIST != wl_goc:
+            return False, "canary không trả DEFAULT_WATCHLIST về nguyên trạng — các bước sau chạy trên khoá tạm"
+        ss.gianh_khoa = lambda *a, **k: (_ for _ in ()).throw(OSError("giả lập"))
+        try:
+            tdc.thu_khoa_quet_co_lap(ss, tam)
+        except OSError:
+            pass
+        if ss.DEFAULT_WATCHLIST != wl_goc:
+            return False, "canary không trả DEFAULT_WATCHLIST khi giành khoá nổ lỗi giữa chừng"
+    return True, ""
 
 
 def bh48_ma_thoat_tach_noi_dung_va_ha_tang():
@@ -8300,6 +8409,89 @@ def bh139_mcp_json_khoi_chay_khong_phu_thuoc_thu_muc_chay():
     return True, ""
 
 
+def bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi():
+    """01/10 — mọi phiên Windows mở ra đều in «⚠ Đồng bộ Claude–Codex còn lỗi» dù nối skill 50×2 đạt và agent khớp 50/50.
+    Gốc: catalog router cần đủ 9 plugin (hằng `PLUGIN_IDS` của build_catalog.py) mà máy Windows chỉ được khai 4 —
+    `sync/plugin-manifest.json` ghi codex · humanizer · openmed-skills · meta-pipe · pubmed-search là `can_o_may: [Mac,
+    Cloud]`. build_catalog.py ném «Plugin thiếu trong cache» ⇒ `rebuild_router` trả 1 ⇒ lệnh `--ap-dung` của hook trả 1.
+    Báo động quen mặt làm người ta bỏ qua cả lần báo thật. Vá: bỏ qua dựng catalog (giữ bản đã commit, không dựng bản
+    thiếu đè lên) CHỈ khi MỌI plugin thiếu đều được sổ khai xác nhận KHÔNG cần ở máy này. Phần fail-closed phải còn nguyên.
+    Kiểm HÀNH VI `rebuild_router` trên cây tạm (script giả ghi tệp đánh dấu khi ĐƯỢC GỌI): thiếu plugin sổ khai nói không
+    cần ⇒ mã 0 và KHÔNG gọi; thiếu một plugin máy này ĐƯỢC KHAI là cần ⇒ gọi và giữ mã 1; plugin vắng trong sổ khai ⇒ gọi;
+    cùng bộ thiếu nhưng tên máy là Mac ⇒ gọi. Kèm hợp đồng trên TỆP THẬT: `PLUGIN_IDS` còn đọc được bằng ast và mỗi plugin
+    router có `can_o_may` là danh sách không rỗng trong sổ khai (thiếu mục thì nhánh bỏ qua không bao giờ bật)."""
+    import contextlib
+    import io
+    import tempfile as _tf
+    from unittest import mock
+    try:
+        DB = _nap(REPO / "tools" / "dong_bo_skill_claude_codex.py", "_dbskcc_bh140")
+    except Exception as loi:  # noqa: BLE001
+        return False, f"không nạp được tools/dong_bo_skill_claude_codex.py ({type(loi).__name__}: {loi})"
+    for ten in ("plugin_id_router", "plugin_thieu_tren_may", "plugin_thieu_ma_may_nay_khong_can", "_ten_may", "SO_KHAI"):
+        if not hasattr(DB, ten):
+            return False, f"dong_bo_skill_claude_codex.py không còn `{ten}` — nhánh bỏ qua catalog đã bị gỡ (báo động giả quay lại)"
+
+    def thu(cai, khai, may):
+        with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+            d = Path(d)
+            nguon = d / "sync" / "skills"
+            sc = nguon / DB.ROUTER_NAME / "scripts"
+            sc.mkdir(parents=True)
+            dau = d / "da-goi"
+            (sc / "build_catalog.py").write_text(
+                "PLUGIN_IDS = ('a@x', 'b@x', 'c@x')\nfrom pathlib import Path\n"
+                f"Path({str(dau)!r}).write_text('x')\nraise SystemExit(1)\n", encoding="utf-8")
+            home = d / "home"
+            (home / ".claude" / "plugins").mkdir(parents=True)
+            bang = {}
+            for p in cai:
+                tm = d / "cache" / p
+                tm.mkdir(parents=True)
+                bang[p] = [{"installPath": str(tm)}]
+            (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
+                json.dumps({"plugins": bang}), encoding="utf-8")
+            sk = d / "plugin-manifest.json"
+            sk.write_text(json.dumps({"plugin": {p: {"can_o_may": c} for p, c in khai.items()}}), encoding="utf-8")
+            with (mock.patch.object(Path, "home", return_value=home), mock.patch.object(DB, "SO_KHAI", sk),
+                  mock.patch.object(DB, "_ten_may", return_value=may),
+                  mock.patch.object(DB, "co_codex_tren_may", return_value=False),
+                  contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+                rc = DB.rebuild_router(nguon, quiet=True)
+            return rc, dau.exists()
+
+    rc, da_goi = thu(("a@x",), {"a@x": ["Windows"], "b@x": ["Mac"], "c@x": ["Mac"]}, "Windows")
+    if rc != 0 or da_goi:
+        return False, (f"thiếu plugin mà sổ khai nói máy Windows không cần mà rebuild_router trả {rc}"
+                       f"{' và vẫn gọi build_catalog.py' if da_goi else ''} — hook mở phiên lại báo «còn lỗi» giả")
+    rc, da_goi = thu(("a@x", "c@x"), {"a@x": ["Windows"], "b@x": ["Mac", "Windows"], "c@x": ["Windows"]}, "Windows")
+    if not da_goi or rc != 1:
+        return False, ("thiếu plugin máy này ĐƯỢC KHAI là cần mà không fail-closed (đã gọi build_catalog.py: "
+                       f"{da_goi}, mã {rc}) — mất plugin thật bị che")
+    rc, da_goi = thu(("a@x",), {"a@x": ["Windows"], "b@x": ["Mac"]}, "Windows")
+    if not da_goi or rc != 1:
+        return False, "plugin vắng trong sổ khai bị coi là «không cần» — chưa ai khai ý định thì phải là «không biết»"
+    rc, da_goi = thu(("a@x",), {"a@x": ["Mac"], "b@x": ["Mac"], "c@x": ["Mac"]}, "Mac")
+    if not da_goi or rc != 1:
+        return False, "cùng bộ thiếu nhưng đứng ở Mac (nơi được khai là cần) mà vẫn bị bỏ qua — quyết định phải theo TÊN MÁY"
+    script = REPO / "sync" / "skills" / DB.ROUTER_NAME / "scripts" / "build_catalog.py"
+    if not script.is_file():
+        return False, f"không thấy {script} — nguồn router được git theo dõi phải có ở mọi cây"
+    ids = DB.plugin_id_router(script)
+    if len(ids) < 9:
+        return False, (f"PLUGIN_IDS thật của build_catalog.py không còn đọc được bằng ast ({len(ids)} mục) — đổi thành "
+                       "biểu thức động thì nhánh bỏ qua im lặng vô hiệu và báo động giả quay lại")
+    try:
+        muc = json.loads(DB.SO_KHAI.read_text(encoding="utf-8"))["plugin"]
+    except (OSError, ValueError, KeyError) as loi:
+        return False, f"không đọc được sổ khai {DB.SO_KHAI} ({type(loi).__name__})"
+    chua = [p for p in ids if not (isinstance(muc.get(p), dict) and isinstance(muc[p].get("can_o_may"), list)
+                                   and muc[p]["can_o_may"])]
+    if chua:
+        return False, f"plugin router chưa khai `can_o_may` trong sổ khai (nhánh bỏ qua không bao giờ bật cho chúng): {chua}"
+    return True, ""
+
+
 def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
     """29/09 — lượt quét tuần W40 SẬP ở bước đo độ trễ vì một ứng viên mang `publication_date` kiểu số (engine chỉ trả
     NĂM). Lỗi nổ SAU khi con trỏ đã tiến cho 47 chủ đề và sổ dự phòng đã ghi «đã trình», TRƯỚC khi có báo cáo ⇒ cửa sổ
@@ -8881,6 +9073,7 @@ BAI_HOC = [
     ("BH45", "15/08", "Luồng theo-yêu-cầu phải thừa hưởng luồng định kỳ", bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky),
     ("BH46", "15/08", "Hợp đồng item + máy trạng thái thi hành được", bh46_hop_dong_item_va_may_trang_thai),
     ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
+    ("BH142", "01/10", "Chốt BH47 và canary đầu–cuối thử khoá TẠM, không giành/xoá khoá quét THẬT chung qua OneDrive (đỏ giả + nhả mất khoá lượt quét đang chạy)", bh142_chot_va_canary_khong_cham_khoa_quet_that),
     ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
     ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
     ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),
@@ -8985,6 +9178,7 @@ BAI_HOC = [
     ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),
     ("BH137", "30/09", "Sổ nguồn phủ mọi module nguồn của engine; tuyên bố độ phủ không gộp nguồn gọi-theo-yêu-cầu vào «giám sát tự động», in tên từng làn nhập tay và mọi khoảng trống đã khai", bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua),
     ("BH138", "30/09", "Trạm web hội: quét lại được thì nhãn về active; 0 tiêu đề không tính là thành công, không ghi đè state", bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat),
+    ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
 ]
 
 
