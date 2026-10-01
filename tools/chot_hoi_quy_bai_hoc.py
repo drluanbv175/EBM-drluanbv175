@@ -5898,7 +5898,8 @@ def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
       (2) MA TRẬN ĐÁNH GIÁ — cả 16 công cụ của medical-mcp vẫn có mặt ở §1ter kèm quyết định; cắt bớt một dòng là mất luôn lý do
           từ chối (lần sau lại đánh giá lại từ đầu, hoặc tệ hơn: cài thẳng máy chủ vì «chưa từng bị từ chối»).
       (3) BH41 — công cụ không agent nào gọi thì với dây chuyền hằng ngày nó KHÔNG TỒN TẠI: `ke-don-an-toan.md` phải gọi cả hai
-          lệnh con và nhắc luật đọc; `khoang-trong-nghien-cuu.md` phải nhắc «không làm p0».
+          lệnh con, nhắc luật đọc và (01/10/2026) dạy in dòng `mien_tru_nlm` ngay trên dòng gọi lệnh chuẩn hoá;
+          `khoang-trong-nghien-cuu.md` phải nhắc «không làm p0». Khối này chạy cả khi vắng engine (tệp nó soi nằm trong git).
     """
     # VÁ 24/09/2026: `_goc_mea()` (lồng HOẶC anh em) — ghép cứng `REPO / "medical-ebm-automation"`
     # làm chốt ĐỎ GIẢ «tra_thuoc_quoc_te.py biến mất» ở mọi phiên cloud (engine là anh em ở đó).
@@ -5933,16 +5934,24 @@ def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
             return False, f"§1ter thiếu luật «{y_nghia}» (không thấy «{dau_hieu}»)"
 
     # ---- (3) BH41: agent phải gọi công cụ
-    if not cli.exists():
-        return False, "medical-ebm-automation/tools/tra_thuoc_quoc_te.py biến mất — agent trỏ vào công cụ không tồn tại"
+    # VÁ 01/10/2026: khối này nằm TRƯỚC bước dò engine — ba tệp nó soi đều trong git. Trước đây bước dò đứng trước, nên
+    # phiên vắng engine (CI, Cloud một-repo, worktree gốc trần) trả ⚪ ngay tại đó và khối này không bao giờ chạy (đo
+    # thật: agent mất «`gan_dung`» mà chốt vẫn ⚪). Thông điệp ở đây không được nêu tên engine (luật hẹp của phan_loai).
     ag = kd.read_text(encoding="utf-8")
     for dau_hieu, y_nghia in (("tra_thuoc_quoc_te.py chuan-hoa", "lệnh chuẩn hoá RxNorm"), ("tra_thuoc_quoc_te.py ema", "lệnh EMA"),
                               ("`gan_dung`", "luật đọc gan_dung"), ("KHÔNG BIẾT", "loi ≠ không thấy"),
                               ("KHÔNG kèm lý do", "trạng thái EMA không lý do")):
         if dau_hieu not in ag:
             return False, f"ke-don-an-toan.md không còn «{y_nghia}» (không thấy «{dau_hieu}») — công cụ mồ côi (BH41)"
+    # VÁ 01/10/2026 (§1ter luật 5): dòng miễn trừ NLM phải được dạy NGAY trên dòng gọi lệnh chuẩn hoá (mục 8), không khớp
+    # cả tệp — một chỗ nhắc khác cùng chuỗi sẽ làm xanh giả khi mệnh đề ở mục 8 bị xoá (luật §0.8).
+    if not any("`mien_tru_nlm`" in d for d in ag.splitlines() if "tra_thuoc_quoc_te.py chuan-hoa" in d):
+        return False, ("ke-don-an-toan.md: dòng gọi lệnh chuẩn hoá (mục 8) không còn dạy in dòng `mien_tru_nlm` của NLM "
+                       "(§1ter luật 5) — luật doctrine không agent nào đọc (BH41)")
     if "who.md" not in kt.read_text(encoding="utf-8") or "KHÔNG được dùng làm p0" not in kt.read_text(encoding="utf-8"):
         return False, "khoang-trong-nghien-cuu.md không còn nêu WHO GHO làm bối cảnh và cấm làm p0"
+    if not cli.exists():
+        return False, "medical-ebm-automation/tools/tra_thuoc_quoc_te.py biến mất — agent trỏ vào công cụ không tồn tại"
 
     # ---- (1) hành vi thật của hai adapter, tiêm HTTP giả (ngoại tuyến)
     if str(mea) not in sys.path:
@@ -5984,7 +5993,8 @@ def bh108_medical_mcp_chon_loc_va_cong_cu_thuoc_co_agent_goi():
     kq = ema.EmaMedicinesClient(Gia({"medicines_json-report_en.json": {"meta": {}, "data": [ban]}})).tra("rosiglitazone")
     if kq["trang_thai"] != "co_ket_qua" or not any("cấp phép quốc gia" in c for c in kq["canh_bao"]):
         return False, "EMA: kết quả thiếu cảnh báo «chỉ cấp phép tập trung» — «không thấy» sẽ bị đọc thành «chưa cấp phép»"
-    return True, "medical-mcp chọn lọc: 16 công cụ có quyết định, RxNorm/EMA fail-closed (loi ≠ không thấy, gan_dung ≠ khớp), agent gọi cả hai lệnh"
+    return True, ("medical-mcp chọn lọc: 16 công cụ có quyết định, RxNorm/EMA fail-closed (loi ≠ không thấy, gan_dung ≠ khớp), "
+                  "agent gọi cả hai lệnh và dạy in dòng miễn trừ NLM")
 
 
 def bh103_chi_thi_tu_bat_hook_cloud_da_khai():
