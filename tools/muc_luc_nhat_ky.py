@@ -79,8 +79,9 @@ def loi_thu_muc_nhat_ky(thu_muc: Path = THU_MUC_NHAT_KY) -> list[str]:
                        "thường không dấu, số, gạch nối)")
             continue
         tieu_de = f"# {ngay:%d/%m/%Y} — "
+        # _dong_dau đã rstrip ⇒ khớp tiền tố (có dấu cách cuối) là đã có ít nhất một ký tự tiêu đề.
         dau = _dong_dau(duong)
-        if not dau.startswith(tieu_de) or len(dau) <= len(tieu_de):
+        if not dau.startswith(tieu_de):
             loi.append(f"{ten}: dòng đầu phải là «{tieu_de}<tiêu đề>» (ngày trùng tên tệp), "
                        f"đang là «{dau[:80]}»")
     return loi

@@ -113,7 +113,8 @@ def test_muc_dung_quy_uoc_va_readme_va_tep_an_deu_qua(tmp_path):
 def test_ten_tep_sai_bi_chan(tmp_path, ten):
     thu_muc = _thu_muc(tmp_path, {ten: MUC_HOP_LE})
     loi = NK.loi_thu_muc_nhat_ky(thu_muc)
-    assert len(loi) == 1 and ten in loi[0], loi
+    # Phải bị bắt ở luật TÊN — không được lọt qua tên rồi mới đỏ vì lý do khác.
+    assert len(loi) == 1 and loi[0].startswith(f"{ten}: tên phải là"), loi
     tep, sha = _tep_cu_tam(tmp_path)
     assert V.check_nhat_ky_su_co(tep, thu_muc, sha)["status"] == "FAIL"
 
