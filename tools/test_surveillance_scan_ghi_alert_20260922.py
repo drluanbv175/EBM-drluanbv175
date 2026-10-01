@@ -9,6 +9,7 @@ chủ đề suy giảm thay vì chỉ số lượng, (2) `ghi_alert()` không gh
 from __future__ import annotations
 
 import importlib.util
+import socket
 import sys
 from pathlib import Path
 
@@ -82,6 +83,24 @@ def _kho_tam(monkeypatch, tmp_path):
     # chạy test đã bật ENABLE_CORE/ENABLE_CONSENSUS/ENABLE_SERPAPI_SCHOLAR thật.
     monkeypatch.setattr(S, "search_core_lane", lambda *a, **k: [])
     monkeypatch.setattr(S, "bo_sung_du_phong_lane", lambda *a, **k: ([], ""))
+
+    # 01/10/2026 — HAI test dùng fixture này từng gọi Europe PMC THẬT: `_search_suy_giam` trả PMID «999», rồi `main()` tóm
+    # tắt ứng viên bằng `summarize` (esummary NCBI, mặc định `get_json` thật) và lùi sang `summarize_europe_pmc` (cũng
+    # mặc định thật). Mạng sống ⇒ xanh nhờ bản ghi THẬT của PMID 999 (một bài sinh hoá 1975); DNS trượt ⇒ đỏ «getaddrinfo
+    # failed» («KHÔNG QUÉT ĐƯỢC … Europe PMC fallback thất bại»). CI GitHub luôn có mạng nên không bao giờ thấy. Nay: tóm tắt
+    # tất định + chặn socket «cứng» — ai thêm đường gọi mạng mới vào test này sẽ nổ to thay vì lặng lẽ xanh.
+    def _tom_tat_gia(ids, **_k):
+        return [S.Candidate(pmid=str(i), publication_date="2026", title=f"ứng viên giả {i}",
+                            url=f"https://pubmed.ncbi.nlm.nih.gov/{i}/") for i in ids]
+
+    monkeypatch.setattr(S, "summarize", _tom_tat_gia)
+    monkeypatch.setattr(S, "summarize_europe_pmc", _tom_tat_gia)
+
+    def _chan(*_a, **_k):
+        raise AssertionError("test chạm MẠNG THẬT — phải tiêm bản giả cho đường gọi mạng mới")
+
+    monkeypatch.setattr(socket, "getaddrinfo", _chan)
+    monkeypatch.setattr(socket, "create_connection", _chan)
     yield tmp_path, wl
 
 

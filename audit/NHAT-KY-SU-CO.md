@@ -3625,6 +3625,45 @@ nguồn được nêu, tập module lộ nguồn thứ tư; (2) «active» là D
 thành tuyên bố độ phủ; (3) cơ chế chỉ có chiều hạ thì nhãn xấu tích luỹ mãi: mỗi chỗ hạ nhãn phải có chỗ trả nhãn; (4) cờ
 «không rút»/«không có» của bên thứ ba là im lặng, đo bằng một ca đã biết đáp án trước khi tin.
 
+### 30/09/2026 (tối) — Công cụ tra RxNorm chạy 10 ngày mà không in dòng miễn trừ điều khoản RxNav đề nghị (đóng mục ⑧(d) ở trên)
+Điều khoản RxNav của NLM (`lhncbc.nlm.nih.gov/RxNav/TermsofService.html`) ghi «We request that any application that makes use
+of NLM data include the following statement: …» và «Developers may not use the NLM name and/or logo in conjunction with their
+applications». Client RxNorm vào engine 20/09 (commit y khoa 5a4e66a — commit đó không nhắc điều khoản); `tra_thuoc_quoc_te.py
+chuan-hoa` chỉ ghi nguồn «RxNorm (NLM RxNav REST)». Món nợ được ghi lần đầu khi đăng ký SRC-047 (mục ⑧(d) ở trên).
+**Vá — repo y khoa (PR y khoa #54):** hằng `MIEN_TRU_NLM` ở `app/sources/rxnorm.py` (263 ký tự ASCII, nguyên văn, không dịch);
+mọi kết quả `chuan_hoa()`, cả bốn trạng thái, mang trường riêng `mien_tru_nlm` — không trộn vào `nguon`/`canh_bao`; lệnh
+`chuan-hoa` gán lại ở tầng CLI (client bị thay hay sửa vẫn in đúng), `--json` có trường riêng, bản đọc in đúng MỘT dòng dưới
+dòng «Nguồn»; `ema` không dùng dữ liệu NLM nên không gắn. `loi` ≠ không thấy, `gan_dung` không tự chấp nhận, mã thoát 0/1/2:
+không đổi.
+**Vá — repo gốc:** §1ter luật 5 của `_CONNECTOR-CHUNG-CU.md` (trả lời cho bác sĩ có dùng kết quả RxNorm thì in ĐÚNG MỘT lần,
+nguyên văn; không chép vào artifact có cổng — cùng luật §2ter mục 5); `terms_note` của SRC-047 bỏ chữ «CHƯA in». Bản sao
+doctrine (`.claude/agents` + mirror `.codex/agents`) đi trong PR y khoa, khớp từng byte.
+**Nguyên văn lấy thế nào:** `curl` từ Bash bị chốt egress của runtime chặn ⇒ mở trang bằng trình duyệt, tính SHA-256 NGAY TRÊN
+TRANG cho câu trong phần tử `<li>` (`1e8b7498…7720f7`, 263 ký tự, thuần ASCII), rồi test khoá hằng trong mã theo mã băm đó —
+không so chuỗi tự gõ với chính nó.
+**Giới hạn nói thẳng:** (a) test khoá câu chữ của NGÀY 30/09; NLM đổi câu thì không gì tự biết — phải có người/agent mở lại
+trang. (b) Công cụ in và doctrine dạy, nhưng KHÔNG kiểm được một phiên cụ thể có in dòng này khi trình cho bác sĩ hay không
+(giới hạn của kiểm doctrine-text, cùng họ BH39/BH42/BH107); `ke-don-an-toan.md` mục 8 tự liệt kê luật đọc và chỉ trỏ §1ter —
+CHƯA nhắc dòng miễn trừ (sửa agent kéo theo tái khoá manifest agent ở repo y khoa — `regenerate_agent_manifest.py` ghi đó là
+bước cần người xác nhận — nên để ngoài đợt này). (c) Nhãn nguồn vẫn là «RxNorm (NLM RxNav REST)» — nêu tên NLM để ghi nơi lấy
+dữ liệu; tên công cụ không dùng tên/logo NLM. (d) Cache 7 ngày so với 12–24 giờ NLM khuyên: giữ nguyên (đã ghi ở SRC-047).
+(e) Đo được nhân tiện, KHÔNG sửa: mirror `.codex/agents/` của repo y khoa lệch nguồn `.claude/agents/` ở 79/84 tệp và thiếu 2
+tệp (render bằng `sync_agents_to_codex.py`), không chốt nào canh — BH107 chỉ so bản `.claude`: đột biến «mirror `.codex` sai
+một chữ» để BH107 vẫn xanh, chỉ test mới của repo y khoa bắt.
+**Việc của bác sĩ:** merge theo cặp (PR y khoa #54 xếp chồng trên #53; PR gốc xếp chồng trên #71) — lệch một bên thì BH107 đỏ
+tới khi bên kia vào; quyết có thêm mệnh đề dòng miễn trừ vào `ke-don-an-toan.md` mục 8 hay không; quyết số phận mirror
+`.codex/agents/` của repo y khoa (đồng bộ lại cả 84 tệp và thêm chốt canh, hay thôi theo dõi).
+**Kiểm:** 54 ca mới ở `medical-ebm-automation/tests/test_rxnorm_mien_tru_nlm_20260930.py` (107 ca phần tra thuốc đạt); 20 đột
+biến đều đỏ đúng chỗ, đối chứng trước/sau xanh, phục hồi sạch; một lượt gọi THẬT `chuan-hoa "metformin"` (2 request,
+`khop_chinh_xac`, RxCUI 6809) in đúng dòng; trọn bộ pytest repo y khoa: 6.500 đạt · 42 bỏ qua · 0 lỗi. Bộ chốt repo gốc trọn
+bộ: bản sao trần 102 ✓ · 36 ⚪ · 0 ✗; nối engine là nhánh PR y khoa (kèm nền Retraction Watch + log tuần của cây chính, chỉ
+đọc) 112 ✓ · 26 ⚪ · 0 ✗ — 26 mục ⚪ đều cần `EBM-Dashboards/`; ở lượt này BH107 + BH108 là kiểm THẬT, và xoá luật 5 khỏi bản
+engine ⇒ BH107 đỏ «LỆCH bản gốc». Nối engine là worktree git TRẦN thì BH43 (nền Retraction Watch vắng ⇒ tầng sống trả «ok»
+cho PMID đã rút) và BH50 (vắng log tuần) đỏ — do engine thiếu dữ liệu ngoài git, không do thay đổi này; cùng họ mục ⑧(f) ở
+trên. `pytest tools/` trên bản sao trần (như CI): 1.695 đạt · 33 bỏ qua.
+**Bài học:** điều khoản sử dụng của một nguồn là một phần của việc NỐI nguồn — đọc và ghi vào sổ ngay lượt nối, không đợi tới
+lúc kiểm kê sổ.
+
 ### 30/09/2026 — Bộ quét tiến con trỏ TRƯỚC khi báo cáo tới nơi; ngày công bố kiểu số chỉ là ngòi nổ (BH136)
 Lượt gói tuần W40 (29/09, phiên goi-duyet) sập ở bước đo độ trễ của `surveillance_scan.main()`: một ứng viên mang
 `publication_date` kiểu int ⇒ `int[:11]` ném TypeError. Phiên đó vá 2 dòng tại nơi tiêu thụ, quét lại với `--since 2026-09-07`, để
@@ -3740,3 +3779,35 @@ số · gỡ hậu tố hẹp hơn luật dò · gỡ hậu tố không gỡ s�
 không phải đạt). Đo trên cây thật so với master: mục 1 🔴→🟢, thôi nêu ĐÚNG 7 tệp có ngày (4 từng chặn + 3 trong `.claude/`),
 66 bản sao thật vẫn nêu đủ, mục 5 không đổi; với cả bốn tên máy thử ở trên kết quả giống hệt nhau (66 tệp nêu, 0 chặn) —
 phán quyết không còn phụ thuộc hậu tố trùng tên của máy. Không xoá/dời tệp cách ly nào.
+
+### 01/10/2026 — Chốt BH47 và canary đầu–cuối giành rồi xoá khoá quét THẬT; BH47 và một test thứ hai âm thầm gọi Europe PMC bằng mạng thật (BH142)
+Sau lượt gộp PR sáng 01/10, bộ chốt trên cây thật ra «139/140 — ✗ BH47 Quét phải có khoá + cursor + alert»; chạy lại thì xanh.
+Lần đỏ ấy không đọc lại được thông điệp nên không biết do gốc nào; đo ra **hai gốc, tái hiện được cả hai**:
+(1) **Khoá THẬT.** BH47 và canary (`tools/thu_dau_cuoi_chung_cu.py`, dây chuyền hằng ngày) gọi `gianh_khoa()` hai lần rồi
+`tra_khoa()` trên `EBM-Dashboards/.quet.lock` — tệp OneDrive đồng bộ sang máy kia — mà `tra_khoa()` xoá KHÔNG hỏi chủ. Lượt quét
+thật đang giữ khoá ⇒ lần 1 của chốt không giành được ⇒ ✗ «khoá không chặn tiến trình thứ hai» GIẢ, và `tra_khoa()` nhả MẤT khoá
+của lượt quét thật (hai lượt cùng ghi sổ — đúng điều khoá sinh ra để chặn). Không có lượt quét nào thì chốt vẫn tạo rồi xoá
+`.quet.lock` trên cây dùng chung, đủ lâu để OneDrive đưa sang máy kia chặn một lượt quét tuần. Tái hiện bằng cây giả có sẵn
+`.quet.lock` tươi của «máy khác»: mã cũ ✗ và khoá bị xoá.
+(2) **Mạng thật.** Từ 22/09 `search()` đòi CẢ `idlist` LẪN `count`; phản hồi giả của BH47 `{"idlist": []}` thiếu `count` ⇒ bị coi là
+lỗi ⇒ lùi sang `search_europe_pmc` bằng MẠNG THẬT. Mạng sống: xanh và âm thầm gọi dịch vụ ngoài mỗi lần chạy chốt (kể cả CI);
+DNS trượt: ✗ «getaddrinfo failed». Dấu vết đo được: tệp test mới của tôi chạy 15–45 giây, đỏ 1/10 lượt; sau vá 0,7 giây, 7/7 ở ba
+lượt liên tiếp. Chạy toàn `tools/` với mạng bị chặn (plugin tạm ngoài repo) liệt kê đúng HAI test khác cũng cần mạng thật:
+`test_surveillance_scan_ghi_alert_20260922.py::{test_hai_luot_cung_chu_de_suy_giam_khong_nhan_doi_dong,
+test_hai_chu_de_khac_nhau_suy_giam_giu_ca_hai_dong}` — `_search_suy_giam` trả PMID «999» rồi `main()` tóm tắt ứng viên bằng
+`summarize`/`summarize_europe_pmc` mặc định thật (lần chạy đầu xanh nhờ bản ghi THẬT của PMID 999, một bài sinh hoá 1975; lần hai
+đỏ vì DNS). CI GitHub luôn có mạng nên không bao giờ thấy.
+**Vá.** BH47 thử khoá trên thư mục TẠM (đổi `DEFAULT_WATCHLIST`, trả lại trong `finally`), phản hồi NCBI giả có `count`, và chặn
+`search_europe_pmc` nổ to nếu bị gọi. Canary tách `thu_khoa_quet_co_lap(ss, tmp)` làm cùng việc. Fixture của hai test ghi_alert tiêm
+`summarize`/`summarize_europe_pmc` giả và chặn `socket.getaddrinfo`/`create_connection` «cứng» (lần sau ai thêm đường gọi mạng mới
+sẽ nổ to thay vì xanh nhờ mạng sống). Chốt BH142: cây tạm có `.quet.lock` tươi và MẠNG BỊ CHẶN — BH47 phải xanh, khoá còn NGUYÊN
+từng byte, canary trả (True, False) và trả `DEFAULT_WATCHLIST` về nguyên trạng kể cả khi giành khoá nổ lỗi.
+**Kiểm.** 7 test mới (`tools/test_khoa_quet_that_khong_bi_cham_20261001.py`); `pytest tools/` 1801 đạt, 59 bỏ qua có khai báo, 0 lỗi;
+bộ chốt trên bản sao trần 0 ✗. Đột biến (`python -B`, xoá `__pycache__`, phục hồi khớp SHA-256): 5/6 đỏ đúng chỗ — BH47 không cô
+lập · canary không cô lập · canary không trả `DEFAULT_WATCHLIST` · canary không trả khoá tạm · phản hồi giả thiếu `count`; 1 sống sót
+CÓ CHỦ Ý vì tương đương (bỏ vế «khoá thật còn nguyên» trong BH142: chỉ chạm tới khi BH47 xanh mà vẫn đụng khoá — đột biến kép «BH47
+mất cô lập VÀ luôn báo xanh» làm cả test pytest lẫn BH142 đỏ, chứng minh lưới ấy sống). Ruff: `chot_hoi_quy_bai_hoc.py` 56 lỗi sẵn có
+(trước = sau) và test ghi_alert 2 lỗi `F841` sẵn có; phần thêm 0 lỗi mới.
+**Chưa làm (cần quyết):** `tra_khoa()` vẫn xoá khoá KHÔNG kiểm chủ sở hữu (pid/máy). Muốn chống nhả nhầm ở gốc thì sửa
+`surveillance_scan.py` (ba bản đồng bộ — sửa bản chuẩn ở `sync/skills/cap-nhat-chung-cu-y-khoa/tools/` rồi
+`tools/dong_bo_scanner_giam_sat.py`); chưa đụng vì ngoài phạm vi và liên quan chạy lịch trên Mac.
