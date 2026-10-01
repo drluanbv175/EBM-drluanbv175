@@ -41,9 +41,17 @@ origin/master từ 10/09; vòng lặp viết bằng bash để `$?` lấy đúng
 - `CLAUDE.md` dòng 3–4 và mục Bộ chốt bài học trỏ sang quy ước mới; thông điệp lỗi ngân sách
   `CLAUDE.md` trỏ sang `audit/nhat-ky/`.
 
-**Kiểm:** `tools/test_nhat_ky_mot_tep_20261001.py` (hành vi trên tệp thật + tệp tạm + một repo git
-tạm chứng minh hai nhánh thêm hai tệp khác tên gộp sạch còn hai nhánh cùng nối cuối một tệp thì
-xung đột); kiểm đột biến từng nhánh của chốt; `python3 tools/chot_hoi_quy_bai_hoc.py` chạy trọn.
+**Kiểm (01/10/2026):** `tools/test_nhat_ky_mot_tep_20261001.py` (27 ca: tệp thật, tệp tạm, một repo
+git tạm chứng minh hai nhánh thêm hai tệp khác tên gộp sạch còn đối chứng hai nhánh cùng nối cuối
+một tệp thì xung đột). Kiểm đột biến (`python -B`, xoá `__pycache__` mỗi phép): 12/12 đỏ rồi phục
+hồi xanh — bỏ so băm · bỏ chuẩn hoá CRLF · tháo khỏi `run_verification` · bỏ lỗi thư mục mới · nhận
+ngày 30/02 · regex tên dễ dãi · bỏ kiểm dòng đầu · không đòi ngày trùng tên · bỏ miễn README · bỏ miễn
+tệp ẩn · bỏ chặn thư mục con · dòng trống đầu tính là dòng đầu. Đột biến thứ 13 (bỏ vế độ dài tiêu đề)
+lọt vì vế đó là mã chết (`_dong_dau` đã `rstrip`) ⇒ gỡ. Đầu–cuối: nối một dòng vào tệp cũ, stage,
+chạy `.githooks/pre-commit` ⇒ mã 1, FAIL `nhat_ky_su_co`. Hai test cũ cố định tập tên chốt
+(`test_claude_code_repo_alignment.py`, `..._20260926_tap_check.py`) thêm `nhat_ky_su_co`.
+`pytest tools/` như CI: 1873 đạt, 31 bỏ qua có khai lý do. `python3 tools/chot_hoi_quy_bai_hoc.py`
+trọn bộ trên worktree trần: 106 ✓, 0 tái phát, 36 ⚪ (thiếu cây dữ liệu/engine ngoài git — KHÔNG phải đạt).
 
 **Thứ tự merge cần chú ý:** PR #75 và #76 (mở trước khi đóng băng) vẫn nối vào cuối tệp cũ. Nếu
 chúng merge TRƯỚC PR này thì phải gộp origin/master vào nhánh này và cập nhật `NHAT_KY_CU_SHA256`

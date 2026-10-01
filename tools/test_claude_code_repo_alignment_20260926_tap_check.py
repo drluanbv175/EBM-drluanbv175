@@ -22,6 +22,7 @@ import verify_claude_code_repo_alignment as V  # noqa: E402
 _TAP_CHECK = {
     "root_docs",
     "claude_md_budget",
+    "nhat_ky_su_co",  # 01/10/2026: tệp nhật ký cũ đóng băng + quy ước audit/nhat-ky/
     "medical_repo_docs",
     "tracked_contract_files",
     "agent_sync_health",
