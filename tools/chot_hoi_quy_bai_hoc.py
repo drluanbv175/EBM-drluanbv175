@@ -9025,6 +9025,84 @@ def bh135_kiem_nguon_that_do_mang_hai_tang():
     return True, ""
 
 
+def bh143_child_repo_memory_has_own_mirror():
+    """01/10 — `tools/sync_memory.py` chỉ đồng bộ MỘT thư mục bộ nhớ: của phiên mở ở repo GỐC. Phiên mở trong repo con
+    `medical-ebm-automation/` (và mọi worktree của nó — Claude Code quy worktree về repo chính) ghi bộ nhớ ở thư mục KHÁC
+    (`<mã của …/Claude AI/medical-ebm-automation>/memory`; đo 01/10 trên Mac: 5 tệp, có MEMORY.md riêng) — thư mục đó
+    không bao giờ lên OneDrive ⇒ sang Windows là mất trắng. Kèm hai lỗi cùng chỗ: lối dò dự phòng cũ («chỉ một ứng viên»
+    rồi «tên chứa claude») có thể chọn thư mục repo y khoa cho bộ nhớ GỐC vì tên nó cũng chứa «Claude-AI»; `_encode` chỉ
+    thay [ /\\:] trong khi Claude Code thay MỌI ký tự ngoài [a-zA-Z0-9]. Vá: mỗi dự án một mirror riêng (`memory-sync/` ·
+    `memory-sync/medical-ebm-automation/`), tên thư mục đúng quy tắc Claude Code, dò dự phòng theo đuôi tên kèm tên thư
+    mục gốc và bỏ worktree tạm, chốt chống trộn. Kiểm HÀNH VI trên cây tạm: hai MEMORY.md khác nhau về HAI mirror, không
+    lẫn chéo; thư mục worktree khớp đuôi tên không bị chọn; dò cho gốc không chọn thư mục repo y khoa; hai dự án chung một
+    thư mục cục bộ ⇒ mã 2 và không ghi. Kèm hợp đồng trên MÃ THẬT: sổ dự án có repo y khoa với mirror riêng nằm trong repo
+    GỐC (repo y khoa công khai)."""
+    import contextlib
+    import io
+    import shutil as _shutil
+    import tempfile as _tf
+    try:
+        SM = _nap(REPO / "tools" / "sync_memory.py", "_sync_memory_bh143")
+    except Exception as loi:  # noqa: BLE001
+        return False, f"không nạp được tools/sync_memory.py ({type(loi).__name__}: {loi})"
+    for ten in ("MEMORY_PROJECTS", "MemoryProject", "claude_project_slug", "find_local_memory", "sync_all"):
+        if not hasattr(SM, ten):
+            return False, f"sync_memory.py không còn `{ten}` — bộ nhớ repo y khoa lại không lên OneDrive"
+    theo_thu_muc = {p.directory: p for p in SM.MEMORY_PROJECTS}
+    goc, con = theo_thu_muc.get(SM.PROJECT_ROOT), theo_thu_muc.get(SM.PROJECT_ROOT / "medical-ebm-automation")
+    if goc is None or con is None:
+        return False, "sổ MEMORY_PROJECTS thiếu repo gốc hoặc repo y khoa — một trong hai bộ nhớ không lên OneDrive"
+    if goc.mirror != SM.MIRROR or con.mirror == goc.mirror:
+        return False, (f"mirror gốc ({goc.mirror}) rời memory-sync/ hoặc trùng mirror repo y khoa ({con.mirror}) — máy "
+                       "chưa cập nhật mất nguồn kéo / hai MEMORY.md đè nhau")
+    if con.mirror.is_relative_to(con.directory):
+        return False, "mirror repo y khoa nằm TRONG repo y khoa (repo công khai) — bộ nhớ cá nhân có thể bị commit"
+    if SM.claude_project_slug("/a/.claude/b(2)") != "-a--claude-b-2-":
+        return False, "claude_project_slug lệch quy tắc Claude Code (mọi ký tự ngoài [a-zA-Z0-9] ⇒ '-')"
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+        d = Path(d).resolve()
+        root = d / "Claude AI"
+        child = root / "medical-ebm-automation"
+        child.mkdir(parents=True)
+        projects_dir = d / "home" / ".claude" / "projects"
+        mirror = root / "memory-sync"
+        du_an = (SM.MemoryProject("goc", root, mirror),
+                 SM.MemoryProject("yk", child, mirror / "medical-ebm-automation"))
+        mem_goc = projects_dir / SM.claude_project_slug(root) / "memory"
+        mem_con = projects_dir / SM.claude_project_slug(child) / "memory"
+        for mem, chu in ((mem_goc, "GOC"), (mem_con, "YK")):
+            mem.mkdir(parents=True)
+            (mem / "MEMORY.md").write_text(chu, encoding="utf-8")
+        (mem_con / "rieng-yk.md").write_text("y", encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            ma = SM.sync_all(du_an, projects_dir, root)
+        if ma != 0:
+            return False, f"đồng bộ hai dự án sạch mà mã thoát {ma}"
+        try:
+            dung_cho = ((mirror / "MEMORY.md").read_text(encoding="utf-8") == "GOC"
+                        and (mirror / "medical-ebm-automation" / "MEMORY.md").read_text(encoding="utf-8") == "YK")
+        except OSError:
+            dung_cho = False
+        if not dung_cho or (mirror / "rieng-yk.md").exists():
+            return False, ("hai MEMORY.md không về đúng hai mirror riêng (hoặc tệp repo y khoa lọt vào mirror gốc) — "
+                           "hỏng chỉ mục bộ nhớ")
+        _shutil.rmtree(mem_con.parent)
+        mem_wt = projects_dir / "-x--ebm-worktrees-y-Claude-AI-medical-ebm-automation" / "memory"
+        mem_wt.mkdir(parents=True)
+        if SM.find_local_memory(du_an[1], projects_dir, root).path == mem_wt:
+            return False, "dò bộ nhớ repo y khoa chọn thư mục của worktree tạm thay vì tên Claude Code tính được"
+        _shutil.rmtree(mem_goc.parent)
+        mem_con.mkdir(parents=True)
+        if SM.find_local_memory(du_an[0], projects_dir, root).path == mem_con:
+            return False, "dò bộ nhớ GỐC chọn thư mục của repo y khoa (lối «tên chứa claude» cũ) — trộn hai bộ nhớ"
+        chung = (SM.MemoryProject("a", child, d / "m-a"), SM.MemoryProject("b", child, d / "m-b"))
+        with contextlib.redirect_stdout(io.StringIO()):
+            ma = SM.sync_all(chung, projects_dir, root)
+        if ma != 2 or (d / "m-a").exists() or (d / "m-b").exists():
+            return False, f"hai dự án chung một thư mục cục bộ mà không bị từ chối (mã {ma}) — đồng bộ sẽ trộn bộ nhớ"
+    return True, ""
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -9179,6 +9257,7 @@ BAI_HOC = [
     ("BH137", "30/09", "Sổ nguồn phủ mọi module nguồn của engine; tuyên bố độ phủ không gộp nguồn gọi-theo-yêu-cầu vào «giám sát tự động», in tên từng làn nhập tay và mọi khoảng trống đã khai", bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua),
     ("BH138", "30/09", "Trạm web hội: quét lại được thì nhãn về active; 0 tiêu đề không tính là thành công, không ghi đè state", bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat),
     ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
+    ("BH143", "01/10", "Bộ nhớ Claude của repo y khoa có mirror RIÊNG (memory-sync/medical-ebm-automation/): không trộn hai MEMORY.md, không bắt nhầm worktree tạm, dò cho gốc không chọn thư mục repo y khoa, hai dự án chung thư mục ⇒ từ chối", bh143_child_repo_memory_has_own_mirror),
 ]
 
 
