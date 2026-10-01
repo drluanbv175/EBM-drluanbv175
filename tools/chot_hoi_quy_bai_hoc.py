@@ -1958,10 +1958,19 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     for ten in ("gianh_khoa", "tra_khoa", "doc_cursor", "ghi_cursor", "ghi_alert"):
         if not hasattr(ss, ten):
             return False, f"mất {ten} — LÔ 1 bị tháo"
-    # (a) khoá
-    ok1, _ = ss.gianh_khoa()
-    ok2, _ = ss.gianh_khoa()
-    ss.tra_khoa()
+    # (a) khoá — trên khoá TẠM (01/10/2026): khoá thật là `EBM-Dashboards/.quet.lock`, tệp OneDrive đồng bộ sang máy kia, và
+    # `tra_khoa()` xoá nó không hỏi chủ. Chạy chốt này khi một lượt quét thật đang giữ khoá thì lần 1 không giành được ⇒
+    # ✗ giả (đã đỏ nhất thời trên cây thật 01/10), và `tra_khoa()` nhả mất khoá của lượt quét thật.
+    import tempfile as _tf
+    goc_wl = ss.DEFAULT_WATCHLIST
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as tam:
+        ss.DEFAULT_WATCHLIST = Path(tam) / "watchlist.json"
+        try:
+            ok1, _ = ss.gianh_khoa()
+            ok2, _ = ss.gianh_khoa()
+            ss.tra_khoa()
+        finally:
+            ss.DEFAULT_WATCHLIST = goc_wl
     if not (ok1 and not ok2):
         return False, "khoá không chặn tiến trình thứ hai — 2 máy sẽ ghi chồng"
     # (b) cursor → mindate
@@ -1969,8 +1978,15 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
 
     def _fetch(u):
         urls.append(u)
-        return {"esearchresult": {"idlist": []}}
+        # ĐÚNG HÌNH NCBI (01/10/2026): từ 22/09 `search()` đòi CẢ `idlist` LẪN `count` (vá «esearchresult thiếu khoá = 0 kết
+        # quả giả»). Bản giả cũ `{"idlist": []}` thiếu `count` ⇒ bị coi là LỖI ⇒ `search()` lùi sang Europe PMC bằng MẠNG
+        # THẬT: chốt xanh nhờ mạng sống và âm thầm gọi dịch vụ ngoài mỗi lần chạy, đỏ («getaddrinfo failed») khi DNS trượt.
+        return {"esearchresult": {"count": "0", "idlist": []}}
 
+    def _khong_mang(*_a, **_k):
+        raise AssertionError("BH47 chạm Europe PMC bằng MẠNG THẬT — phản hồi NCBI giả của chốt đã lệch hợp đồng esearchresult")
+
+    ss.search_europe_pmc = _khong_mang           # dự phòng mà bị gọi là chốt PHẢI nổ to, không được lặng lẽ ra mạng
     ss.search("abc", 30, 5, fetch_json=_fetch, mindate="2026/08/01")
     if "mindate=2026%2F08%2F01" not in urls[-1] or "reldate" in urls[-1]:
         return False, "search() có mindate mà vẫn hỏi reldate — cursor không tác dụng"
@@ -1981,6 +1997,99 @@ def bh47_quet_phai_co_khoa_cursor_va_alert():
     if ss.ghi_alert([], "2099-01-01") is not None:
         return False, "ghi_alert sinh file cho danh sách RỖNG — nhiễu kênh khẩn"
     return True, "khoá chặn chồng · cursor ra mindate · alert chỉ khi có sự kiện"
+
+
+def bh142_chot_va_canary_khong_cham_khoa_quet_that():
+    """01/10 — chốt BH47 và canary đầu–cuối (`thu_dau_cuoi_chung_cu.py`) giành rồi xoá khoá quét THẬT. Khoá thật là
+    `EBM-Dashboards/.quet.lock`, tệp OneDrive đồng bộ sang máy kia, và `tra_khoa()` xoá nó KHÔNG hỏi chủ. Hậu quả:
+    (a) lượt quét thật đang giữ khoá ⇒ lần 1 của chốt không giành được ⇒ ✗ «khoá không chặn tiến trình thứ hai» GIẢ (đỏ
+    nhất thời trên cây thật 01/10 sau lượt gộp PR); (b) `tra_khoa()` nhả MẤT khoá của lượt quét thật ⇒ hai lượt cùng ghi
+    sổ — đúng điều khoá sinh ra để chặn; (c) chạy chốt/canary ở Windows tạo `.quet.lock` sang Mac chặn lượt quét tuần;
+    (d) cùng ngày đo ra đỏ nhất thời còn một gốc KHÁC: phần (b) của BH47 đưa vào `search()` phản hồi giả thiếu `count`
+    (từ 22/09 `search()` đòi cả `idlist` lẫn `count`) ⇒ bị coi là lỗi ⇒ lùi sang Europe PMC bằng MẠNG THẬT — xanh khi mạng
+    sống (và âm thầm gọi dịch vụ ngoài mỗi lần chạy), đỏ «getaddrinfo failed» khi DNS trượt (lượt chạy chậm 15→45 giây).
+    Kiểm HÀNH VI trên cây tạm có sẵn một `.quet.lock` tươi của «máy khác» (bản chuẩn của bộ quét chép vào `EBM-Dashboards/
+    tools/`), MẠNG BỊ CHẶN (socket nổ nếu bị chạm): BH47 phải xanh, khoá phải còn NGUYÊN từng byte; `thu_khoa_quet_co_lap`
+    của canary phải trả (True, False), không chạm khoá, và trả `DEFAULT_WATCHLIST` về nguyên trạng kể cả khi giành khoá nổ
+    lỗi; cây chưa có khoá thì chốt không để lại khoá."""
+    global REPO
+    import shutil
+    import socket
+    import tempfile as _tf
+    import time as _t
+    from unittest import mock
+
+    def chan_mang():
+        """Mọi lần phân giải tên/nối socket trong khối `with` đều nổ AssertionError — chạm mạng là lỗi, không phải «lùi dự phòng»."""
+        return mock.patch.multiple(socket, getaddrinfo=mock.Mock(side_effect=AssertionError("chạm MẠNG THẬT")),
+                                   create_connection=mock.Mock(side_effect=AssertionError("chạm MẠNG THẬT")))
+
+    repo_goc = REPO
+    chuan = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py"
+    canary = REPO / "tools" / "thu_dau_cuoi_chung_cu.py"
+    for p in (chuan, canary):
+        if not p.is_file():
+            return False, f"thiếu {p.relative_to(REPO)} — nguồn được git theo dõi phải có ở mọi cây"
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+        d = Path(d)
+
+        def dung(co_khoa):
+            dash = d / ("co" if co_khoa else "chua") / "EBM-Dashboards"
+            (dash / "tools").mkdir(parents=True)
+            shutil.copy(chuan, dash / "tools" / "surveillance_scan.py")
+            (dash / "watchlist.json").write_text('{"topics": []}', encoding="utf-8")
+            khoa = dash / ".quet.lock"
+            if co_khoa:
+                khoa.write_text(json.dumps({"pid": 4242, "may": "may-khac", "luc": _t.time()}), encoding="utf-8")
+            return dash, khoa
+
+        dash, khoa = dung(True)
+        truoc = khoa.read_bytes()
+        REPO = dash.parent
+        try:
+            with chan_mang():
+                ok, ct = bh47_quet_phai_co_khoa_cursor_va_alert()
+        except AssertionError as loi:
+            REPO = repo_goc
+            return False, f"BH47 chạm mạng thật ({loi}) — phản hồi NCBI giả của chốt lệch hợp đồng esearchresult của bộ quét"
+        finally:
+            REPO = repo_goc
+        if not ok:
+            return False, f"BH47 đỏ giả khi một lượt quét thật đang giữ khoá: {ct}"
+        if not khoa.exists() or khoa.read_bytes() != truoc:
+            return False, "BH47 đã xoá/ghi đè KHOÁ THẬT của lượt quét đang chạy — hai lượt sẽ ghi sổ chồng nhau"
+        dash2, khoa2 = dung(False)
+        REPO = dash2.parent
+        try:
+            with chan_mang():
+                ok, ct = bh47_quet_phai_co_khoa_cursor_va_alert()
+        except AssertionError as loi:
+            REPO = repo_goc
+            return False, f"BH47 chạm mạng thật ({loi}) khi cây chưa có khoá"
+        finally:
+            REPO = repo_goc
+        if not ok or khoa2.exists():
+            return False, (f"BH47 {'đỏ' if not ok else 'để lại khoá THẬT'} khi cây chưa có khoá ({ct}) — "
+                           "khoá lọt qua OneDrive có thể chặn lượt quét tuần bên máy kia")
+        tdc = _nap(canary, "_tdc_bh142")
+        ss = _nap(dash / "tools" / "surveillance_scan.py", "_ss_bh142")
+        wl_goc = ss.DEFAULT_WATCHLIST
+        tam = d / "canary"
+        tam.mkdir()
+        if tdc.thu_khoa_quet_co_lap(ss, tam) != (True, False):
+            return False, "canary: khoá tạm không cho kết quả (lần 1 giành được, lần 2 bị chặn)"
+        if not khoa.exists() or khoa.read_bytes() != truoc:
+            return False, "canary đã xoá/ghi đè KHOÁ THẬT của lượt quét đang chạy"
+        if ss.DEFAULT_WATCHLIST != wl_goc:
+            return False, "canary không trả DEFAULT_WATCHLIST về nguyên trạng — các bước sau chạy trên khoá tạm"
+        ss.gianh_khoa = lambda *a, **k: (_ for _ in ()).throw(OSError("giả lập"))
+        try:
+            tdc.thu_khoa_quet_co_lap(ss, tam)
+        except OSError:
+            pass
+        if ss.DEFAULT_WATCHLIST != wl_goc:
+            return False, "canary không trả DEFAULT_WATCHLIST khi giành khoá nổ lỗi giữa chừng"
+    return True, ""
 
 
 def bh48_ma_thoat_tach_noi_dung_va_ha_tang():
@@ -8881,6 +8990,7 @@ BAI_HOC = [
     ("BH45", "15/08", "Luồng theo-yêu-cầu phải thừa hưởng luồng định kỳ", bh45_luong_theo_yeu_cau_phai_thua_huong_luong_dinh_ky),
     ("BH46", "15/08", "Hợp đồng item + máy trạng thái thi hành được", bh46_hop_dong_item_va_may_trang_thai),
     ("BH47", "15/08", "Quét phải có khoá + cursor + alert", bh47_quet_phai_co_khoa_cursor_va_alert),
+    ("BH142", "01/10", "Chốt BH47 và canary đầu–cuối thử khoá TẠM, không giành/xoá khoá quét THẬT chung qua OneDrive (đỏ giả + nhả mất khoá lượt quét đang chạy)", bh142_chot_va_canary_khong_cham_khoa_quet_that),
     ("BH48", "15/08", "Mã thoát tách «gói sai» khỏi «chưa xác minh»", bh48_ma_thoat_tach_noi_dung_va_ha_tang),
     ("BH49", "15/08", "Toàn văn bắt buộc cho apply + rút bài theo định danh", bh49_toan_van_va_rut_bai_theo_dinh_danh),
     ("BH50", "15/08", "Ping không được đội lốt lần chạy thật", bh50_ping_khong_duoc_doi_lot_chay_that),

@@ -3779,3 +3779,35 @@ số · gỡ hậu tố hẹp hơn luật dò · gỡ hậu tố không gỡ s�
 không phải đạt). Đo trên cây thật so với master: mục 1 🔴→🟢, thôi nêu ĐÚNG 7 tệp có ngày (4 từng chặn + 3 trong `.claude/`),
 66 bản sao thật vẫn nêu đủ, mục 5 không đổi; với cả bốn tên máy thử ở trên kết quả giống hệt nhau (66 tệp nêu, 0 chặn) —
 phán quyết không còn phụ thuộc hậu tố trùng tên của máy. Không xoá/dời tệp cách ly nào.
+
+### 01/10/2026 — Chốt BH47 và canary đầu–cuối giành rồi xoá khoá quét THẬT; BH47 và một test thứ hai âm thầm gọi Europe PMC bằng mạng thật (BH142)
+Sau lượt gộp PR sáng 01/10, bộ chốt trên cây thật ra «139/140 — ✗ BH47 Quét phải có khoá + cursor + alert»; chạy lại thì xanh.
+Lần đỏ ấy không đọc lại được thông điệp nên không biết do gốc nào; đo ra **hai gốc, tái hiện được cả hai**:
+(1) **Khoá THẬT.** BH47 và canary (`tools/thu_dau_cuoi_chung_cu.py`, dây chuyền hằng ngày) gọi `gianh_khoa()` hai lần rồi
+`tra_khoa()` trên `EBM-Dashboards/.quet.lock` — tệp OneDrive đồng bộ sang máy kia — mà `tra_khoa()` xoá KHÔNG hỏi chủ. Lượt quét
+thật đang giữ khoá ⇒ lần 1 của chốt không giành được ⇒ ✗ «khoá không chặn tiến trình thứ hai» GIẢ, và `tra_khoa()` nhả MẤT khoá
+của lượt quét thật (hai lượt cùng ghi sổ — đúng điều khoá sinh ra để chặn). Không có lượt quét nào thì chốt vẫn tạo rồi xoá
+`.quet.lock` trên cây dùng chung, đủ lâu để OneDrive đưa sang máy kia chặn một lượt quét tuần. Tái hiện bằng cây giả có sẵn
+`.quet.lock` tươi của «máy khác»: mã cũ ✗ và khoá bị xoá.
+(2) **Mạng thật.** Từ 22/09 `search()` đòi CẢ `idlist` LẪN `count`; phản hồi giả của BH47 `{"idlist": []}` thiếu `count` ⇒ bị coi là
+lỗi ⇒ lùi sang `search_europe_pmc` bằng MẠNG THẬT. Mạng sống: xanh và âm thầm gọi dịch vụ ngoài mỗi lần chạy chốt (kể cả CI);
+DNS trượt: ✗ «getaddrinfo failed». Dấu vết đo được: tệp test mới của tôi chạy 15–45 giây, đỏ 1/10 lượt; sau vá 0,7 giây, 7/7 ở ba
+lượt liên tiếp. Chạy toàn `tools/` với mạng bị chặn (plugin tạm ngoài repo) liệt kê đúng HAI test khác cũng cần mạng thật:
+`test_surveillance_scan_ghi_alert_20260922.py::{test_hai_luot_cung_chu_de_suy_giam_khong_nhan_doi_dong,
+test_hai_chu_de_khac_nhau_suy_giam_giu_ca_hai_dong}` — `_search_suy_giam` trả PMID «999» rồi `main()` tóm tắt ứng viên bằng
+`summarize`/`summarize_europe_pmc` mặc định thật (lần chạy đầu xanh nhờ bản ghi THẬT của PMID 999, một bài sinh hoá 1975; lần hai
+đỏ vì DNS). CI GitHub luôn có mạng nên không bao giờ thấy.
+**Vá.** BH47 thử khoá trên thư mục TẠM (đổi `DEFAULT_WATCHLIST`, trả lại trong `finally`), phản hồi NCBI giả có `count`, và chặn
+`search_europe_pmc` nổ to nếu bị gọi. Canary tách `thu_khoa_quet_co_lap(ss, tmp)` làm cùng việc. Fixture của hai test ghi_alert tiêm
+`summarize`/`summarize_europe_pmc` giả và chặn `socket.getaddrinfo`/`create_connection` «cứng» (lần sau ai thêm đường gọi mạng mới
+sẽ nổ to thay vì xanh nhờ mạng sống). Chốt BH142: cây tạm có `.quet.lock` tươi và MẠNG BỊ CHẶN — BH47 phải xanh, khoá còn NGUYÊN
+từng byte, canary trả (True, False) và trả `DEFAULT_WATCHLIST` về nguyên trạng kể cả khi giành khoá nổ lỗi.
+**Kiểm.** 7 test mới (`tools/test_khoa_quet_that_khong_bi_cham_20261001.py`); `pytest tools/` 1801 đạt, 59 bỏ qua có khai báo, 0 lỗi;
+bộ chốt trên bản sao trần 0 ✗. Đột biến (`python -B`, xoá `__pycache__`, phục hồi khớp SHA-256): 5/6 đỏ đúng chỗ — BH47 không cô
+lập · canary không cô lập · canary không trả `DEFAULT_WATCHLIST` · canary không trả khoá tạm · phản hồi giả thiếu `count`; 1 sống sót
+CÓ CHỦ Ý vì tương đương (bỏ vế «khoá thật còn nguyên» trong BH142: chỉ chạm tới khi BH47 xanh mà vẫn đụng khoá — đột biến kép «BH47
+mất cô lập VÀ luôn báo xanh» làm cả test pytest lẫn BH142 đỏ, chứng minh lưới ấy sống). Ruff: `chot_hoi_quy_bai_hoc.py` 56 lỗi sẵn có
+(trước = sau) và test ghi_alert 2 lỗi `F841` sẵn có; phần thêm 0 lỗi mới.
+**Chưa làm (cần quyết):** `tra_khoa()` vẫn xoá khoá KHÔNG kiểm chủ sở hữu (pid/máy). Muốn chống nhả nhầm ở gốc thì sửa
+`surveillance_scan.py` (ba bản đồng bộ — sửa bản chuẩn ở `sync/skills/cap-nhat-chung-cu-y-khoa/tools/` rồi
+`tools/dong_bo_scanner_giam_sat.py`); chưa đụng vì ngoài phạm vi và liên quan chạy lịch trên Mac.
