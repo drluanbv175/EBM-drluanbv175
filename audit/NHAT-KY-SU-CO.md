@@ -3811,3 +3811,38 @@ mất cô lập VÀ luôn báo xanh» làm cả test pytest lẫn BH142 đỏ, c
 **Chưa làm (cần quyết):** `tra_khoa()` vẫn xoá khoá KHÔNG kiểm chủ sở hữu (pid/máy). Muốn chống nhả nhầm ở gốc thì sửa
 `surveillance_scan.py` (ba bản đồng bộ — sửa bản chuẩn ở `sync/skills/cap-nhat-chung-cu-y-khoa/tools/` rồi
 `tools/dong_bo_scanner_giam_sat.py`); chưa đụng vì ngoài phạm vi và liên quan chạy lịch trên Mac.
+
+### 01/10/2026 — Báo động giả «⚠ Đồng bộ Claude–Codex còn lỗi» ở MỌI phiên Windows: catalog router đòi plugin mà sổ khai nói máy này không cần (BH141)
+Hook SessionStart chạy `dong_bo_skill_claude_codex.py --ap-dung --dong-bo-plugin --im-khi-on` và in «⚠ Đồng bộ Claude–Codex còn lỗi»
+mỗi lần mở phiên trên Windows, dù nối skill 50×2 đạt, agent khớp 50/50 và `check_claude_codex_sync_health.py` PASS. Gốc: `rebuild_router`
+chạy `build_catalog.py`, mà catalog router cần đủ 9 plugin (`PLUGIN_IDS`) còn máy Windows chỉ được khai 4 — `sync/plugin-manifest.json`
+ghi codex · humanizer · openmed-skills · meta-pipe · pubmed-search là `can_o_may: [Mac, Cloud]` (đo: đúng 5 plugin ấy là 5 plugin
+build_catalog.py báo thiếu). `build_catalog.py` ném «Plugin thiếu trong cache Claude Code» ⇒ mã 1 ⇒ cả lệnh trả 1. Một báo động
+đỏ quanh năm dạy người đọc bỏ qua cả lần báo thật (cùng họ BH32); dựng bản thiếu thì còn tệ hơn vì GHI ĐÈ catalog đầy đủ đã commit
+từ Mac bằng bản 4 plugin.
+**Vá** (chỉ `tools/dong_bo_skill_claude_codex.py`; KHÔNG sửa `build_catalog.py` — nó là skill đóng gói ZIP, sửa nó làm ZIP cũ): `rebuild_router`
+bỏ qua dựng catalog (mã 0, im lặng khi `--im-khi-on`, in ⚪ nêu rõ khi không im) CHỈ khi MỌI plugin thiếu đều được sổ khai xác nhận KHÔNG
+cần ở máy này (tên máy từ `tools/nhan_dien_may.py`, danh sách plugin đọc TĨNH bằng `ast` từ `PLUGIN_IDS`, không chạy mã). Mọi trường
+hợp «không biết» vẫn fail-closed như cũ: thiếu một plugin máy này ĐƯỢC KHAI là cần (mất thật — vd 12 plugin biến mất im lặng 05/08)
+· plugin vắng trong sổ khai · `can_o_may` rỗng/sai kiểu · không đọc được `PLUGIN_IDS`/cache/sổ khai · cùng bộ thiếu nhưng đứng ở Mac.
+**Đo trên máy Windows thật:** lệnh hook trước = mã 1 + «Plugin thiếu trong cache Claude Code: 5 plugin»; sau = mã 0, im lặng. Catalog
+trên Windows vẫn là bản Mac đã commit (không dựng lại) — đúng thiết kế, không phải bỏ sót. Chưa đo trên Mac/Cloud: Mac được khai đủ 9 plugin
+và Cloud được khai các plugin ấy nên đường chạy của hai nơi không đổi (thiếu ⇒ vẫn lỗi).
+**Kiểm.** 17 test mới (`tools/test_rebuild_router_thieu_plugin_khong_khai_20261001.py`, kèm khoá hợp đồng trên TỆP THẬT: `PLUGIN_IDS`
+còn đọc được bằng `ast` và mỗi plugin router có `can_o_may` không rỗng trong sổ khai — thiếu mục thì nhánh bỏ qua không bao giờ bật).
+Đột biến (`python -B`, xoá `__pycache__`, phục hồi khớp SHA-256) 7/7 đỏ đúng chỗ: bỏ nhánh bỏ qua · bỏ qua cả plugin máy này được khai ·
+coi vắng sổ khai/`can_o_may` rỗng là «không cần» · bỏ qua tên máy · `installPath` chết vẫn tính là đang cài · tự suy danh sách khi `ast`
+bó tay · nuốt sổ khai hỏng. Phép «tự suy danh sách» LỌT lần đầu vì ca test chưa đủ phân biệt (sổ khai thiếu `c@x` che mất) — siết ca test
+rồi chạy lại cả bảy. Số hiệu: tôi định dùng BH140 nhưng chốt BH68 (mã bài học phải duy nhất) bắt trùng với PR #72 ⇒ đổi BH141.
+
+### 01/10/2026 — Test hook pre-commit của repo y khoa đỏ ngẫu nhiên trên Windows: `python3` (bí danh Microsoft Store) mất ~13 s mỗi lần khi môi trường chỉ có PATH+HOME
+`tests/test_githooks_precommit_worktree_gitdir_leak_20260912.py` ở repo y khoa đỏ lúc có lúc không trên máy Windows phát triển
+(`subprocess.TimeoutExpired` sau 30 s ở lệnh `sh <wrapper>/.githooks/pre-commit`); bộ test tổng hợp cục bộ của đợt gộp PR sáng 01/10
+ra «2 failed, 6714 passed» chỉ vì hai test này. Đối chứng trên nền y khoa CHƯA có PR nào vẫn đỏ (35 s) ⇒ không do các PR gần đây.
+Bấm giờ từng lệnh bên trong test (tạm bọc `_run`): mọi lệnh git 0,1 s, riêng `sh wrapper` 27,1 s. Wrapper gọi `python3` hai lần; trên
+máy dùng bí danh WindowsApps\python3 mà `_moi_truong_sach` chỉ cấp PATH+HOME, MỖI lần gọi mất ~13 s (đo: 13,5 s so với 0,46 s khi có
+SYSTEMROOT/LOCALAPPDATA/USERPROFILE/TEMP) — CI Windows dùng Python cài thật nên không bao giờ thấy. **Vá đúng gốc, KHÔNG nâng hạn 30 s**
+(nâng hạn che chỗ chậm thật): `_moi_truong_sach` chuyển tiếp các biến hệ thống Windows nếu có; không làm rò `GIT_*` (`_GIT_ENV` áp
+sau cùng). Mỗi test 27–36 s ⇒ 0,9 s; cả tệp 65–80 s ⇒ 4–6 s; đột biến «bỏ chuyển tiếp» ⇒ đỏ sau 37 s; `ruff check .` sạch. Bản vá nằm ở
+PR repo y khoa (không đụng hook, mã chạy hay nội dung y khoa). Bài học chung: một môi trường test rút gọn cho git KHÔNG nhất thiết đủ cho
+mọi tiến trình con — đo bằng cách bấm giờ từng lệnh trước khi nâng hạn.
