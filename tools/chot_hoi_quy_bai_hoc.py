@@ -8300,6 +8300,89 @@ def bh139_mcp_json_khoi_chay_khong_phu_thuoc_thu_muc_chay():
     return True, ""
 
 
+def bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi():
+    """01/10 — mọi phiên Windows mở ra đều in «⚠ Đồng bộ Claude–Codex còn lỗi» dù nối skill 50×2 đạt và agent khớp 50/50.
+    Gốc: catalog router cần đủ 9 plugin (hằng `PLUGIN_IDS` của build_catalog.py) mà máy Windows chỉ được khai 4 —
+    `sync/plugin-manifest.json` ghi codex · humanizer · openmed-skills · meta-pipe · pubmed-search là `can_o_may: [Mac,
+    Cloud]`. build_catalog.py ném «Plugin thiếu trong cache» ⇒ `rebuild_router` trả 1 ⇒ lệnh `--ap-dung` của hook trả 1.
+    Báo động quen mặt làm người ta bỏ qua cả lần báo thật. Vá: bỏ qua dựng catalog (giữ bản đã commit, không dựng bản
+    thiếu đè lên) CHỈ khi MỌI plugin thiếu đều được sổ khai xác nhận KHÔNG cần ở máy này. Phần fail-closed phải còn nguyên.
+    Kiểm HÀNH VI `rebuild_router` trên cây tạm (script giả ghi tệp đánh dấu khi ĐƯỢC GỌI): thiếu plugin sổ khai nói không
+    cần ⇒ mã 0 và KHÔNG gọi; thiếu một plugin máy này ĐƯỢC KHAI là cần ⇒ gọi và giữ mã 1; plugin vắng trong sổ khai ⇒ gọi;
+    cùng bộ thiếu nhưng tên máy là Mac ⇒ gọi. Kèm hợp đồng trên TỆP THẬT: `PLUGIN_IDS` còn đọc được bằng ast và mỗi plugin
+    router có `can_o_may` là danh sách không rỗng trong sổ khai (thiếu mục thì nhánh bỏ qua không bao giờ bật)."""
+    import contextlib
+    import io
+    import tempfile as _tf
+    from unittest import mock
+    try:
+        DB = _nap(REPO / "tools" / "dong_bo_skill_claude_codex.py", "_dbskcc_bh140")
+    except Exception as loi:  # noqa: BLE001
+        return False, f"không nạp được tools/dong_bo_skill_claude_codex.py ({type(loi).__name__}: {loi})"
+    for ten in ("plugin_id_router", "plugin_thieu_tren_may", "plugin_thieu_ma_may_nay_khong_can", "_ten_may", "SO_KHAI"):
+        if not hasattr(DB, ten):
+            return False, f"dong_bo_skill_claude_codex.py không còn `{ten}` — nhánh bỏ qua catalog đã bị gỡ (báo động giả quay lại)"
+
+    def thu(cai, khai, may):
+        with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+            d = Path(d)
+            nguon = d / "sync" / "skills"
+            sc = nguon / DB.ROUTER_NAME / "scripts"
+            sc.mkdir(parents=True)
+            dau = d / "da-goi"
+            (sc / "build_catalog.py").write_text(
+                "PLUGIN_IDS = ('a@x', 'b@x', 'c@x')\nfrom pathlib import Path\n"
+                f"Path({str(dau)!r}).write_text('x')\nraise SystemExit(1)\n", encoding="utf-8")
+            home = d / "home"
+            (home / ".claude" / "plugins").mkdir(parents=True)
+            bang = {}
+            for p in cai:
+                tm = d / "cache" / p
+                tm.mkdir(parents=True)
+                bang[p] = [{"installPath": str(tm)}]
+            (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
+                json.dumps({"plugins": bang}), encoding="utf-8")
+            sk = d / "plugin-manifest.json"
+            sk.write_text(json.dumps({"plugin": {p: {"can_o_may": c} for p, c in khai.items()}}), encoding="utf-8")
+            with (mock.patch.object(Path, "home", return_value=home), mock.patch.object(DB, "SO_KHAI", sk),
+                  mock.patch.object(DB, "_ten_may", return_value=may),
+                  mock.patch.object(DB, "co_codex_tren_may", return_value=False),
+                  contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+                rc = DB.rebuild_router(nguon, quiet=True)
+            return rc, dau.exists()
+
+    rc, da_goi = thu(("a@x",), {"a@x": ["Windows"], "b@x": ["Mac"], "c@x": ["Mac"]}, "Windows")
+    if rc != 0 or da_goi:
+        return False, (f"thiếu plugin mà sổ khai nói máy Windows không cần mà rebuild_router trả {rc}"
+                       f"{' và vẫn gọi build_catalog.py' if da_goi else ''} — hook mở phiên lại báo «còn lỗi» giả")
+    rc, da_goi = thu(("a@x", "c@x"), {"a@x": ["Windows"], "b@x": ["Mac", "Windows"], "c@x": ["Windows"]}, "Windows")
+    if not da_goi or rc != 1:
+        return False, ("thiếu plugin máy này ĐƯỢC KHAI là cần mà không fail-closed (đã gọi build_catalog.py: "
+                       f"{da_goi}, mã {rc}) — mất plugin thật bị che")
+    rc, da_goi = thu(("a@x",), {"a@x": ["Windows"], "b@x": ["Mac"]}, "Windows")
+    if not da_goi or rc != 1:
+        return False, "plugin vắng trong sổ khai bị coi là «không cần» — chưa ai khai ý định thì phải là «không biết»"
+    rc, da_goi = thu(("a@x",), {"a@x": ["Mac"], "b@x": ["Mac"], "c@x": ["Mac"]}, "Mac")
+    if not da_goi or rc != 1:
+        return False, "cùng bộ thiếu nhưng đứng ở Mac (nơi được khai là cần) mà vẫn bị bỏ qua — quyết định phải theo TÊN MÁY"
+    script = REPO / "sync" / "skills" / DB.ROUTER_NAME / "scripts" / "build_catalog.py"
+    if not script.is_file():
+        return False, f"không thấy {script} — nguồn router được git theo dõi phải có ở mọi cây"
+    ids = DB.plugin_id_router(script)
+    if len(ids) < 9:
+        return False, (f"PLUGIN_IDS thật của build_catalog.py không còn đọc được bằng ast ({len(ids)} mục) — đổi thành "
+                       "biểu thức động thì nhánh bỏ qua im lặng vô hiệu và báo động giả quay lại")
+    try:
+        muc = json.loads(DB.SO_KHAI.read_text(encoding="utf-8"))["plugin"]
+    except (OSError, ValueError, KeyError) as loi:
+        return False, f"không đọc được sổ khai {DB.SO_KHAI} ({type(loi).__name__})"
+    chua = [p for p in ids if not (isinstance(muc.get(p), dict) and isinstance(muc[p].get("can_o_may"), list)
+                                   and muc[p]["can_o_may"])]
+    if chua:
+        return False, f"plugin router chưa khai `can_o_may` trong sổ khai (nhánh bỏ qua không bao giờ bật cho chúng): {chua}"
+    return True, ""
+
+
 def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
     """29/09 — lượt quét tuần W40 SẬP ở bước đo độ trễ vì một ứng viên mang `publication_date` kiểu số (engine chỉ trả
     NĂM). Lỗi nổ SAU khi con trỏ đã tiến cho 47 chủ đề và sổ dự phòng đã ghi «đã trình», TRƯỚC khi có báo cáo ⇒ cửa sổ
@@ -8985,6 +9068,7 @@ BAI_HOC = [
     ("BH136", "30/09", "Bộ quét: báo cáo tới nơi rồi mới tiến con trỏ/ghi «đã trình»; ngày công bố kiểu số không làm sập lượt", bh136_bao_cao_toi_noi_roi_moi_tien_con_tro),
     ("BH137", "30/09", "Sổ nguồn phủ mọi module nguồn của engine; tuyên bố độ phủ không gộp nguồn gọi-theo-yêu-cầu vào «giám sát tự động», in tên từng làn nhập tay và mọi khoảng trống đã khai", bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua),
     ("BH138", "30/09", "Trạm web hội: quét lại được thì nhãn về active; 0 tiêu đề không tính là thành công, không ghi đè state", bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat),
+    ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
 ]
 
 
