@@ -355,7 +355,7 @@ _NGUON_THIET_YEU = frozenset({"pubmed", "europepmc", "crossref", "openfda", "fee
 def giac_quan_nguon_hong_keo_dai(db: Path) -> list[tuple[int, str, str]]:
     """Nguồn engine báo «hỏng kéo dài» ở lượt live gần nhất có số đo nguồn — [(ưu tiên, mô tả, lệnh)] (01/10/2026).
 
-    Vì sao (BH144): RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09, kho không nhận bài NEJM nào, mà lượt
+    Vì sao (BH145): RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09, kho không nhận bài NEJM nào, mà lượt
     nào cũng PASS — trạng thái lượt cố ý không đổi vì một feed lẻ hỏng — nên chỉ lộ khi đo tay 30/09 (15 feed BMJ cũng hỏng
     từ 13/08 như vậy). Engine y khoa ghi `source_health["hong_keo_dai"]` (≥ 3 lượt live liền, trải ≥ 7 ngày) vào
     `pipeline_runs.stats`; cảm biến này đưa nó lên hòm việc. CHỈ ĐỌC (sqlite `mode=ro`), không đổi gì.
@@ -701,7 +701,7 @@ def main() -> int:
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
 
-    # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH144): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
+    # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
     for uu, dong, lenh in giac_quan_nguon_hong_keo_dai(_GOC_MEA / "data" / "medical_ebm.db"):
         de_xuat.append((uu, "🤖", dong, lenh))
 

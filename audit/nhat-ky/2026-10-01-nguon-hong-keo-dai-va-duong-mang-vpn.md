@@ -1,4 +1,4 @@
-# 01/10/2026 — BH144: nguồn hỏng nhiều lượt liền không tự lộ + hệ bền với đường mạng (VPN)
+# 01/10/2026 — BH145: nguồn hỏng nhiều lượt liền không tự lộ + hệ bền với đường mạng (VPN)
 
 **Bối cảnh:** bác sĩ yêu cầu «giải quyết vấn đề VPN một cách triệt để giúp hệ thống bền vững lâu dài» (01/10/2026), chọn
 «Để sau» cho việc tắt VPN đo đối chứng ⇒ làm phần phía hệ thống trước, gửi lệnh đo để bác sĩ tự chạy khi tắt VPN.
@@ -39,11 +39,11 @@
 
 - Chạy thuật toán trên lịch sử thật (chỉ đọc): lẽ ra đã báo 15 feed BMJ từ lượt 01/09, PubMed từ 16/09, NEJM từ 21/09.
 - Engine: `tests/test_mang_ben_vung_20261001.py` 61 ca ngoại tuyến; 36/36 đột biến đỏ đúng chỗ.
-- Repo gốc: chốt **BH144** (cảm biến trên CSDL tạm + thuật toán ca NEJM + dây nối AST `ingest_all` →
+- Repo gốc: chốt **BH145** (cảm biến trên CSDL tạm + thuật toán ca NEJM + dây nối AST `ingest_all` →
   `_gan_mang_va_hong_keo_dai` → `tinh_hong_keo_dai`); engine vắng ⇒ ⚪, engine có mà thiếu ⇒ ✗; 12/12 đột biến.
 
 ## Còn treo — thẩm quyền bác sĩ
 
 - Đo đối chứng khi TẮT VPN bằng `tools/do_mang_nguon.py --ghi …` rồi `--so-sanh` với lần đo qua VPN 01/10 — quyết định bật/tắt
   VPN hay tách tuyến theo ứng dụng (Kaspersky Mac: chỉ theo ứng dụng trong Applications, bản Unlimited) là của bác sĩ.
-- Thứ tự gộp: PR y khoa trước, kéo cây chính, rồi mới PR gốc (BH144 đỏ trên máy có engine cũ là chủ ý).
+- Thứ tự gộp: PR y khoa trước, kéo cây chính, rồi mới PR gốc (BH145 đỏ trên máy có engine cũ là chủ ý).

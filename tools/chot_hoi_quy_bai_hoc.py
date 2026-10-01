@@ -4095,13 +4095,17 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
 # «tái phát» mỗi lần mở phiên (3 dòng đỏ giả — đúng «bức tường đỏ giả» BH08/BH82 cấm). KHÔNG đưa vào danh sách trên: nhánh
 # lùi `tran` ở đó sẽ ⚪ hoá luôn lỗi TRONG repo (doctrine/agent) của chúng trên mọi phiên Cloud. Luật HẸP: ⚪ CHỈ KHI thông
 # điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng; mọi thất bại khác vẫn ✗ ở mọi máy.
-_CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109", "BH144"})
+_CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109"})
 
 # VÁ 26/09/2026 (đột biến lộ ra): BH56 nằm trong danh sách trên vì nửa «chỉ mục RAG tươi» cần
 # EBM-Dashboards/, nhưng nửa «công cụ MỒ CÔI» soi doctrine agent NẰM TRONG GIT — trên Cloud gỡ dây gọi
 # toan_van_guideline khỏi tra-cuu-chung-cu.md chỉ ra ⚪ thay vì ✗. Thông điệp mang dấu hiệu dưới đây
 # là lỗi trong-repo: luôn «tái phát», ở mọi máy.
 _DAU_HIEU_LOI_TRONG_REPO = {"BH56": "MỒ CÔI"}
+
+# BH145 (01/10/2026) cũng soi mã ENGINE — thêm bằng DÒNG RIÊNG, không sửa dòng khai báo `_CAN_ENGINE_NEU_TEN` ở trên:
+# các PR mở song song cùng thêm mã vào dòng đó sẽ xung đột gộp (PR gốc #80 thêm BH144 đúng dòng ấy cùng ngày).
+_CAN_ENGINE_NEU_TEN = _CAN_ENGINE_NEU_TEN | {"BH145"}
 
 
 def ban_sao_git_tran() -> bool:
@@ -6888,7 +6892,7 @@ def _bh113_than():
     return True, ""
 
 
-def bh144_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass():
+def bh145_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass():
     """01/10 — RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09 (kho không nhận bài NEJM nào), 15 feed BMJ
     hỏng từ 13/08, PubMed bị NCBI chặn 01→16/09 — lượt nào cũng PASS (một feed lẻ hỏng cố ý không đổi trạng thái; PubMed có
     gương Europe PMC + Crossref) và không gì so lượt này với lượt trước, nên chỉ lộ khi đo tay (NEJM: 30/09). Cùng họ «xanh
@@ -6908,7 +6912,7 @@ def bh144_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass():
     import tempfile as _tf
     from datetime import datetime as _dt, timedelta as _td
 
-    tdxv = _nap(REPO / "tools" / "tu_de_xuat_viec.py", "tdxv_bh144")
+    tdxv = _nap(REPO / "tools" / "tu_de_xuat_viec.py", "tdxv_bh145")
     cam = getattr(tdxv, "giac_quan_nguon_hong_keo_dai", None)
     if not callable(cam):
         return False, "tu_de_xuat_viec.py mất cảm biến giac_quan_nguon_hong_keo_dai — nguồn hỏng kéo dài lại im lặng"
@@ -6962,11 +6966,11 @@ def bh144_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass():
     tep = goc / "app" / "services" / "nguon_hong_keo_dai.py"
     tep_ing = goc / "app" / "services" / "ingestion.py"
     if not goc.exists():
-        return False, "medical-ebm-automation vắng — không soi được phần engine của BH144"
+        return False, "medical-ebm-automation vắng — không soi được phần engine của BH145"
     if not tep.exists() or not tep_ing.exists():
         return False, (f"medical-ebm-automation có mặt nhưng thiếu {tep.name}/{tep_ing.name} — engine chưa có phép đo nguồn "
                        "hỏng kéo dài (chưa kéo PR y khoa «mạng bền vững»?)")
-    nhkd = _nap(tep, "nhkd_bh144")
+    nhkd = _nap(tep, "nhkd_bh145")
     moc = _dt(2026, 9, 29, 13, 0)
 
     def luot(ngay_truoc, health):
@@ -9255,8 +9259,8 @@ BAI_HOC = [
     ("BH110", "20/09", "Orchestrator: tên lát cắt/gốc nối đúng tên watchlist; mã thoát phân loại theo bước; sai tên ⇒ 64 (không phải «lỗi mạng»)", bh110_orchestrator_ten_chu_de_va_ma_thoat_dung_nghia),
     ("BH112", "21/09", "Điểm khám không trả thẻ LẠC ĐỀ: đ→d, từ nguyên, từ ghép kề nhau, xung đột quyết định có cờ, miss yếu không tính là khoảng trống", bh112_diem_kham_khong_tra_the_lac_de),
     ("BH113", "21/09", "Thu nhận khi NCBI chặn: dịch thẻ PubMed→Europe PMC, PASS_DEGRADED, con trỏ đứng yên (không 0 giả, không mất cửa sổ quét)", bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia),
-    # BH144 đứng cạnh BH113 (cùng họ «nguồn thu nhận»), không nối đuôi bảng: các PR mở cùng ngày 01/10 đều chèn ở cuối.
-    ("BH144", "01/10", "Nguồn hỏng NHIỀU lượt live liền (≥3 lượt, ≥7 ngày) phải lộ lên hòm việc dù lượt PASS (ca NEJM 07→29/09); không đo được ≠ không có", bh144_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass),
+    # BH145 đứng cạnh BH113 (cùng họ «nguồn thu nhận»), không nối đuôi bảng: các PR mở cùng ngày 01/10 đều chèn ở cuối.
+    ("BH145", "01/10", "Nguồn hỏng NHIỀU lượt live liền (≥3 lượt, ≥7 ngày) phải lộ lên hòm việc dù lượt PASS (ca NEJM 07→29/09); không đo được ≠ không có", bh145_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass),
     ("BH114", "21/09", "Bốn cổng không xanh khi CHƯA ĐO: bản lỗi HTTP-200, sổ rút bài im lặng, kiem_so_lieu hỏng/mẫu, gradeLevel máy gán", bh114_cong_khong_xanh_khi_chua_do),
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
