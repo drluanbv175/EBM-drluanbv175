@@ -7882,6 +7882,105 @@ def bh119_cam_bien_commit_chua_day_nhin_moi_nhanh():
 
 
 
+def bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao():
+    """02/10 (EV-02) — `kiem_phu_giam_sat.py` chỉ đo KHAI BÁO («chủ đề này có mục watchlist»), không đo mục đó tìm ra gì.
+    Đo 02/10: 10/42 chủ đề cho ≤3 bản ghi trong CẢ BỐN tầng/90 ngày (RA = 2) vì cụm truy vấn dài («rheumatoid arthritis treatment
+    EULAR guideline») bị PubMed ngầm AND mọi từ; chốt phủ vẫn xanh «49/49». «0 ứng viên» ở đó là cấu trúc truy vấn, không phải
+    «không có chứng cứ mới». Vá: `tools/kiem_san_luong_giam_sat.py` (ĐO esearch retmax=0 đúng phép ghép bộ lọc của bộ quét thật) +
+    `tools/ap_dung_de_xuat_watchlist.py` (bác sĩ duyệt đề xuất rồi chép, có sao lưu) + bước ②b trong `chu_trinh_chung_cu.py`.
+
+    Kiểm HÀNH VI ngoại tuyến (fetch/subprocess GIẢ): (a) chủ đề tổng ≤ ngưỡng ⇒ MU, > ngưỡng ⇒ ON; tầng lỗi mạng ⇒ KHONG_DO (không
+    bao giờ thành 0/ổn); không đo được gì ⇒ mã thoát 2 (không phải 0); (b) đề xuất bỏ tầng `moi_vao_pubmed` hoặc đặt nó `pdat`/lọc
+    loại thiết kế bị TỪ CHỐI (bất biến của bộ quét); (c) chu trình đầy đủ gọi chốt sản lượng, `--nhanh` KHÔNG gọi (không mạng), mã 1 ⇒
+    việc 🟠, mã 2 ⇒ ghi chú ⚪ (không im lặng, không đọc thành «không có chủ đề mù»)."""
+    import contextlib as _cl
+    import importlib.util as _iu
+    import io as _io
+    import tempfile as _tf
+    from unittest import mock as _mock
+
+    def nap(ten, tep):
+        sp = _iu.spec_from_file_location(ten, REPO / "tools" / tep)
+        m = _iu.module_from_spec(sp)
+        sys.modules[ten] = m
+        sp.loader.exec_module(m)
+        return m
+    sl = nap("_bh148_sl", "kiem_san_luong_giam_sat.py")
+    ad = nap("_bh148_ad", "ap_dung_de_xuat_watchlist.py")
+
+    def muc(ten, q):
+        return {"topic": ten, "query": "cũ", "active": True, "queries": [
+            {"tang": "guideline", "query": f"({q}) AND G", "datetype": "pdat", "loc_thiet_ke": True},
+            {"tang": "sr_ma", "query": f"({q}) AND S", "datetype": "pdat", "loc_thiet_ke": True},
+            {"tang": "rct", "query": f"({q}) AND R", "datetype": "pdat", "loc_thiet_ke": True},
+            {"tang": "moi_vao_pubmed", "query": f"({q})", "datetype": "edat", "loc_thiet_ke": False}]}
+
+    def fetch_theo(bang):
+        def f(term, datetype, days):
+            for k, v in bang.items():
+                if k in term:
+                    if isinstance(v, Exception):
+                        raise v
+                    return v
+            return 0
+        return f
+    wl = {"topics": [muc("MU", "mu"), muc("ON", "on")]}
+    b = sl.kiem(wl, fetch_theo({"(mu)": 0, "(on)": 50}), "(D)")
+    if b["mu"] != ["MU"] or [k["loai"] for k in b["chu_de"]] != ["MU", "ON"] or sl.ma_thoat(b) != 1:
+        return False, f"phân loại sản lượng sai: mu={b['mu']} loai={[k['loai'] for k in b['chu_de']]}"
+    loi = sl.kiem({"topics": [muc("L", "l")]}, fetch_theo({"(l)": RuntimeError("chặn")}), "(D)")
+    if loi["chu_de"][0]["loai"] != "KHONG_DO" or loi["mu"] or sl.ma_thoat(loi) != 2:
+        return False, "tầng lỗi mạng bị đọc thành 0/ổn — «không đo được» phải ra KHONG_DO và mã 2, không phải «không có chủ đề mù»"
+    if sl.thuat_ngu_that("a", True, "(D)") != "(a) AND (D)" or sl.thuat_ngu_that("a", False, "(D)") != "(a)":
+        return False, "phép ghép bộ lọc loại thiết kế lệch bộ quét thật (surveillance_scan.search)"
+
+    cu = muc("X", "x")
+    hong = muc("X", "x")
+    hong["queries"].pop()
+    sai = muc("X", "x")
+    sai["queries"][3]["datetype"] = "pdat"
+    for nhan, de in (("bỏ tầng moi_vao_pubmed", hong), ("moi_vao_pubmed đi pdat", sai)):
+        _doi, loi_dx, _kd = ad.lap_ke_hoach({"topics": [cu]}, {"topics": [de]})
+        if not loi_dx:
+            return False, f"đề xuất «{nhan}» KHÔNG bị từ chối — watchlist mất tầng bắt cái mới nhất/lọc nhầm (bẫy 14/08)"
+
+    c = nap("_bh148_ct", "chu_trinh_chung_cu.py")
+
+    class _P:
+        def __init__(self, rc):
+            self.returncode, self.stdout, self.stderr = rc, "", ""
+
+    def chay_chu_trinh(nhanh, rc_san_luong):
+        lenh = []
+
+        def _goi(cmd, **_kw):
+            lenh.append([str(x) for x in cmd])
+            return _P(rc_san_luong if len(lenh[-1]) > 1 and "kiem_san_luong_giam_sat.py" in lenh[-1][1] else 0)
+        with _tf.TemporaryDirectory() as td:
+            (Path(td) / "EBM-Dashboards").mkdir()
+            (Path(td) / "EBM-Dashboards" / "watchlist.json").write_text("{}", encoding="utf-8")
+            argv = ["chu_trinh_chung_cu.py"] + (["--nhanh"] if nhanh else [])
+            out = _io.StringIO()
+            with _mock.patch.object(sys, "argv", argv), _mock.patch.object(c.subprocess, "run", side_effect=_goi), \
+                    _mock.patch.object(c, "_co_dashboard_that", return_value=True), _mock.patch.object(c, "REPO", Path(td)), \
+                    _cl.redirect_stdout(out):
+                c.main()
+        return [x for x in lenh if len(x) > 1 and "kiem_san_luong_giam_sat.py" in x[1]], out.getvalue()
+    goi, out = chay_chu_trinh(False, 0)
+    if len(goi) != 1:
+        return False, f"chu trình đầy đủ gọi chốt sản lượng {len(goi)} lần (kỳ vọng 1) — chốt có mà không ai gọi thì không tồn tại (họ BH41)"
+    goi_nhanh, _ = chay_chu_trinh(True, 0)
+    if goi_nhanh:
+        return False, "--nhanh gọi chốt sản lượng (gọi NCBI ~5 phút) — chế độ nhanh chỉ được đọc sổ"
+    _g, out1 = chay_chu_trinh(False, 1)
+    if "CÓ THỂ MÙ" not in out1:
+        return False, "chốt sản lượng báo mã 1 mà chu trình KHÔNG nêu thành việc 🟠 — «0 ứng viên» tiếp tục bị đọc thành «không có chứng cứ mới»"
+    _g, out2 = chay_chu_trinh(False, 2)
+    if "Chưa đo được sản lượng" not in out2:
+        return False, "chốt sản lượng KHÔNG đo được (mã 2) mà chu trình im lặng — phải ghi ⚪, không để đọc thành xanh"
+    return True, "phân loại MU/ON/KHONG_DO đúng; đề xuất bỏ/đổi tầng bắt-cái-mới bị từ chối; chu trình đầy đủ gọi, --nhanh không gọi, mã 1→🟠, mã 2→⚪"
+
+
 def bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh():
     """27/09 — «Phủ sổ xác minh: 125 mục chưa/hết hạn» đứng yên dù chạy đúng lệnh được gợi ý (`so_xac_minh_nguon.py
     --vong 3` thêm 220 mục MỚI, 125 mục cũ nguyên vẹn): lệnh đó chỉ tái kiểm định danh gom từ dashboard, còn 125 mục là bản
@@ -9729,6 +9828,7 @@ BAI_HOC = [
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
     ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
+    ("BH148", "02/10", "Chu trình chứng cứ ĐO SẢN LƯỢNG truy vấn giám sát (không chỉ đo khai báo): chủ đề ≤3 bản ghi/90 ngày ⇒ «có thể mù»; lỗi mạng ⇒ KHÔNG ĐO ĐƯỢC chứ không phải ổn; đề xuất không được bỏ/đổi tầng bắt-cái-mới", bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao),
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
