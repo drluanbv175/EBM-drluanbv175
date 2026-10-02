@@ -14,6 +14,8 @@
      "dau_vet": {"loai": "khong-co"}},
     {"id": "kiem-tra-hoan-thien-he-thong-thang", "cron": "0 18 3 * *", "tu_ngay": "2026-10-03", "grace_gio": 30,
      "dau_vet": {"loai": "khong-co"}},
+    {"id": "giam-sat-9-tram-web-hoi-tuan", "cron": "45 18 * * 1", "tu_ngay": "2026-10-05", "grace_gio": 30,
+     "dau_vet": {"loai": "file-ngay", "path": "EBM-Dashboards/surveillance/to-chuc-{ngay}.md"}},
     {"id": "kiem-rut-bai-kho-thang", "cron": "30 18 4 * *", "tu_ngay": "2026-10-04", "grace_gio": 30,
      "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-rut-bai-kho.log"}}
   ]
