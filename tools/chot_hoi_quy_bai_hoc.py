@@ -9168,6 +9168,7 @@ _BH137_MODULE_NGUON = {
     "ema_medicines.py": ("SRC-048",),
     "scite_public.py": ("SRC-049",),
     "unpaywall.py": ("SRC-051",),
+    "ec_union_register.py": ("SRC-052",),   # 03/10: đường dự phòng của SRC-048 khi VPN bật (PR y khoa #63)
     "feeds.py": "chưa khai: họ feed/lane — sổ mới khai riêng kcb.vn (SRC-020) và NICE qua Europe PMC (SRC-037); các feed "
                 "RSS/Atom và làn tạp chí còn lại chưa có mục, sức khoẻ của chúng chỉ hiện ở khối source_health của lượt tuần",
     "rss_feed.py": "chưa khai: connector đọc các feed của feeds.py — cùng khoảng trống với feeds.py",
