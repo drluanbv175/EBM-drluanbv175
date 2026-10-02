@@ -1,7 +1,7 @@
 # EBM Copilot — Trợ lý AI cho Bác sĩ Y học Bằng chứng
 
-> **Bản gọn — chỉ chứa LUẬT THƯỜNG TRỰC (rút gọn 24/09/2026).** Lịch sử sự cố, số đo theo ngày, mã BH và mọi khối «ĐÍNH CHÍNH» nằm NGUYÊN VĂN ở `audit/NHAT-KY-SU-CO.md` — không nạp mỗi phiên; tra bằng `grep -n "<từ khoá>" audit/NHAT-KY-SU-CO.md`, không đọc cả tệp.
-> Sự cố/bài học MỚI ghi vào mục «SAU 24/09/2026» của tệp đó, KHÔNG nối vào đây. Tệp này chỉ nhận LUẬT mới, viết gọn 1–3 dòng; `tools/verify_claude_code_repo_alignment.py` chặn commit khi tệp vượt ngân sách ký tự.
+> **Bản gọn — chỉ chứa LUẬT THƯỜNG TRỰC (rút gọn 24/09/2026).** Lịch sử sự cố, số đo theo ngày, mã BH và mọi khối «ĐÍNH CHÍNH» nằm NGUYÊN VĂN ở `audit/NHAT-KY-SU-CO.md` (tới 01/10/2026, ĐÓNG BĂNG) và `audit/nhat-ky/` (từ 01/10/2026) — không nạp mỗi phiên; tra bằng `grep -rn "<từ khoá>" audit/NHAT-KY-SU-CO.md audit/nhat-ky/` hoặc `python3 tools/muc_luc_nhat_ky.py [từ khoá]`, không đọc cả tệp.
+> Sự cố/bài học MỚI: mỗi sự cố MỘT TỆP `audit/nhat-ky/YYYY-MM-DD-<slug>.md`, dòng đầu `# DD/MM/YYYY — <tiêu đề>` (quy ước `audit/nhat-ky/README.md`; tệp chung mà PR nào cũng nối vào cuối từng làm hai PR song song gần như chắc xung đột). KHÔNG nối vào tệp cũ, KHÔNG nối vào đây, KHÔNG commit mục lục. Tệp này chỉ nhận LUẬT mới, viết gọn 1–3 dòng; `tools/verify_claude_code_repo_alignment.py` chặn commit khi tệp vượt ngân sách ký tự, khi tệp nhật ký cũ bị đổi hoặc tệp ở `audit/nhat-ky/` sai quy ước.
 > Mọi SỐ ĐO động (số skill, số hook, số chốt BH, tác vụ lịch, CI, độ tươi, tiến độ đề tài, khoá đã phát) phải ĐO SỐNG bằng lệnh ở §9–§10 — không trích số cũ từ tài liệu.
 
 ## Mục tiêu
@@ -161,7 +161,7 @@ Dựng dashboard (EW) → cổng liêm chính → an toàn thuốc (nếu liên 
 ## 9. Tự động & lịch nền
 - Tác vụ lịch (app Claude trên Mac): đo sống bằng `list_scheduled_tasks` + `list_task_runs` và `python3 tools/kiem_lich_nen.py` (cảm biến theo TỪNG kỳ; kỳ vọng ở `sync/lich-nen-ky-vong.json`). Khôi phục/sửa tác vụ: chép `SKILL.md` từ NGUỒN GIT `sync/scheduled-tasks/` sang runtime, không chép ngược. Không tạo tệp hàng chờ tuần «gộp» để hết đỏ. App từng xoá cả loạt tác vụ — một phép đo lịch là ảnh chụp.
 - Lưới đỡ khi máy không thức đúng giờ: `tools/tu_khoi_dong.py --phong` (chỉ phóng script chủ sở hữu trong allowlist; kết quả vào hàng ứng viên; tắt bằng `--tat`). Tự vá máy móc: `tools/tu_sua_chua.py --ap-dung` (KHÔNG đụng nội dung y khoa).
-- Bộ chốt bài học: `python3 tools/chot_hoi_quy_bai_hoc.py` (mỗi mục là một lỗi CÓ THẬT, kiểm HÀNH VI trên mã sống, nhanh, ngoại tuyến). Thêm/sửa mục ⇒ chạy TRỌN BỘ; miễn trừ theo từng match (`bh10-mien:` kèm lý do). Lịch sử từng mục: `audit/NHAT-KY-SU-CO.md`.
+- Bộ chốt bài học: `python3 tools/chot_hoi_quy_bai_hoc.py` (mỗi mục là một lỗi CÓ THẬT, kiểm HÀNH VI trên mã sống, nhanh, ngoại tuyến). Thêm/sửa mục ⇒ chạy TRỌN BỘ; miễn trừ theo từng match (`bh10-mien:` kèm lý do). Lịch sử từng mục: `audit/NHAT-KY-SU-CO.md` + `audit/nhat-ky/`.
 - CI GitHub Actions hai repo: đo sống bằng `gh run list`; bật/tắt Actions và hạn mức là việc của bác sĩ.
 - **«Hệ còn gì để làm?»** = `python3 tools/tu_de_xuat_viec.py` (👤 thẩm quyền bác sĩ · 🤖 máy chạy được · 🛎 máy làm được nhưng chưa ai chạy). Báo cáo đánh giá: thư mục `audit/` (12 = đánh giá hoàn thiện 21/09; 15 = nguồn chứng cứ trên Cloud 24/09).
 
