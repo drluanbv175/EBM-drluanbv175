@@ -7,6 +7,7 @@ trong Markdown + JSON; mặc định PARTIAL/FAIL trả mã khác 0 để lịch
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -850,29 +851,80 @@ def _khoa_path() -> Path:
     return DEFAULT_WATCHLIST.parent / ".quet.lock"
 
 
+@contextlib.contextmanager
+def _mutex_khoa(kp: Path):
+    """Khoá loại trừ CẤP HỆ ĐIỀU HÀNH quanh thủ tục giành khoá (flock / msvcrt) — tự nhả khi tiến trình chết, không mồ côi.
+
+    Đặt cạnh tệp khoá (không dùng thư mục tạm: TMPDIR khác nhau giữa tác vụ lịch và phiên tay sẽ làm mỗi bên một mutex)."""
+    import os as _os
+    mp = kp.with_name(kp.name + ".mutex")
+    f = open(mp, "a+b")  # noqa: SIM115 — giữ mở suốt vùng găng
+    try:
+        if _os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            if _os.name == "nt":
+                import msvcrt
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        f.close()
+
+
 def gianh_khoa(han_phut: int = 30) -> tuple[bool, str]:
     """Khoá chống 2 máy/2 tiến trình cùng quét (OneDrive đồng bộ 2 máy — K3).
 
     Khoá cũ quá `han_phut` coi là MỒ CÔI (tiến trình chết giữa chừng) và được thay.
     Không giành được ⇒ caller phải FAIL RÕ RÀNG, không lặng lẽ chạy tiếp (I7).
+
+    VÁ 02/10/2026 (F5, kiểm toàn diện): bản cũ «kiểm rồi mới ghi» (`exists()` rồi `write_text`) — đo 10 tiến trình cùng giành
+    một mốc, 10 vòng: 10/10 vòng có > 1 tiến trình cùng «giành được» (5–10 tiến trình/vòng) ⇒ hai lượt quét cùng ghi con trỏ/sổ.
+    Chỉ đổi sang `O_EXCL` vẫn hở khi đã có khoá MỒ CÔI (đo 8 tiến trình: 2–5 tiến trình/vòng cùng thay khoá mồ côi — đứa đến sau
+    gỡ nhầm khoá mới, hoặc đọc phải khoá rỗng đang ghi dở). Nay: cả thủ tục đọc–gỡ–tạo chạy TRONG `_mutex_khoa` (khoá hệ điều
+    hành, tuần tự hoá mọi tiến trình trên MỘT máy) và tệp khoá vẫn tạo bằng `O_EXCL` (phòng bản cũ chưa vá chạy song song).
+    Giữa HAI MÁY vẫn chỉ dựa vào OneDrive đồng bộ tệp khoá (giới hạn cũ, không đổi).
     """
+    kp = _khoa_path()
+    try:
+        return _gianh_trong_mutex(kp, han_phut)
+    except OSError as e:  # không khoá được vùng găng (Windows LK_LOCK hết 10 lần thử, thư mục chỉ đọc…)
+        return False, f"không khoá được vùng găng của khoá quét ({e.__class__.__name__}) — không chạy chồng"
+
+
+def _gianh_trong_mutex(kp: Path, han_phut: int) -> tuple[bool, str]:
     import json as _j
     import os as _os
     import socket as _sk
     import time as _t
-    kp = _khoa_path()
-    if kp.exists():
+    with _mutex_khoa(kp):
+        if kp.exists():
+            try:
+                d = _j.loads(kp.read_text(encoding="utf-8"))
+                tuoi_phut = (_t.time() - float(d.get("luc", 0))) / 60
+                if tuoi_phut < han_phut:
+                    return False, (f"máy {d.get('may','?')} (pid {d.get('pid','?')}) đang quét "
+                                   f"từ {tuoi_phut:.0f} phút trước — không chạy chồng")
+            except (ValueError, OSError, AttributeError, TypeError):
+                pass  # khoá hỏng định dạng → coi như mồ côi
+            try:
+                kp.unlink()
+            except FileNotFoundError:
+                pass
         try:
-            d = _j.loads(kp.read_text(encoding="utf-8"))
-            tuoi_phut = (_t.time() - float(d.get("luc", 0))) / 60
-            if tuoi_phut < han_phut:
-                return False, (f"máy {d.get('may','?')} (pid {d.get('pid','?')}) đang quét "
-                               f"từ {tuoi_phut:.0f} phút trước — không chạy chồng")
-        except (ValueError, OSError):
-            pass  # khoá hỏng định dạng → coi như mồ côi
-    kp.write_text(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(),
-                            "luc": _t.time()}), encoding="utf-8")
-    return True, ""
+            fd = _os.open(str(kp), _os.O_CREAT | _os.O_EXCL | _os.O_WRONLY, 0o644)
+        except FileExistsError:
+            return False, "tranh chấp khoá quét (tiến trình khác vừa giành) — không chạy chồng"
+        with _os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(), "luc": _t.time()}))
+        return True, ""
 
 
 def tra_khoa() -> None:
