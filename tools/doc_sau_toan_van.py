@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import json
 import re
 import sys
 from datetime import date
@@ -206,13 +207,25 @@ def main() -> int:
     if not pmids:
         print("✗ Không có PMID đầu vào (--queue hoặc --pmid).")
         return 1
-    co, thieu, dang_khac = [], [], []
+    co, thieu, dang_khac, trinh_duyet = [], [], [], []
     for pm in sorted(pmids):
         khop = list(KHO.glob(f"PMID-{pm}_*.xml"))
         if not khop:
             # kho có bản HTML/PDF tầng-2 (Unpaywall) → toàn văn CÓ, chỉ là không
             # qua bộ bóc JATS — phiên thẩm định đọc trực tiếp file đó
             khac = sorted(KHO.glob(f"PMID-{pm}_UPW.*"))
+            # 02/10/2026: bài KHÔNG có bản OA nhưng đã đọc qua TRÌNH DUYỆT CÓ BÁC SĨ (tools/doc_toan_van_co_nguoi.py) — bản đọc
+            # doc_sau/PMID-<n>.md là trích xuất CÓ CẤU TRÚC (không nguyên văn); độ đầy đủ ghi trong hồ sơ JSON.
+            hs_td = KHO / "trinh_duyet" / f"PMID-{pm}.json"
+            if hs_td.exists():
+                try:
+                    dd = json.loads(hs_td.read_text(encoding="utf-8")).get("kiem", {}).get("do_day_du", "?")
+                except (OSError, ValueError):
+                    dd = "?"
+                trinh_duyet.append(pm)
+                print(f"  ◑ {pm}: toàn văn đọc qua trình duyệt có bác sĩ — trích xuất có cấu trúc, độ đầy đủ {dd} "
+                      f"(doc_sau/PMID-{pm}.md)")
+                continue
             if khac:
                 dang_khac.append(pm)
                 print(f"  ◐ {pm}: toàn văn dạng {khac[0].suffix[1:].upper()} "
@@ -228,9 +241,12 @@ def main() -> int:
             thieu.append(pm)
             print(f"  ⚠ {pm}: XML hỏng — bỏ qua, coi như chưa có toàn văn")
     print(f"\nĐọc sâu: {len(co)} bài JATS · {len(dang_khac)} bài toàn văn HTML/PDF "
-          f"(đọc trực tiếp) · {len(thieu)} bài CHỈ TÓM TẮT (ghi rõ trên thẻ, không đoán)")
+          f"(đọc trực tiếp) · {len(trinh_duyet)} bài đọc qua trình duyệt có bác sĩ · {len(thieu)} bài CHỈ TÓM TẮT "
+          f"(ghi rõ trên thẻ, không đoán)")
     if thieu:
         print("  Chỉ tóm tắt: " + " ".join(thieu))
+        print("  → bài không có OA: Claude mở trình duyệt, bác sĩ vượt chặn/đăng nhập — "
+              "python3 tools/doc_toan_van_co_nguoi.py --pmid " + " ".join(thieu))
     print("Cần bác sĩ kiểm chứng.")
     return 0
 
