@@ -8492,6 +8492,140 @@ def bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi():
     return True, ""
 
 
+def bh146_mcp_pubmed_windows_chay_may_chu_khong_dung_exec():
+    """02/10 — lớp bọc MCP `pubmed-search` kết thúc bằng `os.execvpe(...)`. Trên POSIX đó là thay hẳn tiến trình; trên
+    WINDOWS `os.exec*` chỉ tạo một tiến trình MỚI rồi cho tiến trình hiện tại thoát NGAY với mã 0 (đo 01/10 trên máy Windows
+    thật: cha `poll()` = 0 sau vài giây trong khi con vẫn chạy) và không bọc dấu nháy đối số có dấu cách. Hệ quả đo được:
+    khởi chạy MCP qua lớp bọc thành công 3/6 lượt (python lớp bọc) và 5/6 (`uv run` đúng lệnh `.mcp.json`), trong khi
+    `uvx pubmed-search-mcp` chạy thẳng 6/6 — «Connection closed» chập chờn, lúc có lúc không, không ai đoán ra gốc. Sau vá
+    `chay_may_chu`: 15/15 và 12/12. Vá: Windows chạy máy chủ như tiến trình CON (stdio kế thừa nguyên, chờ, trả đúng mã thoát,
+    phân giải tệp thực thi theo PATH của `env` vì CreateProcess tìm theo PATH của tiến trình CHA); POSIX giữ `os.execvpe`.
+    Kiểm HÀNH VI `chay_may_chu(..., la_windows=...)` của TỆP THẬT, ngoại tuyến, chạy được ở mọi nền (cờ là tham số): (a)
+    Windows: con ngủ rồi ghi dấu và thoát 7 ⇒ trả đúng 7 SAU KHI con xong, không gọi `os.execvpe`; (b) stdin/stdout/stderr
+    của con nối thẳng vào ống của cha (không chèn lớp đệm vào kênh JSON-RPC); (c) đối số có dấu cách không bị tách; (d) POSIX
+    vẫn `os.execvpe` đúng đối số và KHÔNG chạy tiến trình con; (e) không chạy được ⇒ mã 1 + nói rõ ở stderr; (f) mặc định
+    theo `os.name` cả hai chiều. Kèm hợp đồng tĩnh bằng ast: mọi lời gọi `os.exec*` nằm TRONG `chay_may_chu` và `main()` gọi
+    nó (ai chèn lại `os.execvpe` trần vào `main()` là mang lỗi cũ trở lại — dòng khớp là dòng THI HÀNH, không phải chữ trong
+    docstring)."""
+    import ast
+    import contextlib
+    import io
+    import os
+    import subprocess
+    import tempfile as _tf
+    import time as _tm
+    from unittest import mock
+    tep = REPO / "tools" / "mcp" / "chay_pubmed_search_mcp.py"
+    if not tep.is_file():
+        return False, f"không thấy {tep} — đổi tên/dời lớp bọc thì sửa `.mcp.json`, BH139 và chốt này cùng lúc"
+    try:
+        M = _nap(tep, "_chay_pubmed_mcp_bh146")
+    except Exception as loi:  # noqa: BLE001
+        return False, f"không nạp được lớp bọc MCP ({type(loi).__name__}: {loi})"
+    if not callable(getattr(M, "chay_may_chu", None)):
+        return False, "lớp bọc không còn `chay_may_chu` — Windows lại rơi về os.execvpe (MCP «Connection closed» chập chờn)"
+    # --- hợp đồng tĩnh: mọi os.exec* nằm trong chay_may_chu; main() gọi chay_may_chu
+    cay = ast.parse(tep.read_text(encoding="utf-8"))
+
+    def _la_exec(n):
+        return (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr.startswith("exec")
+                and isinstance(n.func.value, ast.Name) and n.func.value.id == "os")
+
+    tong = sum(1 for n in ast.walk(cay) if _la_exec(n))
+    ham = {f.name: f for f in cay.body if isinstance(f, ast.FunctionDef)}
+    trong = sum(1 for n in ast.walk(ham["chay_may_chu"]) if _la_exec(n))
+    if tong != trong or trong < 1:
+        return False, (f"có {tong - trong} lời gọi os.exec* NGOÀI `chay_may_chu` (hoặc POSIX mất os.execvpe: {trong}) — "
+                       "trên Windows nó không thay tiến trình")
+    if "main" not in ham or not any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "chay_may_chu"
+                                    for n in ast.walk(ham["main"])):
+        return False, "`main()` không gọi `chay_may_chu` — đường khởi chạy thật không đi qua chỗ đã vá"
+
+    def _cam(*_a, **_k):
+        raise AssertionError("os.execvpe bị gọi")
+
+    with _tf.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+        d = Path(d)
+        dau = d / "con-xong.marker"
+        con = d / "con.py"
+        con.write_text(f"import sys, time\ntime.sleep(0.7)\nopen({str(dau)!r}, 'w').write('x')\nsys.exit(7)\n", encoding="utf-8")
+        env = dict(os.environ)
+        b = _tm.time()
+        try:
+            with mock.patch.object(M.os, "execvpe", _cam), contextlib.redirect_stderr(io.StringIO()):
+                rc = M.chay_may_chu([sys.executable, str(con)], env, la_windows=True)
+        except AssertionError:
+            return False, "Windows gọi os.execvpe — nó không thay tiến trình, cha thoát mã 0 ngay trong khi máy chủ còn chạy"
+        if rc != 7 or not dau.exists() or _tm.time() - b < 0.6:
+            return False, (f"Windows không chờ con rồi trả đúng mã thoát (trả {rc}, con đã xong: {dau.exists()}) — lớp bọc "
+                           "báo «xong» trước khi máy chủ xong, uv/Claude Code kéo máy chủ chết theo")
+        # (b) stdio kế thừa nguyên: chạy trong tiến trình riêng nối ống
+        con2 = d / "con2.py"
+        con2.write_text("import sys\nd = sys.stdin.readline().strip()\nprint('PHAN-HOI:' + d, flush=True)\n"
+                        "print('LOI:' + d, file=sys.stderr, flush=True)\n", encoding="utf-8")
+        ma = (f"import sys; sys.path.insert(0, {str(tep.parent)!r}); import chay_pubmed_search_mcp as M; "
+              f"sys.exit(M.chay_may_chu([sys.executable, {str(con2)!r}], dict(__import__('os').environ), la_windows=True))")
+        kq = subprocess.run([sys.executable, "-B", "-c", ma], input=b"XIN-CHAO\n", capture_output=True, timeout=60)
+        if kq.returncode != 0 or b"PHAN-HOI:XIN-CHAO" not in kq.stdout or b"LOI:XIN-CHAO" not in kq.stderr:
+            return False, ("stdin/stdout/stderr của máy chủ không nối thẳng vào cha trên Windows (mã "
+                           f"{kq.returncode}) — kênh JSON-RPC của MCP bị chèn lớp đệm hoặc mất")
+        # (c) đối số có dấu cách
+        argv = d / "argv.txt"
+        con3 = d / "con3.py"
+        con3.write_text(f"import sys\nopen({str(argv)!r}, 'w', encoding='utf-8').write(repr(sys.argv[1:]))\n", encoding="utf-8")
+        M.chay_may_chu([sys.executable, str(con3), "có dấu cách", "a b"], env, la_windows=True)
+        if not argv.exists() or argv.read_text(encoding="utf-8") != repr(["có dấu cách", "a b"]):
+            return False, "đối số có dấu cách bị tách/bóp méo khi chạy con trên Windows"
+    # (d) POSIX giữ execvpe, không chạy con
+    cuoc = []
+    env2 = {"PATH": "x"}
+    with mock.patch.object(M.os, "execvpe", lambda *a: cuoc.append(a)), \
+            mock.patch.object(M.subprocess, "call", side_effect=AssertionError("POSIX không được chạy tiến trình con")):
+        try:
+            rc = M.chay_may_chu(["uvx", "pubmed-search-mcp"], env2, la_windows=False)
+        except AssertionError as loi:
+            return False, str(loi)
+    if rc != 0 or cuoc != [("uvx", ["uvx", "pubmed-search-mcp"], env2)]:
+        return False, f"POSIX không còn thay tiến trình bằng os.execvpe đúng đối số (gọi: {cuoc}, mã {rc})"
+    # (e) không chạy được ⇒ mã 1 + nói rõ ở stderr
+    loi_io = io.StringIO()
+    with contextlib.redirect_stderr(loi_io):
+        rc = M.chay_may_chu(["khong-ton-tai-xyz-pubmed-bh146"], {"PATH": ""}, la_windows=True)
+    if rc != 1 or "không chạy được" not in loi_io.getvalue():
+        return False, f"không khởi chạy được máy chủ mà trả mã {rc} / không nói rõ ở stderr — hỏng im lặng"
+    # (g) CreateProcess tìm tệp thực thi theo PATH của tiến trình CHA ⇒ phải phân giải sẵn theo PATH của `env` truyền cho con
+    thay, goi_g = {}, []
+    env_g = {"PATH": "dir-uv-gia"}
+    with mock.patch.object(M.shutil, "which", lambda t, path=None: thay.update(ten=t, path=path) or "uvx-da-phan-giai"), \
+            mock.patch.object(M.subprocess, "call", lambda lenh, env=None: goi_g.append((lenh, env)) or 0), \
+            mock.patch.object(M.os, "execvpe", _cam):
+        M.chay_may_chu(["uvx", "pubmed-search-mcp"], env_g, la_windows=True)
+    if thay != {"ten": "uvx", "path": "dir-uv-gia"} or goi_g != [(["uvx-da-phan-giai", "pubmed-search-mcp"], env_g)]:
+        return False, ("Windows không phân giải tệp thực thi theo PATH của `env` truyền cho con (CreateProcess tìm theo PATH "
+                       f"của cha) — `uv`/`uvx` ở ~/.local/bin không tìm thấy khi PATH của app khác (which={thay}, gọi={goi_g})")
+    # (f) mặc định theo os.name, cả hai chiều
+    goi = []
+    with mock.patch.object(M.os, "name", "nt"), mock.patch.object(M.shutil, "which", lambda t, path=None: t), \
+            mock.patch.object(M.subprocess, "call", lambda lenh, env=None: goi.append(lenh) or 0), \
+            mock.patch.object(M.os, "execvpe", _cam):
+        try:
+            rc = M.chay_may_chu(["a", "b"], {"PATH": ""})
+        except AssertionError:
+            return False, "mặc định không theo os.name: máy Windows vẫn đi đường os.execvpe"
+    if rc != 0 or goi != [["a", "b"]]:
+        return False, f"os.name == 'nt' mà không chạy tiến trình con (gọi: {goi}, mã {rc})"
+    cuoc.clear()
+    with mock.patch.object(M.os, "name", "posix"), mock.patch.object(M.os, "execvpe", lambda *a: cuoc.append(a)), \
+            mock.patch.object(M.subprocess, "call", side_effect=AssertionError("POSIX chạy con")):
+        try:
+            M.chay_may_chu(["a", "b"], {"PATH": ""})
+        except AssertionError as loi:
+            return False, f"os.name == 'posix' mà không đi đường os.execvpe ({loi})"
+    if len(cuoc) != 1:
+        return False, "os.name == 'posix' mà không gọi os.execvpe"
+    return True, ""
+
+
 def bh136_bao_cao_toi_noi_roi_moi_tien_con_tro():
     """29/09 — lượt quét tuần W40 SẬP ở bước đo độ trễ vì một ứng viên mang `publication_date` kiểu số (engine chỉ trả
     NĂM). Lỗi nổ SAU khi con trỏ đã tiến cho 47 chủ đề và sổ dự phòng đã ghi «đã trình», TRƯỚC khi có báo cáo ⇒ cửa sổ
@@ -9257,6 +9391,7 @@ BAI_HOC = [
     ("BH137", "30/09", "Sổ nguồn phủ mọi module nguồn của engine; tuyên bố độ phủ không gộp nguồn gọi-theo-yêu-cầu vào «giám sát tự động», in tên từng làn nhập tay và mọi khoảng trống đã khai", bh137_so_nguon_phu_module_engine_va_do_phu_khong_noi_qua),
     ("BH138", "30/09", "Trạm web hội: quét lại được thì nhãn về active; 0 tiêu đề không tính là thành công, không ghi đè state", bh138_nhan_tram_web_hoi_theo_luot_quet_gan_nhat),
     ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
+    ("BH146", "02/10", "Lớp bọc MCP pubmed-search trên Windows chạy máy chủ như tiến trình CON (stdio kế thừa, chờ, trả đúng mã thoát) — `os.exec*` Windows không thay tiến trình, MCP «Connection closed» chập chờn; POSIX giữ os.execvpe", bh146_mcp_pubmed_windows_chay_may_chu_khong_dung_exec),
     ("BH143", "01/10", "Bộ nhớ Claude của repo y khoa có mirror RIÊNG (memory-sync/medical-ebm-automation/): không trộn hai MEMORY.md, không bắt nhầm worktree tạm, dò cho gốc không chọn thư mục repo y khoa, hai dự án chung thư mục ⇒ từ chối", bh143_child_repo_memory_has_own_mirror),
 ]
 
