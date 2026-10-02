@@ -7899,6 +7899,101 @@ def bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky():
 
 
 
+def bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron():
+    """02/10 (HV-01) — hook SessionStart từng chạy TRỌN bộ chốt hồi quy (`chot_hoi_quy_bai_hoc.py --im-khi-on`) với
+    `timeout: 30`, trong khi bộ chốt cần 46–55 giây trên máy thật: hook hết hạn ở 18/19 phiên từ 24/09. Lệnh hook kết
+    thúc bằng `; true` và chế độ `--im-khi-on` im lặng khi không có gì đỏ ⇒ «bị cắt giữa chừng» đọc GIỐNG HỆT «mọi chốt
+    xanh»: lưới an toàn mù 8 ngày mà không ai thấy (im lặng bị đọc thành xanh, CLAUDE.md §0.2).
+    Vá: hook gọi `tools/chot_hoi_quy_nen.py --doc --im-khi-on` — ĐỌC `state/chot-hoi-quy-gan-nhat.json` (< 1 giây) và
+    phóng một lượt `--chay` NỀN khi kết quả cũ. Không có đường nào im lặng ngoài «xanh THẬT, còn mới (≤ 72 giờ)».
+
+    Kiểm (a) bản khai hook trong git: đúng MỘT hook chốt hồi quy, gọi bản đọc nền, KHÔNG gọi trực tiếp bộ chốt trọn, timeout
+    ≤ 30; (b) HÀNH VI của `danh_gia` (hàm thuần): chưa có kết quả / xanh cũ > 72 giờ / lượt nền LỖI / dấu thời gian tương
+    lai ⇒ CHUA_DO (KHÔNG im lặng); chỉ xanh còn mới mới im lặng; đỏ ⇒ in báo cáo; (c) `chay_tron_bo_chot` trên bộ chốt GIẢ:
+    mã thoát lạ/quá hạn ⇒ LOI (không bao giờ XANH), khoá được gỡ, đang có lượt khác ⇒ mã 3 và KHÔNG ghi đè."""
+    import json as _json
+    import subprocess as _sp
+    import tempfile
+    from datetime import datetime, timedelta, timezone
+
+    cfg_p = REPO / "sync" / "hooks-sessionstart.json"
+    nen_p = REPO / "tools" / "chot_hoi_quy_nen.py"
+    if not cfg_p.exists() or not nen_p.exists():
+        return False, "thiếu sync/hooks-sessionstart.json hoặc tools/chot_hoi_quy_nen.py"
+    try:
+        cfg = _json.loads(cfg_p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return False, f"không đọc được sync/hooks-sessionstart.json: {e}"
+    hooks = [h for m in cfg.get("SessionStart") or [] for h in m.get("hooks") or []
+             if "chot_hoi_quy" in str(h.get("command"))]
+    if len(hooks) != 1:
+        return False, f"kỳ vọng ĐÚNG 1 hook chốt hồi quy, có {len(hooks)}"
+    lenh = str(hooks[0].get("command"))
+    if "tools/chot_hoi_quy_nen.py --doc --im-khi-on" not in lenh:
+        return False, "hook KHÔNG gọi tools/chot_hoi_quy_nen.py --doc --im-khi-on"
+    if "chot_hoi_quy_bai_hoc.py" in lenh:
+        return False, "hook chạy trực tiếp bộ chốt trọn (46–55 s > timeout) ⇒ bị cắt giữa chừng, lưới mù"
+    if int(hooks[0].get("timeout") or 0) > 30:
+        return False, f"timeout hook {hooks[0].get('timeout')} s > 30"
+
+    m = _nap(nen_p, "bh147_chot_nen")
+    bg = datetime(2026, 10, 2, 12, 0, tzinfo=timezone.utc)
+
+    def kq(tt, gio, bao=""):
+        return {"trang_thai": tt, "bao_cao": bao, "head": "h", "ket_thuc": (bg - timedelta(hours=gio)).isoformat()}
+
+    ca = [
+        ("chưa có kết quả", None, "CHUA_DO"),
+        ("xanh cũ 100 giờ", kq("XANH", 100), "CHUA_DO"),
+        ("lượt nền LỖI", kq("LOI", 1, "x"), "CHUA_DO"),
+        ("dấu thời gian tương lai", kq("XANH", -3), "CHUA_DO"),
+        ("đỏ", kq("DO", 1, "✗ BH1"), "DO"),
+        ("xanh còn mới", kq("XANH", 1), "XANH_IM"),
+    ]
+    for nhan, d, mong in ca:
+        loai = m.danh_gia(d, bg, "h")[0]
+        if loai != mong:
+            return False, f"danh_gia «{nhan}» trả {loai}, kỳ vọng {mong}"
+
+    class _Gia:
+        def __init__(self, ma, out="", err=""):
+            self.returncode, self.stdout, self.stderr = ma, out, err
+
+    with tempfile.TemporaryDirectory() as td:
+        st = Path(td) / "state"
+        m.THU_MUC_STATE, m.TEP_KET_QUA, m.TEP_KHOA = st, st / "kq.json", st / "khoa"
+        m.head_hien_tai = lambda: "h"
+
+        def chay(gia):
+            m.subprocess = type("S", (), {"run": staticmethod(gia), "TimeoutExpired": _sp.TimeoutExpired,
+                                          "SubprocessError": _sp.SubprocessError})
+            return m.chay_tron_bo_chot()
+
+        def het_han(*a, **k):
+            raise _sp.TimeoutExpired(cmd="x", timeout=1)
+
+        for nhan, gia, mong in (("mã lạ 2", lambda *a, **k: _Gia(2, "", "boom"), "LOI"),
+                                ("quá hạn", het_han, "LOI"),
+                                ("mã 1", lambda *a, **k: _Gia(1, "✗ BH9"), "DO"),
+                                ("mã 0", lambda *a, **k: _Gia(0, ""), "XANH")):
+            if chay(gia) != 0:
+                return False, f"chay_tron_bo_chot «{nhan}» không trả 0"
+            tt = _json.loads(m.TEP_KET_QUA.read_text(encoding="utf-8")).get("trang_thai")
+            if tt != mong:
+                return False, f"bộ chốt giả «{nhan}» ⇒ trạng thái {tt}, kỳ vọng {mong}"
+            if m.TEP_KHOA.exists():
+                return False, f"khoá không được gỡ sau lượt «{nhan}»"
+        m.TEP_KHOA.write_text("9", encoding="utf-8")
+        truoc = m.TEP_KET_QUA.read_text(encoding="utf-8")
+        import contextlib as _cl
+        import io as _io
+        with _cl.redirect_stderr(_io.StringIO()):  # lượt bỏ qua tự in một dòng ở stderr — không làm ồn báo cáo chốt
+            ma_khoa = chay(lambda *a, **k: _Gia(1, "ghi đè?"))
+        if ma_khoa != 3 or m.TEP_KET_QUA.read_text(encoding="utf-8") != truoc:
+            return False, "đang có lượt khác mà vẫn chạy/ghi đè (kỳ vọng mã 3, không đổi kết quả)"
+    return True, "hook gọi bản đọc nền (timeout ≤ 30); 6 ca danh_gia + 5 ca chạy giả: không im lặng khi chưa đo/cũ/lỗi"
+
+
 def bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong():
     """27/09 — orchestrator `--cu-nhat 5`: bước A4 của gói Orlistat_AKI_FDA ĐỎ vì URL fda.gov «chưa xác minh lần nào», trong
     khi cổng B2 cho qua nhờ bằng chứng mở bằng TRÌNH DUYỆT THẬT (24/09). Sổ gọi `verify_url_online` KHÔNG kèm đường dashboard
@@ -9237,101 +9332,6 @@ def bh143_child_repo_memory_has_own_mirror():
     return True, ""
 
 
-def bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron():
-    """02/10 (HV-01) — hook SessionStart từng chạy TRỌN bộ chốt hồi quy (`chot_hoi_quy_bai_hoc.py --im-khi-on`) với
-    `timeout: 30`, trong khi bộ chốt cần 46–55 giây trên máy thật: hook hết hạn ở 18/19 phiên từ 24/09. Lệnh hook kết
-    thúc bằng `; true` và chế độ `--im-khi-on` im lặng khi không có gì đỏ ⇒ «bị cắt giữa chừng» đọc GIỐNG HỆT «mọi chốt
-    xanh»: lưới an toàn mù 8 ngày mà không ai thấy (im lặng bị đọc thành xanh, CLAUDE.md §0.2).
-    Vá: hook gọi `tools/chot_hoi_quy_nen.py --doc --im-khi-on` — ĐỌC `state/chot-hoi-quy-gan-nhat.json` (< 1 giây) và
-    phóng một lượt `--chay` NỀN khi kết quả cũ. Không có đường nào im lặng ngoài «xanh THẬT, còn mới (≤ 72 giờ)».
-
-    Kiểm (a) bản khai hook trong git: đúng MỘT hook chốt hồi quy, gọi bản đọc nền, KHÔNG gọi trực tiếp bộ chốt trọn, timeout
-    ≤ 30; (b) HÀNH VI của `danh_gia` (hàm thuần): chưa có kết quả / xanh cũ > 72 giờ / lượt nền LỖI / dấu thời gian tương
-    lai ⇒ CHUA_DO (KHÔNG im lặng); chỉ xanh còn mới mới im lặng; đỏ ⇒ in báo cáo; (c) `chay_tron_bo_chot` trên bộ chốt GIẢ:
-    mã thoát lạ/quá hạn ⇒ LOI (không bao giờ XANH), khoá được gỡ, đang có lượt khác ⇒ mã 3 và KHÔNG ghi đè."""
-    import json as _json
-    import subprocess as _sp
-    import tempfile
-    from datetime import datetime, timedelta, timezone
-
-    cfg_p = REPO / "sync" / "hooks-sessionstart.json"
-    nen_p = REPO / "tools" / "chot_hoi_quy_nen.py"
-    if not cfg_p.exists() or not nen_p.exists():
-        return False, "thiếu sync/hooks-sessionstart.json hoặc tools/chot_hoi_quy_nen.py"
-    try:
-        cfg = _json.loads(cfg_p.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as e:
-        return False, f"không đọc được sync/hooks-sessionstart.json: {e}"
-    hooks = [h for m in cfg.get("SessionStart") or [] for h in m.get("hooks") or []
-             if "chot_hoi_quy" in str(h.get("command"))]
-    if len(hooks) != 1:
-        return False, f"kỳ vọng ĐÚNG 1 hook chốt hồi quy, có {len(hooks)}"
-    lenh = str(hooks[0].get("command"))
-    if "tools/chot_hoi_quy_nen.py --doc --im-khi-on" not in lenh:
-        return False, "hook KHÔNG gọi tools/chot_hoi_quy_nen.py --doc --im-khi-on"
-    if "chot_hoi_quy_bai_hoc.py" in lenh:
-        return False, "hook chạy trực tiếp bộ chốt trọn (46–55 s > timeout) ⇒ bị cắt giữa chừng, lưới mù"
-    if int(hooks[0].get("timeout") or 0) > 30:
-        return False, f"timeout hook {hooks[0].get('timeout')} s > 30"
-
-    m = _nap(nen_p, "bh147_chot_nen")
-    bg = datetime(2026, 10, 2, 12, 0, tzinfo=timezone.utc)
-
-    def kq(tt, gio, bao=""):
-        return {"trang_thai": tt, "bao_cao": bao, "head": "h", "ket_thuc": (bg - timedelta(hours=gio)).isoformat()}
-
-    ca = [
-        ("chưa có kết quả", None, "CHUA_DO"),
-        ("xanh cũ 100 giờ", kq("XANH", 100), "CHUA_DO"),
-        ("lượt nền LỖI", kq("LOI", 1, "x"), "CHUA_DO"),
-        ("dấu thời gian tương lai", kq("XANH", -3), "CHUA_DO"),
-        ("đỏ", kq("DO", 1, "✗ BH1"), "DO"),
-        ("xanh còn mới", kq("XANH", 1), "XANH_IM"),
-    ]
-    for nhan, d, mong in ca:
-        loai = m.danh_gia(d, bg, "h")[0]
-        if loai != mong:
-            return False, f"danh_gia «{nhan}» trả {loai}, kỳ vọng {mong}"
-
-    class _Gia:
-        def __init__(self, ma, out="", err=""):
-            self.returncode, self.stdout, self.stderr = ma, out, err
-
-    with tempfile.TemporaryDirectory() as td:
-        st = Path(td) / "state"
-        m.THU_MUC_STATE, m.TEP_KET_QUA, m.TEP_KHOA = st, st / "kq.json", st / "khoa"
-        m.head_hien_tai = lambda: "h"
-
-        def chay(gia):
-            m.subprocess = type("S", (), {"run": staticmethod(gia), "TimeoutExpired": _sp.TimeoutExpired,
-                                          "SubprocessError": _sp.SubprocessError})
-            return m.chay_tron_bo_chot()
-
-        def het_han(*a, **k):
-            raise _sp.TimeoutExpired(cmd="x", timeout=1)
-
-        for nhan, gia, mong in (("mã lạ 2", lambda *a, **k: _Gia(2, "", "boom"), "LOI"),
-                                ("quá hạn", het_han, "LOI"),
-                                ("mã 1", lambda *a, **k: _Gia(1, "✗ BH9"), "DO"),
-                                ("mã 0", lambda *a, **k: _Gia(0, ""), "XANH")):
-            if chay(gia) != 0:
-                return False, f"chay_tron_bo_chot «{nhan}» không trả 0"
-            tt = _json.loads(m.TEP_KET_QUA.read_text(encoding="utf-8")).get("trang_thai")
-            if tt != mong:
-                return False, f"bộ chốt giả «{nhan}» ⇒ trạng thái {tt}, kỳ vọng {mong}"
-            if m.TEP_KHOA.exists():
-                return False, f"khoá không được gỡ sau lượt «{nhan}»"
-        m.TEP_KHOA.write_text("9", encoding="utf-8")
-        truoc = m.TEP_KET_QUA.read_text(encoding="utf-8")
-        import contextlib as _cl
-        import io as _io
-        with _cl.redirect_stderr(_io.StringIO()):  # lượt bỏ qua tự in một dòng ở stderr — không làm ồn báo cáo chốt
-            ma_khoa = chay(lambda *a, **k: _Gia(1, "ghi đè?"))
-        if ma_khoa != 3 or m.TEP_KET_QUA.read_text(encoding="utf-8") != truoc:
-            return False, "đang có lượt khác mà vẫn chạy/ghi đè (kỳ vọng mã 3, không đổi kết quả)"
-    return True, "hook gọi bản đọc nền (timeout ≤ 30); 6 ca danh_gia + 5 ca chạy giả: không im lặng khi chưa đo/cũ/lỗi"
-
-
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -9466,6 +9466,7 @@ BAI_HOC = [
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
+    ("BH147", "02/10", "Hook chốt hồi quy ĐỌC kết quả chạy nền (chot_hoi_quy_nen.py), không chạy trọn bộ chốt 46–55 s dưới timeout 30 s; chưa đo/cũ/lỗi ⇒ 🟡 CHƯA ĐO ĐƯỢC, chỉ xanh THẬT còn mới mới im lặng", bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron),
     ("BH124", "27/09", "Không email cá nhân viết cứng trong mã repo công khai — email liên hệ API lấy từ cấu hình", bh124_khong_email_ca_nhan_viet_cung_trong_ma),
     ("BH125", "27/09", "Dự phòng tính phí của vòng quét tuần XOAY VÒNG (tối đa 2 chủ đề/TUẦN — 29/09) và không trình lại bài đã trình", bh125_du_phong_xoay_vong_va_khong_trinh_lai),
 
@@ -9488,7 +9489,6 @@ BAI_HOC = [
     ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
     ("BH146", "02/10", "Lớp bọc MCP pubmed-search trên Windows chạy máy chủ như tiến trình CON (stdio kế thừa, chờ, trả đúng mã thoát) — `os.exec*` Windows không thay tiến trình, MCP «Connection closed» chập chờn; POSIX giữ os.execvpe", bh146_mcp_pubmed_windows_chay_may_chu_khong_dung_exec),
     ("BH143", "01/10", "Bộ nhớ Claude của repo y khoa có mirror RIÊNG (memory-sync/medical-ebm-automation/): không trộn hai MEMORY.md, không bắt nhầm worktree tạm, dò cho gốc không chọn thư mục repo y khoa, hai dự án chung thư mục ⇒ từ chối", bh143_child_repo_memory_has_own_mirror),
-    ("BH147", "02/10", "Hook chốt hồi quy ĐỌC kết quả chạy nền (chot_hoi_quy_nen.py), không chạy trọn bộ chốt 46–55 s dưới timeout 30 s; chưa đo/cũ/lỗi ⇒ 🟡 CHƯA ĐO ĐƯỢC, chỉ xanh THẬT còn mới mới im lặng", bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron),
 ]
 
 
