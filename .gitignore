@@ -82,6 +82,10 @@
 #     .claude/state/*.jsonl do phiên làm việc sinh ra). Quy tắc /.claude/* ở trên chỉ áp cho GỐC,
 #     nên thư mục lồng phải khai riêng — state phiên là runtime từng máy, không phải nội dung skill.
 sync/skills/**/.claude/
+# 3d) (03/10/2026, AN-09 kiểm toàn diện) Trạng thái phiên do hook harness ghi vào `.claude/state|sessions` của MỌI thư mục làm
+#     việc (tools/, tools/eval/, tools/vietnamize/…) — 29 tệp từng bị track: lộ đường dẫn máy + mã phiên ra repo công khai.
+**/.claude/state/
+**/.claude/sessions/
 
 # 4) Bên trong sync/: track skills/ + HẠ TẦNG CÀI ĐẶT CHO MÁY KIA.
 #    Loại trừ đúng một thứ: memory/ (bộ nhớ cá nhân, đi riêng qua OneDrive).
