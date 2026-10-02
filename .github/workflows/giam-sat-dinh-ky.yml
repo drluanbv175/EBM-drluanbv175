@@ -13,15 +13,19 @@
 #              KHÔNG nằm trong git; EBM_MASTER và EBM-Dashboards bị .gitignore
 #              CỐ Ý). Việc đó vẫn thuộc máy bác sĩ — xem Routine ở HUONG-DAN.
 #
-# Thiếu secret SIBLING_REPO_TOKEN thì 3 verifier cần repo anh em tự bỏ qua,
-# 11 verifier còn lại vẫn chạy. Chạy được ngay ngày đầu, không cần cấu hình gì.
+# Repo anh em medical-ebm-automation CÔNG KHAI nên lấy được bằng token mặc định của lượt chạy; secret SIBLING_REPO_TOKEN chỉ
+# cần khi repo đó chuyển sang riêng tư. Trước 02/10/2026 bước lấy repo anh em chỉ chạy khi CÓ secret (chưa ai đặt) ⇒ 3 verifier
+# (verify_research_gate_contracts · verify_controlled_research_automation · verify_lessons_rubric_alignment) bị BỎ QUA MỌI LƯỢT
+# mà lượt chạy vẫn xanh. Đã thử trên bản sao trần + repo anh em bằng `python3 -S` (không site-packages): cả 3 thoát mã 0.
+# Lấy repo anh em thất bại ⇒ lượt chạy KHÔNG đỏ (continue-on-error) nhưng PHẢI hiện cảnh báo ::warning:: — «bỏ qua» không được im lặng.
 
 name: giam-sat-dinh-ky
 
 on:
   schedule:
-    - cron: "0 0 * * 1"     # 07:00 thứ Hai giờ VN — nhịp TUẦN
-    - cron: "0 0 1 * *"     # 07:00 mùng 1 giờ VN  — nhịp THÁNG
+    # Lệch khỏi 00:00 UTC (đỉnh tải của hàng đợi `schedule`): đo 3 lượt gần nhất chạy TRỄ 3,9–5,4 giờ (03:56/04:19/05:23 UTC).
+    - cron: "43 0 * * 1"    # ~07:43 thứ Hai giờ VN — nhịp TUẦN
+    - cron: "17 1 1 * *"    # ~08:17 mùng 1 giờ VN  — nhịp THÁNG
   workflow_dispatch:
 
 permissions:
@@ -48,16 +52,8 @@ jobs:
         with:
           python-version: "3.11"      # SÀN KHAI BÁO trong CLAUDE.md
 
-      # Repo anh em nằm LỒNG trong repo này trên máy thật:
-      # verify_research_gate_contracts.py:32 -> REPO = ROOT / "medical-ebm-automation"
-      - name: Lấy repo anh em (nếu có token)
-        if: env.SIBLING_TOKEN != ''
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: drluanbv175/medical-ebm-automation
-          token: ${{ env.SIBLING_TOKEN }}
-          path: medical-ebm-automation
-
+      # 11 verifier chạy TRƯỚC khi repo anh em được lấy về: chúng phải đo trên BẢN SAO TRẦN (đúng nhãn của bước), không bị
+      # đổi hành vi vì có thêm một repo lồng bên trong (vd kiem_cay_lam_viec soi cả hai repo).
       - name: 11 verifier chạy được trên bản sao trần
         run: |
           set -u; do_=0
@@ -71,6 +67,22 @@ jobs:
           done
           echo "verifier_do=$do_" >> "$GITHUB_ENV"
           [ "$do_" -eq 0 ]
+
+      # Repo anh em nằm LỒNG trong repo này trên máy thật:
+      # verify_research_gate_contracts.py:32 -> REPO = ROOT / "medical-ebm-automation"
+      - name: Lấy repo anh em (công khai; secret chỉ cần khi repo chuyển riêng tư)
+        id: anh_em
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: drluanbv175/medical-ebm-automation
+          token: ${{ env.SIBLING_TOKEN != '' && env.SIBLING_TOKEN || github.token }}
+          path: medical-ebm-automation
+
+      - name: Cảnh báo — không lấy được repo anh em (3 verifier sẽ bị bỏ qua)
+        if: ${{ steps.anh_em.outcome != 'success' }}
+        run: |
+          echo "::warning title=3 verifier cần repo anh em bị BỎ QUA::Không lấy được drluanbv175/medical-ebm-automation (repo riêng tư mà chưa đặt secret SIBLING_REPO_TOKEN?). Lượt xanh này KHÔNG phủ verify_research_gate_contracts, verify_controlled_research_automation, verify_lessons_rubric_alignment."
 
       - name: 3 verifier cần repo anh em
         if: ${{ hashFiles('medical-ebm-automation/tools/audit_research_gates.py') != '' }}
@@ -96,6 +108,19 @@ jobs:
           n=$(ls .codex/agents 2>/dev/null | wc -l)
           [ "$n" -gt 0 ] || { echo "🔴 Bộ sinh chạy xong nhưng .codex/agents rỗng"; exit 1; }
           echo "✅ Gương .codex: $n tệp, qua cổng sức khoẻ"
+
+      # Issue «🔴 Giám sát định kỳ đỏ» do bước báo động bên dưới mở nhưng KHÔNG bao giờ được đóng: #20 mở từ 21/09 trong khi hai lượt
+      # sau (28/09, 01/10) đã xanh ⇒ đèn đỏ cũ làm giảm giá trị đèn đỏ mới. Lượt xanh đóng mọi issue nhãn `giam-sat` còn mở.
+      # Repo công khai: nội dung issue chỉ có đường dẫn nhật ký, KHÔNG đưa dữ liệu y khoa hay PII vào.
+      - name: Tự đóng issue giám sát cũ khi lượt này xanh
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for n in $(gh issue list --label giam-sat --state open --json number --jq '.[].number' 2>/dev/null); do
+            gh issue close "$n" --comment "Lượt chạy $(date +%d/%m/%Y) XANH — đóng tự động. Nhật ký: $URL"
+          done
 
       - name: Báo động khi đỏ
         if: failure()
