@@ -7671,6 +7671,49 @@ def bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho():
     return True, "gói tuần đọc MÃ kết quả rút bài kho (dòng cuối; 🔴 lên đầu; ⚪ khi không đo được)"
 
 
+def bh153_phep_do_khong_lam_ban_cay_git():
+    """03/10 (HV-13 · N11 · PM-14) — PHÉP ĐO làm bẩn cây git khi không có gì mới: `cloud-mirror/trang-thai-chung-cu.json` 27 commit
+    «chore»/30 ngày mà diff chỉ là `sinh_luc` + số ngày tự trôi; `sources_health.py` viết lại `data/sources.json` mỗi lượt chỉ để đổi
+    `updated`/`last_probe_at` (34 commit/30 ngày cho sổ). Vá: gương so CHỮ KÝ ỔN ĐỊNH (bỏ `sinh_luc`, che token thời gian — KHÔNG che
+    số đếm thật như «0/4 cổng cứng»), chỉ ghi khi đổi hoặc ≥ 7 ngày (`--ep-ghi` ở bước ⑥ xuat_goi_cap_nhat); sổ nguồn chỉ ghi khi NỘI
+    DUNG đổi, dấu thăm sống ghi `state/tham-song-nguon.json` (ngoài git). Kiểm HÀNH VI ngoại tuyến."""
+    import contextlib as _cl
+    import io as _io
+    import json as _json
+    import tempfile as _tf
+    xc = _nap(REPO / "tools/xuat_trang_thai_cloud.py", "_bh153_xc")
+    g = {"sinh_luc": "2026-10-02T10:00:00", "bo_dem": {"a": {"ma_thoat": 0, "stdout": "trung vị 94 ngày · 0/4 cổng cứng · "
+                                                                                   "kỳ 14/09/2026 18:00 · 1 file chưa commit"}}}
+    troi = {"sinh_luc": "2026-10-03T10:00:00", "bo_dem": {"a": {"ma_thoat": 0, "stdout": "trung vị 95 ngày · 0/4 cổng cứng · "
+                                                                                      "kỳ 21/09/2026 18:00 · 2 file chưa commit"}}}
+    that = {"sinh_luc": "2026-10-03T10:00:00", "bo_dem": {"a": {"ma_thoat": 0, "stdout": "trung vị 95 ngày · 1/4 cổng cứng · "
+                                                                                      "kỳ 21/09/2026 18:00 · 2 file chưa commit"}}}
+    if xc.chu_ky_on_dinh(g) != xc.chu_ky_on_dinh(troi):
+        return False, "gương cloud coi «chỉ thời gian trôi» là thay đổi — lại ghi mỗi phiên"
+    if xc.chu_ky_on_dinh(g) == xc.chu_ky_on_dinh(that):
+        return False, "gương cloud che mất số đếm THẬT («0/4 → 1/4 cổng cứng») — Cloud không thấy cổng vừa ký"
+    sh = _nap(REPO / "tools/sources_health.py", "_bh153_sh")
+    with _tf.TemporaryDirectory() as td:
+        so = Path(td) / "sources.json"
+        so.write_text(_json.dumps({"updated": "2000-01-01", "sources": [
+            {"id": "SRC-X", "name": "x", "status": "not-covered", "access": "api", "scan_frequency": "weekly"}]},
+            ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        truoc = so.read_bytes()
+        cu_so, cu_argv, cu_tran, cu_cloud = sh.SO, sys.argv, sh.la_ban_sao_tran, sh.la_phien_cloud
+        try:
+            sh.SO, sys.argv = so, ["sources_health", "--khong-mang", "--im-khi-on"]
+            sh.la_ban_sao_tran, sh.la_phien_cloud = (lambda: False), (lambda: False)   # nhánh MÁY THẬT (có ghi)
+            with _cl.redirect_stdout(_io.StringIO()):
+                sh.main()
+        finally:
+            sh.SO, sys.argv, sh.la_ban_sao_tran, sh.la_phien_cloud = cu_so, cu_argv, cu_tran, cu_cloud
+        if so.read_bytes() != truoc:
+            return False, "sources_health viết lại sổ tracked dù nội dung không đổi (chỉ dấu ngày) — cây git bẩn sau mỗi phép đo"
+        if not so.with_name("tham-song-nguon.json").exists():
+            return False, "nhánh máy thật không ghi sổ dấu thăm ngoài git"
+    return True, "chỉ thời gian trôi ⇒ không ghi gương/sổ; số đếm thật vẫn làm gương đổi; dấu thăm ra state/"
+
+
 def bh117_du_phong_tinh_phi_chi_leo_thang_khi_can():
     """27/09 — bậc thang dự phòng Consensus → SerpApi của vòng quét tuần (thêm 22/09) leo thang ở MỌI chủ đề: cổng
     đủ-chứng-cứ của engine chấm bản ghi scanner (không mang loại xuất bản) ra tier C, điểm 0–6 ⇒ luôn «thiếu»; leo
@@ -9879,6 +9922,7 @@ BAI_HOC = [
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
+    ("BH153", "03/10", "Phép đo không làm bẩn cây git: gương cloud và sổ nguồn chỉ ghi khi có thay đổi THẬT (số ngày tự trôi không tính; số đếm thật vẫn tính); dấu thăm sống ra state/", bh153_phep_do_khong_lam_ban_cay_git),
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
     ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
