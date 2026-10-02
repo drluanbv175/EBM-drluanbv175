@@ -44,9 +44,9 @@
         },
         {
           "type": "command",
-          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/chot_hoi_quy_bai_hoc.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/chot_hoi_quy_bai_hoc.py --im-khi-on; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT chot_hoi_quy_bai_hoc KHÔNG CHẠY — không thấy $D/tools/chot_hoi_quy_bai_hoc.py\"; fi; true",
-          "timeout": 30,
-          "statusMessage": "Kiểm bài học cũ có tái phát không…"
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/chot_hoi_quy_nen.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/chot_hoi_quy_nen.py --doc --im-khi-on; else echo \"⚠ CHỐT chot_hoi_quy_nen KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT chot_hoi_quy_nen KHÔNG CHẠY — không thấy $D/tools/chot_hoi_quy_nen.py\"; fi; true",
+          "timeout": 15,
+          "statusMessage": "Đọc kết quả chốt bài học (chạy nền)…"
         },
         {
           "type": "command",
