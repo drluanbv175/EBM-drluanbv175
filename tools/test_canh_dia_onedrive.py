@@ -191,18 +191,25 @@ def test_main_thong_bao_chi_goi_mot_lan_trong_60_phut(monkeypatch, tmp_path):
 def test_plist_chay_moi_5_phut_chi_do_va_bao():
     d = plistlib.loads(cd.tao_plist("/usr/bin/python3", Path("/x/tools/canh_dia_onedrive.py")))
     assert d["Label"] == cd.NHAN_LAUNCHD and d["StartInterval"] == 300 and d["RunAtLoad"] is True
-    assert d["ProgramArguments"] == ["/usr/bin/python3", "/x/tools/canh_dia_onedrive.py", "--im-khi-on", "--thong-bao"]
+    assert d["ProgramArguments"] == ["/usr/bin/python3", str(Path("/x/tools/canh_dia_onedrive.py")), "--im-khi-on", "--thong-bao"]
     assert not any(k in d for k in ("KeepAlive", "WatchPaths"))
 
 
 def test_cai_launchd_mac_dinh_la_chay_kho_khong_ghi_gi(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(cd.sys, "platform", "darwin")
+    monkeypatch.setattr(cd.os, "getuid", lambda: 501, raising=False)   # Windows không có os.getuid (CLAUDE.md §0.9)
     monkeypatch.setattr(cd.Path, "home", classmethod(lambda c: tmp_path))
     chay = []
     monkeypatch.setattr(cd.subprocess, "run", lambda *a, **k: chay.append(a) or None)
     assert cd.cai_launchd(False, False) == 0 and cd.cai_launchd(False, True) == 0
     assert chay == [] and not (tmp_path / "Library").exists(), "chạy khô không được ghi/gọi launchctl"
     assert "CHẠY KHÔ" in capsys.readouterr().out
+
+
+def test_cai_launchd_thieu_getuid_thi_tu_choi_khong_sap(monkeypatch, capsys):
+    monkeypatch.setattr(cd.sys, "platform", "darwin")
+    monkeypatch.delattr(cd.os, "getuid", raising=False)
+    assert cd.cai_launchd(True, False) == 3 and "uid" in capsys.readouterr().out
 
 
 def test_cai_launchd_khong_phai_mac_la_mo_ta_ro_khong_gia_vo(monkeypatch, capsys):

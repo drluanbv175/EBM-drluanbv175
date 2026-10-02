@@ -193,7 +193,11 @@ def cai_launchd(ap_dung: bool, go: bool) -> int:
               f"`python {Path(__file__).name} --im-khi-on` mỗi 5 phút (chưa tự động hoá).")
         return 3
     duong = Path.home() / "Library" / "LaunchAgents" / f"{NHAN_LAUNCHD}.plist"
-    dich = f"gui/{os.getuid()}"
+    lay_uid = getattr(os, "getuid", None)   # API chỉ-POSIX (CLAUDE.md §0.9): Windows không có — test vá sys.platform vẫn không sập
+    if lay_uid is None:
+        print("⚪ Không lấy được uid người dùng (nền tảng không phải POSIX) — không cài launchd.")
+        return 3
+    dich = f"gui/{lay_uid()}"
     if go:
         print(f"{'GỠ' if ap_dung else 'CHẠY KHÔ gỡ'}: launchctl bootout {dich}/{NHAN_LAUNCHD} + xoá {duong}")
         if ap_dung:
