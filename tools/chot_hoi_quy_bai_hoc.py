@@ -8031,6 +8031,60 @@ def bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh():
 
 
 
+def bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc():
+    """02/10 — vòng lặp log OneDrive SyncEngine tái diễn LẦN THỨ BA (21/08, 17/09, 01–02/10): thư mục log 20,7–24 GB, 24.796 tệp,
+    ~54 tệp/phút, OneDrive 131% CPU, đĩa tự cạn từ 37 GiB xuống thấp. Không có gì canh việc này nên chỉ phát hiện khi đã nặng. Vá:
+    `tools/canh_dia_onedrive.py` (chỉ ĐO và BÁO; hook SessionStart + agent launchd tuỳ chọn). Kiểm HÀNH VI hàm thuần `phan_loai` với
+    đúng ca đo 02/10: log 24 GB/24.796 tệp ⇒ ĐỎ; +54 tệp/phút giữa hai mẫu cách 10 phút ⇒ ĐỎ; đĩa trống 9 GiB ⇒ ĐỎ; không đọc được
+    đĩa ⇒ KHÔNG_ĐO (không xanh); không thấy thư mục log ⇒ VÀNG (không xanh); bình thường ⇒ XANH; tốc độ không suy ra từ hai mẫu
+    cách < 2 phút; công cụ KHÔNG có lệnh xoá/giết tiến trình; và bản khai hook trong git có gọi nó (chốt có mà không ai gọi thì không tồn tại)."""
+    import ast as _ast
+    import importlib.util as _iu
+    import json as _json
+    p = REPO / "tools" / "canh_dia_onedrive.py"
+    if not p.exists():
+        return False, "thiếu tools/canh_dia_onedrive.py"
+    sp = _iu.spec_from_file_location("_bh149_cd", p)
+    m = _iu.module_from_spec(sp)
+    sys.modules["_bh149_cd"] = m
+    sp.loader.exec_module(m)
+    G, M = m.GIB, m.MIB
+
+    def mau(t=1000.0, dia=100.0, log_mb=1.0, tep=10, co_log=True):
+        return {"t": t, "dia_trong": int(dia * G), "dia_tong": 228 * G, "co_log": co_log,
+                "log_tep": tep if co_log else None, "log_byte": int(log_mb * M) if co_log else None, "do_do": False}
+    ca = [
+        ("bình thường", mau(), None, "XANH"),
+        ("ca 02/10: log 24 GB / 24.796 tệp", mau(log_mb=24000, tep=24796), None, "DO"),
+        ("+54 tệp/phút trong 10 phút", mau(t=1600.0, log_mb=12, tep=640), mau(t=1000.0, log_mb=10, tep=100), "DO"),
+        ("đĩa trống 9 GiB", mau(dia=9.0), None, "DO"),
+        ("đĩa trống 15 GiB", mau(dia=15.0), None, "VANG"),
+        ("không thấy thư mục log", mau(co_log=False), None, "VANG"),
+        ("tốc độ từ hai mẫu cách 30 giây", mau(t=1030.0, log_mb=9000, tep=900000, dia=99.0), mau(t=1000.0, log_mb=1, tep=1), "DO"),
+    ]
+    for nhan, mm, truoc, mong in ca:
+        muc, ly = m.phan_loai(mm, truoc)
+        if muc != mong:
+            return False, f"«{nhan}» ⇒ {muc}, kỳ vọng {mong} ({ly})"
+    muc, ly = m.phan_loai(mau(t=1030.0, log_mb=9000, tep=900000, dia=99.0), mau(t=1000.0, log_mb=1, tep=1))
+    if any("TĂNG NÓNG" in x for x in ly):
+        return False, "suy tốc độ từ hai mẫu cách 30 giây (cửa sổ hợp lệ là 2 phút–3 giờ) — báo động giả mỗi lần mở phiên"
+    kd = mau()
+    kd["dia_trong"] = None
+    if m.phan_loai(kd, None)[0] != "KHONG_DO":
+        return False, "không đọc được đĩa mà không báo KHÔNG ĐO ĐƯỢC — «không đo được» bị đọc thành ổn"
+    cay = _ast.parse(p.read_text(encoding="utf-8"))
+    goi = {f"{n.func.value.id}.{n.func.attr}" for n in _ast.walk(cay)
+           if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Attribute) and isinstance(n.func.value, _ast.Name)}
+    if goi & {"shutil.rmtree", "os.remove", "os.kill", "os.killpg"}:
+        return False, f"công cụ canh có lệnh xoá/giết tiến trình: {sorted(goi & {'shutil.rmtree', 'os.remove', 'os.kill', 'os.killpg'})} — phải CHỈ ĐO và BÁO"
+    cfg = _json.loads((REPO / "sync" / "hooks-sessionstart.json").read_text(encoding="utf-8"))
+    lenh = [h["command"] for g in cfg.get("SessionStart") or [] for h in g.get("hooks") or []]
+    if sum("tools/canh_dia_onedrive.py --im-khi-on" in c for c in lenh) != 1:
+        return False, "sync/hooks-sessionstart.json không gọi tools/canh_dia_onedrive.py --im-khi-on đúng một lần — công cụ có mà không ai gọi"
+    return True, "ca đo 02/10 ⇒ ĐỎ; không đo được ⇒ KHÔNG_ĐO; không suy tốc độ từ mẫu quá gần; công cụ chỉ đo; hook có gọi"
+
+
 def bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co():
     """27/09 — `so_xac_minh_nguon.py --phu-mo-coi` THAY NGUYÊN bản ghi bằng kết quả `xac_minh_mot()` (chỉ xác minh TỒN
     TẠI) ⇒ mất `kiem_rut_luc`/`ghi_chu_rut` mà `--quet-ledger` vừa ghi cho DOI chỉ-có-trong-hub ⇒ 10 DOI quay về «chưa kiểm
@@ -9830,6 +9884,7 @@ BAI_HOC = [
     ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
     ("BH148", "02/10", "Chu trình chứng cứ ĐO SẢN LƯỢNG truy vấn giám sát (không chỉ đo khai báo): chủ đề ≤3 bản ghi/90 ngày ⇒ «có thể mù»; lỗi mạng ⇒ KHÔNG ĐO ĐƯỢC chứ không phải ổn; đề xuất không được bỏ/đổi tầng bắt-cái-mới", bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao),
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
+    ("BH149", "02/10", "Canh đĩa + log OneDrive (vòng lặp log tái diễn lần 3: 24 GB/24.796 tệp/54 tệp mỗi phút): đo thật, ĐỎ đúng ca 02/10, KHÔNG ĐO ĐƯỢC ≠ ổn, chỉ đo không xoá, hook có gọi", bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
     ("BH147", "02/10", "Hook chốt hồi quy ĐỌC kết quả chạy nền (chot_hoi_quy_nen.py), không chạy trọn bộ chốt 46–55 s dưới timeout 30 s; chưa đo/cũ/lỗi ⇒ 🟡 CHƯA ĐO ĐƯỢC, chỉ xanh THẬT còn mới mới im lặng", bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron),

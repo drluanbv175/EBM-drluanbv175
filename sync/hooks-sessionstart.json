@@ -65,6 +65,12 @@
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/dat_canh_diem_tin_xoay.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/dat_canh_diem_tin_xoay.py; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT dat_canh_diem_tin_xoay KHÔNG CHẠY — không thấy $D/tools/dat_canh_diem_tin_xoay.py\"; fi; true",
           "timeout": 15,
           "statusMessage": "Xoay vòng đặt-cạnh chứng cứ mới…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/canh_dia_onedrive.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/canh_dia_onedrive.py --im-khi-on; else echo \"⚠ CHỐT canh_dia_onedrive KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT canh_dia_onedrive KHÔNG CHẠY — không thấy $D/tools/canh_dia_onedrive.py\"; fi; true",
+          "timeout": 15,
+          "statusMessage": "Canh đĩa + log OneDrive…"
         }
       ]
     }
