@@ -35,6 +35,21 @@ ROOT_NAME = "gốc (Claude AI)"
 CHILD_NAME = "medical-ebm-automation"
 
 
+@pytest.fixture
+def tmp_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Thư mục tạm NGẮN thay cho `tmp_path` mặc định của pytest (02/10/2026 — Windows, MAX_PATH 259 ký tự).
+
+    Tên thư mục bộ nhớ được TÍNH TỪ đường dẫn dự án (`claude_project_slug`: ký tự ngoài [a-zA-Z0-9] ⇒ '-', giữ nguyên
+    độ dài khi ≤ 200) nên đường dẫn tmp xuất hiện HAI lần trong một tệp bộ nhớ: ở phần đầu và trong tên thư mục dự án
+    ⇒ độ dài đích ≈ 2·L + 64 + độ dài tên tệp (L = độ dài thư mục tmp). `tmp_path` mặc định là
+    `<temp>/pytest-of-<user>/pytest-<N>/<tên test cắt 30 ký tự>` (L = 92 trên máy Windows của bác sĩ) ⇒ 266 ký tự cho
+    `pytest-tren-mac.md` (MEMORY.md vừa sát ranh ở 257) ⇒ `WinError 3` khi Windows chưa bật LongPathsEnabled; CI Ubuntu
+    không thấy. Dùng `s<N>` ⇒ L = 63–64 ⇒ đo được đích dài nhất của tệp này là 210 ký tự, dư 49 (tên người dùng dài thêm
+    hoặc bộ đếm `pytest-<N>` thêm chữ số vẫn thoải mái). Công cụ KHÔNG lỗi: bộ nhớ thật trên máy Windows của bác sĩ (đo
+    02/10/2026) dài nhất 144 ký tự ở `~/.claude/projects`, 117 ở `memory-sync/`."""
+    return tmp_path_factory.mktemp("s")
+
+
 def _layout(tmp_path: Path):
     """tmp/Claude AI/medical-ebm-automation/ + tmp/home/.claude/projects + hai MemoryProject dựng như sổ thật."""
     root = tmp_path / "Claude AI"
