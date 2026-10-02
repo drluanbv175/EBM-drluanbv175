@@ -239,3 +239,45 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if _khop(_TEST_CAN_FS_KHONG_PHAN_BIET, item):
                 item.add_marker(danh_dau_fs)
+
+
+# ── 03/10/2026 (PM-14 kiểm toàn diện): CHẠY BỘ TEST KHÔNG ĐƯỢC LÀM BẨN REPO ─────────────────────────────────────────────────
+# Phát hiện thật: `test_canh_dia_onedrive.py` vá `TEP_STATE` mà `main()` vẫn ghi `state/canh-dia-onedrive.json` của repo THẬT (giá
+# trị mặc định chốt lúc import) — chỉ lộ ra vì worktree bẩn sau khi chạy bộ test. Ảnh chụp trước/sau: tệp mới trong `state/` của
+# repo + dòng `git status --porcelain` mới. Có ⇒ in cảnh báo; trên CI (biến CI có mặt, cây sạch, không tiến trình nền) ⇒ ĐỎ.
+def _anh_chup_ban() -> set[str]:
+    import subprocess
+    ra: set[str] = set()
+    st = REPO / "state"
+    if st.is_dir():
+        ra |= {"state/" + p.relative_to(st).as_posix() for p in st.rglob("*") if p.is_file()}
+    try:
+        out = subprocess.run(["git", "-C", str(REPO), "status", "--porcelain", "--untracked-files=all"],
+                             capture_output=True, text=True, timeout=60).stdout
+        ra |= {"git: " + dong for dong in out.splitlines() if "__pycache__" not in dong}
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return ra
+
+
+def pytest_sessionstart(session):
+    session.config._ebm_anh_chup_truoc = _anh_chup_ban()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    import os
+    truoc = getattr(session.config, "_ebm_anh_chup_truoc", None)
+    if truoc is None:
+        return
+    moi = sorted(_anh_chup_ban() - truoc)
+    if not moi:
+        return
+    tr = session.config.pluginmanager.get_plugin("terminalreporter")
+    dong = (f"⚠ BỘ TEST LÀM BẨN REPO ({len(moi)} mục mới — test ghi ra ngoài tmp_path?): " + " · ".join(moi[:8])
+            + (" …" if len(moi) > 8 else ""))
+    if tr is not None:
+        tr.write_line(dong)
+    else:
+        print(dong)
+    if os.environ.get("CI") and session.exitstatus == 0:
+        session.exitstatus = 1

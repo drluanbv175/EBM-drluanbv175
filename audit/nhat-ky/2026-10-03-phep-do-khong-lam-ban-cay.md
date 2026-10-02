@@ -28,3 +28,17 @@
   - Lượt 1 ghi sổ vì nội dung đổi THẬT (`last_success_at` SRC-004: 27/09 → 02/10).
   - Lượt 2 ngay sau đó: băm SHA-256 sổ trước = sau, in «≡ … KHÔNG ghi sổ tracked».
 - BH50 ✓ trên dữ liệu thật. `pytest tools/` xanh; `kiem_tuong_thich_da_nen` 🔴 0.
+
+**Bổ sung cùng ngày — bộ TEST cũng làm bẩn repo.**
+- **Phát hiện.** Sau `pytest tools/` worktree có `state/canh-dia-onedrive.json`. Nguyên nhân: `canh_dia_onedrive.ghi_state(d,
+  duong_dan=TEP_STATE)` chốt đường dẫn làm giá trị mặc định LÚC IMPORT. Test vá `TEP_STATE` nhưng `main()` vẫn ghi vào `state/`
+  THẬT của repo. Đây là lần thứ ba gặp họ lỗi này, sau `chot_hoi_quy_nen` và `xac_nhan_trinh_duyet`.
+- **Vá.** `doc_state`/`ghi_state` đọc `TEP_STATE` lúc gọi.
+- **Chốt chung trong `tools/conftest.py`.** Ảnh chụp trước/sau phiên test gồm tệp mới trong `state/` và dòng `git status --porcelain`
+  mới. Có khác ⇒ in «⚠ BỘ TEST LÀM BẨN REPO …»; trên CI (biến `CI`) ⇒ mã thoát 1.
+- **Đột biến.** Trả `ghi_state` về giá trị mặc định cũ ⇒ test hồi quy mới đỏ, và chốt conftest báo
+  `state/canh-dia-onedrive.json`, mã 1. Lượt đo đầu báo nhầm «mã 0» vì `$?` là của `tail` trong ống — đo lại không qua ống mới đúng.
+- **Quét toàn repo.** Mẫu «giá trị mặc định là hằng đường dẫn» còn ở ~24 chỗ, đều là hàm ĐỌC. Không đổi hàng loạt; chốt conftest
+  canh mọi đường GHI ra ngoài tmp.
+- **Fixture `test_so_nguon_dinh_dang_20260927.py`.** Đưa một thay đổi nội dung THẬT (`last_success_at` mới) để công cụ đi đúng
+  đường ghi mà test soi định dạng. Không nới assertion.
