@@ -15,19 +15,33 @@ on:
 permissions:
   contents: read
 
+# GỌN CI (02/10/2026, đo 70 lượt gần nhất): (1) mỗi push chồng lên push cũ của CÙNG nhánh — có nhánh 50 lượt trong 10 ngày, mỗi lượt 4 job —
+# nên nhánh nào cũng chỉ cần kết quả commit MỚI NHẤT (huỷ lượt cũ; KHÔNG bao giờ huỷ lượt trên master). (2) Ma trận 2 hệ × 2 bản Python:
+# 3.11 và 3.12 luôn cùng đỏ/cùng xanh (0/70 lượt lệch) nên bỏ cặp thừa, đổi lấy bản Python của MÁY THẬT còn chưa được CI phủ (Mac = 3.14).
+concurrency:
+  group: kiem-tinh-da-nen-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   kiem-tinh:
+    timeout-minutes: 15     # đo: lượt bình thường 0,5–1,5 phút; trần để job treo không ăn hàng giờ
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        # 3.11 = SÀN KHAI BÁO trong CLAUDE.md; 3.12 = bản CI cũ + máy Windows thật.
-        # Trước 22/08/2026 CI chỉ chạy 3.12 nên 6 chỗ cú pháp PEP 701 (chỉ hợp lệ từ
-        # 3.12) nằm im trong 5 file — trong đó có `kiem_do_tuoi_chung_cu.py`, MỘT
-        # TRONG 7 CHỐT TỰ CHẠY MỖI PHIÊN. Trên môi trường 3.11 nó chết SyntaxError,
-        # mà hook SessionStart kết thúc bằng `; true` nên nuốt lỗi không một dòng báo
-        # — đúng lại họ lỗi mà chính file đó đã dính hồi 12/08 trên Windows.
-        python-version: ["3.11", "3.12"]
+        # BA lane, mỗi lane đại diện MỘT môi trường thật của bác sĩ:
+        #   ubuntu  + 3.11 = SÀN KHAI BÁO trong CLAUDE.md. Trước 22/08/2026 CI chỉ chạy 3.12 nên 6 chỗ cú pháp PEP 701 (chỉ hợp lệ từ
+        #                    3.12) nằm im trong 5 file — trong đó có `kiem_do_tuoi_chung_cu.py`, MỘT TRONG CÁC CHỐT TỰ CHẠY MỖI PHIÊN. Trên
+        #                    3.11 nó chết SyntaxError, mà hook SessionStart kết thúc bằng `; true` nên nuốt lỗi không một dòng báo.
+        #   windows + 3.12 = máy Windows thật (Python 3.12.10). Lane bắt họ lỗi «viết cho một máy, gãy trên máy kia» (os.getuid, đường dẫn cứng,
+        #                    CRLF): trong 70 lượt đo có 1 lượt đỏ CHỈ ở Windows; PR #87 ngày 02/10 cũng đỏ chỉ ở Windows.
+        #   ubuntu + 3.14  = máy Mac thật (Python 3.14.6) — trước đây KHÔNG lane nào phủ.
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: windows-latest
+            python-version: "3.12"
+          - os: ubuntu-latest
+            python-version: "3.14"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -75,3 +89,18 @@ jobs:
           pip install pytest
           python tools/sync_agents_to_codex.py
           python -m pytest tools/ -q -rs
+
+  # MỘT tên kiểm tra ổn định cho «bảo vệ nhánh»: bật required check chỉ cần khai `ci-ok`, đổi ma trận không phải sửa lại cài đặt.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [kiem-tinh]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Mọi lane kiem-tinh phải xanh (huỷ/bỏ qua cũng là ĐỎ)
+        env:
+          KET_QUA: ${{ needs.kiem-tinh.result }}
+        run: |
+          [ "$KET_QUA" = "success" ] || { echo "kiem-tinh: $KET_QUA" >&2; exit 1; }
+          echo "✅ mọi lane kiem-tinh xanh"
