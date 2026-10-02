@@ -4104,6 +4104,10 @@ _CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109", "BH144"})
 # là lỗi trong-repo: luôn «tái phát», ở mọi máy.
 _DAU_HIEU_LOI_TRONG_REPO = {"BH56": "MỒ CÔI"}
 
+# BH145 (01/10/2026) cũng soi mã ENGINE — thêm bằng DÒNG RIÊNG, không sửa dòng khai báo `_CAN_ENGINE_NEU_TEN` ở trên:
+# các PR mở song song cùng thêm mã vào dòng đó sẽ xung đột gộp (PR gốc #80 thêm BH144 đúng dòng ấy cùng ngày).
+_CAN_ENGINE_NEU_TEN = _CAN_ENGINE_NEU_TEN | {"BH145"}
+
 
 def ban_sao_git_tran() -> bool:
     """Uỷ quyền cho định nghĩa DUY NHẤT ở tools/ban_sao_tran.py (đòi cả BA gốc vắng)."""
@@ -6899,6 +6903,115 @@ def _bh113_than():
     return True, ""
 
 
+def bh145_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass():
+    """01/10 — RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09 (kho không nhận bài NEJM nào), 15 feed BMJ
+    hỏng từ 13/08, PubMed bị NCBI chặn 01→16/09 — lượt nào cũng PASS (một feed lẻ hỏng cố ý không đổi trạng thái; PubMed có
+    gương Europe PMC + Crossref) và không gì so lượt này với lượt trước, nên chỉ lộ khi đo tay (NEJM: 30/09). Cùng họ «xanh
+    khi chưa đo» (BH27/BH32/BH114). Kiểm HÀNH VI, ngoại tuyến:
+    (a) cảm biến `tu_de_xuat_viec.giac_quan_nguon_hong_keo_dai` trên CSDL tạm: lượt live mang `hong_keo_dai` ⇒ một dòng
+        việc mỗi nguồn (lõi ưu tiên 1, có ghi chú chấp nhận ưu tiên 3), lượt lấy bù không số đo nguồn bị bỏ qua; lượt mới
+        nhất do engine CŨ ghi ⇒ không dòng nào; `hong_keo_dai` None ⇒ dòng «KHÔNG đo được»; CSDL vắng ⇒ giác quan chết
+        (không im lặng thành «đủ rồi»);
+    (b) engine `nguon_hong_keo_dai.tinh_hong_keo_dai` trên lịch sử kiểu NEJM (unavailable 07/09→29/09, chạy được 01/09)
+        ⇒ báo đúng mốc; bốn lượt chạy bù trong cùng ngày ⇒ KHÔNG báo; lượt chạy được xen giữa ⇒ chuỗi đứt;
+    (c) DÂY NỐI (luật «công cụ không ai gọi thì không tồn tại»): `ingest_all` GỌI `_gan_mang_va_hong_keo_dai`, hàm đó GỌI
+        `tinh_hong_keo_dai` — soi bằng AST (dòng thi hành, không khớp chuỗi trong bình luận).
+    (a) chạy ở mọi cây; (b)(c) cần engine — engine vắng ⇒ ⚪ (luật `_CAN_ENGINE_NEU_TEN`), engine có mà thiếu ⇒ ✗."""
+    import ast as _ast
+    import json as _json
+    import sqlite3 as _sq
+    import tempfile as _tf
+    from datetime import datetime as _dt, timedelta as _td
+
+    tdxv = _nap(REPO / "tools" / "tu_de_xuat_viec.py", "tdxv_bh145")
+    cam = getattr(tdxv, "giac_quan_nguon_hong_keo_dai", None)
+    if not callable(cam):
+        return False, "tu_de_xuat_viec.py mất cảm biến giac_quan_nguon_hong_keo_dai — nguồn hỏng kéo dài lại im lặng"
+
+    def csdl(thu_muc: Path, *luot) -> Path:
+        db = thu_muc / "medical_ebm.db"
+        con = _sq.connect(db)
+        con.execute("CREATE TABLE pipeline_runs (id INTEGER PRIMARY KEY, started_at DATETIME, finished_at DATETIME, "
+                    "mode VARCHAR(16), status VARCHAR(16), stats JSON)")
+        for i, (ngay, sh) in enumerate(luot, 1):
+            con.execute("INSERT INTO pipeline_runs VALUES (?, ?, ?, 'live', 'ok', ?)",
+                        (i, ngay, ngay, _json.dumps({"source_health": sh}) if sh is not None else None))
+        con.commit()
+        con.close()
+        return db
+
+    hong = {"feed_nejm_current": {"so_luot_lien": 7, "hong_tu": "2026-09-07", "so_ngay": 22,
+                                  "kieu_duong_mang": {"cloudflare-chan": 1}, "da_co_ghi_chu": None},
+            "pubmed": {"so_luot_lien": 5, "hong_tu": "2026-09-01", "so_ngay": 15, "kieu_duong_mang": {"ncbi-chan": 3},
+                       "da_co_ghi_chu": None},
+            "scopus": {"so_luot_lien": 5, "hong_tu": "2026-09-21", "so_ngay": 8, "kieu_duong_mang": {},
+                       "da_co_ghi_chu": "SCOPUS_BLOCKED_BY_CLOUDFLARE_403_NETWORK_IP"}}
+    with _tf.TemporaryDirectory() as d:
+        d = Path(d)
+        (d / "a").mkdir()
+        db = csdl(d / "a", ("2026-09-29 13:13:28", {"sources": {"x": {}}, "hong_keo_dai": hong}),
+                  ("2026-10-01 10:36:54", {"status": "NOT_APPLICABLE"}))       # lượt lấy bù MỚI hơn, không số đo
+        dong = cam(db)
+        theo_ten = {next((t for t in hong if f"Nguồn {t} " in mo_ta), "?"): uu for uu, mo_ta, _l in dong}
+        if theo_ten != {"feed_nejm_current": 2, "pubmed": 1, "scopus": 3}:
+            return False, (f"cảm biến không đưa đủ/đúng ưu tiên nguồn hỏng kéo dài lên hòm việc: {theo_ten} — kỳ vọng "
+                           "NEJM 2, PubMed 1 (lõi), Scopus 3 (đã có ghi chú); lượt lấy bù phải bị bỏ qua")
+        if not all("HỎNG KÉO DÀI" in mo_ta and "do_mang_nguon.py" in lenh for _u, mo_ta, lenh in dong):
+            return False, "dòng việc thiếu nhãn «HỎNG KÉO DÀI» hoặc lệnh đo lại đường mạng"
+        (d / "b").mkdir()
+        # Lượt mới nhất do engine CŨ ghi (vd cây chính bị lùi nhánh, như 29/09) — số đo của lượt CŨ HƠN không được đem ra báo.
+        if cam(csdl(d / "b", ("2026-09-22 13:00:00", {"sources": {"x": {}}, "hong_keo_dai": hong}),
+                    ("2026-09-29 13:00:00", {"sources": {"x": {}}, "status": "PASS"}))):
+            return False, ("lượt live mới nhất do engine CŨ ghi (chưa có khoá hong_keo_dai) mà cảm biến vẫn sinh dòng việc "
+                           "— đem số đo cũ ra báo như hiện trạng")
+        (d / "c").mkdir()
+        dong = cam(csdl(d / "c", ("2026-09-29 13:00:00", {"sources": {}, "hong_keo_dai": None,
+                                                          "hong_keo_dai_loi": "OperationalError"})))
+        if len(dong) != 1 or "KHÔNG đo được" not in dong[0][1]:
+            return False, "engine báo không đo được (hong_keo_dai=None) mà cảm biến không nói ra — «không đo» thành «ổn»"
+        chet_truoc = len(tdxv._GIAC_QUAN_CHET)
+        if cam(d / "khong-co.db") or len(tdxv._GIAC_QUAN_CHET) != chet_truoc + 1:
+            return False, "CSDL vắng mà cảm biến không ghi «giác quan chết» — bảng sẽ in «đủ rồi» khi chưa đo"
+
+    goc = _goc_mea()
+    tep = goc / "app" / "services" / "nguon_hong_keo_dai.py"
+    tep_ing = goc / "app" / "services" / "ingestion.py"
+    if not goc.exists():
+        return False, "medical-ebm-automation vắng — không soi được phần engine của BH145"
+    if not tep.exists() or not tep_ing.exists():
+        return False, (f"medical-ebm-automation có mặt nhưng thiếu {tep.name}/{tep_ing.name} — engine chưa có phép đo nguồn "
+                       "hỏng kéo dài (chưa kéo PR y khoa «mạng bền vững»?)")
+    nhkd = _nap(tep, "nhkd_bh145")
+    moc = _dt(2026, 9, 29, 13, 0)
+
+    def luot(ngay_truoc, health):
+        return {"luc": moc - _td(days=ngay_truoc), "sources": {"feed_nejm": {"health": health}}}
+
+    hien_tai = {"feed_nejm": {"health": "unavailable", "error": 1, "kieu_duong_mang": {}}}
+    kq = nhkd.tinh_hong_keo_dai(hien_tai, [luot(0.1, "unavailable"), luot(8, "unavailable"), luot(13, "unavailable"),
+                                           luot(22, "unavailable"), luot(28, "ok")], moc)
+    if (kq.get("feed_nejm") or {}).get("hong_tu") != "2026-09-07":
+        return False, f"ca NEJM (hỏng 07/09→29/09) không được báo đúng mốc: {kq!r}"
+    if nhkd.tinh_hong_keo_dai(hien_tai, [luot(h / 24, "unavailable") for h in (1, 2, 3)], moc):
+        return False, "bốn lượt chạy bù trong CÙNG một ngày bị báo «hỏng kéo dài» — báo động giả"
+    if nhkd.tinh_hong_keo_dai(hien_tai, [luot(1, "unavailable"), luot(5, "ok"), luot(10, "unavailable"),
+                                         luot(20, "unavailable")], moc):
+        return False, "lượt chạy được xen giữa không làm đứt chuỗi hỏng"
+
+    cay = _ast.parse(tep_ing.read_text(encoding="utf-8"))
+    ham = {n.name: n for n in _ast.walk(cay) if isinstance(n, _ast.FunctionDef)}
+
+    def goi(ten_ham: str, ten_dich: str) -> bool:
+        return ten_ham in ham and any(
+            isinstance(n, _ast.Call) and (getattr(n.func, "id", None) == ten_dich or getattr(n.func, "attr", None) == ten_dich)
+            for n in _ast.walk(ham[ten_ham]))
+    if not goi("ingest_all", "_gan_mang_va_hong_keo_dai"):
+        return False, "ingest_all không còn GỌI _gan_mang_va_hong_keo_dai — phép đo có mà lượt tuần không chạy"
+    if not goi("_gan_mang_va_hong_keo_dai", "tinh_hong_keo_dai"):
+        return False, "_gan_mang_va_hong_keo_dai không còn GỌI tinh_hong_keo_dai — dây nối đứt"
+    return True, ""
+
+
 def bh114_cong_khong_xanh_khi_chua_do():
     """21/09 — bốn cổng cùng họ «xanh khi chưa đo» (BH27/BH32), lộ ra khi đánh giá hoàn thiện:
       (a) `verify_dashboard.py` chế độ ngoại tuyến: PMID Wakefield 9500320 (ĐÃ RÚT) PASS 0 lỗi cứng vì «sổ im lặng» gồm cả
@@ -9509,6 +9622,8 @@ BAI_HOC = [
     ("BH110", "20/09", "Orchestrator: tên lát cắt/gốc nối đúng tên watchlist; mã thoát phân loại theo bước; sai tên ⇒ 64 (không phải «lỗi mạng»)", bh110_orchestrator_ten_chu_de_va_ma_thoat_dung_nghia),
     ("BH112", "21/09", "Điểm khám không trả thẻ LẠC ĐỀ: đ→d, từ nguyên, từ ghép kề nhau, xung đột quyết định có cờ, miss yếu không tính là khoảng trống", bh112_diem_kham_khong_tra_the_lac_de),
     ("BH113", "21/09", "Thu nhận khi NCBI chặn: dịch thẻ PubMed→Europe PMC, PASS_DEGRADED, con trỏ đứng yên (không 0 giả, không mất cửa sổ quét)", bh113_thu_nhan_khi_ncbi_chan_khong_tra_0_gia),
+    # BH145 đứng cạnh BH113 (cùng họ «nguồn thu nhận»), không nối đuôi bảng: các PR mở cùng ngày 01/10 đều chèn ở cuối.
+    ("BH145", "01/10", "Nguồn hỏng NHIỀU lượt live liền (≥3 lượt, ≥7 ngày) phải lộ lên hòm việc dù lượt PASS (ca NEJM 07→29/09); không đo được ≠ không có", bh145_nguon_hong_keo_dai_phai_lo_ra_du_luot_pass),
     ("BH114", "21/09", "Bốn cổng không xanh khi CHƯA ĐO: bản lỗi HTTP-200, sổ rút bài im lặng, kiem_so_lieu hỏng/mẫu, gradeLevel máy gán", bh114_cong_khong_xanh_khi_chua_do),
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),

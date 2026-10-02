@@ -347,6 +347,71 @@ def de_xuat_plugin(rc: int, cloud: bool) -> list[tuple[int, str, str, str]]:
     return []
 
 
+# Nguồn mà «hỏng kéo dài» là việc gấp hơn (ưu tiên 1): ba nguồn khám phá lõi + nguồn an toàn thuốc của engine.
+_NGUON_THIET_YEU = frozenset({"pubmed", "europepmc", "crossref", "openfda", "feed_fda_medwatch", "feed_fda_recalls",
+                              "feed_mhra_dsu"})
+
+
+def giac_quan_nguon_hong_keo_dai(db: Path) -> list[tuple[int, str, str]]:
+    """Nguồn engine báo «hỏng kéo dài» ở lượt live gần nhất có số đo nguồn — [(ưu tiên, mô tả, lệnh)] (01/10/2026).
+
+    Vì sao (BH145): RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09, kho không nhận bài NEJM nào, mà lượt
+    nào cũng PASS — trạng thái lượt cố ý không đổi vì một feed lẻ hỏng — nên chỉ lộ khi đo tay 30/09 (15 feed BMJ cũng hỏng
+    từ 13/08 như vậy). Engine y khoa ghi `source_health["hong_keo_dai"]` (≥ 3 lượt live liền, trải ≥ 7 ngày) vào
+    `pipeline_runs.stats`; cảm biến này đưa nó lên hòm việc. CHỈ ĐỌC (sqlite `mode=ro`), không đổi gì.
+    - CSDL vắng/không đọc được ⇒ giác quan chết (⚪ — bảng không in «đủ rồi»), KHÔNG phải «không nguồn nào hỏng».
+    - Lượt live mới nhất có số đo do engine CŨ ghi (chưa có khoá) ⇒ [] — chưa có số đo thì không báo động.
+    - `hong_keo_dai` None (engine không đọc được lịch sử) ⇒ một dòng «không đo được».
+    Ưu tiên: nguồn lõi/an toàn thuốc 1 · nguồn khác 2 · đã có ghi chú chấp nhận trong lượt (vd Scopus) 3.
+    """
+    import sqlite3
+
+    _SO_GIAC_QUAN["chay"] += 1
+    if not db.exists():
+        _ghi_chet(["", "nguồn hỏng kéo dài"], "không thấy CSDL engine data/medical_ebm.db ở cây này")
+        return []
+    try:
+        con = sqlite3.connect(db.resolve().as_uri() + "?mode=ro", uri=True, timeout=5)
+        try:
+            dong_csdl = con.execute("SELECT stats FROM pipeline_runs WHERE mode = 'live' AND finished_at IS NOT NULL "
+                                    "ORDER BY started_at DESC, id DESC LIMIT 20").fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as exc:
+        _ghi_chet(["", "nguồn hỏng kéo dài"], f"không đọc được CSDL engine ({type(exc).__name__})")
+        return []
+    lenh = "cd medical-ebm-automation && python tools/do_mang_nguon.py  # đo đường mạng tới từng nguồn"
+    for (stats,) in dong_csdl:
+        try:
+            sh = (json.loads(stats) if isinstance(stats, str) else (stats or {})).get("source_health") or {}
+        except (ValueError, AttributeError):
+            continue
+        if not isinstance(sh, dict) or not isinstance(sh.get("sources"), dict):
+            continue  # lượt nạp sẵn bản ghi (vd lượt lấy bù) — không có số đo nguồn
+        if "hong_keo_dai" not in sh:
+            return []
+        hong = sh["hong_keo_dai"]
+        if hong is None:
+            return [(2, "Engine KHÔNG đo được nguồn hỏng kéo dài ở lượt live gần nhất "
+                     f"({sh.get('hong_keo_dai_loi') or 'không rõ lỗi'}) — không phải «không có nguồn nào hỏng»",
+                     "xem medical-ebm-automation/data/archive/launchd_weekly.log")]
+        ra: list[tuple[int, str, str]] = []
+        for ten, ct in sorted((hong or {}).items()):
+            if not isinstance(ct, dict):
+                continue
+            kieu = ",".join(sorted(ct.get("kieu_duong_mang") or {})) or "chưa phân loại"
+            ghi_chu = ct.get("da_co_ghi_chu")
+            uu = 3 if ghi_chu else (1 if ten in _NGUON_THIET_YEU else 2)
+            mo_ta = (f"Nguồn {ten} HỎNG KÉO DÀI: {ct.get('so_luot_lien')} lượt live liền từ {ct.get('hong_tu')} "
+                     f"({ct.get('so_ngay')} ngày, kiểu: {kieu}) — lượt vẫn PASS nên không tự lộ; đo lại đường mạng, "
+                     "chặn ở biên/mạng thì chuyển nguồn sang lane không phụ thuộc mạng (Crossref/Europe PMC)")
+            if ghi_chu:
+                mo_ta += f" · đã có ghi chú chấp nhận {ghi_chu}"
+            ra.append((uu, mo_ta, lenh))
+        return ra
+    return []
+
+
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -635,6 +700,10 @@ def main() -> int:
                             "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»"))
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+
+    # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
+    for uu, dong, lenh in giac_quan_nguon_hong_keo_dai(_GOC_MEA / "data" / "medical_ebm.db"):
+        de_xuat.append((uu, "🤖", dong, lenh))
 
     # ⑦e GIÁC QUAN QUYẾT ĐỊNH ĐÃ DUYỆT (16/08): dashboard sinh lại/sửa hàng loạt
     # có thể lật ngược im lặng quyết định bác sĩ 13–14/08 (đã xảy ra: 5 mục Đau
