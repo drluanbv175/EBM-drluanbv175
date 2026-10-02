@@ -85,7 +85,7 @@ def test_fda_bi_chan_khong_co_bang_chung_la_chua_xac_minh(monkeypatch, dashboard
     assert "KHÔNG phải bằng chứng link chết" in info and V.SO_URL_TRINH_DUYET in info
 
 
-@pytest.mark.parametrize("ma", [403, 404, 410])
+@pytest.mark.parametrize("ma", [401, 403, 404, 410])  # 401: FDA đổi cách chặn 02/10/2026
 def test_fda_bi_chan_co_bang_chung_con_han_thi_dat(monkeypatch, dashboard, ma):
     monkeypatch.setattr(V, "source_urlopen", _gia_mo(ma))
     _ghi_so(dashboard.parent, [_muc()])
@@ -139,3 +139,26 @@ def test_loi_goi_that_trong_main_truyen_duong_dashboard():
            if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "verify_url_online"]
     assert goi, "main() không còn gọi verify_url_online"
     assert all(any(k.arg == "duong_dashboard" for k in g.keywords) for g in goi)
+
+
+# ── 02/10/2026: FDA trả 401 cho trình khách tự động (trình duyệt trong app gặp trang chặn bot) ──────────────────────────
+def test_fda_401_khong_co_bang_chung_van_chua_xac_minh(monkeypatch, dashboard):
+    """401 của miền chặn KHÔNG tự thành đạt: thiếu bằng chứng trình duyệt ⇒ None (strict-sources vẫn chặn)."""
+    monkeypatch.setattr(V, "source_urlopen", _gia_mo(401))
+    ok, info = V.verify_url_online(URL_FDA, retries=0, duong_dashboard=dashboard)
+    assert ok is None and "HTTP 401" in info and V.SO_URL_TRINH_DUYET in info
+
+
+def test_401_cua_mien_khong_khai_bao_van_la_loi_mang_khong_bao_gio_dat(monkeypatch, dashboard):
+    monkeypatch.setattr(V, "source_urlopen", _gia_mo(401))
+    _ghi_so(dashboard.parent, [_muc(url=URL_KHAC)])   # có «bằng chứng» cho URL lạ cũng không được tính
+    ok, info = V.verify_url_online(URL_KHAC, retries=0, duong_dashboard=dashboard)
+    assert ok is None and "lỗi mạng" in info
+
+
+def test_ma_khac_cua_mien_chan_khong_duoc_coi_la_chan(monkeypatch, dashboard):
+    """Chỉ đúng tập MA_CHAN_TU_DONG mới đi đường sổ trình duyệt — 500 vẫn là lỗi mạng dù có bằng chứng."""
+    monkeypatch.setattr(V, "source_urlopen", _gia_mo(500))
+    _ghi_so(dashboard.parent, [_muc()])
+    ok, info = V.verify_url_online(URL_FDA, retries=0, duong_dashboard=dashboard)
+    assert ok is None and "lỗi mạng" in info
