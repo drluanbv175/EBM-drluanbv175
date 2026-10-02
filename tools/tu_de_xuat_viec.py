@@ -414,19 +414,6 @@ def giac_quan_nguon_hong_keo_dai(db: Path) -> list[tuple[int, str, str]]:
     return []
 
 
-def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str, str]], list[str]]:
-    """(việc 🛎, dòng thông tin ⓘ) từ phát hiện của `kiem_lich_nen.kiem()` (02/10/2026, HV-08).
-
-    Kỳ CŨ đã lỡ mà kỳ sau đã chạy lại (uu ≥ 2) KHÔNG phải việc: «Run now» lúc này vô ích (kỳ sau đã chạy, vòng quét dùng con trỏ
-    tăng dần nên không hở cửa sổ). Đo: «kỳ 14/09» lặp 28 lần ở 15 phiên. Gộp thành MỘT dòng ⓘ, không tính vào danh sách việc."""
-    viec = [(p["uu"], "🛎", p["thong_diep"], "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»")
-            for p in phat_hien if p["uu"] < 2]
-    cu = sum(1 for p in phat_hien if p["uu"] >= 2)
-    tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
-          "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
-    return viec, tt
-
-
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -485,6 +472,19 @@ def giac_quan_lich_nen(log_tuan: Path,
         return [(2, f"Kỳ lịch thứ Hai vừa qua KHÔNG nổ (máy không thức?) — dữ liệu vẫn tươi "
                     f"(PASS {ngay_pass}, {tuoi} ngày), nhưng lịch nền đang không tự chạy")]
     return []
+
+
+def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str, str]], list[str]]:
+    """(việc 🛎, dòng thông tin ⓘ) từ phát hiện của `kiem_lich_nen.kiem()` (02/10/2026, HV-08).
+
+    Kỳ CŨ đã lỡ mà kỳ sau đã chạy lại (uu ≥ 2) KHÔNG phải việc: «Run now» lúc này vô ích (kỳ sau đã chạy, vòng quét dùng con trỏ
+    tăng dần nên không hở cửa sổ). Đo: «kỳ 14/09» lặp 28 lần ở 15 phiên. Gộp thành MỘT dòng ⓘ, không tính vào danh sách việc."""
+    viec = [(p["uu"], "🛎", p["thong_diep"], "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»")
+            for p in phat_hien if p["uu"] < 2]
+    cu = sum(1 for p in phat_hien if p["uu"] >= 2)
+    tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
+          "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
+    return viec, tt
 
 
 def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
