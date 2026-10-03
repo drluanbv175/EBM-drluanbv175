@@ -28,3 +28,28 @@ sát). Với `--tat-ca`: 4 bài tra ngược ra đúng PMID và qua xác minh, 2
 chặn bot + orchestrator 11/11; công cụ tra có tài khoản 12/12 (D5 lọt lần đầu vì ca test bị vô hiệu khi thêm «receptor» vào từ chung — thêm ca
 «Obesity Hypoventilation Syndrome» rồi mới bắt); BH150 8/8. Một lỗi của chính tôi trong lúc đột biến: dùng `git checkout --` khôi phục tệp có sửa
 chưa commit ⇒ mất phần sửa, phục hồi bằng chép từ bản nguồn chuẩn (trùng byte) — bài học: khôi phục từ bản sao lưu, không từ git, khi tệp có sửa dở.
+
+## ĐÍNH CHÍNH 03/10/2026 — điều khoản nhà cung cấp (góp ý của phiên Claude khác, bác sĩ cho chuyển tới)
+
+**Nguồn góp ý.** Phiên «Nén chỉ mục MEMORY.md» đọc điều khoản ngày 03/10/2026 và nêu ba điểm:
+- Elsevier cấm dùng Content với công cụ AI. Phiên này tự đọc lại được trang điều khoản website Elsevier và xác nhận câu «You may not
+  use Content … in combination with an artificial intelligence tool».
+- EBSCO/DynaMed: dùng AI phải hỏi phép; TDM bị cấm. Phiên này đọc được trang giấy phép DynaMed của UBC và trang điều khoản EBSCO
+  của MLB.
+- ADA cấm TDM/ML khi chưa có văn bản cho phép. Phiên này không mở được trang ADA (403) nên dựa vào bản đọc của phiên kia.
+
+**Sai ở bản đầu của PR này.** Quy trình DynaMed cho Claude ĐỌC trang «Recent Alerts» trong khung trình duyệt. Đầu ra còn mang tên chủ
+đề và trích dẫn của DynaMed, và tôi đã đọc thử một lượt thật ngày 02/10, lưu vào tệp tạm (`--ghi` chưa từng chạy nên kho chung không
+có gì). Ngày 03/10 tệp tạm đã xoá.
+
+**Sửa.**
+- `HUONG_DAN_DYNAMED`:
+  - Claude KHÔNG mở/đọc trang DynaMed, kể cả trong khung trình duyệt của app, và không đọc tệp bác sĩ chép.
+  - Bác sĩ tự chép; công cụ Python tất định tách trích dẫn → PubMed.
+  - Đầu ra chỉ nêu SỐ THỨ TỰ cảnh báo, ngày và metadata PubMed/Crossref.
+- `HUONG_DAN_SCOPUS`: Claude không mở trang Scopus. Dòng bỏ/rút của nguồn Scopus không mang tiêu đề export; ứng viên chọn nhận tiêu đề
+  của cơ quan đăng ký.
+- Test cập nhật theo hợp đồng chặt hơn (đầu ra không có chữ nào của DynaMed; Scopus không lộ tiêu đề export), kèm 2 đột biến bị bắt.
+- BH150 thêm hai kiểm; CLAUDE.md sửa dòng tương ứng.
+- Phần Web of Science qua Export giữ nguyên. Clarivate chỉ cấm thu thập tự động có hệ thống; phiên kia không thấy điều khoản cấm AI
+  cho người dùng.

@@ -8265,7 +8265,16 @@ def bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si():
                                  "\n\nView in Prostate Cancer\n")
     if len(cb) != 1 or any("Câu tóm tắt" in str(v) for v in cb[0].values()):
         return False, "bộ tách cảnh báo DynaMed hỏng hoặc GIỮ câu tóm tắt có bản quyền"
-    return True, "401 là mã chặn; tiêu đề trang chặn bị từ chối; lô đi tiếp khi chỉ vướng chặn bot; chỉ bản ghi xác minh được thành ứng viên"
+    # 03/10/2026 — điều khoản EBSCO (AI phải được phép, TDM bị cấm) và Elsevier (không dùng Content với công cụ AI): Claude không
+    # mở/đọc trang DynaMed/Scopus; đầu ra của công cụ (Claude đọc được) không mang chữ nào của DynaMed.
+    if "Claude KHÔNG mở, KHÔNG đọc trang DynaMed" not in tk.HUONG_DAN_DYNAMED or "Claude KHÔNG mở/đọc trang Scopus" not in tk.HUONG_DAN_SCOPUS:
+        return False, "quy trình DynaMed/Scopus lại cho Claude đọc trang của nhà cung cấp (điều khoản EBSCO/Elsevier cấm dùng với AI)"
+    _bg, bcdm = tk.tu_canh_bao_dynamed(cb, [{"topic": "Ung thư tuyến tiền liệt"}], lambda term: [])
+    dau_ra = " ".join(bcdm["ngoai_watchlist"] + bcdm["ngoai_pubmed"] + bcdm["khong_phan_giai"])
+    if "Prostate Cancer" in dau_ra or "Ann Oncol" in dau_ra:
+        return False, "đầu ra làn DynaMed còn chữ của DynaMed (tên chủ đề/trích dẫn) — Claude sẽ đọc nội dung EBSCO"
+    return True, ("401 là mã chặn; tiêu đề trang chặn bị từ chối; lô đi tiếp khi chỉ vướng chặn bot; chỉ bản ghi xác minh được thành "
+                  "ứng viên; đầu ra DynaMed không mang chữ của DynaMed")
 
 
 def bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky():

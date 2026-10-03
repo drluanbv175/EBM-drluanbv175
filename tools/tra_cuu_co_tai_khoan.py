@@ -60,7 +60,9 @@ HE_SO_XAC_MINH = 4           # chỉ xác minh tối đa toi_da × 4 bản ghi �
 
 _CUM_LOAI = '(guideline* OR consensus OR recommendation* OR "systematic review" OR meta-analys* OR randomi*)'
 
-HUONG_DAN_SCOPUS = """SCOPUS (https://www.scopus.com) — bác sĩ tự đăng nhập bằng tài khoản của mình:
+HUONG_DAN_SCOPUS = """SCOPUS (https://www.scopus.com) — bác sĩ tự đăng nhập bằng tài khoản của mình. Claude KHÔNG mở/đọc trang Scopus
+(điều khoản website Elsevier, đọc 03/10/2026: không dùng Content «in combination with an artificial intelligence tool»); công cụ chỉ in
+metadata lấy từ Crossref/PubMed — tiêu đề trong tệp export Scopus không được in ra hay lưu lại:
   1. Search → «Advanced document search» → dán câu tìm → Search.
   2. Sắp xếp «Date (newest)». Chọn «All» (hoặc tối đa 200 dòng đầu).
   3. Export → CSV → tick «Citation information» (thêm «Abstract & keywords» nếu muốn) → Export. Lưu ~/Downloads/scopus_<chủ-đề>.csv."""
@@ -69,14 +71,15 @@ HUONG_DAN_WOS = """WEB OF SCIENCE (https://www.webofscience.com) — bác sĩ t�
   2. Sắp xếp «Date: newest first».
   3. Export → «Tab delimited file» (hoặc «Plain text file» / «RIS») → Records 1–500 · Record content «Full Record» → Export.
      Tệp thường tên savedrecs.txt trong ~/Downloads."""
-HUONG_DAN_DYNAMED = """DYNAMED (https://www.dynamed.com) — bác sĩ tự đăng nhập trong khung trình duyệt của app (máy không gõ mật khẩu):
-  1. Claude mở «Recent Alerts» → tab «All Topics» (hoặc «View All Alerts») trong MỘT tab nền, đọc văn bản trang (get_page_text).
-     Một lượt đọc mỗi tuần, theo yêu cầu của bác sĩ — KHÔNG cào hàng loạt trang chủ đề, không tải toàn văn (điều khoản EBSCO).
-  2. Claude ghi văn bản đó vào tệp TẠM trong scratchpad của phiên (ngoài repo, ngoài OneDrive) rồi chạy:
-       python3 tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao <tệp tạm>            (chạy thử)
-       python3 tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao <tệp tạm> --ghi      (sau khi bác sĩ xem kết quả)
-  3. Máy KHÔNG lưu câu tóm tắt của DynaMed; chỉ lưu trích dẫn + tên chủ đề + ngày + từ khoá, rồi tra ngược ra PMID và xác minh.
-     Trích dẫn ngoài PubMed (nhãn FDA, NCCN…) và cảnh báo không gắn được chủ đề watchlist được LIỆT KÊ để bác sĩ đọc."""
+HUONG_DAN_DYNAMED = """DYNAMED — điều khoản EBSCO (đọc 03/10/2026): dùng công cụ AI với nội dung phải được EBSCO cho phép; khai thác
+văn bản/dữ liệu (TDM) bị cấm ⇒ Claude KHÔNG mở, KHÔNG đọc trang DynaMed (kể cả trong khung trình duyệt của app) và KHÔNG đọc tệp bác sĩ chép.
+  1. BÁC SĨ tự mở «Recent Alerts» → chép văn bản trang (Ctrl/Cmd+A, Ctrl/Cmd+C) vào một tệp ở máy, vd ~/Downloads/dynamed.txt.
+  2. Chạy (bác sĩ, hoặc Claude chạy LỆNH mà không mở tệp):
+       python3 tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao ~/Downloads/dynamed.txt          (chạy thử)
+       python3 tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao ~/Downloads/dynamed.txt --ghi    (sau khi bác sĩ xem kết quả)
+     Công cụ Python TẤT ĐỊNH (không phải AI) tách trích dẫn rồi tra PubMed; đầu ra CHỈ có số thứ tự cảnh báo, ngày, PMID và metadata
+     PubMed/Crossref — không in, không lưu chữ nào của DynaMed (tên chủ đề, trích dẫn, câu tóm tắt).
+  3. Xoá tệp chép sau khi chạy. Cảnh báo ngoài PubMed / ngoài watchlist được nêu theo SỐ THỨ TỰ để bác sĩ tra lại trong tệp của mình."""
 HUONG_DAN_NHAP = ("Sau khi export, nói với Claude: «nhập tệp <đường dẫn> cho chủ đề <tên>». Claude chạy chạy thử trước "
                   "(`--nhap … ` không ghi), đọc kết quả xác minh với bác sĩ, rồi mới `--ghi`.")
 
@@ -351,6 +354,7 @@ def doc_canh_bao_dynamed(van_ban: str) -> list[dict]:
         if d.startswith("View in "):
             cur["chu_de_dynamed"] = d[len("View in "):].strip()
             if cur.get("trich_dan"):
+                cur["so_thu_tu"] = len(ra) + 1     # đầu ra nêu cảnh báo theo SỐ THỨ TỰ, không theo chữ của DynaMed
                 ra.append(cur)
             cur = None
             continue
@@ -459,7 +463,9 @@ def tu_canh_bao_dynamed(canh_bao: list[dict], ds_watch: list[dict], tim: Callabl
     ban_ghi, bc = [], {"tong_canh_bao": len(canh_bao), "ngoai_watchlist": [], "ngoai_pubmed": [], "khong_phan_giai": []}
     for cb in canh_bao:
         chu_de = gan_chu_de(cb.get("chu_de_dynamed", ""), ds_watch)
-        ngu_canh = (f"{cb.get('loai')} {cb.get('ngay')} — chủ đề DynaMed «{cb.get('chu_de_dynamed')}» — trích dẫn ({cb.get('trich_dan')})"
+        # Không mang chữ nào của DynaMed (tên chủ đề, trích dẫn, loại cảnh báo) — chỉ số thứ tự + ngày + chủ đề watchlist CỦA TA
+        # (điều khoản EBSCO: không đưa nội dung vào công cụ AI; đầu ra này Claude đọc được).
+        ngu_canh = (f"cảnh báo DynaMed #{cb.get('so_thu_tu', '?')} ({cb.get('ngay') or 'không rõ ngày'})"
                     + (f" → watchlist «{chu_de}»" if chu_de else ""))
         if chu_de is None and not tat_ca:
             bc["ngoai_watchlist"].append(ngu_canh)
@@ -525,7 +531,10 @@ def xu_ly(ban_ghi: list[dict], nguon: str, ten_tep: str, dang: str, chu_de: str,
     for b in ds[:tran]:
         b = {**b, "_nguon": nguon}
         kq = xac_minh(b)
-        hang = {"title": b["title"], "doi": b["doi"], "pmid": b["pmid"], "year": b["year"], "loai_export": b["loai"],
+        # Scopus là nội dung Elsevier — điều khoản cấm dùng với công cụ AI ⇒ không mang tiêu đề export ra đầu ra/báo cáo phiên;
+        # ứng viên được chọn nhận tiêu đề từ Crossref/PubMed (bước xác minh).
+        hang = {"title": "" if nguon == "scopus" else b["title"], "doi": b["doi"], "pmid": b["pmid"], "year": b["year"],
+                "loai_export": b["loai"],
                 "ket_qua": kq["ket_qua"], "ly_do": kq.get("ly_do", ""), "chu_de": b.get("chu_de") or chu_de,
                 **({"ngu_canh": b["ngu_canh"]} if b.get("ngu_canh") else {})}
         if kq["ket_qua"] == "bi_rut_bai":
@@ -577,7 +586,8 @@ def in_bao_cao(bc: dict, ghi: bool) -> None:
     for c in bc["chon"]:
         print(f"  ✓ [{c.get('study_type') or c.get('loai_export') or '?'}] {c['title'][:95]} · PMID {c.get('pmid') or '—'} · DOI {c.get('doi') or '—'}")
     for r in bc["rut_bai"]:
-        print(f"  🔴 BỊ RÚT/THÔNG BÁO RÚT — KHÔNG đưa vào: {r['title'][:90]} ({r['ly_do'][:80]})")
+        dinh_danh = " · ".join(x for x in (f"PMID {r['pmid']}" if r.get("pmid") else "", f"DOI {r['doi']}" if r.get("doi") else "") if x)
+        print(f"  🔴 BỊ RÚT/THÔNG BÁO RÚT — KHÔNG đưa vào: {dinh_danh or r['title'][:90]} ({r['ly_do'][:80]})")
     bo = {}
     for h in bc["bo"]:
         bo[h["ket_qua"]] = bo.get(h["ket_qua"], 0) + 1
