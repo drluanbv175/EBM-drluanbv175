@@ -44,7 +44,9 @@ def test_guideline_esc_dang_o_oup_hay_wiley_van_cam(tieu_de) -> None:
 @pytest.mark.parametrize("tieu_de", ["Guidelines from the ESC Congress were discussed", "A trial of ESC inhibitors",
                                      "Escape guidelines for rural clinics", ""])
 def test_tieu_de_khong_phai_guideline_esc_khong_bi_cam(tieu_de) -> None:
-    assert D.nxb_cua("10.1093/eurheartj/x", "https://academic.oup.com/eurheartj/x", tieu_de) == (None, None)
+    """Không phải guideline ESC ⇒ không mang khoá ESC; từ 03/10/2026 bài trên OUP mang khoá OUP (OUP vào bảng)."""
+    assert D.nxb_cua("10.1093/eurheartj/x", "https://academic.oup.com/eurheartj/x", tieu_de)[0] == "Oxford University Press"
+    assert D.nxb_cua("10.9999/x", "https://example.org/x", tieu_de) == (None, None)
 
 
 def test_springer_nature_cam_theo_tien_to_bmc_khong() -> None:
@@ -52,6 +54,36 @@ def test_springer_nature_cam_theo_tien_to_bmc_khong() -> None:
     assert D.nxb_cua("10.1038/s41591-026-0001-1", "")[0] == "Springer Nature"
     assert D.nxb_cua("10.1186/s12916-026-0001-1", "https://bmcmedicine.biomedcentral.com/articles/x") == (None, None), \
         "BMC toàn OA — không được chặn theo tiền tố"
+
+
+@pytest.mark.parametrize("doi,ten", [
+    ("10.1093/jcem/dgad001", "Oxford University Press"), ("10.1210/jc.2015-1710", "Oxford University Press"),
+    ("10.1164/rccm.202301-0001OC", "Oxford University Press"), ("10.1056/NEJMoa2400001", "Massachusetts Medical Society (NEJM)"),
+    ("10.1001/jama.2026.1", "American Medical Association (JAMA Network)"), ("10.1542/peds.2026-1", "American Academy of Pediatrics"),
+    ("10.1177/0333102418754880", "SAGE Publishing"), ("10.1136/gutjnl-2021-324598", "BMJ Publishing Group"),
+    ("10.7326/M23-0001", "American College of Physicians (Annals)"),
+    ("10.1161/CIR.0000000000001001", "Wolters Kluwer Health (LWW · AHA journals · Neurology)"),
+    ("10.1212/WNL.0000000000200001", "Wolters Kluwer Health (LWW · AHA journals · Neurology)"),
+    ("10.1097/HJH.0000000000003001", "Wolters Kluwer Health (LWW · AHA journals · Neurology)"),
+])
+def test_dot_doc_dieu_khoan_03_10_nhan_dung_khoa(doi, ten) -> None:
+    """Đợt đọc điều khoản 03/10/2026 (phủ hiệp hội/tạp chí uy tín cho làn Chrome): tám NXB «cấm»/«không rõ ⇒ xử như cấm»."""
+    assert D.nxb_cua(doi, "")[0] == ten, doi
+
+
+def test_guideline_esc_tren_oup_van_mang_khoa_esc_khong_phai_oup() -> None:
+    """Thứ tự trong `nxb_cua`: tiêu đề ESC xét TRƯỚC tiền tố — đảo lại thì guideline ESC thành «OUP» và mất đường cấp phép ESC."""
+    assert D.nxb_cua("10.1093/eurheartj/ehag100", "https://academic.oup.com/eurheartj/x",
+                     "2026 ESC Guidelines for the management of heart failure")[0] == ESC
+
+
+def test_ban_tdm_cua_nxb_tinh_la_may_co_toan_van_nhung_khong_phai_oa(tmp_path) -> None:
+    """PDF Wiley TDM (`PMID-<n>_WTDM.pdf`, token của bác sĩ) ⇒ «tdm_nxb»: máy có toàn văn, KHÔNG gọi là OA."""
+    (tmp_path / "PMID-111_WTDM.pdf").write_bytes(b"%PDF-1.4")
+    (tmp_path / "PMID-222_UPW.pdf").write_bytes(b"%PDF-1.4")
+    tt = D.bao_phu_cuc_bo(["111", "222", "333"], kho=tmp_path)
+    assert tt == {"111": "tdm_nxb", "222": "oa_khac", "333": "chua_co"}, tt
+    assert "tdm_nxb" in D.TRANG_THAI_MAY_CO_TOAN_VAN
 
 
 def test_nice_mdpi_who_frontiers_van_chua_kiem() -> None:

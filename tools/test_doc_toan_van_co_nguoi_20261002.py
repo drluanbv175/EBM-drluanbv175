@@ -33,9 +33,9 @@ TIEU_DE = "Cognitive behavioral therapy for insomnia-assisted discontinuation of
 
 
 def _hs(**sua) -> dict:
-    hs = {"pmid": "42751933", "doi": "10.1177/03000605261487272", "tieu_de_bai": TIEU_DE,
-          "url_doc": "https://journals.sagepub.com/doi/10.1177/03000605261487272",
-          "tieu_de_trang": TIEU_DE + " - SAGE Journals", "doc_luc": HOM_NAY.isoformat(),
+    hs = {"pmid": "42751933", "doi": "10.1080/07853890.2026.2600001", "tieu_de_bai": TIEU_DE,
+          "url_doc": "https://www.tandfonline.com/doi/full/10.1080/07853890.2026.2600001",
+          "tieu_de_trang": TIEU_DE + " - Taylor & Francis Online", "doc_luc": HOM_NAY.isoformat(),
           "nguon_truy_cap": "trinh_duyet_co_nguoi", "gap_chan": True, "nguoi_vuot_chan": "bac_si",
           "so_ky_tu_toan_van": 41000, "sha256_toan_van": "ab" * 32, "loai_tai_lieu": "sr_ma",
           "phuong_phap": {"thiet_ke": "Tổng quan hệ thống + phân tích gộp 12 RCT", "quan_the": "Người lớn dùng thuốc ngủ kéo dài",
@@ -80,11 +80,11 @@ def test_duong_doc_phan_nhanh_va_loi_mang_khong_thanh_khong_co():
     oa = D.duong_doc("1", "chua_co", epmc=lambda **k: {"pmcid": "PMC9", "isOpenAccess": "Y", "doi": "10.1/a"})
     assert oa["cach"] == "oa_chua_gom"
     mp = D.duong_doc("2", "chua_co", epmc=lambda **k: {"doi": "10.1/b", "fullTextUrlList": {"fullTextUrl": [
-        {"availabilityCode": "F", "url": "https://www.nejm.org/doi/full/10.1/b"}]}})
+        {"availabilityCode": "F", "url": "https://www.tandfonline.com/doi/full/10.1/b"}]}})
     assert mp["cach"] == "trinh_duyet" and mp["mien_phi"] and "Cloudflare" in mp["mien_do_duoc"]
-    # (jacc.org là Elsevier ⇒ nay thuộc «bác sĩ đọc trực tiếp» — ca này dùng một NXB ngoài bảng cấm.)
-    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"}, doi_dich=lambda d: "https://www.ahajournals.org/doi/" + d)
-    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == "www.ahajournals.org" and not qua_doi["mien_phi"]
+    # (jacc.org là Elsevier, nejm.org/ahajournals.org vào bảng cấm 03/10/2026 ⇒ ca này dùng NXB NGOÀI bảng: T&F, Karger.)
+    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"}, doi_dich=lambda d: "https://karger.com/doi/" + d)
+    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == "karger.com" and not qua_doi["mien_phi"]
 
     def hong(**k):
         raise OSError("mạng")
@@ -263,7 +263,8 @@ def test_han_doc_luc_dung_hang_so():
 @pytest.mark.parametrize("doi, url, ten", [
     ("10.1016/j.jacc.2026.05.033", "", "Elsevier"), ("", "https://www.sciencedirect.com/science/article/pii/S1", "Elsevier"),
     ("", "https://www.thelancet.com/journals/lancet/article/x", "Elsevier"), ("10.2337/dc26-sint", "", "ADA (American Diabetes Association)"),
-    ("", "https://www.dynamed.com/topics/x", "EBSCO (DynaMed)"), ("10.1136/heartjnl-2025-326305", "https://heart.bmj.com/x", None),
+    ("", "https://www.dynamed.com/topics/x", "EBSCO (DynaMed)"), ("10.1136/heartjnl-2025-326305", "https://heart.bmj.com/x", "BMJ Publishing Group"),
+    ("10.1080/07853890.2026.2600001", "https://www.tandfonline.com/doi/full/x", None),
 ])
 def test_nxb_cua(doi, url, ten):
     assert D.nxb_cua(doi, url)[0] == ten
@@ -273,8 +274,8 @@ def test_phieu_xep_bai_elsevier_cho_bac_si_doc_truc_tiep_ke_ca_mien_phi():
     r = D.duong_doc("42377292", "chua_co", epmc=lambda **k: {"doi": "10.1016/j.jacc.2026.05.033", "fullTextUrlList": {"fullTextUrl": [
         {"availabilityCode": "F", "url": "https://www.jacc.org/doi/10.1016/j.jacc.2026.05.033"}]}})
     assert r["cach"] == "bac_si_doc_truc_tiep" and r["nxb"] == "Elsevier" and "TDM" in r["ly_do"]
-    k = D.duong_doc("41672763", "chua_co", epmc=lambda **k: {"doi": "10.1136/heartjnl-2025-326305"},
-                    doi_dich=lambda d: "https://heart.bmj.com/lookup/doi/" + d)
+    k = D.duong_doc("41672763", "chua_co", epmc=lambda **k: {"doi": "10.1080/07853890.2026.2600001"},
+                    doi_dich=lambda d: "https://www.tandfonline.com/doi/full/" + d)
     assert k["cach"] == "trinh_duyet" and k["dieu_khoan"] == "chua_kiem"
 
 
@@ -640,3 +641,11 @@ def test_huong_dan_va_doctrine_co_uy_quyen_bac_si():
     muc = van_ban[i:van_ban.find("\n## ", i + 5)]
     assert "**Bác sĩ uỷ quyền máy đọc (03/10/2026):**" in muc and "`EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json`" in muc
     assert "KHÔNG phải «NXB cho phép»" in muc and D.lech_doctrine(van_ban) == []
+
+
+def test_bai_da_co_ban_tdm_cua_nxb_thi_khong_nap_lan_trinh_duyet(kho):
+    """03/10/2026: đã có PDF qua kênh TDM của NXB (`PMID-<n>_WTDM.pdf`) ⇒ không mở bài bằng trình duyệt nữa."""
+    (kho / "PMID-42751933_WTDM.pdf").write_bytes(b"%PDF-1.4")
+    ma, bao = D.nap(_hs(), ghi=True, xac_minh=_xm(), kho=kho, hom_nay=HOM_NAY, kiem_tieu_de=XN.kiem_tieu_de)
+    assert ma == 3 and any("kênh TDM" in x for x in bao), bao
+    assert not (kho / "trinh_duyet").exists()

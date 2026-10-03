@@ -60,7 +60,9 @@ TRAN_SO_TRICH = 6
 GHI_CHU_BAC_SI_MIN, GHI_CHU_BAC_SI_MAX = 5, 300
 # Trạng thái kho cục bộ được tính ĐÃ PHỦ (không còn «chỉ tóm tắt» cần làm). `bac_si_da_doc_truc_tiep`: máy KHÔNG có toàn văn —
 # bác sĩ tự đọc (NXB cấm AI/TDM) và ghi kết luận. Khác `cach` «bac_si_doc_truc_tiep» của phiếu = bài CHỜ bác sĩ đọc.
-TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "da_doc_trinh_duyet")
+# «tdm_nxb» (03/10/2026): PDF tải qua kênh TDM chính thức của NXB bằng token của bác sĩ (Wiley TDM — SRC-042), lưu NGOÀI git
+# dạng `PMID-<n>_WTDM.pdf`; KHÔNG gọi là OA (bài có bản quyền, chỉ dùng theo giấy phép TDM).
+TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "tdm_nxb", "da_doc_trinh_duyet")
 TRANG_THAI_DA_PHU = TRANG_THAI_MAY_CO_TOAN_VAN + ("bac_si_da_doc_truc_tiep",)
 
 # Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản. Đo lại
@@ -167,6 +169,74 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         "trich": "explicitly reserves all rights in the Content for any kind of text-and-data-mining",
         "ngoai_le": "bài mang giấy phép CC của CHÍNH bài: theo đúng giấy phép (đường PMC OA); BMC (10.1186/) toàn OA nên không nằm trong tiền tố cấm",
         "duong_hop_le": "TDM cho nhà nghiên cứu qua tổ chức, mục đích phi thương mại (TDM API có phí, cần khoá); hỏi datasolutions@springernature.com"},
+    # Đợt đọc điều khoản 03/10/2026 (bác sĩ yêu cầu phủ các hiệp hội/tạp chí uy tín cho làn Chrome). Năm NXB cấm RÕ việc dùng
+    # nội dung với công cụ AI; ba NXB còn lại chỉ cấm huấn luyện mô hình hoặc im lặng về AI ⇒ «không rõ ⇒ xử như cấm» (doctrine
+    # §2septies mục 4). Guideline ESC đăng trên OUP vẫn mang khoá ESC — `nxb_cua` xét tiêu đề ESC TRƯỚC nền tảng đăng bài.
+    "Oxford University Press": {
+        "ket_luan": "cam", "doi": ("10.1093/", "10.1210/", "10.1164/"), "mien": ("academic.oup.com", "oup.com"),
+        "nguon": "https://academic.oup.com/pages/legal-notice", "doc_luc": "2026-10-03",
+        "trich": "use any portion of the Content in combination with any artificial intelligence (AI) tool",
+        "loai_nguon": "Legal notice của Oxford Academic, mục «Text and Data Mining, TDM Reservation Policy, and Artificial "
+                      "Intelligence Systems» (đọc bằng Chrome); 10.1210 = Endocrine Society (JCEM…), 10.1164 = ATS (AJRCCM…) — "
+                      "atsjournals.org chuyển 301 sang academic.oup.com (đo 03/10/2026)",
+        "ngoai_le": "Subscriber Agreement của cơ sở, giấy phép CC của bài Open Access, giấy phép chính phủ cho Government Works",
+        "duong_hop_le": "TDM phi thương mại theo Subscription Agreement của cơ sở có quyền truy cập hợp pháp; dùng với AI/TDM thương mại "
+                        "phải có thoả thuận — data.mining@oup.com"},
+    "Massachusetts Medical Society (NEJM)": {
+        "ket_luan": "cam", "doi": ("10.1056/",), "mien": ("nejm.org", "nejmgroup.org"),
+        "nguon": "https://www.nejmgroup.org/legal/terms-of-use.htm", "doc_luc": "2026-10-03",
+        "trich": "test, process, analyze, train, generate output from, or develop any form of artificial intelligence",
+        "loai_nguon": "NEJM Group Terms of Use (sửa 01/2026), §4 Prohibited Conduct — đọc qua WebFetch (bản chuyển markdown), "
+                      "chưa mở bằng trình duyệt; §2 giữ mọi quyền TDM/huấn luyện AI, chỉ cho dùng cá nhân phi thương mại",
+        "duong_hop_le": "xin phép bằng văn bản của NEJM Group (permissions) — chưa có kênh TDM/AI công khai"},
+    "American Medical Association (JAMA Network)": {
+        "ket_luan": "cam", "doi": ("10.1001/",), "mien": ("jamanetwork.com", "ama-assn.org"),
+        "nguon": "https://www.ama-assn.org/about/terms-use", "doc_luc": "2026-10-03",
+        "trich": "CHƯA XÁC MINH NGUYÊN VĂN — ama-assn.org chặn cứng («Sorry, you have been blocked») cả Chrome của bác sĩ",
+        "loai_nguon": "jamanetwork.com/pages/terms-of-use chuyển 301 sang trang AMA; trang AMA chặn cứng 03/10/2026; hướng dẫn "
+                      "biên tập JAMA Network (chỉ qua kết quả tìm kiếm, chưa đọc nguyên văn) nêu cấm đưa bài vào mô hình AI khi "
+                      "chưa có giấy phép ⇒ «không rõ ⇒ dừng»",
+        "duong_hop_le": "xin phép/giấy phép của AMA (JAMA Network permissions) — kênh cụ thể chưa xác minh"},
+    "American Academy of Pediatrics": {
+        "ket_luan": "cam", "doi": ("10.1542/",), "mien": ("publications.aap.org", "aap.org", "aappublications.org"),
+        "nguon": "https://www.aap.org/en/pages/terms-of-use/", "doc_luc": "2026-10-03",
+        "trich": "in conjunction with any artificial intelligence tool without the express written permission of the AAP",
+        "loai_nguon": "AAP Terms of Use (sửa 24/09/2026) — đọc qua WebFetch; điều khoản phủ «websites, apps, and digital "
+                      "platforms provided by AAP», không nêu đích danh publications.aap.org",
+        "duong_hop_le": "văn bản cho phép của AAP"},
+    "SAGE Publishing": {
+        "ket_luan": "cam", "doi": ("10.1177/",), "mien": ("journals.sagepub.com", "sagepub.com"),
+        "nguon": "https://www.sagepub.com/tdm-ai-policy", "doc_luc": "2026-10-03",
+        "trich": "for any AI uses including generative AI you will need … a license from Sage",
+        "loai_nguon": "Sage Policy on TDM and AI (không ghi ngày) — đọc qua WebFetch; TDM phi thương mại nội dung có quyền truy "
+                      "cập hợp pháp thì KHÔNG cần giấy phép, nhưng mọi việc dùng với AI (gồm RAG) cần giấy phép",
+        "duong_hop_le": "giấy phép AI của Sage — permissions@sagepub.com"},
+    "BMJ Publishing Group": {
+        "ket_luan": "cam", "doi": ("10.1136/",), "mien": ("bmj.com", "bmjgroup.com"),
+        "nguon": "https://bmjgroup.com/text-and-data-mining-tdm-policy/", "doc_luc": "2026-10-03",
+        "trich": "development, training, fine-tuning or validation of AI systems or models",
+        "loai_nguon": "TDM policy and licence (06/01/2026) — đọc qua WebFetch: cho TDM PHI THƯƠNG MẠI nội dung có quyền truy cập "
+                      "hợp pháp, cấm TDM để phát triển/huấn luyện/kiểm định hệ AI; im lặng về dùng công cụ AI để đọc–tóm tắt "
+                      "⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài Open Access theo đúng giấy phép CC của bài",
+        "duong_hop_le": "TDM phi thương mại theo chính sách BMJ (không dùng cho phát triển AI); dùng với AI cần BMJ cho phép"},
+    "American College of Physicians (Annals)": {
+        "ket_luan": "cam", "doi": ("10.7326/",), "mien": ("acpjournals.org", "annals.org", "acponline.org"),
+        "nguon": "https://www.acpjournals.org/journal/aim/conditions-of-use", "doc_luc": "2026-10-03",
+        "trich": "YOU MAY NOT USE CONTENT TO TRAIN AI MODELS OR USE CONTENT FOR OTHER PURPOSES",
+        "loai_nguon": "Conditions of Use của Annals.org (đọc bằng Chrome): nội dung «for personal noncommercial use», cấm rõ "
+                      "huấn luyện AI; không nói về công cụ AI đọc–tóm tắt ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "permissions@acponline.org"},
+    "Wolters Kluwer Health (LWW · AHA journals · Neurology)": {
+        "ket_luan": "cam", "doi": ("10.1097/", "10.1161/", "10.1212/"),
+        "mien": ("journals.lww.com", "lww.com", "ovid.com", "ahajournals.org", "neurology.org"),
+        "nguon": "https://www.ovid.com/global/terms", "doc_luc": "2026-10-03",
+        "trich": "any commercial use of any Site Materials … without the prior written consent of WKH",
+        "loai_nguon": "Terms and Conditions của WKH (journals.lww.com nay chuyển sang ovid.com — đo 03/10/2026; đọc bằng Chrome): "
+                      "không có điều về AI/TDM; hướng dẫn tác giả của WK và trang AHA journals (chỉ qua kết quả tìm kiếm, chưa đọc "
+                      "nguyên văn) cấm tải bài vào AI tạo sinh/cào để huấn luyện AI ⇒ «không rõ ⇒ xử như cấm»; 10.1161 = AHA, 10.1212 = AAN",
+        "ngoai_le": "bài Open Access theo giấy phép CC của bài (vd JAHA)",
+        "duong_hop_le": "TDM qua CCC RightFind XML for Mining (Wolters Kluwer Health tham gia); dùng với AI cần WKH cho phép"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
@@ -237,15 +307,17 @@ def uy_quyen_bac_si(nxb: str | None, hom_nay: date | None = None, tep: Path | No
 
 
 def nxb_cua(doi: str = "", url: str = "", tieu_de: str = "") -> tuple[str | None, dict | None]:
-    """(tên NXB, mục điều khoản) theo tiền tố DOI rồi theo miền, cuối cùng theo TIÊU ĐỀ guideline ESC; không khớp ⇒ (None, None)
-    = CHƯA KIỂM."""
+    """(tên NXB, mục điều khoản) theo TIÊU ĐỀ guideline ESC trước, rồi tiền tố DOI, rồi miền; không khớp ⇒ (None, None) = CHƯA KIỂM.
+
+    Tiêu đề ESC đứng TRƯỚC (03/10/2026): từ khi OUP (nơi đăng EHJ) vào bảng, xét tiền tố trước sẽ gán guideline ESC cho OUP và
+    mất luật cấp phép AI riêng của ESC (cùng là «cấm», nhưng đường hợp lệ và uỷ quyền theo khoá khác nhau)."""
+    if tieu_de and _TIEU_DE_ESC_GUIDELINE.search(tieu_de):
+        ten = "ESC (European Society of Cardiology)"
+        return ten, DIEU_KHOAN_NXB[ten]
     doi, h = (doi or "").lower(), _mien(url)
     for ten, d in DIEU_KHOAN_NXB.items():
         if any(doi.startswith(t) for t in d["doi"]) or (h and any(h == m or h.endswith("." + m) for m in d["mien"])):
             return ten, d
-    if tieu_de and _TIEU_DE_ESC_GUIDELINE.search(tieu_de):
-        ten = "ESC (European Society of Cardiology)"
-        return ten, DIEU_KHOAN_NXB[ten]
     return None, None
 
 
@@ -430,7 +502,7 @@ def _bac_si_da_doc(kho: Path) -> dict[str, dict]:
 
 
 def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | None = None) -> dict[str, str]:
-    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
+    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · tdm_nxb · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
     khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền»."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
     ktc = _khong_truy_cap(kho, hom_nay)
@@ -441,6 +513,8 @@ def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | No
             ra[pm] = "oa_xml"
         elif list(kho.glob(f"PMID-{pm}_UPW.*")):
             ra[pm] = "oa_khac"
+        elif list(kho.glob(f"PMID-{pm}_WTDM.*")):
+            ra[pm] = "tdm_nxb"
         elif (kho / "trinh_duyet" / f"PMID-{pm}.json").exists():
             ra[pm] = "da_doc_trinh_duyet"
         elif pm in bsd:
@@ -850,6 +924,9 @@ def nap(hs: dict, *, ghi: bool, xac_minh: Callable[[dict], dict] | None, kho: Pa
     pm = str(hs.get("pmid") or "").strip() if isinstance(hs, dict) else ""
     if pm and (list(kho.glob(f"PMID-{pm}_*.xml")) or list(kho.glob(f"PMID-{pm}_UPW.*"))):
         loi.append("đã có toàn văn OA trong kho — dùng doc_sau_toan_van.py, không cần làn trình duyệt")
+        bao.append(f"✗ {loi[-1]}")
+    elif pm and list(kho.glob(f"PMID-{pm}_WTDM.*")):
+        loi.append("đã có toàn văn qua kênh TDM của NXB (PMID-<n>_WTDM.pdf) — đọc tệp đó, không mở bài bằng trình duyệt")
         bao.append(f"✗ {loi[-1]}")
     if loi:
         return 3, bao + ["TỪ CHỐI — chưa ghi gì."]
