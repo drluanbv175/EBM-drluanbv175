@@ -7928,6 +7928,20 @@ def bh152_toan_van_khong_oa_qua_trinh_duyet_co_bac_si():
             return False, f"hồ sơ toàn văn có {mo_ta} vẫn đạt kiểm"
     if dtv.kiem_ho_so(hs, hom, xn.kiem_tieu_de)[0]:
         return False, "hồ sơ hợp lệ bị từ chối"
+    # 03/10/2026 — bác sĩ uỷ quyền máy đọc (EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json, quyết định của bác sĩ): hồ sơ Elsevier
+    # TỰ KHAI «bac_si_uy_quyen» mà tệp quyết định KHÔNG uỷ quyền Elsevier (vắng tệp, hoặc chỉ uỷ quyền NXB khác) vẫn phải bị từ chối.
+    # Dùng tệp quyết định TẠM — không đụng EBM-Dashboards thật.
+    with _tf.TemporaryDirectory() as td:
+        tq = Path(td) / "dieu-khoan-bac-si-uy-quyen.json"
+        hs_e = {**hs, "doi": "10.1016/j.jacc.2026.05.033", "url_doc": "https://www.jacc.org/doi/x",
+                "dieu_khoan": {"ket_luan": "bac_si_uy_quyen", "ngay_uy_quyen": "2026-10-02"}}
+        if not dtv.kiem_ho_so(hs_e, hom, xn.kiem_tieu_de, tep_uy_quyen=tq)[0]:
+            return False, "hồ sơ Elsevier tự khai «bac_si_uy_quyen» KHÔNG có tệp quyết định của bác sĩ vẫn đạt kiểm"
+        tq.write_text(json.dumps({"muc": [{"nxb": "ADA (American Diabetes Association)", "ngay": "2026-10-02",
+                                           "can_cu": "câu bác sĩ giả cho chốt hồi quy"}]}, ensure_ascii=False),
+                      encoding="utf-8", newline="\n")
+        if not dtv.kiem_ho_so(hs_e, hom, xn.kiem_tieu_de, tep_uy_quyen=tq)[0]:
+            return False, "hồ sơ Elsevier đạt kiểm nhờ uỷ quyền của NXB KHÁC (ADA) — uỷ quyền phải đúng tên NXB"
     with _tf.TemporaryDirectory() as td:
         kho = Path(td) / "toan_van_oa"
         kho.mkdir()
