@@ -43,7 +43,9 @@ def _hs(**sua) -> dict:
                           "di_bien": "I² 41%"},
           "ket_qua": [{"ket_cuc": "Ngừng thuốc ngủ", "chi_so": "RR", "gia_tri": 1.85, "ci_duoi": 1.32, "ci_tren": 2.59, "p": "<0.001",
                        "vi_tri": "Hình 2", "trich_ngan": "CBT-I nearly doubled discontinuation"}],
-          "han_che": "Đa số thử nghiệm nhỏ, không làm mù người tham gia", "tai_tro_coi": "Không tài trợ; không xung đột khai báo"}
+          "han_che": "Đa số thử nghiệm nhỏ, không làm mù người tham gia", "tai_tro_coi": "Không tài trợ; không xung đột khai báo",
+          "dieu_khoan": {"url": "https://nxb-thu.invalid/terms", "doc_luc": "2026-10-02", "ket_luan": "giay_phep_cc",
+                         "trich": "CC BY-NC 4.0"}}
     hs.update(sua)
     return hs
 
@@ -80,8 +82,9 @@ def test_duong_doc_phan_nhanh_va_loi_mang_khong_thanh_khong_co():
     mp = D.duong_doc("2", "chua_co", epmc=lambda **k: {"doi": "10.1/b", "fullTextUrlList": {"fullTextUrl": [
         {"availabilityCode": "F", "url": "https://www.nejm.org/doi/full/10.1/b"}]}})
     assert mp["cach"] == "trinh_duyet" and mp["mien_phi"] and "Cloudflare" in mp["mien_do_duoc"]
-    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"}, doi_dich=lambda d: "https://www.jacc.org/doi/" + d)
-    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == "www.jacc.org" and not qua_doi["mien_phi"]
+    # (jacc.org là Elsevier ⇒ nay thuộc «bác sĩ đọc trực tiếp» — ca này dùng một NXB ngoài bảng cấm.)
+    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"}, doi_dich=lambda d: "https://www.ahajournals.org/doi/" + d)
+    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == "www.ahajournals.org" and not qua_doi["mien_phi"]
 
     def hong(**k):
         raise OSError("mạng")
@@ -254,3 +257,43 @@ def test_han_doc_luc_dung_hang_so():
     assert D.HAN_DOC_LUC_NGAY == 14 and (HOM_NAY - timedelta(days=14)).isoformat() == "2026-09-18"
     loi, _cb, _k = D.kiem_ho_so(_hs(doc_luc="2026-09-18"), HOM_NAY, XN.kiem_tieu_de)
     assert loi == []
+
+
+# ── 03/10/2026: điều khoản nhà xuất bản về AI/TDM ──────────────────────────────────────────────────────────────────────
+@pytest.mark.parametrize("doi, url, ten", [
+    ("10.1016/j.jacc.2026.05.033", "", "Elsevier"), ("", "https://www.sciencedirect.com/science/article/pii/S1", "Elsevier"),
+    ("", "https://www.thelancet.com/journals/lancet/article/x", "Elsevier"), ("10.2337/dc26-sint", "", "ADA (American Diabetes Association)"),
+    ("", "https://www.dynamed.com/topics/x", "EBSCO (DynaMed)"), ("10.1136/heartjnl-2025-326305", "https://heart.bmj.com/x", None),
+])
+def test_nxb_cua(doi, url, ten):
+    assert D.nxb_cua(doi, url)[0] == ten
+
+
+def test_phieu_xep_bai_elsevier_cho_bac_si_doc_truc_tiep_ke_ca_mien_phi():
+    r = D.duong_doc("42377292", "chua_co", epmc=lambda **k: {"doi": "10.1016/j.jacc.2026.05.033", "fullTextUrlList": {"fullTextUrl": [
+        {"availabilityCode": "F", "url": "https://www.jacc.org/doi/10.1016/j.jacc.2026.05.033"}]}})
+    assert r["cach"] == "bac_si_doc_truc_tiep" and r["nxb"] == "Elsevier" and "TDM" in r["ly_do"]
+    k = D.duong_doc("41672763", "chua_co", epmc=lambda **k: {"doi": "10.1136/heartjnl-2025-326305"},
+                    doi_dich=lambda d: "https://heart.bmj.com/lookup/doi/" + d)
+    assert k["cach"] == "trinh_duyet" and k["dieu_khoan"] == "chua_kiem"
+
+
+@pytest.mark.parametrize("sua, mau", [
+    ({"doi": "10.1016/j.jhep.2026.08.028", "url_doc": "https://www.journal-of-hepatology.eu/article/x"}, "Elsevier cấm"),
+    ({"doi": "10.2337/dc26-s001", "url_doc": "https://diabetesjournals.org/care/article/49/x"}, "ADA"),
+    ({"dieu_khoan": None}, "CHƯA KIỂM"),
+    ({"dieu_khoan": {"url": "https://x.invalid/t", "doc_luc": "2026-10-02", "ket_luan": "cam"}}, "CHƯA KIỂM"),
+    ({"dieu_khoan": {"url": "", "doc_luc": "2026-10-02", "ket_luan": "cho_phep"}}, "CHƯA KIỂM"),
+])
+def test_nap_tu_choi_theo_dieu_khoan_nxb(sua, mau):
+    loi, _cb, _k = D.kiem_ho_so(_hs(**sua), HOM_NAY, XN.kiem_tieu_de)
+    assert any(mau in x for x in loi), loi
+
+
+def test_nap_nhan_khi_da_kiem_dieu_khoan_cho_phep():
+    hs = _hs(dieu_khoan={"url": "https://nxb.invalid/terms", "doc_luc": "2026-10-03", "ket_luan": "cho_phep", "trich": "AI use permitted"})
+    assert D.kiem_ho_so(hs, HOM_NAY, XN.kiem_tieu_de)[0] == []
+
+
+def test_huong_dan_co_buoc_dieu_khoan():
+    assert "2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN" in D.HUONG_DAN and "2b. NXB CHƯA KIỂM" in D.HUONG_DAN

@@ -7786,12 +7786,16 @@ def bh152_toan_van_khong_oa_qua_trinh_duyet_co_bac_si():
           "tieu_de_trang": tieu_de + " - SAGE Journals", "doc_luc": "2026-10-02", "nguon_truy_cap": "trinh_duyet_co_nguoi",
           "gap_chan": True, "nguoi_vuot_chan": "bac_si", "so_ky_tu_toan_van": 40000, "sha256_toan_van": "ab" * 32,
           "loai_tai_lieu": "sr_ma", "phuong_phap": {"thiet_ke": "SR/MA"},
-          "ket_qua": [{"ket_cuc": "Ngừng thuốc", "chi_so": "RR", "gia_tri": 1.85, "ci_duoi": 1.32, "ci_tren": 2.59, "vi_tri": "Hình 2"}]}
+          "ket_qua": [{"ket_cuc": "Ngừng thuốc", "chi_so": "RR", "gia_tri": 1.85, "ci_duoi": 1.32, "ci_tren": 2.59, "vi_tri": "Hình 2"}],
+          "dieu_khoan": {"url": "https://nxb-thu.invalid/terms", "doc_luc": "2026-10-02", "ket_luan": "giay_phep_cc"}}
     for sua, mo_ta in (({"tieu_de_trang": "Chờ một chút..."}, "tiêu đề trang chặn bot tiếng Việt"),
                        ({"tieu_de_trang": "Sign in | ScienceDirect"}, "tiêu đề trang đăng nhập"),
                        ({"nguoi_vuot_chan": "claude"}, "người vượt chặn không phải bác sĩ"),
                        ({"han_che": "x" * 900}, "đoạn chép nguyên văn dài"),
-                       ({"ket_qua": [{**hs["ket_qua"][0], "gia_tri": 3.1}]}, "con số nằm ngoài CI")):
+                       ({"ket_qua": [{**hs["ket_qua"][0], "gia_tri": 3.1}]}, "con số nằm ngoài CI"),
+                       # 03/10/2026 — điều khoản NXB: Elsevier cấm dùng Content với công cụ AI; NXB chưa kiểm phải khai đã đọc điều khoản.
+                       ({"doi": "10.1016/j.jacc.2026.05.033", "url_doc": "https://www.jacc.org/doi/x"}, "bài Elsevier (điều khoản cấm AI)"),
+                       ({"dieu_khoan": None}, "NXB chưa kiểm điều khoản AI/TDM")):
         if not dtv.kiem_ho_so({**hs, **sua}, hom, xn.kiem_tieu_de)[0]:
             return False, f"hồ sơ toàn văn có {mo_ta} vẫn đạt kiểm"
     if dtv.kiem_ho_so(hs, hom, xn.kiem_tieu_de)[0]:
@@ -7825,6 +7829,8 @@ def bh152_toan_van_khong_oa_qua_trinh_duyet_co_bac_si():
             return False, "doc_sau_toan_van.py vẫn coi bài đã đọc qua trình duyệt là «CHỈ TÓM TẮT»"
     if "KHÔNG bấm" not in dtv.HUONG_DAN or "KHÔNG giải CAPTCHA" not in dtv.HUONG_DAN:
         return False, "quy trình mất dòng cấm Claude tự vượt kiểm tra chống bot"
+    if dtv.nxb_cua("10.1016/x", "")[1].get("ket_luan") != "cam" or dtv.nxb_cua("10.2337/x", "")[1].get("ket_luan") != "cam":
+        return False, "bảng điều khoản NXB mất mục cấm AI của Elsevier/ADA"
     sk = (REPO / "sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md").read_text(encoding="utf-8")
     if "tools/doc_toan_van_co_nguoi.py --queue" not in sk:
         return False, "tác vụ tuần không lập phiếu toàn văn cho thẻ «chỉ tóm tắt» — công cụ không ai gọi"

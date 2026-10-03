@@ -97,6 +97,41 @@ MIEN_DO_DUOC: dict[str, str] = {
 # DynaMed/UpToDate là bản TỔNG HỢP có bản quyền: chỉ dùng để đi tới nghiên cứu gốc (tools/tra_cuu_co_tai_khoan.py), không làm «toàn văn».
 MIEN_TONG_HOP = ("dynamed.com", "uptodate.com", "bestpractice.bmj.com")
 
+# ĐIỀU KHOẢN NHÀ XUẤT BẢN về dùng NỘI DUNG với công cụ AI / khai thác văn bản (TDM) — 03/10/2026, góp ý của phiên khác + phiên này
+# tự đọc lại. CHỈ ghi điều ĐÃ ĐỌC (nguồn + ngày). NXB không có trong bảng = CHƯA KIỂM ⇒ hồ sơ phải tự khai `dieu_khoan` đã đọc.
+# «cam» ⇒ Claude KHÔNG đọc/xử lý bài; bác sĩ đọc trực tiếp, hoặc đi đường hợp lệ (giấy phép TDM). Nhận diện theo TIỀN TỐ DOI (một
+# NXB có hàng trăm miền tạp chí — vd JACC, J Hepatol, Clin Gastroenterol Hepatol đều là 10.1016) rồi tới miền.
+DIEU_KHOAN_NXB: dict[str, dict] = {
+    "Elsevier": {
+        "ket_luan": "cam", "doi": ("10.1016/",),
+        "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
+                 "cghjournal.org", "elsevierhealth.com"),
+        "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
+        "trich": "may not use Content … in combination with an artificial intelligence tool",
+        "duong_hop_le": "API khai thác văn bản (TDM) của Elsevier qua cơ sở có thuê bao — "
+                        "https://www.elsevier.com/about/policies-and-standards/text-and-data-mining"},
+    "ADA (American Diabetes Association)": {
+        "ket_luan": "cam", "doi": ("10.2337/",), "mien": ("diabetesjournals.org", "diabetes.org"),
+        "nguon": "https://www.diabetesjournals.org/journals/pages/license", "doc_luc": "2026-10-03",
+        "trich": "cấm text/data mining, machine learning khi chưa có văn bản cho phép (phiên khác đọc; máy này gặp 403)",
+        "duong_hop_le": "xin phép bằng văn bản: permissions@diabetes.org"},
+    "EBSCO (DynaMed)": {
+        "ket_luan": "cam", "doi": (), "mien": ("dynamed.com", "ebsco.com", "ebscohost.com"),
+        "nguon": "https://licenses.library.ubc.ca/EBSCOPublishing_Dynamed", "doc_luc": "2026-10-03",
+        "trich": "AI tool: Ask (phải hỏi phép) · Text and Data Mining: No",
+        "duong_hop_le": "chỉ dùng để tìm nghiên cứu gốc — tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao (bác sĩ tự chép)"},
+}
+_KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
+
+
+def nxb_cua(doi: str = "", url: str = "") -> tuple[str | None, dict | None]:
+    """(tên NXB, mục điều khoản) theo tiền tố DOI rồi theo miền; không khớp ⇒ (None, None) = CHƯA KIỂM."""
+    doi, h = (doi or "").lower(), _mien(url)
+    for ten, d in DIEU_KHOAN_NXB.items():
+        if any(doi.startswith(t) for t in d["doi"]) or (h and any(h == m or h.endswith("." + m) for m in d["mien"])):
+            return ten, d
+    return None, None
+
 _TIEU_DE_DANG_NHAP = re.compile(r"\b(sign in|sign-in|log in|login|access through your institution|purchase (pdf|article|access)|"
                                 r"subscribe|đăng nhập|institutional login|get access|buy article|mua bài|truy cập qua tổ chức)\b", re.I)
 _TIEU_DE_CAM_DU_PHONG = re.compile(r"automated request|not a bot|robot|captcha|just a moment|attention required|access denied|"
@@ -120,7 +155,12 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
   0. `python3 tools/gom_toan_van_dashboard.py --queue <tệp>` trước — bài có bản OA thì dây chuyền OA lấy, KHÔNG cần làn này.
   1. `python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-<W>.md` → phiếu: bài nào chưa có toàn văn, mở ở URL nào,
      nhóm theo MIỀN (bác sĩ vượt chặn MỘT lần cho mỗi miền là đọc được cả nhóm).
-  2. Với từng bài: Claude mở URL bằng trình duyệt trong app (Claude_Browser → navigate) rồi chụp màn hình.
+  2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN trước tiên (03/10/2026). NXB trong `DIEU_KHOAN_NXB` với kết luận «cấm» (Elsevier — DOI 10.1016/…,
+     ADA — 10.2337/…, EBSCO/DynaMed) ⇒ Claude KHÔNG mở bài; phiếu đã xếp chúng vào «BÁC SĨ ĐỌC TRỰC TIẾP».
+  2b. NXB CHƯA KIỂM ⇒ Claude đọc trang ĐIỀU KHOẢN (không phải bài) của NXB, tìm điều về AI / text-and-data mining. Cấm hoặc không rõ
+     ⇒ dừng, bác sĩ đọc trực tiếp. Cho phép rõ, hoặc bài mang giấy phép CC ⇒ ghi vào hồ sơ `dieu_khoan` {url, doc_luc, ket_luan:
+     cho_phep | giay_phep_cc, trich ≤ 15 từ}; NXB đã kiểm thì đề xuất thêm vào DIEU_KHOAN_NXB bằng PR.
+  2. Với từng bài được phép: Claude mở URL bằng trình duyệt trong app (Claude_Browser → navigate) rồi chụp màn hình.
      • Trang chặn bot («Just a moment…», «I am not a bot», CAPTCHA) hoặc trang đăng nhập ⇒ Claude DỪNG, nhờ BÁC SĨ tự bấm/đăng
        nhập ngay trong khung trình duyệt rồi nói «xong». Claude KHÔNG bấm, KHÔNG giải CAPTCHA, KHÔNG gõ tài khoản/mật khẩu,
        KHÔNG giả dạng trình duyệt.
@@ -155,6 +195,8 @@ MAU = {
                  "vi_tri": "Bảng 2", "trich_ngan": ""}],
     "khuyen_cao": [{"tom_tat": "", "muc": "Class I, LOE A", "vi_tri": ""}],
     "han_che": "", "tai_tro_coi": "", "ghi_chu": "",
+    "dieu_khoan": {"url": "<trang điều khoản NXB đã đọc>", "doc_luc": date.today().isoformat(), "ket_luan": "cho_phep | giay_phep_cc",
+                   "trich": "<≤ 15 từ nguyên văn điều cho phép / tên giấy phép CC>"},
 }
 
 
@@ -304,8 +346,13 @@ def duong_doc(pm: str, trang_thai: str, epmc: Callable[..., dict] = tra_epmc,
             return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "chua_ro", "ly_do": f"doi.org lỗi {type(e).__name__}"}
     if not url:
         return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "chua_ro", "ly_do": "không có DOI/URL toàn văn trong Europe PMC"}
+    ten_nxb, dk = nxb_cua(doi, url)
+    if dk and dk["ket_luan"] == "cam":
+        return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "bac_si_doc_truc_tiep", "url": url, "nxb": ten_nxb,
+                "ly_do": f"điều khoản {ten_nxb} cấm xử lý nội dung bằng AI/TDM — bác sĩ đọc trực tiếp; đường hợp lệ: {dk['duong_hop_le']}"}
     return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "trinh_duyet", "url": url, "mien": _mien(url),
-            "mien_do_duoc": phan_loai_mien(url), "mien_phi": bool(mien_phi)}
+            "mien_do_duoc": phan_loai_mien(url), "mien_phi": bool(mien_phi),
+            "dieu_khoan": "da_kiem" if dk else "chua_kiem"}
 
 
 def lap_phieu(pmids: list[str], *, ngoai_tuyen: bool, kho: Path | None = None, hom_nay: date | None = None,
@@ -319,6 +366,14 @@ def lap_phieu(pmids: list[str], *, ngoai_tuyen: bool, kho: Path | None = None, h
 def in_phieu(phieu: list[dict]) -> None:
     da = [p for p in phieu if p["cach"] in ("oa_xml", "oa_khac", "da_doc_trinh_duyet")]
     print(f"Đã có toàn văn: {len(da)}/{len(phieu)} bài.")
+    doc_truc_tiep = [p for p in phieu if p["cach"] == "bac_si_doc_truc_tiep"]
+    if doc_truc_tiep:
+        print("\nBÁC SĨ ĐỌC TRỰC TIẾP — điều khoản NXB cấm xử lý nội dung bằng AI/TDM (Claude KHÔNG mở bài):")
+        for ten in sorted({p.get("nxb", "?") for p in doc_truc_tiep}):
+            dk = DIEU_KHOAN_NXB.get(ten, {})
+            print(f"  ▸ {ten} — đường hợp lệ: {dk.get('duong_hop_le', '?')}")
+            for p in (x for x in doc_truc_tiep if x.get("nxb", "?") == ten):
+                print(f"      PMID {p['pmid']} · {p.get('tieu_de', '')[:80]}\n        {p.get('url', '')}")
     for nhan, cach in (("BÀI OA CHƯA GOM — chạy gom_toan_van_dashboard.py", "oa_chua_gom"),
                        ("CHƯA RÕ (lỗi mạng/thiếu định danh — KHÔNG phải «không có toàn văn»)", "chua_ro"),
                        ("ĐÃ BÁO KHÔNG CÓ QUYỀN ĐỌC (≤ 90 ngày)", "khong_truy_cap"),
@@ -334,6 +389,8 @@ def in_phieu(phieu: list[dict]) -> None:
             print(f"  ▸ {mien} — {nhom[0]['mien_do_duoc']}")
             for p in nhom:
                 print(f"      PMID {p['pmid']}{' (miễn phí)' if p['mien_phi'] else ''} · {p['tieu_de'][:80]}\n        {p['url']}")
+                if p.get("dieu_khoan") == "chua_kiem":
+                    print("        ⚠ điều khoản NXB về AI/TDM CHƯA KIỂM — Claude đọc trang điều khoản trước (--huong-dan bước 2b)")
         print("\nQuy trình: python3 tools/doc_toan_van_co_nguoi.py --huong-dan")
     print("Cần bác sĩ kiểm chứng.")
 
@@ -386,6 +443,16 @@ def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[st
         loi.append("url_doc phải là http(s)")
     elif any(_mien(url).endswith(m) for m in MIEN_TONG_HOP):
         loi.append("url_doc là bản TỔNG HỢP có bản quyền (DynaMed/UpToDate…) — chỉ dùng để tìm nghiên cứu gốc, không phải toàn văn")
+    ten_nxb, dk = nxb_cua(doi, url)
+    if dk and dk["ket_luan"] == "cam":
+        loi.append(f"điều khoản {ten_nxb} cấm dùng nội dung với công cụ AI/TDM (đọc {dk['doc_luc']}: {dk['nguon']}) — KHÔNG nạp; "
+                   f"bác sĩ đọc trực tiếp, đường hợp lệ: {dk['duong_hop_le']}")
+    elif not dk:
+        kd = hs.get("dieu_khoan") if isinstance(hs.get("dieu_khoan"), dict) else {}
+        if kd.get("ket_luan") not in _KET_LUAN_DIEU_KHOAN_NHAN or not re.match(r"https?://", str(kd.get("url") or "")) \
+                or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(kd.get("doc_luc") or "")):
+            loi.append("nhà xuất bản CHƯA KIỂM điều khoản về AI/TDM — đọc trang điều khoản trước rồi khai `dieu_khoan` "
+                       "{url, doc_luc, ket_luan: cho_phep | giay_phep_cc, trich ≤ 15 từ}; cấm hoặc không rõ ⇒ dừng, bác sĩ đọc trực tiếp")
     td = (hs.get("tieu_de_trang") or "").strip()
     ly = (kiem_tieu_de(td) if kiem_tieu_de else None) or (
         None if len(td) >= 10 and not _TIEU_DE_CAM_DU_PHONG.search(td) else f"tiêu đề trang «{td[:60]}» là trang chặn/lỗi/quá ngắn")
@@ -678,7 +745,7 @@ def main(argv: list[str] | None = None) -> int:
         _ghi_nguyen_tu(PHIEU_DIR / f"phieu-{date.today():%Y%m%d}.json",
                        json.dumps({"ngay": date.today().isoformat(), "nguon": a.queue or a.pmid, "phieu": phieu},
                                   ensure_ascii=False, indent=2) + "\n")
-    return 1 if any(p["cach"] in ("trinh_duyet", "oa_chua_gom", "chua_ro", "chua_co") for p in phieu) else 0
+    return 1 if any(p["cach"] in ("trinh_duyet", "oa_chua_gom", "chua_ro", "chua_co", "bac_si_doc_truc_tiep") for p in phieu) else 0
 
 
 if __name__ == "__main__":

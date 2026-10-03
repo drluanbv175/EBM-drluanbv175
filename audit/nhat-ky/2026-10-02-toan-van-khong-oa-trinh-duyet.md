@@ -64,3 +64,27 @@ python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-2026-W40.md
 
 **Phát hiện phụ.** BH137 ĐỎ trên cây chính: PR y khoa #63 thêm `app/sources/ec_union_register.py` mà sổ `data/sources.json` chưa có
 mục. Vá ở PR riêng.
+
+## ĐÍNH CHÍNH 03/10/2026 — điều khoản nhà xuất bản về AI/TDM (góp ý của phiên Claude khác)
+
+**Góp ý.** Bản đầu xem mọi nhà xuất bản như nhau: bác sĩ vượt chặn xong thì Claude đọc toàn văn. Nhưng điều khoản của một số NXB cấm
+dùng nội dung với công cụ AI:
+- **Elsevier.** Phiên này tự đọc lại trang điều khoản website, có câu «may not use Content … in combination with an artificial
+  intelligence tool». Elsevier gồm ScienceDirect, Lancet, Cell, JACC, J Hepatol… — DOI 10.1016/.
+- **ADA** (diabetesjournals.org, DOI 10.2337/): cấm TDM/ML khi chưa có văn bản cho phép. Phiên khác đọc; máy này gặp 403.
+- **EBSCO/DynaMed:** AI phải hỏi phép; TDM bị cấm.
+
+Phiếu W40 của bản đầu có 3/5 bài là Elsevier (JACC, CGH, J Hepatol). Chưa bài nào được đọc hay nạp.
+
+**Sửa.**
+- `DIEU_KHOAN_NXB`: chỉ ghi điều ĐÃ ĐỌC (nguồn + ngày + trích ≤ 15 từ + đường hợp lệ). Nhận diện NXB theo TIỀN TỐ DOI trước, miền sau.
+- Phiếu: bài của NXB «cấm» ⇒ nhóm «BÁC SĨ ĐỌC TRỰC TIẾP», kể cả khi bài miễn phí. NXB chưa kiểm ⇒ cảnh báo trong phiếu.
+- `--nap`: NXB cấm ⇒ từ chối. NXB chưa kiểm ⇒ hồ sơ phải khai `dieu_khoan` {url, doc_luc, ket_luan: cho_phep | giay_phep_cc};
+  thiếu, hoặc `cam` ⇒ từ chối.
+- Quy trình thêm bước 2a/2b: Claude đọc trang ĐIỀU KHOẢN của NXB, không phải bài, trước khi mở bài.
+- Giác quan ⑦i nêu rõ «bài Elsevier/ADA: bác sĩ đọc trực tiếp».
+- 11 test mới, 4 đột biến đều bị bắt. Fixture cũ dùng jacc.org làm ví dụ NXB thường, nay đổi sang ahajournals.org vì JACC là
+  Elsevier. BH152 thêm hai kiểm.
+
+**Chưa kiểm điều khoản:** NEJM, JAMA, BMJ, OUP, Wiley, Springer, AHA, SAGE, Cochrane… Trước khi đọc bài của các NXB này phải đọc điều
+khoản (bước 2b). Bài OA mang giấy phép CC ⇒ khai `giay_phep_cc`.

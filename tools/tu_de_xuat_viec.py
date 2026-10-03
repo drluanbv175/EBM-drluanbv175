@@ -471,8 +471,9 @@ def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.dat
     chua = [pm for pm, t in bp.items() if t == "chua_co"]
     if not chua:
         return []
-    return [(3, f"{len(chua)}/{len(pmids)} thẻ gói {moi.stem} chỉ có TÓM TẮT (không có bản OA) — Claude mở trình duyệt, bác sĩ tự "
-             f"vượt chặn/đăng nhập để Claude đọc toàn văn (~5 phút/bài); tới lúc đó thẻ giữ trần «Cân nhắc»",
+    return [(3, f"{len(chua)}/{len(pmids)} thẻ gói {moi.stem} chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở "
+             f"trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp; tới lúc đó thẻ "
+             f"giữ trần «Cân nhắc»",
              f"python3 tools/doc_toan_van_co_nguoi.py --queue queue/{moi.name}  # rồi --huong-dan")]
 
 
