@@ -7193,6 +7193,52 @@ def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
     return True, ""
 
 
+def bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan():
+    """03/10 (HV-02 · HV-04 · EV-10 kiểm toàn diện) — việc của bác sĩ không bao giờ hiện lúc mở phiên (986 sự kiện SessionStart:
+    0 lần có bảng tự đề xuất); 11 PR mở không cảm biến nào đếm; 49 thẻ tuần 0 quyết định được ghi (quyết định nằm trong chat). Vá:
+    `hom_viec_mot_cua.py` (≤ 12 dòng từ bảng sinh sẵn, 👤 trước, 🤖 chỉ đếm, giác quan chết ⇒ không nói «không có việc»), giác quan
+    PR chờ gộp (gh không trả lời ⇒ ⚪, KHÔNG phải «0 PR»; PR xếp chồng nêu tên), `ghi_duyet_the_tuan.py` CHỈ GHI ĐÚNG lời bác sĩ
+    (thẻ không có trong gói / nêu hai lần ⇒ từ chối, không đoán). Kiểm HÀNH VI ngoại tuyến."""
+    import datetime as _dt
+    import json as _json
+    import os as _os
+    hv = _nap(REPO / "tools/hom_viec_mot_cua.py", "_bh154_hv")
+    gd = _nap(REPO / "tools/ghi_duyet_the_tuan.py", "_bh154_gd")
+    td = _nap(REPO / "tools/tu_de_xuat_viec.py", "_bh154_td")
+    the = [f"W40-0{i}" for i in range(1, 8)]
+    for cau, mau in (("W40: 9 ✓", "không có trong gói"), ("W40: 1 ✓ 1 ✗", "hai lần"), ("duyệt: 1 ✓", "không thấy tuần")):
+        if not any(mau in x for x in gd.phan_tich(cau, the)[1]):
+            return False, f"ghi quyết định thẻ tuần ĐOÁN thay vì từ chối («{cau}»)"
+    bang = {"sinh_luc": "2026-10-03T07:00:00", "chet": [], "viec":
+            [{"uu": 2, "ai": "🤖", "viec": "máy", "lenh": ""}] + [{"uu": 2, "ai": "👤", "viec": f"bs {i}", "lenh": ""} for i in range(30)]
+            + [{"uu": 0, "ai": "👤", "viec": "KHẨN", "lenh": ""}]}
+    ra = hv.dong_hom(bang, _dt.datetime(2026, 10, 3, 8))
+    if len(ra) > 12 or "KHẨN" not in ra[1] or any(x.strip().endswith("máy") for x in ra):
+        return False, "hòm việc vượt 12 dòng, không xếp việc khẩn lên đầu, hoặc để việc máy chiếm dòng"
+    if "🟢" in hv.dong_hom({"sinh_luc": "2026-10-03T07:00:00", "chet": ["x"], "viec": []}, _dt.datetime(2026, 10, 3, 8))[-1]:
+        return False, "hòm việc nói «không có việc» khi còn giác quan không đo được"
+    cu = _os.environ.pop("CLAUDE_CODE_REMOTE", None)
+    goc_or = td._owner_repo_tu_remote
+    try:
+        td._owner_repo_tu_remote = lambda d: "chu/repo"
+        truoc = len(td._GIAC_QUAN_CHET)
+        if td.giac_quan_pr_cho_gop([("gốc", REPO)], chay=lambda lenh: "") != [] or len(td._GIAC_QUAN_CHET) != truoc + 1:
+            return False, "gh không trả lời mà giác quan PR không báo ⚪ — im lặng đọc thành «0 PR chờ gộp»"
+        pr = [{"number": 93, "createdAt": "2026-10-02T00:00:00Z", "baseRefName": "claude/nen", "isDraft": False,
+               "statusCheckRollup": [{"conclusion": "SUCCESS"}]}]
+        ra = td.giac_quan_pr_cho_gop([("gốc", REPO)], chay=lambda lenh: _json.dumps(pr))
+        if not ra or "XẾP CHỒNG" not in ra[0][1]:
+            return False, "PR xếp chồng không được nêu — bác sĩ có thể gộp sai thứ tự"
+    finally:
+        td._owner_repo_tu_remote = goc_or
+        if cu is not None:
+            _os.environ["CLAUDE_CODE_REMOTE"] = cu
+    hook = _json.loads((REPO / "sync/hooks-sessionstart.json").read_text(encoding="utf-8"))
+    if not any("hom_viec_mot_cua.py --doc" in h.get("command", "") for g in hook["SessionStart"] for h in g["hooks"]):
+        return False, "bản nguồn hook SessionStart không có hòm việc — việc của bác sĩ lại không hiện lúc mở phiên"
+    return True, "hòm việc ≤ 12 dòng, khẩn lên đầu; PR chờ gộp đo được hoặc ⚪; ghi quyết định thẻ không đoán"
+
+
 def bh116_so_nguon_ghi_dung_dinh_dang_git():
     """27/09 — `sources_health.py` và `giam_sat_to_chuc.py` ghi `data/sources.json` thụt lề 1 trong khi MỌI commit của
     sổ thụt lề 2 ⇒ lượt đo trạm 25/09 thành diff 834 dòng chưa commit, chặn chuyển nhánh (phải cất stash). Kiểm DÒNG
@@ -9876,6 +9922,7 @@ BAI_HOC = [
     ("BH111", "20/09", "Kênh cảnh báo không được im: lịch nền theo TỪNG kỳ · hòm thư đọc alerts hiện hành · câu không dấu vào đúng cửa", bh111_lich_nen_nguoi_chet_hom_thu_canh_bao_va_cua_vao_khong_dau),
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
+    ("BH154", "03/10", "Hòm việc một cửa lúc mở phiên (≤ 12 dòng, việc bác sĩ trước); PR chờ gộp được đếm (gh lỗi ⇒ ⚪); quyết định thẻ tuần ghi đúng lời bác sĩ, không đoán", bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
