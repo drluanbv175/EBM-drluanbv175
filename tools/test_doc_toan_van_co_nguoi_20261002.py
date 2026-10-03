@@ -310,3 +310,13 @@ def test_lech_doctrine_bat_bang_moi_va_doctrine_cu(monkeypatch):
     monkeypatch.setitem(D.DIEU_KHOAN_NXB, "Springer Nature", {"ket_luan": "cam", "doi": ("10.1007/",), "mien": ()})
     assert any("Springer Nature" in x for x in D.lech_doctrine(van_ban))
     assert D.lech_doctrine(van_ban.replace("## 2septies. ", "## 2x. ")) == ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
+
+
+def test_bang_dieu_khoan_ghi_dung_ngoai_le_va_loai_nguon():
+    """03/10/2026 — kiểm độc lập đọc lại văn bản gốc: câu trích Elsevier từng bỏ mất mệnh đề ngoại lệ («except … relevant
+    license»), scopus.com không nằm trong miền Elsevier dù doctrine cấm mở trang Scopus, và nguồn của EBSCO là TÓM TẮT của thư
+    viện UBC chứ không phải điều khoản của chính EBSCO."""
+    e = D.DIEU_KHOAN_NXB["Elsevier"]
+    assert "except" in e["trich"] and e.get("ngoai_le"), "câu trích Elsevier bỏ mất mệnh đề ngoại lệ"
+    assert D.nxb_cua("", "https://www.scopus.com/results/results.uri")[0] == "Elsevier"
+    assert "UBC" in D.DIEU_KHOAN_NXB["EBSCO (DynaMed)"].get("loai_nguon", ""), "nguồn EBSCO là tóm tắt của thư viện — ghi rõ"
