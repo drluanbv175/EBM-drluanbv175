@@ -7826,6 +7826,34 @@ def _bh118_than():
 
 
 
+def bh151_ca_tu_nhien_va_bien_co_cap_cuu_vao_nhanh_lam_sang():
+    """02/10 (B2) — cửa vào `tools/orchestrator/intent.py` để 10/17 câu bác sĩ mô tả ca TỰ NHIÊN rơi `unknown` («ông 65 tuổi sốt ho 3 ngày
+    khó thở», «trẻ 3 tuổi sốt cao co giật», «sản phụ 30 tuần HA 160/100», «suy tim, kali 6,2, đang dùng spironolactone»…) và đẩy «bệnh
+    nhân ngừng tim, chạy protocol hồi sức thế nào» sang NHÁNH ĐỀ TÀI (do chữ «protocol») — mất BƯỚC 0 sàng lọc cờ đỏ. Vá: mẫu HẸP xưng hô +
+    tuổi (vào cả nhánh «cá thể thắng cue đề tài»), trẻ em/người/thai phụ + tuổi KHÔNG theo sau bởi khoảng («trở lên», «đến», «-»), «đang
+    dùng/uống/tiêm» + thuốc; cue biến cố cấp cứu (ngừng tim, hồi sức, co giật, sốc phản vệ, bất tỉnh, hôn mê) vào luật cờ đỏ.
+    Kiểm HÀNH VI: ca tự nhiên (có dấu + không dấu) ⇒ clinical_case; biến cố cấp cứu thắng cue đề tài; mô tả QUẦN THỂ và việc lẻ giữ nguyên."""
+    it = _nap(REPO / "tools/orchestrator/intent.py", "_bh151_it")
+    for cau in ("ông 65 tuổi sốt ho 3 ngày khó thở", "trẻ 3 tuổi sốt cao co giật", "sản phụ 30 tuần HA 160/100",
+                "suy tim, kali 6,2, đang dùng spironolactone", "anh 45t tiểu đường HbA1c 9", "ong 65 tuoi sot ho 3 ngay kho tho"):
+        r = it.route(cau)
+        if r.kind != "clinical_case":
+            return False, f"câu mô tả ca «{cau}» rơi {r.kind} — không vào nhạc trưởng lâm sàng (mất BƯỚC 0 cờ đỏ có cấu trúc)"
+    for cau in ("bệnh nhân ngừng tim, chạy protocol hồi sức thế nào", "benh nhan ngung tim chay protocol hoi suc"):
+        if it.route(cau).kind != "clinical_case":
+            return False, f"«{cau}» rơi nhánh đề tài vì «protocol» — biến cố cấp cứu phải thắng cue đề tài"
+    for cau, kind in (("Nghiên cứu cắt ngang tỷ lệ tăng huyết áp ở người 65 tuổi trở lên", "research_topic"),
+                      ("Khảo sát mô tả tình trạng dinh dưỡng trẻ 6 tháng đến 5 tuổi", "research_topic"),
+                      ("Nghiên cứu cắt ngang tỷ lệ đau đầu dữ dội kèm sốt cao ở phụ nữ mang thai tại phòng khám", "research_topic"),
+                      ("tính cỡ mẫu cho nghiên cứu cắt ngang", "single_task"),
+                      ("người 65 tuổi trở lên nên tiêm vắc-xin gì", "single_task")):
+        if it.route(cau).kind != kind:
+            return False, f"mô tả quần thể/việc lẻ «{cau}» bị đẩy sang {it.route(cau).kind} (kỳ vọng {kind})"
+    if it.route("không 5 tuổi nào").kind != "unknown":
+        return False, "«ông» trong «không» bị đọc thành xưng hô — mẫu thiếu ranh giới từ"
+    return True, "ca tự nhiên ⇒ lâm sàng; biến cố cấp cứu thắng «protocol»; quần thể/việc lẻ giữ nguyên"
+
+
 def bh119_cam_bien_commit_chua_day_nhin_moi_nhanh():
     """27/09 — sáng 27/09 repo gốc đứng ở một nhánh CHƯA ĐẨY và 8 nhánh cục bộ (06–17/09) giữ 20 commit không có trên
     GitHub, trong khi `tu_de_xuat_viec.py` báo «0 commit chưa đẩy»: cảm biến chỉ đếm `@{u}..HEAD` của nhánh ĐANG đứng
@@ -9968,6 +9996,7 @@ BAI_HOC = [
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
     ("BH118", "27/09", "Làn dự phòng của vòng quét tuần mang mốc ngày như mọi làn khác (không tìm mọi năm)", bh118_lan_du_phong_quet_tuan_mang_moc_ngay),
     ("BH119", "27/09", "Cảm biến commit chưa đẩy nhìn MỌI nhánh cục bộ, không chỉ nhánh đang đứng", bh119_cam_bien_commit_chua_day_nhin_moi_nhanh),
+    ("BH151", "02/10", "Cửa vào nhận câu mô tả ca TỰ NHIÊN (xưng hô/trẻ em/thai phụ + tuổi, «đang dùng» thuốc) và biến cố cấp cứu (ngừng tim, hồi sức, co giật…) thắng cue đề tài; mô tả quần thể giữ nguyên", bh151_ca_tu_nhien_va_bien_co_cap_cuu_vao_nhanh_lam_sang),
     ("BH120", "27/09", "Chu trình chứng cứ phủ cả bản ghi MỒ CÔI của sổ xác minh (không chỉ định danh trong dashboard)", bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh),
     ("BH148", "02/10", "Chu trình chứng cứ ĐO SẢN LƯỢNG truy vấn giám sát (không chỉ đo khai báo): chủ đề ≤3 bản ghi/90 ngày ⇒ «có thể mù»; lỗi mạng ⇒ KHÔNG ĐO ĐƯỢC chứ không phải ổn; đề xuất không được bỏ/đổi tầng bắt-cái-mới", bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao),
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
