@@ -209,6 +209,10 @@ VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
     (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
      "dao-tao-slide-tai-lieu-y-khoa", "sản phẩm đào tạo / slide"),
     # 02/10/2026 — làn có NGƯỜI trên trình duyệt (bác sĩ yêu cầu): trang chặn bot và cơ sở dữ liệu cần tài khoản của bác sĩ.
+    # Toàn văn đứng TRƯỚC «chặn bot»: «đọc toàn văn bài bị chặn bot» là việc đọc bài, không phải ghi bằng chứng URL.
+    (["toàn văn", "full text", "fulltext", "bài trả phí", "paywall", "tường phí"],
+     "tools/doc_toan_van_co_nguoi.py", "đọc toàn văn bài KHÔNG OA: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập, Claude trích xuất có "
+     "cấu trúc rồi nạp vào kho toàn văn"),
     (["chặn bot", "i am not a bot", "not a bot", "xác nhận trình duyệt", "xác nhận trên trình duyệt", "trang chặn"],
      "tools/xac_nhan_trinh_duyet.py", "trang chặn bot: Claude mở trang, bác sĩ tự bấm xác nhận, Claude ghi bằng chứng"),
     (["scopus", "web of science", "webofscience", "dynamed", "tài khoản scopus", "tài khoản dynamed"],

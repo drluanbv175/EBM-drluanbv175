@@ -41,7 +41,10 @@ CANH_BAO_TRUOC_NGAY = 30   # bằng chứng còn ≤ 30 ngày ⇒ vào hàng ch�
 _TIEU_DE_CAM = re.compile(
     r"automated request|not a bot|are you a robot|robot check|captcha|verify (that )?you are (a )?human|"
     r"just a moment|attention required|access denied|forbidden|unauthori[sz]ed|page not found|not found|"
-    r"\b40[134]\b|\b410\b|\berror\b|security check|request blocked", re.I)
+    r"\b40[134]\b|\b410\b|\berror\b|security check|request blocked|"
+    # Trình duyệt trong app chạy giao diện TIẾNG VIỆT (đo 02/10/2026: Cloudflare hiện «Chờ một chút...», «Thực hiện xác minh bảo mật»).
+    r"chờ một chút|xác minh bạn là con người|xác minh bảo mật|không phải là bot|truy cập bị từ chối|không tìm thấy trang|"
+    r"\blỗi\b|vui lòng chờ|please wait|one moment", re.I)
 _TIEU_DE_CHUNG = {"u.s. food and drug administration", "food and drug administration", "fda", "home", "trang chủ"}
 
 HUONG_DAN = """QUY TRÌNH «TRANG CHẶN BOT — BÁC SĨ XÁC NHẬN» (Claude làm, bác sĩ chỉ bấm xác nhận trên trang):

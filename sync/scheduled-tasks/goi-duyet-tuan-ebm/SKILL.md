@@ -34,6 +34,13 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    chưa có bản OA trên PMC (sổ 30 ngày tự thử lại)"* và giữ `partial`. LUẬT: partial
    → tối đa "Cân nhắc" như cũ; toàn văn KHÔNG tự động nâng đề xuất — chỉ ghi dữ kiện,
    nâng/hạ là thẩm quyền bác sĩ lúc duyệt.
+   Bài «CHỈ TÓM TẮT» (thêm 02/10/2026 — W40 có 5/7 thẻ như vậy; hầu hết nhà xuất bản chặn truy cập
+   tự động): chạy `python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-<W>.md` (có mạng) để lập
+   PHIẾU theo miền (ghi `state/doc-toan-van/`), và trên thẻ ghi *"chưa đọc được — không có bản OA;
+   chờ bác sĩ mở trình duyệt (phiếu doc-toan-van)"*. Lượt lịch KHÔNG mở trình duyệt, KHÔNG vượt chặn:
+   làn đó chỉ chạy trong phiên CÓ bác sĩ (`--huong-dan`). Bài đã đọc qua trình duyệt có bản
+   `doc_sau/PMID-<n>.md` ghi «trích xuất CÓ CẤU TRÚC»: thẩm định như bản OA, `appraisalCompleteness`
+   theo độ đầy đủ in trong bản đó (partial ⇒ vẫn trần "Cân nhắc").
 5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
    lỗi thời "6 dòng/xem mẫu W33" — định dạng thật đã tăng lên 8 khối qua W35-W37 mà chưa từng được
    viết lại): `sync/scheduled-tasks/goi-duyet-tuan-ebm/MAU-THE-CHUNG-CU-TUAN.md`. Mỗi thẻ: tiêu đề

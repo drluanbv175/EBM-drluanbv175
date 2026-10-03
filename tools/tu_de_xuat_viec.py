@@ -440,6 +440,45 @@ def giac_quan_url_chan_bot(dash_dir: Path) -> list[tuple[int, str, str]]:
              "python3 tools/xac_nhan_trinh_duyet.py --huong-dan  # Claude mở trang, bác sĩ tự bấm xác nhận chống bot")]
 
 
+def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
+    """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
+
+    Đo W40: 5/7 thẻ «chỉ tóm tắt» ⇒ trần «Cân nhắc». Hầu hết nhà xuất bản chặn truy cập tự động (đo 02/10) nên đường duy nhất là làn
+    CÓ NGƯỜI: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập, Claude trích xuất có cấu trúc (`tools/doc_toan_van_co_nguoi.py`).
+    Ngoại tuyến — chỉ soi kho `EBM-Dashboards/toan_van_oa/`. Vắng kho/công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG phải «đủ toàn văn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    hom_nay = hom_nay or dt.date.today()
+    if not queue_dir.is_dir():
+        _ghi_chet(["", "toàn văn thẻ tuần"], "không có queue/ ở cây này")
+        return []
+    goi = sorted(queue_dir.glob("tuan-*.md"))
+    if not goi:
+        return []
+    moi = goi[-1]
+    if (hom_nay - dt.date.fromtimestamp(moi.stat().st_mtime)).days > 14:
+        return []
+    kho = dash_dir / "toan_van_oa"
+    if not kho.is_dir():
+        _ghi_chet(["", "toàn văn thẻ tuần"], "không có EBM-Dashboards/toan_van_oa ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_dtv_tdxv", Path(__file__).resolve().parent / "doc_toan_van_co_nguoi.py")
+        dtv = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(dtv)
+        pmids = dtv.pmid_cua_queue(moi)
+        bp = dtv.bao_phu_cuc_bo(pmids, kho, hom_nay)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "toàn văn thẻ tuần"], f"lỗi {type(exc).__name__}")
+        return []
+    chua = [pm for pm, t in bp.items() if t == "chua_co"]
+    if not chua:
+        return []
+    return [(3, f"{len(chua)}/{len(pmids)} thẻ gói {moi.stem} chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở "
+             f"trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp; tới lúc đó thẻ "
+             f"giữ trần «Cân nhắc»",
+             f"python3 tools/doc_toan_van_co_nguoi.py --queue queue/{moi.name}  # rồi --huong-dan")]
+
+
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -876,6 +915,10 @@ def main() -> int:
 
     # ⑦h URL MIỀN CHẶN BOT (02/10/2026): bác sĩ tự vượt kiểm tra chống bot, máy ghi bằng chứng — xem docstring.
     for uu, dong, lenh in giac_quan_url_chan_bot(DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦i TOÀN VĂN THẺ TUẦN (02/10/2026): bài không OA ⇒ làn trình duyệt có bác sĩ — xem docstring.
+    for uu, dong, lenh in giac_quan_toan_van_the_tuan(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue"), DASH):
         de_xuat.append((uu, "👤", dong, lenh))
 
     # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
