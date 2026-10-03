@@ -296,7 +296,7 @@ def test_dynamed_tach_ca_hai_bo_cuc_va_khong_giu_cau_tom_tat():
         ("Guideline Summary", "2026-10-01", "Management of Appendicitis in Adolescents and Adults"),
         ("Evidence", "2026-09-30", "Asthma in Adults")]
     for x in a + b:
-        assert set(x) == {"loai", "ngay", "trich_dan", "chu_de_dynamed", "tu_khoa"}, "không được giữ câu tóm tắt của DynaMed"
+        assert set(x) == {"loai", "ngay", "trich_dan", "chu_de_dynamed", "tu_khoa", "so_thu_tu"}, "không được giữ câu tóm tắt của DynaMed"
         assert len(x["tu_khoa"]) <= 4
 
 
@@ -370,8 +370,13 @@ def test_tu_canh_bao_chi_tra_chu_de_watchlist_tru_khi_tat_ca():
                                                         "title": "Diagnosis and Treatment of Acute Appendicitis"}]})
     bg, bc = T.tu_canh_bao_dynamed(cb, WL_DM, tim)
     assert [b["chu_de"] for b in bg] == ["Hen phế quản"] and bg[0]["pmid"] == "43000009"
-    assert len(bc["ngoai_pubmed"]) == 1 and "FDA Product Information" in bc["ngoai_pubmed"][0]   # cảnh báo thuốc gắn thận hư
+    assert len(bc["ngoai_pubmed"]) == 1 and bc["ngoai_pubmed"][0].startswith("cảnh báo DynaMed #1 (2026-10-02)")
     assert len(bc["ngoai_watchlist"]) == 2
+    # 03/10/2026 — điều khoản EBSCO: đầu ra (Claude đọc được) không mang CHỮ NÀO của DynaMed: tên chủ đề, trích dẫn, loại cảnh báo.
+    chu_dm = {x["chu_de_dynamed"] for x in cb} | {x["trich_dan"] for x in cb} | {x["loai"] for x in cb}
+    dau_ra = [b["ngu_canh"] for b in bg] + bc["ngoai_pubmed"] + bc["ngoai_watchlist"] + bc["khong_phan_giai"]
+    lot = [(c, d) for c in chu_dm for d in dau_ra if c and c in d]
+    assert not lot, f"đầu ra còn chữ của DynaMed: {lot[:3]}"
     bg2, _ = T.tu_canh_bao_dynamed(cb, WL_DM, tim, tat_ca=True)
     assert len(bg2) == 3
 
@@ -411,5 +416,19 @@ def test_main_dynamed_van_ban_la_thi_ma_3(moi_truong, capsys):
 
 
 def test_huong_dan_dynamed_cam_cao_hang_loat_va_khong_luu_cau():
-    assert "KHÔNG cào hàng loạt" in T.HUONG_DAN_DYNAMED and "KHÔNG lưu câu tóm tắt" in T.HUONG_DAN_DYNAMED
-    assert "ngoài repo" in T.HUONG_DAN_DYNAMED
+    # 03/10/2026 — điều khoản EBSCO (AI phải được phép; TDM bị cấm): Claude không mở/đọc trang hay tệp chép của DynaMed.
+    assert "Claude KHÔNG mở, KHÔNG đọc trang DynaMed" in T.HUONG_DAN_DYNAMED and "KHÔNG đọc tệp bác sĩ chép" in T.HUONG_DAN_DYNAMED
+    assert "không in, không lưu chữ nào của DynaMed" in T.HUONG_DAN_DYNAMED
+    assert "Claude KHÔNG mở/đọc trang Scopus" in T.HUONG_DAN_SCOPUS
+
+
+def test_scopus_khong_mang_tieu_de_export_ra_dau_ra():
+    """Scopus là nội dung Elsevier (điều khoản: không dùng với công cụ AI) — dòng bỏ/rút không mang tiêu đề export; ứng viên được
+    chọn lấy tiêu đề của cơ quan đăng ký."""
+    bg = [T._ban_ghi(f"Tieu de export Scopus so {i} du dai", 2026, "J", f"10.1/{i}", "", "Review") for i in range(3)]
+    kq = {"10.1/0": "xac_minh_duoc", "10.1/1": "bi_rut_bai", "10.1/2": "khong_khop"}
+    bc = T.xu_ly(bg, "scopus", "t.csv", "scopus_csv", "X", toi_da=7, pm_kho=set(), doi_kho=set(),
+                 xac_minh=lambda b: {"ket_qua": kq[b["doi"]], "pmid": "", "doi": b["doi"], "title": "Tieu de Crossref",
+                                     "journal": "", "study_type": "", "co": []})
+    assert bc["chon"][0]["title"] == "Tieu de Crossref"
+    assert all("Tieu de export" not in json.dumps(x, ensure_ascii=False) for x in bc["rut_bai"] + bc["bo"])
