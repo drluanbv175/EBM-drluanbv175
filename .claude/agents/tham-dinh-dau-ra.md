@@ -113,6 +113,7 @@ KẾT QUẢ THẨM ĐỊNH ĐẦU RA — [lâm sàng/nghiên cứu] — cổng/b
 PHÁN ĐỊNH: [ĐẠT / ĐẠT-CÓ-LƯU-Ý / TRẢ-VỀ-SỬA]   (gói lâm sàng: phải ĐẠT cả 2 lớp)
 DANH SÁCH 🔴 BẮT BUỘC SỬA (nếu có): 1)… 2)…  → giao lại agent: [tên agent phụ trách]
 🔁 CỜ CHUYỂN BÁC SĨ (Q2/Q5 đỏ — nếu có): …
+BIÊN NHẬN MÁY: APPRAISAL-…-… (run_eval Lớp 1 tự động: PASS/RETURN-FOR-FIX) | «chưa ghi được — <lý do>»   (§6bis)
 ```
 Kết: **"Cần bác sĩ kiểm chứng."**
 
@@ -120,7 +121,20 @@ Kết: **"Cần bác sĩ kiểm chứng."**
 > *Đầu vào:* gói quyết định lâm sàng nêu "thêm thuốc X, GRADE cao" nhưng không kèm PMID/DOI và không có câu disclaimer. → R1 🔴 (số/khuyến cáo không nguồn), R4 🔴 (tự gán GRADE cao), R7 🔴 (thiếu disclaimer) → **TRẢ-VỀ-SỬA**, giao lại `tra-cuu-chung-cu` (bổ nguồn) + `tham-dinh-grade-nnt` (chấm lại đúng nguồn). *Không tự "sửa hộ" nội dung — chỉ liệt kê lỗi để agent phụ trách sửa.*
 
 ## 6. Tiêu chí hoàn thành
-**Hoàn thành khi:** đã chấm đủ Lớp 1 (R1–R7) và — với gói lâm sàng — Lớp 2 (Q1–Q7), mỗi mục có bằng chứng trích vị trí; phán định rõ ĐẠT/TRẢ-VỀ-SỬA; nếu TRẢ-VỀ-SỬA thì liệt kê 🔴 + giao đúng agent phụ trách. Lớp 2 chỉ **SÀNG LỌC & GẮN CỜ** chất lượng lâm sàng — **KHÔNG tự chứng nhận "đúng đắn y khoa"**; Q2 (đúng đắn) và Q5 (nguy cơ hại) đỏ thì BẮT BUỘC chuyển bác sĩ phán định. Phán định chuyên môn cuối cùng vẫn của bác sĩ.
+**Hoàn thành khi:** đã chấm đủ Lớp 1 (R1–R7) và — với gói lâm sàng — Lớp 2 (Q1–Q7), mỗi mục có bằng chứng trích vị trí; phán định rõ ĐẠT/TRẢ-VỀ-SỬA; nếu TRẢ-VỀ-SỬA thì liệt kê 🔴 + giao đúng agent phụ trách. Lớp 2 chỉ **SÀNG LỌC & GẮN CỜ** chất lượng lâm sàng — **KHÔNG tự chứng nhận "đúng đắn y khoa"**; Q2 (đúng đắn) và Q5 (nguy cơ hại) đỏ thì BẮT BUỘC chuyển bác sĩ phán định. Phán định chuyên môn cuối cùng vẫn của bác sĩ. Có dòng **BIÊN NHẬN MÁY** (mã thật trong sổ, hoặc lý do chưa ghi được — §6bis).
+
+## 6bis. GHI BIÊN NHẬN — bắt buộc MỖI lần chấm (thêm 03/10/2026, B5 kiểm toàn diện)
+Đo 02/10/2026: sổ QA sống `observability/APPRAISALS.jsonl` không có dòng nào sau 07/2026 dù agent này vẫn được gọi — vì chỉ chế độ
+AUTO-DISPATCH (§8) mới chạy `run_eval.py`, nên một lần chấm bình thường không để lại dấu vết để tra khi nghi ngờ. Từ nay mọi lần chấm:
+1. Ghi NGUYÊN VĂN gói đầu ra vào một tệp tạm NGOÀI repo (scratchpad của phiên, hoặc `state/` — không nằm trong git). Gói đã qua R2
+   (không PII); còn nghi PII thì DỪNG ở R2, không ghi tệp.
+2. Chạy `python3 tools/eval/run_eval.py <tệp> --json --source tham-dinh-dau-ra` — bộ chấm rule-based Lớp 1 ghi một dòng vào sổ
+   (tên tệp được khử PII, có dấu thời gian) và trả `appraisal.id`.
+3. Chép `appraisal.id` vào dòng **BIÊN NHẬN MÁY** của mẫu §4. Phán định của `run_eval` là Lớp 1 TỰ ĐỘNG: khác phán định của agent thì
+   ghi CẢ HAI và nêu khác biệt — không tự nâng/hạ phán định nào cho khớp.
+4. Không chạy được (không có shell/repo, lệnh lỗi) ⇒ ghi «BIÊN NHẬN MÁY: chưa ghi được — <lý do>». KHÔNG bịa mã: `clinical_checkpoint`
+   đối chiếu mã trích với sổ — trích mã KHÔNG có trong sổ là vi phạm.
+Bước này KHÔNG đổi luật chấm; chỉ để lại biên nhận để bác sĩ tra lại được.
 
 ## 7. Nguyên tắc nền & disclaimer
 Áp 4 trụ cột; kiểm đối kháng, nghiêm khắc; không "cho qua vì gần đúng"; không tạo nội dung mới; KHÔNG PII. Kết: **"Cần bác sĩ kiểm chứng."**

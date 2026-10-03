@@ -18,6 +18,7 @@ import json
 import re
 import sys
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from . import ROOT
@@ -214,6 +215,9 @@ def emit_appraisal(res: dict, target: str, *, source: str = "orchestrator",
     (người gọi truyền để test tái lặp). Best-effort: lỗi ghi đĩa KHÔNG làm hỏng chấm."""
     verdict = {"ĐẠT": "PASS", "TRẢ-VỀ-SỬA": "RETURN-FOR-FIX"}.get(
         res.get("verdict", ""), res.get("verdict", "?"))
+    # VÁ 03/10/2026 (B5): người gọi thật (orchestrator-live) không truyền `at` ⇒ trước đây `ts` RỖNG (6/17 dòng của sổ) — không biết
+    # phán quyết nào thuộc lúc nào. Nay mặc định là thời điểm ghi (UTC); test vẫn truyền `at` cố định để tái lặp.
+    at = at or datetime.now(timezone.utc).isoformat(timespec="seconds")
     display, thash = _safe_target(target)
     red = list(res.get("red_fails", []))
     required_fix = _failed_required_check_ids(res)
