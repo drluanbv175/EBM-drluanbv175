@@ -109,5 +109,7 @@ def test_gom_nguon_thu_ca_dinh_danh_trong_references(tmp_path):
     nguon = so.gom_nguon([f], vd)
     assert "pmid:34101376" in nguon
     assert "pmid:9500320" in nguon, sorted(nguon)
-    assert "doi:10.1016/S0140-6736(97)11096-0" in nguon, sorted(nguon)
+    # Từ 03/10/2026 khoá DOI của sổ ở DẠNG CHUẨN chữ thường (so_xac_minh_nguon.chuan_hoa_khoa — DOI không phân biệt
+    # hoa/thường); kỳ vọng cũ giữ nguyên chữ hoa chính là hành vi đã sinh bản ghi trùng.
+    assert "doi:10.1016/s0140-6736(97)11096-0" in nguon, sorted(nguon)
     assert "pmid:11111111" not in nguon, "ghi chú ngoài references không phải nguồn gói trích"
