@@ -88,3 +88,11 @@ Phiếu W40 của bản đầu có 3/5 bài là Elsevier (JACC, CGH, J Hepatol).
 
 **Chưa kiểm điều khoản:** NEJM, JAMA, BMJ, OUP, Wiley, Springer, AHA, SAGE, Cochrane… Trước khi đọc bài của các NXB này phải đọc điều
 khoản (bước 2b). Bài OA mang giấy phép CC ⇒ khai `giay_phep_cc`.
+
+**Dạy agent cùng luật (03/10/2026, CLAUDE.md §6.4).** Cổng `kiem_ho_so` chỉ chặn hồ sơ SAU khi agent đã đọc bài. Còn doctrine
+`.claude/agents/_CONNECTOR-CHUNG-CU.md` chưa nói gì về điều khoản NXB, nên một agent tra cứu/thẩm định vẫn có thể mở bài Elsevier.
+- Thêm §2septies + luật §0.8 + hai dòng bản đồ §4 (`tham-dinh-*`, `trich-xuat-y-van`/`meta-phan-tich`). Bản y khoa của doctrine
+  sửa y hệt từng byte bằng PR cặp (BH107 đối chiếu hai bản).
+- `lech_doctrine()` so bảng `DIEU_KHOAN_NXB` với §2septies: NXB «cấm» nào cũng phải được nêu tên + tiền tố DOI, và §2septies phải
+  trỏ công cụ. BH152 gọi hàm này. 2 test mới; 6 đột biến (bảng thêm NXB «cấm» mà quên doctrine, mất tiền tố DOI, mất §2septies, mất
+  §0.8, không trỏ công cụ, hàm luôn rỗng) đều bị bắt.

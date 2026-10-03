@@ -7831,7 +7831,11 @@ def bh152_toan_van_khong_oa_qua_trinh_duyet_co_bac_si():
         return False, "quy trình mất dòng cấm Claude tự vượt kiểm tra chống bot"
     if dtv.nxb_cua("10.1016/x", "")[1].get("ket_luan") != "cam" or dtv.nxb_cua("10.2337/x", "")[1].get("ket_luan") != "cam":
         return False, "bảng điều khoản NXB mất mục cấm AI của Elsevier/ADA"
-    sk = (REPO / "sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md").read_text(encoding="utf-8")
+    # 03/10/2026 — cổng chặn hồ sơ SAU khi đã đọc bài; doctrine dạy agent dừng TRƯỚC khi mở bài (CLAUDE.md §6.4).
+    lech = dtv.lech_doctrine((REPO / ".claude/agents/_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8"))
+    if lech:
+        return False, "doctrine _CONNECTOR-CHUNG-CU.md lệch bảng điều khoản NXB: " + "; ".join(lech)
+    sk =(REPO / "sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md").read_text(encoding="utf-8")
     if "tools/doc_toan_van_co_nguoi.py --queue" not in sk:
         return False, "tác vụ tuần không lập phiếu toàn văn cho thẻ «chỉ tóm tắt» — công cụ không ai gọi"
     return True, "tiêu đề chặn VI/EN bị từ chối; bài rút/chưa xác minh không vào kho; bản đọc trình duyệt được gói tuần nhận"

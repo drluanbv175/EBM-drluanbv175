@@ -132,6 +132,27 @@ def nxb_cua(doi: str = "", url: str = "") -> tuple[str | None, dict | None]:
             return ten, d
     return None, None
 
+
+def lech_doctrine(van_ban: str) -> list[str]:
+    """So bảng `DIEU_KHOAN_NXB` với doctrine `.claude/agents/_CONNECTOR-CHUNG-CU.md` §2septies (03/10/2026).
+
+    Cổng (`kiem_ho_so`) chỉ chặn hồ sơ SAU khi agent đã đọc bài; doctrine mới là chỗ dạy agent dừng TRƯỚC khi mở bài
+    (CLAUDE.md §6.4). Thêm một NXB «cấm» vào bảng mà quên doctrine ⇒ agent vẫn mở bài đó. Trả danh sách chỗ lệch (rỗng = khớp)."""
+    i = van_ban.find("## 2septies. ")
+    if i < 0:
+        return ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
+    j = van_ban.find("\n## ", i + 5)
+    muc = van_ban[i:j if j > 0 else len(van_ban)]
+    lech = [f"§2septies không nêu NXB «cấm» {ten} kèm tiền tố DOI {d['doi']}"
+            for ten, d in DIEU_KHOAN_NXB.items()
+            if d.get("ket_luan") == "cam" and (ten.split()[0] not in muc or any(f"`{t}`" not in muc for t in d["doi"]))]
+    if "tools/doc_toan_van_co_nguoi.py" not in muc:
+        lech.append("§2septies không trỏ công cụ tools/doc_toan_van_co_nguoi.py")
+    if "8. **ĐIỀU KHOẢN NXB TRƯỚC TOÀN VĂN.**" not in van_ban:
+        lech.append("mất luật §0.8 «ĐIỀU KHOẢN NXB TRƯỚC TOÀN VĂN»")
+    return lech
+
+
 _TIEU_DE_DANG_NHAP = re.compile(r"\b(sign in|sign-in|log in|login|access through your institution|purchase (pdf|article|access)|"
                                 r"subscribe|đăng nhập|institutional login|get access|buy article|mua bài|truy cập qua tổ chức)\b", re.I)
 _TIEU_DE_CAM_DU_PHONG = re.compile(r"automated request|not a bot|robot|captcha|just a moment|attention required|access denied|"

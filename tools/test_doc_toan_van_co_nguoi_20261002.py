@@ -297,3 +297,16 @@ def test_nap_nhan_khi_da_kiem_dieu_khoan_cho_phep():
 
 def test_huong_dan_co_buoc_dieu_khoan():
     assert "2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN" in D.HUONG_DAN and "2b. NXB CHƯA KIỂM" in D.HUONG_DAN
+
+
+def test_doctrine_day_agent_cung_bang_dieu_khoan():
+    """03/10/2026 — doctrine `_CONNECTOR-CHUNG-CU.md` §2septies phải nêu ĐỦ mọi NXB «cấm» của bảng (CLAUDE.md §6.4)."""
+    van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
+    assert D.lech_doctrine(van_ban) == []
+
+
+def test_lech_doctrine_bat_bang_moi_va_doctrine_cu(monkeypatch):
+    van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
+    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "Springer Nature", {"ket_luan": "cam", "doi": ("10.1007/",), "mien": ()})
+    assert any("Springer Nature" in x for x in D.lech_doctrine(van_ban))
+    assert D.lech_doctrine(van_ban.replace("## 2septies. ", "## 2x. ")) == ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
