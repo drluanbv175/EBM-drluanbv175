@@ -307,8 +307,9 @@ def test_doctrine_day_agent_cung_bang_dieu_khoan():
 
 def test_lech_doctrine_bat_bang_moi_va_doctrine_cu(monkeypatch):
     van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
-    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "Springer Nature", {"ket_luan": "cam", "doi": ("10.1007/",), "mien": ()})
-    assert any("Springer Nature" in x for x in D.lech_doctrine(van_ban))
+    # NXB CHƯA có trong bảng (Karger, 10.1159/ — chưa kiểm 03/10/2026; trước đó ví dụ này là Springer Nature, nay đã vào bảng).
+    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "Karger", {"ket_luan": "cam", "doi": ("10.1159/",), "mien": ()})
+    assert any("Karger" in x for x in D.lech_doctrine(van_ban))
     assert D.lech_doctrine(van_ban.replace("## 2septies. ", "## 2x. ")) == ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
 
 
@@ -318,7 +319,10 @@ def test_bang_dieu_khoan_ghi_dung_ngoai_le_va_loai_nguon():
     viện UBC chứ không phải điều khoản của chính EBSCO."""
     e = D.DIEU_KHOAN_NXB["Elsevier"]
     assert "except" in e["trich"] and e.get("ngoai_le"), "câu trích Elsevier bỏ mất mệnh đề ngoại lệ"
-    assert D.nxb_cua("", "https://www.scopus.com/results/results.uri")[0] == "Elsevier"
+    # 03/10/2026 (tối): Scopus tách thành khoá riêng «Scopus (Elsevier)» (điều khoản riêng 16/09/2026 + uỷ quyền làn Chrome riêng của
+    # bác sĩ) — vẫn là «cấm»; điều cần giữ là trang Scopus KHÔNG bao giờ rơi vào «chưa kiểm».
+    ten, dk = D.nxb_cua("", "https://www.scopus.com/results/results.uri")
+    assert ten == "Scopus (Elsevier)" and dk["ket_luan"] == "cam"
     assert "UBC" in D.DIEU_KHOAN_NXB["EBSCO (DynaMed)"].get("loai_nguon", ""), "nguồn EBSCO là tóm tắt của thư viện — ghi rõ"
 
 
@@ -586,7 +590,7 @@ def test_cli_ghi_uy_quyen_chay_thu_khong_ghi(tmp_path, monkeypatch, capsys):
     assert "chạy thử" in ra and not (dash / "dieu-khoan-bac-si-uy-quyen.json").exists()
 
 
-@pytest.mark.parametrize("nxb", ["Springer Nature", "elsevier", "ADA", "NXB thử cho phép"])
+@pytest.mark.parametrize("nxb", ["Karger", "elsevier", "ADA", "NXB thử cho phép"])
 def test_cli_ghi_uy_quyen_tu_choi_nxb_khong_phai_khoa_cam(tmp_path, monkeypatch, capsys, nxb):
     dash = tmp_path / "EBM-Dashboards"
     dash.mkdir()

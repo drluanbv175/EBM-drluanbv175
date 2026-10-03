@@ -63,7 +63,9 @@ GHI_CHU_BAC_SI_MIN, GHI_CHU_BAC_SI_MAX = 5, 300
 TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "da_doc_trinh_duyet")
 TRANG_THAI_DA_PHU = TRANG_THAI_MAY_CO_TOAN_VAN + ("bac_si_da_doc_truc_tiep",)
 
-# Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản.
+# Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản. Đo lại
+# 03/10/2026 13:04–13:10 (35/37 miền, cùng UA trung thực; không gọi scopus.com/dynamed.com): 6 miền đổi, ghi kèm ngày bên dưới.
+# VPN đổi IP thoát ⇒ mỗi dòng là ẢNH CHỤP lúc đo, không phải trạng thái cố định.
 MIEN_DO_DUOC: dict[str, str] = {
     "diabetesjournals.org": "chặn bot 403 «Just a moment…» (Cloudflare) — ADA Standards of Care",
     "academic.oup.com": "chặn bot 403 «Just a moment…» (Cloudflare) — ESC/EHJ trên OUP",
@@ -72,10 +74,10 @@ MIEN_DO_DUOC: dict[str, str] = {
     "jamanetwork.com": "chặn bot 403 (Cloudflare)",
     "www.ahajournals.org": "chặn bot 403 (Cloudflare) — AHA/ACC trên AHA journals",
     "onlinelibrary.wiley.com": "chặn bot 403 (Cloudflare)",
-    "www.bmj.com": "chặn bot 403 «Attention Required» (Cloudflare)",
+    "www.bmj.com": "chặn bot 403 «Just a moment…» (Cloudflare) — đo 03/10/2026, trang chủ + trang bài (02/10 là «Attention Required»)",
     "www.sciencedirect.com": "chặn truy cập tự động 403 (Elsevier)",
     "link.springer.com": "từ chối truy cập tự động 406",
-    "kdigo.org": "từ chối truy cập tự động 406",
+    "kdigo.org": "MỞ (200) — đo 03/10/2026: trang chủ, /guidelines/, trang guideline và PDF đều 200 (02/10 là 406)",
     "www.fda.gov": "chặn bot 401 «automated request»",
     "journals.sagepub.com": "chặn bot 403 (Cloudflare)",
     "www.jacc.org": "chặn bot 403 (Cloudflare) — JACC",
@@ -87,12 +89,12 @@ MIEN_DO_DUOC: dict[str, str] = {
     "journals.lww.com": "chặn bot 403 (Cloudflare)",
     "www.acpjournals.org": "chặn bot 403 (Cloudflare) — Annals of Internal Medicine",
     "www.mdpi.com": "chặn truy cập tự động 403 «Access Denied»",
-    "www.cochranelibrary.com": "từ chối truy cập tự động 419",
+    "www.cochranelibrary.com": "chặn bot 403 «Just a moment…» (Cloudflare) — đo 03/10/2026, trang chủ + trang bài CDSR (02/10 là 419)",
     "www.journal-of-hepatology.eu": "chặn bot 403 (Cloudflare)",
     "publications.ersnet.org": "chặn bot 403 (Cloudflare)",
-    "www.atsjournals.org": "chặn truy cập tự động 403",
+    "www.atsjournals.org": "CHUYỂN 301 → academic.oup.com/atsjournals (URL bài cũ cũng về trang chung) rồi 403 «Just a moment…» — đo 03/10/2026; DOI 10.1164/… nay phân giải sang academic.oup.com/ajrccm/…",
     "linkinghub.elsevier.com": "trang CHUYỂN HƯỚNG của Elsevier (200 «Redirecting») → trang tạp chí/ScienceDirect (đều chặn 403)",
-    "www.webofscience.com": "chặn bot 403 + cần tài khoản bác sĩ",
+    "www.webofscience.com": "200 → /wos/ nhưng chỉ là vỏ ứng dụng JS (~3 KB, không nội dung) + cần tài khoản bác sĩ — đo 03/10/2026 (02/10 là 403)",
     "www.scopus.com": "cần tài khoản bác sĩ",
     "www.dynamed.com": "cần tài khoản bác sĩ",
     "www.escardio.org": "MỞ (200) — trang đích ESC; toàn văn guideline nằm trên academic.oup.com",
@@ -101,7 +103,7 @@ MIEN_DO_DUOC: dict[str, str] = {
     "www.frontiersin.org": "MỞ (200) — thường là OA, dây chuyền OA lấy được",
     "www.acc.org": "MỞ (200) — trang hội; toàn văn guideline nằm trên jacc.org/ahajournals.org",
     "pmc.ncbi.nlm.nih.gov": "MỞ (200) — dùng dây chuyền OA, không cần làn này",
-    "europepmc.org": "MỞ (200) — dùng dây chuyền OA, không cần làn này",
+    "europepmc.org": "web chặn bot 403 «Just a moment…» — đo 03/10/2026 (02/10 là 200); REST API www.ebi.ac.uk/europepmc/webservices/rest vẫn 200 ⇒ dây chuyền OA dùng API, không cần làn này",
 }
 # DynaMed/UpToDate là bản TỔNG HỢP có bản quyền: chỉ dùng để đi tới nghiên cứu gốc (tools/tra_cuu_co_tai_khoan.py), không làm «toàn văn».
 MIEN_TONG_HOP = ("dynamed.com", "uptodate.com", "bestpractice.bmj.com")
@@ -115,10 +117,10 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
     "Elsevier": {
         "ket_luan": "cam", "doi": ("10.1016/",),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
-                 "cghjournal.org", "elsevierhealth.com", "scopus.com"),
+                 "cghjournal.org", "elsevierhealth.com"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
-        "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (vd Scopus 16/09/2026) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
+        "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
         "duong_hop_le": "API khai thác văn bản (TDM) của Elsevier cho nhà nghiên cứu thuộc cơ sở HỌC THUẬT có thuê bao, mục đích PHI THƯƠNG MẠI; dùng cùng AI theo API Service Agreement §2.4 (môi trường đóng, không huấn luyện, không chia sẻ, không lưu cục bộ đáng kể) — "
                         "https://www.elsevier.com/about/policies-and-standards/text-and-data-mining"},
     "ADA (American Diabetes Association)": {
@@ -132,7 +134,39 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         "loai_nguon": "tóm tắt giấy phép của thư viện UBC (đại diện) — chưa đọc điều khoản của chính EBSCO hay hợp đồng của bác sĩ; «cam» theo luật «không rõ ⇒ dừng»",
         "trich": "AI tool: Ask (phải hỏi phép) · Text and Data Mining: No",
         "duong_hop_le": "Dyna AI của chính EBSCO hoặc giấy phép bằng văn bản của EBSCO; chỉ dùng để tìm nghiên cứu gốc — tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao (bác sĩ tự chép, thỉnh thoảng bằng tay, không đưa vào lịch nền)"},
+    # Hai nền tảng TRA CỨU (không phải NXB bài báo) — khoá riêng để uỷ quyền làn Chrome của bác sĩ (tools/tra_cuu_co_tai_khoan.py)
+    # không lẫn với uỷ quyền đọc toàn văn bài Elsevier. Không có tiền tố DOI: chỉ nhận diện theo miền.
+    "Scopus (Elsevier)": {
+        "ket_luan": "cam", "doi": (), "mien": ("scopus.com",),
+        "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions/elsevier-scopus-terms-and-conditions",
+        "doc_luc": "2026-10-03",
+        "trich": "used in a closed hosted, enterprise-grade, environment solely for the individual use",
+        "loai_nguon": "Elsevier Terms and Conditions of Sale for Scopus (sửa 16/09/2026): §1.1 cho dùng cùng công cụ AI CHỈ khi đủ (a) môi trường đóng cấp doanh nghiệp, chỉ cho cá nhân người dùng được cấp quyền (b) không huấn luyện AI bên ngoài (c) không chia sẻ cho bên thứ ba; §1.2 cấm robot/spider/crawler ⇒ «không rõ ⇒ dừng»",
+        "duong_hop_le": "Export chính thức do bác sĩ xuất ⇒ tools/tra_cuu_co_tai_khoan.py --nhap; Scopus API qua Elsevier Developer Portal theo API Service Agreement §2.4 (cờ ENABLE_SCOPUS của engine — tạm tắt chờ bác sĩ quyết)"},
+    "Clarivate (Web of Science)": {
+        "ket_luan": "cam", "doi": (), "mien": ("webofscience.com", "webofknowledge.com", "clarivate.com"),
+        "nguon": "https://clarivate.com/download/web-of-science-apis/", "doc_luc": "2026-10-03",
+        "trich": "must not use and access the Web of Science API data … application of artificial intelligence",
+        "loai_nguon": "Product/Service Terms — Web of Science APIs v3.8 (17/07/2024) §4(a); End User Terms (12/2018) §3(b)(iv) cấm «automatically download, text mine or index Content»; Terms of Use 3.1 (24/11/2023) trang HTML trả 403 cho máy — chưa đọc lại nguyên văn",
+        "ngoai_le": "«Artificial Intelligence Addendum» hoặc thoả thuận bằng văn bản hai bên ký với Clarivate; hợp đồng giấy phép của tổ chức thắng End User Terms",
+        "duong_hop_le": "Export chính thức do bác sĩ xuất ⇒ tools/tra_cuu_co_tai_khoan.py --nhap; dùng cùng AI qua API cần AI Addendum của Clarivate (Developer Portal / Sales Support)"},
+    # ESC giữ quyền cấp phép AI cho GUIDELINE của mình bất kể nơi đăng (EHJ/OUP, EJHF/Wiley…): miền escardio.org + luật nhận diện
+    # theo TIÊU ĐỀ «ESC … Guidelines» trong `nxb_cua` (tiền tố DOI của tạp chí đăng guideline còn chở cả bài KHÔNG phải guideline).
+    "ESC (European Society of Cardiology)": {
+        "ket_luan": "cam", "doi": (), "mien": ("escardio.org",),
+        "nguon": "https://www.escardio.org/guidelines/clinical-practice-guidelines/esc-guidelines-licensing-for-ai-llms-and-cds-tools/",
+        "doc_luc": "2026-10-03",
+        "trich": "explicit permission is required for AI-related applications—even if the content is publicly accessible",
+        "duong_hop_le": "giấy phép AI/LLM/CDS của ESC qua ESC Licensing Form (có phí, theo năm); tái bản/dịch: xin Oxford University Press bằng văn bản"},
+    "Springer Nature": {
+        "ket_luan": "cam", "doi": ("10.1007/", "10.1038/"), "mien": ("link.springer.com", "springer.com", "nature.com"),
+        "nguon": "https://datasolutions.springernature.com/tdm-reservation-policy/", "doc_luc": "2026-10-03",
+        "trich": "explicitly reserves all rights in the Content for any kind of text-and-data-mining",
+        "ngoai_le": "bài mang giấy phép CC của CHÍNH bài: theo đúng giấy phép (đường PMC OA); BMC (10.1186/) toàn OA nên không nằm trong tiền tố cấm",
+        "duong_hop_le": "TDM cho nhà nghiên cứu qua tổ chức, mục đích phi thương mại (TDM API có phí, cần khoá); hỏi datasolutions@springernature.com"},
 }
+# Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
+_TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
 _KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
 
 # BÁC SĨ UỶ QUYỀN MÁY ĐỌC (03/10/2026 — bác sĩ quyết trong chat: «Vậy hãy chỉnh sửa lại để máy đọc toàn văn và tóm tắt cho tôi»).
@@ -199,12 +233,16 @@ def uy_quyen_bac_si(nxb: str | None, hom_nay: date | None = None, tep: Path | No
     return dict(tot) if tot else None
 
 
-def nxb_cua(doi: str = "", url: str = "") -> tuple[str | None, dict | None]:
-    """(tên NXB, mục điều khoản) theo tiền tố DOI rồi theo miền; không khớp ⇒ (None, None) = CHƯA KIỂM."""
+def nxb_cua(doi: str = "", url: str = "", tieu_de: str = "") -> tuple[str | None, dict | None]:
+    """(tên NXB, mục điều khoản) theo tiền tố DOI rồi theo miền, cuối cùng theo TIÊU ĐỀ guideline ESC; không khớp ⇒ (None, None)
+    = CHƯA KIỂM."""
     doi, h = (doi or "").lower(), _mien(url)
     for ten, d in DIEU_KHOAN_NXB.items():
         if any(doi.startswith(t) for t in d["doi"]) or (h and any(h == m or h.endswith("." + m) for m in d["mien"])):
             return ten, d
+    if tieu_de and _TIEU_DE_ESC_GUIDELINE.search(tieu_de):
+        ten = "ESC (European Society of Cardiology)"
+        return ten, DIEU_KHOAN_NXB[ten]
     return None, None
 
 
@@ -479,7 +517,7 @@ def duong_doc(pm: str, trang_thai: str, epmc: Callable[..., dict] = tra_epmc,
             return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "chua_ro", "ly_do": f"doi.org lỗi {type(e).__name__}"}
     if not url:
         return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "chua_ro", "ly_do": "không có DOI/URL toàn văn trong Europe PMC"}
-    ten_nxb, dk = nxb_cua(doi, url)
+    ten_nxb, dk = nxb_cua(doi, url, tieu_de)
     if dk and dk["ket_luan"] == "cam":
         uq = uy_quyen_bac_si(ten_nxb, hom_nay, tep_uy_quyen)
         if not uq:
@@ -597,7 +635,7 @@ def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[st
         loi.append("url_doc phải là http(s)")
     elif any(_mien(url).endswith(m) for m in MIEN_TONG_HOP):
         loi.append("url_doc là bản TỔNG HỢP có bản quyền (DynaMed/UpToDate…) — chỉ dùng để tìm nghiên cứu gốc, không phải toàn văn")
-    ten_nxb, dk = nxb_cua(doi, url)
+    ten_nxb, dk = nxb_cua(doi, url, " ".join(str(hs.get(k) or "") for k in ("tieu_de_bai", "tieu_de_trang")))
     if dk and dk["ket_luan"] == "cam":
         kd = hs.get("dieu_khoan") if isinstance(hs.get("dieu_khoan"), dict) else {}
         uq = uy_quyen_bac_si(ten_nxb, hom_nay, tep_uy_quyen)
