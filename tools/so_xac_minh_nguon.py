@@ -1097,6 +1097,25 @@ def lenh_quet(files: list[Path], vong: int) -> int:
     return bao_cao(nguon_pham_vi=set(nguon))
 
 
+def _dinh_chinh_da_ky(khoa: str, bg: dict) -> bool:
+    """Bác sĩ đã ký xem xét «bản đính chính bị rút» cho `khoa` với ĐÚNG tập thông báo hiện có? Dùng hàm của cổng
+    verify_dashboard (nguồn chuẩn sync/skills/…); không nạp được / thiếu vân tay ⇒ False (fail-closed: vẫn báo đỏ)."""
+    ids = sorted({str(x).strip().lower() for x in (bg.get("thong_bao_ids") or []) if str(x).strip()})
+    if not ids:
+        return False
+    try:
+        import importlib.util as _ilu
+        duong = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py"
+        spec = _ilu.spec_from_file_location("_vd_sxmn_dc", duong)
+        cong = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(cong)
+        ban_ghi = {"khoa": khoa, "loai": bg.get("loai", ""), "gia_tri": bg.get("gia_tri", ""),
+                   "tinh_trang": "retracted", "sua_loi_bi_rut": True, "thong_bao_ids": ids}
+        return bool(cong._da_xem_xet_thong_bao_dinh_chinh(str(DASH / "a.html"), ban_ghi))
+    except Exception:  # noqa: BLE001 — không đối chiếu được chữ ký ⇒ coi như chưa ký
+        return False
+
+
 def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     if nguon_pham_vi is None and not SO.exists():
         # VÁ 26/09/2026 (phát hiện #28): sổ VẮNG (bản sao trần/Cloud không có EBM-Dashboards) ⇒ mã 3 «không đo
@@ -1190,11 +1209,36 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     print(f"  ĐÃ BỊ RÚT    : {len(han)}"
           + (f"  ·  RÚT & ĐĂNG LẠI BẢN SỬA: {len(thay)}" if thay else "")
           + (f"  ·  {mo_coi} bản ghi cũ không còn dashboard nào trích" if mo_coi else ""))
-    if han:
+    # VÁ 03/10/2026: «thông báo rút là BẢN ĐÍNH CHÍNH bị rút» mà bác sĩ ĐÃ KÝ xem xét (rut-bai-da-xem-xet.json, đúng vân
+    # tay tập thông báo) từng bị in chung dưới «🔴 ĐÃ BỊ RÚT — không dùng kết luận» ⇒ báo động giả xui bỏ một guideline
+    # hợp lệ (đo: CCS/CHFS 2025 của TienLuongSuyTim, bác sĩ ký 24/09, cổng PASS). Dòng ĐẾM «ĐÃ BỊ RÚT : N» ở trên GIỮ
+    # NGUYÊN nghĩa cũ (tu_de_xuat_viec trừ số ca đính chính khỏi nó — đổi con số sẽ che một ca rút thật); chỉ tách
+    # phần LIỆT KÊ. Nhận «đã ký» bằng ĐÚNG hàm của cổng verify_dashboard; không nạp được cổng ⇒ coi như CHƯA ký.
+    that, dc_cho, dc_ky = [], [], []
+    for khoa, gc in han:
+        bg = muc[khoa]
+        if not bg.get("sua_loi_bi_rut"):
+            that.append((khoa, gc))
+        elif _dinh_chinh_da_ky(khoa, bg):
+            dc_ky.append((khoa, gc))
+        else:
+            dc_cho.append((khoa, gc))
+    if that:
         print("\n  🔴 NGUỒN ĐÃ BỊ RÚT — không dùng kết luận của các bài này:")
-        for khoa, gc in han:
+        for khoa, gc in that:
             dash = ", ".join(muc[khoa].get("cac_dashboard", [])[:3])
             print(f"     • {khoa} [{gc}]  ← {dash}")
+    if dc_cho:
+        print("\n  🔴 CẦN BÁC SĨ XEM — thông báo rút là BẢN ĐÍNH CHÍNH bị rút, CHƯA ký xem xét (cổng vẫn chặn):")
+        for khoa, gc in dc_cho:
+            dash = ", ".join(muc[khoa].get("cac_dashboard", [])[:3])
+            print(f"     • {khoa} [{gc}]  ← {dash}")
+        print("     → python3 tools/mau_ky_rut_bai.py (dựng mẫu; CHỈ bác sĩ ký vào rut-bai-da-xem-xet.json)")
+    if dc_ky:
+        print("\n  ✅ BẢN ĐÍNH CHÍNH bị rút — bác sĩ ĐÃ KÝ xem xét (miễn trừ gắn đúng tập thông báo; trích dẫn vẫn dùng):")
+        for khoa, _gc in dc_ky:
+            dash = ", ".join(muc[khoa].get("cac_dashboard", [])[:3])
+            print(f"     • {khoa}  ← {dash}")
     if thay:
         print("\n  🟠 RÚT & ĐĂNG LẠI BẢN ĐÃ SỬA — trích dẫn VẪN dùng được, nhưng số liệu")
         print("     phải lấy từ BẢN ĐÃ SỬA (thường cùng DOI/PMID), không phải bỏ mục đi:")
