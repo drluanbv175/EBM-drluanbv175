@@ -45,6 +45,8 @@ for _s in (sys.stdout, sys.stderr):
 REPO = Path(__file__).resolve().parent.parent
 WATCHLIST = REPO / "EBM-Dashboards" / "watchlist.json"
 SCANNER = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py"
+# Nơi chu_trinh_chung_cu (②b) và tác vụ tuần (2b) ghi kết quả `--json`; `kiem_chuoi_0_ung_vien.py` đọc lại ở đây.
+KET_QUA_GAN_NHAT = REPO / "state" / "san-luong-giam-sat-gan-nhat.json"
 
 NGUONG_MU = 3       # tổng bản ghi 4 tầng trong cửa sổ ≤ ngưỡng ⇒ «truy vấn có thể mù»
 SO_NGAY = 90        # cùng trần cửa sổ `--days` mặc định của bộ quét
@@ -147,6 +149,12 @@ def kiem(watchlist: dict, fetch: Fetch, design: str, *, nguong: int = NGUONG_MU,
             "khong_do": [k["topic"] for k in ket if k["loai"] == "KHONG_DO"]}
 
 
+def bam_watchlist(wl_text: str) -> str:
+    """Băm SHA-256 NỘI DUNG watchlist (văn bản đã đọc) — MỘT định nghĩa cho cả lúc ghi kết quả lẫn lúc xét dùng lại
+    (`kiem_chuoi_0_ung_vien.py` cũng gọi hàm này; hai nơi tự băm là hai chỗ cho phép đo trôi)."""
+    return hashlib.sha256(wl_text.encode("utf-8")).hexdigest()
+
+
 def dung_lai_duoc(duong_dan: Path, sha_watchlist: str, nguong: int, days: int, so_ngay_moi: float,
                   bay_gio: datetime | None = None) -> dict | None:
     """Kết quả đo CŨ nếu còn dùng được: cùng watchlist (băm SHA-256), cùng ngưỡng/cửa sổ, ≤ N ngày, và LẦN ĐÓ đo trọn
@@ -219,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
             raise
         print(f"⚪ KHÔNG ĐO ĐƯỢC — không nạp được bộ quét chuẩn: {type(e).__name__}: {e}")
         return 2
-    sha = hashlib.sha256(wl_text.encode("utf-8")).hexdigest()
+    sha = bam_watchlist(wl_text)
     if a.dung_lai_neu_moi_hon_ngay and a.json and not a.chu_de:
         cu = dung_lai_duoc(Path(a.json), sha, a.nguong, a.ngay, a.dung_lai_neu_moi_hon_ngay)
         if cu is not None:

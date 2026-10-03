@@ -710,6 +710,42 @@ def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, 
              "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
 
 
+# Kết quả `--json` gần nhất của kiem_san_luong_giam_sat; None ⇒ đúng hằng KET_QUA_GAN_NHAT của chính công cụ đó.
+SAN_LUONG_GIAM_SAT: Path | None = None
+
+
+def giac_quan_chu_de_0_lien(dash_dir: Path, san_luong: Path | None = None
+                            ) -> tuple[list[tuple[int, str, str, str]], list[str]]:
+    """Chủ đề watchlist 0 ứng viên ≥ 2 lượt tuần LIỀN + đề xuất truy vấn chờ duyệt (03/10/2026) — (việc, dòng ⓘ).
+
+    Đếm thô 03/10: W39 + W40 có 10/47 chủ đề 0 ứng viên mà bộ quét vẫn PASS và tiến con trỏ; đề xuất viết lại truy vấn
+    soạn 02/10 nằm chờ; chốt sản lượng không nằm trong dây chuyền tuần ⇒ không ai thấy. Logic và luật «đo được» ở
+    `tools/kiem_chuoi_0_ung_vien.py` (một nguồn cho CLI và bảng này): chủ đề PASS_DEGRADED/FAIL, tệp hỏng không bao
+    giờ thành «0 ứng viên», lượt không đo được nằm giữa không bắc cầu. Ngoại tuyến. Vắng EBM-Dashboards/surveillance,
+    < 2 lượt đọc được, watchlist/đề xuất hỏng, công cụ lỗi ⇒ giác quan chết (⚪), KHÔNG phải «không có chủ đề mù»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "chủ đề 0 ứng viên liền"]
+    if not (dash_dir / "surveillance").is_dir():
+        _ghi_chet(nhan, "không có EBM-Dashboards/surveillance ở cây này")
+        return [], []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_k0uv_tdxv",
+                                              Path(__file__).resolve().parent / "kiem_chuoi_0_ung_vien.py")
+        k0 = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(k0)
+        pt = k0.phan_tich(dash_dir, san_luong)
+        viec, tt = k0.viec_tu_phan_tich(pt)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return [], []
+    if not pt.get("do_duoc"):
+        _ghi_chet(nhan, str(pt.get("ly_do")))
+        return [], []
+    for cb in pt.get("canh_bao") or []:
+        _ghi_chet(nhan, cb)
+    return viec, tt
+
+
 def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> None:
     """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/)."""
     tep.parent.mkdir(parents=True, exist_ok=True)
@@ -935,6 +971,11 @@ def main() -> int:
     # ⑦i TOÀN VĂN THẺ TUẦN (02/10/2026): bài không OA ⇒ làn trình duyệt có bác sĩ — xem docstring.
     for uu, dong, lenh in giac_quan_toan_van_the_tuan(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue"), DASH):
         de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
+    _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
+    de_xuat += _viec_0
+    _THONG_TIN.extend(_tt_0)
 
     # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
     for uu, dong, lenh in giac_quan_nguon_hong_keo_dai(_GOC_MEA / "data" / "medical_ebm.db"):
