@@ -17,7 +17,9 @@ CLAUDE.md §5) và WoS chưa có làn nào; 10/42 chủ đề watchlist từng �
   1. `--phieu`  : máy soạn câu tìm Advanced Search cho từng chủ đề (cú pháp Scopus `TITLE-ABS-KEY`, WoS `TS=`) + các bước bấm.
   2. Bác sĩ TỰ đăng nhập (máy không bao giờ gõ mật khẩu), dán câu, bấm Export (CSV/RIS của Scopus; Tab-delimited/Plain text/RIS
      của WoS) — chức năng xuất CHÍNH THỨC của hai trang. Máy KHÔNG tự cào trang kết quả: điều khoản Scopus/WoS cấm công cụ tự động
-     thu thập; tệp export là đường hợp lệ và bền hơn đọc giao diện.
+     thu thập; tệp export là đường hợp lệ và bền hơn đọc giao diện. LÀN CHROME CÓ BÁC SĨ (03/10/2026, quyết định của bác sĩ): khi
+     đã ghi uỷ quyền cho «Scopus (Elsevier)» / «Clarivate (Web of Science)», Claude mở trang bằng Chrome của bác sĩ, bác sĩ tự đăng
+     nhập, rồi Claude dán câu tìm và bấm Export thay bác sĩ (`huong_dan_lan_chrome`) — vẫn không chép/lưu nội dung trang.
   3. `--nhap <tệp> --chu-de "<watchlist>"`: máy đọc tệp, bỏ trùng (trong tệp · đã có trong kho · đã nằm ở hàng ngoài-quét), xếp hạng
      (guideline/đồng thuận > tổng quan hệ thống/gộp > RCT > khác; mới hơn trước), XÁC MINH từng bản ghi bằng CHÍNH bộ xác minh của
      làn dự phòng (`medical-ebm-automation/app/services/fallback_verification.py`: Crossref/PubMed + cổng rút bài Crossref/Scite,
@@ -60,9 +62,9 @@ HE_SO_XAC_MINH = 4           # chỉ xác minh tối đa toi_da × 4 bản ghi �
 
 _CUM_LOAI = '(guideline* OR consensus OR recommendation* OR "systematic review" OR meta-analys* OR randomi*)'
 
-HUONG_DAN_SCOPUS = """SCOPUS (https://www.scopus.com) — bác sĩ tự đăng nhập bằng tài khoản của mình. Claude KHÔNG mở/đọc trang Scopus
-(điều khoản website Elsevier, đọc 03/10/2026: không dùng Content «in combination with an artificial intelligence tool»); công cụ chỉ in
-metadata lấy từ Crossref/PubMed — tiêu đề trong tệp export Scopus không được in ra hay lưu lại:
+HUONG_DAN_SCOPUS = """SCOPUS (https://www.scopus.com) — bác sĩ tự đăng nhập bằng tài khoản của mình. CHƯA có uỷ quyền làn Chrome
+(dưới) ⇒ Claude KHÔNG mở/đọc trang Scopus (điều khoản Scopus/Elsevier: dùng cùng công cụ AI chỉ trong điều kiện hẹp; cấm robot); công
+cụ chỉ in metadata lấy từ Crossref/PubMed — tiêu đề trong tệp export Scopus không được in ra hay lưu lại:
   1. Search → «Advanced document search» → dán câu tìm → Search.
   2. Sắp xếp «Date (newest)». Chọn «All» (hoặc tối đa 200 dòng đầu).
   3. Export → CSV → tick «Citation information» (thêm «Abstract & keywords» nếu muốn) → Export. Lưu ~/Downloads/scopus_<chủ-đề>.csv."""
@@ -82,6 +84,50 @@ văn bản/dữ liệu (TDM) bị cấm ⇒ Claude KHÔNG mở, KHÔNG đọc tr
   3. Xoá tệp chép sau khi chạy. Cảnh báo ngoài PubMed / ngoài watchlist được nêu theo SỐ THỨ TỰ để bác sĩ tra lại trong tệp của mình."""
 HUONG_DAN_NHAP = ("Sau khi export, nói với Claude: «nhập tệp <đường dẫn> cho chủ đề <tên>». Claude chạy chạy thử trước "
                   "(`--nhap … ` không ghi), đọc kết quả xác minh với bác sĩ, rồi mới `--ghi`.")
+
+# LÀN CHROME CÓ BÁC SĨ cho Scopus / Web of Science (03/10/2026 — bác sĩ quyết trong chat: «Scopus,Web of Science giữ nguyên và kết
+# hợp mở Chrome để tôi đăng nhập sau đó thực hiện theo tác vụ yêu cầu»). Làn Export ở trên GIỮ NGUYÊN; làn này chỉ thêm việc Claude
+# thao tác Chrome của bác sĩ SAU khi bác sĩ tự đăng nhập: dán câu tìm của phiếu, sắp xếp, bấm Export chính thức. Chỉ mở khi tệp quyết
+# định `EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json` có uỷ quyền CÒN HIỆU LỰC cho đúng khoá dưới (ghi bằng
+# `doc_toan_van_co_nguoi.py --ghi-uy-quyen "<khoá>" --can-cu "<nguyên văn lời bác sĩ>" --ghi`); vắng/hỏng/hết hạn ⇒ làn ĐÓNG (fail-closed).
+# Điều khoản của Elsevier/Clarivate KHÔNG đổi — đây là quyết định và trách nhiệm của bác sĩ, không phải «nhà cung cấp cho phép».
+KHOA_UY_QUYEN = {"scopus": "Scopus (Elsevier)", "wos": "Clarivate (Web of Science)"}
+_TEN_TRANG = {"scopus": "Scopus", "wos": "Web of Science"}
+
+
+def _doc_toan_van():
+    """Nạp `doc_toan_van_co_nguoi.py` (bảng DIEU_KHOAN_NXB + `uy_quyen_bac_si`) theo đường dẫn — hai công cụ cùng thư mục."""
+    import importlib.util  # noqa: PLC0415
+    spec = importlib.util.spec_from_file_location("_tctk_dtv", Path(__file__).resolve().parent / "doc_toan_van_co_nguoi.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def uy_quyen_lan_chrome(nguon: str, hom_nay: date | None = None, tep: Path | None = None) -> dict | None:
+    """Uỷ quyền CÒN HIỆU LỰC của bác sĩ cho làn Chrome của `nguon` («scopus» | «wos»), hoặc None. Nạp công cụ hỏng ⇒ None (đóng)."""
+    if nguon not in KHOA_UY_QUYEN:
+        return None
+    try:
+        return _doc_toan_van().uy_quyen_bac_si(KHOA_UY_QUYEN[nguon], hom_nay, tep)
+    except Exception:  # noqa: BLE001 — không đọc được bảng/tệp quyết định ⇒ KHÔNG có uỷ quyền
+        return None
+
+
+def huong_dan_lan_chrome(nguon: str, uq: dict | None) -> str:
+    """Các bước làn Chrome có bác sĩ khi CÓ uỷ quyền; vắng ⇒ một dòng nói rõ làn đang đóng và cách bác sĩ mở."""
+    khoa, ten = KHOA_UY_QUYEN[nguon], _TEN_TRANG[nguon]
+    if not uq:
+        return (f"  Làn Chrome có bác sĩ: ĐÓNG — chưa có uỷ quyền ghi sổ cho «{khoa}» ⇒ Claude không mở trang {ten}; bác sĩ tự làm "
+                f"các bước trên (mở làn: bác sĩ nói rõ trong chat, Claude chạy doc_toan_van_co_nguoi.py --ghi-uy-quyen \"{khoa}\").")
+    return (f"  LÀN CHROME CÓ BÁC SĨ — uỷ quyền ngày {uq.get('ngay')} («{str(uq.get('can_cu') or '')[:90]}»; điều khoản {khoa} KHÔNG đổi,\n"
+            f"  trách nhiệm điều khoản thuộc bác sĩ):\n"
+            f"    a. Claude mở {ten} bằng Claude in Chrome (Chrome thật của bác sĩ); bác sĩ TỰ đăng nhập, tự vượt kiểm tra chống bot —\n"
+            f"       Claude không gõ tài khoản/mật khẩu, không bấm «I am not a bot», không giải CAPTCHA.\n"
+            f"    b. Bác sĩ nói «xong» ⇒ Claude dán ĐÚNG câu tìm của phiếu, sắp xếp, bấm Export chính thức như các bước trên — MỘT câu hỏi\n"
+            f"       mỗi lần bác sĩ yêu cầu; không chạy theo lịch, không xuất hàng loạt ngoài tác vụ đó.\n"
+            f"    c. Claude KHÔNG chép/lưu nội dung trang kết quả (tiêu đề, tóm tắt, số trích dẫn…); thứ duy nhất đi tiếp là tệp Export ⇒\n"
+            f"       --nhap (định danh xác minh qua Crossref/PubMed; tiêu đề của tệp Scopus vẫn bị bỏ).")
 
 
 # ── câu tìm ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -119,11 +165,12 @@ def chon_chu_de(ds: list[dict], tu_khoa: list[str], mu: bool, san_luong: Path | 
     return ra
 
 
-def phieu(cac_chu_de: list[dict], nam: int) -> str:
+def phieu(cac_chu_de: list[dict], nam: int, hom_nay: date | None = None, tep_uy_quyen: Path | None = None) -> str:
     dong = [f"# PHIẾU TRA SCOPUS / WEB OF SCIENCE — {date.today():%d/%m/%Y}", "",
             "> Bác sĩ tự đăng nhập; máy KHÔNG gõ mật khẩu, KHÔNG tự cào trang kết quả (điều khoản Scopus/WoS). Kết quả export chỉ là",
             "> nguồn KHÁM PHÁ: mọi bản ghi qua xác minh Crossref/PubMed + rút bài trước khi thành ứng viên. Cần bác sĩ kiểm chứng.", "",
-            HUONG_DAN_SCOPUS, "", HUONG_DAN_WOS, "", HUONG_DAN_NHAP, ""]
+            HUONG_DAN_SCOPUS, huong_dan_lan_chrome("scopus", uy_quyen_lan_chrome("scopus", hom_nay, tep_uy_quyen)), "",
+            HUONG_DAN_WOS, huong_dan_lan_chrome("wos", uy_quyen_lan_chrome("wos", hom_nay, tep_uy_quyen)), "", HUONG_DAN_NHAP, ""]
     for t in cac_chu_de:
         c = cau_tim(t, nam)
         dong.append(f"## {t.get('topic')}")
@@ -655,7 +702,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--huong-dan", action="store_true", help="in quy trình Scopus/WoS/DynaMed")
     a = ap.parse_args(argv)
     if a.huong_dan:
-        print("\n\n".join((HUONG_DAN_SCOPUS, HUONG_DAN_WOS, HUONG_DAN_DYNAMED, HUONG_DAN_NHAP)))
+        print("\n\n".join((HUONG_DAN_SCOPUS + "\n" + huong_dan_lan_chrome("scopus", uy_quyen_lan_chrome("scopus")),
+                           HUONG_DAN_WOS + "\n" + huong_dan_lan_chrome("wos", uy_quyen_lan_chrome("wos")),
+                           HUONG_DAN_DYNAMED, HUONG_DAN_NHAP)))
         return 0
     try:
         ds = doc_watchlist()
