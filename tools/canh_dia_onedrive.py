@@ -143,7 +143,10 @@ def phan_loai(mau: dict, truoc: dict | None) -> tuple[str, list[str]]:
     return "XANH", []
 
 
-def doc_state(duong_dan: Path = TEP_STATE) -> dict:
+def doc_state(duong_dan: Path | None = None) -> dict:
+    # Đọc TEP_STATE lúc GỌI, không chốt làm giá trị mặc định lúc import (03/10/2026: test vá TEP_STATE mà main() vẫn ghi vào
+    # state/ THẬT của repo — cùng họ lỗi đã gặp ở chot_hoi_quy_nen và xac_nhan_trinh_duyet).
+    duong_dan = duong_dan or TEP_STATE
     try:
         d = json.loads(duong_dan.read_text(encoding="utf-8"))
         return d if isinstance(d, dict) else {}
@@ -151,7 +154,8 @@ def doc_state(duong_dan: Path = TEP_STATE) -> dict:
         return {}
 
 
-def ghi_state(d: dict, duong_dan: Path = TEP_STATE) -> None:
+def ghi_state(d: dict, duong_dan: Path | None = None) -> None:
+    duong_dan = duong_dan or TEP_STATE
     duong_dan.parent.mkdir(parents=True, exist_ok=True)
     tam = duong_dan.with_name(duong_dan.name + f".tmp{os.getpid()}")
     tam.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")

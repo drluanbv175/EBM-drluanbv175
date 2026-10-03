@@ -580,7 +580,7 @@ def main() -> int:
     if not XUAT_CLOUD.exists():
         print("   ⚠ Bỏ qua: thiếu tools/xuat_trang_thai_cloud.py")
     else:
-        rc, out = run([py, str(XUAT_CLOUD)])
+        rc, out = run([py, str(XUAT_CLOUD), "--ep-ghi"])   # vừa cập nhật chứng cứ ⇒ ghi kể cả khi chỉ đổi số ngày
         if rc == 0 and out.strip():
             for dong in out.splitlines():
                 if dong.strip():

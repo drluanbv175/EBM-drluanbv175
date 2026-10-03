@@ -227,3 +227,14 @@ def test_cong_cu_khong_co_lenh_xoa_hay_dung_tien_trinh():
     cam = {"shutil.rmtree", "os.remove", "os.kill", "os.killpg"}
     assert not (goi & cam), goi & cam
     assert ".unlink" in nguon and nguon.count(".unlink(") <= 1, "unlink chỉ dùng để gỡ plist của chính công cụ"
+
+
+def test_main_ghi_state_vao_duong_da_va_khong_dung_state_that(monkeypatch, tmp_path):
+    """03/10/2026: `ghi_state(d, duong_dan=TEP_STATE)` chốt đường dẫn lúc import ⇒ test vá TEP_STATE mà main() vẫn ghi vào
+    state/ THẬT của repo (phát hiện vì cây worktree bẩn sau khi chạy bộ test)."""
+    tep = tmp_path / "state-gia" / "canh.json"
+    monkeypatch.setattr(cd, "TEP_STATE", tep)
+    mau = _mau(t=1000.0)
+    monkeypatch.setattr(cd, "do_mau", lambda *a, **k: mau)
+    cd.main(["--im-khi-on"])
+    assert tep.exists() and cd.doc_state()["mau"]["t"] == 1000.0
