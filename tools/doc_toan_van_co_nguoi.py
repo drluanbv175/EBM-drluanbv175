@@ -105,21 +105,23 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
     "Elsevier": {
         "ket_luan": "cam", "doi": ("10.1016/",),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
-                 "cghjournal.org", "elsevierhealth.com"),
+                 "cghjournal.org", "elsevierhealth.com", "scopus.com"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
-        "trich": "may not use Content … in combination with an artificial intelligence tool",
-        "duong_hop_le": "API khai thác văn bản (TDM) của Elsevier qua cơ sở có thuê bao — "
+        "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
+        "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (vd Scopus 16/09/2026) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
+        "duong_hop_le": "API khai thác văn bản (TDM) của Elsevier cho nhà nghiên cứu thuộc cơ sở HỌC THUẬT có thuê bao, mục đích PHI THƯƠNG MẠI; dùng cùng AI theo API Service Agreement §2.4 (môi trường đóng, không huấn luyện, không chia sẻ, không lưu cục bộ đáng kể) — "
                         "https://www.elsevier.com/about/policies-and-standards/text-and-data-mining"},
     "ADA (American Diabetes Association)": {
         "ket_luan": "cam", "doi": ("10.2337/",), "mien": ("diabetesjournals.org", "diabetes.org"),
         "nguon": "https://www.diabetesjournals.org/journals/pages/license", "doc_luc": "2026-10-03",
-        "trich": "cấm text/data mining, machine learning khi chưa có văn bản cho phép (phiên khác đọc; máy này gặp 403)",
-        "duong_hop_le": "xin phép bằng văn bản: permissions@diabetes.org"},
+        "trich": "CHƯA XÁC MINH NGUYÊN VĂN — trang trả 403 cho máy này; bác sĩ mở bằng Chrome để chép câu ≤ 15 từ",
+        "duong_hop_le": "xin phép bằng văn bản (kênh cụ thể chưa xác minh lại: nút «Get Permissions» trên bài hoặc permissions@diabetes.org)"},
     "EBSCO (DynaMed)": {
         "ket_luan": "cam", "doi": (), "mien": ("dynamed.com", "ebsco.com", "ebscohost.com"),
         "nguon": "https://licenses.library.ubc.ca/EBSCOPublishing_Dynamed", "doc_luc": "2026-10-03",
+        "loai_nguon": "tóm tắt giấy phép của thư viện UBC (đại diện) — chưa đọc điều khoản của chính EBSCO hay hợp đồng của bác sĩ; «cam» theo luật «không rõ ⇒ dừng»",
         "trich": "AI tool: Ask (phải hỏi phép) · Text and Data Mining: No",
-        "duong_hop_le": "chỉ dùng để tìm nghiên cứu gốc — tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao (bác sĩ tự chép)"},
+        "duong_hop_le": "Dyna AI của chính EBSCO hoặc giấy phép bằng văn bản của EBSCO; chỉ dùng để tìm nghiên cứu gốc — tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao (bác sĩ tự chép, thỉnh thoảng bằng tay, không đưa vào lịch nền)"},
 }
 _KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
 
