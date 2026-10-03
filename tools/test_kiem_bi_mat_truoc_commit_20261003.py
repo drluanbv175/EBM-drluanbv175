@@ -113,3 +113,55 @@ def test_pre_commit_goi_chot():
     hook = (TOOLS.parent / ".githooks" / "pre-commit").read_text(encoding="utf-8")
     dong = [x for x in hook.splitlines() if "kiem_bi_mat_truoc_commit.py" in x and not x.lstrip().startswith("#")]
     assert dong, "pre-commit không gọi chốt bí mật"
+
+
+# ---- 03/10/2026 (kiểm độc lập sau gộp): chốt tin vào định dạng HIỂN THỊ của `git diff` ⇒ bốn đường lọt NỘI DUNG ----
+def _stage(kho: Path, ten: str, noi_dung: str) -> None:
+    p = kho / ten
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(noi_dung.encode("utf-8"))
+    subprocess.run(["git", "-C", str(kho), "add", "--", ten], check=True)
+
+
+_TEN_DAC_BIET = ["thử_bí_mật.txt", "thư mục/có cách.txt"] + ([] if os.name == "nt" else ['nhay"kep.txt', "gach\\nguoc.txt"])
+
+
+@pytest.mark.parametrize("ten", _TEN_DAC_BIET)
+def test_ten_tep_khong_ascii_va_ky_tu_dac_biet_van_bi_quet(kho, capsys, ten):
+    """core.quotepath mặc định bọc nháy tên tiếng Việt («+++ "b/th\\341…"») ⇒ bản đầu bỏ qua CẢ TỆP; tên có dấu cách thì
+    git thêm TAB cuối tên. Phải chặn VÀ in đúng tên (không mã bát phân, không TAB)."""
+    _stage(kho, ten, f"x\n{GIA['pem']}\n")
+    assert K.main(["--repo", str(kho)]) == 1
+    assert f"{ten}:2 · khối PRIVATE KEY" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("khoa, gia_tri", [("diff.mnemonicPrefix", "true"), ("diff.noprefix", "true"), ("core.quotepath", "true")])
+def test_cau_hinh_git_cua_nguoi_dung_khong_lam_mu_chot(kho, khoa, gia_tri):
+    subprocess.run(["git", "-C", str(kho), "config", khoa, gia_tri], check=True)
+    _stage(kho, "thử.py", f"T = '{GIA['github']}'\n")
+    assert K.main(["--repo", str(kho)]) == 1, f"{khoa}={gia_tri} làm mù chốt"
+
+
+def test_dong_them_gia_dang_dau_tep_van_bi_quet(kho, capsys):
+    """Dòng THÊM có nội dung «++ …» hiện thành «+++ …» trong diff — không được đọc nhầm là dòng đầu tệp."""
+    _stage(kho, "moi.md", f"++ {GIA['pem']}\nbinh thuong\n")
+    assert K.main(["--repo", str(kho)]) == 1
+    assert "moi.md:1 · khối PRIVATE KEY" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("ngat", ["\r", " ", "\x0c", "\x1c"])
+def test_ky_tu_ngat_dong_la_khong_giau_duoc_bi_mat(kho, ngat):
+    """splitlines() cắt cả ở \\r, \\u2028… ⇒ phần sau ký tự đó mất dấu «+» và không được quét."""
+    _stage(kho, "moi.txt", f"abc{ngat}{GIA['pem']}\n")
+    assert K.main(["--repo", str(kho)]) == 1
+
+
+def test_tep_sach_ten_tieng_viet_van_cho_qua(kho):
+    _stage(kho, "ghi_chú_khám.md", "chỉ là ghi chú bình thường\n")
+    assert K.main(["--repo", str(kho)]) == 0
+
+
+def test_bo_nhay_c():
+    assert K._bo_nhay_c('"th\\341\\273\\255.txt"') == "thử.txt"
+    assert K._bo_nhay_c('"a\\"b\\\\c\\td"') == 'a"b\\c\td'
+    assert K._bo_nhay_c("khong_nhay.txt") == "khong_nhay.txt"
