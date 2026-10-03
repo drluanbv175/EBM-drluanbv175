@@ -95,6 +95,11 @@ tìm ra sai lệch rõ ràng và an toàn để tự sửa (chỉ sửa văn b�
 sạch, ghi rõ nếu có "BÀI HỌC TÁI PHÁT"). `python3 tools/kiem_plugin_day_du.py` — kho công cụ có
 đủ không (🟢/🟡/🔴).
 
+**⑨ Sổ đo sử dụng công cụ (thêm 03/10/2026, Q7).** Transcript chỉ giữ ~26 ngày nên kết luận «công cụ X không ai dùng» chỉ có giá
+trị khi có sổ dài hạn. Chạy `python3 tools/do_su_dung_cong_cu.py --thang <THÁNG TRƯỚC, YYYY-MM> --ghi` (chỉ đếm TÊN tool/skill/
+lệnh/agent/MCP/mô hình — không giữ nội dung hội thoại), rồi `python3 tools/do_su_dung_cong_cu.py --tong-hop`; ghi số tháng đã có
+vào báo cáo. KHÔNG đề xuất tắt công cụ khi sổ mới có < 3 tháng.
+
 BÁO CÁO: viết một bản tóm tắt ngắn gọn BẰNG TIẾNG VIỆT (đúng theo chỉ thị ngôn ngữ toàn cục của
 người dùng) liệt kê: mảng nào sạch, mảng nào có việc cần bác sĩ xử lý (kèm lệnh cụ thể để tự
 chạy), mảng nào đã tự sửa (kèm bằng chứng). Nếu có sửa file: `git status` để chắc không đè lên
