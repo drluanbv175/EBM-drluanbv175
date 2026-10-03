@@ -8134,6 +8134,87 @@ def bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co():
 
 
 
+def bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si():
+    """02/10 — LÀN TRÌNH DUYỆT CÓ NGƯỜI (bác sĩ yêu cầu): (1) www.fda.gov đổi cách chặn sang HTTP 401 + trang «Sorry! This resembles an
+    automated request»; cổng đọc 401 thành lỗi mạng và MỘT URL thiếu bằng chứng làm DỪNG cả lô `ops/orchestrator.py`. (2) Bác sĩ có tài
+    khoản Scopus/Web of Science/DynaMed nhưng hệ chưa có đường nào dùng. Vá: `MA_CHAN_TU_DONG` có 401; `tools/xac_nhan_trinh_duyet.py`
+    (máy mở trang, BÁC SĨ tự bấm xác nhận chống bot, máy đọc tiêu đề rồi ghi sổ — từ chối tiêu đề trang chặn/lỗi/tên cơ quan, miền chưa
+    khai); orchestrator đổi «hạ tầng» của B2 thành việc 👤 khi dashboard có URL miền chặn thiếu bằng chứng, lô đi tiếp;
+    `tools/tra_cuu_co_tai_khoan.py` (export Scopus/WoS · cảnh báo DynaMed ⇒ CHỈ bản ghi xác minh được qua Crossref/PubMed mới thành
+    ứng viên; bài rút nêu đỏ; tra ngược trích dẫn DynaMed chỉ nhận khi đúng MỘT PMID; không lưu câu tóm tắt DynaMed).
+    Kiểm HÀNH VI ngoại tuyến (không mạng, bộ tìm/xác minh giả)."""
+    import importlib.util as _iu
+    import tempfile as _tf
+
+    def nap(rel, ten):
+        sp = _iu.spec_from_file_location(ten, REPO / rel)
+        m = _iu.module_from_spec(sp)
+        sys.modules[ten] = m
+        sp.loader.exec_module(m)
+        return m
+    nguon = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py"
+    vd = nap("sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py", "_bh150_vd")
+    if 401 not in tuple(getattr(vd, "MA_CHAN_TU_DONG", ())):
+        return False, "MA_CHAN_TU_DONG thiếu 401 — FDA trả 401 cho lượt kiểm tự động thì cổng lại đọc thành lỗi mạng, cả lô dừng"
+    if nguon.read_bytes() != (REPO / "sync/skills/dark-analyst/tools/verify_dashboard.py").read_bytes():
+        return False, "hai bản verify_dashboard.py trong git lệch byte (luật «4 bản đồng bộ byte»)"
+    xn = nap("tools/xac_nhan_trinh_duyet.py", "_bh150_xn")
+    for td in ("Sorry! This resembles an automated request", "I am not a bot", "Just a moment...", "U.S. Food and Drug Administration",
+               "Page Not Found"):
+        if xn.kiem_tieu_de(td) is None:
+            return False, f"công cụ nhận tiêu đề «{td}» làm bằng chứng — trang chặn/lỗi bị ghi thành «đã mở trang thật»"
+    if xn.kiem_tieu_de("FDA Approves Labeling Changes for alli (Orlistat) to Warn of Risk of Kidney Injury") is not None:
+        return False, "công cụ từ chối tiêu đề tài liệu thật"
+    if "Claude KHÔNG bấm" not in xn.HUONG_DAN or "KHÔNG giải CAPTCHA" not in xn.HUONG_DAN:
+        return False, "quy trình mất dòng cấm Claude tự vượt kiểm tra chống bot"
+    with _tf.TemporaryDirectory() as td:
+        ma, _tb = xn.ghi(vd, "https://mien-chua-khai.invalid/x", "Một tiêu đề tài liệu đủ dài", "Claude_Browser: đã đọc", "x",
+                         thu_muc=Path(td), sao_luu=Path(td) / "sl")
+        if ma != 3:
+            return False, "ghi bằng chứng cho miền CHƯA khai chặn bot không bị từ chối — sổ trình duyệt thành đường lách cổng"
+    op = nap("ops/orchestrator.py", "_bh150_op")
+    ke = [{"buoc": "B2-cong-liem-chinh[X]", "lat": "X", "lenh": ["py", "b2x", "/k/WebDashboard_X.html"]},
+          {"buoc": "B4-bo-nam[X]", "lat": "X", "lenh": ["py", "b4x"]},
+          {"buoc": "B2-cong-liem-chinh[Y]", "lat": "Y", "lenh": ["py", "b2y", "/k/WebDashboard_Y.html"]}]
+    goc = op._url_cho_trinh_duyet
+    try:
+        op._url_cho_trinh_duyet = lambda lenh: ["fda-gia"] if "b2x" in lenh else []
+        da = []
+        res = op.thuc_thi(ke, chay=lambda lenh, _t: (da.append(lenh[1]) or (2 if lenh[1] == "b2x" else 0)), in_=lambda *_: None)
+        if res["dung"] is not None or "b2y" not in da or "b4x" in da:
+            return False, f"URL chặn bot thiếu bằng chứng vẫn dừng cả lô hoặc lát cắt bị chặn vẫn xuất B4 (dung={res['dung']}, chạy={da})"
+        op._url_cho_trinh_duyet = lambda lenh: []
+        res2 = op.thuc_thi(ke, chay=lambda lenh, _t: 2 if lenh[1] == "b2x" else 0, in_=lambda *_: None)
+        if res2["dung"] != "ha_tang":
+            return False, "lỗi mạng THẬT ở B2 không còn dừng lô"
+    finally:
+        op._url_cho_trinh_duyet = goc
+    tk = nap("tools/tra_cuu_co_tai_khoan.py", "_bh150_tk")
+    bg = [tk._ban_ghi(f"Tieu de bai so {i} du dai de nhan", 2026, "J", f"10.1/{i}", "", "Review") for i in range(4)]
+    kq = {"10.1/0": "xac_minh_duoc", "10.1/1": "bi_rut_bai", "10.1/2": "khong_khop", "10.1/3": "loi_xac_minh"}
+    bc = tk.xu_ly(bg, "scopus", "t.csv", "scopus_csv", "X", toi_da=7, pm_kho=set(), doi_kho=set(),
+                  xac_minh=lambda b: {"ket_qua": kq[b["doi"]], "pmid": "", "doi": b["doi"], "title": b["title"], "journal": "",
+                                      "study_type": "", "co": []})
+    if [c["doi"] for c in bc["chon"]] != ["10.1/0"] or [r["doi"] for r in bc["rut_bai"]] != ["10.1/1"]:
+        return False, "bản ghi chưa xác minh/bài rút lọt thành ứng viên (chỉ «xac_minh_duoc» được thành CANDIDATE)"
+    if tk.phan_giai_pubmed({"trich_dan": "Ann Oncol 2026 May", "tu_khoa": ["a", "b"]}, lambda term: [{}, {}])[0] != "mo_ho":
+        return False, "tra ngược trích dẫn DynaMed nhận bài khi PubMed trả NHIỀU bài (phải «mơ hồ», không đoán)"
+    cb = tk.doc_canh_bao_dynamed("EvidenceUpdated 2 Oct 2026\n\nCâu tóm tắt có bản quyền của DynaMed về enzalutamide (Ann Oncol 2026 May)."
+                                 "\n\nView in Prostate Cancer\n")
+    if len(cb) != 1 or any("Câu tóm tắt" in str(v) for v in cb[0].values()):
+        return False, "bộ tách cảnh báo DynaMed hỏng hoặc GIỮ câu tóm tắt có bản quyền"
+    # 03/10/2026 — điều khoản EBSCO (AI phải được phép, TDM bị cấm) và Elsevier (không dùng Content với công cụ AI): Claude không
+    # mở/đọc trang DynaMed/Scopus; đầu ra của công cụ (Claude đọc được) không mang chữ nào của DynaMed.
+    if "Claude KHÔNG mở, KHÔNG đọc trang DynaMed" not in tk.HUONG_DAN_DYNAMED or "Claude KHÔNG mở/đọc trang Scopus" not in tk.HUONG_DAN_SCOPUS:
+        return False, "quy trình DynaMed/Scopus lại cho Claude đọc trang của nhà cung cấp (điều khoản EBSCO/Elsevier cấm dùng với AI)"
+    _bg, bcdm = tk.tu_canh_bao_dynamed(cb, [{"topic": "Ung thư tuyến tiền liệt"}], lambda term: [])
+    dau_ra = " ".join(bcdm["ngoai_watchlist"] + bcdm["ngoai_pubmed"] + bcdm["khong_phan_giai"])
+    if "Prostate Cancer" in dau_ra or "Ann Oncol" in dau_ra:
+        return False, "đầu ra làn DynaMed còn chữ của DynaMed (tên chủ đề/trích dẫn) — Claude sẽ đọc nội dung EBSCO"
+    return True, ("401 là mã chặn; tiêu đề trang chặn bị từ chối; lô đi tiếp khi chỉ vướng chặn bot; chỉ bản ghi xác minh được thành "
+                  "ứng viên; đầu ra DynaMed không mang chữ của DynaMed")
+
+
 def bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky():
     """27/09 — `chu_trinh_chung_cu.py` báo «🔴 CÓ NGUỒN RÚT BỎ HẲN đang được trích» vì sổ xác minh trả mã 2 cho 2 nguồn mang
     cờ rút bài — cả hai là ca thông báo rút là BẢN ĐÍNH CHÍNH bị rút (BH109) mà bác sĩ đã ký xem xét 24/09; cổng cho qua và
@@ -9892,6 +9973,7 @@ BAI_HOC = [
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH149", "02/10", "Canh đĩa + log OneDrive (vòng lặp log tái diễn lần 3: 24 GB/24.796 tệp/54 tệp mỗi phút): đo thật, ĐỎ đúng ca 02/10, KHÔNG ĐO ĐƯỢC ≠ ổn, chỉ đo không xoá, hook có gọi", bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
+    ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
     ("BH147", "02/10", "Hook chốt hồi quy ĐỌC kết quả chạy nền (chot_hoi_quy_nen.py), không chạy trọn bộ chốt 46–55 s dưới timeout 30 s; chưa đo/cũ/lỗi ⇒ 🟡 CHƯA ĐO ĐƯỢC, chỉ xanh THẬT còn mới mới im lặng", bh147_hook_chot_hoi_quy_doc_ket_qua_nen_khong_chay_tron),
     ("BH124", "27/09", "Không email cá nhân viết cứng trong mã repo công khai — email liên hệ API lấy từ cấu hình", bh124_khong_email_ca_nhan_viet_cung_trong_ma),

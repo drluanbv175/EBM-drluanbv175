@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.53.0 — 2026-10-02 (cổng nhận HTTP 401 của www.fda.gov là «chặn kiểm tự động», vẫn đòi bằng chứng trình duyệt)
+
+**Cổng liêm chính (`tools/verify_dashboard.py`, 4 bản đồng bộ byte).** www.fda.gov đổi cách chặn trình khách tự động: urllib nhận
+HTTP 401 Unauthorized (trước là 404), chính trình duyệt trong app cũng gặp trang chặn «Sorry! This resembles an automated request».
+Cổng đọc 401 thành «lỗi mạng» ⇒ lô `ops/orchestrator.py --cu-nhat 3 --online` ngày 02/10 dừng ở gói Orlistat dù sổ
+`url-xac-minh-trinh-duyet.json` có bằng chứng trình duyệt 24/09 còn hạn. `MA_CHAN_TU_DONG` nay là (401, 403, 404, 410). Chiều an
+toàn không đổi: 401 của miền đã khai vẫn CHỈ đạt khi có bằng chứng trình duyệt còn hạn đúng URL; 401 của miền chưa khai và các mã
+khác (500…) vẫn là «lỗi mạng», không bao giờ thành đạt. 3 ca test mới + tham số 401; đột biến bắt 3/3.
+
+**Làn trình duyệt có người (cùng ngày, bác sĩ yêu cầu).** `tools/xac_nhan_trinh_duyet.py` (gốc repo): trang chặn bot ⇒ Claude mở trang,
+bác sĩ tự bấm xác nhận, Claude đọc tiêu đề và ghi sổ `url-xac-minh-trinh-duyet.json` (bằng CHÍNH hàm của cổng). `tools/tra_cuu_co_tai_khoan.py`:
+Scopus/WoS (export của bác sĩ) và DynaMed «Recent Alerts» (đọc trên tài khoản của bác sĩ) ⇒ xác minh Crossref/PubMed + rút bài ⇒
+`surveillance/ung-vien-ngoai-quet.jsonl` (bước 1c của gói tuần). Skill KHÔNG đổi luật cổng nào khác.
+
 ## v1.52.0 — 2026-09-24 (bản đọc đọc sổ ký rút bài như cổng — sau khi bác sĩ ký ITEM-11)
 
 **Bản đọc (`tools/build_ban_doc_chung_cu.py`).** Bác sĩ ký miễn trừ ITEM-11 của TienLuongSuyTim_20260914 (thông

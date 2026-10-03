@@ -182,6 +182,11 @@ VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
      "/tra-ma-icd10", "tra mã ICD-10"),
     (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
      "dao-tao-slide-tai-lieu-y-khoa", "sản phẩm đào tạo / slide"),
+    # 02/10/2026 — làn có NGƯỜI trên trình duyệt (bác sĩ yêu cầu): trang chặn bot và cơ sở dữ liệu cần tài khoản của bác sĩ.
+    (["chặn bot", "i am not a bot", "not a bot", "xác nhận trình duyệt", "xác nhận trên trình duyệt", "trang chặn"],
+     "tools/xac_nhan_trinh_duyet.py", "trang chặn bot: Claude mở trang, bác sĩ tự bấm xác nhận, Claude ghi bằng chứng"),
+    (["scopus", "web of science", "webofscience", "dynamed", "tài khoản scopus", "tài khoản dynamed"],
+     "tools/tra_cuu_co_tai_khoan.py", "tra Scopus/WoS/DynaMed bằng tài khoản bác sĩ (bác sĩ tự đăng nhập; máy xác minh)"),
 ]
 
 CLINICAL_ORCHESTRATOR = "dieu-phoi-lam-sang"

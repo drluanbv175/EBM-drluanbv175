@@ -412,6 +412,32 @@ def giac_quan_nguon_hong_keo_dai(db: Path) -> list[tuple[int, str, str]]:
     return []
 
 
+def giac_quan_url_chan_bot(dash_dir: Path) -> list[tuple[int, str, str]]:
+    """URL miền chặn bot (vd www.fda.gov) đang được dashboard trích mà THIẾU/SẮP HẾT HẠN bằng chứng trình duyệt (02/10/2026).
+
+    Thiếu bằng chứng ⇒ cổng `--strict-sources` chặn gói và (trước 02/10) dừng cả lô orchestrator. Việc 👤: Claude mở trang, bác sĩ TỰ
+    bấm xác nhận chống bot, Claude đọc tiêu đề rồi ghi sổ (`tools/xac_nhan_trinh_duyet.py`). Ngoại tuyến. Vắng EBM-Dashboards/
+    hoặc công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG phải «không có URL chờ»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not dash_dir.is_dir():
+        _ghi_chet(["", "URL chặn bot"], "không có EBM-Dashboards/ ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_xntd_tdxv", Path(__file__).resolve().parent / "xac_nhan_trinh_duyet.py")
+        xn = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(xn)
+        cho = xn.can_xac_nhan(xn.quet(xn.nap_cong(), dash_dir))
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "URL chặn bot"], f"lỗi {type(exc).__name__}")
+        return []
+    if not cho:
+        return []
+    thieu = sum(1 for m in cho if m["trang_thai"] == "THIEU")
+    return [(1 if thieu else 3, f"{len(cho)} URL miền chặn bot chờ bác sĩ xác nhận trên trình duyệt "
+             f"({thieu} thiếu bằng chứng — cổng đang chặn gói; {len(cho) - thieu} sắp hết hạn) — ~1 phút/URL",
+             "python3 tools/xac_nhan_trinh_duyet.py --huong-dan  # Claude mở trang, bác sĩ tự bấm xác nhận chống bot")]
+
+
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -700,6 +726,10 @@ def main() -> int:
                             "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»"))
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+
+    # ⑦h URL MIỀN CHẶN BOT (02/10/2026): bác sĩ tự vượt kiểm tra chống bot, máy ghi bằng chứng — xem docstring.
+    for uu, dong, lenh in giac_quan_url_chan_bot(DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
 
     # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
     for uu, dong, lenh in giac_quan_nguon_hong_keo_dai(_GOC_MEA / "data" / "medical_ebm.db"):

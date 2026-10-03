@@ -205,7 +205,8 @@ def ke_hoach(topic: str | None, online: bool, xuat: bool, *, uu_tien: bool = Fal
 
 # ── phân loại mã thoát THEO BƯỚC (T1-04) ─────────────────────────────────────────────────────────────
 def phan_loai(buoc: str, rc: int, *, a2_json_khong_pass: bool = False) -> tuple[str, str]:
-    """(mức, thông điệp). mức ∈ ok · noi_dung · ha_tang · tham_so · khoa_ban · rut · chan · timeout.
+    """(mức, thông điệp). mức ∈ ok · noi_dung · ha_tang · tham_so · khoa_ban · rut · chan · timeout
+    (+ «cho_trinh_duyet» do `thuc_thi` đổi từ ha_tang của B2 khi dashboard có URL miền chặn bot thiếu bằng chứng).
 
     Số mã thoát KHÔNG có nghĩa chung giữa các bước: A2 rc=2 vừa là argparse vừa là «quét không PASS»; A4 rc=2
     là «có NGUỒN ĐÃ BỊ RÚT» chứ không phải mạng; B4 rc=3 là «CHẶN XUẤT» của cổng. Trước đây mọi rc=2 đều in
@@ -373,6 +374,22 @@ def _du_phong_a2(duong_json: Path) -> list[tuple[str, str, int | None]]:
         return []   # báo cáo cũ/sai dạng: không có gì để nói — không được làm sập bước A2
 
 
+def _url_cho_trinh_duyet(lenh: list[str]) -> list[str]:
+    """URL miền chặn bot của dashboard trong lệnh B2 còn THIẾU/SẮP HẾT HẠN bằng chứng trình duyệt — ngoại tuyến (02/10/2026).
+
+    Dùng `tools/xac_nhan_trinh_duyet.py` (luật lấy từ CHÍNH cổng). Không đọc được gì ⇒ [] (giữ phân loại hạ tầng cũ — không đoán)."""
+    db = next((Path(x) for x in lenh[2:] if str(x).endswith(".html")), None)
+    if db is None or not db.exists():
+        return []
+    try:
+        xn = _nap(GOC / "tools" / "xac_nhan_trinh_duyet.py", "xac_nhan_trinh_duyet_ops")
+        vd = xn.nap_cong()
+        url = {u for _i, u in xn.url_mien_chan_cua_dashboard(db, vd)}
+        return [m["url"] for m in xn.quet(vd, db.parent) if m["url"] in url and m["trang_thai"] == "THIEU"]
+    except Exception:  # noqa: BLE001 — công cụ phụ hỏng không được làm sập lô
+        return []
+
+
 def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: frozenset | set | dict = frozenset(),
              in_=print, topic: str | None = None) -> dict:
     """Chạy các bước; trả {tong_rc, dung, ket_qua{buoc: (mức, rc)}, lat_hong, rut, ung_vien}.
@@ -383,7 +400,7 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
     """
     chay = chay or _chay_that  # tra lúc GỌI (không phải lúc định nghĩa) để test main() thay được bộ chạy
     res = {"tong_rc": 0, "dung": None, "ket_qua": {}, "lat_hong": set(), "rut": [], "ung_vien": None,
-           "phien": [], "a2_bao_cao": [], "b2_offline": False, "du_phong": []}
+           "phien": [], "a2_bao_cao": [], "b2_offline": False, "du_phong": [], "cho_trinh_duyet": []}
     for b in cac_buoc:
         ten = b["buoc"]
         if _la_da_xong(b, da_xong):
@@ -431,6 +448,16 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
             if "--report" in b["lenh"]:
                 res["a2_bao_cao"].append(b["lenh"][b["lenh"].index("--report") + 1])
         muc, msg = phan_loai(ten, rc, a2_json_khong_pass=a2_khong_pass)
+        if muc == "ha_tang" and ten.startswith("B2"):
+            # 02/10/2026: một URL miền chặn bot (vd www.fda.gov) thiếu bằng chứng trình duyệt từng làm DỪNG cả lô như sự cố
+            # mạng. Đó không phải lỗi mạng mà là việc 👤: bác sĩ tự vượt kiểm tra chống bot trên trình duyệt. Lát cắt này bỏ B4
+            # (gói vẫn bị chặn), các lát cắt khác đi tiếp. Lỗi mạng THẬT ở lát cắt sau vẫn dừng lô như cũ.
+            cho = _url_cho_trinh_duyet(b["lenh"])
+            if cho:
+                muc = "cho_trinh_duyet"
+                msg = (f"👤 {len(cho)} URL miền chặn bot chưa có bằng chứng trình duyệt — bác sĩ tự xác nhận trên trang: "
+                       "`python3 tools/xac_nhan_trinh_duyet.py --huong-dan`; lát cắt này bỏ B4, lô đi tiếp")
+                res["cho_trinh_duyet"] += [u for u in cho if u not in res["cho_trinh_duyet"]]
         res["ket_qua"][ten] = (muc, rc)
         ghi({"buoc": ten, "lenh": b["lenh"][1:], "rc": rc, "muc": muc, "giay": round(time.time() - t0, 1),
              "dau_tep": _dau_tep(b["lenh"]), **({"du_phong": [list(x) for x in du_phong_buoc]} if du_phong_buoc else {})})
@@ -445,7 +472,7 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
         res["tong_rc"] = max(res["tong_rc"], 1)
         if muc == "rut":
             res["rut"].append(b.get("lat") or ten)
-        if muc == "chan" and ten.startswith("B2"):
+        if muc in ("chan", "cho_trinh_duyet") and ten.startswith("B2"):
             res["lat_hong"].add(b.get("lat"))
     return res
 
@@ -492,6 +519,10 @@ def phieu_can_phien(topic: str | None, tt: dict, cac_db: list[Path], res: dict,
                     + " — bị cổng chặn vì nguồn có thông báo rút là bản đính chính; chạy "
                       "`python3 tools/mau_ky_rut_bai.py` rồi đọc + ký `rut-bai-da-xem-xet.json`")
         res = {**res, "lat_hong": set(res["lat_hong"]) - ten_ky}
+    if res.get("cho_trinh_duyet"):
+        viec.append(f"👤 XÁC NHẬN TRÊN TRÌNH DUYỆT {len(res['cho_trinh_duyet'])} URL miền chặn bot (Claude mở trang, bác sĩ tự bấm "
+                    "xác nhận chống bot, Claude đọc tiêu đề rồi ghi sổ): `python3 tools/xac_nhan_trinh_duyet.py --huong-dan` — "
+                    "xong thì chạy lại lô bằng --resume")
     cu_nhat = max((t for t in (_tuoi_ngay(p) for p in cac_db) if t is not None), default=None)
     if cu_nhat is not None and cu_nhat >= HAN_CAP_NHAT_NGAY:  # lát cắt CŨ NHẤT (P1-10: trước ghi nhầm «mới nhất»)
         ly_do.append(f"lát cắt cũ nhất {cu_nhat} ngày (≥ {HAN_CAP_NHAT_NGAY})")
