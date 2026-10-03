@@ -87,21 +87,68 @@ def quet_dong(duong: str, so_dong: int, dong: str) -> tuple[list[tuple[str, int,
     return chan, cb
 
 
+_THOAT_C = {"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13, '"': 34, "\\": 92}
+
+
+def _bo_nhay_c(s: str) -> str:
+    """Giải tên tệp git bọc nháy kiểu C («\\ooo» bát phân là từng BYTE UTF-8; \\t \\n \\" \\\\…).
+
+    Kể cả khi đã tắt core.quotepath, git vẫn bọc nháy tên có `"`, `\\` hay ký tự điều khiển."""
+    if not (len(s) >= 2 and s[0] == s[-1] == '"'):
+        return s
+    t, b, i = s[1:-1], bytearray(), 0
+    while i < len(t):
+        if t[i] == "\\" and i + 1 < len(t):
+            if re.fullmatch(r"[0-7]{3}", t[i + 1:i + 4]):
+                b.append(int(t[i + 1:i + 4], 8))
+                i += 4
+                continue
+            if t[i + 1] in _THOAT_C:
+                b.append(_THOAT_C[t[i + 1]])
+                i += 2
+                continue
+        b.extend(t[i].encode("utf-8"))
+        i += 1
+    return b.decode("utf-8", "replace")
+
+
+def _ten_tep_dong_cong(d: str) -> str:
+    """Tên tệp từ dòng `+++ ` của diff. Không đọc được thì trả «<?>» — vẫn quét (fail-closed), không bỏ qua."""
+    s = _bo_nhay_c(d[4:].rstrip("\t"))  # git thêm TAB cuối tên khi tên có dấu cách
+    s = s[2:] if s.startswith("b/") else s
+    return s or "<?>"
+
+
 def dong_them_da_stage(cwd: Path) -> tuple[list[str], list[tuple[str, int, str]]]:
-    """(tệp được thêm/sửa trong phần stage, các dòng THÊM (tệp, số dòng mới, nội dung))."""
-    ten = subprocess.run(["git", "-C", str(cwd), "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
+    """(tệp được thêm/sửa trong phần stage, các dòng THÊM (tệp, số dòng mới, nội dung)).
+
+    VÁ 03/10/2026 (kiểm độc lập sau gộp). Bản đầu tin vào định dạng HIỂN THỊ của `git diff` nên bốn đường lọt nội dung:
+    (1) core.quotepath mặc định bọc nháy tên không-ASCII («+++ "b/th\\341…"») ⇒ tên tiếng Việt bị bỏ qua cả tệp;
+    (2) cấu hình người dùng diff.mnemonicPrefix/noprefix đổi tiền tố «b/» ⇒ bỏ qua cả tệp;
+    (3) một dòng THÊM bắt đầu «++ » hiện thành «+++ …» và bị đọc nhầm là đầu tệp;
+    (4) splitlines() cắt cả ở \\r, \\u2028… nên phần sau ký tự đó không còn dấu «+» ⇒ không quét.
+    Nay: ép cấu hình + tiền tố tường minh, chỉ đọc «+++ » trong phần ĐẦU của mỗi tệp (trước «@@»), tách dòng đúng «\\n»."""
+    ep = ["git", "-C", str(cwd), "-c", "core.quotepath=false", "-c", "diff.mnemonicPrefix=false", "-c", "diff.noprefix=false"]
+    ten = subprocess.run([*ep, "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
                          capture_output=True, timeout=60).stdout.decode("utf-8", "replace").split("\0")
-    diff = subprocess.run(["git", "-C", str(cwd), "diff", "--cached", "-U0", "--no-color", "--diff-filter=ACMR", "--text"],
+    diff = subprocess.run([*ep, "diff", "--cached", "-U0", "--no-color", "--no-ext-diff", "--diff-filter=ACMR", "--text",
+                           "--src-prefix=a/", "--dst-prefix=b/"],
                           capture_output=True, timeout=120).stdout.decode("utf-8", "replace")
-    dong, tep, so = [], None, 0
-    for d in diff.splitlines():
-        if d.startswith("+++ "):
-            tep = d[6:] if d.startswith("+++ b/") else None
-        elif d.startswith("@@"):
+    dong, tep, so, dau = [], "<?>", 0, False
+    for d in diff.split("\n"):
+        if d.startswith("diff --git "):
+            dau, tep = True, "<?>"
+            continue
+        if d.startswith("@@"):
+            dau = False
             m = re.search(r"\+(\d+)", d)
             so = int(m.group(1)) if m else 0
-        elif d.startswith("+") and tep and not _NHI_PHAN.search(tep):
-            dong.append((tep, so, d[1:]))
+        elif dau:
+            if d.startswith("+++ "):
+                tep = _ten_tep_dong_cong(d)
+        elif d.startswith("+"):
+            if not _NHI_PHAN.search(tep):
+                dong.append((tep, so, d[1:]))
             so += 1
     return [x for x in ten if x], dong
 

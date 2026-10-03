@@ -7198,6 +7198,40 @@ def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
     return True, ""
 
 
+def bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git():
+    """03/10 — kiểm độc lập sau gộp: chốt bí mật trước commit (AN-06) tin vào định dạng HIỂN THỊ của `git diff` nên bỏ qua
+    NỘI DUNG của cả tệp khi tên tệp có dấu tiếng Việt (core.quotepath mặc định bọc nháy «+++ "b/th\\341…"»), khi người dùng
+    bật diff.mnemonicPrefix/noprefix, khi một dòng thêm bắt đầu «++ » (hiện thành «+++ », đọc nhầm là đầu tệp), và cắt dòng
+    bằng splitlines() nên phần sau \\r/\\u2028 không được quét. Một khối khoá riêng lọt qua ở CẢ HAI repo. Kiểm HÀNH VI trên
+    repo git thật trong thư mục tạm (cấu hình người dùng bị cô lập)."""
+    import shutil as _sh
+    import subprocess as _sp
+    import tempfile as _tf
+    if _sh.which("git") is None:
+        return True, "⚪ KIỂM YẾU HƠN (máy không có git — chưa chạy phép thử hành vi)"
+    k = _nap(REPO / "tools/kiem_bi_mat_truoc_commit.py", "_bh155_kbm")
+    khoa = "-----BEGIN " + "PRIVATE KEY-----"
+    # Chạy với cấu hình git THẬT của máy (công cụ phải tự ép cờ của nó); chỉ ca mnemonicPrefix đặt cấu hình riêng của repo tạm.
+    ca = [("thử_bí_mật.txt", f"x\n{khoa}\n", None), ("moi.py", f"{khoa}\n", ("diff.mnemonicPrefix", "true")),
+          ("moi.md", f"++ {khoa}\n", None), ("moi.txt", f"abc\r{khoa}\n", None)]
+    for ten, noi_dung, cau_hinh in ca:
+        with _tf.TemporaryDirectory() as td:
+            g = ["git", "-C", td]
+            _sp.run([*g, "init", "-q"], check=True, capture_output=True)
+            if cau_hinh:
+                _sp.run([*g, "config", *cau_hinh], check=True)
+            (Path(td) / ten).write_bytes(noi_dung.encode("utf-8"))
+            _sp.run([*g, "add", "--", ten], check=True)
+            _ten, dong = k.dong_them_da_stage(Path(td))
+            chan, _cb = k.kiem(_ten, dong)
+            if not any("khối PRIVATE KEY" in x for x in chan):
+                return False, (f"chốt bí mật KHÔNG chặn khối khoá trong «{ten}»"
+                               + (f" (cấu hình {cau_hinh[0]}={cau_hinh[1]})" if cau_hinh else ""))
+            if ten == "thử_bí_mật.txt" and not any(x.startswith("thử_bí_mật.txt:2 ") for x in chan):
+                return False, "chốt chặn nhưng in sai tên tệp tiếng Việt (mã bát phân/nháy)"
+    return True, "tên tiếng Việt · tiền tố diff của người dùng · dòng «++ » · \\r giữa dòng — khối khoá đều bị chặn"
+
+
 def bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan():
     """03/10 (HV-02 · HV-04 · EV-10 kiểm toàn diện) — việc của bác sĩ không bao giờ hiện lúc mở phiên (986 sự kiện SessionStart:
     0 lần có bảng tự đề xuất); 11 PR mở không cảm biến nào đếm; 49 thẻ tuần 0 quyết định được ghi (quyết định nằm trong chat). Vá:
@@ -10158,6 +10192,7 @@ BAI_HOC = [
     ("BH115", "24/09", "Bản đọc nói CÙNG cổng về sổ ký rút bài: đã ký ⇒ rời dải đỏ nhưng vẫn liệt kê; chưa ký ⇒ «cần bác sĩ xem»", bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai),
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
     ("BH154", "03/10", "Hòm việc một cửa lúc mở phiên (≤ 12 dòng, việc bác sĩ trước); PR chờ gộp được đếm (gh lỗi ⇒ ⚪); quyết định thẻ tuần ghi đúng lời bác sĩ, không đoán", bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan),
+    ("BH155", "03/10", "Chốt bí mật trước commit không mù: tên tệp tiếng Việt, tiền tố diff của người dùng, dòng «++ », \\r giữa dòng — khối khoá vẫn bị chặn", bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
