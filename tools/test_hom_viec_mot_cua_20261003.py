@@ -202,3 +202,12 @@ def test_hook_nguon_co_hom_viec_va_nhanh():
     d = json.loads((TOOLS.parent / "sync" / "hooks-sessionstart.json").read_text(encoding="utf-8"))
     h = [x for g in d["SessionStart"] for x in g["hooks"] if "hom_viec_mot_cua.py" in x.get("command", "")]
     assert len(h) == 1 and "--doc --lam-moi-nen" in h[0]["command"] and h[0]["timeout"] <= 10
+
+
+def test_dinh_tuyen_hom_viec_va_duyet_the():
+    sys.path.insert(0, str(TOOLS / "orchestrator"))
+    it = _nap("_t_hv_it", "orchestrator/intent.py")
+    assert it.route("hòm việc của tôi còn gì").target == "tools/hom_viec_mot_cua.py"
+    assert it.route("ghi duyệt W40: 1 ✓ 3 ✗").target == "tools/ghi_duyet_the_tuan.py"
+    assert it.route("đọc toàn văn các thẻ tuần W40").target != "tools/ghi_duyet_the_tuan.py", \
+        "đọc bài của thẻ tuần KHÔNG phải ghi quyết định thẻ"
