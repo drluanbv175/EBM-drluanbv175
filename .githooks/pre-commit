@@ -125,4 +125,16 @@ if [ -f tools/kiem_o_nhiem_artifact.py ]; then
   fi
 fi
 
+# 03/10/2026 (AN-06 kiem toan dien): chot bi mat / PII. Chi quet dong THEM trong phan stage (khong bao oan noi dung cu).
+# CHAN: khoi PRIVATE KEY, token nha cung cap (sk-/ghp_/AKIA/xox/AIza), URL kem mat khau toi may that, tep khoa
+# (.pem/.key/.env/gate_approval_key_*, tep khong phai .pub trong config/gate_ed25519_pubkeys/). PII chi CANH BAO.
+# Khoa GIA trong test: chu thich "bimat-mien: <ly do>" tren dung dong do. Khong in gia tri khop.
+if [ -f tools/kiem_bi_mat_truoc_commit.py ]; then
+  python3 tools/kiem_bi_mat_truoc_commit.py
+  if [ $? -ne 0 ]; then
+    echo "CHAN COMMIT: phan stage co dau hieu bi mat that (xem cac dong o tren)." >&2
+    exit 1
+  fi
+fi
+
 exit 0
