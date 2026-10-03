@@ -181,7 +181,8 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
   2b. NXB CHƯA KIỂM ⇒ Claude đọc trang ĐIỀU KHOẢN (không phải bài) của NXB, tìm điều về AI / text-and-data mining. Cấm hoặc không rõ
      ⇒ dừng, bác sĩ đọc trực tiếp. Cho phép rõ, hoặc bài mang giấy phép CC ⇒ ghi vào hồ sơ `dieu_khoan` {url, doc_luc, ket_luan:
      cho_phep | giay_phep_cc, trich ≤ 15 từ}; NXB đã kiểm thì đề xuất thêm vào DIEU_KHOAN_NXB bằng PR.
-  2. Với từng bài được phép: Claude mở URL bằng trình duyệt trong app (Claude_Browser → navigate) rồi chụp màn hình.
+  2. Với từng bài được phép: Claude mở URL bằng Claude in Chrome (Chrome thật của bác sĩ, đã đăng nhập sẵn — bác sĩ dặn
+     03/10/2026); vắng Chrome thì dùng trình duyệt trong app (Claude_Browser → navigate); chụp màn hình.
      • Trang chặn bot («Just a moment…», «I am not a bot», CAPTCHA) hoặc trang đăng nhập ⇒ Claude DỪNG, nhờ BÁC SĨ tự bấm/đăng
        nhập ngay trong khung trình duyệt rồi nói «xong». Claude KHÔNG bấm, KHÔNG giải CAPTCHA, KHÔNG gõ tài khoản/mật khẩu,
        KHÔNG giả dạng trình duyệt.
