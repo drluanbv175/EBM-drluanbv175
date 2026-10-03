@@ -1609,15 +1609,20 @@ def bh38_khong_loc_bo_cai_moi_nhat_o_khau_tim():
 
     def gia_fetch(url):
         ghi["url"] = url
-        return {"esearchresult": {"idlist": []}}
+        # VÁ 03/10/2026: phản hồi giả phải HỢP LỆ (có cả `count`) — từ vá 22/09 bộ quét coi esearchresult thiếu idlist/count là
+        # LỖI NCBI và rơi xuống Europe PMC THẬT qua mạng ⇒ chốt này đỏ giả khi DNS chập chờn (đo 03/10 trên cây ghép 13 PR).
+        return {"esearchresult": {"idlist": [], "count": "0"}}
 
-    ss.search("abc", 30, 5, fetch_json=gia_fetch, datetype="edat", loc_thiet_ke=False)
+    def cam_mang(url):
+        raise AssertionError(f"BH38 không được gọi mạng (dự phòng Europe PMC): {url[:60]}")
+
+    ss.search("abc", 30, 5, fetch_json=gia_fetch, fallback_fetch_json=cam_mang, datetype="edat", loc_thiet_ke=False)
     u1 = ghi.get("url", "")
     if "ptyp" in u1:
         return False, "yêu cầu bỏ lọc mà truy vấn vẫn mang [ptyp] — cái mới vẫn bị vứt"
     if "edat" not in u1:
         return False, "không dùng edat — vẫn hỏi theo ngày công bố, bỏ sót bài mới vào PubMed"
-    ss.search("abc", 30, 5, fetch_json=gia_fetch)
+    ss.search("abc", 30, 5, fetch_json=gia_fetch, fallback_fetch_json=cam_mang)
     if "ptyp" not in ghi.get("url", ""):
         return False, "chế độ mặc định mất bộ lọc — 3 tầng có thứ bậc hoá ra không lọc gì"
     return True, f"{len(co_tang)} chủ đề có tầng không-lọc; search() tôn trọng cả hai chế độ"
