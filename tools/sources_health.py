@@ -214,6 +214,44 @@ def lay_thanh_cong_that(sid: str) -> str | None:
     return None
 
 
+# VÁ 03/10/2026 (N11/PM-14 kiểm toàn diện): mỗi lượt đo trên máy thật GHI LẠI sổ tracked chỉ để đổi `updated` và
+# `last_probe_at` (đo 02/10: 16 dòng diff, toàn dấu ngày) ⇒ cây git bẩn sau mỗi phép ĐO, hai máy cùng ghi một dòng. Nay sổ
+# tracked chỉ ghi khi NỘI DUNG đổi (status, last_success_at…); dấu thăm sống luôn ghi vào `state/tham-song-nguon.json` (ngoài git).
+def duong_dau_tham() -> Path:
+    """Sổ dấu thăm NGOÀI git: `<GOC>/state/` khi dùng sổ thật; sổ bị trỏ đi nơi khác (test, BH50) thì nằm cạnh sổ đó.
+    Đọc `GOC`/`SO` lúc GỌI — không chốt lúc import."""
+    if SO == GOC / "data" / "sources.json":
+        return GOC / "state" / "tham-song-nguon.json"
+    return SO.with_name("tham-song-nguon.json")
+
+
+def chu_ky_so(du: dict) -> str:
+    """Nội dung sổ BỎ `updated` và mọi `last_probe_at` — hai chữ ký khác nhau mới là lý do ghi sổ tracked."""
+    import copy  # noqa: PLC0415
+    d = copy.deepcopy(du)
+    d.pop("updated", None)
+    for s in d.get("sources", []):
+        if isinstance(s, dict):
+            s.pop("last_probe_at", None)
+    return json.dumps(d, ensure_ascii=False, sort_keys=True)
+
+
+def ghi_dau_tham(du: dict, hom_nay: date, tep: Path | None = None) -> None:
+    """Gộp `last_probe_at` của lượt này vào sổ dấu thăm NGOÀI git (giữ dấu của nguồn lượt này không thăm)."""
+    tep = tep or duong_dau_tham()
+    try:
+        cu = json.loads(tep.read_text(encoding="utf-8"))
+        dau = dict(cu.get("last_probe_at") or {})
+    except (OSError, ValueError, AttributeError):
+        dau = {}
+    dau.update({s["id"]: s["last_probe_at"] for s in du.get("sources", []) if isinstance(s, dict) and s.get("last_probe_at")})
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
+    tam.write_text(json.dumps({"cap_nhat": hom_nay.isoformat(), "last_probe_at": dau}, ensure_ascii=False, indent=2) + "\n",
+                   encoding="utf-8", newline="\n")
+    os.replace(tam, tep)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Sức khoẻ sổ đăng ký nguồn")
     ap.add_argument("--im-khi-on", action="store_true")
@@ -233,6 +271,7 @@ def main() -> int:
     except (OSError, ValueError) as exc:
         print(f"🔴 Sổ nguồn hỏng: {exc}")
         return 2
+    chu_ky_truoc = chu_ky_so(du)
 
     hom_nay = date.today()
     loi: list[str] = []
@@ -296,12 +335,19 @@ def main() -> int:
                        f" (thành công gần nhất: {s.get('last_success_at') or 'chưa từng'})"
                        + (" — nhãn của SỔ, lượt này không đo được" if file_khong_do else ""))
 
+    so_khong_doi = False
     if ghi_so:
+        ghi_dau_tham(du, hom_nay)
+        so_khong_doi = chu_ky_so(du) == chu_ky_truoc
+    if ghi_so and not so_khong_doi:
         du["updated"] = hom_nay.isoformat()
         # Thụt lề 2 + LF: đúng định dạng MỌI commit của sổ (vá 27/09/2026 — thụt lề 1 làm mỗi lượt
         # viết lại ~830/833 dòng; cùng lỗi ở giam_sat_to_chuc.py::_ghi_so_nguon).
         SO.write_text(json.dumps(du, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
                       newline="\n")
+    if so_khong_doi and not a.im_khi_on:
+        print("≡ Sổ data/sources.json không đổi nội dung (chỉ dấu thăm sống) — KHÔNG ghi sổ tracked; dấu thăm ở "
+              "state/tham-song-nguon.json.")
     if khong_do:
         print(f"⚪ {len(khong_do)} nguồn KHÔNG ĐO ĐƯỢC — proxy môi trường từ chối theo chính sách "
               f"(request chưa tới nguồn, trạng thái giữ nguyên): {', '.join(khong_do)}")

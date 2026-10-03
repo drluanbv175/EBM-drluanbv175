@@ -7,6 +7,7 @@ trong Markdown + JSON; mặc định PARTIAL/FAIL trả mã khác 0 để lịch
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -303,6 +304,35 @@ def _ung_vien_tu_so(muc: object) -> Candidate | None:
     if not all(isinstance(getattr(c, truong), str) for truong in _TRUONG_CHUOI_UNG_VIEN):
         return None
     return c if (c.pmid or c.url) else None
+
+
+# EV-03 (kiểm toàn diện 02/10/2026): ba chủ đề thẩm quyền trả «PASS / 0 ứng viên» 7/7 tuần W33–W40, và mẫu 18 bản ghi PubMed
+# của truy vấn (8 USPSTF, 10 NICE) có 0/18 là văn bản chính thức ⇒ làn PubMed của chúng KHÔNG quan sát được văn bản chính thức.
+# «0 ứng viên» ở đây ≠ «không có cập nhật». Không đổi `status` (bên tiêu thụ cũ đọc PASS/FAIL) — gắn GHI CHÚ vào từng chủ đề +
+# trường máy đọc `quan_sat_han_che` + một dòng ở báo cáo Markdown, trỏ tới kênh khác ĐANG CÓ trong sổ nguồn data/sources.json.
+KENH_THAT_NGOAI_PUBMED: dict[str, str] = {
+    "An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA)":
+        "cảnh báo an toàn thuốc chính thức đi qua kênh khác của hệ: SRC-006 openFDA (weekly_safety.sh) và SRC-016 EMA/MHRA "
+        "(feed) — xem alerts/ và lượt thu thập an toàn thuốc tuần",
+    "NICE — hướng dẫn mới":
+        "văn bản NICE chính thức theo dõi ở SRC-017 (trạm web hội) và SRC-037 (tóm tắt NICE qua Europe PMC)",
+    "USPSTF — khuyến cáo dự phòng":
+        "khuyến cáo USPSTF theo dõi ở SRC-019 (trạm web USPSTF, giam_sat_to_chuc.py)",
+}
+
+
+def gan_ghi_chu_quan_sat(topic_results: list) -> tuple[list, list[dict]]:
+    """Chủ đề thuộc KENH_THAT_NGOAI_PUBMED mà lượt này 0 ứng viên ⇒ thêm ghi chú «QUAN SÁT HẠN CHẾ» (không đổi status)."""
+    ra, ds = [], []
+    for tr in topic_results:
+        kenh = KENH_THAT_NGOAI_PUBMED.get(tr.topic)
+        if kenh and not tr.candidates and tr.status in ("PASS", "PASS_DEGRADED"):
+            ghi = (f"QUAN SÁT HẠN CHẾ: làn PubMed của chủ đề này không thấy văn bản chính thức — 0 ứng viên ≠ không có cập "
+                   f"nhật; {kenh}")
+            tr = replace(tr, error="; ".join(x for x in (tr.error, ghi) if x))
+            ds.append({"topic": tr.topic, "kenh_khac": kenh})
+        ra.append(tr)
+    return ra, ds
 
 
 @dataclass(frozen=True)
@@ -850,29 +880,80 @@ def _khoa_path() -> Path:
     return DEFAULT_WATCHLIST.parent / ".quet.lock"
 
 
+@contextlib.contextmanager
+def _mutex_khoa(kp: Path):
+    """Khoá loại trừ CẤP HỆ ĐIỀU HÀNH quanh thủ tục giành khoá (flock / msvcrt) — tự nhả khi tiến trình chết, không mồ côi.
+
+    Đặt cạnh tệp khoá (không dùng thư mục tạm: TMPDIR khác nhau giữa tác vụ lịch và phiên tay sẽ làm mỗi bên một mutex)."""
+    import os as _os
+    mp = kp.with_name(kp.name + ".mutex")
+    f = open(mp, "a+b")  # noqa: SIM115 — giữ mở suốt vùng găng
+    try:
+        if _os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            if _os.name == "nt":
+                import msvcrt
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        f.close()
+
+
 def gianh_khoa(han_phut: int = 30) -> tuple[bool, str]:
     """Khoá chống 2 máy/2 tiến trình cùng quét (OneDrive đồng bộ 2 máy — K3).
 
     Khoá cũ quá `han_phut` coi là MỒ CÔI (tiến trình chết giữa chừng) và được thay.
     Không giành được ⇒ caller phải FAIL RÕ RÀNG, không lặng lẽ chạy tiếp (I7).
+
+    VÁ 02/10/2026 (F5, kiểm toàn diện): bản cũ «kiểm rồi mới ghi» (`exists()` rồi `write_text`) — đo 10 tiến trình cùng giành
+    một mốc, 10 vòng: 10/10 vòng có > 1 tiến trình cùng «giành được» (5–10 tiến trình/vòng) ⇒ hai lượt quét cùng ghi con trỏ/sổ.
+    Chỉ đổi sang `O_EXCL` vẫn hở khi đã có khoá MỒ CÔI (đo 8 tiến trình: 2–5 tiến trình/vòng cùng thay khoá mồ côi — đứa đến sau
+    gỡ nhầm khoá mới, hoặc đọc phải khoá rỗng đang ghi dở). Nay: cả thủ tục đọc–gỡ–tạo chạy TRONG `_mutex_khoa` (khoá hệ điều
+    hành, tuần tự hoá mọi tiến trình trên MỘT máy) và tệp khoá vẫn tạo bằng `O_EXCL` (phòng bản cũ chưa vá chạy song song).
+    Giữa HAI MÁY vẫn chỉ dựa vào OneDrive đồng bộ tệp khoá (giới hạn cũ, không đổi).
     """
+    kp = _khoa_path()
+    try:
+        return _gianh_trong_mutex(kp, han_phut)
+    except OSError as e:  # không khoá được vùng găng (Windows LK_LOCK hết 10 lần thử, thư mục chỉ đọc…)
+        return False, f"không khoá được vùng găng của khoá quét ({e.__class__.__name__}) — không chạy chồng"
+
+
+def _gianh_trong_mutex(kp: Path, han_phut: int) -> tuple[bool, str]:
     import json as _j
     import os as _os
     import socket as _sk
     import time as _t
-    kp = _khoa_path()
-    if kp.exists():
+    with _mutex_khoa(kp):
+        if kp.exists():
+            try:
+                d = _j.loads(kp.read_text(encoding="utf-8"))
+                tuoi_phut = (_t.time() - float(d.get("luc", 0))) / 60
+                if tuoi_phut < han_phut:
+                    return False, (f"máy {d.get('may','?')} (pid {d.get('pid','?')}) đang quét "
+                                   f"từ {tuoi_phut:.0f} phút trước — không chạy chồng")
+            except (ValueError, OSError, AttributeError, TypeError):
+                pass  # khoá hỏng định dạng → coi như mồ côi
+            try:
+                kp.unlink()
+            except FileNotFoundError:
+                pass
         try:
-            d = _j.loads(kp.read_text(encoding="utf-8"))
-            tuoi_phut = (_t.time() - float(d.get("luc", 0))) / 60
-            if tuoi_phut < han_phut:
-                return False, (f"máy {d.get('may','?')} (pid {d.get('pid','?')}) đang quét "
-                               f"từ {tuoi_phut:.0f} phút trước — không chạy chồng")
-        except (ValueError, OSError):
-            pass  # khoá hỏng định dạng → coi như mồ côi
-    kp.write_text(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(),
-                            "luc": _t.time()}), encoding="utf-8")
-    return True, ""
+            fd = _os.open(str(kp), _os.O_CREAT | _os.O_EXCL | _os.O_WRONLY, 0o644)
+        except FileExistsError:
+            return False, "tranh chấp khoá quét (tiến trình khác vừa giành) — không chạy chồng"
+        with _os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(), "luc": _t.time()}))
+        return True, ""
 
 
 def tra_khoa() -> None:
@@ -1964,6 +2045,7 @@ def run_scan(
     da_dung_tuan_sau_luot = (sum(1 for v in lan_cuoi.values() if _cung_tuan(v)) if so is not None
                              else da_dung_tuan + so_suat_da_tieu)
 
+    topic_results, quan_sat_han_che = gan_ghi_chu_quan_sat(topic_results)
     success_count = sum(result.status == "PASS" for result in topic_results)
     degraded_count = sum(result.status == "PASS_DEGRADED" for result in topic_results)
     # failed_topics = KHÔNG PHẢI PASS (gồm cả suy giảm) — mọi nơi tiêu thụ cũ đọc failed_topics/status≠PASS
@@ -2003,6 +2085,8 @@ def run_scan(
         "du_phong_bo_trung_xuyen_tuan": bo_trung_xuyen_tuan,
         # Trình bù (30/09/2026): {chủ đề: số bài} lấy ở lượt trước mà báo cáo chưa tới nơi, nay đưa vào báo cáo này.
         "du_phong_trinh_bu": dict(sorted(trinh_bu.items())),
+        # EV-03: chủ đề thẩm quyền 0 ứng viên mà làn PubMed không quan sát được văn bản chính thức (+ kênh khác).
+        "quan_sat_han_che": quan_sat_han_che,
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
         "next_state": "CANDIDATE_REVIEW_QUEUE",
@@ -2023,6 +2107,10 @@ def markdown_report(report: dict) -> str:
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}"
         + (f" (trong đó {report['degraded_topics']} SUY GIẢM — xem dưới)" if report.get("degraded_topics") else ""),
         f"- Ứng viên không trùng: {report['candidate_count']}",
+        *([f"- ⚪ {len(report['quan_sat_han_che'])} chủ đề thẩm quyền 0 ứng viên nhưng làn PubMed KHÔNG quan sát được văn bản "
+           f"chính thức (0 ≠ không có cập nhật): "
+           + " · ".join(f"{x['topic']} → {x['kenh_khac']}" for x in report["quan_sat_han_che"])]
+          if report.get("quan_sat_han_che") else []),
         (f"- Độ trễ phát hiện: trung vị {report['do_tre']['trung_vi_ngay']} ngày "
          f"({report['do_tre']['n_do_duoc']}/{report['do_tre']['n_tong']} đo được; "
          f"{report['do_tre']['qua_14_ngay']} mục quá ngưỡng 14 ngày)"

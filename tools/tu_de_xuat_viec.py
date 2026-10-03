@@ -66,6 +66,8 @@ DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 # NHẬN, và bảng không bao giờ in xanh khi còn giác quan không đo được.
 _SO_GIAC_QUAN = {"chay": 0}
 _GIAC_QUAN_CHET: list[str] = []
+# Dòng THÔNG TIN (ⓘ) — sự kiện đã qua, không còn việc: in riêng, KHÔNG tính vào danh sách việc (để «🟢 không còn việc» vẫn in được).
+_THONG_TIN: list[str] = []
 
 
 def _ghi_chet(lenh: list[str], ly_do: str) -> None:
@@ -347,6 +349,139 @@ def de_xuat_plugin(rc: int, cloud: bool) -> list[tuple[int, str, str, str]]:
     return []
 
 
+# Nguồn mà «hỏng kéo dài» là việc gấp hơn (ưu tiên 1): ba nguồn khám phá lõi + nguồn an toàn thuốc của engine.
+_NGUON_THIET_YEU = frozenset({"pubmed", "europepmc", "crossref", "openfda", "feed_fda_medwatch", "feed_fda_recalls",
+                              "feed_mhra_dsu"})
+
+
+def giac_quan_nguon_hong_keo_dai(db: Path) -> list[tuple[int, str, str]]:
+    """Nguồn engine báo «hỏng kéo dài» ở lượt live gần nhất có số đo nguồn — [(ưu tiên, mô tả, lệnh)] (01/10/2026).
+
+    Vì sao (BH145): RSS NEJM bị Cloudflare chặn 9/9 lần gọi từ lượt 07/09 tới 29/09, kho không nhận bài NEJM nào, mà lượt
+    nào cũng PASS — trạng thái lượt cố ý không đổi vì một feed lẻ hỏng — nên chỉ lộ khi đo tay 30/09 (15 feed BMJ cũng hỏng
+    từ 13/08 như vậy). Engine y khoa ghi `source_health["hong_keo_dai"]` (≥ 3 lượt live liền, trải ≥ 7 ngày) vào
+    `pipeline_runs.stats`; cảm biến này đưa nó lên hòm việc. CHỈ ĐỌC (sqlite `mode=ro`), không đổi gì.
+    - CSDL vắng/không đọc được ⇒ giác quan chết (⚪ — bảng không in «đủ rồi»), KHÔNG phải «không nguồn nào hỏng».
+    - Lượt live mới nhất có số đo do engine CŨ ghi (chưa có khoá) ⇒ [] — chưa có số đo thì không báo động.
+    - `hong_keo_dai` None (engine không đọc được lịch sử) ⇒ một dòng «không đo được».
+    Ưu tiên: nguồn lõi/an toàn thuốc 1 · nguồn khác 2 · đã có ghi chú chấp nhận trong lượt (vd Scopus) 3.
+    """
+    import sqlite3
+
+    _SO_GIAC_QUAN["chay"] += 1
+    if not db.exists():
+        _ghi_chet(["", "nguồn hỏng kéo dài"], "không thấy CSDL engine data/medical_ebm.db ở cây này")
+        return []
+    try:
+        con = sqlite3.connect(db.resolve().as_uri() + "?mode=ro", uri=True, timeout=5)
+        try:
+            dong_csdl = con.execute("SELECT stats FROM pipeline_runs WHERE mode = 'live' AND finished_at IS NOT NULL "
+                                    "ORDER BY started_at DESC, id DESC LIMIT 20").fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as exc:
+        _ghi_chet(["", "nguồn hỏng kéo dài"], f"không đọc được CSDL engine ({type(exc).__name__})")
+        return []
+    lenh = "cd medical-ebm-automation && python tools/do_mang_nguon.py  # đo đường mạng tới từng nguồn"
+    for (stats,) in dong_csdl:
+        try:
+            sh = (json.loads(stats) if isinstance(stats, str) else (stats or {})).get("source_health") or {}
+        except (ValueError, AttributeError):
+            continue
+        if not isinstance(sh, dict) or not isinstance(sh.get("sources"), dict):
+            continue  # lượt nạp sẵn bản ghi (vd lượt lấy bù) — không có số đo nguồn
+        if "hong_keo_dai" not in sh:
+            return []
+        hong = sh["hong_keo_dai"]
+        if hong is None:
+            return [(2, "Engine KHÔNG đo được nguồn hỏng kéo dài ở lượt live gần nhất "
+                     f"({sh.get('hong_keo_dai_loi') or 'không rõ lỗi'}) — không phải «không có nguồn nào hỏng»",
+                     "xem medical-ebm-automation/data/archive/launchd_weekly.log")]
+        ra: list[tuple[int, str, str]] = []
+        for ten, ct in sorted((hong or {}).items()):
+            if not isinstance(ct, dict):
+                continue
+            kieu = ",".join(sorted(ct.get("kieu_duong_mang") or {})) or "chưa phân loại"
+            ghi_chu = ct.get("da_co_ghi_chu")
+            uu = 3 if ghi_chu else (1 if ten in _NGUON_THIET_YEU else 2)
+            mo_ta = (f"Nguồn {ten} HỎNG KÉO DÀI: {ct.get('so_luot_lien')} lượt live liền từ {ct.get('hong_tu')} "
+                     f"({ct.get('so_ngay')} ngày, kiểu: {kieu}) — lượt vẫn PASS nên không tự lộ; đo lại đường mạng, "
+                     "chặn ở biên/mạng thì chuyển nguồn sang lane không phụ thuộc mạng (Crossref/Europe PMC)")
+            if ghi_chu:
+                mo_ta += f" · đã có ghi chú chấp nhận {ghi_chu}"
+            ra.append((uu, mo_ta, lenh))
+        return ra
+    return []
+
+
+def giac_quan_url_chan_bot(dash_dir: Path) -> list[tuple[int, str, str]]:
+    """URL miền chặn bot (vd www.fda.gov) đang được dashboard trích mà THIẾU/SẮP HẾT HẠN bằng chứng trình duyệt (02/10/2026).
+
+    Thiếu bằng chứng ⇒ cổng `--strict-sources` chặn gói và (trước 02/10) dừng cả lô orchestrator. Việc 👤: Claude mở trang, bác sĩ TỰ
+    bấm xác nhận chống bot, Claude đọc tiêu đề rồi ghi sổ (`tools/xac_nhan_trinh_duyet.py`). Ngoại tuyến. Vắng EBM-Dashboards/
+    hoặc công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG phải «không có URL chờ»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not dash_dir.is_dir():
+        _ghi_chet(["", "URL chặn bot"], "không có EBM-Dashboards/ ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_xntd_tdxv", Path(__file__).resolve().parent / "xac_nhan_trinh_duyet.py")
+        xn = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(xn)
+        cho = xn.can_xac_nhan(xn.quet(xn.nap_cong(), dash_dir))
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "URL chặn bot"], f"lỗi {type(exc).__name__}")
+        return []
+    if not cho:
+        return []
+    thieu = sum(1 for m in cho if m["trang_thai"] == "THIEU")
+    return [(1 if thieu else 3, f"{len(cho)} URL miền chặn bot chờ bác sĩ xác nhận trên trình duyệt "
+             f"({thieu} thiếu bằng chứng — cổng đang chặn gói; {len(cho) - thieu} sắp hết hạn) — ~1 phút/URL",
+             "python3 tools/xac_nhan_trinh_duyet.py --huong-dan  # Claude mở trang, bác sĩ tự bấm xác nhận chống bot")]
+
+
+def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
+    """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
+
+    Đo W40: 5/7 thẻ «chỉ tóm tắt» ⇒ trần «Cân nhắc». Hầu hết nhà xuất bản chặn truy cập tự động (đo 02/10) nên đường duy nhất là làn
+    CÓ NGƯỜI: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập, Claude trích xuất có cấu trúc (`tools/doc_toan_van_co_nguoi.py`).
+    Ngoại tuyến — chỉ soi kho `EBM-Dashboards/toan_van_oa/`. Vắng kho/công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG phải «đủ toàn văn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    hom_nay = hom_nay or dt.date.today()
+    if not queue_dir.is_dir():
+        _ghi_chet(["", "toàn văn thẻ tuần"], "không có queue/ ở cây này")
+        return []
+    goi = sorted(queue_dir.glob("tuan-*.md"))
+    if not goi:
+        return []
+    moi = goi[-1]
+    if (hom_nay - dt.date.fromtimestamp(moi.stat().st_mtime)).days > 14:
+        return []
+    kho = dash_dir / "toan_van_oa"
+    if not kho.is_dir():
+        _ghi_chet(["", "toàn văn thẻ tuần"], "không có EBM-Dashboards/toan_van_oa ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_dtv_tdxv", Path(__file__).resolve().parent / "doc_toan_van_co_nguoi.py")
+        dtv = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(dtv)
+        pmids = dtv.pmid_cua_queue(moi)
+        bp = dtv.bao_phu_cuc_bo(pmids, kho, hom_nay)
+        # Bộ trạng thái ĐÃ PHỦ lấy từ chính công cụ (một nguồn sự thật). 03/10/2026: «bac_si_da_doc_truc_tiep» — bác sĩ đã tự đọc
+        # bài NXB cấm AI và ghi kết luận ⇒ không còn là việc treo, dù máy vẫn không có toàn văn.
+        da_phu = set(dtv.TRANG_THAI_DA_PHU)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "toàn văn thẻ tuần"], f"lỗi {type(exc).__name__}")
+        return []
+    chua = [pm for pm, t in bp.items() if t not in da_phu and t != "khong_truy_cap"]
+    if not chua:
+        return []
+    return [(3, f"{len(chua)}/{len(pmids)} thẻ gói {moi.stem} chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở "
+             f"trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp rồi ghi "
+             f"`--bac-si-da-doc <PMID> --ghi-chu \"<kết luận>\" --ghi`; tới lúc đó thẻ giữ trần «Cân nhắc»",
+             f"python3 tools/doc_toan_van_co_nguoi.py --queue queue/{moi.name}  # rồi --huong-dan")]
+
+
 def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
     """Bọc `giac_quan_lich_nen` theo nơi chạy (26/09/2026).
 
@@ -407,6 +542,19 @@ def giac_quan_lich_nen(log_tuan: Path,
     return []
 
 
+def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str, str]], list[str]]:
+    """(việc 🛎, dòng thông tin ⓘ) từ phát hiện của `kiem_lich_nen.kiem()` (02/10/2026, HV-08).
+
+    Kỳ CŨ đã lỡ mà kỳ sau đã chạy lại (uu ≥ 2) KHÔNG phải việc: «Run now» lúc này vô ích (kỳ sau đã chạy, vòng quét dùng con trỏ
+    tăng dần nên không hở cửa sổ). Đo: «kỳ 14/09» lặp 28 lần ở 15 phiên. Gộp thành MỘT dòng ⓘ, không tính vào danh sách việc."""
+    viec = [(p["uu"], "🛎", p["thong_diep"], "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»")
+            for p in phat_hien if p["uu"] < 2]
+    cu = sum(1 for p in phat_hien if p["uu"] >= 2)
+    tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
+          "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
+    return viec, tt
+
+
 def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
     """(số commit CHỈ có ở nhánh cục bộ — không có trên remote nào, tên các nhánh đang giữ chúng); None = không đo được.
 
@@ -426,6 +574,137 @@ def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
                  giay=20)
     nhanh = sorted(ten for ma, _, ten in (d.strip().partition(" ") for d in dinh.splitlines()) if ma in chua_day and ten)
     return len(chua_day), nhanh
+
+
+def _trang_thai_ci_pr(rollup: list) -> str:
+    """xanh · do · chay · khong — từ `statusCheckRollup` của gh (CheckRun dùng conclusion/status, StatusContext dùng state)."""
+    if not rollup:
+        return "khong"
+    ket = [str(c.get("conclusion") or c.get("state") or c.get("status") or "").upper() for c in rollup if isinstance(c, dict)]
+    if any(k in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE") for k in ket):
+        return "do"
+    if all(k in ("SUCCESS", "SKIPPED", "NEUTRAL") for k in ket):
+        return "xanh"
+    return "chay"
+
+
+def giac_quan_pr_cho_gop(cac_repo: list[tuple[str, Path]], chay=None, bay_gio: dt.datetime | None = None
+                         ) -> list[tuple[int, str, str]]:
+    """PR MỞ đang chờ bác sĩ gộp ở cả hai repo (HV-04, kiểm toàn diện 02/10/2026: 11 PR mở mà 0 cảm biến đếm).
+
+    Gộp PR là thẩm quyền bác sĩ (CLAUDE.md §0.5) ⇒ việc 👤. Nêu CI xanh/đỏ/đang chạy, tuổi PR cũ nhất và PR XẾP CHỒNG (base không
+    phải nhánh mặc định ⇒ phải gộp PR nền trước). Cần mạng + `gh`; không trả lời được ⇒ giác quan chết (⚪), KHÔNG phải «0 PR»."""
+    chay = chay or (lambda lenh: _chay(lenh, giay=45))
+    bay_gio = bay_gio or dt.datetime.now(dt.timezone.utc)
+    if la_phien_cloud():
+        _SO_GIAC_QUAN["chay"] += 1
+        _ghi_chet(["", "PR chờ gộp"], "phiên Cloud — gh không có xác thực ở đây")
+        return []
+    nhom, do, chay_dang, xanh, cu_nhat, xep_chong = [], 0, 0, 0, 0.0, []
+    for ten, duong in cac_repo:
+        orr = _owner_repo_tu_remote(duong)
+        if not orr:
+            _SO_GIAC_QUAN["chay"] += 1
+            _ghi_chet(["", f"PR chờ gộp ({ten})"], "không suy được owner/repo từ remote")
+            return []
+        out = chay(["gh", "pr", "list", "--repo", orr, "--state", "open", "--limit", "50", "--json",
+                    "number,createdAt,baseRefName,isDraft,statusCheckRollup"])
+        try:
+            prs = json.loads(out)
+            assert isinstance(prs, list)
+        except (ValueError, AssertionError):
+            _ghi_chet(["", f"PR chờ gộp ({ten})"], "gh không trả JSON (chưa đăng nhập / mất mạng?)")
+            return []
+        prs = [x for x in prs if not x.get("isDraft")]
+        if not prs:
+            continue
+        mac_dinh = _nhanh_mac_dinh(duong) if ten == "y khoa" else "master"
+        so = []
+        for x in sorted(prs, key=lambda y: y.get("number", 0)):
+            tt = _trang_thai_ci_pr(x.get("statusCheckRollup") or [])
+            do += tt == "do"
+            chay_dang += tt == "chay"
+            xanh += tt == "xanh"
+            so.append(f"#{x['number']}" + ("✗" if tt == "do" else ""))
+            try:
+                tuoi = (bay_gio - dt.datetime.fromisoformat(str(x["createdAt"]).replace("Z", "+00:00"))).total_seconds() / 3600
+                cu_nhat = max(cu_nhat, tuoi)
+            except (KeyError, ValueError):
+                pass
+            if mac_dinh and x.get("baseRefName") not in (mac_dinh, None, ""):
+                xep_chong.append(f"#{x['number']}→{x['baseRefName'][:40]}")
+        nhom.append(f"{ten}: {' '.join(so)}")
+    tong = do + chay_dang + xanh
+    if not tong:
+        return []
+    dong = (f"{tong} PR chờ bác sĩ gộp — " + " · ".join(nhom)
+            + f" (CI xanh {xanh}/{tong}" + (f", ĐỎ {do}" if do else "") + (f", đang chạy {chay_dang}" if chay_dang else "")
+            + f"; cũ nhất {cu_nhat:.0f} giờ)" + (f"; XẾP CHỒNG (gộp PR nền trước): {', '.join(xep_chong)}" if xep_chong else ""))
+    return [(1 if (do or cu_nhat > 48) else 2, dong, "nêu SỐ PR muốn gộp trong chat (gh --auto không chờ CI ở repo này)")]
+
+
+def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = None, so: Path | None = None
+                                 ) -> list[tuple[int, str, str]]:
+    """Thẻ của gói tuần MỚI NHẤT (≥ 3 ngày tuổi, ≤ 21 ngày) chưa có quyết định của bác sĩ trong sổ (EV-10, 03/10/2026).
+    Ngoại tuyến; vắng queue ⇒ giác quan chết (⚪)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    hom_nay = hom_nay or dt.date.today()
+    if not queue_dir.is_dir():
+        _ghi_chet(["", "quyết định thẻ tuần"], "không có queue/ ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_gdtt_tdxv", Path(__file__).resolve().parent / "ghi_duyet_the_tuan.py")
+        gd = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(gd)
+        goi = gd.goi_moi_nhat(queue_dir)
+        if goi is None:
+            return []
+        tuoi = (hom_nay - dt.date.fromtimestamp(goi.stat().st_mtime)).days
+        if not 3 <= tuoi <= 21:
+            return []
+        the, chua = gd.chua_quyet(goi, so)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "quyết định thẻ tuần"], f"lỗi {type(exc).__name__}")
+        return []
+    if not chua:
+        return []
+    return [(2, f"{len(chua)}/{len(the)} thẻ gói {goi.stem} chưa ghi quyết định của bác sĩ ({tuoi} ngày) — máy không biết thẻ nào "
+             "hữu ích", 'python3 tools/ghi_duyet_the_tuan.py "duyệt W<tuần>: 1 ✓ 3 ✗ 5 hoãn" --ghi')]
+
+
+def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
+    """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
+
+    Chỉ một tệp doctrine (`_CONNECTOR-CHUNG-CU.md`, BH107) từng được so; cặp PR #77↔#61 cho thấy gộp một bên là hai bản lệch mà không
+    chốt nào đỏ — vd agent kê đơn sửa ở một repo, quên repo kia. Không chặn commit (hai PR cặp có thể lệch pha vài giờ) — chỉ nhắc 🤖.
+    Vắng repo y khoa ⇒ giác quan chết (⚪)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not (goc_agents.is_dir() and mea_agents.is_dir()):
+        _ghi_chet(["", "agent gốc ↔ y khoa"], "thiếu một trong hai thư mục .claude/agents")
+        return []
+    goc = {p.name: p for p in goc_agents.glob("*.md")}
+    mea = {p.name: p for p in mea_agents.glob("*.md")}
+    lech = sorted(n for n in goc.keys() & mea.keys() if goc[n].read_bytes() != mea[n].read_bytes())
+    chi_mot = sorted(goc.keys() ^ mea.keys())
+    if not lech and not chi_mot:
+        return []
+    mo_ta = []
+    if lech:
+        mo_ta.append(f"{len(lech)} lệch nội dung ({', '.join(lech[:4])}{'…' if len(lech) > 4 else ''})")
+    if chi_mot:
+        mo_ta.append(f"{len(chi_mot)} chỉ có ở một bên ({', '.join(chi_mot[:4])}{'…' if len(chi_mot) > 4 else ''})")
+    return [(2, "Agent gốc ↔ y khoa: " + "; ".join(mo_ta) + " — đồng bộ bằng PR CẶP (cùng nội dung ở cả hai repo)",
+             "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
+
+
+def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> None:
+    """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/)."""
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
+    tam.write_text(json.dumps({"sinh_luc": dt.datetime.now().isoformat(timespec="seconds"), "giac_quan": so_giac_quan,
+                               "chet": chet, "viec": [{"uu": u, "ai": a, "viec": v, "lenh": lenh} for u, a, v, lenh in de_xuat]},
+                              ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    os.replace(tam, tep)
 
 
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
@@ -475,6 +754,7 @@ def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Bảng đề xuất việc tự sinh từ bộ đếm sống")
     ap.add_argument("--gon", action="store_true", help="chỉ in bảng, bỏ phần giải thích")
+    ap.add_argument("--json", type=Path, default=None, help="ghi bảng dạng máy đọc (cho hom_viec_mot_cua.py)")
     a = ap.parse_args()
     de_xuat: list[tuple[int, str, str, str]] = []  # (ưu tiên, ai, việc+số đo, lệnh)
 
@@ -630,11 +910,23 @@ def main() -> int:
         _sp_kln = _ilu_mea.spec_from_file_location("_kln_tdxv", Path(__file__).resolve().parent / "kiem_lich_nen.py")
         _kln = _ilu_mea.module_from_spec(_sp_kln)
         _sp_kln.loader.exec_module(_kln)
-        for _p in _kln.kiem()["phat_hien"]:
-            de_xuat.append((_p["uu"], "🛎", _p["thong_diep"],
-                            "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»"))
+        _viec, _tt = phan_loai_lich_nen(_kln.kiem()["phat_hien"])
+        de_xuat += _viec
+        _THONG_TIN.extend(_tt)
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+
+    # ⑦h URL MIỀN CHẶN BOT (02/10/2026): bác sĩ tự vượt kiểm tra chống bot, máy ghi bằng chứng — xem docstring.
+    for uu, dong, lenh in giac_quan_url_chan_bot(DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦i TOÀN VĂN THẺ TUẦN (02/10/2026): bài không OA ⇒ làn trình duyệt có bác sĩ — xem docstring.
+    for uu, dong, lenh in giac_quan_toan_van_the_tuan(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue"), DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦g NGUỒN HỎNG KÉO DÀI (01/10/2026, BH145): nguồn hỏng nhiều lượt live liền mà lượt vẫn PASS — xem docstring.
+    for uu, dong, lenh in giac_quan_nguon_hong_keo_dai(_GOC_MEA / "data" / "medical_ebm.db"):
+        de_xuat.append((uu, "🤖", dong, lenh))
 
     # ⑦e GIÁC QUAN QUYẾT ĐỊNH ĐÃ DUYỆT (16/08): dashboard sinh lại/sửa hàng loạt
     # có thể lật ngược im lặng quyết định bác sĩ 13–14/08 (đã xảy ra: 5 mục Đau
@@ -726,6 +1018,17 @@ def main() -> int:
         except (json.JSONDecodeError, OSError):
             pass
 
+    # ⑫ PR CHỜ GỘP (HV-04) + ⑬ QUYẾT ĐỊNH THẺ TUẦN (EV-10) — 03/10/2026, xem docstring.
+    for uu, dong, lenh in giac_quan_pr_cho_gop([("gốc", REPO), ("y khoa", _GOC_MEA)] if _GOC_MEA.exists() else [("gốc", REPO)]):
+        de_xuat.append((uu, "👤", dong, lenh))
+    for uu, dong, lenh in giac_quan_the_tuan_chua_quyet(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue")):
+        de_xuat.append((uu, "👤", dong, lenh))
+    for uu, dong, lenh in giac_quan_agent_lech(REPO / ".claude" / "agents", _GOC_MEA / ".claude" / "agents"):
+        de_xuat.append((uu, "🤖", dong, lenh))
+    if a.json:
+        de_xuat.sort(key=lambda x: x[0])
+        ghi_json(de_xuat, list(_GIAC_QUAN_CHET), a.json, _SO_GIAC_QUAN["chay"])
+
     hom_nay = dt.date.today().isoformat()
     print("=" * 66)
     print(f"  HỆ TỰ ĐỀ XUẤT VIỆC — {hom_nay} (sinh từ bộ đếm sống, không cảm giác)")
@@ -746,6 +1049,8 @@ def main() -> int:
             print(f"       → {lenh}")
     for x in _GIAC_QUAN_CHET:
         print(f"  ⚪ giác quan KHÔNG đo được: {x}")
+    for x in _THONG_TIN:
+        print(f"  ⓘ {x}")
     if not a.gon:
         print("-" * 66)
         print("  👤 = thẩm quyền bác sĩ, máy không tự làm · 🤖 = máy chạy được ngay")

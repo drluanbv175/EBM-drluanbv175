@@ -49,6 +49,7 @@ import argparse
 import datetime as dt
 import importlib.util as _ilu
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -123,6 +124,54 @@ def xay_trang_thai() -> dict:
     return trang_thai
 
 
+# VÁ 03/10/2026 (HV-13 kiểm toàn diện): hook SessionStart ghi lại gương MỖI phiên ⇒ 27 commit «chore» / 30 ngày cho một tệp
+# mà diff chỉ là `sinh_luc` và các số TỰ TRÔI theo lịch (tuổi «94 ngày» thành «95 ngày», ngày in trong tiêu đề bảng, «N file chưa
+# commit» — chính tệp gương là tệp chưa commit đó). Nay so CHỮ KÝ ỔN ĐỊNH: bỏ `sinh_luc`, che các token thời gian; chữ ký trùng
+# và gương còn mới hơn LAM_TUOI_NGAY ⇒ KHÔNG ghi. Số đếm THẬT (cổng ký, số chủ đề, số mục, mã thoát…) không bị che nên vẫn ghi ngay.
+LAM_TUOI_NGAY = 7
+_MAT_NA_THOI_GIAN = (
+    (re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?"), "<ngày>"),
+    # dd/mm CHỈ khi kèm năm hoặc kèm giờ — «0/4 cổng cứng», «17/17 giác quan» là SỐ ĐẾM thật, không được che.
+    (re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b"), "<ngày>"),
+    (re.compile(r"\b\d{1,2}/\d{1,2}(?= \d{1,2}:\d{2})"), "<ngày>"),
+    (re.compile(r"\b\d{1,2}:\d{2}\b"), "<giờ>"),
+    (re.compile(r"\b\d+(?=\s*(?:ngày|ng\b|ng\)))"), "<n>"),
+    (re.compile(r"\b\d+(?= file chưa commit)"), "<n>"),
+)
+
+
+def _che_thoi_gian(x):
+    if isinstance(x, str):
+        for mau, thay in _MAT_NA_THOI_GIAN:
+            x = mau.sub(thay, x)
+        return x
+    if isinstance(x, dict):
+        return {k: _che_thoi_gian(v) for k, v in x.items() if k != "sinh_luc"}
+    if isinstance(x, list):
+        return [_che_thoi_gian(v) for v in x]
+    return x
+
+
+def chu_ky_on_dinh(trang_thai: dict) -> str:
+    """Chữ ký của gương sau khi bỏ `sinh_luc` và che token thời gian — trùng nhau ⇒ không có gì MỚI để Cloud biết."""
+    return json.dumps(_che_thoi_gian(trang_thai), ensure_ascii=False, sort_keys=True)
+
+
+def can_ghi(moi: dict, tep: Path, bay_gio: dt.datetime | None = None) -> tuple[bool, str]:
+    """(có ghi không, lý do). Gương cũ vắng/hỏng/khác chữ ký/quá LAM_TUOI_NGAY ngày ⇒ ghi."""
+    bay_gio = bay_gio or dt.datetime.now()
+    try:
+        cu = json.loads(tep.read_text(encoding="utf-8"))
+        tuoi = (bay_gio - dt.datetime.fromisoformat(str(cu.get("sinh_luc")))).days
+    except (OSError, ValueError, TypeError):
+        return True, "gương cũ vắng/hỏng"
+    if chu_ky_on_dinh(cu) != chu_ky_on_dinh(moi):
+        return True, "nội dung đổi"
+    if tuoi >= LAM_TUOI_NGAY:
+        return True, f"gương {tuoi} ngày tuổi — làm mới định kỳ"
+    return False, f"nội dung không đổi (chỉ số ngày/giờ trôi) — giữ gương {cu.get('sinh_luc')}"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Xuất trạng thái hệ cập nhật chứng cứ y khoa vào mirror đi qua git")
@@ -132,6 +181,8 @@ def main() -> int:
                          " hook SessionStart (bảng đề xuất tự động mỗi khi mở phiên trên Mac/"
                          "Windows). Vẫn in cảnh báo khi máy KHÔNG có EBM-Dashboards/ thật, vì đó"
                          " là tín hiệu bác sĩ cần biết (mirror chỉ ghi được trạng thái rỗng).")
+    ap.add_argument("--ep-ghi", action="store_true",
+                    help="ghi kể cả khi nội dung chỉ khác ở dấu thời gian (bước ⑥ của xuat_goi_cap_nhat.py — vừa cập nhật chứng cứ)")
     ap.add_argument("--ghi-du-rong", action="store_true",
                     help="ÉP ghi gương dù máy KHÔNG có EBM-Dashboards/ thật (mặc định: không"
                          " ghi, mã 2 — để không xoá gương giá trị thật của máy có dữ liệu)")
@@ -152,9 +203,14 @@ def main() -> int:
         print(noi_dung)
         return 0
 
+    im = a.im_khi_on and trang_thai["co_du_lieu_dashboard_that"]
+    ghi, ly_do = (True, "--ep-ghi") if a.ep_ghi else can_ghi(trang_thai, MIRROR_FILE)
+    if not ghi:
+        if not im:
+            print(f"≡ Không ghi {MIRROR_FILE.parent.name}/{MIRROR_FILE.name}: {ly_do}.")
+        return 0
     MIRROR_DIR.mkdir(parents=True, exist_ok=True)
     MIRROR_FILE.write_text(noi_dung + "\n", encoding="utf-8", newline="\n")
-    im = a.im_khi_on and trang_thai["co_du_lieu_dashboard_that"]
     if not im:
         print(f"✓ Đã ghi {MIRROR_FILE}")
     if not trang_thai["co_du_lieu_dashboard_that"]:

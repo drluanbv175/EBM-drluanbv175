@@ -151,6 +151,21 @@ def _chu_trinh(a: argparse.Namespace) -> int:
     if rc != 0:
         viec_can_lam.append("Có mục giám sát quá hạn — xem phần ② ở trên.")
 
+    # ── 2b. TRUY VẤN GIÁM SÁT CÓ «MÙ» KHÔNG (EV-02, 02/10/2026) ─────────────
+    # `kiem_phu_giam_sat` chỉ đo KHAI BÁO (chủ đề có mục watchlist), không đo mục đó tìm ra gì — đo 02/10: 10/42 chủ đề cho
+    # ≤3 bản ghi/90 ngày vì cụm truy vấn dài bị PubMed ngầm AND mọi từ, chốt phủ vẫn xanh. Gọi NCBI (~5 phút) nên CHỈ ở chế độ
+    # đầy đủ và dùng lại kết quả ≤ 7 ngày cùng watchlist (đổi watchlist ⇒ băm đổi ⇒ tự đo lại). Chỉ ĐO và BÁO.
+    if not a.nhanh and (REPO / "EBM-Dashboards" / "watchlist.json").exists():
+        rc, out = chay([PY, "tools/kiem_san_luong_giam_sat.py", "--json", "state/san-luong-giam-sat-gan-nhat.json",
+                        "--dung-lai-neu-moi-hon-ngay", "7"], "②b Truy vấn giám sát có «mù» không?")
+        if rc == 1:
+            viec_can_lam.append("🟠 Có chủ đề truy vấn giám sát CÓ THỂ MÙ (≤3 bản ghi/90 ngày) — «0 ứng viên» ở đó KHÔNG phải «không có "
+                                "chứng cứ mới» (xem ②b). Soạn lại là phán đoán y khoa: máy đề xuất ở EBM-Dashboards/watchlist.de-xuat.json, "
+                                "bác sĩ duyệt rồi `python3 tools/ap_dung_de_xuat_watchlist.py`.")
+        elif rc != 0:
+            ghi_chu.append("⚪ Chưa đo được sản lượng truy vấn giám sát (NCBI chặn/mạng/không nạp được bộ quét) — KHÔNG phải «không có "
+                           "chủ đề mù» (xem ②b).")
+
     # ── 3 + 4. XÁC MINH TỪNG NGUỒN và RÚT BÀI ───────────────────────────────
     if a.nhanh:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--bao-cao"],

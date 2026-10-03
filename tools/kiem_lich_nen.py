@@ -16,7 +16,8 @@ Sổ khai kỳ vọng: `sync/lich-nen-ky-vong.json` (đi qua git). Python không
 đo GIÁN TIẾP qua đầu ra; muốn biết chắc trạng thái bộ lập lịch, phiên Claude gọi `list_scheduled_tasks`.
 
 Mức: 🔴 (0) kỳ gần nhất LỠ hẳn (không dấu vết) · 🟠 (1) chỉ có lượt trễ/chạy bù ngoài hạn (lịch không nổ đúng hẹn)
-· 🟡 (2) kỳ cũ hơn đã lỡ nhưng kỳ sau đã chạy lại (còn trong cửa sổ).
+· 🟡 (2) kỳ cũ hơn đã lỡ nhưng kỳ sau đã chạy lại (còn trong cửa sổ) — chỉ in khi chạy KHÔNG cờ; `--im-khi-on` (hook)
+  im lặng với mức này vì không còn việc gì để làm (02/10/2026, HV-08).
 Mã thoát: 0 = mọi kỳ đến hạn đều có dấu vết đúng hẹn (hoặc KHÔNG đo được kỳ nào — tiêu đề ⚪) · 1 = có 🔴/🟠.
 
 26/09/2026 (#35): khi KHÔNG tác vụ nào đo được (ok == 0), tiêu đề là ⚪ «không đo được», không
@@ -107,10 +108,22 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
             if ket is None:
                 ra["khong_do_duoc"].append(f"{tv['id']}: không đọc được {dv['path']} (bản sao trần/máy khác)")
                 continue
-        elif loai == "file-tuan-iso":
+        elif loai in ("file-tuan-iso", "file-ngay"):
             if not (goc / Path(dv["path"]).parent).exists():
                 ra["khong_do_duoc"].append(f"{tv['id']}: thư mục {Path(dv['path']).parent}/ vắng mặt (bản sao trần)")
                 continue
+            if loai == "file-ngay":
+                # 02/10/2026 (F4): tác vụ để lại tệp MANG NGÀY CHẠY trong tên (vd surveillance/to-chuc-<YYYY-MM-DD>.md). Ngày đọc
+                # từ TÊN tệp, không từ mtime (nguyên tắc 2).
+                mau = Path(dv["path"]).name
+                truoc, _, sau = mau.partition("{ngay}")
+                ket = []
+                for f in (goc / Path(dv["path"]).parent).glob(truoc + "*" + sau):
+                    try:
+                        ket.append(dt.datetime.combine(dt.date.fromisoformat(f.name[len(truoc):len(f.name) - len(sau)]),
+                                                       dt.time(23, 59)))
+                    except ValueError:
+                        continue
         else:
             ra["khong_do_duoc"].append(f"{tv['id']}: loại dấu vết «{loai}» không hỗ trợ")
             continue
@@ -118,7 +131,17 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
         for i, s in enumerate(cac):
             ky_sau = cac_ky(tv["cron"], s.date() + dt.timedelta(days=1), s.date() + dt.timedelta(days=400))
             han_tre = ky_sau[0] if ky_sau else s + dt.timedelta(days=400)
-            if loai == "log-ket-thuc":
+            if loai in ("log-ket-thuc", "file-ngay"):
+                # file-ngay chỉ biết NGÀY (gán 23:59): đúng hẹn = tệp mang ngày từ ngày của kỳ tới ngày hết hạn.
+                if loai == "file-ngay":
+                    dung_han = [e for e in ket if s.date() <= e.date() <= (s + grace).date()]
+                    tre = [e for e in ket if (s + grace).date() < e.date() < han_tre.date()]
+                    if dung_han:
+                        continue
+                    thieu.append((s, "tre" if tre else "lo",
+                                  f"có tệp TRỄ ngày {tre[0]:%d/%m} (ngoài hạn {tv.get('grace_gio', 30)}h) — lịch không nổ đúng hẹn"
+                                  if tre else f"không có tệp {Path(dv['path']).name.replace('{ngay}', '<ngày>')} trong hạn"))
+                    continue
                 dung_han = [e for e in ket if s <= e <= s + grace]
                 tre = [e for e in ket if s + grace < e < han_tre]
                 if dung_han:
@@ -155,6 +178,12 @@ def main(argv: list[str] | None = None) -> int:
     hong = [p for p in kq["phat_hien"] if p["uu"] <= 1]
     if a.json:
         return 1 if hong else 0
+    if a.im_khi_on and not hong:
+        # 02/10/2026 (HV-08): kỳ CŨ đã lỡ nhưng kỳ sau đã chạy lại (uu=2) từng in ra ở MỌI lần mở phiên tới hết cửa sổ 21 ngày
+        # (đo: «kỳ 14/09» lặp 28 lần ở 15 phiên). Không còn việc gì để làm: chạy bù kỳ cũ vô ích vì kỳ sau đã chạy, và vòng quét dùng
+        # con trỏ tăng dần nên lượt sau đã phủ cửa sổ của kỳ lỡ (không hở chứng cứ). Hook im lặng; chạy KHÔNG cờ vẫn in đủ để tra.
+        # Kỳ GẦN NHẤT lỡ/trễ (uu ≤ 1) vẫn in như cũ.
+        return 0
     if not kq["phat_hien"]:
         if not a.im_khi_on:
             if kq["ok"] == 0:

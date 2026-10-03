@@ -77,7 +77,10 @@ def test_may_that_bi_proxy_chan_van_ghi_nhung_giu_trang_thai(sh, monkeypatch):
     monkeypatch.setattr(mod.urllib.request, "urlopen", _tu_choi)
     assert _chay(mod, monkeypatch, "--im-khi-on") == 0
     du = json.loads(so.read_text(encoding="utf-8"))
-    assert du["sources"][0]["status"] == "active" and du["updated"] != "2000-01-01"
+    # Máy thật vẫn đi nhánh GHI (khác Cloud): dấu thăm ra sổ ngoài git. Từ 03/10/2026 sổ tracked chỉ ghi khi NỘI DUNG đổi —
+    # proxy chặn thì nhãn giữ nguyên ⇒ không có gì để ghi vào sổ tracked.
+    assert du["sources"][0]["status"] == "active" and du["updated"] == "2000-01-01"
+    assert so.with_name("tham-song-nguon.json").exists(), "máy thật phải ghi dấu thăm (nhánh ghi), Cloud thì không"
 
 
 def test_loi_that_van_ha_degraded(sh, monkeypatch):
