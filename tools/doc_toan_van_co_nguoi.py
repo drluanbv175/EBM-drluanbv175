@@ -16,6 +16,7 @@ văn rồi ghi một HỒ SƠ TRÍCH XUẤT CÓ CẤU TRÚC — không chép ngu
     python3 tools/doc_toan_van_co_nguoi.py --mau                             # khuôn JSON hồ sơ trích xuất
     python3 tools/doc_toan_van_co_nguoi.py --nap ho-so.json [--ghi]          # kiểm (mặc định chạy thử) rồi ghi vào kho
     python3 tools/doc_toan_van_co_nguoi.py --khong-truy-cap 42377292 --ly-do "tạp chí đòi mua bài"   # bác sĩ không có quyền đọc
+    python3 tools/doc_toan_van_co_nguoi.py --bac-si-da-doc 42377292 --ghi-chu "<kết luận của bác sĩ>" [--ghi]   # NXB cấm AI: bác sĩ đã tự đọc
 
 Ghi vào (ngoài git, cùng kho dây chuyền OA): `EBM-Dashboards/toan_van_oa/trinh_duyet/PMID-<n>.json` + bản đọc
 `EBM-Dashboards/toan_van_oa/doc_sau/PMID-<n>.md` (gói tuần bước 4b đọc đúng thư mục này). Mã thoát: phiếu 0 hết việc · 1 còn bài
@@ -53,6 +54,13 @@ TRAN_CHUOI = 800                  # trường văn bản dài hơn ⇒ nghi ché
 TRAN_TOM_TAT_KC = 400
 TRAN_TU_TRICH = 15                # trích nguyên văn ngắn: ≤ 15 từ/lần
 TRAN_SO_TRICH = 6
+# Ghi chú «bác sĩ đã đọc trực tiếp» (03/10/2026): KẾT LUẬN bằng lời bác sĩ, không phải nội dung bài ⇒ ngắn có chủ ý (không có hàm
+# kiểm trích nguyên văn dùng chung — trần 300 ký tự là rào chép bài). KHÔNG hết hạn: kết luận đã ghi không cũ đi như «không có quyền».
+GHI_CHU_BAC_SI_MIN, GHI_CHU_BAC_SI_MAX = 5, 300
+# Trạng thái kho cục bộ được tính ĐÃ PHỦ (không còn «chỉ tóm tắt» cần làm). `bac_si_da_doc_truc_tiep`: máy KHÔNG có toàn văn —
+# bác sĩ tự đọc (NXB cấm AI/TDM) và ghi kết luận. Khác `cach` «bac_si_doc_truc_tiep» của phiếu = bài CHỜ bác sĩ đọc.
+TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "da_doc_trinh_duyet")
+TRANG_THAI_DA_PHU = TRANG_THAI_MAY_CO_TOAN_VAN + ("bac_si_da_doc_truc_tiep",)
 
 # Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản.
 MIEN_DO_DUOC: dict[str, str] = {
@@ -180,6 +188,10 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
      nhóm theo MIỀN (bác sĩ vượt chặn MỘT lần cho mỗi miền là đọc được cả nhóm).
   2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN trước tiên (03/10/2026). NXB trong `DIEU_KHOAN_NXB` với kết luận «cấm» (Elsevier — DOI 10.1016/…,
      ADA — 10.2337/…, EBSCO/DynaMed) ⇒ Claude KHÔNG mở bài; phiếu đã xếp chúng vào «BÁC SĨ ĐỌC TRỰC TIẾP».
+     Bác sĩ đọc trực tiếp xong ⇒ `python3 tools/doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu "<kết luận của bác sĩ>"`
+     (chạy thử) rồi thêm `--ghi`. Ghi chú là KẾT LUẬN bằng lời bác sĩ ({GHI_CHU_MIN}–{GHI_CHU_MAX} ký tự, không PII), KHÔNG chép nội
+     dung bài. Bác sĩ KHÔNG dán nội dung bài Elsevier/ADA vào chat — Claude không được đọc nó. Thẻ thành «BÁC SĨ ĐÃ ĐỌC TRỰC TIẾP»
+     (đã phủ, không hết hạn); máy vẫn KHÔNG có toàn văn bài đó.
   2b. NXB CHƯA KIỂM ⇒ Claude đọc trang ĐIỀU KHOẢN (không phải bài) của NXB, tìm điều về AI / text-and-data mining. Cấm hoặc không rõ
      ⇒ dừng, bác sĩ đọc trực tiếp. Cho phép rõ, hoặc bài mang giấy phép CC ⇒ ghi vào hồ sơ `dieu_khoan` {url, doc_luc, ket_luan:
      cho_phep | giay_phep_cc, trich ≤ 15 từ}; NXB đã kiểm thì đề xuất thêm vào DIEU_KHOAN_NXB bằng PR.
@@ -201,7 +213,8 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
   5. `python3 tools/doc_toan_van_co_nguoi.py --nap <hồ sơ>.json` (chạy thử) → sửa đến khi đạt → thêm `--ghi`. Công cụ xác minh
      định danh qua cơ quan đăng ký (Crossref/PubMed), chặn bài đã rút, kiểm con số/CI, từ chối tiêu đề trang chặn/đăng nhập.
   6. Gói tuần đọc `EBM-Dashboards/toan_van_oa/doc_sau/PMID-<n>.md` như bản OA; hồ sơ «partial» (thiếu mục) vẫn giữ trần
-     «Cân nhắc». Toàn văn KHÔNG tự nâng đề xuất — nâng/hạ là thẩm quyền bác sĩ. Cần bác sĩ kiểm chứng."""
+     «Cân nhắc». Toàn văn KHÔNG tự nâng đề xuất — nâng/hạ là thẩm quyền bác sĩ. Cần bác sĩ kiểm chứng.""".replace(
+    "{GHI_CHU_MIN}", str(GHI_CHU_BAC_SI_MIN)).replace("{GHI_CHU_MAX}", str(GHI_CHU_BAC_SI_MAX))
 
 MAU = {
     "pmid": "42377292", "doi": "10.1016/j.jacc.2026.05.033",
@@ -287,10 +300,27 @@ def _khong_truy_cap(kho: Path, hom_nay: date) -> dict[str, dict]:
     return ra
 
 
+def _bac_si_da_doc(kho: Path) -> dict[str, dict]:
+    """Sổ «bác sĩ đã đọc trực tiếp» (`trinh_duyet/bac-si-da-doc.jsonl`) — KHÔNG hết hạn; dòng hỏng bỏ qua; dòng sau của cùng PMID thắng."""
+    tep = kho / "trinh_duyet" / "bac-si-da-doc.jsonl"
+    ra: dict[str, dict] = {}
+    if not tep.exists():
+        return ra
+    for dong in tep.read_text(encoding="utf-8").splitlines():
+        try:
+            d = json.loads(dong)
+            ra[str(d["pmid"])] = d
+        except (ValueError, KeyError, TypeError):
+            continue
+    return ra
+
+
 def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | None = None) -> dict[str, str]:
-    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · da_doc_trinh_duyet · khong_truy_cap · chua_co."""
+    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
+    khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền»."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
     ktc = _khong_truy_cap(kho, hom_nay)
+    bsd = _bac_si_da_doc(kho)
     ra = {}
     for pm in pmids:
         if list(kho.glob(f"PMID-{pm}_*.xml")):
@@ -299,6 +329,8 @@ def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | No
             ra[pm] = "oa_khac"
         elif (kho / "trinh_duyet" / f"PMID-{pm}.json").exists():
             ra[pm] = "da_doc_trinh_duyet"
+        elif pm in bsd:
+            ra[pm] = "bac_si_da_doc_truc_tiep"
         elif pm in ktc:
             ra[pm] = "khong_truy_cap"
         else:
@@ -388,8 +420,14 @@ def lap_phieu(pmids: list[str], *, ngoai_tuyen: bool, kho: Path | None = None, h
 
 
 def in_phieu(phieu: list[dict]) -> None:
-    da = [p for p in phieu if p["cach"] in ("oa_xml", "oa_khac", "da_doc_trinh_duyet")]
-    print(f"Đã có toàn văn: {len(da)}/{len(phieu)} bài.")
+    da = [p for p in phieu if p["cach"] in TRANG_THAI_MAY_CO_TOAN_VAN]
+    bs = [p for p in phieu if p["cach"] == "bac_si_da_doc_truc_tiep"]
+    # Trung thực: bài bác sĩ đọc trực tiếp được tính ĐÃ PHỦ nhưng máy KHÔNG có toàn văn — đếm tách riêng, không cộng vào «máy có».
+    print(f"Đã có toàn văn: {len(da)}/{len(phieu)} bài máy có toàn văn"
+          + (f" + {len(bs)} bài bác sĩ đọc trực tiếp (máy KHÔNG có toàn văn các bài này)" if bs else "") + ".")
+    if bs:
+        print("\nBÁC SĨ ĐÃ ĐỌC TRỰC TIẾP (kết luận của bác sĩ ở toan_van_oa/trinh_duyet/bac-si-da-doc.jsonl): "
+              + " · ".join(p["pmid"] for p in bs))
     doc_truc_tiep = [p for p in phieu if p["cach"] == "bac_si_doc_truc_tiep"]
     if doc_truc_tiep:
         print("\nBÁC SĨ ĐỌC TRỰC TIẾP — điều khoản NXB cấm xử lý nội dung bằng AI/TDM (Claude KHÔNG mở bài):")
@@ -697,6 +735,43 @@ def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_na
         f.write(json.dumps({"pmid": pm, "ngay": hom_nay.isoformat(), "ly_do": ly_do}, ensure_ascii=False) + "\n")
 
 
+def kiem_ghi_chu_bac_si(ghi_chu: str | None) -> list[str]:
+    """Lỗi chặn của ghi chú «bác sĩ đã đọc trực tiếp» (rỗng = đạt). Ghi KẾT LUẬN của bác sĩ, không chép nội dung bài."""
+    s = (ghi_chu or "").strip()
+    loi = []
+    if len(s) < GHI_CHU_BAC_SI_MIN:
+        loi.append(f"--ghi-chu bắt buộc, ≥ {GHI_CHU_BAC_SI_MIN} ký tự — kết luận bằng lời của bác sĩ")
+    elif len(s) > GHI_CHU_BAC_SI_MAX:
+        loi.append(f"--ghi-chu dài {len(s)} ký tự (> {GHI_CHU_BAC_SI_MAX}) — chỉ ghi KẾT LUẬN của bác sĩ, KHÔNG chép nội dung bài")
+    if any(p.search(s) for p in _PII):
+        loi.append("--ghi-chu có chuỗi giống thông tin định danh (email/điện thoại/số 12 chữ) — KHÔNG PII")
+    return loi
+
+
+def danh_dau_bac_si_da_doc(pm: str, ghi_chu: str | None, *, ghi: bool, kho: Path | None = None,
+                           hom_nay: date | None = None) -> tuple[int, list[str]]:
+    """Ghi nối «bác sĩ đã đọc trực tiếp» vào `trinh_duyet/bac-si-da-doc.jsonl`. Mặc định chạy thử; `ghi=True` mới ghi.
+
+    Mã: 0 đạt (đã ghi / chạy thử) · 2 kho vắng (KHÔNG ĐO ĐƯỢC, không tự tạo kho) · 3 từ chối. Bản ghi KHÔNG hết hạn."""
+    kho, hom_nay = kho or KHO, hom_nay or date.today()
+    pm = str(pm or "").strip()
+    loi = ([] if re.fullmatch(r"\d{6,9}", pm) else [f"PMID «{pm}» sai dạng (6–9 chữ số)"]) + kiem_ghi_chu_bac_si(ghi_chu)
+    if loi:
+        return 3, [f"✗ {x}" for x in loi] + ["TỪ CHỐI — chưa ghi gì."]
+    ban = {"pmid": pm, "ngay": hom_nay.isoformat(), "ghi_chu": (ghi_chu or "").strip(), "nguon": "bac_si_doc_truc_tiep"}
+    bao = [f"✓ PMID {pm}: ghi chú đạt kiểm ({len(ban['ghi_chu'])} ký tự) — thẻ sẽ thành «BÁC SĨ ĐÃ ĐỌC TRỰC TIẾP» "
+           "(máy vẫn KHÔNG có toàn văn; không hết hạn)"]
+    if not ghi:
+        return 0, bao + ["(chạy thử — thêm --ghi để ghi vào kho)"]
+    if not kho.is_dir():
+        return 2, bao + [f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {kho} (EBM-Dashboards/ vắng ở cây này) — KHÔNG ghi"]
+    tep = kho / "trinh_duyet" / "bac-si-da-doc.jsonl"
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    with open(tep, "a", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(ban, ensure_ascii=False) + "\n")
+    return 0, bao + [f"✓ đã ghi {_tuong_doi(tep)}"]
+
+
 def _kiem_tieu_de_cua_cong():
     try:
         return _nap_mo_dun("_dtv_xntd", "xac_nhan_trinh_duyet.py").kiem_tieu_de
@@ -719,9 +794,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--huong-dan", action="store_true")
     ap.add_argument("--mau", action="store_true")
     ap.add_argument("--nap", type=Path, help="hồ sơ trích xuất JSON do phiên Claude soạn")
-    ap.add_argument("--ghi", action="store_true", help="cùng --nap: ghi vào kho (mặc định chạy thử)")
+    ap.add_argument("--ghi", action="store_true", help="cùng --nap / --bac-si-da-doc: ghi vào kho (mặc định chạy thử)")
     ap.add_argument("--khong-truy-cap", metavar="PMID")
     ap.add_argument("--ly-do", default="")
+    ap.add_argument("--bac-si-da-doc", metavar="PMID",
+                    help="NXB cấm AI/TDM: bác sĩ đã tự đọc bài — ghi kết luận (cần --ghi-chu; mặc định chạy thử)")
+    ap.add_argument("--ghi-chu", default=None,
+                    help=f"kết luận bằng lời bác sĩ, {GHI_CHU_BAC_SI_MIN}–{GHI_CHU_BAC_SI_MAX} ký tự, không PII, KHÔNG chép nội dung bài")
     a = ap.parse_args(argv)
     if a.huong_dan:
         print(HUONG_DAN)
@@ -736,6 +815,11 @@ def main(argv: list[str] | None = None) -> int:
         danh_dau_khong_truy_cap(a.khong_truy_cap, a.ly_do.strip())
         print(f"✓ PMID {a.khong_truy_cap}: ghi «không có quyền đọc» — không nhắc lại {HAN_KHONG_TRUY_CAP_NGAY} ngày.")
         return 0
+    if a.bac_si_da_doc is not None:
+        ma, bao = danh_dau_bac_si_da_doc(a.bac_si_da_doc, a.ghi_chu, ghi=a.ghi)
+        print("\n".join(bao))
+        print("Cần bác sĩ kiểm chứng.")
+        return ma
     if a.nap:
         try:
             hs = json.loads(a.nap.read_text(encoding="utf-8"))

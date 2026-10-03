@@ -467,15 +467,18 @@ def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.dat
         sp.loader.exec_module(dtv)
         pmids = dtv.pmid_cua_queue(moi)
         bp = dtv.bao_phu_cuc_bo(pmids, kho, hom_nay)
+        # Bộ trạng thái ĐÃ PHỦ lấy từ chính công cụ (một nguồn sự thật). 03/10/2026: «bac_si_da_doc_truc_tiep» — bác sĩ đã tự đọc
+        # bài NXB cấm AI và ghi kết luận ⇒ không còn là việc treo, dù máy vẫn không có toàn văn.
+        da_phu = set(dtv.TRANG_THAI_DA_PHU)
     except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
         _ghi_chet(["", "toàn văn thẻ tuần"], f"lỗi {type(exc).__name__}")
         return []
-    chua = [pm for pm, t in bp.items() if t == "chua_co"]
+    chua = [pm for pm, t in bp.items() if t not in da_phu and t != "khong_truy_cap"]
     if not chua:
         return []
     return [(3, f"{len(chua)}/{len(pmids)} thẻ gói {moi.stem} chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở "
-             f"trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp; tới lúc đó thẻ "
-             f"giữ trần «Cân nhắc»",
+             f"trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp rồi ghi "
+             f"`--bac-si-da-doc <PMID> --ghi-chu \"<kết luận>\" --ghi`; tới lúc đó thẻ giữ trần «Cân nhắc»",
              f"python3 tools/doc_toan_van_co_nguoi.py --queue queue/{moi.name}  # rồi --huong-dan")]
 
 

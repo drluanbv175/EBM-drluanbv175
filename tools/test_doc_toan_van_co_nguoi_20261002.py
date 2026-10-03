@@ -320,3 +320,101 @@ def test_bang_dieu_khoan_ghi_dung_ngoai_le_va_loai_nguon():
     assert "except" in e["trich"] and e.get("ngoai_le"), "câu trích Elsevier bỏ mất mệnh đề ngoại lệ"
     assert D.nxb_cua("", "https://www.scopus.com/results/results.uri")[0] == "Elsevier"
     assert "UBC" in D.DIEU_KHOAN_NXB["EBSCO (DynaMed)"].get("loai_nguon", ""), "nguồn EBSCO là tóm tắt của thư viện — ghi rõ"
+
+
+# ── 03/10/2026: «bác sĩ đã đọc trực tiếp» — NXB cấm AI/TDM, bác sĩ tự đọc rồi ghi KẾT LUẬN (không phải nội dung bài) ───────────
+PM_BS = "42377292"
+GHI_CHU_BS = "Đã đọc toàn văn: kết luận khớp tóm tắt, giữ đề xuất hiện tại"
+
+
+def test_bac_si_da_doc_ghi_duoc_va_thanh_da_phu(kho):
+    ma, bao = D.danh_dau_bac_si_da_doc(PM_BS, "  " + GHI_CHU_BS + "  ", ghi=True, kho=kho, hom_nay=HOM_NAY)
+    assert ma == 0, bao
+    dong = (kho / "trinh_duyet" / "bac-si-da-doc.jsonl").read_text(encoding="utf-8").splitlines()
+    assert [json.loads(x) for x in dong] == [{"pmid": PM_BS, "ngay": "2026-10-02", "ghi_chu": GHI_CHU_BS,
+                                               "nguon": "bac_si_doc_truc_tiep"}], "ghi_chu phải strip; ngày ISO; nguồn cố định"
+    assert D.bao_phu_cuc_bo([PM_BS, "10000009"], kho, HOM_NAY) == {PM_BS: "bac_si_da_doc_truc_tiep", "10000009": "chua_co"}
+    assert "bac_si_da_doc_truc_tiep" in D.TRANG_THAI_DA_PHU and "bac_si_da_doc_truc_tiep" not in D.TRANG_THAI_MAY_CO_TOAN_VAN
+
+
+def test_bac_si_da_doc_xet_truoc_khong_truy_cap_va_khong_het_han(kho):
+    (kho / "trinh_duyet").mkdir()
+    (kho / "trinh_duyet" / "khong-truy-cap.jsonl").write_text(
+        json.dumps({"pmid": PM_BS, "ngay": "2026-10-01", "ly_do": "đòi mua bài"}) + "\n", encoding="utf-8", newline="\n")
+    assert D.bao_phu_cuc_bo([PM_BS], kho, HOM_NAY) == {PM_BS: "khong_truy_cap"}
+    assert D.danh_dau_bac_si_da_doc(PM_BS, GHI_CHU_BS, ghi=True, kho=kho, hom_nay=HOM_NAY)[0] == 0
+    assert D.bao_phu_cuc_bo([PM_BS], kho, HOM_NAY) == {PM_BS: "bac_si_da_doc_truc_tiep"}, "phải xét TRƯỚC khong_truy_cap"
+    assert D.bao_phu_cuc_bo([PM_BS], kho, HOM_NAY + timedelta(days=400)) == {PM_BS: "bac_si_da_doc_truc_tiep"}, "KHÔNG hết hạn"
+    # Bản ghi THẬT SỰ cũ 400 ngày, đọc với «hôm nay» mặc định — bắt cả kiểu hết hạn dùng date.today() lẫn dùng hom_nay truyền vào.
+    pm_cu = "10000400"
+    assert D.danh_dau_bac_si_da_doc(pm_cu, GHI_CHU_BS, ghi=True, kho=kho, hom_nay=date.today() - timedelta(days=400))[0] == 0
+    assert D.bao_phu_cuc_bo([pm_cu], kho) == {pm_cu: "bac_si_da_doc_truc_tiep"}, "bản ghi 400 ngày tuổi vẫn phải còn hiệu lực"
+
+
+@pytest.mark.parametrize("ghi_chu, mau", [
+    (None, "bắt buộc"), ("", "bắt buộc"), ("   ok  ", "bắt buộc"), ("x" * 301, "KHÔNG chép nội dung bài"),
+    ("Đã đọc, liên hệ bn@example.com để bàn thêm", "KHÔNG PII"),
+    ("Đã đọc, gọi 0912345678 nếu cần", "KHÔNG PII"),  # bimat-mien: số điện thoại GIẢ — fixture kiểm luật chặn PII của ghi chú
+])
+def test_bac_si_da_doc_tu_choi_khong_ghi(kho, ghi_chu, mau):
+    ma, bao = D.danh_dau_bac_si_da_doc(PM_BS, ghi_chu, ghi=True, kho=kho, hom_nay=HOM_NAY)
+    assert ma == 3 and any(mau in x for x in bao), bao
+    assert not (kho / "trinh_duyet").exists() and D.bao_phu_cuc_bo([PM_BS], kho, HOM_NAY) == {PM_BS: "chua_co"}
+
+
+def test_bac_si_da_doc_bien_do_dai_va_pmid_sai(kho):
+    assert D.kiem_ghi_chu_bac_si("x" * 5) == [] and D.kiem_ghi_chu_bac_si("x" * 300) == []
+    assert D.kiem_ghi_chu_bac_si("x" * 4) and D.kiem_ghi_chu_bac_si("x" * 301)
+    ma, bao = D.danh_dau_bac_si_da_doc("123", GHI_CHU_BS, ghi=True, kho=kho, hom_nay=HOM_NAY)
+    assert ma == 3 and any("sai dạng" in x for x in bao) and not (kho / "trinh_duyet").exists()
+
+
+def test_bac_si_da_doc_chay_thu_khong_ghi_va_kho_vang_khong_tu_tao(tmp_path, kho):
+    ma, bao = D.danh_dau_bac_si_da_doc(PM_BS, GHI_CHU_BS, ghi=False, kho=kho, hom_nay=HOM_NAY)
+    assert ma == 0 and any("chạy thử" in x for x in bao) and not (kho / "trinh_duyet").exists()
+    vang = tmp_path / "khong-co-kho"
+    ma2, bao2 = D.danh_dau_bac_si_da_doc(PM_BS, GHI_CHU_BS, ghi=True, kho=vang, hom_nay=HOM_NAY)
+    assert ma2 == 2 and any("KHÔNG ĐO ĐƯỢC" in x for x in bao2) and not vang.exists()
+
+
+def test_bac_si_da_doc_qua_cli(kho, monkeypatch, capsys):
+    monkeypatch.setattr(D, "KHO", kho)
+    assert D.main(["--bac-si-da-doc", PM_BS]) == 3, "thiếu --ghi-chu phải bị từ chối"
+    assert D.main(["--bac-si-da-doc", PM_BS, "--ghi-chu", GHI_CHU_BS]) == 0 and not (kho / "trinh_duyet").exists()
+    assert D.main(["--bac-si-da-doc", PM_BS, "--ghi-chu", GHI_CHU_BS, "--ghi"]) == 0
+    assert (kho / "trinh_duyet" / "bac-si-da-doc.jsonl").exists()
+    capsys.readouterr()
+
+
+def test_phieu_tach_may_co_toan_van_va_bac_si_doc(kho, capsys):
+    D.in_phieu([{"pmid": "10000001", "cach": "oa_xml"}, {"pmid": PM_BS, "cach": "bac_si_da_doc_truc_tiep"},
+                {"pmid": "10000003", "cach": "chua_co"}])
+    ra = capsys.readouterr().out
+    assert "1/3 bài máy có toàn văn + 1 bài bác sĩ đọc trực tiếp (máy KHÔNG có toàn văn" in ra
+    assert "BÁC SĨ ĐÃ ĐỌC TRỰC TIẾP" in ra and PM_BS in ra
+    assert D.danh_dau_bac_si_da_doc(PM_BS, GHI_CHU_BS, ghi=True, kho=kho, hom_nay=HOM_NAY)[0] == 0
+    phieu = D.lap_phieu([PM_BS], ngoai_tuyen=False, epmc=lambda **k: pytest.fail("bài đã phủ không được tra mạng"),
+                        kho=kho, hom_nay=HOM_NAY)
+    assert phieu == [{"pmid": PM_BS, "cach": "bac_si_da_doc_truc_tiep"}], "không được rơi vào nhóm CHỜ «bac_si_doc_truc_tiep»"
+
+
+def test_giac_quan_the_tuan_khong_dem_the_bac_si_da_doc(tmp_path):
+    tdx = _nap("_t_dtv_tdxv_bs", "tu_de_xuat_viec.py")
+    q = tmp_path / "queue"
+    q.mkdir()
+    (q / "tuan-2026-W40.md").write_text(f"## ⓶ BẢY THẺ\nPMID {PM_BS} · PMID 42751933\n## ⓷ GIỮ\n", encoding="utf-8", newline="\n")
+    dash = tmp_path / "EBM-Dashboards"
+    kho_t = dash / "toan_van_oa"
+    kho_t.mkdir(parents=True)
+    (kho_t / "PMID-42751933_PMC1.xml").write_text("<x/>", encoding="utf-8", newline="\n")
+    homnay = date.fromtimestamp(time.time())
+    ra = tdx.giac_quan_toan_van_the_tuan(q, dash, homnay)
+    assert len(ra) == 1 and "1/2 thẻ" in ra[0][1] and "--bac-si-da-doc" in ra[0][1]
+    assert D.danh_dau_bac_si_da_doc(PM_BS, GHI_CHU_BS, ghi=True, kho=kho_t, hom_nay=homnay)[0] == 0
+    assert tdx.giac_quan_toan_van_the_tuan(q, dash, homnay) == [], "thẻ bác sĩ đã đọc trực tiếp vẫn bị đếm «chỉ tóm tắt»"
+
+
+def test_huong_dan_co_buoc_bac_si_da_doc():
+    h = D.HUONG_DAN
+    assert "--bac-si-da-doc <PMID> --ghi-chu" in h and "--ghi" in h and "KHÔNG dán nội dung bài Elsevier/ADA vào chat" in h
+    assert "5–300 ký tự" in h and "{GHI_CHU" not in h
