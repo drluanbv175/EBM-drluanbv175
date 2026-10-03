@@ -418,3 +418,221 @@ def test_huong_dan_co_buoc_bac_si_da_doc():
     h = D.HUONG_DAN
     assert "--bac-si-da-doc <PMID> --ghi-chu" in h and "--ghi" in h and "KHÔNG dán nội dung bài Elsevier/ADA vào chat" in h
     assert "5–300 ký tự" in h and "{GHI_CHU" not in h
+
+
+# ── 03/10/2026: BÁC SĨ UỶ QUYỀN MÁY ĐỌC — quyết định của bác sĩ (chủ hệ thống) cho Claude đọc bài NXB «cấm» bác sĩ có quyền truy cập ──
+# Điều khoản NXB KHÔNG đổi; công cụ chỉ ghi và tôn trọng QUYẾT ĐỊNH của bác sĩ (tệp ngoài git), fail-closed khi tệp vắng/hỏng/hết hạn.
+NGAY_UQ = "2026-10-02"
+CAN_CU_UQ = "Vậy hãy chỉnh sửa lại để máy đọc toàn văn và tóm tắt cho tôi"
+ADA = "ADA (American Diabetes Association)"
+DOI_E, URL_E = "10.1016/j.jacc.2026.05.033", "https://www.jacc.org/doi/10.1016/j.jacc.2026.05.033"
+
+
+@pytest.fixture(autouse=True)
+def _co_lap_tep_uy_quyen(monkeypatch, tmp_path):
+    """Mọi test của tệp này KHÔNG được đọc tệp quyết định THẬT ở EBM-Dashboards/ (bác sĩ ghi nó sau khi PR gộp): đường mặc định
+    tính lúc gọi từ D.DASH ⇒ trỏ D.DASH vào một thư mục tạm chưa có tệp."""
+    monkeypatch.setattr(D, "DASH", tmp_path / "EBM-Dashboards-gia")
+
+
+def _muc_uq(**sua) -> dict:
+    m = {"nxb": "Elsevier", "ngay": NGAY_UQ, "can_cu": CAN_CU_UQ, "pham_vi": "đọc qua Chrome của bác sĩ, chỉ hồ sơ tóm lược"}
+    m.update(sua)
+    return m
+
+
+def _tep_uq(tmp_path, *muc, noi_dung: str | None = None) -> Path:
+    t = tmp_path / "uq" / "dieu-khoan-bac-si-uy-quyen.json"
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_text(noi_dung if noi_dung is not None else json.dumps({"_about": "thử", "muc": list(muc)}, ensure_ascii=False),
+                 encoding="utf-8", newline="\n")
+    return t
+
+
+def _hs_e(**dk) -> dict:
+    kd = {"ket_luan": "bac_si_uy_quyen", "ngay_uy_quyen": NGAY_UQ}
+    kd.update(dk)
+    return _hs(doi=DOI_E, url_doc=URL_E, tieu_de_trang=TIEU_DE + " | JACC", dieu_khoan=kd)
+
+
+@pytest.mark.parametrize("muc, noi_dung, mo_ta", [
+    (None, None, "tệp vắng"),
+    (None, "{hỏng", "tệp hỏng JSON"),
+    (None, json.dumps({"muc": {"nxb": "Elsevier"}}), "muc không phải danh sách"),
+    ([_muc_uq(het_han="2026-10-01")], None, "hết hạn hôm qua"),
+    ([_muc_uq(nxb=ADA)], None, "uỷ quyền khác NXB"),
+    ([_muc_uq(ngay="2026-10-09")], None, "ngày ở tương lai"),
+    ([_muc_uq(can_cu="ok")], None, "căn cứ quá ngắn"),
+    ([_muc_uq(het_han="mai")], None, "het_han sai dạng"),
+    ([_muc_uq(ngay="03/10/2026")], None, "ngày sai dạng"),
+])
+def test_uy_quyen_vang_hong_het_han_khac_nxb_thi_tu_choi(tmp_path, muc, noi_dung, mo_ta):
+    tep = (tmp_path / "khong-co.json") if muc is None and noi_dung is None else _tep_uq(tmp_path, *(muc or []), noi_dung=noi_dung)
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY, tep) is None, mo_ta
+    loi, _cb, tt = D.kiem_ho_so(_hs_e(), HOM_NAY, XN.kiem_tieu_de, tep)
+    assert any("Elsevier cấm" in x for x in loi) and "uy_quyen" not in tt, (mo_ta, loi)
+    assert any("KHÔNG có uỷ quyền còn hiệu lực" in x for x in loi), "hồ sơ tự khai bac_si_uy_quyen mà không có uỷ quyền phải được nói rõ"
+
+
+def test_khong_uy_quyen_giu_nguyen_thong_diep_cu(tmp_path):
+    """Không uỷ quyền ⇒ thông điệp cũ NGUYÊN VĂN (đường hợp lệ, «bác sĩ đọc trực tiếp»)."""
+    hs = _hs(doi=DOI_E, url_doc=URL_E)
+    loi, _cb, _tt = D.kiem_ho_so(hs, HOM_NAY, XN.kiem_tieu_de, tmp_path / "khong-co.json")
+    dk = D.DIEU_KHOAN_NXB["Elsevier"]
+    assert (f"điều khoản Elsevier cấm dùng nội dung với công cụ AI/TDM (đọc {dk['doc_luc']}: {dk['nguon']}) — KHÔNG nạp; "
+            f"bác sĩ đọc trực tiếp, đường hợp lệ: {dk['duong_hop_le']}") in loi
+
+
+def test_uy_quyen_dung_va_ho_so_khai_dung_ngay_thi_nhan(tmp_path):
+    tep = _tep_uq(tmp_path, _muc_uq())
+    uq = D.uy_quyen_bac_si("Elsevier", HOM_NAY, tep)
+    assert uq and uq["ngay"] == NGAY_UQ and uq["can_cu"] == CAN_CU_UQ
+    loi, _cb, tt = D.kiem_ho_so(_hs_e(), HOM_NAY, XN.kiem_tieu_de, tep)
+    assert loi == [] and tt["uy_quyen"]["nxb"] == "Elsevier" and tt["uy_quyen"]["ngay"] == NGAY_UQ, loi
+    # Mọi kiểm khác GIỮ NGUYÊN với hồ sơ uỷ quyền: tiêu đề chặn, trích > 15 từ, chuỗi > 800, số ngoài CI, PII.
+    for sua, mau in (({"tieu_de_trang": "Just a moment..."}, "CHẶN BOT"), ({"han_che": "x" * 900}, "nguyên văn"),
+                     ({"ket_qua": [{**_hs()["ket_qua"][0], "gia_tri": 3.1}]}, "ngoài CI"),
+                     ({"ghi_chu": "liên hệ bn@example.com"}, "định danh"),
+                     ({"ket_qua": [{**_hs()["ket_qua"][0], "trich_ngan": " ".join(["từ"] * 16)}]}, "15 từ")):
+        loi2, _c, _t = D.kiem_ho_so({**_hs_e(), **sua}, HOM_NAY, XN.kiem_tieu_de, tep)
+        assert any(mau in x for x in loi2), (sua, loi2)
+
+
+def test_uy_quyen_het_han_dung_ngay_van_hieu_luc_va_muc_moi_nhat_thang(tmp_path):
+    tep = _tep_uq(tmp_path, _muc_uq(het_han=HOM_NAY.isoformat()))
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY, tep) is not None, "ngày het_han vẫn còn hiệu lực"
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY + timedelta(days=1), tep) is None, "qua het_han ⇒ hết uỷ quyền"
+    tep2 = _tep_uq(tmp_path, _muc_uq(ngay="2026-09-30"), _muc_uq(ngay="2026-10-01"), _muc_uq(nxb=ADA, ngay=NGAY_UQ))
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY, tep2)["ngay"] == "2026-10-01"
+
+
+@pytest.mark.parametrize("dk, mo_ta", [
+    ({"ket_luan": "cho_phep"}, "ket_luan cho_phep"), ({"ket_luan": "giay_phep_cc"}, "ket_luan giay_phep_cc"),
+    ({"ket_luan": None}, "thiếu ket_luan"), ({"ngay_uy_quyen": "2026-10-01"}, "ngày lệch tệp quyết định"),
+    ({"ngay_uy_quyen": None}, "thiếu ngay_uy_quyen"),
+])
+def test_uy_quyen_dung_nhung_ho_so_khai_sai_thi_tu_choi(tmp_path, dk, mo_ta):
+    tep = _tep_uq(tmp_path, _muc_uq())
+    loi, _cb, tt = D.kiem_ho_so(_hs_e(**dk), HOM_NAY, XN.kiem_tieu_de, tep)
+    assert any("Elsevier cấm" in x and "ĐÃ uỷ quyền máy đọc ngày 2026-10-02" in x for x in loi) and "uy_quyen" not in tt, (mo_ta, loi)
+
+
+def test_nxb_chua_kiem_khai_bac_si_uy_quyen_van_tu_choi(tmp_path):
+    """bac_si_uy_quyen CHỈ nhận ở nhánh NXB «cam» có uỷ quyền — NXB chưa kiểm vẫn chỉ cho_phep | giay_phep_cc."""
+    tep = _tep_uq(tmp_path, _muc_uq())
+    hs = _hs(dieu_khoan={"url": "https://nxb.invalid/terms", "doc_luc": "2026-10-02", "ket_luan": "bac_si_uy_quyen",
+                         "ngay_uy_quyen": NGAY_UQ})
+    loi, _cb, tt = D.kiem_ho_so(hs, HOM_NAY, XN.kiem_tieu_de, tep)
+    assert any("CHƯA KIỂM" in x for x in loi) and "uy_quyen" not in tt, loi
+    assert "bac_si_uy_quyen" not in D._KET_LUAN_DIEU_KHOAN_NHAN
+
+
+def test_uy_quyen_duong_dan_mac_dinh_tinh_luc_goi(tmp_path, monkeypatch):
+    dash = tmp_path / "dash-luc-goi"
+    dash.mkdir()
+    (dash / "dieu-khoan-bac-si-uy-quyen.json").write_text(json.dumps({"muc": [_muc_uq()]}, ensure_ascii=False), encoding="utf-8",
+                                                          newline="\n")
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY) is None, "DASH tạm (autouse) chưa có tệp"
+    monkeypatch.setattr(D, "DASH", dash)
+    assert D.tep_uy_quyen_mac_dinh() == dash / "dieu-khoan-bac-si-uy-quyen.json"
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY)["ngay"] == NGAY_UQ
+    assert D.kiem_ho_so(_hs_e(), HOM_NAY, XN.kiem_tieu_de)[0] == []
+
+
+def test_phieu_doi_nhan_khi_co_uy_quyen(tmp_path, kho, capsys):
+    epmc = lambda **k: {"doi": DOI_E, "title": "Bài JACC thử", "fullTextUrlList": {"fullTextUrl": [  # noqa: E731
+        {"availabilityCode": "F", "url": URL_E}]}}
+    khong = D.duong_doc("42377292", "chua_co", epmc=epmc, hom_nay=HOM_NAY, tep_uy_quyen=tmp_path / "khong-co.json")
+    assert khong["cach"] == "bac_si_doc_truc_tiep", "không uỷ quyền ⇒ như cũ"
+    ada = D.duong_doc("42377292", "chua_co", epmc=epmc, hom_nay=HOM_NAY, tep_uy_quyen=_tep_uq(tmp_path, _muc_uq(nxb=ADA)))
+    assert ada["cach"] == "bac_si_doc_truc_tiep", "uỷ quyền ADA không mở bài Elsevier"
+    tep = _tep_uq(tmp_path, _muc_uq())
+    r = D.duong_doc("42377292", "chua_co", epmc=epmc, hom_nay=HOM_NAY, tep_uy_quyen=tep)
+    assert r["cach"] == "trinh_duyet" and r["dieu_khoan"] == "bac_si_uy_quyen" and r["nxb"] == "Elsevier"
+    assert r["ngay_uy_quyen"] == NGAY_UQ and r["nhan_dieu_khoan"] == "BÁC SĨ UỶ QUYỀN MÁY ĐỌC (2026-10-02)"
+    phieu = D.lap_phieu(["42377292"], ngoai_tuyen=False, kho=kho, hom_nay=HOM_NAY, epmc=epmc, tep_uy_quyen=tep)
+    assert phieu[0]["cach"] == "trinh_duyet" and phieu[0]["dieu_khoan"] == "bac_si_uy_quyen"
+    D.in_phieu(phieu)
+    ra = capsys.readouterr().out
+    assert "CẦN TRÌNH DUYỆT CÓ BÁC SĨ" in ra and "BÁC SĨ UỶ QUYỀN MÁY ĐỌC (2026-10-02)" in ra and "KHÔNG đổi" in ra
+    assert "BÁC SĨ ĐỌC TRỰC TIẾP —" not in ra and "CHƯA KIỂM" not in ra
+
+
+def test_ban_doc_ho_so_uy_quyen_co_dong_quyet_dinh(tmp_path, kho):
+    tep = _tep_uq(tmp_path, _muc_uq())
+    ma, bao = D.nap(_hs_e(), ghi=True, xac_minh=_xm(), kho=kho, hom_nay=HOM_NAY, kiem_tieu_de=XN.kiem_tieu_de, tep_uy_quyen=tep)
+    assert ma == 0 and any("QUYẾT ĐỊNH của bác sĩ" in x for x in bao), bao
+    md = (kho / "doc_sau" / "PMID-42751933.md").read_text(encoding="utf-8")
+    dong = ("Đọc theo QUYẾT ĐỊNH của bác sĩ ngày 2026-10-02 (điều khoản Elsevier chỉ cho dùng với AI khi có giấy phép/thuê bao/"
+            "sự cho phép — trách nhiệm điều khoản thuộc bác sĩ).")
+    than = [x for x in md.splitlines()[1:] if x.strip()]
+    assert than[0] == "> " + dong, "dòng quyết định phải là dòng ĐẦU của thân bản đọc"
+    hs = json.loads((kho / "trinh_duyet" / "PMID-42751933.json").read_text(encoding="utf-8"))
+    assert hs["kiem"]["uy_quyen"]["ngay"] == NGAY_UQ and hs["kiem"]["uy_quyen"]["can_cu"] == CAN_CU_UQ
+    # Hồ sơ KHÔNG uỷ quyền (NXB đã kiểm giấy phép CC) ⇒ không có dòng quyết định.
+    kho2 = tmp_path / "kho2"
+    kho2.mkdir()
+    assert D.nap(_hs(), ghi=True, xac_minh=_xm(), kho=kho2, hom_nay=HOM_NAY, kiem_tieu_de=XN.kiem_tieu_de)[0] == 0
+    assert "QUYẾT ĐỊNH của bác sĩ" not in (kho2 / "doc_sau" / "PMID-42751933.md").read_text(encoding="utf-8")
+
+
+def test_cli_ghi_uy_quyen_chay_thu_khong_ghi(tmp_path, monkeypatch, capsys):
+    dash = tmp_path / "EBM-Dashboards"
+    dash.mkdir()
+    monkeypatch.setattr(D, "DASH", dash)
+    assert D.main(["--ghi-uy-quyen", "Elsevier", "--can-cu", CAN_CU_UQ]) == 0
+    ra = capsys.readouterr().out
+    assert "quyết định của bác sĩ — trách nhiệm điều khoản thuộc bác sĩ" in ra and "KHÔNG phải «NXB cho phép»" in ra
+    assert "chạy thử" in ra and not (dash / "dieu-khoan-bac-si-uy-quyen.json").exists()
+
+
+@pytest.mark.parametrize("nxb", ["Springer Nature", "elsevier", "ADA", "NXB thử cho phép"])
+def test_cli_ghi_uy_quyen_tu_choi_nxb_khong_phai_khoa_cam(tmp_path, monkeypatch, capsys, nxb):
+    dash = tmp_path / "EBM-Dashboards"
+    dash.mkdir()
+    monkeypatch.setattr(D, "DASH", dash)
+    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "NXB thử cho phép", {"ket_luan": "cho_phep", "doi": ("10.9999/",), "mien": ()})
+    assert D.main(["--ghi-uy-quyen", nxb, "--can-cu", CAN_CU_UQ, "--ghi"]) == 3
+    assert "không phải khoá «cấm»" in capsys.readouterr().out and not (dash / "dieu-khoan-bac-si-uy-quyen.json").exists()
+
+
+@pytest.mark.parametrize("can_cu", [None, "", "ok bác sĩ", "   cho đọc   "])
+def test_cli_ghi_uy_quyen_tu_choi_can_cu_ngan(tmp_path, monkeypatch, capsys, can_cu):
+    dash = tmp_path / "EBM-Dashboards"
+    dash.mkdir()
+    monkeypatch.setattr(D, "DASH", dash)
+    argv = ["--ghi-uy-quyen", "Elsevier", "--ghi"] + ([] if can_cu is None else ["--can-cu", can_cu])
+    assert D.main(argv) == 3
+    assert "--can-cu bắt buộc" in capsys.readouterr().out and not (dash / "dieu-khoan-bac-si-uy-quyen.json").exists()
+
+
+def test_ghi_uy_quyen_ghi_that_noi_tiep_khong_de_tep_hong_khong_tao_thu_muc(tmp_path):
+    dash = tmp_path / "EBM-Dashboards"
+    dash.mkdir()
+    tep = dash / "dieu-khoan-bac-si-uy-quyen.json"
+    ma, bao = D.ghi_uy_quyen("Elsevier", CAN_CU_UQ, ghi=True, tep=tep, hom_nay=HOM_NAY)
+    assert ma == 0, bao
+    d = json.loads(tep.read_text(encoding="utf-8"))
+    assert "KHÔNG phải «NXB cho phép»" in d["_about"] and len(d["muc"]) == 1
+    m = d["muc"][0]
+    assert (m["nxb"], m["ngay"], m["can_cu"]) == ("Elsevier", NGAY_UQ, CAN_CU_UQ) and "Chrome của bác sĩ" in m["pham_vi"]
+    assert m["dieu_khoan_nxb_khong_doi"]["nguon"] == D.DIEU_KHOAN_NXB["Elsevier"]["nguon"]
+    assert D.uy_quyen_bac_si("Elsevier", HOM_NAY, tep)["ngay"] == NGAY_UQ
+    assert D.ghi_uy_quyen(ADA, CAN_CU_UQ, ghi=True, tep=tep, hom_nay=HOM_NAY, het_han="2027-10-02")[0] == 0
+    d2 = json.loads(tep.read_text(encoding="utf-8"))
+    assert [x["nxb"] for x in d2["muc"]] == ["Elsevier", ADA] and d2["muc"][1]["het_han"] == "2027-10-02"
+    assert D.ghi_uy_quyen("Elsevier", CAN_CU_UQ, ghi=True, tep=tep, hom_nay=HOM_NAY, het_han="2026-10-01")[0] == 3
+    tep.write_text("{hỏng", encoding="utf-8", newline="\n")
+    ma3, bao3 = D.ghi_uy_quyen("Elsevier", CAN_CU_UQ, ghi=True, tep=tep, hom_nay=HOM_NAY)
+    assert ma3 == 3 and tep.read_text(encoding="utf-8") == "{hỏng" and any("KHÔNG ghi đè" in x for x in bao3)
+    vang = tmp_path / "khong-co" / "dieu-khoan-bac-si-uy-quyen.json"
+    assert D.ghi_uy_quyen("Elsevier", CAN_CU_UQ, ghi=True, tep=vang, hom_nay=HOM_NAY)[0] == 2 and not vang.parent.exists()
+
+
+def test_huong_dan_va_doctrine_co_uy_quyen_bac_si():
+    assert "--ghi-uy-quyen" in D.HUONG_DAN and "BÁC SĨ UỶ QUYỀN MÁY ĐỌC" in D.HUONG_DAN and "KHÔNG phải «NXB cho phép»" in D.HUONG_DAN
+    van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
+    i = van_ban.find("## 2septies. ")
+    muc = van_ban[i:van_ban.find("\n## ", i + 5)]
+    assert "**Bác sĩ uỷ quyền máy đọc (03/10/2026):**" in muc and "`EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json`" in muc
+    assert "KHÔNG phải «NXB cho phép»" in muc and D.lech_doctrine(van_ban) == []

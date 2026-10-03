@@ -17,6 +17,7 @@ văn rồi ghi một HỒ SƠ TRÍCH XUẤT CÓ CẤU TRÚC — không chép ngu
     python3 tools/doc_toan_van_co_nguoi.py --nap ho-so.json [--ghi]          # kiểm (mặc định chạy thử) rồi ghi vào kho
     python3 tools/doc_toan_van_co_nguoi.py --khong-truy-cap 42377292 --ly-do "tạp chí đòi mua bài"   # bác sĩ không có quyền đọc
     python3 tools/doc_toan_van_co_nguoi.py --bac-si-da-doc 42377292 --ghi-chu "<kết luận của bác sĩ>" [--ghi]   # NXB cấm AI: bác sĩ đã tự đọc
+    python3 tools/doc_toan_van_co_nguoi.py --ghi-uy-quyen Elsevier --can-cu "<nguyên văn lời bác sĩ>" [--ghi]   # bác sĩ uỷ quyền máy đọc
 
 Ghi vào (ngoài git, cùng kho dây chuyền OA): `EBM-Dashboards/toan_van_oa/trinh_duyet/PMID-<n>.json` + bản đọc
 `EBM-Dashboards/toan_van_oa/doc_sau/PMID-<n>.md` (gói tuần bước 4b đọc đúng thư mục này). Mã thoát: phiếu 0 hết việc · 1 còn bài
@@ -107,7 +108,8 @@ MIEN_TONG_HOP = ("dynamed.com", "uptodate.com", "bestpractice.bmj.com")
 
 # ĐIỀU KHOẢN NHÀ XUẤT BẢN về dùng NỘI DUNG với công cụ AI / khai thác văn bản (TDM) — 03/10/2026, góp ý của phiên khác + phiên này
 # tự đọc lại. CHỈ ghi điều ĐÃ ĐỌC (nguồn + ngày). NXB không có trong bảng = CHƯA KIỂM ⇒ hồ sơ phải tự khai `dieu_khoan` đã đọc.
-# «cam» ⇒ Claude KHÔNG đọc/xử lý bài; bác sĩ đọc trực tiếp, hoặc đi đường hợp lệ (giấy phép TDM). Nhận diện theo TIỀN TỐ DOI (một
+# «cam» ⇒ Claude KHÔNG đọc/xử lý bài; bác sĩ đọc trực tiếp, hoặc đi đường hợp lệ (giấy phép TDM) — TRỪ KHI bác sĩ đã ghi uỷ quyền
+# máy đọc cho đúng NXB đó (`uy_quyen_bac_si`, quyết định của bác sĩ, xem dưới). Nhận diện theo TIỀN TỐ DOI (một
 # NXB có hàng trăm miền tạp chí — vd JACC, J Hepatol, Clin Gastroenterol Hepatol đều là 10.1016) rồi tới miền.
 DIEU_KHOAN_NXB: dict[str, dict] = {
     "Elsevier": {
@@ -132,6 +134,69 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         "duong_hop_le": "Dyna AI của chính EBSCO hoặc giấy phép bằng văn bản của EBSCO; chỉ dùng để tìm nghiên cứu gốc — tools/tra_cuu_co_tai_khoan.py --dynamed-canh-bao (bác sĩ tự chép, thỉnh thoảng bằng tay, không đưa vào lịch nền)"},
 }
 _KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
+
+# BÁC SĨ UỶ QUYỀN MÁY ĐỌC (03/10/2026 — bác sĩ quyết trong chat: «Vậy hãy chỉnh sửa lại để máy đọc toàn văn và tóm tắt cho tôi»).
+# Bác sĩ là chủ hệ thống có thể quyết cho Claude đọc toàn văn bài của một NXB «cam» mà bác sĩ CÓ quyền truy cập (qua Chrome của
+# bác sĩ). Điều khoản của NXB KHÔNG đổi — Elsevier chỉ cho dùng Content với AI khi có giấy phép/thuê bao/sự cho phép; đây là
+# QUYẾT ĐỊNH và TRÁCH NHIỆM của bác sĩ, KHÔNG phải «NXB cho phép». Tệp quyết định nằm NGOÀI git (dữ liệu của bác sĩ); công cụ chỉ
+# ghi nó qua `--ghi-uy-quyen … --ghi` bằng ĐÚNG lời bác sĩ. Tệp vắng/hỏng/hết hạn ⇒ KHÔNG có uỷ quyền (fail-closed).
+TEN_TEP_UY_QUYEN = "dieu-khoan-bac-si-uy-quyen.json"
+KET_LUAN_UY_QUYEN = "bac_si_uy_quyen"   # CHỈ nhận ở nhánh NXB «cam» có uỷ quyền — NXB chưa kiểm vẫn chỉ cho_phep | giay_phep_cc
+CAN_CU_UY_QUYEN_MIN = 10
+DONG_QUYET_DINH = ("Đọc theo QUYẾT ĐỊNH của bác sĩ ngày {ngay} (điều khoản {nxb} chỉ cho dùng với AI khi có giấy phép/thuê bao/"
+                   "sự cho phép — trách nhiệm điều khoản thuộc bác sĩ).")
+_ABOUT_UY_QUYEN = ("Quyết định của BÁC SĨ (chủ hệ thống) cho Claude đọc toàn văn bài của NXB «cấm» trong DIEU_KHOAN_NXB mà bác sĩ CÓ "
+                   "quyền truy cập, chỉ qua Chrome của bác sĩ, để tóm tắt và lập hồ sơ trích xuất có cấu trúc (trích ≤ 15 từ, không "
+                   "lưu toàn văn). Điều khoản của NXB KHÔNG đổi; đây KHÔNG phải «NXB cho phép» — trách nhiệm điều khoản thuộc bác sĩ. "
+                   "Ghi bằng tools/doc_toan_van_co_nguoi.py --ghi-uy-quyen (đúng lời bác sĩ, có ngày); agent KHÔNG tự ghi khi bác sĩ "
+                   "chưa nói rõ trong chat. Xoá một mục (hoặc thêm het_han) = rút uỷ quyền.")
+
+
+def tep_uy_quyen_mac_dinh() -> Path:
+    """Đường dẫn tệp quyết định — tính LÚC GỌI từ `DASH` (test đổi được `DASH`; không chốt lúc import)."""
+    return DASH / TEN_TEP_UY_QUYEN
+
+
+def _ngay_iso(s) -> date | None:
+    s = str(s or "")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+        return None
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return None
+
+
+def uy_quyen_bac_si(nxb: str | None, hom_nay: date | None = None, tep: Path | None = None) -> dict | None:
+    """Uỷ quyền CÒN HIỆU LỰC của bác sĩ cho đúng NXB «cam» `nxb` (khoá của DIEU_KHOAN_NXB), hoặc None.
+
+    Fail-closed: tệp vắng / không đọc được / sai cấu trúc ⇒ None; mục khác NXB, ngày sai dạng hay ở tương lai, căn cứ quá ngắn,
+    `het_han` sai dạng hoặc đã qua (hôm nay > het_han) ⇒ bỏ qua mục đó. Nhiều mục hợp lệ ⇒ mục ngày mới nhất (bằng ngày: mục sau)."""
+    hom_nay = hom_nay or date.today()
+    if not nxb or (DIEU_KHOAN_NXB.get(nxb) or {}).get("ket_luan") != "cam":
+        return None
+    tep = Path(tep) if tep else tep_uy_quyen_mac_dinh()
+    try:
+        d = json.loads(tep.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    muc = d.get("muc") if isinstance(d, dict) else None
+    if not isinstance(muc, list):
+        return None
+    tot: dict | None = None
+    for m in muc:
+        if not isinstance(m, dict) or m.get("nxb") != nxb:
+            continue
+        ngay = _ngay_iso(m.get("ngay"))
+        if ngay is None or ngay > hom_nay or len(str(m.get("can_cu") or "").strip()) < CAN_CU_UY_QUYEN_MIN:
+            continue
+        if m.get("het_han") not in (None, ""):
+            hh = _ngay_iso(m.get("het_han"))
+            if hh is None or hom_nay > hh:
+                continue
+        if tot is None or ngay >= _ngay_iso(tot["ngay"]):
+            tot = m
+    return dict(tot) if tot else None
 
 
 def nxb_cua(doi: str = "", url: str = "") -> tuple[str | None, dict | None]:
@@ -192,6 +257,12 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
      (chạy thử) rồi thêm `--ghi`. Ghi chú là KẾT LUẬN bằng lời bác sĩ ({GHI_CHU_MIN}–{GHI_CHU_MAX} ký tự, không PII), KHÔNG chép nội
      dung bài. Bác sĩ KHÔNG dán nội dung bài Elsevier/ADA vào chat — Claude không được đọc nó. Thẻ thành «BÁC SĨ ĐÃ ĐỌC TRỰC TIẾP»
      (đã phủ, không hết hạn); máy vẫn KHÔNG có toàn văn bài đó.
+     NGOẠI LỆ — BÁC SĨ UỶ QUYỀN MÁY ĐỌC (03/10/2026): bác sĩ nói rõ trong chat là cho máy đọc bài của một NXB «cấm» mà bác sĩ có
+     quyền truy cập ⇒ phiên Claude ghi ĐÚNG lời bác sĩ: `--ghi-uy-quyen "<khoá NXB>" --can-cu "<nguyên văn lời bác sĩ>"` (chạy
+     thử) rồi thêm `--ghi` (vào EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json). Phiếu xếp bài NXB đó vào làn trình duyệt có
+     người, nhãn «BÁC SĨ UỶ QUYỀN MÁY ĐỌC (<ngày>)»; chỉ qua Chrome của bác sĩ; hồ sơ khai `dieu_khoan` {ket_luan:
+     bac_si_uy_quyen, ngay_uy_quyen: <đúng ngày trong tệp>}. Điều khoản NXB KHÔNG đổi — quyết định và trách nhiệm của bác sĩ,
+     KHÔNG phải «NXB cho phép». Agent KHÔNG tự ghi uỷ quyền khi bác sĩ chưa nói rõ trong chat.
   2b. NXB CHƯA KIỂM ⇒ Claude đọc trang ĐIỀU KHOẢN (không phải bài) của NXB, tìm điều về AI / text-and-data mining. Cấm hoặc không rõ
      ⇒ dừng, bác sĩ đọc trực tiếp. Cho phép rõ, hoặc bài mang giấy phép CC ⇒ ghi vào hồ sơ `dieu_khoan` {url, doc_luc, ket_luan:
      cho_phep | giay_phep_cc, trich ≤ 15 từ}; NXB đã kiểm thì đề xuất thêm vào DIEU_KHOAN_NXB bằng PR.
@@ -232,8 +303,10 @@ MAU = {
                  "vi_tri": "Bảng 2", "trich_ngan": ""}],
     "khuyen_cao": [{"tom_tat": "", "muc": "Class I, LOE A", "vi_tri": ""}],
     "han_che": "", "tai_tro_coi": "", "ghi_chu": "",
-    "dieu_khoan": {"url": "<trang điều khoản NXB đã đọc>", "doc_luc": date.today().isoformat(), "ket_luan": "cho_phep | giay_phep_cc",
-                   "trich": "<≤ 15 từ nguyên văn điều cho phép / tên giấy phép CC>"},
+    "dieu_khoan": {"url": "<trang điều khoản NXB đã đọc>", "doc_luc": date.today().isoformat(),
+                   "ket_luan": "cho_phep | giay_phep_cc | bac_si_uy_quyen (CHỈ NXB «cấm» có uỷ quyền của bác sĩ còn hiệu lực)",
+                   "trich": "<≤ 15 từ nguyên văn điều cho phép / tên giấy phép CC>",
+                   "ngay_uy_quyen": "<chỉ khi bac_si_uy_quyen: đúng ngày của mục trong EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json>"},
 }
 
 
@@ -379,8 +452,12 @@ def tra_doi_dich(doi: str) -> str:
 
 
 def duong_doc(pm: str, trang_thai: str, epmc: Callable[..., dict] = tra_epmc,
-              doi_dich: Callable[[str], str] = tra_doi_dich) -> dict:
-    """Đường đọc của MỘT bài chưa có toàn văn: OA chưa gom / trình duyệt (URL + miền đã đo) / chưa rõ (lỗi mạng ≠ «không có»)."""
+              doi_dich: Callable[[str], str] = tra_doi_dich, *, hom_nay: date | None = None,
+              tep_uy_quyen: Path | None = None) -> dict:
+    """Đường đọc của MỘT bài chưa có toàn văn: OA chưa gom / trình duyệt (URL + miền đã đo) / chưa rõ (lỗi mạng ≠ «không có»).
+
+    NXB «cam» ⇒ «bác sĩ đọc trực tiếp», TRỪ KHI bác sĩ có uỷ quyền máy đọc còn hiệu lực cho đúng NXB đó ⇒ làn trình duyệt có người,
+    gắn nhãn «BÁC SĨ UỶ QUYỀN MÁY ĐỌC (<ngày>)» (điều khoản NXB không đổi — quyết định của bác sĩ)."""
     if trang_thai != "chua_co":
         return {"pmid": pm, "cach": trang_thai}
     try:
@@ -404,19 +481,25 @@ def duong_doc(pm: str, trang_thai: str, epmc: Callable[..., dict] = tra_epmc,
         return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "chua_ro", "ly_do": "không có DOI/URL toàn văn trong Europe PMC"}
     ten_nxb, dk = nxb_cua(doi, url)
     if dk and dk["ket_luan"] == "cam":
-        return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "bac_si_doc_truc_tiep", "url": url, "nxb": ten_nxb,
-                "ly_do": f"điều khoản {ten_nxb} cấm xử lý nội dung bằng AI/TDM — bác sĩ đọc trực tiếp; đường hợp lệ: {dk['duong_hop_le']}"}
+        uq = uy_quyen_bac_si(ten_nxb, hom_nay, tep_uy_quyen)
+        if not uq:
+            return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "bac_si_doc_truc_tiep", "url": url, "nxb": ten_nxb,
+                    "ly_do": f"điều khoản {ten_nxb} cấm xử lý nội dung bằng AI/TDM — bác sĩ đọc trực tiếp; đường hợp lệ: {dk['duong_hop_le']}"}
+        return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "trinh_duyet", "url": url, "mien": _mien(url),
+                "mien_do_duoc": phan_loai_mien(url), "mien_phi": bool(mien_phi), "dieu_khoan": KET_LUAN_UY_QUYEN,
+                "nxb": ten_nxb, "ngay_uy_quyen": uq["ngay"], "nhan_dieu_khoan": f"BÁC SĨ UỶ QUYỀN MÁY ĐỌC ({uq['ngay']})"}
     return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "trinh_duyet", "url": url, "mien": _mien(url),
             "mien_do_duoc": phan_loai_mien(url), "mien_phi": bool(mien_phi),
             "dieu_khoan": "da_kiem" if dk else "chua_kiem"}
 
 
 def lap_phieu(pmids: list[str], *, ngoai_tuyen: bool, kho: Path | None = None, hom_nay: date | None = None,
-              epmc: Callable[..., dict] = tra_epmc, doi_dich: Callable[[str], str] = tra_doi_dich) -> list[dict]:
+              epmc: Callable[..., dict] = tra_epmc, doi_dich: Callable[[str], str] = tra_doi_dich,
+              tep_uy_quyen: Path | None = None) -> list[dict]:
     bp = bao_phu_cuc_bo(pmids, kho, hom_nay)
     if ngoai_tuyen:
         return [{"pmid": pm, "cach": t} for pm, t in bp.items()]
-    return [duong_doc(pm, t, epmc, doi_dich) for pm, t in bp.items()]
+    return [duong_doc(pm, t, epmc, doi_dich, hom_nay=hom_nay, tep_uy_quyen=tep_uy_quyen) for pm, t in bp.items()]
 
 
 def in_phieu(phieu: list[dict]) -> None:
@@ -453,6 +536,10 @@ def in_phieu(phieu: list[dict]) -> None:
                 print(f"      PMID {p['pmid']}{' (miễn phí)' if p['mien_phi'] else ''} · {p['tieu_de'][:80]}\n        {p['url']}")
                 if p.get("dieu_khoan") == "chua_kiem":
                     print("        ⚠ điều khoản NXB về AI/TDM CHƯA KIỂM — Claude đọc trang điều khoản trước (--huong-dan bước 2b)")
+                elif p.get("dieu_khoan") == KET_LUAN_UY_QUYEN:
+                    print(f"        ⚖ {p.get('nhan_dieu_khoan', 'BÁC SĨ UỶ QUYỀN MÁY ĐỌC')} — điều khoản {p.get('nxb', '?')} KHÔNG đổi; "
+                          "quyết định và trách nhiệm điều khoản của bác sĩ. Chỉ qua Chrome của bác sĩ; hồ sơ khai `dieu_khoan` "
+                          f"{{ket_luan: {KET_LUAN_UY_QUYEN}, ngay_uy_quyen: {p.get('ngay_uy_quyen', '?')}}}")
         print("\nQuy trình: python3 tools/doc_toan_van_co_nguoi.py --huong-dan")
     print("Cần bác sĩ kiểm chứng.")
 
@@ -483,12 +570,17 @@ def _duyet_khoa(x):
             yield from _duyet_khoa(v)
 
 
-def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[str], str | None] | None = None
-               ) -> tuple[list[str], list[str], dict]:
-    """(lỗi chặn, cảnh báo, thông tin) — CHỈ cấu trúc/nội dung, chưa gọi mạng. Lỗi ⇒ không ghi."""
+def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[str], str | None] | None = None,
+               tep_uy_quyen: Path | None = None) -> tuple[list[str], list[str], dict]:
+    """(lỗi chặn, cảnh báo, thông tin) — CHỈ cấu trúc/nội dung, chưa gọi mạng. Lỗi ⇒ không ghi.
+
+    NXB «cam»: CHỈ nhận khi (a) bác sĩ có uỷ quyền máy đọc còn hiệu lực cho ĐÚNG NXB đó (`uy_quyen_bac_si`, tệp `tep_uy_quyen`,
+    mặc định EBM-Dashboards/dieu-khoan-bac-si-uy-quyen.json) VÀ (b) hồ sơ khai `dieu_khoan.ket_luan == "bac_si_uy_quyen"` kèm
+    `dieu_khoan.ngay_uy_quyen` đúng ngày của mục uỷ quyền. Thiếu một ⇒ từ chối. Mọi kiểm khác không đổi."""
     hom_nay = hom_nay or date.today()
     loi: list[str] = []
     cb: list[str] = []
+    uy_quyen: dict | None = None
     if not isinstance(hs, dict):
         return ["hồ sơ không phải đối tượng JSON"], [], {}
     pm, doi = str(hs.get("pmid") or "").strip(), str(hs.get("doi") or "").strip().lower()
@@ -507,8 +599,21 @@ def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[st
         loi.append("url_doc là bản TỔNG HỢP có bản quyền (DynaMed/UpToDate…) — chỉ dùng để tìm nghiên cứu gốc, không phải toàn văn")
     ten_nxb, dk = nxb_cua(doi, url)
     if dk and dk["ket_luan"] == "cam":
-        loi.append(f"điều khoản {ten_nxb} cấm dùng nội dung với công cụ AI/TDM (đọc {dk['doc_luc']}: {dk['nguon']}) — KHÔNG nạp; "
-                   f"bác sĩ đọc trực tiếp, đường hợp lệ: {dk['duong_hop_le']}")
+        kd = hs.get("dieu_khoan") if isinstance(hs.get("dieu_khoan"), dict) else {}
+        uq = uy_quyen_bac_si(ten_nxb, hom_nay, tep_uy_quyen)
+        if uq and kd.get("ket_luan") == KET_LUAN_UY_QUYEN and str(kd.get("ngay_uy_quyen") or "") == uq["ngay"]:
+            uy_quyen = {"nxb": ten_nxb, "ngay": uq["ngay"], "can_cu": uq.get("can_cu", ""), "pham_vi": uq.get("pham_vi", ""),
+                        "het_han": uq.get("het_han") or ""}
+        elif uq:
+            loi.append(f"điều khoản {ten_nxb} cấm dùng nội dung với công cụ AI/TDM trừ khi có giấy phép/thuê bao/sự cho phép — bác sĩ "
+                       f"ĐÃ uỷ quyền máy đọc ngày {uq['ngay']} nhưng hồ sơ phải khai `dieu_khoan` {{ket_luan: {KET_LUAN_UY_QUYEN}, "
+                       f"ngay_uy_quyen: {uq['ngay']}}} (đúng ngày trong {TEN_TEP_UY_QUYEN}) — KHÔNG nạp")
+        else:
+            loi.append(f"điều khoản {ten_nxb} cấm dùng nội dung với công cụ AI/TDM (đọc {dk['doc_luc']}: {dk['nguon']}) — KHÔNG nạp; "
+                       f"bác sĩ đọc trực tiếp, đường hợp lệ: {dk['duong_hop_le']}")
+            if kd.get("ket_luan") == KET_LUAN_UY_QUYEN:
+                loi.append(f"hồ sơ khai `{KET_LUAN_UY_QUYEN}` nhưng KHÔNG có uỷ quyền còn hiệu lực của bác sĩ cho {ten_nxb} trong "
+                           f"EBM-Dashboards/{TEN_TEP_UY_QUYEN} — agent KHÔNG tự ghi uỷ quyền khi bác sĩ chưa nói rõ trong chat")
     elif not dk:
         kd = hs.get("dieu_khoan") if isinstance(hs.get("dieu_khoan"), dict) else {}
         if kd.get("ket_luan") not in _KET_LUAN_DIEU_KHOAN_NHAN or not re.match(r"https?://", str(kd.get("url") or "")) \
@@ -611,7 +716,10 @@ def kiem_ho_so(hs: dict, hom_nay: date | None = None, kiem_tieu_de: Callable[[st
         cb.append(f"thiếu {', '.join(thieu)} ⇒ độ đầy đủ «partial» (thẻ giữ trần «Cân nhắc»)")
     if td and do_giong(td, hs.get("tieu_de_bai") or "") < 0.2:
         cb.append("tiêu đề trang ít trùng tiêu đề bài — kiểm lại đã mở đúng bài chưa")
-    return loi, cb, {"do_day_du": "partial" if thieu else "full", "thieu_muc": thieu}
+    tt = {"do_day_du": "partial" if thieu else "full", "thieu_muc": thieu}
+    if uy_quyen:
+        tt["uy_quyen"] = uy_quyen
+    return loi, cb, tt
 
 
 def xac_minh_dinh_danh(hs: dict, xac_minh: Callable[[dict], dict]) -> tuple[str | None, dict]:
@@ -639,13 +747,17 @@ def ban_doc_md(hs: dict, kiem: dict) -> str:
     nhan = {"thiet_ke": "Thiết kế", "quan_the": "Quần thể", "can_thiep_so_sanh": "Can thiệp / so sánh", "ket_cuc_chinh": "Kết cục chính",
             "ngau_nhien_lam_mu": "Ngẫu nhiên hoá / làm mù", "dang_ky": "Mã đăng ký", "nguy_co_sai_lech": "Nguy cơ sai lệch",
             "di_bien": "Dị biệt (heterogeneity)"}
-    d = [f"# Đọc sâu toàn văn — {_ten_tep(hs).replace('-', ' ', 1)}",
-         f"\n> Đọc qua TRÌNH DUYỆT CÓ BÁC SĨ ngày {hs['doc_luc']} (bài KHÔNG có bản OA; trang «{hs['tieu_de_trang'][:90]}»). "
-         "Trích xuất CÓ CẤU TRÚC do phiên Claude ghi — KHÔNG nguyên văn (bản quyền nhà xuất bản); mỗi con số kèm vị trí trong bài "
-         f"để đối chiếu. SHA-256 văn bản trang (tính trong trình duyệt): `{hs['sha256_toan_van'][:16]}…` · "
-         f"{int(hs['so_ky_tu_toan_van'])} ký tự. Độ đầy đủ: **{kiem['do_day_du']}**"
-         + (f" (thiếu: {', '.join(kiem['thieu_muc'])})" if kiem["thieu_muc"] else "") + ". **Cần bác sĩ kiểm chứng.**\n",
-         f"**{hs['tieu_de_bai']}**" + (f" · doi:{hs['doi']}" if hs.get("doi") else "") + f"  \nNguồn đọc: {hs['url_doc']}"]
+    d = [f"# Đọc sâu toàn văn — {_ten_tep(hs).replace('-', ' ', 1)}"]
+    uq = kiem.get("uy_quyen") or {}
+    if uq:
+        # Hồ sơ của NXB «cam» chỉ tới được đây qua uỷ quyền của bác sĩ ⇒ dòng ĐẦU của thân bản đọc nói rõ căn cứ (không viết như NXB cho phép).
+        d.append("\n> " + DONG_QUYET_DINH.format(ngay=uq["ngay"], nxb=uq["nxb"]))
+    d += [f"\n> Đọc qua TRÌNH DUYỆT CÓ BÁC SĨ ngày {hs['doc_luc']} (bài KHÔNG có bản OA; trang «{hs['tieu_de_trang'][:90]}»). "
+          "Trích xuất CÓ CẤU TRÚC do phiên Claude ghi — KHÔNG nguyên văn (bản quyền nhà xuất bản); mỗi con số kèm vị trí trong bài "
+          f"để đối chiếu. SHA-256 văn bản trang (tính trong trình duyệt): `{hs['sha256_toan_van'][:16]}…` · "
+          f"{int(hs['so_ky_tu_toan_van'])} ký tự. Độ đầy đủ: **{kiem['do_day_du']}**"
+          + (f" (thiếu: {', '.join(kiem['thieu_muc'])})" if kiem["thieu_muc"] else "") + ". **Cần bác sĩ kiểm chứng.**\n",
+          f"**{hs['tieu_de_bai']}**" + (f" · doi:{hs['doi']}" if hs.get("doi") else "") + f"  \nNguồn đọc: {hs['url_doc']}"]
     co_pp = [(nhan.get(k, k), v) for k, v in pp.items() if (v or "").strip()]
     if co_pp:
         d.append("\n## Phương pháp (lời Claude, không nguyên văn)\n")
@@ -684,11 +796,16 @@ def _ghi_nguyen_tu(tep: Path, noi_dung: str) -> None:
 
 
 def nap(hs: dict, *, ghi: bool, xac_minh: Callable[[dict], dict] | None, kho: Path | None = None,
-        hom_nay: date | None = None, kiem_tieu_de: Callable[[str], str | None] | None = None) -> tuple[int, list[str]]:
+        hom_nay: date | None = None, kiem_tieu_de: Callable[[str], str | None] | None = None,
+        tep_uy_quyen: Path | None = None) -> tuple[int, list[str]]:
     """Kiểm → xác minh → (nếu --ghi) ghi JSON + bản đọc. Trả (mã thoát, dòng báo)."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
-    loi, cb, kiem = kiem_ho_so(hs, hom_nay, kiem_tieu_de)
+    loi, cb, kiem = kiem_ho_so(hs, hom_nay, kiem_tieu_de, tep_uy_quyen)
     bao = [f"✗ {x}" for x in loi] + [f"🟡 {x}" for x in cb]
+    if not loi and kiem.get("uy_quyen"):
+        uq = kiem["uy_quyen"]
+        bao.append(f"⚖ {uq['nxb']}: nạp theo QUYẾT ĐỊNH của bác sĩ ngày {uq['ngay']} — điều khoản NXB không đổi; trách nhiệm điều "
+                   "khoản thuộc bác sĩ")
     pm = str(hs.get("pmid") or "").strip() if isinstance(hs, dict) else ""
     if pm and (list(kho.glob(f"PMID-{pm}_*.xml")) or list(kho.glob(f"PMID-{pm}_UPW.*"))):
         loi.append("đã có toàn văn OA trong kho — dùng doc_sau_toan_van.py, không cần làn trình duyệt")
@@ -772,6 +889,60 @@ def danh_dau_bac_si_da_doc(pm: str, ghi_chu: str | None, *, ghi: bool, kho: Path
     return 0, bao + [f"✓ đã ghi {_tuong_doi(tep)}"]
 
 
+def ghi_uy_quyen(nxb: str, can_cu: str | None, *, pham_vi: str | None = None, het_han: str | None = None, ghi: bool = False,
+                 tep: Path | None = None, hom_nay: date | None = None) -> tuple[int, list[str]]:
+    """Ghi QUYẾT ĐỊNH của bác sĩ cho máy đọc toàn văn bài của một NXB «cam» (mặc định chạy thử; `ghi=True` mới ghi).
+
+    `can_cu` = NGUYÊN VĂN lời bác sĩ trong chat (≥ 10 ký tự, không PII). Chỉ nhận khoá «cam» của DIEU_KHOAN_NXB. Mã: 0 đạt (đã ghi /
+    chạy thử) · 2 thư mục EBM-Dashboards vắng (không tự tạo) · 3 từ chối (kể cả tệp quyết định có mà hỏng — KHÔNG ghi đè)."""
+    hom_nay = hom_nay or date.today()
+    tep = Path(tep) if tep else tep_uy_quyen_mac_dinh()
+    cam = [k for k, v in DIEU_KHOAN_NXB.items() if v.get("ket_luan") == "cam"]
+    loi: list[str] = []
+    dk = DIEU_KHOAN_NXB.get(nxb or "")
+    if not dk or dk.get("ket_luan") != "cam":
+        loi.append(f"NXB «{nxb}» không phải khoá «cấm» của DIEU_KHOAN_NXB — chỉ nhận đúng một trong: " + " · ".join(f"«{k}»" for k in cam))
+    cc = (can_cu or "").strip()
+    if len(cc) < CAN_CU_UY_QUYEN_MIN:
+        loi.append(f"--can-cu bắt buộc, ≥ {CAN_CU_UY_QUYEN_MIN} ký tự — NGUYÊN VĂN lời bác sĩ trong chat (agent không tự soạn)")
+    elif any(p.search(cc) for p in _PII):
+        loi.append("--can-cu có chuỗi giống thông tin định danh (email/điện thoại/số 12 chữ) — KHÔNG PII")
+    hh = None
+    if het_han not in (None, ""):
+        hh = _ngay_iso(het_han)
+        if hh is None or hh < hom_nay:
+            loi.append(f"--het-han «{het_han}» phải là ngày ISO (YYYY-MM-DD) từ hôm nay trở đi")
+    if loi:
+        return 3, [f"✗ {x}" for x in loi] + ["TỪ CHỐI — chưa ghi gì."]
+    muc = {"nxb": nxb, "ngay": hom_nay.isoformat(), "can_cu": cc,
+           "pham_vi": (pham_vi or "").strip() or (f"Claude đọc toàn văn bài {nxb} mà bác sĩ có quyền truy cập, chỉ qua Chrome của bác "
+                                                  "sĩ, để tóm tắt và lập hồ sơ trích xuất có cấu trúc (trích ≤ 15 từ, không lưu toàn văn)")}
+    if hh:
+        muc["het_han"] = hh.isoformat()
+    muc["dieu_khoan_nxb_khong_doi"] = {"nguon": dk.get("nguon", ""), "doc_luc": dk.get("doc_luc", ""), "trich": dk.get("trich", "")}
+    muc["ghi_boi"] = "tools/doc_toan_van_co_nguoi.py --ghi-uy-quyen"
+    bao = [f"⚖ Đây là quyết định của bác sĩ — trách nhiệm điều khoản thuộc bác sĩ. Điều khoản {nxb} KHÔNG đổi "
+           f"(«{dk.get('trich', '')}» — {dk.get('nguon', '')}); đây KHÔNG phải «NXB cho phép».",
+           "  mục sẽ ghi: " + json.dumps(muc, ensure_ascii=False)]
+    if not ghi:
+        return 0, bao + [f"(chạy thử — thêm --ghi để ghi vào {_tuong_doi(tep)})"]
+    if not tep.parent.is_dir():
+        return 2, bao + [f"⚪ KHÔNG ĐO ĐƯỢC — không thấy thư mục {tep.parent} — KHÔNG ghi (không tự tạo thư mục)"]
+    if tep.exists():
+        try:
+            d = json.loads(tep.read_text(encoding="utf-8"))
+            if not isinstance(d, dict) or not isinstance(d.get("muc"), list):
+                raise ValueError("sai cấu trúc (cần {\"muc\": [...]})")
+        except (OSError, ValueError) as e:
+            return 3, bao + [f"✗ tệp quyết định {tep.name} có mà KHÔNG đọc được ({type(e).__name__}) — KHÔNG ghi đè; bác sĩ xem lại tệp"]
+    else:
+        d = {"_about": _ABOUT_UY_QUYEN, "muc": []}
+    d["muc"].append(muc)
+    _ghi_nguyen_tu(tep, json.dumps(d, ensure_ascii=False, indent=2) + "\n")
+    return 0, bao + [f"✓ đã ghi {_tuong_doi(tep)} — phiếu xếp bài {nxb} vào làn trình duyệt có người, nhãn "
+                     f"«BÁC SĨ UỶ QUYỀN MÁY ĐỌC ({muc['ngay']})»"]
+
+
 def _kiem_tieu_de_cua_cong():
     try:
         return _nap_mo_dun("_dtv_xntd", "xac_nhan_trinh_duyet.py").kiem_tieu_de
@@ -794,13 +965,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--huong-dan", action="store_true")
     ap.add_argument("--mau", action="store_true")
     ap.add_argument("--nap", type=Path, help="hồ sơ trích xuất JSON do phiên Claude soạn")
-    ap.add_argument("--ghi", action="store_true", help="cùng --nap / --bac-si-da-doc: ghi vào kho (mặc định chạy thử)")
+    ap.add_argument("--ghi", action="store_true",
+                    help="cùng --nap / --bac-si-da-doc / --ghi-uy-quyen: ghi thật (mặc định chạy thử)")
     ap.add_argument("--khong-truy-cap", metavar="PMID")
     ap.add_argument("--ly-do", default="")
     ap.add_argument("--bac-si-da-doc", metavar="PMID",
                     help="NXB cấm AI/TDM: bác sĩ đã tự đọc bài — ghi kết luận (cần --ghi-chu; mặc định chạy thử)")
     ap.add_argument("--ghi-chu", default=None,
                     help=f"kết luận bằng lời bác sĩ, {GHI_CHU_BAC_SI_MIN}–{GHI_CHU_BAC_SI_MAX} ký tự, không PII, KHÔNG chép nội dung bài")
+    ap.add_argument("--ghi-uy-quyen", metavar="NXB",
+                    help="ghi QUYẾT ĐỊNH của bác sĩ cho máy đọc bài của một NXB «cấm» (đúng khoá DIEU_KHOAN_NXB; cần --can-cu; "
+                         "mặc định chạy thử) — trách nhiệm điều khoản thuộc bác sĩ")
+    ap.add_argument("--can-cu", default=None, help=f"NGUYÊN VĂN lời bác sĩ trong chat (≥ {CAN_CU_UY_QUYEN_MIN} ký tự)")
+    ap.add_argument("--pham-vi", default=None, help="phạm vi uỷ quyền (mặc định: đọc qua Chrome của bác sĩ, chỉ hồ sơ tóm lược)")
+    ap.add_argument("--het-han", default=None, help="ngày hết hạn uỷ quyền YYYY-MM-DD (tuỳ chọn)")
     a = ap.parse_args(argv)
     if a.huong_dan:
         print(HUONG_DAN)
@@ -819,6 +997,10 @@ def main(argv: list[str] | None = None) -> int:
         ma, bao = danh_dau_bac_si_da_doc(a.bac_si_da_doc, a.ghi_chu, ghi=a.ghi)
         print("\n".join(bao))
         print("Cần bác sĩ kiểm chứng.")
+        return ma
+    if a.ghi_uy_quyen is not None:
+        ma, bao = ghi_uy_quyen(a.ghi_uy_quyen, a.can_cu, pham_vi=a.pham_vi, het_han=a.het_han, ghi=a.ghi)
+        print("\n".join(bao))
         return ma
     if a.nap:
         try:
