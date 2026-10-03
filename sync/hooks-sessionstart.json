@@ -71,6 +71,12 @@
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/canh_dia_onedrive.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/canh_dia_onedrive.py --im-khi-on; else echo \"⚠ CHỐT canh_dia_onedrive KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT canh_dia_onedrive KHÔNG CHẠY — không thấy $D/tools/canh_dia_onedrive.py\"; fi; true",
           "timeout": 15,
           "statusMessage": "Canh đĩa + log OneDrive…"
+        },
+        {
+          "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/hom_viec_mot_cua.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/hom_viec_mot_cua.py --doc --lam-moi-nen; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không thấy $D/tools/hom_viec_mot_cua.py\"; fi; true",
+          "timeout": 10,
+          "statusMessage": "Hòm việc một cửa (đọc bảng sinh sẵn)…"
         }
       ]
     }

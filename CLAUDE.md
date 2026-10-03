@@ -170,6 +170,7 @@ Dựng dashboard (EW) → cổng liêm chính → an toàn thuốc (nếu liên 
 - Bộ chốt bài học: `python3 tools/chot_hoi_quy_bai_hoc.py` (mỗi mục là một lỗi CÓ THẬT, kiểm HÀNH VI trên mã sống, nhanh, ngoại tuyến). Thêm/sửa mục ⇒ chạy TRỌN BỘ; miễn trừ theo từng match (`bh10-mien:` kèm lý do). Lịch sử từng mục: `audit/NHAT-KY-SU-CO.md` + `audit/nhat-ky/`.
 - CI GitHub Actions hai repo: đo sống bằng `gh run list`; bật/tắt Actions và hạn mức là việc của bác sĩ.
 - **«Hệ còn gì để làm?»** = `python3 tools/tu_de_xuat_viec.py` (👤 thẩm quyền bác sĩ · 🤖 máy chạy được · 🛎 máy làm được nhưng chưa ai chạy). Báo cáo đánh giá: thư mục `audit/` (12 = đánh giá hoàn thiện 21/09; 15 = nguồn chứng cứ trên Cloud 24/09).
+- **Hòm việc một cửa** (03/10/2026, BH154): `python3 tools/hom_viec_mot_cua.py` — ≤ 12 dòng việc 👤 từ bảng sinh sẵn `state/hom-viec.json` (hook SessionStart `--doc --lam-moi-nen`, làm mới ở nền); bảng có giác quan PR chờ gộp và thẻ tuần chưa quyết. Bác sĩ nói quyết định thẻ ⇒ `python3 tools/ghi_duyet_the_tuan.py "duyệt W40: 1 ✓ 3 ✗ 5 hoãn" --ghi` (chỉ ghi lời bác sĩ, không đổi dashboard).
 - **Hook chốt hồi quy chỉ ĐỌC kết quả nền** (HV-01, BH147): `tools/chot_hoi_quy_nen.py --doc --im-khi-on` đọc `state/chot-hoi-quy-gan-nhat.json` (<1 s) và tự phóng lượt `--chay` nền khi cũ (>6 giờ/đổi HEAD); chưa đo/cũ >72 giờ/lượt LỖI ⇒ 🟡 «CHƯA ĐO ĐƯỢC», KHÔNG BAO GIỜ im lặng như xanh. Đổi hook máy: `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` (nguồn `sync/hooks-sessionstart.json`).
 
 ## 10. Lệnh thường dùng

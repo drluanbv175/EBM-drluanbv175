@@ -534,6 +534,137 @@ def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
     return len(chua_day), nhanh
 
 
+def _trang_thai_ci_pr(rollup: list) -> str:
+    """xanh · do · chay · khong — từ `statusCheckRollup` của gh (CheckRun dùng conclusion/status, StatusContext dùng state)."""
+    if not rollup:
+        return "khong"
+    ket = [str(c.get("conclusion") or c.get("state") or c.get("status") or "").upper() for c in rollup if isinstance(c, dict)]
+    if any(k in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE") for k in ket):
+        return "do"
+    if all(k in ("SUCCESS", "SKIPPED", "NEUTRAL") for k in ket):
+        return "xanh"
+    return "chay"
+
+
+def giac_quan_pr_cho_gop(cac_repo: list[tuple[str, Path]], chay=None, bay_gio: dt.datetime | None = None
+                         ) -> list[tuple[int, str, str]]:
+    """PR MỞ đang chờ bác sĩ gộp ở cả hai repo (HV-04, kiểm toàn diện 02/10/2026: 11 PR mở mà 0 cảm biến đếm).
+
+    Gộp PR là thẩm quyền bác sĩ (CLAUDE.md §0.5) ⇒ việc 👤. Nêu CI xanh/đỏ/đang chạy, tuổi PR cũ nhất và PR XẾP CHỒNG (base không
+    phải nhánh mặc định ⇒ phải gộp PR nền trước). Cần mạng + `gh`; không trả lời được ⇒ giác quan chết (⚪), KHÔNG phải «0 PR»."""
+    chay = chay or (lambda lenh: _chay(lenh, giay=45))
+    bay_gio = bay_gio or dt.datetime.now(dt.timezone.utc)
+    if la_phien_cloud():
+        _SO_GIAC_QUAN["chay"] += 1
+        _ghi_chet(["", "PR chờ gộp"], "phiên Cloud — gh không có xác thực ở đây")
+        return []
+    nhom, do, chay_dang, xanh, cu_nhat, xep_chong = [], 0, 0, 0, 0.0, []
+    for ten, duong in cac_repo:
+        orr = _owner_repo_tu_remote(duong)
+        if not orr:
+            _SO_GIAC_QUAN["chay"] += 1
+            _ghi_chet(["", f"PR chờ gộp ({ten})"], "không suy được owner/repo từ remote")
+            return []
+        out = chay(["gh", "pr", "list", "--repo", orr, "--state", "open", "--limit", "50", "--json",
+                    "number,createdAt,baseRefName,isDraft,statusCheckRollup"])
+        try:
+            prs = json.loads(out)
+            assert isinstance(prs, list)
+        except (ValueError, AssertionError):
+            _ghi_chet(["", f"PR chờ gộp ({ten})"], "gh không trả JSON (chưa đăng nhập / mất mạng?)")
+            return []
+        prs = [x for x in prs if not x.get("isDraft")]
+        if not prs:
+            continue
+        mac_dinh = _nhanh_mac_dinh(duong) if ten == "y khoa" else "master"
+        so = []
+        for x in sorted(prs, key=lambda y: y.get("number", 0)):
+            tt = _trang_thai_ci_pr(x.get("statusCheckRollup") or [])
+            do += tt == "do"
+            chay_dang += tt == "chay"
+            xanh += tt == "xanh"
+            so.append(f"#{x['number']}" + ("✗" if tt == "do" else ""))
+            try:
+                tuoi = (bay_gio - dt.datetime.fromisoformat(str(x["createdAt"]).replace("Z", "+00:00"))).total_seconds() / 3600
+                cu_nhat = max(cu_nhat, tuoi)
+            except (KeyError, ValueError):
+                pass
+            if mac_dinh and x.get("baseRefName") not in (mac_dinh, None, ""):
+                xep_chong.append(f"#{x['number']}→{x['baseRefName'][:40]}")
+        nhom.append(f"{ten}: {' '.join(so)}")
+    tong = do + chay_dang + xanh
+    if not tong:
+        return []
+    dong = (f"{tong} PR chờ bác sĩ gộp — " + " · ".join(nhom)
+            + f" (CI xanh {xanh}/{tong}" + (f", ĐỎ {do}" if do else "") + (f", đang chạy {chay_dang}" if chay_dang else "")
+            + f"; cũ nhất {cu_nhat:.0f} giờ)" + (f"; XẾP CHỒNG (gộp PR nền trước): {', '.join(xep_chong)}" if xep_chong else ""))
+    return [(1 if (do or cu_nhat > 48) else 2, dong, "nêu SỐ PR muốn gộp trong chat (gh --auto không chờ CI ở repo này)")]
+
+
+def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = None, so: Path | None = None
+                                 ) -> list[tuple[int, str, str]]:
+    """Thẻ của gói tuần MỚI NHẤT (≥ 3 ngày tuổi, ≤ 21 ngày) chưa có quyết định của bác sĩ trong sổ (EV-10, 03/10/2026).
+    Ngoại tuyến; vắng queue ⇒ giác quan chết (⚪)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    hom_nay = hom_nay or dt.date.today()
+    if not queue_dir.is_dir():
+        _ghi_chet(["", "quyết định thẻ tuần"], "không có queue/ ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_gdtt_tdxv", Path(__file__).resolve().parent / "ghi_duyet_the_tuan.py")
+        gd = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(gd)
+        goi = gd.goi_moi_nhat(queue_dir)
+        if goi is None:
+            return []
+        tuoi = (hom_nay - dt.date.fromtimestamp(goi.stat().st_mtime)).days
+        if not 3 <= tuoi <= 21:
+            return []
+        the, chua = gd.chua_quyet(goi, so)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "quyết định thẻ tuần"], f"lỗi {type(exc).__name__}")
+        return []
+    if not chua:
+        return []
+    return [(2, f"{len(chua)}/{len(the)} thẻ gói {goi.stem} chưa ghi quyết định của bác sĩ ({tuoi} ngày) — máy không biết thẻ nào "
+             "hữu ích", 'python3 tools/ghi_duyet_the_tuan.py "duyệt W<tuần>: 1 ✓ 3 ✗ 5 hoãn" --ghi')]
+
+
+def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
+    """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
+
+    Chỉ một tệp doctrine (`_CONNECTOR-CHUNG-CU.md`, BH107) từng được so; cặp PR #77↔#61 cho thấy gộp một bên là hai bản lệch mà không
+    chốt nào đỏ — vd agent kê đơn sửa ở một repo, quên repo kia. Không chặn commit (hai PR cặp có thể lệch pha vài giờ) — chỉ nhắc 🤖.
+    Vắng repo y khoa ⇒ giác quan chết (⚪)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not (goc_agents.is_dir() and mea_agents.is_dir()):
+        _ghi_chet(["", "agent gốc ↔ y khoa"], "thiếu một trong hai thư mục .claude/agents")
+        return []
+    goc = {p.name: p for p in goc_agents.glob("*.md")}
+    mea = {p.name: p for p in mea_agents.glob("*.md")}
+    lech = sorted(n for n in goc.keys() & mea.keys() if goc[n].read_bytes() != mea[n].read_bytes())
+    chi_mot = sorted(goc.keys() ^ mea.keys())
+    if not lech and not chi_mot:
+        return []
+    mo_ta = []
+    if lech:
+        mo_ta.append(f"{len(lech)} lệch nội dung ({', '.join(lech[:4])}{'…' if len(lech) > 4 else ''})")
+    if chi_mot:
+        mo_ta.append(f"{len(chi_mot)} chỉ có ở một bên ({', '.join(chi_mot[:4])}{'…' if len(chi_mot) > 4 else ''})")
+    return [(2, "Agent gốc ↔ y khoa: " + "; ".join(mo_ta) + " — đồng bộ bằng PR CẶP (cùng nội dung ở cả hai repo)",
+             "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
+
+
+def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> None:
+    """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/)."""
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
+    tam.write_text(json.dumps({"sinh_luc": dt.datetime.now().isoformat(timespec="seconds"), "giac_quan": so_giac_quan,
+                               "chet": chet, "viec": [{"uu": u, "ai": a, "viec": v, "lenh": lenh} for u, a, v, lenh in de_xuat]},
+                              ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    os.replace(tam, tep)
+
+
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
     """Đếm dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
 
@@ -581,6 +712,7 @@ def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Bảng đề xuất việc tự sinh từ bộ đếm sống")
     ap.add_argument("--gon", action="store_true", help="chỉ in bảng, bỏ phần giải thích")
+    ap.add_argument("--json", type=Path, default=None, help="ghi bảng dạng máy đọc (cho hom_viec_mot_cua.py)")
     a = ap.parse_args()
     de_xuat: list[tuple[int, str, str, str]] = []  # (ưu tiên, ai, việc+số đo, lệnh)
 
@@ -839,6 +971,17 @@ def main() -> int:
                                 "python3 tools/tra_nguon_chuan.py --danh-sach"))
         except (json.JSONDecodeError, OSError):
             pass
+
+    # ⑫ PR CHỜ GỘP (HV-04) + ⑬ QUYẾT ĐỊNH THẺ TUẦN (EV-10) — 03/10/2026, xem docstring.
+    for uu, dong, lenh in giac_quan_pr_cho_gop([("gốc", REPO), ("y khoa", _GOC_MEA)] if _GOC_MEA.exists() else [("gốc", REPO)]):
+        de_xuat.append((uu, "👤", dong, lenh))
+    for uu, dong, lenh in giac_quan_the_tuan_chua_quyet(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue")):
+        de_xuat.append((uu, "👤", dong, lenh))
+    for uu, dong, lenh in giac_quan_agent_lech(REPO / ".claude" / "agents", _GOC_MEA / ".claude" / "agents"):
+        de_xuat.append((uu, "🤖", dong, lenh))
+    if a.json:
+        de_xuat.sort(key=lambda x: x[0])
+        ghi_json(de_xuat, list(_GIAC_QUAN_CHET), a.json, _SO_GIAC_QUAN["chay"])
 
     hom_nay = dt.date.today().isoformat()
     print("=" * 66)

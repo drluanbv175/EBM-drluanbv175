@@ -190,6 +190,12 @@ VIEC_LE_MANH: set[str] = {
 VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
     (["còn gì để hoàn thiện", "còn gì phải làm", "hệ thống còn gì", "còn việc gì"],
      "tools/tu_de_xuat_viec.py", "bảng 8 giác quan — hệ còn gì để hoàn thiện"),
+    # 03/10/2026 (HV-02 · EV-10): hòm việc một cửa + ghi quyết định thẻ tuần của bác sĩ.
+    (["hòm việc", "việc chờ tôi", "việc cần tôi", "cần tôi xác nhận", "việc chờ xác nhận"],
+     "tools/hom_viec_mot_cua.py", "hòm việc một cửa — ≤ 12 dòng việc của bác sĩ (đọc bảng sinh sẵn)"),
+    # KHÔNG có cue trơn «thẻ tuần»: «đọc toàn văn các thẻ tuần» là việc ĐỌC BÀI (ghép thử với PR toàn văn 03/10 bắt được).
+    (["duyệt thẻ", "ghi quyết định thẻ", "quyết định thẻ tuần", "duyệt gói tuần", "ghi duyệt"],
+     "tools/ghi_duyet_the_tuan.py", "ghi ĐÚNG lời bác sĩ trên thẻ gói tuần (máy không tự quyết)"),
     # 20/09/2026 (T3-05): năng lực mới CÓ CHỦ nhưng chưa có cửa vào router (đo: unknown).
     (["làm mới chứng cứ", "cập nhật chứng cứ chủ đề", "chủ đề nào cũ", "chủ đề nào lâu", "độ tươi chứng cứ",
       "làm mới chủ đề"],
