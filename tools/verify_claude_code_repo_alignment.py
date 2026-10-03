@@ -8,6 +8,7 @@ này chỉ đọc file và git index; không tự sửa/sync.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import check_claude_codex_sync_health as sync_health
+import muc_luc_nhat_ky as nk
 import sync_agents_to_codex as sync
 
 
@@ -108,8 +110,9 @@ def _missing_markers(path: Path, markers: list[str]) -> list[str]:
 # Ngân sách ký tự cho CLAUDE.md gốc (thêm 24/09/2026, đề xuất #12 của audit/12).
 # CLAUDE.md được nạp vào MỌI phiên; trước khi rút gọn nó phình tới 278.003 ký tự vì
 # mỗi sự cố được nối thêm vào như nhật ký (15/08: 147K · 09/09: 189K · 21/09: 268K).
-# Lịch sử nay nằm nguyên văn ở audit/NHAT-KY-SU-CO.md. Vượt ngân sách ⇒ FAIL, để sự cố
-# mới được ghi vào nhật ký thay vì làm CLAUDE.md phình trở lại.
+# Lịch sử nay nằm nguyên văn ở audit/NHAT-KY-SU-CO.md (tới 01/10/2026) và audit/nhat-ky/
+# (từ 01/10/2026). Vượt ngân sách ⇒ FAIL, để sự cố mới được ghi vào nhật ký thay vì làm
+# CLAUDE.md phình trở lại.
 NGAN_SACH_CLAUDE_MD = 60_000
 
 
@@ -129,8 +132,40 @@ def check_claude_md_budget(path: Path | None = None,
     }
     if so_ky_tu > ngan_sach:
         ket_qua["errors"] = [
-            f"CLAUDE.md có {so_ky_tu} ký tự > ngân sách {ngan_sach}: ghi sự cố/lịch sử vào "
-            "audit/NHAT-KY-SU-CO.md, CLAUDE.md chỉ giữ LUẬT thường trực"]
+            f"CLAUDE.md có {so_ky_tu} ký tự > ngân sách {ngan_sach}: ghi sự cố/lịch sử thành "
+            "tệp riêng audit/nhat-ky/YYYY-MM-DD-<slug>.md, CLAUDE.md chỉ giữ LUẬT thường trực"]
+    return ket_qua
+
+
+# Nhật ký sự cố (01/10/2026, bác sĩ chọn phương án «mỗi sự cố một tệp»). Từ 24/09 mọi PR
+# nối mục vào CUỐI audit/NHAT-KY-SU-CO.md nên hai PR song song gần như chắc xung đột ở đó
+# (3/3 lần gộp có xung đột từ 24/09). Tệp cũ ĐÓNG BĂNG bằng băm (đã chuẩn hoá CRLF→LF để
+# Windows không đỏ giả); mục mới vào audit/nhat-ky/, luật tên tệp nằm ở muc_luc_nhat_ky.py.
+# Đổi hằng băm chỉ trong PR có lý do ghi rõ — không đổi để «cho qua» một lần nối thêm.
+NHAT_KY_CU = ROOT / "audit" / "NHAT-KY-SU-CO.md"
+NHAT_KY_CU_SHA256 = "93ef577b6e5a1cc06b4a3de2cb992d62c9f626e110dfdc04e6577e81e012ac34"
+
+
+def check_nhat_ky_su_co(tep_cu: Path | None = None, thu_muc: Path | None = None,
+                        sha_ky_vong: str = NHAT_KY_CU_SHA256) -> dict[str, Any]:
+    """Chặn ghi thêm vào nhật ký cũ đã đóng băng và tệp sai quy ước ở audit/nhat-ky/."""
+    duong_cu = tep_cu or NHAT_KY_CU
+    loi: list[str] = []
+    if not duong_cu.exists():
+        loi.append(f"không thấy {duong_cu} — tệp lưu trữ nguyên văn phải còn nguyên")
+    else:
+        sha = hashlib.sha256(duong_cu.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+        if sha != sha_ky_vong:
+            loi.append(
+                "audit/NHAT-KY-SU-CO.md đã ĐÓNG BĂNG (01/10/2026) nhưng nội dung đổi: ghi sự cố "
+                "mới thành tệp riêng audit/nhat-ky/YYYY-MM-DD-<slug>.md (audit/nhat-ky/README.md). "
+                "Nhánh mở trước khi đóng băng: dời khối đã nối sang tệp mới NGUYÊN VĂN rồi "
+                "`git checkout origin/master -- audit/NHAT-KY-SU-CO.md`.")
+    loi.extend(f"audit/nhat-ky/{dong}" for dong in nk.loi_thu_muc_nhat_ky(
+        thu_muc or nk.THU_MUC_NHAT_KY))
+    ket_qua: dict[str, Any] = {"name": "nhat_ky_su_co", "status": "FAIL" if loi else "PASS"}
+    if loi:
+        ket_qua["errors"] = loi
     return ket_qua
 
 
@@ -293,6 +328,7 @@ def run_verification() -> dict[str, Any]:
     checks = [
         check_root_docs(),
         check_claude_md_budget(),
+        check_nhat_ky_su_co(),
         check_medical_docs(),
         check_tracked_contract_files(),
         check_agent_sync_health(),

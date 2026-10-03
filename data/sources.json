@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30",
+  "updated": "2026-10-03",
   "_ghi_chu": "LÔ A PHA 4. LUẬT: endpoint chỉ ghi khi ĐÃ xác minh sống từ máy này (3 API kiểm 15/08: crossref/europepmc/eutils đều HTTP 200). Trạm web tổ chức: egress ngoài danh sách phê duyệt bị chặn ở tầng runtime ⇒ ghi not-covered kèm lý do THẬT, không ghi active suông. PubMed-lane đang phủ THAY các tổ chức đó (trễ hơn web gốc — đó chính là khoảng trống LÔ B nhắm tới). | 29/08/2026 (phiên cloud): đo lại — MỌI host ngoài allowlist bị chính sách mạng của môi trường chặn (CONNECT 403), kể cả eutils/crossref/ebi/openalex/openfda và cả kênh WebFetch ⇒ xác minh sống URL hội KHÔNG khả thi từ sandbox; 7 nguồn active giữ nguyên theo phép đo 15/08 từ máy thật. Đường kích hoạt trạm hội nay là MỘT lệnh trên máy thật (ngoài sandbox): python3 tools/giam_sat_to_chuc.py --kiem-tra (dò, chỉ đo) rồi --bat-neu-ok (bật trạm dò đạt, tự sao lưu sổ).",
   "sources": [
     {
@@ -940,6 +940,28 @@
       "last_success_at": null,
       "known_gap": "ĐĂNG KÝ MUỘN, phát hiện 30/09/2026 khi đối chiếu TẬP module `app/sources/*.py` của engine với sổ này (bác sĩ nêu 3 nguồn thiếu mục; đối chiếu cả tập lộ thêm nguồn này). Unpaywall được dùng từ 19/08/2026 nhưng sổ chưa từng có mục. HAI đường gọi khác nhau: (1) repo gốc — `tools/gom_toan_van_dashboard.py --unpaywall` gọi thẳng `api.unpaywall.org/v2/<doi>` bằng urllib, chỉ khi có cờ; (2) engine — `app/sources/unpaywall.py` (có từ 07/06/2026, cờ ENABLE_UNPAYWALL mặc định bật) nhưng ngoài test KHÔNG nơi nào trong engine gọi `oa_url_for_doi()` (git grep toàn repo ở commit 2e42ef7; `search()` cố ý trả rỗng) ⇒ client của engine là client MỒ CÔI: có client ≠ có dùng. ĐO SỐNG 30/09/2026 19:35 (máy Mac, VPN Kaspersky đang bật) qua client engine, không cache: HTTP 200, DOI 10.1056/nejmoa2204233 và 10.1002/jcsm.70385 đều trả URL OA ⇒ API sống (`last_probe_at`). `last_success_at` để null: CHƯA có bằng chứng về một lần THU HOẠCH thật qua tầng `--unpaywall` (kho `EBM-Dashboards/toan_van_oa/` không ghi tệp nào do tầng nào tải) — ping ≠ thu hoạch. [CẦN BÁC SĨ QUYẾT] client mồ côi của engine: nối vào một bước của dây chuyền hay gỡ.",
       "last_probe_at": "2026-09-30"
+    },
+    {
+      "id": "SRC-052",
+      "name": "EC Union Register — Sổ đăng ký Liên minh của Uỷ ban châu Âu (thuốc người cấp phép tập trung), đường DỰ PHÒNG của SRC-048 khi VPN bật, connector code-level xây 01/10/2026, đăng ký sổ 03/10/2026",
+      "org": "European Commission (DG SANTE) — cơ quan RA QUYẾT ĐỊNH cấp phép tập trung (EMA là cơ quan thẩm định)",
+      "tier": 1,
+      "domain": [
+        "an toàn thuốc — trạng thái ĐANG / KHÔNG CÒN lưu hành của thuốc cấp phép tập trung tại EU"
+      ],
+      "access": "api",
+      "endpoint_or_url": "https://ec.europa.eu/health/documents/community-register/html/reg_hum_act.htm (+ reg_hum_nact.htm)",
+      "auth_required": false,
+      "terms_ok": null,
+      "terms_note": "CHƯA đọc được điều khoản tái sử dụng trong phiên 03/10/2026: trang legal-notice của commission.europa.eu trả HTTP 403 cho truy cập tự động (yêu cầu trung thực, không giả trình duyệt) ⇒ terms_ok để null thay vì khẳng định từ trí nhớ. Hai trang sổ là trang HTML công khai không cần khoá; client cache 7 ngày nên mỗi lần hết hạn chỉ gửi 2 GET (~1,2 MB trang đang lưu hành). KHÔNG thăm sống tự động bằng sources_health.py (không có mục trong DIEM_THAM — một lần thăm phải tải cả trang ~1,2 MB, và ping ≠ thu hoạch, BH50) ⇒ nhãn status là nhãn KHAI theo lượt đo tay gần nhất, không tự làm mới.",
+      "scan_frequency": "ad-hoc",
+      "detection_method": "api-query",
+      "measured_latency_days": null,
+      "owner": "agent ke-don-an-toan qua medical-ebm-automation/tools/tra_thuoc_quoc_te.py ema — `EmaMedicinesClient` tự rơi sang sổ EC khi danh mục EMA (SRC-048) không tới được (gọi theo yêu cầu, không tham gia vòng quét tuần) — xem _CONNECTOR-CHUNG-CU.md §1ter",
+      "status": "active",
+      "last_success_at": "2026-10-03",
+      "known_gap": "ĐĂNG KÝ MUỘN, phát hiện 03/10/2026: BH137 ĐỎ trên cây chính sau khi PR y khoa #63 (commit a85f35d, 01/10/2026 — «VPN luôn bật») thêm `app/sources/ec_union_register.py` mà sổ này chưa có mục. ĐO SỐNG 03/10/2026 (máy Mac, `EcUnionRegisterClient(http=HttpClient(cache_ttl=0)).nap()`, không cache): 1.554 thuốc người ĐANG lưu hành + 447 KHÔNG CÒN lưu hành, 3,0 giây. GIỚI HẠN CỦA CHÍNH NGUỒN (CANH_BAO_EC đi kèm mọi kết quả): chỉ biết ĐANG / KHÔNG CÒN lưu hành — không lý do (rút/hết hạn/đình chỉ), không ngày, không cờ giám sát bổ sung hay cấp phép có điều kiện; hồ sơ bị TỪ CHỐI hoặc rút đơn trước cấp phép không có trong sổ; chỉ thuốc NGƯỜI; không thay Cục Quản lý Dược Việt Nam. Lỗi mạng/bố cục ⇒ `EcLoi` ⇒ KHÔNG BIẾT, không bao giờ đọc thành «không thấy».",
+      "last_probe_at": "2026-10-03"
     }
   ]
 }

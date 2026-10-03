@@ -20,7 +20,7 @@ QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 1. Chạy `python3 EBM-Dashboards/tools/surveillance_scan.py --json-report state/tuan.json` (con trỏ tăng dần tự lo cửa sổ; tôn trọng khoá .quet.lock — bị khoá thì dừng, báo rõ).
 1b. Chạy làn đối chiếu `python3 tools/doi_chieu_openalex.py --toan-bo --ngay 10 --max 10` — ứng viên «⚡ chỉ-OpenAlex» đáng chú ý thì đưa vào cân nhắc chọn thẻ (vẫn ≤7 tổng).
 1c. Đọc `EBM-Dashboards/surveillance/ung-vien-ngoai-quet.jsonl` (nếu có) — ứng viên do worker/canary/phiên thường phát hiện NGOÀI vòng quét; mục `trang_thai` còn CANDIDATE thì cân nhắc chọn thẻ như 1b (vẫn ≤7 tổng, vẫn kiểm rút bài ở bước 4); đã lên thẻ hoặc bị loại thì cập nhật `trang_thai` kèm tuần xử lý — không xoá dòng (giữ dấu vết).
-2. Đọc state/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json.
+2. Đọc state/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json. Khối `quan_sat_han_che` (thêm 03/10/2026, EV-03) liệt kê chủ đề thẩm quyền 0 ứng viên mà làn PubMed KHÔNG quan sát được văn bản chính thức — chép vào gói dạng «⚪ 0 ≠ không có cập nhật — kênh khác: …», TUYỆT ĐỐI không viết «không có gì mới» cho các chủ đề đó.
 3. Chọn TỐI ĐA 7 thẻ theo tác động lâm sàng ngoại trú (ưu tiên: guideline/nhãn an toàn > SR/MA > RCT lớn; loại mục da_co_trong_kho; mục rut_bai dương tính → alerts, KHÔNG vào queue). Phần dư GIỮ LẠI có ghi chú — không bỏ âm thầm.
 4. Với 7 PMID được chọn: kiểm rút bài qua `~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (PHẢI venv — python3 hệ thống làm tầng NCBI rụng âm thầm, alert 17/08); lấy abstract qua efetch để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
 4b. ĐỌC TOÀN VĂN trước khi thẩm định (thêm 19/08 — trước đó gói tuần thẩm định 100% từ
@@ -34,6 +34,13 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    chưa có bản OA trên PMC (sổ 30 ngày tự thử lại)"* và giữ `partial`. LUẬT: partial
    → tối đa "Cân nhắc" như cũ; toàn văn KHÔNG tự động nâng đề xuất — chỉ ghi dữ kiện,
    nâng/hạ là thẩm quyền bác sĩ lúc duyệt.
+   Bài «CHỈ TÓM TẮT» (thêm 02/10/2026 — W40 có 5/7 thẻ như vậy; hầu hết nhà xuất bản chặn truy cập
+   tự động): chạy `python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-<W>.md` (có mạng) để lập
+   PHIẾU theo miền (ghi `state/doc-toan-van/`), và trên thẻ ghi *"chưa đọc được — không có bản OA;
+   chờ bác sĩ mở trình duyệt (phiếu doc-toan-van)"*. Lượt lịch KHÔNG mở trình duyệt, KHÔNG vượt chặn:
+   làn đó chỉ chạy trong phiên CÓ bác sĩ (`--huong-dan`). Bài đã đọc qua trình duyệt có bản
+   `doc_sau/PMID-<n>.md` ghi «trích xuất CÓ CẤU TRÚC»: thẩm định như bản OA, `appraisalCompleteness`
+   theo độ đầy đủ in trong bản đó (partial ⇒ vẫn trần "Cân nhắc").
 5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
    lỗi thời "6 dòng/xem mẫu W33" — định dạng thật đã tăng lên 8 khối qua W35-W37 mà chưa từng được
    viết lại): `sync/scheduled-tasks/goi-duyet-tuan-ebm/MAU-THE-CHUNG-CU-TUAN.md`. Mỗi thẻ: tiêu đề

@@ -48,6 +48,20 @@ def _proxy_tu_choi(*a, **kw):
     raise urllib.error.URLError(OSError("Tunnel connection failed: 403 Forbidden"))
 
 
+class _TraLoi200:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def _ok(*a, **kw):
+    return _TraLoi200()
+
+
 def _cay(tmp_path: Path, *, engine: str | None = None, kho_rw: bool = False, goc_du_lieu: bool = False) -> Path:
     """Dựng gốc repo giả. `engine`: None = vắng · "long" = lồng trong repo · "anh_em" = cạnh repo.
     `kho_rw`: có thư mục Retraction Watch (kèm một tệp vừa ghi). `goc_du_lieu`: có `EBM-Dashboards/`
@@ -135,10 +149,34 @@ def test_dong_tong_ket_khong_dem_nguon_chua_do_la_khoe(chay, tmp_path):
 
 def test_dong_tong_ket_cung_tru_nguon_bi_proxy_tu_choi(chay, tmp_path):
     """Cùng luật cho loại ⚪ có từ 24/09 (proxy môi trường từ chối): chưa tới được nguồn thì không phải «khoẻ»."""
-    ma, out, da_ghi, so = chay(_cay(tmp_path, goc_du_lieu=True), [dict(API)], urlopen=_proxy_tu_choi)
+    repo = _cay(tmp_path, goc_du_lieu=True)
+    ma, out, da_ghi, so = chay(repo, [dict(API)], urlopen=_proxy_tu_choi)
     assert ma == 0 and "proxy môi trường từ chối" in out
     assert "🟢 SỔ NGUỒN: 0 active khoẻ · ⚪ 1 active KHÔNG đo được lượt này" in out
-    assert da_ghi and _nhan(so, "SRC-004") == "active", "máy thật vẫn ghi sổ, nhãn giữ nguyên (bản vá 24/09)"
+    # Máy thật đi nhánh GHI (bản vá 24/09) — từ 03/10/2026 nhánh đó ghi dấu thăm ra state/ và CHỈ ghi sổ tracked khi nội dung
+    # đổi; nhãn giữ nguyên nên sổ tracked không bị viết lại.
+    assert not da_ghi and _nhan(so, "SRC-004") == "active"
+    assert (repo / "state" / "tham-song-nguon.json").exists(), "máy thật phải đi nhánh ghi (dấu thăm)"
+
+
+def test_tham_song_ok_khong_viet_lai_so_tracked_chi_ghi_dau_tham(chay, tmp_path):
+    """03/10/2026 (N11/PM-14): lượt đo chỉ đổi `last_probe_at` ⇒ sổ tracked GIỮ NGUYÊN BYTE; dấu thăm vào state/."""
+    repo = _cay(tmp_path, goc_du_lieu=True)
+    ma, _out, da_ghi, so = chay(repo, [dict(API)], urlopen=_ok)
+    dau = json.loads((repo / "state" / "tham-song-nguon.json").read_text(encoding="utf-8"))
+    assert ma == 0 and not da_ghi and so["updated"] == "2000-01-01"
+    assert dau["last_probe_at"]["SRC-004"] == dau["cap_nhat"]
+
+
+def test_chu_ky_so_bo_dau_ngay_nhung_giu_noi_dung():
+    mod = _nap()
+    a = {"updated": "2026-10-01", "sources": [{"id": "S", "status": "active", "last_probe_at": "2026-10-01", "last_success_at": "x"}]}
+    b = {"updated": "2026-10-03", "sources": [{"id": "S", "status": "active", "last_probe_at": "2026-10-03", "last_success_at": "x"}]}
+    assert mod.chu_ky_so(a) == mod.chu_ky_so(b)
+    for khoa, gt in (("status", "degraded"), ("last_success_at", "y")):
+        c = json.loads(json.dumps(b))
+        c["sources"][0][khoa] = gt
+        assert mod.chu_ky_so(c) != mod.chu_ky_so(a), f"đổi {khoa} phải là thay đổi NỘI DUNG"
 
 
 # ── Răng phải còn: thiếu THẬT vẫn là BROKEN ─────────────────────────────────────────────────────────────

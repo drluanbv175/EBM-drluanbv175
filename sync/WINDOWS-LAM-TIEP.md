@@ -171,6 +171,13 @@ thì rơi về `uvx` — nên máy chưa cài gì vẫn chạy.
 > `git pull` chạy `claude mcp get pubmed-search` một lần ở thư mục repo, phải ra «✔ Connected»
 > (ra «⏸ Pending approval» là chưa phê duyệt trên máy đó, không phải lỗi khởi chạy).
 
+> **Đo trên Windows 01–02/10/2026 (chốt BH146):** `uv` 0.12.21 đã cài ở `%USERPROFILE%\.local\bin` (app phải thấy thư mục
+> này trong PATH — mở lại app sau khi thêm). Bắt tay MCP (initialize → tools/list) bằng ĐÚNG lệnh `.mcp.json`, từ thư mục gốc
+> lẫn thư mục lồng `tools/mcp`: máy chủ 0.7.5, 41 công cụ. Lớp bọc cũ khởi chạy chập chờn (qua python 3/6, qua `uv run` 5/6, trong
+> khi `uvx` chạy thẳng 6/6) vì `os.execvpe` trên Windows KHÔNG thay tiến trình (tạo tiến trình mới rồi thoát mã 0 ngay); nay chạy
+> máy chủ như tiến trình con, đo lại 15/15 và 12/12. Tra PubMed thật còn «pubmed error» khi NCBI chặn IP của mạng máy này
+> (chuyển hướng `misuse.ncbi.nlm.nih.gov`, CLAUDE.md §5) — đó là chặn IP, không phải lỗi lớp bọc.
+
 > **Một điều kiện Windows PHẢI có:** file `~/.ebm-secrets/medical-ebm-automation.env` với dòng
 > `NCBI_EMAIL=…`. Kho secrets nằm ngoài OneDrive nên **không tự sang máy khác**. Thiếu nó thì
 > server vẫn khởi động nhưng NCBI có thể từ chối (NCBI đòi email trong mọi lời gọi) — lớp bọc

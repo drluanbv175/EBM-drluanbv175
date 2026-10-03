@@ -40,7 +40,10 @@ def test_sources_health_ghi_giu_thut_le_2(monkeypatch, tmp_path):
     so = tmp_path / "sources.json"
     so.write_text(json.dumps(MAU, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(mod, "SO", so)
-    monkeypatch.setattr(mod, "lay_thanh_cong_that", lambda sid: None)
+    # Từ 03/10/2026 sổ tracked chỉ được ghi khi NỘI DUNG đổi (BH153) ⇒ fixture đưa một thay đổi nội dung THẬT (lần chạy-thật mới
+    # suy từ artifact) để công cụ đi đúng đường ghi mà test này soi định dạng.
+    moc = MAU["sources"][0]["id"]
+    monkeypatch.setattr(mod, "lay_thanh_cong_that", lambda sid: "2026-10-03" if sid == moc else None)
     monkeypatch.setattr(mod, "la_phien_cloud", lambda: False)
     monkeypatch.setattr(mod, "la_ban_sao_tran", lambda: False)  # máy thật — bản sao trần không ghi sổ (30/09/2026)
     monkeypatch.setattr(sys, "argv", ["sources_health", "--khong-mang"])

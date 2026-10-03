@@ -92,8 +92,28 @@ def main() -> int:
         return 1
 
     print(f"[pubmed-search] khởi động: {lenh[0]}", file=sys.stderr)
-    # Thay hẳn tiến trình để stdin/stdout nối thẳng vào server — không chèn lớp đệm nào
-    # vào giữa kênh JSON-RPC.
+    return chay_may_chu(lenh, env)
+
+
+def chay_may_chu(lenh: list[str], env: dict[str, str], *, la_windows: bool | None = None) -> int:
+    """Chạy máy chủ MCP với stdin/stdout/stderr nối thẳng vào tiến trình gọi — không chèn lớp đệm nào vào kênh JSON-RPC.
+
+    POSIX: `os.execvpe` thay hẳn tiến trình. WINDOWS: `os.exec*` KHÔNG thay tiến trình — nó tạo một tiến trình mới rồi
+    cho tiến trình hiện tại thoát NGAY với mã 0 (đo 01/10/2026: cha `poll()` = 0 sau vài giây trong khi con vẫn chạy),
+    và còn không bọc dấu nháy cho đối số có dấu cách. Hệ quả đo được trên máy Windows thật: qua lớp bọc, khởi chạy MCP
+    thành công 3/6 lượt (python lớp bọc) và 5/6 lượt (`uv run`), trong khi `uvx pubmed-search-mcp` chạy thẳng 6/6 — máy
+    chủ lúc mất stdio, lúc bị kéo theo khi `uv` thấy lớp bọc «đã xong». Nên trên Windows chạy máy chủ như tiến trình CON
+    (stdio kế thừa nguyên), chờ nó thoát và trả đúng mã thoát; đường dẫn tệp thực thi phân giải theo PATH của `env` vì
+    CreateProcess tìm theo PATH của tiến trình cha."""
+    if la_windows is None:
+        la_windows = os.name == "nt"
+    if la_windows:
+        exe = shutil.which(lenh[0], path=env.get("PATH")) or lenh[0]
+        try:
+            return subprocess.call([exe, *lenh[1:]], env=env)   # stdin/stdout/stderr kế thừa — không chuyển hướng gì
+        except OSError as loi:
+            print(f"[pubmed-search] không chạy được {lenh[0]}: {loi}", file=sys.stderr)
+            return 1
     try:
         os.execvpe(lenh[0], lenh, env)
     except OSError as loi:  # execvpe chỉ trả về khi thất bại

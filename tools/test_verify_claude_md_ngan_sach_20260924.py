@@ -27,7 +27,8 @@ def test_tep_vuot_ngan_sach_bi_chan_va_chi_duong_ghi_nhat_ky(tmp_path):
     ket_qua = V.check_claude_md_budget(tep, ngan_sach=100)
     assert ket_qua["status"] == "FAIL"
     assert ket_qua["so_ky_tu"] == 101, "phải đếm KÝ TỰ, không đếm byte"
-    assert "audit/NHAT-KY-SU-CO.md" in ket_qua["errors"][0]
+    # Từ 01/10/2026 sự cố mới ghi thành tệp riêng ở audit/nhat-ky/ (tệp cũ đóng băng).
+    assert "audit/nhat-ky/" in ket_qua["errors"][0]
 
 
 def test_tep_dung_bang_ngan_sach_van_qua(tmp_path):

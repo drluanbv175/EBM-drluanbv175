@@ -44,6 +44,7 @@ def test_claude_code_repo_alignment_overall_passes():
     assert {check["name"] for check in report["checks"]} == {
         "root_docs",
         "claude_md_budget",
+        "nhat_ky_su_co",  # 01/10/2026: tệp nhật ký cũ đóng băng + quy ước audit/nhat-ky/
         "medical_repo_docs",
         "tracked_contract_files",
         "agent_sync_health",

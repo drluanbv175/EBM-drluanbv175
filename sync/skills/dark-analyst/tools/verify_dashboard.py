@@ -1168,7 +1168,7 @@ def verify_doi_online(doi, retries=2):
 
 
 # ── Miền CHẶN trình khách tự động (thêm 24/09/2026) ──────────────────────────────────────────────
-# Khai báo TƯỜNG MINH kèm bằng chứng — không suy đoán theo mã lỗi. Với các miền này, HTTP 403/404/410
+# Khai báo TƯỜNG MINH kèm bằng chứng — không suy đoán theo mã lỗi. Với các miền này, HTTP MA_CHAN_TU_DONG
 # của lượt kiểm tự động KHÔNG phải bằng chứng link chết: www.fda.gov trả 404 cho urllib (User-Agent
 # SOURCE_GATE_USER_AGENT) với trang Drug Safety Communication về alli/orlistat, trong khi trình duyệt
 # thật mở được đúng trang, đúng tiêu đề (kiểm 24/09/2026). Cổng KHÔNG giả dạng trình duyệt để lách
@@ -1177,10 +1177,15 @@ def verify_doi_online(doi, retries=2):
 # bằng chứng ⇒ vẫn «chưa xác minh» (strict-sources: lỗi cứng) — URL bịa hay link chết THẬT trên miền
 # này không được lọt qua chỉ vì miền chặn kiểm tự động. Thêm miền mới: chỉ khi đã có bằng chứng tương tự.
 MIEN_CHAN_TRUY_CAP_TU_DONG = {
-    "www.fda.gov": "24/09/2026 — HTTP 404 với urllib, trình duyệt mở được (trang alli/orlistat)",
+    "www.fda.gov": "24/09/2026 — HTTP 404 với urllib, trình duyệt mở được (trang alli/orlistat); 02/10/2026 — HTTP 401",
     "fda.gov": "như www.fda.gov",
 }
-MA_CHAN_TU_DONG = (403, 404, 410)
+# 401 thêm 02/10/2026: www.fda.gov đổi cách chặn — urllib nhận HTTP 401 Unauthorized và chính trình duyệt trong app cũng gặp
+# trang chặn «Sorry! This resembles an automated request» (nút «I am not a bot» — KHÔNG bấm, không lách chặn). Trước bản sửa
+# cổng đọc 401 thành «lỗi mạng» ⇒ lô `ops/orchestrator.py --cu-nhat 3 --online` dừng ở gói Orlistat dù bằng chứng trình duyệt
+# 24/09 còn hạn. Chiều an toàn giữ nguyên: 401 của miền này vẫn CHỈ đạt khi sổ trình duyệt có bằng chứng còn hạn đúng URL;
+# 401 của miền KHÔNG khai báo vẫn là «lỗi mạng» (không xác minh được), không bao giờ thành đạt.
+MA_CHAN_TU_DONG = (401, 403, 404, 410)
 SO_URL_TRINH_DUYET = "url-xac-minh-trinh-duyet.json"
 URL_TRINH_DUYET_HAN_NGAY = 180
 
@@ -1259,7 +1264,7 @@ def verify_url_online(url, retries=2, duong_dashboard=None):
     "đã xác minh". Chỉ GET nhẹ (không tải toàn bộ nội dung) — đủ để xác nhận URL còn tồn tại,
     không phải 404/hỏng.
 
-    SỬA 2026-09-24: URL thuộc MIEN_CHAN_TRUY_CAP_TU_DONG bị trả 403/404/410 thì KHÔNG kết luận link
+    SỬA 2026-09-24: URL thuộc MIEN_CHAN_TRUY_CAP_TU_DONG bị trả MA_CHAN_TU_DONG (401/403/404/410) thì KHÔNG kết luận link
     chết mà tra bằng chứng trình duyệt thật (`duong_dashboard` = đường dẫn dashboard để tìm sổ)."""
     last_err = None
     for attempt in range(retries + 1):

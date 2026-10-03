@@ -30,6 +30,20 @@ CLINICAL_CASE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(bé|cháu)\s*(trai|gái|bé)"),     # "bé trai", "cháu bé", "cháu gái"
     re.compile(r"phụ nữ (mang thai|có thai)"),    # thai kỳ
 ]
+# SỬA 02/10/2026 (B2, kiểm toàn diện): đo trên 17 câu bác sĩ mô tả ca TỰ NHIÊN — 10 câu rơi `unknown` («ông 65 tuổi sốt ho 3 ngày
+# khó thở», «trẻ 3 tuổi sốt cao co giật», «sản phụ 30 tuần HA 160/100», «anh 45t tiểu đường…», «suy tim, kali 6,2, đang dùng
+# spironolactone»…). Cách gọi xưng hô + tuổi là khuôn trình bày MỘT người bệnh (không có tiền lệ mô tả quần thể); tuổi trẻ em/người
+# và thai phụ thì LOẠI khi theo sau là khoảng («trở lên», «đến», «-») — đó là mô tả QUẦN THỂ («người 65 tuổi trở lên», «trẻ 6 tháng
+# đến 5 tuổi»). Over-route sang nhạc trưởng lâm sàng là chiều an toàn (xem VIEC_LE_MANH).
+_XUNG_HO_TUOI = re.compile(r"(?<!\w)(ông|bà|anh|chị|cô|chú|bác|cụ|em)\s+\d+\s*(tuổi|t)(?!\w)")   # "ông 65 tuổi", "anh 45t"
+_KHOANG = r"(?!\s*(trở|đến|tới|-|–))"
+CLINICAL_CASE_PATTERNS += [
+    _XUNG_HO_TUOI,
+    re.compile(r"(?<!\w)(trẻ|bé|cháu|em bé)\s+\d+\s*(tuổi|tháng|ngày)" + _KHOANG),   # "trẻ 3 tuổi sốt cao"
+    re.compile(r"(?<!\w)người\s+\d+\s*tuổi" + _KHOANG),                                # "người 80 tuổi té ngã"
+    re.compile(r"(?<!\w)(sản phụ|thai phụ)\s+\d+\s*(tuổi|tuần)" + _KHOANG),          # "sản phụ 30 tuần"
+    re.compile(r"(?<!\w)đang (dùng|uống|tiêm)\s+\w"),                                  # "đang dùng spironolactone"
+]
 # SỬA 2026-09-05 (Workflow đối kháng đa-agent vòng 4, HIGH): tập CON của
 # CLINICAL_CASE_PATTERNS — CHỈ hai mẫu ĐẦU (tuổi+giới cụ thể, giới tính trẻ em) — dùng RIÊNG
 # cho nhánh "cờ đỏ luôn thắng cue đề tài" trong route() bên dưới. CỐ Ý LOẠI mẫu thai kỳ (mẫu
@@ -44,7 +58,9 @@ CLINICAL_CASE_PATTERNS: list[re.Pattern[str]] = [
 # đánh đổi CÓ CHỦ Ý, cùng tinh thần giới hạn đã ghi nhận ở R5 của guardrail_check_g0 — một cấp
 # cứu sản khoa (tiền sản giật…) mô tả BẰNG "protocol" mà KHÔNG kèm tuổi/giới cụ thể vẫn có thể
 # lọt qua override này; ghi nhận ở đây để không bị coi là "đã đóng hoàn toàn".
-_INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS = CLINICAL_CASE_PATTERNS[:2]
+# 02/10/2026: thêm xưng hô + tuổi («ông 65 tuổi», «chị 38 tuổi») — cùng độ đặc hiệu «một người cụ thể» như «nữ 60 tuổi»; các mẫu
+# tuổi trẻ em/người/thai phụ/«đang dùng» KHÔNG vào đây (có thể xuất hiện trong câu mô tả quần thể có cue đề tài).
+_INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS = CLINICAL_CASE_PATTERNS[:2] + [_XUNG_HO_TUOI]
 # Cụm từ báo hiệu một ĐỀ TÀI nghiên cứu → nhạc trưởng nghiên cứu
 # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện HIGH): whitelist cũ chỉ có
 # 8 cụm hẹp — một đề tài diễn đạt TỰ NHIÊN ("Nghiên cứu hồi cứu hiệu quả metformin trên bệnh
@@ -84,7 +100,11 @@ def _khao_sat_co_thiet_ke(text: str) -> bool:
 
 # Luật việc lẻ: (keywords, agent, ghi chú). Thứ tự = độ ưu tiên (đặc thù trước).
 SINGLE_TASK_RULES: list[tuple[list[str], str, str]] = [
-    (["có nguy hiểm", "chuyển viện", "cấp cứu", "cờ đỏ", "đừng bỏ sót"], "sang-loc-co-do", "sàng lọc cờ đỏ"),
+    (["có nguy hiểm", "chuyển viện", "cấp cứu", "cờ đỏ", "đừng bỏ sót",
+      # 02/10/2026 (B2): tình huống cấp cứu nêu bằng TÊN BIẾN CỐ, không kèm chữ «cấp cứu» — «bệnh nhân ngừng tim, chạy protocol hồi
+      # sức thế nào» từng rơi research_topic (do «protocol») và mất BƯỚC 0. Cờ đỏ luôn thắng cue đề tài (route()).
+      "ngừng tim", "ngưng tim", "ngừng thở", "hồi sức", "co giật", "sốc phản vệ", "bất tỉnh", "hôn mê"],
+     "sang-loc-co-do", "sàng lọc cờ đỏ"),
     (["quadas", "test này đáng tin", "se-sp", "độ nhạy độ đặc hiệu", "lr+", "độ chính xác chẩn đoán"], "tham-dinh-do-chinh-xac-chan-doan", "thẩm định độ chính xác test"),
     (["có nên làm xét nghiệm", "khả năng bệnh", "đủ chắc để điều trị", "xét nghiệm gì"], "chan-doan-xac-suat", "Bayes chẩn đoán"),
     (["đọc giúp", "kết quả này", "panel xét nghiệm", "nguy kịch", "đọc ecg"], "dien-giai-can-lam-sang", "đọc cận lâm sàng"),
@@ -170,6 +190,12 @@ VIEC_LE_MANH: set[str] = {
 VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
     (["còn gì để hoàn thiện", "còn gì phải làm", "hệ thống còn gì", "còn việc gì"],
      "tools/tu_de_xuat_viec.py", "bảng 8 giác quan — hệ còn gì để hoàn thiện"),
+    # 03/10/2026 (HV-02 · EV-10): hòm việc một cửa + ghi quyết định thẻ tuần của bác sĩ.
+    (["hòm việc", "việc chờ tôi", "việc cần tôi", "cần tôi xác nhận", "việc chờ xác nhận"],
+     "tools/hom_viec_mot_cua.py", "hòm việc một cửa — ≤ 12 dòng việc của bác sĩ (đọc bảng sinh sẵn)"),
+    # KHÔNG có cue trơn «thẻ tuần»: «đọc toàn văn các thẻ tuần» là việc ĐỌC BÀI (ghép thử với PR toàn văn 03/10 bắt được).
+    (["duyệt thẻ", "ghi quyết định thẻ", "quyết định thẻ tuần", "duyệt gói tuần", "ghi duyệt"],
+     "tools/ghi_duyet_the_tuan.py", "ghi ĐÚNG lời bác sĩ trên thẻ gói tuần (máy không tự quyết)"),
     # 20/09/2026 (T3-05): năng lực mới CÓ CHỦ nhưng chưa có cửa vào router (đo: unknown).
     (["làm mới chứng cứ", "cập nhật chứng cứ chủ đề", "chủ đề nào cũ", "chủ đề nào lâu", "độ tươi chứng cứ",
       "làm mới chủ đề"],
@@ -182,6 +208,15 @@ VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
      "/tra-ma-icd10", "tra mã ICD-10"),
     (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
      "dao-tao-slide-tai-lieu-y-khoa", "sản phẩm đào tạo / slide"),
+    # 02/10/2026 — làn có NGƯỜI trên trình duyệt (bác sĩ yêu cầu): trang chặn bot và cơ sở dữ liệu cần tài khoản của bác sĩ.
+    # Toàn văn đứng TRƯỚC «chặn bot»: «đọc toàn văn bài bị chặn bot» là việc đọc bài, không phải ghi bằng chứng URL.
+    (["toàn văn", "full text", "fulltext", "bài trả phí", "paywall", "tường phí"],
+     "tools/doc_toan_van_co_nguoi.py", "đọc toàn văn bài KHÔNG OA: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập, Claude trích xuất có "
+     "cấu trúc rồi nạp vào kho toàn văn"),
+    (["chặn bot", "i am not a bot", "not a bot", "xác nhận trình duyệt", "xác nhận trên trình duyệt", "trang chặn"],
+     "tools/xac_nhan_trinh_duyet.py", "trang chặn bot: Claude mở trang, bác sĩ tự bấm xác nhận, Claude ghi bằng chứng"),
+    (["scopus", "web of science", "webofscience", "dynamed", "tài khoản scopus", "tài khoản dynamed"],
+     "tools/tra_cuu_co_tai_khoan.py", "tra Scopus/WoS/DynaMed bằng tài khoản bác sĩ (bác sĩ tự đăng nhập; máy xác minh)"),
 ]
 
 CLINICAL_ORCHESTRATOR = "dieu-phoi-lam-sang"
