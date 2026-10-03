@@ -211,3 +211,19 @@ def test_dinh_tuyen_hom_viec_va_duyet_the():
     assert it.route("ghi duyệt W40: 1 ✓ 3 ✗").target == "tools/ghi_duyet_the_tuan.py"
     assert it.route("đọc toàn văn các thẻ tuần W40").target != "tools/ghi_duyet_the_tuan.py", \
         "đọc bài của thẻ tuần KHÔNG phải ghi quyết định thẻ"
+
+
+def test_giac_quan_agent_lech(tmp_path):
+    g, m = tmp_path / "goc", tmp_path / "mea"
+    g.mkdir()
+    m.mkdir()
+    for d in (g, m):
+        (d / "ke-don-an-toan.md").write_text("A\n", encoding="utf-8", newline="\n")
+        (d / "_TRANG-THAI.json").write_text("{}", encoding="utf-8")   # không phải agent .md ⇒ không so
+    assert TD.giac_quan_agent_lech(g, m) == []
+    (m / "ke-don-an-toan.md").write_text("B\n", encoding="utf-8", newline="\n")
+    (g / "moi.md").write_text("x", encoding="utf-8")
+    ra = TD.giac_quan_agent_lech(g, m)
+    assert len(ra) == 1 and "1 lệch nội dung (ke-don-an-toan.md)" in ra[0][1] and "1 chỉ có ở một bên (moi.md)" in ra[0][1]
+    truoc = len(TD._GIAC_QUAN_CHET)
+    assert TD.giac_quan_agent_lech(g, tmp_path / "vang") == [] and len(TD._GIAC_QUAN_CHET) == truoc + 1

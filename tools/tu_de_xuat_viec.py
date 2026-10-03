@@ -589,6 +589,31 @@ def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = Non
              "hữu ích", 'python3 tools/ghi_duyet_the_tuan.py "duyệt W<tuần>: 1 ✓ 3 ✗ 5 hoãn" --ghi')]
 
 
+def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
+    """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
+
+    Chỉ một tệp doctrine (`_CONNECTOR-CHUNG-CU.md`, BH107) từng được so; cặp PR #77↔#61 cho thấy gộp một bên là hai bản lệch mà không
+    chốt nào đỏ — vd agent kê đơn sửa ở một repo, quên repo kia. Không chặn commit (hai PR cặp có thể lệch pha vài giờ) — chỉ nhắc 🤖.
+    Vắng repo y khoa ⇒ giác quan chết (⚪)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not (goc_agents.is_dir() and mea_agents.is_dir()):
+        _ghi_chet(["", "agent gốc ↔ y khoa"], "thiếu một trong hai thư mục .claude/agents")
+        return []
+    goc = {p.name: p for p in goc_agents.glob("*.md")}
+    mea = {p.name: p for p in mea_agents.glob("*.md")}
+    lech = sorted(n for n in goc.keys() & mea.keys() if goc[n].read_bytes() != mea[n].read_bytes())
+    chi_mot = sorted(goc.keys() ^ mea.keys())
+    if not lech and not chi_mot:
+        return []
+    mo_ta = []
+    if lech:
+        mo_ta.append(f"{len(lech)} lệch nội dung ({', '.join(lech[:4])}{'…' if len(lech) > 4 else ''})")
+    if chi_mot:
+        mo_ta.append(f"{len(chi_mot)} chỉ có ở một bên ({', '.join(chi_mot[:4])}{'…' if len(chi_mot) > 4 else ''})")
+    return [(2, "Agent gốc ↔ y khoa: " + "; ".join(mo_ta) + " — đồng bộ bằng PR CẶP (cùng nội dung ở cả hai repo)",
+             "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
+
+
 def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> None:
     """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/)."""
     tep.parent.mkdir(parents=True, exist_ok=True)
@@ -907,6 +932,8 @@ def main() -> int:
         de_xuat.append((uu, "👤", dong, lenh))
     for uu, dong, lenh in giac_quan_the_tuan_chua_quyet(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue")):
         de_xuat.append((uu, "👤", dong, lenh))
+    for uu, dong, lenh in giac_quan_agent_lech(REPO / ".claude" / "agents", _GOC_MEA / ".claude" / "agents"):
+        de_xuat.append((uu, "🤖", dong, lenh))
     if a.json:
         de_xuat.sort(key=lambda x: x[0])
         ghi_json(de_xuat, list(_GIAC_QUAN_CHET), a.json, _SO_GIAC_QUAN["chay"])

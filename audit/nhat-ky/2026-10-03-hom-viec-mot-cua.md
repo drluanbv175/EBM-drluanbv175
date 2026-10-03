@@ -37,3 +37,10 @@
   tệp đã dọn.
 - Test bắt một lỗi thật: `SO.relative_to(REPO)` văng khi sổ nằm ngoài repo.
 - `pytest tools/` 2083 đạt; `orchestrator/tests` 181; chốt 🟢; `kiem_tuong_thich_da_nen` 🔴 0.
+
+**Bổ sung (PM-15).** Thêm giác quan ⑭ «agent gốc ↔ y khoa» trong `tu_de_xuat_viec.py`: so từng `.claude/agents/*.md` giữa hai repo
+theo byte.
+- Có tệp lệch hoặc chỉ có ở một bên ⇒ 🤖 nhắc đồng bộ bằng PR cặp. Không chặn commit, vì hai PR cặp có thể lệch pha.
+- Vắng repo y khoa ⇒ ⚪.
+- Đo sống 03/10: 0 lệch. Trước đây chỉ `_CONNECTOR-CHUNG-CU.md` được BH107 so; cặp #77↔#61 cho thấy gộp một bên là lệch mà không
+  chốt nào đỏ.
