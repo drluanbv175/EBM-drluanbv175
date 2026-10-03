@@ -66,6 +66,8 @@ DASH = _bst_mea.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 # NHẬN, và bảng không bao giờ in xanh khi còn giác quan không đo được.
 _SO_GIAC_QUAN = {"chay": 0}
 _GIAC_QUAN_CHET: list[str] = []
+# Dòng THÔNG TIN (ⓘ) — sự kiện đã qua, không còn việc: in riêng, KHÔNG tính vào danh sách việc (để «🟢 không còn việc» vẫn in được).
+_THONG_TIN: list[str] = []
 
 
 def _ghi_chet(lenh: list[str], ly_do: str) -> None:
@@ -498,6 +500,19 @@ def giac_quan_lich_nen(log_tuan: Path,
     return []
 
 
+def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str, str]], list[str]]:
+    """(việc 🛎, dòng thông tin ⓘ) từ phát hiện của `kiem_lich_nen.kiem()` (02/10/2026, HV-08).
+
+    Kỳ CŨ đã lỡ mà kỳ sau đã chạy lại (uu ≥ 2) KHÔNG phải việc: «Run now» lúc này vô ích (kỳ sau đã chạy, vòng quét dùng con trỏ
+    tăng dần nên không hở cửa sổ). Đo: «kỳ 14/09» lặp 28 lần ở 15 phiên. Gộp thành MỘT dòng ⓘ, không tính vào danh sách việc."""
+    viec = [(p["uu"], "🛎", p["thong_diep"], "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»")
+            for p in phat_hien if p["uu"] < 2]
+    cu = sum(1 for p in phat_hien if p["uu"] >= 2)
+    tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
+          "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
+    return viec, tt
+
+
 def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
     """(số commit CHỈ có ở nhánh cục bộ — không có trên remote nào, tên các nhánh đang giữ chúng); None = không đo được.
 
@@ -721,9 +736,9 @@ def main() -> int:
         _sp_kln = _ilu_mea.spec_from_file_location("_kln_tdxv", Path(__file__).resolve().parent / "kiem_lich_nen.py")
         _kln = _ilu_mea.module_from_spec(_sp_kln)
         _sp_kln.loader.exec_module(_kln)
-        for _p in _kln.kiem()["phat_hien"]:
-            de_xuat.append((_p["uu"], "🛎", _p["thong_diep"],
-                            "python3 tools/kiem_lich_nen.py  # rồi list_scheduled_tasks (bị xoá/tắt?) + «Run now»"))
+        _viec, _tt = phan_loai_lich_nen(_kln.kiem()["phat_hien"])
+        de_xuat += _viec
+        _THONG_TIN.extend(_tt)
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
 
@@ -845,6 +860,8 @@ def main() -> int:
             print(f"       → {lenh}")
     for x in _GIAC_QUAN_CHET:
         print(f"  ⚪ giác quan KHÔNG đo được: {x}")
+    for x in _THONG_TIN:
+        print(f"  ⓘ {x}")
     if not a.gon:
         print("-" * 66)
         print("  👤 = thẩm quyền bác sĩ, máy không tự làm · 🤖 = máy chạy được ngay")
