@@ -305,6 +305,35 @@ def _ung_vien_tu_so(muc: object) -> Candidate | None:
     return c if (c.pmid or c.url) else None
 
 
+# EV-03 (kiểm toàn diện 02/10/2026): ba chủ đề thẩm quyền trả «PASS / 0 ứng viên» 7/7 tuần W33–W40, và mẫu 18 bản ghi PubMed
+# của truy vấn (8 USPSTF, 10 NICE) có 0/18 là văn bản chính thức ⇒ làn PubMed của chúng KHÔNG quan sát được văn bản chính thức.
+# «0 ứng viên» ở đây ≠ «không có cập nhật». Không đổi `status` (bên tiêu thụ cũ đọc PASS/FAIL) — gắn GHI CHÚ vào từng chủ đề +
+# trường máy đọc `quan_sat_han_che` + một dòng ở báo cáo Markdown, trỏ tới kênh khác ĐANG CÓ trong sổ nguồn data/sources.json.
+KENH_THAT_NGOAI_PUBMED: dict[str, str] = {
+    "An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA)":
+        "cảnh báo an toàn thuốc chính thức đi qua kênh khác của hệ: SRC-006 openFDA (weekly_safety.sh) và SRC-016 EMA/MHRA "
+        "(feed) — xem alerts/ và lượt thu thập an toàn thuốc tuần",
+    "NICE — hướng dẫn mới":
+        "văn bản NICE chính thức theo dõi ở SRC-017 (trạm web hội) và SRC-037 (tóm tắt NICE qua Europe PMC)",
+    "USPSTF — khuyến cáo dự phòng":
+        "khuyến cáo USPSTF theo dõi ở SRC-019 (trạm web USPSTF, giam_sat_to_chuc.py)",
+}
+
+
+def gan_ghi_chu_quan_sat(topic_results: list) -> tuple[list, list[dict]]:
+    """Chủ đề thuộc KENH_THAT_NGOAI_PUBMED mà lượt này 0 ứng viên ⇒ thêm ghi chú «QUAN SÁT HẠN CHẾ» (không đổi status)."""
+    ra, ds = [], []
+    for tr in topic_results:
+        kenh = KENH_THAT_NGOAI_PUBMED.get(tr.topic)
+        if kenh and not tr.candidates and tr.status in ("PASS", "PASS_DEGRADED"):
+            ghi = (f"QUAN SÁT HẠN CHẾ: làn PubMed của chủ đề này không thấy văn bản chính thức — 0 ứng viên ≠ không có cập "
+                   f"nhật; {kenh}")
+            tr = replace(tr, error="; ".join(x for x in (tr.error, ghi) if x))
+            ds.append({"topic": tr.topic, "kenh_khac": kenh})
+        ra.append(tr)
+    return ra, ds
+
+
 @dataclass(frozen=True)
 class TopicResult:
     topic: str
@@ -1964,6 +1993,7 @@ def run_scan(
     da_dung_tuan_sau_luot = (sum(1 for v in lan_cuoi.values() if _cung_tuan(v)) if so is not None
                              else da_dung_tuan + so_suat_da_tieu)
 
+    topic_results, quan_sat_han_che = gan_ghi_chu_quan_sat(topic_results)
     success_count = sum(result.status == "PASS" for result in topic_results)
     degraded_count = sum(result.status == "PASS_DEGRADED" for result in topic_results)
     # failed_topics = KHÔNG PHẢI PASS (gồm cả suy giảm) — mọi nơi tiêu thụ cũ đọc failed_topics/status≠PASS
@@ -2003,6 +2033,8 @@ def run_scan(
         "du_phong_bo_trung_xuyen_tuan": bo_trung_xuyen_tuan,
         # Trình bù (30/09/2026): {chủ đề: số bài} lấy ở lượt trước mà báo cáo chưa tới nơi, nay đưa vào báo cáo này.
         "du_phong_trinh_bu": dict(sorted(trinh_bu.items())),
+        # EV-03: chủ đề thẩm quyền 0 ứng viên mà làn PubMed không quan sát được văn bản chính thức (+ kênh khác).
+        "quan_sat_han_che": quan_sat_han_che,
         "topics": [asdict(result) for result in topic_results],
         "auto_apply": False,
         "next_state": "CANDIDATE_REVIEW_QUEUE",
@@ -2023,6 +2055,10 @@ def markdown_report(report: dict) -> str:
         f"- Chủ đề PASS/FAIL: {report['successful_topics']}/{report['failed_topics']}"
         + (f" (trong đó {report['degraded_topics']} SUY GIẢM — xem dưới)" if report.get("degraded_topics") else ""),
         f"- Ứng viên không trùng: {report['candidate_count']}",
+        *([f"- ⚪ {len(report['quan_sat_han_che'])} chủ đề thẩm quyền 0 ứng viên nhưng làn PubMed KHÔNG quan sát được văn bản "
+           f"chính thức (0 ≠ không có cập nhật): "
+           + " · ".join(f"{x['topic']} → {x['kenh_khac']}" for x in report["quan_sat_han_che"])]
+          if report.get("quan_sat_han_che") else []),
         (f"- Độ trễ phát hiện: trung vị {report['do_tre']['trung_vi_ngay']} ngày "
          f"({report['do_tre']['n_do_duoc']}/{report['do_tre']['n_tong']} đo được; "
          f"{report['do_tre']['qua_14_ngay']} mục quá ngưỡng 14 ngày)"
