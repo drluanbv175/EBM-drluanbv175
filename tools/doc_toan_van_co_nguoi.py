@@ -387,10 +387,13 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
      • Trang đòi MUA bài / «Access through your institution» mà bác sĩ không có quyền ⇒ không đọc;
        `--khong-truy-cap <PMID> --ly-do "<…>"` (không nhắc lại 90 ngày). Thẻ giữ «chỉ tóm tắt».
      • DynaMed/UpToDate là bản tổng hợp có bản quyền ⇒ chỉ dùng để tìm nghiên cứu gốc (tools/tra_cuu_co_tai_khoan.py).
-  3. Trang toàn văn đã hiện: Claude đọc bằng get_page_text (max_chars đủ lớn), và tính dấu văn bản NGAY TRONG trình duyệt
-     (javascript_tool):
+  3. Trang toàn văn đã hiện: Claude đọc bằng get_page_text (max_chars đủ lớn) — bài dài (guideline hàng trăm nghìn ký tự) thì
+     lọc đoạn cần (khuyến cáo/kết quả/hạn chế) bằng javascript_tool — và tính dấu văn bản NGAY TRONG trình duyệt:
        const t=document.body.innerText; const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
-       ({title:document.title, len:t.length, sha256:[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')})
+       ({title:document.title, len:t.length, sha_parts:[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')
+         .match(/.{8}/g).join(' ')})
+     (Claude in Chrome che chuỗi hex 64 ký tự liền thành «[BLOCKED: Base64 encoded data]» — đo 03/10/2026; trả theo nhóm 8 rồi
+     bỏ dấu cách khi điền `sha256_toan_van`.)
   4. Claude điền hồ sơ theo `--mau`: con số CHÉP ĐÚNG như bài báo cáo (không quy đổi HR/RR/OR), mỗi số kèm `vi_tri` (Bảng 2,
      Hình 3, Kết quả ¶4…) để bác sĩ đối chiếu; phương pháp/hạn chế/tài trợ viết bằng LỜI CỦA CLAUDE; trích nguyên văn chỉ khi
      cần và ≤ 15 từ/lần, ≤ 6 lần. KHÔNG dán toàn văn vào tệp, chat hay repo.
