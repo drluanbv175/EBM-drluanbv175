@@ -115,9 +115,12 @@ MIEN_TONG_HOP = ("dynamed.com", "uptodate.com", "bestpractice.bmj.com")
 # NXB có hàng trăm miền tạp chí — vd JACC, J Hepatol, Clin Gastroenterol Hepatol đều là 10.1016) rồi tới miền.
 DIEU_KHOAN_NXB: dict[str, dict] = {
     "Elsevier": {
-        "ket_luan": "cam", "doi": ("10.1016/",),
+        # Tiền tố DOI của các NHÁNH xuất bản Elsevier (Saunders 10.1053 — Gastroenterology, AJKD; Mosby 10.1067; Churchill
+        # Livingstone 10.1054; Academic Press 10.1006…) — Crossref /prefixes xác nhận «Elsevier BV» 03/10/2026. Thiếu chúng ⇒ bài
+        # Gastroenterology/AJKD rơi vào «chưa kiểm» dù cùng điều khoản Elsevier.
+        "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
-                 "cghjournal.org", "elsevierhealth.com"),
+                 "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
