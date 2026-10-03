@@ -70,6 +70,19 @@ _GIAC_QUAN_CHET: list[str] = []
 _THONG_TIN: list[str] = []
 
 
+def _dong_kiem_ke_gradeby(out: str) -> str | None:
+    """Dòng ⓘ kiểm kê quý gradeBy từ đầu ra `kiem_phan_hang.py`; None khi 0 item hoặc không đọc được số.
+
+    Bác sĩ chấp nhận là khoảng trống đã biết (03/10/2026, «5b») nên đây là THÔNG TIN, không phải việc 👤.
+    Không đọc được số (công cụ hỏng) ⇒ None; giác quan chết đã được `_chay` ghi nhận riêng."""
+    m = re.search(r"(\d+) CHƯA khai `gradeBy` \((\d+)", out or "")
+    if not m or not int(m.group(1)):
+        return None
+    return (f"Kiểm kê quý gradeBy: {m.group(1)} item chưa khai ({m.group(2)} đang apply) — KHOẢNG TRỐNG ĐÃ BIẾT, "
+            "bác sĩ chấp nhận 03/10/2026; 'na' là trung thực, số tự giảm khi cập nhật chủ đề "
+            "(xem: python3 tools/de_xuat_gradeby.py)")
+
+
 def _ghi_chet(lenh: list[str], ly_do: str) -> None:
     ten = " ".join(str(x) for x in lenh[1:3])[:70] or str(lenh[0])
     _GIAC_QUAN_CHET.append(f"{ten} ({ly_do})")
@@ -793,15 +806,14 @@ def main() -> int:
     # ② gradeBy tồn kho — ĐÓNG 16/08 theo duyệt bác sĩ: mọi đường máy đã vét
     # (nhóm tổ chức · tra sống pubtype · toàn văn PMC-OA); 'na' là khai báo
     # TRUNG THỰC khi nguồn không phân hạng, cổng đang mức CẢNH BÁO. Chuyển
-    # theo dõi thành KIỂM KÊ QUÝ (chỉ nhắc 🟡 tháng đầu quý), số sẽ tự giảm
-    # khi các phiên cập-nhật-chủ-đề thay nguồn cũ bằng guideline có chấm.
+    # theo dõi thành KIỂM KÊ QUÝ (tháng đầu quý), số sẽ tự giảm khi các phiên
+    # cập-nhật-chủ-đề thay nguồn cũ bằng guideline có chấm.
+    # 03/10/2026 bác sĩ chọn «5b»: chấp nhận là KHOẢNG TRỐNG ĐÃ BIẾT ⇒ hạ xuống dòng ⓘ, không còn là việc
+    # 👤 (cổng verify_dashboard vẫn cảnh báo từng item như cũ; chỉ hòm việc thôi nhắc).
     if dt.date.today().month in (1, 4, 7, 10):
-        out = _chay([sys.executable, "tools/kiem_phan_hang.py"])
-        m = re.search(r"(\d+) CHƯA khai `gradeBy` \((\d+)", out)
-        if m and int(m.group(1)):
-            de_xuat.append((2, "👤", f"Kiểm kê quý gradeBy: {m.group(1)} item chưa khai "
-                            f"({m.group(2)} đang apply) — na là trung thực, xem có nguồn mới neo được không",
-                            "python3 tools/de_xuat_gradeby.py"))
+        dong = _dong_kiem_ke_gradeby(_chay([sys.executable, "tools/kiem_phan_hang.py"]))
+        if dong:
+            _THONG_TIN.append(dong)
 
     # ③ Hai bản nói ngược
     out = _chay([sys.executable, "tools/dang_ky_chu_de.py"])
