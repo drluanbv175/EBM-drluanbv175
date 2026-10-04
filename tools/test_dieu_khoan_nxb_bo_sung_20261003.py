@@ -68,3 +68,11 @@ def test_ho_so_guideline_esc_tren_oup_bi_tu_choi(tmp_path) -> None:
           "dieu_khoan": {"url": "https://academic.oup.com/pages/terms", "doc_luc": "2026-10-03", "ket_luan": "cho_phep", "trich": "x"}}
     loi, _cb, _tt = D.kiem_ho_so(hs, D.date(2026, 10, 3), None, tmp_path / "khong-co.json")
     assert any("ESC" in x and "cấm" in x for x in loi), loi
+
+
+def test_nhanh_xuat_ban_elsevier_nhan_dung_khoa() -> None:
+    """03/10/2026: Gastroenterology/AJKD mang DOI 10.1053 (Saunders — Crossref xác nhận Elsevier BV) từng rơi vào «chưa kiểm»."""
+    for doi in ("10.1053/j.gastro.2026.01.001", "10.1053/j.ajkd.2026.01.001", "10.1067/j.cpcardiol.2026.1", "10.1054/x",
+                "10.1006/x", "10.1078/x", "10.1383/x", "10.1157/x"):
+        assert D.nxb_cua(doi, "")[0] == "Elsevier", doi
+    assert D.nxb_cua("", "https://www.gastrojournal.org/article/x")[0] == "Elsevier"
