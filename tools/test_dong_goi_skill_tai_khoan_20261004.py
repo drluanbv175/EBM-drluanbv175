@@ -74,6 +74,22 @@ def test_chi_tep_git_track(tmp_path):
     assert (d / "references" / "chua-track.md").exists()
 
 
+def test_quyen_tep_theo_git_khong_theo_dia(tmp_path):
+    """OneDrive đổi bit thực thi trên đĩa (đo 04/10: 0o700 ở cây chính, 644 ở worktree) ⇒ quyền trong ZIP phải lấy theo git, để
+    cùng nội dung ra cùng từng byte ở mọi bản sao."""
+    hub, ra = tmp_path / "hub", tmp_path / "ra"
+    d = _skill(hub, "abc", them={"tools/chay.sh": "echo 1\n", "tools/doc.md": "x\n"})
+    subprocess.run(["git", "init", "-q", str(hub)], check=True)
+    subprocess.run(["git", "-C", str(hub), "add", "abc"], check=True)
+    subprocess.run(["git", "-C", str(hub), "update-index", "--chmod=+x", "abc/tools/chay.sh"], check=True)
+    (d / "tools" / "doc.md").chmod(0o700)   # đĩa có bit thực thi giả, git ghi 100644
+    DG.dong_goi(DG.danh_gia(hub, None), hub, ra, None, "t")
+    with zipfile.ZipFile(ra / "abc.zip") as z:
+        quyen = {i.filename: (i.external_attr >> 16) & 0o777 for i in z.infolist()}
+    assert quyen["abc/tools/chay.sh"] == 0o755, "git ghi 100755 ⇒ ZIP 755"
+    assert quyen["abc/tools/doc.md"] == 0o644, "bit thực thi trên đĩa không được lọt vào ZIP"
+
+
 def test_ghi_lai_name_theo_thu_muc_nguon_khong_doi(tmp_path):
     hub, ra = tmp_path / "hub", tmp_path / "ra"
     d = _skill(hub, "abc-kdense", name="abc", than="Thân giữ nguyên: name: abc trong thân không bị đổi.\n")

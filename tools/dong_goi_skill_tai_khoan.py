@@ -279,14 +279,20 @@ def ghi_zip(dich: Path, ten: str, tep: dict[str, bytes], che_do: dict[str, int] 
 
 
 def _che_do(thu_muc: Path, tep: dict[str, bytes]) -> dict[str, int]:
-    """Giữ bit thực thi của tệp nguồn (script chạy thẳng), còn lại 644."""
-    ra = {}
-    for rel in tep:
-        try:
-            ra[rel] = 0o755 if (thu_muc / rel).stat().st_mode & 0o111 else 0o644
-        except OSError:
-            ra[rel] = 0o644
-    return ra
+    """Quyền tệp trong ZIP lấy theo GIT (100755 ⇒ 755, còn lại 644), KHÔNG theo đĩa. Đo 04/10/2026: OneDrive gắn bit thực thi
+    (0o700) cho 7 tệp của cap-nhat-chung-cu-y-khoa ở cây chính mà worktree sạch là 644 ⇒ cùng nội dung ra hai ZIP khác byte. Không
+    đọc được git ⇒ mọi tệp 644 (vẫn tất định)."""
+    ma = {}
+    try:
+        r = subprocess.run(["git", "-C", str(thu_muc), "ls-files", "-s", "-z"], capture_output=True, timeout=60)
+        if r.returncode == 0:
+            for dong in r.stdout.decode("utf-8", "surrogateescape").split("\0"):
+                dau, _, duong = dong.partition("\t")
+                if duong:
+                    ma[duong] = 0o755 if dau.split(" ", 1)[0] == "100755" else 0o644
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return {rel: ma.get(rel, 0o644) for rel in tep}
 
 
 _NHAN = {"cap_nhat": "cập nhật", "moi": "mới", "da_moi": "đã mới", "khac_han": "KHÁC HẲN", "khong_so": "không so",
