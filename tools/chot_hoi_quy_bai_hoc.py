@@ -7274,15 +7274,32 @@ def bh161_he_thong_bao_dam_toan_van():
     vd = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py", "_bh161_vd")
     if not hasattr(vd, "kiem_toan_van_apply"):
         return False, "cổng không có kiem_toan_van_apply — mục apply thiếu toàn văn lọt im lặng"
+    import datetime as _d
+    import json as _js
     with _tf.TemporaryDirectory() as td:
         kho = Path(td) / "toan_van_oa"
-        kho.mkdir()
+        (kho / "trinh_duyet").mkdir(parents=True)
         (kho / "PMID-111111_PMC1.xml").write_text("x")
-        warns, oks = [], []
-        vd.kiem_toan_van_apply(["{id:'ITEM-01', decision:'apply', pmid:'111111'}",
-                                "{id:'ITEM-02', decision:'apply', pmid:'222222'}"], kho, warns, oks)
-        if len(warns) != 1 or "222222" not in warns[0]:
-            return False, "cổng không cảnh báo đúng mục apply thiếu toàn văn trong kho"
+        muc = ["{id:'ITEM-01', decision:'apply', pmid:'111111'}", "{id:'ITEM-02', decision:'apply', pmid:'222222'}"]
+        e, w, o = [], [], []
+        vd.kiem_toan_van_apply(muc, kho, e, w, o, ten_dashboard="DB", hom_nay=_d.date(2026, 10, 4))
+        if len(e) != 1 or "222222" not in e[0]:
+            return False, "BẢO ĐẢM hỏng: mục apply CHƯA đọc toàn văn (ngoài sổ nợ) không bị CHẶN"
+        (Path(td) / "no-toan-van-apply.json").write_text(_js.dumps(
+            {"han": "2026-11-03", "muc": [{"dashboard": "DB", "item": "ITEM-02", "pmid": "222222"}]}), encoding="utf-8")
+        e, w, o = [], [], []
+        vd.kiem_toan_van_apply(muc, kho, e, w, o, ten_dashboard="DB", hom_nay=_d.date(2026, 10, 4))
+        if e or len(w) != 1:
+            return False, "sổ nợ trong hạn phải chỉ CẢNH BÁO (lộ trình trả nợ), không chặn"
+        e, w, o = [], [], []
+        vd.kiem_toan_van_apply(muc, kho, e, w, o, ten_dashboard="DB", hom_nay=_d.date(2026, 11, 4))
+        if len(e) != 1:
+            return False, "nợ QUÁ HẠN không bị chặn — sổ nợ thành miễn trừ vĩnh viễn"
+        (kho / "trinh_duyet" / "bac-si-da-doc.jsonl").write_text(_js.dumps({"pmid": "222222", "ngay": "2026-10-05"}) + "\n")
+        e, w, o = [], [], []
+        vd.kiem_toan_van_apply(muc, kho, e, w, o, ten_dashboard="DB", hom_nay=_d.date(2026, 11, 4))
+        if e or w:
+            return False, "«bác sĩ đã đọc trực tiếp» không được tính là đã đọc toàn văn"
     nguon = (REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py").read_text(encoding="utf-8")
     if not any(d.strip().startswith("kiem_toan_van_apply(items,") for d in nguon.splitlines()):
         return False, "main() của cổng KHÔNG gọi kiem_toan_van_apply (chỉ có hàm, không có dòng thi hành)"
@@ -7301,7 +7318,7 @@ def bh161_he_thong_bao_dam_toan_van():
         return False, "bước TV không nằm giữa A2 và A4/B2"
     if op.phan_loai("TV-toan-van", 2)[0] in op.DUNG_HET:
         return False, "lỗi bước toàn văn (phụ trợ) làm dừng cả chuỗi"
-    return True, "cổng đo phủ toàn văn mục apply từ kho · chuỗi theo chủ đề có bước TV (giữa A2 và A4/B2, không chặn)"
+    return True, "BẢO ĐẢM đọc toàn văn: chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn) · bác sĩ đã đọc được tính · chuỗi theo chủ đề có bước TV"
 
 
 def bh160_unpaywall_cong_dieu_khoan_va_noi_dung():
@@ -10587,7 +10604,7 @@ BAI_HOC = [
     ("BH158", "04/10", "Phiên uỷ quyền Chrome lưu bản sao: chỉ mở bằng lời bác sĩ, không bao giờ DynaMed/Scopus/WoS, hết ngày tự đóng, trần/nhịp mỗi miền, chặn giao diện tài khoản/tệp lạ, nhãn KHÔNG phải OA", bh158_phien_uy_quyen_chrome_luu_ban_sao),
     ("BH159", "04/10", "Phạm vi phiên uỷ quyền Chrome tính LÚC KIỂM (uỷ quyền thêm/rút giữa phiên có hiệu lực ngay); J Rheumatol vào bảng «cam»; doctrine so đủ tên NXB", bh159_pham_vi_phien_tinh_luc_kiem),
     ("BH160", "04/10", "Tầng 2 Unpaywall: chỉ LƯU TỰ ĐỘNG bản có giấy phép mở; loại trang giới thiệu kho lưu trữ; sổ phủ đếm mọi loại toàn văn", bh160_unpaywall_cong_dieu_khoan_va_noi_dung),
-    ("BH161", "04/10", "Hệ thống BẢO ĐẢM toàn văn: cổng đo phủ toàn văn mục apply từ kho; chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
+    ("BH161", "04/10", "BẢO ĐẢM đọc toàn văn: cổng chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn); chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

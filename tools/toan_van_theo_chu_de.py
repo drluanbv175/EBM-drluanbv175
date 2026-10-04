@@ -67,21 +67,23 @@ def pmid_tu_a2(duong: Path) -> list[str]:
     return ds
 
 
+_DTV = None
+
+
 def co_toan_van(pmid: str, kho: Path, gom=None) -> bool:
-    """PMID có toàn văn THẬT trong kho (mọi loại tệp ở gốc kho, trừ `_UPW.html` là trang giới thiệu kho lưu trữ) hoặc đã đọc
-    qua làn trình duyệt (`trinh_duyet/`)."""
-    for q in kho.glob(f"PMID-{pmid}_*"):
-        if not q.is_file():
-            continue
-        if q.name.endswith("_UPW.html") and gom is not None:
-            if not gom.la_toan_van_html(gom._van_ban_tho(q.read_bytes()))[0]:
-                continue
-        return True
-    return any((kho / "trinh_duyet").glob(f"PMID-{pmid}*"))
+    """PMID ĐÃ ĐỌC toàn văn theo NGUỒN SỰ THẬT dùng chung `doc_toan_van_co_nguoi.bao_phu_cuc_bo` (toàn văn máy đọc — loại trang
+    giới thiệu kho lưu trữ —, hồ sơ làn trình duyệt, hoặc bác sĩ đã đọc trực tiếp). `gom` giữ cho tương thích chữ ký."""
+    global _DTV
+    if _DTV is None:
+        sp = importlib.util.spec_from_file_location("_dtv_tv_cd", REPO / "tools" / "doc_toan_van_co_nguoi.py")
+        _DTV = importlib.util.module_from_spec(sp)
+        sys.modules["_dtv_tv_cd"] = _DTV
+        sp.loader.exec_module(_DTV)
+    return _DTV.bao_phu_cuc_bo([pmid], kho)[pmid] in _DTV.TRANG_THAI_DA_PHU
 
 
 def pmid_apply_thieu(dashboards: list[Path], kho: Path, gom=None) -> list[str]:
-    """PMID chính (`pmid:`) của mục decision='apply' CHƯA có toàn văn trong kho (bỏ mục tự khai appraisalCompleteness)."""
+    """PMID chính (`pmid:`) của mục decision='apply' CHƯA ĐỌC toàn văn (theo nguồn sự thật `bao_phu_cuc_bo`)."""
     sp = importlib.util.spec_from_file_location("_vd_tv_cd", REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py")
     vd = importlib.util.module_from_spec(sp)
     sp.loader.exec_module(vd)
@@ -91,7 +93,7 @@ def pmid_apply_thieu(dashboards: list[Path], kho: Path, gom=None) -> list[str]:
         if not blk:
             continue
         for ch in vd.split_items(blk):
-            if vd.field(ch, "decision") != "apply" or vd.field(ch, "appraisalCompleteness") in ("full", "partial"):
+            if vd.field(ch, "decision") != "apply":  # tự khai «full» không thay bằng chứng đọc (bảo đảm 04/10/2026)
                 continue
             pm = (vd.field(ch, "pmid") or "").strip()
             if re.fullmatch(r"\d{6,9}", pm) and not co_toan_van(pm, kho, gom) and pm not in ds:
