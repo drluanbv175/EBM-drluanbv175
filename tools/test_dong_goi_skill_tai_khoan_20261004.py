@@ -178,7 +178,7 @@ def test_giac_quan_hom_viec(tmp_path):
     viec = tdx.giac_quan_skill_tai_khoan(bundle=tk, hub=hub)
     assert len(viec) == 1 and viec[0][0] == 2, viec
     assert "1 skill của bác sĩ" in viec[0][1] and "thêm 1 skill chưa từng lên" in viec[0][1]
-    (tk / "cu" / "tools" / "a.py").write_text("2\n", encoding="utf-8")
+    (tk / "cu" / "tools" / "a.py").write_bytes(b"2\n")  # write_text đổi \n thành \r\n trên Windows ⇒ tệp vẫn khác (CI 04/10)
     viec2 = tdx.giac_quan_skill_tai_khoan(bundle=tk, hub=hub)
     assert len(viec2) == 1 and viec2[0][0] == 3, "chỉ còn skill chưa từng lên ⇒ tuỳ chọn, ưu tiên thấp"
     assert tdx.giac_quan_skill_tai_khoan(bundle=tmp_path / "khong-co", hub=hub) == []
