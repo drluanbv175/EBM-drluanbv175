@@ -63,6 +63,103 @@ def _van_ban_tho(du_lieu: bytes) -> str:
     return re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", vb)))
 
 
+_DTV = None
+# Giá trị `license` của Unpaywall được coi là GIẤY PHÉP MỞ (mọi biến thể CC BY*, CC0, phạm vi công cộng).
+GIAY_PHEP_MO_DUNG = ("cc0", "pd", "public-domain")
+GIAY_PHEP_MO_TIEN_TO = ("cc-by",)
+# PMID bị cổng điều khoản chặn ở lượt gần nhất: (pmid, doi, lý do) — để báo cáo, không phải để thử lại mù.
+BO_QUA_UNPAYWALL: list[tuple[str, str, str]] = []
+
+
+def _nap_dtv():
+    """Nạp `tools/doc_toan_van_co_nguoi.py` (bảng điều khoản NXB + uỷ quyền bác sĩ). Lỗi ⇒ None: cổng ĐÓNG với mọi bản
+    không mang giấy phép mở (fail-closed), không lặng lẽ cho qua."""
+    global _DTV
+    if _DTV is None:
+        try:
+            sp = importlib.util.spec_from_file_location("_dtv_gom_tv", REPO / "tools" / "doc_toan_van_co_nguoi.py")
+            mod = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(mod)
+            _DTV = mod
+        except Exception:  # noqa: BLE001
+            _DTV = False
+    return _DTV or None
+
+
+def la_giay_phep_mo(license: str | None) -> bool:
+    lic = (license or "").strip().lower()
+    return lic in GIAY_PHEP_MO_DUNG or lic.startswith(GIAY_PHEP_MO_TIEN_TO)
+
+
+def quyet_dinh_unpaywall(doi: str, url: str, license: str | None, *, dtv=None, hom_nay=None) -> tuple[bool, str]:
+    """CỔNG ĐIỀU KHOẢN của tầng 2 (04/10/2026) — trả (được LƯU tự động?, lý do). Trước bản vá, tầng này lưu MỌI bản «is_oa»
+    (kể cả bản đọc-miễn-phí không giấy phép của NXB đã kết luận «cấm» dùng với AI), trái doctrine §2septies.
+
+    CHỈ bản mang GIẤY PHÉP MỞ (CC BY*, CC0, phạm vi công cộng) được lưu tự động — chính giấy phép cho phép dùng.
+    Bản không có giấy phép mở thì KHÔNG lưu, kể cả NXB «cấm» mà bác sĩ đã uỷ quyền: uỷ quyền 03/10 là uỷ quyền ĐỌC («KHÔNG lưu
+    toàn văn»); lưu bản sao chỉ trong phiên uỷ quyền có lời bác sĩ, trần mỗi miền và nhịp nghỉ (`phien_uy_quyen_chrome.py`) —
+    tải tự động hàng loạt là đúng thứ điều khoản NXB cấm. Lý do trả về phân loại để định tuyến:
+    «cam_co_uq» → làn trình duyệt có phiên; «cam_khong_uq» → bác sĩ đọc trực tiếp; «chua_kiem» → đọc trang điều khoản trước."""
+    lic = (license or "").strip().lower()
+    if la_giay_phep_mo(lic):
+        return True, f"giấy phép mở ({lic})"
+    dtv = dtv if dtv is not None else _nap_dtv()
+    if dtv is None:
+        return False, "khong_nap_bang: không nạp được bảng điều khoản NXB — chỉ lưu bản có giấy phép mở"
+    ten, dk = dtv.nxb_cua(doi=doi or "", url=url or "")
+    if ten and (dk or {}).get("ket_luan") == "cam":
+        if dtv.uy_quyen_bac_si(ten, hom_nay):
+            return False, (f"cam_co_uq: NXB «cấm» {ten}, bản đọc-miễn-phí không giấy phép mở — uỷ quyền ĐỌC không gồm lưu tự "
+                           "động; đọc qua làn trình duyệt (phiên uỷ quyền lưu bản sao)")
+        return False, f"cam_khong_uq: NXB «cấm» {ten}, chưa có uỷ quyền của bác sĩ — bác sĩ đọc trực tiếp"
+    if ten:
+        return False, f"khac: NXB {ten} — kết luận điều khoản «{(dk or {}).get('ket_luan')}» tầng này chưa nhận"
+    return False, "chua_kiem: NXB chưa có trong DIEU_KHOAN_NXB và bản OA không mang giấy phép mở — đọc trang điều khoản trước"
+
+
+# Dấu hiệu TRANG GIỚI THIỆU của cổng kho lưu trữ (Pure/Research Explorer, kho đại học): chỉ tóm tắt + metadata + nút tải.
+# Đo 04/10/2026: 15/27 tệp `_UPW.html` trong kho là loại này (gồm 4 mục apply: CHA₂DS₂-VASc 19762550, HAS-BLED 20299623,
+# EMPOWER 24733354, SUMMIT 27203508) — vượt ngưỡng 500 từ nên lọt vào kho với nhãn «toàn văn».
+DAU_TRANG_GIOI_THIEU = ("Fingerprint", "Access to Document", "Link to publication", "Research output", "Accéder au contenu principal")
+DE_MUC_TOAN_VAN = ("Methods", "Results", "Discussion", "Introduction", "METHODS", "RESULTS", "DISCUSSION", "INTRODUCTION")
+SO_TU_TOAN_VAN_KHONG_DE_MUC = 6000  # guideline/khuyến cáo dài thường không có đề mục IMRaD (vd Tiêu chuẩn ADA: 18–26 nghìn từ)
+
+
+def la_toan_van_html(vb: str) -> tuple[bool, str]:
+    """(có phải TOÀN VĂN?, lý do) cho văn bản thô của một trang HTML. Toàn văn khi: ≥ 3 đề mục IMRaD và ≥ 2500 từ, HOẶC
+    ≥ 6000 từ (guideline dài). Mang dấu trang giới thiệu kho mà dưới 6000 từ ⇒ KHÔNG phải toàn văn."""
+    so_tu = len(vb.split())
+    de_muc = sum(1 for k in DE_MUC_TOAN_VAN if k in vb)
+    dau = [k for k in DAU_TRANG_GIOI_THIEU if k in vb]
+    if so_tu >= SO_TU_TOAN_VAN_KHONG_DE_MUC:
+        return True, f"{so_tu} từ"
+    if dau:
+        return False, f"trang giới thiệu kho lưu trữ ({', '.join(dau[:2])}; {so_tu} từ)"
+    if so_tu >= 2500 and de_muc >= 3:
+        return True, f"{so_tu} từ, {de_muc} đề mục"
+    return False, f"không đủ dấu hiệu toàn văn ({so_tu} từ, {de_muc} đề mục IMRaD)"
+
+
+def dem_toan_van(kho: Path) -> dict[str, set[str]]:
+    """PMID có toàn văn trong kho theo LOẠI tệp ở gốc kho (XML JATS · PDF/HTML Unpaywall · _CHR phiên Chrome · TDM…) cộng
+    `trinh_duyet/` (đọc qua làn trình duyệt có bác sĩ — hồ sơ trích xuất, KHÔNG lưu bản). Trước 04/10 sổ phủ chỉ đếm `*.xml`
+    nên báo thấp hơn thật (203/676 trong khi 337/676 PMID đã có toàn văn hoặc đã được đọc toàn văn)."""
+    loai: dict[str, set[str]] = {}
+    for q in kho.glob("PMID-*"):
+        m = re.match(r"PMID-(\d+)(?:_([A-Za-z]+))?", q.name)
+        if not m or not q.is_file():
+            continue
+        nhan = "XML" if q.suffix.lower() == ".xml" else (m.group(2) or "khác").upper()
+        loai.setdefault(nhan, set()).add(m.group(1))
+    td = kho / "trinh_duyet"
+    if td.is_dir():
+        for q in td.glob("PMID-*"):
+            m = re.match(r"PMID-(\d+)", q.name)
+            if m:
+                loai.setdefault("TRINH_DUYET", set()).add(m.group(1))
+    return loai
+
+
 def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
     """TẦNG 2 OA — Unpaywall (bác sĩ duyệt gói ② 19/08): bài không có bản PMC vẫn
     thường có bản OA HỢP PHÁP ở repository (bản tác giả tự lưu, Gold OA ngoài PMC).
@@ -76,6 +173,7 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
         print("  ⚠ Unpaywall cần email định danh (NCBI_EMAIL trong ~/.ebm-secrets) — bỏ tầng 2.")
         return 0, pmids
     moi_tai, con_thieu = 0, []
+    BO_QUA_UNPAYWALL.clear()
     for pm in pmids:
         try:  # DOI qua esummary (id → articleids)
             u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
@@ -91,6 +189,13 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
             loc = uj.get("best_oa_location") or {}
             url = loc.get("url_for_pdf") or loc.get("url")
             if not (uj.get("is_oa") and url):
+                con_thieu.append(pm)
+                continue
+            # CỔNG ĐIỀU KHOẢN — xét TRƯỚC khi mở nội dung (04/10/2026)
+            duoc, ly_do = quyet_dinh_unpaywall(doi, url, loc.get("license"))
+            if not duoc:
+                BO_QUA_UNPAYWALL.append((pm, doi, ly_do))
+                print(f"  ⛔ Unpaywall {pm}: KHÔNG lưu — {ly_do}")
                 con_thieu.append(pm)
                 continue
             req = _rq.Request(url, headers={"User-Agent": "Mozilla/5.0 (EBM-OA-fetch)"})
@@ -119,9 +224,9 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
             # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
             # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
             vb = _van_ban_tho(du_lieu)
-            if len(vb.split()) < 500 or "Cookies must be enabled" in vb:
-                print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn "
-                      f"({len(vb.split())} từ) — từ chối, không lưu")
+            la_tv, vi_sao = la_toan_van_html(vb)
+            if not la_tv or "Cookies must be enabled" in vb:
+                print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu")
                 con_thieu.append(pm)
                 continue
             (KHO / f"PMID-{pm}_UPW.html").write_bytes(du_lieu)
@@ -255,15 +360,21 @@ def main() -> int:
         so_moi[pm] = hom_nay
     ghi_chu.write_text("\n".join(f"{pm} {ngay}" for pm, ngay in sorted(so_moi.items()))
                        + "\n", encoding="utf-8")
-    da_co_sau = {re.search(r"PMID-(\d+)_", p.name).group(1) for p in KHO.glob("PMID-*.xml")}
+    loai = dem_toan_van(KHO)
+    da_co_sau = set().union(*loai.values()) if loai else set()
     tong_co = len(da_co_sau)
     phu_quet = len(pmids & da_co_sau)
+    chi_tiet = " · ".join(f"{k} {len(v)}" for k, v in sorted(loai.items()))
+    bo_qua = "".join(f"  - {pm} (doi:{d}) — {ly}\n" for pm, d, ly in BO_QUA_UNPAYWALL)
     (KHO / "DO-PHU-OA.md").write_text(
-        f"# ĐỘ PHỦ TOÀN VĂN OA — kho dùng chung dashboard — {date.today().isoformat()}\n\n"
-        f"- Kho hiện có **{tong_co}** toàn văn OA; tập vừa quét phủ **{phu_quet}/{len(pmids)}**\n"
+        f"# ĐỘ PHỦ TOÀN VĂN — kho dùng chung dashboard — {date.today().isoformat()}\n\n"
+        f"- Kho có toàn văn (hoặc đã đọc toàn văn qua làn trình duyệt) cho **{tong_co}** PMID; tập vừa quét phủ "
+        f"**{phu_quet}/{len(pmids)}**\n"
+        f"- Theo loại (một PMID có thể nhiều loại): {chi_tiet or '—'}\n"
         f"- Lượt này: +{moi} tải mới · {len(khong_oa)} có PMC nhưng không-OA · "
-        f"{len(khong_pmc)} không có bản PMC\n\n"
-        "> Phần không-OA cần quyền truy cập của bác sĩ — độ phủ thấp là SỰ THẬT về OA,\n"
+        f"{len(khong_pmc)} không có bản PMC\n"
+        + (f"- Tầng 2 Unpaywall — KHÔNG lưu vì điều khoản NXB ({len(BO_QUA_UNPAYWALL)}):\n{bo_qua}" if BO_QUA_UNPAYWALL else "")
+        + "\n> Phần không-OA cần quyền truy cập của bác sĩ — độ phủ thấp là SỰ THẬT về OA,\n"
         "> không phải lỗi. Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
     print(f"  +{moi} toàn văn mới · không-OA {len(khong_oa)} · không-PMC {len(khong_pmc)} "
           f"→ kho {tong_co}/{len(pmids)} PMID")

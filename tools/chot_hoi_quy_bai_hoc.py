@@ -7263,6 +7263,76 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh160_unpaywall_cong_dieu_khoan_va_noi_dung():
+    """04/10 — đo kho toàn văn: tầng 2 Unpaywall của `gom_toan_van_dashboard.py` lưu MỌI bản «is_oa» ⇒ 32/42 tệp `_UPW` không
+    mang giấy phép mở (NXB «cấm» hoặc chưa kiểm điều khoản); cổng nội dung chỉ đòi ≥ 500 từ ⇒ 15/27 `_UPW.html` là TRANG GIỚI
+    THIỆU kho lưu trữ (tóm tắt + metadata) mà vẫn tính «có toàn văn» — gồm 4 mục apply (CHA₂DS₂-VASc 19762550, HAS-BLED 20299623,
+    EMPOWER 24733354, SUMMIT 27203508); sổ phủ chỉ đếm `*.xml` (báo 203/676 khi thật là 337/676). Vá: chỉ LƯU TỰ ĐỘNG bản có giấy
+    phép mở (uỷ quyền 03/10 là uỷ quyền ĐỌC, «KHÔNG lưu toàn văn»); nhận diện trang giới thiệu kho; sổ phủ đếm mọi loại. Kiểm HÀNH
+    VI ngoại tuyến (bảng điều khoản giả, mạng giả, thư mục tạm)."""
+    import io as _io
+    import json as _js
+    import tempfile as _tf
+    import types as _ty
+    from unittest import mock as _mk
+    g = _nap(REPO / "tools/gom_toan_van_dashboard.py", "_bh160_gom")
+    for ten in ("quyet_dinh_unpaywall", "la_toan_van_html", "dem_toan_van"):
+        if not hasattr(g, ten):
+            return False, f"thiếu {ten} — tầng 2 không có cổng"
+    bang = {"Wiley": {"ket_luan": "cam", "doi": ("10.1002/",), "mien": ()}}
+    dtv = _ty.SimpleNamespace(
+        DIEU_KHOAN_NXB=bang,
+        nxb_cua=lambda doi="", url="", tieu_de="": ("Wiley", bang["Wiley"]) if (doi or "").startswith("10.1002/") else (None, None),
+        uy_quyen_bac_si=lambda ten, hom_nay=None: {"ngay": "2026-10-03"})
+    if g.quyet_dinh_unpaywall("10.1002/acr.22812", "", None, dtv=dtv)[0]:
+        return False, "bản không giấy phép mở của NXB «cấm» được LƯU TỰ ĐỘNG chỉ vì có uỷ quyền ĐỌC"
+    if not g.quyet_dinh_unpaywall("10.1002/x", "", "cc-by-nc-nd", dtv=dtv)[0]:
+        return False, "bản mang giấy phép CC bị chặn oan"
+    if g.quyet_dinh_unpaywall("10.1378/chest.09-1584", "", "other-oa", dtv=dtv)[0]:
+        return False, "NXB chưa kiểm điều khoản lọt vào kho"
+    # Mẫu giống ca thật SUMMIT 27203508: tóm tắt CÓ CẤU TRÚC (đủ đề mục IMRaD) > 2500 từ + dấu trang kho — chỉ cổng nhận diện
+    # trang giới thiệu mới loại được (mẫu thiếu đề mục thì cổng số-từ/đề-mục đã loại sẵn ⇒ phép thử không đo gì).
+    trang = ("Abstract Introduction Methods Results Discussion " + "w " * 2700
+             + " Fingerprint Dive into the research topics. Access to Document Link to publication")
+    if g.la_toan_van_html(trang)[0]:
+        return False, "trang giới thiệu kho lưu trữ được nhận là toàn văn"
+    if not g.la_toan_van_html("Recommendation " + "x " * 7000)[0]:
+        return False, "guideline dài không đề mục IMRaD bị loại oan"
+    with _tf.TemporaryDirectory() as td:
+        k = Path(td)
+        (k / "PMID-1_UPW.pdf").write_text("x")
+        (k / "PMID-2_PMC2.xml").write_text("x")
+        (k / "PMID-3_CHR.html").write_text("x")
+        if set().union(*g.dem_toan_van(k).values()) != {"1", "2", "3"}:
+            return False, "sổ phủ không đếm bản PDF/HTML ngoài XML"
+        da_mo = []
+        noi_dung_gia = "https" + "://kho-luu-tru.invalid/bai"
+
+        class _PH(_io.BytesIO):
+            def __init__(self, b, u):
+                super().__init__(b)
+                self._u = u
+
+            def geturl(self):
+                return self._u
+
+        def _mang(req, timeout=None, context=None):
+            u = req if isinstance(req, str) else req.full_url
+            if "esummary.fcgi" in u:
+                return _PH(_js.dumps({"result": {"41358886": {"articleids": [{"idtype": "doi", "value": "10.1002/x"}]}}}).encode(), u)
+            if "api.unpaywall.org" in u:
+                return _PH(_js.dumps({"is_oa": True, "best_oa_location": {"url": noi_dung_gia, "license": None}}).encode(), u)
+            da_mo.append(u)
+            return _PH(b"%PDF-1.4 noi dung", u)
+        with _mk.patch("urllib.request.urlopen", _mang), _mk.patch.object(g, "KHO", k), \
+                _mk.patch.object(g, "_nap_dtv", lambda: dtv), _mk.patch.object(g, "_email_lich_su", lambda: "bh@example.org"), \
+                _mk.patch.object(g.time, "sleep", lambda s: None):
+            moi, _ = g.tang_unpaywall(["41358886"])
+        if moi or da_mo or (k / "PMID-41358886_UPW.pdf").exists():
+            return False, "tang_unpaywall MỞ/LƯU nội dung trước khi xét cổng điều khoản"
+    return True, "chỉ lưu tự động bản giấy phép mở · loại trang giới thiệu kho · sổ phủ đếm mọi loại toàn văn"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10475,6 +10545,7 @@ BAI_HOC = [
     ("BH157", "04/10", "Tầng thứ bậc trống (0 tổng quan, guideline+SR+RCT ≤ 1/90 ngày) không bị tầng «mới vào PubMed» che: 🟠 thu_bac_trong, không đổi mã thoát, chu trình nêu việc", bh157_tang_thu_bac_trong_khong_bi_tang_moi_che),
     ("BH158", "04/10", "Phiên uỷ quyền Chrome lưu bản sao: chỉ mở bằng lời bác sĩ, không bao giờ DynaMed/Scopus/WoS, hết ngày tự đóng, trần/nhịp mỗi miền, chặn giao diện tài khoản/tệp lạ, nhãn KHÔNG phải OA", bh158_phien_uy_quyen_chrome_luu_ban_sao),
     ("BH159", "04/10", "Phạm vi phiên uỷ quyền Chrome tính LÚC KIỂM (uỷ quyền thêm/rút giữa phiên có hiệu lực ngay); J Rheumatol vào bảng «cam»; doctrine so đủ tên NXB", bh159_pham_vi_phien_tinh_luc_kiem),
+    ("BH160", "04/10", "Tầng 2 Unpaywall: chỉ LƯU TỰ ĐỘNG bản có giấy phép mở; loại trang giới thiệu kho lưu trữ; sổ phủ đếm mọi loại toàn văn", bh160_unpaywall_cong_dieu_khoan_va_noi_dung),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

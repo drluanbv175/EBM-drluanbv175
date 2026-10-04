@@ -42,7 +42,10 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    c. PUBMED/EUROPE PMC: MCP `pubmed-search` `unified_search` (3 tầng:
       guideline → SR/MA → RCT lớn) — lấy PMID chuẩn.
    d. TOÀN VĂN: `python3 tools/gom_toan_van_dashboard.py --pmid <các PMID chốt>`
-      (thêm `--unpaywall` để phủ tầng 2 OA) → `python3 tools/doc_sau_toan_van.py
+      (thêm `--unpaywall` để phủ tầng 2 OA — từ 04/10/2026 tầng này CHỈ lưu bản mang giấy phép mở
+      và loại trang giới thiệu kho lưu trữ; bản OA không giấy phép mở của NXB «cấm» đọc qua làn trình duyệt
+      có phiên uỷ quyền, NXB chưa kiểm điều khoản thì đọc trang điều khoản trước — cùng luật cho
+      bản `_MCP.md` dưới) → `python3 tools/doc_sau_toan_van.py
       --pmid ...` → ĐỌC bản `EBM-Dashboards/toan_van_oa/doc_sau/PMID-*.md`;
       còn thiếu thì gọi MCP `pubmed-search` `get_fulltext` (chuỗi OA nhiều tầng)
       và lưu markdown về `EBM-Dashboards/toan_van_oa/PMID-<n>_MCP.md`.
