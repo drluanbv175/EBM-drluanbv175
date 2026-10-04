@@ -944,8 +944,12 @@ def main() -> int:
     if "CHƯA được bác sĩ chốt" in out:
         de_xuat.append((1, "👤", "C1a: G0 chờ 5 cờ FINER — một cú đúp",
                         "mở «Chot FINER C1a.command» (Mac) / .ps1 (Windows)"))
-    if "0/4" in out:
-        de_xuat.append((1, "👤", "C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ "
+    # 04/10/2026: study_readiness nay đếm SÁU cổng cứng theo gate_contract («chữ ký thật: 0/6») thay vì 4 viết tay — nhận
+    # cả dạng mới lẫn «0/4» của bản cũ để thứ tự gộp hai repo không làm mất dòng nhắc.
+    _m_cc = re.search(r"chữ ký thật: 0/(\d+)", out)
+    if _m_cc or "0/4" in out:
+        _so_cc = _m_cc.group(1) if _m_cc else "4"
+        de_xuat.append((1, "👤", f"C1a: 0/{_so_cc} cổng cứng có chữ ký — bước tiếp là hồ sơ "
                         "G2 nộp IRB thật", "xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md"))
 
     # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
