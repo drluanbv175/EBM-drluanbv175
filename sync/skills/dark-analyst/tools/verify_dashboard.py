@@ -23,6 +23,11 @@ Kiểm TRƯỚC KHI GIAO cho bác sĩ:
     lại khai dateVersion "2024" — cùng họ guideline nên tiêu đề trùng đủ từ khóa để KHÔNG bị
     heuristic tráo-trích-dẫn ở trên bắt được; đây là dạng lỗi RIÊNG — "đúng họ, sai phiên
     bản/năm" — cần so năm trực tiếp mới bắt được).
+  - (--online, thêm 04/10/2026) Mục ghi CẢ pmid lẫn doi: DOI mà CHÍNH PubMed ghi cho PMID (esummary
+    `articleids`; Europe PMC khi NCBI chặn) phải TRÙNG DOI của mục (không phân biệt hoa/thường). Đo
+    04/10 trên 72 dashboard: 10/1164 cặp trỏ HAI bài khác nhau (3 mục `apply`) — từng định danh vẫn
+    «✓» riêng lẻ nên cổng cũ không thấy. Lệch ⇒ cảnh báo; --strict-sources ⇒ lỗi cứng. PubMed không
+    ghi DOI cho PMID ⇒ «chưa so được» (cảnh báo, KHÔNG coi là khớp).
   - (--online, SỬA 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện MEDIUM): item
     CHỈ khai `url` (không pmid/doi) nay CŨNG được xác minh mở được thật (GET nhẹ) — trước bản
     vá này, url được chấp nhận ngang pmid/doi để qua cổng truy nguyên nhưng KHÔNG BAO GIỜ được
@@ -46,7 +51,8 @@ Lỗi cứng: item thiếu cả pmid lẫn doi; PMID/DOI sai định dạng; thi
 Cảnh báo (không chặn): nghi PII; khi --online, PMID xác minh tồn tại nhưng tiêu đề PubMed
   không khớp nội dung item (nghi tráo trích dẫn — heuristic từ khóa, cần rà tay); khi --online,
   năm PubMed thật lệch >1 năm so với dateVersion item khai (nghi trích dẫn NHẦM PHIÊN BẢN/năm
-  của cùng một họ guideline — rà tay, không tự sửa). Khi bật --strict-sources, các cảnh báo
+  của cùng một họ guideline — rà tay, không tự sửa); khi --online, PMID và DOI của CÙNG một mục
+  trỏ hai bản ghi khác nhau (xem khối `_DOI_CUA_PMID`). Khi bật --strict-sources, các cảnh báo
   nguồn này được nâng thành lỗi cứng để không cần bác sĩ tự dò từng nguồn trước khi đọc dashboard.
 """
 import argparse
@@ -1084,6 +1090,7 @@ def verify_pmid_online(pmid, retries=2):
             if pmid in res and "title" in res[pmid]:
                 # pubdate thường dạng "2026 Mar 13" hoặc "2026" — chỉ cần năm cho so khớp
                 # dateVersion (vá 2026-07-12, xem docstring module).
+                _ghi_doi_cua_pmid(pmid, _doi_tu_esummary(res[pmid]), res[pmid].get("pubtype"))
                 return True, res[pmid].get("title", ""), res[pmid].get("pubdate", "")
             return False, "không có trong PubMed", ""
         except (ValueError, JSONDecodeError) as e:
@@ -1133,7 +1140,120 @@ def verify_pmid_europe_pmc(pmid):
         return None, "Europe PMC trả bản ghi không khớp PMID", ""
     title = rec.get("title") or ""
     year = rec.get("pubYear") or rec.get("firstPublicationDate") or ""
+    _ghi_doi_cua_pmid(pmid, rec.get("doi") or "", (rec.get("pubTypeList") or {}).get("pubType") or rec.get("pubType"))
     return True, title, year
+
+
+# ── Cặp PMID–DOI của CÙNG một mục phải trỏ CÙNG một bài (thêm 04/10/2026) ────────────────────────────────────────
+# Đo 04/10/2026 trên 72 dashboard: 1164 mục ghi cả PMID lẫn DOI, 10 cặp trỏ HAI bài khác nhau (3 mục `apply`): PMID
+# guideline ESC 2026 đi cùng DOI một bài BMJ 1999; PMID một THƯ bạn đọc NEJM đi cùng DOI của chính thử nghiệm; PMID bản
+# đồng xuất bản ở tạp chí A đi cùng DOI bản ở tạp chí B… Cổng xác minh TỪNG định danh tồn tại nên cả hai đều «✓», nhưng
+# người đọc bấm PMID và bấm DOI tới hai bài khác nhau, và không ai biết số liệu của mục lấy từ bài nào. Phép so dùng DOI
+# mà CHÍNH PubMed ghi cho PMID (esummary `articleids`/`elocationid`; Europe PMC SRC:MED khi NCBI chặn) — không đoán.
+# PubMed không ghi DOI (bài cũ) ⇒ «chưa so được»: không phải lệch (không báo đỏ giả), cũng không phải khớp (không xanh giả).
+_DOI_CUA_PMID = {}  # pmid → {"doi": DOI đã chuẩn hoá ('' nếu PubMed không ghi), "loai": loại xuất bản (chữ thường)}
+_LOAI_KHONG_PHAI_BAI_GOC = {
+    "letter": "thư bạn đọc (Letter)",
+    "comment": "bình luận (Comment)",
+    "editorial": "xã luận (Editorial)",
+    "published erratum": "đính chính (Published Erratum)",
+    "retraction of publication": "thông báo rút bài (Retraction of Publication)",
+    "expression of concern": "thông báo quan ngại (Expression of Concern)",
+    "news": "tin tức (News)",
+}
+_COCHRANE_PHIEN_BAN_RE = re.compile(r"^(10\.1002/14651858\.[a-z]{2}\d+)(?:\.pub\d+)?$")
+
+
+def chuan_hoa_doi(doi):
+    """DOI không phân biệt hoa/thường (Handle System): hạ chữ thường, bỏ tiền tố link/«doi:» và dấu câu dính cuối."""
+    s = str(doi or "").strip().lower()
+    for tien_to in ("https://doi.org/", "http://doi.org/", "https://dx.doi.org/", "http://dx.doi.org/", "doi:"):
+        if s.startswith(tien_to):
+            s = s[len(tien_to):].strip()
+    return s.rstrip(".,;)")
+
+
+def _doi_tu_esummary(ban_ghi):
+    """DOI PubMed ghi cho một bản ghi esummary: `articleids` (idtype doi) trước, `elocationid` («doi: 10.…») sau.
+    Không bao giờ ném lỗi — được gọi BÊN TRONG khối xác minh PMID, lỗi ở đây không được biến PMID thật thành lỗi mạng."""
+    if not isinstance(ban_ghi, dict):
+        return ""
+    for a in ban_ghi.get("articleids") or ():
+        if isinstance(a, dict) and str(a.get("idtype") or "").lower() == "doi" and a.get("value"):
+            return str(a["value"])
+    m = re.search(r"\bdoi:\s*(10\.\S+)", str(ban_ghi.get("elocationid") or ""), re.I)
+    return m.group(1) if m else ""
+
+
+def _ghi_doi_cua_pmid(pmid, doi, loai):
+    """Nhớ DOI + loại xuất bản mà nguồn ghi cho PMID (dùng ở bước so cặp PMID–DOI). Không bao giờ ném lỗi."""
+    if isinstance(loai, str):
+        loai = loai.split(";")
+    if not isinstance(loai, (list, tuple)):
+        loai = ()
+    _DOI_CUA_PMID[str(pmid)] = {
+        "doi": chuan_hoa_doi(doi),
+        "loai": tuple(str(x).strip().lower() for x in loai if str(x).strip()),
+    }
+
+
+def so_cap_pmid_doi(doi_muc, doi_cua_pmid, loai_cua_pmid=()):
+    """So DOI của mục với DOI mà PubMed ghi cho PMID của CHÍNH mục đó. Trả (kết luận, ghi chú):
+      "khop"          — cùng một DOI (không phân biệt hoa/thường);
+      "khong_so_duoc" — PubMed không ghi DOI cho PMID ⇒ không coi là khớp, cũng không coi là lệch;
+      "lech"          — hai DOI khác nhau ⇒ PMID và DOI trỏ hai bản ghi khác nhau.
+    Ghi chú nói rõ hai ca hay gặp: PMID trỏ thư/bình luận/đính chính (thường PMID sai, DOI đúng) và hai PHIÊN BẢN của
+    cùng một tổng quan Cochrane (.pubN) — vẫn «lech»: số liệu mỗi phiên bản khác nhau."""
+    a, b = chuan_hoa_doi(doi_muc), chuan_hoa_doi(doi_cua_pmid)
+    if not a or not b:
+        return "khong_so_duoc", "PubMed không ghi DOI cho PMID này"
+    if a == b:
+        return "khop", ""
+    loai = [_LOAI_KHONG_PHAI_BAI_GOC[t] for t in (str(x).strip().lower() for x in loai_cua_pmid or ())
+            if t in _LOAI_KHONG_PHAI_BAI_GOC]
+    if loai:
+        return "lech", "PMID trỏ tới %s, không phải bài gốc — nhiều khả năng PMID sai" % ", ".join(loai)
+    ca, cb = _COCHRANE_PHIEN_BAN_RE.match(a), _COCHRANE_PHIEN_BAN_RE.match(b)
+    if ca and cb and ca.group(1) == cb.group(1):
+        return "lech", "hai PHIÊN BẢN khác nhau của cùng một tổng quan Cochrane — số liệu mỗi phiên bản khác nhau"
+    return "lech", ""
+
+
+def kiem_cap_pmid_doi(pmids, ket_qua_pmid, strict, errors, warns, oks):
+    """Bước 3b′ của cổng --online: mục ghi cả pmid lẫn doi (đúng định dạng) và PMID đã xác minh ĐƯỢC ⇒ so cặp.
+    `pmids` là danh sách (iid, pmid, chunk, dateVersion) của main(); `ket_qua_pmid` là bộ nhớ kết quả xác minh PMID
+    (pmid → (ok, tiêu đề, pubdate)). Lệch ⇒ cảnh báo, strict-sources ⇒ lỗi cứng — cùng khuôn với luật tráo trích dẫn
+    và luật lệch năm. PMID chưa xác minh được thì bỏ qua: bước 3 đã báo lỗi riêng."""
+    so, khop = 0, 0
+    for iid, p, ch, _dv in pmids:
+        doi_muc = (field(ch, "doi") or "").strip()
+        if not doi_muc or not DOI_RE.match(doi_muc):
+            continue
+        if (ket_qua_pmid.get(p) or (None,))[0] is not True:
+            continue
+        so += 1
+        meta = _DOI_CUA_PMID.get(str(p))
+        if meta is None:
+            ket_luan, ghi_chu = "khong_so_duoc", "không lấy được bản ghi PubMed đầy đủ của PMID"
+        else:
+            ket_luan, ghi_chu = so_cap_pmid_doi(doi_muc, meta["doi"], meta["loai"])
+        if ket_luan == "khop":
+            khop += 1
+        elif ket_luan == "khong_so_duoc":
+            warns.append("[%s] Cặp PMID %s – DOI %s CHƯA SO ĐƯỢC (%s) — không coi là đã khớp; nghi thì mở cả hai "
+                         "đối chiếu tiêu đề/tạp chí/năm." % (iid, p, doi_muc, ghi_chu))
+        else:
+            msg = ("[%s] PMID %s và DOI %s trỏ HAI bản ghi khác nhau: PubMed ghi DOI %s cho PMID này%s. Người đọc bấm "
+                   "PMID và bấm DOI sẽ tới hai bài khác nhau — sửa để cả hai cùng trỏ ĐÚNG bài mà số liệu của mục trích "
+                   "ra (tra PubMed/Europe PMC, KHÔNG đoán DOI)."
+                   % (iid, p, doi_muc, meta["doi"], ("; " + ghi_chu) if ghi_chu else ""))
+            if strict:
+                errors.append(msg + " Strict-sources: lỗi cứng, không phát hành.")
+            else:
+                warns.append(msg + " RÀ TAY, không tự sửa.")
+    if khop:
+        oks.append("Cặp PMID–DOI: %d/%d mục ghi cả hai định danh trỏ CÙNG một bài (DOI PubMed ghi cho PMID = DOI "
+                   "của mục)." % (khop, so))
 
 
 def verify_doi_online(doi, retries=2):
@@ -1589,6 +1709,10 @@ def main():
     elif dois:
         oks.append("Có %d DOI đúng định dạng (chạy --online để xác minh phân giải qua Crossref)."
                    % len(set(d for _, d, _ in dois)))
+
+    # 3b′) Cặp PMID–DOI của CÙNG một mục phải trỏ CÙNG một bài (thêm 04/10/2026 — xem khối `_DOI_CUA_PMID`).
+    if a.online and pmids:
+        kiem_cap_pmid_doi(pmids, seen, a.strict_sources, errors, warns, oks)
 
     # 3c) Xác minh URL online (SỬA 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 10, phát hiện
     # MEDIUM): item CHỈ có url (không pmid/doi) trước đây KHÔNG BAO GIỜ được xác minh online dù

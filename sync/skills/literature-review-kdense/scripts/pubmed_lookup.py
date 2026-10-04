@@ -124,11 +124,18 @@ class PubMedClient:
 
             pmid = mc.findtext(".//PMID", "")
 
+            # DOI của CHÍNH bài (sửa 04/10/2026): `.//ArticleId` quét cả <ReferenceList> nên bản ghi thiếu DOI ở
+            # ArticleIdList trả DOI của một tài liệu tham khảo. Chỉ đọc ArticleIdList của bài rồi ELocationID hợp lệ.
             doi = ""
-            for aid in article.findall(".//ArticleId"):
-                if aid.get("IdType") == "doi":
-                    doi = aid.text or ""
+            for aid in article.findall("PubmedData/ArticleIdList/ArticleId"):
+                if aid.get("IdType") == "doi" and (aid.text or "").strip():
+                    doi = aid.text.strip()
                     break
+            if not doi:
+                for el in art.findall("ELocationID"):
+                    if el.get("EIdType") == "doi" and (el.get("ValidYN") or "Y").upper() != "N" and (el.text or "").strip():
+                        doi = el.text.strip()
+                        break
 
             authors = []
             al = art.find(".//AuthorList")

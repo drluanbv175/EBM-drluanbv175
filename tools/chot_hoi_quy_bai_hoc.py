@@ -7198,6 +7198,94 @@ def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
     return True, ""
 
 
+def bh156_cap_pmid_doi_cung_mot_bai():
+    """04/10 — cặp PMID–DOI của CÙNG một mục trỏ HAI bài khác nhau mà cổng không thấy: `--online` xác minh TỪNG định danh tồn
+    tại nên cả hai đều «✓». Đo 04/10 trên 72 dashboard: 10/1164 cặp lệch (3 mục `apply`); 5 mục mang DOI của một bài nằm trong
+    DANH MỤC THAM KHẢO của chính bài mang PMID — `nghien-cuu-ebm-tong-hop/scripts/pubmed_search.py` duyệt `.//ArticleId` và ghi
+    đè ⇒ trả DOI tài liệu tham khảo CUỐI (engine đã vá cùng lớp lỗi 14/08, script của skill thì chưa). Vá: cổng so DOI mà CHÍNH
+    PubMed ghi cho PMID với DOI của mục (lệch ⇒ --strict-sources chặn; PubMed không ghi DOI ⇒ «chưa so được», KHÔNG xanh); bốn
+    bộ rút XML trong sync/skills chỉ đọc ArticleIdList/ELocationID của chính bài. Kiểm HÀNH VI ngoại tuyến (mạng giả)."""
+    import contextlib as _cl
+    import io as _io
+    import json as _js
+    import tempfile as _tf
+    from unittest import mock as _mk
+    nguon = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py"
+    if nguon.read_bytes() != (REPO / "sync/skills/dark-analyst/tools/verify_dashboard.py").read_bytes():
+        return False, "hai bản verify_dashboard.py trong git lệch byte (luật «4 bản đồng bộ byte»)"
+    vd = _nap(nguon, "_bh156_vd")
+
+    class _Ph:
+        def __init__(self, than):
+            self._t, self.headers = than.encode("utf-8"), {"content-type": "application/json"}
+
+        def read(self):
+            return self._t
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    esum = _js.dumps({"result": {"uids": ["41967042"], "41967042": {
+        "title": "Cardiac evaluation of paediatric athletes.", "pubdate": "2026 Jun 2", "pubtype": ["Journal Article"],
+        "articleids": [{"idtype": "pubmed", "value": "41967042"}, {"idtype": "doi", "value": "10.1093/eurheartj/ehag188"}]}}})
+
+    def _mang(url, timeout=None):
+        if "esummary.fcgi" in url:
+            return _Ph(esum)
+        if "api.crossref.org" in url:
+            return _Ph(_js.dumps({"message": {"title": ["Gaining informed consent for screening"]}}))
+        raise OSError("URL ngoài giả lập: " + url)
+
+    with _mk.patch.object(vd, "source_urlopen", _mang):
+        kq = vd.verify_pmid_online("41967042", retries=0)
+    if kq[0] is not True or (vd._DOI_CUA_PMID.get("41967042") or {}).get("doi") != "10.1093/eurheartj/ehag188":
+        return False, "xác minh PMID không nhớ DOI mà PubMed ghi cho PMID — bước so cặp PMID–DOI bị mù"
+    ch = "{id:'ITEM-06', pmid:'41967042', doi:'%s', gradeLevel:'high', decision:'apply'}"
+    e, w, o = [], [], []
+    vd.kiem_cap_pmid_doi([("ITEM-06", "41967042", ch % "10.1136/bmj.319.7212.722", "2026")],
+                         {"41967042": (True, "t", "2026")}, True, e, w, o)
+    if len(e) != 1 or "10.1093/eurheartj/ehag188" not in e[0]:
+        return False, "cặp PMID–DOI trỏ hai bài khác nhau KHÔNG bị --strict-sources chặn (ca thật TimMach ITEM-06)"
+    e, w, o = [], [], []
+    vd.kiem_cap_pmid_doi([("ITEM-06", "41967042", ch % "10.1093/EURHEARTJ/ehag188", "2026")],
+                         {"41967042": (True, "t", "2026")}, True, e, w, o)
+    if e or w or not any("Cặp PMID–DOI: 1/1" in x for x in o):
+        return False, "cặp khớp (chỉ khác hoa/thường) bị báo lệch hoặc không ghi dòng đạt"
+    vd._ghi_doi_cua_pmid("10023943", "", ["Journal Article"])
+    e, w, o = [], [], []
+    vd.kiem_cap_pmid_doi([("ITEM-04", "10023943", "{id:'ITEM-04', pmid:'10023943', doi:'10.1016/S0140-6736(98)11181-9'}",
+                           "1999")], {"10023943": (True, "t", "1999")}, True, e, w, o)
+    if e or len(w) != 1 or any("Cặp PMID–DOI" in x for x in o):
+        return False, "PubMed không ghi DOI mà cổng coi là khớp (xanh giả) hoặc báo lỗi cứng (đỏ giả)"
+    html = ("<p>Cần bác sĩ kiểm chứng</p><script>const DATA = {meta:{title:'t'}, summary:{conclusion:'x', doNow:['x'], "
+            "dontDo:['x'], redFlags:['x']}, items:[{id:'ITEM-06', design:'Guideline', gradeLevel:'high', decision:'consider', "
+            "dateVersion:'2026', pmid:'41967042', doi:'10.1136/bmj.319.7212.722', references:['Pieles GE. Cardiac evaluation "
+            "of paediatric athletes. Eur Heart J 2026. PMID 41967042.']}]};\n// HẾT KHỐI DATA\n</script>")
+    with _tf.TemporaryDirectory() as td:
+        f = Path(td) / "WebDashboard_BH156.html"
+        f.write_text(html, encoding="utf-8")
+        ra = _io.StringIO()
+        with _mk.patch.object(vd, "source_urlopen", _mang), _mk.patch.object(sys, "argv", ["vd", str(f), "--online",
+                                                                                         "--strict-sources"]), \
+                _cl.redirect_stdout(ra):
+            vd.main()
+    if not any(d.lstrip().startswith("✗") and "trỏ HAI bản ghi" in d for d in ra.getvalue().splitlines()):
+        return False, "main() --online --strict-sources không chạy bước so cặp PMID–DOI (bước 3b′ không được nối)"
+    ps = _nap(REPO / "sync/skills/nghien-cuu-ebm-tong-hop/scripts/pubmed_search.py", "_bh156_ps")
+    xml = (b'<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>1</PMID><Article><ArticleTitle>T</ArticleTitle>'
+           b'</Article></MedlineCitation><PubmedData><ArticleIdList><ArticleId IdType="doi">10.1/chinh-bai</ArticleId>'
+           b'</ArticleIdList><ReferenceList><Reference><ArticleIdList><ArticleId IdType="doi">10.1/tham-khao</ArticleId>'
+           b'</ArticleIdList></Reference></ReferenceList></PubmedData></PubmedArticle></PubmedArticleSet>')
+    with _mk.patch.object(ps, "_get", return_value=xml):
+        doi = ps.efetch(["1"])[0]["doi"]
+    if doi != "10.1/chinh-bai":
+        return False, f"bộ rút XML của skill trả DOI {doi!r} — DOI của tài liệu tham khảo, không phải của chính bài"
+    return True, "cặp lệch bị chặn · khớp ghi đạt · PubMed thiếu DOI là «chưa so được» · main() nối bước so · bộ rút XML trả DOI chính bài"
+
+
 def bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git():
     """03/10 — kiểm độc lập sau gộp: chốt bí mật trước commit (AN-06) tin vào định dạng HIỂN THỊ của `git diff` nên bỏ qua
     NỘI DUNG của cả tệp khi tên tệp có dấu tiếng Việt (core.quotepath mặc định bọc nháy «+++ "b/th\\341…"»), khi người dùng
@@ -10207,6 +10295,7 @@ BAI_HOC = [
     ("BH116", "27/09", "Sổ nguồn data/sources.json ghi đúng định dạng git (thụt lề 2 + LF) — không viết lại cả tệp mỗi lượt đo", bh116_so_nguon_ghi_dung_dinh_dang_git),
     ("BH154", "03/10", "Hòm việc một cửa lúc mở phiên (≤ 12 dòng, việc bác sĩ trước); PR chờ gộp được đếm (gh lỗi ⇒ ⚪); quyết định thẻ tuần ghi đúng lời bác sĩ, không đoán", bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan),
     ("BH155", "03/10", "Chốt bí mật trước commit không mù: tên tệp tiếng Việt, tiền tố diff của người dùng, dòng «++ », \\r giữa dòng — khối khoá vẫn bị chặn", bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git),
+    ("BH156", "04/10", "Cặp PMID–DOI của cùng một mục phải trỏ CÙNG một bài (strict chặn lệch; PubMed thiếu DOI ⇒ «chưa so được», không xanh); bộ rút XML lấy DOI chính bài, không lấy DOI trong danh mục tham khảo", bh156_cap_pmid_doi_cung_mot_bai),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
