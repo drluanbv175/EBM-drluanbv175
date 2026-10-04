@@ -7910,8 +7910,11 @@ def bh152_toan_van_khong_oa_qua_trinh_duyet_co_bac_si():
             return False, f"sổ bằng chứng trình duyệt nhận tiêu đề trang chặn «{td}» (trình duyệt app chạy giao diện tiếng Việt)"
     hom = _d(2026, 10, 2)
     tieu_de = "Cognitive behavioral therapy for insomnia-assisted discontinuation of hypnotics: a meta-analysis"
-    hs = {"pmid": "42751933", "doi": "10.1177/03000605261487272", "tieu_de_bai": tieu_de, "url_doc": "https://journals.sagepub.com/x",
-          "tieu_de_trang": tieu_de + " - SAGE Journals", "doc_luc": "2026-10-02", "nguon_truy_cap": "trinh_duyet_co_nguoi",
+    # 04/10/2026: fixture đổi từ bài SAGE sang bài BMC (10.1186/, giấy phép CC) — SAGE đã vào bảng NXB cấm AI (03/10), hồ sơ SAGE
+    # không uỷ quyền bị từ chối ĐÚNG luật; chốt cần một hồ sơ hợp lệ ngoài bảng cấm.
+    hs = {"pmid": "42751933", "doi": "10.1186/s12888-026-07487-2", "tieu_de_bai": tieu_de,
+          "url_doc": "https://bmcpsychiatry.biomedcentral.com/articles/10.1186/s12888-026-07487-2",
+          "tieu_de_trang": tieu_de + " | BMC Psychiatry", "doc_luc": "2026-10-02", "nguon_truy_cap": "trinh_duyet_co_nguoi",
           "gap_chan": True, "nguoi_vuot_chan": "bac_si", "so_ky_tu_toan_van": 40000, "sha256_toan_van": "ab" * 32,
           "loai_tai_lieu": "sr_ma", "phuong_phap": {"thiet_ke": "SR/MA"},
           "ket_qua": [{"ket_cuc": "Ngừng thuốc", "chi_so": "RR", "gia_tri": 1.85, "ci_duoi": 1.32, "ci_tren": 2.59, "vi_tri": "Hình 2"}],
