@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import re
 import subprocess
 import sys
@@ -165,6 +166,17 @@ def _chu_trinh(a: argparse.Namespace) -> int:
         elif rc != 0:
             ghi_chu.append("⚪ Chưa đo được sản lượng truy vấn giám sát (NCBI chặn/mạng/không nạp được bộ quét) — KHÔNG phải «không có "
                            "chủ đề mù» (xem ②b).")
+        if rc in (0, 1):
+            # 🟠 tầng thứ bậc trống (04/10/2026): không đổi mã thoát của cảm biến nên phải đọc khoá JSON — tệp hỏng/vắng ⇒ im lặng
+            # ở đây (chính cảm biến đã in đủ ở ②b), không đoán.
+            try:
+                hep = json.loads((REPO / "state/san-luong-giam-sat-gan-nhat.json").read_text(encoding="utf-8")).get("thu_bac_trong")
+            except (OSError, ValueError, AttributeError):
+                hep = None
+            if hep:
+                viec_can_lam.append(f"🟠 {len(hep)} chủ đề TẦNG THỨ BẬC TRỐNG (0 tổng quan, guideline+SR+RCT ≤ 1/90 ngày — xem ②b): "
+                                    "nghi truy vấn hẹp ở tầng tổng quan/RCT; máy đề xuất ở EBM-Dashboards/watchlist.de-xuat.json, "
+                                    "bác sĩ duyệt rồi `python3 tools/ap_dung_de_xuat_watchlist.py`.")
 
     # ── 3 + 4. XÁC MINH TỪNG NGUỒN và RÚT BÀI ───────────────────────────────
     if a.nhanh:
