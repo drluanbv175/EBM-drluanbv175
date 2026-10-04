@@ -62,7 +62,9 @@ GHI_CHU_BAC_SI_MIN, GHI_CHU_BAC_SI_MAX = 5, 300
 # bác sĩ tự đọc (NXB cấm AI/TDM) và ghi kết luận. Khác `cach` «bac_si_doc_truc_tiep» của phiếu = bài CHỜ bác sĩ đọc.
 # «tdm_nxb» (03/10/2026): PDF tải qua kênh TDM chính thức của NXB bằng token của bác sĩ (Wiley TDM — SRC-042), lưu NGOÀI git
 # dạng `PMID-<n>_WTDM.pdf`; KHÔNG gọi là OA (bài có bản quyền, chỉ dùng theo giấy phép TDM).
-TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "tdm_nxb", "da_doc_trinh_duyet")
+# «phien_chrome» (04/10/2026): HTML thân bài/PDF của NXB lưu trong PHIÊN UỶ QUYỀN của bác sĩ (`tools/phien_uy_quyen_chrome.py`),
+# dạng `PMID-<n>_CHR.html|pdf` ngoài git; KHÔNG gọi là OA (tài khoản cá nhân của bác sĩ, điều khoản NXB không đổi).
+TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "tdm_nxb", "phien_chrome", "da_doc_trinh_duyet")
 TRANG_THAI_DA_PHU = TRANG_THAI_MAY_CO_TOAN_VAN + ("bac_si_da_doc_truc_tiep",)
 
 # Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản. Đo lại
@@ -505,7 +507,7 @@ def _bac_si_da_doc(kho: Path) -> dict[str, dict]:
 
 
 def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | None = None) -> dict[str, str]:
-    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · tdm_nxb · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
+    """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · tdm_nxb · phien_chrome · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
     khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền»."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
     ktc = _khong_truy_cap(kho, hom_nay)
@@ -518,6 +520,8 @@ def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | No
             ra[pm] = "oa_khac"
         elif list(kho.glob(f"PMID-{pm}_WTDM.*")):
             ra[pm] = "tdm_nxb"
+        elif list(kho.glob(f"PMID-{pm}_CHR.*")):
+            ra[pm] = "phien_chrome"
         elif (kho / "trinh_duyet" / f"PMID-{pm}.json").exists():
             ra[pm] = "da_doc_trinh_duyet"
         elif pm in bsd:
