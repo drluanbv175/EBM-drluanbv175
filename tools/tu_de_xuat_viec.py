@@ -486,6 +486,36 @@ def giac_quan_no_toan_van(dash_dir: Path, hom_nay: dt.date | None = None) -> lis
     return ra
 
 
+def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = None) -> list[tuple[int, str, str]]:
+    """Skill của bác sĩ trên TÀI KHOẢN claude.ai cũ hơn repo (04/10/2026, BH163).
+
+    Cowork · claude.ai web · Routine nạp bộ skill của TÀI KHOẢN — chỉ đổi khi bác sĩ tự tải lên; đẩy vào ~/.claude/skills hay thư
+    mục chạy của Claude Desktop KHÔNG lan lên. Đo 04/10: 21/25 skill trên tài khoản đã cũ (cap-nhat-chung-cu-y-khoa v1.15.0 so với
+    repo v1.53.0) mà không giác quan nào nhắc. So CẢ thư mục skill (`tools/dong_goi_skill_tai_khoan.py`). Skill «mới» (chưa từng
+    lên) là TUỲ CHỌN ⇒ chỉ nhắc kèm, không đẩy ưu tiên. Máy không có bộ skill tài khoản / công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG
+    phải «đã khớp»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        sp = _ilu_mea.spec_from_file_location("_dgsk_tdxv", Path(__file__).resolve().parent / "dong_goi_skill_tai_khoan.py")
+        dg = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(dg)
+        nhom = dg.tom_tat(dg.danh_gia(hub or dg.HUB, bundle or dg.dcbb.tim_bundle_cloud(None)))
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng/thiếu bộ tài khoản phải hiện ra, không im lặng như «đã khớp»
+        _ghi_chet(["", "skill tài khoản claude.ai"], f"{type(exc).__name__}: {str(exc)[:90]}")
+        return []
+    cap, moi, khac = nhom.get("cap_nhat", []), nhom.get("moi", []), nhom.get("khac_han", [])
+    lenh = "python3 tools/dong_goi_skill_tai_khoan.py  # rồi mở CLAUDE_AI_SKILLS/DANH-SACH-TAI-LEN.md, bác sĩ tự tải ZIP lên claude.ai"
+    if cap or khac:
+        dau = ", ".join(cap[:3]) + ("…" if len(cap) > 3 else "")
+        return [(2, f"{len(cap)} skill của bác sĩ trên TÀI KHOẢN claude.ai đã CŨ hơn repo ({dau}) — Cowork/claude.ai/Routine "
+                    "đang chạy bản cũ; bác sĩ tải ZIP lên"
+                    + (f"; {len(khac)} skill trùng tên mà KHÁC HẲN — bác sĩ quyết" if khac else "")
+                    + (f"; thêm {len(moi)} skill chưa từng lên (tuỳ chọn)" if moi else ""), lenh)]
+    if moi:
+        return [(3, f"{len(moi)} skill trong repo chưa từng lên tài khoản claude.ai (tuỳ chọn — đọc mô tả trong danh sách)", lenh)]
+    return []
+
+
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
     """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
@@ -1007,6 +1037,10 @@ def main() -> int:
 
     # ⑦k BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026): mục apply chưa đọc toàn văn — sổ nợ có hạn, quá hạn cổng chặn — xem docstring.
     for uu, dong, lenh in giac_quan_no_toan_van(DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦l SKILL TÀI KHOẢN CLAUDE.AI (04/10/2026, BH163): bộ skill Cowork/claude.ai/Routine nạp cũ hơn repo — xem docstring.
+    for uu, dong, lenh in giac_quan_skill_tai_khoan():
         de_xuat.append((uu, "👤", dong, lenh))
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.

@@ -35,6 +35,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import unicodedata
 from pathlib import Path
@@ -57,6 +58,12 @@ NGUONG_KHAC_HAN = 0.35
 # Dấu do tools/vietnamize (_vietnamize.py) chèn khi Việt hóa skill tiếng Anh.
 DAU_VIET_HOA = "<!-- EBM-VN-GUARD -->"
 
+# Tệp KHÔNG thuộc skill khi đối chiếu/đóng gói — khớp skill-creator/scripts/package_skill.py của Anthropic (bản trong bộ skill tài
+# khoản, đọc 04/10/2026): __pycache__/node_modules ở mọi độ sâu, evals/ chỉ ở gốc skill, .DS_Store, *.pyc.
+THU_MUC_RAC = frozenset({"__pycache__", "node_modules"})
+THU_MUC_RAC_GOC = frozenset({"evals"})
+TEP_RAC = frozenset({".DS_Store"})
+
 
 class KhongDoDuoc(Exception):
     """Thiếu dữ liệu để kết luận. Ném ra thay vì trả kết quả rỗng."""
@@ -65,6 +72,44 @@ class KhongDoDuoc(Exception):
 # ----------------------------------------------------------------- đọc skill
 def _doc(p: Path) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
+
+
+def la_tep_rac(rel: str) -> bool:
+    """`rel`: đường dẫn tương đối gốc skill, phân cách «/». Đúng tập loại trừ của package_skill.py."""
+    phan = rel.split("/")
+    if any(p in THU_MUC_RAC for p in phan):
+        return True
+    if len(phan) > 1 and phan[0] in THU_MUC_RAC_GOC:
+        return True
+    return phan[-1] in TEP_RAC or phan[-1].endswith(".pyc")
+
+
+def _tep_git(thu_muc: Path) -> list[str] | None:
+    """Tệp git TRACK dưới `thu_muc` (tương đối, dạng «/»); None khi không đọc được git (không phải cây git, thiếu git)."""
+    try:
+        r = subprocess.run(["git", "-C", str(thu_muc), "ls-files", "-z"], capture_output=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    return [t for t in r.stdout.decode("utf-8", "surrogateescape").split("\0") if t]
+
+
+def liet_ke_tep_skill(thu_muc: Path, chi_tep_git: bool = False) -> list[str]:
+    """Các tệp THUỘC skill — đúng tập sẽ đóng gói lên tài khoản (đã bỏ rác), sắp xếp.
+
+    `chi_tep_git` (bên repo): chỉ tệp git track — tệp chưa commit/rác cục bộ không lên tài khoản và không làm lệch phép so; không
+    đọc được git ⇒ mọi tệp trên đĩa. Bên bộ skill tài khoản KHÔNG dùng git: thư mục nhà có thể là repo dotfiles, khi đó ls-files
+    trả rỗng và skill bị tưởng là không có tệp nào."""
+    ds = _tep_git(thu_muc) if chi_tep_git else None
+    if ds is None:
+        ds = [p.relative_to(thu_muc).as_posix() for p in thu_muc.rglob("*") if p.is_file()]
+    return sorted(r for r in set(ds) if not la_tep_rac(r) and (thu_muc / r).is_file())
+
+
+def tep_skill(thu_muc: Path, chi_tep_git: bool = False) -> dict[str, str]:
+    """{đường dẫn tương đối: sha256} của các tệp thuộc skill (xem `liet_ke_tep_skill`)."""
+    return {r: hashlib.sha256((thu_muc / r).read_bytes()).hexdigest() for r in liet_ke_tep_skill(thu_muc, chi_tep_git)}
 
 
 def tach_frontmatter(text: str) -> tuple[dict, str]:
@@ -249,6 +294,16 @@ def doi_chieu(cloud: dict[str, Skill], repo: dict[str, Skill],
     }
     for t in chung:
         loai, tt, dong, dan_phang = phan_loai(cloud[t], repo[t])
+        tep_phu_khac = 0
+        if loai == "GIỐNG":
+            # VÁ 04/10/2026 (BH163): SKILL.md trùng CHƯA phải skill trùng — tài khoản giữ CẢ thư mục skill đã tải lên (tools/,
+            # references/…). Đo: nghien-cuu-y-khoa-chuan-quoc-te trùng SKILL.md nhưng 7 tệp phụ khác + 1 tệp mới ⇒ từng đếm
+            # «giống», Cowork vẫn chạy công cụ cũ. Bên repo chỉ so tệp git track (đúng tập sẽ đóng gói).
+            a = tep_skill(cloud[t].duong_dan.parent)
+            b = tep_skill(repo[t].duong_dan.parent, chi_tep_git=True)
+            tep_phu_khac = sum(1 for r in set(a) | set(b) if a.get(r) != b.get(r))
+            if tep_phu_khac:
+                loai = "LỆCH BẢN"
         muc = {
             "ten": t, "tuong_tu": round(tt, 3),
             "tuong_tu_dong": round(dong, 3), "dan_phang": dan_phang,
@@ -257,6 +312,7 @@ def doi_chieu(cloud: dict[str, Skill], repo: dict[str, Skill],
             "vn_repo": round(repo[t].vn * 100, 1),
             "repo_viet_hoa_may": repo[t].viet_hoa_may,
             "mo_ta_khop": cloud[t].mo_ta == repo[t].mo_ta,
+            "tep_phu_khac": tep_phu_khac,
         }
         {"GIỐNG": kq["giong"], "LỆCH BẢN": kq["lech_ban"],
          "KHÁC HẲN": kq["khac_han"]}[loai].append(muc)
@@ -292,9 +348,11 @@ def in_ket_qua(kq: dict, ten_cloud: str, ten_repo: str) -> None:
             f"cloud {m['byte_cloud']:>6}B  repo {m['byte_repo']:>6}B"
             f"{'' if m['mo_ta_khop'] else '  [mô tả khác]'}"
             f"{'  [cloud bị dàn phẳng]' if m['dan_phang'] else ''}"
+            + (f"  [SKILL.md trùng, {m['tep_phu_khac']} tệp phụ khác]" if m.get("tep_phu_khac") else "")
             for m in kq["lech_ban"]
         ]
         _bang("🟡 LỆCH BẢN — cùng skill, khác phiên bản", dong)
+        print("\n  → Đóng gói ZIP để bác sĩ tải lên tài khoản: python3 tools/dong_goi_skill_tai_khoan.py")
 
     if kq["chi_repo"]:
         _bang(f"⚪ CHỈ CÓ TRONG REPO ({len(kq['chi_repo'])}) — cloud không nạp được",
