@@ -121,10 +121,13 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
     "Elsevier": {
         # Tiền tố DOI của các NHÁNH xuất bản Elsevier (Saunders 10.1053 — Gastroenterology, AJKD; Mosby 10.1067; Churchill
         # Livingstone 10.1054; Academic Press 10.1006…) — Crossref /prefixes xác nhận «Elsevier BV» 03/10/2026. Thiếu chúng ⇒ bài
-        # Gastroenterology/AJKD rơi vào «chưa kiểm» dù cùng điều khoản Elsevier.
-        "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/"),
+        # Gastroenterology/AJKD rơi vào «chưa kiểm» dù cùng điều khoản Elsevier. 10.1378 (CHEST — Crossref /prefixes «Elsevier BV»,
+        # đo 04/10/2026): journal.chestnet.org chạy trên nền tảng Elsevier, chân trang «Terms and Conditions» trỏ ĐÚNG trang điều
+        # khoản website Elsevier ở `nguon` (đọc trên Chrome 04/10/2026) ⇒ cùng điều khoản, cùng uỷ quyền.
+        "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/",
+                                     "10.1378/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
-                 "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org"),
+                 "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
@@ -247,6 +250,15 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "chép/tải/dùng nội dung dưới mọi hình thức; không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Trang "
                       "điều khoản của jrheum.org trả 403 cho máy",
         "duong_hop_le": "xin phép The Journal of Rheumatology Publishing Co. Ltd. (mục Permissions của jrheum.org)"},
+    "CMAJ (Canadian Medical Association)": {
+        "ket_luan": "cam", "doi": ("10.1503/",), "mien": ("cmaj.ca", "cma.ca"),
+        "nguon": "https://www.cmaj.ca/page/copyright", "doc_luc": "2026-10-04",
+        "trich": "may only be copied or shared for non-commercial educational purposes",
+        "loai_nguon": "Trang «Copyright, open access, and permission to reuse» của CMAJ + Terms and Conditions của CMA (cma.ca; "
+                      "đọc trên Chrome 04/10/2026; Crossref: tiền tố 10.1503 của CMA Impact Inc.): bài trước 01/01/2021 chỉ được "
+                      "sao bản đơn lẻ dùng giáo dục phi thương mại, không tác phẩm phái sinh; bài từ 2021 mang CC BY-NC-ND/CC BY "
+                      "(đi đường OA theo giấy phép của bài); không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "xin phép CMA (mục Copyright and Permissions của cmaj.ca)"},
     "Wiley (Wiley Online Library · Cochrane Library)": {
         "ket_luan": "cam", "doi": ("10.1002/", "10.1111/", "10.1046/", "10.1034/"),
         "mien": ("onlinelibrary.wiley.com", "wiley.com", "cochranelibrary.com"),
