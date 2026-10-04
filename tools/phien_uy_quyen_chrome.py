@@ -24,9 +24,11 @@ QUY TRÌNH (Claude làm; bác sĩ chỉ vượt chặn/đăng nhập và nói c�
   1. Bác sĩ nói trong chat, ví dụ «uỷ quyền phiên: đọc và lưu toàn văn các bài trong phiếu» ⇒
      `python3 tools/phien_uy_quyen_chrome.py --mo "<nguyên văn lời bác sĩ>"`.
   2. Trước MỖI bài: `--kiem <PMID> --url <URL> [--doi <DOI>]` (mã 0 = được; 3 = dừng/đợi — đọc lý do).
-  3. Trên tab: tạo Blob của thân bài (kèm dòng đầu `<!-- ebm-phien:<mã phiên> pmid:<n> url:<URL> -->`) và/hoặc tải PDF của NXB
-     bằng fetch cùng nguồn, lưu về ~/Downloads; rồi `--nhan <PMID> --tep <tệp> --url <URL> [--doi <DOI>]` (kiểm loại, cỡ, dấu
-     phiên, không ghi đè; chuyển vào kho; ghi nhật ký kèm SHA-256).
+  3. Trên tab, trong MỘT lần nạp trang: tạo Blob của thân bài (dòng đầu `<!-- ebm-phien:<mã phiên> pmid:<n> url:<URL> -->`);
+     PDF của NXB (fetch cùng nguồn) NHÚNG vào chính tệp HTML đó dạng `<script type="application/pdf;base64" id="ebm-pdf">…`
+     ⇒ mỗi bài chỉ MỘT lần tải. Đo 04/10: Chrome chặn lặng lẽ lần tải tự động thứ hai trên cùng trang và GHI NHỚ lệnh chặn cho
+     miền; nạp lại trang để tải tiếp làm Cloudflare chặn lại (ahajournals). Rồi `--nhan <PMID> --tep <tệp> --url <URL>
+     [--doi <DOI>]` (kiểm loại, cỡ, dấu phiên, không ghi đè; tách PDF nhúng ra `_CHR.pdf`; chuyển vào kho; nhật ký kèm SHA-256).
   4. `python3 tools/doc_sau_toan_van.py --pmid <PMID…>` sinh bản đọc sâu từ PDF `_CHR`.
   5. Bác sĩ nói «dừng» ⇒ `--dung`. `--trang-thai` xem phiên đang mở.
 Mã thoát: 0 được/xong · 2 không đọc/ghi được tệp · 3 bị từ chối (ngoài phạm vi, hết phiên, quá trần, chưa đủ nhịp, tệp sai).
@@ -39,7 +41,6 @@ import importlib.util
 import json
 import os
 import re
-import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -57,13 +58,33 @@ HAU_TO = "_CHR"
 TRAN_MOI_MIEN = 20            # bài (PMID khác nhau) mỗi miền trong một phiên
 NGHI_TOI_THIEU_GIAY = 60      # giữa hai bài cùng miền
 CAN_CU_MIN = 20               # ký tự tối thiểu của lời bác sĩ
-CO_HTML = (5_000, 30_000_000)  # byte (thân bài ngắn nhất của một báo cáo ngắn … trần an toàn)
+CO_HTML = (5_000, 30_000_000)  # byte của HTML SAU KHI tách PDF nhúng (thân bài ngắn nhất … trần an toàn)
+CO_TEP_TAI = 120_000_000       # trần tệp tải về (HTML + PDF nhúng base64)
 CO_PDF = (20_000, 60_000_000)
 # Cơ sở dữ liệu tra cứu — điều khoản cấm dùng nội dung với AI; KHÔNG BAO GIỜ thuộc phiên dù có uỷ quyền khác.
 KHONG_BAO_GIO = ("EBSCO (DynaMed)", "Scopus (Elsevier)", "Clarivate (Web of Science)")
 # Dấu giao diện tài khoản/đầu trang lọt vào tệp ⇒ từ chối (chỉ lưu thân bài).
 _DAU_TAI_KHOAN = re.compile(r"\b(sign out|log ?out|my account|đăng xuất|tài khoản của tôi)\b", re.I)
 _DAU_PHIEN = re.compile(r"<!--\s*ebm-phien:(?P<ma>[0-9A-Za-z_-]+)\s+pmid:(?P<pmid>\d{1,9})\b")
+_PDF_NHUNG = re.compile(r'<script type="application/pdf;base64" id="ebm-pdf">(?P<b64>[A-Za-z0-9+/=\s]+)</script>')
+
+
+def tach_pdf_nhung(van_ban: str) -> tuple[str, bytes | None, str]:
+    """(HTML đã gỡ khối PDF nhúng, byte PDF | None, lý do lỗi). Khối nhúng hỏng/không phải PDF ⇒ lỗi (không im lặng bỏ)."""
+    import base64
+    import binascii
+    m = _PDF_NHUNG.search(van_ban)
+    if not m:
+        if '<script type="application/pdf;base64" id="ebm-pdf">' in van_ban:
+            return van_ban, None, "khối PDF nhúng hỏng (có thẻ mở nhưng nội dung không phải base64/thiếu thẻ đóng)"
+        return van_ban, None, ""
+    try:
+        pdf = base64.b64decode(re.sub(r"\s+", "", m.group("b64")), validate=True)
+    except (binascii.Error, ValueError):
+        return van_ban, None, "khối PDF nhúng không phải base64 hợp lệ"
+    if not pdf.startswith(b"%PDF-") or not CO_PDF[0] <= len(pdf) <= CO_PDF[1]:
+        return van_ban, None, f"khối nhúng không phải PDF hợp lệ ({len(pdf)} byte)"
+    return van_ban[:m.start()] + van_ban[m.end():], pdf, ""
 
 
 def _nap_dtv():
@@ -177,6 +198,8 @@ def kiem_tep(tep: Path, pmid: str, ma_phien: str) -> tuple[str | None, str]:
         if not CO_PDF[0] <= co <= CO_PDF[1]:
             return None, f"PDF {co} byte ngoài khoảng {CO_PDF} — trang lỗi/bìa?"
         return "pdf", ""
+    if co > CO_TEP_TAI:
+        return None, f"tệp {co} byte vượt trần {CO_TEP_TAI}"
     try:
         van_ban = tep.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -184,6 +207,10 @@ def kiem_tep(tep: Path, pmid: str, ma_phien: str) -> tuple[str | None, str]:
     m = _DAU_PHIEN.search(van_ban[:2000])
     if not m or m.group("ma") != ma_phien or m.group("pmid") != str(pmid):
         return None, "HTML thiếu dấu phiên đúng (<!-- ebm-phien:<mã> pmid:<n> … -->) — tệp không do phiên này tạo"
+    van_ban, _pdf, loi = tach_pdf_nhung(van_ban)
+    if loi:
+        return None, loi
+    co = len(van_ban.encode("utf-8"))
     if not CO_HTML[0] <= co <= CO_HTML[1]:
         return None, f"HTML {co} byte ngoài khoảng {CO_HTML} — thân bài quá ngắn (chỉ tóm tắt/trang chặn?)"
     if _DAU_TAI_KHOAN.search(van_ban):
@@ -207,19 +234,34 @@ def nhan(pmid: str, tep: Path, url: str, doi: str = "", *, bay_gio: datetime | N
     if not loai:
         return 3, ly
     kho = kho or KHO
-    dich = kho / f"PMID-{pmid}{HAU_TO}.{loai}"
-    if dich.exists():
-        return 3, f"kho đã có {dich.name} — không ghi đè (xoá tay nếu thật sự muốn thay)"
-    sha = hashlib.sha256(tep.read_bytes()).hexdigest()
+    if loai == "pdf":
+        cac_tep = {"pdf": tep.read_bytes()}
+    else:
+        html, pdf, _loi = tach_pdf_nhung(tep.read_text(encoding="utf-8"))
+        cac_tep = {"html": html.encode("utf-8"), **({"pdf": pdf} if pdf else {})}
+    dich = {k: kho / f"PMID-{pmid}{HAU_TO}.{k}" for k in cac_tep}
+    co_san = [x.name for x in dich.values() if x.exists()]
+    if co_san:
+        return 3, f"kho đã có {', '.join(co_san)} — không ghi đè (xoá tay nếu thật sự muốn thay)"
     kho.mkdir(parents=True, exist_ok=True)
-    try:
-        shutil.move(str(tep), str(dich))
-    except OSError as e:
-        return 2, f"không chuyển được tệp vào kho: {e}"
-    d["lich_su"].append({"luc": bay_gio.isoformat(timespec="seconds"), "pmid": str(pmid), "url": url, "doi": doi,
-                         "mien": _mien(url), "tep": dich.name, "byte": dich.stat().st_size, "sha256": sha, "loai": loai})
+    tb = []
+    for k, noi_dung in cac_tep.items():
+        tam = dich[k].with_name(dich[k].name + f".tam-{os.getpid()}")
+        try:
+            tam.write_bytes(noi_dung)
+            os.replace(tam, dich[k])
+        except OSError as e:
+            return 2, f"không ghi được {dich[k].name} vào kho: {e}"
+        sha = hashlib.sha256(noi_dung).hexdigest()
+        d["lich_su"].append({"luc": bay_gio.isoformat(timespec="seconds"), "pmid": str(pmid), "url": url, "doi": doi,
+                             "mien": _mien(url), "tep": dich[k].name, "byte": len(noi_dung), "sha256": sha, "loai": k})
+        tb.append(f"{dich[k].name} ({len(noi_dung)} byte, sha256 {sha[:16]}…)")
     _ghi(d, so)
-    return 0, f"đã lưu {dich.name} ({dich.stat().st_size} byte, sha256 {sha[:16]}…) — phiên {d['ma']}"
+    try:
+        tep.unlink()                     # tệp tải về đã vào kho — không để bản sao thứ hai trong Downloads
+    except OSError:
+        pass
+    return 0, f"đã lưu {' + '.join(tb)} — phiên {d['ma']}"
 
 
 def dung(*, bay_gio: datetime | None = None, tep: Path | None = None) -> tuple[int, str]:

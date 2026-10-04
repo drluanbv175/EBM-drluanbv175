@@ -215,3 +215,38 @@ def test_doc_sau_pdf_chr_gan_nhan_phien_khong_phai_token_tdm(tmp_path, monkeypat
 def test_doc_sau_html_chr_doc_truc_tiep(tmp_path):
     (tmp_path / "PMID-34153348_CHR.html").write_text("<article>x</article>", encoding="utf-8")
     assert DS.xu_ly_pmid("34153348", tmp_path, lam_lai=False)[0] == "doc_truc_tiep"
+
+
+# ── PDF nhúng trong HTML: mỗi bài MỘT lần tải (Chrome chặn lần tải tự động thứ hai trên cùng trang) ───────────────────
+def _html_pdf(tmp_path, ma, pmid, pdf_bytes):
+    import base64
+    t = tmp_path / f"nhung-{pmid}.html"
+    b64 = base64.b64encode(pdf_bytes).decode()
+    t.write_text(f"<!-- ebm-phien:{ma} pmid:{pmid} url:{URL_ELS} -->\n<article>{'x' * 6000}</article>"
+                 f'<script type="application/pdf;base64" id="ebm-pdf">{b64}</script>', encoding="utf-8")
+    return t
+
+
+def test_pdf_nhung_tach_thanh_hai_tep(tmp_path, so):
+    _mo(so)
+    ma = P.doc_phien(so)["ma"]
+    kho = tmp_path / "kho"
+    pdf = b"%PDF-1.7\n" + b"1" * 40_000
+    t = _html_pdf(tmp_path, ma, "34024117", pdf)
+    kq, tb = P.nhan("34024117", t, URL_ELS, bay_gio=T0, so=so, kho=kho, dtv=_dtv())
+    assert kq == 0, tb
+    assert (kho / "PMID-34024117_CHR.pdf").read_bytes() == pdf
+    html = (kho / "PMID-34024117_CHR.html").read_text(encoding="utf-8")
+    assert "ebm-pdf" not in html and "<article>" in html          # HTML lưu GỌN, không mang base64
+    assert not t.exists()                                         # không để bản sao thứ hai trong Downloads
+    assert sorted(x["loai"] for x in P.doc_phien(so)["lich_su"]) == ["html", "pdf"]
+
+
+def test_pdf_nhung_hong_hoac_khong_phai_pdf_bi_tu_choi(tmp_path):
+    t = _html_pdf(tmp_path, "M1", "5", b"KHONG-PHAI-PDF" * 3000)
+    loai, ly = P.kiem_tep(t, "5", "M1")
+    assert loai is None and "PDF" in ly
+    hong = tmp_path / "hong.html"
+    hong.write_text(f"<!-- ebm-phien:M1 pmid:5 url:{URL_ELS} -->\n<article>{'x' * 6000}</article>"
+                    '<script type="application/pdf;base64" id="ebm-pdf">@@@không-phải-base64@@@</script>', encoding="utf-8")
+    assert P.kiem_tep(hong, "5", "M1")[0] is None
