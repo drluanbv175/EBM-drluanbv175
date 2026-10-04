@@ -17,6 +17,13 @@ CÔNG CỤ NÀY CHỈ ĐO VÀ BÁO. Không sửa watchlist, không quét, không
     python3 tools/kiem_san_luong_giam_sat.py --watchlist <tệp>     # đo một bản đề xuất TRƯỚC khi duyệt
     python3 tools/kiem_san_luong_giam_sat.py --chu-de lupus --json ra.json
 
+TẦNG THỨ BẬC TRỐNG (thêm 04/10/2026). Ngưỡng «mù» tính TỔNG 4 tầng nên tầng «mới vào PubMed» (không lọc thiết kế) che mất chủ
+đề mà ba tầng thứ bậc gần như trống. Đo 04/10: 10 chủ đề KHÔNG mù có 0 tổng quan hệ thống/gộp và guideline+SR+RCT ≤ 1 trong 90
+ngày — gồm statin, CKD, COPD (lĩnh vực ra hàng chục tổng quan mỗi quý), trong khi tầng mới-vào-PubMed vẫn có 6–49 bản ghi. Chủ đề
+đo trọn, không mù, mà tầng `sr_ma` = 0 VÀ guideline+sr_ma+rct ≤ NGUONG_THU_BAC ⇒ 🟠 «tầng thứ bậc trống — nghi truy vấn hẹp ở tầng
+tổng quan/RCT» (khoá JSON `thu_bac_trong`). Chỉ là NGHI để soạn lại truy vấn, không kết luận lĩnh vực thiếu chứng cứ; KHÔNG đổi
+mã thoát (chu_trinh_chung_cu đọc mã 1 = «có chủ đề mù»). Chủ đề không có tầng `sr_ma` ⇒ không xét.
+
 Mã thoát: 0 không chủ đề nào mù · 1 có chủ đề mù (≤ ngưỡng, mặc định 3) · 2 KHÔNG ĐO ĐƯỢC (mạng/NCBI chặn/không nạp được bộ quét) — không
 đọc thành «ổn». Chủ đề có tầng không đo được ⇒ ghi ⚪ riêng, KHÔNG tính là mù cũng KHÔNG tính là ổn.
 Dùng đúng `DESIGN`, `EUTILS` và kênh TLS của bộ quét chuẩn (`sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py`) để không trôi."""
@@ -49,6 +56,8 @@ SCANNER = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "sur
 KET_QUA_GAN_NHAT = REPO / "state" / "san-luong-giam-sat-gan-nhat.json"
 
 NGUONG_MU = 3       # tổng bản ghi 4 tầng trong cửa sổ ≤ ngưỡng ⇒ «truy vấn có thể mù»
+NGUONG_THU_BAC = 1  # không mù, sr_ma = 0 và guideline+sr_ma+rct ≤ ngưỡng ⇒ «tầng thứ bậc trống» (🟠, không đổi mã thoát)
+TANG_THU_BAC = ("guideline", "sr_ma", "rct")
 SO_NGAY = 90        # cùng trần cửa sổ `--days` mặc định của bộ quét
 GIAN_CACH_S = 0.4   # NCBI không khoá: tối đa 3 lời gọi/giây (có NCBI_API_KEY thì 0.12)
 SO_LAN_THU = 3
@@ -129,6 +138,17 @@ def phan_loai(kq: dict, nguong: int) -> str:
     return "MU" if kq["tong"] <= nguong else "ON"
 
 
+def thu_bac_trong(kq: dict) -> bool:
+    """Chủ đề ĐO TRỌN, không mù, có tầng `sr_ma` = 0 và guideline+sr_ma+rct ≤ NGUONG_THU_BAC. Tính từ `tang` của chính
+    kết quả (nên tệp --json cũ không có khoá `thu_bac_trong` vẫn in đúng khi dùng lại). Tầng thiếu/không đo ⇒ False."""
+    if kq.get("loai") != "ON" or not kq.get("do_duoc"):
+        return False
+    dem = {t.get("tang"): t.get("dem") for t in kq.get("tang") or []}
+    if dem.get("sr_ma") != 0:
+        return False
+    return sum(dem.get(t) or 0 for t in TANG_THU_BAC) <= NGUONG_THU_BAC
+
+
 def kiem(watchlist: dict, fetch: Fetch, design: str, *, nguong: int = NGUONG_MU, days: int = SO_NGAY,
          loc_ten: str = "") -> dict:
     """Đo mọi chủ đề đang bật CÓ `queries` (nhóm cơ quan thẩm quyền cố ý không áp tầng ⇒ bỏ qua, có đếm)."""
@@ -146,7 +166,8 @@ def kiem(watchlist: dict, fetch: Fetch, design: str, *, nguong: int = NGUONG_MU,
         ket.append(kq)
     return {"nguong": nguong, "so_ngay": days, "chu_de": ket, "bo_qua_khong_tang": bo_qua,
             "mu": [k["topic"] for k in ket if k["loai"] == "MU"],
-            "khong_do": [k["topic"] for k in ket if k["loai"] == "KHONG_DO"]}
+            "khong_do": [k["topic"] for k in ket if k["loai"] == "KHONG_DO"],
+            "thu_bac_trong": [k["topic"] for k in ket if thu_bac_trong(k)]}
 
 
 def bam_watchlist(wl_text: str) -> str:
@@ -186,14 +207,20 @@ def ma_thoat(bao_cao: dict) -> int:
 def in_bao_cao(b: dict) -> None:
     ds = b["chu_de"]
     print(f"SẢN LƯỢNG GIÁM SÁT — {len(ds)} chủ đề có tầng · cửa sổ {b['so_ngay']} ngày · mù = tổng 4 tầng ≤ {b['nguong']}")
-    for k in sorted(ds, key=lambda x: (x["loai"] != "MU", x["tong"])):
-        bieu = {"MU": "🔴", "KHONG_DO": "⚪", "ON": "🟢"}[k["loai"]]
+    hep = [k["topic"] for k in ds if thu_bac_trong(k)]
+    for k in sorted(ds, key=lambda x: (x["loai"] != "MU", not thu_bac_trong(x), x["tong"])):
+        bieu = "🟠" if thu_bac_trong(k) else {"MU": "🔴", "KHONG_DO": "⚪", "ON": "🟢"}[k["loai"]]
         chi_tiet = " ".join(f"{t['tang'].split('_')[0][:5]}={'?' if t['dem'] is None else t['dem']}" for t in k["tang"])
         print(f"  {bieu} {k['topic'][:58]:<58} tổng={k['tong']:<6} {chi_tiet}")
     if b["mu"]:
         print(f"\n🔴 {len(b['mu'])} chủ đề CÓ THỂ MÙ: «0 ứng viên» ở đó là cấu trúc truy vấn, KHÔNG phải «không có chứng cứ mới».")
         print("   Soạn lại bằng MeSH/tiab + OR (không dồn nhiều khái niệm vào một cụm dài — PubMed ngầm AND mọi từ); máy chỉ ĐỀ XUẤT,")
         print("   bác sĩ duyệt rồi chép vào EBM-Dashboards/watchlist.json (có sao lưu). Đo bản đề xuất bằng --watchlist <tệp> trước khi duyệt.")
+    if hep:
+        print(f"\n🟠 {len(hep)} chủ đề TẦNG THỨ BẬC TRỐNG (không mù, nhưng 0 tổng quan và guideline+SR+RCT ≤ {NGUONG_THU_BAC}/"
+              f"{b['so_ngay']} ngày): {'; '.join(hep[:6])}{'…' if len(hep) > 6 else ''}")
+        print("   Tầng «mới vào PubMed» làm tổng vượt ngưỡng mù nên che chỗ này. NGHI truy vấn hẹp ở tầng tổng quan/RCT — soạn lại như")
+        print("   chủ đề mù (máy đề xuất, bác sĩ duyệt); KHÔNG kết luận lĩnh vực thiếu chứng cứ. Không đổi mã thoát.")
     if b["khong_do"]:
         print(f"\n⚪ {len(b['khong_do'])} chủ đề có tầng KHÔNG đo được (mạng/NCBI) — không phải mù, cũng không phải ổn: "
               + "; ".join(b["khong_do"][:5]))
