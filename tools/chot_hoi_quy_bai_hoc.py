@@ -7263,6 +7263,47 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh161_he_thong_bao_dam_toan_van():
+    """04/10 — bác sĩ hỏi «hệ thống đã BẢO ĐẢM phủ chứng cứ và đọc toàn văn chưa». Đo: cổng chỉ chặn mục apply thẩm định từ tóm
+    tắt khi mục TỰ KHAI appraisalCompleteness='partial' ⇒ 27 mục apply (20 PMID) không có toàn văn trong kho vẫn qua cổng; chuỗi
+    máy theo chủ đề (`ops/orchestrator.py`) KHÔNG có bước toàn văn ⇒ ứng viên mới tới tay bác sĩ khi máy mới đọc tóm tắt. Vá:
+    `verify_dashboard.kiem_toan_van_apply` (cảnh báo ĐO ĐƯỢC từ kho cạnh dashboard, gọi trong main) + bước «TV»
+    (`tools/toan_van_theo_chu_de.py`: gom bản hợp lệ → đọc sâu → phiếu làn trình duyệt cho bài còn thiếu), nằm giữa A2 và A4/B2,
+    phụ trợ (không dừng chuỗi). Kiểm HÀNH VI ngoại tuyến (thư mục tạm, kế hoạch giả)."""
+    import tempfile as _tf
+    vd = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py", "_bh161_vd")
+    if not hasattr(vd, "kiem_toan_van_apply"):
+        return False, "cổng không có kiem_toan_van_apply — mục apply thiếu toàn văn lọt im lặng"
+    with _tf.TemporaryDirectory() as td:
+        kho = Path(td) / "toan_van_oa"
+        kho.mkdir()
+        (kho / "PMID-111111_PMC1.xml").write_text("x")
+        warns, oks = [], []
+        vd.kiem_toan_van_apply(["{id:'ITEM-01', decision:'apply', pmid:'111111'}",
+                                "{id:'ITEM-02', decision:'apply', pmid:'222222'}"], kho, warns, oks)
+        if len(warns) != 1 or "222222" not in warns[0]:
+            return False, "cổng không cảnh báo đúng mục apply thiếu toàn văn trong kho"
+    nguon = (REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py").read_text(encoding="utf-8")
+    if not any(d.strip().startswith("kiem_toan_van_apply(items,") for d in nguon.splitlines()):
+        return False, "main() của cổng KHÔNG gọi kiem_toan_van_apply (chỉ có hàm, không có dòng thi hành)"
+    op = _nap(REPO / "ops/orchestrator.py", "_bh161_op")
+    tt = {"loai": "watchlist", "a2_arg": "Bệnh thận mạn (CKD)", "lat_cat": [], "ly_do": ""}
+    goc_pg, goc_db = op._phan_giai, op._dashboards_cua_chu_de
+    try:
+        op._phan_giai = lambda _t: tt
+        op._dashboards_cua_chu_de = lambda _t: [Path("WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260701.html")]
+        ten = [b["buoc"] for b in op.ke_hoach("x", False, False, run_id="RID")]
+    finally:
+        op._phan_giai, op._dashboards_cua_chu_de = goc_pg, goc_db
+    if "TV-toan-van" not in ten:
+        return False, "chuỗi máy theo chủ đề KHÔNG có bước toàn văn (TV)"
+    if not (ten.index("A2-quet") < ten.index("TV-toan-van") < min(i for i, t in enumerate(ten) if t.startswith(("A4", "B2")))):
+        return False, "bước TV không nằm giữa A2 và A4/B2"
+    if op.phan_loai("TV-toan-van", 2)[0] in op.DUNG_HET:
+        return False, "lỗi bước toàn văn (phụ trợ) làm dừng cả chuỗi"
+    return True, "cổng đo phủ toàn văn mục apply từ kho · chuỗi theo chủ đề có bước TV (giữa A2 và A4/B2, không chặn)"
+
+
 def bh160_unpaywall_cong_dieu_khoan_va_noi_dung():
     """04/10 — đo kho toàn văn: tầng 2 Unpaywall của `gom_toan_van_dashboard.py` lưu MỌI bản «is_oa» ⇒ 32/42 tệp `_UPW` không
     mang giấy phép mở (NXB «cấm» hoặc chưa kiểm điều khoản); cổng nội dung chỉ đòi ≥ 500 từ ⇒ 15/27 `_UPW.html` là TRANG GIỚI
@@ -10546,6 +10587,7 @@ BAI_HOC = [
     ("BH158", "04/10", "Phiên uỷ quyền Chrome lưu bản sao: chỉ mở bằng lời bác sĩ, không bao giờ DynaMed/Scopus/WoS, hết ngày tự đóng, trần/nhịp mỗi miền, chặn giao diện tài khoản/tệp lạ, nhãn KHÔNG phải OA", bh158_phien_uy_quyen_chrome_luu_ban_sao),
     ("BH159", "04/10", "Phạm vi phiên uỷ quyền Chrome tính LÚC KIỂM (uỷ quyền thêm/rút giữa phiên có hiệu lực ngay); J Rheumatol vào bảng «cam»; doctrine so đủ tên NXB", bh159_pham_vi_phien_tinh_luc_kiem),
     ("BH160", "04/10", "Tầng 2 Unpaywall: chỉ LƯU TỰ ĐỘNG bản có giấy phép mở; loại trang giới thiệu kho lưu trữ; sổ phủ đếm mọi loại toàn văn", bh160_unpaywall_cong_dieu_khoan_va_noi_dung),
+    ("BH161", "04/10", "Hệ thống BẢO ĐẢM toàn văn: cổng đo phủ toàn văn mục apply từ kho; chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

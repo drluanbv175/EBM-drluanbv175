@@ -783,6 +783,67 @@ def strict_source_checks(data_block, items, *, today=None):
     return errors, warns, oks
 
 
+# TẦNG TOÀN VĂN ĐO ĐƯỢC (04/10/2026). Luật «appraisalCompleteness» ở strict_source_checks chỉ chặn khi mục TỰ KHAI 'partial';
+# vắng trường thì không suy đoán. Đo 04/10: 27 mục apply (20 PMID) KHÔNG có toàn văn nào trong kho dùng chung mà vẫn qua cổng
+# vì không khai — hệ thống DẶN đọc toàn văn nhưng không KIỂM được. Kho nằm cạnh dashboard (`toan_van_oa/`) nên đo thẳng được:
+# mục apply mà kho không có toàn văn của PMID chính, và mục không tự khai ⇒ CẢNH BÁO hiện ở mọi lượt cổng. CHƯA chặn: chặn
+# buộc đổi decision của các mục bác sĩ đã duyệt — nâng thành lỗi là quyết định của bác sĩ. Không thấy kho ⇒ ⚪ không đo.
+_DAU_TRANG_GIOI_THIEU_KHO = ("Fingerprint", "Access to Document", "Link to publication", "Research output",
+                             "Accéder au contenu principal")
+_DE_MUC_IMRAD = ("Methods", "Results", "Discussion", "Introduction", "METHODS", "RESULTS", "DISCUSSION", "INTRODUCTION")
+
+
+def _html_la_toan_van(duong):
+    """Bản `_UPW.html` có phải TOÀN VĂN không (cùng tiêu chí `gom_toan_van_dashboard.la_toan_van_html`, BH160): ≥ 6000 từ,
+    hoặc ≥ 2500 từ + ≥ 3 đề mục IMRaD và KHÔNG mang dấu trang giới thiệu kho lưu trữ."""
+    try:
+        vb = Path(duong).read_bytes().decode("utf-8", errors="replace")
+    except OSError:
+        return False
+    vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
+    vb = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", vb))
+    so_tu = len(vb.split())
+    if so_tu >= 6000:
+        return True
+    if any(k in vb for k in _DAU_TRANG_GIOI_THIEU_KHO):
+        return False
+    return so_tu >= 2500 and sum(1 for k in _DE_MUC_IMRAD if k in vb) >= 3
+
+
+def co_toan_van_trong_kho(pmid, kho):
+    """PMID có toàn văn trong kho dùng chung: mọi tệp `PMID-<n>_*` ở gốc kho (XML JATS, PDF, HTML…, trừ `_UPW.html` là trang
+    giới thiệu kho lưu trữ) hoặc hồ sơ làn trình duyệt có bác sĩ (`trinh_duyet/`)."""
+    kho = Path(kho)
+    for q in kho.glob("PMID-%s_*" % pmid):
+        if q.is_file() and (not q.name.endswith("_UPW.html") or _html_la_toan_van(q)):
+            return True
+    return any((kho / "trinh_duyet").glob("PMID-%s*" % pmid))
+
+
+def kiem_toan_van_apply(items, kho, warns, oks):
+    """Cảnh báo mục decision='apply' có PMID chính mà kho KHÔNG có toàn văn, khi mục không tự khai appraisalCompleteness."""
+    kho = Path(kho)
+    if not kho.is_dir():
+        oks.append("⚪ Không thấy kho toàn văn cạnh dashboard (%s) — CHƯA đo phủ toàn văn mục apply (không phải đạt)." % kho.name)
+        return
+    tong, thieu = 0, []
+    for ch in items:
+        if field(ch, "decision") != "apply":
+            continue
+        pmid = (field(ch, "pmid") or "").strip()
+        if not PMID_RE.match(pmid):
+            continue
+        tong += 1
+        if field(ch, "appraisalCompleteness") in ("full", "partial") or co_toan_van_trong_kho(pmid, kho):
+            continue
+        thieu.append(field(ch, "id") or "(?)")
+        warns.append("[%s] decision='apply' nhưng kho toàn văn CHƯA có PMID %s — thẩm định có thể chỉ dựa tóm tắt: đọc toàn "
+                     "văn hợp lệ (tools/gom_toan_van_dashboard.py · làn trình duyệt doc_toan_van_co_nguoi.py) hoặc khai "
+                     "appraisalCompleteness ('full' nếu đã đọc ngoài kho, 'partial' nếu chưa)." % (field(ch, "id") or "(?)", pmid))
+    if tong:
+        oks.append("Toàn văn mục apply (PMID chính): %d/%d có trong kho hoặc đã tự khai." % (tong - len(thieu), tong))
+
+
 # Khoá cấp 1 HỢP LỆ của DATA.summary — phải khớp ĐÚNG thứ mà template và ba bộ
 # sinh phái sinh đọc: evidence-workbench-template.html (s.dontDo),
 # tools/build_ban_doc_chung_cu.py, EBM-Dashboards/tools/build_dashboard_docx.py và
@@ -1600,6 +1661,7 @@ def main():
         oks.extend(so)
         if not a.online:
             warns.append("--strict-sources đang chạy offline: đã kiểm hợp đồng nguồn, nhưng chưa phân giải thật PMID/DOI. Dashboard thật nên chạy thêm --online.")
+        kiem_toan_van_apply(items, Path(a.file).resolve().parent / "toan_van_oa", warns, oks)
 
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []

@@ -13,6 +13,8 @@ lại và in "việc cần phiên" kèm lệnh cụ thể thay vì làm bừa.
 Các bước máy chạy được (mỗi bước = một hiện thân đã có, T4 — không viết lại):
   A2  quét ứng viên        surveillance_scan.py --topic <TÊN WATCHLIST> --report/--json-report (lưu ứng viên)
   A3  ưu tiên toàn kho     uu_tien_cap_nhat.py   (CHỈ khi --uu-tien: bảng TOÀN KHO, ~70 phút, không theo chủ đề)
+  TV  toàn văn            toan_van_theo_chu_de.py (04/10/2026): gom bản HỢP LỆ (PMC OA + giấy phép mở) cho ứng viên A2 và mục
+                          apply chưa có toàn văn → đọc sâu → phiếu làn trình duyệt có bác sĩ cho bài còn thiếu (phụ trợ, không chặn)
   A4  sổ xác minh nguồn    so_xac_minh_nguon.py --quet <dashboard mới nhất của TỪNG lát cắt>
   B2  cổng liêm chính      verify_dashboard.py <dashboard> --strict-sources [--online]
   B4  BỘ NĂM               xuat_goi_cap_nhat.py (CHỈ khi --xuat — nặng, sinh 5 sản phẩm)
@@ -66,7 +68,7 @@ PY = sys.executable  # BH05: không gọi "python3" cứng — Windows không c�
 HAN_CAP_NHAT_NGAY = 35   # ngưỡng «đáng mở phiên làm mới» — cùng ngưỡng kiem_do_tuoi_chung_cu dùng để nhắc
 TRAN_LO = 8              # trần số chủ đề mỗi lô: mỗi chủ đề ≈ vài phút gọi mạng
 HAN_KHOA_GIAY = 4 * 3600  # khoá mặc định 30' ngắn hơn một lượt có A3 (~71') — coi mồ côi giữa chừng (T1-08)
-TIMEOUT_BUOC = {"A2": 1800, "A3": 7200, "A4": 1800, "B2": 1800, "B4": 3600, "B5": 600}
+TIMEOUT_BUOC = {"A2": 1800, "A3": 7200, "TV": 2400, "A4": 1800, "B2": 1800, "B4": 3600, "B5": 600}
 KHONG_PHAN_GIAI = 64
 THIEU_TEP = -7           # mã nội bộ: tệp script/dashboard của bước không tồn tại (chưa chạy gì)
 
@@ -180,6 +182,16 @@ def ke_hoach(topic: str | None, online: bool, xuat: bool, *, uu_tien: bool = Fal
     if uu_tien:
         buoc.append({"buoc": "A3-uu-tien" + hau_to, "lenh": [PY, str(GOC / "tools" / "uu_tien_cap_nhat.py")]})
     cac_db = _dashboards_cua_chu_de(topic) if topic else []
+    # TV — TOÀN VĂN (04/10/2026): trước đây chuỗi theo chủ đề không có bước toàn văn nào ⇒ ứng viên mới tới tay bác sĩ khi máy
+    # mới đọc tóm tắt, và mục apply thiếu toàn văn lọt cổng. Bước PHỤ TRỢ: rc≠0 chỉ ghi phiếu (rơi vào «noi_dung»), không dừng.
+    if topic and tt["loai"] != "khong_can" and (tt.get("a2_arg") or cac_db):
+        slug_tv = _slug(tt.get("a2_arg") or topic)[:40]
+        tv = [PY, str(GOC / "tools" / "toan_van_theo_chu_de.py"), "--bao-cao", str(LOGS / f"{run_id}.TV-{slug_tv}.md")]
+        if tt.get("a2_arg"):
+            tv += ["--a2-json", str(LOGS / f"{run_id}.A2-{slug_tv}.json")]
+        if cac_db:
+            tv += ["--dashboard", *[str(db) for db in cac_db]]
+        buoc.append({"buoc": "TV-toan-van" + hau_to, "lenh": tv})
     for db in cac_db:  # TỪNG lát cắt — chúng bổ sung nhau, không thay nhau (BH30)
         lat = _ten_lat(db)
         buoc.append({"buoc": f"A4-so-xac-minh[{lat}]" + hau_to, "lat": lat,
