@@ -68,12 +68,37 @@ MUC_DUONG_TINH = frozenset({"duong", "rut_va_thay", "eoc"})
 MUC_RUT = ("duong", "rut_va_thay", "eoc", "ok_con_han", "ok_qua_han", "khong_biet")
 
 
+def _khoa_doi_chuan(khoa: str) -> str:
+    """Cùng luật với `so_xac_minh_nguon.chuan_hoa_khoa` (DOI không phân biệt hoa/thường; test khoá hai hàm khớp nhau).
+
+    Viết lại tại chỗ thay vì import để công cụ điểm khám không nạp cả mô-đun sổ (mô-đun đó tự chuyển venv khi nạp)."""
+    loai, sep, gia_tri = str(khoa).partition(":")
+    if sep and loai.strip().lower() == "doi":
+        return "doi:" + gia_tri.strip().lower()
+    return str(khoa)
+
+
+def _uu_tien_ban_ghi(ds: list[dict]) -> dict | None:
+    """Trong các bản ghi cùng định danh: bản DƯƠNG TÍNH trước (bất đối xứng), rồi bản kiểm rút bài mới nhất."""
+    if not ds:
+        return None
+    duong = [b for b in ds if b.get("ghi_chu_rut") in DUONG_TINH or b.get("da_rut") or b.get("quan_ngai")]
+    if duong:
+        return duong[0]
+    return max(ds, key=lambda b: str(b.get("kiem_rut_luc") or ""))
+
+
 def tra_muc_so(src: dict, so: dict) -> dict | None:
-    """Bản ghi sổ xác minh của nguồn: khoá `pmid:` trước, rồi `doi:` (nguyên dạng → chữ thường)."""
+    """Bản ghi sổ xác minh của nguồn: khoá `pmid:` trước, rồi `doi:` — mọi biến thể hoa/thường (vá 03/10/2026).
+
+    Bản cũ chỉ thử nguyên dạng rồi chữ thường ⇒ trượt bản ghi khoá viết hoa khi thẻ viết thường (⇒ «không biết» thay
+    cho «đã rút»), và với cặp trùng thì có thể đọc bản «ok» trong khi bản kia ĐÃ RÚT."""
     pmid, doi = src.get("pmid"), src.get("doi")
     muc_so = so.get(f"pmid:{pmid}") if pmid else None
     if muc_so is None and doi:
-        muc_so = so.get(f"doi:{doi}") or so.get(f"doi:{str(doi).lower()}")
+        chuan = _khoa_doi_chuan(f"doi:{doi}")
+        muc_so = _uu_tien_ban_ghi([b for k, b in so.items()
+                                   if isinstance(b, dict) and _khoa_doi_chuan(k) == chuan])
     return muc_so if isinstance(muc_so, dict) else None
 
 

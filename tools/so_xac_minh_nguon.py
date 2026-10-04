@@ -125,6 +125,60 @@ HAN_TON_TAI_NGAY = 180
 HAN_RUT_BAI_NGAY = 30
 
 
+def chuan_hoa_khoa(khoa: str) -> str:
+    """Dạng CHUẨN của một khoá sổ — hàm DUY NHẤT mà mọi đường GHI lẫn ĐỌC khoá phải đi qua (vá 03/10/2026).
+
+    DOI không phân biệt hoa/thường — tài liệu Crossref «Constructing your DOIs»: hậu tố DOI không phân biệt hoa/thường,
+    `10.1006/abc` và `10.1006/ABC` là MỘT trong hệ thống (tiền tố `10.<số>` vốn không có chữ) ⇒ khoá `doi:` = phần giá
+    trị viết thường. PMID là chữ số; URL giữ NGUYÊN (đường dẫn URL CÓ phân biệt hoa/thường — hạ chữ là trộn hai trang).
+
+    Vì sao: `lenh_quet` từng ghi khoá DOI đúng như dashboard viết (giữ chữ hoa) trong khi `dinh_danh_da_rut` và
+    `pham_vi_kiem_rut_bai` chỉ tra `doi:` + chữ thường, còn `--kiem-rut-lai`/`--quet-ledger` ghi chữ thường ⇒ bản ghi
+    ĐÃ RÚT mang khoá viết hoa không được tầng 2 của cổng thấy (dashboard mới trích đúng DOI đó PASS như sạch), bản ghi
+    còn hạn bị tầng 3 gọi là «chưa kiểm». Sổ CŨ không bị bắt di cư: đọc khớp mọi biến thể qua `cac_khoa_trong_so`.
+    """
+    loai, sep, gia_tri = str(khoa).partition(":")
+    if sep and loai.strip().lower() == "doi":
+        return "doi:" + gia_tri.strip().lower()
+    return str(khoa)
+
+
+def _chi_muc_khoa(muc: dict) -> dict[str, list[str]]:
+    """{khoá chuẩn: [các khoá ĐANG CÓ trong sổ cùng định danh]} — khoá đã chuẩn đứng đầu, còn lại theo thứ tự chữ.
+
+    Sổ cũ giữ khoá DOI viết hoa, có cả cặp bản ghi chỉ khác hoa/thường (sổ thật 03/10/2026: 210/837 khoá DOI có chữ
+    hoa, 17 cặp trùng) ⇒ tra phải thấy TẤT CẢ để luật bất đối xứng (dương tính từ bất kỳ bản ghi nào là nhận) không bị
+    một bản «ok» che mất.
+    """
+    chi_muc: dict[str, list[str]] = {}
+    for k in muc:
+        chi_muc.setdefault(chuan_hoa_khoa(k), []).append(k)
+    for chuan, ds in chi_muc.items():
+        ds.sort(key=lambda k, c=chuan: (k != c, k))
+    return chi_muc
+
+
+def cac_khoa_trong_so(muc: dict, khoa: str, chi_muc: dict[str, list[str]] | None = None) -> list[str]:
+    """Mọi khoá ĐANG CÓ trong `muc` trỏ CÙNG định danh với `khoa`; rỗng = VẮNG SỔ (chưa kiểm), không bao giờ là «sạch».
+
+    Truyền `chi_muc` (từ `_chi_muc_khoa`) khi tra nhiều định danh trên cùng một sổ; vắng thì quét sổ một lượt.
+    """
+    chuan = chuan_hoa_khoa(khoa)
+    if chi_muc is not None:
+        return list(chi_muc.get(chuan, []))
+    if not chuan.startswith("doi:"):
+        return [chuan] if chuan in muc else []
+    return sorted((k for k in muc if chuan_hoa_khoa(k) == chuan), key=lambda k: (k != chuan, k))
+
+
+def _nguon_chuan(nguon: dict[str, set[str]]) -> dict[str, set[str]]:
+    """Gộp các khoá nguồn chỉ khác hoa/thường về khoá chuẩn (hợp tập dashboard) — chịu được cả caller đưa khoá thô."""
+    ra: dict[str, set[str]] = {}
+    for k, tep in nguon.items():
+        ra.setdefault(chuan_hoa_khoa(k), set()).update(tep or ())
+    return ra
+
+
 def _nap_verify_dashboard():
     """Nạp verify_dashboard.py để dùng lại đúng bộ xác minh của cổng.
 
@@ -412,13 +466,19 @@ def dinh_danh_da_rut(cac_dinh_danh: list[str]) -> list[dict]:
     Giữ nguyên bất đối xứng: chỉ trả DƯƠNG TÍNH; vắng mặt ≠ sạch (BH08/BH27).
     """
     muc = (doc_so() or {}).get("muc", {}) or {}
+    chi_muc = _chi_muc_khoa(muc)
     ra: list[dict] = []
+    da_phat: set[str] = set()
     for dd in cac_dinh_danh:
         dd = str(dd).strip()
-        for khoa in (f"pmid:{dd}", f"doi:{dd.lower()}"):
-            bg = muc.get(khoa)
-            if bg and _la_duong_tinh(bg):
-                ra.append(_ban_ghi_cong(khoa, bg))
+        for khoa in (f"pmid:{dd}", f"doi:{dd}"):
+            # Vá 03/10/2026: tra qua `chuan_hoa_khoa` — bản cũ tra `doi:`+lower nên TRƯỢT bản ghi ĐÃ RÚT mang khoá viết
+            # hoa (do `lenh_quet` ghi). Phát MỌI biến thể dương tính (cặp trùng cũ: bản «ok» không che bản đã rút);
+            # một bản ghi không phát hai lần khi trang viết cùng DOI theo hai kiểu.
+            duong = [k for k in cac_khoa_trong_so(muc, khoa, chi_muc) if _la_duong_tinh(muc[k])]
+            if duong:
+                ra.extend(_ban_ghi_cong(k, muc[k]) for k in duong if k not in da_phat)
+                da_phat.update(duong)
                 break
     return ra
 
@@ -434,14 +494,17 @@ def pham_vi_kiem_rut_bai(cac_dinh_danh: list[str]) -> dict:
     `co` = có bản ghi trong sổ mà kiểm rút bài CÒN HẠN (hoặc đã biết là bị rút); `chua` = vắng sổ / chưa kiểm /
     quá hạn. Chỉ ĐỌC sổ, không mạng. Vắng mặt ≠ sạch (BH08/BH27) — nên không có nhánh nào trả «sạch»."""
     muc = (doc_so() or {}).get("muc", {}) or {}
+    chi_muc = _chi_muc_khoa(muc)
     co: list[str] = []
     chua: list[str] = []
     for dd in cac_dinh_danh:
         dd = str(dd).strip()
-        bg = muc.get(f"pmid:{dd}") or muc.get(f"doi:{dd.lower()}")
+        # Vá 03/10/2026: khoá qua `chuan_hoa_khoa` — bản cũ tra `doi:`+lower nên bản ghi còn hạn mang khoá viết hoa bị
+        # gọi oan là «chưa kiểm» (sổ thật 03/10: 194 bản ghi). Cặp trùng cũ: một biến thể đủ điều kiện là đủ.
+        cac = cac_khoa_trong_so(muc, f"pmid:{dd}", chi_muc) or cac_khoa_trong_so(muc, f"doi:{dd}", chi_muc)
         # «Nghi ma»/'unresolved' = lượt kiểm KHÔNG lấy được bản ghi ⇒ CHƯA có phán quyết rút bài — xếp vào
         # 'chua' (chỉ CẢNH BÁO; 'unresolved' có thể do lỗi tầng API của NCBI nên không chặn cứng). Vá #2, 26/09.
-        if bg and (bg.get("da_rut") or (con_hieu_luc(bg)[0] and not _la_chua_phan_xu(bg))):
+        if any(muc[k].get("da_rut") or (con_hieu_luc(muc[k])[0] and not _la_chua_phan_xu(muc[k])) for k in cac):
             co.append(dd)
         else:
             chua.append(dd)
@@ -529,7 +592,7 @@ def rut_bai_retraction_watch_ngoai_tuyen_doi(cac_doi: list[str]) -> list[dict] |
         ly_do = str(bg.get("reason") or "")
         tieu_de = str(bg.get("title") or "").strip()
         ra.append({
-            "khoa": f"doi:{goc.lower()}", "loai": "doi", "gia_tri": goc,
+            "khoa": chuan_hoa_khoa(f"doi:{goc}"), "loai": "doi", "gia_tri": goc,
             "tinh_trang": bg.get("status") or "retracted",
             "tieu_de": ("tiêu đề theo Retraction Watch: " + tieu_de) if tieu_de else "",
             "kiem_luc": _hom_nay().isoformat(),
@@ -543,7 +606,11 @@ def rut_bai_retraction_watch_ngoai_tuyen_doi(cac_doi: list[str]) -> list[dict] |
 
 
 def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
-    """Gom mọi pmid/doi/url từ các dashboard. Trả {khoá: {file đã dùng}}."""
+    """Gom mọi pmid/doi/url từ các dashboard. Trả {khoá CHUẨN: {file đã dùng}}.
+
+    Khoá đi qua `chuan_hoa_khoa` (vá 03/10/2026): cùng một DOI viết hoa ở dashboard này, viết thường ở dashboard kia
+    là MỘT nguồn — bản cũ giữ nguyên cách viết nên đẻ hai bản ghi trong sổ và lệch với mọi phép tra chữ thường.
+    """
     nguon: dict[str, set[str]] = {}
     for f in files:
         try:
@@ -564,7 +631,7 @@ def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
                     continue
                 if loai == "url" and not gt.startswith("http"):
                     continue
-                nguon.setdefault(f"{loai}:{gt}", set()).add(f.name)
+                nguon.setdefault(chuan_hoa_khoa(f"{loai}:{gt}"), set()).add(f.name)
             # VÁ 26/09/2026 (phát hiện #13) — định danh trong references[] của item cũng là nguồn gói
             # đang trích. Cổng verify_dashboard nay đưa PMID dạng «PMID 12345678» trong references vào
             # tầng 2/3; nếu sổ không gom chúng thì `--quet` không bao giờ kiểm và cổng in mãi một cảnh
@@ -577,7 +644,7 @@ def gom_nguon(files: list[Path], vd) -> dict[str, set[str]]:
                 for d in _DOI_THAM_KHAO.findall(r or ""):
                     d = d.rstrip(".,;'\")”")
                     if vd.DOI_RE.match(d):
-                        nguon.setdefault(f"doi:{d}", set()).add(f.name)
+                        nguon.setdefault(chuan_hoa_khoa(f"doi:{d}"), set()).add(f.name)
     return nguon
 
 
@@ -596,11 +663,16 @@ def dong_bo_lien_ket_dashboard(
     tiếp tục khai dashboard đó đang sử dụng nguồn. Tuy nhiên ``--quet`` có thể chỉ
     nhận một vài dashboard, nên phải giữ nguyên liên kết tới các file KHÔNG thuộc
     lượt quét hiện tại; nếu gán thẳng từ ``nguon`` sẽ làm mất lịch sử của cả kho.
+
+    So khoá qua `chuan_hoa_khoa` (vá 03/10/2026): bản cũ so nguyên văn nên (a) bản ghi chữ thường do `--kiem-rut-lai`/
+    `--quet-ledger` ghi không bao giờ được nối với dashboard viết DOI hoa — tầng 1 mù với nó; (b) dashboard đổi cách viết
+    DOI là bản ghi ĐÃ RÚT cũ bị GỠ liên kết. Mọi biến thể hoa/thường của cùng định danh đều nhận liên kết.
     """
+    nguon = _nguon_chuan(nguon)
     thay_doi = 0
     for khoa, ban_ghi in muc.items():
         cu = set(ban_ghi.get("cac_dashboard") or [])
-        moi = (cu - ten_da_quet) | set(nguon.get(khoa, set()))
+        moi = (cu - ten_da_quet) | nguon.get(chuan_hoa_khoa(khoa), set())
         moi_sap_xep = sorted(moi)
         if moi_sap_xep != sorted(cu):
             ban_ghi["cac_dashboard"] = moi_sap_xep
@@ -700,13 +772,16 @@ def kiem_rut_bai_theo_doi(muc: dict, nguon: dict, so: dict) -> None:
     Giữ nguyên luật bất đối xứng: chỉ ghi `da_rut` khi Crossref khẳng định; "không
     hỏi được" giữ trạng thái CHƯA kiểm, không bao giờ thành "sạch".
     """
+    nguon_chuan = _nguon_chuan(nguon)
     can = []
     for khoa, bg in muc.items():
         # Bản ghi ĐÃ đánh dấu rút bài trước đây bị bỏ qua vĩnh viễn, nên khi thêm một
         # trường mới (vd `rut_va_thay`) nó KHÔNG BAO GIỜ được ghi vào các bản ghi cũ —
         # cảnh báo cứ giữ nguyên câu chữ sai. Cho phép hỏi lại ĐÚNG MỘT LẦN khi thiếu
         # trường đó; đã có phán quyết rồi thì không hỏi lại nữa.
-        if khoa not in nguon:
+        # «Có trong nguồn» so khoá CHUẨN (vá 03/10/2026): nguồn gom về khoá chuẩn, so nguyên văn thì bản ghi cũ khoá
+        # viết hoa không bao giờ được kiểm rút bài lại — hết hạn 30 ngày là kẹt «chưa kiểm» vĩnh viễn.
+        if chuan_hoa_khoa(khoa) not in nguon_chuan:
             continue
         if bg.get("da_rut") and "rut_va_thay" in bg:
             continue
@@ -904,29 +979,31 @@ def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
             kq_doi = {}
             print(f"  ⚠ Không tra được nhóm DOI ({e}) — giữ nguyên, KHÔNG coi là sạch.")
         for doi in doi_can:
-            khoa = f"doi:{doi.casefold()}"
-            bg = muc.setdefault(khoa, {"loai": "doi", "gia_tri": doi,
-                                       "cac_dashboard": []})
+            # Vá 03/10/2026: bản cũ ghi `doi:`+casefold ⇒ đẻ bản ghi chữ thường bên cạnh bản cũ viết hoa. Nay ghi vào
+            # MỌI biến thể đang có (vắng sổ thì tạo một bản khoá chuẩn); phán quyết RÚT phủ mọi biến thể.
+            cac = cac_khoa_trong_so(muc, f"doi:{doi}") or [chuan_hoa_khoa(f"doi:{doi}")]
             info = kq_doi.get(doi) or {}
             tt = info.get("status", "")
-            if tt == "retracted":
-                bg["kiem_rut_luc"] = bay_gio
-                bg["ghi_chu_rut"] = tt
-                bg["da_rut"] = True
-                bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
-                _gan_dau_hieu_thong_bao(bg, info)
-                bg["thong_bao_rut_doi"] = info.get("notice_doi", "")
-                print(f"  🔴 {khoa}: {'ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA' if bg['rut_va_thay'] else 'ĐÃ BỊ RÚT'} — đã cập nhật")
-                thay_doi += 1
-            elif tt == "ok" and not bg.get("da_rut"):
-                bg["kiem_rut_luc"] = bay_gio
-                bg["ghi_chu_rut"] = tt
-                print(f"  ✓ {khoa}: ok (Crossref)")
-                thay_doi += 1
-            elif tt == "ok" and bg.get("da_rut"):
-                print(f"  ⚠ {khoa}: lượt này 'ok' nhưng sổ DƯƠNG TÍNH — giữ (luật bất đối xứng).")
-            else:
-                print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
+            for khoa in cac:
+                bg = muc.setdefault(khoa, {"loai": "doi", "gia_tri": doi, "cac_dashboard": []})
+                if tt == "retracted":
+                    bg["kiem_rut_luc"] = bay_gio
+                    bg["ghi_chu_rut"] = tt
+                    bg["da_rut"] = True
+                    bg["rut_va_thay"] = bool(info.get("retract_and_replace"))
+                    _gan_dau_hieu_thong_bao(bg, info)
+                    bg["thong_bao_rut_doi"] = info.get("notice_doi", "")
+                    print(f"  🔴 {khoa}: {'ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA' if bg['rut_va_thay'] else 'ĐÃ BỊ RÚT'} — đã cập nhật")
+                    thay_doi += 1
+                elif tt == "ok" and not bg.get("da_rut"):
+                    bg["kiem_rut_luc"] = bay_gio
+                    bg["ghi_chu_rut"] = tt
+                    print(f"  ✓ {khoa}: ok (Crossref)")
+                    thay_doi += 1
+                elif tt == "ok" and bg.get("da_rut"):
+                    print(f"  ⚠ {khoa}: lượt này 'ok' nhưng sổ DƯƠNG TÍNH — giữ (luật bất đối xứng).")
+                else:
+                    print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
     if thay_doi:
         ghi_so(so)
         print(f"Đã ghi sổ ({thay_doi} bản ghi chạm tới). Chạy lại verify_dashboard để thấy hiệu lực.")
@@ -954,15 +1031,20 @@ def lenh_quet(files: list[Path], vong: int) -> int:
         print(f"Đã đối soát liên kết nguồn↔dashboard: {so_lien_ket} bản ghi thay đổi.")
 
     can_lam = []
+    # Vá 03/10/2026: nguồn gom về khoá CHUẨN; bản ghi cũ có thể mang khoá viết hoa ⇒ tra mọi biến thể. Còn hạn/đã rút ở
+    # BẤT KỲ biến thể nào là đủ; phải xác minh lại thì ghi vào ĐÚNG bản ghi cũ (không đẻ bản trùng chỉ khác hoa/thường).
+    chi_muc = _chi_muc_khoa(muc)
+    khoa_ghi: dict[str, str] = {}
     for khoa in sorted(nguon):
-        cu = muc.get(khoa)
-        if cu:
-            con, ly_do = con_hieu_luc(cu)
-            if con:
-                continue
-            if cu.get("da_rut"):
+        cac = cac_khoa_trong_so(muc, khoa, chi_muc)
+        if cac:
+            if any(muc[k].get("da_rut") for k in cac):
                 continue  # đã biết bị rút — không xác minh lại, để nguyên cảnh báo
-            print(f"  · hết hiệu lực: {khoa} ({ly_do})")
+            hieu_luc = [con_hieu_luc(muc[k]) for k in cac]
+            if any(con for con, _ in hieu_luc):
+                continue
+            print(f"  · hết hiệu lực: {cac[0]} ({hieu_luc[0][1]})")
+        khoa_ghi[khoa] = cac[0] if cac else khoa
         can_lam.append(khoa)
 
     print(f"Cần xác minh lần này: {len(can_lam)} "
@@ -974,19 +1056,20 @@ def lenh_quet(files: list[Path], vong: int) -> int:
         print(f"\n── Vòng {v}/{vong} — còn {len(can_lam)} mục ──")
         that_bai = []
         for khoa in can_lam:
-            ban_ghi = xac_minh_mot(khoa, vd)
+            dich = khoa_ghi.get(khoa, khoa)
+            ban_ghi = xac_minh_mot(dich, vd)
             if ban_ghi is None:
                 that_bai.append(khoa)
                 continue
             ban_ghi["cac_dashboard"] = sorted(nguon.get(khoa, []))
-            cu = muc.get(khoa) or {}
+            cu = muc.get(dich) or {}
             # giữ lại dấu vết kiểm rút bài cũ nếu có, để không mất lịch sử — kể cả cờ EoC/«nghi ma» (vá #2,
             # 26/09/2026: bản cũ làm MẤT `quan_ngai`/`nghi_ma` sau mỗi lần xác minh lại tồn tại).
             for k in ("kiem_rut_luc", "da_rut", "ghi_chu_rut", "quan_ngai", "nghi_ma"):
                 if k in cu and k not in ban_ghi:
                     ban_ghi[k] = cu[k]
-            muc[khoa] = ban_ghi
-            print(f"  ✓ {khoa}")
+            muc[dich] = ban_ghi
+            print(f"  ✓ {dich}")
             # VÁ 13/08/2026 — GHI SỔ TỪNG CHẶNG, không đợi hết vòng.
             # Bản cũ chỉ `ghi_so()` sau khi vòng chạy xong. Với mạng chậm (NCBI đang
             # chặn máy này) một vòng ~180 mục kéo dài rất lâu ⇒ phiên đóng, máy ngủ
@@ -1132,7 +1215,21 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
         return 1
 
     du, thieu, rut, luu_y = [], [], [], []
+    chi_muc = _chi_muc_khoa(muc) if nguon_pham_vi is not None else None
     for khoa in khoas:
+        if chi_muc is not None:
+            # Vá 03/10/2026: phạm vi quét mang khoá CHUẨN; sổ có thể giữ bản ghi khoá viết hoa hoặc cặp trùng. Dương tính
+            # ở BẤT KỲ biến thể là nhận (in đúng khoá của bản dương tính); một biến thể còn hạn là đủ cho cả định danh.
+            cac = cac_khoa_trong_so(muc, khoa, chi_muc)
+            if not cac:
+                thieu.append((khoa, "chưa xác minh lần nào"))
+                continue
+            duong = [k for k in cac if muc[k].get("da_rut")]
+            if duong:
+                rut.append((duong[0], muc[duong[0]].get("ghi_chu_rut", "")))
+                continue
+            con_han = [k for k in cac if con_hieu_luc(muc[k])[0]]
+            khoa = (con_han or cac)[0]
         bg = muc.get(khoa)
         if not bg:
             thieu.append((khoa, "chưa xác minh lần nào"))
@@ -1315,8 +1412,9 @@ def quet_ledger_hub(vong: int = 1) -> None:
             if not (bg and bg.get("ghi_chu_rut") and (bg.get("kiem_rut_luc") or "") > han):
                 can_pmid.append(str(pm))
         elif doi:
-            bg = muc.get(f"doi:{doi}")
-            if not (bg and bg.get("ghi_chu_rut") and (bg.get("kiem_rut_luc") or "") > han):
+            # Vá 03/10/2026: hub ghi DOI chữ thường, sổ có thể giữ khoá viết hoa ⇒ xét MỌI biến thể.
+            if not any(muc[k].get("ghi_chu_rut") and (muc[k].get("kiem_rut_luc") or "") > han
+                       for k in cac_khoa_trong_so(muc, f"doi:{doi}")):
                 can_doi.append(doi)
     can_pmid, can_doi = sorted(set(can_pmid)), sorted(set(can_doi))
     print(f"HUB: cần kiểm {len(can_pmid)} PMID + {len(can_doi)} DOI (chưa có phán quyết còn hạn)")
@@ -1361,24 +1459,26 @@ def quet_ledger_hub(vong: int = 1) -> None:
             for d, v in (kq or {}).items():
                 tt = (v or {}).get("status", "")
                 if tt == "ok" or tt in ("retracted", "expression_of_concern"):
-                    k = f"doi:{d.lower()}"
-                    bg = muc.setdefault(k, {"loai": "doi", "gia_tri": d,
-                                            "cac_dashboard": ["(hub-only)"]})
-                    bg["ghi_chu_rut"] = tt
-                    bg["kiem_rut_luc"] = bay_gio
-                    bg["nguon_xac_minh"] = "crossref"
-                    if tt != "ok":
-                        bg["da_rut"] = True
-                        if v.get("retract_and_replace"):
-                            bg["rut_va_thay"] = True
-                        if tt == "retracted":
-                            _gan_dau_hieu_thong_bao(bg, v)
-                    ghi += 1
+                    for k in (cac_khoa_trong_so(muc, f"doi:{d}") or [chuan_hoa_khoa(f"doi:{d}")]):
+                        bg = muc.setdefault(k, {"loai": "doi", "gia_tri": d,
+                                                "cac_dashboard": ["(hub-only)"]})
+                        if tt == "ok" and bg.get("da_rut"):
+                            continue  # luật bất đối xứng: «ok» không ghi đè dương tính cũ
+                        bg["ghi_chu_rut"] = tt
+                        bg["kiem_rut_luc"] = bay_gio
+                        bg["nguon_xac_minh"] = "crossref"
+                        if tt != "ok":
+                            bg["da_rut"] = True
+                            if v.get("retract_and_replace"):
+                                bg["rut_va_thay"] = True
+                            if tt == "retracted":
+                                _gan_dau_hieu_thong_bao(bg, v)
+                        ghi += 1
         # các mục đã ghi thành công sẽ bị lọc ở vòng kế nhờ điều kiện còn-hạn
         can_pmid = [p for p in can_pmid
                     if not ((muc.get(f"pmid:{p}") or {}).get("kiem_rut_luc") or "") > han]
         can_doi = [d for d in can_doi
-                   if not ((muc.get(f"doi:{d}") or {}).get("kiem_rut_luc") or "") > han]
+                   if not any((muc[k].get("kiem_rut_luc") or "") > han for k in cac_khoa_trong_so(muc, f"doi:{d}"))]
     ghi_so(so)
     print(f"✓ ghi {ghi} phán quyết vào sổ · còn KHÔNG BIẾT: {len(can_pmid)} PMID + {len(can_doi)} DOI")
 
@@ -1430,7 +1530,7 @@ def _chay_lenh(a) -> int:
                if not bg.get("da_rut") and not con_hieu_luc(bg)[0]
                and bg.get("loai") in ("pmid", "doi")]
         print(f"Phủ mồ côi: {len(can)} bản ghi không dashboard nào kéo vào --quet.")
-        thanh, hong = 0, []
+        thanh = 0
         for v in range(1, max(1, a.vong) + 1):
             if not can:
                 break
