@@ -7198,6 +7198,73 @@ def bh115_ban_doc_noi_cung_cong_ve_so_ky_rut_bai():
     return True, ""
 
 
+def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
+    """04/10 — ngưỡng «mù» của `kiem_san_luong_giam_sat.py` tính TỔNG 4 tầng nên tầng «mới vào PubMed» (không lọc thiết kế) che
+    chủ đề có ba tầng thứ bậc gần như trống: đo 04/10 10 chủ đề không mù có 0 tổng quan và guideline+SR+RCT ≤ 1/90 ngày (statin,
+    CKD, COPD…) mà không cảm biến nào báo. Vá: tín hiệu 🟠 `thu_bac_trong` (tính từ tầng nên tệp cũ in đúng), KHÔNG đổi mã thoát;
+    `chu_trinh_chung_cu` đọc khoá JSON và nêu thành việc (không đọc khi cảm biến không đo được). Kiểm HÀNH VI ngoại tuyến."""
+    import contextlib as _cl
+    import io as _io
+    import json as _js
+    import tempfile as _tf
+    from unittest import mock as _mk
+    sl = _nap(REPO / "tools/kiem_san_luong_giam_sat.py", "_bh157_sl")
+
+    def ch(ten, q):
+        return {"topic": ten, "active": True, "queries": [
+            {"tang": t, "query": f"{q} {t}", "datetype": "edat" if t == "moi_vao_pubmed" else "pdat",
+             "loc_thiet_ke": t != "moi_vao_pubmed"} for t in ("guideline", "sr_ma", "rct", "moi_vao_pubmed")]}
+    dem = {"hep": {"guideline": 1, "sr_ma": 0, "rct": 0, "moi_vao_pubmed": 46},
+           "mu": {"guideline": 0, "sr_ma": 0, "rct": 0, "moi_vao_pubmed": 2},
+           "khoe": {"guideline": 3, "sr_ma": 17, "rct": 1, "moi_vao_pubmed": 108}}
+
+    def fetch(term, _dt, _d):
+        q, t = term.split("(", 1)[1].split(")", 1)[0].split()
+        return dem[q][t]
+    b = sl.kiem({"topics": [ch("CKD", "hep"), ch("Mù", "mu"), ch("Khoẻ", "khoe")]}, fetch, "DESIGN")
+    if b.get("thu_bac_trong") != ["CKD"]:
+        return False, f"chủ đề 0 tổng quan + thứ bậc ≤ 1 KHÔNG được báo (thu_bac_trong={b.get('thu_bac_trong')!r}) — tầng mới-vào-PubMed lại che"
+    if "Mù" in b["thu_bac_trong"] or "Khoẻ" in b["thu_bac_trong"]:
+        return False, "chủ đề mù/khoẻ bị gắn nhầm «tầng thứ bậc trống»"
+    chi_hep = sl.kiem({"topics": [ch("CKD", "hep")]}, fetch, "DESIGN")
+    if sl.ma_thoat(chi_hep) != 0:
+        return False, "tín hiệu 🟠 đổi mã thoát — chu_trinh_chung_cu đọc mã 1 là «có chủ đề mù», sẽ báo sai"
+    out = _io.StringIO()
+    with _cl.redirect_stdout(out):
+        sl.in_bao_cao({k: v for k, v in b.items() if k != "thu_bac_trong"})
+    if "TẦNG THỨ BẬC TRỐNG" not in out.getvalue():
+        return False, "tệp --json cũ (không có khoá thu_bac_trong) in lại mất tín hiệu 🟠"
+    c = _nap(REPO / "tools/chu_trinh_chung_cu.py", "_bh157_ct")
+
+    class _P:
+        def __init__(self, rc):
+            self.returncode, self.stdout, self.stderr = rc, "", ""
+
+    def chay(rc):
+        with _tf.TemporaryDirectory() as td:
+            goc = Path(td)
+            (goc / "EBM-Dashboards").mkdir()
+            (goc / "EBM-Dashboards" / "watchlist.json").write_text("{}", encoding="utf-8")
+            (goc / "state").mkdir()
+            (goc / "state" / "san-luong-giam-sat-gan-nhat.json").write_text(_js.dumps({"thu_bac_trong": ["CKD"]}),
+                                                                            encoding="utf-8")
+
+            def goi(cmd, **_kw):
+                x = [str(v) for v in cmd]
+                return _P(rc if len(x) > 1 and "kiem_san_luong_giam_sat.py" in x[1] else 0)
+            o = _io.StringIO()
+            with _mk.patch.object(sys, "argv", ["chu_trinh_chung_cu.py"]), _mk.patch.object(c.subprocess, "run", side_effect=goi), \
+                    _mk.patch.object(c, "_co_dashboard_that", return_value=True), _mk.patch.object(c, "REPO", goc), \
+                    _cl.redirect_stdout(o):
+                c.main()
+            return o.getvalue()
+    if "TẦNG THỨ BẬC TRỐNG" not in chay(0):
+        return False, "chu trình đầy đủ KHÔNG nêu việc 🟠 khi cảm biến ghi thu_bac_trong — tín hiệu có mà không ai thấy (họ BH41)"
+    if "TẦNG THỨ BẬC TRỐNG" in chay(2):
+        return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
+    return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+
+
 def bh156_cap_pmid_doi_cung_mot_bai():
     """04/10 — cặp PMID–DOI của CÙNG một mục trỏ HAI bài khác nhau mà cổng không thấy: `--online` xác minh TỪNG định danh tồn
     tại nên cả hai đều «✓». Đo 04/10 trên 72 dashboard: 10/1164 cặp lệch (3 mục `apply`); 5 mục mang DOI của một bài nằm trong
@@ -10299,6 +10366,7 @@ BAI_HOC = [
     ("BH154", "03/10", "Hòm việc một cửa lúc mở phiên (≤ 12 dòng, việc bác sĩ trước); PR chờ gộp được đếm (gh lỗi ⇒ ⚪); quyết định thẻ tuần ghi đúng lời bác sĩ, không đoán", bh154_hom_viec_mot_cua_pr_va_quyet_dinh_the_tuan),
     ("BH155", "03/10", "Chốt bí mật trước commit không mù: tên tệp tiếng Việt, tiền tố diff của người dùng, dòng «++ », \\r giữa dòng — khối khoá vẫn bị chặn", bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git),
     ("BH156", "04/10", "Cặp PMID–DOI của cùng một mục phải trỏ CÙNG một bài (strict chặn lệch; PubMed thiếu DOI ⇒ «chưa so được», không xanh); bộ rút XML lấy DOI chính bài, không lấy DOI trong danh mục tham khảo", bh156_cap_pmid_doi_cung_mot_bai),
+    ("BH157", "04/10", "Tầng thứ bậc trống (0 tổng quan, guideline+SR+RCT ≤ 1/90 ngày) không bị tầng «mới vào PubMed» che: 🟠 thu_bac_trong, không đổi mã thoát, chu trình nêu việc", bh157_tang_thu_bac_trong_khong_bi_tang_moi_che),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
