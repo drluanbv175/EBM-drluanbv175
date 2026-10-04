@@ -8,9 +8,12 @@ tải trong phiên làm việc đó luôn», chọn LƯU «HTML thân bài + PDF
 
 GIỚI HẠN — không mở rộng được bằng cờ:
   • Phiên chỉ mở bằng LỜI BÁC SĨ trong chat, cho TỪNG phiên (`--mo "<nguyên văn>"`). Agent KHÔNG suy uỷ quyền từ việc bác sĩ đã
-    đăng nhập và KHÔNG tự mở phiên. Quyền tải là của phiên đó; hết ngày phiên tự đóng, phiên sau phải có lời mới.
+    đăng nhập và KHÔNG tự mở phiên. Quyền tải là của phiên đó; hết ngày phiên tự đóng, phiên sau phải có lời mới — NGOẠI LỆ
+    bác sĩ quyết 04/10/2026: lời uỷ quyền THƯỜNG TRỰC «… và cho tất cả các vấn đề tương tự khác không hỏi lại tôi nữa»
+    (doctrine `_CONNECTOR-CHUNG-CU.md` §2septies mục 8) được dùng làm lời mở phiên, vẫn ghi nguyên văn kèm ngày nói.
   • Uỷ quyền đọc ngày 03/10 (`dieu-khoan-bac-si-uy-quyen.json`) ghi phạm vi «tóm tắt… KHÔNG lưu toàn văn». Lưu bản sao là phạm vi
-    RỘNG HƠN ⇒ cần lời phiên này; và CHỈ áp cho NXB đã có uỷ quyền đọc còn hiệu lực. NXB chưa kiểm điều khoản ⇒ không lưu.
+    RỘNG HƠN ⇒ cần lời phiên này; và CHỈ áp cho NXB đã có uỷ quyền đọc còn hiệu lực — tính LÚC KIỂM từng bài, nên uỷ quyền
+    thêm/rút giữa phiên có hiệu lực ngay. NXB chưa kiểm điều khoản ⇒ không lưu.
     Cơ sở dữ liệu (DynaMed/EBSCO, Scopus, Web of Science) KHÔNG BAO GIỜ thuộc phiên — điều khoản cấm dùng nội dung với AI.
   • Điều khoản nhà xuất bản KHÔNG đổi: tài khoản cá nhân cho phép đọc cá nhân; tải nhiều tự động có thể bị NXB khoá tài khoản.
     Trách nhiệm điều khoản thuộc bác sĩ. Vì vậy có TRẦN mỗi miền (TRAN_MOI_MIEN bài/phiên) và NHỊP (≥ NGHI_TOI_THIEU_GIAY giây
@@ -171,7 +174,10 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
         return 3, "PMID sai dạng"
     dtv = dtv or _nap_dtv()
     ten, _dk = dtv.nxb_cua(doi=doi, url=url)
-    if not ten or ten not in d["nxb"]:
+    # Phạm vi tính LÚC KIỂM, không chỉ theo ảnh chụp lúc mở: NXB có uỷ quyền đọc CÒN HIỆU LỰC ngay bây giờ. Bác sĩ uỷ quyền thêm
+    # NXB khi phiên đang mở (04/10: «J Rheumatol uỷ quyền») thì áp ngay; rút uỷ quyền (xoá mục/het_han) thì dừng ngay.
+    # `d["nxb"]` chỉ còn là ảnh chụp lúc mở để đối chiếu. KHONG_BAO_GIO đã bị loại sẵn trong nxb_duoc_luu.
+    if not ten or ten not in nxb_duoc_luu(dtv, bay_gio.date()):
         return 3, f"NXB của bài ({ten or 'chưa kiểm điều khoản'}) KHÔNG thuộc phạm vi phiên — đọc theo làn thường, không lưu"
     mien = _mien(url)
     if not mien:
@@ -303,7 +309,9 @@ def main(argv: list[str] | None = None) -> int:
             print("Không có phiên uỷ quyền đang mở hôm nay.")
             return 0
         so_bai = len({x["pmid"] for x in d["lich_su"]})
-        print(f"Phiên {d['ma']} mở {d['mo_luc']} — {len(d['nxb'])} NXB, {so_bai} bài, {len(d['lich_su'])} tệp. Lời bác sĩ: "
+        hien_hanh = nxb_duoc_luu(_nap_dtv())
+        print(f"Phiên {d['ma']} mở {d['mo_luc']} — {len(d['nxb'])} NXB lúc mở · {len(hien_hanh)} NXB hiện hành, {so_bai} bài, "
+              f"{len(d['lich_su'])} tệp. Lời bác sĩ: "
               f"«{d['can_cu'][:160]}»")
         return 0
     print(("✓ " if ma == 0 else "✗ ") + tb)

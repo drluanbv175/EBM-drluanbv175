@@ -7263,6 +7263,55 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh159_pham_vi_phien_tinh_luc_kiem():
+    """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
+    hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
+    uỷ quyền đọc CÒN HIỆU LỰC lúc kiểm; J Rheumatol vào DIEU_KHOAN_NXB («cam», 10.3899/); bộ so doctrine đòi ĐỦ tên NXB (trước
+    chỉ xét chữ đầu — «The Journal of Rheumatology» khớp giả khi chữ «The» có ở chỗ khác trong mục). Kiểm HÀNH VI ngoại tuyến (bộ điều khoản giả)."""
+    import tempfile as _tf
+    import types as _ty
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    pu = _nap(REPO / "tools/phien_uy_quyen_chrome.py", "_bh159_pu")
+    bang = {"Elsevier": {"ket_luan": "cam", "doi": ("10.1016/",), "mien": ("sciencedirect.com",)},
+            "WK": {"ket_luan": "cam", "doi": ("10.1161/",), "mien": ("ahajournals.org",)}}
+    uq = {"Elsevier"}
+
+    def nxb_cua(doi="", url="", tieu_de=""):
+        h = pu._mien(url)
+        for ten, d in bang.items():
+            if any(h == m or h.endswith("." + m) for m in d["mien"]):
+                return ten, d
+        return None, None
+    dtv = _ty.SimpleNamespace(DIEU_KHOAN_NXB=bang, nxb_cua=nxb_cua,
+                              uy_quyen_bac_si=lambda ten, hom_nay=None: {"nxb": ten} if ten in uq else None)
+    t0 = _dt(2026, 10, 4, 9, 0, tzinfo=_tz(_td(hours=7)))
+    aha = "https://www.ahajournals.org/doi/10.1161/STR.0000000000000375"
+    els = "https://www.sciencedirect.com/science/article/pii/S0741521421008934"
+    with _tf.TemporaryDirectory() as td:
+        so = Path(td) / "phien.json"
+        if pu.mo("uỷ quyền phiên: đọc và lưu toàn văn các bài hôm nay", bay_gio=t0, tep=so, dtv=dtv)[0] != 0:
+            return False, "không mở được phiên bằng lời bác sĩ hợp lệ"
+        if pu.kiem("34024117", aha, bay_gio=t0, tep=so, dtv=dtv)[0] != 3:
+            return False, "NXB CHƯA được uỷ quyền lọt vào phiên lưu"
+        uq.add("WK")
+        if pu.kiem("34024117", aha, bay_gio=t0, tep=so, dtv=dtv)[0] != 0:
+            return False, "uỷ quyền bác sĩ thêm GIỮA phiên không có hiệu lực — phải đợi phiên sau mới lưu được"
+        uq.discard("Elsevier")
+        if pu.kiem("34153348", els, bay_gio=t0, tep=so, dtv=dtv)[0] != 3:
+            return False, "uỷ quyền đã RÚT giữa phiên vẫn được lưu tiếp"
+    dtv_mod = _nap(REPO / "tools/doc_toan_van_co_nguoi.py", "_bh159_dtv")
+    jr = dtv_mod.DIEU_KHOAN_NXB.get("The Journal of Rheumatology") or {}
+    if jr.get("ket_luan") != "cam" or "10.3899/" not in jr.get("doi", ()):
+        return False, "J Rheumatol chưa có mục «cam» (10.3899/) — uỷ quyền 04/10 của bác sĩ không có chỗ bám"
+    van_ban = (REPO / ".claude/agents/_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
+    if dtv_mod.lech_doctrine(van_ban):
+        return False, f"doctrine lệch bảng điều khoản: {dtv_mod.lech_doctrine(van_ban)[0]}"
+    mat_ten = van_ban.replace("**The Journal of Rheumatology**", "**J Rheum**").replace("## 2septies. ", "## 2septies. The ", 1)
+    if not dtv_mod.lech_doctrine(mat_ten):
+        return False, "bộ so doctrine chỉ xét chữ đầu tên NXB — tên bắt đầu bằng «The» khớp giả"
+    return True, "uỷ quyền thêm/rút giữa phiên có hiệu lực ngay · J Rheumatol «cam» (10.3899/) · doctrine so đủ tên NXB"
+
+
 def bh158_phien_uy_quyen_chrome_luu_ban_sao():
     """04/10 — bác sĩ yêu cầu «đăng nhập làn Chrome thì uỷ quyền truy cập toàn văn và tải trong phiên đó luôn» (lưu HTML thân bài + PDF,
     đến khi bác sĩ nói «dừng»). Uỷ quyền đọc 03/10 ghi «KHÔNG lưu toàn văn» ⇒ lưu là phạm vi rộng hơn, phải có LỜI PHIÊN. Canh: phiên chỉ
@@ -10425,6 +10474,7 @@ BAI_HOC = [
     ("BH156", "04/10", "Cặp PMID–DOI của cùng một mục phải trỏ CÙNG một bài (strict chặn lệch; PubMed thiếu DOI ⇒ «chưa so được», không xanh); bộ rút XML lấy DOI chính bài, không lấy DOI trong danh mục tham khảo", bh156_cap_pmid_doi_cung_mot_bai),
     ("BH157", "04/10", "Tầng thứ bậc trống (0 tổng quan, guideline+SR+RCT ≤ 1/90 ngày) không bị tầng «mới vào PubMed» che: 🟠 thu_bac_trong, không đổi mã thoát, chu trình nêu việc", bh157_tang_thu_bac_trong_khong_bi_tang_moi_che),
     ("BH158", "04/10", "Phiên uỷ quyền Chrome lưu bản sao: chỉ mở bằng lời bác sĩ, không bao giờ DynaMed/Scopus/WoS, hết ngày tự đóng, trần/nhịp mỗi miền, chặn giao diện tài khoản/tệp lạ, nhãn KHÔNG phải OA", bh158_phien_uy_quyen_chrome_luu_ban_sao),
+    ("BH159", "04/10", "Phạm vi phiên uỷ quyền Chrome tính LÚC KIỂM (uỷ quyền thêm/rút giữa phiên có hiệu lực ngay); J Rheumatol vào bảng «cam»; doctrine so đủ tên NXB", bh159_pham_vi_phien_tinh_luc_kiem),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

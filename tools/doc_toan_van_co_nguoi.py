@@ -239,6 +239,26 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "nguyên văn) cấm tải bài vào AI tạo sinh/cào để huấn luyện AI ⇒ «không rõ ⇒ xử như cấm»; 10.1161 = AHA, 10.1212 = AAN",
         "ngoai_le": "bài Open Access theo giấy phép CC của bài (vd JAHA)",
         "duong_hop_le": "TDM qua CCC RightFind XML for Mining (Wolters Kluwer Health tham gia); dùng với AI cần WKH cho phép"},
+    "The Journal of Rheumatology": {
+        "ket_luan": "cam", "doi": ("10.3899/",), "mien": ("jrheum.org", "jrheum.com"),
+        "nguon": "https://www.jrheum.com/terms_of_use", "doc_luc": "2026-10-04",
+        "trich": "reproduce, republish, download, post, transmit, distribute, copy, publicly display, or otherwise use any Content",
+        "loai_nguon": "Terms of Use của jrheum.com (cập nhật 08/12/2016; đọc 04/10/2026 bằng tải trang, 9.601 ký tự): cấm sao "
+                      "chép/tải/dùng nội dung dưới mọi hình thức; không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Trang "
+                      "điều khoản của jrheum.org trả 403 cho máy",
+        "duong_hop_le": "xin phép The Journal of Rheumatology Publishing Co. Ltd. (mục Permissions của jrheum.org)"},
+    "Wiley (Wiley Online Library · Cochrane Library)": {
+        "ket_luan": "cam", "doi": ("10.1002/", "10.1111/", "10.1046/", "10.1034/"),
+        "mien": ("onlinelibrary.wiley.com", "wiley.com", "cochranelibrary.com"),
+        "nguon": "https://onlinelibrary.wiley.com/terms-and-conditions", "doc_luc": "2026-10-04",
+        "trich": "Use or enable artificial intelligence technologies and tools to ingest, train, test, analyze, process",
+        "loai_nguon": "Terms of Use của Wiley Online Library (đọc 04/10/2026 bằng Chrome sau khi bác sĩ tự qua Cloudflare): bảo lưu "
+                      "mọi quyền TDM/huấn luyện AI; CẤM dùng công cụ AI phân tích, xử lý, sinh đầu ra từ nội dung — kể cả qua "
+                      "plugin/tiện ích bên thứ ba; cấm công cụ tự động; TDM chỉ theo Thoả thuận TDM của Wiley. Cochrane Library do "
+                      "Wiley xuất bản (điều khoản riêng của cochranelibrary.com chưa đọc). Hindawi (10.1155/) toàn OA CC BY nên KHÔNG "
+                      "chặn theo tiền tố",
+        "ngoai_le": "bài Open Access theo giấy phép CC của bài",
+        "duong_hop_le": "Wiley TDM API theo Thoả thuận TDM (token của bác sĩ, SRC-042) + Wiley Scholar Gateway (kênh AI có giấy phép)"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
@@ -333,9 +353,12 @@ def lech_doctrine(van_ban: str) -> list[str]:
         return ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
     j = van_ban.find("\n## ", i + 5)
     muc = van_ban[i:j if j > 0 else len(van_ban)]
+    # Tên so phần TRƯỚC « (»: chữ đầu một mình quá lỏng — tên mở đầu bằng từ phổ biến («The Journal of Rheumatology») «khớp»
+    # chỉ cần chữ «The» có ở chỗ khác trong mục (04/10/2026).
     lech = [f"§2septies không nêu NXB «cấm» {ten} kèm tiền tố DOI {d['doi']}"
             for ten, d in DIEU_KHOAN_NXB.items()
-            if d.get("ket_luan") == "cam" and (ten.split()[0] not in muc or any(f"`{t}`" not in muc for t in d["doi"]))]
+            if d.get("ket_luan") == "cam"
+            and (ten.split(" (")[0].strip() not in muc or any(f"`{t}`" not in muc for t in d["doi"]))]
     if "tools/doc_toan_van_co_nguoi.py" not in muc:
         lech.append("§2septies không trỏ công cụ tools/doc_toan_van_co_nguoi.py")
     if "8. **ĐIỀU KHOẢN NXB TRƯỚC TOÀN VĂN.**" not in van_ban:
