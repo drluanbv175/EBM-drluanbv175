@@ -7263,6 +7263,63 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh158_phien_uy_quyen_chrome_luu_ban_sao():
+    """04/10 — bác sĩ yêu cầu «đăng nhập làn Chrome thì uỷ quyền truy cập toàn văn và tải trong phiên đó luôn» (lưu HTML thân bài + PDF,
+    đến khi bác sĩ nói «dừng»). Uỷ quyền đọc 03/10 ghi «KHÔNG lưu toàn văn» ⇒ lưu là phạm vi rộng hơn, phải có LỜI PHIÊN. Canh: phiên chỉ
+    mở bằng lời bác sĩ (≥ 20 ký tự); chỉ NXB có uỷ quyền đọc, KHÔNG BAO GIỜ DynaMed/Scopus/WoS; hết ngày tự đóng; trần/nhịp mỗi miền;
+    tệp HTML phải mang dấu phiên đúng và không có giao diện tài khoản; không ghi đè; kho và bộ đọc sâu gắn nhãn «KHÔNG phải OA».
+    Kiểm HÀNH VI ngoại tuyến (bộ điều khoản giả, thư mục tạm)."""
+    import tempfile as _tf
+    import types as _ty
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    pu = _nap(REPO / "tools/phien_uy_quyen_chrome.py", "_bh158_pu")
+    bang = {"Elsevier": {"ket_luan": "cam", "doi": ("10.1016/",), "mien": ("sciencedirect.com",)},
+            "EBSCO (DynaMed)": {"ket_luan": "cam", "doi": (), "mien": ("dynamed.com",)}}
+
+    def nxb_cua(doi="", url="", tieu_de=""):
+        h = pu._mien(url)
+        for ten, d in bang.items():
+            if any(h == m or h.endswith("." + m) for m in d["mien"]):
+                return ten, d
+        return None, None
+    dtv = _ty.SimpleNamespace(DIEU_KHOAN_NXB=bang, nxb_cua=nxb_cua, uy_quyen_bac_si=lambda ten, hom_nay=None: {"nxb": ten})
+    t0 = _dt(2026, 10, 4, 9, 0, tzinfo=_tz(_td(hours=7)))
+    url = "https://www.sciencedirect.com/science/article/pii/S0741521421008934"
+    with _tf.TemporaryDirectory() as td:
+        so, kho = Path(td) / "phien.json", Path(td) / "kho"
+        if pu.mo("ok", bay_gio=t0, tep=so, dtv=dtv)[0] != 3:
+            return False, "phiên mở được bằng lời quá ngắn — agent có thể tự mở phiên thay bác sĩ"
+        if pu.mo("uỷ quyền phiên: đọc và lưu toàn văn các bài hôm nay", bay_gio=t0, tep=so, dtv=dtv)[0] != 0:
+            return False, "không mở được phiên bằng lời bác sĩ hợp lệ"
+        if pu.doc_phien(so)["nxb"] != ["Elsevier"]:
+            return False, "phiên chứa cơ sở dữ liệu DynaMed/Scopus/WoS — điều khoản cấm dùng với AI dù có uỷ quyền khác"
+        if pu.kiem("1", "https://www.dynamed.com/x", bay_gio=t0, tep=so, dtv=dtv)[0] != 3:
+            return False, "trang DynaMed lọt vào phiên lưu"
+        if pu.phien_mo(t0 + _td(days=1), so) is not None:
+            return False, "phiên KHÔNG hết hạn khi sang ngày — một lần nói thành uỷ quyền vĩnh viễn"
+        ma = pu.doc_phien(so)["ma"]
+        bai = Path(td) / "a.html"
+        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{'x' * 6000}<a>Sign out</a></article>",
+                       encoding="utf-8")
+        if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 3:
+            return False, "HTML có giao diện tài khoản (Sign out) vẫn được lưu — lộ thông tin tài khoản bác sĩ"
+        bai.write_text(f"<!-- ebm-phien:SAI pmid:34153348 url:{url} -->\n<article>{'x' * 6000}</article>", encoding="utf-8")
+        if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 3:
+            return False, "HTML không mang dấu phiên đúng vẫn được nhận — tệp lạ lọt vào kho"
+        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{'x' * 6000}</article>", encoding="utf-8")
+        if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 0 or not (kho / "PMID-34153348_CHR.html").exists():
+            return False, "tệp hợp lệ trong phiên không vào kho PMID-<n>_CHR.html"
+        bai2 = Path(td) / "b.html"
+        bai2.write_text(f"<!-- ebm-phien:{ma} pmid:35598721 url:{url} -->\n<article>{'y' * 6000}</article>", encoding="utf-8")
+        if pu.nhan("35598721", bai2, url, bay_gio=t0 + _td(seconds=10), so=so, kho=kho, dtv=dtv)[0] != 3:
+            return False, "hai bài cùng miền cách 10 giây vẫn lưu — mất nhịp người đọc, dễ bị NXB khoá tài khoản"
+    dtv_mod = _nap(REPO / "tools/doc_toan_van_co_nguoi.py", "_bh158_dtv")
+    if "phien_chrome" not in dtv_mod.TRANG_THAI_MAY_CO_TOAN_VAN:
+        return False, "kho không tính tệp _CHR là «máy có toàn văn»"
+    ds = _nap(REPO / "tools/doc_sau_toan_van.py", "_bh158_ds")
+    if "KHÔNG phải OA" not in ds.NHAN_NGUON_CHR or "token" in ds.CAU_NGUON_CHR:
+        return False, "bộ đọc sâu gắn nhãn sai cho PDF phiên Chrome (gọi là OA hoặc token TDM)"
+    return True, "phiên cần lời bác sĩ · không CSDL · hết ngày tự đóng · chặn giao diện tài khoản/tệp lạ · nhịp · nhãn KHÔNG phải OA"
 
 
 def bh156_cap_pmid_doi_cung_mot_bai():
@@ -10367,6 +10424,7 @@ BAI_HOC = [
     ("BH155", "03/10", "Chốt bí mật trước commit không mù: tên tệp tiếng Việt, tiền tố diff của người dùng, dòng «++ », \\r giữa dòng — khối khoá vẫn bị chặn", bh155_chot_bi_mat_khong_mu_ten_tep_va_cau_hinh_git),
     ("BH156", "04/10", "Cặp PMID–DOI của cùng một mục phải trỏ CÙNG một bài (strict chặn lệch; PubMed thiếu DOI ⇒ «chưa so được», không xanh); bộ rút XML lấy DOI chính bài, không lấy DOI trong danh mục tham khảo", bh156_cap_pmid_doi_cung_mot_bai),
     ("BH157", "04/10", "Tầng thứ bậc trống (0 tổng quan, guideline+SR+RCT ≤ 1/90 ngày) không bị tầng «mới vào PubMed» che: 🟠 thu_bac_trong, không đổi mã thoát, chu trình nêu việc", bh157_tang_thu_bac_trong_khong_bi_tang_moi_che),
+    ("BH158", "04/10", "Phiên uỷ quyền Chrome lưu bản sao: chỉ mở bằng lời bác sĩ, không bao giờ DynaMed/Scopus/WoS, hết ngày tự đóng, trần/nhịp mỗi miền, chặn giao diện tài khoản/tệp lạ, nhãn KHÔNG phải OA", bh158_phien_uy_quyen_chrome_luu_ban_sao),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
