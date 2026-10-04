@@ -7263,6 +7263,32 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh162_doi_chieu_skill_tai_khoan_nguon_plugin():
+    """04/10 — bác sĩ hỏi «tất cả đã được đồng bộ vào các skill?». `dong_bo_tat_ca.py` làn «Cloud ↔ repo» báo «giống 0 · lệch
+    bản 0 · chỉ repo 25»: bộ lọc `doi_chieu_ba_ben.doi_chieu` chỉ giữ skill có `source == "custom"`, mà manifest thật của bundle
+    tài khoản ghi skill của bác sĩ là «plugin» ⇒ MỌI skill bị loại khỏi phép so. Đo tay: 20/25 skill của bác sĩ trên tài khoản đã
+    cũ (cap-nhat-chung-cu-y-khoa v1.15.0 so với repo v1.53.0). Vá: chỉ loại nguồn Anthropic («anthropic», «anthropic-example»).
+    Kiểm HÀNH VI ngoại tuyến (bundle giả trong thư mục tạm)."""
+    import json as _js
+    import tempfile as _tf
+    dc = _nap(REPO / "tools/doi_chieu_ba_ben.py", "_bh162_dc")
+    with _tf.TemporaryDirectory() as td:
+        cloud, repo = Path(td) / "cloud", Path(td) / "repo"
+        for goc, than in ((cloud, "cũ " * 40), (repo, "cũ " * 40 + "mới " * 20)):
+            (goc / "cap-nhat-chung-cu-y-khoa").mkdir(parents=True)
+            (goc / "cap-nhat-chung-cu-y-khoa" / "SKILL.md").write_text("---\nname: x\n---\n" + than, encoding="utf-8")
+        (cloud / "docx").mkdir()
+        (cloud / "docx" / "SKILL.md").write_text("---\nname: docx\n---\nanthropic", encoding="utf-8")
+        (cloud / "manifest.json").write_text(_js.dumps({"skills": [{"name": "cap-nhat-chung-cu-y-khoa", "source": "plugin"},
+                                                                  {"name": "docx", "source": "anthropic"}]}), encoding="utf-8")
+        kq = dc.doi_chieu(dc.quet_thu_muc(cloud), dc.quet_thu_muc(repo), dc.doc_manifest(cloud), chi_custom=True)
+    if not any(m["ten"] == "cap-nhat-chung-cu-y-khoa" for m in kq["lech_ban"]):
+        return False, "skill nguồn «plugin» của bác sĩ bị loại khỏi phép so — làn báo «0 lệch bản» giả"
+    if any(m["ten"] == "docx" for m in kq["lech_ban"] + kq["giong"]) or "docx" in kq["chi_cloud"]:
+        return False, "skill của Anthropic bị tính vào trách nhiệm đồng bộ của bác sĩ"
+    return True, "đối chiếu skill tài khoản so cả skill nguồn «plugin»; chỉ bỏ nguồn Anthropic"
+
+
 def bh161_he_thong_bao_dam_toan_van():
     """04/10 — bác sĩ hỏi «hệ thống đã BẢO ĐẢM phủ chứng cứ và đọc toàn văn chưa». Đo: cổng chỉ chặn mục apply thẩm định từ tóm
     tắt khi mục TỰ KHAI appraisalCompleteness='partial' ⇒ 27 mục apply (20 PMID) không có toàn văn trong kho vẫn qua cổng; chuỗi
@@ -10605,6 +10631,7 @@ BAI_HOC = [
     ("BH159", "04/10", "Phạm vi phiên uỷ quyền Chrome tính LÚC KIỂM (uỷ quyền thêm/rút giữa phiên có hiệu lực ngay); J Rheumatol vào bảng «cam»; doctrine so đủ tên NXB", bh159_pham_vi_phien_tinh_luc_kiem),
     ("BH160", "04/10", "Tầng 2 Unpaywall: chỉ LƯU TỰ ĐỘNG bản có giấy phép mở; loại trang giới thiệu kho lưu trữ; sổ phủ đếm mọi loại toàn văn", bh160_unpaywall_cong_dieu_khoan_va_noi_dung),
     ("BH161", "04/10", "BẢO ĐẢM đọc toàn văn: cổng chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn); chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
+    ("BH162", "04/10", "Đối chiếu skill tài khoản ↔ repo phải so skill nguồn «plugin» của bác sĩ (bộ lọc «custom» từng che 20 skill cũ)", bh162_doi_chieu_skill_tai_khoan_nguon_plugin),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
