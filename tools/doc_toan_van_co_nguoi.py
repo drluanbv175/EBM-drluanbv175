@@ -247,6 +247,18 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "chép/tải/dùng nội dung dưới mọi hình thức; không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Trang "
                       "điều khoản của jrheum.org trả 403 cho máy",
         "duong_hop_le": "xin phép The Journal of Rheumatology Publishing Co. Ltd. (mục Permissions của jrheum.org)"},
+    "Wiley (Wiley Online Library · Cochrane Library)": {
+        "ket_luan": "cam", "doi": ("10.1002/", "10.1111/", "10.1046/", "10.1034/"),
+        "mien": ("onlinelibrary.wiley.com", "wiley.com", "cochranelibrary.com"),
+        "nguon": "https://onlinelibrary.wiley.com/terms-and-conditions", "doc_luc": "2026-10-04",
+        "trich": "Use or enable artificial intelligence technologies and tools to ingest, train, test, analyze, process",
+        "loai_nguon": "Terms of Use của Wiley Online Library (đọc 04/10/2026 bằng Chrome sau khi bác sĩ tự qua Cloudflare): bảo lưu "
+                      "mọi quyền TDM/huấn luyện AI; CẤM dùng công cụ AI phân tích, xử lý, sinh đầu ra từ nội dung — kể cả qua "
+                      "plugin/tiện ích bên thứ ba; cấm công cụ tự động; TDM chỉ theo Thoả thuận TDM của Wiley. Cochrane Library do "
+                      "Wiley xuất bản (điều khoản riêng của cochranelibrary.com chưa đọc). Hindawi (10.1155/) toàn OA CC BY nên KHÔNG "
+                      "chặn theo tiền tố",
+        "ngoai_le": "bài Open Access theo giấy phép CC của bài",
+        "duong_hop_le": "Wiley TDM API theo Thoả thuận TDM (token của bác sĩ, SRC-042) + Wiley Scholar Gateway (kênh AI có giấy phép)"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")

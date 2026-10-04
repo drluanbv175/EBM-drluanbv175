@@ -8,7 +8,9 @@ tải trong phiên làm việc đó luôn», chọn LƯU «HTML thân bài + PDF
 
 GIỚI HẠN — không mở rộng được bằng cờ:
   • Phiên chỉ mở bằng LỜI BÁC SĨ trong chat, cho TỪNG phiên (`--mo "<nguyên văn>"`). Agent KHÔNG suy uỷ quyền từ việc bác sĩ đã
-    đăng nhập và KHÔNG tự mở phiên. Quyền tải là của phiên đó; hết ngày phiên tự đóng, phiên sau phải có lời mới.
+    đăng nhập và KHÔNG tự mở phiên. Quyền tải là của phiên đó; hết ngày phiên tự đóng, phiên sau phải có lời mới — NGOẠI LỆ
+    bác sĩ quyết 04/10/2026: lời uỷ quyền THƯỜNG TRỰC «… và cho tất cả các vấn đề tương tự khác không hỏi lại tôi nữa»
+    (doctrine `_CONNECTOR-CHUNG-CU.md` §2septies mục 8) được dùng làm lời mở phiên, vẫn ghi nguyên văn kèm ngày nói.
   • Uỷ quyền đọc ngày 03/10 (`dieu-khoan-bac-si-uy-quyen.json`) ghi phạm vi «tóm tắt… KHÔNG lưu toàn văn». Lưu bản sao là phạm vi
     RỘNG HƠN ⇒ cần lời phiên này; và CHỈ áp cho NXB đã có uỷ quyền đọc còn hiệu lực — tính LÚC KIỂM từng bài, nên uỷ quyền
     thêm/rút giữa phiên có hiệu lực ngay. NXB chưa kiểm điều khoản ⇒ không lưu.

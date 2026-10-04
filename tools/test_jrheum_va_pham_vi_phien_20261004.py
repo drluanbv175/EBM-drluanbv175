@@ -129,3 +129,30 @@ def test_doctrine_phai_neu_du_ten_khong_chi_chu_dau() -> None:
     assert any(JRHEUM in x for x in DTV.lech_doctrine(mat_ten))
     mat_doi = van_ban.replace("`10.3899/`", "10.3899")
     assert any(JRHEUM in x for x in DTV.lech_doctrine(mat_doi))
+
+
+WILEY = "Wiley (Wiley Online Library · Cochrane Library)"
+
+
+def test_wiley_co_muc_cam_nhan_dung_doi_mien_va_khong_chan_hindawi() -> None:
+    muc = DTV.DIEU_KHOAN_NXB[WILEY]
+    assert muc["ket_luan"] == "cam" and len(muc["trich"].split()) <= 15 and muc["doc_luc"] == "2026-10-04"
+    assert DTV.nxb_cua(doi="10.1002/ajh.70118")[0] == WILEY
+    assert DTV.nxb_cua(doi="10.1111/j.1365-2265.2008.03340.x")[0] == WILEY
+    assert DTV.nxb_cua(doi="10.1002/14651858.CD008322.pub2")[0] == WILEY          # Cochrane
+    assert DTV.nxb_cua(url="https://onlinelibrary.wiley.com/doi/10.1002/art.27584")[0] == WILEY
+    assert DTV.nxb_cua(url="https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD008616.pub2/full")[0] == WILEY
+    assert DTV.nxb_cua(doi="10.1155/2013/586497")[0] != WILEY                     # Hindawi toàn OA CC BY
+    # guideline ESC đăng trên EJHF (Wiley) vẫn mang khoá ESC — bảng xét tiêu đề ESC trước tiền tố DOI
+    esc = DTV.nxb_cua(doi="10.1002/ejhf.2333", tieu_de="2021 ESC Guidelines for the diagnosis and treatment of heart failure")
+    assert esc[0] == "ESC (European Society of Cardiology)"
+
+
+def test_doctrine_ghi_uy_quyen_thuong_truc_nguyen_van_va_gioi_han() -> None:
+    van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
+    i = van_ban.index("## 2septies. ")
+    muc = van_ban[i:van_ban.index("\n## ", i + 5)]
+    assert "**Uỷ quyền THƯỜNG TRỰC (04/10/2026)**" in muc
+    assert "cho tất cả các vấn đề tương tự khác không hỏi lại tôi nữa" in muc
+    assert "KHÔNG áp cho DynaMed/EBSCO, Scopus, Web of Science" in muc and "không gõ tài khoản/mật khẩu" in muc
+    assert DTV.lech_doctrine(van_ban) == []

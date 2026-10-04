@@ -32,3 +32,15 @@ xét đủ phần tên trước « (».
 - `tools/test_jrheum_va_pham_vi_phien_20261004.py`: 7 test, cùng 175 test liên quan xanh.
 - Đột biến 3/3 đỏ đúng chỗ: phạm vi về ảnh chụp, bỏ mục J Rheumatol, bộ so về chữ đầu.
 - BH159 kiểm hành vi ngoại tuyến.
+
+**Bổ sung cùng ngày — Wiley và uỷ quyền thường trực.**
+- Nguyên văn bác sĩ: «uỷ quyền riêng cho Wiley như đã làm với J Rheumatol và cho tất cả các vấn đề tương tự khác không hỏi lại
+  tôi nữa».
+- Điều khoản Wiley Online Library (đọc 04/10 trong Chrome) cấm dùng công cụ AI phân tích, xử lý nội dung, kể cả qua tiện ích trình
+  duyệt; TDM chỉ theo Thoả thuận TDM. Đã thêm mục «cam» (DOI 10.1002/, 10.1111/, 10.1046/, 10.1034/; miền onlinelibrary.wiley.com,
+  cochranelibrary.com). Hindawi (10.1155/) toàn OA nên không chặn theo tiền tố. Guideline ESC trên EJHF vẫn mang khoá ESC.
+- Uỷ quyền thường trực được dạy ở doctrine §2septies mục 8 và CLAUDE.md §6.4: NXB mới có điều khoản cấm/không rõ ⇒ Claude đọc trang
+  điều khoản, thêm mục bảng bằng PR, ghi `--ghi-uy-quyen` trích câu trên — không hỏi lại; phiên lưu bản sao mở bằng câu đó.
+  Không áp cho DynaMed/Scopus/WoS; bất biến không đổi (không bấm xác minh chống bot, không gõ tài khoản/mật khẩu).
+- Kiểm thêm: 2 test (Wiley nhận đúng DOI/miền, không chặn Hindawi, ESC trên Wiley giữ khoá ESC; doctrine ghi đúng nguyên văn và
+  giới hạn); 260 test liên quan xanh; bộ chốt bài học không tái phát.
