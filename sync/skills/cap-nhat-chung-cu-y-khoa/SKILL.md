@@ -497,8 +497,15 @@ Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đả
 
 **(a) Cổng kiểm liêm chính — `tools/verify_dashboard.py`** (chạy TRƯỚC khi giao):
 `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
-Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
+Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · **mục ghi CẢ `pmid` lẫn `doi` thì hai định danh phải trỏ CÙNG một bài** (DOI mà PubMed ghi cho PMID = DOI của mục; lệch ⇒ `--strict-sources` chặn) · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
 Cờ **opt-in `--check-topic`** (thêm sau `--online`): gọi LLM chấm mỗi item có LẠC CHỦ ĐỀ/chuyên khoa của dashboard không (`tools/check_topic_relevance.py` — lấp khoảng trống cổng kỹ thuật không bắt được item lạc chủ đề, vd bài sản/nhi lọt vào dashboard Tim mạch). Chỉ CẢNH BÁO, không chặn cứng; thiếu `ANTHROPIC_API_KEY` → bỏ qua êm.
+
+🔴 **CẶP PMID–DOI PHẢI CÙNG MỘT BÀI (thêm 04/10/2026).** Đo 04/10: 10/1164 cặp trong kho trỏ HAI bài khác nhau (3 mục
+`apply`) — phần lớn là DOI của một bài nằm trong DANH MỤC THAM KHẢO của chính bài mang PMID (bộ rút XML duyệt `.//ArticleId`).
+Khi ghi định danh cho mục: lấy DOI từ CHÍNH bản ghi PubMed của PMID (esummary `articleids`, hoặc `convert_article_ids`/Europe
+PMC) — KHÔNG chép DOI từ danh mục tham khảo, KHÔNG đoán. Hai bản đồng xuất bản (cùng guideline ở hai tạp chí) có HAI cặp
+PMID+DOI riêng: chọn MỘT bản, ghi đủ cặp của bản đó. Cổng báo lệch ⇒ đối chiếu xem số liệu/tiêu đề/references của mục khớp
+bài nào rồi sửa định danh SAI cho khớp; mục `apply` hay đổi `decision` thì vẫn là việc của bác sĩ.
 
 🔴 **CỔNG NAY CHẶN NGUỒN ĐÃ BỊ RÚT (thêm 14/08/2026 — trước đó KHÔNG kiểm).** Cổng vẫn giữ
 nguyên tắc *không tự kết luận* trạng thái rút bài từ một nguồn metadata thiếu thẩm quyền; điều

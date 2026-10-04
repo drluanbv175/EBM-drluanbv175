@@ -180,12 +180,18 @@ class MetadataExtractor:
                 journal = article_elem.find('.//Journal')
                 
                 # Get DOI if available
+                # DOI của CHÍNH bài (sửa 04/10/2026): './/ArticleId' quét cả <ReferenceList> nên bản ghi thiếu DOI ở
+                # ArticleIdList trả DOI của một tài liệu tham khảo. Chỉ đọc ArticleIdList của bài rồi ELocationID hợp lệ.
                 doi = None
-                article_ids = article.findall('.//ArticleId')
-                for article_id in article_ids:
-                    if article_id.get('IdType') == 'doi':
-                        doi = article_id.text
+                for article_id in article.findall('PubmedData/ArticleIdList/ArticleId'):
+                    if article_id.get('IdType') == 'doi' and (article_id.text or '').strip():
+                        doi = article_id.text.strip()
                         break
+                if doi is None:
+                    for el in article_elem.findall('ELocationID'):
+                        if el.get('EIdType') == 'doi' and (el.get('ValidYN') or 'Y').upper() != 'N' and (el.text or '').strip():
+                            doi = el.text.strip()
+                            break
                 
                 metadata = {
                     'type': 'pmid',

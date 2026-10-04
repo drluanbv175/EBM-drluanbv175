@@ -57,6 +57,24 @@ def esearch(query: str, retmax: int) -> list[str]:
     return [e.text for e in root.findall(".//IdList/Id") if e.text]
 
 
+def _doi_cua_chinh_bai(art: ET.Element) -> str:
+    """DOI của CHÍNH bài — tuyệt đối không dùng trục `.//ArticleId`.
+
+    Sửa 04/10/2026: bản cũ duyệt trục hậu duệ `.//ArticleId` và GHI ĐÈ mỗi lần gặp IdType doi, nên với bài PubMed trả
+    kèm `<ReferenceList>` (rất phổ biến) DOI trả ra là DOI của tài liệu tham khảo CUỐI CÙNG, không phải của bài. Cùng lớp
+    lỗi engine đã vá 14/08 (`app/sources/pubmed.py::_own_article_doi`); đo 04/10 trong kho dashboard: 5 mục mang PMID của
+    một bài nhưng DOI của một bài nằm trong danh mục tham khảo của chính nó. Chỉ đọc hai vị trí của chính bài:
+    `PubmedData/ArticleIdList` rồi `MedlineCitation/Article/ELocationID[@EIdType="doi"]` (bỏ mục `ValidYN="N"`);
+    lấy giá trị hợp lệ ĐẦU TIÊN rồi dừng."""
+    for idn in art.findall("PubmedData/ArticleIdList/ArticleId"):
+        if idn.get("IdType") == "doi" and (idn.text or "").strip():
+            return (idn.text or "").strip()
+    for el in art.findall("MedlineCitation/Article/ELocationID"):
+        if el.get("EIdType") == "doi" and (el.get("ValidYN") or "Y").upper() != "N" and (el.text or "").strip():
+            return (el.text or "").strip()
+    return ""
+
+
 def efetch(pmids: list[str]) -> list[dict]:
     if not pmids:
         return []
@@ -69,10 +87,7 @@ def efetch(pmids: list[str]) -> list[dict]:
         journal = art.findtext(".//Journal/Title") or ""
         year = art.findtext(".//JournalIssue/PubDate/Year") or \
             art.findtext(".//JournalIssue/PubDate/MedlineDate") or ""
-        doi = ""
-        for idn in art.findall(".//ArticleId"):
-            if idn.get("IdType") == "doi":
-                doi = (idn.text or "").strip()
+        doi = _doi_cua_chinh_bai(art)
         ptypes = [pt.text for pt in art.findall(".//PublicationType") if pt.text]
         out.append({"pmid": pmid, "title": title, "journal": journal,
                     "year": year, "doi": doi, "types": ptypes})
