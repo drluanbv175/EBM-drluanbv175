@@ -1226,7 +1226,13 @@ phân nhóm phải nêu định-trước + kiểm tương tác · ghi cả hiệ
 
 **Toàn văn (LÔ D):** item sắp `apply` phải thẩm định TOÀN VĂN hợp pháp (PMC OA · Europe PMC ·
 bản công khai của tổ chức · quyền của bác sĩ [CẦN XÁC NHẬN TẠI ĐƠN VỊ]); chỉ có abstract →
-khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`.
+khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`. BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026, BH161):
+cổng ĐO kho `EBM-Dashboards/toan_van_oa/` — mục `apply` mà PMID chính CHƯA được đọc toàn văn (máy, làn trình duyệt, hoặc
+bác sĩ ghi `doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu …`) bị CHẶN; tự khai `full` KHÔNG thay bằng chứng.
+Chỉ 27 mục tồn có trong sổ nợ (`no-toan-van-apply.json`, hạn 03/11/2026) được cảnh báo thay vì chặn — mục MỚI không bao giờ
+vào sổ. Xem nợ + cách trả: `python3 tools/so_toan_van.py`. Chuỗi máy
+`ops/orchestrator.py --topic` chạy bước «TV» (`tools/toan_van_theo_chu_de.py`): gom bản hợp lệ → đọc sâu → phiếu làn trình
+duyệt cho bài còn thiếu — ĐỌC phiếu đó trước khi thẩm định ứng viên.
 
 **Tuyên bố độ phủ (LÔ I):** mỗi gói phát hành dán khối từ `python3 tools/tuyen_bo_do_phu.py`.
 

@@ -783,6 +783,118 @@ def strict_source_checks(data_block, items, *, today=None):
     return errors, warns, oks
 
 
+# BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026 — bác sĩ: «Hãy xây dựng đảm bảo việc đọc toàn văn cho tôi»). Luật «appraisalCompleteness»
+# ở strict_source_checks chỉ chặn khi mục TỰ KHAI 'partial' — đo 04/10: 27 mục apply (20 PMID) không có toàn văn trong kho vẫn
+# qua cổng vì không khai (hệ thống DẶN nhưng không KIỂM). Nay cổng ĐO thẳng kho `toan_van_oa/` cạnh dashboard, cùng định nghĩa
+# với `tools/doc_toan_van_co_nguoi.bao_phu_cuc_bo`: ĐÃ ĐỌC = toàn văn máy đọc (XML JATS · `_UPW` thật — loại trang giới thiệu kho
+# lưu trữ · `_WTDM` · `_CHR`) · hồ sơ làn trình duyệt `trinh_duyet/PMID-<n>.json` · «bác sĩ đã đọc trực tiếp»
+# (`trinh_duyet/bac-si-da-doc.jsonl`). BÁNH CÓC: mục apply CHƯA ĐỌC ⇒ LỖI (chặn); riêng mục có trong SỔ NỢ
+# (`no-toan-van-apply.json` cạnh dashboard, lập một lần bằng tools/so_toan_van.py với nguyên văn lời bác sĩ) ⇒ cảnh báo tới «han»,
+# quá hạn ⇒ lỗi. Sổ hỏng ⇒ coi như vắng (fail-closed). Không thấy kho ⇒ ⚪ không đo (fixture, bản sao trần).
+_DAU_TRANG_GIOI_THIEU_KHO = ("Fingerprint", "Access to Document", "Link to publication", "Research output",
+                             "Accéder au contenu principal")
+_DE_MUC_IMRAD = ("Methods", "Results", "Discussion", "Introduction", "METHODS", "RESULTS", "DISCUSSION", "INTRODUCTION")
+TEN_SO_NO_TOAN_VAN = "no-toan-van-apply.json"
+
+
+def _html_la_toan_van(duong):
+    """Bản `_UPW.html` có phải TOÀN VĂN không (cùng tiêu chí `gom_toan_van_dashboard.la_toan_van_html`, BH160): ≥ 6000 từ,
+    hoặc ≥ 2500 từ + ≥ 3 đề mục IMRaD và KHÔNG mang dấu trang giới thiệu kho lưu trữ."""
+    try:
+        vb = Path(duong).read_bytes().decode("utf-8", errors="replace")
+    except OSError:
+        return False
+    vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
+    vb = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", vb))
+    so_tu = len(vb.split())
+    if so_tu >= 6000:
+        return True
+    if any(k in vb for k in _DAU_TRANG_GIOI_THIEU_KHO):
+        return False
+    return so_tu >= 2500 and sum(1 for k in _DE_MUC_IMRAD if k in vb) >= 3
+
+
+def _bac_si_da_doc_kho(kho):
+    """PMID có trong sổ «bác sĩ đã đọc trực tiếp» (dòng hỏng bỏ qua)."""
+    tep = Path(kho) / "trinh_duyet" / "bac-si-da-doc.jsonl"
+    ra = set()
+    try:
+        dong_tep = tep.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ra
+    for dong in dong_tep:
+        try:
+            ra.add(str(json.loads(dong)["pmid"]))
+        except (ValueError, KeyError, TypeError):
+            continue
+    return ra
+
+
+def co_toan_van_trong_kho(pmid, kho, bac_si_da_doc=None):
+    """PMID ĐÃ ĐỌC toàn văn theo kho (định nghĩa trùng `bao_phu_cuc_bo`)."""
+    kho = Path(kho)
+    if list(kho.glob("PMID-%s_*.xml" % pmid)) or list(kho.glob("PMID-%s_WTDM.*" % pmid)) or list(kho.glob("PMID-%s_CHR.*" % pmid)):
+        return True
+    for q in kho.glob("PMID-%s_UPW.*" % pmid):
+        if q.suffix.lower() != ".html" or _html_la_toan_van(q):
+            return True
+    if (kho / "trinh_duyet" / ("PMID-%s.json" % pmid)).exists():
+        return True
+    return str(pmid) in (bac_si_da_doc if bac_si_da_doc is not None else _bac_si_da_doc_kho(kho))
+
+
+def doc_so_no_toan_van(duong_so):
+    """(hạn: date | None, tập khoá (dashboard, item, pmid), cảnh báo | None). Vắng ⇒ (None, ∅, None); hỏng ⇒ coi như vắng."""
+    p = Path(duong_so)
+    if not p.exists():
+        return None, set(), None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        han = date.fromisoformat(d["han"])
+        khoa = {(str(x.get("dashboard")), str(x.get("item")), str(x.get("pmid"))) for x in d["muc"] if isinstance(x, dict)}
+        return han, khoa, None
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return None, set(), "sổ nợ toàn văn %s KHÔNG đọc được (%s) — coi như không có sổ: mọi mục apply chưa đọc đều bị chặn" % (
+            p.name, type(e).__name__)
+
+
+def kiem_toan_van_apply(items, kho, errors, warns, oks, *, ten_dashboard="", duong_so_no=None, hom_nay=None):
+    """BẢO ĐẢM ĐỌC TOÀN VĂN cho mục decision='apply' có PMID chính (xem khối chú thích phía trên)."""
+    kho = Path(kho)
+    if not kho.is_dir():
+        oks.append("⚪ Không thấy kho toàn văn cạnh dashboard (%s) — CHƯA đo bảo đảm đọc toàn văn (không phải đạt)." % kho.name)
+        return
+    hom_nay = hom_nay or date.today()
+    han, khoa_no, loi_so = doc_so_no_toan_van(duong_so_no or (kho.parent / TEN_SO_NO_TOAN_VAN))
+    if loi_so:
+        warns.append(loi_so)
+    bsd = _bac_si_da_doc_kho(kho)
+    tong = da_doc = 0
+    for ch in items:
+        if field(ch, "decision") != "apply":
+            continue
+        pmid = (field(ch, "pmid") or "").strip()
+        if not PMID_RE.match(pmid):
+            continue
+        tong += 1
+        if co_toan_van_trong_kho(pmid, kho, bsd):
+            da_doc += 1
+            continue
+        iid = field(ch, "id") or "(?)"
+        cach = ("đọc toàn văn hợp lệ (tools/gom_toan_van_dashboard.py · làn trình duyệt tools/doc_toan_van_co_nguoi.py --pmid %s), "
+                "hoặc bác sĩ đã tự đọc thì `doc_toan_van_co_nguoi.py --bac-si-da-doc %s --ghi-chu \"<kết luận>\" --ghi`, "
+                "hoặc bác sĩ hạ xuống consider" % (pmid, pmid))
+        if (ten_dashboard, iid, pmid) in khoa_no and han and hom_nay <= han:
+            warns.append("[%s] NỢ TOÀN VĂN: decision='apply' nhưng PMID %s CHƯA được đọc toàn văn — hạn %s (còn %d ngày; quá hạn "
+                         "cổng CHẶN). Trả nợ: %s." % (iid, pmid, han.isoformat(), (han - hom_nay).days, cach))
+        else:
+            ly_do = ("NỢ QUÁ HẠN %s" % han.isoformat()) if (ten_dashboard, iid, pmid) in khoa_no else "mục KHÔNG có trong sổ nợ"
+            errors.append("[%s] decision='apply' nhưng PMID %s CHƯA được đọc toàn văn (%s) — BẢO ĐẢM ĐỌC TOÀN VĂN chặn: %s."
+                          % (iid, pmid, ly_do, cach))
+    if tong:
+        oks.append("Bảo đảm đọc toàn văn: %d/%d mục apply (PMID chính) đã đọc toàn văn." % (da_doc, tong))
+
+
 # Khoá cấp 1 HỢP LỆ của DATA.summary — phải khớp ĐÚNG thứ mà template và ba bộ
 # sinh phái sinh đọc: evidence-workbench-template.html (s.dontDo),
 # tools/build_ban_doc_chung_cu.py, EBM-Dashboards/tools/build_dashboard_docx.py và
@@ -1600,6 +1712,8 @@ def main():
         oks.extend(so)
         if not a.online:
             warns.append("--strict-sources đang chạy offline: đã kiểm hợp đồng nguồn, nhưng chưa phân giải thật PMID/DOI. Dashboard thật nên chạy thêm --online.")
+        kiem_toan_van_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks,
+                            ten_dashboard=Path(a.file).stem)
 
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []

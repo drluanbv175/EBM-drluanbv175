@@ -453,6 +453,39 @@ def giac_quan_url_chan_bot(dash_dir: Path) -> list[tuple[int, str, str]]:
              "python3 tools/xac_nhan_trinh_duyet.py --huong-dan  # Claude mở trang, bác sĩ tự bấm xác nhận chống bot")]
 
 
+def giac_quan_no_toan_van(dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
+    """BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026, bác sĩ: «Hãy xây dựng đảm bảo việc đọc toàn văn cho tôi»).
+
+    Mục «Áp dụng ngay» CHƯA đọc toàn văn: ngoài sổ nợ hoặc nợ QUÁ HẠN ⇒ cổng `verify_dashboard` ĐANG CHẶN (ưu tiên 1); nợ trong hạn
+    ⇒ nhắc kèm số ngày còn lại (ưu tiên 1 khi ≤ 7 ngày). Nguồn: `tools/so_toan_van.py` (dùng `bao_phu_cuc_bo`). Ngoại tuyến. Vắng
+    kho/công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG phải «đủ toàn văn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    hom_nay = hom_nay or dt.date.today()
+    kho = dash_dir / "toan_van_oa"
+    if not kho.is_dir():
+        _ghi_chet(["", "bảo đảm toàn văn"], "không có kho toàn văn ở cây này")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_stv_tdxv", Path(__file__).resolve().parent / "so_toan_van.py")
+        stv = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(stv)
+        no = stv.phan_loai_no(stv.quet_muc(dash_dir, kho, hom_nay), stv.doc_so_no(dash_dir), hom_nay)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "bảo đảm toàn văn"], f"lỗi {type(exc).__name__}")
+        return []
+    ra = []
+    chan = len(no["ngoai_so"]) + len(no["qua_han"])
+    if chan:
+        ra.append((1, f"{chan} mục «Áp dụng ngay» CHƯA đọc toàn văn — cổng ĐANG CHẶN (ngoài sổ nợ hoặc nợ quá hạn): đọc toàn văn, "
+                      "bác sĩ xác nhận đã đọc, hoặc hạ «Cân nhắc»", "python3 tools/so_toan_van.py"))
+    if no["trong_han"]:
+        con = (dt.date.fromisoformat(no["han"]) - hom_nay).days
+        ra.append((1 if con <= 7 else 2, f"{len(no['trong_han'])} mục «Áp dụng ngay» còn NỢ toàn văn — hạn {no['han']} (còn {con} "
+                                         "ngày; quá hạn cổng chặn) — làn trình duyệt hoặc bác sĩ xác nhận đã đọc",
+                   "python3 tools/so_toan_van.py"))
+    return ra
+
+
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
     """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
@@ -970,6 +1003,10 @@ def main() -> int:
 
     # ⑦i TOÀN VĂN THẺ TUẦN (02/10/2026): bài không OA ⇒ làn trình duyệt có bác sĩ — xem docstring.
     for uu, dong, lenh in giac_quan_toan_van_the_tuan(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue"), DASH):
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦k BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026): mục apply chưa đọc toàn văn — sổ nợ có hạn, quá hạn cổng chặn — xem docstring.
+    for uu, dong, lenh in giac_quan_no_toan_van(DASH):
         de_xuat.append((uu, "👤", dong, lenh))
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.

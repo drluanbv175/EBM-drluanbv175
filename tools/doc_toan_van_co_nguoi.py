@@ -529,6 +529,27 @@ def _bac_si_da_doc(kho: Path) -> dict[str, dict]:
     return ra
 
 
+_GOM_TV = None
+
+
+def _upw_la_toan_van(kho: Path, pm: str) -> bool:
+    """Có bản `_UPW` là TOÀN VĂN thật: PDF, hoặc HTML qua cổng nội dung của `gom_toan_van_dashboard.la_toan_van_html` (BH160 —
+    04/10/2026: 15/27 `_UPW.html` trong kho là TRANG GIỚI THIỆU kho lưu trữ, từng bị tính «oa_khac»). Không nạp được cổng nội dung
+    ⇒ HTML không được tính (fail-closed: chưa biết ≠ có toàn văn)."""
+    global _GOM_TV
+    for q in kho.glob(f"PMID-{pm}_UPW.*"):
+        if q.suffix.lower() != ".html":
+            return True
+        if _GOM_TV is None:
+            try:
+                _GOM_TV = _nap_mo_dun("_gom_tv_bpcb", "gom_toan_van_dashboard.py")
+            except Exception:  # noqa: BLE001
+                _GOM_TV = False
+        if _GOM_TV and _GOM_TV.la_toan_van_html(_GOM_TV._van_ban_tho(q.read_bytes()))[0]:
+            return True
+    return False
+
+
 def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | None = None) -> dict[str, str]:
     """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · tdm_nxb · phien_chrome · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
     khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền»."""
@@ -539,7 +560,7 @@ def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | No
     for pm in pmids:
         if list(kho.glob(f"PMID-{pm}_*.xml")):
             ra[pm] = "oa_xml"
-        elif list(kho.glob(f"PMID-{pm}_UPW.*")):
+        elif _upw_la_toan_van(kho, pm):
             ra[pm] = "oa_khac"
         elif list(kho.glob(f"PMID-{pm}_WTDM.*")):
             ra[pm] = "tdm_nxb"
