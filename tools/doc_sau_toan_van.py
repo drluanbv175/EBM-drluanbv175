@@ -111,7 +111,7 @@ NHAN_NGUON_TDM = "kênh TDM của NXB (Wiley) — có bản quyền, KHÔNG ph�
 CAU_NGUON_TDM = "tải bằng token của bác sĩ, chỉ dùng theo giấy phép TDM"
 # PDF lưu trong PHIÊN UỶ QUYỀN Chrome của bác sĩ (04/10/2026, tools/phien_uy_quyen_chrome.py) — cùng bộ bóc PDF, KHÁC nhãn nguồn:
 # không phải token TDM, không phải OA; điều khoản NXB không đổi.
-NHAN_NGUON_CHR = "PDF lưu trong phiên uỷ quyền Chrome của bác sĩ — có bản quyền, KHÔNG phải OA"
+NHAN_NGUON_CHR = "phiên uỷ quyền Chrome của bác sĩ — có bản quyền, KHÔNG phải OA"
 CAU_NGUON_CHR = "tải bằng tài khoản của bác sĩ trong phiên bác sĩ đã uỷ quyền; điều khoản NXB không đổi — chỉ dùng cá nhân"
 
 _SO_MUC = r"(?:\d{1,2}(?:\.\d{1,2})*\.?|[IVX]{1,4}\.)?\s*\|?\s*"
@@ -693,12 +693,15 @@ def main(argv: list[str] | None = None) -> int:
     lam_lai = a.lam_lai or not che_do_dash
     bsd = _bac_si_da_doc(kho)
     nhom: dict[str, list[str]] = {k: [] for k in NHOM}
+    pdf_chr: list[str] = []      # PDF phiên Chrome nằm trong nhóm vua_sinh_tdm (cùng bộ bóc) — đếm RIÊNG để nhãn tổng kết đúng nguồn
     ky_hieu = {"trinh_duyet": "◑", "da_co": "=", "vua_sinh_xml": "✓", "vua_sinh_tdm": "✓", "doc_truc_tiep": "◐",
                "tdm_thieu_thu_vien": "◐", "chua_co_tep": "○", "loi": "⚠"}
     luon_in = ("vua_sinh_xml", "vua_sinh_tdm", "tdm_thieu_thu_vien", "loi")
     for pm in sorted(pmids):
         loai, ghi_chu = xu_ly_pmid(pm, kho, lam_lai=lam_lai)
         nhom[loai].append(pm)
+        if loai == "vua_sinh_tdm" and NHAN_NGUON_CHR in ghi_chu:
+            pdf_chr.append(pm)
         if loai == "chua_co_tep":
             continue  # liệt kê gộp ở cuối
         if che_do_dash and loai not in luon_in:
@@ -713,8 +716,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nĐọc sâu — đơn vị PMID ({n} PMID duy nhất):")
     print(f"  ✓ đã có bản đọc: {da_co} — {len(nhom['trinh_duyet'])} bài đọc qua trình duyệt có bác sĩ (giữ nguyên) · "
           f"{len(nhom['da_co'])} bản đọc máy")
-    print(f"  ✚ vừa sinh: {vua} — {len(nhom['vua_sinh_xml'])} bài JATS · {len(nhom['vua_sinh_tdm'])} bài PDF kênh TDM "
-          "của NXB (có bản quyền, không phải OA)")
+    n_tdm = len(nhom["vua_sinh_tdm"]) - len(pdf_chr)
+    print(f"  ✚ vừa sinh: {vua} — {len(nhom['vua_sinh_xml'])} bài JATS · {n_tdm} bài PDF kênh TDM của NXB · {len(pdf_chr)} bài "
+          "PDF phiên uỷ quyền Chrome (hai loại PDF đều có bản quyền, không phải OA)")
     print(f"  ◐ có toàn văn nhưng đọc trực tiếp (HTML/PDF tầng 2 hoặc thiếu thư viện PDF), chưa bóc: {truc_tiep}")
     if nhom["tdm_thieu_thu_vien"]:
         print(f"    ⚠ {len(nhom['tdm_thieu_thu_vien'])} PDF kênh TDM: không đọc được PDF — thiếu thư viện pypdf "
