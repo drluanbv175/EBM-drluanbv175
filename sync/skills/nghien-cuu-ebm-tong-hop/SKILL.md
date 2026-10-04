@@ -10,7 +10,8 @@ description: >-
   nguồn & API MIỄN PHÍ (PubMed E-utilities…). Mọi đầu ra kèm PMID/DOI + disclaimer
   "Cần bác sĩ kiểm chứng". KHÔNG lưu thông tin định danh bệnh nhân (PII). KHÔNG dùng cho bench/omics.
 license: MIT
-author: "Hợp nhất & Việt hoá từ AIPOCH Medical Research Skills (MIT) cho thực hành EBM ngoại trú"
+metadata:
+  author: "Hợp nhất & Việt hoá từ AIPOCH Medical Research Skills (MIT) cho thực hành EBM ngoại trú"
 ---
 
 # Nghiên cứu Y khoa & EBM — Tổng hợp (tiếng Việt)
