@@ -45,6 +45,11 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    làn đó chỉ chạy trong phiên CÓ bác sĩ (`--huong-dan`). Bài đã đọc qua trình duyệt có bản
    `doc_sau/PMID-<n>.md` ghi «trích xuất CÓ CẤU TRÚC»: thẩm định như bản OA, `appraisalCompleteness`
    theo độ đầy đủ in trong bản đó (partial ⇒ vẫn trần "Cân nhắc").
+   Bài có `PMID-<n>_WTDM.pdf` (thêm 04/10/2026 — PDF kênh TDM của NXB tải bằng token của bác sĩ, CÓ BẢN
+   QUYỀN, KHÔNG phải OA): bản đọc máy chỉ có DỮ KIỆN (bản đồ mục, mã đăng ký, dấu hiệu phương pháp) + VỊ TRÍ
+   TRANG + trích ≤ 15 từ/lần — chưa phải toàn văn. Thẩm định thì mở chính tệp PDF ở trang ghi kèm; trên thẻ
+   chỉ ghi dữ kiện/con số kèm số trang và trích ≤ 15 từ, KHÔNG chép đoạn văn của bài vào gói.
+   `appraisalCompleteness=full` chỉ khi đã đọc đủ các mục cần ở PDF; chỉ dựa bản đọc máy ⇒ `partial`.
 5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
    lỗi thời "6 dòng/xem mẫu W33" — định dạng thật đã tăng lên 8 khối qua W35-W37 mà chưa từng được
    viết lại): `sync/scheduled-tasks/goi-duyet-tuan-ebm/MAU-THE-CHUNG-CU-TUAN.md`. Mỗi thẻ: tiêu đề

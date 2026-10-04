@@ -214,6 +214,9 @@ def test_doc_sau_dem_ban_doc_trinh_duyet(kho, monkeypatch, capsys):
     (kho / "trinh_duyet").mkdir()
     (kho / "trinh_duyet" / "PMID-42751933.json").write_text(json.dumps({"kiem": {"do_day_du": "partial"}}), encoding="utf-8",
                                                             newline="\n")
+    # `--nap --ghi` luôn ghi CẢ hồ sơ lẫn bản đọc; hồ sơ thiếu bản đọc là lỗi riêng (04/10/2026 — test_doc_sau_tdm_dashboard)
+    (kho / "doc_sau").mkdir(exist_ok=True)
+    (kho / "doc_sau" / "PMID-42751933.md").write_text("# bản đọc trình duyệt\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(ds, "KHO", kho)
     monkeypatch.setattr(sys, "argv", ["x", "--pmid", "42751933", "42377292"])
     assert ds.main() == 0
