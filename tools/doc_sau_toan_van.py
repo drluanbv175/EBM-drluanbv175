@@ -108,6 +108,11 @@ TRAN_TU_TRICH = 15
 TOI_THIEU_KY_TU_PDF = 3000
 TRAN_TRICH_PDF = {"hieu_so": 10, "khuyen_cao": 4, "han_che": 2, "tai_tro": 3}
 NHAN_NGUON_TDM = "kênh TDM của NXB (Wiley) — có bản quyền, KHÔNG phải OA"
+CAU_NGUON_TDM = "tải bằng token của bác sĩ, chỉ dùng theo giấy phép TDM"
+# PDF lưu trong PHIÊN UỶ QUYỀN Chrome của bác sĩ (04/10/2026, tools/phien_uy_quyen_chrome.py) — cùng bộ bóc PDF, KHÁC nhãn nguồn:
+# không phải token TDM, không phải OA; điều khoản NXB không đổi.
+NHAN_NGUON_CHR = "PDF lưu trong phiên uỷ quyền Chrome của bác sĩ — có bản quyền, KHÔNG phải OA"
+CAU_NGUON_CHR = "tải bằng tài khoản của bác sĩ trong phiên bác sĩ đã uỷ quyền; điều khoản NXB không đổi — chỉ dùng cá nhân"
 
 _SO_MUC = r"(?:\d{1,2}(?:\.\d{1,2})*\.?|[IVX]{1,4}\.)?\s*\|?\s*"
 _MUC_PDF = {
@@ -439,7 +444,8 @@ def _dong_trich(ds: list[tuple[int, str, str]], kem_tieu_de: bool = False) -> li
     return [f"- tr. {so}" + (f" [{td}]" if kem_tieu_de and td else "") + f" — «{t}»" for so, t, td in ds]
 
 
-def ban_doc_tdm_md(pm: str, trang: list[str], tieu_de: str, ten_tep: str) -> str:
+def ban_doc_tdm_md(pm: str, trang: list[str], tieu_de: str, ten_tep: str, nhan_nguon: str = NHAN_NGUON_TDM,
+                   cau_nguon: str = CAU_NGUON_TDM) -> str:
     """Bản đọc của PDF kênh TDM (thuần — không đọc đĩa, không ghi). Chỉ dữ kiện + trang + trích ≤ TRAN_TU_TRICH từ."""
     khoi = _khoi_pdf(trang)
     so_tu = sum(len(t.split()) for t in trang)
@@ -455,8 +461,7 @@ def ban_doc_tdm_md(pm: str, trang: list[str], tieu_de: str, ten_tep: str) -> str
     noi_dung = " ".join(k[2] for k in khoi if k[0] != "tai_lieu")
     dang_ky = sorted(set(MA_DANG_KY.findall(noi_dung)))
     d = [f"# Đọc sâu toàn văn — PMID {pm}",
-         f"\n> Trích MÁY từ PDF qua **{NHAN_NGUON_TDM}** (tệp `{ten_tep}`, ngoài git; tải bằng token của bác sĩ, "
-         f"chỉ dùng theo giấy phép TDM). Bản đọc chỉ ghi DỮ KIỆN + VỊ TRÍ TRANG + trích ≤ {TRAN_TU_TRICH} từ/lần — "
+         f"\n> Trích MÁY từ PDF qua **{nhan_nguon}** (tệp `{ten_tep}`, ngoài git; {cau_nguon}). Bản đọc chỉ ghi DỮ KIỆN + VỊ TRÍ TRANG + trích ≤ {TRAN_TU_TRICH} từ/lần — "
          f"KHÔNG chép đoạn văn (khác bản OA JATS); đủ ngữ cảnh thì đọc chính tệp PDF ở trang ghi kèm. "
          f"{len(trang)} trang · {so_tu} từ trích được. Sinh {date.today().isoformat()}. **Cần bác sĩ kiểm chứng.**\n",
          f"**{td}**" + (f"  \ndoi:{doi}" if doi else ""),
@@ -502,7 +507,8 @@ def ban_doc_tdm_md(pm: str, trang: list[str], tieu_de: str, ten_tep: str) -> str
     return "\n".join(d)
 
 
-def viet_ban_doc_tdm(pm: str, pdf: Path, ra_dir: Path | None = None) -> Path:
+def viet_ban_doc_tdm(pm: str, pdf: Path, ra_dir: Path | None = None, nhan_nguon: str = NHAN_NGUON_TDM,
+                     cau_nguon: str = CAU_NGUON_TDM) -> Path:
     """PDF kênh TDM → doc_sau/PMID-<n>.md. Văn bản quá ít (ảnh quét/trang bìa) ⇒ LoiDocPdf, KHÔNG sinh bản đọc giả."""
     trang, tieu_de = _doc_pdf(pdf)
     n = len(re.sub(r"\s+", " ", " ".join(trang)).strip())
@@ -510,7 +516,7 @@ def viet_ban_doc_tdm(pm: str, pdf: Path, ra_dir: Path | None = None) -> Path:
         raise LoiDocPdf("pdf_it_chu", f"PDF chỉ có {n} ký tự chữ (< {TOI_THIEU_KY_TU_PDF}) — ảnh quét/trang bìa? "
                                       "đọc trực tiếp tệp, không sinh bản đọc")
     ra = (ra_dir or KHO / "doc_sau") / f"PMID-{pm}.md"
-    _ghi_nguyen_tu(ra, ban_doc_tdm_md(pm, trang, tieu_de, pdf.name))
+    _ghi_nguyen_tu(ra, ban_doc_tdm_md(pm, trang, tieu_de, pdf.name, nhan_nguon, cau_nguon))
     return ra
 
 
@@ -559,6 +565,7 @@ def xu_ly_pmid(pm: str, kho: Path, *, lam_lai: bool) -> tuple[str, str]:
         return "da_co", f"đã có bản đọc doc_sau/{md.name}"
     xml = sorted(kho.glob(f"PMID-{pm}_*.xml"))
     pdf = sorted(kho.glob(f"PMID-{pm}_WTDM.pdf"))
+    pdf_chr = [] if pdf else sorted(kho.glob(f"PMID-{pm}_CHR.pdf"))
     loi_xml = ""
     if xml:
         try:
@@ -566,18 +573,19 @@ def xu_ly_pmid(pm: str, kho: Path, *, lam_lai: bool) -> tuple[str, str]:
         except ET.ParseError:
             loi_xml = (f"XML hỏng ({xml[0].name}) — gom bỏ qua PMID đã có XML nên tệp hỏng chặn cả làn OA lẫn làn "
                        "trình duyệt; kiểm tệp")
-    if pdf:
+    if pdf or pdf_chr:
+        tep, nhan, cau = (pdf[0], NHAN_NGUON_TDM, CAU_NGUON_TDM) if pdf else (pdf_chr[0], NHAN_NGUON_CHR, CAU_NGUON_CHR)
         try:
-            return "vua_sinh_tdm", f"→ {_tuong_doi(viet_ban_doc_tdm(pm, pdf[0], ra_dir))} (PDF {NHAN_NGUON_TDM})"
+            return "vua_sinh_tdm", f"→ {_tuong_doi(viet_ban_doc_tdm(pm, tep, ra_dir, nhan, cau))} (PDF {nhan})"
         except LoiDocPdf as e:
             if e.ly_do == "thieu_thu_vien":
-                return "tdm_thieu_thu_vien", f"PDF kênh TDM ({pdf[0].name}) — {e}"
-            return "loi", f"{pdf[0].name}: {e}"
+                return "tdm_thieu_thu_vien", f"PDF {'kênh TDM' if pdf else 'phiên Chrome'} ({tep.name}) — {e}"
+            return "loi", f"{tep.name}: {e}"
     if loi_xml:
         return "loi", loi_xml
     if md.exists():
         return "da_co", f"đã có bản đọc doc_sau/{md.name} (kho không còn tệp nguồn để sinh lại)"
-    khac = sorted(kho.glob(f"PMID-{pm}_UPW.*"))
+    khac = sorted(kho.glob(f"PMID-{pm}_UPW.*")) or sorted(kho.glob(f"PMID-{pm}_CHR.html"))
     if khac:
         # kho có bản HTML/PDF tầng-2 (Unpaywall) → toàn văn CÓ, chỉ là không qua bộ bóc — phiên thẩm định đọc trực tiếp
         return "doc_truc_tiep", (f"toàn văn dạng {khac[0].suffix[1:].upper()} ({khac[0].name}) — đọc trực tiếp, "
