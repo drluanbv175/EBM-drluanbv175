@@ -253,7 +253,8 @@ def lan_ba_ben(im: bool) -> KetQua:
     if ma >= 2:
         kq.ghi_chu.append("có skill TRÙNG TÊN mà khác nội dung — ĐỪNG chép đè bên nào")
     elif ma == 1:
-        kq.ghi_chu.append("lệch phiên bản hoặc thiếu/thừa skill giữa cloud và repo")
+        kq.ghi_chu.append("lệch phiên bản hoặc thiếu/thừa skill giữa cloud và repo — bộ tài khoản chỉ đổi khi bác sĩ tự tải lên: "
+                          "python3 tools/dong_goi_skill_tai_khoan.py (ZIP + danh sách ở CLAUDE_AI_SKILLS/)")
     return kq
 
 

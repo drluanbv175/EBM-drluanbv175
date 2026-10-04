@@ -7263,6 +7263,54 @@ def bh157_tang_thu_bac_trong_khong_bi_tang_moi_che():
     if "TẦNG THỨ BẬC TRỐNG" in chay(2):
         return False, "cảm biến KHÔNG đo được (mã 2) mà chu trình vẫn nêu việc từ tệp state CŨ"
     return True, "báo 🟠 đúng chủ đề, không đổi mã thoát, tệp cũ in đúng, chu trình nêu việc và không đọc khi không đo được"
+def bh163_skill_tai_khoan_tep_phu_va_dong_goi():
+    """04/10 — bác sĩ: «Gộp 124 và đóng gói các skill để cập nhật». Sau BH162 làn đối chiếu vẫn báo «giống 5» vì chỉ so SKILL.md:
+    nghien-cuu-y-khoa-chuan-quoc-te trùng SKILL.md nhưng 7 tệp phụ khác + 1 tệp mới ⇒ Cowork chạy công cụ cũ mà làn báo khớp. Bộ
+    skill tài khoản chỉ đổi khi bác sĩ tự tải lên, mà không công cụ nào đóng gói và không giác quan nào nhắc (21/25 skill cũ suốt
+    25 ngày). Khoá HÀNH VI ngoại tuyến: (1) `doi_chieu` xếp «SKILL.md trùng + tệp phụ khác» vào lệch bản; (2) công cụ đóng gói
+    xếp «cập nhật», ZIP có gốc <tên>/, ghi name = tên thư mục; (3) hòm việc nhắc (ưu tiên 2); (4) main() của hòm việc có DÒNG THI
+    HÀNH gọi giác quan."""
+    import tempfile as _tf
+    import zipfile as _zf
+    dc = _nap(REPO / "tools/doi_chieu_ba_ben.py", "_bh163_dc")
+    dg = _nap(REPO / "tools/dong_goi_skill_tai_khoan.py", "_bh163_dg")
+    tdx = _nap(REPO / "tools/tu_de_xuat_viec.py", "_bh163_tdx")
+
+    def _sk(goc, ten, name, py):
+        (goc / ten / "tools").mkdir(parents=True)
+        (goc / ten / "SKILL.md").write_text("---\nname: " + name + "\ndescription: Mô tả.\n---\nThân.\n", encoding="utf-8")
+        (goc / ten / "tools" / "a.py").write_text(py, encoding="utf-8")
+
+    with _tf.TemporaryDirectory() as td:
+        cloud, hub, ra = Path(td) / "cloud", Path(td) / "hub", Path(td) / "ra"
+        _sk(cloud, "x", "x", "print(1)\n")
+        _sk(hub, "x", "x", "print(2)\n")
+        _sk(hub, "y-kdense", "y", "print(3)\n")
+        kq = dc.doi_chieu(dc.quet_thu_muc(cloud), dc.quet_thu_muc(hub), {}, chi_custom=True)
+        if [m["ten"] for m in kq["lech_ban"]] != ["x"]:
+            return False, "đối chiếu chỉ so SKILL.md — skill trùng SKILL.md mà tệp phụ khác bị đếm «giống»"
+        ket = {m["ten"]: m for m in dg.danh_gia(hub, cloud)}
+        if ket["x"]["trang_thai"] != "cap_nhat":
+            return False, "công cụ đóng gói không xếp «cập nhật» cho skill khác tệp phụ"
+        dg.dong_goi(list(ket.values()), hub, ra, cloud, "bh163")
+        if not (ra / "y-kdense.zip").is_file():
+            return False, "skill có name khác tên thư mục không được đóng gói (thiếu bước ghi lại name)"
+        with _zf.ZipFile(ra / "y-kdense.zip") as z:
+            ten_zip = z.namelist()
+            skill_md = z.read("y-kdense/SKILL.md").decode("utf-8") if "y-kdense/SKILL.md" in ten_zip else ""
+        if not ten_zip or any(not t.startswith("y-kdense/") for t in ten_zip):
+            return False, "ZIP không có gốc là thư mục skill — claude.ai không nhận"
+        if "name: y-kdense" not in skill_md:
+            return False, "ZIP giữ name khác tên thư mục — tải lên sẽ ĐÈ skill cùng tên trên tài khoản"
+        viec = tdx.giac_quan_skill_tai_khoan(bundle=cloud, hub=hub)
+        if not viec or viec[0][0] != 2:
+            return False, "hòm việc không nhắc khi skill trên tài khoản đã cũ"
+    nguon = (REPO / "tools/tu_de_xuat_viec.py").read_text(encoding="utf-8")
+    if not any(d.strip().startswith("for uu, dong, lenh in giac_quan_skill_tai_khoan(") for d in nguon.splitlines()):
+        return False, "main() của hòm việc KHÔNG gọi giac_quan_skill_tai_khoan (chỉ có hàm, không có dòng thi hành)"
+    return True, "skill tài khoản: so cả tệp phụ · ZIP gốc <tên>/ + name = tên thư mục · hòm việc nhắc khi tài khoản cũ"
+
+
 def bh162_doi_chieu_skill_tai_khoan_nguon_plugin():
     """04/10 — bác sĩ hỏi «tất cả đã được đồng bộ vào các skill?». `dong_bo_tat_ca.py` làn «Cloud ↔ repo» báo «giống 0 · lệch
     bản 0 · chỉ repo 25»: bộ lọc `doi_chieu_ba_ben.doi_chieu` chỉ giữ skill có `source == "custom"`, mà manifest thật của bundle
@@ -10632,6 +10680,7 @@ BAI_HOC = [
     ("BH160", "04/10", "Tầng 2 Unpaywall: chỉ LƯU TỰ ĐỘNG bản có giấy phép mở; loại trang giới thiệu kho lưu trữ; sổ phủ đếm mọi loại toàn văn", bh160_unpaywall_cong_dieu_khoan_va_noi_dung),
     ("BH161", "04/10", "BẢO ĐẢM đọc toàn văn: cổng chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn); chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
     ("BH162", "04/10", "Đối chiếu skill tài khoản ↔ repo phải so skill nguồn «plugin» của bác sĩ (bộ lọc «custom» từng che 20 skill cũ)", bh162_doi_chieu_skill_tai_khoan_nguon_plugin),
+    ("BH163", "04/10", "Skill tài khoản claude.ai: so CẢ tệp phụ (không chỉ SKILL.md), đóng gói ZIP đúng cấu trúc tải lên (gốc <tên>/, name = tên thư mục) và hòm việc nhắc khi tài khoản cũ", bh163_skill_tai_khoan_tep_phu_va_dong_goi),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
