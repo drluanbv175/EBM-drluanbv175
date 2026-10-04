@@ -223,15 +223,23 @@ def _bang(tieu_de: str, dong: list[str]) -> None:
         print(d)
 
 
+# Giá trị `source` trong manifest.json của bundle tài khoản ứng với skill DO ANTHROPIC phát hành (không phải của bác sĩ).
+NGUON_ANTHROPIC = ("anthropic", "anthropic-example")
+
+
 def doi_chieu(cloud: dict[str, Skill], repo: dict[str, Skill],
               manifest: dict[str, dict], chi_custom: bool) -> dict:
     """So cloud với repo. Trả về kết quả có cấu trúc để in và để xuất JSON."""
     ten_cloud = set(cloud)
     if chi_custom and manifest:
-        # Skill do Anthropic phát hành không thuộc trách nhiệm đồng bộ của bác sĩ.
+        # Skill do Anthropic phát hành không thuộc trách nhiệm đồng bộ của bác sĩ. VÁ 04/10/2026: trước đây chỉ giữ skill có
+        # `source == "custom"` — nhưng manifest thật ghi skill của bác sĩ là «plugin» (25), Anthropic là «anthropic» (4) và
+        # «anthropic-example» (15), không có «custom» nào ⇒ MỌI skill của bác sĩ bị loại khỏi phép so, làn báo «giống 0 · lệch
+        # bản 0» trong khi đo tay có 20 skill lệch (cap-nhat-chung-cu-y-khoa trên tài khoản v1.15.0, repo v1.53.0). Nay loại
+        # ĐÚNG nguồn Anthropic; nguồn khác/vắng ⇒ của bác sĩ ⇒ phải so.
         ten_cloud = {
             t for t in ten_cloud
-            if manifest.get(t, {}).get("source", "custom") == "custom"
+            if manifest.get(t, {}).get("source") not in NGUON_ANTHROPIC
         }
     chung = sorted(ten_cloud & set(repo))
     kq = {
