@@ -352,6 +352,33 @@ def _commit_nam_trong(repo: Path, sha: str, ref_that: str) -> bool:
     return ok_that and _run_git(["merge-base", "--is-ancestor", sha, ref_that], repo, timeout=30)[0]
 
 
+def _cac_thiet_bi_git() -> tuple:
+    """Tên máy nhận diện bản sao xung đột TRONG `.git`: máy đang chạy + các máy đã khai (dùng chung mục 5 và công cụ dọn)."""
+    return (socket.gethostname().split(".")[0].lower(), *THIET_BI_TRONG_GIT)
+
+
+def _la_ref_ma(refname: str, cac_thiet_bi) -> bool:
+    """Ref mà git đọc từ một BẢN SAO xung đột (tên cuối mang hậu tố máy) — không được tính là nơi «giữ» commit."""
+    return _hau_to_thiet_bi(_nfc_thuong(refname.rsplit("/", 1)[-1]), cac_thiet_bi) is not None
+
+
+def _ref_that_giu(repo: Path, sha: str) -> str | None:
+    """Một ref THẬT (không phải ref ma) đang giữ `sha`; None nếu không ref thật nào giữ hoặc không đo được.
+
+    Commit ⇒ ref có `sha` là tổ tiên (nhánh đã xoá nhưng commit đã gộp vào nhánh khác thì KHÔNG mất gì). Đối tượng khác —
+    Codex trỏ `refs/codex/turn-diffs/…` thẳng vào TREE — ⇒ ref trỏ ĐÚNG `sha`: `merge-base` báo lỗi với tree nên bản cũ
+    coi mọi ref Codex trong bản sao packed-refs là «mất» (đo 06/10/2026: 🔴 giả chặn kéo cây chính, cả 4 ref đều còn)."""
+    ok, kieu, _ = _run_git(["cat-file", "-t", sha], repo, timeout=20)
+    if not ok:
+        return None
+    loc = "--contains" if kieu == "commit" else "--points-at"
+    ok, out, _ = _run_git(["for-each-ref", loc, sha, "--format=%(refname)"], repo, timeout=60)
+    if not ok:
+        return None
+    tb = _cac_thiet_bi_git()
+    return next((ref for ref in out.splitlines() if ref and not _la_ref_ma(ref, tb)), None)
+
+
 def _xet_ref_ma(repo: Path, tep: Path, ref_that: str) -> tuple[str, str]:
     try:
         noi_dung = tep.read_text(encoding="utf-8", errors="replace").strip()
@@ -366,6 +393,9 @@ def _xet_ref_ma(repo: Path, tep: Path, ref_that: str) -> tuple[str, str]:
         return "YELLOW", f"ref ma — commit {sha[:7]} đã nằm trong `{ref_that}`, dời được (không mất gì)"
     if ref_that.startswith("refs/remotes/"):
         return "YELLOW", f"ref ma của nhánh máy chủ — `git fetch --prune` gỡ; commit {sha[:7]} lấy lại từ máy chủ nếu còn"
+    noi = _ref_that_giu(repo, sha)
+    if noi:
+        return "YELLOW", f"ref ma — {sha[:7]} đã nằm trong `{noi}` (ref thật khác), dời được (không mất gì)"
     return "RED", (f"ref ma giữ commit {sha[:7]} mà `{ref_that or '?'}` KHÔNG có — tạo nhánh `rescue/…` từ commit đó "
                    "trước khi dời (dời trước là mất việc)")
 
@@ -375,17 +405,22 @@ def _xet_packed_refs_ma(repo: Path, tep: Path) -> tuple[str, str]:
         dong = tep.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError as e:
         return "RED", f"bản sao packed-refs không đọc được ({e}) — kiểm tay trước khi dời"
-    mat = []
+    mat, noi_khac = [], 0
     for d in dong:
         p = d.split()
         if len(p) != 2 or d.startswith(("#", "^")) or not p[1].startswith("refs/") or p[1].startswith("refs/remotes/"):
             continue
-        if not _commit_nam_trong(repo, p[0], p[1]):
-            mat.append(p[1])
+        if _commit_nam_trong(repo, p[0], p[1]):
+            continue
+        if _ref_that_giu(repo, p[0]):
+            noi_khac += 1            # nhánh đã xoá mà commit nằm trong ref khác / ref Codex trỏ đúng tree đang dùng
+            continue
+        mat.append(p[1])
     if mat:
-        return "RED", (f"bản sao packed-refs giữ {len(mat)} ref mà bản đang dùng KHÔNG có/lùi hơn (vd `{mat[0]}`) — "
-                       "cứu bằng nhánh `rescue/…` trước khi dời")
-    return "YELLOW", "bản sao packed-refs — mọi nhánh trong đó đã nằm trong ref đang dùng, dời được"
+        return "RED", (f"bản sao packed-refs giữ {len(mat)} ref mà KHÔNG ref thật nào giữ (vd `{mat[0]}`) — "
+                       "cứu bằng nhánh `rescue/…` trước khi dời (`python3 tools/don_ban_sao_git.py` làm việc này)")
+    them = f" ({noi_khac} ref chỉ còn ở ref thật khác)" if noi_khac else ""
+    return "YELLOW", f"bản sao packed-refs — mọi ref trong đó đã có ref thật giữ{them}, dời được"
 
 
 def _xet_mot_ban_sao_git(repo: Path, git_dir: Path, rel: str, tb: str) -> tuple[str, str]:
@@ -406,8 +441,7 @@ def _xet_mot_ban_sao_git(repo: Path, git_dir: Path, rel: str, tb: str) -> tuple[
 
 def check_git_conflict_copies(time_budget_s: float = 10.0) -> tuple[str, list[str]]:
     """Bản sao xung đột OneDrive NẰM TRONG `.git` của 2 repo — mục 1 prune `.git` nên không thấy (xem khối chú thích trên)."""
-    host_stem = socket.gethostname().split(".")[0].lower()
-    cac_thiet_bi = (host_stem, *THIET_BI_TRONG_GIT)
+    cac_thiet_bi = _cac_thiet_bi_git()
     order = {"GREEN": 0, "YELLOW": 1, "RED": 2}
     worst, notes = "GREEN", []
     for rel_repo, repo in GIT_REPOS:
@@ -429,7 +463,7 @@ def check_git_conflict_copies(time_budget_s: float = 10.0) -> tuple[str, list[st
         if rac:
             vd = ", ".join(rac[:3]) + (f" … (+{len(rac) - 3})" if len(rac) > 3 else "")
             notes.append(f"[{rel_repo}] {len(rac)} tệp rác trong .git (git không đọc tên có hậu tố máy — dấu hai máy từng "
-                         f"ghi .git cùng lúc; dời ra ngoài OneDrive được): {vd}")
+                         f"ghi .git cùng lúc; dời ra ngoài OneDrive được — `python3 tools/don_ban_sao_git.py --ap-dung`): {vd}")
     return worst, notes
 
 
