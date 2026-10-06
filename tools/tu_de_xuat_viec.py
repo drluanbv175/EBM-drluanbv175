@@ -88,6 +88,15 @@ def _ghi_chet(lenh: list[str], ly_do: str) -> None:
     _GIAC_QUAN_CHET.append(f"{ten} ({ly_do})")
 
 
+def so_cong_cung_chua_ky(out: str) -> str | None:
+    """Số cổng cứng (n) khi study_readiness báo «chữ ký thật: 0/<n>» — tức CHƯA cổng cứng nào có chữ ký; None nếu không.
+
+    Chỉ khớp ĐÚNG cụm «chữ ký thật: 0/<n>» (bản cũ in «…: 0/4», bản 04/10/2026 in «…: 0/6») — không dò chuỗi «0/4» trơn,
+    vì ngày tháng («10/4», «20/4») trong đầu ra sẽ bật nhầm dòng nhắc."""
+    m = re.search(r"chữ ký thật: 0/(\d+)\b", out or "")
+    return m.group(1) if m else None
+
+
 def _chay(lenh: list[str], giay: int = 120, cwd: Path | None = None) -> str:
     _SO_GIAC_QUAN["chay"] += 1
     try:
@@ -944,8 +953,10 @@ def main() -> int:
     if "CHƯA được bác sĩ chốt" in out:
         de_xuat.append((1, "👤", "C1a: G0 chờ 5 cờ FINER — một cú đúp",
                         "mở «Chot FINER C1a.command» (Mac) / .ps1 (Windows)"))
-    if "0/4" in out:
-        de_xuat.append((1, "👤", "C1a: 0/4 cổng cứng có chữ ký — bước tiếp là hồ sơ "
+    # 04/10/2026: study_readiness nay đếm SÁU cổng cứng theo gate_contract («chữ ký thật: 0/6») thay vì 4 viết tay.
+    _so_cc = so_cong_cung_chua_ky(out)
+    if _so_cc:
+        de_xuat.append((1, "👤", f"C1a: 0/{_so_cc} cổng cứng có chữ ký — bước tiếp là hồ sơ "
                         "G2 nộp IRB thật", "xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md"))
 
     # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
