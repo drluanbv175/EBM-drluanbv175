@@ -33,9 +33,10 @@ class TestRegistry(unittest.TestCase):
 
     def test_counts(self):
         c = self.reg.counts()
-        self.assertEqual(c["total"], 50, "phải có đúng 50 agent")
+        # 06/10/2026: +14 hội đồng cổng (11 điều phối cổng + giám khảo + phản biện + trọng tài — _HOI-DONG-CONG.md).
+        self.assertEqual(c["total"], 64, "phải có đúng 64 agent")
         self.assertEqual(c["clinical"], 21)
-        self.assertEqual(c["research"], 28)
+        self.assertEqual(c["research"], 42)
         self.assertEqual(c["guardrail"], 1)
         self.assertEqual(c["unknown"], 0, "mọi agent phải được phân cụm từ README")
 

@@ -76,6 +76,8 @@
 #     RIÊNG từng máy, đưa vào git là ép máy này chạy đường dẫn của máy kia.
 !/.claude/settings.json
 !/.claude/hooks/
+# 3c) Workflow Claude Code đã lưu (06/10/2026 — hội đồng cổng G0–G10: hoi-dong-cong, dieu-phoi-tong-hoi-dong).
+!/.claude/workflows/
 # 3b) .claude/agents/.claude/ là thư mục rác thừa kế (sessions/state cũ), không phải nội dung agent
 /.claude/agents/.claude/
 # 3c) Cùng loại rác nhưng nằm TRONG cây skill (06/09/2026: sync/skills/nghien-cuu-y-khoa-chuan-quoc-te/

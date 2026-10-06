@@ -172,11 +172,13 @@ def count_agent_guardrails() -> dict[str, int]:
 # Số agent LÕI (baseline) — 21 lâm sàng + 28 nghiên cứu + 1 guardrail chung.
 # (2026-07-04: +1 `quan-ly-khang-dong` — quản lý kháng đông trọn vòng (48→49);
 #  +1 `tham-dinh-do-chinh-xac-chan-doan` — thẩm định độ chính xác chẩn đoán
-#  QUADAS-2/QUADAS-C + GRADE-cho-test + STARD, lấp khoảng trống nhánh chẩn đoán (49→50).)
+#  QUADAS-2/QUADAS-C + GRADE-cho-test + STARD, lấp khoảng trống nhánh chẩn đoán (49→50).
+#  06/10/2026: +14 hội đồng cổng — 11 điều phối cổng dieu-phoi-g0…g10 + giam-khao-cong + phan-bien-tranh-bien +
+#  trong-tai-tranh-bien (_HOI-DONG-CONG.md) ⇒ 21 lâm sàng + 42 nghiên cứu + 1 guardrail = 64.)
 # Agent TỰ SINH (qua tools/generate_agent.py) được phép VƯỢT baseline MIỄN LÀ đã
 # đăng ký trong _TU-SINH-AGENT-REGISTRY.json — nhờ đó tripwire vẫn bắt được agent
 # thêm/bớt "chui" (không qua registry) mà KHÔNG chặn cơ chế tự sinh hợp lệ.
-CORE_AGENT_COUNT = 50
+CORE_AGENT_COUNT = 64
 AUTOGEN_REGISTRY = AGENTS_SRC / "_TU-SINH-AGENT-REGISTRY.json"
 
 
