@@ -503,3 +503,68 @@ def test_main_that_su_chay_muc_ban_sao_trong_git(monkeypatch, capsys):
 
     assert S.main() == 2
     assert "TRONG .git" in capsys.readouterr().out
+
+
+# ── 06/10/2026: 🔴 GIẢ đã chặn kéo cây chính — bản sao packed-refs của máy Windows giữ 3 ref Codex trỏ thẳng vào TREE (bộ
+# ref đang dùng có ĐÚNG cùng giá trị — `merge-base` báo lỗi với tree nên bị coi là «mất») và 1 nhánh đã gộp rồi xoá (commit
+# nằm trong master). Chỉ 🔴 khi KHÔNG ref thật nào giữ đối tượng; ref ma của chính bản sao không được tính là «giữ».
+def test_ban_sao_packed_refs_ref_codex_tro_tree_dang_dung_la_vang(monkeypatch, tmp_path):
+    repo, _c1, _c2 = _repo_hai_commit(tmp_path)
+    cay = _git(repo, "rev-parse", "HEAD^{tree}")
+    _git(repo, "update-ref", "refs/codex/turn-diffs/checkpoints/a/b", cay)
+    (repo / ".git" / "packed-refs-C010000PK16BSL").write_text(
+        f"{cay} refs/codex/turn-diffs/checkpoints/a/b\n", encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "YELLOW", details
+    assert any("packed-refs-C010000PK16BSL" in d and "dời được" in d for d in details), details
+
+
+def test_ban_sao_packed_refs_nhanh_da_xoa_ma_commit_nam_trong_nhanh_khac_la_vang(monkeypatch, tmp_path):
+    repo, c1, _c2 = _repo_hai_commit(tmp_path)
+    (repo / ".git" / "packed-refs-C010000PK16BSL").write_text(f"{c1} refs/heads/claude/da-gop-roi-xoa\n",
+                                                               encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "YELLOW", details
+    assert any("1 ref chỉ còn ở ref thật khác" in d for d in details), details
+
+
+def test_ban_sao_packed_refs_tree_khong_ref_that_nao_giu_van_do(monkeypatch, tmp_path):
+    repo, c1, _c2 = _repo_hai_commit(tmp_path)
+    cay_cu = _git(repo, "rev-parse", f"{c1}^{{tree}}")        # tree của commit cũ: không ref nào trỏ THẲNG vào
+    (repo / ".git" / "packed-refs-C010000PK16BSL").write_text(f"{cay_cu} refs/codex/turn-diffs/x\n", encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "RED", details
+    assert any("refs/codex/turn-diffs/x" in d for d in details), details
+
+
+def test_ref_ma_roi_commit_nam_trong_ref_that_khac_la_vang(monkeypatch, tmp_path):
+    repo, c1, _c2 = _repo_hai_commit(tmp_path)
+    (repo / ".git" / "refs" / "heads" / "nhanh-xoa-C010000PK16BSL").write_text(c1 + "\n", encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "YELLOW", details
+    assert any("nhanh-xoa-C010000PK16BSL" in d and "`refs/heads/main`" in d for d in details), details
+
+
+def test_ref_ma_khong_duoc_tu_tinh_la_noi_giu_commit(monkeypatch, tmp_path):
+    """Git đọc ref ma rời như một ref ⇒ `for-each-ref --contains` liệt kê CHÍNH nó; không loại ra thì mọi ref ma giữ commit
+    mất đều thành 🟡 «dời được» — dời là mất commit."""
+    repo, c1, c2 = _repo_hai_commit(tmp_path)
+    _git(repo, "update-ref", "refs/heads/main", c1)
+    (repo / ".git" / "refs" / "heads" / "khac-C010000PK16BSL").write_text(c2 + "\n", encoding="utf-8")
+    _chi_repo(monkeypatch, repo)
+
+    level, details = S.check_git_conflict_copies()
+
+    assert level == "RED", details
