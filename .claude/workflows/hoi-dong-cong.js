@@ -63,13 +63,20 @@ const MUC_CHAM = { type: 'object', required: ['nguoi_cham', 'vai', 'tieu_chi', '
 const VONG = { type: 'object', required: ['luan_diem'], properties: { luan_diem: { type: 'array', minItems: 1, items: LUAN_DIEM } } }
 const DE_XUAT = { type: 'object', required: ['ket_luan_de_xuat', 'luan_diem'], properties: {
   ket_luan_de_xuat: { type: 'string' }, luan_diem: { type: 'array', minItems: 1, items: LUAN_DIEM } } }
-const PHAN_QUYET = { type: 'object', required: ['tung_luan_diem', 'ket_qua', 'ket_luan_cuoi'], properties: {
+// 06/10/2026 — bác sĩ quyết: hội đồng TƯ VẤN, ĐƯA RA GIẢI PHÁP TỐT NHẤT ⇒ phán quyết bắt buộc giai_phap_tot_nhat
+// (hoi_dong_cong.py biên bản v2 từ chối ghi khi thiếu/thiếu căn cứ/viết như trạng thái cổng).
+const GIAI_PHAP = { type: 'object', required: ['phuong_an', 'can_cu'], properties: {
+  phuong_an: { type: 'string' }, can_cu: { type: 'array', minItems: 1, items: CAN_CU.items },
+  phuong_an_khac: { type: 'array', items: { type: 'object', required: ['phuong_an', 'vi_sao_khong_chon'], properties: {
+    phuong_an: { type: 'string' }, vi_sao_khong_chon: { type: 'string' } } } } } }
+const PHAN_QUYET = { type: 'object', required: ['tung_luan_diem', 'ket_qua', 'ket_luan_cuoi', 'giai_phap_tot_nhat'], properties: {
   tung_luan_diem: { type: 'array', items: { type: 'object', required: ['ma', 'ket', 'ly_do'], properties: {
     ma: { type: 'string' }, ket: { enum: ['chap_nhan', 'bac', 'chua_du_can_cu'] }, ly_do: { type: 'string' } } } },
   ket_qua: { enum: ['giu_ket_luan', 'sua_ket_luan', 'chuyen_bac_si'] }, ket_luan_cuoi: { type: 'string' },
   viec_sua: { type: 'array', items: { type: 'string' } },
   chuyen_bac_si: { type: 'array', items: { type: 'object', required: ['van_de', 'vi_sao'], properties: {
-    van_de: { type: 'string' }, vi_sao: { type: 'string' } } } } } }
+    van_de: { type: 'string' }, vi_sao: { type: 'string' } } } },
+  giai_phap_tot_nhat: GIAI_PHAP } }
 const KQ_GHI = { type: 'object', required: ['ket_qua'], properties: {
   ket_qua: { type: 'array', items: { type: 'object', properties: { loai: { type: 'string' }, ma: { type: 'string' },
     ma_thoat: { type: 'number' }, dau_ra: { type: 'string' } } } }, tom_tat: { type: 'string' } } }
@@ -149,7 +156,9 @@ async function tranh(d) {
     `${CHUNG}\nBạn là trong-tai-tranh-bien (ngữ cảnh mới). Điểm quyết định ${d.ma}; kết luận dự kiến «${d.ket_luan_de_xuat}»; ` +
     `tài liệu ${d.tai_lieu_xet.join(', ')}. Hồ sơ các vòng: ${JSON.stringify(vong)}. Kiểm căn cứ của từng bên rồi phán MỌI ` +
     'phản đối P… (chap_nhan/bac/chua_du_can_cu + lý do). Đã chấp nhận phản đối thì KHÔNG giữ nguyên kết luận; tranh chấp thuộc ' +
-    'thẩm quyền người ⇒ chuyen_bac_si (van_de + vi_sao). ket_luan_cuoi là ĐỀ XUẤT — không viết «đã ký/đã duyệt/PASS_…/…_LOCKED».',
+    'thẩm quyền người ⇒ chuyen_bac_si (van_de + vi_sao). ket_luan_cuoi là ĐỀ XUẤT — không viết «đã ký/đã duyệt/PASS_…/…_LOCKED». ' +
+    'BẮT BUỘC giai_phap_tot_nhat: phuong_an = khuyến nghị CỤ THỂ làm được + can_cu kiểm được; sua_ket_luan/chuyen_bac_si thì ' +
+    'thêm ≥1 phuong_an_khac đã cân nhắc + vi_sao_khong_chon (bác sĩ quyết 06/10/2026: hội đồng ĐƯA RA GIẢI PHÁP TỐT NHẤT).',
     { label: `trọng tài ${d.ma}`, phase: 'Tranh biện', agentType: 'trong-tai-tranh-bien', schema: PHAN_QUYET })
   return pq ? { d, vong, pq } : null
 }
@@ -195,7 +204,7 @@ return {
   study: STUDY, gate: GATE, trang_thai_song: hoSo.trang_thai_song, so_agent: soAgent, bo_qua: boQua,
   danh_gia: danhGia.filter(Boolean).map(d => ({ ma: d.nhiem_vu.ma, dong_thuan: d.dong_thuan, ket_luan: d.cham.map(c => `${c.nguoi_cham}:${c.ket_luan}`) })),
   tranh_bien: tranhBien.filter(Boolean).map(t => ({ dp: t.d.ma, ket_qua: t.pq.ket_qua, ket_luan_cuoi: t.pq.ket_luan_cuoi,
-    chuyen_bac_si: t.pq.chuyen_bac_si || [] })),
+    chuyen_bac_si: t.pq.chuyen_bac_si || [], giai_phap_tot_nhat: t.pq.giai_phap_tot_nhat || null })),
   ghi_bien_ban: ghi,
   luu_y: 'TƯ VẤN — không mở, không chặn cổng; cổng do bộ chấm + chữ ký người có thẩm quyền. Cần bác sĩ kiểm chứng.',
 }
