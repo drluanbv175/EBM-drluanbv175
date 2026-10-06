@@ -61,12 +61,24 @@ Công cụ (biên bản v2) từ chối ghi khi thiếu căn cứ, có PII hoặ
 pháp. Lộ thêm và vá luôn: `thoi_diem` biên bản cắt về giây ⇒ hai biên bản cùng giây chọn «mới nhất» theo đuôi băm
 (test chập chờn ~50%) — nay giữ micro giây, sắp theo mốc thời gian thật.
 
+**07/10 — micro giây vẫn chưa đủ:**
+- CI y khoa trên Windows chạy Python 3.12. Trước 3.13, `time()` trên Windows dùng `GetSystemTimeAsFileTime()`, độ phân
+  giải 15,6 ms (What's New in Python 3.13, tra 07/10/2026). Hai biên bản ghi liền nhau vẫn có thể trùng mốc.
+- Vá: ghi bằng đồng hồ thật thì mốc mới LỚN HƠN HẲN mốc mới nhất của cổng (trùng hoặc lùi ⇒ +1 µs) ⇒ thứ tự ghi = thứ
+  tự thời gian. Mốc truyền tay giữ nguyên.
+- Test giả lập đồng hồ thô (`datetime.now` trả hằng) nên lỗi lộ TẤT ĐỊNH trên mọi máy, không chỉ trên CI Windows.
+
 ## Kiểm
 
-- Y khoa: `tests/test_sua_doi_ket_cuc_va_sap_dinh_tinh_20261006.py` (18 test) và `test_hoi_dong_cong` +5.
+- Y khoa (drluanbv175/medical-ebm-automation#95): `tests/test_sua_doi_ket_cuc_va_sap_dinh_tinh_20261006.py` (18 test)
+  và `test_hoi_dong_cong` +7.
 - Đột biến:
   - kết cục + SAP định tính: 28/28 (26 + bù 2/2);
-  - hội đồng: 10/10.
+  - hội đồng: 10/10;
+  - đồng hồ thô: 5/5.
+- Lộ khi chạy toàn bộ: fixture SAP định tính của `test_g4_quality_gate` còn điền khuôn §2 ĐỊNH LƯỢNG cũ ⇒ 2 test đỏ. Đã
+  sửa fixture theo khuôn mới, không nới assertion (§0.8).
 - Gốc: workflow `hoi-dong-cong.js` (lược đồ `GIAI_PHAP`, kiểm cú pháp node); 8 agent dạy luật mới; toàn bộ `tools/` 2654
   qua.
-- Toàn bộ bộ test y khoa: ghi ở PR.
+- Toàn bộ bộ test y khoa: 8245 qua · 44 bỏ qua · 0 đỏ (sau rebase, trước vá đồng hồ thô). Sau vá, chạy lại các tệp liên
+  quan: đều qua.
