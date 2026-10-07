@@ -34,7 +34,10 @@ let soAgent = 0
 const boQua = []
 
 async function goi(prompt, opts) {
-  if (soAgent >= MAX_AGENT) {
+  // 07/10/2026 (lộ ở lượt họp thí điểm G0): bước GHI BIÊN BẢN cũng tính vào trần — hết suất thì kết quả cả hội đồng
+  // không vào sổ. Nay GIỮ CHỖ một suất cho bước ghi: các vai khác dùng tối đa MAX_AGENT − 1.
+  const tran = opts.phase === 'Biên bản' ? MAX_AGENT : MAX_AGENT - 1
+  if (soAgent >= tran) {
     boQua.push(opts.label)
     log(`⛔ Chạm trần ${MAX_AGENT} agent — BỎ «${opts.label}» (ghi vào kết quả, không cắt im lặng)`)
     return null
