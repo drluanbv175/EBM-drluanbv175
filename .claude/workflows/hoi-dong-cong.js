@@ -1,7 +1,7 @@
 export const meta = {
   name: 'hoi-dong-cong',
   description: 'Hội đồng MỘT cổng G0–G10: đánh giá chéo đầu ra các agent + tranh biện điểm quyết định trước kết luận (tư vấn, không mở cổng)',
-  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"|"codex"}. Tốn ~1–3 triệu token/cổng — hỏi trước.',
+  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"|"codex"}. Tốn ≈6 triệu token cho một cổng 4 nhiệm vụ (đo 07/10/2026) — hỏi trước.',
   phases: [
     { title: 'Hồ sơ cổng', detail: 'điều phối cổng chấm sống (chỉ đọc), liệt kê đầu ra có thật + kết luận dự kiến cho từng điểm quyết định' },
     { title: 'Đánh giá chéo', detail: 'người chấm chuyên môn theo ma trận + giám khảo độc lập, rubric RQ1–RQ8' },
