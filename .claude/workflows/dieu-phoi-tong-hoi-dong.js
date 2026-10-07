@@ -1,7 +1,7 @@
 export const meta = {
   name: 'dieu-phoi-tong-hoi-dong',
   description: 'Điều phối tổng: họp hội đồng LẦN LƯỢT các cổng được chọn của một đề tài (đánh giá chéo + tranh biện), dừng khi cần người có thẩm quyền',
-  whenToUse: 'Bác sĩ đồng ý họp hội đồng cho NHIỀU cổng một lượt. args: {study, gates: ["G2","G4",…], max_agent_tong?, max_vong?, chay_thu?}. Chi phí ≈ số cổng × 1–3 triệu token — hỏi trước.',
+  whenToUse: 'Bác sĩ đồng ý họp hội đồng cho NHIỀU cổng một lượt. args: {study, gates: ["G2","G4",…], max_agent_tong?, max_vong?, chay_thu?}. Chi phí ≈ số cổng × ~6 triệu token (đo 07/10/2026) — hỏi trước.',
   phases: [{ title: 'Hội đồng từng cổng', detail: 'gọi workflow hoi-dong-cong cho từng cổng theo thứ tự G0→G10' }],
 }
 
