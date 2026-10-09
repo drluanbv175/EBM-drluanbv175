@@ -93,7 +93,10 @@ const KQ_CODEX = { type: 'object', required: ['ok'], properties: {
     model: { type: 'string' }, luc: { type: 'string' } } } } }
 const KQ_GHI = { type: 'object', required: ['ket_qua'], properties: {
   ket_qua: { type: 'array', items: { type: 'object', properties: { loai: { type: 'string' }, ma: { type: 'string' },
-    ma_thoat: { type: 'number' }, dau_ra: { type: 'string' } } } }, tom_tat: { type: 'string' } } }
+    ma_thoat: { type: 'number' }, dau_ra: { type: 'string' } } } }, tom_tat: { type: 'string' },
+  // 09/10/2026: bảng trách nhiệm của điều phối cổng lúc bàn giao (`hoi_dong_cong.py trach-nhiem --ghi`, _HOI-DONG-CONG §1b).
+  trach_nhiem: { type: 'object', properties: { ket_luan: { type: 'string' }, ma_thoat: { type: 'number' },
+    tep_luu: { type: 'string' }, agent_con_viec: { type: 'array', items: { type: 'string' } } } } } }
 
 const CHUNG = `Đề tài «${STUDY}», cổng ${GATE}. Mọi lệnh chạy trong thư mục ${Y}/. Đường dẫn tệp là tương đối exports/${STUDY}/. ` +
   'KHÔNG sửa tệp đề tài, KHÔNG ghi gate_params/approval_ledger, KHÔNG chạy approve_gate.py, KHÔNG PII. ' +
@@ -234,7 +237,9 @@ const ghi = await goi(
   `${CHUNG}\nBạn là ${DIEU_PHOI} ở BƯỚC 7 (ghi biên bản). Ghi LẦN LƯỢT từng biên bản dưới đây, NGUYÊN VĂN (không sửa nội dung), ` +
   `bằng \`python3 tools/hoi_dong_cong.py ghi --study ${STUDY} --gate ${GATE} --tep -\` với JSON qua stdin. Ghi biên bản danh_gia_cheo ` +
   'TRƯỚC; với tranh biện BD-…, thay nguon_bat_dong bằng id biên bản đánh giá vừa ghi của đúng nhiệm vụ. Công cụ trả mã 3 = vi phạm ' +
-  'luật ⇒ KHÔNG lách, ghi lại mã thoát + thông điệp. Cuối cùng chạy `python3 tools/hoi_dong_cong.py tom-tat --study ' + STUDY + '`.\n' +
+  'luật ⇒ KHÔNG lách, ghi lại mã thoát + thông điệp. Cuối cùng chạy `python3 tools/hoi_dong_cong.py tom-tat --study ' + STUDY + '`, rồi ' +
+  `\`python3 tools/hoi_dong_cong.py trach-nhiem --study ${STUDY} --gate ${GATE} --ghi\` (bạn CHỊU TRÁCH NHIỆM kết quả cổng — trả ` +
+  'trach_nhiem: kết luận, mã thoát, tệp lưu, mã các tiêu chí «agent còn việc»; KHÔNG tự khai hoàn chỉnh khi mã ≠ 0).\n' +
   `BIÊN BẢN: ${JSON.stringify(bienBan)}`,
   { label: `ghi biên bản ${GATE}`, phase: 'Biên bản', agentType: DIEU_PHOI, schema: KQ_GHI })
 
@@ -244,5 +249,6 @@ return {
   tranh_bien: tranhBien.filter(Boolean).map(t => ({ dp: t.d.ma, ket_qua: t.pq.ket_qua, ket_luan_cuoi: t.pq.ket_luan_cuoi,
     chuyen_bac_si: t.pq.chuyen_bac_si || [], giai_phap_tot_nhat: t.pq.giai_phap_tot_nhat || null })),
   ghi_bien_ban: ghi,
+  trach_nhiem: ghi && ghi.trach_nhiem ? ghi.trach_nhiem : null,
   luu_y: 'TƯ VẤN — không mở, không chặn cổng; cổng do bộ chấm + chữ ký người có thẩm quyền. Cần bác sĩ kiểm chứng.',
 }
