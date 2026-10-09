@@ -26,6 +26,7 @@ Mã thoát: 0 sạch 🔴 · 1 chỉ 🟡 · 2 có 🔴. Cần bác sĩ kiểm c
 """
 from __future__ import annotations
 
+import ast
 import io
 import re
 import sys
@@ -63,6 +64,54 @@ R5 = re.compile(r"[\"'](?:/Library/|/Applications/|AppData\\\\|AppData/)")
 R6 = re.compile(r'\.write_text\([^\n]*encoding="utf-8"\)')
 VUNG_KY = ("medical-ebm-automation/tools", "medical-ebm-automation/runtime",
            "medical-ebm-automation/tests", "medical-ebm-automation/scripts")
+
+
+def dong_r6_vi_pham(text: str) -> set[int] | None:
+    """Số dòng (dòng chứa `.write_text`) của mọi lời gọi `.write_text(...)` CÓ encoding mà THIẾU newline — đọc bằng CÚ
+    PHÁP (ast), không bằng regex theo dòng. None = tệp không phân tích được cú pháp (bên gọi lùi về regex cũ).
+
+    VÁ 09/10/2026 (BH55 đỏ từ 07/10): regex `R6` khớp `encoding="utf-8")` của lời gọi `read_text(...)` LỒNG trong đối số
+    rồi tưởng là hết lời gọi `write_text`, trong khi `newline="\\n"` nằm ở dòng kế — vd
+    `p.write_text(p.read_text(encoding="utf-8") + "…",` ⏎ `encoding="utf-8", newline="\\n")`. Đo 09/10 trên 752 tệp vùng
+    ký: regex báo 24 🔴, CẢ 24 là báo nhầm; AST: 0 vi phạm thật. Ngược lại regex BỎ SÓT mọi lời gọi trải nhiều dòng
+    (`encoding=` và `)` không cùng dòng). Đối số vị trí: `write_text(s, "utf-8")` có encoding; ≥ 4 đối số vị trí có
+    newline. `*args`/`**kwargs` có thể mang newline ⇒ không phán (không bịa vi phạm). Miễn trừ `# da-nen: bo-qua` ở BẤT
+    KỲ dòng nào của lời gọi."""
+    try:
+        cay = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return None
+    dong = text.split("\n")
+    ra: set[int] = set()
+    for nut in ast.walk(cay):
+        if not (isinstance(nut, ast.Call) and isinstance(nut.func, ast.Attribute) and nut.func.attr == "write_text"):
+            continue
+        if any(isinstance(a, ast.Starred) for a in nut.args) or any(k.arg is None for k in nut.keywords):
+            continue
+        ten_kw = {k.arg for k in nut.keywords}
+        co_encoding = "encoding" in ten_kw or len(nut.args) >= 2
+        co_newline = "newline" in ten_kw or len(nut.args) >= 4
+        if not co_encoding or co_newline:
+            continue
+        dau = nut.lineno
+        cuoi = getattr(nut, "end_lineno", None) or dau
+        if any(MIEN_TRU in dong[i - 1] for i in range(dau, cuoi + 1) if 0 < i <= len(dong)):
+            continue
+        ra.add(getattr(nut.func, "end_lineno", None) or dau)
+    return ra
+
+
+def _r6_bao_do(text: str, ten: str, code: list[str], dong: list[str]) -> list[str]:
+    """Thông điệp 🔴 R6 của MỘT tệp trong vùng chuỗi-ký. Đọc bằng AST (`dong_r6_vi_pham`); tệp lỗi cú pháp thì lùi về
+    regex theo dòng cũ trên mã đã che chú thích/chuỗi — KHÔNG ĐO ĐƯỢC không bao giờ được đọc thành «sạch»."""
+    vi_pham = dong_r6_vi_pham(text)
+    duoi = ""
+    if vi_pham is None:
+        vi_pham = {i for i, ln in enumerate(code, 1)
+                   if MIEN_TRU not in dong[i - 1] and R6.search(ln) and "newline=" not in ln}
+        duoi = " [đọc theo dòng: tệp lỗi cú pháp]"
+    return [f"{ten}:{i} R6 write_text thiếu newline='\\n' trong vùng chuỗi-ký (CRLF phá hash){duoi}"
+            for i in sorted(vi_pham)]
 
 
 def _che_chu_thich_dong(s: str) -> str:
@@ -326,9 +375,9 @@ def quet_file(p: Path) -> tuple[list[str], list[str]]:
         if R5.search(ln) and not biet_nen_tang:
             vang.append(f"{ten}:{i} R5 đường dẫn đặc thù nền tảng không guard: "
                         f"{dong[i-1].strip()[:70]}")
-        if (R6.search(ln) and 'newline=' not in ln
-                and any(v in ten for v in VUNG_KY)):
-            do.append(f"{ten}:{i} R6 write_text thiếu newline='\\n' trong vùng chuỗi-ký (CRLF phá hash)")
+    # R6 đọc CẢ lời gọi bằng cú pháp (09/10/2026) — không còn so khớp theo từng dòng.
+    if any(v in ten for v in VUNG_KY):
+        do.extend(_r6_bao_do(text, ten, code, dong))
     if co_in_ngoai_ascii and not co_utf8:
         vang.append(f"{ten} R4 print ngoài-ASCII mà không reconfigure UTF-8 (bẫy cp1252)")
     return do, vang
@@ -359,9 +408,10 @@ def main() -> int:
                 continue
             n += 1
             try:
-                dong = p.read_text(encoding="utf-8", errors="replace").splitlines()
+                text = p.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
+            dong = text.splitlines()
             code = _mask_khong_phai_code(dong)
             # VÁ 08/09/2026: medical-ebm-automation có thể là SIBLING của REPO trên
             # phiên cloud (không lồng bên trong) — p.relative_to(REPO) ném ValueError
@@ -371,12 +421,8 @@ def main() -> int:
                 ten = p.relative_to(REPO).as_posix()
             except ValueError:
                 ten = p.as_posix()
-            for i, ln in enumerate(code, 1):
-                if MIEN_TRU in dong[i - 1]:
-                    continue
-                if R6.search(ln) and 'newline=' not in ln:
-                    do_tong.append(f"{ten}:{i} R6 write_text thiếu newline='\\n' "
-                                   "trong vùng chuỗi-ký (CRLF phá hash)")
+            # R6 đọc bằng cú pháp (09/10/2026) — cùng một hàm với vòng lặp chính.
+            do_tong.extend(_r6_bao_do(text, ten, code, dong))
     print(f"CHỐT ĐA NỀN TẢNG — quét {n} file Python trong {len(CAY_QUET)} cây tool + vùng ký R6")
     for x in do_tong:
         print(f"  🔴 {x}")
