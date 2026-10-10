@@ -1,7 +1,7 @@
 export const meta = {
   name: 'hoi-dong-cong',
   description: 'Hội đồng MỘT cổng G0–G10: đánh giá chéo đầu ra các agent + tranh biện điểm quyết định trước kết luận (tư vấn, không mở cổng)',
-  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"|"codex"}. Tốn ≈6 triệu token cho một cổng 4 nhiệm vụ (đo 07/10/2026) — hỏi trước.',
+  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, ho_so?, gom_giam_khao?, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"|"codex"}. Tốn ≈6 triệu token cho một cổng 4 nhiệm vụ (đo 07/10/2026) — hỏi trước; ước tính trước bằng `hoi_dong_cong.py uoc-tinh`, họp với ho_so = `hoi_dong_cong.py ho-so --json` (máy lập hồ sơ, chỉ họp phần chưa có biên bản còn hiệu lực).',
   phases: [
     { title: 'Hồ sơ cổng', detail: 'điều phối cổng chấm sống (chỉ đọc), liệt kê đầu ra có thật + kết luận dự kiến cho từng điểm quyết định' },
     { title: 'Đánh giá chéo', detail: 'người chấm chuyên môn theo ma trận + giám khảo độc lập, rubric RQ1–RQ8' },
@@ -30,6 +30,18 @@ if (a.trong_tai !== undefined && !['subagent', 'codex'].includes(a.trong_tai)) {
 const CHE_DO = a.trong_tai === 'codex' ? 'codex' : 'subagent'
 const TEN_TRONG_TAI = CHE_DO === 'codex' ? 'codex:trong-tai-tranh-bien' : 'trong-tai-tranh-bien'
 const Y = 'medical-ebm-automation'
+// 10/10/2026 — HỌP TIẾT KIỆM (bác sĩ: «việc họp rất tốn token, hãy hoàn thiện theo cách thông minh nhất»). Hồ sơ do
+// MÁY lập: `python3 tools/hoi_dong_cong.py ho-so --study … --gate … --json` (0 agent) truyền qua args.ho_so ⇒ bỏ agent
+// lập hồ sơ (chỉ còn agent soạn luận điểm khi có DP cần tranh biện), chỉ chấm đầu ra CHƯA có biên bản còn hiệu lực,
+// chỉ tranh biện DP chưa có biên bản còn hiệu lực + bất đồng còn treo. Không truyền ho_so ⇒ lập hồ sơ bằng agent như cũ.
+const HS = a.ho_so
+if (HS !== undefined && !(HS && HS.schema === 'hoi_dong_cong/ho_so/v1' && HS.study === STUDY && HS.gate === GATE &&
+    Array.isArray(HS.nhiem_vu) && Array.isArray(HS.dp) && Array.isArray(HS.bat_dong_treo))) {
+  throw new Error('args.ho_so phải là đầu ra `hoi_dong_cong.py ho-so --json` của ĐÚNG đề tài + cổng')
+}
+// §5 «gom MỘT giám khảo cho nhiều đầu ra cùng cổng khi được»: một giam-khao-cong chấm ≤ GOM đầu ra (mỗi đầu ra một bản
+// chấm riêng). 1 = mỗi đầu ra một giám khảo như trước. Cùng mặc định với hoi_dong_cong.GOM_GIAM_KHAO.
+const GOM = Math.min(Math.max(Number(a.gom_giam_khao === undefined ? 4 : a.gom_giam_khao) || 1, 1), 8)
 let soAgent = 0
 const boQua = []
 
@@ -103,6 +115,15 @@ const CHUNG = `Đề tài «${STUDY}», cổng ${GATE}. Mọi lệnh chạy tron
   'Căn cứ phải kiểm được: tep (<tệp>:<dòng>), tieu_chi (G4-AUTO-09…), pmid, doi, lenh (kèm ket_qua). Trả lời đúng schema.'
 
 // ── Chạy thử: in kế hoạch, KHÔNG mở agent ─────────────────────────────────────────────────────────────────────────────
+if (a.chay_thu && HS) {
+  return { chay_thu: true, ho_so_may: true, study: STUDY, gate: GATE, khuyen_nghi: HS.khuyen_nghi, gom_giam_khao: GOM,
+    cham: HS.nhiem_vu.filter(n => n.can_cham).map(n => n.ma),
+    tranh_bien_dp: HS.dp.filter(d => d.can_tranh_bien).map(d => d.ma),
+    bat_dong_treo: HS.bat_dong_treo.map(b => b.ma),
+    bo_qua: [...HS.nhiem_vu.filter(n => !n.can_cham).map(n => `${n.ma}: ${n.ly_do}`),
+      ...HS.dp.filter(d => !d.can_tranh_bien).map(d => `${d.ma}: ${d.ly_do}`)],
+    ghi_chu: `Số agent + token: python3 tools/hoi_dong_cong.py uoc-tinh --study ${STUDY} --gate ${GATE}` }
+}
 if (a.chay_thu) {
   const vaiTrongTai = CHE_DO === 'codex' ? 'trọng tài Codex (tools/trong_tai_codex.py)' : 'trọng tài'
   return { chay_thu: true, study: STUDY, gate: GATE, dieu_phoi: DIEU_PHOI, max_vong: MAX_VONG, max_agent: MAX_AGENT,
@@ -115,7 +136,33 @@ if (a.chay_thu) {
 phase('Hồ sơ cổng')
 const dpYeuCau = Array.isArray(a.dp) && a.dp.length ? `chỉ các DP: ${a.dp.join(', ')}` :
   'các DP BẮT BUỘC của cổng (cổng cứng) hoặc mọi DP (cổng mềm)'
-const hoSo = await goi(
+if (HS && !HS.can_hop) {  // máy đã lập hồ sơ: không còn gì cần họp ⇒ 0 agent
+  return { study: STUDY, gate: GATE, khong_can_hop: true, so_agent: 0, khuyen_nghi: HS.khuyen_nghi,
+    cho_bac_si: HS.cho_bac_si || [], bo_qua: HS.nhiem_vu.map(n => `${n.ma}: ${n.ly_do}`)
+      .concat(HS.dp.map(d => `${d.ma}: ${d.ly_do}`)),
+    luu_y: 'TƯ VẤN — không mở, không chặn cổng. Cần bác sĩ kiểm chứng.' }
+}
+const DP_HO_SO = { type: 'object', required: ['dp'], properties: { dp: HO_SO.properties.dp } }
+async function lapHoSo() {
+  if (!HS) return null
+  const dpCan = HS.dp.filter(d => d.can_tranh_bien)
+  let dp = []
+  if (dpCan.length) {
+    const r = await goi(
+      `${CHUNG}\nBạn là ${DIEU_PHOI} ở BƯỚC 1–2 của hội đồng. MÁY đã lập hồ sơ tất định (trạng thái sống ${HS.trang_thai_song}; ` +
+      'đầu ra đem chấm, người chấm, phần đã có biên bản còn hiệu lực) — bạn CHỈ soạn điểm quyết định, không giao việc mới, ' +
+      `không sửa gì. Với MỖI DP: ${JSON.stringify(dpCan.map(d => ({ ma: d.ma, cau_hoi: d.cau_hoi, tham_quyen: d.tham_quyen })))} ` +
+      'nêu kết luận dự kiến (đề xuất cho người có thẩm quyền — KHÔNG viết «đã ký/đã duyệt/PASS_…»), tai_lieu_xet (tệp có ' +
+      `thật; hồ sơ cổng: ${HS.tai_lieu_cong.join(', ')}), và 1–4 luận điểm mã L1… mỗi luận điểm ≥1 căn cứ đã tự kiểm.`,
+      { label: `luận điểm DP ${GATE}`, phase: 'Hồ sơ cổng', agentType: DIEU_PHOI, schema: DP_HO_SO })
+    if (!r) return { loi: true }
+    dp = (r.dp || []).filter(d => dpCan.some(x => x.ma === d.ma))
+  }
+  return { trang_thai_song: HS.trang_thai_song, dp,
+    nhiem_vu: HS.nhiem_vu.filter(n => n.can_cham && n.cham_chuyen_mon)
+      .map(n => ({ ma: n.ma, tac_gia: n.agent, tai_lieu: n.tai_lieu, cham_chuyen_mon: n.cham_chuyen_mon })) }
+}
+const hoSo = HS ? await lapHoSo() : await goi(
   `${CHUNG}\nBạn là ${DIEU_PHOI} ở BƯỚC 1–2 của hội đồng (chuẩn bị hồ sơ — không giao việc mới, không sửa gì).\n` +
   `1) Chạy \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\` và \`python3 tools/hoi_dong_cong.py danh-muc --gate ${GATE} --json\`.\n` +
   `2) Với MỖI nhiệm vụ của danh mục: tác giả đúng danh mục; tai_lieu = các tệp đầu ra CÓ THẬT trong exports/${STUDY}/ (ls để kiểm); ` +
@@ -124,7 +171,7 @@ const hoSo = await goi(
   `3) Với ${dpYeuCau}: kết luận dự kiến (đề xuất cho người có thẩm quyền — KHÔNG viết «đã ký/đã duyệt/PASS_…»), ` +
   'tai_lieu_xet (tệp có thật), và 1–4 luận điểm mã L1… mỗi luận điểm ≥1 căn cứ đã tự kiểm.',
   { label: `hồ sơ ${GATE}`, phase: 'Hồ sơ cổng', agentType: DIEU_PHOI, schema: HO_SO })
-if (!hoSo) return { loi: 'không lập được hồ sơ cổng', bo_qua: boQua }
+if (!hoSo || hoSo.loi) return { loi: 'không lập được hồ sơ cổng', bo_qua: boQua }
 const nhiemVu = (hoSo.nhiem_vu || []).filter(n => n.ap_dung !== false && (n.tai_lieu || []).length)
 log(`${GATE}: ${nhiemVu.length} đầu ra đem chấm · ${(hoSo.dp || []).length} DP đem tranh biện · trạng thái sống ${hoSo.trang_thai_song}`)
 
@@ -175,7 +222,7 @@ async function tranh(d) {
     // Vai trọng tài KHÔNG tự phán: chạy trình Codex (mô hình khác) và trả NGUYÊN VĂN phán quyết đã qua luật biên bản.
     const nhap = { loai: 'tranh_bien', diem_quyet_dinh: { ma: d.ma }, tai_lieu_xet: d.tai_lieu_xet,
       ket_luan_de_xuat: d.ket_luan_de_xuat, vai: { de_xuat: DIEU_PHOI, phan_bien: 'phan-bien-tranh-bien' }, vong,
-      ...(d.nguon ? { nguon_bat_dong: `(id biên bản đánh giá ${d.nguon} — điều phối cổng điền khi ghi)` } : {}) }
+      ...(d.nguon ? { nguon_bat_dong: d.nguon_id || `(id biên bản đánh giá ${d.nguon} — điều phối cổng điền khi ghi)` } : {}) }
     const kq = await goi(
       `${CHUNG}\nBạn là trong-tai-tranh-bien ở CHẾ ĐỘ CODEX — KHÔNG tự phán, KHÔNG sửa phán quyết. ` +
       '1) Ghi BẢN NHÁP dưới đây NGUYÊN VĂN ra một tệp trong thư mục tạm của hệ điều hành (KHÔNG ghi vào exports/). ' +
@@ -202,17 +249,48 @@ async function tranh(d) {
     { label: `trọng tài ${d.ma}`, phase: 'Tranh biện', agentType: 'trong-tai-tranh-bien', schema: PHAN_QUYET })
   return pq ? { d, vong, pq } : null
 }
+const MUC_CHAM_NV = { ...MUC_CHAM, required: [...MUC_CHAM.required, 'ma_nhiem_vu'],
+  properties: { ...MUC_CHAM.properties, ma_nhiem_vu: { type: 'string' } } }
+const GOM_CHAM = { type: 'object', required: ['danh_gia'], properties: { danh_gia: { type: 'array', items: MUC_CHAM_NV } } }
+const chamGom = nhom => goi(
+  `${CHUNG}\nBạn là giam-khao-cong (vai giam_khao), chấm ĐỘC LẬP ${nhom.length} đầu ra của cổng — MỖI đầu ra một bản chấm ` +
+  'riêng đủ RQ1–RQ8, xét từng đầu ra trên tệp của chính nó, không để nhận xét đầu ra này lan sang đầu ra khác: ' +
+  nhom.map(n => `${n.ma} (tác giả «${n.tac_gia}»; tệp: ${n.tai_lieu.join(', ')})`).join(' · ') +
+  `. Rubric .claude/agents/_HOI-DONG-CONG.md §3 (trạng thái sống chỉ đọc: \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\`). ` +
+  'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' +
+  'Trả danh_gia = đúng một mục cho MỖI mã nhiệm vụ (ma_nhiem_vu), nguoi_cham="giam-khao-cong", vai="giam_khao".',
+  { label: `giám khảo ${nhom.map(n => n.ma).join('+')}`, phase: 'Đánh giá chéo', agentType: 'giam-khao-cong', schema: GOM_CHAM })
+const nhomGK = []
+for (let i = 0; i < nhiemVu.length; i += GOM) nhomGK.push(nhiemVu.slice(i, i + GOM))
+if (GOM > 1 && nhiemVu.length > 1) log(`Gom giám khảo: ${nhiemVu.length} đầu ra → ${nhomGK.length} lượt giam-khao-cong`)
 phase('Đánh giá chéo')
-const [danhGiaTho, tranhDP] = await parallel([
-  () => pipeline(nhiemVu,
-    n => parallel([() => chamMot(n, n.cham_chuyen_mon, 'chuyen_mon'), () => chamMot(n, 'giam-khao-cong', 'giam_khao')]),
-    chamXong),
+const [chuyenMon, giamKhao, tranhDP] = await parallel([
+  () => parallel(nhiemVu.map(n => () => chamMot(n, n.cham_chuyen_mon, 'chuyen_mon'))),
+  () => GOM > 1 ? parallel(nhomGK.map(nh => () => chamGom(nh)))
+    : parallel(nhiemVu.map(n => () => chamMot(n, 'giam-khao-cong', 'giam_khao'))),
   () => pipeline((hoSo.dp || []).map(d => ({ ...d, nguon: null })), tranh),
 ])
-const danhGia = (danhGiaTho || []).filter(Boolean)
+const gkTheoMa = {}
+if (GOM > 1) {
+  for (const r of (giamKhao || []).filter(Boolean)) {
+    for (const c of r.danh_gia || []) {
+      if (!nhiemVu.some(n => n.ma === c.ma_nhiem_vu) || gkTheoMa[c.ma_nhiem_vu]) continue
+      const { ma_nhiem_vu, ...cham } = c
+      gkTheoMa[ma_nhiem_vu] = { ...cham, nguoi_cham: 'giam-khao-cong', vai: 'giam_khao' }
+    }
+  }
+} else nhiemVu.forEach((n, i) => { if (giamKhao && giamKhao[i]) gkTheoMa[n.ma] = giamKhao[i] })
+const thieuGK = nhiemVu.filter(n => !gkTheoMa[n.ma]).map(n => n.ma)
+if (thieuGK.length) log(`⛔ Thiếu bản chấm giám khảo cho ${thieuGK.join(', ')} — đầu ra đó KHÔNG ghi biên bản (ghi vào kết quả)`)
+boQua.push(...thieuGK.map(m => `giám khảo ${m}`))
+const danhGia = nhiemVu.map((n, i) => chamXong([chuyenMon && chuyenMon[i], gkTheoMa[n.ma]], n))
 phase('Tranh biện')
-const batDong = danhGia.filter(dg => !dg.dong_thuan && dg.cham.length === 2).map(dg => ({
-  ma: `BD-${dg.nhiem_vu.ma}`, nguon: dg.nhiem_vu.ma, tai_lieu_xet: dg.nhiem_vu.tai_lieu, cham: dg.cham }))
+const batDong = [
+  ...(HS ? HS.bat_dong_treo.map(b => ({ ma: b.ma, nguon: b.nguon, nguon_id: b.nguon_id, tai_lieu_xet: b.tai_lieu_xet,
+    cham: b.cham })) : []),
+  ...danhGia.filter(dg => !dg.dong_thuan && dg.cham.length === 2).map(dg => ({
+    ma: `BD-${dg.nhiem_vu.ma}`, nguon: dg.nhiem_vu.ma, tai_lieu_xet: dg.nhiem_vu.tai_lieu, cham: dg.cham })),
+]
 if (batDong.length) log(`${batDong.length} đầu ra bất đồng ⇒ tranh biện BD-…`)
 const tranhBien = [...(tranhDP || []), ...(await pipeline(batDong, tranh))]
 
@@ -227,7 +305,7 @@ for (const dg of danhGia.filter(Boolean)) {
 }
 for (const tb of tranhBien.filter(Boolean)) {
   bienBan.push({ loai: 'tranh_bien', ma: tb.d.ma, json: { loai: 'tranh_bien', che_do: CHE_DO,
-    diem_quyet_dinh: { ma: tb.d.ma }, nguon_bat_dong: tb.d.nguon ? `(id biên bản đánh giá ${tb.d.nguon} — điều phối cổng điền sau khi ghi)` : undefined,
+    diem_quyet_dinh: { ma: tb.d.ma }, nguon_bat_dong: tb.d.nguon_id || (tb.d.nguon ? `(id biên bản đánh giá ${tb.d.nguon} — điều phối cổng điền sau khi ghi)` : undefined),
     tai_lieu_xet: tb.d.tai_lieu_xet, ket_luan_de_xuat: tb.d.ket_luan_de_xuat,
     vai: { de_xuat: DIEU_PHOI, phan_bien: 'phan-bien-tranh-bien', trong_tai: TEN_TRONG_TAI },
     vong: tb.vong, phan_quyet: { viec_sua: [], chuyen_bac_si: [], ...tb.pq, trong_tai: TEN_TRONG_TAI },
@@ -236,7 +314,8 @@ for (const tb of tranhBien.filter(Boolean)) {
 const ghi = await goi(
   `${CHUNG}\nBạn là ${DIEU_PHOI} ở BƯỚC 7 (ghi biên bản). Ghi LẦN LƯỢT từng biên bản dưới đây, NGUYÊN VĂN (không sửa nội dung), ` +
   `bằng \`python3 tools/hoi_dong_cong.py ghi --study ${STUDY} --gate ${GATE} --tep -\` với JSON qua stdin. Ghi biên bản danh_gia_cheo ` +
-  'TRƯỚC; với tranh biện BD-…, thay nguon_bat_dong bằng id biên bản đánh giá vừa ghi của đúng nhiệm vụ. Công cụ trả mã 3 = vi phạm ' +
+  'TRƯỚC; với tranh biện BD-…, thay nguon_bat_dong bằng id biên bản đánh giá vừa ghi của đúng nhiệm vụ (đã là id thật dạng ' +
+  `«${GATE}-DG-…» thì GIỮ NGUYÊN — bất đồng từ lần họp trước). Công cụ trả mã 3 = vi phạm ` +
   'luật ⇒ KHÔNG lách, ghi lại mã thoát + thông điệp. Cuối cùng chạy `python3 tools/hoi_dong_cong.py tom-tat --study ' + STUDY + '`, rồi ' +
   `\`python3 tools/hoi_dong_cong.py trach-nhiem --study ${STUDY} --gate ${GATE} --ghi\` (bạn CHỊU TRÁCH NHIỆM kết quả cổng — trả ` +
   'trach_nhiem: kết luận, mã thoát, tệp lưu, mã các tiêu chí «agent còn việc»; KHÔNG tự khai hoàn chỉnh khi mã ≠ 0).\n' +
@@ -245,6 +324,9 @@ const ghi = await goi(
 
 return {
   study: STUDY, gate: GATE, trong_tai: CHE_DO, trang_thai_song: hoSo.trang_thai_song, so_agent: soAgent, bo_qua: boQua,
+  ho_so_may: !!HS, gom_giam_khao: GOM,
+  khong_hop_lai: HS ? HS.nhiem_vu.filter(n => !n.can_cham).map(n => `${n.ma}: ${n.ly_do}`)
+    .concat(HS.dp.filter(d => !d.can_tranh_bien).map(d => `${d.ma}: ${d.ly_do}`)) : [],
   danh_gia: danhGia.filter(Boolean).map(d => ({ ma: d.nhiem_vu.ma, dong_thuan: d.dong_thuan, ket_luan: d.cham.map(c => `${c.nguoi_cham}:${c.ket_luan}`) })),
   tranh_bien: tranhBien.filter(Boolean).map(t => ({ dp: t.d.ma, ket_qua: t.pq.ket_qua, ket_luan_cuoi: t.pq.ket_luan_cuoi,
     chuyen_bac_si: t.pq.chuyen_bac_si || [], giai_phap_tot_nhat: t.pq.giai_phap_tot_nhat || null })),
