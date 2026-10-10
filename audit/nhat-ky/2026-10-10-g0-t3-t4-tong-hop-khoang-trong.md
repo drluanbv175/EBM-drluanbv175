@@ -42,6 +42,7 @@ Repo gốc (PR này): `tong-quan-y-van.md`, `khoang-trong-nghien-cuu.md` (hợp 
 
 - `tests/test_g0_tong_hop_bien_ban_20261010.py`: 21 ca; một test cũ chốt chuỗi «hiển thị» đổi sang «liệt kê đủ» (giữ ý tách
   số hit khỏi số bài).
-- Đột biến 14/14 bị bắt, có lượt nền xanh (909 test nhóm G0/hội đồng/StudySpec).
+- Đột biến 16/16 bị bắt (gồm chốt ngày dd/mm/yyyy và đường dẫn tương đối), có lượt nền xanh. Bộ đầy đủ repo y khoa:
+  8630 qua, 43 bỏ qua, 0 đỏ (12 phút 57 giây); `exports/` 72 → 72 tệp.
 - Bảng trách nhiệm G0 của C1a sau sửa: AGENT_XONG_CHO_NGUOI (đo trong worktree). Hai biên bản 07/10 chuyển trạng thái «cũ»
   (tài liệu đã đổi) — xác nhận chất lượng cần hội đồng chấm chéo lại, việc tốn token nên hỏi bác sĩ trước.
