@@ -52,6 +52,9 @@ cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ c�
 7. **Đánh giá chéo nằm trong trách nhiệm:** biên bản «trả về sửa» còn hiệu lực ⇒ `AGENT_CON_VIEC`; nhiệm vụ KHÔNG có tiêu
    chí máy (vd G3-T2 biến số, G3-T3 CRF, G6-T3 diễn giải) chỉ được bảo đảm bằng đánh giá chéo — chưa đánh giá ⇒ bảng ghi
    «chất lượng chưa được bảo đảm» và khối bàn giao phải nói thật (không đổi kết luận máy; triệu tập vẫn hỏi bác sĩ §5).
+   Nhiệm vụ có tệp hợp đồng thì được thêm **kiểm máy cấp nhiệm vụ** (`hoi_dong_cong.KIEM_NHIEM_VU`, chỉ CẤU TRÚC, không
+   phải tiêu chí cổng): G3-T2/G3-T3 — `_bo-bien-rieng.csv` nạp được bằng đúng hàm G5 dùng, không biến định danh, CRF có
+   luật kiểm tra; lỗi ⇒ `AGENT_CON_VIEC` của đúng agent.
 8. **Lệnh trong tài liệu agent phải chạy được:** test `tests/test_lenh_trong_tai_lieu_agent_20261010.py` (repo y khoa)
    đối chiếu mọi cờ của lệnh `python3 tools/…` trong `.claude/agents/*.md` với argparse của công cụ.
 
