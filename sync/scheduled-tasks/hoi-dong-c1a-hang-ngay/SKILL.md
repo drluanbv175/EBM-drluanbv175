@@ -17,7 +17,8 @@ và BƯỚC 1; có cổng thì thêm `ho-so … --gate <G> --json`, `uoc-tinh --
 --chua-xu-ly`, `gh pr list --repo drluanbv175/medical-ebm-automation --state open`, rồi Workflow `hoi-dong-cong`
 với args {"study": …, "gate": "<G>", "ho_so": <JSON>, "chay_thu": true} (CHẠY THỬ — workflow trả kế hoạch, KHÔNG
 mở agent). Ghi kết quả vào `state/hoi-dong-thu-quyen-<YYYY-MM-DD>.md`. Lượt thử KHÔNG họp thật, KHÔNG sửa gì, KHÔNG
-commit/push/PR, KHÔNG ghi BAO_CAO_NGAY.
+commit/push/PR, KHÔNG ghi BAO_CAO_NGAY — chỗ nào ở bước 0 bảo «ghi báo cáo ngày» thì lượt thử ghi vào tệp `state/`
+nói trên.
 
 BỐI CẢNH. Bác sĩ (PI, quản trị duy nhất của hệ) giao ngày 10/10/2026: «Việc họp như vậy sẽ như hoàn thiện đề tài
 nghiên cứu của tôi, mỗi ngày họp một cổng và với lần họp này sẽ đảm bảo hệ thống được hoàn thiện tự động tốt nhất từ
