@@ -41,7 +41,8 @@ cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ c�
 3. **Thước đo duy nhất (chỉ đọc, không tốn agent):** `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate
    G<N> [--ghi]` — kết luận `DAT_TIEU_CHI` · `AGENT_XONG_CHO_NGUOI` (mã 0 = phần agent HOÀN CHỈNH) · `AGENT_CON_VIEC` ·
    `CHO_CONG_TRUOC` · `CHUA_PHAN_CONG` (mã 1) · `KHONG_DO_DUOC` (mã 2). Không tự khai «hoàn chỉnh». `--ghi` lưu bảng lúc
-   bàn giao ở `hoi_dong/G<N>/trach_nhiem/TN-<mốc>.json` kèm SHA-256 hồ sơ `G<N>_*`.
+   bàn giao ở `hoi_dong/G<N>/trach_nhiem/TN-<mốc>.json` kèm SHA-256 hồ sơ `G<N>_*`. Toàn đề tài cho điều phối
+   tổng: `--gate ALL` (bảng 11 cổng + cổng GIAO TRƯỚC; mã 1 nếu còn cổng có việc agent).
 4. **Không đổi ranh giới:** trách nhiệm hoàn chỉnh KHÔNG cho phép ký, bật cờ, ghi xác nhận/dấu vân tay thay người, hay sửa
    artifact của cổng khác để «xanh» tiêu chí tiền đề; cũng KHÔNG đòi triệu tập hội đồng nhiều agent (§5).
 5. Điều phối tổng chỉ nhận «phần agent của cổng hoàn chỉnh» khi bảng ra mã 0; mã 1 ⇒ trả về đúng điều phối cổng đó.
