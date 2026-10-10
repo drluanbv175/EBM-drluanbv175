@@ -11,6 +11,9 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 `~/.ebm-worktrees` → `%USERPROFILE%\.ebm-worktrees`.
 Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
 
+NGÀY BẮT ĐẦU: bác sĩ hẹn bắt đầu 18:00 ngày 11/10/2026. Lượt chạy trước ngày đó (ngày hệ thống < 2026-10-11) ⇒ DỪNG
+NGAY, không chạy lệnh nào khác, không ghi báo cáo.
+
 BỐI CẢNH. Bác sĩ (PI, quản trị duy nhất của hệ) giao ngày 10/10/2026: «Việc họp như vậy sẽ như hoàn thiện đề tài
 nghiên cứu của tôi, mỗi ngày họp một cổng và với lần họp này sẽ đảm bảo hệ thống được hoàn thiện tự động tốt nhất từ
 vấn đề hệ thống, Agent và các điều phối» và «Bắt đầu từ 18h ngày mai». Đề tài: `hai-long-benh-nhan-C1a-BVQY175`.
