@@ -11,14 +11,12 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 `~/.ebm-worktrees` → `%USERPROFILE%\.ebm-worktrees`.
 Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
 
-NGÀY BẮT ĐẦU + LƯỢT THỬ CẤP QUYỀN: bác sĩ hẹn HỌP THẬT từ 18:00 ngày 11/10/2026 và (10/10/2026) cho phép chạy thử
-trước để cấp quyền công cụ. Lượt chạy trước ngày đó (ngày hệ thống < 2026-10-11) là LƯỢT THỬ: chỉ làm BƯỚC 0 (a, b, c)
-và BƯỚC 1; có cổng thì thêm `ho-so … --gate <G> --json`, `uoc-tinh --study … --gate ALL`, `bai-hoc --study …
---chua-xu-ly`, `gh pr list --repo drluanbv175/medical-ebm-automation --state open`, rồi Workflow `hoi-dong-cong`
-với args {"study": …, "gate": "<G>", "ho_so": <JSON>, "chay_thu": true} (CHẠY THỬ — workflow trả kế hoạch, KHÔNG
-mở agent). Ghi kết quả vào `state/hoi-dong-thu-quyen-<YYYY-MM-DD>.md`. Lượt thử KHÔNG họp thật, KHÔNG sửa gì, KHÔNG
-commit/push/PR, KHÔNG ghi BAO_CAO_NGAY — chỗ nào ở bước 0 bảo «ghi báo cáo ngày» thì lượt thử ghi vào tệp `state/`
-nói trên.
+NGÀY BẮT ĐẦU: bác sĩ hẹn HỌP THẬT từ 18:00 ngày 11/10/2026 (10/10 đã chạm giới hạn sử dụng — không chạy lượt nào
+hôm đó). Lượt chạy trước ngày đó (ngày hệ thống < 2026-10-11) ⇒ DỪNG NGAY, không chạy lệnh nào, không ghi gì.
+LỊCH: tác vụ được tạo với cron TẠM `0 18 11-31 10 *` (chỉ để bỏ qua ngày 10/10). Lượt đầu tiên, sau bước 5, đổi lại
+lịch hằng ngày bằng công cụ scheduled-tasks `update_scheduled_task` (taskId `hoi-dong-c1a-hang-ngay`, CHỈ trường
+`cronExpression: "0 18 * * *"`). Không có công cụ đó ⇒ ghi vào báo cáo ngày «cần bác sĩ đổi lịch tác vụ sang
+`0 18 * * *` trước 31/10/2026». Cron đã là `0 18 * * *` thì bỏ qua.
 
 BỐI CẢNH. Bác sĩ (PI, quản trị duy nhất của hệ) giao ngày 10/10/2026: «Việc họp như vậy sẽ như hoàn thiện đề tài
 nghiên cứu của tôi, mỗi ngày họp một cổng và với lần họp này sẽ đảm bảo hệ thống được hoàn thiện tự động tốt nhất từ
