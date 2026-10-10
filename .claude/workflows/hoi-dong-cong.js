@@ -66,6 +66,14 @@ const CAN_CU = {
 const LUAN_DIEM = { type: 'object', required: ['ma', 'noi_dung'], properties: {
   ma: { type: 'string' }, phan_doi: { type: 'string' }, noi_dung: { type: 'string' }, can_cu: CAN_CU,
   nhuong: { type: 'boolean' } } }
+// 10/10/2026 — bài học HỆ THỐNG (không bắt buộc): lỗi của công cụ/agent/điều phối/doctrine/quy trình, tách khỏi lỗi
+// của đầu ra đề tài, để vòng hoàn thiện sau họp sửa đúng chỗ (_HOI-DONG-CONG §3, `hoi_dong_cong.py bai-hoc`).
+const BAI_HOC = { type: 'array', items: { type: 'object', required: ['pham_vi', 'doi_tuong', 'van_de', 'can_cu'], properties: {
+  pham_vi: { enum: ['cong_cu', 'agent', 'dieu_phoi', 'doctrine', 'quy_trinh_hoi_dong'] }, doi_tuong: { type: 'string' },
+  van_de: { type: 'string' }, de_xuat: { type: 'string' }, can_cu: CAN_CU } } }
+const BAI_HOC_LOI = 'Lỗi của HỆ (công cụ/bộ chấm, tài liệu agent, điều phối, doctrine, quy trình hội đồng) — KHÔNG phải lỗi ' +
+  'của đầu ra — ghi riêng ở bai_hoc_he_thong (pham_vi, doi_tuong cụ thể, van_de, de_xuat, can_cu kiểm được); không thấy ' +
+  'lỗi hệ thì bỏ trống, KHÔNG bịa cho có.'
 const HO_SO = { type: 'object', required: ['trang_thai_song', 'nhiem_vu', 'dp'], properties: {
   trang_thai_song: { type: 'string' },
   nhiem_vu: { type: 'array', items: { type: 'object', required: ['ma', 'tac_gia', 'tai_lieu', 'cham_chuyen_mon'],
@@ -81,7 +89,7 @@ const MUC_CHAM = { type: 'object', required: ['nguoi_cham', 'vai', 'tieu_chi', '
     ma: { enum: ['RQ1', 'RQ2', 'RQ3', 'RQ4', 'RQ5', 'RQ6', 'RQ7', 'RQ8'] },
     muc: { enum: ['dat', 'can_sua', 'loi_do', 'khong_ap_dung'] }, nhan_xet: { type: 'string' },
     can_cu: { type: 'array', items: CAN_CU.items } } } },
-  ket_luan: { enum: ['dat', 'dat_co_luu_y', 'tra_ve_sua'] } } }
+  ket_luan: { enum: ['dat', 'dat_co_luu_y', 'tra_ve_sua'] }, bai_hoc_he_thong: BAI_HOC } }
 const VONG = { type: 'object', required: ['luan_diem'], properties: { luan_diem: { type: 'array', minItems: 1, items: LUAN_DIEM } } }
 const DE_XUAT = { type: 'object', required: ['ket_luan_de_xuat', 'luan_diem'], properties: {
   ket_luan_de_xuat: { type: 'string' }, luan_diem: { type: 'array', minItems: 1, items: LUAN_DIEM } } }
@@ -98,7 +106,7 @@ const PHAN_QUYET = { type: 'object', required: ['tung_luan_diem', 'ket_qua', 'ke
   viec_sua: { type: 'array', items: { type: 'string' } },
   chuyen_bac_si: { type: 'array', items: { type: 'object', required: ['van_de', 'vi_sao'], properties: {
     van_de: { type: 'string' }, vi_sao: { type: 'string' } } } },
-  giai_phap_tot_nhat: GIAI_PHAP } }
+  giai_phap_tot_nhat: GIAI_PHAP, bai_hoc_he_thong: BAI_HOC } }
 const KQ_CODEX = { type: 'object', required: ['ok'], properties: {
   ok: { type: 'boolean' }, phan_quyet: PHAN_QUYET, loi: { type: 'string' },
   nguon_trong_tai: { type: 'object', properties: { cong_cu: { type: 'string' }, codex: { type: 'string' },
@@ -181,7 +189,7 @@ const chamMot = (n, nguoi, vai) => goi(
   `Tệp: ${n.tai_lieu.join(', ')}. Chấm ĐỦ RQ1–RQ8 theo rubric của .claude/agents/_HOI-DONG-CONG.md §3 ` +
   `(trạng thái sống chỉ đọc: \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\`). ` +
   'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' +
-  `Trả nguoi_cham="${nguoi}", vai="${vai}".`,
+  `${BAI_HOC_LOI} Trả nguoi_cham="${nguoi}", vai="${vai}".`,
   { label: `chấm ${n.ma} · ${nguoi}`, phase: 'Đánh giá chéo', agentType: nguoi, schema: MUC_CHAM })
 const chamXong = (cham, n) => {
   const hopLe = (cham || []).filter(Boolean)
@@ -245,7 +253,8 @@ async function tranh(d) {
     'phản đối P… (chap_nhan/bac/chua_du_can_cu + lý do). Đã chấp nhận phản đối thì KHÔNG giữ nguyên kết luận; tranh chấp thuộc ' +
     'thẩm quyền người ⇒ chuyen_bac_si (van_de + vi_sao). ket_luan_cuoi là ĐỀ XUẤT — không viết «đã ký/đã duyệt/PASS_…/…_LOCKED». ' +
     'BẮT BUỘC giai_phap_tot_nhat: phuong_an = khuyến nghị CỤ THỂ làm được + can_cu kiểm được; sua_ket_luan/chuyen_bac_si thì ' +
-    'thêm ≥1 phuong_an_khac đã cân nhắc + vi_sao_khong_chon (bác sĩ quyết 06/10/2026: hội đồng ĐƯA RA GIẢI PHÁP TỐT NHẤT).',
+    'thêm ≥1 phuong_an_khac đã cân nhắc + vi_sao_khong_chon (bác sĩ quyết 06/10/2026: hội đồng ĐƯA RA GIẢI PHÁP TỐT NHẤT). ' +
+    BAI_HOC_LOI,
     { label: `trọng tài ${d.ma}`, phase: 'Tranh biện', agentType: 'trong-tai-tranh-bien', schema: PHAN_QUYET })
   return pq ? { d, vong, pq } : null
 }
@@ -258,7 +267,7 @@ const chamGom = nhom => goi(
   nhom.map(n => `${n.ma} (tác giả «${n.tac_gia}»; tệp: ${n.tai_lieu.join(', ')})`).join(' · ') +
   `. Rubric .claude/agents/_HOI-DONG-CONG.md §3 (trạng thái sống chỉ đọc: \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\`). ` +
   'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' +
-  'Trả danh_gia = đúng một mục cho MỖI mã nhiệm vụ (ma_nhiem_vu), nguoi_cham="giam-khao-cong", vai="giam_khao".',
+  `${BAI_HOC_LOI} Trả danh_gia = đúng một mục cho MỖI mã nhiệm vụ (ma_nhiem_vu), nguoi_cham="giam-khao-cong", vai="giam_khao".`,
   { label: `giám khảo ${nhom.map(n => n.ma).join('+')}`, phase: 'Đánh giá chéo', agentType: 'giam-khao-cong', schema: GOM_CHAM })
 const nhomGK = []
 for (let i = 0; i < nhiemVu.length; i += GOM) nhomGK.push(nhiemVu.slice(i, i + GOM))
@@ -325,6 +334,8 @@ const ghi = await goi(
 return {
   study: STUDY, gate: GATE, trong_tai: CHE_DO, trang_thai_song: hoSo.trang_thai_song, so_agent: soAgent, bo_qua: boQua,
   ho_so_may: !!HS, gom_giam_khao: GOM,
+  so_bai_hoc_he_thong: danhGia.reduce((s, d) => s + d.cham.reduce((x, c) => x + ((c.bai_hoc_he_thong || []).length), 0), 0)
+    + tranhBien.filter(Boolean).reduce((s, tb) => s + ((tb.pq.bai_hoc_he_thong || []).length), 0),
   khong_hop_lai: HS ? HS.nhiem_vu.filter(n => !n.can_cham).map(n => `${n.ma}: ${n.ly_do}`)
     .concat(HS.dp.filter(d => !d.can_tranh_bien).map(d => `${d.ma}: ${d.ly_do}`)) : [],
   danh_gia: danhGia.filter(Boolean).map(d => ({ ma: d.nhiem_vu.ma, dong_thuan: d.dong_thuan, ket_luan: d.cham.map(c => `${c.nguoi_cham}:${c.ket_luan}`) })),
