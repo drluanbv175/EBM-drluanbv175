@@ -17,6 +17,9 @@
     {"id": "giam-sat-9-tram-web-hoi-tuan", "cron": "45 18 * * 1", "tu_ngay": "2026-10-05", "grace_gio": 30,
      "dau_vet": {"loai": "file-ngay", "path": "EBM-Dashboards/surveillance/to-chuc-{ngay}.md"}},
     {"id": "kiem-rut-bai-kho-thang", "cron": "30 18 4 * *", "tu_ngay": "2026-10-04", "grace_gio": 30,
-     "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-rut-bai-kho.log"}}
+     "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-rut-bai-kho.log"}},
+    {"id": "hoi-dong-c1a-hang-ngay", "cron": "0 18 * * *", "tu_ngay": "2026-10-11", "grace_gio": 30,
+     "dau_vet": {"loai": "file-ngay",
+                 "path": "medical-ebm-automation/exports/hai-long-benh-nhan-C1a-BVQY175/hoi_dong/BAO_CAO_NGAY_{ngay}.md"}}
   ]
 }
