@@ -94,6 +94,12 @@ def _chay_main(monkeypatch, tmp_path, *argv) -> tuple[Path, str]:
     monkeypatch.setattr(XC, "MIRROR_DIR", tep.parent)
     monkeypatch.setattr(XC, "DASH", tmp_path)        # có «EBM-Dashboards» ⇒ không vào nhánh máy-không-dữ-liệu
     monkeypatch.setattr(XC, "xay_trang_thai", lambda: _troi(GUONG, 1))
+    # VÁ 10/10/2026 — «quả bom hẹn giờ»: main() gọi can_ghi(…) không truyền giờ ⇒ so với GIỜ THẬT; gương mẫu cố định
+    # 02/10 nên từ 09/10 23:28 (≥ 7 ngày) nhánh «làm mới định kỳ» bật và test đỏ mãi. Chốt «bây giờ» = 1 ngày sau gương
+    # — đúng kịch bản «chỉ thời gian trôi» mà test kiểm.
+    goc_can_ghi = XC.can_ghi
+    luc = dt.datetime.fromisoformat(GUONG["sinh_luc"]) + dt.timedelta(days=1)
+    monkeypatch.setattr(XC, "can_ghi", lambda moi, tep, bay_gio=None: goc_can_ghi(moi, tep, bay_gio or luc))
     monkeypatch.setattr(sys, "argv", ["xuat_trang_thai_cloud.py", *argv])
     assert XC.main() == 0
     return tep, tep.read_text(encoding="utf-8")
