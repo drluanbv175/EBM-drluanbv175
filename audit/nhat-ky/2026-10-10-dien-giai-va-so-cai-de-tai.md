@@ -36,7 +36,7 @@ quả/Bàn luận từ `G6_DIEN_GIAI_<mã>.md`; bảng §3 `dieu-phoi-g6/g10`; `
 
 ## Kiểm
 
-- `tests/test_dien_giai_so_trang_thai_20261010.py`: 47 ca.
+- `tests/test_dien_giai_so_trang_thai_20261010.py`: 46 ca.
 - Đột biến CÓ lượt nền xanh: lượt 1 **14/16** — R5 (bỏ nhánh riêng cho «p = 0,000») lọt vì nhánh chung đã bắt (p = 0 <
   0,001) ⇒ bỏ nhánh thừa; R6 (bỏ rào «nguồn phải trong thư mục kết quả») lọt vì thiếu ca tệp nguồn CÓ THẬT ngoài thư mục
   kết quả ⇒ thêm ca test; lượt 2 **2/2**.
