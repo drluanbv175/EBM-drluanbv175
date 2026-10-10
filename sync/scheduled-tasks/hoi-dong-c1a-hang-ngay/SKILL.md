@@ -11,8 +11,13 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 `~/.ebm-worktrees` → `%USERPROFILE%\.ebm-worktrees`.
 Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
 
-NGÀY BẮT ĐẦU: bác sĩ hẹn bắt đầu 18:00 ngày 11/10/2026. Lượt chạy trước ngày đó (ngày hệ thống < 2026-10-11) ⇒ DỪNG
-NGAY, không chạy lệnh nào khác, không ghi báo cáo.
+NGÀY BẮT ĐẦU + LƯỢT THỬ CẤP QUYỀN: bác sĩ hẹn HỌP THẬT từ 18:00 ngày 11/10/2026 và (10/10/2026) cho phép chạy thử
+trước để cấp quyền công cụ. Lượt chạy trước ngày đó (ngày hệ thống < 2026-10-11) là LƯỢT THỬ: chỉ làm BƯỚC 0 (a, b, c)
+và BƯỚC 1; có cổng thì thêm `ho-so … --gate <G> --json`, `uoc-tinh --study … --gate ALL`, `bai-hoc --study …
+--chua-xu-ly`, `gh pr list --repo drluanbv175/medical-ebm-automation --state open`, rồi Workflow `hoi-dong-cong`
+với args {"study": …, "gate": "<G>", "ho_so": <JSON>, "chay_thu": true} (CHẠY THỬ — workflow trả kế hoạch, KHÔNG
+mở agent). Ghi kết quả vào `state/hoi-dong-thu-quyen-<YYYY-MM-DD>.md`. Lượt thử KHÔNG họp thật, KHÔNG sửa gì, KHÔNG
+commit/push/PR, KHÔNG ghi BAO_CAO_NGAY.
 
 BỐI CẢNH. Bác sĩ (PI, quản trị duy nhất của hệ) giao ngày 10/10/2026: «Việc họp như vậy sẽ như hoàn thiện đề tài
 nghiên cứu của tôi, mỗi ngày họp một cổng và với lần họp này sẽ đảm bảo hệ thống được hoàn thiện tự động tốt nhất từ
@@ -30,7 +35,7 @@ b. Cập nhật cây chính, KHÔNG đổi nhánh/stash/reset: repo gốc `git f
    ở cây chính: để nguyên. Sau khi kéo: `python3 tools/sync_agents_to_codex.py --check` ở gốc; lệch ⇒ chạy không `--check`.
 c. Điều kiện có công cụ: `python3 tools/hoi_dong_cong.py lich-hop --help`. Báo «invalid choice» ⇒ PR họp tiết kiệm/
    họp hằng ngày CHƯA được gộp vào cây chính ⇒ KHÔNG họp; ghi báo cáo ngày «chưa họp — cần bác sĩ gộp PR y khoa
-   #114 và PR gốc #153 cùng hai PR họp hằng ngày nối sau chúng» rồi DỪNG.
+   #114, #115 và PR gốc #153, #154» rồi DỪNG.
 
 BƯỚC 1 — chọn cổng (0 agent): `python3 tools/hoi_dong_cong.py lich-hop --study hai-long-benh-nhan-C1a-BVQY175 --json`.
 `gate` null ⇒ hôm nay không họp: bỏ bước 2, vẫn làm bước 3–5. Có cổng ⇒ ghi lại `khuyen_nghi` và `uoc_tinh`
