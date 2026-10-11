@@ -452,6 +452,54 @@ def test_tep_dinh_kem_phan_tich_ma_co_dau_cach_va_bo_dong_rac(N):
     assert en.tep_dinh_kem([a, b]) == {a: 0, b: 57}
 
 
+# ── --gan-kho: PDF trong kho → bản ghi có sẵn, không cần dashboard ─────────────────────────────────
+
+def test_gan_kho_chi_gan_ban_ghi_co_san_chua_co_tep(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-555_CHR.pdf", "PMID-777_UPW.pdf", "PMID-1555_UPW.pdf")
+    (kho / "PMID-888_UPW.html").write_text("x", encoding="utf-8", newline="\n")
+    cua_bac_si = "internal-pdf://0304089167/Cua bac si.pdf"
+    en = _EndNoteGia(tv, co_san=[("555", None, ""), ("555", None, ""), ("1555", None, cua_bac_si), ("999", None, "")])
+    bc = N.gan_kho(en, kho, None, True)
+    assert (bc["pdf_trong_kho"], bc["co_ban_ghi"], bc["gan_them_pdf"]) == (3, 2, 1)
+    assert re.fullmatch(r"internal-pdf://\d{10}/PMID-555\.pdf", en.ban_ghi[0]["tep"])
+    assert en.ban_ghi[1]["tep"] == "", "bản trùng PMID trong thư viện: chỉ gắn bản đầu"
+    assert en.ban_ghi[2]["tep"] == cua_bac_si and en.ban_ghi[3]["tep"] == ""
+    assert len(_thu_muc_pdf(tmp_path)) == 1
+    assert N.gan_kho(en, kho, None, True)["gan_them_pdf"] == 0, "chạy lại không gắn lần hai"
+
+
+def test_gan_kho_loc_theo_pmid_va_chay_kho(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-555_CHR.pdf", "PMID-556_CHR.pdf")
+    en = _EndNoteGia(tv, co_san=[("555", None, ""), ("556", None, "")])
+    bc = N.gan_kho(en, kho, ["556"], False)
+    assert (bc["pdf_trong_kho"], bc["se_gan_pdf"]) == (1, 1)
+    assert [b["tep"] for b in en.ban_ghi] == ["", ""] and _thu_muc_pdf(tmp_path) == []
+    assert N.gan_kho(en, None, None, True)["kho_toan_van"] is False
+
+
+class _EndNoteMacDong:
+    """EndNoteMac giả: thư viện CHƯA mở; mở EndNote là lỗi của phép thử."""
+
+    def __init__(self, ung_dung, thu_vien):
+        self.thu_vien = thu_vien
+
+    def dang_mo_dung_thu_vien(self):
+        return False
+
+    def mo_thu_vien(self, cho_giay=40):
+        raise AssertionError("--chi-khi-dang-mo mà vẫn tự mở EndNote")
+
+
+def test_gan_kho_chi_khi_dang_mo_khong_tu_bat_endnote(N, tmp_path, monkeypatch, capsys):
+    tv = tmp_path / "tv.enl"
+    tv.write_bytes(b"")
+    monkeypatch.setattr(N, "doc_cau_hinh", lambda tep=None: {"thu_vien": str(tv), "ung_dung": "EndNote 2025"})
+    monkeypatch.setattr(N, "EndNoteMac", _EndNoteMacDong)
+    ma = N.main(["--gan-kho", "--pmid", "555", "--kho-toan-van", str(tmp_path), "--ap-dung", "--chi-khi-dang-mo"])
+    assert ma == 0 and "⚪ EndNote chưa mở" in capsys.readouterr().out
+    assert N.main(["--gan-kho", "--file", str(tv)]) == 3, "--gan-kho không đi cùng --file"
+
+
 # ── rào an toàn & cấu hình ─────────────────────────────────────────────────────────────────────────
 
 def test_khong_bao_gio_dieu_khien_endnote_that_duoi_pytest(N, tmp_path, monkeypatch):

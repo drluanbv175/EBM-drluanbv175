@@ -39,3 +39,23 @@ lộ ra ba lỗi.
 
 - zsh không tách biến chưa trích dẫn thành nhiều đối số: `--pmid $P` gửi 24 PMID thành MỘT chuỗi ⇒ phiếu báo
   «0/1 bài, CHƯA RÕ». Dùng `--pmid ${=P}` (zsh) hoặc mảng.
+
+## 4. Toàn văn về sau vẫn phải chạy lại bằng tay mới vào EndNote
+
+- Đo trong phiên Chrome uỷ quyền cùng ngày (8 bài COPD lưu vào kho): mỗi PDF mới chỉ vào EndNote khi có người chạy lại
+  `nap_endnote_chu_de.py --file <dashboard> --ap-dung`; quên là PDF nằm trong kho mà nhóm EndNote vẫn thiếu.
+- Vá: chế độ `--gan-kho [--pmid …]` gắn PDF trong kho vào bản ghi CÓ SẴN cùng PMID (không cần dashboard, cùng luật: chỉ bản
+  ghi chưa có tệp, bản trùng PMID chỉ gắn bản đầu); `--chi-khi-dang-mo` ⇒ thư viện chưa mở thì ⚪, KHÔNG tự bật EndNote.
+  `phien_uy_quyen_chrome.py --nhan` (khi có `_CHR.pdf`) và tầng Unpaywall của `gom_toan_van_dashboard.py` (PDF mới của lượt)
+  tự gọi; mọi lỗi của bước phụ chỉ thành một dòng ⚪, lượt chính không hỏng; dưới pytest không bao giờ gọi.
+- Chạy thật: gắn thêm 3 PDF vào bản ghi CỦA BÁC SĨ (không do công cụ nhập) cùng PMID, chưa có tệp — chạy lại «sẽ gắn 0».
+- Kiểm hồi quy: `tools/test_nap_endnote_chu_de_20261011.py` + `tools/test_endnote_gan_tu_cong_cu_20261011.py`; 11/11 phép
+  đột biến đỏ đúng chỗ (K1–K11, trên ba tệp).
+
+## Bẫy vận hành của làn Chrome (đo 11/10)
+
+- Chrome chặn lần tải TỰ ĐỘNG thứ hai trên cùng miền và nhớ lệnh chặn (europepmc.org), kể cả với cú bấm; bác sĩ bấm «Luôn cho
+  phép» ở thanh địa chỉ thì Chrome NHẢ cả các lần tải đã giữ ⇒ có bản trùng «… (1).pdf» — so byte rồi mới xoá bản trùng.
+- PDF của JAMA/OUP/Cochrane chuyển hướng sang miền khác ⇒ `fetch` cùng trang hỏng; ScienceDirect đi qua trang trung gian
+  (`pdfft` trả HTML) ⇒ bấm «View PDF», tải từ tab `pdf.sciencedirectassets.com`.
+- Europe PMC `?pdf=render` trả PDF trong Chrome của bác sĩ nhưng 403 cho Python; bài JAMA trong PMC trả 404 (không có PDF).

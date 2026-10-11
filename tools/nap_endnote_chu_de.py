@@ -660,6 +660,51 @@ def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None) -> tupl
     return can_gan, thieu
 
 
+def _gan_pdf(endnote, can_gan: list[tuple]) -> None:
+    """Đặt từng PDF vào `.Data/PDF/` rồi gắn vào bản ghi; gắn hỏng ⇒ dọn đúng thư mục vừa đặt rồi ném lỗi."""
+    for r, pmid, (pdf, _nhan) in can_gan:
+        url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, pdf, pmid)
+        try:
+            endnote.gan_tep(r, url)
+        except Exception:
+            shutil.rmtree(tm, ignore_errors=True)  # gắn hỏng ⇒ không để PDF mồ côi
+            raise
+
+
+def gan_kho(endnote, kho: Path | None, pmids: list[str] | None, ap_dung: bool) -> dict:
+    """PDF trong kho → bản ghi CÓ SẴN trong thư viện cùng PMID («Accession Number»), không cần dashboard.
+
+    Toàn văn về SAU trích dẫn (phiên Chrome uỷ quyền, Unpaywall, Wiley TDM) ⇒ công cụ sinh PDF gọi chế độ này để PDF vào
+    ngay mọi nhóm đang chứa bản ghi. Cùng luật với lượt nạp chủ đề: chỉ bản ghi CHƯA có tệp nào; bản trùng PMID trong thư
+    viện chỉ gắn bản đầu (giống lúc đăng nhóm)."""
+    bc: dict = {"kho_toan_van": bool(kho and kho.is_dir()), "pdf_trong_kho": 0, "co_ban_ghi": 0, "ap_dung": ap_dung}
+    if not bc["kho_toan_van"]:
+        return bc
+    co_pdf: set[str] = set()
+    for p in kho.iterdir():
+        m = re.fullmatch(r"PMID-(\d{1,9})_[A-Za-z]+\.pdf", p.name, flags=re.I)
+        if m and p.is_file():
+            co_pdf.add(m.group(1))
+    pm = sorted(co_pdf if pmids is None else co_pdf & set(pmids))
+    bc["pdf_trong_kho"] = len(pm)
+    theo_pm = endnote.tim_khop(pm, "Accession Number") if pm else {}
+    cap: list[tuple[dict, str]] = []
+    thay: set[str] = set()
+    for p in pm:
+        for r in (theo_pm.get(p) or [])[:1]:
+            if r not in thay:
+                thay.add(r)
+                cap.append(({"pmid": p}, r))
+    bc["co_ban_ghi"] = len(cap)
+    can_gan, _ = xet_toan_van(endnote, cap, kho)
+    if ap_dung:
+        _gan_pdf(endnote, can_gan)
+        bc["gan_them_pdf"] = len(can_gan)
+    else:
+        bc["se_gan_pdf"] = len(can_gan)
+    return bc
+
+
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None) -> dict:
     """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được."""
@@ -748,13 +793,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
 
     # Toàn văn về SAU khi trích dẫn đã nằm trong EndNote ⇒ gắn vào bản ghi chưa có tệp đính kèm nào.
     can_gan, bc["thieu_toan_van"] = xet_toan_van(endnote, cap, kho)
-    for r, pmid, (pdf, _nhan) in can_gan:
-        url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, pdf, pmid)
-        try:
-            endnote.gan_tep(r, url)
-        except Exception:
-            shutil.rmtree(tm, ignore_errors=True)  # gắn hỏng ⇒ không để PDF mồ côi
-            raise
+    _gan_pdf(endnote, can_gan)
     bc["gan_them_pdf"] = len(can_gan)
     return bc
 
@@ -797,6 +836,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ung-dung", default=UNG_DUNG_MAC_DINH, help="tên ứng dụng EndNote (đi cùng --ghi-cau-hinh)")
     ap.add_argument("--im-khi-chua-cau-hinh", action="store_true",
                     help="máy chưa cấu hình/không phải Mac thì in một dòng ⚪ và trả 0 (dùng trong bộ năm)")
+    ap.add_argument("--gan-kho", action="store_true",
+                    help="gắn PDF trong kho vào bản ghi ĐÃ có trong thư viện cùng PMID (không cần dashboard)")
+    ap.add_argument("--pmid", nargs="*", help="cùng --gan-kho: chỉ xét các PMID này")
+    ap.add_argument("--chi-khi-dang-mo", action="store_true",
+                    help="EndNote chưa mở đúng thư viện thì in ⚪ và trả 0 — KHÔNG tự mở EndNote (công cụ khác gọi)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -819,8 +863,11 @@ def main(argv: list[str] | None = None) -> int:
             print("✗ không thấy thư mục EBM-Dashboards/ (bản sao trần?) — dùng --file")
             return MA_KHONG_CHAY
         files += sorted(dash_goc.glob("WebDashboard_*.html"))
-    if not files:
+    if not files and not a.gan_kho:
         ap.print_usage()
+        return MA_THAM_SO
+    if a.gan_kho and (files or a.xuat_xml):
+        print("✗ --gan-kho không đi cùng --file/--tat-ca/--xuat-xml")
         return MA_THAM_SO
     if a.ten_nhom and len(files) != 1:
         print("✗ --ten-nhom chỉ dùng với đúng một --file")
@@ -854,6 +901,9 @@ def main(argv: list[str] | None = None) -> int:
             raise KhongChayDuoc(f"thư viện đã cấu hình không còn tồn tại: {thu_vien}")
         endnote = EndNoteMac(ch["ung_dung"], thu_vien)
         if not endnote.dang_mo_dung_thu_vien():
+            if a.chi_khi_dang_mo:  # công cụ khác gọi giữa chừng: không bao giờ tự bật EndNote lên màn hình bác sĩ
+                print(f"⚪ EndNote chưa mở thư viện {thu_vien.name} — bỏ qua, lần nạp sau sẽ gắn.")
+                return MA_OK
             if a.ap_dung:
                 endnote.mo_thu_vien()
             else:
@@ -868,6 +918,25 @@ def main(argv: list[str] | None = None) -> int:
             return MA_KHONG_CHAY
         print(f"⚪ {e} — chỉ lập kế hoạch.")
         endnote = None
+
+    if a.gan_kho:
+        if endnote is None:
+            print("⚪ --gan-kho cần EndNote đang mở đúng thư viện — chưa gắn gì.")
+            return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
+        try:
+            bc = gan_kho(endnote, kho, a.pmid, a.ap_dung)
+        except (RuntimeError, OSError) as e:
+            print(f"✗ gắn toàn văn từ kho: {type(e).__name__}: {e}"[:300])
+            return MA_KHONG_CHAY
+        if not bc["kho_toan_van"]:
+            print("⚠ Không thấy kho toàn văn — CHƯA XÉT PDF; chỉ đường bằng --kho-toan-van")
+        else:
+            gan = bc.get("gan_them_pdf", bc.get("se_gan_pdf", 0))
+            print(f"✓ EndNote · kho: {bc['pdf_trong_kho']} PMID có PDF · {bc['co_ban_ghi']} có bản ghi trong thư viện · "
+                  f"{'gắn thêm' if a.ap_dung else 'sẽ gắn'} {gan}")
+        if a.json:
+            print(json.dumps(bc, ensure_ascii=False, indent=2))
+        return MA_OK
 
     doc = _nap_doc_data()
     ket_qua = []
