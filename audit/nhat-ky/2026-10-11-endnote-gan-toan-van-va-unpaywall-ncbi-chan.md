@@ -59,3 +59,13 @@ lộ ra ba lỗi.
 - PDF của JAMA/OUP/Cochrane chuyển hướng sang miền khác ⇒ `fetch` cùng trang hỏng; ScienceDirect đi qua trang trung gian
   (`pdfft` trả HTML) ⇒ bấm «View PDF», tải từ tab `pdf.sciencedirectassets.com`.
 - Europe PMC `?pdf=render` trả PDF trong Chrome của bác sĩ nhưng 403 cho Python; bài JAMA trong PMC trả 404 (không có PDF).
+
+## 5. Nhiều phiên bản một chủ đề sinh nhiều nhóm gần trùng
+
+- Đo khi chuẩn bị nạp 72 dashboard: tên nhóm theo câu hỏi lâm sàng ⇒ 68 nhóm cho 64 chủ đề (Suy tim tổng hợp: 5 bản, 4 câu
+  hỏi khác chữ; Tiên lượng suy tim: 3 bản, 2 câu). Bác sĩ dặn: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu».
+- Vá: `nap_nhieu` — một khoá chủ đề (tên tệp bỏ đuôi ngày) = một nhóm; bản MỚI NHẤT đặt tên; bảng `nhom_theo_chu_de` trong
+  `~/.ebm-endnote.json` ghi nhớ nhóm (chỉ khi nạp thật) để bản cập nhật sau vẫn vào nhóm cũ dù câu hỏi đổi chữ; khai lại
+  cùng thư viện giữ bảng, đổi thư viện thì bỏ. 5/5 phép đột biến đỏ đúng chỗ.
+- EndNote sập lần hai lúc 13:40 khi bác sĩ đóng thư viện thử: luồng `ENWebSync::GetAccountInfo` (đồng bộ của chính EndNote),
+  không phải lệnh của công cụ. Thư viện chính kiểm trên bản sao (`sqlite3 .backup` — nhất quán dù đang mở): `quick_check` ok.
