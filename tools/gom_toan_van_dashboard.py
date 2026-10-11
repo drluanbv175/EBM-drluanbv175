@@ -167,6 +167,77 @@ def la_trang_chan_ncbi(du_lieu: bytes) -> bool:
     return b"blocked diagnostic" in dau or b"blocked for possible abuse" in dau
 
 
+EPMC_REST = "https://www.ebi.ac.uk/europepmc/webservices/rest"
+
+
+def la_jats_toan_van(du_lieu: bytes | None) -> bool:
+    """JATS có thân bài — KHÔNG phải trang HTML (trang chặn NCBI cũng chứa «<body»: chỉ xét «<body» là lưu nhầm trang chặn)."""
+    if not du_lieu:
+        return False
+    dau = du_lieu[:3000].lower()
+    if b"<html" in dau or b"<!doctype html" in dau or la_trang_chan_ncbi(du_lieu):
+        return False
+    return b"<article" in dau and b"<body" in du_lieu
+
+
+def _lay(url: str, timeout: int = 60) -> bytes:
+    import urllib.request as _rq
+    return _rq.urlopen(url, timeout=timeout).read()
+
+
+def lien_ket_pmc_epmc(pmids: list[str], lay=None) -> dict[str, tuple[str, bool]]:
+    """PMID → (PMCID chỉ phần số, có thuộc tập truy cập mở không) qua Europe PMC — đường dự phòng khi NCBI elink hỏng.
+
+    Đo 11/10/2026: NCBI chặn IP ⇒ elink trả trang HTML ⇒ JSONDecodeError ⇒ bước gom DỪNG, bỏ cả tầng Unpaywall: lượt toàn văn
+    63 chủ đề báo 49 bài «có bản truy cập mở mà chưa gom». Lỗi mạng của Europe PMC ném ra (người gọi báo hạ tầng)."""
+    import json as _json
+    import urllib.parse as _up
+    lay = lay or _lay
+    ra: dict[str, tuple[str, bool]] = {}
+    for i in range(0, len(pmids), 80):
+        lo = pmids[i:i + 80]
+        q = _up.quote("(" + " OR ".join(f"EXT_ID:{p}" for p in lo) + ") AND SRC:MED")
+        js = _json.loads(lay(f"{EPMC_REST}/search?resultType=lite&format=json&pageSize=1000&query={q}"))
+        for r in (js.get("resultList") or {}).get("result") or []:
+            pm, pmc = str(r.get("pmid") or ""), str(r.get("pmcid") or "")
+            if pm in lo and pmc.upper().startswith("PMC"):
+                ra[pm] = (pmc[3:], r.get("isOpenAccess") == "Y")
+    return ra
+
+
+def tai_jats(gom, pmcid: str, la_oa: bool | None, trang: dict, lay=None) -> tuple[bytes | None, str]:
+    """Toàn văn JATS của một PMCID: NCBI efetch trước, NCBI chặn/lỗi/trả HTML ⇒ Europe PMC.
+
+    Trả (JATS, "ok") · (None, "khong_oa") khi NCBI TRẢ LỜI là bài không thuộc tập OA (ghi sổ 30 ngày như cũ) ·
+    (None, "khong_oa_epmc") khi Europe PMC nói không OA — KHÔNG ghi sổ (NCBI có thể có bản thảo tác giả khi hết chặn) ·
+    (None, "loi") khi chưa tải được (lượt sau thử lại). Trang chặn NCBI chứa «<body» ⇒ không bao giờ được lưu làm toàn văn."""
+    if la_oa is False:
+        return None, "khong_oa_epmc"
+    if not trang.get("ncbi_chan"):
+        try:
+            xml = gom.tai_toan_van(pmcid)
+        except Exception:  # noqa: BLE001 — lỗi mạng NCBI ⇒ thử Europe PMC
+            xml = b""
+        if xml is None:
+            return None, "khong_oa"
+        if la_jats_toan_van(xml):
+            return xml, "ok"
+        if xml and la_trang_chan_ncbi(xml):
+            trang["ncbi_chan"] = True
+            print("  ⚠ NCBI đang chặn IP này (trang «Blocked Diagnostic») — tải toàn văn qua Europe PMC cho phần còn lại")
+    try:
+        b = tai_jats_epmc(pmcid, lay)
+    except Exception:  # noqa: BLE001
+        return None, "loi"
+    return (b, "ok") if b else (None, "loi")
+
+
+def tai_jats_epmc(pmcid: str, lay=None) -> bytes | None:
+    """JATS toàn văn của bài truy cập mở từ Europe PMC; trả về không phải JATS ⇒ None. Lỗi mạng/HTTP ném ra (chưa tải được)."""
+    b = (lay or _lay)(f"{EPMC_REST}/PMC{pmcid}/fullTextXML")
+    return b if la_jats_toan_van(b) else None
+
+
 def doi_cua_pmid(pm: str, email: str, trang_thai: dict) -> str:
     """DOI của một PMID ("" = bài KHÔNG có DOI). NCBI esummary trước, rồi Europe PMC (EXT_ID:<pmid> AND SRC:MED).
 
@@ -377,33 +448,42 @@ def main() -> int:
     # (họ lỗi return-sớm 12/08: khi --unpaywall bật, KHÔNG thoát ở đây — tầng 2
     # nằm sau và xét tập thiếu độc lập với sổ back-off của tầng PMC)
     gom = _nap_gom()
-    try:
-        anh_xa = gom.lien_ket_pmc(can) if can else {}
-    except Exception as exc:  # noqa: BLE001
-        print(f"🔴 HẠ TẦNG: elink không trả lời ({type(exc).__name__}) — chưa gom, "
-              "KHÔNG kết luận độ phủ.")
-        return 2
+    # NCBI hỏng/chặn ⇒ Europe PMC (11/10/2026). Trước đây elink hỏng là `return 2` NGAY — bỏ luôn tầng Unpaywall.
+    ha_tang_loi, qua_epmc = False, False
+    anh_xa: dict[str, tuple[str, bool | None]] = {}
+    if can:
+        try:
+            anh_xa = {pm: (pmc, None) for pm, pmc in gom.lien_ket_pmc(can).items()}
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ⚠ NCBI elink không trả lời ({type(exc).__name__}) — đổi PMID→PMCID qua Europe PMC")
+            qua_epmc = True
+            try:
+                anh_xa = lien_ket_pmc_epmc(can)
+            except Exception as exc2:  # noqa: BLE001
+                print(f"🔴 HẠ TẦNG: cả NCBI elink lẫn Europe PMC không trả lời ({type(exc2).__name__}) — tầng PMC chưa "
+                      "gom, KHÔNG kết luận độ phủ (tầng Unpaywall vẫn chạy).")
+                ha_tang_loi = True
     moi, khong_oa, khong_pmc = 0, [], []
     loi_mang = 0
-    for pm in can:
-        pmcid = anh_xa.get(pm)
+    trang = {"ncbi_chan": qua_epmc}
+    for pm in ([] if ha_tang_loi else can):
+        pmcid, la_oa = anh_xa.get(pm, (None, None))
         if not pmcid:
-            khong_pmc.append(pm)
+            if not qua_epmc:   # Europe PMC thiếu bản ghi ≠ «không có bản PMC» — không ghi sổ 30 ngày
+                khong_pmc.append(pm)
             continue
         # Lỗi MỘT bài không được giết CẢ lượt (đo thật 15/08: IncompleteRead ở file
         # 17/600 làm mất trọn lượt chạy dài). Bài lỗi mạng KHÔNG vào danh sách
         # «không-OA» — đó là CHƯA TẢI ĐƯỢC, lần chạy sau thử lại (idempotent).
-        try:
-            xml = gom.tai_toan_van(pmcid)
-        except Exception:  # noqa: BLE001
-            loi_mang += 1
-            continue
-        time.sleep(0.34)
-        if xml:
+        xml, ket_luan = tai_jats(gom, pmcid, la_oa, trang)
+        if ket_luan == "ok":
             (KHO / f"PMID-{pm}_PMC{pmcid}.xml").write_bytes(xml)
             moi += 1
-        else:
+            time.sleep(0.34)
+        elif ket_luan == "khong_oa":
             khong_oa.append(pm)
+        elif ket_luan == "loi":
+            loi_mang += 1
     if loi_mang:
         print(f"  ⚠ {loi_mang} bài lỗi mạng lượt này — CHƯA tải được (không phải "
               "không-OA); chạy lại tool sẽ thử tiếp.")
@@ -448,7 +528,7 @@ def main() -> int:
         "> không phải lỗi. Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
     print(f"  +{moi} toàn văn mới · không-OA {len(khong_oa)} · không-PMC {len(khong_pmc)} "
           f"→ kho {tong_co}/{len(pmids)} PMID")
-    return 0
+    return 2 if ha_tang_loi else 0   # tầng PMC chưa gom được ⇒ người gọi KHÔNG được kết luận độ phủ
 
 
 if __name__ == "__main__":
