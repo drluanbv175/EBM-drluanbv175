@@ -589,11 +589,37 @@ def main() -> int:
         else:
             print("   ⚠ Bỏ qua (không chặn 5 sản phẩm trên): " + (out.strip().splitlines() or ["không rõ"])[-1][:160])
 
-    # ── ⑦ EndNote: trích dẫn của chủ đề vào nhóm «EBM · <câu hỏi>» (bác sĩ yêu cầu 11/10/2026) ──
+    # ── ⑦ TOÀN VĂN MỌI TRÍCH DẪN + phiếu xác thực (bác sĩ yêu cầu 11/10/2026: «tất cả phải được kiểm tra, đọc và tải
+    # toàn văn …, không được thì đưa ra giải pháp để tôi xác thực») ──
+    # Chạy TRƯỚC EndNote để PDF vừa gom được gắn ngay lúc nhập. Cần mạng ⇒ chỉ khi --online. Best-effort: không đổi
+    # rc_final; dưới pytest không gọi mạng thật.
+    print("⑦ Toàn văn mọi trích dẫn…")
+    TV = ROOT / "tools" / "toan_van_theo_chu_de.py"
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        print("   ⚪ Bỏ qua trong lượt test.")
+    elif not a.online:
+        print("   ⚪ Bỏ qua (không có --online — cần mạng để gom toàn văn và dò đường đọc).")
+    elif not TV.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/toan_van_theo_chu_de.py")
+    else:
+        bd = result.get("ban_doc") or ""
+        bc_tv = (Path(bd).with_name(Path(bd).name.replace("_ban-doc.html", "_toan-van.md")) if bd.endswith("_ban-doc.html")
+                 else dash.parent / "derivatives" / f"{dash.stem}_toan-van.md")
+        rc, out = run([py, str(TV), "--dashboard", str(dash), "--moi-trich-dan", "--bao-cao", str(bc_tv)])
+        for dong in out.splitlines():
+            if dong.strip() and (dong.startswith("PHIẾU") or dong.startswith("→")):
+                print("   " + dong.strip())
+        if rc == 0:
+            result["toan_van"] = str(bc_tv)
+        else:
+            print("   ⚠ Toàn văn chưa chạy xong (không chặn 5 sản phẩm trên): "
+                  + (out.strip().splitlines() or ["không rõ"])[-1][:160])
+
+    # ── ⑧ EndNote: trích dẫn của chủ đề vào nhóm «EBM · <câu hỏi>» (bác sĩ yêu cầu 11/10/2026) ──
     # Best-effort NHƯ ⑤ ⑥: tiện ích quản lý tài liệu, KHÔNG phải cổng — không đổi rc_final. Máy chưa cấu hình
     # (~/.ebm-endnote.json) hoặc không phải Mac ⇒ một dòng ⚪. Dưới pytest KHÔNG BAO GIỜ chạm EndNote thật
     # (dashboard của test là dữ liệu giả — nạp vào thư viện thật của bác sĩ là làm bẩn tài liệu).
-    print("⑦ EndNote…")
+    print("⑧ EndNote…")
     NAP_EN = ROOT / "tools" / "nap_endnote_chu_de.py"
     if os.environ.get("PYTEST_CURRENT_TEST"):
         print("   ⚪ Bỏ qua trong lượt test.")
