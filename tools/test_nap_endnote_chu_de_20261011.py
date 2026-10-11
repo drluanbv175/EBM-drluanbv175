@@ -249,10 +249,29 @@ class _EndNoteGia:
             self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
                        r.findtext("urls/pdf-urls/url") or "")
 
+    # Đo 11/10 trên thư viện thật: nhóm vừa tạo chưa vào danh sách nhóm vài giây; đăng cùng tên lúc đó ⇒ nhóm THỨ HAI.
+    tre_dang_ky = 0                              # số lần hỏi danh sách nhóm mà nhóm mới còn «vô hình»
+    nhom_trung: list = []                        # tên các nhóm trùng tên EndNote đã sinh ra
+
     def thanh_vien_nhom(self, ten):
         return list(self.nhom.get(ten, []))
 
+    def ten_cac_nhom(self):
+        if not hasattr(self, "_an"):
+            self._an = {}
+        ra = [n for n in self.nhom if self._an.get(n, 0) == 0] + list(self.nhom_trung)
+        for n in self._an:
+            self._an[n] = max(0, self._an[n] - 1)
+        return ra
+
     def dang_vao_nhom(self, ids, ten):
+        if not hasattr(self, "_an"):
+            self._an = {}
+        if ten in self.nhom and (self._an.get(ten, 0) > 0 or getattr(self, "sinh_trung_ten", False)):
+            self.nhom_trung = [*self.nhom_trung, ten]   # nhóm cũ chưa đăng ký ⇒ EndNote tạo nhóm mới cùng tên
+            return
+        if ten not in self.nhom:
+            self._an[ten] = self.tre_dang_ky
         self.nhom.setdefault(ten, []).extend(ids)   # đăng lại = nhân đôi, như đo thật
 
 
@@ -498,6 +517,105 @@ def test_gan_kho_chi_khi_dang_mo_khong_tu_bat_endnote(N, tmp_path, monkeypatch, 
     ma = N.main(["--gan-kho", "--pmid", "555", "--kho-toan-van", str(tmp_path), "--ap-dung", "--chi-khi-dang-mo"])
     assert ma == 0 and "⚪ EndNote chưa mở" in capsys.readouterr().out
     assert N.main(["--gan-kho", "--file", str(tv)]) == 3, "--gan-kho không đi cùng --file"
+
+
+# ── một chủ đề = một nhóm qua mọi phiên bản dashboard ──────────────────────────────────────────────
+
+def test_sap_xep_phien_ban_moi_nhat_truoc_giu_thu_tu_chu_de(N):
+    f = [Path(p) for p in ("WebDashboard_A_20260101.html", "WebDashboard_B_20260301.html", "WebDashboard_A_20260601.html",
+                           "WebDashboard_A.html")]
+    assert [x.name for x in N.sap_xep_phien_ban(f)] == [
+        "WebDashboard_A_20260601.html", "WebDashboard_A_20260101.html", "WebDashboard_A.html", "WebDashboard_B_20260301.html"]
+
+
+def _hai_phien_ban(tmp_path):
+    cu, moi = tmp_path / "WebDashboard_EBM_SuyTim_20260804.html", tmp_path / "WebDashboard_EBM_SuyTim_20260914.html"
+    for f in (cu, moi):
+        f.write_text("x", encoding="utf-8", newline="\n")
+    du = {cu.name: {"meta": {"question": "Suy tim — câu hỏi bản cũ"}, "items": [{"id": "1", "pmid": "111", "doi": ""},
+                                                                                 {"id": "2", "pmid": "222", "doi": ""}]},
+          moi.name: {"meta": {"question": "Suy tim — câu hỏi bản mới"}, "items": [{"id": "1", "pmid": "111", "doi": ""},
+                                                                                  {"id": "3", "pmid": "333", "doi": ""}]}}
+    tv = tmp_path / "tv.enl"
+    tv.write_bytes(b"")
+    ch = tmp_path / "ch.json"
+    N_ghi = json.dumps({"thu_vien": str(tv), "ung_dung": "EndNote 2025"})
+    ch.write_text(N_ghi, encoding="utf-8", newline="\n")
+    return [cu, moi], (lambda p: du[p.name]), tv, ch
+
+
+def _nap_nhieu(N, files, doc, en, ch, ap_dung=True):
+    return N.nap_nhieu(files, endnote=en, ap_dung=ap_dung, kho=None, doc_data=doc, cau_hinh=ch,
+                       lay_pm=lambda pmids: {p: _meta(p) for p in pmids}, lay_ep=lambda pmids: {}, lay_cr=lambda doi: None)
+
+
+def test_nhieu_phien_ban_vao_mot_nhom_ten_ban_moi_nhat_va_ghi_nho(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv, co_san=[("111", None, "")])
+    kq = _nap_nhieu(N, files, doc, en, ch)
+    assert [b["dashboard"] for b in kq] == [files[1].name, files[0].name], "bản mới nhất chạy trước, đặt tên nhóm"
+    assert set(en.nhom) == {"EBM · Suy tim — câu hỏi bản mới"}, "một chủ đề chỉ một nhóm"
+    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3, "bổ sung phần thiếu của bản cũ (222), không lặp 111"
+    assert len(en.ban_ghi) == 3, "bản ghi đã có (111) giữ nguyên, không nhập lại"
+    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": "EBM · Suy tim — câu hỏi bản mới"}
+
+
+def test_nhom_da_ghi_nho_thang_cau_hoi_moi(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    N.ghi_nhom("EBM_SuyTim", "EBM · Suy tim (nhóm cũ)", ch)
+    en = _EndNoteGia(tv)
+    _nap_nhieu(N, files[1:], doc, en, ch)
+    assert set(en.nhom) == {"EBM · Suy tim (nhóm cũ)"}, "chủ đề đã có nhóm ⇒ vào đúng nhóm cũ dù câu hỏi đổi chữ"
+
+
+def test_doi_nhom_moi_dang_ky_roi_moi_dang_ban_ke_tiep(N, tmp_path, monkeypatch):
+    """Ca thật 11/10: «Tiên lượng suy tim» bị tách hai nhóm cùng tên vì bản cũ đăng ngay sau khi bản mới tạo nhóm."""
+    ngu: list[float] = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv)
+    en.tre_dang_ky = 3
+    kq = _nap_nhieu(N, files, doc, en, ch)
+    assert en.nhom_trung == [], "đăng bản kế tiếp khi nhóm chưa đăng ký ⇒ EndNote sinh nhóm trùng tên"
+    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3 and ngu, "phải đợi nhóm đăng ký"
+    assert not any(b.get("nhom_trung_ten") for b in kq)
+
+
+def test_endnote_sinh_nhom_trung_ten_thi_bao_ro(N, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(N, "_ngu", lambda s: None)
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv)
+    _nap_nhieu(N, files[1:], doc, en, ch)
+    en.sinh_trung_ten = True
+    kq = _nap_nhieu(N, files[:1], doc, en, ch)
+    assert kq[0]["nhom_trung_ten"] == 2
+    assert "nhóm cùng tên này — gộp tay" in capsys.readouterr().out
+
+
+def test_cho_nhom_co_tran_thoi_gian(N, monkeypatch):
+    ngu: list[float] = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    en = type("E", (), {"ten_cac_nhom": lambda self: []})()
+    assert N.cho_nhom_dang_ky(en, "EBM · X", 1) == 0
+    assert len(ngu) == N.CHO_NHOM_GIAY, "không đợi vô hạn khi EndNote không bao giờ liệt kê nhóm"
+
+
+def test_chay_kho_khong_ghi_bang_nhom(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    kq = _nap_nhieu(N, files, doc, _EndNoteGia(tv), ch, ap_dung=False)
+    assert {b["nhom"] for b in kq} == {"EBM · Suy tim — câu hỏi bản mới"}, "chạy khô vẫn báo đúng một nhóm"
+    assert N.nhom_da_ghi(ch) == {}
+
+
+def test_khai_lai_cung_thu_vien_giu_bang_nhom_doi_thu_vien_thi_bo(N, tmp_path):
+    _, _, tv, ch = _hai_phien_ban(tmp_path)
+    N.ghi_nhom("EBM_SuyTim", "EBM · X", ch)
+    N.ghi_cau_hinh(str(tv), "EndNote 2025", tep=ch)
+    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": "EBM · X"}
+    tv2 = tmp_path / "khac.enl"
+    tv2.write_bytes(b"")
+    N.ghi_cau_hinh(str(tv2), "EndNote 2025", tep=ch)
+    assert N.nhom_da_ghi(ch) == {}, "bảng nhóm thuộc về MỘT thư viện"
 
 
 # ── rào an toàn & cấu hình ─────────────────────────────────────────────────────────────────────────

@@ -59,3 +59,24 @@ lộ ra ba lỗi.
 - PDF của JAMA/OUP/Cochrane chuyển hướng sang miền khác ⇒ `fetch` cùng trang hỏng; ScienceDirect đi qua trang trung gian
   (`pdfft` trả HTML) ⇒ bấm «View PDF», tải từ tab `pdf.sciencedirectassets.com`.
 - Europe PMC `?pdf=render` trả PDF trong Chrome của bác sĩ nhưng 403 cho Python; bài JAMA trong PMC trả 404 (không có PDF).
+
+## 5. Nhiều phiên bản một chủ đề sinh nhiều nhóm gần trùng
+
+- Đo khi chuẩn bị nạp 72 dashboard: tên nhóm theo câu hỏi lâm sàng ⇒ 68 nhóm cho 64 chủ đề (Suy tim tổng hợp: 5 bản, 4 câu
+  hỏi khác chữ; Tiên lượng suy tim: 3 bản, 2 câu). Bác sĩ dặn: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu».
+- Vá: `nap_nhieu` — một khoá chủ đề (tên tệp bỏ đuôi ngày) = một nhóm; bản MỚI NHẤT đặt tên; bảng `nhom_theo_chu_de` trong
+  `~/.ebm-endnote.json` ghi nhớ nhóm (chỉ khi nạp thật) để bản cập nhật sau vẫn vào nhóm cũ dù câu hỏi đổi chữ; khai lại
+  cùng thư viện giữ bảng, đổi thư viện thì bỏ. 5/5 phép đột biến đỏ đúng chỗ.
+- EndNote sập lần hai lúc 13:40 khi bác sĩ đóng thư viện thử: luồng `ENWebSync::GetAccountInfo` (đồng bộ của chính EndNote),
+  không phải lệnh của công cụ. Thư viện chính kiểm trên bản sao (`sqlite3 .backup` — nhất quán dù đang mở): `quick_check` ok.
+
+## 6. Nạp 72 dashboard: một nhóm bị tách đôi cùng tên
+
+- Kết quả nạp thật 11/10 (EndNote không sập, 0 lỗi): thư viện 1.155 → 1.929 bản ghi (+774), 59 nhóm EBM có bài (5 dashboard
+  không có PMID/DOI nào ⇒ không tạo nhóm), chạy khô lại: 1.373/1.373 trích dẫn đã có, 0 cần nhập, 0 cần gắn PDF.
+- Lỗi đo được: «Tiên lượng suy tim» thành HAI nhóm cùng tên (bảng `groups`: id 145 tạo lúc …798 với 11 bài, id 146 tạo
+  5 giây sau với 7 bài) — bản mới tạo nhóm, bản cũ hơn đăng ngay sau đó khi nhóm chưa vào danh sách nhóm của EndNote.
+  `get groups` cũng cho thấy EndNote CHO PHÉP trùng tên (26 nhóm của bác sĩ tự có trùng tên ×2).
+- Vá: `cho_nhom_dang_ky` — sau mỗi lần đăng, đợi (≤ 20 lần × 1 giây) tới khi EndNote liệt kê nhóm; đếm nhóm cùng tên trước/
+  sau, tăng ⇒ báo ⚠ kèm cách gộp tay (không im lặng). `ten_cac_nhom` ngăn tên bằng xuống dòng (tên nhóm có dấu phẩy).
+  3/3 phép đột biến đỏ đúng chỗ. Nhóm đã tách đôi: bác sĩ gộp tay (xoá nhóm không xoá bài).
