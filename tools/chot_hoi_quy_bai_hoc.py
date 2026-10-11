@@ -8773,6 +8773,13 @@ def bh120_chu_trinh_phu_ban_ghi_mo_coi_cua_so_xac_minh():
     if not ham_main or not any(isinstance(n, _ast.Constant) and isinstance(n.value, str) and "--phu-mo-coi" in n.value
                                for n in _ast.walk(ham_main[0])):
         return False, "lời gợi ý «Phủ sổ xác minh» của tu_de_xuat_viec không còn `--phu-mo-coi` — lại gợi lệnh không chạm tới mục mồ côi"
+    # 11/10/2026: có `--phu-mo-coi` mà nối bằng «&&» thì vẫn không bao giờ chạy tới — lượt quét trả mã 1/2 là chuyện thường
+    # (sổ có mục cờ rút, kể cả bản đính chính đã ký) ⇒ chuỗi dừng sau bước đầu; đo 11/10: 25 thẻ hub-only treo mãi.
+    for n in _ast.walk(ham_main[0]):
+        if (isinstance(n, _ast.Constant) and isinstance(n.value, str) and "so_xac_minh_nguon.py" in n.value
+                and "&&" in n.value):
+            return False, ("lời gợi ý «Phủ sổ xác minh» nối các lượt bằng «&&» — lượt quét trả mã 1/2 là bình thường nên "
+                           "`--quet-ledger`/`--phu-mo-coi` không bao giờ chạy (ca 11/10: 25 mục); nối bằng «;»")
     return True, ""
 
 
