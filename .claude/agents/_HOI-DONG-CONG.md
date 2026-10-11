@@ -11,7 +11,7 @@
 
 ```
 dieu-phoi-nghien-cuu  (ĐIỀU PHỐI TỔNG — owner DUY NHẤT của G0–G10, giữ hợp đồng plugin MỘT OWNER)
-   ├── dieu-phoi-g0 … dieu-phoi-g10   (ĐIỀU PHỐI CỔNG — đại diện của owner cho đúng MỘT cổng; không phải owner)
+   ├── dieu-phoi-g0 … dieu-phoi-g10   (ĐIỀU PHỐI CỔNG — CHỊU TRÁCH NHIỆM kết quả nhiệm vụ của đúng MỘT cổng, §1b)
    │      ├── agent nhiệm vụ chuyên trách (cau-hoi-nghien-cuu, thiet-ke-nghien-cuu, co-mau-nghien-cuu, …)
    │      ├── giam-khao-cong            (GIÁM KHẢO độc lập — chấm đầu ra theo rubric RQ1–RQ8)
    │      ├── phan-bien-tranh-bien      (PHẢN BIỆN trong tranh biện — cố bác kết luận dự kiến bằng căn cứ)
@@ -21,11 +21,85 @@ dieu-phoi-nghien-cuu  (ĐIỀU PHỐI TỔNG — owner DUY NHẤT của G0–G10
 
 - **Điều phối tổng** quyết định cổng nào làm tiếp (chấm sống), triệu tập hội đồng cổng nào (theo §5 chi phí — hỏi
   bác sĩ trước), gom kết luận các cổng, bàn giao bác sĩ. Không ký, không bật cờ, không ghi xác nhận người.
-- **Điều phối cổng** chạy 8 bước của §2 cho đúng cổng của mình; là bên ĐỀ XUẤT trong tranh biện; KHÔNG chấm đầu ra
-  của chính nhiệm vụ mình làm (G10-T1).
+- **Điều phối cổng** chịu trách nhiệm kết quả thực hiện mọi nhiệm vụ của cổng mình (§1b); chạy 8 bước của §2; là bên
+  ĐỀ XUẤT trong tranh biện; KHÔNG chấm đầu ra của chính nhiệm vụ mình làm (G10-T1).
 - **Agent nhiệm vụ** làm đúng nhiệm vụ trong danh mục; đầu ra là artifact/khoá thật của cổng (tên artifact là HỢP
   ĐỒNG — không đổi). Agent nhiệm vụ cũng là **người chấm chuyên môn** cho nhiệm vụ KHÁC theo ma trận (§3).
 - Plugin vẫn chỉ là worker theo `_PLUGIN-ROUTING-CONTRACT.md`; không làm giám khảo/phản biện/trọng tài, không mở cổng.
+
+## 1b. Trách nhiệm hoàn chỉnh của điều phối cổng (09/10/2026)
+
+Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối của
+cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó».
+
+1. **Mọi vấn đề của cổng có chủ:** từng tiêu chí AUTO/HUMAN của `g<N>_quality_gate.py` (203 tiêu chí, 11 cổng) gán ĐÚNG
+   MỘT bên ở `hoi_dong_cong.PHAN_CONG`: nhiệm vụ agent (`G3-T1`) · vai NGƯỜI quyết/ký kèm nhiệm vụ agent phải chuẩn bị hồ
+   sơ + lệnh (`STATISTICIAN@G3-T1`) · cổng tiền đề (`^G0,G1`). Test đối chiếu bảng với tập mã bộ chấm phát ra (cây cú
+   pháp) và với mục 4b của từng `dieu-phoi-gN.md` — thêm tiêu chí mà quên gán ⇒ đỏ.
+2. **Chuỗi trách nhiệm:** agent nhiệm vụ → điều phối cổng → điều phối tổng. Điều phối cổng giao việc, đòi làm lại tới khi
+   tiêu chí của agent đạt, bảo đảm người có thẩm quyền nhận đủ hồ sơ + lệnh, báo cổng tiền đề khi bị chặn từ trước.
+3. **Thước đo duy nhất (chỉ đọc, không tốn agent):** `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate
+   G<N> [--ghi]` — kết luận `DAT_TIEU_CHI` · `AGENT_XONG_CHO_NGUOI` (mã 0 = phần agent HOÀN CHỈNH) · `AGENT_CON_VIEC` ·
+   `CHO_CONG_TRUOC` · `CHUA_PHAN_CONG` (mã 1) · `KHONG_DO_DUOC` (mã 2). Không tự khai «hoàn chỉnh». `--ghi` lưu bảng lúc
+   bàn giao ở `hoi_dong/G<N>/trach_nhiem/TN-<mốc>.json` kèm SHA-256 hồ sơ `G<N>_*`. Toàn đề tài cho điều phối
+   tổng: `--gate ALL` (bảng 11 cổng + cổng GIAO TRƯỚC; mã 1 nếu còn cổng có việc agent).
+4. **Không đổi ranh giới:** trách nhiệm hoàn chỉnh KHÔNG cho phép ký, bật cờ, ghi xác nhận/dấu vân tay thay người, hay sửa
+   artifact của cổng khác để «xanh» tiêu chí tiền đề; cũng KHÔNG đòi triệu tập hội đồng nhiều agent (§5).
+5. Điều phối tổng chỉ nhận «phần agent của cổng hoàn chỉnh» khi bảng ra mã 0; mã 1 ⇒ trả về đúng điều phối cổng đó.
+6. **Từng agent (10/10/2026, bác sĩ giao «hoàn thiện từng cổng, từng Agent, từng điều phối»):** mỗi agent làm/chấm chéo
+   nhiệm vụ cổng có khối «Trách nhiệm trong hội đồng cổng» (nhiệm vụ nó làm · đầu ra · tiêu chí nó phải đưa tới ĐẠT · hồ
+   sơ nó chuẩn bị cho người · đầu ra nó chấm chéo); mục 4b của điều phối và khối này SINH từ `hoi_dong_cong` bằng
+   `python3 tools/sinh_tai_lieu_trach_nhiem.py --ghi --agents-dir <gốc>/.claude/agents` (không sửa tay; test báo lệch).
+7. **Đánh giá chéo nằm trong trách nhiệm:** biên bản «trả về sửa» còn hiệu lực ⇒ `AGENT_CON_VIEC`; nhiệm vụ KHÔNG có tiêu
+   chí máy (vd G3-T2 biến số, G3-T3 CRF, G6-T3 diễn giải) chỉ được bảo đảm bằng đánh giá chéo — chưa đánh giá ⇒ bảng ghi
+   «chất lượng chưa được bảo đảm» và khối bàn giao phải nói thật (không đổi kết luận máy; triệu tập vẫn hỏi bác sĩ §5).
+   Nhiệm vụ có tệp hợp đồng thì được thêm **kiểm máy cấp nhiệm vụ** (`hoi_dong_cong.KIEM_NHIEM_VU`, chỉ CẤU TRÚC, không
+   phải tiêu chí cổng): G3-T2/G3-T3 — `_bo-bien-rieng.csv` nạp được bằng đúng hàm G5 dùng, không biến định danh, CRF có
+   luật kiểm tra; G1-T5 (chỉ RCT) — hai dòng an toàn của đề cương lõi (lợi ích–nguy cơ · dừng/chuyển/cứu hộ) đã điền,
+   đếm bằng đúng bộ đếm ô trống của G1-AUTO-07; G4-T2 (chỉ khi thiết kế chắc là RCT) — SAP §13 giữa kỳ/dừng · §14 DMC
+   · §15 tổn hại đã điền theo đúng hàm bước ký G4 dùng; lỗi ⇒ `AGENT_CON_VIEC` của đúng agent. Mục «Tiền đề» §2 của
+   mỗi điều phối có dòng tiêu chí tiền đề SINH từ `PHAN_CONG` (không còn văn xuôi lệch mã). Ô có điều kiện theo thiết
+   kế: G2-AUTO-07 «G2-T2|G2-T1» (RCT ⇒ an toàn) và G6-AUTO-09 «G6-T2|G6-T1» (tổng quan hệ thống có gộp ⇒
+   `meta-phan-tich` chịu mô hình phân tích chính ↔ SAP §4; thiết kế khác ⇒ `phan-tich-thong-ke`).
+8. **Lệnh trong tài liệu agent phải chạy được:** test `tests/test_lenh_trong_tai_lieu_agent_20261010.py` (repo y khoa)
+   đối chiếu mọi cờ của lệnh `python3 tools/…` trong `.claude/agents/*.md` với argparse của công cụ.
+9. **Nhiệm vụ có điều kiện máy không suy được — điều phối KHAI bằng máy** (10/10/2026): điều kiện RCT/SR suy từ thiết
+   kế đã chốt do máy quyết; điều kiện khác (G1-T4 công cụ đo lường «khi đề tài phát triển, sửa đổi hoặc dịch–thích nghi
+   bộ câu hỏi/thang đo»; G7-T2 hiệu đính song ngữ «nộp tạp chí tiếng Anh») trước chỉ được dặn «khai trong khối bàn
+   giao» — không máy nào đọc lại nên nhiệm vụ mãi «chưa xác định» và đầu ra không bao giờ bị đòi. Nay:
+   `python3 tools/hoi_dong_cong.py khai-ap-dung --study <mã> --gate G<N> --nhiem-vu <NV> --ap-dung co|khong --ly-do "…"`
+   ghi `hoi_dong/G<N>/ap_dung_nhiem_vu.json` (lý do ≥ 10 ký tự, không PII; từ chối nhiệm vụ không điều kiện hoặc điều
+   kiện thiết kế). Khai «co» ⇒ bảng trách nhiệm đòi đầu ra + kiểm máy của nhiệm vụ: G1-T4 đòi
+   `pha_cong_cu/phieu_cvi.csv` + `pha_cong_cu/nhat_ky_phong_van_nhan_thuc.csv` dựng bằng
+   `tools/pha_phat_trien_cong_cu.py mau` (phiếu CVI đúng cấu trúc, ≥ 3 chuyên gia, điểm 1–4; nhật ký đủ cột — ô chưa
+   chấm/I-CVI thấp là việc của hội đồng chuyên gia, không phải lỗi agent). Khai không phải xác nhận của người: PI bác
+   được bằng cách yêu cầu khai lại.
+10. **Mỗi agent có nhiệm vụ rõ ràng và có điều phối kiểm soát** (10/10/2026, bác sĩ giao): đo 10/10 có 4 agent nghiên cứu
+    không thuộc nhiệm vụ cổng nào (`mo-hinh-tien-luong`, `nghien-cuu-dinh-tinh`, `kinh-te-y-te`, `trich-xuat-y-van`) ⇒ nay
+    G1-T6/G6-T4 (prediction), G1-T7/G6-T5 (qualitative), G1-T8 (khai: có cấu phần kinh tế), G5-T2 (SR/MA — bảng
+    `06_phan_tich_R/study_level_extraction.csv` mà script gộp đọc); `huong-dan-lam-sang` chấm chéo G6-T3; G6-AUTO-09
+    «G6-T2|G6-T4|G6-T5|G6-T1». Bên lâm sàng: hai bảng của `dieu-phoi-lam-sang` sinh khối «Nhiệm vụ & kiểm soát trong
+    ca lâm sàng» cho từng agent; thêm C8c (`ket-qua-hoc-tap` + `cap-nhat-guideline` trước đó không có hạng mục
+    tự-rà). Test `tests/test_agent_co_dieu_phoi_20261010.py` (repo y khoa) chặn agent mồ côi.
+11. **Diễn giải kết quả và sổ cái đề tài** (10/10/2026, bác sĩ quyết): G6-T3 `dien-giai-ket-qua` nộp `G6_DIEN_GIAI_<mã>.md`
+    (khung + kiểm `tools/dien_giai_ket_qua.py`: số liệu truy nguyên tệp kết quả, văn phong không diễn giải quá mức,
+    bảng biểu đủ chuẩn); G10-T3 `so-cai-ghi-nho` giữ sổ trạng thái RIÊNG mỗi đề tài `exports/<mã>/SO_TRANG_THAI_<mã>.md`
+    (đúng schema, mọi khối thuộc đề tài, ngày không lùi, đủ mốc mọi cổng đã ký) — không ghi khối đề tài vào tệp chung
+    `_SO-TRANG-THAI-CHECKPOINT.md`.
+12. **Tiêu chuẩn hoàn thiện từng agent và từng điều phối** (10/10/2026, bác sĩ giao «xây dựng từng Agent một cho tới
+    khi hoàn thiện để khỏi tốn thời gian và Token»): `python3 tools/tieu_chuan_hoan_thien.py [--agent <tên>]` (repo y
+    khoa) đo MỘT bộ hạng mục — agent A1 khung doctrine · A2 có điều phối giao việc · A3 khối sinh khớp · A4 mọi
+    nhiệm vụ có kiểm máy · A5 lệnh chạy được · A6 bản Codex · A7 giao nhiệm vụ + tiêu chí kết quả + người
+    kiểm (mọi vai, `--json` → «giao_viec»); điều phối cổng D1 bảng §3 khớp · D2 phủ đủ tiêu chí
+    bộ chấm · D3 mọi nhiệm vụ có kiểm máy; nhạc trưởng lâm sàng L1; điều phối tổng N1/N2. Mã 0 = mọi agent + điều
+    phối ĐẠT; test chốt không cho lùi. Làm việc theo danh sách công cụ in ra — không rà mở lại từ đầu.
+13. **Ô trống gửi đích danh người ⇒ «CHỜ NGƯỜI», không phải «agent còn việc»** (10/10/2026, đo trên C1a): tiêu chí giao
+    agent mà phần còn lại CHỈ là ô của người có thẩm quyền (dòng quyết định PI của đề cương lõi G1 — G1-HUMAN-01/03;
+    thẻ «[CẦN CHỦ NHIỆM …]», «[CẦN PI …]», «[CẦN THỐNG KÊ VIÊN …]», «[CẦN CNTT …]», «[CẦN HỘI ĐỒNG …]» trong mục bắt
+    buộc SAP) thì bộ chấm mở đầu bằng chứng «CHỜ NGƯỜI (vai)» và bảng trách nhiệm xếp vào «chờ người» (trạng thái tiêu
+    chí KHÔNG đổi). Điều phối KHÔNG đòi agent điền thay — chuẩn bị câu hỏi + nguồn cho người đó. Ô chung «[CẦN BỔ SUNG]»,
+    «___» hoặc mục VẮNG vẫn là việc agent. Kiểm chi tiết (`kiem_chi_tiet_he_nghien_cuu.py`) tô VÀNG checkpoint bị chặn vì
+    chính cổng chờ dữ kiện đời thực (PI chốt, IRB, chữ ký, dữ liệu thật…), không tô đỏ «máy sửa được».
 
 ## 2. Tám bước của một hội đồng cổng (`dieu-phoi-gN`)
 
@@ -67,6 +141,13 @@ Mức mỗi trục: `dat` · `can_sua` · `loi_do` · `khong_ap_dung` (phải n�
 **Căn cứ kiểm được** (mọi nhận xét đòi sửa và mọi luận điểm tranh biện): `tep` (đường dẫn tương đối thư mục đề tài/
 repo, có thể `:dòng` hoặc `:dòng-dòng`) · `tieu_chi` (`G4-AUTO-09`, `G4-HUMAN-04`…) · `pmid` · `doi` · `lenh` (câu
 lệnh + đoạn `ket_qua`). Lời nói không kèm căn cứ KHÔNG phải căn cứ.
+
+**Bài học HỆ THỐNG** (10/10/2026, `bai_hoc_he_thong` — không bắt buộc, mỗi người chấm và trọng tài đều ghi được):
+rubric và việc sửa nói về ĐẦU RA của một đề tài; lỗi nằm ở HỆ thì ghi riêng, mỗi mục `pham_vi` ∈ `cong_cu` (công
+cụ/bộ chấm sai) · `agent` (tài liệu agent thiếu/sai chỉ dẫn) · `dieu_phoi` (điều phối giao sai/thiếu) · `doctrine`
+(doctrine mâu thuẫn mã sống) · `quy_trinh_hoi_dong`, kèm `doi_tuong` (tệp/agent cụ thể), `van_de`, `de_xuat` và
+căn cứ kiểm được như trên. `hoi_dong_cong.py ghi` kiểm luật này (thiếu căn cứ/PII ⇒ không ghi). Không có lỗi hệ
+thì không bịa bài học cho có.
 
 ## 4. Tranh biện — trước mọi kết luận của cổng
 
@@ -110,9 +191,49 @@ Chế độ này GỬI tới dịch vụ Codex (OpenAI): doctrine trọng tài, 
 cứ CẤP ĐẦU thư mục đề tài — không tệp ẩn/khoá/`.env`, không dữ liệu hay bản gỡ băng ở thư mục con. Bác sĩ chọn chế độ khi
 triệu tập.
 
-Điều phối tổng/cổng LUÔN hỏi bác sĩ (kèm ước lượng) trước khi mở hội đồng `subagent`; mặc định gom MỘT giám khảo cho
-nhiều đầu ra cùng cổng khi được. Workflow Claude Code (`.claude/workflows/hoi-dong-cong.js`) chạy đúng 8 bước với trần
-vòng và trần số agent — chỉ chạy khi bác sĩ gọi.
+**Họp tiết kiệm — hồ sơ do máy lập (10/10/2026; bác sĩ: «việc họp rất tốn token, hãy hoàn thiện theo cách thông minh
+nhất»).** Ba khoản tốn mà máy làm thay được, KHÔNG đổi rubric, luật biên bản, vai hay mức độc lập:
+
+1. **Ước tính trước — 0 agent:** `python3 tools/hoi_dong_cong.py uoc-tinh --study <mã> --gate G<N>|ALL` → số agent +
+   token tối thiểu–tối đa của từng cổng (~380 nghìn/agent), so với cách cũ, kèm khuyến nghị `hop_duoc` ·
+   `nen_cho_cong_truoc` (cổng tiền đề trong `PHAN_CONG` chưa PASS sống: đầu ra cổng này còn đổi khi cổng trước chốt,
+   biên bản sẽ CŨ và phải họp lại) · `khong_can_hop`. Hỏi bác sĩ triệu tập thì báo đúng con số này.
+2. **Hồ sơ máy — 0 agent:** `python3 tools/hoi_dong_cong.py ho-so --study <mã> --gate G<N> --json` → truyền NGUYÊN VĂN
+   vào `args.ho_so` của `hoi-dong-cong.js` (nhiều cổng: `args.ho_so_theo_cong` của `dieu-phoi-tong-hoi-dong.js`, tự
+   dừng trước cổng `nen_cho_cong_truoc` trừ khi bác sĩ truyền `ca_khi_cong_truoc_chua_dat: true`). Chỉ phần CHƯA có
+   biên bản còn hiệu lực mới vào hội đồng: đầu ra đã qua, hoặc bị trả về sửa mà tài liệu chưa đổi, KHÔNG chấm lại
+   (biên bản gắn SHA-256 — chấm lại cho cùng kết quả); bất đồng chưa tranh biện ⇒ tranh biện `BD-…` trỏ id biên bản
+   thật; DP đã có tranh biện còn hiệu lực không tranh biện lại; cổng còn nhiệm vụ thiếu đầu ra hay chưa xác định áp
+   dụng thì CHƯA tranh biện DP (kết luận cổng phải dựa trên hồ sơ đủ — khai `khai-ap-dung` trước). Agent điều phối
+   chỉ còn soạn kết luận dự kiến + luận điểm cho DP cần tranh biện; không có DP thì không mở agent hồ sơ. `--tat-ca`
+   = họp lại từ đầu (chi phí như cách cũ).
+3. **Gom giám khảo:** một `giam-khao-cong` chấm ≤ 4 đầu ra cùng cổng trong một lượt (`args.gom_giam_khao`, mặc định
+   `hoi_dong_cong.GOM_GIAM_KHAO`; 1 = mỗi đầu ra một giám khảo) — mỗi đầu ra một bản chấm riêng đủ RQ1–RQ8; đầu ra
+   thiếu bản chấm của giám khảo thì không ghi biên bản (ghi vào kết quả, không cắt im lặng).
+
+Điều phối tổng/cổng LUÔN hỏi bác sĩ (kèm ước lượng của `uoc-tinh`) trước khi mở hội đồng `subagent`. Workflow Claude
+Code (`.claude/workflows/hoi-dong-cong.js`) chạy đúng 8 bước với trần vòng và trần số agent — chỉ chạy khi bác sĩ gọi.
+
+**Nhịp hằng ngày + vòng hoàn thiện sau họp (10/10/2026; bác sĩ: «mỗi ngày họp một cổng và với lần họp này sẽ đảm
+bảo hệ thống được hoàn thiện tự động tốt nhất từ vấn đề hệ thống, Agent và các điều phối»).** Cùng ngày bác sĩ HUỶ
+lịch tự chạy (tốn token, chưa bảo đảm hoàn thiện) ⇒ KHÔNG có tác vụ lịch nào; 5 bước dưới chỉ chạy khi bác sĩ gọi:
+
+1. **Chọn cổng — 0 agent:** `python3 tools/hoi_dong_cong.py lich-hop --study <mã>` → cổng ĐẦU TIÊN G0→G10 còn phần
+   cần họp theo hồ sơ máy (không có ⇒ không mở agent, chỉ làm bước 3–4). Cổng mang `nen_cho_cong_truoc` vẫn họp khi
+   tới lượt (nhịp bác sĩ chọn) nhưng báo cáo phải ghi biên bản có thể CŨ khi cổng trước chốt.
+2. **Họp MỘT cổng:** `ho-so … --json` → workflow `hoi-dong-cong` với `args.ho_so` (trần 16 agent, một vòng tranh
+   biện). Lỗi/dừng giữa chừng ⇒ không resume, không chạy lại; đọc journal, báo đã ghi được gì.
+3. **Hoàn thiện đầu ra đề tài:** mục «agent còn việc» của `trach-nhiem --gate G<N>` (gồm đầu ra bị trả về sửa) ⇒
+   sửa bằng CÔNG CỤ THẬT của cổng theo biên bản, trong worktree `~/.ebm-worktrees`, xuất Word, commit + push + PR.
+   Ô thuộc người (PI/IRB/thống kê viên…) và mọi cờ xác nhận: KHÔNG điền — ghi vào báo cáo là việc của bác sĩ.
+4. **Hoàn thiện HỆ:** `bai-hoc --study <mã> --chua-xu-ly` ⇒ mỗi bài học: kiểm lại trên mã sống (đúng mới sửa), sửa
+   công cụ/tài liệu agent/điều phối/doctrine trong worktree, test + kiểm đột biến cho chốt mới, commit + push + PR;
+   rồi `bai-hoc --xu-ly <mã> --ket da_sua --pr <URL> --ly-do …` (hoặc `khong_sua`/`trung` kèm lý do). Trước khi
+   sửa, xem PR đang mở của hai repo — đã có PR cho cùng vấn đề thì ghi `trung`/bỏ qua, không mở PR trùng.
+5. **Báo cáo ngày** `hoi_dong/BAO_CAO_NGAY_<YYYY-MM-DD>.md` (dấu vết cho `kiem_lich_nen.py`): cổng đã họp, số agent,
+   biên bản đã ghi, kết luận từng nhiệm vụ/DP, PR đã mở, bài học đã/chưa xử lý, việc của bác sĩ còn lại.
+
+Vòng này KHÔNG gộp PR, không ký, không ghi cờ/`gate_params`, không đụng sổ cái — mọi PR chờ bác sĩ gộp.
 
 ## 6. Khối bàn giao (bắt buộc ở cuối mỗi hội đồng cổng)
 
@@ -125,6 +246,7 @@ KẾT LUẬN HỘI ĐỒNG CỔNG G<N> — <mã đề tài> (TƯ VẤN — khôn
 - Giải pháp tốt nhất: <từng điểm quyết định: phương án khuyến nghị — căn cứ; phương án khác đã cân nhắc — vì sao không chọn>
 - Việc của người có thẩm quyền: <ai — làm gì — lệnh/khoá nào>
 - tham-dinh-dau-ra: ĐẠT | TRẢ-VỀ-SỬA
+- Trách nhiệm cổng (§1b): <ket_luan của `trach-nhiem --ghi`> — agent còn việc <n> · chờ người <n> · chờ cổng trước <n> — <tệp TN-…json>
 - Tóm tắt hội đồng: python3 tools/hoi_dong_cong.py tom-tat --study <mã>
 Cần bác sĩ kiểm chứng.
 ```

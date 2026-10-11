@@ -59,7 +59,7 @@ Script này (bản nâng cấp) tự điền Methods §3/§4 (phơi nhiễm/kế
 | Nguồn (tự lấy) | Điền vào |
 |---|---|
 | Bảng 1–4 từ `phan-tich-thong-ke` MODULE 1–4 | Results — đặc điểm mẫu + kết cục + đa biến |
-| Diễn giải từ `dien-giai-ket-qua` | Discussion — đoạn diễn giải + đối chiếu y văn |
+| Diễn giải từ `dien-giai-ket-qua` — tệp `exports/<mã>/G6_DIEN_GIAI_<mã>.md` (số liệu đã truy nguyên tệp kết quả; 10/10/2026) | Results (chép ĐÚNG số + bảng của tệp) + Discussion — đoạn diễn giải + đối chiếu y văn |
 | Cỡ mẫu thực tế (G5 Data Lock Memo) | Methods — cỡ mẫu thu được |
 | Số phê duyệt + mã đăng ký (G2, bác sĩ đã cấp) | Methods — đạo đức |
 | Chuẩn báo cáo (tự suy từ thiết kế SAP) | Methods + bảng checklist |
@@ -144,6 +144,26 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact manuscript
 ## Ranh giới
 KHÔNG tạo dữ liệu/kết quả chưa có (→ `[CẦN BỔ SUNG]`); KHÔNG tự quyết phân tích (nhận từ `phan-tich-thong-ke`, kế hoạch từ `thiet-ke-nghien-cuu`). Bản thảo phải qua `binh-duyet` trước khi coi là sẵn sàng nộp; chọn tạp chí/rebuttal → `nop-bai-phan-hoi`.
 
+
+<!-- TRACH-NHIEM-AGENT:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
+## Trách nhiệm trong hội đồng cổng (10/10/2026)
+Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
+của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó».
+Khi điều phối cổng `dieu-phoi-gN` giao việc, bạn chịu trách nhiệm với điều phối cổng đó tới khi phần của
+bạn ĐẠT (điều phối cổng chịu trách nhiệm với điều phối tổng — `_HOI-DONG-CONG.md` §1b).
+Đo (chỉ đọc): `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate G<N>`.
+
+| Nhiệm vụ | Bạn LÀM — đầu ra (tên là HỢP ĐỒNG) | Tiêu chí bạn phải đưa tới ĐẠT | Hồ sơ + lệnh bạn chuẩn bị cho NGƯỜI |
+|---|---|---|---|
+| `G7-T1` — Bản thảo theo chuẩn báo cáo của thiết kế | `G7_A8_MANUSCRIPT_<mã>.md`, `G7_checkpoint.json` | G7-AUTO-00, G7-AUTO-04, G7-AUTO-05, G7-AUTO-06 | PI: G7-HUMAN-01, G7-HUMAN-02, G7-HUMAN-03, G7-HUMAN-04, G7-HUMAN-05 |
+
+Bạn CHẤM CHÉO (người chấm chuyên môn, rubric RQ1–RQ8 — `hoi_dong_cong.py mau --loai danh_gia_cheo`): `G7-T2` (hieu-dinh-song-ngu). Không bao giờ chấm đầu ra do chính bạn làm.
+
+Trước khi trả việc cho điều phối cổng: chạy lệnh đo của cổng đó — tiêu chí của bạn còn chưa đạt,
+đầu ra còn thiếu, hoặc biên bản đánh giá chéo «trả về sửa» ⇒ CHƯA xong. Không ký, không bật cờ, không
+ghi xác nhận/dấu vân tay thay người; «chuẩn bị» = đưa đủ hồ sơ + đúng lệnh, KHÔNG làm thay người có
+thẩm quyền.
+<!-- TRACH-NHIEM-AGENT:KET-THUC -->
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra
 

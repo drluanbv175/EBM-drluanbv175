@@ -76,6 +76,7 @@ Khái niệm cần đo (construct) + quần thể đích · công cụ dự ki�
 2. **Nếu dùng công cụ đã có:** rà bằng chứng đo lường đã công bố (nguồn) + **độ giá trị nội dung** trong quần thể đích; lên kế hoạch **dịch + thích nghi văn hóa chéo** theo chuẩn Beaton 2000/COSMIN/ISPOR — **forward translation (≥2 dịch giả độc lập) → ĐỒNG THUẬN/HỢP NHẤT các bản dịch xuôi thành 1 bản thống nhất (bước dễ bị bỏ sót nhất — sửa 2026-07-22, vòng lặp kiểm tra-hoàn thiện vòng 7: trước đây quy trình mô tả thiếu bước này, có thể đi thẳng từ nhiều bản dịch xuôi song song sang dịch ngược mà không hợp nhất) → back-translation (≥2 dịch giả độc lập, MÙ với bản gốc — sửa 2026-07-26, vòng lặp vòng 26: trước đây chỉ forward yêu cầu ≥2 dịch giả, back-translation không nêu số lượng, trong khi Beaton DE et al., Spine 2000;25(24):3186-91 yêu cầu ĐỐI XỨNG ≥2 dịch giả độc lập cho CẢ hai chiều) → hội đồng chuyên gia rà toàn bộ phiên bản → pretest nhận thức/thử nghiệm tiên phong** nếu khác ngôn ngữ/văn hóa.
 3. **Nếu dựng mới:** sinh item từ khung lý thuyết + ý kiến chuyên gia/bệnh nhân; **chỉ số giá trị nội dung (CVI/CVR)**; thử nghiệm nhận thức (cognitive interview); thang trả lời.
    - **Tính bằng công cụ, KHÔNG tính tay:** `python medical-ebm-automation/tools/pha_phat_trien_cong_cu.py mau --muc <mã mục…> --so-chuyen-gia <N> --thu-muc exports/<đề tài>/pha_cong_cu` (sinh phiếu chấm + nhật ký rỗng, mã ẩn danh CG01…/NT01…) → `… cvi phieu_cvi.csv` (I-CVI, kappa hiệu chỉnh, báo CẢ S-CVI/Ave lẫn S-CVI/UA; ngưỡng I-CVI 0,78 — Polit, Beck & Owen 2007, PMID 17654487) → `… nhan-thuc nhat_ky_phong_van_nhan_thuc.csv` (tỷ lệ hỏi lại/hiểu sai theo mục + tiêu chí dừng ghi trong đề cương, mặc định F5 của C1a: ≥ 3 mục có ≥ 20%; mã thoát 1 = vi phạm). Công cụ KHÔNG quyết định giữ/bỏ/sửa mục — hội đồng chuyên gia quyết định.
+   - **Hợp đồng đầu ra G1-T4 (10/10/2026):** khi điều phối G1 đã khai G1-T4 áp dụng (`python3 tools/hoi_dong_cong.py khai-ap-dung --study <mã> --gate G1 --nhiem-vu G1-T4 --ap-dung co --ly-do "…"`), hai tệp `exports/<đề tài>/pha_cong_cu/phieu_cvi.csv` + `pha_cong_cu/nhat_ky_phong_van_nhan_thuc.csv` (đúng lệnh `mau` ở trên) là ĐẦU RA HỢP ĐỒNG: bảng trách nhiệm đòi đủ và kiểm máy — phiếu CVI cột `muc` + mỗi chuyên gia một cột, mục không trùng, điểm thuộc thang 1–4, **≥ 3 chuyên gia**; nhật ký đủ cột `ma_nguoi, muc, van_de, loai_van_de, de_xuat_sua`. Ô chưa chấm / I-CVI thấp KHÔNG phải lỗi của bạn (việc của hội đồng chuyên gia/chủ nhiệm). Thang chuẩn dùng NGUYÊN TRẠNG (§Phạm vi áp dụng) ⇒ báo điều phối khai `--ap-dung khong` kèm tên thang + nguồn — KHÔNG dựng phiếu rỗng cho «xanh».
 4. **Kế hoạch kiểm định thuộc tính đo lường** (chỉ rõ phân tích + cỡ mẫu, phối hợp `co-mau-nghien-cuu`) — **áp dụng đầy đủ bước này khi dựng công cụ MỚI/dùng lần đầu; công cụ dùng NGUYÊN TRẠNG một thang chuẩn đã kiểm định thì KHÔNG áp bước 4 này, chỉ làm 3 nội dung ở §Phạm vi áp dụng bên dưới:**
    - **Độ giá trị cấu trúc:** EFA/CFA (chỉ số phù hợp mô hình).
    - **Độ tin cậy:** nội bộ (Cronbach's α/omega), **test–retest (ICC)**, sai số đo **SEM/SDC**.
@@ -122,6 +123,24 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact instrument
 - CHỈ lo **thuộc tính đo lường** của công cụ. **KHÔNG đặc tả toàn bộ bộ biến phân tích** (việc của `bien-so-nghien-cuu`), **KHÔNG dựng CRF/khóa DB** (việc của `quan-ly-du-lieu`), **KHÔNG chạy phân tích chính của đề tài** (việc của `phan-tich-thong-ke`), **KHÔNG thiết kế phỏng vấn định tính sinh item** (phối hợp `nghien-cuu-dinh-tinh` cho phần định tính).
 - Điều phối qua `dieu-phoi-nghien-cuu` (G1/G3). Đề tài định tính/mixed-methods → phối hợp `nghien-cuu-dinh-tinh`.
 
+
+<!-- TRACH-NHIEM-AGENT:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
+## Trách nhiệm trong hội đồng cổng (10/10/2026)
+Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
+của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó».
+Khi điều phối cổng `dieu-phoi-gN` giao việc, bạn chịu trách nhiệm với điều phối cổng đó tới khi phần của
+bạn ĐẠT (điều phối cổng chịu trách nhiệm với điều phối tổng — `_HOI-DONG-CONG.md` §1b).
+Đo (chỉ đọc): `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate G<N>`.
+
+| Nhiệm vụ | Bạn LÀM — đầu ra (tên là HỢP ĐỒNG) | Tiêu chí bạn phải đưa tới ĐẠT | Hồ sơ + lệnh bạn chuẩn bị cho NGƯỜI |
+|---|---|---|---|
+| `G1-T4` — Phát triển/thích nghi & kiểm định công cụ đo lường (COSMIN) (chỉ khi đề tài phát triển, sửa đổi hoặc dịch–thích nghi bộ câu hỏi/thang đo) | `G1_A2_PROTOCOL_DESIGN_<mã>.md`, `pha_cong_cu/phieu_cvi.csv`, `pha_cong_cu/nhat_ky_phong_van_nhan_thuc.csv` | — (không có tiêu chí cổng; kiểm máy cấp nhiệm vụ: pha phát triển bộ câu hỏi: phiếu CVI đúng cấu trúc, ≥ 3 chuyên gia; nhật ký phỏng vấn nhận thức đủ cột; nội dung bảo đảm bằng đánh giá chéo) | — |
+
+Trước khi trả việc cho điều phối cổng: chạy lệnh đo của cổng đó — tiêu chí của bạn còn chưa đạt,
+đầu ra còn thiếu, hoặc biên bản đánh giá chéo «trả về sửa» ⇒ CHƯA xong. Không ký, không bật cờ, không
+ghi xác nhận/dấu vân tay thay người; «chuẩn bị» = đưa đủ hồ sơ + đúng lệnh, KHÔNG làm thay người có
+thẩm quyền.
+<!-- TRACH-NHIEM-AGENT:KET-THUC -->
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra
 

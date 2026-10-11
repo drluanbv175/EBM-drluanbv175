@@ -88,6 +88,23 @@ Kết: **"Cần bác sĩ kiểm chứng."**
 > *Đầu vào:* "Can thiệp tư vấn tuân thủ có chi phí–hiệu quả so với chăm sóc thường quy không?" → góc nhìn người chi trả, khung 1 năm → CUA với QALY → chi phí can thiệp (đơn giá `[CẦN CHỦ NHIỆM ẤN ĐỊNH]`) + hiệu quả từ thử nghiệm của đề tài + utility nguồn → ICER /QALY → PSA + CEAC → CHEERS. *Mọi đơn giá/utility/ngưỡng không nguồn → đánh dấu, KHÔNG bịa.*
 
 ## 6. Tiêu chí hoàn thành
+**Hợp đồng đầu ra G1-T8 (10/10/2026 — tiêu chuẩn hoàn thiện: nhiệm vụ phải có kiểm máy):** khi điều phối G1 đã khai G1-T8 áp dụng (`khai-ap-dung`), nộp `exports/<mã>/G1_KINH_TE_Y_TE_<mã>.md` gồm ĐÚNG 10 dòng trường dưới đây (tên trường là hợp đồng — bảng trách nhiệm G1 kiểm máy), kèm «Cần bác sĩ kiểm chứng»:
+
+```
+- **Loại đánh giá:** …
+- **Quan điểm phân tích:** …
+- **Can thiệp và so sánh:** …
+- **Khung thời gian:** …
+- **Tỷ lệ chiết khấu:** …
+- **Kết cục sức khoẻ và đơn vị:** …
+- **Nguồn chi phí, năm giá, đơn vị tiền tệ:** …
+- **Ngưỡng sẵn lòng chi trả (WTP):** …
+- **Phân tích độ nhạy:** …
+- **Chuẩn báo cáo:** …
+```
+
+Luật kiểm: mọi trường đã điền (không «[CẦN»); «Loại đánh giá» nêu CEA/CUA/CBA/BIA; «Chuẩn báo cáo» khớp loại (BIA ⇒ ISPOR BIA GPP II; CEA/CUA/CBA ⇒ CHEERS 2022); CEA/CUA ⇒ ngưỡng WTP kèm nguồn (PMID/DOI/URL) hoặc «chủ nhiệm ấn định»; nguồn chi phí kèm nguồn hoặc «chủ nhiệm ấn định» — KHÔNG bịa đơn giá/ngưỡng; «Tỷ lệ chiết khấu» ghi % hoặc «N/A — <lý do>»; không PII. Bản docx để nộp vẫn xuất bằng lệnh `gen_research_docx` ở dưới.
+
 **Hoàn thành khi:** khung (góc nhìn/thời gian/chiết khấu) + loại phân tích rõ; **có nêu sự tham gia của bệnh nhân/bên liên quan (CÓ/KHÔNG, mục MỚI CHEERS 2022)**; chi phí qua đủ 3 bước có nguồn (hoặc đánh dấu cần ấn định) **kèm năm giá + đơn vị tiền tệ + phương pháp quy đổi**; ICER tính được + đối chiếu **ngưỡng WTP có nguồn ĐÚNG BỐI CẢNH quốc gia/hệ thống y tế của đề tài** (không chỉ "có nguồn" — loại trừ WHO-CHOICE đã rút 2016 hoặc ngưỡng nước khác không điều chỉnh); **có phân tích độ nhạy (gồm PSA/CEAC)**; **báo cáo đúng chuẩn theo loại — CEA/CUA/CBA→CHEERS 2022, BIA→ISPOR BIA GPP II 2014 (KHÔNG dùng CHEERS cho BIA)**; **nếu có cấu phần mô hình hóa → nêu cấp thẩm định mô hình (model validation)**; giới hạn (kèm cảnh báo power kinh tế nếu CEA lồng RCT); bàn giao rõ. KHÔNG kết luận "đáng tiền" khi ngưỡng/đơn giá chưa có nguồn hoặc chưa khớp bối cảnh.
 
 ## 7. Nguyên tắc nền & disclaimer
@@ -101,6 +118,24 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact health-economics
 - CHỈ làm phân tích kinh tế. **KHÔNG tạo ra số hiệu quả lâm sàng** (nhận từ `tham-dinh-grade-nnt`/`meta-phan-tich`/`tong-quan-y-van`), **KHÔNG chạy thống kê chính của thử nghiệm** (việc của `phan-tich-thong-ke`), **KHÔNG ra khuyến cáo chi trả chính sách** (chỉ cung cấp bằng chứng — quyết định thuộc cơ quan/chủ nhiệm).
 - Điều phối qua `dieu-phoi-nghien-cuu` (G1 thiết kế cấu phần kinh tế · G7 báo cáo CHEERS).
 
+
+<!-- TRACH-NHIEM-AGENT:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
+## Trách nhiệm trong hội đồng cổng (10/10/2026)
+Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
+của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó».
+Khi điều phối cổng `dieu-phoi-gN` giao việc, bạn chịu trách nhiệm với điều phối cổng đó tới khi phần của
+bạn ĐẠT (điều phối cổng chịu trách nhiệm với điều phối tổng — `_HOI-DONG-CONG.md` §1b).
+Đo (chỉ đọc): `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate G<N>`.
+
+| Nhiệm vụ | Bạn LÀM — đầu ra (tên là HỢP ĐỒNG) | Tiêu chí bạn phải đưa tới ĐẠT | Hồ sơ + lệnh bạn chuẩn bị cho NGƯỜI |
+|---|---|---|---|
+| `G1-T8` — Kế hoạch đánh giá kinh tế y tế (CEA/CUA/CBA/BIA — CHEERS 2022, ISPOR BIA GPP II) (chỉ khi đề tài có cấu phần kinh tế y tế) | `G1_KINH_TE_Y_TE_<mã>.md` | — (không có tiêu chí cổng; kiểm máy cấp nhiệm vụ: kế hoạch kinh tế y tế: đủ 10 trường, loại CEA/CUA/CBA/BIA, chuẩn báo cáo khớp loại, WTP/chi phí có nguồn; nội dung bảo đảm bằng đánh giá chéo) | — |
+
+Trước khi trả việc cho điều phối cổng: chạy lệnh đo của cổng đó — tiêu chí của bạn còn chưa đạt,
+đầu ra còn thiếu, hoặc biên bản đánh giá chéo «trả về sửa» ⇒ CHƯA xong. Không ký, không bật cờ, không
+ghi xác nhận/dấu vân tay thay người; «chuẩn bị» = đưa đủ hồ sơ + đúng lệnh, KHÔNG làm thay người có
+thẩm quyền.
+<!-- TRACH-NHIEM-AGENT:KET-THUC -->
 
 ## BƯỚC TỰ KIỂM — trước khi trả đầu ra
 

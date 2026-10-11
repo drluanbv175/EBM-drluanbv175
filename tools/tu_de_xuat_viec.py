@@ -640,25 +640,110 @@ def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str,
     return viec, tt
 
 
-def dem_commit_chua_co_tren_remote(duong: Path) -> tuple[int | None, list[str]]:
+_SHA_RE = re.compile(r"[0-9a-f]{40,64}")
+# Tiêu đề ngắn/chung chung («wip», «fix») dễ trùng tình cờ một dòng của commit gộp — không dùng để suy «đã gộp».
+_TIEU_DE_TOI_THIEU_SQUASH = 20
+
+
+def _nen_nhanh_chinh_remote(duong: Path) -> str:
+    """Ref nhánh chính TRÊN REMOTE để hỏi «nội dung đã gộp chưa» (09/10/2026) — chỉ đọc ref cục bộ, không gọi mạng.
+
+    Thứ tự: nhánh chính khai báo (`kiem_cay_lam_viec.NHANH_CHINH`) → `refs/remotes/origin/HEAD`. KHÔNG đoán «main»/«master»
+    (repo y khoa CÓ `origin/main` nhưng đó là nhánh bỏ). Không dò được ⇒ «» và bên gọi KHÔNG lọc gì: báo thừa an toàn hơn
+    báo thiếu."""
+    ung_vien = []
+    kb = _nhanh_khai_bao(duong)
+    if kb:
+        ung_vien.append(f"refs/remotes/origin/{kb}")
+    ra = _chay(["git", "-C", str(duong), "symbolic-ref", "-q", "refs/remotes/origin/HEAD"], giay=20).strip()
+    if ra.startswith("refs/remotes/") and " " not in ra:
+        ung_vien.append(ra)
+    for ref in ung_vien:
+        sha = _chay(["git", "-C", str(duong), "rev-parse", "-q", "--verify", ref + "^{commit}"], giay=20).strip()
+        if _SHA_RE.fullmatch(sha):
+            return ref
+    return ""
+
+
+def _commit_gop_squash(duong: Path, nen: str, ung_vien: set[str]) -> set[str]:
+    """Commit trong `ung_vien` mà một commit GỘP KIỂU SQUASH trên `nen` đã mang nội dung (09/10/2026).
+
+    GitHub squash ghi tiêu đề từng commit của PR thành dòng «* <tiêu đề>» trong thông điệp commit gộp (PR một commit: tiêu đề
+    kèm «(#n)»). Chỉ nhận khi commit gộp có NGÀY COMMIT không sớm hơn commit cục bộ — commit sửa lại SAU khi gộp mà giữ nguyên
+    tiêu đề vẫn bị đếm là chưa đẩy. Đầu ra git lạ ⇒ tập rỗng (không lọc)."""
+    if not ung_vien:
+        return set()
+    ra = _chay(["git", "-C", str(duong), "log", "--no-walk=unsorted", "--format=%H%x00%ct%x00%s", *sorted(ung_vien)],
+               giay=30)
+    rieng: dict[str, tuple[int, str]] = {}
+    for d in ra.splitlines():
+        p = d.split("\x00")
+        if len(p) != 3 or not _SHA_RE.fullmatch(p[0]) or not p[1].isdigit():
+            return set()
+        rieng[p[0]] = (int(p[1]), p[2].strip())
+    if not rieng:
+        return set()
+    tu = dt.datetime.fromtimestamp(min(ct for ct, _ in rieng.values()), tz=dt.timezone.utc).isoformat()
+    ra = _chay(["git", "-C", str(duong), "log", nen, f"--since={tu}", "--format=%x1e%ct%x00%B"], giay=60)
+    moi_nhat: dict[str, int] = {}  # dòng đã chuẩn hoá → ngày commit gộp MỚI NHẤT chứa nó
+    for ban in ra.split("\x1e")[1:]:
+        ct, _, than = ban.partition("\x00")
+        if not ct.strip().isdigit():
+            return set()
+        for dong in than.splitlines():
+            dong = re.sub(r"\s+\(#\d+\)$", "", dong.strip().removeprefix("*").strip())
+            if dong:
+                moi_nhat[dong] = max(moi_nhat.get(dong, 0), int(ct))
+    return {sha for sha, (ct, tieu_de) in rieng.items()
+            if len(tieu_de) >= _TIEU_DE_TOI_THIEU_SQUASH and moi_nhat.get(tieu_de, -1) >= ct}
+
+
+def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) -> tuple[int | None, list[str]]:
     """(số commit CHỈ có ở nhánh cục bộ — không có trên remote nào, tên các nhánh đang giữ chúng); None = không đo được.
 
     Vá 27/09/2026: cảm biến cũ chỉ đếm `@{u}..HEAD` của nhánh ĐANG đứng — nhánh chưa có upstream thì git báo lỗi và bị
     đếm thành 0, còn các nhánh khác không bao giờ được nhìn. Đo cùng ngày: 8 nhánh cục bộ của repo gốc giữ 20 commit
-    không có trên GitHub (06–17/09) trong khi cảm biến báo «0 commit chưa đẩy». Đúng 2 lượt gọi git: danh sách commit
-    chưa có trên remote, rồi đỉnh các nhánh (nhánh giữ commit chưa đẩy ⇔ đỉnh của nó nằm trong danh sách đó).
+    không có trên GitHub (06–17/09) trong khi cảm biến báo «0 commit chưa đẩy». Nhánh giữ commit chưa đẩy ⇔ đỉnh của nó
+    nằm trong danh sách commit chưa có trên remote.
+
+    Vá 09/10/2026 — báo NHẦM chiều ngược lại: commit cục bộ mà NỘI DUNG đã vào nhánh chính remote dưới SHA khác vẫn bị đếm.
+    Đo 09/10: 6 commit «chưa đẩy» ở hai repo thì 5 đã gộp — 3 trùng bản vá (rebase/cherry-pick), 2 gộp kiểu squash (#78 repo
+    y khoa); chỉ 1 là việc dở thật. Hòm việc nhắc «soi rồi commit/push» mỗi phiên cho việc đã xong. Nay trừ đi:
+    ① commit `git cherry` đánh «-» (bản vá trùng một commit trên nhánh chính remote); ② commit gộp squash
+    (`_commit_gop_squash`). Không dò được nhánh chính remote hoặc đầu ra git lạ ⇒ KHÔNG lọc (báo như cũ). `chi_tiet` (nếu
+    truyền) nhận {"nen", "trung_ban_va", "gop_squash", "nhanh_da_gop"} để in dòng ⓘ.
     """
     ra = _chay(["git", "-C", str(duong), "rev-list", "--branches", "--not", "--remotes"], giay=30)
     dong = [x.strip() for x in ra.splitlines() if x.strip()]
-    if any(not re.fullmatch(r"[0-9a-f]{40,64}", x) for x in dong):
+    if any(not _SHA_RE.fullmatch(x) for x in dong):
         return None, []   # git lỗi / đầu ra lạ ⇒ KHÔNG ĐO ĐƯỢC — không được đọc thành 0 (BH08)
     if not dong:
         return 0, []
     chua_day = set(dong)
     dinh = _chay(["git", "-C", str(duong), "for-each-ref", "--format=%(objectname) %(refname:short)", "refs/heads"],
                  giay=20)
-    nhanh = sorted(ten for ma, _, ten in (d.strip().partition(" ") for d in dinh.splitlines()) if ma in chua_day and ten)
-    return len(chua_day), nhanh
+    nhanh_dinh = {ten: ma for ma, _, ten in (d.strip().partition(" ") for d in dinh.splitlines()) if ma in chua_day and ten}
+    nen = _nen_nhanh_chinh_remote(duong)
+    trung: set[str] = set()
+    cua_nhanh: dict[str, set[str]] = {}  # nhánh → commit chưa đẩy của nó (theo đầu ra git cherry)
+    for ten, ma in sorted(nhanh_dinh.items()) if nen else ():
+        ra = _chay(["git", "-C", str(duong), "cherry", nen, ma], giay=60)
+        dong_ch = [x.split() for x in ra.splitlines() if x.strip()]
+        if any(len(x) != 2 or x[0] not in "+-" or not _SHA_RE.fullmatch(x[1]) for x in dong_ch):
+            trung, cua_nhanh = set(), {}
+            break   # đầu ra lạ ⇒ không lọc gì (báo như cũ), không đoán
+        cua_nhanh[ten] = {sha for _, sha in dong_ch if sha in chua_day}
+        trung |= {sha for dau, sha in dong_ch if dau == "-" and sha in chua_day}
+    squash = _commit_gop_squash(duong, nen, chua_day - trung) if cua_nhanh else set()
+    that = chua_day - trung - squash
+    if cua_nhanh:
+        nhanh = sorted(ten for ten in nhanh_dinh if cua_nhanh[ten] & that)
+    else:
+        nhanh = sorted(nhanh_dinh)
+    if chi_tiet is not None:
+        chi_tiet.update(nen=nen, trung_ban_va=sorted(trung), gop_squash=sorted(squash),
+                        nhanh_da_gop=sorted(set(nhanh_dinh) - set(nhanh)))
+    return len(that), nhanh
 
 
 def _trang_thai_ci_pr(rollup: list) -> str:
@@ -993,7 +1078,15 @@ def main() -> int:
             # sẽ bị _chay gộp vào stdout và đếm nhầm thành "1 file chưa commit"
         st = _chay(["git", "-C", str(duong), "status", "--porcelain"], giay=20)
         n_ban = len([x for x in st.splitlines() if x.strip()])
-        n_chua_day, nhanh_chua_day = dem_commit_chua_co_tren_remote(duong)
+        chi_tiet_day: dict = {}
+        n_chua_day, nhanh_chua_day = dem_commit_chua_co_tren_remote(duong, chi_tiet_day)
+        n_da_gop = len(chi_tiet_day.get("trung_ban_va", [])) + len(chi_tiet_day.get("gop_squash", []))
+        if n_da_gop:
+            ng = chi_tiet_day.get("nhanh_da_gop", [])
+            _THONG_TIN.append(
+                f"Repo {ten_repo}: {n_da_gop} commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên "
+                f"{chi_tiet_day['nen'].removeprefix('refs/remotes/')} (trùng bản vá/gộp squash) — không còn việc"
+                + (f"; nhánh cục bộ chỉ còn bản đã gộp: {', '.join(ng[:4])}{'…' if len(ng) > 4 else ''}" if ng else ""))
         if n_chua_day is None:
             de_xuat.append((2, "🤖", f"Repo {ten_repo}: KHÔNG đo được commit chưa có trên remote (git lỗi) — kiểm tay",
                             f"git -C \"{duong.name}\" log --branches --not --remotes --oneline"))

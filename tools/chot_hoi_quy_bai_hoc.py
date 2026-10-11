@@ -2255,9 +2255,18 @@ def _bh51_chay(mea, sap, home_tam=None):
                             "--study", "ZZPHA-R-AUTO-DEMO"],
                            capture_output=True, text=True, cwd=mea, timeout=120, encoding="utf-8",
                            errors="replace", env=env)
-        if "chữ ký thật" not in r.stdout:
+        # 09/10/2026 — G6-AUTO-01 nay đòi CẢ chữ ký sổ cái LẪN G4 chấm trực tiếp PASS_G4_SAP_LOCKED (soát từng cổng
+        # G6-01, 04/10). SAP của đề tài demo (15/08) không còn đạt G4 đã siết, nên dòng «chữ ký thật» không còn in dù
+        # điểm gọi vẫn ĐÚNG ⇒ chốt đỏ giả từ 07/10. Bài học này canh ĐIỂM GỌI ledger_approved trong g6_quality_gate
+        # (`_g4_da_khoa`), nên nhận cả hai thông điệp chứng minh chữ ký ĐÃ được nhận ra; điểm gọi hỏng (đảo tham số,
+        # sai repo_root) rơi vào «sổ cái không có chữ ký…» hoặc «không đo được (…)» ⇒ vẫn đỏ.
+        da_nhan_chu_ky = ("sổ cái (chữ ký thật)", "có chữ ký nhưng G4 chấm trực tiếp")
+        if "sổ cái không có chữ ký G4 hợp lệ" in r.stdout or not any(x in r.stdout for x in da_nhan_chu_ky):
             return False, ("G6-AUTO-01 không còn lấy bằng chứng từ ledger — điểm gọi "
                            "ledger_approved trong g6_quality_gate hỏng (đảo tham số?)"), None
+        if "sổ cái (chữ ký thật)" not in r.stdout:
+            return True, ("synthetic đúng phạm vi + điểm gọi G6 nhận ra chữ ký sổ cái (G4 chấm trực tiếp của đề tài "
+                          "demo chưa đạt khoá — việc của G4, ngoài bài học này)"), None
         return True, "synthetic đúng phạm vi + điểm gọi G6 lấy đúng bằng chứng ledger", None
     finally:
         for k, v in cu_moi_truong.items():
@@ -3050,8 +3059,9 @@ def bh55_khong_duong_dan_cung_mot_may():
     r = subprocess.run([sys.executable, str(duong)], capture_output=True,
                        text=True, cwd=REPO, timeout=180, encoding="utf-8", errors="replace")
     if r.returncode == 2:
-        dong_do = [x.strip() for x in r.stdout.splitlines() if "🔴" in x][:3]
-        return False, "tool viết-cho-một-máy quay lại: " + " | ".join(dong_do)
+        # 09/10/2026: in TỔNG số dòng 🔴 — bản cũ chỉ in 3 dòng đầu nên 24 báo nhầm của R6 trông như 3.
+        dong_do = [x.strip() for x in r.stdout.splitlines() if x.strip().startswith("🔴")]
+        return False, (f"tool viết-cho-một-máy quay lại ({len(dong_do)} 🔴, 3 đầu): " + " | ".join(dong_do[:3]))
     if "KẾT:" not in r.stdout:
         return False, f"chốt đa nền không chạy trọn: {r.stderr.strip()[-100:]}"
     return True, "0 🔴 toàn kho tool (5 cây, ~268 file)"
@@ -5398,8 +5408,16 @@ def bh97_sap_rong_khong_duoc_khoa_bang_chu_ky():
     (cho qua) vs VẮNG SẠCH (chặn) — không cần biết `design`, nên không phải đổi chữ ký hàm.
 
     Kiểm HÀNH VI trên mã sống của repo y khoa (⚪ khi repo vắng — không suy đoán):
-      ① SAP rỗng ⇒ CHẶN   ② vắng đúng một mục ⇒ vẫn cho qua (biến thể thiết kế hợp lệ)
+      ① SAP rỗng ⇒ CHẶN   ② vắng đúng một mục BẮT BUỘC ⇒ CHẶN, nêu đúng mục đó (xem đính chính)
       ③ đủ mục, còn `[CẦN` ⇒ vẫn chặn đúng như cũ (không phá hành vi gốc)
+
+    ĐÍNH CHÍNH 09/10/2026 (chốt đỏ giả từ 07/10): vế ② CŨ «vắng đúng một mục ⇒ cho qua (biến thể thiết kế)» đã bị chính
+    bản vá G4-01 (soát từng cổng 04/10/2026) ĐẢO CÓ CHỦ Ý: run_g4_auto.generate() in đủ §1–§12 có đánh số cho cả 8 thiết
+    kế (định tính chỉ đổi tiêu đề §5–§9), nên «vắng» chỉ có thể là bị XOÁ — ký khoá một SAP mất §2/§4 là đúng loại sai
+    lệch G4 sinh ra để ngăn. Hành vi mới có test bảo vệ ở repo y khoa (`tests/test_g4_hoan_thien_20261004.py`: mục bắt
+    buộc VẮNG ⇒ chặn; rỗng ⇒ «VẮNG SẠCH»). Fixture cũ viết cứng 4 mục (§1/§2/§5/§10) nên «đủ mục» của nó thiếu §4/§9 ⇒
+    báo «dương tính giả». Nay fixture dựng từ `_g4_muc_bat_buoc` (danh mục hiện hành) — kèm SÀN 6 mục lõi
+    §1/§2/§4/§5/§9/§10 (CLAUDE.md §8) để danh mục bị THU NHỎ cũng làm chốt đỏ — và vế ② kiểm từng mục một.
     """
     import importlib.util as _iu
 
@@ -5416,21 +5434,36 @@ def bh97_sap_rong_khong_duoc_khoa_bang_chu_ky():
         return True, f"⚪ không nạp được approve_gate ({type(e).__name__}) — không kết luận"
 
     f = m._g4_sections_still_draft
+    danh_muc = getattr(m, "_g4_muc_bat_buoc", None)
+    if danh_muc is None:
+        return False, ("approve_gate mất `_g4_muc_bat_buoc` — không còn biết tập mục bắt buộc hiện hành của SAP "
+                       "(chốt không dựng được fixture, soát lại cổng G4)")
+    muc = list(danh_muc("", None))
+    san = ("§1", "§2", "§4", "§5", "§9", "§10")
+    thieu_san = [s for s in san if s not in muc]
+    if thieu_san:
+        return False, (f"danh mục mục bắt buộc của SAP bị THU NHỎ — mất {thieu_san} (sàn CLAUDE.md §8: "
+                       "§1/§2/§4/§5/§9/§10) ⇒ ký khoá được SAP thiếu kết cục/phân tích chính")
     if not f(""):
         return False, ("SAP RỖNG vẫn đi qua chốt trước-khi-ký của G4 — cổng sẽ KHOÁ BẰNG CHỮ KÝ "
                        "một bản rỗng, và mọi phân tích sau đó lệch khỏi SAP đã khoá")
-    day_du = ("## §1 a\nok\n## §2 b\nok\n## §5 c\nok\n## §10 d\nok")
+
+    def _sap(cac_muc, dien=lambda so: "ok"):
+        return "\n".join(f"## {so} t\n{dien(so)}" for so in cac_muc)
+
+    day_du = _sap(muc)
     if f(day_du):
         return False, f"SAP ĐỦ MỤC, đã điền mà vẫn bị chặn — dương tính giả: {f(day_du)}"
-    thieu_mot = "## §2 b\nok\n## §5 c\nok\n## §10 d\nok"
-    if f(thieu_mot):
-        return False, ("thiếu ĐÚNG MỘT mục đã bị chặn — mất nhượng bộ cho biến thể thiết kế "
-                       "(định tính dùng §5 khác), sẽ chặn oan SAP hợp lệ")
-    con_can = "## §1 a\n[CẦN BÁC SĨ]\n## §2 b\nok\n## §5 c\nok\n## §10 d\nok"
+    for so in muc:
+        kq = f(_sap([s for s in muc if s != so]))
+        if not any(x.startswith(so) and "VẮNG" in x for x in kq):
+            return False, (f"thiếu mục bắt buộc {so} mà KHÔNG bị chặn ({kq}) — ký khoá được SAP đã bị xoá mục "
+                           "(G4-01, 04/10/2026)")
+    con_can = _sap(muc, lambda so: "[CẦN BÁC SĨ]" if so == muc[0] else "ok")
     if not f(con_can):
         return False, "SAP còn placeholder [CẦN mà không bị chặn — mất hành vi gốc của chốt"
 
-    return True, ("SAP rỗng bị chặn; thiếu một mục vẫn cho qua (biến thể thiết kế); "
+    return True, (f"SAP rỗng bị chặn; đủ {len(muc)} mục bắt buộc thì qua; thiếu BẤT KỲ mục nào bị chặn đúng mục; "
                   "placeholder [CẦN vẫn chặn như cũ")
 
 
