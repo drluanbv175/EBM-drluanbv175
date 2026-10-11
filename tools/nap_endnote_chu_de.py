@@ -643,6 +643,12 @@ class EndNoteMac:
         if doc_lai.strip() != url:
             raise RuntimeError(f"EndNote không nhận tệp đính kèm cho {ma}: đọc lại {doc_lai[:120]!r}")
 
+    def ten_cac_nhom(self) -> list[str]:
+        """Tên mọi nhóm của thư viện, có lặp nếu EndNote giữ hai nhóm cùng tên (ngăn bằng xuống dòng — tên có dấu phẩy)."""
+        out = self._chay('set g to get groups in window (item 1 of argv)\nif g is missing value then return ""\n'
+                         "set AppleScript's text item delimiters to linefeed\nreturn g as text", self.ten)
+        return [x for x in out.splitlines() if x.strip()]
+
 
 # ── điều phối một chủ đề ───────────────────────────────────────────────────────────────────────────
 
@@ -697,6 +703,25 @@ def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None) -> tupl
         else:
             thieu.append(f"PMID {d['pmid']}" if d.get("pmid") else f"DOI {d['doi']}")
     return can_gan, thieu
+
+
+CHO_NHOM_GIAY = 20  # đo 11/10: nhóm vừa tạo chưa vào danh sách nhóm của EndNote sau vài giây
+_ngu = time.sleep
+
+
+def cho_nhom_dang_ky(endnote, nhom: str, can: int) -> int:
+    """Đợi tới khi EndNote liệt kê ≥ `can` nhóm tên `nhom` (≤ CHO_NHOM_GIAY lượt, mỗi lượt 1 giây); trả số nhóm cùng tên.
+
+    Đo 11/10/2026 khi nạp 72 dashboard: bản «Tiên lượng suy tim» mới đăng 11 bài tạo nhóm, 5 giây sau bản cũ hơn đăng 7 bài
+    cùng tên ⇒ EndNote tạo nhóm THỨ HAI cùng tên thay vì cộng thêm (nhóm vừa tạo chưa vào danh sách nhóm). Đợi nhóm đăng ký
+    xong rồi mới chạy dashboard kế tiếp; số trả về > can ⇒ người gọi báo «trùng tên» chứ không im lặng."""
+    so = 0
+    for _ in range(CHO_NHOM_GIAY):
+        so = endnote.ten_cac_nhom().count(nhom)
+        if so >= can:
+            return so
+        _ngu(1)
+    return so
 
 
 def _gan_pdf(endnote, can_gan: list[tuple]) -> None:
@@ -826,7 +851,12 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     cap = cap_ban_ghi(theo_pm, theo_doi)
     da_trong_nhom = set(endnote.thanh_vien_nhom(nhom))
     can_dang = [r for _, r in cap if r not in da_trong_nhom]
-    endnote.dang_vao_nhom(can_dang, nhom)
+    if can_dang:
+        truoc = endnote.ten_cac_nhom().count(nhom)
+        endnote.dang_vao_nhom(can_dang, nhom)
+        sau = cho_nhom_dang_ky(endnote, nhom, max(truoc, 1))
+        if sau > max(truoc, 1):
+            bc["nhom_trung_ten"] = sau
     bc["dang_vao_nhom"] = len(can_dang)
     bc["trong_nhom_sau"] = len(da_trong_nhom) + len(can_dang)
 
@@ -883,6 +913,9 @@ def _in_bao_cao(bc: dict) -> None:
         print(f"   Sẽ gắn toàn văn cho bản ghi đã có: {bc['se_gan_pdf']}")
     if bc["ap_dung"] and bc["kiem_trung"]:
         print(f"   Đăng thêm vào nhóm: {bc['dang_vao_nhom']} · nhóm hiện có {bc.get('trong_nhom_sau', '?')} bản ghi")
+        if bc.get("nhom_trung_ten"):
+            print(f"   ⚠ EndNote đang có {bc['nhom_trung_ten']} nhóm cùng tên này — gộp tay: mở nhóm ít bài, chọn hết, kéo vào "
+                  "nhóm kia, rồi xoá nhóm rỗng (xoá nhóm không xoá bài khỏi thư viện)")
         print(f"   Gắn thêm toàn văn cho bản ghi đã có: {bc.get('gan_them_pdf', 0)}")
         thieu = bc.get("thieu_toan_van") or []
         if thieu:
