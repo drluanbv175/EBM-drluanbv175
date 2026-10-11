@@ -280,6 +280,25 @@ def dung(*, bay_gio: datetime | None = None, tep: Path | None = None) -> tuple[i
     return 0, f"đã đóng phiên {d['ma']} — {n} bài, {len(d['lich_su'])} tệp"
 
 
+def gan_vao_endnote(pmids: list[str], kho: Path, nap=None) -> None:
+    """PDF vừa vào kho ⇒ gắn ngay vào bản ghi cùng PMID trong EndNote (11/10/2026; `nap_endnote_chu_de.py --gan-kho`).
+
+    Chỉ khi thư viện ĐANG mở (không tự bật EndNote); chưa cấu hình/không phải Mac ⇒ một dòng ⚪. Không bao giờ làm hỏng
+    lượt nhận: mọi lỗi chỉ thành một dòng ⚪ — lần nạp chủ đề sau vẫn gắn được."""
+    if not pmids:
+        return
+    try:
+        if nap is None:
+            sp = importlib.util.spec_from_file_location("_nap_endnote_phien", Path(__file__).resolve().parent
+                                                        / "nap_endnote_chu_de.py")
+            nap = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(nap)
+        nap.main(["--gan-kho", "--pmid", *pmids, "--kho-toan-van", str(kho), "--ap-dung",
+                  "--chi-khi-dang-mo", "--im-khi-chua-cau-hinh"])
+    except Exception as e:  # noqa: BLE001 — bước phụ, không được làm hỏng lượt nhận đã ghi kho
+        print(f"⚪ EndNote: chưa gắn được — {type(e).__name__}")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Phiên uỷ quyền Chrome: đọc và lưu toàn văn trong phiên bác sĩ đã nói")
     nhom = ap.add_mutually_exclusive_group(required=True)
@@ -301,6 +320,12 @@ def main(argv: list[str] | None = None) -> int:
             print("✗ --nhan cần --tep")
             return 3
         ma, tb = nhan(a.nhan, a.tep, a.url, a.doi)
+        if ma == 0:
+            print("✓ " + tb)
+            # Dưới pytest không bao giờ chạm EndNote thật (EndNoteMac cũng tự chặn — hai lớp).
+            if (KHO / f"PMID-{a.nhan}{HAU_TO}.pdf").is_file() and not os.environ.get("PYTEST_CURRENT_TEST"):
+                gan_vao_endnote([a.nhan], KHO)
+            return 0
     elif a.dung:
         ma, tb = dung()
     else:

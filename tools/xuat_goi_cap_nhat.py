@@ -54,6 +54,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -587,6 +588,24 @@ def main() -> int:
                     print("   " + dong.strip())
         else:
             print("   ⚠ Bỏ qua (không chặn 5 sản phẩm trên): " + (out.strip().splitlines() or ["không rõ"])[-1][:160])
+
+    # ── ⑦ EndNote: trích dẫn của chủ đề vào nhóm «EBM · <câu hỏi>» (bác sĩ yêu cầu 11/10/2026) ──
+    # Best-effort NHƯ ⑤ ⑥: tiện ích quản lý tài liệu, KHÔNG phải cổng — không đổi rc_final. Máy chưa cấu hình
+    # (~/.ebm-endnote.json) hoặc không phải Mac ⇒ một dòng ⚪. Dưới pytest KHÔNG BAO GIỜ chạm EndNote thật
+    # (dashboard của test là dữ liệu giả — nạp vào thư viện thật của bác sĩ là làm bẩn tài liệu).
+    print("⑦ EndNote…")
+    NAP_EN = ROOT / "tools" / "nap_endnote_chu_de.py"
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        print("   ⚪ Bỏ qua trong lượt test.")
+    elif not NAP_EN.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/nap_endnote_chu_de.py")
+    else:
+        rc, out = run([py, str(NAP_EN), "--file", str(dash), "--ap-dung", "--im-khi-chua-cau-hinh"])
+        for dong in out.splitlines():
+            if dong.strip():
+                print("   " + dong.strip())
+        if rc not in (0, 1):
+            print("   ⚠ EndNote chưa nạp được (không chặn 5 sản phẩm trên).")
 
     # VÁ 13/08/2026 — TIÊU ĐỀ PHẢI NÓI ĐÚNG SỰ THẬT.
     # Bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể cả khi chỉ sinh được 3/5.

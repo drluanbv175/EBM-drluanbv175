@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import glob
 import importlib.util
+import os
 import re
 import sys
 import time
@@ -160,6 +161,44 @@ def dem_toan_van(kho: Path) -> dict[str, set[str]]:
     return loai
 
 
+def la_trang_chan_ncbi(du_lieu: bytes) -> bool:
+    """NCBI chặn IP thì trả HTML «NCBI - WWW Error Blocked Diagnostic» với mã 200 — không phải JSON."""
+    dau = du_lieu[:3000].lower()
+    return b"blocked diagnostic" in dau or b"blocked for possible abuse" in dau
+
+
+def doi_cua_pmid(pm: str, email: str, trang_thai: dict) -> str:
+    """DOI của một PMID ("" = bài KHÔNG có DOI). NCBI esummary trước, rồi Europe PMC (EXT_ID:<pmid> AND SRC:MED).
+
+    Đo 11/10/2026: NCBI trả trang chặn cho MỌI esummary ⇒ cả 13 bài của chủ đề COPD báo «JSONDecodeError — chưa lấy
+    được» như thể Unpaywall hỏng, tầng 2 không chạy được bài nào. Thấy trang chặn MỘT lần thì cả lượt không gọi NCBI nữa
+    (`trang_thai["ncbi_chan"]` — gọi tiếp vào IP đang bị chặn chỉ kéo dài lệnh chặn). Lỗi mạng/JSON hỏng lẻ tẻ chỉ chuyển
+    bài đó sang Europe PMC. Cả hai nguồn không trả lời được ⇒ NÉM lỗi, không trả "" (rỗng là khẳng định «không có DOI»)."""
+    import json as _json
+    import urllib.parse as _up
+    import urllib.request as _rq
+    if not trang_thai.get("ncbi_chan"):
+        u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+             f"?db=pubmed&id={pm}&retmode=json&email={email}")
+        try:
+            du_lieu = _rq.urlopen(u, timeout=20).read()
+            if la_trang_chan_ncbi(du_lieu):
+                trang_thai["ncbi_chan"] = True
+                print("  ⚠ NCBI đang chặn IP này (trang «Blocked Diagnostic») — lấy DOI qua Europe PMC cho phần còn lại")
+            else:
+                ids = _json.loads(du_lieu)["result"][pm].get("articleids", [])
+                return next((x["value"] for x in ids if x.get("idtype") == "doi"), "")
+        except (OSError, ValueError, KeyError, TypeError):  # URLError/timeout là OSError; JSON hỏng là ValueError
+            pass
+    q = _up.quote(f"EXT_ID:{pm} AND SRC:MED")
+    js = _json.loads(_rq.urlopen("https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+                                 f"?resultType=lite&format=json&pageSize=1&query={q}", timeout=25).read())
+    kq = (js.get("resultList") or {}).get("result") or []
+    if not kq:
+        raise LookupError(f"Europe PMC không có bản ghi PMID {pm}")
+    return kq[0].get("doi") or ""
+
+
 def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
     """TẦNG 2 OA — Unpaywall (bác sĩ duyệt gói ② 19/08): bài không có bản PMC vẫn
     thường có bản OA HỢP PHÁP ở repository (bản tác giả tự lưu, Gold OA ngoài PMC).
@@ -174,13 +213,10 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
         return 0, pmids
     moi_tai, con_thieu = 0, []
     BO_QUA_UNPAYWALL.clear()
+    trang_thai: dict = {}
     for pm in pmids:
-        try:  # DOI qua esummary (id → articleids)
-            u = ("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-                 f"?db=pubmed&id={pm}&retmode=json&email={email}")
-            js = _json.loads(_rq.urlopen(u, timeout=20).read())
-            ids = js["result"][pm].get("articleids", [])
-            doi = next((x["value"] for x in ids if x.get("idtype") == "doi"), "")
+        try:  # DOI qua NCBI esummary, NCBI chặn/lỗi ⇒ Europe PMC
+            doi = doi_cua_pmid(pm, email, trang_thai)
             if not doi:
                 con_thieu.append(pm)
                 continue
@@ -237,6 +273,36 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
             print(f"  ⚠ Unpaywall {pm}: {type(exc).__name__} — chưa lấy được, lần sau thử lại")
             con_thieu.append(pm)
     return moi_tai, con_thieu
+
+
+def pmid_co_pdf(kho: Path) -> set[str]:
+    """PMID có ít nhất một tệp PDF trong kho (`PMID-<n>_<NGUỒN>.pdf`)."""
+    ra: set[str] = set()
+    if kho.is_dir():
+        for q in kho.glob("PMID-*_*.pdf"):
+            m = re.fullmatch(r"PMID-(\d{1,9})_[A-Za-z]+\.pdf", q.name, flags=re.I)
+            if m:
+                ra.add(m.group(1))
+    return ra
+
+
+def gan_vao_endnote(pmids: list[str], kho: Path, nap=None) -> None:
+    """PDF mới của lượt gom ⇒ gắn ngay vào bản ghi cùng PMID trong EndNote (11/10/2026; `nap_endnote_chu_de.py --gan-kho`).
+
+    Chỉ khi thư viện ĐANG mở (không tự bật EndNote); chưa cấu hình/không phải Mac ⇒ một dòng ⚪; mọi lỗi chỉ thành một dòng ⚪
+    — lượt gom đã ghi kho không bao giờ hỏng vì bước phụ này."""
+    if not pmids:
+        return
+    try:
+        if nap is None:
+            sp = importlib.util.spec_from_file_location("_nap_endnote_gom", Path(__file__).resolve().parent
+                                                        / "nap_endnote_chu_de.py")
+            nap = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(nap)
+        nap.main(["--gan-kho", "--pmid", *pmids, "--kho-toan-van", str(kho), "--ap-dung",
+                  "--chi-khi-dang-mo", "--im-khi-chua-cau-hinh"])
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚪ EndNote: chưa gắn được — {type(e).__name__}")
 
 
 def _nap_gom():
@@ -352,8 +418,12 @@ def main() -> int:
         thu = sorted(pmids - da_bat_ky)
         if thu:
             print(f"  Tầng 2 Unpaywall: thử {len(thu)} bài không có bản PMC…")
+            pdf_truoc = pmid_co_pdf(KHO)
             upw_moi, _ = tang_unpaywall(thu, gom=gom)
             moi += upw_moi
+            pdf_moi = sorted(pmid_co_pdf(KHO) - pdf_truoc)
+            if pdf_moi and not os.environ.get("PYTEST_CURRENT_TEST"):  # dưới pytest không chạm EndNote thật
+                gan_vao_endnote(pdf_moi, KHO)
     hom_nay = date.today().isoformat()
     so_moi = {pm: ngay for pm, ngay in khong_pmc_cu.items() if pm in con_han}
     for pm in list(khong_pmc) + list(khong_oa):
