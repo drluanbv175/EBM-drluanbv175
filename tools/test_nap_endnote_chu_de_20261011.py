@@ -249,10 +249,29 @@ class _EndNoteGia:
             self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
                        r.findtext("urls/pdf-urls/url") or "")
 
+    # Đo 11/10 trên thư viện thật: nhóm vừa tạo chưa vào danh sách nhóm vài giây; đăng cùng tên lúc đó ⇒ nhóm THỨ HAI.
+    tre_dang_ky = 0                              # số lần hỏi danh sách nhóm mà nhóm mới còn «vô hình»
+    nhom_trung: list = []                        # tên các nhóm trùng tên EndNote đã sinh ra
+
     def thanh_vien_nhom(self, ten):
         return list(self.nhom.get(ten, []))
 
+    def ten_cac_nhom(self):
+        if not hasattr(self, "_an"):
+            self._an = {}
+        ra = [n for n in self.nhom if self._an.get(n, 0) == 0] + list(self.nhom_trung)
+        for n in self._an:
+            self._an[n] = max(0, self._an[n] - 1)
+        return ra
+
     def dang_vao_nhom(self, ids, ten):
+        if not hasattr(self, "_an"):
+            self._an = {}
+        if ten in self.nhom and (self._an.get(ten, 0) > 0 or getattr(self, "sinh_trung_ten", False)):
+            self.nhom_trung = [*self.nhom_trung, ten]   # nhóm cũ chưa đăng ký ⇒ EndNote tạo nhóm mới cùng tên
+            return
+        if ten not in self.nhom:
+            self._an[ten] = self.tre_dang_ky
         self.nhom.setdefault(ten, []).extend(ids)   # đăng lại = nhân đôi, như đo thật
 
 
@@ -547,6 +566,38 @@ def test_nhom_da_ghi_nho_thang_cau_hoi_moi(N, tmp_path):
     en = _EndNoteGia(tv)
     _nap_nhieu(N, files[1:], doc, en, ch)
     assert set(en.nhom) == {"EBM · Suy tim (nhóm cũ)"}, "chủ đề đã có nhóm ⇒ vào đúng nhóm cũ dù câu hỏi đổi chữ"
+
+
+def test_doi_nhom_moi_dang_ky_roi_moi_dang_ban_ke_tiep(N, tmp_path, monkeypatch):
+    """Ca thật 11/10: «Tiên lượng suy tim» bị tách hai nhóm cùng tên vì bản cũ đăng ngay sau khi bản mới tạo nhóm."""
+    ngu: list[float] = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv)
+    en.tre_dang_ky = 3
+    kq = _nap_nhieu(N, files, doc, en, ch)
+    assert en.nhom_trung == [], "đăng bản kế tiếp khi nhóm chưa đăng ký ⇒ EndNote sinh nhóm trùng tên"
+    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3 and ngu, "phải đợi nhóm đăng ký"
+    assert not any(b.get("nhom_trung_ten") for b in kq)
+
+
+def test_endnote_sinh_nhom_trung_ten_thi_bao_ro(N, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(N, "_ngu", lambda s: None)
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv)
+    _nap_nhieu(N, files[1:], doc, en, ch)
+    en.sinh_trung_ten = True
+    kq = _nap_nhieu(N, files[:1], doc, en, ch)
+    assert kq[0]["nhom_trung_ten"] == 2
+    assert "nhóm cùng tên này — gộp tay" in capsys.readouterr().out
+
+
+def test_cho_nhom_co_tran_thoi_gian(N, monkeypatch):
+    ngu: list[float] = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    en = type("E", (), {"ten_cac_nhom": lambda self: []})()
+    assert N.cho_nhom_dang_ky(en, "EBM · X", 1) == 0
+    assert len(ngu) == N.CHO_NHOM_GIAY, "không đợi vô hạn khi EndNote không bao giờ liệt kê nhóm"
 
 
 def test_chay_kho_khong_ghi_bang_nhom(N, tmp_path):
