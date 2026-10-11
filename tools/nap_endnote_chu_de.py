@@ -117,9 +117,48 @@ def ghi_cau_hinh(thu_vien: str, ung_dung: str, tep: Path | None = None) -> dict:
         raise ValueError(f"không thấy thư viện EndNote (.enl): {p}")
     if not _TEN_UNG_DUNG.match(ung_dung):
         raise ValueError(f"tên ứng dụng không hợp lệ: {ung_dung!r}")
+    cu = doc_cau_hinh(tep) or {}
     ch = {"thu_vien": str(p.resolve()), "ung_dung": ung_dung}
-    (tep or CAU_HINH).write_text(json.dumps(ch, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    if cu.get("nhom_theo_chu_de") and cu.get("thu_vien") == ch["thu_vien"]:
+        ch["nhom_theo_chu_de"] = cu["nhom_theo_chu_de"]  # khai lại cùng thư viện: giữ bảng nhóm đã dựng
+    _ghi_json(tep or CAU_HINH, ch)
     return ch
+
+
+def _ghi_json(tep: Path, d: dict) -> None:
+    tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
+    tam.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    os.replace(tam, tep)
+
+
+def nhom_da_ghi(tep: Path | None = None) -> dict[str, str]:
+    """Bảng {khoá chủ đề: tên nhóm EndNote} của thư viện đã cấu hình — một chủ đề MỘT nhóm qua mọi phiên bản dashboard."""
+    bang = (doc_cau_hinh(tep) or {}).get("nhom_theo_chu_de")
+    return {str(k): str(v) for k, v in bang.items()} if isinstance(bang, dict) else {}
+
+
+def ghi_nhom(khoa: str, ten: str, tep: Path | None = None) -> None:
+    """Ghi nhớ nhóm của một chủ đề (chỉ khi máy đã cấu hình thư viện)."""
+    ch = doc_cau_hinh(tep)
+    if ch is None:
+        return
+    bang = ch.get("nhom_theo_chu_de") if isinstance(ch.get("nhom_theo_chu_de"), dict) else {}
+    if bang.get(khoa) == ten:
+        return
+    bang[khoa] = ten
+    ch["nhom_theo_chu_de"] = bang
+    _ghi_json(tep or CAU_HINH, ch)
+
+
+def sap_xep_phien_ban(files: list[Path]) -> list[Path]:
+    """Gom các phiên bản cùng chủ đề và đưa bản MỚI NHẤT (đuôi _YYYYMMDD lớn nhất) lên trước — tên nhóm lấy theo bản đó."""
+    def ngay(f: Path) -> int:
+        m = re.search(r"_(\d{8})$", f.stem)
+        return int(m.group(1)) if m else 0   # không có ngày ⇒ coi là cũ nhất
+    thu_tu: dict[str, int] = {}
+    for f in files:
+        thu_tu.setdefault(khoa_chu_de(f), len(thu_tu))
+    return sorted(files, key=lambda f: (thu_tu[khoa_chu_de(f)], -ngay(f)))
 
 
 # ── đọc dashboard ──────────────────────────────────────────────────────────────────────────────────
@@ -798,6 +837,35 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     return bc
 
 
+def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, ten_nhom: str | None = None,
+              doc_data=None, cau_hinh: Path | None = None, **lay) -> list[dict]:
+    """Nạp nhiều dashboard: MỘT chủ đề (khoá bỏ đuôi ngày) = MỘT nhóm qua mọi phiên bản.
+
+    Bác sĩ dặn 11/10/2026: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu». Câu hỏi lâm sàng đổi chữ giữa
+    các phiên bản (Suy tim tổng hợp: 5 bản, 4 câu khác nhau) nên đặt tên theo câu hỏi sẽ sinh nhiều nhóm gần trùng. Vì vậy:
+    nhóm đã ghi nhớ cho chủ đề (bảng `nhom_theo_chu_de` trong cấu hình máy) thắng; chưa có thì bản MỚI NHẤT đặt tên và các bản
+    cũ hơn đổ vào cùng nhóm (bản ghi đã có giữ nguyên, chỉ thêm bài và thêm thành viên nhóm còn thiếu). `--ten-nhom` của
+    bác sĩ thắng tất cả và được ghi nhớ."""
+    doc_data = doc_data or _nap_doc_data()
+    bang = nhom_da_ghi(cau_hinh)
+    ket_qua: list[dict] = []
+    for f in sap_xep_phien_ban(files):
+        khoa = khoa_chu_de(f)
+        ten = ten_nhom or bang.get(khoa)
+        try:
+            bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten, **lay)
+        except (RuntimeError, OSError) as e:
+            bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
+        if not bc.get("loi") and bc.get("nhom"):
+            moi = bang.get(khoa) != bc["nhom"]
+            bang[khoa] = bc["nhom"]
+            if moi and ap_dung and endnote is not None:  # chỉ ghi nhớ khi nhóm THẬT đã dựng trong EndNote
+                ghi_nhom(khoa, bc["nhom"], cau_hinh)
+        ket_qua.append(bc)
+        _in_bao_cao(bc)
+    return ket_qua
+
+
 def _in_bao_cao(bc: dict) -> None:
     if bc.get("loi"):
         print(f"✗ {bc['dashboard']}: {bc['loi']}")
@@ -938,15 +1006,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(bc, ensure_ascii=False, indent=2))
         return MA_OK
 
-    doc = _nap_doc_data()
-    ket_qua = []
-    for f in files:
-        try:
-            bc = nap_chu_de(f, endnote=endnote, ap_dung=a.ap_dung, kho=kho, doc_data=doc, ten_nhom=a.ten_nhom)
-        except (RuntimeError, OSError) as e:
-            bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
-        ket_qua.append(bc)
-        _in_bao_cao(bc)
+    ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom)
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
               "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"

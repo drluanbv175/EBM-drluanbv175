@@ -500,6 +500,73 @@ def test_gan_kho_chi_khi_dang_mo_khong_tu_bat_endnote(N, tmp_path, monkeypatch, 
     assert N.main(["--gan-kho", "--file", str(tv)]) == 3, "--gan-kho không đi cùng --file"
 
 
+# ── một chủ đề = một nhóm qua mọi phiên bản dashboard ──────────────────────────────────────────────
+
+def test_sap_xep_phien_ban_moi_nhat_truoc_giu_thu_tu_chu_de(N):
+    f = [Path(p) for p in ("WebDashboard_A_20260101.html", "WebDashboard_B_20260301.html", "WebDashboard_A_20260601.html",
+                           "WebDashboard_A.html")]
+    assert [x.name for x in N.sap_xep_phien_ban(f)] == [
+        "WebDashboard_A_20260601.html", "WebDashboard_A_20260101.html", "WebDashboard_A.html", "WebDashboard_B_20260301.html"]
+
+
+def _hai_phien_ban(tmp_path):
+    cu, moi = tmp_path / "WebDashboard_EBM_SuyTim_20260804.html", tmp_path / "WebDashboard_EBM_SuyTim_20260914.html"
+    for f in (cu, moi):
+        f.write_text("x", encoding="utf-8", newline="\n")
+    du = {cu.name: {"meta": {"question": "Suy tim — câu hỏi bản cũ"}, "items": [{"id": "1", "pmid": "111", "doi": ""},
+                                                                                 {"id": "2", "pmid": "222", "doi": ""}]},
+          moi.name: {"meta": {"question": "Suy tim — câu hỏi bản mới"}, "items": [{"id": "1", "pmid": "111", "doi": ""},
+                                                                                  {"id": "3", "pmid": "333", "doi": ""}]}}
+    tv = tmp_path / "tv.enl"
+    tv.write_bytes(b"")
+    ch = tmp_path / "ch.json"
+    N_ghi = json.dumps({"thu_vien": str(tv), "ung_dung": "EndNote 2025"})
+    ch.write_text(N_ghi, encoding="utf-8", newline="\n")
+    return [cu, moi], (lambda p: du[p.name]), tv, ch
+
+
+def _nap_nhieu(N, files, doc, en, ch, ap_dung=True):
+    return N.nap_nhieu(files, endnote=en, ap_dung=ap_dung, kho=None, doc_data=doc, cau_hinh=ch,
+                       lay_pm=lambda pmids: {p: _meta(p) for p in pmids}, lay_ep=lambda pmids: {}, lay_cr=lambda doi: None)
+
+
+def test_nhieu_phien_ban_vao_mot_nhom_ten_ban_moi_nhat_va_ghi_nho(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv, co_san=[("111", None, "")])
+    kq = _nap_nhieu(N, files, doc, en, ch)
+    assert [b["dashboard"] for b in kq] == [files[1].name, files[0].name], "bản mới nhất chạy trước, đặt tên nhóm"
+    assert set(en.nhom) == {"EBM · Suy tim — câu hỏi bản mới"}, "một chủ đề chỉ một nhóm"
+    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3, "bổ sung phần thiếu của bản cũ (222), không lặp 111"
+    assert len(en.ban_ghi) == 3, "bản ghi đã có (111) giữ nguyên, không nhập lại"
+    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": "EBM · Suy tim — câu hỏi bản mới"}
+
+
+def test_nhom_da_ghi_nho_thang_cau_hoi_moi(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    N.ghi_nhom("EBM_SuyTim", "EBM · Suy tim (nhóm cũ)", ch)
+    en = _EndNoteGia(tv)
+    _nap_nhieu(N, files[1:], doc, en, ch)
+    assert set(en.nhom) == {"EBM · Suy tim (nhóm cũ)"}, "chủ đề đã có nhóm ⇒ vào đúng nhóm cũ dù câu hỏi đổi chữ"
+
+
+def test_chay_kho_khong_ghi_bang_nhom(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    kq = _nap_nhieu(N, files, doc, _EndNoteGia(tv), ch, ap_dung=False)
+    assert {b["nhom"] for b in kq} == {"EBM · Suy tim — câu hỏi bản mới"}, "chạy khô vẫn báo đúng một nhóm"
+    assert N.nhom_da_ghi(ch) == {}
+
+
+def test_khai_lai_cung_thu_vien_giu_bang_nhom_doi_thu_vien_thi_bo(N, tmp_path):
+    _, _, tv, ch = _hai_phien_ban(tmp_path)
+    N.ghi_nhom("EBM_SuyTim", "EBM · X", ch)
+    N.ghi_cau_hinh(str(tv), "EndNote 2025", tep=ch)
+    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": "EBM · X"}
+    tv2 = tmp_path / "khac.enl"
+    tv2.write_bytes(b"")
+    N.ghi_cau_hinh(str(tv2), "EndNote 2025", tep=ch)
+    assert N.nhom_da_ghi(ch) == {}, "bảng nhóm thuộc về MỘT thư viện"
+
+
 # ── rào an toàn & cấu hình ─────────────────────────────────────────────────────────────────────────
 
 def test_khong_bao_gio_dieu_khien_endnote_that_duoi_pytest(N, tmp_path, monkeypatch):
