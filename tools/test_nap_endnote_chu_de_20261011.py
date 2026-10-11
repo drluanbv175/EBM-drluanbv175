@@ -213,16 +213,28 @@ class _EndNoteGia:
 
     def __init__(self, thu_vien: Path, co_san=()):
         self.thu_vien = thu_vien
-        self.ban_ghi: list[dict] = []          # {"id", "pmid", "doi"}
+        self.ban_ghi: list[dict] = []          # {"id", "pmid", "doi", "tep"}
         self.nhom: dict[str, list[str]] = {}
         self.so_lan_nhap = 0
         self.loi_khi_nhap = False
-        for pm, doi in co_san:
-            self._them(pm, doi)
+        self.loi_khi_gan = False
+        self.doc_duoc_dinh_kem = True
+        for bg in co_san:
+            self._them(*bg)
 
-    def _them(self, pm, doi):
+    def _them(self, pm, doi, tep=""):
         rid = f'<RecordID database="2" recNum="{len(self.ban_ghi) + 1}" />'
-        self.ban_ghi.append({"id": rid, "pmid": pm or "", "doi": (doi or "").lower()})
+        self.ban_ghi.append({"id": rid, "pmid": pm or "", "doi": (doi or "").lower(), "tep": tep})
+
+    def tep_dinh_kem(self, ids):
+        if not self.doc_duoc_dinh_kem:
+            return {}
+        return {b["id"]: len(b["tep"]) for b in self.ban_ghi if b["id"] in ids}
+
+    def gan_tep(self, ma, url):
+        if self.loi_khi_gan:
+            raise RuntimeError("AppleScript lỗi: giả")
+        next(b for b in self.ban_ghi if b["id"] == ma)["tep"] = url
 
     def tim_khop(self, gia_tri, truong):
         khoa = "pmid" if truong == "Accession Number" else "doi"
@@ -234,7 +246,8 @@ class _EndNoteGia:
             raise RuntimeError("AppleScript lỗi: giả")
         goc = ET.fromstring(Path(tep).read_bytes())
         for r in goc.findall("records/record"):
-            self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"))
+            self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
+                       r.findtext("urls/pdf-urls/url") or "")
 
     def thanh_vien_nhom(self, ten):
         return list(self.nhom.get(ten, []))
@@ -311,6 +324,132 @@ def test_pdf_co_san_duoc_dinh_noi_bo(N, tmp_path):
     assert bc["pdf_dinh_kem"] == 1 and bc["chua_toan_van"] == 3
     tep = list((tmp_path / "tv.Data" / "PDF").glob("*/PMID-27811932.pdf"))
     assert len(tep) == 1 and tep[0].read_bytes() == b"%PDF-1.4 a"
+    assert bc["gan_them_pdf"] == 0, "bản ghi vừa nhập đã mang PDF — không gắn lần hai"
+
+
+# ── toàn văn về SAU khi trích dẫn đã nằm trong EndNote ─────────────────────────────────────────────
+
+def _kho_tv(tmp_path, *ten):
+    kho = tmp_path / "kho"
+    kho.mkdir(exist_ok=True)
+    for t in ten:
+        (kho / t).write_bytes(b"%PDF-1.4 sau")
+    tv = tmp_path / "tv.enl"
+    tv.write_bytes(b"")
+    return kho, tv
+
+
+def _thu_muc_pdf(tmp_path):
+    goc = tmp_path / "tv.Data" / "PDF"
+    return sorted(goc.iterdir()) if goc.is_dir() else []
+
+
+def test_pdf_ve_sau_duoc_gan_vao_ban_ghi_da_co_va_chay_lai_khong_gan_lai(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-34447992_CHR.pdf")
+    en = _EndNoteGia(tv, co_san=[("34447992", None, "")])
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert bc["gan_them_pdf"] == 1
+    bg = next(b for b in en.ban_ghi if b["pmid"] == "34447992")
+    assert re.fullmatch(r"internal-pdf://\d{10}/PMID-34447992\.pdf", bg["tep"]), bg["tep"]
+    assert len(_thu_muc_pdf(tmp_path)) == 1
+    bc2 = _chay(N, tmp_path, en, kho=kho)
+    assert bc2["gan_them_pdf"] == 0 and len(_thu_muc_pdf(tmp_path)) == 1, "chạy lại không chép PDF lần hai"
+
+
+def test_khong_bao_gio_ghi_de_tep_bac_si_da_gan(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-34447992_UPW.pdf")
+    cua_bac_si = "internal-pdf://0304089167/Ban cua bac si.pdf"
+    en = _EndNoteGia(tv, co_san=[("34447992", None, cua_bac_si)])
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert bc["gan_them_pdf"] == 0
+    assert next(b for b in en.ban_ghi if b["pmid"] == "34447992")["tep"] == cua_bac_si
+    assert _thu_muc_pdf(tmp_path) == []
+
+
+def test_khong_doc_duoc_truong_dinh_kem_thi_khong_gan_khong_bao_thieu(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-34447992_UPW.pdf")
+    en = _EndNoteGia(tv, co_san=[("34447992", None, "")])
+    en.doc_duoc_dinh_kem = False
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert bc["gan_them_pdf"] == 0 and bc["thieu_toan_van"] == [], "«không đo được» không phải «chưa có»"
+    assert next(b for b in en.ban_ghi if b["pmid"] == "34447992")["tep"] == ""
+    assert _thu_muc_pdf(tmp_path) == []
+
+
+def test_liet_ke_ban_ghi_con_thieu_toan_van(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-27811932_UPW.pdf")
+    en = _EndNoteGia(tv)
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert bc["thieu_toan_van"] == ["DOI 10.1530/eje-12-0627", "PMID 34447992", "DOI 10.1089/thy.2016.0229"]
+
+
+def test_gan_hong_thi_don_pdf_vua_dat(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-34447992_WTDM.pdf")
+    en = _EndNoteGia(tv, co_san=[("34447992", None, "")])
+    en.loi_khi_gan = True
+    with pytest.raises(RuntimeError):
+        _chay(N, tmp_path, en, kho=kho)
+    assert _thu_muc_pdf(tmp_path) == [], "PDF mồ côi phải được dọn"
+
+
+def test_chay_kho_bao_se_gan_ma_khong_cham_thu_vien(N, tmp_path):
+    kho, tv = _kho_tv(tmp_path, "PMID-34447992_CHR.pdf")
+    en = _EndNoteGia(tv, co_san=[("34447992", None, "")])
+    bc = _chay(N, tmp_path, en, ap_dung=False, kho=kho)
+    assert bc["se_gan_pdf"] == 1
+    assert en.ban_ghi[0]["tep"] == "" and _thu_muc_pdf(tmp_path) == []
+
+
+def test_hai_trich_dan_cung_mot_ban_ghi_chi_dang_va_gan_mot_lan(N, tmp_path):
+    """Mục ghi PMID, tham khảo khác ghi DOI của CÙNG bài ⇒ hai trích dẫn, một bản ghi trong thư viện."""
+    kho, tv = _kho_tv(tmp_path, "PMID-555_UPW.pdf")
+    en = _EndNoteGia(tv, co_san=[("555", "10.5555/x", "")])
+    dash = tmp_path / "WebDashboard_EBM_Thu_20261011.html"
+    dash.write_text("x", encoding="utf-8", newline="\n")
+    du_lieu = {"meta": {"question": "Q"}, "items": [{"id": "A", "pmid": "555", "doi": ""},
+                                                    {"id": "B", "pmid": "", "doi": "10.5555/X"}]}
+    bc = N.nap_chu_de(dash, endnote=en, ap_dung=True, kho=kho, doc_data=lambda p: du_lieu,
+                      lay_pm=lambda pmids: {}, lay_ep=lambda pmids: {}, lay_cr=lambda doi: None)
+    assert bc["dang_vao_nhom"] == 1 and en.nhom["EBM · Q"] == [en.ban_ghi[0]["id"]]
+    assert bc["gan_them_pdf"] == 1 and len(_thu_muc_pdf(tmp_path)) == 1
+
+
+def test_khong_thay_kho_bao_chua_xet_khong_phai_khong_co(N, tmp_path, capsys):
+    en = _EndNoteGia(tmp_path / "tv.enl")
+    bc = _chay(N, tmp_path, en, kho=None)
+    assert bc["kho_toan_van"] is False
+    bc_co = _chay(N, tmp_path, _EndNoteGia(tmp_path / "tv2.enl"), kho=_kho_tv(tmp_path)[0])
+    assert bc_co["kho_toan_van"] is True
+    N._in_bao_cao(bc)
+    assert "CHƯA XÉT PDF" in capsys.readouterr().out
+
+
+def _endnote_mac_gia(N, tra_ve):
+    """EndNoteMac bỏ qua hàm dựng (hàm dựng chặn pytest và máy không phải Mac); `_chay` trả chuỗi cho sẵn."""
+    en = object.__new__(N.EndNoteMac)
+    en.goi = []
+
+    def _chay(than, *doi_so, cho=600):
+        en.goi.append((than, doi_so))
+        return tra_ve(than, doi_so)
+    en._chay = _chay
+    return en
+
+
+def test_gan_tep_doc_lai_khong_khop_thi_bao_loi(N):
+    url = "internal-pdf://1234567890/PMID-1.pdf"
+    tot = _endnote_mac_gia(N, lambda than, ds: ds[1])
+    tot.gan_tep('<RecordID database="1" recNum="9" />', url)
+    assert 'set field "File Attachments"' in tot.goi[0][0]
+    xau = _endnote_mac_gia(N, lambda than, ds: "")
+    with pytest.raises(RuntimeError):
+        xau.gan_tep('<RecordID database="1" recNum="9" />', url)
+
+
+def test_tep_dinh_kem_phan_tich_ma_co_dau_cach_va_bo_dong_rac(N):
+    a, b = '<RecordID database="1" recNum="9" />', '<RecordID database="1" recNum="10" />'
+    en = _endnote_mac_gia(N, lambda than, ds: f"{a}\t0\n{b}\t57\nrác không có tab\n{a}x\tkhông-số\n")
+    assert en.tep_dinh_kem([a, b]) == {a: 0, b: 57}
 
 
 # ── rào an toàn & cấu hình ─────────────────────────────────────────────────────────────────────────

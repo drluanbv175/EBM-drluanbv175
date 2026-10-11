@@ -24,11 +24,22 @@ từ bản sao lưu cũ), không đụng thư viện thật:
   • Nhập qua AppleScript KHÔNG kích «Find Full Text» tự động (chờ 45 giây, bài truy cập mở vẫn
     không có PDF); AppleScript của EndNote không có lệnh Find Full Text ⇒ phần toàn văn còn thiếu
     do BÁC SĨ bấm: chọn nhóm → References → Find Full Text (dùng quyền truy cập của chính bác sĩ).
+  • `set field "File Attachments" of record … to "internal-pdf://…"` gắn PDF vào bản ghi ĐÃ có
+    (bảng `file_res` của thư viện nhận đúng dòng đính kèm nội bộ). Lệnh `close document` làm EndNote
+    SẬP (SIGSEGV, đo 11/10) ⇒ công cụ KHÔNG BAO GIỜ đóng thư viện.
 
 Toàn văn đính kèm: CHỈ PDF đã có hợp lệ trong kho chung `EBM-Dashboards/toan_van_oa/` cho đúng PMID
 (Unpaywall giấy phép mở · Wiley TDM · bản lưu trong phiên trình duyệt có uỷ quyền của bác sĩ). Công
 cụ KHÔNG tải bài thuê bao, KHÔNG đọc nội dung PDF. Metadata lấy lại từ PubMed (efetch) hoặc Crossref
 — không chép từ chuỗi tham khảo trong dashboard. Không lấy được metadata ⇒ KHÔNG nhập bản ghi đó.
+Toàn văn thường về SAU trích dẫn (gom OA/Unpaywall, Wiley TDM, phiên Chrome uỷ quyền của bác sĩ) ⇒
+mỗi lượt `--ap-dung` còn GẮN PDF mới có vào bản ghi của chủ đề CHƯA có tệp đính kèm nào — tệp bác sĩ
+đã gắn không bao giờ bị ghi đè — rồi liệt kê bản ghi còn thiếu toàn văn cho làn kế tiếp:
+  1. `python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall`   (bản truy cập mở)
+  2. `python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID…>`                     (bài thuê bao: phiếu
+     làn Chrome có uỷ quyền — Wiley · ScienceDirect · NEJM · JAMA…; bác sĩ tự đăng nhập/vượt chặn)
+  3. `python3 tools/doc_sau_toan_van.py --dashboard <dashboard>`                  (bản đọc sâu)
+  4. chạy lại công cụ này với `--ap-dung` ⇒ PDF mới vào đúng nhóm EndNote.
 
 Dùng:
   python3 tools/nap_endnote_chu_de.py --ghi-cau-hinh "<đường dẫn .enl>" [--ung-dung "EndNote 2025"]
@@ -572,6 +583,27 @@ class EndNoteMac:
                        'post records in ids in window (item 2 of argv) as (item 1 of argv) of type "CUSTOM"',
                        ten_nhom, self.ten, *ids)
 
+    def tep_dinh_kem(self, ids: list[str]) -> dict[str, int]:
+        """{mã bản ghi: số ký tự trường «File Attachments»} — 0 = chưa gắn tệp nào.
+        Chỉ trả ĐỘ DÀI: trường có nhiều tệp ngăn bằng xuống dòng, đọc nguyên văn sẽ vỡ dòng kết quả."""
+        ra: dict[str, int] = {}
+        than = ('set out to ""\nrepeat with i from 1 to count of argv\nset r to item i of argv\n'
+                'set out to out & r & tab & (count of (field "File Attachments" of record r)) & linefeed\n'
+                'end repeat\nreturn out')
+        for i in range(0, len(ids), 200):
+            for dong in self._chay(than, *ids[i:i + 200]).splitlines():
+                ma, _, so = dong.rpartition("\t")
+                if ma and so.strip().isdigit():
+                    ra[ma] = int(so)
+        return ra
+
+    def gan_tep(self, ma: str, url: str) -> None:
+        """Gắn MỘT tệp vào bản ghi rồi đọc lại — không khớp ⇒ lỗi (không im lặng coi là đã gắn)."""
+        doc_lai = self._chay('set field "File Attachments" of record (item 1 of argv) to (item 2 of argv)\n'
+                             'return field "File Attachments" of record (item 1 of argv)', ma, url)
+        if doc_lai.strip() != url:
+            raise RuntimeError(f"EndNote không nhận tệp đính kèm cho {ma}: đọc lại {doc_lai[:120]!r}")
+
 
 # ── điều phối một chủ đề ───────────────────────────────────────────────────────────────────────────
 
@@ -609,6 +641,25 @@ def lay_metadata(dd: list[dict], lay_pm=lay_pubmed, lay_cr=lay_crossref,
     return co, thieu
 
 
+def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None) -> tuple[list[tuple], list[str]]:
+    """(trích dẫn, mã bản ghi) → ([(mã, PMID, (pdf, nhãn))] cần gắn, [định danh còn thiếu toàn văn]).
+
+    Bản ghi ĐÃ có tệp đính kèm (bác sĩ gắn, Find Full Text, lượt trước) bị bỏ qua — không bao giờ ghi đè.
+    Bản ghi không đọc được trường đính kèm cũng bỏ qua: «không đo được» không phải «chưa có»."""
+    tep = endnote.tep_dinh_kem([r for _, r in cap]) if cap else {}
+    can_gan: list[tuple] = []
+    thieu: list[str] = []
+    for d, r in cap:
+        if tep.get(r) != 0:
+            continue
+        pdf = chon_pdf(kho, d.get("pmid"))
+        if pdf:
+            can_gan.append((r, d["pmid"], pdf))
+        else:
+            thieu.append(f"PMID {d['pmid']}" if d.get("pmid") else f"DOI {d['doi']}")
+    return can_gan, thieu
+
+
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None) -> dict:
     """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được."""
@@ -621,11 +672,25 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     dd = trich_dinh_danh(data)
     bc: dict = {"dashboard": dash.name, "nhom": nhom, "so_trich_dan": len(dd), "da_co": 0, "nhap_moi": 0,
                 "pdf_dinh_kem": 0, "khong_lay_duoc": [], "chua_toan_van": 0, "dang_vao_nhom": 0,
-                "kiem_trung": endnote is not None, "ap_dung": ap_dung}
+                "kiem_trung": endnote is not None, "ap_dung": ap_dung,
+                # Không thấy kho ⇒ CHƯA XÉT được PDF — khác hẳn «không có toàn văn» (lượt 11/10 từ worktree báo
+                # «đính PDF 0» trong khi kho có sẵn PDF Wiley TDM của chủ đề).
+                "kho_toan_van": bool(kho and kho.is_dir())}
 
     def ma_cua(d: dict, theo_pm: dict, theo_doi: dict) -> list[str]:
         return (theo_pm.get(d["pmid"]) if d.get("pmid") else None) or \
                (theo_doi.get(d["doi"]) if d.get("doi") else None) or []
+
+    def cap_ban_ghi(theo_pm: dict, theo_doi: dict) -> list[tuple[dict, str]]:
+        """Mỗi trích dẫn ↔ bản ghi ĐẦU TIÊN khớp (bản trùng sẵn có trong thư viện: chỉ dùng một), không lặp mã."""
+        cap: list[tuple[dict, str]] = []
+        thay: set[str] = set()
+        for d in dd:
+            for r in ma_cua(d, theo_pm, theo_doi)[:1]:
+                if r not in thay:
+                    thay.add(r)
+                    cap.append((d, r))
+        return cap
 
     theo_pm = endnote.tim_khop([d["pmid"] for d in dd if d.get("pmid")], "Accession Number") if endnote else {}
     theo_doi = endnote.tim_khop([d["doi"] for d in dd if d.get("doi")], "DOI") if endnote else {}
@@ -650,6 +715,8 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     bc["chua_toan_van"] = len(can_nhap) - bc["pdf_dinh_kem"]
     if not ap_dung or endnote is None:
         bc["ke_hoach_nhap"] = [m.get("pmid") or m.get("doi") for m in can_nhap]
+        if endnote is not None:  # chạy khô vẫn ĐỌC được trường đính kèm của bản ghi đã có (chỉ đọc)
+            bc["se_gan_pdf"] = len(xet_toan_van(endnote, cap_ban_ghi(theo_pm, theo_doi), kho)[0])
         return bc
 
     thu_muc_moi: list[Path] = []
@@ -672,16 +739,23 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
 
     theo_pm = endnote.tim_khop([d["pmid"] for d in dd if d.get("pmid")], "Accession Number")
     theo_doi = endnote.tim_khop([d["doi"] for d in dd if d.get("doi")], "DOI")
-    ma: list[str] = []
-    for d in dd:
-        for r in ma_cua(d, theo_pm, theo_doi)[:1]:  # bản ghi trùng sẵn có trong thư viện: chỉ đăng một
-            if r not in ma:
-                ma.append(r)
+    cap = cap_ban_ghi(theo_pm, theo_doi)
     da_trong_nhom = set(endnote.thanh_vien_nhom(nhom))
-    can_dang = [r for r in ma if r not in da_trong_nhom]
+    can_dang = [r for _, r in cap if r not in da_trong_nhom]
     endnote.dang_vao_nhom(can_dang, nhom)
     bc["dang_vao_nhom"] = len(can_dang)
     bc["trong_nhom_sau"] = len(da_trong_nhom) + len(can_dang)
+
+    # Toàn văn về SAU khi trích dẫn đã nằm trong EndNote ⇒ gắn vào bản ghi chưa có tệp đính kèm nào.
+    can_gan, bc["thieu_toan_van"] = xet_toan_van(endnote, cap, kho)
+    for r, pmid, (pdf, _nhan) in can_gan:
+        url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, pdf, pmid)
+        try:
+            endnote.gan_tep(r, url)
+        except Exception:
+            shutil.rmtree(tm, ignore_errors=True)  # gắn hỏng ⇒ không để PDF mồ côi
+            raise
+    bc["gan_them_pdf"] = len(can_gan)
     return bc
 
 
@@ -696,8 +770,17 @@ def _in_bao_cao(bc: dict) -> None:
     print(f"   {bc['so_trich_dan']} trích dẫn · đã có trong thư viện {bc['da_co']} · "
           f"{'nhập mới' if bc['ap_dung'] else 'sẽ nhập mới'} {bc['nhap_moi']} "
           f"(đính PDF {bc['pdf_dinh_kem']}, chưa có toàn văn {bc['chua_toan_van']})")
+    if not bc["kho_toan_van"]:
+        print("   ⚠ Không thấy kho toàn văn — CHƯA XÉT PDF (không phải «không có»); chỉ đường bằng --kho-toan-van")
+    if bc.get("se_gan_pdf"):
+        print(f"   Sẽ gắn toàn văn cho bản ghi đã có: {bc['se_gan_pdf']}")
     if bc["ap_dung"] and bc["kiem_trung"]:
         print(f"   Đăng thêm vào nhóm: {bc['dang_vao_nhom']} · nhóm hiện có {bc.get('trong_nhom_sau', '?')} bản ghi")
+        print(f"   Gắn thêm toàn văn cho bản ghi đã có: {bc.get('gan_them_pdf', 0)}")
+        thieu = bc.get("thieu_toan_van") or []
+        if thieu:
+            print(f"   Còn thiếu toàn văn trong EndNote: {len(thieu)} — {', '.join(thieu[:12])}"
+                  f"{' …' if len(thieu) > 12 else ''}")
     if bc["khong_lay_duoc"]:
         print(f"   ⚠ Không lấy được metadata (KHÔNG nhập): {', '.join(bc['khong_lay_duoc'][:10])}")
 
@@ -795,9 +878,12 @@ def main(argv: list[str] | None = None) -> int:
             bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
         ket_qua.append(bc)
         _in_bao_cao(bc)
-    if a.ap_dung and endnote is not None and any(b.get("chua_toan_van") for b in ket_qua):
-        print("Toàn văn còn thiếu: trong EndNote chọn nhóm «EBM · …» → References → Find Full Text "
-              "(dùng quyền truy cập của chính bác sĩ; công cụ không tải bài thuê bao).")
+    if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
+        print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
+              "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"
+              "  2. python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID…>   (bài thuê bao: làn Chrome có uỷ quyền,\n"
+              "     bác sĩ tự đăng nhập/vượt chặn; công cụ này không tải bài thuê bao)\n"
+              "  3. hoặc trong EndNote: chọn nhóm «EBM · …» → References → Find Full Text (quyền truy cập của bác sĩ).")
     if not a.ap_dung:
         print("Chạy khô — chưa nhập gì. Thêm --ap-dung để nạp thật.")
     if a.json:
