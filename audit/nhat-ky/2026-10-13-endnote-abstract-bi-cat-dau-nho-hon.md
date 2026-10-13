@@ -49,9 +49,16 @@ có «<»» — thay bằng xét trượt gióng.
   luật «đoạn sát nhau là nối tiếp») ban đầu KHÔNG bị bắt: fixture tự soạn không tái hiện phép gióng tách đoạn của 3/194 ca
   thật ⇒ lỗi phép thử; sửa bằng SequenceMatcher giả ép đúng cách gióng của ca thật PMID 42024702.
 
+## Đã sửa thư viện (13/10/2026, 20:55 — bác sĩ tự gõ lệnh `--europepmc-khi-ncbi-chan --ap-dung`)
+
+Chạy từ nhánh PR (cây chính chưa có công cụ), NCBI vẫn chặn ⇒ đối chiếu Europe PMC qua bộ lọc đã vá. Sao lưu trước
+khi ghi: `~/.ebm-endnote-sao-luu/My EndNote Library-20261013-205542`. Đã sửa 187/187, 0 lỗi ghi, 0 bản bỏ qua vì trường
+đổi. Lượt chạy khô kiểm lại ngay sau đó: 853 bản ghi · khớp 842 · bị cắt 0 · khác 11 (giữ nguyên) · không đo được 0;
+đọc trực tiếp PMID 23713578 và 40401436: khối «EBM · ĐỌC NHANH» còn nguyên, abstract gốc đủ («<140 mm Hg», «P < .001»).
+
 ## Còn treo — việc của bác sĩ
 
-- Chạy `--ap-dung` (187 bản ghi) hay chờ NCBI gỡ chặn để đối chiếu PubMed đúng như yêu cầu ban đầu.
+- Khi NCBI gỡ chặn: chạy khô lại KHÔNG cờ lùi để đối chiếu PubMed efetch đúng yêu cầu ban đầu (bản «khác» chỉ báo).
 - Kho tóm tắt máy `EBM-Dashboards/tom-tat-abstract-vi.json`: 39 PMID (đo lần cuối 13/10, kho đang được bổ sung — 37 ở
   lượt đo trước) có tóm tắt dựng từ abstract BỊ CẮT. Chốt
   `so_khong_khop` (PR #171) KHÔNG bắt được — chốt chỉ đòi mọi số của tóm tắt có trong abstract gốc, abstract đầy đủ chỉ
