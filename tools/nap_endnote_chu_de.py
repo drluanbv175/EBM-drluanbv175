@@ -968,17 +968,23 @@ def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt
     Không làm hỏng lượt nạp vừa xong: nạp và tóm tắt là hai bước, bước sau hỏng thì bước trước vẫn giữ."""
     try:
         tt = tt or _nap_tom_tat()
-        bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data())
+        try:
+            kho_tt = tt.nap_tom_tat_abstract(files[0].parent if files else None)
+        except (ValueError, OSError) as e:
+            print(f"⚠ Kho tóm tắt máy {tt.TEP_TOM_TAT_ABS} không đọc được ({e}) — lượt này không in tóm tắt máy"[:300])
+            kho_tt = {}
+        bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data(), tom_tat_abs=kho_tt)
     except (RuntimeError, OSError, sqlite3.Error) as e:
         print(f"✗ Tóm tắt tiếng Việt (Abstract): {type(e).__name__}: {e} — chưa ghi gì sau lỗi này"[:300])
         return None
     print(f"✓ Tóm tắt tiếng Việt (Abstract): {bc['trich_dan']} trích dẫn · {bc['co_ban_ghi']} có bản ghi · "
           f"{'đã ghi ' + str(bc['da_ghi']) if ap_dung else 'sẽ ghi ' + str(bc['se_ghi'])} · "
-          f"không đổi {bc['khong_doi']}" + (f" · sao lưu trước khi ghi: {bc['sao_luu']}" if bc.get("sao_luu") else ""))
+          f"không đổi {bc['khong_doi']} · tóm tắt máy (tham khảo) {bc['tom_tat_may']}"
+          + (f" · sao lưu trước khi ghi: {bc['sao_luu']}" if bc.get("sao_luu") else ""))
     if bc["khong_co_ban_ghi"]:
         print(f"   Chưa có bản ghi trong thư viện (nạp chủ đề trước): {len(bc['khong_co_ban_ghi'])} — "
               + ", ".join(bc["khong_co_ban_ghi"][:8]) + (" …" if len(bc["khong_co_ban_ghi"]) > 8 else ""))
-    for loi in bc["loi"][:8]:
+    for loi in bc["loi"][:8] + bc["tom_tat_lech_so"][:8]:
         print(f"   ⚠ {loi}")
     return bc
 
