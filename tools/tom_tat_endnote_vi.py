@@ -10,7 +10,8 @@ NGUYÊN TẮC (không nới bằng cờ):
   • KHÔNG sinh nội dung y khoa mới. Khối tiếng Việt CHÉP các trường của mục dashboard đã qua cổng liêm chính
     — rút gọn được, thêm khẳng định thì không (CHAT-BRIEF-SPEC).
   • Bản ĐỌC NHANH (bác sĩ yêu cầu 13/10: «ngắn gọn và thể hiện điểm nhấn»): dòng đầu = khuyến nghị · mức chứng cứ ·
-    thiết kế; ★ = tiêu đề mục (câu điểm nhấn của dashboard); rồi Kết quả · Thực hành · An toàn · Lưu ý · Tại Việt Nam.
+    thiết kế; ★ = tiêu đề mục (câu điểm nhấn của dashboard) kèm PICO (đối tượng · can thiệp · so sánh · kết cục, nhãn
+    lệch câu hỏi); rồi Kết quả · Thực hành · An toàn · Lưu ý · Tại Việt Nam; «Đặt cạnh» ≤ 3 mục cùng câu hỏi trong chủ đề.
     Rút gọn bằng CHỌN TRƯỜNG, không cắt giữa câu (cắt câu có thể mất mệnh đề điều kiện); trường dài quá trần thì bỏ
     cả trường. Một ngữ cảnh chính (bản dashboard mới nhất); chủ đề khác chỉ nêu tên — khuyến nghị lệch nhau thì ⚠.
   • Bài chỉ là TÀI LIỆU THAM KHẢO của một mục ⇒ ghi đúng vai đó; KHÔNG gán kết quả/khuyến nghị của nguồn chính
@@ -136,14 +137,13 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
                        for x in muc["ngu_canh"]):
                 muc["ngu_canh"].append(dict(nc, ban_cu=ban_cu))
 
-        for it in data.get("items") or []:
-            if not isinstance(it, dict):
-                continue
+        cac_muc = [x for x in data.get("items") or [] if isinstance(x, dict)]
+        for it in cac_muc:
             chung = {"dashboard": dash.name, "ngay": _ngay_dashboard(dash), "chu_de": cau_hoi,
                      "muc": str(it.get("id") or "?"), "tieu_de": _gon(it.get("title"))}
             pm_chinh = _gon(it.get("pmid")) or None
             doi_chinh = it.get("doi")
-            them(pm_chinh, doi_chinh, dict(chung, vai="muc", item=it))
+            them(pm_chinh, doi_chinh, dict(chung, vai="muc", item=it, anh_em=cac_muc))
             for tk in it.get("references") or []:
                 tk = str(tk)
                 m_pm = re.search(r"PMID[:\s]*(\d{6,9})", tk)
@@ -195,12 +195,104 @@ def _dong_nguon_goc(nc: dict) -> str:
             + (" (bản dashboard CŨ)" if nc.get("ban_cu") else ""))
 
 
+NHAN_PICO = (("P", "Đối tượng"), ("I", "Can thiệp/phơi nhiễm"), ("C", "So sánh"), ("O", "Kết cục"))
+# Nhãn khớp của từng thành phần PICO so với câu hỏi của chủ đề (trường `pico` của mục dashboard). «match» không in.
+NHAN_KHOP = {"mis": " ⚠ lệch câu hỏi của chủ đề", "partial": " (khớp một phần)", "diff": " (khác câu hỏi)",
+             "gap": " (khoảng trống)"}
+TOI_DA_DAT_CANH = 3
+# ĐẶT CẠNH (bác sĩ yêu cầu 13/10: «so sánh với các kết quả khác»): mục KHÁC của cùng dashboard có cùng can thiệp (I) và
+# kết cục (O) — máy ghép theo từ khoá PICO, CHỈ đặt cạnh, không phán chiều (luật của dat_canh_chung_cu_moi.py). Bắt buộc
+# trùng I: chỉ trùng nhóm so sánh (C, vd «không dùng công cụ») từng ghép nhầm thang điểm suy tim với vắc-xin RSV (đo 13/10).
+NGUONG_I, NGUONG_O, NGUONG_I_MANH = 0.25, 0.15, 0.5
+_TU_DUNG = {"va", "hoac", "cua", "cho", "voi", "khong", "nhom", "benh", "nhan", "nguoi", "dieu", "tri", "cham", "soc",
+            "thuong", "quy", "don", "thuan", "sau", "truoc", "trong", "ngay", "tuan", "thang", "nam", "lieu", "muc",
+            "kem", "theo", "duoc", "co", "la", "mot", "cac", "tren", "duoi", "toi", "den", "tu", "khi", "neu", "dung",
+            "thuoc", "so", "gia", "chuan", "hon", "it", "nhat", "lon", "nho", "the", "nay", "do", "bi", "can", "giua",
+            "ve", "tai", "phat",
+            # đơn vị, liều, đường dùng — đo 13/10: «mg» + «tối đa»/«dưới da» (cùng thành «da») ghép nhầm finerenone
+            # (FINEARTS-HF) với semaglutide (FLOW); chúng không nói gì về CÂU HỎI nghiên cứu
+            "mg", "mcg", "ml", "kg", "ug", "iu", "da", "tiem", "uong", "lan", "moi", "duong", "tinh", "nen", "dai",
+            "ngan", "lien", "tuc", "dau", "hang",
+            # «ức chế» là từ chung của mọi nhóm thuốc ức chế — từng ghép SGLT2i với DPP-4i (đo 13/10)
+            "uc", "che"}
+
+
+def _pico_tp(it: dict, k: str) -> tuple[str, str]:
+    """(nội dung, nhãn khớp) của một thành phần PICO — trường là [nội dung, nhãn] hoặc chuỗi."""
+    v = (it.get("pico") or {}).get(k) if isinstance(it.get("pico"), dict) else None
+    if isinstance(v, (list, tuple)):
+        return _gon(v[0] if v else ""), str(v[1]) if len(v) > 1 else ""
+    return _gon(v), ""
+
+
+def _tu_khoa(s: str) -> set[str]:
+    import unicodedata  # noqa: PLC0415
+    t = unicodedata.normalize("NFD", (s or "").lower()).replace("đ", "d")
+    t = "".join(c for c in t if unicodedata.category(c) != "Mn")
+    return {w for w in re.findall(r"[a-z0-9]+", t) if len(w) >= 2 and not w.isdigit() and w not in _TU_DUNG}
+
+
+_GIU_CHO_PICO = re.compile(r"^\(.*\b(không|chưa)\b.*\)$", re.I)
+
+
+def _tk_pico(it: dict, k: str) -> set[str]:
+    """Từ khoá của một thành phần PICO để GHÉP. Ô giữ chỗ «(không nêu rõ trong abstract)» ⇒ rỗng — đo 13/10: hai mục
+    cùng ghi câu giữ chỗ đó bị ghép thành «cùng câu hỏi». Khi HIỂN THỊ vẫn in nguyên câu giữ chỗ (nói thật là thiếu)."""
+    nd = _pico_tp(it, k)[0]
+    return set() if _GIU_CHO_PICO.match(nd) else _tu_khoa(nd)
+
+
+def _jac(a: set[str], b: set[str]) -> float:
+    return len(a & b) / len(a | b) if a and b else 0.0
+
+
+def _ung_vien_canh(it: dict, anh_em: list[dict]) -> list[tuple[float, dict, bool]]:
+    """(điểm, mục, cùng kết cục?) của mục khác cùng dashboard có cùng câu hỏi: trùng I và O, hoặc trùng I rất mạnh
+    (khi đó kết cục có thể KHÁC — dòng đặt cạnh phải nói ra, không để người đọc tưởng hai bài đo cùng một thứ)."""
+    tk = {k: _tk_pico(it, k) for k in "ICO"}
+    ung: list[tuple[float, dict, bool]] = []
+    for b in anh_em:
+        if b is it or (it.get("pmid") and _gon(b.get("pmid")) == _gon(it.get("pmid"))):
+            continue
+        si = _jac(tk["I"], _tk_pico(b, "I"))
+        so = _jac(tk["O"], _tk_pico(b, "O"))
+        if (si >= NGUONG_I and so >= NGUONG_O) or si >= NGUONG_I_MANH:
+            ung.append((si + so + 0.3 * _jac(tk["C"], _tk_pico(b, "C")), b, so >= NGUONG_O))
+    return ung
+
+
+def dat_canh(ngu_canh_muc: list[dict]) -> list[tuple[dict, bool]]:
+    """Gom ứng viên đặt cạnh từ MỌI chủ đề có trích bài này làm nguồn chính (một bài có thể chỉ có «hàng xóm» cùng
+    câu hỏi ở dashboard khác); khử trùng theo PMID/DOI/tiêu đề; tối đa TOI_DA_DAT_CANH, điểm cao trước."""
+    tot: dict[str, tuple[float, dict, bool]] = {}
+    for ngu in ngu_canh_muc:
+        for diem, b, cung_o in _ung_vien_canh(ngu["item"], ngu.get("anh_em") or []):
+            khoa = _gon(b.get("pmid")) or _gon(b.get("doi")) or _gon(b.get("title"))
+            if khoa not in tot or diem > tot[khoa][0]:
+                tot[khoa] = (diem, b, cung_o)
+    return [(b, cung_o) for _, b, cung_o in sorted(tot.values(), key=lambda x: -x[0])[:TOI_DA_DAT_CANH]]
+
+
+def _dong_dat_canh(b: dict, cung_o: bool = True) -> str:
+    dd = f"PMID {_gon(b.get('pmid'))}" if _gon(b.get("pmid")) else (f"DOI {_gon(b.get('doi'))}" if b.get("doi") else "")
+    phu = " · ".join(x for x in (dd, _nhan(NHAN_QD, b.get("decision")), f"chứng cứ: {_nhan(NHAN_GRADE, b.get('gradeLevel'))}",
+                                 _hieu_so(b.get("effect"))) if x)
+    o = _pico_tp(b, "O")[0]
+    return f"   – {_gon(b.get('title'))} [{phu}]" + ("" if cung_o or not o else f" — kết cục khác: {o}")
+
+
 def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     it = nc["item"]
     thiet_ke = " ".join(x for x in (_gon(it.get("design")), _gon(it.get("dateVersion"))) if x)
     dong = [f"{MO_DAU} {_nhan(NHAN_QD, it.get('decision'))} · Chứng cứ: {_nhan(NHAN_GRADE, it.get('gradeLevel'))}"
             + (f" · {thiet_ke}" if thiet_ke else ""),
             f"★ {nc['tieu_de']}"]
+    for k, nhan in NHAN_PICO:
+        nd, khop = _pico_tp(it, k)
+        if k == "P" and not nd:
+            nd = _gon(it.get("population"))
+        if nd:
+            dong.append(f"   {k} · {nhan}: {nd}{NHAN_KHOP.get(khop, '')}")
     et = _gon(it.get("effectText"))
     ket_qua = "; ".join(x for x in (et if len(et) <= TRAN_KET_QUA else "", _hieu_so(it.get("effect"))) if x)
     if ket_qua:
@@ -215,6 +307,10 @@ def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     if it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or it.get("replacesPmid"):
         tb = it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or "—"
         dong.append(f"▸ Rút và thay: bài gốc đã bị rút và thay thế (thông báo {tb}) — số liệu theo BẢN ĐÃ THAY.")
+    canh = dat_canh([nc, *khac])
+    if canh:
+        dong.append("▸ Đặt cạnh trong chủ đề (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):")
+        dong += [_dong_dat_canh(b, cung_o) for b, cung_o in canh]
     if khac:
         if any(x["item"].get("decision") != it.get("decision") for x in khac):
             dong.append("⚠ Khuyến nghị KHÁC nhau giữa các chủ đề — " + "; ".join(

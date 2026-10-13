@@ -57,9 +57,56 @@ def test_khoi_doc_nhanh_dong_dau_diem_nhan_va_truong_nguyen_ven(tmp_path):
                 "▸ Tại Việt Nam: Không khởi trị ngoài nghiên cứu", "Chủ đề: Đột quỵ · 14/06/2026",
                 "PMID 31111111 · Toàn văn: CHƯA có", "Cần bác sĩ kiểm chứng"):
         assert chu in k, chu
-    for bo in ("Theo dõi", "PICO", "Quần thể", "RCT dừng sớm"):
+    for bo in ("Theo dõi", "Quần thể", "RCT dừng sớm"):
         assert bo not in k, f"bản đọc nhanh không in {bo}"
-    assert len(k) < 900
+    assert dong[2:6] == ["   P · Đối tượng: Đột quỵ", "   I · Can thiệp/phơi nhiễm: Colchicine",
+                         "   C · So sánh: Chuẩn", "   O · Kết cục: Tái phát"], "PICO ngay dưới dòng ★"
+    assert len(k) < 1000
+
+
+def test_pico_nhan_lech_cau_hoi_va_p_lay_quan_the_khi_thieu(tmp_path):
+    f, d = _dash("WebDashboard_X_20260614.html",
+                 [dict(MUC, pico={"I": ["Colchicine", "mis"], "C": ["Chuẩn", "partial"], "O": ["Tái phát", "match"]})])
+    k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
+    assert "   P · Đối tượng: Đột quỵ không do tim" in k, "thiếu P ⇒ dùng trường quần thể"
+    assert "   I · Can thiệp/phơi nhiễm: Colchicine ⚠ lệch câu hỏi của chủ đề" in k
+    assert "   C · So sánh: Chuẩn (khớp một phần)" in k and "Tái phát (" not in k
+
+
+ANH = dict(MUC, id="I2", pmid="34444444", doi=None, references=[], title="Colchicine liều thấp sau nhồi máu não",
+           decision="apply", gradeLevel="high", effect={"measure": "HR", "hr": 0.7, "ci": "0.5–0.9"},
+           pico={"I": ["Colchicine liều thấp", "match"], "C": ["Giả dược", "match"], "O": ["Đột quỵ tái phát", "match"]})
+
+
+def test_dat_canh_cung_cau_hoi_kem_khuyen_nghi_va_so_do(tmp_path):
+    kdcc = ["Không dùng công cụ / nhóm so sánh", "match"]  # đúng ca ghép nhầm thật 13/10 (thang điểm ↔ vắc-xin RSV)
+    goc = dict(MUC, pico={"I": ["Colchicine 0,5 mg tối đa", "match"], "C": kdcc,
+                          "O": ["Đột quỵ tái phát", "match"]})
+    chi_c = dict(ANH, id="I3", pmid="35555555", title="Vắc-xin cúm", pico={"I": ["Vắc-xin cúm", "match"], "C": kdcc,
+                                                                           "O": ["Nhập viện", "match"]})
+    don_vi = dict(ANH, id="I4", pmid="36666666", title="Semaglutide", pico={"I": ["Semaglutide 1 mg dưới da", "match"],
+                                                                            "C": ["Chuẩn", "match"], "O": ["Đột quỵ tái phát", "match"]})
+    khac_o = dict(ANH, id="I5", pmid="37777777", title="Colchicine và gout", pico={"I": ["Colchicine", "match"],
+                                                                                  "O": ["Cơn gout cấp", "match"]})
+    f, d = _dash("WebDashboard_X_20260614.html", [goc, ANH, chi_c, don_vi, khac_o])
+    k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
+    assert "▸ Đặt cạnh trong chủ đề (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):" in k
+    assert ("   – Colchicine liều thấp sau nhồi máu não [PMID 34444444 · Áp dụng ngay · chứng cứ: Cao · "
+            "HR 0.7 (KTC 95% 0.5–0.9)]") in k
+    assert "Vắc-xin cúm" not in k, "chỉ trùng nhóm so sánh (C) không phải cùng câu hỏi"
+    assert "Semaglutide" not in k, "chỉ trùng đơn vị liều/đường dùng («mg», «tối đa»/«dưới da») không phải cùng câu hỏi"
+    assert "Colchicine và gout [" in k and "— kết cục khác: Cơn gout cấp" in k, "cùng can thiệp, khác kết cục ⇒ nói rõ"
+
+
+def test_dat_canh_bo_o_giu_cho_va_gom_tu_chu_de_khac(tmp_path):
+    gc = {"I": ["(không nêu rõ trong abstract)", "na"], "O": ["(không nêu rõ trong abstract)", "na"]}
+    f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, pico=gc), dict(ANH, pico=gc)])
+    k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
+    assert "Đặt cạnh" not in k, "hai ô giữ chỗ giống nhau không phải «cùng câu hỏi»"
+    a, da = _dash("WebDashboard_A_20260901.html", [dict(MUC, pico=ANH["pico"])], "Chủ đề A")
+    b, db = _dash("WebDashboard_B_20260601.html", [dict(MUC, pico=ANH["pico"]), ANH], "Chủ đề B")
+    k2 = tt.khoi_tieng_viet(tt.ngu_canh([a, b], _doc({a.name: da, b.name: db}))["pmid:31111111"], tmp_path)
+    assert "PMID 34444444" in k2, "bài cùng câu hỏi chỉ có ở dashboard khác vẫn được đặt cạnh"
 
 
 def test_rut_gon_bang_chon_truong_khong_cat_giua_cau(tmp_path):
@@ -90,7 +137,8 @@ def test_tai_lieu_tham_khao_khong_bi_gan_ket_qua_cua_nguon_chinh(tmp_path):
     ds = tt.ngu_canh([f], _doc({f.name: d}))
     k = tt.khoi_tieng_viet(ds["pmid:32222222"], tmp_path)
     assert k.startswith(f"{tt.MO_DAU} Tài liệu tham khảo bổ trợ") and "nguồn chính PMID 31111111" in k
-    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Chứng cứ:", "Thực hành:"):
+    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Chứng cứ:", "Thực hành:", "P · Đối tượng",
+                "Đặt cạnh"):
         assert chu not in k, f"kết quả/khuyến nghị của nguồn chính bị gán cho bài tham khảo: {chu}"
     assert "doi:10.1093/bbb" in ds, "trích dẫn chỉ có DOI vẫn có ngữ cảnh"
     assert len([n for n in ds["pmid:31111111"]["ngu_canh"] if n["vai"] == "tham_khao"]) == 0, \
