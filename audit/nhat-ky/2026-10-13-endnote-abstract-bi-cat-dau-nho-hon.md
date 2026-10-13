@@ -43,8 +43,8 @@ có «<»» — thay bằng xét trượt gióng.
 
 ## Kiểm hồi quy
 
-- `tools/test_abstract_bi_cat_endnote_20261013.py` — 31 ca (bộ lọc thẻ, phân loại, thay đúng phần gốc, EndNote giả).
-  Cùng bộ test EndNote cũ: 104 đạt; `pytest tools/` 2.820 đạt; ruff sạch; `chot_hoi_quy_bai_hoc.py` mã 0.
+- `tools/test_abstract_bi_cat_endnote_20261013.py` — 30 ca (bộ lọc thẻ, phân loại, thay đúng phần gốc, EndNote giả).
+  Sau khi gộp master (PR #171/#172): `pytest tools/` 2.839 đạt; ruff sạch; `chot_hoi_quy_bai_hoc.py` mã 0.
 - Đột biến 21/21 đỏ đúng test canh rồi phục hồi xanh (`python -B`, xoá `__pycache__` trước mỗi phép). Một đột biến (bỏ
   luật «đoạn sát nhau là nối tiếp») ban đầu KHÔNG bị bắt: fixture tự soạn không tái hiện phép gióng tách đoạn của 3/194 ca
   thật ⇒ lỗi phép thử; sửa bằng SequenceMatcher giả ép đúng cách gióng của ca thật PMID 42024702.
