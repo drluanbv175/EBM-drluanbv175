@@ -40,3 +40,17 @@
 - `tools/test_tom_tat_may_tham_khao_20261013.py` 11 ca; 11/11 phép đột biến đỏ đúng chỗ (bỏ chốt số, không chuẩn hoá «·»,
   mục chính nhận tóm tắt máy, chân luôn CHAN, không in, DOI không chữ thường, kho hỏng làm sập, dùng abstract của bản ghi
   khác, chuẩn hoá dấu phẩy thập phân, ô trống vẫn in, kho sai khuôn coi như hợp lệ).
+
+## Bổ sung cùng ngày: nhấn mạnh — chữ đậm và màu
+
+- Bác sĩ: «nội dung cần nhấn mạnh hãy in đậm», «có thể hiện được màu sắc không». Đo trên EndNote 2025 (sao lưu trước, chỉ
+  thử trên MỘT bản ghi): `set field` chỉ nhận chữ thường; `set record contents` (XML có `<style face="bold">`) chạy không lỗi
+  nhưng bị BỎ QUA (xuất lại trùng y bản trước, 3 lần thử, số bản ghi giữ 1928); `import` tạo bản ghi MỚI; sửa thẳng cột
+  `text_styles` của `sdb.eni` kích hoạt trigger `refs__refs_ord_AU` dùng hàm `EN_MAKE_SORT_KEY` và collation `ENCIN_Base` riêng
+  của EndNote — bên ngoài không tái tạo được ⇒ nguy cơ hỏng chỉ mục, thư viện lại đang đồng bộ EndNote Online ⇒ KHÔNG làm.
+  Thanh định dạng trường chỉ có Đậm/Nghiêng/Gạch chân/chỉ số trên–dưới; 391 bản ghi có định dạng, 0 bản ghi có màu.
+- Giải pháp: nhãn IN HOA + biểu tượng màu trong BMP (✅ áp dụng/thực hành · ⚠️ cân nhắc/lưu ý · ⏸️ chưa đủ · ⛔ an toàn ·
+  ▶️ kết quả/VN · ⭐ điểm nhấn · ❗ khuyến nghị lệch · ❌ rút và thay · ↔️ đặt cạnh · ℹ️ tham khảo/tóm tắt máy). Đã nhìn
+  thật trong EndNote: hiện có màu. Ghi 850 bản ghi, 0 lỗi, sao lưu trước.
+- Kiểm: `tools/test_tom_tat_trinh_bay_20261013.py` 4 ca (mọi nhãn trong BMP · mỗi phần có dấu màu + IN HOA · an toàn mang dấu
+  đỏ, ba mức quyết định phân biệt · tham khảo không mang dấu quyết định); 9/9 đột biến đỏ (gồm chạy lại M1/M3/M5).

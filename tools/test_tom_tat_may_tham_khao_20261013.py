@@ -56,14 +56,14 @@ def test_tham_khao_co_tom_tat_may_nhan_ro_chua_qua_cong_va_khong_gan_khuyen_nghi
     assert lech == [] and tom is TOM_TAT
     k = tt.khoi_tieng_viet(muc, tmp_path, tom)
     dong = k.splitlines()
-    assert dong[0] == f"{tt.MO_DAU} Tài liệu tham khảo bổ trợ" and "NGUỒN CHÍNH" in dong[1], "vai tham khảo giữ nguyên"
-    i = dong.index("▸ Tóm tắt MÁY từ abstract (chưa qua cổng dashboard — không phải khuyến nghị):")
-    assert dong[i + 1:i + 7] == ["   Thiết kế: RCT, n = 1234", "   P · Đối tượng: Người lớn ≥ 40 tuổi",
-                                 "   I · Can thiệp/phơi nhiễm: Thuốc", "   C · So sánh: Giả dược",
-                                 "   O · Kết cục: Kết cục chính",
-                                 "   Kết quả: 9.1% so với 12.0%; HR 0.85 (KTC 95% 0.71–0.93)"]
+    assert dong[0] == f"{tt.MO_DAU} ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ" and "NGUỒN CHÍNH" in dong[1], "vai tham khảo giữ nguyên"
+    i = dong.index("ℹ️ TÓM TẮT MÁY TỪ ABSTRACT (chưa qua cổng dashboard — không phải khuyến nghị):")
+    assert dong[i + 1:i + 7] == ["   THIẾT KẾ: RCT, n = 1234", "   P · ĐỐI TƯỢNG: Người lớn ≥ 40 tuổi",
+                                 "   I · CAN THIỆP/PHƠI NHIỄM: Thuốc", "   C · SO SÁNH: Giả dược",
+                                 "   O · KẾT CỤC: Kết cục chính",
+                                 "   KẾT QUẢ: 9.1% so với 12.0%; HR 0.85 (KTC 95% 0.71–0.93)"]
     assert dong[-1] == tt.CHAN_MAY and tt.CHAN not in k, "dòng chân phải nói đúng: nội dung rút từ abstract, chưa qua cổng"
-    for chu in ("Chứng cứ:", "Áp dụng", "Thực hành:", "HR 0.84", "CHƯA thêm colchicine"):
+    for chu in ("Chứng cứ:", "ÁP DỤNG", "THỰC HÀNH:", "HR 0.84", "CHƯA thêm colchicine"):
         assert chu not in k, f"tóm tắt máy không mang mức chứng cứ/khuyến nghị/kết quả nguồn chính: {chu}"
 
 
@@ -93,7 +93,7 @@ def test_muc_chinh_khong_bao_gio_nhan_tom_tat_may(tmp_path):
     muc = ds["pmid:31111111"]
     assert tt.tom_tat_cho(muc, {"PMID 31111111": TOM_TAT}, GOC) == (None, [])
     k = tt.khoi_tieng_viet(muc, tmp_path, TOM_TAT)
-    assert "Tóm tắt MÁY" not in k and k.splitlines()[-1] == tt.CHAN, "mục chính luôn dùng nội dung đã qua cổng"
+    assert "TÓM TẮT MÁY" not in k and k.splitlines()[-1] == tt.CHAN, "mục chính luôn dùng nội dung đã qua cổng"
 
 
 def test_tra_theo_doi_chu_thuong_va_kho_rong_khong_lam_gi():
@@ -144,10 +144,10 @@ def test_ghi_tom_tat_dung_abstract_goc_cua_ban_ghi_va_chay_lai_khong_doi(tmp_pat
                      {"31111111": ["r1"], "32222222": ["r2", "r3"]})
     kho_tt = {"PMID 32222222": TOM_TAT}
     bc = tt.ghi_tom_tat(en, [f], kho=tmp_path, ap_dung=True, doc_data=doc, sao_luu=lambda: "/s", tom_tat_abs=kho_tt)
-    assert "Tóm tắt MÁY" in en.abstract["r2"] and en.abstract["r2"].endswith(GOC.split(". ")[-1]), "abstract gốc giữ nguyên"
-    assert "Tóm tắt MÁY" not in en.abstract["r3"], "bản ghi có abstract khác số ⇒ không in tóm tắt cho bản ghi đó"
+    assert "TÓM TẮT MÁY" in en.abstract["r2"] and en.abstract["r2"].endswith(GOC.split(". ")[-1]), "abstract gốc giữ nguyên"
+    assert "TÓM TẮT MÁY" not in en.abstract["r3"], "bản ghi có abstract khác số ⇒ không in tóm tắt cho bản ghi đó"
     assert bc["tom_tat_may"] == 1 and len(bc["tom_tat_lech_so"]) == 1 and "r3" in bc["tom_tat_lech_so"][0]
-    assert "Tóm tắt MÁY" not in en.abstract["r1"]
+    assert "TÓM TẮT MÁY" not in en.abstract["r1"]
     bc2 = tt.ghi_tom_tat(en, [f], kho=tmp_path, ap_dung=True, doc_data=doc,
                          sao_luu=lambda: pytest.fail("không đổi thì không ghi"), tom_tat_abs=kho_tt)
     assert bc2["se_ghi"] == 0 and bc2["khong_doi"] == 3
