@@ -26,3 +26,21 @@
 - `tools/test_tom_tat_endnote_vi_20261013.py` 19 ca; 14/14 phép đột biến đỏ đúng chỗ (cắt «Thực hành», bỏ trần kết quả/VN,
   không cảnh báo lệch khuyến nghị, chọn bản cũ nhất, không nhận khối cũ, tham khảo nhận khuyến nghị, «na» ⇒ «Thấp», giá trị lạ
   ⇒ «Cân nhắc», mất abstract gốc, ghi trước sao lưu, coi không đọc được là rỗng, bỏ đổi emoji, ghi khi không đổi).
+
+## Bổ sung cùng ngày: PICO dưới dòng ★ và «Đặt cạnh»
+
+- Bác sĩ (13/10): «Dòng ★ hãy bổ sung PICO để biết vấn đề nghiên cứu, đối tượng và kết quả, so sánh với các kết quả khác».
+- Dưới ★: 4 dòng P · Đối tượng / I · Can thiệp/phơi nhiễm / C · So sánh / O · Kết cục, chép trường `pico` của mục; nhãn khớp so
+  với câu hỏi chủ đề («mis» ⇒ «⚠ lệch câu hỏi của chủ đề», «partial» ⇒ «khớp một phần»); thiếu P ⇒ dùng trường quần thể.
+- «▸ Đặt cạnh trong chủ đề» ≤ 3 mục KHÁC cùng câu hỏi (máy ghép theo từ khoá PICO, gom từ MỌI chủ đề trích bài này), mỗi
+  dòng kèm khuyến nghị · mức chứng cứ · số đo; chỉ đặt cạnh, không phán chiều (luật của dat_canh_chung_cu_moi.py).
+- Ghép nhầm đo được khi soát mẫu và đã vá: (1) chỉ trùng nhóm so sánh «không dùng công cụ» ⇒ thang điểm suy tim ghép với
+  vắc-xin RSV — bắt buộc trùng I; (2) «mg» + «tối đa»/«dưới da» (bỏ dấu đều thành «da») ⇒ finerenone (FINEARTS-HF) ghép với
+  semaglutide (FLOW) — bỏ qua đơn vị/liều/đường dùng; (3) hai ô giữ chỗ «(không nêu rõ trong abstract)» ⇒ không tính khi ghép;
+  (4) «ức chế» ⇒ SGLT2i ghép DPP-4i — bỏ qua. Cùng can thiệp mà khác kết cục ⇒ dòng ghi «— kết cục khác: …».
+- Chạy thật: ghi 693 bản ghi (154 bài chỉ là tài liệu tham khảo không đổi), 0 lỗi; đọc lại 826 bản ghi: 673 có PICO, 189 có
+  đặt cạnh, 0 khối cũ; khối tiếng Việt trung vị 1.254 ký tự.
+- Kiểm: 22 ca; 12/12 phép đột biến đỏ (bỏ PICO, bỏ nhãn lệch, P không lấy quần thể, chỉ trùng C cũng ghép, bỏ từ dừng đơn vị,
+  ô giữ chỗ tính khi ghép, không nói kết cục khác, chỉ đặt cạnh trong ngữ cảnh chính, tham khảo nhận PICO, cắt «Thực hành»,
+  không nhận khối cũ, ghi trước sao lưu). Một phép («chỉ trùng C») sống ở lượt đầu vì fixture dùng «Chuẩn» — từ bị bỏ qua — nên
+  không kiểm được gì; sửa fixture theo đúng ca nhầm thật, không nới assertion.
