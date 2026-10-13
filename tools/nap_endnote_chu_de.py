@@ -54,6 +54,7 @@ Cần bác sĩ kiểm chứng.
 from __future__ import annotations
 
 import argparse
+import html
 import importlib.util
 import json
 import os
@@ -365,10 +366,19 @@ def lay_pubmed(pmids: list[str], tai=_tai) -> dict[str, dict]:
 
 EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 LO_EUROPEPMC = 80
+# CHỈ bỏ thẻ THẬT: tên thẻ nằm trong danh sách và theo ngay sau là khoảng trắng, «/» hoặc «>». Đo 13/10/2026 trên 828 PMID
+# của 72 dashboard: abstractText/title của Europe PMC chỉ dùng h4 · i · sup · sub · b, và 211 PMID có dấu «<» là CHỮ
+# («<140 mm Hg», «P < .001», «<0·05») không mã hoá. Regex cũ `<[^>]+>` coi mọi «<» là đầu thẻ ⇒ xoá từ «<140» tới thẻ
+# `<h4>` kế tiếp (INTERACT2 PMID 23713578 còn «target systolic level of Results»). Thẻ lạ ngoài danh sách thì ĐỂ NGUYÊN:
+# hiện thừa một thẻ vô hại, xoá nhầm chữ của abstract thì không.
+_THE_HTML = re.compile(r"</?(?:h[1-6]|p|br|div|span|i|b|u|em|strong|sup|sub|sc)(?=[\s/>])[^<>]*>", re.I)
 
 
 def _bo_the_html(s: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", s or "")).strip()
+    """Bỏ thẻ HTML thật, giải mã thực thể, rồi bỏ thẻ lần nữa: Europe PMC mã hoá KÉP thẻ trong một số tiêu đề
+    («&lt;i&gt;Helicobacter pylori&lt;/i&gt;», đo 13/10 — 6/828 PMID). «&lt;140» giải mã thành «<140» là chữ, lượt hai
+    không đụng vì không phải tên thẻ trong danh sách."""
+    return re.sub(r"\s+", " ", _THE_HTML.sub(" ", html.unescape(_THE_HTML.sub(" ", s or "")))).strip()
 
 
 def phan_tich_europepmc(js: dict) -> dict[str, dict]:
