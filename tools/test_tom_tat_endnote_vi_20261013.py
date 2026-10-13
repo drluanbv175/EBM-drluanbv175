@@ -45,24 +45,37 @@ def _dash(ten: str, items: list[dict], cau_hoi: str = "Đột quỵ") -> tuple[P
     return Path(f"/khong-ton-tai/{ten}"), {"meta": {"question": cau_hoi}, "items": items}
 
 
-def test_khoi_nguon_chinh_chep_dung_truong_va_nhan_dashboard(tmp_path):
+def test_khoi_doc_nhanh_dong_dau_diem_nhan_va_truong_nguyen_ven(tmp_path):
     f, d = _dash("WebDashboard_X_20260614.html", [MUC])
     ds = tt.ngu_canh([f], _doc({f.name: d}))
     k = tt.khoi_tieng_viet(ds["pmid:31111111"], tmp_path)
-    assert k.startswith(tt.MO_DAU) and "PMID 31111111 · DOI 10.1016/aaa" in k
-    for chu in ("Colchicine dự phòng thứ phát", "Đột quỵ không do tim", "P: Đột quỵ | I: Colchicine | C: Chuẩn | O: Tái phát",
-                "Kết quả chính không đạt ý nghĩa; HR 0.84 (KTC 95% 0.68–1.05)", "Mức chứng cứ: Trung bình",
-                "Khuyến nghị cho thực hành: Chưa đủ thay đổi — CHƯA thêm colchicine thường quy",
-                "Áp dụng tại Việt Nam: Không khởi trị ngoài nghiên cứu", "Lưu ý: Âm tính", "Cần bác sĩ kiểm chứng", "14/06/2026"):
+    dong = k.splitlines()
+    assert dong[0] == f"{tt.MO_DAU} Chưa đủ thay đổi · Chứng cứ: Trung bình · RCT 2024"
+    assert dong[1] == "★ Colchicine dự phòng thứ phát — chưa đủ dùng thường quy"
+    for chu in ("▸ Kết quả: Kết quả chính không đạt ý nghĩa; HR 0.84 (KTC 95% 0.68–1.05)",
+                "▸ Thực hành: CHƯA thêm colchicine thường quy", "▸ Lưu ý: Âm tính ở phân tích chính",
+                "▸ Tại Việt Nam: Không khởi trị ngoài nghiên cứu", "Chủ đề: Đột quỵ · 14/06/2026",
+                "PMID 31111111 · Toàn văn: CHƯA có", "Cần bác sĩ kiểm chứng"):
         assert chu in k, chu
-    assert "Theo dõi" not in k, "ô giữ chỗ «—» không được in thành một dòng"
-    assert "CHƯA có toàn văn" in k
+    for bo in ("Theo dõi", "PICO", "Quần thể", "RCT dừng sớm"):
+        assert bo not in k, f"bản đọc nhanh không in {bo}"
+    assert len(k) < 900
 
 
-@pytest.mark.parametrize("gl, qd, can", [("na", "apply", ["Nguồn không phân hạng", "KHÔNG có nghĩa là chứng cứ yếu",
+def test_rut_gon_bang_chon_truong_khong_cat_giua_cau(tmp_path):
+    dai = "Hiệu quả " + "rất " * 120 + "rõ"
+    hd = "Dùng thuốc X " + "thận trọng " * 70 + "NẾU KHÔNG CHỐNG CHỈ ĐỊNH"
+    f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, effectText=dai, action=hd, vn="V" * 400)])
+    k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
+    assert "Hiệu quả" not in k and "▸ Kết quả: HR 0.84 (KTC 95% 0.68–1.05)" in k, "kết quả dài bỏ CẢ trường, giữ số đo"
+    assert f"▸ Thực hành: {tt._gon(hd)}" in k, "«Thực hành» luôn in nguyên vẹn — giữ mệnh đề điều kiện cuối câu"
+    assert "Tại Việt Nam" not in k, "trường áp dụng VN quá trần bị bỏ cả trường, không cắt"
+
+
+@pytest.mark.parametrize("gl, qd, can", [("na", "apply", ["Chứng cứ: nguồn không phân hạng (≠ chứng cứ yếu)",
                                                             "Áp dụng ngay"]),
-                                         ("high", "consider", ["Mức chứng cứ: Cao", "Cân nhắc chọn lọc"]),
-                                         ("la", "xyz", ["chưa rõ (giá trị «la»)", "chưa rõ (giá trị «xyz»)"])])
+                                         ("high", "consider", ["Chứng cứ: Cao", "Cân nhắc chọn lọc"]),
+                                         ("la", "xyz", ["chưa rõ («la»)", "chưa rõ («xyz»)"])])
 def test_nhan_grade_va_quyet_dinh_khong_doan(tmp_path, gl, qd, can):
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, gradeLevel=gl, decision=qd)])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
@@ -76,8 +89,8 @@ def test_tai_lieu_tham_khao_khong_bi_gan_ket_qua_cua_nguon_chinh(tmp_path):
     f, d = _dash("WebDashboard_X_20260614.html", [MUC])
     ds = tt.ngu_canh([f], _doc({f.name: d}))
     k = tt.khoi_tieng_viet(ds["pmid:32222222"], tmp_path)
-    assert "TÀI LIỆU THAM KHẢO bổ trợ cho mục «Colchicine" in k and "nguồn chính của mục: PMID 31111111" in k
-    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Mức chứng cứ", "Khuyến nghị cho thực hành"):
+    assert k.startswith(f"{tt.MO_DAU} Tài liệu tham khảo bổ trợ") and "nguồn chính PMID 31111111" in k
+    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Chứng cứ:", "Thực hành:"):
         assert chu not in k, f"kết quả/khuyến nghị của nguồn chính bị gán cho bài tham khảo: {chu}"
     assert "doi:10.1093/bbb" in ds, "trích dẫn chỉ có DOI vẫn có ngữ cảnh"
     assert len([n for n in ds["pmid:31111111"]["ngu_canh"] if n["vai"] == "tham_khao"]) == 0, \
@@ -95,11 +108,30 @@ def test_phien_ban_moi_thang_ban_cu_chi_bo_sung_trich_dan_da_bi_bo(tmp_path):
     assert "bản dashboard CŨ" in k333, "bài chỉ còn ở bản cũ vẫn có tóm tắt, ghi rõ là bản cũ"
 
 
+def test_nhieu_chu_de_khuyen_nghi_lech_thi_canh_bao(tmp_path):
+    a, da = _dash("WebDashboard_A_20260901.html", [dict(MUC, decision="apply", action="Làm A")], "Suy tim: tổng hợp")
+    b, db = _dash("WebDashboard_B_20260601.html", [dict(MUC, decision="notyet", action="Làm B")], "Tiên lượng suy tim")
+    k = tt.khoi_tieng_viet(tt.ngu_canh([a, b], _doc({a.name: da, b.name: db}))["pmid:31111111"], tmp_path)
+    assert "Làm A" in k and "Làm B" not in k, "ngữ cảnh chính = dashboard MỚI NHẤT, chủ đề khác chỉ nêu tên"
+    assert "⚠ Khuyến nghị KHÁC nhau giữa các chủ đề — Suy tim: Áp dụng ngay; Tiên lượng suy tim: Chưa đủ thay đổi" in k
+    b2, db2 = _dash("WebDashboard_B_20260601.html", [dict(MUC, decision="apply")], "Tiên lượng suy tim")
+    k2 = tt.khoi_tieng_viet(tt.ngu_canh([a, b2], _doc({a.name: da, b2.name: db2}))["pmid:31111111"], tmp_path)
+    assert "⚠" not in k2 and "▸ Cũng dùng trong: Tiên lượng suy tim" in k2
+
+
+def test_chay_lai_nhan_ra_khoi_dang_cu_va_thay_khong_long(tmp_path):
+    goc = "Background: original English abstract."
+    cu = f"【TÓM TẮT THỰC HÀNH · tiếng Việt】\nPMID 1\n• Mục: dài dòng\n\n{tt.PHAN_CACH}\n{goc}".replace("\n", "\r")
+    moi = tt.ghep_abstract(cu, tt.MO_DAU + " X")
+    assert moi.startswith(tt.MO_DAU) and "TÓM TẮT THỰC HÀNH" not in moi and moi.endswith(goc)
+    assert moi.count(tt.PHAN_CACH) == 1
+
+
 def test_emoji_ngoai_bmp_doi_thanh_chu_vi_endnote_khong_luu_duoc(tmp_path):
     """Đo 13/10: EndNote đổi «🔴» thành «?» ⇒ đọc lại lệch. Khối ghi vào chỉ được chứa ký tự mặt phẳng cơ bản."""
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, action="🔴 ĐỌC THẬN TRỌNG 🧪 thử")])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "●đỏ ĐỌC THẬN TRỌNG ◆ thử" in k
+    assert "▸ Thực hành: ●đỏ ĐỌC THẬN TRỌNG ◆ thử" in k
     assert all(ord(c) <= 0xFFFF for c in k)
 
 
@@ -176,10 +208,9 @@ def test_trang_thai_toan_van_theo_kho(tmp_path):
     (tmp_path / "PMID-5_CHR.pdf").write_bytes(b"%PDF-1.4")
     (tmp_path / "doc_sau" / "PMID-5.md").write_text("x", encoding="utf-8")
     (tmp_path / "PMID-6_CHR.html").write_text("x", encoding="utf-8")
-    s5, s6 = tt.trang_thai_toan_van("5", tmp_path), tt.trang_thai_toan_van("6", tmp_path)
-    assert "có PDF toàn văn" in s5 and "có bản quyền" in s5 and "doc_sau/PMID-5.md" in s5
-    assert "có HTML toàn văn" in s6 and "đọc sâu" not in s6
-    assert "CHƯA có toàn văn" in tt.trang_thai_toan_van("7", tmp_path)
+    assert tt.trang_thai_toan_van("5", tmp_path) == "có PDF (bản quyền — dùng cá nhân) · có bản đọc sâu"
+    assert tt.trang_thai_toan_van("6", tmp_path) == "có HTML (bản quyền — dùng cá nhân)"
+    assert tt.trang_thai_toan_van("7", tmp_path).startswith("CHƯA có")
 
 
 def test_sao_luu_thu_vien_ban_sao_doc_duoc(tmp_path):
