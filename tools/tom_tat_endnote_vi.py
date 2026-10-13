@@ -8,8 +8,11 @@ Abstract hãy ghi nội dung tiếng Việt tóm tắt trích dẫn đó cho th�
 
 NGUYÊN TẮC (không nới bằng cờ):
   • KHÔNG sinh nội dung y khoa mới. Khối tiếng Việt CHÉP các trường của mục dashboard đã qua cổng liêm chính
-    (tiêu đề, nguồn, thiết kế, quần thể, PICO, kết quả, mức chứng cứ, khuyến nghị, theo dõi, an toàn, áp dụng tại
-    Việt Nam, lưu ý) — rút gọn khoảng trắng được, thêm khẳng định thì không (CHAT-BRIEF-SPEC).
+    — rút gọn được, thêm khẳng định thì không (CHAT-BRIEF-SPEC).
+  • Bản ĐỌC NHANH (bác sĩ yêu cầu 13/10: «ngắn gọn và thể hiện điểm nhấn»): dòng đầu = khuyến nghị · mức chứng cứ ·
+    thiết kế; ★ = tiêu đề mục (câu điểm nhấn của dashboard); rồi Kết quả · Thực hành · An toàn · Lưu ý · Tại Việt Nam.
+    Rút gọn bằng CHỌN TRƯỜNG, không cắt giữa câu (cắt câu có thể mất mệnh đề điều kiện); trường dài quá trần thì bỏ
+    cả trường. Một ngữ cảnh chính (bản dashboard mới nhất); chủ đề khác chỉ nêu tên — khuyến nghị lệch nhau thì ⚠.
   • Bài chỉ là TÀI LIỆU THAM KHẢO của một mục ⇒ ghi đúng vai đó; KHÔNG gán kết quả/khuyến nghị của nguồn chính
     cho bài tham khảo (gán nhầm = một khẳng định sai về bài).
   • Nhãn giữ đúng nhãn của dashboard: «Nguồn không phân hạng» (gradeLevel 'na') KHÔNG có nghĩa là chứng cứ yếu;
@@ -29,20 +32,25 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-MO_DAU = "【TÓM TẮT THỰC HÀNH · tiếng Việt】"
+MO_DAU = "【EBM · ĐỌC NHANH】"
+# Dấu mở đầu của MỌI dạng khối đã từng ghi (13/10: bản đầy đủ → bản đọc nhanh). Chạy lại phải nhận ra để THAY khối cũ —
+# không nhận ra là coi khối cũ như abstract gốc và lồng khối mới lên trên.
+MO_DAU_DA_DUNG = (MO_DAU, "【TÓM TẮT THỰC HÀNH · tiếng Việt】")
 PHAN_CACH = "━━━━━━━━ ABSTRACT GỐC (nguyên văn PubMed/nhà xuất bản) ━━━━━━━━"
-CHAN = ("Cần bác sĩ kiểm chứng. Khối này CHÉP nội dung dashboard đã qua cổng liêm chính (EBM Copilot) — không thêm "
-        "khẳng định mới; áp dụng cho từng bệnh nhân qua Cổng A của bác sĩ.")
+CHAN = "Cần bác sĩ kiểm chứng · chép từ dashboard đã qua cổng, không thêm khẳng định mới · áp dụng qua Cổng A."
 NHAN_GRADE = {"high": "Cao", "mod": "Trung bình", "low": "Thấp", "vlow": "Rất thấp",
-              "na": "Nguồn không phân hạng (không dùng thang GRADE — KHÔNG có nghĩa là chứng cứ yếu)"}
+              "na": "nguồn không phân hạng (≠ chứng cứ yếu)"}
 NHAN_QD = {"apply": "Áp dụng ngay", "consider": "Cân nhắc chọn lọc", "notyet": "Chưa đủ thay đổi"}
-# Hậu tố tệp trong kho toàn văn → nhãn nguồn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF và doc_sau_toan_van).
-NGUON_TOAN_VAN = (("_CHR", "phiên Chrome có uỷ quyền của bác sĩ — có bản quyền, chỉ dùng cá nhân"),
-                  ("_WTDM", "kênh TDM của nhà xuất bản (Wiley)"),
-                  ("_UPW", "Unpaywall — bản truy cập mở"),
-                  ("_PMC", "PMC — bản truy cập mở"))
-TOI_DA_MUC = 3        # ngữ cảnh «nguồn chính của mục» tối đa mỗi trích dẫn
-TOI_DA_THAM_KHAO = 3  # ngữ cảnh «tài liệu tham khảo» tối đa mỗi trích dẫn
+# Hậu tố tệp trong kho toàn văn → nhãn nguồn ngắn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF).
+NGUON_TOAN_VAN = (("_CHR", "bản quyền — dùng cá nhân"), ("_WTDM", "TDM Wiley"), ("_UPW", "truy cập mở"),
+                  ("_PMC", "truy cập mở"))
+# Bản ĐỌC NHANH (bác sĩ yêu cầu 13/10: «ngắn gọn, thể hiện điểm nhấn»): rút gọn bằng cách CHỌN TRƯỜNG — trường nào in ra thì
+# in NGUYÊN VẸN (cắt giữa câu có thể mất mệnh đề điều kiện «ngoài thai kỳ», «nếu không chống chỉ định»). Trường dài quá
+# trần thì bỏ cả trường; «Thực hành», «An toàn», «Lưu ý» luôn in nguyên vẹn.
+TRAN_KET_QUA = 320
+TRAN_VN = 220
+TRAN_THAM_KHAO = 220
+TOI_DA_CHU_DE_KHAC = 3
 
 
 def _nap():
@@ -75,20 +83,6 @@ def _gon(s) -> str:
 def _ngay_dashboard(dash: Path) -> str:
     m = re.search(r"_(\d{4})(\d{2})(\d{2})$", dash.stem)
     return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else ""
-
-
-def _pico(p) -> str:
-    if not isinstance(p, dict):
-        return ""
-    phan = []
-    for k in ("P", "I", "C", "O"):
-        v = p.get(k)
-        if isinstance(v, (list, tuple)):
-            v = v[0] if v else ""
-        v = _gon(v)
-        if v:
-            phan.append(f"{k}: {v}")
-    return " | ".join(phan)
 
 
 def _hieu_so(e) -> str:
@@ -166,82 +160,96 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
 
 def trang_thai_toan_van(pmid: str | None, kho: Path | None) -> str:
     if kho is None:
-        return "chưa xét (không thấy kho toàn văn)"
+        return "chưa xét (không thấy kho)"
     if not pmid:
-        return "chưa xét được (trích dẫn không có PMID — kho đặt tên theo PMID)"
+        return "chưa xét (không có PMID)"
     tep = sorted(p.name for p in kho.glob(f"PMID-{pmid}_*") if p.is_file())
     if not tep:
-        return ("CHƯA có toàn văn trong kho — cách lấy ghi trong phiếu xác thực của chủ đề "
-                "(EBM-Dashboards/derivatives/…_toan-van.md); bài thuê bao cần bác sĩ đăng nhập làn Chrome")
+        return "CHƯA có — cách lấy ở phiếu toàn văn của chủ đề (derivatives/…_toan-van.md)"
     pdf = [t for t in tep if t.lower().endswith(".pdf")]
     chinh = pdf[0] if pdf else tep[0]
     nguon = next((nh for hau_to, nh in NGUON_TOAN_VAN if hau_to in chinh), "kho toàn văn")
     loai = "PDF" if pdf else ("HTML" if chinh.lower().endswith((".html", ".htm")) else "XML")
     doc_sau = (kho / "doc_sau" / f"PMID-{pmid}.md").is_file()
-    return (f"có {loai} toàn văn ({chinh} — {nguon})"
-            + (f"; bản đọc sâu máy: toan_van_oa/doc_sau/PMID-{pmid}.md" if doc_sau else ""))
+    return f"có {loai} ({nguon})" + (" · có bản đọc sâu" if doc_sau else "")
 
 
-def _dong_chu_de(nc: dict) -> str:
-    return (f"▸ Chủ đề: {nc['chu_de']}  [{nc['dashboard']}" + (f" · {nc['ngay']}" if nc["ngay"] else "") + "]"
-            + ("  (bản dashboard CŨ — bản mới của chủ đề không còn trích bài này)" if nc.get("ban_cu") else ""))
+def _chu_de_ngan(cau_hoi: str) -> str:
+    """Nhãn chủ đề ngắn — phần trước « — »/«:» đầu tiên, ≤ 70 ký tự. Đây là NHÃN nhóm, không phải khẳng định y khoa."""
+    t = re.split(r"\s[—–]\s|:\s", cau_hoi or "", maxsplit=1)[0].strip() or (cau_hoi or "")
+    return t if len(t) <= 70 else t[:69].rstrip() + "…"
 
 
-def _khoi_muc(nc: dict) -> list[str]:
+def _ngay_so(nc: dict) -> int:
+    m = re.search(r"_(\d{8})\.html?$", nc.get("dashboard") or "")
+    return int(m.group(1)) if m else 0
+
+
+def _nhan(bang: dict, gia_tri) -> str:
+    g = str(gia_tri or "")
+    return bang.get(g, f"chưa rõ («{g}»)" if g else "chưa ghi")
+
+
+def _dong_nguon_goc(nc: dict) -> str:
+    return (f"Chủ đề: {_chu_de_ngan(nc['chu_de'])}" + (f" · {nc['ngay']}" if nc["ngay"] else "")
+            + (" (bản dashboard CŨ)" if nc.get("ban_cu") else ""))
+
+
+def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     it = nc["item"]
-    dong = [_dong_chu_de(nc),
-            f"• Mục: {nc['tieu_de']}"]
-    nguon = " · ".join(x for x in (_gon(it.get("source")), _gon(it.get("design")), _gon(it.get("org")),
-                                   _gon(it.get("dateVersion"))) if x)
-    if nguon:
-        dong.append(f"• Nguồn: {nguon}")
-    for nhan, gia_tri in (("Quần thể", _gon(it.get("population"))), ("PICO", _pico(it.get("pico")))):
-        if gia_tri:
-            dong.append(f"• {nhan}: {gia_tri}")
-    ket_qua = "; ".join(x for x in (_gon(it.get("effectText")), _hieu_so(it.get("effect"))) if x)
+    thiet_ke = " ".join(x for x in (_gon(it.get("design")), _gon(it.get("dateVersion"))) if x)
+    dong = [f"{MO_DAU} {_nhan(NHAN_QD, it.get('decision'))} · Chứng cứ: {_nhan(NHAN_GRADE, it.get('gradeLevel'))}"
+            + (f" · {thiet_ke}" if thiet_ke else ""),
+            f"★ {nc['tieu_de']}"]
+    et = _gon(it.get("effectText"))
+    ket_qua = "; ".join(x for x in (et if len(et) <= TRAN_KET_QUA else "", _hieu_so(it.get("effect"))) if x)
     if ket_qua:
-        dong.append(f"• Kết quả chính: {ket_qua}")
-    gl = str(it.get("gradeLevel") or "")
-    muc_cc = NHAN_GRADE.get(gl, f"chưa rõ (giá trị «{gl}»)" if gl else "chưa ghi")
-    gb, gs = _gon(it.get("gradeBy")), _gon(it.get("gradeSource"))
-    dong.append(f"• Mức chứng cứ: {muc_cc}" + (f" — {gb}" if gb else "") + (f". Nguồn phân hạng: {gs}" if gs else ""))
-    qd = str(it.get("decision") or "")
-    nhan_qd = NHAN_QD.get(qd, f"chưa rõ (giá trị «{qd}»)" if qd else "chưa ghi")
-    hd = _gon(it.get("action"))
-    dong.append(f"• Khuyến nghị cho thực hành: {nhan_qd}" + (f" — {hd}" if hd else ""))
-    for nhan, khoa in (("Theo dõi", "monitoring"), ("An toàn", "safety"), ("Áp dụng tại Việt Nam", "vn"),
-                       ("Lưu ý", "flag")):
+        dong.append(f"▸ Kết quả: {ket_qua}")
+    for nhan, khoa in (("Thực hành", "action"), ("An toàn", "safety"), ("Lưu ý", "flag")):
         v = _gon(it.get(khoa))
         if v:
-            dong.append(f"• {nhan}: {v}")
+            dong.append(f"▸ {nhan}: {v}")
+    vn = _gon(it.get("vn"))
+    if vn and len(vn) <= TRAN_VN:
+        dong.append(f"▸ Tại Việt Nam: {vn}")
     if it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or it.get("replacesPmid"):
         tb = it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or "—"
-        dong.append(f"• Rút và thay: bài gốc đã bị rút và thay thế (thông báo {tb}) — số liệu theo BẢN ĐÃ THAY.")
+        dong.append(f"▸ Rút và thay: bài gốc đã bị rút và thay thế (thông báo {tb}) — số liệu theo BẢN ĐÃ THAY.")
+    if khac:
+        if any(x["item"].get("decision") != it.get("decision") for x in khac):
+            dong.append("⚠ Khuyến nghị KHÁC nhau giữa các chủ đề — " + "; ".join(
+                f"{_chu_de_ngan(x['chu_de'])}: {_nhan(NHAN_QD, x['item'].get('decision'))}"
+                for x in [nc, *khac[:TOI_DA_CHU_DE_KHAC]]))
+        else:
+            dong.append("▸ Cũng dùng trong: " + "; ".join(_chu_de_ngan(x["chu_de"]) for x in khac[:TOI_DA_CHU_DE_KHAC])
+                        + (f" (+{len(khac) - TOI_DA_CHU_DE_KHAC})" if len(khac) > TOI_DA_CHU_DE_KHAC else ""))
+    if so_tham_khao:
+        dong.append(f"▸ Còn là tài liệu tham khảo cho {so_tham_khao} mục khác")
+    dong.append(_dong_nguon_goc(nc))
     return dong
 
 
-def _khoi_tham_khao(nc: dict) -> list[str]:
-    return [_dong_chu_de(nc),
-            f"• Vai trò: TÀI LIỆU THAM KHẢO bổ trợ cho mục «{nc['tieu_de']}» (nguồn chính của mục: {nc['nguon_chinh']}). "
-            "Kết quả và khuyến nghị của mục thuộc NGUỒN CHÍNH — không gán cho bài này.",
-            f"• Dashboard ghi: {nc['tham_khao']}"]
+def _khoi_tham_khao(nc: dict, so_khac: int) -> list[str]:
+    dong = [f"{MO_DAU} Tài liệu tham khảo bổ trợ",
+            f"★ Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
+            "không gán cho bài này"]
+    if len(nc["tham_khao"]) <= TRAN_THAM_KHAO:
+        dong.append(f"▸ Dashboard ghi: {nc['tham_khao']}")
+    if so_khac:
+        dong.append(f"▸ Cũng là tham khảo cho {so_khac} mục khác")
+    dong.append(_dong_nguon_goc(nc))
+    return dong
 
 
 def khoi_tieng_viet(muc: dict, kho: Path | None) -> str:
-    """Khối tiếng Việt cho MỘT trích dẫn (đầu ra của `ngu_canh`)."""
-    dinh_danh = " · ".join(x for x in (f"PMID {muc['pmid']}" if muc.get("pmid") else "",
-                                       f"DOI {muc['doi']}" if muc.get("doi") else "") if x)
-    dong = [MO_DAU, dinh_danh, f"Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}"]
-    chinh = [x for x in muc["ngu_canh"] if x["vai"] == "muc"]
-    tk = [x for x in muc["ngu_canh"] if x["vai"] == "tham_khao"]
-    for nc in chinh[:TOI_DA_MUC]:
-        dong += ["", *_khoi_muc(nc)]
-    for nc in tk[:TOI_DA_THAM_KHAO]:
-        dong += ["", *_khoi_tham_khao(nc)]
-    con = max(0, len(chinh) - TOI_DA_MUC) + max(0, len(tk) - TOI_DA_THAM_KHAO)
-    if con:
-        dong += ["", f"… và {con} ngữ cảnh khác trong các dashboard (xem nhóm «EBM · …» của chủ đề)."]
-    dong += ["", CHAN]
+    """Khối ĐỌC NHANH cho MỘT trích dẫn (đầu ra của `ngu_canh`): một ngữ cảnh chính — bản dashboard MỚI NHẤT, không
+    phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ⚠."""
+    xep = sorted(muc["ngu_canh"], key=lambda x: (bool(x.get("ban_cu")), -_ngay_so(x)))
+    chinh = [x for x in xep if x["vai"] == "muc"]
+    tk = [x for x in xep if x["vai"] == "tham_khao"]
+    dong = _khoi_muc(chinh[0], chinh[1:], len(tk)) if chinh else _khoi_tham_khao(tk[0], len(tk) - 1)
+    dinh_danh = f"PMID {muc['pmid']}" if muc.get("pmid") else f"DOI {muc.get('doi')}"
+    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", CHAN]
     return "\n".join(dong)
 
 
@@ -253,7 +261,7 @@ def chuan_dong(s: str) -> str:
 def tach_goc(cu: str) -> str:
     """Abstract GỐC trong trường hiện tại: phần dưới dấu phân cách nếu đã có khối tiếng Việt, nguyên trường nếu chưa."""
     cu = chuan_dong(cu)
-    if cu.startswith(MO_DAU):
+    if cu.startswith(MO_DAU_DA_DUNG):
         _, co, sau = cu.partition(PHAN_CACH)
         return sau.strip() if co else ""
     return cu
