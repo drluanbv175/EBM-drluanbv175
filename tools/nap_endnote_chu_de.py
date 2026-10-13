@@ -60,6 +60,7 @@ import os
 import re
 import secrets
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -643,6 +644,36 @@ class EndNoteMac:
         if doc_lai.strip() != url:
             raise RuntimeError(f"EndNote không nhận tệp đính kèm cho {ma}: đọc lại {doc_lai[:120]!r}")
 
+    def doc_truong(self, ids: list[str], truong: str) -> dict[str, str]:
+        """{mã bản ghi: nội dung trường} — ngăn bằng ký tự điều khiển 30/31 vì trường (Abstract) có xuống dòng.
+        Bản ghi không có trong kết quả = không đọc được (người gọi KHÔNG được coi là trường rỗng)."""
+        ra: dict[str, str] = {}
+        than = ('set RS to character id 30\nset US to character id 31\nset out to ""\n'
+                'repeat with i from 2 to count of argv\nset r to item i of argv\n'
+                'set out to out & r & US & (field (item 1 of argv) of record r) & RS\nend repeat\nreturn out')
+        for i in range(0, len(ids), 100):
+            for khoi in self._chay(than, truong, *ids[i:i + 100]).split("\x1e"):
+                ma, co, gia_tri = khoi.partition("\x1f")
+                if co and ma.strip():
+                    ra[ma.strip()] = gia_tri
+        return ra
+
+    def ghi_truong(self, cap: list[tuple[str, str]], truong: str) -> dict[str, str]:
+        """Ghi (mã, nội dung) rồi ĐỌC LẠI từng bản ghi trong cùng lệnh. {mã: ""} = khớp; {mã: lý do} = lỗi.
+        EndNote lưu xuống dòng thành \\r — so sánh sau khi chuẩn hoá xuống dòng."""
+        def chuan(s: str) -> str:
+            return (s or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+        than = ('set RS to character id 30\nset f to item 1 of argv\nset out to ""\n'
+                'repeat with i from 2 to (count of argv) by 2\nset r to item i of argv\n'
+                'set field f of record r to (item (i + 1) of argv)\n'
+                'set out to out & (field f of record r) & RS\nend repeat\nreturn out')
+        try:
+            doc_lai = self._chay(than, truong, *[x for p in cap for x in p]).split("\x1e")
+        except RuntimeError as e:  # lỗi giữa lô: không biết bản nào đã ghi — lượt sau đọc lại và ghi tiếp
+            return {ma: f"AppleScript lỗi giữa lô: {e}"[:200] for ma, _ in cap}
+        return {ma: ("" if k < len(doc_lai) and chuan(doc_lai[k]) == chuan(gt) else "đọc lại không khớp nội dung vừa ghi")
+                for k, (ma, gt) in enumerate(cap)}
+
     def ten_cac_nhom(self) -> list[str]:
         """Tên mọi nhóm của thư viện, có lặp nếu EndNote giữ hai nhóm cùng tên (ngăn bằng xuống dòng — tên có dấu phẩy)."""
         out = self._chay('set g to get groups in window (item 1 of argv)\nif g is missing value then return ""\n'
@@ -925,6 +956,33 @@ def _in_bao_cao(bc: dict) -> None:
         print(f"   ⚠ Không lấy được metadata (KHÔNG nhập): {', '.join(bc['khong_lay_duoc'][:10])}")
 
 
+def _nap_tom_tat():
+    sp = importlib.util.spec_from_file_location("_tom_tat_endnote_vi", ROOT / "tools" / "tom_tat_endnote_vi.py")
+    mod = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(mod)
+    return mod
+
+
+def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt=None) -> dict | None:
+    """Ghi khối «TÓM TẮT THỰC HÀNH» tiếng Việt vào Abstract (tom_tat_endnote_vi). In một dòng; lỗi ⇒ dòng ✗, trả None.
+    Không làm hỏng lượt nạp vừa xong: nạp và tóm tắt là hai bước, bước sau hỏng thì bước trước vẫn giữ."""
+    try:
+        tt = tt or _nap_tom_tat()
+        bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data())
+    except (RuntimeError, OSError, sqlite3.Error) as e:
+        print(f"✗ Tóm tắt tiếng Việt (Abstract): {type(e).__name__}: {e} — chưa ghi gì sau lỗi này"[:300])
+        return None
+    print(f"✓ Tóm tắt tiếng Việt (Abstract): {bc['trich_dan']} trích dẫn · {bc['co_ban_ghi']} có bản ghi · "
+          f"{'đã ghi ' + str(bc['da_ghi']) if ap_dung else 'sẽ ghi ' + str(bc['se_ghi'])} · "
+          f"không đổi {bc['khong_doi']}" + (f" · sao lưu trước khi ghi: {bc['sao_luu']}" if bc.get("sao_luu") else ""))
+    if bc["khong_co_ban_ghi"]:
+        print(f"   Chưa có bản ghi trong thư viện (nạp chủ đề trước): {len(bc['khong_co_ban_ghi'])} — "
+              + ", ".join(bc["khong_co_ban_ghi"][:8]) + (" …" if len(bc["khong_co_ban_ghi"]) > 8 else ""))
+    for loi in bc["loi"][:8]:
+        print(f"   ⚠ {loi}")
+    return bc
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     ap.add_argument("--file", nargs="*", default=[], help="dashboard WebDashboard_*.html")
@@ -940,6 +998,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--gan-kho", action="store_true",
                     help="gắn PDF trong kho vào bản ghi ĐÃ có trong thư viện cùng PMID (không cần dashboard)")
     ap.add_argument("--pmid", nargs="*", help="cùng --gan-kho: chỉ xét các PMID này")
+    ap.add_argument("--tom-tat-vi", action="store_true",
+                    help="chỉ ghi/làm mới TÓM TẮT THỰC HÀNH tiếng Việt vào trường Abstract (cùng --file/--tat-ca; "
+                         "abstract gốc giữ dưới dấu phân cách; chạy khô mặc định)")
+    ap.add_argument("--khong-tom-tat", action="store_true",
+                    help="nạp --ap-dung mà KHÔNG ghi tóm tắt tiếng Việt (mặc định nạp xong thì ghi)")
     ap.add_argument("--chi-khi-dang-mo", action="store_true",
                     help="EndNote chưa mở đúng thư viện thì in ⚪ và trả 0 — KHÔNG tự mở EndNote (công cụ khác gọi)")
     ap.add_argument("--json", action="store_true")
@@ -969,6 +1032,9 @@ def main(argv: list[str] | None = None) -> int:
         return MA_THAM_SO
     if a.gan_kho and (files or a.xuat_xml):
         print("✗ --gan-kho không đi cùng --file/--tat-ca/--xuat-xml")
+        return MA_THAM_SO
+    if a.tom_tat_vi and (a.gan_kho or a.xuat_xml or not files):
+        print("✗ --tom-tat-vi cần --file/--tat-ca và không đi cùng --gan-kho/--xuat-xml")
         return MA_THAM_SO
     if a.ten_nhom and len(files) != 1:
         print("✗ --ten-nhom chỉ dùng với đúng một --file")
@@ -1039,7 +1105,18 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(bc, ensure_ascii=False, indent=2))
         return MA_OK
 
+    if a.tom_tat_vi:
+        if endnote is None:
+            print("⚪ --tom-tat-vi cần EndNote đang mở đúng thư viện — chưa ghi gì.")
+            return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
+        bc = chay_tom_tat(endnote, files, kho, a.ap_dung)
+        if a.json:
+            print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
+        return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
+
     ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom)
+    if a.ap_dung and endnote is not None and not a.khong_tom_tat:
+        chay_tom_tat(endnote, files, kho, True)  # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
               "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"
