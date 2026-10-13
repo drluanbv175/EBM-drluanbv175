@@ -15,7 +15,10 @@ NGUYÊN TẮC (không nới bằng cờ):
     Rút gọn bằng CHỌN TRƯỜNG, không cắt giữa câu (cắt câu có thể mất mệnh đề điều kiện); trường dài quá trần thì bỏ
     cả trường. Một ngữ cảnh chính (bản dashboard mới nhất); chủ đề khác chỉ nêu tên — khuyến nghị lệch nhau thì ⚠.
   • Bài chỉ là TÀI LIỆU THAM KHẢO của một mục ⇒ ghi đúng vai đó; KHÔNG gán kết quả/khuyến nghị của nguồn chính
-    cho bài tham khảo (gán nhầm = một khẳng định sai về bài).
+    cho bài tham khảo (gán nhầm = một khẳng định sai về bài). Dashboard không có nội dung riêng cho bài tham khảo ⇒
+    «Tóm tắt MÁY» (thiết kế · PICO · kết quả) rút từ ABSTRACT GỐC, lưu ở kho riêng `EBM-Dashboards/tom-tat-abstract-vi.json`
+    (ngoài git), nhãn rõ «chưa qua cổng dashboard — không phải khuyến nghị», không mức chứng cứ. Chốt cứng: mọi con số
+    trong tóm tắt phải có NGUYÊN VĂN trong abstract gốc của chính bản ghi — lệch một số ⇒ không in tóm tắt đó.
   • Nhãn giữ đúng nhãn của dashboard: «Nguồn không phân hạng» (gradeLevel 'na') KHÔNG có nghĩa là chứng cứ yếu;
     giá trị lạ ⇒ «chưa rõ», không đoán.
   • Abstract gốc (PubMed/nhà xuất bản) GIỮ NGUYÊN dưới dấu phân cách; chạy lại chỉ thay khối tiếng Việt.
@@ -27,6 +30,7 @@ Gọi qua `tools/nap_endnote_chu_de.py --tom-tat-vi` (riêng) hoặc tự chạy
 Cần bác sĩ kiểm chứng."""
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import sqlite3
@@ -52,6 +56,12 @@ TRAN_KET_QUA = 320
 TRAN_VN = 220
 TRAN_THAM_KHAO = 220
 TOI_DA_CHU_DE_KHAC = 3
+# Trích dẫn CHỈ là tài liệu tham khảo (bác sĩ 13/10: «hoàn thiện với các trích dẫn còn lại»): tóm tắt MÁY từ abstract gốc.
+TEP_TOM_TAT_ABS = "tom-tat-abstract-vi.json"
+NHAN_TOM_TAT = (("thiet_ke", "Thiết kế"), ("P", "P · Đối tượng"), ("I", "I · Can thiệp/phơi nhiễm"), ("C", "C · So sánh"),
+                ("O", "O · Kết cục"), ("ket_qua", "Kết quả"))
+CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abstract gốc bên dưới, chưa qua cổng dashboard, không phải "
+            "khuyến nghị · áp dụng qua Cổng A.")
 
 
 def _nap():
@@ -325,10 +335,57 @@ def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     return dong
 
 
-def _khoi_tham_khao(nc: dict, so_khac: int) -> list[str]:
+def nap_tom_tat_abstract(dash: Path | None) -> dict[str, dict]:
+    """Kho tóm tắt máy `<EBM-Dashboards>/tom-tat-abstract-vi.json` → {«PMID <n>» | «DOI <doi chữ thường>»: {trường}}.
+    Vắng tệp ⇒ {}; tệp hỏng/sai khuôn ⇒ ValueError — người gọi báo rõ, không lặng lẽ coi như rỗng."""
+    tep = dash / TEP_TOM_TAT_ABS if dash else None
+    if tep is None or not tep.is_file():
+        return {}
+    du_lieu = json.loads(tep.read_text(encoding="utf-8"))
+    muc = du_lieu.get("muc") if isinstance(du_lieu, dict) else None
+    if not isinstance(muc, dict) or not all(isinstance(v, dict) for v in muc.values()):
+        raise ValueError(f"{tep.name}: thiếu khoá «muc» dạng {{định danh: {{trường: nội dung}}}}")
+    return muc
+
+
+_SO = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _cac_so(s: str) -> set[str]:
+    """Các con số trong chuỗi. Chuẩn hoá hai cách viết của abstract: «0·85» (Lancet) → 0.85; «1,234» / «1 234» (phân
+    cách hàng nghìn) → 1234. Dấu phẩy thập phân KHÔNG chuẩn hoá — tóm tắt phải chép số đúng như abstract."""
+    s = re.sub(r"(?<=\d)[·⋅](?=\d)", ".", s or "")
+    s = re.sub(r"(?<=\d)[,    ](?=\d{3}(?!\d))", "", s)
+    return set(_SO.findall(s))
+
+
+def so_khong_khop(tom_tat: dict, goc: str) -> list[str]:
+    """Các số có trong tóm tắt máy mà KHÔNG có nguyên văn trong abstract gốc. Rỗng mới được in tóm tắt."""
+    co = _cac_so(goc)
+    return sorted({x for k, _ in NHAN_TOM_TAT for x in _cac_so(str(tom_tat.get(k) or "")) if x not in co})
+
+
+def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[str]]:
+    """(tóm tắt máy, số lệch) cho MỘT trích dẫn. Chỉ áp cho trích dẫn KHÔNG là mục chính ở dashboard nào — mục chính
+    đã có nội dung qua cổng. Có số lệch abstract gốc ⇒ (None, các số lệch): không in."""
+    if not kho_tt or any(x["vai"] == "muc" for x in muc["ngu_canh"]):
+        return None, []
+    tt = kho_tt.get(f"PMID {muc['pmid']}") if muc.get("pmid") else None
+    if tt is None and muc.get("doi"):
+        tt = kho_tt.get(f"DOI {str(muc['doi']).lower()}")
+    if not tt or not any(_gon(tt.get(k)) for k, _ in NHAN_TOM_TAT):
+        return None, []
+    lech = so_khong_khop(tt, goc)
+    return (None, lech) if lech else (tt, [])
+
+
+def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list[str]:
     dong = [f"{MO_DAU} Tài liệu tham khảo bổ trợ",
             f"★ Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
             "không gán cho bài này"]
+    if tom_tat:
+        dong.append("▸ Tóm tắt MÁY từ abstract (chưa qua cổng dashboard — không phải khuyến nghị):")
+        dong += [f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k))]
     if len(nc["tham_khao"]) <= TRAN_THAM_KHAO:
         dong.append(f"▸ Dashboard ghi: {nc['tham_khao']}")
     if so_khac:
@@ -337,15 +394,17 @@ def _khoi_tham_khao(nc: dict, so_khac: int) -> list[str]:
     return dong
 
 
-def khoi_tieng_viet(muc: dict, kho: Path | None) -> str:
+def khoi_tieng_viet(muc: dict, kho: Path | None, tom_tat: dict | None = None) -> str:
     """Khối ĐỌC NHANH cho MỘT trích dẫn (đầu ra của `ngu_canh`): một ngữ cảnh chính — bản dashboard MỚI NHẤT, không
-    phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ⚠."""
+    phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ⚠. `tom_tat` (đã qua
+    `tom_tat_cho`) chỉ in cho bài CHỈ là tài liệu tham khảo, và đổi dòng chân cho đúng nguồn gốc nội dung."""
     xep = sorted(muc["ngu_canh"], key=lambda x: (bool(x.get("ban_cu")), -_ngay_so(x)))
     chinh = [x for x in xep if x["vai"] == "muc"]
     tk = [x for x in xep if x["vai"] == "tham_khao"]
-    dong = _khoi_muc(chinh[0], chinh[1:], len(tk)) if chinh else _khoi_tham_khao(tk[0], len(tk) - 1)
+    may = None if chinh else tom_tat
+    dong = _khoi_muc(chinh[0], chinh[1:], len(tk)) if chinh else _khoi_tham_khao(tk[0], len(tk) - 1, may)
     dinh_danh = f"PMID {muc['pmid']}" if muc.get("pmid") else f"DOI {muc.get('doi')}"
-    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", CHAN]
+    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", CHAN_MAY if may else CHAN]
     return "\n".join(dong)
 
 
@@ -391,13 +450,14 @@ def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
 
 
 def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, doc_data,
-                sao_luu=None) -> dict:
+                sao_luu=None, tom_tat_abs: dict | None = None) -> dict:
     """Ghi khối tiếng Việt vào trường Abstract của mọi bản ghi khớp (PMID → «Accession Number», rồi DOI).
 
-    Chạy khô (ap_dung=False): chỉ đếm. Bản ghi mà nội dung mới trùng nội dung cũ ⇒ không ghi."""
+    Chạy khô (ap_dung=False): chỉ đếm. Bản ghi mà nội dung mới trùng nội dung cũ ⇒ không ghi. `tom_tat_abs` = kho
+    tóm tắt máy (`nap_tom_tat_abstract`); số lệch abstract gốc của bản ghi ⇒ báo ở `tom_tat_lech_so`, không in."""
     ds = ngu_canh(files, doc_data)
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
-                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None}
+                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -419,7 +479,11 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         if m not in cu:
             bc["loi"].append(f"{m}: không đọc được Abstract — bỏ qua (không ghi đè thứ chưa đọc được)")
             continue
-        moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho))
+        tt, lech = tom_tat_cho(v, tom_tat_abs or {}, tach_goc(cu[m]))
+        if lech:
+            bc["tom_tat_lech_so"].append(f"{m}: số không có trong abstract gốc ({', '.join(lech[:5])}) — không in tóm tắt máy")
+        bc["tom_tat_may"] += bool(tt)
+        moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
         if chuan_dong(moi) == chuan_dong(cu[m]):
             bc["khong_doi"] += 1
         else:
