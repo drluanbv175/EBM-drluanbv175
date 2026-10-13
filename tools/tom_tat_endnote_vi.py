@@ -125,6 +125,24 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
     chuan_doi, khoa_chu_de, sap_xep_phien_ban = nap.chuan_doi, nap.khoa_chu_de, nap.sap_xep_phien_ban
     da_thay: dict[str, set[str]] = {}   # chủ đề → khoá trích dẫn đã có ngữ cảnh từ phiên bản mới hơn
     ra: dict[str, dict] = {}
+    tap_khoa: list[set[str]] = []       # mọi tập khoá đang giữ (đổi tên khi gộp khoá «doi:» vào khoá «pmid:»)
+
+    def gop_doi_vao_pmid(doi: str, k_pm: str) -> None:
+        """Trích dẫn gặp TRƯỚC chỉ có DOI (khoá «doi:»), gặp SAU kèm PMID ⇒ một khoá «pmid:» (đo 13/10: SELECT là mục chính
+        trích theo DOI ở chủ đề CKM, là tham khảo kèm PMID ở chủ đề GLP-1 — hai khoá cùng trỏ một bản ghi EndNote)."""
+        cu = ra.pop(f"doi:{doi}", None)
+        if cu is None:
+            return
+        dich = ra.setdefault(k_pm, {"pmid": k_pm.split(":", 1)[1], "doi": doi, "ngu_canh": []})
+        dich["doi"] = dich["doi"] or doi
+        for ngc in cu["ngu_canh"]:
+            if not any(x["dashboard"] == ngc["dashboard"] and x["vai"] == ngc["vai"] and x.get("muc") == ngc.get("muc")
+                       for x in dich["ngu_canh"]):
+                dich["ngu_canh"].append(ngc)
+        for t in tap_khoa:
+            if f"doi:{doi}" in t:
+                t.discard(f"doi:{doi}")
+                t.add(k_pm)
 
     def khoa_cua(pmid, doi) -> tuple[str | None, str | None, str | None]:
         pmid = pmid if pmid and re.fullmatch(r"\d{1,9}", str(pmid)) else None
@@ -132,6 +150,8 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
         if not pmid and not doi:
             return None, None, None
         if pmid:
+            if doi:
+                gop_doi_vao_pmid(doi, f"pmid:{pmid}")
             return f"pmid:{pmid}", pmid, doi
         for k, v in ra.items():  # trích dẫn chỉ có DOI có thể đã gặp dưới khoá PMID ở nơi khác
             if v.get("doi") == doi:
@@ -143,6 +163,7 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
         ban_cu = chu_de in da_thay
         cua_chu_de = da_thay.setdefault(chu_de, set())
         trong_ban_nay: set[str] = set()
+        tap_khoa.extend(x for x in (cua_chu_de, trong_ban_nay) if not any(x is t for t in tap_khoa))
         data = doc_data(dash) or {}
         cau_hoi = _gon((data.get("meta") or {}).get("question")) or dash.stem
 
@@ -461,14 +482,23 @@ def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
 
 
 def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, doc_data,
-                sao_luu=None, tom_tat_abs: dict | None = None) -> dict:
+                sao_luu=None, tom_tat_abs: dict | None = None, boi_canh: list[Path] | None = None) -> dict:
     """Ghi khối tiếng Việt vào trường Abstract của mọi bản ghi khớp (PMID → «Accession Number», rồi DOI).
 
     Chạy khô (ap_dung=False): chỉ đếm. Bản ghi mà nội dung mới trùng nội dung cũ ⇒ không ghi. `tom_tat_abs` = kho
-    tóm tắt máy (`nap_tom_tat_abstract`); số lệch abstract gốc của bản ghi ⇒ báo ở `tom_tat_lech_so`, không in."""
-    ds = ngu_canh(files, doc_data)
+    tóm tắt máy (`nap_tom_tat_abstract`); số lệch abstract gốc của bản ghi ⇒ báo ở `tom_tat_lech_so`, không in;
+    trích dẫn chỉ là tham khảo mà kho CHƯA có mục ⇒ `tham_khao_chua_tom_tat` (cần một phiên Claude soạn — máy không tự sinh).
+
+    `boi_canh` = MỌI dashboard của thư mục. Bước ⑧ của dây chuyền chỉ nạp MỘT dashboard; dựng ngữ cảnh chỉ từ nó thì một
+    bài là MỤC CHÍNH ở chủ đề khác bị ghi đè bằng khối «tham khảo», mất «Cũng dùng trong»/«Đặt cạnh» (đo 13/10: SELECT).
+    Có `boi_canh` ⇒ ngữ cảnh từ toàn bộ, nhưng CHỈ GHI trích dẫn có mặt trong `files`."""
+    ds = ngu_canh(sorted({*map(Path, files), *map(Path, boi_canh)}) if boi_canh else files, doc_data)
+    if boi_canh:
+        ten = {Path(f).name for f in files}
+        ds = {k: v for k, v in ds.items() if any(x["dashboard"] in ten for x in v["ngu_canh"])}
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
-                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": []}
+                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": [],
+                "tham_khao_chua_tom_tat": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -494,6 +524,10 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         if lech:
             bc["tom_tat_lech_so"].append(f"{m}: số không có trong abstract gốc ({', '.join(lech[:5])}) — không in tóm tắt máy")
         bc["tom_tat_may"] += bool(tt)
+        dinh_danh = f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}"
+        if (tom_tat_abs is not None and dinh_danh not in tom_tat_abs  # DOI trong ngu_canh đã chữ thường = khoá kho
+                and not any(x["vai"] == "muc" for x in v["ngu_canh"]) and dinh_danh not in bc["tham_khao_chua_tom_tat"]):
+            bc["tham_khao_chua_tom_tat"].append(dinh_danh)
         moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
         if chuan_dong(moi) == chuan_dong(cu[m]):
             bc["khong_doi"] += 1
