@@ -11,8 +11,9 @@ Khác bản nghiên cứu (`medical-ebm-automation/tools/gom_toan_van_oa.py` —
 PMID, tải một lần dùng cho mọi dashboard. TÁI DÙNG nguyên hàm của bản nghiên cứu
 (qua importlib — không chép đôi logic, kế thừa luôn bộ lọc `pubmed_pmc` của BH53).
 
-P5 giữ nguyên: chỉ PMC Open Access — không cào nguồn trả phí. Bài không-OA được
-ghi rõ, KHÔNG đoán. Chạy lại an toàn: PMID đã có XML thì bỏ qua (idempotent).
+P5 giữ nguyên: chỉ PMC Open Access + bản thảo tác giả PMC phát cho khai thác văn bản
+(TDM) — không cào nguồn trả phí. Bài không-OA được ghi rõ, KHÔNG đoán. Chạy lại an
+toàn: PMID đã có XML thì bỏ qua (idempotent).
 
 Dùng:  python3 tools/gom_toan_van_dashboard.py            # mọi dashboard
        python3 tools/gom_toan_van_dashboard.py --file EBM-Dashboards/WebDashboard_X.html
@@ -22,7 +23,9 @@ from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
 import importlib.util
+import json
 import os
 import re
 import sys
@@ -210,9 +213,14 @@ def tai_jats(gom, pmcid: str, la_oa: bool | None, trang: dict, lay=None) -> tupl
 
     Trả (JATS, "ok") · (None, "khong_oa") khi NCBI TRẢ LỜI là bài không thuộc tập OA (ghi sổ 30 ngày như cũ) ·
     (None, "khong_oa_epmc") khi Europe PMC nói không OA — KHÔNG ghi sổ (NCBI có thể có bản thảo tác giả khi hết chặn) ·
-    (None, "loi") khi chưa tải được (lượt sau thử lại). Trang chặn NCBI chứa «<body» ⇒ không bao giờ được lưu làm toàn văn."""
+    (None, "rut_bai_pmc") khi PMC Cloud ghi bài đã rút · (None, "loi") khi chưa tải được (lượt sau thử lại).
+    Trang chặn NCBI chứa «<body» ⇒ không bao giờ được lưu làm toàn văn.
+
+    Europe PMC «không OA» trong lúc NCBI chặn/lỗi ⇒ thử PMC Cloud S3 (13/10/2026): bản thảo tác giả NIH bị Europe PMC ghi
+    `isOpenAccess="N"` nhưng PMC phát cho khai thác văn bản — đúng thứ efetch NCBI vẫn trả khi không bị chặn. NCBI không chặn
+    thì giữ nguyên hành vi cũ (không gọi gì)."""
     if la_oa is False:
-        return None, "khong_oa_epmc"
+        return tai_jats_pmc_s3(pmcid, lay) if trang.get("ncbi_chan") else (None, "khong_oa_epmc")
     if not trang.get("ncbi_chan"):
         try:
             xml = gom.tai_toan_van(pmcid)
@@ -236,6 +244,106 @@ def tai_jats_epmc(pmcid: str, lay=None) -> bytes | None:
     """JATS toàn văn của bài truy cập mở từ Europe PMC; trả về không phải JATS ⇒ None. Lỗi mạng/HTTP ném ra (chưa tải được)."""
     b = (lay or _lay)(f"{EPMC_REST}/PMC{pmcid}/fullTextXML")
     return b if la_jats_toan_van(b) else None
+
+
+# PMC Cloud Service (bucket S3 công khai của NIH, không cùng hạ tầng với NCBI nên không dính lệnh chặn IP). Đo 13/10/2026 ca
+# PMID 22591294 (Ray, NEJM 2012, PMC3374857, NIHMS381524): Europe PMC ghi «N», bucket có `PMC3374857.1/` với
+# `license_code: "TDM"`, `is_manuscript: true`; md5 của bản XML lưu tay trùng md5 trong siêu dữ liệu.
+PMC_S3 = "https://pmc-oa-opendata.s3.amazonaws.com"
+# README.txt của bucket: `license_code` là mã Creative Commons, hoặc «TDM» cho bản thảo tác giả có toàn văn dùng được cho
+# khai thác văn bản. Mã khác/rỗng ⇒ không lưu.
+GIAY_PHEP_PMC_TDM = "TDM"
+
+
+def giay_phep_pmc_s3_cho_phep(license_code: str | None) -> bool:
+    """«TDM» hoặc giấy phép mở (cùng tập với cổng Unpaywall: CC BY*, CC0, phạm vi công cộng). PMC ghi «CC BY-NC» có khoảng
+    trắng nên chuẩn hoá về dạng gạch nối trước khi so."""
+    lic = (license_code or "").strip()
+    if lic.upper() == GIAY_PHEP_PMC_TDM:
+        return True
+    return la_giay_phep_mo(re.sub(r"[\s_]+", "-", lic.lower()))
+
+
+def _co_khong(v) -> bool | None:
+    """Cờ trong JSON của PMC: true/false (tài liệu PMC có chỗ viết «yes»/«no») — còn lại ⇒ None, tức KHÔNG BIẾT."""
+    if isinstance(v, bool):
+        return v
+    s = v.strip().lower() if isinstance(v, str) else ""
+    return True if s in ("yes", "true") else False if s in ("no", "false") else None
+
+
+def phien_ban_pmc_s3(pmcid: str, lay=None) -> list[int]:
+    """Các phiên bản `PMC<id>.<n>/` có trong bucket, tra bằng DANH MỤC (ListObjectsV2; tiền tố «PMC<id>.» có dấu chấm để không
+    lẫn PMC<id>0…). Không thử «.1» mò: tài liệu PMC Cloud nói có bài có bản 2 mà không có bản 1. Trả về không phải danh mục S3
+    hoặc danh mục bị cắt ⇒ NÉM lỗi; [] chỉ khi danh mục khẳng định bài không có trong bucket."""
+    vb = (lay or _lay)(f"{PMC_S3}/?list-type=2&prefix=PMC{pmcid}.&delimiter=/").decode("utf-8", errors="replace")
+    if "<ListBucketResult" not in vb:
+        raise ValueError("trả về không phải danh mục S3")
+    if re.search(r"<IsTruncated>\s*true", vb, flags=re.I):
+        raise ValueError("danh mục S3 bị cắt — chưa chắc đã thấy mọi phiên bản")
+    return sorted({int(n) for n in re.findall(rf"<Prefix>PMC{pmcid}\.(\d+)/</Prefix>", vb)})
+
+
+def chon_ban_pmc_s3(pmcid: str, ds: list[tuple[int, dict]]) -> tuple[tuple[int, dict] | None, str]:
+    """Chọn phiên bản được LƯU từ siêu dữ liệu MỌI phiên bản (không gọi mạng). Trả ((n, meta), "ok") ·
+    (None, "loi") khi siêu dữ liệu lệch khoá (pmcid/version) hoặc cờ `is_retracted` không rõ — KHÔNG BIẾT không phải «chưa rút» ·
+    (None, "rut_bai_pmc") khi BẤT KỲ phiên bản nào ghi đã rút — tín hiệu dương, không lưu bản nào ·
+    (None, "khong_oa_epmc") khi không phiên bản nào mang giấy phép cho phép.
+
+    Nhiều bản được phép ⇒ bản công bố chính thức trước bản thảo tác giả, rồi số phiên bản lớn hơn (tài liệu PMC: số lớn hơn
+    KHÔNG có nghĩa là mới hơn, nên không chọn chỉ theo số)."""
+    for n, md in ds:
+        if not isinstance(md, dict) or md.get("pmcid") != f"PMC{pmcid}" or str(md.get("version")) != str(n):
+            return None, "loi"
+    rut = [_co_khong(md.get("is_retracted")) for _, md in ds]
+    if any(rut):
+        return None, "rut_bai_pmc"
+    if None in rut:
+        return None, "loi"
+    duoc = [(n, md) for n, md in ds if giay_phep_pmc_s3_cho_phep(md.get("license_code"))]
+    if not duoc:
+        return None, "khong_oa_epmc"
+    return max(duoc, key=lambda c: (_co_khong(c[1].get("is_manuscript")) is False, c[0])), "ok"
+
+
+def tai_jats_pmc_s3(pmcid: str, lay=None) -> tuple[bytes | None, str]:
+    """JATS từ PMC Cloud S3 cho bài Europe PMC ghi «không OA» trong lúc NCBI chặn/lỗi. Chỉ lưu khi `license_code` cho phép,
+    `is_retracted` là false, md5 tệp khớp tham số `md5` trong `xml_url`, và tệp là JATS có thân bài.
+
+    Trả (JATS, "ok") · (None, "khong_oa_epmc") khi giấy phép không cho phép hoặc bài không có trong bucket (như cũ, không ghi
+    sổ) · (None, "rut_bai_pmc") · (None, "loi") khi lỗi mạng, siêu dữ liệu lạ, md5 lệch hoặc tệp không phải JATS (lượt sau
+    thử lại)."""
+    lay = lay or _lay
+    if not re.fullmatch(r"\d{1,10}", pmcid or ""):
+        return None, "loi"
+    try:
+        ds = [(n, json.loads(lay(f"{PMC_S3}/PMC{pmcid}.{n}/PMC{pmcid}.{n}.json"))) for n in phien_ban_pmc_s3(pmcid, lay)]
+    except Exception:  # noqa: BLE001 — lỗi mạng/JSON hỏng ⇒ chưa tải được
+        return None, "loi"
+    if not ds:
+        return None, "khong_oa_epmc"
+    chon, ket_luan = chon_ban_pmc_s3(pmcid, ds)
+    if chon is None:
+        if ket_luan == "rut_bai_pmc":
+            print(f"  ⛔ PMC Cloud ghi PMC{pmcid} ĐÃ RÚT — không lưu bản nào")
+        return None, ket_luan
+    n, md = chon
+    m = re.fullmatch(rf"s3://pmc-oa-opendata/(PMC{pmcid}\.{n}/PMC{pmcid}\.{n}\.xml)\?md5=([0-9a-fA-F]{{32}})",
+                     str(md.get("xml_url") or ""))
+    if not m:
+        return None, "loi"
+    try:
+        b = lay(f"{PMC_S3}/{m.group(1)}")
+    except Exception:  # noqa: BLE001
+        return None, "loi"
+    if hashlib.md5(b, usedforsecurity=False).hexdigest() != m.group(2).lower():
+        print(f"  ⚠ PMC Cloud PMC{pmcid}.{n}: md5 tệp XML lệch siêu dữ liệu — không lưu, lượt sau thử lại")
+        return None, "loi"
+    if not la_jats_toan_van(b):
+        return None, "loi"
+    loai = {True: "bản thảo tác giả", False: "bản công bố"}.get(_co_khong(md.get("is_manuscript")), "loại bản không rõ")
+    print(f"  ✓ PMC Cloud S3: PMC{pmcid}.{n} ({loai}, giấy phép {md.get('license_code')})")
+    return b, "ok"
 
 
 def doi_cua_pmid(pm: str, email: str, trang_thai: dict) -> str:
@@ -463,7 +571,7 @@ def main() -> int:
                 print(f"🔴 HẠ TẦNG: cả NCBI elink lẫn Europe PMC không trả lời ({type(exc2).__name__}) — tầng PMC chưa "
                       "gom, KHÔNG kết luận độ phủ (tầng Unpaywall vẫn chạy).")
                 ha_tang_loi = True
-    moi, khong_oa, khong_pmc = 0, [], []
+    moi, khong_oa, khong_pmc, rut_bai_pmc = 0, [], [], []
     loi_mang = 0
     trang = {"ncbi_chan": qua_epmc}
     for pm in ([] if ha_tang_loi else can):
@@ -484,9 +592,14 @@ def main() -> int:
             khong_oa.append(pm)
         elif ket_luan == "loi":
             loi_mang += 1
+        elif ket_luan == "rut_bai_pmc":
+            rut_bai_pmc.append(pm)
     if loi_mang:
         print(f"  ⚠ {loi_mang} bài lỗi mạng lượt này — CHƯA tải được (không phải "
               "không-OA); chạy lại tool sẽ thử tiếp.")
+    if rut_bai_pmc:
+        print(f"  ⛔ PMC Cloud ghi ĐÃ RÚT {len(rut_bai_pmc)} bài ({', '.join(rut_bai_pmc)}) — không lưu; tra lại bằng "
+              "chuỗi rút bài 3 tầng trước khi dùng.")
     # ghi sổ «không lấy được» KÈM NGÀY — mục vừa tra nhận ngày hôm nay; mục còn
     # hạn giữ nguyên ngày cũ; mục hết hạn mà lượt này không tra tới thì rơi khỏi sổ
     if a.unpaywall:
@@ -523,6 +636,7 @@ def main() -> int:
         f"- Theo loại (một PMID có thể nhiều loại): {chi_tiet or '—'}\n"
         f"- Lượt này: +{moi} tải mới · {len(khong_oa)} có PMC nhưng không-OA · "
         f"{len(khong_pmc)} không có bản PMC\n"
+        + (f"- PMC Cloud ghi ĐÃ RÚT — không lưu, tra chuỗi rút bài: {', '.join(rut_bai_pmc)}\n" if rut_bai_pmc else "")
         + (f"- Tầng 2 Unpaywall — KHÔNG lưu vì điều khoản NXB ({len(BO_QUA_UNPAYWALL)}):\n{bo_qua}" if BO_QUA_UNPAYWALL else "")
         + "\n> Phần không-OA cần quyền truy cập của bác sĩ — độ phủ thấp là SỰ THẬT về OA,\n"
         "> không phải lỗi. Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
