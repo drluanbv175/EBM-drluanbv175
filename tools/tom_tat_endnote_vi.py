@@ -13,7 +13,9 @@ NGUYÊN TẮC (không nới bằng cờ):
     thiết kế; ★ = tiêu đề mục (câu điểm nhấn của dashboard) kèm PICO (đối tượng · can thiệp · so sánh · kết cục, nhãn
     lệch câu hỏi); rồi Kết quả · Thực hành · An toàn · Lưu ý · Tại Việt Nam; «Đặt cạnh» ≤ 3 mục cùng câu hỏi trong chủ đề.
     Rút gọn bằng CHỌN TRƯỜNG, không cắt giữa câu (cắt câu có thể mất mệnh đề điều kiện); trường dài quá trần thì bỏ
-    cả trường. Một ngữ cảnh chính (bản dashboard mới nhất); chủ đề khác chỉ nêu tên — khuyến nghị lệch nhau thì ⚠.
+    cả trường. Một ngữ cảnh chính (bản dashboard mới nhất); chủ đề khác chỉ nêu tên — khuyến nghị lệch nhau thì ❗.
+  • Nhấn mạnh bằng NHÃN IN HOA + biểu tượng màu trong BMP (✅ ⚠️ ⛔ ⏸️ ▶️ ⭐ ❗ ℹ️) — EndNote không ghi được chữ đậm qua
+    AppleScript và trường không có màu chữ (đo 13/10, xem chú thích `NHAN_DONG`).
   • Bài chỉ là TÀI LIỆU THAM KHẢO của một mục ⇒ ghi đúng vai đó; KHÔNG gán kết quả/khuyến nghị của nguồn chính
     cho bài tham khảo (gán nhầm = một khẳng định sai về bài). Dashboard không có nội dung riêng cho bài tham khảo ⇒
     «Tóm tắt MÁY» (thiết kế · PICO · kết quả) rút từ ABSTRACT GỐC, lưu ở kho riêng `EBM-Dashboards/tom-tat-abstract-vi.json`
@@ -45,7 +47,16 @@ PHAN_CACH = "━━━━━━━━ ABSTRACT GỐC (nguyên văn PubMed/nhà x
 CHAN = "Cần bác sĩ kiểm chứng · chép từ dashboard đã qua cổng, không thêm khẳng định mới · áp dụng qua Cổng A."
 NHAN_GRADE = {"high": "Cao", "mod": "Trung bình", "low": "Thấp", "vlow": "Rất thấp",
               "na": "nguồn không phân hạng (≠ chứng cứ yếu)"}
-NHAN_QD = {"apply": "Áp dụng ngay", "consider": "Cân nhắc chọn lọc", "notyet": "Chưa đủ thay đổi"}
+# TRÌNH BÀY (bác sĩ 13/10: «nội dung cần nhấn mạnh hãy in đậm», «có thể hiện được màu sắc không»). Đo 13/10 trên EndNote
+# 2025: `set field` chỉ nhận chữ thường, `set record contents` (XML có <style>) bị bỏ qua, sửa thẳng `text_styles` trong
+# sdb.eni kích hoạt trigger dùng hàm/collation riêng của EndNote (nguy cơ hỏng chỉ mục); thanh định dạng của trường không
+# có màu chữ. ⇒ Nhấn mạnh bằng NHÃN IN HOA + biểu tượng màu trong mặt phẳng cơ bản (BMP) — EndNote lưu được và hiện có màu
+# trên macOS (đã nhìn thật). Ký tự ngoài BMP bị EndNote đổi thành «?» ⇒ mọi nhãn phải nằm trong BMP (có test chốt).
+NHAN_QD = {"apply": "✅ ÁP DỤNG NGAY", "consider": "⚠️ CÂN NHẮC CHỌN LỌC", "notyet": "⏸️ CHƯA ĐỦ THAY ĐỔI"}
+NHAN_DONG = {"diem_nhan": "⭐", "ket_qua": "▶️ KẾT QUẢ", "action": "✅ THỰC HÀNH", "safety": "⛔ AN TOÀN",
+             "flag": "⚠️ LƯU Ý", "vn": "▶️ TẠI VIỆT NAM", "rut": "❌ RÚT VÀ THAY", "dat_canh": "↔️ ĐẶT CẠNH TRONG CHỦ ĐỀ",
+             "lech": "❗ KHUYẾN NGHỊ KHÁC NHAU GIỮA CÁC CHỦ ĐỀ", "tham_khao": "ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ",
+             "may": "ℹ️ TÓM TẮT MÁY TỪ ABSTRACT"}
 # Hậu tố tệp trong kho toàn văn → nhãn nguồn ngắn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF).
 NGUON_TOAN_VAN = (("_CHR", "bản quyền — dùng cá nhân"), ("_WTDM", "TDM Wiley"), ("_UPW", "truy cập mở"),
                   ("_PMC", "truy cập mở"))
@@ -58,8 +69,8 @@ TRAN_THAM_KHAO = 220
 TOI_DA_CHU_DE_KHAC = 3
 # Trích dẫn CHỈ là tài liệu tham khảo (bác sĩ 13/10: «hoàn thiện với các trích dẫn còn lại»): tóm tắt MÁY từ abstract gốc.
 TEP_TOM_TAT_ABS = "tom-tat-abstract-vi.json"
-NHAN_TOM_TAT = (("thiet_ke", "Thiết kế"), ("P", "P · Đối tượng"), ("I", "I · Can thiệp/phơi nhiễm"), ("C", "C · So sánh"),
-                ("O", "O · Kết cục"), ("ket_qua", "Kết quả"))
+NHAN_TOM_TAT = (("thiet_ke", "THIẾT KẾ"), ("P", "P · ĐỐI TƯỢNG"), ("I", "I · CAN THIỆP/PHƠI NHIỄM"), ("C", "C · SO SÁNH"),
+                ("O", "O · KẾT CỤC"), ("ket_qua", "KẾT QUẢ"))
 CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abstract gốc bên dưới, chưa qua cổng dashboard, không phải "
             "khuyến nghị · áp dụng qua Cổng A.")
 
@@ -114,6 +125,24 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
     chuan_doi, khoa_chu_de, sap_xep_phien_ban = nap.chuan_doi, nap.khoa_chu_de, nap.sap_xep_phien_ban
     da_thay: dict[str, set[str]] = {}   # chủ đề → khoá trích dẫn đã có ngữ cảnh từ phiên bản mới hơn
     ra: dict[str, dict] = {}
+    tap_khoa: list[set[str]] = []       # mọi tập khoá đang giữ (đổi tên khi gộp khoá «doi:» vào khoá «pmid:»)
+
+    def gop_doi_vao_pmid(doi: str, k_pm: str) -> None:
+        """Trích dẫn gặp TRƯỚC chỉ có DOI (khoá «doi:»), gặp SAU kèm PMID ⇒ một khoá «pmid:» (đo 13/10: SELECT là mục chính
+        trích theo DOI ở chủ đề CKM, là tham khảo kèm PMID ở chủ đề GLP-1 — hai khoá cùng trỏ một bản ghi EndNote)."""
+        cu = ra.pop(f"doi:{doi}", None)
+        if cu is None:
+            return
+        dich = ra.setdefault(k_pm, {"pmid": k_pm.split(":", 1)[1], "doi": doi, "ngu_canh": []})
+        dich["doi"] = dich["doi"] or doi
+        for ngc in cu["ngu_canh"]:
+            if not any(x["dashboard"] == ngc["dashboard"] and x["vai"] == ngc["vai"] and x.get("muc") == ngc.get("muc")
+                       for x in dich["ngu_canh"]):
+                dich["ngu_canh"].append(ngc)
+        for t in tap_khoa:
+            if f"doi:{doi}" in t:
+                t.discard(f"doi:{doi}")
+                t.add(k_pm)
 
     def khoa_cua(pmid, doi) -> tuple[str | None, str | None, str | None]:
         pmid = pmid if pmid and re.fullmatch(r"\d{1,9}", str(pmid)) else None
@@ -121,6 +150,8 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
         if not pmid and not doi:
             return None, None, None
         if pmid:
+            if doi:
+                gop_doi_vao_pmid(doi, f"pmid:{pmid}")
             return f"pmid:{pmid}", pmid, doi
         for k, v in ra.items():  # trích dẫn chỉ có DOI có thể đã gặp dưới khoá PMID ở nơi khác
             if v.get("doi") == doi:
@@ -132,6 +163,7 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
         ban_cu = chu_de in da_thay
         cua_chu_de = da_thay.setdefault(chu_de, set())
         trong_ban_nay: set[str] = set()
+        tap_khoa.extend(x for x in (cua_chu_de, trong_ban_nay) if not any(x is t for t in tap_khoa))
         data = doc_data(dash) or {}
         cau_hoi = _gon((data.get("meta") or {}).get("question")) or dash.stem
 
@@ -205,9 +237,9 @@ def _dong_nguon_goc(nc: dict) -> str:
             + (" (bản dashboard CŨ)" if nc.get("ban_cu") else ""))
 
 
-NHAN_PICO = (("P", "Đối tượng"), ("I", "Can thiệp/phơi nhiễm"), ("C", "So sánh"), ("O", "Kết cục"))
+NHAN_PICO = (("P", "ĐỐI TƯỢNG"), ("I", "CAN THIỆP/PHƠI NHIỄM"), ("C", "SO SÁNH"), ("O", "KẾT CỤC"))
 # Nhãn khớp của từng thành phần PICO so với câu hỏi của chủ đề (trường `pico` của mục dashboard). «match» không in.
-NHAN_KHOP = {"mis": " ⚠ lệch câu hỏi của chủ đề", "partial": " (khớp một phần)", "diff": " (khác câu hỏi)",
+NHAN_KHOP = {"mis": " ⚠️ LỆCH câu hỏi của chủ đề", "partial": " (khớp một phần)", "diff": " (khác câu hỏi)",
              "gap": " (khoảng trống)"}
 TOI_DA_DAT_CANH = 3
 # ĐẶT CẠNH (bác sĩ yêu cầu 13/10: «so sánh với các kết quả khác»): mục KHÁC của cùng dashboard có cùng can thiệp (I) và
@@ -296,7 +328,7 @@ def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     thiet_ke = " ".join(x for x in (_gon(it.get("design")), _gon(it.get("dateVersion"))) if x)
     dong = [f"{MO_DAU} {_nhan(NHAN_QD, it.get('decision'))} · Chứng cứ: {_nhan(NHAN_GRADE, it.get('gradeLevel'))}"
             + (f" · {thiet_ke}" if thiet_ke else ""),
-            f"★ {nc['tieu_de']}"]
+            f"{NHAN_DONG['diem_nhan']} {nc['tieu_de']}"]
     for k, nhan in NHAN_PICO:
         nd, khop = _pico_tp(it, k)
         if k == "P" and not nd:
@@ -306,24 +338,24 @@ def _khoi_muc(nc: dict, khac: list[dict], so_tham_khao: int) -> list[str]:
     et = _gon(it.get("effectText"))
     ket_qua = "; ".join(x for x in (et if len(et) <= TRAN_KET_QUA else "", _hieu_so(it.get("effect"))) if x)
     if ket_qua:
-        dong.append(f"▸ Kết quả: {ket_qua}")
-    for nhan, khoa in (("Thực hành", "action"), ("An toàn", "safety"), ("Lưu ý", "flag")):
+        dong.append(f"{NHAN_DONG['ket_qua']}: {ket_qua}")
+    for khoa in ("action", "safety", "flag"):
         v = _gon(it.get(khoa))
         if v:
-            dong.append(f"▸ {nhan}: {v}")
+            dong.append(f"{NHAN_DONG[khoa]}: {v}")
     vn = _gon(it.get("vn"))
     if vn and len(vn) <= TRAN_VN:
-        dong.append(f"▸ Tại Việt Nam: {vn}")
+        dong.append(f"{NHAN_DONG['vn']}: {vn}")
     if it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or it.get("replacesPmid"):
         tb = it.get("replacementNoticePmid") or it.get("replacementNoticeDoi") or "—"
-        dong.append(f"▸ Rút và thay: bài gốc đã bị rút và thay thế (thông báo {tb}) — số liệu theo BẢN ĐÃ THAY.")
+        dong.append(f"{NHAN_DONG['rut']}: bài gốc đã bị rút và thay thế (thông báo {tb}) — số liệu theo BẢN ĐÃ THAY.")
     canh = dat_canh([nc, *khac])
     if canh:
-        dong.append("▸ Đặt cạnh trong chủ đề (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):")
+        dong.append(f"{NHAN_DONG['dat_canh']} (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):")
         dong += [_dong_dat_canh(b, cung_o) for b, cung_o in canh]
     if khac:
         if any(x["item"].get("decision") != it.get("decision") for x in khac):
-            dong.append("⚠ Khuyến nghị KHÁC nhau giữa các chủ đề — " + "; ".join(
+            dong.append(f"{NHAN_DONG['lech']} — " + "; ".join(
                 f"{_chu_de_ngan(x['chu_de'])}: {_nhan(NHAN_QD, x['item'].get('decision'))}"
                 for x in [nc, *khac[:TOI_DA_CHU_DE_KHAC]]))
         else:
@@ -380,11 +412,11 @@ def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[st
 
 
 def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list[str]:
-    dong = [f"{MO_DAU} Tài liệu tham khảo bổ trợ",
-            f"★ Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
+    dong = [f"{MO_DAU} {NHAN_DONG['tham_khao']}",
+            f"{NHAN_DONG['diem_nhan']} Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
             "không gán cho bài này"]
     if tom_tat:
-        dong.append("▸ Tóm tắt MÁY từ abstract (chưa qua cổng dashboard — không phải khuyến nghị):")
+        dong.append(f"{NHAN_DONG['may']} (chưa qua cổng dashboard — không phải khuyến nghị):")
         dong += [f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k))]
     if len(nc["tham_khao"]) <= TRAN_THAM_KHAO:
         dong.append(f"▸ Dashboard ghi: {nc['tham_khao']}")
@@ -396,7 +428,7 @@ def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list
 
 def khoi_tieng_viet(muc: dict, kho: Path | None, tom_tat: dict | None = None) -> str:
     """Khối ĐỌC NHANH cho MỘT trích dẫn (đầu ra của `ngu_canh`): một ngữ cảnh chính — bản dashboard MỚI NHẤT, không
-    phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ⚠. `tom_tat` (đã qua
+    phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ❗. `tom_tat` (đã qua
     `tom_tat_cho`) chỉ in cho bài CHỈ là tài liệu tham khảo, và đổi dòng chân cho đúng nguồn gốc nội dung."""
     xep = sorted(muc["ngu_canh"], key=lambda x: (bool(x.get("ban_cu")), -_ngay_so(x)))
     chinh = [x for x in xep if x["vai"] == "muc"]
@@ -450,14 +482,23 @@ def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
 
 
 def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, doc_data,
-                sao_luu=None, tom_tat_abs: dict | None = None) -> dict:
+                sao_luu=None, tom_tat_abs: dict | None = None, boi_canh: list[Path] | None = None) -> dict:
     """Ghi khối tiếng Việt vào trường Abstract của mọi bản ghi khớp (PMID → «Accession Number», rồi DOI).
 
     Chạy khô (ap_dung=False): chỉ đếm. Bản ghi mà nội dung mới trùng nội dung cũ ⇒ không ghi. `tom_tat_abs` = kho
-    tóm tắt máy (`nap_tom_tat_abstract`); số lệch abstract gốc của bản ghi ⇒ báo ở `tom_tat_lech_so`, không in."""
-    ds = ngu_canh(files, doc_data)
+    tóm tắt máy (`nap_tom_tat_abstract`); số lệch abstract gốc của bản ghi ⇒ báo ở `tom_tat_lech_so`, không in;
+    trích dẫn chỉ là tham khảo mà kho CHƯA có mục ⇒ `tham_khao_chua_tom_tat` (cần một phiên Claude soạn — máy không tự sinh).
+
+    `boi_canh` = MỌI dashboard của thư mục. Bước ⑧ của dây chuyền chỉ nạp MỘT dashboard; dựng ngữ cảnh chỉ từ nó thì một
+    bài là MỤC CHÍNH ở chủ đề khác bị ghi đè bằng khối «tham khảo», mất «Cũng dùng trong»/«Đặt cạnh» (đo 13/10: SELECT).
+    Có `boi_canh` ⇒ ngữ cảnh từ toàn bộ, nhưng CHỈ GHI trích dẫn có mặt trong `files`."""
+    ds = ngu_canh(sorted({*map(Path, files), *map(Path, boi_canh)}) if boi_canh else files, doc_data)
+    if boi_canh:
+        ten = {Path(f).name for f in files}
+        ds = {k: v for k, v in ds.items() if any(x["dashboard"] in ten for x in v["ngu_canh"])}
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
-                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": []}
+                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": [],
+                "tham_khao_chua_tom_tat": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -483,6 +524,10 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         if lech:
             bc["tom_tat_lech_so"].append(f"{m}: số không có trong abstract gốc ({', '.join(lech[:5])}) — không in tóm tắt máy")
         bc["tom_tat_may"] += bool(tt)
+        dinh_danh = f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}"
+        if (tom_tat_abs is not None and dinh_danh not in tom_tat_abs  # DOI trong ngu_canh đã chữ thường = khoá kho
+                and not any(x["vai"] == "muc" for x in v["ngu_canh"]) and dinh_danh not in bc["tham_khao_chua_tom_tat"]):
+            bc["tham_khao_chua_tom_tat"].append(dinh_danh)
         moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
         if chuan_dong(moi) == chuan_dong(cu[m]):
             bc["khong_doi"] += 1

@@ -50,17 +50,17 @@ def test_khoi_doc_nhanh_dong_dau_diem_nhan_va_truong_nguyen_ven(tmp_path):
     ds = tt.ngu_canh([f], _doc({f.name: d}))
     k = tt.khoi_tieng_viet(ds["pmid:31111111"], tmp_path)
     dong = k.splitlines()
-    assert dong[0] == f"{tt.MO_DAU} Chưa đủ thay đổi · Chứng cứ: Trung bình · RCT 2024"
-    assert dong[1] == "★ Colchicine dự phòng thứ phát — chưa đủ dùng thường quy"
-    for chu in ("▸ Kết quả: Kết quả chính không đạt ý nghĩa; HR 0.84 (KTC 95% 0.68–1.05)",
-                "▸ Thực hành: CHƯA thêm colchicine thường quy", "▸ Lưu ý: Âm tính ở phân tích chính",
-                "▸ Tại Việt Nam: Không khởi trị ngoài nghiên cứu", "Chủ đề: Đột quỵ · 14/06/2026",
+    assert dong[0] == f"{tt.MO_DAU} ⏸️ CHƯA ĐỦ THAY ĐỔI · Chứng cứ: Trung bình · RCT 2024"
+    assert dong[1] == "⭐ Colchicine dự phòng thứ phát — chưa đủ dùng thường quy"
+    for chu in ("▶️ KẾT QUẢ: Kết quả chính không đạt ý nghĩa; HR 0.84 (KTC 95% 0.68–1.05)",
+                "✅ THỰC HÀNH: CHƯA thêm colchicine thường quy", "⚠️ LƯU Ý: Âm tính ở phân tích chính",
+                "▶️ TẠI VIỆT NAM: Không khởi trị ngoài nghiên cứu", "Chủ đề: Đột quỵ · 14/06/2026",
                 "PMID 31111111 · Toàn văn: CHƯA có", "Cần bác sĩ kiểm chứng"):
         assert chu in k, chu
     for bo in ("Theo dõi", "Quần thể", "RCT dừng sớm"):
         assert bo not in k, f"bản đọc nhanh không in {bo}"
-    assert dong[2:6] == ["   P · Đối tượng: Đột quỵ", "   I · Can thiệp/phơi nhiễm: Colchicine",
-                         "   C · So sánh: Chuẩn", "   O · Kết cục: Tái phát"], "PICO ngay dưới dòng ★"
+    assert dong[2:6] == ["   P · ĐỐI TƯỢNG: Đột quỵ", "   I · CAN THIỆP/PHƠI NHIỄM: Colchicine",
+                         "   C · SO SÁNH: Chuẩn", "   O · KẾT CỤC: Tái phát"], "PICO ngay dưới dòng ★"
     assert len(k) < 1000
 
 
@@ -68,9 +68,9 @@ def test_pico_nhan_lech_cau_hoi_va_p_lay_quan_the_khi_thieu(tmp_path):
     f, d = _dash("WebDashboard_X_20260614.html",
                  [dict(MUC, pico={"I": ["Colchicine", "mis"], "C": ["Chuẩn", "partial"], "O": ["Tái phát", "match"]})])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "   P · Đối tượng: Đột quỵ không do tim" in k, "thiếu P ⇒ dùng trường quần thể"
-    assert "   I · Can thiệp/phơi nhiễm: Colchicine ⚠ lệch câu hỏi của chủ đề" in k
-    assert "   C · So sánh: Chuẩn (khớp một phần)" in k and "Tái phát (" not in k
+    assert "   P · ĐỐI TƯỢNG: Đột quỵ không do tim" in k, "thiếu P ⇒ dùng trường quần thể"
+    assert "   I · CAN THIỆP/PHƠI NHIỄM: Colchicine ⚠️ LỆCH câu hỏi của chủ đề" in k
+    assert "   C · SO SÁNH: Chuẩn (khớp một phần)" in k and "Tái phát (" not in k
 
 
 ANH = dict(MUC, id="I2", pmid="34444444", doi=None, references=[], title="Colchicine liều thấp sau nhồi máu não",
@@ -90,8 +90,8 @@ def test_dat_canh_cung_cau_hoi_kem_khuyen_nghi_va_so_do(tmp_path):
                                                                                   "O": ["Cơn gout cấp", "match"]})
     f, d = _dash("WebDashboard_X_20260614.html", [goc, ANH, chi_c, don_vi, khac_o])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "▸ Đặt cạnh trong chủ đề (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):" in k
-    assert ("   – Colchicine liều thấp sau nhồi máu não [PMID 34444444 · Áp dụng ngay · chứng cứ: Cao · "
+    assert "↔️ ĐẶT CẠNH TRONG CHỦ ĐỀ (máy ghép theo PICO — chỉ đặt cạnh, không phán chiều):" in k
+    assert ("   – Colchicine liều thấp sau nhồi máu não [PMID 34444444 · ✅ ÁP DỤNG NGAY · chứng cứ: Cao · "
             "HR 0.7 (KTC 95% 0.5–0.9)]") in k
     assert "Vắc-xin cúm" not in k, "chỉ trùng nhóm so sánh (C) không phải cùng câu hỏi"
     assert "Semaglutide" not in k, "chỉ trùng đơn vị liều/đường dùng («mg», «tối đa»/«dưới da») không phải cùng câu hỏi"
@@ -102,7 +102,7 @@ def test_dat_canh_bo_o_giu_cho_va_gom_tu_chu_de_khac(tmp_path):
     gc = {"I": ["(không nêu rõ trong abstract)", "na"], "O": ["(không nêu rõ trong abstract)", "na"]}
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, pico=gc), dict(ANH, pico=gc)])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "Đặt cạnh" not in k, "hai ô giữ chỗ giống nhau không phải «cùng câu hỏi»"
+    assert tt.NHAN_DONG["dat_canh"] not in k, "hai ô giữ chỗ giống nhau không phải «cùng câu hỏi»"
     a, da = _dash("WebDashboard_A_20260901.html", [dict(MUC, pico=ANH["pico"])], "Chủ đề A")
     b, db = _dash("WebDashboard_B_20260601.html", [dict(MUC, pico=ANH["pico"]), ANH], "Chủ đề B")
     k2 = tt.khoi_tieng_viet(tt.ngu_canh([a, b], _doc({a.name: da, b.name: db}))["pmid:31111111"], tmp_path)
@@ -114,14 +114,14 @@ def test_rut_gon_bang_chon_truong_khong_cat_giua_cau(tmp_path):
     hd = "Dùng thuốc X " + "thận trọng " * 70 + "NẾU KHÔNG CHỐNG CHỈ ĐỊNH"
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, effectText=dai, action=hd, vn="V" * 400)])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "Hiệu quả" not in k and "▸ Kết quả: HR 0.84 (KTC 95% 0.68–1.05)" in k, "kết quả dài bỏ CẢ trường, giữ số đo"
-    assert f"▸ Thực hành: {tt._gon(hd)}" in k, "«Thực hành» luôn in nguyên vẹn — giữ mệnh đề điều kiện cuối câu"
-    assert "Tại Việt Nam" not in k, "trường áp dụng VN quá trần bị bỏ cả trường, không cắt"
+    assert "Hiệu quả" not in k and "▶️ KẾT QUẢ: HR 0.84 (KTC 95% 0.68–1.05)" in k, "kết quả dài bỏ CẢ trường, giữ số đo"
+    assert f"✅ THỰC HÀNH: {tt._gon(hd)}" in k, "«Thực hành» luôn in nguyên vẹn — giữ mệnh đề điều kiện cuối câu"
+    assert "TẠI VIỆT NAM" not in k, "trường áp dụng VN quá trần bị bỏ cả trường, không cắt"
 
 
 @pytest.mark.parametrize("gl, qd, can", [("na", "apply", ["Chứng cứ: nguồn không phân hạng (≠ chứng cứ yếu)",
-                                                            "Áp dụng ngay"]),
-                                         ("high", "consider", ["Chứng cứ: Cao", "Cân nhắc chọn lọc"]),
+                                                            "✅ ÁP DỤNG NGAY"]),
+                                         ("high", "consider", ["Chứng cứ: Cao", "⚠️ CÂN NHẮC CHỌN LỌC"]),
                                          ("la", "xyz", ["chưa rõ («la»)", "chưa rõ («xyz»)"])])
 def test_nhan_grade_va_quyet_dinh_khong_doan(tmp_path, gl, qd, can):
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, gradeLevel=gl, decision=qd)])
@@ -129,16 +129,16 @@ def test_nhan_grade_va_quyet_dinh_khong_doan(tmp_path, gl, qd, can):
     for c in can:
         assert c in k, c
     if qd == "xyz":
-        assert "Cân nhắc chọn lọc" not in k, "giá trị lạ không được hiển thị như một khuyến nghị có thật"
+        assert "CÂN NHẮC CHỌN LỌC" not in k, "giá trị lạ không được hiển thị như một khuyến nghị có thật"
 
 
 def test_tai_lieu_tham_khao_khong_bi_gan_ket_qua_cua_nguon_chinh(tmp_path):
     f, d = _dash("WebDashboard_X_20260614.html", [MUC])
     ds = tt.ngu_canh([f], _doc({f.name: d}))
     k = tt.khoi_tieng_viet(ds["pmid:32222222"], tmp_path)
-    assert k.startswith(f"{tt.MO_DAU} Tài liệu tham khảo bổ trợ") and "nguồn chính PMID 31111111" in k
-    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Chứng cứ:", "Thực hành:", "P · Đối tượng",
-                "Đặt cạnh"):
+    assert k.startswith(f"{tt.MO_DAU} ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ") and "nguồn chính PMID 31111111" in k
+    for chu in ("HR 0.84", "CHƯA thêm colchicine", "Không khởi trị", "Chứng cứ:", "THỰC HÀNH:", "P · ĐỐI TƯỢNG",
+                "ĐẶT CẠNH"):
         assert chu not in k, f"kết quả/khuyến nghị của nguồn chính bị gán cho bài tham khảo: {chu}"
     assert "doi:10.1093/bbb" in ds, "trích dẫn chỉ có DOI vẫn có ngữ cảnh"
     assert len([n for n in ds["pmid:31111111"]["ngu_canh"] if n["vai"] == "tham_khao"]) == 0, \
@@ -161,10 +161,10 @@ def test_nhieu_chu_de_khuyen_nghi_lech_thi_canh_bao(tmp_path):
     b, db = _dash("WebDashboard_B_20260601.html", [dict(MUC, decision="notyet", action="Làm B")], "Tiên lượng suy tim")
     k = tt.khoi_tieng_viet(tt.ngu_canh([a, b], _doc({a.name: da, b.name: db}))["pmid:31111111"], tmp_path)
     assert "Làm A" in k and "Làm B" not in k, "ngữ cảnh chính = dashboard MỚI NHẤT, chủ đề khác chỉ nêu tên"
-    assert "⚠ Khuyến nghị KHÁC nhau giữa các chủ đề — Suy tim: Áp dụng ngay; Tiên lượng suy tim: Chưa đủ thay đổi" in k
+    assert "❗ KHUYẾN NGHỊ KHÁC NHAU GIỮA CÁC CHỦ ĐỀ — Suy tim: ✅ ÁP DỤNG NGAY; Tiên lượng suy tim: ⏸️ CHƯA ĐỦ THAY ĐỔI" in k
     b2, db2 = _dash("WebDashboard_B_20260601.html", [dict(MUC, decision="apply")], "Tiên lượng suy tim")
     k2 = tt.khoi_tieng_viet(tt.ngu_canh([a, b2], _doc({a.name: da, b2.name: db2}))["pmid:31111111"], tmp_path)
-    assert "⚠" not in k2 and "▸ Cũng dùng trong: Tiên lượng suy tim" in k2
+    assert "❗" not in k2 and "▸ Cũng dùng trong: Tiên lượng suy tim" in k2
 
 
 def test_chay_lai_nhan_ra_khoi_dang_cu_va_thay_khong_long(tmp_path):
@@ -179,7 +179,7 @@ def test_emoji_ngoai_bmp_doi_thanh_chu_vi_endnote_khong_luu_duoc(tmp_path):
     """Đo 13/10: EndNote đổi «🔴» thành «?» ⇒ đọc lại lệch. Khối ghi vào chỉ được chứa ký tự mặt phẳng cơ bản."""
     f, d = _dash("WebDashboard_X_20260614.html", [dict(MUC, action="🔴 ĐỌC THẬN TRỌNG 🧪 thử")])
     k = tt.khoi_tieng_viet(tt.ngu_canh([f], _doc({f.name: d}))["pmid:31111111"], tmp_path)
-    assert "▸ Thực hành: ●đỏ ĐỌC THẬN TRỌNG ◆ thử" in k
+    assert "✅ THỰC HÀNH: ●đỏ ĐỌC THẬN TRỌNG ◆ thử" in k
     assert all(ord(c) <= 0xFFFF for c in k)
 
 
