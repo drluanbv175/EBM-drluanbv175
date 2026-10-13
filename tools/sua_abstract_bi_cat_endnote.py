@@ -65,7 +65,6 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parents[1]
 MA_OK, MA_CON_VIEC, MA_KHONG_DO, MA_THAM_SO = 0, 1, 2, 3
 SUA_DUOC = ("bi_cat", "thuc_the")
-TEP_KHO_TOM_TAT = "tom-tat-abstract-vi.json"
 # Dấu vân của lỗi: đoạn thiếu BẮT ĐẦU ngay sau một dấu «<» (regex cũ xoá từ «<»). Phép gióng chọn tuỳ ý một trong các
 # cách gióng tương đương khi chữ ở hai mép đoạn lặp lại, nên xét MỌI vị trí trượt. Đo 13/10/2026 trên 194 abstract thật bị
 # regex cũ cắt: «short-term (< three months) and long-term» ⇒ đoạn thiếu được gióng trượt TRÁI qua «term»; «P <0.001).
@@ -184,17 +183,6 @@ def _nguon_meta(ghi_chu: str | None) -> str:
     """Nguồn metadata ghi trong Notes lúc nạp («Metadata: Europe PMC.») — chỉ để báo, không dùng để quyết định sửa."""
     m = re.search(r"Metadata: (PubMed|Europe PMC|Crossref)", ghi_chu or "")
     return m.group(1) if m else "?"
-
-
-def doc_kho_tom_tat(dash: Path | None) -> dict:
-    """Mục của kho tóm tắt máy `<EBM-Dashboards>/tom-tat-abstract-vi.json` ({«PMID <n>»: {…}}). Vắng ⇒ {}; hỏng ⇒ ValueError."""
-    tep = dash / TEP_KHO_TOM_TAT if dash else None
-    if tep is None or not tep.is_file():
-        return {}
-    muc = json.loads(tep.read_text(encoding="utf-8")).get("muc")
-    if not isinstance(muc, dict):
-        raise ValueError(f"{tep.name}: thiếu khoá «muc» dạng {{định danh: {{…}}}}")
-    return muc
 
 
 # ── đo và sửa ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -316,7 +304,7 @@ def in_bao_cao(bc: dict, ap_dung: bool) -> None:
         if len(ds) > 40:
             print(f"     … +{len(ds) - 40}")
     if bc["kho_tom_tat_dung_lai"]:
-        print(f"   ⚠ Kho tóm tắt máy ({TEP_KHO_TOM_TAT}): {len(bc['kho_tom_tat_dung_lai'])} PMID có tóm tắt dựng từ abstract "
+        print(f"   ⚠ Kho tóm tắt máy ({T.TEP_TOM_TAT_ABS}): {len(bc['kho_tom_tat_dung_lai'])} PMID có tóm tắt dựng từ abstract "
               "bị cắt — chốt `so_khong_khop` KHÔNG bắt được (abstract đầy đủ chỉ thêm số); cần dựng lại: "
               + ", ".join(bc["kho_tom_tat_dung_lai"]))
     if bc.get("sao_luu"):
@@ -377,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"⚪ Không đo được: {e}")
         return MA_KHONG_DO
     try:
-        kho_tt = doc_kho_tom_tat(dash_goc)
+        kho_tt = T.nap_tom_tat_abstract(dash_goc)
     except (OSError, ValueError) as e:
         print(f"⚠ Kho tóm tắt máy hỏng — bỏ phần đối chiếu kho: {e}"[:300])
         kho_tt = {}

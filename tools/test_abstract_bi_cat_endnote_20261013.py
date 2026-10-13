@@ -298,15 +298,6 @@ def test_liet_ke_kho_tom_tat_may_can_dung_lai():
     assert bc["kho_tom_tat_dung_lai"] == ["1"]
 
 
-def test_doc_kho_tom_tat(tmp_path):
-    assert S.doc_kho_tom_tat(None) == {} and S.doc_kho_tom_tat(tmp_path) == {}
-    (tmp_path / S.TEP_KHO_TOM_TAT).write_text('{"muc": {"PMID 1": {}}}', encoding="utf-8")
-    assert S.doc_kho_tom_tat(tmp_path) == {"PMID 1": {}}
-    (tmp_path / S.TEP_KHO_TOM_TAT).write_text('{"khac": 1}', encoding="utf-8")
-    with pytest.raises(ValueError):
-        S.doc_kho_tom_tat(tmp_path)
-
-
 def test_ma_thoat_va_tham_so(monkeypatch, capsys):
     sach = {"loi": [], "se_sua": 0, "dem": {"khong_do": 0}}
     assert S.ma_thoat(sach, False) == S.MA_OK

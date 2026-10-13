@@ -52,8 +52,9 @@ có «<»» — thay bằng xét trượt gióng.
 ## Còn treo — việc của bác sĩ
 
 - Chạy `--ap-dung` (187 bản ghi) hay chờ NCBI gỡ chặn để đối chiếu PubMed đúng như yêu cầu ban đầu.
-- Kho tóm tắt máy `EBM-Dashboards/tom-tat-abstract-vi.json`: 37 PMID có tóm tắt dựng từ abstract BỊ CẮT. Chốt
+- Kho tóm tắt máy `EBM-Dashboards/tom-tat-abstract-vi.json`: 39 PMID (đo lần cuối 13/10, kho đang được bổ sung — 37 ở
+  lượt đo trước) có tóm tắt dựng từ abstract BỊ CẮT. Chốt
   `so_khong_khop` (PR #171) KHÔNG bắt được — chốt chỉ đòi mọi số của tóm tắt có trong abstract gốc, abstract đầy đủ chỉ
-  THÊM số ⇒ tóm tắt cũ vẫn qua. Cần dựng lại 37 mục rồi `nap_endnote_chu_de.py --tat-ca --tom-tat-vi --ap-dung`.
+  THÊM số ⇒ tóm tắt cũ vẫn qua. Cần dựng lại các mục đó rồi `nap_endnote_chu_de.py --tat-ca --tom-tat-vi --ap-dung`.
 
 Cần bác sĩ kiểm chứng.
