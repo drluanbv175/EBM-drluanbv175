@@ -2,7 +2,7 @@
 
 **Bối cảnh.** Việc 4 của biên bản tranh biện BD-G0-T2 (hội đồng G0, 07/10): PI chọn chuỗi PubMed rồi chạy lại
 `run_g0_auto.py` một lần. NCBI gỡ chặn IP chiều 14/10; chạy với chuỗi §5.2 của gói PRISMA-S (MeSH + từ tự do).
-Repo y khoa PR #128 (commit 27e1c85).
+Repo y khoa PR #128 (commit 7e6aadc — bản squash đã gộp; mã 27e1c85 ghi trước đây không tồn tại trong repo).
 
 ## Sự cố 1 — tra đăng ký «CHƯA TRA ĐƯỢC» dù mạng tốt
 
