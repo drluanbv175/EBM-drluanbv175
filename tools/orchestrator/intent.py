@@ -80,6 +80,10 @@ RESEARCH_TOPIC_CUES = [
     "nghiên cứu can thiệp", "nghiên cứu quan sát", "nghiên cứu mô tả",
     "khảo sát cắt ngang", "khảo sát hồi cứu", "khảo sát mô tả",
     "thử nghiệm lâm sàng", "thử nghiệm ngẫu nhiên",
+    # Hội đồng cổng G0–G10 (14/10/2026): README §Ma trận định tuyến khai ba câu này → dieu-phoi-nghien-cuu nhưng cửa
+    # vào chưa có luật ⇒ «unknown». Cụm HẸP («hội đồng CỔNG», không «hội đồng» trần) để không bắt nhầm Hội đồng Đạo đức;
+    # nằm trong RESEARCH_TOPIC_CUES nên vẫn thua cờ đỏ / mô tả ca lâm sàng (luật bất đối xứng trong route()).
+    "hội đồng cổng", "tranh biện trước khi kết luận cổng", "đánh giá chéo đầu ra",
 ]
 # SỬA 2026-09-03 (Workflow đối kháng đa-agent vòng 2): "khảo sát cắt ngang"/"khảo sát mô
 # tả"... ở trên đòi cụm liền kề — câu diễn đạt tự nhiên có từ chen giữa ("khảo sát tỷ lệ
