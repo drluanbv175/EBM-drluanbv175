@@ -132,7 +132,8 @@ def test_main_cong_that_su_goi_bao_dam(tmp_path):
     db.write_text("<script>const DATA = {meta:{}, summary:{}, items:[" + _muc("ITEM-01", "apply", "123456")
                   + "]};\n/* HẾT KHỐI DATA */</script>", encoding="utf-8")
     r = subprocess.run([sys.executable, str(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py"),
-                        str(db), "--strict-sources"], capture_output=True, text=True)
+                        str(db), "--strict-sources"], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
     assert "PMID 123456 CHƯA được đọc toàn văn" in r.stdout + r.stderr and r.returncode != 0
 
 
