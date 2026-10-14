@@ -30,12 +30,17 @@ def _nap(ten: str, tep: str):
 D = _nap("_t_dtv", "doc_toan_van_co_nguoi.py")
 XN = _nap("_t_dtv_xn", "xac_nhan_trinh_duyet.py")
 TIEU_DE = "Cognitive behavioral therapy for insomnia-assisted discontinuation of hypnotics: a systematic review and meta-analysis"
+# NXB NGOÀI bảng điều khoản dùng cho các ca «chưa kiểm». Là NXB GIẢ (tiền tố 10.99999, miền .invalid) để không bao giờ vào bảng:
+# trước 14/10/2026 ca này dùng Taylor & Francis rồi Karger — mỗi đợt đọc điều khoản đưa NXB thật vào bảng lại làm fixture sai.
+DOI_NGOAI_BANG = "10.99999/nxbthu.2026.2600001"
+MIEN_NGOAI_BANG = "www.nxb-thu.invalid"
+URL_NGOAI_BANG = f"https://{MIEN_NGOAI_BANG}/doi/full/{DOI_NGOAI_BANG}"
 
 
 def _hs(**sua) -> dict:
-    hs = {"pmid": "42751933", "doi": "10.1080/07853890.2026.2600001", "tieu_de_bai": TIEU_DE,
-          "url_doc": "https://www.tandfonline.com/doi/full/10.1080/07853890.2026.2600001",
-          "tieu_de_trang": TIEU_DE + " - Taylor & Francis Online", "doc_luc": HOM_NAY.isoformat(),
+    hs = {"pmid": "42751933", "doi": DOI_NGOAI_BANG, "tieu_de_bai": TIEU_DE,
+          "url_doc": URL_NGOAI_BANG,
+          "tieu_de_trang": TIEU_DE + " - NXB thử Online", "doc_luc": HOM_NAY.isoformat(),
           "nguon_truy_cap": "trinh_duyet_co_nguoi", "gap_chan": True, "nguoi_vuot_chan": "bac_si",
           "so_ky_tu_toan_van": 41000, "sha256_toan_van": "ab" * 32, "loai_tai_lieu": "sr_ma",
           "phuong_phap": {"thiet_ke": "Tổng quan hệ thống + phân tích gộp 12 RCT", "quan_the": "Người lớn dùng thuốc ngủ kéo dài",
@@ -76,15 +81,18 @@ def test_bao_phu_cuc_bo_doc_dung_kho(tmp_path):
                   "10000004": "khong_truy_cap", "10000005": "chua_co"}, "quá 90 ngày thì nhắc lại"
 
 
-def test_duong_doc_phan_nhanh_va_loi_mang_khong_thanh_khong_co():
+def test_duong_doc_phan_nhanh_va_loi_mang_khong_thanh_khong_co(monkeypatch):
     oa = D.duong_doc("1", "chua_co", epmc=lambda **k: {"pmcid": "PMC9", "isOpenAccess": "Y", "doi": "10.1/a"})
     assert oa["cach"] == "oa_chua_gom"
+    # Ca này cần NXB NGOÀI bảng (jacc.org là Elsevier; nejm/aha vào bảng 03/10; T&F, Karger vào bảng 14/10/2026) ⇒ NXB giả, gắn
+    # tạm một số đo cho miền giả để vẫn kiểm `phan_loai_mien` đi vào nhánh «miền đã đo».
+    monkeypatch.setitem(D.MIEN_DO_DUOC, MIEN_NGOAI_BANG, "chặn bot 403 (Cloudflare)")
     mp = D.duong_doc("2", "chua_co", epmc=lambda **k: {"doi": "10.1/b", "fullTextUrlList": {"fullTextUrl": [
-        {"availabilityCode": "F", "url": "https://www.tandfonline.com/doi/full/10.1/b"}]}})
+        {"availabilityCode": "F", "url": f"https://{MIEN_NGOAI_BANG}/doi/full/10.1/b"}]}})
     assert mp["cach"] == "trinh_duyet" and mp["mien_phi"] and "Cloudflare" in mp["mien_do_duoc"]
-    # (jacc.org là Elsevier, nejm.org/ahajournals.org vào bảng cấm 03/10/2026 ⇒ ca này dùng NXB NGOÀI bảng: T&F, Karger.)
-    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"}, doi_dich=lambda d: "https://karger.com/doi/" + d)
-    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == "karger.com" and not qua_doi["mien_phi"]
+    qua_doi = D.duong_doc("3", "chua_co", epmc=lambda **k: {"doi": "10.1/c"},
+                          doi_dich=lambda d: f"https://{MIEN_NGOAI_BANG}/doi/" + d)
+    assert qua_doi["cach"] == "trinh_duyet" and qua_doi["mien"] == MIEN_NGOAI_BANG and not qua_doi["mien_phi"]
 
     def hong(**k):
         raise OSError("mạng")
@@ -267,7 +275,7 @@ def test_han_doc_luc_dung_hang_so():
     ("10.1016/j.jacc.2026.05.033", "", "Elsevier"), ("", "https://www.sciencedirect.com/science/article/pii/S1", "Elsevier"),
     ("", "https://www.thelancet.com/journals/lancet/article/x", "Elsevier"), ("10.2337/dc26-sint", "", "ADA (American Diabetes Association)"),
     ("", "https://www.dynamed.com/topics/x", "EBSCO (DynaMed)"), ("10.1136/heartjnl-2025-326305", "https://heart.bmj.com/x", "BMJ Publishing Group"),
-    ("10.1080/07853890.2026.2600001", "https://www.tandfonline.com/doi/full/x", None),
+    (DOI_NGOAI_BANG, f"https://{MIEN_NGOAI_BANG}/doi/full/x", None),
 ])
 def test_nxb_cua(doi, url, ten):
     assert D.nxb_cua(doi, url)[0] == ten
@@ -277,8 +285,8 @@ def test_phieu_xep_bai_elsevier_cho_bac_si_doc_truc_tiep_ke_ca_mien_phi():
     r = D.duong_doc("42377292", "chua_co", epmc=lambda **k: {"doi": "10.1016/j.jacc.2026.05.033", "fullTextUrlList": {"fullTextUrl": [
         {"availabilityCode": "F", "url": "https://www.jacc.org/doi/10.1016/j.jacc.2026.05.033"}]}})
     assert r["cach"] == "bac_si_doc_truc_tiep" and r["nxb"] == "Elsevier" and "TDM" in r["ly_do"]
-    k = D.duong_doc("41672763", "chua_co", epmc=lambda **k: {"doi": "10.1080/07853890.2026.2600001"},
-                    doi_dich=lambda d: "https://www.tandfonline.com/doi/full/" + d)
+    k = D.duong_doc("41672763", "chua_co", epmc=lambda **k: {"doi": DOI_NGOAI_BANG},
+                    doi_dich=lambda d: f"https://{MIEN_NGOAI_BANG}/doi/full/" + d)
     assert k["cach"] == "trinh_duyet" and k["dieu_khoan"] == "chua_kiem"
 
 
@@ -311,9 +319,10 @@ def test_doctrine_day_agent_cung_bang_dieu_khoan():
 
 def test_lech_doctrine_bat_bang_moi_va_doctrine_cu(monkeypatch):
     van_ban = (TOOLS.parent / ".claude" / "agents" / "_CONNECTOR-CHUNG-CU.md").read_text(encoding="utf-8")
-    # NXB CHƯA có trong bảng (Karger, 10.1159/ — chưa kiểm 03/10/2026; trước đó ví dụ này là Springer Nature, nay đã vào bảng).
-    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "Karger", {"ket_luan": "cam", "doi": ("10.1159/",), "mien": ()})
-    assert any("Karger" in x for x in D.lech_doctrine(van_ban))
+    # NXB «cấm» MỚI thêm vào bảng mà doctrine chưa nêu ⇒ phải lệch. NXB giả (ví dụ này từng là Springer Nature rồi Karger — cả hai
+    # nay đã vào bảng VÀ doctrine thật, nên không còn tái hiện được «quên doctrine»).
+    monkeypatch.setitem(D.DIEU_KHOAN_NXB, "NXB thử ngoài doctrine", {"ket_luan": "cam", "doi": ("10.99999/",), "mien": ()})
+    assert any("NXB thử ngoài doctrine" in x for x in D.lech_doctrine(van_ban))
     assert D.lech_doctrine(van_ban.replace("## 2septies. ", "## 2x. ")) == ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
 
 
@@ -594,7 +603,8 @@ def test_cli_ghi_uy_quyen_chay_thu_khong_ghi(tmp_path, monkeypatch, capsys):
     assert "chạy thử" in ra and not (dash / "dieu-khoan-bac-si-uy-quyen.json").exists()
 
 
-@pytest.mark.parametrize("nxb", ["Karger", "elsevier", "ADA", "NXB thử cho phép"])
+# «NXB ngoài bảng thử» thay «Karger» (Karger vào bảng 14/10/2026 — tên NXB thật sớm muộn cũng vào bảng).
+@pytest.mark.parametrize("nxb", ["NXB ngoài bảng thử", "elsevier", "ADA", "NXB thử cho phép"])
 def test_cli_ghi_uy_quyen_tu_choi_nxb_khong_phai_khoa_cam(tmp_path, monkeypatch, capsys, nxb):
     dash = tmp_path / "EBM-Dashboards"
     dash.mkdir()

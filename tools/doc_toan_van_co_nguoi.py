@@ -178,12 +178,16 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
     # nội dung với công cụ AI; ba NXB còn lại chỉ cấm huấn luyện mô hình hoặc im lặng về AI ⇒ «không rõ ⇒ xử như cấm» (doctrine
     # §2septies mục 4). Guideline ESC đăng trên OUP vẫn mang khoá ESC — `nxb_cua` xét tiêu đề ESC TRƯỚC nền tảng đăng bài.
     "Oxford University Press": {
-        "ket_luan": "cam", "doi": ("10.1093/", "10.1210/", "10.1164/"), "mien": ("academic.oup.com", "oup.com"),
+        # 10.1530/eje- (14/10/2026): European Journal of Endocrinology chuyển từ Bioscientifica sang OUP từ 01/01/2023; DOI cũ
+        # 10.1530/EJE-… nay phân giải sang academic.oup.com/ejendo (đo trên Chrome) ⇒ điều khoản OUP. Đặt ở khoá OUP (đứng TRƯỚC
+        # khoá Bioscientifica trong bảng) để `nxb_cua` gán EJE cho OUP cả khi chỉ có DOI, không có URL.
+        "ket_luan": "cam", "doi": ("10.1093/", "10.1210/", "10.1164/", "10.1530/eje-"), "mien": ("academic.oup.com", "oup.com"),
         "nguon": "https://academic.oup.com/pages/legal-notice", "doc_luc": "2026-10-03",
         "trich": "use any portion of the Content in combination with any artificial intelligence (AI) tool",
         "loai_nguon": "Legal notice của Oxford Academic, mục «Text and Data Mining, TDM Reservation Policy, and Artificial "
                       "Intelligence Systems» (đọc bằng Chrome); 10.1210 = Endocrine Society (JCEM…), 10.1164 = ATS (AJRCCM…) — "
-                      "atsjournals.org chuyển 301 sang academic.oup.com (đo 03/10/2026)",
+                      "atsjournals.org chuyển 301 sang academic.oup.com (đo 03/10/2026); 10.1530/EJE- = European Journal of "
+                      "Endocrinology, nay trên academic.oup.com/ejendo (DOI phân giải sang OUP, đo 14/10/2026)",
         "ngoai_le": "Subscriber Agreement của cơ sở, giấy phép CC của bài Open Access, giấy phép chính phủ cho Government Works",
         "duong_hop_le": "TDM phi thương mại theo Subscription Agreement của cơ sở có quyền truy cập hợp pháp; dùng với AI/TDM thương mại "
                         "phải có thoả thuận — data.mining@oup.com"},
@@ -271,6 +275,103 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "chặn theo tiền tố",
         "ngoai_le": "bài Open Access theo giấy phép CC của bài",
         "duong_hop_le": "Wiley TDM API theo Thoả thuận TDM (token của bác sĩ, SRC-042) + Wiley Scholar Gateway (kênh AI có giấy phép)"},
+    # Đợt đọc điều khoản 14/10/2026 — mười NXB có bài trong hàng chờ toàn văn mà `phien_uy_quyen_chrome.py --kiem` từ chối vì
+    # «chưa kiểm điều khoản». Đọc bằng Chrome của bác sĩ (lớp Cloudflare do bác sĩ tự qua; Claude không bấm). Tiền tố DOI đối chiếu
+    # Crossref /prefixes cùng ngày. Taylor & Francis cấm RÕ dùng với công cụ AI; Minerva Medica và ASH bảo lưu RÕ quyền TDM/huấn
+    # luyện AI; bảy NXB còn lại chỉ cấm huấn luyện/phát triển AI hoặc im lặng về AI ⇒ «không rõ ⇒ xử như cấm» (doctrine §2septies).
+    "Taylor & Francis (Informa UK)": {
+        "ket_luan": "cam", "doi": ("10.1080/", "10.3109/"),
+        "mien": ("tandfonline.com", "informahealthcare.com", "taylorandfrancis.com"),
+        "nguon": "https://www.tandfonline.com/terms-and-conditions", "doc_luc": "2026-10-14",
+        "trich": "the Materials may not be input into any artificial intelligence or large language model tool",
+        "loai_nguon": "Informa Group terms of website use (tandfonline.com, đọc trên Chrome 14/10/2026): Part II §4.b.iv «Use of "
+                      "Materials with AI Tools» — dùng với AI Tool cần giấy phép văn bản riêng; §4.c.iv TDM phi thương mại cho thuê "
+                      "bao nhưng dùng AI Tool để TDM bị cấm; §4.a.ii giấy phép nội dung miễn phí loại trừ AI/LLM. Crossref: 10.1080 "
+                      "và 10.3109 (Informa Healthcare cũ) đều của Informa UK Limited",
+        "ngoai_le": "bài Open Access theo giấy phép CC của bài; thoả thuận thuê bao của cơ sở thắng điều khoản chung (§5)",
+        "duong_hop_le": "giấy phép văn bản riêng của Taylor & Francis cho dùng với AI Tool (support@tandfonline.com)"},
+    "Thieme (Georg Thieme Verlag)": {
+        "ket_luan": "cam", "doi": ("10.1055/",), "mien": ("thieme-connect.de", "thieme-connect.com", "thieme.com", "thieme.de"),
+        "nguon": "https://www.thieme.com/en-us/imprint/georg-thieme-verlag-kg", "doc_luc": "2026-10-14",
+        "trich": "may not be used for the development, training and/or enrichment of AI systems",
+        "loai_nguon": "Imprint của Georg Thieme Verlag KG (chân trang thieme-connect chỉ trỏ Imprint và Privacy; đọc trên Chrome "
+                      "14/10/2026): bảo lưu TDM thương mại theo § 44b UrhG, cấm dùng nội dung để phát triển/huấn luyện hệ AI; im "
+                      "lặng về công cụ AI đọc–tóm tắt ⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài Open Access theo giấy phép CC của bài; hợp đồng thuê bao của cơ sở",
+        "duong_hop_le": "giấy phép sử dụng của Thieme — Permission@thieme.de"},
+    "American Society of Hematology (Blood)": {
+        "ket_luan": "cam", "doi": ("10.1182/",), "mien": ("ashpublications.org", "hematology.org", "bloodjournal.org"),
+        "nguon": "https://www.hematology.org/about/terms-of-service", "doc_luc": "2026-10-14",
+        "trich": "All rights are reserved, including those for text and data mining, AI training",
+        "loai_nguon": "ASH Terms of Service (chân trang ashpublications.org trỏ tới; đọc trên Chrome 14/10/2026): chỉ dùng cá nhân "
+                      "phi thương mại, cấm sao chép/tải lên/truyền, không có điều về AI; câu trích là dòng bản quyền in trên bài "
+                      "Blood 2025 («Published by Elsevier Inc.» — Permissions của trang trỏ sang Elsevier) ⇒ bảo lưu RÕ quyền "
+                      "TDM/huấn luyện AI",
+        "ngoai_le": "bài trả phí công khai mang CC BY / CC BY-NC-ND theo giấy phép của bài",
+        "duong_hop_le": "xin phép qua Tools > Request Permissions trên trang bài (kênh permissions của Elsevier)"},
+    "Karger": {
+        "ket_luan": "cam", "doi": ("10.1159/",), "mien": ("karger.com",),
+        "nguon": "https://karger.com/pages/terms-of-use", "doc_luc": "2026-10-14",
+        "trich": "forbidden to use any of the Karger content … for … training artificially intelligent tools",
+        "loai_nguon": "Terms of Use for Karger Websites (11/2021) + Karger's AI Principles (đọc trên Chrome 14/10/2026): cấm "
+                      "huấn luyện AI, Karger nhận bản quyền mọi đầu ra AI dùng nội dung Karger, cấm bot/tải có hệ thống; quyền dùng "
+                      "AI CHỈ cấp cho thuê bao TỔ CHỨC HỌC THUẬT (phi thương mại) ⇒ với tài khoản của bác sĩ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "thuê bao tổ chức học thuật: dùng AI trên nội dung đã thuê bao, phi thương mại (AI Principles); bài Open Access "
+                    "theo giấy phép CC của bài",
+        "duong_hop_le": "TDM policy for licensed content / Rights & Permissions của Karger; quyền AI qua thuê bao tổ chức học thuật"},
+    "Bioscientifica": {
+        "ket_luan": "cam", "doi": ("10.1530/",), "mien": ("bioscientifica.com",),
+        "nguon": "https://journals.bioscientifica.com/pages/terms", "doc_luc": "2026-10-14",
+        "trich": "may view, reproduce or store copies of articles … only for their personal, non-commercial use",
+        "loai_nguon": "Terms & conditions của Bioscientifica Journals (đọc trên Chrome 14/10/2026): tạp chí thuê bao (Journal of "
+                      "Endocrinology, J Mol Endocrinol, Endocrine-Related Cancer) chỉ dùng cá nhân phi thương mại, cấm sao chép có "
+                      "hệ thống, không có điều về AI ⇒ «không rõ ⇒ xử như cấm». European Journal of Endocrinology (10.1530/EJE-) nay "
+                      "trên OUP — khoá OUP nhận trước khoá này",
+        "ngoai_le": "tạp chí Open Access (Endocrine Connections, European Thyroid Journal…) theo giấy phép CC của từng bài",
+        "duong_hop_le": "xin phép qua mục Permissions của trang tạp chí (Copyright Clearance Center)"},
+    "American Psychiatric Association (PsychiatryOnline)": {
+        "ket_luan": "cam", "doi": ("10.1176/",), "mien": ("psychiatryonline.org", "psychiatry.org", "appi.org"),
+        "nguon": "https://psychiatryonline.org/termsofuse", "doc_luc": "2026-10-14",
+        "trich": "train, develop, fine-tune, or validate any artificial intelligence, machine learning, or large language model systems",
+        "loai_nguon": "Terms of Use của PsychiatryOnline (đọc trên Chrome 14/10/2026 sau lớp Cloudflare): cấm tải có hệ thống bằng "
+                      "robot, cấm dùng tài liệu để huấn luyện/phát triển/kiểm định hệ AI khi chưa có văn bản cho phép của APA; "
+                      "im lặng về công cụ AI đọc–tóm tắt ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "APA Publishing Permissions (www.appi.org/permissions); thoả thuận tổ chức qua institutions@psych.org"},
+    "European Respiratory Society": {
+        "ket_luan": "cam", "doi": ("10.1183/",), "mien": ("ersnet.org", "ersjournals.com"),
+        "nguon": "https://publications.ersnet.org/tdm", "doc_luc": "2026-10-14",
+        "trich": "users may not use ERS content to develop, train, optimise or validate AI models",
+        "loai_nguon": "ERS Text and data mining policy + Publications User Licence (đều cập nhật 29/05/2026; đọc trên Chrome "
+                      "14/10/2026): cho TDM học thuật/giáo dục với điều kiện BÁO TRƯỚC bằng văn bản; cấm dùng nội dung cho mô hình "
+                      "AI; im lặng về công cụ AI đọc–tóm tắt ⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài CC BY / CC BY-NC (ERJ Open Research, European Respiratory Review…) theo giấy phép của bài; giấy phép "
+                    "thuê bao của cơ sở",
+        "duong_hop_le": "TDM học thuật phi thương mại sau khi báo trước tới permissions@ersnet.org; RightFind XML for Mining (CCC)"},
+    "Edizioni Minerva Medica": {
+        "ket_luan": "cam", "doi": ("10.23736/",), "mien": ("minervamedica.it",),
+        "nguon": "https://www.minervamedica.it/en/sales-terms.php", "doc_luc": "2026-10-14",
+        "trich": "including rights for text and data mining and training of artificial technologies",
+        "loai_nguon": "Terms and conditions của minervamedica.it, mục Copyright (đọc trên Chrome 14/10/2026 sau lớp Cloudflare): bảo "
+                      "lưu mọi quyền gồm TDM và huấn luyện AI; cấm tải, lưu, tái bản, truyền nội dung khi chưa có văn bản cho phép",
+        "duong_hop_le": "văn bản cho phép của Edizioni Minerva Medica"},
+    "COPD Foundation": {
+        "ket_luan": "cam", "doi": ("10.15326/",), "mien": ("copdfoundation.org",),
+        "nguon": "https://www.copdfoundation.org/Disclaimer.aspx", "doc_luc": "2026-10-14",
+        "trich": "The JCOPDF maintains a traditional copyright for all works published in the Journal",
+        "loai_nguon": "Terms của copdfoundation.org (trang Disclaimer) + hướng dẫn nộp bài của JCOPDF (câu trích; đọc trên Chrome "
+                      "14/10/2026): tạp chí đọc miễn phí nhưng KHÔNG mang giấy phép CC — COPD Foundation giữ bản quyền; website chỉ "
+                      "cho dùng cá nhân phi thương mại, cấm công cụ tự động/khai thác dữ liệu tải dữ liệu khi chưa được phép; không "
+                      "có điều về AI ⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài mang giấy phép CC của CHÍNH bài (kiểm siêu dữ liệu giấy phép trên PMC) đi đường OA",
+        "duong_hop_le": "văn bản cho phép của COPD Foundation (mục Copyright & Reprints của journal.copdfoundation.org)"},
+    "Europa Group (PCR · EuroIntervention)": {
+        "ket_luan": "cam", "doi": ("10.4244/",), "mien": ("pcronline.com", "eurointervention.org"),
+        "nguon": "https://eurointervention.pcronline.com/pages/legal-notice", "doc_luc": "2026-10-14",
+        "trich": "No information contained on this website can be copied",
+        "loai_nguon": "Legal notice của EuroIntervention (Europa Group SAS; đọc trên Chrome 14/10/2026; Crossref: 10.4244 của Europa "
+                      "Digital & Publishing): cấm sao chép, cấm robot/scraping trích dữ liệu; không có điều về AI ⇒ «không rõ ⇒ xử "
+                      "như cấm»",
+        "duong_hop_le": "Copyright Clearance Center (copyright.com, ISSN 1969-6213) — trang Rights & Permissions"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
