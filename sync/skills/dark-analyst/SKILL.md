@@ -2,7 +2,7 @@
 name: dark-analyst
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.12.12
+  version: 1.12.13
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -336,7 +336,7 @@ Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
 Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
 
-**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online --strict-sources` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
+**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online --strict-sources` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) · **KHÔNG tự chạy `EBM_MASTER/tools/sync_all.py`** (đổi mặc định 2026-08-05 theo yêu cầu bác sĩ — chỉ chạy khi bác sĩ yêu cầu riêng; giữ một gói ngoài Antifacts xem skill `cap-nhat-chung-cu-y-khoa`). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
 **CỔNG TRA CỨU DUY NHẤT cho bác sĩ** (không phải lục từng file): nút **"Mở EBM (WebApp).command"** → `EBM_MASTER/EBM_WEBAPP.html` (tìm/lọc mọi cập nhật đã làm). `EBM-Dashboards/` chỉ là vùng staging tạo file mới.
 
 
@@ -407,7 +407,36 @@ Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đả
 
 **(a) Cổng kiểm liêm chính — `tools/verify_dashboard.py`** (chạy TRƯỚC khi giao):
 `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
-Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
+Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · **mục ghi CẢ `pmid` lẫn `doi` thì hai định danh phải trỏ CÙNG một bài** (DOI mà PubMed ghi cho PMID = DOI của mục; lệch ⇒ `--strict-sources` chặn) · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
+
+🔴 **CẶP PMID–DOI PHẢI CÙNG MỘT BÀI (thêm 04/10/2026).** Đo 04/10: 10/1164 cặp trong kho trỏ HAI bài khác nhau (3 mục
+`apply`) — phần lớn là DOI của một bài nằm trong DANH MỤC THAM KHẢO của chính bài mang PMID (bộ rút XML duyệt `.//ArticleId`).
+Khi ghi định danh cho mục: lấy DOI từ CHÍNH bản ghi PubMed của PMID (esummary `articleids`, hoặc `convert_article_ids`/Europe
+PMC) — KHÔNG chép DOI từ danh mục tham khảo, KHÔNG đoán. Hai bản đồng xuất bản (cùng guideline ở hai tạp chí) có HAI cặp
+PMID+DOI riêng: chọn MỘT bản, ghi đủ cặp của bản đó. Cổng báo lệch ⇒ đối chiếu xem số liệu/tiêu đề/references của mục khớp
+bài nào rồi sửa định danh SAI cho khớp; mục `apply` hay đổi `decision` thì vẫn là việc của bác sĩ.
+
+🔴 **CỔNG NAY CHẶN NGUỒN ĐÃ BỊ RÚT (thêm 14/08/2026 — trước đó KHÔNG kiểm).** Cổng vẫn giữ
+nguyên tắc *không tự kết luận* trạng thái rút bài từ một nguồn metadata thiếu thẩm quyền; điều
+mới là nó **đọc lại kết luận DƯƠNG TÍNH** mà chuỗi 3 tầng đã xác nhận và ghi vào
+`EBM-Dashboards/.so-xac-minh-nguon.json`, qua `tools/so_xac_minh_nguon.py::nguon_da_rut()`.
+*Vì sao cần:* PMID 30267080 (JAMA Oncology, rút 2019, dạng **retract-and-replace**) nằm trong
+`ViemGanB_DieuTri` và **đi qua cổng sạch sẽ** suốt — nó chỉ hiện khi bác sĩ chủ động gõ
+`so_xac_minh_nguon.py --bao-cao`.
+**Bất đối xứng bắt buộc:** có bản ghi ⇒ **lỗi cứng**; sổ **im lặng ⇒ KHÔNG** phát tín hiệu nào
+(im lặng chỉ nghĩa là chưa ai quét file đó — biến nó thành dấu ✓ là dựng lời bảo đảm không có
+cơ sở); tra cứu hỏng ⇒ **cảnh báo hiện ra**, không bỏ qua thầm lặng. Khoá bằng **BH31**.
+⚠️ Cổng chỉ ĐO. Không tự gỡ mục: *retract-and-replace* nghĩa là bài đã được sửa rồi đăng lại,
+việc cần làm là **đối chiếu số liệu với bản đã thay**, không phải xoá — và đó là việc của bác sĩ.
+
+🔴 **Toàn văn cho mục `apply` (đồng bộ từ `cap-nhat-chung-cu-y-khoa`, 14/10/2026):** item sắp `apply` phải thẩm định TOÀN VĂN
+hợp pháp; chỉ có abstract → `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`. khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`. BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026, BH161):
+cổng ĐO kho `EBM-Dashboards/toan_van_oa/` — mục `apply` mà PMID chính CHƯA được đọc toàn văn (máy, làn trình duyệt, hoặc
+bác sĩ ghi `doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu …`) bị CHẶN; tự khai `full` KHÔNG thay bằng chứng.
+Chỉ 27 mục tồn có trong sổ nợ (`no-toan-van-apply.json`, hạn 03/11/2026) được cảnh báo thay vì chặn — mục MỚI không bao giờ
+vào sổ. Xem nợ + cách trả: `python3 tools/so_toan_van.py`. Chuỗi máy
+`ops/orchestrator.py --topic` chạy bước «TV» (`tools/toan_van_theo_chu_de.py`): gom bản hợp lệ → đọc sâu → phiếu làn trình
+duyệt cho bài còn thiếu — ĐỌC phiếu đó trước khi thẩm định ứng viên.
 
 **(b) Thư viện cập nhật — `tools/build_library.py`** (tích lũy thành tài sản tra cứu):
 `python3 tools/build_library.py add <dashboard>.html` → cập nhật `library.json` + sinh `evidence-library.html` (chỉ mục mọi bản cập nhật, có tìm/lọc, mở thẳng từng dashboard).
