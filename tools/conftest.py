@@ -253,7 +253,8 @@ def _anh_chup_ban() -> set[str]:
         ra |= {"state/" + p.relative_to(st).as_posix() for p in st.rglob("*") if p.is_file()}
     try:
         out = subprocess.run(["git", "-C", str(REPO), "status", "--porcelain", "--untracked-files=all"],
-                             capture_output=True, text=True, timeout=60).stdout
+                             capture_output=True, text=True, encoding="utf-8", errors="replace",
+                             timeout=60).stdout
         ra |= {"git: " + dong for dong in out.splitlines() if "__pycache__" not in dong}
     except (OSError, subprocess.SubprocessError):
         pass

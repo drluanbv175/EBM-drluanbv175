@@ -255,7 +255,9 @@ def test_trang_thai_toan_van_theo_kho(tmp_path):
     (tmp_path / "doc_sau").mkdir()
     (tmp_path / "PMID-5_CHR.pdf").write_bytes(b"%PDF-1.4")
     (tmp_path / "doc_sau" / "PMID-5.md").write_text("x", encoding="utf-8")
-    (tmp_path / "PMID-6_CHR.html").write_text("x", encoding="utf-8")
+    # HTML phải là TOÀN VĂN thật (cổng nội dung dùng chung — TT-03/TT-04, 15/10/2026); «x» trước đây là fixture không hợp lệ.
+    (tmp_path / "PMID-6_CHR.html").write_text("<article>Introduction Methods Results Discussion " + "word " * 2600
+                                              + "</article>", encoding="utf-8")
     assert tt.trang_thai_toan_van("5", tmp_path) == "có PDF (bản quyền — dùng cá nhân) · có bản đọc sâu"
     assert tt.trang_thai_toan_van("6", tmp_path) == "có HTML (bản quyền — dùng cá nhân)"
     assert tt.trang_thai_toan_van("7", tmp_path).startswith("CHƯA có")

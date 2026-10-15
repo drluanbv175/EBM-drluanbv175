@@ -123,7 +123,7 @@ def test_nghiem_ngat_nang_canh_bao_thanh_chan(tmp_path, capsys):
     import subprocess
     r = subprocess.run(
         [sys.executable, str(REPO / "tools" / "kiem_mau_the_chung_cu_tuan.py"), str(f), "--nghiem-ngat"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     assert r.returncode == 2, r.stdout
 

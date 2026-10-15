@@ -61,7 +61,7 @@ def cac_goc_worktree_git(root: Path) -> list[Path]:
     try:
         ra = subprocess.run(
             ["git", "worktree", "list", "--porcelain"],
-            cwd=root, capture_output=True, text=True, timeout=10, check=True,
+            cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, check=True,
         )
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return [root]

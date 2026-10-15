@@ -21,8 +21,8 @@ Dùng:
   python3 tools/so_toan_van.py --json
   python3 tools/so_toan_van.py --tao-no --han 2026-11-03 --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
   python3 tools/so_toan_van.py --gia-han 2026-12-03 --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
-Mã thoát: 0 · 1 = còn mục apply chưa đọc toàn văn NGOÀI sổ nợ hoặc nợ QUÁ HẠN (cổng đang chặn) · 2 = không đo được (vắng kho)
-· 3 = từ chối ghi.
+Mã thoát: 0 · 1 = còn mục apply chưa đọc toàn văn NGOÀI sổ nợ hoặc nợ QUÁ HẠN (cổng đang chặn) · 2 = không đo được (vắng kho
+hoặc 0 dashboard) · 3 = từ chối ghi.
 """
 from __future__ import annotations
 
@@ -41,7 +41,21 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _goc_du_lieu(ten: str) -> Path:
+    """Gốc dữ liệu ngoài git qua `ban_sao_tran.duong_goc` (lồng rồi anh em — TT-07, 15/10/2026: cùng cách định vị với mọi công
+    cụ của kho toàn văn). Không thấy ⇒ vị trí lồng (`main` rào kho vắng ⇒ ⚪ mã 2)."""
+    try:
+        sp = importlib.util.spec_from_file_location("_bst_stv", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        return m.duong_goc(ten, REPO) or (REPO / ten)
+    except Exception:  # noqa: BLE001 — thiếu bộ định vị ⇒ vị trí lồng như trước
+        return REPO / ten
+
+
+DASH = _goc_du_lieu("EBM-Dashboards")
 TEN_SO_NO = "no-toan-van-apply.json"
 CAN_CU_MIN = 20
 HAN_TOI_DA_NGAY = 90
@@ -191,6 +205,11 @@ def main(argv: list[str] | None = None, *, dash: Path | None = None, hom_nay: da
     kho = dash / "toan_van_oa"
     if not kho.is_dir():
         print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {kho} (EBM-Dashboards/ vắng ở cây này). KHÔNG phải «đủ toàn văn».")
+        return 2
+    if not any(dash.glob("WebDashboard_*.html")):
+        # TT-06 (15/10/2026): 0 dashboard ⇒ KHÔNG đo được, không phải «🟢 mọi mục đã đọc» (trước đó in xanh + mã 0 — một kho ma
+        # do công cụ ghi tự tạo đủ để lật ⚪ thành 🟢).
+        print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy dashboard nào (WebDashboard_*.html) ở {dash}. KHÔNG phải «đủ toàn văn».")
         return 2
     muc = quet_muc(dash, kho, hom_nay)
     so_no = doc_so_no(dash)

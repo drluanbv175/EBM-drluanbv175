@@ -24,7 +24,8 @@ def _g(cay: Path, *a: str, ngay: str | None = None) -> str:
     env = dict(os.environ)
     if ngay:
         env.update(GIT_AUTHOR_DATE=ngay, GIT_COMMITTER_DATE=ngay)
-    return subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True, env=env).stdout.strip()
+    return subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True, env=env,
+                          encoding="utf-8", errors="replace").stdout.strip()
 
 
 def _commit(cay: Path, ten: str, noi_dung: str, thong_diep: str, ngay: str) -> None:

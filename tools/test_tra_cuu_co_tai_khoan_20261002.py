@@ -432,3 +432,17 @@ def test_scopus_khong_mang_tieu_de_export_ra_dau_ra():
                                      "journal": "", "study_type": "", "co": []})
     assert bc["chon"][0]["title"] == "Tieu de Crossref"
     assert all("Tieu de export" not in json.dumps(x, ensure_ascii=False) for x in bc["rut_bai"] + bc["bo"])
+
+
+def test_docstring_va_help_khong_day_claude_doc_trang_dynamed(capsys):
+    """15/10/2026 (rà đồng bộ làn Chrome, G3-D2) — commit 6383f1f sửa HUONG_DAN_DYNAMED («Claude KHÔNG mở, KHÔNG đọc trang
+    DynaMed … KHÔNG đọc tệp bác sĩ chép») nhưng bỏ sót docstring module và dòng `--help` của `--dynamed-canh-bao`, vẫn dạy
+    «Claude đọc văn bản trang (get_page_text)» — trái điều khoản EBSCO ngay ở chỗ agent tra cờ."""
+    assert "get_page_text" not in (T.__doc__ or "")
+    with pytest.raises(SystemExit):
+        T.main(["--help"])
+    tro_giup = capsys.readouterr().out
+    assert "--dynamed-canh-bao" in tro_giup and "get_page_text" not in tro_giup
+    # Lời dặn đúng phải có ở CẢ hai chỗ agent đọc: BÁC SĨ tự chép, Claude chỉ chạy lệnh.
+    for van_ban in ((T.__doc__ or ""), " ".join(tro_giup.split())):
+        assert "BÁC SĨ tự chép" in van_ban

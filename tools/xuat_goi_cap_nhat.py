@@ -128,12 +128,103 @@ def configure_utf8_stdio() -> None:
             pass
 
 
-def run(cmd: list, cwd: Path | None = None) -> tuple[int, str]:
-    """Chạy một tool con, trả về (mã thoát, đầu ra gộp)."""
-    proc = subprocess.run(
-        [str(c) for c in cmd], cwd=str(cwd) if cwd else None,
-        capture_output=True, text=True, encoding="utf-8", errors="replace")
+# Trần giây cho ⑦ (vá 15/10/2026, W1): ⑦ nối gom (≤ 900 s) + đọc sâu (≤ 900 s) + dò đường đọc online (≤ 900 s,
+# `toan_van_theo_chu_de.TRAN_GIAY_DUONG_DOC`) + biên. Không trần thì một lượt mạng chậm kéo cả bộ năm quá ngân sách B4 của
+# `ops/orchestrator.py` (B4 = 3600 cũ cho ①–⑥ + trần này) và orchestrator đọc thành «timeout», dừng cả lô.
+TIMEOUT_TOAN_VAN = 3000
+
+
+def run(cmd: list, cwd: Path | None = None, timeout: int | None = None) -> tuple[int, str]:
+    """Chạy một tool con, trả về (mã thoát, đầu ra gộp). Quá `timeout` ⇒ (-9, lời báo) — người gọi tự quyết đi tiếp hay dừng."""
+    try:
+        proc = subprocess.run(
+            [str(c) for c in cmd], cwd=str(cwd) if cwd else None,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return -9, f"QUÁ {timeout} giây — dừng công cụ con"
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def _dang_kiem_thu() -> bool:
+    """Đang chạy dưới pytest ⇒ ⑦ ⑧ không chạm mạng/EndNote thật. Tách hàm để test thay được (gọi ⑦ ⑧ với run() giả)."""
+    return bool(os.environ.get("PYTEST_CURRENT_TEST"))
+
+
+def kho_canh_dashboard(dash: Path) -> Path:
+    """Kho toàn văn CẠNH dashboard — đúng kho cổng liêm chính (BH161) đọc (TT-07, 15/10/2026). Trước đây ⑦ ⑧ để công cụ con tự
+    đoán kho (REPO/EBM-Dashboards cố định) ⇒ chạy từ worktree/bố cục anh em, ba nơi (⑦ · ⑧ · cổng) nhìn ba kho khác nhau."""
+    return dash.parent / "toan_van_oa"
+
+
+def buoc_toan_van(py: str, dash: Path, result: dict) -> int | None:
+    """⑦ TOÀN VĂN MỌI TRÍCH DẪN + phiếu xác thực. Best-effort: không đổi rc_final. Trả mã của công cụ (None nếu không chạy).
+
+    `result["toan_van"]` CHỈ ghi khi công cụ trả 0 VÀ đã lập phiếu xác thực (có trích dẫn thật) — TT-06: trước đây mã 0 của một lượt
+    «Không có PMID nào» (đầu vào vắng bị bỏ lặng lẽ) cũng được ghi như đã xong. Mọi dòng «⚠»/«⚪» của công cụ con được in lại (W6)."""
+    TV = ROOT / "tools" / "toan_van_theo_chu_de.py"
+    if not TV.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/toan_van_theo_chu_de.py")
+        result["toan_van_ly_do"] = "thiếu tools/toan_van_theo_chu_de.py"
+        return None
+    bd = result.get("ban_doc") or ""
+    bc_tv = (Path(bd).with_name(Path(bd).name.replace("_ban-doc.html", "_toan-van.md")) if bd.endswith("_ban-doc.html")
+             else dash.parent / "derivatives" / f"{dash.stem}_toan-van.md")
+    rc, out = run([py, str(TV), "--dashboard", str(dash), "--moi-trich-dan", "--kho", str(kho_canh_dashboard(dash)),
+                   "--bao-cao", str(bc_tv)], timeout=TIMEOUT_TOAN_VAN)
+    co_phieu = False
+    canh_bao: list[str] = []
+    for dong in out.splitlines():
+        d = dong.strip()
+        if not d:
+            continue
+        if d.startswith("PHIẾU"):
+            co_phieu = True
+        if d.startswith(("⚠", "⚪")):
+            canh_bao.append(d)
+        if d.startswith(("PHIẾU", "→", "⚠", "⚪")):
+            print("   " + d)
+    if canh_bao:
+        result["toan_van_canh_bao"] = canh_bao
+    if rc == 0 and co_phieu:
+        result["toan_van"] = str(bc_tv)
+    elif rc == 0:
+        result["toan_van_ly_do"] = "không có trích dẫn nào có PMID/DOI để xét"
+        print("   ⚪ " + result["toan_van_ly_do"])
+    elif rc == -9:
+        result["toan_van_ly_do"] = f"quá {TIMEOUT_TOAN_VAN} giây — chạy lại khi mạng ổn"
+        print(f"   ⚠ Toàn văn QUÁ {TIMEOUT_TOAN_VAN} giây — bỏ qua, chạy lại sau (không chặn 5 sản phẩm trên).")
+    else:
+        result["toan_van_ly_do"] = (out.strip().splitlines() or ["không rõ"])[-1][:160]
+        print("   ⚠ Toàn văn chưa chạy xong (không chặn 5 sản phẩm trên): " + result["toan_van_ly_do"])
+    return rc
+
+
+def lenh_endnote(py: str, dash: Path, verified: bool) -> list[str]:
+    """Lệnh ⑧. Cổng liêm chính KHÔNG PASS sống (chạy ngoại tuyến · rc_loi do mạng) ⇒ thêm `--chua-xac-minh` (W10, 15/10/2026):
+    khối «EBM · ĐỌC NHANH» không được ghi «chép từ dashboard đã qua cổng» khi bản Word cùng bộ năm nói «CHƯA xác minh nguồn sống».
+    Công cụ chưa nhận cờ ⇒ argparse từ chối, ⑧ báo ⚠ và KHÔNG nạp (an toàn — không ghi khẳng định sai)."""
+    cmd = [py, str(ROOT / "tools" / "nap_endnote_chu_de.py"), "--file", str(dash), "--ap-dung", "--im-khi-chua-cau-hinh",
+           "--kho-toan-van", str(kho_canh_dashboard(dash))]
+    if not verified:
+        cmd.append("--chua-xac-minh")
+    return cmd
+
+
+def buoc_endnote(py: str, dash: Path, verified: bool) -> int | None:
+    """⑧ EndNote — best-effort như ⑤ ⑥, không đổi rc_final. Trả mã của công cụ (None nếu thiếu công cụ)."""
+    NAP_EN = ROOT / "tools" / "nap_endnote_chu_de.py"
+    if not NAP_EN.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/nap_endnote_chu_de.py")
+        return None
+    if not verified:
+        print("   ⓘ Cổng CHƯA xác minh nguồn sống ⇒ nạp kèm --chua-xac-minh (khối đọc nhanh không ghi «đã qua cổng»).")
+    rc, out = run(lenh_endnote(py, dash, verified))
+    for dong in out.splitlines():
+        if dong.strip():
+            print("   " + dong.strip())
+    if rc not in (0, 1):
+        print("   ⚠ EndNote chưa nạp được (không chặn 5 sản phẩm trên).")
+    return rc
 
 
 def ghi_sidecar_hash_data(dash: Path, word_path: str) -> None:
@@ -594,44 +685,22 @@ def main() -> int:
     # Chạy TRƯỚC EndNote để PDF vừa gom được gắn ngay lúc nhập. Cần mạng ⇒ chỉ khi --online. Best-effort: không đổi
     # rc_final; dưới pytest không gọi mạng thật.
     print("⑦ Toàn văn mọi trích dẫn…")
-    TV = ROOT / "tools" / "toan_van_theo_chu_de.py"
-    if os.environ.get("PYTEST_CURRENT_TEST"):
+    if _dang_kiem_thu():
         print("   ⚪ Bỏ qua trong lượt test.")
     elif not a.online:
         print("   ⚪ Bỏ qua (không có --online — cần mạng để gom toàn văn và dò đường đọc).")
-    elif not TV.exists():
-        print("   ⚠ Bỏ qua: thiếu tools/toan_van_theo_chu_de.py")
     else:
-        bd = result.get("ban_doc") or ""
-        bc_tv = (Path(bd).with_name(Path(bd).name.replace("_ban-doc.html", "_toan-van.md")) if bd.endswith("_ban-doc.html")
-                 else dash.parent / "derivatives" / f"{dash.stem}_toan-van.md")
-        rc, out = run([py, str(TV), "--dashboard", str(dash), "--moi-trich-dan", "--bao-cao", str(bc_tv)])
-        for dong in out.splitlines():
-            if dong.strip() and (dong.startswith("PHIẾU") or dong.startswith("→")):
-                print("   " + dong.strip())
-        if rc == 0:
-            result["toan_van"] = str(bc_tv)
-        else:
-            print("   ⚠ Toàn văn chưa chạy xong (không chặn 5 sản phẩm trên): "
-                  + (out.strip().splitlines() or ["không rõ"])[-1][:160])
+        buoc_toan_van(py, dash, result)
 
     # ── ⑧ EndNote: trích dẫn của chủ đề vào nhóm «EBM · <câu hỏi>» (bác sĩ yêu cầu 11/10/2026) ──
     # Best-effort NHƯ ⑤ ⑥: tiện ích quản lý tài liệu, KHÔNG phải cổng — không đổi rc_final. Máy chưa cấu hình
     # (~/.ebm-endnote.json) hoặc không phải Mac ⇒ một dòng ⚪. Dưới pytest KHÔNG BAO GIỜ chạm EndNote thật
     # (dashboard của test là dữ liệu giả — nạp vào thư viện thật của bác sĩ là làm bẩn tài liệu).
     print("⑧ EndNote…")
-    NAP_EN = ROOT / "tools" / "nap_endnote_chu_de.py"
-    if os.environ.get("PYTEST_CURRENT_TEST"):
+    if _dang_kiem_thu():
         print("   ⚪ Bỏ qua trong lượt test.")
-    elif not NAP_EN.exists():
-        print("   ⚠ Bỏ qua: thiếu tools/nap_endnote_chu_de.py")
     else:
-        rc, out = run([py, str(NAP_EN), "--file", str(dash), "--ap-dung", "--im-khi-chua-cau-hinh"])
-        for dong in out.splitlines():
-            if dong.strip():
-                print("   " + dong.strip())
-        if rc not in (0, 1):
-            print("   ⚠ EndNote chưa nạp được (không chặn 5 sản phẩm trên).")
+        buoc_endnote(py, dash, verified)
 
     # VÁ 13/08/2026 — TIÊU ĐỀ PHẢI NÓI ĐÚNG SỰ THẬT.
     # Bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể cả khi chỉ sinh được 3/5.

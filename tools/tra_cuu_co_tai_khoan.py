@@ -4,9 +4,11 @@
 
 DYNAMED (thêm cùng ngày, bác sĩ đã đăng nhập trên khung trình duyệt của app): trang «Recent Alerts» liệt kê cảnh báo chứng cứ mới
 (Evidence / Guideline Summary / Drug/Device Alert) kèm trích dẫn tạp chí dạng «(Ann Oncol 2026 May)» — KHÔNG có PMID/DOI (đo 02/10:
-trang chủ đề có 169 liên kết, 0 liên kết PubMed/DOI). Claude đọc văn bản trang (get_page_text) vào tệp TẠM ngoài repo, rồi
-`--dynamed-canh-bao <tệp>`: máy tách {loại, ngày, trích dẫn, chủ đề DynaMed, vài từ khoá} — KHÔNG lưu câu tóm tắt của DynaMed (nội
-dung có bản quyền) —, gắn chủ đề watchlist khi tên chủ đề DynaMed trùng từ khoá của chủ đề đó, tra ngược trích dẫn ra PMID trên PubMed
+trang chủ đề có 169 liên kết, 0 liên kết PubMed/DOI). Điều khoản EBSCO (đọc 03/10/2026: dùng AI phải được phép, TDM bị cấm) ⇒
+BÁC SĨ tự chép văn bản trang «Recent Alerts» vào một tệp ở máy; Claude chỉ chạy LỆNH, KHÔNG mở trang DynaMed và KHÔNG đọc tệp
+đó (HUONG_DAN_DYNAMED). Lệnh `--dynamed-canh-bao <tệp>`: máy tách {loại, ngày, trích dẫn, chủ đề DynaMed, vài từ khoá} —
+KHÔNG lưu câu tóm tắt của DynaMed (nội dung có bản quyền) —, gắn chủ đề watchlist khi tên chủ đề DynaMed trùng từ khoá của
+chủ đề đó, tra ngược trích dẫn ra PMID trên PubMed
 (`"<tạp chí>"[ta] AND <năm>[dp] AND <từ khoá>`; CHỈ nhận khi đúng MỘT bài), rồi đi CÙNG luồng xác minh/ứng viên như Scopus/WoS.
 Trích dẫn không phải tạp chí (FDA Product Information, NCCN…) ⇒ liệt kê riêng cho bác sĩ đọc, không tự thành ứng viên.
 
@@ -530,9 +532,18 @@ def tu_canh_bao_dynamed(canh_bao: list[dict], ds_watch: list[dict], tim: Callabl
 
 
 # ── xác minh (engine) ───────────────────────────────────────────────────────────────────────────────────────────────────
+def _goc_engine() -> Path:
+    """Gốc repo engine: bố cục LỒNG (cây OneDrive: REPO/medical-ebm-automation) trước, rồi ANH EM (phiên Cloud clone cạnh repo)
+    — TT-07, 15/10/2026: trước đây chỉ nhìn bố cục lồng nên `--nap --ghi` báo «engine vắng» trên phiên Cloud có engine."""
+    for b in (REPO, REPO.parent):
+        if (b / "medical-ebm-automation" / "app" / "services" / "fallback_verification.py").exists():
+            return b / "medical-ebm-automation"
+    return REPO / "medical-ebm-automation"
+
+
 def tao_xac_minh_engine() -> Callable[[dict], dict]:
     """Bộ xác minh THẬT của làn dự phòng; ném lỗi nếu engine vắng (người gọi trả mã 2, không ghi gì)."""
-    mea = REPO / "medical-ebm-automation"
+    mea = _goc_engine()
     if not (mea / "app" / "services" / "fallback_verification.py").exists():
         raise FileNotFoundError("không thấy medical-ebm-automation/app/services/fallback_verification.py")
     if str(mea) not in sys.path:
@@ -697,7 +708,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--nguon", choices=("scopus", "wos"), default=None, help="nguồn của tệp (mặc định suy từ định dạng)")
     ap.add_argument("--toi-da", type=int, default=TOI_DA_MAC_DINH)
     ap.add_argument("--ghi", action="store_true", help="(--nhap/--dynamed-canh-bao) nối ứng viên vào ung-vien-ngoai-quet.jsonl + báo cáo phiên")
-    ap.add_argument("--dynamed-canh-bao", default="", help="tệp văn bản trang DynaMed Recent Alerts (Claude đọc bằng get_page_text)")
+    ap.add_argument("--dynamed-canh-bao", default="",
+                    help="tệp văn bản trang DynaMed Recent Alerts do BÁC SĨ tự chép (Claude chỉ chạy lệnh: không mở trang, không đọc tệp)")
     ap.add_argument("--tat-ca", action="store_true", help="(--dynamed-canh-bao) tra cả cảnh báo không gắn được chủ đề watchlist")
     ap.add_argument("--huong-dan", action="store_true", help="in quy trình Scopus/WoS/DynaMed")
     a = ap.parse_args(argv)

@@ -17,7 +17,8 @@ _sp.loader.exec_module(M)
 
 
 def _g(cay: Path, *a: str) -> str:
-    return subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace").stdout.strip()
 
 
 def _repo_co_nhanh_chua_day(tmp_path: Path) -> Path:

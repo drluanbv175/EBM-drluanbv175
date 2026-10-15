@@ -61,7 +61,8 @@ def test_doi_chieu_openalex_mailto_theo_cau_hinh(khong_cau_hinh, monkeypatch, em
 
 def test_khong_email_ca_nhan_viet_cung_trong_ma():
     """Quét mã được theo dõi (không kể test — nơi địa chỉ giả dùng để thử bộ lọc PII là hợp lệ)."""
-    tep = subprocess.run(["git", "-C", str(GOC), "ls-files"], capture_output=True, text=True, check=True).stdout
+    tep = subprocess.run(["git", "-C", str(GOC), "ls-files"], capture_output=True, text=True, check=True,
+                         encoding="utf-8", errors="replace").stdout
     vi_pham = []
     for rel in tep.splitlines():
         p = Path(rel)

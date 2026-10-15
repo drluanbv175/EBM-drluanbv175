@@ -29,7 +29,7 @@ NHANH_YK = "feat/r1-1-2-design-gap-remediation"
 
 
 def _g(cay: Path, *a: str) -> None:
-    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True)
+    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
 def _repo(tmp_path: Path, url: str, head_symbolic: str | None = None) -> Path:

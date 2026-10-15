@@ -45,7 +45,22 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parent.parent
-DASH = REPO / "EBM-Dashboards"
+
+
+def _goc_du_lieu(ten: str) -> Path:
+    """Gốc dữ liệu ngoài git qua `ban_sao_tran.duong_goc` — vị trí LỒNG rồi ANH EM (TT-07, 15/10/2026: mọi công cụ của kho toàn
+    văn định vị CÙNG một cách; trước đó công cụ này cố định `REPO/EBM-Dashboards` trong khi bộ nạp EndNote dùng `duong_goc`).
+    Không thấy ở đâu ⇒ vị trí lồng (người gọi tự rào `is_dir()` — KHÔNG tự tạo kho)."""
+    try:
+        sp = importlib.util.spec_from_file_location("_bst_dtv", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        return m.duong_goc(ten, REPO) or (REPO / ten)
+    except Exception:  # noqa: BLE001 — thiếu bộ định vị ⇒ vị trí lồng như trước
+        return REPO / ten
+
+
+DASH = _goc_du_lieu("EBM-Dashboards")
 KHO = DASH / "toan_van_oa"
 PHIEU_DIR = REPO / "state" / "doc-toan-van"
 HAN_KHONG_TRUY_CAP_NGAY = 90      # bác sĩ báo «không có quyền đọc» ⇒ không nhắc lại trong 90 ngày
@@ -66,6 +81,15 @@ GHI_CHU_BAC_SI_MIN, GHI_CHU_BAC_SI_MAX = 5, 300
 # dạng `PMID-<n>_CHR.html|pdf` ngoài git; KHÔNG gọi là OA (tài khoản cá nhân của bác sĩ, điều khoản NXB không đổi).
 TRANG_THAI_MAY_CO_TOAN_VAN = ("oa_xml", "oa_khac", "tdm_nxb", "phien_chrome", "da_doc_trinh_duyet")
 TRANG_THAI_DA_PHU = TRANG_THAI_MAY_CO_TOAN_VAN + ("bac_si_da_doc_truc_tiep",)
+# Trạng thái mà kho có TỆP toàn văn thật (không tính hồ sơ trích xuất/«bác sĩ đã đọc») — tầng Unpaywall của gom chỉ bỏ qua các
+# PMID này (W3, 15/10/2026: trước đó bỏ qua MỌI PMID có tệp `PMID-<n>_*.*`, kể cả `_MCP.md`/trang giới thiệu ⇒ không thử lại mãi).
+TRANG_THAI_CO_TEP_TOAN_VAN = ("oa_xml", "oa_khac", "tdm_nxb", "phien_chrome")
+# TÊN TỆP HỢP LỆ trong kho (TT-01, 15/10/2026): chỉ tên khớp NGUYÊN mẫu mà các bộ ghi sinh ra — `_PMC<n>.xml` (gom tầng PMC,
+# Unpaywall→PMC) · `_UPW.pdf|html` (Unpaywall có giấy phép mở) · `_WTDM.pdf` (kênh TDM Wiley) · `_CHR.pdf|html` (phiên uỷ quyền
+# Chrome). Tệp tạm `.tam-<pid>` của lượt ghi hỏng, bản `.cu`, `PMID-<n>_MCP.md`… KHÔNG phải toàn văn (trước đó glob `_CHR.*`
+# khớp cả `PMID-<n>_CHR.pdf.tam-<pid>` ⇒ cổng BH161 tính «đã đọc» một tệp mà công cụ báo ghi hỏng). Trùng byte mẫu
+# `_TEN_TEP_TOAN_VAN` của verify_dashboard.py (có test chốt).
+TEN_TEP_TOAN_VAN = re.compile(r"PMID-(\d{1,9})_(PMC\d+\.xml|UPW\.(?:pdf|html)|WTDM\.pdf|CHR\.(?:pdf|html))")
 
 # Đo 02/10/2026, yêu cầu trung thực «EBM-Copilot/1.0» (scratchpad do_mien.py) — số đo, không phải luật của nhà xuất bản. Đo lại
 # 03/10/2026 13:04–13:10 (35/37 miền, cùng UA trung thực; không gọi scopus.com/dynamed.com): 6 miền đổi, ghi kèm ngày bên dưới.
@@ -372,6 +396,32 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "Digital & Publishing): cấm sao chép, cấm robot/scraping trích dữ liệu; không có điều về AI ⇒ «không rõ ⇒ xử "
                       "như cấm»",
         "duong_hop_le": "Copyright Clearance Center (copyright.com, ISSN 1969-6213) — trang Rights & Permissions"},
+    # Đọc 15/10/2026 (WebFetch phiên Cloud) — ba tổ chức ra guideline hô hấp có làn toàn văn ở engine (app/sources/gold_copd.py ·
+    # gina_asthma.py · bts_guidelines.py): trang pháp lý IM LẶNG về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Không có tiền tố DOI riêng
+    # (báo cáo GOLD/GINA không mang DOI; guideline BTS đăng ở Thorax mang tiền tố BMJ 10.1136/ đã có khoá) ⇒ khớp theo MIỀN.
+    "GOLD (Global Initiative for Chronic Obstructive Lung Disease)": {
+        "ket_luan": "cam", "doi": (), "mien": ("goldcopd.org",),
+        "nguon": "https://goldcopd.org/legal-policy/", "doc_luc": "2026-10-15",
+        "trich": "Reproduction of material published on this website is prohibited without the express written permission",
+        "loai_nguon": "Legal Policy của goldcopd.org (không ghi ngày cập nhật; văn bản ghi Copyright © 2016) + trang Copyright "
+                      "Requests (đọc qua WebFetch 15/10/2026): cấm tái bản khi chưa có văn bản cho phép; không có điều nào về "
+                      "AI/TDM ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "xin phép bằng văn bản qua form Copyright Requests của GOLD (goldcopd.org/copyright-requests/)"},
+    "GINA (Global Initiative for Asthma)": {
+        "ket_luan": "cam", "doi": (), "mien": ("ginasthma.org",),
+        "nguon": "https://ginasthma.org/legal-policy/", "doc_luc": "2026-10-15",
+        "trich": "Reproduction of material published on this website is prohibited without the express written permission",
+        "loai_nguon": "Legal Policy của ginasthma.org (không ghi ngày cập nhật; đọc qua WebFetch 15/10/2026): cấm tái bản khi chưa "
+                      "có văn bản cho phép (kèm ngoại lệ fair use); không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "xin phép bằng văn bản qua Copyright Request Form của GINA (ginasthma.org/copyright-requests/)"},
+    "BTS (British Thoracic Society)": {
+        "ket_luan": "cam", "doi": (), "mien": ("brit-thoracic.org.uk",),
+        "nguon": "https://www.brit-thoracic.org.uk/terms-and-conditions/", "doc_luc": "2026-10-15",
+        "trich": "use it for any other purpose other than for your personal non-commercial use",
+        "loai_nguon": "Terms and Conditions của brit-thoracic.org.uk (Last updated: May 2023; đọc qua WebFetch 15/10/2026): chỉ cho "
+                      "dùng cá nhân phi thương mại, cấm tác phẩm phái sinh và cấm đăng lại/phân phối; không có điều nào về AI/TDM "
+                      "⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "xin phép BTS bằng văn bản; guideline đăng ở Thorax đi theo khoá BMJ (10.1136/)"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
@@ -499,7 +549,11 @@ _MUC_DU = {
 _MUC_DU_MAC_DINH = ("thiet_ke", "quan_the", "ket_cuc_chinh")
 
 HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» (Claude làm; bác sĩ chỉ vượt chặn/đăng nhập trên trang):
-  0. `python3 tools/gom_toan_van_dashboard.py --queue <tệp>` trước — bài có bản OA thì dây chuyền OA lấy, KHÔNG cần làn này.
+  0. `python3 tools/gom_toan_van_dashboard.py --queue <tệp> --unpaywall` trước — bài có bản OA (PMC, hoặc bản mang giấy phép mở
+     qua Unpaywall — tầng 2) thì dây chuyền OA lấy, KHÔNG cần làn này.
+  0b. NXB có uỷ quyền đọc của bác sĩ VÀ bác sĩ đã nói câu uỷ quyền phiên ⇒ phiên LƯU bản sao `tools/phien_uy_quyen_chrome.py`
+     (`--mo "<nguyên văn>"` một lần; `--kiem <PMID> --url <URL>` trước MỖI bài; `--nhan <PMID> --tep <tệp> --url <URL>` từng tệp;
+     `--dung` khi bác sĩ nói «dừng») — lưu `toan_van_oa/PMID-<n>_CHR.*` (có bản quyền, KHÔNG phải OA). Ngoài phiên: theo các bước dưới.
   1. `python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-<W>.md` → phiếu: bài nào chưa có toàn văn, mở ở URL nào,
      nhóm theo MIỀN (bác sĩ vượt chặn MỘT lần cho mỗi miền là đọc được cả nhóm).
   2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN trước tiên (03/10/2026). NXB trong `DIEU_KHOAN_NXB` với kết luận «cấm» (Elsevier — DOI 10.1016/…,
@@ -645,39 +699,57 @@ def _bac_si_da_doc(kho: Path) -> dict[str, dict]:
 _GOM_TV = None
 
 
-def _upw_la_toan_van(kho: Path, pm: str) -> bool:
-    """Có bản `_UPW` là TOÀN VĂN thật: PDF, hoặc HTML qua cổng nội dung của `gom_toan_van_dashboard.la_toan_van_html` (BH160 —
-    04/10/2026: 15/27 `_UPW.html` trong kho là TRANG GIỚI THIỆU kho lưu trữ, từng bị tính «oa_khac»). Không nạp được cổng nội dung
-    ⇒ HTML không được tính (fail-closed: chưa biết ≠ có toàn văn)."""
+def tep_toan_van(kho: Path, pm: str) -> dict[str, list[Path]]:
+    """{'PMC' | 'UPW' | 'WTDM' | 'CHR': [tệp]} của MỘT PMID — CHỈ tên khớp nguyên `TEN_TEP_TOAN_VAN` (TT-01). Chưa xét nội dung."""
+    ra: dict[str, list[Path]] = {}
+    for q in sorted(Path(kho).glob(f"PMID-{pm}_*")):
+        m = TEN_TEP_TOAN_VAN.fullmatch(q.name)
+        if m and m.group(1) == str(pm) and q.is_file():
+            nguon = m.group(2).split(".", 1)[0]
+            ra.setdefault("PMC" if nguon.startswith("PMC") else nguon, []).append(q)
+    return ra
+
+
+def la_html_toan_van(q: Path) -> bool:
+    """HTML trong kho có phải TOÀN VĂN thật: cổng nội dung `gom_toan_van_dashboard.la_toan_van_html` (BH160 — 04/10/2026: 15/27
+    `_UPW.html` là TRANG GIỚI THIỆU kho lưu trữ; TT-04 — 15/10/2026: áp cả `_CHR.html`, trước đó tính mọi `_CHR.*` dù thân bài chỉ
+    có tóm tắt + «Purchase PDF»). Không nạp được cổng nội dung / không đọc được tệp ⇒ False (fail-closed: chưa biết ≠ có)."""
     global _GOM_TV
-    for q in kho.glob(f"PMID-{pm}_UPW.*"):
-        if q.suffix.lower() != ".html":
-            return True
-        if _GOM_TV is None:
-            try:
-                _GOM_TV = _nap_mo_dun("_gom_tv_bpcb", "gom_toan_van_dashboard.py")
-            except Exception:  # noqa: BLE001
-                _GOM_TV = False
-        if _GOM_TV and _GOM_TV.la_toan_van_html(_GOM_TV._van_ban_tho(q.read_bytes()))[0]:
-            return True
-    return False
+    if _GOM_TV is None:
+        try:
+            _GOM_TV = _nap_mo_dun("_gom_tv_bpcb", "gom_toan_van_dashboard.py")
+        except Exception:  # noqa: BLE001
+            _GOM_TV = False
+    if not _GOM_TV:
+        return False
+    try:
+        return bool(_GOM_TV.la_toan_van_html(_GOM_TV._van_ban_tho(Path(q).read_bytes()))[0])
+    except OSError:
+        return False
+
+
+def tep_toan_van_that(kho: Path, pm: str) -> list[Path]:
+    """Tệp toàn văn THẬT của MỘT PMID: tên hợp lệ (TT-01) và — với HTML — qua cổng nội dung (TT-04). XML/PDF giữ quy tắc cũ."""
+    return [q for ds in tep_toan_van(kho, pm).values() for q in ds if q.suffix != ".html" or la_html_toan_van(q)]
 
 
 def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | None = None) -> dict[str, str]:
     """Trạng thái từng PMID chỉ từ kho cục bộ (NGOẠI TUYẾN): oa_xml · oa_khac · tdm_nxb · phien_chrome · da_doc_trinh_duyet · bac_si_da_doc_truc_tiep ·
-    khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền»."""
+    khong_truy_cap · chua_co. «bac_si_da_doc_truc_tiep» xét TRƯỚC «khong_truy_cap»: bác sĩ đã đọc thì không còn là «không có quyền».
+    Tệp chỉ được tính khi tên khớp nguyên mẫu hợp lệ (TT-01); HTML (`_UPW`, `_CHR`) phải qua cổng nội dung toàn văn (BH160, TT-04)."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
     ktc = _khong_truy_cap(kho, hom_nay)
     bsd = _bac_si_da_doc(kho)
     ra = {}
     for pm in pmids:
-        if list(kho.glob(f"PMID-{pm}_*.xml")):
+        that = {q.name.split("_", 1)[1].split(".", 1)[0] for q in tep_toan_van_that(kho, pm)}
+        if any(x.startswith("PMC") for x in that):
             ra[pm] = "oa_xml"
-        elif _upw_la_toan_van(kho, pm):
+        elif "UPW" in that:
             ra[pm] = "oa_khac"
-        elif list(kho.glob(f"PMID-{pm}_WTDM.*")):
+        elif "WTDM" in that:
             ra[pm] = "tdm_nxb"
-        elif list(kho.glob(f"PMID-{pm}_CHR.*")):
+        elif "CHR" in that:
             ra[pm] = "phien_chrome"
         elif (kho / "trinh_duyet" / f"PMID-{pm}.json").exists():
             ra[pm] = "da_doc_trinh_duyet"
@@ -688,6 +760,21 @@ def bao_phu_cuc_bo(pmids: list[str], kho: Path | None = None, hom_nay: date | No
         else:
             ra[pm] = "chua_co"
     return ra
+
+
+def pmid_da_phu(kho: Path | None = None, them=(), hom_nay: date | None = None) -> set[str]:
+    """Tập PMID ĐÃ PHỦ (`TRANG_THAI_DA_PHU`) theo `bao_phu_cuc_bo` — xét mọi PMID có dấu vết trong kho (tệp ở gốc kho, hồ sơ
+    `trinh_duyet/PMID-<n>.json`, sổ «bác sĩ đã đọc») cộng `them`. Sổ phủ DO-PHU-OA.md của gom đếm qua hàm này (W8, 15/10/2026 —
+    trước đó đếm MỌI tệp `PMID-*` ⇒ trang giới thiệu kho, `_MCP.md`, tệp tạm đều thành «có toàn văn»): MỘT nguồn sự thật."""
+    kho = kho or KHO
+    ung = {str(x) for x in them}
+    for q in list(Path(kho).glob("PMID-*")) + list((Path(kho) / "trinh_duyet").glob("PMID-*.json")):
+        m = re.match(r"PMID-(\d{1,9})(?!\d)", q.name)
+        if m:
+            ung.add(m.group(1))
+    ung |= set(_bac_si_da_doc(Path(kho)))
+    tt = bao_phu_cuc_bo(sorted(ung), Path(kho), hom_nay)
+    return {pm for pm, t in tt.items() if t in TRANG_THAI_DA_PHU}
 
 
 # ── mạng (tiêm được trong test) ─────────────────────────────────────────────────────────────────────────────────────────
@@ -748,6 +835,13 @@ def duong_doc(pm: str, trang_thai: str, epmc: Callable[..., dict] = tra_epmc,
     if r.get("pmcid") and r.get("isOpenAccess") == "Y":
         return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "oa_chua_gom", "pmcid": r["pmcid"],
                 "ly_do": "có bản OA — chạy gom_toan_van_dashboard.py, không cần trình duyệt"}
+    # Bản thảo tác giả NIH trên PMC (Europe PMC `authMan: "Y"`; gói PMC Cloud ghi `license_code: "TDM"`): bác sĩ quyết 15/10/2026
+    # cho máy TẢI và ĐỌC toàn văn, KỂ CẢ bài của NXB «cam» (doctrine §2septies mục 1, ngoại lệ (b)) ⇒ xét TRƯỚC điều khoản NXB.
+    # `gom_toan_van_dashboard.py` tải bản này (NCBI efetch; NCBI chặn ⇒ PMC Cloud S3) — không mở trang nhà xuất bản.
+    if r.get("pmcid") and r.get("authMan") == "Y":
+        return {"pmid": pm, "doi": doi, "tieu_de": tieu_de, "cach": "oa_chua_gom", "pmcid": r["pmcid"],
+                "ly_do": "có bản thảo tác giả trên PMC (giấy phép TDM — bác sĩ cho máy tải/đọc 15/10/2026) — chạy "
+                         "gom_toan_van_dashboard.py, không cần trình duyệt"}
     urls = ((r.get("fullTextUrlList") or {}).get("fullTextUrl")) or []
     mien_phi = [u for u in urls if u.get("availabilityCode") in ("F", "OA") and u.get("url")]
     url = mien_phi[0]["url"] if mien_phi else ""
@@ -1086,10 +1180,13 @@ def nap(hs: dict, *, ghi: bool, xac_minh: Callable[[dict], dict] | None, kho: Pa
         bao.append(f"⚖ {uq['nxb']}: nạp theo QUYẾT ĐỊNH của bác sĩ ngày {uq['ngay']} — điều khoản NXB không đổi; trách nhiệm điều "
                    "khoản thuộc bác sĩ")
     pm = str(hs.get("pmid") or "").strip() if isinstance(hs, dict) else ""
-    if pm and (list(kho.glob(f"PMID-{pm}_*.xml")) or list(kho.glob(f"PMID-{pm}_UPW.*"))):
+    # Cùng nguồn sự thật `bao_phu_cuc_bo` (TT-01/TT-04, 15/10/2026): tệp tạm, trang giới thiệu kho lưu trữ `_UPW.html` KHÔNG chặn
+    # làn trình duyệt — trước đó glob `_UPW.*` coi chúng là «đã có toàn văn OA» nên bài đó không bao giờ nạp được hồ sơ.
+    tt_kho = bao_phu_cuc_bo([pm], kho, hom_nay)[pm] if re.fullmatch(r"\d{1,9}", pm) else ""
+    if tt_kho in ("oa_xml", "oa_khac"):
         loi.append("đã có toàn văn OA trong kho — dùng doc_sau_toan_van.py, không cần làn trình duyệt")
         bao.append(f"✗ {loi[-1]}")
-    elif pm and list(kho.glob(f"PMID-{pm}_WTDM.*")):
+    elif tt_kho == "tdm_nxb":
         loi.append("đã có toàn văn qua kênh TDM của NXB (PMID-<n>_WTDM.pdf) — đọc tệp đó, không mở bài bằng trình duyệt")
         bao.append(f"✗ {loi[-1]}")
     if loi:
@@ -1126,12 +1223,18 @@ def nap(hs: dict, *, ghi: bool, xac_minh: Callable[[dict], dict] | None, kho: Pa
     return 0, bao
 
 
-def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_nay: date | None = None) -> None:
+def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_nay: date | None = None) -> int:
+    """Ghi nối «bác sĩ không có quyền đọc» vào `trinh_duyet/khong-truy-cap.jsonl`. Mã: 0 đã ghi · 2 kho vắng (KHÔNG ĐO ĐƯỢC —
+    không tự tạo kho; TT-05 15/10/2026: trước đó mkdir(parents=True) dựng kho ma ở worktree/phiên Cloud, quyết định của bác sĩ rơi
+    vào thư mục không ai đọc, còn chốt ⚪ của công cụ đọc bị lật thành kết quả đo — đồng nhất với `danh_dau_bac_si_da_doc`)."""
     kho, hom_nay = kho or KHO, hom_nay or date.today()
+    if not kho.is_dir():
+        return 2
     tep = kho / "trinh_duyet" / "khong-truy-cap.jsonl"
     tep.parent.mkdir(parents=True, exist_ok=True)
     with open(tep, "a", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps({"pmid": pm, "ngay": hom_nay.isoformat(), "ly_do": ly_do}, ensure_ascii=False) + "\n")
+    return 0
 
 
 def kiem_ghi_chu_bac_si(ghi_chu: str | None) -> list[str]:
@@ -1272,7 +1375,9 @@ def main(argv: list[str] | None = None) -> int:
         if not re.fullmatch(r"\d{6,9}", a.khong_truy_cap) or not a.ly_do.strip():
             print("✗ cần PMID đúng dạng và --ly-do (vd «tạp chí đòi mua bài, bác sĩ không có quyền»)")
             return 3
-        danh_dau_khong_truy_cap(a.khong_truy_cap, a.ly_do.strip())
+        if danh_dau_khong_truy_cap(a.khong_truy_cap, a.ly_do.strip()) != 0:
+            print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {KHO} (EBM-Dashboards/ vắng ở cây này) — KHÔNG ghi (không tự tạo kho)")
+            return 2
         print(f"✓ PMID {a.khong_truy_cap}: ghi «không có quyền đọc» — không nhắc lại {HAN_KHONG_TRUY_CAP_NGAY} ngày.")
         return 0
     if a.bac_si_da_doc is not None:

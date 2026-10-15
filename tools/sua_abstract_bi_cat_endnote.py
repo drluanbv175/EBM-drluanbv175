@@ -352,9 +352,20 @@ def main(argv: list[str] | None = None) -> int:
         pmids = list(dict.fromkeys(d["pmid"] for f in files for d in N.trich_dinh_danh(doc(f) or {}) if d.get("pmid")))
         dash_goc = dash_goc or files[0].resolve().parent   # worktree ngoài cây OneDrive: kho nằm cạnh dashboard
 
-    ch = N.doc_cau_hinh()
     try:
+        # DN-02 (15/10/2026): xét NỀN TẢNG trước cấu hình — ngoài Mac không bao giờ bảo «chạy --ghi-cau-hinh».
+        if not N._la_mac():
+            raise N.KhongChayDuoc(
+                "sửa Abstract trong EndNote chỉ chạy trên macOS (AppleScript điều khiển EndNote) — máy này không sửa được "
+                f"bản ghi đã nạp. Đường duy nhất ngoài Mac là nhập tay: `{N.LENH_XUAT_XML}` (abstract lấy lại từ PubMed "
+                "qua bộ lọc đã vá) rồi File → Import — nhập như vậy tạo bản ghi MỚI, không sửa bản cũ.")
+        ch = N.doc_cau_hinh()
         if ch is None:
+            hong = N.ly_do_cau_hinh_hong()
+            if hong:  # TT-09: hỏng ≠ vắng
+                raise N.KhongChayDuoc(f"tệp cấu hình hỏng — xem {N.CAU_HINH} ({hong}); sửa tay, hoặc khai lại bằng "
+                                      "tools/nap_endnote_chu_de.py --ghi-cau-hinh \"<đường dẫn .enl>\" "
+                                      "--xac-nhan-cau-hinh-hong")
             raise N.KhongChayDuoc(f"chưa cấu hình thư viện EndNote ({N.CAU_HINH}) — "
                                   "chạy tools/nap_endnote_chu_de.py --ghi-cau-hinh \"<đường dẫn .enl>\"")
         endnote = N.EndNoteMac(ch["ung_dung"], Path(ch["thu_vien"]))

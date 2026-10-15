@@ -429,6 +429,48 @@ def khoi_bai_tong_thuat(so_tt: Path, hom: dt.date) -> str:
             f"<div class='luoi-doc'>{''.join(o)}</div></section>")
 
 
+def _dinh_danh_ung_vien(c: dict) -> str:
+    """«PMID <n>» hoặc «doi:<doi>» (đều thành link qua `_inline`). Ứng viên xác minh qua Crossref thường CHỈ có DOI (TT-12,
+    15/10/2026 — trước đó in «PMID » rỗng, mất định danh)."""
+    pm = str(c.get("pmid") or "").strip()
+    if pm:
+        return "PMID " + pm
+    doi = str(c.get("doi") or "").strip()
+    return ("doi:" + doi) if doi else "(không có PMID/DOI)"
+
+
+def khoi_ung_vien(uv: Path) -> str:
+    """Khối VI «Ứng viên ngoài vòng quét còn chờ» từ `surveillance/ung-vien-ngoai-quet.jsonl` (chỉ dòng CANDIDATE). Dòng JSONL
+    HỎNG (ghi dở — OneDrive, tiến trình bị cắt) bị BỎ QUA và ĐẾM, không làm sập cả hòm thư (TT-12, 15/10/2026). Vắng tệp/không
+    có gì ⇒ chuỗi rỗng."""
+    if not uv.exists():
+        return ""
+    con, hong = [], 0
+    for x in uv.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not x.strip():
+            continue
+        try:
+            c = json.loads(x)
+        except ValueError:
+            hong += 1
+            continue
+        if not isinstance(c, dict):
+            hong += 1
+            continue
+        if "CANDIDATE" in x:
+            con.append(c)
+    dong = [f"<div class='li'>{_inline(_dinh_danh_ung_vien(c))} — {_hoa_dau(html.escape(str(c.get('title') or '')[:110]))} "
+            f"<span class='mo'>({html.escape(str(c.get('nguon_phat_hien') or ''))})</span></div>"
+            for c in con]
+    if hong:
+        dong.append(f"<div class='li'>{_inline('🟠')} {hong} dòng hỏng trong {html.escape(uv.name)} bị bỏ qua — kiểm tệp "
+                    "(ghi dở?)</div>")
+    if not dong:
+        return ""
+    return ("<section><div class='dau-muc'><h2 class='muc'><span class='so'>VI.</span>Ứng viên ngoài vòng quét còn chờ</h2></div>"
+            + "\n".join(dong) + "</section>")
+
+
 def main() -> int:
     hom_nay = dt.datetime.now()
     khoi: list[str] = []
@@ -517,16 +559,9 @@ def main() -> int:
     except (OSError, subprocess.SubprocessError):
         pass
 
-    uv = REPO / "EBM-Dashboards" / "surveillance" / "ung-vien-ngoai-quet.jsonl"
-    if uv.exists():
-        con = [json.loads(x) for x in uv.read_text(encoding="utf-8").splitlines()
-               if x.strip() and "CANDIDATE" in x]
-        if con:
-            dong = [f"<div class='li'>{_inline('PMID ' + c['pmid'])} — {_hoa_dau(html.escape(c['title'][:110]))} "
-                    f"<span class='mo'>({html.escape(c.get('nguon_phat_hien', ''))})</span></div>"
-                    for c in con]
-            khoi.append("<section><div class='dau-muc'><h2 class='muc'><span class='so'>VI.</span>Ứng viên ngoài vòng quét còn chờ</h2></div>"
-                        + "\n".join(dong) + "</section>")
+    khoi_vi = khoi_ung_vien(REPO / "EBM-Dashboards" / "surveillance" / "ung-vien-ngoai-quet.jsonl")
+    if khoi_vi:
+        khoi.append(khoi_vi)
 
     RA.write_text(f"""<!DOCTYPE html>
 <html lang="vi"><head><meta charset="UTF-8">

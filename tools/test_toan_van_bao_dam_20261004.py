@@ -245,5 +245,6 @@ def test_buoc_tv_sau_a2_truoc_a4_va_khong_chan_chuoi(monkeypatch):
     a2, tvl = cac[i_a2]["lenh"], cac[i_tv]["lenh"]
     assert tvl[tvl.index("--a2-json") + 1] == a2[a2.index("--json-report") + 1] and str(db) in tvl
     assert op.phan_loai("TV-toan-van", 2)[0] not in op.DUNG_HET
+    assert op.phan_loai("TV-toan-van", -9)[0] not in op.DUNG_HET, "TV quá giờ (phụ trợ) không được dừng cả chuỗi (W1, 15/10)"
     khong_can = {"loai": "khong_can", "a2_arg": None, "lat_cat": [], "ly_do": "bản tin gộp"}
     assert not [b for b in _ke(monkeypatch, khong_can, [db]) if b["buoc"].startswith("TV")]

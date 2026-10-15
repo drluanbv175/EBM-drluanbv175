@@ -34,7 +34,7 @@ RUN_API = {"/runs": {"workflow_runs": [{"conclusion": "failure", "head_branch": 
 
 
 def _g(cay: Path, *a: str) -> None:
-    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True)
+    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
 @pytest.fixture()

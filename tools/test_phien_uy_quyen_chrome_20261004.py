@@ -132,9 +132,17 @@ def test_nhip_toi_thieu_giua_hai_bai_cung_mien(so):
 
 
 # ── tệp ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
-def _html(tmp_path, ma, pmid, them="", co=6000):
+# Thân bài TOÀN VĂN hợp lệ (≥ 2500 từ + ≥ 3 đề mục IMRaD — cổng nội dung dùng chung, TT-04 15/10/2026). Trước đó fixture là
+# 6 000 chữ «x» (một «từ»): chỉ đạt ngưỡng byte cũ, không phải toàn văn — phiên nay từ chối đúng như cổng `_UPW.html`.
+THAN_BAI_TOAN_VAN = ("<h2>Introduction</h2><p>" + "background " * 700 + "</p><h2>Methods</h2><p>" + "randomised " * 700
+                     + "</p><h2>Results</h2><p>" + "outcome " * 700 + "</p><h2>Discussion</h2><p>" + "interpretation " * 700
+                     + "</p>")
+
+
+def _html(tmp_path, ma, pmid, them="", co=None):
     t = tmp_path / f"bai-{pmid}.html"
-    t.write_text(f"<!-- ebm-phien:{ma} pmid:{pmid} url:{URL_ELS} -->\n<article>{'x' * co}{them}</article>", encoding="utf-8")
+    than = THAN_BAI_TOAN_VAN if co is None else "x" * co
+    t.write_text(f"<!-- ebm-phien:{ma} pmid:{pmid} url:{URL_ELS} -->\n<article>{than}{them}</article>", encoding="utf-8")
     return t
 
 
@@ -158,6 +166,7 @@ def test_nhan_luu_vao_kho_ghi_nhat_ky_khong_ghi_de(tmp_path, so):
     _mo(so)
     ma_phien = P.doc_phien(so)["ma"]
     kho = tmp_path / "kho"
+    kho.mkdir()                                   # kho thật phải có sẵn — phiên KHÔNG tự tạo kho (TT-05, 15/10/2026)
     t = _html(tmp_path, ma_phien, "34153348")
     ma, tb = P.nhan("34153348", t, URL_ELS, "10.1016/j.jvs.2021.04.073", bay_gio=T0, so=so, kho=kho, dtv=_dtv())
     assert ma == 0, tb
@@ -222,7 +231,7 @@ def _html_pdf(tmp_path, ma, pmid, pdf_bytes):
     import base64
     t = tmp_path / f"nhung-{pmid}.html"
     b64 = base64.b64encode(pdf_bytes).decode()
-    t.write_text(f"<!-- ebm-phien:{ma} pmid:{pmid} url:{URL_ELS} -->\n<article>{'x' * 6000}</article>"
+    t.write_text(f"<!-- ebm-phien:{ma} pmid:{pmid} url:{URL_ELS} -->\n<article>{THAN_BAI_TOAN_VAN}</article>"
                  f'<script type="application/pdf;base64" id="ebm-pdf">{b64}</script>', encoding="utf-8")
     return t
 
@@ -231,6 +240,7 @@ def test_pdf_nhung_tach_thanh_hai_tep(tmp_path, so):
     _mo(so)
     ma = P.doc_phien(so)["ma"]
     kho = tmp_path / "kho"
+    kho.mkdir()
     pdf = b"%PDF-1.7\n" + b"1" * 40_000
     t = _html_pdf(tmp_path, ma, "34024117", pdf)
     kq, tb = P.nhan("34024117", t, URL_ELS, bay_gio=T0, so=so, kho=kho, dtv=_dtv())

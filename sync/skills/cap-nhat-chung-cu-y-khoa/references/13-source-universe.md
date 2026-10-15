@@ -12,7 +12,7 @@ Tìm rộng đủ lớp nguồn để bác sĩ có chứng cứ tốt nhất có
 4. **Trial registry:** ClinicalTrials.gov, WHO ICTRP, EU Clinical Trials Register, ISRCTN. Dùng để phát hiện nghiên cứu đang/chưa công bố hoặc posted results; registry không có kết quả peer-reviewed không đủ để đổi thực hành.
 5. **An toàn thuốc:** openFDA, FDA MedWatch/recalls, EMA/PRAC, MHRA Drug Safety Update, DailyMed, Drugs@FDA, LactMed, WHO VigiAccess khi phù hợp. Ưu tiên safety communication/label chính thức.
 6. **Retraction/integrity:** PubMed publication type/comment, Crossmark/publisher page, Retraction Watch khi có quyền truy cập. Mọi paper quan trọng phải được kiểm trạng thái rút bài/withdrawal/expression of concern khi có công cụ.
-7. **Full text/citation context:** Unpaywall, PubMed Central, publisher full text, Semantic Scholar/citation graph. Dùng để đọc/định vị toàn văn hợp pháp và bối cảnh trích dẫn; không thay thế nguồn gốc.
+7. **Full text/citation context:** Unpaywall, PubMed Central, publisher full text (CHỈ khi điều khoản AI/TDM của NXB cho phép hoặc có uỷ quyền ghi sổ — bảng `DIEU_KHOAN_NXB` của `tools/doc_toan_van_co_nguoi.py`, doctrine `_CONNECTOR-CHUNG-CU.md` §2septies), Semantic Scholar/citation graph. Dùng để đọc/định vị toàn văn hợp pháp và bối cảnh trích dẫn; không thay thế nguồn gốc.
 
 ## Luật fail-closed
 

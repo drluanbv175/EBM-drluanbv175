@@ -22,6 +22,21 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    hiện hành của hiệp hội cho chủ đề + hệ phân mức nguyên bản:
    · Có 📌 BẢN CHỤP trong `EBM-Dashboards/guideline_snapshot/` → ĐỌC bản chụp
      (PDF đọc bằng Read theo trang), trích kèm «bản chụp <ngày>».
+   · ĐIỀU KHOẢN NXB TRƯỚC KHI ĐỌC/CHỤP (thêm 15/10/2026 — doctrine
+     `_CONNECTOR-CHUNG-CU.md` §2septies): «máy thăm được» KHÔNG có nghĩa «được đọc
+     bằng AI». Tra bảng `DIEU_KHOAN_NXB` bằng `nxb_cua(doi, url, tieu_de)` của
+     `tools/doc_toan_van_co_nguoi.py` (guideline ESC xét theo TIÊU ĐỀ, mọi nơi đăng; ADA,
+     AHA/WK, JACC/Elsevier… theo tiền tố DOI/miền) — một dòng, in «khoá · kết luận · uỷ quyền»:
+     `python3 -c "import sys; sys.path.insert(0, 'tools'); import doc_toan_van_co_nguoi as d; t = d.nxb_cua(doi='<DOI>', url='<URL>', tieu_de='<tiêu đề>'); print(t[0], (t[1] or {}).get('ket_luan'), d.uy_quyen_bac_si(t[0]))"`
+     (bài có PMID: `python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID>` in luôn đường đọc).
+     Khoá «cam» mà CHƯA có uỷ quyền ghi sổ (cột uỷ quyền in None) ⇒ KHÔNG WebFetch,
+     KHÔNG mở Browser pane, KHÔNG `luu_guideline.py`; chỉ dùng bản PMC OA mang giấy phép
+     CC của CHÍNH bài, abstract/siêu dữ liệu, hoặc để bác sĩ tự đọc rồi ghi
+     `python3 tools/doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu "…" --ghi`.
+     Có uỷ quyền ⇒ chỉ đọc qua Chrome của bác sĩ, KHÔNG chụp lưu bằng `luu_guideline.py`
+     (ngoại lệ lưu DUY NHẤT là phiên uỷ quyền lưu bản sao `_CHR`, §2septies mục 7–8).
+     NXB CHƯA KIỂM (nxb_cua trả None) ⇒ đọc TRANG ĐIỀU KHOẢN trước
+     (§2septies mục 4); cho phép rõ hoặc giấy phép CC mới đi tiếp các gạch dưới.
    · Nguồn «✓ máy thăm được» → WebFetch/đọc thẳng; nguồn «⛔ chặn máy» → mở
      bằng Browser pane (egress qua cổng đi được) đọc trang guideline thật.
    · Guideline vừa đọc được bản mở → `python3 tools/luu_guideline.py` chụp lại
@@ -45,11 +60,26 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    d. TOÀN VĂN: `python3 tools/gom_toan_van_dashboard.py --pmid <các PMID chốt>`
       (thêm `--unpaywall` để phủ tầng 2 OA — từ 04/10/2026 tầng này CHỈ lưu bản mang giấy phép mở
       và loại trang giới thiệu kho lưu trữ; bản OA không giấy phép mở của NXB «cấm» đọc qua làn trình duyệt
-      có phiên uỷ quyền, NXB chưa kiểm điều khoản thì đọc trang điều khoản trước — cùng luật cho
-      bản `_MCP.md` dưới) → `python3 tools/doc_sau_toan_van.py
-      --pmid ...` → ĐỌC bản `EBM-Dashboards/toan_van_oa/doc_sau/PMID-*.md`;
-      còn thiếu thì gọi MCP `pubmed-search` `get_fulltext` (chuỗi OA nhiều tầng)
-      và lưu markdown về `EBM-Dashboards/toan_van_oa/PMID-<n>_MCP.md`.
+      có phiên uỷ quyền, NXB chưa kiểm điều khoản thì đọc trang điều khoản trước) →
+      `python3 tools/doc_sau_toan_van.py --pmid ...` → ĐỌC bản
+      `EBM-Dashboards/toan_van_oa/doc_sau/PMID-*.md`;
+      còn thiếu thì QUA CỔNG ĐIỀU KHOẢN NHƯ BƯỚC 0, TRƯỚC KHI GỌI (sửa 15/10/2026: chuỗi OA nhiều
+      tầng của `pubmed-search` có thể trả bản đọc miễn phí của NXB hoặc bản Unpaywall KHÔNG mang giấy
+      phép CC — đọc bản đó là vi phạm §2septies mục 1, rẽ nhánh SAU khi đọc là quá muộn): tra `nxb_cua`
+      (lệnh một dòng ở bước 0, hoặc `doc_toan_van_co_nguoi.py --pmid <PMID>`). Khoá «cam» (kể cả khi
+      có uỷ quyền — uỷ quyền chỉ mở làn Chrome, §2septies mục 8) ⇒ KHÔNG gọi `get_fulltext`; chỉ đường
+      bản PMC — OA mang giấy phép CC của CHÍNH bài, hoặc bản thảo tác giả «TDM» (bác sĩ quyết 15/10/2026,
+      §2septies mục 1 ngoại lệ (b)) — qua `gom_toan_van_dashboard.py` (gom vào kho, cổng thấy), làn
+      trình duyệt có uỷ quyền, hoặc bác sĩ tự đọc rồi ghi `--bac-si-da-doc`. NXB CHƯA KIỂM (nxb_cua trả
+      None) ⇒ đọc TRANG ĐIỀU KHOẢN trước (§2septies mục 4); chỉ khi điều khoản cho phép rõ, hoặc bài mang
+      giấy phép CC của CHÍNH bài (biết TRƯỚC khi đọc, từ siêu dữ liệu/PMC OA) mới có thể ĐỌC bản MCP
+      `pubmed-search` `get_fulltext` ngay trong phiên — KHÔNG lưu tệp markdown riêng vào `toan_van_oa/`
+      (hậu tố đó không công cụ nào nhận, cổng/sổ vẫn coi «chưa đọc» và tệp còn chặn vĩnh viễn tầng Unpaywall).
+      Ghi nhận đã đọc qua làn CÓ SẴN: bài của NXB ngoài bảng «cấm» (giấy phép CC hoặc điều khoản cho
+      phép rõ) ⇒ hồ sơ trích xuất `python3 tools/doc_toan_van_co_nguoi.py --nap <hồ sơ> --ghi` (khai
+      `dieu_khoan` `ket_luan: giay_phep_cc` — hoặc `cho_phep`; khuôn: `--mau`); bản PMC của NXB «cấm» (OA mang CC, hoặc bản thảo tác giả «TDM») ⇒
+      `gom_toan_van_dashboard.py` gom vào kho (cổng BH161 thấy; `tools/doc_toan_van_pmc.py` chỉ IN đoạn để đọc, không ghi nhận); không giấy phép mở ⇒ làn trình duyệt có bác
+      sĩ (`--huong-dan`) hoặc bác sĩ tự đọc rồi ghi `--bac-si-da-doc <PMID> --ghi-chu "…" --ghi`.
       Kho guideline chụp: `EBM-Dashboards/guideline_snapshot/` (nếu có bản chụp
       liên quan thì trích từ đó, ghi ngày chụp).
 

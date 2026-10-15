@@ -5700,10 +5700,12 @@ def bh101_hop_dong_nguon_thi_hanh_duoc_bang_may():
         if not f.exists():
             return False, f"mất {f.name} — hợp đồng nguồn lại chỉ còn trên giấy"
     r = subprocess.run([sys.executable, str(vd), "--self-test"],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True, timeout=60,
+                       encoding="utf-8", errors="replace")
     if r.returncode != 0 or "LỌT" in (r.stdout or ""):
         return False, "validator không bắt đủ 5 ca xấu — hợp đồng nguồn thành lời khuyên"
-    r2 = subprocess.run([sys.executable, str(vd)], capture_output=True, text=True, timeout=60)
+    r2 = subprocess.run([sys.executable, str(vd)], capture_output=True, text=True, timeout=60,
+                        encoding="utf-8", errors="replace")
     if r2.returncode != 0:
         return False, f"data/sources.json thật đang vi phạm hợp đồng: {(r2.stdout or '').strip()[:200]}"
     return True, "hợp đồng nguồn thi hành được bằng máy + data/sources.json thật đang sạch"
@@ -7425,6 +7427,8 @@ def bh161_he_thong_bao_dam_toan_van():
         return False, "bước TV không nằm giữa A2 và A4/B2"
     if op.phan_loai("TV-toan-van", 2)[0] in op.DUNG_HET:
         return False, "lỗi bước toàn văn (phụ trợ) làm dừng cả chuỗi"
+    if op.phan_loai("TV-toan-van", -9)[0] in op.DUNG_HET:  # 15/10 (W1): nhánh -9 chung chạy trước nhánh theo bước
+        return False, "bước toàn văn (phụ trợ) QUÁ GIỜ làm dừng cả chuỗi — A4/B2/B5 không chạy"
     return True, "BẢO ĐẢM đọc toàn văn: chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn) · bác sĩ đã đọc được tính · chuỗi theo chủ đề có bước TV"
 
 
@@ -7569,8 +7573,12 @@ def bh158_phien_uy_quyen_chrome_luu_ban_sao():
     dtv = _ty.SimpleNamespace(DIEU_KHOAN_NXB=bang, nxb_cua=nxb_cua, uy_quyen_bac_si=lambda ten, hom_nay=None: {"nxb": ten})
     t0 = _dt(2026, 10, 4, 9, 0, tzinfo=_tz(_td(hours=7)))
     url = "https://www.sciencedirect.com/science/article/pii/S0741521421008934"
+    # Thân bài TOÀN VĂN hợp lệ (≥ 2500 từ + ≥ 3 đề mục IMRaD — 15/10/2026 phiên dùng CÙNG cổng nội dung với `_UPW.html`; kho phải
+    # có sẵn — phiên không tự tạo kho). Fixture cũ «x»×6000 chỉ đạt ngưỡng byte, không phải toàn văn.
+    than = "".join(f"<h2>{dm}</h2><p>" + "word " * 700 + "</p>" for dm in ("Introduction", "Methods", "Results", "Discussion"))
     with _tf.TemporaryDirectory() as td:
         so, kho = Path(td) / "phien.json", Path(td) / "kho"
+        kho.mkdir()
         if pu.mo("ok", bay_gio=t0, tep=so, dtv=dtv)[0] != 3:
             return False, "phiên mở được bằng lời quá ngắn — agent có thể tự mở phiên thay bác sĩ"
         if pu.mo("uỷ quyền phiên: đọc và lưu toàn văn các bài hôm nay", bay_gio=t0, tep=so, dtv=dtv)[0] != 0:
@@ -7583,18 +7591,18 @@ def bh158_phien_uy_quyen_chrome_luu_ban_sao():
             return False, "phiên KHÔNG hết hạn khi sang ngày — một lần nói thành uỷ quyền vĩnh viễn"
         ma = pu.doc_phien(so)["ma"]
         bai = Path(td) / "a.html"
-        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{'x' * 6000}<a>Sign out</a></article>",
+        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{than}<a>Sign out</a></article>",
                        encoding="utf-8")
         if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 3:
             return False, "HTML có giao diện tài khoản (Sign out) vẫn được lưu — lộ thông tin tài khoản bác sĩ"
-        bai.write_text(f"<!-- ebm-phien:SAI pmid:34153348 url:{url} -->\n<article>{'x' * 6000}</article>", encoding="utf-8")
+        bai.write_text(f"<!-- ebm-phien:SAI pmid:34153348 url:{url} -->\n<article>{than}</article>", encoding="utf-8")
         if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 3:
             return False, "HTML không mang dấu phiên đúng vẫn được nhận — tệp lạ lọt vào kho"
-        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{'x' * 6000}</article>", encoding="utf-8")
+        bai.write_text(f"<!-- ebm-phien:{ma} pmid:34153348 url:{url} -->\n<article>{than}</article>", encoding="utf-8")
         if pu.nhan("34153348", bai, url, bay_gio=t0, so=so, kho=kho, dtv=dtv)[0] != 0 or not (kho / "PMID-34153348_CHR.html").exists():
             return False, "tệp hợp lệ trong phiên không vào kho PMID-<n>_CHR.html"
         bai2 = Path(td) / "b.html"
-        bai2.write_text(f"<!-- ebm-phien:{ma} pmid:35598721 url:{url} -->\n<article>{'y' * 6000}</article>", encoding="utf-8")
+        bai2.write_text(f"<!-- ebm-phien:{ma} pmid:35598721 url:{url} -->\n<article>{than}</article>", encoding="utf-8")
         if pu.nhan("35598721", bai2, url, bay_gio=t0 + _td(seconds=10), so=so, kho=kho, dtv=dtv)[0] != 3:
             return False, "hai bài cùng miền cách 10 giây vẫn lưu — mất nhịp người đọc, dễ bị NXB khoá tài khoản"
     dtv_mod = _nap(REPO / "tools/doc_toan_van_co_nguoi.py", "_bh158_dtv")

@@ -17,7 +17,8 @@ toàn: PMID đã có XML thì bỏ qua (idempotent).
 
 Dùng:  python3 tools/gom_toan_van_dashboard.py            # mọi dashboard
        python3 tools/gom_toan_van_dashboard.py --file EBM-Dashboards/WebDashboard_X.html
-Mã thoát: 0 = chạy trọn · 2 = hạ tầng (elink chết toàn phần).
+Mã thoát: 0 = chạy trọn · 2 = KHÔNG ĐO ĐƯỢC (hạ tầng PMC chết toàn phần · kho `toan_van_oa/` vắng — không tự tạo ·
+thiếu engine medical-ebm-automation).
 """
 from __future__ import annotations
 
@@ -40,8 +41,55 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parents[1]
-DASH = REPO / "EBM-Dashboards"
+
+
+def _goc_du_lieu(ten: str) -> Path:
+    """Gốc dữ liệu ngoài git qua `ban_sao_tran.duong_goc` (lồng rồi anh em — TT-07, 15/10/2026: cùng cách định vị với mọi công
+    cụ của kho toàn văn). Không thấy ⇒ vị trí lồng; `main` rào `KHO.is_dir()` và KHÔNG tự tạo kho (TT-05/W9)."""
+    try:
+        sp = importlib.util.spec_from_file_location("_bst_gtvd_goc", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        return m.duong_goc(ten, REPO) or (REPO / ten)
+    except Exception:  # noqa: BLE001 — thiếu bộ định vị ⇒ vị trí lồng như trước
+        return REPO / ten
+
+
+DASH = _goc_du_lieu("EBM-Dashboards")
 KHO = DASH / "toan_van_oa"
+
+
+def _ghi_nguyen_tu(dich: Path, du_lieu: bytes) -> None:
+    """Ghi qua tệp tạm rồi `os.replace` (TT-01, 15/10/2026): đứt giữa chừng (hết đĩa, tiến trình bị giết) không để lại tệp CỤT
+    mang tên hợp lệ — tệp cụt từng được tính là «có toàn văn». Lỗi ⇒ gỡ tệp tạm rồi ném lại (người gọi xử lý như lỗi một bài)."""
+    tam = dich.with_name(dich.name + f".tam-{os.getpid()}")
+    try:
+        tam.write_bytes(du_lieu)
+        os.replace(tam, dich)
+    except OSError:
+        try:
+            tam.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
+
+
+_NGUON = None
+
+
+def _nap_nguon_su_that():
+    """`doc_toan_van_co_nguoi` — NGUỒN SỰ THẬT độ phủ (`bao_phu_cuc_bo`), nạp RIÊNG với `_nap_dtv` (bảng điều khoản, test thay được).
+    Lỗi ⇒ None: người gọi báo «KHÔNG ĐO ĐƯỢC», không lùi về đếm tên tệp."""
+    global _NGUON
+    if _NGUON is None:
+        try:
+            sp = importlib.util.spec_from_file_location("_dtv_gom_nguon", REPO / "tools" / "doc_toan_van_co_nguoi.py")
+            mod = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(mod)
+            _NGUON = mod
+        except Exception:  # noqa: BLE001
+            _NGUON = False
+    return _NGUON or None
 
 
 def _email_lich_su() -> str:
@@ -147,7 +195,8 @@ def la_toan_van_html(vb: str) -> tuple[bool, str]:
 def dem_toan_van(kho: Path) -> dict[str, set[str]]:
     """PMID có toàn văn trong kho theo LOẠI tệp ở gốc kho (XML JATS · PDF/HTML Unpaywall · _CHR phiên Chrome · TDM…) cộng
     `trinh_duyet/` (đọc qua làn trình duyệt có bác sĩ — hồ sơ trích xuất, KHÔNG lưu bản). Trước 04/10 sổ phủ chỉ đếm `*.xml`
-    nên báo thấp hơn thật (203/676 trong khi 337/676 PMID đã có toàn văn hoặc đã được đọc toàn văn)."""
+    nên báo thấp hơn thật (203/676 trong khi 337/676 PMID đã có toàn văn hoặc đã được đọc toàn văn). Từ 15/10 (W8) chỉ là THÔNG
+    TIN PHỤ theo tên tệp — số tổng độ phủ đi qua `doc_toan_van_co_nguoi.pmid_da_phu` (nguồn sự thật `bao_phu_cuc_bo`)."""
     loai: dict[str, set[str]] = {}
     for q in kho.glob("PMID-*"):
         m = re.match(r"PMID-(\d+)(?:_([A-Za-z]+))?", q.name)
@@ -425,13 +474,13 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
             if m_pmc and gom is not None:
                 xml = gom.tai_toan_van(m_pmc.group(1))
                 if xml:
-                    (KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml").write_bytes(xml)
+                    _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml", xml)
                     moi_tai += 1
                     print(f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)})")
                     time.sleep(0.4)
                     continue
             if du_lieu[:5] == b"%PDF-":
-                (KHO / f"PMID-{pm}_UPW.pdf").write_bytes(du_lieu)
+                _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.pdf", du_lieu)
                 moi_tai += 1
                 print(f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB)")
                 time.sleep(0.4)
@@ -444,7 +493,7 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
                 print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu")
                 con_thieu.append(pm)
                 continue
-            (KHO / f"PMID-{pm}_UPW.html").write_bytes(du_lieu)
+            _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.html", du_lieu)
             moi_tai += 1
             print(f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật)")
             time.sleep(0.4)
@@ -529,7 +578,12 @@ def main() -> int:
             qt = Path(q).read_text(encoding="utf-8", errors="replace")
             pmids |= set(re.findall(r"PMID[ :]?(\d{6,9})", qt))
     pmids |= {pm for pm in (a.pmid or []) if re.fullmatch(r"\d{6,9}", pm)}
-    KHO.mkdir(parents=True, exist_ok=True)
+    # KHÔNG tự tạo kho (TT-05/W9, 15/10/2026): trước đó `KHO.mkdir(parents=True)` dựng `EBM-Dashboards/toan_van_oa` ngay trong cây
+    # git của bản sao trần/worktree ⇒ cờ «bản sao trần» đảo, các chốt ⚪ thành FAIL, và lượt sau ghi vào kho ma không ai đọc.
+    if not KHO.is_dir():
+        print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {KHO} (EBM-Dashboards/ vắng ở cây này) — KHÔNG tự tạo kho, KHÔNG gom. "
+              "Máy thật lần đầu: tạo thư mục kho bằng tay rồi chạy lại.")
+        return 2
     da_co = {re.search(r"PMID-(\d+)_", p.name).group(1) for p in KHO.glob("PMID-*.xml")}
     # Sổ «không lấy được» CÓ HẠN DÙNG 30 ngày (vá 15/08 chiều — bản đầu là danh
     # sách trần, tức SỔ ĐEN VĨNH VIỄN: một bài vào PMC-OA muộn (embargo hết,
@@ -555,7 +609,12 @@ def main() -> int:
         return 0
     # (họ lỗi return-sớm 12/08: khi --unpaywall bật, KHÔNG thoát ở đây — tầng 2
     # nằm sau và xét tập thiếu độc lập với sổ back-off của tầng PMC)
-    gom = _nap_gom()
+    try:
+        gom = _nap_gom()
+    except Exception as exc:  # noqa: BLE001 — vắng engine ⇒ một dòng ⚪, không traceback (W9, 15/10/2026)
+        print(f"⚪ KHÔNG ĐO ĐƯỢC — thiếu engine medical-ebm-automation/tools/gom_toan_van_oa.py ({type(exc).__name__}) — "
+              "bỏ gom, KHÔNG kết luận độ phủ.")
+        return 2
     # NCBI hỏng/chặn ⇒ Europe PMC (11/10/2026). Trước đây elink hỏng là `return 2` NGAY — bỏ luôn tầng Unpaywall.
     ha_tang_loi, qua_epmc = False, False
     anh_xa: dict[str, tuple[str, bool | None]] = {}
@@ -585,7 +644,7 @@ def main() -> int:
         # «không-OA» — đó là CHƯA TẢI ĐƯỢC, lần chạy sau thử lại (idempotent).
         xml, ket_luan = tai_jats(gom, pmcid, la_oa, trang)
         if ket_luan == "ok":
-            (KHO / f"PMID-{pm}_PMC{pmcid}.xml").write_bytes(xml)
+            _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{pmcid}.xml", xml)
             moi += 1
             time.sleep(0.34)
         elif ket_luan == "khong_oa":
@@ -606,8 +665,14 @@ def main() -> int:
         # Tầng 2 xét TRỰC TIẾP tập còn thiếu trong kho — KHÔNG để sổ 30-ngày của
         # tầng PMC chặn (sổ đó ghi «không có bản PMC»; Unpaywall là nguồn KHÁC
         # chưa từng thử — back-off của nguồn này không được gác cửa nguồn kia).
-        da_bat_ky = {re.search(r"PMID-(\d+)_", q.name).group(1)
-                     for q in KHO.glob("PMID-*_*.*")}
+        # Bỏ qua CHỈ PMID mà kho đã có TỆP toàn văn thật theo nguồn sự thật `bao_phu_cuc_bo` (W3, 15/10/2026): trước đó mọi tệp
+        # `PMID-<n>_*.*` — kể cả `_MCP.md`, tệp tạm, trang giới thiệu kho `_UPW.html` — loại PMID khỏi tầng Unpaywall VĨNH VIỄN.
+        nguon = _nap_nguon_su_that()
+        if nguon is not None:
+            da_bat_ky = {pm for pm, t in nguon.bao_phu_cuc_bo(sorted(pmids), KHO).items()
+                         if t in nguon.TRANG_THAI_CO_TEP_TOAN_VAN}
+        else:  # không nạp được nguồn sự thật ⇒ giữ quy tắc thận trọng cũ (không thử lại PMID đã có bất kỳ tệp nào)
+            da_bat_ky = {re.search(r"PMID-(\d+)_", q.name).group(1) for q in KHO.glob("PMID-*_*.*")}
         thu = sorted(pmids - da_bat_ky)
         if thu:
             print(f"  Tầng 2 Unpaywall: thử {len(thu)} bài không có bản PMC…")
@@ -624,16 +689,20 @@ def main() -> int:
     ghi_chu.write_text("\n".join(f"{pm} {ngay}" for pm, ngay in sorted(so_moi.items()))
                        + "\n", encoding="utf-8")
     loai = dem_toan_van(KHO)
-    da_co_sau = set().union(*loai.values()) if loai else set()
-    tong_co = len(da_co_sau)
-    phu_quet = len(pmids & da_co_sau)
+    # Số TỔNG đi qua nguồn sự thật `bao_phu_cuc_bo` (W8, 15/10/2026) — trước đó là hợp mọi tên tệp `PMID-*` (trang giới thiệu kho
+    # lưu trữ, `_MCP.md`, tệp tạm đều thành «có toàn văn»; «bác sĩ đã đọc» lại không được đếm) ⇒ sổ báo phủ cao hơn thật.
+    # Đếm theo loại tệp giữ làm THÔNG TIN PHỤ. Không nạp được nguồn sự thật ⇒ «KHÔNG ĐO ĐƯỢC», không lùi về đếm tên tệp.
+    nguon = _nap_nguon_su_that()
+    da_co_sau = nguon.pmid_da_phu(KHO, pmids) if nguon is not None else None
+    tong_co = len(da_co_sau) if da_co_sau is not None else "KHÔNG ĐO ĐƯỢC"
+    phu_quet = len(pmids & da_co_sau) if da_co_sau is not None else "?"
     chi_tiet = " · ".join(f"{k} {len(v)}" for k, v in sorted(loai.items()))
     bo_qua = "".join(f"  - {pm} (doi:{d}) — {ly}\n" for pm, d, ly in BO_QUA_UNPAYWALL)
     (KHO / "DO-PHU-OA.md").write_text(
         f"# ĐỘ PHỦ TOÀN VĂN — kho dùng chung dashboard — {date.today().isoformat()}\n\n"
-        f"- Kho có toàn văn (hoặc đã đọc toàn văn qua làn trình duyệt) cho **{tong_co}** PMID; tập vừa quét phủ "
-        f"**{phu_quet}/{len(pmids)}**\n"
-        f"- Theo loại (một PMID có thể nhiều loại): {chi_tiet or '—'}\n"
+        f"- Kho có toàn văn (hoặc đã đọc toàn văn qua làn trình duyệt / bác sĩ đã đọc trực tiếp) cho **{tong_co}** PMID; "
+        f"tập vừa quét phủ **{phu_quet}/{len(pmids)}** — theo nguồn sự thật `doc_toan_van_co_nguoi.bao_phu_cuc_bo`\n"
+        f"- Theo loại TÊN tệp (thông tin phụ, KHÔNG phải độ phủ — một PMID có thể nhiều loại): {chi_tiet or '—'}\n"
         f"- Lượt này: +{moi} tải mới · {len(khong_oa)} có PMC nhưng không-OA · "
         f"{len(khong_pmc)} không có bản PMC\n"
         + (f"- PMC Cloud ghi ĐÃ RÚT — không lưu, tra chuỗi rút bài: {', '.join(rut_bai_pmc)}\n" if rut_bai_pmc else "")

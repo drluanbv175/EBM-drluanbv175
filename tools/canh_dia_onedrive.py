@@ -219,7 +219,8 @@ def cai_launchd(ap_dung: bool, go: bool) -> int:
     duong.parent.mkdir(parents=True, exist_ok=True)
     duong.write_bytes(noi_dung)
     subprocess.run(["launchctl", "bootout", f"{dich}/{NHAN_LAUNCHD}"], capture_output=True)
-    r = subprocess.run(["launchctl", "bootstrap", dich, str(duong)], capture_output=True, text=True)
+    r = subprocess.run(["launchctl", "bootstrap", dich, str(duong)], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
     if r.returncode != 0:
         print(f"✗ launchctl bootstrap lỗi (mã {r.returncode}): {(r.stderr or '').strip()[:200]}")
         return 2

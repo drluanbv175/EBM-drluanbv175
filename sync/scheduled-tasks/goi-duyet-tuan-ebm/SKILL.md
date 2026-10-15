@@ -29,8 +29,9 @@ QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 4. Với 7 PMID được chọn: kiểm rút bài qua `~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (PHẢI venv — python3 hệ thống làm tầng NCBI rụng âm thầm, alert 17/08); lấy abstract qua efetch để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
 4b. ĐỌC TOÀN VĂN trước khi thẩm định (thêm 19/08 — trước đó gói tuần thẩm định 100% từ
 tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
-   `python3 tools/gom_toan_van_dashboard.py --queue queue/tuan-<W>.md` (tải OA hợp pháp,
-   idempotent) → `python3 tools/doc_sau_toan_van.py --queue queue/tuan-<W>.md` →
+   `python3 tools/gom_toan_van_dashboard.py --queue queue/tuan-<W>.md --unpaywall` (tải OA hợp pháp,
+   idempotent; `--unpaywall` = tầng 2 BH160, CHỈ lưu bản mang giấy phép mở) →
+   `python3 tools/doc_sau_toan_van.py --queue queue/tuan-<W>.md` →
    ĐỌC các bản `EBM-Dashboards/toan_van_oa/doc_sau/PMID-*.md` của thẻ được chọn.
    Mỗi thẻ thêm dòng `Thẩm định toàn văn:` — có toàn văn thì thẩm định TỪ TOÀN VĂN
    (mã đăng ký · RoB đáng chú ý · I²/heterogeneity · hạn chế tự khai · tài trợ nếu
@@ -45,9 +46,11 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    làn đó chỉ chạy trong phiên CÓ bác sĩ (`--huong-dan`). Bài đã đọc qua trình duyệt có bản
    `doc_sau/PMID-<n>.md` ghi «trích xuất CÓ CẤU TRÚC»: thẩm định như bản OA, `appraisalCompleteness`
    theo độ đầy đủ in trong bản đó (partial ⇒ vẫn trần "Cân nhắc").
-   Bài có `PMID-<n>_WTDM.pdf` (thêm 04/10/2026 — PDF kênh TDM của NXB tải bằng token của bác sĩ, CÓ BẢN
-   QUYỀN, KHÔNG phải OA): bản đọc máy chỉ có DỮ KIỆN (bản đồ mục, mã đăng ký, dấu hiệu phương pháp) + VỊ TRÍ
-   TRANG + trích ≤ 15 từ/lần — chưa phải toàn văn. Thẩm định thì mở chính tệp PDF ở trang ghi kèm; trên thẻ
+   Bài có `PMID-<n>_WTDM.pdf` (thêm 04/10/2026 — PDF kênh TDM của NXB tải bằng token của bác sĩ) hoặc
+   `PMID-<n>_CHR.*` (thêm 15/10/2026 — HTML thân bài/PDF lưu trong phiên uỷ quyền Chrome có bác sĩ,
+   `tools/phien_uy_quyen_chrome.py`; lượt lịch KHÔNG mở phiên) — cả hai CÓ BẢN QUYỀN, KHÔNG phải OA: bản đọc
+   máy chỉ có DỮ KIỆN (bản đồ mục, mã đăng ký, dấu hiệu phương pháp) + VỊ TRÍ TRANG + trích ≤ 15 từ/lần — chưa
+   phải toàn văn. Thẩm định thì mở chính tệp PDF (hoặc HTML `_CHR`) ở trang/mục ghi kèm; trên thẻ
    chỉ ghi dữ kiện/con số kèm số trang và trích ≤ 15 từ, KHÔNG chép đoạn văn của bài vào gói.
    `appraisalCompleteness=full` chỉ khi đã đọc đủ các mục cần ở PDF; chỉ dựa bản đọc máy ⇒ `partial`.
 5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu

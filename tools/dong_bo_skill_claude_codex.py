@@ -317,6 +317,8 @@ def rebuild_router(source_root: Path, quiet: bool) -> int:
         check=False,
         capture_output=quiet,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=120,
     )
     if proc.returncode != 0 and quiet:
