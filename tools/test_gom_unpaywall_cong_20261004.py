@@ -106,7 +106,7 @@ def test_dem_toan_van_moi_loai(tmp_path):
     (tmp_path / "trinh_duyet").mkdir()
     (tmp_path / "trinh_duyet" / "PMID-4.json").write_text("{}")
     (tmp_path / "doc_sau").mkdir()
-    (tmp_path / "doc_sau" / "PMID-9.md").write_text("ghi chú đọc sâu — KHÔNG phải toàn văn")
+    (tmp_path / "doc_sau" / "PMID-9.md").write_text("ghi chú đọc sâu — KHÔNG phải toàn văn", encoding="utf-8")
     loai = g.dem_toan_van(tmp_path)
     tat_ca = set().union(*loai.values())
     assert tat_ca == {"1", "2", "3", "4", "5"}

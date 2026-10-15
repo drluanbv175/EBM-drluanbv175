@@ -204,7 +204,10 @@ def phieu_xac_thuc(pmids: list[str], dois: list[str], kho: Path, lap_phieu, co_d
 
 def _chay(lenh: list[str]) -> tuple[int, str]:
     try:
-        r = subprocess.run(lenh, capture_output=True, text=True, timeout=TIMEOUT_CONG_CU, cwd=str(REPO))
+        # encoding cố định (14/10/2026): công cụ con in UTF-8; để trống thì Python giải mã bằng bảng mã máy ⇒ Windows
+        # chưa bật UTF-8 mode mất đầu ra, máy locale ASCII ném UnicodeDecodeError ra khỏi hàm này.
+        r = subprocess.run(lenh, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=TIMEOUT_CONG_CU, cwd=str(REPO))
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except subprocess.TimeoutExpired:
         return -9, f"QUÁ {TIMEOUT_CONG_CU} giây — bỏ bước này, lượt sau chạy lại"

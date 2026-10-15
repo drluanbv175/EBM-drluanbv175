@@ -2,7 +2,7 @@
 name: dark-analyst
 description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
 metadata:
-  version: 1.12.12
+  version: 1.12.14
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -336,7 +336,56 @@ Chỉ cần thay khối hằng số `DATA = {…}` ở cuối file; KHÔNG sửa
 **Mẫu KHI BÁC SĨ YÊU CẦU (nền tối, dày dữ liệu):** `templates/web-dashboard-dark-analyst.html` — **CÙNG schema `DATA`** (một khối dữ liệu chạy được cả hai). Template một-cột cũ `web-dashboard-van-de-cu-the-clinical-quick-view.html` chỉ dùng khi yêu cầu riêng.
 Cả hai mẫu hỗ trợ field tùy chọn `effectText` (hiệu số phi-tỷ-số), `rob` (RoB 2, chỉ RCT), `frame`/`frameLabels` (khung không-PICO), `etd` (GRADE Evidence-to-Decision) và `standards` (chuẩn cập nhật chứng cứ).
 
-**TỰ ĐỘNG khi gọi skill:** mỗi lần skill được gọi cho một vấn đề → tự chạy TRỌN dây chuyền (không cần yêu cầu từng bước): dựng Dashboard (EW mặc định) → `tools/verify_dashboard.py --online --strict-sources` (PASS) → `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add` → `tools/make_derivatives.py` (3 phái sinh) → **`python3 EBM_MASTER/tools/sync_all.py`** (nạp vào sổ cái trung tâm EBM_MASTER, sinh lại WebApp duy nhất). Dùng mẫu Dark Analyst CHỈ khi bác sĩ yêu cầu.
+**TỰ ĐỘNG khi gọi skill — BỘ NĂM, MỘT LỆNH:** mỗi lần skill được gọi cho một vấn đề → dựng Dashboard (mẫu Evidence Workbench; Dark Analyst CHỈ khi bác sĩ yêu cầu) rồi chạy **một lệnh duy nhất**:
+
+```bash
+python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online
+```
+
+Lệnh này tự làm trọn và sinh **năm** sản phẩm từ CÙNG một khối `DATA` (nên không bản nào tụt lại một phiên bản so với bản khác):
+① **Dashboard** — đã qua **HAI** cổng chạy sẵn bên trong: `verify_dashboard.py --online` (liêm chính:
+PMID/DOI phân giải thật) và **①-bis `--strict-sources`** (cổng nguồn nghiêm ngặt) ·
+② **Bản đọc** `derivatives/<mã>_ban-doc.html` — cờ đỏ và việc cần làm đứng trước; từ 14/08/2026
+mang thêm **hai dải cảnh báo về ĐỘ TIN CẬY của chính tài liệu**, đặt ngay dưới đầu trang: dải
+**đỏ "Nguồn đã bị rút"** và dải **cam "Bản khác cùng chủ đề đang kết luận ngược"** (xem 5D-a
+và mục *Đăng ký chủ đề*). Cả hai chỉ ĐẶT CẠNH NHAU hai kết luận, **không đổi `decision` nào**
+(BH10) và **không đoán bên nào đúng** (BH28 — hai bản có thể đang nói về hai kết cục khác nhau
+của cùng một thử nghiệm). Không tính được thì in rõ *"chưa kiểm"*, tuyệt đối không im lặng ·
+③ **Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` — bản lưu trữ chuẩn, có màu ·
+④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
+⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
+
+Sau bộ năm, cùng lệnh chạy tiếp (tiện ích, KHÔNG đổi mã thoát): ⑥ làm mới `cloud-mirror/` · ⑦ **toàn văn MỌI trích dẫn** (`tools/toan_van_theo_chu_de.py --moi-trich-dan`, cần `--online`) ⇒ phiếu `derivatives/<mã>_toan-van.md` — mỗi trích dẫn: đã đọc toàn văn hay GIẢI PHÁP cho bác sĩ · ⑧ **EndNote** (`tools/nap_endnote_chu_de.py --file <dashboard> --ap-dung`): trích dẫn vào nhóm «EBM · <câu hỏi>», gắn PDF có sẵn, rồi ghi khối «EBM · ĐỌC NHANH» tiếng Việt vào trường Abstract (abstract gốc giữ dưới dấu phân cách; sao lưu `sdb.eni` trước). Khối dựng từ ngữ cảnh MỌI dashboard dù ⑧ chỉ chạy một dashboard — bài là mục chính ở chủ đề khác không bị ghi đè. Bài CHỈ là tham khảo nhận «Tóm tắt MÁY» từ kho `EBM-Dashboards/tom-tat-abstract-vi.json` (nhãn chưa qua cổng; số phải có nguyên văn trong abstract gốc). Dòng «ℹ Trích dẫn tham khảo CHƯA có tóm tắt máy: N» ⇒ agent đọc abstract gốc và SOẠN mục cho kho (thiết kế · P · I · C · O · kết quả; chép số đúng abstract, không khuyến nghị, không mức chứng cứ) rồi chạy lại `nap_endnote_chu_de.py --tom-tat-vi`. EndNote không ghi được chữ đậm/màu qua AppleScript ⇒ nhấn mạnh bằng nhãn IN HOA + biểu tượng màu trong BMP; KHÔNG sửa thẳng `sdb.eni`.
+
+Cổng liêm chính LUÔN chạy — thiếu `--online` thì chạy phần ngoại tuyến (vá 26/09/2026): lỗi cứng THẬT (khoá summary lạ, nguồn đã rút trong sổ, `apply` trên chứng cứ yếu…) ⇒ **CHẶN XUẤT, mã 3** ở cả hai chế độ. Chỉ khi cổng CHƯA kết luận được (lỗi mạng, hoặc chạy không `--online`) mới vẫn xuất, bản Word tự hạ câu chữ thành "CẦN xác minh" và tiêu đề ghi «CHƯA xác minh nguồn sống» — không bao giờ khẳng định sai. Thiếu `pandoc` (bước ④) hoặc thiếu Chrome/Edge (bước ⑤) thì bỏ qua đúng bước đó kèm thông báo rõ, KHÔNG làm hỏng các bước còn lại và KHÔNG đổi mã thoát — hai bước này là tiện ích đọc, không phải cổng chất lượng.
+
+**Cổng nguồn ①-bis xử lý HAI loại lỗi khác hẳn nhau — đừng gộp:**
+- `decision='apply'` trên `gradeLevel` na/low, hoặc `apply` chỉ dựa Consensus ⇒ **CHẶN XUẤT, mã thoát 3**.
+  Cách sửa phụ thuộc nguồn thuộc nhóm nào: nguồn **QUY PHẠM** (guideline chính thức, nhãn thuốc FDA —
+  `gradeLevel:'na'` vì nguồn không dùng thang GRADE) thì khai `normativeBasis`, **KHÔNG hạ** `decision`
+  (hạ một chống chỉ định hay liều theo CrCl xuống "cân nhắc" là làm GIẢM an toàn); chứng cứ **yếu thật**
+  thì HẠ `decision` xuống `consider`/`notyet`. **TUYỆT ĐỐI không nâng `gradeLevel`.**
+  **«Chỉ dựa Consensus» là cả HỌ ĐỒNG THUẬN (vá 26/09/2026):** mọi `design` BẮT ĐẦU bằng `consensus`
+  hoặc `đồng thuận` — bất kể hoa/thường, có hậu tố hay không (`consensus`, `Consensus statement`,
+  `Đồng thuận chuyên gia`, `Đồng thuận đa hội (expert consensus)`…) — đi kèm `apply` đều bị CHẶN, kể cả
+  khi `gradeLevel` là `mod`/`high` và đã khai `gradeBy`. Đừng đổi cách viết `design` để lách; nguồn thật
+  là guideline/nhãn thuốc thì sửa `design` cho ĐÚNG loại nguồn, còn đồng thuận thật thì HẠ `decision`
+  (agent chỉ ĐỀ XUẤT, bác sĩ duyệt). `design` như `Guideline (dựa đồng thuận)` vẫn thuộc họ guideline.
+- Thiếu `DATA.standards` ⇒ chỉ **CẢNH BÁO**, vẫn xuất. Nhưng **dashboard MỚI phải luôn khai
+  `DATA.standards`** — bỏ trống là tự đánh mất hợp đồng nguồn của chính lần tìm kiếm vừa làm.
+
+⚠️ **Bài học 12/08/2026 — đọc kết quả cổng phải hỏi "cổng đã chạy tới luật nào", không chỉ đếm số lỗi.**
+Bản cũ của `verify_dashboard.py` `return` NGAY khi thiếu `DATA.standards`, nên toàn bộ luật an toàn cấp
+item chưa từng chạy trên 47 dashboard. Cổng báo đúng "1 lỗi cứng" và người đọc kết luận "chỉ thiếu siêu
+dữ liệu, nội dung không sai" — một ảo ảnh. Sau khi bỏ `return` sớm, đo lại 61 dashboard: **73 mục `apply`
+trên chứng cứ yếu/không phân hạng, trên 16 dashboard** (trước chỉ thấy 4).
+
+**Chạy tiếp sau bộ năm:** `tools/drug_safety_scan.py` (nếu có thuốc + cao tuổi/đa thuốc) → `tools/build_library.py add <dashboard>.html` (tích lũy vào chỉ mục tra cứu).
+
+**KHÔNG tự chạy `EBM_MASTER/tools/sync_all.py`** (đổi mặc định 2026-08-05 theo yêu cầu bác sĩ) — chỉ chạy khi bác sĩ yêu cầu riêng. ⚠️ Bỏ chạy `sync_all.py` là CHƯA ĐỦ để giữ một gói ngoài Antifacts: `tools/build_antifacts.py` quét `EBM-Dashboards/WebDashboard_*.html` bằng glob và scheduled-task `ebm-antifacts-weekly` (thay hai lịch launchd đã TẮT từ 15/08/2026) vẫn dựng lại hub từ chính thư mục đó. Muốn giữ ngoài hub thì phải khai tên file vào `EBM-Dashboards/antifacts-exclude.txt` rồi chạy lại `build_antifacts.py`.
+
+**MẶC ĐỊNH sau khi chạy xong:** mở cả năm file cho bác sĩ ngay trong Claude (SendUserFile — `display:"render"` cho dashboard · bản đọc · Word-dạng-HTML · PDF; `.docx` đính kèm để tải). Không bắt bác sĩ tự đi tìm trong thư mục.
+
 **CỔNG TRA CỨU DUY NHẤT cho bác sĩ** (không phải lục từng file): nút **"Mở EBM (WebApp).command"** → `EBM_MASTER/EBM_WEBAPP.html` (tìm/lọc mọi cập nhật đã làm). `EBM-Dashboards/` chỉ là vùng staging tạo file mới.
 
 
@@ -407,7 +456,36 @@ Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đả
 
 **(a) Cổng kiểm liêm chính — `tools/verify_dashboard.py`** (chạy TRƯỚC khi giao):
 `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
-Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
+Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · **mục ghi CẢ `pmid` lẫn `doi` thì hai định danh phải trỏ CÙNG một bài** (DOI mà PubMed ghi cho PMID = DOI của mục; lệch ⇒ `--strict-sources` chặn) · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
+
+🔴 **CẶP PMID–DOI PHẢI CÙNG MỘT BÀI (thêm 04/10/2026).** Đo 04/10: 10/1164 cặp trong kho trỏ HAI bài khác nhau (3 mục
+`apply`) — phần lớn là DOI của một bài nằm trong DANH MỤC THAM KHẢO của chính bài mang PMID (bộ rút XML duyệt `.//ArticleId`).
+Khi ghi định danh cho mục: lấy DOI từ CHÍNH bản ghi PubMed của PMID (esummary `articleids`, hoặc `convert_article_ids`/Europe
+PMC) — KHÔNG chép DOI từ danh mục tham khảo, KHÔNG đoán. Hai bản đồng xuất bản (cùng guideline ở hai tạp chí) có HAI cặp
+PMID+DOI riêng: chọn MỘT bản, ghi đủ cặp của bản đó. Cổng báo lệch ⇒ đối chiếu xem số liệu/tiêu đề/references của mục khớp
+bài nào rồi sửa định danh SAI cho khớp; mục `apply` hay đổi `decision` thì vẫn là việc của bác sĩ.
+
+🔴 **CỔNG NAY CHẶN NGUỒN ĐÃ BỊ RÚT (thêm 14/08/2026 — trước đó KHÔNG kiểm).** Cổng vẫn giữ
+nguyên tắc *không tự kết luận* trạng thái rút bài từ một nguồn metadata thiếu thẩm quyền; điều
+mới là nó **đọc lại kết luận DƯƠNG TÍNH** mà chuỗi 3 tầng đã xác nhận và ghi vào
+`EBM-Dashboards/.so-xac-minh-nguon.json`, qua `tools/so_xac_minh_nguon.py::nguon_da_rut()`.
+*Vì sao cần:* PMID 30267080 (JAMA Oncology, rút 2019, dạng **retract-and-replace**) nằm trong
+`ViemGanB_DieuTri` và **đi qua cổng sạch sẽ** suốt — nó chỉ hiện khi bác sĩ chủ động gõ
+`so_xac_minh_nguon.py --bao-cao`.
+**Bất đối xứng bắt buộc:** có bản ghi ⇒ **lỗi cứng**; sổ **im lặng ⇒ KHÔNG** phát tín hiệu nào
+(im lặng chỉ nghĩa là chưa ai quét file đó — biến nó thành dấu ✓ là dựng lời bảo đảm không có
+cơ sở); tra cứu hỏng ⇒ **cảnh báo hiện ra**, không bỏ qua thầm lặng. Khoá bằng **BH31**.
+⚠️ Cổng chỉ ĐO. Không tự gỡ mục: *retract-and-replace* nghĩa là bài đã được sửa rồi đăng lại,
+việc cần làm là **đối chiếu số liệu với bản đã thay**, không phải xoá — và đó là việc của bác sĩ.
+
+🔴 **Toàn văn cho mục `apply` (đồng bộ từ `cap-nhat-chung-cu-y-khoa`, 14/10/2026):** item sắp `apply` phải thẩm định TOÀN VĂN
+hợp pháp; chỉ có abstract → `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`. khai `appraisalCompleteness:'partial'` — cổng CHẶN khỏi `apply`, tối đa `consider`. BẢO ĐẢM ĐỌC TOÀN VĂN (04/10/2026, BH161):
+cổng ĐO kho `EBM-Dashboards/toan_van_oa/` — mục `apply` mà PMID chính CHƯA được đọc toàn văn (máy, làn trình duyệt, hoặc
+bác sĩ ghi `doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu …`) bị CHẶN; tự khai `full` KHÔNG thay bằng chứng.
+Chỉ 27 mục tồn có trong sổ nợ (`no-toan-van-apply.json`, hạn 03/11/2026) được cảnh báo thay vì chặn — mục MỚI không bao giờ
+vào sổ. Xem nợ + cách trả: `python3 tools/so_toan_van.py`. Chuỗi máy
+`ops/orchestrator.py --topic` chạy bước «TV» (`tools/toan_van_theo_chu_de.py`): gom bản hợp lệ → đọc sâu → phiếu làn trình
+duyệt cho bài còn thiếu — ĐỌC phiếu đó trước khi thẩm định ứng viên.
 
 **(b) Thư viện cập nhật — `tools/build_library.py`** (tích lũy thành tài sản tra cứu):
 `python3 tools/build_library.py add <dashboard>.html` → cập nhật `library.json` + sinh `evidence-library.html` (chỉ mục mọi bản cập nhật, có tìm/lọc, mở thẳng từng dashboard).
