@@ -723,7 +723,7 @@ def la_html_toan_van(q: Path) -> bool:
     if not _GOM_TV:
         return False
     try:
-        return bool(_GOM_TV.la_toan_van_html(_GOM_TV._van_ban_tho(Path(q).read_bytes()))[0])
+        return bool(_GOM_TV.la_toan_van_html(Path(q).read_bytes().decode("utf-8", errors="replace"))[0])
     except OSError:
         return False
 
