@@ -325,7 +325,7 @@ def kiem_tep(tep: Path, pmid: str, ma_phien: str) -> tuple[str | None, str]:
         if cong is None:
             ly_do = "không nạp được cổng nội dung toàn văn (gom_toan_van_dashboard) — không nhận HTML (fail-closed)"
         else:
-            la_tv, vi_sao = cong.la_toan_van_html(cong._van_ban_tho(van_ban.encode("utf-8")))
+            la_tv, vi_sao = cong.la_toan_van_html(van_ban)  # NGUYÊN VĂN HTML — cổng đọc đề mục tường phí/hậu bài
             if la_tv:
                 return "html", ""
             ly_do = f"thân bài KHÔNG phải toàn văn ({vi_sao}) — chỉ tóm tắt/tường phí?"

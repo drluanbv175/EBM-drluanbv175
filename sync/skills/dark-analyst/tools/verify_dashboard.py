@@ -802,22 +802,123 @@ TEN_SO_NO_TOAN_VAN = "no-toan-van-apply.json"
 _TEN_TEP_TOAN_VAN = re.compile(r"PMID-(\d{1,9})_(PMC\d+\.xml|UPW\.(?:pdf|html)|WTDM\.pdf|CHR\.(?:pdf|html))")
 
 
+# CẤU TRÚC ĐỀ MỤC (15/10/2026 — sự cố `audit/nhat-ky/2026-10-15-cong-toan-van-tuong-phi-dai.md`): bản sao CÙNG luật với
+# `gom_toan_van_dashboard.la_toan_van_html` (test `tools/test_cong_toan_van_tuong_phi_20261015.py` khoá hai bản ra cùng kết luận).
+# Trước đó MỌI trang ≥ 6000 từ là «toàn văn», trước cả khi xét dấu nào ⇒ trang Nature KHÔNG có quyền (PMID 27811932: Key Points ·
+# Abstract · «Access options», thân bài ~575 từ) qua cổng nhờ danh mục tham khảo dài. Nay mọi ngưỡng tính trên THÂN BÀI (bỏ khối
+# hậu bài References/Author information/…); đề mục tường phí (thẻ h1–h6) mà thân bài không có cấu trúc toàn văn ⇒ KHÔNG; nhóm
+# IMRaD nhận đồng nghĩa (Background · Interpretation/Comment/Conclusions) khi là thẻ đề mục NGOÀI khối tóm tắt.
+_LA_HTML_KHO = re.compile(r"<\s*(?:html|body|article|section|main|div|p|h[1-6])\b", re.I)
+_THE_DE_MUC_KHO = re.compile(r"<(h[1-6])\b[^>]*>(.*?)</\1\s*>", re.S | re.I)
+
+
+def _mau_de_muc_kho(*cum):
+    return re.compile(r"(?:(?:\d+(?:\.\d+)*|[IVXivx]+)[.):]?\s+)?(?:" + "|".join(cum) + r")(?:\s*\(\d+\))?\s*[:.]?", re.I)
+
+
+_DE_MUC_TUONG_PHI_KHO = _mau_de_muc_kho(
+    r"access options", r"buy (?:this )?article(?: pdf)?", r"rent or buy(?: this article)?", r"purchase (?:this )?(?:pdf|article)",
+    r"purchase access", r"get access(?: to (?:this|the full) article)?", r"access through your institution")
+_DE_MUC_HAU_BAI_KHO = _mau_de_muc_kho(
+    r"references?(?: and notes)?", r"notes and references", r"reference list", r"bibliography", r"literature cited", r"works cited",
+    r"cited literature", r"tài liệu tham khảo", r"author information", r"authors? and affiliations", r"acknowledge?ments?",
+    r"footnotes", r"ethics declarations", r"additional information", r"rights and permissions", r"about this article",
+    r"cite this article", r"share this article", r"this article is cited by", r"cited by", r"citing articles",
+    r"similar content being viewed by others", r"related articles", r"recommended articles")
+_DE_MUC_TOM_TAT_KHO = _mau_de_muc_kho(r"abstract", r"structured abstract", r"summary", r"key points", r"highlights",
+                                      r"graphical abstract")
+_NHOM_IMRAD_KHO = (
+    ("mo_bai", _mau_de_muc_kho(r"introduction", r"background")),
+    ("phuong_phap", _mau_de_muc_kho(r"methods?", r"(?:materials?|patients?|subjects|participants) and methods?", r"methodology",
+                                    r"study design(?: and (?:setting|participants|methods?))?")),
+    ("ket_qua", _mau_de_muc_kho(r"results?", r"results and discussion", r"findings")),
+    ("ban_luan", _mau_de_muc_kho(r"discussion", r"results and discussion", r"interpretation", r"comments?", r"conclusions?",
+                                 r"general discussion")),
+)
+_NHOM_TU_KHOA_CU_KHO = {"Introduction": "mo_bai", "Methods": "phuong_phap", "Results": "ket_qua", "Discussion": "ban_luan"}
+
+
+def _chu_tho_kho(vb):
+    import html as _h
+    vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
+    return re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", vb)))
+
+
+def _phan_tich_than_bai_kho(html):
+    """(chữ thân bài, có đề mục tường phí?, tập nhóm IMRaD theo thẻ, số mục nội dung) — cùng thuật toán `phan_tich_trang_html`."""
+    html = re.sub(r"<script.*?</script>|<style.*?</style>|<!--.*?-->", " ", html, flags=re.S | re.I)
+    than, tuong_phi, nhom = [], False, set()
+    vi_tri, cap_bo, cap_tom_tat, so_muc, muc_cho = 0, None, None, 0, False
+    for m in _THE_DE_MUC_KHO.finditer(html):
+        doan = html[vi_tri:m.start()]
+        if muc_cho and len(_chu_tho_kho(doan).split()) >= 40:
+            so_muc += 1
+        muc_cho = False
+        if cap_bo is None:
+            than.append(doan)
+        vi_tri = m.end()
+        chu = _chu_tho_kho(m.group(2)).strip()
+        if not chu:
+            continue
+        cap = int(m.group(1)[1])
+        if _DE_MUC_TUONG_PHI_KHO.fullmatch(chu):
+            tuong_phi = True
+        if cap_bo is not None and cap > cap_bo:
+            continue
+        cap_bo = None
+        if cap_tom_tat is not None and cap <= cap_tom_tat:
+            cap_tom_tat = None
+        if _DE_MUC_HAU_BAI_KHO.fullmatch(chu):
+            cap_bo = cap
+            continue
+        than.append(" %s " % chu)
+        if cap_tom_tat is not None:
+            continue
+        if _DE_MUC_TOM_TAT_KHO.fullmatch(chu):
+            cap_tom_tat = cap
+            continue
+        if not _DE_MUC_TUONG_PHI_KHO.fullmatch(chu):
+            muc_cho = True
+        nhom.update(ten for ten, mau in _NHOM_IMRAD_KHO if mau.fullmatch(chu))
+    if muc_cho and len(_chu_tho_kho(html[vi_tri:]).split()) >= 40:
+        so_muc += 1
+    if cap_bo is None:
+        than.append(html[vi_tri:])
+    return _chu_tho_kho(" ".join(than)), tuong_phi, nhom, so_muc
+
+
+def _la_toan_van_kho(vb):
+    """Văn bản NGUYÊN VĂN HTML có phải TOÀN VĂN (cùng thứ tự luật `gom_toan_van_dashboard.la_toan_van_html`)."""
+    if not _LA_HTML_KHO.search(vb):
+        so_tu = len(vb.split())
+        if so_tu >= 6000:
+            return True
+        if any(k in vb for k in _DAU_TRANG_GIOI_THIEU_KHO):
+            return False
+        return so_tu >= 2500 and sum(1 for k in _DE_MUC_IMRAD if k in vb) >= 3
+    than, tuong_phi, nhom_the, muc = _phan_tich_than_bai_kho(vb)
+    so_tu = len(than.split())
+    imrad_the = len(nhom_the) >= 3 and so_tu >= 2500
+    imrad_ngan = len(nhom_the) >= 3 and so_tu >= 1500 and muc >= 5
+    tong_quan = so_tu >= 2500 and muc >= 8
+    if tuong_phi and not (imrad_the or imrad_ngan or tong_quan):
+        return False
+    if so_tu >= 6000:
+        return True
+    if any(k in _chu_tho_kho(vb) for k in _DAU_TRANG_GIOI_THIEU_KHO):
+        return False
+    nhom = nhom_the | {n for k, n in _NHOM_TU_KHOA_CU_KHO.items() if k in than or k.upper() in than}
+    return (so_tu >= 2500 and len(nhom) >= 3) or imrad_ngan or tong_quan
+
+
 def _html_la_toan_van(duong):
-    """Bản HTML trong kho (`_UPW.html`, và từ 15/10/2026 cả `_CHR.html` — TT-04) có phải TOÀN VĂN không (cùng tiêu chí
-    `gom_toan_van_dashboard.la_toan_van_html`, BH160): ≥ 6000 từ, hoặc ≥ 2500 từ + ≥ 3 đề mục IMRaD và KHÔNG mang dấu trang
-    giới thiệu kho lưu trữ."""
+    """Bản HTML trong kho (`_UPW.html`, và từ 15/10/2026 cả `_CHR.html` — TT-04) có phải TOÀN VĂN không — cùng luật
+    `gom_toan_van_dashboard.la_toan_van_html` (BH160; đọc cấu trúc đề mục từ 15/10/2026). Không đọc được tệp ⇒ False."""
     try:
         vb = Path(duong).read_bytes().decode("utf-8", errors="replace")
     except OSError:
         return False
-    vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
-    vb = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", vb))
-    so_tu = len(vb.split())
-    if so_tu >= 6000:
-        return True
-    if any(k in vb for k in _DAU_TRANG_GIOI_THIEU_KHO):
-        return False
-    return so_tu >= 2500 and sum(1 for k in _DE_MUC_IMRAD if k in vb) >= 3
+    return _la_toan_van_kho(vb)
 
 
 def _bac_si_da_doc_kho(kho):

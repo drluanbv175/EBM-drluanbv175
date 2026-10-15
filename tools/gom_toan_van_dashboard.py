@@ -108,11 +108,16 @@ def _email_lich_su() -> str:
     return ""
 
 
-def _van_ban_tho(du_lieu: bytes) -> str:
+def _chu_tho(vb: str) -> str:
+    """Chữ thô của một đoạn HTML (bỏ script/style/thẻ, giải mã thực thể, gộp khoảng trắng)."""
     import html as _h
-    vb = du_lieu.decode("utf-8", errors="replace")
     vb = re.sub(r"<script.*?</script>|<style.*?</style>", " ", vb, flags=re.S | re.I)
     return re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", vb)))
+
+
+def _van_ban_tho(du_lieu: bytes) -> str:
+    """Chữ thô CẢ TRANG — MÙ cấu trúc đề mục. Cổng toàn văn phải nhận NGUYÊN VĂN HTML (`la_toan_van_html`), không nhận chuỗi này."""
+    return _chu_tho(du_lieu.decode("utf-8", errors="replace"))
 
 
 _DTV = None
@@ -175,21 +180,146 @@ def quyet_dinh_unpaywall(doi: str, url: str, license: str | None, *, dtv=None, h
 DAU_TRANG_GIOI_THIEU = ("Fingerprint", "Access to Document", "Link to publication", "Research output", "Accéder au contenu principal")
 DE_MUC_TOAN_VAN = ("Methods", "Results", "Discussion", "Introduction", "METHODS", "RESULTS", "DISCUSSION", "INTRODUCTION")
 SO_TU_TOAN_VAN_KHONG_DE_MUC = 6000  # guideline/khuyến cáo dài thường không có đề mục IMRaD (vd Tiêu chuẩn ADA: 18–26 nghìn từ)
+SO_TU_TOAN_VAN_IMRAD = 2500
+# Ngưỡng trên THÂN BÀI (đã bỏ References/hậu bài) — hiệu chỉnh 15/10/2026 trên 303 tệp HTML của kho: trang tường phí/giới thiệu
+# có 575–1 463 từ thân bài và ≤ 5 mục nội dung; toàn văn thật KHÔNG IMRaD (tổng quan, báo cáo lâm sàng, cập nhật thực hành) có
+# 4 054–5 764 từ thân bài và 10–22 mục — trước đây chúng chỉ qua ngưỡng 6000 nhờ danh mục tham khảo thổi số từ.
+SO_TU_MOT_MUC = 40  # một «mục thân bài có nội dung»: đề mục ngoài tóm tắt/hậu bài, theo sau ≥ 40 từ chữ riêng
+SO_MUC_TONG_QUAN = 8  # bài không IMRaD: ≥ 2500 từ thân bài + ≥ 8 mục nội dung
+SO_TU_IMRAD_NGAN, SO_MUC_IMRAD_NGAN = 1500, 5  # bài ngắn: ≥ 3 nhóm IMRaD bằng THẺ đề mục + ≥ 1500 từ thân bài + ≥ 5 mục
+
+# ĐỌC CẤU TRÚC ĐỀ MỤC (15/10/2026 — sự cố `audit/nhat-ky/2026-10-15-cong-toan-van-tuong-phi-dai.md`). Trước đó cổng nhận chữ thô
+# cả trang và trả «toàn văn» cho MỌI trang ≥ 6000 từ, trước cả khi xét dấu nào: trang Nature Reviews Cardiology KHÔNG có quyền
+# (PMID 27811932) chỉ có Key Points · Abstract · «Access options» — thân bài ~540 từ — nhưng danh mục tham khảo kéo tổng lên
+# 8 743 từ ⇒ lọt vào kho `_CHR.html` qua phiên Chrome (TT-04 dùng chung cổng này) và có thể bị BH161 tính «đã đọc toàn văn».
+# Chiều ngược (âm tính giả): CMAJ (PMID 16129869, 5 189 từ) đặt đề mục Methods · Results · Interpretation — «Interpretation» thay
+# «Discussion», mở bài không đề mục — nên chỉ đếm được 2 đề mục IMRaD ⇒ toàn văn thật rơi vào sổ nợ BH161.
+# Nay: (1) số từ chỉ tính THÂN BÀI — bỏ khối hậu bài (References · Author information · Rights and permissions · About this
+# article…) cùng mọi tiểu mục của nó; (2) đề mục TƯỜNG PHÍ (thẻ h1–h6 — KHÔNG xét chuỗi toàn trang: trang Nature có quyền vẫn có
+# «Subscribe to this journal» ở thanh bên) xét TRƯỚC mọi ngưỡng số từ: có đề mục đó mà thân bài KHÔNG tự chứng minh cấu trúc toàn
+# văn ⇒ không phải toàn văn. Không dùng đề mục tường phí làm án tuyệt đối: đo 15/10, trang SAGE CÓ quyền (toàn văn đủ IMRaD —
+# 40277321, 42084558, 42751933) vẫn có h4 «Access options» trong menu «View options»; (3) đề mục IMRaD đếm theo NHÓM, nhận đồng
+# nghĩa (Background ≈ Introduction; Interpretation/Comment/Conclusions ≈ Discussion) nhưng CHỈ khi là thẻ đề mục nằm NGOÀI khối
+# tóm tắt — tóm tắt có cấu trúc (Background/Methods/Results/Interpretation ~300 từ) không tự đủ ba nhóm; (4) bài không IMRaD được
+# nhận bằng số MỤC nội dung (ngưỡng ở trên), không bằng số từ cả trang.
+_LA_HTML = re.compile(r"<\s*(?:html|body|article|section|main|div|p|h[1-6])\b", re.I)
+_THE_DE_MUC = re.compile(r"<(h[1-6])\b[^>]*>(.*?)</\1\s*>", re.S | re.I)
+_DANH_SO = r"(?:(?:\d+(?:\.\d+)*|[IVXivx]+)[.):]?\s+)?"  # «3.», «IV.», «2.1» đứng đầu đề mục
+_DUOI = r"(?:\s*\(\d+\))?\s*[:.]?"  # «References (52)», «Methods:»
+
+
+def _mau_de_muc(*cum: str) -> re.Pattern:
+    return re.compile(_DANH_SO + "(?:" + "|".join(cum) + ")" + _DUOI, re.I)
+
+
+DE_MUC_TUONG_PHI = _mau_de_muc(
+    r"access options", r"buy (?:this )?article(?: pdf)?", r"rent or buy(?: this article)?", r"purchase (?:this )?(?:pdf|article)",
+    r"purchase access", r"get access(?: to (?:this|the full) article)?", r"access through your institution")
+DE_MUC_HAU_BAI = _mau_de_muc(
+    r"references?(?: and notes)?", r"notes and references", r"reference list", r"bibliography", r"literature cited", r"works cited",
+    r"cited literature", r"tài liệu tham khảo", r"author information", r"authors? and affiliations", r"acknowledge?ments?",
+    r"footnotes", r"ethics declarations", r"additional information", r"rights and permissions", r"about this article",
+    r"cite this article", r"share this article", r"this article is cited by", r"cited by", r"citing articles",
+    r"similar content being viewed by others", r"related articles", r"recommended articles")
+DE_MUC_TOM_TAT = _mau_de_muc(r"abstract", r"structured abstract", r"summary", r"key points", r"highlights", r"graphical abstract")
+NHOM_IMRAD = (
+    ("mo_bai", _mau_de_muc(r"introduction", r"background")),
+    ("phuong_phap", _mau_de_muc(r"methods?", r"(?:materials?|patients?|subjects|participants) and methods?", r"methodology",
+                                r"study design(?: and (?:setting|participants|methods?))?")),
+    ("ket_qua", _mau_de_muc(r"results?", r"results and discussion", r"findings")),
+    ("ban_luan", _mau_de_muc(r"discussion", r"results and discussion", r"interpretation", r"comments?", r"conclusions?",
+                             r"general discussion")),
+)
+# Từ khoá cũ (chuỗi trong chữ thân bài) ánh xạ vào nhóm — giữ mọi kết luận «toàn văn» cũ không phụ thuộc đề mục thẻ.
+_NHOM_TU_KHOA_CU = {"Introduction": "mo_bai", "Methods": "phuong_phap", "Results": "ket_qua", "Discussion": "ban_luan"}
+
+
+def phan_tich_trang_html(html: str) -> dict:
+    """Tách THÂN BÀI của một trang HTML theo thẻ đề mục h1–h6. Trả {than_bai (chữ thô), tuong_phi [đề mục], hau_bai [đề mục đã bỏ],
+    nhom_imrad {nhóm}, so_de_muc}. Khối hậu bài kéo tới đề mục kế tiếp CÙNG CẤP hoặc cao hơn; đề mục rỗng không phải ranh giới."""
+    html = re.sub(r"<script.*?</script>|<style.*?</style>|<!--.*?-->", " ", html, flags=re.S | re.I)
+    than, tuong_phi, hau_bai, nhom = [], [], [], set()
+    vi_tri, cap_bo, cap_tom_tat, so_de_muc, so_muc, muc_cho = 0, None, None, 0, 0, False
+    for m in _THE_DE_MUC.finditer(html):
+        doan = html[vi_tri:m.start()]
+        if muc_cho and len(_chu_tho(doan).split()) >= SO_TU_MOT_MUC:
+            so_muc += 1
+        muc_cho = False
+        if cap_bo is None:
+            than.append(doan)
+        vi_tri = m.end()
+        chu = _chu_tho(m.group(2)).strip()
+        if not chu:
+            continue
+        so_de_muc += 1
+        cap = int(m.group(1)[1])
+        if DE_MUC_TUONG_PHI.fullmatch(chu):
+            tuong_phi.append(chu)
+        if cap_bo is not None and cap > cap_bo:
+            continue  # tiểu mục của khối hậu bài (Authors and Affiliations, Cite this article…)
+        cap_bo = None
+        if cap_tom_tat is not None and cap <= cap_tom_tat:
+            cap_tom_tat = None
+        if DE_MUC_HAU_BAI.fullmatch(chu):
+            cap_bo = cap
+            hau_bai.append(chu)
+            continue
+        than.append(f" {chu} ")
+        if cap_tom_tat is not None:
+            continue  # tiểu mục TRONG tóm tắt có cấu trúc — không tính đề mục thân bài
+        if DE_MUC_TOM_TAT.fullmatch(chu):
+            cap_tom_tat = cap
+            continue
+        if not DE_MUC_TUONG_PHI.fullmatch(chu):
+            muc_cho = True
+        nhom.update(ten for ten, mau in NHOM_IMRAD if mau.fullmatch(chu))
+    if muc_cho and len(_chu_tho(html[vi_tri:]).split()) >= SO_TU_MOT_MUC:
+        so_muc += 1
+    if cap_bo is None:
+        than.append(html[vi_tri:])
+    return {"than_bai": _chu_tho(" ".join(than)), "tuong_phi": tuong_phi, "hau_bai": hau_bai, "nhom_imrad": nhom,
+            "so_de_muc": so_de_muc, "so_muc_noi_dung": so_muc}
 
 
 def la_toan_van_html(vb: str) -> tuple[bool, str]:
-    """(có phải TOÀN VĂN?, lý do) cho văn bản thô của một trang HTML. Toàn văn khi: ≥ 3 đề mục IMRaD và ≥ 2500 từ, HOẶC
-    ≥ 6000 từ (guideline dài). Mang dấu trang giới thiệu kho mà dưới 6000 từ ⇒ KHÔNG phải toàn văn."""
-    so_tu = len(vb.split())
-    de_muc = sum(1 for k in DE_MUC_TOAN_VAN if k in vb)
-    dau = [k for k in DAU_TRANG_GIOI_THIEU if k in vb]
+    """(có phải TOÀN VĂN?, lý do). `vb` nên là NGUYÊN VĂN HTML của trang — cổng đọc cấu trúc đề mục, mọi ngưỡng tính trên THÂN
+    BÀI (đã bỏ References/hậu bài). Thứ tự: đề mục tường phí mà thân bài không tự chứng minh cấu trúc toàn văn (≥ 3 nhóm IMRaD
+    bằng thẻ + ≥ 2500 từ, hoặc một trong hai luật cấu trúc cuối) ⇒ KHÔNG · ≥ 6000 từ (guideline
+    dài) ⇒ CÓ · dấu trang giới thiệu kho ⇒ KHÔNG · ≥ 2500 từ + ≥ 3 nhóm IMRaD ⇒ CÓ · bài ngắn ≥ 1500 từ + ≥ 3 nhóm IMRaD bằng thẻ +
+    ≥ 5 mục ⇒ CÓ · bài không IMRaD ≥ 2500 từ + ≥ 8 mục ⇒ CÓ. Chữ thô không thẻ (tương thích ngược) thì MÙ cấu trúc: luật cũ."""
+    if not _LA_HTML.search(vb):
+        so_tu = len(vb.split())
+        de_muc = sum(1 for k in DE_MUC_TOAN_VAN if k in vb)
+        dau = [k for k in DAU_TRANG_GIOI_THIEU if k in vb]
+        if so_tu >= SO_TU_TOAN_VAN_KHONG_DE_MUC:
+            return True, f"{so_tu} từ (chữ thô — không đọc được cấu trúc đề mục)"
+        if dau:
+            return False, f"trang giới thiệu kho lưu trữ ({', '.join(dau[:2])}; {so_tu} từ)"
+        if so_tu >= SO_TU_TOAN_VAN_IMRAD and de_muc >= 3:
+            return True, f"{so_tu} từ, {de_muc} đề mục"
+        return False, f"không đủ dấu hiệu toàn văn ({so_tu} từ, {de_muc} đề mục IMRaD)"
+    pt = phan_tich_trang_html(vb)
+    than = pt["than_bai"]
+    so_tu, muc, nhom_the = len(than.split()), pt["so_muc_noi_dung"], pt["nhom_imrad"]
+    bo = f"; bỏ {len(pt['hau_bai'])} khối hậu bài" if pt["hau_bai"] else ""
+    imrad_the = len(nhom_the) >= 3 and so_tu >= SO_TU_TOAN_VAN_IMRAD
+    imrad_ngan = len(nhom_the) >= 3 and so_tu >= SO_TU_IMRAD_NGAN and muc >= SO_MUC_IMRAD_NGAN
+    tong_quan = so_tu >= SO_TU_TOAN_VAN_IMRAD and muc >= SO_MUC_TONG_QUAN
+    if pt["tuong_phi"] and not (imrad_the or imrad_ngan or tong_quan):
+        return False, f"tường phí — đề mục «{pt['tuong_phi'][0]}», thân bài không có cấu trúc toàn văn ({so_tu} từ, {muc} mục{bo})"
     if so_tu >= SO_TU_TOAN_VAN_KHONG_DE_MUC:
-        return True, f"{so_tu} từ"
+        return True, f"{so_tu} từ thân bài{bo}"
+    dau = [k for k in DAU_TRANG_GIOI_THIEU if k in _chu_tho(vb)]
     if dau:
-        return False, f"trang giới thiệu kho lưu trữ ({', '.join(dau[:2])}; {so_tu} từ)"
-    if so_tu >= 2500 and de_muc >= 3:
-        return True, f"{so_tu} từ, {de_muc} đề mục"
-    return False, f"không đủ dấu hiệu toàn văn ({so_tu} từ, {de_muc} đề mục IMRaD)"
+        return False, f"trang giới thiệu kho lưu trữ ({', '.join(dau[:2])}; {so_tu} từ thân bài)"
+    nhom = nhom_the | {n for k, n in _NHOM_TU_KHOA_CU.items() if k in than or k.upper() in than}
+    if so_tu >= SO_TU_TOAN_VAN_IMRAD and len(nhom) >= 3:
+        return True, f"{so_tu} từ thân bài, {len(nhom)} nhóm đề mục IMRaD{bo}"
+    if imrad_ngan:
+        return True, f"bài ngắn có cấu trúc IMRaD ({so_tu} từ thân bài, {len(nhom_the)} nhóm, {muc} mục{bo})"
+    if tong_quan:
+        return True, f"bài không IMRaD có cấu trúc ({so_tu} từ thân bài, {muc} mục nội dung{bo})"
+    return False, f"không đủ dấu hiệu toàn văn ({so_tu} từ thân bài, {len(nhom)} nhóm đề mục IMRaD, {muc} mục{bo})"
 
 
 def dem_toan_van(kho: Path) -> dict[str, set[str]]:
@@ -488,7 +618,7 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
             # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
             # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
             vb = _van_ban_tho(du_lieu)
-            la_tv, vi_sao = la_toan_van_html(vb)
+            la_tv, vi_sao = la_toan_van_html(du_lieu.decode("utf-8", errors="replace"))  # NGUYÊN VĂN HTML: cổng đọc đề mục
             if not la_tv or "Cookies must be enabled" in vb:
                 print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu")
                 con_thieu.append(pm)

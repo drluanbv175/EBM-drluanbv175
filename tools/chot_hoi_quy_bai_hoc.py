@@ -7502,6 +7502,57 @@ def bh160_unpaywall_cong_dieu_khoan_va_noi_dung():
     return True, "chỉ lưu tự động bản giấy phép mở · loại trang giới thiệu kho · sổ phủ đếm mọi loại toàn văn"
 
 
+def bh164_cong_toan_van_doc_cau_truc_de_muc():
+    """15/10 — cổng nội dung toàn văn (`gom_toan_van_dashboard.la_toan_van_html`, dùng chung cho tầng Unpaywall, phiên Chrome
+    `--nhan` và `bao_phu_cuc_bo`; bản sao `verify_dashboard._html_la_toan_van` là cổng BH161) trả «toàn văn» cho MỌI trang
+    ≥ 6000 từ, trước cả khi xét dấu nào: trang Nature KHÔNG có quyền (PMID 27811932 — Key Points · Abstract · «Access options»,
+    thân bài ~575 từ) qua cổng nhờ danh mục tham khảo dài và vào kho `_CHR.html`. Chiều ngược: CMAJ (16129869) dùng
+    «Interpretation» thay «Discussion» ⇒ toàn văn thật vào sổ nợ BH161. Vá: ngưỡng tính trên THÂN BÀI (bỏ References/hậu bài);
+    đề mục tường phí mà thân bài không tự chứng minh cấu trúc toàn văn ⇒ KHÔNG (trang SAGE CÓ quyền vẫn có h4 «Access options»);
+    nhóm IMRaD nhận đồng nghĩa chỉ khi là thẻ NGOÀI tóm tắt; mọi nơi gọi truyền NGUYÊN VĂN HTML. Kiểm HÀNH VI ngoại tuyến."""
+    import tempfile as _tf
+    g = _nap(REPO / "tools/gom_toan_van_dashboard.py", "_bh164_gom")
+    vd = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py", "_bh164_vd")
+    if not hasattr(g, "phan_tich_trang_html") or not hasattr(vd, "_la_toan_van_kho"):
+        return False, "cổng chưa đọc cấu trúc đề mục (thiếu phan_tich_trang_html / _la_toan_van_kho)"
+
+    def m(the, de_muc, n, goc):
+        return "<%s>%s</%s><p>%s</p>" % (the, de_muc, the, " ".join("%s%d" % (goc, i % 89) for i in range(n)))
+
+    def trang(*khoi):
+        return "<html><body><article><h1>T</h1>" + "".join(khoi) + "</article></body></html>"
+    tom_tat = ("<h2>Abstract</h2>" + m("h3", "Background", 70, "a") + m("h3", "Methods", 80, "b") + m("h3", "Results", 90, "c")
+               + m("h3", "Interpretation", 60, "d"))
+    imrad = m("h2", "Introduction", 700, "i") + m("h2", "Methods", 900, "me") + m("h2", "Results", 900, "r") + m("h2", "Discussion", 700, "di")
+    ca = {
+        "Nature không quyền (Access options + 8000 từ tham khảo)": (trang(m("h2", "Key Points", 120, "k"), m("h2", "Abstract", 250, "ab"),
+            m("h2", "Access options", 30, "ac"), m("h2", "References", 8000, "re"), m("h2", "Author information", 300, "au")), False),
+        "tham khảo dài, không đề mục tường phí": (trang(m("h2", "Abstract", 250, "ab"), m("h2", "References", 8000, "re")), False),
+        "tường phí + tham khảo dưới đề mục lạ": (trang(m("h2", "Abstract", 250, "ab"), m("h2", "Access options", 30, "ac"),
+            m("h2", "Bibliografía", 8000, "re")), False),
+        "SAGE có quyền (h4 Access options)": (trang(tom_tat, imrad, m("h2", "References", 1400, "re"), m("h4", "Access options", 100, "ac")), True),
+        "CMAJ (Interpretation, mở bài không đề mục)": (trang(tom_tat, "<h2></h2><p>" + "mo " * 600 + "</p>", m("h2", "Methods", 1200, "me"),
+            m("h2", "Results", 1200, "r"), m("h2", "Interpretation", 1100, "it"), m("h2", "References", 700, "re")), True),
+        "tóm tắt có cấu trúc + bình luận dài": (trang(tom_tat, m("h2", "Commentary", 2800, "co")), False),
+        "guideline dài không IMRaD": (trang(*(m("h2", "Recommendation %d" % i, 700, "g%d" % i) for i in range(10))), True),
+    }
+    with _tf.TemporaryDirectory() as td:
+        for ten, (html, ky_vong) in ca.items():
+            q = Path(td) / "PMID-1_CHR.html"
+            q.write_text(html, encoding="utf-8")
+            if g.la_toan_van_html(html)[0] is not ky_vong:
+                return False, "cổng gom kết luận sai: %s (%s)" % (ten, g.la_toan_van_html(html)[1])
+            if vd._html_la_toan_van(q) is not ky_vong:
+                return False, "cổng BH161 (verify_dashboard) kết luận sai: %s" % ten
+    import re as _re
+    goi_chu_tho = _re.compile(r"la_toan_van_html\(\s*(?:[A-Za-z_][\w.]*\.)?_van_ban_tho\(")  # LỜI GỌI, không phải chuỗi nhắc tên
+    for ten in ("gom_toan_van_dashboard.py", "phien_uy_quyen_chrome.py", "doc_toan_van_co_nguoi.py"):
+        for i, dong in enumerate((REPO / "tools" / ten).read_text(encoding="utf-8").splitlines(), 1):
+            if goi_chu_tho.search(dong.split("#", 1)[0]):
+                return False, "%s:%d gọi cổng với chữ thô — cổng MÙ đề mục" % (ten, i)
+    return True, "thân bài bỏ References · đề mục tường phí xét trước ngưỡng 6000 (trừ trang tự chứng minh toàn văn) · IMRaD đồng nghĩa ngoài tóm tắt · hai bản cổng cùng kết luận"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10729,6 +10780,7 @@ BAI_HOC = [
     ("BH161", "04/10", "BẢO ĐẢM đọc toàn văn: cổng chặn mục apply chưa đọc (bánh cóc + sổ nợ có hạn); chuỗi theo chủ đề có bước TV (gom hợp lệ → đọc sâu → phiếu làn trình duyệt)", bh161_he_thong_bao_dam_toan_van),
     ("BH162", "04/10", "Đối chiếu skill tài khoản ↔ repo phải so skill nguồn «plugin» của bác sĩ (bộ lọc «custom» từng che 20 skill cũ)", bh162_doi_chieu_skill_tai_khoan_nguon_plugin),
     ("BH163", "04/10", "Skill tài khoản claude.ai: so CẢ tệp phụ (không chỉ SKILL.md), đóng gói ZIP đúng cấu trúc tải lên (gốc <tên>/, name = tên thư mục) và hòm việc nhắc khi tài khoản cũ", bh163_skill_tai_khoan_tep_phu_va_dong_goi),
+    ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
