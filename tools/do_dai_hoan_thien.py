@@ -15,8 +15,16 @@ Nguồn từng tệp:
   chu_de_cu.json     — `kiem_do_tuoi_chung_cu.lau_chua_xem_lai()` (tuổi từng chủ đề)
   lo_trinh.json      — lộ trình (hằng số LO_TRINH dưới đây; sửa tay khi bác sĩ đổi kế hoạch)
   chi_phi_token.json — chi phí token đã ĐO (hằng số CHI_PHI_TOKEN, mỗi dòng ghi nguồn)
+  tien_do.json       — nhật ký việc đã hoàn thiện (`--ghi-tien-do`), mới nhất trước, kèm hạn mức 5 giờ lúc ghi
+  han_muc.json       — hạn mức gói Claude (5 giờ · tuần) từ `han_muc_vao.json` do Claude chép từ thẻ usage của app;
+                       vắng/hỏng ⇒ một dòng `khong_do` (máy không tự đọc được hạn mức tài khoản)
+
+Theo dõi tiến độ (15/10/2026, bác sĩ: «khi hoàn thiện tự cập nhật để theo dõi tiến độ, đảm bảo tiến độ với mức token
+và hạn mức»): mỗi việc xong ghi MỘT dòng bằng `--ghi-tien-do "<mảng>|<việc>|<kết quả>"`; lệnh in danh sách tệp ĐỔI so
+với lần trước để chỉ tải lại đúng các tệp đó.
 
 Lệnh:  python3 tools/do_dai_hoan_thien.py [--goc <thư mục Claude AI>] [--ra <thư mục>] [--study <mã>]
+              [--ghi-tien-do "<mảng>|<việc>|<kết quả>"]
 Mã thoát: 0 đã ghi (kể cả khi có thước đo không đo được) · 2 không ghi được.
 """
 from __future__ import annotations
@@ -53,6 +61,8 @@ TEN_CONG = {"G0": "Câu hỏi & khả thi", "G1": "Thiết kế & đề cương"
 NHAN_KET_LUAN = {"DAT_TIEU_CHI": "Đạt tiêu chí", "AGENT_XONG_CHO_NGUOI": "Agent xong, chờ người",
                  "AGENT_CON_VIEC": "Agent còn việc", "CHO_CONG_TRUOC": "Chờ cổng trước"}
 NHAN_TRANG_THAI = {"dat": "Đạt", "chua": "Chưa đạt", "khong_do": "Không đo được"}
+# Ngưỡng hạn mức (phần trăm đã dùng) — quá ngưỡng thì hoãn việc nặng tới khi cửa sổ đặt lại.
+NGUONG_HAN_MUC = {"5 giờ": (85, 95), "tuần": (80, 92)}  # (hoãn việc nặng, dừng hẳn)
 _CI_DANG_CHAY = ("in_progress", "queued", "pending", "waiting", "requested")  # chưa có kết luận
 _KY_CUNG = re.compile(r"^(PASS|LOCKED|APPROVED|RELEASED)|_LOCKED$")
 
@@ -312,17 +322,90 @@ def thuoc_do(goc: Path, y_khoa: Path, cong: List[Dict[str, Any]], viec: List[Dic
     return hang
 
 
+def _doc_json_tep(p: Path) -> Any:
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def do_han_muc(ra: Path) -> List[Dict[str, Any]]:
+    """Hạn mức gói Claude từ `han_muc_vao.json` (Claude chép từ thẻ usage của app: {do_luc, windows:[{label,
+    percentUsed, resetsAt}]}). Mỗi cửa sổ một dòng kèm khuyến nghị theo NGUONG_HAN_MUC; vắng ⇒ dòng khong_do."""
+    d = _doc_json_tep(ra / "han_muc_vao.json")
+    hang: List[Dict[str, Any]] = []
+    for w in (d or {}).get("windows") or []:
+        nhan = str(w.get("label") or "")
+        loai = "5 giờ" if "5-hour" in nhan or "5 giờ" in nhan else ("tuần" if "eekly" in nhan or "tuần" in nhan else None)
+        pct = w.get("percentUsed")
+        if loai is None or not isinstance(pct, (int, float)):
+            continue
+        hoan, dung = NGUONG_HAN_MUC[loai]
+        tt = "dung" if pct >= dung else ("hoan_viec_nang" if pct >= hoan else "binh_thuong")
+        hang.append({"cua_so": nhan, "loai": loai, "da_dung": pct, "dat_lai_luc": w.get("resetsAt"),
+                     "nguong_hoan": hoan, "nguong_dung": dung, "trang_thai": tt,
+                     "khuyen_nghi": {"dung": "Dừng, chờ cửa sổ đặt lại", "hoan_viec_nang": "Chỉ làm việc nhẹ, 0 agent",
+                                     "binh_thuong": "Làm theo lộ trình"}[tt],
+                     "do_luc": (d or {}).get("do_luc")})
+    if not hang:
+        hang.append({"cua_so": "Hạn mức gói Claude", "loai": "", "da_dung": None, "dat_lai_luc": None,
+                     "nguong_hoan": None, "nguong_dung": None, "trang_thai": "khong_do",
+                     "khuyen_nghi": "Chưa có số đo hạn mức — hỏi Claude «đo hạn mức»", "do_luc": None})
+    return hang
+
+
+def ghi_tien_do(ra: Path, dong: str, han_muc: List[Dict[str, Any]], luc: str) -> Dict[str, Any]:
+    """Nối MỘT dòng việc đã xong vào nhật ký tien_do.jsonl (chỉ nối, không sửa dòng cũ)."""
+    phan = [x.strip() for x in dong.split("|")]
+    if len(phan) != 3 or not all(phan):
+        raise ValueError("--ghi-tien-do cần đúng dạng «<mảng>|<việc>|<kết quả>»")
+    h5 = next((h["da_dung"] for h in han_muc if h.get("loai") == "5 giờ"), None)
+    rec = {"luc": luc, "mang": phan[0], "viec": phan[1], "ket_qua": phan[2], "han_muc_5h": h5}
+    ra.mkdir(parents=True, exist_ok=True)
+    with (ra / "tien_do.jsonl").open("a", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    return rec
+
+
+def doc_tien_do(ra: Path) -> List[Dict[str, Any]]:
+    """Nhật ký tiến độ, mới nhất trước; dòng hỏng bị bỏ qua (không chặn cả trang)."""
+    hang = []
+    try:
+        dong = (ra / "tien_do.jsonl").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for i, x in enumerate(dong, 1):
+        try:
+            r = json.loads(x)
+        except ValueError:
+            continue
+        if isinstance(r, dict):
+            r["ma"] = f"T{i:03d}"
+            hang.append(r)
+    return list(reversed(hang))
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Thu số đo cho trang Đài hoàn thiện EBM (0 agent).")
     ap.add_argument("--goc", type=Path, default=GOC_MAC_DINH, help="thư mục «Claude AI» (mặc định: repo chứa tệp này)")
     ap.add_argument("--ra", type=Path, default=None, help="thư mục ghi (mặc định <gốc>/state/dai-hoan-thien)")
     ap.add_argument("--study", default=STUDY_MAC_DINH)
+    ap.add_argument("--ghi-tien-do", default=None, metavar="MẢNG|VIỆC|KẾT QUẢ",
+                    help="nối một dòng việc đã hoàn thiện vào nhật ký tiến độ trước khi đo")
     a = ap.parse_args(argv)
     goc = a.goc.resolve()
     y_khoa = goc / "medical-ebm-automation"
     ra = (a.ra or goc / "state" / "dai-hoan-thien").resolve()
     luc = dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
+    han_muc = do_han_muc(ra)
+    if a.ghi_tien_do:
+        try:
+            rec = ghi_tien_do(ra, a.ghi_tien_do, han_muc, luc)
+        except (ValueError, OSError) as e:
+            print(f"Không ghi được tiến độ: {e}", file=sys.stderr)
+            return 2
+        print(f"Đã ghi tiến độ: {rec['mang']} — {rec['viec']}")
     cong = do_cong(y_khoa, a.study) if y_khoa.is_dir() else []
     viec = do_viec(goc)
     tuoi = do_tuoi(goc)
@@ -333,10 +416,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         "chu_de_cu": [t for t in tuoi if not t["ban_tin_gop"]],
         "lo_trinh": LO_TRINH,
         "chi_phi_token": CHI_PHI_TOKEN,
+        "tien_do": doc_tien_do(ra),
+        "han_muc": han_muc,
     }
+    doi = []
     try:
         ra.mkdir(parents=True, exist_ok=True)
         for ten, hang in bo.items():
+            cu = _doc_json_tep(ra / f"{ten}.json")
+            if not isinstance(cu, dict) or cu.get("rows") != hang:
+                doi.append(f"{ten}.json")
             (ra / f"{ten}.json").write_text(json.dumps({"do_luc": luc, "rows": hang}, ensure_ascii=False, indent=1),
                                             encoding="utf-8", newline="\n")
     except OSError as e:
@@ -346,6 +435,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     dem = {k: sum(1 for h in td if h["trang_thai"] == k) for k in ("dat", "chua", "khong_do")}
     print(f"Đài hoàn thiện — đo lúc {luc}: {dem['dat']} đạt · {dem['chua']} chưa · {dem['khong_do']} không đo được")
     print(f"  {len(cong)} cổng · {len(viec)} việc · {len(bo['chu_de_cu'])} chủ đề → {ra.as_posix()}")
+    print("  Tệp đổi (cần tải lại lên trang): " + (", ".join(doi) if doi else "không có"))
     return 0
 
 
