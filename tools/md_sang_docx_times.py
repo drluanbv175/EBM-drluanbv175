@@ -26,9 +26,16 @@ Cú pháp Markdown hỗ trợ: đề mục `#`–`####` · đoạn văn · **đ�
 `mã` · [chữ](liên-kết) · bảng dạng ống · trích dẫn `>` · danh sách `-`/`*`/`1.` ·
 đường kẻ ngang `---`.
 
+CHẾ ĐỘ TRÌNH BÀY ĐỀ CƯƠNG (`--trang-de-cuong`, thêm 15/10/2026): dùng cho văn bản nộp
+Hội đồng (đề cương, thuyết minh). Khổ A4; lề trái 3 cm, phải/trên/dưới 2 cm; đoạn văn
+căn đều hai bên, giãn dòng 1,3; số trang giữa chân trang. Đường kẻ `---` KHÔNG vẽ
+thành đường kẻ mà thành NGẮT TRANG; mọi nội dung đứng trước `---` đầu tiên là TRANG BÌA
+và được căn giữa.
+
 Dùng:
     python3 tools/md_sang_docx_times.py <đầu-vào>.md [--ra <đầu-ra>.docx]
     python3 tools/md_sang_docx_times.py bao-cao.md --co-chu 12
+    python3 tools/md_sang_docx_times.py de-cuong.md --co-chu 13 --trang-de-cuong
 
 Mã thoát: 0 = xong · 2 = lỗi đầu vào hoặc thiếu python-docx.
 """
@@ -47,7 +54,7 @@ try:
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.shared import Pt, RGBColor
+    from docx.shared import Cm, Pt, RGBColor
 except ImportError:  # pragma: no cover - phụ thuộc môi trường
     print("❌ Thiếu python-docx. Cài: pip install python-docx "
           "(venv ~/.ebm-venv đã có sẵn).", file=sys.stderr)
@@ -124,8 +131,57 @@ def _la_dong_ngan_cach(dong: str) -> bool:
     return bool(re.fullmatch(r"\s*\|?[\s:|-]+\|?\s*", dong)) and "-" in dong
 
 
-def dung_docx(md: str, co_chu: float) -> "Document":
+def _so_trang_chan_trang(section) -> None:
+    """Chèn trường PAGE căn giữa ở chân trang."""
+    p = section.footer.paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run()
+    for loai in ("begin", "instr", "end"):
+        if loai == "instr":
+            el = OxmlElement("w:instrText")
+            el.set(qn("xml:space"), "preserve")
+            el.text = "PAGE"
+        else:
+            el = OxmlElement("w:fldChar")
+            el.set(qn("w:fldCharType"), loai)
+        run._r.append(el)
+    _dat_font(run)
+
+
+def _trinh_bay_de_cuong(doc) -> None:
+    """Khổ A4, lề 3-2-2-2 cm, số trang; đoạn văn thân bài căn đều, giãn dòng 1,3."""
+    for s in doc.sections:
+        s.page_width, s.page_height = Cm(21), Cm(29.7)
+        s.top_margin = s.bottom_margin = Cm(2)
+        s.left_margin, s.right_margin = Cm(3), Cm(2)
+        _so_trang_chan_trang(s)
+    for p in doc.paragraphs:
+        if p.alignment is not None or p.style.name.startswith("Heading"):
+            continue
+        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p.paragraph_format.line_spacing = 1.3
+    for bang in doc.tables:
+        for hang in bang.rows:
+            for o in hang.cells:
+                for p in o.paragraphs:
+                    p.paragraph_format.line_spacing = 1.1
+                    p.paragraph_format.space_after = Pt(2)
+
+
+def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document":
     doc = Document()
+    # Trạng thái chế độ đề cương: đang ở trang bìa? đoạn kế tiếp có ngắt trang trước?
+    trang = {"bia": trang_de_cuong, "ngat": False}
+
+    def _moi(p):
+        """Áp trạng thái trang bìa/ngắt trang cho đoạn vừa tạo."""
+        if trang["ngat"]:
+            p.paragraph_format.page_break_before = True
+            trang["ngat"] = False
+        if trang["bia"]:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_after = Pt(12)
+        return p
 
     # Font mặc định cho TOÀN tài liệu.
     for ten_style in ("Normal", "Title", "Heading 1", "Heading 2", "Heading 3",
@@ -158,6 +214,12 @@ def dung_docx(md: str, co_chu: float) -> "Document":
 
         # Đường kẻ ngang
         if re.fullmatch(r"-{3,}|\*{3,}|_{3,}", tho):
+            if trang_de_cuong:
+                # Chế độ đề cương: đường kẻ = ngắt trang; hết trang bìa ở đường kẻ đầu tiên.
+                trang["bia"] = False
+                trang["ngat"] = True
+                i += 1
+                continue
             p = doc.add_paragraph()
             ppr = p._p.get_or_add_pPr()
             bdr = OxmlElement("w:pBdr")
@@ -176,15 +238,18 @@ def dung_docx(md: str, co_chu: float) -> "Document":
             muc = len(m.group(1))
             chu = m.group(2).strip()
             if muc == 1:
-                p = doc.add_paragraph()
+                p = _moi(doc.add_paragraph())
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 _viet_inline(p, chu, co=co_chu + 6, dam_het=True)
             else:
-                p = doc.add_heading(level=min(muc, 4))
+                p = _moi(doc.add_heading(level=min(muc, 4)))
                 p.text = ""
                 _viet_inline(p, chu, co=co_chu + (4 - muc))
                 for r in p.runs:
                     r.font.color.rgb = RGBColor(0x14, 0x25, 0x2C)
+                    if trang["bia"]:
+                        r.font.size = Pt(co_chu + 3)
+                        r.bold = True
             i += 1
             continue
 
@@ -196,6 +261,8 @@ def dung_docx(md: str, co_chu: float) -> "Document":
             while i < len(dong_md) and dong_md[i].strip().startswith("|"):
                 than.append(_o_bang(dong_md[i]))
                 i += 1
+            if trang["ngat"]:
+                _moi(doc.add_paragraph())
             bang = doc.add_table(rows=1, cols=len(dau))
             bang.style = "Table Grid"
             for j, o in enumerate(dau):
@@ -216,7 +283,7 @@ def dung_docx(md: str, co_chu: float) -> "Document":
             while i < len(dong_md) and dong_md[i].strip().startswith(">"):
                 khoi.append(dong_md[i].strip().lstrip(">").strip())
                 i += 1
-            p = doc.add_paragraph()
+            p = _moi(doc.add_paragraph())
             p.paragraph_format.left_indent = Pt(24)
             _viet_inline(p, " ".join(khoi), co=co_chu)
             for r in p.runs:
@@ -238,9 +305,9 @@ def dung_docx(md: str, co_chu: float) -> "Document":
                 noi_dung.append(dong_md[i].strip())
                 i += 1
             try:
-                p = doc.add_paragraph(style=style)
+                p = _moi(doc.add_paragraph(style=style))
             except KeyError:
-                p = doc.add_paragraph()
+                p = _moi(doc.add_paragraph())
             p.paragraph_format.left_indent = Pt(18 + 18 * thut)
             _viet_inline(p, " ".join(noi_dung), co=co_chu)
             continue
@@ -253,10 +320,13 @@ def dung_docx(md: str, co_chu: float) -> "Document":
                and not re.match(r"^(\s*)([-*•]|\d+[.)])\s+", dong_md[i])):
             khoi.append(dong_md[i].strip())
             i += 1
-        p = doc.add_paragraph()
-        p.paragraph_format.space_after = Pt(6)
+        p = _moi(doc.add_paragraph())
+        if not trang["bia"]:
+            p.paragraph_format.space_after = Pt(6)
         _viet_inline(p, " ".join(khoi), co=co_chu)
 
+    if trang_de_cuong:
+        _trinh_bay_de_cuong(doc)
     return doc
 
 
@@ -266,6 +336,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("nguon", type=Path, help="file .md đầu vào")
     ap.add_argument("--ra", type=Path, help="file .docx đầu ra (mặc định cùng tên)")
     ap.add_argument("--co-chu", type=float, default=12.0, help="cỡ chữ thân bài (pt)")
+    ap.add_argument("--trang-de-cuong", action="store_true",
+                    help="trình bày văn bản nộp Hội đồng: A4, lề 3-2-2-2 cm, căn đều, "
+                         "«---» = ngắt trang, phần trước «---» đầu tiên là trang bìa căn giữa")
     a = ap.parse_args(argv)
 
     if not a.nguon.exists():
@@ -274,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     ra = a.ra or a.nguon.with_suffix(".docx")
     ra.parent.mkdir(parents=True, exist_ok=True)
 
-    doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu)
+    doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu, a.trang_de_cuong)
     doc.save(str(ra))
     print(f"✅ {ra}  ({ra.stat().st_size:,} byte · font {FONT} · {a.co_chu:g}pt)")
     return 0
