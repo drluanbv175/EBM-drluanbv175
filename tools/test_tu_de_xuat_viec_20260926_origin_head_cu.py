@@ -31,7 +31,7 @@ URL_YK = "https://github.com/chu/medical-ebm-automation.git"
 
 
 def _g(cay: Path, *a: str) -> None:
-    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True)
+    subprocess.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
 def _repo_origin_head(tmp_path: Path, url: str, nhanh_head: str) -> Path:

@@ -365,7 +365,8 @@ def test_muc_1_quet_chua_het_ma_da_thay_ban_sao_van_do(monkeypatch, tmp_path):
 # ── mục 5: bản sao xung đột NẰM TRONG .git (30/09/2026) ──────────────────────
 def _git(repo: Path, *lenh: str) -> str:
     p = subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@example.org",
-                        "-c", "commit.gpgsign=false", *lenh], check=True, capture_output=True, text=True)
+                        "-c", "commit.gpgsign=false", *lenh], check=True, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
     return p.stdout.strip()
 
 

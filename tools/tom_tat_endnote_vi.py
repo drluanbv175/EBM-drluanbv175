@@ -73,6 +73,19 @@ NHAN_TOM_TAT = (("thiet_ke", "THIẾT KẾ"), ("P", "P · ĐỐI TƯỢNG"), ("I
                 ("O", "O · KẾT CỤC"), ("ket_qua", "KẾT QUẢ"))
 CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abstract gốc bên dưới, chưa qua cổng dashboard, không phải "
             "khuyến nghị · áp dụng qua Cổng A.")
+# KHUÔN kho tóm tắt máy (TT-08, 15/10/2026): kho do một phiên Claude soạn tay theo SKILL — khoá sai trước đó bị bỏ IM LẶNG.
+# Khoá định danh: «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: đúng các khoá của NHAN_TOM_TAT. `--mau` in khuôn này.
+KHOA_TRUONG_TOM_TAT = tuple(k for k, _ in NHAN_TOM_TAT)
+_KHOA_DINH_DANH = re.compile(r"PMID \d{1,9}|DOI 10\.\d{4,9}/\S+")
+MAU_KHO_TOM_TAT = {
+    "_about": ("Kho «Tóm tắt MÁY» cho trích dẫn CHỈ là tài liệu tham khảo — phiên Claude soạn từ ABSTRACT GỐC (mọi con số phải có "
+               "nguyên văn trong abstract, lệch ⇒ không in). Khoá định danh «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: "
+               + ", ".join(KHOA_TRUONG_TOM_TAT) + ". Khoá lạ bị báo lỗi, mục không có trường hợp lệ = «chưa tóm tắt»."),
+    "muc": {
+        "PMID 12345678": {k: f"<{nhan.lower()} — tiếng Việt, rút từ abstract gốc>" for k, nhan in NHAN_TOM_TAT},
+        "DOI 10.1000/vi-du.2026.001": {k: f"<{nhan.lower()}>" for k, nhan in NHAN_TOM_TAT},
+    },
+}
 
 
 def _nap():
@@ -200,15 +213,57 @@ def ngu_canh(files: list[Path], doc_data) -> dict[str, dict]:
     return ra
 
 
+_DTV = None
+_NHAN_DA_PHU = None
+
+
+def _dtv():
+    """`doc_toan_van_co_nguoi` — NGUỒN SỰ THẬT dùng chung về độ phủ toàn văn (`bao_phu_cuc_bo`), nạp một lần."""
+    global _DTV
+    if _DTV is None:
+        import importlib.util  # noqa: PLC0415
+        sp = importlib.util.spec_from_file_location("_dtv_tom_tat", Path(__file__).resolve().parent / "doc_toan_van_co_nguoi.py")
+        _DTV = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(_DTV)
+    return _DTV
+
+
+def _nhan_da_phu(trang_thai: str) -> str:
+    """Nhãn người đọc của một trạng thái ĐÃ PHỦ — dùng chung `toan_van_theo_chu_de.NHAN_DA_PHU` (phiếu ⑦); không nạp được ⇒ mã."""
+    global _NHAN_DA_PHU
+    if _NHAN_DA_PHU is None:
+        try:
+            import importlib.util  # noqa: PLC0415
+            sp = importlib.util.spec_from_file_location("_tvcd_tom_tat", Path(__file__).resolve().parent / "toan_van_theo_chu_de.py")
+            m = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(m)
+            _NHAN_DA_PHU = dict(m.NHAN_DA_PHU)
+        except Exception:  # noqa: BLE001 — chỉ là nhãn hiển thị
+            _NHAN_DA_PHU = {}
+    return _NHAN_DA_PHU.get(trang_thai, trang_thai)
+
+
 def trang_thai_toan_van(pmid: str | None, kho: Path | None) -> str:
+    """Dòng «Toàn văn» của khối ĐỌC NHANH — theo NGUỒN SỰ THẬT `doc_toan_van_co_nguoi.bao_phu_cuc_bo` (TT-03, 15/10/2026: trước đó
+    glob riêng `PMID-<n>_*` ⇒ trang giới thiệu kho lưu trữ thành «có HTML (truy cập mở)», tệp tạm `.tam-*` thành «có XML», còn bài
+    bác sĩ đã đọc trực tiếp lại «CHƯA có»). Chỉ khi ĐÃ PHỦ mới xét tệp — chỉ tệp toàn văn THẬT (tên hợp lệ, HTML qua cổng nội
+    dung) — để in loại PDF/HTML/XML."""
     if kho is None:
         return "chưa xét (không thấy kho)"
     if not pmid:
         return "chưa xét (không có PMID)"
-    tep = sorted(p.name for p in kho.glob(f"PMID-{pmid}_*") if p.is_file())
-    if not tep:
+    try:
+        dtv = _dtv()
+        t = dtv.bao_phu_cuc_bo([str(pmid)], kho)[str(pmid)]
+    except Exception as e:  # noqa: BLE001 — không nạp/đo được nguồn sự thật ⇒ nói «chưa xét», không sập cả khối ĐỌC NHANH
+        return f"chưa xét (không đo được độ phủ toàn văn: {type(e).__name__})"
+    if t not in dtv.TRANG_THAI_DA_PHU:
         return "CHƯA có — cách lấy ở phiếu toàn văn của chủ đề (derivatives/…_toan-van.md)"
-    pdf = [t for t in tep if t.lower().endswith(".pdf")]
+    tep = sorted(q.name for q in dtv.tep_toan_van_that(kho, str(pmid)))
+    if not tep:   # đã đọc qua làn trình duyệt / bác sĩ đã đọc trực tiếp — máy KHÔNG có tệp toàn văn
+        doc_sau = (kho / "doc_sau" / f"PMID-{pmid}.md").is_file()
+        return _nhan_da_phu(t) + (" · có bản đọc sâu" if doc_sau else "")
+    pdf = [x for x in tep if x.lower().endswith(".pdf")]
     chinh = pdf[0] if pdf else tep[0]
     nguon = next((nh for hau_to, nh in NGUON_TOAN_VAN if hau_to in chinh), "kho toàn văn")
     loai = "PDF" if pdf else ("HTML" if chinh.lower().endswith((".html", ".htm")) else "XML")
@@ -380,6 +435,24 @@ def nap_tom_tat_abstract(dash: Path | None) -> dict[str, dict]:
     return muc
 
 
+def kiem_kho_tom_tat(kho_tt: dict) -> list[str]:
+    """Lỗi KHUÔN của kho tóm tắt máy (TT-08, 15/10/2026 — trước đó khoá sai bị bỏ IM LẶNG: `design/population` ⇒ không in, không báo
+    thiếu; «thiết kế» có dấu ⇒ mất trường mà không ai biết). Khoá định danh sai dạng / DOI không chữ thường / trường lạ ⇒ một dòng
+    lỗi; khuôn đúng: `python3 tools/tom_tat_endnote_vi.py --mau`."""
+    loi = []
+    for k, v in (kho_tt or {}).items():
+        if not _KHOA_DINH_DANH.fullmatch(str(k)):
+            loi.append(f"kho tóm tắt máy: khoá «{k}» sai dạng — cần «PMID <n>» hoặc «DOI <doi chữ thường>» (xem --mau)")
+            continue
+        if str(k).startswith("DOI ") and str(k)[4:] != str(k)[4:].lower():
+            loi.append(f"kho tóm tắt máy: khoá «{k}» — DOI phải viết chữ thường (bộ đọc tra «DOI <doi chữ thường>»)")
+        la = [f for f in (v or {}) if f not in KHOA_TRUONG_TOM_TAT]
+        if la:
+            loi.append(f"kho tóm tắt máy: «{k}» có trường lạ {', '.join(map(str, la))} — trường hợp lệ: "
+                       + ", ".join(KHOA_TRUONG_TOM_TAT) + " (xem --mau)")
+    return loi
+
+
 _SO = re.compile(r"\d+(?:\.\d+)?")
 
 
@@ -405,7 +478,7 @@ def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[st
     tt = kho_tt.get(f"PMID {muc['pmid']}") if muc.get("pmid") else None
     if tt is None and muc.get("doi"):
         tt = kho_tt.get(f"DOI {str(muc['doi']).lower()}")
-    if not tt or not any(_gon(tt.get(k)) for k, _ in NHAN_TOM_TAT):
+    if not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
         return None, []
     lech = so_khong_khop(tt, goc)
     return (None, lech) if lech else (tt, [])
@@ -497,8 +570,8 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         ten = {Path(f).name for f in files}
         ds = {k: v for k, v in ds.items() if any(x["dashboard"] in ten for x in v["ngu_canh"])}
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
-                "se_ghi": 0, "da_ghi": 0, "loi": [], "sao_luu": None, "tom_tat_may": 0, "tom_tat_lech_so": [],
-                "tham_khao_chua_tom_tat": []}
+                "se_ghi": 0, "da_ghi": 0, "loi": kiem_kho_tom_tat(tom_tat_abs or {}), "sao_luu": None, "tom_tat_may": 0,
+                "tom_tat_lech_so": [], "tham_khao_chua_tom_tat": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -525,7 +598,9 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
             bc["tom_tat_lech_so"].append(f"{m}: số không có trong abstract gốc ({', '.join(lech[:5])}) — không in tóm tắt máy")
         bc["tom_tat_may"] += bool(tt)
         dinh_danh = f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}"
-        if (tom_tat_abs is not None and dinh_danh not in tom_tat_abs  # DOI trong ngu_canh đã chữ thường = khoá kho
+        # «Chưa tóm tắt» = kho KHÔNG cho ra tóm tắt dùng được (vắng mục, hoặc mục không có trường hợp lệ nào — TT-08), trừ khi
+        # mục có mà lệch số (đã báo ở tom_tat_lech_so). Trước đó chỉ xét khoá định danh có mặt ⇒ mục khoá sai lọt khỏi cả hai danh sách.
+        if (tom_tat_abs is not None and tt is None and not lech
                 and not any(x["vai"] == "muc" for x in v["ngu_canh"]) and dinh_danh not in bc["tham_khao_chua_tom_tat"]):
             bc["tham_khao_chua_tom_tat"].append(dinh_danh)
         moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
@@ -544,3 +619,45 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
             else:
                 bc["da_ghi"] += 1
     return bc
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Cửa dòng lệnh nhỏ (TT-08, 15/10/2026): `--mau` in khuôn kho `tom-tat-abstract-vi.json` cho phiên Claude soạn; `--kiem <tệp>`
+    kiểm khuôn một kho đã có (mã 0 đạt · 1 có lỗi khuôn · 2 không đọc được). Ghi vào EndNote đi qua `nap_endnote_chu_de.py`."""
+    import argparse  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+    for _s in (sys.stdout, sys.stderr):
+        try:
+            _s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+    ap = argparse.ArgumentParser(description="Tóm tắt thực hành tiếng Việt cho EndNote — khuôn kho tóm tắt máy")
+    nhom = ap.add_mutually_exclusive_group(required=True)
+    nhom.add_argument("--mau", action="store_true", help=f"in khuôn JSON hợp lệ của kho {TEP_TOM_TAT_ABS}")
+    nhom.add_argument("--kiem", type=Path, metavar="THU_MUC_HOAC_TEP",
+                      help=f"kiểm khuôn kho {TEP_TOM_TAT_ABS} (thư mục EBM-Dashboards hoặc chính tệp)")
+    a = ap.parse_args(argv)
+    if a.mau:
+        print(json.dumps(MAU_KHO_TOM_TAT, ensure_ascii=False, indent=2))
+        return 0
+    thu_muc = a.kiem if a.kiem.is_dir() else a.kiem.parent
+    if not (thu_muc / TEP_TOM_TAT_ABS).is_file():
+        print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy {thu_muc / TEP_TOM_TAT_ABS}")
+        return 2
+    try:
+        kho_tt = nap_tom_tat_abstract(thu_muc)
+    except (OSError, ValueError) as e:
+        print(f"✗ {TEP_TOM_TAT_ABS} không đọc được: {e}")
+        return 2
+    loi = kiem_kho_tom_tat(kho_tt)
+    rong = [k for k, v in kho_tt.items() if not any(_gon(v.get(f)) for f in KHOA_TRUONG_TOM_TAT)]
+    for x in loi:
+        print(f"✗ {x}")
+    for k in rong:
+        print(f"🟡 «{k}»: không có trường hợp lệ nào có nội dung — tính là «chưa tóm tắt»")
+    print(f"{'✓' if not loi else '✗'} {len(kho_tt)} mục · {len(loi)} lỗi khuôn · {len(rong)} mục rỗng. Cần bác sĩ kiểm chứng.")
+    return 1 if loi else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

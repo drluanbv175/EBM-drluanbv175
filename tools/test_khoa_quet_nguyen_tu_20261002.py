@@ -50,7 +50,8 @@ def _mot_vong(tmp_path: Path, n: int, vong: int, mo_coi: bool = False) -> int:
     if mo_coi:
         khoa.write_text(json.dumps({"pid": 1, "may": "x", "luc": time.time() - 7200}), encoding="utf-8", newline="\n")
     moc = time.time() + 2.0
-    ps = [subprocess.Popen([sys.executable, "-c", _CON, str(SS), str(khoa), str(moc)], stdout=subprocess.PIPE, text=True)
+    ps = [subprocess.Popen([sys.executable, "-c", _CON, str(SS), str(khoa), str(moc)], stdout=subprocess.PIPE, text=True,
+                           encoding="utf-8", errors="replace")
           for _ in range(n)]
     ra = [p.communicate(timeout=60)[0].strip() for p in ps]
     return ra.count("OK")

@@ -359,7 +359,7 @@ def _ngay_that_cua_file(path: Path, nguon: str) -> tuple[str, int] | None:
         elif nguon == "git-log":
             r = subprocess.run(
                 ["git", "-C", str(ROOT), "log", "-1", "--format=%aI", "--", str(path)],
-                capture_output=True, text=True, timeout=10, check=True,
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, check=True,
             )
             out = r.stdout.strip()
             if not out:

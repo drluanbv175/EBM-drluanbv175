@@ -514,6 +514,8 @@ def test_gan_kho_chi_khi_dang_mo_khong_tu_bat_endnote(N, tmp_path, monkeypatch, 
     tv.write_bytes(b"")
     monkeypatch.setattr(N, "doc_cau_hinh", lambda tep=None: {"thu_vien": str(tv), "ung_dung": "EndNote 2025"})
     monkeypatch.setattr(N, "EndNoteMac", _EndNoteMacDong)
+    # Giả lập ĐANG Ở MAC (15/10: phép kiểm nền tảng nay đứng trước phép kiểm cấu hình — DN-02).
+    monkeypatch.setattr(N, "_la_mac", lambda: True)
     ma = N.main(["--gan-kho", "--pmid", "555", "--kho-toan-van", str(tmp_path), "--ap-dung", "--chi-khi-dang-mo"])
     assert ma == 0 and "⚪ EndNote chưa mở" in capsys.readouterr().out
     assert N.main(["--gan-kho", "--file", str(tv)]) == 3, "--gan-kho không đi cùng --file"

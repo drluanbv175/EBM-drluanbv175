@@ -212,6 +212,19 @@ VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
      "/tra-ma-icd10", "tra mã ICD-10"),
     (["làm slide", "bài giảng", "soạn slide", "tài liệu đào tạo", "poster"],
      "dao-tao-slide-tai-lieu-y-khoa", "sản phẩm đào tạo / slide"),
+    # 15/10/2026 — làn toàn văn đã có thêm ba CHỦ mà cửa vào chưa biết (đo: «nạp chủ đề này vào EndNote» · «mở phiên uỷ quyền
+    # chrome» ⇒ unknown; «sổ nợ toàn văn còn bao nhiêu» · câu uỷ quyền lưu bản sao ⇒ nhầm sang doc_toan_van_co_nguoi). Đứng TRƯỚC
+    # luật «toàn văn» (câu của ba việc này đều có chữ «toàn văn»); vẫn thua cờ đỏ / mô tả ca lâm sàng (route() kiểm cong_cu SAU CÙNG).
+    # KHÔNG dùng cue trơn «uỷ quyền»: «uỷ quyền máy đọc <NXB>» là việc ghi uỷ quyền ĐỌC (doc_toan_van_co_nguoi --ghi-uy-quyen),
+    # không phải mở phiên LƯU bản sao.
+    (["nợ toàn văn", "sổ nợ", "sổ toàn văn", "bảo đảm đọc toàn văn"],
+     "tools/so_toan_van.py", "sổ BẢO ĐẢM đọc toàn văn (BH161): mục apply chưa đọc toàn văn, nợ còn hạn/quá hạn và cách trả"),
+    (["phiên uỷ quyền", "phiên ủy quyền", "uỷ quyền phiên", "ủy quyền phiên", "lưu bản sao", "phiên chrome"],
+     "tools/phien_uy_quyen_chrome.py", "phiên uỷ quyền LƯU bản sao toàn văn qua Chrome của bác sĩ: `--mo \"<nguyên văn lời bác "
+     "sĩ>\"` (agent không tự mở), `--kiem` trước mỗi bài, `--dung` khi bác sĩ nói dừng"),
+    (["endnote"],
+     "tools/nap_endnote_chu_de.py", "nạp trích dẫn của chủ đề vào nhóm «EBM · <câu hỏi>» trong EndNote (`--file <dashboard> "
+     "--ap-dung`; gắn PDF mới về: `--gan-kho`; máy không phải Mac: `--xuat-xml`)"),
     # 02/10/2026 — làn có NGƯỜI trên trình duyệt (bác sĩ yêu cầu): trang chặn bot và cơ sở dữ liệu cần tài khoản của bác sĩ.
     # Toàn văn đứng TRƯỚC «chặn bot»: «đọc toàn văn bài bị chặn bot» là việc đọc bài, không phải ghi bằng chứng URL.
     (["toàn văn", "full text", "fulltext", "bài trả phí", "paywall", "tường phí"],

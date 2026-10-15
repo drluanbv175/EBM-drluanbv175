@@ -131,7 +131,7 @@ class TestSongDongKhoaLaBH61ChanXuat(_PatchDuongDanTool):
             import subprocess
             r = subprocess.run(
                 [sys.executable, str(VERIFY_NGUON), str(dash), "--online"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
             )
             self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
             self.assertIn("khoá LẠ", r.stdout)

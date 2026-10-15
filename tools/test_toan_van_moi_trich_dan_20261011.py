@@ -102,8 +102,14 @@ def test_moi_duong_doc_deu_co_giai_phap(p, can):
 
 
 def test_bo_nam_chay_toan_van_truoc_endnote():
+    """15/10/2026: ⑦ ⑧ tách thành `buoc_toan_van`/`buoc_endnote` (test thay được run()) — chốt khớp DÒNG THI HÀNH trong main(),
+    không khớp định nghĩa hàm; hành vi đầu–cuối ở test_lan_toan_van_g2_20261015.py."""
     src = (REPO / "tools" / "xuat_goi_cap_nhat.py").read_text(encoding="utf-8")
-    i_tv = src.index('print("⑦ Toàn văn mọi trích dẫn…")')
-    i_en = src.index('print("⑧ EndNote…")')
+    than_main = src[src.index("def main() -> int:"):]
+    i_tv = than_main.index('print("⑦ Toàn văn mọi trích dẫn…")')
+    i_en = than_main.index('print("⑧ EndNote…")')
     assert i_tv < i_en, "toàn văn phải chạy TRƯỚC EndNote để PDF vừa gom được gắn ngay lúc nhập"
-    assert '"--moi-trich-dan"' in src[i_tv:i_en]
+    assert "buoc_toan_van(py, dash, result)" in than_main[i_tv:i_en]
+    assert "buoc_endnote(py, dash, verified)" in than_main[i_en:]
+    than_tv = src[src.index("def buoc_toan_van("):src.index("def lenh_endnote(")]
+    assert '"--moi-trich-dan"' in than_tv

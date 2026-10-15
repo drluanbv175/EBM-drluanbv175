@@ -28,8 +28,9 @@ CHẾ ĐỘ LÔ: `--cu-nhat N` tự chọn N chủ đề có lát cắt cũ nh�
 run_id + một khoá cho cả lô.
 
 Log: `logs/<run_id>.jsonl` — mỗi dòng {run_id, buoc, lenh, rc, giay, luc}; dòng đầu ghi THAM SỐ lượt chạy để
-`--resume` chạy tiếp ĐÚNG cờ (T1-09). Ứng viên A2 lưu ở `logs/<run_id>.A2-<slug>.{md,json}`; phiếu cuối lượt
-ở `logs/<run_id>.phieu.md`.
+`--resume` chạy tiếp ĐÚNG cờ (T1-09). Ứng viên A2 lưu ở `logs/<run_id>.A2-<slug>.{md,json}`; báo cáo toàn văn ở
+`logs/<run_id>.TV-<slug>.md`; phiếu cuối lượt ở `logs/<run_id>.phieu.md` (có dòng phiếu toàn văn khi còn bài thiếu / không đo
+được — 15/10/2026, W4).
 Khoá: `ops/lock.py` trên `EBM-Dashboards/.orchestrator.lock` (không đụng `.quet.lock` của A2).
 
 Mã thoát: 0 = mọi bước sạch · 1 = có bước FAIL NỘI DUNG / cần bác sĩ · 2 = hạ tầng (khoá bận / mạng /
@@ -68,7 +69,10 @@ PY = sys.executable  # BH05: không gọi "python3" cứng — Windows không c�
 HAN_CAP_NHAT_NGAY = 35   # ngưỡng «đáng mở phiên làm mới» — cùng ngưỡng kiem_do_tuoi_chung_cu dùng để nhắc
 TRAN_LO = 8              # trần số chủ đề mỗi lô: mỗi chủ đề ≈ vài phút gọi mạng
 HAN_KHOA_GIAY = 4 * 3600  # khoá mặc định 30' ngắn hơn một lượt có A3 (~71') — coi mồ côi giữa chừng (T1-08)
-TIMEOUT_BUOC = {"A2": 1800, "A3": 7200, "TV": 2400, "A4": 1800, "B2": 1800, "B4": 3600, "B5": 600}
+# Ngân sách giờ PHẢI khớp tầng dưới (vá 15/10/2026, W1): TV nối tối đa 3 công cụ con, mỗi cái trần
+# `toan_van_theo_chu_de.TIMEOUT_CONG_CU` (900 s) ⇒ TV ≥ 3×900 + biên (trước là 2400 < 2700). B4 chứa ⑦ toàn văn có trần riêng
+# `xuat_goi_cap_nhat.TIMEOUT_TOAN_VAN` (3000 s) ⇒ B4 = ngân sách cũ của ①–⑥ (3600) + trần ⑦. Test chốt giữ hai đẳng thức này.
+TIMEOUT_BUOC = {"A2": 1800, "A3": 7200, "TV": 3300, "A4": 1800, "B2": 1800, "B4": 6600, "B5": 600}
 KHONG_PHAN_GIAI = 64
 THIEU_TEP = -7           # mã nội bộ: tệp script/dashboard của bước không tồn tại (chưa chạy gì)
 
@@ -225,6 +229,11 @@ def phan_loai(buoc: str, rc: int, *, a2_json_khong_pass: bool = False) -> tuple[
     «FAIL HẠ TẦNG — chạy lại khi mạng ổn» và rc=3 lọt thành «đi tiếp».
     """
     if rc == -9:
+        if buoc.startswith("TV"):
+            # TV là bước PHỤ TRỢ (vá 15/10/2026, W1): trước đây nhánh -9 chung chạy TRƯỚC mọi nhánh theo bước ⇒ TV quá giờ thành
+            # «timeout» ∈ DUNG_HET, dừng cả lượt — A4/B2/B5 không chạy, trái với lời hứa «rc≠0 chỉ ghi phiếu».
+            return "noi_dung", (f"{buoc} QUÁ THỜI GIAN — bước PHỤ TRỢ: ghi phiếu, đi tiếp (A4/B2/B5 vẫn chạy); "
+                                "chạy lại TV bằng --resume")
         return "timeout", f"{buoc} QUÁ THỜI GIAN — dừng bước (hạ tầng/nguồn chậm); chạy lại bằng --resume"
     if rc == THIEU_TEP:  # script/dashboard không tồn tại: KHÔNG được đọc thành «nguồn bị rút» (rc=2 của Python) — P1-06
         return "tham_so", f"{buoc}: THIẾU TỆP (script hoặc dashboard không tồn tại) — lệnh sai, không phải nguồn bị rút"
@@ -412,7 +421,7 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
     """
     chay = chay or _chay_that  # tra lúc GỌI (không phải lúc định nghĩa) để test main() thay được bộ chạy
     res = {"tong_rc": 0, "dung": None, "ket_qua": {}, "lat_hong": set(), "rut": [], "ung_vien": None,
-           "phien": [], "a2_bao_cao": [], "b2_offline": False, "du_phong": [], "cho_trinh_duyet": []}
+           "phien": [], "a2_bao_cao": [], "tv_bao_cao": [], "b2_offline": False, "du_phong": [], "cho_trinh_duyet": []}
     for b in cac_buoc:
         ten = b["buoc"]
         if _la_da_xong(b, da_xong):
@@ -426,6 +435,8 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
                 res["du_phong"] += _du_phong_a2(duong_json_cu)
                 if "--report" in b["lenh"]:
                     res["a2_bao_cao"].append(b["lenh"][b["lenh"].index("--report") + 1])
+            if ten.startswith("TV") and "--bao-cao" in b.get("lenh", []):
+                res["tv_bao_cao"].append(b["lenh"][b["lenh"].index("--bao-cao") + 1])  # resume: phiếu TV vẫn vào phiếu cuối (W4)
             continue
         if "phien" in b:
             res["phien"].append(b["phien"])  # B1 «chưa có dashboard» phải vào phiếu + kết luận cuối (P1-04)
@@ -459,6 +470,10 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
                     in_(f"ⓘ {ten}: {cau}")
             if "--report" in b["lenh"]:
                 res["a2_bao_cao"].append(b["lenh"][b["lenh"].index("--report") + 1])
+        if ten.startswith("TV") and "--bao-cao" in b["lenh"]:
+            # W4 (15/10/2026): báo cáo TV (bài còn thiếu toàn văn ⇒ làn trình duyệt có bác sĩ) trước đây chỉ nằm trong logs/,
+            # không vào phiếu cuối lượt ⇒ lượt có thể kết luận «🟢 xong, sạch» dù còn bài cần bác sĩ đọc trước khi thẩm định.
+            res["tv_bao_cao"].append(b["lenh"][b["lenh"].index("--bao-cao") + 1])
         muc, msg = phan_loai(ten, rc, a2_json_khong_pass=a2_khong_pass)
         if muc == "ha_tang" and ten.startswith("B2"):
             # 02/10/2026: một URL miền chặn bot (vd www.fda.gov) thiếu bằng chứng trình duyệt từng làm DỪNG cả lô như sự cố
@@ -496,6 +511,57 @@ def _cho_ky_rut_bai() -> frozenset:
         return frozenset(n for e in m.muc_cho_ky() for n in (e.get("_ngu_canh", {}).get("dashboard") or []))
     except Exception:  # noqa: BLE001 — phiếu không được chết vì công cụ phụ
         return frozenset()
+
+
+def _rel(x) -> str:
+    return str(Path(x).relative_to(GOC)) if str(x).startswith(str(GOC)) else str(x)
+
+
+def _tom_tat_tv(duong: Path) -> dict | None:
+    """Đọc báo cáo bước TV: {con_thieu: int|None, canh_bao: [dòng ⚠], khong_do: dòng ⚪|None}; tệp vắng/không đọc được ⇒ None.
+
+    Chỉ đọc đúng các dòng `toan_van_theo_chu_de.py` ghi («## Kết quả: … còn thiếu N», «Không có PMID nào…», «⚠ …», «⚪ …») — không
+    đoán: không tìm thấy con số thì `con_thieu` là None (người đọc được bảo mở phiếu), KHÔNG coi là 0."""
+    try:
+        van = Path(duong).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    dong: list[str] = []
+    trong_rao = False
+    for d in van.splitlines():  # bỏ phần đầu ra công cụ con trong rào ``` (chúng cũng in «⚠ …»/«⚪ …»/«còn thiếu» của riêng chúng)
+        if d.startswith("```"):
+            trong_rao = not trong_rao
+        elif not trong_rao:
+            dong.append(d.rstrip())
+    m = next(filter(None, (re.match(r"## Kết quả: .*còn thiếu (\d+)", d) for d in dong)), None)
+    con_thieu = int(m.group(1)) if m else (0 if any(d.startswith("Không có PMID nào cần lấy toàn văn") for d in dong) else None)
+    return {"con_thieu": con_thieu, "canh_bao": [d for d in dong if d.startswith("⚠ ")],
+            "khong_do": next((d for d in dong if d.startswith("⚪ ")), None)}
+
+
+def viec_toan_van(res: dict) -> list[str]:
+    """Dòng phiếu cho bước TV (W4, 15/10/2026): đường dẫn báo cáo + số bài còn thiếu toàn văn; không đo được/công cụ con lỗi hạ tầng
+    cũng phải NÓI RA. Bước TV hết bài thiếu và không lỗi ⇒ không có dòng nào (không giao việc thừa)."""
+    viec: list[str] = []
+    for duong in res.get("tv_bao_cao") or ():
+        tt = _tom_tat_tv(Path(duong))
+        if tt is None:
+            viec.append(f"👤 bước TV chưa ra phiếu toàn văn ({_rel(duong)}) — CHƯA biết bài nào thiếu toàn văn; chạy lại bằng "
+                        "--resume (KHÔNG phải «đã đủ toàn văn»)")
+            continue
+        if tt["khong_do"]:
+            viec.append(f"👤 toàn văn KHÔNG ĐO ĐƯỢC lượt này — {tt['khong_do'].lstrip('⚪ ').strip()} (phiếu: {_rel(duong)})")
+            continue
+        loi = (f" · ⚠ {len(tt['canh_bao'])} công cụ con lỗi hạ tầng/quá giờ — số liệu có thể thiếu, chạy lại khi mạng ổn"
+               if tt["canh_bao"] else "")
+        if tt["con_thieu"] is None:
+            viec.append(f"👤 đọc phiếu toàn văn: {_rel(duong)} (không đọc được số bài còn thiếu){loi}")
+        elif tt["con_thieu"] > 0:
+            viec.append(f"👤 đọc phiếu toàn văn: {_rel(duong)} — {tt['con_thieu']} bài còn thiếu toàn văn (làn trình duyệt có bác "
+                        f"sĩ) — ĐỌC trước khi thẩm định ứng viên{loi}")
+        elif loi:
+            viec.append(f"👤 phiếu toàn văn: {_rel(duong)}{loi}")
+    return viec
 
 
 def phieu_can_phien(topic: str | None, tt: dict, cac_db: list[Path], res: dict,
@@ -702,9 +768,8 @@ def main() -> int:
                     # B1: «chủ đề CHƯA có dashboard» phải hiện trong phiếu + kết luận cuối (P1-04)
                     viec += [f"👤 {x}" for x in res.get("phien", [])]
                     if res.get("a2_bao_cao") and res.get("ung_vien"):
-                        viec.append("👤 đọc ứng viên A2: " + ", ".join(
-                            str(Path(x).relative_to(GOC)) if str(x).startswith(str(GOC)) else str(x)
-                            for x in res["a2_bao_cao"]))
+                        viec.append("👤 đọc ứng viên A2: " + ", ".join(_rel(x) for x in res["a2_bao_cao"]))
+                    viec += viec_toan_van(res)
                     b2_offline = b2_offline or bool(res.get("b2_offline"))
                     tat_ca_phien += viec
                     tong_rc = max(tong_rc, res["tong_rc"])

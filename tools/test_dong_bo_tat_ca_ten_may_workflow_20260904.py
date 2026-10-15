@@ -69,7 +69,7 @@ class TestMainJsonBaoCaoMayDung(unittest.TestCase):
         env.update(env_them)
         r = subprocess.run(
             [sys.executable, str(HERE / "dong_bo_tat_ca.py"), "--liet-ke-lan", "--json"],
-            cwd=str(REPO), env=env, capture_output=True, text=True, timeout=30,
+            cwd=str(REPO), env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
         )
         self.assertEqual(r.returncode, 0, r.stderr)
         return json.loads(r.stdout)
@@ -89,7 +89,7 @@ class TestMainJsonBaoCaoMayDung(unittest.TestCase):
         env["CLAUDE_CODE_REMOTE"] = "true"
         r = subprocess.run(
             [sys.executable, str(HERE / "dong_bo_tat_ca.py"), "--bo-qua-an-toan", "--json"],
-            cwd=str(REPO), env=env, capture_output=True, text=True, timeout=60,
+            cwd=str(REPO), env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60,
         )
         # Mã thoát có thể 0/1/2 tuỳ trạng thái đồng bộ thật của máy — không kiểm
         # mã thoát ở đây, chỉ kiểm trường "may" trong JSON đã in được.

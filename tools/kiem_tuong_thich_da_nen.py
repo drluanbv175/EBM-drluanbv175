@@ -16,9 +16,13 @@ Luật quét (chỉ mã Python trong các cây tool đang sống):
      R1 đường dẫn user ghi cứng (`C:/Users/`, `C:\\Users\\`, `/Users/<tên>/`)
      R2 os.getuid()/os.geteuid() không có guard sys.platform
      R3 subprocess gọi literal "python3"/"python" thay vì sys.executable
+     R7 subprocess CHẾ ĐỘ VĂN BẢN (text=True / universal_newlines=True) gọi Python con
+        (`[sys.executable, …]`) mà THIẾU encoding= (15/10/2026 — xem `dong_r7_vi_pham`)
   🟡 CẢNH BÁO — đáng soi tay:
      R4 in ký tự ngoài-ASCII mà file không reconfigure stdout UTF-8
      R5 đường dẫn đặc thù nền tảng (`/Library/`, `AppData`) ngoài nhánh có guard
+     R7 subprocess chế độ văn bản thiếu encoding= với lệnh KHÁC (git, osascript…), hoặc
+        nằm trong cây tool NGOÀI git (EBM-Dashboards/EBM_MASTER — tồn kho không đo được từ CI)
 
 Miễn trừ TƯỜNG MINH bằng chú thích `# da-nen: bo-qua` trên cùng dòng (phải kèm lý do
 ngay cạnh — miễn trừ câm là đường lách). Chốt chỉ ĐO và BÁO — không sửa file.
@@ -64,6 +68,12 @@ R5 = re.compile(r"[\"'](?:/Library/|/Applications/|AppData\\\\|AppData/)")
 R6 = re.compile(r'\.write_text\([^\n]*encoding="utf-8"\)')
 VUNG_KY = ("medical-ebm-automation/tools", "medical-ebm-automation/runtime",
            "medical-ebm-automation/tests", "medical-ebm-automation/scripts")
+# R7 (15/10/2026 — DN-01): hàm của mô-đun subprocess nhận text=/universal_newlines=/encoding=.
+TEN_HAM_SUBPROCESS = frozenset({"run", "Popen", "check_output", "call", "check_call"})
+# Cây tool NGOÀI git (nằm trên OneDrive của bác sĩ, CI không thấy): R7 ở đây chỉ 🟡 — tồn kho chưa từng đo được,
+# 🔴 hàng loạt ở chỗ không sửa được qua PR sẽ dạy người ta bỏ 🔴 (cùng lý do R4 là 🟡).
+CAY_NGOAI_GIT = (_GOC_DASH / "tools", _GOC_MASTER / "tools")
+_R7_DONG = re.compile(r"\b(?:text|universal_newlines)\s*=\s*True\b")
 
 
 def dong_r6_vi_pham(text: str) -> set[int] | None:
@@ -112,6 +122,109 @@ def _r6_bao_do(text: str, ten: str, code: list[str], dong: list[str]) -> list[st
         duoi = " [đọc theo dòng: tệp lỗi cú pháp]"
     return [f"{ten}:{i} R6 write_text thiếu newline='\\n' trong vùng chuỗi-ký (CRLF phá hash){duoi}"
             for i in sorted(vi_pham)]
+
+
+def _bi_danh_subprocess(cay: ast.AST) -> tuple[set[str], dict[str, str], set[str]]:
+    """(tên gọi mô-đun subprocess, {tên gọi hàm: tên hàm gốc}, tên gọi mô-đun sys) — đọc MỌI lệnh import của tệp
+    (`import subprocess as _sp`, `from subprocess import run as chay`, `import sys as _sys`)."""
+    mo_dun, ham, he = set(), {}, set()
+    for nut in ast.walk(cay):
+        if isinstance(nut, ast.Import):
+            for a in nut.names:
+                if a.name == "subprocess":
+                    mo_dun.add(a.asname or "subprocess")
+                elif a.name == "sys":
+                    he.add(a.asname or "sys")
+        elif isinstance(nut, ast.ImportFrom) and nut.module == "subprocess" and not nut.level:
+            for a in nut.names:
+                if a.name in TEN_HAM_SUBPROCESS:
+                    ham[a.asname or a.name] = a.name
+    return mo_dun, ham, he
+
+
+def _la_sys_executable(nut: ast.AST, he: set[str]) -> bool:
+    return (isinstance(nut, ast.Attribute) and nut.attr == "executable"
+            and isinstance(nut.value, ast.Name) and nut.value.id in he)
+
+
+def dong_r7_vi_pham(text: str) -> list[tuple[int, bool]] | None:
+    """[(số dòng, gọi Python con?)] của mọi lời gọi subprocess.run/Popen/check_output/call/check_call ở CHẾ ĐỘ VĂN BẢN
+    (`text=True` hoặc `universal_newlines=True`) mà THIẾU `encoding=` — đọc bằng CÚ PHÁP (ast). None = tệp lỗi cú pháp.
+
+    VÌ SAO (15/10/2026 — DN-01): thiếu `encoding=` thì tiến trình CHA giải mã stdout/stderr bằng bảng mã LOCALE —
+    cp1252/cp1258 trên Windows chưa bật chế độ UTF-8 — trong khi công cụ của kho tự `reconfigure` stdout sang UTF-8 ⇒
+    `UnicodeDecodeError` (byte 0x8d/0x8a không có trong cp1252/cp1258) hoặc chữ Việt vỡ. Đo: test bộ năm
+    (test_xuat_goi_cap_nhat_workflow_20260904.py) ĐỎ dưới `LC_ALL=C PYTHONUTF8=0`. CI ép `PYTHONUTF8=1` nên KHÔNG BAO
+    GIỜ thấy họ lỗi này — chỉ chốt tĩnh bắt được; bản vá ce42643 trước đó là tìm bằng tay và bỏ sót.
+
+    «Gọi Python con» = đối số đầu là danh sách/bộ mở đầu bằng `sys.executable` (công cụ của kho in UTF-8 ⇒ gần chắc
+    gãy ⇒ 🔴); lệnh khác (git, osascript, bash…) ⇒ 🟡. Không phán (không bịa vi phạm): `**kwargs` (có thể mang
+    encoding), `text=<biến>` (không chứng minh được là True). `encoding=None` viết rõ = vẫn theo locale ⇒ vi phạm.
+    Miễn trừ `# da-nen: bo-qua` ở BẤT KỲ dòng nào của lời gọi. Dòng báo = dòng mở lời gọi."""
+    try:
+        cay = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return None
+    mo_dun, ham, he = _bi_danh_subprocess(cay)
+    if not mo_dun and not ham:
+        return []
+    dong = text.split("\n")
+    ra: list[tuple[int, bool]] = []
+    for nut in ast.walk(cay):
+        if not isinstance(nut, ast.Call):
+            continue
+        f = nut.func
+        la_sp = ((isinstance(f, ast.Attribute) and f.attr in TEN_HAM_SUBPROCESS
+                  and isinstance(f.value, ast.Name) and f.value.id in mo_dun)
+                 or (isinstance(f, ast.Name) and f.id in ham))
+        if not la_sp or any(k.arg is None for k in nut.keywords):
+            continue
+        kw = {k.arg: k.value for k in nut.keywords}
+        van_ban = any(isinstance(kw.get(t), ast.Constant) and kw[t].value is True
+                      for t in ("text", "universal_newlines"))
+        enc = kw.get("encoding")
+        if not van_ban or (enc is not None and not (isinstance(enc, ast.Constant) and enc.value is None)):
+            continue
+        dau = nut.lineno
+        cuoi = getattr(nut, "end_lineno", None) or dau
+        if any(MIEN_TRU in dong[i - 1] for i in range(dau, cuoi + 1) if 0 < i <= len(dong)):
+            continue
+        dau_lenh = nut.args[0] if nut.args else kw.get("args")
+        python_con = (isinstance(dau_lenh, (ast.List, ast.Tuple)) and bool(dau_lenh.elts)
+                      and _la_sys_executable(dau_lenh.elts[0], he))
+        ra.append((dau, python_con))
+    return sorted(ra)
+
+
+def _thuoc_cay_ngoai_git(p: Path) -> bool:
+    for goc in CAY_NGOAI_GIT:
+        try:
+            p.resolve().relative_to(goc.resolve())
+            return True
+        except (ValueError, OSError):
+            continue
+    return False
+
+
+def _r7_bao(text: str, ten: str, code: list[str], dong: list[str], p: Path) -> tuple[list[str], list[str]]:
+    """(🔴, 🟡) R7 của MỘT tệp. Tệp lỗi cú pháp ⇒ lùi về đọc theo dòng trên mã đã che (chỉ 🟡) — KHÔNG ĐO ĐƯỢC không bao
+    giờ được đọc thành «sạch»."""
+    do, vang = [], []
+    vi_pham = dong_r7_vi_pham(text)
+    if vi_pham is None:
+        for i, ln in enumerate(code, 1):
+            if MIEN_TRU not in dong[i - 1] and _R7_DONG.search(ln) and "encoding=" not in ln:
+                vang.append(f"{ten}:{i} R7 subprocess text=True thiếu encoding= [đọc theo dòng: tệp lỗi cú pháp]")
+        return do, vang
+    ngoai_git = _thuoc_cay_ngoai_git(p)
+    for i, python_con in vi_pham:
+        if python_con and not ngoai_git:
+            do.append(f"{ten}:{i} R7 subprocess text=True gọi Python con (sys.executable) mà thiếu encoding= — "
+                      "Windows giải mã theo locale (cp1252) ⇒ vỡ chữ Việt; thêm encoding=\"utf-8\", errors=\"replace\"")
+        else:
+            vang.append(f"{ten}:{i} R7 subprocess text=True thiếu encoding= (giải mã theo locale — bẫy cp1252)"
+                        + (" [cây ngoài git]" if python_con else ""))
+    return do, vang
 
 
 def _che_chu_thich_dong(s: str) -> str:
@@ -378,6 +491,10 @@ def quet_file(p: Path) -> tuple[list[str], list[str]]:
     # R6 đọc CẢ lời gọi bằng cú pháp (09/10/2026) — không còn so khớp theo từng dòng.
     if any(v in ten for v in VUNG_KY):
         do.extend(_r6_bao_do(text, ten, code, dong))
+    # R7 đọc bằng cú pháp (15/10/2026) — subprocess chế độ văn bản thiếu encoding=.
+    do7, vang7 = _r7_bao(text, ten, code, dong, p)
+    do.extend(do7)
+    vang.extend(vang7)
     if co_in_ngoai_ascii and not co_utf8:
         vang.append(f"{ten} R4 print ngoài-ASCII mà không reconfigure UTF-8 (bẫy cp1252)")
     return do, vang

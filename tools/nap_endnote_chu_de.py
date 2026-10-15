@@ -47,8 +47,15 @@ Dùng:
   python3 tools/nap_endnote_chu_de.py --file EBM-Dashboards/WebDashboard_X.html --ap-dung  # nạp thật
   python3 tools/nap_endnote_chu_de.py --tat-ca [--ap-dung]
   python3 tools/nap_endnote_chu_de.py --file … --xuat-xml ra.xml   # tệp nhập tay (Windows)
+  python3 tools/nap_endnote_chu_de.py --file … --tom-tat-vi --ap-dung [--chua-xac-minh]
+Ngoài macOS: phép kiểm nền tảng đứng TRƯỚC phép kiểm cấu hình — máy không phải Mac được chỉ thẳng sang `--xuat-xml`,
+không bị bảo «chạy --ghi-cau-hinh» cho một thư viện công cụ không bao giờ điều khiển được (15/10/2026).
+`~/.ebm-endnote.json` HỎNG ≠ VẮNG: hỏng ⇒ ⚪ «tệp cấu hình hỏng — xem <đường dẫn>»; `--ghi-cau-hinh` từ chối ghi đè tệp hỏng
+(có thể còn bảng nhom_theo_chu_de cứu tay được) trừ khi có `--xac-nhan-cau-hinh-hong` — khi đó giữ bản `.hong-<ngày giờ>`.
+`--chua-xac-minh` (bước ⑧ truyền khi cổng liêm chính CHƯA PASS): khối «EBM · ĐỌC NHANH» ghi dòng «CHƯA xác minh nguồn
+sống» và chân khối không nói «đã qua cổng».
 Mã thoát: 0 xong · 1 có trích dẫn không lấy được metadata (phần còn lại vẫn nạp) ·
-          2 không chạy được (không phải Mac, chưa cấu hình, thư viện chưa mở/lệch) · 3 tham số sai.
+          2 không chạy được (không phải Mac, chưa cấu hình/cấu hình hỏng, thư viện chưa mở/lệch) · 3 tham số sai.
 Cần bác sĩ kiểm chứng.
 """
 from __future__ import annotations
@@ -66,11 +73,12 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -100,31 +108,93 @@ class KhongChayDuoc(RuntimeError):
     """Không làm được ở máy/trạng thái này (không phải Mac, chưa cấu hình, thư viện chưa mở…)."""
 
 
+class CauHinhHong(KhongChayDuoc):
+    """Tệp cấu hình CÓ MẶT nhưng không dùng được — KHÁC «chưa cấu hình» (TT-09, 15/10/2026)."""
+
+
+def _la_mac() -> bool:
+    """Máy này điều khiển được EndNote bằng AppleScript không. Tách hàm để test giả lập «đang ở Mac» mà không sửa
+    `sys.platform` toàn cục (EndNoteMac vẫn tự rào `sys.platform` — lớp phòng thứ hai)."""
+    return sys.platform == "darwin"
+
+
+LENH_XUAT_XML = "python tools/nap_endnote_chu_de.py --file <dashboard> --xuat-xml <tệp>.xml"
+THONG_DIEP_KHONG_PHAI_MAC = (
+    "tự nhập vào EndNote chỉ chạy trên macOS (AppleScript); máy này dùng --xuat-xml rồi nhập tay: "
+    f"`{LENH_XUAT_XML}` → EndNote: File → Import, bộ lọc «EndNote generated XML»")
+
+
 # ── cấu hình riêng máy ──────────────────────────────────────────────────────────────────────────────
 
 def doc_cau_hinh(tep: Path | None = None) -> dict | None:
+    """Cấu hình dùng được, hoặc None (vắng HOẶC hỏng — hợp đồng cũ của mọi nơi gọi). Cần phân biệt hai trường hợp đó
+    thì gọi thêm `ly_do_cau_hinh_hong`."""
     try:
         ch = json.loads((tep or CAU_HINH).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-    if not isinstance(ch, dict) or not ch.get("thu_vien"):
+    # Cùng điều kiện với `ly_do_cau_hinh_hong`: «thu_vien» phải là CHUỖI khác rỗng (trước đây số 123 lọt qua rồi Path(123) ném
+    # TypeError không ai bắt ở main).
+    if not isinstance(ch, dict) or not isinstance(ch.get("thu_vien"), str) or not ch.get("thu_vien"):
         return None
     ch.setdefault("ung_dung", UNG_DUNG_MAC_DINH)
     return ch
 
 
-def ghi_cau_hinh(thu_vien: str, ung_dung: str, tep: Path | None = None) -> dict:
+def ly_do_cau_hinh_hong(tep: Path | None = None) -> str | None:
+    """Lý do tệp cấu hình CÓ MẶT mà không dùng được; None khi tệp VẮNG hoặc tệp dùng được.
+
+    VÌ SAO (TT-09, 15/10/2026): bản cũ đọc tệp hỏng (cắt cụt, sửa tay lỗi JSON) thành «chưa cấu hình — chạy
+    --ghi-cau-hinh», và lệnh đó ghi đè luôn tệp hỏng ⇒ mất khả năng cứu tay bảng `nhom_theo_chu_de` (một chủ đề một
+    nhóm EndNote qua mọi phiên bản dashboard). Hỏng ≠ vắng: hỏng phải được NÓI RA, không được xoá âm thầm."""
+    p = tep or CAU_HINH
+    try:
+        tho = p.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as e:  # UnicodeDecodeError là ValueError
+        return f"không đọc được ({type(e).__name__})"
+    try:
+        ch = json.loads(tho)
+    except ValueError as e:
+        return f"JSON hỏng ({e})"[:160]
+    if not isinstance(ch, dict):
+        return "không phải một bảng JSON"
+    if not isinstance(ch.get("thu_vien"), str) or not ch.get("thu_vien"):
+        return "thiếu khoá «thu_vien»"
+    return None
+
+
+def ghi_cau_hinh(thu_vien: str, ung_dung: str, tep: Path | None = None, xac_nhan_hong: bool = False) -> dict:
+    """Ghi thư viện chính. Tệp cũ HỎNG ⇒ từ chối (CauHinhHong) trừ khi `xac_nhan_hong` — khi đó chép tệp hỏng sang
+    `<tên>.hong-<YYYYmmdd-HHMMSS>` TRƯỚC khi ghi (chép hỏng ⇒ không ghi gì). Trả cấu hình đã ghi; có bản giữ lại thì
+    kèm khoá `ban_hong` (chỉ trong giá trị trả về, không ghi vào tệp)."""
     p = Path(thu_vien).expanduser()
     if p.suffix.lower() != ".enl" or not p.is_file():
         raise ValueError(f"không thấy thư viện EndNote (.enl): {p}")
     if not _TEN_UNG_DUNG.match(ung_dung):
         raise ValueError(f"tên ứng dụng không hợp lệ: {ung_dung!r}")
-    cu = doc_cau_hinh(tep) or {}
+    dich = tep or CAU_HINH
+    ban_hong = None
+    hong = ly_do_cau_hinh_hong(dich)
+    if hong:
+        if not xac_nhan_hong:
+            raise CauHinhHong(
+                f"tệp cấu hình {dich} đang HỎNG ({hong}) — KHÔNG ghi đè: tệp có thể còn bảng nhom_theo_chu_de cứu tay "
+                "được. Sửa tay tệp đó, hoặc chạy lại kèm --xac-nhan-cau-hinh-hong (giữ bản .hong-<ngày giờ>).")
+        ban_hong = dich.with_name(f"{dich.name}.hong-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
+        if ban_hong.exists():
+            ban_hong = ban_hong.with_name(f"{ban_hong.name}-{os.getpid()}")
+        try:
+            shutil.copy2(dich, ban_hong)
+        except OSError as e:
+            raise CauHinhHong(f"không giữ được bản hỏng {ban_hong} ({type(e).__name__}) — không ghi gì") from e
+    cu = doc_cau_hinh(dich) or {}
     ch = {"thu_vien": str(p.resolve()), "ung_dung": ung_dung}
     if cu.get("nhom_theo_chu_de") and cu.get("thu_vien") == ch["thu_vien"]:
         ch["nhom_theo_chu_de"] = cu["nhom_theo_chu_de"]  # khai lại cùng thư viện: giữ bảng nhóm đã dựng
-    _ghi_json(tep or CAU_HINH, ch)
-    return ch
+    _ghi_json(dich, ch)
+    return dict(ch, ban_hong=str(ban_hong)) if ban_hong else ch
 
 
 def _ghi_json(tep: Path, d: dict) -> None:
@@ -543,6 +613,26 @@ def dung_xml(ban_ghi: list[dict]) -> str:
 
 # ── điều khiển EndNote trên Mac (AppleScript) ──────────────────────────────────────────────────────
 
+# Phép kiểm «đang chạy?/đang mở?» không được treo lượt gọi (công cụ khác gọi giữa chừng, vd phiên Chrome --nhan).
+CHO_KIEM_GIAY = 20
+
+
+def _cung_tep(a: str | os.PathLike, b: str | os.PathLike) -> bool:
+    """Hai đường dẫn có trỏ CÙNG một tệp không (DN-03, 15/10/2026).
+
+    Bản cũ so chuỗi `os.path.realpath` — realpath chỉ giải symlink, không gộp hoa/thường hay dạng chuẩn Unicode
+    NFC/NFD, trong khi APFS mặc định KHÔNG phân biệt hoa/thường ⇒ cấu hình gõ «documents/…» so với AppleScript trả
+    «Documents/…» thành «chưa mở». Nay so ĐỊNH DANH tệp (`os.path.samefile`: thiết bị + inode). Một bên không stat
+    được (OSError) ⇒ lùi về so chuỗi đã chuẩn hoá NFC + casefold — chỉ áp khi hệ tệp KHÔNG trả lời được; hai tệp đều
+    tồn tại mà khác inode thì không bao giờ «gộp» vì giống chữ."""
+    try:
+        return os.path.samefile(a, b)
+    except (OSError, ValueError):
+        def chuan(x) -> str:
+            return unicodedata.normalize("NFC", os.path.realpath(x)).casefold()
+        return chuan(a) == chuan(b)
+
+
 class EndNoteMac:
     """Bọc các lệnh AppleScript đã đo của EndNote. Mọi lệnh đi qua `_chay` (dễ thay khi test)."""
 
@@ -559,24 +649,45 @@ class EndNoteMac:
         self.ten = thu_vien.name
         self._csdl: str | None = None
 
-    def _chay(self, than: str, *doi_so: str, cho: int = 600) -> str:
-        kich_ban = f'on run argv\ntell application "{self.ung_dung}"\n{than}\nend tell\nend run'
+    def _chay(self, than: str, *doi_so: str, cho: int = 600, trong_tell: bool = True) -> str:
+        """Chạy một kịch bản AppleScript. `trong_tell=False` ⇒ KHÔNG bọc `tell application` — dùng cho phép kiểm
+        «EndNote có đang chạy không» (một sự kiện gửi vào `tell` sẽ KHỞI ĐỘNG ứng dụng đang tắt)."""
+        if trong_tell:
+            than = f'tell application "{self.ung_dung}"\n{than}\nend tell'
+        kich_ban = f"on run argv\n{than}\nend run"
         kq = subprocess.run(["osascript", "-", *doi_so], input=kich_ban, capture_output=True, text=True,
                             encoding="utf-8", errors="replace", timeout=cho)
         if kq.returncode != 0:
             raise RuntimeError(f"AppleScript lỗi: {kq.stderr.strip()[:300]}")
         return kq.stdout.rstrip("\n")
 
+    def dang_chay(self) -> bool:
+        """EndNote có đang chạy không — KHÔNG gửi sự kiện nào tới EndNote: `application "X" is running` chỉ đọc danh
+        sách tiến trình, không khởi động ứng dụng. Lỗi/hết giờ ⇒ False (không biết ⇒ coi như chưa mở, không bật lên)."""
+        try:
+            return self._chay(f'return application "{self.ung_dung}" is running', cho=CHO_KIEM_GIAY,
+                              trong_tell=False).strip().lower() == "true"
+        except (RuntimeError, OSError, subprocess.TimeoutExpired):
+            return False
+
     def dang_mo_dung_thu_vien(self) -> bool:
+        """Thư viện đích có đang mở trong EndNote không.
+
+        VÁ 15/10/2026 (gap_endnote_running): bản cũ hỏi thẳng `documents` trong `tell application` — với EndNote đang
+        TẮT, chính phép kiểm «đã mở chưa» KHỞI ĐỘNG EndNote lên màn hình bác sĩ, phá lời hứa «không tự bật EndNote» của
+        --chi-khi-dang-mo (gom --unpaywall, phien_uy_quyen_chrome --nhan). Nay hỏi `is running` trước (không gửi sự
+        kiện); và hết giờ (`TimeoutExpired`, trước đây không bị bắt, có thể treo tới 600 giây) ⇒ False sau
+        CHO_KIEM_GIAY giây."""
+        if not self.dang_chay():
+            return False
         try:
             # `POSIX path of (file of d)` báo lỗi -1700 (đo 11/10) — phải ép sang chuỗi HFS trước.
             ds = self._chay('set out to ""\nrepeat with d in documents\n'
                             'set out to out & (POSIX path of ((file of d) as text)) & linefeed\n'
-                            'end repeat\nreturn out')
-        except RuntimeError:
+                            'end repeat\nreturn out', cho=CHO_KIEM_GIAY)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired):
             return False
-        dich = os.path.realpath(self.thu_vien)
-        return any(os.path.realpath(d.strip()) == dich for d in ds.splitlines() if d.strip())
+        return any(_cung_tep(d.strip(), self.thu_vien) for d in ds.splitlines() if d.strip())
 
     def mo_thu_vien(self, cho_giay: int = 40) -> None:
         subprocess.run(["open", "-a", self.ung_dung, str(self.thu_vien)], check=False, capture_output=True)
@@ -973,24 +1084,48 @@ def _nap_tom_tat():
     return mod
 
 
-def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt=None) -> dict | None:
+# W10 (15/10/2026, HỢP ĐỒNG với bước ⑧ của xuat_goi_cap_nhat): cổng liêm chính CHƯA PASS (chạy không --online, mạng lỗi
+# ⇒ Word bị hạ «CHƯA xác minh nguồn sống») thì khối ĐỌC NHANH không được mang chân «chép từ dashboard đã qua cổng».
+# Dòng cảnh báo đặt ở CHÂN khối — dòng ĐẦU phải giữ dấu mở `MO_DAU` để lượt chạy lại nhận ra và THAY khối cũ.
+DONG_CHUA_XAC_MINH = "⚠️ CHƯA xác minh nguồn sống (cổng liêm chính chưa PASS)"
+CHAN_CHUA_XAC_MINH = "Cần bác sĩ kiểm chứng · chép từ dashboard, không thêm khẳng định mới · áp dụng qua Cổng A."
+
+
+def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt=None,
+                 chua_xac_minh: bool = False) -> dict | None:
     """Ghi khối «TÓM TẮT THỰC HÀNH» tiếng Việt vào Abstract (tom_tat_endnote_vi). In một dòng; lỗi ⇒ dòng ✗, trả None.
-    Không làm hỏng lượt nạp vừa xong: nạp và tóm tắt là hai bước, bước sau hỏng thì bước trước vẫn giữ."""
+    Không làm hỏng lượt nạp vừa xong: nạp và tóm tắt là hai bước, bước sau hỏng thì bước trước vẫn giữ.
+
+    `chua_xac_minh` ⇒ chân khối đổi sang `DONG_CHUA_XAC_MINH` + chân KHÔNG nói «đã qua cổng» (thay hằng CHAN/CHAN_MAY
+    của mô-đun tóm tắt TRONG lượt này rồi trả lại nguyên trạng — mô-đun đó dựng chân khối từ hai hằng ấy). Chạy khô ⇒
+    dòng tổng kết mở bằng «ℹ», không bằng «✓» (G3-D8: ✓ + mã 0 dễ bị đọc nhầm thành «đã ghi»)."""
     try:
         tt = tt or _nap_tom_tat()
+        # Chỉ đụng hằng của mô-đun tóm tắt khi có cờ — không cờ thì mô-đun (hay bản giả của test) giữ nguyên.
+        chan_cu = (getattr(tt, "CHAN", None), getattr(tt, "CHAN_MAY", None)) if chua_xac_minh else None
+        if chan_cu is not None:
+            tt.CHAN = f"{DONG_CHUA_XAC_MINH}\n{CHAN_CHUA_XAC_MINH}"
+            tt.CHAN_MAY = f"{DONG_CHUA_XAC_MINH}\n{chan_cu[1] or CHAN_CHUA_XAC_MINH}"
         try:
-            kho_tt = tt.nap_tom_tat_abstract(files[0].parent if files else None)
-        except (ValueError, OSError) as e:
-            print(f"⚠ Kho tóm tắt máy {tt.TEP_TOM_TAT_ABS} không đọc được ({e}) — lượt này không in tóm tắt máy"[:300])
-            kho_tt = {}
-        # Ngữ cảnh từ MỌI dashboard cùng thư mục (bước ⑧ chỉ đưa MỘT dashboard) — chỉ ghi trích dẫn của `files`.
-        boi_canh = sorted(files[0].parent.glob("WebDashboard_*.html")) if files and files[0].parent.is_dir() else None
-        bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data(), tom_tat_abs=kho_tt,
-                            boi_canh=boi_canh)
+            try:
+                kho_tt = tt.nap_tom_tat_abstract(files[0].parent if files else None)
+            except (ValueError, OSError) as e:
+                print(f"⚠ Kho tóm tắt máy {tt.TEP_TOM_TAT_ABS} không đọc được ({e}) — lượt này không in tóm tắt máy"[:300])
+                kho_tt = {}
+            # Ngữ cảnh từ MỌI dashboard cùng thư mục (bước ⑧ chỉ đưa MỘT dashboard) — chỉ ghi trích dẫn của `files`.
+            boi_canh = sorted(files[0].parent.glob("WebDashboard_*.html")) if files and files[0].parent.is_dir() else None
+            bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data(), tom_tat_abs=kho_tt,
+                                boi_canh=boi_canh)
+        finally:
+            if chan_cu is not None:
+                tt.CHAN, tt.CHAN_MAY = chan_cu
     except (RuntimeError, OSError, sqlite3.Error) as e:
         print(f"✗ Tóm tắt tiếng Việt (Abstract): {type(e).__name__}: {e} — chưa ghi gì sau lỗi này"[:300])
         return None
-    print(f"✓ Tóm tắt tiếng Việt (Abstract): {bc['trich_dan']} trích dẫn · {bc['co_ban_ghi']} có bản ghi · "
+    if chua_xac_minh:
+        print(f"⚠ Cổng liêm chính CHƯA PASS — khối ĐỌC NHANH ghi rõ «{DONG_CHUA_XAC_MINH}».")
+    print(f"{'✓' if ap_dung else 'ℹ Chạy khô ·'} Tóm tắt tiếng Việt (Abstract): {bc['trich_dan']} trích dẫn · "
+          f"{bc['co_ban_ghi']} có bản ghi · "
           f"{'đã ghi ' + str(bc['da_ghi']) if ap_dung else 'sẽ ghi ' + str(bc['se_ghi'])} · "
           f"không đổi {bc['khong_doi']} · tóm tắt máy (tham khảo) {bc['tom_tat_may']}"
           + (f" · sao lưu trước khi ghi: {bc['sao_luu']}" if bc.get("sao_luu") else ""))
@@ -1028,16 +1163,28 @@ def main(argv: list[str] | None = None) -> int:
                     help="nạp --ap-dung mà KHÔNG ghi tóm tắt tiếng Việt (mặc định nạp xong thì ghi)")
     ap.add_argument("--chi-khi-dang-mo", action="store_true",
                     help="EndNote chưa mở đúng thư viện thì in ⚪ và trả 0 — KHÔNG tự mở EndNote (công cụ khác gọi)")
+    ap.add_argument("--xac-nhan-cau-hinh-hong", action="store_true",
+                    help="cùng --ghi-cau-hinh: cho ghi đè tệp cấu hình HỎNG (giữ bản .hong-<ngày giờ> trước)")
+    ap.add_argument("--chua-xac-minh", action="store_true",
+                    help="cổng liêm chính CHƯA PASS (bước ⑧ truyền): khối ĐỌC NHANH ghi «CHƯA xác minh nguồn sống»")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
     if a.ghi_cau_hinh:
         try:
-            ch = ghi_cau_hinh(a.ghi_cau_hinh, a.ung_dung)
+            ch = ghi_cau_hinh(a.ghi_cau_hinh, a.ung_dung, xac_nhan_hong=a.xac_nhan_cau_hinh_hong)
+        except KhongChayDuoc as e:
+            print(f"✗ {e}")
+            return MA_KHONG_CHAY
         except ValueError as e:
             print(f"✗ {e}")
             return MA_THAM_SO
+        if ch.get("ban_hong"):
+            print(f"⚠ Tệp cấu hình cũ HỎNG — đã giữ nguyên bản tại {ch['ban_hong']} (bảng nhóm cũ cứu tay từ đó).")
         print(f"✓ Đã ghi {CAU_HINH}: thư viện {ch['thu_vien']} · ứng dụng {ch['ung_dung']}")
+        if not _la_mac():  # DN-02: cấu hình chỉ có tác dụng ở nơi điều khiển được EndNote
+            print(f"⚠ Máy này không phải macOS — cấu hình vừa ghi KHÔNG có tác dụng ở đây (công cụ chỉ điều khiển EndNote "
+                  f"bằng AppleScript trên Mac). Ở máy này dùng: `{LENH_XUAT_XML}` rồi nhập tay (File → Import).")
         return MA_OK
 
     bst_sp = importlib.util.spec_from_file_location("_bst_endnote", ROOT / "tools" / "ban_sao_tran.py")
@@ -1080,10 +1227,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"⚠ Không lấy được metadata (không ghi vào tệp): {', '.join(thieu[:10])}")
         return MA_MOT_PHAN if thieu else MA_OK
 
-    ch = doc_cau_hinh()
     endnote = None
     try:
+        # DN-02 (15/10/2026): xét NỀN TẢNG trước cấu hình — máy không phải Mac được chỉ thẳng sang --xuat-xml, không bị
+        # bảo «chạy --ghi-cau-hinh» cho một thư viện công cụ không bao giờ điều khiển được.
+        if not _la_mac():
+            raise KhongChayDuoc(THONG_DIEP_KHONG_PHAI_MAC)
+        ch = doc_cau_hinh()
         if ch is None:
+            hong = ly_do_cau_hinh_hong()
+            if hong:  # TT-09: hỏng ≠ vắng — nói rõ, không dạy ghi đè
+                raise CauHinhHong(f"tệp cấu hình hỏng — xem {CAU_HINH} ({hong}); sửa tay, hoặc khai lại bằng "
+                                  "--ghi-cau-hinh \"<đường dẫn .enl>\" --xac-nhan-cau-hinh-hong (giữ bản .hong-<ngày giờ>)")
             raise KhongChayDuoc("chưa cấu hình thư viện EndNote — chạy --ghi-cau-hinh "
                                 f"\"<đường dẫn .enl>\" ({CAU_HINH})")
         thu_vien = Path(ch["thu_vien"])
@@ -1132,14 +1287,17 @@ def main(argv: list[str] | None = None) -> int:
         if endnote is None:
             print("⚪ --tom-tat-vi cần EndNote đang mở đúng thư viện — chưa ghi gì.")
             return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
-        bc = chay_tom_tat(endnote, files, kho, a.ap_dung)
+        bc = chay_tom_tat(endnote, files, kho, a.ap_dung, chua_xac_minh=a.chua_xac_minh)
+        if bc is not None and not a.ap_dung:
+            print("Chạy khô — chưa ghi tóm tắt nào. Thêm --ap-dung để ghi.")
         if a.json:
             print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
         return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
 
     ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom)
     if a.ap_dung and endnote is not None and not a.khong_tom_tat:
-        chay_tom_tat(endnote, files, kho, True)  # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
+        # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
+        chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh)
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
               "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"

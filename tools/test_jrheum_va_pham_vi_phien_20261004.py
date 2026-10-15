@@ -99,11 +99,15 @@ def test_nhan_cung_theo_pham_vi_luc_kiem(tmp_path, so) -> None:
     assert P.mo(LOI, bay_gio=T0, tep=so, dtv=_dtv(("Elsevier",)))[0] == 0
     ma_phien = P.doc_phien(so)["ma"]
     tep = tmp_path / "PMID-34024117_CHR.html"
-    tep.write_text(f"<!-- ebm-phien:{ma_phien} pmid:34024117 url:{URL_AHA} -->\n<html><body>" + "thân bài " * 900
+    # Thân bài TOÀN VĂN (≥ 2500 từ + ≥ 3 đề mục IMRaD — cổng nội dung dùng chung, TT-04 15/10/2026); trước đó 1 800 từ không đề
+    # mục — chỉ đạt ngưỡng byte cũ.
+    than = "".join(f"<h2>{dm}</h2><p>" + "thân bài " * 350 + "</p>" for dm in ("Introduction", "Methods", "Results", "Discussion"))
+    tep.write_text(f"<!-- ebm-phien:{ma_phien} pmid:34024117 url:{URL_AHA} -->\n<html><body>" + than
                    + "</body></html>", encoding="utf-8")
     kho = tmp_path / "kho"
     ma, tb = P.nhan("34024117", tep, URL_AHA, bay_gio=T0, so=so, kho=kho, dtv=_dtv(("Elsevier",)))
     assert ma == 3 and "KHÔNG thuộc phạm vi" in tb and not kho.exists()
+    kho.mkdir()                                   # kho thật phải có sẵn — phiên KHÔNG tự tạo kho (TT-05, 15/10/2026)
     ma, tb = P.nhan("34024117", tep, URL_AHA, bay_gio=T0, so=so, kho=kho, dtv=_dtv(("Elsevier", WK)))
     assert ma == 0 and (kho / "PMID-34024117_CHR.html").exists()
 

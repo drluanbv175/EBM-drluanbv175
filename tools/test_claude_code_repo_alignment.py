@@ -11,7 +11,8 @@ import verify_claude_code_repo_alignment as V  # noqa: E402
 
 def _git(args: list[str], cwd: Path) -> None:
     proc = subprocess.run(
-        ["git", *args], cwd=str(cwd), capture_output=True, text=True, timeout=30
+        ["git", *args], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=30,
     )
     assert proc.returncode == 0, f"git {args} failed: {proc.stderr}"
 

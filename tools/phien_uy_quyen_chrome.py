@@ -34,7 +34,9 @@ QUY TRÌNH (Claude làm; bác sĩ chỉ vượt chặn/đăng nhập và nói c�
      [--doi <DOI>]` (kiểm loại, cỡ, dấu phiên, không ghi đè; tách PDF nhúng ra `_CHR.pdf`; chuyển vào kho; nhật ký kèm SHA-256).
   4. `python3 tools/doc_sau_toan_van.py --pmid <PMID…>` sinh bản đọc sâu từ PDF `_CHR`.
   5. Bác sĩ nói «dừng» ⇒ `--dung`. `--trang-thai` xem phiên đang mở.
-Mã thoát: 0 được/xong · 2 không đọc/ghi được tệp · 3 bị từ chối (ngoài phạm vi, hết phiên, quá trần, chưa đủ nhịp, tệp sai).
+Mã thoát: 0 được/xong · 2 KHÔNG ĐO ĐƯỢC / không đọc-ghi được tệp (kho vắng — không tự tạo; sổ phiên hỏng — không ghi đè) · 3 bị
+từ chối (ngoài phạm vi, hết phiên, quá trần, chưa đủ nhịp, tệp sai). Phiên cũ được LƯU TRỮ ở `state/phien-uy-quyen-chrome/<mã>.json`
+khi mở phiên mới (không ghi đè nhật ký SHA-256 + lời bác sĩ).
 Cần bác sĩ kiểm chứng."""
 from __future__ import annotations
 
@@ -55,8 +57,22 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 REPO = Path(__file__).resolve().parent.parent
+
+
+def _goc_du_lieu(ten: str) -> Path:
+    """Gốc dữ liệu ngoài git qua `ban_sao_tran.duong_goc` (lồng rồi anh em — TT-07, 15/10/2026: cùng cách định vị với mọi công
+    cụ của kho toàn văn). Không thấy ⇒ vị trí lồng; `--mo`/`--nhan` rào `is_dir()` và KHÔNG tự tạo kho (TT-05)."""
+    try:
+        sp = importlib.util.spec_from_file_location("_bst_puq", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        return m.duong_goc(ten, REPO) or (REPO / ten)
+    except Exception:  # noqa: BLE001 — thiếu bộ định vị ⇒ vị trí lồng như trước
+        return REPO / ten
+
+
 SO_PHIEN = REPO / "state" / "phien-uy-quyen-chrome.json"
-KHO = REPO / "EBM-Dashboards" / "toan_van_oa"
+KHO = _goc_du_lieu("EBM-Dashboards") / "toan_van_oa"
 HAU_TO = "_CHR"
 TRAN_MOI_MIEN = 20            # bài (PMID khác nhau) mỗi miền trong một phiên
 NGHI_TOI_THIEU_GIAY = 60      # giữa hai bài cùng miền
@@ -102,13 +118,26 @@ def _bay_gio() -> datetime:
     return datetime.now().astimezone()
 
 
-def doc_phien(tep: Path | None = None) -> dict | None:
-    """Phiên trong sổ (mở hay đã đóng), hoặc None khi sổ vắng/hỏng — hỏng ⇒ None (fail-closed: không có phiên)."""
+def doc_so(tep: Path | None = None) -> tuple[str, dict | None]:
+    """(«vang» | «hong» | «ok», phiên). «hong» = tệp CÓ mà không đọc được / sai khuôn — khác «vang» (TT-02, 15/10/2026): sổ hỏng
+    không bao giờ bị coi như «không có phiên» để rồi bị `--mo` ghi đè (mất nhật ký SHA-256 và lời bác sĩ)."""
+    tep = tep or SO_PHIEN
+    if not tep.exists():
+        return "vang", None
     try:
-        d = json.loads((tep or SO_PHIEN).read_text(encoding="utf-8"))
+        d = json.loads(tep.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return None
-    return d if isinstance(d, dict) and d.get("ma") else None
+        return "hong", None
+    if not (isinstance(d, dict) and d.get("ma") and isinstance(d.get("lich_su", []), list)):
+        return "hong", None
+    return "ok", d
+
+
+def doc_phien(tep: Path | None = None) -> dict | None:
+    """Phiên trong sổ (mở hay đã đóng), hoặc None khi sổ vắng/hỏng — hỏng ⇒ None (fail-closed: không có phiên để KIỂM/NHẬN; còn
+    `--mo`/`--dung`/`--trang-thai` báo «KHÔNG ĐO ĐƯỢC» mã 2 và không ghi đè — xem `doc_so`)."""
+    trang, d = doc_so(tep)
+    return d if trang == "ok" else None
 
 
 def phien_mo(bay_gio: datetime | None = None, tep: Path | None = None) -> dict | None:
@@ -124,12 +153,51 @@ def phien_mo(bay_gio: datetime | None = None, tep: Path | None = None) -> dict |
     return d if mo.date() == bay_gio.date() and mo <= bay_gio else None
 
 
+def _go(*tep: Path) -> None:
+    """Gỡ tệp (bỏ qua tệp vắng/lỗi) — dọn tệp tạm và tệp dở của một lượt ghi hỏng."""
+    for t in tep:
+        try:
+            t.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
 def _ghi(d: dict, tep: Path | None = None) -> None:
     tep = tep or SO_PHIEN
     tep.parent.mkdir(parents=True, exist_ok=True)
     tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
-    tam.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
-    os.replace(tam, tep)
+    try:
+        tam.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+        os.replace(tam, tep)
+    except OSError:
+        _go(tam)
+        raise
+
+
+def thu_muc_luu_tru(tep: Path | None = None) -> Path:
+    """Nơi lưu trữ các phiên CŨ: `state/phien-uy-quyen-chrome/<mã>.json` (cạnh sổ, cùng tên gốc)."""
+    tep = tep or SO_PHIEN
+    return tep.parent / tep.stem
+
+
+def luu_tru_phien(d: dict, tep: Path | None = None) -> Path:
+    """Chép phiên cũ sang thư mục lưu trữ TRƯỚC khi sổ nhận phiên mới (TT-02, 15/10/2026 — trước đó `--mo` ghi đè, mất nhật ký
+    SHA-256 + lời bác sĩ của phiên trước mà docstring hứa giữ). Đã có bản trùng nội dung ⇒ giữ nguyên; trùng tên khác nội dung ⇒
+    thêm hậu tố, không ghi đè. Lỗi ⇒ ném (người gọi KHÔNG mở phiên mới)."""
+    thu_muc = thu_muc_luu_tru(tep)
+    ten = re.sub(r"[^0-9A-Za-z_-]", "_", str(d.get("ma") or "khong-ro-ma"))[:40]
+    noi_dung = json.dumps(d, ensure_ascii=False, indent=1) + "\n"
+    for i in range(100):
+        dich = thu_muc / (f"{ten}.json" if i == 0 else f"{ten}-{i}.json")
+        if not dich.exists():
+            _ghi(d, dich)
+            return dich
+        try:
+            if dich.read_text(encoding="utf-8") == noi_dung:
+                return dich
+        except OSError:
+            continue
+    raise OSError(f"không tìm được tên lưu trữ trống cho phiên {ten}")
 
 
 def nxb_duoc_luu(dtv, hom_nay=None) -> list[str]:
@@ -143,12 +211,21 @@ def mo(can_cu: str, *, bay_gio: datetime | None = None, tep: Path | None = None,
     if len(can_cu) < CAN_CU_MIN:
         return 3, f"lời bác sĩ phải ghi NGUYÊN VĂN, ≥ {CAN_CU_MIN} ký tự — agent không tự mở phiên"
     bay_gio = bay_gio or _bay_gio()
+    trang, cu = doc_so(tep)
+    if trang == "hong":
+        return 2, (f"⚪ KHÔNG ĐO ĐƯỢC — sổ phiên {(tep or SO_PHIEN).name} CÓ mà không đọc được — KHÔNG ghi đè (nhật ký phiên "
+                   "cũ ở trong đó); bác sĩ xem/chuyển tệp đi rồi mở lại")
     if phien_mo(bay_gio, tep):
         return 3, "đã có phiên đang mở hôm nay — `--dung` trước nếu muốn mở phiên mới"
     dtv = dtv or _nap_dtv()
     nxb = nxb_duoc_luu(dtv, bay_gio.date())
     if not nxb:
         return 3, "không NXB nào có uỷ quyền đọc còn hiệu lực — phiên không có gì để lưu (ghi uỷ quyền trước, đúng lời bác sĩ)"
+    if cu is not None:
+        try:
+            luu_tru_phien(cu, tep)
+        except OSError as e:
+            return 2, f"không lưu trữ được phiên cũ {cu.get('ma')} ({type(e).__name__}) — KHÔNG mở phiên mới (không ghi đè nhật ký)"
     d = {"ma": bay_gio.strftime("%Y%m%d-%H%M%S"), "mo_luc": bay_gio.isoformat(timespec="seconds"), "can_cu": can_cu,
          "pham_vi": "đọc và LƯU bản sao (HTML thân bài + PDF của NXB) vào kho ngoài git, dùng cá nhân, không phân phối lại",
          "nxb": nxb, "tran_moi_mien": TRAN_MOI_MIEN, "nghi_toi_thieu_giay": NGHI_TOI_THIEU_GIAY,
@@ -193,8 +270,28 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
     return 0, f"được — phiên {d['ma']}, {ten}, {mien}"
 
 
+_GOM_TV = None
+
+
+def _cong_noi_dung():
+    """Cổng nội dung toàn văn dùng chung (`gom_toan_van_dashboard.la_toan_van_html`, BH160). Lỗi nạp ⇒ None (fail-closed)."""
+    global _GOM_TV
+    if _GOM_TV is None:
+        try:
+            sp = importlib.util.spec_from_file_location("_gom_tv_puq", Path(__file__).resolve().parent / "gom_toan_van_dashboard.py")
+            m = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(m)
+            _GOM_TV = m
+        except Exception:  # noqa: BLE001
+            _GOM_TV = False
+    return _GOM_TV or None
+
+
 def kiem_tep(tep: Path, pmid: str, ma_phien: str) -> tuple[str | None, str]:
-    """(loại 'html'|'pdf' | None, lý do). HTML phải mang dấu phiên ĐÚNG mã + PMID ở đầu tệp và không có giao diện tài khoản."""
+    """(loại 'html' | 'pdf' | 'pdf_nhung' | None, lý do). HTML phải mang dấu phiên ĐÚNG mã + PMID ở đầu tệp, không có giao diện tài
+    khoản, và thân bài phải là TOÀN VĂN theo CÙNG cổng nội dung với `_UPW.html` (TT-04, 15/10/2026 — trước đó chỉ đòi ≥ 5 000
+    byte nên trang chỉ có tóm tắt + «Purchase PDF» lọt vào kho rồi qua cổng BH161). Thân bài KHÔNG phải toàn văn mà có PDF nhúng
+    hợp lệ ⇒ 'pdf_nhung': chỉ giữ PDF (mỗi bài chỉ MỘT lần tải — không bỏ phí PDF thật)."""
     try:
         co = tep.stat().st_size
         dau = tep.read_bytes()[:4096]
@@ -213,15 +310,28 @@ def kiem_tep(tep: Path, pmid: str, ma_phien: str) -> tuple[str | None, str]:
     m = _DAU_PHIEN.search(van_ban[:2000])
     if not m or m.group("ma") != ma_phien or m.group("pmid") != str(pmid):
         return None, "HTML thiếu dấu phiên đúng (<!-- ebm-phien:<mã> pmid:<n> … -->) — tệp không do phiên này tạo"
-    van_ban, _pdf, loi = tach_pdf_nhung(van_ban)
+    van_ban, pdf, loi = tach_pdf_nhung(van_ban)
     if loi:
         return None, loi
-    co = len(van_ban.encode("utf-8"))
-    if not CO_HTML[0] <= co <= CO_HTML[1]:
-        return None, f"HTML {co} byte ngoài khoảng {CO_HTML} — thân bài quá ngắn (chỉ tóm tắt/trang chặn?)"
     if _DAU_TAI_KHOAN.search(van_ban):
         return None, "HTML có giao diện tài khoản (Sign out/My account…) — chỉ lưu thân bài, bỏ đầu trang"
-    return "html", ""
+    co = len(van_ban.encode("utf-8"))
+    if co > CO_HTML[1]:
+        return None, f"HTML {co} byte vượt trần {CO_HTML[1]}"
+    if co < CO_HTML[0]:
+        ly_do = f"HTML {co} byte ngoài khoảng {CO_HTML} — thân bài quá ngắn (chỉ tóm tắt/trang chặn?)"
+    else:
+        cong = _cong_noi_dung()
+        if cong is None:
+            ly_do = "không nạp được cổng nội dung toàn văn (gom_toan_van_dashboard) — không nhận HTML (fail-closed)"
+        else:
+            la_tv, vi_sao = cong.la_toan_van_html(cong._van_ban_tho(van_ban.encode("utf-8")))
+            if la_tv:
+                return "html", ""
+            ly_do = f"thân bài KHÔNG phải toàn văn ({vi_sao}) — chỉ tóm tắt/tường phí?"
+    if pdf:
+        return "pdf_nhung", ly_do + " — chỉ giữ PDF nhúng, bỏ HTML"
+    return None, ly_do
 
 
 def nhan(pmid: str, tep: Path, url: str, doi: str = "", *, bay_gio: datetime | None = None, so: Path | None = None,
@@ -240,29 +350,40 @@ def nhan(pmid: str, tep: Path, url: str, doi: str = "", *, bay_gio: datetime | N
     if not loai:
         return 3, ly
     kho = kho or KHO
+    if not kho.is_dir():   # TT-05 (15/10/2026): trước đó `kho.mkdir(parents=True)` dựng kho ma ở worktree/bản sao trần
+        return 2, (f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {kho} (EBM-Dashboards/ vắng ở cây này) — KHÔNG tự tạo kho; tệp tải về "
+                   "giữ nguyên")
     if loai == "pdf":
         cac_tep = {"pdf": tep.read_bytes()}
     else:
         html, pdf, _loi = tach_pdf_nhung(tep.read_text(encoding="utf-8"))
-        cac_tep = {"html": html.encode("utf-8"), **({"pdf": pdf} if pdf else {})}
+        cac_tep = ({} if loai == "pdf_nhung" else {"html": html.encode("utf-8")}) | ({"pdf": pdf} if pdf else {})
     dich = {k: kho / f"PMID-{pmid}{HAU_TO}.{k}" for k in cac_tep}
     co_san = [x.name for x in dich.values() if x.exists()]
     if co_san:
         return 3, f"kho đã có {', '.join(co_san)} — không ghi đè (xoá tay nếu thật sự muốn thay)"
-    kho.mkdir(parents=True, exist_ok=True)
-    tb = []
+    tb, da_chuyen = [], []
     for k, noi_dung in cac_tep.items():
         tam = dich[k].with_name(dich[k].name + f".tam-{os.getpid()}")
         try:
             tam.write_bytes(noi_dung)
             os.replace(tam, dich[k])
         except OSError as e:
-            return 2, f"không ghi được {dich[k].name} vào kho: {e}"
+            # TT-01 (15/10/2026): gỡ tệp tạm VÀ tệp đã chuyển xong trong cùng lượt — tệp tạm sót lại từng bị cổng BH161 tính
+            # «đã đọc», còn tệp dở chặn lượt thử lại bằng «không ghi đè» trong khi sổ phiên không ghi gì.
+            _go(tam, *da_chuyen)
+            return 2, f"không ghi được {dich[k].name} vào kho: {e} — đã gỡ tệp dở của lượt này, thử lại được"
+        da_chuyen.append(dich[k])
         sha = hashlib.sha256(noi_dung).hexdigest()
         d["lich_su"].append({"luc": bay_gio.isoformat(timespec="seconds"), "pmid": str(pmid), "url": url, "doi": doi,
                              "mien": _mien(url), "tep": dich[k].name, "byte": len(noi_dung), "sha256": sha, "loai": k})
         tb.append(f"{dich[k].name} ({len(noi_dung)} byte, sha256 {sha[:16]}…)")
-    _ghi(d, so)
+    try:
+        _ghi(d, so)
+    except OSError as e:
+        # Sổ và kho phải khớp (TT-02): tệp trong kho mà sổ không có làm trần 20 bài/miền và nhịp 60 giây đếm thiếu.
+        _go(*da_chuyen)
+        return 2, f"không ghi được sổ phiên ({e}) — đã gỡ tệp vừa chuyển vào kho; thử lại được"
     try:
         tep.unlink()                     # tệp tải về đã vào kho — không để bản sao thứ hai trong Downloads
     except OSError:
@@ -271,7 +392,9 @@ def nhan(pmid: str, tep: Path, url: str, doi: str = "", *, bay_gio: datetime | N
 
 
 def dung(*, bay_gio: datetime | None = None, tep: Path | None = None) -> tuple[int, str]:
-    d = doc_phien(tep)
+    trang, d = doc_so(tep)
+    if trang == "hong":
+        return 2, "⚪ KHÔNG ĐO ĐƯỢC — sổ phiên CÓ mà không đọc được — KHÔNG ghi; bác sĩ xem tệp"
     if not d or d.get("dong_luc"):
         return 0, "không có phiên đang mở"
     d["dong_luc"] = (bay_gio or _bay_gio()).isoformat(timespec="seconds")
@@ -312,6 +435,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tep", type=Path)
     a = ap.parse_args(argv)
     if a.mo is not None:
+        if not KHO.is_dir():   # TT-05 (15/10/2026): không mở phiên lưu khi không có kho thật để lưu vào
+            print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {KHO} (EBM-Dashboards/ vắng ở cây này) — không mở phiên, không tự tạo kho")
+            return 2
         ma, tb = mo(a.mo)
     elif a.kiem:
         ma, tb = kiem(a.kiem, a.url, a.doi)
@@ -329,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
     elif a.dung:
         ma, tb = dung()
     else:
+        if doc_so()[0] == "hong":
+            print(f"⚪ KHÔNG ĐO ĐƯỢC — sổ phiên {SO_PHIEN} CÓ mà không đọc được — bác sĩ xem tệp")
+            return 2
         d = phien_mo()
         if not d:
             print("Không có phiên uỷ quyền đang mở hôm nay.")

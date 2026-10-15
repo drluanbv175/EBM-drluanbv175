@@ -28,7 +28,7 @@ def _can_git() -> bool:
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["git", *args], cwd=cwd, capture_output=True, text=True,
+        ["git", *args], cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=30, check=True,
     )
 

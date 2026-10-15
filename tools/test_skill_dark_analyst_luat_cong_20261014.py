@@ -27,6 +27,11 @@ LUAT_CONG = (
     "xuat_goi_cap_nhat.py <dashboard>.html --online",
     "toan_van_theo_chu_de.py --moi-trich-dan",
     "nap_endnote_chu_de.py",
+    # Rà làn Chrome + EndNote (15/10/2026): điều khoản NXB cho toàn văn không OA (G3-D7), lệnh tóm tắt máy ĐỦ cờ
+    # (G3-D8/W7/DOC-01 — thiếu --ap-dung là chạy khô, thiếu --file là mã 3) và khuôn khoá kho tóm tắt máy (TT-08).
+    "ĐIỀU KHOẢN NXB TRƯỚC TOÀN VĂN KHÔNG OA",
+    "nap_endnote_chu_de.py --file <dashboard> --tom-tat-vi --ap-dung",
+    "tom_tat_endnote_vi.py --mau",
 )
 
 

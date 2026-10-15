@@ -787,7 +787,7 @@ def strict_source_checks(data_block, items, *, today=None):
 # ở strict_source_checks chỉ chặn khi mục TỰ KHAI 'partial' — đo 04/10: 27 mục apply (20 PMID) không có toàn văn trong kho vẫn
 # qua cổng vì không khai (hệ thống DẶN nhưng không KIỂM). Nay cổng ĐO thẳng kho `toan_van_oa/` cạnh dashboard, cùng định nghĩa
 # với `tools/doc_toan_van_co_nguoi.bao_phu_cuc_bo`: ĐÃ ĐỌC = toàn văn máy đọc (XML JATS · `_UPW` thật — loại trang giới thiệu kho
-# lưu trữ · `_WTDM` · `_CHR`) · hồ sơ làn trình duyệt `trinh_duyet/PMID-<n>.json` · «bác sĩ đã đọc trực tiếp»
+# lưu trữ · `_WTDM` · `_CHR` — HTML cũng qua cổng nội dung) · hồ sơ làn trình duyệt `trinh_duyet/PMID-<n>.json` · «bác sĩ đã đọc trực tiếp»
 # (`trinh_duyet/bac-si-da-doc.jsonl`). BÁNH CÓC: mục apply CHƯA ĐỌC ⇒ LỖI (chặn); riêng mục có trong SỔ NỢ
 # (`no-toan-van-apply.json` cạnh dashboard, lập một lần bằng tools/so_toan_van.py với nguyên văn lời bác sĩ) ⇒ cảnh báo tới «han»,
 # quá hạn ⇒ lỗi. Sổ hỏng ⇒ coi như vắng (fail-closed). Không thấy kho ⇒ ⚪ không đo (fixture, bản sao trần).
@@ -795,11 +795,17 @@ _DAU_TRANG_GIOI_THIEU_KHO = ("Fingerprint", "Access to Document", "Link to publi
                              "Accéder au contenu principal")
 _DE_MUC_IMRAD = ("Methods", "Results", "Discussion", "Introduction", "METHODS", "RESULTS", "DISCUSSION", "INTRODUCTION")
 TEN_SO_NO_TOAN_VAN = "no-toan-van-apply.json"
+# TÊN TỆP HỢP LỆ trong kho (TT-01, 15/10/2026) — CHỈ tên khớp NGUYÊN mẫu của các bộ ghi: `_PMC<n>.xml` · `_UPW.pdf|html` ·
+# `_WTDM.pdf` · `_CHR.pdf|html`. Tệp tạm `.tam-<pid>` của lượt ghi hỏng, bản `.cu`, `_MCP.md`… KHÔNG tính (trước đó glob
+# `_CHR.*` khớp cả `PMID-<n>_CHR.pdf.tam-<pid>` ⇒ cổng tính «đã đọc» một tệp mà công cụ báo ghi hỏng). Trùng byte mẫu
+# `TEN_TEP_TOAN_VAN` của tools/doc_toan_van_co_nguoi.py (có test chốt).
+_TEN_TEP_TOAN_VAN = re.compile(r"PMID-(\d{1,9})_(PMC\d+\.xml|UPW\.(?:pdf|html)|WTDM\.pdf|CHR\.(?:pdf|html))")
 
 
 def _html_la_toan_van(duong):
-    """Bản `_UPW.html` có phải TOÀN VĂN không (cùng tiêu chí `gom_toan_van_dashboard.la_toan_van_html`, BH160): ≥ 6000 từ,
-    hoặc ≥ 2500 từ + ≥ 3 đề mục IMRaD và KHÔNG mang dấu trang giới thiệu kho lưu trữ."""
+    """Bản HTML trong kho (`_UPW.html`, và từ 15/10/2026 cả `_CHR.html` — TT-04) có phải TOÀN VĂN không (cùng tiêu chí
+    `gom_toan_van_dashboard.la_toan_van_html`, BH160): ≥ 6000 từ, hoặc ≥ 2500 từ + ≥ 3 đề mục IMRaD và KHÔNG mang dấu trang
+    giới thiệu kho lưu trữ."""
     try:
         vb = Path(duong).read_bytes().decode("utf-8", errors="replace")
     except OSError:
@@ -831,12 +837,14 @@ def _bac_si_da_doc_kho(kho):
 
 
 def co_toan_van_trong_kho(pmid, kho, bac_si_da_doc=None):
-    """PMID ĐÃ ĐỌC toàn văn theo kho (định nghĩa trùng `bao_phu_cuc_bo`)."""
+    """PMID ĐÃ ĐỌC toàn văn theo kho (định nghĩa trùng `bao_phu_cuc_bo`): tệp tên hợp lệ (TT-01) — HTML (`_UPW`, `_CHR`) phải qua
+    cổng nội dung toàn văn (BH160, TT-04) —, hồ sơ làn trình duyệt, hoặc «bác sĩ đã đọc trực tiếp»."""
     kho = Path(kho)
-    if list(kho.glob("PMID-%s_*.xml" % pmid)) or list(kho.glob("PMID-%s_WTDM.*" % pmid)) or list(kho.glob("PMID-%s_CHR.*" % pmid)):
-        return True
-    for q in kho.glob("PMID-%s_UPW.*" % pmid):
-        if q.suffix.lower() != ".html" or _html_la_toan_van(q):
+    for q in sorted(kho.glob("PMID-%s_*" % pmid)):
+        m = _TEN_TEP_TOAN_VAN.fullmatch(q.name)
+        if not m or m.group(1) != str(pmid) or not q.is_file():
+            continue
+        if q.suffix != ".html" or _html_la_toan_van(q):
             return True
     if (kho / "trinh_duyet" / ("PMID-%s.json" % pmid)).exists():
         return True

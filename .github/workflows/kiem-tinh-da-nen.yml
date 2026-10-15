@@ -60,7 +60,7 @@ jobs:
       - name: Compile toàn bộ tools/ + ops/ (bắt lỗi cú pháp đa nền)
         run: python -m compileall -q tools ops
 
-      - name: Chốt đa nền R1–R6 (fail khi có 🔴; 🟡 là tồn kho soi dần)
+      - name: Chốt đa nền R1–R7 (fail khi có 🔴; 🟡 là tồn kho soi dần)
         run: |
           set +e
           python tools/kiem_tuong_thich_da_nen.py
