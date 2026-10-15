@@ -83,3 +83,48 @@ def test_main_ghi_du_bo_tep(monkeypatch, tmp_path):
     for ten in ("thuoc_do", "cong_c1a", "viec", "chu_de_cu", "lo_trinh", "chi_phi_token"):
         d = json.loads((tmp_path / "ra" / f"{ten}.json").read_text(encoding="utf-8"))
         assert set(d) == {"do_luc", "rows"} and isinstance(d["rows"], list)
+
+
+def _han_muc_vao(tmp_path, pct5, pcttuan):
+    (tmp_path / "han_muc_vao.json").write_text(json.dumps({"do_luc": "2026-10-15T21:00:00+07:00", "windows": [
+        {"label": "5-hour limit", "percentUsed": pct5, "resetsAt": "2026-10-15T14:50:00Z"},
+        {"label": "Weekly · all models", "percentUsed": pcttuan, "resetsAt": "2026-10-17T20:00:00Z"}]}),
+        encoding="utf-8", newline="\n")
+
+
+def test_han_muc_theo_nguong(tmp_path):
+    _han_muc_vao(tmp_path, 74, 64)
+    h = {r["loai"]: r for r in D.do_han_muc(tmp_path)}
+    assert h["5 giờ"]["trang_thai"] == "binh_thuong" and h["tuần"]["trang_thai"] == "binh_thuong"
+    _han_muc_vao(tmp_path, 90, 93)
+    h = {r["loai"]: r for r in D.do_han_muc(tmp_path)}
+    assert h["5 giờ"]["trang_thai"] == "hoan_viec_nang" and h["tuần"]["trang_thai"] == "dung"
+
+
+def test_han_muc_vang_la_khong_do(tmp_path):
+    h = D.do_han_muc(tmp_path)
+    assert len(h) == 1 and h[0]["trang_thai"] == "khong_do"
+
+
+def test_ghi_tien_do_chi_noi_them_va_moi_nhat_truoc(tmp_path):
+    _han_muc_vao(tmp_path, 74, 64)
+    hm = D.do_han_muc(tmp_path)
+    D.ghi_tien_do(tmp_path, "Nghiên cứu|Kéo cây y khoa|Hết lệch BH107", hm, "2026-10-15T21:00:00+07:00")
+    D.ghi_tien_do(tmp_path, "Chứng cứ lâm sàng|Dựng lại RAG|Chỉ mục mới", hm, "2026-10-15T21:05:00+07:00")
+    td = D.doc_tien_do(tmp_path)
+    assert [r["viec"] for r in td] == ["Dựng lại RAG", "Kéo cây y khoa"]
+    assert td[0]["han_muc_5h"] == 74 and td[0]["ma"] == "T002"
+    with pytest.raises(ValueError):
+        D.ghi_tien_do(tmp_path, "thiếu|phần", hm, "x")
+    assert len((tmp_path / "tien_do.jsonl").read_text(encoding="utf-8").splitlines()) == 2
+
+
+def test_main_bao_tep_doi(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(D, "_chay", lambda *a, **k: None)
+    monkeypatch.setattr(D, "do_tuoi", lambda goc: [])
+    ra = tmp_path / "ra"
+    D.main(["--goc", str(tmp_path), "--ra", str(ra)])
+    capsys.readouterr()
+    D.main(["--goc", str(tmp_path), "--ra", str(ra), "--ghi-tien-do", "Nền hệ thống|Thử|Xong"])
+    out = capsys.readouterr().out
+    assert "tien_do.json" in out and "thuoc_do.json" not in out.split("Tệp đổi")[1]
