@@ -13,7 +13,8 @@ Nguồn từng tệp:
   cong_c1a.json      — `hoi_dong_cong.py trach-nhiem --gate ALL --json` (đề tài thật)
   viec.json          — `tu_de_xuat_viec.py --json` (việc treo, gắn mảng)
   chu_de_cu.json     — `kiem_do_tuoi_chung_cu.lau_chua_xem_lai()` (tuổi từng chủ đề)
-  lo_trinh.json      — lộ trình (hằng số LO_TRINH dưới đây; sửa tay khi bác sĩ đổi kế hoạch)
+  lo_trinh.json      — lộ trình: `lo_trinh_vao.json` trong thư mục ghi (đổi trạng thái KHÔNG cần PR); vắng/hỏng ⇒ hằng
+                       LO_TRINH dưới đây (bản khởi tạo)
   chi_phi_token.json — chi phí token đã ĐO (hằng số CHI_PHI_TOKEN, mỗi dòng ghi nguồn)
   tien_do.json       — nhật ký việc đã hoàn thiện (`--ghi-tien-do`), mới nhất trước, kèm hạn mức 5 giờ lúc ghi
   han_muc.json       — hạn mức gói Claude (5 giờ · tuần) từ `han_muc_vao.json` do Claude chép từ thẻ usage của app;
@@ -385,6 +386,20 @@ def doc_tien_do(ra: Path) -> List[Dict[str, Any]]:
     return list(reversed(hang))
 
 
+_KHOA_LO_TRINH = ("ma", "mang", "giai_doan", "thoi_gian", "chu", "dich", "trang_thai")
+
+
+def do_lo_trinh(ra: Path) -> List[Dict[str, Any]]:
+    """Lộ trình từ `lo_trinh_vao.json` (danh sách dòng đủ khoá _KHOA_LO_TRINH, mã không trùng); tệp vắng, hỏng hoặc sai
+    khuôn ⇒ hằng LO_TRINH — không bao giờ trả lộ trình rỗng/nửa vời."""
+    d = _doc_json_tep(ra / "lo_trinh_vao.json")
+    if (isinstance(d, list) and d and all(isinstance(r, dict) and all(isinstance(r.get(k), str) and r.get(k)
+                                                                        for k in _KHOA_LO_TRINH) for r in d)
+            and len({r["ma"] for r in d}) == len(d)):
+        return [{k: r[k] for k in _KHOA_LO_TRINH} for r in d]
+    return LO_TRINH
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Thu số đo cho trang Đài hoàn thiện EBM (0 agent).")
     ap.add_argument("--goc", type=Path, default=GOC_MAC_DINH, help="thư mục «Claude AI» (mặc định: repo chứa tệp này)")
@@ -414,7 +429,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "cong_c1a": cong,
         "viec": viec,
         "chu_de_cu": [t for t in tuoi if not t["ban_tin_gop"]],
-        "lo_trinh": LO_TRINH,
+        "lo_trinh": do_lo_trinh(ra),
         "chi_phi_token": CHI_PHI_TOKEN,
         "tien_do": doc_tien_do(ra),
         "han_muc": han_muc,

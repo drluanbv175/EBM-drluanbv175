@@ -128,3 +128,13 @@ def test_main_bao_tep_doi(monkeypatch, tmp_path, capsys):
     D.main(["--goc", str(tmp_path), "--ra", str(ra), "--ghi-tien-do", "Nền hệ thống|Thử|Xong"])
     out = capsys.readouterr().out
     assert "tien_do.json" in out and "thuoc_do.json" not in out.split("Tệp đổi")[1]
+
+
+def test_lo_trinh_doc_tu_tep_va_lui_ve_hang_khi_hong(tmp_path):
+    assert D.do_lo_trinh(tmp_path) is D.LO_TRINH
+    hop_le = [dict(D.LO_TRINH[0], trang_thai="Xong")]
+    (tmp_path / "lo_trinh_vao.json").write_text(json.dumps(hop_le, ensure_ascii=False), encoding="utf-8", newline="\n")
+    assert D.do_lo_trinh(tmp_path)[0]["trang_thai"] == "Xong"
+    for hong in ("{không phải json", json.dumps([{"ma": "R1"}]), json.dumps(hop_le * 2), json.dumps([])):
+        (tmp_path / "lo_trinh_vao.json").write_text(hong, encoding="utf-8", newline="\n")
+        assert D.do_lo_trinh(tmp_path) is D.LO_TRINH
