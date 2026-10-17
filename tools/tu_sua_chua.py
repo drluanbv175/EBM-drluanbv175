@@ -178,6 +178,12 @@ VIEC_MAY = [
     ("Git hook pre-commit chưa bật (core.hooksPath)",
      [PY, "tools/bat_git_hook.py", "--im-khi-on"],
      [PY, "tools/bat_git_hook.py", "--ap-dung"], True),
+    # Thêm 17/10/2026: mirror .Codex/.codex/agents của repo gốc KHÔNG được track ⇒ gộp PR sửa .claude/agents không
+    # cập nhật nó; BH91 (chốt hồi quy) và pre-commit y khoa đỏ tới khi có người chạy tay sync (ca thật 17/10 sau gốc #188,
+    # lần trước 04/10 sau #121). Cloud=False: hook phiên Cloud đã tự sinh lại mirror (CLAUDE.md §2.1).
+    ("Mirror Codex agent lệch nguồn (sau khi gộp PR sửa agent — BH91)",
+     [PY, "tools/sync_agents_to_codex.py", "--check"],
+     [PY, "tools/sync_agents_to_codex.py"], False),
     ("Nguồn chứng cứ có thật không",
      [PY, "tools/kiem_nguon_that.py", "--nhanh", "--im-khi-on"],
      None, False),                # cấu hình secrets — không tự điền
