@@ -24,6 +24,11 @@ Cách dò (chống báo động giả — đúng yêu cầu LÔ B):
     nhưng 0 tiêu đề ⇒ KHÔNG tính là thành công (không ghi last_success_at, không ghi
     đè state) và hạ degraded. Trước đó vòng quét chỉ biết HẠ nhãn: một lần trượt
     mạng làm trạm mang nhãn degraded mãi dù các lượt sau thu hoạch bình thường.
+    Đường `--nap-van-ban` theo CÙNG luật (vá 17/10/2026).
+  • Trạm KÊNH TRÌNH DUYỆT (17/10/2026 — khai ở `tools/lan_chrome/cau_hinh.json`, mục «nguon»): urllib luôn bị
+    chặn bot ở đó nên vòng này KHÔNG tải, chỉ xét độ cũ của lần nạp qua Chrome; quá chu kỳ ⇒ degraded + 🛎 chạy
+    `python3 tools/lan_chrome.py nguon` (cắt đúng vùng guideline đã phát hành rồi nạp). Trạm khai `dieu_kien`
+    (vd cần tắt VPN) vẫn để urllib lo như cũ.
 
 Đầu ra: `EBM-Dashboards/surveillance/to-chuc-<ngày>.md` (ứng viên
 source.type=guideline, kèm ngày phát hiện) · state ở `state/giam-sat-to-chuc.json`.
@@ -51,6 +56,26 @@ GOC = Path(__file__).resolve().parents[1]
 SO_NGUON = GOC / "data" / "sources.json"
 STATE = GOC / "state" / "giam-sat-to-chuc.json"
 RA = GOC / "EBM-Dashboards" / "surveillance"
+# Trạm chỉ đọc được bằng trình duyệt thật (17/10/2026) — khai ở cấu hình làn Chrome, `tools/lan_chrome.py nguon`.
+LAN_CHROME = GOC / "tools" / "lan_chrome" / "cau_hinh.json"
+
+
+def _tram_trinh_duyet() -> dict[str, int]:
+    """{id trạm: chu kỳ ngày} của trạm có làn trình duyệt ĐANG CHẠY (đủ url + vùng cắt + chu kỳ, không khai điều kiện).
+    Vòng quét urllib KHÔNG tải các trạm này: urllib luôn bị chặn bot ở đó, nên trước 17/10 mỗi lượt tuần hạ trạm về degraded
+    ngay sau khi làn trình duyệt vừa nạp thành công. Cấu hình hỏng/vắng ⇒ {} (hành vi cũ) kèm cảnh báo, không im lặng."""
+    try:
+        d = json.loads(LAN_CHROME.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as exc:
+        print(f"⚠ Không đọc được cấu hình làn Chrome ({exc}) — vòng này quét MỌI trạm bằng urllib như cũ.")
+        return {}
+    ra: dict[str, int] = {}
+    for sid, c in (d.get("nguon") or {}).items():
+        if not c.get("dieu_kien") and all(c.get(k) for k in ("url", "dong_dau", "dong_cuoi", "chu_ky_ngay")):
+            ra[sid] = int(c["chu_ky_ngay"])
+    return ra
 
 
 def _ghi_so_nguon(du: dict) -> None:
@@ -432,6 +457,11 @@ def _nap_van_ban(sid: str, duong_dan: str) -> int:
         print(f"🔴 Nội dung quá ngắn ({len(van_ban)} ký tự) — nghi trang chưa tải "
               f"xong hoặc bị chặn; KHÔNG ghi gì để tránh coi 'chặn' là 'không có tin mới'.")
         return 2
+    # VÁ 17/10/2026 — cùng luật BH138 của vòng quét chính: đọc ra 0 tiêu đề thì KHÔNG phải thành công (không ghi
+    # last_success_at, không ghi đè state bằng danh sách rỗng). Trước đó đường nạp trình duyệt ghi «thành công» mọi lượt.
+    if not rut_tieu_de_tu_van_ban(van_ban):
+        print(f"🔴 {sid}: văn bản nạp vào đọc ra 0 tiêu đề — trang chặn/đổi bố cục hoặc cắt sai vùng; KHÔNG ghi gì.")
+        return 2
 
     state = {}
     if STATE.exists():
@@ -453,6 +483,11 @@ def _nap_van_ban(sid: str, duong_dan: str) -> int:
                                   "urllib bị chặn bot-challenge)",
                           "so_tieu_de_luc_do": so_tieu_de_tong}
         da_bat = True
+    hoi_phuc = s.get("status") in ("degraded", "broken")
+    if hoi_phuc:
+        # VÁ 17/10/2026 — trước đó đường này chỉ bật not-covered→active: nạp ACC/AHA/WHO thành công mà nhãn vẫn degraded
+        # (đo 17/10: SRC-015/SRC-022 «last_success_at hôm nay · status degraded»), giống lỗi BH138 của vòng quét chính.
+        s["status"] = "active"
     du["updated"] = date.today().isoformat()
     _ghi_so_nguon(du)
 
@@ -463,6 +498,8 @@ def _nap_van_ban(sid: str, duong_dan: str) -> int:
     f = _ghi_ung_vien(phat_hien)
     if da_bat:
         print(f"🟢 {sid} {s['org']}: BẬT not-covered→active ({so_tieu_de_tong} tiêu đề)")
+    if hoi_phuc:
+        print(f"↺ {sid} {s['org']}: nạp qua trình duyệt được ⇒ nhãn về active")
     if giao_dien:
         print("  (trang đổi thuần giao diện, 0 tiêu đề mới)")
     if f:
@@ -545,7 +582,25 @@ def main() -> int:
     phat_hien: list[str] = []
     hong: list[str] = []
     hoi_phuc: list[str] = []
+    trinh_duyet = _tram_trinh_duyet()
     for s in muc_tieu:
+        if s["id"] in trinh_duyet:
+            # Kênh TRÌNH DUYỆT (17/10/2026): không tải bằng urllib (luôn bị chặn bot) — chỉ xét độ cũ của lần nạp qua Chrome.
+            chu_ky = trinh_duyet[s["id"]]
+            try:
+                tuoi = (date.today() - date.fromisoformat(s["last_success_at"])).days if s.get("last_success_at") else None
+            except (TypeError, ValueError):
+                tuoi = None
+            if tuoi is None or tuoi > chu_ky:
+                s["status"] = "degraded"
+                hong.append(f"{s['id']} {s['org']} — kênh TRÌNH DUYỆT "
+                            + ("chưa nạp lần nào" if tuoi is None else f"quá hạn ({tuoi} ngày > chu kỳ {chu_ky})")
+                            + f" ⇒ chuyên khoa {'/'.join(s['domain'])} đang MÙ ở làn web; 🛎 chạy "
+                            "`python3 tools/lan_chrome.py nguon`")
+            else:
+                print(f"◌ {s['id']}: kênh trình duyệt — nạp gần nhất {s['last_success_at']} ({tuoi} ngày ≤ {chu_ky}), "
+                      "không tải bằng urllib")
+            continue
         nd = _fetch(s["endpoint_or_url"])
         if nd is None:
             s["status"] = "degraded"

@@ -1,0 +1,132 @@
+{
+  "_about": "Cấu hình LÀN CHROME (17/10/2026) — chỉ chứa điều ĐÃ KIỂM THẬT trên trang của nhà xuất bản/trạm nguồn, kèm ngày và bài làm mẫu. «nxb»: cách bộ lưu `bo_luu.js` lấy thân bài + PDF theo từng miền (công cụ `tools/lan_chrome.py toan-van` thay {doi}/{pii} rồi in mã để dán vào javascript_tool). «nguon»: trạm web hội chỉ đọc được bằng trình duyệt thật — vùng cắt đúng danh sách guideline ĐÃ PHÁT HÀNH (`tools/lan_chrome.py nguon`); trạm có khối ở đây thì vòng quét urllib của giam_sat_to_chuc.py KHÔNG tải nữa mà chỉ xét độ cũ. Miền chưa có ở «nxb» = chưa kiểm: dùng --cau-hinh để thử, đạt thì bổ sung vào đây kèm kiem_lan_cuoi.",
+  "chuyen_huong": {
+    "linkinghub.elsevier.com": "sciencedirect"
+  },
+  "dau_khong_quyen_url": [
+    "redirectedFrom=fulltext",
+    "redirectedFrom=PDF",
+    "ovid\\.com/jnls/[^?]*/abstract/"
+  ],
+  "nxb": {
+    "sciencedirect": {
+      "mien": ["www.sciencedirect.com"],
+      "chon": "#abstracts,#body,#references",
+      "khoaTrang": "Article preview",
+      "min": 6000,
+      "pdf2": "/pii/{pii}/pdfft",
+      "kiem_pdf": "pii",
+      "kiem_lan_cuoi": "2026-10-15 · 36 bài (vd PMID 42674184)",
+      "ghi_chu": "Mở URL bài rồi đợi chuyển hướng tới /pii/<PII>; truyền location.href làm --url. PDF lấy ở bước 2 (pdf2) và PHẢI kiểm URL chứa đúng PII — 14/10 liên kết /pdfft đầu tiên trên trang là của một tài liệu tham khảo (PDF nhầm bài)."
+    },
+    "nejm": {
+      "mien": ["www.nejm.org", "evidence.nejm.org"],
+      "chon": "article",
+      "khoa": "Subscribe or renew|Purchase this article|Continue reading|Already a subscriber",
+      "pdf": "/doi/pdf/{doi}",
+      "kiem_lan_cuoi": "2026-10-15 · 9 bài (vd PMID 36036525)",
+      "ghi_chu": "URL content.nejm.org cũ trả 404 — lấy DOI từ meta citation_doi của trang PubMed rồi mở www.nejm.org/doi/full/<doi>. Thư ngắn (NEJMc…) cần --min 2000."
+    },
+    "aha": {
+      "mien": ["www.ahajournals.org"],
+      "chon": "article",
+      "khoa": "Get Access|Purchase this article|Subscribe to",
+      "pdf": "/doi/pdf/{doi}",
+      "kiem_lan_cuoi": "2026-10-13 · 10 bài (vd PMID 40549849)",
+      "ghi_chu": "Đính chính/thư ngắn cần --min 2000."
+    },
+    "oup": {
+      "mien": ["academic.oup.com"],
+      "chon": ".article-body",
+      "khoa": "Get access|Purchase|This content is only available",
+      "min": 10000,
+      "pdf2": "meta",
+      "kiem_pdf": "doi_cuoi",
+      "kiem_lan_cuoi": "2026-10-15 · 11 bài (vd PMID 40401436)",
+      "ghi_chu": "PDF ở bước 2 trên watermark*.silverchair.com (URL có token). Bài «advance» chỉ có ảnh trang đầu («Article PDF first page preview») ⇒ thân HTML ngắn: bỏ HTML, lấy PDF qua meta citation_pdf_url. URL bị chuyển về …?redirectedFrom=fulltext hoặc =PDF ⇒ KHÔNG có quyền (đo 15/10: Rheumatology, EJHF)."
+    },
+    "springer_link": {
+      "mien": ["link.springer.com"],
+      "chon": ".c-article-body",
+      "khoaTrang": "Access this article|Buy article PDF|Buy Now",
+      "min": 10000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-14 · 1 bài",
+      "ghi_chu": "Mới kiểm 1 bài — gặp trang khác thì báo lại."
+    },
+    "nature": {
+      "mien": ["www.nature.com"],
+      "chon": ".c-article-body",
+      "khoaDeMuc": ["Access options"],
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-15 · 3 bài Nature Reviews đều KHÔNG có quyền",
+      "ghi_chu": "Không có quyền thì trang vẫn hiện abstract + Key points + danh mục tham khảo dài (≥ 8 000 từ) và đề mục «Access options»; meta citation_pdf_url chuyển về trang HTML."
+    },
+    "sage": {
+      "mien": ["journals.sagepub.com"],
+      "chon": "article",
+      "khoa": "Get access|Purchase this article|Access options",
+      "pdf": "/doi/pdf/{doi}?download=true",
+      "kiem_lan_cuoi": "2026-10-14 · 2 bài"
+    },
+    "taylor_francis": {
+      "mien": ["www.tandfonline.com"],
+      "chon": ".hlFld-Fulltext",
+      "khoaTrang": "Get Access$",
+      "min": 8000,
+      "pdf": "/doi/pdf/{doi}?download=true",
+      "kiem_lan_cuoi": "2026-10-14 · 2 bài (vd PMID 42138247)"
+    },
+    "cochrane_library": {
+      "mien": ["www.cochranelibrary.com"],
+      "chon": "article",
+      "khoa": "Sign in to read|Purchase|Get access|Subscribe to",
+      "min": 12000,
+      "pdfXem": "/pdf/CDSR/[^\"'\\s]+\\.pdf",
+      "kiem_lan_cuoi": "2026-10-17 · PMID 28898390 (CD006211.pub3, 99 trang)",
+      "ghi_chu": "meta citation_pdf_url là TRANG XEM PDF (≈ 4 KB HTML) — bộ lưu đọc trang đó, tìm liên kết /pdf/CDSR/…/*.pdf rồi mới tải tệp PDF thật."
+    },
+    "wiley": {
+      "mien": ["onlinelibrary.wiley.com", "*.onlinelibrary.wiley.com"],
+      "chon": "article",
+      "pdf": "/doi/pdfdirect/{doi}",
+      "kiem_lan_cuoi": "2026-10-13 · bài AGS/Hepatology (vd PMID 28586122)",
+      "ghi_chu": "Cổng nội dung của --nhan (TT-04) loại trang chỉ có tóm tắt."
+    }
+  },
+  "nguon": {
+    "SRC-015": {
+      "ten": "ACC/AHA — danh sách guideline gần đây",
+      "url": "https://professional.heart.org/en/guidelines-statements",
+      "dong_dau": "^Guidelines$",
+      "dong_cuoi": "^Science Advisories$",
+      "bo_dong": ["^Journal Article", "^PDF/EPUB", "^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \\d{4}$"],
+      "chu_ky_ngay": 30,
+      "kiem_lan_cuoi": "2026-10-17 · 3 guideline (Sep/Aug/Jun 2026)",
+      "ghi_chu": "Trang cũ /guidelines-and-statements chỉ là trang giới thiệu (4 tiêu đề). urllib bị Cloudflare chặn (09/09). Bỏ dòng chỉ có tháng-năm: bộ rút tiêu đề nối nó vào tiêu đề phía trên (17/10 sinh tiêu đề rác «… Sep 2026»)."
+    },
+    "SRC-022": {
+      "ten": "WHO — guideline đã được GRC duyệt gần nhất",
+      "url": "https://www.who.int/publications/who-guidelines",
+      "dong_dau": "^Latest WHO guidelines approved by the Guidelines Review Committee$",
+      "dong_cuoi": "^WHO publications$",
+      "bo_dong": ["^All →$", "^Download Read More$", "^Download$", "^Read More$", "^\\d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) \\d{4}$"],
+      "chu_ky_ngay": 30,
+      "kiem_lan_cuoi": "2026-10-17 · 8 guideline (mới nhất 07/10/2026)",
+      "ghi_chu": "KHÔNG nạp bảng «planned guidelines 2026–2027» phía trên — đó là guideline DỰ KIẾN (17/10 nạp nhầm cả trang sinh 71 ứng viên giả)."
+    },
+    "SRC-021": {
+      "ten": "Cục Quản lý Dược Việt Nam — cảnh báo và thu hồi",
+      "url": "https://dav.gov.vn/canh-bao-va-thu-hoi-cn81.html",
+      "dieu_kien": "tat_vpn",
+      "ghi_chu": "17/10: ERR_CONNECTION_TIMED_OUT ngay trên Chrome thật khi VPN bật (IP nước ngoài). Chỉ thử khi bác sĩ tắt VPN; chưa có vùng cắt đã kiểm ⇒ chưa nạp."
+    },
+    "SRC-048": {
+      "ten": "EMA — danh mục thuốc cấp phép tập trung",
+      "url": "https://www.ema.europa.eu/en/about-us/legal-notice",
+      "dieu_kien": "tat_vpn",
+      "ghi_chu": "17/10: CloudFront chặn cả Chrome thật khi VPN bật. Engine đã có dự phòng EC Union Register (tra_thuoc_quoc_te.py ema chạy thật 17/10). Điều khoản tái sử dụng của EMA vẫn CHƯA đọc được."
+    }
+  }
+}
