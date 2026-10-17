@@ -1134,10 +1134,18 @@ def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt
               + ", ".join(bc["khong_co_ban_ghi"][:8]) + (" …" if len(bc["khong_co_ban_ghi"]) > 8 else ""))
     for loi in bc["loi"][:8] + bc["tom_tat_lech_so"][:8]:
         print(f"   ⚠ {loi}")
+    # 17/10/2026: trước đó cắt IM LẶNG ở 8 dòng — 164 cảnh báo «trường lạ» chỉ hiện 8, không ai thấy quy mô thật.
+    an = max(0, len(bc["loi"]) - 8) + max(0, len(bc["tom_tat_lech_so"]) - 8)
+    if an:
+        print(f"   ⚠ … và {an} cảnh báo khác chưa in (kiểm cả kho: python3 tools/tom_tat_endnote_vi.py --kiem EBM-Dashboards)")
     thieu = bc.get("tham_khao_chua_tom_tat") or []
     if thieu:
         print(f"   ℹ Trích dẫn tham khảo CHƯA có tóm tắt máy: {len(thieu)} — cần một phiên Claude soạn vào "
               f"{tt.TEP_TOM_TAT_ABS} (máy không tự sinh): " + ", ".join(thieu[:8]) + (" …" if len(thieu) > 8 else ""))
+    bo = bc.get("tham_khao_bo_qua") or []
+    if bo:
+        print(f"   ℹ Cố ý KHÔNG tóm tắt máy («bo_qua» trong {tt.TEP_TOM_TAT_ABS}): {len(bo)} — giữ nguyên, KHÔNG soạn đè: "
+              + ", ".join(bo[:8]) + (" …" if len(bo) > 8 else ""))
     return bc
 
 

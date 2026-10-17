@@ -76,11 +76,21 @@ CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abst
 # KHUÔN kho tóm tắt máy (TT-08, 15/10/2026): kho do một phiên Claude soạn tay theo SKILL — khoá sai trước đó bị bỏ IM LẶNG.
 # Khoá định danh: «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: đúng các khoá của NHAN_TOM_TAT. `--mau` in khuôn này.
 KHOA_TRUONG_TOM_TAT = tuple(k for k, _ in NHAN_TOM_TAT)
+# Trường SIÊU DỮ LIỆU của kho (17/10/2026) — hợp lệ nhưng KHÔNG BAO GIỜ in vào EndNote:
+#   `soan`   — ai/khi nào/từ nguồn nào soạn mục. 164/165 mục mang trường này từ 13/10 nên trước đó mỗi lượt nạp in hàng loạt
+#              «trường lạ soan» — nhiễu che mất lỗi khuôn thật.
+#   `bo_qua` — LÝ DO cố ý không tóm tắt máy (13/10: trường Abstract của bản ghi là GHI CHÚ của bác sĩ, không phải abstract
+#              PubMed). Mục `bo_qua` không bao giờ in tóm tắt máy và không bị tính «chưa tóm tắt» — trước đó công cụ vẫn mời
+#              phiên sau «SOẠN mục» trái với quyết định đã ghi.
+TRUONG_SIEU_DU_LIEU = ("soan", "bo_qua")
 _KHOA_DINH_DANH = re.compile(r"PMID \d{1,9}|DOI 10\.\d{4,9}/\S+")
 MAU_KHO_TOM_TAT = {
     "_about": ("Kho «Tóm tắt MÁY» cho trích dẫn CHỈ là tài liệu tham khảo — phiên Claude soạn từ ABSTRACT GỐC (mọi con số phải có "
                "nguyên văn trong abstract, lệch ⇒ không in). Khoá định danh «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: "
-               + ", ".join(KHOA_TRUONG_TOM_TAT) + ". Khoá lạ bị báo lỗi, mục không có trường hợp lệ = «chưa tóm tắt»."),
+               + ", ".join(KHOA_TRUONG_TOM_TAT) + ". Siêu dữ liệu tuỳ chọn, không bao giờ in: «soan» (ai/khi nào/từ nguồn nào "
+               "soạn) và «bo_qua» (LÝ DO cố ý không tóm tắt — vd trường Abstract của bản ghi là ghi chú của bác sĩ; mục bo_qua "
+               "không in tóm tắt máy, không tính «chưa tóm tắt», KHÔNG soạn đè). Khoá lạ khác bị báo lỗi, mục không có trường "
+               "hợp lệ (và không bo_qua) = «chưa tóm tắt»."),
     "muc": {
         "PMID 12345678": {k: f"<{nhan.lower()} — tiếng Việt, rút từ abstract gốc>" for k, nhan in NHAN_TOM_TAT},
         "DOI 10.1000/vi-du.2026.001": {k: f"<{nhan.lower()}>" for k, nhan in NHAN_TOM_TAT},
@@ -446,10 +456,16 @@ def kiem_kho_tom_tat(kho_tt: dict) -> list[str]:
             continue
         if str(k).startswith("DOI ") and str(k)[4:] != str(k)[4:].lower():
             loi.append(f"kho tóm tắt máy: khoá «{k}» — DOI phải viết chữ thường (bộ đọc tra «DOI <doi chữ thường>»)")
-        la = [f for f in (v or {}) if f not in KHOA_TRUONG_TOM_TAT]
+        la = [f for f in (v or {}) if f not in KHOA_TRUONG_TOM_TAT and f not in TRUONG_SIEU_DU_LIEU]
         if la:
             loi.append(f"kho tóm tắt máy: «{k}» có trường lạ {', '.join(map(str, la))} — trường hợp lệ: "
-                       + ", ".join(KHOA_TRUONG_TOM_TAT) + " (xem --mau)")
+                       + ", ".join(KHOA_TRUONG_TOM_TAT) + "; siêu dữ liệu (không in): " + ", ".join(TRUONG_SIEU_DU_LIEU)
+                       + " (xem --mau)")
+        if "bo_qua" in (v or {}) and not _gon(v.get("bo_qua")):
+            loi.append(f"kho tóm tắt máy: «{k}» có «bo_qua» rỗng — ghi LÝ DO cố ý không tóm tắt, hoặc bỏ hẳn trường này")
+        elif _bo_qua(v) and any(_gon(v.get(f)) for f in KHOA_TRUONG_TOM_TAT):
+            loi.append(f"kho tóm tắt máy: «{k}» vừa «bo_qua» vừa có trường tóm tắt — mâu thuẫn; mục bo_qua KHÔNG in tóm tắt "
+                       "máy (xoá bo_qua nếu bác sĩ đã đồng ý cho tóm tắt)")
     return loi
 
 
@@ -470,15 +486,27 @@ def so_khong_khop(tom_tat: dict, goc: str) -> list[str]:
     return sorted({x for k, _ in NHAN_TOM_TAT for x in _cac_so(str(tom_tat.get(k) or "")) if x not in co})
 
 
-def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[str]]:
-    """(tóm tắt máy, số lệch) cho MỘT trích dẫn. Chỉ áp cho trích dẫn KHÔNG là mục chính ở dashboard nào — mục chính
-    đã có nội dung qua cổng. Có số lệch abstract gốc ⇒ (None, các số lệch): không in."""
-    if not kho_tt or any(x["vai"] == "muc" for x in muc["ngu_canh"]):
-        return None, []
+def _bo_qua(tt) -> bool:
+    """Mục kho mang «bo_qua» có nội dung ⇒ CỐ Ý không tóm tắt máy (xem TRUONG_SIEU_DU_LIEU)."""
+    return isinstance(tt, dict) and bool(_gon(tt.get("bo_qua")))
+
+
+def _muc_kho(muc: dict, kho_tt: dict):
+    """Mục kho tóm tắt máy của MỘT trích dẫn: tra «PMID <n>» trước, rồi «DOI <doi chữ thường>»; không có ⇒ None."""
     tt = kho_tt.get(f"PMID {muc['pmid']}") if muc.get("pmid") else None
     if tt is None and muc.get("doi"):
         tt = kho_tt.get(f"DOI {str(muc['doi']).lower()}")
-    if not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
+    return tt
+
+
+def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[str]]:
+    """(tóm tắt máy, số lệch) cho MỘT trích dẫn. Chỉ áp cho trích dẫn KHÔNG là mục chính ở dashboard nào — mục chính
+    đã có nội dung qua cổng. Mục kho mang «bo_qua» ⇒ không bao giờ in, kể cả khi lỡ có trường tóm tắt (mâu thuẫn — báo ở
+    `kiem_kho_tom_tat`). Có số lệch abstract gốc ⇒ (None, các số lệch): không in."""
+    if not kho_tt or any(x["vai"] == "muc" for x in muc["ngu_canh"]):
+        return None, []
+    tt = _muc_kho(muc, kho_tt)
+    if _bo_qua(tt) or not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
         return None, []
     lech = so_khong_khop(tt, goc)
     return (None, lech) if lech else (tt, [])
@@ -571,7 +599,7 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         ds = {k: v for k, v in ds.items() if any(x["dashboard"] in ten for x in v["ngu_canh"])}
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
                 "se_ghi": 0, "da_ghi": 0, "loi": kiem_kho_tom_tat(tom_tat_abs or {}), "sao_luu": None, "tom_tat_may": 0,
-                "tom_tat_lech_so": [], "tham_khao_chua_tom_tat": []}
+                "tom_tat_lech_so": [], "tham_khao_chua_tom_tat": [], "tham_khao_bo_qua": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -600,9 +628,12 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         dinh_danh = f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}"
         # «Chưa tóm tắt» = kho KHÔNG cho ra tóm tắt dùng được (vắng mục, hoặc mục không có trường hợp lệ nào — TT-08), trừ khi
         # mục có mà lệch số (đã báo ở tom_tat_lech_so). Trước đó chỉ xét khoá định danh có mặt ⇒ mục khoá sai lọt khỏi cả hai danh sách.
+        # Mục kho «bo_qua» (cố ý không tóm tắt — 17/10/2026) sang danh sách riêng: không mời phiên sau soạn đè quyết định đã ghi.
         if (tom_tat_abs is not None and tt is None and not lech
-                and not any(x["vai"] == "muc" for x in v["ngu_canh"]) and dinh_danh not in bc["tham_khao_chua_tom_tat"]):
-            bc["tham_khao_chua_tom_tat"].append(dinh_danh)
+                and not any(x["vai"] == "muc" for x in v["ngu_canh"])):
+            ds_ra = "tham_khao_bo_qua" if _bo_qua(_muc_kho(v, tom_tat_abs)) else "tham_khao_chua_tom_tat"
+            if dinh_danh not in bc[ds_ra]:
+                bc[ds_ra].append(dinh_danh)
         moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
         if chuan_dong(moi) == chuan_dong(cu[m]):
             bc["khong_doi"] += 1
@@ -650,12 +681,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"✗ {TEP_TOM_TAT_ABS} không đọc được: {e}")
         return 2
     loi = kiem_kho_tom_tat(kho_tt)
-    rong = [k for k, v in kho_tt.items() if not any(_gon(v.get(f)) for f in KHOA_TRUONG_TOM_TAT)]
+    bo = [k for k, v in kho_tt.items() if _bo_qua(v)]
+    rong = [k for k, v in kho_tt.items() if not _bo_qua(v) and not any(_gon(v.get(f)) for f in KHOA_TRUONG_TOM_TAT)]
     for x in loi:
         print(f"✗ {x}")
     for k in rong:
         print(f"🟡 «{k}»: không có trường hợp lệ nào có nội dung — tính là «chưa tóm tắt»")
-    print(f"{'✓' if not loi else '✗'} {len(kho_tt)} mục · {len(loi)} lỗi khuôn · {len(rong)} mục rỗng. Cần bác sĩ kiểm chứng.")
+    print(f"{'✓' if not loi else '✗'} {len(kho_tt)} mục · {len(loi)} lỗi khuôn · {len(rong)} mục rỗng · {len(bo)} mục cố ý "
+          "bỏ qua (bo_qua). Cần bác sĩ kiểm chứng.")
     return 1 if loi else 0
 
 
