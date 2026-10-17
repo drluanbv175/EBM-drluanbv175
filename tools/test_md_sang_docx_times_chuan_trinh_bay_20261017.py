@@ -5,8 +5,9 @@ Bối cảnh: đề cương nộp Hội đồng của C1a dựng bằng `--trang
 «☐» (Times New Roman không có hình chữ) — trục ④ của `medical-ebm-automation/tools/kiem_chi_tiet_he_nghien_cuu.py`
 báo sai chuẩn. Test đo bằng CHÍNH `kiem_docx` của trục ④ (chạy ở tiến trình con để module repo y khoa không chen vào
 sys.path của bộ test gốc), và đối chiếu với bản dựng KHÔNG áp chuẩn để chứng minh: thước đo không mù (bản thô có ký
-tự lạ), lề · khổ giấy · căn lề · ngắt trang · số trang không đổi, và chỉ ký tự trang trí bị thay — mũi tên mang nghĩa
-(«Tuổi → BHYT», «→ Từ chối») giữ nguyên. Ngoại tuyến hoàn toàn, văn bản fixture tự soạn.
+tự lạ), lề · khổ giấy · căn lề · ngắt trang · số trang không đổi, và chữ đổi ĐÚNG như bộ làm sạch chung
+`lam_sach_van_ban` — kể cả mũi tên «→» thành « đến » như mọi cổng (bác sĩ chọn 17/10/2026). Ngoại tuyến hoàn toàn, văn
+bản fixture tự soạn.
 
 Không có repo y khoa: bản sao git trần (CI/cloud) ⇒ skip có lý do; máy thật mà không nạp được ⇒ ĐỎ (cùng quy ước
 `tools/conftest.py::_bo_qua_nhom_repo_y_khoa`).
@@ -135,23 +136,17 @@ def test_kiem_docx_do_dat_chuan_va_giu_bo_cuc(tmp_path, monkeypatch):
     assert _bo_cuc(doc_dat) == _bo_cuc(doc_tho), "lề/khổ/căn lề/ngắt trang/số trang phải giữ nguyên"
     assert len(_bo_cuc(doc_dat)["ngat_trang"]) == 2 and _bo_cuc(doc_dat)["so_trang"] == ["begin", "end"]
 
-    # Chỉ ký tự trang trí bị thay; mọi chữ khác (kể cả mũi tên mang nghĩa) giữ nguyên.
-    ky_vong = [t.replace("☐", ctb._THAY_KY_HIEU["☐"]).replace("☑", ctb._THAY_KY_HIEU["☑"]) for t in _van_ban(doc_tho)]
-    assert _van_ban(doc_dat) == ky_vong
+    # Chữ đổi đúng như bộ làm sạch chung (mỗi đoạn fixture là một run), không thêm không bớt.
+    assert _van_ban(doc_dat) == [ctb.lam_sach_van_ban(t) for t in _van_ban(doc_tho)]
     chu = "\n".join(_van_ban(doc_dat))
-    assert "☐ Có" not in chu and "[ ] Có [ ] Không" in chu and "[x] Người tham gia" in chu
-    assert "Tuổi → BHYT → thời gian chờ → hài lòng" in chu and "→ Từ chối" in chu and "(→ thời gian chờ" in chu
+    assert "☐" not in chu and "☑" not in chu
+    assert "[ ] Có [ ] Không" in chu and "[x] Người tham gia" in chu
+    # Mũi tên theo chuẩn chung như mọi cổng — không giữ riêng cho đề cương.
+    assert "→" not in chu and "Tuổi đến BHYT đến thời gian chờ đến hài lòng" in chu
 
     # Cấp bậc đề mục giữ nguyên: tên đề cương vẫn thân + 6.
     ten = next(p for p in doc_dat.paragraphs if p.text == "ĐỀ CƯƠNG THỬ")
     assert {r.font.size for r in ten.runs} == {Pt(19)}
-
-
-def test_ky_tu_giu_nghia_suy_tu_chuan_trinh_bay():
-    ctb = _ctb_hoac_bo_qua()
-    giu = M._ky_tu_giu_nghia(ctb, set("☐☑✅•→⇒ab"))
-    assert "→" in giu and "⇒" in giu
-    assert not {"☐", "☑", "✅", "•", "a", "b"} & set(giu)
 
 
 def test_hang_co_bang_khop_chuan_trinh_bay():

@@ -224,32 +224,6 @@ def _nap_chuan_trinh_bay():
         return None, f"nạp {tep.as_posix()} lỗi ({type(e).__name__}: {e})"
 
 
-def _cac_run(doc):
-    """Mọi run của thân bài và của ô bảng — đúng phạm vi ap_dinh_dang_tai_lieu quét."""
-    for p in doc.paragraphs:
-        yield from p.runs
-    for bang in doc.tables:
-        for hang in bang.rows:
-            for o in hang.cells:
-                for p in o.paragraphs:
-                    yield from p.runs
-
-
-def _ky_tu_giu_nghia(ctb, ky_tu: set[str]) -> list[str]:
-    """Ký tự mà `lam_sach_van_ban` sẽ đổi DÙ trục ④ KHÔNG coi là trang trí.
-
-    Suy ra từ chính chuan_trinh_bay (cùng biểu thức `_ky_tu_la` của kiem_docx), không liệt
-    kê tay — bảng ký tự chỉ có một nguồn. Đo 17/10/2026 trên đề cương C1a, tập này là 21
-    mũi tên «→»: quan hệ nhân quả trong mục DAG («Tuổi → BHYT → thời gian chờ → hài lòng»)
-    và nhánh sơ đồ luồng người tham gia («→ Từ chối»). Bộ làm sạch chung đổi «→» thành
-    « đến » — hợp với log máy, nhưng ở đây làm lệch nghĩa («Tuổi đến BHYT», ô « đến Từ
-    chối») trong văn bản nộp Hội đồng; Times New Roman có hình chữ cho chúng.
-    """
-    def _trang_tri(c: str) -> bool:
-        return ctb._la_ky_tu_ve(c) or c in ctb._THAY_KY_HIEU or c in ctb._BO_HAN
-    return sorted(c for c in ky_tu if not _trang_tri(c) and ctb.lam_sach_van_ban(c) != c)
-
-
 def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
     """Áp chuẩn trình bày tài liệu nộp lên văn bản đề cương; True nếu đã áp đủ.
 
@@ -259,14 +233,13 @@ def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
     đụng font/cỡ/chữ của run trong thân bài và bảng — lề, căn đều, ngắt trang, căn giữa
     trang bìa và trường số trang ở chân trang giữ nguyên.
 
-    Hai chỗ bù có chủ ý:
-      1. Ký tự KHÔNG thuộc tập trang trí mà bộ làm sạch chung vẫn đổi (mũi tên — xem
-         `_ky_tu_giu_nghia`) được thay tạm bằng ký tự dùng riêng (Unicode PUA, bộ làm sạch
-         không đụng) trước lời gọi rồi trả lại ngay sau — chỉ ký tự trang trí bị đổi.
-      2. Hàm đó ghi cỡ thân bài lên MỌI run, kể cả đề mục, nên tên đề cương (thân + 6) và
-         đề mục (thân + 1…3) sẽ phẳng thành cỡ thân. Run nào bộ dựng đã đặt LỚN HƠN cỡ thân
-         (chỉ có ở đề mục và trang bìa) được trả lại đúng cỡ cũ để giữ cấp bậc đề mục; trục ④
-         đếm cỡ theo số ký tự nên vài dòng đề mục không đổi kết luận về thân bài.
+    Mũi tên đổi theo ĐÚNG bộ làm sạch chung như mọi cổng («→» → « đến », «⇒» → « suy ra »…)
+    — bác sĩ chọn 17/10/2026, không giữ riêng cho đề cương.
+
+    Một chỗ bù có chủ ý: hàm đó ghi cỡ thân bài lên MỌI run, kể cả đề mục, nên tên đề cương
+    (thân + 6) và đề mục (thân + 1…3) sẽ phẳng thành cỡ thân. Run nào bộ dựng đã đặt LỚN HƠN
+    cỡ thân (chỉ có ở đề mục và trang bìa) được trả lại đúng cỡ cũ để giữ cấp bậc đề mục;
+    trục ④ đếm cỡ theo số ký tự nên vài dòng đề mục không đổi kết luận về thân bài.
 
     Không nạp được chuan_trinh_bay ⇒ False: bảng vẫn 11pt (đặt lúc dựng) nhưng ký tự trang
     trí còn nguyên — nơi gọi phải báo, không được coi là đạt.
@@ -274,26 +247,10 @@ def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
     ctb, _ = _nap_chuan_trinh_bay()
     if ctb is None:
         return False
-    runs = [r for r in _cac_run(doc) if not ctb._run_chua_ma_truong(r)]
-    ky_tu = set().union(*(r.text for r in runs)) if runs else set()
-    tu_do = (chr(o) for o in range(0xF0000, 0xFFFFE) if chr(o) not in ky_tu)
-    tam = {c: next(tu_do) for c in _ky_tu_giu_nghia(ctb, ky_tu)}
-    tra = {v: k for k, v in tam.items()}
-
-    def _doi(bang: dict[str, str]) -> None:
-        if not bang:
-            return
-        for r in runs:
-            moi = "".join(bang.get(c, c) for c in r.text)
-            if moi != r.text:
-                r.text = moi
-
     nguong = Pt(co_chu)
     giu_co = [(r, r.font.size) for p in doc.paragraphs for r in p.runs
               if r.font.size is not None and r.font.size > nguong]
-    _doi(tam)
     ctb.ap_dinh_dang_tai_lieu(doc, co_chu=co_chu)
-    _doi(tra)
     for r, co in giu_co:
         r.font.size = co
     return True

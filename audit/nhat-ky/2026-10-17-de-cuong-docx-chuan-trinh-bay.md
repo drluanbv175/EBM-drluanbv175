@@ -17,11 +17,10 @@ trang trí** — toàn bộ là «☐» U+2610 (Times New Roman không có hình
 - Chế độ đề cương nạp `medical-ebm-automation/tools/chuan_trinh_bay.py` (dò qua `ban_sao_tran.duong_goc()`, nạp
   theo đường dẫn tệp, không chèn sys.path) và gọi `ap_dinh_dang_tai_lieu` — bảng ký tự giữ một nguồn, không chép.
   Bảng 11pt (`CO_CHU_BANG_DE_CUONG`, test canh khớp `CO_CHU_BANG`).
-- **Phát hiện kèm — mũi tên mang nghĩa:** gọi nguyên khối thì `lam_sach_van_ban` còn đổi 21 «→» của đề cương C1a thành
-  « đến »: mục DAG «Tuổi → BHYT → thời gian chờ → hài lòng» thành «Tuổi đến BHYT đến…», ô sơ đồ luồng «→ Từ chối»
-  thành « đến Từ chối». «→» không thuộc tập trục ④ đếm và Times New Roman có hình chữ ⇒ ký tự nào bộ làm sạch đổi mà
-  trục ④ không coi là trang trí được thay tạm bằng ký tự PUA quanh lời gọi rồi trả lại (tập suy tự động từ
-  chuan_trinh_bay, không liệt kê tay). Kết quả đo: chỉ 267 «☐» → «[ ]» đổi; 1.885/1.885 đoạn còn lại giống từng ký tự.
+- **Mũi tên — bác sĩ chọn theo chuẩn chung:** gọi nguyên khối thì `lam_sach_van_ban` còn đổi 21 «→» của đề cương
+  C1a thành « đến » (mục DAG «Tuổi → BHYT → thời gian chờ → hài lòng» thành «Tuổi đến BHYT đến…», ô sơ đồ luồng
+  «→ Từ chối» thành « đến Từ chối»). Bản đầu của PR giữ riêng mũi tên cho đề cương; bác sĩ quyết 17/10: «Bỏ phần bảo vệ
+  mũi tên, để ap_dinh_dang_tai_lieu đổi «→» thành « đến » như các cổng khác.» ⇒ đã gỡ, đề cương đổi đúng như mọi cổng.
 - Cỡ đề mục > cỡ thân (tên đề cương 19pt, đề mục 14–16pt) được trả lại sau lời gọi — hàm chung ghi cỡ thân lên mọi run.
 - Không nạp được repo y khoa ⇒ vẫn ghi tệp, bảng 11pt, nhưng báo 🟡 «CHƯA làm sạch» và **mã thoát 1** (không dấu xanh
   giả). Chế độ thường không đổi.
@@ -29,13 +28,14 @@ trang trí** — toàn bộ là «☐» U+2610 (Times New Roman không có hình
 ## Kiểm hồi quy (17/10/2026)
 
 - Đề cương C1a dựng lại (vào scratchpad, KHÔNG ghi đè `exports/`): `kiem_docx` ⇒ Times New Roman · thân 13 · bảng 11 ·
-  0 ký tự lạ; lề 3/2/2/2 cm, 15 ngắt trang, 372 đoạn căn đều, trường PAGE — y hệt bản cũ; K1/K2 của
-  `kiem_de_cuong_nop_hoi_dong.py` đạt.
-- `tools/test_md_sang_docx_times_chuan_trinh_bay_20261017.py` (5 test): đo bằng chính `kiem_docx` (tiến trình con),
-  đối chiếu bản không áp chuẩn (thước đo không mù, bố cục giữ nguyên, chỉ «☐»/«☑» đổi). Đột biến 9/9 bị bắt đúng
-  test (`python -B`, xoá `__pycache__`, phục hồi + `cmp`). Bản sao trần: 3 test skip có lý do, 2 test dự phòng vẫn chạy.
-- Trọn bộ `tools/`: 3.135 qua · 37 skip · 0 lỗi.
+  0 ký tự lạ; lề 3/2/2/2 cm, 15 ngắt trang, 372 đoạn căn đều, trường PAGE — y hệt bản cũ; chữ đổi: 267 «☐» → «[ ]»
+  và 21 «→» → « đến », số đoạn giữ 1.885; K1/K2 của `kiem_de_cuong_nop_hoi_dong.py` đạt.
+- `tools/test_md_sang_docx_times_chuan_trinh_bay_20261017.py` (4 test): đo bằng chính `kiem_docx` (tiến trình con),
+  đối chiếu bản không áp chuẩn (thước đo không mù, bố cục giữ nguyên, chữ đổi đúng như `lam_sach_van_ban`, kể cả
+  «→»). Đột biến 9/9 bị bắt đúng test, gồm «tắt làm sạch» và «giữ lén mũi tên» (`python -B`, xoá `__pycache__`,
+  phục hồi + `cmp`). Bản sao trần: 2 test skip có lý do, 2 test dự phòng vẫn chạy.
+- Trọn bộ `tools/`: 3.135 qua · 36 skip · 0 lỗi.
 
-**Còn mở (repo y khoa):** 11 bộ sinh của cổng gọi `ap_dinh_dang_tai_lieu` nguyên khối nên «→»/«⇒» trong bản Word
-G1/SAP… cũng bị đổi thành « đến »/« suy ra » — chưa đo, cần bác sĩ quyết có giữ mũi tên ở đó không.
+**Còn mở (repo y khoa):** một phiên riêng đang ĐO «→»/«⇒» trong bản Word của 11 bộ sinh cổng G0–G10 (đổi thành
+« đến »/« suy ra » cùng cơ chế) — chỉ đo và báo, quyết định thuộc bác sĩ.
 Cần bác sĩ kiểm chứng.
