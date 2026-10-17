@@ -32,22 +32,40 @@ căn đều hai bên, giãn dòng 1,3; số trang giữa chân trang. Đường 
 thành đường kẻ mà thành NGẮT TRANG; mọi nội dung đứng trước `---` đầu tiên là TRANG BÌA
 và được căn giữa.
 
+CHUẨN TRÌNH BÀY TÀI LIỆU NỘP (vá 17/10/2026): bản đầu của chế độ đề cương để bảng ở cỡ
+thân − 1 (13 ⇒ 12pt) và giữ nguyên ký tự trang trí («☐» U+2610 — Times New Roman không có
+hình chữ, in ra ô vuông rỗng), nên trục ④ của `kiem_chi_tiet_he_nghien_cuu.py` báo đề cương
+nộp Hội đồng của C1a sai chuẩn (đo 17/10: bảng 12pt, 267 ký tự trang trí). Nguyên nhân gốc:
+công cụ này nằm ở repo gốc, là một điểm `doc.save` KHÔNG đi qua `chuan_trinh_bay.py` như
+11 bộ sinh .docx của cổng G0–G10. Nay chế độ đề cương gọi thẳng
+`medical-ebm-automation/tools/chuan_trinh_bay.py::ap_dinh_dang_tai_lieu` (nguồn DUY NHẤT
+của bảng ký tự — không chép bảng sang đây): Times New Roman, thân `--co-chu`, bảng 11pt,
+«☐» → «[ ]», «☑» → «[x]»…; lề, căn đều, ngắt trang, trang bìa, cấp bậc đề mục và số trang
+giữ nguyên. Không nạp được repo y khoa ⇒ bảng vẫn 11pt nhưng ký tự trang trí CHƯA được
+làm sạch: công cụ vẫn ghi tệp, báo rõ và trả mã 1 (không in dấu xanh giả).
+Chế độ thường không đổi.
+
 Dùng:
     python3 tools/md_sang_docx_times.py <đầu-vào>.md [--ra <đầu-ra>.docx]
     python3 tools/md_sang_docx_times.py bao-cao.md --co-chu 12
     python3 tools/md_sang_docx_times.py de-cuong.md --co-chu 13 --trang-de-cuong
 
-Mã thoát: 0 = xong · 2 = lỗi đầu vào hoặc thiếu python-docx.
+Mã thoát: 0 = xong · 1 = đã ghi .docx nhưng CHƯA làm sạch ký tự trang trí (chỉ ở
+`--trang-de-cuong`, khi không nạp được `chuan_trinh_bay.py`) · 2 = lỗi đầu vào hoặc thiếu
+python-docx.
 """
 from __future__ import annotations
 
 import argparse
+import functools
+import importlib.util
 import re
 import sys
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+for _luong in (sys.stdout, sys.stderr):  # Windows cp1252 không in được «☐»/dấu tiếng Việt
+    if hasattr(_luong, "reconfigure"):
+        _luong.reconfigure(encoding="utf-8")
 
 try:
     from docx import Document
@@ -63,6 +81,11 @@ except ImportError:  # pragma: no cover - phụ thuộc môi trường
 FONT = "Times New Roman"
 XAM_MA = "EEEEEE"       # nền đoạn mã
 XAM_CHU = RGBColor(0x44, 0x44, 0x44)
+# Cỡ chữ trong bảng ở chế độ đề cương — PHẢI bằng chuan_trinh_bay.CO_CHU_BANG (test canh lệch).
+# Chỉ để lối dự phòng khi không nạp được repo y khoa vẫn ra bảng đúng cỡ; có repo thì
+# ap_dinh_dang_tai_lieu tự đặt theo hằng của chính nó.
+CO_CHU_BANG_DE_CUONG = 11
+GOC_REPO = Path(__file__).resolve().parents[1]
 
 # Inline: mã trước tiên để nội dung bên trong không bị parse tiếp.
 _INLINE = re.compile(
@@ -168,6 +191,114 @@ def _trinh_bay_de_cuong(doc) -> None:
                     p.paragraph_format.space_after = Pt(2)
 
 
+def _nap_tep(ten: str, duong: Path):
+    """Nạp một module theo ĐƯỜNG DẪN TỆP — không chèn sys.path (tránh che module trùng tên)."""
+    spec = importlib.util.spec_from_file_location(ten, duong)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@functools.lru_cache(maxsize=1)
+def _nap_chuan_trinh_bay():
+    """→ (module chuan_trinh_bay | None, đường dẫn tệp hoặc lý do không nạp được).
+
+    `chuan_trinh_bay.py` của repo y khoa là nguồn DUY NHẤT của chuẩn trình bày tài liệu
+    nộp (font · cỡ thân/bảng · bảng ký tự trang trí) mà trục ④ của
+    `kiem_chi_tiet_he_nghien_cuu.py` đo theo. Repo y khoa dò qua `ban_sao_tran.duong_goc()`
+    (vị trí lồng ở máy thật, anh em ở phiên Cloud) — không tự ghép đường dẫn.
+    """
+    try:
+        bst = _nap_tep("_md_docx_ban_sao_tran", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        goc = bst.duong_goc("medical-ebm-automation", GOC_REPO)
+    except (OSError, ImportError, AttributeError) as e:
+        return None, f"không dò được repo y khoa ({type(e).__name__}: {e})"
+    if goc is None:
+        return None, "không thấy medical-ebm-automation/ (lồng hoặc anh em với repo gốc)"
+    tep = goc / "tools" / "chuan_trinh_bay.py"
+    if not tep.is_file():
+        return None, f"thiếu {tep.as_posix()}"
+    try:
+        return _nap_tep("_md_docx_chuan_trinh_bay", tep), tep.as_posix()
+    except Exception as e:  # noqa: BLE001 — mọi lỗi nạp đều phải thành lời báo, không sập công cụ
+        return None, f"nạp {tep.as_posix()} lỗi ({type(e).__name__}: {e})"
+
+
+def _cac_run(doc):
+    """Mọi run của thân bài và của ô bảng — đúng phạm vi ap_dinh_dang_tai_lieu quét."""
+    for p in doc.paragraphs:
+        yield from p.runs
+    for bang in doc.tables:
+        for hang in bang.rows:
+            for o in hang.cells:
+                for p in o.paragraphs:
+                    yield from p.runs
+
+
+def _ky_tu_giu_nghia(ctb, ky_tu: set[str]) -> list[str]:
+    """Ký tự mà `lam_sach_van_ban` sẽ đổi DÙ trục ④ KHÔNG coi là trang trí.
+
+    Suy ra từ chính chuan_trinh_bay (cùng biểu thức `_ky_tu_la` của kiem_docx), không liệt
+    kê tay — bảng ký tự chỉ có một nguồn. Đo 17/10/2026 trên đề cương C1a, tập này là 21
+    mũi tên «→»: quan hệ nhân quả trong mục DAG («Tuổi → BHYT → thời gian chờ → hài lòng»)
+    và nhánh sơ đồ luồng người tham gia («→ Từ chối»). Bộ làm sạch chung đổi «→» thành
+    « đến » — hợp với log máy, nhưng ở đây làm lệch nghĩa («Tuổi đến BHYT», ô « đến Từ
+    chối») trong văn bản nộp Hội đồng; Times New Roman có hình chữ cho chúng.
+    """
+    def _trang_tri(c: str) -> bool:
+        return ctb._la_ky_tu_ve(c) or c in ctb._THAY_KY_HIEU or c in ctb._BO_HAN
+    return sorted(c for c in ky_tu if not _trang_tri(c) and ctb.lam_sach_van_ban(c) != c)
+
+
+def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
+    """Áp chuẩn trình bày tài liệu nộp lên văn bản đề cương; True nếu đã áp đủ.
+
+    Gọi `chuan_trinh_bay.ap_dinh_dang_tai_lieu` — cùng điểm mà 11 bộ sinh .docx của cổng
+    G0–G10 đi qua và đúng chuẩn mà `kiem_docx` đo: Times New Roman, thân `co_chu`, bảng
+    `CO_CHU_BANG`, ký tự trang trí thay bằng văn bản («☐» → «[ ]», «☑» → «[x]»…). Hàm đó chỉ
+    đụng font/cỡ/chữ của run trong thân bài và bảng — lề, căn đều, ngắt trang, căn giữa
+    trang bìa và trường số trang ở chân trang giữ nguyên.
+
+    Hai chỗ bù có chủ ý:
+      1. Ký tự KHÔNG thuộc tập trang trí mà bộ làm sạch chung vẫn đổi (mũi tên — xem
+         `_ky_tu_giu_nghia`) được thay tạm bằng ký tự dùng riêng (Unicode PUA, bộ làm sạch
+         không đụng) trước lời gọi rồi trả lại ngay sau — chỉ ký tự trang trí bị đổi.
+      2. Hàm đó ghi cỡ thân bài lên MỌI run, kể cả đề mục, nên tên đề cương (thân + 6) và
+         đề mục (thân + 1…3) sẽ phẳng thành cỡ thân. Run nào bộ dựng đã đặt LỚN HƠN cỡ thân
+         (chỉ có ở đề mục và trang bìa) được trả lại đúng cỡ cũ để giữ cấp bậc đề mục; trục ④
+         đếm cỡ theo số ký tự nên vài dòng đề mục không đổi kết luận về thân bài.
+
+    Không nạp được chuan_trinh_bay ⇒ False: bảng vẫn 11pt (đặt lúc dựng) nhưng ký tự trang
+    trí còn nguyên — nơi gọi phải báo, không được coi là đạt.
+    """
+    ctb, _ = _nap_chuan_trinh_bay()
+    if ctb is None:
+        return False
+    runs = [r for r in _cac_run(doc) if not ctb._run_chua_ma_truong(r)]
+    ky_tu = set().union(*(r.text for r in runs)) if runs else set()
+    tu_do = (chr(o) for o in range(0xF0000, 0xFFFFE) if chr(o) not in ky_tu)
+    tam = {c: next(tu_do) for c in _ky_tu_giu_nghia(ctb, ky_tu)}
+    tra = {v: k for k, v in tam.items()}
+
+    def _doi(bang: dict[str, str]) -> None:
+        if not bang:
+            return
+        for r in runs:
+            moi = "".join(bang.get(c, c) for c in r.text)
+            if moi != r.text:
+                r.text = moi
+
+    nguong = Pt(co_chu)
+    giu_co = [(r, r.font.size) for p in doc.paragraphs for r in p.runs
+              if r.font.size is not None and r.font.size > nguong]
+    _doi(tam)
+    ctb.ap_dinh_dang_tai_lieu(doc, co_chu=co_chu)
+    _doi(tra)
+    for r, co in giu_co:
+        r.font.size = co
+    return True
+
+
 def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document":
     doc = Document()
     # Trạng thái chế độ đề cương: đang ở trang bìa? đoạn kế tiếp có ngắt trang trước?
@@ -263,17 +394,18 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
                 i += 1
             if trang["ngat"]:
                 _moi(doc.add_paragraph())
+            co_bang = CO_CHU_BANG_DE_CUONG if trang_de_cuong else co_chu - 1
             bang = doc.add_table(rows=1, cols=len(dau))
             bang.style = "Table Grid"
             for j, o in enumerate(dau):
                 cell = bang.rows[0].cells[j]
                 cell.text = ""
-                _viet_inline(cell.paragraphs[0], o, co=co_chu - 1, dam_het=True)
+                _viet_inline(cell.paragraphs[0], o, co=co_bang, dam_het=True)
             for hang in than:
                 cells = bang.add_row().cells
                 for j, o in enumerate(hang[:len(dau)]):
                     cells[j].text = ""
-                    _viet_inline(cells[j].paragraphs[0], o, co=co_chu - 1)
+                    _viet_inline(cells[j].paragraphs[0], o, co=co_bang)
             doc.add_paragraph()
             continue
 
@@ -327,6 +459,7 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
 
     if trang_de_cuong:
         _trinh_bay_de_cuong(doc)
+        _ap_chuan_trinh_bay(doc, co_chu)
     return doc
 
 
@@ -349,6 +482,17 @@ def main(argv: list[str] | None = None) -> int:
 
     doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu, a.trang_de_cuong)
     doc.save(str(ra))
+    if a.trang_de_cuong:
+        ctb, nguon = _nap_chuan_trinh_bay()
+        if ctb is None:
+            print(f"🟡 {ra}  ({ra.stat().st_size:,} byte · font {FONT} · {a.co_chu:g}pt · "
+                  f"bảng {CO_CHU_BANG_DE_CUONG}pt) — CHƯA làm sạch ký tự trang trí («☐»…): {nguon}. "
+                  "Bản này CHƯA đạt chuẩn nộp; chạy lại trên máy có medical-ebm-automation/.",
+                  file=sys.stderr)
+            return 1
+        print(f"✅ {ra}  ({ra.stat().st_size:,} byte · font {FONT} · {a.co_chu:g}pt · "
+              f"bảng {ctb.CO_CHU_BANG}pt · chuẩn trình bày: {nguon})")
+        return 0
     print(f"✅ {ra}  ({ra.stat().st_size:,} byte · font {FONT} · {a.co_chu:g}pt)")
     return 0
 
