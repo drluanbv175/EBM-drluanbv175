@@ -41,6 +41,19 @@
     return {ok: true, ly: ''};
   }
 
+  /** Đường PDF bước 2 (THUẦN — test bằng node). `pdf2 = 'meta'` ⇒ meta citation_pdf_url. Còn lại: chọn LIÊN KẾT THẬT trên trang có
+   *  chứa đoạn `pdf2` (vd /pii/<PII>/pdfft) — đúng cách đã kiểm 14–15/10. KHÔNG tự dựng URL: liên kết thật của ScienceDirect mang
+   *  đường /science/article/… và tham số md5/pid; URL tự dựng (17/10) không phải liên kết NXB phát ra. Không thấy ⇒ '' (bước 2 bỏ). */
+  function chonPdf2(o, hrefs, metaPdf) {
+    if (!o || !o.pdf2) return '';
+    if (o.pdf2 === 'meta') return metaPdf || '';
+    var doan = String(o.pdf2).toLowerCase();
+    for (var i = 0; i < (hrefs || []).length; i++) {
+      if (String(hrefs[i]).toLowerCase().indexOf(doan) >= 0) return hrefs[i];
+    }
+    return '';
+  }
+
   function dauPdf(buf) {
     return String.fromCharCode.apply(null, Array.prototype.slice.call(new Uint8Array(buf)));
   }
@@ -94,7 +107,9 @@
         } catch (e2) { pdfLy = String(e2); }
       }
       if (o.pdf2) {
-        pdf2 = o.pdf2 === 'meta' ? ((document.querySelector('meta[name="citation_pdf_url"]') || {}).content || '') : new URL(o.pdf2, location.origin).href;
+        pdf2 = chonPdf2(o, Array.prototype.map.call(document.querySelectorAll('a[href]'), function (a) { return a.href; }),
+          (document.querySelector('meta[name="citation_pdf_url"]') || {}).content || '');
+        if (!pdf2) pdfLy = (pdfLy ? pdfLy + '; ' : '') + 'không thấy liên kết PDF chứa «' + o.pdf2 + '» trên trang — bỏ bước 2';
       }
     }
     if (!kq.ok) { nut(false, 'EBM bỏ ' + pmid); g.__ebmOk = false; g.__pdf2 = ''; return {ok: false, ly: kq.ly, len: vung.length}; }
@@ -133,5 +148,5 @@
   g.__ebmDanhGia = danhGia;
   g.__ebmTai = tai;
   g.__ebmPdfNut = pdfNut;
-  if (typeof module !== 'undefined' && module.exports) module.exports = {danhGia: danhGia};
+  if (typeof module !== 'undefined' && module.exports) module.exports = {danhGia: danhGia, chonPdf2: chonPdf2};
 })(typeof window !== 'undefined' ? window : globalThis);
