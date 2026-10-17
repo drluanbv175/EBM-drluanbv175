@@ -1084,6 +1084,49 @@ def _nap_tom_tat():
     return mod
 
 
+def _tim_dash_goc() -> Path | None:
+    """Thư mục EBM-Dashboards/ của cây đang chạy (None ở worktree/bản sao trần) — tách hàm để test thay được."""
+    bst_sp = importlib.util.spec_from_file_location("_bst_endnote", ROOT / "tools" / "ban_sao_tran.py")
+    bst = importlib.util.module_from_spec(bst_sp)
+    bst_sp.loader.exec_module(bst)
+    return bst.duong_goc("EBM-Dashboards", ROOT)
+
+
+def xac_dinh_kho(kho_tham_so: str | None, dash_goc: Path | None, files: list[Path]) -> Path | None:
+    """Kho toàn văn của lượt chạy (17/10/2026). Thứ tự:
+    1. `--kho-toan-van` — giữ NGUYÊN kể cả khi sai đường (người gọi kiểm `is_dir()` và từ chối ghi, không tự đoán chỗ khác);
+    2. `toan_van_oa` CẠNH dashboard của `--file` — đúng kho mà bước ⑧ và cổng BH161 đọc (TT-07 của xuat_goi_cap_nhat). Chỉ nhận
+       khi mọi dashboard cho ra CÙNG MỘT kho có thật — dashboard ở nhiều thư mục khác nhau ⇒ mơ hồ, không chọn bừa;
+    3. `<EBM-Dashboards gốc>/toan_van_oa`.
+    Không thấy thư mục nào ⇒ None. Trước đó chỉ xét (3): chạy từ worktree/bản sao trần với `--file` trỏ tới dashboard thật ⇒
+    kho None ⇒ dòng «Toàn văn» của MỌI bản ghi thành «chưa xét (không thấy kho)» (đo 17/10: «sẽ ghi 877 · không đổi 0»)."""
+    if kho_tham_so:
+        return Path(kho_tham_so)
+    canh = {(Path(f).parent / "toan_van_oa").resolve() for f in files}
+    if len(canh) == 1 and next(iter(canh)).is_dir():
+        return next(iter(canh))
+    goc = dash_goc / "toan_van_oa" if dash_goc else None
+    return goc if goc is not None and goc.is_dir() else None
+
+
+def chan_ghi_khi_thieu_kho(a, kho: Path | None) -> int | None:
+    """Fail-closed khi GHI (17/10/2026): không có kho thật thì khối ĐỌC NHANH ghi «Toàn văn: chưa xét (không thấy kho)» ĐÈ
+    thông tin tốt hơn đang có («có PDF · có bản đọc sâu») của MỌI bản ghi ⇒ trả mã từ chối, không ghi gì. Chạy khô vẫn đi
+    tiếp (để thấy kế hoạch) nhưng in ⚠. Không áp: `--gan-kho` (có báo riêng), `--xuat-xml` (không đụng thư viện),
+    `--ap-dung --khong-tom-tat` (chỉ nhập bản ghi, không ghi khối — PDF không đính, có ⚠). Có kho thật ⇒ None (đi tiếp)."""
+    if a.gan_kho or a.xuat_xml or (kho is not None and kho.is_dir()):
+        return None
+    ly = (f"không thấy kho toàn văn {kho}" if kho is not None else
+          "không thấy kho toàn văn (không có toan_van_oa cạnh dashboard, cũng không có EBM-Dashboards/ gốc)")
+    if a.ap_dung and (a.tom_tat_vi or not a.khong_tom_tat):
+        print(f"⚪ KHÔNG ĐO ĐƯỢC — {ly}: khối ĐỌC NHANH sẽ ghi «Toàn văn: chưa xét» đè thông tin đang có của mọi bản ghi "
+              "⇒ KHÔNG ghi gì vào EndNote. Chỉ đường: --kho-toan-van <EBM-Dashboards>/toan_van_oa")
+        return MA_KHONG_CHAY
+    print(f"⚠ {ly} — lượt này không đính PDF, dòng «Toàn văn» tính là «chưa xét»"
+          + ("." if a.ap_dung else " (--ap-dung ghi khối ĐỌC NHANH sẽ bị từ chối)."))
+    return None
+
+
 # W10 (15/10/2026, HỢP ĐỒNG với bước ⑧ của xuat_goi_cap_nhat): cổng liêm chính CHƯA PASS (chạy không --online, mạng lỗi
 # ⇒ Word bị hạ «CHƯA xác minh nguồn sống») thì khối ĐỌC NHANH không được mang chân «chép từ dashboard đã qua cổng».
 # Dòng cảnh báo đặt ở CHÂN khối — dòng ĐẦU phải giữ dấu mở `MO_DAU` để lượt chạy lại nhận ra và THAY khối cũ.
@@ -1148,7 +1191,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ap-dung", action="store_true", help="nạp thật vào EndNote (mặc định chạy khô)")
     ap.add_argument("--ten-nhom", help="đặt tên nhóm thay cho câu hỏi lâm sàng (chỉ khi một --file)")
     ap.add_argument("--xuat-xml", help="chỉ ghi tệp XML để nhập tay (máy không phải Mac)")
-    ap.add_argument("--kho-toan-van", help="thư mục toan_van_oa (mặc định EBM-Dashboards/toan_van_oa)")
+    ap.add_argument("--kho-toan-van", help="thư mục toan_van_oa (mặc định: toan_van_oa CẠNH dashboard của --file, rồi "
+                                           "EBM-Dashboards/toan_van_oa; không thấy kho ⇒ --ap-dung bị từ chối)")
     ap.add_argument("--ghi-cau-hinh", metavar="THU_VIEN_ENL", help="ghi thư viện chính vào ~/.ebm-endnote.json")
     ap.add_argument("--ung-dung", default=UNG_DUNG_MAC_DINH, help="tên ứng dụng EndNote (đi cùng --ghi-cau-hinh)")
     ap.add_argument("--im-khi-chua-cau-hinh", action="store_true",
@@ -1187,10 +1231,7 @@ def main(argv: list[str] | None = None) -> int:
                   f"bằng AppleScript trên Mac). Ở máy này dùng: `{LENH_XUAT_XML}` rồi nhập tay (File → Import).")
         return MA_OK
 
-    bst_sp = importlib.util.spec_from_file_location("_bst_endnote", ROOT / "tools" / "ban_sao_tran.py")
-    bst = importlib.util.module_from_spec(bst_sp)
-    bst_sp.loader.exec_module(bst)
-    dash_goc = bst.duong_goc("EBM-Dashboards", ROOT)
+    dash_goc = _tim_dash_goc()
     files = [Path(f) for f in a.file]
     if a.tat_ca:
         if dash_goc is None:
@@ -1209,7 +1250,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.ten_nhom and len(files) != 1:
         print("✗ --ten-nhom chỉ dùng với đúng một --file")
         return MA_THAM_SO
-    kho = Path(a.kho_toan_van) if a.kho_toan_van else (dash_goc / "toan_van_oa" if dash_goc else None)
+    kho = xac_dinh_kho(a.kho_toan_van, dash_goc, files)
 
     if a.xuat_xml:
         # Đường cho máy không phải Mac: một tệp XML để nhập tay; không đính PDF (không có đường vào thư viện).
@@ -1245,6 +1286,11 @@ def main(argv: list[str] | None = None) -> int:
         if not thu_vien.is_file():
             raise KhongChayDuoc(f"thư viện đã cấu hình không còn tồn tại: {thu_vien}")
         endnote = EndNoteMac(ch["ung_dung"], thu_vien)
+        # Xét kho SAU nền tảng/cấu hình (máy không ghi được EndNote thì luật cũ — ⚪/mã 0 trong bộ năm — vẫn thắng) và TRƯỚC
+        # bước có thể bật EndNote lên màn hình (không mở EndNote rồi mới từ chối).
+        chan = chan_ghi_khi_thieu_kho(a, kho)
+        if chan is not None:
+            return chan
         if not endnote.dang_mo_dung_thu_vien():
             if a.chi_khi_dang_mo:  # công cụ khác gọi giữa chừng: không bao giờ tự bật EndNote lên màn hình bác sĩ
                 print(f"⚪ EndNote chưa mở thư viện {thu_vien.name} — bỏ qua, lần nạp sau sẽ gắn.")
