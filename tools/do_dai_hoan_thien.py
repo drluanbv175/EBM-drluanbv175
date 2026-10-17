@@ -61,7 +61,8 @@ TEN_CONG = {"G0": "Câu hỏi & khả thi", "G1": "Thiết kế & đề cương"
             "G10": "Gói phát hành"}
 NHAN_KET_LUAN = {"DAT_TIEU_CHI": "Đạt tiêu chí", "AGENT_XONG_CHO_NGUOI": "Agent xong, chờ người",
                  "AGENT_CON_VIEC": "Agent còn việc", "CHO_CONG_TRUOC": "Chờ cổng trước"}
-NHAN_TRANG_THAI = {"dat": "Đạt", "chua": "Chưa đạt", "khong_do": "Không đo được"}
+# «cho» (17/10/2026, bác sĩ chọn): việc CHƯA TỚI LƯỢT vì cổng trước chưa xong — không phải «đạt», cũng không phải lỗi.
+NHAN_TRANG_THAI = {"dat": "Đạt", "chua": "Chưa đạt", "khong_do": "Không đo được", "cho": "Chờ cổng trước"}
 # Ngưỡng hạn mức (phần trăm đã dùng) — quá ngưỡng thì hoãn việc nặng tới khi cửa sổ đặt lại.
 NGUONG_HAN_MUC = {"5 giờ": (85, 95), "tuần": (80, 92)}  # (hoãn việc nặng, dừng hẳn)
 _CI_DANG_CHAY = ("in_progress", "queued", "pending", "waiting", "requested")  # chưa có kết luận
@@ -173,6 +174,9 @@ def do_cong(y_khoa: Path, study: str) -> List[Dict[str, Any]]:
             "cho_cong_truoc": len(c.get("cho_cong_truoc") or []), "nhiem_vu_ap_dung": len(ap),
             "danh_gia_cheo_hieu_luc": hieu_luc,
             "chat_luong_chua_bao_dam": len(c.get("chat_luong_chua_bao_dam") or []),
+            # Bản công cụ y khoa trước 17/10/2026 chưa có khoá này ⇒ None (không đo được), KHÔNG coi là 0.
+            "chat_luong_chua_toi_luot": ([m.get("ma") for m in c["chat_luong_chua_toi_luot"]]
+                                         if isinstance(c.get("chat_luong_chua_toi_luot"), list) else None),
         })
     return hang
 
@@ -243,6 +247,17 @@ def thuoc_do(goc: Path, y_khoa: Path, cong: List[Dict[str, Any]], viec: List[Dic
         clcb = sum(c["chat_luong_chua_bao_dam"] for c in cong)
         hang.append(_dong(NC, "R-CL", "Nhiệm vụ có chất lượng chưa bảo đảm", str(clcb), clcb, "0",
                           "chua" if clcb else "dat", "hoi_dong_cong.py trach-nhiem --gate ALL"))
+        # 17/10/2026 (bác sĩ chọn «tách dòng chưa tới lượt»): nhiệm vụ chưa có đầu ra (vd diễn giải cần dữ liệu thật)
+        # không chấm chéo được — dòng riêng, trạng thái «cho», không gộp vào R-CL và không bao giờ là «đạt» khi còn.
+        tl = [c.get("chat_luong_chua_toi_luot") for c in cong]
+        if any(x is None for x in tl):
+            hang.append(_dong(NC, "R-CL-CHO", "Nhiệm vụ chưa tới lượt đánh giá chéo (chưa có đầu ra)",
+                              "không đo được", None, "—", "khong_do", "hoi_dong_cong.py trach-nhiem --gate ALL"))
+        else:
+            ma_tl = [m for x in tl for m in x]
+            hang.append(_dong(NC, "R-CL-CHO", "Nhiệm vụ chưa tới lượt đánh giá chéo (chưa có đầu ra)",
+                              ", ".join(ma_tl) or "0", len(ma_tl), "0 khi cổng trước xong",
+                              "cho" if ma_tl else "dat", "hoi_dong_cong.py trach-nhiem --gate ALL"))
     else:
         hang.append(_dong(NC, "R-KY", "Cổng của đề tài thật", "không đo được", None, "—", "khong_do",
                           "hoi_dong_cong.py trach-nhiem --gate ALL"))
@@ -462,8 +477,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"Không ghi được {ra}: {e}", file=sys.stderr)
         return 2
     td = bo["thuoc_do"]
-    dem = {k: sum(1 for h in td if h["trang_thai"] == k) for k in ("dat", "chua", "khong_do")}
-    print(f"Đài hoàn thiện — đo lúc {luc}: {dem['dat']} đạt · {dem['chua']} chưa · {dem['khong_do']} không đo được")
+    dem = {k: sum(1 for h in td if h["trang_thai"] == k) for k in ("dat", "chua", "khong_do", "cho")}
+    print(f"Đài hoàn thiện — đo lúc {luc}: {dem['dat']} đạt · {dem['chua']} chưa · {dem['khong_do']} không đo được"
+          + (f" · {dem['cho']} chờ cổng trước" if dem["cho"] else ""))
     print(f"  {len(cong)} cổng · {len(viec)} việc · {len(bo['chu_de_cu'])} chủ đề → {ra.as_posix()}")
     print("  Tệp đổi (cần tải lại lên trang): " + (", ".join(doi) if doi else "không có"))
     return 0
