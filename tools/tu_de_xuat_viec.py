@@ -1039,8 +1039,11 @@ def main() -> int:
                  str(_GOC_MEA / "tools" / "study_readiness.py"),
                  "--study", "hai-long-benh-nhan-C1a-BVQY175"])
     if "CHƯA được bác sĩ chốt" in out:
-        de_xuat.append((1, "👤", "C1a: G0 chờ 5 cờ FINER — một cú đúp",
-                        "mở «Chot FINER C1a.command» (Mac) / .ps1 (Windows)"))
+        # 17/10/2026: nút «Chot FINER» chỉ ghi 5 cờ FINER — G0 vẫn thiếu tính mới/ICTRP/PICO nên không đạt. Nút «Chot G0»
+        # (từ 11/10) làm trọn cả bốn việc; hướng dẫn từng màn hình ở HUONG_DAN_PI_CHOT_G3_G4_G10_20261017.md BƯỚC 0b.
+        de_xuat.append((1, "👤", "C1a: G0 chờ PI chốt (FINER · tính mới · ICTRP · PICO) — một cú đúp",
+                        "mở «Chot G0 C1a.command» (Mac) / .ps1 (Windows) — exports/<C1a>/"
+                        "HUONG_DAN_PI_CHOT_G3_G4_G10_20261017.md BƯỚC 0b; xong nhắn Claude «ghi biên bản xử lý G0»"))
     # 04/10/2026: study_readiness nay đếm SÁU cổng cứng theo gate_contract («chữ ký thật: 0/6») thay vì 4 viết tay.
     _so_cc = so_cong_cung_chua_ky(out)
     if _so_cc:
