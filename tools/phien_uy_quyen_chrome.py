@@ -32,6 +32,8 @@ QUY TRÌNH (Claude làm; bác sĩ chỉ vượt chặn/đăng nhập và nói c�
      ⇒ mỗi bài chỉ MỘT lần tải. Đo 04/10: Chrome chặn lặng lẽ lần tải tự động thứ hai trên cùng trang và GHI NHỚ lệnh chặn cho
      miền; nạp lại trang để tải tiếp làm Cloudflare chặn lại (ahajournals). Rồi `--nhan <PMID> --tep <tệp> --url <URL>
      [--doi <DOI>]` (kiểm loại, cỡ, dấu phiên, không ghi đè; tách PDF nhúng ra `_CHR.pdf`; chuyển vào kho; nhật ký kèm SHA-256).
+     Từ 17/10/2026 bước 2–3 đóng gói ở `tools/lan_chrome.py` (`toan-van` in mã JS `tools/lan_chrome/bo_luu.js` đã điền cấu hình
+     NXB đã kiểm · `pdf` · `nhan` · `hang-cho`) — mọi luật kiểm tệp vẫn nằm ở `--nhan` của công cụ này.
   4. `python3 tools/doc_sau_toan_van.py --pmid <PMID…>` sinh bản đọc sâu từ PDF `_CHR`.
   5. Bác sĩ nói «dừng» ⇒ `--dung`. `--trang-thai` xem phiên đang mở.
 Mã thoát: 0 được/xong · 2 KHÔNG ĐO ĐƯỢC / không đọc-ghi được tệp (kho vắng — không tự tạo; sổ phiên hỏng — không ghi đè) · 3 bị

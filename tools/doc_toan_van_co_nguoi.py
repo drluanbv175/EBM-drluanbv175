@@ -554,6 +554,9 @@ HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» 
   0b. NXB có uỷ quyền đọc của bác sĩ VÀ bác sĩ đã nói câu uỷ quyền phiên ⇒ phiên LƯU bản sao `tools/phien_uy_quyen_chrome.py`
      (`--mo "<nguyên văn>"` một lần; `--kiem <PMID> --url <URL>` trước MỖI bài; `--nhan <PMID> --tep <tệp> --url <URL>` từng tệp;
      `--dung` khi bác sĩ nói «dừng») — lưu `toan_van_oa/PMID-<n>_CHR.*` (có bản quyền, KHÔNG phải OA). Ngoài phiên: theo các bước dưới.
+     Công cụ đóng gói (17/10/2026): `python3 tools/lan_chrome.py hang-cho` (bài chờ theo miền · ưu tiên · có cấu hình · phạm vi)
+     → `toan-van --pmid <P> --url <location.href> [--doi <D>]` in SẴN mã JS theo cấu hình NXB đã kiểm
+     (`tools/lan_chrome/cau_hinh.json`) → bấm nút đỏ → `pdf` (NXB tách PDF) → `nhan`. Không tự viết lại bộ lưu mỗi phiên.
   1. `python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-<W>.md` → phiếu: bài nào chưa có toàn văn, mở ở URL nào,
      nhóm theo MIỀN (bác sĩ vượt chặn MỘT lần cho mỗi miền là đọc được cả nhóm).
   2a. ĐIỀU KHOẢN NHÀ XUẤT BẢN trước tiên (03/10/2026). NXB trong `DIEU_KHOAN_NXB` với kết luận «cấm» (Elsevier — DOI 10.1016/…,
