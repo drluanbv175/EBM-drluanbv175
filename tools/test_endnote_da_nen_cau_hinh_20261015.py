@@ -65,6 +65,9 @@ def _cach_ly(tmp_path, monkeypatch):
 def _dash(tmp_path: Path) -> Path:
     d = tmp_path / "WebDashboard_X_20261015.html"
     d.write_text("x", encoding="utf-8", newline="\n")
+    # Bố cục thật của EBM-Dashboards: kho toàn văn CẠNH dashboard. Từ 17/10/2026 thiếu kho thì --ap-dung ghi khối bị từ chối
+    # (test_endnote_chan_ghi_khong_kho_20261017.py) — fixture phải đúng bố cục thật, không nới assertion.
+    (tmp_path / "toan_van_oa").mkdir(exist_ok=True)
     return d
 
 
