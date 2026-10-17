@@ -40,7 +40,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Tuple, Any, Dict, List, Optional
 
 for _luong in (sys.stdout, sys.stderr):
     try:
@@ -65,6 +65,15 @@ NHAN_TRANG_THAI = {"dat": "Đạt", "chua": "Chưa đạt", "khong_do": "Không 
 # Ngưỡng hạn mức (phần trăm đã dùng) — quá ngưỡng thì hoãn việc nặng tới khi cửa sổ đặt lại.
 NGUONG_HAN_MUC = {"5 giờ": (85, 95), "tuần": (80, 92)}  # (hoãn việc nặng, dừng hẳn)
 _CI_DANG_CHAY = ("in_progress", "queued", "pending", "waiting", "requested")  # chưa có kết luận
+
+
+def chon_luot_ci(luot: List[Dict[str, Any]]) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """(lượt CI của repo mới nhất, lượt ĐÃ XONG mới nhất) — 17/10/2026: bỏ job tự động của GitHub/Dependabot
+    (`event` = «dynamic»: «Dependabot Updates», «Graph Update»…) và lượt «cancelled» (bị lượt mới hơn thay chỗ). Trước
+    đây đo `--limit 1` mọi workflow ⇒ một job cập nhật Dependabot hỏng biến thước đo CI nhánh chính thành «failure» giả."""
+    that = [r for r in luot if r.get("event") != "dynamic" and r.get("conclusion") != "cancelled"]
+    xong = next((r for r in that if r.get("status") == "completed"), None)
+    return (that[0] if that else None), xong
 _KY_CUNG = re.compile(r"^(PASS|LOCKED|APPROVED|RELEASED)|_LOCKED$")
 
 # Lộ trình đã trình bác sĩ 15/10/2026; `trang_thai` sửa tay khi một giai đoạn đổi trạng thái.
@@ -298,26 +307,32 @@ def thuoc_do(goc: Path, y_khoa: Path, cong: List[Dict[str, Any]], viec: List[Dic
                           f"{chot.get('trang_thai')} (đo {str(chot.get('ket_thuc'))[:10]})", None, "XANH", tt,
                           "chot_hoi_quy_bai_hoc.py"))
     for ma, repo, nhanh in (("N-CI-GOC", REPO_GOC, "master"), ("N-CI-YK", REPO_Y_KHOA, NHANH_Y_KHOA)):
-        r = _gh(["run", "list", "--repo", repo, "--branch", nhanh, "--limit", "1", "--json",
-                 "conclusion,status,createdAt"], goc)
-        if r:
-            kl = r[0].get("conclusion") or r[0].get("status")
+        r = _gh(["run", "list", "--repo", repo, "--branch", nhanh, "--limit", "20", "--json",
+                 "conclusion,status,createdAt,event"], goc)
+        moi, xong = chon_luot_ci(r) if isinstance(r, list) else (None, None)
+        if moi:
+            kl = moi.get("conclusion") or moi.get("status")
+            them = (f" · lượt xong gần nhất: {xong.get('conclusion')} ({str(xong.get('createdAt'))[:10]})"
+                    if kl in _CI_DANG_CHAY and xong else "")
             hang.append(_dong(NEN, ma, f"CI nhánh chính {'repo gốc' if repo == REPO_GOC else 'repo y khoa'}",
-                              f"{kl} ({str(r[0].get('createdAt'))[:10]})", None, "success",
+                              f"{kl} ({str(moi.get('createdAt'))[:10]}){them}", None, "success",
                               "dat" if kl == "success" else ("khong_do" if kl in _CI_DANG_CHAY else "chua"),
                               "gh run list"))
         else:
             hang.append(_dong(NEN, ma, "CI nhánh chính", "không đo được", None, "success", "khong_do",
                               "gh run list"))
-    pr = 0
+    pr = tu_gop = 0
     pr_do = True
     for repo in (REPO_GOC, REPO_Y_KHOA):
-        r = _gh(["pr", "list", "--repo", repo, "--state", "open", "--json", "number"], goc)
+        r = _gh(["pr", "list", "--repo", repo, "--state", "open", "--json", "number,autoMergeRequest"], goc)
         if r is None:
             pr_do = False
         else:
-            pr += len(r)
-    hang.append(_dong(NEN, "N-PR", "PR đang mở chờ bác sĩ", str(pr) if pr_do else "không đo được",
+            # 17/10/2026: PR đã bật tự gộp sẽ tự gộp khi CI xanh — không còn «chờ bác sĩ».
+            tu_gop += sum(1 for x in r if x.get("autoMergeRequest"))
+            pr += sum(1 for x in r if not x.get("autoMergeRequest"))
+    hang.append(_dong(NEN, "N-PR", "PR đang mở chờ bác sĩ",
+                      (f"{pr}" + (f" (+{tu_gop} tự gộp khi CI xanh)" if tu_gop else "")) if pr_do else "không đo được",
                       pr if pr_do else None, "0", ("chua" if pr else "dat") if pr_do else "khong_do",
                       "gh pr list"))
     return hang
