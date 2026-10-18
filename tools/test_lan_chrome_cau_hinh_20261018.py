@@ -28,8 +28,11 @@ NODE = shutil.which("node")
 
 
 def _danh_gia(t):
-    ma = ("const m=require(process.argv[1]);process.stdout.write(JSON.stringify(m.danhGia(JSON.parse(process.argv[2]))))")
-    r = subprocess.run([NODE, "-e", ma, str(BO_LUU), json.dumps(t)], capture_output=True, text=True, timeout=30)
+    # Dữ liệu qua stdin: thân bài dài vượt giới hạn tham số dòng lệnh (Linux E2BIG ~128 KB/đối số, Windows 32 K — CI 18/10).
+    ma = ("const m=require(process.argv[1]);let s='';process.stdin.on('data',d=>s+=d);"
+          "process.stdin.on('end',()=>process.stdout.write(JSON.stringify(m.danhGia(JSON.parse(s)))))")
+    r = subprocess.run([NODE, "-e", ma, str(BO_LUU)], input=json.dumps(t), capture_output=True, text=True,
+                       encoding="utf-8", timeout=30)
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
 
@@ -50,7 +53,7 @@ def test_lww_chuyen_ve_abstract_la_khong_quyen():
     href = ("https://journals.lww.com/greenjournal/abstract/2019/07000/migraine_and_other_headache_disorders.44.aspx"
             "?redirectionsource=fulltextview")
     kq = _danh_gia({"o": o, "href": href, "khongQuyenUrl": CAU_HINH["dau_khong_quyen_url"], "soVung": 1,
-                    "doDai": 50000, "vung": "x" * 50000, "trang": "", "deMuc": []})
+                    "doDai": 20000, "vung": "x" * 20000, "trang": "", "deMuc": []})
     assert kq["ok"] is False and "redirectionsource" in kq["ly"]
 
 
@@ -59,9 +62,9 @@ def test_sage_khung_phu_access_options_khong_chan_bai_doc_duoc_bai_khoa_van_bi_c
     o = L.dien_cau_hinh(CAU_HINH["nxb"]["sage"], "https://journals.sagepub.com/doi/10.1089/thy.2016.0229",
                         "10.1089/thy.2016.0229", CAU_HINH["dau_khong_quyen_url"])
     assert "article" not in [s.strip() for s in o["chon"].split(",")], "khung «Access options» nằm trong <article>"
-    than = "Introduction Methods Results " * 4000
+    than = "Introduction Methods Results " * 500  # 14.500 ký tự > min 12.000
     doc_duoc = _danh_gia({"o": o, "href": "https://journals.sagepub.com/doi/10.1089/thy.2016.0229", "soVung": 2,
-                          "doDai": len(than), "vung": than, "trang": than + " Access options", "deMuc": []})
+                          "doDai": len(than), "vung": than, "trang": "Access options " + than[:200], "deMuc": []})
     assert doc_duoc["ok"] is True, doc_duoc
     khoa = _danh_gia({"o": o, "href": "https://journals.sagepub.com/doi/10.1177/17474930251377174", "soVung": 2,
                       "doDai": 99, "vung": "x" * 99, "trang": "Get full access", "deMuc": []})
