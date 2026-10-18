@@ -913,6 +913,37 @@ def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> No
     os.replace(tam, tep)
 
 
+NGOAI_GIAM_SAT_DA_RA = REPO / "state" / "ngoai-giam-sat-da-ra.json"
+
+
+def doc_ngoai_giam_sat_da_ra(p: Path) -> dict:
+    """Sổ RÀ các lượt điểm-khám «ngoài giám sát» (18/10/2026) — khoá = `luc` của dòng miss trong nhat-ky-tac-dong.jsonl.
+
+    Nhật ký tác động chỉ NỐI THÊM, nên cảm biến ⑦ từng đếm MỌI dòng miss từ xưa tới nay: chạm ngưỡng 3 rồi thì không
+    bao giờ gỡ được, kể cả khi máy đã rà xong. Đo 18/10: 3 miss (20/08–13/10) — VKDT leo thang sau MTX ĐÃ có thẻ hub
+    nhưng bộ khớp không trúng; CGA và COPD nguy cơ tim phổi có dashboard 13–16/10 CHƯA nạp hub. Mỗi mục:
+    {"cau_hoi", "ra_ngay", "ket_qua", "cho_nguoi"} — `cho_nguoi` khác rỗng ⇒ việc tiếp theo thuộc thẩm quyền bác sĩ
+    (nạp hub, phiên cập nhật chứng cứ…), vẫn được đếm ở dòng 👤 tới khi được xoá. Sổ vắng/hỏng ⇒ coi như rỗng: mọi
+    miss vẫn được đếm, không bao giờ im lặng như xanh. Sổ nằm ở state/ (ngoài git), chỉ chứa câu hỏi lâm sàng, không PII.
+    """
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {str(k): v for k, v in d.items() if isinstance(v, dict)} if isinstance(d, dict) else {}
+
+
+def dem_ngoai_giam_sat(dong: list[dict], da_ra: dict) -> tuple[int, list[str]]:
+    """(số lượt miss CHƯA rà, [việc chờ bác sĩ của các lượt ĐÃ rà]).
+
+    «khớp yếu» (có thẻ gần chủ đề, dưới ngưỡng) ≠ khoảng trống giám sát — không dồn vào ngưỡng báo động. Lượt đã có
+    trong sổ rà không còn là việc 🤖; nếu sổ ghi `cho_nguoi` thì việc đó hiện thành dòng 👤 riêng.
+    """
+    miss = sum(1 for r in dong if r.get("miss") and r.get("loai") != "khop_yeu" and str(r.get("luc")) not in da_ra)
+    cho = [str(v.get("cho_nguoi")).strip() for v in da_ra.values() if str(v.get("cho_nguoi") or "").strip()]
+    return miss, cho
+
+
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
     """Đếm dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
 
@@ -1218,19 +1249,23 @@ def main() -> int:
                         "— xuất lại để bác sĩ không đọc bản lỗi thời",
                         "chạy lại tools/xuat_goi_cap_nhat.py cho từng bản (gói tuần tự làm)"))
 
-    # ⑦ Nhật ký tác động — miss dồn cụm
+    # ⑦ Nhật ký tác động — miss dồn cụm (trừ lượt đã rà ở sổ state/ngoai-giam-sat-da-ra.json — 18/10/2026)
     log = REPO / "state" / "nhat-ky-tac-dong.jsonl"
+    da_ra = doc_ngoai_giam_sat_da_ra(NGOAI_GIAM_SAT_DA_RA)
     if log.exists():
         try:
             dong = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines() if x]
-            # «khớp yếu» (có thẻ gần chủ đề, dưới ngưỡng) ≠ khoảng trống giám sát — không dồn vào ngưỡng báo động.
-            miss = sum(1 for r in dong if r.get("miss") and r.get("loai") != "khop_yeu")
+            miss, _ = dem_ngoai_giam_sat(dong, da_ra)
             if miss >= 3:
                 de_xuat.append((1, "🤖", f"{miss} lượt điểm-khám NGOÀI giám sát — rà "
                                 "ứng viên mở watchlist",
                                 "đọc state/cau-hoi-chua-giam-sat.jsonl trong gói tuần"))
         except (json.JSONDecodeError, OSError):
             pass
+    _, cho_nguoi = dem_ngoai_giam_sat([], da_ra)
+    if cho_nguoi:
+        de_xuat.append((2, "👤", f"{len(cho_nguoi)} câu điểm-khám ngoài giám sát ĐÃ RÀ, chờ việc của bác sĩ — "
+                        + "; ".join(cho_nguoi[:3]), "xem state/ngoai-giam-sat-da-ra.json"))
 
     # ⑪ BÀI TỔNG THUẬT — độ tươi + phủ hòm thư (thêm 20/08: bài là ẢNH TĨNH, không
     # ai canh thì nó cũ đi IM LẶNG — đúng họ lỗi đã vá ở dashboard).
