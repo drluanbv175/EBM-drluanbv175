@@ -422,6 +422,72 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "dùng cá nhân phi thương mại, cấm tác phẩm phái sinh và cấm đăng lại/phân phối; không có điều nào về AI/TDM "
                       "⇒ «không rõ ⇒ xử như cấm»",
         "duong_hop_le": "xin phép BTS bằng văn bản; guideline đăng ở Thorax đi theo khoá BMJ (10.1136/)"},
+    # Đọc 18/10/2026 trên Chrome của bác sĩ — sáu NXB có bài «consider» trong hàng chờ toàn văn bị phiên uỷ quyền từ chối «chưa kiểm
+    # điều khoản»; tiền tố DOI đối chiếu Crossref /prefixes cùng ngày. Bài mang giấy phép CC của CHÍNH bài vẫn đi làn giấy phép
+    # (`--nap` khai `giay_phep_cc`, hoặc tầng OA) — khoá «cam» ở đây chỉ chặn nội dung không mang giấy phép mở.
+    "Baishideng Publishing Group": {
+        "ket_luan": "cam", "doi": ("10.3748/", "10.4240/"), "mien": ("wjgnet.com", "f6publishing.com"),
+        "nguon": "https://www.wjgnet.com/bpg/gerinfo/268", "doc_luc": "2026-10-18",
+        "trich": "All rights reserved, including rights relating to text and data mining, AI training",
+        "loai_nguon": "Terms of Use của wjgnet.com (Last updated: November 20, 2025) + dòng bản quyền chân trang (đọc trên Chrome "
+                      "18/10/2026): nội dung chỉ được dùng theo giấy phép CC BY-NC và cho cá nhân phi thương mại; bảo lưu quyền "
+                      "TDM, huấn luyện AI và công nghệ tương tự, nội dung OA theo giấy phép của nó; im lặng về công cụ AI đọc–tóm "
+                      "tắt ⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài mang CC BY-NC 4.0 theo mục «Open-Access Policy of This Article» trên trang bài (gần như mọi bài World J "
+                    "Gastroenterol / World J …) đi làn giấy phép — bản PMC của bài cũ có thể chỉ ghi «All rights reserved»",
+        "duong_hop_le": "trang Permissions của BPG (wjgnet.com/bpg/gerinfo/207)"},
+    "College of Family Physicians of Canada (Canadian Family Physician)": {
+        "ket_luan": "cam", "doi": (), "mien": ("cfp.ca",),
+        "nguon": "https://www.cfp.ca/content/terms", "doc_luc": "2026-10-18",
+        "trich": "Systematic downloading (by robots or other automatic processes) is prohibited without express written permission",
+        "loai_nguon": "Terms of Use của cfp.ca (không ghi ngày; đọc trên Chrome 18/10/2026): CFPC giữ bản quyền; cho xem, tải, in, "
+                      "lưu để nghiên cứu, giảng dạy, học tập cá nhân; cấm tải có hệ thống bằng robot, cấm tái bản/sửa/tác phẩm phái "
+                      "sinh khi chưa có văn bản cho phép. «CFP AI policy» (hiệu lực 30/10/2025) chỉ dành cho tác giả, phản biện, "
+                      "biên tập ⇒ với người đọc dùng công cụ AI: «không rõ ⇒ xử như cấm». Bài CFP thường KHÔNG có DOI ⇒ chỉ khớp theo "
+                      "miền; bản trên PMC (không DOI) không khớp khoá này",
+        "duong_hop_le": "xin phép bằng văn bản của Canadian Family Physician (cfp.ca/content/permissions)"},
+    "Royal College of General Practitioners (BJGP)": {
+        "ket_luan": "cam", "doi": ("10.3399/",), "mien": ("bjgp.org", "bjgpopen.org", "rcgp.org.uk"),
+        "nguon": "https://bjgp.org/authors/bjgp-editorial-process-and-policies", "doc_luc": "2026-10-18",
+        "trich": "You should seek permission to reproduce an article for any other purpose",
+        "loai_nguon": "BJGP editorial process & policies, mục Copyright (đọc trên Chrome 18/10/2026): tác giả chuyển bản quyền cho "
+                      "BJGP; chỉ cho photo tối đa 25 bản cho mục đích giáo dục, mục đích khác phải xin phép; trang Terms and "
+                      "conditions của BJGP trỏ điều khoản RCGP (chỉ là miễn trừ trách nhiệm) và HighWire; không có điều về AI/TDM "
+                      "⇒ «không rõ ⇒ xử như cấm»",
+        "ngoai_le": "bài BJGP/BJGP Open mang giấy phép CC của CHÍNH bài (mục Open access publication) đi làn giấy phép",
+        "duong_hop_le": "nút «Get Permissions» (Copyright Clearance Center) trên trang bài"},
+    "NIHR Journals Library": {
+        "ket_luan": "cam", "doi": ("10.3310/",), "mien": ("journalslibrary.nihr.ac.uk", "njl-admin.nihr.ac.uk"),
+        "nguon": "https://www.journalslibrary.nihr.ac.uk/hta/HTA24270", "doc_luc": "2026-10-18",
+        "trich": "This issue may be freely reproduced for the purposes of private research and study",
+        "loai_nguon": "Tuyên bố bản quyền in trong CHÍNH báo cáo HTA 24(27), 2020 (© Queen's Printer and Controller of HMSO; đọc "
+                      "trên Chrome 18/10/2026): cho tái bản để nghiên cứu, học tập cá nhân và trích vào tạp chí chuyên môn kèm ghi "
+                      "nguồn, tái bản thương mại phải xin; trang web không có điều khoản chung cho người đọc; không có điều về AI/TDM "
+                      "⇒ «không rõ ⇒ xử như cấm». Unpaywall ghi «cc-by» cho DOI này là SAI — câu CC BY trong bài thuộc tài liệu trích "
+                      "lại (đề cương đã công bố), không phải giấy phép của báo cáo",
+        "ngoai_le": "báo cáo mà tuyên bố bản quyền của CHÍNH nó ghi giấy phép Creative Commons đi làn giấy phép",
+        "duong_hop_le": "xin phép NIHR Journals Library (NETSCC, Southampton) cho tái bản thương mại"},
+    "Turkish Journal of Physical Medicine and Rehabilitation": {
+        # 10.5606 là tiền tố của Baycinar Tibbi Yayincilik (Crossref) — dùng chung cho nhiều tạp chí ⇒ chỉ khớp tiền tố HẸP của TJPMR.
+        "ket_luan": "cam", "doi": ("10.5606/tftrd.",), "mien": ("ftrdergisi.com",),
+        "nguon": "https://www.ftrdergisi.com/copyright-and-licensing", "doc_luc": "2026-10-18",
+        "trich": "All content published … is protected under copyright laws",
+        "loai_nguon": "Trang Copyright and Licensing của ftrdergisi.com (nền tảng Galenos; không ghi ngày; đọc trên Chrome "
+                      "18/10/2026): chính sách HIỆN HÀNH cấp phép CC BY-NC 4.0 cho bài được nhận đăng, nhưng bản PMC của bài 2018 "
+                      "chỉ ghi «Copyright © 2018, Turkish Society of Physical Medicine and Rehabilitation», không có dòng giấy phép, "
+                      "và liên kết PDF cũ trên trang tạp chí đã hỏng ⇒ giấy phép của bài cũ không xác minh được ⇒ «không rõ ⇒ xử như "
+                      "cấm»",
+        "ngoai_le": "bài mà CHÍNH trang/tệp của bài in dòng giấy phép CC BY-NC đi làn giấy phép",
+        "duong_hop_le": "Permission Request Form của Galenos (galenos.com.tr/contact-us/permission-request)"},
+    "Medscape (WebMD)": {
+        "ket_luan": "cam", "doi": (), "mien": ("medscape.com", "medscape.org"),
+        "nguon": "https://www.medscape.com/public/termsofuse", "doc_luc": "2026-10-18",
+        "trich": "scripts, bots, spiders, scraper, crawlers, data mining tools or the like",
+        "loai_nguon": "Medscape Terms of Use (Last updated: Dec 8, 2020; đọc trên Chrome 18/10/2026): cấm truy cập/tìm kiếm bằng "
+                      "script, bot, công cụ khai thác dữ liệu ngoài trình duyệt thông thường; cấm sửa, phân phối, tác phẩm phái sinh "
+                      "hay «scrape» nội dung; không có điều về AI ⇒ «không rõ ⇒ xử như cấm». MedGenMed (2005) trên PMC không có DOI "
+                      "nên không khớp khoá này — bác sĩ đọc trực tiếp",
+        "duong_hop_le": "văn bản cho phép của Medscape/WebMD"},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
