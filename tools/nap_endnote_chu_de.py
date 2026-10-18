@@ -48,6 +48,13 @@ Dùng:
   python3 tools/nap_endnote_chu_de.py --tat-ca [--ap-dung]
   python3 tools/nap_endnote_chu_de.py --file … --xuat-xml ra.xml   # tệp nhập tay (Windows)
   python3 tools/nap_endnote_chu_de.py --file … --tom-tat-vi --ap-dung [--chua-xac-minh]
+  python3 tools/nap_endnote_chu_de.py --loai-tru <DOI|PMID> --ly-do "<lý do của bác sĩ>" [--ap-dung]
+DANH SÁCH LOẠI TRỪ CỦA BÁC SĨ (18/10/2026 — bản ghi bác sĩ đã bỏ vào thùng rác bị bước ⑧ nhập lại mỗi lượt bộ năm): khoá
+`bo_qua` của `~/.ebm-endnote.json`, mỗi mục {doi|pmid, ly_do, ngay}. Định danh trong đó KHÔNG nhập, KHÔNG đăng vào nhóm, KHÔNG
+gắn PDF/ghi khối tóm tắt — bản ghi khác không bị ảnh hưởng; bản ghi còn nằm trong thư viện chỉ được BÁO (công cụ không xoá).
+`bo_qua` sai khuôn = cấu hình HỎNG (không nhập gì, có báo). `--loai-tru` chạy khô mặc định, `--ap-dung` ghi sau khi sao lưu —
+agent chỉ ghi khi bác sĩ yêu cầu. Ngoài ra trích dẫn chưa có trong thư viện mà đang nằm trong THÙNG RÁC EndNote cũng không nhập
+lại (đọc `sdb.eni` CHỈ-ĐỌC, cột `refs.trash_state`; không đọc được ⇒ ⚪ «chưa đo được thùng rác», không coi là rỗng).
 Ngoài macOS: phép kiểm nền tảng đứng TRƯỚC phép kiểm cấu hình — máy không phải Mac được chỉ thẳng sang `--xuat-xml`,
 không bị bảo «chạy --ghi-cau-hinh» cho một thư viện công cụ không bao giờ điều khiển được (15/10/2026).
 `~/.ebm-endnote.json` HỎNG ≠ VẮNG: hỏng ⇒ ⚪ «tệp cấu hình hỏng — xem <đường dẫn>»; `--ghi-cau-hinh` từ chối ghi đè tệp hỏng
@@ -137,8 +144,118 @@ def doc_cau_hinh(tep: Path | None = None) -> dict | None:
     # TypeError không ai bắt ở main).
     if not isinstance(ch, dict) or not isinstance(ch.get("thu_vien"), str) or not ch.get("thu_vien"):
         return None
+    if _loi_loai_tru(ch.get(KHOA_LOAI_TRU)):  # danh sách loại trừ sai khuôn = cấu hình HỎNG (18/10/2026)
+        return None
     ch.setdefault("ung_dung", UNG_DUNG_MAC_DINH)
     return ch
+
+
+# ── danh sách loại trừ do BÁC SĨ khai (18/10/2026) ─────────────────────────────────────────────────
+# Sự cố 18/10/2026: bản ghi bác sĩ đã CHỦ Ý bỏ vào thùng rác EndNote bị bước ⑧ nhập lại mỗi lượt bộ năm (công cụ chỉ so với
+# bản ghi đang ở thư viện). Khoá `bo_qua` của `~/.ebm-endnote.json` là quyết định của bác sĩ: mỗi mục {doi|pmid, ly_do, ngay}.
+KHOA_LOAI_TRU = "bo_qua"
+_NGAY_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_PMID_KHUON = re.compile(r"\d{1,9}")
+
+
+def _loi_loai_tru(bang) -> str | None:
+    """Lý do khoá `bo_qua` sai khuôn; None khi vắng hoặc đúng khuôn.
+
+    Định danh nào CÓ MẶT cũng phải đúng khuôn: một DOI gõ sai mà bị lờ đi là âm thầm KHÔNG loại trừ ⇒ coi cả tệp là hỏng
+    (cùng hợp đồng TT-09: hỏng phải được nói ra, không nhập gì)."""
+    if bang is None:
+        return None
+    if not isinstance(bang, list):
+        return f"khoá «{KHOA_LOAI_TRU}» không phải danh sách"
+    for i, muc in enumerate(bang, 1):
+        if not isinstance(muc, dict):
+            return f"«{KHOA_LOAI_TRU}» mục {i} không phải bảng"
+        doi, pmid = muc.get("doi"), muc.get("pmid")
+        if doi is None and pmid is None:
+            return f"«{KHOA_LOAI_TRU}» mục {i} thiếu «doi»/«pmid»"
+        if doi is not None and (not isinstance(doi, str) or chuan_doi(doi) is None):
+            return f"«{KHOA_LOAI_TRU}» mục {i}: DOI sai khuôn ({doi!r})"[:160]
+        if pmid is not None and (isinstance(pmid, bool) or not isinstance(pmid, (str, int))
+                                 or not _PMID_KHUON.fullmatch(str(pmid).strip())):
+            return f"«{KHOA_LOAI_TRU}» mục {i}: PMID sai khuôn ({pmid!r})"[:160]
+        if not isinstance(muc.get("ly_do"), str) or not muc["ly_do"].strip():
+            return f"«{KHOA_LOAI_TRU}» mục {i} thiếu «ly_do»"
+        if not isinstance(muc.get("ngay"), str) or not _NGAY_ISO.match(muc["ngay"]):
+            return f"«{KHOA_LOAI_TRU}» mục {i} thiếu «ngay» dạng YYYY-MM-DD"
+    return None
+
+
+def doc_loai_tru(tep: Path | None = None) -> dict[str, dict[str, dict]]:
+    """{"doi": {doi chuẩn hoá: mục}, "pmid": {pmid: mục}} từ khoá `bo_qua`.
+
+    Tệp vắng ⇒ rỗng (máy chưa khai gì). Tệp HỎNG (kể cả `bo_qua` sai khuôn) ⇒ ném CauHinhHong: người gọi KHÔNG nhập gì —
+    không được coi «không đọc được danh sách» là «danh sách rỗng»."""
+    hong = ly_do_cau_hinh_hong(tep)
+    if hong:
+        raise CauHinhHong(f"tệp cấu hình hỏng — xem {tep or CAU_HINH} ({hong}); không đọc được danh sách loại trừ")
+    ra: dict[str, dict[str, dict]] = {"doi": {}, "pmid": {}}
+    for muc in (doc_cau_hinh(tep) or {}).get(KHOA_LOAI_TRU) or []:
+        if muc.get("doi") is not None:
+            ra["doi"][chuan_doi(muc["doi"])] = muc
+        if muc.get("pmid") is not None:
+            ra["pmid"][str(muc["pmid"]).strip()] = muc
+    return ra
+
+
+def muc_loai_tru(loai_tru: dict | None, pmid: str | None, doi: str | None) -> dict | None:
+    """Mục loại trừ khớp PMID hoặc DOI (đã chuẩn hoá), hoặc None."""
+    if not loai_tru:
+        return None
+    return ((loai_tru.get("pmid") or {}).get(str(pmid)) if pmid else None) or \
+           ((loai_tru.get("doi") or {}).get(chuan_doi(doi)) if doi else None)
+
+
+def phan_loai_dinh_danh(gia_tri: str) -> tuple[str, str] | None:
+    """Chuỗi bác sĩ gõ ở `--loai-tru` → ("doi", doi chuẩn hoá) | ("pmid", số) | None (không đúng khuôn — không đoán)."""
+    s = (gia_tri or "").strip()
+    s_pm = re.sub(r"^PMID[:\s]*", "", s, flags=re.I)
+    if _PMID_KHUON.fullmatch(s_pm):
+        return "pmid", s_pm
+    doi = chuan_doi(s)
+    return ("doi", doi) if doi else None
+
+
+def them_loai_tru(gia_tri: str, ly_do: str, *, ap_dung: bool, tep: Path | None = None,
+                  hom_nay: str | None = None) -> dict:
+    """Thêm MỘT định danh vào `bo_qua` (lệnh `--loai-tru`). Chạy khô mặc định; `ap_dung` mới ghi, và chỉ ghi SAU khi chép
+    tệp cũ sang `<tên>.sao-luu-<YYYYmmdd-HHMMSS>` (chép hỏng ⇒ không ghi gì).
+
+    Trả {"trang_thai": "se_them" | "da_them" | "da_co", "muc": …, "sao_luu": …}. Ném ValueError (tham số sai) hoặc
+    KhongChayDuoc (chưa cấu hình / cấu hình hỏng — không bao giờ ghi vào tệp hỏng)."""
+    loai = phan_loai_dinh_danh(gia_tri)
+    if loai is None:
+        raise ValueError(f"không phải DOI hay PMID đúng khuôn: {gia_tri!r}")
+    if not (ly_do or "").strip():
+        raise ValueError("thiếu --ly-do (lý do của bác sĩ là bắt buộc)")
+    dich = tep or CAU_HINH
+    hong = ly_do_cau_hinh_hong(dich)
+    if hong:
+        raise CauHinhHong(f"tệp cấu hình hỏng — xem {dich} ({hong}); KHÔNG ghi thêm vào tệp hỏng")
+    ch = doc_cau_hinh(dich)
+    if ch is None:
+        raise KhongChayDuoc(f"chưa cấu hình thư viện EndNote ({dich}) — chạy --ghi-cau-hinh \"<đường dẫn .enl>\" trước")
+    khoa, gia = loai
+    cu = muc_loai_tru(doc_loai_tru(dich), gia if khoa == "pmid" else None, gia if khoa == "doi" else None)
+    if cu is not None:
+        return {"trang_thai": "da_co", "muc": cu, "sao_luu": None}
+    muc = {khoa: gia, "ly_do": ly_do.strip(), "ngay": hom_nay or date.today().isoformat()}
+    if not ap_dung:
+        return {"trang_thai": "se_them", "muc": muc, "sao_luu": None}
+    sao_luu = dich.with_name(f"{dich.name}.sao-luu-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
+    if sao_luu.exists():
+        sao_luu = sao_luu.with_name(f"{sao_luu.name}-{os.getpid()}")
+    try:
+        shutil.copy2(dich, sao_luu)
+    except OSError as e:
+        raise KhongChayDuoc(f"không sao lưu được {dich} sang {sao_luu} ({type(e).__name__}) — không ghi gì") from e
+    ch[KHOA_LOAI_TRU] = [*(ch.get(KHOA_LOAI_TRU) or []), muc]
+    _ghi_json(dich, ch)
+    return {"trang_thai": "da_them", "muc": muc, "sao_luu": str(sao_luu)}
 
 
 def ly_do_cau_hinh_hong(tep: Path | None = None) -> str | None:
@@ -162,7 +279,7 @@ def ly_do_cau_hinh_hong(tep: Path | None = None) -> str | None:
         return "không phải một bảng JSON"
     if not isinstance(ch.get("thu_vien"), str) or not ch.get("thu_vien"):
         return "thiếu khoá «thu_vien»"
-    return None
+    return _loi_loai_tru(ch.get(KHOA_LOAI_TRU))
 
 
 def ghi_cau_hinh(thu_vien: str, ung_dung: str, tep: Path | None = None, xac_nhan_hong: bool = False) -> dict:
@@ -193,6 +310,9 @@ def ghi_cau_hinh(thu_vien: str, ung_dung: str, tep: Path | None = None, xac_nhan
     ch = {"thu_vien": str(p.resolve()), "ung_dung": ung_dung}
     if cu.get("nhom_theo_chu_de") and cu.get("thu_vien") == ch["thu_vien"]:
         ch["nhom_theo_chu_de"] = cu["nhom_theo_chu_de"]  # khai lại cùng thư viện: giữ bảng nhóm đã dựng
+    if cu.get(KHOA_LOAI_TRU):
+        # Loại trừ là quyết định của bác sĩ về BÀI BÁO, không về thư viện ⇒ giữ cả khi đổi thư viện (18/10/2026).
+        ch[KHOA_LOAI_TRU] = cu[KHOA_LOAI_TRU]
     _ghi_json(dich, ch)
     return dict(ch, ban_hong=str(ban_hong)) if ban_hong else ch
 
@@ -633,6 +753,33 @@ def _cung_tep(a: str | os.PathLike, b: str | os.PathLike) -> bool:
         return chuan(a) == chuan(b)
 
 
+def doc_thung_rac(thu_vien: Path) -> dict[str, set[str]]:
+    """{"doi": {...}, "pmid": {...}} của bản ghi đang nằm trong THÙNG RÁC của thư viện — CHỈ ĐỌC `<thư viện>.Data/sdb/sdb.eni`.
+
+    ĐO 18/10/2026: từ điển AppleScript của EndNote 2025 (EndNote.sdef) không có lệnh nào cho thùng rác, và `find` không trả bản
+    ghi trong thùng rác (vì vậy bản ghi bác sĩ đã bỏ bị nhập lại: recNum 7249 → 7324 → 7327 cùng một DOI). Bảng `refs` có cột
+    `trash_state`: 0 = ở thư viện, 1 = trong thùng rác (đo trên BẢN CHÉP nhất quán của thư viện thật: 1956 / 2). Mở
+    `mode=ro` giống `tom_tat_endnote_vi.sao_luu_thu_vien` (đọc được khi EndNote đang mở); KHÔNG BAO GIỜ ghi `sdb.eni`.
+    Không đọc được (thiếu tệp, lược đồ khác) ⇒ ném OSError/sqlite3.Error — người gọi báo KHÔNG ĐO ĐƯỢC, không coi là «rỗng»."""
+    sdb = thu_vien.with_suffix(".Data") / "sdb" / "sdb.eni"
+    if not sdb.is_file():
+        raise OSError(f"không thấy cơ sở dữ liệu làm việc {sdb}")
+    kn = sqlite3.connect(sdb.resolve().as_uri() + "?mode=ro", uri=True)
+    try:
+        dong = kn.execute("SELECT accession_number, electronic_resource_number FROM refs WHERE trash_state <> 0").fetchall()
+    finally:
+        kn.close()
+    ra: dict[str, set[str]] = {"doi": set(), "pmid": set()}
+    for pm, doi in dong:
+        pm = str(pm or "").strip()
+        if _PMID_KHUON.fullmatch(pm):
+            ra["pmid"].add(pm)
+        d = chuan_doi(str(doi or ""))
+        if d:
+            ra["doi"].add(d)
+    return ra
+
+
 class EndNoteMac:
     """Bọc các lệnh AppleScript đã đo của EndNote. Mọi lệnh đi qua `_chay` (dễ thay khi test)."""
 
@@ -795,6 +942,10 @@ class EndNoteMac:
         return {ma: ("" if k < len(doc_lai) and chuan(doc_lai[k]) == chuan(gt) else "đọc lại không khớp nội dung vừa ghi")
                 for k, (ma, gt) in enumerate(cap)}
 
+    def thung_rac(self) -> dict[str, set[str]]:
+        """Định danh của bản ghi trong thùng rác (đọc `sdb.eni` chỉ-đọc — AppleScript không có lệnh cho thùng rác)."""
+        return doc_thung_rac(self.thu_vien)
+
     def ten_cac_nhom(self) -> list[str]:
         """Tên mọi nhóm của thư viện, có lặp nếu EndNote giữ hai nhóm cùng tên (ngăn bằng xuống dòng — tên có dấu phẩy)."""
         out = self._chay('set g to get groups in window (item 1 of argv)\nif g is missing value then return ""\n'
@@ -921,22 +1072,57 @@ def gan_kho(endnote, kho: Path | None, pmids: list[str] | None, ap_dung: bool) -
     return bc
 
 
+def _nhan_dinh_danh(pmid: str | None, doi: str | None) -> str:
+    return " · ".join(x for x in (f"PMID {pmid}" if pmid else "", f"DOI {doi}" if doi else "") if x) or "?"
+
+
+def _so_ban_ghi(ma: str) -> str:
+    """`<RecordID database="2" recNum="7327" />` → "7327" (chuỗi lạ thì trả nguyên văn)."""
+    m = re.search(r'recNum="(\d+)"', ma or "")
+    return m.group(1) if m else ma
+
+
+def trong_thung_rac(rac: dict | None, pmid: str | None, doi: str | None) -> bool:
+    if not rac:
+        return False
+    return bool((pmid and str(pmid) in rac.get("pmid", ())) or (doi and chuan_doi(doi) in rac.get("doi", ())))
+
+
+def doc_thung_rac_an_toan(endnote) -> tuple[dict | None, str | None]:
+    """(định danh trong thùng rác, None) hoặc (None, lý do KHÔNG ĐO ĐƯỢC). Lớp EndNote không có `thung_rac` cũng là không đo
+    được — không bao giờ là «thùng rác rỗng»."""
+    doc = getattr(endnote, "thung_rac", None)
+    if doc is None:
+        return None, "lớp EndNote này không đọc được thùng rác"
+    try:
+        return doc(), None
+    except (OSError, sqlite3.Error) as e:
+        return None, f"{type(e).__name__}: {e}"[:200]
+
+
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
-               lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None) -> dict:
-    """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được."""
+               lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None,
+               loai_tru: dict | None = None) -> dict:
+    """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được.
+
+    `loai_tru` (`doc_loai_tru`) = danh sách loại trừ của BÁC SĨ (18/10/2026): định danh trong đó KHÔNG nhập, KHÔNG đăng vào
+    nhóm, KHÔNG gắn PDF — xét theo định danh của dashboard rồi xét LẠI theo định danh của metadata (dashboard chỉ ghi PMID
+    mà bác sĩ loại theo DOI). Trích dẫn chưa có trong thư viện mà đang nằm trong THÙNG RÁC EndNote cũng không nhập lại."""
     doc_data = doc_data or _nap_doc_data()
     data = doc_data(dash)
     if not data:
         return {"dashboard": dash.name, "loi": "không đọc được khối DATA"}
     nhom = ten_nhom or TIEN_TO_NHOM + ten_chu_de(data, dash)
     khoa = khoa_chu_de(dash)
-    dd = trich_dinh_danh(data)
-    bc: dict = {"dashboard": dash.name, "nhom": nhom, "so_trich_dan": len(dd), "da_co": 0, "nhap_moi": 0,
+    dd_tat_ca = trich_dinh_danh(data)
+    bc: dict = {"dashboard": dash.name, "nhom": nhom, "so_trich_dan": len(dd_tat_ca), "da_co": 0, "nhap_moi": 0,
                 "pdf_dinh_kem": 0, "khong_lay_duoc": [], "chua_toan_van": 0, "dang_vao_nhom": 0,
                 "kiem_trung": endnote is not None, "ap_dung": ap_dung,
                 # Không thấy kho ⇒ CHƯA XÉT được PDF — khác hẳn «không có toàn văn» (lượt 11/10 từ worktree báo
                 # «đính PDF 0» trong khi kho có sẵn PDF Wiley TDM của chủ đề).
-                "kho_toan_van": bool(kho and kho.is_dir())}
+                "kho_toan_van": bool(kho and kho.is_dir()),
+                # None = không cần đo (không có bài mới) · True = đã đo · False = KHÔNG ĐO ĐƯỢC (khác «không có gì»)
+                "loai_tru": [], "trong_thung_rac": [], "thung_rac_do_duoc": None}
 
     def ma_cua(d: dict, theo_pm: dict, theo_doi: dict) -> list[str]:
         return (theo_pm.get(d["pmid"]) if d.get("pmid") else None) or \
@@ -953,15 +1139,53 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
                     cap.append((d, r))
         return cap
 
-    theo_pm = endnote.tim_khop([d["pmid"] for d in dd if d.get("pmid")], "Accession Number") if endnote else {}
-    theo_doi = endnote.tim_khop([d["doi"] for d in dd if d.get("doi")], "DOI") if endnote else {}
+    def ghi_loai_tru(d: dict, muc: dict, con_trong: list[str] | None, pmid=None, doi=None) -> None:
+        bc["loai_tru"].append({"dinh_danh": _nhan_dinh_danh(pmid or d.get("pmid"), doi or d.get("doi")),
+                               "ly_do": muc.get("ly_do"), "ngay": muc.get("ngay"), "con_trong_thu_vien": con_trong})
+
+    theo_pm = endnote.tim_khop([d["pmid"] for d in dd_tat_ca if d.get("pmid")], "Accession Number") if endnote else {}
+    theo_doi = endnote.tim_khop([d["doi"] for d in dd_tat_ca if d.get("doi")], "DOI") if endnote else {}
+
+    # ① Danh sách loại trừ của bác sĩ thắng mọi thứ — kể cả khi bản ghi còn nằm trong thư viện (chưa chuyển vào thùng rác):
+    #    không đăng vào nhóm, không gắn PDF; chỉ BÁO mã bản ghi để bác sĩ tự xử lý — công cụ không bao giờ xoá.
+    dd: list[dict] = []
+    for d in dd_tat_ca:
+        muc = muc_loai_tru(loai_tru, d.get("pmid"), d.get("doi"))
+        if muc is None:
+            dd.append(d)
+        else:
+            ghi_loai_tru(d, muc, [_so_ban_ghi(r) for r in ma_cua(d, theo_pm, theo_doi)] if endnote else None)
     moi = [d for d in dd if not ma_cua(d, theo_pm, theo_doi)]
     bc["da_co"] = len(dd) - len(moi)
+
+    # ② Thùng rác: `find` của EndNote không thấy bản ghi trong thùng rác ⇒ bài bác sĩ đã bỏ trông như «chưa có».
+    rac = None
+    if moi and endnote is not None:
+        rac, loi_rac = doc_thung_rac_an_toan(endnote)
+        bc["thung_rac_do_duoc"] = rac is not None
+        if loi_rac:
+            bc["thung_rac_loi"] = loi_rac
+    bo: set[int] = set()
+    for d in moi:
+        if trong_thung_rac(rac, d.get("pmid"), d.get("doi")):
+            bc["trong_thung_rac"].append(_nhan_dinh_danh(d.get("pmid"), d.get("doi")))
+            bo.add(id(d))
+    moi = [d for d in moi if id(d) not in bo]
 
     co, bc["khong_lay_duoc"] = lay_metadata(moi, lay_pm, lay_cr, lay_ep) if moi else ([], [])
     hom_nay = date.today().isoformat()
     can_nhap: list[dict] = []
     for d, m in co:
+        # ③ Xét LẠI theo định danh của metadata: dashboard chỉ ghi PMID mà bác sĩ loại theo DOI (hoặc ngược lại).
+        muc = muc_loai_tru(loai_tru, m.get("pmid"), m.get("doi"))
+        if muc is not None:
+            ghi_loai_tru(d, muc, None, m.get("pmid"), m.get("doi"))
+            bo.add(id(d))
+            continue
+        if trong_thung_rac(rac, m.get("pmid"), m.get("doi")):
+            bc["trong_thung_rac"].append(_nhan_dinh_danh(m.get("pmid"), m.get("doi")))
+            bo.add(id(d))
+            continue
         m["tu_khoa"] = [f"EBM: {khoa}"]
         m["ghi_chu"] = (f"Nạp tự động bởi EBM Copilot ngày {hom_nay} từ {dash.name} "
                         f"({'mục ' + d['muc'] if d['vai'] == 'muc' else 'tham khảo của ' + d['muc']}). "
@@ -971,6 +1195,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             m["ghi_chu"] += " CẢNH BÁO: PubMed gắn «Retracted Publication»."
         m["_pdf"] = chon_pdf(kho, m.get("pmid"))
         can_nhap.append(m)
+    dd = [d for d in dd if id(d) not in bo]  # cap_ban_ghi đọc `dd` qua closure — bài bị loại không đăng nhóm/gắn PDF
     bc["nhap_moi"] = len(can_nhap)
     bc["pdf_dinh_kem"] = sum(1 for m in can_nhap if m["_pdf"])
     bc["chua_toan_van"] = len(can_nhap) - bc["pdf_dinh_kem"]
@@ -1020,22 +1245,27 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
 
 
 def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, ten_nhom: str | None = None,
-              doc_data=None, cau_hinh: Path | None = None, **lay) -> list[dict]:
+              doc_data=None, cau_hinh: Path | None = None, loai_tru: dict | None = None, **lay) -> list[dict]:
     """Nạp nhiều dashboard: MỘT chủ đề (khoá bỏ đuôi ngày) = MỘT nhóm qua mọi phiên bản.
 
     Bác sĩ dặn 11/10/2026: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu». Câu hỏi lâm sàng đổi chữ giữa
     các phiên bản (Suy tim tổng hợp: 5 bản, 4 câu khác nhau) nên đặt tên theo câu hỏi sẽ sinh nhiều nhóm gần trùng. Vì vậy:
     nhóm đã ghi nhớ cho chủ đề (bảng `nhom_theo_chu_de` trong cấu hình máy) thắng; chưa có thì bản MỚI NHẤT đặt tên và các bản
     cũ hơn đổ vào cùng nhóm (bản ghi đã có giữ nguyên, chỉ thêm bài và thêm thành viên nhóm còn thiếu). `--ten-nhom` của
-    bác sĩ thắng tất cả và được ghi nhớ."""
+    bác sĩ thắng tất cả và được ghi nhớ.
+
+    `loai_tru` None ⇒ đọc danh sách loại trừ của bác sĩ từ `cau_hinh` (tệp hỏng ⇒ CauHinhHong — không nhập gì)."""
     doc_data = doc_data or _nap_doc_data()
     bang = nhom_da_ghi(cau_hinh)
+    if loai_tru is None:
+        loai_tru = doc_loai_tru(cau_hinh)
     ket_qua: list[dict] = []
     for f in sap_xep_phien_ban(files):
         khoa = khoa_chu_de(f)
         ten = ten_nhom or bang.get(khoa)
         try:
-            bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten, **lay)
+            bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten,
+                            loai_tru=loai_tru, **lay)
         except (RuntimeError, OSError) as e:
             bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
         if not bc.get("loi") and bc.get("nhom"):
@@ -1056,9 +1286,24 @@ def _in_bao_cao(bc: dict) -> None:
     print(f"{dau} {bc['dashboard']} → nhóm «{bc['nhom']}»")
     if not bc["kiem_trung"]:
         print("   (chưa mở EndNote nên CHƯA kiểm được bài nào đã có trong thư viện)")
-    print(f"   {bc['so_trich_dan']} trích dẫn · đã có trong thư viện {bc['da_co']} · "
+    loai_tru = bc.get("loai_tru") or []
+    rac = bc.get("trong_thung_rac") or []
+    so_bo = len(loai_tru) + len(rac)
+    print(f"   {bc['so_trich_dan']} trích dẫn · " + (f"bỏ qua {so_bo} · " if so_bo else "")
+          + f"đã có trong thư viện {bc['da_co']} · "
           f"{'nhập mới' if bc['ap_dung'] else 'sẽ nhập mới'} {bc['nhap_moi']} "
           f"(đính PDF {bc['pdf_dinh_kem']}, chưa có toàn văn {bc['chua_toan_van']})")
+    for x in loai_tru:
+        print(f"   ⊘ bỏ qua theo danh sách loại trừ của bác sĩ: {x['dinh_danh']} — «{x['ly_do']}» ({x['ngay']})")
+        if x.get("con_trong_thu_vien"):
+            print(f"     ⚠ Bản ghi vẫn còn trong thư viện (recNum {', '.join(x['con_trong_thu_vien'])}) — công cụ KHÔNG xoá, "
+                  "không đăng vào nhóm, không gắn PDF; chuyển vào thùng rác là thao tác của bác sĩ.")
+    if rac:
+        print(f"   ⊘ Đang nằm trong THÙNG RÁC EndNote — không nhập lại: {', '.join(rac)} (dùng lại: Restore trong EndNote; "
+              "chặn hẳn kể cả sau khi dọn thùng rác: --loai-tru <định danh> --ly-do \"…\")")
+    if bc.get("thung_rac_do_duoc") is False:
+        print(f"   ⚪ Chưa đo được thùng rác EndNote ({bc.get('thung_rac_loi', '?')}) — bài mới chỉ được lọc theo danh sách "
+              "loại trừ của bác sĩ.")
     if not bc["kho_toan_van"]:
         print("   ⚠ Không thấy kho toàn văn — CHƯA XÉT PDF (không phải «không có»); chỉ đường bằng --kho-toan-van")
     if bc.get("se_gan_pdf"):
@@ -1134,8 +1379,24 @@ DONG_CHUA_XAC_MINH = "⚠️ CHƯA xác minh nguồn sống (cổng liêm chính
 CHAN_CHUA_XAC_MINH = "Cần bác sĩ kiểm chứng · chép từ dashboard, không thêm khẳng định mới · áp dụng qua Cổng A."
 
 
+def ham_bo_qua(loai_tru: dict | None, rac: dict | None):
+    """Vị từ (pmid, doi, co_ban_ghi) → lý do bỏ qua | None cho bước tóm tắt. Danh sách loại trừ của bác sĩ: luôn bỏ qua.
+    Thùng rác: chỉ khi CHƯA có bản ghi sống (còn một bản sống thì vẫn ghi khối cho bản đó). Không có gì để lọc ⇒ None."""
+    if not (loai_tru and (loai_tru.get("doi") or loai_tru.get("pmid"))) and not (rac and (rac.get("doi") or rac.get("pmid"))):
+        return None
+
+    def bo_qua(pmid, doi, co_ban_ghi: bool) -> str | None:
+        muc = muc_loai_tru(loai_tru, pmid, doi)
+        if muc is not None:
+            return f"danh sách loại trừ của bác sĩ — «{muc.get('ly_do')}», {muc.get('ngay')}"
+        if not co_ban_ghi and trong_thung_rac(rac, pmid, doi):
+            return "đang nằm trong thùng rác EndNote"
+        return None
+    return bo_qua
+
+
 def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt=None,
-                 chua_xac_minh: bool = False) -> dict | None:
+                 chua_xac_minh: bool = False, bo_qua=None) -> dict | None:
     """Ghi khối «TÓM TẮT THỰC HÀNH» tiếng Việt vào Abstract (tom_tat_endnote_vi). In một dòng; lỗi ⇒ dòng ✗, trả None.
     Không làm hỏng lượt nạp vừa xong: nạp và tóm tắt là hai bước, bước sau hỏng thì bước trước vẫn giữ.
 
@@ -1157,8 +1418,9 @@ def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt
                 kho_tt = {}
             # Ngữ cảnh từ MỌI dashboard cùng thư mục (bước ⑧ chỉ đưa MỘT dashboard) — chỉ ghi trích dẫn của `files`.
             boi_canh = sorted(files[0].parent.glob("WebDashboard_*.html")) if files and files[0].parent.is_dir() else None
+            # `bo_qua` chỉ truyền khi có (bản giả của test cũ không nhận khoá này).
             bc = tt.ghi_tom_tat(endnote, files, kho=kho, ap_dung=ap_dung, doc_data=_nap_doc_data(), tom_tat_abs=kho_tt,
-                                boi_canh=boi_canh)
+                                boi_canh=boi_canh, **({"bo_qua": bo_qua} if bo_qua else {}))
         finally:
             if chan_cu is not None:
                 tt.CHAN, tt.CHAN_MAY = chan_cu
@@ -1175,6 +1437,10 @@ def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt
     if bc["khong_co_ban_ghi"]:
         print(f"   Chưa có bản ghi trong thư viện (nạp chủ đề trước): {len(bc['khong_co_ban_ghi'])} — "
               + ", ".join(bc["khong_co_ban_ghi"][:8]) + (" …" if len(bc["khong_co_ban_ghi"]) > 8 else ""))
+    bo_bs = bc.get("bo_qua_theo_bac_si") or []
+    if bo_bs:
+        print(f"   ⊘ Không ghi khối (bác sĩ đã loại/đã bỏ vào thùng rác): {len(bo_bs)} — " + "; ".join(bo_bs[:8])
+              + (" …" if len(bo_bs) > 8 else ""))
     for loi in bc["loi"][:8] + bc["tom_tat_lech_so"][:8]:
         print(f"   ⚠ {loi}")
     # 17/10/2026: trước đó cắt IM LẶNG ở 8 dòng — 164 cảnh báo «trường lạ» chỉ hiện 8, không ai thấy quy mô thật.
@@ -1219,8 +1485,41 @@ def main(argv: list[str] | None = None) -> int:
                     help="cùng --ghi-cau-hinh: cho ghi đè tệp cấu hình HỎNG (giữ bản .hong-<ngày giờ> trước)")
     ap.add_argument("--chua-xac-minh", action="store_true",
                     help="cổng liêm chính CHƯA PASS (bước ⑧ truyền): khối ĐỌC NHANH ghi «CHƯA xác minh nguồn sống»")
+    ap.add_argument("--loai-tru", metavar="DOI_HOAC_PMID",
+                    help="khai MỘT định danh bác sĩ không muốn nạp lại vào khoá «bo_qua» của ~/.ebm-endnote.json "
+                         "(cần --ly-do; chạy khô mặc định, --ap-dung mới ghi, sao lưu trước — agent chỉ ghi khi bác sĩ yêu cầu)")
+    ap.add_argument("--ly-do", help="cùng --loai-tru: lý do của bác sĩ (bắt buộc)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+
+    if a.ly_do is not None and a.loai_tru is None:
+        print("✗ --ly-do chỉ đi cùng --loai-tru")
+        return MA_THAM_SO
+    if a.loai_tru is not None:
+        if a.file or a.tat_ca or a.gan_kho or a.xuat_xml or a.tom_tat_vi or a.ghi_cau_hinh:
+            print("✗ --loai-tru chạy riêng (không đi cùng --file/--tat-ca/--gan-kho/--xuat-xml/--tom-tat-vi/--ghi-cau-hinh)")
+            return MA_THAM_SO
+        try:
+            kq = them_loai_tru(a.loai_tru, a.ly_do or "", ap_dung=a.ap_dung)
+        except ValueError as e:
+            print(f"✗ {e}")
+            return MA_THAM_SO
+        except KhongChayDuoc as e:
+            print(f"✗ {e}")
+            return MA_KHONG_CHAY
+        muc = kq["muc"]
+        nhan = _nhan_dinh_danh(muc.get("pmid"), muc.get("doi"))
+        if kq["trang_thai"] == "da_co":
+            print(f"ℹ {nhan} đã có trong danh sách loại trừ («{muc.get('ly_do')}», {muc.get('ngay')}) — không ghi gì.")
+        elif kq["trang_thai"] == "se_them":
+            print(f"ℹ Chạy khô · sẽ thêm vào «{KHOA_LOAI_TRU}» của {CAU_HINH}: {json.dumps(muc, ensure_ascii=False)}\n"
+                  "  Thêm --ap-dung để ghi (agent chỉ ghi khi bác sĩ yêu cầu).")
+        else:
+            print(f"✓ Đã thêm {nhan} vào danh sách loại trừ («{muc['ly_do']}», {muc['ngay']}) · sao lưu: {kq['sao_luu']}")
+            print("  Bản ghi đang có trong thư viện (nếu có) KHÔNG bị xoá — chuyển vào thùng rác là thao tác của bác sĩ.")
+        if a.json:
+            print(json.dumps(kq, ensure_ascii=False, indent=2))
+        return MA_OK
 
     if a.ghi_cau_hinh:
         try:
@@ -1262,16 +1561,35 @@ def main(argv: list[str] | None = None) -> int:
 
     if a.xuat_xml:
         # Đường cho máy không phải Mac: một tệp XML để nhập tay; không đính PDF (không có đường vào thư viện).
+        # Danh sách loại trừ của bác sĩ áp cả ở đây (18/10/2026); cấu hình hỏng ⇒ không ghi tệp nhập.
+        try:
+            loai_tru = doc_loai_tru()
+        except CauHinhHong as e:
+            print(f"✗ {e} — không ghi tệp XML.")
+            return MA_KHONG_CHAY
         doc = _nap_doc_data()
         tat_ca: list[dict] = []
         thieu: list[str] = []
+        bo_lt: list[str] = []
         for f in files:
-            co, th = lay_metadata(trich_dinh_danh(doc(f) or {}))
+            dd = []
+            for d in trich_dinh_danh(doc(f) or {}):
+                if muc_loai_tru(loai_tru, d.get("pmid"), d.get("doi")):
+                    bo_lt.append(_nhan_dinh_danh(d.get("pmid"), d.get("doi")))
+                else:
+                    dd.append(d)
+            co, th = lay_metadata(dd)
             thieu += th
-            tat_ca += [dict(m, tu_khoa=[f"EBM: {khoa_chu_de(f)}"], ghi_chu=f"Từ {f.name}.") for _, m in co]
+            for _, m in co:
+                if muc_loai_tru(loai_tru, m.get("pmid"), m.get("doi")):
+                    bo_lt.append(_nhan_dinh_danh(m.get("pmid"), m.get("doi")))
+                    continue
+                tat_ca.append(dict(m, tu_khoa=[f"EBM: {khoa_chu_de(f)}"], ghi_chu=f"Từ {f.name}."))
         Path(a.xuat_xml).write_text(dung_xml(tat_ca), encoding="utf-8", newline="\n")
         print(f"✓ Đã ghi {a.xuat_xml}: {len(tat_ca)} bản ghi — EndNote: File → Import → «EndNote generated XML»."
               " Nhóm theo chủ đề: tạo Smart Group theo từ khoá «EBM: …».")
+        if bo_lt:
+            print(f"⊘ bỏ qua theo danh sách loại trừ của bác sĩ (không ghi vào tệp): {', '.join(bo_lt[:10])}")
         if thieu:
             print(f"⚠ Không lấy được metadata (không ghi vào tệp): {', '.join(thieu[:10])}")
         return MA_MOT_PHAN if thieu else MA_OK
@@ -1337,21 +1655,35 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(bc, ensure_ascii=False, indent=2))
         return MA_OK
 
+    # Danh sách loại trừ của bác sĩ (18/10/2026). Cấu hình hỏng tới được đây CHỈ ở lượt chạy khô lập kế hoạch (--ap-dung đã
+    # dừng ở khối trên với mã 2, hoặc ⚪/mã 0 trong bộ năm) ⇒ nói rõ kế hoạch chưa trừ danh sách, không coi là rỗng.
+    try:
+        loai_tru = doc_loai_tru()
+    except CauHinhHong as e:
+        if a.ap_dung:  # phòng thủ — không bao giờ nhập khi không đọc được danh sách loại trừ
+            print(f"✗ {e} — không nhập gì.")
+            return MA_KHONG_CHAY
+        print(f"⚪ {e} — kế hoạch dưới đây CHƯA trừ danh sách loại trừ của bác sĩ.")
+        loai_tru = {"doi": {}, "pmid": {}}
+
+    def bo_qua_tom_tat():
+        return ham_bo_qua(loai_tru, doc_thung_rac_an_toan(endnote)[0] if endnote is not None else None)
+
     if a.tom_tat_vi:
         if endnote is None:
             print("⚪ --tom-tat-vi cần EndNote đang mở đúng thư viện — chưa ghi gì.")
             return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
-        bc = chay_tom_tat(endnote, files, kho, a.ap_dung, chua_xac_minh=a.chua_xac_minh)
+        bc = chay_tom_tat(endnote, files, kho, a.ap_dung, chua_xac_minh=a.chua_xac_minh, bo_qua=bo_qua_tom_tat())
         if bc is not None and not a.ap_dung:
             print("Chạy khô — chưa ghi tóm tắt nào. Thêm --ap-dung để ghi.")
         if a.json:
             print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
         return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
 
-    ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom)
+    ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom, loai_tru=loai_tru)
     if a.ap_dung and endnote is not None and not a.khong_tom_tat:
         # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
-        chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh)
+        chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh, bo_qua=bo_qua_tom_tat())
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
               "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"

@@ -583,7 +583,8 @@ def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
 
 
 def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, doc_data,
-                sao_luu=None, tom_tat_abs: dict | None = None, boi_canh: list[Path] | None = None) -> dict:
+                sao_luu=None, tom_tat_abs: dict | None = None, boi_canh: list[Path] | None = None,
+                bo_qua=None) -> dict:
     """Ghi khối tiếng Việt vào trường Abstract của mọi bản ghi khớp (PMID → «Accession Number», rồi DOI).
 
     Chạy khô (ap_dung=False): chỉ đếm. Bản ghi mà nội dung mới trùng nội dung cũ ⇒ không ghi. `tom_tat_abs` = kho
@@ -592,14 +593,18 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
 
     `boi_canh` = MỌI dashboard của thư mục. Bước ⑧ của dây chuyền chỉ nạp MỘT dashboard; dựng ngữ cảnh chỉ từ nó thì một
     bài là MỤC CHÍNH ở chủ đề khác bị ghi đè bằng khối «tham khảo», mất «Cũng dùng trong»/«Đặt cạnh» (đo 13/10: SELECT).
-    Có `boi_canh` ⇒ ngữ cảnh từ toàn bộ, nhưng CHỈ GHI trích dẫn có mặt trong `files`."""
+    Có `boi_canh` ⇒ ngữ cảnh từ toàn bộ, nhưng CHỈ GHI trích dẫn có mặt trong `files`.
+
+    `bo_qua(pmid, doi, co_ban_ghi) -> lý do | None` (18/10/2026, `nap_endnote_chu_de.ham_bo_qua`): trích dẫn trong danh sách
+    loại trừ của bác sĩ — hoặc chưa có bản ghi mà đang nằm trong thùng rác EndNote — KHÔNG ghi khối và KHÔNG vào
+    `khong_co_ban_ghi` (danh sách đó mời «nạp chủ đề trước», tức mời nhập lại bài bác sĩ đã bỏ); đưa sang `bo_qua_theo_bac_si`."""
     ds = ngu_canh(sorted({*map(Path, files), *map(Path, boi_canh)}) if boi_canh else files, doc_data)
     if boi_canh:
         ten = {Path(f).name for f in files}
         ds = {k: v for k, v in ds.items() if any(x["dashboard"] in ten for x in v["ngu_canh"])}
     bc: dict = {"trich_dan": len(ds), "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0,
                 "se_ghi": 0, "da_ghi": 0, "loi": kiem_kho_tom_tat(tom_tat_abs or {}), "sao_luu": None, "tom_tat_may": 0,
-                "tom_tat_lech_so": [], "tham_khao_chua_tom_tat": [], "tham_khao_bo_qua": []}
+                "tom_tat_lech_so": [], "tham_khao_chua_tom_tat": [], "tham_khao_bo_qua": [], "bo_qua_theo_bac_si": []}
     theo_pm = endnote.tim_khop([v["pmid"] for v in ds.values() if v.get("pmid")], "Accession Number")
     con_doi = [v["doi"] for v in ds.values() if v.get("doi") and not theo_pm.get(v.get("pmid") or "")]
     theo_doi = endnote.tim_khop(con_doi, "DOI") if con_doi else {}
@@ -607,6 +612,11 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
     da_ma: set[str] = set()
     for v in ds.values():
         ma = theo_pm.get(v.get("pmid") or "") or theo_doi.get(v.get("doi") or "") or []
+        ly_do_bo = bo_qua(v.get("pmid"), v.get("doi"), bool(ma)) if bo_qua else None
+        if ly_do_bo:
+            bc["bo_qua_theo_bac_si"].append(f"{'PMID ' + v['pmid'] if v.get('pmid') else 'DOI ' + str(v.get('doi'))} "
+                                            f"({ly_do_bo})")
+            continue
         if not ma:
             bc["khong_co_ban_ghi"].append(f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}")
             continue
