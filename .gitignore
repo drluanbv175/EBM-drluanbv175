@@ -102,6 +102,10 @@ sync/skills/**/.claude/
 # hệ skill ngoài, sự cố BH77 tái phát 2 lần qua OneDrive từ máy kia).
 /sync/skills/_quarantine-guard/
 !/sync/scheduled-tasks/
+# Nguồn chuẩn công cụ sổ cái hub (18/10/2026): EBM_MASTER/tools/ nằm NGOÀI git nên sửa
+# ingest_dashboard.py trước nay không qua PR; bản chạy thật được chép sang bằng
+# tools/dong_bo_cong_cu_hub.py (chỉ tua nhanh từ phiên bản đã biết, chỉ từ mã đã gộp).
+!/sync/ebm-master-tools/
 !/sync/commands-vi/
 !/sync/*.sh
 !/sync/*.ps1
