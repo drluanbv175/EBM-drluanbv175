@@ -41,7 +41,8 @@ def test_khuon_hop_le_va_mien_moi_tim_dung():
     assert L.kiem_cau_hinh(CAU_HINH) == []
     for host, ten in [("journals.lww.com", "lww"), ("www.ovid.com", "lww"), ("gut.bmj.com", "bmj"),
                       ("pmc.ncbi.nlm.nih.gov", "pmc"), ("journal.chestnet.org", "elsevier_hoi"),
-                      ("www.gastrojournal.org", "elsevier_hoi"), ("europepmc.org", "europepmc")]:
+                      ("www.gastrojournal.org", "elsevier_hoi"), ("europepmc.org", "europepmc"),
+                      ("www.thelancet.com", "lancet"), ("www.thieme-connect.de", "thieme")]:
         assert L.tim_nxb(host, CAU_HINH)[0] == ten, host
 
 
