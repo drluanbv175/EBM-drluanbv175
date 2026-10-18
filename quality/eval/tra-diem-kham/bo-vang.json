@@ -807,6 +807,10 @@
   {
    "q": "hạ kali máu",
    "vi_sao": "cùng cụm «hạ kali máu» xuất hiện ở CẢ câu hỏi (mô tả TÌNH TRẠNG hạ kali) lẫn tiêu đề thẻ (mô tả TÁC DỤNG của thuốc — thuốc LÀM hạ kali máu, tức điều trị TĂNG kali) — không có xung đột từ vựng để bắt vì cả hai phía dùng ĐÚNG cùng cụm từ với vai trò ngữ pháp khác nhau (tính từ-mô-tả vs động từ-tác-dụng)"
+  },
+  {
+   "q": "viêm khớp dạng thấp đáp ứng kém methotrexate chọn bDMARD hay JAK inhibitor",
+   "vi_sao": "câu thật tại điểm khám 20/08/2026 (nhật ký tác động: miss). Hub CÓ thẻ đã xác minh trả lời đúng câu này (EULAR 2025 «leo thang bDMARD/JAKi khi MTX thất bại» — EVID-2026-0664; «Thất bại MTX + tiên lượng xấu → thêm bDMARD (hoặc JAKi sau cân nhắc nguy cơ)» — EVID-2026-0349) nhưng tiêu đề thẻ không chứa «viêm khớp dạng thấp»/«đáp ứng kém» và câu dài 12 token ⇒ dưới ngưỡng ⇒ «chưa giám sát» (an toàn, tra tay). Rà 18/10/2026."
   }
  ]
 }
