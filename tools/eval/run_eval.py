@@ -307,7 +307,7 @@ def _is_evidence_positioning(text: str) -> bool:
     áp dụng cho bệnh nhân" nhưng lại có chỉ dẫn cá thể hóa trực tiếp — xưng hô 2 ngôi hoặc
     hẹn tái khám cụ thể, xem `_has_disclaimer_directive_contradiction`) thì KHÔNG miễn — nội
     dung dạng này không thực sự là "định vị chứng cứ", dù có đủ 2 lớp rào trên."""
-    if RE_S1_TRIGGER.search(text) or RE_REDFLAG.search(text):
+    if _s1_trigger_present(text) or RE_REDFLAG.search(text):
         return False
     if _real_patient_present(text):
         return False
@@ -362,13 +362,76 @@ RE_CAN_LABEL = re.compile(r"\[CẦN[^\]]{0,60}\]", re.I)
 # "mất ngủ" nào — bỏ lọt hoàn toàn nếu chỉ dựa từ khóa tự nhiên. G47.0x = họ mã ICD-10-CM
 # CHÍNH THỨC cho rối loạn mất ngủ (insomnia disorders) — tập hợp hữu hạn, không phải diễn
 # giải tự do, đáng thêm cùng bản chất với tên thuốc/thuật ngữ chuẩn đã thêm các vòng trước.
+# Vá 18/10/2026 (dương tính giả CÓ THẬT, biên nhận APPRAISAL-20261018T100528-76e64e): «thất
+# bại» đã TÁCH khỏi regex này, xử lý ở `_s1_trigger_present()` bên dưới. MỌI nơi hỏi «có bối
+# cảnh S1 không» phải gọi hàm đó, KHÔNG gọi thẳng RE_S1_TRIGGER (sẽ bỏ sót cảm giác thất bại).
 RE_S1_TRIGGER = re.compile(
     r"mất\s*ngủ|khó\s*ngủ|trằn\s*trọc|thức\s*trắng|"
     r"(?:không|chẳng)\s*(?:thể\s*)?(?:chợp\s*mắt|ngủ\s*được)|"
-    r"thất\s*bại|vô\s*vọng|"
+    r"vô\s*vọng|"
     r"thuốc\s*(?:ngủ|an\s*thần|trấn\s*tĩnh)\s*(?:mạnh|liều\s*cao)|"
     r"benzodiazepin|z-?drug|zolpidem|diazepam|bromazepam|alprazolam|lorazepam|clonazepam|"
     r"\bG47\.0\d?\b", re.I)
+# «thất bại» trong S1 — doctrine `_CAU-HOI-AN-TOAN-BAT-BUOC.md` dòng S1 ghi «cảm giác thất
+# bại/vô vọng»: CẢM GIÁC của người bệnh trong bối cảnh tâm thần–giấc ngủ–đòi thuốc an thần,
+# KHÔNG phải «thất bại điều trị» của một can thiệp. Bản cũ khớp «thất bại» trần nên một tóm
+# tắt tim mạch (PMID 16369379, «amiodarone chỉ dùng khi các biện pháp khác thất bại») bị R13
+# đỏ dù không có chữ nào về mất ngủ/thuốc ngủ/tâm thần. Luật mới, thiên về AN TOÀN (mặc định
+# vẫn kích hoạt): một lần «thất bại» chỉ bị BỎ QUA khi chính nó là cụm thất-bại-can-thiệp
+# (danh từ can thiệp đứng trước trong cùng mệnh đề, hoặc «thất bại (với) điều trị/thuốc…» đứng
+# ngay sau) VÀ câu chứa nó không có ngữ cảnh tâm thần/giấc ngủ/vô vọng. «kẻ/người thất bại»
+# luôn kích hoạt. «vô vọng» KHÔNG đổi (vẫn nằm trong RE_S1_TRIGGER).
+RE_S1_THAT_BAI = re.compile(r"thất\s*bại", re.I)
+_RE_S1_CAN_THIEP_TRUOC = re.compile(
+    r"(?:biện\s*pháp|điều\s*trị|liệu\s*pháp|phác\s*đồ|thuốc|can\s*thiệp|thủ\s*thuật|"
+    r"phẫu\s*thuật|kháng\s*sinh|h[oó]a\s*trị|xạ\s*trị|sốc\s*điện|chuyển\s*nhịp|"
+    r"lựa\s*chọn)[^.,;:!?\n]{0,30}$", re.I)
+_RE_S1_CAN_THIEP_SAU = re.compile(
+    r"^\s*(?:(?:với|sau)\s+)?(?:các\s+|những\s+)?(?:điều\s*trị|liệu\s*pháp|phác\s*đồ|thuốc|"
+    r"biện\s*pháp|can\s*thiệp|thủ\s*thuật|kháng\s*sinh|h[oó]a\s*trị|xạ\s*trị|chuyển\s*nhịp)", re.I)
+_RE_S1_THAT_BAI_CA_NHAN = re.compile(r"(?:kẻ|người)\s*$", re.I)
+# Ngữ cảnh tâm thần–giấc ngủ–vô vọng trong CÙNG CÂU ⇒ cụm thất-bại-can-thiệp vẫn kích hoạt
+# (vd «thất bại với thuốc ngủ hiện tại», «liệu pháp tâm lý thất bại»). Loại «buồn nôn»/«chán
+# ăn» — triệu chứng tiêu hoá hay gặp trong tóm tắt thuốc, không phải cảm xúc.
+_RE_S1_NGU_CANH_TAM_THAN = re.compile(
+    r"ngủ|tâm\s*thần|tâm\s*lý|trầm\s*cảm|lo\s*âu|tuyệt\s*vọng|vô\s*vọng|"
+    r"buồn(?!\s*nôn)|chán(?!\s*ăn)|cảm\s*(?:thấy|giác|xúc)|tự\s*(?:ti|trách|sát|hại)|"
+    r"bản\s*thân|cuộc\s*(?:sống|đời)|an\s*thần|trấn\s*tĩnh|vô\s*dụng|gánh\s*nặng|"
+    r"benzodiazepin|z-?drug", re.I)
+_RE_RANH_GIOI_CAU = re.compile(r"[.!?;](?=\s|$)|\n")
+
+
+def _bien_cau(text: str, start: int, end: int) -> tuple[int, int]:
+    """Trả (đầu, cuối) của câu chứa đoạn text[start:end]; ranh giới là . ! ? ; theo sau bởi
+    khoảng trắng/hết chuỗi, hoặc xuống dòng (dấu chấm thập phân «0.5» không cắt câu)."""
+    lo = 0
+    for m in _RE_RANH_GIOI_CAU.finditer(text, 0, start):
+        lo = m.end()
+    nxt = _RE_RANH_GIOI_CAU.search(text, end)
+    return lo, (nxt.start() if nxt else len(text))
+
+
+def _s1_trigger_present(text: str) -> bool:
+    """True nếu văn bản có bối cảnh kích hoạt S1 (doctrine `_CAU-HOI-AN-TOAN-BAT-BUOC.md`).
+
+    Mọi trigger S1 cũ (RE_S1_TRIGGER) giữ nguyên; riêng «thất bại» bỏ qua khi đó là thất bại
+    của một CAN THIỆP và câu chứa nó không có ngữ cảnh tâm thần/giấc ngủ/vô vọng (xem chú
+    thích RE_S1_THAT_BAI). Chiều sai còn lại cố ý là chiều AN TOÀN: «thất bại» đứng ngoài cụm
+    can thiệp (thất bại trong công việc, cảm thấy thất bại…) vẫn kích hoạt.
+    """
+    if RE_S1_TRIGGER.search(text):
+        return True
+    for m in RE_S1_THAT_BAI.finditer(text):
+        lo, hi = _bien_cau(text, m.start(), m.end())
+        truoc, sau = text[lo:m.start()], text[m.end():hi]
+        if _RE_S1_NGU_CANH_TAM_THAN.search(text[lo:hi]):
+            return True
+        if _RE_S1_THAT_BAI_CA_NHAN.search(truoc):
+            return True
+        if _RE_S1_CAN_THIEP_TRUOC.search(truoc) or _RE_S1_CAN_THIEP_SAU.search(sau):
+            continue  # thất bại của một can thiệp, không phải cảm giác thất bại của người bệnh
+        return True
+    return False
 # RESPONSE mở rộng 2026-07-04 (red-team): thêm cách diễn đạt lâm sàng TỰ NHIÊN cho
 # sàng lọc ý tưởng tự sát (không chỉ thuật ngữ kỹ thuật suicid/PHQ-9/C-SSRS) — bác
 # sĩ Việt Nam thường hỏi bằng lời thường ("nghĩ đến cái chết", "không muốn sống nữa"...).
@@ -892,7 +955,7 @@ def evaluate(text: str, gold: dict | None):
     # hỏi câu an toàn bắt buộc trong tài liệu định vị chứng cứ/EtD cấp hệ thống.
     if on("mandatory_safety_question") and typ == "clinical" and not _is_evidence_positioning(text):
         missing = []
-        if RE_S1_TRIGGER.search(text) and not _s1_response_present(text):
+        if _s1_trigger_present(text) and not _s1_response_present(text):
             missing.append("S1: mất ngủ/thất bại/đòi thuốc ngủ mạnh — THIẾU hỏi Ý TƯỞNG TỰ SÁT")
         if RE_S2_TRIGGER.search(text) and not RE_S2_RESPONSE.search(text):
             missing.append("S2: thuốc gây quái thai — THIẾU hỏi KHẢ NĂNG CÓ THAI")
