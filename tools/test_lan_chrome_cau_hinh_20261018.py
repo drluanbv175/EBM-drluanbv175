@@ -42,8 +42,27 @@ def test_khuon_hop_le_va_mien_moi_tim_dung():
     for host, ten in [("journals.lww.com", "lww"), ("www.ovid.com", "lww"), ("gut.bmj.com", "bmj"),
                       ("pmc.ncbi.nlm.nih.gov", "pmc"), ("journal.chestnet.org", "elsevier_hoi"),
                       ("www.gastrojournal.org", "elsevier_hoi"), ("europepmc.org", "europepmc"),
-                      ("www.thelancet.com", "lancet"), ("www.thieme-connect.de", "thieme")]:
+                      ("www.thelancet.com", "lancet"), ("www.thieme-connect.de", "thieme"),
+                      ("www.kidney-international.org", "elsevier_hoi"), ("www.ajog.org", "elsevier_hoi"),
+                      ("www.journal-of-hepatology.eu", "elsevier_hoi"), ("jamanetwork.com", "jama"),
+                      ("diabetesjournals.org", "ada"), ("www.jacc.org", "jacc"), ("www.acpjournals.org", "acp"),
+                      ("www.wjgnet.com", "wjg")]:
         assert L.tim_nxb(host, CAU_HINH)[0] == ten, host
+
+
+@pytest.mark.skipif(NODE is None, reason="máy không có node")
+def test_oup_cau_mua_ban_in_them_khong_bi_coi_la_khoa():
+    # Đo thật 18/10 (EHJ 42366993, đồng xuất bản AHA): thân bài đọc được 80.420 ký tự có câu «To purchase additional reprints»
+    # ở phần thông tin bài ⇒ khoá chữ «Purchase» trần từ chối nhầm. Bài khoá thật vẫn có «Get access».
+    o = L.dien_cau_hinh(CAU_HINH["nxb"]["oup"], "https://academic.oup.com/eurheartj/article/47/32/4357/8719720",
+                        "10.1093/eurheartj/ehag500", CAU_HINH["dau_khong_quyen_url"])
+    than = "Introduction Methods Results " * 500 + " To purchase additional reprints, call the publisher."
+    doc_duoc = _danh_gia({"o": o, "href": "https://academic.oup.com/eurheartj/article/47/32/4357/8719720", "soVung": 1,
+                          "doDai": len(than), "vung": than, "trang": than[:200], "deMuc": []})
+    assert doc_duoc["ok"] is True, doc_duoc
+    khoa = _danh_gia({"o": o, "href": "https://academic.oup.com/eurheartj/article/1/1/1/1", "soVung": 1,
+                      "doDai": len(than), "vung": than + " Get access to this article", "trang": "", "deMuc": []})
+    assert khoa["ok"] is False
 
 
 @pytest.mark.skipif(NODE is None, reason="máy không có node")

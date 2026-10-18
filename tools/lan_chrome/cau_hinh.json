@@ -39,12 +39,12 @@
     "oup": {
       "mien": ["academic.oup.com"],
       "chon": ".article-body",
-      "khoa": "Get access|Purchase|This content is only available",
+      "khoa": "Get access|Purchase this|Purchase access|Purchase options|This content is only available",
       "min": 10000,
       "pdf2": "meta",
       "kiem_pdf": "doi_cuoi",
-      "kiem_lan_cuoi": "2026-10-15 · 11 bài (vd PMID 40401436)",
-      "ghi_chu": "PDF ở bước 2 trên watermark*.silverchair.com (URL có token). Bài «advance» chỉ có ảnh trang đầu («Article PDF first page preview») ⇒ thân HTML ngắn: bỏ HTML, lấy PDF qua meta citation_pdf_url. URL bị chuyển về …?redirectedFrom=fulltext hoặc =PDF ⇒ KHÔNG có quyền (đo 15/10: Rheumatology, EJHF)."
+      "kiem_lan_cuoi": "2026-10-18 · 18 bài (vd PMID 40401436, 42366993, 26760044)",
+      "ghi_chu": "PDF ở bước 2 trên watermark*.silverchair.com (URL có token). Bài «advance» chỉ có ảnh trang đầu («Article PDF first page preview») ⇒ thân HTML ngắn: bỏ HTML, lấy PDF qua meta citation_pdf_url. URL bị chuyển về …?redirectedFrom=fulltext hoặc =PDF ⇒ KHÔNG có quyền (đo 15/10: Rheumatology, EJHF). Khoá chữ «Purchase» trần báo nhầm bài đọc được có câu «To purchase additional reprints» ở phần thông tin bài (EHJ 42366993, 18/10) ⇒ chỉ khớp «Purchase this/access/options»."
     },
     "springer_link": {
       "mien": ["link.springer.com"],
@@ -160,13 +160,53 @@
       "ghi_chu": "Ngược Neurology: /doi/pdf/ trả PDF, /doi/pdfdirect/ trả HTML."
     },
     "elsevier_hoi": {
-      "mien": ["www.gastrojournal.org", "journal.chestnet.org"],
+      "mien": ["www.gastrojournal.org", "journal.chestnet.org", "www.kidney-international.org", "www.ajog.org",
+               "www.journal-of-hepatology.eu"],
       "chon": "article",
       "min": 12000,
       "pdf": "meta",
       "khoaTrang": "Article preview",
-      "kiem_lan_cuoi": "2026-10-18 · 3 bài (PMID 35679950, 38395525, 19376844)",
-      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com — bác sĩ tick một lần mỗi miền."
+      "kiem_lan_cuoi": "2026-10-18 · 7 bài (PMID 35679950, 38395525, 19376844, 31034818, 38490803, 38141870, 40348683)",
+      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST, KDIGO/ISN, SMFM, EASL). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com hoặc SSO id.elsevier.com (tự quay lại, không cần đăng nhập) — bác sĩ tick một lần mỗi miền."
+    },
+    "jama": {
+      "mien": ["jamanetwork.com"],
+      "chon": ".article-body",
+      "min": 12000,
+      "pdf2": "meta",
+      "kiem_lan_cuoi": "2026-10-18 · 6 bài (vd PMID 17405970, 28973656)",
+      "ghi_chu": "Nền Silverchair: PDF ở bước 2 trên watermark*.silverchair.com (fetch thẳng ở bước 1 lỗi «Failed to fetch»); kiểm PDF bằng tên tệp trong meta. Khuyến cáo USPSTF không theo IMRaD ⇒ cổng nội dung của «nhan» loại HTML, giữ PDF. Trang PDF có thể hiện «Just a moment…» rồi tự qua."
+    },
+    "ada": {
+      "mien": ["diabetesjournals.org"],
+      "chon": ".article-body",
+      "khoa": "Get Access|Purchase this|This content is only available",
+      "min": 12000,
+      "pdf2": "meta",
+      "kiem_lan_cuoi": "2026-10-18 · PMID 41358888",
+      "ghi_chu": "Nền Silverchair như OUP/JAMA: PDF ở bước 2 trên watermark*.silverchair.com."
+    },
+    "jacc": {
+      "mien": ["www.jacc.org"],
+      "chon": "#abstracts,#bodymatter",
+      "min": 12000,
+      "pdf": "/doi/pdf/{doi}?download=true",
+      "kiem_lan_cuoi": "2026-10-18 · PMID 35379503",
+      "ghi_chu": "Nền Atypon của ACC; <article> chứa cả phần phụ ⇒ chỉ lấy #abstracts,#bodymatter. PDF tải được ở bước 1."
+    },
+    "acp": {
+      "mien": ["www.acpjournals.org"],
+      "chon": "#abstracts,#bodymatter",
+      "min": 12000,
+      "kiem_lan_cuoi": "2026-10-18 · PMID 15710956",
+      "ghi_chu": "Nền Atypon. /doi/pdf/<doi>?download=true trả 403 cho fetch ở bước 1 ⇒ chỉ lưu HTML; bộ in BANIN làm PDF cho EndNote."
+    },
+    "wjg": {
+      "mien": ["www.wjgnet.com"],
+      "chon": ".main",
+      "min": 12000,
+      "kiem_lan_cuoi": "2026-10-18 · PMID 22147965",
+      "ghi_chu": "Baishideng, bài OA. Trang /full/…htm không có meta citation_pdf_url ⇒ chỉ lưu HTML."
     },
     "copdfoundation": {
       "mien": ["journal.copdfoundation.org"],
