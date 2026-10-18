@@ -972,6 +972,94 @@ def test_r2_pii_regression_role_title_guard_still_works():
     assert c["pass"] is True
 
 
+# ── 18/10/2026: «thất bại» trong S1 chỉ là CẢM GIÁC thất bại, không phải thất bại điều trị ──
+# Dương tính giả có thật: biên nhận APPRAISAL-20261018T100528-76e64e (observability/
+# APPRAISALS.jsonl) — tóm tắt «Thyrotoxic atrial fibrillation» (PMID 16369379) bị R13 đỏ chỉ
+# vì câu về amiodarone. Gói KHÔNG được sửa câu chữ để né; sửa ở bộ chấm (run_eval.py).
+
+def _s1_safety_check(text):
+    res = RE.evaluate(text, {"type": "clinical"})
+    return res, [x for x in res["checks"] if x["id"] == "mandatory_safety_question"][0]
+
+
+def test_r13_s1_khong_kich_hoat_amiodarone_bien_phap_khac_that_bai():
+    # Đúng câu của gói 16369379 — không mất ngủ, không thuốc ngủ, không tâm thần.
+    text = ("Tóm tắt bài Thyrotoxic atrial fibrillation (PMID 16369379). Chẹn beta là lựa "
+            "chọn đầu tay để kiểm soát tần số thất. Amiodarone: Bài chỉ dùng khi các biện "
+            "pháp khác thất bại, vì thuốc chứa iod có thể làm nặng cường giáp. "
+            "Cần bác sĩ kiểm chứng.")
+    assert RE._s1_trigger_present(text) is False
+    res, c = _s1_safety_check(text)
+    assert c["pass"] is True, c["note"]
+    assert "mandatory_safety_question" not in res["red_fails"]
+
+
+def test_r13_s1_khong_kich_hoat_cac_cum_that_bai_can_thiep():
+    # Các cách viết «thất bại của một can thiệp» thường gặp trong tóm tắt tim mạch/nhiễm.
+    for cau in (
+        "Chuyển nhịp bằng sốc điện khi điều trị nội khoa thất bại.",
+        "Bệnh nhân thất bại với kháng sinh đường uống, chuyển kháng sinh tĩnh mạch.",
+        "Thất bại điều trị kiểm soát tần số thì cân nhắc kiểm soát nhịp.",
+        "Phác đồ hai thuốc thất bại ở 12% bệnh nhân trong thử nghiệm.",
+    ):
+        text = f"{cau} PMID:12345678. Cần bác sĩ kiểm chứng."
+        assert RE._s1_trigger_present(text) is False, cau
+        _, c = _s1_safety_check(text)
+        assert c["pass"] is True, (cau, c["note"])
+
+
+def test_r13_s1_cam_giac_that_bai_ngoai_cum_can_thiep_van_kich_hoat():
+    # «thất bại» KHÔNG đi cùng can thiệp nào ⇒ mặc định vẫn là bối cảnh S1 (chiều an toàn).
+    # Không có mất ngủ/vô vọng/thuốc ngủ — chỉ «thất bại» kích hoạt.
+    text = ("Bệnh nhân nam 45 tuổi thất bại trong công việc nhiều tháng, xin thuốc để "
+            "bình tĩnh hơn. PMID:12345678. Cần bác sĩ kiểm chứng.")
+    assert RE.RE_S1_TRIGGER.search(text) is None  # chỉ nhánh «thất bại» mới bắt được ca này
+    res, c = _s1_safety_check(text)
+    assert c["pass"] is False
+    assert "S1" in c["note"]
+    assert "mandatory_safety_question" in res["red_fails"]
+
+
+def test_r13_s1_ke_that_bai_sau_danh_tu_thuoc_van_kich_hoat():
+    # «kẻ/người thất bại» là cảm giác về BẢN THÂN, dù có chữ «thuốc» đứng ngay trước.
+    text = ("Bệnh nhân nữ 30 tuổi bỏ thuốc vì tự coi mình là kẻ thất bại. "
+            "PMID:12345678. Cần bác sĩ kiểm chứng.")
+    assert RE.RE_S1_TRIGGER.search(text) is None
+    _, c = _s1_safety_check(text)
+    assert c["pass"] is False
+    assert "S1" in c["note"]
+
+
+def test_r13_s1_that_bai_can_thiep_trong_ngu_canh_tam_than_giac_ngu_van_kich_hoat():
+    # Cụm thất-bại-can-thiệp nhưng CÙNG CÂU có ngữ cảnh tâm thần/giấc ngủ ⇒ vẫn kích hoạt.
+    for cau in (
+        "Bệnh nhân trầm cảm, thất bại với hai đợt liệu pháp tâm lý, xin đổi hướng điều trị.",
+        "Bệnh nhân thất bại với thuốc ngủ hiện tại, xin đổi sang thuốc khác.",
+    ):
+        text = f"{cau} PMID:12345678. Cần bác sĩ kiểm chứng."
+        assert RE.RE_S1_TRIGGER.search(text) is None, cau
+        _, c = _s1_safety_check(text)
+        assert c["pass"] is False, cau
+        assert "S1" in c["note"], cau
+    # Đã hỏi ý tưởng tự sát ⇒ đạt.
+    text = ("Bệnh nhân thất bại với thuốc ngủ hiện tại. Đã hỏi ý tưởng tự sát (PHQ-9 mục 9) — "
+            "âm tính. PMID:12345678. Cần bác sĩ kiểm chứng.")
+    _, c = _s1_safety_check(text)
+    assert c["pass"] is True
+
+
+def test_evidence_positioning_bypass_blocked_by_cam_giac_that_bai():
+    # Veto S1 của _is_evidence_positioning phải dùng CÙNG luật với R13: cảm giác thất bại
+    # (không qua RE_S1_TRIGGER nữa) vẫn chặn miễn trừ «định vị chứng cứ».
+    text = ("Định vị chứng cứ nội bộ về cảm giác thất bại kéo dài ở người trưởng thành — tín "
+            "hiệu nội bộ chưa thẩm định, không tự áp dụng cho bệnh nhân. PMID:12345678. "
+            "Cần bác sĩ kiểm chứng.")
+    assert RE.RE_S1_TRIGGER.search(text) is None
+    res = RE.evaluate(text, {"type": "clinical"})
+    assert "mandatory_safety_question" in [c["id"] for c in res["checks"]]
+    assert "mandatory_safety_question" in res["red_fails"]
+
+
 # Quy ước XFAIL (2026-07-09, vòng 3 — không có pytest cài sẵn trong môi trường này nên không
 # dùng @pytest.mark.xfail được; tự cài quy ước tối giản thay thế theo đúng yêu cầu bác sĩ:
 # "tạo test xfail... không để trôi như ghi chú mơ hồ"). Hàm tên `xfail_*` PHẢI raise
