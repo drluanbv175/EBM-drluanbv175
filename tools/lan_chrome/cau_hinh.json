@@ -201,13 +201,13 @@
       "ten": "Cục Quản lý Dược Việt Nam — cảnh báo và thu hồi",
       "url": "https://dav.gov.vn/canh-bao-va-thu-hoi-cn81.html",
       "dieu_kien": "tat_vpn",
-      "ghi_chu": "17/10: ERR_CONNECTION_TIMED_OUT ngay trên Chrome thật khi VPN bật (IP nước ngoài). Chỉ thử khi bác sĩ tắt VPN; chưa có vùng cắt đã kiểm ⇒ chưa nạp."
+      "ghi_chu": "17/10: ERR_CONNECTION_TIMED_OUT ngay trên Chrome thật khi VPN bật (IP nước ngoài). 18/10 (bác sĩ tắt VPN): trang tải được; chân trang cho trích dẫn/phát hành lại nếu ghi rõ nguồn dav.gov.vn; không có robots.txt (máy chủ trả trang giao diện). NHƯNG chuyên mục cn81 suốt 41 trang (07/2018–10/2026) chỉ có công văn QLD-MP thu hồi MỸ PHẨM — không có thu hồi thuốc (QLD-CL); các mục QLD-CL/QLD-ĐK thấy trên trang chỉ là cột «Tin mới nhất». Cần chọn lại URL đúng chuyên mục thu hồi THUỐC trước khi khai vùng cắt ⇒ chưa nạp."
     },
     "SRC-048": {
       "ten": "EMA — danh mục thuốc cấp phép tập trung",
-      "url": "https://www.ema.europa.eu/en/about-us/legal-notice",
+      "url": "https://www.ema.europa.eu/en/about-us/about-website/legal-notice",
       "dieu_kien": "tat_vpn",
-      "ghi_chu": "17/10: CloudFront chặn cả Chrome thật khi VPN bật. Engine đã có dự phòng EC Union Register (tra_thuoc_quoc_te.py ema chạy thật 17/10). Điều khoản tái sử dụng của EMA vẫn CHƯA đọc được."
+      "ghi_chu": "17/10: CloudFront chặn cả Chrome thật khi VPN bật. Engine đã có dự phòng EC Union Register (tra_thuoc_quoc_te.py ema chạy thật 17/10). 18/10 (bác sĩ tắt VPN): đọc được Legal notice (chuyển hướng sang /about-website/legal-notice; Last updated 19/05/2010) — tài liệu trên trang EMA được tái bản/phân phối toàn bộ hoặc một phần, kể cả thương mại, nếu ghi EMA là nguồn (trừ tài liệu bản quyền bên thứ ba, ảnh); tra_thuoc_quoc_te.py ema tải thẳng medicines JSON của EMA được (2754 bản ghi). Không phải trang danh sách nên không khai vùng cắt."
     }
   }
 }
