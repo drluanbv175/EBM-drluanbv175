@@ -107,7 +107,12 @@ def test_cli_ghi_bao_cao_va_ma_thoat(tmp_path):
     bc = json.loads((ra / "THE-TRUNG-HUB_2026-10-18.json").read_text(encoding="utf-8"))
     assert bc["so_cum"] == 1 and bc["so_the_thua"] == 1 and bc["cum"][0]["giu"] == "EVID-2026-0005"
     md = (ra / "THE-TRUNG-HUB_2026-10-18.md").read_text(encoding="utf-8")
-    assert 'manage_ledger.py drop EVID-2026-0300' in md and "CHỈ ĐỌC" in md
+    lenh = [d for d in md.splitlines() if d.startswith("python3 tools/manage_ledger.py drop-nhieu --tu-bao-cao ")]
+    duong_json = (ra / "THE-TRUNG-HUB_2026-10-18.json").resolve().as_posix()
+    assert len(lenh) == 2 and all(duong_json in d for d in lenh), lenh      # chạy khô + ghi thật
+    assert "--ap-dung" not in lenh[0] and "--ap-dung --ly-do" in lenh[1]
+    assert "CHỈ ĐỌC" in md
+    assert "manage_ledger.py drop EVID" not in md        # không còn 1 lệnh/1 bản sao lưu cho mỗi thẻ
     # Sổ cái KHÔNG bị ghi.
     assert len(json.loads((hub / "EBM_MASTER.json").read_text(encoding="utf-8"))["evidence_cards"]) == 3
 

@@ -39,6 +39,7 @@ def goc(tmp_path):
     _git(g, "config", "user.name", "test")
     _ghi(g / NGUON / "ingest_dashboard.py", "# ban 1\n")
     _ghi(g / NGUON / "ledger_ids.py", "# ledger\n")
+    _ghi(g / NGUON / "manage_ledger.py", "# quan ly\n")
     _ghi(g / NGUON / "PHIEN-BAN-DA-BIET.json", "{}\n")
     _git(g, "add", "-A")
     _git(g, "commit", "-q", "-m", "v1")
@@ -46,6 +47,7 @@ def goc(tmp_path):
     _git(g, "commit", "-q", "-am", "v2")
     _ghi(g / "EBM_MASTER" / "tools" / "ingest_dashboard.py", "# ban 1\n")
     _ghi(g / "EBM_MASTER" / "tools" / "ledger_ids.py", "# ledger\n")
+    _ghi(g / "EBM_MASTER" / "tools" / "manage_ledger.py", "# quan ly\n")
     return g
 
 
@@ -117,3 +119,11 @@ def test_khong_co_ebm_master_la_khong_do_duoc(tmp_path):
     r = _chay(g)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "không đo được" in r.stdout
+
+
+def test_manage_ledger_cung_duoc_trien_khai(goc):
+    """drop-nhieu (18/10/2026) sống ở nguồn chuẩn — bản chạy thiếu thì --ap-dung phải chép sang."""
+    (goc / "EBM_MASTER" / "tools" / "manage_ledger.py").unlink()
+    r = _chay(goc, "--ap-dung")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (goc / "EBM_MASTER" / "tools" / "manage_ledger.py").read_text(encoding="utf-8") == "# quan ly\n"

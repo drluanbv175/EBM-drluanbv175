@@ -51,7 +51,7 @@ for _s in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 NGUON_REL = Path("sync") / "ebm-master-tools"
-DANH_SACH = ("ingest_dashboard.py", "ledger_ids.py")
+DANH_SACH = ("ingest_dashboard.py", "ledger_ids.py", "manage_ledger.py")
 SO_PHIEN_BAN = "PHIEN-BAN-DA-BIET.json"
 SO_LUONG_PHIEN_BAN = 40          # số phiên bản gần nhất trong lịch sử git đem so
 NHANH_DA_GOP = ("master", "main")

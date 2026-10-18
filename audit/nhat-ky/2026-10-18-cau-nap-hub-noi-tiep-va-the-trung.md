@@ -31,12 +31,18 @@ MỌI thẻ cùng khoá (đã vá từ 13/07, chưa có test chốt) — chỉ p
 - Nạp thường: bỏ qua bản cũ khi đã có bản mới hơn cùng lát cắt (sổ cái hoặc cùng lô); không nạp bản
   mới khi bản trước đã có thẻ mà chưa nối tiếp. Lát cắt lấy từ `tools/dang_ky_chu_de.py::tach_ten`.
 - `tools/liet_ke_the_trung_hub.py` (CHỈ ĐỌC): mọi cụm + đề xuất thẻ giữ (tham chiếu sống → cập nhật có
-  bác sĩ → ID gốc), cờ «thẻ giữ thiếu trường thẻ loại có», lệnh `manage_ledger.py drop` chờ bác sĩ duyệt.
+  bác sĩ → ID gốc), cờ «thẻ giữ thiếu trường thẻ loại có», lệnh loại chờ bác sĩ duyệt.
+- `manage_ledger.py drop-nhieu` (nguồn chuẩn cũng vào `sync/ebm-master-tools/`): `drop` cũ sao lưu TRỌN sổ cái
+  (~4,8 MB) cho MỖI thẻ ⇒ 193 thẻ ≈ 0,9 GB BACKUPS trên OneDrive. Lệnh mới loại cả lô trong MỘT lần ghi + MỘT
+  bản sao lưu; chạy khô mặc định, `--ap-dung` bắt buộc `--ly-do` nguyên văn bác sĩ; chế độ `--tu-bao-cao --cum`
+  kiểm LẠI từng cụm trên sổ sống (vẫn trùng khoá + tiêu đề, cùng decision với thẻ giữ); lỗi nào là không loại gì;
+  đọc lại trong khoá ghi của sync_all trước khi ghi.
 
 ## Kiểm hồi quy
 
-31 test (`tools/test_ingest_noi_tiep_20261018.py`, `test_dong_bo_cong_cu_hub_20261018.py`,
-`test_liet_ke_the_trung_hub_20261018.py`), chạy cả trên CI. 23 đột biến đều bị bắt đúng test đích, lượt
-nền/sau khôi phục xanh, SHA ba tệp khớp. Một đột biến TƯƠNG ĐƯƠNG đã thay (thêm `specialty` vào danh
+42 test (`tools/test_ingest_noi_tiep_20261018.py`, `test_dong_bo_cong_cu_hub_20261018.py`,
+`test_liet_ke_the_trung_hub_20261018.py`, `test_manage_ledger_drop_nhieu_20261018.py`), chạy cả trên CI. 33 đột
+biến (23 + 10 cho drop-nhieu) đều bị bắt đúng test đích, lượt nền/sau khôi phục xanh, SHA khớp. Đột biến
+«báo cáo mất dòng lệnh chạy khô» từng LỌT vì test chỉ đòi một trong hai dòng — đã siết test. Một đột biến TƯƠNG ĐƯƠNG đã thay (thêm `specialty` vào danh
 sách trường — trộn ba chiều vẫn giữ nó vì hai bản dashboard đều để trống). Mô phỏng nạp đủ 76 dashboard
 trên bản sao: mã cũ +10 thẻ (2 thẻ cũ hồi sinh), mã mới +8; 11 bản cũ bỏ qua, 0 bản mới bị chặn.
