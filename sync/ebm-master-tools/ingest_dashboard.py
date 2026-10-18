@@ -10,8 +10,22 @@ Chống trùng theo (pmid|doi|title). provenance="from_doctor_master".
 Cách dùng (trong thư mục EBM_MASTER/):
     python3 tools/ingest_dashboard.py <đường-dẫn-dashboard.html> [--today YYYY-MM-DD]
     python3 tools/ingest_dashboard.py a.html b.html --today 2026-06-09
+
+PHIÊN BẢN NỐI TIẾP (cùng lát cắt, khác ngày — vd ..._HopNhat_20260614 → ..._HopNhat_20261018):
+    python3 tools/ingest_dashboard.py <bản-mới.html> --thay-ban <bản-cũ.html> --today YYYY-MM-DD
+    python3 tools/ingest_dashboard.py <bản-mới.html> --noi-tiep --today YYYY-MM-DD   # tự tìm bản trước
+  Mặc định CHẠY KHÔ (in kế hoạch, không ghi gì); thêm --ap-dung để ghi sau khi bác sĩ xem kế hoạch.
+  Cập nhật TẠI CHỖ trường nội dung của thẻ bản cũ (giữ id/date_added/specialty/provenance, nối
+  history); mục mới thì thêm; mục biến mất thì BÁO, không tự xoá.
+  Nạp thường (sync_all.py) tự BỎ QUA bản cũ khi đã có bản mới hơn cùng lát cắt, và KHÔNG nạp bản
+  mới khi bản trước đã có thẻ trong sổ cái mà chưa chạy nối tiếp (in đúng lệnh cần chạy).
+
+NGUỒN CHUẨN (18/10/2026): tệp này sống trong git ở sync/ebm-master-tools/ của repo gốc; bản chạy
+thật ở EBM_MASTER/tools/ được chép sang bằng tools/dong_bo_cong_cu_hub.py — sửa ở nguồn chuẩn,
+KHÔNG sửa thẳng bản chạy thật (công cụ đồng bộ sẽ giữ lại bản bị sửa tay và báo bác sĩ).
 """
 import argparse
+import copy
 import difflib
 import json
 import os
@@ -264,6 +278,68 @@ def key_of(card):
     return _norm_doi(s.get("doi")) or str(s.get("pmid") or "").strip() or card.get("topic", "")
 
 
+def build_card(it, *, question, updated, dashboard_name, today, card_id):
+    """Dựng Evidence Card từ MỘT item dashboard.
+
+    Tách khỏi main() ngày 18/10/2026 để nạp thường và nạp PHIÊN BẢN NỐI TIẾP dùng CHUNG một
+    định nghĩa trường nội dung — hai bản chép tay của khối này sẽ lệch nhau theo thời gian,
+    đúng lớp lỗi kho này đã vấp nhiều lần."""
+    # Vá 2026-07-10: GIỮ url (trước đây hardcode "" → thẻ guideline/quy định chỉ có
+    # URL, không PMID/DOI, bị mất dấu truy nguyên → cách ly nhầm).
+    source = {"agency": it["org"], "title": question, "url": it.get("url", ""),
+              "pmid": it["pmid"], "doi": it["doi"], "type": "guideline/RCT"}
+    card = {
+        "id": card_id,
+        "cycle": "from_dashboard",
+        "date_added": today or "",
+        "date_source": it["dateVersion"] or updated,
+        "specialty": "",
+        "topic": it["title"] or it["local_id"],
+        "source": source,
+        "provenance": "from_doctor_master",
+        # 2026-07-12: "đã xác minh" ở ĐÂY nghĩa là NGUỒN/TRÍCH DẪN đã qua cổng liêm
+        # chính TỰ ĐỘNG (verify_dashboard.py --online PASS chạy TRƯỚC khi gọi hàm
+        # này) — KHÔNG phải "bác sĩ đã duyệt lâm sàng". Tín hiệu Cổng B thật (chờ/đã
+        # duyệt) là trường "decision" bên dưới, luôn "notyet"/"consider" khi mới nạp
+        # (không bao giờ tự "apply"). Quyết định thiết kế: xem _SO-EBM-MASTER.md.
+        "verification_status": "đã xác minh",
+        "pico": {"population": it["P"], "intervention": it["I"],
+                 "comparison": it["C"], "outcome": it["O"]},
+        "pico_question": ("%s — %s" % (it["I"], it["O"])).strip(" —") or it["title"],
+        "recommendation": it.get("action") or it["title"],
+        "certainty": it["gradeSource"],
+        "operational_assessment": "Nhãn GRADE theo nguồn dashboard (đã PASS cổng liêm chính).",
+        "gradeLevel": it["gradeLevel"],
+        "decision": it["decision"],
+        "vietnam_context": it["vn"],
+        "frame": it.get("frame", ""),
+        "frameLabels": it.get("frameLabels") or {},
+        "practice": {
+            "action": it.get("action", ""),
+            "monitoring": it.get("monitoring", ""),
+            "safety": it.get("safety", ""),
+        },
+        "critical_appraisal": {"design": it["design"], "effect_estimate": it["effectText"]},
+        "references": [
+            r for r in [
+                it["pmid"] and ("PMID:" + it["pmid"]),
+                it["doi"] and ("DOI:" + it["doi"]),
+                it["replacementNoticePmid"] and ("PMID:" + it["replacementNoticePmid"]),
+                it["replacementNoticeDoi"] and ("DOI:" + it["replacementNoticeDoi"]),
+            ] if r
+        ],
+        "history": [{"date": today or "", "change": "nạp từ dashboard %s" % dashboard_name}],
+    }
+    if it["replacesPmid"]:
+        card["replacement"] = {
+            "supersedes_pmid": it["replacesPmid"],
+            "notice_pmid": it["replacementNoticePmid"],
+            "notice_doi": it["replacementNoticeDoi"],
+            "status": "REPLACEMENT_REQUIRES_DOCTOR_REVIEW",
+        }
+    return card
+
+
 def apply_explicit_replacement(data, card, replaces_pmid, *, today, dashboard_name):
     """Thay thẻ nguồn bị rút tại chỗ, giữ ID/lịch sử và quay về hàng bác sĩ duyệt.
 
@@ -450,6 +526,506 @@ def rehydrate_quarantined_card(data, card, *, today, dashboard_name):
     return "reassigned" if id_conflict else "preserved"
 
 
+# ---------------------------------------------------------------------------------------------
+# PHIÊN BẢN NỐI TIẾP (thêm 18/10/2026)
+# ---------------------------------------------------------------------------------------------
+# VÌ SAO: chống trùng ở main() (key_of + độ giống chủ đề ≥ SIMILARITY_THRESHOLD) đúng cho một
+# dashboard MỚI, nhưng SAI cho phiên bản nối tiếp của CÙNG lát cắt (vd ..._HopNhat_20260614 →
+# ..._HopNhat_20261018; quy ước tên ở tools/dang_ky_chu_de.py::tach_ten):
+#   • mục GIỮ tiêu đề bị coi là trùng ⇒ BỎ QUA thẻ mới, sổ cái giữ nội dung/decision CŨ;
+#   • mục ĐỔI tiêu đề hoặc đổi nguồn thành thẻ thứ hai SONG SONG với thẻ cũ.
+# Đo 18/10/2026 trên BẢN SAO sổ cái (sau khi mạch máu não đã được cập nhật tay): một lượt
+# sync_all.py kế tiếp nạp CẢ hai bản còn hồi sinh 2 thẻ nội dung CŨ từ bản 20260614 (ITEM-02 đổi
+# nguồn, ITEM-03 đổi tiêu đề). Cách vá:
+#   (1) --thay-ban/--noi-tiep: cập nhật TẠI CHỖ thẻ của bản cũ (giữ id, date_added, specialty,
+#       provenance; nối history), mục mới thì nạp như thường, mục biến mất thì BÁO;
+#   (2) nạp thường TỰ BỎ QUA bản cũ khi đã có bản mới hơn cùng lát cắt (trong sổ cái hoặc trong
+#       cùng lô), và KHÔNG nạp bản mới khi bản trước đã có thẻ mà chưa chạy nối tiếp.
+# Máy KHÔNG tự đổi decision/gradeLevel ngoài nội dung của chính dashboard đã qua cổng; mọi thay
+# đổi decision/gradeLevel được in nổi trong bản chạy khô để bác sĩ thấy trước khi --ap-dung.
+#
+# TRỘN BA CHIỀU (gốc = item bản cũ, sổ = thẻ hub, mới = item bản mới), từng trường một:
+#   • mới == sổ                ⇒ không đụng;
+#   • sổ == gốc                ⇒ sổ còn y nguyên bản cũ ⇒ lấy theo bản mới;
+#   • sổ ≠ gốc (thẻ đã bị sửa NGOÀI dashboard — integrity_guard hạ decision, khôi phục cách ly ép
+#     notyet, manage_ledger, «THAY NGUỒN (bác sĩ duyệt)», recommendation điền bằng bản tổng hợp…
+#     — hoặc dashboard cũ bị sửa tại chỗ sau khi nạp):
+#       – trường NGHIÊM (decision, gradeLevel, PMID/DOI/URL): GIỮ sổ, báo xung đột cho bác sĩ;
+#       – trường mô tả: sổ TRỐNG ⇒ bù theo bản mới; sổ là tiền tố của bản mới (chuỗi bị bộ tách
+#         trước 21/07/2026 cắt cụt tại dấu nháy, vd «Quy trình») ⇒ bù phần cắt cụt;
+#       – còn lại: dashboard KHÔNG đổi trường đó giữa hai bản ⇒ giữ sổ, im lặng; dashboard CÓ đổi ⇒
+#         giữ sổ và báo xung đột cho bác sĩ.
+# Đo 18/10/2026: so thẳng sổ ↔ bản mới (không có gốc) sẽ đưa lại 'apply' cho thẻ integrity_guard
+# đã hạ và ghi đè recommendation đã được điền — chính là «tự đổi decision ngoài dashboard».
+
+# Trường NỘI DUNG được cập nhật tại chỗ (đường dẫn phẳng "cha.con" cho trường lồng). Cố ý KHÔNG
+# có: id, date_added, specialty, provenance, cycle, verification_status, quarantine*, replacement
+# (luồng Retraction-and-Replacement riêng) và mọi khoá do công cụ khác gắn thêm vào thẻ — kể cả
+# khoá con lạ trong source/practice (vd source.type) được giữ nguyên.
+NOI_TIEP_TRUONG = (
+    "topic", "pico_question", "recommendation", "certainty", "gradeLevel", "decision",
+    "date_source", "vietnam_context", "frame", "frameLabels",
+    "source.agency", "source.title", "source.url", "source.pmid", "source.doi",
+    "pico.population", "pico.intervention", "pico.comparison", "pico.outcome",
+    "practice.action", "practice.monitoring", "practice.safety",
+    "critical_appraisal.design", "critical_appraisal.effect_estimate",
+)
+# Trường mà xung đột KHÔNG BAO GIỜ tự giải (quyết định lâm sàng + định danh nguồn).
+NOI_TIEP_TRUONG_NGHIEM = frozenset(
+    ("decision", "gradeLevel", "source.pmid", "source.doi", "source.url"))
+
+_DANG_KY_CHU_DE = {"ham": None, "loi": None}
+
+
+def _tach_ten_ban(ten):
+    """(lát_cắt, ngày YYYYMMDD) theo quy ước tên dashboard, hoặc None.
+
+    NGUỒN DUY NHẤT của quy ước là tools/dang_ky_chu_de.py::tach_ten ở repo gốc (cùng độ sâu
+    từ EBM_MASTER/tools/ lẫn sync/ebm-master-tools/) — KHÔNG chép regex sang đây: hai bản sẽ
+    lệch nhau và «lát cắt» bị hiểu khác nhau giữa đăng ký chủ đề và sổ cái. Không nạp được
+    công cụ đó ⇒ trả None (không nhận diện được phiên bản) và ghi lý do vào _DANG_KY_CHU_DE."""
+    if _DANG_KY_CHU_DE["ham"] is None and _DANG_KY_CHU_DE["loi"] is None:
+        duong = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "tools", "dang_ky_chu_de.py")
+        try:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("_dang_ky_chu_de_cho_ingest", duong)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            _DANG_KY_CHU_DE["ham"] = mod.tach_ten
+        except Exception as exc:  # noqa: BLE001 — thiếu công cụ ⇒ «không nhận diện được», không crash
+            _DANG_KY_CHU_DE["loi"] = "%s (%s: %s)" % (duong, type(exc).__name__, exc)
+    if _DANG_KY_CHU_DE["ham"] is None:
+        return None
+    r = _DANG_KY_CHU_DE["ham"](os.path.basename(str(ten)))
+    return (r[0], r[2]) if r else None
+
+
+_RE_NGUON_BAN = re.compile(r"(?:nạp từ dashboard|phiên bản nối tiếp)\s+(\S+?\.html)")
+
+
+def card_dashboard_names(card):
+    """Tên các dashboard mà thẻ MANG NỘI DUNG của nó — đọc từ history: «nạp từ dashboard X»
+    (tạo thẻ) và «… phiên bản nối tiếp X …» (cập nhật tại chỗ). «đối chiếu trùng với X» (bù
+    trường) KHÔNG tính: thẻ đó chỉ được bù PMID/DOI, nội dung vẫn của dashboard khác."""
+    names = set()
+    for event in card.get("history") or []:
+        if isinstance(event, dict):
+            text = unicodedata.normalize("NFC", str(event.get("change") or ""))
+            names.update(m.group(1) for m in _RE_NGUON_BAN.finditer(text))
+    return names
+
+
+def hub_dashboard_names(data):
+    """Mọi dashboard đã có thẻ trong sổ cái (kể cả thẻ cách ly)."""
+    names = set()
+    for card in (data.get("evidence_cards") or []) + (data.get("quarantined_cards") or []):
+        if isinstance(card, dict):
+            names |= card_dashboard_names(card)
+    return names
+
+
+def phan_loai_phien_ban(ten, ten_trong_so, ten_trong_lo=()):
+    """Nạp thường có nên nạp dashboard `ten` không, xét phiên bản nối tiếp cùng lát cắt.
+
+    Trả một trong:
+      ("nap", None)                      — nạp như trước;
+      ("bo_qua_ban_cu", <tên bản mới>)   — đã có bản MỚI HƠN cùng lát cắt trong sổ cái hoặc
+                                           trong cùng lô: nạp lại bản cũ sẽ hồi sinh nội dung
+                                           đã bị thay (hoặc tạo thẻ song song);
+      ("can_noi_tiep", <tên bản trước>)  — bản trước cùng lát cắt đã có thẻ mà bản này chưa:
+                                           nạp thường sẽ giữ nội dung cũ/sinh thẻ song song —
+                                           phải chạy --thay-ban.
+    Tên không theo quy ước hoặc thiếu tools/dang_ky_chu_de.py ⇒ ("nap", None) như trước."""
+    ten = os.path.basename(str(ten))
+    r = _tach_ten_ban(ten)
+    if r is None:
+        return ("nap", None)
+    lat_cat, ngay = r
+    cung_lat = []
+    for other in set(ten_trong_so) | {os.path.basename(str(x)) for x in ten_trong_lo}:
+        if other == ten:
+            continue
+        rr = _tach_ten_ban(other)
+        if rr and rr[0] == lat_cat:
+            cung_lat.append((rr[1], other, other in ten_trong_so))
+    moi_hon = sorted(x for x in cung_lat if x[0] > ngay)
+    if moi_hon:
+        return ("bo_qua_ban_cu", moi_hon[-1][1])
+    if ten in ten_trong_so:
+        return ("nap", None)
+    truoc = sorted(x for x in cung_lat if x[0] < ngay and x[2])
+    if truoc:
+        return ("can_noi_tiep", truoc[-1][1])
+    return ("nap", None)
+
+
+def kiem_cap_noi_tiep(duong_cu, duong_moi):
+    """Chuỗi lỗi (rỗng = hợp lệ) cho cặp bản cũ → bản mới của chế độ nối tiếp. Fail-closed:
+    không xác nhận được CÙNG lát cắt + ngày MỚI HƠN thì không cập nhật tại chỗ gì cả — các lát
+    cắt khác nhau BỔ SUNG cho nhau, ghi đè chéo là làm mất nội dung của lát cắt kia."""
+    ten_cu, ten_moi = os.path.basename(str(duong_cu)), os.path.basename(str(duong_moi))
+    if os.path.abspath(str(duong_cu)) == os.path.abspath(str(duong_moi)) or ten_cu == ten_moi:
+        return "bản cũ và bản mới là CÙNG một tệp (%s)." % ten_moi
+    a, b = _tach_ten_ban(ten_cu), _tach_ten_ban(ten_moi)
+    if a is None or b is None:
+        if _DANG_KY_CHU_DE["loi"]:
+            return ("không nhận diện được lát cắt/ngày vì không nạp được %s — không thể xác "
+                    "nhận đây là phiên bản nối tiếp." % _DANG_KY_CHU_DE["loi"])
+        return ("tên tệp không theo quy ước WebDashboard_EBM_<nhóm>_<lát cắt>_<YYYYMMDD>.html "
+                "(%s)." % (ten_cu if a is None else ten_moi))
+    if a[0] != b[0]:
+        return ("hai bản KHÁC lát cắt (%s ≠ %s) — các lát cắt khác nhau bổ sung cho nhau, "
+                "không thay nhau (tools/dang_ky_chu_de.py::tach_ten)." % (a[0], b[0]))
+    if b[1] <= a[1]:
+        return "bản mới (%s) không có ngày MỚI HƠN bản cũ (%s)." % (b[1], a[1])
+    return ""
+
+
+def dong_ban_den(ten_cu, ten_trong_so):
+    """Mọi bản cùng lát cắt có ngày ≤ bản cũ (kể cả chính nó) đang có thẻ trong sổ cái.
+
+    Thẻ mang nguồn từ BẤT KỲ bản nào trong dòng này đều đang đại diện cho mục của bản cũ: chế
+    độ nối tiếp chỉ ghi history cho thẻ ĐỔI nội dung, nên thẻ không đổi ở lượt v1→v2 vẫn chỉ
+    mang «nạp từ dashboard v1» khi tới lượt v2→v3."""
+    ten_cu = os.path.basename(str(ten_cu))
+    r = _tach_ten_ban(ten_cu)
+    if r is None:
+        return {ten_cu}
+    lat_cat, ngay = r
+    dong = {ten_cu}
+    for other in ten_trong_so:
+        rr = _tach_ten_ban(other)
+        if rr and rr[0] == lat_cat and rr[1] <= ngay:
+            dong.add(other)
+    return dong
+
+
+def tim_file_ban_truoc(duong_moi, ten_trong_so, hub):
+    """(đường dẫn bản trước, lý do lỗi) cho --noi-tiep: bản cùng lát cắt mới nhất có ngày nhỏ
+    hơn bản mới VÀ đã có thẻ trong sổ cái; tìm tệp cạnh bản mới, rồi EBM-Dashboards/, rồi
+    WEB_DASHBOARDS/ của hub."""
+    ten_moi = os.path.basename(str(duong_moi))
+    r = _tach_ten_ban(ten_moi)
+    if r is None:
+        if _DANG_KY_CHU_DE["loi"]:
+            return None, "không nạp được %s nên không tìm được bản trước." % _DANG_KY_CHU_DE["loi"]
+        return None, ("tên tệp không theo quy ước WebDashboard_EBM_<nhóm>_<lát cắt>_<YYYYMMDD>.html "
+                      "(%s) — truyền bản cũ bằng --thay-ban." % ten_moi)
+    lat_cat, ngay = r
+    truoc = sorted(
+        (rr[1], other) for other in ten_trong_so
+        for rr in [_tach_ten_ban(other)] if rr and rr[0] == lat_cat and rr[1] < ngay
+    )
+    if not truoc:
+        return None, ("sổ cái chưa có thẻ nào từ bản trước của lát cắt %s — không có gì để nối "
+                      "tiếp; nạp thường là đủ." % lat_cat)
+    ten_truoc = truoc[-1][1]
+    noi_tim = [
+        os.path.dirname(os.path.abspath(str(duong_moi))),
+        os.path.join(os.path.dirname(os.path.abspath(hub)), "EBM-Dashboards"),
+        os.path.join(os.path.abspath(hub), "WEB_DASHBOARDS"),
+    ]
+    for thu_muc in noi_tim:
+        ung_vien = os.path.join(thu_muc, ten_truoc)
+        if os.path.isfile(ung_vien):
+            return ung_vien, ""
+    return None, ("thẻ trong sổ cái đến từ %s nhưng không tìm thấy tệp này ở: %s — truyền "
+                  "đường dẫn bằng --thay-ban." % (ten_truoc, "; ".join(noi_tim)))
+
+
+def _khoa_muc(it):
+    """Khoá ghép một item giữa hai phiên bản: mã item (ITEM-xx), không có mã thì tiêu đề."""
+    local_id = str(it.get("local_id") or "").strip()
+    if local_id:
+        return ("id", local_id)
+    return ("tieu_de", _normalized_topic(it.get("title")))
+
+
+def _nhan_muc(it):
+    return "%s «%s»" % (str(it.get("local_id") or "").strip() or "—", str(it.get("title") or "")[:70])
+
+
+def ghep_muc_hai_ban(items_cu, items_moi):
+    """(cặp [(cũ, mới)], chỉ-mới [..], chỉ-cũ [..]) — ghép theo mã item, thiếu mã thì theo tiêu
+    đề. Hai item cùng khoá trong MỘT bản ⇒ dừng fail-closed: máy không đoán item nào là item nào."""
+    def chi_muc(items, nhan):
+        out = {}
+        for it in items:
+            khoa = _khoa_muc(it)
+            if khoa in out:
+                raise RuntimeError(
+                    "Bản %s có hai mục cùng khoá %s — không ghép được hai phiên bản, cần bác sĩ "
+                    "xem dashboard." % (nhan, khoa[1]))
+            out[khoa] = it
+        return out
+
+    cu, moi = chi_muc(items_cu, "cũ"), chi_muc(items_moi, "mới")
+    cap = [(cu[k], moi[k]) for k in moi if k in cu]
+    chi_moi = [moi[k] for k in moi if k not in cu]
+    chi_cu = [cu[k] for k in cu if k not in moi]
+    return cap, chi_moi, chi_cu
+
+
+def _gia_tri_so_sanh(value):
+    """Chuẩn hoá để so nội dung: None/""/{}/[] coi như nhau (thẻ cũ thường THIẾU khoá mà bản mới
+    có khoá rỗng — không phải thay đổi nội dung)."""
+    if value is None or value == "" or value == {} or value == []:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return str(value)
+
+
+def _lay_truong(card, duong):
+    """Giá trị theo đường dẫn phẳng ("practice.safety"); cha không phải dict ⇒ None."""
+    if "." in duong:
+        cha, con = duong.split(".", 1)
+        khoi = card.get(cha)
+        return khoi.get(con) if isinstance(khoi, dict) else None
+    return card.get(duong)
+
+
+def _dat_truong(card, duong, value):
+    """Ghi theo đường dẫn phẳng, GIỮ các khoá con khác của cha (vd source.type)."""
+    value = copy.deepcopy(value)
+    if "." in duong:
+        cha, con = duong.split(".", 1)
+        if not isinstance(card.get(cha), dict):
+            card[cha] = {}
+        card[cha][con] = value
+    else:
+        card[duong] = value
+
+
+def tron_ba_chieu(the, goc, moi):
+    """So thẻ sổ cái (`the`) với thẻ dựng từ item bản cũ (`goc`) và bản mới (`moi`).
+
+    Trả (thay, xung_dot):
+      thay      — [(đường dẫn, giá trị mới, lý do)] với lý do ∈ {"theo bản mới", "bù trường
+                  trống", "bù phần bị cắt cụt"};
+      xung_dot  — [(đường dẫn, giá trị sổ, giá trị gốc, giá trị mới)]: sổ đã bị sửa ngoài
+                  dashboard ⇒ GIỮ sổ, bác sĩ quyết.
+    Luật đầy đủ ở khối chú thích «TRỘN BA CHIỀU» phía trên. references xử lý riêng ở
+    _tron_tham_chieu() vì nó đi theo nguồn."""
+    thay, xung_dot = [], []
+    for duong in NOI_TIEP_TRUONG:
+        v_so, v_goc, v_moi = _lay_truong(the, duong), _lay_truong(goc, duong), _lay_truong(moi, duong)
+        s_so, s_goc, s_moi = _gia_tri_so_sanh(v_so), _gia_tri_so_sanh(v_goc), _gia_tri_so_sanh(v_moi)
+        if s_moi == s_so:
+            continue
+        if s_so == s_goc:
+            thay.append((duong, v_moi, "theo bản mới"))
+            continue
+        if duong not in NOI_TIEP_TRUONG_NGHIEM:
+            if s_so == "":
+                thay.append((duong, v_moi, "bù trường trống"))
+                continue
+            if (isinstance(v_so, str) and isinstance(v_moi, str)
+                    and len(v_moi) > len(v_so) and v_moi.startswith(v_so)):
+                thay.append((duong, v_moi, "bù phần bị cắt cụt"))
+                continue
+        if s_goc == s_moi:
+            # Dashboard KHÔNG đổi trường này giữa hai bản ⇒ không có gì để lan truyền; giữ nguyên sửa
+            # đổi của sổ (vd integrity_guard hạ decision) mà không báo xung đột thừa.
+            continue
+        xung_dot.append((duong, v_so, v_goc, v_moi))
+    return thay, xung_dot
+
+
+def _tron_tham_chieu(the, goc, moi, nguon_bi_thay):
+    """references mới cho thẻ, hoặc None nếu không đổi.
+
+    Sổ còn y nguyên bản cũ ⇒ lấy đúng danh sách bản mới. Sổ đã có tham chiếu ngoài bản cũ (vd bù
+    trường từ dashboard khác) ⇒ chỉ THÊM tham chiếu mới, và bỏ đúng «PMID:/DOI:» của nguồn vừa bị
+    thay ở lượt này (`nguon_bi_thay`) — không xoá tham chiếu nào khác."""
+    r_so = list(the.get("references") or [])
+    r_goc = list(goc.get("references") or [])
+    r_moi = list(moi.get("references") or [])
+    if r_so == r_goc:
+        ket_qua = r_moi
+    else:
+        ket_qua = [r for r in r_so if r not in nguon_bi_thay] + [r for r in r_moi if r not in r_so]
+    return None if ket_qua == r_so else ket_qua
+
+
+def ap_dung_phien_ban_noi_tiep(data, items_cu, items_moi, *, ten_cu, ten_moi, question_cu,
+                               updated_cu, question_moi, updated_moi, today):
+    """Cập nhật TẠI CHỖ thẻ sổ cái của bản cũ theo bản mới. Sửa `data` trong bộ nhớ; ghi đĩa hay
+    không là việc của main() (--ap-dung).
+
+    Thẻ «của» một item bản cũ = thẻ evidence_cards có key_of trùng, chủ đề giống ≥
+    SIMILARITY_THRESHOLD (đúng luật chống trùng của nạp thường) VÀ mang nội dung từ một bản
+    trong dòng phiên bản (dong_ban_den) — không đụng thẻ của LÁT CẮT KHÁC dù trùng khoá + tiêu
+    đề. Một cụm thẻ trùng (sinh bởi lỗi nạp lặp 12–13/07/2026) được cập nhật CẢ CỤM để các bản
+    sao không lệch nhau, và được báo trong `cum_trung` để bác sĩ dọn. Một thẻ bị hai item khác
+    nhau cùng nhận ⇒ dừng fail-closed (RuntimeError) TRƯỚC khi sửa bất cứ thẻ nào.
+
+    Trả báo cáo dict; `xu_ly` là tập khoá item bản mới ĐÃ xử lý (main() bỏ qua chúng ở vòng nạp
+    thường). Item bản mới có replacesPmid đi luồng Retraction-and-Replacement (nạp thường)."""
+    ten_cu, ten_moi = os.path.basename(str(ten_cu)), os.path.basename(str(ten_moi))
+    dong = dong_ban_den(ten_cu, hub_dashboard_names(data))
+    the_so = data.setdefault("evidence_cards", [])
+
+    def dung(it, question, updated, ten):
+        return build_card(it, question=question, updated=updated, dashboard_name=ten,
+                          today=today, card_id="")
+
+    def tim_the(card_cu):
+        khoa = key_of(card_cu)
+        return [
+            c for c in the_so
+            if key_of(c) == khoa
+            and _topic_similarity(card_cu.get("topic", ""), c.get("topic", "")) >= SIMILARITY_THRESHOLD
+            and card_dashboard_names(c) & dong
+        ]
+
+    cap, chi_moi, chi_cu = ghep_muc_hai_ban(items_cu, items_moi)
+    bao = {
+        "ten_cu": ten_cu, "ten_moi": ten_moi, "dong_phien_ban": sorted(dong),
+        "cap_nhat": [], "xung_dot": [], "khong_doi": [], "khong_khop_so": [], "muc_moi": [],
+        "bien_mat": [], "cum_trung": [], "chuyen_rr": [], "trung_sau_cap_nhat": [],
+        "xu_ly": set(),
+    }
+
+    # Lượt 1 — ghép và KIỂM, chưa sửa gì (fail-closed phải dừng trước khi đụng thẻ nào).
+    ke_hoach = []
+    chu_the = {}
+    for cu, moi in cap:
+        if str(moi.get("replacesPmid") or "").strip():
+            bao["chuyen_rr"].append(_nhan_muc(moi))
+            continue
+        card_goc = dung(cu, question_cu, updated_cu, ten_cu)
+        the = tim_the(card_goc)
+        if not the:
+            bao["khong_khop_so"].append(_nhan_muc(moi))
+            continue
+        for c in the:
+            truoc = chu_the.get(id(c))
+            if truoc is not None and truoc != _khoa_muc(moi):
+                raise RuntimeError(
+                    "Thẻ %s khớp cả hai mục %s và %s của bản cũ — không biết cập nhật theo mục "
+                    "nào; cần bác sĩ xem." % (c.get("id"), truoc[1], _khoa_muc(moi)[1]))
+            chu_the[id(c)] = _khoa_muc(moi)
+        ke_hoach.append((card_goc, moi, the))
+    for cu in chi_cu:
+        the = tim_the(dung(cu, question_cu, updated_cu, ten_cu))
+        bao["bien_mat"].append({"muc": _nhan_muc(cu), "ids": [c.get("id") for c in the]})
+    bao["muc_moi"] = [_nhan_muc(m) for m in chi_moi]
+
+    # Lượt 2 — áp (trộn ba chiều). Chỉ đụng thẻ có trường cần đổi; thẻ không đổi giữ nguyên,
+    # không thêm history.
+    da_doi_khoa = []
+    for card_goc, moi, the in ke_hoach:
+        card_moi = dung(moi, question_moi, updated_moi, ten_moi)
+        nhan = _nhan_muc(moi)
+        bao["xu_ly"].add(_khoa_muc(moi))
+        if len(the) > 1:
+            bao["cum_trung"].append({"muc": nhan, "ids": [c.get("id") for c in the]})
+        co_doi = False
+        for c in the:
+            thay, xung_dot = tron_ba_chieu(c, card_goc, card_moi)
+            for duong, v_so, v_goc, v_moi in xung_dot:
+                bao["xung_dot"].append({"muc": nhan, "id": c.get("id"), "truong": duong,
+                                        "so_cai": v_so, "ban_cu": v_goc, "ban_moi": v_moi})
+            nguon_cu = dict(c.get("source") or {})
+            khoa_truoc, tieu_de_truoc = key_of(c), _normalized_topic(c.get("topic"))
+            dec_cu, grade_cu = c.get("decision"), c.get("gradeLevel")
+            for duong, value, _ly_do in thay:
+                _dat_truong(c, duong, value)
+            nguon_bi_thay = set()
+            if any(d == "source.pmid" for d, _v, _l in thay) and nguon_cu.get("pmid"):
+                nguon_bi_thay.add("PMID:" + str(nguon_cu["pmid"]))
+            if any(d == "source.doi" for d, _v, _l in thay) and nguon_cu.get("doi"):
+                nguon_bi_thay.add("DOI:" + str(nguon_cu["doi"]))
+            # PMID/DOI đang bị GIỮ do xung đột ⇒ không động tới references: lấy danh sách bản mới lúc
+            # này sẽ đưa lại qua cửa sau đúng nguồn mà sổ (bác sĩ) đã bỏ.
+            nguon_xung_dot = any(x[0] in ("source.pmid", "source.doi") for x in xung_dot)
+            refs = None if nguon_xung_dot else _tron_tham_chieu(c, card_goc, card_moi, nguon_bi_thay)
+            if refs is not None:
+                c["references"] = refs
+                thay.append(("references", refs, "theo nguồn bản mới"))
+            if not thay:
+                continue
+            co_doi = True
+            truong = [d if ly_do in ("theo bản mới", "theo nguồn bản mới") else "%s [%s]" % (d, ly_do)
+                      for d, _v, ly_do in thay]
+            ten_truong = [d for d, _v, _l in thay]
+            phan = ["cập nhật tại chỗ theo phiên bản nối tiếp %s (%s; thay bản %s): %s"
+                    % (ten_moi, str(moi.get("local_id") or "").strip() or "theo tiêu đề",
+                       ten_cu, ", ".join(truong))]
+            nguon_moi = c.get("source") or {}
+            if ("source.pmid" in ten_truong) or ("source.doi" in ten_truong):
+                phan.append("nguồn PMID %s/DOI %s → PMID %s/DOI %s" % (
+                    nguon_cu.get("pmid") or "—", nguon_cu.get("doi") or "—",
+                    nguon_moi.get("pmid") or "—", nguon_moi.get("doi") or "—"))
+            if "decision" in ten_truong:
+                phan.append("decision %s → %s theo dashboard đã qua cổng" % (dec_cu, c.get("decision")))
+            if "gradeLevel" in ten_truong:
+                phan.append("gradeLevel %s → %s theo dashboard đã qua cổng" % (grade_cu, c.get("gradeLevel")))
+            c.setdefault("history", []).append({"date": today or "", "change": "; ".join(phan)})
+            bao["cap_nhat"].append({
+                "muc": nhan, "id": c.get("id"), "truong": truong,
+                "decision": [dec_cu, c.get("decision")] if "decision" in ten_truong else None,
+                "gradeLevel": [grade_cu, c.get("gradeLevel")] if "gradeLevel" in ten_truong else None,
+            })
+            if (key_of(c), _normalized_topic(c.get("topic"))) != (khoa_truoc, tieu_de_truoc):
+                da_doi_khoa.append((c, the))
+        if not co_doi:
+            bao["khong_doi"].append({"muc": nhan, "ids": [c.get("id") for c in the]})
+
+    # Sau cập nhật: thẻ vừa ĐỔI khoá/tiêu đề có trùng khoá + tiêu đề với thẻ NGOÀI cụm của nó không
+    # (vd bản mới đổi tiêu đề trùng đúng một thẻ của lát cắt khác)? Chỉ BÁO, không gộp.
+    for c, cum in da_doi_khoa:
+        trong_cum = {id(x) for x in cum}
+        khoa, tieu_de = key_of(c), _normalized_topic(c.get("topic"))
+        trung = [x.get("id") for x in the_so
+                 if id(x) not in trong_cum and key_of(x) == khoa
+                 and _normalized_topic(x.get("topic")) == tieu_de]
+        if trung:
+            bao["trung_sau_cap_nhat"].append({"id": c.get("id"), "trung_voi": trung})
+    return bao
+
+
+def in_bao_noi_tiep(bao, *, ghi_that):
+    """In kế hoạch/kết quả nối tiếp cho bác sĩ đọc (cùng nội dung ở chạy khô lẫn --ap-dung)."""
+    print("PHIÊN BẢN NỐI TIẾP: %s → %s" % (bao["ten_cu"], bao["ten_moi"]))
+    if len(bao["dong_phien_ban"]) > 1:
+        print("  Dòng phiên bản đã có thẻ: %s" % ", ".join(bao["dong_phien_ban"]))
+    for u in bao["cap_nhat"]:
+        print("  ✎ %s %s: %s" % (u["id"], u["muc"], ", ".join(u["truong"])))
+        if u["decision"]:
+            print("      ⚠ decision %s → %s (theo dashboard đã qua cổng — bác sĩ xem)" % tuple(u["decision"]))
+        if u["gradeLevel"]:
+            print("      ⚠ gradeLevel %s → %s (theo dashboard đã qua cổng — bác sĩ xem)" % tuple(u["gradeLevel"]))
+    for x in bao["xung_dot"]:
+        def _ngan(v):
+            return (json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else str(v or "∅"))[:60]
+        print("  ⛔ GIỮ NGUYÊN %s %s.%s — sổ cái đã bị sửa ngoài dashboard (sổ «%s» · bản cũ «%s» · "
+              "bản mới «%s»): bác sĩ quyết." % (x["id"], x["muc"].split(" ")[0], x["truong"],
+                                               _ngan(x["so_cai"]), _ngan(x["ban_cu"]), _ngan(x["ban_moi"])))
+    if bao["khong_doi"]:
+        print("  = %d mục không đổi nội dung (không đụng thẻ)." % len(bao["khong_doi"]))
+    for m in bao["muc_moi"]:
+        print("  + mục mới %s — nạp như thẻ mới (vẫn qua chống trùng thường)." % m)
+    for m in bao["khong_khop_so"]:
+        print("  + %s — có ở cả hai bản nhưng sổ cái không có thẻ của bản cũ ⇒ nạp thường." % m)
+    for m in bao["chuyen_rr"]:
+        print("  ↺ %s — khai replacesPmid ⇒ đi luồng Retraction-and-Replacement." % m)
+    for b in bao["bien_mat"]:
+        print("  ? %s có ở bản cũ, KHÔNG còn ở bản mới — GIỮ NGUYÊN thẻ %s (không tự xoá; "
+              "bác sĩ quyết, vd manage_ledger.py drop)." % (b["muc"], ", ".join(b["ids"]) or "(không có thẻ)"))
+    for c in bao["cum_trung"]:
+        print("  ⚠ %s ứng với CỤM %d thẻ trùng %s — cập nhật cả cụm cho khỏi lệch; dọn cụm theo "
+              "báo cáo tools/liet_ke_the_trung_hub.py." % (c["muc"], len(c["ids"]), ", ".join(c["ids"])))
+    for t in bao["trung_sau_cap_nhat"]:
+        print("  ⚠ %s sau cập nhật trùng khoá + tiêu đề với %s (ngoài dòng phiên bản) — bác sĩ xem."
+              % (t["id"], ", ".join(t["trung_voi"])))
+    if not ghi_that:
+        print("  (CHẠY KHÔ — chưa ghi gì vào sổ cái. Bác sĩ xem kế hoạch trên rồi chạy lại kèm --ap-dung.)")
+
+
 _STANDALONE_LEDGER_LOCK_CM = None  # tham chiếu MODULE-LEVEL — xem chú thích bên dưới
 
 
@@ -489,14 +1065,25 @@ def _acquire_standalone_ledger_lock():
 
 
 def main():
-    _acquire_standalone_ledger_lock()
     ap = argparse.ArgumentParser()
     ap.add_argument("files", nargs="+")
     ap.add_argument("--today", default="")
+    ap.add_argument("--thay-ban", default="", metavar="DASHBOARD_CU",
+                    help="nạp PHIÊN BẢN NỐI TIẾP: cập nhật tại chỗ thẻ của bản cũ này theo bản mới "
+                         "(đúng MỘT tệp mới; cùng lát cắt, ngày mới hơn)")
+    ap.add_argument("--noi-tiep", action="store_true",
+                    help="như --thay-ban nhưng tự tìm bản trước cùng lát cắt đã có thẻ trong sổ cái")
+    ap.add_argument("--ap-dung", action="store_true",
+                    help="chế độ nối tiếp: GHI THẬT (mặc định chạy khô) — chỉ sau khi bác sĩ xem kế hoạch")
+    ap.add_argument("--hub", default="",
+                    help="thư mục hub chứa EBM_MASTER.json (mặc định: thư mục cha của tools/; dùng cho kiểm thử)")
     args = ap.parse_args()
 
     here = os.path.dirname(os.path.abspath(__file__))
-    hub = os.path.dirname(here)
+    hub = os.path.abspath(args.hub) if args.hub else os.path.dirname(here)
+    if not args.hub:
+        # Khoá chỉ bảo vệ sổ cái THẬT; hub khác (kiểm thử) không được giành khoá của sổ thật.
+        _acquire_standalone_ledger_lock()
     master_path = os.path.join(hub, "EBM_MASTER.json")
     # Vá 2026-07-11 (vòng 8): JSON hỏng/ghi dở (OneDrive sync giữa chừng) trước đây làm crash
     # với traceback thô. Sổ cái là dữ liệu quan trọng nhất trong hub — báo lỗi tiếng Việt rõ
@@ -508,12 +1095,58 @@ def main():
         print("  Phục hồi từ bản backup gần nhất trong EBM_MASTER/BACKUPS/ rồi chạy lại.")
         sys.exit(1)
 
-    # Backup trước khi ghi
-    backups = os.path.join(hub, "BACKUPS")
-    os.makedirs(backups, exist_ok=True)
-    stamp = (args.today or "manual").replace("-", "")
-    shutil.copy(master_path, os.path.join(backups, "EBM_MASTER_%s_pre-ingest.json" % stamp))
+    che_do_noi_tiep = bool(args.thay_ban or args.noi_tiep)
+    # Nạp thường ghi như trước; chế độ nối tiếp mặc định CHẠY KHÔ (sửa tại chỗ thẻ đã có —
+    # kể cả decision/gradeLevel theo dashboard — nên bác sĩ phải thấy kế hoạch trước).
+    ghi_that = (not che_do_noi_tiep) or args.ap_dung
+    ten_trong_so = hub_dashboard_names(data)
+    noi_tiep_bao = None
+    noi_tiep_xu_ly = set()
+    if che_do_noi_tiep:
+        if len(args.files) != 1:
+            print("⛔ Chế độ nối tiếp nhận đúng MỘT dashboard mới (nhận %d)." % len(args.files))
+            return 2
+        duong_moi = args.files[0]
+        if args.thay_ban:
+            duong_cu = args.thay_ban
+        else:
+            duong_cu, ly_do = tim_file_ban_truoc(duong_moi, ten_trong_so, hub)
+            if not duong_cu:
+                print("⛔ --noi-tiep: %s" % ly_do)
+                return 2
+        loi_cap = kiem_cap_noi_tiep(duong_cu, duong_moi)
+        if loi_cap:
+            print("⛔ Không nạp phiên bản nối tiếp: %s" % loi_cap)
+            return 2
+        try:
+            question_cu, updated_cu, items_cu = parse_dashboard(duong_cu)
+            question_moi, updated_moi, items_moi = parse_dashboard(duong_moi)
+        except (OSError, UnicodeError) as exc:
+            print("⛔ Không đọc được dashboard của cặp nối tiếp: %s" % exc)
+            return 2
+        try:
+            noi_tiep_bao = ap_dung_phien_ban_noi_tiep(
+                data, items_cu, items_moi,
+                ten_cu=duong_cu, ten_moi=duong_moi,
+                question_cu=question_cu, updated_cu=updated_cu,
+                question_moi=question_moi, updated_moi=updated_moi,
+                today=args.today or "",
+            )
+        except RuntimeError as exc:
+            print("⛔ Không thể nạp phiên bản nối tiếp: %s" % exc)
+            return 1
+        noi_tiep_xu_ly = noi_tiep_bao["xu_ly"]
+        in_bao_noi_tiep(noi_tiep_bao, ghi_that=ghi_that)
 
+    # Backup trước khi ghi (chạy khô không ghi gì nên không sao lưu).
+    stamp = (args.today or "manual").replace("-", "")
+    nhan_sao_luu = "pre-noi-tiep" if che_do_noi_tiep else "pre-ingest"
+    if ghi_that:
+        backups = os.path.join(hub, "BACKUPS")
+        os.makedirs(backups, exist_ok=True)
+        shutil.copy(master_path, os.path.join(backups, "EBM_MASTER_%s_%s.json" % (stamp, nhan_sao_luu)))
+
+    # Chỉ mục chống trùng dựng SAU bước nối tiếp: thẻ cập nhật tại chỗ có thể đã đổi DOI/PMID/topic.
     existing = {
         key_of(c)
         for c in (data.get("evidence_cards", []) + data.get("quarantined_cards", []))
@@ -535,8 +1168,28 @@ def main():
     seq = max_ledger_seq(data)
     added = dup = enriched = same_source_new = pii_warned = 0
     replaced = replacement_duplicates_removed = rehydrated = rehydrated_reassigned = 0
+    bo_qua_ban_cu = chua_noi_tiep = 0
+    da_bao_thieu_dang_ky = False
 
     for f in args.files:
+        if not che_do_noi_tiep:
+            loai, ten_lien_quan = phan_loai_phien_ban(os.path.basename(f), ten_trong_so, args.files)
+            if _DANG_KY_CHU_DE["loi"] and not da_bao_thieu_dang_ky:
+                da_bao_thieu_dang_ky = True
+                print("  ⚪ Không nhận diện được phiên bản nối tiếp (không nạp được %s) — nạp như "
+                      "trước, KHÔNG chặn bản cũ/bản mới." % _DANG_KY_CHU_DE["loi"])
+            if loai == "bo_qua_ban_cu":
+                bo_qua_ban_cu += 1
+                print("  ⏭ Bỏ qua %s — đã có phiên bản nối tiếp MỚI HƠN cùng lát cắt (%s); nạp lại "
+                      "bản cũ sẽ hồi sinh nội dung đã bị thay." % (os.path.basename(f), ten_lien_quan))
+                continue
+            if loai == "can_noi_tiep":
+                chua_noi_tiep += 1
+                print("  ⛔ CHƯA nạp %s — đây là phiên bản nối tiếp của %s (đã có thẻ trong sổ cái); "
+                      "nạp thường sẽ giữ nội dung cũ hoặc sinh thẻ song song. Chạy: python3 "
+                      "tools/ingest_dashboard.py %s --noi-tiep --today <ngày> (chạy khô, bác sĩ xem) "
+                      "rồi thêm --ap-dung." % (os.path.basename(f), ten_lien_quan, f))
+                continue
         # SỬA 2026-07-22 (vòng lặp kiểm tra-hoàn thiện vòng 9, phát hiện MEDIUM): vòng lặp
         # này trước đây không có try/except — 1 file lỗi/biến mất giữa chừng (vd bị
         # reskin_dashboards.py di chuyển vào _reskin_backup/ đúng lúc, hoặc OneDrive sync
@@ -550,60 +1203,14 @@ def main():
             print("  ⚠ Bỏ qua dashboard lỗi/không đọc được: %s (%s)" % (f, exc))
             continue
         for it in items:
-            # Vá 2026-07-10: GIỮ url (trước đây hardcode "" → thẻ guideline/quy định chỉ có
-            # URL, không PMID/DOI, bị mất dấu truy nguyên → cách ly nhầm).
-            source = {"agency": it["org"], "title": question, "url": it.get("url", ""),
-                      "pmid": it["pmid"], "doi": it["doi"], "type": "guideline/RCT"}
+            if noi_tiep_xu_ly and _khoa_muc(it) in noi_tiep_xu_ly:
+                continue  # đã cập nhật tại chỗ (hoặc xác nhận không đổi) ở bước nối tiếp
             seq += 1
-            card = {
-                "id": "EVID-%s-%04d" % ((args.today or "0000")[:4], seq),
-                "cycle": "from_dashboard",
-                "date_added": args.today or "",
-                "date_source": it["dateVersion"] or updated,
-                "specialty": "",
-                "topic": it["title"] or it["local_id"],
-                "source": source,
-                "provenance": "from_doctor_master",
-                # 2026-07-12: "đã xác minh" ở ĐÂY nghĩa là NGUỒN/TRÍCH DẪN đã qua cổng liêm
-                # chính TỰ ĐỘNG (verify_dashboard.py --online PASS chạy TRƯỚC khi gọi hàm
-                # này) — KHÔNG phải "bác sĩ đã duyệt lâm sàng". Tín hiệu Cổng B thật (chờ/đã
-                # duyệt) là trường "decision" bên dưới, luôn "notyet"/"consider" khi mới nạp
-                # (không bao giờ tự "apply"). Quyết định thiết kế: xem _SO-EBM-MASTER.md.
-                "verification_status": "đã xác minh",
-                "pico": {"population": it["P"], "intervention": it["I"],
-                         "comparison": it["C"], "outcome": it["O"]},
-                "pico_question": ("%s — %s" % (it["I"], it["O"])).strip(" —") or it["title"],
-                "recommendation": it.get("action") or it["title"],
-                "certainty": it["gradeSource"],
-                "operational_assessment": "Nhãn GRADE theo nguồn dashboard (đã PASS cổng liêm chính).",
-                "gradeLevel": it["gradeLevel"],
-                "decision": it["decision"],
-                "vietnam_context": it["vn"],
-                "frame": it.get("frame", ""),
-                "frameLabels": it.get("frameLabels") or {},
-                "practice": {
-                    "action": it.get("action", ""),
-                    "monitoring": it.get("monitoring", ""),
-                    "safety": it.get("safety", ""),
-                },
-                "critical_appraisal": {"design": it["design"], "effect_estimate": it["effectText"]},
-                "references": [
-                    r for r in [
-                        it["pmid"] and ("PMID:" + it["pmid"]),
-                        it["doi"] and ("DOI:" + it["doi"]),
-                        it["replacementNoticePmid"] and ("PMID:" + it["replacementNoticePmid"]),
-                        it["replacementNoticeDoi"] and ("DOI:" + it["replacementNoticeDoi"]),
-                    ] if r
-                ],
-                "history": [{"date": args.today or "", "change": "nạp từ dashboard %s" % os.path.basename(f)}],
-            }
-            if it["replacesPmid"]:
-                card["replacement"] = {
-                    "supersedes_pmid": it["replacesPmid"],
-                    "notice_pmid": it["replacementNoticePmid"],
-                    "notice_doi": it["replacementNoticeDoi"],
-                    "status": "REPLACEMENT_REQUIRES_DOCTOR_REVIEW",
-                }
+            card = build_card(
+                it, question=question, updated=updated, dashboard_name=os.path.basename(f),
+                today=args.today or "", card_id="EVID-%s-%04d" % ((args.today or "0000")[:4], seq),
+            )
+            source = card["source"]
             pii_hits = _card_pii_warnings(card)
             if pii_hits:
                 pii_warned += 1
@@ -718,7 +1325,8 @@ def main():
                 card.setdefault("history", []).append({
                     "date": args.today or "",
                     "change": "cùng DOI/PMID với thẻ khác trong sổ cái nhưng nội dung khác biệt "
-                              "(topic similarity < %.1f) — nạp như thẻ mới, không gộp." % SIMILARITY_THRESHOLD,
+                              # %.2f: «%.1f» từng in 0,95 thành «0.9» — sai ngưỡng thật trong history.
+                              "(topic similarity < %.2f) — nạp như thẻ mới, không gộp." % SIMILARITY_THRESHOLD,
                 })
             existing.add(k)
             data.setdefault("evidence_cards", []).append(card)
@@ -726,19 +1334,31 @@ def main():
             added += 1
 
     assert_unique(data["evidence_cards"])   # cổng bất biến: không bao giờ ghi sổ cái có id trùng
-    data["meta"]["last_updated"] = args.today or data["meta"].get("last_updated", "")
-    data["meta"]["last_backup"] = "BACKUPS/EBM_MASTER_%s_pre-ingest.json" % stamp
-    data["meta"]["counts"]["evidence_cards"] = len(data["evidence_cards"])
-    data["meta"]["counts"]["quarantined_cards"] = len(data.get("quarantined_cards", []))
+    tom_tat = ("+%d thẻ mới; %d thẻ cách ly đã khôi phục về notyet "
+               "(%d thẻ phải cấp ID mới do xung đột lịch sử); "
+               "%d thẻ Retraction and Replacement đã cập nhật tại chỗ "
+               "(%d bản trùng cũ đã hợp nhất); %d cùng DOI/PMID nguồn khác nội dung — không gộp; "
+               "%d trùng (bỏ qua, %d đã bù trường pmid/doi thiếu)" %
+               (added, rehydrated, rehydrated_reassigned, replaced, replacement_duplicates_removed,
+                same_source_new, dup, enriched))
+    if noi_tiep_bao is not None:
+        tom_tat += ("; nối tiếp: %d thẻ cập nhật tại chỗ, %d mục không đổi, %d mục biến mất (giữ thẻ)"
+                    % (len(noi_tiep_bao["cap_nhat"]), len(noi_tiep_bao["khong_doi"]),
+                       len(noi_tiep_bao["bien_mat"])))
+    if bo_qua_ban_cu or chua_noi_tiep:
+        tom_tat += ("; %d bản cũ bỏ qua (đã có phiên bản mới hơn); %d bản mới CHƯA nạp (cần --noi-tiep)"
+                    % (bo_qua_ban_cu, chua_noi_tiep))
+    if not ghi_that:
+        print("CHẠY KHÔ — sẽ: %s. Tổng sổ cái sau nạp: %d thẻ. Chưa ghi gì." %
+              (tom_tat, len(data["evidence_cards"])))
+        return 0
+    meta = data.setdefault("meta", {})
+    meta["last_updated"] = args.today or meta.get("last_updated", "")
+    meta["last_backup"] = "BACKUPS/EBM_MASTER_%s_%s.json" % (stamp, nhan_sao_luu)
+    meta.setdefault("counts", {})["evidence_cards"] = len(data["evidence_cards"])
+    meta["counts"]["quarantined_cards"] = len(data.get("quarantined_cards", []))
     json.dump(data, open(master_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print("Nạp xong: +%d thẻ mới; %d thẻ cách ly đã khôi phục về notyet "
-          "(%d thẻ phải cấp ID mới do xung đột lịch sử); "
-          "%d thẻ Retraction and Replacement đã cập nhật tại chỗ "
-          "(%d bản trùng cũ đã hợp nhất); %d cùng DOI/PMID nguồn khác nội dung — không gộp; "
-          "%d trùng (bỏ qua, %d đã bù trường pmid/doi thiếu). Tổng sổ cái: %d thẻ." %
-          (added, rehydrated, rehydrated_reassigned, replaced, replacement_duplicates_removed,
-           same_source_new, dup, enriched,
-           len(data["evidence_cards"])))
+    print("Nạp xong: %s. Tổng sổ cái: %d thẻ." % (tom_tat, len(data["evidence_cards"])))
     if pii_warned:
         print("⚠️  %d thẻ có nghi PII (xem cảnh báo ⚠️ ở trên) — bác sĩ RÀ TAY trước khi tin tưởng." %
               pii_warned)
@@ -750,14 +1370,16 @@ def main():
             event_type="DASHBOARD_INGEST",
             actor="ingest_dashboard.py (automated)",
             description=(
-                "Nạp %d dashboard: +%d thẻ mới, %d thẻ cách ly khôi phục về notyet, "
-                "%d trùng bỏ qua. Tổng sổ cái sau nạp: %d thẻ."
-                % (len(args.files), added, rehydrated, dup, len(data["evidence_cards"]))
+                "Nạp %d dashboard%s: %s. Tổng sổ cái sau nạp: %d thẻ."
+                % (len(args.files),
+                   (" (phiên bản nối tiếp %s → %s)" % (noi_tiep_bao["ten_cu"], noi_tiep_bao["ten_moi"]))
+                   if noi_tiep_bao is not None else "",
+                   tom_tat, len(data["evidence_cards"]))
             ),
             affected_files=["EBM_MASTER.json"],
             source_files_modified=[os.path.basename(f) for f in args.files],
             pii_present=False,
-            notes="Backup trước ghi: BACKUPS/EBM_MASTER_%s_pre-ingest.json" % stamp,
+            notes="Backup trước ghi: BACKUPS/EBM_MASTER_%s_%s.json" % (stamp, nhan_sao_luu),
             session_id=args.today or "",
         )
     except Exception as exc:  # noqa: BLE001 — log lỗi không được chặn kết quả ingest

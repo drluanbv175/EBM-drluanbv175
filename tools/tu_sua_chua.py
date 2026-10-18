@@ -139,6 +139,12 @@ VIEC_MAY = [
     ("Bộ ba scanner giám sát lệch hash (ESD02 chặn commit)",
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--im-khi-on"],
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"], False),
+    # Thêm 18/10/2026 — cầu nạp sổ cái hub (EBM_MASTER/tools/ingest_dashboard.py) nay có nguồn chuẩn
+    # trong git (sync/ebm-master-tools/); không ai chạy bước chép thì PR đã gộp không có hiệu lực (BH41).
+    # Chỉ tua nhanh từ phiên bản đã biết + chỉ từ master sạch; bản chạy có sửa riêng ⇒ giữ lại chờ bác sĩ.
+    ("Công cụ sổ cái hub (EBM_MASTER/tools) tụt hậu nguồn git",
+     [PY, "tools/dong_bo_cong_cu_hub.py", "--im-khi-on"],
+     [PY, "tools/dong_bo_cong_cu_hub.py", "--ap-dung"], False),
     # Thêm 29/09/2026 — đo thật: 13/14 bản chạy SKILL.md của tác vụ lịch tụt hậu nguồn git suốt 6 tuần (luật CLAUDE.md
     # §9 «chép nguồn git → bản chạy» có mà không ai chạy — BH41), tác vụ mới `kiem-rut-bai-kho-thang` chưa từng được tạo.
     # Chỉ tự chép khi bản chạy trùng khít MỘT phiên bản cũ của nguồn; có sửa riêng / chưa tạo ⇒ việc của bác sĩ.
