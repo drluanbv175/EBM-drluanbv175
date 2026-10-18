@@ -567,10 +567,63 @@ def doi_cua_pmid(pm: str, email: str, trang_thai: dict) -> str:
     return kq[0].get("doi") or ""
 
 
+def vi_tri_oa_duoc_luu(uj: dict, doi: str, *, dtv=None) -> tuple[list[str], str]:
+    """Các URL OA mà CỔNG ĐIỀU KHOẢN cho lưu, theo thứ tự thử: `best_oa_location` trước, rồi các vị trí còn lại của
+    `oa_locations` (18/10/2026). Trước đó tầng này chỉ xét best ⇒ bài có bản CC ở kho trường (vd PMID 42240859: best là bản
+    không giấy phép, kho Glasgow có bản CC BY-SA) bị bỏ. Mỗi vị trí qua CÙNG `quyet_dinh_unpaywall` — không nới cổng.
+    Trả (danh sách URL được lưu, lý do từ chối của vị trí ĐẦU TIÊN bị chặn — để định tuyến như cũ khi không vị trí nào được)."""
+    if not uj.get("is_oa"):
+        return [], ""
+    best = uj.get("best_oa_location") or {}
+    duoc: list[str] = []
+    ly_dau, thay = "", set()
+    for loc in [best] + list(uj.get("oa_locations") or []):
+        url = (loc or {}).get("url_for_pdf") or (loc or {}).get("url")
+        if not url or url in thay:
+            continue
+        thay.add(url)
+        ok, ly = quyet_dinh_unpaywall(doi, url, loc.get("license"), dtv=dtv)
+        if ok:
+            duoc.append(url)
+        elif not ly_dau:
+            ly_dau = ly
+    return duoc, ly_dau
+
+
+def _tai_vi_tri_upw(pm: str, url: str, gom, _rq) -> tuple[bool, str]:
+    """Tải MỘT vị trí OA đã qua cổng điều khoản và ghi kho nếu đúng là toàn văn. Trả (đã lưu?, thông điệp)."""
+    req = _rq.Request(url, headers={"User-Agent": "Mozilla/5.0 (EBM-OA-fetch)"})
+    phan_hoi = _rq.urlopen(req, timeout=40)
+    du_lieu = phan_hoi.read()
+    url_cuoi = phan_hoi.geturl() or url
+    # Link trỏ về PMC → lấy JATS CHUẨN qua đúng đường PMC (doc_sau/RAG
+    # parse được), không giữ bản HTML trang web
+    m_pmc = (re.search(r"pmc\.ncbi\.nlm\.nih\.gov/articles/PMC(\d+)", url_cuoi)
+             or re.search(r"/articles/PMC(\d+)/", du_lieu[:4000].decode(
+                 "utf-8", errors="replace")))
+    if m_pmc and gom is not None:
+        xml = gom.tai_toan_van(m_pmc.group(1))
+        if xml:
+            _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml", xml)
+            return True, f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)})"
+    if du_lieu[:5] == b"%PDF-":
+        _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.pdf", du_lieu)
+        return True, f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB)"
+    # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
+    # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
+    vb = _van_ban_tho(du_lieu)
+    la_tv, vi_sao = la_toan_van_html(du_lieu.decode("utf-8", errors="replace"))  # NGUYÊN VĂN HTML: cổng đọc đề mục
+    if not la_tv or "Cookies must be enabled" in vb:
+        return False, f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu"
+    _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.html", du_lieu)
+    return True, f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật)"
+
+
 def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
     """TẦNG 2 OA — Unpaywall (bác sĩ duyệt gói ② 19/08): bài không có bản PMC vẫn
     thường có bản OA HỢP PHÁP ở repository (bản tác giả tự lưu, Gold OA ngoài PMC).
-    Chỉ tải link best_oa_location do Unpaywall xác nhận — KHÔNG cào nguồn trả phí.
+    Chỉ tải vị trí OA do Unpaywall xác nhận — KHÔNG cào nguồn trả phí. Thử best_oa_location
+    trước rồi các vị trí khác ĐÃ QUA cổng điều khoản (18/10/2026), dừng ở vị trí đầu tiên lưu được.
     Lưu PMID-<n>_UPW.pdf|.html (doc_sau không parse được PDF — phiên Claude đọc
     trực tiếp bằng skill pdf khi thẩm định). Trả (số tải được, danh sách còn thiếu)."""
     import json as _json
@@ -590,53 +643,29 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
                 continue
             uj = _json.loads(_rq.urlopen(
                 f"https://api.unpaywall.org/v2/{doi}?email={email}", timeout=25).read())
-            loc = uj.get("best_oa_location") or {}
-            url = loc.get("url_for_pdf") or loc.get("url")
-            if not (uj.get("is_oa") and url):
+            # CỔNG ĐIỀU KHOẢN — xét TRƯỚC khi mở nội dung (04/10/2026), cho TỪNG vị trí OA (18/10/2026)
+            ds_url, ly_do = vi_tri_oa_duoc_luu(uj, doi)
+            if not ds_url:
+                if ly_do:
+                    BO_QUA_UNPAYWALL.append((pm, doi, ly_do))
+                    print(f"  ⛔ Unpaywall {pm}: KHÔNG lưu — {ly_do}")
                 con_thieu.append(pm)
                 continue
-            # CỔNG ĐIỀU KHOẢN — xét TRƯỚC khi mở nội dung (04/10/2026)
-            duoc, ly_do = quyet_dinh_unpaywall(doi, url, loc.get("license"))
-            if not duoc:
-                BO_QUA_UNPAYWALL.append((pm, doi, ly_do))
-                print(f"  ⛔ Unpaywall {pm}: KHÔNG lưu — {ly_do}")
-                con_thieu.append(pm)
-                continue
-            req = _rq.Request(url, headers={"User-Agent": "Mozilla/5.0 (EBM-OA-fetch)"})
-            phan_hoi = _rq.urlopen(req, timeout=40)
-            du_lieu = phan_hoi.read()
-            url_cuoi = phan_hoi.geturl() or url
-            # Link trỏ về PMC → lấy JATS CHUẨN qua đúng đường PMC (doc_sau/RAG
-            # parse được), không giữ bản HTML trang web
-            m_pmc = (re.search(r"pmc\.ncbi\.nlm\.nih\.gov/articles/PMC(\d+)", url_cuoi)
-                     or re.search(r"/articles/PMC(\d+)/", du_lieu[:4000].decode(
-                         "utf-8", errors="replace")))
-            if m_pmc and gom is not None:
-                xml = gom.tai_toan_van(m_pmc.group(1))
-                if xml:
-                    _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml", xml)
-                    moi_tai += 1
-                    print(f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)})")
-                    time.sleep(0.4)
-                    continue
-            if du_lieu[:5] == b"%PDF-":
-                _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.pdf", du_lieu)
+            luu, bao = False, []
+            for url in ds_url:
+                try:
+                    luu, tin = _tai_vi_tri_upw(pm, url, gom, _rq)
+                except Exception as exc:  # noqa: BLE001 — vị trí này hỏng thì thử vị trí kế
+                    luu, tin = False, f"  ⚠ Unpaywall {pm}: {type(exc).__name__} ở {url[:80]} — thử vị trí kế"
+                bao.append(tin)
+                if luu:
+                    break
+            print("\n".join(bao[-1:] if luu else bao))
+            if luu:
                 moi_tai += 1
-                print(f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB)")
                 time.sleep(0.4)
-                continue
-            # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
-            # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
-            vb = _van_ban_tho(du_lieu)
-            la_tv, vi_sao = la_toan_van_html(du_lieu.decode("utf-8", errors="replace"))  # NGUYÊN VĂN HTML: cổng đọc đề mục
-            if not la_tv or "Cookies must be enabled" in vb:
-                print(f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu")
+            else:
                 con_thieu.append(pm)
-                continue
-            _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.html", du_lieu)
-            moi_tai += 1
-            print(f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật)")
-            time.sleep(0.4)
         except Exception as exc:  # noqa: BLE001 — lỗi MỘT bài không giết cả lượt
             print(f"  ⚠ Unpaywall {pm}: {type(exc).__name__} — chưa lấy được, lần sau thử lại")
             con_thieu.append(pm)
