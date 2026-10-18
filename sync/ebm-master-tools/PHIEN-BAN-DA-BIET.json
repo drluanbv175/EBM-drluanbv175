@@ -1,0 +1,9 @@
+{
+  "_ghi_chu": "SHA-256 (nội dung chuẩn hoá: CRLF→LF, bỏ khoảng trắng cuối tệp) của các phiên bản bản chạy EBM_MASTER/tools/ đã biết TRƯỚC khi nguồn chuẩn vào git (18/10/2026). tools/dong_bo_cong_cu_hub.py chỉ tự chép đè bản chạy trùng một SHA ở đây hoặc một phiên bản trong lịch sử git của tệp nguồn.",
+  "ingest_dashboard.py": [
+    "104e02f93a31e9c27b9d1aa4d07484421fcdca3833e544ca592fb2951bf32167"
+  ],
+  "ledger_ids.py": [
+    "edf3a09a450a724575e4c68b01adc2de50a75678d2738ca2b981380773afd5e0"
+  ]
+}
