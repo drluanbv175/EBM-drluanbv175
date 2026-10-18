@@ -215,7 +215,9 @@ def lap_bao_cao(data, cau_nap, goc: Path) -> dict:
     }
 
 
-def ghi_markdown(bc: dict, hub: Path, ngay: str) -> str:
+def ghi_markdown(bc: dict, hub: Path, ngay: str, json_path: str = "") -> str:
+    """Báo cáo Markdown cho bác sĩ; `json_path` = đường dẫn báo cáo JSON để dán vào lệnh drop-nhieu."""
+    json_path = json_path or f"AUDITS/THE-TRUNG-HUB_{ngay}.json"
     L = [f"# Thẻ trùng trong sổ cái hub — {ngay}", "",
          f"Sổ cái: `{(hub / 'EBM_MASTER.json').as_posix()}` · {bc['so_the']} thẻ · sinh bởi "
          "`tools/liet_ke_the_trung_hub.py` (CHỈ ĐỌC — chưa loại thẻ nào).", "",
@@ -256,12 +258,20 @@ def ghi_markdown(bc: dict, hub: Path, ngay: str) -> str:
             L.append(f"  - `{t['id']}` · tạo {t['date_added']} · {t['specialty'] or '—'} · "
                      f"{', '.join(t['dashboard']) or '(không rõ dashboard)'}" + (" · " + " · ".join(phu) if phu else ""))
         L.append("")
-    lenh = [f'python3 tools/manage_ledger.py drop {i} "thẻ trùng cụm — giữ {c["giu"]} (bác sĩ duyệt {ngay})"'
-            for c in bc["cum"] if c["giu"] for i in c["loai"]]
+    so_loai = sum(len(c["loai"]) for c in bc["cum"] if c["giu"])
+    duoc = ",".join(str(i) for i, c in enumerate(bc["cum"], 1) if c["giu"])
     L += ["## Lệnh loại thẻ — CHỈ chạy sau khi bác sĩ duyệt từng cụm", "",
-          f"Chạy trong `EBM_MASTER/`. {len(lenh)} lệnh; mỗi lệnh `drop` sao lưu TRỌN sổ cái (~"
-          f"{(hub / 'EBM_MASTER.json').stat().st_size // 1_000_000 if (hub / 'EBM_MASTER.json').is_file() else '?'} MB) "
-          "vào BACKUPS/ — chạy hết sẽ phình BACKUPS đáng kể trên OneDrive.", "", "```bash", *lenh, "```", "",
+          f"Chạy trong `EBM_MASTER/`. `drop-nhieu` loại cả lô trong MỘT lần ghi với MỘT bản sao lưu (lệnh "
+          f"`drop` từng thẻ sao lưu trọn sổ cái mỗi lần — {so_loai} lần). Nó KIỂM LẠI từng cụm trên sổ cái "
+          "sống (thẻ loại phải vẫn trùng khoá + tiêu đề và cùng decision với thẻ giữ); lỗi nào là không loại "
+          "gì. Cụm «BÁC SĨ CHỌN» không loại được theo báo cáo — dùng `drop-nhieu <ID…>` sau khi chọn.", "",
+          "```bash",
+          f"# 1) Chạy khô các cụm đã duyệt (thay danh sách số cụm; cụm đề xuất được: {duoc or '—'})",
+          f"python3 tools/manage_ledger.py drop-nhieu --tu-bao-cao {json_path} --cum <số cụm, vd 1,2,5|all>",
+          "# 2) Ghi thật — kèm lời duyệt NGUYÊN VĂN của bác sĩ",
+          f"python3 tools/manage_ledger.py drop-nhieu --tu-bao-cao {json_path} --cum <số cụm> --ap-dung "
+          "--ly-do \"<lời duyệt nguyên văn>\"",
+          "```", "",
           "Cần bác sĩ kiểm chứng."]
     return "\n".join(L) + "\n"
 
@@ -297,7 +307,13 @@ def main() -> int:
     (ra / f"THE-TRUNG-HUB_{ngay}.json").write_text(
         json.dumps(dict(bc, ngay=ngay, hub=hub.as_posix()), ensure_ascii=False, indent=1) + "\n",
         encoding="utf-8", newline="\n")
-    (ra / f"THE-TRUNG-HUB_{ngay}.md").write_text(ghi_markdown(bc, hub, ngay), encoding="utf-8", newline="\n")
+    tep_json = (ra / f"THE-TRUNG-HUB_{ngay}.json").resolve()
+    try:
+        json_path = tep_json.relative_to(hub.resolve()).as_posix()   # chạy lệnh trong EBM_MASTER/
+    except ValueError:
+        json_path = tep_json.as_posix()
+    (ra / f"THE-TRUNG-HUB_{ngay}.md").write_text(ghi_markdown(bc, hub, ngay, json_path), encoding="utf-8",
+                                                newline="\n")
     print(f"THẺ TRÙNG SỔ CÁI HUB — {bc['so_cum']} cụm · {bc['so_the_trong_cum']} thẻ · {bc['so_the_thua']} thẻ thừa "
           f"(theo ngày tạo: {bc['the_thua_theo_ngay_tao']}).")
     print(f"  Đề xuất được {sum(1 for c in bc['cum'] if not c['can_bac_si'])} cụm · bác sĩ chọn "
