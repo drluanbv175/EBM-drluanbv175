@@ -304,6 +304,8 @@ def thuoc_do(goc: Path, y_khoa: Path, cong: List[Dict[str, Any]], viec: List[Dic
             continue
         # Bảng việc chỉ liệt kê điều đang treo: không có dòng khớp ⇒ cảm biến không báo ⇒ 0.
         n = _so_trong(viec, mau) or 0
+        if ma == "E-NGOAI":  # lượt ĐÃ rà mà còn chờ việc bác sĩ vẫn là câu chưa trả lời được — không đọc thành «đạt»
+            n += _so_trong(viec, r"(\d+) câu điểm-khám ngoài giám sát ĐÃ RÀ") or 0
         hang.append(_dong(CC, ma, ten, str(n), n, "0", "chua" if n else "dat", lenh))
     sl = _json((goc / "state" / "san-luong-giam-sat-gan-nhat.json").read_text(encoding="utf-8")
                if (goc / "state" / "san-luong-giam-sat-gan-nhat.json").exists() else None)
