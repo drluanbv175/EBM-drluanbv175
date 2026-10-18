@@ -156,7 +156,11 @@ def quyet_dinh_unpaywall(doi: str, url: str, license: str | None, *, dtv=None, h
     Bản không có giấy phép mở thì KHÔNG lưu, kể cả NXB «cấm» mà bác sĩ đã uỷ quyền: uỷ quyền 03/10 là uỷ quyền ĐỌC («KHÔNG lưu
     toàn văn»); lưu bản sao chỉ trong phiên uỷ quyền có lời bác sĩ, trần mỗi miền và nhịp nghỉ (`phien_uy_quyen_chrome.py`) —
     tải tự động hàng loạt là đúng thứ điều khoản NXB cấm. Lý do trả về phân loại để định tuyến:
-    «cam_co_uq» → làn trình duyệt có phiên; «cam_khong_uq» → bác sĩ đọc trực tiếp; «chua_kiem» → đọc trang điều khoản trước."""
+    «cam_co_uq» → làn trình duyệt có phiên; «cam_khong_uq» → bác sĩ đọc trực tiếp; «chua_kiem» → đọc trang điều khoản trước.
+
+    Giấy phép mở khai ở CẤP NXB (18/10/2026, `GIAY_PHEP_MO_CAP_NXB`): Unpaywall không ghi giấy phép nhưng bản OA nằm trên MIỀN
+    CỦA CHÍNH NXB mà trang điều khoản (đã đọc, có nguồn + ngày) khai mọi nội dung trên miền đó mang giấy phép mở ⇒ được lưu. Xét
+    SAU nhánh «cấm» — NXB «cấm» không bao giờ được hưởng nhánh này."""
     lic = (license or "").strip().lower()
     if la_giay_phep_mo(lic):
         return True, f"giấy phép mở ({lic})"
@@ -169,9 +173,15 @@ def quyet_dinh_unpaywall(doi: str, url: str, license: str | None, *, dtv=None, h
             return False, (f"cam_co_uq: NXB «cấm» {ten}, bản đọc-miễn-phí không giấy phép mở — uỷ quyền ĐỌC không gồm lưu tự "
                            "động; đọc qua làn trình duyệt (phiên uỷ quyền lưu bản sao)")
         return False, f"cam_khong_uq: NXB «cấm» {ten}, chưa có uỷ quyền của bác sĩ — bác sĩ đọc trực tiếp"
+    ten_cc, cc = dtv.giay_phep_mo_cap_nxb(url or "") if hasattr(dtv, "giay_phep_mo_cap_nxb") else (None, None)
+    gp = tuple((cc or {}).get("giay_phep") or ())
+    if ten_cc and gp and all(la_giay_phep_mo(g) for g in gp):
+        return True, (f"giấy phép mở cấp NXB {ten_cc} ({', '.join(gp)}; điều khoản đọc {cc.get('doc_luc')}) — Unpaywall không "
+                      "ghi giấy phép, bản nằm trên miền của chính NXB")
     if ten:
         return False, f"khac: NXB {ten} — kết luận điều khoản «{(dk or {}).get('ket_luan')}» tầng này chưa nhận"
-    return False, "chua_kiem: NXB chưa có trong DIEU_KHOAN_NXB và bản OA không mang giấy phép mở — đọc trang điều khoản trước"
+    return False, ("chua_kiem: NXB chưa có trong DIEU_KHOAN_NXB/GIAY_PHEP_MO_CAP_NXB và bản OA không mang giấy phép mở — đọc "
+                   "trang điều khoản trước")
 
 
 # Dấu hiệu TRANG GIỚI THIỆU của cổng kho lưu trữ (Pure/Research Explorer, kho đại học): chỉ tóm tắt + metadata + nút tải.

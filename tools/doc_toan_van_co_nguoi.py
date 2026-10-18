@@ -489,6 +489,23 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "nên không khớp khoá này — bác sĩ đọc trực tiếp",
         "duong_hop_le": "văn bản cho phép của Medscape/WebMD"},
 }
+# GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
+# khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
+# `--nap`). CHỈ tầng 2 Unpaywall (`gom_toan_van_dashboard.quyet_dinh_unpaywall`) dùng, khi Unpaywall KHÔNG ghi giấy phép cho bản
+# OA: nhận khi URL bản OA nằm trên MIỀN CỦA CHÍNH NXB — không theo tiền tố DOI (10.1532 của The Heart Surgery Forum đăng ký cho
+# Carden Jennings Publishing trên Crossref; IMR Press chỉ lưu hộ bài cũ). `giay_phep` liệt kê MỌI giấy phép áp cho nội dung trên
+# miền đó, theo từ vựng `license` của Unpaywall; tất cả phải là giấy phép mở thì mục mới có hiệu lực. CHỈ ghi điều ĐÃ ĐỌC (nguồn +
+# ngày + trích ≤ 15 từ).
+GIAY_PHEP_MO_CAP_NXB: dict[str, dict] = {
+    "IMR Press": {
+        "mien": ("imrpress.com",),
+        "giay_phep": ("cc-by", "cc-by-nc"),
+        "nguon": "https://www.imrpress.com/page/copyright-license", "doc_luc": "2026-10-18",
+        "trich": "Authors grant IMR Press a license (Creative Commons Attribution License 4.0)",
+        "ghi_chu": "Bài IMR Press xuất bản: CC BY 4.0 (trang Copyright & License, cập nhật 24/12/2025). The Heart Surgery Forum do "
+                   "IMR Press xuất bản từ tập 28 số 8 (2025); bài cũ hơn do NXB trước đăng theo CC BY-NC, IMR Press lưu hộ trên "
+                   "imrpress.com (ghi trên trang bài 10.1532/hsf.3547, đọc 18/10/2026) — cả hai đều là giấy phép mở."},
+}
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
 _KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
@@ -568,6 +585,20 @@ def nxb_cua(doi: str = "", url: str = "", tieu_de: str = "") -> tuple[str | None
     doi, h = (doi or "").lower(), _mien(url)
     for ten, d in DIEU_KHOAN_NXB.items():
         if any(doi.startswith(t) for t in d["doi"]) or (h and any(h == m or h.endswith("." + m) for m in d["mien"])):
+            return ten, d
+    return None, None
+
+
+def giay_phep_mo_cap_nxb(url: str = "") -> tuple[str | None, dict | None]:
+    """(tên NXB, mục) khi `url` nằm trên miền của một NXB trong GIAY_PHEP_MO_CAP_NXB; không khớp ⇒ (None, None).
+
+    So theo MIỀN của URL (đúng miền hoặc miền con ngăn bằng dấu chấm), KHÔNG theo tiền tố DOI: một bản lưu ở kho khác (Europe PMC,
+    ResearchGate…) hay miền giả «imrpress.com.vi-du.org» không được hưởng giấy phép khai ở cấp NXB."""
+    h = _mien(url)
+    if not h:
+        return None, None
+    for ten, d in GIAY_PHEP_MO_CAP_NXB.items():
+        if any(h == m or h.endswith("." + m) for m in d["mien"]):
             return ten, d
     return None, None
 
