@@ -65,6 +65,37 @@ def _nap(ten: str, duong: Path):
     return mod
 
 
+DA_XET = DASH / "vuot-qua-da-xet.json"
+# Kết luận ĐÓNG của bác sĩ: mục không còn là việc «chờ so». `can_cap_nhat` KHÔNG đóng — mục vẫn được đếm tới khi gói
+# được cập nhật (lúc đó PMID đang dùng/nguồn mới đổi và mục tự rời danh sách).
+KET_LUAN_DONG = {"lac_chu_de", "chinh_nguon", "da_so_giu"}
+
+
+def doc_da_xet(p: Path) -> dict:
+    """Sổ BÁC SĨ đã xét (18/10/2026): {pmid đang dùng: {"pmid_moi_da_xet", "ket_luan", "ngay", "loi_bac_si"}}.
+
+    Vì sao có: trước đây không có chỗ ghi «đã so» nên con số «N mục có tổng quan/guideline mới hơn» không bao giờ giảm
+    (đo 18/10: 112/155 mục, 358 cặp — sàng lọc theo tiêu đề thấy 29 mục mọi nguồn «mới hơn» đều LẠC CHỦ ĐỀ, 4 mục là
+    chính nguồn đang dùng). Chỉ `tools/ghi_vuot_qua_da_xet.py` ghi sổ này, theo lời bác sĩ. Sổ vắng/hỏng ⇒ coi như rỗng
+    ⇒ mọi mục vẫn được đếm (không bao giờ im lặng như xanh).
+    """
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    muc = d.get("muc") if isinstance(d, dict) else None
+    return {str(k): v for k, v in muc.items() if isinstance(v, dict)} if isinstance(muc, dict) else {}
+
+
+def da_xet_het(pmid: str, moi: list, da_xet: dict) -> bool:
+    """True khi bác sĩ đã xét MỌI nguồn mới hiện có của mục với kết luận đóng. Nguồn MỚI chưa xét ⇒ mục tự mở lại."""
+    v = da_xet.get(str(pmid))
+    if not v or v.get("ket_luan") not in KET_LUAN_DONG or not moi:
+        return False
+    da = {str(x) for x in (v.get("pmid_moi_da_xet") or [])}
+    return {str(b.get("pmid")) for b in moi} <= da
+
+
 def _diem_bai_moi(b: dict) -> int:
     """Xếp ưu tiên đọc: guideline > SR/MA; càng mới càng cao. KHÔNG phải chất lượng."""
     pts = " ".join(b.get("pubtype") or []).lower()
@@ -207,15 +238,21 @@ def main() -> int:
 
     # ② hỏi PubMed từng mục (tái dùng tool 14/08 — không tự dựng truy vấn)
     ung_vien = []
+    da_xet = doc_da_xet(DA_XET)
+    n_da_xet = hong = 0
     for i, (pm, m) in enumerate(ds, 1):
         moi = kcv.tong_quan_moi_hon(pm, m["nam"], None)
-        if moi:
+        if moi is None:  # không hỏi được (mạng/NCBI chặn) — khác «hỏi được, không có bài»
+            hong += 1
+        elif moi and da_xet_het(pm, moi, da_xet):
+            n_da_xet += 1
+        elif moi:
             tot = max(moi, key=_diem_bai_moi)
             ung_vien.append((_diem_bai_moi(tot), pm, m, tot))
         if i % 25 == 0:
             print(f"  …{i}/{len(ds)}")
         time.sleep(0.35)  # nhịp E-utilities không key
-    if not ung_vien and len(ds):
+    if ds and hong == len(ds):
         print("Không hỏi được PubMed cho mục nào — kiểm mạng rồi chạy lại.")
         return 2
 
@@ -252,8 +289,13 @@ def main() -> int:
         "> **có thể lạc chủ đề** (đã đo: không lọc máy được — cặp lạc còn giống khung",
         "> câu hơn cặp đúng). Title bài gốc in kèm để bác sĩ loại mục lạc trong vài",
         "> giây. Cần bác sĩ kiểm chứng.",
-        "",
     ]
+    if n_da_xet:
+        dong.append(f"> ({n_da_xet} mục khác có nguồn mới hơn nhưng bác sĩ ĐÃ XÉT HẾT — sổ `vuot-qua-da-xet.json`; "
+                    "nguồn MỚI xuất hiện thì mục tự mở lại.)")
+    if hong:
+        dong.append(f"> ⚠️ {hong} PMID KHÔNG hỏi được PubMed lượt này — chưa kiểm, không phải «không có bài mới».")
+    dong.append("")
     for stt, (_, pm, m, tot) in enumerate(chon, 1):
         pts = ", ".join(tot.get("pubtype") or [])
         tg = title_goc.get(pm, "")
