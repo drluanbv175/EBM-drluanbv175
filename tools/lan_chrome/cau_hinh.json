@@ -6,7 +6,8 @@
   "dau_khong_quyen_url": [
     "redirectedFrom=fulltext",
     "redirectedFrom=PDF",
-    "ovid\\.com/jnls/[^?]*/abstract/"
+    "ovid\\.com/jnls/[^?]*/abstract/",
+    "redirectionsource=fulltextview"
   ],
   "nxb": {
     "sciencedirect": {
@@ -65,10 +66,12 @@
     },
     "sage": {
       "mien": ["journals.sagepub.com"],
-      "chon": "article",
+      "chon": "#abstracts,#bodymatter",
       "khoa": "Get access|Purchase this article|Access options",
       "pdf": "/doi/pdf/{doi}?download=true",
-      "kiem_lan_cuoi": "2026-10-14 · 2 bài"
+      "kiem_lan_cuoi": "2026-10-18 · PMID 27521067 đọc được, PMID 40884091 bị khoá đúng (+2 bài 14/10)",
+      "min": 12000,
+      "ghi_chu": "«Access options» là đầu mục khung phụ #core-collateral-fulltext-options nằm TRONG <article> cả khi đọc được ⇒ chỉ lấy #abstracts,#bodymatter; bài khoá có #bodymatter ~100 ký tự ⇒ min chặn."
     },
     "taylor_francis": {
       "mien": ["www.tandfonline.com"],
@@ -93,6 +96,84 @@
       "pdf": "/doi/pdfdirect/{doi}",
       "kiem_lan_cuoi": "2026-10-13 · bài AGS/Hepatology (vd PMID 28586122)",
       "ghi_chu": "Cổng nội dung của --nhan (TT-04) loại trang chỉ có tóm tắt."
+    },
+    "bmj": {
+      "mien": ["*.bmj.com"],
+      "chon": ".fulltext-view",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-17 · 3 bài gut.bmj.com (PMID 38383142, 35944925, 33004546)"
+    },
+    "eular_ard": {
+      "mien": ["ard.eular.org"],
+      "chon": "article",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-17 · PMID 27377815"
+    },
+    "europepmc": {
+      "mien": ["europepmc.org"],
+      "chon": "#fulltextcontent",
+      "min": 12000,
+      "kiem_lan_cuoi": "2026-10-18 · 11 bài (vd PMID 31742631, 30283735)",
+      "ghi_chu": "Bản PMC hiển thị trên Europe PMC. ?pdf=render trả 404, backend ptpmcrender trả 520 ⇒ chỉ lưu HTML. Phạm vi phiên xét theo NXB của DOI — luôn truyền --doi."
+    },
+    "pmc": {
+      "mien": ["pmc.ncbi.nlm.nih.gov"],
+      "chon": "article",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-17 · PMID 35521829",
+      "ghi_chu": "PDF của PMC trả trang thử thách ~1,8 KB (không phải %PDF) ⇒ bộ lưu tự bỏ PDF, giữ HTML."
+    },
+    "jrheum": {
+      "mien": ["www.jrheum.org"],
+      "chon": ".fulltext-view",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-10-17 · 4 bài (vd PMID 22002014, 41326168)"
+    },
+    "lww": {
+      "mien": ["journals.lww.com", "www.ovid.com"],
+      "chon": "article",
+      "min": 12000,
+      "pdf2": "/pdf/{doi}",
+      "kiem_lan_cuoi": "2026-10-18 · 8 bài (vd PMID 42390126, 37345492)",
+      "ghi_chu": "Thẻ article ĐẦU TIÊN là thân bài. Không quyền ⇒ chuyển sang www.ovid.com/jnls/<tạp chí>/abstract/…?redirectionsource=fulltextview (đã có trong dau_khong_quyen_url). DOI PAIN cũ chỉ dẫn về trang chủ tạp chí. journals.lww.com có Cloudflare — bác sĩ tick một lần."
+    },
+    "neurology": {
+      "mien": ["www.neurology.org"],
+      "chon": "article",
+      "min": 12000,
+      "khoa": "Get full access to this article",
+      "pdf": "/doi/pdfdirect/{doi}",
+      "kiem_lan_cuoi": "2026-10-18 · PMID 19056666 (PMID 10746617 bị khoá đúng)",
+      "ghi_chu": "meta citation_pdf_url và /doi/pdf/ trả trang xem HTML; /doi/pdfdirect/ trả PDF thật."
+    },
+    "psychiatryonline": {
+      "mien": ["psychiatryonline.org"],
+      "chon": "article",
+      "min": 12000,
+      "khoa": "Get full access to this article",
+      "pdf": "/doi/pdf/{doi}",
+      "kiem_lan_cuoi": "2026-10-18 · PMID 22764363",
+      "ghi_chu": "Ngược Neurology: /doi/pdf/ trả PDF, /doi/pdfdirect/ trả HTML."
+    },
+    "elsevier_hoi": {
+      "mien": ["www.gastrojournal.org", "journal.chestnet.org"],
+      "chon": "article",
+      "min": 12000,
+      "pdf": "meta",
+      "khoaTrang": "Article preview",
+      "kiem_lan_cuoi": "2026-10-18 · 3 bài (PMID 35679950, 38395525, 19376844)",
+      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com — bác sĩ tick một lần mỗi miền."
+    },
+    "copdfoundation": {
+      "mien": ["journal.copdfoundation.org"],
+      "chon": "article",
+      "min": 12000,
+      "kiem_lan_cuoi": "2026-10-18 · PMID 36516330",
+      "ghi_chu": "PDF meta nằm khác miền ⇒ fetch lỗi CORS; chỉ lưu HTML."
     }
   },
   "nguon": {
