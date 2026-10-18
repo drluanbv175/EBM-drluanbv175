@@ -210,12 +210,26 @@ def lenh_endnote(py: str, dash: Path, verified: bool) -> list[str]:
     return cmd
 
 
+def lenh_in_pdf(py: str, dash: Path) -> list[str]:
+    """Lệnh in toàn văn XML/HTML đã đọc trong kho thành PDF (18/10/2026) — chạy NGAY TRƯỚC ⑧ để EndNote có tệp gắn cho bài mà
+    kho chỉ có XML JATS/HTML (đo 18/10: 320/873 bản ghi EndNote trống vì lý do này)."""
+    return [py, str(ROOT / "tools" / "in_pdf_toan_van_kho.py"), "--kho", str(kho_canh_dashboard(dash)), "--file", str(dash),
+            "--ap-dung"]
+
+
 def buoc_endnote(py: str, dash: Path, verified: bool) -> int | None:
     """⑧ EndNote — best-effort như ⑤ ⑥, không đổi rc_final. Trả mã của công cụ (None nếu thiếu công cụ)."""
     NAP_EN = ROOT / "tools" / "nap_endnote_chu_de.py"
     if not NAP_EN.exists():
         print("   ⚠ Bỏ qua: thiếu tools/nap_endnote_chu_de.py")
         return None
+    if (ROOT / "tools" / "in_pdf_toan_van_kho.py").exists():
+        rc_in, out_in = run(lenh_in_pdf(py, dash))
+        for dong in out_in.splitlines():
+            if dong.strip().startswith(("In toàn văn", "✓", "⚠", "⚪")):
+                print("   " + dong.strip())
+        if rc_in not in (0, 1):
+            print("   ⚠ Chưa in được toàn văn kho thành PDF (không chặn ⑧).")
     if not verified:
         print("   ⓘ Cổng CHƯA xác minh nguồn sống ⇒ nạp kèm --chua-xac-minh (khối đọc nhanh không ghi «đã qua cổng»).")
     rc, out = run(lenh_endnote(py, dash, verified))
