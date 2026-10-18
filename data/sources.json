@@ -657,7 +657,7 @@
     },
     {
       "id": "SRC-039",
-      "name": "Semantic Scholar — bác sĩ ĐỔI Ý bật lại 22/09/2026, đo sống lộ giới hạn nhịp thật",
+      "name": "Semantic Scholar — LOẠI KHỎI VẬN HÀNH 18/10/2026 (bác sĩ quyết)",
       "org": "Allen Institute for AI (Semantic Scholar)",
       "tier": 2,
       "domain": [
@@ -672,9 +672,9 @@
       "detection_method": "api-query",
       "measured_latency_days": null,
       "owner": "agent-A2",
-      "status": "degraded",
+      "status": "not-covered",
       "last_success_at": null,
-      "known_gap": "ĐÃ đổi ENABLE_SEMANTIC_SCHOLAR=true (bác sĩ đổi ý sau khi nghe giải thích 'không cần khoá vẫn chạy được'). Nhưng 'chạy được về mặt code' KHÁC 'trả kết quả thật ngay bây giờ' — đo sống 2 lần liên tiếp (query 'heart failure', 'diabetes') đều nhận HTTP 429 (đã thử lại theo backoff chuẩn của HttpClient, vẫn hết hạn mức) — connector đúng thiết kế fail-closed: trả `live:true, count:0, results:[]`, KHÔNG bịa dữ liệu giả khi bị chặn. Vì vậy dù đã BẬT, thực tế sẽ THƯỜNG XUYÊN trả rỗng cho tới khi có API key thật. Ghi status=degraded (không phải active) đúng sự thật đo được, không phải suy đoán. Người đọc: khi thấy Semantic Scholar trong SourceLog toàn 'error'/429, đây là hành vi ĐÃ BIẾT, không phải lỗi mới.",
+      "known_gap": "LOẠI KHỎI VẬN HÀNH 18/10/2026 theo quyết định của bác sĩ («Loại bỏ Semantic Scholar»): kênh không khoá trả HTTP 429 kéo dài — đo 22/09 (2 lượt test-live đều 429), «hỏng kéo dài» 3 lượt live liền 01→18/10, đo lại do_mang_nguon.py 18/10 vẫn 429. Engine không còn truy vấn nguồn này (y khoa #174: gỡ khỏi get_enabled_sources, test-live, adapter đo sống, phép đo mạng). Khôi phục chỉ khi bác sĩ có khoá API và quyết bật lại. Lịch sử trước đó: ĐÃ đổi ENABLE_SEMANTIC_SCHOLAR=true (bác sĩ đổi ý sau khi nghe giải thích 'không cần khoá vẫn chạy được'). Nhưng 'chạy được về mặt code' KHÁC 'trả kết quả thật ngay bây giờ' — đo sống 2 lần liên tiếp (query 'heart failure', 'diabetes') đều nhận HTTP 429 (đã thử lại theo backoff chuẩn của HttpClient, vẫn hết hạn mức) — connector đúng thiết kế fail-closed: trả `live:true, count:0, results:[]`, KHÔNG bịa dữ liệu giả khi bị chặn. Vì vậy dù đã BẬT, thực tế sẽ THƯỜNG XUYÊN trả rỗng cho tới khi có API key thật. Ghi status=degraded (không phải active) đúng sự thật đo được, không phải suy đoán. Người đọc: khi thấy Semantic Scholar trong SourceLog toàn 'error'/429, đây là hành vi ĐÃ BIẾT, không phải lỗi mới.",
       "last_probe_at": "2026-09-22"
     },
     {
