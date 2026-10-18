@@ -106,6 +106,9 @@ NGUON_PDF = (
     ("UPW", "Unpaywall — bản mang giấy phép mở"),
     ("WTDM", "Wiley TDM"),
     ("CHR", "bản lưu trong phiên trình duyệt có uỷ quyền của bác sĩ"),
+    # 18/10/2026: bản in từ toàn văn XML/HTML ĐÃ QUA CỔNG trong kho (tools/in_pdf_toan_van_kho.py) — ưu tiên THẤP NHẤT: mọi PDF
+    # gốc ở trên luôn thắng. Không khớp TEN_TEP_TOAN_VAN nên không được đếm thành một nguồn toàn văn mới.
+    ("BANIN", "bản in từ toàn văn XML/HTML đã đọc trong kho"),
 )
 MA_OK, MA_MOT_PHAN, MA_KHONG_CHAY, MA_THAM_SO = 0, 1, 2, 3
 _TEN_UNG_DUNG = re.compile(r"^[\w .\-]{1,60}$")
