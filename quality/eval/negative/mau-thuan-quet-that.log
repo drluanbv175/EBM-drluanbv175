@@ -1,16 +1,4 @@
-ỆN HÀNH
 
-  ── LÁT CẮT KHÁC NHAU CỦA CÙNG CHỦ ĐỀ (BỔ SUNG, không thay nhau) ──
-  ▸ BenhThanMan: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260607  BenhThanMan_CKD
-      20260813  BenhThanMan_BenhKem_DoiTuongDacBiet
-      20260816  BenhThanMan_ThieuMau
-
-  ▸ COPD: 4 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260610  COPD
-      20260709  COPD_TimMachNoiTiet
-      20260710  COPD_TimThanChuyenHoa
-      20260805  COPD_DoiTuongDacBiet_DaBenh
 
   ▸ DauDau: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
       20260718  DauDau
@@ -32,18 +20,26 @@
       20260804  SuyTim_TongHop
       20260805  SuyTim_TongHop
       20260811  SuyTim_TongHop
+      20260909  SuyTim_TongHop
+      20260914  SuyTim_TongHop
 
   ▸ VKDT: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
       20260717  VKDT_TongHop
       20260811  VKDT_TamThanKinh
+      20260915  VKDT_TamThanKinh
 
-  ▸ ViemGanB: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
+  ▸ ViemGanB: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
       20260716  ViemGanB_DieuTri
       20260811  ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet
+      20260912  ViemGanB_TiepCanChanDoan_DieuTri
 
   ── Bản cũ CHỈ THIẾU, không nói sai (bản mới bao trọn) ──
-     SuyTim_TongHop: bản 20260804 nằm gọn trong bản 20260811 (+17 nguồn mới)
-     SuyTim_TongHop: bản 20260805 nằm gọn trong bản 20260811 (+12 nguồn mới)
+     SuyTim_TongHop: bản 20260804 nằm gọn trong bản 20260914 (+35 nguồn mới)
+     SuyTim_TongHop: bản 20260805 nằm gọn trong bản 20260914 (+30 nguồn mới)
+     SuyTim_TongHop: bản 20260811 nằm gọn trong bản 20260914 (+18 nguồn mới)
+     SuyTim_TongHop: bản 20260909 nằm gọn trong bản 20260914 (+4 nguồn mới)
+     TienLuongSuyTim: bản 20260718 nằm gọn trong bản 20260914 (+3 nguồn mới)
+     VKDT_TamThanKinh: bản 20260811 nằm gọn trong bản 20260915 (+13 nguồn mới)
      ViemDaDay_TongHop: bản 20260811 nằm gọn trong bản 20260816 (+8 nguồn mới)
 
 ======================================================================

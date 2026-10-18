@@ -16,6 +16,6 @@
   ✓ rút-và-thay khai ĐỦ → cảnh báo; khai THIẾU (apply) → vẫn chặn
   ✓ ed1: ký khoá riêng tạm → verify CHỈ bằng khoá công; sửa nội dung → trượt
 ----------------------------------------------------------------------
-🟢 14/14 lỗi gài đều bị bắt.
+🟢 14/14 lỗi gài kiểm được đều bị bắt.
    Canary kiểm DÂY CHUYỀN CÔNG CỤ — KHÔNG chứng minh agent đã GỌI cổng lúc chạy
    thật. Cần bác sĩ kiểm chứng.
