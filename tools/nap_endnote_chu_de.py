@@ -783,8 +783,14 @@ def doc_thung_rac(thu_vien: Path) -> dict[str, set[str]]:
     return ra
 
 
+_KHOA_GHI = None  # mô-đun khoá ghi, nạp một lần (None = chưa nạp, False = nạp hỏng)
+
+
 class EndNoteMac:
-    """Bọc các lệnh AppleScript đã đo của EndNote. Mọi lệnh đi qua `_chay` (dễ thay khi test)."""
+    """Bọc các lệnh AppleScript đã đo của EndNote. Mọi lệnh đi qua `_chay` (dễ thay khi test).
+
+    KHÔNG BAO GIỜ dùng lệnh `delete record` của EndNote: đo 19/10/2026 trên BẢN SAO thư viện, lệnh này XOÁ HẲN hàng khỏi
+    `refs` (không vào thùng rác). Bỏ bản ghi chỉ qua thùng rác do bác sĩ bấm (`tools/chuyen_nhom_vao_thung_rac.py`)."""
 
     def __init__(self, ung_dung: str, thu_vien: Path) -> None:
         if sys.platform != "darwin":
@@ -878,7 +884,25 @@ class EndNoteMac:
                     ra[phan[0]] = [x for x in phan[1:] if x]
         return ra
 
+    def _truoc_khi_ghi(self, ly_do: str) -> None:
+        """KHOÁ GHI (19/10/2026, `tools/khoa_ghi_endnote.py`): chờ khi bác sĩ đang thao tác trên EndNote, giữ khoá giữa các
+        tiến trình Claude, báo một lần «Claude đang ghi EndNote». Bác sĩ vẫn bận quá hạn ⇒ ném lỗi (bỏ lượt ghi, không chen).
+        Thiếu mô-đun khoá (cây cũ) ⇒ ghi như trước kèm một dòng cảnh báo — không làm hỏng dây chuyền."""
+        global _KHOA_GHI
+        if _KHOA_GHI is None:
+            try:
+                sp = importlib.util.spec_from_file_location("_khoa_ghi_endnote", Path(__file__).resolve().parent / "khoa_ghi_endnote.py")
+                m = importlib.util.module_from_spec(sp)
+                sp.loader.exec_module(m)
+                _KHOA_GHI = m
+            except Exception as e:  # noqa: BLE001
+                _KHOA_GHI = False
+                print(f"⚠ không nạp được khoá ghi EndNote ({type(e).__name__}) — ghi không qua khoá", file=sys.stderr)
+        if _KHOA_GHI:
+            _KHOA_GHI.cho_phep_ghi(getattr(self, "ung_dung", "EndNote"), ly_do)
+
     def nhap(self, tep_xml: Path) -> None:
+        self._truoc_khi_ghi("nhập trích dẫn mới")
         self._chay('set x to read (POSIX file (item 1 of argv)) as «class utf8»\n'
                    'import x into document (item 2 of argv)', str(tep_xml), self.ten)
 
@@ -890,6 +914,7 @@ class EndNoteMac:
 
     def dang_vao_nhom(self, ids: list[str], ten_nhom: str) -> None:
         if ids:
+            self._truoc_khi_ghi(f"đăng {len(ids)} bản ghi vào nhóm «{ten_nhom}»")
             self._chay('set ids to items 3 thru -1 of argv\n'
                        'post records in ids in window (item 2 of argv) as (item 1 of argv) of type "CUSTOM"',
                        ten_nhom, self.ten, *ids)
@@ -910,6 +935,7 @@ class EndNoteMac:
 
     def gan_tep(self, ma: str, url: str) -> None:
         """Gắn MỘT tệp vào bản ghi rồi đọc lại — không khớp ⇒ lỗi (không im lặng coi là đã gắn)."""
+        self._truoc_khi_ghi("gắn toàn văn vào bản ghi")
         doc_lai = self._chay('set field "File Attachments" of record (item 1 of argv) to (item 2 of argv)\n'
                              'return field "File Attachments" of record (item 1 of argv)', ma, url)
         if doc_lai.strip() != url:
@@ -938,6 +964,7 @@ class EndNoteMac:
                 'repeat with i from 2 to (count of argv) by 2\nset r to item i of argv\n'
                 'set field f of record r to (item (i + 1) of argv)\n'
                 'set out to out & (field f of record r) & RS\nend repeat\nreturn out')
+        self._truoc_khi_ghi(f"ghi trường «{truong}» cho {len(cap)} bản ghi")
         try:
             doc_lai = self._chay(than, truong, *[x for p in cap for x in p]).split("\x1e")
         except RuntimeError as e:  # lỗi giữa lô: không biết bản nào đã ghi — lượt sau đọc lại và ghi tiếp

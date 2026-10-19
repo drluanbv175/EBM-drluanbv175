@@ -525,6 +525,34 @@ def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = Non
     return []
 
 
+def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str]]:
+    """THƯ VIỆN ENDNOTE (19/10/2026, bác sĩ: «Hãy làm tất cả 6 việc giúp tôi» — việc 6).
+
+    Thư viện đặt trong OneDrive theo lựa chọn của bác sĩ ⇒ canh hai rủi ro Clarivate cảnh báo: BẢN SAO XUNG ĐỘT đồng bộ và tệp
+    chỉ còn trên mây (ưu tiên 1); cùng nhóm «_Cho thung rac…» còn bản ghi chờ bác sĩ chuyển vào thùng rác (ưu tiên 2). Nguồn:
+    `tools/endnote_suc_khoe.py` — chỉ đọc cơ sở dữ liệu `sdb.eni`, KHÔNG gửi AppleScript (không bật EndNote). Chưa khai thư viện /
+    không đọc được ⇒ giác quan chết (⚪), KHÔNG phải «ổn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        if tinh_trang is None:
+            sp = _ilu_mea.spec_from_file_location("_sk_tdxv", Path(__file__).resolve().parent / "endnote_suc_khoe.py")
+            sk = _ilu_mea.module_from_spec(sp)
+            sp.loader.exec_module(sk)
+            tinh_trang = sk.tinh_trang
+        kq = tinh_trang()
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "thư viện EndNote"], f"lỗi {type(exc).__name__}")
+        return []
+    if not kq.get("do_duoc"):
+        _ghi_chet(["", "thư viện EndNote"], str(kq.get("ly_do") or "không đo được")[:120])
+        return []
+    ra = [(1, f"Thư viện EndNote: {c}", "python3 tools/endnote_suc_khoe.py") for c in kq.get("canh_bao") or []]
+    for n in kq.get("nhom_cho_thung_rac") or []:
+        ra.append((2, f"Nhóm EndNote «{n['ten']}» còn {n['con_o_thu_vien']}/{n['tong']} bản ghi chờ bác sĩ chuyển vào thùng rác",
+                   "bấm đúp «Chuyen Nhom Vao Thung Rac.command» ở gốc repo"))
+    return ra
+
+
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
     """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
@@ -1182,6 +1210,10 @@ def main() -> int:
 
     # ⑦l SKILL TÀI KHOẢN CLAUDE.AI (04/10/2026, BH163): bộ skill Cowork/claude.ai/Routine nạp cũ hơn repo — xem docstring.
     for uu, dong, lenh in giac_quan_skill_tai_khoan():
+        de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦m THƯ VIỆN ENDNOTE (19/10/2026): bản sao xung đột OneDrive · tệp chỉ còn trên mây · nhóm chờ thùng rác — xem docstring.
+    for uu, dong, lenh in giac_quan_endnote():
         de_xuat.append((uu, "👤", dong, lenh))
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
