@@ -9,6 +9,16 @@
         "-c",
         "import pathlib,runpy,sys;c=pathlib.Path.cwd();r='tools/mcp/chay_pubmed_search_mcp.py';s=next((d/r for d in (c,*c.parents) if (d/r).is_file() and (d/'.mcp.json').is_file()),None);sys.exit('[pubmed-search] khong thay '+r+' nam canh .mcp.json, do tu '+str(c)+' tro len') if s is None else runpy.run_path(str(s),run_name='__main__')"
       ]
+    },
+    "endnote-ebm": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--no-project",
+        "python",
+        "-c",
+        "import pathlib,runpy,sys;c=pathlib.Path.cwd();r='tools/mcp/endnote_ebm_mcp.py';s=next((d/r for d in (c,*c.parents) if (d/r).is_file() and (d/'.mcp.json').is_file()),None);sys.exit('[endnote-ebm] khong thay '+r+' nam canh .mcp.json, do tu '+str(c)+' tro len') if s is None else runpy.run_path(str(s),run_name='__main__')"
+      ]
     }
   }
 }
