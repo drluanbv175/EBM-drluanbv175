@@ -7635,6 +7635,35 @@ def bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard():
     return True, "⑧ đếm lại thư viện sau nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2) · build_library/make_derivatives ghi cạnh dashboard"
 
 
+def bh166_nut_command_mang_bit_thuc_thi_trong_index():
+    """19/10 — nút «Chuyen Nhom Vao Thung Rac.command» gộp vào master với chế độ 100644: repo đặt core.fileMode=false
+    nên `chmod +x` trên đĩa KHÔNG được git ghi lại; máy kéo về nhận tệp không có quyền chạy, bác sĩ bấm đúp không chạy.
+    Kiểm: (1) mọi tệp .command đã track mang 100755 TRONG INDEX; (2) pre-commit có dòng THI HÀNH chặn tệp .command
+    thiếu bit (không tính dòng chú thích)."""
+    import subprocess as _sp
+    git = _sh_which("git")
+    if not git:
+        return False, "không có git để đọc chế độ tệp trong index"
+    r = _sp.run([git, "-c", "core.quotePath=false", "ls-files", "-s", "--", "*.command"], cwd=REPO, capture_output=True, text=True,
+                encoding="utf-8", errors="replace")
+    if r.returncode != 0:
+        return False, f"git ls-files lỗi: {r.stderr.strip()[:200]}"
+    dong = [d for d in r.stdout.splitlines() if d.strip()]
+    if not dong:
+        return False, "không thấy tệp .command nào trong index — chốt không có gì để kiểm (đường dẫn REPO sai?)"
+    thieu = [d.split("\t", 1)[-1] for d in dong if not d.startswith("100755")]
+    if thieu:
+        return False, f"{len(thieu)} tệp .command thiếu bit thực thi trong git: {', '.join(thieu)[:300]}"
+    hook = REPO / ".githooks/pre-commit"
+    try:
+        thi_hanh = [d for d in hook.read_text(encoding="utf-8").splitlines() if not d.lstrip().startswith("#")]
+    except OSError as e:
+        return False, f"không đọc được .githooks/pre-commit: {e}"
+    if not any("ls-files -s" in d and ".command" in d and "100755" in d for d in thi_hanh):
+        return False, "pre-commit không còn dòng thi hành chặn tệp .command thiếu bit thực thi"
+    return True, f"{len(dong)} tệp .command đều 100755; pre-commit chặn khi thiếu"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10864,6 +10893,7 @@ BAI_HOC = [
     ("BH163", "04/10", "Skill tài khoản claude.ai: so CẢ tệp phụ (không chỉ SKILL.md), đóng gói ZIP đúng cấu trúc tải lên (gốc <tên>/, name = tên thư mục) và hòm việc nhắc khi tài khoản cũ", bh163_skill_tai_khoan_tep_phu_va_dong_goi),
     ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
     ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
+    ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

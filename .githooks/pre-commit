@@ -137,4 +137,15 @@ if [ -f tools/kiem_bi_mat_truoc_commit.py ]; then
   fi
 fi
 
+# 19/10/2026 (BH166): nut bam dup .command phai mang bit thuc thi TRONG INDEX. Repo dat core.fileMode=false nen
+# chmod +x tren dia KHONG duoc git ghi lai — nut «Chuyen Nhom Vao Thung Rac.command» gop vao master voi 100644,
+# bac si bam dup khong chay. Sua: git update-index --chmod=+x -- <tep>.
+KHONG_CHAY=$(git -c core.quotePath=false ls-files -s -- '*.command' | awk '$1 != "100755"' | cut -f2-)
+if [ -n "$KHONG_CHAY" ]; then
+  echo "CHAN COMMIT: tep .command thieu bit thuc thi trong git (bac si bam dup se khong chay):" >&2
+  echo "$KHONG_CHAY" >&2
+  echo "  Sua: git update-index --chmod=+x -- <tep>" >&2
+  exit 1
+fi
+
 exit 0
