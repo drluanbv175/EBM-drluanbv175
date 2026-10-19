@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.54.0 — 2026-10-19 (bước ⑨: tóm tắt chứng cứ Word cho trích dẫn MỚI có PDF)
+
+Bác sĩ 19/10/2026: «Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên». `xuat_goi_cap_nhat.py --online`
+thêm ⑨ sau ⑧: `tools/tom_tat_chung_cu_word.py hang-cho --dashboard <dashboard> --chuan-bi` liệt kê trích dẫn của chủ đề có
+PDF, nạp SAU mốc «để nguyên» (1887 bản ghi ngày 19/10 không bao giờ vào hàng chờ) và chưa có Word; dựng sẵn gói đọc. Phiên
+Claude xử lý tuần tự: một agent đọc → cổng tất định → một agent ĐỘC LẬP kiểm chéo từng câu → Word 11 mục có điểm nhấn màu, gắn
+EndNote. Hòm việc có giác quan 🛎 cho hàng chờ.
+
 ## v1.53.0 — 2026-10-02 (cổng nhận HTTP 401 của www.fda.gov là «chặn kiểm tự động», vẫn đòi bằng chứng trình duyệt)
 
 **Cổng liêm chính (`tools/verify_dashboard.py`, 4 bản đồng bộ byte).** www.fda.gov đổi cách chặn trình khách tự động: urllib nhận

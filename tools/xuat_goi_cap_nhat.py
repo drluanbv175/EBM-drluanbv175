@@ -241,6 +241,32 @@ def buoc_endnote(py: str, dash: Path, verified: bool) -> int | None:
     return rc
 
 
+# Trần giây cho ⑨: mỗi mục hàng chờ tra rút bài qua mạng (lỗi mạng ⇒ thử lại tới ≈ 45 giây/mục).
+TRAN_GIAY_TOM_TAT_WORD = 1800
+
+
+def lenh_tom_tat_word(py: str, dash: Path) -> list[str]:
+    """Lệnh ⑨: hàng chờ tóm tắt Word cho trích dẫn MỚI có PDF của chủ đề này, dựng sẵn gói đọc (tra rút bài)."""
+    return [py, str(ROOT / "tools" / "tom_tat_chung_cu_word.py"), "hang-cho", "--dashboard", str(dash), "--chuan-bi"]
+
+
+def buoc_tom_tat_word(py: str, dash: Path) -> int | None:
+    """⑨ TÓM TẮT CHỨNG CỨ WORD cho trích dẫn MỚI có PDF (bác sĩ 19/10/2026: «xây dựng cho những chứng cứ sau này, còn hiện
+    tại hãy để nguyên»). Bản ghi thuộc mốc «để nguyên» không bao giờ vào hàng chờ. Python chỉ LIỆT KÊ + dựng gói đọc; việc
+    đọc toàn văn, kiểm chéo độc lập và dựng Word là của phiên Claude (skill cap-nhat-chung-cu-y-khoa, bước ⑨). Best-effort
+    như ⑧: không đổi rc_final."""
+    if not (ROOT / "tools" / "tom_tat_chung_cu_word.py").exists():
+        print("   ⚠ Bỏ qua: thiếu tools/tom_tat_chung_cu_word.py")
+        return None
+    rc, out = run(lenh_tom_tat_word(py, dash), timeout=TRAN_GIAY_TOM_TAT_WORD)
+    for dong in out.splitlines():
+        if dong.strip() and "| INFO" not in dong and "| WARNING" not in dong:
+            print("   " + dong.rstrip())
+    if rc not in (0, 2):
+        print("   ⚠ Chưa lập được hàng chờ tóm tắt Word (không chặn 5 sản phẩm trên).")
+    return rc
+
+
 def ghi_sidecar_hash_data(dash: Path, word_path: str) -> None:
     """VÁ 25/08/2026 (BH76) — ghi sidecar `<tên>.data-sha256` cạnh bản Word, chứa
     SHA256 của khối `const DATA` trong dashboard TẠI THỜI ĐIỂM xuất.
@@ -715,6 +741,16 @@ def main() -> int:
         print("   ⚪ Bỏ qua trong lượt test.")
     else:
         buoc_endnote(py, dash, verified)
+
+    # ── ⑨ TÓM TẮT CHỨNG CỨ WORD cho trích dẫn MỚI có PDF (bác sĩ 19/10/2026) — sau ⑧ để bài vừa nạp có mặt. Gói đọc tra
+    # rút bài ⇒ cần mạng ⇒ chỉ khi --online. Phiên Claude xử lý hàng chờ theo skill (đọc → kiểm chéo độc lập → Word). ──
+    print("⑨ Tóm tắt chứng cứ Word (trích dẫn mới có PDF)…")
+    if _dang_kiem_thu():
+        print("   ⚪ Bỏ qua trong lượt test.")
+    elif not a.online:
+        print("   ⚪ Bỏ qua (không có --online — gói đọc cần tra rút bài).")
+    else:
+        buoc_tom_tat_word(py, dash)
 
     # VÁ 13/08/2026 — TIÊU ĐỀ PHẢI NÓI ĐÚNG SỰ THẬT.
     # Bản cũ in "── Bộ năm đã sẵn sàng ──" VÔ ĐIỀU KIỆN, kể cả khi chỉ sinh được 3/5.

@@ -553,6 +553,36 @@ def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str]]:
     return ra
 
 
+def giac_quan_tom_tat_word(hang_cho=None) -> list[tuple[int, str, str]]:
+    """TÓM TẮT CHỨNG CỨ WORD cho trích dẫn MỚI có PDF (19/10/2026, bác sĩ: «xây dựng cho những chứng cứ sau này, còn hiện tại
+    hãy để nguyên»). Bản ghi thuộc mốc «để nguyên» không tính. Việc cần một phiên Claude (đọc toàn văn → kiểm chéo độc lập →
+    Word) ⇒ nhãn 🛎. Chưa có mốc / không đọc được thư viện ⇒ giác quan chết (⚪), KHÔNG phải «không có việc»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        if hang_cho is None:
+            sp = _ilu_mea.spec_from_file_location("_ttcc_tdxv", Path(__file__).resolve().parent / "tom_tat_chung_cu_word.py")
+            tt = _ilu_mea.module_from_spec(sp)
+            sp.loader.exec_module(tt)
+            tv = tt.mod("sk").thu_vien_cau_hinh()
+            if tv is None:
+                _ghi_chet(["", "tóm tắt Word chứng cứ mới"], "chưa khai thư viện EndNote")
+                return []
+
+            def hang_cho():
+                return tt.hang_cho(Path(tv))
+        ds = hang_cho()
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "tóm tắt Word chứng cứ mới"], f"lỗi {type(exc).__name__}")
+        return []
+    if ds is None:
+        _ghi_chet(["", "tóm tắt Word chứng cứ mới"], "chưa có mốc «để nguyên»")
+        return []
+    if not ds:
+        return []
+    return [(2, f"{len(ds)} trích dẫn MỚI có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)",
+             "python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨")]
+
+
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
     """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
@@ -1215,6 +1245,10 @@ def main() -> int:
     # ⑦m THƯ VIỆN ENDNOTE (19/10/2026): bản sao xung đột OneDrive · tệp chỉ còn trên mây · nhóm chờ thùng rác — xem docstring.
     for uu, dong, lenh in giac_quan_endnote():
         de_xuat.append((uu, "👤", dong, lenh))
+
+    # ⑦n TÓM TẮT CHỨNG CỨ WORD (19/10/2026): trích dẫn MỚI có PDF chờ phiên Claude tóm tắt — xem docstring.
+    for uu, dong, lenh in giac_quan_tom_tat_word():
+        de_xuat.append((uu, "🛎", dong, lenh))
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
