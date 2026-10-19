@@ -32,8 +32,15 @@ Với mỗi trích dẫn có PDF toàn văn, bổ sung một tệp Word tóm t�
 - Bài thử đầu tiên: PARADIGM-HF (PMID 25176015) đã được gắn vào recNum 6914; PDF gốc còn nguyên.
 
 ## Kiểm
-- `tools/test_tom_tat_chung_cu_word_20261019.py`: 22 ca.
-- 9 phép đột biến đều làm kiểm đỏ (một phép sống sót ở lượt đầu — nới số nguyên — đã thêm ca để bắt).
+- `tools/test_tom_tat_chung_cu_word_20261019.py`: 28 ca.
+- 17 phép đột biến (9 của cổng gốc + 8 của khuôn v2) đều làm kiểm đỏ; phép «nới số nguyên» sống sót ở lượt đầu — đã thêm ca để bắt.
+
+## Trình bày theo yêu cầu bác sĩ (cùng ngày, khuôn v2)
+- Bỏ các mục «đối chiếu dashboard», «trích nguyên văn», «câu hỏi còn mở». Mỗi mục mở đầu bằng một ô ĐIỂM NHẤN tô màu, chữ đậm màu mang nghĩa: xanh lá = lợi ích / nguy cơ sai lệch thấp; đỏ = cảnh báo / nguy cơ cao; cam = thận trọng; xanh dương = theo dõi. Bộ dựng chuyển sang python-docx trực tiếp; bộ chuyển Markdown cũ không có màu.
+- «Cần kiểm chứng», «cần xác nhận», «[CẦN…]», «đề xuất của máy» bị cấm trong thân văn bản (cổng chặn); chỉ ghi ở mục Lưu ý CUỐI văn bản (trường `can_xac_nhan`). Ghi chú «GRADE do máy đánh giá» chuyển xuống cuối, không bỏ.
+- Mở rộng phép kiểm số ra MỌI trường chữ. Ở bài thử, cổng bắt được tổng tự cộng «8399», «2031» và số làm tròn «70%» khi trước đó chỉ phần tóm lược được kiểm.
+- Bộ kiểm có hai lỗi đã vá: (1) coi dấu cách thường là phân cách hàng nghìn, nên gộp hai số đứng cạnh nhau trong bảng PDF thành «15121», «696100»; (2) không bỏ số 0 đứng đầu, nên «08» ≠ «8».
+- Tệp Word qua trình xác thực OOXML của skill docx. Lỗi duy nhất lúc đầu nằm ở mẫu mặc định của python-docx (`w:zoom` thiếu `w:percent`), đã vá.
 
 ## Bài học
 Bác sĩ dựa vào bản tóm tắt để thực hành, nên cổng phải đối chiếu số với TRANG của PDF chứ không đối chiếu với trí nhớ của mô hình. PDF tách chữ sinh ra gạch nối kiểu «air -⏎way» và chữ của bảng chen giữa câu; bộ so khớp trích dẫn phải chịu được các lỗi này nhưng không được nới tới mức nhận câu bịa.

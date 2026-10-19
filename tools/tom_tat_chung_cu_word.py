@@ -17,7 +17,8 @@ DÂY CHUYỀN (mỗi trích dẫn):
        · mọi trích dẫn nguyên văn ≤ 15 từ và tìm thấy trên trang khai;
        · công cụ nguy cơ sai lệch ĐÚNG thiết kế (RoB 2 chỉ cho RCT; ROBINS cho quan sát; AMSTAR-2 cho tổng quan; QUADAS cho
          chẩn đoán; AGREE II cho guideline);
-       · GRADE luôn in là ĐỀ XUẤT CỦA MÁY — không bao giờ thay phân hạng của dashboard/bác sĩ;
+       · GRADE do máy đánh giá — không bao giờ thay phân hạng của dashboard/bác sĩ; nguồn gốc này, «cần kiểm chứng» và các
+         điểm «cần xác nhận» chỉ ghi ở mục Lưu ý CUỐI văn bản (bác sĩ 19/10/2026), thân văn bản không chứa các cụm đó;
        · bài đã RÚT ⇒ chặn (mã 3); định danh PDF không khớp ⇒ chặn (mã 3).
      Word lưu cạnh thư viện EndNote: `<thư mục thư viện>/TomTatChungCu/<khoá>_TomTatChungCu.docx` (đi theo OneDrive);
      JSON nguồn đã qua cổng lưu ở `TomTatChungCu/_nguon/`.
@@ -55,7 +56,7 @@ from pathlib import Path
 GOC = Path(__file__).resolve().parents[1]
 CACHE = Path.home() / ".ebm-cache" / "tom-tat-chung-cu"
 TEN_THU_MUC_RA = "TomTatChungCu"
-PHIEN_BAN_KHUON = 1
+PHIEN_BAN_KHUON = 2  # v2 (19/10/2026): thêm `diem_nhan`; bỏ đối chiếu dashboard · trích nguyên văn · câu hỏi mở
 TOI_DA_TU_TRICH = 15
 LOAI_THIET_KE = ("rct", "sr_ma", "cohort", "case_control", "cross_sectional", "diagnostic", "guideline", "nhan_thuoc", "khac")
 TEN_THIET_KE = {"rct": "Thử nghiệm lâm sàng ngẫu nhiên có đối chứng", "sr_ma": "Tổng quan hệ thống / phân tích gộp",
@@ -77,6 +78,11 @@ CONG_CU_HOP_LE = {
 }
 MUC_GRADE = ("cao", "trung bình", "thấp", "rất thấp", "không áp dụng")
 TRUONG_SO = ("nhom_can_thiep", "nhom_so_sanh", "hieu_ung", "ktc95", "p", "tuyet_doi", "nnt")
+# Ô «ĐIỂM NHẤN» mở đầu mỗi mục của Word (bác sĩ 19/10/2026). `tac_hai` không có ở guideline/nhãn thuốc.
+KHOA_DIEM_NHAN = ("thong_tin", "pico", "phuong_phap", "ket_qua", "tac_hai", "nguy_co_sai_lech", "grade", "ap_dung_vn", "goi_y",
+                  "manh_han_che")
+TOI_DA_TU_DIEM_NHAN = 70
+DANH_GIA_TAC_HAI = ("bat_loi", "loi", "tuong_duong")
 MIEN_TRU = "Bản tóm tắt do MÁY (Claude) soạn từ toàn văn — CẦN BÁC SĨ KIỂM CHỨNG trước khi áp dụng cho người bệnh."
 
 MAU = {
@@ -99,7 +105,8 @@ MAU = {
                  "nhom_so_sanh": "386/841 (46%)", "hieu_ung": "RR 0.70", "ktc95": "0.60–0.82", "p": "<0.001",
                  "tuyet_doi": "ARR 11%", "nnt": "9", "may_tinh": ["tuyet_doi", "nnt"], "trang": 3}],
     "tac_hai": [{"ket_cuc": "Vú to/đau vú ở nam", "chinh": False, "nhom_can_thiep": "10%", "nhom_so_sanh": "1%",
-                 "hieu_ung": "", "ktc95": "", "p": "<0.001", "tuyet_doi": "", "nnt": "", "may_tinh": [], "trang": 4}],
+                 "hieu_ung": "", "ktc95": "", "p": "<0.001", "tuyet_doi": "", "nnt": "", "may_tinh": [], "trang": 4,
+                 "danh_gia": "bat_loi"}],
     "tac_hai_ghi_chu": "Ghi khi bài không báo cáo tác hại có cấu trúc.",
     "phan_nhom": ["Phân nhóm (kèm kiểm định tương tác nếu bài báo cáo)."],
     "khuyen_cao": [],
@@ -110,15 +117,15 @@ MAU = {
     "goi_y_ap_dung": {"nen_lam": ["…"], "khong_nen": ["…"], "dieu_kien": ["…"], "theo_doi": ["…"]},
     "diem_manh": ["…"],
     "han_che": ["…"],
-    "doi_chieu_dashboard": "Bài là nguồn chính của mục … (decision …); bản tóm tắt khớp/lệch ở điểm …",
-    "trich_nguyen_van": [{"cau": "tối đa 15 từ, chép đúng chữ trong PDF", "trang": 3}],
-    "cau_hoi_mo": ["…"],
+    "diem_nhan": {"thong_tin": "…", "pico": "…", "phuong_phap": "…", "ket_qua": "…", "tac_hai": "…",
+                  "nguy_co_sai_lech": "…", "grade": "…", "ap_dung_vn": "…", "goi_y": "…", "manh_han_che": "…"},
+    "can_xac_nhan": ["Điểm chưa chắc (chi phí, BHYT, chứng cứ khác cần tra) — chỉ in ở mục Lưu ý cuối văn bản"],
     "nguoi_soan": "Claude (máy) — đề xuất, chưa qua bác sĩ",
 }
 # Khoá bắt buộc theo thiết kế (guideline/nhãn thuốc không có nhóm can thiệp–so sánh theo nghĩa thử nghiệm).
 _BAT_BUOC_CHUNG = ("khoa", "loai_thiet_ke", "thiet_ke_mo_ta", "cau_hoi_lam_sang", "ket_luan_thuc_hanh", "boi_canh",
                    "nguy_co_sai_lech", "grade_de_xuat", "kha_nang_ap_dung", "goi_y_ap_dung", "diem_manh", "han_che",
-                   "doi_chieu_dashboard", "trich_nguyen_van")
+                   "diem_nhan")
 _BAT_BUOC_NGHIEN_CUU = ("doi_tuong", "ket_cuc", "phan_tich", "ket_qua")
 _BAT_BUOC_THEO_THIET_KE = {
     "rct": _BAT_BUOC_NGHIEN_CUU + ("can_thiep_so_sanh",),
@@ -142,20 +149,30 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    `nnt`) phải chép ĐÚNG như trong bài, và có trên trang `trang` (±1). Dấu thập phân giữ như bài (0.70 / 0·70 đều được).
    Số do bạn TỰ TÍNH (ARR, NNT, NNH…) ⇒ ghi tên trường vào `may_tinh` (Word in dấu †) và ghi cách tính ở `phan_tich`.
    Bài không báo cáo ⇒ để chuỗi rỗng, KHÔNG suy đoán.
-2. `trich_nguyen_van`: tối đa {tu} từ mỗi câu, chép đúng chữ trên trang khai. Không chép đoạn văn dài (bản quyền).
+2. Không chép đoạn văn của bài (bản quyền) — chỉ dữ kiện bằng lời tiếng Việt. (`trich_nguyen_van` là tuỳ chọn, không in ra
+   Word; nếu ghi thì tối đa {tu} từ mỗi câu, đúng chữ trên trang khai.)
 3. `nguy_co_sai_lech.cong_cu` đúng thiết kế: RCT → «RoB 2»; tổng quan/gộp → «AMSTAR-2» (hoặc ROBIS); thuần tập/bệnh–chứng →
    «ROBINS-I» / «ROBINS-E» (hoặc Newcastle-Ottawa); chẩn đoán → «QUADAS-2»/«QUADAS-3»; guideline → «AGREE II» (ghi rõ Miền 3
    Rigour nếu guideline không mô tả); nhãn thuốc → «Không áp dụng». Mỗi miền: `danh_gia` + `ly_do` + `trang`.
 4. `grade_de_xuat`: mức ∈ {{cao, trung bình, thấp, rất thấp, không áp dụng}} cho TỪNG kết cục chính, lý do theo 5 miền hạ
-   (nguy cơ sai lệch · không nhất quán · gián tiếp · không chính xác · sai lệch xuất bản) và miền nâng. Đây là ĐỀ XUẤT — Word in
-   rõ như vậy; guideline thì ghi phân hạng NGUYÊN BẢN của guideline trong `khuyen_cao`, không tự gán.
+   (nguy cơ sai lệch · không nhất quán · gián tiếp · không chính xác · sai lệch xuất bản) và miền nâng. Nguồn gốc «máy đánh giá»
+   được ghi MỘT lần ở mục Lưu ý cuối văn bản — thân văn bản không viết «đề xuất của máy». Guideline thì ghi phân hạng NGUYÊN
+   BẢN của guideline trong `khuyen_cao`, không tự gán.
 5. `ket_luan_thuc_hanh` (2–8 gạch) và `goi_y_ap_dung`: giữ mệnh đề điều kiện của bài (quần thể, ngưỡng, chống chỉ định,
    «ngoài thai kỳ»…); số liệu gắn đúng kết cục nó đo; không khẳng định vượt bài. Không viết lời dặn bệnh nhân, không bịa liều —
    liều chỉ chép từ bài kèm trang.
-6. `kha_nang_ap_dung.trien_khai_viet_nam`: sẵn có thuốc/xét nghiệm, BHYT, khác biệt quần thể — điều chưa chắc ghi «[CẦN XÁC
-   NHẬN]», không đoán.
-7. `doi_chieu_dashboard`: đọc `ngu_canh.json` — bài là nguồn chính hay tham khảo của mục nào, decision/gradeLevel hiện tại;
-   nói rõ bản tóm tắt KHỚP hay LỆCH ở điểm nào (chỉ đặt cạnh, không đổi decision).
+6. `kha_nang_ap_dung.trien_khai_viet_nam`: sẵn có thuốc/xét nghiệm, BHYT, khác biệt quần thể — không đoán. Điều CHƯA CHẮC
+   (chi phí, BHYT, sẵn có, chứng cứ khác cần tra) KHÔNG viết vào thân văn bản: ghi từng điểm vào `can_xac_nhan` (in ở mục Lưu
+   ý cuối văn bản). Bác sĩ 19/10/2026: thân văn bản không chứa «cần kiểm chứng», «cần xác nhận», «[CẦN…]», «đề xuất của
+   máy» — cổng chặn.
+7. `diem_nhan` — ô ĐIỂM NHẤN mở đầu từng mục của Word, mỗi ô 1–2 câu (≤ {tdn} từ) nói điều QUAN TRỌNG NHẤT của mục:
+   {kdn} (guideline/nhãn thuốc bỏ `tac_hai`). Nhấn trong MỌI trường chữ bằng: `**đậm**` ·
+   `[!cảnh báo!]` (đỏ đậm — chống chỉ định, tác hại, nhóm bị loại) · `[+lợi ích+]` (xanh lá đậm — lợi ích chính). Số trong `ket_luan_thuc_hanh`, `diem_nhan`, `goi_y_ap_dung` cũng phải có NGUYÊN VĂN trong bài
+   (hoặc trong bảng kết quả/tác hại) — viết đúng số của bài (93.1%, không «≈ 93%»; không tự cộng tổng). Luật này áp cho
+   MỌI trường chữ, không chỉ phần tóm lược. Số lấy từ nguồn KHÁC (nhãn thuốc,
+   guideline, dashboard) phải nằm trong cùng một gạch có nhãn `[ngoài bài: <nguồn/PMID>]` — Word in xám nghiêng.
+   Mỗi dòng `tac_hai` thêm `danh_gia` ∈ {{bat_loi, loi, tuong_duong}} (can thiệp nhiều tác hại hơn · ít hơn · không khác) để tô màu.
+   Đọc `ngu_canh.json` để biết bài đang được dashboard dùng thế nào (decision, gradeLevel) — chỉ để hiểu bối cảnh.
 8. guideline/nhãn thuốc: điền `khuyen_cao` (mỗi khuyến cáo liên quan: nội dung tiếng Việt, `luc_khuyen_cao`, `muc_chung_cu`
    NGUYÊN BẢN, `trang`, `lien_quan_dashboard`); `ket_qua` để [].
 9. Không PII. Không thông tin ngoài bài trừ khi ghi nguồn (PMID/DOI) ngay trong câu.
@@ -163,6 +180,11 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
 """
+
+
+def huong_dan_doc() -> str:
+    return HUONG_DAN_DOC.format(pb=PHIEN_BAN_KHUON, tu=TOI_DA_TU_TRICH, tdn=TOI_DA_TU_DIEM_NHAN,
+                                kdn=" · ".join(f"`{k}`" for k in KHOA_DIEM_NHAN))
 
 
 # ───────────────────────── tiện ích chung ─────────────────────────
@@ -179,7 +201,7 @@ _MOD: dict = {}
 
 def mod(ten: str):
     tep = {"sk": "endnote_suc_khoe.py", "nec": "nap_endnote_chu_de.py", "tt": "tom_tat_endnote_vi.py",
-           "sx": "so_xac_minh_nguon.py", "md": "md_sang_docx_times.py"}[ten]
+           "sx": "so_xac_minh_nguon.py"}[ten]
     if ten not in _MOD:
         _MOD[ten] = _nap(f"_ttcc_{ten}", tep)
     return _MOD[ten]
@@ -208,10 +230,13 @@ def _chuan_chu(s: str) -> str:
 
 
 def _chuan_so(s: str) -> str:
-    """Chuẩn hoá cách viết số hai phía như nhau: «0·70»→0.70; phân cách nghìn «10 000»/«10,000»→10000; phẩy thập phân → chấm."""
-    s = unicodedata.normalize("NFKC", s or "")
-    s = re.sub(r"(?<=\d)[·⋅](?=\d)", ".", s)
-    s = re.sub(r"(?<=\d)[,    ](?=\d{3}(?!\d))", "", s)
+    """Chuẩn hoá cách viết số hai phía như nhau: «0·70»→0.70; phân cách nghìn «10,000» hoặc «10 000» (dấu cách MẢNH/không
+    ngắt) → 10000; phẩy thập phân → chấm. KHÔNG coi dấu cách THƯỜNG là phân cách nghìn: văn bản tách từ bảng PDF đặt các số
+    cạnh nhau bằng dấu cách («122±15 121±15», «LCZ696 100 mg») — gộp chúng tạo ra số không có thật (đo 19/10: «15121»,
+    «696100»). Bỏ phân cách nghìn TRƯỚC khi NFKC (NFKC đổi dấu cách mảnh/không ngắt thành dấu cách thường)."""
+    s = re.sub(r"(?<=\d)[,\u2009\u202f\u00a0](?=\d{3}(?!\d))", "", s or "")
+    s = unicodedata.normalize("NFKC", s)
+    s = re.sub(r"(?<=\d)[\u00b7\u22c5](?=\d)", ".", s)
     return re.sub(r"(?<=\d),(?=\d)", ".", s)
 
 
@@ -219,7 +244,8 @@ _SO = re.compile(r"\d+(?:\.\d+)?")
 
 
 def cac_so(s: str) -> list[str]:
-    return _SO.findall(_chuan_so(s))
+    """Các số trong chuỗi; số nguyên bỏ số 0 đứng đầu («08/12/2009» ≡ «December 8, 2009»)."""
+    return [x if "." in x else (x.lstrip("0") or "0") for x in _SO.findall(_chuan_so(s))]
 
 
 def _so_khop(so: str, tap: set[str]) -> bool:
@@ -422,7 +448,7 @@ def chuan_bi(thu_vien: Path, ma: str, *, ngu_canh_tat_ca: dict | None = None, ru
           "ngu_canh_dashboard": ngu_canh, "chuan_bi_luc": dt.datetime.now().isoformat(timespec="seconds")}
     (goi / "ngu_canh.json").write_text(json.dumps(nc, ensure_ascii=False, indent=2), encoding="utf-8")
     (goi / "HUONG-DAN-DOC.md").write_text(
-        HUONG_DAN_DOC.format(pb=PHIEN_BAN_KHUON, tu=TOI_DA_TU_TRICH) + "\n```json\n"
+        huong_dan_doc() + "\n```json\n"
         + json.dumps(MAU, ensure_ascii=False, indent=2) + "\n```\n", encoding="utf-8")
     print(f"Gói đọc: {goi}")
     print(f"  {bg['khoa']} · recNum {bg['rec']} · {len(trang)} trang · {so_ky_tu} ký tự · tầng ưu tiên {nc['tang_uu_tien']}")
@@ -489,6 +515,46 @@ def _cau_co_tren_trang(cau: str, trang: list[str], so_trang: int) -> bool:
         if k == len(tu_q):
             return True
     return False
+
+
+# Bác sĩ 19/10/2026: «Loại bỏ những câu chữ cần kiểm chứng và cần xác nhận; nếu cần thì để cuối văn bản» + «những câu đề
+# xuất của máy cũng bỏ đi». Thân văn bản không được chứa các cụm dưới; đưa vào `can_xac_nhan` (in ở mục Lưu ý cuối).
+CUM_CAM_THAN_BAI = re.compile(r"\[\s*CẦN|cần\s+(?:bác\s+sĩ\s+)?(?:kiểm\s+chứng|xác\s+nhận|tra\s+thêm)|đề\s+xuất\s+(?:của\s+)?máy"
+                              r"|máy\s+đề\s+xuất|chưa\s+qua\s+bác\s+sĩ|đề\s+xuất\s+mức", re.I)
+_KHONG_KIEM_CUM = {"can_xac_nhan", "nguoi_soan"}
+
+
+def cac_chuoi_than_bai(x, duong: str = "") -> list[tuple[str, str]]:
+    ra: list[tuple[str, str]] = []
+    if isinstance(x, dict):
+        for k, v in x.items():
+            if k not in _KHONG_KIEM_CUM:
+                ra += cac_chuoi_than_bai(v, f"{duong}.{k}" if duong else k)
+    elif isinstance(x, list):
+        for i, v in enumerate(x, 1):
+            ra += cac_chuoi_than_bai(v, f"{duong}[{i}]")
+    elif isinstance(x, str):
+        ra.append((duong, x))
+    return ra
+
+
+_KHONG_KIEM_SO = {"phien_ban_khuon", "khoa", "pmid", "doi", "nguoi_soan", "trich_nguyen_van", "ket_qua", "tac_hai", "trang",
+                  "dang_ky", "cong_cu"}  # cong_cu: tên «RoB 2», «AMSTAR-2» không phải số liệu
+
+
+def cac_chuoi_kiem_so(x, duong: str = "") -> list[tuple[str, str]]:
+    """Mọi chuỗi chữ của tom_tat.json phải qua phép kiểm số — trừ định danh, bảng đã kiểm theo trang, số trang."""
+    ra: list[tuple[str, str]] = []
+    if isinstance(x, dict):
+        for k, v in x.items():
+            if k not in _KHONG_KIEM_SO:
+                ra += cac_chuoi_kiem_so(v, f"{duong}.{k}" if duong else k)
+    elif isinstance(x, list):
+        for i, v in enumerate(x, 1):
+            ra += cac_chuoi_kiem_so(v, f"{duong}[{i}]")
+    elif isinstance(x, str):
+        ra.append((duong, x))
+    return ra
 
 
 def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
@@ -569,7 +635,44 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
             tr = kc.get("trang")
             if not isinstance(tr, int) or not 1 <= tr <= len(trang):
                 loi.append(f"khuyen_cao[{i}]: trang {tr!r} không hợp lệ")
-    # Trích nguyên văn
+    # ĐIỂM NHẤN từng mục
+    dn = tt.get("diem_nhan") if isinstance(tt.get("diem_nhan"), dict) else {}
+    for k in KHOA_DIEM_NHAN:
+        if k == "tac_hai" and tk in ("guideline", "nhan_thuoc"):
+            continue
+        if _rong(dn.get(k)):
+            loi.append(f"diem_nhan.{k} rỗng — mỗi mục của Word mở đầu bằng một ô ĐIỂM NHẤN")
+        elif len(re.findall(r"\S+", str(dn.get(k)))) > TOI_DA_TU_DIEM_NHAN:
+            loi.append(f"diem_nhan.{k} dài quá {TOI_DA_TU_DIEM_NHAN} từ — điểm nhấn phải ngắn")
+    for i, h in enumerate(tt.get("tac_hai") or [], 1):
+        if isinstance(h, dict) and h.get("danh_gia") not in (None, "") + DANH_GIA_TAC_HAI:
+            loi.append(f"tac_hai[{i}].danh_gia phải thuộc {DANH_GIA_TAC_HAI}")
+    # SỐ ở MỌI trường chữ (kết luận, điểm nhấn, gợi ý, phương pháp, nguy cơ sai lệch, GRADE, điểm mạnh/hạn chế…): phải có
+    # nguyên văn trong bài hoặc trong bảng đã kiểm theo trang. Đo 19/10 (PARADIGM-HF): tổng tự cộng «8399», «2031» lọt vào
+    # điểm nhấn/điểm mạnh khi cổng chỉ kiểm phần tóm lược. Chuỗi mang nhãn «[ngoài bài: …]» được miễn (Word in xám nghiêng).
+    tap_bai: set[str] = set()
+    for t_ in trang:
+        tap_bai.update(cac_so(t_))
+    tap_bang: set[str] = set()
+    for h in (tt.get("ket_qua") or []) + (tt.get("tac_hai") or []):
+        if isinstance(h, dict):
+            for truong in TRUONG_SO:
+                tap_bang.update(cac_so(str(h.get(truong) or "")))
+    for ten, x in cac_chuoi_kiem_so(tt):
+        x = str(x or "")
+        if "[ngoài bài" in x:
+            continue
+        sai = [so for so in cac_so(x) if not (_so_khop(so, tap_bai) or _so_khop(so, tap_bang))]
+        if sai:
+            loi.append(f"{ten}: số {', '.join(sorted(set(sai)))} không có trong bài — chép đúng số của bài, hoặc ghi "
+                       "«[ngoài bài: <nguồn>]» nếu lấy từ nguồn khác")
+    for ten, x in cac_chuoi_than_bai(tt):
+        m = CUM_CAM_THAN_BAI.search(x)
+        if m:
+            loi.append(f"{ten}: thân văn bản chứa «{m.group(0)}» — chuyển điểm chưa chắc vào can_xac_nhan (in ở cuối văn bản)")
+    if not isinstance(tt.get("can_xac_nhan", []), list):
+        loi.append("can_xac_nhan phải là danh sách")
+    # Trích nguyên văn (tuỳ chọn, không in ra Word — vẫn kiểm nếu có)
     for i, tc in enumerate(tt.get("trich_nguyen_van") or [], 1):
         cau = (tc or {}).get("cau", "") if isinstance(tc, dict) else ""
         tr = (tc or {}).get("trang") if isinstance(tc, dict) else None
@@ -580,20 +683,225 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     return loi
 
 
-# ───────────────────────── dựng Markdown → Word ─────────────────────────
+# ───────────────────────── dựng Word (python-docx, Times New Roman, có ĐIỂM NHẤN màu) ─────────────────────────
+# Bác sĩ 19/10/2026: «Phần 12, 13, 14 không cần, mỗi phần trình bày phải có điểm nhấn với những in đậm, màu sắc».
+# Màu mang NGHĨA, dùng nhất quán: xanh lá = lợi ích / nguy cơ sai lệch thấp / nên làm · đỏ = cảnh báo / nguy cơ cao /
+# không nên · cam = thận trọng / cần xác nhận · xanh dương = theo dõi / thông tin · xám = ngoài bài, chú thích.
+# Không dùng ký hiệu ngoài bảng mã Times New Roman (☐ ✔ ★… in ra ô vuông rỗng) — nhấn bằng NHÃN CHỮ IN HOA + màu.
+
+MAU_CHU = {"navy": "1F3864", "duong": "2E74B5", "la": "1E7B34", "do": "C00000", "cam": "B45F06", "xam": "595959",
+           "trang": "FFFFFF"}
+MAU_NEN = {"navy": "1F3864", "duong": "DEEAF6", "la": "E2F0D9", "do": "FBE4E4", "cam": "FFF2CC", "xam": "F2F2F2"}
+_DANH_DAU = re.compile(r"\*\*(.+?)\*\*|\[!(.+?)!\]|\[\+(.+?)\+\]|(\[CẦN[^\]]*\])|(\[ngoài bài[^\]]*\])")
+_SAU_PBDR = ("shd", "tabs", "suppressAutoHyphens", "kinsoku", "wordWrap", "overflowPunct", "topLinePunct", "autoSpaceDE",
+             "autoSpaceDN", "bidi", "adjustRightInd", "snapToGrid", "spacing", "ind", "contextualSpacing", "mirrorIndents",
+             "suppressOverlap", "jc", "textDirection", "textAlignment", "textboxTightWrap", "outlineLvl", "divId",
+             "cnfStyle", "rPr", "sectPr", "pPrChange")
+_SAU_SHD_O = ("noWrap", "tcMar", "textDirection", "tcFitText", "vAlign", "hideMark")
+
 
 def _o(s) -> str:
-    return re.sub(r"\s+", " ", str(s if s is not None else "")).replace("|", "/").strip() or "—"
+    return re.sub(r"\s+", " ", str(s if s is not None else "")).strip() or "—"
 
 
-def _ds(xs) -> list[str]:
-    return [f"- {_o(x)}" for x in (xs or []) if not _rong(x)] or ["- —"]
+def _ox():
+    from docx.oxml import OxmlElement  # noqa: PLC0415
+    from docx.oxml.ns import qn  # noqa: PLC0415
+    return OxmlElement, qn
 
 
-def _bang(tieu_de: list[str], hang: list[list[str]]) -> list[str]:
-    ra = ["| " + " | ".join(tieu_de) + " |", "|" + "---|" * len(tieu_de)]
-    ra += ["| " + " | ".join(_o(c) for c in h) + " |" for h in hang]
-    return ra + [""]
+def _font(run, *, dam: bool = False, nghieng: bool = False, mau: str | None = None, co: float | None = None) -> None:
+    from docx.shared import Pt, RGBColor  # noqa: PLC0415
+    OxmlElement, qn = _ox()
+    run.font.name = "Times New Roman"
+    rpr = run._element.get_or_add_rPr()
+    rf = rpr.find(qn("w:rFonts"))
+    if rf is None:
+        rf = OxmlElement("w:rFonts")
+        rpr.insert(0, rf)
+    for k in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        rf.set(qn(k), "Times New Roman")
+    run.bold = dam or None
+    run.italic = nghieng or None
+    if mau:
+        run.font.color.rgb = RGBColor.from_string(mau)
+    if co:
+        run.font.size = Pt(co)
+
+
+def _them(par, text: str, **kieu):
+    r = par.add_run(text)
+    _font(r, **kieu)
+    return r
+
+
+def _viet(par, text, *, co: float | None = None, mau: str | None = None, dam: bool = False) -> None:
+    """Chữ có đánh dấu nhấn: **đậm** · [!cảnh báo — đỏ đậm!] · [+lợi ích — xanh lá đậm+] · [CẦN …] cam đậm ·
+    [ngoài bài …] xám nghiêng (số liệu không lấy từ bài này)."""
+    text = _o(text)
+    vi_tri = 0
+    for m in _DANH_DAU.finditer(text):
+        if m.start() > vi_tri:
+            _them(par, text[vi_tri:m.start()], co=co, mau=mau, dam=dam)
+        if m.group(1):
+            _them(par, m.group(1), co=co, mau=mau or MAU_CHU["navy"], dam=True)
+        elif m.group(2):
+            _them(par, m.group(2), co=co, mau=MAU_CHU["do"], dam=True)
+        elif m.group(3):
+            _them(par, m.group(3), co=co, mau=MAU_CHU["la"], dam=True)
+        elif m.group(4):
+            _them(par, m.group(4), co=co, mau=MAU_CHU["cam"], dam=True)
+        else:
+            _them(par, m.group(5), co=co, mau=MAU_CHU["xam"], nghieng=True)
+        vi_tri = m.end()
+    if vi_tri < len(text):
+        _them(par, text[vi_tri:], co=co, mau=mau, dam=dam)
+
+
+def _chen_dung_thu_tu(cha, con, sau: tuple[str, ...]) -> None:
+    """Chèn phần tử OOXML TRƯỚC phần tử đầu tiên thuộc nhóm phải đứng sau nó (CLAUDE.md: pBdr trước spacing, shd sau
+    tcBorders) — append bừa làm Word báo tệp hỏng."""
+    _, qn = _ox()
+    for el in cha:
+        if el.tag in {qn(f"w:{t}") for t in sau}:
+            el.addprevious(con)
+            return
+    cha.append(con)
+
+
+def _to_nen(o, mau_nen: str) -> None:
+    OxmlElement, qn = _ox()
+    tcpr = o._tc.get_or_add_tcPr()
+    cu = tcpr.find(qn("w:shd"))
+    if cu is not None:
+        tcpr.remove(cu)
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:color"), "auto")
+    shd.set(qn("w:fill"), mau_nen)
+    _chen_dung_thu_tu(tcpr, shd, _SAU_SHD_O)
+
+
+def _doan(noi, *, sau: float = 3, truoc: float = 0, can: str | None = None):
+    from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: PLC0415
+    from docx.shared import Pt  # noqa: PLC0415
+    p = noi.add_paragraph()
+    p.paragraph_format.space_after = Pt(sau)
+    p.paragraph_format.space_before = Pt(truoc)
+    if can == "giua":
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    return p
+
+
+def _tieu_de_muc(doc, so: int, ten: str) -> None:
+    OxmlElement, qn = _ox()
+    from docx.shared import Pt  # noqa: PLC0415
+    p = doc.add_heading(level=2)
+    p.paragraph_format.space_before = Pt(14)
+    p.paragraph_format.space_after = Pt(6)
+    _them(p, f"{so}. {ten}", dam=True, mau=MAU_CHU["navy"], co=14)
+    ppr = p._p.get_or_add_pPr()
+    bdr = OxmlElement("w:pBdr")
+    duoi = OxmlElement("w:bottom")
+    for k, v in (("w:val", "single"), ("w:sz", "8"), ("w:space", "1"), ("w:color", MAU_CHU["duong"])):
+        duoi.set(qn(k), v)
+    bdr.append(duoi)
+    _chen_dung_thu_tu(ppr, bdr, _SAU_PBDR)
+
+
+def _tieu_de_nho(doc, ten: str, mau: str = "duong") -> None:
+    p = _doan(doc, truoc=6, sau=2)
+    _them(p, ten, dam=True, mau=MAU_CHU[mau], co=12.5)
+
+
+def _hop(doc, nhan: str, noi_dung, *, mau: str = "duong", danh_sach: bool = False) -> None:
+    """Ô tô nền một ô: NHÃN in hoa đậm màu + nội dung (chuỗi hoặc danh sách gạch đánh số)."""
+    from docx.shared import Cm, Pt  # noqa: PLC0415
+    t = doc.add_table(rows=1, cols=1)
+    t.style = "Table Grid"
+    t.autofit = False
+    o = t.cell(0, 0)
+    o.width = Cm(17)
+    _to_nen(o, MAU_NEN[mau])
+    p = o.paragraphs[0]
+    _them(p, nhan, dam=True, mau=MAU_CHU["navy" if mau == "duong" else mau])
+    if danh_sach:
+        for i, x in enumerate([x for x in noi_dung or [] if not _rong(x)], 1):
+            q = o.add_paragraph()
+            q.paragraph_format.space_after = Pt(3)
+            _them(q, f"{i}. ", dam=True, mau=MAU_CHU["navy" if mau == "duong" else mau])
+            _viet(q, x)
+    else:
+        _them(p, "  ")
+        _viet(p, noi_dung)
+    _doan(doc, sau=2)
+
+
+def _bang(doc, tieu_de: list[str], hang: list[list], *, co: float = 10.5, rong: list[float] | None = None) -> None:
+    """Bảng có dòng tiêu đề nền xanh đậm chữ trắng (lặp lại khi sang trang). Ô = chuỗi, hoặc (chuỗi, {dam, mau, nen}).
+    `rong` = bề rộng từng cột (cm); vắng ⇒ chia đều 17 cm (trọn bề ngang A4 lề 2 cm)."""
+    from docx.shared import Cm  # noqa: PLC0415
+    OxmlElement, qn = _ox()
+    t = doc.add_table(rows=1, cols=len(tieu_de))
+    t.style = "Table Grid"
+    t.autofit = False
+    rong = rong or [17.0 / len(tieu_de)] * len(tieu_de)
+    dau = t.rows[0]
+    trpr = dau._tr.get_or_add_trPr()
+    th = OxmlElement("w:tblHeader")
+    th.set(qn("w:val"), "true")
+    trpr.append(th)
+    for i, h in enumerate(tieu_de):
+        _to_nen(dau.cells[i], MAU_NEN["navy"])
+        _them(dau.cells[i].paragraphs[0], h, dam=True, mau=MAU_CHU["trang"], co=co)
+    for h in hang:
+        o = t.add_row().cells
+        for i, gt in enumerate(h):
+            kieu = {}
+            if isinstance(gt, tuple):
+                gt, kieu = gt
+            if kieu.get("nen"):
+                _to_nen(o[i], MAU_NEN[kieu["nen"]])
+            _viet(o[i].paragraphs[0], gt, co=co, mau=MAU_CHU.get(kieu.get("mau", ""), None), dam=kieu.get("dam", False))
+    for dong in t.rows:
+        for i, o_ in enumerate(dong.cells):
+            o_.width = Cm(rong[i])
+    _doan(doc, sau=2)
+
+
+def _danh_sach(doc, xs, *, mau_dau: str = "navy") -> None:
+    for x in [x for x in xs or [] if not _rong(x)]:
+        p = _doan(doc, sau=2)
+        p.paragraph_format.left_indent = 270000  # ≈ 0.75 cm
+        p.paragraph_format.first_line_indent = -150000
+        _them(p, "•  ", dam=True, mau=MAU_CHU[mau_dau])
+        _viet(p, x)
+
+
+def _nhan_dong(doc, nhan: str, noi_dung, mau: str) -> None:
+    p = _doan(doc, sau=3)
+    _them(p, f"{nhan}: ", dam=True, mau=MAU_CHU[mau])
+    _viet(p, noi_dung)
+
+
+def _mau_danh_gia(s: str, *, agree: bool = False) -> str | None:
+    """Màu ô đánh giá nguy cơ sai lệch. AGREE II đo CHẤT LƯỢNG (cao = tốt) ⇒ đảo chiều so với RoB/ROBINS/QUADAS."""
+    s = _chuan_chu(s)
+    cao = any(k in s for k in ("cao", "high", "nghiêm trọng", "serious", "critical"))
+    lo = any(k in s for k in ("lo ngại", "concern", "trung bình", "moderate", "không rõ", "unclear", "vừa"))
+    thap = any(k in s for k in ("thấp", "low"))
+    if lo:
+        return "cam"
+    if cao and not thap:
+        return "la" if agree else "do"
+    if thap and not cao:
+        return "do" if agree else "la"
+    return None
+
+
+RONG_BANG_SO = [4.1, 2.3, 2.3, 1.9, 1.9, 1.3, 1.4, 1.1, 0.7]  # cm — bảng kết quả/tác hại 9 cột, tổng 17 cm
+MAU_GRADE = {"cao": "la", "trung bình": "duong", "thấp": "cam", "rất thấp": "do", "không áp dụng": "xam"}
+MAU_TAC_HAI = {"bat_loi": "do", "loi": "la", "tuong_duong": "xam"}
 
 
 def _gia_tri(h: dict, truong: str) -> str:
@@ -601,108 +909,224 @@ def _gia_tri(h: dict, truong: str) -> str:
     return f"{v} †" if v != "—" and truong in set(h.get("may_tinh") or []) else v
 
 
-def dung_markdown(tt: dict, ngu_canh: dict) -> str:
+def dung_word(tt: dict, ngu_canh: dict):
+    """Dựng Document từ tom_tat.json ĐÃ QUA CỔNG. 11 mục (guideline/nhãn thuốc: 10 — không có mục tác hại riêng)."""
+    from docx import Document  # noqa: PLC0415
+    from docx.shared import Cm, Pt  # noqa: PLC0415
+    doc = Document()
+    sec = doc.sections[0]
+    sec.page_width, sec.page_height = Cm(21), Cm(29.7)
+    for k in ("left_margin", "right_margin", "top_margin", "bottom_margin"):
+        setattr(sec, k, Cm(2))
+    st = doc.styles["Normal"]
+    st.font.name = "Times New Roman"
+    st.font.size = Pt(12)
+    OxmlElement, qn = _ox()
+    rpr = st.element.get_or_add_rPr()
+    rf = rpr.find(qn("w:rFonts"))
+    if rf is None:
+        rf = OxmlElement("w:rFonts")
+        rpr.insert(0, rf)
+    for k in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        rf.set(qn(k), "Times New Roman")
+    zoom = doc.settings.element.find(qn("w:zoom"))  # mẫu python-docx thiếu w:percent bắt buộc — trình xác thực OOXML báo lỗi
+    if zoom is not None and zoom.get(qn("w:percent")) is None:
+        zoom.set(qn("w:percent"), "100")
+
     bg = ngu_canh.get("ban_ghi") or {}
     pdf = ngu_canh.get("pdf") or {}
     rb = ngu_canh.get("rut_bai") or {}
     tk = tt["loai_thiet_ke"]
+    dn = tt.get("diem_nhan") or {}
+    la_guideline = tk in ("guideline", "nhan_thuoc")
+
+    # Đầu trang
+    _them(_doan(doc, sau=4, can="giua"), "TÓM TẮT CHỨNG CỨ CHO THỰC HÀNH LÂM SÀNG", dam=True, mau=MAU_CHU["navy"], co=16)
+    _them(_doan(doc, sau=3, can="giua"), _o(bg.get("tieu_de")), dam=True, co=13)
+    _them(_doan(doc, sau=6, can="giua"),
+          f"{_o(bg.get('tac_gia'))} · {_o(bg.get('tap_chi'))} · {_o(bg.get('nam'))}"
+          + (f" · PMID {bg['pmid']}" if bg.get("pmid") else "") + (f" · DOI {bg['doi']}" if bg.get("doi") else ""),
+          nghieng=True, mau=MAU_CHU["xam"], co=11)
+    p = _doan(doc, sau=8, can="giua")
+    _them(p, "THIẾT KẾ: ", dam=True, mau=MAU_CHU["navy"], co=11)
+    _them(p, TEN_THIET_KE[tk], co=11)
+    _them(p, "     RÚT BÀI: ", dam=True, mau=MAU_CHU["navy"], co=11)
+    tt_rb = rb.get("trang_thai")
+    _them(p, {"khong_thay_rut": "không thấy thông báo rút", "khong_thay_rut_rw": "không thấy (chỉ Retraction Watch)",
+              "da_rut": "ĐÃ RÚT", "chua_kiem": "CHƯA KIỂM ĐƯỢC"}.get(tt_rb, "—"),
+          dam=True, mau=MAU_CHU["la" if tt_rb == "khong_thay_rut" else ("cam" if tt_rb == "khong_thay_rut_rw" else "do")], co=11)
+
+    so = 1
+    _tieu_de_muc(doc, so, "Kết luận cho thực hành")
+    _hop(doc, "ĐIỂM NHẤN CHO THỰC HÀNH", tt.get("ket_luan_thuc_hanh"), mau="la", danh_sach=True)
+
+    so += 1
+    _tieu_de_muc(doc, so, "Thông tin trích dẫn")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("thong_tin"))
+    bc = tt.get("boi_canh") or {}
+    _bang(doc, ["Mục", "Nội dung"], [
+        [("Thiết kế", {"dam": True, "nen": "xam"}), f"**{TEN_THIET_KE[tk]}** — {_o(tt.get('thiet_ke_mo_ta'))}"],
+        [("Lĩnh vực", {"dam": True, "nen": "xam"}), tt.get("linh_vuc")],
+        [("Địa điểm", {"dam": True, "nen": "xam"}), bc.get("dia_diem")],
+        [("Thời gian", {"dam": True, "nen": "xam"}), bc.get("thoi_gian")],
+        [("Đăng ký", {"dam": True, "nen": "xam"}), bc.get("dang_ky")],
+        [("Tài trợ", {"dam": True, "nen": "xam"}), bc.get("tai_tro")],
+        [("Xung đột lợi ích", {"dam": True, "nen": "xam"}), bc.get("xung_dot_loi_ich")],
+        [("Rút bài", {"dam": True, "nen": "xam"}),
+         (f"{NHAN_RUT_BAI.get(tt_rb, '—')} — tra {_o(rb.get('luc'))} ({_o(rb.get('nguon'))})",
+          {"mau": "la" if tt_rb == "khong_thay_rut" else "do", "dam": tt_rb != "khong_thay_rut"})],
+    ], co=11, rong=[4.0, 13.0])
+
+    so += 1
     pico = tt.get("cau_hoi_lam_sang") or {}
-    L: list[str] = ["# TÓM TẮT CHỨNG CỨ CHO THỰC HÀNH LÂM SÀNG", "",
-                    f"**{_o(bg.get('tieu_de'))}**", "",
-                    f"{_o(bg.get('tac_gia'))} · *{_o(bg.get('tap_chi'))}* · {_o(bg.get('nam'))} · "
-                    + (f"PMID {bg['pmid']} · " if bg.get("pmid") else "") + (f"DOI {bg['doi']}" if bg.get("doi") else "DOI —"),
-                    "", f"> **{MIEN_TRU}** Mức chứng cứ trong bản này là ĐỀ XUẤT CỦA MÁY; áp dụng cho người bệnh là quyết "
-                    "định của bác sĩ (Cổng A).", ""]
-    if rb.get("trang_thai") != "khong_thay_rut":
-        L += [f"> **Trạng thái rút bài: {NHAN_RUT_BAI.get(rb.get('trang_thai'), rb.get('trang_thai'))}** "
-              f"(tra lúc {_o(rb.get('luc'))}).", ""]
-    L += ["## 1. Kết luận cho thực hành", ""] + _ds(tt.get("ket_luan_thuc_hanh")) + [""]
-    L += ["## 2. Thông tin trích dẫn", ""] + _bang(["Mục", "Nội dung"], [
-        ["Thiết kế", f"{TEN_THIET_KE[tk]} — {_o(tt.get('thiet_ke_mo_ta'))}"],
-        ["Lĩnh vực", tt.get("linh_vuc")],
-        ["Địa điểm", (tt.get("boi_canh") or {}).get("dia_diem")],
-        ["Thời gian", (tt.get("boi_canh") or {}).get("thoi_gian")],
-        ["Đăng ký", (tt.get("boi_canh") or {}).get("dang_ky")],
-        ["Tài trợ", (tt.get("boi_canh") or {}).get("tai_tro")],
-        ["Xung đột lợi ích", (tt.get("boi_canh") or {}).get("xung_dot_loi_ich")],
-        ["Rút bài", f"{NHAN_RUT_BAI.get(rb.get('trang_thai'), '—')} — tra {_o(rb.get('luc'))} ({_o(rb.get('nguon'))})"],
-    ])
-    L += ["## 3. Câu hỏi lâm sàng (PICO)", ""] + _bang(["Thành phần", "Nội dung"], [
-        ["Loại câu hỏi", pico.get("loai")], ["P — Người bệnh", pico.get("P")], ["I — Can thiệp / phơi nhiễm", pico.get("I")],
-        ["C — So sánh", pico.get("C")], ["O — Kết cục", pico.get("O")]])
-    if tk in ("guideline", "nhan_thuoc"):
-        L += ["## 4. Phạm vi và phương pháp xây dựng", "", _o(tt.get("phan_tich")), ""]
+    _tieu_de_muc(doc, so, "Câu hỏi lâm sàng (PICO)")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("pico"))
+    _bang(doc, ["Thành phần", "Nội dung"], [
+        [("Loại câu hỏi", {"dam": True, "nen": "xam"}), pico.get("loai")],
+        [("P — Người bệnh", {"dam": True, "mau": "navy", "nen": "duong"}), pico.get("P")],
+        [("I — Can thiệp / phơi nhiễm", {"dam": True, "mau": "navy", "nen": "duong"}), pico.get("I")],
+        [("C — So sánh", {"dam": True, "mau": "navy", "nen": "duong"}), pico.get("C")],
+        [("O — Kết cục", {"dam": True, "mau": "navy", "nen": "duong"}), pico.get("O")]], co=11, rong=[4.5, 12.5])
+
+    so += 1
+    if la_guideline:
+        _tieu_de_muc(doc, so, "Phạm vi và phương pháp xây dựng")
+        _hop(doc, "ĐIỂM NHẤN:", dn.get("phuong_phap"))
+        _viet(_doan(doc), tt.get("phan_tich"))
         dt_ = tt.get("doi_tuong") or {}
         if not _rong(dt_):
-            L += [f"**Đối tượng áp dụng:** {_o(dt_.get('dac_diem_nen') or dt_.get('co_mau'))}", ""]
-        L += ["## 5. Các khuyến cáo (phân hạng NGUYÊN BẢN của nguồn)", ""] + _bang(
-            ["#", "Khuyến cáo", "Lực khuyến cáo", "Mức chứng cứ", "Trang", "Liên quan dashboard"],
-            [[str(i), kc.get("noi_dung"), kc.get("luc_khuyen_cao"), kc.get("muc_chung_cu"), kc.get("trang"),
-              "có" if kc.get("lien_quan_dashboard") else "—"] for i, kc in enumerate(tt.get("khuyen_cao") or [], 1)])
-        so = 6
+            _nhan_dong(doc, "Đối tượng áp dụng", dt_.get("dac_diem_nen") or dt_.get("co_mau"), "navy")
+        so += 1
+        _tieu_de_muc(doc, so, "Các khuyến cáo (phân hạng NGUYÊN BẢN của nguồn)")
+        _hop(doc, "ĐIỂM NHẤN:", dn.get("ket_qua"))
+        _bang(doc, ["#", "Khuyến cáo", "Lực khuyến cáo", "Mức chứng cứ", "Trang"],
+              [[str(i), (kc.get("noi_dung"), {"dam": bool(kc.get("lien_quan_dashboard"))}),
+                (kc.get("luc_khuyen_cao"), {"dam": True, "mau": "navy"}), (kc.get("muc_chung_cu"), {"dam": True}),
+                kc.get("trang")] for i, kc in enumerate(tt.get("khuyen_cao") or [], 1)], co=10.5,
+              rong=[0.8, 9.6, 2.9, 2.7, 1.0])
     else:
         dt_ = tt.get("doi_tuong") or {}
         ct = tt.get("can_thiep_so_sanh") or {}
         kc_ = tt.get("ket_cuc") or {}
-        L += ["## 4. Phương pháp", "", "### 4.1 Đối tượng", "", "**Tiêu chuẩn chọn:**", ""] + _ds(dt_.get("tieu_chuan_chon"))
-        L += ["", "**Tiêu chuẩn loại:**", ""] + _ds(dt_.get("tieu_chuan_loai"))
-        L += ["", f"**Cỡ mẫu:** {_o(dt_.get('co_mau'))}", "", f"**Đặc điểm nền:** {_o(dt_.get('dac_diem_nen'))}", ""]
+        _tieu_de_muc(doc, so, "Phương pháp")
+        _hop(doc, "ĐIỂM NHẤN:", dn.get("phuong_phap"))
+        _tieu_de_nho(doc, "Đối tượng")
+        _nhan_dong(doc, "Cỡ mẫu", dt_.get("co_mau"), "navy")
+        _them(_doan(doc, sau=1), "Tiêu chuẩn chọn", dam=True, mau=MAU_CHU["la"])
+        _danh_sach(doc, dt_.get("tieu_chuan_chon"), mau_dau="la")
+        _them(_doan(doc, sau=1), "Tiêu chuẩn loại", dam=True, mau=MAU_CHU["do"])
+        _danh_sach(doc, dt_.get("tieu_chuan_loai"), mau_dau="do")
+        _nhan_dong(doc, "Đặc điểm nền", dt_.get("dac_diem_nen"), "navy")
         if not _rong(ct):
-            L += ["### 4.2 Can thiệp và so sánh", "", f"**Can thiệp:** {_o(ct.get('can_thiep'))}", "",
-                  f"**So sánh:** {_o(ct.get('so_sanh'))}", "", f"**Điều trị đi kèm:** {_o(ct.get('dong_tri_lieu'))}", ""]
-        L += ["### 4.3 Kết cục và theo dõi", "", f"**Kết cục chính:** {_o(kc_.get('chinh'))}", "", "**Kết cục phụ:**", ""]
-        L += _ds(kc_.get("phu")) + ["", f"**Thời gian theo dõi:** {_o(kc_.get('theo_doi'))}", ""]
-        L += ["### 4.4 Phân tích thống kê", "", _o(tt.get("phan_tich")), ""]
-        cot = ["Kết cục", "Nhóm can thiệp", "Nhóm so sánh", "Hiệu ứng", "KTC 95%", "p", "Tuyệt đối", "NNT/NNH", "Trang"]
+            _tieu_de_nho(doc, "Can thiệp và so sánh")
+            _nhan_dong(doc, "Can thiệp", ct.get("can_thiep"), "la")
+            _nhan_dong(doc, "So sánh", ct.get("so_sanh"), "duong")
+            _nhan_dong(doc, "Điều trị đi kèm", ct.get("dong_tri_lieu"), "xam")
+        _tieu_de_nho(doc, "Kết cục và theo dõi")
+        _nhan_dong(doc, "Kết cục chính", kc_.get("chinh"), "navy")
+        _them(_doan(doc, sau=1), "Kết cục phụ", dam=True, mau=MAU_CHU["duong"])
+        _danh_sach(doc, kc_.get("phu"), mau_dau="duong")
+        _nhan_dong(doc, "Thời gian theo dõi", kc_.get("theo_doi"), "navy")
+        _tieu_de_nho(doc, "Phân tích thống kê")
+        _viet(_doan(doc), tt.get("phan_tich"))
 
-        def _dong(h: dict) -> list[str]:
-            ten = f"{_o(h.get('ket_cuc'))}" + (" (chính)" if h.get("chinh") else "")
-            return [ten] + [_gia_tri(h, t) for t in TRUONG_SO] + [_o(h.get("trang"))]
-        L += ["## 5. Kết quả", ""] + _bang(cot, [_dong(h) for h in tt.get("ket_qua") or []])
+        cot = ["Kết cục", "Can thiệp", "So sánh", "Hiệu ứng", "KTC 95%", "p", "Tuyệt đối", "NNT/NNH", "Tr."]
+
+        def _dong(h: dict, *, nen: str | None = None) -> list:
+            ten = _o(h.get("ket_cuc")) + (" (CHÍNH)" if h.get("chinh") else "")
+            nen = nen or ("la" if h.get("chinh") else None)
+            o = [(ten, {"dam": bool(h.get("chinh")), "nen": nen})]
+            for t_ in TRUONG_SO:
+                o.append((_gia_tri(h, t_), {"dam": t_ in ("hieu_ung", "ktc95"), "nen": nen,
+                                            "mau": "navy" if t_ in ("hieu_ung", "ktc95") else ""}))
+            return o + [(_o(h.get("trang")), {"nen": nen})]
+        so += 1
+        _tieu_de_muc(doc, so, "Kết quả")
+        _hop(doc, "ĐIỂM NHẤN:", dn.get("ket_qua"), mau="la")
+        _bang(doc, cot, [_dong(h) for h in tt.get("ket_qua") or []], co=10, rong=RONG_BANG_SO)
         if any(h.get("may_tinh") for h in (tt.get("ket_qua") or []) + (tt.get("tac_hai") or [])):
-            L += ["† Số do MÁY tính từ số liệu của bài (cách tính ở mục 4.4) — không phải số bài báo công bố.", ""]
+            _them(_doan(doc), "† Số do MÁY tính từ số liệu của bài (cách tính ở mục Phân tích thống kê) — không phải số bài "
+                  "báo công bố. Dòng nền xanh lá = kết cục chính.", nghieng=True, mau=MAU_CHU["xam"], co=10)
         if not _rong(tt.get("phan_nhom")):
-            L += ["**Phân nhóm:**", ""] + _ds(tt.get("phan_nhom")) + [""]
-        L += ["## 6. Tác hại và an toàn", ""]
-        L += _bang(cot, [_dong(h) for h in tt.get("tac_hai") or []]) if tt.get("tac_hai") else []
+            _them(_doan(doc, sau=1), "Phân nhóm", dam=True, mau=MAU_CHU["duong"])
+            _danh_sach(doc, tt.get("phan_nhom"), mau_dau="duong")
+        so += 1
+        _tieu_de_muc(doc, so, "Tác hại và an toàn")
+        _hop(doc, "ĐIỂM NHẤN:", dn.get("tac_hai"), mau="do")
+        if tt.get("tac_hai"):
+            _bang(doc, cot, [_dong(h, nen=MAU_TAC_HAI.get(h.get("danh_gia") or "")) for h in tt["tac_hai"]], co=10,
+                  rong=RONG_BANG_SO)
+            _them(_doan(doc), "Nền đỏ = nhóm can thiệp nhiều tác hại hơn · nền xanh lá = ít hơn · nền xám = không khác biệt.",
+                  nghieng=True, mau=MAU_CHU["xam"], co=10)
         if not _rong(tt.get("tac_hai_ghi_chu")):
-            L += [_o(tt.get("tac_hai_ghi_chu")), ""]
-        so = 7
+            _viet(_doan(doc), tt.get("tac_hai_ghi_chu"))
+
+    so += 1
     nsl = tt.get("nguy_co_sai_lech") or {}
-    L += [f"## {so}. Thẩm định nguy cơ sai lệch — {_o(nsl.get('cong_cu'))}", ""] + _bang(
-        ["Miền", "Đánh giá", "Lý do", "Trang"],
-        [[m.get("ten"), m.get("danh_gia"), m.get("ly_do"), m.get("trang")] for m in nsl.get("mien") or []])
-    L += [f"**Tổng thể:** {_o(nsl.get('tong_the'))}", ""]
-    L += [f"## {so + 1}. Mức chắc chắn của chứng cứ — GRADE (ĐỀ XUẤT CỦA MÁY, chưa qua bác sĩ)", ""] + _bang(
-        ["Kết cục", "Mức đề xuất", "Lý do hạ/nâng"],
-        [[g.get("ket_cuc"), g.get("muc"), g.get("ly_do")] for g in tt.get("grade_de_xuat") or []])
+    agree = _chuan_cong_cu(nsl.get("cong_cu", "")).startswith("agree")
+    _tieu_de_muc(doc, so, f"Thẩm định nguy cơ sai lệch — {_o(nsl.get('cong_cu'))}")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("nguy_co_sai_lech"))
+    _bang(doc, ["Miền", "Đánh giá", "Lý do", "Tr."],
+          [[(m.get("ten"), {"dam": True}),
+            (m.get("danh_gia"), {"dam": True, "nen": _mau_danh_gia(str(m.get("danh_gia")), agree=agree)}),
+            m.get("ly_do"), m.get("trang")] for m in nsl.get("mien") or []], co=10.5, rong=[3.6, 2.6, 9.8, 1.0])
+    p = _doan(doc)
+    _them(p, "TỔNG THỂ: ", dam=True, mau=MAU_CHU[_mau_danh_gia(str(nsl.get("tong_the")), agree=agree) or "navy"])
+    _viet(p, nsl.get("tong_the"))
+
+    so += 1
+    so_grade = so
+    _tieu_de_muc(doc, so, "Mức chắc chắn của chứng cứ (GRADE)")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("grade"))
+    _bang(doc, ["Kết cục", "Mức chắc chắn", "Lý do hạ / nâng"],
+          [[(g.get("ket_cuc"), {"dam": True}),
+            (str(g.get("muc", "")).upper(), {"dam": True, "nen": MAU_GRADE.get(g.get("muc"))}),
+            g.get("ly_do")] for g in tt.get("grade_de_xuat") or []], co=10.5, rong=[4.2, 2.8, 10.0])
+
+    so += 1
     ka = tt.get("kha_nang_ap_dung") or {}
-    L += [f"## {so + 2}. Khả năng áp dụng cho người bệnh ngoại trú Việt Nam", "",
-          f"**Tương đồng:** {_o(ka.get('tuong_dong'))}", "", f"**Khác biệt:** {_o(ka.get('khac_biet'))}", "",
-          f"**Triển khai tại Việt Nam:** {_o(ka.get('trien_khai_viet_nam'))}", ""]
+    _tieu_de_muc(doc, so, "Khả năng áp dụng cho người bệnh ngoại trú Việt Nam")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("ap_dung_vn"))
+    _nhan_dong(doc, "TƯƠNG ĐỒNG", ka.get("tuong_dong"), "la")
+    _nhan_dong(doc, "KHÁC BIỆT", ka.get("khac_biet"), "cam")
+    _nhan_dong(doc, "TRIỂN KHAI TẠI VIỆT NAM", ka.get("trien_khai_viet_nam"), "duong")
+
+    so += 1
     gy = tt.get("goi_y_ap_dung") or {}
-    L += [f"## {so + 3}. Gợi ý áp dụng vào thực hành (GỢI Ý — quyết định thuộc bác sĩ)", "", "**Nên làm:**", ""]
-    L += _ds(gy.get("nen_lam")) + ["", "**Không nên:**", ""] + _ds(gy.get("khong_nen"))
-    L += ["", "**Điều kiện / thận trọng:**", ""] + _ds(gy.get("dieu_kien")) + ["", "**Theo dõi:**", ""] + _ds(gy.get("theo_doi"))
-    L += ["", f"## {so + 4}. Điểm mạnh và hạn chế", "", "**Điểm mạnh:**", ""] + _ds(tt.get("diem_manh"))
-    L += ["", "**Hạn chế:**", ""] + _ds(tt.get("han_che")) + [""]
-    L += [f"## {so + 5}. Đối chiếu với dashboard EBM", "", _o(tt.get("doi_chieu_dashboard")), ""]
-    ds_nc = [x for x in ngu_canh.get("ngu_canh_dashboard") or [] if not x.get("ban_cu")]
-    if ds_nc:
-        L += _bang(["Dashboard", "Mục", "Vai", "Decision", "gradeLevel"],
-                   [[x.get("chu_de"), f"{_o(x.get('muc'))} — {_o(x.get('tieu_de_muc'))}", x.get("vai"), x.get("decision"),
-                     x.get("gradeLevel")] for x in ds_nc])
-    L += [f"## {so + 6}. Trích nguyên văn chọn lọc (≤ {TOI_DA_TU_TRICH} từ)", ""]
-    L += [f"- «{_o(t.get('cau'))}» (tr. {_o(t.get('trang'))})" for t in tt.get("trich_nguyen_van") or []] + [""]
-    L += [f"## {so + 7}. Câu hỏi còn mở", ""] + _ds(tt.get("cau_hoi_mo")) + [""]
-    L += ["---", "", "**Nguồn của bản tóm tắt**", ""] + _bang(["Mục", "Giá trị"], [
+    _tieu_de_muc(doc, so, "Áp dụng vào thực hành")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("goi_y"), mau="la")
+    for nhan, khoa, mau in (("NÊN LÀM", "nen_lam", "la"), ("KHÔNG NÊN", "khong_nen", "do"),
+                            ("THẬN TRỌNG / ĐIỀU KIỆN", "dieu_kien", "cam"), ("THEO DÕI", "theo_doi", "duong")):
+        if not _rong(gy.get(khoa)):
+            _them(_doan(doc, truoc=4, sau=1), nhan, dam=True, mau=MAU_CHU[mau])
+            _danh_sach(doc, gy.get(khoa), mau_dau=mau)
+
+    so += 1
+    _tieu_de_muc(doc, so, "Điểm mạnh và hạn chế")
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("manh_han_che"))
+    _them(_doan(doc, sau=1), "ĐIỂM MẠNH", dam=True, mau=MAU_CHU["la"])
+    _danh_sach(doc, tt.get("diem_manh"), mau_dau="la")
+    _them(_doan(doc, truoc=4, sau=1), "HẠN CHẾ", dam=True, mau=MAU_CHU["do"])
+    _danh_sach(doc, tt.get("han_che"), mau_dau="do")
+
+    # Lưu ý CUỐI văn bản — nơi DUY NHẤT của «cần kiểm chứng», «cần xác nhận», nguồn gốc máy của GRADE (bác sĩ 19/10/2026).
+    _doan(doc, sau=6)
+    _them(_doan(doc, truoc=6, sau=4), "Lưu ý", dam=True, mau=MAU_CHU["cam"], co=13)
+    _hop(doc, "CẦN BÁC SĨ KIỂM CHỨNG:", f"bản tóm tắt do máy (Claude) soạn từ toàn văn PDF. Mức chắc chắn GRADE ở mục "
+         f"{so_grade} do máy đánh giá theo phương pháp GRADE; phần áp dụng vào thực hành là gợi ý — quyết định cho từng người "
+         "bệnh thuộc bác sĩ (Cổng A).", mau="cam")
+    if not _rong(tt.get("can_xac_nhan")):
+        _them(_doan(doc, truoc=4, sau=1), "ĐIỂM CẦN XÁC NHẬN", dam=True, mau=MAU_CHU["cam"])
+        _danh_sach(doc, tt.get("can_xac_nhan"), mau_dau="cam")
+    _doan(doc, sau=4)
+    _bang(doc, ["Nguồn của bản tóm tắt", ""], [
         ["Tệp toàn văn", f"{_o(pdf.get('tep'))} · {_o(pdf.get('so_trang'))} trang · SHA-256 {str(pdf.get('sha256', ''))[:16]}…"],
         ["Bản ghi EndNote", f"recNum {_o(bg.get('rec'))}"],
         ["Người soạn", tt.get("nguoi_soan") or "Claude (máy)"],
         ["Ngày dựng", dt.date.today().strftime("%d/%m/%Y")],
-        ["Khuôn", f"phiên bản {PHIEN_BAN_KHUON} — tools/tom_tat_chung_cu_word.py"]])
-    L += [f"*{MIEN_TRU} Không chứa thông tin định danh người bệnh.*", ""]
-    return "\n".join(L)
+        ["Khuôn", f"phiên bản {PHIEN_BAN_KHUON} — tools/tom_tat_chung_cu_word.py"]], co=9.5, rong=[4.0, 13.0])
+    _them(_doan(doc), "Không chứa thông tin định danh người bệnh.", nghieng=True, mau=MAU_CHU["xam"], co=10)
+    return doc
 
 
 def dung(thu_vien: Path, ma: str, *, gan_endnote: bool = False, ap_dung: bool = False, endnote=None,
@@ -737,14 +1161,11 @@ def dung(thu_vien: Path, ma: str, *, gan_endnote: bool = False, ap_dung: bool = 
         for x in loi:
             print(f"  · {x}")
         return 1
-    md = dung_markdown(tt, nc)
     ra = tep_word(thu_vien, bg["khoa"])
     ra.parent.mkdir(parents=True, exist_ok=True)
     (ra.parent / "_nguon").mkdir(exist_ok=True)
-    doc = mod("md").dung_docx(md, 12.0)
-    doc.save(str(ra))
+    dung_word(tt, nc).save(str(ra))
     (ra.parent / "_nguon" / f"{bg['khoa']}.json").write_text(json.dumps(tt, ensure_ascii=False, indent=2), encoding="utf-8")
-    (ra.parent / "_nguon" / f"{bg['khoa']}.md").write_text(md, encoding="utf-8")
     print(f"✓ Word: {ra}")
     if gan_endnote:
         return gan_vao_endnote(thu_vien, bg, ra, ap_dung=ap_dung, endnote=endnote)
@@ -837,7 +1258,7 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--ap-dung", action="store_true")
     a = ap.parse_args(argv)
     if a.lenh == "mau":
-        print(HUONG_DAN_DOC.format(pb=PHIEN_BAN_KHUON, tu=TOI_DA_TU_TRICH))
+        print(huong_dan_doc())
         print(json.dumps(MAU, ensure_ascii=False, indent=2))
         return 0
     tv = _thu_vien()

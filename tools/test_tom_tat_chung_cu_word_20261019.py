@@ -132,15 +132,75 @@ def test_chuan_so_hai_cach_viet():
     assert not T._so_khop("8", {"8.0"})  # số nguyên phải trùng nguyên văn, không so theo giá trị
 
 
-def test_word_ghi_ro_de_xuat_va_dau_may_tinh():
-    md = T.dung_markdown(_hop_le(), NGU_CANH)
-    assert T.MIEN_TRU in md and "ĐỀ XUẤT CỦA MÁY" in md
-    assert "4.7 điểm % †" in md and "do MÁY tính" in md
+def _chu_word(doc) -> tuple[str, str]:
+    """(thân văn bản, mục Lưu ý cuối) — tách tại đoạn tiêu đề «Lưu ý»."""
+    doan = ["".join(t.text or "" for t in p.iter() if t.tag.endswith("}t"))
+            for p in doc.element.body.iter() if p.tag.endswith("}p")]
+    i = doan.index("Lưu ý")
+    return "\n".join(doan[:i]), "\n".join(doan[i:])
+
+
+def test_word_11_muc_co_mau_va_luu_y_o_cuoi():
+    tt = _hop_le()
+    tt["ket_luan_thuc_hanh"][0] = "[!Không dùng!] cho người [+có lợi+] **đậm**."
+    tt["can_xac_nhan"] = ["BHYT tại đơn vị."]
+    doc = T.dung_word(tt, NGU_CANH)
+    muc = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
+    assert len(muc) == 11 and not any(k in " ".join(muc) for k in ("Đối chiếu", "Trích nguyên văn", "Câu hỏi còn mở"))
+    xml = doc.element.xml
+    assert 'w:val="C00000"' in xml and 'w:val="1E7B34"' in xml  # đỏ cảnh báo · xanh lá lợi ích
+    assert 'w:fill="E2F0D9"' in xml  # nền xanh lá: điểm nhấn / kết cục chính
+    assert "4.7 điểm % †" in xml
+    than, cuoi = _chu_word(doc)
+    assert not T.CUM_CAM_THAN_BAI.search(than) and "đề xuất" not in than.lower()
+    assert "CẦN BÁC SĨ KIỂM CHỨNG" in cuoi and "do máy đánh giá" in cuoi and "BHYT tại đơn vị." in cuoi
+
+
+def test_cum_cam_trong_than_bi_chan():
+    for truong, gt in (("kha_nang_ap_dung", {"tuong_dong": "a", "khac_biet": "b", "trien_khai_viet_nam": "BHYT [CẦN XÁC NHẬN]"}),
+                       ("han_che", ["Mức này là đề xuất của máy"]),
+                       ("diem_manh", ["Kết luận cần bác sĩ kiểm chứng"])):
+        tt = _hop_le()
+        tt[truong] = gt
+        assert any("thân văn bản chứa" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH)), truong
+
+
+def test_cum_cho_phep_o_can_xac_nhan():
+    tt = _hop_le()
+    tt["can_xac_nhan"] = ["Cần xác nhận BHYT; cần bác sĩ kiểm chứng."]
+    assert T.kiem_tom_tat(tt, TRANG, NGU_CANH) == []
+
+
+def test_so_tu_cong_o_truong_chu_bi_chan():
+    tt = _hop_le()
+    tt["diem_manh"] = ["Cỡ mẫu lớn, 2031 biến cố chính"]  # 914 + 1117 — máy tự cộng, bài không ghi
+    assert any("2031" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH))
+
+
+def test_so_ngoai_bai_duoc_mien_khi_ghi_nguon():
+    tt = _hop_le()
+    tt["goi_y_ap_dung"]["khong_nen"] = ["Ngừng ACEi ≥ 36 giờ [ngoài bài: nhãn thuốc]"]
+    assert T.kiem_tom_tat(tt, TRANG, NGU_CANH) == []
+    tt["goi_y_ap_dung"]["khong_nen"] = ["Ngừng ACEi ≥ 36 giờ"]
+    assert any("36" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH))
+
+
+def test_diem_nhan_thieu_bi_chan():
+    tt = _hop_le()
+    tt["diem_nhan"]["grade"] = ""
+    assert any("diem_nhan.grade" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH))
+
+
+def test_dau_cach_thuong_khong_gop_so_bang_pdf():
+    assert T.cac_so("122±15 121±15") == ["122", "15", "121", "15"]
+    assert "696100" not in T.cac_so("LCZ696 100 mg")
+    assert T.cac_so("08/12/2009") == ["8", "12", "2009"]
 
 
 def test_huong_dan_day_moi_truong_so_va_luat_cong():
-    hd = T.HUONG_DAN_DOC
-    for k in T.TRUONG_SO + ("may_tinh", "trich_nguyen_van", "RoB 2", "AMSTAR-2", "ROBINS-I", "QUADAS", "AGREE II"):
+    hd = T.huong_dan_doc()
+    for k in T.TRUONG_SO + T.KHOA_DIEM_NHAN + ("may_tinh", "can_xac_nhan", "danh_gia", "[ngoài bài", "RoB 2", "AMSTAR-2",
+                                              "ROBINS-I", "QUADAS", "AGREE II"):
         assert k in hd, k
 
 
