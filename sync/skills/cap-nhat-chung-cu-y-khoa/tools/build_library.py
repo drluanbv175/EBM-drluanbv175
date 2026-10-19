@@ -7,12 +7,14 @@ Biến các bản cập nhật rời rạc thành MỘT tài sản tra cứu tí
 một dashboard, thêm vào thư viện; sinh trang `evidence-library.html` có tìm/lọc,
 mỗi dòng mở thẳng dashboard tương ứng.
 
-Cách dùng (đặt cùng thư mục với các file dashboard):
+Cách dùng:
     python3 build_library.py add <dashboard.html>     # thêm/cập nhật 1 mục + dựng lại HTML
-    python3 build_library.py build                     # dựng lại HTML từ library.json
+    python3 build_library.py build                     # dựng lại HTML từ library.json ở thư mục hiện hành
     python3 build_library.py add *.html                # thêm nhiều file
+    python3 build_library.py build --thu-vien <thư mục>
 
-Dữ liệu lưu trong `library.json`; trang xuất `evidence-library.html` (cùng thư mục).
+Dữ liệu lưu trong `library.json`; trang xuất `evidence-library.html` — CÙNG thư mục với dashboard (từ 19/10/2026 `add`
+lấy thư mục của chính dashboard, không phụ thuộc thư mục đang đứng; `build` không dựng thư viện rỗng khi thiếu library.json).
 """
 import sys, os, re, json, glob
 
@@ -181,33 +183,68 @@ def build_html(lib, outpath):
     open(outpath, "w", encoding="utf-8").write(html)
 
 
+def thu_muc_thu_vien(files, chi_dinh=None):
+    """Thư mục chứa library.json/evidence-library.html cho lệnh `add`.
+
+    VÁ 19/10/2026: bản cũ lấy `os.getcwd()` — chạy từ gốc repo (`python3 EBM-Dashboards/tools/build_library.py add
+    EBM-Dashboards/<dashboard>.html`) đã nối dashboard vào một library.json CŨ ở gốc thay vì thư viện chuẩn
+    `EBM-Dashboards/`, và liên kết trong trang chỉ mục (tên tệp tương đối) không mở được dashboard. Thư viện phải nằm CÙNG
+    thư mục với dashboard ⇒ mặc định lấy thư mục của chính dashboard; dashboard ở nhiều thư mục ⇒ None (người gọi phải chỉ
+    định bằng --thu-vien), không đoán."""
+    if chi_dinh:
+        return os.path.abspath(chi_dinh)
+    cha = {os.path.dirname(os.path.abspath(f)) for f in files}
+    return cha.pop() if len(cha) == 1 else None
+
+
 def main():
     configure_utf8_stdio()
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+    chi_dinh = None
+    if "--thu-vien" in args:
+        i = args.index("--thu-vien")
+        if i + 1 >= len(args):
+            print("--thu-vien cần một thư mục.")
+            return 1
+        chi_dinh = args[i + 1]
+        del args[i:i + 2]
+    if not args:
         print(__doc__); return 1
-    cmd = sys.argv[1]
-    base = os.getcwd()
+    cmd = args[0]
+
+    if cmd == "add":
+        files = []
+        for a in args[1:]:
+            files += glob.glob(a)
+        files = [f for f in files if f.endswith(".html") and "evidence-library" not in f]
+        if not files:
+            print("Không có file .html hợp lệ để thêm."); return 1
+        base = thu_muc_thu_vien(files, chi_dinh)
+        if base is None:
+            print("Các dashboard nằm ở nhiều thư mục khác nhau — chỉ định thư viện bằng --thu-vien <thư mục>.")
+            return 1
+    elif cmd == "build":
+        base = os.path.abspath(chi_dinh) if chi_dinh else os.getcwd()
+        if not os.path.exists(os.path.join(base, "library.json")):
+            print("Không thấy library.json ở %s — chỉ định bằng --thu-vien <thư mục chứa library.json>; "
+                  "không dựng thư viện rỗng ở chỗ lạ." % base)
+            return 1
+    else:
+        print("Lệnh không rõ. Dùng: add <file.html> | build  [--thu-vien <thư mục>]")
+        return 1
     libpath = os.path.join(base, "library.json")
     outpath = os.path.join(base, "evidence-library.html")
     lib = load_lib(libpath)
 
     if cmd == "add":
-        files = []
-        for a in sys.argv[2:]:
-            files += glob.glob(a)
-        files = [f for f in files if f.endswith(".html") and "evidence-library" not in f]
-        if not files:
-            print("Không có file .html hợp lệ để thêm."); return 1
         for f in files:
             entry = parse_dashboard(f)
             lib = upsert(lib, entry)
             print("  + %s  (%s · %d item · áp dụng %d)" % (entry["file"], entry["updated"], entry["total"], entry["apply"]))
         json.dump(lib, open(libpath, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         build_html(lib, outpath)
-    elif cmd == "build":
-        build_html(lib, outpath)
     else:
-        print("Lệnh không rõ. Dùng: add <file.html> | build"); return 1
+        build_html(lib, outpath)
 
     print("Thư viện: %d bản → %s" % (len(lib), outpath))
     return 0

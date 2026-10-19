@@ -62,7 +62,8 @@ không bị bảo «chạy --ghi-cau-hinh» cho một thư viện công cụ kh�
 `--chua-xac-minh` (bước ⑧ truyền khi cổng liêm chính CHƯA PASS): khối «EBM · ĐỌC NHANH» ghi dòng «CHƯA xác minh nguồn
 sống» và chân khối không nói «đã qua cổng».
 Mã thoát: 0 xong · 1 có trích dẫn không lấy được metadata (phần còn lại vẫn nạp) ·
-          2 không chạy được (không phải Mac, chưa cấu hình/cấu hình hỏng, thư viện chưa mở/lệch) · 3 tham số sai.
+          2 không chạy được (không phải Mac, chưa cấu hình/cấu hình hỏng, thư viện chưa mở/lệch) hoặc NHẬP HỤT (sau lệnh
+          nhập, tra lại thư viện vẫn thiếu bài — đo 19/10/2026: cửa sổ Preferences mở làm `import` im lặng) · 3 tham số sai.
 Cần bác sĩ kiểm chứng.
 """
 from __future__ import annotations
@@ -839,6 +840,16 @@ class EndNoteMac:
             return False
         return any(_cung_tep(d.strip(), self.thu_vien) for d in ds.splitlines() if d.strip())
 
+    def ten_cua_so(self) -> list[str]:
+        """Tên các cửa sổ EndNote đang mở — CHỈ ĐỌC, để chỉ ra cửa sổ có thể chặn lệnh nhập (vd «EndNote™ Preferences»).
+        Lỗi/hết giờ ⇒ [] (không đo được, không kết luận)."""
+        try:
+            out = self._chay('set AppleScript\'s text item delimiters to linefeed\nreturn (name of every window) as text',
+                             cho=CHO_KIEM_GIAY)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired):
+            return []
+        return [x.strip() for x in out.splitlines() if x.strip()]
+
     def mo_thu_vien(self, cho_giay: int = 40) -> None:
         subprocess.run(["open", "-a", self.ung_dung, str(self.thu_vien)], check=False, capture_output=True)
         het = time.monotonic() + cho_giay
@@ -1030,6 +1041,29 @@ def cho_nhom_dang_ky(endnote, nhom: str, can: int) -> int:
     return so
 
 
+CHO_NHAP_GIAY = 10  # lượt tra lại (mỗi lượt 1 giây) sau lệnh `import` trước khi kết luận «nhập hụt»
+
+
+def tra_ban_ghi_sau_nhap(endnote, dd: list[dict], vua_nhap: list[dict], ma_cua) -> tuple[dict, dict, list[dict]]:
+    """Tra lại thư viện SAU lệnh nhập: trả (theo_pm, theo_doi, các trích dẫn vừa nhập mà thư viện VẪN KHÔNG có).
+
+    VÌ SAO (19/10/2026, gói THA ngoại trú): `import x into document` trả về KHÔNG lỗi nhưng không nhập gì khi EndNote đang mở
+    hai cửa sổ «Libraries Preferences» và «EndNote™ Preferences» — công cụ vẫn in «nhập mới 17» theo SỐ DỰ ĐỊNH, tra lại
+    theo PMID lẫn DOI ra 0/17, nhóm không tồn tại. Cùng họ BH17: tuyên bố không điều kiện. Nay đếm theo thư viện THẬT; tra
+    lặp ≤ CHO_NHAP_GIAY lượt phòng EndNote ghi chậm, rồi mới kết luận."""
+    def tra() -> tuple[dict, dict]:
+        return (endnote.tim_khop([d["pmid"] for d in dd if d.get("pmid")], "Accession Number"),
+                endnote.tim_khop([d["doi"] for d in dd if d.get("doi")], "DOI"))
+
+    theo_pm, theo_doi = tra()
+    for _ in range(CHO_NHAP_GIAY if vua_nhap else 0):
+        if all(ma_cua(d, theo_pm, theo_doi) for d in vua_nhap):
+            break
+        _ngu(1)
+        theo_pm, theo_doi = tra()
+    return theo_pm, theo_doi, [d for d in vua_nhap if not ma_cua(d, theo_pm, theo_doi)]
+
+
 def _gan_pdf(endnote, can_gan: list[tuple]) -> None:
     """Đặt từng PDF vào `.Data/PDF/` rồi gắn vào bản ghi; gắn hỏng ⇒ dọn đúng thư mục vừa đặt rồi ném lỗi."""
     for r, pmid, (pdf, _nhan) in can_gan:
@@ -1178,6 +1212,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     co, bc["khong_lay_duoc"] = lay_metadata(moi, lay_pm, lay_cr, lay_ep) if moi else ([], [])
     hom_nay = date.today().isoformat()
     can_nhap: list[dict] = []
+    nguon_nhap: list[tuple[dict, dict]] = []  # (trích dẫn của dashboard, metadata sẽ nhập) — để đếm lại SAU khi nhập
     for d, m in co:
         # ③ Xét LẠI theo định danh của metadata: dashboard chỉ ghi PMID mà bác sĩ loại theo DOI (hoặc ngược lại).
         muc = muc_loai_tru(loai_tru, m.get("pmid"), m.get("doi"))
@@ -1198,6 +1233,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             m["ghi_chu"] += " CẢNH BÁO: PubMed gắn «Retracted Publication»."
         m["_pdf"] = chon_pdf(kho, m.get("pmid"))
         can_nhap.append(m)
+        nguon_nhap.append((d, m))
     dd = [d for d in dd if id(d) not in bo]  # cap_ban_ghi đọc `dd` qua closure — bài bị loại không đăng nhóm/gắn PDF
     bc["nhap_moi"] = len(can_nhap)
     bc["pdf_dinh_kem"] = sum(1 for m in can_nhap if m["_pdf"])
@@ -1214,6 +1250,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             if m["_pdf"]:
                 url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, m["_pdf"][0], m["pmid"])
                 thu_muc_moi.append(tm)
+                m["_thu_muc"] = tm
                 m["pdf_url"] = url
                 m["ghi_chu"] += f" Toàn văn đính kèm: {m['_pdf'][1]}."
         if can_nhap:
@@ -1226,8 +1263,16 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             shutil.rmtree(tm, ignore_errors=True)
         raise
 
-    theo_pm = endnote.tim_khop([d["pmid"] for d in dd if d.get("pmid")], "Accession Number")
-    theo_doi = endnote.tim_khop([d["doi"] for d in dd if d.get("doi")], "DOI")
+    theo_pm, theo_doi, chua_vao = tra_ban_ghi_sau_nhap(endnote, dd, [d for d, _m in nguon_nhap], ma_cua)
+    bc["nhap_thuc"] = len(nguon_nhap) - len(chua_vao)
+    if chua_vao:
+        hut = {id(d) for d in chua_vao}
+        bc["nhap_hut"] = [_nhan_dinh_danh(m.get("pmid") or d.get("pmid"), m.get("doi") or d.get("doi"))
+                          for d, m in nguon_nhap if id(d) in hut]
+        bc["cua_so_endnote"] = endnote.ten_cua_so() if hasattr(endnote, "ten_cua_so") else []
+        for d, m in nguon_nhap:  # PDF vừa đặt cho bản ghi KHÔNG vào thư viện ⇒ mồ côi, dọn như nhánh nhập hỏng
+            if id(d) in hut and m.get("_thu_muc"):
+                shutil.rmtree(m["_thu_muc"], ignore_errors=True)
     cap = cap_ban_ghi(theo_pm, theo_doi)
     da_trong_nhom = set(endnote.thanh_vien_nhom(nhom))
     can_dang = [r for _, r in cap if r not in da_trong_nhom]
@@ -1292,10 +1337,22 @@ def _in_bao_cao(bc: dict) -> None:
     loai_tru = bc.get("loai_tru") or []
     rac = bc.get("trong_thung_rac") or []
     so_bo = len(loai_tru) + len(rac)
+    # Lượt ghi thật in số ĐÃ VÀO thư viện (đếm lại sau nhập), không in số dự định — xem tra_ban_ghi_sau_nhap.
+    nhap = (f"nhập mới {bc['nhap_thuc']}/{bc['nhap_moi']} (đếm lại trong thư viện sau nhập)"
+            if bc["ap_dung"] and "nhap_thuc" in bc else
+            f"{'nhập mới' if bc['ap_dung'] else 'sẽ nhập mới'} {bc['nhap_moi']}")
     print(f"   {bc['so_trich_dan']} trích dẫn · " + (f"bỏ qua {so_bo} · " if so_bo else "")
-          + f"đã có trong thư viện {bc['da_co']} · "
-          f"{'nhập mới' if bc['ap_dung'] else 'sẽ nhập mới'} {bc['nhap_moi']} "
+          + f"đã có trong thư viện {bc['da_co']} · {nhap} "
           f"(đính PDF {bc['pdf_dinh_kem']}, chưa có toàn văn {bc['chua_toan_van']})")
+    if bc.get("nhap_hut"):
+        hut = bc["nhap_hut"]
+        print(f"   🔴 NHẬP HỤT: {len(hut)}/{bc['nhap_moi']} trích dẫn KHÔNG có trong thư viện sau lệnh nhập của EndNote — "
+              f"{', '.join(hut[:8])}{' …' if len(hut) > 8 else ''}")
+        cs = [c for c in bc.get("cua_so_endnote") or [] if not c.lower().endswith(".enl")]  # bỏ cửa sổ thư viện
+        if cs:
+            print(f"     Cửa sổ EndNote đang mở: {' · '.join(cs[:6])} — cửa sổ Preferences/hộp thoại có thể chặn lệnh nhập.")
+        print("     Đóng cửa sổ phụ/hộp thoại trong EndNote rồi chạy lại lệnh này (công cụ tra trước khi nhập nên không "
+              "nhập trùng bài đã vào); PDF vừa đặt cho các bài hụt đã được dọn.")
     for x in loai_tru:
         print(f"   ⊘ bỏ qua theo danh sách loại trừ của bác sĩ: {x['dinh_danh']} — «{x['ly_do']}» ({x['ngay']})")
         if x.get("con_trong_thu_vien"):
@@ -1697,7 +1754,12 @@ def main(argv: list[str] | None = None) -> int:
         print("Chạy khô — chưa nhập gì. Thêm --ap-dung để nạp thật.")
     if a.json:
         print(json.dumps(ket_qua, ensure_ascii=False, indent=2, default=str))
-    if any(b.get("loi") for b in ket_qua):
+    return ma_thoat_nap(ket_qua)
+
+
+def ma_thoat_nap(ket_qua: list[dict]) -> int:
+    """Mã thoát của lượt nạp: lỗi hoặc NHẬP HỤT ⇒ 2 (không nạp được — không phải «xong một phần»); thiếu metadata ⇒ 1."""
+    if any(b.get("loi") or b.get("nhap_hut") for b in ket_qua):
         return MA_KHONG_CHAY
     return MA_MOT_PHAN if any(b.get("khong_lay_duoc") for b in ket_qua) else MA_OK
 

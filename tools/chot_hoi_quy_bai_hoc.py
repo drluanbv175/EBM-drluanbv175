@@ -7553,6 +7553,88 @@ def bh164_cong_toan_van_doc_cau_truc_de_muc():
     return True, "thân bài bỏ References · đề mục tường phí xét trước ngưỡng 6000 (trừ trang tự chứng minh toàn văn) · IMRaD đồng nghĩa ngoài tóm tắt · hai bản cổng cùng kết luận"
 
 
+def bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard():
+    """19/10 — xuất gói THA ngoại trú, HAI lỗi «báo sai / ghi nhầm chỗ» cùng họ BH17:
+    (1) bước ⑧ EndNote in «nhập mới 17» theo SỐ DỰ ĐỊNH; `import … into document` trả về không lỗi nhưng tra lại theo PMID
+        lẫn DOI ra 0/17, nhóm không tồn tại (EndNote đang mở hai cửa sổ Preferences). Nay đếm lại thư viện sau nhập, báo
+        NHẬP HỤT, dọn PDF mồ côi, mã thoát 2.
+    (2) `build_library.py add` và `make_derivatives.py` ghi theo THƯ MỤC ĐANG ĐỨNG — chạy từ gốc repo đã nối vào một
+        library.json cũ ở gốc và tạo derivatives/ ở gốc. Nay neo cạnh dashboard.
+    Kiểm HÀNH VI ngoại tuyến: EndNote giả có lệnh nhập im lặng; hai công cụ chạy bằng tiến trình con từ một cwd KHÁC."""
+    import json as _js
+    import shutil as _sh
+    import subprocess as _sp
+    import tempfile as _tf
+    N = _nap(REPO / "tools/nap_endnote_chu_de.py", "_bh165_nap")
+    if not hasattr(N, "tra_ban_ghi_sau_nhap") or not hasattr(N, "ma_thoat_nap"):
+        return False, "nap_endnote_chu_de chưa đếm lại thư viện sau nhập (thiếu tra_ban_ghi_sau_nhap/ma_thoat_nap)"
+    N._ngu = lambda s: None
+
+    class _EnImLang:
+        def __init__(self, tv):
+            self.thu_vien = tv
+            self.so_lan_nhap = 0
+
+        def tim_khop(self, gia_tri, truong):
+            return {v: [] for v in gia_tri}
+
+        def nhap(self, tep):
+            self.so_lan_nhap += 1          # trả về không lỗi, không nhập gì — đúng như đo 19/10
+
+        def thanh_vien_nhom(self, ten):
+            return []
+
+        def ten_cac_nhom(self):
+            return []
+
+        def dang_vao_nhom(self, ids, ten):
+            raise AssertionError("không được đăng nhóm khi không có bản ghi nào")
+
+        def tep_dinh_kem(self, ids):
+            return {}
+
+        def ten_cua_so(self):
+            return ["Thu vien.enl", "EndNote™ Preferences"]
+
+    meta = {"loai_tl": "Journal Article", "tac_gia": ["Nguyễn, Văn A"], "tap_chi": "T", "tap_chi_viet_tat": "", "nam": "2020",
+            "tap": "1", "so": "2", "trang": "3-4", "issn": "", "tom_tat": "", "ngon_ngu": "eng", "pmcid": "", "da_rut": False,
+            "nguon_meta": "PubMed"}
+    du_lieu = {"meta": {"question": "THA"}, "items": [{"id": "ITEM-01", "pmid": "39210715"}, {"id": "ITEM-02", "pmid": "40811497"}]}
+    with _tf.TemporaryDirectory() as tam:
+        tam = Path(tam)
+        tv = tam / "Thu vien.enl"
+        tv.write_bytes(b"")
+        dash = tam / "WebDashboard_EBM_VanDeCuThe_THA_20261019.html"
+        dash.write_text("x", encoding="utf-8", newline="\n")
+        en = _EnImLang(tv)
+        bc = N.nap_chu_de(dash, endnote=en, ap_dung=True, kho=None, doc_data=lambda p: du_lieu,
+                          lay_pm=lambda pmids: {p: dict(meta, pmid=p, doi=None, tieu_de="Bài " + p) for p in pmids},
+                          lay_ep=lambda pmids: {}, lay_cr=lambda doi: None, loai_tru={"doi": {}, "pmid": {}})
+        if en.so_lan_nhap != 1 or bc.get("nhap_moi") != 2:
+            return False, "đường nhập không chạy như ca thật (so_lan_nhap=%s, nhap_moi=%s)" % (en.so_lan_nhap, bc.get("nhap_moi"))
+        if bc.get("nhap_thuc") != 0 or len(bc.get("nhap_hut") or []) != 2:
+            return False, "lệnh nhập im lặng mà không báo NHẬP HỤT (nhap_thuc=%s)" % bc.get("nhap_thuc")
+        if N.ma_thoat_nap([bc]) != N.MA_KHONG_CHAY:
+            return False, "nhập hụt mà mã thoát không phải «không nạp được» (2)"
+
+        goc, kho = tam / "goc", tam / "goc" / "kho"
+        kho.mkdir(parents=True)
+        ten = "WebDashboard_EBM_VanDeCuThe_Thu_20261019.html"
+        _sh.copyfile(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/templates/web-dashboard-evidence-workbench.html", kho / ten)
+        (goc / "library.json").write_text(_js.dumps([{"file": "Cu.html", "updated": "2026-06-28"}]), encoding="utf-8")
+        cong_cu = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools"
+        for lenh in (["build_library.py", "add", "kho/" + ten], ["make_derivatives.py", "kho/" + ten]):
+            kq = _sp.run([sys.executable, "-B", str(cong_cu / lenh[0]), *lenh[1:]], cwd=goc, capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", timeout=120)
+            if kq.returncode != 0:
+                return False, "%s chạy từ cwd khác bị lỗi: %s" % (lenh[0], (kq.stdout + kq.stderr)[-200:])
+        if len(_js.loads((goc / "library.json").read_text(encoding="utf-8"))) != 1 or not (kho / "library.json").is_file():
+            return False, "build_library.py add ghi theo thư mục đang đứng, không cạnh dashboard"
+        if (goc / "derivatives").exists() or not (kho / "derivatives").is_dir():
+            return False, "make_derivatives.py tạo derivatives/ ở thư mục đang đứng"
+    return True, "⑧ đếm lại thư viện sau nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2) · build_library/make_derivatives ghi cạnh dashboard"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10781,6 +10863,7 @@ BAI_HOC = [
     ("BH162", "04/10", "Đối chiếu skill tài khoản ↔ repo phải so skill nguồn «plugin» của bác sĩ (bộ lọc «custom» từng che 20 skill cũ)", bh162_doi_chieu_skill_tai_khoan_nguon_plugin),
     ("BH163", "04/10", "Skill tài khoản claude.ai: so CẢ tệp phụ (không chỉ SKILL.md), đóng gói ZIP đúng cấu trúc tải lên (gốc <tên>/, name = tên thư mục) và hòm việc nhắc khi tài khoản cũ", bh163_skill_tai_khoan_tep_phu_va_dong_goi),
     ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
+    ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
