@@ -841,11 +841,12 @@ class EndNoteMac:
         return any(_cung_tep(d.strip(), self.thu_vien) for d in ds.splitlines() if d.strip())
 
     def ten_cua_so(self) -> list[str]:
-        """Tên các cửa sổ EndNote đang mở — CHỈ ĐỌC, để chỉ ra cửa sổ có thể chặn lệnh nhập (vd «EndNote™ Preferences»).
-        Lỗi/hết giờ ⇒ [] (không đo được, không kết luận)."""
+        """Tên các cửa sổ EndNote ĐANG HIỂN THỊ — CHỈ ĐỌC, để chỉ ra cửa sổ có thể chặn lệnh nhập. Chỉ lấy `visible`: đo 19/10
+        sau khi bác sĩ đóng Preferences, `every window` vẫn trả «Libraries Preferences», «EndNote™ Preferences» với
+        visible=false — liệt kê cả cửa sổ ẩn sẽ chẩn đoán sai. Lỗi/hết giờ ⇒ [] (không đo được, không kết luận)."""
         try:
-            out = self._chay('set AppleScript\'s text item delimiters to linefeed\nreturn (name of every window) as text',
-                             cho=CHO_KIEM_GIAY)
+            out = self._chay('set AppleScript\'s text item delimiters to linefeed\n'
+                             'return (name of every window whose visible is true) as text', cho=CHO_KIEM_GIAY)
         except (RuntimeError, OSError, subprocess.TimeoutExpired):
             return []
         return [x.strip() for x in out.splitlines() if x.strip()]

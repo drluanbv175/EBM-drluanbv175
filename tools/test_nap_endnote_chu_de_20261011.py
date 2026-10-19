@@ -746,8 +746,15 @@ def test_ma_thoat_nap(N):
 def test_ten_cua_so_chi_doc_va_loi_thi_rong(N):
     en = object.__new__(N.EndNoteMac)
     en.ung_dung = "EndNote 2025"
-    en._chay = lambda *a, **k: "My EndNote Library.enl\nEndNote™ Preferences\n"
+    gui = []
+
+    def chay(than, *a, **k):
+        gui.append(than)
+        return "My EndNote Library.enl\nEndNote™ Preferences\n"
+    en._chay = chay
     assert en.ten_cua_so() == ["My EndNote Library.enl", "EndNote™ Preferences"]
+    # 19/10: EndNote giữ cửa sổ Preferences đã đóng như đối tượng ẨN (visible=false) — lệnh gửi đi phải lọc cửa sổ hiển thị
+    assert "whose visible is true" in gui[0]
 
     def hong(*a, **k):
         raise RuntimeError("AppleScript lỗi: giả")

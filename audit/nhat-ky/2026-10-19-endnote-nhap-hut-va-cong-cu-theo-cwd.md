@@ -8,9 +8,13 @@ bằng `python3 tools/xuat_goi_cap_nhat.py <dashboard> --online` — bộ năm 5
 1. **Bước ⑧ EndNote báo số DỰ ĐỊNH như số đã nhập.** `nap_endnote_chu_de.py` in «17 trích dẫn · đã có 0 · nhập mới 17
    (đính PDF 4…)» rồi «Đăng thêm vào nhóm: 0 · nhóm hiện có 0 bản ghi». Đo lại chỉ-đọc ngay sau đó (`EndNoteMac.tim_khop`
    theo `Accession Number` và `DOI`): 0/17 bản ghi, không có nhóm «EBM · Tăng huyết áp ngoại trú…». AppleScript
-   `import x into document` trả về KHÔNG lỗi. Lúc đó EndNote 2025 đang mở 3 cửa sổ: thư viện, «Libraries Preferences»,
-   «EndNote™ Preferences» — nghi cửa sổ Preferences làm lệnh nhập im lặng (chưa tái hiện có chủ đích). Mã thoát vẫn 0 nên
-   bộ xuất không cảnh báo gì; 4 thư mục PDF vừa đặt vào `.Data/PDF/` thành mồ côi.
+   `import x into document` trả về KHÔNG lỗi. Lúc đó AppleScript liệt kê 3 cửa sổ: thư viện, «Libraries Preferences»,
+   «EndNote™ Preferences» (chưa đo thuộc tính `visible`). Mã thoát vẫn 0 nên bộ xuất không cảnh báo gì; 4 thư mục PDF vừa
+   đặt vào `.Data/PDF/` thành mồ côi.
+   **Đính chính cùng ngày (19:38):** sau khi bác sĩ đóng Preferences, `every window` VẪN trả hai cửa sổ đó với
+   `visible=false` — EndNote giữ chúng như đối tượng ẩn. Vì vậy giả thuyết «cửa sổ Preferences chặn lệnh nhập» CHƯA được
+   chứng minh. Lượt nạp lại 19:39 thành công: 15 bài mới + 2 bài có sẵn (recNum 6529, 6361) ⇒ 17/17 PMID đúng một bản
+   ghi, một nhóm, 17 thành viên. Nguyên nhân lần hụt đầu chưa rõ — đó chính là lý do phải ĐẾM LẠI sau nhập.
 2. **`build_library.py add` và `make_derivatives.py` ghi theo `os.getcwd()`.** Chạy từ gốc repo:
    `build_library.py add EBM-Dashboards/<dashboard>.html` nối vào một `library.json` CŨ ở gốc (4 → 5 bản; liên kết tương đối
    trong trang chỉ mục không mở được dashboard) thay vì thư viện chuẩn `EBM-Dashboards/` (74 bản); `make_derivatives.py`
@@ -21,7 +25,8 @@ bằng `python3 tools/xuat_goi_cap_nhat.py <dashboard> --online` — bộ năm 5
 
 - `nap_endnote_chu_de.py`: `tra_ban_ghi_sau_nhap()` tra lại thư viện SAU lệnh nhập (lặp ≤ `CHO_NHAP_GIAY` = 10 lượt × 1
   giây phòng EndNote ghi chậm); báo `nhap_thuc`/`nhap_hut`; dòng báo cáo in «nhập mới X/Y (đếm lại trong thư viện sau
-  nhập)» và «🔴 NHẬP HỤT …» kèm tên cửa sổ EndNote đang mở (`EndNoteMac.ten_cua_so()`, chỉ đọc); dọn PDF vừa đặt cho bài
+  nhập)» và «🔴 NHẬP HỤT …» kèm tên cửa sổ EndNote ĐANG HIỂN THỊ (`EndNoteMac.ten_cua_so()`, chỉ đọc, `whose visible is
+  true`); dọn PDF vừa đặt cho bài
   hụt; `ma_thoat_nap()` ⇒ mã 2 khi nhập hụt (bộ xuất in «⚠ EndNote chưa nạp được»; không đổi mã thoát bộ năm).
 - `build_library.py`: `add` lấy thư mục của CHÍNH dashboard (dashboard ở nhiều thư mục ⇒ từ chối, đòi `--thu-vien`); `build`
   không dựng thư viện rỗng khi thiếu `library.json`. `make_derivatives.py`: `--outdir` mặc định = `derivatives/` CẠNH
@@ -40,5 +45,5 @@ bằng `python3 tools/xuat_goi_cap_nhat.py <dashboard> --online` — bộ năm 5
 
 - BH11 đòi 3 bản khớp md5: chép nguồn `sync/skills/cap-nhat-chung-cu-y-khoa/tools/{build_library,make_derivatives}.py`
   sang `EBM-Dashboards/tools/` và `EBM_MASTER/skill_assets/` (runtime không có dòng riêng — đã so 19/10, ba bản trùng byte).
-- Nạp lại 17 trích dẫn gói THA vào EndNote sau khi bác sĩ đóng cửa sổ Preferences:
-  `python3 tools/nap_endnote_chu_de.py --file EBM-Dashboards/WebDashboard_EBM_VanDeCuThe_TangHuyetAp_NgoaiTru_20261019.html --ap-dung`.
+- (Đã làm 19:39–19:40) nạp lại 17 trích dẫn gói THA, ghi khối tóm tắt tiếng Việt cho 17 bản ghi (3 bài tham khảo nhận
+  «Tóm tắt MÁY», PMID 40811523 `bo_qua` vì PubMed không có abstract); sao lưu `sdb.eni` trước mỗi lượt ghi.
