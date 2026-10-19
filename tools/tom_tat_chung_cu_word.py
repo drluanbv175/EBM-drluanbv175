@@ -43,6 +43,8 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py kiem-cheo <PMID|REC-n>   # dựng gói cho agent kiểm chéo độc lập
   python3 tools/tom_tat_chung_cu_word.py dung <PMID|REC-n> [--gan-endnote] [--ap-dung]
   python3 tools/tom_tat_chung_cu_word.py tien-do
+  python3 tools/tom_tat_chung_cu_word.py moc --loi "<nguyên văn bác sĩ>"   # bản ghi hiện có: để nguyên, không tóm tắt
+  python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
 """
 from __future__ import annotations
@@ -1401,6 +1403,80 @@ def gan_vao_endnote(thu_vien: Path, bg: dict, tep: Path, *, ap_dung: bool, endno
     return 0
 
 
+# ───────────────────────── MỐC «để nguyên» + HÀNG CHỜ chứng cứ MỚI ─────────────────────────
+# Bác sĩ 19/10/2026: «Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên». Mốc liệt kê MỌI bản ghi đang
+# có (kể cả trong thùng rác) lúc ghi — các bản ghi đó KHÔNG BAO GIỜ vào hàng chờ, kể cả khi sau này được gắn thêm PDF. Chỉ bản
+# ghi nạp SAU mốc (recNum mới) có PDF và chưa có Word mới vào hàng chờ. Thiếu mốc ⇒ KHÔNG đoán «mới» là gì (fail-closed).
+
+TEN_MOC = "_moc_de_nguyen.json"
+LOI_MOC_TOI_THIEU = 10
+
+
+def tep_moc(thu_vien: Path) -> Path:
+    return thu_muc_ra(thu_vien) / TEN_MOC
+
+
+def ghi_moc(thu_vien: Path, loi_bac_si: str, *, ghi_de: bool = False) -> int:
+    tep = tep_moc(thu_vien)
+    if tep.exists() and not ghi_de:
+        print(f"= đã có mốc {tep} — không ghi đè (dùng --ghi-de nếu bác sĩ muốn dời mốc)")
+        return 1
+    if len((loi_bac_si or "").strip()) < LOI_MOC_TOI_THIEU:
+        print("✗ cần NGUYÊN VĂN lời bác sĩ (--loi) làm căn cứ ghi mốc")
+        return 1
+    c = mod("sk")._ket_noi(thu_vien)
+    try:
+        ids = sorted(r[0] for r in c.execute("select id from refs"))
+    finally:
+        c.close()
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tep.write_text(json.dumps({"phien_ban": 1, "luc": dt.datetime.now().isoformat(timespec="seconds"),
+                               "loi_bac_si": loi_bac_si.strip(), "thu_vien": thu_vien.name, "so_ban_ghi": len(ids),
+                               "rec": ids}, ensure_ascii=False), encoding="utf-8")
+    print(f"✓ mốc «để nguyên»: {len(ids)} bản ghi hiện có KHÔNG vào hàng chờ tóm tắt — {tep}")
+    return 0
+
+
+def doc_moc(thu_vien: Path) -> set[int] | None:
+    """Tập recNum thuộc mốc; None = chưa có mốc hoặc mốc hỏng (KHÔNG coi là rỗng — rỗng sẽ đẩy cả thư viện vào hàng chờ)."""
+    try:
+        d = json.loads(tep_moc(thu_vien).read_text(encoding="utf-8"))
+        ids = d["rec"]
+        if not isinstance(ids, list) or not ids:
+            return None
+        return {int(x) for x in ids}
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
+    """(PMID, DOI chuẩn hoá) mà dashboard trích — mục chính lẫn tài liệu tham khảo."""
+    ds = mod("tt").ngu_canh([dash], mod("nec")._nap_doc_data())
+    pm = {v["pmid"] for v in ds.values() if v.get("pmid")}
+    doi = {v["doi"] for v in ds.values() if v.get("doi")}
+    return pm, doi
+
+
+def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | None:
+    """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word. None = chưa có mốc (không đoán)."""
+    moc = doc_moc(thu_vien)
+    if moc is None:
+        return None
+    ra = [bg for bg in ban_ghi_co_pdf(thu_vien) if bg["rec"] not in moc and not tep_word(thu_vien, bg["khoa"]).is_file()]
+    if dashboard is not None:
+        pm, doi = trich_dan_cua_dashboard(dashboard)
+        ra = [bg for bg in ra if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)]
+    return sorted(ra, key=lambda x: x["rec"])
+
+
+HUONG_DAN_HANG_CHO = (
+    "Mỗi trích dẫn trong hàng chờ (phiên Claude, TUẦN TỰ — mỗi bài ≈ 150.000–400.000 token):\n"
+    "  1. `chuan-bi <mã>` (gói đọc + tra rút bài) — bài rút / PDF sai bài ⇒ dừng, báo bác sĩ.\n"
+    "  2. MỘT agent đọc toàn văn theo HUONG-DAN-DOC.md → tom_tat.json → `kiem <mã>` tới khi đạt.\n"
+    "  3. `kiem-cheo <mã>` → MỘT agent ĐỘC LẬP khác chấm từng câu → sửa mục sai (đối chiếu lại bài) → lặp tới 0 sai.\n"
+    "  4. `dung <mã> --gan-endnote --ap-dung` (Word cạnh thư viện, gắn liên kết, giữ PDF).")
+
+
 # ───────────────────────── liệt kê / tiến độ ─────────────────────────
 
 def liet_ke(thu_vien: Path, *, tang: int | None = None, chua_lam: bool = False) -> list[dict]:
@@ -1438,6 +1514,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
     sub.add_parser("mau")
     sub.add_parser("tien-do")
+    p = sub.add_parser("moc", help="ghi mốc «để nguyên»: bản ghi hiện có không vào hàng chờ tóm tắt")
+    p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
+    p.add_argument("--ghi-de", action="store_true")
+    p = sub.add_parser("hang-cho", help="trích dẫn MỚI (ngoài mốc) có PDF chưa có Word")
+    p.add_argument("--dashboard", type=Path)
+    p.add_argument("--chuan-bi", action="store_true", help="dựng sẵn gói đọc (tra rút bài, cần mạng) cho từng mục")
+    p.add_argument("--json", action="store_true")
     for ten in ("chuan-bi", "kiem", "kiem-cheo", "dung"):
         p = sub.add_parser(ten)
         p.add_argument("ma")
@@ -1462,12 +1545,35 @@ def main(argv: list[str] | None = None) -> int:
                       f"  {' '.join(x['muc_dashboard'])[:40]}")
             print(f"— {len(ds)} trích dẫn")
         return 0
+    if a.lenh == "moc":
+        return ghi_moc(tv, a.loi, ghi_de=a.ghi_de)
+    if a.lenh == "hang-cho":
+        hc = hang_cho(tv, dashboard=a.dashboard)
+        if hc is None:
+            print(f"⚪ chưa có mốc «để nguyên» ({tep_moc(tv)}) — không xác định được trích dẫn MỚI; bác sĩ quyết rồi chạy "
+                  "`moc --loi \"<nguyên văn>\"`")
+            return 2
+        if a.json:
+            print(json.dumps([{k: v for k, v in x.items() if k != "pdf"} for x in hc], ensure_ascii=False, indent=1))
+            return 0
+        if not hc:
+            print("🟢 không có trích dẫn MỚI có PDF chờ tóm tắt Word" + (f" trong {a.dashboard.name}" if a.dashboard else ""))
+            return 0
+        print(f"🛎 {len(hc)} trích dẫn MỚI có PDF chờ tóm tắt Word" + (f" ({a.dashboard.name})" if a.dashboard else "") + ":")
+        for x in hc:
+            print(f"  · {x['khoa']:<14} rec {x['rec']:<5} {x['tieu_de'][:80]}")
+            if a.chuan_bi:
+                chuan_bi(tv, x["khoa"])
+        print(HUONG_DAN_HANG_CHO)
+        return 0
     if a.lenh == "tien-do":
         ds = liet_ke(tv)
         for t in (1, 2, 3, 4):
             nhom = [x for x in ds if x["tang"] == t]
             print(f"Tầng {t}: {sum(x['da_lam'] for x in nhom)}/{len(nhom)} đã có Word")
         print(f"Tổng: {sum(x['da_lam'] for x in ds)}/{len(ds)} · thư mục {thu_muc_ra(tv)}")
+        hc = hang_cho(tv)
+        print("Hàng chờ chứng cứ MỚI: " + ("⚪ chưa có mốc «để nguyên»" if hc is None else f"{len(hc)} trích dẫn"))
         return 0
     if a.lenh == "chuan-bi":
         return chuan_bi(tv, a.ma)[0]
