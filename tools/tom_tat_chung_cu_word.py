@@ -184,6 +184,9 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    Không dùng «≈», «~» — ghi đúng số của bài, báo cáo theo nhóm thì ghi đủ HAI nhóm (93.1% / 92.9%), không tự cộng/làm tròn.
    Sau bạn, một agent ĐỘC LẬP sẽ chấm từng câu với toàn văn; một câu «sai» hay «không có trong bài» là Word không được dựng.
 10. Viết tiếng Việt chuẩn y khoa, thuật ngữ chưa có tương đương thì tiếng Việt kèm tiếng Anh trong ngoặc lần đầu.
+11. Sửa theo góp ý của kiểm chéo: ĐỐI CHIẾU LẠI với bài trước khi viết — không chép nguyên câu đề nghị (19/10/2026, PARADIGM-HF:
+    đề nghị «phù mạch không nặng» của kiểm chéo bị chép vào 5 chỗ, trong khi Bảng 3 có 3 so với 1 ca phải nhập viện).
+    Tác hại chia theo mức độ trong bảng của bài ⇒ ghi từng mức một dòng, không gộp thành một nhãn nhẹ hơn.
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
 """
@@ -1286,7 +1289,8 @@ def dung_word(tt: dict, ngu_canh: dict):
         if tt.get("tac_hai"):
             _bang(doc, cot, [_dong(h, nen=MAU_TAC_HAI.get(h.get("danh_gia") or "")) for h in tt["tac_hai"]], co=10,
                   rong=RONG_BANG_SO)
-            _them(_doan(doc), "Nền đỏ = nhóm can thiệp nhiều tác hại hơn · nền xanh lá = ít hơn · nền xám = không khác biệt.",
+            _them(_doan(doc), "Nền đỏ = nhóm can thiệp nhiều ca hơn · nền xanh lá = ít ca hơn · nền xám = như nhau — màu theo SỐ CA, "
+                  "không phải ý nghĩa thống kê: xem cột p.",
                   nghieng=True, mau=MAU_CHU["xam"], co=10)
         if not _rong(tt.get("tac_hai_ghi_chu")):
             _viet(_doan(doc), tt.get("tac_hai_ghi_chu"))
