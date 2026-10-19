@@ -3,7 +3,7 @@
 """
 make_derivatives.py — TỰ ĐỘNG sinh 3 sản phẩm phái sinh từ một dashboard đã PASS cổng liêm chính.
 
-Đầu ra (vào derivatives/):
+Đầu ra (vào derivatives/ CẠNH dashboard — từ 19/10/2026 không theo thư mục đang đứng; --outdir để ghi chỗ khác):
   <slug>_to-dan-nguoi-benh.md   — BẢN NHÁP tờ dặn người bệnh (model/bác sĩ rà ngôn ngữ phổ thông, BỎ liều)
   <slug>_slide-outline.md       — dàn ý slide (FAITHFUL: giữ hiệu số + GRADE + PMID) → nạp skill slide ra .pptx
   <slug>_kich-ban-tiktok.md     — BẢN NHÁP kịch bản TikTok (rà ngôn ngữ; video thật: skill tao-video-tiktok)
@@ -99,8 +99,13 @@ def li(xs):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("file")
-    ap.add_argument("--outdir", default="derivatives")
+    ap.add_argument("--outdir", default=None,
+                    help="mặc định: thư mục derivatives/ CẠNH dashboard (không theo thư mục đang đứng)")
     a = ap.parse_args()
+    # VÁ 19/10/2026: mặc định cũ "derivatives" tương đối thư mục hiện hành — chạy từ gốc repo đã tạo thư mục derivatives/
+    # ở gốc, tách khỏi bộ năm trong EBM-Dashboards/derivatives/. Neo theo vị trí dashboard.
+    if a.outdir is None:
+        a.outdir = os.path.join(os.path.dirname(os.path.abspath(a.file)), "derivatives")
 
     html = open(a.file, encoding="utf-8").read()
     b = block(html)

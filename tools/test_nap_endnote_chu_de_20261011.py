@@ -654,3 +654,102 @@ def test_bo_nam_chua_cau_hinh_thi_im_lang_ma_0(N, tmp_path, monkeypatch, capsys)
     assert N.main(["--file", str(dash), "--ap-dung", "--im-khi-chua-cau-hinh"]) == 0
     assert "⚪ EndNote: bỏ qua" in capsys.readouterr().out
     assert N.main(["--file", str(dash), "--ap-dung"]) == 2, "gọi tay mà chưa cấu hình ⇒ không chạy được, không im"
+
+
+# ── NHẬP HỤT (19/10/2026): `import` của EndNote trả về KHÔNG lỗi mà thư viện không có bài ─────────────
+# Ca thật: gói THA ngoại trú — bước ⑧ in «nhập mới 17», tra lại theo PMID lẫn DOI ra 0/17, nhóm không tồn tại; lúc đó
+# EndNote mở hai cửa sổ «Libraries Preferences» và «EndNote™ Preferences». Công cụ phải đếm theo thư viện THẬT.
+
+class _EndNoteNhapImLang(_EndNoteGia):
+    """`tre` None ⇒ lệnh nhập im lặng không làm gì; `tre`=n ⇒ bài vào thư viện sau n lượt tra lại (EndNote ghi chậm)."""
+
+    def __init__(self, thu_vien, tre=None):
+        super().__init__(thu_vien)
+        self.tre = tre
+        self._cho = None
+        self._dem = 0
+
+    def nhap(self, tep):
+        self.so_lan_nhap += 1
+        if self.tre is not None:
+            self._cho = Path(tep).read_bytes()
+
+    def tim_khop(self, gia_tri, truong):
+        if self._cho is not None:
+            self._dem += 1
+            if self._dem > 2 * self.tre:  # mỗi lượt tra gọi tim_khop hai lần (PMID rồi DOI)
+                for r in ET.fromstring(self._cho).findall("records/record"):
+                    self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
+                               r.findtext("urls/pdf-urls/url") or "")
+                self._cho = None
+        return super().tim_khop(gia_tri, truong)
+
+    def ten_cua_so(self):
+        return ["tv.enl", "Libraries Preferences", "EndNote™ Preferences"]
+
+
+def _kho_mot_pdf(tmp_path):
+    kho = tmp_path / "kho"
+    kho.mkdir()
+    (kho / "PMID-27811932_UPW.pdf").write_bytes(b"%PDF-1.4 a")
+    tv = tmp_path / "tv.enl"
+    tv.write_bytes(b"")
+    return kho, tv
+
+
+def test_nhap_im_lang_bao_nhap_hut_khong_bao_so_du_dinh(N, tmp_path, monkeypatch, capsys):
+    ngu = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    kho, tv = _kho_mot_pdf(tmp_path)
+    en = _EndNoteNhapImLang(tv)
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert en.so_lan_nhap == 1
+    assert (bc["nhap_moi"], bc["nhap_thuc"], len(bc["nhap_hut"])) == (4, 0, 4)
+    assert len(ngu) == N.CHO_NHAP_GIAY, "tra lại có giới hạn rồi mới kết luận hụt"
+    assert bc["dang_vao_nhom"] == 0 and en.nhom == {}
+    assert not any((tmp_path / "tv.Data" / "PDF").iterdir()), "PDF đặt cho bài không vào thư viện phải được dọn"
+    assert N.ma_thoat_nap([bc]) == N.MA_KHONG_CHAY
+    N._in_bao_cao(bc)
+    out = capsys.readouterr().out
+    assert "nhập mới 0/4" in out and "NHẬP HỤT: 4/4" in out
+    assert "EndNote™ Preferences" in out and "tv.enl" not in out.split("Cửa sổ EndNote đang mở:")[1].splitlines()[0]
+    assert "nhập mới 4 " not in out, "không bao giờ in số DỰ ĐỊNH như số đã nhập"
+
+
+def test_endnote_ghi_cham_van_dem_du_khong_bao_hut(N, tmp_path, monkeypatch):
+    ngu = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    kho, tv = _kho_mot_pdf(tmp_path)
+    en = _EndNoteNhapImLang(tv, tre=2)
+    bc = _chay(N, tmp_path, en, kho=kho)
+    assert (bc["nhap_thuc"], bc.get("nhap_hut")) == (4, None)
+    assert len(ngu) == 2, "chỉ đợi tới khi bài vào thư viện"
+    assert bc["dang_vao_nhom"] == 4
+    assert len(list((tmp_path / "tv.Data" / "PDF").glob("*/PMID-27811932.pdf"))) == 1, "bài đã vào thì giữ PDF"
+    assert N.ma_thoat_nap([bc]) == N.MA_OK
+
+
+def test_nhap_binh_thuong_khong_doi_va_khong_ngu(N, tmp_path, monkeypatch):
+    ngu = []
+    monkeypatch.setattr(N, "_ngu", ngu.append)
+    bc = _chay(N, tmp_path, _EndNoteGia(tmp_path / "tv.enl"))
+    assert (bc["nhap_moi"], bc["nhap_thuc"], bc.get("nhap_hut")) == (4, 4, None) and ngu == []
+
+
+def test_ma_thoat_nap(N):
+    assert N.ma_thoat_nap([{}]) == N.MA_OK
+    assert N.ma_thoat_nap([{"khong_lay_duoc": ["PMID 1"]}]) == N.MA_MOT_PHAN
+    assert N.ma_thoat_nap([{"khong_lay_duoc": ["PMID 1"]}, {"nhap_hut": ["PMID 2"]}]) == N.MA_KHONG_CHAY
+    assert N.ma_thoat_nap([{"loi": "x"}]) == N.MA_KHONG_CHAY
+
+
+def test_ten_cua_so_chi_doc_va_loi_thi_rong(N):
+    en = object.__new__(N.EndNoteMac)
+    en.ung_dung = "EndNote 2025"
+    en._chay = lambda *a, **k: "My EndNote Library.enl\nEndNote™ Preferences\n"
+    assert en.ten_cua_so() == ["My EndNote Library.enl", "EndNote™ Preferences"]
+
+    def hong(*a, **k):
+        raise RuntimeError("AppleScript lỗi: giả")
+    en._chay = hong
+    assert en.ten_cua_so() == [], "không đo được thì không kết luận"
