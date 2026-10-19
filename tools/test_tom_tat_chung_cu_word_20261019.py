@@ -13,6 +13,9 @@ _sp = importlib.util.spec_from_file_location("_ttcc_test", Path(__file__).resolv
 T = importlib.util.module_from_spec(_sp)
 _sp.loader.exec_module(T)
 
+# Hai ca dựng Word cần python-docx; CI bản sao trần không cài thư viện này ⇒ bỏ qua CÓ KHAI BÁO, mọi ca kiểm cổng vẫn chạy.
+CAN_DOCX = pytest.mark.skipif(importlib.util.find_spec("docx") is None, reason="thiếu python-docx (CI bản sao trần không cài)")
+
 TRANG = [
     "Trial of drug X versus placebo in heart failure. DOI: 10.1000/xyz123",
     "Patients were randomly assigned with concealed allocation. The study was double-blind.",
@@ -140,6 +143,7 @@ def _chu_word(doc) -> tuple[str, str]:
     return "\n".join(doan[:i]), "\n".join(doan[i:])
 
 
+@CAN_DOCX
 def test_word_11_muc_co_mau_va_luu_y_o_cuoi():
     tt = _hop_le()
     tt["ket_luan_thuc_hanh"][0] = "[!Không dùng!] cho người [+có lợi+] **đậm**."
@@ -382,6 +386,7 @@ def test_moi_dong_bang_la_mot_muc_kiem_cheo():
     assert "pmid" not in duong and "can_xac_nhan[1]" not in duong
 
 
+@CAN_DOCX
 def test_dung_dau_cuoi_can_kiem_cheo(tmp_path, monkeypatch):
     import json
     tt = _hop_le()
