@@ -412,7 +412,7 @@ def kiem_rut_bai(pmid: str | None, doi: str | None) -> dict:
             kq = (sx.kiem_rut_bai([pmid]) or {}).get(pmid)
             if isinstance(kq, dict) and kq.get("status") in ("ok", "retracted"):
                 return {"trang_thai": "da_rut" if kq["status"] == "retracted" else "khong_thay_rut",
-                        "nguon": kq.get("source") or ",".join(kq.get("sources_tried") or []), "luc": luc}
+                        "nguon": ", ".join(kq.get("sources_tried") or [kq.get("source") or "?"]), "luc": luc}
         elif doi:
             kq = sx.rut_bai_retraction_watch_ngoai_tuyen_doi([doi])
             if kq is not None:
@@ -423,7 +423,9 @@ def kiem_rut_bai(pmid: str | None, doi: str | None) -> dict:
     return {"trang_thai": "chua_kiem", "nguon": "công cụ không trả kết luận", "luc": luc}
 
 
-NHAN_RUT_BAI = {"khong_thay_rut": "Không thấy thông báo rút bài (chuỗi 3 tầng: Retraction Watch · PubMed · Europe PMC)",
+# Nhãn KHÔNG tự kể tên nguồn — nguồn THỰC SỰ đã tra đi kèm từ `rut_bai["nguon"]` (chuỗi dừng ở tầng đầu cho kết luận;
+# kiểm chéo 19/10/2026 bắt nhãn cũ ghi «Europe PMC» khi chỉ Retraction Watch + PubMed được tra).
+NHAN_RUT_BAI = {"khong_thay_rut": "Không thấy thông báo rút bài (chuỗi tra rút bài của hệ)",
                 "khong_thay_rut_rw": "Không thấy trong Retraction Watch (chỉ tra ngoại tuyến theo DOI — bài không có PMID)",
                 "da_rut": "ĐÃ BỊ RÚT — KHÔNG ĐƯỢC DÙNG",
                 "chua_kiem": "CHƯA KIỂM ĐƯỢC RÚT BÀI — tra lại trước khi dùng"}
@@ -552,6 +554,8 @@ Bạn KHÔNG soạn bản tóm tắt này. Bác sĩ sẽ dựa vào nó để đ
 - `sai` — có dữ kiện/số SAI so với bài, gắn nhầm nhóm/kết cục, đảo chiều, hoặc thiếu mệnh đề điều kiện làm đổi nghĩa;
 - `khong_co_trong_bai` — khẳng định không tìm thấy trong bài (kể cả so sánh nhất/kém nhất, nhận định về Việt Nam không ghi nguồn).
 Mỗi mục ghi `trang` (danh sách trang đã đối chiếu) và `ghi_chu` (bắt buộc khi sai/khong_co_trong_bai: sai ở đâu, bài viết gì).
+Chỉ chấm các mục trong `muc`; mục trong `ke_thua` đã đạt ở lần trước với nội dung y hệt — không chấm lại.
+Tiết kiệm: đọc `van_ban.txt` MỘT lần, viết `kiem_cheo.json` MỘT lần (mỗi lần gọi công cụ gửi lại toàn bộ ngữ cảnh).
 Không sửa tom_tat.json. Ghi kết quả vào `kiem_cheo.json` đúng khuôn:
 {"phien_ban": 1, "tom_tat_sha256": "<sao y từ kiem_cheo_can_kiem.json>", "nguoi_kiem": "<tên agent, ngữ cảnh mới>",
  "luc": "<ISO>", "muc": [{"duong_dan": "...", "ket_luan": "dung", "trang": [3], "ghi_chu": ""}]}
@@ -586,11 +590,46 @@ def bam_tom_tat(goi: Path) -> str:
     return hashlib.sha256((goi / "tom_tat.json").read_bytes()).hexdigest()
 
 
+def _bam_chu(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def _ket_luan_hop_le_cu(goi: Path) -> dict[str, dict]:
+    """{đường dẫn: kết luận ĐẠT của lần kiểm chéo trước, kèm băm nội dung đã chấm} — chỉ lấy khi lần trước tự nhất quán
+    (kiem_cheo.json chấm đúng bản mà kiem_cheo_can_kiem.json mô tả). Mục «sai»/«không có trong bài» không bao giờ được kế thừa."""
+    try:
+        ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+        kc = json.loads((goi / "kiem_cheo.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if kc.get("tom_tat_sha256") != ck.get("tom_tat_sha256"):
+        return {}
+    ra: dict[str, dict] = {}
+    for m in ck.get("ke_thua") or []:
+        ra[m["duong_dan"]] = m
+    noi_dung = {m["duong_dan"]: m["noi_dung"] for m in ck.get("muc") or []}
+    for m in kc.get("muc") or []:
+        d = m.get("duong_dan")
+        if d in noi_dung and m.get("ket_luan") in ("dung", "suy_luan_hop_ly", "ngoai_bai_co_nguon"):
+            ra[d] = {"duong_dan": d, "noi_dung_sha256": _bam_chu(noi_dung[d]), "ket_luan": m["ket_luan"],
+                     "trang": m.get("trang"), "ghi_chu": m.get("ghi_chu", ""), "luc": kc.get("luc")}
+    return ra
+
+
 def chuan_bi_kiem_cheo(goi: Path) -> Path:
+    """Gói cho agent kiểm chéo. Mục có NỘI DUNG GIỐNG HỆT lần kiểm trước và đã đạt ⇒ kế thừa kết luận (đo 19/10: một lượt
+    chấm 111 mục tốn ≈ 332.000 token); mục mới/đã sửa ⇒ phải chấm lại."""
     tt = json.loads((goi / "tom_tat.json").read_text(encoding="utf-8"))
+    cu = _ket_luan_hop_le_cu(goi)
+    can, ke_thua = [], []
+    for d, n in cac_muc_kiem_cheo(tt):
+        m = cu.get(d)
+        if m and m.get("noi_dung_sha256") == _bam_chu(n):
+            ke_thua.append(m)
+        else:
+            can.append({"duong_dan": d, "noi_dung": n})
     ra = goi / "kiem_cheo_can_kiem.json"
-    ra.write_text(json.dumps({"tom_tat_sha256": bam_tom_tat(goi),
-                              "muc": [{"duong_dan": d, "noi_dung": n} for d, n in cac_muc_kiem_cheo(tt)]},
+    ra.write_text(json.dumps({"tom_tat_sha256": bam_tom_tat(goi), "muc": can, "ke_thua": ke_thua},
                              ensure_ascii=False, indent=1), encoding="utf-8")
     (goi / "HUONG-DAN-KIEM-CHEO.md").write_text(HUONG_DAN_KIEM_CHEO, encoding="utf-8")
     return ra
@@ -609,6 +648,15 @@ def kiem_ket_qua_kiem_cheo(goi: Path, tt: dict) -> list[str]:
     if kc.get("tom_tat_sha256") != bam_tom_tat(goi):
         return ["kiem_cheo.json chấm một bản tom_tat.json KHÁC (đã sửa sau khi kiểm chéo) — kiểm chéo lại bản hiện tại"]
     da_cham = {}
+    try:  # kết luận KẾ THỪA (mục không đổi chữ) — chỉ khi gói kiểm chéo dựng cho ĐÚNG bản hiện tại
+        ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ck = {}
+    if ck.get("tom_tat_sha256") == bam_tom_tat(goi):
+        noi_dung_hien_tai = dict(cac_muc_kiem_cheo(tt))
+        for m in ck.get("ke_thua") or []:
+            if m.get("noi_dung_sha256") == _bam_chu(noi_dung_hien_tai.get(m.get("duong_dan"), "\0")):
+                da_cham[m.get("duong_dan")] = m
     for m in kc.get("muc") or []:
         if isinstance(m, dict):
             da_cham[m.get("duong_dan")] = m
@@ -1483,7 +1531,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"✗ cổng tất định còn {len(loi)} lỗi — sửa trước khi kiểm chéo (chạy `kiem {bg['khoa']}`)")
             return 1
         ra = chuan_bi_kiem_cheo(goi)
-        print(f"Gói kiểm chéo: {ra} ({len(json.loads(ra.read_text(encoding='utf-8'))['muc'])} mục)")
+        _g = json.loads(ra.read_text(encoding="utf-8"))
+        print(f"Gói kiểm chéo: {ra} — {len(_g['muc'])} mục phải chấm, {len(_g['ke_thua'])} mục kế thừa (không đổi chữ)")
         print(f"  Giao một agent ĐỘC LẬP (ngữ cảnh mới) đọc {goi / 'HUONG-DAN-KIEM-CHEO.md'} → viết {goi / 'kiem_cheo.json'}")
         return 0
     if a.lenh == "kiem":

@@ -409,3 +409,59 @@ def test_dung_dau_cuoi_can_kiem_cheo(tmp_path, monkeypatch):
                                         encoding="utf-8")
     assert T.dung(lib, "123", rut_bai=rb) == 0
     assert T.tep_word(lib, "PMID-123").is_file()
+
+
+# ── Kế thừa kết luận kiểm chéo cho mục KHÔNG đổi chữ (một lượt chấm 111 mục ≈ 332.000 token) ──
+
+def _lan_dau(tmp_path, tt, ket_luan_rieng=None):
+    import json
+    goi = tmp_path / "goi"
+    goi.mkdir(exist_ok=True)
+    (goi / "tom_tat.json").write_text(json.dumps(tt, ensure_ascii=False), encoding="utf-8")
+    T.chuan_bi_kiem_cheo(goi)
+    ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+    muc = [{"duong_dan": m["duong_dan"], "ket_luan": (ket_luan_rieng or {}).get(m["duong_dan"], "dung"), "trang": [3],
+            "ghi_chu": ""} for m in ck["muc"]]
+    (goi / "kiem_cheo.json").write_text(json.dumps({"phien_ban": 1, "tom_tat_sha256": ck["tom_tat_sha256"], "muc": muc,
+                                                    "luc": "x"}, ensure_ascii=False), encoding="utf-8")
+    return goi
+
+
+def test_ke_thua_chi_cham_lai_muc_da_sua(tmp_path):
+    import json
+    tt = _hop_le()
+    goi = _lan_dau(tmp_path, tt)
+    assert T.kiem_ket_qua_kiem_cheo(goi, tt) == []
+    tt["diem_manh"] = ["Điểm mạnh đã sửa"]
+    (goi / "tom_tat.json").write_text(json.dumps(tt, ensure_ascii=False), encoding="utf-8")
+    assert any("bản tom_tat.json KHÁC" in x for x in T.kiem_ket_qua_kiem_cheo(goi, tt))  # sửa ⇒ phải kiểm chéo lại
+    T.chuan_bi_kiem_cheo(goi)
+    ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+    assert [m["duong_dan"] for m in ck["muc"]] == ["diem_manh[1]"] and len(ck["ke_thua"]) > 10
+    (goi / "kiem_cheo.json").write_text(json.dumps({"phien_ban": 1, "tom_tat_sha256": ck["tom_tat_sha256"], "muc": [
+        {"duong_dan": "diem_manh[1]", "ket_luan": "dung", "trang": [1], "ghi_chu": ""}]}), encoding="utf-8")
+    assert T.kiem_ket_qua_kiem_cheo(goi, tt) == []
+
+
+def test_muc_sai_khong_bao_gio_duoc_ke_thua(tmp_path):
+    import json
+    tt = _hop_le()
+    goi = _lan_dau(tmp_path, tt, {"han_che[1]": "sai"})
+    T.chuan_bi_kiem_cheo(goi)
+    ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+    assert "han_che[1]" in [m["duong_dan"] for m in ck["muc"]]
+    assert "han_che[1]" not in [m["duong_dan"] for m in ck["ke_thua"]]
+
+
+def test_ke_thua_bi_sua_tay_khong_duoc_tinh(tmp_path):
+    import json
+    tt = _hop_le()
+    goi = _lan_dau(tmp_path, tt)
+    T.chuan_bi_kiem_cheo(goi)  # mọi mục kế thừa, «muc» rỗng
+    ck = json.loads((goi / "kiem_cheo_can_kiem.json").read_text(encoding="utf-8"))
+    for m in ck["ke_thua"]:
+        m["noi_dung_sha256"] = "0" * 64
+    (goi / "kiem_cheo_can_kiem.json").write_text(json.dumps(ck), encoding="utf-8")
+    (goi / "kiem_cheo.json").write_text(json.dumps({"phien_ban": 1, "tom_tat_sha256": ck["tom_tat_sha256"], "muc": []}),
+                                        encoding="utf-8")
+    assert any("bỏ sót" in x for x in T.kiem_ket_qua_kiem_cheo(goi, tt))

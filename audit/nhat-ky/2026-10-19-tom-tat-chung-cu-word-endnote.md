@@ -61,6 +61,13 @@ Tự soát lại bản PARADIGM-HF câu theo câu, thấy các lỗi mà cổng 
    - `kiem_cheo.json` gắn băm SHA-256 của đúng bản `tom_tat.json` đã chấm — sửa bản tóm tắt sau đó thì phải kiểm chéo lại;
    - `dung` đòi phủ đủ 100% mục, không mục nào «sai» hay «không có trong bài».
 - Kiểm thử: 42 ca; 27 phép đột biến đều làm kiểm đỏ.
+- Kiểm chéo lần 1 (PARADIGM-HF, 111 mục, ≈ 332.000 token): 66 đúng · 35 suy luận hợp lý · 2 ngoài bài có nguồn · **1 sai · 7 không có trong bài**. Mọi con số đều khớp; lỗi nằm ở CÂU CHỮ:
+  - phù mạch không nặng bị ghi «tương đương», trong khi bài viết nhóm LCZ696 có tỷ lệ cao hơn;
+  - «theo dõi phù mạch giai đoạn đầu», SGLT2, «đúng như đăng ký», «đường uống» — không có trong bài;
+  - ngưỡng HATT/kali bỏ mất mốc «lúc sàng lọc / lúc ngẫu nhiên»;
+  - NNT thiếu khung thời gian.
+  Kiểm chéo còn bắt một lỗi CÔNG CỤ: nhãn rút bài kể «Europe PMC» trong khi chuỗi tra chỉ tới PubMed — nay nhãn không kể tên nguồn, nguồn thật đi kèm.
+- Kế thừa kết luận: mục KHÔNG đổi chữ và đã đạt thì không chấm lại (băm nội dung từng mục); mục «sai»/«không có trong bài» luôn phải chấm lại. Lần 2: 17 mục phải chấm, 94 mục kế thừa. Kiểm thử 45 ca; thêm 3 phép đột biến, đều làm kiểm đỏ.
 
 ## Bài học
 Cổng tất định chỉ chứng minh được «số có trong bài», không chứng minh «câu đúng»: khẳng định định tính sai (so sánh nhất, nhận định ngoài bài) chỉ một người đọc độc lập mới bắt được — nên kiểm chéo độc lập là bắt buộc trước khi ra Word. Bác sĩ dựa vào bản tóm tắt để thực hành, nên cổng phải đối chiếu số với TRANG của PDF chứ không đối chiếu với trí nhớ của mô hình. PDF tách chữ sinh ra gạch nối kiểu «air -⏎way» và chữ của bảng chen giữa câu; bộ so khớp trích dẫn phải chịu được các lỗi này nhưng không được nới tới mức nhận câu bịa.
