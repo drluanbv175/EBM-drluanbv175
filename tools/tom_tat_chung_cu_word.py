@@ -11,7 +11,10 @@ DÂY CHUYỀN (mỗi trích dẫn):
      bằng chuỗi 3 tầng THẬT (không trả lời bằng trí nhớ), gom ngữ cảnh dashboard (mục nào dùng bài, decision, gradeLevel). Gói
      đọc ở `~/.ebm-cache/tom-tat-chung-cu/<khoá>/` (ngoài OneDrive — chứa toàn văn, không phân phối).
   2. Một phiên/agent Claude ĐỌC TOÀN VĂN theo `HUONG_DAN_DOC` (in kèm gói) và viết `tom_tat.json` đúng khuôn `MAU`.
-  3. `dung <mã>` — CỔNG kiểm (fail-closed) rồi dựng Word:
+  2b. `kiem-cheo <mã>` — sau khi cổng tất định đạt: MỘT agent ĐỘC LẬP (ngữ cảnh mới, không soạn bản này) chấm TỪNG câu/dòng
+     bảng với toàn văn (dung · suy_luan_hop_ly · ngoai_bai_co_nguon · sai · khong_co_trong_bai) → `kiem_cheo.json` gắn băm
+     SHA-256 của đúng bản tom_tat.json đã chấm (bác sĩ 19/10/2026: «không được phép sai sót về chứng cứ và số liệu»).
+  3. `dung <mã>` — CỔNG kiểm (fail-closed) + đòi kiểm chéo ĐỦ 100% mục, 0 sai/0 không có trong bài, rồi dựng Word:
        · mọi con số ở bảng kết quả/tác hại phải có NGUYÊN VĂN trên trang khai (±1 trang); số do máy tự tính (ARR, NNT) phải
          khai `may_tinh` và in dấu † — không lẫn với số của bài;
        · mọi trích dẫn nguyên văn ≤ 15 từ và tìm thấy trên trang khai;
@@ -37,6 +40,7 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py mau                       # khuôn JSON + hướng dẫn đọc
   python3 tools/tom_tat_chung_cu_word.py chuan-bi <PMID|REC-n>
   python3 tools/tom_tat_chung_cu_word.py kiem <PMID|REC-n>        # chỉ chạy cổng
+  python3 tools/tom_tat_chung_cu_word.py kiem-cheo <PMID|REC-n>   # dựng gói cho agent kiểm chéo độc lập
   python3 tools/tom_tat_chung_cu_word.py dung <PMID|REC-n> [--gan-endnote] [--ap-dung]
   python3 tools/tom_tat_chung_cu_word.py tien-do
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
@@ -175,7 +179,10 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    Đọc `ngu_canh.json` để biết bài đang được dashboard dùng thế nào (decision, gradeLevel) — chỉ để hiểu bối cảnh.
 8. guideline/nhãn thuốc: điền `khuyen_cao` (mỗi khuyến cáo liên quan: nội dung tiếng Việt, `luc_khuyen_cao`, `muc_chung_cu`
    NGUYÊN BẢN, `trang`, `lien_quan_dashboard`); `ket_qua` để [].
-9. Không PII. Không thông tin ngoài bài trừ khi ghi nguồn (PMID/DOI) ngay trong câu.
+9. Không PII. Không thông tin ngoài bài trừ khi ghi nguồn (PMID/DOI) ngay trong câu. Không viết so sánh nhất («lớn nhất»,
+   «đầu tiên») hay nhận định về thực hành ở Việt Nam nếu bài không viết — gắn `[ngoài bài: nguồn]` khi lấy từ nơi khác.
+   Không dùng «≈», «~» — ghi đúng số của bài, báo cáo theo nhóm thì ghi đủ HAI nhóm (93.1% / 92.9%), không tự cộng/làm tròn.
+   Sau bạn, một agent ĐỘC LẬP sẽ chấm từng câu với toàn văn; một câu «sai» hay «không có trong bài» là Word không được dựng.
 10. Viết tiếng Việt chuẩn y khoa, thuật ngữ chưa có tương đương thì tiếng Việt kèm tiếng Anh trong ngoặc lần đầu.
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
@@ -466,6 +473,158 @@ def chuan_bi(thu_vien: Path, ma: str, *, ngu_canh_tat_ca: dict | None = None, ru
     return 0, goi
 
 
+# ───────────────────────── kiểm TẤT ĐỊNH nhất quán số liệu một dòng kết quả ─────────────────────────
+# Bác sĩ 19/10/2026: «không được phép sai sót về chứng cứ và số liệu». Số có trong bài vẫn có thể bị GẮN NHẦM (đảo hai nhóm,
+# lấy KTC của dòng khác). Các phép dưới bắt mâu thuẫn nội tại của một dòng — không cần hiểu ngữ nghĩa.
+
+_SO_CO_DAU = r"[-−–]?\d+(?:[.,·]\d+)?"
+_KTC = re.compile(rf"({_SO_CO_DAU})\s*(?:–|—|-|to|đến|,)\s*({_SO_CO_DAU})")
+_TY_SO = re.compile(r"\b(HR|RR|OR|IRR|aHR|aOR|aRR|SHR|rate ratio|hazard ratio|odds ratio|risk ratio|tỷ số)\b", re.I)
+SO_GAN_DUNG = re.compile(r"[≈~∼]\s*\d|\bkhoảng\s+\d+(?:[.,]\d+)?\s*%")
+
+
+def _f(s: str) -> float | None:
+    try:
+        return float(_chuan_so(s.replace("−", "-").replace("–", "-")))
+    except (TypeError, ValueError):
+        return None
+
+
+def _ty_le_nhom(s: str) -> float | None:
+    """Tỷ lệ % của một nhóm: «914 (21.8%)», «914 (21.8)», «10.7%»."""
+    s = _chuan_so(str(s or ""))
+    m = re.search(r"(\d+(?:\.\d+)?)\s*%", s) or re.search(r"\((\d+(?:\.\d+)?)\)", s)
+    return float(m.group(1)) if m else None
+
+
+def _gia_tri_p(s: str) -> tuple[str, float] | None:
+    s = _chuan_so(str(s or "")).replace(" ", "")
+    m = re.search(r"([<≤>=]?)(\d*\.?\d+)", s)
+    return (m.group(1), float(m.group(2))) if m else None
+
+
+def kiem_nhat_quan_dong(h: dict, ten: str) -> list[str]:
+    loi: list[str] = []
+    hu = str(h.get("hieu_ung") or "")
+    la_ty_so = bool(_TY_SO.search(hu))
+    so_hu = re.findall(_SO_CO_DAU, hu)
+    uoc = _f(so_hu[0]) if so_hu else None
+    m = _KTC.search(str(h.get("ktc95") or ""))
+    lo, hi = (_f(m.group(1)), _f(m.group(2))) if m else (None, None)
+    if uoc is not None and lo is not None and hi is not None:
+        if lo > hi:
+            lo, hi = hi, lo
+        if not lo - 1e-9 <= uoc <= hi + 1e-9:
+            loi.append(f"{ten}: ước lượng {uoc} nằm NGOÀI KTC 95% {lo}–{hi} — KTC của dòng khác, hay chép nhầm?")
+        moc = 1.0 if la_ty_so else 0.0
+        loai_tru_moc = hi < moc or lo > moc
+        p = _gia_tri_p(h.get("p"))
+        if p is not None:
+            dau, gt = p
+            if loai_tru_moc and gt > 0.10 and dau not in ("<", "≤"):
+                loi.append(f"{ten}: KTC 95% {lo}–{hi} không chứa {moc} nhưng p = {gt} — mâu thuẫn, kiểm lại")
+            if not loai_tru_moc and (gt < 0.01 or (dau in ("<", "≤") and gt <= 0.01)):
+                loi.append(f"{ten}: KTC 95% {lo}–{hi} chứa {moc} nhưng p {dau}{gt} — mâu thuẫn, kiểm lại")
+    pi, pc = _ty_le_nhom(h.get("nhom_can_thiep")), _ty_le_nhom(h.get("nhom_so_sanh"))
+    if la_ty_so and uoc is not None and pi is not None and pc is not None and abs(pi - pc) >= 0.5:
+        if (pi < pc and uoc > 1) or (pi > pc and uoc < 1):
+            loi.append(f"{ten}: tỷ lệ nhóm can thiệp {pi}% so với nhóm so sánh {pc}% ngược chiều {hu} — đảo hai nhóm?")
+    dg = h.get("danh_gia")
+    if dg in ("bat_loi", "loi") and pi is not None and pc is not None and abs(pi - pc) >= 0.1:
+        if (dg == "bat_loi" and pi < pc) or (dg == "loi" and pi > pc):
+            loi.append(f"{ten}: danh_gia «{dg}» ngược với tỷ lệ {pi}% (can thiệp) so với {pc}% (so sánh)")
+    return loi
+
+
+# ───────────────────────── KIỂM CHÉO ĐỘC LẬP (agent ngữ cảnh mới chấm TỪNG câu) ─────────────────────────
+KET_LUAN_KIEM_CHEO = ("dung", "suy_luan_hop_ly", "ngoai_bai_co_nguon", "sai", "khong_co_trong_bai")
+_KHOA_META = {"phien_ban_khuon", "khoa", "pmid", "doi", "loai_thiet_ke", "may_tinh", "chinh", "danh_gia", "trang",
+              "lien_quan_dashboard", "can_xac_nhan", "nguoi_soan", "trich_nguyen_van"}
+
+HUONG_DAN_KIEM_CHEO = """# Kiểm chéo ĐỘC LẬP bản tóm tắt `tom_tat.json` với toàn văn `van_ban.txt`
+
+Bạn KHÔNG soạn bản tóm tắt này. Bác sĩ sẽ dựa vào nó để điều trị người bệnh. Với TỪNG mục trong `kiem_cheo_can_kiem.json`
+(đường dẫn + nội dung), đọc đúng chỗ trong `van_ban.txt` (trang mở đầu bằng `=== TRANG n ===`) rồi chấm một kết luận:
+- `dung` — mọi dữ kiện và mọi con số trong câu có trong bài và gắn ĐÚNG đối tượng (đúng nhóm, đúng kết cục, đúng thời điểm);
+- `suy_luan_hop_ly` — câu là thẩm định/diễn giải (nguy cơ sai lệch, GRADE, khả năng áp dụng) có căn cứ trong bài, không thêm
+  dữ kiện mới;
+- `ngoai_bai_co_nguon` — câu mang nhãn `[ngoài bài: …]` ghi rõ nguồn;
+- `sai` — có dữ kiện/số SAI so với bài, gắn nhầm nhóm/kết cục, đảo chiều, hoặc thiếu mệnh đề điều kiện làm đổi nghĩa;
+- `khong_co_trong_bai` — khẳng định không tìm thấy trong bài (kể cả so sánh nhất/kém nhất, nhận định về Việt Nam không ghi nguồn).
+Mỗi mục ghi `trang` (danh sách trang đã đối chiếu) và `ghi_chu` (bắt buộc khi sai/khong_co_trong_bai: sai ở đâu, bài viết gì).
+Không sửa tom_tat.json. Ghi kết quả vào `kiem_cheo.json` đúng khuôn:
+{"phien_ban": 1, "tom_tat_sha256": "<sao y từ kiem_cheo_can_kiem.json>", "nguoi_kiem": "<tên agent, ngữ cảnh mới>",
+ "luc": "<ISO>", "muc": [{"duong_dan": "...", "ket_luan": "dung", "trang": [3], "ghi_chu": ""}]}
+"""
+
+
+def cac_muc_kiem_cheo(tt: dict) -> list[tuple[str, str]]:
+    """Mọi khẳng định phải được chấm: mỗi chuỗi chữ là một mục; mỗi dòng bảng (kết quả/tác hại/khuyến cáo) là MỘT mục."""
+    ra: list[tuple[str, str]] = []
+
+    def di(x, duong: str) -> None:
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k in _KHOA_META:
+                    continue
+                if k in ("ket_qua", "tac_hai", "khuyen_cao") and isinstance(v, list):
+                    for i, h in enumerate(v, 1):
+                        if isinstance(h, dict):
+                            ra.append((f"{k}[{i}]", " | ".join(f"{a}={b}" for a, b in h.items() if a not in ("chinh",))))
+                    continue
+                di(v, f"{duong}.{k}" if duong else k)
+        elif isinstance(x, list):
+            for i, v in enumerate(x, 1):
+                di(v, f"{duong}[{i}]")
+        elif isinstance(x, str) and x.strip():
+            ra.append((duong, x))
+    di(tt, "")
+    return ra
+
+
+def bam_tom_tat(goi: Path) -> str:
+    return hashlib.sha256((goi / "tom_tat.json").read_bytes()).hexdigest()
+
+
+def chuan_bi_kiem_cheo(goi: Path) -> Path:
+    tt = json.loads((goi / "tom_tat.json").read_text(encoding="utf-8"))
+    ra = goi / "kiem_cheo_can_kiem.json"
+    ra.write_text(json.dumps({"tom_tat_sha256": bam_tom_tat(goi),
+                              "muc": [{"duong_dan": d, "noi_dung": n} for d, n in cac_muc_kiem_cheo(tt)]},
+                             ensure_ascii=False, indent=1), encoding="utf-8")
+    (goi / "HUONG-DAN-KIEM-CHEO.md").write_text(HUONG_DAN_KIEM_CHEO, encoding="utf-8")
+    return ra
+
+
+def kiem_ket_qua_kiem_cheo(goi: Path, tt: dict) -> list[str]:
+    """Cổng kiểm chéo: phải có `kiem_cheo.json` của ĐÚNG bản tom_tat.json hiện tại (băm), chấm ĐỦ mọi mục, không mục nào sai."""
+    tep = goi / "kiem_cheo.json"
+    if not tep.is_file():
+        return ["chưa có kiem_cheo.json — chạy `kiem-cheo <mã>` rồi giao một agent ĐỘC LẬP (ngữ cảnh mới) chấm từng câu"]
+    try:
+        kc = json.loads(tep.read_text(encoding="utf-8"))
+    except ValueError as e:
+        return [f"kiem_cheo.json không phải JSON hợp lệ: {e}"]
+    loi: list[str] = []
+    if kc.get("tom_tat_sha256") != bam_tom_tat(goi):
+        return ["kiem_cheo.json chấm một bản tom_tat.json KHÁC (đã sửa sau khi kiểm chéo) — kiểm chéo lại bản hiện tại"]
+    da_cham = {}
+    for m in kc.get("muc") or []:
+        if isinstance(m, dict):
+            da_cham[m.get("duong_dan")] = m
+    for duong, _ in cac_muc_kiem_cheo(tt):
+        m = da_cham.get(duong)
+        if m is None:
+            loi.append(f"kiểm chéo bỏ sót mục {duong}")
+            continue
+        kl = m.get("ket_luan")
+        if kl not in KET_LUAN_KIEM_CHEO:
+            loi.append(f"kiểm chéo {duong}: kết luận «{kl}» không hợp lệ")
+        elif kl in ("sai", "khong_co_trong_bai"):
+            loi.append(f"kiểm chéo {duong}: {kl.upper()} — {str(m.get('ghi_chu') or '')[:200]}")
+    return loi
+
+
 # ───────────────────────── CỔNG kiểm tom_tat.json ─────────────────────────
 
 def _rong(v) -> bool:
@@ -666,7 +825,14 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
         if sai:
             loi.append(f"{ten}: số {', '.join(sorted(set(sai)))} không có trong bài — chép đúng số của bài, hoặc ghi "
                        "«[ngoài bài: <nguồn>]» nếu lấy từ nguồn khác")
+    for khoi in ("ket_qua", "tac_hai"):
+        for i, h in enumerate(tt.get(khoi) or [], 1):
+            if isinstance(h, dict):
+                loi += kiem_nhat_quan_dong(h, f"{khoi}[{i}] «{h.get('ket_cuc')}»")
     for ten, x in cac_chuoi_than_bai(tt):
+        g = SO_GAN_DUNG.search(x)
+        if g:
+            loi.append(f"{ten}: số gần đúng «{g.group(0)}» — ghi đúng số của bài (từng nhóm nếu bài báo cáo theo nhóm)")
         m = CUM_CAM_THAN_BAI.search(x)
         if m:
             loi.append(f"{ten}: thân văn bản chứa «{m.group(0)}» — chuyển điểm chưa chắc vào can_xac_nhan (in ở cuối văn bản)")
@@ -816,12 +982,12 @@ def _tieu_de_nho(doc, ten: str, mau: str = "duong") -> None:
 
 def _hop(doc, nhan: str, noi_dung, *, mau: str = "duong", danh_sach: bool = False) -> None:
     """Ô tô nền một ô: NHÃN in hoa đậm màu + nội dung (chuỗi hoặc danh sách gạch đánh số)."""
-    from docx.shared import Cm, Pt  # noqa: PLC0415
+    from docx.shared import Pt  # noqa: PLC0415
     t = doc.add_table(rows=1, cols=1)
     t.style = "Table Grid"
     t.autofit = False
     o = t.cell(0, 0)
-    o.width = Cm(17)
+    _dat_rong(t, [17.0])
     _to_nen(o, MAU_NEN[mau])
     p = o.paragraphs[0]
     _them(p, nhan, dam=True, mau=MAU_CHU["navy" if mau == "duong" else mau])
@@ -840,7 +1006,6 @@ def _hop(doc, nhan: str, noi_dung, *, mau: str = "duong", danh_sach: bool = Fals
 def _bang(doc, tieu_de: list[str], hang: list[list], *, co: float = 10.5, rong: list[float] | None = None) -> None:
     """Bảng có dòng tiêu đề nền xanh đậm chữ trắng (lặp lại khi sang trang). Ô = chuỗi, hoặc (chuỗi, {dam, mau, nen}).
     `rong` = bề rộng từng cột (cm); vắng ⇒ chia đều 17 cm (trọn bề ngang A4 lề 2 cm)."""
-    from docx.shared import Cm  # noqa: PLC0415
     OxmlElement, qn = _ox()
     t = doc.add_table(rows=1, cols=len(tieu_de))
     t.style = "Table Grid"
@@ -863,10 +1028,27 @@ def _bang(doc, tieu_de: list[str], hang: list[list], *, co: float = 10.5, rong: 
             if kieu.get("nen"):
                 _to_nen(o[i], MAU_NEN[kieu["nen"]])
             _viet(o[i].paragraphs[0], gt, co=co, mau=MAU_CHU.get(kieu.get("mau", ""), None), dam=kieu.get("dam", False))
+    _dat_rong(t, rong)
+    _doan(doc, sau=2)
+
+
+def _dat_rong(t, rong: list[float]) -> None:
+    """Bề rộng bảng ở CẢ ba nơi Word/trình xem đọc: lưới cột (tblGrid), từng ô (tcW) và tổng bảng (tblW, kiểu dxa) —
+    chỉ đặt tcW thì Xem nhanh của macOS (và vài bản Word) vẫn vẽ theo lưới cột mặc định, bảng hẹp lệch trái."""
+    from docx.shared import Cm  # noqa: PLC0415
+    OxmlElement, qn = _ox()
+    for i, cot in enumerate(t.columns):
+        cot.width = Cm(rong[i])
     for dong in t.rows:
         for i, o_ in enumerate(dong.cells):
             o_.width = Cm(rong[i])
-    _doan(doc, sau=2)
+    tblpr = t._tbl.tblPr
+    w = tblpr.find(qn("w:tblW"))
+    if w is None:
+        w = OxmlElement("w:tblW")
+        tblpr.append(w)
+    w.set(qn("w:w"), str(int(sum(rong) / 2.54 * 1440)))
+    w.set(qn("w:type"), "dxa")
 
 
 def _danh_sach(doc, xs, *, mau_dau: str = "navy") -> None:
@@ -1161,6 +1343,12 @@ def dung(thu_vien: Path, ma: str, *, gan_endnote: bool = False, ap_dung: bool = 
         for x in loi:
             print(f"  · {x}")
         return 1
+    loi = kiem_ket_qua_kiem_cheo(goi, tt)
+    if loi:
+        print(f"✗ KIỂM CHÉO ĐỘC LẬP: {len(loi)} lỗi — sửa tom_tat.json (nếu sai) rồi kiểm chéo lại:")
+        for x in loi[:40]:
+            print(f"  · {x}")
+        return 1
     ra = tep_word(thu_vien, bg["khoa"])
     ra.parent.mkdir(parents=True, exist_ok=True)
     (ra.parent / "_nguon").mkdir(exist_ok=True)
@@ -1250,7 +1438,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
     sub.add_parser("mau")
     sub.add_parser("tien-do")
-    for ten in ("chuan-bi", "kiem", "dung"):
+    for ten in ("chuan-bi", "kiem", "kiem-cheo", "dung"):
         p = sub.add_parser(ten)
         p.add_argument("ma")
         if ten == "dung":
@@ -1283,6 +1471,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if a.lenh == "chuan-bi":
         return chuan_bi(tv, a.ma)[0]
+    if a.lenh == "kiem-cheo":
+        bg = tim_ban_ghi(tv, a.ma)
+        goi = CACHE / bg["khoa"] if bg else None
+        if not goi or not (goi / "tom_tat.json").is_file():
+            print("⚪ chưa có gói đọc/tom_tat.json")
+            return 2
+        loi = kiem_tom_tat(json.loads((goi / "tom_tat.json").read_text(encoding="utf-8")), doc_van_ban(goi),
+                           json.loads((goi / "ngu_canh.json").read_text(encoding="utf-8")))
+        if loi:
+            print(f"✗ cổng tất định còn {len(loi)} lỗi — sửa trước khi kiểm chéo (chạy `kiem {bg['khoa']}`)")
+            return 1
+        ra = chuan_bi_kiem_cheo(goi)
+        print(f"Gói kiểm chéo: {ra} ({len(json.loads(ra.read_text(encoding='utf-8'))['muc'])} mục)")
+        print(f"  Giao một agent ĐỘC LẬP (ngữ cảnh mới) đọc {goi / 'HUONG-DAN-KIEM-CHEO.md'} → viết {goi / 'kiem_cheo.json'}")
+        return 0
     if a.lenh == "kiem":
         bg = tim_ban_ghi(tv, a.ma)
         goi = CACHE / bg["khoa"] if bg else None

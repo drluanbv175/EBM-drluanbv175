@@ -282,3 +282,125 @@ def test_bai_da_rut_bi_chan_khi_dung(tmp_path, monkeypatch, trang_thai, ma):
     rb = lambda p, d: {"trang_thai": trang_thai, "luc": "x", "nguon": "test"}  # noqa: E731
     assert T.dung(tmp_path / "lib.enl", "123", rut_bai=rb) == ma
     assert not (tmp_path / T.TEN_THU_MUC_RA).exists()
+
+
+# ── Lớp kiểm tất định nhất quán dòng (bác sĩ 19/10/2026: «không được phép sai sót về chứng cứ và số liệu») ──
+
+def _dong(**k):
+    h = {"ket_cuc": "X", "nhom_can_thiep": "914 (21.8%)", "nhom_so_sanh": "1117 (26.5%)", "hieu_ung": "HR 0.80",
+         "ktc95": "0.73–0.87", "p": "<0.001"}
+    h.update(k)
+    return h
+
+
+def test_dong_nhat_quan_dat():
+    assert T.kiem_nhat_quan_dong(_dong(), "r") == []
+    assert T.kiem_nhat_quan_dong(_dong(hieu_ung="Chênh lệch 1.64 điểm", ktc95="0.63–2.65", p="0.001",
+                                       nhom_can_thiep="−2.99", nhom_so_sanh="−4.63"), "r") == []
+    assert T.kiem_nhat_quan_dong(_dong(hieu_ung="HR 0.97", ktc95="0.72–1.31", p="0.83",
+                                       nhom_can_thiep="84 (3.1%)", nhom_so_sanh="83 (3.1%)"), "r") == []
+
+
+def test_uoc_luong_ngoai_ktc_bi_bat():
+    assert any("NGOÀI KTC" in x for x in T.kiem_nhat_quan_dong(_dong(ktc95="0.71–0.79"), "r"))
+
+
+def test_dao_hai_nhom_bi_bat():
+    loi = T.kiem_nhat_quan_dong(_dong(nhom_can_thiep="1117 (26.5%)", nhom_so_sanh="914 (21.8%)"), "r")
+    assert any("đảo hai nhóm" in x for x in loi)
+
+
+def test_p_mau_thuan_ktc_bi_bat():
+    assert any("mâu thuẫn" in x for x in T.kiem_nhat_quan_dong(_dong(p="0.28"), "r"))
+    assert any("mâu thuẫn" in x for x in T.kiem_nhat_quan_dong(_dong(hieu_ung="HR 0.97", ktc95="0.72–1.31"), "r"))
+
+
+def test_danh_gia_tac_hai_nguoc_ty_le_bi_bat():
+    h = _dong(hieu_ung="", ktc95="", danh_gia="bat_loi")  # can thiệp 21.8% < so sánh 26.5% mà ghi «bất lợi»
+    assert any("danh_gia" in x for x in T.kiem_nhat_quan_dong(h, "r"))
+
+
+def test_so_gan_dung_bi_chan():
+    tt = _hop_le()
+    tt["diem_manh"] = ["Nền beta-blocker ≈ 93%"]
+    assert any("số gần đúng" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH))
+
+
+def test_cong_kiem_nhat_quan_chay_trong_kiem_tom_tat():
+    tt = _hop_le()
+    tt["ket_qua"][0]["ktc95"] = "0.71–0.79"  # số có trong bài? không — nhưng lỗi nhất quán phải được báo riêng
+    assert any("NGOÀI KTC" in x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH))
+
+
+# ── Cổng kiểm chéo độc lập ──
+
+def _goi_kiem_cheo(tmp_path, tt, ket_luan="dung", bo=None, bam=None):
+    import json
+    goi = tmp_path / "goi"
+    goi.mkdir(exist_ok=True)
+    (goi / "tom_tat.json").write_text(json.dumps(tt, ensure_ascii=False), encoding="utf-8")
+    muc = [{"duong_dan": d, "ket_luan": ket_luan, "trang": [3], "ghi_chu": "x"} for d, _ in T.cac_muc_kiem_cheo(tt)
+           if d != bo]
+    (goi / "kiem_cheo.json").write_text(json.dumps({"phien_ban": 1, "tom_tat_sha256": bam or T.bam_tom_tat(goi),
+                                                    "muc": muc}, ensure_ascii=False), encoding="utf-8")
+    return goi
+
+
+def test_kiem_cheo_du_va_dung_thi_dat(tmp_path):
+    tt = _hop_le()
+    assert T.kiem_ket_qua_kiem_cheo(_goi_kiem_cheo(tmp_path, tt), tt) == []
+
+
+def test_kiem_cheo_vang_bi_chan(tmp_path):
+    goi = tmp_path / "g"
+    goi.mkdir()
+    assert any("chưa có kiem_cheo" in x for x in T.kiem_ket_qua_kiem_cheo(goi, _hop_le()))
+
+
+def test_kiem_cheo_bo_sot_muc_bi_chan(tmp_path):
+    tt = _hop_le()
+    assert any("bỏ sót" in x for x in T.kiem_ket_qua_kiem_cheo(_goi_kiem_cheo(tmp_path, tt, bo="ket_qua[1]"), tt))
+
+
+def test_kiem_cheo_co_muc_sai_bi_chan(tmp_path):
+    tt = _hop_le()
+    assert any("SAI" in x for x in T.kiem_ket_qua_kiem_cheo(_goi_kiem_cheo(tmp_path, tt, ket_luan="sai"), tt))
+    assert any("KHONG_CO_TRONG_BAI" in x
+               for x in T.kiem_ket_qua_kiem_cheo(_goi_kiem_cheo(tmp_path, tt, ket_luan="khong_co_trong_bai"), tt))
+
+
+def test_kiem_cheo_cua_ban_cu_bi_chan(tmp_path):
+    tt = _hop_le()
+    assert any("bản tom_tat.json KHÁC" in x
+               for x in T.kiem_ket_qua_kiem_cheo(_goi_kiem_cheo(tmp_path, tt, bam="0" * 64), tt))
+
+
+def test_moi_dong_bang_la_mot_muc_kiem_cheo():
+    duong = [d for d, _ in T.cac_muc_kiem_cheo(_hop_le())]
+    assert "ket_qua[1]" in duong and "tac_hai[1]" in duong
+    assert not any(d.startswith("ket_qua[1].") for d in duong)
+    assert "pmid" not in duong and "can_xac_nhan[1]" not in duong
+
+
+def test_dung_dau_cuoi_can_kiem_cheo(tmp_path, monkeypatch):
+    import json
+    tt = _hop_le()
+    cache = tmp_path / "cache"
+    goi = cache / "PMID-123"
+    goi.mkdir(parents=True)
+    (goi / "van_ban.txt").write_text(T.ghep_van_ban(TRANG), encoding="utf-8")
+    (goi / "ngu_canh.json").write_text(json.dumps(dict(NGU_CANH, dinh_danh={"khop": True, "ly_do": "DOI"}),
+                                                  ensure_ascii=False), encoding="utf-8")
+    (goi / "tom_tat.json").write_text(json.dumps(tt, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(T, "CACHE", cache)
+    monkeypatch.setattr(T, "tim_ban_ghi", lambda tv, ma_: {"rec": 1, "pmid": "123", "doi": "10.1000/xyz123",
+                                                            "khoa": "PMID-123"})
+    rb = lambda p, d: {"trang_thai": "khong_thay_rut", "luc": "x", "nguon": "test"}  # noqa: E731
+    lib = tmp_path / "lib" / "My.enl"
+    assert T.dung(lib, "123", rut_bai=rb) == 1  # chưa kiểm chéo ⇒ không ra Word
+    assert not T.tep_word(lib, "PMID-123").exists()
+    muc = [{"duong_dan": d, "ket_luan": "dung", "trang": [3], "ghi_chu": ""} for d, _ in T.cac_muc_kiem_cheo(tt)]
+    (goi / "kiem_cheo.json").write_text(json.dumps({"phien_ban": 1, "tom_tat_sha256": T.bam_tom_tat(goi), "muc": muc}),
+                                        encoding="utf-8")
+    assert T.dung(lib, "123", rut_bai=rb) == 0
+    assert T.tep_word(lib, "PMID-123").is_file()

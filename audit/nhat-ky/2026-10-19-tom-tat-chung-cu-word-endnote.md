@@ -42,5 +42,25 @@ Với mỗi trích dẫn có PDF toàn văn, bổ sung một tệp Word tóm t�
 - Bộ kiểm có hai lỗi đã vá: (1) coi dấu cách thường là phân cách hàng nghìn, nên gộp hai số đứng cạnh nhau trong bảng PDF thành «15121», «696100»; (2) không bỏ số 0 đứng đầu, nên «08» ≠ «8».
 - Tệp Word qua trình xác thực OOXML của skill docx. Lỗi duy nhất lúc đầu nằm ở mẫu mặc định của python-docx (`w:zoom` thiếu `w:percent`), đã vá.
 
+## Bác sĩ: «không được phép sai sót về chứng cứ và số liệu» (cùng ngày)
+Tự soát lại bản PARADIGM-HF câu theo câu, thấy các lỗi mà cổng kiểm số KHÔNG bắt được:
+- «RCT mù đôi lớn nhất» — khẳng định so sánh không có trong bài;
+- nhận định về thực hành ở Việt Nam và «chi phí cao» không ghi nguồn;
+- số của MỘT nhánh trình bày như số chung (93.1% thay vì 93.1% / 92.9%);
+- số «≈».
+
+Đã thêm hai lớp kiểm:
+1. Kiểm tất định từng dòng bảng (`kiem_nhat_quan_dong`):
+   - ước lượng phải nằm trong KTC 95%;
+   - chiều HR/RR/OR phải khớp tỷ lệ hai nhóm (bắt lỗi đảo nhóm);
+   - p không được mâu thuẫn rõ với KTC;
+   - `danh_gia` của dòng tác hại phải khớp tỷ lệ;
+   - cấm «≈», «~».
+2. Kiểm chéo ĐỘC LẬP (`kiem-cheo`):
+   - MỘT agent ngữ cảnh mới chấm TỪNG câu và TỪNG dòng bảng (PARADIGM-HF: 111 mục);
+   - `kiem_cheo.json` gắn băm SHA-256 của đúng bản `tom_tat.json` đã chấm — sửa bản tóm tắt sau đó thì phải kiểm chéo lại;
+   - `dung` đòi phủ đủ 100% mục, không mục nào «sai» hay «không có trong bài».
+- Kiểm thử: 42 ca; 27 phép đột biến đều làm kiểm đỏ.
+
 ## Bài học
-Bác sĩ dựa vào bản tóm tắt để thực hành, nên cổng phải đối chiếu số với TRANG của PDF chứ không đối chiếu với trí nhớ của mô hình. PDF tách chữ sinh ra gạch nối kiểu «air -⏎way» và chữ của bảng chen giữa câu; bộ so khớp trích dẫn phải chịu được các lỗi này nhưng không được nới tới mức nhận câu bịa.
+Cổng tất định chỉ chứng minh được «số có trong bài», không chứng minh «câu đúng»: khẳng định định tính sai (so sánh nhất, nhận định ngoài bài) chỉ một người đọc độc lập mới bắt được — nên kiểm chéo độc lập là bắt buộc trước khi ra Word. Bác sĩ dựa vào bản tóm tắt để thực hành, nên cổng phải đối chiếu số với TRANG của PDF chứ không đối chiếu với trí nhớ của mô hình. PDF tách chữ sinh ra gạch nối kiểu «air -⏎way» và chữ của bảng chen giữa câu; bộ so khớp trích dẫn phải chịu được các lỗi này nhưng không được nới tới mức nhận câu bịa.
