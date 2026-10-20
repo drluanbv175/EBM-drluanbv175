@@ -32,6 +32,11 @@ _sp.loader.exec_module(G)
     # chỉ mô tả thiết kế, không tổ chức nào
     ("RCT đa trung tâm, nguy cơ sai lệch thấp", "Lancet",
      ("G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)")),
+    # khối GRADE EtD do người soạn dựng; NOS là thang chất lượng nghiên cứu thành phần mà bài gộp dùng — người soạn chấm mức
+    ("RCT đa trung tâm; xem khối GRADE EtD ở tab riêng để phân tách theo mức LDL nền", "Lancet",
+     ("G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)")),
+    ("Phân tích gộp (chất lượng nghiên cứu quan sát, NOS): NT-proBNP cao, HR tử vong 1,65", "Heart Failure Reviews",
+     ("G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)")),
 ])
 def test_de_xuat_dung(gs, org, mong):
     assert G.phan_nhom(gs, org) == mong
@@ -52,6 +57,11 @@ def test_de_xuat_dung(gs, org, mong):
     ("Tổng quan hệ thống Cochrane", "Cochrane Collaboration"),
     # thuật ngữ phân hạng, org là tạp chí ⇒ không đoán
     ("Khuyến cáo loại I (Class 1)", "Lancet"),
+    # mức chắc chắn có thể là của NGUỒN ⇒ không được ghi «nguồn không tự phân hạng» (soát 20/10)
+    ("GRADE nguyên văn: very low/low-quality. Nguy cơ sai lệch: 35% cao, 34% trung bình, 30% thấp", "Semin Arthritis Rheum"),
+    ("Meta-analysis độ chắc chắn cao", "Lancet"),
+    ("Meta-analysis 12 RCT — mức nguyên văn của bài: thấp", "Lancet"),
+    ("IPD meta-analysis (chứng cứ độ chắc chắn cao)", "Lancet"),
 ])
 def test_khong_du_chu_thi_de_tay_nguoi(gs, org):
     assert G.phan_nhom(gs, org) is None
