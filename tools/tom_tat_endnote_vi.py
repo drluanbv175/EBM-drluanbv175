@@ -21,6 +21,9 @@ NGUYÊN TẮC (không nới bằng cờ):
     «Tóm tắt MÁY» (thiết kế · PICO · kết quả) rút từ ABSTRACT GỐC, lưu ở kho riêng `EBM-Dashboards/tom-tat-abstract-vi.json`
     (ngoài git), nhãn rõ «chưa qua cổng dashboard — không phải khuyến nghị», không mức chứng cứ. Chốt cứng: mọi con số
     trong tóm tắt phải có NGUYÊN VĂN trong abstract gốc của chính bản ghi — lệch một số ⇒ không in tóm tắt đó.
+    Bài KHÔNG có abstract (20/10/2026, bác sĩ cho phép): mục kho khai `"nguon": "toan_van_pmc"` thì nguồn và văn bản
+    đối chiếu số là TOÀN VĂN PMC TRUY CẬP MỞ trong kho (`PMID-<n>_PMC<id>.xml`) — cùng chốt cứng; bài CÓ abstract mà khai
+    nguồn này, hoặc kho không có tệp PMC đó ⇒ không in. Nhãn và dòng chân ghi rõ nguồn là toàn văn.
   • Nhãn giữ đúng nhãn của dashboard: «Nguồn không phân hạng» (gradeLevel 'na') KHÔNG có nghĩa là chứng cứ yếu;
     giá trị lạ ⇒ «chưa rõ», không đoán.
   • Abstract gốc (PubMed/nhà xuất bản) GIỮ NGUYÊN dưới dấu phân cách; chạy lại chỉ thay khối tiếng Việt.
@@ -36,6 +39,7 @@ import json
 import re
 import shutil
 import sqlite3
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 
@@ -56,7 +60,8 @@ NHAN_QD = {"apply": "✅ ÁP DỤNG NGAY", "consider": "⚠️ CÂN NHẮC CHỌ
 NHAN_DONG = {"diem_nhan": "⭐", "ket_qua": "▶️ KẾT QUẢ", "action": "✅ THỰC HÀNH", "safety": "⛔ AN TOÀN",
              "flag": "⚠️ LƯU Ý", "vn": "▶️ TẠI VIỆT NAM", "rut": "❌ RÚT VÀ THAY", "dat_canh": "↔️ ĐẶT CẠNH TRONG CHỦ ĐỀ",
              "lech": "❗ KHUYẾN NGHỊ KHÁC NHAU GIỮA CÁC CHỦ ĐỀ", "tham_khao": "ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ",
-             "may": "ℹ️ TÓM TẮT MÁY TỪ ABSTRACT"}
+             "may": "ℹ️ TÓM TẮT MÁY TỪ ABSTRACT",
+             "may_pmc": "ℹ️ TÓM TẮT MÁY TỪ TOÀN VĂN PMC (bài không có abstract)"}
 # Hậu tố tệp trong kho toàn văn → nhãn nguồn ngắn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF).
 NGUON_TOAN_VAN = (("_CHR", "bản quyền — dùng cá nhân"), ("_WTDM", "TDM Wiley"), ("_UPW", "truy cập mở"),
                   ("_PMC", "truy cập mở"))
@@ -73,6 +78,14 @@ NHAN_TOM_TAT = (("thiet_ke", "THIẾT KẾ"), ("P", "P · ĐỐI TƯỢNG"), ("I
                 ("O", "O · KẾT CỤC"), ("ket_qua", "KẾT QUẢ"))
 CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abstract gốc bên dưới, chưa qua cổng dashboard, không phải "
             "khuyến nghị · áp dụng qua Cổng A.")
+CHAN_MAY_PMC = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ toàn văn PMC truy cập mở (bài không có abstract), chưa qua cổng "
+                "dashboard, không phải khuyến nghị · áp dụng qua Cổng A.")
+# NGUỒN của tóm tắt máy (20/10/2026 — bác sĩ: «cho phép tóm tắt máy từ toàn văn PMC truy cập mở khi bài không có abstract,
+# giữ chốt kiểm con số so với toàn văn»). Mặc định «abstract». «toan_van_pmc» CHỈ nhận khi bản ghi không có abstract, và văn bản
+# đối chiếu số là JATS XML PMC trong kho — không phải bản lưu phiên Chrome (_CHR, có bản quyền) hay HTML Unpaywall.
+NGUON_TOM_TAT = ("abstract", "toan_van_pmc")
+KHONG_ABSTRACT = "(PubMed không có abstract cho bài này)"
+_TEP_PMC = re.compile(r"PMID-\d+_PMC\d+\.xml")
 # KHUÔN kho tóm tắt máy (TT-08, 15/10/2026): kho do một phiên Claude soạn tay theo SKILL — khoá sai trước đó bị bỏ IM LẶNG.
 # Khoá định danh: «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: đúng các khoá của NHAN_TOM_TAT. `--mau` in khuôn này.
 KHOA_TRUONG_TOM_TAT = tuple(k for k, _ in NHAN_TOM_TAT)
@@ -82,15 +95,18 @@ KHOA_TRUONG_TOM_TAT = tuple(k for k, _ in NHAN_TOM_TAT)
 #   `bo_qua` — LÝ DO cố ý không tóm tắt máy (13/10: trường Abstract của bản ghi là GHI CHÚ của bác sĩ, không phải abstract
 #              PubMed). Mục `bo_qua` không bao giờ in tóm tắt máy và không bị tính «chưa tóm tắt» — trước đó công cụ vẫn mời
 #              phiên sau «SOẠN mục» trái với quyết định đã ghi.
-TRUONG_SIEU_DU_LIEU = ("soan", "bo_qua")
+#   `nguon`  — (20/10/2026) nguồn soạn: «abstract» (mặc định) hoặc «toan_van_pmc» (xem NGUON_TOM_TAT); không in nguyên văn,
+#              chỉ đổi nhãn, dòng chân và văn bản đối chiếu số.
+TRUONG_SIEU_DU_LIEU = ("soan", "bo_qua", "nguon")
 _KHOA_DINH_DANH = re.compile(r"PMID \d{1,9}|DOI 10\.\d{4,9}/\S+")
 MAU_KHO_TOM_TAT = {
     "_about": ("Kho «Tóm tắt MÁY» cho trích dẫn CHỈ là tài liệu tham khảo — phiên Claude soạn từ ABSTRACT GỐC (mọi con số phải có "
                "nguyên văn trong abstract, lệch ⇒ không in). Khoá định danh «PMID <n>» hoặc «DOI <doi chữ thường>»; trường hợp lệ: "
                + ", ".join(KHOA_TRUONG_TOM_TAT) + ". Siêu dữ liệu tuỳ chọn, không bao giờ in: «soan» (ai/khi nào/từ nguồn nào "
                "soạn) và «bo_qua» (LÝ DO cố ý không tóm tắt — vd trường Abstract của bản ghi là ghi chú của bác sĩ; mục bo_qua "
-               "không in tóm tắt máy, không tính «chưa tóm tắt», KHÔNG soạn đè). Khoá lạ khác bị báo lỗi, mục không có trường "
-               "hợp lệ (và không bo_qua) = «chưa tóm tắt»."),
+               "không in tóm tắt máy, không tính «chưa tóm tắt», KHÔNG soạn đè), «nguon» («abstract» mặc định; «toan_van_pmc» "
+               "CHỈ cho bài không có abstract — soạn từ toàn văn PMC truy cập mở PMID-<n>_PMC<id>.xml trong kho, số đối chiếu "
+               "với toàn văn đó). Khoá lạ khác bị báo lỗi, mục không có trường hợp lệ (và không bo_qua) = «chưa tóm tắt»."),
     "muc": {
         "PMID 12345678": {k: f"<{nhan.lower()} — tiếng Việt, rút từ abstract gốc>" for k, nhan in NHAN_TOM_TAT},
         "DOI 10.1000/vi-du.2026.001": {k: f"<{nhan.lower()}>" for k, nhan in NHAN_TOM_TAT},
@@ -466,6 +482,9 @@ def kiem_kho_tom_tat(kho_tt: dict) -> list[str]:
         elif _bo_qua(v) and any(_gon(v.get(f)) for f in KHOA_TRUONG_TOM_TAT):
             loi.append(f"kho tóm tắt máy: «{k}» vừa «bo_qua» vừa có trường tóm tắt — mâu thuẫn; mục bo_qua KHÔNG in tóm tắt "
                        "máy (xoá bo_qua nếu bác sĩ đã đồng ý cho tóm tắt)")
+        if "nguon" in (v or {}) and v.get("nguon") not in NGUON_TOM_TAT:
+            loi.append(f"kho tóm tắt máy: «{k}» có «nguon» = «{v.get('nguon')}» — chỉ nhận: " + ", ".join(NGUON_TOM_TAT)
+                       + " (mục này không in)")
     return loi
 
 
@@ -499,16 +518,54 @@ def _muc_kho(muc: dict, kho_tt: dict):
     return tt
 
 
-def tom_tat_cho(muc: dict, kho_tt: dict, goc: str) -> tuple[dict | None, list[str]]:
+def khong_co_abstract(goc: str) -> bool:
+    """Bản ghi KHÔNG có abstract: trường trống, hoặc chỉ còn dòng giữ chỗ do chính công cụ ghi ở lượt trước."""
+    return chuan_dong(goc) in ("", KHONG_ABSTRACT)
+
+
+def van_ban_toan_van_pmc(pmid: str | None, kho: Path | None) -> str:
+    """Văn bản TOÀN VĂN PMC TRUY CẬP MỞ (JATS XML `PMID-<n>_PMC<id>.xml` trong kho, qua `tep_toan_van_that`) của MỘT PMID —
+    văn bản đối chiếu số cho tóm tắt máy «toan_van_pmc». Không có tệp hợp lệ / XML hỏng ⇒ ''. Các mẩu chữ nối bằng dấu cách:
+    nối liền thì «<td>12</td><td>3</td>» thành «123» — một con số không có trong bài lại được coi là khớp."""
+    if not pmid or kho is None:
+        return ""
+    try:
+        tep = sorted(q for q in _dtv().tep_toan_van_that(kho, str(pmid)) if _TEP_PMC.fullmatch(q.name))
+    except Exception:  # noqa: BLE001 — không đo được kho ⇒ coi như không có toàn văn (không in), không đoán
+        return ""
+    for q in tep:
+        try:
+            goc = ET.parse(q).getroot()
+        except (ET.ParseError, OSError):
+            continue
+        return " ".join(t.strip() for t in goc.itertext() if t.strip())
+    return ""
+
+
+def tom_tat_cho(muc: dict, kho_tt: dict, goc: str, kho: Path | None = None) -> tuple[dict | None, list[str]]:
     """(tóm tắt máy, số lệch) cho MỘT trích dẫn. Chỉ áp cho trích dẫn KHÔNG là mục chính ở dashboard nào — mục chính
     đã có nội dung qua cổng. Mục kho mang «bo_qua» ⇒ không bao giờ in, kể cả khi lỡ có trường tóm tắt (mâu thuẫn — báo ở
-    `kiem_kho_tom_tat`). Có số lệch abstract gốc ⇒ (None, các số lệch): không in."""
+    `kiem_kho_tom_tat`). Có số lệch văn bản đối chiếu ⇒ (None, các số lệch): không in.
+
+    Văn bản đối chiếu: abstract gốc của bản ghi (mặc định); mục `"nguon": "toan_van_pmc"` ⇒ toàn văn PMC truy cập mở trong
+    `kho` — CHỈ khi bản ghi không có abstract. Bị từ chối vì nguồn (bài có abstract, kho thiếu tệp PMC, «nguon» lạ) ⇒
+    (None, [một dòng «⛔ …»]) — fail-closed, không in."""
     if not kho_tt or any(x["vai"] == "muc" for x in muc["ngu_canh"]):
         return None, []
     tt = _muc_kho(muc, kho_tt)
     if _bo_qua(tt) or not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
         return None, []
-    lech = so_khong_khop(tt, goc)
+    nguon = tt.get("nguon") or "abstract"
+    if nguon not in NGUON_TOM_TAT:
+        return None, [f"⛔ «nguon» = «{nguon}» không hợp lệ"]
+    doi_chieu = goc
+    if nguon == "toan_van_pmc":
+        if not khong_co_abstract(goc):
+            return None, ["⛔ bản ghi CÓ abstract — tóm tắt máy phải rút từ abstract (nguồn toàn văn PMC chỉ cho bài không có abstract)"]
+        doi_chieu = van_ban_toan_van_pmc(muc.get("pmid"), kho)
+        if not doi_chieu:
+            return None, ["⛔ kho không có toàn văn PMC truy cập mở (PMID-<n>_PMC<id>.xml) để đối chiếu số"]
+    lech = so_khong_khop(tt, doi_chieu)
     return (None, lech) if lech else (tt, [])
 
 
@@ -517,7 +574,8 @@ def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list
             f"{NHAN_DONG['diem_nhan']} Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
             "không gán cho bài này"]
     if tom_tat:
-        dong.append(f"{NHAN_DONG['may']} (chưa qua cổng dashboard — không phải khuyến nghị):")
+        nhan_may = NHAN_DONG["may_pmc"] if tom_tat.get("nguon") == "toan_van_pmc" else NHAN_DONG["may"]
+        dong.append(f"{nhan_may} (chưa qua cổng dashboard — không phải khuyến nghị):")
         dong += [f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k))]
     if len(nc["tham_khao"]) <= TRAN_THAM_KHAO:
         dong.append(f"▸ Dashboard ghi: {nc['tham_khao']}")
@@ -537,7 +595,8 @@ def khoi_tieng_viet(muc: dict, kho: Path | None, tom_tat: dict | None = None) ->
     may = None if chinh else tom_tat
     dong = _khoi_muc(chinh[0], chinh[1:], len(tk)) if chinh else _khoi_tham_khao(tk[0], len(tk) - 1, may)
     dinh_danh = f"PMID {muc['pmid']}" if muc.get("pmid") else f"DOI {muc.get('doi')}"
-    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", CHAN_MAY if may else CHAN]
+    chan = (CHAN_MAY_PMC if may.get("nguon") == "toan_van_pmc" else CHAN_MAY) if may else CHAN
+    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", chan]
     return "\n".join(dong)
 
 
@@ -557,7 +616,7 @@ def tach_goc(cu: str) -> str:
 
 def ghep_abstract(cu: str, khoi: str) -> str:
     goc = tach_goc(cu)
-    return f"{khoi}\n\n{PHAN_CACH}\n{goc}" if goc else f"{khoi}\n\n{PHAN_CACH}\n(PubMed không có abstract cho bài này)"
+    return f"{khoi}\n\n{PHAN_CACH}\n{goc}" if goc else f"{khoi}\n\n{PHAN_CACH}\n{KHONG_ABSTRACT}"
 
 
 def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
@@ -631,9 +690,13 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
         if m not in cu:
             bc["loi"].append(f"{m}: không đọc được Abstract — bỏ qua (không ghi đè thứ chưa đọc được)")
             continue
-        tt, lech = tom_tat_cho(v, tom_tat_abs or {}, tach_goc(cu[m]))
+        tt, lech = tom_tat_cho(v, tom_tat_abs or {}, tach_goc(cu[m]), kho)
         if lech:
-            bc["tom_tat_lech_so"].append(f"{m}: số không có trong abstract gốc ({', '.join(lech[:5])}) — không in tóm tắt máy")
+            tu_choi = [x for x in lech if x.startswith("⛔")]
+            dc = ("toàn văn PMC" if (_muc_kho(v, tom_tat_abs or {}) or {}).get("nguon") == "toan_van_pmc"
+                  else "abstract gốc")
+            bc["tom_tat_lech_so"].append(f"{m}: " + (tu_choi[0] if tu_choi else f"số không có trong {dc} ({', '.join(lech[:5])})")
+                                         + " — không in tóm tắt máy")
         bc["tom_tat_may"] += bool(tt)
         dinh_danh = f"PMID {v['pmid']}" if v.get("pmid") else f"DOI {v['doi']}"
         # «Chưa tóm tắt» = kho KHÔNG cho ra tóm tắt dùng được (vắng mục, hoặc mục không có trường hợp lệ nào — TT-08), trừ khi
