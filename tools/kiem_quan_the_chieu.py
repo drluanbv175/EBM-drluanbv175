@@ -192,6 +192,11 @@ _NGUOC = re.compile(
     r"|was not (?:superior|associated with (?:a )?(?:lower|reduced|improved))"
     r"|failed to (?:reduce|improve|show|demonstrate)"
     r"|class iii|net harm|(?:increased|caused) (?:the )?(?:risk of )?harm|stopped (?:early )?for futility"
+    # 20/10/2026: cách nói CHUẨN của khuyến cáo chống trong guideline — GRADE «(strong|conditional) recommendation
+    # against», «we recommend/suggest against»; USPSTF «recommends against … (D recommendation)», «harms … outweigh the
+    # benefits». Đo trên 85 câu ngược chiều thật của kho toàn văn: trước bản vá K4 bắt 0/8 câu «against» và 0/3 câu USPSTF D.
+    r"|(?:recommends?|suggests?|advises?) against|recommendations? against"
+    r"|harms?\b[^.;]{0,120}?\boutweighs? (?:the |its )?benefits?|\(d recommendation\)|grade d recommendation"
 )
 
 
@@ -201,7 +206,18 @@ _NGUOC = re.compile(
 _PHU = re.compile(r"secondary|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety"
                   r"|tolerab|discontinuation")
 _CHINH = re.compile(r"primary (?:end ?point|outcome|composite)")
-_LUON_BAO = re.compile(r"not recommended|should not be|class iii|net harm|futility")
+_LUON_BAO = re.compile(r"not recommended|should not be|class iii|net harm|futility|against|outweighs? (?:the |its )?benefit"
+                       r"|d recommendation")
+
+# Mục mà CHÍNH NÓ là khuyến cáo phủ định («KHÔNG tầm soát…», «Tránh…», «Ngừng…») thì tín hiệu ngược chiều của nguồn là
+# CÙNG chiều với mục — không phải lỗi (bộ vàng 20/10: USPSTF «recommends against screening» ↔ mục «KHÔNG tầm soát»).
+# «Bỏ thuốc lá» là khuyến cáo NÊN làm ⇒ không tính «bỏ»; «không chỉ/không những…» là câu khẳng định.
+_MUC_PHU_DINH = re.compile(r"^\W*(?:không(?!\s+(?:chỉ|những)(?!\w))|tránh|ngừng|chống chỉ định)(?!\w)", re.I)
+
+
+def muc_phu_dinh(it: dict) -> bool:
+    """Tiêu đề hoặc hành động của mục MỞ ĐẦU bằng phủ định ⇒ mục là khuyến cáo chống/ngừng."""
+    return any(_MUC_PHU_DINH.match(str(it.get(k) or "")) for k in ("title", "action"))
 
 
 def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
@@ -317,7 +333,11 @@ def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
         muc, doan = kiem_co_mau(so, ng)
         dong["k2_co_mau"].append({"so": so, "muc": muc, "doan_nguon": doan})
     tin_hieu, bo_qua = kiem_chieu_chi_tiet(ng)
-    dong["k4"] = {"muc": "can_doc" if tin_hieu else "khop", "cau_nguon": tin_hieu, "cau_bo_qua": bo_qua}
+    if tin_hieu and muc_phu_dinh(it):
+        # mục và nguồn cùng nói «không làm» ⇒ khớp; câu nguồn giữ ở cau_bo_qua để người đọc vẫn thấy
+        dong["k4"] = {"muc": "khop", "cau_nguon": [], "cau_bo_qua": tin_hieu + bo_qua, "muc_phu_dinh": True}
+    else:
+        dong["k4"] = {"muc": "can_doc" if tin_hieu else "khop", "cau_nguon": tin_hieu, "cau_bo_qua": bo_qua}
     return dong
 
 
