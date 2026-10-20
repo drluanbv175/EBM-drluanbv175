@@ -90,6 +90,11 @@ _COCHRANE_MUC = re.compile(r"Cochrane.{0,80}(?:chất lượng|chắc chắn|tin
 _THIET_KE = re.compile(r"\bRCT\b|thử nghiệm (?:ngẫu nhiên|pha)|cohort|đoàn hệ|phân tích gộp|meta-?analysis|\bSR-?MA\b|"
                        r"tổng quan hệ thống|nghiên cứu quan sát|bệnh-chứng|cắt ngang|nguy cơ sai lệch|"
                        r"thiết kế|kiểm định|IPD", re.I)
+# Chữ nói về MỨC CHẮC CHẮN mà không nói ai chấm (vd «GRADE nguyên văn: very low», «Meta-analysis độ chắc chắn cao») — có thể
+# là phân hạng CỦA NGUỒN ⇒ không được gắn G11 «nguồn không tự phân hạng» (soát 20/10/2026: VKDT ITEM-05 trích GRADE của bài
+# mà bị xếp G11). «GRADE EtD» là khối Evidence-to-Decision do người soạn dựng ⇒ không tính.
+_MUC_CO_THE_CUA_NGUON = re.compile(r"GRADE(?!\s*EtD)|nguyên văn|certainty|\bquality\b|độ chắc chắn|"
+                                   r"chất lượng\s+(?:rất\s+)?(?:cao|thấp|trung bình)", re.I)
 NHOM_MO_RONG = [("G9", "Người soạn — đánh giá vận hành"), ("G8", "Cochrane (GRADE)"),
                 ("G10", "<tổ chức> (phân hạng nguyên bản)"),
                 ("G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)")]
@@ -147,7 +152,8 @@ def phan_nhom_mo_rong(gs: str, org: str) -> tuple[str, str] | None:
         if len(con) == 1:
             return "G10", f"{next(iter(con))} (phân hạng nguyên bản)"
         return None
-    if not to_chuc and _THIET_KE.search(gs) and not re.search(r"khuyến cáo|guideline|hướng dẫn|đồng thuận", gs, re.I):
+    if (not to_chuc and _THIET_KE.search(gs) and not re.search(r"khuyến cáo|guideline|hướng dẫn|đồng thuận", gs, re.I)
+            and not _MUC_CO_THE_CUA_NGUON.search(gs)):
         return "G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)"
     return None
 
