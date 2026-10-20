@@ -335,11 +335,11 @@
    "nhan_bac_si": {
     "dung_quan_the": true,
     "dung_chieu": true,
-    "du_dieu_kien": false,
-    "ghi_chu": "nguồn giảm insulin 35–50% chỉ cho típ 2",
-    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "du_dieu_kien": true,
+    "ghi_chu": "toàn văn JBDS (PMC13074134): típ 2 giảm 50% tổng liều insulin khi bắt đầu chế độ ăn giảm thể tích gan (Bảng 2), sau mổ giảm 35–50% (Bảng 4); típ 1 có thể cần giảm 30–50%, không bao giờ ngừng (Bảng 5) — nhãn S cũ dựa tóm tắt là sai",
+    "loi_bac_si": "17: Đ Đ Đ toàn văn JBDS (PMC13074134): típ 2 giảm 50% tổng liều insulin khi bắt đầu chế độ ăn giảm thể tích gan (Bảng 2), sau mổ giảm 35–50% (Bảng 4); típ 1 có thể cần giảm 30–50%, không bao giờ ngừng (Bảng 5) — nhãn S cũ dựa tóm tắt là sai",
     "ngay": "2026-10-20",
-    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «Sửa nhãn và duyệt bản dựa»"
    }
   },
   {
