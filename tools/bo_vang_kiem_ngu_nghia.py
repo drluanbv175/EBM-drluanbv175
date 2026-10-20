@@ -11,9 +11,9 @@ nguyên văn lời bác sĩ → ĐO.
 Ba lệnh:
   phieu [--online]   — Word Times New Roman cho bác sĩ gắn nhãn: mỗi mục có quần thể, khuyến cáo, nguồn và tóm tắt PubMed.
                        CỐ Ý KHÔNG in kết quả của máy (K1/K4) — nhãn chuẩn phải độc lập, không bị máy dẫn dắt.
-  ghi --loi "<nguyên văn>" [--ap-dung] [--ghi-de]
+  ghi --loi "<nguyên văn>" [--ap-dung] [--ghi-de] [--de-xuat-boi Claude]
                      — ghi nhãn theo mẫu «1: Đ Đ Đ · 2: S Đ Đ quần thể sai · …» (ba chữ = quần thể · chiều · điều kiện; Đ/✓ =
-                       đúng, S/✗ = sai). Chạy khô mặc định; KHÔNG ghi đè nhãn đã có trừ khi --ghi-de; lưu nguyên văn lời bác sĩ.
+                       đúng, S/✗ = sai, ? = chưa đủ căn cứ). Chạy khô mặc định; KHÔNG ghi đè nhãn đã có trừ khi --ghi-de; lưu nguyên văn lời bác sĩ.
   do [--online]      — đo K1 so với nhãn «đúng quần thể», K4 so với nhãn «đúng chiều»: báo động giả (🟠 trên mục bác sĩ nói
                        đúng) · bỏ lọt (mục bác sĩ nói sai mà máy im). Nhãn còn trống ⇒ CHƯA ĐO (không bao giờ in 0%).
 GIỚI HẠN NÓI TRƯỚC: K3 kiểm bản xuất (bản đọc/Word) có GIỮ cụm điều kiện của chính mục không — nhãn «đủ điều kiện» của bác sĩ
@@ -41,6 +41,7 @@ TEN_NHAN = {"dung_quan_the": "Quần thể của mục ĐÚNG với quần thể
             "du_dieu_kien": "Mục giữ ĐỦ mệnh đề điều kiện của nguồn (không nới rộng ra ngoài quần thể được chứng minh)"}
 _DUNG = {"đ", "d", "✓", "dung", "đúng", "y", "co", "có"}
 _SAI = {"s", "✗", "x", "sai", "n", "khong", "không"}
+_CHUA_RO = {"?"}  # bác sĩ chưa đủ căn cứ cho trục đó (vd cần toàn văn) ⇒ để trống trục, không ép Đ/S
 
 
 def _nap(ten: str, tep: str):
@@ -129,7 +130,7 @@ def dung_phieu_md(bv: dict, nguon: dict[str, str | None]) -> str:
 
 # ───────────────────────── ghi nhãn ─────────────────────────
 
-_TOK = "|".join(sorted((re.escape(t) for t in _DUNG | _SAI), key=len, reverse=True))
+_TOK = "|".join(sorted((re.escape(t) for t in _DUNG | _SAI | _CHUA_RO), key=len, reverse=True))
 _MUC = re.compile(rf"(?<!\w)(?:mục\s*)?(\d+)\s*[:.)-]\s*({_TOK})[,.]?\s+({_TOK})[,.]?\s+({_TOK})[,.]?(?=\s|$|[·;])",
                   re.I)
 # «N: …» còn sót trong ghi chú/phần đầu = một mục viết sai mẫu (vd thiếu một chữ) — phải báo, không nuốt vào ghi chú
@@ -154,12 +155,14 @@ def doc_loi(loi: str, so_muc: int) -> tuple[dict[int, dict], list[str]]:
         if not 1 <= so <= so_muc or so in ra or _MUC_SOT.search(ghi_chu):
             loi_doc.append(loi[m.start():het].strip(" ·;\n\t"))
             continue
-        gt = [m.group(k).lower() in _DUNG for k in (2, 3, 4)]
+        gt = [None if m.group(k) in _CHUA_RO else m.group(k).lower() in _DUNG for k in (2, 3, 4)]
         ra[so] = {"dung_quan_the": gt[0], "dung_chieu": gt[1], "du_dieu_kien": gt[2], "ghi_chu": ghi_chu or None}
     return ra, loi_doc
 
 
-def ghi_nhan(loi: str, *, ap_dung: bool, ghi_de: bool, tep: Path = TEP_BO_VANG) -> int:
+def ghi_nhan(loi: str, *, ap_dung: bool, ghi_de: bool, tep: Path = TEP_BO_VANG, de_xuat_boi: str | None = None) -> int:
+    """Ghi nhãn từ NGUYÊN VĂN lời bác sĩ. `de_xuat_boi` (vd «Claude») khi bác sĩ xác nhận nhãn do máy soạn sẵn — ghi kèm
+    từng nhãn để số đo về sau nói rõ «chuẩn có máy tham gia», không trông như bộ vàng bác sĩ gắn độc lập."""
     bv = doc_bo_vang(tep)
     nhan, loi_doc = doc_loi(loi, len(bv["muc"]))
     for x in loi_doc:
@@ -174,7 +177,8 @@ def ghi_nhan(loi: str, *, ap_dung: bool, ghi_de: bool, tep: Path = TEP_BO_VANG) 
             continue
         se_ghi.append(so)
         if ap_dung:
-            bv["muc"][so - 1]["nhan_bac_si"] = {**nh, "loi_bac_si": loi.strip(), "ngay": dt.date.today().isoformat()}
+            bv["muc"][so - 1]["nhan_bac_si"] = {**nh, "loi_bac_si": loi.strip(), "ngay": dt.date.today().isoformat(),
+                                                 **({"de_xuat_boi": de_xuat_boi} if de_xuat_boi else {})}
     if bo:
         print(f"= bỏ qua mục {bo}: đã có nhãn (dùng --ghi-de nếu bác sĩ muốn sửa)")
     if not ap_dung:
@@ -218,11 +222,14 @@ def do(bv: dict, nguon: dict[str, str | None], kiem_muc=None) -> dict:
             k1.append((bao, not nh["dung_quan_the"]))
         if nh.get("dung_chieu") is not None and kq.get("k4"):
             k4.append((kq["k4"]["muc"] == "can_doc", not nh["dung_chieu"]))
+    co_nhan = [m.get("nhan_bac_si") or {} for m in bv["muc"]]
+    co_nhan = [nh for nh in co_nhan if any(nh.get(k) is not None for k in NHAN)]
     dk = [(m.get("nhan_bac_si") or {}).get("du_dieu_kien") for m in bv["muc"]]
     co_nhan_dk = [x for x in dk if x is not None]
     return {"K1": bang_nham_lan(k1), "K4": bang_nham_lan(k4), "chua": chua,
             "muc_rung_dieu_kien": sum(1 for x in co_nhan_dk if x is False) if co_nhan_dk else None,
-            "so_nhan_dieu_kien": len(co_nhan_dk)}
+            "so_nhan_dieu_kien": len(co_nhan_dk),
+            "so_nhan": len(co_nhan), "so_nhan_may_de_xuat": sum(1 for nh in co_nhan if nh.get("de_xuat_boi"))}
 
 
 def _pt(x) -> str:
@@ -241,6 +248,9 @@ def in_do(kq: dict) -> None:
     so_rung = "CHƯA ĐO" if rung is None else f"{rung}/{kq['so_nhan_dieu_kien']}"
     print(f"  Mục bác sĩ nói RỤNG ĐIỀU KIỆN so với bài gốc: {so_rung} — hiện CHƯA phép kiểm nào bắt lỗi này "
           "(K3 kiểm bản xuất giữ cụm điều kiện của MỤC, không so với bài gốc).")
+    if kq.get("so_nhan_may_de_xuat"):
+        print(f"  ⚠ {kq['so_nhan_may_de_xuat']}/{kq['so_nhan']} nhãn do máy soạn sẵn, bác sĩ xác nhận — chuẩn CÓ máy tham gia, "
+              "chưa phải bộ vàng bác sĩ gắn độc lập; đọc số đo với giới hạn đó.")
     print("  Chuyển K1/K4 từ CẢNH BÁO sang CHẶN là quyết định của bác sĩ sau khi xem số này (audit/16 §4). "
           "Cần bác sĩ kiểm chứng.")
 
@@ -259,6 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--loi", required=True)
     p.add_argument("--ap-dung", action="store_true")
     p.add_argument("--ghi-de", action="store_true")
+    p.add_argument("--de-xuat-boi", help="ai soạn sẵn nhãn mà bác sĩ xác nhận (vd «Claude»); bỏ trống = bác sĩ tự gắn")
     p = sub.add_parser("do")
     p.add_argument("--online", action="store_true")
     a = ap.parse_args(argv)
@@ -266,7 +277,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"⚪ chưa có {TEP_BO_VANG} — chạy `python3 tools/kiem_cheo_ngu_nghia.py --ung-vien-bo-vang` trước")
         return 2
     if a.lenh == "ghi":
-        return ghi_nhan(a.loi, ap_dung=a.ap_dung, ghi_de=a.ghi_de)
+        return ghi_nhan(a.loi, ap_dung=a.ap_dung, ghi_de=a.ghi_de, tep=TEP_BO_VANG, de_xuat_boi=a.de_xuat_boi)
     bv = doc_bo_vang()
     nguon = nap_nguon(bv, online=a.online)
     if a.lenh == "phieu":

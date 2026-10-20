@@ -186,3 +186,42 @@ def test_moi_nhan_trong_bo_vang_deu_kem_loi_bac_si():
         nh = m.get("nhan_bac_si") or {}
         if any(nh.get(k) is not None for k in B.NHAN):
             assert isinstance(nh.get("loi_bac_si"), str) and nh["loi_bac_si"].strip(), m.get("id")
+
+
+# ───── 20/10 (chiều): «?» và nhãn do máy soạn sẵn ─────
+
+def test_dau_hoi_la_chua_du_can_cu_de_trong_truc():
+    nhan, loi = B.doc_loi("3: Đ Đ ? cần toàn văn · 4: ? S Đ", 4)
+    assert loi == [] and nhan[3]["du_dieu_kien"] is None and nhan[3]["dung_chieu"] is True
+    assert nhan[4]["dung_quan_the"] is None and nhan[4]["dung_chieu"] is False
+
+
+def test_de_xuat_boi_duoc_ghi_va_do_bao_ro(tep):
+    assert B.ghi_nhan("1: Đ Đ Đ · 2: S Đ ?", ap_dung=True, ghi_de=False, tep=tep, de_xuat_boi="Claude") == 0
+    bv = json.loads(tep.read_text(encoding="utf-8"))
+    assert bv["muc"][0]["nhan_bac_si"]["de_xuat_boi"] == "Claude"
+    assert bv["muc"][1]["nhan_bac_si"]["du_dieu_kien"] is None
+    kq = B.do(bv, {"111": "abc"}, kiem_muc=_kiem_gia(False, False))
+    assert kq["so_nhan"] == 2 and kq["so_nhan_may_de_xuat"] == 2 and kq["so_nhan_dieu_kien"] == 1
+
+
+def test_bac_si_tu_gan_khong_mang_de_xuat_boi(tep):
+    B.ghi_nhan("1: Đ Đ Đ", ap_dung=True, ghi_de=False, tep=tep)
+    assert "de_xuat_boi" not in json.loads(tep.read_text(encoding="utf-8"))["muc"][0]["nhan_bac_si"]
+
+
+def test_in_do_canh_bao_nhan_co_may_tham_gia(capsys):
+    kq = B.do({"muc": [_muc(1, q=True, c=True, d=True)]}, {"111": "abc"}, kiem_muc=_kiem_gia(False, False))
+    B.in_do(kq)
+    assert "chuẩn CÓ máy tham gia" not in capsys.readouterr().out
+    m = _muc(1, q=True, c=True, d=True)
+    m["nhan_bac_si"]["de_xuat_boi"] = "Claude"
+    B.in_do(B.do({"muc": [m]}, {"111": "abc"}, kiem_muc=_kiem_gia(False, False)))
+    assert "chuẩn CÓ máy tham gia" in capsys.readouterr().out
+
+
+def test_dong_lenh_ghi_truyen_de_xuat_boi_va_dung_tep(monkeypatch, tep):
+    monkeypatch.setattr(B, "TEP_BO_VANG", tep)
+    assert B.main(["ghi", "--loi", "1: Đ Đ ?", "--ap-dung", "--de-xuat-boi", "Claude"]) == 0
+    nh = json.loads(tep.read_text(encoding="utf-8"))["muc"][0]["nhan_bac_si"]
+    assert nh["de_xuat_boi"] == "Claude" and nh["du_dieu_kien"] is None
