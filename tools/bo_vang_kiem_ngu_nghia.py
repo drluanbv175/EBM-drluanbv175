@@ -216,7 +216,7 @@ def do(bv: dict, nguon: dict[str, str | None], kiem_muc=None) -> dict:
             chua["chua_nguon"] += 1
             continue
         kq = kiem_muc({"id": m.get("id"), "title": m.get("title"), "population": m.get("population"),
-                       "pmid": m.get("pmid"), "doi": m.get("doi")}, tx)
+                       "action": m.get("action"), "pmid": m.get("pmid"), "doi": m.get("doi")}, tx)
         if nh.get("dung_quan_the") is not None:
             bao = any(x["muc"] == "can_doc" for x in kq["k1_nguong"] + kq["k1_cap"])
             k1.append((bao, not nh["dung_quan_the"]))
