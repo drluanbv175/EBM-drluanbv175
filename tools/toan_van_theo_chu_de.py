@@ -62,6 +62,7 @@ DASH = _bst.duong_goc("EBM-Dashboards", REPO) or (REPO / "EBM-Dashboards")
 KHO = DASH / "toan_van_oa"
 TRAN_PMID = 60          # một lượt theo chủ đề: tối đa 60 PMID (ứng viên ≤ 6/tầng + mục apply thiếu) — tránh tải dồn
 TIMEOUT_CONG_CU = 900   # giây cho mỗi công cụ
+MA_PHIEU_CON_BAI_CHO = 1  # mã thoát của `doc_toan_van_co_nguoi.py` (phiếu): còn bài chờ bác sĩ — KHÔNG phải lỗi
 TRAN_GIAY_DUONG_DOC = 900   # trần giây dò đường đọc online (--moi-trich-dan) — bài sau trần ghi «chưa đo được», không treo cả bộ năm
 
 
@@ -366,11 +367,15 @@ def main(argv: list[str] | None = None, *, chay=_chay, kho: Path | None = None, 
                  "", f"- Mới có toàn văn: {', '.join(moi) or '—'}", f"- Còn thiếu: {', '.join(con_thieu) or '—'}", ""]
         if con_thieu and not a.moi_trich_dan:
             rc, out = chay([py, str(REPO / "tools/doc_toan_van_co_nguoi.py"), "--pmid", *con_thieu])
-            if rc != 0:
+            # Phiếu trả 1 = «còn bài chờ bác sĩ» — đúng việc của bước này, đã đếm ở «còn thiếu N». Trước 20/10/2026 mã 1 cũng thành
+            # dòng ⚠ ⇒ orchestrator in «công cụ con lỗi hạ tầng/quá giờ» cho MỌI chủ đề có bài thiếu toàn văn (đỏ giả, 7/7 chủ đề
+            # lượt 20/10). Chỉ 2 (KHÔNG ĐO ĐƯỢC), quá giờ hay mã lạ mới là cảnh báo.
+            loi_3 = rc not in (0, MA_PHIEU_CON_BAI_CHO)
+            if loi_3:
                 canh_bao.append(_canh_bao_cong_cu("③ Phiếu làn trình duyệt", rc, out))
             dong += [f"## ③ Phiếu làn trình duyệt có bác sĩ cho bài còn thiếu — mã {rc}", "```",
                      "\n".join(out.strip().splitlines()[-60:]) or "(không in gì)", "```", "",
-                     *([canh_bao[-1], ""] if rc != 0 else []),
+                     *([canh_bao[-1], ""] if loi_3 else []),
                      "> Bài tường phí/bị trang NXB chặn máy: bác sĩ mở theo phiếu (tự qua Cloudflare/đăng nhập), Claude trích",
                      "> xuất có cấu trúc rồi `doc_toan_van_co_nguoi.py --nap`. Bài không có quyền truy cập ⇒ thẩm định từ tóm",
                      "> tắt và khai `appraisalCompleteness:'partial'` (cổng giữ ở mức «Cân nhắc»)."]
