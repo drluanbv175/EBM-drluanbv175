@@ -61,6 +61,96 @@ TO_CHUC = re.compile(
     r"\b(ACC|AHA|ESC|EULAR|ACR|KDIGO|NICE|Cochrane|USPSTF|WHO|ADA|EASD|AASLD|EASL|"
     r"APASL|GOLD|GINA|IDSA|ATS|ERS|ASH|AGS|CHEST|SIGN|Endocrine Society|IHS|EAN)\b")
 
+# ── Mở rộng 20/10/2026 (bác sĩ: «Giải quyết 3 vấn đề chưa đạt» — 330 mục chưa khai gradeBy). Đo cùng ngày: 255/256 mục
+# rơi vào «không tự suy» dù CHÍNH gradeSource đã nói rõ ai chấm, chỉ vì kho mẫu thiếu. Ba nhóm mới, vẫn đúng luật 1 (chỉ
+# từ CHỮ đang có trong item), xét theo THỨ TỰ: G9 trước G8 — «đánh giá vận hành» là lời người soạn tự nhận đã chấm.
+#   G9  lời người soạn tự nhận («đánh giá vận hành») ⇒ «Người soạn — đánh giá vận hành» (giá trị đã dùng sẵn trong kho);
+#   G8  Cochrane + từ chỉ mức chắc chắn ⇒ «Cochrane (GRADE)»;
+#   G10 ĐÚNG MỘT tổ chức có tên + thuật ngữ phân hạng tường minh (Class/Level, loại I, mức A, 1A, A/B/C/E, A–D…) ⇒
+#       «<tổ chức> (phân hạng nguyên bản)»; hai tổ chức trở lên ⇒ không đoán;
+#   G11 KHÔNG nêu tổ chức nào, chỉ mô tả thiết kế/nguy cơ sai lệch ⇒ «Người soạn — đánh giá theo thiết kế (nguồn không
+#       tự phân hạng)»: mức trên dashboard do người soạn gán (nghiên cứu gốc không tự mang mức chắc chắn).
+TO_CHUC_RONG = re.compile(
+    r"\b(ACC/AHA|AHA/ASA|ACC|AHA|ASA|ESC|ESO|EANS|ESVS|ESH|EAS|EULAR|ACR|KDIGO|NICE|USPSTF|WHO|ADA|EASD|AASLD|"
+    r"EASL|APASL|GOLD|GINA|IDSA|ATS|ERS|ASH|AGS|CHEST|SIGN|Endocrine Society|IHS|EAN|AAN|AAP|BSH|HFSA|AGA|ACG|"
+    r"ASCO|ESMO|NCCN|SMFM|ACOG|SVS|Cochrane|FDA|EMA|PRAC|MHRA)\b")
+# Tên đầy đủ hay gặp ở trường `org` — G10 đòi tổ chức nêu trong gradeSource TRÙNG tổ chức của item (soát 20/10: một bài
+# tổng quan trên Am J Emerg Med nói lại «chất lượng rất thấp» của ATS — không chắc ai chấm ⇒ không được gán cho ATS).
+TEN_DAY_DU = {"AHA": "American Heart Association", "ASA": "American Stroke Association", "ADA": "American Diabetes",
+              "AAN": "American Academy of Neurology", "GOLD": "Global Initiative for Chronic", "ACC": "American College of Cardiology",
+              "ESC": "European Society of Cardiology", "EULAR": "European Alliance", "ACR": "American College of Rheumatology",
+              "KDIGO": "Kidney Disease", "AASLD": "American Association for the Study of Liver", "WHO": "World Health",
+              "AAP": "American Academy of Pediatrics", "BSH": "British Society for Haematology", "ATS": "American Thoracic"}
+_THUAT_NGU_PHAN_HANG = re.compile(
+    r"khuyến cáo loại\s*(?:I{1,3}|[123])|\bClass\s*(?:I{1,3}|[123])[ab]?\b|Class/Level|\bCOR\b|\bLOE\b|"
+    r"\bLevel\s*[A-C]\b|\bmức\s*[A-C]\b|\b[12][A-D]\b|A/B/C/E|\(A[–-]D\)|\bLoE\b|\bSoR\b|"
+    r"khuyến cáo (?:mạnh|có điều kiện|yếu)|chất lượng (?:RẤT THẤP|rất thấp|thấp|trung bình|cao)", re.I)
+_COCHRANE_MUC = re.compile(r"Cochrane.{0,80}(?:chất lượng|chắc chắn|tin cậy|certainty|moderate|high|low)|"
+                           r"(?:chất lượng|chắc chắn|tin cậy|certainty).{0,40}Cochrane", re.I)
+_THIET_KE = re.compile(r"\bRCT\b|thử nghiệm (?:ngẫu nhiên|pha)|cohort|đoàn hệ|phân tích gộp|meta-?analysis|\bSR-?MA\b|"
+                       r"tổng quan hệ thống|nghiên cứu quan sát|bệnh-chứng|cắt ngang|nguy cơ sai lệch|"
+                       r"thiết kế|kiểm định|IPD", re.I)
+NHOM_MO_RONG = [("G9", "Người soạn — đánh giá vận hành"), ("G8", "Cochrane (GRADE)"),
+                ("G10", "<tổ chức> (phân hạng nguyên bản)"),
+                ("G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)")]
+
+
+def phan_nhom(gs: str, org: str) -> tuple[str, str] | None:
+    """(mã nhóm, gradeBy đề xuất) hoặc None (để tay người) — chỉ đọc CHỮ của item (luật 1).
+
+    Vá 20/10/2026: (a) G1 «ACC/AHA» chỉ khi chữ có ACC — một mục trích AHA/ASA từng bị gán ACC/AHA; (b) G5 «EULAR» chỉ khi
+    chữ có EULAR — mẫu «LoE» không phân biệt hoa/thường bắt cả «LOE A» của AHA; (c) mục khớp mẫu G3 mà không có tên tổ
+    chức trước đây bị `break` loại khỏi CẢ hai danh sách (mất khỏi báo cáo) — nay rơi xuống nhóm mở rộng / tay người."""
+    von = f"{gs} | {org}"
+    for ma, ten, mau_re in MAU:
+        if ma == "G1" and not re.search(r"\bACC\b", von):
+            continue
+        if ma == "G5" and not re.search(r"\bEULAR\b", von):
+            continue
+        if any(re.search(m, von, re.I) for m in mau_re):
+            if ma == "G3":
+                tc = TO_CHUC.search(von)
+                if not tc:
+                    break  # GRADE vô danh — không truy nguyên được tổ chức ⇒ không dùng G3
+                return "G3", f"{tc.group(1)} (GRADE)"
+            return ma, ten
+    return phan_nhom_mo_rong(gs, org)
+
+
+def phan_nhom_mo_rong(gs: str, org: str) -> tuple[str, str] | None:
+    """(mã nhóm, gradeBy đề xuất) cho mục MAU gốc không nhận ra; None = để tay người. Chỉ đọc chữ của item."""
+    if re.search(r"bác sĩ|thẩm định", gs, re.I):
+        return None  # mức có bàn tay bác sĩ (vd «bác sĩ chuẩn y 14/08/2026») — để bác sĩ tự xác nhận, máy không gán nhãn
+    if re.search(r"đánh giá vận hành", gs, re.I):
+        return "G9", "Người soạn — đánh giá vận hành"
+    if _COCHRANE_MUC.search(gs):
+        return "G8", "Cochrane (GRADE)"
+    # Tên tổ chức CHỈ lấy từ chữ của gradeSource (soát 20/10: org «SVS / ESVS» + «SVS grade 1» bị gán ESVS); trường `org`
+    # chỉ dùng để ĐỐI CHIẾU tổ chức đó có đúng là nơi ban hành item không.
+    to_chuc = {m.group(1) for m in TO_CHUC_RONG.finditer(gs)}
+    if to_chuc and _THUAT_NGU_PHAN_HANG.search(gs):
+        # «ACC/AHA» và «ACC», «AHA» là một ⇒ gộp tên con vào tên ghép trước khi đếm.
+        ghep = {t for t in to_chuc if "/" in t}
+        don = {t for t in to_chuc if "/" not in t and not any(t in g.split("/") for g in ghep)}
+        con = ghep | don
+        if len(con) == 1:
+            ten = next(iter(con))
+            if all(t in org or TEN_DAY_DU.get(t, "\0") in org for t in ten.split("/")):
+                return "G10", f"{ten} (phân hạng nguyên bản)"
+        return None
+    if not to_chuc and _THUAT_NGU_PHAN_HANG.search(gs):
+        # gradeSource có thuật ngữ phân hạng mà không nêu tổ chức ⇒ mức thuộc NGUỒN của chính item (vd guideline AHA/ASA ghi
+        # «Khuyến cáo loại I») — chỉ khi trường `org` chỉ ra ĐÚNG MỘT tổ chức đã biết (tạp chí như «Lancet» ⇒ không đoán).
+        o = {m.group(1) for m in TO_CHUC_RONG.finditer(org)} | {k for k, v in TEN_DAY_DU.items() if v in org}
+        ghep = {t for t in o if "/" in t}
+        con = ghep | {t for t in o if "/" not in t and not any(t in g.split("/") for g in ghep)}
+        if len(con) == 1:
+            return "G10", f"{next(iter(con))} (phân hạng nguyên bản)"
+        return None
+    if not to_chuc and _THIET_KE.search(gs) and not re.search(r"khuyến cáo|guideline|hướng dẫn|đồng thuận", gs, re.I):
+        return "G11", "Người soạn — đánh giá theo thiết kế (nguồn không tự phân hạng)"
+    return None
+
 
 def _nap_vd():
     sp = importlib.util.spec_from_file_location("vd_gb", DASH / "tools" / "verify_dashboard.py")
@@ -87,23 +177,13 @@ def quet() -> tuple[dict, list]:
                 continue
             gs = vd.field(c, "gradeSource") or ""
             org = vd.field(c, "org") or ""
-            von = f"{gs} | {org}"
             muc = {"file": f.name, "item": vd.field(c, "id") or "?",
                    "decision": vd.field(c, "decision") or "",
                    "trich": gs[:100]}
-            for ma, ten, mau_re in MAU:
-                if any(re.search(m, von, re.I) for m in mau_re):
-                    # G3 (GRADE chung) đòi thêm TÊN tổ chức trong chữ — GRADE vô danh
-                    # không truy nguyên được, giữ ở nhóm không-suy.
-                    tc = TO_CHUC.search(von)
-                    if ma == "G3" and not tc:
-                        break
-                    muc["de_xuat"] = (f"{tc.group(1)} (GRADE)" if ma == "G3"
-                                      else ten if not tc or ma != "G3" else ten)
-                    if ma != "G3":
-                        muc["de_xuat"] = ten
-                    nhom[ma].append(muc)
-                    break
+            kq = phan_nhom(gs, org)
+            if kq:
+                muc["de_xuat"] = kq[1]
+                nhom[kq[0]].append(muc)
             else:
                 khong_suy.append(muc)
     return dict(nhom), khong_suy
@@ -247,7 +327,7 @@ def main() -> int:
             f"`gradeSource`/`org`; **{len(khong_suy)}** item KHÔNG tự suy được (để tay người).",
             "", "> Máy chỉ ĐỀ XUẤT — bác sĩ duyệt nhóm nào thì chạy:",
             "> `python3 tools/de_xuat_gradeby.py --ap-dung <MÃ NHÓM…>`", ""]
-    for ma, ten, _ in MAU:
+    for ma, ten in [(m, t) for m, t, _ in MAU] + NHOM_MO_RONG:
         ds = nhom.get(ma, [])
         if not ds:
             continue
@@ -267,7 +347,7 @@ def main() -> int:
     out.write_text("\n".join(dong) + "\n", encoding="utf-8")
     print(f"ĐỀ XUẤT gradeBy: {tong} item chia {sum(1 for v in nhom.values() if v)} nhóm · "
           f"{len(khong_suy)} không-tự-suy → {out.name}")
-    for ma, ten, _ in MAU:
+    for ma, ten in [(m, t) for m, t, _ in MAU] + NHOM_MO_RONG:
         if nhom.get(ma):
             n_a = sum(1 for x in nhom[ma] if x['decision'] == 'apply')
             print(f"  {ma} {ten}: {len(nhom[ma])} item ({n_a} apply)")
