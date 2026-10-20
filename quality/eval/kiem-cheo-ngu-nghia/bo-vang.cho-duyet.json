@@ -1,346 +1,406 @@
 {
-  "_mo_ta": "Ứng viên bộ vàng cho kiểm chéo ngữ nghĩa (audit/16). MÁY SOẠN, BÁC SĨ GẮN NHÃN: điền nhan_bac_si.dung_quan_the / dung_chieu / du_dieu_kien = true|false cho từng mục. Máy không tự gắn nhãn; khi nhãn còn null, mọi con số báo động giả là CHƯA ĐO.",
-  "so_muc": 20,
-  "muc": [
-    {
-      "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
-      "id": "ITEM-04",
-      "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
-      "population": "Người ≥65 tuổi (ngoại trú, đa thuốc)",
-      "action": "Rà soát thuốc theo Beers 2023: cảnh giác benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài; cân nhắc giảm liều/ngưng có kế hoạch.",
-      "pmid": "37139824",
-      "doi": "10.1111/jgs.18372",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
-      "id": "ITEM-01",
-      "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
-      "population": "Người lớn không triệu chứng, không tiền sử TIA/đột quỵ",
-      "action": "Không siêu âm ĐM cảnh thường quy để sàng lọc ở người không triệu chứng. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
-      "pmid": "33528542",
-      "doi": "10.1001/jama.2020.26988",
-      "gradeLevel": "mod",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
-      "id": "ITEM-01",
-      "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
-      "population": "Người lớn chưa từng đột quỵ",
-      "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
-      "pmid": "39429201",
-      "doi": "10.1161/STR.0000000000000475",
-      "gradeLevel": "high",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20261018.html",
-      "id": "ITEM-01",
-      "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
-      "population": "Người lớn chưa từng đột quỵ",
-      "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
-      "pmid": "39429201",
-      "doi": "10.1161/STR.0000000000000475",
-      "gradeLevel": "high",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
-      "id": "ITEM-01",
-      "title": "KDIGO 2024 — phân loại nguyên nhân · mức lọc cầu thận · albumin niệu (hệ CGA) là NỀN cho mọi quyết định về bệnh kết hợp",
-      "population": "Người lớn và trẻ em có bệnh thận mạn ở mọi giai đoạn, mọi nguyên nhân",
-      "action": "Với MỌI người bệnh thận mạn, ghi đủ ba trục vào bệnh án chứ không chỉ một con số eGFR: (a) nguyên nhân (đái tháo đường, tăng huyết áp, cầu thận, thận đa nang, tắc nghẽn, không rõ); (b) giai đoạn G theo eGFR — G1 từ 90 trở lên, G2 60 đến 89, G3a 45 đến 59, G3b 30 đến 44, G4 15 đến 29, G5 dưới 15; (c) mức albumin niệu A theo tỷ số albumin/creatinine niệu — A1 dưới 30 mg/g, A2 từ 30 đến 300 mg/g, A3 trên 300 mg/g. Chính ô giao nhau giữa G và A quyết định tần suất theo dõi, ngưỡng chuyển thận học và mức độ quyết liệt của điều trị bệnh kết hợp. Đo albumin niệu bằng mẫu nước tiểu bất kỳ (ưu tiên mẫu đầu tiên buổi sáng), lặp lại để xác nhận vì albumin niệu dao động.",
-      "pmid": "38490803",
-      "doi": "10.1016/j.kint.2023.10.018",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
-      "id": "ITEM-01",
-      "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
-      "population": "Người lớn nguy cơ/nghi CKD",
-      "action": "Chẩn đoán CKD khi bất thường cấu trúc/chức năng thận kéo dài ≥3 tháng. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Dùng eGFR creatinine (± cystatin C khi cần xác nhận).",
-      "pmid": "38490803",
-      "doi": "10.1016/j.kint.2023.10.018",
-      "gradeLevel": "high",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
-      "id": "ITEM-01",
-      "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
-      "population": "Mọi người bệnh ĐTĐ type 1 & 2",
-      "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
-      "pmid": "41358886",
-      "doi": "10.2337/dc26-S012",
-      "gradeLevel": "high",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20261018.html",
-      "id": "ITEM-01",
-      "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
-      "population": "Mọi người bệnh ĐTĐ type 1 & 2",
-      "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
-      "pmid": "41358886",
-      "doi": "10.2337/dc26-S012",
-      "gradeLevel": "high",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
-      "id": "ITEM-01",
-      "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
-      "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
-      "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi đạt ổn định lâm sàng (không còn sốt, SpO2 ổn, không cần IV). Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
-      "pmid": "42127879",
-      "doi": "10.1016/j.ajem.2026.05.020",
-      "gradeLevel": "mod",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_CKM_TimThanChuyenHoa_20260628.html",
-      "id": "ITEM-01",
-      "title": "Phân giai đoạn CKM (AHA 2023) — Khung chẩn đoán và phân tầng chiến lược",
-      "population": "Mọi người lớn có ≥ 1 yếu tố nguy cơ chuyển hóa, thận hoặc tim mạch",
-      "action": "Áp dụng phân giai đoạn CKM Stage 0–4b: Stage 0–1 (lối sống ± cân nhắc GLP-1 RA), Stage 2 (SGLT2i + RAAS), Stage 3–4a (tối ưu đa thuốc), Stage 4b (đa chuyên khoa).",
-      "pmid": "37807924",
-      "doi": "10.1161/CIR.0000000000001184",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
-      "id": "ITEM-05",
-      "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
-      "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
-      "action": "Leo thang lên bộ ba cho nhóm E còn đợt cấp dù giãn phế quản kép; ưu tiên thiết bị một-bình.",
-      "pmid": "29668352",
-      "doi": "10.1056/NEJMoa1713901",
-      "gradeLevel": "high",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
-      "id": "ITEM-01",
-      "title": "Bỏ thuốc lá — can thiệp DUY NHẤT đã chứng minh giảm tử vong dài hạn ở người tắc nghẽn đường thở",
-      "population": "5.887 người trung niên có tắc nghẽn đường thở KHÔNG triệu chứng, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
-      "action": "Đặt cai thuốc lá lên TRƯỚC mọi leo thang thuốc hít. Điểm đáng chú ý: lợi ích tử vong xuất hiện dù chỉ 21,7% người trong nhóm can thiệp bỏ được thuốc ở năm thứ 5 (so với 5,4% nhóm chứng) — nghĩa là chương trình cai thuốc vẫn đáng làm ngay cả khi tỷ lệ thành công khiêm tốn.",
-      "pmid": "15710956",
-      "doi": "10.7326/0003-4819-142-4-200502150-00005",
-      "gradeLevel": "high",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261013.html",
-      "id": "ITEM-01",
-      "title": "COPD làm tăng nguy cơ MẮC MỚI suy tim, NMCT, đột quỵ, rung nhĩ và tử vong tim mạch (SR/MA 2026, GRADE trung bình)",
-      "population": "140 nghiên cứu quan sát, 30.144.481 người (3.062.712 có COPD), theo dõi trung vị 3,0 năm",
-      "action": "Coi COPD là một yếu tố nguy cơ tim mạch. RR so với người không COPD: suy tim 2,33 (1,78–3,06); nhịp nhanh thất 2,05 (1,27–3,31); bệnh động mạch ngoại biên 1,99 (1,49–2,65); nhập viện suy tim 1,78 (1,28–2,47); CKD 1,65 (1,25–2,16); tử vong tim mạch 1,55 (1,33–1,82); NMCT 1,47 (1,28–1,68); đột quỵ TMCB 1,38 (1,18–1,62); rung nhĩ 1,38 (1,19–1,61). Ở mọi người COPD: chủ động hỏi–khám–xét nghiệm tìm suy tim, bệnh mạch vành, rung nhĩ, bệnh mạch ngoại biên, CKD và quản lý yếu tố nguy cơ theo guideline tim mạch.",
-      "pmid": "42602993",
-      "doi": "10.1016/j.eclinm.2026.104131",
-      "gradeLevel": "mod",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
-      "id": "ITEM-03",
-      "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
-      "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
-      "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
-      "pmid": "38771577",
-      "doi": "10.1001/jamanetworkopen.2024.7535",
-      "gradeLevel": "mod",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimThanChuyenHoa_20260710.html",
-      "id": "ITEM-03",
-      "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
-      "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
-      "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
-      "pmid": "38771577",
-      "doi": "10.1001/jamanetworkopen.2024.7535",
-      "gradeLevel": "mod",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20260706.html",
-      "id": "ITEM-02",
-      "title": "Hướng dẫn HS Bắc Mỹ — Phần I: chẩn đoán, đánh giá & xử trí bổ trợ/thủ thuật",
-      "population": "Người lớn HS — khuyến cáo chẩn đoán/đánh giá",
-      "action": "Dùng phân độ Hurley (I–III) + tầm soát đồng mắc (hội chứng chuyển hóa, viêm khớp, bệnh viêm ruột, trầm cảm) làm khung đánh giá chuẩn khi chẩn đoán HS.",
-      "pmid": "30872156",
-      "doi": "10.1016/j.jaad.2019.02.067",
-      "gradeLevel": "mod",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
-      "id": "ITEM-14",
-      "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
-      "population": "Người đái tháo đường típ 1 và típ 2 trước, trong và sau phẫu thuật chuyển hoá",
-      "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
-      "pmid": "41840846",
-      "doi": "10.1111/dme.70281",
-      "gradeLevel": "na",
-      "co_dieu_kien": true,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
-      "id": "ITEM-04",
-      "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
-      "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
-      "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
-      "pmid": "29368949",
-      "doi": "10.1177/0333102417738202",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_TongHop_20260811.html",
-      "id": "ITEM-04",
-      "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
-      "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
-      "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
-      "pmid": "29368949",
-      "doi": "10.1177/0333102417738202",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    },
-    {
-      "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
-      "id": "ITEM-01",
-      "title": "Hội Tiêu hoá Hoa Kỳ 2021 — dùng CHIẾN LƯỢC CHẨN ĐOÁN DƯƠNG TÍNH theo tiêu chuẩn triệu chứng, thay cho chẩn đoán loại trừ",
-      "population": "Người lớn có triệu chứng gợi ý hội chứng ruột kích thích, chăm sóc ban đầu và chuyên khoa tiêu hoá",
-      "action": "Ở người bệnh KHÔNG có cờ đỏ, đối chiếu thẳng tiêu chuẩn Rome IV ngay lần khám đầu: đau bụng tái diễn trung bình ít nhất 1 ngày mỗi tuần trong 3 tháng gần nhất, khởi phát triệu chứng ít nhất 6 tháng trước, kèm ít nhất 2 trong 3 đặc điểm — liên quan tới đại tiện, thay đổi tần suất phân, thay đổi hình dạng phân. Phân thể bằng thang phân Bristol trên những ngày có phân bất thường (thể táo bón, thể tiêu chảy, thể hỗn hợp, thể không phân loại được) vì thể bệnh quyết định lựa chọn thuốc phía sau. Nói rõ với người bệnh đây là chẩn đoán KHẲNG ĐỊNH dựa trên bộ tiêu chuẩn quốc tế, không phải kết luận 'không tìm thấy bệnh gì'.",
-      "pmid": "33315591",
-      "doi": "10.14309/ajg.0000000000001036",
-      "gradeLevel": "na",
-      "co_dieu_kien": false,
-      "nhan_bac_si": {
-        "dung_quan_the": null,
-        "dung_chieu": null,
-        "du_dieu_kien": null,
-        "ghi_chu": null
-      }
-    }
-  ]
+ "_mo_ta": "Ứng viên bộ vàng cho kiểm chéo ngữ nghĩa (audit/16). MÁY SOẠN, BÁC SĨ GẮN NHÃN: điền nhan_bac_si.dung_quan_the / dung_chieu / du_dieu_kien = true|false cho từng mục. Máy không tự gắn nhãn; khi nhãn còn null, mọi con số báo động giả là CHƯA ĐO.",
+ "so_muc": 20,
+ "muc": [
+  {
+   "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+   "id": "ITEM-04",
+   "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
+   "population": "Người ≥65 tuổi (ngoại trú, đa thuốc)",
+   "action": "Rà soát thuốc theo Beers 2023: cảnh giác benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài; cân nhắc giảm liều/ngưng có kế hoạch.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+   "id": "ITEM-01",
+   "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+   "population": "Người lớn không triệu chứng, không tiền sử TIA/đột quỵ",
+   "action": "Không siêu âm ĐM cảnh thường quy để sàng lọc ở người không triệu chứng. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
+   "pmid": "33528542",
+   "doi": "10.1001/jama.2020.26988",
+   "gradeLevel": "mod",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
+   "id": "ITEM-01",
+   "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
+   "population": "Người lớn chưa từng đột quỵ",
+   "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn",
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20261018.html",
+   "id": "ITEM-01",
+   "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
+   "population": "Người lớn chưa từng đột quỵ",
+   "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "như mục 3",
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
+   "id": "ITEM-01",
+   "title": "KDIGO 2024 — phân loại nguyên nhân · mức lọc cầu thận · albumin niệu (hệ CGA) là NỀN cho mọi quyết định về bệnh kết hợp",
+   "population": "Người lớn và trẻ em có bệnh thận mạn ở mọi giai đoạn, mọi nguyên nhân",
+   "action": "Với MỌI người bệnh thận mạn, ghi đủ ba trục vào bệnh án chứ không chỉ một con số eGFR: (a) nguyên nhân (đái tháo đường, tăng huyết áp, cầu thận, thận đa nang, tắc nghẽn, không rõ); (b) giai đoạn G theo eGFR — G1 từ 90 trở lên, G2 60 đến 89, G3a 45 đến 59, G3b 30 đến 44, G4 15 đến 29, G5 dưới 15; (c) mức albumin niệu A theo tỷ số albumin/creatinine niệu — A1 dưới 30 mg/g, A2 từ 30 đến 300 mg/g, A3 trên 300 mg/g. Chính ô giao nhau giữa G và A quyết định tần suất theo dõi, ngưỡng chuyển thận học và mức độ quyết liệt của điều trị bệnh kết hợp. Đo albumin niệu bằng mẫu nước tiểu bất kỳ (ưu tiên mẫu đầu tiên buổi sáng), lặp lại để xác nhận vì albumin niệu dao động.",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+   "id": "ITEM-01",
+   "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
+   "population": "Người lớn nguy cơ/nghi CKD",
+   "action": "Chẩn đoán CKD khi bất thường cấu trúc/chức năng thận kéo dài ≥3 tháng. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Dùng eGFR creatinine (± cystatin C khi cần xác nhận).",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "high",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+   "id": "ITEM-01",
+   "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+   "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+   "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20261018.html",
+   "id": "ITEM-01",
+   "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+   "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+   "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01",
+   "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+   "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+   "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi đạt ổn định lâm sàng (không còn sốt, SpO2 ổn, không cần IV). Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CKM_TimThanChuyenHoa_20260628.html",
+   "id": "ITEM-01",
+   "title": "Phân giai đoạn CKM (AHA 2023) — Khung chẩn đoán và phân tầng chiến lược",
+   "population": "Mọi người lớn có ≥ 1 yếu tố nguy cơ chuyển hóa, thận hoặc tim mạch",
+   "action": "Áp dụng phân giai đoạn CKM Stage 0–4b: Stage 0–1 (lối sống ± cân nhắc GLP-1 RA), Stage 2 (SGLT2i + RAAS), Stage 3–4a (tối ưu đa thuốc), Stage 4b (đa chuyên khoa).",
+   "pmid": "37807924",
+   "doi": "10.1161/CIR.0000000000001184",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định",
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05",
+   "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+   "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
+   "action": "Leo thang lên bộ ba cho nhóm E còn đợt cấp dù giãn phế quản kép; ưu tiên thiết bị một-bình.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
+   "id": "ITEM-01",
+   "title": "Bỏ thuốc lá — can thiệp DUY NHẤT đã chứng minh giảm tử vong dài hạn ở người tắc nghẽn đường thở",
+   "population": "5.887 người trung niên có tắc nghẽn đường thở KHÔNG triệu chứng, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
+   "action": "Đặt cai thuốc lá lên TRƯỚC mọi leo thang thuốc hít. Điểm đáng chú ý: lợi ích tử vong xuất hiện dù chỉ 21,7% người trong nhóm can thiệp bỏ được thuốc ở năm thứ 5 (so với 5,4% nhóm chứng) — nghĩa là chương trình cai thuốc vẫn đáng làm ngay cả khi tỷ lệ thành công khiêm tốn.",
+   "pmid": "15710956",
+   "doi": "10.7326/0003-4819-142-4-200502150-00005",
+   "gradeLevel": "high",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261013.html",
+   "id": "ITEM-01",
+   "title": "COPD làm tăng nguy cơ MẮC MỚI suy tim, NMCT, đột quỵ, rung nhĩ và tử vong tim mạch (SR/MA 2026, GRADE trung bình)",
+   "population": "140 nghiên cứu quan sát, 30.144.481 người (3.062.712 có COPD), theo dõi trung vị 3,0 năm",
+   "action": "Coi COPD là một yếu tố nguy cơ tim mạch. RR so với người không COPD: suy tim 2,33 (1,78–3,06); nhịp nhanh thất 2,05 (1,27–3,31); bệnh động mạch ngoại biên 1,99 (1,49–2,65); nhập viện suy tim 1,78 (1,28–2,47); CKD 1,65 (1,25–2,16); tử vong tim mạch 1,55 (1,33–1,82); NMCT 1,47 (1,28–1,68); đột quỵ TMCB 1,38 (1,18–1,62); rung nhĩ 1,38 (1,19–1,61). Ở mọi người COPD: chủ động hỏi–khám–xét nghiệm tìm suy tim, bệnh mạch vành, rung nhĩ, bệnh mạch ngoại biên, CKD và quản lý yếu tố nguy cơ theo guideline tim mạch.",
+   "pmid": "42602993",
+   "doi": "10.1016/j.eclinm.2026.104131",
+   "gradeLevel": "mod",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+   "id": "ITEM-03",
+   "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+   "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+   "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimThanChuyenHoa_20260710.html",
+   "id": "ITEM-03",
+   "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+   "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+   "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20260706.html",
+   "id": "ITEM-02",
+   "title": "Hướng dẫn HS Bắc Mỹ — Phần I: chẩn đoán, đánh giá & xử trí bổ trợ/thủ thuật",
+   "population": "Người lớn HS — khuyến cáo chẩn đoán/đánh giá",
+   "action": "Dùng phân độ Hurley (I–III) + tầm soát đồng mắc (hội chứng chuyển hóa, viêm khớp, bệnh viêm ruột, trầm cảm) làm khung đánh giá chuẩn khi chẩn đoán HS.",
+   "pmid": "30872156",
+   "doi": "10.1016/j.jaad.2019.02.067",
+   "gradeLevel": "mod",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+   "id": "ITEM-14",
+   "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
+   "population": "Người đái tháo đường típ 1 và típ 2 trước, trong và sau phẫu thuật chuyển hoá",
+   "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
+   "pmid": "41840846",
+   "doi": "10.1111/dme.70281",
+   "gradeLevel": "na",
+   "co_dieu_kien": true,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "nguồn giảm insulin 35–50% chỉ cho típ 2",
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
+   "id": "ITEM-04",
+   "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+   "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+   "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+   "pmid": "29368949",
+   "doi": "10.1177/0333102417738202",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_TongHop_20260811.html",
+   "id": "ITEM-04",
+   "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+   "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+   "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+   "pmid": "29368949",
+   "doi": "10.1177/0333102417738202",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
+   "id": "ITEM-01",
+   "title": "Hội Tiêu hoá Hoa Kỳ 2021 — dùng CHIẾN LƯỢC CHẨN ĐOÁN DƯƠNG TÍNH theo tiêu chuẩn triệu chứng, thay cho chẩn đoán loại trừ",
+   "population": "Người lớn có triệu chứng gợi ý hội chứng ruột kích thích, chăm sóc ban đầu và chuyên khoa tiêu hoá",
+   "action": "Ở người bệnh KHÔNG có cờ đỏ, đối chiếu thẳng tiêu chuẩn Rome IV ngay lần khám đầu: đau bụng tái diễn trung bình ít nhất 1 ngày mỗi tuần trong 3 tháng gần nhất, khởi phát triệu chứng ít nhất 6 tháng trước, kèm ít nhất 2 trong 3 đặc điểm — liên quan tới đại tiện, thay đổi tần suất phân, thay đổi hình dạng phân. Phân thể bằng thang phân Bristol trên những ngày có phân bất thường (thể táo bón, thể tiêu chảy, thể hỗn hợp, thể không phân loại được) vì thể bệnh quyết định lựa chọn thuốc phía sau. Nói rõ với người bệnh đây là chẩn đoán KHẲNG ĐỊNH dựa trên bộ tiêu chuẩn quốc tế, không phải kết luận 'không tìm thấy bệnh gì'.",
+   "pmid": "33315591",
+   "doi": "10.14309/ajg.0000000000001036",
+   "gradeLevel": "na",
+   "co_dieu_kien": false,
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": true,
+    "ghi_chu": null,
+    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
+    "ngay": "2026-10-20",
+    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+   }
+  }
+ ]
 }
