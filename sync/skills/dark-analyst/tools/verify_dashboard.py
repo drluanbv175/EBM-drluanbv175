@@ -1520,7 +1520,15 @@ def verify_doi_online(doi, retries=2):
 MIEN_CHAN_TRUY_CAP_TU_DONG = {
     "www.fda.gov": "24/09/2026 — HTTP 404 với urllib, trình duyệt mở được (trang alli/orlistat); 02/10/2026 — HTTP 401",
     "fda.gov": "như www.fda.gov",
+    "www.ema.europa.eu": "21/10/2026 — HTTP 403 CloudFront «Request blocked» với urllib (VPN bật); trình duyệt mở được 3 trang PRAC, "
+                         "đúng tiêu đề, khi VPN tắt",
+    "ema.europa.eu": "như www.ema.europa.eu",
 }
+# EMA thêm 21/10/2026 (bác sĩ duyệt): KHÁC FDA ở chỗ EMA chặn theo IP THOÁT (CloudFront chặn IP của VPN, cả trình duyệt trong app
+# cũng nhận «403 ERROR — Request blocked»), không theo trình khách. VPN BẬT là mặc định của bác sĩ và NCBI lại chặn IP Việt Nam ⇒
+# trước bản sửa, mỗi gói EMA phải tắt VPN cho riêng bước cổng rồi bật lại (lô 20261018T143247-lo dừng 3 lần). Chiều an toàn giữ
+# nguyên: 403 của miền này CHỈ đạt khi sổ trình duyệt có bằng chứng còn hạn ĐÚNG URL; lấy bằng chứng = tắt VPN, mở trang thật,
+# `tools/xac_nhan_trinh_duyet.py --ghi`. Tắt VPN thì urllib nhận 200 và cổng đạt như mọi trang khác, không cần sổ.
 # 401 thêm 02/10/2026: www.fda.gov đổi cách chặn — urllib nhận HTTP 401 Unauthorized và chính trình duyệt trong app cũng gặp
 # trang chặn «Sorry! This resembles an automated request» (nút «I am not a bot» — KHÔNG bấm, không lách chặn). Trước bản sửa
 # cổng đọc 401 thành «lỗi mạng» ⇒ lô `ops/orchestrator.py --cu-nhat 3 --online` dừng ở gói Orlistat dù bằng chứng trình duyệt
