@@ -12,6 +12,9 @@ giúp tôi» (việc 3). Claude Code (qua `.mcp.json`), Claude Desktop/khung cha
   • KHÔNG có công cụ xoá: không `delete record` (đo 19/10/2026: xoá HẲN), không thùng rác tự động, không `close document`
     (làm EndNote sập). Thùng rác: công cụ chỉ CHUẨN BỊ (hiện đúng bản ghi) và KIỂM — bác sĩ bấm.
   • `endnote_loai_tru` chỉ dùng khi BÁC SĨ đã nói loại bài đó; `ly_do` phải là lời bác sĩ.
+  • NHÓM đo theo group_id trên bản sao tạm của `sdb.eni` (21/10/2026), không theo TÊN qua AppleScript — `get records in "<tên>"`
+    trả HỢP mọi nhóm cùng tên (2 nhóm 5 + 4 bài từng bị báo thành «1 nhóm 9 bài», tưởng đã gộp). `endnote_dua_vao_nhom` TỪ CHỐI
+    ghi khi tên đích đang có ≥2 nhóm hoặc không đo được: không biết `post` sẽ rơi vào nhóm nào.
 
 Giao thức: MCP qua stdio — JSON-RPC 2.0, mỗi thông điệp một dòng. Chỉ dùng thư viện chuẩn (chạy được bằng `python3` hệ thống
 hay `uv run`). stdout là KÊNH GIAO THỨC: mọi dòng chữ khác đi stderr.
@@ -26,6 +29,7 @@ import importlib.util
 import json
 import os
 import shutil
+import sqlite3
 import sys
 import traceback
 from datetime import datetime
@@ -39,7 +43,8 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
 
 TOOLS = Path(__file__).resolve().parents[1]
 TEN_MAY_CHU = "endnote-ebm"
-PHIEN_BAN = "1.0.0"
+PHIEN_BAN = "1.1.0"
+NGUON_NHOM = "sdb.eni (bản sao tạm, chỉ đọc) — mỗi nhóm theo group_id, tên trùng KHÔNG cộng thành viên"
 GIAO_THUC = ("2025-06-18", "2025-03-26", "2024-11-05")
 
 
@@ -100,23 +105,53 @@ def cc_tim(a: dict) -> dict:
     return mod("sk").tra_dinh_danh(_thu_vien(), dd)
 
 
+class NhomTrungTen(RuntimeError):
+    """Tên nhóm đích đang có ≥2 nhóm — không ghi (fail-closed)."""
+
+
+class KhongDoDuocNhom(RuntimeError):
+    """Không đọc được bảng nhóm trong sdb.eni — không ghi (fail-closed)."""
+
+
+def _mo_ta_trung(ten: str, nh: list[dict]) -> str:
+    ds = ", ".join(f"group_id {n['group_id']}: {n['so_ban_ghi']} bài" for n in nh)
+    return (f"«{ten}» đang có {len(nh)} nhóm RIÊNG ({ds}) — CHƯA gộp. Đếm theo TÊN (AppleScript `get records in`) trả HỢP "
+            "nên sai. Gộp chắc nhất: bác sĩ xoá HẾT các nhóm cùng tên trong EndNote (bài không mất), máy đăng lại toàn bộ "
+            "recNum vào tên đó (tạo đúng MỘT nhóm), rồi đo lại bằng endnote_nhom.")
+
+
+def _rut_gon_nhom(n: dict, khoa: tuple[str, ...]) -> dict:
+    return {**{k: n[k] for k in khoa if k in n}, **({"loi": n["loi"]} if n.get("loi") else {})}
+
+
 def cc_nhom(a: dict) -> dict:
-    en, tv = _endnote()
+    """Nhóm đọc từ sdb.eni THEO group_id (bản sao tạm, chỉ đọc; không cần EndNote đang mở). Tên trùng ⇒ từng nhóm riêng + cờ
+    `trung_ten` + cảnh báo — không bao giờ cộng thành viên các nhóm cùng tên."""
+    sk, tv = mod("sk"), _thu_vien()
     ten = (a.get("ten_nhom") or "").strip()
     if not ten:
-        ds = list(dict.fromkeys(en.ten_cac_nhom()))
-        loc = (a.get("loc") or "").strip()
-        return {"nhom": [n for n in ds if loc.lower() in n.lower()] if loc else ds}
-    ids = en.thanh_vien_nhom(ten)
-    rec = [r for r in (mod("sk").so_rec(x) for x in ids) if r is not None]
-    kn = mod("sk")._ket_noi(tv)
-    try:
-        ban_ghi = [{"rec": r, "tieu_de": ((kn.execute("SELECT title FROM refs WHERE id = ?", (r,)).fetchone() or [""])[0] or "")[:160],
-                    "so_tep": kn.execute("SELECT count(*) FROM file_res WHERE refs_id = ?", (r,)).fetchone()[0]} for r in rec]
-    finally:
-        kn.close()
-    return {"ten_nhom": ten, "so_ban_ghi": len(rec), "chua_co_tep": sum(1 for b in ban_ghi if not b["so_tep"]),
-            "ban_ghi": ban_ghi}
+        ds = sk.doc_nhom(tv)
+        loc = (a.get("loc") or "").strip().casefold()
+        if loc:
+            ds = [n for n in ds if loc in n["ten"].casefold()]
+        trung = sk.nhom_trung_ten(ds)
+        khoa_trung = {sk.khoa_ten(t["ten"]) for t in trung}
+        kq = {"nguon": NGUON_NHOM, "so_nhom": len(ds),
+              "nhom": [{**_rut_gon_nhom(n, ("group_id", "ten", "loai", "so_ban_ghi")),
+                        "trung_ten": sk.khoa_ten(n["ten"]) in khoa_trung} for n in ds],
+              "nhom_trung_ten": trung}
+        if trung:
+            kq["canh_bao"] = (f"{len(trung)} tên đang có ≥2 nhóm RIÊNG (cờ trung_ten) — chưa gộp; gọi endnote_nhom với ten_nhom "
+                              "để xem từng nhóm")
+        return kq
+    nh = sk.nhom_theo_ten(tv, ten, chi_tiet=True)
+    kq = {"nguon": NGUON_NHOM, "ten_nhom": ten, "so_nhom": len(nh), "trung_ten": len(nh) >= 2,
+          "nhom": [_rut_gon_nhom(n, ("group_id", "ten", "loai", "so_ban_ghi", "chua_co_tep", "ban_ghi")) for n in nh]}
+    if not nh:
+        kq["ghi_chu"] = "không có nhóm nào mang tên này trong sdb.eni"
+    elif len(nh) >= 2:
+        kq["canh_bao"] = _mo_ta_trung(ten, nh)
+    return kq
 
 
 def cc_gan_pdf_kho(a: dict) -> dict:
@@ -127,19 +162,60 @@ def cc_gan_pdf_kho(a: dict) -> dict:
     return nec.gan_kho(en, kho, pm, bool(a.get("ap_dung")))
 
 
+def _nhom_dich(tv: Path, ten: str) -> list[dict]:
+    """Các nhóm đang mang tên đích — fail-closed: không đo được hoặc ≥2 nhóm ⇒ ngoại lệ, KHÔNG ghi."""
+    try:
+        nh = mod("sk").nhom_theo_ten(tv, ten)
+    except (OSError, sqlite3.Error) as e:
+        raise KhongDoDuocNhom(f"không đọc được nhóm trong sdb.eni ({type(e).__name__}: {str(e)[:120]}) ⇒ KHÔNG ghi: chưa biết "
+                              f"«{ten}» đang có mấy nhóm") from e
+    if len(nh) >= 2:
+        raise NhomTrungTen("TỪ CHỐI ghi — không biết `post` sẽ rơi vào nhóm nào. " + _mo_ta_trung(ten, nh))
+    return nh
+
+
+def _do_sau_khi_dang(tv: Path, ten: str, rec: list[int], id_truoc: set[int]) -> dict:
+    """Đo lại sdb.eni sau `post`: nhóm nào nhận bài, có sinh nhóm MỚI cùng tên không (đo 18/10/2026: post vào tên đã có nhóm
+    từng tạo nhóm mới thay vì cộng vào). Không đo được ⇒ nói rõ, không coi là thành công."""
+    kq: dict = {"da_goi_post": True, "ten_nhom": ten, "yeu_cau": len(rec)}
+    try:
+        sau = mod("sk").nhom_theo_ten(tv, ten)
+    except (OSError, sqlite3.Error) as e:
+        kq["canh_bao"] = f"KHÔNG ĐO LẠI được sdb.eni sau khi đăng ({type(e).__name__}) — gọi endnote_nhom để kiểm theo group_id"
+        return kq
+    can = set(rec)
+    kq["nhom_sau"] = [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"], "co_ban_ghi_yeu_cau": len(can & set(n["rec"] or []))}
+                      for n in sau]
+    kq["nhom_moi_tao"] = [n["group_id"] for n in sau if n["group_id"] not in id_truoc]
+    if len(sau) >= 2:
+        kq["canh_bao"] = "post vừa để lại ≥2 nhóm cùng tên — các lần ghi sau vào tên này sẽ bị từ chối. " + _mo_ta_trung(ten, sau)
+    elif not sau:
+        kq["canh_bao"] = "chưa thấy nhóm trong sdb.eni sau khi đăng — EndNote có thể chưa ghi xuống đĩa; gọi endnote_nhom đo lại"
+    else:
+        kq["da_dang"] = kq["nhom_sau"][0]["co_ban_ghi_yeu_cau"]
+        if kq["da_dang"] < len(can):
+            kq["canh_bao"] = (f"nhóm group_id {sau[0]['group_id']} mới có {kq['da_dang']}/{len(can)} bài yêu cầu — gọi endnote_nhom "
+                              "đo lại (EndNote có thể chưa ghi xuống đĩa)")
+    return kq
+
+
 def cc_dua_vao_nhom(a: dict) -> dict:
-    en, _tv = _endnote()
     ten = (a.get("ten_nhom") or "").strip()
-    rec = [int(x) for x in a.get("rec_nums") or []]
+    rec = list(dict.fromkeys(int(x) for x in a.get("rec_nums") or []))
     if not ten or not rec:
         raise ValueError("cần `ten_nhom` và `rec_nums`")
+    en, tv = _endnote()
+    truoc = _nhom_dich(tv, ten)
     csdl = en.so_csdl()
     ids = [f'<RecordID database="{csdl}" recNum="{r}" />' for r in rec]
     if not a.get("ap_dung"):
-        return {"chay_kho": True, "se_dang": len(ids), "ten_nhom": ten}
+        return {"chay_kho": True, "se_dang": len(ids), "ten_nhom": ten,
+                "nhom_hien_co": [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in truoc],
+                "luu_y": (f"đã có MỘT nhóm tên này (group_id {truoc[0]['group_id']}) — post vào tên đã có từng TẠO NHÓM MỚI "
+                          "(đo 18/10/2026); sau khi ghi công cụ đo lại theo group_id") if truoc else
+                         "chưa có nhóm tên này — post tạo MỘT nhóm mới (đo 21/10/2026)"}
     en.dang_vao_nhom(ids, ten)
-    co = set(en.thanh_vien_nhom(ten))
-    return {"da_dang": sum(1 for i in ids if i in co), "yeu_cau": len(ids), "ten_nhom": ten}
+    return _do_sau_khi_dang(tv, ten, rec, {n["group_id"] for n in truoc})
 
 
 def cc_loai_tru(a: dict) -> dict:
@@ -178,16 +254,19 @@ def _sc(props: dict, bat_buoc: list[str] | None = None) -> dict:
 _AP = {"type": "boolean", "description": "true = GHI thật; mặc định chạy khô (chỉ báo sẽ làm gì)"}
 CONG_CU = [
     ("endnote_trang_thai", "Tình trạng thư viện EndNote: vị trí (OneDrive), bản sao xung đột, tệp chỉ còn trên mây, số bản ghi/"
-     "có tệp/thùng rác, EndNote có đang mở, nhóm chờ thùng rác, khoá ghi. Chỉ đọc.", _sc({}), cc_trang_thai),
+     "có tệp/thùng rác, EndNote có đang mở, nhóm chờ thùng rác, NHÓM TRÙNG TÊN (`nhom_trung_ten`: từng group_id + số bài), khoá "
+     "ghi. Chỉ đọc.", _sc({}), cc_trang_thai),
     ("endnote_tim", "Tra bản ghi theo PMID hoặc DOI trên cơ sở dữ liệu EndNote (chỉ đọc): recNum, tiêu đề, năm, số tệp đính kèm, "
      "có trong thùng rác không.", _sc({"dinh_danh": {"type": "array", "items": {"type": "string"}}}, ["dinh_danh"]), cc_tim),
-    ("endnote_nhom", "Không có ten_nhom: liệt kê tên nhóm (lọc bằng `loc`). Có ten_nhom: các bản ghi của nhóm và bản nào chưa có "
-     "tệp. Cần EndNote đang mở thư viện. Chỉ đọc.",
+    ("endnote_nhom", "Nhóm đọc từ sdb.eni THEO group_id (chỉ đọc, không cần EndNote mở). Không có ten_nhom: liệt kê mọi nhóm "
+     "(lọc bằng `loc`) kèm số bài TỪNG nhóm và cờ `trung_ten`. Có ten_nhom: từng nhóm mang tên đó RIÊNG (bản ghi, bản chưa có "
+     "tệp); ≥2 nhóm cùng tên ⇒ cảnh báo — KHÔNG cộng thành viên.",
      _sc({"ten_nhom": {"type": "string"}, "loc": {"type": "string"}}), cc_nhom),
     ("endnote_gan_pdf_kho", "Gắn PDF toàn văn có sẵn trong kho EBM (`toan_van_oa/PMID-<n>_*.pdf`) vào bản ghi CHƯA có tệp (khớp "
      "theo PMID). Chạy khô mặc định.",
      _sc({"pmids": {"type": "array", "items": {"type": "string"}}, "ap_dung": _AP}), cc_gan_pdf_kho),
-    ("endnote_dua_vao_nhom", "Đăng bản ghi (recNum) vào một nhóm CUSTOM. Chạy khô mặc định. Không xoá, không bỏ khỏi nhóm.",
+    ("endnote_dua_vao_nhom", "Đăng bản ghi (recNum) vào một nhóm CUSTOM. Chạy khô mặc định. Không xoá, không bỏ khỏi nhóm. TỪ "
+     "CHỐI khi tên đích đang có ≥2 nhóm hoặc không đọc được sdb.eni; ghi xong đo lại theo group_id (báo nhóm mới sinh).",
      _sc({"rec_nums": {"type": "array", "items": {"type": "integer"}}, "ten_nhom": {"type": "string"}, "ap_dung": _AP},
          ["rec_nums", "ten_nhom"]), cc_dua_vao_nhom),
     ("endnote_loai_tru", "Thêm PMID/DOI vào danh sách LOẠI TRỪ (không nạp lại vào EndNote). CHỈ khi bác sĩ đã nói loại bài này; "

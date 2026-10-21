@@ -9,6 +9,8 @@ Nguyên tắc:
   • Đọc `<thư viện>.Data/sdb/sdb.eni` ở chế độ `mode=ro` (đọc được khi EndNote đang mở) — KHÔNG BAO GIỜ ghi tệp này.
   • Không gửi sự kiện AppleScript nào ở đây (không khởi động EndNote, không chiếm giao diện bác sĩ).
   • «Không đo được» ⇒ trả lý do, không bao giờ coi là «ổn».
+  • NHÓM đọc theo group_id trên BẢN SAO TẠM của sdb.eni (`ban_sao_csdl`, 21/10/2026) — tên trùng là các nhóm RIÊNG, không
+    bao giờ cộng thành viên (AppleScript `get records in "<tên>"` trả HỢP nên che việc nhóm bị tách đôi).
 
 Đo 19/10/2026 (bản sao thư viện): bảng `refs` (id, trash_state, title, year, accession_number,
 electronic_resource_number…), `file_res` (refs_id, file_path) — mỗi hàng là một tệp đính kèm. Thư viện bác sĩ nằm ở
@@ -20,11 +22,17 @@ Chạy tay: `python3 tools/endnote_suc_khoe.py [--json]` — in tình trạng; m
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
+import shutil
 import sqlite3
 import sys
+import tempfile
+import time
+import unicodedata
+from contextlib import contextmanager
 from pathlib import Path
 
 for _s in (sys.stdout, sys.stderr):
@@ -36,6 +44,9 @@ for _s in (sys.stdout, sys.stderr):
 CAU_HINH = Path.home() / ".ebm-endnote.json"
 SF_DATALESS = 0x40000000  # cờ macOS: tệp chỉ còn trên mây (File Provider đã đẩy đi), mở ra mới tải về
 TIEN_TO_NHOM_THUNG_RAC = "_Cho thung rac"
+TEP_PHU_SQLITE = ("-wal", "-shm", "-journal")
+# Đo 21/10/2026 trên bản sao thư viện (171 nhóm): `<rule>TYPE;3</rule>` = nhóm tự tạo (CUSTOM), `TYPE;6` = nhóm tìm trực tuyến.
+LOAI_NHOM = {"3": "custom", "6": "online"}
 # Bản sao xung đột của OneDrive/iCloud: «Tên 2.enl», «Tên (1).enl», «Tên-<tên máy>.enl», «Tên (conflicted copy …).enl».
 _XUNG_DOT = r"(?: \d+| \(\d+\)|-[A-Za-z0-9][A-Za-z0-9 ._'’-]*| \(conflicted copy[^)]*\))"
 
@@ -190,21 +201,135 @@ def giai_thanh_vien(blob: bytes) -> list[int]:
     return [int.from_bytes(b[8 + 4 * i:12 + 4 * i], "little") for i in range(n)]
 
 
-def nhom_trong_csdl(thu_vien: Path) -> list[tuple[str, list[int]]]:
-    """[(tên nhóm, [recNum])] của mọi nhóm thường (đọc `groups`, mode=ro). Tên trùng thì trả từng nhóm riêng."""
-    kn = _ket_noi(thu_vien)
-    try:
-        dong = kn.execute("SELECT spec, members FROM groups").fetchall()
-    finally:
-        kn.close()
+def _dau_tep(goc: Path) -> tuple:
+    """(đuôi, kích thước, mtime_ns) của sdb.eni và từng tệp phụ SQLite — so trước/sau khi chép để biết có bị ghi giữa chừng."""
     ra = []
-    for spec, mem in dong:
-        s = spec.decode("utf-8", "replace") if isinstance(spec, (bytes, bytearray)) else str(spec or "")
-        m = re.search(r"<name>(.*?)</name>", s, re.S)
-        if not m or mem is None:
+    for duoi in ("",) + TEP_PHU_SQLITE:
+        try:
+            st = os.stat(str(goc) + duoi)
+            ra.append((duoi, st.st_size, st.st_mtime_ns))
+        except FileNotFoundError:
+            ra.append((duoi, None, None))
+    return tuple(ra)
+
+
+@contextmanager
+def ban_sao_csdl(thu_vien: Path, so_lan: int = 3, ngu=time.sleep):
+    """Kết nối `mode=ro` tới BẢN SAO TẠM của sdb.eni (+ -wal/-shm/-journal nếu có) — không mở tệp thật của thư viện.
+
+    Cách đo nhóm đúng (21/10/2026): chép ra thư mục tạm rồi mới mở — không giữ khoá đọc trên tệp EndNote đang ghi, không để
+    SQLite tạo tệp phụ cạnh thư viện trong thư mục OneDrive. Tệp gốc đổi (kích thước, mtime, tệp phụ xuất hiện/biến mất) trong
+    lúc chép ⇒ chép lại; vẫn đổi sau `so_lan` lượt ⇒ OSError (KHÔNG ĐO ĐƯỢC). Bản sao mang nhật ký rollback «nóng» ⇒ `mode=ro`
+    báo lỗi sqlite3 khi đọc — cũng là KHÔNG ĐO ĐƯỢC, không bao giờ đọc trạng thái ghi dở."""
+    goc = sdb(thu_vien)
+    if not goc.is_file():
+        raise OSError(f"không thấy cơ sở dữ liệu {goc}")
+    with tempfile.TemporaryDirectory(prefix="ebm-sdb-") as tam:
+        dich = Path(tam) / "sdb.eni"
+        so_lan = max(1, so_lan)
+        for lan in range(so_lan):
+            truoc = _dau_tep(goc)
+            for duoi, co, _mt in truoc:
+                Path(str(dich) + duoi).unlink(missing_ok=True)
+                if co is None:
+                    continue
+                try:
+                    shutil.copyfile(str(goc) + duoi, str(dich) + duoi)
+                except FileNotFoundError:
+                    break  # tệp phụ vừa biến mất ⇒ dấu tệp sẽ khác ⇒ chép lại
+            if _dau_tep(goc) == truoc:
+                break
+            if lan + 1 < so_lan:
+                ngu(0.5)
+        else:
+            raise OSError("sdb.eni đổi liên tục trong lúc chép (EndNote đang ghi) — KHÔNG ĐO ĐƯỢC, thử lại sau")
+        kn = sqlite3.connect(dich.as_uri() + "?mode=ro", uri=True)
+        try:
+            yield kn
+        finally:
+            kn.close()
+
+
+def _giai_spec(spec) -> tuple[str, str]:
+    """(tên nhóm, loại) từ cột `groups.spec` (XML): tên bỏ mã thực thể XML; loại theo `<rule>TYPE;n</rule>`."""
+    s = spec.decode("utf-8", "replace") if isinstance(spec, (bytes, bytearray)) else str(spec or "")
+    m = re.search(r"<name>(.*?)</name>", s, re.S)
+    t = re.search(r"<rule>\s*TYPE;(\d+)\s*</rule>", s)
+    return (html.unescape(m.group(1)) if m else ""), (LOAI_NHOM.get(t.group(1), f"TYPE;{t.group(1)}") if t else "khong_ro")
+
+
+def _doc_nhom_kn(kn: sqlite3.Connection) -> list[dict]:
+    ra = []
+    for gid, spec, mem in kn.execute("SELECT group_id, spec, members FROM groups ORDER BY group_id").fetchall():
+        ten, loai = _giai_spec(spec)
+        muc = {"group_id": gid, "ten": ten, "loai": loai}
+        try:
+            rec = giai_thanh_vien(mem)
+            muc.update(so_ban_ghi=len(rec), rec=rec)
+        except ValueError as e:
+            muc.update(so_ban_ghi=None, rec=None, loi=f"KHÔNG ĐO ĐƯỢC thành viên: {e}")
+        ra.append(muc)
+    return ra
+
+
+def khoa_ten(ten: str) -> str:
+    """Khoá so tên nhóm: NFC, bỏ khoảng trắng hai đầu, không phân biệt hoa thường — EndNote gọi nhóm qua AppleScript theo TÊN
+    nên hai nhóm chỉ khác hoa/thường cũng bị coi là trùng (chiều an toàn cho chốt chặn ghi)."""
+    return unicodedata.normalize("NFC", ten or "").strip().casefold()
+
+
+def doc_nhom(thu_vien: Path) -> list[dict]:
+    """Mọi nhóm trong bảng `groups` THEO group_id: [{group_id, ten, loai, so_ban_ghi, rec}] — đọc bản sao tạm, chỉ đọc.
+
+    Không qua AppleScript: `get records in "<tên>"` trả HỢP mọi nhóm cùng tên (đo 21/10/2026: nhóm 114 có 5 bài và nhóm 162 có
+    4 bài cùng tên bị báo thành «1 nhóm 9 bài»). Thành viên không giải được ⇒ so_ban_ghi/rec = None + `loi`, không phải rỗng."""
+    with ban_sao_csdl(thu_vien) as kn:
+        return _doc_nhom_kn(kn)
+
+
+def nhom_trung_ten(nhom: list[dict]) -> list[dict]:
+    """Mọi tên đang có ≥2 nhóm: [{ten, so_nhom, nhom: [{group_id, so_ban_ghi}]}] — từng nhóm RIÊNG, không cộng thành viên."""
+    gom: dict[str, list[dict]] = {}
+    for n in nhom:
+        if khoa_ten(n["ten"]):
+            gom.setdefault(khoa_ten(n["ten"]), []).append(n)
+    return [{"ten": ds[0]["ten"], "so_nhom": len(ds),
+             "nhom": [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in ds]}
+            for ds in gom.values() if len(ds) >= 2]
+
+
+def _chi_tiet_rec(kn: sqlite3.Connection, r: int) -> dict:
+    h = kn.execute("SELECT title, trash_state FROM refs WHERE id = ?", (r,)).fetchone()
+    if h is None:
+        return {"rec": r, "khong_con_hang": True}
+    so_tep = kn.execute("SELECT count(*) FROM file_res WHERE refs_id = ?", (r,)).fetchone()[0]
+    return {"rec": r, "tieu_de": (h[0] or "")[:160], "so_tep": so_tep, "thung_rac": bool(h[1])}
+
+
+def nhom_theo_ten(thu_vien: Path, ten: str, chi_tiet: bool = False) -> list[dict]:
+    """Các nhóm mang tên `ten` (so bằng `khoa_ten`), mỗi nhóm RIÊNG theo group_id — không bao giờ trả hợp thành viên.
+
+    `chi_tiet=True` thêm `ban_ghi` [{rec, tieu_de, so_tep, thung_rac}] và `chua_co_tep`, đọc trên CÙNG một bản sao."""
+    k = khoa_ten(ten)
+    with ban_sao_csdl(thu_vien) as kn:
+        ra = [n for n in _doc_nhom_kn(kn) if k and khoa_ten(n["ten"]) == k]
+        if chi_tiet:
+            for n in ra:
+                n["ban_ghi"] = [_chi_tiet_rec(kn, r) for r in n["rec"] or []]
+                n["chua_co_tep"] = sum(1 for b in n["ban_ghi"] if not b.get("khong_con_hang") and not b["so_tep"])
+    return ra
+
+
+def nhom_trong_csdl(thu_vien: Path) -> list[tuple[str, list[int]]]:
+    """[(tên nhóm, [recNum])] của mọi nhóm có tên (đọc `groups` trên bản sao tạm). Tên trùng thì trả từng nhóm riêng;
+    thành viên không giải được ⇒ ValueError (người gọi báo KHÔNG ĐO ĐƯỢC)."""
+    ra = []
+    for n in doc_nhom(thu_vien):
+        if not n["ten"]:
             continue
-        ten = m.group(1).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"')
-        ra.append((ten, giai_thanh_vien(mem)))
+        if n.get("loi"):
+            raise ValueError(f"nhóm {n['group_id']}: {n['loi']}")
+        ra.append((n["ten"], n["rec"]))
     return ra
 
 
@@ -253,6 +378,11 @@ def tinh_trang(thu_vien: Path | None = None) -> dict:
     except (OSError, sqlite3.Error, ValueError) as e:
         kq["nhom_cho_thung_rac"] = None
         kq["canh_bao"].append(f"không đọc được nhóm chờ thùng rác: {type(e).__name__}")
+    try:
+        kq["nhom_trung_ten"] = nhom_trung_ten(doc_nhom(thu_vien))
+    except (OSError, sqlite3.Error) as e:
+        kq["nhom_trung_ten"] = None  # KHÔNG ĐO ĐƯỢC — khác danh sách rỗng
+        kq["canh_bao"].append(f"không đọc được danh sách nhóm: {type(e).__name__}")
     return kq
 
 
@@ -275,6 +405,9 @@ def main(argv: list[str] | None = None) -> int:
         for n in kq.get("nhom_cho_thung_rac") or []:
             print(f"  👤 nhóm «{n['ten']}» còn {n['con_o_thu_vien']}/{n['tong']} bản ghi chờ bác sĩ chuyển vào thùng rác — "
                   "bấm đúp «Chuyen Nhom Vao Thung Rac.command»")
+        for n in kq.get("nhom_trung_ten") or []:
+            ds = ", ".join(f"group_id {g['group_id']}: {g['so_ban_ghi']} bài" for g in n["nhom"])
+            print(f"  🟡 «{n['ten'][:80]}» đang có {n['so_nhom']} nhóm RIÊNG ({ds}) — chưa gộp")
         if not kq["canh_bao"]:
             print("  🟢 không có bản sao xung đột, không có tệp chỉ còn trên mây")
     if not kq.get("do_duoc"):
