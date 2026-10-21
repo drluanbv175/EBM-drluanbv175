@@ -7664,6 +7664,78 @@ def bh166_nut_command_mang_bit_thuc_thi_trong_index():
     return True, f"{len(dong)} tệp .command đều 100755; pre-commit chặn khi thiếu"
 
 
+def bh167_endnote_nhom_trung_ten_do_theo_group_id():
+    """21/10 — thư viện có 2 nhóm «EBM · Biến chứng thần kinh ở bệnh nhân ĐTĐ…» (group_id 114: 5 bài, 162: 4 bài) nhưng MCP
+    `endnote_nhom` báo 1 nhóm 9 bài: AppleScript `get records in "<tên>"` trả HỢP mọi nhóm cùng tên ⇒ tưởng đã gộp xong.
+    Kiểm HÀNH VI ngoại tuyến trên sdb.eni giả: `endnote_nhom` trả từng group_id riêng (không cộng), `endnote_dua_vao_nhom`
+    TỪ CHỐI ghi (cả chạy khô) khi tên đích có ≥2 nhóm, trạng thái có danh sách nhóm trùng tên."""
+    import contextlib as _ctx
+    import io as _io
+    import json as _js
+    import sqlite3 as _sq
+    import tempfile as _tf
+    M = _nap(REPO / "tools/mcp/endnote_ebm_mcp.py", "_bh167_mcp")
+    sk = M.mod("sk")
+    if not all(hasattr(sk, h) for h in ("doc_nhom", "nhom_theo_ten", "nhom_trung_ten", "ban_sao_csdl")):
+        return False, "endnote_suc_khoe chưa đọc nhóm theo group_id (thiếu doc_nhom/nhom_theo_ten/nhom_trung_ten/ban_sao_csdl)"
+    ten = "EBM · Biến chứng thần kinh ĐTĐ"
+
+    def _tv(*rec):
+        return b"\x00\x00\x00\x02" + len(rec).to_bytes(4, "little") + b"".join(r.to_bytes(4, "little") for r in rec)
+
+    spec = ('<?xml version="1.0"?><group version="1"><ids><name>%s</name></ids><rules><rule>TYPE;3</rule></rules></group>'
+            % ten).encode()
+
+    class _En:
+        goi = []
+
+        def so_csdl(self):
+            return "1"
+
+        def dang_vao_nhom(self, ids, t):
+            self.goi.append(t)
+
+    with _tf.TemporaryDirectory() as tam:
+        tv = Path(tam) / "Lib.enl"
+        tv.write_bytes(b"enl")
+        (Path(tam) / "Lib.Data" / "sdb").mkdir(parents=True)
+        kn = _sq.connect(Path(tam) / "Lib.Data" / "sdb" / "sdb.eni")
+        kn.executescript("CREATE TABLE refs (id INTEGER PRIMARY KEY, trash_state INTEGER, title TEXT);"
+                         "CREATE TABLE file_res (refs_id INTEGER, file_path TEXT);"
+                         "CREATE TABLE groups (group_id INTEGER PRIMARY KEY, recs_stamp INTEGER, spec BLOB, members BLOB);")
+        kn.executemany("INSERT INTO refs VALUES (?, 0, 'x')", [(r,) for r in (1, 2, 3, 4, 5, 6, 7, 8, 9)])
+        kn.executemany("INSERT INTO groups VALUES (?, 0, ?, ?)", [(114, spec, _tv(1, 2, 3, 4, 5)), (162, spec, _tv(6, 7, 8, 9))])
+        kn.commit()
+        kn.close()
+        M._thu_vien = lambda: tv
+        en = _En()
+        M._endnote = lambda: (en, tv)
+        sk.thu_vien_cau_hinh = lambda tep=None: tv
+
+        def goi(cc, doi):
+            with _ctx.redirect_stderr(_io.StringIO()):  # máy chủ in traceback của lần từ chối ra stderr — đúng ý, không cần hiện
+                return M.xu_ly({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                "params": {"name": cc, "arguments": doi}})["result"]
+
+        r = goi("endnote_nhom", {"ten_nhom": ten})
+        if r["isError"]:
+            return False, "endnote_nhom lỗi: " + r["content"][0]["text"][:200]
+        kq = _js.loads(r["content"][0]["text"])
+        if [(n["group_id"], n["so_ban_ghi"]) for n in kq.get("nhom", [])] != [(114, 5), (162, 4)] or not kq.get("trung_ten"):
+            return False, "endnote_nhom không trả TỪNG nhóm cùng tên theo group_id (114: 5, 162: 4): %s" % str(kq)[:200]
+        if "so_ban_ghi" in kq:
+            return False, "endnote_nhom còn số đếm gộp theo tên ở cấp ngoài (từng báo «1 nhóm 9 bài»)"
+        for ap in (False, True):
+            r = goi("endnote_dua_vao_nhom", {"rec_nums": [1], "ten_nhom": ten, "ap_dung": ap})
+            if not r["isError"] or en.goi:
+                return False, "endnote_dua_vao_nhom không từ chối khi tên đích có 2 nhóm (ap_dung=%s)" % ap
+        r = goi("endnote_trang_thai", {})
+        tt = _js.loads(r["content"][0]["text"]) if not r["isError"] else {}
+        if [g["group_id"] for n in tt.get("nhom_trung_ten") or [] for g in n["nhom"]] != [114, 162]:
+            return False, "endnote_trang_thai thiếu danh sách nhóm trùng tên"
+    return True, "nhóm EndNote đo theo group_id (2 nhóm cùng tên báo riêng 5 + 4); ghi vào tên trùng bị từ chối; trạng thái liệt kê"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10894,6 +10966,7 @@ BAI_HOC = [
     ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
     ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
+    ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

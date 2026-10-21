@@ -220,7 +220,7 @@ def test_mcp_khoi_tao_liet_ke_va_cong_cu_la_tra_loi_dung_giao_thuc():
     assert mcp.xu_ly({"jsonrpc": "2.0", "id": 4, "method": "abc"})["error"]["code"] == -32601
 
 
-def test_mcp_cong_cu_ghi_chay_kho_mac_dinh_va_loi_tra_ve_isError(monkeypatch):
+def test_mcp_cong_cu_ghi_chay_kho_mac_dinh_va_loi_tra_ve_isError(monkeypatch, thu_vien):
     goi = []
 
     class _En:
@@ -233,7 +233,9 @@ def test_mcp_cong_cu_ghi_chay_kho_mac_dinh_va_loi_tra_ve_isError(monkeypatch):
         def thanh_vien_nhom(self, ten):
             return []
 
-    monkeypatch.setattr(mcp, "_endnote", lambda: (_En(), Path("/khong/co.enl")))
+    # Thư viện giả THẬT (21/10/2026): công cụ ghi giờ đo nhóm trong sdb.eni trước cả khi chạy khô — đường dẫn không tồn tại
+    # bị từ chối (fail-closed), không còn là fixture hợp lệ cho ca «chạy khô thành công».
+    monkeypatch.setattr(mcp, "_endnote", lambda: (_En(), thu_vien))
     kq = mcp.xu_ly({"jsonrpc": "2.0", "id": 5, "method": "tools/call",
                     "params": {"name": "endnote_dua_vao_nhom", "arguments": {"rec_nums": [7], "ten_nhom": "EBM · a"}}})
     assert json.loads(kq["result"]["content"][0]["text"])["chay_kho"] is True and goi == []
