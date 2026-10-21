@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.55.0 — 2026-10-21 (tóm tắt chứng cứ: kèm PDF giữ màu, gắn PDF thay Word trong EndNote)
+
+Bác sĩ 21/10/2026: «Với bản Word tóm tắt chứng cứ không thể đọc trực tiếp được trong Endnote hãy chuyển tất cả sang file pdf để
+tôi có thể mở trực tiếp như file PMID pdf toàn văn». `tools/tom_tat_chung_cu_word.py dung` dựng thêm `…_TomTatChungCu.pdf`
+(`docx_sang_pdf_giu_mau.py`, Chrome headless — giữ ô ĐIỂM NHẤN tô màu) và `--gan-endnote` gắn PDF THAY liên kết Word, giữ PDF
+toàn văn (đọc lại thiếu tệp ⇒ ghi trả nguyên trạng). Lệnh mới `pdf-hoa [--ap-dung]` cho mọi bản Word đã có; `tien-do` đếm PDF.
+
 ## v1.54.0 — 2026-10-19 (bước ⑨: tóm tắt chứng cứ Word cho trích dẫn MỚI có PDF)
 
 Bác sĩ 19/10/2026: «Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên». `xuat_goi_cap_nhat.py --online`

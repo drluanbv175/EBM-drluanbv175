@@ -24,9 +24,13 @@ DÂY CHUYỀN (mỗi trích dẫn):
          điểm «cần xác nhận» chỉ ghi ở mục Lưu ý CUỐI văn bản (bác sĩ 19/10/2026), thân văn bản không chứa các cụm đó;
        · bài đã RÚT ⇒ chặn (mã 3); định danh PDF không khớp ⇒ chặn (mã 3).
      Word lưu cạnh thư viện EndNote: `<thư mục thư viện>/TomTatChungCu/<khoá>_TomTatChungCu.docx` (đi theo OneDrive);
-     JSON nguồn đã qua cổng lưu ở `TomTatChungCu/_nguon/`.
-  4. `dung <mã> --gan-endnote --ap-dung` — THÊM tệp Word vào trường «File Attachments» của bản ghi (giữ nguyên PDF cũ; đọc lại
-     phải còn đủ tệp cũ, thiếu ⇒ ghi trả lại ngay và báo lỗi). Đo 19/10 trên BẢN SAO thư viện: EndNote nhận Word làm tệp LIÊN
+     JSON nguồn đã qua cổng lưu ở `TomTatChungCu/_nguon/`. Kèm bản PDF GIỮ MÀU cùng tên (`…_TomTatChungCu.pdf`, dựng bằng
+     `docx_sang_pdf_giu_mau.py` — Chrome headless) vì EndNote KHÔNG xem được Word trong khung đọc (bác sĩ 21/10/2026: «chuyển
+     tất cả sang file pdf để tôi có thể mở trực tiếp như file PMID pdf toàn văn»).
+  4. `dung <mã> --gan-endnote --ap-dung` — THÊM bản PDF tóm tắt vào trường «File Attachments» của bản ghi, THAY liên kết Word
+     cùng tên nếu có (Word vẫn nằm trong thư mục để sửa); giữ nguyên PDF toàn văn — đọc lại phải còn đủ tệp được giữ, thiếu ⇒
+     ghi trả lại ngay và báo lỗi. Thiếu Chrome/Edge (không dựng được PDF) ⇒ gắn Word như trước. `pdf-hoa` làm việc này cho
+     mọi bản Word đã có. Đo 19/10 trên BẢN SAO thư viện: EndNote nhận Word làm tệp LIÊN
      KẾT (đường dẫn tuyệt đối, `file_type` 2) — mở được trên máy Mac này; máy khác cần mở tệp trong thư mục OneDrive.
      Mọi lần ghi đi qua khoá ghi `khoa_ghi_endnote.py` (chờ khi bác sĩ đang thao tác EndNote). Gán `internal-pdf://` qua
      AppleScript KHÔNG được (EndNote trả «missing value») — đừng thử lại trên thư viện thật.
@@ -45,6 +49,7 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py tien-do
   python3 tools/tom_tat_chung_cu_word.py moc --loi "<nguyên văn bác sĩ>"   # bản ghi hiện có: để nguyên, không tóm tắt
   python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt
+  python3 tools/tom_tat_chung_cu_word.py pdf-hoa [--ap-dung]   # mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
 """
 from __future__ import annotations
@@ -54,9 +59,12 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
+import os
 import re
+import subprocess
 import sys
 import unicodedata
+from urllib.parse import unquote
 from pathlib import Path
 
 GOC = Path(__file__).resolve().parents[1]
@@ -226,6 +234,37 @@ def thu_muc_ra(thu_vien: Path) -> Path:
 
 def tep_word(thu_vien: Path, khoa: str) -> Path:
     return thu_muc_ra(thu_vien) / f"{khoa}_TomTatChungCu.docx"
+
+
+def tep_pdf(tep_docx: Path) -> Path:
+    """Bản PDF đứng cạnh bản Word (cùng tên, đuôi .pdf) — EndNote mở PDF ngay trong khung đọc, Word thì không."""
+    return tep_docx.with_suffix(".pdf")
+
+
+def pdf_con_moi(tep_docx: Path) -> bool:
+    """PDF đã có và KHÔNG cũ hơn Word (Word dựng lại sau ⇒ phải dựng lại PDF, không gắn bản lệch)."""
+    pdf = tep_pdf(tep_docx)
+    return pdf.is_file() and pdf.stat().st_mtime >= tep_docx.stat().st_mtime
+
+
+def dung_pdf(tep_docx: Path, *, chay=subprocess.run) -> Path | None:
+    """Dựng PDF GIỮ MÀU từ bản Word bằng `docx_sang_pdf_giu_mau.py` (Chrome/Edge headless, cùng công cụ bước ⑤ của bộ
+    năm). Thiếu trình duyệt/lỗi/PDF ra cũ hơn Word ⇒ None (người gọi gắn Word thay vì gắn PDF lệch nội dung)."""
+    ra = tep_pdf(tep_docx)
+    moi_truong = dict(os.environ)
+    pandoc_rieng = Path.home() / ".local" / "bin"  # pandoc của máy Mac nằm ở đây (bộ nhớ toolchain docx)
+    if pandoc_rieng.is_dir():
+        moi_truong["PATH"] = str(pandoc_rieng) + os.pathsep + moi_truong.get("PATH", "")
+    try:
+        kq = chay([sys.executable, str(GOC / "tools" / "docx_sang_pdf_giu_mau.py"), str(tep_docx), "--ra", str(ra)],
+                  capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, env=moi_truong)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f"⚪ không dựng được PDF cho {tep_docx.name}: {e}")
+        return None
+    if kq.returncode != 0 or not pdf_con_moi(tep_docx):
+        print(f"⚪ không dựng được PDF cho {tep_docx.name} (mã {kq.returncode}): {(kq.stdout or '')[-200:].strip()}")
+        return None
+    return ra
 
 
 def _chuan_chu(s: str) -> str:
@@ -1357,7 +1396,11 @@ def dung(thu_vien: Path, ma: str, *, gan_endnote: bool = False, ap_dung: bool = 
     dung_word(tt, nc).save(str(ra))
     (ra.parent / "_nguon" / f"{bg['khoa']}.json").write_text(json.dumps(tt, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✓ Word: {ra}")
+    pdf = dung_pdf(ra)
+    print(f"✓ PDF: {pdf}" if pdf else "⚪ chưa có PDF — sẽ gắn bản Word (EndNote không xem trực tiếp được)")
     if gan_endnote:
+        if pdf:
+            return gan_vao_endnote(thu_vien, bg, pdf, ap_dung=ap_dung, endnote=endnote, thay=(ra.name,))
         return gan_vao_endnote(thu_vien, bg, ra, ap_dung=ap_dung, endnote=endnote)
     return 0
 
@@ -1368,39 +1411,97 @@ def _tach_tep(gia_tri: str) -> list[str]:
     return [x.strip() for x in re.split(r"[\r\n]+", gia_tri or "") if x.strip()]
 
 
-def gan_vao_endnote(thu_vien: Path, bg: dict, tep: Path, *, ap_dung: bool, endnote=None) -> int:
-    """THÊM tệp Word vào «File Attachments» của bản ghi; tệp cũ (PDF) phải còn nguyên khi đọc lại."""
+def _mo_endnote(thu_vien: Path):
+    """EndNote đang mở ĐÚNG thư viện ⇒ đối tượng điều khiển; chưa mở ⇒ None (không tự bật EndNote)."""
+    nec = mod("nec")
+    ch = nec.doc_cau_hinh() or {}
+    endnote = nec.EndNoteMac(ch.get("ung_dung") or "EndNote 2025", thu_vien)
+    return endnote if endnote.dang_mo_dung_thu_vien() else None
+
+
+def _ten_tep(x: str) -> str:
+    """Tên tệp của một mục «File Attachments» (internal-pdf://…, file:///…, đường dẫn) — bỏ mã hoá %20."""
+    return unquote(x.rstrip("/").rsplit("/", 1)[-1])
+
+
+def gan_vao_endnote(thu_vien: Path, bg: dict, tep: Path, *, ap_dung: bool, endnote=None, thay: tuple[str, ...] = ()) -> int:
+    """THÊM `tep` vào «File Attachments» của bản ghi; mục có tên trong `thay` (vd bản Word cũ cùng tên khi gắn PDF) được BỎ
+    khỏi trường — tệp trên đĩa giữ nguyên. Mọi tệp còn lại (PDF toàn văn) phải còn nguyên khi đọc lại, thiếu ⇒ ghi trả."""
     if endnote is None:
-        nec = mod("nec")
-        ch = nec.doc_cau_hinh() or {}
-        endnote = nec.EndNoteMac(ch.get("ung_dung") or "EndNote 2025", thu_vien)
-        if not endnote.dang_mo_dung_thu_vien():
-            print(f"⚪ EndNote chưa mở thư viện {thu_vien.name} — Word đã lưu, chưa gắn")
+        endnote = _mo_endnote(thu_vien)
+        if endnote is None:
+            print(f"⚪ EndNote chưa mở thư viện {thu_vien.name} — tệp đã lưu, chưa gắn")
             return 2
     ma = f'<RecordID database="{endnote.so_csdl()}" recNum="{bg["rec"]}" />'
     cu = _tach_tep(endnote.doc_truong([ma], "File Attachments").get(ma, ""))
     if not cu:
         print("⚪ không đọc được tệp đính kèm hiện có của bản ghi — không ghi (tránh xoá PDF)")
         return 2
-    if any(tep.name in x for x in cu):
+    ten_thay = {t for t in thay if t != tep.name}
+    giu = [x for x in cu if _ten_tep(x) not in ten_thay]
+    bo = [x for x in cu if _ten_tep(x) in ten_thay]
+    if any(_ten_tep(x) == tep.name for x in giu) and not bo:
         print(f"= đã gắn sẵn {tep.name} vào recNum {bg['rec']}")
         return 0
-    moi = "\r".join(cu + [tep.resolve().as_uri()])
+    giu_lai = [x for x in giu if _ten_tep(x) != tep.name]  # tệp cùng tên cũ (nếu có) thay bằng đường dẫn hiện hành
+    moi = "\r".join(giu_lai + [tep.resolve().as_uri()])
+    them_bo = f", bỏ liên kết {', '.join(_ten_tep(x) for x in bo)}" if bo else ""
     if not ap_dung:
-        print(f"(chạy khô) sẽ thêm {tep.name} vào recNum {bg['rec']} — giữ {len(cu)} tệp cũ; thêm --ap-dung để ghi")
+        print(f"(chạy khô) sẽ thêm {tep.name} vào recNum {bg['rec']} — giữ {len(giu_lai)} tệp{them_bo}; thêm --ap-dung để ghi")
         return 0
-    endnote._truoc_khi_ghi("gắn tóm tắt chứng cứ Word vào bản ghi")
+    endnote._truoc_khi_ghi("gắn tóm tắt chứng cứ vào bản ghi")
     doc_lai = _tach_tep(endnote._chay('set field "File Attachments" of record (item 1 of argv) to (item 2 of argv)\n'
                                       'return field "File Attachments" of record (item 1 of argv)', ma, moi))
-    if not all(x in doc_lai for x in cu):
+    if not all(x in doc_lai for x in giu_lai):
         endnote._chay('set field "File Attachments" of record (item 1 of argv) to (item 2 of argv)', ma, "\r".join(cu))
-        print(f"✗ EndNote làm mất tệp cũ khi thêm — đã ghi trả lại {len(cu)} tệp cũ cho recNum {bg['rec']}")
+        print(f"✗ EndNote làm mất tệp cũ khi ghi — đã ghi trả lại {len(cu)} tệp cũ cho recNum {bg['rec']}")
         return 1
-    if not any(tep.name in x for x in doc_lai):
+    if not any(_ten_tep(x) == tep.name for x in doc_lai):
         print(f"✗ EndNote không nhận {tep.name} (đọc lại không thấy)")
         return 1
-    print(f"✓ đã gắn {tep.name} vào recNum {bg['rec']} (giữ {len(cu)} tệp cũ)")
+    print(f"✓ đã gắn {tep.name} vào recNum {bg['rec']} (giữ {len(giu_lai)} tệp{them_bo})")
     return 0
+
+
+def pdf_hoa(thu_vien: Path, *, ap_dung: bool, endnote=None, dung_pdf_fn=None, tim=None) -> int:
+    """Mọi bản Word tóm tắt đã có → PDF giữ màu (dựng khi thiếu hoặc cũ hơn Word) rồi gắn PDF THAY liên kết Word trong
+    EndNote. Chạy khô mặc định: không dựng tệp, không ghi EndNote. Mã: 0 xong · 1 có mục lỗi · 2 không đo được."""
+    dung_pdf_fn = dung_pdf_fn or dung_pdf
+    tim = tim or tim_ban_ghi
+    ds = sorted(thu_muc_ra(thu_vien).glob("*_TomTatChungCu.docx"))
+    if not ds:
+        print(f"⚪ không có bản Word tóm tắt nào trong {thu_muc_ra(thu_vien)}")
+        return 2
+    if ap_dung and endnote is None:
+        endnote = _mo_endnote(thu_vien)
+        if endnote is None:
+            print(f"⚪ EndNote chưa mở thư viện {thu_vien.name} — mở thư viện rồi chạy lại (không tự bật EndNote)")
+            return 2
+    loi = 0
+    for docx in ds:
+        khoa = docx.name[: -len("_TomTatChungCu.docx")]
+        pdf = tep_pdf(docx)
+        if not pdf_con_moi(docx):
+            if not ap_dung:
+                print(f"(chạy khô) {khoa}: sẽ dựng {pdf.name}")
+            else:
+                pdf = dung_pdf_fn(docx)
+                if pdf is None:
+                    loi += 1
+                    continue
+                print(f"✓ PDF: {pdf.name}")
+        bg = tim(thu_vien, khoa)
+        if bg is None:
+            print(f"⚪ {khoa}: không thấy bản ghi có PDF trong EndNote — PDF đã có, chưa gắn")
+            loi += 1
+            continue
+        if not ap_dung:
+            print(f"(chạy khô) {khoa}: sẽ gắn {pdf.name} vào recNum {bg['rec']}, thay liên kết {docx.name}")
+            continue
+        if gan_vao_endnote(thu_vien, bg, pdf, ap_dung=True, endnote=endnote, thay=(docx.name,)) != 0:
+            loi += 1
+    print(f"{'(chạy khô) ' if not ap_dung else ''}{len(ds)} bản tóm tắt · {loi} mục lỗi")
+    return 1 if loi else 0
 
 
 # ───────────────────────── MỐC «để nguyên» + HÀNG CHỜ chứng cứ MỚI ─────────────────────────
@@ -1517,6 +1618,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("moc", help="ghi mốc «để nguyên»: bản ghi hiện có không vào hàng chờ tóm tắt")
     p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
     p.add_argument("--ghi-de", action="store_true")
+    p = sub.add_parser("pdf-hoa", help="mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote")
+    p.add_argument("--ap-dung", action="store_true")
     p = sub.add_parser("hang-cho", help="trích dẫn MỚI (ngoài mốc) có PDF chưa có Word")
     p.add_argument("--dashboard", type=Path)
     p.add_argument("--chuan-bi", action="store_true", help="dựng sẵn gói đọc (tra rút bài, cần mạng) cho từng mục")
@@ -1547,6 +1650,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if a.lenh == "moc":
         return ghi_moc(tv, a.loi, ghi_de=a.ghi_de)
+    if a.lenh == "pdf-hoa":
+        return pdf_hoa(tv, ap_dung=a.ap_dung)
     if a.lenh == "hang-cho":
         hc = hang_cho(tv, dashboard=a.dashboard)
         if hc is None:
@@ -1572,6 +1677,9 @@ def main(argv: list[str] | None = None) -> int:
             nhom = [x for x in ds if x["tang"] == t]
             print(f"Tầng {t}: {sum(x['da_lam'] for x in nhom)}/{len(nhom)} đã có Word")
         print(f"Tổng: {sum(x['da_lam'] for x in ds)}/{len(ds)} · thư mục {thu_muc_ra(tv)}")
+        word = sorted(thu_muc_ra(tv).glob("*_TomTatChungCu.docx"))
+        print(f"PDF giữ màu (mở được trong EndNote): {sum(pdf_con_moi(w) for w in word)}/{len(word)}"
+              + ("" if all(pdf_con_moi(w) for w in word) else " — chạy `pdf-hoa --ap-dung`"))
         hc = hang_cho(tv)
         print("Hàng chờ chứng cứ MỚI: " + ("⚪ chưa có mốc «để nguyên»" if hc is None else f"{len(hc)} trích dẫn"))
         return 0
