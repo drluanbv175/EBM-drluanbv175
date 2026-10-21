@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """TRANG CHẶN BOT ⇒ MÁY MỞ TRANG, BÁC SĨ TỰ XÁC NHẬN — hàng chờ + ghi bằng chứng trình duyệt (02/10/2026, bác sĩ yêu cầu).
 
-VÌ SAO CÓ. Một số cơ quan (hiện www.fda.gov) chặn trình khách tự động: lượt kiểm của cổng liêm chính nhận 401/403/404/410, còn
+VÌ SAO CÓ. Một số cơ quan (hiện www.fda.gov; www.ema.europa.eu từ 21/10/2026 — EMA chặn theo IP thoát của VPN, cả
+trình duyệt cũng bị «Request blocked» khi VPN bật) chặn trình khách tự động: lượt kiểm của cổng liêm chính nhận 401/403/404/410, còn
 trình duyệt trong app gặp trang «Sorry! This resembles an automated request» + nút «I am not a bot». Cổng KHÔNG giả dạng trình
 duyệt và Claude KHÔNG BAO GIỜ bấm vượt kiểm tra chống bot. Đường đúng: máy MỞ trang trong khung trình duyệt, BÁC SĨ tự bấm xác
 nhận, trang thật hiện ra ⇒ máy đọc tiêu đề trang thật và ghi bằng chứng vào `EBM-Dashboards/url-xac-minh-trinh-duyet.json`
@@ -45,7 +46,8 @@ _TIEU_DE_CAM = re.compile(
     # Trình duyệt trong app chạy giao diện TIẾNG VIỆT (đo 02/10/2026: Cloudflare hiện «Chờ một chút...», «Thực hiện xác minh bảo mật»).
     r"chờ một chút|xác minh bạn là con người|xác minh bảo mật|không phải là bot|truy cập bị từ chối|không tìm thấy trang|"
     r"\blỗi\b|vui lòng chờ|please wait|one moment", re.I)
-_TIEU_DE_CHUNG = {"u.s. food and drug administration", "food and drug administration", "fda", "home", "trang chủ"}
+_TIEU_DE_CHUNG = {"u.s. food and drug administration", "food and drug administration", "fda", "home", "trang chủ",
+                  "european medicines agency", "european medicines agency (ema)", "ema"}
 
 HUONG_DAN = """QUY TRÌNH «TRANG CHẶN BOT — BÁC SĨ XÁC NHẬN» (Claude làm, bác sĩ chỉ bấm xác nhận trên trang):
   1. `python3 tools/xac_nhan_trinh_duyet.py` → danh sách URL chờ (đánh số).

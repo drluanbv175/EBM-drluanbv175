@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.56.0 — 2026-10-21 (cổng: khai www.ema.europa.eu là miền chặn kiểm tự động, đòi bằng chứng trình duyệt như FDA)
+
+Bác sĩ duyệt 21/10/2026: «mở PR khai EMA vào danh sách miền chặn của cổng, giống cách đang làm với FDA». EMA trả HTTP 403
+CloudFront «Request blocked» cho MỌI trình khách qua IP của VPN (cả trình duyệt trong app); VPN tắt thì mở được nhưng NCBI chặn IP
+Việt Nam ⇒ mỗi gói EMA phải tắt VPN riêng cho bước cổng (lô 20261018T143247-lo dừng ba lần). `MIEN_CHAN_TRUY_CAP_TU_DONG` (4 bản
+đồng bộ byte) thêm `www.ema.europa.eu` + `ema.europa.eu`; chiều an toàn không đổi: 403 của EMA CHỈ đạt khi sổ
+`url-xac-minh-trinh-duyet.json` có bằng chứng còn hạn ĐÚNG URL (lấy khi tắt VPN, ghi bằng `tools/xac_nhan_trinh_duyet.py --ghi`).
+`xac_nhan_trinh_duyet.py` từ chối tiêu đề chỉ là tên cơ quan EMA. 13 test mới; đột biến bắt 2/2.
+
 ## v1.55.0 — 2026-10-21 (tóm tắt chứng cứ: kèm PDF giữ màu, gắn PDF thay Word trong EndNote)
 
 Bác sĩ 21/10/2026: «Với bản Word tóm tắt chứng cứ không thể đọc trực tiếp được trong Endnote hãy chuyển tất cả sang file pdf để
