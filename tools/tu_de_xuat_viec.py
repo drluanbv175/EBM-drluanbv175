@@ -495,24 +495,36 @@ def giac_quan_no_toan_van(dash_dir: Path, hom_nay: dt.date | None = None) -> lis
     return ra
 
 
-def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = None) -> list[tuple[int, str, str]]:
+def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = None,
+                              ra: Path | None = None) -> list[tuple[int, str, str]]:
     """Skill của bác sĩ trên TÀI KHOẢN claude.ai cũ hơn repo (04/10/2026, BH163).
 
     Cowork · claude.ai web · Routine nạp bộ skill của TÀI KHOẢN — chỉ đổi khi bác sĩ tự tải lên; đẩy vào ~/.claude/skills hay thư
     mục chạy của Claude Desktop KHÔNG lan lên. Đo 04/10: 21/25 skill trên tài khoản đã cũ (cap-nhat-chung-cu-y-khoa v1.15.0 so với
     repo v1.53.0) mà không giác quan nào nhắc. So CẢ thư mục skill (`tools/dong_goi_skill_tai_khoan.py`). Skill «mới» (chưa từng
     lên) là TUỲ CHỌN ⇒ chỉ nhắc kèm, không đẩy ưu tiên. Máy không có bộ skill tài khoản / công cụ hỏng ⇒ giác quan chết (⚪), KHÔNG
-    phải «đã khớp»."""
+    phải «đã khớp».
+
+    23/10/2026 (BH168): «bộ skill tài khoản» là GƯƠNG cục bộ, dừng ở 02/10 ⇒ dòng này báo «21 skill CŨ» dù bác sĩ đã tải đủ ZIP
+    21/10. Skill mà gương cũ hơn ZIP cùng nội dung (`dong_goi_skill_tai_khoan` xếp «khong_do_duoc») ⇒ ⚪ KHÔNG đo được, không vào
+    dòng 🟡. Sổ lượt chỉ đọc khi dùng bộ mặc định (`ra` bỏ trống + không truyền bundle/hub); truyền `ra` để đọc sổ khác."""
     _SO_GIAC_QUAN["chay"] += 1
     try:
         sp = _ilu_mea.spec_from_file_location("_dgsk_tdxv", Path(__file__).resolve().parent / "dong_goi_skill_tai_khoan.py")
         dg = _ilu_mea.module_from_spec(sp)
         sp.loader.exec_module(dg)
-        nhom = dg.tom_tat(dg.danh_gia(hub or dg.HUB, bundle or dg.dcbb.tim_bundle_cloud(None)))
+        so = ra if ra is not None else (dg.RA_MAC_DINH if bundle is None and hub is None else None)
+        ket = dg.danh_gia(hub or dg.HUB, bundle or dg.dcbb.tim_bundle_cloud(None), ra=so)
+        nhom = dg.tom_tat(ket)
     except Exception as exc:  # noqa: BLE001 — cảm biến hỏng/thiếu bộ tài khoản phải hiện ra, không im lặng như «đã khớp»
         _ghi_chet(["", "skill tài khoản claude.ai"], f"{type(exc).__name__}: {str(exc)[:90]}")
         return []
     cap, moi, khac = nhom.get("cap_nhat", []), nhom.get("moi", []), nhom.get("khac_han", [])
+    kdd = [m for m in ket if m["trang_thai"] == "khong_do_duoc"]
+    if kdd:
+        _ghi_chet(["", "skill tài khoản claude.ai"],
+                  f"{len(kdd)} skill: gương cục bộ đồng bộ {kdd[0]['guong'][:10]}, cũ hơn ZIP cùng nội dung đóng gói "
+                  f"{max(m['dong_goi_luc'] for m in kdd)[:10]} — không thấy đã tải lên chưa; đã tải thì bỏ qua")
     lenh = "python3 tools/dong_goi_skill_tai_khoan.py  # rồi mở CLAUDE_AI_SKILLS/DANH-SACH-TAI-LEN.md, bác sĩ tự tải ZIP lên claude.ai"
     if cap or khac:
         dau = ", ".join(cap[:3]) + ("…" if len(cap) > 3 else "")

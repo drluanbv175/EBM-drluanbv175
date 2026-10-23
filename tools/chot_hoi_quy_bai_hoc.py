@@ -7736,6 +7736,53 @@ def bh167_endnote_nhom_trung_ten_do_theo_group_id():
     return True, "nhóm EndNote đo theo group_id (2 nhóm cùng tên báo riêng 5 + 4); ghi vào tên trùng bị từ chối; trạng thái liệt kê"
 
 
+def bh168_skill_tai_khoan_guong_cuc_bo_lac_hau():
+    """23/10 — bác sĩ: «Kiểm tra lại vì tôi đã tải lên đủ hết các skill». `dong_goi_skill_tai_khoan.py` và hòm việc vẫn báo «21
+    skill CŨ · 23 mới» dù danh sách skill sống của tài khoản có đủ 44 skill bản mới: phép so dùng GƯƠNG cục bộ
+    `~/.claude/skills/synced/<uuid>` mà app dừng đồng bộ từ 02/10 (manifest `lastUpdated`), còn ZIP đóng gói 21/10. Kiểm HÀNH VI
+    ngoại tuyến: (1) gương cũ hơn ZIP cùng nội dung ⇒ «khong_do_duoc», không «da_moi»; (2) repo đổi sau đóng gói ⇒ «cap_nhat»;
+    (3) hòm việc đưa skill không đo được vào ⚪, không vào dòng 🟡; (4) main() của công cụ có DÒNG THI HÀNH truyền sổ lượt."""
+    import datetime as _dt
+    import json as _js
+    import tempfile as _tf
+    dg = _nap(REPO / "tools/dong_goi_skill_tai_khoan.py", "_bh168_dg")
+    tdx = _nap(REPO / "tools/tu_de_xuat_viec.py", "_bh168_tdx")
+
+    def _sk(goc, ten, than):
+        (goc / ten).mkdir(parents=True, exist_ok=True)
+        (goc / ten / "SKILL.md").write_text("---\nname: " + ten + "\ndescription: Mô tả.\n---\n"
+                                            + "Hướng dẫn tra cứu chứng cứ y khoa cho bác sĩ ngoại trú theo từng bước rõ ràng. " * 20
+                                            + than,
+                                            encoding="utf-8")
+
+    with _tf.TemporaryDirectory() as td:
+        cloud, hub, ra = Path(td) / "cloud", Path(td) / "hub", Path(td) / "ra"
+        _sk(cloud, "x", "cũ")
+        _sk(hub, "x", "mới")
+        luc = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=21)
+        (cloud / "manifest.json").write_text(_js.dumps({"lastUpdated": int(luc.timestamp() * 1000), "skills": []}), encoding="utf-8")
+        dg.dong_goi(dg.danh_gia(hub, cloud), hub, ra, cloud, "bh168")
+        tt = {m["ten"]: m["trang_thai"] for m in dg.danh_gia(hub, cloud, ra=ra)}
+        if tt.get("x") != "khong_do_duoc":
+            return False, f"gương cũ hơn ZIP cùng nội dung vẫn bị xếp «{tt.get('x')}» — đỏ giả «skill CŨ» sau khi bác sĩ đã tải lên"
+        tdx._GIAC_QUAN_CHET.clear()
+        if tdx.giac_quan_skill_tai_khoan(bundle=cloud, hub=hub, ra=ra):
+            return False, "hòm việc vẫn nhắc «skill CŨ» cho skill không đo được"
+        if not any("gương cục bộ" in x for x in tdx._GIAC_QUAN_CHET):
+            return False, "skill không đo được bị nuốt im lặng — hòm việc không ghi ⚪ giác quan không đo được"
+        _sk(hub, "x", "mới hơn nữa")
+        tt = {m["ten"]: m["trang_thai"] for m in dg.danh_gia(hub, cloud, ra=ra)}
+        if tt.get("x") != "cap_nhat":
+            return False, "repo đổi sau lần đóng gói mà không còn báo «cập nhật» — mất nhắc thật"
+    nguon = (REPO / "tools/dong_goi_skill_tai_khoan.py").read_text(encoding="utf-8")
+    if not any(d.strip().startswith("ket = danh_gia(") and "ra=Path(a.ra)" in d for d in nguon.splitlines()):
+        return False, "main() của công cụ đóng gói KHÔNG truyền sổ lượt (ra=) cho danh_gia — bản vá không chạy ở lệnh thật"
+    nguon = (REPO / "tools/tu_de_xuat_viec.py").read_text(encoding="utf-8")
+    if not any(d.strip().startswith("so = ra if ra is not None else (dg.RA_MAC_DINH") for d in nguon.splitlines()):
+        return False, "giác quan hòm việc không đọc sổ lượt mặc định (CLAUDE_AI_SKILLS/) — bản vá không chạy ở hòm việc thật"
+    return True, "gương cục bộ cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được (không đỏ giả, không xanh giả); repo đổi ⇒ vẫn «cập nhật»"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -10967,6 +11014,7 @@ BAI_HOC = [
     ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
+    ("BH168", "23/10", "Skill tài khoản: gương cục bộ (~/.claude/skills/synced, dừng 02/10) cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được thay vì «21 skill CŨ» đỏ giả; repo đổi sau đóng gói vẫn «cập nhật»", bh168_skill_tai_khoan_guong_cuc_bo_lac_hau),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

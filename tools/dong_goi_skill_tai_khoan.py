@@ -21,7 +21,14 @@ LÀM GÌ (chỉ ĐỌC sync/skills/ và bộ skill tài khoản; chỉ GHI vào 
   4. `name` khác tên thư mục ⇒ bản ĐÓNG GÓI ghi `name` = tên thư mục, nguồn giữ nguyên. Spec Agent Skills buộc khớp, và tài khoản
      định danh skill theo tên: `citation-management-kdense` mang name «citation-management» sẽ ĐÈ skill tiếng Việt cùng tên.
   5. Ghi DANH-SACH-TAI-LEN.md (thứ tự tải: cập nhật trước, mới sau) và .dong-goi.json (sổ của lượt — lượt sau chỉ xoá ĐÚNG các ZIP
-     ghi trong sổ, không đụng tệp khác trong thư mục).
+     ghi trong sổ, không đụng tệp khác trong thư mục; mỗi ZIP kèm lúc nội dung đó được đóng gói LẦN ĐẦU, giữ qua các lượt).
+  6. ⚪ KHÔNG ĐO ĐƯỢC (23/10/2026, BH168): «bộ skill tài khoản» ở đây là GƯƠNG CỤC BỘ do app chép về máy, không phải tài khoản.
+     Đo 23/10: gương dừng ở lần đồng bộ 02/10/2026 mà bác sĩ đã tải đủ 44 ZIP đóng gói 21/10 (danh sách skill sống của tài khoản
+     xác nhận) ⇒ công cụ vẫn báo «21 cập nhật · 23 mới» — đỏ giả. Nay skill gương báo khác mà nội dung hiện tại TRÙNG ZIP đã đóng
+     gói SAU lần đồng bộ gương cuối (`lastUpdated` của manifest.json) ⇒ «không đo được»: gương chưa thể thấy bản bác sĩ có thể đã
+     tải lên. KHÔNG bao giờ thành «đã mới». Nội dung repo đổi sau lần đóng gói (ZIP khác) ⇒ vẫn «cập nhật»/«mới»; gương đồng bộ
+     SAU lần đóng gói mà vẫn khác ⇒ vẫn «cập nhật»/«mới» (lúc gương chép về, bản đó chưa lên); gương không có manifest.json ⇒
+     không biết tuổi gương, giữ nguyên phán của gương.
 
 KHÔNG tự tải lên — thao tác trên tài khoản là của bác sĩ. Skill trong `CHI_CLAUDE_CODE` không đóng gói mặc định (nêu lý do; muốn
 vẫn đóng thì `--skill <tên>`).
@@ -36,6 +43,7 @@ import argparse
 import datetime as dt
 import hashlib
 import importlib.util
+import io
 import json
 import re
 import subprocess
@@ -171,6 +179,61 @@ def kiem_luat(ten: str, tep: dict[str, bytes]) -> tuple[list[str], list[str]]:
     return loi, canh
 
 
+# ------------------------------------------------------------------ tuổi gương & sổ lượt (BH168)
+def moc_guong(bundle: Path | None) -> dt.datetime | None:
+    """Lúc app đồng bộ gương bộ skill tài khoản về máy lần cuối (giờ có múi). Nguồn: `lastUpdated` (mili-giây) của manifest.json;
+    thiếu/hỏng khoá ⇒ giờ sửa tệp manifest.json; không có manifest ⇒ None (không biết tuổi gương)."""
+    if bundle is None:
+        return None
+    f = bundle / "manifest.json"
+    if not f.is_file():
+        return None
+    try:
+        ms = json.loads(f.read_text(encoding="utf-8")).get("lastUpdated")
+        if isinstance(ms, (int, float)) and not isinstance(ms, bool) and ms > 0:
+            return dt.datetime.fromtimestamp(ms / 1000, tz=dt.timezone.utc)
+    except (OSError, ValueError, AttributeError, OverflowError):
+        pass
+    try:
+        return dt.datetime.fromtimestamp(f.stat().st_mtime, tz=dt.timezone.utc)
+    except OSError:
+        return None
+
+
+def _gio(chuoi: object) -> dt.datetime | None:
+    """Giờ trong sổ lượt: ISO có múi (bản mới) hoặc «YYYY-MM-DD HH:MM» giờ máy (bản cũ ghi `luc`)."""
+    if not isinstance(chuoi, str):
+        return None
+    try:
+        g = dt.datetime.fromisoformat(chuoi)
+    except ValueError:
+        try:
+            g = dt.datetime.strptime(chuoi, "%Y-%m-%d %H:%M")
+        except ValueError:
+            return None
+    return g if g.tzinfo else g.astimezone()
+
+
+def doc_so_luot(ra: Path | None) -> dict[str, tuple[str, dt.datetime]]:
+    """{tên ZIP: (sha256, lúc nội dung đó được đóng gói lần đầu)} từ .dong-goi.json; sổ cũ chưa có `dong_goi_dau` ⇒ lấy `luc` của
+    lượt. Không có/hỏng sổ ⇒ {} (không hạ trạng thái nào)."""
+    if ra is None or not (ra / SO_LUOT).is_file():
+        return {}
+    try:
+        so = json.loads((ra / SO_LUOT).read_text(encoding="utf-8"))
+        zips, dau = so.get("zip") or {}, so.get("dong_goi_dau") or {}
+        luc = _gio(so.get("luc_iso")) or _gio(so.get("luc"))
+    except (OSError, ValueError, AttributeError):
+        return {}
+    ket = {}
+    for ten, sha in zips.items() if isinstance(zips, dict) else ():
+        gio = _gio(dau.get(ten)) if isinstance(dau, dict) else None
+        gio = gio or luc
+        if isinstance(sha, str) and gio is not None:
+            ket[ten] = (sha, gio)
+    return ket
+
+
 # ------------------------------------------------------------------ đánh giá
 def _thong_tin_fm(vb: str) -> tuple[str, str, str]:
     """(phiên bản, tác giả, mô tả rút gọn) để bác sĩ chọn skill nào tải."""
@@ -201,9 +264,11 @@ def _git_ban(thu_muc: Path) -> tuple[int, int]:
     return sua, chua
 
 
-def danh_gia(hub: Path, bundle: Path | None, chon: set[str] | None = None, tat_ca: bool = False) -> list[dict]:
+def danh_gia(hub: Path, bundle: Path | None, chon: set[str] | None = None, tat_ca: bool = False,
+              ra: Path | None = None) -> list[dict]:
     """Một mục cho MỖI skill trong `hub`. `bundle` None ⇒ không so (mọi skill «khong_so»). `chon` ⇒ chỉ các skill đó, đóng gói kể
-    cả khi đã mới hay thuộc CHI_CLAUDE_CODE. Khoá `_tep` (nội dung sẽ đóng gói) không xuất JSON."""
+    cả khi đã mới hay thuộc CHI_CLAUDE_CODE. `ra` (thư mục có sổ lượt .dong-goi.json) ⇒ áp mục 6 của docstring: gương cũ hơn ZIP
+    trùng nội dung ⇒ «khong_do_duoc»; None ⇒ không đọc sổ. Khoá `_tep` (nội dung sẽ đóng gói) không xuất JSON."""
     repo = dcbb.quet_thu_muc(hub)
     if bundle is not None and not bundle.is_dir():
         raise KhongDoDuoc(f"không có bộ skill tài khoản: {bundle}")
@@ -211,6 +276,8 @@ def danh_gia(hub: Path, bundle: Path | None, chon: set[str] | None = None, tat_c
         thieu = sorted(chon - set(repo))
         if thieu:
             raise KhongDoDuoc(f"không có skill {', '.join(thieu)} trong {hub}")
+    guong = moc_guong(bundle)
+    so_luot = doc_so_luot(ra) if (bundle is not None and guong is not None) else {}
     ket = []
     for ten in sorted(repo):
         if chon and ten not in chon:
@@ -243,15 +310,32 @@ def danh_gia(hub: Path, bundle: Path | None, chon: set[str] | None = None, tat_c
                                    "tep_bo": len(set(tk) - set(rp)), "skill_md_khac": tk.get("SKILL.md") != rp.get("SKILL.md")}
                 loai = dcbb.phan_loai(dcbb.Skill(ten, bundle / ten / "SKILL.md"), dcbb.Skill(ten, thu_muc / "SKILL.md"))[0]
                 trang_thai = "khac_han" if loai == "KHÁC HẲN" else "cap_nhat"
-        muc["trang_thai"] = trang_thai
-        muc["dong_goi"] = chon_tay or trang_thai in ("moi", "cap_nhat", "khong_so") or (tat_ca and trang_thai == "da_moi")
         tep = dict(nguon)
         if "SKILL.md" in tep:
             fm = doc_frontmatter(vb_nguon) or {}
             if fm.get("name", "") != ten:
                 muc["doi_ten"] = fm.get("name", "")
                 tep["SKILL.md"] = ghi_ten(vb_nguon, ten).encode("utf-8")
+        ghi_chu_guong = ""
+        if trang_thai in ("moi", "cap_nhat") and f"{ten}.zip" in so_luot:
+            sha_cu, luc_dong = so_luot[f"{ten}.zip"]
+            if luc_dong > guong:
+                muc.update(trang_thai_guong=trang_thai, guong=guong.astimezone().isoformat(timespec="minutes"),
+                           dong_goi_luc=luc_dong.astimezone().isoformat(timespec="minutes"))
+                if hashlib.sha256(_zip_byte(ten, tep, _che_do(thu_muc, tep))).hexdigest() == sha_cu:
+                    trang_thai = "khong_do_duoc"
+                else:
+                    # Đã đóng gói sau lần đồng bộ gương (có thể đã lên tài khoản) mà repo đổi sau đó ⇒ cần tải bản mới, kể cả khi
+                    # gương chưa thấy skill («mới») — không xếp vào nhóm «chưa từng lên, tuỳ chọn».
+                    trang_thai = "cap_nhat"
+                    ghi_chu_guong = (f"đã đóng gói {muc['dong_goi_luc'][:10]} (sau lần đồng bộ gương {muc['guong'][:10]} — có "
+                                     "thể đã lên tài khoản), repo đổi sau đó ⇒ tải bản mới")
+        muc["trang_thai"] = trang_thai
+        muc["dong_goi"] = (chon_tay or trang_thai in ("moi", "cap_nhat", "khong_so", "khong_do_duoc")
+                           or (tat_ca and trang_thai == "da_moi"))
         muc["loi"], muc["canh"] = kiem_luat(ten, tep)
+        if ghi_chu_guong:
+            muc["canh"].insert(0, ghi_chu_guong)
         sua, chua = _git_ban(thu_muc)
         if sua:
             muc["canh"].append(f"{sua} tệp có thay đổi CHƯA commit — ZIP lấy bản trên đĩa (chưa qua chốt bí mật của pre-commit)")
@@ -263,17 +347,25 @@ def danh_gia(hub: Path, bundle: Path | None, chon: set[str] | None = None, tat_c
 
 
 # ------------------------------------------------------------------ ghi
-def ghi_zip(dich: Path, ten: str, tep: dict[str, bytes], che_do: dict[str, int] | None = None) -> str:
-    """ZIP tất định (thứ tự, dấu thời gian, quyền cố định); gốc là thư mục <ten>/. Trả sha256 của ZIP."""
+def _zip_byte(ten: str, tep: dict[str, bytes], che_do: dict[str, int] | None = None) -> bytes:
+    """Byte của ZIP tất định (thứ tự, dấu thời gian, quyền cố định); gốc là thư mục <ten>/. Dùng chung cho `ghi_zip` và phép so với
+    sổ lượt (BH168) — hai nơi phải ra cùng từng byte."""
     che_do = che_do or {}
-    tam = dich.with_name(dich.name + ".tam")
-    with zipfile.ZipFile(tam, "w", compression=zipfile.ZIP_DEFLATED) as z:
+    bo = io.BytesIO()
+    with zipfile.ZipFile(bo, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for rel in sorted(tep):
             zi = zipfile.ZipInfo(f"{ten}/{rel}", date_time=NGAY_CO_DINH)
             zi.compress_type = zipfile.ZIP_DEFLATED
             zi.create_system = 3
             zi.external_attr = (0o100000 | che_do.get(rel, 0o644)) << 16
             z.writestr(zi, tep[rel])
+    return bo.getvalue()
+
+
+def ghi_zip(dich: Path, ten: str, tep: dict[str, bytes], che_do: dict[str, int] | None = None) -> str:
+    """Ghi ZIP tất định (`_zip_byte`) qua tệp tạm rồi thay. Trả sha256 của ZIP."""
+    tam = dich.with_name(dich.name + ".tam")
+    tam.write_bytes(_zip_byte(ten, tep, che_do))
     tam.replace(dich)
     return hashlib.sha256(dich.read_bytes()).hexdigest()
 
@@ -296,13 +388,14 @@ def _che_do(thu_muc: Path, tep: dict[str, bytes]) -> dict[str, int]:
 
 
 _NHAN = {"cap_nhat": "cập nhật", "moi": "mới", "da_moi": "đã mới", "khac_han": "KHÁC HẲN", "khong_so": "không so",
-         "chi_claude_code": "chỉ Claude Code"}
+         "chi_claude_code": "chỉ Claude Code", "khong_do_duoc": "không đo được"}
 
 
 def _dong_bang(i: int, m: dict) -> str:
     ct = m.get("chi_tiet") or {}
     khac = (f"{ct.get('tep_khac', 0)} khác · {ct.get('tep_moi', 0)} mới · {ct.get('tep_bo', 0)} bỏ" if ct else "—")
-    pb = (f"{m['phien_ban_tk'] or '?'} → {m['phien_ban'] or '?'}" if m["trang_thai"] == "cap_nhat" else (m["phien_ban"] or "—"))
+    cap = m["trang_thai"] == "cap_nhat" or m.get("trang_thai_guong") == "cap_nhat"
+    pb = (f"{m['phien_ban_tk'] or '?'} → {m['phien_ban'] or '?'}" if cap else (m["phien_ban"] or "—"))
     ghi = "; ".join(([f"ZIP ghi name = tên thư mục (nguồn: «{m['doi_ten']}»)"] if m.get("doi_ten") else []) + m.get("canh", []))
     mo_ta = m.get("mo_ta", "").replace("|", "/")
     return f"| {i} | `{m['ten']}.zip` | {pb} | {khac} | {m['so_tep']} tệp · {m['byte'] // 1024} KB | {mo_ta} | {ghi or '—'} |"
@@ -311,7 +404,8 @@ def _dong_bang(i: int, m: dict) -> str:
 def viet_danh_sach(ket: list[dict], luc: str, bundle: Path | None) -> str:
     dg = [m for m in ket if m.get("zip")]
     cap = [m for m in dg if m["trang_thai"] == "cap_nhat"]
-    khac = [m for m in dg if m["trang_thai"] != "cap_nhat"]
+    kdd = [m for m in dg if m["trang_thai"] == "khong_do_duoc"]
+    khac = [m for m in dg if m["trang_thai"] not in ("cap_nhat", "khong_do_duoc")]
     dong = [f"# Skill cần tải lên tài khoản claude.ai — {luc}", "",
             "Sinh bởi `python3 tools/dong_goi_skill_tai_khoan.py`. Bộ skill tài khoản đem so: "
             + (f"`{bundle}`." if bundle else "KHÔNG so (`--khong-so`)."), "",
@@ -326,6 +420,12 @@ def viet_danh_sach(ket: list[dict], luc: str, bundle: Path | None) -> str:
     dong += [_dong_bang(i, m) for i, m in enumerate(cap, 1)] or ["| — | (không có) | | | | | |"]
     dong += ["", f"## ② Mới / theo yêu cầu — chưa có trên tài khoản ({len(khac)})", "", tieu, vach]
     dong += [_dong_bang(i, m) for i, m in enumerate(khac, 1)] or ["| — | (không có) | | | | | |"]
+    if kdd:
+        dong += ["", f"## ⚪ Không đo được — đã đóng gói SAU lần đồng bộ gương cuối ({len(kdd)})", "",
+                 f"Gương cục bộ của bộ skill tài khoản đồng bộ lần cuối {kdd[0]['guong']}; các ZIP dưới đây (nội dung không đổi) đóng "
+                 "gói sau mốc đó ⇒ máy KHÔNG thấy được bác sĩ đã tải lên chưa. Đã tải lên thì không cần làm lại; chưa tải thì tải "
+                 "như nhóm ①/②. Gương làm mới thì lượt sau tự xếp lại.", "", tieu, vach]
+        dong += [_dong_bang(i, m) for i, m in enumerate(kdd, 1)]
     chan = [m for m in ket if m["loi"] and m.get("dong_goi")]
     bo = [m for m in ket if not m.get("dong_goi")]
     dong += ["", "## ③ Không đóng gói", ""]
@@ -348,11 +448,14 @@ def dong_goi(ket: list[dict], hub: Path, ra: Path, bundle: Path | None, luc: str
         cu = json.loads(so.read_text(encoding="utf-8")).get("zip", {}) if so.is_file() else {}
     except (OSError, ValueError, AttributeError):
         cu = {}
+    cu_dau = doc_so_luot(ra)
+    bay_gio = dt.datetime.now().astimezone()
     for ten_tep in cu:
         p = ra / ten_tep
         if ten_tep.endswith(".zip") and "/" not in ten_tep and "\\" not in ten_tep and p.is_file():
             p.unlink()
-    zip_moi = {}
+    zip_moi: dict[str, str] = {}
+    dau: dict[str, str] = {}
     for m in ket:
         m["zip"] = ""
         if not m.get("dong_goi") or m["loi"]:
@@ -363,9 +466,11 @@ def dong_goi(ket: list[dict], hub: Path, ra: Path, bundle: Path | None, luc: str
             m["canh"].append(f"ZIP {dich.stat().st_size // 1024} KB > 8 MiB (giới hạn của Skills API) — claude.ai có thể từ chối")
         m["zip"] = dich.name
         zip_moi[dich.name] = sha
+        cu_sha, cu_luc = cu_dau.get(dich.name, ("", None))
+        dau[dich.name] = (cu_luc if cu_sha == sha and cu_luc is not None else bay_gio).isoformat(timespec="seconds")
     (ra / DANH_SACH).write_text(viet_danh_sach(ket, luc, bundle), encoding="utf-8")
-    so.write_text(json.dumps({"luc": luc, "bundle": str(bundle) if bundle else None, "zip": zip_moi},
-                             ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    so.write_text(json.dumps({"luc": luc, "luc_iso": bay_gio.isoformat(timespec="seconds"), "bundle": str(bundle) if bundle else None,
+                             "zip": zip_moi, "dong_goi_dau": dau}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return zip_moi
 
 
@@ -394,7 +499,7 @@ def main(argv=None) -> int:
     hub = Path(a.hub).expanduser().resolve()
     try:
         bundle = None if a.khong_so else dcbb.tim_bundle_cloud(a.cloud)
-        ket = danh_gia(hub, bundle, set(a.skill) or None, a.tat_ca)
+        ket = danh_gia(hub, bundle, set(a.skill) or None, a.tat_ca, ra=Path(a.ra).expanduser().resolve())
     except KhongDoDuoc as e:
         print(f"KHÔNG ĐO ĐƯỢC: {e}", file=sys.stderr)
         print("Không có bộ skill tài khoản để so thì chạy với --khong-so (đóng gói mọi skill).", file=sys.stderr)
@@ -413,6 +518,10 @@ def main(argv=None) -> int:
               f"đã mới {len(nhom.get('da_moi', []))} · khác hẳn {len(nhom.get('khac_han', []))} · "
               f"chỉ Claude Code {len(nhom.get('chi_claude_code', []))}"
               + (f" · không so {len(nhom['khong_so'])}" if nhom.get("khong_so") else ""))
+        kdd = [m for m in ket if m["trang_thai"] == "khong_do_duoc"]
+        if kdd:
+            print(f"  ⚪ không đo được {len(kdd)}: gương cục bộ đồng bộ lần cuối {kdd[0]['guong']}, cũ hơn ZIP cùng nội dung đã đóng "
+                  "gói — máy không thấy bác sĩ đã tải lên chưa (đã tải thì bỏ qua; gương làm mới thì tự xếp lại)")
         for m in ket:
             if m["loi"] and m.get("dong_goi"):
                 print(f"  🔴 {m['ten']}: {'; '.join(m['loi'])}")
