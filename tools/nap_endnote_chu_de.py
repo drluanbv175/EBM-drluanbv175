@@ -1274,13 +1274,35 @@ def _gan_pdf(endnote, can_gan: list[tuple]) -> None:
             raise
 
 
-def gan_kho(endnote, kho: Path | None, pmids: list[str] | None, ap_dung: bool) -> dict:
+def doi_cua_pmid(pmids: list[str], lay_pm=lay_pubmed, lay_ep=lay_europepmc) -> dict[str, str]:
+    """{PMID: DOI} theo bản ghi PubMed (NCBI chặn/lỗi ⇒ Europe PMC) — cho `gan_kho` khớp bản ghi KHÔNG mang PMID ở
+    «Accession Number». Lỗi cả hai nguồn ⇒ ném lên (người gọi ghi «không đo được», không coi là «không có DOI»)."""
+    try:
+        meta = lay_pm(pmids)
+    except Exception:  # noqa: BLE001 — NCBI chặn IP/mạng lỗi ⇒ Europe PMC, như lượt nạp chủ đề
+        meta = lay_ep(pmids)
+    return {p: d for p, m in meta.items() if (d := chuan_doi((m or {}).get("doi")))}
+
+
+def _la_pmid_khac(acc: str | None, pmid: str) -> bool:
+    """Accession Number là MỘT PMID (thuần số hoặc «PMID: n») KHÁC `pmid` ⇒ định danh mâu thuẫn, không gắn theo DOI."""
+    m = re.fullmatch(r"(?:PMID:\s*)?(\d{1,9})", (acc or "").strip(), flags=re.I)
+    return bool(m) and m.group(1) != pmid
+
+
+def gan_kho(endnote, kho: Path | None, pmids: list[str] | None, ap_dung: bool, doi_cua=None) -> dict:
     """PDF trong kho → bản ghi CÓ SẴN trong thư viện cùng PMID («Accession Number»), không cần dashboard.
 
     Toàn văn về SAU trích dẫn (phiên Chrome uỷ quyền, Unpaywall, Wiley TDM) ⇒ công cụ sinh PDF gọi chế độ này để PDF vào
     ngay mọi nhóm đang chứa bản ghi. Cùng luật với lượt nạp chủ đề: chỉ bản ghi CHƯA có tệp nào; bản trùng PMID trong thư
-    viện chỉ gắn bản đầu (giống lúc đăng nhóm)."""
-    bc: dict = {"kho_toan_van": bool(kho and kho.is_dir()), "pdf_trong_kho": 0, "co_ban_ghi": 0, "ap_dung": ap_dung}
+    viện chỉ gắn bản đầu (giống lúc đăng nhóm).
+
+    Bản ghi KHÔNG mang PMID thuần số ở Accession Number (đo 24/10/2026 trên thư viện thật: 90 bản ghi có PMID trên PubMed
+    nhưng 84 mang «WOS:…» — nhập từ Web of Science — và 6 mang «PMID: n») trước đây không bao giờ được gắn PDF. Nay khớp
+    thêm hai bậc cho PMID còn thiếu: (1) «PMID: n»; (2) DOI của PMID theo PubMed (`doi_cua`) với trường DOI của bản ghi —
+    bỏ bản ghi có Accession Number là MỘT PMID KHÁC. `doi_cua` lỗi ⇒ `doi_khong_do_duoc`, bậc (1) vẫn giữ."""
+    bc: dict = {"kho_toan_van": bool(kho and kho.is_dir()), "pdf_trong_kho": 0, "co_ban_ghi": 0, "ap_dung": ap_dung,
+                "khop_pmid_tien_to": 0, "khop_doi": 0}
     if not bc["kho_toan_van"]:
         return bc
     co_pdf: set[str] = set()
@@ -1291,6 +1313,28 @@ def gan_kho(endnote, kho: Path | None, pmids: list[str] | None, ap_dung: bool) -
     pm = sorted(co_pdf if pmids is None else co_pdf & set(pmids))
     bc["pdf_trong_kho"] = len(pm)
     theo_pm = endnote.tim_khop(pm, "Accession Number") if pm else {}
+    thieu = [p for p in pm if not theo_pm.get(p)]
+    if thieu:
+        tien_to = endnote.tim_khop([f"PMID: {p}" for p in thieu], "Accession Number")
+        for p in thieu:
+            if tien_to.get(f"PMID: {p}"):
+                theo_pm[p] = tien_to[f"PMID: {p}"]
+                bc["khop_pmid_tien_to"] += 1
+        thieu = [p for p in thieu if not theo_pm.get(p)]
+    if thieu and doi_cua is not None:
+        try:
+            doi = doi_cua(thieu)
+        except Exception as e:  # noqa: BLE001 — không tra được DOI: không gắn theo DOI lượt này, không phải «không có»
+            bc["doi_khong_do_duoc"] = f"{type(e).__name__}: {e}"[:200]
+            doi = {}
+        theo_doi = endnote.tim_khop(sorted(set(doi.values())), "DOI") if doi else {}
+        ung = {p: theo_doi[d] for p, d in doi.items() if theo_doi.get(d)}
+        acc = endnote.doc_truong(sorted({r for rs in ung.values() for r in rs}), "Accession Number") if ung else {}
+        for p, rs in ung.items():
+            hop = [r for r in rs if r in acc and not _la_pmid_khac(acc[r], p)]
+            if hop:
+                theo_pm[p] = hop
+                bc["khop_doi"] += 1
     cap: list[tuple[dict, str]] = []
     thay: set[str] = set()
     for p in pm:
@@ -2021,7 +2065,7 @@ def main(argv: list[str] | None = None) -> int:
             print("⚪ --gan-kho cần EndNote đang mở đúng thư viện — chưa gắn gì.")
             return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
         try:
-            bc = gan_kho(endnote, kho, a.pmid, a.ap_dung)
+            bc = gan_kho(endnote, kho, a.pmid, a.ap_dung, doi_cua=doi_cua_pmid)
         except (RuntimeError, OSError) as e:
             print(f"✗ gắn toàn văn từ kho: {type(e).__name__}: {e}"[:300])
             return MA_KHONG_CHAY
@@ -2029,8 +2073,12 @@ def main(argv: list[str] | None = None) -> int:
             print("⚠ Không thấy kho toàn văn — CHƯA XÉT PDF; chỉ đường bằng --kho-toan-van")
         else:
             gan = bc.get("gan_them_pdf", bc.get("se_gan_pdf", 0))
-            print(f"✓ EndNote · kho: {bc['pdf_trong_kho']} PMID có PDF · {bc['co_ban_ghi']} có bản ghi trong thư viện · "
-                  f"{'gắn thêm' if a.ap_dung else 'sẽ gắn'} {gan}")
+            phu = " · ".join(x for x in (f"«PMID: n» {bc['khop_pmid_tien_to']}" if bc.get("khop_pmid_tien_to") else "",
+                                          f"khớp DOI {bc['khop_doi']}" if bc.get("khop_doi") else "") if x)
+            print(f"✓ EndNote · kho: {bc['pdf_trong_kho']} PMID có PDF · {bc['co_ban_ghi']} có bản ghi trong thư viện"
+                  f"{f' ({phu})' if phu else ''} · {'gắn thêm' if a.ap_dung else 'sẽ gắn'} {gan}")
+            if bc.get("doi_khong_do_duoc"):
+                print(f"   ⚪ chưa khớp được theo DOI (không tra được DOI: {bc['doi_khong_do_duoc']}) — chạy lại sau")
         if a.json:
             print(json.dumps(bc, ensure_ascii=False, indent=2))
         return MA_OK
