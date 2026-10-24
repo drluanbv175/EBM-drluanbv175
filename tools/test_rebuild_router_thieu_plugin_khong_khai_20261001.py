@@ -178,7 +178,8 @@ def test_doc_duoc_PLUGIN_IDS_that_cua_repo_va_moi_plugin_deu_co_trong_so_khai():
     script = DB.DEFAULT_SOURCE / DB.ROUTER_NAME / "scripts" / "build_catalog.py"
     assert script.is_file(), f"nguồn router được git theo dõi phải có mặt ở mọi cây: {script}"
     ids = DB.plugin_id_router(script)
-    assert len(ids) >= 9, f"không đọc được PLUGIN_IDS thật bằng ast: {ids}"
+    # 24/10/2026: không khoá cứng số plugin (gỡ aipoch ⇒ 8) — canh hằng còn đọc được bằng ast và đúng dạng «tên@marketplace»
+    assert ids and all("@" in p for p in ids), f"không đọc được PLUGIN_IDS thật bằng ast: {ids}"
     muc = json.loads(DB.SO_KHAI.read_text(encoding="utf-8"))["plugin"]
     chua_khai = [p for p in ids if not (isinstance(muc.get(p), dict) and isinstance(muc[p].get("can_o_may"), list)
                                         and muc[p]["can_o_may"])]

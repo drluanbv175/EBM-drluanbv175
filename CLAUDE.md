@@ -40,17 +40,17 @@ Quyền sở hữu canonical: `.claude/agents/_PLUGIN-ROUTING-CONTRACT.md` + `to
 | Việc | CHỦ duy nhất (dùng cái này) | Tuyệt đối KHÔNG thay bằng |
 |---|---|---|
 | Cỡ mẫu / power | `co-mau-nghien-cuu` → `run_g3_auto.py` + `g3_quality_gate.py` | mọi `*sample-size*`, `*power-calculator*` của plugin |
-| Thiết kế đề cương / SAP | `thiet-ke-nghien-cuu` → `run_g4_auto.py` + `g4_quality_gate.py` | skill `*-planner`/`*-designer` của aipoch |
+| Thiết kế đề cương / SAP | `thiet-ke-nghien-cuu` → `run_g4_auto.py` + `g4_quality_gate.py` | skill `*-planner`/`*-designer` của plugin |
 | Kiểm trích dẫn | `kiem-chung-trich-dan` + `check_citation_retraction.py` | `reference-integrity-checker`, `verify-refs`, `citation-*` |
 | Bình duyệt (G8) | `binh-duyet` + `g8_quality_gate.py` | `sci-paper-reviewer`, `peer-review*` của plugin |
-| Tổng quan / gộp | `tong-quan-y-van`, `meta-phan-tich` | `ma-end-to-end`, `systematic-review*`, `meta-*` của aipoch |
+| Tổng quan / gộp | `tong-quan-y-van`, `meta-phan-tich` | `ma-end-to-end`, `systematic-review*`, `meta-*` của plugin |
 | Thống kê | `phan-tich-thong-ke` → `run_stats_analysis.py` | mọi `*statistical-analysis*` của plugin |
-| Viết bản thảo | `viet-ban-thao` | skill `*-section-writer`/`*-writer` của aipoch |
+| Viết bản thảo | `viet-ban-thao` | skill `*-section-writer`/`*-writer` của plugin |
 | Nộp bài / COI / khai AI | `nop-bai-phan-hoi` + `g9_quality_gate.py` | `cover-letter-*`, `journal-*`, `target-journal-matcher` |
 | Khử định danh / PII | `quan-ly-du-lieu` + quy tắc KHÔNG PII | `deidentify*`, `openmed:*deident*` |
 | Ca lâm sàng | `dieu-phoi-lam-sang` (dừng Cổng A/B) | mọi skill lâm sàng của plugin |
 
-Ba luật nền: (1) plugin không bao giờ là chủ của việc có cổng — được gọi thì chỉ ở vai worker, đầu ra qua chủ chuẩn hoá rồi qua `tham-dinh-dau-ra`; (2) không có chủ trong bảng → hỏi bác sĩ, không tự chọn plugin; plugin bị cấm ghi `exports/*/approval_ledger*.json`, `study_meta.json`, `EBM_MASTER.json`; (3) `humanizer` KHÔNG chạy trên nội dung y khoa đã qua cổng (làm lệch mệnh đề điều kiện). Hai lối định tuyến skill bổ trợ nhau: `plugin-router-chatgpt` (xếp hạng từ khoá, phủ mọi plugin, cần chạy script) và `dieu-phoi-aipoch` (nhóm ngữ nghĩa cho 605 skill aipoch, văn bản thuần). Không xây thêm router kiểu này cho plugin nhỏ.
+Ba luật nền: (1) plugin không bao giờ là chủ của việc có cổng — được gọi thì chỉ ở vai worker, đầu ra qua chủ chuẩn hoá rồi qua `tham-dinh-dau-ra`; (2) không có chủ trong bảng → hỏi bác sĩ, không tự chọn plugin; plugin bị cấm ghi `exports/*/approval_ledger*.json`, `study_meta.json`, `EBM_MASTER.json`; (3) `humanizer` KHÔNG chạy trên nội dung y khoa đã qua cổng (làm lệch mệnh đề điều kiện). Định tuyến skill plugin: `plugin-router-chatgpt` (xếp hạng từ khoá, phủ mọi plugin, cần chạy script); plugin aipoch và skill `dieu-phoi-aipoch` ĐÃ GỠ 24/10/2026 (bác sĩ quyết, 0 lượt dùng). Không xây thêm router kiểu này cho plugin nhỏ.
 
 ## 2. Đồng bộ nhiều nơi chạy (Mac · Windows · Cloud)
 - **Một lệnh cho tất cả:** `python3 tools/dong_bo_tat_ca.py [--ap-dung]` (8 làn theo thứ tự phụ thuộc; làn ① an toàn là CỔNG CHẶN; công cụ vắng mặt thì không dừng; KHÔNG tự commit/push).

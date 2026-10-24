@@ -3,7 +3,7 @@
 """
 cap_nhat_plugin_tay.py — Cập nhật các plugin mà nút "Update" của app KHÔNG làm được.
 
-VÌ SAO CẦN: ba kho meta-pipe · pubmed-search · aipoch-medical-research không kèm sẵn
+VÌ SAO CẦN: các kho meta-pipe · pubmed-search (aipoch-medical-research ĐÃ GỠ 24/10/2026 theo bác sĩ) không kèm sẵn
 manifest plugin, nên phải khai vào Claude Code dưới dạng marketplace kiểu `directory`
 (trỏ vào một thư mục trên máy). Kiểu `directory` KHÔNG có nguồn từ xa, nên app không
 biết lấy bản mới ở đâu — bấm cập nhật cũng không có gì xảy ra. 11 marketplace còn lại
@@ -77,14 +77,6 @@ CAU_HINH = {
         "plugin_key": "watermarks-remover@watermarks-remover",
         "bo_them": {"docs", "integrations", "service/scripts/__pycache__"},
         "sinh_manifest": None,
-    },
-    "aipoch-medical-research": {
-        "kho": "medical-research-skills",
-        "url": "https://github.com/aipoch/medical-research-skills",
-        "plugin_key": "aipoch-medical-research@aipoch-medical-research",
-        "bo_them": set(),
-        # kho này 605 skill và hay thêm skill mới → sinh lại manifest từ cây thư mục
-        "sinh_manifest": "quet",
     },
 }
 

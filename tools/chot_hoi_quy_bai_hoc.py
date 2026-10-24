@@ -9973,7 +9973,9 @@ def bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi():
     if not script.is_file():
         return False, f"không thấy {script} — nguồn router được git theo dõi phải có ở mọi cây"
     ids = DB.plugin_id_router(script)
-    if len(ids) < 9:
+    # 24/10/2026: bỏ ngưỡng cứng «≥ 9» — số plugin router đổi theo quyết định của bác sĩ (gỡ aipoch ⇒ 8); điều cần canh là
+    # hằng còn đọc được bằng ast (biểu thức động ⇒ rỗng) và mỗi mục đúng dạng «tên@marketplace».
+    if not ids or any("@" not in p for p in ids):
         return False, (f"PLUGIN_IDS thật của build_catalog.py không còn đọc được bằng ast ({len(ids)} mục) — đổi thành "
                        "biểu thức động thì nhánh bỏ qua im lặng vô hiệu và báo động giả quay lại")
     try:

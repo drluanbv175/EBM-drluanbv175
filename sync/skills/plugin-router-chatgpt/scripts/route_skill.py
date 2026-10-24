@@ -19,7 +19,6 @@ PLUGIN_CUES = {
     "pubmed-search": {"pubmed", "medline", "pmid", "truy van", "tim bai"},
     "meta-pipe": {"meta analysis", "phan tich gop", "forest plot", "prisma"},
     "academic-research-skills": {"ban thao", "abstract", "phan bien", "revision", "hoc thuat"},
-    "aipoch-medical-research": {"omics", "single cell", "faers", "mendelian", "qtl", "biomarker"},
     "codex": {"code", "lap trinh", "sua loi", "test", "repository"},
     "claude-code-harness": {"harness", "agent", "workflow", "kiem thu"},
     "humanizer": {"tu nhien hon", "van phong", "humanize"},

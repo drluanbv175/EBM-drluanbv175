@@ -24,7 +24,6 @@ PLUGIN_IDS = (
     "openmed-skills@openmed-skills",
     "claude-code-harness@claude-code-harness-marketplace",
     "medsci-project@medsci-skills",
-    "aipoch-medical-research@aipoch-medical-research",
     "meta-pipe@meta-pipe",
     "pubmed-search@pubmed-search",
 )

@@ -246,7 +246,8 @@ class TestPluginOwnership(unittest.TestCase):
         self.assertEqual(decision.owner_unit, "sang-loc-co-do")
         self.assertEqual(decision.workers, ())
 
-    def test_specialized_aipoch_worker_only_runs_when_request_matches(self):
+    def test_aipoch_da_go_khong_con_worker_dac_thu(self):
+        """24/10/2026 bác sĩ gỡ aipoch: yêu cầu chung vẫn có worker ARS; yêu cầu MR không còn gắn worker aipoch nào."""
         generic = self.plugins.resolve(
             "protocol_design",
             request="Thiết kế nghiên cứu đoàn hệ về tăng huyết áp",
@@ -254,27 +255,26 @@ class TestPluginOwnership(unittest.TestCase):
         )
         generic_units = {worker.unit for worker in generic.workers}
         self.assertIn("source-command-ars-plan", generic_units)
-        self.assertFalse(any(worker.provider == "aipoch-medical-research" for worker in generic.workers))
 
         mr = self.plugins.resolve(
             "protocol_design",
             request="Thiết kế Mendelian randomization về đái tháo đường",
             stage="G1",
         )
-        mr_units = {worker.unit for worker in mr.workers}
-        self.assertIn("mendelian-randomization-protocol-designer", mr_units)
-        self.assertNotIn("single-cell-research-planner", mr_units)
+        self.assertFalse(any(worker.provider == "aipoch-medical-research" for worker in mr.workers))
+        self.assertNotIn("mendelian-randomization-protocol-designer", {worker.unit for worker in mr.workers})
 
     def test_unbound_provider_cannot_also_have_worker_binding(self):
         original = self.plugins.unbound_providers
         try:
-            self.plugins.unbound_providers = frozenset({"aipoch-medical-research"})
+            self.plugins.unbound_providers = frozenset({"meta-pipe"})
             errors = self.plugins.validate(set(self.agents.agents))
             self.assertTrue(any("vua unbound vua co worker binding" in error for error in errors))
         finally:
             self.plugins.unbound_providers = original
 
-    def test_nested_step_routing_selects_aipoch_mr_planner(self):
+    def test_nested_step_routing_de_tai_mr_khong_con_worker_aipoch(self):
+        """Đề tài MR đi qua G1 vẫn do thiet-ke-nghien-cuu làm chủ; không còn worker aipoch, không binding treo."""
         session = self.orch.handle(
             "Đề tài Mendelian randomization về đái tháo đường",
             persist=False,
@@ -284,12 +284,7 @@ class TestPluginOwnership(unittest.TestCase):
             if row["step"] == "G1" and row["agent"] == "thiet-ke-nghien-cuu"
         )
         units = {worker["unit"] for worker in g1["worker_routing"]["workers"]}
-        self.assertIn("mendelian-randomization-protocol-designer", units)
-        self.assertNotIn("single-cell-research-planner", units)
-        # Plugin cài THEO TỪNG MÁY (sổ khai sync/plugin-manifest.json): máy không có
-        # aipoch thì worker «chưa cài» là sự thật runtime, không phải binding treo.
-        # Chỉ binding TREO (provider có mà thiếu skill / provider không khai) mới là lỗi
-        # — trên Mac đủ plugin, phép thử này tương đương `== []` như cũ (BH85).
+        self.assertNotIn("mendelian-randomization-protocol-designer", units)
         from orchestrator.worker_inventory import LY_DO_CHUA_CAI
         treo = [w for w in g1["worker_routing"]["unavailable_workers"]
                 if w["reason"] != LY_DO_CHUA_CAI]

@@ -163,46 +163,6 @@
       "tim": "cong-cu-gi"
     },
     {
-      "viec": "Thiết kế nghiên cứu nhân quả di truyền (Mendelian randomization)",
-      "goi": "/aipoch-medical-research:mendelian-randomization-protocol-designer",
-      "tim": "ngau nhien hoa Mendel"
-    },
-    {
-      "viec": "MR hai mẫu từ số liệu tóm tắt GWAS",
-      "goi": "/aipoch-medical-research:two-sample-mr-research-planner",
-      "tim": "MR hai mau"
-    },
-    {
-      "viec": "Dò tín hiệu an toàn thuốc trên FAERS (dược cảnh giác)",
-      "goi": "/aipoch-medical-research:faers-pharmacovigilance-disproportionality-research-planner",
-      "tim": "duoc canh giac FAERS"
-    },
-    {
-      "viec": "Nghiên cứu độc chất mạng + gắn kết phân tử (docking)",
-      "goi": "/aipoch-medical-research:network-tox-docking-research-planner",
-      "tim": "doc chat mang"
-    },
-    {
-      "viec": "Thiết kế nghiên cứu đơn tế bào (scRNA-seq)",
-      "goi": "/aipoch-medical-research:single-cell-research-planner",
-      "tim": "don te bao"
-    },
-    {
-      "viec": "Tích hợp đa omics với biến số lâm sàng",
-      "goi": "/aipoch-medical-research:multi-omics-clinical-integration-planner",
-      "tim": "da omics"
-    },
-    {
-      "viec": "Thiết kế nghiên cứu tái định vị thuốc (drug repurposing)",
-      "goi": "/aipoch-medical-research:drug-repurposing-study-planner",
-      "tim": "tai dinh vi thuoc"
-    },
-    {
-      "viec": "Đồng định vị QTL với locus GWAS",
-      "goi": "/aipoch-medical-research:qtl-colocalization-study-planner",
-      "tim": "dong dinh vi QTL"
-    },
-    {
       "viec": "Lập kế hoạch sprint cho repo code (harness)",
       "goi": "/claude-code-harness:harness-plan",
       "tim": "harness-plan"
