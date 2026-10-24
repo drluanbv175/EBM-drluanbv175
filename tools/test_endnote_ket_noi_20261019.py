@@ -157,7 +157,7 @@ class _Gio:
 
 
 def _reset_khoa():
-    kg._DANG_GIU.update({"pid": None, "thong_bao": False})
+    kg._DANG_GIU.update({"pid": None, "tep": None, "thong_bao": False, "pham_vi": 0, "tu_pham_vi": False})
 
 
 def test_khoa_cho_bac_si_ranh_roi_moi_ghi_va_bao_mot_lan(tmp_path):

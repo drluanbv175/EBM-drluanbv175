@@ -7783,6 +7783,69 @@ def bh168_skill_tai_khoan_guong_cuc_bo_lac_hau():
     return True, "gương cục bộ cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được (không đỏ giả, không xanh giả); repo đổi ⇒ vẫn «cập nhật»"
 
 
+def bh169_khoa_ghi_endnote_theo_pham_vi_mcp():
+    """24/10 — máy chủ MCP `endnote-ebm` sống cả phiên Claude giữ `~/.ebm-endnote-dang-ghi.json` sau MỘT lệnh ghi tới khi quá
+    HAN_KHOA (khoá theo tiến trình, nhả bằng atexit) ⇒ bộ năm VKDT_TongHop_20261024 bị bỏ bước ⑧ (`DangCoTienTrinhKhacGhi`: pid
+    máy chủ MCP). Thêm: `luc_epoch` không làm mới khi đang giữ khoá ghi tiếp. Kiểm HÀNH VI ngoại tuyến (tệp khoá tạm, không chạm
+    tệp khoá thật): lời gọi `endnote_dua_vao_nhom` ap_dung đi đường ghi THẬT `EndNoteMac._truoc_khi_ghi` → khoá giữ TRONG lời gọi,
+    nhả khi trả về (cả khi lỗi); máy chủ dùng CHÍNH bản mô-đun khoá của EndNoteMac; lệnh ghi tiếp làm mới `luc_epoch`."""
+    import contextlib as _ctx
+    import io as _io
+    import os as _os
+    import tempfile as _tf
+    import time as _t
+    M = _nap(REPO / "tools/mcp/endnote_ebm_mcp.py", "_bh169_mcp")
+    if not hasattr(M, "pham_vi_cong_cu") or not hasattr(M, "_khoa_ghi"):
+        return False, "máy chủ MCP chưa mở phạm vi khoá cho từng lời gọi công cụ (thiếu pham_vi_cong_cu/_khoa_ghi)"
+    nec = M.mod("nec")
+    kg = M._khoa_ghi()
+    if kg is None or not hasattr(kg, "giu_khoa_ghi") or kg is not getattr(nec, "nap_khoa_ghi", lambda: None)():
+        return False, "máy chủ MCP không dùng CHÍNH bản mô-đun khoá của EndNoteMac (phạm vi sẽ không thấy khoá để nhả)"
+    cu = {k: getattr(kg, k) for k in ("_bo_qua", "TEP_KHOA", "bac_si_dang_dung", "_thong_bao")}
+    trang_thai = dict(kg._DANG_GIU)
+    trong = []
+    with _tf.TemporaryDirectory() as tam:
+        tep = Path(tam) / "khoa.json"
+        try:
+            kg._DANG_GIU.update(pid=None, tep=None, thong_bao=False, pham_vi=0, tu_pham_vi=False)
+            kg._bo_qua, kg.TEP_KHOA, kg.bac_si_dang_dung, kg._thong_bao = (lambda: False), tep, (lambda *a, **k: False), (lambda s: None)
+            en = object.__new__(nec.EndNoteMac)
+            en.ten, en.ung_dung, en._csdl = "Lib.enl", "EndNote 2025", "1"
+
+            def _chay(than, *ds, **kw):
+                d = kg.doc_khoa(tep)
+                trong.append(bool(d) and d.get("pid") == _os.getpid())
+                if "HONG" in ds:
+                    raise RuntimeError("AppleScript hỏng")
+                return ""
+
+            en._chay = _chay
+            M._endnote = lambda: (en, Path(tam) / "Lib.enl")
+            M._nhom_dich = lambda tv, ten: []
+            M._do_sau_khi_dang = lambda tv, ten, rec, truoc: {"da_goi_post": True}
+            for ten in ("EBM · a", "HONG"):
+                with _ctx.redirect_stderr(_io.StringIO()):
+                    M.xu_ly({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {
+                        "name": "endnote_dua_vao_nhom", "arguments": {"rec_nums": [7], "ten_nhom": ten, "ap_dung": True}}})
+                if tep.exists():
+                    return False, f"lời gọi công cụ ghi («{ten}») trả về mà khoá vẫn giữ — chặn mọi tiến trình khác tới HAN_KHOA"
+            if trong != [True, True]:
+                return False, "lệnh ghi của EndNoteMac chạy khi máy chủ chưa giữ khoá"
+            xua = _t.time() - kg.HAN_KHOA - 60
+            kg.cho_phep_ghi_loi("EndNote 2025", "đầu", tep=tep, dang_dung=lambda: False, thong_bao=lambda s: None,
+                                bay_gio=lambda: xua)
+            kg.cho_phep_ghi_loi("EndNote 2025", "tiếp", tep=tep, dang_dung=lambda: False, thong_bao=lambda s: None)
+            if (kg.doc_khoa(tep) or {}).get("luc_epoch", 0) <= xua + kg.HAN_KHOA:
+                return False, "lệnh ghi tiếp không làm mới luc_epoch — khoá đang ghi dở bị tiến trình khác coi là treo"
+        finally:
+            kg._tha_khoa(tep)
+            for k, v in cu.items():
+                setattr(kg, k, v)
+            kg._DANG_GIU.clear()
+            kg._DANG_GIU.update(trang_thai)
+    return True, "MCP: khoá ghi giữ trong lời gọi công cụ, nhả khi trả về (cả khi lỗi), cùng bản mô-đun với EndNoteMac; luc_epoch làm mới"
+
+
 def bh159_pham_vi_phien_tinh_luc_kiem():
     """04/10 — bác sĩ nói GIỮA phiên «J Rheumatol uỷ quyền». Phiên chỉ nhận các NXB chụp lúc mở (`d["nxb"]`) ⇒ uỷ quyền mới vô
     hiệu tới phiên sau, và uỷ quyền bị RÚT giữa phiên vẫn được lưu tiếp (chiều không an toàn). Vá: `kiem` tính phạm vi = NXB có
@@ -11017,6 +11080,7 @@ BAI_HOC = [
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
     ("BH168", "23/10", "Skill tài khoản: gương cục bộ (~/.claude/skills/synced, dừng 02/10) cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được thay vì «21 skill CŨ» đỏ giả; repo đổi sau đóng gói vẫn «cập nhật»", bh168_skill_tai_khoan_guong_cuc_bo_lac_hau),
+    ("BH169", "24/10", "Khoá ghi EndNote theo PHẠM VI một thao tác: máy chủ MCP endnote-ebm (sống cả phiên) nhả khoá khi mỗi lời gọi công cụ trả về (cả khi lỗi), trên CÙNG bản mô-đun khoá với EndNoteMac; lệnh ghi tiếp làm mới luc_epoch (khoá cũ chặn bộ năm bước ⑧ tới 15 phút)", bh169_khoa_ghi_endnote_theo_pham_vi_mcp),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

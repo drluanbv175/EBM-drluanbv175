@@ -785,6 +785,30 @@ def doc_thung_rac(thu_vien: Path) -> dict[str, set[str]]:
 
 
 _KHOA_GHI = None  # mô-đun khoá ghi, nạp một lần (None = chưa nạp, False = nạp hỏng)
+TEN_MO_DUN_KHOA_GHI = "_khoa_ghi_endnote"
+
+
+def nap_khoa_ghi():
+    """Mô-đun khoá ghi `tools/khoa_ghi_endnote.py` — MỘT bản cho cả tiến trình (đăng ký ở `sys.modules`), None khi nạp hỏng.
+
+    VÌ SAO (24/10/2026): trạng thái khoá là biến của mô-đun. Máy chủ MCP mở phạm vi `giu_khoa_ghi` trên bản mô-đun nó nạp;
+    lệnh ghi của `EndNoteMac` lấy khoá trên bản `_KHOA_GHI` này. Hai bản `spec_from_file_location` riêng ⇒ phạm vi không thấy
+    lần lấy khoá ⇒ không nhả ⇒ khoá kẹt tới HAN_KHOA. Mọi nơi cần khoá gọi hàm này, không tự nạp."""
+    global _KHOA_GHI
+    if _KHOA_GHI is None:
+        try:
+            m = sys.modules.get(TEN_MO_DUN_KHOA_GHI)
+            if m is None:
+                sp = importlib.util.spec_from_file_location(TEN_MO_DUN_KHOA_GHI,
+                                                            Path(__file__).resolve().parent / "khoa_ghi_endnote.py")
+                m = importlib.util.module_from_spec(sp)
+                sp.loader.exec_module(m)
+                m = sys.modules.setdefault(TEN_MO_DUN_KHOA_GHI, m)
+            _KHOA_GHI = m
+        except Exception as e:  # noqa: BLE001
+            _KHOA_GHI = False
+            print(f"⚠ không nạp được khoá ghi EndNote ({type(e).__name__}) — ghi không qua khoá", file=sys.stderr)
+    return _KHOA_GHI or None
 
 
 class EndNoteMac:
@@ -899,18 +923,9 @@ class EndNoteMac:
         """KHOÁ GHI (19/10/2026, `tools/khoa_ghi_endnote.py`): chờ khi bác sĩ đang thao tác trên EndNote, giữ khoá giữa các
         tiến trình Claude, báo một lần «Claude đang ghi EndNote». Bác sĩ vẫn bận quá hạn ⇒ ném lỗi (bỏ lượt ghi, không chen).
         Thiếu mô-đun khoá (cây cũ) ⇒ ghi như trước kèm một dòng cảnh báo — không làm hỏng dây chuyền."""
-        global _KHOA_GHI
-        if _KHOA_GHI is None:
-            try:
-                sp = importlib.util.spec_from_file_location("_khoa_ghi_endnote", Path(__file__).resolve().parent / "khoa_ghi_endnote.py")
-                m = importlib.util.module_from_spec(sp)
-                sp.loader.exec_module(m)
-                _KHOA_GHI = m
-            except Exception as e:  # noqa: BLE001
-                _KHOA_GHI = False
-                print(f"⚠ không nạp được khoá ghi EndNote ({type(e).__name__}) — ghi không qua khoá", file=sys.stderr)
-        if _KHOA_GHI:
-            _KHOA_GHI.cho_phep_ghi(getattr(self, "ung_dung", "EndNote"), ly_do)
+        kg = nap_khoa_ghi()
+        if kg:
+            kg.cho_phep_ghi(getattr(self, "ung_dung", "EndNote"), ly_do)
 
     def nhap(self, tep_xml: Path) -> None:
         self._truoc_khi_ghi("nhập trích dẫn mới")
