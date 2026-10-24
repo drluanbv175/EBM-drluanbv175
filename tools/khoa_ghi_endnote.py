@@ -9,9 +9,19 @@ Mọi lệnh GHI vào EndNote của `nap_endnote_chu_de.EndNoteMac` (nhập, đ�
 trước. Hàm này:
   1. Chờ khi BÁC SĨ ĐANG DÙNG EndNote (EndNote là ứng dụng đang ở trước VÀ bàn phím/chuột vừa được dùng < NGUONG_RANH giây),
      tối đa CHO_TOI_DA giây; quá hạn ⇒ ném `BacSiDangDungEndNote` — người gọi BỎ lượt ghi và báo, không ghi chen.
-  2. Giữ tệp khoá `~/.ebm-endnote-dang-ghi.json` (pid + giờ + lý do) suốt tiến trình; một tiến trình Claude khác đang giữ khoá
-     còn sống ⇒ chờ rồi ném `DangCoTienTrinhKhacGhi`. Khoá của tiến trình đã chết hoặc quá HAN_KHOA giây ⇒ coi như bỏ.
-  3. Hiện MỘT thông báo macOS «Claude đang ghi EndNote: <lý do>» cho mỗi tiến trình (không lặp mỗi lệnh ghi).
+  2. Giữ tệp khoá `~/.ebm-endnote-dang-ghi.json` (pid + giờ + lý do); một tiến trình Claude khác đang giữ khoá còn sống ⇒
+     chờ rồi ném `DangCoTienTrinhKhacGhi`. Khoá của tiến trình đã chết hoặc quá HAN_KHOA giây ⇒ coi như bỏ. Mỗi lệnh ghi khi
+     đang giữ khoá LÀM MỚI `luc_epoch` ⇒ khoá của tiến trình đang ghi dở không bị tiến trình khác coi là treo.
+  3. Hiện MỘT thông báo macOS «Claude đang ghi EndNote: <lý do>» cho mỗi LẦN LẤY khoá (không lặp mỗi lệnh ghi).
+
+Hai cách giữ khoá (24/10/2026):
+  • THEO TIẾN TRÌNH (mặc định — script ngắn như `nap_endnote_chu_de.py`, `xuat_goi_cap_nhat.py` bước ⑧): lấy ở lần ghi đầu,
+    nhả bằng `atexit` khi tiến trình thoát.
+  • THEO PHẠM VI một thao tác — `with giu_khoa_ghi(...):` — cho tiến trình SỐNG LÂU (máy chủ MCP `endnote-ebm` sống cả phiên
+    Claude): khoá lấy trong khối được nhả NGAY khi ra khỏi khối, kể cả khi lỗi. Sự cố đo 24/10/2026: sau MỘT lệnh ghi của
+    MCP, khoá bị giữ tới khi quá HAN_KHOA (15 phút) ⇒ bộ năm VKDT_TongHop_20261024 bị bỏ bước ⑧ (`DangCoTienTrinhKhacGhi`:
+    pid máy chủ MCP). Trạng thái khoá là biến của mô-đun ⇒ phạm vi chỉ thấy lần ghi đi qua CÙNG bản mô-đun: nạp bằng
+    `nap_endnote_chu_de.nap_khoa_ghi()` (một bản cho cả tiến trình), không `spec_from_file_location` riêng.
 Đo hoạt động: `lsappinfo` (ứng dụng ở trước — không cần quyền Trợ năng) + `ioreg IOHIDSystem` (giây rảnh). Không đo được ⇒
 coi là RẢNH (fail-open có chủ ý: khoá chỉ để không ghi chen khi bác sĩ đang thao tác, không được làm hỏng dây chuyền nền).
 Dưới pytest (`PYTEST_CURRENT_TEST`) hàm công khai không đo, không ghi khoá — test gọi hàm lõi với bộ đo giả.
@@ -19,6 +29,7 @@ Dưới pytest (`PYTEST_CURRENT_TEST`) hàm công khai không đo, không ghi kh
 from __future__ import annotations
 
 import atexit
+import contextlib
 import json
 import os
 import re
@@ -32,7 +43,7 @@ TEP_KHOA = Path.home() / ".ebm-endnote-dang-ghi.json"
 NGUONG_RANH = 20       # bàn phím/chuột rảnh ≥ 20 giây ⇒ bác sĩ không đang thao tác
 CHO_TOI_DA = 120       # chờ bác sĩ rảnh tối đa 2 phút rồi bỏ lượt ghi
 HAN_KHOA = 15 * 60     # khoá quá 15 phút coi là treo
-_DANG_GIU = {"pid": None, "thong_bao": False}
+_DANG_GIU = {"pid": None, "tep": None, "thong_bao": False, "pham_vi": 0, "tu_pham_vi": False, "atexit": False}
 
 
 class BacSiDangDungEndNote(RuntimeError):
@@ -90,9 +101,9 @@ def _pid_song(pid: int) -> bool:
         return True  # có tiến trình nhưng không có quyền gửi tín hiệu ⇒ coi là còn sống (thận trọng)
 
 
-def doc_khoa(tep: Path = TEP_KHOA) -> dict | None:
+def doc_khoa(tep: Path | None = None) -> dict | None:
     try:
-        d = json.loads(tep.read_text(encoding="utf-8"))
+        d = json.loads((tep or TEP_KHOA).read_text(encoding="utf-8"))
         return d if isinstance(d, dict) else None
     except (OSError, ValueError):
         return None
@@ -108,12 +119,17 @@ def khoa_con_hieu_luc(d: dict | None, bay_gio: float | None = None, song=_pid_so
     return song(d["pid"])
 
 
-def _ghi_khoa(ly_do: str, tep: Path) -> None:
-    tep.write_text(json.dumps({"pid": os.getpid(), "luc_epoch": time.time(), "luc": datetime.now().isoformat(timespec="seconds"),
+def _ghi_khoa(ly_do: str, tep: Path, luc: float) -> None:
+    """Ghi NGUYÊN TỬ (tệp tạm + `os.replace`): tiến trình khác đọc giữa lúc làm mới không bao giờ thấy JSON dở dang — JSON
+    hỏng bị `doc_khoa` đọc thành «không có khoá» ⇒ hai tiến trình cùng ghi."""
+    tam = tep.with_name(f"{tep.name}.{os.getpid()}.tam")
+    tam.write_text(json.dumps({"pid": os.getpid(), "luc_epoch": luc, "luc": datetime.fromtimestamp(luc).isoformat(timespec="seconds"),
                                "ly_do": ly_do[:200]}, ensure_ascii=False), encoding="utf-8")
+    os.replace(tam, tep)
 
 
-def _tha_khoa(tep: Path = TEP_KHOA) -> None:
+def _tha_khoa(tep: Path | None = None) -> None:
+    tep = tep or TEP_KHOA
     d = doc_khoa(tep)
     if d and d.get("pid") == os.getpid():
         try:
@@ -122,16 +138,23 @@ def _tha_khoa(tep: Path = TEP_KHOA) -> None:
             pass
 
 
+def _tha_khi_thoat() -> None:
+    """`atexit` (đăng ký MỘT lần mỗi tiến trình): nhả khoá tiến trình còn giữ."""
+    if _DANG_GIU["pid"] == os.getpid() and _DANG_GIU["tep"] is not None:
+        _tha_khoa(_DANG_GIU["tep"])
+
+
 def _thong_bao(noi_dung: str) -> None:
     if sys.platform == "darwin":
         an = noi_dung.replace("\\", "\\\\").replace('"', "'")
         _chay(["osascript", "-e", f'display notification "{an}" with title "EBM · Claude đang ghi EndNote"'])
 
 
-def cho_phep_ghi_loi(ung_dung: str, ly_do: str, *, tep: Path = TEP_KHOA, dang_dung=None, ngu=time.sleep,
-                     dong_ho=time.monotonic, cho_toi_da: float = CHO_TOI_DA, buoc: float = 5, thong_bao=_thong_bao,
-                     song=_pid_song) -> None:
+def cho_phep_ghi_loi(ung_dung: str, ly_do: str, *, tep: Path | None = None, dang_dung=None, ngu=time.sleep,
+                     dong_ho=time.monotonic, cho_toi_da: float = CHO_TOI_DA, buoc: float = 5, thong_bao=None,
+                     song=_pid_song, bay_gio=time.time) -> None:
     """Lõi của `cho_phep_ghi` (bộ đo/giờ/ngủ tiêm được để test). Ném lỗi khi phải bỏ lượt ghi."""
+    tep, thong_bao = tep or TEP_KHOA, thong_bao or _thong_bao
     dang_dung = dang_dung or (lambda: bac_si_dang_dung(ung_dung))
     het = dong_ho() + cho_toi_da
     while True:
@@ -144,20 +167,55 @@ def cho_phep_ghi_loi(ung_dung: str, ly_do: str, *, tep: Path = TEP_KHOA, dang_du
                 raise DangCoTienTrinhKhacGhi(f"tiến trình {doc_khoa(tep).get('pid')} đang ghi EndNote — bỏ lượt ghi này")
             raise BacSiDangDungEndNote(f"bác sĩ đang thao tác trên {ung_dung} — bỏ lượt ghi «{ly_do}», chạy lại sau")
         ngu(buoc)
-    if _DANG_GIU["pid"] != os.getpid() or not tep.exists():
-        _ghi_khoa(ly_do, tep)
-        _DANG_GIU["pid"] = os.getpid()
-        atexit.register(_tha_khoa, tep)
+    d = doc_khoa(tep)
+    dang_giu = _DANG_GIU["pid"] == os.getpid() and _DANG_GIU["tep"] == tep and bool(d) and d.get("pid") == os.getpid()
+    _ghi_khoa(ly_do, tep, bay_gio())  # lấy khoá mới, hoặc LÀM MỚI luc_epoch khi đang giữ
+    if not dang_giu:
+        _DANG_GIU.update(pid=os.getpid(), tep=tep, thong_bao=False, tu_pham_vi=_DANG_GIU["pham_vi"] > 0)
+        if not _DANG_GIU["atexit"]:
+            _DANG_GIU["atexit"] = True
+            atexit.register(_tha_khi_thoat)
     if not _DANG_GIU["thong_bao"]:
         _DANG_GIU["thong_bao"] = True
         thong_bao(ly_do)
 
 
+@contextlib.contextmanager
+def pham_vi_ghi():
+    """Lõi của `giu_khoa_ghi`: mở PHẠM VI một thao tác. Khoá do `cho_phep_ghi*` lấy TRONG phạm vi được nhả ngay khi khối
+    NGOÀI CÙNG kết thúc (kể cả khi lỗi); khoá tiến trình đã giữ từ trước khi vào phạm vi giữ nguyên hành vi cũ (atexit).
+    Không lệnh ghi nào trong khối (vd chạy khô) ⇒ không đụng tệp khoá."""
+    _DANG_GIU["pham_vi"] += 1
+    try:
+        yield
+    finally:
+        _DANG_GIU["pham_vi"] -= 1
+        if _DANG_GIU["pham_vi"] == 0 and _DANG_GIU["tu_pham_vi"] and _DANG_GIU["pid"] == os.getpid():
+            _tha_khoa(_DANG_GIU["tep"])
+            _DANG_GIU.update(pid=None, tep=None, thong_bao=False, tu_pham_vi=False)
+
+
+def _bo_qua() -> bool:
+    return bool(os.environ.get("PYTEST_CURRENT_TEST")) or sys.platform != "darwin"
+
+
 def cho_phep_ghi(ung_dung: str, ly_do: str) -> None:
     """Gọi TRƯỚC mỗi lệnh ghi vào EndNote. Dưới pytest không làm gì (xem docstring mô-đun)."""
-    if os.environ.get("PYTEST_CURRENT_TEST") or sys.platform != "darwin":
+    if _bo_qua():
         return
     cho_phep_ghi_loi(ung_dung, ly_do)
+
+
+@contextlib.contextmanager
+def giu_khoa_ghi(ung_dung: str | None = None, ly_do: str | None = None):
+    """Giữ khoá ghi EndNote theo PHẠM VI một thao tác, nhả ngay khi xong (xem docstring mô-đun và `pham_vi_ghi`).
+
+    Có `ly_do` ⇒ lấy khoá ngay khi vào khối (chờ/ném như `cho_phep_ghi`). Không có ⇒ chỉ mở phạm vi: khoá lấy ở lệnh ghi
+    đầu tiên trong khối — công cụ chạy khô không giữ khoá. Dưới pytest / ngoài macOS chỉ mở phạm vi (không đo, không ghi)."""
+    with pham_vi_ghi():
+        if ly_do:
+            cho_phep_ghi(ung_dung or "EndNote", ly_do)
+        yield
 
 
 if __name__ == "__main__":

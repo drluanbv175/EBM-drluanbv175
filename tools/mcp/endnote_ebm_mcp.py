@@ -8,7 +8,8 @@ giúp tôi» (việc 3). Claude Code (qua `.mcp.json`), Claude Desktop/khung cha
 
   • ĐỌC qua cơ sở dữ liệu `sdb.eni` ở chế độ chỉ-đọc (nhanh, không chiếm giao diện EndNote của bác sĩ).
   • GHI chỉ qua lớp `EndNoteMac` (đi qua KHOÁ GHI `tools/khoa_ghi_endnote.py`), mọi công cụ ghi CHẠY KHÔ mặc định —
-    `ap_dung: true` mới ghi.
+    `ap_dung: true` mới ghi. Máy chủ sống CẢ PHIÊN Claude ⇒ mỗi lời gọi công cụ là MỘT phạm vi khoá (`giu_khoa_ghi`): khoá lấy
+    trong lời gọi được nhả ngay khi công cụ trả về (24/10/2026 — khoá giữ theo tiến trình từng chặn bộ năm bước ⑧ tới 15 phút).
   • KHÔNG có công cụ xoá: không `delete record` (đo 19/10/2026: xoá HẲN), không thùng rác tự động, không `close document`
     (làm EndNote sập). Thùng rác: công cụ chỉ CHUẨN BỊ (hiện đúng bản ghi) và KIỂM — bác sĩ bấm.
   • `endnote_loai_tru` chỉ dùng khi BÁC SĨ đã nói loại bài đó; `ly_do` phải là lời bác sĩ.
@@ -25,6 +26,7 @@ Cài cho Claude Desktop (khung chat): `python3 tools/mcp/endnote_ebm_mcp.py --ca
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib.util
 import json
 import os
@@ -43,7 +45,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
 
 TOOLS = Path(__file__).resolve().parents[1]
 TEN_MAY_CHU = "endnote-ebm"
-PHIEN_BAN = "1.1.0"
+PHIEN_BAN = "1.2.0"
 NGUON_NHOM = "sdb.eni (bản sao tạm, chỉ đọc) — mỗi nhóm theo group_id, tên trùng KHÔNG cộng thành viên"
 GIAO_THUC = ("2025-06-18", "2025-03-26", "2024-11-05")
 
@@ -62,6 +64,22 @@ def mod(ten: str):
     if ten not in _MOD:
         _MOD[ten] = _nap(f"_mcp_{ten}", {"sk": "endnote_suc_khoe.py", "nec": "nap_endnote_chu_de.py"}[ten])
     return _MOD[ten]
+
+
+def _khoa_ghi():
+    """CHÍNH bản mô-đun khoá ghi mà `EndNoteMac` dùng (`nap_endnote_chu_de.nap_khoa_ghi`) — None khi không nạp được. Bản nạp
+    riêng sẽ có trạng thái khoá riêng: phạm vi mở trên đó không thấy (và không nhả) khoá do lệnh ghi lấy."""
+    try:
+        return mod("nec").nap_khoa_ghi()
+    except Exception as e:  # noqa: BLE001 — cây hỏng thì công cụ đọc vẫn chạy; lệnh ghi tự báo lỗi của nó
+        print(f"⚠ không nạp được khoá ghi EndNote ({type(e).__name__}: {str(e)[:120]})", file=sys.stderr)
+        return None
+
+
+def pham_vi_cong_cu():
+    """Phạm vi khoá cho MỘT lời gọi công cụ: khoá lấy bên trong được nhả khi công cụ trả về, kể cả khi lỗi."""
+    kg = _khoa_ghi()
+    return kg.giu_khoa_ghi() if kg else contextlib.nullcontext()
 
 
 def _endnote():
@@ -94,7 +112,8 @@ def cc_trang_thai(_a: dict) -> dict:
     except Exception as e:  # noqa: BLE001 — báo lý do, không coi là lỗi máy chủ
         kq["endnote_dang_mo"] = False
         kq["ly_do_chua_mo"] = str(e)[:200]
-    kq["khoa_ghi"] = _nap("_mcp_kg", "khoa_ghi_endnote.py").doc_khoa()
+    kg = _khoa_ghi()
+    kq["khoa_ghi"] = kg.doc_khoa() if kg else "không nạp được mô-đun khoá ghi"
     return kq
 
 
@@ -305,7 +324,8 @@ def xu_ly(tin: dict) -> dict | None:
             return {"jsonrpc": "2.0", "id": ma, "result": {"isError": True, "content": [
                 {"type": "text", "text": f"không có công cụ «{p.get('name')}» (máy chủ không có công cụ xoá)"}]}}
         try:
-            ra = ham(p.get("arguments") or {})
+            with pham_vi_cong_cu():
+                ra = ham(p.get("arguments") or {})
             kq = {"content": [{"type": "text", "text": json.dumps(ra, ensure_ascii=False, indent=1, default=str)}], "isError": False}
         except Exception as e:  # noqa: BLE001 — lỗi công cụ trả về như kết quả lỗi, máy chủ sống tiếp
             print(traceback.format_exc(), file=sys.stderr)
