@@ -591,7 +591,11 @@ def giac_quan_tom_tat_word(hang_cho=None) -> list[tuple[int, str, str]]:
         return []
     if not ds:
         return []
-    return [(2, f"{len(ds)} trích dẫn MỚI có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)",
+    n_cu = sum(1 for x in ds if x.get("nguon_hang_cho") == "ngoai_le_moc")
+    n_moi = len(ds) - n_cu
+    phan = ([f"{n_moi} trích dẫn MỚI"] if n_moi else []) + (
+        [f"{n_cu} bản ghi CŨ tầng ngoại lệ mốc (bác sĩ chọn tóm tắt — `ngoai-le-moc`)"] if n_cu else [])
+    return [(2, " + ".join(phan) + " có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)",
              "python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨")]
 
 
