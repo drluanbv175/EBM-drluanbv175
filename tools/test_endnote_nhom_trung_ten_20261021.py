@@ -102,10 +102,11 @@ def _json(kq: dict) -> dict:
 
 
 class _EnGia:
-    """EndNote giả: `post` ghi thẳng một nhóm vào sdb giả — `tao_moi=True` mô phỏng post sinh nhóm MỚI cùng tên (đo 18/10)."""
+    """EndNote giả: `post` ghi thẳng một nhóm vào sdb giả — post vào tên đã có nhóm sinh nhóm MỚI cùng tên, không bao giờ cộng
+    thêm (đo 18/10 và đo lại 24/10/2026 trên bản sao thư viện: 171 → +146 → +158)."""
 
-    def __init__(self, tv: Path, tao_moi: bool = False):
-        self.tv, self.tao_moi, self.goi = tv, tao_moi, []
+    def __init__(self, tv: Path):
+        self.tv, self.goi = tv, []
 
     def so_csdl(self):
         return "1"
@@ -116,12 +117,7 @@ class _EnGia:
         kn = sqlite3.connect(sk.sdb(self.tv))
         try:
             cu = [g for g, s in kn.execute("SELECT group_id, spec FROM groups") if sk._giai_spec(s)[0] == ten]
-            if cu and not self.tao_moi:
-                mem = kn.execute("SELECT members FROM groups WHERE group_id = ?", (cu[0],)).fetchone()[0]
-                kn.execute("UPDATE groups SET members = ? WHERE group_id = ?",
-                           (_thanh_vien(*sk.giai_thanh_vien(mem), *rec), cu[0]))
-            else:
-                kn.execute("INSERT INTO groups (group_id, spec, members) VALUES (?,?,?)", (200 + len(cu), _spec(ten), _thanh_vien(*rec)))
+            kn.execute("INSERT INTO groups (group_id, spec, members) VALUES (?,?,?)", (200 + len(cu), _spec(ten), _thanh_vien(*rec)))
             kn.commit()
         finally:
             kn.close()
@@ -262,16 +258,21 @@ def test_dua_vao_nhom_ten_moi_tao_dung_mot_nhom_va_dem_theo_group_id(may_chu, mo
     assert kq["nhom_moi_tao"] == [200] and kq["da_dang"] == 2 and "canh_bao" not in kq
 
 
-def test_dua_vao_nhom_post_sinh_nhom_moi_cung_ten_thi_bao_va_lan_sau_tu_choi(may_chu, monkeypatch):
-    en = _EnGia(may_chu, tao_moi=True)
+def test_dua_vao_nhom_ten_da_co_mot_nhom_khong_post_ma_ghi_hang_cho(may_chu, monkeypatch, tmp_path):
+    """24/10/2026: post vào tên đã có MỘT nhóm luôn sinh nhóm trùng ⇒ KHÔNG post (cả khi ap_dung), bài thiếu vào hàng chờ."""
+    cho = tmp_path / "cho.json"
+    monkeypatch.setenv("EBM_ENDNOTE_CHO_VAO_NHOM", str(cho))
+    en = _EnGia(may_chu)
     monkeypatch.setattr(mcp, "_endnote", lambda: (en, may_chu))
-    kho = _json(_goi("endnote_dua_vao_nhom", {"rec_nums": [30], "ten_nhom": TEN_MMN}))
-    assert kho["nhom_hien_co"] == [{"group_id": 171, "so_ban_ghi": 1}] and "TẠO NHÓM MỚI" in kho["luu_y"]
-    kq = _json(_goi("endnote_dua_vao_nhom", {"rec_nums": [30], "ten_nhom": TEN_MMN, "ap_dung": True}))
-    assert kq["nhom_moi_tao"] == [201] and "da_dang" not in kq and "≥2 nhóm" in kq["canh_bao"]
-    assert [(n["group_id"], n["co_ban_ghi_yeu_cau"]) for n in kq["nhom_sau"]] == [(171, 0), (201, 1)]
-    lan_sau = _goi("endnote_dua_vao_nhom", {"rec_nums": [31], "ten_nhom": TEN_MMN, "ap_dung": True})
-    assert lan_sau["isError"] is True and len(en.goi) == 1
+    truoc = sk.nhom_trung_ten(sk.doc_nhom(may_chu))
+    kho = _json(_goi("endnote_dua_vao_nhom", {"rec_nums": [30, 40], "ten_nhom": TEN_MMN}))
+    assert kho["khong_post"] is True and kho["chay_kho"] is True and kho["se_ghi_hang_cho"] == 1 and kho["da_trong_nhom"] == 1
+    assert kho["nhom_hien_co"] == [{"group_id": 171, "so_ban_ghi": 1}] and en.goi == [] and not cho.exists()
+    kq = _json(_goi("endnote_dua_vao_nhom", {"rec_nums": [30, 40], "ten_nhom": TEN_MMN, "ap_dung": True}))
+    assert kq["khong_post"] is True and en.goi == [] and kq["cho_vao_nhom"] == [30] and "--cho-vao-nhom" in kq["viec_cua_bac_si"]
+    assert [n["group_id"] for n in sk.nhom_theo_ten(may_chu, TEN_MMN)] == [171], "không được sinh nhóm mới cùng tên"
+    assert sk.nhom_trung_ten(sk.doc_nhom(may_chu)) == truoc
+    assert [(n["ten"], n["rec"], n["group_id"]) for n in sk.cho_vao_nhom_con_lai(may_chu)] == [(TEN_MMN, [30], [171])]
 
 
 # ── trạng thái ───────────────────────────────────────────────────────────────────────────────────────────────────────────

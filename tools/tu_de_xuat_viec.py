@@ -541,7 +541,8 @@ def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str]]:
     """THƯ VIỆN ENDNOTE (19/10/2026, bác sĩ: «Hãy làm tất cả 6 việc giúp tôi» — việc 6).
 
     Thư viện đặt trong OneDrive theo lựa chọn của bác sĩ ⇒ canh hai rủi ro Clarivate cảnh báo: BẢN SAO XUNG ĐỘT đồng bộ và tệp
-    chỉ còn trên mây (ưu tiên 1); cùng nhóm «_Cho thung rac…» còn bản ghi chờ bác sĩ chuyển vào thùng rác (ưu tiên 2). Nguồn:
+    chỉ còn trên mây (ưu tiên 1); cùng nhóm «_Cho thung rac…» còn bản ghi chờ bác sĩ chuyển vào thùng rác, bản ghi chờ bác sĩ
+    kéo vào nhóm ĐÃ có (post không cộng thêm được — đo 24/10/2026) và tên nhóm đang có ≥2 nhóm riêng (ưu tiên 2). Nguồn:
     `tools/endnote_suc_khoe.py` — chỉ đọc cơ sở dữ liệu `sdb.eni`, KHÔNG gửi AppleScript (không bật EndNote). Chưa khai thư viện /
     không đọc được ⇒ giác quan chết (⚪), KHÔNG phải «ổn»."""
     _SO_GIAC_QUAN["chay"] += 1
@@ -562,6 +563,13 @@ def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str]]:
     for n in kq.get("nhom_cho_thung_rac") or []:
         ra.append((2, f"Nhóm EndNote «{n['ten']}» còn {n['con_o_thu_vien']}/{n['tong']} bản ghi chờ bác sĩ chuyển vào thùng rác",
                    "bấm đúp «Chuyen Nhom Vao Thung Rac.command» ở gốc repo"))
+    for n in kq.get("cho_vao_nhom") or []:
+        ra.append((2, f"{len(n['rec'])} bản ghi EndNote chờ bác sĩ kéo vào nhóm «{n['ten'][:70]}»",
+                   f"python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{n['ten']}\""))
+    for n in kq.get("nhom_trung_ten") or []:
+        ds = " + ".join(f"{g['so_ban_ghi']}" for g in n["nhom"])
+        ra.append((2, f"Nhóm EndNote «{n['ten'][:70]}» đang tách {n['so_nhom']} nhóm cùng tên ({ds} bài) — gộp tay",
+                   "python3 tools/endnote_suc_khoe.py"))
     return ra
 
 

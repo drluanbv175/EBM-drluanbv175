@@ -187,6 +187,7 @@ def test_mcp_moi_loi_goi_cong_cu_ghi_nha_khoa_khi_tra_ve(tmp_path, monkeypatch):
     trong_luc_ghi: list[str] = []
     en = object.__new__(nec.EndNoteMac)
     en.ten, en.ung_dung, en._csdl = "Lib.enl", "EndNote 2025", "1"
+    en.nhom_theo_ten = lambda ten: []  # tên nhóm mới — chốt nhóm đã có (24/10/2026) cho post
 
     def _chay(than, *ds, **kw):
         assert kgc.doc_khoa(tep)["pid"] == os.getpid(), "lệnh ghi chạy khi chưa giữ khoá"

@@ -15,7 +15,8 @@ giúp tôi» (việc 3). Claude Code (qua `.mcp.json`), Claude Desktop/khung cha
   • `endnote_loai_tru` chỉ dùng khi BÁC SĨ đã nói loại bài đó; `ly_do` phải là lời bác sĩ.
   • NHÓM đo theo group_id trên bản sao tạm của `sdb.eni` (21/10/2026), không theo TÊN qua AppleScript — `get records in "<tên>"`
     trả HỢP mọi nhóm cùng tên (2 nhóm 5 + 4 bài từng bị báo thành «1 nhóm 9 bài», tưởng đã gộp). `endnote_dua_vao_nhom` TỪ CHỐI
-    ghi khi tên đích đang có ≥2 nhóm hoặc không đo được: không biết `post` sẽ rơi vào nhóm nào.
+    ghi khi tên đích đang có ≥2 nhóm hoặc không đo được; tên đích đã có MỘT nhóm ⇒ KHÔNG post (đo 24/10/2026: post vào tên đã
+    có LUÔN sinh nhóm mới cùng tên) — bản ghi thiếu vào hàng chờ đưa vào nhóm cho bác sĩ kéo tay.
 
 Giao thức: MCP qua stdio — JSON-RPC 2.0, mỗi thông điệp một dòng. Chỉ dùng thư viện chuẩn (chạy được bằng `python3` hệ thống
 hay `uv run`). stdout là KÊNH GIAO THỨC: mọi dòng chữ khác đi stderr.
@@ -225,16 +226,27 @@ def cc_dua_vao_nhom(a: dict) -> dict:
         raise ValueError("cần `ten_nhom` và `rec_nums`")
     en, tv = _endnote()
     truoc = _nhom_dich(tv, ten)
+    if truoc:  # ĐÃ có một nhóm: post LUÔN sinh nhóm MỚI cùng tên (đo 24/10/2026) ⇒ không post, hàng chờ cho bác sĩ kéo tay
+        da_vao = set(truoc[0]["rec"] or [])
+        thieu = [r for r in rec if r not in da_vao]
+        kq = {"khong_post": True, "ten_nhom": ten,
+              "nhom_hien_co": [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in truoc],
+              "da_trong_nhom": len(rec) - len(thieu), "cho_vao_nhom_moi": thieu,
+              "ly_do": "post vào tên đã có nhóm LUÔN sinh nhóm MỚI cùng tên, kể cả nhóm vừa tạo cùng phiên (đo 24/10/2026 trên "
+                       "bản sao thư viện); EndNote.sdef không có lệnh thêm vào nhóm đã có ⇒ bác sĩ kéo tay"}
+        if not a.get("ap_dung"):
+            return {**kq, "chay_kho": True, "se_ghi_hang_cho": len(thieu)}
+        kq["cho_vao_nhom"] = mod("nec").ghi_cho_vao_nhom(tv, ten, them=thieu, da_vao=da_vao, group_id=[truoc[0]["group_id"]])
+        kq["viec_cua_bac_si"] = (f"python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{ten}\" (EndNote chỉ hiện các bài chờ) → "
+                                 "⌘A → kéo vào nhóm ở cột trái")
+        return kq
     csdl = en.so_csdl()
     ids = [f'<RecordID database="{csdl}" recNum="{r}" />' for r in rec]
     if not a.get("ap_dung"):
-        return {"chay_kho": True, "se_dang": len(ids), "ten_nhom": ten,
-                "nhom_hien_co": [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in truoc],
-                "luu_y": (f"đã có MỘT nhóm tên này (group_id {truoc[0]['group_id']}) — post vào tên đã có từng TẠO NHÓM MỚI "
-                          "(đo 18/10/2026); sau khi ghi công cụ đo lại theo group_id") if truoc else
-                         "chưa có nhóm tên này — post tạo MỘT nhóm mới (đo 21/10/2026)"}
+        return {"chay_kho": True, "se_dang": len(ids), "ten_nhom": ten, "nhom_hien_co": [],
+                "luu_y": "chưa có nhóm tên này — post tạo MỘT nhóm mới (đo 21/10 và 24/10/2026)"}
     en.dang_vao_nhom(ids, ten)
-    return _do_sau_khi_dang(tv, ten, rec, {n["group_id"] for n in truoc})
+    return _do_sau_khi_dang(tv, ten, rec, set())
 
 
 def cc_loai_tru(a: dict) -> dict:
@@ -284,8 +296,10 @@ CONG_CU = [
     ("endnote_gan_pdf_kho", "Gắn PDF toàn văn có sẵn trong kho EBM (`toan_van_oa/PMID-<n>_*.pdf`) vào bản ghi CHƯA có tệp (khớp "
      "theo PMID). Chạy khô mặc định.",
      _sc({"pmids": {"type": "array", "items": {"type": "string"}}, "ap_dung": _AP}), cc_gan_pdf_kho),
-    ("endnote_dua_vao_nhom", "Đăng bản ghi (recNum) vào một nhóm CUSTOM. Chạy khô mặc định. Không xoá, không bỏ khỏi nhóm. TỪ "
-     "CHỐI khi tên đích đang có ≥2 nhóm hoặc không đọc được sdb.eni; ghi xong đo lại theo group_id (báo nhóm mới sinh).",
+    ("endnote_dua_vao_nhom", "Đăng bản ghi (recNum) vào một nhóm CUSTOM. Chạy khô mặc định. Không xoá, không bỏ khỏi nhóm. CHỈ "
+     "post khi tên đích CHƯA có nhóm (tạo đúng một, đo lại theo group_id); nhóm ĐÃ có ⇒ KHÔNG post (post luôn sinh nhóm trùng "
+     "tên — đo 24/10/2026), bản ghi thiếu vào hàng chờ cho bác sĩ kéo tay. TỪ CHỐI khi tên đích có ≥2 nhóm hoặc không đọc "
+     "được sdb.eni.",
      _sc({"rec_nums": {"type": "array", "items": {"type": "integer"}}, "ten_nhom": {"type": "string"}, "ap_dung": _AP},
          ["rec_nums", "ten_nhom"]), cc_dua_vao_nhom),
     ("endnote_loai_tru", "Thêm PMID/DOI vào danh sách LOẠI TRỪ (không nạp lại vào EndNote). CHỈ khi bác sĩ đã nói loại bài này; "

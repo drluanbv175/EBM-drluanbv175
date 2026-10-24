@@ -2,8 +2,9 @@
 """Kiểm tools/nap_endnote_chu_de.py — nạp trích dẫn của một chủ đề vào EndNote (11/10/2026).
 
 Không gọi mạng, không điều khiển EndNote thật: EndNote được thay bằng `_EndNoteGia` mô phỏng ĐÚNG các
-hành vi đã đo trên EndNote 2025 (tìm theo chuỗi con nhưng ta lọc khớp nguyên; nhóm CỘNG THÊM và nhân đôi
-khi đăng lại; nhập lại cùng XML sinh bản trùng). Mọi đường dẫn đều nằm trong tmp_path.
+hành vi đã đo trên EndNote 2025 (tìm theo chuỗi con nhưng ta lọc khớp nguyên; post vào tên ĐÃ có nhóm LUÔN sinh nhóm
+MỚI cùng tên — đo 24/10/2026 trên bản sao thư viện; nhập lại cùng XML sinh bản trùng). Mọi đường dẫn đều nằm trong tmp_path,
+kể cả hàng chờ đưa vào nhóm (fixture tự động trỏ `EBM_ENDNOTE_CHO_VAO_NHOM` sang tmp_path).
 """
 from __future__ import annotations
 
@@ -16,6 +17,13 @@ from pathlib import Path
 import pytest
 
 DUONG = Path(__file__).resolve().parent / "nap_endnote_chu_de.py"
+
+
+@pytest.fixture(autouse=True)
+def _hang_cho_tam(tmp_path, monkeypatch):
+    """Hàng chờ đưa vào nhóm luôn ở tmp_path — không bao giờ tệp thật trong thư mục nhà."""
+    monkeypatch.setenv("EBM_ENDNOTE_CHO_VAO_NHOM", str(tmp_path / "cho-vao-nhom.json"))
+    return tmp_path / "cho-vao-nhom.json"
 
 
 @pytest.fixture(scope="module")
@@ -209,7 +217,8 @@ def test_dat_pdf_vao_thu_vien(N, tmp_path):
 # ── điều phối với EndNote mô phỏng ─────────────────────────────────────────────────────────────────
 
 class _EndNoteGia:
-    """Mô phỏng hành vi đã đo của EndNote 2025: nhập lại sinh bản trùng, nhóm cộng thêm và nhân đôi."""
+    """Mô phỏng hành vi đã đo của EndNote 2025: nhập lại sinh bản trùng; post vào tên ĐÃ có nhóm sinh nhóm MỚI cùng tên (đo
+    24/10/2026 — không bao giờ cộng thêm); nhóm đọc theo group_id như sdb.eni (`nhom_theo_ten`)."""
 
     def __init__(self, thu_vien: Path, co_san=()):
         self.thu_vien = thu_vien
@@ -249,30 +258,39 @@ class _EndNoteGia:
             self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
                        r.findtext("urls/pdf-urls/url") or "")
 
-    # Đo 11/10 trên thư viện thật: nhóm vừa tạo chưa vào danh sách nhóm vài giây; đăng cùng tên lúc đó ⇒ nhóm THỨ HAI.
-    tre_dang_ky = 0                              # số lần hỏi danh sách nhóm mà nhóm mới còn «vô hình»
-    nhom_trung: list = []                        # tên các nhóm trùng tên EndNote đã sinh ra
+    # `nhom` = {tên: mã bản ghi} của nhóm ĐẦU TIÊN mang tên đó; `nhom_trung` = [(tên, mã)] các nhóm cùng tên sinh thêm.
+    tre_dang_ky = 0          # số lần đo sdb.eni mà nhóm vừa tạo còn «vô hình» (EndNote ghi xuống đĩa trễ)
+    nhom_trung: list = []
+    loi_do_nhom = None       # ngoại lệ ném khi đo nhóm (giả lập sdb.eni không đọc được)
 
     def thanh_vien_nhom(self, ten):
-        return list(self.nhom.get(ten, []))
+        raise AssertionError("không được đo nhóm theo TÊN qua AppleScript (trả HỢP các nhóm cùng tên)")
 
     def ten_cac_nhom(self):
+        raise AssertionError("không được liệt kê nhóm qua AppleScript")
+
+    @staticmethod
+    def _so(ids):
+        return [int(re.search(r'recNum="(\d+)"', i).group(1)) for i in ids]
+
+    def nhom_theo_ten(self, ten):
+        if self.loi_do_nhom is not None:
+            raise self.loi_do_nhom
         if not hasattr(self, "_an"):
             self._an = {}
-        ra = [n for n in self.nhom if self._an.get(n, 0) == 0] + list(self.nhom_trung)
-        for n in self._an:
-            self._an[n] = max(0, self._an[n] - 1)
-        return ra
+        ds = [] if ten not in self.nhom or self._an.get(ten, 0) > 0 else [(1, self.nhom[ten])]
+        ds += [(100 + k, ids) for k, (t, ids) in enumerate(self.nhom_trung) if t == ten]
+        self._an[ten] = max(0, self._an.get(ten, 0) - 1)
+        return [{"group_id": g, "ten": ten, "so_ban_ghi": len(ids), "rec": self._so(ids)} for g, ids in ds]
 
     def dang_vao_nhom(self, ids, ten):
         if not hasattr(self, "_an"):
             self._an = {}
-        if ten in self.nhom and (self._an.get(ten, 0) > 0 or getattr(self, "sinh_trung_ten", False)):
-            self.nhom_trung = [*self.nhom_trung, ten]   # nhóm cũ chưa đăng ký ⇒ EndNote tạo nhóm mới cùng tên
+        if ten in self.nhom:  # đo 24/10/2026: post vào tên đã có ⇒ nhóm MỚI cùng tên, không bao giờ cộng thêm
+            self.nhom_trung = [*self.nhom_trung, (ten, list(ids))]
             return
-        if ten not in self.nhom:
-            self._an[ten] = self.tre_dang_ky
-        self.nhom.setdefault(ten, []).extend(ids)   # đăng lại = nhân đôi, như đo thật
+        self._an[ten] = self.tre_dang_ky
+        self.nhom[ten] = list(ids)
 
 
 def _chay(N, tmp_path, en, ap_dung=True, lay_pm=None, lay_ep=None, lay_cr=None, kho=None):
@@ -551,15 +569,24 @@ def _nap_nhieu(N, files, doc, en, ch, ap_dung=True):
                        lay_pm=lambda pmids: {p: _meta(p) for p in pmids}, lay_ep=lambda pmids: {}, lay_cr=lambda doi: None)
 
 
+def _hang_cho(N, tv):
+    return N._sk().doc_cho_vao_nhom()["thu_vien"].get(N._sk().khoa_thu_vien(tv)) or {}
+
+
 def test_nhieu_phien_ban_vao_mot_nhom_ten_ban_moi_nhat_va_ghi_nho(N, tmp_path):
+    """Bản mới nhất TẠO nhóm (post một lần); bản cũ hơn KHÔNG post vào nhóm vừa tạo (post luôn sinh nhóm trùng — đo 24/10/2026)
+    mà đưa bài thiếu (222) vào hàng chờ cho bác sĩ kéo tay."""
     files, doc, tv, ch = _hai_phien_ban(tmp_path)
     en = _EndNoteGia(tv, co_san=[("111", None, "")])
     kq = _nap_nhieu(N, files, doc, en, ch)
+    ten = "EBM · Suy tim — câu hỏi bản mới"
     assert [b["dashboard"] for b in kq] == [files[1].name, files[0].name], "bản mới nhất chạy trước, đặt tên nhóm"
-    assert set(en.nhom) == {"EBM · Suy tim — câu hỏi bản mới"}, "một chủ đề chỉ một nhóm"
-    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3, "bổ sung phần thiếu của bản cũ (222), không lặp 111"
+    assert set(en.nhom) == {ten} and en.nhom_trung == [], "một chủ đề chỉ một nhóm, không sinh nhóm trùng tên"
+    assert en._so(en.nhom[ten]) == [1, 2], "bản mới nhất tạo nhóm với 111 (đã có) + 333 (vừa nhập)"
+    assert kq[1]["cho_vao_nhom_moi"] == [3] and _hang_cho(N, tv)[ten]["rec"] == [3], "222 của bản cũ vào hàng chờ"
+    assert _hang_cho(N, tv)[ten]["dashboard"] == [files[0].name] and _hang_cho(N, tv)[ten]["group_id"] == [1]
     assert len(en.ban_ghi) == 3, "bản ghi đã có (111) giữ nguyên, không nhập lại"
-    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": "EBM · Suy tim — câu hỏi bản mới"}
+    assert N.nhom_da_ghi(ch) == {"EBM_SuyTim": ten}
 
 
 def test_nhom_da_ghi_nho_thang_cau_hoi_moi(N, tmp_path):
@@ -570,36 +597,77 @@ def test_nhom_da_ghi_nho_thang_cau_hoi_moi(N, tmp_path):
     assert set(en.nhom) == {"EBM · Suy tim (nhóm cũ)"}, "chủ đề đã có nhóm ⇒ vào đúng nhóm cũ dù câu hỏi đổi chữ"
 
 
-def test_doi_nhom_moi_dang_ky_roi_moi_dang_ban_ke_tiep(N, tmp_path, monkeypatch):
-    """Ca thật 11/10: «Tiên lượng suy tim» bị tách hai nhóm cùng tên vì bản cũ đăng ngay sau khi bản mới tạo nhóm."""
+def test_nhom_vua_tao_cham_hien_tren_dia_thi_doi_roi_ban_ke_tiep_vao_hang_cho(N, tmp_path, monkeypatch):
+    """EndNote ghi nhóm mới xuống sdb.eni trễ vài giây ⇒ đo lại tới khi thấy; bản kế tiếp thấy nhóm ⇒ không post."""
     ngu: list[float] = []
     monkeypatch.setattr(N, "_ngu", ngu.append)
     files, doc, tv, ch = _hai_phien_ban(tmp_path)
     en = _EndNoteGia(tv)
     en.tre_dang_ky = 3
     kq = _nap_nhieu(N, files, doc, en, ch)
-    assert en.nhom_trung == [], "đăng bản kế tiếp khi nhóm chưa đăng ký ⇒ EndNote sinh nhóm trùng tên"
-    assert len(en.nhom["EBM · Suy tim — câu hỏi bản mới"]) == 3 and ngu, "phải đợi nhóm đăng ký"
-    assert not any(b.get("nhom_trung_ten") for b in kq)
+    assert en.nhom_trung == [], "post vào nhóm vừa tạo ⇒ EndNote sinh nhóm trùng tên"
+    assert len(ngu) == 3 and kq[0]["nhom_sau"] == [{"group_id": 1, "so_ban_ghi": 2}], "phải đợi nhóm hiện trên sdb.eni"
+    assert kq[1]["cho_vao_nhom_moi"] == [3] and not any(b.get("nhom_trung_ten") for b in kq)
 
 
-def test_endnote_sinh_nhom_trung_ten_thi_bao_ro(N, tmp_path, monkeypatch, capsys):
+def test_nhom_tao_trong_luot_ma_chua_hien_thi_ban_ke_tiep_khong_post(N, tmp_path, monkeypatch, capsys):
+    """Nhóm vừa post trong CÙNG lượt mà sau CHO_NHOM_GIAY vẫn chưa hiện trên sdb.eni ⇒ bản kế tiếp KHÔNG post lại (post lần hai
+    vào cùng tên = nhóm trùng) — bài thiếu vào hàng chờ."""
     monkeypatch.setattr(N, "_ngu", lambda s: None)
     files, doc, tv, ch = _hai_phien_ban(tmp_path)
     en = _EndNoteGia(tv)
-    _nap_nhieu(N, files[1:], doc, en, ch)
-    en.sinh_trung_ten = True
+    en.tre_dang_ky = 10 ** 6
+    kq = _nap_nhieu(N, files, doc, en, ch)
+    assert en.nhom_trung == [] and kq[0].get("nhom_chua_thay") and kq[1]["dang_vao_nhom"] == 0
+    assert _hang_cho(N, tv)["EBM · Suy tim — câu hỏi bản mới"]["rec"] == [1, 3], "lượt sau đo lại sẽ dọn 1 (đã vào nhóm)"
+    assert "Chưa thấy nhóm trong sdb.eni" in capsys.readouterr().out
+
+
+def test_ten_dang_co_hai_nhom_thi_khong_post_bao_gop_tay(N, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(N, "_ngu", lambda s: None)
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    ten = "EBM · Suy tim — câu hỏi bản mới"
+    en = _EndNoteGia(tv, co_san=[("111", None, "")])
+    en.nhom = {ten: [en.ban_ghi[0]["id"]]}
+    en.nhom_trung = [(ten, [])]
+    kq = _nap_nhieu(N, files[1:], doc, en, ch)
+    assert en.nhom_trung == [(ten, [])] and en._so(en.nhom[ten]) == [1], "tên đã có nhóm ⇒ không post (không thêm nhóm)"
+    assert kq[0]["nhom_trung_ten"] == 2 and kq[0]["cho_vao_nhom_moi"] == [2]
+    ra = capsys.readouterr().out
+    assert "nhóm cùng tên này — gộp tay" in ra and "🛎 Nhóm đã có (group_id 1: 1 bài, group_id 100: 0 bài)" in ra
+
+
+def test_khong_do_duoc_nhom_thi_khong_post_khong_ghi_hang_cho(N, tmp_path, capsys):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv)
+    en.loi_do_nhom = N.KhongDoDuocNhom("sdb.eni đổi liên tục")
+    kq = _nap_nhieu(N, files[1:], doc, en, ch)
+    assert en.nhom == {} and en.nhom_trung == [] and kq[0]["dang_vao_nhom"] == 0
+    assert kq[0]["nhom_khong_do_duoc"] and _hang_cho(N, tv) == {}
+    assert "KHÔNG ĐO ĐƯỢC nhóm trong sdb.eni" in capsys.readouterr().out
+
+
+def test_bai_bac_si_da_keo_vao_nhom_duoc_don_khoi_hang_cho(N, tmp_path):
+    files, doc, tv, ch = _hai_phien_ban(tmp_path)
+    en = _EndNoteGia(tv, co_san=[("111", None, "")])
+    _nap_nhieu(N, files, doc, en, ch)
+    ten = "EBM · Suy tim — câu hỏi bản mới"
+    assert _hang_cho(N, tv)[ten]["rec"] == [3]
+    en.nhom[ten].append(en.ban_ghi[2]["id"])  # bác sĩ kéo 222 vào nhóm trên giao diện EndNote
     kq = _nap_nhieu(N, files[:1], doc, en, ch)
-    assert kq[0]["nhom_trung_ten"] == 2
-    assert "nhóm cùng tên này — gộp tay" in capsys.readouterr().out
+    assert kq[0]["cho_vao_nhom_moi"] == [] and _hang_cho(N, tv) == {}, "lượt sau phải dọn bài đã vào nhóm"
 
 
 def test_cho_nhom_co_tran_thoi_gian(N, monkeypatch):
     ngu: list[float] = []
     monkeypatch.setattr(N, "_ngu", ngu.append)
-    en = type("E", (), {"ten_cac_nhom": lambda self: []})()
-    assert N.cho_nhom_dang_ky(en, "EBM · X", 1) == 0
-    assert len(ngu) == N.CHO_NHOM_GIAY, "không đợi vô hạn khi EndNote không bao giờ liệt kê nhóm"
+    en = type("E", (), {"nhom_theo_ten": lambda self, ten: []})()
+    assert N.cho_nhom_dang_ky(en, "EBM · X") == []
+    assert len(ngu) == N.CHO_NHOM_GIAY, "không đợi vô hạn khi sdb.eni không bao giờ có nhóm"
+
+    def hong(self, ten):
+        raise N.KhongDoDuocNhom("x")
+    assert N.cho_nhom_dang_ky(type("E", (), {"nhom_theo_ten": hong})(), "EBM · X") is None, "chưa đo được ≠ chưa có nhóm"
 
 
 def test_chay_kho_khong_ghi_bang_nhom(N, tmp_path):
