@@ -48,6 +48,7 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py dung <PMID|REC-n> [--gan-endnote] [--ap-dung]
   python3 tools/tom_tat_chung_cu_word.py tien-do
   python3 tools/tom_tat_chung_cu_word.py moc --loi "<nguyên văn bác sĩ>"   # bản ghi hiện có: để nguyên, không tóm tắt
+  python3 tools/tom_tat_chung_cu_word.py ngoai-le-moc --tang 1 2 --loi "<nguyên văn bác sĩ>"   # bản ghi CŨ tầng đó vẫn vào hàng chờ
   python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt
   python3 tools/tom_tat_chung_cu_word.py pdf-hoa [--ap-dung]   # mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
@@ -1550,6 +1551,45 @@ def doc_moc(thu_vien: Path) -> set[int] | None:
         return None
 
 
+# Bác sĩ 24/10/2026: «Hãy kiểm tra lại tất cả các trích dẫn trong Endnote giúp tôi,đảm bảo đã được tải,đọc toàn văn và tóm tắt
+# chứng cứ một cách chi tiết» → chọn phương án «T1 + T2». NGOẠI LỆ của mốc theo TẦNG ưu tiên: bản ghi trong mốc mà là nguồn của mục
+# «Áp dụng» (T1) / «Cân nhắc» (T2) vẫn vào hàng chờ; T3/T4 giữ luật mốc. Tệp vắng/hỏng ⇒ không ngoại lệ (đúng luật 19/10).
+TEN_NGOAI_LE = "_ngoai_le_moc.json"
+
+
+def tep_ngoai_le(thu_vien: Path) -> Path:
+    return thu_muc_ra(thu_vien) / TEN_NGOAI_LE
+
+
+def ghi_ngoai_le_moc(thu_vien: Path, tang: list[int], loi_bac_si: str) -> int:
+    """Ghi quyết định ngoại lệ mốc (thay quyết định trước). Bắt buộc nguyên văn lời bác sĩ và tầng thuộc 1–4."""
+    if len((loi_bac_si or "").strip()) < LOI_MOC_TOI_THIEU:
+        print("✗ cần NGUYÊN VĂN lời bác sĩ (--loi) làm căn cứ ghi ngoại lệ mốc")
+        return 1
+    tap = sorted({int(t) for t in tang})
+    if not tap or any(t not in (1, 2, 3, 4) for t in tap):
+        print("✗ --tang phải là một hay nhiều giá trị trong 1 2 3 4")
+        return 1
+    tep = tep_ngoai_le(thu_vien)
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tep.write_text(json.dumps({"phien_ban": 1, "luc": dt.datetime.now().isoformat(timespec="seconds"),
+                               "loi_bac_si": loi_bac_si.strip(), "tang": tap}, ensure_ascii=False), encoding="utf-8")
+    print(f"✓ ngoại lệ mốc: bản ghi cũ tầng {', '.join(f'T{t}' for t in tap)} vào hàng chờ tóm tắt — {tep}")
+    return 0
+
+
+def doc_ngoai_le_moc(thu_vien: Path) -> set[int]:
+    """Tầng được miễn mốc; vắng/hỏng/sai kiểu ⇒ tập rỗng (giữ nguyên luật mốc 19/10)."""
+    try:
+        d = json.loads(tep_ngoai_le(thu_vien).read_text(encoding="utf-8"))
+        tang = d["tang"]
+        if not isinstance(tang, list) or len(str(d.get("loi_bac_si") or "").strip()) < LOI_MOC_TOI_THIEU:
+            return set()
+        return {int(t) for t in tang if int(t) in (1, 2, 3, 4)}
+    except (OSError, ValueError, KeyError, TypeError):
+        return set()
+
+
 def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
     """(PMID, DOI chuẩn hoá) mà dashboard trích — mục chính lẫn tài liệu tham khảo."""
     ds = mod("tt").ngu_canh([dash], mod("nec")._nap_doc_data())
@@ -1559,15 +1599,26 @@ def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
 
 
 def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | None:
-    """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word. None = chưa có mốc (không đoán)."""
+    """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word, rồi bản ghi CŨ thuộc tầng ngoại lệ mốc (`ngoai-le-moc`, xếp theo tầng).
+    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán)."""
     moc = doc_moc(thu_vien)
     if moc is None:
         return None
-    ra = [bg for bg in ban_ghi_co_pdf(thu_vien) if bg["rec"] not in moc and not tep_word(thu_vien, bg["khoa"]).is_file()]
+    co_pdf = [bg for bg in ban_ghi_co_pdf(thu_vien) if not tep_word(thu_vien, bg["khoa"]).is_file()]
+    moi = [dict(bg, nguon_hang_cho="moi") for bg in co_pdf if bg["rec"] not in moc]
+    cu: list[dict] = []
+    ngoai_le = doc_ngoai_le_moc(thu_vien)
+    if ngoai_le:
+        ds = ngu_canh_dashboard()
+        for bg in co_pdf:
+            if bg["rec"] in moc:
+                t = tang_uu_tien(_ngu_canh_cua(ds, bg["pmid"], bg["doi"]))
+                if t in ngoai_le:
+                    cu.append(dict(bg, tang=t, nguon_hang_cho="ngoai_le_moc"))
     if dashboard is not None:
         pm, doi = trich_dan_cua_dashboard(dashboard)
-        ra = [bg for bg in ra if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)]
-    return sorted(ra, key=lambda x: x["rec"])
+        moi, cu = ([bg for bg in nh if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)] for nh in (moi, cu))
+    return sorted(moi, key=lambda x: x["rec"]) + sorted(cu, key=lambda x: (x["tang"], x["rec"]))
 
 
 HUONG_DAN_HANG_CHO = (
@@ -1618,6 +1669,9 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("moc", help="ghi mốc «để nguyên»: bản ghi hiện có không vào hàng chờ tóm tắt")
     p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
     p.add_argument("--ghi-de", action="store_true")
+    p = sub.add_parser("ngoai-le-moc", help="bản ghi CŨ (trong mốc) thuộc tầng ưu tiên đã chọn vẫn vào hàng chờ tóm tắt")
+    p.add_argument("--tang", type=int, nargs="+", required=True, choices=(1, 2, 3, 4))
+    p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
     p = sub.add_parser("pdf-hoa", help="mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote")
     p.add_argument("--ap-dung", action="store_true")
     p = sub.add_parser("hang-cho", help="trích dẫn MỚI (ngoài mốc) có PDF chưa có Word")
@@ -1650,6 +1704,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if a.lenh == "moc":
         return ghi_moc(tv, a.loi, ghi_de=a.ghi_de)
+    if a.lenh == "ngoai-le-moc":
+        return ghi_ngoai_le_moc(tv, a.tang, a.loi)
     if a.lenh == "pdf-hoa":
         return pdf_hoa(tv, ap_dung=a.ap_dung)
     if a.lenh == "hang-cho":
@@ -1681,7 +1737,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PDF giữ màu (mở được trong EndNote): {sum(pdf_con_moi(w) for w in word)}/{len(word)}"
               + ("" if all(pdf_con_moi(w) for w in word) else " — chạy `pdf-hoa --ap-dung`"))
         hc = hang_cho(tv)
-        print("Hàng chờ chứng cứ MỚI: " + ("⚪ chưa có mốc «để nguyên»" if hc is None else f"{len(hc)} trích dẫn"))
+        if hc is None:
+            print("Hàng chờ chứng cứ MỚI: ⚪ chưa có mốc «để nguyên»")
+        else:
+            print(f"Hàng chờ chứng cứ MỚI: {sum(x['nguon_hang_cho'] == 'moi' for x in hc)} trích dẫn")
+            nl = doc_ngoai_le_moc(tv)
+            if nl:
+                cu = [x for x in hc if x["nguon_hang_cho"] == "ngoai_le_moc"]
+                print(f"Ngoại lệ mốc ({', '.join(f'T{t}' for t in sorted(nl))}): còn {len(cu)} bản ghi cũ chờ tóm tắt — "
+                      + " · ".join(f"T{t} {sum(x['tang'] == t for x in cu)}" for t in sorted(nl)))
         return 0
     if a.lenh == "chuan-bi":
         return chuan_bi(tv, a.ma)[0]
