@@ -151,7 +151,7 @@ def test_mau_kho_tom_tat_dung_khoa_hop_le(capsys):
     mau = json.loads(capsys.readouterr().out)
     assert tt.kiem_kho_tom_tat(mau["muc"]) == []
     for v in mau["muc"].values():
-        assert set(v) == set(tt.KHOA_TRUONG_TOM_TAT) == {"thiet_ke", "P", "I", "C", "O", "ket_qua"}
+        assert set(v) == set(tt.KHOA_TRUONG_TOM_TAT) == {"thiet_ke", "P", "I", "C", "O", "ket_qua", "han_che", "ket_luan"}
 
 
 def test_kiem_kho_bao_khoa_la_va_dinh_danh_sai():
