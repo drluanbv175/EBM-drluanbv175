@@ -1545,6 +1545,34 @@ def chay_tom_tat(endnote, files: list[Path], kho: Path | None, ap_dung: bool, tt
     return bc
 
 
+def chay_tom_tat_thu_vien(endnote, dash_goc: Path, kho: Path | None, ap_dung: bool, tt=None, bo_qua=None) -> dict | None:
+    """Tóm tắt máy cho bài trong thư viện KHÔNG thuộc dashboard nào (24/10/2026, `tom_tat_endnote_vi.ghi_thu_vien`). In tổng
+    kết; lỗi ⇒ dòng ✗, trả None. Chạy khô ⇒ dòng mở bằng «ℹ», không bằng «✓»."""
+    try:
+        tt = tt or _nap_tom_tat()
+        kho_tt = tt.nap_tom_tat_abstract(dash_goc)
+        bc = tt.ghi_thu_vien(endnote, dashboards=sorted(dash_goc.glob("WebDashboard_*.html")), kho=kho, ap_dung=ap_dung,
+                             doc_data=_nap_doc_data(), tom_tat_abs=kho_tt, bo_qua=bo_qua)
+    except (RuntimeError, OSError, ValueError, sqlite3.Error) as e:
+        print(f"✗ Tóm tắt thư viện (Abstract): {type(e).__name__}: {e} — chưa ghi gì sau lỗi này"[:300])
+        return None
+    print(f"{'✓' if ap_dung else 'ℹ Chạy khô ·'} Tóm tắt thư viện (Abstract): {bc['muc_kho']} mục kho ngoài dashboard · "
+          f"{bc['co_ban_ghi']} có bản ghi · {'đã ghi ' + str(bc['da_ghi']) if ap_dung else 'sẽ ghi ' + str(bc['se_ghi'])} · "
+          f"không đổi {bc['khong_doi']} · thuộc dashboard (để bước --tom-tat-vi) {bc['thuoc_dashboard']}"
+          + (f" · sao lưu trước khi ghi: {bc['sao_luu']}" if bc.get("sao_luu") else ""))
+    for ten, nhan in (("khong_co_ban_ghi", "Không thấy bản ghi trong thư viện"),
+                      ("bo_qua_theo_bac_si", "⊘ Không ghi (bác sĩ đã loại/đã bỏ vào thùng rác)")):
+        ds = bc.get(ten) or []
+        if ds:
+            print(f"   {nhan}: {len(ds)} — " + "; ".join(ds[:8]) + (" …" if len(ds) > 8 else ""))
+    for loi in bc["loi"][:8] + bc["tom_tat_lech_so"][:8]:
+        print(f"   ⚠ {loi}")
+    an = max(0, len(bc["loi"]) - 8) + max(0, len(bc["tom_tat_lech_so"]) - 8)
+    if an:
+        print(f"   ⚠ … và {an} cảnh báo khác chưa in (--json để xem đủ)")
+    return bc
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     ap.add_argument("--file", nargs="*", default=[], help="dashboard WebDashboard_*.html")
@@ -1564,6 +1592,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tom-tat-vi", action="store_true",
                     help="chỉ ghi/làm mới TÓM TẮT THỰC HÀNH tiếng Việt vào trường Abstract (cùng --file/--tat-ca; "
                          "abstract gốc giữ dưới dấu phân cách; chạy khô mặc định)")
+    ap.add_argument("--tom-tat-thu-vien", action="store_true",
+                    help="ghi tóm tắt máy (kho tom-tat-abstract-vi.json) vào Abstract của bài trong thư viện KHÔNG thuộc "
+                         "dashboard nào (không đi cùng --file/--tat-ca; chạy khô mặc định)")
     ap.add_argument("--khong-tom-tat", action="store_true",
                     help="nạp --ap-dung mà KHÔNG ghi tóm tắt tiếng Việt (mặc định nạp xong thì ghi)")
     ap.add_argument("--chi-khi-dang-mo", action="store_true",
@@ -1632,7 +1663,13 @@ def main(argv: list[str] | None = None) -> int:
             print("✗ không thấy thư mục EBM-Dashboards/ (bản sao trần?) — dùng --file")
             return MA_KHONG_CHAY
         files += sorted(dash_goc.glob("WebDashboard_*.html"))
-    if not files and not a.gan_kho:
+    if a.tom_tat_thu_vien and (files or a.gan_kho or a.xuat_xml or a.tom_tat_vi):
+        print("✗ --tom-tat-thu-vien chạy riêng (không đi cùng --file/--tat-ca/--gan-kho/--xuat-xml/--tom-tat-vi)")
+        return MA_THAM_SO
+    if a.tom_tat_thu_vien and dash_goc is None:
+        print("✗ --tom-tat-thu-vien cần thư mục EBM-Dashboards/ (kho tóm tắt máy + ngữ cảnh mọi dashboard)")
+        return MA_KHONG_CHAY
+    if not files and not a.gan_kho and not a.tom_tat_thu_vien:
         ap.print_usage()
         return MA_THAM_SO
     if a.gan_kho and (files or a.xuat_xml):
@@ -1755,6 +1792,17 @@ def main(argv: list[str] | None = None) -> int:
 
     def bo_qua_tom_tat():
         return ham_bo_qua(loai_tru, doc_thung_rac_an_toan(endnote)[0] if endnote is not None else None)
+
+    if a.tom_tat_thu_vien:
+        if endnote is None:
+            print("⚪ --tom-tat-thu-vien cần EndNote đang mở đúng thư viện — chưa ghi gì.")
+            return MA_OK if a.chi_khi_dang_mo else MA_KHONG_CHAY
+        bc = chay_tom_tat_thu_vien(endnote, dash_goc, kho, a.ap_dung, bo_qua=bo_qua_tom_tat())
+        if bc is not None and not a.ap_dung:
+            print("Chạy khô — chưa ghi tóm tắt nào. Thêm --ap-dung để ghi.")
+        if a.json:
+            print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
+        return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
 
     if a.tom_tat_vi:
         if endnote is None:

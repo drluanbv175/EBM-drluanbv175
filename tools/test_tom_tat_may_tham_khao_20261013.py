@@ -88,12 +88,20 @@ def test_khong_abstract_thi_tom_tat_co_so_bi_chan_khong_so_thi_in():
     assert tt.tom_tat_cho(ds["pmid:32222222"], {"PMID 32222222": chu}, "")[0] == chu
 
 
-def test_muc_chinh_khong_bao_gio_nhan_tom_tat_may(tmp_path):
+def test_muc_chinh_giu_khoi_da_qua_cong_tom_tat_may_tach_rieng_ben_duoi(tmp_path):
+    """24/10/2026 (bác sĩ: chứng cứ chưa đạt chuẩn ⇒ tóm tắt tiếng Việt chi tiết vào Abstract): mục chính CÓ mục kho thì nhận
+    thêm tóm tắt máy — nhưng khối dashboard đã qua cổng vẫn đứng trước NGUYÊN VẸN với dòng chân của nó; không có mục kho ⇒
+    khối như cũ."""
     _, _, ds = _ds()
     muc = ds["pmid:31111111"]
-    assert tt.tom_tat_cho(muc, {"PMID 31111111": TOM_TAT}, GOC) == (None, [])
+    assert tt.tom_tat_cho(muc, {"PMID 31111111": TOM_TAT}, GOC) == (TOM_TAT, [])
+    cu = tt.khoi_tieng_viet(muc, tmp_path, None)
+    assert "TÓM TẮT MÁY" not in cu and cu.splitlines()[-1] == tt.CHAN, "không có mục kho ⇒ mục chính chỉ dùng nội dung đã qua cổng"
     k = tt.khoi_tieng_viet(muc, tmp_path, TOM_TAT)
-    assert "TÓM TẮT MÁY" not in k and k.splitlines()[-1] == tt.CHAN, "mục chính luôn dùng nội dung đã qua cổng"
+    assert k.startswith(cu + "\n\n"), "khối dashboard + dòng chân «đã qua cổng» giữ nguyên, đứng trước, cách một dòng trống"
+    sau = k[len(cu) + 2:].splitlines()
+    assert sau[0].startswith("ℹ️ TÓM TẮT MÁY TỪ ABSTRACT") and sau[-1] == tt.CHAN_MAY and tt.CHAN not in sau, \
+        "tóm tắt máy có dòng chân riêng — không đứng dưới chân «chép từ dashboard đã qua cổng»"
 
 
 def test_tra_theo_doi_chu_thuong_va_kho_rong_khong_lam_gi():

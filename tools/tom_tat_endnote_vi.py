@@ -61,7 +61,8 @@ NHAN_DONG = {"diem_nhan": "⭐", "ket_qua": "▶️ KẾT QUẢ", "action": "✅
              "flag": "⚠️ LƯU Ý", "vn": "▶️ TẠI VIỆT NAM", "rut": "❌ RÚT VÀ THAY", "dat_canh": "↔️ ĐẶT CẠNH TRONG CHỦ ĐỀ",
              "lech": "❗ KHUYẾN NGHỊ KHÁC NHAU GIỮA CÁC CHỦ ĐỀ", "tham_khao": "ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ",
              "may": "ℹ️ TÓM TẮT MÁY TỪ ABSTRACT",
-             "may_pmc": "ℹ️ TÓM TẮT MÁY TỪ TOÀN VĂN PMC (bài không có abstract)"}
+             "may_pmc": "ℹ️ TÓM TẮT MÁY TỪ TOÀN VĂN PMC (bài không có abstract)",
+             "thu_vien": "ℹ️ TÀI LIỆU TRONG THƯ VIỆN (không thuộc dashboard nào)"}
 # Hậu tố tệp trong kho toàn văn → nhãn nguồn ngắn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF).
 NGUON_TOAN_VAN = (("_CHR", "bản quyền — dùng cá nhân"), ("_WTDM", "TDM Wiley"), ("_UPW", "truy cập mở"),
                   ("_PMC", "truy cập mở"))
@@ -73,9 +74,14 @@ TRAN_VN = 220
 TRAN_THAM_KHAO = 220
 TOI_DA_CHU_DE_KHAC = 3
 # Trích dẫn CHỈ là tài liệu tham khảo (bác sĩ 13/10: «hoàn thiện với các trích dẫn còn lại»): tóm tắt MÁY từ abstract gốc.
+# 24/10/2026 — bác sĩ: «những chứng cứ chưa đạt chuẩn thì hãy tóm tắt tiếng việt một cách chi tiết vào phần Abstract của
+# trích dẫn», chọn «Từ abstract gốc, có cổng số liệu»: thêm HẠN CHẾ và KẾT LUẬN CỦA TÁC GIẢ (cùng chốt số với các trường khác);
+# tóm tắt máy in cả cho bài là MỤC CHÍNH của dashboard (dưới khối đã qua cổng, tách riêng dòng chân) và cho bài trong thư viện
+# không thuộc dashboard nào (`ghi_thu_vien`).
 TEP_TOM_TAT_ABS = "tom-tat-abstract-vi.json"
 NHAN_TOM_TAT = (("thiet_ke", "THIẾT KẾ"), ("P", "P · ĐỐI TƯỢNG"), ("I", "I · CAN THIỆP/PHƠI NHIỄM"), ("C", "C · SO SÁNH"),
-                ("O", "O · KẾT CỤC"), ("ket_qua", "KẾT QUẢ"))
+                ("O", "O · KẾT CỤC"), ("ket_qua", "KẾT QUẢ"), ("han_che", "HẠN CHẾ"),
+                ("ket_luan", "KẾT LUẬN CỦA TÁC GIẢ"))
 CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abstract gốc bên dưới, chưa qua cổng dashboard, không phải "
             "khuyến nghị · áp dụng qua Cổng A.")
 CHAN_MAY_PMC = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ toàn văn PMC truy cập mở (bài không có abstract), chưa qua cổng "
@@ -542,17 +548,14 @@ def van_ban_toan_van_pmc(pmid: str | None, kho: Path | None) -> str:
     return ""
 
 
-def tom_tat_cho(muc: dict, kho_tt: dict, goc: str, kho: Path | None = None) -> tuple[dict | None, list[str]]:
-    """(tóm tắt máy, số lệch) cho MỘT trích dẫn. Chỉ áp cho trích dẫn KHÔNG là mục chính ở dashboard nào — mục chính
-    đã có nội dung qua cổng. Mục kho mang «bo_qua» ⇒ không bao giờ in, kể cả khi lỡ có trường tóm tắt (mâu thuẫn — báo ở
-    `kiem_kho_tom_tat`). Có số lệch văn bản đối chiếu ⇒ (None, các số lệch): không in.
+def kiem_tom_tat_may(tt, goc: str, pmid: str | None = None, kho: Path | None = None) -> tuple[dict | None, list[str]]:
+    """(tóm tắt máy dùng được, số lệch) cho MỘT mục kho. Mục «bo_qua» ⇒ không bao giờ in, kể cả khi lỡ có trường tóm tắt
+    (mâu thuẫn — báo ở `kiem_kho_tom_tat`); mục không có trường hợp lệ ⇒ (None, []). Có số lệch văn bản đối chiếu ⇒
+    (None, các số lệch): không in.
 
     Văn bản đối chiếu: abstract gốc của bản ghi (mặc định); mục `"nguon": "toan_van_pmc"` ⇒ toàn văn PMC truy cập mở trong
     `kho` — CHỈ khi bản ghi không có abstract. Bị từ chối vì nguồn (bài có abstract, kho thiếu tệp PMC, «nguon» lạ) ⇒
     (None, [một dòng «⛔ …»]) — fail-closed, không in."""
-    if not kho_tt or any(x["vai"] == "muc" for x in muc["ngu_canh"]):
-        return None, []
-    tt = _muc_kho(muc, kho_tt)
     if _bo_qua(tt) or not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
         return None, []
     nguon = tt.get("nguon") or "abstract"
@@ -562,11 +565,31 @@ def tom_tat_cho(muc: dict, kho_tt: dict, goc: str, kho: Path | None = None) -> t
     if nguon == "toan_van_pmc":
         if not khong_co_abstract(goc):
             return None, ["⛔ bản ghi CÓ abstract — tóm tắt máy phải rút từ abstract (nguồn toàn văn PMC chỉ cho bài không có abstract)"]
-        doi_chieu = van_ban_toan_van_pmc(muc.get("pmid"), kho)
+        doi_chieu = van_ban_toan_van_pmc(pmid, kho)
         if not doi_chieu:
             return None, ["⛔ kho không có toàn văn PMC truy cập mở (PMID-<n>_PMC<id>.xml) để đối chiếu số"]
     lech = so_khong_khop(tt, doi_chieu)
     return (None, lech) if lech else (tt, [])
+
+
+def tom_tat_cho(muc: dict, kho_tt: dict, goc: str, kho: Path | None = None) -> tuple[dict | None, list[str]]:
+    """(tóm tắt máy, số lệch) cho MỘT trích dẫn của dashboard. Từ 24/10/2026 áp cả cho bài là MỤC CHÍNH (trước đó chỉ bài tham
+    khảo): khối dashboard đã qua cổng vẫn đứng trước, tóm tắt máy in tách riêng bên dưới với dòng chân của nó — xem
+    `khoi_tieng_viet`. Luật chốt số và nguồn: `kiem_tom_tat_may`."""
+    if not kho_tt:
+        return None, []
+    return kiem_tom_tat_may(_muc_kho(muc, kho_tt), goc, muc.get("pmid"), kho)
+
+
+def _dong_may(tom_tat: dict) -> list[str]:
+    """Nhãn + các trường của tóm tắt máy — một chỗ dựng cho mọi loại khối, nên chữ giống hệt nhau ở mọi nơi in."""
+    nhan_may = NHAN_DONG["may_pmc"] if tom_tat.get("nguon") == "toan_van_pmc" else NHAN_DONG["may"]
+    return [f"{nhan_may} (chưa qua cổng dashboard — không phải khuyến nghị):",
+            *(f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k)))]
+
+
+def _chan_may(tom_tat: dict) -> str:
+    return CHAN_MAY_PMC if tom_tat.get("nguon") == "toan_van_pmc" else CHAN_MAY
 
 
 def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list[str]:
@@ -574,9 +597,7 @@ def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list
             f"{NHAN_DONG['diem_nhan']} Cho mục «{nc['tieu_de']}» (nguồn chính {nc['nguon_chinh']}) — kết quả và khuyến nghị thuộc NGUỒN CHÍNH, "
             "không gán cho bài này"]
     if tom_tat:
-        nhan_may = NHAN_DONG["may_pmc"] if tom_tat.get("nguon") == "toan_van_pmc" else NHAN_DONG["may"]
-        dong.append(f"{nhan_may} (chưa qua cổng dashboard — không phải khuyến nghị):")
-        dong += [f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k))]
+        dong += _dong_may(tom_tat)
     if len(nc["tham_khao"]) <= TRAN_THAM_KHAO:
         dong.append(f"▸ Dashboard ghi: {nc['tham_khao']}")
     if so_khac:
@@ -588,16 +609,28 @@ def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list
 def khoi_tieng_viet(muc: dict, kho: Path | None, tom_tat: dict | None = None) -> str:
     """Khối ĐỌC NHANH cho MỘT trích dẫn (đầu ra của `ngu_canh`): một ngữ cảnh chính — bản dashboard MỚI NHẤT, không
     phải bản cũ — các chủ đề khác chỉ nêu tên; khuyến nghị lệch nhau giữa chủ đề thì nêu rõ ❗. `tom_tat` (đã qua
-    `tom_tat_cho`) chỉ in cho bài CHỈ là tài liệu tham khảo, và đổi dòng chân cho đúng nguồn gốc nội dung."""
+    `tom_tat_cho`): bài tham khảo ⇒ in trong khối tham khảo, dòng chân «Tóm tắt MÁY»; bài là MỤC CHÍNH (24/10/2026) ⇒ khối
+    dashboard giữ NGUYÊN kèm dòng chân «chép từ dashboard đã qua cổng», rồi một dòng trống và tóm tắt máy với dòng chân
+    riêng — hai nguồn nội dung không bao giờ dùng chung một dòng chân."""
     xep = sorted(muc["ngu_canh"], key=lambda x: (bool(x.get("ban_cu")), -_ngay_so(x)))
     chinh = [x for x in xep if x["vai"] == "muc"]
     tk = [x for x in xep if x["vai"] == "tham_khao"]
-    may = None if chinh else tom_tat
-    dong = _khoi_muc(chinh[0], chinh[1:], len(tk)) if chinh else _khoi_tham_khao(tk[0], len(tk) - 1, may)
     dinh_danh = f"PMID {muc['pmid']}" if muc.get("pmid") else f"DOI {muc.get('doi')}"
-    chan = (CHAN_MAY_PMC if may.get("nguon") == "toan_van_pmc" else CHAN_MAY) if may else CHAN
-    dong += [f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}", chan]
+    dong_dd = f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(muc.get('pmid'), kho)}"
+    if chinh:
+        dong = [*_khoi_muc(chinh[0], chinh[1:], len(tk)), dong_dd, CHAN]
+        if tom_tat:
+            dong += ["", *_dong_may(tom_tat), _chan_may(tom_tat)]
+        return "\n".join(dong)
+    dong = [*_khoi_tham_khao(tk[0], len(tk) - 1, tom_tat), dong_dd, _chan_may(tom_tat) if tom_tat else CHAN]
     return "\n".join(dong)
+
+
+def khoi_thu_vien(dinh_danh: str, tom_tat: dict, kho: Path | None, pmid: str | None = None) -> str:
+    """Khối cho bài trong thư viện KHÔNG thuộc dashboard nào (24/10/2026): chỉ có tóm tắt máy — không mức chứng cứ, không
+    khuyến nghị. Dòng đầu mang `MO_DAU` để lượt chạy lại nhận ra và THAY khối cũ (abstract gốc giữ dưới dấu phân cách)."""
+    return "\n".join([f"{MO_DAU} {NHAN_DONG['thu_vien']}", *_dong_may(tom_tat),
+                      f"{dinh_danh} · Toàn văn: {trang_thai_toan_van(pmid, kho)}", _chan_may(tom_tat)])
 
 
 def chuan_dong(s: str) -> str:
@@ -708,6 +741,88 @@ def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, 
             if dinh_danh not in bc[ds_ra]:
                 bc[ds_ra].append(dinh_danh)
         moi = ghep_abstract(cu[m], khoi_tieng_viet(v, kho, tt))
+        if chuan_dong(moi) == chuan_dong(cu[m]):
+            bc["khong_doi"] += 1
+        else:
+            can_ghi.append((m, moi))
+    bc["se_ghi"] = len(can_ghi)
+    if not ap_dung or not can_ghi:
+        return bc
+    bc["sao_luu"] = str((sao_luu or (lambda: sao_luu_thu_vien(endnote.thu_vien)))())
+    for i in range(0, len(can_ghi), 25):
+        for m, loi in endnote.ghi_truong(can_ghi[i:i + 25], "Abstract").items():
+            if loi:
+                bc["loi"].append(f"{m}: {loi}")
+            else:
+                bc["da_ghi"] += 1
+    return bc
+
+
+def ghi_thu_vien(endnote, *, dashboards: list[Path], kho: Path | None, ap_dung: bool, doc_data, tom_tat_abs: dict,
+                 sao_luu=None, bo_qua=None) -> dict:
+    """Ghi tóm tắt máy cho bài trong thư viện KHÔNG thuộc dashboard nào (24/10/2026 — bác sĩ: chứng cứ chưa đạt chuẩn thì
+    tóm tắt tiếng Việt chi tiết vào Abstract). Chỉ xét mục CÓ trong kho `tom_tat_abs`; mục có định danh nằm trong bất kỳ
+    dashboard nào thuộc `ghi_tom_tat` (khối dashboard thắng) ⇒ bỏ qua ở đây. Số lệch / nguồn bị từ chối ⇒ KHÔNG ghi bản ghi
+    đó (khối cũ giữ nguyên). `bo_qua(pmid, doi, co_ban_ghi)` như `ghi_tom_tat` (danh sách loại trừ của bác sĩ, thùng rác).
+    Chạy khô (ap_dung=False): chỉ đếm. Ghi: sao lưu trước, ghi từng lô 25 bản ghi rồi đọc lại."""
+    ds = ngu_canh(sorted(map(Path, dashboards)), doc_data) if dashboards else {}
+    co_pm = {str(v["pmid"]) for v in ds.values() if v.get("pmid")}
+    co_doi = {str(v["doi"]).lower() for v in ds.values() if v.get("doi")}
+    bc: dict = {"muc_kho": 0, "thuoc_dashboard": 0, "co_ban_ghi": 0, "khong_co_ban_ghi": [], "khong_doi": 0, "se_ghi": 0,
+                "da_ghi": 0, "loi": kiem_kho_tom_tat(tom_tat_abs or {}), "sao_luu": None, "tom_tat_lech_so": [],
+                "bo_qua_theo_bac_si": [], "bo_qua_kho": 0}
+    theo_pm: dict[str, dict] = {}
+    theo_doi: dict[str, dict] = {}
+    for k, tt in (tom_tat_abs or {}).items():
+        if _bo_qua(tt):
+            bc["bo_qua_kho"] += 1
+            continue
+        loai, _, gt = str(k).partition(" ")
+        if loai == "PMID":
+            if gt in co_pm:
+                bc["thuoc_dashboard"] += 1
+                continue
+            theo_pm[gt] = tt
+        elif loai == "DOI":
+            if gt.lower() in co_doi:
+                bc["thuoc_dashboard"] += 1
+                continue
+            theo_doi[gt.lower()] = tt
+    bc["muc_kho"] = len(theo_pm) + len(theo_doi)
+    ma_pm = endnote.tim_khop(list(theo_pm), "Accession Number") if theo_pm else {}
+    ma_doi = endnote.tim_khop(list(theo_doi), "DOI") if theo_doi else {}
+    cap: list[tuple[str, str, str | None, str | None, dict]] = []
+    da_ma: set[str] = set()
+    for nguon, bang, ma_bang in (("PMID", theo_pm, ma_pm), ("DOI", theo_doi, ma_doi)):
+        for gt, tt in bang.items():
+            ma = ma_bang.get(gt) or []
+            pmid, doi = (gt, None) if nguon == "PMID" else (None, gt)
+            ly_do = bo_qua(pmid, doi, bool(ma)) if bo_qua else None
+            if ly_do:
+                bc["bo_qua_theo_bac_si"].append(f"{nguon} {gt} ({ly_do})")
+                continue
+            if not ma:
+                bc["khong_co_ban_ghi"].append(f"{nguon} {gt}")
+                continue
+            bc["co_ban_ghi"] += 1
+            for m in ma:
+                if m not in da_ma:
+                    da_ma.add(m)
+                    cap.append((m, f"{nguon} {gt}", pmid, doi, tt))
+    cu = endnote.doc_truong([m for m, *_ in cap], "Abstract") if cap else {}
+    can_ghi: list[tuple[str, str]] = []
+    for m, dinh_danh, pmid, _doi, tt in cap:
+        if m not in cu:
+            bc["loi"].append(f"{m}: không đọc được Abstract — bỏ qua (không ghi đè thứ chưa đọc được)")
+            continue
+        dung, lech = kiem_tom_tat_may(tt, tach_goc(cu[m]), pmid, kho)
+        if dung is None:
+            if lech:
+                tu_choi = [x for x in lech if x.startswith("⛔")]
+                bc["tom_tat_lech_so"].append(f"{m} ({dinh_danh}): " + (tu_choi[0] if tu_choi else
+                                             f"số không có trong văn bản đối chiếu ({', '.join(lech[:5])})") + " — không ghi")
+            continue
+        moi = ghep_abstract(cu[m], khoi_thu_vien(dinh_danh, dung, kho, pmid))
         if chuan_dong(moi) == chuan_dong(cu[m]):
             bc["khong_doi"] += 1
         else:
