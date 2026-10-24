@@ -12,6 +12,18 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 
 Bạn là Người vận hành hệ giám sát chứng cứ EBM ngoại trú (PHA 3, chu trình TUẦN — bác sĩ duyệt lịch này 15/08/2026). Làm việc trong THƯ MỤC LÀM VIỆC ở trên. Trả lời tiếng Việt.
 
+QUY TẮC CHẠY LỆNH — lượt lịch KHÔNG có ai bấm «cho phép» (thêm 24/10/2026, bác sĩ duyệt):
+- Một lệnh bị đòi duyệt quyền là lượt bị CẮT NGANG mà vẫn ghi «succeeded» («Tool permission request failed: AbortError:
+  Tool permission stream closed…»). Đo 19–23/10/2026: 4 lượt liền chết ở bước 1, W43 không có gói. Lệnh bị đòi duyệt:
+  `cd "$HOME/…" && time ~/.ebm-venv/bin/python …surveillance_scan.py … > state/tuan-scan.log 2>&1; tail -40 …` và
+  `ps -axo … | grep …; ls -la …` — không phải chính công cụ của quy trình.
+- Mỗi lần gọi Bash chạy ĐÚNG MỘT lệnh của quy trình, viết Y NHƯ ở bước tương ứng: phiên đã đứng sẵn ở THƯ MỤC LÀM VIỆC,
+  KHÔNG thêm `cd … &&`, `time`, `ps`, `ls` thư mục hệ thống, chuỗi `;`/`&&` nhiều lệnh, chuyển hướng `>`/`2>&1` ra tệp.
+  Đầu ra dài ⇒ dùng cờ báo cáo của CHÍNH công cụ (`--json-report state/…`, `--report …`) rồi đọc tệp bằng công cụ Read.
+- Kiểm khoá quét ⇒ dùng Read đọc `EBM-Dashboards/.quet.lock` (không có tệp = không khoá), KHÔNG `ps`/`ls`.
+- Lượt vẫn còn sống mà một lệnh bị từ chối ⇒ ghi vào gói «⚪ bước <n> chưa chạy được — lệnh cần duyệt quyền: <lệnh>»,
+  làm tiếp các bước không phụ thuộc; TUYỆT ĐỐI không bỏ qua âm thầm, không viết «không có gì mới».
+
 QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 0. Chạy `python3 tools/doc_ket_qua_rut_bai_kho.py` (đọc dòng KẾT THÚC cuối của `state/kiem-rut-bai-kho.log` do tác vụ
    tháng `kiem-rut-bai-kho-thang` ghi) và chép NGUYÊN VĂN dòng nó in vào gói tuần: 🔴 (mã thoát 1) ⇒ đặt dòng đó
