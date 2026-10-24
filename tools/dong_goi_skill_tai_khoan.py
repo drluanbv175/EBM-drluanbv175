@@ -81,7 +81,6 @@ NGAY_CO_DINH = (1980, 1, 1, 0, 0, 0)
 CHI_CLAUDE_CODE = {
     "plugin-router-chatgpt": "định tuyến theo catalog plugin của Claude Code/Codex trên máy — tài khoản claude.ai không có các "
                              "plugin đó (bản cho ChatGPT nằm ở CHATGPT_SKILLS/dist/)",
-    "dieu-phoi-aipoch": "định tuyến 605 skill của plugin aipoch-medical-research — plugin này chỉ cài trong Claude Code",
 }
 
 _FM = re.compile(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|$)", re.S)

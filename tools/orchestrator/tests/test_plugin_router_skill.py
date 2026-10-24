@@ -48,12 +48,13 @@ class TestPluginRouterSkill(unittest.TestCase):
         ):
             self.assertTrue((ROUTER / relative).is_file(), f"thiếu {relative}")
 
-    def test_catalog_has_all_nine_plugin_families(self):
+    def test_catalog_has_all_plugin_families(self):
         data = json.loads((ROUTER / "references/plugin-catalog.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(data["plugins"]), 9)
+        self.assertEqual(len(data["plugins"]), len(load_catalog_module().PLUGIN_IDS))
         self.assertGreaterEqual(len(data["skills"]), 100)
 
-    def test_mendelian_request_prefers_specialized_aipoch_skill(self):
+    def test_mendelian_request_khong_con_tro_toi_aipoch_da_go(self):
+        """24/10/2026 bác sĩ gỡ aipoch: catalog không còn plugin đó, router không được xếp nó lên."""
         module = load_router_module()
         data = json.loads((ROUTER / "references/plugin-catalog.json").read_text(encoding="utf-8"))
         ranked = module.rank(
@@ -61,9 +62,9 @@ class TestPluginRouterSkill(unittest.TestCase):
             data,
             5,
         )
-        self.assertTrue(ranked)
-        self.assertEqual(ranked[0]["plugin"], "aipoch-medical-research")
-        self.assertEqual(ranked[0]["skill"], "mendelian-randomization-protocol-designer")
+        self.assertFalse(any(r["plugin"] == "aipoch-medical-research" for r in ranked))
+        self.assertNotIn("aipoch-medical-research", {p.get("id", p.get("name", "")) if isinstance(p, dict) else p
+                                                       for p in data["plugins"]})
 
     def test_catalog_falls_back_to_enabled_config_and_real_cache(self):
         module = load_catalog_module()
@@ -76,7 +77,7 @@ class TestPluginRouterSkill(unittest.TestCase):
                 name, marketplace = plugin_id.split("@", 1)
                 config_lines.extend([f'[plugins."{plugin_id}"]', "enabled = true", ""])
                 version = "local" if name in {
-                    "openmed-skills", "medsci-project", "aipoch-medical-research",
+                    "openmed-skills", "medsci-project",
                     "meta-pipe", "pubmed-search",
                 } else "1.0.0"
                 (cache_root / marketplace / name / version).mkdir(parents=True)
@@ -85,7 +86,7 @@ class TestPluginRouterSkill(unittest.TestCase):
             records = module.read_configured_plugins_from_cache(config_path, cache_root)
 
         self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
-        self.assertEqual(len(records), 9)
+        self.assertEqual(len(records), len(module.PLUGIN_IDS))
 
     def test_catalog_falls_back_to_claude_code_cache_when_codex_absent(self):
         """05/09/2026: máy chạy phiên Claude Code có thể KHÔNG có Codex ở bất kỳ dạng
@@ -120,7 +121,7 @@ class TestPluginRouterSkill(unittest.TestCase):
             self.assertTrue(all(record.source_path.is_dir() for record in records))
 
         self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
-        self.assertEqual(len(records), 9)
+        self.assertEqual(len(records), len(module.PLUGIN_IDS))
 
 
 if __name__ == "__main__":

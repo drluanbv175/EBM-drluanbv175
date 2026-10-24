@@ -30,14 +30,10 @@
       }
     },
     "aipoch-medical-research@aipoch-medical-research": {
-      "can_o_may": [
-        "Mac",
-        "Windows",
-        "Cloud"
-      ],
+      "can_o_may": [],
       "da_xac_nhan": true,
       "chieu_sang_codex": false,
-      "ly_do": "605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
+      "ly_do": "GỠ CÓ CHỦ Ý 24/10/2026 (bác sĩ: «Gỡ aipoch»). Đo 24/10: 0 lượt gọi skill aipoch trong mọi bản ghi phiên trên Mac; vai duy nhất theo hợp đồng là 8 planner đặc thù ở G0–G1 (MR · FAERS · đơn tế bào · đa omics · tái định vị thuốc · QTL · độc chất mạng · biomarker tiên lượng) — không khớp đề tài thật; 605 skill chiếm ngân sách danh sách skill. Registry bỏ provider + 8 worker; skill dieu-phoi-aipoch đã gỡ. Lý do cũ: 605 skill nghiên cứu, vai WORKER. Không bao giờ là chủ của việc CÓ CỔNG (cỡ mẫu · thiết kế · gộp · PROSPERO đã có agent chủ). Cài kiểu directory trỏ vào repo medical-research-skills nên KHÔNG được ghi tiếng Việt vào nguồn — sẽ xung đột git pull (CLAUDE.md, rào an toàn 10/08). Từ 02/09/2026 cũng cài trên Cloud theo yêu cầu bác sĩ (phiên web chỉ là worker, không đổi chủ việc có cổng).",
       "do_duoc_luc_ghi": {
         "Mac": 605,
         "Windows": 605

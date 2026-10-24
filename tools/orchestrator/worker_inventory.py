@@ -72,7 +72,6 @@ class WorkerInventory:
         self.provider_roots = provider_roots or {
             "anthropic-skills": (ROOT / "sync/skills",) + duong("claude-cowork/anthropic-skills"),
             "academic-research-skills": duong("academic-research-skills"),
-            "aipoch-medical-research": duong("aipoch-medical-research"),
             "meta-pipe": duong("meta-pipe"),
             "pubmed-search": duong("pubmed-search"),
             "claude-code-harness": duong("claude-code-harness-marketplace/claude-code-harness"),
