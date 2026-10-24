@@ -117,3 +117,29 @@ def test_co_ngoai_le_ma_khong_doc_duoc_dashboard_la_khong_do_duoc(tmp_path, monk
     chet = []
     monkeypatch.setattr(tdxv, "_ghi_chet", lambda lenh, ly: chet.append(ly))
     assert tdxv.giac_quan_tom_tat_word(lambda: T.hang_cho(tv)) == [] and chet and "NgoaiLeKhongDoDuoc" in chet[0]
+
+
+def _sx_gia(kq: dict, da_ky: bool):
+    def gan(bg, info):
+        bg["sua_loi_bi_rut"] = bool(info.get("withdrawn_correction_notice"))
+        bg["thong_bao_ids"] = list(info.get("notice_ids") or [])
+    return types.SimpleNamespace(kiem_rut_bai=lambda ds: {ds[0]: kq}, _gan_dau_hieu_thong_bao=gan,
+                                 _dinh_chinh_da_ky=lambda khoa, bg: da_ky and bool(bg.get("thong_bao_ids")))
+
+
+def test_dinh_chinh_bi_rut_bac_si_da_ky_khong_chan(monkeypatch):
+    """CCS/CHFS 2025 (PMID 41110921): thông báo rút là bản đính chính bị rút, bác sĩ ký 24/09 ⇒ không chặn tóm tắt."""
+    kq = {"status": "retracted", "source": "pubmed", "notice_ids": ["41422828"], "withdrawn_correction_notice": True}
+    monkeypatch.setitem(T._MOD, "sx", _sx_gia(kq, da_ky=True))
+    r = T.kiem_rut_bai("41110921", None)
+    assert r["trang_thai"] == "dinh_chinh_bi_rut_da_ky" and r["thong_bao_ids"] == ["41422828"]
+    assert "đã ký" in T.NHAN_RUT_BAI[r["trang_thai"]]
+
+
+def test_dinh_chinh_bi_rut_chua_ky_hoac_rut_that_van_chan(monkeypatch):
+    kq = {"status": "retracted", "source": "pubmed", "notice_ids": ["41422828"], "withdrawn_correction_notice": True}
+    monkeypatch.setitem(T._MOD, "sx", _sx_gia(kq, da_ky=False))
+    assert T.kiem_rut_bai("41110921", None)["trang_thai"] == "da_rut"
+    that = {"status": "retracted", "source": "pubmed", "notice_ids": ["1"]}
+    monkeypatch.setitem(T._MOD, "sx", _sx_gia(that, da_ky=True))
+    assert T.kiem_rut_bai("30267080", None)["trang_thai"] == "da_rut", "rút bài THẬT không được thành «đã ký»"
