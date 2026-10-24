@@ -66,6 +66,40 @@ def _nap(ten: str, duong: Path):
 
 
 DA_XET = DASH / "vuot-qua-da-xet.json"
+
+# Nhóm dashboard KHÔNG có phần chủ đề (tach_ten() lấy chính tên nhóm làm lát cắt): các bản tin theo tuần/đợt KHÔNG thay thế
+# nhau như phiên bản nối tiếp — giữ đủ.
+NHOM_KHONG_CHU_DE = {"VanDeCuThe", "Uptodate", "CapNhatTuan", "AnToanThuoc", "CongCuKeDon"}
+
+
+def _tach_ten_chu_de():
+    """`dang_ky_chu_de.tach_ten` — nạp RIÊNG (không qua `_nap`, vốn chỉ dành cho verify_dashboard/kiem_chung_cu_vuot_qua)."""
+    spec = importlib.util.spec_from_file_location("_dkc_dat_canh", Path(__file__).resolve().parent / "dang_ky_chu_de.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["_dkc_dat_canh"] = mod
+    spec.loader.exec_module(mod)
+    return mod.tach_ten
+
+
+def chi_ban_moi_nhat(cac_tep: list[Path], tach_ten) -> list[Path]:
+    """Bỏ dashboard đã bị PHIÊN BẢN NỐI TIẾP thay (cùng lát cắt, ngày cũ hơn) — vá 24/10/2026.
+
+    Bản cũ gom mục `apply` từ MỌI dashboard, kể cả bản đã bị bản nối tiếp thay: một mục bác sĩ đã HẠ khỏi `apply` ở bản
+    mới (vd ITEM-06 mạch máu não 18/10, ITEM-06 Thận 21/10) vẫn bị đếm vào «mục apply có nguồn mới hơn chờ so» (Đài E-MOI),
+    và các lát cắt có nhiều phiên bản (SuyTim_TongHop 5 bản) được rà theo bản cũ. «Cùng lát cắt, ngày mới hơn ⇒ thay bản cũ»
+    lấy từ CHÍNH `dang_ky_chu_de.tach_ten` (một nguồn sự thật, không viết luật thứ hai). Tên không tách được hoặc thuộc
+    nhóm không có phần chủ đề ⇒ GIỮ (thừa an toàn hơn bỏ sót)."""
+    moi_nhat: dict[str, tuple[str, Path]] = {}
+    giu: list[Path] = []
+    for f in cac_tep:
+        r = tach_ten(f.name)
+        if not r or r[0] in NHOM_KHONG_CHU_DE:
+            giu.append(f)
+            continue
+        lat_cat, _goc, ngay = r
+        if lat_cat not in moi_nhat or ngay > moi_nhat[lat_cat][0]:
+            moi_nhat[lat_cat] = (ngay, f)
+    return sorted(giu + [f for _ngay, f in moi_nhat.values()])
 # Kết luận ĐÓNG của bác sĩ: mục không còn là việc «chờ so». `can_cap_nhat` KHÔNG đóng — mục vẫn được đếm tới khi gói
 # được cập nhật (lúc đó PMID đang dùng/nguồn mới đổi và mục tự rời danh sách).
 KET_LUAN_DONG = {"lac_chu_de", "chinh_nguon", "da_so_giu"}
@@ -211,9 +245,12 @@ def main() -> int:
     vd = _nap("_vd_dc", duong_vd)
     kcv = _nap("_kcv_dc", REPO / "tools" / "kiem_chung_cu_vuot_qua.py")
 
-    # ① gom mục apply có PMID (mỗi PMID một lần, nhớ mọi nơi nó xuất hiện)
+    # ① gom mục apply có PMID (mỗi PMID một lần, nhớ mọi nơi nó xuất hiện) — CHỈ bản mới nhất của mỗi lát cắt
+    tat_ca = sorted(DASH.glob("WebDashboard_*.html"))
+    hien_hanh = chi_ban_moi_nhat(tat_ca, _tach_ten_chu_de())
+    print(f"Dashboard hiện hành: {len(hien_hanh)}/{len(tat_ca)} (bỏ {len(tat_ca) - len(hien_hanh)} bản đã bị bản nối tiếp thay)")
     muc: dict[str, dict] = {}
-    for f in sorted(DASH.glob("WebDashboard_*.html")):
+    for f in hien_hanh:
         try:
             blk = vd.extract_data_block(f.read_text(encoding="utf-8", errors="replace"))
         except Exception:  # noqa: BLE001 — dashboard hỏng khối DATA thì bỏ qua, không chết cả lượt
