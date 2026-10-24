@@ -10,25 +10,9 @@
         "so_skill": 1,
         "phien_ban": "2.11.2"
       },
-      "academic-research-skills@academic-research-skills": {
-        "so_skill": 4,
-        "phien_ban": "3.21.1"
-      },
-      "openmed-skills@openmed-skills": {
-        "so_skill": 72,
-        "phien_ban": "576520381df7"
-      },
       "claude-code-harness@claude-code-harness-marketplace": {
         "so_skill": 73,
         "phien_ban": "5.15.0"
-      },
-      "medsci-project@medsci-skills": {
-        "so_skill": 60,
-        "phien_ban": "de57f34b4921"
-      },
-      "aipoch-medical-research@aipoch-medical-research": {
-        "so_skill": 605,
-        "phien_ban": "f5ef65b9bea7"
       },
       "meta-pipe@meta-pipe": {
         "so_skill": 14,
@@ -41,6 +25,18 @@
       "cochrane@cochrane-marketplace": {
         "so_skill": 3,
         "phien_ban": "0.3.2"
+      },
+      "academic-research-skills@academic-research-skills": {
+        "so_skill": 4,
+        "phien_ban": "3.21.2"
+      },
+      "openmed-skills@openmed-skills": {
+        "so_skill": 74,
+        "phien_ban": "129ebf3c02ff"
+      },
+      "medsci-project@medsci-skills": {
+        "so_skill": 60,
+        "phien_ban": "fb6e78dadb9a"
       }
     }
   },
