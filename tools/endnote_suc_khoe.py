@@ -51,6 +51,13 @@ LOAI_NHOM = {"3": "custom", "6": "online"}
 _XUNG_DOT = r"(?: \d+| \(\d+\)|-[A-Za-z0-9][A-Za-z0-9 ._'’-]*| \(conflicted copy[^)]*\))"
 
 
+def tep_cho_vao_nhom() -> Path:
+    """HÀNG CHỜ ĐƯA VÀO NHÓM (24/10/2026): bản ghi cần thêm vào một nhóm EndNote ĐÃ CÓ — AppleScript không cộng thêm được (post
+    luôn sinh nhóm mới cùng tên) ⇒ bác sĩ kéo tay. Ghi bởi `nap_endnote_chu_de.ghi_cho_vao_nhom`; mô-đun này chỉ ĐỌC. Riêng máy,
+    ngoài OneDrive. `EBM_ENDNOTE_CHO_VAO_NHOM` trỏ sang tệp khác (thư viện thử nghiệm, kiểm thử) — đọc LÚC GỌI."""
+    return Path(os.environ.get("EBM_ENDNOTE_CHO_VAO_NHOM") or (Path.home() / ".ebm-endnote-cho-vao-nhom.json"))
+
+
 def thu_vien_cau_hinh(tep: Path | None = None) -> Path | None:
     """Đường dẫn `.enl` khai ở ~/.ebm-endnote.json (chưa khai / hỏng ⇒ None)."""
     try:
@@ -348,6 +355,52 @@ def nhom_cho_thung_rac(thu_vien: Path) -> list[dict]:
     return ra
 
 
+def khoa_thu_vien(thu_vien: Path) -> str:
+    """Khoá của một thư viện trong hàng chờ: đường dẫn tuyệt đối dạng NFC (tên tệp tiếng Việt từ Finder có thể ở dạng NFD)."""
+    return unicodedata.normalize("NFC", os.path.normpath(str(Path(thu_vien).expanduser())))
+
+
+def doc_cho_vao_nhom(tep: Path | None = None) -> dict:
+    """Hàng chờ đưa vào nhóm: {"thu_vien": {<khoa_thu_vien>: {<tên nhóm>: {rec, group_id, dashboard, cap_nhat}}}}.
+
+    Tệp vắng ⇒ hàng chờ rỗng hợp lệ. Tệp HỎNG/sai khuôn ⇒ ValueError — người gọi báo KHÔNG ĐO ĐƯỢC, không coi là rỗng."""
+    tep = Path(tep or tep_cho_vao_nhom())
+    try:
+        d = json.loads(tep.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"thu_vien": {}}
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ValueError(f"hàng chờ đưa vào nhóm hỏng ({tep}): {type(e).__name__}") from e
+    if not (isinstance(d, dict) and isinstance(d.get("thu_vien"), dict)
+            and all(isinstance(tv, dict) and all(isinstance(m, dict) and isinstance(m.get("rec"), list)
+                                                  and all(isinstance(r, int) for r in m["rec"]) for m in tv.values())
+                    for tv in d["thu_vien"].values())):
+        raise ValueError(f"hàng chờ đưa vào nhóm sai khuôn ({tep})")
+    return d
+
+
+def cho_vao_nhom_con_lai(thu_vien: Path, tep: Path | None = None, nhom: list[dict] | None = None) -> list[dict]:
+    """Bản ghi trong hàng chờ CHƯA nằm trong nhóm nào mang tên đích, đo theo group_id trên bản sao sdb.eni:
+    [{ten, rec, group_id, so_nhom, dashboard}]. Bản ghi bác sĩ đã kéo vào nhóm không còn trong kết quả. `nhom` = kết quả
+    `doc_nhom` đã đọc (đỡ chép sdb.eni lần nữa). Không đọc được / thành viên hỏng ⇒ ngoại lệ, không bao giờ «hết việc»."""
+    muc = doc_cho_vao_nhom(tep)["thu_vien"].get(khoa_thu_vien(thu_vien)) or {}
+    if not muc:
+        return []
+    nhom = doc_nhom(thu_vien) if nhom is None else nhom
+    ra = []
+    for ten, m in muc.items():
+        cung = [n for n in nhom if khoa_ten(n["ten"]) == khoa_ten(ten)]
+        hong = [n["group_id"] for n in cung if n.get("loi")]
+        if hong:
+            raise ValueError(f"không giải được thành viên nhóm {hong} của «{ten[:60]}»")
+        da_vao = {r for n in cung for r in n["rec"]}
+        con = [r for r in m["rec"] if r not in da_vao]
+        if con:
+            ra.append({"ten": ten, "rec": con, "group_id": [n["group_id"] for n in cung], "so_nhom": len(cung),
+                       "dashboard": list(m.get("dashboard") or [])})
+    return ra
+
+
 def tinh_trang(thu_vien: Path | None = None) -> dict:
     """Tình trạng tổng hợp (không gửi AppleScript). Khoá `canh_bao` liệt kê việc cần bác sĩ để ý."""
     thu_vien = thu_vien or thu_vien_cau_hinh()
@@ -378,11 +431,18 @@ def tinh_trang(thu_vien: Path | None = None) -> dict:
     except (OSError, sqlite3.Error, ValueError) as e:
         kq["nhom_cho_thung_rac"] = None
         kq["canh_bao"].append(f"không đọc được nhóm chờ thùng rác: {type(e).__name__}")
+    nhom = None
     try:
-        kq["nhom_trung_ten"] = nhom_trung_ten(doc_nhom(thu_vien))
+        nhom = doc_nhom(thu_vien)
+        kq["nhom_trung_ten"] = nhom_trung_ten(nhom)
     except (OSError, sqlite3.Error) as e:
         kq["nhom_trung_ten"] = None  # KHÔNG ĐO ĐƯỢC — khác danh sách rỗng
         kq["canh_bao"].append(f"không đọc được danh sách nhóm: {type(e).__name__}")
+    try:
+        kq["cho_vao_nhom"] = cho_vao_nhom_con_lai(thu_vien, nhom=nhom)
+    except (OSError, sqlite3.Error, ValueError) as e:
+        kq["cho_vao_nhom"] = None  # KHÔNG ĐO ĐƯỢC — khác «không còn bài chờ»
+        kq["canh_bao"].append(f"không đọc được hàng chờ đưa vào nhóm: {type(e).__name__}")
     return kq
 
 
@@ -408,6 +468,9 @@ def main(argv: list[str] | None = None) -> int:
         for n in kq.get("nhom_trung_ten") or []:
             ds = ", ".join(f"group_id {g['group_id']}: {g['so_ban_ghi']} bài" for g in n["nhom"])
             print(f"  🟡 «{n['ten'][:80]}» đang có {n['so_nhom']} nhóm RIÊNG ({ds}) — chưa gộp")
+        for n in kq.get("cho_vao_nhom") or []:
+            print(f"  👤 {len(n['rec'])} bản ghi chờ bác sĩ đưa vào nhóm «{n['ten'][:80]}» — "
+                  "python3 tools/nap_endnote_chu_de.py --cho-vao-nhom")
         if not kq["canh_bao"]:
             print("  🟢 không có bản sao xung đột, không có tệp chỉ còn trên mây")
     if not kq.get("do_duoc"):

@@ -198,6 +198,7 @@ def test_khoa_cua_tien_trinh_khac_con_song_thi_cho_roi_bo_khoa_chet_thi_bo_qua(t
 def test_moi_lenh_ghi_cua_endnotemac_qua_khoa_truoc_khi_chay():
     en = object.__new__(nec.EndNoteMac)
     en.ten, en.ung_dung, en._csdl = "Lib.enl", "EndNote 2025", "1"
+    en.nhom_theo_ten = lambda ten: []  # tên nhóm mới — chốt nhóm đã có (24/10/2026) cho post
     nhat: list[str] = []
     en._truoc_khi_ghi = lambda ly_do: nhat.append("KHOA")
     en._chay = lambda than, *ds, **kw: (nhat.append("CHAY"), "internal-pdf://1/a.pdf" if "File Attachments" in than else "")[1]

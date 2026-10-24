@@ -14,8 +14,11 @@ từ bản sao lưu cũ), không đụng thư viện thật:
   • `find` tìm CHUỖI CON trong mọi thư viện đang mở và trả mã bản ghi dạng
     `<RecordID database="N" recNum="M" />` ⇒ phải lọc đúng `database` của thư viện đích và so
     KHỚP NGUYÊN trường (PMID 8 chữ số có thể là chuỗi con của số khác).
-  • `post records in … as "<tên>" of type "CUSTOM"` tạo nhóm nếu chưa có và CỘNG THÊM vào nhóm đã
-    có; đăng lại bản ghi đã nằm trong nhóm thì nhóm bị NHÂN ĐÔI (3 → 5) ⇒ chỉ đăng bản ghi chưa có.
+  • `post records in … as "<tên>" of type "CUSTOM"` tạo nhóm nếu chưa có. ĐÍNH CHÍNH 24/10/2026 (đo lại trên BẢN SAO thư
+    viện, EndNote 22.4.1): post vào tên ĐÃ CÓ nhóm KHÔNG cộng thêm — LUÔN sinh nhóm MỚI cùng tên, kể cả nhóm vừa do post tạo
+    trong cùng phiên (171 → +146 → +158; tên mới 159 → +160). Từ điển AppleScript (EndNote.sdef) chỉ gọi nhóm theo TÊN, không
+    có lệnh thêm bản ghi vào nhóm đã có ⇒ nhóm đã có thì KHÔNG post: bản ghi thiếu vào HÀNG CHỜ cho bác sĩ kéo tay
+    (`--cho-vao-nhom`). Chốt nằm ở `EndNoteMac.dang_vao_nhom` (đo sdb.eni theo group_id trước khi post).
   • `retrieve "all" records in document …` chạy với `document`; lệnh nhóm chạy với `window`.
   • Nhập lại cùng XML tạo bản ghi TRÙNG ⇒ tra PMID («Accession Number») và DOI trước khi nhập.
   • PDF đính NỘI BỘ: `internal-pdf://<số>/<tệp>` trỏ tới `<thư viện>.Data/PDF/<số>/<tệp>` (đúng
@@ -49,6 +52,7 @@ Dùng:
   python3 tools/nap_endnote_chu_de.py --file … --xuat-xml ra.xml   # tệp nhập tay (Windows)
   python3 tools/nap_endnote_chu_de.py --file … --tom-tat-vi --ap-dung [--chua-xac-minh]
   python3 tools/nap_endnote_chu_de.py --loai-tru <DOI|PMID> --ly-do "<lý do của bác sĩ>" [--ap-dung]
+  python3 tools/nap_endnote_chu_de.py --cho-vao-nhom ["<tên nhóm>"]   # hàng chờ đưa vào nhóm đã có; có tên ⇒ hiện bài trong EndNote
 DANH SÁCH LOẠI TRỪ CỦA BÁC SĨ (18/10/2026 — bản ghi bác sĩ đã bỏ vào thùng rác bị bước ⑧ nhập lại mỗi lượt bộ năm): khoá
 `bo_qua` của `~/.ebm-endnote.json`, mỗi mục {doi|pmid, ly_do, ngay}. Định danh trong đó KHÔNG nhập, KHÔNG đăng vào nhóm, KHÔNG
 gắn PDF/ghi khối tóm tắt — bản ghi khác không bị ảnh hưởng; bản ghi còn nằm trong thư viện chỉ được BÁO (công cụ không xoá).
@@ -811,6 +815,30 @@ def nap_khoa_ghi():
     return _KHOA_GHI or None
 
 
+def _sk():
+    """Mô-đun `tools/endnote_suc_khoe.py` (đọc sdb.eni chỉ-đọc, nhóm theo group_id, hàng chờ đưa vào nhóm) — nạp một lần."""
+    m = sys.modules.get("_sk_nap_endnote")
+    if m is None:
+        sp = importlib.util.spec_from_file_location("_sk_nap_endnote", Path(__file__).resolve().parent / "endnote_suc_khoe.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        m = sys.modules.setdefault("_sk_nap_endnote", m)
+    return m
+
+
+class NhomDaCo(RuntimeError):
+    """Tên nhóm đích ĐÃ có nhóm trong thư viện ⇒ không post (post luôn sinh nhóm mới cùng tên — đo 24/10/2026)."""
+
+    def __init__(self, ten_nhom: str, group_id: list[int]):
+        super().__init__(f"nhóm «{ten_nhom[:80]}» đã có (group_id {', '.join(map(str, group_id))}) — post sẽ sinh nhóm MỚI cùng "
+                         "tên, KHÔNG cộng thêm (đo 24/10/2026) ⇒ không post; bản ghi thiếu vào hàng chờ cho bác sĩ")
+        self.ten_nhom, self.group_id = ten_nhom, group_id
+
+
+class KhongDoDuocNhom(RuntimeError):
+    """Không đọc được nhóm trong sdb.eni ⇒ không biết tên đích đã có nhóm chưa ⇒ KHÔNG post (fail-closed)."""
+
+
 class EndNoteMac:
     """Bọc các lệnh AppleScript đã đo của EndNote. Mọi lệnh đi qua `_chay` (dễ thay khi test).
 
@@ -938,12 +966,33 @@ class EndNoteMac:
                          'return ids as text', ten_nhom, self.ten)
         return [x for x in out.split("\t") if x.strip()]
 
+    def nhom_theo_ten(self, ten_nhom: str) -> list[dict]:
+        """Các nhóm mang tên này, TỪNG nhóm theo group_id ({group_id, so_ban_ghi, rec}) — đọc bản sao sdb.eni, không AppleScript
+        (`get records in "<tên>"` trả HỢP các nhóm cùng tên). Không đọc được / thành viên không giải được ⇒ KhongDoDuocNhom."""
+        try:
+            ra = _sk().nhom_theo_ten(self.thu_vien, ten_nhom)
+        except (OSError, sqlite3.Error) as e:
+            raise KhongDoDuocNhom(f"không đọc được nhóm trong sdb.eni ({type(e).__name__}: {str(e)[:120]})") from e
+        hong = [n["group_id"] for n in ra if n.get("loi")]
+        if hong:
+            raise KhongDoDuocNhom(f"không giải được thành viên nhóm group_id {hong}")
+        return ra
+
     def dang_vao_nhom(self, ids: list[str], ten_nhom: str) -> None:
-        if ids:
-            self._truoc_khi_ghi(f"đăng {len(ids)} bản ghi vào nhóm «{ten_nhom}»")
-            self._chay('set ids to items 3 thru -1 of argv\n'
-                       'post records in ids in window (item 2 of argv) as (item 1 of argv) of type "CUSTOM"',
-                       ten_nhom, self.ten, *ids)
+        """`post` CHỈ khi tên đích CHƯA có nhóm nào (tạo đúng MỘT nhóm — đo 21/10 và 24/10/2026).
+
+        Đo 24/10/2026 trên BẢN SAO thư viện: post vào tên đã có nhóm LUÔN sinh nhóm MỚI cùng tên, kể cả nhóm vừa tạo trong cùng
+        phiên EndNote; EndNote.sdef không có lệnh thêm vào nhóm đã có. Nên đo sdb.eni TRƯỚC: đã có ⇒ NhomDaCo, không đo được ⇒
+        KhongDoDuocNhom — không post trong cả hai trường hợp (người gọi ghi hàng chờ cho bác sĩ)."""
+        if not ids:
+            return
+        hien = self.nhom_theo_ten(ten_nhom)
+        if hien:
+            raise NhomDaCo(ten_nhom, [n["group_id"] for n in hien])
+        self._truoc_khi_ghi(f"tạo nhóm «{ten_nhom}» với {len(ids)} bản ghi")
+        self._chay('set ids to items 3 thru -1 of argv\n'
+                   'post records in ids in window (item 2 of argv) as (item 1 of argv) of type "CUSTOM"',
+                   ten_nhom, self.ten, *ids)
 
     def tep_dinh_kem(self, ids: list[str]) -> dict[str, int]:
         """{mã bản ghi: số ký tự trường «File Attachments»} — 0 = chưa gắn tệp nào.
@@ -997,6 +1046,13 @@ class EndNoteMac:
             return {ma: f"AppleScript lỗi giữa lô: {e}"[:200] for ma, _ in cap}
         return {ma: ("" if k < len(doc_lai) and chuan(doc_lai[k]) == chuan(gt) else "đọc lại không khớp nội dung vừa ghi")
                 for k, (ma, gt) in enumerate(cap)}
+
+    def hien_ban_ghi(self, rec: list[int]) -> None:
+        """Đưa EndNote lên trước, CHỈ hiện và tô sáng các bản ghi này (cho bác sĩ ⌘A rồi kéo vào nhóm). Không ghi gì."""
+        csdl = self.so_csdl()
+        self._chay('activate\nset ids to items 2 thru -1 of argv\nshow records in ids in window (item 1 of argv)\n'
+                   'highlight records in ids in window (item 1 of argv)', self.ten,
+                   *[f'<RecordID database="{csdl}" recNum="{r}" />' for r in rec])
 
     def thung_rac(self) -> dict[str, set[str]]:
         """Định danh của bản ghi trong thùng rác (đọc `sdb.eni` chỉ-đọc — AppleScript không có lệnh cho thùng rác)."""
@@ -1064,23 +1120,124 @@ def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None) -> tupl
     return can_gan, thieu
 
 
-CHO_NHOM_GIAY = 20  # đo 11/10: nhóm vừa tạo chưa vào danh sách nhóm của EndNote sau vài giây
+CHO_NHOM_GIAY = 30  # lượt đo lại sdb.eni (mỗi lượt 1 giây) sau khi post tạo nhóm — EndNote ghi xuống đĩa trễ vài giây
 _ngu = time.sleep
 
 
-def cho_nhom_dang_ky(endnote, nhom: str, can: int) -> int:
-    """Đợi tới khi EndNote liệt kê ≥ `can` nhóm tên `nhom` (≤ CHO_NHOM_GIAY lượt, mỗi lượt 1 giây); trả số nhóm cùng tên.
+def cho_nhom_dang_ky(endnote, nhom: str) -> list[dict] | None:
+    """Sau khi post TẠO nhóm: đo lại sdb.eni theo group_id tới khi thấy nhóm (≤ CHO_NHOM_GIAY lượt, mỗi lượt 1 giây).
 
-    Đo 11/10/2026 khi nạp 72 dashboard: bản «Tiên lượng suy tim» mới đăng 11 bài tạo nhóm, 5 giây sau bản cũ hơn đăng 7 bài
-    cùng tên ⇒ EndNote tạo nhóm THỨ HAI cùng tên thay vì cộng thêm (nhóm vừa tạo chưa vào danh sách nhóm). Đợi nhóm đăng ký
-    xong rồi mới chạy dashboard kế tiếp; số trả về > can ⇒ người gọi báo «trùng tên» chứ không im lặng."""
-    so = 0
+    Trả các nhóm mang tên đó — [] = vẫn chưa thấy (EndNote chưa ghi xuống đĩa), > 1 nhóm ⇒ người gọi báo trùng tên; None = chưa
+    lần nào đo được (sdb.eni đổi liên tục/không đọc được) — KHÔNG phải «đã tạo xong».
+    Lịch sử: bản 11/10 đợi `get groups` (AppleScript) vì tưởng nhóm «chưa đăng ký» nên lần post sau sinh nhóm thứ hai; đo 24/10
+    cho thấy post vào tên đã có LUÔN sinh nhóm mới — đợi không cứu được, nay chỉ post khi chưa có nhóm (`dang_vao_nhom`)."""
+    ds: list[dict] | None = None
     for _ in range(CHO_NHOM_GIAY):
-        so = endnote.ten_cac_nhom().count(nhom)
-        if so >= can:
-            return so
+        try:
+            ds = endnote.nhom_theo_ten(nhom)
+        except KhongDoDuocNhom:
+            pass  # EndNote đang ghi ngay sau post ⇒ bản sao không ổn định; đo lại lượt sau
+        if ds:
+            return ds
         _ngu(1)
-    return so
+    return ds
+
+
+def ghi_cho_vao_nhom(thu_vien: Path, ten_nhom: str, *, them: list[int], da_vao: set[int], group_id: list[int],
+                     dashboard: str | None = None, tep: Path | None = None) -> list[int]:
+    """Cập nhật HÀNG CHỜ ĐƯA VÀO NHÓM của thư viện (`endnote_suc_khoe.tep_cho_vao_nhom()`): thêm `them`, bỏ bản ghi đã nằm trong
+    nhóm (`da_vao` — bác sĩ kéo xong). Trả danh sách recNum còn chờ của nhóm. Không đổi gì ⇒ không ghi tệp.
+
+    Dưới pytest KHÔNG BAO GIỜ ghi tệp mặc định trong thư mục nhà — test phải truyền `tep` hoặc đặt `EBM_ENDNOTE_CHO_VAO_NHOM`
+    sang thư mục tạm. Tệp hỏng ⇒ ValueError (không ghi đè: có thể còn bài chờ cứu tay được)."""
+    sk = _sk()
+    if tep is None and os.environ.get("PYTEST_CURRENT_TEST") and not os.environ.get("EBM_ENDNOTE_CHO_VAO_NHOM"):
+        raise KhongChayDuoc(f"đang chạy dưới pytest — không ghi hàng chờ thật {sk.tep_cho_vao_nhom()}")
+    tep = Path(tep or sk.tep_cho_vao_nhom())
+    d = sk.doc_cho_vao_nhom(tep)
+    bang = d["thu_vien"].setdefault(sk.khoa_thu_vien(thu_vien), {})
+    ten_nhom = next((t for t in bang if sk.khoa_ten(t) == sk.khoa_ten(ten_nhom)), ten_nhom)  # EndNote gọi nhóm theo tên khoá
+    cu = bang.get(ten_nhom) or {}
+    rec = sorted({*cu.get("rec", []), *them} - set(da_vao))
+    if not cu and not rec:
+        return []
+    nguon = list(dict.fromkeys([*(cu.get("dashboard") or []), *([dashboard] if dashboard and them else [])]))
+    moi = {"rec": rec, "group_id": sorted(group_id), "dashboard": nguon}
+    if {k: cu.get(k) for k in moi} == moi:
+        return rec
+    if rec:
+        bang[ten_nhom] = {**moi, "cap_nhat": datetime.now().isoformat(timespec="seconds")}
+    else:
+        bang.pop(ten_nhom, None)
+    if not bang:
+        d["thu_vien"].pop(sk.khoa_thu_vien(thu_vien), None)
+    _ghi_json(tep, d)
+    return rec
+
+
+def xep_vao_nhom(endnote, nhom: str, ids: list[str], dashboard: str | None = None, tep_cho: Path | None = None,
+                 da_tao: set[str] | None = None) -> dict:
+    """Đưa bản ghi (`ids`, mã AppleScript) vào nhóm `nhom` mà KHÔNG BAO GIỜ sinh nhóm trùng tên (24/10/2026).
+
+    Đo nhóm trên sdb.eni theo group_id: chưa có nhóm ⇒ post (tạo đúng MỘT nhóm) rồi đo lại; ĐÃ có ⇒ KHÔNG post — bản ghi chưa
+    nằm trong nhóm nào cùng tên vào hàng chờ cho bác sĩ kéo tay (`--cho-vao-nhom`), bản ghi bác sĩ đã kéo xong được dọn khỏi
+    hàng chờ; không đo được ⇒ KHÔNG post, không ghi hàng chờ (lượt sau đo lại). `da_tao` = khoá tên các nhóm đã post trong
+    CÙNG lượt (`nap_nhieu`): nhóm vừa post mà chưa hiện trên sdb.eni thì bản kế tiếp không post lần hai — vào hàng chờ.
+    Trả các khoá báo cáo cho `nap_chu_de`."""
+    kq: dict = {"dang_vao_nhom": 0}
+    if not ids:
+        return kq
+    khoa = _sk().khoa_ten(nhom)
+    cho_dia = False
+    try:
+        hien = endnote.nhom_theo_ten(nhom)
+        cho_dia = not hien and da_tao is not None and khoa in da_tao
+        if not hien and not cho_dia:
+            endnote.dang_vao_nhom(ids, nhom)
+            if da_tao is not None:
+                da_tao.add(khoa)
+    except KhongDoDuocNhom as e:
+        kq["nhom_khong_do_duoc"] = str(e)[:200]
+        return kq
+    except NhomDaCo:  # nhóm vừa xuất hiện giữa lần đo và lệnh post (phiên khác/bác sĩ) ⇒ đo lại, đi nhánh hàng chờ
+        try:
+            hien = endnote.nhom_theo_ten(nhom)
+        except KhongDoDuocNhom as e:
+            kq["nhom_khong_do_duoc"] = str(e)[:200]
+            return kq
+    if not hien and not cho_dia:
+        kq["dang_vao_nhom"] = len(ids)
+        sau = cho_nhom_dang_ky(endnote, nhom)
+        if sau is None:
+            kq["nhom_sau_khong_do_duoc"] = True
+        elif not sau:
+            kq["nhom_chua_thay"] = True
+        else:
+            kq["nhom_sau"] = [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in sau]
+            kq["trong_nhom_sau"] = len({r for n in sau for r in n["rec"]})
+            if len(sau) > 1:
+                kq["nhom_trung_ten"] = len(sau)
+            try:  # nhóm được tạo LẠI (bác sĩ đã xoá nhóm cũ) ⇒ dọn bài đã vào nhóm khỏi hàng chờ cũ của tên này
+                ghi_cho_vao_nhom(endnote.thu_vien, nhom, them=[], da_vao={r for n in sau for r in n["rec"]},
+                                 group_id=[n["group_id"] for n in sau], tep=tep_cho)
+            except (ValueError, OSError, KhongChayDuoc):
+                pass  # việc dọn phụ — `--cho-vao-nhom` và lượt sau cũng đo lại theo group_id
+        return kq
+    da_vao = {r for n in hien for r in n["rec"]}
+    so = [int(s) for s in (_so_ban_ghi(r) for r in ids) if s.isdigit()]
+    thieu = [r for r in dict.fromkeys(so) if r not in da_vao]
+    kq["nhom_da_co"] = [{"group_id": n["group_id"], "so_ban_ghi": n["so_ban_ghi"]} for n in hien]
+    kq["nhom_tao_trong_luot_chua_hien"] = cho_dia
+    kq["trong_nhom_sau"] = len(da_vao)
+    kq["cho_vao_nhom_moi"] = thieu
+    if len(hien) > 1:
+        kq["nhom_trung_ten"] = len(hien)
+    try:
+        kq["cho_vao_nhom"] = ghi_cho_vao_nhom(endnote.thu_vien, nhom, them=thieu, da_vao=da_vao,
+                                              group_id=[n["group_id"] for n in hien], dashboard=dashboard, tep=tep_cho)
+    except (ValueError, OSError) as e:
+        kq["cho_vao_nhom_loi"] = f"{type(e).__name__}: {e}"[:200]
+    return kq
 
 
 CHO_NHAP_GIAY = 10  # lượt tra lại (mỗi lượt 1 giây) sau lệnh `import` trước khi kết luận «nhập hụt»
@@ -1181,7 +1338,7 @@ def doc_thung_rac_an_toan(endnote) -> tuple[dict | None, str | None]:
 
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None,
-               loai_tru: dict | None = None) -> dict:
+               loai_tru: dict | None = None, tep_cho: Path | None = None, da_tao: set[str] | None = None) -> dict:
     """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được.
 
     `loai_tru` (`doc_loai_tru`) = danh sách loại trừ của BÁC SĨ (18/10/2026): định danh trong đó KHÔNG nhập, KHÔNG đăng vào
@@ -1316,16 +1473,8 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             if id(d) in hut and m.get("_thu_muc"):
                 shutil.rmtree(m["_thu_muc"], ignore_errors=True)
     cap = cap_ban_ghi(theo_pm, theo_doi)
-    da_trong_nhom = set(endnote.thanh_vien_nhom(nhom))
-    can_dang = [r for _, r in cap if r not in da_trong_nhom]
-    if can_dang:
-        truoc = endnote.ten_cac_nhom().count(nhom)
-        endnote.dang_vao_nhom(can_dang, nhom)
-        sau = cho_nhom_dang_ky(endnote, nhom, max(truoc, 1))
-        if sau > max(truoc, 1):
-            bc["nhom_trung_ten"] = sau
-    bc["dang_vao_nhom"] = len(can_dang)
-    bc["trong_nhom_sau"] = len(da_trong_nhom) + len(can_dang)
+    # Nhóm đo theo group_id trên sdb.eni; nhóm ĐÃ có thì không post (post luôn sinh nhóm trùng tên — đo 24/10/2026).
+    bc.update(xep_vao_nhom(endnote, nhom, [r for _, r in cap], dashboard=dash.name, tep_cho=tep_cho, da_tao=da_tao))
 
     # Toàn văn về SAU khi trích dẫn đã nằm trong EndNote ⇒ gắn vào bản ghi chưa có tệp đính kèm nào.
     can_gan, bc["thieu_toan_van"] = xet_toan_van(endnote, cap, kho)
@@ -1350,12 +1499,13 @@ def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, te
     if loai_tru is None:
         loai_tru = doc_loai_tru(cau_hinh)
     ket_qua: list[dict] = []
+    da_tao: set[str] = set()  # nhóm đã post trong lượt này — bản kế tiếp cùng chủ đề không post lần hai (xep_vao_nhom)
     for f in sap_xep_phien_ban(files):
         khoa = khoa_chu_de(f)
         ten = ten_nhom or bang.get(khoa)
         try:
             bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten,
-                            loai_tru=loai_tru, **lay)
+                            loai_tru=loai_tru, da_tao=da_tao, **lay)
         except (RuntimeError, OSError) as e:
             bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
         if not bc.get("loi") and bc.get("nhom"):
@@ -1366,6 +1516,91 @@ def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, te
         ket_qua.append(bc)
         _in_bao_cao(bc)
     return ket_qua
+
+
+def _ds_rec(rec: list[int], toi_da: int = 15) -> str:
+    return ", ".join(map(str, rec[:toi_da])) + (" …" if len(rec) > toi_da else "")
+
+
+def _in_nhom(bc: dict) -> None:
+    """Phần NHÓM của báo cáo một dashboard (khoá do `xep_vao_nhom` trả)."""
+    if bc.get("nhom_khong_do_duoc"):
+        print(f"   ⚪ KHÔNG ĐO ĐƯỢC nhóm trong sdb.eni ({bc['nhom_khong_do_duoc']}) — KHÔNG đăng vào nhóm (chưa biết nhóm đã có "
+              "chưa; post vào tên đã có sinh nhóm trùng tên). Chạy lại lệnh này sau.")
+    elif bc.get("dang_vao_nhom"):
+        print(f"   Tạo nhóm mới với {bc['dang_vao_nhom']} bản ghi"
+              + (" · đo lại theo group_id: " + ", ".join(f"{g['group_id']} ({g['so_ban_ghi']} bài)" for g in bc["nhom_sau"])
+                 if bc.get("nhom_sau") else ""))
+        if bc.get("nhom_chua_thay") or bc.get("nhom_sau_khong_do_duoc"):
+            print(f"   ⚪ Chưa {'thấy' if bc.get('nhom_chua_thay') else 'đo được'} nhóm trong sdb.eni sau {CHO_NHOM_GIAY} giây — "
+                  "EndNote có thể chưa ghi xuống đĩa; đo lại: python3 tools/endnote_suc_khoe.py")
+    elif bc.get("nhom_da_co") is not None:
+        ds = ", ".join(f"group_id {g['group_id']}: {g['so_ban_ghi']} bài" for g in bc["nhom_da_co"])
+        if bc.get("nhom_tao_trong_luot_chua_hien"):
+            ds = "vừa tạo trong lượt này, chưa hiện trên sdb.eni"
+        moi, con = bc.get("cho_vao_nhom_moi") or [], bc.get("cho_vao_nhom")
+        if moi or con:
+            print(f"   🛎 Nhóm đã có ({ds}) — KHÔNG post (post vào tên đã có LUÔN sinh nhóm trùng tên, đo 24/10/2026). "
+                  f"{len(moi)} bản ghi mới chờ bác sĩ đưa vào nhóm" + (f" (recNum {_ds_rec(moi)})" if moi else "")
+                  + (f"; hàng chờ của nhóm còn {len(con)}" if con is not None else ""))
+            print(f"     Bác sĩ: python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{bc['nhom']}\" (EndNote chỉ hiện các bài "
+                  "chờ) → ⌘A → kéo vào nhóm ở cột trái; lượt nạp sau tự dọn bài đã vào nhóm khỏi hàng chờ.")
+        else:
+            print(f"   Nhóm đã có ({ds}) — đủ bài, không cần đăng thêm")
+        if bc.get("cho_vao_nhom_loi"):
+            print(f"   ⚠ KHÔNG ghi được hàng chờ ({bc['cho_vao_nhom_loi']}) — recNum cần đưa vào nhóm: {_ds_rec(moi, 50)}")
+    if bc.get("nhom_trung_ten"):
+        print(f"   ⚠ EndNote đang có {bc['nhom_trung_ten']} nhóm cùng tên này — gộp tay: mở nhóm ít bài, chọn hết, kéo vào "
+              "nhóm kia, rồi xoá nhóm rỗng (xoá nhóm không xoá bài khỏi thư viện)")
+
+
+def chay_cho_vao_nhom(ten: str, tep: Path | None = None, endnote_cls=None) -> int:
+    """`--cho-vao-nhom ["<tên>"]`: liệt kê hàng chờ đưa vào nhóm của thư viện, đo lại theo group_id và dọn bài bác sĩ đã kéo
+    vào nhóm. Có tên ⇒ EndNote chỉ hiện các bài chờ của nhóm đó (bác sĩ ⌘A → kéo vào nhóm). Không ghi gì vào EndNote."""
+    sk = _sk()
+    ch = doc_cau_hinh()
+    if not ch:
+        print(f"⚪ chưa khai thư viện EndNote ({CAU_HINH})")
+        return MA_KHONG_CHAY
+    tv = Path(ch["thu_vien"])
+    try:
+        da_luu = sk.doc_cho_vao_nhom(tep)["thu_vien"].get(sk.khoa_thu_vien(tv)) or {}
+        con = {n["ten"]: n for n in sk.cho_vao_nhom_con_lai(tv, tep)}
+        for t, m in da_luu.items():  # dọn bài đã vào nhóm khỏi tệp hàng chờ
+            xong = set(m["rec"]) - set((con.get(t) or {}).get("rec", []))
+            if xong:
+                ghi_cho_vao_nhom(tv, t, them=[], da_vao=xong, group_id=(con.get(t) or m).get("group_id") or [], tep=tep)
+    except (OSError, sqlite3.Error, ValueError) as e:
+        print(f"⚪ KHÔNG ĐO ĐƯỢC hàng chờ đưa vào nhóm: {type(e).__name__}: {str(e)[:200]}")
+        return MA_KHONG_CHAY
+    if not con:
+        print("✓ Không còn bản ghi nào chờ đưa vào nhóm EndNote.")
+        return MA_OK
+    for t, n in con.items():
+        nhom = (f"group_id {', '.join(map(str, n['group_id']))}" if n["group_id"] else
+                "chưa thấy nhóm trong sdb.eni — lượt nạp sau đo lại/tạo nhóm")
+        print(f"👤 «{t}» ({nhom}) — {len(n['rec'])} bản ghi chờ bác sĩ đưa vào nhóm: recNum {_ds_rec(n['rec'], 40)}")
+        if n["so_nhom"] > 1:
+            print(f"   ⚠ tên này đang có {n['so_nhom']} nhóm — gộp hai nhóm trước (kéo nhóm ít bài vào nhóm kia, xoá nhóm rỗng)")
+    if not ten:
+        print("Hiện các bài của MỘT nhóm trong EndNote: python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"<tên nhóm>\"")
+        return MA_OK
+    chon = [n for t, n in con.items() if sk.khoa_ten(t) == sk.khoa_ten(ten)]
+    if not chon:
+        print(f"✗ «{ten}» không có trong hàng chờ")
+        return MA_THAM_SO
+    try:
+        en = (endnote_cls or EndNoteMac)(ch.get("ung_dung") or UNG_DUNG_MAC_DINH, tv)
+    except KhongChayDuoc as e:
+        print(f"⚪ {e}")
+        return MA_KHONG_CHAY
+    if not en.dang_mo_dung_thu_vien():
+        print(f"⚪ EndNote chưa mở thư viện {tv.name} — bác sĩ mở EndNote rồi chạy lại")
+        return MA_KHONG_CHAY
+    en.hien_ban_ghi(chon[0]["rec"])
+    print(f"✓ EndNote đang CHỈ hiện {len(chon[0]['rec'])} bài chờ. Bác sĩ: bấm vào danh sách → ⌘A → kéo vào nhóm «{chon[0]['ten']}» "
+          "ở cột trái (hoặc References → Add References To → nhóm đó). Xong chạy lại --cho-vao-nhom để kiểm.")
+    return MA_OK
 
 
 def _in_bao_cao(bc: dict) -> None:
@@ -1411,10 +1646,7 @@ def _in_bao_cao(bc: dict) -> None:
     if bc.get("se_gan_pdf"):
         print(f"   Sẽ gắn toàn văn cho bản ghi đã có: {bc['se_gan_pdf']}")
     if bc["ap_dung"] and bc["kiem_trung"]:
-        print(f"   Đăng thêm vào nhóm: {bc['dang_vao_nhom']} · nhóm hiện có {bc.get('trong_nhom_sau', '?')} bản ghi")
-        if bc.get("nhom_trung_ten"):
-            print(f"   ⚠ EndNote đang có {bc['nhom_trung_ten']} nhóm cùng tên này — gộp tay: mở nhóm ít bài, chọn hết, kéo vào "
-                  "nhóm kia, rồi xoá nhóm rỗng (xoá nhóm không xoá bài khỏi thư viện)")
+        _in_nhom(bc)
         print(f"   Gắn thêm toàn văn cho bản ghi đã có: {bc.get('gan_them_pdf', 0)}")
         thieu = bc.get("thieu_toan_van") or []
         if thieu:
@@ -1622,8 +1854,17 @@ def main(argv: list[str] | None = None) -> int:
                     help="khai MỘT định danh bác sĩ không muốn nạp lại vào khoá «bo_qua» của ~/.ebm-endnote.json "
                          "(cần --ly-do; chạy khô mặc định, --ap-dung mới ghi, sao lưu trước — agent chỉ ghi khi bác sĩ yêu cầu)")
     ap.add_argument("--ly-do", help="cùng --loai-tru: lý do của bác sĩ (bắt buộc)")
+    ap.add_argument("--cho-vao-nhom", nargs="?", const="", metavar="TEN_NHOM",
+                    help="hàng chờ đưa vào nhóm ĐÃ có (post không cộng thêm được — đo 24/10/2026): liệt kê + dọn bài đã vào "
+                         "nhóm; có tên ⇒ EndNote chỉ hiện các bài chờ của nhóm đó để bác sĩ kéo vào (chạy riêng)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+
+    if a.cho_vao_nhom is not None:
+        if a.file or a.tat_ca or a.gan_kho or a.xuat_xml or a.tom_tat_vi or a.ghi_cau_hinh or a.loai_tru or a.tom_tat_thu_vien:
+            print("✗ --cho-vao-nhom chạy riêng")
+            return MA_THAM_SO
+        return chay_cho_vao_nhom(a.cho_vao_nhom)
 
     if a.ly_do is not None and a.loai_tru is None:
         print("✗ --ly-do chỉ đi cùng --loai-tru")

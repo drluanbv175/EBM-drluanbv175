@@ -7811,6 +7811,7 @@ def bh169_khoa_ghi_endnote_theo_pham_vi_mcp():
             kg._bo_qua, kg.TEP_KHOA, kg.bac_si_dang_dung, kg._thong_bao = (lambda: False), tep, (lambda *a, **k: False), (lambda s: None)
             en = object.__new__(nec.EndNoteMac)
             en.ten, en.ung_dung, en._csdl = "Lib.enl", "EndNote 2025", "1"
+            en.nhom_theo_ten = lambda ten: []  # tên nhóm mới — chốt nhóm đã có (BH170) cho post
 
             def _chay(than, *ds, **kw):
                 d = kg.doc_khoa(tep)
@@ -7844,6 +7845,94 @@ def bh169_khoa_ghi_endnote_theo_pham_vi_mcp():
             kg._DANG_GIU.clear()
             kg._DANG_GIU.update(trang_thai)
     return True, "MCP: khoá ghi giữ trong lời gọi công cụ, nhả khi trả về (cả khi lỗi), cùng bản mô-đun với EndNoteMac; luc_epoch làm mới"
+
+
+def bh170_endnote_khong_post_vao_nhom_da_co():
+    """24/10 — bước ⑧ bộ năm post vào nhóm «EBM · <câu hỏi>» ĐÃ có ⇒ sinh nhóm trùng («Tiên lượng suy tim…» 133: 3 bài · 145:
+    14 bài; «VKDT…» 135 · 150). Đo lại trên BẢN SAO thư viện: post vào tên đã có — kể cả nhóm vừa tạo cùng phiên — LUÔN sinh nhóm
+    mới; EndNote.sdef không có lệnh thêm vào nhóm đã có. Kiểm HÀNH VI ngoại tuyến (sdb.eni giả, hàng chờ tạm): (1) EndNoteMac
+    THẬT không gửi post khi sdb.eni đã có nhóm cùng tên / không đọc được; (2) `xep_vao_nhom` (bước ⑧) trên EndNote giả mà post
+    luôn sinh nhóm mới: nhóm đã có ⇒ không post, bài thiếu vào hàng chờ, `nhom_trung_ten` trước = sau; (3) tên mới ⇒ đúng MỘT nhóm."""
+    import os as _os
+    import sqlite3 as _sq
+    import tempfile as _tf
+    N = _nap(REPO / "tools/nap_endnote_chu_de.py", "_bh170_nap")
+    if not all(hasattr(N, h) for h in ("NhomDaCo", "KhongDoDuocNhom", "xep_vao_nhom", "ghi_cho_vao_nhom")):
+        return False, "nap_endnote_chu_de chưa chặn post vào nhóm đã có (thiếu NhomDaCo/KhongDoDuocNhom/xep_vao_nhom/hàng chờ)"
+    sk = N._sk()
+    N._ngu = lambda s: None
+    ten = "EBM · Tiên lượng suy tim"
+
+    def _spec(t):
+        return ('<?xml version="1.0"?><group version="1"><ids><name>' + t + '</name></ids><rules><rule>TYPE;3</rule></rules>'
+                '</group>').encode()
+
+    def _tv(*rec):
+        return b"\x00\x00\x00\x02" + len(rec).to_bytes(4, "little") + b"".join(r.to_bytes(4, "little") for r in rec)
+
+    def _ma(r):
+        return '<RecordID database="2" recNum="%d" />' % r
+
+    cu_env = _os.environ.get("EBM_ENDNOTE_CHO_VAO_NHOM")
+    with _tf.TemporaryDirectory() as tam:
+        tam = Path(tam)
+        _os.environ["EBM_ENDNOTE_CHO_VAO_NHOM"] = str(tam / "cho.json")  # KHÔNG BAO GIỜ ghi hàng chờ thật
+        try:
+            tv = tam / "Lib.enl"
+            tv.write_bytes(b"enl")
+            sdb = tam / "Lib.Data" / "sdb" / "sdb.eni"
+            sdb.parent.mkdir(parents=True)
+            kn = _sq.connect(sdb)
+            kn.executescript("CREATE TABLE refs (id INTEGER PRIMARY KEY, trash_state INTEGER, title TEXT);"
+                             "CREATE TABLE file_res (refs_id INTEGER, file_path TEXT);"
+                             "CREATE TABLE groups (group_id INTEGER PRIMARY KEY, recs_stamp INTEGER, spec BLOB, members BLOB);")
+            kn.execute("INSERT INTO groups VALUES (145, 0, ?, ?)", (_spec(ten), _tv(40)))
+            kn.commit()
+            kn.close()
+
+            lenh = []
+            for duong, loi in ((tv, N.NhomDaCo), (tam / "Khong.enl", N.KhongDoDuocNhom)):
+                en = object.__new__(N.EndNoteMac)
+                en.ung_dung, en.thu_vien, en.ten, en._csdl = "EndNote 2025", duong, duong.name, "2"
+                en._chay = lambda than, *ds, **kw: lenh.append(than) or ""
+                try:
+                    en.dang_vao_nhom([_ma(30)], ten.upper())
+                except loi:
+                    pass
+                except Exception as e:  # noqa: BLE001 — ngoại lệ khác loại cũng là chốt hỏng
+                    return False, f"EndNoteMac.dang_vao_nhom ném {type(e).__name__} thay vì {loi.__name__}"
+                if lenh:
+                    return False, ("EndNoteMac.dang_vao_nhom vẫn gửi post khi " + ("sdb.eni đã có nhóm cùng tên (EndNote sinh nhóm trùng)"
+                                   if loi is N.NhomDaCo else "không đọc được sdb.eni (phải fail-closed)"))
+
+            class _En:
+                """Post LUÔN chèn nhóm mới (đo 24/10/2026), KHÔNG có chốt riêng — để chốt của bước ⑧ tự đứng."""
+                thu_vien, post = tv, []
+                nhom_theo_ten = N.EndNoteMac.nhom_theo_ten
+
+                def dang_vao_nhom(self, ids, t):
+                    self.post.append(t)
+                    k = _sq.connect(sdb)
+                    gid = k.execute("SELECT max(group_id) FROM groups").fetchone()[0] + 1
+                    k.execute("INSERT INTO groups VALUES (?, 0, ?, ?)", (gid, _spec(t), _tv(*[int(sk.so_rec(i)) for i in ids])))
+                    k.commit()
+                    k.close()
+
+            truoc = sk.nhom_trung_ten(sk.doc_nhom(tv))
+            kq = N.xep_vao_nhom(_En(), ten, [_ma(30), _ma(40)])
+            if _En.post or sk.nhom_trung_ten(sk.doc_nhom(tv)) != truoc:
+                return False, "nhóm đã có mà bước ⑧ (xep_vao_nhom) vẫn post ⇒ nhóm trùng tên (sự cố 24/10)"
+            if kq.get("cho_vao_nhom") != [30] or [n["rec"] for n in sk.cho_vao_nhom_con_lai(tv)] != [[30]]:
+                return False, "bài thiếu của nhóm đã có không vào hàng chờ cho bác sĩ (cho_vao_nhom=%s)" % kq.get("cho_vao_nhom")
+            kq = N.xep_vao_nhom(_En(), "EBM · mới", [_ma(31)])
+            if _En.post != ["EBM · mới"] or len(sk.nhom_theo_ten(tv, "EBM · mới")) != 1 or kq.get("dang_vao_nhom") != 1:
+                return False, "tên nhóm mới không được tạo đúng MỘT nhóm"
+        finally:
+            if cu_env is None:
+                _os.environ.pop("EBM_ENDNOTE_CHO_VAO_NHOM", None)
+            else:
+                _os.environ["EBM_ENDNOTE_CHO_VAO_NHOM"] = cu_env
+    return True, "EndNote: không post vào nhóm đã có (đo sdb.eni theo group_id; không đo được ⇒ không post) — bài thiếu vào hàng chờ"
 
 
 def bh159_pham_vi_phien_tinh_luc_kiem():
@@ -11081,6 +11170,7 @@ BAI_HOC = [
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
     ("BH168", "23/10", "Skill tài khoản: gương cục bộ (~/.claude/skills/synced, dừng 02/10) cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được thay vì «21 skill CŨ» đỏ giả; repo đổi sau đóng gói vẫn «cập nhật»", bh168_skill_tai_khoan_guong_cuc_bo_lac_hau),
     ("BH169", "24/10", "Khoá ghi EndNote theo PHẠM VI một thao tác: máy chủ MCP endnote-ebm (sống cả phiên) nhả khoá khi mỗi lời gọi công cụ trả về (cả khi lỗi), trên CÙNG bản mô-đun khoá với EndNoteMac; lệnh ghi tiếp làm mới luc_epoch (khoá cũ chặn bộ năm bước ⑧ tới 15 phút)", bh169_khoa_ghi_endnote_theo_pham_vi_mcp),
+    ("BH170", "24/10", "EndNote: post vào nhóm ĐÃ có LUÔN sinh nhóm mới cùng tên (đo lại trên bản sao, kể cả nhóm vừa tạo cùng phiên) ⇒ EndNoteMac.dang_vao_nhom đo sdb.eni theo group_id trước khi post (đã có/không đo được ⇒ không post); bước ⑧ đưa bài thiếu vào hàng chờ cho bác sĩ kéo tay", bh170_endnote_khong_post_vao_nhom_da_co),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

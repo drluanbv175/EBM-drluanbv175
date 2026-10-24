@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import re
 import sqlite3
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -30,6 +31,12 @@ def _nap(rel: str, ten: str):
 
 
 N = _nap("tools/nap_endnote_chu_de.py", "_nap_endnote_loai_tru")
+
+
+@pytest.fixture(autouse=True)
+def _hang_cho_tam(tmp_path, monkeypatch):
+    """Hàng chờ đưa vào nhóm (24/10/2026) luôn ở tmp_path — không bao giờ tệp thật trong thư mục nhà."""
+    monkeypatch.setenv("EBM_ENDNOTE_CHO_VAO_NHOM", str(tmp_path / "cho-vao-nhom.json"))
 tt = _nap("tools/tom_tat_endnote_vi.py", "_tt_loai_tru")
 
 DOI_CHOI = "10.1001/jamaoncol.2018.4070"
@@ -64,7 +71,8 @@ def _cau_hinh(tmp_path: Path, bo_qua=None, **khac) -> Path:
 
 
 class _EnGia:
-    """Mô phỏng EndNote như các test nạp trước: nhập lại sinh bản trùng, nhóm cộng thêm. `find` (tim_khop) KHÔNG thấy bản ghi
+    """Mô phỏng EndNote như các test nạp trước: nhập lại sinh bản trùng; nhóm đọc theo group_id (`nhom_theo_ten`), post vào tên
+    ĐÃ có nhóm là lỗi của phép thử (EndNote thật sinh nhóm trùng tên — đo 24/10/2026). `find` (tim_khop) KHÔNG thấy bản ghi
     trong thùng rác — đúng hành vi gây sự cố; thùng rác chỉ lộ qua `thung_rac()` (đọc sdb.eni)."""
 
     def __init__(self, thu_vien: Path, co_san=(), rac=None, rac_loi: Exception | None = None):
@@ -107,14 +115,15 @@ class _EnGia:
         self.da_gan.append(ma)
         next(b for b in self.ban_ghi if b["id"] == ma)["tep"] = url
 
-    def thanh_vien_nhom(self, ten):
-        return list(self.nhom.get(ten, []))
-
-    def ten_cac_nhom(self):
-        return list(self.nhom)
+    def nhom_theo_ten(self, ten):
+        if ten not in self.nhom:
+            return []
+        rec = [int(re.search(r'recNum="(\d+)"', i).group(1)) for i in self.nhom[ten]]
+        return [{"group_id": 1, "ten": ten, "so_ban_ghi": len(rec), "rec": rec}]
 
     def dang_vao_nhom(self, ids, ten):
-        self.nhom.setdefault(ten, []).extend(ids)
+        assert ten not in self.nhom, "post vào tên đã có nhóm ⇒ EndNote sinh nhóm trùng tên (đo 24/10/2026)"
+        self.nhom[ten] = list(ids)
 
     def ma_cua(self, pm=None, doi=None) -> list[str]:
         return [b["id"] for b in self.ban_ghi if (pm and b["pmid"] == pm) or (doi and b["doi"] == doi)]
