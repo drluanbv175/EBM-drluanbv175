@@ -85,6 +85,19 @@ SKILL_DUNG_SAN = {
 # sẽ mất dấu vết vì sao đã retire.
 TEN_LICH_SU = {"antifacts-weekly-update", "giam-sat-chung-cu-noi-chung",
                "tu-kiem-dong-bo-agent"}
+# Skill bác sĩ ĐÃ GỠ có chủ ý khỏi sync/skills/ mà bản ở runtime Cowork vẫn còn — bản đó đến từ bộ skill TÀI KHOẢN
+# claude.ai (app chép lại nếu xoá trên máy), chỉ bác sĩ gỡ được (claude.ai → Settings → Skills). Báo việc 👤, KHÔNG báo
+# «mất nguồn»: «cứu» bằng cp -R là làm NGƯỢC quyết định gỡ. 24/10/2026: BH44 đỏ sau #236 vì đúng ca này. Hết ở runtime
+# ⇒ xoá dòng.
+SKILL_DA_GO_CHO_TAI_KHOAN = {
+    "dieu-phoi-aipoch": "24/10/2026 — bác sĩ quyết gỡ plugin aipoch (#236)",
+}
+
+
+def phan_loai_runtime(rt: set[str], nguon: set[str]) -> tuple[list[str], list[str]]:
+    """(skill runtime KHÔNG có nguồn — 🔴, skill đã gỡ có chủ ý còn ở runtime chờ bác sĩ gỡ khỏi tài khoản — 👤)."""
+    da_go = set(SKILL_DA_GO_CHO_TAI_KHOAN) - nguon
+    return sorted(rt - nguon - SKILL_DUNG_SAN - da_go), sorted(rt & da_go)
 
 
 def _skill_nguon() -> set[str]:
@@ -144,7 +157,7 @@ def main() -> int:
     mo_coi = sorted(agent - duoc_goi)
 
     # ③ skill runtime không nguồn
-    khong_nguon = sorted(rt - nguon - SKILL_DUNG_SAN)
+    khong_nguon, cho_tai_khoan = phan_loai_runtime(rt, nguon)
 
     sach = not nghi_hong and not mo_coi and not khong_nguon
     if a.im_khi_on and sach:
@@ -180,6 +193,11 @@ def main() -> int:
         print("       mô tả tiếng Anh, thường trỏ sang connector) thì KHÔNG chép — khai vào SKILL_DUNG_SAN.")
     elif rt_path:
         print(f"  ✓ ③ {len(rt)} skill runtime đều có nguồn")
+    if cho_tai_khoan:
+        print(f"  👤 {len(cho_tai_khoan)} skill đã gỡ có chủ ý còn ở runtime (đến từ skill TÀI KHOẢN claude.ai) — bác sĩ"
+              " xoá trong claude.ai → Settings → Skills:")
+        for t in cho_tai_khoan:
+            print(f"   · {t} ({SKILL_DA_GO_CHO_TAI_KHOAN[t]})")
 
     print("-" * 70)
     print("🟢 Điều phối sạch." if sach else "🔴 Có việc cần xử lý — xem trên.")

@@ -16,3 +16,11 @@ tồn tại; thư mục thật, liên kết còn sống, liên kết treo trỏ 
 
 **Bài học.** Gỡ một skill khỏi `sync/skills/` là thay đổi hai phía: nguồn và runtime. Công cụ đồng bộ phải đối chiếu cả
 chiều ngược (runtime → nguồn), không chỉ nguồn → runtime.
+
+**Lớp thứ hai (đo lại sau khi gỡ hai liên kết, BH44 vẫn đỏ).** Runtime Cowork
+(`~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/…/skills/`) giữ một BẢN THẬT của
+`dieu-phoi-aipoch` — bản đó đến từ bộ skill TÀI KHOẢN claude.ai mà bác sĩ đã tải lên; app chép lại nếu xoá trên máy, chỉ
+bác sĩ gỡ được (claude.ai → Settings → Skills). Gợi ý «cứu: cp -R … sync/skills/» của `kiem_dieu_phoi` là làm NGƯỢC
+quyết định gỡ. Vá: `SKILL_DA_GO_CHO_TAI_KHOAN` (khai báo kèm lý do, cùng kiểu `SKILL_DUNG_SAN`) + `phan_loai_runtime()` —
+skill đã gỡ có chủ ý còn ở runtime ⇒ dòng 👤 cho bác sĩ, không 🔴; skill lạ không nguồn vẫn đỏ; skill trở lại nguồn thì
+không còn là «đã gỡ». Test 3 ca; 2 đột biến bị bắt.
