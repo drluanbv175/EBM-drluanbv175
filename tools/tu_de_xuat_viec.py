@@ -768,6 +768,42 @@ def _commit_gop_squash(duong: Path, nen: str, ung_vien: set[str]) -> set[str]:
             if len(tieu_de) >= _TIEU_DE_TOI_THIEU_SQUASH and moi_nhat.get(tieu_de, -1) >= ct}
 
 
+def _commit_merge_sach(duong: Path, ung_vien: set[str], chua_day: set[str], da_gop: set[str]) -> set[str]:
+    """Commit MERGE trong `ung_vien` mà nội dung đã có trên remote (24/10/2026).
+
+    `git cherry` không xét commit merge, `_commit_gop_squash` chỉ khớp tiêu đề commit thường ⇒ merge «Merge origin/master vào
+    nhánh X» (kéo nhánh chính về trước khi PR được gộp squash) bị đếm mãi là «chưa đẩy». Đo 24/10: 3 commit ở repo gốc + 6 ở
+    repo y khoa — CẢ 9 là merge loại này, hòm việc nhắc 🟡 «soi rồi commit/push» cho việc đã xong. Nhận một merge khi ĐỦ HAI:
+    ① merge sạch — `git diff-tree --cc` rỗng (merge không tự thêm dòng nào, kể cả phần giải xung đột); ② MỌI cha hoặc đã ở trên
+    remote (không thuộc `chua_day`), hoặc đã được coi là đã gộp (`da_gop`, hay một merge sạch khác — lặp tới khi hết thêm).
+    git lỗi / quá giờ / đầu ra lạ ⇒ KHÔNG nhận (báo như cũ, không đoán). Gọi git trực tiếp, không qua `_chay` (số merge đổi
+    theo ngày, không được làm trôi bộ đếm giác quan)."""
+    cha: dict[str, list[str]] = {}
+    for sha in sorted(ung_vien):
+        try:
+            r = subprocess.run(["git", "-C", str(duong), "rev-list", "--parents", "-n", "1", sha], capture_output=True,
+                               text=True, timeout=20, encoding="utf-8", errors="replace")
+            cc = subprocess.run(["git", "-C", str(duong), "diff-tree", "--cc", "--no-commit-id", "-p", sha],
+                                capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
+        except (OSError, subprocess.SubprocessError):
+            continue
+        tach = r.stdout.split()
+        if r.returncode != 0 or cc.returncode != 0 or len(tach) < 3 or tach[0] != sha:
+            continue   # lỗi git, hoặc không phải merge (một cha)
+        if any(not _SHA_RE.fullmatch(x) for x in tach) or cc.stdout.strip():
+            continue   # đầu ra lạ, hoặc merge có nội dung riêng ⇒ không nhận
+        cha[sha] = tach[1:]
+    nhan: set[str] = set()
+    them = True
+    while them:
+        them = False
+        for sha, ds in cha.items():
+            if sha not in nhan and all(c not in chua_day or c in da_gop or c in nhan for c in ds):
+                nhan.add(sha)
+                them = True
+    return nhan
+
+
 def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) -> tuple[int | None, list[str]]:
     """(số commit CHỈ có ở nhánh cục bộ — không có trên remote nào, tên các nhánh đang giữ chúng); None = không đo được.
 
@@ -780,8 +816,9 @@ def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) ->
     Đo 09/10: 6 commit «chưa đẩy» ở hai repo thì 5 đã gộp — 3 trùng bản vá (rebase/cherry-pick), 2 gộp kiểu squash (#78 repo
     y khoa); chỉ 1 là việc dở thật. Hòm việc nhắc «soi rồi commit/push» mỗi phiên cho việc đã xong. Nay trừ đi:
     ① commit `git cherry` đánh «-» (bản vá trùng một commit trên nhánh chính remote); ② commit gộp squash
-    (`_commit_gop_squash`). Không dò được nhánh chính remote hoặc đầu ra git lạ ⇒ KHÔNG lọc (báo như cũ). `chi_tiet` (nếu
-    truyền) nhận {"nen", "trung_ban_va", "gop_squash", "nhanh_da_gop"} để in dòng ⓘ.
+    (`_commit_gop_squash`); ③ (24/10/2026) commit MERGE sạch mà mọi cha đã ở remote hoặc đã gộp (`_commit_merge_sach`).
+    Không dò được nhánh chính remote hoặc đầu ra git lạ ⇒ KHÔNG lọc (báo như cũ). `chi_tiet` (nếu truyền) nhận {"nen",
+    "trung_ban_va", "gop_squash", "gop_merge", "nhanh_da_gop"} để in dòng ⓘ.
     """
     ra = _chay(["git", "-C", str(duong), "rev-list", "--branches", "--not", "--remotes"], giay=30)
     dong = [x.strip() for x in ra.splitlines() if x.strip()]
@@ -805,13 +842,14 @@ def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) ->
         cua_nhanh[ten] = {sha for _, sha in dong_ch if sha in chua_day}
         trung |= {sha for dau, sha in dong_ch if dau == "-" and sha in chua_day}
     squash = _commit_gop_squash(duong, nen, chua_day - trung) if cua_nhanh else set()
-    that = chua_day - trung - squash
+    merge = _commit_merge_sach(duong, chua_day - trung - squash, chua_day, trung | squash) if cua_nhanh else set()
+    that = chua_day - trung - squash - merge
     if cua_nhanh:
         nhanh = sorted(ten for ten in nhanh_dinh if cua_nhanh[ten] & that)
     else:
         nhanh = sorted(nhanh_dinh)
     if chi_tiet is not None:
-        chi_tiet.update(nen=nen, trung_ban_va=sorted(trung), gop_squash=sorted(squash),
+        chi_tiet.update(nen=nen, trung_ban_va=sorted(trung), gop_squash=sorted(squash), gop_merge=sorted(merge),
                         nhanh_da_gop=sorted(set(nhanh_dinh) - set(nhanh)))
     return len(that), nhanh
 
@@ -1187,12 +1225,12 @@ def main() -> int:
         n_ban = len([x for x in st.splitlines() if x.strip()])
         chi_tiet_day: dict = {}
         n_chua_day, nhanh_chua_day = dem_commit_chua_co_tren_remote(duong, chi_tiet_day)
-        n_da_gop = len(chi_tiet_day.get("trung_ban_va", [])) + len(chi_tiet_day.get("gop_squash", []))
+        n_da_gop = sum(len(chi_tiet_day.get(k, [])) for k in ("trung_ban_va", "gop_squash", "gop_merge"))
         if n_da_gop:
             ng = chi_tiet_day.get("nhanh_da_gop", [])
             _THONG_TIN.append(
                 f"Repo {ten_repo}: {n_da_gop} commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên "
-                f"{chi_tiet_day['nen'].removeprefix('refs/remotes/')} (trùng bản vá/gộp squash) — không còn việc"
+                f"{chi_tiet_day['nen'].removeprefix('refs/remotes/')} (trùng bản vá/gộp squash/merge sạch) — không còn việc"
                 + (f"; nhánh cục bộ chỉ còn bản đã gộp: {', '.join(ng[:4])}{'…' if len(ng) > 4 else ''}" if ng else ""))
         if n_chua_day is None:
             de_xuat.append((2, "🤖", f"Repo {ten_repo}: KHÔNG đo được commit chưa có trên remote (git lỗi) — kiểm tay",

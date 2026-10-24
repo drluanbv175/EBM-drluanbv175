@@ -8917,6 +8917,68 @@ def bh119_cam_bien_commit_chua_day_nhin_moi_nhanh():
 
 
 
+def bh169_cam_bien_commit_chua_day_nhan_merge_sach():
+    """24/10 — hòm việc báo 🟡 «Repo gốc: 3 commit chưa có trên remote nào» và «Repo y khoa: 6» mỗi phiên; CẢ 9 là merge
+    «Merge origin/master vào nhánh X» (kéo nhánh chính về trước khi PR gộp squash): `git cherry` không xét merge, khớp tiêu đề
+    squash cũng không. Kiểm HÀNH VI `dem_commit_chua_co_tren_remote` trên repo git tạm: merge sạch trên nhánh đã gộp ⇒ (0, []);
+    merge tự thêm dòng riêng ⇒ vẫn đếm."""
+    import importlib.util as _iu
+    import subprocess as _sp
+    import tempfile as _tf
+    spec = _iu.spec_from_file_location("_bh169_tdx", REPO / "tools" / "tu_de_xuat_viec.py")
+    M = _iu.module_from_spec(spec)
+    spec.loader.exec_module(M)
+
+    def g(cay, *a):
+        return _sp.run(["git", *a], cwd=cay, check=True, capture_output=True, text=True).stdout.strip()
+
+    def ghi(cay, ten, nd, td):
+        (cay / ten).write_text(nd, encoding="utf-8", newline="\n")
+        g(cay, "add", ten)
+        g(cay, "commit", "-q", "-m", td)
+
+    def kich_ban(goc, them_rieng):
+        g(goc, "init", "--bare", "-q", "-b", "main", str(goc / "remote.git"))
+        cay, gh = goc / "cay", goc / "gh"
+        cay.mkdir()
+        g(cay, "init", "-q", "-b", "main")
+        for c in (cay,):
+            g(c, "config", "user.email", "t@t")
+            g(c, "config", "user.name", "t")
+        ghi(cay, "a.txt", "a\n", "goc")
+        g(cay, "remote", "add", "origin", str(goc / "remote.git"))
+        g(cay, "push", "-q", "-u", "origin", "main")
+        g(cay, "remote", "set-head", "origin", "main")
+        g(goc, "clone", "-q", str(goc / "remote.git"), str(gh))
+        g(gh, "config", "user.email", "g@g")
+        g(gh, "config", "user.name", "g")
+        g(cay, "switch", "-q", "-c", "phu")
+        ghi(cay, "p.txt", "p\n", "feat: tính năng của nhánh phụ cần gộp")
+        ghi(gh, "m.txt", "m\n", "chore: nhánh chính tiến lên")
+        g(gh, "push", "-q", "origin", "main")
+        g(cay, "fetch", "-q", "origin")
+        g(cay, "merge", "-q", "--no-ff", "--no-edit", "origin/main")
+        if them_rieng:
+            (cay / "p.txt").write_text("p\nthêm trong merge\n", encoding="utf-8", newline="\n")
+            g(cay, "add", "p.txt")
+            g(cay, "commit", "-q", "--amend", "--no-edit")
+        g(gh, "pull", "-q")
+        ghi(gh, "p.txt", "p\n", "feat: tính năng của nhánh phụ cần gộp (#9)")
+        g(gh, "push", "-q", "origin", "main")
+        g(cay, "fetch", "-q", "origin")
+        return cay
+
+    with _tf.TemporaryDirectory() as _d:
+        kq = M.dem_commit_chua_co_tren_remote(kich_ban(Path(_d), False))
+        if kq != (0, []):
+            return False, f"merge sạch trên nhánh đã gộp squash vẫn bị đếm {kq} — 🟡 «commit chưa đẩy» giả tái phát"
+    with _tf.TemporaryDirectory() as _d:
+        kq = M.dem_commit_chua_co_tren_remote(kich_ban(Path(_d), True))
+        if kq[0] != 1:
+            return False, f"merge tự thêm dòng riêng bị coi là đã gộp ({kq}) — mất nội dung chưa đẩy thật"
+    return True, "merge sạch (combined diff rỗng, mọi cha đã gộp) không còn bị đếm; merge có nội dung riêng vẫn đếm"
+
+
 def bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao():
     """02/10 (EV-02) — `kiem_phu_giam_sat.py` chỉ đo KHAI BÁO («chủ đề này có mục watchlist»), không đo mục đó tìm ra gì.
     Đo 02/10: 10/42 chủ đề cho ≤3 bản ghi trong CẢ BỐN tầng/90 ngày (RA = 2) vì cụm truy vấn dài («rheumatoid arthritis treatment
@@ -11015,6 +11077,7 @@ BAI_HOC = [
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
     ("BH168", "23/10", "Skill tài khoản: gương cục bộ (~/.claude/skills/synced, dừng 02/10) cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được thay vì «21 skill CŨ» đỏ giả; repo đổi sau đóng gói vẫn «cập nhật»", bh168_skill_tai_khoan_guong_cuc_bo_lac_hau),
+    ("BH169", "24/10", "Cảm biến «commit chưa đẩy» nhận commit MERGE sạch (combined diff rỗng, mọi cha đã ở remote/đã gộp) — hết 🟡 giả «3 + 6 commit chưa đẩy» do merge kéo nhánh chính về trước khi PR gộp squash", bh169_cam_bien_commit_chua_day_nhan_merge_sach),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),
