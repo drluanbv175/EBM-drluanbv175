@@ -781,7 +781,10 @@ def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) ->
     y khoa); chỉ 1 là việc dở thật. Hòm việc nhắc «soi rồi commit/push» mỗi phiên cho việc đã xong. Nay trừ đi:
     ① commit `git cherry` đánh «-» (bản vá trùng một commit trên nhánh chính remote); ② commit gộp squash
     (`_commit_gop_squash`). Không dò được nhánh chính remote hoặc đầu ra git lạ ⇒ KHÔNG lọc (báo như cũ). `chi_tiet` (nếu
-    truyền) nhận {"nen", "trung_ban_va", "gop_squash", "nhanh_da_gop"} để in dòng ⓘ.
+    truyền) nhận {"nen", "trung_ban_va", "gop_squash", "merge_da_gop", "nhanh_da_gop"} để in dòng ⓘ.
+
+    Vá 24/10/2026 — ③ commit MERGE (đồng bộ nhánh chính vào nhánh PR) mà nội dung nhánh đã vào nhánh chính remote
+    (`_commit_merge_nhanh_da_gop`; `git cherry` bỏ qua commit merge nên ①② không bao giờ lọc được chúng).
     """
     ra = _chay(["git", "-C", str(duong), "rev-list", "--branches", "--not", "--remotes"], giay=30)
     dong = [x.strip() for x in ra.splitlines() if x.strip()]
@@ -805,15 +808,68 @@ def dem_commit_chua_co_tren_remote(duong: Path, chi_tiet: dict | None = None) ->
         cua_nhanh[ten] = {sha for _, sha in dong_ch if sha in chua_day}
         trung |= {sha for dau, sha in dong_ch if dau == "-" and sha in chua_day}
     squash = _commit_gop_squash(duong, nen, chua_day - trung) if cua_nhanh else set()
-    that = chua_day - trung - squash
+    merge_da_gop = (_commit_merge_nhanh_da_gop(duong, chua_day - trung - squash, cua_nhanh, trung | squash)
+                    if cua_nhanh else set())
+    that = chua_day - trung - squash - merge_da_gop
     if cua_nhanh:
         nhanh = sorted(ten for ten in nhanh_dinh if cua_nhanh[ten] & that)
     else:
         nhanh = sorted(nhanh_dinh)
     if chi_tiet is not None:
         chi_tiet.update(nen=nen, trung_ban_va=sorted(trung), gop_squash=sorted(squash),
-                        nhanh_da_gop=sorted(set(nhanh_dinh) - set(nhanh)))
+                        merge_da_gop=sorted(merge_da_gop), nhanh_da_gop=sorted(set(nhanh_dinh) - set(nhanh)))
     return len(that), nhanh
+
+
+def _merge_sach(duong: Path, sha: str) -> bool:
+    """Commit merge KHÔNG mang sửa tay nào: `git show --remerge-diff` (so với kết quả git tự trộn hai cha) rỗng.
+
+    git cũ không có `--remerge-diff` / lỗi ⇒ đầu ra khác rỗng ⇒ False (giữ commit trong số đếm, BH08)."""
+    return not _chay(["git", "-C", str(duong), "show", "--remerge-diff", "--format=", sha], giay=60).strip()
+
+
+def _pr_da_gop_chua_commit(duong: Path, sha: str) -> bool:
+    """GitHub ghi commit `sha` thuộc một PR ĐÃ GỘP, và commit có trước lúc gộp ⇒ nội dung đã vào nhánh chính qua squash.
+
+    GitHub giữ liên kết commit ↔ PR cả sau khi gộp squash và xoá nhánh đầu. Remote không phải GitHub, gh lỗi, mạng hỏng hay
+    đầu ra lạ ⇒ False (không biết ≠ đã gộp)."""
+    url = _chay(["git", "-C", str(duong), "remote", "get-url", "origin"], giay=10).strip()
+    chu = _owner_repo_tu_remote(duong) if "github.com" in url else ""
+    if not chu:
+        return False
+    luc = _chay(["git", "-C", str(duong), "log", "-1", "--format=%cI", sha], giay=10).strip()
+    ra = _chay(["gh", "api", f"repos/{chu}/commits/{sha}/pulls", "--jq",
+                ".[] | select(.merged_at != null) | .merged_at"], giay=30)
+    try:
+        t_commit = dt.datetime.fromisoformat(luc)
+        gop = [dt.datetime.fromisoformat(x.strip().replace("Z", "+00:00")) for x in ra.splitlines() if x.strip()]
+    except ValueError:
+        return False   # đầu ra lỗi của gh/git ⇒ không đoán
+    return any(g >= t_commit for g in gop)
+
+
+def _commit_merge_nhanh_da_gop(duong: Path, ung_vien: set[str], cua_nhanh: dict[str, set[str]],
+                               da_loc: set[str]) -> set[str]:
+    """Commit MERGE (≥ 2 cha) chỉ còn trên nhánh cục bộ mà nội dung đã vào nhánh chính remote — vá 24/10/2026.
+
+    `git cherry` bỏ qua commit merge, nên commit «Merge remote-tracking branch 'origin/…' into <nhánh PR>» (đồng bộ nhánh
+    chính vào nhánh PR trước khi GitHub squash) không bao giờ được lọc: đo 24/10/2026 hòm việc báo «3 commit chưa có trên
+    remote» (repo gốc) và «6» (repo y khoa) trong khi danh sách nhánh giữ chúng RỖNG. Loại commit merge khi:
+    ⓐ trộn SẠCH (`_merge_sach`) và MỌI nhánh cục bộ chứa nó không còn commit thật nào chưa lọc; hoặc
+    ⓑ GitHub ghi nó thuộc một PR đã gộp, tạo TRƯỚC lúc gộp (`_pr_da_gop_chua_commit` — giải xung đột tay cũng vào squash).
+    So nội dung tệp với nhánh chính HIỆN TẠI không dùng được: PR sau sửa tiếp các tệp đó (đo 24/10: 0/6 qua) — và trong zsh,
+    biến danh sách tệp không tách từ nên phép so tay `git diff -- $tep` luôn rỗng, báo «đã có» giả (đã gặp khi đo vá này)."""
+    ra: set[str] = set()
+    for sha in sorted(ung_vien):
+        cha = _chay(["git", "-C", str(duong), "rev-list", "--parents", "-n", "1", sha], giay=20).split()
+        if len(cha) < 3 or not all(_SHA_RE.fullmatch(x) for x in cha):
+            continue   # không phải commit merge (hoặc đầu ra lạ) ⇒ không đụng
+        ten = [x.strip() for x in _chay(["git", "-C", str(duong), "for-each-ref", "--contains", sha,
+                                         "--format=%(refname:short)", "refs/heads"], giay=30).splitlines() if x.strip()]
+        nhanh_da_gop = bool(ten) and all(n in cua_nhanh and not (cua_nhanh[n] - da_loc) for n in ten)
+        if (nhanh_da_gop and _merge_sach(duong, sha)) or _pr_da_gop_chua_commit(duong, sha):
+            ra.add(sha)
+    return ra
 
 
 def _trang_thai_ci_pr(rollup: list) -> str:
@@ -1187,7 +1243,8 @@ def main() -> int:
         n_ban = len([x for x in st.splitlines() if x.strip()])
         chi_tiet_day: dict = {}
         n_chua_day, nhanh_chua_day = dem_commit_chua_co_tren_remote(duong, chi_tiet_day)
-        n_da_gop = len(chi_tiet_day.get("trung_ban_va", [])) + len(chi_tiet_day.get("gop_squash", []))
+        n_da_gop = (len(chi_tiet_day.get("trung_ban_va", [])) + len(chi_tiet_day.get("gop_squash", []))
+                    + len(chi_tiet_day.get("merge_da_gop", [])))
         if n_da_gop:
             ng = chi_tiet_day.get("nhanh_da_gop", [])
             _THONG_TIN.append(
