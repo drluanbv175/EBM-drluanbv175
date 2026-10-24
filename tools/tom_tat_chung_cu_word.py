@@ -453,8 +453,19 @@ def kiem_rut_bai(pmid: str | None, doi: str | None) -> dict:
         if pmid:
             kq = (sx.kiem_rut_bai([pmid]) or {}).get(pmid)
             if isinstance(kq, dict) and kq.get("status") in ("ok", "retracted"):
+                nguon = kq.get("source") or ",".join(kq.get("sources_tried") or [])
+                if kq["status"] == "retracted" and kq.get("withdrawn_correction_notice"):
+                    # 24/10/2026: thông báo rút là BẢN ĐÍNH CHÍNH bị rút mà bác sĩ ĐÃ KÝ xem xét (rut-bai-da-xem-xet.json, đúng
+                    # vân tay tập thông báo) — cùng hàm của sổ xác minh/cổng verify_dashboard. Đo: guideline CCS/CHFS 2025
+                    # (PMID 41110921, bác sĩ ký 24/09) bị `chuan-bi` chặn «ĐÃ BỊ RÚT» trong khi cổng dashboard cho qua.
+                    # Chưa ký / vân tay lệch / không đối chiếu được ⇒ vẫn «da_rut» (fail-closed).
+                    tam: dict = {}
+                    sx._gan_dau_hieu_thong_bao(tam, kq)
+                    if tam.get("sua_loi_bi_rut") and sx._dinh_chinh_da_ky(f"pmid:{pmid}", tam):
+                        return {"trang_thai": "dinh_chinh_bi_rut_da_ky", "nguon": nguon, "luc": luc,
+                                "thong_bao_ids": tam.get("thong_bao_ids") or []}
                 return {"trang_thai": "da_rut" if kq["status"] == "retracted" else "khong_thay_rut",
-                        "nguon": kq.get("source") or ",".join(kq.get("sources_tried") or []), "luc": luc}
+                        "nguon": nguon, "luc": luc}
         elif doi:
             kq = sx.rut_bai_retraction_watch_ngoai_tuyen_doi([doi])
             if kq is not None:
@@ -468,6 +479,8 @@ def kiem_rut_bai(pmid: str | None, doi: str | None) -> dict:
 NHAN_RUT_BAI = {"khong_thay_rut": "Không thấy thông báo rút bài (chuỗi 3 tầng: Retraction Watch · PubMed · Europe PMC)",
                 "khong_thay_rut_rw": "Không thấy trong Retraction Watch (chỉ tra ngoại tuyến theo DOI — bài không có PMID)",
                 "da_rut": "ĐÃ BỊ RÚT — KHÔNG ĐƯỢC DÙNG",
+                "dinh_chinh_bi_rut_da_ky": "Cờ rút bài là BẢN ĐÍNH CHÍNH bị rút — bác sĩ đã ký xem xét (rut-bai-da-xem-xet.json, "
+                                           "đúng vân tay thông báo); bài gốc không bị rút",
                 "chua_kiem": "CHƯA KIỂM ĐƯỢC RÚT BÀI — tra lại trước khi dùng"}
 
 
