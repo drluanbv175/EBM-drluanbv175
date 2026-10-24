@@ -161,6 +161,35 @@ def ensure_link(source: Path, destination: Path, apply: bool) -> LinkResult:
     return LinkResult(label, source.name, "DA_NOI")
 
 
+def don_lien_ket_mo_coi(source_root: Path, destination: Path, apply: bool) -> list[LinkResult]:
+    """Liên kết trong runtime trỏ VÀO nguồn ``source_root`` mà skill nguồn đã bị gỡ (đích không còn) ⇒ «mồ côi».
+
+    24/10/2026: gỡ skill ``dieu-phoi-aipoch`` khỏi ``sync/skills/`` (bác sĩ quyết gỡ plugin aipoch) để lại liên kết treo
+    ở ``~/.claude/skills`` và ``~/.codex/skills`` — ``ensure_link`` chỉ đi theo skill NGUỒN đang có nên không bao giờ thấy
+    nó, và chốt BH44 (``kiem_dieu_phoi`` ③ «skill runtime KHÔNG CÓ NGUỒN») đỏ. Chỉ gỡ ĐÚNG liên kết (``LK.go`` — không đụng
+    dữ liệu) khi đích nằm trong ``source_root`` và không còn tồn tại; thư mục thật, liên kết còn sống hay liên kết trỏ
+    nơi khác giữ nguyên. ``apply=False`` chỉ báo «MO_COI»."""
+    ket_qua: list[LinkResult] = []
+    if not destination.is_dir():
+        return ket_qua
+    goc = os.path.normcase(str(source_root.resolve()))
+    for muc in sorted(destination.iterdir(), key=lambda item: item.name.casefold()):
+        if not LK.la_lien_ket(muc):
+            continue
+        dich = LK.dich_cua(muc)
+        if dich is None or dich.exists():
+            continue
+        if not os.path.normcase(str(dich)).startswith(goc + os.sep):
+            continue
+        nhan = destination.parent.name
+        if not apply:
+            ket_qua.append(LinkResult(nhan, muc.name, "MO_COI", f"liên kết treo trỏ vào nguồn đã gỡ: {dich}"))
+            continue
+        LK.go(muc)
+        ket_qua.append(LinkResult(nhan, muc.name, "DA_GO", f"đã gỡ liên kết treo (nguồn đã gỡ: {dich})"))
+    return ket_qua
+
+
 def co_codex_tren_may() -> bool:
     """Máy này có Codex để hỏi «plugin nào đang cài» không (cùng ứng viên build_catalog dùng).
 
@@ -426,6 +455,11 @@ def main() -> int:
             for destination in (args.claude_skills, args.codex_skills)
             for source in sources
         ]
+        mo_coi = [
+            item
+            for destination in (args.claude_skills, args.codex_skills)
+            for item in don_lien_ket_mo_coi(args.source, destination, args.ap_dung)
+        ]
     except (OSError, RuntimeError) as exc:
         print(f"LỖI đồng bộ skill: {exc}", file=sys.stderr)
         return 1
@@ -437,6 +471,12 @@ def main() -> int:
         print(f"✓ Đã liên kết {len(changed)} skill vào Claude/Codex")
     for item in conflicts:
         print(f"✗ {item.runtime}/{item.skill}: {item.detail}", file=sys.stderr)
+    for item in mo_coi:
+        if item.status == "DA_GO" and not args.im_khi_on:
+            print(f"✓ {item.runtime}/{item.skill}: {item.detail}")
+        elif item.status == "MO_COI":
+            print(f"⚠ {item.runtime}/{item.skill}: {item.detail} — chạy lại với --ap-dung để gỡ", file=sys.stderr)
+    pending += [item for item in mo_coi if item.status == "MO_COI"]
 
     codes: list[int] = [2 if conflicts else (1 if pending else 0)]
     # Chỉ kể tên bước ĐÃ THỰC SỰ CHẠY. Dòng kết cũ luôn nói "Cowork và plugin đã
