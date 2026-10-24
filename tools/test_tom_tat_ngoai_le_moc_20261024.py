@@ -47,7 +47,7 @@ def _thu_vien(tmp_path, monkeypatch, ids=(1, 2, 3, 4)):
     assert T.ghi_moc(tv, "Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên") == 0
     monkeypatch.setattr(T, "ban_ghi_co_pdf",
                         lambda _tv: [_bg(1, "111"), _bg(2, "222"), _bg(3, "333"), _bg(4, "444"), _bg(9, "999")])
-    monkeypatch.setattr(T, "ngu_canh_dashboard", lambda: {})
+    monkeypatch.setattr(T, "ngu_canh_dashboard", lambda: {"pmid:gia": {}})  # có dashboard (rỗng ⇒ không đo được)
     monkeypatch.setattr(T, "_ngu_canh_cua", lambda ds, pmid, doi: (
         [{"vai": "muc", "decision": QUYET[pmid]}] if QUYET.get(pmid) else []))
     return tv
@@ -104,3 +104,16 @@ def test_hom_viec_tach_moi_va_cu():
     assert len(kq) == 1 and "1 trích dẫn MỚI" in kq[0][1] and "2 bản ghi CŨ" in kq[0][1]
     kq = tdxv.giac_quan_tom_tat_word(lambda: [dict(_bg(1, "111"), nguon_hang_cho="ngoai_le_moc")])
     assert "MỚI" not in kq[0][1] and "1 bản ghi CŨ" in kq[0][1]
+
+
+def test_co_ngoai_le_ma_khong_doc_duoc_dashboard_la_khong_do_duoc(tmp_path, monkeypatch):
+    """Worktree/bản sao trần không có EBM-Dashboards ⇒ mọi bản ghi rơi vào T4 ⇒ «0 chờ» là XANH GIẢ — phải báo không đo được."""
+    import pytest
+    tv = _thu_vien(tmp_path, monkeypatch)
+    T.ghi_ngoai_le_moc(tv, [1, 2], LOI)
+    monkeypatch.setattr(T, "ngu_canh_dashboard", lambda: {})
+    with pytest.raises(T.NgoaiLeKhongDoDuoc):
+        T.hang_cho(tv)
+    chet = []
+    monkeypatch.setattr(tdxv, "_ghi_chet", lambda lenh, ly: chet.append(ly))
+    assert tdxv.giac_quan_tom_tat_word(lambda: T.hang_cho(tv)) == [] and chet and "NgoaiLeKhongDoDuoc" in chet[0]

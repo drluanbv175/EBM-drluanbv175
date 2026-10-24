@@ -1557,6 +1557,10 @@ def doc_moc(thu_vien: Path) -> set[int] | None:
 TEN_NGOAI_LE = "_ngoai_le_moc.json"
 
 
+class NgoaiLeKhongDoDuoc(RuntimeError):
+    """Có ngoại lệ mốc nhưng không đọc được dashboard nào để xếp tầng (vd chạy ở worktree/bản sao trần) — KHÔNG được trả «0 chờ»."""
+
+
 def tep_ngoai_le(thu_vien: Path) -> Path:
     return thu_muc_ra(thu_vien) / TEN_NGOAI_LE
 
@@ -1610,6 +1614,8 @@ def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | N
     ngoai_le = doc_ngoai_le_moc(thu_vien)
     if ngoai_le:
         ds = ngu_canh_dashboard()
+        if not ds:
+            raise NgoaiLeKhongDoDuoc("không đọc được dashboard nào (EBM-Dashboards/) để xếp tầng bản ghi cũ — không đo được")
         for bg in co_pdf:
             if bg["rec"] in moc:
                 t = tang_uu_tien(_ngu_canh_cua(ds, bg["pmid"], bg["doi"]))
@@ -1709,7 +1715,11 @@ def main(argv: list[str] | None = None) -> int:
     if a.lenh == "pdf-hoa":
         return pdf_hoa(tv, ap_dung=a.ap_dung)
     if a.lenh == "hang-cho":
-        hc = hang_cho(tv, dashboard=a.dashboard)
+        try:
+            hc = hang_cho(tv, dashboard=a.dashboard)
+        except NgoaiLeKhongDoDuoc as e:
+            print(f"⚪ {e}")
+            return 2
         if hc is None:
             print(f"⚪ chưa có mốc «để nguyên» ({tep_moc(tv)}) — không xác định được trích dẫn MỚI; bác sĩ quyết rồi chạy "
                   "`moc --loi \"<nguyên văn>\"`")
@@ -1736,7 +1746,11 @@ def main(argv: list[str] | None = None) -> int:
         word = sorted(thu_muc_ra(tv).glob("*_TomTatChungCu.docx"))
         print(f"PDF giữ màu (mở được trong EndNote): {sum(pdf_con_moi(w) for w in word)}/{len(word)}"
               + ("" if all(pdf_con_moi(w) for w in word) else " — chạy `pdf-hoa --ap-dung`"))
-        hc = hang_cho(tv)
+        try:
+            hc = hang_cho(tv)
+        except NgoaiLeKhongDoDuoc as e:
+            print(f"Hàng chờ: ⚪ {e}")
+            return 2
         if hc is None:
             print("Hàng chờ chứng cứ MỚI: ⚪ chưa có mốc «để nguyên»")
         else:
