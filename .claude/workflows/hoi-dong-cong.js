@@ -120,7 +120,12 @@ const KQ_GHI = { type: 'object', required: ['ket_qua'], properties: {
 
 const CHUNG = `Đề tài «${STUDY}», cổng ${GATE}. Mọi lệnh chạy trong thư mục ${Y}/. Đường dẫn tệp là tương đối exports/${STUDY}/. ` +
   'KHÔNG sửa tệp đề tài, KHÔNG ghi gate_params/approval_ledger, KHÔNG chạy approve_gate.py, KHÔNG PII. ' +
-  'Căn cứ phải kiểm được: tep (<tệp>:<dòng>), tieu_chi (G4-AUTO-09…), pmid, doi, lenh (kèm ket_qua). Trả lời đúng schema.'
+  'Căn cứ phải kiểm được: tep (<tệp>:<dòng>), tieu_chi (G4-AUTO-09…), pmid, doi, lenh (kèm ket_qua). Trả lời đúng schema. ' +
+  // 25/10/2026: agent hội đồng G1 gọi `python3` hệ thống (thiếu thư viện cryptography) ⇒ không kiểm được chữ ký Ed25519 của
+  // sổ cái ⇒ đọc G4 đã khoá thành «chờ ký» và ghi khẳng định sai đó vào biên bản tranh biện.
+  'Chữ «python3» trong mọi lệnh dưới đây nghĩa là ~/.ebm-venv/bin/python (Windows: ~/.ebm-venv/Scripts/python.exe); chỉ ' +
+  'khi không có venv mới dùng python3. Trạng thái «KHÔNG ĐO ĐƯỢC» hay «chữ ký không kiểm được» KHÔNG phải trạng thái cổng — ' +
+  'không được viết thành «chưa khoá/chờ ký».'
 
 // ── Chạy thử: in kế hoạch, KHÔNG mở agent ─────────────────────────────────────────────────────────────────────────────
 if (a.chay_thu && HS) {
