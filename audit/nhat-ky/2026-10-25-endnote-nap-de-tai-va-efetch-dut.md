@@ -38,4 +38,16 @@ xanh (2 đột biến lúc đầu lọt do fixture thiếu tệp `.enl` — sử
 bổ sung `doc_nhom` (thư viện thật luôn có bảng nhóm); 431 ca EndNote + tóm tắt + hòm việc xanh. Chạy khô thật `--de-tai` trên đề tài:
 66/66 đã có trong thư viện, về đúng nhóm đã ghi nhớ, không nhập gì.
 
+**Bổ sung cùng ngày — hai công cụ nạp trích dẫn đề tài, hai tên nhóm.** #254 (gộp vào master trước #252) thêm
+`tools/nap_endnote_de_tai.py` (TLTK của đề cương) với nhóm mặc định «NC · <mã>» và KHÔNG đọc bảng `nhom_theo_chu_de` ⇒ đề tài
+`btm-dtd2-ngoai-tru-BVQY175` (đã có group 133 «NC · Chăm sóc thận ĐTĐ típ 2 ngoại trú BVQY175 (btm-…)», ghi nhớ bởi lượt
+`--de-tai`) chạy `--ap-dung` không `--ten-nhom` sẽ dựng nhóm đề tài thứ hai. Bác sĩ chọn sửa ở #252. Vá: `chay()` lấy tên nhóm
+theo thứ tự `--ten-nhom` → nhóm đã ghi nhớ (khoá `khoa_nhom_de_tai` = `DE-TAI_<mã>`, cùng khoá `doc_de_tai` của `--de-tai`) →
+«NC · <mã>»; lượt `--ap-dung` thật (EndNote mở, nạp không lỗi) ghi nhớ tên đã dùng (`--ten-nhom` thắng và được ghi nhớ, như
+`nap_nhieu`); báo cáo in nguồn tên nhóm. Dưới pytest ghi vào `~/.ebm-endnote.json` thật bị chặn cứng (`_ghi_nho_nhom`) — test
+của #254 vốn không cô lập cấu hình (chạy thử trước khi thêm fixture: 3 ca nạp thật đỏ đúng ở rào, tệp thật không đổi); fixture tự
+động nay trỏ `NE.CAU_HINH` sang tmp_path. Đo thật (chỉ đọc): btm-dtd2 → nhóm 133 (66 bản ghi); hai-long-benh-nhan-C1a chưa ghi
+nhớ ⇒ «NC · hai-long-benh-nhan-C1a-BVQY175» = đúng group 135 đang có (52 bản ghi), lượt `--ap-dung` kế tiếp sẽ ghi nhớ.
+Kiểm: 6 ca mới trong `tools/test_nap_endnote_de_tai_20261025.py` (29 ca); 8 đột biến đều đỏ, phục hồi nguyên byte.
+
 Cần bác sĩ kiểm chứng.

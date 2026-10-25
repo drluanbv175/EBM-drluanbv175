@@ -26,6 +26,9 @@ mang giấy phép mở). Bài thuê bao: làn trình duyệt có uỷ quyền / 
 chưa có PDF toàn văn (vd chỉ có PDF tóm tắt chứng cứ) ⇒ THÊM toàn văn, giữ mọi tệp cũ (`EndNoteMac.them_tep`).
 Độ phủ = số TLTK có bản ghi mang PDF toàn văn trong EndNote / tổng TLTK — đo trên thư viện thật, không theo số dự định.
 
+Nhóm: `--ten-nhom` → nhóm ĐÃ GHI NHỚ của đề tài (khoá `DE-TAI_<mã>` trong ~/.ebm-endnote.json, chung với
+`nap_endnote_chu_de.py --de-tai`) → «NC · <mã>»; `--ap-dung` thật ghi nhớ tên đã dùng (25/10/2026 — tránh nhóm NC thứ hai).
+
 Chạy khô mặc định. `--ap-dung` mới ghi EndNote và biên nhận `exports/<đề tài>/ENDNOTE_TLTK_<đề tài>.json`.
 Mã thoát: 0 đủ (mọi TLTK trong EndNote, đủ toàn văn, không lệch) · 1 còn việc (thiếu toàn văn/lệch/chưa nhập được) ·
 2 không chạy được · 3 tham số sai. Cần bác sĩ kiểm chứng.
@@ -35,6 +38,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -461,17 +465,41 @@ def ma_ban_ghi(endnote, ds: list[dict]) -> dict[int, str]:
     return ra
 
 
+def khoa_nhom_de_tai(study: str) -> str:
+    """Khoá của đề tài trong bảng `nhom_theo_chu_de` (~/.ebm-endnote.json) — CÙNG khoá với `nap_endnote_chu_de.py --de-tai`
+    («DE-TAI_<mã>», 25/10/2026) ⇒ hai công cụ nạp trích dẫn đề tài về MỘT nhóm."""
+    return NE.khoa_chu_de(Path(f"DE-TAI_{study}.json"))
+
+
+def _ghi_nho_nhom(khoa: str, nhom: str, cau_hinh: Path | None) -> None:
+    """Ghi nhớ nhóm của đề tài. Dưới pytest KHÔNG BAO GIỜ ghi tệp cấu hình thật trong thư mục nhà — test phải trỏ
+    `NE.CAU_HINH`/`cau_hinh` sang thư mục tạm (cùng lối `ghi_cho_vao_nhom`)."""
+    tep = Path(cau_hinh or NE.CAU_HINH)
+    if os.environ.get("PYTEST_CURRENT_TEST") and tep == Path.home() / ".ebm-endnote.json":
+        raise NE.KhongChayDuoc(f"đang chạy dưới pytest — không ghi cấu hình EndNote thật {tep}")
+    NE.ghi_nhom(khoa, nhom, tep)
+
+
 def chay(ds_tep: list[Path], study: str, thu_muc: Path, *, endnote, ap_dung: bool, kho: Path | None,
          ten_nhom: str | None = None, gom: bool = False, loai_tru: dict | None = None,
-         lay_pm=None, lay_cr=None, lay_ep=None, tim_pmid=tim_pmid_theo_doi, gom_tv=gom_toan_van) -> dict:
-    """Toàn bộ lượt nạp một đề tài. `endnote` None = chỉ lập kế hoạch (không kiểm trùng, không đo độ phủ trong EndNote)."""
+         lay_pm=None, lay_cr=None, lay_ep=None, tim_pmid=tim_pmid_theo_doi, gom_tv=gom_toan_van,
+         cau_hinh: Path | None = None) -> dict:
+    """Toàn bộ lượt nạp một đề tài. `endnote` None = chỉ lập kế hoạch (không kiểm trùng, không đo độ phủ trong EndNote).
+
+    Tên nhóm (25/10/2026): `ten_nhom` (--ten-nhom) → nhóm ĐÃ GHI NHỚ của đề tài (khoá `DE-TAI_<mã>` trong `cau_hinh`, mặc định
+    ~/.ebm-endnote.json — nhóm `--de-tai` hay lượt trước đã dựng) → «NC · <mã>». Thiếu bước giữa thì một đề tài đã có nhóm
+    tên khác sinh thêm nhóm «NC · <mã>» thứ hai. Lượt `--ap-dung` thật (EndNote mở, nạp không lỗi) ghi nhớ tên nhóm đã dùng —
+    `--ten-nhom` của bác sĩ thắng và được ghi nhớ, như `nap_endnote_chu_de.nap_nhieu`."""
     lay_pm = lay_pm or NE.lay_pubmed
     lay_cr = lay_cr or NE.lay_crossref
     lay_ep = lay_ep or NE.lay_europepmc
     ds, canh_bao = gop_tai_lieu(ds_tep)
-    nhom = ten_nhom or TIEN_TO_NHOM + study
+    khoa = khoa_nhom_de_tai(study)
+    da_ghi = NE.nhom_da_ghi(cau_hinh).get(khoa)
+    nhom = ten_nhom or da_ghi or TIEN_TO_NHOM + study
     thu_muc_tv = thu_muc / THU_MUC_TOAN_VAN
     bc: dict = {"study": study, "tai_lieu": [t.name for t in ds_tep], "nhom": nhom, "so_tltk": len(ds),
+                "nhom_nguon": "tham_so" if ten_nhom else ("ghi_nho" if da_ghi else "mac_dinh"),
                 "ap_dung": ap_dung, "kiem_trung": endnote is not None, "danh_muc": canh_bao,
                 "kho_toan_van": bool(kho and kho.is_dir()), "thu_muc_toan_van": str(thu_muc_tv)}
     bc["pmid_tu_doi"] = phan_giai_pmid(ds, tim=tim_pmid, lay_pm=lay_pm, lay_ep=lay_ep)
@@ -524,6 +552,10 @@ def chay(ds_tep: list[Path], study: str, thu_muc: Path, *, endnote, ap_dung: boo
         lay_pm=lambda pmids: {p: cache_pm[p] for p in pmids if p in cache_pm},
         lay_cr=lambda doi: cache_doi.get(doi), lay_ep=lambda _pmids: {}, ten_nhom=nhom, loai_tru=loai_tru,
         bo_sung=bo_sung, chon_pdf_cua=chon, ids_them=list(bc["khong_dinh_danh"]["ids"].values()) if ap_dung else None)
+    # Chỉ ghi nhớ khi nhóm THẬT đã được xử lý trong EndNote (như nap_nhieu) — chạy khô/không mở EndNote/nạp lỗi thì không.
+    if ap_dung and endnote is not None and not bc["nap"].get("loi") and da_ghi != nhom:
+        _ghi_nho_nhom(khoa, nhom, cau_hinh)
+        bc["ghi_nho_nhom"] = True
 
     # TLTK không định danh: gắn toàn văn bác sĩ đặt sẵn (`TLTK-<n>.pdf`) vào bản ghi chưa có tệp nào.
     if ap_dung and endnote is not None and bc["khong_dinh_danh"]["ids"]:
@@ -590,6 +622,10 @@ def ma_thoat(bc: dict) -> int:
 def in_bao_cao(bc: dict) -> None:
     nap = bc.get("nap") or {}
     print(f"📚 TLTK đề tài {bc['study']} → EndNote nhóm «{bc['nhom']}» ({'NẠP THẬT' if bc['ap_dung'] else 'chạy khô'})")
+    nguon = {"tham_so": "theo --ten-nhom", "ghi_nho": "nhóm đã ghi nhớ của đề tài",
+             "mac_dinh": "tên mặc định — đề tài chưa có nhóm ghi nhớ"}.get(bc.get("nhom_nguon", ""))
+    if nguon:
+        print(f"   Nhóm: {nguon}" + (" · đã ghi nhớ cho lượt sau" if bc.get("ghi_nho_nhom") else ""))
     print(f"   {bc['so_tltk']} TLTK từ {', '.join(bc['tai_lieu'])}")
     for c in bc["danh_muc"]:
         print(f"   🟠 danh mục: {c}")
@@ -660,7 +696,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--study", required=True, help="mã đề tài (thư mục exports/<mã>/ của repo y khoa)")
     ap.add_argument("--thu-muc-de-tai", help="thư mục đề tài (mặc định medical-ebm-automation/exports/<mã>)")
     ap.add_argument("--tai-lieu", nargs="*", help="tệp .md có mục TLTK (mặc định DE_CUONG_NOP_HOI_DONG_<mã>.md)")
-    ap.add_argument("--ten-nhom", help=f"tên nhóm EndNote (mặc định «{TIEN_TO_NHOM}<mã>»)")
+    ap.add_argument("--ten-nhom", help="tên nhóm EndNote (mặc định: nhóm đã ghi nhớ của đề tài — khoá DE-TAI_<mã> trong "
+                                       f"~/.ebm-endnote.json — không có thì «{TIEN_TO_NHOM}<mã>»; --ap-dung ghi nhớ tên đã dùng)")
     ap.add_argument("--kho-toan-van", help="kho toàn văn chung (mặc định EBM-Dashboards/toan_van_oa)")
     ap.add_argument("--gom-toan-van", action="store_true",
                     help="chạy làn truy cập mở (PMC + Unpaywall, cổng điều khoản) cho TLTK còn thiếu PDF trước khi nạp")
