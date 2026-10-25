@@ -161,13 +161,14 @@
     },
     "elsevier_hoi": {
       "mien": ["www.gastrojournal.org", "journal.chestnet.org", "www.kidney-international.org", "www.ajog.org",
-               "www.journal-of-hepatology.eu"],
+               "www.journal-of-hepatology.eu", "www.resuscitationjournal.com", "www.nmcd-journal.com",
+               "www.jhltonline.org"],
       "chon": "article",
       "min": 12000,
       "pdf": "meta",
       "khoaTrang": "Article preview",
-      "kiem_lan_cuoi": "2026-10-18 · 7 bài (PMID 35679950, 38395525, 19376844, 31034818, 38490803, 38141870, 40348683)",
-      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST, KDIGO/ISN, SMFM, EASL). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com hoặc SSO id.elsevier.com (tự quay lại, không cần đăng nhập) — bác sĩ tick một lần mỗi miền."
+      "kiem_lan_cuoi": "2026-10-18 · 7 bài (PMID 35679950, 38395525, 19376844, 31034818, 38490803, 38141870, 40348683); 2026-10-25 · 3 miền mới (PMID 42727699 Resuscitation, 42476858 NMCD, 42764189 JHLT)",
+      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST, KDIGO/ISN, SMFM, EASL; thêm 25/10: ERC Resuscitation, NMCD, ISHLT JHLT). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com hoặc SSO id.elsevier.com (tự quay lại, không cần đăng nhập) — bác sĩ tick một lần mỗi miền. linkinghub chuyển tới miền KHÔNG có www (vd resuscitationjournal.com/retrieve/pii/…) rồi mới về www.<miền>/article/<PII>/fulltext — truyền location.href SAU chuyển hướng làm --url. Bài «Perspectives» ngắn của JHLT (14.504 ký tự, không IMRaD): cổng nội dung của «nhan» loại HTML, giữ PDF."
     },
     "jama": {
       "mien": ["jamanetwork.com"],
@@ -220,8 +221,8 @@
       "chon": "article",
       "min": 12000,
       "pdf": "meta",
-      "kiem_lan_cuoi": "2026-10-18 · 2 bài (PMID 40897189, 42225113)",
-      "ghi_chu": "Mở /journals/<tạp chí>/article/PII<PII>/fulltext. Bài tin/News ngắn (vd 42225113, 6.316 ký tự) cần --min 5000. Cloudflare — bác sĩ tick."
+      "kiem_lan_cuoi": "2026-10-18 · 2 bài (PMID 40897189, 42225113); 2026-10-25 · 2 bài Lancet qua Tufts (PMID 42815506, 42810372) + 1 bài Lancet Diabetes Endocrinol bị chặn đúng (PMID 42628555)",
+      "ghi_chu": "Mở /journals/<tạp chí>/article/PII<PII>/fulltext. Bài tin/News ngắn (vd 42225113, 6.316 ký tự) cần --min 5000. Cloudflare — bác sĩ tick. Quyền theo TỪNG tạp chí: tạp chí không thuê bao ⇒ /fulltext tự chuyển về /abstract, đề mục «Get full text access», <article> ~10.800 ký tự ⇒ ngưỡng min chặn (25/10, Lancet Diabetes Endocrinol). linkinghub có thể ghé SSO id.elsevier.com (prompt=none) vài giây rồi tự quay lại — không đăng nhập."
     },
     "thieme": {
       "mien": ["www.thieme-connect.de"],
@@ -230,6 +231,14 @@
       "pdf": "/products/ejournals/pdf/{doi}.pdf",
       "kiem_lan_cuoi": "2026-10-18 · PMID 40112834",
       "ghi_chu": "Mở /products/ejournals/html/<doi> (trang /abstract/ chỉ có tóm tắt). Meta citation_pdf_url là http:// ⇒ fetch bị chặn mixed content; dùng đường dẫn tương đối. Trang có thể treo vài giây khi tải."
+    },
+    "aua": {
+      "mien": ["www.auajournals.org"],
+      "chon": "article",
+      "min": 12000,
+      "pdf": "/doi/pdf/{doi}",
+      "kiem_lan_cuoi": "2026-10-25 · 5 bài J Urol đều KHÔNG quyền, bị chặn đúng (PMID 42095477, 42095481, 42095468, 42623640, 42284178) — nhánh LƯU chưa có bài đọc được để kiểm",
+      "ghi_chu": "Nền Atypon của AUA (Journal of Urology, DOI 10.1097/JU.*). Cloudflare — bác sĩ tick. Bài không quyền: trang ghi «No Access», <article> chỉ có Abstract + References (2.139–9.338 ký tự) ⇒ ngưỡng min chặn; /doi/pdf/ trả 403. Chưa dùng «No Access» làm khoaTrang vì chưa thấy trang có quyền (nhãn truy cập Atypon có thể nằm ở danh sách bài liên quan). Trang AUA ghi cấm đưa nội dung vào ứng dụng AI (đọc 25/10/2026); uỷ quyền đọc theo khoá Wolters Kluwer Health (10.1097/) của bác sĩ. Gặp bài ĐỌC ĐƯỢC đầu tiên thì kiểm nhánh lưu + PDF rồi sửa kiem_lan_cuoi."
     }
   },
   "nguon": {
