@@ -53,6 +53,11 @@ Dùng:
   python3 tools/nap_endnote_chu_de.py --file … --tom-tat-vi --ap-dung [--chua-xac-minh]
   python3 tools/nap_endnote_chu_de.py --loai-tru <DOI|PMID> --ly-do "<lý do của bác sĩ>" [--ap-dung]
   python3 tools/nap_endnote_chu_de.py --cho-vao-nhom ["<tên nhóm>"]   # hàng chờ đưa vào nhóm đã có; có tên ⇒ hiện bài trong EndNote
+  python3 tools/nap_endnote_chu_de.py --de-tai <mã đề tài> [--ap-dung] [--ten-nhom "NC · …"]
+ĐỀ TÀI NGHIÊN CỨU (25/10/2026): `--de-tai <mã>` đọc `medical-ebm-automation/exports/<mã>/DANH_MUC_TRICH_DAN_<mã>.json` (khoá
+`trich_dan[]`: id, pmid, doi) thay cho khối DATA của dashboard rồi đi ĐÚNG đường `nap_nhieu` (kiểm trùng, loại trừ, thùng rác,
+khoá ghi, nhóm theo group_id, gắn PDF từ kho chung). Nhóm mặc định «NC · <tên đề tài> (<mã>)», khoá chủ đề «DE-TAI_<mã>». KHÔNG
+ghi tóm tắt tiếng Việt — bác sĩ dặn 25/10/2026: trích dẫn đề tài không cần tóm tắt chi tiết nhưng phải có toàn văn.
 DANH SÁCH LOẠI TRỪ CỦA BÁC SĨ (18/10/2026 — bản ghi bác sĩ đã bỏ vào thùng rác bị bước ⑧ nhập lại mỗi lượt bộ năm): khoá
 `bo_qua` của `~/.ebm-endnote.json`, mỗi mục {doi|pmid, ly_do, ngay}. Định danh trong đó KHÔNG nhập, KHÔNG đăng vào nhóm, KHÔNG
 gắn PDF/ghi khối tóm tắt — bản ghi khác không bị ảnh hưởng; bản ghi còn nằm trong thư viện chỉ được BÁO (công cụ không xoá).
@@ -74,6 +79,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import http.client
 import importlib.util
 import json
 import os
@@ -103,6 +109,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CAU_HINH = Path(os.environ.get("EBM_ENDNOTE_CAU_HINH") or (Path.home() / ".ebm-endnote.json"))
 UNG_DUNG_MAC_DINH = "EndNote 2025"
 TIEN_TO_NHOM = "EBM · "
+TIEN_TO_NHOM_DE_TAI = "NC · "  # trích dẫn của một ĐỀ TÀI nghiên cứu (--de-tai, 25/10/2026) — tách khỏi nhóm chứng cứ «EBM · »
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 CROSSREF = "https://api.crossref.org/works/"
 LO_EFETCH = 150
@@ -432,6 +439,60 @@ def trich_dinh_danh(data: dict) -> list[dict]:
     return ra
 
 
+# ── đọc danh mục trích dẫn của một ĐỀ TÀI nghiên cứu (25/10/2026) ──────────────────────────────────
+
+_MA_DE_TAI = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]{0,79}")
+
+
+def _tim_exports() -> Path | None:
+    """Thư mục `exports/` của repo y khoa (None ở worktree/bản sao trần) — tách hàm để test thay được."""
+    bst_sp = importlib.util.spec_from_file_location("_bst_endnote", ROOT / "tools" / "ban_sao_tran.py")
+    bst = importlib.util.module_from_spec(bst_sp)
+    bst_sp.loader.exec_module(bst)
+    goc = bst.duong_goc("medical-ebm-automation", ROOT)
+    return goc / "exports" if goc is not None and (goc / "exports").is_dir() else None
+
+
+def ten_de_tai(meta: dict | None, ma: str) -> str:
+    """Tên nhóm của đề tài (chưa tiền tố): tên đề tài trong study_meta + «(mã)», gọn một dòng ≤ 100 ký tự để mã không bị cắt;
+    study_meta không có tên ⇒ chỉ mã."""
+    ten = re.sub(r"\s+", " ", str((meta or {}).get("title") or (meta or {}).get("topic") or "")).strip()
+    if not ten:
+        return ma
+    duoi = f" ({ma})"
+    toi_da = 100 - len(duoi)
+    return (ten if len(ten) <= toi_da else ten[:toi_da - 1].rstrip() + "…") + duoi
+
+
+def doc_de_tai(ma: str, exports: Path) -> tuple[dict, Path]:
+    """`exports/<mã>/DANH_MUC_TRICH_DAN_<mã>.json` (khoá `trich_dan[]`: id, pmid, doi) → (khối giống DATA của dashboard, tên
+    tệp GIẢ `DE-TAI_<mã>.json`). Tên giả là KHOÁ CHỦ ĐỀ («DE-TAI_<mã>» trong bảng nhom_theo_chu_de — đúng khoá lượt nạp tay
+    25/10/2026 đã ghi nhớ) và nguồn ghi trong ghi chú bản ghi; không ai đọc tệp đó.
+    Mã sai khuôn ⇒ ValueError; thiếu tệp / JSON hỏng / sai khuôn / ghi đề tài khác ⇒ KhongChayDuoc (không nạp gì)."""
+    if not _MA_DE_TAI.fullmatch(ma or ""):
+        raise ValueError(f"mã đề tài sai khuôn: {ma!r} (chữ, số, «.», «_», «-»; ≤ 80 ký tự)")
+    thu_muc = exports / ma
+    tep = thu_muc / f"DANH_MUC_TRICH_DAN_{ma}.json"
+    if not tep.is_file():
+        raise KhongChayDuoc(f"không thấy danh mục trích dẫn của đề tài: {tep}")
+    try:
+        dm = json.loads(tep.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise KhongChayDuoc(f"không đọc được {tep.name}: {type(e).__name__}: {e}"[:300]) from e
+    if not isinstance(dm, dict) or not isinstance(dm.get("trich_dan"), list):
+        raise KhongChayDuoc(f"{tep.name} sai khuôn — cần khoá «trich_dan» là danh sách")
+    if dm.get("study") not in (None, ma):
+        raise KhongChayDuoc(f"{tep.name} ghi đề tài {dm.get('study')!r}, không phải {ma!r}")
+    try:
+        meta = json.loads((thu_muc / "study_meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        meta = None  # thiếu tên đề tài chỉ làm tên nhóm mặc định thành mã — không chặn
+    items = [{"id": str(d.get("id") or "?"), "pmid": d.get("pmid"), "doi": d.get("doi")}
+             for d in dm["trich_dan"] if isinstance(d, dict)]
+    data = {"meta": {"question": ten_de_tai(meta if isinstance(meta, dict) else None, ma)}, "items": items}
+    return data, Path(f"DE-TAI_{ma}.json")
+
+
 # ── metadata: PubMed / Crossref ────────────────────────────────────────────────────────────────────
 
 def _email() -> str:
@@ -445,7 +506,10 @@ def _email() -> str:
 
 
 def _tai(url: str, lan_thu: int = 3, cho: float = 2.0) -> bytes:
-    """GET có thử lại (lỗi mạng, 429, 5xx). Lỗi 4xx khác thì ném ngay — thử lại vô ích."""
+    """GET có thử lại (lỗi mạng, đứt giữa chừng, 429, 5xx). Lỗi 4xx khác thì ném ngay — thử lại vô ích.
+
+    `http.client.HTTPException` (25/10/2026): gói efetch lớn bị ngắt giữa chừng ném `IncompleteRead` — KHÔNG phải lớp con của
+    URLError/OSError nên từng lọt ra ngoài làm hỏng cả lượt nạp (đo 25/10: efetch 52 PMID đứt sau 1.160.011 byte)."""
     loi: Exception | None = None
     for i in range(lan_thu):
         try:
@@ -456,7 +520,7 @@ def _tai(url: str, lan_thu: int = 3, cho: float = 2.0) -> bytes:
             if e.code not in (429, 500, 502, 503, 504):
                 raise
             loi = e
-        except (urllib.error.URLError, TimeoutError, OSError) as e:
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError) as e:
             loi = e
         if i < lan_thu - 1:
             time.sleep(cho * (i + 1))
@@ -1410,8 +1474,9 @@ def doc_thung_rac_an_toan(endnote) -> tuple[dict | None, str | None]:
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None,
                loai_tru: dict | None = None, tep_cho: Path | None = None, da_tao: set[str] | None = None,
-               bo_sung=None, chon_pdf_cua=None, ids_them: list[str] | None = None) -> dict:
-    """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được.
+               tien_to: str = TIEN_TO_NHOM, bo_sung=None, chon_pdf_cua=None, ids_them: list[str] | None = None) -> dict:
+    """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được. `tien_to` = tiền tố tên nhóm
+    MẶC ĐỊNH («EBM · » chủ đề chứng cứ · «NC · » đề tài nghiên cứu); `ten_nhom` đã có thì không dùng.
 
     Ba tham số cho người gọi KHÔNG phải dashboard (TLTK đề tài — `nap_endnote_de_tai.py`, 25/10/2026); vắng ⇒ hành vi cũ:
     `bo_sung(trích dẫn, metadata)` sửa từ khoá/ghi chú/nhãn của bản ghi MỚI sau khi đã điền mặc định; `chon_pdf_cua(trích
@@ -1425,7 +1490,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     data = doc_data(dash)
     if not data:
         return {"dashboard": dash.name, "loi": "không đọc được khối DATA"}
-    nhom = ten_nhom or TIEN_TO_NHOM + ten_chu_de(data, dash)
+    nhom = ten_nhom or tien_to + ten_chu_de(data, dash)
     khoa = khoa_chu_de(dash)
     dd_tat_ca = trich_dinh_danh(data)
     bc: dict = {"dashboard": dash.name, "nhom": nhom, "so_trich_dan": len(dd_tat_ca), "da_co": 0, "nhap_moi": 0,
@@ -1565,7 +1630,8 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
 
 
 def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, ten_nhom: str | None = None,
-              doc_data=None, cau_hinh: Path | None = None, loai_tru: dict | None = None, **lay) -> list[dict]:
+              doc_data=None, cau_hinh: Path | None = None, loai_tru: dict | None = None, tien_to: str = TIEN_TO_NHOM,
+              **lay) -> list[dict]:
     """Nạp nhiều dashboard: MỘT chủ đề (khoá bỏ đuôi ngày) = MỘT nhóm qua mọi phiên bản.
 
     Bác sĩ dặn 11/10/2026: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu». Câu hỏi lâm sàng đổi chữ giữa
@@ -1586,7 +1652,7 @@ def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, te
         ten = ten_nhom or bang.get(khoa)
         try:
             bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten,
-                            loai_tru=loai_tru, da_tao=da_tao, **lay)
+                            loai_tru=loai_tru, da_tao=da_tao, tien_to=tien_to, **lay)
         except (RuntimeError, OSError) as e:
             bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
         if not bc.get("loi") and bc.get("nhom"):
@@ -1785,7 +1851,8 @@ def chan_ghi_khi_thieu_kho(a, kho: Path | None) -> int | None:
               "⇒ KHÔNG ghi gì vào EndNote. Chỉ đường: --kho-toan-van <EBM-Dashboards>/toan_van_oa")
         return MA_KHONG_CHAY
     print(f"⚠ {ly} — lượt này không đính PDF, dòng «Toàn văn» tính là «chưa xét»"
-          + ("." if a.ap_dung else " (--ap-dung ghi khối ĐỌC NHANH sẽ bị từ chối)."))
+          + (" (--ap-dung ghi khối ĐỌC NHANH sẽ bị từ chối)." if not a.ap_dung and (a.tom_tat_vi or not a.khong_tom_tat)
+             else "."))
     return None
 
 
@@ -1907,6 +1974,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     ap.add_argument("--file", nargs="*", default=[], help="dashboard WebDashboard_*.html")
     ap.add_argument("--tat-ca", action="store_true", help="mọi dashboard trong EBM-Dashboards/")
+    ap.add_argument("--de-tai", metavar="MA_DE_TAI",
+                    help="nạp danh mục trích dẫn của MỘT đề tài nghiên cứu (medical-ebm-automation/exports/<mã>/"
+                         "DANH_MUC_TRICH_DAN_<mã>.json) vào nhóm «NC · …»; KHÔNG ghi tóm tắt tiếng Việt (chạy khô mặc định)")
     ap.add_argument("--ap-dung", action="store_true", help="nạp thật vào EndNote (mặc định chạy khô)")
     ap.add_argument("--ten-nhom", help="đặt tên nhóm thay cho câu hỏi lâm sàng (chỉ khi một --file)")
     ap.add_argument("--xuat-xml", help="chỉ ghi tệp XML để nhập tay (máy không phải Mac)")
@@ -1942,6 +2012,12 @@ def main(argv: list[str] | None = None) -> int:
                          "nhóm; có tên ⇒ EndNote chỉ hiện các bài chờ của nhóm đó để bác sĩ kéo vào (chạy riêng)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+
+    if a.de_tai is not None and (a.file or a.tat_ca or a.gan_kho or a.tom_tat_vi or a.tom_tat_thu_vien or a.ghi_cau_hinh
+                                 or a.loai_tru is not None or a.cho_vao_nhom is not None):
+        print("✗ --de-tai không đi cùng --file/--tat-ca/--gan-kho/--tom-tat-vi/--tom-tat-thu-vien/--ghi-cau-hinh/--loai-tru/"
+              "--cho-vao-nhom")
+        return MA_THAM_SO
 
     if a.cho_vao_nhom is not None:
         if a.file or a.tat_ca or a.gan_kho or a.xuat_xml or a.tom_tat_vi or a.ghi_cau_hinh or a.loai_tru or a.tom_tat_thu_vien:
@@ -1997,6 +2073,29 @@ def main(argv: list[str] | None = None) -> int:
 
     dash_goc = _tim_dash_goc()
     files = [Path(f) for f in a.file]
+    doc_data = None  # None = đọc khối DATA của dashboard (kiem_cheo_ngu_nghia.doc_data)
+    if a.de_tai is not None:
+        exports = _tim_exports()
+        if exports is None:
+            print("✗ không thấy thư mục medical-ebm-automation/exports/ (worktree/bản sao trần?) — chạy từ cây OneDrive")
+            return MA_KHONG_CHAY
+        try:
+            data_de_tai, gia = doc_de_tai(a.de_tai, exports)
+        except ValueError as e:
+            print(f"✗ {e}")
+            return MA_THAM_SO
+        except KhongChayDuoc as e:
+            print(f"✗ {e}")
+            return MA_KHONG_CHAY
+
+        def doc_data(_p: Path) -> dict:
+            return data_de_tai
+
+        files = [gia]
+        # Bác sĩ dặn 25/10/2026: trích dẫn của đề tài KHÔNG cần tóm tắt chi tiết tiếng Việt, nhưng phải có toàn văn ⇒ không
+        # chạy bước tóm tắt; PDF trong kho chung vẫn được đính/gắn như mọi chủ đề.
+        a.khong_tom_tat = True
+        print(f"Đề tài {a.de_tai}: {len(data_de_tai['items'])} trích dẫn trong danh mục · không ghi tóm tắt tiếng Việt")
     if a.tat_ca:
         if dash_goc is None:
             print("✗ không thấy thư mục EBM-Dashboards/ (bản sao trần?) — dùng --file")
@@ -2020,7 +2119,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.ten_nhom and len(files) != 1:
         print("✗ --ten-nhom chỉ dùng với đúng một --file")
         return MA_THAM_SO
-    kho = xac_dinh_kho(a.kho_toan_van, dash_goc, files)
+    # Đề tài: tệp giả không có thư mục thật — không đoán `toan_van_oa` cạnh thư mục đang đứng, dùng kho chung.
+    kho = xac_dinh_kho(a.kho_toan_van, dash_goc, [] if a.de_tai is not None else files)
 
     if a.xuat_xml:
         # Đường cho máy không phải Mac: một tệp XML để nhập tay; không đính PDF (không có đường vào thư viện).
@@ -2030,7 +2130,7 @@ def main(argv: list[str] | None = None) -> int:
         except CauHinhHong as e:
             print(f"✗ {e} — không ghi tệp XML.")
             return MA_KHONG_CHAY
-        doc = _nap_doc_data()
+        doc = doc_data or _nap_doc_data()
         tat_ca: list[dict] = []
         thieu: list[str] = []
         bo_lt: list[str] = []
@@ -2158,16 +2258,19 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
         return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
 
-    ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom, loai_tru=loai_tru)
+    tien_to = TIEN_TO_NHOM_DE_TAI if a.de_tai is not None else TIEN_TO_NHOM
+    ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom, loai_tru=loai_tru,
+                        doc_data=doc_data, tien_to=tien_to)
     if a.ap_dung and endnote is not None and not a.khong_tom_tat:
         # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
         chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh, bo_qua=bo_qua_tom_tat())
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
+        nguon = "--pmid <PMID…>" if a.de_tai is not None else "--file <dashboard>"
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
-              "  1. python3 tools/gom_toan_van_dashboard.py --file <dashboard> --unpaywall   (bản truy cập mở)\n"
+              f"  1. python3 tools/gom_toan_van_dashboard.py {nguon} --unpaywall   (bản truy cập mở)\n"
               "  2. python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID…>   (bài thuê bao: làn Chrome có uỷ quyền,\n"
               "     bác sĩ tự đăng nhập/vượt chặn; công cụ này không tải bài thuê bao)\n"
-              "  3. hoặc trong EndNote: chọn nhóm «EBM · …» → References → Find Full Text (quyền truy cập của bác sĩ).")
+              f"  3. hoặc trong EndNote: chọn nhóm «{tien_to}…» → References → Find Full Text (quyền truy cập của bác sĩ).")
     if not a.ap_dung:
         print("Chạy khô — chưa nhập gì. Thêm --ap-dung để nạp thật.")
     if a.json:

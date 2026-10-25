@@ -49,7 +49,7 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py tien-do
   python3 tools/tom_tat_chung_cu_word.py moc --loi "<nguyên văn bác sĩ>"   # bản ghi hiện có: để nguyên, không tóm tắt
   python3 tools/tom_tat_chung_cu_word.py ngoai-le-moc --tang 1 2 --loi "<nguyên văn bác sĩ>"   # bản ghi CŨ tầng đó vẫn vào hàng chờ
-  python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt
+  python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt (trừ bài chỉ thuộc nhóm đề tài «NC · »)
   python3 tools/tom_tat_chung_cu_word.py pdf-hoa [--ap-dung]   # mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
 """
@@ -62,6 +62,7 @@ import importlib.util
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import unicodedata
@@ -1615,9 +1616,42 @@ def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
     return pm, doi
 
 
+# Bác sĩ 25/10/2026: trích dẫn của ĐỀ TÀI nghiên cứu (nhóm «NC · …», dựng bởi `nap_endnote_chu_de.py --de-tai`) không cần tóm tắt
+# chi tiết, nhưng phải có toàn văn ⇒ bản ghi CHỈ thuộc nhóm «NC · » (không nằm trong nhóm «EBM · » nào) không vào hàng chờ. Bản ghi
+# vừa là trích dẫn đề tài vừa nằm trong nhóm chứng cứ vẫn theo luật chứng cứ. Đo 25/10: hàng chờ nhảy 2 → 43, 41 bài chỉ thuộc nhóm
+# «NC · Chăm sóc thận ĐTĐ típ 2…». Nhóm đo theo group_id trên bản sao sdb.eni (BH167), không qua AppleScript.
+
+class NhomKhongDoDuoc(RuntimeError):
+    """Không đọc được nhóm EndNote để tách trích dẫn đề tài — KHÔNG được trả hàng chờ lẫn bài đề tài như thể đã lọc."""
+
+
+def chi_thuoc_de_tai(thu_vien: Path) -> set[int]:
+    """recNum nằm trong ≥ 1 nhóm «NC · » và không nằm trong nhóm «EBM · » nào. Không đọc được bảng nhóm, hoặc thành viên của một
+    nhóm «NC · »/«EBM · » không giải được ⇒ NhomKhongDoDuoc (không đoán)."""
+    sk, nec = mod("sk"), mod("nec")
+    tien_to_nc, tien_to_ebm = sk.khoa_ten(nec.TIEN_TO_NHOM_DE_TAI), sk.khoa_ten(nec.TIEN_TO_NHOM)
+    try:
+        nhom = sk.doc_nhom(thu_vien)
+    except (OSError, sqlite3.Error) as e:
+        raise NhomKhongDoDuoc(f"không đọc được nhóm EndNote để tách trích dẫn đề tài «{nec.TIEN_TO_NHOM_DE_TAI}…» — "
+                              f"{type(e).__name__}: {e}"[:300]) from e
+    nc: set[int] = set()
+    ebm: set[int] = set()
+    for n in nhom:
+        ten = sk.khoa_ten(n.get("ten") or "")
+        dich = nc if ten.startswith(tien_to_nc) else ebm if ten.startswith(tien_to_ebm) else None
+        if dich is None:
+            continue
+        if n.get("rec") is None:
+            raise NhomKhongDoDuoc(f"nhóm {n.get('group_id')} «{n.get('ten')}»: {n.get('loi') or 'không giải được thành viên'}")
+        dich.update(n["rec"])
+    return nc - ebm
+
+
 def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | None:
     """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word, rồi bản ghi CŨ thuộc tầng ngoại lệ mốc (`ngoai-le-moc`, xếp theo tầng).
-    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán)."""
+    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán). Bản ghi chỉ thuộc nhóm đề tài
+    «NC · » bị loại (`chi_thuoc_de_tai`; không đọc được nhóm ⇒ NhomKhongDoDuoc)."""
     moc = doc_moc(thu_vien)
     if moc is None:
         return None
@@ -1634,6 +1668,9 @@ def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | N
                 t = tang_uu_tien(_ngu_canh_cua(ds, bg["pmid"], bg["doi"]))
                 if t in ngoai_le:
                     cu.append(dict(bg, tang=t, nguon_hang_cho="ngoai_le_moc"))
+    if moi or cu:  # chỉ đọc nhóm khi có ứng viên (đọc nhóm = chép tạm sdb.eni)
+        de_tai = chi_thuoc_de_tai(thu_vien)
+        moi, cu = ([bg for bg in nh if bg["rec"] not in de_tai] for nh in (moi, cu))
     if dashboard is not None:
         pm, doi = trich_dan_cua_dashboard(dashboard)
         moi, cu = ([bg for bg in nh if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)] for nh in (moi, cu))
@@ -1730,7 +1767,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.lenh == "hang-cho":
         try:
             hc = hang_cho(tv, dashboard=a.dashboard)
-        except NgoaiLeKhongDoDuoc as e:
+        except (NgoaiLeKhongDoDuoc, NhomKhongDoDuoc) as e:
             print(f"⚪ {e}")
             return 2
         if hc is None:
@@ -1761,7 +1798,7 @@ def main(argv: list[str] | None = None) -> int:
               + ("" if all(pdf_con_moi(w) for w in word) else " — chạy `pdf-hoa --ap-dung`"))
         try:
             hc = hang_cho(tv)
-        except NgoaiLeKhongDoDuoc as e:
+        except (NgoaiLeKhongDoDuoc, NhomKhongDoDuoc) as e:
             print(f"Hàng chờ: ⚪ {e}")
             return 2
         if hc is None:
