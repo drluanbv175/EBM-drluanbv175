@@ -1588,7 +1588,8 @@ def _in_nhom(bc: dict) -> None:
                   f"{len(moi)} bản ghi mới chờ bác sĩ đưa vào nhóm" + (f" (recNum {_ds_rec(moi)})" if moi else "")
                   + (f"; hàng chờ của nhóm còn {len(con)}" if con is not None else ""))
             print(f"     Bác sĩ: python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{bc['nhom']}\" (EndNote chỉ hiện các bài "
-                  "chờ) → ⌘A → kéo vào nhóm ở cột trái; lượt nạp sau tự dọn bài đã vào nhóm khỏi hàng chờ.")
+                  "chờ) → ⌘A → kéo vào nhóm ở cột trái (hoặc phiên Claude: chọn từng dòng → Groups › Add References To › nhóm); "
+                  "lượt nạp sau tự dọn bài đã vào nhóm khỏi hàng chờ.")
         else:
             print(f"   Nhóm đã có ({ds}) — đủ bài, không cần đăng thêm")
         if bc.get("cho_vao_nhom_loi"):
@@ -1643,7 +1644,8 @@ def chay_cho_vao_nhom(ten: str, tep: Path | None = None, endnote_cls=None) -> in
         return MA_KHONG_CHAY
     en.hien_ban_ghi(chon[0]["rec"])
     print(f"✓ EndNote đang CHỈ hiện {len(chon[0]['rec'])} bài chờ. Bác sĩ: bấm vào danh sách → ⌘A → kéo vào nhóm «{chon[0]['ten']}» "
-          "ở cột trái (hoặc References → Add References To → nhóm đó). Xong chạy lại --cho-vao-nhom để kiểm.")
+          "ở cột trái (hoặc menu Groups → Add References To → nhóm đó — menu References KHÔNG có mục này, đo 25/10/2026; "
+          "phiên Claude làm được: chọn từng dòng rồi dùng menu đó). Xong chạy lại --cho-vao-nhom để kiểm.")
     return MA_OK
 
 
