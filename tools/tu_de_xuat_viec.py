@@ -522,14 +522,21 @@ def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = Non
     cap, moi, khac = nhom.get("cap_nhat", []), nhom.get("moi", []), nhom.get("khac_han", [])
     kdd = [m for m in ket if m["trang_thai"] == "khong_do_duoc"]
     if kdd:
+        # 25/10/2026: nêu đích danh ZIP đóng gói MỚI NHẤT — bác sĩ cần biết tải tệp nào, không chỉ «không đo được».
+        moi_nhat = max(m["dong_goi_luc"] for m in kdd)
+        ten_moi = [m["ten"] for m in kdd if m["dong_goi_luc"][:10] == moi_nhat[:10]]
         _ghi_chet(["", "skill tài khoản claude.ai"],
                   f"{len(kdd)} skill: gương cục bộ đồng bộ {kdd[0]['guong'][:10]}, cũ hơn ZIP cùng nội dung đóng gói "
-                  f"{max(m['dong_goi_luc'] for m in kdd)[:10]} — không thấy đã tải lên chưa; đã tải thì bỏ qua")
+                  f"{moi_nhat[:10]} — không thấy đã tải lên chưa; ZIP mới nhất ({moi_nhat[:16].replace('T', ' ')}): "
+                  f"{', '.join(ten_moi[:4])}{'…' if len(ten_moi) > 4 else ''} — đã tải đúng ZIP này thì bỏ qua")
     lenh = "python3 tools/dong_goi_skill_tai_khoan.py  # rồi mở CLAUDE_AI_SKILLS/DANH-SACH-TAI-LEN.md, bác sĩ tự tải ZIP lên claude.ai"
     if cap or khac:
         dau = ", ".join(cap[:3]) + ("…" if len(cap) > 3 else "")
+        # 25/10/2026: câu cũ «bác sĩ tải ZIP lên» khiến bác sĩ tải lại ZIP CŨ còn trong CLAUDE_AI_SKILLS/ (đóng TRƯỚC khi repo đổi)
+        # nhiều lần mà cảnh báo không hết. ZIP phải đóng lại từ repo trước (tools/tu_sua_chua.py --ap-dung nay tự làm).
         return [(2, f"{len(cap)} skill của bác sĩ trên TÀI KHOẢN claude.ai đã CŨ hơn repo ({dau}) — Cowork/claude.ai/Routine "
-                    "đang chạy bản cũ; bác sĩ tải ZIP lên"
+                    "đang chạy bản cũ; MÁY đóng lại ZIP từ repo (lệnh dưới) rồi bác sĩ tải đúng ZIP vừa đóng — tải lại ZIP cũ "
+                    "trong CLAUDE_AI_SKILLS/ không hết cảnh báo"
                     + (f"; {len(khac)} skill trùng tên mà KHÁC HẲN — bác sĩ quyết" if khac else "")
                     + (f"; thêm {len(moi)} skill chưa từng lên (tuỳ chọn)" if moi else ""), lenh)]
     if moi:
