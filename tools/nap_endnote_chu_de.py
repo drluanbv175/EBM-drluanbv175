@@ -684,6 +684,9 @@ def lay_europepmc(pmids: list[str], tai=_tai) -> dict[str, dict]:
     return ra
 
 
+_LOAI_SACH_CROSSREF = ("book", "monograph", "edited-book", "reference-book")
+
+
 def phan_tich_crossref(js: dict) -> dict | None:
     m = (js or {}).get("message") or {}
     tieu_de = " ".join(m.get("title") or []).strip()
@@ -697,10 +700,14 @@ def phan_tich_crossref(js: dict) -> dict | None:
             tac_gia.append(a["name"])
     phan = ((m.get("issued") or {}).get("date-parts") or [[None]])[0]
     loai = m.get("type") or ""
+    # 25/10/2026 (TLTK đề tài): sách nguyên cuốn nhập thành «Journal Article» thì kiểu Vancouver in như bài báo không tạp chí.
+    sach = loai in _LOAI_SACH_CROSSREF
     return {
         "pmid": None, "doi": chuan_doi(m.get("DOI")),
-        "loai_tl": "Book Section" if loai in ("book-chapter", "book-section") else "Journal Article",
-        "tieu_de": tieu_de, "tac_gia": tac_gia, "tap_chi": " ".join(m.get("container-title") or []),
+        "loai_tl": "Book" if sach else ("Book Section" if loai in ("book-chapter", "book-section") else "Journal Article"),
+        "nha_xb": (m.get("publisher") or "") if sach else "", "noi_xb": (m.get("publisher-location") or "") if sach else "",
+        "isbn": ((m.get("ISBN") or [""])[0]) if sach else "",
+        "tieu_de": tieu_de, "tac_gia": tac_gia, "tap_chi": "" if sach else " ".join(m.get("container-title") or []),
         "tap_chi_viet_tat": " ".join(m.get("short-container-title") or []),
         "nam": str(phan[0]) if phan and phan[0] else "", "tap": m.get("volume") or "", "so": m.get("issue") or "",
         "trang": m.get("page") or "", "issn": (m.get("ISSN") or [""])[0], "tom_tat": "",
@@ -734,9 +741,10 @@ def chon_pdf(kho: Path | None, pmid: str | None) -> tuple[Path, str] | None:
     return None
 
 
-def dat_pdf_vao_thu_vien(thu_vien: Path, pdf: Path, pmid: str) -> tuple[str, Path]:
+def dat_pdf_vao_thu_vien(thu_vien: Path, pdf: Path, pmid: str | None) -> tuple[str, Path]:
     """Chép PDF vào `<thư viện>.Data/PDF/<số 10 chữ số>/` — đúng chỗ EndNote cất đính kèm nội bộ.
-    Trả (url internal-pdf, thư mục vừa tạo) để người gọi dọn nếu bước nhập hỏng."""
+    Trả (url internal-pdf, thư mục vừa tạo) để người gọi dọn nếu bước nhập hỏng. Không có PMID (TLTK chỉ có DOI hoặc
+    không định danh của đề tài) ⇒ giữ tên tệp nguồn, chỉ thay ký tự ngoài [A-Za-z0-9._-]."""
     goc = thu_vien.with_suffix(".Data") / "PDF"
     goc.mkdir(parents=True, exist_ok=True)
     for _ in range(50):
@@ -747,14 +755,15 @@ def dat_pdf_vao_thu_vien(thu_vien: Path, pdf: Path, pmid: str) -> tuple[str, Pat
     else:  # pragma: no cover — 50 lần trùng liên tiếp gần như không thể
         raise RuntimeError("không chọn được thư mục đính kèm còn trống")
     thu_muc.mkdir()
-    ten = f"PMID-{pmid}.pdf"
+    ten = f"PMID-{pmid}.pdf" if pmid else re.sub(r"[^A-Za-z0-9._-]", "_", pdf.name)
     shutil.copyfile(pdf, thu_muc / ten)
     return f"internal-pdf://{so}/{ten}", thu_muc
 
 
 # ── dựng XML nhập của EndNote ──────────────────────────────────────────────────────────────────────
 
-_MA_LOAI = {"Journal Article": 17, "Book Section": 5}
+# Mã của định dạng XML nhập (khác mã nội bộ trong RefTypeTableEN9.xml); EndNote nhận theo thuộc tính `name` (EndNote.dtd).
+_MA_LOAI = {"Journal Article": 17, "Book Section": 5, "Book": 6, "Report": 27, "Government Document": 46}
 
 
 def _the(ten: str, gia_tri: str) -> str:
@@ -781,8 +790,9 @@ def dung_xml(ban_ghi: list[dict]) -> str:
             phan.append("<keywords>" + "".join(_the("keyword", k) for k in m["tu_khoa"]) + "</keywords>")
         if m.get("nam"):
             phan.append("<dates>" + _the("year", m["nam"]) + "</dates>")
+        phan.append(_the("pub-location", m.get("noi_xb", "")))
         phan.append(_the("publisher", m.get("nha_xb", "")))
-        phan.append(_the("isbn", m.get("issn", "")))
+        phan.append(_the("isbn", m.get("isbn") or m.get("issn", "")))
         phan.append(_the("accession-num", m.get("pmid") or ""))
         phan.append(_the("electronic-resource-num", m.get("doi") or ""))
         phan.append(_the("abstract", m.get("tom_tat", "")))
@@ -1080,6 +1090,21 @@ class EndNoteMac:
         if doc_lai.strip() != url:
             raise RuntimeError(f"EndNote không nhận tệp đính kèm cho {ma}: đọc lại {doc_lai[:120]!r}")
 
+    def them_tep(self, ma: str, url: str) -> None:
+        """THÊM một tệp vào «File Attachments» mà GIỮ mọi tệp đang có (vd chỉ có PDF tóm tắt chứng cứ, chưa có toàn văn —
+        25/10/2026), rồi đọc lại: tệp cũ mất hoặc tệp mới không vào ⇒ ghi trả trường cũ và ném lỗi."""
+        self._truoc_khi_ghi("gắn toàn văn vào bản ghi")
+        cu_tho = self.doc_truong([ma], "File Attachments").get(ma)
+        if cu_tho is None:
+            raise RuntimeError(f"không đọc được tệp đính kèm hiện có của {ma} — không ghi (tránh mất tệp)")
+        cu = [x.strip() for x in re.split(r"[\r\n]+", cu_tho) if x.strip()]
+        lenh = 'set field "File Attachments" of record (item 1 of argv) to (item 2 of argv)'
+        doc_lai = self._chay(lenh + '\nreturn field "File Attachments" of record (item 1 of argv)', ma, "\r".join(cu + [url]))
+        con = [x.strip() for x in re.split(r"[\r\n]+", doc_lai) if x.strip()]
+        if url not in con or not all(x in con for x in cu):
+            self._chay(lenh, ma, "\r".join(cu))
+            raise RuntimeError(f"EndNote không giữ đủ tệp đính kèm cho {ma} — đã ghi trả {len(cu)} tệp cũ")
+
     def doc_truong(self, ids: list[str], truong: str) -> dict[str, str]:
         """{mã bản ghi: nội dung trường} — ngăn bằng ký tự điều khiển 30/31 vì trường (Abstract) có xuống dòng.
         Bản ghi không có trong kết quả = không đọc được (người gọi KHÔNG được coi là trường rỗng)."""
@@ -1165,20 +1190,22 @@ def lay_metadata(dd: list[dict], lay_pm=lay_pubmed, lay_cr=lay_crossref,
     return co, thieu
 
 
-def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None) -> tuple[list[tuple], list[str]]:
+def xet_toan_van(endnote, cap: list[tuple[dict, str]], kho: Path | None,
+                 chon=None) -> tuple[list[tuple], list[str]]:
     """(trích dẫn, mã bản ghi) → ([(mã, PMID, (pdf, nhãn))] cần gắn, [định danh còn thiếu toàn văn]).
 
     Bản ghi ĐÃ có tệp đính kèm (bác sĩ gắn, Find Full Text, lượt trước) bị bỏ qua — không bao giờ ghi đè.
-    Bản ghi không đọc được trường đính kèm cũng bỏ qua: «không đo được» không phải «chưa có»."""
+    Bản ghi không đọc được trường đính kèm cũng bỏ qua: «không đo được» không phải «chưa có».
+    `chon(trích dẫn)` thay `chon_pdf(kho, PMID)` khi người gọi có chỗ cất toàn văn riêng (TLTK đề tài, 25/10/2026)."""
     tep = endnote.tep_dinh_kem([r for _, r in cap]) if cap else {}
     can_gan: list[tuple] = []
     thieu: list[str] = []
     for d, r in cap:
         if tep.get(r) != 0:
             continue
-        pdf = chon_pdf(kho, d.get("pmid"))
+        pdf = chon(d) if chon else chon_pdf(kho, d.get("pmid"))
         if pdf:
-            can_gan.append((r, d["pmid"], pdf))
+            can_gan.append((r, d.get("pmid"), pdf))
         else:
             thieu.append(f"PMID {d['pmid']}" if d.get("pmid") else f"DOI {d['doi']}")
     return can_gan, thieu
@@ -1447,9 +1474,14 @@ def doc_thung_rac_an_toan(endnote) -> tuple[dict | None, str | None]:
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None,
                loai_tru: dict | None = None, tep_cho: Path | None = None, da_tao: set[str] | None = None,
-               tien_to: str = TIEN_TO_NHOM) -> dict:
+               tien_to: str = TIEN_TO_NHOM, bo_sung=None, chon_pdf_cua=None, ids_them: list[str] | None = None) -> dict:
     """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được. `tien_to` = tiền tố tên nhóm
     MẶC ĐỊNH («EBM · » chủ đề chứng cứ · «NC · » đề tài nghiên cứu); `ten_nhom` đã có thì không dùng.
+
+    Ba tham số cho người gọi KHÔNG phải dashboard (TLTK đề tài — `nap_endnote_de_tai.py`, 25/10/2026); vắng ⇒ hành vi cũ:
+    `bo_sung(trích dẫn, metadata)` sửa từ khoá/ghi chú/nhãn của bản ghi MỚI sau khi đã điền mặc định; `chon_pdf_cua(trích
+    dẫn)` thay `chon_pdf(kho, PMID)`; `ids_them` = mã bản ghi người gọi đã tự nhập, đưa vào CÙNG lượt post nhóm (post lần
+    hai vào nhóm đã có sinh nhóm trùng tên — BH170).
 
     `loai_tru` (`doc_loai_tru`) = danh sách loại trừ của BÁC SĨ (18/10/2026): định danh trong đó KHÔNG nhập, KHÔNG đăng vào
     nhóm, KHÔNG gắn PDF — xét theo định danh của dashboard rồi xét LẠI theo định danh của metadata (dashboard chỉ ghi PMID
@@ -1540,7 +1572,10 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
         if m.get("da_rut"):
             m["nhan"] = "ĐÃ RÚT (PubMed)"
             m["ghi_chu"] += " CẢNH BÁO: PubMed gắn «Retracted Publication»."
-        m["_pdf"] = chon_pdf(kho, m.get("pmid"))
+        if bo_sung:
+            bo_sung(d, m)
+        m["_pdf"] = (chon_pdf_cua({**d, "pmid": m.get("pmid") or d.get("pmid"), "doi": m.get("doi") or d.get("doi")})
+                     if chon_pdf_cua else chon_pdf(kho, m.get("pmid")))
         can_nhap.append(m)
         nguon_nhap.append((d, m))
     dd = [d for d in dd if id(d) not in bo]  # cap_ban_ghi đọc `dd` qua closure — bài bị loại không đăng nhóm/gắn PDF
@@ -1550,14 +1585,14 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     if not ap_dung or endnote is None:
         bc["ke_hoach_nhap"] = [m.get("pmid") or m.get("doi") for m in can_nhap]
         if endnote is not None:  # chạy khô vẫn ĐỌC được trường đính kèm của bản ghi đã có (chỉ đọc)
-            bc["se_gan_pdf"] = len(xet_toan_van(endnote, cap_ban_ghi(theo_pm, theo_doi), kho)[0])
+            bc["se_gan_pdf"] = len(xet_toan_van(endnote, cap_ban_ghi(theo_pm, theo_doi), kho, chon_pdf_cua)[0])
         return bc
 
     thu_muc_moi: list[Path] = []
     try:
         for m in can_nhap:
             if m["_pdf"]:
-                url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, m["_pdf"][0], m["pmid"])
+                url, tm = dat_pdf_vao_thu_vien(endnote.thu_vien, m["_pdf"][0], m.get("pmid"))
                 thu_muc_moi.append(tm)
                 m["_thu_muc"] = tm
                 m["pdf_url"] = url
@@ -1584,10 +1619,11 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
                 shutil.rmtree(m["_thu_muc"], ignore_errors=True)
     cap = cap_ban_ghi(theo_pm, theo_doi)
     # Nhóm đo theo group_id trên sdb.eni; nhóm ĐÃ có thì không post (post luôn sinh nhóm trùng tên — đo 24/10/2026).
-    bc.update(xep_vao_nhom(endnote, nhom, [r for _, r in cap], dashboard=dash.name, tep_cho=tep_cho, da_tao=da_tao))
+    ids_nhom = list(dict.fromkeys([r for _, r in cap] + list(ids_them or [])))
+    bc.update(xep_vao_nhom(endnote, nhom, ids_nhom, dashboard=dash.name, tep_cho=tep_cho, da_tao=da_tao))
 
     # Toàn văn về SAU khi trích dẫn đã nằm trong EndNote ⇒ gắn vào bản ghi chưa có tệp đính kèm nào.
-    can_gan, bc["thieu_toan_van"] = xet_toan_van(endnote, cap, kho)
+    can_gan, bc["thieu_toan_van"] = xet_toan_van(endnote, cap, kho, chon_pdf_cua)
     _gan_pdf(endnote, can_gan)
     bc["gan_them_pdf"] = len(can_gan)
     return bc

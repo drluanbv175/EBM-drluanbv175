@@ -1,436 +1,466 @@
 # -*- coding: utf-8 -*-
-"""EndNote: nạp trích dẫn của một ĐỀ TÀI nghiên cứu (`--de-tai`) · `_tai()` thử lại khi efetch đứt giữa chừng (25/10/2026).
+"""TLTK của đề tài nghiên cứu → EndNote (25/10/2026) — `tools/nap_endnote_de_tai.py` + tham số mới của `nap_chu_de`.
 
-Bối cảnh 25/10/2026: đề tài `btm-dtd2-ngoai-tru-BVQY175` cần 66 trích dẫn trong EndNote. Công cụ chỉ nhận dashboard nên phiên
-trước phải nạp bằng kịch bản tạm gọi API `nap_nhieu` với `doc_data` dựng từ `DANH_MUC_TRICH_DAN_<mã>.json`; lượt đó còn vỡ vì
-efetch PubMed cho 52 PMID đứt sau 1.160.011 byte — `http.client.IncompleteRead` không phải lớp con của URLError/OSError nên
-`_tai()` không thử lại và lỗi lọt qua `lay_metadata` (chỉ bắt RuntimeError/ParseError/OSError) làm hỏng cả lượt.
-
-Khoá: `--de-tai` đọc danh mục → nhóm mặc định «NC · <tên đề tài> (<mã>)», khoá chủ đề «DE-TAI_<mã>» (đúng khoá lượt tay đã ghi
-nhớ ⇒ nhóm ghi nhớ thắng, không post nhóm thứ hai) · KHÔNG chạy bước tóm tắt tiếng Việt (bác sĩ dặn 25/10) và vì thế thiếu kho
-không chặn ghi · không đoán `toan_van_oa` cạnh thư mục đang đứng · chạy khô không nhập · tham số xung đột/mã sai ⇒ 3 · danh mục
-hỏng ⇒ 2. `_tai()` thử lại khi `IncompleteRead`, hết lượt ⇒ RuntimeError để `lay_metadata` lùi sang Europe PMC.
-Hàng chờ tóm tắt Word ⑨ (`tom_tat_chung_cu_word.hang_cho`): bản ghi CHỈ thuộc nhóm «NC · » không vào hàng chờ (đo 25/10: hàng
-chờ nhảy 2 → 43 sau lượt nạp đề tài, 41 bài chỉ thuộc nhóm «NC · Chăm sóc thận…»); bản ghi có cả nhóm «EBM · » vẫn vào; không đọc
-được nhóm ⇒ «không đo được» (⚪, mã 2), không trả hàng chờ lẫn bài đề tài.
-Ngoại tuyến: EndNote giả, mạng giả (urlopen thay trong test); mọi đường dẫn trong tmp_path.
+Bác sĩ giao: trích dẫn của đề tài vào EndNote ĐÚNG CHUẨN TRÍCH DẪN, KHÔNG tóm tắt như hệ cập nhật chứng cứ, NHƯNG phải đảm bảo
+toàn văn. Đề cương C1a (đo 25/10/2026): 52 TLTK — 35 có PMID, 14 chỉ có DOI (9 bài tạp chí Việt Nam, 1 sách Wiley), 3 không
+định danh (2 quyết định Bộ Y tế, 1 sách WHO). Ngoại tuyến hoàn toàn: EndNote giả, metadata giả, Unpaywall giả.
 """
 from __future__ import annotations
 
-import http.client
 import importlib.util
 import json
 import re
-import sqlite3
-import sys
-import types
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-MA = "btm-thu-nghiem-BVQY175"
-TEN_DE_TAI = "Bảo vệ thận ở người đái tháo đường típ 2 ngoại trú"
 
 
-def _nap(ten: str, tep: str):
-    sp = importlib.util.spec_from_file_location(ten, REPO / "tools" / tep)
+def _nap(rel: str, ten: str):
+    sp = importlib.util.spec_from_file_location(ten, REPO / rel)
     m = importlib.util.module_from_spec(sp)
-    sys.modules[ten] = m
     sp.loader.exec_module(m)
     return m
 
 
-N = _nap("_nec_t1025", "nap_endnote_chu_de.py")
+T = _nap("tools/nap_endnote_de_tai.py", "_nap_endnote_de_tai_test")
+NE = T.NE
 
 
 @pytest.fixture(autouse=True)
 def _hang_cho_tam(tmp_path, monkeypatch):
     """Hàng chờ đưa vào nhóm luôn ở tmp_path — không bao giờ tệp thật trong thư mục nhà."""
     monkeypatch.setenv("EBM_ENDNOTE_CHO_VAO_NHOM", str(tmp_path / "cho-vao-nhom.json"))
+    monkeypatch.setattr(NE, "_ngu", lambda _s: None)
 
 
-# ── _tai(): thử lại khi gói tải đứt giữa chừng ─────────────────────────────────────────────────────
+DE_CUONG = """# 6. KẾ HOẠCH
 
-class _PhanHoi:
-    def __init__(self, du_lieu: bytes | None):
-        self.du_lieu = du_lieu
+1. Không phải TLTK — nằm trước mục tài liệu tham khảo.
 
-    def __enter__(self):
-        return self
+# 7. TÀI LIỆU THAM KHẢO
 
-    def __exit__(self, *_):
-        return False
+1. Bộ Y tế. Quyết định số 56/QĐ-BYT ngày 08/01/2024 ban hành Hướng dẫn đo lường sự hài lòng. Hà Nội: Bộ Y tế; 2024.
+2. Bull C, Byrnes J. A systematic review of the validity of patient-reported experience measures. Health Serv Res. \
+2019;54(5):1023-1035. doi:10.1111/1475-6773.13187. PMID: 31218671.
+3. Eldridge SM, Ashby D, Kerry S. Sample size for cluster randomized trials. Int J Epidemiol. 2006;35(5):1292-1300. \
+doi:10.1093/ije/dyl129.
+4. Lê Thị A. Hài lòng người bệnh tại khoa khám bệnh. Tạp chí Y học Cộng đồng. 2023;64(1):1-5.
+   doi:10.52163/yhc.v64i1.573.
+5. Lwanga SK, Lemeshow S. Sample size determination in health studies: a practical manual. Geneva: World Health \
+Organization; 1991.
+6. Một tài liệu không theo khuôn nào cả
 
-    def read(self) -> bytes:
-        if self.du_lieu is None:  # đo 25/10/2026: efetch 52 PMID đứt sau 1.160.011 byte
-            raise http.client.IncompleteRead(b"x" * 1_160_011, 4096)
-        return self.du_lieu
+# PHỤ LỤC A. BẢNG
 
-
-def _mang_gia(monkeypatch, *luot: bytes | None) -> list[str]:
-    """urlopen giả trả lần lượt các phản hồi trong `luot` (None = đứt giữa chừng); lượt cuối lặp lại mãi."""
-    goi: list[str] = []
-
-    def urlopen(req, timeout=30):
-        goi.append(req.full_url)
-        return _PhanHoi(luot[min(len(goi), len(luot)) - 1])
-
-    monkeypatch.setattr(N.urllib.request, "urlopen", urlopen)
-    monkeypatch.setattr(N.time, "sleep", lambda s: None)
-    return goi
+1. Cũng không phải TLTK.
+"""
 
 
-def test_tai_thu_lai_khi_doc_dut_giua_chung(monkeypatch):
-    goi = _mang_gia(monkeypatch, None, b"<ok/>")
-    assert N._tai("https://eutils.example/efetch") == b"<ok/>"
-    assert len(goi) == 2, "IncompleteRead phải được thử lại như lỗi mạng"
+def _de_tai(tmp_path: Path, noi_dung: str = DE_CUONG) -> tuple[Path, Path]:
+    thu_muc = tmp_path / "exports" / "NC-THU"
+    thu_muc.mkdir(parents=True)
+    tep = thu_muc / "DE_CUONG_NOP_HOI_DONG_NC-THU.md"
+    tep.write_text(noi_dung, encoding="utf-8", newline="\n")
+    return thu_muc, tep
 
 
-def test_tai_het_luot_thi_bao_runtime_error_khong_lot_incomplete_read(monkeypatch):
-    goi = _mang_gia(monkeypatch, None)
-    with pytest.raises(RuntimeError, match="không tải được sau 3 lần"):
-        N._tai("https://eutils.example/efetch")
-    assert len(goi) == 3
+def _meta(pmid=None, doi=None, tieu_de=None, nam="2019", nguon="PubMed", rut=False):
+    return {"pmid": pmid, "doi": doi, "loai_tl": "Journal Article", "tieu_de": tieu_de or f"Bài {pmid or doi}",
+            "tac_gia": ["Bull, C"], "tap_chi": "Health Serv Res", "tap_chi_viet_tat": "", "nam": nam, "tap": "54",
+            "so": "5", "trang": "1023-1035", "issn": "", "tom_tat": "Abstract gốc của nguồn.", "ngon_ngu": "eng",
+            "pmcid": "", "da_rut": rut, "nguon_meta": nguon}
 
 
-def test_efetch_dut_mai_thi_lay_metadata_lui_europepmc_khong_hong_ca_luot(monkeypatch):
-    """Đường thật của lượt nạp: lay_pubmed → _tai đứt mãi ⇒ RuntimeError ⇒ lay_metadata lùi Europe PMC (không văng lỗi)."""
-    _mang_gia(monkeypatch, None)
-    monkeypatch.setattr(N, "_email", lambda: "")
-    dd = [{"pmid": "111", "doi": None, "vai": "muc", "muc": "T01"}]
-    co, thieu = N.lay_metadata(dd, lay_ep=lambda pmids: {p: {"pmid": p, "nguon_meta": "Europe PMC"} for p in pmids},
-                               lay_cr=lambda doi: None)
-    assert [m["nguon_meta"] for _, m in co] == ["Europe PMC"] and thieu == []
+META = {
+    "31218671": _meta("31218671", "10.1111/1475-6773.13187",
+                      "A systematic review of the validity of patient-reported experience measures"),
+    "16855282": _meta("16855282", "10.1093/ije/dyl129", "Sample size for cluster randomized trials", nam="2006"),
+}
+META_CR = {"10.52163/yhc.v64i1.573": _meta(None, "10.52163/yhc.v64i1.573", "Hài lòng người bệnh tại khoa khám bệnh",
+                                            nam="2023", nguon="Crossref")}
 
 
-# ── đọc danh mục trích dẫn của đề tài ──────────────────────────────────────────────────────────────
+def _pdf(p: Path) -> Path:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(b"%PDF-1.4 toan van")
+    return p
 
-def _de_tai(goc: Path, ma: str = MA, trich_dan=None, meta: dict | bool | None = None, study: str | None = MA) -> Path:
-    """Dựng exports/<mã>/ giả; trả thư mục exports. `meta=False` = không có study_meta.json."""
-    exports = goc / "exports"
-    d = exports / ma
-    d.mkdir(parents=True)
-    dm = {"schema": "de_tai/danh_muc_trich_dan/v1", "ngay": "2026-10-25",
-          "trich_dan": trich_dan if trich_dan is not None else [
-              {"id": "T01", "pmid": "111", "doi": None, "vai": "nen_G0"},
-              {"id": "T02", "pmid": 222, "doi": None},
-              {"id": "V01", "pmid": None, "doi": "10.5555/VN.2025.01"},
-          ]}
-    if study is not None:
-        dm["study"] = study
-    (d / f"DANH_MUC_TRICH_DAN_{ma}.json").write_text(json.dumps(dm, ensure_ascii=False), encoding="utf-8", newline="\n")
-    if meta is not False:
-        (d / "study_meta.json").write_text(json.dumps(meta or {"title": TEN_DE_TAI}, ensure_ascii=False),
-                                           encoding="utf-8", newline="\n")
-    return exports
-
-
-def test_doc_de_tai_dung_khoi_giong_dashboard_va_khoa_chu_de(tmp_path):
-    data, gia = N.doc_de_tai(MA, _de_tai(tmp_path))
-    assert data["meta"]["question"] == f"{TEN_DE_TAI} ({MA})"
-    assert [(i["id"], i["pmid"], i["doi"]) for i in data["items"]] == [
-        ("T01", "111", None), ("T02", 222, None), ("V01", None, "10.5555/VN.2025.01")]
-    assert gia.name == f"DE-TAI_{MA}.json" and N.khoa_chu_de(gia) == f"DE-TAI_{MA}", "khoá lượt tay 25/10 đã ghi nhớ"
-    dd = N.trich_dinh_danh(data)
-    assert [(x["pmid"], x["doi"]) for x in dd] == [("111", None), ("222", None), (None, "10.5555/vn.2025.01")]
-
-
-def test_ten_de_tai_gon_giu_ma_va_thieu_ten_thi_la_ma():
-    dai = "Đề tài " * 40
-    ten = N.ten_de_tai({"title": dai}, MA)
-    assert len(ten) <= 100 and ten.endswith(f"… ({MA})")
-    assert N.ten_de_tai({"topic": "  Chủ   đề\nhai dòng "}, MA) == f"Chủ đề hai dòng ({MA})"
-    assert N.ten_de_tai(None, MA) == MA and N.ten_de_tai({"title": ""}, MA) == MA
-
-
-@pytest.mark.parametrize("ma", ["../exports", "a/b", "", "-dau-gach", "x" * 81])
-def test_doc_de_tai_ma_sai_khuon_bi_tu_choi(tmp_path, ma):
-    with pytest.raises(ValueError, match="sai khuôn"):
-        N.doc_de_tai(ma, tmp_path)
-
-
-def test_doc_de_tai_danh_muc_hong_khong_nap(tmp_path):
-    with pytest.raises(N.KhongChayDuoc, match="không thấy danh mục"):
-        N.doc_de_tai(MA, tmp_path / "exports")
-    with pytest.raises(N.KhongChayDuoc, match="sai khuôn"):
-        N.doc_de_tai(MA, _de_tai(tmp_path / "a", trich_dan={"T01": "111"}))
-    with pytest.raises(N.KhongChayDuoc, match="không phải"):
-        N.doc_de_tai(MA, _de_tai(tmp_path / "b", study="de-tai-khac"))
-    ex = _de_tai(tmp_path / "c")
-    (ex / MA / f"DANH_MUC_TRICH_DAN_{MA}.json").write_text("{hỏng", encoding="utf-8")
-    with pytest.raises(N.KhongChayDuoc, match="không đọc được"):
-        N.doc_de_tai(MA, ex)
-
-
-def test_doc_de_tai_thieu_study_meta_thi_ten_nhom_la_ma(tmp_path):
-    data, _ = N.doc_de_tai(MA, _de_tai(tmp_path, meta=False))
-    assert data["meta"]["question"] == MA
-
-
-# ── main --de-tai với EndNote giả ──────────────────────────────────────────────────────────────────
 
 class _EnGia:
-    """EndNote giả đủ cho đường `nap_nhieu`: post vào tên ĐÃ có nhóm sinh nhóm MỚI cùng tên (đo 24/10/2026)."""
-    hien_tai: "_EnGia | None" = None
+    """EndNote giả: nhập XML thành bản ghi; tim_khop theo Accession Number/DOI/Title; nhóm đo theo tên (post vào tên ĐÃ có là
+    lỗi phép thử — EndNote thật sinh nhóm trùng tên, BH170); trường «File Attachments» lưu chuỗi ngăn bằng \\r."""
 
-    def __init__(self, ung_dung, thu_vien, co_san=(), nhom=None):
-        self.ung_dung, self.thu_vien = ung_dung, Path(thu_vien)
+    def __init__(self, thu_vien: Path, co_san=()):
+        self.thu_vien = thu_vien
         self.ban_ghi: list[dict] = []
         self.nhom: dict[str, list[str]] = {}
-        self.nhom_trung: list[tuple[str, list[str]]] = []
         self.so_lan_nhap = 0
-        for pm, doi in co_san:
-            self._them(pm, doi)
-        for ten, pmids in (nhom or {}).items():
-            self.nhom[ten] = [b["id"] for b in self.ban_ghi if b["pmid"] in pmids]
-        _EnGia.hien_tai = self
+        self.lan_post = 0
+        for bg in co_san:
+            self._them(**bg)
 
-    def _them(self, pm, doi, tep=""):
-        rid = f'<RecordID database="2" recNum="{len(self.ban_ghi) + 1}" />'
-        self.ban_ghi.append({"id": rid, "pmid": pm or "", "doi": (doi or "").lower(), "tep": tep})
+    def _them(self, pmid="", doi="", tieu_de="", tep="", loai="Journal Article", nhan="", tu_khoa=(), abstract=""):
+        rid = f'<RecordID database="2" recNum="{9000 + len(self.ban_ghi) + 1}" />'
+        self.ban_ghi.append({"id": rid, "pmid": pmid or "", "doi": (doi or "").lower(), "tieu_de": tieu_de, "tep": tep,
+                             "loai": loai, "nhan": nhan, "tu_khoa": list(tu_khoa), "abstract": abstract})
+        return rid
 
-    def dang_mo_dung_thu_vien(self):
-        return True
+    def _bg(self, ma):
+        return next(b for b in self.ban_ghi if b["id"] == ma)
 
     def thung_rac(self):
-        return {"pmid": set(), "doi": set()}
+        return {"doi": set(), "pmid": set()}
 
     def tim_khop(self, gia_tri, truong):
-        khoa = "pmid" if truong == "Accession Number" else "doi"
-        return {v: [b["id"] for b in self.ban_ghi if b[khoa] and b[khoa] == str(v).lower()] for v in gia_tri}
+        khoa = {"Accession Number": "pmid", "DOI": "doi", "Title": "tieu_de"}[truong]
+        return {v: [b["id"] for b in self.ban_ghi if b[khoa] and b[khoa].lower() == v.lower()] for v in gia_tri}
 
     def nhap(self, tep):
         self.so_lan_nhap += 1
         for r in ET.fromstring(Path(tep).read_bytes()).findall("records/record"):
-            self._them(r.findtext("accession-num"), r.findtext("electronic-resource-num"),
-                       r.findtext("urls/pdf-urls/url") or "")
-
-    @staticmethod
-    def _so(ids):
-        return [int(re.search(r'recNum="(\d+)"', i).group(1)) for i in ids]
-
-    def nhom_theo_ten(self, ten):
-        ds = [(1, self.nhom[ten])] if ten in self.nhom else []
-        ds += [(100 + k, ids) for k, (t, ids) in enumerate(self.nhom_trung) if t == ten]
-        return [{"group_id": g, "ten": ten, "so_ban_ghi": len(ids), "rec": self._so(ids)} for g, ids in ds]
-
-    def dang_vao_nhom(self, ids, ten):
-        if ten in self.nhom:
-            self.nhom_trung.append((ten, list(ids)))
-        else:
-            self.nhom[ten] = list(ids)
+            self._them(pmid=r.findtext("accession-num"), doi=r.findtext("electronic-resource-num"),
+                       tieu_de=r.findtext("titles/title") or "", tep=r.findtext("urls/pdf-urls/url") or "",
+                       loai=r.find("ref-type").get("name"), nhan=r.findtext("label") or "",
+                       tu_khoa=[k.text for k in r.findall("keywords/keyword")], abstract=r.findtext("abstract") or "")
 
     def tep_dinh_kem(self, ids):
         return {b["id"]: len(b["tep"]) for b in self.ban_ghi if b["id"] in ids}
 
     def gan_tep(self, ma, url):
-        next(b for b in self.ban_ghi if b["id"] == ma)["tep"] = url
+        self._bg(ma)["tep"] = url
+
+    def them_tep(self, ma, url):
+        b = self._bg(ma)
+        b["tep"] = "\r".join([x for x in b["tep"].split("\r") if x] + [url])
+
+    def doc_truong(self, ids, truong):
+        k = {"File Attachments": "tep", "Reference Type": "loai"}[truong]
+        return {b["id"]: b[k] for b in self.ban_ghi if b["id"] in ids}
+
+    def nhom_theo_ten(self, ten):
+        if ten not in self.nhom:
+            return []
+        rec = [int(re.search(r'recNum="(\d+)"', i).group(1)) for i in self.nhom[ten]]
+        return [{"group_id": 1, "ten": ten, "so_ban_ghi": len(rec), "rec": rec}]
+
+    def dang_vao_nhom(self, ids, ten):
+        assert ten not in self.nhom, "post vào tên đã có nhóm ⇒ EndNote sinh nhóm trùng tên (BH170)"
+        self.lan_post += 1
+        self.nhom[ten] = list(ids)
+
+    def ma(self, **k):
+        return next(b["id"] for b in self.ban_ghi if all(b[x] == v for x, v in k.items()))
 
 
-def _meta(d: dict) -> dict:
-    return {"pmid": d.get("pmid"), "doi": d.get("doi"), "loai_tl": "Journal Article", "tieu_de": "Bài thử",
-            "tac_gia": ["Nguyễn, Văn A"], "tap_chi": "Tạp chí", "tap_chi_viet_tat": "", "nam": "2025", "tap": "1",
-            "so": "2", "trang": "3-4", "issn": "", "tom_tat": "", "ngon_ngu": "vie", "pmcid": "", "da_rut": False,
-            "nguon_meta": "PubMed" if d.get("pmid") else "Crossref"}
+def _tim(doi):
+    return ["16855282"] if doi == "10.1093/ije/dyl129" else []
 
 
-@pytest.fixture
-def moi_truong(tmp_path, monkeypatch):
-    """Đang ở Mac, thư viện đã cấu hình và đang mở; mạng/tóm tắt bị thay — tóm tắt mà chạy là lỗi của phép thử."""
+def _chay(tmp_path, en, ap_dung=True, kho=None, noi_dung=DE_CUONG, **k):
+    thu_muc, tep = _de_tai(tmp_path, noi_dung)
+    k.setdefault("lay_pm", lambda pmids: {p: META[p] for p in pmids if p in META})
+    k.setdefault("lay_cr", lambda doi: META_CR.get(doi))
+    k.setdefault("lay_ep", lambda pmids: {})
+    k.setdefault("tim_pmid", _tim)
+    bc = T.chay([tep], "NC-THU", thu_muc, endnote=en, ap_dung=ap_dung, kho=kho, loai_tru=None, **k)
+    return bc, thu_muc
+
+
+# ── đọc mục TLTK ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def test_doc_tltk_chi_lay_muc_tham_khao_noi_dong_va_tach_dinh_danh(tmp_path):
+    _thu_muc, tep = _de_tai(tmp_path)
+    ds = T.doc_tltk(tep)
+    assert [r["so"] for r in ds] == [1, 2, 3, 4, 5, 6], "dừng ở đề mục kế tiếp, bỏ danh sách đánh số ngoài mục TLTK"
+    assert ds[1]["pmid"] == "31218671" and ds[1]["doi"] == "10.1111/1475-6773.13187", "DOI bỏ dấu chấm cuối câu"
+    assert ds[3]["doi"] == "10.52163/yhc.v64i1.573" and ds[3]["van_ban"].endswith("doi:10.52163/yhc.v64i1.573."), \
+        "dòng xuống dòng nối vào TLTK đứng trước"
+    assert ds[0]["pmid"] is None and ds[0]["doi"] is None
+
+
+def test_khong_thay_muc_tltk_la_loi_khong_phai_khong_co_tltk(tmp_path):
+    _thu_muc, tep = _de_tai(tmp_path, "# 1. ĐẶT VẤN ĐỀ\n\n1. a\n")
+    with pytest.raises(ValueError, match="không thấy"):
+        T.doc_tltk(tep)
+
+
+def test_danh_so_dut_lap_va_trung_nguon_duoc_bao(tmp_path):
+    _thu_muc, tep = _de_tai(tmp_path, "# TÀI LIỆU THAM KHẢO\n\n1. A. B. C. 2019. PMID: 11111111\n"
+                                      "3. D. E. F. 2020. PMID: 11111111\n3. G. H. I. 2021. doi:10.1/x\n")
+    ds, cb = T.gop_tai_lieu([tep])
+    assert len(ds) == 2, "trùng PMID trong cùng danh mục chỉ nạp MỘT bản ghi"
+    noi = " ".join(cb)
+    assert "lặp [3]" in noi and "thiếu [2]" in noi and "TLTK 3 trùng nguồn với TLTK 1" in noi
+
+
+# ── TLTK không định danh ────────────────────────────────────────────────────────────────────────────────────────────────
+
+def test_tach_van_ban_nha_nuoc_va_sach_khu_hoi():
+    m = T.tach_khong_dinh_danh("Bộ Y tế. Quyết định số 56/QĐ-BYT ngày 08/01/2024 ban hành Hướng dẫn. Hà Nội: Bộ Y tế; 2024.")
+    assert m["loai_tl"] == "Government Document" and m["tac_gia"] == ["Bộ Y tế,"], "tác giả tập thể mang dấu phẩy cuối"
+    assert (m["noi_xb"], m["nha_xb"], m["nam"]) == ("Hà Nội", "Bộ Y tế", "2024")
+    s = T.tach_khong_dinh_danh("Lwanga SK, Lemeshow S. Sample size determination in health studies: a practical manual. "
+                               "Geneva: World Health Organization; 1991.")
+    assert s["loai_tl"] == "Book" and s["tac_gia"] == ["Lwanga, S. K.", "Lemeshow, S."]
+    assert s["tieu_de"] == "Sample size determination in health studies: a practical manual"
+
+
+@pytest.mark.parametrize("van", [
+    "Một tài liệu không theo khuôn nào cả",
+    "Rubin DB. Multiple imputation. New York: Wiley; 1987. doi:10.1002/9780470316696.",  # có định danh ⇒ không đi đường này
+    "Tác giả. Tên sách. Nơi: NXB; năm không rõ.",
+])
+def test_khong_tach_duoc_thi_khong_doan(van):
+    assert T.tach_khong_dinh_danh(van) is None
+
+
+# ── PMID từ DOI ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def test_pmid_tu_doi_chi_nhan_khi_pubmed_xac_nhan_hai_chieu():
+    ds = [{"so": 3, "pmid": None, "doi": "10.1093/ije/dyl129"}, {"so": 4, "pmid": None, "doi": "10.52163/yhc.v64i1.573"}]
+    bc = T.phan_giai_pmid(ds, tim=_tim, lay_pm=lambda pmids: {p: META[p] for p in pmids})
+    assert ds[0]["pmid"] == "16855282" and ds[0]["pmid_tu_doi"] and ds[1]["pmid"] is None
+    assert bc["them"] == ["TLTK 3: DOI 10.1093/ije/dyl129 → PMID 16855282"]
+    ds = [{"so": 3, "pmid": None, "doi": "10.1093/ije/dyl129"}]
+    T.phan_giai_pmid(ds, tim=_tim, lay_pm=lambda pmids: {p: _meta(p, "10.9/khac") for p in pmids})
+    assert ds[0]["pmid"] is None, "DOI của bản ghi PubMed khác DOI của TLTK ⇒ không gắn PMID"
+    ds = [{"so": 3, "pmid": None, "doi": "10.1093/ije/dyl129"}]
+    T.phan_giai_pmid(ds, tim=lambda d: ["1", "2"], lay_pm=lambda pmids: {p: _meta(p, d) for p, d in
+                                                                          zip(pmids, ["10.1093/ije/dyl129"] * 2)})
+    assert ds[0]["pmid"] is None, "hai PMID cho một DOI ⇒ mơ hồ, không chọn"
+
+
+def test_ncbi_chan_khi_tra_pmid_la_khong_do_duoc():
+    ds = [{"so": 3, "pmid": None, "doi": "10.1093/ije/dyl129"}]
+
+    def chan(_d):
+        raise NE.NcbiChan("chặn")
+    bc = T.phan_giai_pmid(ds, tim=chan)
+    assert ds[0]["pmid"] is None and bc["khong_do_duoc"] == ["TLTK 3 (NcbiChan)"]
+
+
+# ── đối chiếu chuẩn trích dẫn ───────────────────────────────────────────────────────────────────────────────────────────
+
+def test_doi_chieu_bat_tieu_de_nam_va_bai_rut():
+    r = {"van_ban": "Bull C. A systematic review of the validity of patient-reported experience measures. "
+                    "Health Serv Res. 2019;54(5):1023."}
+    assert T.doi_chieu(r, META["31218671"]) == []
+    sai = T.doi_chieu(r, _meta("1", tieu_de="Statins after myocardial infarction", nam="2021", rut=True))
+    assert any("tiêu đề" in x for x in sai) and any("năm của nguồn 2021" in x for x in sai) and any("ĐÃ RÚT" in x for x in sai)
+    dich = T.doi_chieu({"van_ban": "Iglesias-Puzas Á. Adaptación transcultural y validación al español del PSQ-18. "
+                                   "J Healthc Qual Res. 2021;36(5):269-274."},
+                       _meta("34053882", tieu_de="[Cross-cultural adaptation and Spanish validation of PSQ-18].", nam="2021"))
+    assert len(dich) == 1 and "tiêu đề DỊCH" in dich[0], "tiêu đề dịch trong ngoặc vuông của PubMed được gọi đúng tên"
+
+
+# ── toàn văn ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def test_chon_toan_van_dung_dinh_danh_va_chi_nhan_pdf_that(tmp_path):
+    kho, tv = tmp_path / "kho", tmp_path / "tv"
+    _pdf(kho / "PMID-1234_UPW.pdf")
+    assert T.chon_toan_van({"so": 1, "pmid": "123"}, kho, tv) is None, "PMID-123 không bắt nhầm PMID-1234"
+    assert T.chon_toan_van({"so": 1, "pmid": "1234"}, kho, tv)[0].name == "PMID-1234_UPW.pdf"
+    _pdf(tv / "DOI-10.52163_yhc.v64i1.573.pdf")
+    assert T.chon_toan_van({"so": 4, "pmid": None, "doi": "10.52163/yhc.v64i1.573"}, kho, tv)
+    (tv / "TLTK-7.pdf").write_bytes(b"<html>trang loi</html>")
+    assert T.chon_toan_van({"so": 7}, kho, tv) is None, "tệp không bắt đầu %PDF- không phải toàn văn"
+    _pdf(tv / "TLTK-8.pdf")
+    assert T.chon_toan_van({"so": 8}, kho, tv) and T.chon_toan_van({"so": 8, "pmid": "9"}, kho, tv) is None, \
+        "tệp theo SỐ TLTK chỉ dành cho TLTK không định danh"
+
+
+def test_co_toan_van_khong_tinh_pdf_tom_tat():
+    assert T.co_toan_van("internal-pdf://1234567890/PMID-1.pdf")
+    assert not T.co_toan_van("file:///x/TomTatChungCu/PMID-1_TomTatChungCu.pdf\rfile:///x/a.docx")
+    assert not T.co_toan_van("")
+
+
+def test_unpaywall_theo_doi_qua_cong_dieu_khoan_va_chi_luu_pdf(tmp_path):
+    ghi = []
+    gom = SimpleNamespace(
+        _email_lich_su=lambda: "a@b.c",
+        vi_tri_oa_duoc_luu=lambda uj, doi: (uj["urls"], uj.get("ly")),
+        _ghi_nguyen_tu=lambda dich, du_lieu: (ghi.append(dich.name), dich.write_bytes(du_lieu)))
+    tra = {"10.1/cam": {"urls": [], "ly": "cam_khong_uq: NXB cấm"}, "10.1/pdf": {"urls": ["u-pdf"]},
+           "10.1/html": {"urls": ["u-html"]}}
+    noi_dung = {"u-pdf": b"%PDF-1.7 x", "u-html": b"<html>"}
+
+    def tai(url):
+        if url.startswith("https://api.unpaywall.org/v2/"):
+            return json.dumps(tra[url.split("/v2/")[1].split("?")[0]]).encode()
+        return noi_dung[url]
+    ds = [{"so": i, "pmid": None, "doi": d} for i, d in enumerate(tra, 1)] + [{"so": 9, "pmid": "1", "doi": "10.1/x"}]
+    bc = T.gom_doi_unpaywall(ds, tmp_path / "tv", gom_mod=gom, tai=tai)
+    assert ghi == ["DOI-10.1_pdf_UPW.pdf"] and bc["luu"] == ["TLTK 2"]
+    assert any("NXB cấm" in x for x in bc["khong_luu"]) and any("HTML" in x for x in bc["khong_luu"])
+    assert len(bc["khong_luu"]) == 2, "TLTK có PMID đi bộ gom kho chung, không đi làn DOI"
+
+
+# ── lượt nạp đầy đủ ─────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def test_nap_that_dung_chuan_trich_dan_khong_tom_tat_va_mot_lan_post_nhom(tmp_path):
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    en = _EnGia(tv_lib)
+    kho = tmp_path / "kho"
+    _pdf(kho / "PMID-31218671_UPW.pdf")
+    bc, thu_muc = _chay(tmp_path, en, kho=kho)
+    assert bc["nap"]["nhap_moi"] == 3 and bc["khong_dinh_danh"]["nhap_moi"] == 2
+    b2 = en._bg(en.ma(pmid="31218671"))
+    assert b2["nhan"] == "TLTK 2" and b2["tu_khoa"] == ["NC: NC-THU"]
+    assert b2["abstract"] == "Abstract gốc của nguồn.", "KHÔNG ghi tóm tắt tiếng Việt — giữ abstract gốc"
+    assert b2["tep"].startswith("internal-pdf://") and b2["tep"].endswith("/PMID-31218671.pdf")
+    assert en.ma(pmid="16855282"), "DOI-only có PMID trên PubMed ⇒ nhập kèm PMID"
+    assert en._bg(en.ma(tieu_de="Sample size determination in health studies: a practical manual"))["loai"] == "Book"
+    vb = en._bg(en.ma(loai="Government Document"))
+    assert vb["nhan"] == "TLTK 1" and vb["tu_khoa"] == ["NC: NC-THU"]
+    assert en.lan_post == 1 and len(en.nhom["NC · NC-THU"]) == 5, "MỘT lượt post gồm cả TLTK không định danh (BH170)"
+    assert bc["khong_tach_duoc"] and "TLTK 6" in bc["khong_tach_duoc"][0]
+    assert bc["co_toan_van"] == 1 and len(bc["thieu_toan_van"]) == 5
+    assert any("TLTK 4" in x and "DOI-10.52163_yhc.v64i1.573.pdf" in x for x in bc["thieu_toan_van"])
+    assert T.ma_thoat(bc) == T.MA_MOT_PHAN
+
+
+def test_chay_lai_khi_bac_si_da_dat_toan_van_thi_gan_va_them_vao_ban_ghi_chi_co_tom_tat(tmp_path):
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    tom_tat = "file:///lib/TomTatChungCu/PMID-31218671_TomTatChungCu.pdf"
+    en = _EnGia(tv_lib, co_san=[{"pmid": "31218671", "doi": "10.1111/1475-6773.13187", "tep": tom_tat}])
+    thu_muc, _ = _de_tai(tmp_path)
+    tv = thu_muc / "toan_van_tltk"
+    for ten in ("PMID-31218671.pdf", "PMID-16855282.pdf", "DOI-10.52163_yhc.v64i1.573.pdf", "TLTK-1.pdf", "TLTK-5.pdf"):
+        _pdf(tv / ten)
+    bc = T.chay([thu_muc / "DE_CUONG_NOP_HOI_DONG_NC-THU.md"], "NC-THU", thu_muc, endnote=en, ap_dung=True, kho=None,
+                lay_pm=lambda pmids: {p: META[p] for p in pmids if p in META}, lay_cr=lambda d: META_CR.get(d),
+                lay_ep=lambda p: {}, tim_pmid=_tim)
+    cu = en._bg(en.ma(pmid="31218671"))
+    assert cu["tep"].split("\r")[0] == tom_tat and cu["tep"].split("\r")[1].endswith("/PMID-31218671.pdf"), \
+        "THÊM toàn văn, giữ PDF tóm tắt đang có"
+    assert bc["them_toan_van"] == ["TLTK 2"]
+    assert bc["nap"]["pdf_dinh_kem"] == 2, "PDF ở thư mục đề tài đính NGAY lúc nhập (bộ chọn PDF của người gọi)"
+    assert bc["co_toan_van"] == 5 and [x for x in bc["thieu_toan_van"] if "TLTK 6" not in x] == []
+    assert en._bg(en.ma(loai="Government Document"))["tep"].endswith("/TLTK-1.pdf")
+
+
+def test_chay_kho_khong_ghi_gi(tmp_path):
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    en = _EnGia(tv_lib)
+    bc, thu_muc = _chay(tmp_path, en, ap_dung=False)
+    assert en.so_lan_nhap == 0 and en.nhom == {} and not (thu_muc / "toan_van_tltk").exists()
+    assert len(bc["nap"]["ke_hoach_nhap"]) == 3 and len(bc["khong_dinh_danh"]["ke_hoach"]) == 2
+    assert bc["cho_gan"] == 0
+    kho = tmp_path / "kho"
+    _pdf(kho / "PMID-31218671_BANIN.pdf")
+    bc, _ = _chay(tmp_path / "lan2", en, ap_dung=False, kho=kho)
+    assert bc["cho_gan"] == 1 and any("TLTK 2: có PDF sẵn" in x for x in bc["thieu_toan_van"])
+
+
+def test_khong_co_endnote_chi_lap_ke_hoach_va_bao_khong_kiem_trung(tmp_path):
+    bc, _ = _chay(tmp_path, None, ap_dung=False)
+    assert not bc["kiem_trung"] and T.ma_thoat(bc) == T.MA_MOT_PHAN
+    assert bc["co_toan_van_san"] == 0 and len(bc["thieu_toan_van"]) == 6
+
+
+def test_ban_ghi_da_co_giu_nguyen_khong_nhap_lai(tmp_path):
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    en = _EnGia(tv_lib, co_san=[{"pmid": "31218671", "nhan": "nhãn bác sĩ"},
+                                {"tieu_de": "Sample size determination in health studies: a practical manual",
+                                 "loai": "Book"}])
+    bc, _ = _chay(tmp_path, en)
+    assert bc["nap"]["da_co"] == 1 and bc["khong_dinh_danh"]["da_co"] == 1
+    assert en._bg(en.ma(pmid="31218671"))["nhan"] == "nhãn bác sĩ", "bản ghi đã có không bị sửa nhãn"
+    assert len(en.ban_ghi) == 2 + 3, "chỉ nhập 2 bài định danh mới + 1 văn bản nhà nước"
+
+
+# ── lõi dùng chung: hành vi cũ không đổi, phần mới ─────────────────────────────────────────────────────────────────────
+
+def test_crossref_sach_nhap_thanh_book_co_nha_xuat_ban():
+    js = {"message": {"type": "book", "title": ["Multiple imputation for nonresponse in surveys"], "DOI": "10.1002/9780470316696",
+                      "author": [{"family": "Rubin", "given": "Donald B."}], "issued": {"date-parts": [[1987]]},
+                      "publisher": "Wiley", "publisher-location": "New York", "ISBN": ["9780471087052"],
+                      "container-title": ["Wiley Series in Probability and Statistics"]}}
+    m = NE.phan_tich_crossref(js)
+    assert (m["loai_tl"], m["nha_xb"], m["noi_xb"], m["isbn"], m["tap_chi"]) == \
+        ("Book", "Wiley", "New York", "9780471087052", "")
+    x = NE.dung_xml([m])
+    assert '<ref-type name="Book">6</ref-type>' in x and "<pub-location>New York</pub-location>" in x
+    assert "<isbn>9780471087052</isbn>" in x
+    bai = NE.phan_tich_crossref({"message": {"type": "journal-article", "title": ["T"], "container-title": ["J"],
+                                             "publisher": "P"}})
+    assert (bai["loai_tl"], bai["tap_chi"], bai["nha_xb"]) == ("Journal Article", "J", ""), "bài báo không đổi"
+
+
+def test_dat_pdf_khong_pmid_giu_ten_nguon_an_toan(tmp_path):
     tv = tmp_path / "tv.enl"
-    tv.write_bytes(b"enl")
-    ch = tmp_path / "ebm-endnote.json"
-    ch.write_text(json.dumps({"thu_vien": str(tv), "ung_dung": "EndNote 2025"}), encoding="utf-8", newline="\n")
-    monkeypatch.setattr(N, "CAU_HINH", ch)
-    monkeypatch.setattr(N, "_la_mac", lambda: True)
-    monkeypatch.setattr(N, "EndNoteMac", _EnGia)
-    monkeypatch.setattr(N, "_tim_dash_goc", lambda: None)
-    exports = _de_tai(tmp_path / "y-khoa")
-    monkeypatch.setattr(N, "_tim_exports", lambda: exports)
-    monkeypatch.setattr(N, "_ngu", lambda s: None)
-    monkeypatch.setattr(N, "lay_metadata", lambda dd, *a, **k: ([(d, _meta(d)) for d in dd], []))
-
-    def cam_tom_tat(*_a, **_k):
-        raise AssertionError("trích dẫn đề tài KHÔNG được ghi tóm tắt tiếng Việt (bác sĩ dặn 25/10/2026)")
-
-    monkeypatch.setattr(N, "chay_tom_tat", cam_tom_tat)
-    monkeypatch.chdir(tmp_path)
-    _EnGia.hien_tai = None
-    return tmp_path, ch
+    pdf = _pdf(tmp_path / "DOI-10.1_a b.pdf")
+    url, tm = NE.dat_pdf_vao_thu_vien(tv, pdf, None)
+    assert url.endswith("/DOI-10.1_a_b.pdf") and (tm / "DOI-10.1_a_b.pdf").is_file()
+    url, _ = NE.dat_pdf_vao_thu_vien(tv, pdf, "123")
+    assert url.endswith("/PMID-123.pdf")
 
 
-def test_de_tai_ap_dung_nap_vao_nhom_nc_ghi_nho_khoa_khong_tom_tat(moi_truong, capsys):
-    goc, ch = moi_truong
-    ma = N.main(["--de-tai", MA, "--ap-dung"])
+class _EnMacGia(NE.EndNoteMac):
+    """EndNoteMac thật với `_chay` giả — đo đúng mã `them_tep` sẽ chạy."""
+
+    def __init__(self, cu: str, nuot: bool = False):
+        self.cu, self.nuot, self.lenh = cu, nuot, []
+
+    def _truoc_khi_ghi(self, ly_do):
+        pass
+
+    def doc_truong(self, ids, truong):
+        return {ids[0]: self.cu}
+
+    def _chay(self, than, *doi_so, **_k):
+        self.lenh.append(doi_so)
+        if "return field" in than:
+            return doi_so[1].split("\r")[-1] if self.nuot else doi_so[1]
+        return ""
+
+
+def test_them_tep_giu_tep_cu_va_ghi_tra_khi_endnote_lam_mat():
+    en = _EnMacGia("file:///a_TomTatChungCu.pdf")
+    en.them_tep("R", "internal-pdf://1/PMID-1.pdf")
+    assert en.lenh == [("R", "file:///a_TomTatChungCu.pdf\rinternal-pdf://1/PMID-1.pdf")]
+    en = _EnMacGia("file:///a_TomTatChungCu.pdf", nuot=True)
+    with pytest.raises(RuntimeError, match="ghi trả"):
+        en.them_tep("R", "internal-pdf://1/PMID-1.pdf")
+    assert en.lenh[-1] == ("R", "file:///a_TomTatChungCu.pdf"), "EndNote làm mất tệp cũ ⇒ ghi trả đúng trường cũ"
+
+
+def test_main_chay_kho_tren_de_tai_va_ma_thoat(tmp_path, monkeypatch, capsys):
+    thu_muc, _ = _de_tai(tmp_path)
+    monkeypatch.setattr(NE, "_la_mac", lambda: False)
+    monkeypatch.setattr(NE, "_tim_dash_goc", lambda: None)
+    monkeypatch.setattr(NE, "doc_loai_tru", lambda *a: {"doi": {}, "pmid": {}})
+    goc = T.chay
+
+    def chay_gia(*a, **k):
+        k.update(lay_pm=lambda pmids: {p: META[p] for p in pmids if p in META}, lay_cr=lambda d: META_CR.get(d),
+                 lay_ep=lambda p: {}, tim_pmid=_tim)
+        return goc(*a, **k)
+    monkeypatch.setattr(T, "chay", chay_gia)
+    ma = T.main(["--study", "NC-THU", "--thu-muc-de-tai", str(thu_muc)])
     ra = capsys.readouterr().out
-    en = _EnGia.hien_tai
-    ten = f"NC · {TEN_DE_TAI} ({MA})"
-    assert ma == 0, ra
-    assert set(en.nhom) == {ten} and len(en.nhom[ten]) == 3 and en.nhom_trung == []
-    assert {b["pmid"] for b in en.ban_ghi} == {"111", "222", ""} and en.so_lan_nhap == 1
-    assert N.nhom_da_ghi(ch) == {f"DE-TAI_{MA}": ten}, "nhóm thật đã dựng ⇒ ghi nhớ theo khoá DE-TAI_<mã>"
-    assert "Không thấy kho toàn văn" in ra, "thiếu kho chỉ cảnh báo — không chặn ghi vì không có bước tóm tắt"
+    assert ma == T.MA_MOT_PHAN and "Chạy khô" in ra and "6 TLTK" in ra and not (thu_muc / "ENDNOTE_TLTK_NC-THU.json").exists()
+    assert T.main(["--study", "../x"]) == T.MA_THAM_SO
 
 
-def test_de_tai_khong_doan_kho_canh_thu_muc_dang_dung(moi_truong, capsys):
-    """Tệp giả `DE-TAI_<mã>.json` không có thư mục thật: `toan_van_oa` cạnh thư mục đang đứng KHÔNG phải kho của đề tài."""
-    goc, _ = moi_truong
-    (goc / "toan_van_oa").mkdir()
-    (goc / "toan_van_oa" / "PMID-111_UPW.pdf").write_bytes(b"%PDF-1.4 fake")
-    assert N.main(["--de-tai", MA, "--ap-dung"]) == 0
-    assert all(b["tep"] == "" for b in _EnGia.hien_tai.ban_ghi), "không được đính PDF từ kho đoán theo thư mục đang đứng"
-
-
-def test_de_tai_kho_chi_dinh_thi_dinh_pdf(moi_truong, capsys):
-    goc, _ = moi_truong
-    kho = goc / "kho"
-    kho.mkdir()
-    (kho / "PMID-222_UPW.pdf").write_bytes(b"%PDF-1.4 fake")
-    assert N.main(["--de-tai", MA, "--ap-dung", "--kho-toan-van", str(kho)]) == 0
-    tep = {b["pmid"]: b["tep"] for b in _EnGia.hien_tai.ban_ghi}
-    assert tep["222"].startswith("internal-pdf://") and tep["111"] == "", "PDF đúng PMID trong kho được đính nội bộ"
-
-
-def test_de_tai_nhom_ghi_nho_thang_ten_mac_dinh_khong_post_nhom_thu_hai(moi_truong, monkeypatch, capsys):
-    """Lượt tay 25/10 đã dựng «NC · Chăm sóc thận…» (group_id 133) — chạy lại phải về ĐÚNG nhóm đó, không post nhóm mới."""
-    goc, ch = moi_truong
-    cu = "NC · Tên nhóm bác sĩ đã dùng"
-    N.ghi_nhom(f"DE-TAI_{MA}", cu, ch)
-
-    def en_co_san(ung_dung, thu_vien):
-        return _EnGia(ung_dung, thu_vien, co_san=[("111", None), ("222", None)], nhom={cu: {"111", "222"}})
-
-    monkeypatch.setattr(N, "EndNoteMac", en_co_san)
-    assert N.main(["--de-tai", MA, "--ap-dung"]) == 0
-    en = _EnGia.hien_tai
-    assert set(en.nhom) == {cu} and en.nhom_trung == [], "nhóm đã có ⇒ không post (post luôn sinh nhóm trùng tên)"
-    assert len(en.ban_ghi) == 3, "chỉ bài còn thiếu (V01) được nhập — bài đã có không nhập lại"
-
-
-def test_de_tai_chay_kho_khong_nhap_khong_dang_nhom(moi_truong, capsys):
-    assert N.main(["--de-tai", MA]) == 0
-    ra = capsys.readouterr().out
-    en = _EnGia.hien_tai
-    assert en.so_lan_nhap == 0 and en.nhom == {} and "Chạy khô" in ra and f"nhóm «NC · {TEN_DE_TAI}" in ra
-    assert "sẽ bị từ chối" not in ra, "đề tài không có bước tóm tắt ⇒ thiếu kho không chặn --ap-dung, đừng báo sai"
-
-
-def test_de_tai_xuat_xml_dung_danh_muc(moi_truong, capsys):
-    goc, _ = moi_truong
-    ra = goc / "ra.xml"
-    assert N.main(["--de-tai", MA, "--xuat-xml", str(ra)]) == 0
-    goc_xml = ET.fromstring(ra.read_bytes())
-    assert len(goc_xml.findall("records/record")) == 3
-    assert {"".join(k.itertext()) for k in goc_xml.iter("keyword")} == {f"EBM: DE-TAI_{MA}"}
-
-
-@pytest.mark.parametrize("them", [["--file", "x.html"], ["--tat-ca"], ["--gan-kho"], ["--tom-tat-vi"],
-                                  ["--tom-tat-thu-vien"], ["--loai-tru", "111", "--ly-do", "x"], ["--cho-vao-nhom"]])
-def test_de_tai_xung_dot_tham_so_ma_3(moi_truong, them, capsys):
-    assert N.main(["--de-tai", MA, *them]) == 3
-    assert _EnGia.hien_tai is None, "tham số sai thì không chạm EndNote"
-
-
-def test_de_tai_ma_sai_3_khong_thay_exports_hoac_danh_muc_2(moi_truong, monkeypatch, capsys):
-    assert N.main(["--de-tai", "../thoat-ra", "--ap-dung"]) == 3
-    assert N.main(["--de-tai", "de-tai-khong-co", "--ap-dung"]) == 2
-    monkeypatch.setattr(N, "_tim_exports", lambda: None)
-    assert N.main(["--de-tai", MA, "--ap-dung"]) == 2
-    assert _EnGia.hien_tai is None
-
-
-# ── hàng chờ tóm tắt Word ⑨: bài chỉ thuộc nhóm đề tài «NC · » không vào ─────────────────────────────
-
-TT = _nap("_ttcc_t1025", "tom_tat_chung_cu_word.py")
-SK = _nap("_sk_t1025", "endnote_suc_khoe.py")
-NHOM_NC = "NC · Chăm sóc thận ĐTĐ típ 2 ngoại trú BVQY175 (btm-dtd2-ngoai-tru-BVQY175)"
-NHOM_EBM = "EBM · COPD: tiếp cận đa chuyên khoa"
-
-
-def _bg(rec: int) -> dict:
-    return {"rec": rec, "pmid": str(rec * 111), "doi": None, "tieu_de": f"Bài {rec}", "khoa": f"PMID-{rec * 111}",
-            "pdf": ["x.pdf"]}
-
-
-def _nhom(gid: int, ten: str, rec: list[int] | None, loi: str | None = None) -> dict:
-    return {"group_id": gid, "ten": ten, "loai": "custom", "so_ban_ghi": None if rec is None else len(rec), "rec": rec,
-            **({"loi": loi} if loi else {})}
-
-
-@pytest.fixture
-def thu_vien_hc(tmp_path, monkeypatch):
-    """Thư viện giả: mốc «để nguyên» gồm recNum 1–3; bản ghi có PDF 2, 10, 11, 12, 20, 30; nhóm theo group_id = trang_thai["nhom"]."""
-    tv = tmp_path / "EndNote" / "My.enl"
-    tv.parent.mkdir(parents=True)
-    tv.write_bytes(b"enl")  # main() kiểm tệp .enl có thật trước khi tới hàng chờ
-    trang_thai = {"nhom": [], "loi": None, "so_lan_doc": 0}
-
-    def ket_noi(_tv):
-        c = sqlite3.connect(":memory:")
-        c.execute("create table refs (id integer)")
-        c.executemany("insert into refs values (?)", [(i,) for i in (1, 2, 3)])
-        return c
-
-    def doc_nhom(_tv):
-        trang_thai["so_lan_doc"] += 1
-        if trang_thai["loi"] is not None:
-            raise trang_thai["loi"]
-        return trang_thai["nhom"]
-
-    monkeypatch.setitem(TT._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi, doc_nhom=doc_nhom, khoa_ten=SK.khoa_ten,
-                                                              thu_vien_cau_hinh=lambda: tv))
-    assert TT.ghi_moc(tv, "Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên") == 0
-    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(r) for r in (2, 10, 11, 12, 20, 30)])
-    return tv, trang_thai
-
-
-def test_chi_thuoc_de_tai_la_nc_tru_ebm_bo_qua_nhom_khac(thu_vien_hc):
-    tv, tt = thu_vien_hc
-    tt["nhom"] = [_nhom(133, NHOM_NC, [10, 11, 12]), _nhom(140, NHOM_EBM, [12, 20]), _nhom(150, "Nhóm riêng bác sĩ", [11, 30]),
-                  _nhom(160, "Nhóm hỏng không liên quan", None, "members quá ngắn")]
-    assert TT.chi_thuoc_de_tai(tv) == {10, 11}, "NC trừ EBM; nhóm riêng không cứu bài đề tài; nhóm khác hỏng không chặn"
-
-
-def test_hang_cho_loai_bai_chi_thuoc_de_tai_giu_bai_co_nhom_chung_cu(thu_vien_hc):
-    tv, tt = thu_vien_hc
-    tt["nhom"] = [_nhom(133, NHOM_NC, [10, 11, 12]), _nhom(140, NHOM_EBM, [12, 20])]
-    assert [x["rec"] for x in TT.hang_cho(tv)] == [12, 20, 30], "10, 11 chỉ thuộc đề tài ⇒ không tóm tắt chi tiết"
-
-
-def test_hang_cho_loai_ca_ban_ghi_cu_ngoai_le_moc_chi_thuoc_de_tai(thu_vien_hc, monkeypatch):
-    tv, tt = thu_vien_hc
-    tt["nhom"] = [_nhom(133, NHOM_NC, [1, 10])]
-    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(r) for r in (1, 2, 10)])
-    assert TT.ghi_ngoai_le_moc(tv, [4], "tóm tắt cả bản ghi cũ chỉ là tham khảo") == 0
-    monkeypatch.setattr(TT, "ngu_canh_dashboard", lambda: {"pmid:gia": {}})
-    monkeypatch.setattr(TT, "_ngu_canh_cua", lambda ds, pmid, doi: [])  # không là nguồn dashboard nào ⇒ tầng 4
-    hc = TT.hang_cho(tv)
-    assert [(x["rec"], x["nguon_hang_cho"]) for x in hc] == [(2, "ngoai_le_moc")], "bản ghi cũ chỉ thuộc đề tài cũng bị loại"
-
-
-@pytest.mark.parametrize("loi", [OSError("sdb.eni đổi liên tục trong lúc chép"), sqlite3.DatabaseError("hot journal")])
-def test_khong_doc_duoc_nhom_thi_khong_do_duoc_khong_tra_hang_cho_lan(thu_vien_hc, loi, capsys):
-    tv, tt = thu_vien_hc
-    tt["loi"] = loi
-    with pytest.raises(TT.NhomKhongDoDuoc):
-        TT.hang_cho(tv)
-    assert TT.main(["hang-cho"]) == 2 and "⚪ không đọc được nhóm EndNote" in capsys.readouterr().out
-    assert TT.main(["tien-do"]) == 2, "tiến độ cũng báo không đo được thay vì đếm hàng chờ lẫn bài đề tài"
-    assert "Hàng chờ: ⚪ không đọc được nhóm EndNote" in capsys.readouterr().out
-
-
-def test_nhom_nc_hoac_ebm_khong_giai_duoc_thanh_vien_thi_khong_do_duoc(thu_vien_hc):
-    tv, tt = thu_vien_hc
-    for hong in (_nhom(133, NHOM_NC, None, "members quá ngắn"), _nhom(140, NHOM_EBM, None, "số lượng không khớp")):
-        tt["nhom"] = [hong]
-        with pytest.raises(TT.NhomKhongDoDuoc, match=str(hong["group_id"])):
-            TT.hang_cho(tv)
-
-
-def test_khong_co_ung_vien_thi_khong_doc_nhom(thu_vien_hc, monkeypatch):
-    tv, tt = thu_vien_hc
-    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(2)])  # chỉ bản ghi trong mốc
-    tt["loi"] = OSError("không được đọc")
-    assert TT.hang_cho(tv) == [] and tt["so_lan_doc"] == 0, "không có ứng viên ⇒ không chép tạm sdb.eni"
+def test_ban_ghi_da_co_chua_dinh_kem_duoc_gan_toan_van_tu_thu_muc_de_tai(tmp_path):
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    en = _EnGia(tv_lib, co_san=[{"pmid": "31218671"}])
+    thu_muc, tep = _de_tai(tmp_path)
+    _pdf(thu_muc / "toan_van_tltk" / "PMID-31218671.pdf")
+    bc = T.chay([tep], "NC-THU", thu_muc, endnote=en, ap_dung=True, kho=None,
+                lay_pm=lambda pmids: {p: META[p] for p in pmids if p in META}, lay_cr=lambda d: META_CR.get(d),
+                lay_ep=lambda p: {}, tim_pmid=_tim)
+    assert bc["nap"]["gan_them_pdf"] == 1 and bc["them_toan_van"] == [], \
+        "bản ghi chưa có tệp nào nhận toàn văn ở bước gắn của nap_chu_de (bộ chọn PDF truyền tới xet_toan_van)"
+    assert en._bg(en.ma(pmid="31218671"))["tep"].endswith("/PMID-31218671.pdf")

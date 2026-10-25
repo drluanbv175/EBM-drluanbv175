@@ -33,7 +33,7 @@ mới trên thư viện thật: 43 → 2 (hai bài Cochrane của nhóm «EBM ·
 trích nhưng còn nằm trong hàng chờ «đưa vào nhóm ĐÃ có» (chưa vào nhóm «EBM · ») tạm thời chưa vào hàng chờ ⑨ — vào ngay khi được kéo
 vào nhóm.
 
-**Kiểm.** `tools/test_nap_endnote_de_tai_20261025.py` (33 ca); 12 đột biến `--de-tai`/`_tai` + 9 đột biến hàng chờ đều đỏ, phục hồi
+**Kiểm.** `tools/test_endnote_danh_muc_de_tai_hang_cho_20261025.py` (33 ca; đổi tên khi gộp #254 — tên cũ nay là test của `nap_endnote_de_tai.py`); 12 đột biến `--de-tai`/`_tai` + 9 đột biến hàng chờ đều đỏ, phục hồi
 xanh (2 đột biến lúc đầu lọt do fixture thiếu tệp `.enl` — sửa fixture, không nới khẳng định); fixture hai tệp test hàng chờ cũ được
 bổ sung `doc_nhom` (thư viện thật luôn có bảng nhóm); 431 ca EndNote + tóm tắt + hòm việc xanh. Chạy khô thật `--de-tai` trên đề tài:
 66/66 đã có trong thư viện, về đúng nhóm đã ghi nhớ, không nhập gì.
