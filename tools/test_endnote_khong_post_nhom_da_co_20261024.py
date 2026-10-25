@@ -247,9 +247,10 @@ def test_trang_thai_va_hom_viec_thay_hang_cho(tv, cho, monkeypatch):
     viec = tdxv.giac_quan_endnote(lambda: {**kq, "nhom_trung_ten": [{"ten": TEN_KHAC, "so_nhom": 2,
                                                                        "nhom": [{"group_id": 1, "so_ban_ghi": 3},
                                                                                 {"group_id": 2, "so_ban_ghi": 14}]}]})
-    assert (2, f"1 bản ghi EndNote chờ bác sĩ kéo vào nhóm «{TEN}»",
-            f"python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{TEN}\"") in viec
-    assert any("tách 2 nhóm cùng tên (3 + 14 bài)" in d for _u, d, _l in viec)
+    assert (2, "🛎", f"1 bản ghi EndNote chờ đưa vào nhóm «{TEN}» — phiên Claude làm qua menu EndNote (Groups › Add "
+            "References To), hoặc bác sĩ kéo tay", f"python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{TEN}\"") in viec, \
+        "đưa vào nhóm ĐÃ có là việc máy làm được qua giao diện (25/10/2026) ⇒ 🛎, không còn 👤"
+    assert any("tách 2 nhóm cùng tên (3 + 14 bài)" in d and n == "👤" for _u, n, d, _l in viec)
     monkeypatch.setattr(sk, "ban_sao_csdl", lambda tv_: (_ for _ in ()).throw(sqlite3.DatabaseError("hỏng")))
     kq2 = sk.tinh_trang(tv)
     assert kq2["cho_vao_nhom"] is None and any("hàng chờ đưa vào nhóm" in c for c in kq2["canh_bao"])
