@@ -32,8 +32,10 @@ NE = T.NE
 
 @pytest.fixture(autouse=True)
 def _hang_cho_tam(tmp_path, monkeypatch):
-    """Hàng chờ đưa vào nhóm luôn ở tmp_path — không bao giờ tệp thật trong thư mục nhà."""
+    """Hàng chờ đưa vào nhóm và cấu hình EndNote (bảng nhóm ghi nhớ) luôn ở tmp_path — không bao giờ tệp thật trong thư mục
+    nhà (`chay` ghi nhớ nhóm sau lượt --ap-dung từ 25/10/2026; dưới pytest ghi vào tệp thật bị chặn cứng)."""
     monkeypatch.setenv("EBM_ENDNOTE_CHO_VAO_NHOM", str(tmp_path / "cho-vao-nhom.json"))
+    monkeypatch.setattr(NE, "CAU_HINH", tmp_path / "ebm-endnote.json")
     monkeypatch.setattr(NE, "_ngu", lambda _s: None)
 
 
@@ -464,3 +466,82 @@ def test_ban_ghi_da_co_chua_dinh_kem_duoc_gan_toan_van_tu_thu_muc_de_tai(tmp_pat
     assert bc["nap"]["gan_them_pdf"] == 1 and bc["them_toan_van"] == [], \
         "bản ghi chưa có tệp nào nhận toàn văn ở bước gắn của nap_chu_de (bộ chọn PDF truyền tới xet_toan_van)"
     assert en._bg(en.ma(pmid="31218671"))["tep"].endswith("/PMID-31218671.pdf")
+
+
+# ── nhóm đã ghi nhớ của đề tài (khoá DE-TAI_<mã>, 25/10/2026) ───────────────────────────────────────────────────────────
+# Đề tài btm-dtd2-ngoai-tru-BVQY175 đã có nhóm «NC · Chăm sóc thận … (btm-…)» (group_id 133, ghi nhớ bởi lượt --de-tai);
+# công cụ này mặc định «NC · <mã>» ⇒ không tra bảng ghi nhớ thì chạy --ap-dung dựng thêm một nhóm đề tài thứ hai.
+
+NHOM_CU = "NC · Tên nhóm đề tài đã có (NC-THU)"
+
+
+def _cau_hinh(tmp_path: Path, nhom: dict | None = None) -> Path:
+    """Cấu hình EndNote giả ĐÚNG chỗ fixture tự động trỏ `NE.CAU_HINH` tới."""
+    tv_lib = tmp_path / "tv.enl"
+    tv_lib.write_bytes(b"enl")
+    ch = tmp_path / "ebm-endnote.json"
+    ch.write_text(json.dumps({"thu_vien": str(tv_lib), "ung_dung": "EndNote 2025", "nhom_theo_chu_de": nhom or {}},
+                             ensure_ascii=False), encoding="utf-8", newline="\n")
+    assert NE.CAU_HINH == ch
+    return tv_lib
+
+
+def test_khoa_nhom_trung_khoa_cua_de_tai_trong_nap_endnote_chu_de(tmp_path):
+    """Hai công cụ nạp trích dẫn đề tài phải về MỘT nhóm ⇒ cùng khoá với `nap_endnote_chu_de.doc_de_tai` (--de-tai)."""
+    ma = "btm-thu-nghiem-BVQY175"
+    d = tmp_path / "exports" / ma
+    d.mkdir(parents=True)
+    (d / f"DANH_MUC_TRICH_DAN_{ma}.json").write_text(json.dumps({"study": ma, "trich_dan": []}), encoding="utf-8")
+    _data, gia = NE.doc_de_tai(ma, tmp_path / "exports")
+    assert T.khoa_nhom_de_tai(ma) == NE.khoa_chu_de(gia) == f"DE-TAI_{ma}"
+
+
+def test_nhom_ghi_nho_thang_ten_mac_dinh_khong_post_nhom_thu_hai(tmp_path, capsys):
+    tv_lib = _cau_hinh(tmp_path, {"DE-TAI_NC-THU": NHOM_CU})
+    en = _EnGia(tv_lib, co_san=[{"pmid": "31218671"}])
+    en.nhom[NHOM_CU] = [en.ma(pmid="31218671")]
+    bc, _ = _chay(tmp_path, en)
+    assert bc["nhom"] == NHOM_CU and bc["nhom_nguon"] == "ghi_nho"
+    assert set(en.nhom) == {NHOM_CU} and en.lan_post == 0, "nhóm đã có ⇒ không post, không dựng «NC · NC-THU»"
+    assert bc["nap"]["cho_vao_nhom_moi"], "bài mới vào hàng chờ đưa vào nhóm ĐÃ có (BH170)"
+    assert not bc.get("ghi_nho_nhom") and NE.nhom_da_ghi() == {"DE-TAI_NC-THU": NHOM_CU}
+    T.in_bao_cao(bc)
+    assert "Nhóm: nhóm đã ghi nhớ của đề tài" in capsys.readouterr().out
+
+
+def test_chua_ghi_nho_thi_ten_mac_dinh_va_ap_dung_ghi_nho_cho_luot_sau(tmp_path):
+    tv_lib = _cau_hinh(tmp_path)
+    en = _EnGia(tv_lib)
+    bc, _ = _chay(tmp_path, en)
+    assert bc["nhom"] == "NC · NC-THU" and bc["nhom_nguon"] == "mac_dinh" and bc["ghi_nho_nhom"]
+    assert NE.nhom_da_ghi() == {"DE-TAI_NC-THU": "NC · NC-THU"}
+    bc2, _ = _chay(tmp_path / "lan2", en)
+    assert bc2["nhom_nguon"] == "ghi_nho" and en.lan_post == 1, "lượt sau về đúng nhóm vừa dựng, không post lần hai"
+
+
+def test_ten_nhom_cua_bac_si_thang_va_duoc_ghi_nho(tmp_path):
+    tv_lib = _cau_hinh(tmp_path, {"DE-TAI_NC-THU": NHOM_CU})
+    en = _EnGia(tv_lib)
+    bc, _ = _chay(tmp_path, en, ten_nhom="NC · Tên bác sĩ chọn")
+    assert bc["nhom"] == "NC · Tên bác sĩ chọn" and bc["nhom_nguon"] == "tham_so"
+    assert NE.nhom_da_ghi() == {"DE-TAI_NC-THU": "NC · Tên bác sĩ chọn"}, "như nap_nhieu: --ten-nhom thắng và được ghi nhớ"
+
+
+def test_chay_kho_hoac_khong_endnote_khong_ghi_nho(tmp_path):
+    _cau_hinh(tmp_path)
+    truoc = NE.CAU_HINH.read_text(encoding="utf-8")
+    bc, _ = _chay(tmp_path, _EnGia(tmp_path / "tv.enl"), ap_dung=False)
+    assert bc["nhom"] == "NC · NC-THU" and not bc.get("ghi_nho_nhom")
+    bc, _ = _chay(tmp_path / "lan2", None, ap_dung=True)
+    assert not bc.get("ghi_nho_nhom") and NE.CAU_HINH.read_text(encoding="utf-8") == truoc
+
+
+def test_duoi_pytest_khong_ghi_cau_hinh_that(tmp_path, monkeypatch):
+    goi: list = []
+    monkeypatch.setattr(NE, "ghi_nhom", lambda *a, **k: goi.append(a))
+    with pytest.raises(NE.KhongChayDuoc, match="dưới pytest"):
+        T._ghi_nho_nhom("DE-TAI_X", "NC · X", Path.home() / ".ebm-endnote.json")
+    monkeypatch.setattr(NE, "CAU_HINH", Path.home() / ".ebm-endnote.json")
+    with pytest.raises(NE.KhongChayDuoc, match="dưới pytest"):
+        T._ghi_nho_nhom("DE-TAI_X", "NC · X", None)
+    assert goi == [], "tệp cấu hình thật không bao giờ bị ghi khi chạy test"
