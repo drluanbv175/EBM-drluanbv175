@@ -38,7 +38,9 @@ def _thu_vien_gia(tmp_path, monkeypatch, ids=(1, 2, 3)):
         c.execute("create table refs (id integer)")
         c.executemany("insert into refs values (?)", [(i,) for i in ids])
         return c
-    monkeypatch.setitem(T._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi))
+    # Thư viện thật luôn có bảng nhóm; hàng chờ đọc nhóm để loại bài chỉ thuộc đề tài «NC · » (25/10/2026) — ở đây: chưa có nhóm.
+    monkeypatch.setitem(T._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi, doc_nhom=lambda _tv: [],
+                                                            khoa_ten=_nap("_sk_tl", "endnote_suc_khoe.py").khoa_ten))
     return tv
 
 

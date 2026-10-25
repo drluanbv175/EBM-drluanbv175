@@ -10,6 +10,9 @@ Khoá: `--de-tai` đọc danh mục → nhóm mặc định «NC · <tên đề 
 nhớ ⇒ nhóm ghi nhớ thắng, không post nhóm thứ hai) · KHÔNG chạy bước tóm tắt tiếng Việt (bác sĩ dặn 25/10) và vì thế thiếu kho
 không chặn ghi · không đoán `toan_van_oa` cạnh thư mục đang đứng · chạy khô không nhập · tham số xung đột/mã sai ⇒ 3 · danh mục
 hỏng ⇒ 2. `_tai()` thử lại khi `IncompleteRead`, hết lượt ⇒ RuntimeError để `lay_metadata` lùi sang Europe PMC.
+Hàng chờ tóm tắt Word ⑨ (`tom_tat_chung_cu_word.hang_cho`): bản ghi CHỈ thuộc nhóm «NC · » không vào hàng chờ (đo 25/10: hàng
+chờ nhảy 2 → 43 sau lượt nạp đề tài, 41 bài chỉ thuộc nhóm «NC · Chăm sóc thận…»); bản ghi có cả nhóm «EBM · » vẫn vào; không đọc
+được nhóm ⇒ «không đo được» (⚪, mã 2), không trả hàng chờ lẫn bài đề tài.
 Ngoại tuyến: EndNote giả, mạng giả (urlopen thay trong test); mọi đường dẫn trong tmp_path.
 """
 from __future__ import annotations
@@ -18,7 +21,9 @@ import http.client
 import importlib.util
 import json
 import re
+import sqlite3
 import sys
+import types
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -334,3 +339,98 @@ def test_de_tai_ma_sai_3_khong_thay_exports_hoac_danh_muc_2(moi_truong, monkeypa
     monkeypatch.setattr(N, "_tim_exports", lambda: None)
     assert N.main(["--de-tai", MA, "--ap-dung"]) == 2
     assert _EnGia.hien_tai is None
+
+
+# ── hàng chờ tóm tắt Word ⑨: bài chỉ thuộc nhóm đề tài «NC · » không vào ─────────────────────────────
+
+TT = _nap("_ttcc_t1025", "tom_tat_chung_cu_word.py")
+SK = _nap("_sk_t1025", "endnote_suc_khoe.py")
+NHOM_NC = "NC · Chăm sóc thận ĐTĐ típ 2 ngoại trú BVQY175 (btm-dtd2-ngoai-tru-BVQY175)"
+NHOM_EBM = "EBM · COPD: tiếp cận đa chuyên khoa"
+
+
+def _bg(rec: int) -> dict:
+    return {"rec": rec, "pmid": str(rec * 111), "doi": None, "tieu_de": f"Bài {rec}", "khoa": f"PMID-{rec * 111}",
+            "pdf": ["x.pdf"]}
+
+
+def _nhom(gid: int, ten: str, rec: list[int] | None, loi: str | None = None) -> dict:
+    return {"group_id": gid, "ten": ten, "loai": "custom", "so_ban_ghi": None if rec is None else len(rec), "rec": rec,
+            **({"loi": loi} if loi else {})}
+
+
+@pytest.fixture
+def thu_vien_hc(tmp_path, monkeypatch):
+    """Thư viện giả: mốc «để nguyên» gồm recNum 1–3; bản ghi có PDF 2, 10, 11, 12, 20, 30; nhóm theo group_id = trang_thai["nhom"]."""
+    tv = tmp_path / "EndNote" / "My.enl"
+    tv.parent.mkdir(parents=True)
+    tv.write_bytes(b"enl")  # main() kiểm tệp .enl có thật trước khi tới hàng chờ
+    trang_thai = {"nhom": [], "loi": None, "so_lan_doc": 0}
+
+    def ket_noi(_tv):
+        c = sqlite3.connect(":memory:")
+        c.execute("create table refs (id integer)")
+        c.executemany("insert into refs values (?)", [(i,) for i in (1, 2, 3)])
+        return c
+
+    def doc_nhom(_tv):
+        trang_thai["so_lan_doc"] += 1
+        if trang_thai["loi"] is not None:
+            raise trang_thai["loi"]
+        return trang_thai["nhom"]
+
+    monkeypatch.setitem(TT._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi, doc_nhom=doc_nhom, khoa_ten=SK.khoa_ten,
+                                                              thu_vien_cau_hinh=lambda: tv))
+    assert TT.ghi_moc(tv, "Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên") == 0
+    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(r) for r in (2, 10, 11, 12, 20, 30)])
+    return tv, trang_thai
+
+
+def test_chi_thuoc_de_tai_la_nc_tru_ebm_bo_qua_nhom_khac(thu_vien_hc):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = [_nhom(133, NHOM_NC, [10, 11, 12]), _nhom(140, NHOM_EBM, [12, 20]), _nhom(150, "Nhóm riêng bác sĩ", [11, 30]),
+                  _nhom(160, "Nhóm hỏng không liên quan", None, "members quá ngắn")]
+    assert TT.chi_thuoc_de_tai(tv) == {10, 11}, "NC trừ EBM; nhóm riêng không cứu bài đề tài; nhóm khác hỏng không chặn"
+
+
+def test_hang_cho_loai_bai_chi_thuoc_de_tai_giu_bai_co_nhom_chung_cu(thu_vien_hc):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = [_nhom(133, NHOM_NC, [10, 11, 12]), _nhom(140, NHOM_EBM, [12, 20])]
+    assert [x["rec"] for x in TT.hang_cho(tv)] == [12, 20, 30], "10, 11 chỉ thuộc đề tài ⇒ không tóm tắt chi tiết"
+
+
+def test_hang_cho_loai_ca_ban_ghi_cu_ngoai_le_moc_chi_thuoc_de_tai(thu_vien_hc, monkeypatch):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = [_nhom(133, NHOM_NC, [1, 10])]
+    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(r) for r in (1, 2, 10)])
+    assert TT.ghi_ngoai_le_moc(tv, [4], "tóm tắt cả bản ghi cũ chỉ là tham khảo") == 0
+    monkeypatch.setattr(TT, "ngu_canh_dashboard", lambda: {"pmid:gia": {}})
+    monkeypatch.setattr(TT, "_ngu_canh_cua", lambda ds, pmid, doi: [])  # không là nguồn dashboard nào ⇒ tầng 4
+    hc = TT.hang_cho(tv)
+    assert [(x["rec"], x["nguon_hang_cho"]) for x in hc] == [(2, "ngoai_le_moc")], "bản ghi cũ chỉ thuộc đề tài cũng bị loại"
+
+
+@pytest.mark.parametrize("loi", [OSError("sdb.eni đổi liên tục trong lúc chép"), sqlite3.DatabaseError("hot journal")])
+def test_khong_doc_duoc_nhom_thi_khong_do_duoc_khong_tra_hang_cho_lan(thu_vien_hc, loi, capsys):
+    tv, tt = thu_vien_hc
+    tt["loi"] = loi
+    with pytest.raises(TT.NhomKhongDoDuoc):
+        TT.hang_cho(tv)
+    assert TT.main(["hang-cho"]) == 2 and "⚪ không đọc được nhóm EndNote" in capsys.readouterr().out
+    assert TT.main(["tien-do"]) == 2, "tiến độ cũng báo không đo được thay vì đếm hàng chờ lẫn bài đề tài"
+    assert "Hàng chờ: ⚪ không đọc được nhóm EndNote" in capsys.readouterr().out
+
+
+def test_nhom_nc_hoac_ebm_khong_giai_duoc_thanh_vien_thi_khong_do_duoc(thu_vien_hc):
+    tv, tt = thu_vien_hc
+    for hong in (_nhom(133, NHOM_NC, None, "members quá ngắn"), _nhom(140, NHOM_EBM, None, "số lượng không khớp")):
+        tt["nhom"] = [hong]
+        with pytest.raises(TT.NhomKhongDoDuoc, match=str(hong["group_id"])):
+            TT.hang_cho(tv)
+
+
+def test_khong_co_ung_vien_thi_khong_doc_nhom(thu_vien_hc, monkeypatch):
+    tv, tt = thu_vien_hc
+    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(2)])  # chỉ bản ghi trong mốc
+    tt["loi"] = OSError("không được đọc")
+    assert TT.hang_cho(tv) == [] and tt["so_lan_doc"] == 0, "không có ứng viên ⇒ không chép tạm sdb.eni"

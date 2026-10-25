@@ -43,7 +43,9 @@ def _thu_vien(tmp_path, monkeypatch, ids=(1, 2, 3, 4)):
         c.execute("create table refs (id integer)")
         c.executemany("insert into refs values (?)", [(i,) for i in ids])
         return c
-    monkeypatch.setitem(T._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi))
+    # Thư viện thật luôn có bảng nhóm; hàng chờ đọc nhóm để loại bài chỉ thuộc đề tài «NC · » (25/10/2026) — ở đây: chưa có nhóm.
+    monkeypatch.setitem(T._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi, doc_nhom=lambda _tv: [],
+                                                            khoa_ten=_nap("_sk_nlm", "endnote_suc_khoe.py").khoa_ten))
     assert T.ghi_moc(tv, "Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên") == 0
     monkeypatch.setattr(T, "ban_ghi_co_pdf",
                         lambda _tv: [_bg(1, "111"), _bg(2, "222"), _bg(3, "333"), _bg(4, "444"), _bg(9, "999")])

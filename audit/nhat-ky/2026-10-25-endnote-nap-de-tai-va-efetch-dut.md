@@ -22,7 +22,20 @@ RuntimeError/ParseError/OSError) cũng không lùi sang Europe PMC ⇒ cả lư�
 - Câu cảnh báo chạy khô «--ap-dung ghi khối ĐỌC NHANH sẽ bị từ chối» chỉ in khi lượt `--ap-dung` thật sự bị chặn (trước đó in cả
   với `--khong-tom-tat`).
 
-**Kiểm.** `tools/test_nap_endnote_de_tai_20261025.py` (26 ca); 12 đột biến đều đỏ, phục hồi xanh; 271 ca EndNote xanh. Chạy khô
-thật trên đề tài: 66/66 đã có trong thư viện, về đúng nhóm đã ghi nhớ, không nhập gì.
+**Bổ sung cùng ngày — hàng chờ tóm tắt Word ⑨ tính cả bài đề tài** (phiên «Cài đặt cho Endnote» báo, ~18:30). `tom_tat_chung_cu_word
+.hang_cho` lấy mọi bản ghi MỚI (ngoài mốc 19/10) có PDF ⇒ sau lượt nạp đề tài hàng chờ nhảy 2 → 43 (41 bài chỉ thuộc nhóm «NC · …»);
+hòm việc báo «🛎 43 trích dẫn MỚI … chờ tóm tắt chứng cứ Word» — một phiên làm theo sẽ tốn ~150–400 nghìn token/bài cho việc bác sĩ
+không muốn. Vá: `chi_thuoc_de_tai()` đo nhóm theo group_id trên bản sao sdb.eni (BH167): bản ghi nằm trong nhóm «NC · » mà không nằm
+trong nhóm «EBM · » nào ⇒ loại khỏi hàng chờ (cả bản ghi mới lẫn bản ghi cũ ngoại lệ mốc); bài đề tài đồng thời là trích dẫn chứng
+cứ vẫn vào. Không đọc được nhóm (sdb.eni đổi liên tục, lỗi sqlite, thành viên nhóm «NC · »/«EBM · » không giải được) ⇒
+`NhomKhongDoDuoc` ⇒ `hang-cho`/`tien-do` in ⚪, mã 2 — không trả hàng chờ lẫn bài đề tài. Chỉ đọc nhóm khi có ứng viên. Đo lại bằng mã
+mới trên thư viện thật: 43 → 2 (hai bài Cochrane của nhóm «EBM · COPD»); 63 bản ghi chỉ thuộc đề tài. Giới hạn: bài đề tài được dashboard
+trích nhưng còn nằm trong hàng chờ «đưa vào nhóm ĐÃ có» (chưa vào nhóm «EBM · ») tạm thời chưa vào hàng chờ ⑨ — vào ngay khi được kéo
+vào nhóm.
+
+**Kiểm.** `tools/test_nap_endnote_de_tai_20261025.py` (33 ca); 12 đột biến `--de-tai`/`_tai` + 9 đột biến hàng chờ đều đỏ, phục hồi
+xanh (2 đột biến lúc đầu lọt do fixture thiếu tệp `.enl` — sửa fixture, không nới khẳng định); fixture hai tệp test hàng chờ cũ được
+bổ sung `doc_nhom` (thư viện thật luôn có bảng nhóm); 431 ca EndNote + tóm tắt + hòm việc xanh. Chạy khô thật `--de-tai` trên đề tài:
+66/66 đã có trong thư viện, về đúng nhóm đã ghi nhớ, không nhập gì.
 
 Cần bác sĩ kiểm chứng.
