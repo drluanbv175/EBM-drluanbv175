@@ -36,6 +36,13 @@ for (const g of gates) {
     log(`${g}: hồ sơ máy — không cần họp (0 agent)`)
     ket.push({ gate: g, khong_can_hop: true, so_agent: 0 })
     if ((hs.cho_bac_si || []).length) { log(`Dừng sau ${g}: ${hs.cho_bac_si.join(', ')} đang chờ bác sĩ quyết`); break }
+    // 25/10/2026: bác sĩ ĐÃ quyết (sổ quyet_dinh_bac_si.json) nhưng tài liệu chưa sửa theo quyết định ⇒ các cổng sau
+    // còn đổi theo — họp lúc này biên bản sẽ CŨ ngay khi sửa xong.
+    if ((hs.cho_thuc_hien || []).length) {
+      log(`Dừng sau ${g}: ${hs.cho_thuc_hien.join(', ')} — bác sĩ đã quyết, chờ thực hiện quyết định rồi mới họp tiếp`)
+      ket.push({ gate: g, cho_thuc_hien: hs.cho_thuc_hien })
+      break
+    }
     continue
   }
   if (hs && hs.khuyen_nghi === 'nen_cho_cong_truoc' && !a.ca_khi_cong_truoc_chua_dat) {
@@ -54,7 +61,8 @@ for (const g of gates) {
   }
   daDung += (r && r.so_agent) || 0
   ket.push(r || { gate: g, loi: 'không có kết quả' })
-  const canNguoi = (r && (r.tranh_bien || []).some(t => t.ket_qua === 'chuyen_bac_si')) || !!(hs && (hs.cho_bac_si || []).length)
+  const canNguoi = (r && (r.tranh_bien || []).some(t => t.ket_qua === 'chuyen_bac_si')) || !!(hs && (hs.cho_bac_si || []).length) ||
+    !!(hs && (hs.cho_thuc_hien || []).length)
   if (!r || r.loi || canNguoi) {
     log(`Dừng sau ${g}: ${canNguoi ? 'có vấn đề CHUYỂN BÁC SĨ — các cổng sau phụ thuộc quyết định này' : 'hội đồng không hoàn tất'}`)
     break
