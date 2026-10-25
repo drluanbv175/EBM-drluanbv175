@@ -291,7 +291,7 @@ def test_nut_thung_rac_chi_hien_ban_ghi_khong_xoa():
 def test_giac_quan_endnote_canh_bao_va_nhom_cho_hay_chet_khi_khong_do_duoc(monkeypatch):
     kq = tdxv.giac_quan_endnote(lambda: {"do_duoc": True, "canh_bao": ["2 bản sao xung đột"],
                                          "nhom_cho_thung_rac": [{"ten": "_Cho thung rac A", "tong": 5, "con_o_thu_vien": 3}]})
-    assert [u for u, _d, _l in kq] == [1, 2] and "3/5" in kq[1][1]
+    assert [(u, n) for u, n, _d, _l in kq] == [(1, "👤"), (2, "👤")] and "3/5" in kq[1][2]
     chet = []
     monkeypatch.setattr(tdxv, "_ghi_chet", lambda lenh, ly: chet.append(ly))
     assert tdxv.giac_quan_endnote(lambda: {"do_duoc": False, "ly_do": "chưa khai"}) == [] and chet == ["chưa khai"]
