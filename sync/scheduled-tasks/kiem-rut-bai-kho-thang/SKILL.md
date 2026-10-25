@@ -23,9 +23,10 @@ CÁC BƯỚC:
    `python3 tools/chu_trinh_chung_cu.py --vong 3 --ghi-log state/kiem-rut-bai-kho.log`
    Lệnh tự chạy ① nguồn thật → ② độ tươi → ③ xác minh (gồm bản ghi mồ côi) → ④ rút bài → ⑤ mâu thuẫn → ⑥ dây
    chuyền, và nối một dòng «KẾT THÚC (mã N)» vào state/kiem-rut-bai-kho.log để tools/kiem_lich_nen.py canh được kỳ này.
-   LỆNH CHẠY LÂU (đo 25/10/2026: hơn 6 phút). Lượt 04/10 gọi Bash với hạn mặc định 2 phút ⇒ lệnh bị cắt, KHÔNG ghi được dòng
-   «KẾT THÚC», phiên vẫn hiện «succeeded» ⇒ lịch báo trễ. Vì vậy: gọi Bash với `run_in_background: true` rồi ĐỢI thông báo
-   hoàn tất (không ngủ/thăm dò liên tục); không có chạy nền thì đặt `timeout: 600000`. KHÔNG kết thúc phiên trước khi
+   LỆNH CHẠY LÂU (đo 25/10/2026: 23 phút — vượt cả hạn tối đa 10 phút của một lệnh Bash chạy thường). Lượt 04/10 gọi Bash với
+   hạn mặc định 2 phút ⇒ lệnh bị cắt, KHÔNG ghi được dòng «KẾT THÚC», phiên vẫn hiện «succeeded» ⇒ lịch báo trễ. Vì vậy: BẮT
+   BUỘC gọi Bash với `run_in_background: true` rồi ĐỢI thông báo hoàn tất (không ngủ/thăm dò liên tục; đặt `timeout` không đủ).
+   KHÔNG kết thúc phiên trước khi
    state/kiem-rut-bai-kho.log có dòng «KẾT THÚC» MỚI của hôm nay — không thấy dòng đó thì báo «⚪ lượt chưa hoàn tất».
 3. Đọc mã thoát:
    - 0: báo MỘT dòng — kho sạch (không thấy nguồn bị rút), kèm câu phạm vi «chỉ là toàn vẹn kỹ thuật».
