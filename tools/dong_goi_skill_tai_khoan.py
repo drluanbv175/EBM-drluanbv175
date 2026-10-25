@@ -473,6 +473,20 @@ def dong_goi(ket: list[dict], hub: Path, ra: Path, bundle: Path | None, luc: str
     return zip_moi
 
 
+def can_dong_goi_lai(ket: list[dict], hub: Path, so_luot: dict[str, tuple[str, dt.datetime]]) -> list[str]:
+    """Skill phải ĐÓNG LẠI ZIP: sẽ đóng gói (cập nhật/mới, không lỗi luật) mà ZIP trong sổ lượt khác nội dung repo hiện tại hoặc
+    chưa có ZIP (25/10/2026). Ca thật: repo đổi 24/10 sau lần đóng gói 23/10 ⇒ hòm việc báo «tải ZIP lên», bác sĩ tải lại đúng
+    ZIP 23/10 trong CLAUDE_AI_SKILLS/ nhiều lần mà cảnh báo không hết — vì chưa ai chạy lại bước đóng gói."""
+    ra = []
+    for m in ket:
+        if not m.get("dong_goi") or m["loi"] or m["trang_thai"] not in ("cap_nhat", "moi"):
+            continue
+        sha = hashlib.sha256(_zip_byte(m["ten"], m["_tep"], _che_do(hub / m["ten"], m["_tep"]))).hexdigest()
+        if so_luot.get(f"{m['ten']}.zip", ("", None))[0] != sha:
+            ra.append(m["ten"])
+    return ra
+
+
 def tom_tat(ket: list[dict]) -> dict[str, list[str]]:
     """Gom tên skill theo trạng thái (cho giác quan hòm việc và dòng in)."""
     nhom: dict[str, list[str]] = {}
@@ -494,8 +508,23 @@ def main(argv=None) -> int:
     ap.add_argument("--khong-so", action="store_true", help="không so với tài khoản — đóng gói mọi skill (trừ CHI_CLAUDE_CODE)")
     ap.add_argument("--chay-kho", action="store_true", help="chỉ báo, không ghi gì")
     ap.add_argument("--json", action="store_true", help="xuất JSON")
+    ap.add_argument("--im-khi-on", action="store_true",
+                    help="chỉ KIỂM (cho tools/tu_sua_chua.py): mã 1 + một dòng khi có skill phải đóng lại ZIP; không ghi gì")
     a = ap.parse_args(argv)
     hub = Path(a.hub).expanduser().resolve()
+    if a.im_khi_on:
+        ra_kiem = Path(a.ra).expanduser().resolve()
+        try:
+            ket = danh_gia(hub, dcbb.tim_bundle_cloud(a.cloud), ra=ra_kiem)
+        except KhongDoDuoc:
+            return 0  # thiếu gương tài khoản: hòm việc đã báo ⚪ riêng; không có gì để tự đóng gói
+        can = can_dong_goi_lai(ket, hub, doc_so_luot(ra_kiem))
+        if can:
+            print(f"{len(can)} skill đổi trong repo SAU lần đóng ZIP gần nhất ({', '.join(can[:4])}"
+                  f"{'…' if len(can) > 4 else ''}) — ZIP trong {ra_kiem.name}/ đã cũ; đóng lại: "
+                  "python3 tools/dong_goi_skill_tai_khoan.py")
+            return 1
+        return 0
     try:
         bundle = None if a.khong_so else dcbb.tim_bundle_cloud(a.cloud)
         ket = danh_gia(hub, bundle, set(a.skill) or None, a.tat_ca, ra=Path(a.ra).expanduser().resolve())

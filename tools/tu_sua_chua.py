@@ -154,6 +154,12 @@ VIEC_MAY = [
     ("Tác vụ lịch chưa tạo trong app / bản chạy có sửa riêng",
      [PY, "tools/dong_bo_tac_vu_lich.py", "--can-bac-si", "--im-khi-on"],
      None, False),                # tạo/xoá tác vụ trong app là việc của bác sĩ
+    # Thêm 25/10/2026 — ca thật: repo đổi skill 24/10 sau lần đóng ZIP 23/10; hòm việc báo «bác sĩ tải ZIP lên», bác sĩ tải lại
+    # ZIP 23/10 nhiều lần mà cảnh báo không hết vì chưa ai đóng lại ZIP (BH41). Đóng gói chỉ ghi CLAUDE_AI_SKILLS/ (ngoài git);
+    # tải lên tài khoản claude.ai vẫn là việc của bác sĩ. Cloud=False: container không có gương bộ skill tài khoản.
+    ("ZIP skill tài khoản cũ hơn repo — đóng lại để bác sĩ tải đúng bản mới",
+     [PY, "tools/dong_goi_skill_tai_khoan.py", "--im-khi-on"],
+     [PY, "tools/dong_goi_skill_tai_khoan.py"], False),
     ("Cờ TẮT của plugin trùng bị app xoá",
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--im-khi-on"],
      [PY, "tools/kiem_co_tat_plugin_trung.py", "--ap-dung"], False),
