@@ -423,10 +423,10 @@ def test_kiem_cheo_giao_ca_phan_quyet_tung_mien_va_ket_cuc_chinh():
     assert not any(d.endswith(".chinh") and d != "ket_cuc.chinh" for d in muc), "cờ chinh của dòng bảng không thành mục"
 
 
-def test_agree_ii_tieu_de_chat_luong_va_amstar_dao_chieu_mau():
-    """26/10/2026 (kiểm chéo PMID 42799440 + 37142273): AGREE II đo CHẤT LƯỢNG ⇒ tiêu đề mục không được là «nguy cơ sai lệch»
-    (chữ «thấp» đọc thành nguy cơ thấp); AMSTAR-2 đo ĐỘ TIN CẬY (cao = tốt) ⇒ «độ tin cậy thấp» phải đỏ, không xanh lá;
-    màu TỔNG THỂ lấy vế đầu, không bị số đếm nghiên cứu gốc («22 thấp, 18 cao, 35 không rõ») kéo lệch."""
+@CAN_DOCX
+def test_agree_ii_tieu_de_chat_luong_phuong_phap():
+    """26/10/2026 (kiểm chéo PMID 42799440): AGREE II đo CHẤT LƯỢNG ⇒ tiêu đề mục không được là «nguy cơ sai lệch»
+    (chữ «thấp» dưới tiêu đề đó bị đọc thành «nguy cơ sai lệch thấp»)."""
     tt = _hop_le()
     tt["loai_thiet_ke"] = "guideline"
     tt["nguy_co_sai_lech"]["cong_cu"] = "AGREE II"
@@ -435,6 +435,11 @@ def test_agree_ii_tieu_de_chat_luong_va_amstar_dao_chieu_mau():
     muc = [p.text for p in T.dung_word(tt, NGU_CANH).paragraphs if p.style.name.startswith("Heading")]
     assert any("Thẩm định chất lượng phương pháp — AGREE II" in m for m in muc)
     assert not any("nguy cơ sai lệch" in m.lower() for m in muc)
+
+
+def test_amstar_dao_chieu_mau_va_bo_so_dem_nc_goc():
+    """26/10/2026 (PMID 37142273, 37696529): AMSTAR-2 đo ĐỘ TIN CẬY (cao = tốt) ⇒ «độ tin cậy thấp» phải đỏ, không xanh lá;
+    màu TỔNG THỂ không bị số đếm nghiên cứu gốc («22 thấp, 18 cao, 35 không rõ») kéo lệch. Không cần python-docx."""
     assert T._do_chat_luong("AMSTAR-2") and T._do_chat_luong("AGREE II") and not T._do_chat_luong("RoB 2")
     assert not T._do_chat_luong("ROBIS")
     amstar = T._do_chat_luong("AMSTAR-2")

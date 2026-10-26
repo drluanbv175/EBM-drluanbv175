@@ -14,6 +14,6 @@ trung tính.
 - Tiêu đề mục: AGREE II ⇒ «Thẩm định chất lượng phương pháp — AGREE II»; công cụ khác giữ «Thẩm định nguy cơ sai lệch — …».
 - Màu nhãn TỔNG THỂ tính sau khi bỏ các cụm «<số> [nguy cơ] thấp/cao/không rõ» (`_bo_so_dem_nc_goc`).
 
-**Kiểm hồi quy.** Test `test_agree_ii_tieu_de_chat_luong_va_amstar_dao_chieu_mau`: 3 đột biến (tiêu đề cũ · bỏ AMSTAR khỏi nhóm đảo
+**Kiểm hồi quy.** Test `test_agree_ii_tieu_de_chat_luong_phuong_phap` (cần python-docx, `CAN_DOCX` — CI bản sao trần bỏ qua có khai báo) + `test_amstar_dao_chieu_mau_va_bo_so_dem_nc_goc` (chạy cả trên CI): 3 đột biến (tiêu đề cũ · bỏ AMSTAR khỏi nhóm đảo
 chiều · không lọc số đếm) đều đỏ đúng chỗ rồi xanh lại; 44 test của công cụ đạt; ruff sạch. Word đã dựng trước bản vá
 (37696529, 37142273) chỉ khác màu nhãn TỔNG THỂ; nội dung không đổi.
