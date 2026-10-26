@@ -160,3 +160,16 @@ def test_jats_giu_khai_xung_dot_loi_ich_va_tai_tro_bo_dia_chi_lien_he() -> None:
         b"<award-group>", b"<funding-statement>No specific funding was received.</funding-statement><award-group>"))
     assert "No specific funding was received." in h2 and "NIHR-1" not in h2, "có câu khai tài trợ ⇒ dùng câu đó"
     assert "Author notes and funding" not in IP.jats_sang_html(JATS), "bài không có khai báo ⇒ không thêm mục rỗng"
+
+
+def test_jats_giu_khai_bao_dang_p_trong_author_notes_kieu_jama() -> None:
+    """27/10/2026: JAMA đặt «Conflict of Interest Disclosures», «Funding/Support» bằng <p> thẳng trong author-notes (không bọc
+    <fn>) ⇒ bản vá 26/10 chỉ in `fn` vẫn bỏ sót (PMID 42842238 và 21 XML khác trong kho)."""
+    jama = JATS_KHAI.replace(
+        b"<fn fn-type=\"COI-statement\"><p>Author A has acted in an advisory capacity for Hang Duoc X.</p></fn>",
+        b"<title>Article Information</title><p><bold>Conflict of Interest Disclosures:</bold> Dr B reported grants from Y.</p>"
+        b"<p><bold>Funding/Support:</bold> Supported by Quy Z.</p>")
+    h = IP.jats_sang_html(jama)
+    assert "Dr B reported grants from Y." in h and "Supported by Quy Z." in h
+    assert "tacgia@vidu.org" not in h
+    assert "Article Information" not in h, "title của author-notes không in lặp (đã có đề mục riêng)"
