@@ -421,3 +421,28 @@ def test_kiem_cheo_giao_ca_phan_quyet_tung_mien_va_ket_cuc_chinh():
     assert muc["ket_cuc.chinh"] == tt["ket_cuc"]["chinh"]
     assert "ket_qua[1]" in muc and not any(d.startswith("ket_qua[1].") for d in muc), "dòng bảng vẫn là MỘT mục"
     assert not any(d.endswith(".chinh") and d != "ket_cuc.chinh" for d in muc), "cờ chinh của dòng bảng không thành mục"
+
+
+def test_agree_ii_tieu_de_chat_luong_va_amstar_dao_chieu_mau():
+    """26/10/2026 (kiểm chéo PMID 42799440 + 37142273): AGREE II đo CHẤT LƯỢNG ⇒ tiêu đề mục không được là «nguy cơ sai lệch»
+    (chữ «thấp» đọc thành nguy cơ thấp); AMSTAR-2 đo ĐỘ TIN CẬY (cao = tốt) ⇒ «độ tin cậy thấp» phải đỏ, không xanh lá;
+    màu TỔNG THỂ lấy vế đầu, không bị số đếm nghiên cứu gốc («22 thấp, 18 cao, 35 không rõ») kéo lệch."""
+    tt = _hop_le()
+    tt["loai_thiet_ke"] = "guideline"
+    tt["nguy_co_sai_lech"]["cong_cu"] = "AGREE II"
+    tt["khuyen_cao"] = [{"noi_dung": "Khuyến cáo mẫu (trang 1).", "luc_khuyen_cao": "nên", "muc_chung_cu": "Không phân hạng",
+                         "trang": 1}]
+    muc = [p.text for p in T.dung_word(tt, NGU_CANH).paragraphs if p.style.name.startswith("Heading")]
+    assert any("Thẩm định chất lượng phương pháp — AGREE II" in m for m in muc)
+    assert not any("nguy cơ sai lệch" in m.lower() for m in muc)
+    assert T._do_chat_luong("AMSTAR-2") and T._do_chat_luong("AGREE II") and not T._do_chat_luong("RoB 2")
+    assert not T._do_chat_luong("ROBIS")
+    amstar = T._do_chat_luong("AMSTAR-2")
+    assert T._mau_danh_gia("Độ tin cậy thấp", agree=amstar) == "do"
+    assert T._mau_danh_gia("Độ tin cậy cao", agree=amstar) == "la"
+    assert T._mau_danh_gia("Nguy cơ thấp", agree=T._do_chat_luong("RoB 2")) == "la"
+    tong = "Độ tin cậy thấp theo AMSTAR-2: một lỗi then chốt. RoB 1: 22 thấp, 18 cao, 35 không rõ."
+    assert T._mau_danh_gia(T._bo_so_dem_nc_goc(tong), agree=amstar) == "do"
+    tong2 = "Độ tin cậy tổng thể theo AMSTAR-2: CAO — không có điểm yếu; nghiên cứu gốc (RoB 1): 51 nguy cơ thấp, 104 nguy cơ cao."
+    assert T._mau_danh_gia(T._bo_so_dem_nc_goc(tong2), agree=amstar) == "la"
+    assert T._bo_so_dem_nc_goc("Nguy cơ thấp") == "Nguy cơ thấp"
