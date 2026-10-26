@@ -1406,11 +1406,14 @@ class KetQuaDuPhong(tuple):
     đó «được chọn leo thang» bị đồng nhất với «đã gọi nguồn» — máy không có engine vẫn tiêu suất tuần và mốc xoay vòng."""
     so_goi: int | None
     canh_bao: str   # lỗi MỘT PHẦN (một tầng hỏng nhưng vẫn có bài) — ghi chú cho chủ đề, không phải «lần gọi lỗi»
+    ly_do_khong_goi: str  # vì sao CHẮC CHẮN không gọi (vd engine không nạp được) — in kèm ghi chú «không tính suất»
 
-    def __new__(cls, ung_vien: list, ghi_chu: str, so_goi: int | None = None, canh_bao: str = "") -> "KetQuaDuPhong":
+    def __new__(cls, ung_vien: list, ghi_chu: str, so_goi: int | None = None, canh_bao: str = "",
+                ly_do_khong_goi: str = "") -> "KetQuaDuPhong":
         ket_qua = super().__new__(cls, (ung_vien, ghi_chu))
         ket_qua.so_goi = so_goi
         ket_qua.canh_bao = canh_bao
+        ket_qua.ly_do_khong_goi = ly_do_khong_goi
         return ket_qua
 
 
@@ -1458,17 +1461,27 @@ def bo_sung_du_phong_lane(topic: str, unique_hien_co: Sequence[Candidate], retma
     """
     mea = _tim_medical_ebm_automation()
     RawRecord = None
+    # 26/10/2026: chạy bằng python3 HỆ THỐNG (thiếu thư viện của engine) ⇒ `import app…` ném ModuleNotFoundError TRƯỚC mọi lời
+    # gọi nguồn tính phí, nhưng nơi gọi xếp nó là «lần gọi LỖI» ⇒ trừ suất tuần (đo: «Viêm phổi cộng đồng (CAP)» mất 1 suất,
+    # 0 lời gọi). Lỗi NẠP engine = engine không dùng được ⇒ «chắc chắn không gọi» (so_goi 0), ghi rõ lý do.
+    loi_nap = ""
     if mea is not None and (mea / "app" / "sources" / "base.py").exists():
         import sys as _sys  # noqa: PLC0415
         if str(mea) not in _sys.path:
             _sys.path.insert(0, str(mea))
-        from app.sources.base import RawRecord as _RawRecord_that  # noqa: PLC0415
-        RawRecord = _RawRecord_that
+        try:
+            from app.sources.base import RawRecord as _RawRecord_that  # noqa: PLC0415
+            RawRecord = _RawRecord_that
+        except ImportError as e:
+            loi_nap = f"engine không nạp được ({type(e).__name__}: {e})"[:200]
     if bo_sung_fn is None:
         # Đường TỰ DÒ MÔI TRƯỜNG — bắt buộc cả mea LẪN RawRecord thật, không có đường lùi.
         if mea is None or RawRecord is None or not (mea / "app" / "services" / "fallback_ladder.py").exists():
-            return KetQuaDuPhong([], "", 0)
-        from app.services.fallback_ladder import bo_sung_neu_thieu, du_phong_dang_bat  # noqa: PLC0415
+            return KetQuaDuPhong([], "", 0, ly_do_khong_goi=loi_nap)
+        try:
+            from app.services.fallback_ladder import bo_sung_neu_thieu, du_phong_dang_bat  # noqa: PLC0415
+        except ImportError as e:
+            return KetQuaDuPhong([], "", 0, ly_do_khong_goi=f"engine không nạp được ({type(e).__name__}: {e})"[:200])
         if not du_phong_dang_bat():
             return KetQuaDuPhong([], "", 0)
         bo_sung_fn = bo_sung_neu_thieu
@@ -1986,8 +1999,10 @@ def run_scan(
                 trang_thai_goi = "loi"
             if trang_thai_goi == "khong_goi":
                 du_phong_khong_leo["nguon_khong_goi"] = du_phong_khong_leo.get("nguon_khong_goi", 0) + 1
+                ly_do = getattr(ket_qua, "ly_do_khong_goi", "")
                 ghi_them.append("bậc thang dự phòng: được chọn nhưng nguồn tính phí KHÔNG được gọi (engine vắng · cờ "
-                                "tắt · engine thấy đã đủ chứng cứ · hết ngân sách) — không tính suất tuần")
+                                "tắt · engine thấy đã đủ chứng cứ · hết ngân sách) — không tính suất tuần"
+                                + (f" [{ly_do} — chạy bằng ~/.ebm-venv/bin/python]" if ly_do else ""))
                 continue
             # Lỗi thì KHÔNG biết lời gọi đã tới nguồn chưa ⇒ vẫn tính suất (không đốt thêm ngoài ý muốn), nhưng đánh
             # dấu để lượt sau cùng tuần được thử lại: chưa có kết quả thì không được nói «đã tra».

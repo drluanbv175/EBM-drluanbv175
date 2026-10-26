@@ -282,7 +282,7 @@ def main() -> int:
         canh_bao.append(
             f"{len(rat_lau)} chủ đề chưa xem lại quá {HAN_RAT_LAU_NGAY} ngày: {ten}"
             + (f" và {len(rat_lau) - 3} chủ đề nữa" if len(rat_lau) > 3 else "")
-            + ". Chạy `python3 ops/orchestrator.py --cu-nhat 3 --online` (máy làm phần quét/kiểm) rồi "
+            + ". Chạy `~/.ebm-venv/bin/python ops/orchestrator.py --cu-nhat 3 --online` (máy làm phần quét/kiểm) rồi "
               "`/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.")
 
     if not canh_bao:

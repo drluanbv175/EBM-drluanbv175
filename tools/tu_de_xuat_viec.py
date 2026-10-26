@@ -1216,7 +1216,7 @@ def main() -> int:
     if m and int(m.group(1)) > 60:
         de_xuat.append((2, "🤖", f"Trung vị tuổi gói {m.group(1)} ngày — chạy cập nhật "
                         "chủ đề lâu nhất (máy làm A2/A4/B2, rồi mở phiên /cap-nhat-chung-cu theo phiếu)",
-                        "python3 ops/orchestrator.py --cu-nhat 3 --online"))
+                        "~/.ebm-venv/bin/python ops/orchestrator.py --cu-nhat 3 --online"))  # python3 hệ thống thiếu thư viện engine (26/10)
 
     # ⑤ Kho toàn văn + chỉ mục RAG
     kho = DASH / "toan_van_oa"
