@@ -594,7 +594,11 @@ def kiem_nhat_quan_dong(h: dict, ten: str) -> list[str]:
 
 # ───────────────────────── KIỂM CHÉO ĐỘC LẬP (agent ngữ cảnh mới chấm TỪNG câu) ─────────────────────────
 KET_LUAN_KIEM_CHEO = ("dung", "suy_luan_hop_ly", "ngoai_bai_co_nguon", "sai", "khong_co_trong_bai")
-_KHOA_META = {"phien_ban_khuon", "khoa", "pmid", "doi", "loai_thiet_ke", "may_tinh", "chinh", "danh_gia", "trang",
+# 26/10/2026: bỏ «chinh», «danh_gia» khỏi tập này — kiểm chéo PMID 37142273 thấy `ket_cuc.chinh` (kết cục chính, chuỗi) và
+# `nguy_co_sai_lech.mien[].danh_gia` (phán quyết từng miền RoB/AMSTAR-2) chưa từng được giao cho người chấm; mức «có một phần»
+# không hợp lệ ở mục 11 AMSTAR-2 (mục chỉ có Có/Không) lọt qua, chỉ bị bắt gián tiếp qua `tong_the`. Giá trị không phải chuỗi
+# (cờ `chinh: true` của dòng bảng) vẫn tự bị bỏ; dòng bảng ket_qua/tac_hai/khuyen_cao vẫn gộp thành MỘT mục như cũ.
+_KHOA_META = {"phien_ban_khuon", "khoa", "pmid", "doi", "loai_thiet_ke", "may_tinh", "trang",
               "lien_quan_dashboard", "can_xac_nhan", "nguoi_soan", "trich_nguyen_van"}
 
 HUONG_DAN_KIEM_CHEO = """# Kiểm chéo ĐỘC LẬP bản tóm tắt `tom_tat.json` với toàn văn `van_ban.txt`
@@ -622,6 +626,11 @@ def cac_muc_kiem_cheo(tt: dict) -> list[tuple[str, str]]:
         if isinstance(x, dict):
             for k, v in x.items():
                 if k in _KHOA_META:
+                    continue
+                if k == "danh_gia" and isinstance(v, str) and v.strip():
+                    # phán quyết một miền đứng riêng không có nghĩa ⇒ gắn tên miền để người chấm đối chiếu đúng tiêu chí
+                    ra.append((f"{duong}.danh_gia" if duong else "danh_gia",
+                               f"{x.get('ten') or duong} → đánh giá: {v}"))
                     continue
                 if k in ("ket_qua", "tac_hai", "khuyen_cao") and isinstance(v, list):
                     for i, h in enumerate(v, 1):
