@@ -1131,8 +1131,26 @@ def _nhan_dong(doc, nhan: str, noi_dung, mau: str) -> None:
     _viet(p, noi_dung)
 
 
+def _do_chat_luong(cong_cu: str) -> bool:
+    """Công cụ đo CHẤT LƯỢNG/ĐỘ TIN CẬY (cao = tốt): AGREE II, AMSTAR-2 — ngược chiều RoB/ROBINS/QUADAS/ROBIS (thấp = tốt).
+
+    Đo 26/10/2026: chỉ AGREE được đảo chiều ⇒ «Độ tin cậy thấp theo AMSTAR-2» bị tô xanh lá như «nguy cơ sai lệch thấp»."""
+    cc = _chuan_cong_cu(cong_cu)
+    return cc.startswith("agree") or cc.startswith("amstar")
+
+
+_SO_DEM_NC_GOC = re.compile(r"\d+\s*(?:nghiên cứu\s*|thử nghiệm\s*)?(?:nguy cơ\s*)?(?:thấp|cao|không rõ)", re.IGNORECASE)
+
+
+def _bo_so_dem_nc_goc(s: str) -> str:
+    """Câu tổng thể hay kể thêm số đếm nghiên cứu gốc («22 thấp, 18 cao, 35 không rõ»; «51 nguy cơ thấp, 104 nguy cơ cao»)
+    — các chữ đó làm hàm tô màu bắt nhầm mức của CHÍNH tổng quan. Bỏ riêng các cụm «<số> [nguy cơ] thấp/cao/không rõ»."""
+    return _SO_DEM_NC_GOC.sub("", s)
+
+
 def _mau_danh_gia(s: str, *, agree: bool = False) -> str | None:
-    """Màu ô đánh giá nguy cơ sai lệch. AGREE II đo CHẤT LƯỢNG (cao = tốt) ⇒ đảo chiều so với RoB/ROBINS/QUADAS."""
+    """Màu ô đánh giá. Công cụ đo CHẤT LƯỢNG (AGREE II, AMSTAR-2 — cao = tốt; tham số `agree`) ⇒ đảo chiều so với
+    RoB/ROBINS/QUADAS."""
     s = _chuan_chu(s)
     cao = any(k in s for k in ("cao", "high", "nghiêm trọng", "serious", "critical"))
     lo = any(k in s for k in ("lo ngại", "concern", "trung bình", "moderate", "không rõ", "unclear", "vừa"))
@@ -1310,15 +1328,20 @@ def dung_word(tt: dict, ngu_canh: dict):
 
     so += 1
     nsl = tt.get("nguy_co_sai_lech") or {}
-    agree = _chuan_cong_cu(nsl.get("cong_cu", "")).startswith("agree")
-    _tieu_de_muc(doc, so, f"Thẩm định nguy cơ sai lệch — {_o(nsl.get('cong_cu'))}")
+    agree = _do_chat_luong(nsl.get("cong_cu", ""))
+    # AGREE II đo chất lượng phương pháp, không đo nguy cơ sai lệch: dưới tiêu đề «nguy cơ sai lệch», chữ «thấp» bị đọc
+    # thành «nguy cơ sai lệch thấp» — NGƯỢC nghĩa (kiểm chéo PMID 42799440, 26/10/2026).
+    ten_muc = ("Thẩm định chất lượng phương pháp" if _chuan_cong_cu(nsl.get("cong_cu", "")).startswith("agree")
+               else "Thẩm định nguy cơ sai lệch")
+    _tieu_de_muc(doc, so, f"{ten_muc} — {_o(nsl.get('cong_cu'))}")
     _hop(doc, "ĐIỂM NHẤN:", dn.get("nguy_co_sai_lech"))
     _bang(doc, ["Miền", "Đánh giá", "Lý do", "Tr."],
           [[(m.get("ten"), {"dam": True}),
             (m.get("danh_gia"), {"dam": True, "nen": _mau_danh_gia(str(m.get("danh_gia")), agree=agree)}),
             m.get("ly_do"), m.get("trang")] for m in nsl.get("mien") or []], co=10.5, rong=[3.6, 2.6, 9.8, 1.0])
     p = _doan(doc)
-    _them(p, "TỔNG THỂ: ", dam=True, mau=MAU_CHU[_mau_danh_gia(str(nsl.get("tong_the")), agree=agree) or "navy"])
+    _them(p, "TỔNG THỂ: ", dam=True,
+          mau=MAU_CHU[_mau_danh_gia(_bo_so_dem_nc_goc(str(nsl.get("tong_the"))), agree=agree) or "navy"])
     _viet(p, nsl.get("tong_the"))
 
     so += 1
