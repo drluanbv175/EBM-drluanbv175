@@ -676,7 +676,8 @@ def giac_quan_lich_nen_theo_noi_chay(log_tuan: Path) -> list[tuple[int, str]]:
 
 def giac_quan_lich_nen(log_tuan: Path,
                        hom_nay: dt.date | None = None,
-                       ngay_lich_tuan: int = 0) -> list[tuple[int, str]]:
+                       ngay_lich_tuan: int = 0,
+                       bay_gio: dt.datetime | None = None) -> list[tuple[int, str]]:
     """Kỳ lịch tuần có NỔ thật không — đọc dòng «KẾT THÚC … tổng thể=PASS» trong log.
 
     Trả [(ưu tiên, mô tả)]. Ba mức theo tuổi lượt PASS cuối: ≤7 ngày mà kỳ lịch
@@ -692,8 +693,16 @@ def giac_quan_lich_nen(log_tuan: Path,
     kỳ thứ Hai thật đã chạy PASS đúng hẹn. Đổi từ hằng số ẩn sang tham số có
     tên, để lần đổi lịch sau chỉ cần sửa MỘT chỗ thay vì một số không giải
     thích được ý nghĩa.
+
+    `bay_gio` (giờ đang chạy): ĐÍNH CHÍNH 26/10/2026 — gọi lúc 17:18 thứ Hai, hàm báo «kỳ thứ Hai vừa qua
+    KHÔNG nổ» dù tác vụ 18:00 hôm đó CHƯA tới giờ (lượt 19/10 PASS). Kỳ của CHÍNH ngày lịch chưa đến hạn khi
+    ngày đó chưa hết: lượt 18:00 có thể chưa nổ hoặc đang chạy (đo 12/10: 1 giờ 48 phút) ⇒ trong ngày lịch
+    xét kỳ TUẦN TRƯỚC. Không truyền `hom_nay` thì lấy giờ máy; chỉ truyền `hom_nay` (chốt BH, test thuần) =
+    đánh giá lúc HẾT ngày đó — giữ hành vi cũ.
     """
-    hom_nay = hom_nay or dt.date.today()
+    if hom_nay is None:
+        bay_gio = bay_gio or dt.datetime.now()
+        hom_nay = bay_gio.date()
     try:
         dong = log_tuan.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
@@ -710,6 +719,8 @@ def giac_quan_lich_nen(log_tuan: Path,
     tuoi = (hom_nay - ngay_pass).days
     # ngày lịch tuần gần nhất đã qua; đúng ngày đó thì chính hôm nay
     ky_gan_nhat = hom_nay - dt.timedelta(days=(hom_nay.weekday() - ngay_lich_tuan) % 7)
+    if bay_gio is not None and ky_gan_nhat == hom_nay:
+        ky_gan_nhat -= dt.timedelta(days=7)  # ngày lịch chưa hết ⇒ kỳ hôm nay chưa đến hạn
     lo_ky = ngay_pass < ky_gan_nhat <= hom_nay
     if tuoi > 10:
         return [(0, f"Giám sát tuần quá hạn {tuoi} ngày (PASS cuối {ngay_pass}) — chạy bù NGAY")]
