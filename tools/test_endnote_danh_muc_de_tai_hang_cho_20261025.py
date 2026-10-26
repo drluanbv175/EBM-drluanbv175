@@ -381,6 +381,7 @@ def thu_vien_hc(tmp_path, monkeypatch):
 
     monkeypatch.setitem(TT._MOD, "sk", types.SimpleNamespace(_ket_noi=ket_noi, doc_nhom=doc_nhom, khoa_ten=SK.khoa_ten,
                                                               thu_vien_cau_hinh=lambda: tv))
+    monkeypatch.setattr(TT, "THU_MUC_DE_TAI", tmp_path / "exports")  # không bao giờ đọc danh mục đề tài thật của máy
     assert TT.ghi_moc(tv, "Bây giờ xây dựng cho những chứng cứ sau này, còn hiện tại hãy để nguyên") == 0
     monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(r) for r in (2, 10, 11, 12, 20, 30)])
     return tv, trang_thai
@@ -434,3 +435,67 @@ def test_khong_co_ung_vien_thi_khong_doc_nhom(thu_vien_hc, monkeypatch):
     monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [_bg(2)])  # chỉ bản ghi trong mốc
     tt["loi"] = OSError("không được đọc")
     assert TT.hang_cho(tv) == [] and tt["so_lan_doc"] == 0, "không có ứng viên ⇒ không chép tạm sdb.eni"
+
+
+# ── 26/10/2026: bài ĐÃ LOẠI khỏi danh mục đề tài (gỡ khỏi nhóm «NC · », không thùng rác) không vào hàng chờ ⑨ ───────────────
+# Đo 26/10: hàng chờ 16 bài, 14 là trích dẫn đề tài btm-dtd2 đã loại — không còn nhóm nào nên bị coi là «chứng cứ MỚI».
+
+def _danh_muc(goc: Path, ma: str, trich_dan: list[dict], loai_bo: list[dict], ten: str | None = None) -> Path:
+    tep = goc / ma / (ten or f"DANH_MUC_TRICH_DAN_{ma}.json")
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tep.write_text(json.dumps({"schema": "de_tai/danh_muc_trich_dan/v1", "study": ma, "trich_dan": trich_dan,
+                               "loai_bo": loai_bo}, ensure_ascii=False), encoding="utf-8")
+    return tep
+
+
+def test_bai_da_loai_khoi_de_tai_khong_con_nhom_khong_vao_hang_cho(thu_vien_hc, tmp_path):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = [_nhom(133, NHOM_NC, [10]), _nhom(140, NHOM_EBM, [20])]
+    # 11 đã loại (gỡ khỏi nhóm), 30 còn giữ nhưng chưa vào nhóm; 12 không thuộc đề tài nào ⇒ vẫn là chứng cứ mới
+    _danh_muc(tmp_path / "exports", MA, [{"pmid": str(30 * 111), "doi": None}], [{"pmid": str(11 * 111), "doi": None}])
+    assert [x["rec"] for x in TT.hang_cho(tv)] == [12, 20]
+
+
+def test_bai_de_tai_nam_trong_nhom_chung_cu_van_theo_luat_chung_cu(thu_vien_hc, tmp_path):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = [_nhom(140, NHOM_EBM, [11])]
+    _danh_muc(tmp_path / "exports", MA, [], [{"pmid": str(11 * 111), "doi": None}])
+    assert 11 in [x["rec"] for x in TT.hang_cho(tv)], "11 là chứng cứ của một gói «EBM · » ⇒ vẫn tóm tắt"
+
+
+def test_khop_doi_khong_phan_biet_hoa_thuong_cho_bai_khong_pmid(thu_vien_hc, tmp_path, monkeypatch):
+    # Đo 26/10: bài tạp chí trong nước (rec 7473) chỉ có DOI 10.52389/ydls.v19incs.2358, khoá hàng chờ «REC-7473».
+    tv, tt = thu_vien_hc
+    tt["nhom"] = []
+    bg = {"rec": 40, "pmid": None, "doi": "10.52389/YDLS.v19incs.2358", "tieu_de": "Bài trong nước", "khoa": "REC-40",
+          "pdf": ["x.pdf"]}
+    monkeypatch.setattr(TT, "ban_ghi_co_pdf", lambda _tv: [bg, _bg(12)])
+    _danh_muc(tmp_path / "exports", MA, [], [{"pmid": None, "doi": "10.52389/ydls.v19incs.2358"}])
+    assert [x["rec"] for x in TT.hang_cho(tv)] == [12]
+
+
+def test_ban_bak_cua_danh_muc_khong_tinh(thu_vien_hc, tmp_path):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = []
+    _danh_muc(tmp_path / "exports", MA, [], [], ten=f"DANH_MUC_TRICH_DAN_{MA}.bak-20261025-truoc-loai-bo.json")
+    goc = tmp_path / "exports" / MA / f"DANH_MUC_TRICH_DAN_{MA}.bak-20261025-truoc-loai-bo.json"
+    goc.write_text(json.dumps({"trich_dan": [{"pmid": str(12 * 111)}], "loai_bo": []}), encoding="utf-8")
+    assert 12 in [x["rec"] for x in TT.hang_cho(tv)], "bản sao lưu .bak không phải danh mục hiện hành"
+
+
+@pytest.mark.parametrize("noi_dung", ["{hỏng", json.dumps({"trich_dan": ["không phải dict"]})])
+def test_danh_muc_de_tai_hong_thi_khong_do_duoc(thu_vien_hc, tmp_path, noi_dung, capsys):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = []
+    tep = tmp_path / "exports" / MA / f"DANH_MUC_TRICH_DAN_{MA}.json"
+    tep.parent.mkdir(parents=True)
+    tep.write_text(noi_dung, encoding="utf-8")
+    with pytest.raises(TT.NhomKhongDoDuoc, match="danh mục trích dẫn đề tài"):
+        TT.hang_cho(tv)
+    assert TT.main(["hang-cho"]) == 2
+
+
+def test_vang_thu_muc_de_tai_thi_khong_loai_them(thu_vien_hc):
+    tv, tt = thu_vien_hc
+    tt["nhom"] = []
+    assert [x["rec"] for x in TT.hang_cho(tv)] == [10, 11, 12, 20, 30], "phiên Cloud/worktree không có exports ⇒ giữ nguyên"
