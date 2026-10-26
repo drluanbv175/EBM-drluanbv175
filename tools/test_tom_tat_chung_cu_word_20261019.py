@@ -409,3 +409,15 @@ def test_dung_dau_cuoi_can_kiem_cheo(tmp_path, monkeypatch):
                                         encoding="utf-8")
     assert T.dung(lib, "123", rut_bai=rb) == 0
     assert T.tep_word(lib, "PMID-123").is_file()
+
+
+def test_kiem_cheo_giao_ca_phan_quyet_tung_mien_va_ket_cuc_chinh():
+    # 26/10/2026 (PMID 37142273): mức «có một phần» ở mục 11 AMSTAR-2 (chỉ Có/Không) lọt kiểm chéo vì `danh_gia` của miền và
+    # `ket_cuc.chinh` không được giao cho người chấm.
+    tt = _hop_le()
+    muc = dict(T.cac_muc_kiem_cheo(tt))
+    ten = tt["nguy_co_sai_lech"]["mien"][0]["ten"]
+    assert muc["nguy_co_sai_lech.mien[1].danh_gia"] == f"{ten} → đánh giá: {tt['nguy_co_sai_lech']['mien'][0]['danh_gia']}"
+    assert muc["ket_cuc.chinh"] == tt["ket_cuc"]["chinh"]
+    assert "ket_qua[1]" in muc and not any(d.startswith("ket_qua[1].") for d in muc), "dòng bảng vẫn là MỘT mục"
+    assert not any(d.endswith(".chinh") and d != "ket_cuc.chinh" for d in muc), "cờ chinh của dòng bảng không thành mục"
