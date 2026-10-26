@@ -1621,13 +1621,47 @@ def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
 # vừa là trích dẫn đề tài vừa nằm trong nhóm chứng cứ vẫn theo luật chứng cứ. Đo 25/10: hàng chờ nhảy 2 → 43, 41 bài chỉ thuộc nhóm
 # «NC · Chăm sóc thận ĐTĐ típ 2…». Nhóm đo theo group_id trên bản sao sdb.eni (BH167), không qua AppleScript.
 
+#
+# 26/10/2026: bác sĩ cho loại 19/66 trích dẫn của đề tài btm-dtd2 (không toàn văn hoặc ít phù hợp) ⇒ phiên đề tài gỡ chúng khỏi nhóm
+# «NC · » (không thùng rác). 14 bài có PDF trong số đó không còn nhóm nào nên rơi vào hàng chờ như «chứng cứ MỚI» (đo: 16 bài chờ, 14
+# là bài đề tài đã loại). Nhóm thôi là chưa đủ: bài có trong danh mục trích dẫn của MỘT đề tài (`trich_dan` lẫn `loai_bo` của
+# `DANH_MUC_TRICH_DAN_<mã>.json`) mà không thuộc nhóm «EBM · » nào cũng không vào hàng chờ.
+
+THU_MUC_DE_TAI: Path | None = None  # None ⇒ <repo y khoa>/exports qua goc_du_lieu (lồng rồi anh em); test gán thư mục tạm
+
+
 class NhomKhongDoDuoc(RuntimeError):
     """Không đọc được nhóm EndNote để tách trích dẫn đề tài — KHÔNG được trả hàng chờ lẫn bài đề tài như thể đã lọc."""
 
 
-def chi_thuoc_de_tai(thu_vien: Path) -> set[int]:
-    """recNum nằm trong ≥ 1 nhóm «NC · » và không nằm trong nhóm «EBM · » nào. Không đọc được bảng nhóm, hoặc thành viên của một
-    nhóm «NC · »/«EBM · » không giải được ⇒ NhomKhongDoDuoc (không đoán)."""
+def trich_dan_danh_muc_de_tai(thu_muc: Path | None = None) -> tuple[set[str], set[str]]:
+    """(PMID, DOI chữ thường) trong `trich_dan` + `loai_bo` của mọi `<đề tài>/DANH_MUC_TRICH_DAN_*.json` (bỏ bản `.bak`). Vắng thư
+    mục đề tài (phiên Cloud, worktree) ⇒ hai tập rỗng; danh mục không đọc được hoặc sai khuôn ⇒ NhomKhongDoDuoc (không đoán)."""
+    goc = thu_muc or THU_MUC_DE_TAI or (goc_du_lieu("medical-ebm-automation") / "exports")
+    pm: set[str] = set()
+    doi: set[str] = set()
+    if not goc.is_dir():
+        return pm, doi
+    for tep in sorted(goc.glob("*/DANH_MUC_TRICH_DAN_*.json")):
+        if ".bak" in tep.name:
+            continue
+        try:
+            d = json.loads(tep.read_text(encoding="utf-8"))
+            muc = list(d.get("trich_dan") or []) + list(d.get("loai_bo") or [])
+            for m in muc:
+                if m.get("pmid"):
+                    pm.add(str(m["pmid"]).strip())
+                if m.get("doi"):
+                    doi.add(str(m["doi"]).strip().lower())
+        except (OSError, ValueError, AttributeError, TypeError) as e:
+            raise NhomKhongDoDuoc(f"danh mục trích dẫn đề tài {tep.parent.name}/{tep.name} không đọc được — "
+                                  f"{type(e).__name__}: {e}"[:300]) from e
+    return pm, doi
+
+
+def _nhom_nc_ebm(thu_vien: Path) -> tuple[set[int], set[int]]:
+    """(recNum trong nhóm «NC · », recNum trong nhóm «EBM · »). Không đọc được bảng nhóm, hoặc thành viên của một nhóm «NC · »/
+    «EBM · » không giải được ⇒ NhomKhongDoDuoc (không đoán)."""
     sk, nec = mod("sk"), mod("nec")
     tien_to_nc, tien_to_ebm = sk.khoa_ten(nec.TIEN_TO_NHOM_DE_TAI), sk.khoa_ten(nec.TIEN_TO_NHOM)
     try:
@@ -1645,13 +1679,20 @@ def chi_thuoc_de_tai(thu_vien: Path) -> set[int]:
         if n.get("rec") is None:
             raise NhomKhongDoDuoc(f"nhóm {n.get('group_id')} «{n.get('ten')}»: {n.get('loi') or 'không giải được thành viên'}")
         dich.update(n["rec"])
+    return nc, ebm
+
+
+def chi_thuoc_de_tai(thu_vien: Path) -> set[int]:
+    """recNum nằm trong ≥ 1 nhóm «NC · » và không nằm trong nhóm «EBM · » nào (lỗi nhóm ⇒ NhomKhongDoDuoc)."""
+    nc, ebm = _nhom_nc_ebm(thu_vien)
     return nc - ebm
 
 
 def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | None:
     """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word, rồi bản ghi CŨ thuộc tầng ngoại lệ mốc (`ngoai-le-moc`, xếp theo tầng).
-    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán). Bản ghi chỉ thuộc nhóm đề tài
-    «NC · » bị loại (`chi_thuoc_de_tai`; không đọc được nhóm ⇒ NhomKhongDoDuoc)."""
+    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán). Bản ghi KHÔNG thuộc nhóm «EBM · »
+    nào mà thuộc nhóm đề tài «NC · » hoặc có PMID/DOI trong danh mục trích dẫn của một đề tài (kể cả bài đã loại) bị loại; không đọc
+    được nhóm hay danh mục ⇒ NhomKhongDoDuoc."""
     moc = doc_moc(thu_vien)
     if moc is None:
         return None
@@ -1669,8 +1710,16 @@ def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | N
                 if t in ngoai_le:
                     cu.append(dict(bg, tang=t, nguon_hang_cho="ngoai_le_moc"))
     if moi or cu:  # chỉ đọc nhóm khi có ứng viên (đọc nhóm = chép tạm sdb.eni)
-        de_tai = chi_thuoc_de_tai(thu_vien)
-        moi, cu = ([bg for bg in nh if bg["rec"] not in de_tai] for nh in (moi, cu))
+        nc, ebm = _nhom_nc_ebm(thu_vien)
+        pm_dt, doi_dt = trich_dan_danh_muc_de_tai()
+
+        def la_de_tai(bg: dict) -> bool:
+            if bg["rec"] in ebm:  # vừa là trích dẫn đề tài vừa là chứng cứ ⇒ theo luật chứng cứ
+                return False
+            return (bg["rec"] in nc or (bool(bg.get("pmid")) and str(bg["pmid"]) in pm_dt)
+                    or (bool(bg.get("doi")) and str(bg["doi"]).lower() in doi_dt))
+
+        moi, cu = ([bg for bg in nh if not la_de_tai(bg)] for nh in (moi, cu))
     if dashboard is not None:
         pm, doi = trich_dan_cua_dashboard(dashboard)
         moi, cu = ([bg for bg in nh if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)] for nh in (moi, cu))
