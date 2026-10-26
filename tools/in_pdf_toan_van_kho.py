@@ -252,7 +252,35 @@ def jats_sang_html(du_lieu: bytes) -> str:
                 phan.append("<h2>References</h2><ol class='tltk'>" + "".join(refs) + "</ol>")
             elif t in ("ack", "app-group", "fn-group", "sec", "notes", "glossary"):
                 phan.append(_dung(c, 2))
+    khai = _khai_bao_tac_gia(meta) if meta is not None else ""
+    if khai:
+        phan.append(khai)
     return "\n".join(phan)
+
+
+def _khai_bao_tac_gia(meta: ET.Element) -> str:
+    """Khai báo nằm trong `article-meta`: `author-notes/fn` (xung đột lợi ích, đóng góp, ghi chú tác giả) và `funding-group`
+    (câu khai tài trợ, hoặc tên nhà tài trợ + mã tài trợ). Bỏ `corresp` (địa chỉ liên hệ).
+
+    Đo 26/10/2026: trước bản vá hai khối này bị bỏ hẳn ⇒ 267/752 bản in từ JATS thiếu `author-notes/fn`, 288 thiếu
+    `funding-group`; tóm tắt ⑨ đọc bản in nên ghi «bài không khai xung đột lợi ích» trong khi bài CÓ khai (PMID 42799440,
+    42914541) — kéo theo chấm sai AMSTAR-2 mục 16 / AGREE II Miền 6."""
+    muc: list[str] = []
+    for c in meta:
+        if _ten(c) == "author-notes":
+            muc += [_dung(fn, 3) for fn in c if _ten(fn) == "fn"]
+    for fg in (c for c in meta if _ten(c) == "funding-group"):
+        cau = [f"<p>{_con(x, 3)}</p>" for x in fg.iter() if _ten(x) == "funding-statement"]
+        if not cau:
+            for ag in (x for x in fg.iter() if _ten(x) == "award-group"):
+                ten = " · ".join(_chu(x) for x in ag.iter() if _ten(x) == "funding-source" and _chu(x))
+                ma = ", ".join(_chu(x) for x in ag.iter() if _ten(x) == "award-id" and _chu(x))
+                if ten:
+                    cau.append(f"<p>Funding: {_e(ten)}{' (' + _e(ma) + ')' if ma else ''}</p>")
+        muc += cau
+    if not muc:
+        return ""
+    return "<h2>Author notes and funding (article metadata)</h2>" + "".join(muc)
 
 
 # ───────────────────────── HTML lưu sẵn → HTML in ─────────────────────────

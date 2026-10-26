@@ -136,3 +136,27 @@ def test_bo_nam_buoc_8_goi_cong_cu_in_voi_kho_canh_dashboard() -> None:
     assert lenh[1].endswith("in_pdf_toan_van_kho.py")
     assert lenh[lenh.index("--kho") + 1] == str(dash.parent / "toan_van_oa")
     assert "--ap-dung" in lenh and lenh[lenh.index("--file") + 1] == str(dash)
+
+
+JATS_KHAI = b"""<?xml version="1.0"?>
+<article><front><article-meta><article-id pub-id-type="pmid">87654321</article-id>
+<title-group><article-title>Bai co khai bao</article-title></title-group>
+<author-notes><corresp>Correspondence: <email>tacgia@vidu.org</email></corresp>
+<fn fn-type="COI-statement"><p>Author A has acted in an advisory capacity for Hang Duoc X.</p></fn></author-notes>
+<funding-group><award-group><funding-source>National Institute for Health and Care Research</funding-source>
+<award-id>NIHR-1</award-id></award-group></funding-group>
+<abstract><p>Tom tat.</p></abstract></article-meta></front>
+<body><sec><title>Methods</title><p>Phuong phap.</p></sec></body></article>"""
+
+
+def test_jats_giu_khai_xung_dot_loi_ich_va_tai_tro_bo_dia_chi_lien_he() -> None:
+    """26/10/2026: `author-notes/fn` (khai xung đột lợi ích) và `funding-group` nằm trong article-meta từng bị bỏ hẳn ⇒
+    tóm tắt ⑨ ghi «bài không khai xung đột lợi ích» trong khi bài có khai (PMID 42799440, 42914541)."""
+    h = IP.jats_sang_html(JATS_KHAI)
+    assert "advisory capacity for Hang Duoc X" in h
+    assert "National Institute for Health and Care Research" in h and "NIHR-1" in h
+    assert "tacgia@vidu.org" not in h, "địa chỉ liên hệ (corresp) không in"
+    h2 = IP.jats_sang_html(JATS_KHAI.replace(
+        b"<award-group>", b"<funding-statement>No specific funding was received.</funding-statement><award-group>"))
+    assert "No specific funding was received." in h2 and "NIHR-1" not in h2, "có câu khai tài trợ ⇒ dùng câu đó"
+    assert "Author notes and funding" not in IP.jats_sang_html(JATS), "bài không có khai báo ⇒ không thêm mục rỗng"
