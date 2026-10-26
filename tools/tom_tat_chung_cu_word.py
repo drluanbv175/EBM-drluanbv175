@@ -93,6 +93,11 @@ CONG_CU_HOP_LE = {
     "khac": (),
 }
 MUC_GRADE = ("cao", "trung bình", "thấp", "rất thấp", "không áp dụng")
+# AMSTAR-2 (Shea 2017, BMJ 358:j4008): «Có một phần» CHỈ có ở mục 2, 4, 7, 8, 9; mục khác chỉ Có/Không (mục 11, 12, 15 thêm
+# «không thực hiện phân tích gộp»). Đo 27/10/2026: kiểm chéo PMID 38770818 bắt «Có một phần» ở mục 14 làm mức tổng thể lên
+# «cao» sai; quét kho thấy thêm mục 5, 12, 16 ở 3 bài khác — người soạn lẫn người chấm đều bỏ qua.
+AMSTAR2_MUC_CO_MOT_PHAN = frozenset({2, 4, 7, 8, 9})
+_MUC_AMSTAR2 = re.compile(r"^\s*Mục\s+(\d+)(?:\s*[–-]\s*(\d+))?", re.IGNORECASE)
 TRUONG_SO = ("nhom_can_thiep", "nhom_so_sanh", "hieu_ung", "ktc95", "p", "tuyet_doi", "nnt")
 # Ô «ĐIỂM NHẤN» mở đầu mỗi mục của Word (bác sĩ 19/10/2026). `tac_hai` không có ở guideline/nhãn thuốc.
 KHOA_DIEM_NHAN = ("thong_tin", "pico", "phuong_phap", "ket_qua", "tac_hai", "nguy_co_sai_lech", "grade", "ap_dung_vn", "goi_y",
@@ -170,6 +175,10 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
 3. `nguy_co_sai_lech.cong_cu` đúng thiết kế: RCT → «RoB 2»; tổng quan/gộp → «AMSTAR-2» (hoặc ROBIS); thuần tập/bệnh–chứng →
    «ROBINS-I» / «ROBINS-E» (hoặc Newcastle-Ottawa); chẩn đoán → «QUADAS-2»/«QUADAS-3»; guideline → «AGREE II» (ghi rõ Miền 3
    Rigour nếu guideline không mô tả); nhãn thuốc → «Không áp dụng». Mỗi miền: `danh_gia` + `ly_do` + `trang`.
+   AMSTAR-2: `ten` mở đầu «Mục n — …»; `danh_gia` ∈ Có / Có một phần / Không (mục 11, 12, 15 thêm «không thực hiện phân tích
+   gộp»); «Có một phần» CHỈ ở mục 2, 4, 7, 8, 9 — cổng chặn ở mục khác. Mức tổng thể (Shea 2017): «Không» ở mục then chốt 2, 4,
+   7, 9, 11, 13, 15 là lỗi then chốt, «Không» ở mục khác là điểm yếu, «Có một phần» không tính; cao = 0 lỗi then chốt và ≤ 1
+   điểm yếu · trung bình = > 1 điểm yếu · thấp = 1 lỗi then chốt · rất thấp = > 1 lỗi then chốt.
 4. `grade_de_xuat`: mức ∈ {{cao, trung bình, thấp, rất thấp, không áp dụng}} cho TỪNG kết cục chính, lý do theo 5 miền hạ
    (nguy cơ sai lệch · không nhất quán · gián tiếp · không chính xác · sai lệch xuất bản) và miền nâng. Nguồn gốc «máy đánh giá»
    được ghi MỘT lần ở mục Lưu ý cuối văn bản — thân văn bản không viết «đề xuất của máy». Guideline thì ghi phân hạng NGUYÊN
@@ -612,6 +621,8 @@ Bạn KHÔNG soạn bản tóm tắt này. Bác sĩ sẽ dựa vào nó để đ
 - `sai` — có dữ kiện/số SAI so với bài, gắn nhầm nhóm/kết cục, đảo chiều, hoặc thiếu mệnh đề điều kiện làm đổi nghĩa;
 - `khong_co_trong_bai` — khẳng định không tìm thấy trong bài (kể cả so sánh nhất/kém nhất, nhận định về Việt Nam không ghi nguồn).
 Mỗi mục ghi `trang` (danh sách trang đã đối chiếu) và `ghi_chu` (bắt buộc khi sai/khong_co_trong_bai: sai ở đâu, bài viết gì).
+Phán quyết từng miền (`nguy_co_sai_lech.mien[].danh_gia`) và mức tổng thể chấm theo ĐÚNG thang của công cụ — vd AMSTAR-2:
+«Có một phần» chỉ hợp lệ ở mục 2, 4, 7, 8, 9; «Không» ở mục then chốt 2, 4, 7, 9, 11, 13, 15 là lỗi then chốt (Shea 2017).
 Không sửa tom_tat.json. Ghi kết quả vào `kiem_cheo.json` đúng khuôn:
 {"phien_ban": 1, "tom_tat_sha256": "<sao y từ kiem_cheo_can_kiem.json>", "nguoi_kiem": "<tên agent, ngữ cảnh mới>",
  "luc": "<ISO>", "muc": [{"duong_dan": "...", "ket_luan": "dung", "trang": [3], "ghi_chu": ""}]}
@@ -781,6 +792,23 @@ def cac_chuoi_kiem_so(x, duong: str = "") -> list[tuple[str, str]]:
     return ra
 
 
+def _amstar2_sai_thang(mien) -> list[str]:
+    """Mục AMSTAR-2 chấm «Có một phần» ngoài mục 2, 4, 7, 8, 9 (Shea 2017). Chỉ xét miền có `ten` mở đầu «Mục n» hoặc
+    «Mục n–m» (mục gộp: mọi mục trong khoảng phải cho phép «Có một phần»); tên khác không đoán được số mục ⇒ bỏ qua."""
+    loi: list[str] = []
+    for i, mi in enumerate(mien or [], 1):
+        if not isinstance(mi, dict):
+            continue
+        m = _MUC_AMSTAR2.match(str(mi.get("ten") or ""))
+        if not m or "một phần" not in str(mi.get("danh_gia") or "").lower():
+            continue
+        muc = set(range(int(m.group(1)), int(m.group(2) or m.group(1)) + 1))
+        if not muc <= AMSTAR2_MUC_CO_MOT_PHAN:
+            loi.append(f"nguy_co_sai_lech.mien[{i}] «{mi.get('ten')}»: AMSTAR-2 chỉ cho «Có một phần» ở mục 2, 4, 7, 8, 9 "
+                       f"(Shea 2017) — mục này chấm «Có» hoặc «Không»")
+    return loi
+
+
 def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     """Danh sách lỗi (rỗng = đạt). Mỗi lỗi là một câu tiếng Việt chỉ đúng chỗ phải sửa."""
     loi: list[str] = []
@@ -823,6 +851,8 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     for i, mi in enumerate(nc_sl.get("mien") or [], 1):
         if not isinstance(mi, dict) or _rong(mi.get("ten")) or _rong(mi.get("danh_gia")) or _rong(mi.get("ly_do")):
             loi.append(f"nguy_co_sai_lech.mien[{i}] cần ten · danh_gia · ly_do")
+    if cc.startswith("amstar"):
+        loi += _amstar2_sai_thang(nc_sl.get("mien"))
     # GRADE đề xuất
     gr = tt.get("grade_de_xuat") or []
     for i, g in enumerate(gr if isinstance(gr, list) else [], 1):
