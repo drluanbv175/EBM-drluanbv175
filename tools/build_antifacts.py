@@ -34,6 +34,11 @@ _sp_mea.loader.exec_module(_bst_mea)
 _GOC_MEA = _bst_mea.duong_goc("medical-ebm-automation", ROOT) or (ROOT / "medical-ebm-automation")
 SCALES_JSON = _GOC_MEA / "data" / "reference" / "clinical_scores_45.json"
 OUT_HTML = ROOT / "Antifacts.html"
+# Sổ tiến độ đề tài nghiên cứu (27/10/2026, bác sĩ: «Bảng tiến độ đưa lên Antifacts»): mỗi đề tài MỘT sổ
+# exports/<mã>/tien_do/TIEN_DO_<mã>.json — Antifacts chỉ ĐỌC và trình bày lại, không tự đổi trạng thái việc nào.
+EXPORTS_DIR = _GOC_MEA / "exports"
+SCHEMA_TIEN_DO = "de_tai/so_tien_do/v1"
+TRANG_THAI_SO = frozenset({"xong", "dang", "cho_bs", "chua"})
 
 
 def configure_utf8_stdio() -> None:
@@ -243,6 +248,80 @@ def load_exclusions() -> set:
     return names
 
 
+def trang_thai_hien(viec: dict, theo_id: dict) -> str:
+    """Trạng thái HIỂN THỊ của một việc. Giữ nguyên xong/dang/cho_bs; «chua» tách đôi: «san» khi mọi việc phải xong
+    trước đã xong (bảng mời bấm làm ngay), «khoa» khi còn việc trước chưa xong."""
+    tt = viec.get("trang_thai")
+    if tt != "chua":
+        return tt
+    truoc = viec.get("phu_thuoc") or []
+    return "san" if all(theo_id.get(p, {}).get("trang_thai") == "xong" for p in truoc) else "khoa"
+
+
+def _so_hop_le(so) -> bool:
+    """Sổ đúng khuôn: schema đúng, có giai đoạn và việc; mỗi việc đủ khoá, trạng thái hợp lệ, trỏ đúng giai đoạn và
+    phụ thuộc trỏ tới việc có thật. Sai một chỗ ⇒ bỏ CẢ sổ (thà không hiện còn hơn hiện tiến độ sai)."""
+    if not isinstance(so, dict) or so.get("schema") != SCHEMA_TIEN_DO:
+        return False
+    gd, viec = so.get("giai_doan"), so.get("viec")
+    if not isinstance(gd, list) or not gd or not isinstance(viec, list) or not viec:
+        return False
+    ma_gd = {g.get("id") for g in gd if isinstance(g, dict)}
+    ma_viec = {v.get("id") for v in viec if isinstance(v, dict)}
+    for v in viec:
+        if not isinstance(v, dict) or not all(isinstance(v.get(k), str) and v.get(k) for k in ("id", "gd", "ten", "han")):
+            return False
+        if v.get("trang_thai") not in TRANG_THAI_SO or v["gd"] not in ma_gd:
+            return False
+        if not isinstance(v.get("phu_thuoc", []), list) or any(p not in ma_viec for p in v.get("phu_thuoc", [])):
+            return False
+    return True
+
+
+def load_projects(exports_dir: Path = None) -> list:
+    """Đọc mọi sổ tiến độ `exports/*/tien_do/TIEN_DO_*.json` thành dạng gọn cho trang (chỉ đọc)."""
+    exports_dir = exports_dir or EXPORTS_DIR
+    if not exports_dir.is_dir():
+        return []
+    projects = []
+    for f in sorted(exports_dir.glob("*/tien_do/TIEN_DO_*.json")):
+        try:
+            so = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"   ⚠️  Bỏ qua sổ tiến độ không đọc được: {f.name} ({e.__class__.__name__})")
+            continue
+        if not _so_hop_le(so):
+            print(f"   ⚠️  Bỏ qua sổ tiến độ sai khuôn: {f.name}")
+            continue
+        theo_id = {v["id"]: v for v in so["viec"]}
+        chi_so_gd = {g["id"]: k for k, g in enumerate(so["giai_doan"])}
+        nhan_ai = so.get("ai") if isinstance(so.get("ai"), dict) else {}
+        viec = [[v["id"], chi_so_gd[v["gd"]], v["ten"], nhan_ai.get(v.get("ai"), v.get("ai") or ""), v["han"],
+                 trang_thai_hien(v, theo_id)] for v in so["viec"]]
+        giai_doan = []
+        for k, g in enumerate(so["giai_doan"]):
+            cua_gd = [v for v in viec if v[1] == k]
+            giai_doan.append({"ten": g.get("ten", ""), "tu": g.get("tu", ""), "den": g.get("den", ""),
+                              "xong": sum(v[5] == "xong" for v in cua_gd), "tong": len(cua_gd)})
+        # Cổng cứng = việc đo bằng sổ cái phê duyệt (approval_ledger G2/G4/G5/G8/G9/G10).
+        cong = [v for v in so["viec"] if str(v.get("do_song", "")).startswith("approval_ledger")]
+        gd_hien = next((k for k, g in enumerate(giai_doan) if g["xong"] < g["tong"]), -1)
+        projects.append({
+            "ma": so.get("study") or f.stem.replace("TIEN_DO_", ""),
+            "ten": so.get("ten_de_tai") or so.get("study") or f.stem,
+            "tap_chi": so.get("tap_chi_dich", ""),
+            "cap_nhat": so.get("cap_nhat", ""),
+            "giai_doan": giai_doan,
+            "viec": viec,
+            "tong": len(viec),
+            "xong": sum(v[5] == "xong" for v in viec),
+            "cong_ky": sum(v.get("trang_thai") == "xong" for v in cong),
+            "cong_tong": len(cong),
+            "gd_hien": gd_hien,
+        })
+    return projects
+
+
 def load_updates():
     lib = {}
     if LIBRARY_JSON.exists():
@@ -318,6 +397,7 @@ RESEARCH = [
 def build_data():
     scales = load_scales()
     updates = load_updates()
+    projects = load_projects()
     counts = {s: {"updates": 0, "scales": 0} for s in SPEC_NAMES}
     for u in updates:
         counts.setdefault(u["specialty"], {"updates": 0, "scales": 0})
@@ -332,10 +412,12 @@ def build_data():
         "updates": updates,
         "scales": scales,
         "research": RESEARCH,
+        "projects": projects,
         "totals": {
             "updates": len(updates),
             "scales": len(scales),
             "research": sum(len(c["tools"]) for c in RESEARCH),
+            "projects": len(projects),
         },
     }
 
@@ -402,6 +484,25 @@ main{max-width:1180px;margin:18px auto 60px;padding:0 20px}
 .empty{color:var(--muted);font-size:13px;font-style:italic;padding:6px 0}
 .research-cat{margin:10px 0 4px;font-weight:700}
 .research-cat .ag{font-size:12px;color:var(--brand);font-weight:600}
+.proj{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin:0 0 18px}
+.proj .t{font-weight:700;font-size:16px;margin:0 0 4px}
+.proj .m{font-size:12.5px;color:var(--muted)}
+.plist{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.prow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer}
+.prow:first-child{border-top:0}
+.prow:hover{background:#eef2ff}
+.prow.done{cursor:default;color:var(--muted)}.prow.done:hover{background:#fff}
+.prow .badge{min-width:104px;text-align:center}
+.prow .pid{color:var(--muted);min-width:34px}.prow .pten{flex:1;min-width:0}
+.prow .pai,.prow .phan{font-size:12px;color:var(--muted);white-space:nowrap}.prow .phan.tre{color:var(--bad);font-weight:700}
+details.phase{border:1px solid var(--line);border-radius:10px;margin:8px 0;overflow:hidden}
+details.phase>summary{cursor:pointer;padding:9px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px;background:#f8fafc}
+details.phase>summary .pten{flex:1}.pdate,.pcnt{font-size:12px;color:var(--muted);white-space:nowrap}
+.pbar{width:90px;height:6px;background:var(--line);border-radius:3px;overflow:hidden;flex:none}.pbar i{display:block;height:100%;background:var(--ok)}
+.pnote{font-size:12.5px;color:var(--muted);margin-top:10px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;display:none;z-index:60;max-width:90vw}
+#toast.on{display:block}
+@media(max-width:560px){.prow .pai{display:none}.pdate{display:none}}
 footer{max-width:1180px;margin:0 auto 40px;padding:18px 20px;color:var(--muted);font-size:12.5px;border-top:1px dashed var(--line)}
 .disc{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:10px 12px;margin:8px 0}
 /* modal */
@@ -456,8 +557,9 @@ BODY_TAIL = """
 <footer>
   <div class="disc">⚠️ Mọi nội dung là HỖ TRỢ tra cứu — <b>Cần bác sĩ kiểm chứng</b>. Thang điểm/ngưỡng theo nguồn đã công nhận; chứng cứ kèm PMID/DOI trong từng dashboard. KHÔNG dùng cho thông tin định danh bệnh nhân (PII).</div>
   <div id="gen"></div>
-  <div>Antifacts gom dữ liệu từ <code>EBM-Dashboards/</code> + <code>clinical_scores_45.json</code>. Cập nhật: chạy <code>python3 tools/build_antifacts.py</code> (KHÔNG sửa tay file HTML này).</div>
+  <div>Antifacts gom dữ liệu từ <code>EBM-Dashboards/</code> + <code>clinical_scores_45.json</code> + sổ tiến độ đề tài <code>exports/*/tien_do/</code>. Cập nhật: chạy <code>python3 tools/build_antifacts.py</code> (KHÔNG sửa tay file HTML này).</div>
 </footer>
+<div id="toast" role="status" aria-live="polite"></div>
 <script>
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function evBadge(e){e=(e||'').toLowerCase();if(e.startsWith('high'))return '<span class="badge b-ok">'+esc(e)+'</span>';
@@ -653,8 +755,50 @@ function renderScales(){
   });
   return html||'<div class="empty">Không có thang điểm khớp.</div>';
 }
+const TT={xong:['Xong','b-ok'],dang:['Đang làm','b-info'],cho_bs:['Chờ bác sĩ','b-warn'],san:['Làm được ngay','b-info'],khoa:['Chờ việc trước','b-gray']};
+function quaHan(s){const p=String(s||'').split('/');if(p.length!==3)return false;return new Date(+p[2],p[1]-1,+p[0]).getTime()<Date.now();}
+function tienDoDong(p,v){
+  const xong=v[5]==='xong', nh=TT[v[5]]||['?','b-gray'];
+  return '<div class="prow'+(xong?' done':'')+'"'+(xong?'':' role="button" tabindex="0" data-ma="'+esc(p.ma)+'" data-id="'+esc(v[0])+'" title="Bấm để chép câu lệnh tiếp tục, rồi dán vào Claude"')+'>'
+    +'<span class="badge '+nh[1]+'">'+nh[0]+'</span><span class="pid">'+esc(v[0])+'</span><span class="pten">'+esc(v[2])+'</span>'
+    +'<span class="pai">'+esc(v[3])+'</span><span class="phan'+(!xong&&quaHan(v[4])?' tre':'')+'">'+esc(v[4])+'</span></div>';
+}
+function renderProjects(){
+  if(!DATA.projects||!DATA.projects.length)return '';
+  let html='<div class="sub-h">🧪 Đề tài đang làm — theo dõi tiến độ</div>';
+  DATA.projects.forEach(p=>{
+    const vs=p.viec.filter(v=>match(v[0]+' '+v[2]+' '+p.ten+' '+p.ma));
+    if(q&&!vs.length)return;
+    const ngay=p.viec.filter(v=>['dang','cho_bs','san'].includes(v[5]));
+    html+='<div class="proj"><p class="t">'+esc(p.ten)+'</p><div class="m">'+esc(p.ma)+(p.tap_chi?' · đích: '+esc(p.tap_chi):'')+' · sổ cập nhật '+esc(p.cap_nhat)+'</div>'
+      +'<div class="counts"><span class="badge b-ok">Hoàn thành '+p.xong+'/'+p.tong+' ('+Math.round(p.xong*100/p.tong)+'%)</span>'
+      +'<span class="badge b-info">Cổng cứng đã ký '+p.cong_ky+'/'+p.cong_tong+'</span>'
+      +(p.gd_hien>=0?'<span class="badge b-gray">Đang ở GĐ'+(p.gd_hien+1)+': '+esc(p.giai_doan[p.gd_hien].ten)+'</span>':'<span class="badge b-ok">Đã hoàn thành</span>')+'</div>';
+    if(ngay.length&&!q)html+='<div class="sub-h">Việc làm được ngay</div><div class="plist">'+ngay.map(v=>tienDoDong(p,v)).join('')+'</div>';
+    p.giai_doan.forEach((g,k)=>{
+      const it=vs.filter(v=>v[1]===k);if(!it.length)return;
+      const mo=q||k===p.gd_hien||k===p.gd_hien+1;
+      html+='<details class="phase"'+(mo?' open':'')+'><summary><b>GĐ'+(k+1)+'</b><span class="pten">'+esc(g.ten)+'</span><span class="pdate">'+esc(g.tu)+' – '+esc(g.den)+'</span>'
+        +'<span class="pbar"><i style="width:'+Math.round(g.xong*100/g.tong)+'%"></i></span><span class="pcnt">'+g.xong+'/'+g.tong+'</span></summary>'
+        +'<div class="plist" style="border:0;border-top:1px solid var(--line);border-radius:0">'+it.map(v=>tienDoDong(p,v)).join('')+'</div></details>';
+    });
+    html+='<div class="pnote">Bấm một việc chưa xong để CHÉP câu lệnh «Tiếp tục mục …», rồi dán vào Claude để làm tiếp. Hạn là ước tính; việc gắn cổng chỉ chuyển «Xong» khi cổng đo đạt. Cần bác sĩ kiểm chứng.</div></div>';
+  });
+  return html;
+}
+function baoToast(s){const t=document.getElementById('toast');t.textContent=s;t.classList.add('on');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('on'),4000);}
+function chepLenh(ma,id){
+  const p=DATA.projects.find(x=>x.ma===ma),v=p&&p.viec.find(x=>x[0]===id);if(!v)return;
+  const lenh='Tiếp tục mục '+v[0]+' «'+v[2]+'» của đề tài '+p.ma;
+  const xong=()=>baoToast('Đã chép: «'+lenh+'» — dán vào Claude để làm tiếp');
+  const tay=()=>{const a=document.createElement('textarea');a.value=lenh;document.body.appendChild(a);a.select();
+    let ok=false;try{ok=document.execCommand('copy');}catch(e){}a.remove();ok?xong():baoToast('Chép không được — tự chép câu: '+lenh);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(lenh).then(xong,tay);else tay();
+}
+document.addEventListener('click',e=>{const r=e.target.closest('.prow[data-id]');if(r)chepLenh(r.dataset.ma,r.dataset.id);});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const r=e.target.closest&&e.target.closest('.prow[data-id]');if(r)chepLenh(r.dataset.ma,r.dataset.id);}});
 function renderResearch(){
-  let html='<p style="color:var(--muted);font-size:13px;margin:4px 0 14px">Công cụ chuẩn cho nghiên cứu y khoa — mỗi mục trỏ về agent/skill xử lý tương ứng. Đây là chỉ mục tra nhanh, KHÔNG thay thao tác thẩm định đầy đủ.</p>';
+  let html=renderProjects()+'<p style="color:var(--muted);font-size:13px;margin:4px 0 14px">Công cụ chuẩn cho nghiên cứu y khoa — mỗi mục trỏ về agent/skill xử lý tương ứng. Đây là chỉ mục tra nhanh, KHÔNG thay thao tác thẩm định đầy đủ.</p>';
   DATA.research.forEach(c=>{
     const tools=c.tools.filter(t=>match(t.name+' '+t.for+' '+t.purpose));
     if(!tools.length)return;
@@ -698,6 +842,8 @@ def render_header(data):
         f'<span class="stat"><b>{t["updates"]}</b>cập nhật chứng cứ</span>'
         f'<span class="stat"><b>{t["scales"]}</b>thang điểm lâm sàng</span>'
         f'<span class="stat"><b>{t["research"]}</b>công cụ nghiên cứu</span>'
+        + (f'<span class="stat"><b>{t["projects"]}</b>đề tài đang làm</span>' if t.get("projects") else '')
+        +
         f'<span class="stat"><b>{nspec}</b>chuyên khoa</span>'
         '</div></div></header>'
         '<div class="toolbar"><div class="row">'
@@ -723,6 +869,8 @@ def main():
     # ---- Báo cáo ----
     print(f"✅ Đã sinh: {OUT_HTML}")
     print(f"   {data['totals']['updates']} cập nhật · {data['totals']['scales']} thang điểm · {data['totals']['research']} công cụ NC")
+    for p in data["projects"]:
+        print(f"   🧪 Đề tài {p['ma']}: {p['xong']}/{p['tong']} việc xong · cổng cứng đã ký {p['cong_ky']}/{p['cong_tong']}")
     print("   Phân bổ theo chuyên khoa (cập nhật / thang điểm):")
     for s in SPEC_NAMES:
         c = data["counts"].get(s, {})
