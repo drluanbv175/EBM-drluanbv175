@@ -38,6 +38,7 @@ Mở file `Antifacts.html` ở gốc "Claude AI" trong trình duyệt (hoặc b�
 - **Cập nhật chứng cứ** ← `EBM-Dashboards/WebDashboard_*.html` (+ enrich từ `EBM-Dashboards/library.json`).
 - **Thang điểm lâm sàng** ← `medical-ebm-automation/data/reference/clinical_scores_45.json`.
 - **Công cụ nghiên cứu** ← danh mục chuẩn (RoB2/GRADE/CONSORT/STROBE/PRISMA…) trong generator, trỏ về agent tương ứng.
+- **Đề tài đang làm** (27/10/2026) ← sổ tiến độ `medical-ebm-automation/exports/<mã>/tien_do/TIEN_DO_<mã>.json` (schema `de_tai/so_tien_do/v1`), hiện ở đầu tab Nghiên cứu: phần trăm hoàn thành, cổng cứng đã ký, việc làm được ngay, từng giai đoạn. Bấm việc chưa xong = CHÉP câu «Tiếp tục mục …» để dán vào Claude (trang tĩnh không gọi được Claude). Sổ sai khuôn ⇒ bỏ cả sổ và in cảnh báo. Antifacts chỉ ĐỌC sổ — cập nhật trạng thái việc làm trong phiên Claude.
 
 ## 5. Liên kết với hub EBM trung tâm
 Antifacts nối **2 chiều** với hub `EBM_MASTER/`: nút "🛡️ Antifacts ↗" có ở header 3 trang hub (EBM_WEBAPP/DANH_MUC/EBM_LIENKET), và Antifacts có link "↩ Hub EBM". Các nút này nằm trong **generator** (gen_*.py, build_antifacts.py), bền qua mỗi lần sync. Khi đồng bộ toàn hệ `python EBM_MASTER/tools/sync_all.py`, bước cuối cũng tự dựng lại Antifacts.
