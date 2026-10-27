@@ -64,6 +64,7 @@ Ba luật nền: (1) plugin không bao giờ là chủ của việc có cổng �
 - **Git hỏng do OneDrive** (HEAD không giải được, `git fsck` báo missing object): trên máy còn đủ dữ liệu `git bundle create <ten>.bundle --all`; đợi OneDrive xanh; máy thiếu `git fetch <bundle> 'refs/*:refs/rescue/*'` rồi `git fsck --full`.
 
 - **Canh đĩa + log OneDrive** (BH149; OneDrive SyncEngine kẹt vòng lặp log tái diễn 21/08, 17/09, 01–02/10: log 24 GB/24.796 tệp/~54 tệp mỗi phút): `python3 tools/canh_dia_onedrive.py [--im-khi-on]` đo đĩa trống + thư mục log + tốc độ giữa hai mẫu (🔴 đĩa <10 GiB · log >8 GiB · +30 tệp/phút · cạn <2 giờ); KHÔNG đo được ⇒ ⚪/🟡, không bao giờ xanh. Chạy ở hook SessionStart; chạy nền mỗi 5 phút bằng `--cai-launchd` (chạy khô mặc định, `--ap-dung` cài, macOS) — cài là việc của bác sĩ. CHỈ ĐO và BÁO, không xoá gì; chữa gốc: menu OneDrive → Sync Issues (KHÔNG Reset).
+- **Canh mạng/VPN** (27/10, BH171): `tools/canh_mang_vpn.py` — launchd mỗi phút: mất mạng ⇒ báo + tự nối lại VPN; `--bao-cao`. Cài: bác sĩ.
 
 ### 2.1 Phiên Cloud (claude.ai/code)
 - `.claude/hooks/session-start.sh` (khai trong `.claude/settings.json`, đi qua git) chỉ chạy khi `CLAUDE_CODE_REMOTE=true`: nối skill, khôi phục ngân sách skill từ `sync/cau-hinh-nguoi-dung.json`, cài thư viện thiếu, sinh lại mirror Codex, tự sửa `--pham-vi-cloud`, cài plugin ở NỀN (`tools/cai_plugin_phien_cloud.py --ap-dung`, từ chối chạy trên máy thật), nạp nền Retraction Watch.

@@ -74,6 +74,12 @@
         },
         {
           "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/canh_mang_vpn.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/canh_mang_vpn.py --doc --im-khi-on --do-nguon-nen; else echo \"⚠ CHỐT canh_mang_vpn KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT canh_mang_vpn KHÔNG CHẠY — không thấy $D/tools/canh_mang_vpn.py\"; fi; true",
+          "timeout": 20,
+          "statusMessage": "Canh mạng + VPN…"
+        },
+        {
+          "type": "command",
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/hom_viec_mot_cua.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/hom_viec_mot_cua.py --doc --lam-moi-nen; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không thấy $D/tools/hom_viec_mot_cua.py\"; fi; true",
           "timeout": 10,
           "statusMessage": "Hòm việc một cửa (đọc bảng sinh sẵn)…"

@@ -9279,6 +9279,69 @@ def bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc():
     return True, "ca đo 02/10 ⇒ ĐỎ; không đo được ⇒ KHÔNG_ĐO; không suy tốc độ từ mẫu quá gần; công cụ chỉ đo; hook có gọi"
 
 
+def bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang():
+    """27/10 — Kaspersky VPN rớt lúc 15:28 («Plugin initiated») ⇒ macOS ghi «No network route» ~930–1.000 dòng/phút ⇒ Mac mini MẤT
+    MẠNG ~1 giờ 50 phút, chỉ hết khi bác sĩ khởi động lại 17:18 (Wi-Fi không rớt). Không gì báo, cách chữa duy nhất biết được là khởi
+    động lại. Vá: `tools/canh_mang_vpn.py` (agent launchd mỗi phút + hook SessionStart). Kiểm HÀNH VI máy trạng thái `buoc` bằng
+    đúng ca 27/10 (110 mẫu mất mạng, VPN Disconnected, còn Wi-Fi): nhắc ở mẫu xấu THỨ 2 (không đợi bác sĩ tự phát hiện); tự bật VPN
+    ≤ 2 lần cách ≥ 10 phút; ghi đúng một sự cố 6600 giây; mất mạng mà scutil báo «Connected» vẫn ĐỎ; VPN tắt mà có mạng thì KHÔNG
+    tự bật; không đo được ⇒ KHONG_DO (không xanh); state nằm NGOÀI repo/OneDrive (agent ghi mỗi phút); công cụ không xoá/giết/đổi
+    cấu hình mạng; và bản khai hook trong git có gọi nó."""
+    import ast as _ast
+    import importlib.util as _iu
+    import json as _json
+    p = REPO / "tools" / "canh_mang_vpn.py"
+    if not p.exists():
+        return False, "thiếu tools/canh_mang_vpn.py"
+    sp = _iu.spec_from_file_location("_bh171_cm", p)
+    m = _iu.module_from_spec(sp)
+    sys.modules["_bh171_cm"] = m
+    sp.loader.exec_module(m)
+    t0 = 1_793_000_000.0
+
+    def mau(t, vpn="Connected", co_mang=True, vat_ly=("en1",)):
+        return {"t": t, "do_duoc": True, "vpn": vpn, "co_mang": co_mang, "vat_ly": list(vat_ly), "may_chu": "aaaa1111"}
+    st, viec = {}, []
+    for d in [mau(t0)] + [mau(t0 + 60 * i, "Disconnected", False) for i in range(1, 111)] + [mau(t0 + 60 * 111)]:
+        st, v = m.buoc(st, d)
+        viec += [(d["t"], x) for x in v]
+    nhac = [t for t, x in viec if x[0] == "thong_bao" and "mất kết nối" in x[1]]
+    noi = [t for t, x in viec if x[0] == "noi_lai"]
+    ghi = [x[1] for t, x in viec if x[0] == "ghi"]
+    if not nhac or nhac[0] != t0 + 120:
+        return False, f"ca 27/10: lần nhắc đầu {'không có' if not nhac else nhac[0] - t0} — phải ở mẫu xấu thứ 2 (120 giây)"
+    if len(noi) > 2 or not noi or any(b - a < 600 for a, b in zip(noi, noi[1:])):
+        return False, f"ca 27/10: tự nối lại {len(noi)} lần — phải 1–2 lần, cách ≥ 10 phút"
+    if len(ghi) != 1 or ghi[0].get("loai") != "MAT_MANG" or ghi[0].get("giay") != 6600:
+        return False, f"ca 27/10: bản ghi sự cố sai {ghi}"
+    if m.phan_loai(mau(t0, "Connected", False))[0] != "MAT_MANG":
+        return False, "mất mạng mà scutil báo VPN «Connected» bị đọc thành ổn — đường hầm chết vẫn là MẤT MẠNG"
+    if m.phan_loai({"t": t0, "do_duoc": False})[0] != "KHONG_DO":
+        return False, "không đo được mà không báo KHONG_DO — «không đo được» bị đọc thành ổn"
+    st2, v2 = {}, []
+    for i in range(70):
+        st2, v = m.buoc(st2, mau(t0 + 60 * i, "Disconnected", True))
+        v2 += v
+    if any(x[0] == "noi_lai" for x in v2):
+        return False, "VPN tắt mà vẫn có mạng lại TỰ BẬT VPN — có thể bác sĩ cố ý tắt; chỉ được nhắc"
+    for ten in ("TEP_STATE", "TEP_SU_CO", "BAN_CAI"):
+        duong = Path(getattr(m, ten)).resolve()
+        if REPO.resolve() in duong.parents or "OneDrive" in str(duong):
+            return False, f"{ten} nằm trong repo/OneDrive ({duong}) — agent ghi mỗi phút sẽ bắt OneDrive đồng bộ liên tục"
+    nguon = p.read_text(encoding="utf-8")
+    cay = _ast.parse(nguon)
+    goi = {f"{n.func.value.id}.{n.func.attr}" for n in _ast.walk(cay)
+           if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Attribute) and isinstance(n.func.value, _ast.Name)}
+    cam = goi & {"shutil.rmtree", "os.remove", "os.kill", "os.killpg"}
+    if cam or any(x in nguon for x in ("networksetup", "ifconfig", "killall", "pkill")):
+        return False, f"công cụ canh mạng có lệnh xoá/giết/đổi cấu hình mạng: {sorted(cam)}"
+    cfg = _json.loads((REPO / "sync" / "hooks-sessionstart.json").read_text(encoding="utf-8"))
+    lenh = [h["command"] for g in cfg.get("SessionStart") or [] for h in g.get("hooks") or []]
+    if sum("tools/canh_mang_vpn.py --doc" in c for c in lenh) != 1:
+        return False, "sync/hooks-sessionstart.json không gọi tools/canh_mang_vpn.py --doc đúng một lần — công cụ có mà không ai gọi"
+    return True, "ca 27/10 ⇒ nhắc ở phút 2, tự nối lại ≤ 2 lần, ghi sự cố 1 giờ 50 phút; VPN tắt có mạng chỉ nhắc; state ngoài OneDrive; hook có gọi"
+
+
 def bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co():
     """27/09 — `so_xac_minh_nguon.py --phu-mo-coi` THAY NGUYÊN bản ghi bằng kết quả `xac_minh_mot()` (chỉ xác minh TỒN
     TẠI) ⇒ mất `kiem_rut_luc`/`ghi_chu_rut` mà `--quet-ledger` vừa ghi cho DOI chỉ-có-trong-hub ⇒ 10 DOI quay về «chưa kiểm
@@ -11183,6 +11246,7 @@ BAI_HOC = [
     ("BH148", "02/10", "Chu trình chứng cứ ĐO SẢN LƯỢNG truy vấn giám sát (không chỉ đo khai báo): chủ đề ≤3 bản ghi/90 ngày ⇒ «có thể mù»; lỗi mạng ⇒ KHÔNG ĐO ĐƯỢC chứ không phải ổn; đề xuất không được bỏ/đổi tầng bắt-cái-mới", bh148_chu_trinh_do_san_luong_truy_van_giam_sat_khong_chi_do_khai_bao),
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH149", "02/10", "Canh đĩa + log OneDrive (vòng lặp log tái diễn lần 3: 24 GB/24.796 tệp/54 tệp mỗi phút): đo thật, ĐỎ đúng ca 02/10, KHÔNG ĐO ĐƯỢC ≠ ổn, chỉ đo không xoá, hook có gọi", bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc),
+    ("BH171", "27/10", "Canh mạng + VPN (Kaspersky VPN rớt ⇒ «No network route» 1 giờ 50 phút tới khi khởi động lại): nhắc ở phút 2, tự nối lại VPN ≤ 2 lần, VPN tắt có mạng chỉ nhắc, không đo được ≠ ổn, state ngoài OneDrive, hook có gọi", bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
