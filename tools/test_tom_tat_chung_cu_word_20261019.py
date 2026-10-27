@@ -451,3 +451,26 @@ def test_amstar_dao_chieu_mau_va_bo_so_dem_nc_goc():
     tong2 = "Độ tin cậy tổng thể theo AMSTAR-2: CAO — không có điểm yếu; nghiên cứu gốc (RoB 1): 51 nguy cơ thấp, 104 nguy cơ cao."
     assert T._mau_danh_gia(T._bo_so_dem_nc_goc(tong2), agree=amstar) == "la"
     assert T._bo_so_dem_nc_goc("Nguy cơ thấp") == "Nguy cơ thấp"
+
+
+def test_amstar2_co_mot_phan_chi_o_muc_2_4_7_8_9():
+    """27/10/2026 (PMID 38770818): «Có một phần» ở mục 14 AMSTAR-2 (thang chỉ Có/Không) làm mức tổng thể lên «cao» sai — người
+    soạn lẫn người chấm bỏ qua. Shea 2017: «Có một phần» CHỈ ở mục 2, 4, 7, 8, 9; mục gộp «12–13» không được «Có một phần»."""
+    def loi_amstar(mien):
+        tt = _hop_le()
+        tt["loai_thiet_ke"] = "sr_ma"
+        tt["nguy_co_sai_lech"]["cong_cu"] = "AMSTAR-2"
+        tt["nguy_co_sai_lech"]["mien"] = [dict(m, ly_do="lý do", trang=2) for m in mien]
+        return [x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH) if "Shea 2017" in x]
+
+    assert loi_amstar([{"ten": "Mục 14 — Giải thích không đồng nhất", "danh_gia": "Có một phần"}])
+    assert loi_amstar([{"ten": "Mục 12–13 — Tác động của nguy cơ sai lệch", "danh_gia": "đạt một phần — lo ngại nhẹ"}])
+    assert loi_amstar([{"ten": "Mục 16 — Xung đột lợi ích", "danh_gia": "Đạt một phần"}])
+    assert not loi_amstar([{"ten": "Mục 7 — Danh sách nghiên cứu bị loại", "danh_gia": "Có một phần"},
+                           {"ten": "Mục 8–9 — Mô tả và nguy cơ sai lệch nghiên cứu gốc", "danh_gia": "Có một phần"},
+                           {"ten": "Mục 14 — Giải thích không đồng nhất", "danh_gia": "Có"},
+                           {"ten": "Miền không đánh số", "danh_gia": "Có một phần"}])
+    # Công cụ khác (RoB 2) không bị luật AMSTAR-2 chạm tới.
+    tt = _hop_le()
+    tt["nguy_co_sai_lech"]["mien"] = [{"ten": "Mục 14", "danh_gia": "Có một phần", "ly_do": "x", "trang": 2}]
+    assert not [x for x in T.kiem_tom_tat(tt, TRANG, NGU_CANH) if "Shea 2017" in x]
