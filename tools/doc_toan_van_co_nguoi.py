@@ -488,6 +488,17 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "hay «scrape» nội dung; không có điều về AI ⇒ «không rõ ⇒ xử như cấm». MedGenMed (2005) trên PMC không có DOI "
                       "nên không khớp khoá này — bác sĩ đọc trực tiếp",
         "duong_hop_le": "văn bản cho phép của Medscape/WebMD"},
+    # Đọc 27/10/2026 trên Chrome của bác sĩ — bài «Radiology: Cardiothoracic Imaging» (PMID 41410572) của gói Bệnh mạch vành bị
+    # `phien_uy_quyen_chrome.py --kiem` từ chối «chưa kiểm điều khoản». Tiền tố 10.1148 đối chiếu Crossref /prefixes cùng ngày.
+    "Radiological Society of North America (RSNA)": {
+        "ket_luan": "cam", "doi": ("10.1148/",), "mien": ("pubs.rsna.org", "rsna.org"),
+        "nguon": "https://www.rsna.org/about/rsna-terms-of-use", "doc_luc": "2026-10-27",
+        "trich": "This website and all its contents are intended solely for personal, noncommercial use",
+        "loai_nguon": "RSNA Terms of Use (đọc trên Chrome 27/10/2026; pubs.rsna.org/page/termsandconditions trả 404 và trỏ về trang "
+                      "này) + trang Permissions and policies của RSNA journals: chỉ cho tải/sao chép để dùng cá nhân, cấm tái bản, "
+                      "phân phối, tác phẩm phái sinh; không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Bài Radiology: "
+                      "Cardiothoracic Imaging 2026 không mang giấy phép trên Crossref",
+        "duong_hop_le": "Copyright Clearance Center (marketplace.copyright.com — liên kết Permissions của pubs.rsna.org)"},
 }
 # GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
 # khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
