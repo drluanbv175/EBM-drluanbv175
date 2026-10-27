@@ -26,6 +26,7 @@ NGUỒN CHUẨN (18/10/2026): tệp này sống trong git ở sync/ebm-master-to
 EBM_MASTER/tools/ được chép bằng tools/dong_bo_cong_cu_hub.py — KHÔNG sửa thẳng bản chạy.
 """
 import contextlib
+import datetime
 import os
 import sys
 import json
@@ -382,7 +383,9 @@ def set_field(data, cid, field, value, label):
         print("Không thấy thẻ", cid); return False
     old = c.get(field)
     c[field] = value
-    c.setdefault("history", []).append({"date": data["meta"].get("last_updated", ""),
+    # 27/10/2026: ngày của lần SỬA, không phải `meta.last_updated` (ngày nạp gần nhất của sổ) — đổi quyết định 27/10 từng ghi
+    # lịch sử «2026-10-26».
+    c.setdefault("history", []).append({"date": datetime.date.today().isoformat(),
                                         "change": "%s: %s → %s (quản lý)" % (label, old, value)})
     print("  ✓ %s: %s — %s: %s → %s" % (c["id"], c.get("topic", "")[:40], label, old, value))
     return True
