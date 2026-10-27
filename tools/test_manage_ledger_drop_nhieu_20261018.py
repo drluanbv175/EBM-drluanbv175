@@ -171,3 +171,18 @@ def test_dau_cuoi_liet_ke_roi_loai_theo_bao_cao(tmp_path):
     r3 = subprocess.run([sys.executable, "-B", str(LIET_KE), "--hub", str(hub), "--ra", str(ra), "--ngay", "2026-10-19"],
                         capture_output=True, text=True, encoding="utf-8", env=env, timeout=120)
     assert r3.returncode == 0, r3.stdout + r3.stderr
+
+
+def test_doi_quyet_dinh_ghi_lich_su_bang_ngay_sua(tmp_path):
+    """27/10/2026: đổi quyết định ghi lịch sử bằng `meta.last_updated` (ngày nạp cũ của sổ, «2026-10-18» ở sổ mẫu) thay vì ngày
+    sửa thật — dấu vết duyệt sai ngày."""
+    import datetime
+    hub = _so_cai_mau(tmp_path)
+    env = dict(os.environ, EBM_MASTER_HUB_DIR=str(hub), EBM_MASTER_LEDGER_LOCK_HELD="1", PYTHONIOENCODING="utf-8")
+    r = subprocess.run([sys.executable, "-B", str(ML), "consider", "EVID-2026-0020"], cwd=str(hub), capture_output=True,
+                       text=True, encoding="utf-8", env=env, timeout=120)
+    assert r.returncode == 0, r.stdout + r.stderr
+    the = next(c for c in json.loads((hub / "EBM_MASTER.json").read_text(encoding="utf-8"))["evidence_cards"]
+               if c["id"] == "EVID-2026-0020")
+    assert the["decision"] == "consider"
+    assert the["history"][-1] == {"date": datetime.date.today().isoformat(), "change": "Quyết định: apply → consider (quản lý)"}
