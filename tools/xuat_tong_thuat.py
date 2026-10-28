@@ -75,6 +75,29 @@ def kiem_hinh_thuc(md: str) -> list[str]:
     return loi
 
 
+def kiem_neo_dashboard(md: str, dashboard_html: str) -> list[str]:
+    """Luật MỘT CỬA VÀO (28/10/2026): mọi nguồn của bài tổng thuật phải có trong dashboard đã qua cổng.
+
+    Một mục «## Nguồn» đạt khi ÍT NHẤT một định danh của nó (PMID · DOI · URL nếu mục không có PMID/DOI) xuất hiện trong
+    dashboard. PMID khớp trọn số (12345 không khớp 123456); DOI so chữ thường, bỏ dấu câu cuối.
+    """
+    phan = re.split(r"^## Nguồn\s*$", md, maxsplit=1, flags=re.M)
+    if len(phan) != 2:
+        return ["thiếu mục «## Nguồn» — không đối chiếu được với dashboard"]
+    dash = dashboard_html.lower()
+    loi: list[str] = []
+    for m in re.finditer(r"^(\d{1,3})\.\s+(.+)$", phan[1], re.M):
+        n, dong = int(m.group(1)), m.group(2)
+        pmids = re.findall(r"PMID (\d{6,9})", dong)
+        dois = [d.rstrip(".,;)]").lower() for d in re.findall(r"doi:(10\.\S+)", dong, flags=re.I)]
+        urls = [] if (pmids or dois) else [u.rstrip(".,;)]").lower() for u in re.findall(r"https?://\S+", dong)]
+        co = (any(re.search(rf"(?<!\d){p}(?!\d)", dash) for p in pmids)
+              or any(d in dash for d in dois) or any(u in dash for u in urls))
+        if not co:
+            loi.append(f"nguồn {n} không có trong dashboard — thêm vào dashboard (bản nối tiếp) qua cổng rồi mới trích")
+    return loi
+
+
 def _inline(t: str) -> str:
     t = html.escape(t, quote=False)
     t = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", t)
@@ -319,15 +342,26 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Xuất bài tổng thuật chứng cứ (md → HTML học thuật)")
     ap.add_argument("md", help="file markdown tổng thuật")
     ap.add_argument("--mo", action="store_true", help="mở bằng trình duyệt sau khi xuất")
+    ap.add_argument("--dashboard", help="dashboard Evidence Workbench ĐÃ qua cổng của chủ đề (luật một cửa vào 28/10/2026): "
+                                        "nguồn ngoài dashboard ⇒ chặn")
     a = ap.parse_args()
     src = Path(a.md)
     md = src.read_text(encoding="utf-8")
     loi = kiem_hinh_thuc(md)
+    if a.dashboard:
+        dash = Path(a.dashboard)
+        if not dash.is_file():
+            loi.append(f"không thấy dashboard {a.dashboard}")
+        else:
+            loi += kiem_neo_dashboard(md, dash.read_text(encoding="utf-8", errors="replace"))
     if loi:
         print("🔴 LỖI HÌNH THỨC TRÍCH DẪN — không render:")
         for x in loi:
             print(f"   • {x}")
         return 2
+    if not a.dashboard:
+        print("🟠 CHƯA NEO DASHBOARD (--dashboard): luật một cửa vào 28/10/2026 — bài tổng thuật chỉ dựng TỪ dashboard đã qua "
+              "cổng của Skill cap-nhat-chung-cu-y-khoa; bài này chưa qua cổng liêm chính, không vào bộ năm/hub.")
     RA_DIR.mkdir(parents=True, exist_ok=True)
     ra = RA_DIR / (src.stem + ".html")
     ra.write_text(render(md, src.name), encoding="utf-8", newline="\n")

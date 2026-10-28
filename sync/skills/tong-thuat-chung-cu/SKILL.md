@@ -1,8 +1,8 @@
 ---
 name: tong-thuat-chung-cu
-description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
+description: KHÔNG phải cửa vào — chỉ viết bài đọc liền mạch TỪ dashboard đã qua cổng của cap-nhat-chung-cu-y-khoa (nguồn ⊆ dashboard, xuat_tong_thuat.py --dashboard); câu hỏi chủ đề chứng cứ mới ⇒ gọi cap-nhat-chung-cu-y-khoa trước. Trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11.
 metadata:
-  version: 1.8.0
+  version: 1.9.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -13,6 +13,17 @@ VÌ SAO SKILL NÀY TỒN TẠI: bác sĩ so với Gemini/ChatGPT thấy hệ thu
 (thẻ rời rạc thay vì một bài trả lời) và ĐỘ PHỦ NGUỒN. Bài tổng thuật phải cho
 trải nghiệm một-bài-đọc-liền-mạch NHƯNG giữ nguyên thứ hệ hơn chatbot: trích dẫn
 THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết, không bịa.
+
+## ĐIỀU KIỆN VÀO — KHÔNG PHẢI CỬA VÀO (28/10/2026, bác sĩ chọn «một cửa vào»)
+
+Câu hỏi CHỦ ĐỀ chứng cứ («tiếp cận … toàn diện dựa trên chứng cứ mới nhất», «cập nhật chứng cứ <bệnh>», «tổng thuật <bệnh>»)
+đi vào Skill `cap-nhat-chung-cu-y-khoa` TRƯỚC. Skill này CHỈ chạy khi đã có dashboard Evidence Workbench của chủ đề qua cổng
+`verify_dashboard.py` và bộ năm `xuat_goi_cap_nhat.py --online` PASS; chưa có ⇒ DỪNG, gọi `cap-nhat-chung-cu-y-khoa`.
+- Nguồn của bài ⊆ nguồn của dashboard. Bốn làn và bước 0–2 dưới đây dùng để ĐỌC LẠI nguồn đã qua cổng, KHÔNG để mở rộng nguồn
+  ngoài dashboard; thấy nguồn mới đáng đưa vào ⇒ thêm vào dashboard (bản nối tiếp) qua cổng, rồi mới trích.
+- Xuất bắt buộc kèm `--dashboard <dashboard>.html`: cổng chặn mọi PMID/DOI trong «## Nguồn» không có trong dashboard.
+Vì sao: đo chiều 28/10, hai phiên dùng skill này làm cửa vào cho «suy tim toàn diện», «đái tháo đường toàn diện» ⇒ bài 64 và 31
+nguồn KHÔNG qua cổng liêm chính, không bộ năm, không hub (không vào `tra_diem_kham`, không được theo dõi độ tươi).
 
 ## QUY TRÌNH
 
@@ -148,10 +159,10 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    Cuối bài: «Cần bác sĩ kiểm chứng.»
 
 4. **XUẤT + GIAO**: lưu md vào `EBM-Dashboards/tong_thuat/TT_<slug>_<YYYYMMDD>.md`
-   → `python3 tools/xuat_tong_thuat.py <file>.md` (renderer TỰ sinh dải THẺ
+   → `python3 tools/xuat_tong_thuat.py <file>.md --dashboard <dashboard>.html` (renderer TỰ sinh dải THẺ
    NGUỒN có link dưới mỗi mục — số [n] trong câu + thẻ bấm-mở-thẳng DOI/PubMed,
    theo mẫu bác sĩ duyệt 19/08; cổng hình thức fail-closed:
-   [n] khớp Nguồn hai chiều, nguồn nào cũng có PMID/DOI/URL) → gửi bác sĩ file
+   [n] khớp Nguồn hai chiều, nguồn nào cũng có PMID/DOI/URL, nguồn ⊆ dashboard) → gửi bác sĩ file
    HTML (SendUserFile, display:"render") → `python3 tools/dung_hom_thu.py`.
    **Nối EndNote (28/10/2026 — bác sĩ hỏi «đã có sự kết nối với Endnote chưa»; trước đó
    bài tổng thuật KHÔNG vào EndNote vì công cụ nạp chỉ nhận dashboard/đề tài):**
