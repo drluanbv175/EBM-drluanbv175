@@ -78,11 +78,21 @@ def test_tien_to_baycinar_cua_tap_chi_khac_khong_mang_khoa_tjpmr(doi) -> None:
 
 
 def test_ban_pmc_khong_doi_khong_khop_khoa_cfp_va_medscape() -> None:
-    """CFP và MedGenMed (Medscape) không có DOI; bảng khớp theo tiền tố DOI rồi miền ⇒ bản trên PMC không mang khoá nào —
+    """Bản trên PMC KHÔNG kèm DOI (CFP cũ, MedGenMed của Medscape) không mang khoá nào — bảng khớp theo tiền tố DOI rồi miền,
     hành vi có chủ ý (đọc ở trang của chính NXB, hoặc bác sĩ đọc trực tiếp)."""
     assert DTV.nxb_cua(url="https://pmc.ncbi.nlm.nih.gov/articles/PMC5429051/")[0] is None
     assert DTV.nxb_cua(url="https://pmc.ncbi.nlm.nih.gov/articles/PMC1681414/")[0] is None
-    assert DTV.DIEU_KHOAN_NXB[CFP]["doi"] == () and DTV.DIEU_KHOAN_NXB[MEDSCAPE]["doi"] == ()
+    assert DTV.DIEU_KHOAN_NXB[MEDSCAPE]["doi"] == ()
+
+
+def test_bai_cfp_co_doi_doc_qua_pmc_mang_khoa_cfp() -> None:
+    """28/10/2026: bài CFP từ khoảng 2021 có DOI tiền tố 10.46747/ (PMID 41844291 · doi 10.46747/cfp.7203173). Bảng chỉ khớp
+    miền cfp.ca thì bản PMC của bài đó rơi về «chưa kiểm» — sai cả hai chiều: không áp được luật «cấm» của CFP, cũng không
+    nhận được uỷ quyền bác sĩ đã ghi cho CFP. Có DOI ⇒ phải mang khoá CFP dù đọc ở PMC; DOI của NXB khác không bị kéo theo."""
+    assert DTV.DIEU_KHOAN_NXB[CFP]["doi"] == ("10.46747/",)
+    pmc = "https://pmc.ncbi.nlm.nih.gov/articles/PMC12995299/"
+    assert DTV.nxb_cua(doi="10.46747/cfp.7203173", url=pmc)[0] == CFP
+    assert DTV.nxb_cua(doi="10.3399/BJGP.2024.0369", url=pmc)[0] == RCGP
 
 
 @pytest.mark.parametrize("ten", MOI)

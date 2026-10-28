@@ -437,7 +437,7 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                     "Gastroenterol / World J …) đi làn giấy phép — bản PMC của bài cũ có thể chỉ ghi «All rights reserved»",
         "duong_hop_le": "trang Permissions của BPG (wjgnet.com/bpg/gerinfo/207)"},
     "College of Family Physicians of Canada (Canadian Family Physician)": {
-        "ket_luan": "cam", "doi": (), "mien": ("cfp.ca",),
+        "ket_luan": "cam", "doi": ("10.46747/",), "mien": ("cfp.ca",),
         "nguon": "https://www.cfp.ca/content/terms", "doc_luc": "2026-10-18",
         "trich": "Systematic downloading (by robots or other automatic processes) is prohibited without express written permission",
         "loai_nguon": "Terms of Use của cfp.ca (không ghi ngày; đọc trên Chrome 18/10/2026): CFPC giữ bản quyền; cho xem, tải, in, "
