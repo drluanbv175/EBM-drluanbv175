@@ -1,17 +1,31 @@
 ---
 name: cap-nhat-chung-cu-y-khoa
-description: "Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm chứng cứ · panel thẩm định; có Clinical Quick View và tab Chuẩn & chất lượng) nếu môi trường hỗ trợ tạo file; đây không phải hệ thống giám sát định kỳ hoặc Dashboard Master mặc định."
+description: "CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical Quick View, tab Chuẩn & chất lượng) → cổng liêm chính → bộ năm (toàn văn, EndNote) → hub. Bài tổng thuật liền mạch chỉ dựng TỪ dashboard đã qua cổng. Không phải giám sát định kỳ hay Dashboard Master."
 metadata:
-  version: 1.54.0
+  version: 1.55.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
 
 ## 1. Phạm vi sử dụng
 
+**MỘT CỬA VÀO (28/10/2026 — bác sĩ chọn):** skill này là cửa vào DUY NHẤT cho mọi câu hỏi CHỦ ĐỀ chứng cứ, kể cả khi
+bác sĩ không dùng chữ «cập nhật»: «tiếp cận chẩn đoán, điều trị, tiên lượng <bệnh> toàn diện dựa trên chứng cứ mới nhất và độ
+tin cậy cao nhất», «<bệnh>: chẩn đoán và điều trị hiện hành», «tổng thuật <bệnh>». Đo chiều 28/10: hai phiên hỏi đúng kiểu câu đó
+rẽ sang `tong-thuat-chung-cu` (không dashboard, không cổng `verify_dashboard`, không bộ năm, không hub), một phiên trả lời từ trí
+nhớ (tự bắt 3 trích dẫn sai). Hook `tools/nhac_dinh_tuyen.py` (UserPromptSubmit) nhắc đúng đường ngay lượt gõ.
+- Chủ đề ĐÃ có dashboard/watchlist ⇒ bước 0: `python3 ops/orchestrator.py --topic "<chủ đề>" --online` (quét theo tầng, truy
+  nguyên, cổng, hàng chờ) rồi dựng BẢN NỐI TIẾP của dashboard đó; chủ đề mới ⇒ đi trọn quy trình mục 4.
+- Chủ đề rộng («toàn diện») dùng **Chế độ chuyên sâu** và có thể tách vài dashboard theo lát cắt (chẩn đoán · điều trị · tiên
+  lượng), mỗi dashboard qua cổng riêng; lát cắt đã có dashboard thì làm bản nối tiếp, không dựng trùng.
+- Bác sĩ muốn **bài đọc liền mạch** ⇒ SAU khi bộ năm PASS mới viết bài theo khuôn `tong-thuat-chung-cu`, CHỈ từ mục và nguồn của
+  dashboard đã qua cổng, xuất bằng `python3 tools/xuat_tong_thuat.py <TT>.md --dashboard <dashboard>.html` (cổng chặn nguồn
+  ngoài dashboard). Nguồn mới tìm thêm ⇒ đưa vào dashboard (bản nối tiếp) qua cổng trước, rồi mới trích.
+
 Kích hoạt khi người dùng hỏi một vấn đề cụ thể, ví dụ:
 
 - “Cập nhật EBM điều trị suy tim EF bảo tồn hiện nay.”
+- “Tiếp cận chẩn đoán, điều trị, tiên lượng suy tim một cách toàn diện dựa trên chứng cứ mới nhất.”
 - “Hen phế quản 2026: chẩn đoán và điều trị theo mức chứng cứ.”
 - “Duloxetine có vai trò gì trong đau thần kinh ở người cao tuổi?”
 - “Cập nhật an toàn của finasteride/dutasteride.”

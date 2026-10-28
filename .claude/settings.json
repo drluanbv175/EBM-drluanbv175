@@ -1,5 +1,5 @@
 {
-  "_ghi_chu": "CHỈ khai hook chuẩn bị phiên CLOUD. Script tự thoát ngay khi không phải môi trường remote, nên file này vô hại trên Mac/Windows của bác sĩ. Tám chốt SessionStart của MÁY THẬT nằm ở .claude/settings.local.json (không đi qua git, vì chúng trỏ vào venv/kho plugin/OneDrive riêng từng máy) — cài bằng tools/dong_bo_hook_sessionstart.py --ap-dung. Đã đo 01/09/2026: hook ở HAI file này CỘNG DỒN, cả hai đều chạy, không cái nào đè cái nào.",
+  "_ghi_chu": "SessionStart ở đây CHỈ khai hook chuẩn bị phiên CLOUD. Script tự thoát ngay khi không phải môi trường remote, nên file này vô hại trên Mac/Windows của bác sĩ. Tám chốt SessionStart của MÁY THẬT nằm ở .claude/settings.local.json (không đi qua git, vì chúng trỏ vào venv/kho plugin/OneDrive riêng từng máy) — cài bằng tools/dong_bo_hook_sessionstart.py --ap-dung. Đã đo 01/09/2026: hook ở HAI file này CỘNG DỒN, cả hai đều chạy, không cái nào đè cái nào. UserPromptSubmit (28/10/2026, «một cửa vào»): tools/nhac_dinh_tuyen.py chạy bộ định tuyến intent.py trên câu bác sĩ gõ và chỉ nhắc khi câu là CHỦ ĐỀ chứng cứ/CA lâm sàng — Python thuần, không đường dẫn riêng máy nên khai ở file đi qua git cho MỌI nơi chạy; lỗi ⇒ im lặng, mã 0.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,17 @@
           {
             "type": "command",
             "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/.claude/hooks/session-start.sh\" ]; then bash \"$D/.claude/hooks/session-start.sh\"; else echo \"⚠ KHÔNG CHẠY hook phiên cloud: không thấy $D/.claude/hooks/session-start.sh\"; fi; true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/nhac_dinh_tuyen.py\" ]; then PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" \"$D/tools/nhac_dinh_tuyen.py\"; fi; fi; true",
+            "timeout": 10
           }
         ]
       }

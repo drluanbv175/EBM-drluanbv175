@@ -236,6 +236,20 @@ VIEC_CONG_CU: list[tuple[list[str], str, str]] = [
      "tools/tra_cuu_co_tai_khoan.py", "tra Scopus/WoS/DynaMed bằng tài khoản bác sĩ (bác sĩ tự đăng nhập; máy xác minh)"),
 ]
 
+# 28/10/2026 — MỘT CỬA VÀO cho câu hỏi CHỦ ĐỀ chứng cứ (bác sĩ chọn sau khi đo: ba phiên chiều 28/10 hỏi «tiếp cận chẩn đoán điều
+# trị … toàn diện dựa trên chứng cứ mới nhất» đều KHÔNG vào dây chuyền §6.2 — hai phiên rẽ sang skill tổng thuật, một phiên trả lời
+# từ trí nhớ; router cũ xếp câu đó thành `tra-cuu-chung-cu` một câu hỏi lẻ). Cần CẢ HAI: một cue chủ đề VÀ một từ chứng cứ/lâm sàng
+# — «kiểm tra toàn diện hệ thống nghiên cứu» có cue chủ đề nhưng không có từ chứng cứ nên không bị kéo vào đây.
+# Nhánh đứng SAU đề tài và SAU ca lâm sàng (ca/cờ đỏ luôn thắng — over-route sang nơi có BƯỚC 0 là chiều an toàn), và thua cờ đỏ
+# cùng việc lẻ MẠNH trong route().
+CHU_DE_CHUNG_CU_CUES = ["toàn diện", "tiếp cận", "cập nhật", "tổng thuật", "mới nhất", "hiện hành", "tin cậy cao nhất"]
+CHUNG_CU_WORDS = ["chứng cứ", "bằng chứng", "guideline", "khuyến cáo", "chẩn đoán", "điều trị"]
+# Câu hỏi VỀ HỆ THỐNG («hệ thống cập nhật chứng cứ của tôi đã hoàn thiện chưa», «vì sao cập nhật chứng cứ không đúng thiết kế»)
+# không phải một chủ đề lâm sàng. KHÔNG dùng «hệ thống» trần: «lupus ban đỏ hệ thống», «viêm mạch hệ thống» là tên bệnh.
+CAU_HOI_HE_THONG_CUES = ["hệ thống cập nhật", "hệ thống nghiên cứu", "hệ thống của tôi", "của hệ thống", "với hệ thống",
+                         "đúng thiết kế", "thiết kế và xây dựng", "skill", "agent", "dây chuyền", "plugin", "hook"]
+SKILL_CAP_NHAT_CHUNG_CU = "cap-nhat-chung-cu-y-khoa"
+
 CLINICAL_ORCHESTRATOR = "dieu-phoi-lam-sang"
 RESEARCH_ORCHESTRATOR = "dieu-phoi-nghien-cuu"
 
@@ -284,6 +298,9 @@ class _Bang(NamedTuple):
     patterns: list
     case_cues: list
     cong_cu: list
+    chu_de: list
+    chung_cu: list
+    he_thong: list
 
 
 def _gap(x):
@@ -294,7 +311,8 @@ def _gap(x):
 # cả ca có cờ đỏ — bác sĩ gõ nhanh trên điện thoại thường bỏ dấu. Câu THUẦN ASCII không thể khớp cue có dấu, nên nó dùng
 # bảng đã GẤP DẤU của chính các cue/mẫu đó. Câu CÓ dấu giữ nguyên bảng cũ (để «năm,» không khớp nhầm «nam,»).
 _CO_DAU = _Bang(_any, SINGLE_TASK_RULES, RESEARCH_TOPIC_CUES, _RESEARCH_DESIGN_WORDS, "khảo sát",
-                _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS, CLINICAL_CASE_PATTERNS, CLINICAL_CASE_CUES, VIEC_CONG_CU)
+                _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS, CLINICAL_CASE_PATTERNS, CLINICAL_CASE_CUES, VIEC_CONG_CU,
+                CHU_DE_CHUNG_CU_CUES, CHUNG_CU_WORDS, CAU_HOI_HE_THONG_CUES)
 _ASCII = _Bang(
     _any_ascii,
     [([k for k in _gap(kws) if k not in _CUE_ASCII_LOAI] + _CUE_ASCII_THEM.get(a, []), a, n)
@@ -302,7 +320,8 @@ _ASCII = _Bang(
     tuple(_gap(_RESEARCH_DESIGN_WORDS)), _fold("khảo sát"),
     [re.compile(_fold(p.pattern)) for p in _INDIVIDUAL_PATIENT_OVERRIDE_PATTERNS],
     [re.compile(_fold(p.pattern)) for p in CLINICAL_CASE_PATTERNS], _gap(CLINICAL_CASE_CUES),
-    [(_gap(kws), c, n) for kws, c, n in VIEC_CONG_CU])
+    [(_gap(kws), c, n) for kws, c, n in VIEC_CONG_CU],
+    _gap(CHU_DE_CHUNG_CU_CUES), _gap(CHUNG_CU_WORDS), _gap(CAU_HOI_HE_THONG_CUES))
 
 
 def route(request: str) -> IntentResult:
@@ -365,6 +384,13 @@ def route(request: str) -> IntentResult:
     if B.khop(t, B.case_cues) or pattern_hits:
         return IntentResult("clinical_case", CLINICAL_ORCHESTRATOR,
                             "phát hiện mô tả một CA lâm sàng → nhạc trưởng lâm sàng (5 bước EBM)",
+                            match_labels)
+    # Một cửa vào (28/10/2026): chủ đề chứng cứ → skill dây chuyền §6.2; cờ đỏ và việc lẻ MẠNH vẫn thắng.
+    if (B.khop(t, B.chu_de) and B.khop(t, B.chung_cu) and not B.khop(t, B.he_thong)
+            and not any(a == "sang-loc-co-do" or a in VIEC_LE_MANH for a, _ in single_hits)):
+        return IntentResult("cong_cu", SKILL_CAP_NHAT_CHUNG_CU,
+                            "CHỦ ĐỀ chứng cứ → MỘT CỬA VÀO: skill cap-nhat-chung-cu-y-khoa (quét theo tầng/orchestrator → "
+                            "dashboard → cổng liêm chính → bộ năm → EndNote → hub); bài tổng thuật chỉ dựng TỪ dashboard đã qua cổng",
                             match_labels)
     if single_hits:
         agent, note = single_hits[0]

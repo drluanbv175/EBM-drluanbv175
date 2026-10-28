@@ -4673,7 +4673,8 @@ CAU_BAC_SI_NOI: tuple[tuple[str, str | None], ...] = (
     ("Giúp tôi viết bản thảo phần bàn luận", "single_task"),
     ("Tôi muốn làm một bài báo về suy tim ở người cao tuổi", "single_task"),
     ("Phân tích số liệu tôi vừa thu thập xong", "single_task"),
-    ("Cập nhật chứng cứ mới nhất về đái tháo đường", "single_task"),
+    # 28/10/2026 — bác sĩ chọn «một cửa vào»: câu CHỦ ĐỀ chứng cứ vào skill cap-nhat-chung-cu-y-khoa (BH172), không còn là việc lẻ.
+    ("Cập nhật chứng cứ mới nhất về đái tháo đường", "cong_cu"),
     ("Chủ đề COPD có gì mới không", "single_task"),
     ("Kiểm tra xem dashboard của tôi có lỗi gì không", "single_task"),
     ("Tính cỡ mẫu cho nghiên cứu cắt ngang", "single_task"),
@@ -9279,6 +9280,64 @@ def bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc():
     return True, "ca đo 02/10 ⇒ ĐỎ; không đo được ⇒ KHÔNG_ĐO; không suy tốc độ từ mẫu quá gần; công cụ chỉ đo; hook có gọi"
 
 
+def bh172_mot_cua_vao_chu_de_chung_cu():
+    """28/10 — ba phiên bác sĩ hỏi «tiếp cận chẩn đoán điều trị … toàn diện dựa trên chứng cứ mới nhất» KHÔNG vào dây chuyền §6.2:
+    hai phiên rẽ sang skill tổng thuật (64 và 31 nguồn, không dashboard/cổng/bộ năm/hub), một phiên trả lời từ trí nhớ (tự bắt 3
+    trích dẫn sai). Gốc: router intent.py có mà không ai gọi + xếp câu đó thành tra cứu lẻ; mô tả skill bị cắt 80 ký tự nên model
+    chọn «Bác sĩ hỏi MỘT chủ đề lâm sàng → tổng thuật». Bác sĩ chọn «một cửa vào». Kiểm HÀNH VI: (1) route() đưa câu thật 28/10
+    vào skill cap-nhat-chung-cu-y-khoa, ca cụ thể/cờ đỏ/câu hỏi về hệ thống KHÔNG bị kéo vào; (2) hook nhắc in additionalContext
+    cho câu chủ đề, im lặng và mã 0 với rác; settings.json đi qua git có khai hook; (3) 80 ký tự đầu mô tả skill nói rõ cửa vào;
+    (4) xuat_tong_thuat chặn nguồn ngoài dashboard (PMID khớp trọn số)."""
+    import json as _json
+    import subprocess
+    sys.path.insert(0, str(REPO))
+    from tools.orchestrator.intent import SKILL_CAP_NHAT_CHUNG_CU, route
+    cau = "Tiếp cận chẩn đoán điều trị,tiên lương suy tim một cách toàn diện dựa trên chứng cứ mới nhất và độ tin cậy cao nhất"
+    if (route(cau).kind, route(cau).target) != ("cong_cu", SKILL_CAP_NHAT_CHUNG_CU):
+        return False, f"câu chủ đề 28/10 không vào một cửa: {route(cau).as_dict()}"
+    for c, dich in (("nữ 60 tuổi đau ngực, tiếp cận chẩn đoán theo chứng cứ mới nhất", "dieu-phoi-lam-sang"),
+                    ("tiếp cận chẩn đoán đau ngực cấp cứu theo chứng cứ mới nhất", "sang-loc-co-do")):
+        if route(c).target != dich:
+            return False, f"ca/cờ đỏ bị một cửa nuốt: «{c}» → {route(c).target}"
+    if route("Hệ thống cập nhật chứng cứ y khoa của tôi đã hoàn thiện các bước").target == SKILL_CAP_NHAT_CHUNG_CU:
+        return False, "câu hỏi VỀ hệ thống bị kéo vào một cửa"
+    hook = REPO / "tools" / "nhac_dinh_tuyen.py"
+    r = subprocess.run([sys.executable, str(hook)], input=_json.dumps({"prompt": cau}).encode("utf-8"), capture_output=True, timeout=30)
+    if r.returncode != 0 or SKILL_CAP_NHAT_CHUNG_CU.encode() not in r.stdout:
+        return False, "hook nhac_dinh_tuyen không nhắc một cửa cho câu chủ đề"
+    r = subprocess.run([sys.executable, str(hook)], input=b"rac khong phai json", capture_output=True, timeout=30)
+    if r.returncode != 0 or r.stdout:
+        return False, "hook nhắc chặn/nói khi gặp đầu vào rác — phải im lặng, mã 0"
+    try:
+        cfg = _json.loads((REPO / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        lenh = [h["command"] for m in cfg["hooks"]["UserPromptSubmit"] for h in m["hooks"]]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return False, f"settings.json không có khối UserPromptSubmit: {e}"
+    # Chạy ĐÚNG lệnh đã khai (không chỉ tìm chuỗi): khai sai đường dẫn ⇒ hook im lặng mãi mà không ai biết (BH41).
+    bash = _tim_bash()
+    if bash is None:
+        return False, "không tìm thấy bash — không mô phỏng được hook UserPromptSubmit"
+    import os as _os
+    r = subprocess.run([bash, "-c", lenh[0] if len(lenh) == 1 else "false"], input=_json.dumps({"prompt": cau}).encode("utf-8"),
+                       capture_output=True, timeout=30, env={**_os.environ, "CLAUDE_PROJECT_DIR": str(REPO)})
+    if len(lenh) != 1 or SKILL_CAP_NHAT_CHUNG_CU.encode() not in r.stdout:
+        return False, "lệnh UserPromptSubmit khai trong settings.json (đi qua git) không chạy ra lời nhắc một cửa — hook có mà không ai gọi (BH41)"
+
+    def _mo_ta(sk):
+        dau = (REPO / "sync" / "skills" / sk / "SKILL.md").read_text(encoding="utf-8").split("---")[1]
+        return next(d for d in dau.splitlines() if d.startswith("description:")).split(":", 1)[1].strip().strip('"')[:80]
+    if "CỬA VÀO DUY NHẤT" not in _mo_ta("cap-nhat-chung-cu-y-khoa") or "KHÔNG phải cửa vào" not in _mo_ta("tong-thuat-chung-cu"):
+        return False, "80 ký tự đầu mô tả skill (phần model thấy) không nói rõ cửa vào"
+    if _mo_ta("dark-analyst") == _mo_ta("cap-nhat-chung-cu-y-khoa"):
+        return False, "dark-analyst trùng mô tả với cap-nhat-chung-cu-y-khoa — model không phân biệt được"
+    X = _nap(REPO / "tools" / "xuat_tong_thuat.py", "_bh172_xtt")
+    bai = "T [1][2].\nCần bác sĩ kiểm chứng.\n## Nguồn\n1. A. PMID 123456\n2. B. PMID 1234567\n"
+    loi = X.kiem_neo_dashboard(bai, "pmid 123456 pmid 12345678")
+    if len(loi) != 1 or not loi[0].startswith("nguồn 2 "):
+        return False, f"cổng neo dashboard không chặn đúng nguồn ngoài dashboard: {loi}"
+    return True, "câu chủ đề → một cửa; ca/cờ đỏ/câu hỏi hệ thống giữ đường cũ; hook nhắc + im lặng khi rác; mô tả 80 ký tự; cổng neo dashboard"
+
+
 def bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang():
     """27/10 — Kaspersky VPN rớt lúc 15:28 («Plugin initiated») ⇒ macOS ghi «No network route» ~930–1.000 dòng/phút ⇒ Mac mini MẤT
     MẠNG ~1 giờ 50 phút, chỉ hết khi bác sĩ khởi động lại 17:18 (Wi-Fi không rớt). Không gì báo, cách chữa duy nhất biết được là khởi
@@ -11247,6 +11306,7 @@ BAI_HOC = [
     ("BH121", "27/09", "Phủ mồ côi của sổ xác minh GIỮ phán quyết rút bài đã có (sổ phải hội tụ)", bh121_phu_mo_coi_giu_phan_quyet_rut_bai_da_co),
     ("BH149", "02/10", "Canh đĩa + log OneDrive (vòng lặp log tái diễn lần 3: 24 GB/24.796 tệp/54 tệp mỗi phút): đo thật, ĐỎ đúng ca 02/10, KHÔNG ĐO ĐƯỢC ≠ ổn, chỉ đo không xoá, hook có gọi", bh149_canh_dia_onedrive_do_that_va_khong_bao_xanh_khi_khong_do_duoc),
     ("BH171", "27/10", "Canh mạng + VPN (Kaspersky VPN rớt ⇒ «No network route» 1 giờ 50 phút tới khi khởi động lại): nhắc ở phút 2, tự nối lại VPN ≤ 2 lần, VPN tắt có mạng chỉ nhắc, không đo được ≠ ổn, state ngoài OneDrive, hook có gọi", bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang),
+    ("BH172", "28/10", "Một cửa vào cho câu hỏi CHỦ ĐỀ chứng cứ («tiếp cận … toàn diện dựa trên chứng cứ mới nhất» từng rẽ sang skill tổng thuật / trả lời từ trí nhớ): router + hook UserPromptSubmit nhắc + mô tả skill 80 ký tự + cổng --dashboard của xuat_tong_thuat", bh172_mot_cua_vao_chu_de_chung_cu),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
