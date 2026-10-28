@@ -179,7 +179,7 @@ Dựng dashboard (EW) → cổng liêm chính → an toàn thuốc (nếu liên 
 - Đề tài thật duy nhất hiện nay: `hai-long-benh-nhan-C1a-BVQY175` — tiến độ đo bằng `study_readiness.py`.
 
 ## 9. Tự động & lịch nền
-- Tác vụ lịch (app Claude trên Mac): đo sống bằng `list_scheduled_tasks` + `list_task_runs` và `python3 tools/kiem_lich_nen.py` (cảm biến theo TỪNG kỳ; kỳ vọng ở `sync/lich-nen-ky-vong.json`). Khôi phục/sửa tác vụ: chép `SKILL.md` từ NGUỒN GIT `sync/scheduled-tasks/` sang runtime, không chép ngược. Không tạo tệp hàng chờ tuần «gộp» để hết đỏ. App từng xoá cả loạt tác vụ — một phép đo lịch là ảnh chụp.
+- Tác vụ lịch (app Claude trên Mac): đo sống bằng `list_scheduled_tasks` + `list_task_runs` và `python3 tools/kiem_lich_nen.py` (cảm biến theo TỪNG kỳ; kỳ vọng ở `sync/lich-nen-ky-vong.json`). Khôi phục/sửa tác vụ: chép `SKILL.md` từ NGUỒN GIT `sync/scheduled-tasks/` sang runtime, không chép ngược. Không tạo tệp hàng chờ tuần «gộp» để hết đỏ. Quyền lượt lịch: khai ở `sync/quyen-lich-nen.json` (BH173). App từng xoá cả loạt tác vụ — một phép đo lịch là ảnh chụp.
 - Lưới đỡ khi máy không thức đúng giờ: `tools/tu_khoi_dong.py --phong` (chỉ phóng script chủ sở hữu trong allowlist; kết quả vào hàng ứng viên; tắt bằng `--tat`). Tự vá máy móc: `tools/tu_sua_chua.py --ap-dung` (KHÔNG đụng nội dung y khoa).
 - Bộ chốt bài học: `python3 tools/chot_hoi_quy_bai_hoc.py` (mỗi mục là một lỗi CÓ THẬT, kiểm HÀNH VI trên mã sống, nhanh, ngoại tuyến). Thêm/sửa mục ⇒ chạy TRỌN BỘ; miễn trừ theo từng match (`bh10-mien:` kèm lý do). Lịch sử từng mục: `audit/NHAT-KY-SU-CO.md` + `audit/nhat-ky/`.
 - CI GitHub Actions hai repo: đo sống bằng `gh run list`; bật/tắt Actions và hạn mức là việc của bác sĩ.

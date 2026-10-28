@@ -23,6 +23,11 @@ QUY TẮC CHẠY LỆNH — lượt lịch KHÔNG có ai bấm «cho phép» (th
 - Kiểm khoá quét ⇒ dùng Read đọc `EBM-Dashboards/.quet.lock` (không có tệp = không khoá), KHÔNG `ps`/`ls`.
 - Lượt vẫn còn sống mà một lệnh bị từ chối ⇒ ghi vào gói «⚪ bước <n> chưa chạy được — lệnh cần duyệt quyền: <lệnh>»,
   làm tiếp các bước không phụ thuộc; TUYỆT ĐỐI không bỏ qua âm thầm, không viết «không có gì mới».
+- QUYỀN ĐÃ KHAI (28/10/2026, bác sĩ duyệt «khai đúng lệnh»; W44 mất vì 16/17 lệnh chưa được phép): mọi lệnh của quy trình
+  này nằm ở `sync/quyen-lich-nen.json` và đã áp vào máy bằng `python3 tools/quyen_lich_nen.py --ap-dung`; lượt được GHI tệp
+  (Write/Edit) chỉ trong `queue/`, `alerts/`, `state/`, `EBM-Dashboards/surveillance/`. Không dùng `cp`/`ls`/`find`/`curl`:
+  sao chép = Read rồi Write; danh sách tệp = cờ của chính công cụ. Thêm lệnh mới vào tệp này ⇒ khai ở `sync/quyen-lich-nen.json`
+  trước (chốt BH173 đỏ nếu quên).
 
 QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 0. Chạy `python3 tools/doc_ket_qua_rut_bai_kho.py` (đọc dòng KẾT THÚC cuối của `state/kiem-rut-bai-kho.log` do tác vụ
@@ -32,13 +37,13 @@ QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
 1. Chạy `python3 EBM-Dashboards/tools/surveillance_scan.py --json-report state/tuan.json` (con trỏ tăng dần tự lo cửa sổ; tôn trọng khoá .quet.lock — bị khoá thì dừng, báo rõ).
 1b. Chạy làn đối chiếu `python3 tools/doi_chieu_openalex.py --toan-bo --ngay 10 --max 10` — ứng viên «⚡ chỉ-OpenAlex» đáng chú ý thì đưa vào cân nhắc chọn thẻ (vẫn ≤7 tổng).
 1c. Đọc `EBM-Dashboards/surveillance/ung-vien-ngoai-quet.jsonl` (nếu có) — ứng viên do worker/canary/phiên thường phát hiện NGOÀI vòng quét; mục `trang_thai` còn CANDIDATE thì cân nhắc chọn thẻ như 1b (vẫn ≤7 tổng, vẫn kiểm rút bài ở bước 4); đã lên thẻ hoặc bị loại thì cập nhật `trang_thai` kèm tuần xử lý — không xoá dòng (giữ dấu vết).
-2. Đọc state/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json. Khối `quan_sat_han_che` (thêm 03/10/2026, EV-03) liệt kê chủ đề thẩm quyền 0 ứng viên mà làn PubMed KHÔNG quan sát được văn bản chính thức — chép vào gói dạng «⚪ 0 ≠ không có cập nhật — kênh khác: …», TUYỆT ĐỐI không viết «không có gì mới» cho các chủ đề đó.
+2. Đọc state/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json (Read rồi Write — không `cp`). Khối `quan_sat_han_che` (thêm 03/10/2026, EV-03) liệt kê chủ đề thẩm quyền 0 ứng viên mà làn PubMed KHÔNG quan sát được văn bản chính thức — chép vào gói dạng «⚪ 0 ≠ không có cập nhật — kênh khác: …», TUYỆT ĐỐI không viết «không có gì mới» cho các chủ đề đó.
 2b. ĐO SẢN LƯỢNG TRUY VẤN + CHUỖI 0 ỨNG VIÊN (thêm 03/10/2026 — W39/W40: nhiều chủ đề 0 ứng viên mà lượt vẫn PASS, đề xuất viết lại truy vấn soạn 02/10 nằm chờ, không ai thấy). SAU bước 2 (tệp tuần này đã lưu):
    - `python3 tools/kiem_san_luong_giam_sat.py --json state/san-luong-giam-sat-gan-nhat.json --dung-lai-neu-moi-hon-ngay 2` (có mạng, ≈190 lời gọi esearch retmax=0). Mã 1 = có chủ đề «có thể mù» (≤3 bản ghi/90 ngày); mã 2 = NCBI chặn/mạng ⇒ ghi «⚪ chưa đo được sản lượng», TUYỆT ĐỐI không viết «không có chủ đề mù».
    - `python3 tools/kiem_chuoi_0_ung_vien.py` (ngoại tuyến): chủ đề 0 ứng viên ≥2 lượt tuần LIỀN (lượt/chủ đề suy giảm hoặc lỗi = KHÔNG ĐO ĐƯỢC, không bắc cầu) + đề xuất truy vấn CHỜ DUYỆT + sản lượng vừa đo. Mã 1 = có việc; mã 2 = không đo được (ghi ⚪, không phải ổn).
    Chép phần nó in vào mục tình trạng giám sát của gói. Chủ đề 0 ứng viên KHÔNG BAO GIỜ được viết là «không có gì mới»: «0 ứng viên ≠ không có chứng cứ mới». Có đề xuất chờ duyệt ⇒ ghi cho bác sĩ lệnh duyệt `python3 tools/ap_dung_de_xuat_watchlist.py` (chạy khô; bác sĩ đọc `_ly_do` rồi tự `--ap-dung`). Lượt lịch KHÔNG tự áp đề xuất, KHÔNG sửa watchlist, KHÔNG đổi PASS của bộ quét.
 3. Chọn TỐI ĐA 7 thẻ theo tác động lâm sàng ngoại trú (ưu tiên: guideline/nhãn an toàn > SR/MA > RCT lớn; loại mục da_co_trong_kho; mục rut_bai dương tính → alerts, KHÔNG vào queue). Phần dư GIỮ LẠI có ghi chú — không bỏ âm thầm.
-4. Với 7 PMID được chọn: kiểm rút bài qua `~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (PHẢI venv — python3 hệ thống làm tầng NCBI rụng âm thầm, alert 17/08); lấy abstract qua efetch để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
+4. Với 7 PMID được chọn: kiểm rút bài qua `~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py <PMIDs>` (PHẢI venv — python3 hệ thống làm tầng NCBI rụng âm thầm, alert 17/08); lấy abstract bằng `python3 tools/tra_dinh_danh.py --pmids <PMIDs> --abstract` để trích HIỆU SỐ ĐÚNG NHƯ NGUỒN BÁO CÁO (không quy đổi HR/RR/OR; không thấy số thì ghi "tóm tắt không nêu").
 4b. ĐỌC TOÀN VĂN trước khi thẩm định (thêm 19/08 — trước đó gói tuần thẩm định 100% từ
 tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    `python3 tools/gom_toan_van_dashboard.py --queue queue/tuan-<W>.md --unpaywall` (tải OA hợp pháp,
@@ -101,9 +106,9 @@ Chạy `python3 tools/tu_de_xuat_viec.py` và đặt bảng này LÊN ĐẦU gó
 đây là câu trả lời tự động cho «hệ còn gì để hoàn thiện», mỗi dòng có số đo.
 
 ## Bổ sung 16/08 (phái sinh tươi): XUẤT LẠI bản Word/bản-đọc cho dashboard đã đổi
-Sau bước quét, liệt kê dashboard có `derivatives/<mã>_TaiLieuChiTiet.docx` CŨ HƠN chính
-file dashboard (mtime) — với TỐI ĐA 5 bản đổi gần nhất, chạy
-`python3 tools/xuat_goi_cap_nhat.py <file>.html --online` để bác sĩ không đọc bản lỗi
+Sau bước quét, liệt kê dashboard có bản Word/bản-đọc CŨ HƠN nội dung bằng
+`python3 tools/tu_de_xuat_viec.py --phai-sinh-cu` (mỗi dòng một đường dẫn) — với TỐI ĐA 5 bản, chạy
+`python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/<file>.html --online` để bác sĩ không đọc bản lỗi
 thời; còn dư thì ghi số lượng vào gói (giác quan ⑩ của bảng tự-đề-xuất cũng đếm).
 
 ## Bổ sung 16/08 (vòng nội dung): ĐẶT CẠNH chứng cứ đang dùng vs nguồn mới hơn
