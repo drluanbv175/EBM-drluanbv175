@@ -1,0 +1,55 @@
+{
+  "_ghi_chu": "KHAI QUYỀN cho lượt LỊCH NỀN (28/10/2026, bác sĩ chọn «khai đúng lệnh»). Lượt lịch chạy ở chế độ quyền «default», không có ai bấm «cho phép»: lệnh nào chưa nằm sẵn trong permissions.allow là lượt bị CẮT NGANG mà vẫn ghi «succeeded» — gói tuần W44 (26/10/2026) mất vì `python3 tools/tu_de_xuat_viec.py` đòi duyệt (đo: 16/17 lệnh của gói tuần chưa được phép, 0 quyền ghi tệp). Tệp này đi qua git; `tools/quyen_lich_nen.py --ap-dung` áp vào .claude/settings.local.json của MÁY (sao lưu trước, chỉ THÊM đúng các mục khai ở đây). Mỗi lệnh khai Y NHƯ trong SKILL.md của tác vụ, «*» thay chỗ tham số (tuần, PMID, tệp). Thêm lệnh mới vào SKILL.md của tác vụ ⇒ khai thêm ở đây rồi `--ap-dung`; `tools/quyen_lich_nen.py` (giác quan của bảng tự đề xuất + chốt BH173) báo TRƯỚC khi lượt lịch hỏng.",
+  "_ranh_gioi": "CHỈ lệnh ĐO/BÁO/DỰNG GÓI của quy trình đã được bác sĩ duyệt; KHÔNG khai lệnh ghi quyết định thay bác sĩ (ap_dung_de_xuat_watchlist --ap-dung, ghi_vuot_qua_da_xet, approve_gate, nap_endnote --ap-dung…). Lệnh SKILL.md chỉ in cho bác sĩ tự chạy thì khai ở `khong_chay` của tác vụ, không vào allow.",
+  "nen_tang": "darwin",
+  "tac_vu": {
+    "goi-duyet-tuan-ebm": {
+      "lenh": [
+        "python3 tools/doc_ket_qua_rut_bai_kho.py",
+        "python3 tools/tu_de_xuat_viec.py",
+        "python3 tools/tu_de_xuat_viec.py --phai-sinh-cu",
+        "python3 EBM-Dashboards/tools/surveillance_scan.py --json-report state/tuan.json",
+        "python3 tools/doi_chieu_openalex.py --toan-bo --ngay 10 --max 10",
+        "python3 tools/kiem_san_luong_giam_sat.py --json state/san-luong-giam-sat-gan-nhat.json --dung-lai-neu-moi-hon-ngay 2",
+        "python3 tools/kiem_chuoi_0_ung_vien.py",
+        "~/.ebm-venv/bin/python medical-ebm-automation/tools/check_citation_retraction.py *",
+        "python3 tools/tra_dinh_danh.py --pmids * --abstract",
+        "python3 tools/gom_toan_van_dashboard.py --queue queue/tuan-* --unpaywall",
+        "python3 tools/doc_sau_toan_van.py --queue queue/tuan-*",
+        "python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-*",
+        "python3 tools/kiem_mau_the_chung_cu_tuan.py queue/tuan-*",
+        "python3 tools/tuyen_bo_do_phu.py",
+        "python3 tools/do_tac_dong.py --ngay 7",
+        "python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/*.html --online",
+        "python3 tools/dat_canh_chung_cu_moi.py --top 12",
+        "python3 tools/dung_hom_thu.py"
+      ],
+      "khong_chay": ["python3 tools/ap_dung_de_xuat_watchlist.py", "python3 tools/quyen_lich_nen.py --ap-dung"],
+      "ghi": ["queue/**", "alerts/**", "state/**", "EBM-Dashboards/surveillance/**"]
+    },
+    "kiem-rut-bai-kho-thang": {
+      "lenh": [
+        "python3 tools/sync_safety_check.py",
+        "python3 tools/chu_trinh_chung_cu.py --vong 3 --ghi-log state/kiem-rut-bai-kho.log",
+        "python3 tools/mau_ky_rut_bai.py"
+      ],
+      "khong_chay": [],
+      "ghi": ["alerts/**", "state/**"]
+    },
+    "kiem-tra-hoan-thien-he-thong-thang": {
+      "_ghi_chu": "Chỉ khai các lệnh ĐO. Bước SỬA (sửa mã, chạy pytest, commit, mở PR) cố ý KHÔNG khai: lượt lịch dừng ở đó để có người duyệt.",
+      "lenh": [
+        "python3 tools/chot_hoi_quy_bai_hoc.py",
+        "python3 tools/kiem_dieu_phoi.py",
+        "python3 tools/verify_claude_code_repo_alignment.py",
+        "python3 tools/kiem_plugin_day_du.py",
+        "python3 tools/do_su_dung_cong_cu.py --thang * --ghi",
+        "python3 tools/do_su_dung_cong_cu.py --tong-hop",
+        "~/.ebm-venv/bin/python tools/kiem_chi_tiet_he_nghien_cuu.py --study * --no-write",
+        "~/.ebm-venv/bin/python tools/list_studies.py"
+      ],
+      "khong_chay": [],
+      "ghi": ["state/**"]
+    }
+  }
+}

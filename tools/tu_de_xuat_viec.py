@@ -1106,13 +1106,21 @@ def dem_ngoai_giam_sat(dong: list[dict], da_ra: dict) -> tuple[int, list[str]]:
 
 
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
-    """Đếm dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
+    """Số dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời (xem `liet_ke_dashboard_phai_sinh_loi_thoi`)."""
+    return len(liet_ke_dashboard_phai_sinh_loi_thoi(dash_dir))
+
+
+def liet_ke_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> list[Path]:
+    """Liệt kê dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời so với nội dung.
+
+    28/10/2026: tách từ hàm đếm để lượt lịch gói tuần lấy được TÊN tệp bằng MỘT lệnh đã khai quyền
+    (`--phai-sinh-cu`) — trước đó bước «xuất lại phái sinh» phải tự `ls`/`find`, mà lệnh đó bị chặn ở lượt lịch.
 
     Ưu tiên so HASH khối `const DATA` (sidecar `<tên>.data-sha256` cạnh file
     `.docx`, ghi bởi `xuat_goi_cap_nhat.py` mỗi lần xuất — xem BH76). Không có
     sidecar (dashboard chưa từng qua cơ chế mới) thì lùi về heuristic MTIME cũ:
-    docx thiếu hoặc cũ hơn html. Trả về số dashboard thật sự lỗi thời."""
-    n_cu = 0
+    docx thiếu hoặc cũ hơn html."""
+    cu: list[Path] = []
     vd = None
     try:
         tools_dir = str(dash_dir / "tools")
@@ -1129,7 +1137,7 @@ def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
                     dash_dir / "derivatives" / f"{f_db.stem}_TaiLieuChiTiet.docx"]
         docx = next((d for d in cac_docx if d.exists()), None)
         if docx is None:
-            n_cu += 1
+            cu.append(f_db)
             continue
         sidecar = docx.with_suffix(".data-sha256")
         if sidecar.exists() and vd is not None:
@@ -1140,20 +1148,26 @@ def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
                               if data_block else None)
                 h_luc_xuat = sidecar.read_text(encoding="utf-8").strip()
                 if h_hien_tai is not None and h_hien_tai != h_luc_xuat:
-                    n_cu += 1
+                    cu.append(f_db)
                 continue
             except OSError:
                 pass  # đọc lỗi ⇒ lùi về heuristic mtime bên dưới
         if docx.stat().st_mtime < f_db.stat().st_mtime:
-            n_cu += 1
-    return n_cu
+            cu.append(f_db)
+    return cu
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Bảng đề xuất việc tự sinh từ bộ đếm sống")
     ap.add_argument("--gon", action="store_true", help="chỉ in bảng, bỏ phần giải thích")
     ap.add_argument("--json", type=Path, default=None, help="ghi bảng dạng máy đọc (cho hom_viec_mot_cua.py)")
+    ap.add_argument("--phai-sinh-cu", action="store_true",
+                    help="chỉ in đường dẫn dashboard có bản Word/bản-đọc cũ hơn nội dung (lượt lịch gói tuần dùng)")
     a = ap.parse_args()
+    if a.phai_sinh_cu:
+        for f in liet_ke_dashboard_phai_sinh_loi_thoi(DASH):
+            print(f.relative_to(REPO).as_posix() if f.is_relative_to(REPO) else f)
+        return 0
     de_xuat: list[tuple[int, str, str, str]] = []  # (ưu tiên, ai, việc+số đo, lệnh)
 
     # ① Sổ xác minh — độ phủ & rút bài. Sửa 16/08: đọc dòng «Chưa/hết hạn» TRỰC
@@ -1329,6 +1343,25 @@ def main() -> int:
         _THONG_TIN.extend(_tt)
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+
+    # ⑦f-bis QUYỀN LƯỢT LỊCH (28/10/2026, BH173): ⑦f chỉ thấy SAU khi kỳ đã lỡ; lượt lịch không có ai bấm «cho phép» nên lệnh
+    # chưa nằm trong permissions.allow cắt ngang lượt mà vẫn ghi «succeeded» (W44). Báo TRƯỚC kỳ: lệnh SKILL.md chưa khai (👤 —
+    # khai thêm là quyết định của bác sĩ) · quy tắc đã khai mà máy chưa áp (🤖 — `--ap-dung` chỉ thêm đúng mục đã khai).
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        _sp_qln = _ilu_mea.spec_from_file_location("_qln_tdxv", Path(__file__).resolve().parent / "quyen_lich_nen.py")
+        _qln = _ilu_mea.module_from_spec(_sp_qln)
+        _sp_qln.loader.exec_module(_qln)
+        _kq_qln = _qln.kiem()
+        if _kq_qln["thieu_khai"]:
+            de_xuat.append((0, "👤", f"{len(_kq_qln['thieu_khai'])} lệnh trong SKILL.md tác vụ lịch CHƯA khai quyền "
+                            f"(vd {_kq_qln['thieu_khai'][0][0]}: {_kq_qln['thieu_khai'][0][1][:80]}) — lượt lịch sẽ bị cắt ngang "
+                            "mà vẫn ghi «succeeded»", "khai ở sync/quyen-lich-nen.json rồi python3 tools/quyen_lich_nen.py --ap-dung"))
+        if _kq_qln["thieu_may"]:
+            de_xuat.append((0, "🤖", f"{len(_kq_qln['thieu_may'])} quy tắc quyền lượt lịch đã khai mà máy CHƯA áp — lượt lịch kế "
+                            "tiếp sẽ bị cắt ngang", "python3 tools/quyen_lich_nen.py --ap-dung"))
+    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
+        _ghi_chet(["python3", "tools/quyen_lich_nen.py"], f"lỗi {type(_exc).__name__}")
 
     # ⑦h URL MIỀN CHẶN BOT (02/10/2026): bác sĩ tự vượt kiểm tra chống bot, máy ghi bằng chứng — xem docstring.
     for uu, dong, lenh in giac_quan_url_chan_bot(DASH):
