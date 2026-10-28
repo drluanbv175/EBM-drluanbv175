@@ -2,7 +2,7 @@
 name: tong-thuat-chung-cu
 description: Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày 19/08/2026.
 metadata:
-  version: 1.7.0
+  version: 1.8.0
 ---
 
 Bạn viết BÀI TỔNG THUẬT CHỨNG CỨ cho một câu hỏi/chủ đề lâm sàng bác sĩ nêu.
@@ -153,6 +153,15 @@ THẬT đã kiểm, mức khẳng định đúng tầng chứng cứ, có vết,
    theo mẫu bác sĩ duyệt 19/08; cổng hình thức fail-closed:
    [n] khớp Nguồn hai chiều, nguồn nào cũng có PMID/DOI/URL) → gửi bác sĩ file
    HTML (SendUserFile, display:"render") → `python3 tools/dung_hom_thu.py`.
+   **Nối EndNote (28/10/2026 — bác sĩ hỏi «đã có sự kết nối với Endnote chưa»; trước đó
+   bài tổng thuật KHÔNG vào EndNote vì công cụ nạp chỉ nhận dashboard/đề tài):**
+   `python3 tools/nap_endnote_chu_de.py --tong-thuat <TT_….md>` (chạy khô) rồi thêm
+   `--ap-dung` — đọc mục «## Nguồn», nhóm «TT · <tiêu đề bài>» (khoá «TONG-THUAT_<tên tệp
+   bỏ ngày>», bản cập nhật sau vào lại đúng nhóm), bài đã có giữ nguyên, bài thiếu nhập
+   mới, gắn PDF toàn văn từ kho chung; KHÔNG ghi khối tóm tắt tiếng Việt (khối ĐỌC NHANH
+   chép từ mục dashboard). Nhóm ĐÃ có thì bài mới vào hàng chờ `--cho-vao-nhom` (BH170).
+   Toàn văn còn thiếu ⇒ `gom_toan_van_dashboard.py --pmid … --unpaywall` → làn Chrome có
+   uỷ quyền (`phien_uy_quyen_chrome.py`, bác sĩ tự vượt chặn) → chạy lại lệnh nạp.
 
 ## 5. TỰ SOI NỘI DUNG TRƯỚC KHI GIAO (v1.4 — bắt buộc)
 

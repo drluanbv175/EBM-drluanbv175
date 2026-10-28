@@ -54,10 +54,17 @@ Dùng:
   python3 tools/nap_endnote_chu_de.py --loai-tru <DOI|PMID> --ly-do "<lý do của bác sĩ>" [--ap-dung]
   python3 tools/nap_endnote_chu_de.py --cho-vao-nhom ["<tên nhóm>"]   # hàng chờ đưa vào nhóm đã có; có tên ⇒ hiện bài trong EndNote
   python3 tools/nap_endnote_chu_de.py --de-tai <mã đề tài> [--ap-dung] [--ten-nhom "NC · …"]
+  python3 tools/nap_endnote_chu_de.py --tong-thuat EBM-Dashboards/tong_thuat/TT_<slug>.md [--ap-dung] [--ten-nhom "TT · …"]
 ĐỀ TÀI NGHIÊN CỨU (25/10/2026): `--de-tai <mã>` đọc `medical-ebm-automation/exports/<mã>/DANH_MUC_TRICH_DAN_<mã>.json` (khoá
 `trich_dan[]`: id, pmid, doi) thay cho khối DATA của dashboard rồi đi ĐÚNG đường `nap_nhieu` (kiểm trùng, loại trừ, thùng rác,
 khoá ghi, nhóm theo group_id, gắn PDF từ kho chung). Nhóm mặc định «NC · <tên đề tài> (<mã>)», khoá chủ đề «DE-TAI_<mã>». KHÔNG
 ghi tóm tắt tiếng Việt — bác sĩ dặn 25/10/2026: trích dẫn đề tài không cần tóm tắt chi tiết nhưng phải có toàn văn.
+BÀI TỔNG THUẬT (28/10/2026 — bác sĩ hỏi bài tổng thuật suy tim «đã có sự kết nối với Endnote chưa»: chưa, vì công cụ chỉ nhận
+dashboard/đề tài): `--tong-thuat <TT_….md>` đọc mục «## Nguồn» của bài (skill tong-thuat-chung-cu, danh mục Vancouver đánh số,
+mỗi dòng mang PMID và/hoặc doi) rồi đi CÙNG đường `nap_nhieu`. Nhóm mặc định «TT · <tiêu đề bài>», khoá chủ đề
+«TONG-THUAT_<tên tệp bỏ đuôi ngày>» (bản cập nhật sau của cùng bài vào lại đúng nhóm đã ghi nhớ). KHÔNG ghi khối tóm tắt
+tiếng Việt: khối «ĐỌC NHANH» chép từ mục của dashboard, bài tổng thuật không có mục — bản ghi đã có từ dashboard giữ nguyên
+khối của nó; toàn văn vẫn gom và gắn như mọi chủ đề.
 DANH SÁCH LOẠI TRỪ CỦA BÁC SĨ (18/10/2026 — bản ghi bác sĩ đã bỏ vào thùng rác bị bước ⑧ nhập lại mỗi lượt bộ năm): khoá
 `bo_qua` của `~/.ebm-endnote.json`, mỗi mục {doi|pmid, ly_do, ngay}. Định danh trong đó KHÔNG nhập, KHÔNG đăng vào nhóm, KHÔNG
 gắn PDF/ghi khối tóm tắt — bản ghi khác không bị ảnh hưởng; bản ghi còn nằm trong thư viện chỉ được BÁO (công cụ không xoá).
@@ -110,6 +117,7 @@ CAU_HINH = Path(os.environ.get("EBM_ENDNOTE_CAU_HINH") or (Path.home() / ".ebm-e
 UNG_DUNG_MAC_DINH = "EndNote 2025"
 TIEN_TO_NHOM = "EBM · "
 TIEN_TO_NHOM_DE_TAI = "NC · "  # trích dẫn của một ĐỀ TÀI nghiên cứu (--de-tai, 25/10/2026) — tách khỏi nhóm chứng cứ «EBM · »
+TIEN_TO_NHOM_TONG_THUAT = "TT · "  # danh mục nguồn của một BÀI TỔNG THUẬT (--tong-thuat, 28/10/2026)
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 CROSSREF = "https://api.crossref.org/works/"
 LO_EFETCH = 150
@@ -491,6 +499,42 @@ def doc_de_tai(ma: str, exports: Path) -> tuple[dict, Path]:
              for d in dm["trich_dan"] if isinstance(d, dict)]
     data = {"meta": {"question": ten_de_tai(meta if isinstance(meta, dict) else None, ma)}, "items": items}
     return data, Path(f"DE-TAI_{ma}.json")
+
+
+# ── đọc danh mục nguồn của một BÀI TỔNG THUẬT (28/10/2026) ──────────────────────────────────────────
+
+_PMID_NGUON_TT = re.compile(r"\bPMID[:\s]*(\d{1,9})\b")
+_DOI_NGUON_TT = re.compile(r"\bdoi:\s*(10\.\d{4,9}/\S+)", re.I)
+
+
+def doc_tong_thuat(tep: Path) -> tuple[dict, Path]:
+    """Bài tổng thuật (markdown của skill tong-thuat-chung-cu) → (khối giống DATA của dashboard, tên tệp GIẢ
+    `TONG-THUAT_<khoá>.json`). Chỉ đọc mục «## Nguồn»: mỗi dòng «n. …» lấy PMID («PMID n») và/hoặc DOI («doi:10.…»);
+    dòng không mang định danh nào bị bỏ (không đoán từ tiêu đề). Tiêu đề nhóm = dòng «# …» đầu bài.
+    Khoá = tên tệp bỏ tiền tố «TT_» và đuôi «_YYYYMMDD» — bản cập nhật sau của cùng bài vào đúng nhóm đã ghi nhớ.
+    Thiếu tệp / không có mục Nguồn / không định danh nào ⇒ KhongChayDuoc (không nạp gì)."""
+    if not tep.is_file():
+        raise KhongChayDuoc(f"không thấy bài tổng thuật: {tep}")
+    try:
+        md = tep.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        raise KhongChayDuoc(f"không đọc được {tep.name}: {type(e).__name__}: {e}"[:300]) from e
+    phan = re.split(r"^## Nguồn\s*$", md, maxsplit=1, flags=re.M)
+    if len(phan) != 2:
+        raise KhongChayDuoc(f"{tep.name} không có mục «## Nguồn» — không phải bài tổng thuật đúng khuôn")
+    m_tieu_de = re.search(r"^# (.+)$", phan[0], re.M)
+    items: list[dict] = []
+    for m in re.finditer(r"^(\d{1,3})\.\s+(.+)$", phan[1], re.M):
+        dong = m.group(2)
+        pm = _PMID_NGUON_TT.search(dong)
+        do = _DOI_NGUON_TT.search(dong)
+        if pm or do:
+            items.append({"id": f"TT-{m.group(1)}", "pmid": pm.group(1) if pm else None, "doi": do.group(1) if do else None})
+    if not items:
+        raise KhongChayDuoc(f"{tep.name}: mục «## Nguồn» không có dòng nào mang PMID/DOI")
+    khoa = re.sub(r"_\d{8}$", "", re.sub(r"^TT_", "", tep.stem)) or tep.stem
+    tieu_de = m_tieu_de.group(1).strip() if m_tieu_de else khoa
+    return {"meta": {"question": tieu_de}, "items": items}, Path(f"TONG-THUAT_{khoa}.json")
 
 
 # ── metadata: PubMed / Crossref ────────────────────────────────────────────────────────────────────
@@ -1977,6 +2021,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--de-tai", metavar="MA_DE_TAI",
                     help="nạp danh mục trích dẫn của MỘT đề tài nghiên cứu (medical-ebm-automation/exports/<mã>/"
                          "DANH_MUC_TRICH_DAN_<mã>.json) vào nhóm «NC · …»; KHÔNG ghi tóm tắt tiếng Việt (chạy khô mặc định)")
+    ap.add_argument("--tong-thuat", metavar="TEP_MD",
+                    help="nạp mục «## Nguồn» của MỘT bài tổng thuật (EBM-Dashboards/tong_thuat/TT_….md) vào nhóm «TT · …»; "
+                         "KHÔNG ghi tóm tắt tiếng Việt (chạy khô mặc định)")
     ap.add_argument("--ap-dung", action="store_true", help="nạp thật vào EndNote (mặc định chạy khô)")
     ap.add_argument("--ten-nhom", help="đặt tên nhóm thay cho câu hỏi lâm sàng (chỉ khi một --file)")
     ap.add_argument("--xuat-xml", help="chỉ ghi tệp XML để nhập tay (máy không phải Mac)")
@@ -2017,6 +2064,12 @@ def main(argv: list[str] | None = None) -> int:
                                  or a.loai_tru is not None or a.cho_vao_nhom is not None):
         print("✗ --de-tai không đi cùng --file/--tat-ca/--gan-kho/--tom-tat-vi/--tom-tat-thu-vien/--ghi-cau-hinh/--loai-tru/"
               "--cho-vao-nhom")
+        return MA_THAM_SO
+    if a.tong_thuat is not None and (a.de_tai is not None or a.file or a.tat_ca or a.gan_kho or a.tom_tat_vi
+                                     or a.tom_tat_thu_vien or a.ghi_cau_hinh or a.loai_tru is not None
+                                     or a.cho_vao_nhom is not None):
+        print("✗ --tong-thuat không đi cùng --de-tai/--file/--tat-ca/--gan-kho/--tom-tat-vi/--tom-tat-thu-vien/--ghi-cau-hinh/"
+              "--loai-tru/--cho-vao-nhom")
         return MA_THAM_SO
 
     if a.cho_vao_nhom is not None:
@@ -2096,6 +2149,21 @@ def main(argv: list[str] | None = None) -> int:
         # chạy bước tóm tắt; PDF trong kho chung vẫn được đính/gắn như mọi chủ đề.
         a.khong_tom_tat = True
         print(f"Đề tài {a.de_tai}: {len(data_de_tai['items'])} trích dẫn trong danh mục · không ghi tóm tắt tiếng Việt")
+    if a.tong_thuat is not None:
+        try:
+            data_tt, gia_tt = doc_tong_thuat(Path(a.tong_thuat))
+        except KhongChayDuoc as e:
+            print(f"✗ {e}")
+            return MA_KHONG_CHAY
+
+        def doc_data(_p: Path) -> dict:
+            return data_tt
+
+        files = [gia_tt]
+        # Khối «ĐỌC NHANH» chép từ mục của dashboard — bài tổng thuật không có mục; bản ghi đã có giữ khối của dashboard gốc.
+        a.khong_tom_tat = True
+        print(f"Bài tổng thuật {Path(a.tong_thuat).name}: {len(data_tt['items'])} nguồn mang PMID/DOI · "
+              "không ghi tóm tắt tiếng Việt")
     if a.tat_ca:
         if dash_goc is None:
             print("✗ không thấy thư mục EBM-Dashboards/ (bản sao trần?) — dùng --file")
@@ -2120,7 +2188,7 @@ def main(argv: list[str] | None = None) -> int:
         print("✗ --ten-nhom chỉ dùng với đúng một --file")
         return MA_THAM_SO
     # Đề tài: tệp giả không có thư mục thật — không đoán `toan_van_oa` cạnh thư mục đang đứng, dùng kho chung.
-    kho = xac_dinh_kho(a.kho_toan_van, dash_goc, [] if a.de_tai is not None else files)
+    kho = xac_dinh_kho(a.kho_toan_van, dash_goc, [] if (a.de_tai is not None or a.tong_thuat is not None) else files)
 
     if a.xuat_xml:
         # Đường cho máy không phải Mac: một tệp XML để nhập tay; không đính PDF (không có đường vào thư viện).
@@ -2258,14 +2326,15 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(bc, ensure_ascii=False, indent=2, default=str))
         return MA_KHONG_CHAY if bc is None or bc.get("loi") else MA_OK
 
-    tien_to = TIEN_TO_NHOM_DE_TAI if a.de_tai is not None else TIEN_TO_NHOM
+    tien_to = (TIEN_TO_NHOM_DE_TAI if a.de_tai is not None
+               else TIEN_TO_NHOM_TONG_THUAT if a.tong_thuat is not None else TIEN_TO_NHOM)
     ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom, loai_tru=loai_tru,
                         doc_data=doc_data, tien_to=tien_to)
     if a.ap_dung and endnote is not None and not a.khong_tom_tat:
         # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
         chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh, bo_qua=bo_qua_tom_tat())
     if a.ap_dung and endnote is not None and any(b.get("thieu_toan_van") for b in ket_qua):
-        nguon = "--pmid <PMID…>" if a.de_tai is not None else "--file <dashboard>"
+        nguon = "--pmid <PMID…>" if (a.de_tai is not None or a.tong_thuat is not None) else "--file <dashboard>"
         print("Toàn văn còn thiếu — làn kế tiếp, rồi chạy lại lệnh này để gắn PDF mới vào nhóm:\n"
               f"  1. python3 tools/gom_toan_van_dashboard.py {nguon} --unpaywall   (bản truy cập mở)\n"
               "  2. python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID…>   (bài thuê bao: làn Chrome có uỷ quyền,\n"
