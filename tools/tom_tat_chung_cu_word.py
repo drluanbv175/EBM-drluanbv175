@@ -292,10 +292,14 @@ def _chuan_so(s: str) -> str:
     """Chuẩn hoá cách viết số hai phía như nhau: «0·70»→0.70; phân cách nghìn «10,000» hoặc «10 000» (dấu cách MẢNH/không
     ngắt) → 10000; phẩy thập phân → chấm. KHÔNG coi dấu cách THƯỜNG là phân cách nghìn: văn bản tách từ bảng PDF đặt các số
     cạnh nhau bằng dấu cách («122±15 121±15», «LCZ696 100 mg») — gộp chúng tạo ra số không có thật (đo 19/10: «15121»,
-    «696100»). Bỏ phân cách nghìn TRƯỚC khi NFKC (NFKC đổi dấu cách mảnh/không ngắt thành dấu cách thường)."""
+    «696100»). Bỏ phân cách nghìn TRƯỚC khi NFKC (NFKC đổi dấu cách mảnh/không ngắt thành dấu cách thường).
+    28/10/2026: pypdf hay tách số thập phân — «7 .9%», «11 ·1», «2·⏎12» (Lancet, NEJM) — nên số đúng của bài bị cổng báo «không có
+    trong bài» và người soạn phải viết lách «7 phẩy 9%». Ghép lại: chấm có dấu cách ĐỨNG TRƯỚC (câu văn không bao giờ đặt dấu cách
+    trước dấu chấm) và chấm giữa «·» có khoảng trắng hai bên. KHÔNG ghép «3. 12» (chấm cuối câu rồi số mới)."""
     s = re.sub(r"(?<=\d)[,\u2009\u202f\u00a0](?=\d{3}(?!\d))", "", s or "")
+    s = re.sub(r"(?<=\d)[ \t]+\.(?=\d)", ".", s)
     s = unicodedata.normalize("NFKC", s)
-    s = re.sub(r"(?<=\d)[\u00b7\u22c5](?=\d)", ".", s)
+    s = re.sub(r"(?<=\d)\s*[\u00b7\u22c5]\s*(?=\d)", ".", s)
     return re.sub(r"(?<=\d),(?=\d)", ".", s)
 
 

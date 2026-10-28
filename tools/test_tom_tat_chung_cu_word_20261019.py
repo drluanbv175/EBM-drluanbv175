@@ -201,6 +201,17 @@ def test_dau_cach_thuong_khong_gop_so_bang_pdf():
     assert T.cac_so("08/12/2009") == ["8", "12", "2009"]
 
 
+def test_so_thap_phan_bi_pdf_tach_van_khop():
+    """28/10/2026: pypdf tách «7.9%» thành «7 .9%», «1·01» thành «1 ·01», «2·12» xuống dòng — số đúng của bài bị báo «không có trong
+    bài» và người soạn phải viết lách «7 phẩy 9%». Chấm có dấu cách đứng TRƯỚC và chấm giữa có khoảng trắng được ghép lại."""
+    assert T.cac_so("7 .9%") == ["7.9"]
+    assert T.cac_so("HR 1 ·01 (0·85–1·21)") == ["1.01", "0.85", "1.21"]
+    assert T.cac_so("1·62–2·\n12") == ["1.62", "2.12"]
+    # chấm cuối câu rồi số mới KHÔNG được ghép thành số thập phân giả
+    assert T.cac_so("Figure 3. 12 patients") == ["3", "12"]
+    assert T.cac_so("group 7.\n9 patients") == ["7", "9"]
+
+
 def test_huong_dan_day_moi_truong_so_va_luat_cong():
     hd = T.huong_dan_doc()
     for k in T.TRUONG_SO + T.KHOA_DIEM_NHAN + ("may_tinh", "can_xac_nhan", "danh_gia", "[ngoài bài", "RoB 2", "AMSTAR-2",
