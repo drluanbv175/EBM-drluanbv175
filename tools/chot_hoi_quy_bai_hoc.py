@@ -9330,7 +9330,8 @@ def bh172_mot_cua_vao_chu_de_chung_cu():
     chọn «Bác sĩ hỏi MỘT chủ đề lâm sàng → tổng thuật». Bác sĩ chọn «một cửa vào». Kiểm HÀNH VI: (1) route() đưa câu thật 28/10
     vào skill cap-nhat-chung-cu-y-khoa, ca cụ thể/cờ đỏ/câu hỏi về hệ thống KHÔNG bị kéo vào; (2) hook nhắc in additionalContext
     cho câu chủ đề, im lặng và mã 0 với rác; settings.json đi qua git có khai hook; (3) 80 ký tự đầu mô tả skill nói rõ cửa vào;
-    (4) xuat_tong_thuat chặn nguồn ngoài dashboard (PMID khớp trọn số)."""
+    (4) xuat_tong_thuat chặn nguồn ngoài dashboard (PMID khớp trọn số); (5) 29/10: lệnh hook khai ở `.claude/settings.json`
+    của repo y khoa (cầu nối gọi hook nhắc của repo gốc) cũng chạy ra lời nhắc — Claude Code không đọc settings của thư mục cha."""
     import json as _json
     import subprocess
     sys.path.insert(0, str(REPO))
@@ -9365,6 +9366,26 @@ def bh172_mot_cua_vao_chu_de_chung_cu():
                        capture_output=True, timeout=30, env={**_os.environ, "CLAUDE_PROJECT_DIR": str(REPO)})
     if len(lenh) != 1 or SKILL_CAP_NHAT_CHUNG_CU.encode() not in r.stdout:
         return False, "lệnh UserPromptSubmit khai trong settings.json (đi qua git) không chạy ra lời nhắc một cửa — hook có mà không ai gọi (BH41)"
+    # 29/10 — Claude Code chỉ đọc settings của THƯ MỤC DỰ ÁN đang mở: phiên mở trong repo y khoa (nhóm «Nghiên cứu y khoa đăng
+    # tạp chí», cả worktree của nó) không thấy hook ở trên ⇒ repo y khoa khai hook riêng gọi cầu nối tools/nhac_dinh_tuyen_cau_noi.py
+    # (chạy ĐÚNG hook nhắc của repo gốc). Chỉ đo khi repo y khoa LỒNG trong repo gốc — bố cục thật của Mac/Windows nơi bác sĩ mở
+    # phiên; bản sao trần/Cloud (anh em, một-repo) không có phiên y khoa nào nhận hook này ⇒ ⚪, không xanh giả.
+    y_khoa = REPO / "medical-ebm-automation"
+    if (y_khoa / ".git").exists():
+        try:
+            cfg_yk = _json.loads((y_khoa / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            lenh_yk = [h["command"] for m in cfg_yk["hooks"]["UserPromptSubmit"] for h in m["hooks"]]
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            return False, f"repo y khoa không khai hook UserPromptSubmit — phiên mở ở đó mất một cửa vào (checkout cũ ⇒ git pull): {e}"
+        env_yk = {k: v for k, v in _os.environ.items() if k != "EBM_WORKSPACE_ROOT"}
+        env_yk["CLAUDE_PROJECT_DIR"] = str(y_khoa)
+        r = subprocess.run([bash, "-c", lenh_yk[0] if len(lenh_yk) == 1 else "false"], input=_json.dumps({"prompt": cau}).encode("utf-8"),
+                           capture_output=True, timeout=30, env=env_yk)
+        if len(lenh_yk) != 1 or SKILL_CAP_NHAT_CHUNG_CU.encode() not in r.stdout:
+            return False, "lệnh UserPromptSubmit của repo y khoa không chạy ra lời nhắc một cửa — phiên mở ở đó đi lại đường 28/10 (BH41)"
+        phien_yk = "phiên mở trong repo y khoa cũng được nhắc"
+    else:
+        phien_yk = "⚪ không có repo y khoa lồng (bản sao trần/Cloud) — chưa đo phiên y khoa"
 
     def _mo_ta(sk):
         dau = (REPO / "sync" / "skills" / sk / "SKILL.md").read_text(encoding="utf-8").split("---")[1]
@@ -9378,7 +9399,8 @@ def bh172_mot_cua_vao_chu_de_chung_cu():
     loi = X.kiem_neo_dashboard(bai, "pmid 123456 pmid 12345678")
     if len(loi) != 1 or not loi[0].startswith("nguồn 2 "):
         return False, f"cổng neo dashboard không chặn đúng nguồn ngoài dashboard: {loi}"
-    return True, "câu chủ đề → một cửa; ca/cờ đỏ/câu hỏi hệ thống giữ đường cũ; hook nhắc + im lặng khi rác; mô tả 80 ký tự; cổng neo dashboard"
+    return True, ("câu chủ đề → một cửa; ca/cờ đỏ/câu hỏi hệ thống giữ đường cũ; hook nhắc + im lặng khi rác; mô tả 80 ký tự; "
+                  f"cổng neo dashboard; {phien_yk}")
 
 
 def bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang():
