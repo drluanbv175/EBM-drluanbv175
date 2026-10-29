@@ -149,11 +149,16 @@ def _ds(v) -> list[str]:
 
 
 def _dinh_danh(it: dict) -> str:
+    """PMID, rồi DOI; mục KHÔNG có hai định danh này (văn bản cơ quan quản lý — MHRA, FDA…) ⇒ nguồn + URL của mục."""
     pm = str(it.get("pmid") or "").strip()
     if re.fullmatch(r"\d{1,9}", pm):
         return f"PMID {pm}"
     doi = nec().chuan_doi(it.get("doi"))
-    return f"doi:{doi}" if doi else ""
+    if doi:
+        return f"doi:{doi}"
+    g = _tt()._gon
+    nguon, url = g(it.get("source")), g(it.get("url"))
+    return " · ".join(x for x in (nguon, url) if x)
 
 
 def dung_noi_dung(data: dict, dash: Path, *, xac_minh: bool, so_trich_dan: int) -> dict:
@@ -190,8 +195,10 @@ def dung_noi_dung(data: dict, dash: Path, *, xac_minh: bool, so_trich_dan: int) 
             hanh_dong = g(it.get("action")) if qd == "apply" else ""
             if hanh_dong:
                 dong.append(f"  ▶️ THỰC HÀNH: {hanh_dong}")
-    dong.extend(["", f"ℹ️ NGUỒN: dashboard có {so_trich_dan} trích dẫn (PMID/DOI ghi ở từng mục; bản ghi gốc nằm cùng nhóm "
-                     "EndNote này). Bản ghi tổng hợp KHÔNG phải nguồn gốc — khi viết bài, trích dẫn bài gốc."])
+    dong.extend(["", (f"ℹ️ NGUỒN: dashboard có {so_trich_dan} trích dẫn (PMID/DOI ghi ở từng mục; bản ghi gốc nằm cùng nhóm "
+                      "EndNote này)." if so_trich_dan else
+                      "ℹ️ NGUỒN: dashboard không có trích dẫn PMID/DOI — nguồn là văn bản ghi ở từng mục (cơ quan, URL).")
+                     + " Bản ghi tổng hợp KHÔNG phải nguồn gốc — khi viết bài, trích dẫn nguồn gốc."])
     if xac_minh:
         dong.append(_tt().CHAN)
     else:

@@ -86,6 +86,16 @@ def test_chan_noi_dung_trang_thai_cong():
     assert N.DONG_CHUA_XAC_MINH in chua and N.CHAN_CHUA_XAC_MINH in chua and "đã qua cổng" not in chua
 
 
+def test_muc_van_ban_co_quan_ghi_nguon_va_url():
+    d = {"meta": {}, "summary": {}, "items": [
+        {"id": "ITEM-01", "title": "Finasteride — cảnh báo tâm thần", "decision": "apply", "pmid": None, "doi": None,
+         "source": "MHRA Drug Safety Update vol 19, issue 10", "url": "https://www.gov.uk/drug-safety-update/x"}]}
+    t = TH.dung_noi_dung(d, Path("WebDashboard_EBM_X_20261020.html"), xac_minh=True, so_trich_dan=0)["tom_tat"]
+    assert "• ITEM-01 · Finasteride — cảnh báo tâm thần — MHRA Drug Safety Update vol 19, issue 10 · " \
+           "https://www.gov.uk/drug-safety-update/x" in t
+    assert "dashboard không có trích dẫn PMID/DOI" in t and "dashboard có 0 trích dẫn" not in t
+
+
 def test_summary_mot_chuoi_va_thieu_khoa_khong_vo():
     d = {"meta": {}, "summary": {"doNow": "Một câu duy nhất."}, "items": []}
     t = _nd(data=d)["tom_tat"]

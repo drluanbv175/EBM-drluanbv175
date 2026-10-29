@@ -19,6 +19,10 @@ nhóm. Nhóm ĐÃ có (39 chủ đề lúc làm) ⇒ không post được (post 
 Claude kéo MỘT lần (`--cho-vao-nhom "<tên>"`); các lần cập nhật sau sửa tại chỗ. Lỗi của bản ghi tổng hợp chỉ được báo, không
 chặn đăng nhóm các bài.
 
-**Kiểm:** `tools/test_trich_dan_tong_hop_chu_de_20261029.py` 27 ca (EndNote giả, ngoại tuyến); 15 đột biến đều đỏ đúng chỗ (lần
+**Mục không PMID/DOI:** 55 mục toàn kho chỉ có nguồn văn bản (MHRA, FDA…) ⇒ dòng mục ghi `source · url` của mục; dashboard không có trích dẫn PMID/DOI nào (Orlistat FDA, MHRA) ⇒ câu NGUỒN nói rõ. Hai chủ đề này chưa từng có nhóm (⑧ không có bài để post) dù bảng nhom_theo_chu_de đã ghi tên ⇒ lượt điền ngược 29/10 tạo đúng nhóm mang tên đã ghi nhớ (group 164, 167), chỉ chứa bản ghi tổng hợp — nơi duy nhất hai chủ đề này có mặt trong EndNote.
+
+**Điền ngược 29/10/2026:** 32/35 chủ đề có nhóm (thử thật trước 1 chủ đề: Report, ★ tiêu đề, PDF gắn nội bộ, 0 ký tự «?», chạy lại «không đổi»). Để lại 3 chủ đề phiên khác đang sửa (polyp dạ dày, polyp đại trực tràng, u gan) — bước ⑧ lần tới tự tạo.
+
+**Kiểm:** `tools/test_trich_dan_tong_hop_chu_de_20261029.py` 28 ca (EndNote giả, ngoại tuyến); 17 đột biến đều đỏ đúng chỗ (lần
 đầu M8 «nhập hụt không dọn PDF» sống vì phép thử đặt `tm = None` SAU lệnh dọn — lỗi phép thử, đã viết lại nhắm thẳng lệnh dọn);
 433 test EndNote/bộ năm liên quan xanh.
