@@ -837,7 +837,8 @@ def dung_xml(ban_ghi: list[dict]) -> str:
         phan.append(_the("pub-location", m.get("noi_xb", "")))
         phan.append(_the("publisher", m.get("nha_xb", "")))
         phan.append(_the("isbn", m.get("isbn") or m.get("issn", "")))
-        phan.append(_the("accession-num", m.get("pmid") or ""))
+        # `so_truy_cap` (29/10/2026): khoá bền của bản ghi TỰ TẠO (trich_dan_tong_hop_chu_de) — không phải PMID, không link PubMed
+        phan.append(_the("accession-num", m.get("so_truy_cap") or m.get("pmid") or ""))
         phan.append(_the("electronic-resource-num", m.get("doi") or ""))
         phan.append(_the("abstract", m.get("tom_tat", "")))
         phan.append(_the("notes", m.get("ghi_chu", "")))
@@ -1518,7 +1519,8 @@ def doc_thung_rac_an_toan(endnote) -> tuple[dict | None, str | None]:
 def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data=None,
                lay_pm=lay_pubmed, lay_cr=lay_crossref, lay_ep=lay_europepmc, ten_nhom: str | None = None,
                loai_tru: dict | None = None, tep_cho: Path | None = None, da_tao: set[str] | None = None,
-               tien_to: str = TIEN_TO_NHOM, bo_sung=None, chon_pdf_cua=None, ids_them: list[str] | None = None) -> dict:
+               tien_to: str = TIEN_TO_NHOM, bo_sung=None, chon_pdf_cua=None, ids_them: list[str] | None = None,
+               tong_hop=None) -> dict:
     """Một dashboard → một nhóm EndNote. `endnote` None = chỉ lập kế hoạch, không kiểm trùng được. `tien_to` = tiền tố tên nhóm
     MẶC ĐỊNH («EBM · » chủ đề chứng cứ · «NC · » đề tài nghiên cứu); `ten_nhom` đã có thì không dùng.
 
@@ -1526,6 +1528,10 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
     `bo_sung(trích dẫn, metadata)` sửa từ khoá/ghi chú/nhãn của bản ghi MỚI sau khi đã điền mặc định; `chon_pdf_cua(trích
     dẫn)` thay `chon_pdf(kho, PMID)`; `ids_them` = mã bản ghi người gọi đã tự nhập, đưa vào CÙNG lượt post nhóm (post lần
     hai vào nhóm đã có sinh nhóm trùng tên — BH170).
+
+    `tong_hop(endnote, dash, data, nhom, ap_dung) -> (mã | None, báo cáo)` (29/10/2026, `--kem-tong-hop`): tạo/cập nhật bản ghi
+    TỰ TẠO «★ TÓM TẮT THỰC HÀNH» của chủ đề (`trich_dan_tong_hop_chu_de.dam_bao_ban_ghi`) rồi đưa mã vào CÙNG lượt đăng nhóm ⇒
+    chủ đề mới có bản ghi tổng hợp ngay trong lần post tạo nhóm. Lỗi của nó chỉ được báo, không chặn đăng nhóm các bài.
 
     `loai_tru` (`doc_loai_tru`) = danh sách loại trừ của BÁC SĨ (18/10/2026): định danh trong đó KHÔNG nhập, KHÔNG đăng vào
     nhóm, KHÔNG gắn PDF — xét theo định danh của dashboard rồi xét LẠI theo định danh của metadata (dashboard chỉ ghi PMID
@@ -1630,6 +1636,11 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
         bc["ke_hoach_nhap"] = [m.get("pmid") or m.get("doi") for m in can_nhap]
         if endnote is not None:  # chạy khô vẫn ĐỌC được trường đính kèm của bản ghi đã có (chỉ đọc)
             bc["se_gan_pdf"] = len(xet_toan_van(endnote, cap_ban_ghi(theo_pm, theo_doi), kho, chon_pdf_cua)[0])
+        if tong_hop is not None:
+            try:
+                bc["tong_hop"] = tong_hop(endnote, dash, data, nhom, False)[1]
+            except (RuntimeError, OSError) as e:
+                bc["tong_hop"] = {"loi": f"{type(e).__name__}: {e}"[:300]}
         return bc
 
     thu_muc_moi: list[Path] = []
@@ -1662,6 +1673,13 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
             if id(d) in hut and m.get("_thu_muc"):
                 shutil.rmtree(m["_thu_muc"], ignore_errors=True)
     cap = cap_ban_ghi(theo_pm, theo_doi)
+    if tong_hop is not None:
+        try:
+            r_th, bc["tong_hop"] = tong_hop(endnote, dash, data, nhom, True)
+        except (RuntimeError, OSError) as e:  # bản ghi tổng hợp là phần thêm — không chặn đăng nhóm các bài của chủ đề
+            r_th, bc["tong_hop"] = None, {"loi": f"{type(e).__name__}: {e}"[:300]}
+        if r_th:
+            ids_them = [*(ids_them or []), r_th]
     # Nhóm đo theo group_id trên sdb.eni; nhóm ĐÃ có thì không post (post luôn sinh nhóm trùng tên — đo 24/10/2026).
     ids_nhom = list(dict.fromkeys([r for _, r in cap] + list(ids_them or [])))
     bc.update(xep_vao_nhom(endnote, nhom, ids_nhom, dashboard=dash.name, tep_cho=tep_cho, da_tao=da_tao))
@@ -1675,7 +1693,7 @@ def nap_chu_de(dash: Path, *, endnote, ap_dung: bool, kho: Path | None, doc_data
 
 def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, ten_nhom: str | None = None,
               doc_data=None, cau_hinh: Path | None = None, loai_tru: dict | None = None, tien_to: str = TIEN_TO_NHOM,
-              **lay) -> list[dict]:
+              tong_hop=None, **lay) -> list[dict]:
     """Nạp nhiều dashboard: MỘT chủ đề (khoá bỏ đuôi ngày) = MỘT nhóm qua mọi phiên bản.
 
     Bác sĩ dặn 11/10/2026: «chủ đề nào đã có và trùng thì giữ nguyên và bổ sung phần thiếu». Câu hỏi lâm sàng đổi chữ giữa
@@ -1684,19 +1702,23 @@ def nap_nhieu(files: list[Path], *, endnote, ap_dung: bool, kho: Path | None, te
     cũ hơn đổ vào cùng nhóm (bản ghi đã có giữ nguyên, chỉ thêm bài và thêm thành viên nhóm còn thiếu). `--ten-nhom` của
     bác sĩ thắng tất cả và được ghi nhớ.
 
-    `loai_tru` None ⇒ đọc danh sách loại trừ của bác sĩ từ `cau_hinh` (tệp hỏng ⇒ CauHinhHong — không nhập gì)."""
+    `loai_tru` None ⇒ đọc danh sách loại trừ của bác sĩ từ `cau_hinh` (tệp hỏng ⇒ CauHinhHong — không nhập gì).
+    `tong_hop` (bản ghi tổng hợp chủ đề) chỉ chạy cho bản MỚI NHẤT của mỗi chủ đề — bản cũ không được ghi đè nội dung mới."""
     doc_data = doc_data or _nap_doc_data()
     bang = nhom_da_ghi(cau_hinh)
     if loai_tru is None:
         loai_tru = doc_loai_tru(cau_hinh)
     ket_qua: list[dict] = []
     da_tao: set[str] = set()  # nhóm đã post trong lượt này — bản kế tiếp cùng chủ đề không post lần hai (xep_vao_nhom)
-    for f in sap_xep_phien_ban(files):
+    da_tong_hop: set[str] = set()
+    for f in sap_xep_phien_ban(files):  # bản MỚI NHẤT của mỗi chủ đề đứng trước
         khoa = khoa_chu_de(f)
         ten = ten_nhom or bang.get(khoa)
+        th = tong_hop if tong_hop is not None and khoa not in da_tong_hop else None
+        da_tong_hop.add(khoa)
         try:
             bc = nap_chu_de(f, endnote=endnote, ap_dung=ap_dung, kho=kho, doc_data=doc_data, ten_nhom=ten,
-                            loai_tru=loai_tru, da_tao=da_tao, tien_to=tien_to, **lay)
+                            loai_tru=loai_tru, da_tao=da_tao, tien_to=tien_to, tong_hop=th, **lay)
         except (RuntimeError, OSError) as e:
             bc = {"dashboard": f.name, "loi": f"{type(e).__name__}: {e}"[:300]}
         if not bc.get("loi") and bc.get("nhom"):
@@ -1847,6 +1869,12 @@ def _in_bao_cao(bc: dict) -> None:
                   f"{' …' if len(thieu) > 12 else ''}")
     if bc["khong_lay_duoc"]:
         print(f"   ⚠ Không lấy được metadata (KHÔNG nhập): {', '.join(bc['khong_lay_duoc'][:10])}")
+    th = bc.get("tong_hop")
+    if th:
+        tt = {"ke_hoach": "kế hoạch", "se_tao": "sẽ tạo", "se_cap_nhat": "sẽ cập nhật", "khong_doi": "không đổi",
+              "da_tao": "đã tạo", "da_cap_nhat": "đã cập nhật"}.get(th.get("trang_thai"), th.get("trang_thai") or "lỗi")
+        print(f"   ★ Bản ghi tổng hợp chủ đề: {tt}" + (f" — ✗ {th['loi']}" if th.get("loi") else "")
+              + ("" if th.get("xac_minh", True) else " · chân ghi «CHƯA xác minh nguồn sống»"))
 
 
 def _nap_tom_tat():
@@ -1854,6 +1882,17 @@ def _nap_tom_tat():
     mod = importlib.util.module_from_spec(sp)
     sp.loader.exec_module(mod)
     return mod
+
+
+def _nap_tong_hop():
+    """`tools/trich_dan_tong_hop_chu_de.py` — bản ghi tự tạo tổng hợp chủ đề (29/10/2026)."""
+    m = sys.modules.get("_trich_dan_tong_hop")
+    if m is None:
+        sp = importlib.util.spec_from_file_location("_trich_dan_tong_hop", ROOT / "tools" / "trich_dan_tong_hop_chu_de.py")
+        m = importlib.util.module_from_spec(sp)
+        sys.modules["_trich_dan_tong_hop"] = m
+        sp.loader.exec_module(m)
+    return m
 
 
 def _tim_dash_goc() -> Path | None:
@@ -2057,9 +2096,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--cho-vao-nhom", nargs="?", const="", metavar="TEN_NHOM",
                     help="hàng chờ đưa vào nhóm ĐÃ có (post không cộng thêm được — đo 24/10/2026): liệt kê + dọn bài đã vào "
                          "nhóm; có tên ⇒ EndNote chỉ hiện các bài chờ của nhóm đó để bác sĩ kéo vào (chạy riêng)")
+    ap.add_argument("--kem-tong-hop", action="store_true",
+                    help="kèm MỘT bản ghi tự tạo «★ TÓM TẮT THỰC HÀNH» của chủ đề (tools/trich_dan_tong_hop_chu_de.py) vào "
+                         "cùng nhóm — bước ⑧ bộ năm truyền; chỉ cho dashboard (không đi cùng --de-tai/--tong-thuat)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
+    if a.kem_tong_hop and (a.de_tai is not None or a.tong_thuat is not None):
+        print("✗ --kem-tong-hop chỉ dùng cho dashboard chủ đề (không đi cùng --de-tai/--tong-thuat)")
+        return MA_THAM_SO
     if a.de_tai is not None and (a.file or a.tat_ca or a.gan_kho or a.tom_tat_vi or a.tom_tat_thu_vien or a.ghi_cau_hinh
                                  or a.loai_tru is not None or a.cho_vao_nhom is not None):
         print("✗ --de-tai không đi cùng --file/--tat-ca/--gan-kho/--tom-tat-vi/--tom-tat-thu-vien/--ghi-cau-hinh/--loai-tru/"
@@ -2328,8 +2373,13 @@ def main(argv: list[str] | None = None) -> int:
 
     tien_to = (TIEN_TO_NHOM_DE_TAI if a.de_tai is not None
                else TIEN_TO_NHOM_TONG_THUAT if a.tong_thuat is not None else TIEN_TO_NHOM)
+    tong_hop = None
+    if a.kem_tong_hop:
+        th_mod = _nap_tong_hop()
+        th_mod.dat_nec(sys.modules[__name__])  # dùng chính mô-đun đang chạy (khoá ghi, EndNoteMac) — không nạp bản thứ hai
+        tong_hop = th_mod.hook_nap(a.chua_xac_minh)
     ket_qua = nap_nhieu(files, endnote=endnote, ap_dung=a.ap_dung, kho=kho, ten_nhom=a.ten_nhom, loai_tru=loai_tru,
-                        doc_data=doc_data, tien_to=tien_to)
+                        doc_data=doc_data, tien_to=tien_to, tong_hop=tong_hop)
     if a.ap_dung and endnote is not None and not a.khong_tom_tat:
         # mỗi trích dẫn vừa nạp có ngay tóm tắt thực hành tiếng Việt
         chay_tom_tat(endnote, files, kho, True, chua_xac_minh=a.chua_xac_minh, bo_qua=bo_qua_tom_tat())

@@ -202,9 +202,11 @@ def buoc_toan_van(py: str, dash: Path, result: dict) -> int | None:
 def lenh_endnote(py: str, dash: Path, verified: bool) -> list[str]:
     """Lệnh ⑧. Cổng liêm chính KHÔNG PASS sống (chạy ngoại tuyến · rc_loi do mạng) ⇒ thêm `--chua-xac-minh` (W10, 15/10/2026):
     khối «EBM · ĐỌC NHANH» không được ghi «chép từ dashboard đã qua cổng» khi bản Word cùng bộ năm nói «CHƯA xác minh nguồn sống».
-    Công cụ chưa nhận cờ ⇒ argparse từ chối, ⑧ báo ⚠ và KHÔNG nạp (an toàn — không ghi khẳng định sai)."""
+    Công cụ chưa nhận cờ ⇒ argparse từ chối, ⑧ báo ⚠ và KHÔNG nạp (an toàn — không ghi khẳng định sai).
+    `--kem-tong-hop` (bác sĩ yêu cầu 29/10/2026): nhóm của chủ đề có thêm MỘT bản ghi tự tạo «★ TÓM TẮT THỰC HÀNH» chép từ
+    dashboard (`tools/trich_dan_tong_hop_chu_de.py`) — chạy SAU ③⑤ nên đính được PDF tài liệu chi tiết vừa xuất."""
     cmd = [py, str(ROOT / "tools" / "nap_endnote_chu_de.py"), "--file", str(dash), "--ap-dung", "--im-khi-chua-cau-hinh",
-           "--kho-toan-van", str(kho_canh_dashboard(dash))]
+           "--kho-toan-van", str(kho_canh_dashboard(dash)), "--kem-tong-hop"]
     if not verified:
         cmd.append("--chua-xac-minh")
     return cmd
