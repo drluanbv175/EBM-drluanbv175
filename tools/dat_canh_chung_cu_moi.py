@@ -101,8 +101,10 @@ def chi_ban_moi_nhat(cac_tep: list[Path], tach_ten) -> list[Path]:
             moi_nhat[lat_cat] = (ngay, f)
     return sorted(giu + [f for _ngay, f in moi_nhat.values()])
 # Kết luận ĐÓNG của bác sĩ: mục không còn là việc «chờ so». `can_cap_nhat` KHÔNG đóng — mục vẫn được đếm tới khi gói
-# được cập nhật (lúc đó PMID đang dùng/nguồn mới đổi và mục tự rời danh sách).
-KET_LUAN_DONG = {"lac_chu_de", "chinh_nguon", "da_so_giu"}
+# được cập nhật (lúc đó PMID đang dùng/nguồn mới đổi và mục tự rời danh sách). `da_cap_nhat` (29/10/2026) ĐÓNG: cập nhật
+# bằng PHIÊN BẢN NỐI TIẾP giữ mục cũ `apply` + `flag` sang mục mới, nên PMID cũ không bao giờ đổi — trước vá, 7 mục U đã
+# cập nhật 25/10 vẫn nằm mãi trong hòm việc. `ghi_vuot_qua_da_xet.py` chỉ nhận `da_cap_nhat` khi đo được gói đã cập nhật.
+KET_LUAN_DONG = {"lac_chu_de", "chinh_nguon", "da_so_giu", "da_cap_nhat"}
 
 
 def doc_da_xet(p: Path) -> dict:

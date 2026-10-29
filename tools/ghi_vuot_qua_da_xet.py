@@ -20,14 +20,21 @@ Dùng:
     # một mục sau khi bác sĩ đã đọc so
     python3 tools/ghi_vuot_qua_da_xet.py --pmid 123 --ket-luan da_so_giu --pmid-moi 456,789 --loi "<…>" [--ghi]
 
-Kết luận: lac_chu_de · chinh_nguon · da_so_giu (ba loại ĐÓNG) · can_cap_nhat (vẫn được đếm tới khi gói cập nhật).
+Kết luận: lac_chu_de · chinh_nguon · da_so_giu · da_cap_nhat (bốn loại ĐÓNG) · can_cap_nhat (vẫn được đếm tới khi gói
+cập nhật).
+`da_cap_nhat` (29/10/2026) = bác sĩ đã xét và gói ĐÃ cập nhật bằng phiên bản nối tiếp (mục cũ giữ `apply` + `flag` sang mục
+mới, nên PMID đang dùng không đổi và `can_cap_nhat` không bao giờ tự rời danh sách). Máy chỉ nhận khi ĐO ĐƯỢC: bản dashboard
+HIỆN HÀNH (bỏ bản đã bị phiên bản nối tiếp thay) dùng PMID đó chứa ít nhất một nguồn mới đã xét; không thấy ⇒ từ chối (mã 2),
+dùng `can_cap_nhat`.
 Mã thoát: 0 = xong / chạy khô · 2 = tham số sai. Cần bác sĩ kiểm chứng.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import importlib.util
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -40,7 +47,8 @@ for _s in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parents[1]
 SO = REPO / "EBM-Dashboards" / "vuot-qua-da-xet.json"
-KET_LUAN = ("lac_chu_de", "chinh_nguon", "da_so_giu", "can_cap_nhat")
+DASH = REPO / "EBM-Dashboards"
+KET_LUAN = ("lac_chu_de", "chinh_nguon", "da_so_giu", "can_cap_nhat", "da_cap_nhat")
 NHOM_DONG_LOAT = {"L": "lac_chu_de", "S": "chinh_nguon"}
 GIOI_THIEU = ("Sổ BÁC SĨ đã xét các mục `apply` có tổng quan/guideline mới hơn (dat_canh_chung_cu_moi.py). Chỉ "
               "tools/ghi_vuot_qua_da_xet.py ghi, theo nguyên văn lời bác sĩ; nguồn mới chưa có trong pmid_moi_da_xet ⇒ "
@@ -60,6 +68,25 @@ def doc_so(p: Path) -> dict:
 def muc_tu_sang_loc(sang_loc: dict, nhom: set[str]) -> list[dict]:
     """Các mục của tệp sàng lọc thuộc nhóm được đóng hàng loạt (chỉ L/S)."""
     return [m for m in sang_loc.get("muc") or [] if m.get("nhom") in nhom]
+
+
+def goi_da_cap_nhat(pmid: str, pmid_moi: list[str], dash: Path = DASH) -> list[str]:
+    """Tên các dashboard HIỆN HÀNH vừa dùng `pmid` vừa chứa ít nhất một PMID trong `pmid_moi` — bằng chứng gói đã cập nhật.
+
+    Bản hiện hành lấy bằng CHÍNH luật của `dat_canh_chung_cu_moi.chi_ban_moi_nhat` (một nguồn sự thật): bản đã bị phiên bản
+    nối tiếp thay không được tính, kẻo nguồn mới nằm ở bản cũ còn bản đang dùng thì chưa có."""
+    spec = importlib.util.spec_from_file_location("_dc_ghi_vq", Path(__file__).resolve().parent / "dat_canh_chung_cu_moi.py")
+    dc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dc)
+    hien = dc.chi_ban_moi_nhat(sorted(dash.glob("WebDashboard_*.html")), dc._tach_ten_chu_de())
+    co_so = re.compile(rf"(?<!\d){re.escape(str(pmid))}(?!\d)")
+    moi = [re.compile(rf"(?<!\d){re.escape(str(x))}(?!\d)") for x in pmid_moi]
+    ra = []
+    for f in hien:
+        t = f.read_text(encoding="utf-8", errors="replace")
+        if co_so.search(t) and any(m.search(t) for m in moi):
+            ra.append(f.name)
+    return ra
 
 
 def ap_dung(so: dict, cac_muc: list[dict], ngay: str, loi: str, nguon: str) -> list[str]:
@@ -84,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pmid-moi", help="một mục: các PMID nguồn mới đã xét, cách nhau dấu phẩy")
     ap.add_argument("--loi", help="NGUYÊN VĂN lời bác sĩ (bắt buộc)")
     ap.add_argument("--so", type=Path, default=SO, help=argparse.SUPPRESS)
+    ap.add_argument("--dash", type=Path, default=DASH, help=argparse.SUPPRESS)
     ap.add_argument("--ghi", action="store_true")
     a = ap.parse_args(argv)
     if not (a.loi or "").strip():
@@ -102,6 +130,13 @@ def main(argv: list[str] | None = None) -> int:
         cac_muc = [{"pmid": a.pmid, "pmid_moi": [x.strip() for x in a.pmid_moi.split(",") if x.strip()],
                     "ket_luan": a.ket_luan}]
         nguon = "bác sĩ đọc so từng mục"
+        if a.ket_luan == "da_cap_nhat":
+            goi = goi_da_cap_nhat(a.pmid, cac_muc[0]["pmid_moi"], a.dash)
+            if not goi:
+                print(f"PMID {a.pmid}: không bản dashboard hiện hành nào vừa dùng PMID này vừa chứa nguồn mới đã xét — gói "
+                      "CHƯA cập nhật, không ghi da_cap_nhat (dùng can_cap_nhat).")
+                return 2
+            nguon += " · gói đã cập nhật: " + ", ".join(goi)
     else:
         print("Cần --sang-loc + --nhom, hoặc --pmid + --ket-luan + --pmid-moi.")
         return 2
