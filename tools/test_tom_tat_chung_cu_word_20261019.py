@@ -212,6 +212,15 @@ def test_so_thap_phan_bi_pdf_tach_van_khop():
     assert T.cac_so("group 7.\n9 patients") == ["7", "9"]
 
 
+def test_phan_cach_nghin_dau_cach_dac_biet_van_khop():
+    """29/10/2026: phân cách nghìn của bài là U+2008 (Lancet XML PMC «480 942») hoặc U+2007; người soạn viết liền hoặc dùng dấu
+    cách mảnh — hai phía phải ra cùng một số. Dấu cách THƯỜNG giữa hai số vẫn KHÔNG được gộp (bảng PDF)."""
+    for ky_tu in ("\u2008", "\u2007", "\u2009", "\u202f", "\u00a0"):
+        assert T.cac_so(f"480{ky_tu}942 patients") == ["480942"], repr(ky_tu)
+    assert T.cac_so("£14\u2008641·20") == ["14641.20"]
+    assert T.cac_so("122±15 121±15") == ["122", "15", "121", "15"]
+
+
 def test_huong_dan_day_moi_truong_so_va_luat_cong():
     hd = T.huong_dan_doc()
     for k in T.TRUONG_SO + T.KHOA_DIEM_NHAN + ("may_tinh", "can_xac_nhan", "danh_gia", "[ngoài bài", "RoB 2", "AMSTAR-2",
