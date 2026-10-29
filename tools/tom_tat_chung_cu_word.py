@@ -295,8 +295,10 @@ def _chuan_so(s: str) -> str:
     «696100»). Bỏ phân cách nghìn TRƯỚC khi NFKC (NFKC đổi dấu cách mảnh/không ngắt thành dấu cách thường).
     28/10/2026: pypdf hay tách số thập phân — «7 .9%», «11 ·1», «2·⏎12» (Lancet, NEJM) — nên số đúng của bài bị cổng báo «không có
     trong bài» và người soạn phải viết lách «7 phẩy 9%». Ghép lại: chấm có dấu cách ĐỨNG TRƯỚC (câu văn không bao giờ đặt dấu cách
-    trước dấu chấm) và chấm giữa «·» có khoảng trắng hai bên. KHÔNG ghép «3. 12» (chấm cuối câu rồi số mới)."""
-    s = re.sub(r"(?<=\d)[,\u2009\u202f\u00a0](?=\d{3}(?!\d))", "", s or "")
+    trước dấu chấm) và chấm giữa «·» có khoảng trắng hai bên. KHÔNG ghép «3. 12» (chấm cuối câu rồi số mới).
+    29/10/2026: Lancet (XML PMC) dùng dấu cách chấm câu U+2008 («480 942»), JAMA dùng dấu cách mảnh U+2009 làm phân cách nghìn;
+    U+2008 và dấu cách chữ số U+2007 chưa có trong lớp ⇒ cổng tách thành hai số, người soạn phải chép đúng ký tự lạ mới qua."""
+    s = re.sub(r"(?<=\d)[,\u2007\u2008\u2009\u202f\u00a0](?=\d{3}(?!\d))", "", s or "")
     s = re.sub(r"(?<=\d)[ \t]+\.(?=\d)", ".", s)
     s = unicodedata.normalize("NFKC", s)
     s = re.sub(r"(?<=\d)\s*[\u00b7\u22c5]\s*(?=\d)", ".", s)
