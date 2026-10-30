@@ -499,6 +499,27 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "phân phối, tác phẩm phái sinh; không có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm». Bài Radiology: "
                       "Cardiothoracic Imaging 2026 không mang giấy phép trên Crossref",
         "duong_hop_le": "Copyright Clearance Center (marketplace.copyright.com — liên kết Permissions của pubs.rsna.org)"},
+    # Đọc 30/10/2026 trên Chrome của bác sĩ — 4 bài của gói Sleep Psychiatry bị `phien_uy_quyen_chrome.py --kiem` từ chối «chưa kiểm
+    # điều khoản». Tiền tố đối chiếu Crossref /prefixes cùng ngày: 10.5664 = AASM, 10.3238 = Deutscher Arzte-Verlag.
+    "American Academy of Sleep Medicine (AASM)": {
+        "ket_luan": "cam", "doi": ("10.5664/",), "mien": ("aasm.org",),
+        "nguon": "https://go.aasm.org/Terms.html", "doc_luc": "2026-10-30",
+        "trich": "used in any form in connection with generative artificial intelligence",
+        "loai_nguon": "Websites Terms and Conditions of Use (hiệu lực 06/02/2026, đọc trên Chrome 30/10/2026; aasm.org/terms-of-use trả 404, "
+                      "liên kết chân trang của aasm.org trỏ về trang này): mục «Artificial Intelligence terms» cấm đưa «AASM IP» vào "
+                      "công cụ AI tạo sinh, cấm tác phẩm phái sinh bằng AI khi chưa có văn bản cho phép, AASM có thể ngừng quyền truy "
+                      "cập nếu vi phạm; cấm robot và scrape. JCSM nay đăng trên Springer (jcsm.aasm.org chuyển sang "
+                      "link.springer.com/journal/44470) nên bài trên link.springer.com mang khoá Springer Nature theo miền; bài vẫn "
+                      "© AASM, không giấy phép mở, bản đọc miễn phí ở PMC mang khoá này theo DOI",
+        "duong_hop_le": "văn bản cho phép của AASM (điều khoản ghi «express written permission of AASM»)"},
+    "Deutscher Ärzte-Verlag (Deutsches Ärzteblatt)": {
+        "ket_luan": "cam", "doi": ("10.3238/",), "mien": ("aerzteblatt.de", "aerzteverlag.de"),
+        "nguon": "https://www.aerzteblatt.de/impressum", "doc_luc": "2026-10-30",
+        "trich": "Nachdruck und Aufnahme in elektronische Datenbanken, auch auszugsweise, nur mit Genehmigung des Verlages",
+        "loai_nguon": "Impressum của aerzteblatt.de (đọc 30/10/2026): giữ mọi quyền, đưa vào cơ sở dữ liệu điện tử phải được NXB cho phép; "
+                      "không có điều nào về AI/TDM, AGB chỉ nói về đơn hàng và quảng cáo ⇒ «không rõ ⇒ xử như cấm». Bài đọc tự do "
+                      "tại di.aerzteblatt.de nhưng © Deutscher Ärzte-Verlag, không giấy phép CC",
+        "duong_hop_le": "văn bản cho phép của Deutscher Ärzte-Verlag"},
 }
 # GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
 # khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
