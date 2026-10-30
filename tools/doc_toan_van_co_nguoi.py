@@ -520,6 +520,17 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "không có điều nào về AI/TDM, AGB chỉ nói về đơn hàng và quảng cáo ⇒ «không rõ ⇒ xử như cấm». Bài đọc tự do "
                       "tại di.aerzteblatt.de nhưng © Deutscher Ärzte-Verlag, không giấy phép CC",
         "duong_hop_le": "văn bản cho phép của Deutscher Ärzte-Verlag"},
+    # Đọc 30/10/2026 trên Chrome của bác sĩ — guideline ASCO 2020 (PMID 32663120) của gói Đau thần kinh bị
+    # `phien_uy_quyen_chrome.py --kiem` từ chối «chưa kiểm điều khoản». Tiền tố 10.1200 đối chiếu Crossref /prefixes cùng ngày.
+    "American Society of Clinical Oncology (ASCO)": {
+        "ket_luan": "cam", "doi": ("10.1200/",), "mien": ("ascopubs.org", "asco.org"),
+        "nguon": "https://www.asco.org/about-asco/legal/terms-use", "doc_luc": "2026-10-30",
+        "trich": "to ingest, train, test, analyze, process, copy, distribute, make publicly accessible",
+        "loai_nguon": "ASCO Terms of Use (Last updated: September 11, 2025; đọc trên Chrome 30/10/2026; ascopubs.org/terms trả trang "
+                      "lỗi): cấm dùng công cụ AI để nạp, phân tích, xử lý nội dung và sinh đầu ra từ nội dung, cấm đưa nội dung vào "
+                      "công cụ AI kể cả qua plugin và tiện ích, cấm mọi hình thức khai thác văn bản và dữ liệu; phạm vi nêu rõ ASCO "
+                      "Publications gồm Journal of Clinical Oncology và các tạp chí JCO",
+        "duong_hop_le": "văn bản cho phép của ASCO (permissions@asco.org)"},
 }
 # GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
 # khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
