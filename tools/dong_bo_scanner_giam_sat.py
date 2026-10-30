@@ -20,7 +20,12 @@ Luật chiều đồng bộ — chép NGUYÊN luật nội dung 21/08 (BH71 kề
 tin mtime:
   (a) bản đích KHÔNG có dòng riêng so với nguồn → nguồn bao trùm → chép đè;
   (b) bản đích CÓ dòng riêng → GIỮ LẠI + in các dòng đó cho bác sĩ quyết —
-      chép đè lúc này có thể xoá mất một bản vá mới hơn chưa hồi nguồn.
+      chép đè lúc này có thể xoá mất một bản vá mới hơn chưa hồi nguồn;
+  (c) ngoại lệ của (b), thêm 30/10/2026 (BH174): bản đích TRÙNG KHÍT một phiên
+      bản ĐÃ COMMIT của nguồn → nó chỉ tụt hậu, không thể chứa bản vá chưa hồi
+      nguồn → chép đè như (a). Thiếu luật này, MỌI bản vá SỬA hoặc XOÁ một dòng
+      có sẵn đều làm bản đích «có dòng riêng»: PR gộp xong mà bản runtime vẫn kẹt
+      bản cũ, `tu_sua_chua` chỉ báo ⛔ mỗi phiên. Không hỏi được git ⇒ về (b).
 Bản đích không tồn tại = thiếu nguyên liệu, KHÔNG phải nguy hiểm (BH08) —
 bỏ qua có ghi chú, không đỏ. Nguồn chuẩn không đọc được mới là lỗi (mã 2).
 
@@ -33,6 +38,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -60,6 +66,26 @@ def _dong_thuc(p: Path) -> set:
     return {l for l in p.read_text(encoding="utf-8").splitlines() if l.strip()}
 
 
+def _blob_git(p: Path) -> str:
+    """Mã blob git của tệp, tính không cần git; lệch dòng kết thúc (CRLF) ⇒ không khớp ⇒ về luật (b) thận trọng."""
+    du_lieu = p.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(du_lieu) + du_lieu, usedforsecurity=False).hexdigest()
+
+
+def _cac_ban_da_commit(goc: Path) -> set:
+    """Mã blob mọi phiên bản của nguồn chuẩn trong lịch sử HEAD — không hỏi được git ⇒ rỗng (về luật (b))."""
+    try:
+        kq = subprocess.run(["git", "-C", str(goc), "log", "--format=", "--raw", "--no-abbrev", "--", NGUON_CHUAN.as_posix()],
+                            capture_output=True, text=True, encoding="utf-8", timeout=30, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if kq.returncode != 0:
+        return set()
+    # Dòng raw: «:100644 100644 <blob cũ> <blob mới> M <đường dẫn>».
+    blob = {x for dong in kq.stdout.splitlines() if dong.startswith(":") for x in dong.split()[2:4]}
+    return blob - {"0" * 40}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Đồng bộ bộ ba surveillance_scan.py (ESD02)")
     ap.add_argument("--ap-dung", action="store_true",
@@ -85,6 +111,7 @@ def main() -> int:
     lech_con_lai = 0
     da_va = 0
     thong_diep: list = []
+    da_commit: set | None = None   # hỏi git một lần, chỉ khi có bản đích lệch
     for rel in BAN_DICH:
         dich = goc / rel
         if not dich.exists():
@@ -97,6 +124,11 @@ def main() -> int:
                 thong_diep.append(f"✅ {rel}: khớp nguồn chuẩn.")
                 continue
             rieng = sorted(_dong_thuc(dich) - dong_nguon)
+            if rieng:
+                if da_commit is None:
+                    da_commit = _cac_ban_da_commit(goc)
+                if _blob_git(dich) in da_commit:
+                    rieng = []   # luật (c): bản cũ đã commit, không có gì để mất
         except OSError as e:
             print(f"⛔ Không đọc được {rel}: {e}")
             return 2
