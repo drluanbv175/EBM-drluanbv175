@@ -813,8 +813,28 @@ def summarize_europe_pmc(
     return candidates
 
 
+# Trần số chủ đề active của MỘT lượt quét TOÀN danh sách (30/10/2026, BH174). Trần 50 cũ ghi «giảm nhiễu» nhưng nhiễu không
+# nằm ở đây: gói tuần chỉ trình ≤ 7 thẻ dù quét bao nhiêu chủ đề, và làn tính phí có trần TUẦN riêng. Thứ tăng theo số chủ đề
+# là THỜI GIAN (đo W36–W44: tới 38 giây/chủ đề ⇒ 100 chủ đề ≈ 63 phút; đó là việc của `lam_moi_khoa`). Trần này chỉ còn là rào
+# chống watchlist bị SINH SAI (hàng trăm mục làm NCBI chặn IP); đo 30/10: 53 active + 5 chủ đề chưa khai, 73 chủ đề dashboard.
+TRAN_CHU_DE_ACTIVE = 100
+
+
+def kiem_tran_chu_de(topics: Sequence[dict[str, str]]) -> None:
+    """Chặn lượt quét TOÀN danh sách khi vượt `TRAN_CHU_DE_ACTIVE` (fail-closed, nói rõ phải làm gì).
+
+    Tách khỏi `load_watchlist` có chủ ý: trần là thuộc tính của một LƯỢT, không phải của schema — `--topic` chỉ quét một chủ
+    đề nên không bị chặn. Khi trần còn nằm trong `load_watchlist`, watchlist 53 chủ đề giết cả lượt tuần lẫn mọi `--topic`.
+    """
+    if len(topics) > TRAN_CHU_DE_ACTIVE:
+        raise ValueError(f"watchlist có {len(topics)} chủ đề active, vượt trần {TRAN_CHU_DE_ACTIVE} của một lượt quét toàn "
+                         "danh sách — kiểm tệp có bị sinh sai không; nếu đều là chủ đề thật thì bác sĩ gộp/tắt bớt "
+                         "(`active: false`) hoặc nâng TRAN_CHU_DE_ACTIVE kèm số đo thời lượng lượt quét. "
+                         "`--topic` vẫn quét được từng chủ đề.")
+
+
 def load_watchlist(path: Path) -> list[dict[str, str]]:
-    """Kiểm schema, trùng chủ đề/query và chỉ trả chủ đề active."""
+    """Kiểm schema, trùng chủ đề/query và chỉ trả chủ đề active. Trần số chủ đề: xem `kiem_tran_chu_de`."""
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -865,8 +885,6 @@ def load_watchlist(path: Path) -> list[dict[str, str]]:
         active.append(muc)
     if not active:
         raise ValueError("watchlist không có chủ đề active")
-    if len(active) > 50:
-        raise ValueError("watchlist có hơn 50 chủ đề active; cần thu hẹp để giảm nhiễu")
     return active
 
 
@@ -954,6 +972,34 @@ def _gianh_trong_mutex(kp: Path, han_phut: int) -> tuple[bool, str]:
         with _os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(_j.dumps({"pid": _os.getpid(), "may": _sk.gethostname(), "luc": _t.time()}))
         return True, ""
+
+
+def lam_moi_khoa(nhip_giay: float = 300) -> bool:
+    """NHỊP KHOÁ — làm mới mốc giờ của khoá ĐANG GIỮ để lượt quét dài không bị coi là mồ côi (30/10/2026, BH174).
+
+    Hạn 30 phút của `gianh_khoa` chỉ đúng khi mọi lượt xong trong 30 phút, mà đo thật W36/W37 đã 29,8 phút với 47 chủ đề — 53
+    chủ đề ở tốc độ đó là ≈ 33,6 phút: tiến trình khác gỡ khoá của lượt còn sống rồi quét chồng, ghi đè con trỏ/sổ dự phòng.
+    Chỉ làm mới khoá CỦA CHÍNH tiến trình này (đúng pid + máy), trong `_mutex_khoa` để không đua với `_gianh_trong_mutex`; ghi
+    thưa theo `nhip_giay` vì tệp khoá đi qua OneDrive. Lượt chết thì hết nhịp, khoá vẫn mồ côi sau `han_phut` như cũ.
+    Trả True khi đã ghi nhịp. Không làm mới được ⇒ False, KHÔNG nổ: mất nhịp không đáng giết cả lượt đang chạy.
+    """
+    import json as _j
+    import os as _os
+    import socket as _sk
+    import time as _t
+    kp = _khoa_path()
+    try:
+        with _mutex_khoa(kp):
+            d = _j.loads(kp.read_text(encoding="utf-8"))
+            if d.get("pid") != _os.getpid() or d.get("may") != _sk.gethostname():
+                return False
+            if _t.time() - float(d.get("luc", 0)) < nhip_giay:
+                return False
+            d["luc"] = _t.time()
+            write_atomic(kp, _j.dumps(d))
+            return True
+    except (OSError, ValueError, AttributeError, TypeError):
+        return False
 
 
 def tra_khoa() -> None:
@@ -1660,13 +1706,14 @@ def run_scan(
     trang_thai_du_phong: dict | None = None,
     luu_so_du_phong: Callable[[dict], None] | None = None,
     du_phong_tat_vi: str = "",
+    nhip_khoa: Callable[[], object] | None = None,
 ) -> dict:
     """Chạy từng chủ đề độc lập; lỗi một chủ đề không bị nuốt và làm run PARTIAL.
 
     `tran_leo_thang_du_phong` (27/09/2026): tối đa bao nhiêu chủ đề được leo thang bậc thang dự phòng TÍNH PHÍ — None =
     không trần; có sổ thì là trần của cả TUẦN ISO (trừ số chủ đề sổ ghi đã leo thang trong tuần này, 29/09/2026). `trang_thai_du_phong` (sổ `doc_trang_thai_du_phong()`, SỬA TẠI CHỖ): có sổ thì xoay
     vòng theo ngày leo thang gần nhất và bỏ bài dự phòng đã trình ở lượt trước. `main()` bật cả hai; mặc định None giữ
-    nguyên hành vi cũ cho mọi nơi gọi khác.
+    nguyên hành vi cũ cho mọi nơi gọi khác. `nhip_khoa` (30/10/2026): gọi trước mỗi chủ đề — `main()` truyền `lam_moi_khoa`.
     """
     started = datetime.now(timezone.utc)
     topic_results: list[TopicResult] = []
@@ -1679,6 +1726,8 @@ def run_scan(
     except Exception:  # noqa: BLE001 — không đọc được sổ thì không loại bài nào (chỉ tốn chỗ trình)
         trong_kho = set()
     for row in topics:
+        if nhip_khoa is not None:
+            nhip_khoa()
         # Vá 22/09/2026 (phản biện vòng 2, review:thu-nhan #5): chụp all_pmids TRƯỚC khi xử lý
         # chủ đề này. Nếu chủ đề hỏng GIỮA CHỪNG (vd tầng 1 đã thêm PMID vào all_pmids rồi tầng 2
         # mới raise), PMID đó nằm "ma" trong all_pmids — chủ đề đang xử lý bị bỏ (candidates=[]) mà
@@ -2312,7 +2361,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         cursor = doc_cursor() if ghi_con_tro else {}
         try:
             topics = load_watchlist(Path(args.watchlist))
+            if not args.topic:
+                kiem_tran_chu_de(topics)
         except ValueError as exc:
+            # Chết ở đây là 0 chủ đề được quét và KHÔNG có báo cáo; lượt lịch thì `--json-report` cũ của tuần trước vẫn nằm đó.
+            # Chỉ báo cho watchlist THẬT: `--watchlist <tệp tạm>` của phiên tay/kiểm thử không phải sự kiện của hệ giám sát.
+            if Path(args.watchlist).resolve() == DEFAULT_WATCHLIST.resolve():
+                try:
+                    ghi_alert([f"- 🔴 LƯỢT QUÉT KHÔNG CHẠY (0 chủ đề được quét, không có báo cáo): {exc}"],
+                              date.today().isoformat())
+                except OSError:
+                    pass  # không ghi được cảnh báo thì lỗi gốc vẫn phải in ra ở dòng dưới
             parser.error(str(exc))
         if args.topic:
             # Lọc MỘT chủ đề (orchestrator/chạy tay): khớp KHÔNG DẤU hai chiều —
@@ -2343,7 +2402,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             report = run_scan(topics, days=args.days, max_results=args.max, cursor=cursor,
                               search_fn=search, summarize_fn=summarize,
                               tran_leo_thang_du_phong=args.tran_du_phong, trang_thai_du_phong=so_du_phong,
-                              luu_so_du_phong=ghi_trang_thai_du_phong, du_phong_tat_vi=loi_doc_so)
+                              luu_so_du_phong=ghi_trang_thai_du_phong, du_phong_tat_vi=loi_doc_so,
+                              nhip_khoa=lam_moi_khoa)
         except ValueError as exc:
             parser.error(str(exc))
         # Sổ dự phòng: `run_scan` đã tự ghi bản «báo cáo CHƯA tới nơi» ngay sau từng lời gọi nguồn tính phí (mốc leo

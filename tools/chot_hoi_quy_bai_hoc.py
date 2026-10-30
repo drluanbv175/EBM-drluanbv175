@@ -11214,6 +11214,219 @@ def _bh144_tu_kiem_rang() -> tuple[bool, str]:
     return True, "răng còn"
 
 
+def bh174_tran_watchlist_khong_giet_luot_quet():
+    """30/10 — watchlist lên 53 chủ đề active (sửa tay tối 29/10), vượt trần 50 ghi «giảm nhiễu» nằm TRONG `load_watchlist` ⇒
+    lượt tuần chết ở mã 2 (0 alert, `state/tuan.json` của tuần trước vẫn nằm đó) và mọi `--topic` chết theo dù chỉ quét một chủ
+    đề; orchestrator báo nhầm «tên chủ đề không khớp». Không gì báo trước kỳ — một phiên khác tình cờ đo mới thấy. Đo thêm: nâng
+    trần suông là ĐỔI LỖI — W36/W37 đã 29,8 phút với 47 chủ đề, hạn khoá 30 phút ⇒ lượt dài bị coi mồ côi rồi quét chồng; và
+    `dong_bo_scanner_giam_sat` giữ bản đích khi nguồn SỬA/XOÁ dòng ⇒ PR gộp xong mà bản runtime vẫn kẹt trần cũ.
+    Kiểm HÀNH VI của bản chuẩn, ngoại tuyến (khoá socket, kho tạm): (a) watchlist THẬT qua được bộ quét — giác quan TRƯỚC kỳ;
+    (b) 53 chủ đề qua, trên trần bị chặn, `load_watchlist` không còn giữ trần; (c) lượt toàn danh sách vượt trần ⇒ mã 2 + alert
+    + trả khoá, không báo cáo; `--watchlist` tạm thì không alert; (d) `--topic` trên watchlist vượt trần quét đúng 1 chủ đề;
+    (e) `main()` nối nhịp khoá: khoá quá hạn giữa lượt được làm mới, tiến trình khác không giành được; (f) nhịp chỉ đụng khoá
+    của mình, ghi thưa, không tự tạo khoá; (g) công cụ đồng bộ chép đè bản đích trùng một phiên bản đã commit, bản có dòng
+    riêng thật vẫn giữ lại."""
+    import contextlib as _cl
+    import io as _io
+    import socket as _so
+    mo_mang: list = []
+    goc_connect = _so.socket.connect
+
+    def _cam_mang(_sock, dia_chi, *_a, **_k):
+        mo_mang.append(dia_chi)
+        raise OSError("BH174 phải chạy NGOẠI TUYẾN — cấm mở kết nối mạng")
+
+    _so.socket.connect = _cam_mang
+    try:
+        with _cl.redirect_stdout(_io.StringIO()), _cl.redirect_stderr(_io.StringIO()):
+            ok, ct = _bh174_than()
+            if ok:
+                ok, ct = _bh174_dong_bo()
+    finally:
+        _so.socket.connect = goc_connect
+    if mo_mang:
+        return False, f"chốt mở {len(mo_mang)} kết nối mạng thật (vd {mo_mang[0]!r}) — phải NGOẠI TUYẾN"
+    return ok, ct
+
+
+def _bh174_than():
+    """Thân của BH174 phần bộ quét — xem docstring `bh174_tran_watchlist_khong_giet_luot_quet`."""
+    import importlib.util as _iu
+    import json as _json
+    import os as _os
+    import socket as _sk
+    import tempfile as _tf
+    import time as _t
+    sp = _iu.spec_from_file_location("_bh174_ss", REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "surveillance_scan.py")
+    S = _iu.module_from_spec(sp)
+    sys.modules["_bh174_ss"] = S
+    sp.loader.exec_module(S)
+
+    # (a) Đo TRƯỚC kỳ trên dữ liệu thật: lần này tệp sửa tối 29/10, không gì kêu cho tới khi có phiên tình cờ gọi hàm.
+    that = REPO / "EBM-Dashboards" / "watchlist.json"
+    if that.exists():
+        try:
+            S.kiem_tran_chu_de(S.load_watchlist(that))
+        except ValueError as e:
+            return False, f"watchlist THẬT không qua được bộ quét — lượt tuần kế sẽ chết: {e}"
+
+    for ten in dir(S):
+        if ten.endswith("_lane") and ten != "bo_sung_du_phong_lane" and callable(getattr(S, ten)):
+            setattr(S, ten, lambda *a, **k: [])
+    S.bo_sung_du_phong_lane = lambda *a, **k: ([], "")
+    S.gan_do_tin_cay = lambda c: list(c)
+    S._pmid_da_co_trong_kho = lambda: set()
+    S.summarize = lambda ids: []
+    S.search = lambda query, days, retmax, **kw: []
+
+    def _ghi_ds(tep, n):
+        ds = [{"topic": f"Mục {i}", "query": f"truy van {i}"} for i in range(n - 1)]
+        tep.write_text(_json.dumps({"topics": ds + [{"topic": "Đích danh", "query": "truy van dich"}]}),
+                       encoding="utf-8", newline="\n")
+
+    with _tf.TemporaryDirectory() as d:
+        kho = Path(d) / "kho"
+        kho.mkdir()
+        wl = kho / "watchlist.json"
+        S.DEFAULT_WATCHLIST = wl
+        tran = S.TRAN_CHU_DE_ACTIVE
+
+        # (b) Đúng con số của sự cố phải qua; biên trần là biên thật.
+        _ghi_ds(wl, 53)
+        try:
+            S.kiem_tran_chu_de(S.load_watchlist(wl))
+        except ValueError as e:
+            return False, f"53 chủ đề active (đúng số của sự cố 30/10) vẫn bị chặn: {e}"
+        _ghi_ds(wl, tran)
+        try:
+            S.kiem_tran_chu_de(S.load_watchlist(wl))
+        except ValueError as e:
+            return False, f"đúng bằng trần {tran} mà bị chặn (lệch một): {e}"
+        _ghi_ds(wl, tran + 1)
+        try:
+            vuot = S.load_watchlist(wl)
+        except ValueError as e:
+            return False, f"`load_watchlist` lại giữ trần — `--topic` sẽ chết theo lượt toàn danh sách: {e}"
+        try:
+            S.kiem_tran_chu_de(vuot)
+            return False, f"{tran + 1} chủ đề không bị chặn — mất rào chống watchlist sinh sai"
+        except ValueError:
+            pass
+
+        # (c) Vượt trần: chết RÕ — mã 2, alert, trả khoá, không báo cáo.
+        bao_cao = Path(d) / "ra" / "bc.json"
+        try:
+            S.main(["--watchlist", str(wl), "--days", "30", "--json-report", str(bao_cao)])
+            return False, "lượt toàn danh sách vượt trần mà `main()` vẫn chạy"
+        except SystemExit as e:
+            if e.code != 2:
+                return False, f"vượt trần mà mã thoát {e.code}, không phải 2"
+        alerts = list((Path(d) / "alerts").glob("*.md"))
+        if not alerts or "LƯỢT QUÉT KHÔNG CHẠY" not in alerts[0].read_text(encoding="utf-8"):
+            return False, "lượt quét không chạy mà không có dòng nào trong alerts/ — chỉ stderr, đúng kiểu im lặng của sự cố"
+        if (kho / ".quet.lock").exists():
+            return False, "vượt trần mà không trả khoá — lượt sau bị chặn tới khi khoá hết hạn"
+        if bao_cao.exists():
+            return False, "vượt trần mà vẫn có báo cáo — bước sau tưởng lượt đã chạy"
+        for f in alerts:
+            f.unlink()
+        wl_tam = Path(d) / "wl-tam.json"
+        _ghi_ds(wl_tam, tran + 1)
+        try:
+            S.main(["--watchlist", str(wl_tam), "--days", "30"])
+        except SystemExit:
+            pass
+        if list((Path(d) / "alerts").glob("*.md")):
+            return False, "`--watchlist` tệp tạm của phiên tay cũng ghi alerts/ — báo động giả cho hệ giám sát"
+
+        # (d) `--topic` chỉ quét một chủ đề: trần của lượt không được giết nó.
+        try:
+            S.main(["--watchlist", str(wl), "--days", "30", "--topic", "Đích danh", "--khong-cursor",
+                    "--json-report", str(bao_cao)])
+        except SystemExit as e:
+            return False, f"`--topic` một chủ đề chết trên watchlist vượt trần (mã {e.code}) — orchestrator dừng cả lượt"
+        if not bao_cao.exists() or _json.loads(bao_cao.read_text(encoding="utf-8")).get("topic_count") != 1:
+            return False, "`--topic` trên watchlist vượt trần không quét đúng 1 chủ đề"
+
+        # (e) Lượt dài: như thể mỗi chủ đề tốn 31 phút (quá hạn khoá). Không có nhịp ⇒ tiến trình khác giành được khoá.
+        kp = kho / ".quet.lock"
+        _ghi_ds(wl, 3)
+        chen: list = []
+
+        def _quet_cham(query, days, retmax, **kw):
+            chen.append(S.gianh_khoa()[0])
+            hien = _json.loads(kp.read_text(encoding="utf-8"))
+            hien["luc"] = _t.time() - 31 * 60
+            kp.write_text(_json.dumps(hien), encoding="utf-8", newline="\n")
+            return []
+        S.search = _quet_cham
+        S.main(["--watchlist", str(wl), "--days", "30", "--khong-cursor"])
+        S.search = lambda query, days, retmax, **kw: []
+        if len(chen) < 3:
+            return False, f"phép thử lượt dài không chạy đủ 3 chủ đề (chỉ {len(chen)} lần) — chốt không đo được gì"
+        if any(chen):
+            return False, "khoá quá hạn giữa lượt mà không được làm mới — tiến trình khác giành được, hai lượt quét chồng nhau"
+
+        # (f) Nhịp chỉ đụng khoá của CHÍNH tiến trình này, ghi thưa, không tự tạo khoá.
+        if kp.exists():
+            kp.unlink()
+        if S.lam_moi_khoa() or kp.exists():
+            return False, "không có khoá mà nhịp vẫn tạo ra khoá"
+        la = {"pid": _os.getpid() + 1, "may": _sk.gethostname(), "luc": _t.time() - 3600}
+        kp.write_text(_json.dumps(la), encoding="utf-8", newline="\n")
+        truoc = kp.read_bytes()
+        if S.lam_moi_khoa() or kp.read_bytes() != truoc:
+            return False, "nhịp làm mới khoá của tiến trình KHÁC — khoá mồ côi thật không bao giờ hết hạn"
+        cua_minh = {"pid": _os.getpid(), "may": _sk.gethostname(), "luc": _t.time()}
+        kp.write_text(_json.dumps(cua_minh), encoding="utf-8", newline="\n")
+        truoc = kp.read_bytes()
+        if S.lam_moi_khoa() or kp.read_bytes() != truoc:
+            return False, "khoá vừa ghi mà nhịp ghi lại ngay — mỗi chủ đề một lần ghi qua OneDrive"
+        cua_minh["luc"] = _t.time() - 3600
+        kp.write_text(_json.dumps(cua_minh), encoding="utf-8", newline="\n")
+        if not S.lam_moi_khoa() or _t.time() - _json.loads(kp.read_text(encoding="utf-8"))["luc"] > 60:
+            return False, "khoá của chính lượt này đã cũ mà nhịp không làm mới"
+    return True, ""
+
+
+def _bh174_dong_bo():
+    """Phần công cụ đồng bộ của BH174: kho git tạm, chạy CLI thật qua `--goc`."""
+    import subprocess
+    import tempfile as _tf
+    rel = "sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py"
+    rel_dich = "sync/skills/dark-analyst/tools/surveillance_scan.py"
+    with _tf.TemporaryDirectory() as d:
+        g = Path(d)
+        nguon, dich = g / rel, g / rel_dich
+        nguon.parent.mkdir(parents=True)
+        dich.parent.mkdir(parents=True)
+
+        def _git(*tham_so):
+            subprocess.run(["git", "-C", str(g), "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", *tham_so],
+                           capture_output=True, check=True, timeout=30)
+        _git("init", "-q")
+        ban_cu = "dong chung\nif len(active) > 50:\n    raise ValueError('tran cu')\n"
+        ban_moi = "dong chung\nTRAN = 100\n"
+        for tep in (nguon, dich):
+            tep.write_text(ban_cu, encoding="utf-8", newline="\n")
+        _git("add", "-A")
+        _git("commit", "-qm", "ban cu")
+        nguon.write_text(ban_moi, encoding="utf-8", newline="\n")
+        _git("add", "-A")
+        _git("commit", "-qm", "ban moi xoa va sua dong")
+        cong_cu = [sys.executable, "-B", str(REPO / "tools" / "dong_bo_scanner_giam_sat.py"), "--goc", str(g), "--ap-dung"]
+        kq = subprocess.run(cong_cu, capture_output=True, text=True, encoding="utf-8", timeout=30, check=False)
+        if dich.read_text(encoding="utf-8") != ban_moi or kq.returncode != 0:
+            return False, ("bản đích trùng một phiên bản ĐÃ COMMIT mà không được chép đè — PR gộp xong, bản runtime vẫn kẹt bản cũ "
+                           f"(mã {kq.returncode})")
+        ban_va = ban_cu + "# ban va chua hoi nguon\n"
+        dich.write_text(ban_va, encoding="utf-8", newline="\n")
+        kq = subprocess.run(cong_cu, capture_output=True, text=True, encoding="utf-8", timeout=30, check=False)
+        if dich.read_text(encoding="utf-8") != ban_va or kq.returncode != 1:
+            return False, f"bản đích có dòng riêng THẬT bị chép đè — mất bản vá chưa hồi nguồn (mã {kq.returncode})"
+    return True, "53 chủ đề qua · --topic không dính trần · nhịp khoá nối vào main · đồng bộ qua được bản cũ"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -11373,6 +11586,7 @@ BAI_HOC = [
     ("BH171", "27/10", "Canh mạng + VPN (Kaspersky VPN rớt ⇒ «No network route» 1 giờ 50 phút tới khi khởi động lại): nhắc ở phút 2, tự nối lại VPN ≤ 2 lần, VPN tắt có mạng chỉ nhắc, không đo được ≠ ổn, state ngoài OneDrive, hook có gọi", bh171_canh_mang_vpn_bao_som_khi_vpn_rot_mat_duong_mang),
     ("BH172", "28/10", "Một cửa vào cho câu hỏi CHỦ ĐỀ chứng cứ («tiếp cận … toàn diện dựa trên chứng cứ mới nhất» từng rẽ sang skill tổng thuật / trả lời từ trí nhớ): router + hook UserPromptSubmit nhắc + mô tả skill 80 ký tự + cổng --dashboard của xuat_tong_thuat", bh172_mot_cua_vao_chu_de_chung_cu),
     ("BH173", "28/10", "Quyền lượt lịch khai ĐÚNG LỆNH (gói tuần W44 mất vì lượt lịch không ai bấm «cho phép» bị cắt mà vẫn «succeeded»): mọi lệnh SKILL.md tác vụ lịch phải có trong sync/quyen-lich-nen.json, không khai lệnh ghi quyết định, --ap-dung chỉ thêm + sao lưu, giác quan báo trước kỳ", bh173_quyen_luot_lich_khai_dung_lenh),
+    ("BH174", "30/10", "Trần watchlist không giết lượt quét (53 chủ đề từng vượt trần 50 ⇒ gói tuần chết, 0 alert, `--topic` chết theo, orchestrator chẩn đoán sai): watchlist thật qua được bộ quét, trần chỉ áp lượt toàn danh sách, vượt trần có alert, nhịp khoá cho lượt quá 30 phút, công cụ đồng bộ qua được bản đích tụt hậu", bh174_tran_watchlist_khong_giet_luot_quet),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),

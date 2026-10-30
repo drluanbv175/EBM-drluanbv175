@@ -245,7 +245,8 @@ def phan_loai(buoc: str, rc: int, *, a2_json_khong_pass: bool = False) -> tuple[
         if rc == 2 and a2_json_khong_pass:
             return "ha_tang", "HẠ TẦNG NGUỒN — lần quét không PASS (nguồn/mạng); chạy lại sau bằng --resume"
         if rc == 2:
-            return "tham_so", "THAM SỐ/LỆNH SAI — không phải lỗi mạng (tên chủ đề không khớp watchlist?)"
+            return "tham_so", ("THAM SỐ/LỆNH SAI — không phải lỗi mạng (tên chủ đề không khớp, hoặc watchlist không nạp "
+                               "được — đọc dòng `error:` của bộ quét ngay trên)")
         return "noi_dung", f"quét trả rc={rc}"
     if buoc.startswith("A4"):
         if rc == 2:
