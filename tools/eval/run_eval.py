@@ -594,7 +594,13 @@ _CITATION_MASK = re.compile(r"10\.\d{4,9}/\S+|https?://\S+|www\.\S+|PMID[:\s]*\d
 # NHƯNG phải chặn rủi ro dương tính giả mới: "Anh/Chị/Ông/Bà" + 2 từ hoa cũng khớp các cụm
 # CHỨC DANH ("Anh Bác Sĩ Nguyễn", "Chị Điều Dưỡng Hoa") — mở rộng _HOTEN_STOP với từ chức
 # danh phổ biến để _is_name_word loại đúng các cụm đó, không coi là tên người.
-_RE_HOTEN = re.compile(r"(?:bệnh\s*nhân|BN|anh|chị|ông|bà)\s+([A-Za-zÀ-ỹ]+)\s+([A-Za-zÀ-ỹ]+)", re.I)
+# Vá 03/11/2026: mẫu thiếu ranh giới từ bên TRÁI nên đại từ khớp cả khi nằm TRONG một từ khác —
+# «Đông Địa Trung Hải» bị đọc thành «ông Địa Trung», «Thanh Hoá Nghệ An» thành «anh Hoá Nghệ»
+# (ca thật: dashboard SuyTim_TamThanKinh 02/11 phải đổi «Đông Địa Trung Hải» → «EMRO của WHO»
+# để né báo động giả). Thêm \b: chữ Việt là \w của regex str Python, và evaluate() đã chuẩn
+# hoá NFKC (dạng dựng sẵn) trước khi quét, nên «Đ»+«ông» không còn ranh giới ở giữa.
+# tools/rag/deidentify.py vốn đã có \b — không cần sửa bên đó.
+_RE_HOTEN = re.compile(r"\b(?:bệnh\s*nhân|BN|anh|chị|ông|bà)\s+([A-Za-zÀ-ỹ]+)\s+([A-Za-zÀ-ỹ]+)", re.I)
 _HOTEN_STOP = {"nam", "nữ", "này", "đó", "đang", "đủ", "có", "cần", "nên", "trên", "dưới",
                "lớn", "nhỏ", "cao", "trẻ", "già", "ổn", "không", "vẫn", "đã", "sẽ", "được", "bị",
                "bác", "sĩ", "dược", "điều", "dưỡng", "giáo", "sư", "chuyên", "khoa", "y", "tá"}
