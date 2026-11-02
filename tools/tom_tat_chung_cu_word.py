@@ -327,13 +327,16 @@ def _so_khop(so: str, tap: set[str]) -> bool:
 
 # ───────────────────────── văn bản PDF ─────────────────────────
 
-def tach_trang(pdf: Path) -> list[str]:
-    """Văn bản từng trang (pypdf). Trang không trích được ⇒ chuỗi rỗng (PDF ảnh)."""
+def tach_trang(pdf: Path | bytes) -> list[str]:
+    """Văn bản từng trang (pypdf). Trang không trích được ⇒ chuỗi rỗng (PDF ảnh). Nhận đường dẫn hoặc NỘI DUNG tệp (bytes): tầng
+    Unpaywall của `gom_toan_van_dashboard.py` dùng chung `tach_trang` + `khop_dinh_danh` để kiểm định danh TRƯỚC khi ghi kho
+    (02/11/2026 — PDF sai bài từng vào kho với tên hợp lệ)."""
+    import io  # noqa: PLC0415
     import logging  # noqa: PLC0415
 
     import pypdf  # noqa: PLC0415
     logging.getLogger("pypdf").setLevel(logging.ERROR)
-    doc = pypdf.PdfReader(str(pdf))
+    doc = pypdf.PdfReader(io.BytesIO(pdf) if isinstance(pdf, (bytes, bytearray)) else str(pdf))
     ra = []
     for tr in doc.pages:
         try:

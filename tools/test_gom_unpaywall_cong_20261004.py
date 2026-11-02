@@ -77,6 +77,7 @@ def test_khong_nap_duoc_bang_thi_dong(monkeypatch):
 TRANG_GIOI_THIEU = ("Abstract Introduction Methods Results Discussion " + "word " * 2700
                     + " Fingerprint Dive into the research topics. Access to Document Link to publication")
 IMRAD = "Introduction " + "a " * 900 + " Methods " + "b " * 900 + " Results " + "c " * 900 + " Discussion " + "d " * 200
+TIEU_DE = "Synthetic open access cardiology article"
 GUIDELINE_DAI = "Recommendation " + "x " * 6500
 
 
@@ -136,8 +137,8 @@ def _mang_gia(monkeypatch, doi: str, loc: dict, noi_dung: bytes, da_goi: list):
         if "esummary.fcgi" in url:
             pm = url.split("id=")[1].split("&")[0]
             return _PhanHoi(json.dumps({"result": {pm: {"articleids": [{"idtype": "doi", "value": doi}]}}}).encode(), url)
-        if "api.unpaywall.org" in url:
-            return _PhanHoi(json.dumps({"is_oa": True, "best_oa_location": loc}).encode(), url)
+        if "api.unpaywall.org" in url:  # Unpaywall thật luôn trả `title` — cổng định danh (02/11/2026) đối chiếu nó
+            return _PhanHoi(json.dumps({"is_oa": True, "title": TIEU_DE, "best_oa_location": loc}).encode(), url)
         return _PhanHoi(noi_dung, url)
     monkeypatch.setattr("urllib.request.urlopen", urlopen)
     monkeypatch.setattr(g, "_email_lich_su", lambda: "test@example.org")
@@ -161,7 +162,7 @@ def test_tang_unpaywall_luu_ban_cc_toan_van(monkeypatch, tmp_path):
     monkeypatch.setattr(g, "KHO", tmp_path)
     monkeypatch.setattr(g, "_nap_dtv", lambda: _dtv(set()))
     _mang_gia(monkeypatch, "10.9999/cc", {"url": "https://repo.example/cc", "license": "cc-by"},
-              ("<html><body>" + IMRAD + "</body></html>").encode(), da_goi)
+              ("<html><body><p>" + TIEU_DE + "</p>" + IMRAD + "</body></html>").encode(), da_goi)
     moi, _ = g.tang_unpaywall(["111"])
     assert moi == 1 and (tmp_path / "PMID-111_UPW.html").exists()
 

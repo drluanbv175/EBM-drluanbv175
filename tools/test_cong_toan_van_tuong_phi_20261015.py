@@ -229,7 +229,9 @@ def test_tang_unpaywall_tu_choi_trang_tuong_phi(tmp_path, monkeypatch):
             return _PH(json.dumps({"result": {pm: {"articleids": [{"idtype": "doi", "value": pm_doi[pm]}]}}}).encode(), u)
         if "api.unpaywall.org" in u:
             doi = re.search(r"/v2/(10\.\d+/\w)", u).group(1)
-            return _PH(json.dumps({"is_oa": True, "best_oa_location": {"url": f"https://oa.invalid/{doi}", "license": "cc-by"}}).encode(), u)
+            # Unpaywall thật luôn trả `title` — cổng định danh (02/11/2026) đối chiếu nó với <h1> của fixture `_trang`
+            return _PH(json.dumps({"is_oa": True, "title": "Synthetic article title",
+                                   "best_oa_location": {"url": f"https://oa.invalid/{doi}", "license": "cc-by"}}).encode(), u)
         doi = u.split("oa.invalid/", 1)[1]
         return _PH(trang[doi].encode("utf-8"), u)
 

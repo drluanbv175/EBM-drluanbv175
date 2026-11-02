@@ -23,10 +23,17 @@ sp = importlib.util.spec_from_file_location("_gom_upw_moi_vi_tri", REPO / "tools
 g = importlib.util.module_from_spec(sp)
 sp.loader.exec_module(g)
 
+_sp_pdf = importlib.util.spec_from_file_location("_pdf_gia_moi_vi_tri", REPO / "tools" / "pdf_gia_kiem_thu.py")
+pdf_gia = importlib.util.module_from_spec(_sp_pdf)
+_sp_pdf.loader.exec_module(pdf_gia)
+
 BANG = {"Oxford University Press": {"ket_luan": "cam", "doi": ("10.1093/",), "mien": ("academic.oup.com",)}}
-IMRAD = " ".join(["<h2>Introduction</h2>" + "chữ " * 900, "<h2>Methods</h2>" + "chữ " * 900, "<h2>Results</h2>" + "chữ " * 900,
-                  "<h2>Discussion</h2>" + "chữ " * 900])
-PDF = b"%PDF-1.7\n" + b"0" * 4000
+# Unpaywall thật luôn trả `title` (Crossref); cổng định danh (02/11/2026) đối chiếu tiêu đề đó với bản tải về ⇒ fixture mang
+# đúng tiêu đề của bài (PDF là PDF THẬT — chuỗi «%PDF-» + rác cũ không đọc được, cổng từ chối đúng).
+TIEU_DE = "Synthetic heart failure article used by offline fixture"
+IMRAD = " ".join(["<p>" + TIEU_DE + "</p><h2>Introduction</h2>" + "chữ " * 900, "<h2>Methods</h2>" + "chữ " * 900,
+                  "<h2>Results</h2>" + "chữ " * 900, "<h2>Discussion</h2>" + "chữ " * 900])
+PDF = pdf_gia.pdf_co_chu(TIEU_DE + ". " + "body text " * 60, "page two " * 40)
 
 
 def _dtv():
@@ -56,7 +63,7 @@ def _mang(monkeypatch, tmp_path, doi: str, uj: dict, noi_dung: dict, da_goi: lis
             pm = url.split("id=")[1].split("&")[0]
             return _PhanHoi(json.dumps({"result": {pm: {"articleids": [{"idtype": "doi", "value": doi}]}}}).encode(), url)
         if "api.unpaywall.org" in url:
-            return _PhanHoi(json.dumps(uj).encode(), url)
+            return _PhanHoi(json.dumps({"title": TIEU_DE, **uj}).encode(), url)
         gt = noi_dung.get(url)
         if isinstance(gt, Exception):
             raise gt

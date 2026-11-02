@@ -84,9 +84,12 @@ jobs:
       # Sinh mirror Codex TRƯỚC khi test: test_agent_sync_health_is_green kiểm «mirror
       # khớp nguồn» — trên checkout tươi mirror chưa tồn tại (nó là bản tự sinh, cố ý
       # không track). Sinh ở đây cũng biến chính đường sync thành thứ được CI kiểm thật.
+      # 02/11/2026 — + pypdf: tầng Unpaywall của gom_toan_van_dashboard.py đọc chữ PDF để KIỂM ĐỊNH DANH trước khi ghi kho
+      # (PDF của bài khác từng vào kho thành toàn văn của PMID 38099896). Thiếu pypdf ⇒ cổng từ chối mọi PDF (đúng, fail-closed)
+      # và các test lưu PDF đỏ — CI phải chạy CHÍNH cổng đó, không skip.
       - name: Bộ test tools/ (bản sao trần, skip có khai báo)
         run: |
-          pip install pytest
+          pip install pytest pypdf
           python tools/sync_agents_to_codex.py
           python -m pytest tools/ -q -rs
 

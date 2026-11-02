@@ -31,6 +31,8 @@ g = _nap()
 TRANG_CHAN = (b'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"> <html><head>'
               b"<title>NCBI - WWW Error Blocked Diagnostic</title></head><body>blocked</body></html>")
 IMRAD = "Introduction " + "a " * 900 + " Methods " + "b " * 900 + " Results " + "c " * 900 + " Discussion " + "d " * 200
+# Unpaywall thật luôn trả `title`; cổng định danh (02/11/2026) đối chiếu tiêu đề đó với trang tải về ⇒ trang mang đúng tiêu đề.
+TIEU_DE = "Synthetic chronic obstructive pulmonary disease article"
 
 
 class _PhanHoi(io.BytesIO):
@@ -61,10 +63,10 @@ def _mang(monkeypatch, *, ncbi, epmc, da_goi):
             if isinstance(kq, dict):
                 kq = json.dumps({"resultList": {"result": [kq] if kq else []}}).encode()
         elif "api.unpaywall.org" in url:
-            kq = json.dumps({"is_oa": True, "best_oa_location": {"url": "https://repo.example/cc",
-                                                                   "license": "cc-by"}}).encode()
+            kq = json.dumps({"is_oa": True, "title": TIEU_DE, "best_oa_location": {"url": "https://repo.example/cc",
+                                                                                     "license": "cc-by"}}).encode()
         else:
-            kq = ("<html><body>" + IMRAD + "</body></html>").encode()
+            kq = ("<html><body><p>" + TIEU_DE + "</p>" + IMRAD + "</body></html>").encode()
         if isinstance(kq, Exception):
             raise kq
         return _PhanHoi(kq, url)
