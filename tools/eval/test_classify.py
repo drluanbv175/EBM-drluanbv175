@@ -812,6 +812,40 @@ def test_no_pii_role_title_after_pronoun_not_false_flagged_as_name():
     assert c["pass"] is True
 
 
+# ── 03/11/2026: đại từ nằm TRONG một từ khác không phải lời gọi người ──
+# Dương tính giả có thật: dashboard SuyTim_TamThanKinh 02/11 viết «Đông Địa Trung Hải» bị
+# _RE_HOTEN (thiếu \b) đọc thành «ông Địa Trung» ⇒ NGHI PII. Sửa ở bộ chấm, không bắt gói né chữ.
+
+def test_no_pii_dong_dia_trung_hai_not_false_flagged_as_name():
+    # «ông» nằm trong «Đông» — tên vùng WHO, không phải tên người.
+    text = ("Dữ liệu từ khu vực Đông Địa Trung Hải của WHO còn ít. PMID:31313131. "
+            "Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "no_pii"][0]
+    assert c["pass"] is True, c["note"]
+
+
+def test_no_pii_thanh_hoa_nghe_an_not_false_flagged_as_name():
+    # «anh» nằm trong «Thanh» — địa danh, không phải tên người.
+    text = ("Nghiên cứu đa trung tâm tại tỉnh Thanh Hoá Nghệ An và Hà Tĩnh. PMID:32323232. "
+            "Cần bác sĩ kiểm chứng.")
+    res = RE.evaluate(text, {"type": "clinical"})
+    c = [x for x in res["checks"] if x["id"] == "no_pii"][0]
+    assert c["pass"] is True, c["note"]
+
+
+def test_no_pii_word_boundary_still_catches_real_pronoun_names():
+    # Hồi quy: \b không được làm lọt tên thật — đầu câu, giữa câu, sau dấu ngoặc.
+    for text in (
+        "Ông Trần Văn Bình đến khám vì đau ngực. PMID:33333333. Cần bác sĩ kiểm chứng.",
+        "Hôm qua ông Nguyễn Văn An tái khám đúng hẹn. PMID:33333333. Cần bác sĩ kiểm chứng.",
+        "Ca bệnh (bà Lê Thị Hoa) đã ổn định. PMID:33333333. Cần bác sĩ kiểm chứng.",
+    ):
+        res = RE.evaluate(text, {"type": "clinical"})
+        c = [x for x in res["checks"] if x["id"] == "no_pii"][0]
+        assert c["pass"] is False, text
+
+
 def test_no_pii_catches_dob_via_ra_doi_phrasing():
     # P2: "ra đời ngày" thay vì "sinh"/"ngày sinh"/"dob".
     text = "Bệnh nhân ra đời ngày 12/05/1978, hiện điều trị THA. PMID:27272727. Cần bác sĩ kiểm chứng."
