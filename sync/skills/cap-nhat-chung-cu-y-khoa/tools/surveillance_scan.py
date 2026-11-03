@@ -35,9 +35,16 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 EUROPE_PMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+# VÁ 03/11/2026 (BH176): thêm `"consensus statement"[ptyp]` — loại xuất bản đồng thuận HIỆN HÀNH của PubMed
+# (NLM bỏ `consensus development conference`). Mọi truy vấn tầng guideline trong watchlist đều tự khai
+# `"consensus statement"[pt]`, và `khoa_manh_nhat` xếp nó ngang guideline (5) — nhưng DESIGN AND thêm vào
+# lại thiếu nó, nên bản ghi chỉ mang «Consensus Statement» (không kèm «Guideline») bị loại IM LẶNG ở MỌI chủ
+# đề. Đo 03/11/2026 trên 58 chủ đề, cửa sổ 36 tháng: 792 bản ghi truy vấn guideline khớp nhưng DESIGN loại,
+# đa số là clinical consensus statement/position statement của hội chuyên khoa (ESC, SCAI, hội quốc gia).
+# Tầng sr_ma/rct đều tự giới hạn bằng [pt] của chính nó nên thêm loại này không đổi kết quả hai tầng đó.
 DESIGN = (
     '(Guideline[ptyp] OR "systematic review"[ptyp] OR meta-analysis[ptyp] '
-    'OR "practice guideline"[ptyp] OR randomized controlled trial[ptyp])'
+    'OR "practice guideline"[ptyp] OR "consensus statement"[ptyp] OR randomized controlled trial[ptyp])'
 )
 DISCLAIMER = "Cần bác sĩ kiểm chứng"
 
@@ -689,9 +696,11 @@ def search_europe_pmc(
     else:
         since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
         today = datetime.now(timezone.utc).date().isoformat()
+    # BH176 (03/11/2026): cùng bộ loại với DESIGN — Europe PMC nhận PUB_TYPE:"consensus statement" (đo sống:
+    # PMID 42372819, 42536391 mang pubType «Consensus Statement»).
     loc = (
         ' AND (PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
-        'OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline")'
+        'OR PUB_TYPE:"consensus statement" OR PUB_TYPE:"randomized controlled trial" OR TITLE:"guideline")'
         if loc_thiet_ke else ""
     )
     # VÁ 21/09/2026: dịch thẻ PubMed sang cú pháp Europe PMC (xem dich_pubmed_sang_europepmc) — trước đây
