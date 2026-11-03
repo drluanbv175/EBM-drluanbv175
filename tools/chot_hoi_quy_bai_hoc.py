@@ -7554,6 +7554,82 @@ def bh164_cong_toan_van_doc_cau_truc_de_muc():
     return True, "thân bài bỏ References · đề mục tường phí xét trước ngưỡng 6000 (trừ trang tự chứng minh toàn văn) · IMRaD đồng nghĩa ngoài tóm tắt · hai bản cổng cùng kết luận"
 
 
+def bh175_unpaywall_kiem_dinh_danh_truoc_khi_luu():
+    """02/11 — PMID 38099896 (ISHLT 2023 frailty, doi 10.1016/j.healun.2023.09.013): vị trí OA duy nhất qua cổng điều khoản (kho
+    KU Leuven, cc-by) trả PDF của một bài JMIR KHÁC HẲN; tầng 2 của `gom_toan_van_dashboard.py` chỉ kiểm 5 byte «%PDF-» ⇒ tệp sai
+    vào kho `PMID-38099896_UPW.pdf` (BH161 tính «đã đọc toàn văn»), gắn nhầm EndNote, và MỖI lượt bộ năm ⑦ tải lại đúng tệp đó —
+    chỉ bước ⑨ (`tom_tat_chung_cu_word.khop_dinh_danh`) bắt được. Vá: mọi bản (PDF · HTML · JATS qua PMC) qua CÙNG phép kiểm của
+    bước ⑨ trước khi ghi; URL sai bài vào sổ có hạn trong kho, lượt sau không tải lại. Kiểm HÀNH VI: gọi THẬT `tang_unpaywall` với
+    mạng giả và PDF giả HỢP LỆ tiêu đề lệch (đỏ nếu lưu), lượt hai (đỏ nếu tải lại URL trong sổ), HTML toàn văn của bài khác (đỏ
+    nếu lưu), đối chứng dương PDF đúng bài (đỏ nếu cổng chặn tất cả). Thiếu pypdf ⇒ ModuleNotFoundError (máy không kiểm được)."""
+    import io as _io
+    import json as _js
+    import tempfile as _tf
+    from unittest import mock as _mk
+
+    import pypdf  # noqa: F401 — cổng định danh PDF cần pypdf; thiếu thì chốt không đo được, không được xanh
+    g = _nap(REPO / "tools/gom_toan_van_dashboard.py", "_bh175_gom")
+    P = _nap(REPO / "tools/pdf_gia_kiem_thu.py", "_bh175_pdf")
+    for ten in ("kiem_dinh_danh_upw", "url_sai_bai_con_han", "SAI_BAI_UNPAYWALL", "SO_URL_SAI_BAI"):
+        if not hasattr(g, ten):
+            return False, f"thiếu {ten} — tầng 2 không kiểm định danh trước khi lưu"
+    pm, doi = "38099896", "10.1016/j.healun.2023.09.013"
+    tieu_de = ("Assessing and managing frailty in advanced heart failure: An International Society for Heart and Lung "
+               "Transplantation consensus statement")
+    goc = "https" + "://kho-luu-tru.invalid/retrieve/"
+    noi_dung = {
+        goc + "pdf-sai": P.pdf_co_chu("Mapping the Cardiometabolic Patient Experience and Self-Care Behaviors to Inform Design of "
+                                      "Digital Health Care Solutions: Mixed Methods Study. Heart failure and diabetes. "
+                                      + "interview theme coding " * 40),
+        goc + "pdf-dung": P.pdf_co_chu(tieu_de + ". " + "frailty assessment geriatric " * 40),
+        goc + "html-sai": ("<html><body><article><h1>Mapping the Cardiometabolic Patient Experience</h1>" + "".join(
+            "<h2>%s</h2><p>%s</p>" % (d, " ".join("%s%d" % (d[:3], i % 97) for i in range(900)))
+            for d in ("Introduction", "Methods", "Results", "Discussion")) + "</article></body></html>").encode(),
+    }
+    vi_tri, da_mo = [], []
+
+    class _PH(_io.BytesIO):
+        def __init__(self, b, u):
+            super().__init__(b)
+            self._u = u
+
+        def geturl(self):
+            return self._u
+
+    def _mang(req, timeout=None, context=None):
+        u = req if isinstance(req, str) else req.full_url
+        if "esummary.fcgi" in u:
+            return _PH(_js.dumps({"result": {pm: {"articleids": [{"idtype": "doi", "value": doi}]}}}).encode(), u)
+        if "api.unpaywall.org" in u:
+            loc = [{"url": x, "license": "cc-by"} for x in vi_tri]
+            return _PH(_js.dumps({"is_oa": True, "title": tieu_de, "best_oa_location": loc[0], "oa_locations": loc}).encode(), u)
+        da_mo.append(u)
+        return _PH(noi_dung[u], u)
+
+    def _chay(kho, url):
+        vi_tri[:] = [url]
+        with _mk.patch("urllib.request.urlopen", _mang), _mk.patch.object(g, "KHO", kho), \
+                _mk.patch.object(g, "_email_lich_su", lambda: "bh@example.org"), _mk.patch.object(g.time, "sleep", lambda s: None):
+            return g.tang_unpaywall([pm])[0]
+    with _tf.TemporaryDirectory() as td:
+        k = Path(td)
+        if _chay(k, goc + "pdf-sai") or list(k.glob("PMID-*")):
+            return False, "PDF của bài KHÁC vào kho với tên hợp lệ — tầng 2 không kiểm định danh (ca 38099896)"
+        if not g.SAI_BAI_UNPAYWALL or not g.SAI_BAI_UNPAYWALL[0][3].startswith("sai_bai"):
+            return False, f"PDF sai bài bị từ chối KHÔNG vì định danh ({g.SAI_BAI_UNPAYWALL[:1]}) — chốt không đo đúng đường"
+        da_mo.clear()
+        _chay(k, goc + "pdf-sai")
+        if goc + "pdf-sai" in da_mo:
+            return False, "lượt sau TẢI LẠI URL đã biết sai bài (mỗi lượt bộ năm ⑦ từng tải lại tệp sai) — sổ URL không gác cửa"
+    with _tf.TemporaryDirectory() as td:
+        if _chay(Path(td), goc + "html-sai") or list(Path(td).glob("PMID-*")):
+            return False, "HTML toàn văn của bài KHÁC vào kho — nhánh HTML không kiểm định danh"
+    with _tf.TemporaryDirectory() as td:
+        if not _chay(Path(td), goc + "pdf-dung") or not (Path(td) / f"PMID-{pm}_UPW.pdf").exists():
+            return False, f"PDF ĐÚNG bài bị chặn — cổng chặn tất cả (đối chứng dương; {g.SAI_BAI_UNPAYWALL[:1]})"
+    return True, "PDF/HTML của bài khác không vào kho (luật định danh của bước ⑨) · URL sai bài vào sổ có hạn, lượt sau không tải lại · PDF đúng bài vẫn lưu"
+
+
 def bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard():
     """19/10 — xuất gói THA ngoại trú, HAI lỗi «báo sai / ghi nhầm chỗ» cùng họ BH17:
     (1) bước ⑧ EndNote in «nhập mới 17» theo SỐ DỰ ĐỊNH; `import … into document` trả về không lỗi nhưng tra lại theo PMID
@@ -11565,6 +11641,8 @@ BAI_HOC = [
     ("BH162", "04/10", "Đối chiếu skill tài khoản ↔ repo phải so skill nguồn «plugin» của bác sĩ (bộ lọc «custom» từng che 20 skill cũ)", bh162_doi_chieu_skill_tai_khoan_nguon_plugin),
     ("BH163", "04/10", "Skill tài khoản claude.ai: so CẢ tệp phụ (không chỉ SKILL.md), đóng gói ZIP đúng cấu trúc tải lên (gốc <tên>/, name = tên thư mục) và hòm việc nhắc khi tài khoản cũ", bh163_skill_tai_khoan_tep_phu_va_dong_goi),
     ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
+    # BH175 đứng cạnh BH160/BH164 (cùng họ «cổng của kho toàn văn»), không nối đuôi bảng — các PR mở song song đều chèn ở cuối.
+    ("BH175", "02/11", "Tầng 2 Unpaywall KIỂM ĐỊNH DANH trước khi lưu (PDF bài JMIR khác vào kho thành toàn văn của PMID 38099896, tải lại mỗi lượt bộ năm): PDF/HTML/JATS qua cùng luật khop_dinh_danh của bước ⑨, URL sai bài vào sổ có hạn, lượt sau không tải lại", bh175_unpaywall_kiem_dinh_danh_truoc_khi_luu),
     ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),

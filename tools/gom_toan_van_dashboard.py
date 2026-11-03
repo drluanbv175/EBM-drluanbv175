@@ -126,6 +126,14 @@ GIAY_PHEP_MO_DUNG = ("cc0", "pd", "public-domain")
 GIAY_PHEP_MO_TIEN_TO = ("cc-by",)
 # PMID bị cổng điều khoản chặn ở lượt gần nhất: (pmid, doi, lý do) — để báo cáo, không phải để thử lại mù.
 BO_QUA_UNPAYWALL: list[tuple[str, str, str]] = []
+# Bản bị cổng ĐỊNH DANH từ chối ở lượt gần nhất (02/11/2026): (pmid, doi, url, lý do) — gồm cả URL bỏ qua vì sổ dưới đây.
+SAI_BAI_UNPAYWALL: list[tuple[str, str, str, str]] = []
+# Sổ URL đã trả bản SAI BÀI / không kiểm được định danh, nằm trong kho: lượt sau KHÔNG tải lại (mỗi lượt bộ năm ⑦ từng tải lại
+# đúng PDF sai của PMID 38099896). Có HẠN — cùng nhịp sổ «không-OA»: kho lưu trữ có thể sửa tệp đính kèm.
+SO_URL_SAI_BAI = "upw-sai-bai.json"
+HAN_URL_SAI_BAI = 30  # ngày
+SO_TU_TOI_THIEU_DINH_DANH = 50  # ba trang đầu ít chữ hơn ⇒ PDF ảnh/hỏng: KHÔNG kiểm được (không phải «sai bài»)
+SO_TU_MOT_TRANG_HTML = 800  # HTML/JATS không có trang: cắt thân bài thành «trang» cỡ một trang tạp chí để dùng chung luật «3 trang đầu»
 
 
 def _nap_dtv():
@@ -590,8 +598,106 @@ def vi_tri_oa_duoc_luu(uj: dict, doi: str, *, dtv=None) -> tuple[list[str], str]
     return duoc, ly_dau
 
 
-def _tai_vi_tri_upw(pm: str, url: str, gom, _rq) -> tuple[bool, str]:
-    """Tải MỘT vị trí OA đã qua cổng điều khoản và ghi kho nếu đúng là toàn văn. Trả (đã lưu?, thông điệp)."""
+_TTCC = None
+
+
+def _nap_ttcc():
+    """Nạp `tools/tom_tat_chung_cu_word.py` để dùng CHUNG phép kiểm định danh của bước ⑨ (`tach_trang` + `khop_dinh_danh`) —
+    không viết logic song song. Lỗi ⇒ None: người gọi KHÔNG lưu (fail-closed)."""
+    global _TTCC
+    if _TTCC is None:
+        try:
+            sp = importlib.util.spec_from_file_location("_ttcc_gom_tv", REPO / "tools" / "tom_tat_chung_cu_word.py")
+            mod = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(mod)
+            _TTCC = mod
+        except Exception:  # noqa: BLE001
+            _TTCC = False
+    return _TTCC or None
+
+
+def kiem_dinh_danh_upw(du_lieu: bytes, *, loai: str, doi: str, tieu_de: str) -> tuple[str, str]:
+    """CỔNG ĐỊNH DANH của tầng 2 (02/11/2026 — `audit/nhat-ky/2026-11-02-unpaywall-pdf-sai-bai.md`): bản tải về có đúng là bài
+    của DOI này không, xét TRƯỚC khi ghi kho. Ca thật: PMID 38099896 (ISHLT 2023 frailty) nhận PDF một bài JMIR khác hẳn từ kho
+    KU Leuven (Unpaywall ghi cc-by) — tầng này chỉ kiểm 5 byte «%PDF-» nên tệp sai vào kho với tên hợp lệ, cổng BH161 tính «đã
+    đọc toàn văn», EndNote gắn nhầm. Luật là CỦA BƯỚC ⑨ (`khop_dinh_danh`): DOI có trong văn bản, hoặc ≥ 60% từ (≥ 4 chữ) của
+    tiêu đề có ở 3 trang đầu. `loai` ∈ {"pdf", "html", "jats"}; HTML/JATS dùng THÂN BÀI cắt thành «trang» `SO_TU_MOT_TRANG_HTML` từ.
+
+    Trả (kết luận, lý do): «dung» (chỉ kết luận này được lưu) · «sai_bai» (đọc được chữ mà không khớp) · «khong_kiem_duoc» (PDF
+    hỏng/không có lớp chữ, Unpaywall không có tiêu đề) · «thieu_cong_cu» (không nạp được bước ⑨/pypdf — lỗi MÁY, không ghi sổ)."""
+    tt = _nap_ttcc()
+    if tt is None:
+        return "thieu_cong_cu", "không nạp được phép kiểm định danh của bước ⑨ (tools/tom_tat_chung_cu_word.py)"
+    if loai == "pdf":
+        try:
+            trang = tt.tach_trang(du_lieu)
+        except ImportError as exc:
+            return "thieu_cong_cu", f"thiếu thư viện đọc PDF ({exc.name or 'pypdf'})"
+        except Exception as exc:  # noqa: BLE001 — pypdf ném nhiều loại lỗi với tệp hỏng
+            return "khong_kiem_duoc", f"không đọc được PDF ({type(exc).__name__})"
+    else:
+        vb = du_lieu.decode("utf-8", errors="replace")
+        tu = (phan_tich_trang_html(vb)["than_bai"] if loai == "html" else _chu_tho(vb)).split()
+        trang = [" ".join(tu[i:i + SO_TU_MOT_TRANG_HTML]) for i in range(0, len(tu), SO_TU_MOT_TRANG_HTML)]
+    if len(" ".join(trang[:3]).split()) < SO_TU_TOI_THIEU_DINH_DANH:
+        return "khong_kiem_duoc", "ba trang đầu gần như không có chữ (PDF ảnh/hỏng) — không đối chiếu được tiêu đề"
+    khop, ly_do = tt.khop_dinh_danh(trang, doi, tieu_de)
+    if khop:
+        return "dung", ly_do
+    return ("sai_bai" if (tieu_de or "").strip() else "khong_kiem_duoc"), ly_do
+
+
+def doc_so_url_sai_bai(kho: Path) -> dict:
+    """Sổ `SO_URL_SAI_BAI`: {pmid: {url: {ngay, loai, ly_do, doi}}}. Vắng/hỏng ⇒ {} — mất sổ chỉ làm tải lại một lần, cổng định
+    danh vẫn chặn bản sai."""
+    try:
+        so = json.loads((kho / SO_URL_SAI_BAI).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return so if isinstance(so, dict) else {}
+
+
+def url_sai_bai_con_han(so: dict, pm: str, url: str, hom_nay: date | None = None) -> dict | None:
+    """Mục sổ của (PMID, URL) nếu còn hạn `HAN_URL_SAI_BAI` ngày; ngày hỏng/tương lai/hết hạn ⇒ None (thử lại)."""
+    muc = (so.get(pm) if isinstance(so.get(pm), dict) else {}).get(url)
+    if not isinstance(muc, dict):
+        return None
+    try:
+        tuoi = ((hom_nay or date.today()) - date.fromisoformat(str(muc.get("ngay")))).days
+    except ValueError:
+        return None
+    return muc if 0 <= tuoi < HAN_URL_SAI_BAI else None
+
+
+def ghi_url_sai_bai(kho: Path, pm: str, url: str, *, doi: str, loai: str, ly_do: str, hom_nay: date | None = None) -> None:
+    """Ghi (PMID, URL) vào sổ, bỏ mục hết hạn; ghi nguyên tử. Lỗi ghi ném OSError (người gọi chỉ cảnh báo)."""
+    hom_nay = hom_nay or date.today()
+    cu = doc_so_url_sai_bai(kho)
+    so = {p: {u: m for u, m in d.items() if url_sai_bai_con_han(cu, p, u, hom_nay)} for p, d in cu.items() if isinstance(d, dict)}
+    so.setdefault(pm, {})[url] = {"ngay": hom_nay.isoformat(), "loai": loai, "ly_do": ly_do, "doi": doi}
+    _ghi_nguyen_tu(kho / SO_URL_SAI_BAI, json.dumps({p: d for p, d in so.items() if d}, ensure_ascii=False, indent=1,
+                                                    sort_keys=True).encode("utf-8"))
+
+
+def _tu_choi_dinh_danh(pm: str, url: str, doi: str, ket_luan: str, ly_do: str, ten_ban: str) -> str:
+    """Bản bị cổng định danh từ chối: vào SAI_BAI_UNPAYWALL; «sai_bai»/«khong_kiem_duoc» vào sổ URL (lỗi MÁY thì không — lượt
+    sau thử lại). Trả dòng ⚠ cho người gọi in."""
+    SAI_BAI_UNPAYWALL.append((pm, doi, url, f"{ket_luan}: {ly_do}"))
+    ghi = ""
+    if ket_luan in ("sai_bai", "khong_kiem_duoc"):
+        try:
+            ghi_url_sai_bai(KHO, pm, url, doi=doi, loai=ket_luan, ly_do=f"{ten_ban}: {ly_do}")
+            ghi = f" — ghi sổ {SO_URL_SAI_BAI} ({HAN_URL_SAI_BAI} ngày không tải lại URL này)"
+        except OSError as exc:
+            ghi = f" — ⚪ chưa ghi được sổ {SO_URL_SAI_BAI} ({type(exc).__name__})"
+    nhan = {"sai_bai": "KHÔNG phải bài này", "khong_kiem_duoc": "không kiểm được định danh",
+            "thieu_cong_cu": "không kiểm được định danh trên máy này"}.get(ket_luan, ket_luan)
+    return f"  ⚠ Unpaywall {pm}: {ten_ban} ở {url[:80]} {nhan} ({ly_do}) — không lưu{ghi}"
+
+
+def _tai_vi_tri_upw(pm: str, url: str, gom, _rq, *, doi: str = "", tieu_de: str = "") -> tuple[bool, str]:
+    """Tải MỘT vị trí OA đã qua cổng điều khoản và ghi kho nếu đúng là toàn văn CỦA BÀI NÀY (cổng định danh `kiem_dinh_danh_upw`
+    với `doi` + `tieu_de` của Unpaywall, cho cả JATS, PDF lẫn HTML). Trả (đã lưu?, thông điệp)."""
     req = _rq.Request(url, headers={"User-Agent": "Mozilla/5.0 (EBM-OA-fetch)"})
     phan_hoi = _rq.urlopen(req, timeout=40)
     du_lieu = phan_hoi.read()
@@ -601,29 +707,42 @@ def _tai_vi_tri_upw(pm: str, url: str, gom, _rq) -> tuple[bool, str]:
     m_pmc = (re.search(r"pmc\.ncbi\.nlm\.nih\.gov/articles/PMC(\d+)", url_cuoi)
              or re.search(r"/articles/PMC(\d+)/", du_lieu[:4000].decode(
                  "utf-8", errors="replace")))
+    bo_jats = ""
     if m_pmc and gom is not None:
         xml = gom.tai_toan_van(m_pmc.group(1))
         if xml:
-            _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml", xml)
-            return True, f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)})"
+            # PMCID có thể chỉ là một liên kết trong trang ⇒ cùng cổng định danh; không khớp thì xét chính trang tải về
+            kl, ly = kiem_dinh_danh_upw(xml, loai="jats", doi=doi, tieu_de=tieu_de)
+            if kl == "dung":
+                _ghi_nguyen_tu(KHO / f"PMID-{pm}_PMC{m_pmc.group(1)}.xml", xml)
+                return True, f"  ✓ Unpaywall→PMC JATS: {pm} (PMC{m_pmc.group(1)}; định danh: {ly})"
+            bo_jats = f" [bỏ JATS PMC{m_pmc.group(1)}: {kl} — {ly}]"
     if du_lieu[:5] == b"%PDF-":
+        kl, ly = kiem_dinh_danh_upw(du_lieu, loai="pdf", doi=doi, tieu_de=tieu_de)
+        if kl != "dung":
+            return False, _tu_choi_dinh_danh(pm, url, doi, kl, ly, "PDF") + bo_jats
         _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.pdf", du_lieu)
-        return True, f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB)"
+        return True, f"  ✓ Unpaywall: {pm} → PDF ({len(du_lieu)//1024} KB; định danh: {ly})"
     # CỔNG NỘI DUNG THẬT (bẫy đo được 19/08: trang chặn-cookie 15 từ suýt
     # vào kho làm «toàn văn» — tuần sau máy đọc rác mà tưởng đã thẩm định)
     vb = _van_ban_tho(du_lieu)
     la_tv, vi_sao = la_toan_van_html(du_lieu.decode("utf-8", errors="replace"))  # NGUYÊN VĂN HTML: cổng đọc đề mục
     if not la_tv or "Cookies must be enabled" in vb:
-        return False, f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu"
+        return False, f"  ⚠ Unpaywall {pm}: trang trả về KHÔNG phải toàn văn ({vi_sao}) — từ chối, không lưu" + bo_jats
+    # Toàn văn THẬT nhưng có thể của bài KHÁC (02/11/2026) — cùng cổng định danh với PDF
+    kl, ly = kiem_dinh_danh_upw(du_lieu, loai="html", doi=doi, tieu_de=tieu_de)
+    if kl != "dung":
+        return False, _tu_choi_dinh_danh(pm, url, doi, kl, ly, "HTML") + bo_jats
     _ghi_nguyen_tu(KHO / f"PMID-{pm}_UPW.html", du_lieu)
-    return True, f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật)"
+    return True, f"  ✓ Unpaywall: {pm} → HTML ({len(vb.split())} từ chữ thật; định danh: {ly})"
 
 
 def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
     """TẦNG 2 OA — Unpaywall (bác sĩ duyệt gói ② 19/08): bài không có bản PMC vẫn
     thường có bản OA HỢP PHÁP ở repository (bản tác giả tự lưu, Gold OA ngoài PMC).
     Chỉ tải vị trí OA do Unpaywall xác nhận — KHÔNG cào nguồn trả phí. Thử best_oa_location
-    trước rồi các vị trí khác ĐÃ QUA cổng điều khoản (18/10/2026), dừng ở vị trí đầu tiên lưu được.
+    trước rồi các vị trí khác ĐÃ QUA cổng điều khoản (18/10/2026), dừng ở vị trí đầu tiên lưu được. Mọi bản qua cổng ĐỊNH DANH
+    (`kiem_dinh_danh_upw`, 02/11/2026) trước khi ghi; URL từng trả bản sai bài nằm trong sổ `SO_URL_SAI_BAI` thì không tải lại.
     Lưu PMID-<n>_UPW.pdf|.html (doc_sau không parse được PDF — phiên Claude đọc
     trực tiếp bằng skill pdf khi thẩm định). Trả (số tải được, danh sách còn thiếu)."""
     import json as _json
@@ -634,6 +753,8 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
         return 0, pmids
     moi_tai, con_thieu = 0, []
     BO_QUA_UNPAYWALL.clear()
+    SAI_BAI_UNPAYWALL.clear()
+    so_sai_bai = doc_so_url_sai_bai(KHO)
     trang_thai: dict = {}
     for pm in pmids:
         try:  # DOI qua NCBI esummary, NCBI chặn/lỗi ⇒ Europe PMC
@@ -651,10 +772,20 @@ def tang_unpaywall(pmids: list[str], gom=None) -> tuple[int, list[str]]:
                     print(f"  ⛔ Unpaywall {pm}: KHÔNG lưu — {ly_do}")
                 con_thieu.append(pm)
                 continue
+            # SỔ URL SAI BÀI (02/11/2026): URL đã trả bản sai bài/không kiểm được định danh còn hạn ⇒ không tải lại
+            for url in [u for u in ds_url if url_sai_bai_con_han(so_sai_bai, pm, u)]:
+                muc = url_sai_bai_con_han(so_sai_bai, pm, url)
+                SAI_BAI_UNPAYWALL.append((pm, doi, url, f"đã ghi sổ {muc.get('ngay')}: {muc.get('loai')} — {muc.get('ly_do')}"))
+                print(f"  ⏭ Unpaywall {pm}: bỏ {url[:80]} — sổ {SO_URL_SAI_BAI} ghi {muc.get('loai')} ngày {muc.get('ngay')}")
+                ds_url.remove(url)
+            if not ds_url:
+                con_thieu.append(pm)
+                continue
+            tieu_de = str(uj.get("title") or "")
             luu, bao = False, []
             for url in ds_url:
                 try:
-                    luu, tin = _tai_vi_tri_upw(pm, url, gom, _rq)
+                    luu, tin = _tai_vi_tri_upw(pm, url, gom, _rq, doi=doi, tieu_de=tieu_de)
                 except Exception as exc:  # noqa: BLE001 — vị trí này hỏng thì thử vị trí kế
                     luu, tin = False, f"  ⚠ Unpaywall {pm}: {type(exc).__name__} ở {url[:80]} — thử vị trí kế"
                 bao.append(tin)
@@ -867,6 +998,7 @@ def main() -> int:
     phu_quet = len(pmids & da_co_sau) if da_co_sau is not None else "?"
     chi_tiet = " · ".join(f"{k} {len(v)}" for k, v in sorted(loai.items()))
     bo_qua = "".join(f"  - {pm} (doi:{d}) — {ly}\n" for pm, d, ly in BO_QUA_UNPAYWALL)
+    sai_bai = "".join(f"  - {pm} (doi:{d}) {u[:100]} — {ly}\n" for pm, d, u, ly in SAI_BAI_UNPAYWALL)
     (KHO / "DO-PHU-OA.md").write_text(
         f"# ĐỘ PHỦ TOÀN VĂN — kho dùng chung dashboard — {date.today().isoformat()}\n\n"
         f"- Kho có toàn văn (hoặc đã đọc toàn văn qua làn trình duyệt / bác sĩ đã đọc trực tiếp) cho **{tong_co}** PMID; "
@@ -876,6 +1008,8 @@ def main() -> int:
         f"{len(khong_pmc)} không có bản PMC\n"
         + (f"- PMC Cloud ghi ĐÃ RÚT — không lưu, tra chuỗi rút bài: {', '.join(rut_bai_pmc)}\n" if rut_bai_pmc else "")
         + (f"- Tầng 2 Unpaywall — KHÔNG lưu vì điều khoản NXB ({len(BO_QUA_UNPAYWALL)}):\n{bo_qua}" if BO_QUA_UNPAYWALL else "")
+        + (f"- Tầng 2 Unpaywall — KHÔNG lưu vì định danh không khớp/không kiểm được ({len(SAI_BAI_UNPAYWALL)}; sổ "
+           f"{SO_URL_SAI_BAI}):\n{sai_bai}" if SAI_BAI_UNPAYWALL else "")
         + "\n> Phần không-OA cần quyền truy cập của bác sĩ — độ phủ thấp là SỰ THẬT về OA,\n"
         "> không phải lỗi. Cần bác sĩ kiểm chứng.\n", encoding="utf-8")
     print(f"  +{moi} toàn văn mới · không-OA {len(khong_oa)} · không-PMC {len(khong_pmc)} "
