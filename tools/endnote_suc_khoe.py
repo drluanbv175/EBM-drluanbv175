@@ -257,6 +257,26 @@ def ban_sao_csdl(thu_vien: Path, so_lan: int = 3, ngu=time.sleep):
             kn.close()
 
 
+def kiem_cau_truc(thu_vien: Path, gioi_han: int = 100) -> list[str]:
+    """`PRAGMA quick_check` trên BẢN SAO TẠM của sdb.eni (03/11/2026): [] = cấu trúc lành, danh sách = dòng lỗi.
+
+    Đo thật 03/11/2026: sdb.eni hỏng từ khoảng 19:01 ngày 02/11 (101 dòng «invalid page number», «2nd reference to page») — triệu
+    chứng bên ngoài chỉ là lỗi giải mã UTF-8 ở `accession_number` của một bản ghi (trang tràn bị tham chiếu hai lần, lẫn dữ liệu
+    bản ghi khác). EndNote dùng collation riêng ENCIN_Base/ENCI_Base: đăng ký bản so sánh nhị phân thay thế chỉ để quick_check
+    chạy được (bản sao lưu lành vẫn ra «ok» với bản thay thế này). Sqlite tự báo «malformed» ⇒ cũng là hỏng cấu trúc. Lỗi khác
+    (chép không được, nhật ký «nóng») ⇒ ném ra cho bên gọi: KHÔNG ĐO ĐƯỢC, không bao giờ là «lành»."""
+    with ban_sao_csdl(thu_vien) as kn:
+        for ten in ("ENCIN_Base", "ENCI_Base"):
+            kn.create_collation(ten, lambda a, b: (a > b) - (a < b))
+        try:
+            dong = [r[0] for r in kn.execute(f"PRAGMA quick_check({int(gioi_han)})")]
+        except sqlite3.DatabaseError as e:
+            if "malformed" in str(e).lower():
+                return [f"{type(e).__name__}: {e}"]
+            raise
+    return [] if dong == ["ok"] else dong
+
+
 def _giai_spec(spec) -> tuple[str, str]:
     """(tên nhóm, loại) từ cột `groups.spec` (XML): tên bỏ mã thực thể XML; loại theo `<rule>TYPE;n</rule>`."""
     s = spec.decode("utf-8", "replace") if isinstance(spec, (bytes, bytearray)) else str(spec or "")
@@ -401,6 +421,19 @@ def cho_vao_nhom_con_lai(thu_vien: Path, tep: Path | None = None, nhom: list[dic
     return ra
 
 
+def _chan_doan_cau_truc(thu_vien: Path) -> str:
+    """Đuôi chẩn đoán cho một lần đọc sdb.eni thất bại — đo quick_check rồi nói rõ hỏng cấu trúc hay chưa đo được (03/11/2026)."""
+    try:
+        loi = kiem_cau_truc(thu_vien)
+    except (OSError, sqlite3.Error) as e:
+        return f" — chưa kiểm được cấu trúc ({type(e).__name__}), đo lại sau"
+    if not loi:
+        return " — quick_check lành: đo lại sau (EndNote có thể đang ghi); còn lỗi thì báo bác sĩ"
+    return (f" — sdb.eni HỎNG CẤU TRÚC (quick_check {len(loi)} dòng lỗi, vd «{loi[0][:80]}»): KHÔNG ghi EndNote (nạp, gắn PDF, "
+            "Abstract) tới khi bác sĩ sửa — EndNote › Library › Recover Library…, hoặc khôi phục bản sao lưu lành trong "
+            "~/.ebm-endnote-sao-luu/")
+
+
 def tinh_trang(thu_vien: Path | None = None) -> dict:
     """Tình trạng tổng hợp (không gửi AppleScript). Khoá `canh_bao` liệt kê việc cần bác sĩ để ý."""
     thu_vien = thu_vien or thu_vien_cau_hinh()
@@ -425,7 +458,7 @@ def tinh_trang(thu_vien: Path | None = None) -> dict:
         kq["dem"] = dem_ban_ghi(thu_vien)
     except (OSError, sqlite3.Error) as e:
         kq["dem"] = None
-        kq["canh_bao"].append(f"không đọc được cơ sở dữ liệu: {type(e).__name__}")
+        kq["canh_bao"].append(f"không đọc được cơ sở dữ liệu: {type(e).__name__}" + _chan_doan_cau_truc(thu_vien))
     try:
         kq["nhom_cho_thung_rac"] = [n for n in nhom_cho_thung_rac(thu_vien) if n["con_o_thu_vien"]]
     except (OSError, sqlite3.Error, ValueError) as e:
