@@ -7705,6 +7705,85 @@ def bh176_ra_dinh_danh_kho_toan_van_cu():
     return True, "hai ca đối chứng (39186635, 42701440) bị bắt bằng cổng BH175 · tệp đúng vẫn khớp · mạng đứt không thành khớp · chạy khô không dời · dời thật chỉ tệp đã duyệt, nguyên vẹn"
 
 
+def bh177_endnote_giao_dich_treo():
+    """03/11 — EndNote giữ MỘT giao dịch ghi chưa commit từ 19:00:59 ngày 02/11 tới 16:56 ngày 03/11 (~22 giờ; `sdb.nal` là
+    rollback journal tên lạ). Không giác quan nào đo tuổi giao dịch; các phiên vẫn ghi tiếp vào giao dịch dở; mọi bản sao lưu
+    `sao_luu_thu_vien` là ảnh chụp giữa giao dịch («malformed» ⇒ kết luận nhầm «hỏng»). EndNote khởi động lại ⇒ cuộn lại hết, chỉ
+    cứu được nhờ bản online (Sync) kèm 88 bản trùng. Kiểm HÀNH VI trên một giao dịch SQLite THẬT bị tràn bộ đệm (nhật ký đổi tên
+    `sdb.nal`): treo ⇒ `giao_dich_treo` treo và hòm việc ưu tiên 0; mở ngắn ⇒ không báo; khoá ghi ném TRƯỚC khi lấy khoá; sao lưu
+    giữa giao dịch ⇒ trạng thái đã commit (0 dòng dở, quick_check lành)."""
+    import shutil as _sh
+    import sqlite3 as _sq
+    import tempfile as _tf
+    import time as _t
+    from types import SimpleNamespace as _NS
+
+    sk = _nap(REPO / "tools/endnote_suc_khoe.py", "_bh177_sk")
+    kg = _nap(REPO / "tools/khoa_ghi_endnote.py", "_bh177_kg")
+    tv_mod = _nap(REPO / "tools/tom_tat_endnote_vi.py", "_bh177_tv")
+    tdxv = _nap(REPO / "tools/tu_de_xuat_viec.py", "_bh177_tdxv")
+    for m, ten in ((sk, "giao_dich_treo"), (kg, "GiaoDichEndNoteTreo"), (kg, "kiem_giao_dich_treo")):
+        if not hasattr(m, ten):
+            return False, f"thiếu {ten} — không ai đo/chặn giao dịch EndNote treo"
+    with _tf.TemporaryDirectory() as td:
+        td = Path(td)
+        tv = td / "EndNote" / "My.enl"
+        sk.sdb(tv).parent.mkdir(parents=True)
+        tv.write_bytes(b"enl")
+        goc = td / "goc.eni"
+        kn = _sq.connect(goc, isolation_level=None)
+        kn.execute("CREATE TABLE refs(id INTEGER PRIMARY KEY, title TEXT)")
+        kn.execute("BEGIN")
+        kn.executemany("INSERT INTO refs(title) VALUES (?)", [("bai " + "y" * 300,) for _ in range(300)])
+        kn.execute("COMMIT")
+        kn.execute("PRAGMA cache_size=5")
+        kn.execute("BEGIN IMMEDIATE")
+        kn.executemany("INSERT INTO refs(title) VALUES (?)", [("x" * 2000,) for _ in range(400)])
+        kn.execute("UPDATE refs SET title = 'doi'")
+        _sh.copyfile(goc, sk.sdb(tv))
+        _sh.copyfile(str(goc) + "-journal", sk.tep_nhat_ky(tv))
+        kn.execute("ROLLBACK")
+        kn.close()
+        bay_gio = _t.time()
+        dai = sk.giao_dich_treo(tv, bay_gio=bay_gio, luc_mo=lambda p: bay_gio - 22 * 3600)
+        if not dai or not dai.get("treo"):
+            return False, f"giao dịch mở 22 giờ KHÔNG bị coi là treo ({dai}) — sự cố 02–03/11 lặp lại không ai biết"
+        ngan = sk.giao_dich_treo(tv, bay_gio=bay_gio, luc_mo=lambda p: bay_gio - 60)
+        if not ngan or ngan.get("treo"):
+            return False, "giao dịch mở 60 giây (EndNote đang ghi) bị báo treo — báo đỏ giả"
+        ra = tdxv.giac_quan_endnote(tinh_trang=lambda: {"do_duoc": True, "canh_bao": [], "giao_dich_mo": dai})
+        if not ra or ra[0][0] != 0:
+            return False, f"hòm việc không xếp giao dịch treo ưu tiên 0 (🔴): {ra[:1]}"
+        tep_khoa = td / "khoa.json"
+        gia = _NS(thu_vien_cau_hinh=lambda: tv, giao_dich_treo=lambda t, bay_gio=None: dai)
+        try:
+            kg.cho_phep_ghi_loi("EndNote 2025", "nhập", tep=tep_khoa, dang_dung=lambda: False, thong_bao=lambda s: None,
+                                kiem_giao_dich=lambda: kg.kiem_giao_dich_treo(tv, sk=gia))
+            return False, "khoá ghi CHO GHI vào giao dịch treo — mọi thay đổi mới sẽ mất khi EndNote cuộn lại"
+        except kg.GiaoDichEndNoteTreo:
+            pass
+        if tep_khoa.exists():
+            return False, "khoá ghi lấy khoá TRƯỚC khi kiểm giao dịch treo"
+        nap = _nap(REPO / "tools/nap_endnote_chu_de.py", "_bh177_nap")
+        goi = []
+        nap.nap_khoa_ghi = lambda: _NS(cho_phep_ghi=lambda *a: goi.append(a))
+        en = object.__new__(nap.EndNoteMac)
+        en.ung_dung, en.thu_vien = "EndNote 2025", tv
+        en._truoc_khi_ghi("thử")
+        if goi != [("EndNote 2025", "thử", tv)]:
+            return False, f"EndNoteMac không truyền thư viện cho khoá ghi ({goi}) — kiểm nhầm thư viện khai báo thay vì thư viện đang ghi"
+        sl = tv_mod.sao_luu_thu_vien(tv, td / "sl")
+        kn = _sq.connect(f"file:{sl / 'sdb.eni'}?mode=ro", uri=True)
+        try:
+            dong_do, qc = kn.execute("SELECT count(*) FROM refs WHERE title = 'doi'").fetchone()[0], \
+                kn.execute("PRAGMA quick_check").fetchone()[0]
+        finally:
+            kn.close()
+        if dong_do or qc != "ok":
+            return False, f"bản sao lưu chụp giữa giao dịch mang {dong_do} dòng CHƯA commit (quick_check {qc}) — sao lưu không cuộn lại nhật ký"
+    return True, "giao dịch 22 giờ ⇒ treo, hòm việc 🔴 · 60 giây không báo · khoá ghi ném trước khi lấy khoá · sao lưu giữa giao dịch cuộn về trạng thái đã commit"
+
+
 def bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard():
     """19/10 — xuất gói THA ngoại trú, HAI lỗi «báo sai / ghi nhầm chỗ» cùng họ BH17:
     (1) bước ⑧ EndNote in «nhập mới 17» theo SỐ DỰ ĐỊNH; `import … into document` trả về không lỗi nhưng tra lại theo PMID
@@ -11725,6 +11804,8 @@ BAI_HOC = [
     ("BH168", "23/10", "Skill tài khoản: gương cục bộ (~/.claude/skills/synced, dừng 02/10) cũ hơn ZIP cùng nội dung ⇒ ⚪ không đo được thay vì «21 skill CŨ» đỏ giả; repo đổi sau đóng gói vẫn «cập nhật»", bh168_skill_tai_khoan_guong_cuc_bo_lac_hau),
     ("BH169", "24/10", "Khoá ghi EndNote theo PHẠM VI một thao tác: máy chủ MCP endnote-ebm (sống cả phiên) nhả khoá khi mỗi lời gọi công cụ trả về (cả khi lỗi), trên CÙNG bản mô-đun khoá với EndNoteMac; lệnh ghi tiếp làm mới luc_epoch (khoá cũ chặn bộ năm bước ⑧ tới 15 phút)", bh169_khoa_ghi_endnote_theo_pham_vi_mcp),
     ("BH170", "24/10", "EndNote: post vào nhóm ĐÃ có LUÔN sinh nhóm mới cùng tên (đo lại trên bản sao, kể cả nhóm vừa tạo cùng phiên) ⇒ EndNoteMac.dang_vao_nhom đo sdb.eni theo group_id trước khi post (đã có/không đo được ⇒ không post); bước ⑧ đưa bài thiếu vào hàng chờ cho bác sĩ kéo tay", bh170_endnote_khong_post_vao_nhom_da_co),
+    # BH177 đứng cạnh BH167/BH169/BH170 (cùng họ «thư viện EndNote»), không nối đuôi bảng — các PR mở song song đều chèn ở cuối.
+    ("BH177", "03/11", "Giao dịch ghi EndNote TREO (sdb.nal mở ~22 giờ, cuộn lại khi EndNote khởi động lại): giác quan 🔴 theo tuổi giao dịch, khoá ghi từ chối ghi tiếp, sao lưu giữa giao dịch chép kèm nhật ký rồi cuộn về trạng thái đã commit", bh177_endnote_giao_dich_treo),
     # BH140 đứng cạnh BH116 (cùng họ «sổ nguồn»), không nối đuôi bảng: các PR mở cùng ngày 30/09 đều chèn ở cuối.
     ("BH140", "30/09", "Sổ nguồn trên bản sao trần: engine vắng là ⚪ không đo được (không BROKEN), không ghi sổ; thiếu THẬT vẫn đỏ", bh140_so_nguon_engine_vang_la_khong_do_duoc_khong_phai_hong),
     ("BH117", "27/09", "Vòng quét tuần chỉ leo thang Consensus/SerpApi khi NCBI ổn, thiếu bài mạnh và có truy vấn tiếng Anh", bh117_du_phong_tinh_phi_chi_leo_thang_khi_can),

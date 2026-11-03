@@ -33,6 +33,7 @@ import tempfile
 import time
 import unicodedata
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 
 for _s in (sys.stdout, sys.stderr):
@@ -279,6 +280,49 @@ def giao_dich_mo(thu_vien: Path) -> bool:
         return False
 
 
+NGUONG_TREO_GIAY = 30 * 60  # giao dịch ghi của EndNote thường xong trong vài giây — mở quá 30 phút là TREO
+HUONG_DAN_GIAO_DICH_TREO = (
+    "Đừng ghi thêm vào EndNote. Bác sĩ: Library › Sync TRƯỚC (đẩy thay đổi lên bản online — chính bản online đã cứu dữ liệu "
+    "03/11/2026), rồi thoát EndNote êm (EndNote › Quit), mở lại, Sync lần nữa và đo lại: python3 tools/endnote_suc_khoe.py "
+    "(bị cuộn lại thì Sync kéo bản online về nhưng có thể sinh bản trùng — audit/nhat-ky/2026-11-03-endnote-giao-dich-treo-cuon-lai.md)")
+
+
+def luc_mo_nhat_ky(tep: Path) -> float:
+    """Giờ (epoch) TẠO tệp nhật ký = giờ mở giao dịch. EndNote xoá `sdb.nal` khi giao dịch xong (đo 03/11/2026: tệp vắng trước
+    19:00:59 ngày 02/11 và sau khi EndNote khởi động lại) ⇒ mỗi giao dịch một tệp mới. macOS/Windows có giờ tạo (`st_birthtime`;
+    Windows trước Python 3.12 là `st_ctime`). Nền không có giờ tạo ⇒ `st_mtime` — tuổi chỉ NGẮN đi (bỏ sót, không báo đỏ giả)."""
+    st = tep.stat()
+    tao = getattr(st, "st_birthtime", None)
+    if not tao and os.name == "nt":
+        tao = st.st_ctime
+    return float(tao or st.st_mtime)
+
+
+def giao_dich_treo(thu_vien: Path, *, bay_gio: float | None = None, nguong: float | None = None,
+                   luc_mo=None) -> dict | None:
+    """Giao dịch ghi EndNote đang mở: None = không có; dict {tep, tu_epoch, tu_luc, phut, treo, mo_ta}; `treo` = mở ≥ `nguong` giây.
+
+    Sự cố 02–03/11/2026: EndNote giữ MỘT giao dịch từ 19:00:59 ngày 02/11 tới 16:56 ngày 03/11 (~22 giờ). Mọi thay đổi của mọi phiên
+    trong khoảng đó chỉ nằm trong giao dịch; EndNote khởi động lại ⇒ cuộn lại, chỉ cứu được nhờ bản EndNote online (Sync). Suốt
+    22 giờ không giác quan nào đo tuổi giao dịch. Lỗi đọc ⇒ ném ra (KHÔNG ĐO ĐƯỢC, không bao giờ là «không treo»)."""
+    if not giao_dich_mo(thu_vien):
+        return None
+    tep = tep_nhat_ky(thu_vien)
+    try:
+        mo = (luc_mo or luc_mo_nhat_ky)(tep)
+    except FileNotFoundError:
+        return None  # giao dịch vừa xong giữa hai phép đọc
+    giay = max(0.0, (time.time() if bay_gio is None else bay_gio) - mo)
+    gd = {"tep": str(tep), "tu_epoch": mo, "tu_luc": datetime.fromtimestamp(mo).strftime("%H:%M %d/%m/%Y"),
+          "phut": int(giay // 60), "treo": giay >= (NGUONG_TREO_GIAY if nguong is None else nguong)}
+    gio, phut = divmod(gd["phut"], 60)
+    tuoi = f"{gio} giờ {phut} phút" if gio else f"{phut} phút"
+    gd["mo_ta"] = (f"EndNote giữ một giao dịch ghi CHƯA HOÀN TẤT từ {gd['tu_luc']} ({tuoi}) — mọi thay đổi từ mốc đó chưa ghi "
+                   "xuống đĩa, EndNote sập hoặc khởi động lại sẽ CUỘN LẠI (02–03/11/2026 mất ~22 giờ thay đổi, chỉ cứu được nhờ "
+                   f"Sync). {HUONG_DAN_GIAO_DICH_TREO}")
+    return gd
+
+
 def kiem_cau_truc(thu_vien: Path, gioi_han: int = 100) -> list[str]:
     """`PRAGMA quick_check` trên BẢN SAO TẠM của sdb.eni (03/11/2026): [] = cấu trúc lành, danh sách = dòng lỗi.
 
@@ -459,8 +503,7 @@ def _chan_doan_cau_truc(thu_vien: Path) -> str:
     try:
         loi = kiem_cau_truc(thu_vien)
     except GiaoDichDangMo as e:
-        return (f" — {e}: KHÔNG kết luận thư viện hỏng; đừng ghi thêm vào EndNote, bác sĩ đóng thư viện êm (File › Close) hoặc "
-                "thoát EndNote êm rồi đo lại — giao dịch treo lâu có nguy cơ mất dữ liệu nếu EndNote sập")
+        return f" — {e}: KHÔNG kết luận thư viện hỏng. {HUONG_DAN_GIAO_DICH_TREO}"
     except (OSError, sqlite3.Error) as e:
         return f" — chưa kiểm được cấu trúc ({type(e).__name__}), đo lại sau"
     if not loi:
@@ -491,6 +534,13 @@ def tinh_trang(thu_vien: Path | None = None) -> dict:
         kq["canh_bao"].append("thư viện nằm trong iCloud Drive — bác sĩ đã chọn OneDrive (19/10/2026); kiểm lại "
                               "`~/.ebm-endnote.json`")
     try:
+        # Khoá RIÊNG (không vào `canh_bao`): treo là 🔴 — hòm việc và `main` đọc khoá này; mở ngắn (EndNote đang ghi) không báo.
+        kq["giao_dich_mo"] = giao_dich_treo(thu_vien)
+    except OSError as e:
+        kq["giao_dich_mo"] = None
+        kq["canh_bao"].append(f"không đọc được nhật ký giao dịch sdb.nal: {type(e).__name__} — chưa biết EndNote có giữ giao "
+                              "dịch ghi treo không")
+    try:
         kq["dem"] = dem_ban_ghi(thu_vien)
     except (OSError, sqlite3.Error) as e:
         kq["dem"] = None
@@ -520,6 +570,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     kq = tinh_trang()
+    treo = bool((kq.get("giao_dich_mo") or {}).get("treo"))
     if a.json:
         print(json.dumps(kq, ensure_ascii=False, indent=1))
     elif not kq.get("do_duoc"):
@@ -529,6 +580,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Thư viện: {kq['thu_vien']}" + (f" (đồng bộ: {kq['dong_bo']})" if kq["dong_bo"] else ""))
         if dem:
             print(f"  {dem['trong_thu_vien']} bản ghi · {dem['co_tep']} có tệp đính kèm · {dem['thung_rac']} trong thùng rác")
+        if treo:
+            print(f"  🔴 {kq['giao_dich_mo']['mo_ta']}")
         for c in kq["canh_bao"]:
             print(f"  🟠 {c}")
         for n in kq.get("nhom_cho_thung_rac") or []:
@@ -540,11 +593,11 @@ def main(argv: list[str] | None = None) -> int:
         for n in kq.get("cho_vao_nhom") or []:
             print(f"  👤 {len(n['rec'])} bản ghi chờ bác sĩ đưa vào nhóm «{n['ten'][:80]}» — "
                   "python3 tools/nap_endnote_chu_de.py --cho-vao-nhom")
-        if not kq["canh_bao"]:
-            print("  🟢 không có bản sao xung đột, không có tệp chỉ còn trên mây")
+        if not kq["canh_bao"] and not treo:
+            print("  🟢 không có bản sao xung đột, không có tệp chỉ còn trên mây, không có giao dịch ghi treo")
     if not kq.get("do_duoc"):
         return 2
-    return 1 if kq["canh_bao"] else 0
+    return 1 if kq["canh_bao"] or treo else 0
 
 
 if __name__ == "__main__":

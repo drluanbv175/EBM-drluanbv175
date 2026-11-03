@@ -13,6 +13,9 @@ trước. Hàm này:
      chờ rồi ném `DangCoTienTrinhKhacGhi`. Khoá của tiến trình đã chết hoặc quá HAN_KHOA giây ⇒ coi như bỏ. Mỗi lệnh ghi khi
      đang giữ khoá LÀM MỚI `luc_epoch` ⇒ khoá của tiến trình đang ghi dở không bị tiến trình khác coi là treo.
   3. Hiện MỘT thông báo macOS «Claude đang ghi EndNote: <lý do>» cho mỗi LẦN LẤY khoá (không lặp mỗi lệnh ghi).
+  0. (03/11/2026, chạy TRƯỚC mọi bước trên) EndNote đang giữ một giao dịch ghi chưa commit quá `NGUONG_TREO_GIAY` của
+     `endnote_suc_khoe` (`sdb.nal` còn header) ⇒ ném `GiaoDichEndNoteTreo`, không chờ. Sự cố 02–03/11: giao dịch treo ~22 giờ,
+     các phiên vẫn ghi tiếp vào đó, EndNote khởi động lại ⇒ cuộn lại hết. Ghi thêm chỉ làm phình phần có thể mất.
 
 Hai cách giữ khoá (24/10/2026):
   • THEO TIẾN TRÌNH (mặc định — script ngắn như `nap_endnote_chu_de.py`, `xuat_goi_cap_nhat.py` bước ⑧): lấy ở lần ghi đầu,
@@ -30,6 +33,7 @@ from __future__ import annotations
 
 import atexit
 import contextlib
+import importlib.util
 import json
 import os
 import re
@@ -52,6 +56,36 @@ class BacSiDangDungEndNote(RuntimeError):
 
 class DangCoTienTrinhKhacGhi(RuntimeError):
     """Một tiến trình Claude khác đang giữ khoá ghi EndNote."""
+
+
+class GiaoDichEndNoteTreo(RuntimeError):
+    """EndNote giữ một giao dịch ghi chưa commit quá ngưỡng — không ghi thêm vào phần có thể bị cuộn lại."""
+
+
+def _sk():
+    """Mô-đun `tools/endnote_suc_khoe.py` (đọc header `sdb.nal`, tuổi giao dịch) — nạp một lần, chỉ khi cần."""
+    m = sys.modules.get("_sk_khoa_ghi")
+    if m is None:
+        sp = importlib.util.spec_from_file_location("_sk_khoa_ghi", Path(__file__).resolve().parent / "endnote_suc_khoe.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        m = sys.modules.setdefault("_sk_khoa_ghi", m)
+    return m
+
+
+def kiem_giao_dich_treo(thu_vien: Path | None = None, *, sk=None, bay_gio: float | None = None) -> None:
+    """Ném `GiaoDichEndNoteTreo` khi EndNote giữ giao dịch ghi treo. Chưa khai thư viện / không đọc được nhật ký ⇒ cho qua kèm
+    một dòng cảnh báo (fail-open như phép đo hoạt động — khoá không được làm hỏng dây chuyền nền; giác quan hòm việc và
+    `endnote_suc_khoe.py` vẫn báo «không đo được»)."""
+    try:
+        sk = sk or _sk()
+        thu_vien = thu_vien or sk.thu_vien_cau_hinh()
+        gd = sk.giao_dich_treo(thu_vien, bay_gio=bay_gio) if thu_vien else None
+    except Exception as e:  # noqa: BLE001 — đo hỏng không được chặn ghi, nhưng phải lộ ra
+        print(f"⚠ chưa kiểm được giao dịch ghi treo của EndNote ({type(e).__name__}) — ghi tiếp", file=sys.stderr)
+        return
+    if gd and gd.get("treo"):
+        raise GiaoDichEndNoteTreo(gd["mo_ta"])
 
 
 def _chay(lenh: list[str], cho: int = 5) -> str:
@@ -152,8 +186,11 @@ def _thong_bao(noi_dung: str) -> None:
 
 def cho_phep_ghi_loi(ung_dung: str, ly_do: str, *, tep: Path | None = None, dang_dung=None, ngu=time.sleep,
                      dong_ho=time.monotonic, cho_toi_da: float = CHO_TOI_DA, buoc: float = 5, thong_bao=None,
-                     song=_pid_song, bay_gio=time.time) -> None:
-    """Lõi của `cho_phep_ghi` (bộ đo/giờ/ngủ tiêm được để test). Ném lỗi khi phải bỏ lượt ghi."""
+                     song=_pid_song, bay_gio=time.time, kiem_giao_dich=None) -> None:
+    """Lõi của `cho_phep_ghi` (bộ đo/giờ/ngủ tiêm được để test). Ném lỗi khi phải bỏ lượt ghi. `kiem_giao_dich()` chạy TRƯỚC
+    mọi bước (ném `GiaoDichEndNoteTreo` khi giao dịch treo) — không chờ, không lấy khoá."""
+    if kiem_giao_dich:
+        kiem_giao_dich()
     tep, thong_bao = tep or TEP_KHOA, thong_bao or _thong_bao
     dang_dung = dang_dung or (lambda: bac_si_dang_dung(ung_dung))
     het = dong_ho() + cho_toi_da
@@ -199,22 +236,23 @@ def _bo_qua() -> bool:
     return bool(os.environ.get("PYTEST_CURRENT_TEST")) or sys.platform != "darwin"
 
 
-def cho_phep_ghi(ung_dung: str, ly_do: str) -> None:
-    """Gọi TRƯỚC mỗi lệnh ghi vào EndNote. Dưới pytest không làm gì (xem docstring mô-đun)."""
+def cho_phep_ghi(ung_dung: str, ly_do: str, thu_vien: Path | None = None) -> None:
+    """Gọi TRƯỚC mỗi lệnh ghi vào EndNote. `thu_vien` (.enl) để đo giao dịch treo — vắng ⇒ thư viện khai ở ~/.ebm-endnote.json.
+    Dưới pytest không làm gì (xem docstring mô-đun)."""
     if _bo_qua():
         return
-    cho_phep_ghi_loi(ung_dung, ly_do)
+    cho_phep_ghi_loi(ung_dung, ly_do, kiem_giao_dich=lambda: kiem_giao_dich_treo(thu_vien))
 
 
 @contextlib.contextmanager
-def giu_khoa_ghi(ung_dung: str | None = None, ly_do: str | None = None):
+def giu_khoa_ghi(ung_dung: str | None = None, ly_do: str | None = None, thu_vien: Path | None = None):
     """Giữ khoá ghi EndNote theo PHẠM VI một thao tác, nhả ngay khi xong (xem docstring mô-đun và `pham_vi_ghi`).
 
     Có `ly_do` ⇒ lấy khoá ngay khi vào khối (chờ/ném như `cho_phep_ghi`). Không có ⇒ chỉ mở phạm vi: khoá lấy ở lệnh ghi
     đầu tiên trong khối — công cụ chạy khô không giữ khoá. Dưới pytest / ngoài macOS chỉ mở phạm vi (không đo, không ghi)."""
     with pham_vi_ghi():
         if ly_do:
-            cho_phep_ghi(ung_dung or "EndNote", ly_do)
+            cho_phep_ghi(ung_dung or "EndNote", ly_do, thu_vien)
         yield
 
 
