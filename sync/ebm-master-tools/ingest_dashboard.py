@@ -8,7 +8,7 @@ Liêm chính: chỉ nạp nội dung ĐÃ có sẵn trong dashboard (không bị
 Chống trùng theo (pmid|doi|title). provenance="from_doctor_master".
 
 Cách dùng (trong thư mục EBM_MASTER/):
-    python3 tools/ingest_dashboard.py <đường-dẫn-dashboard.html> [--today YYYY-MM-DD]
+    python3 tools/ingest_dashboard.py <đường-dẫn-dashboard.html> [--today YYYY-MM-DD]   # thiếu ⇒ hôm nay
     python3 tools/ingest_dashboard.py a.html b.html --today 2026-06-09
 
 PHIÊN BẢN NỐI TIẾP (cùng lát cắt, khác ngày — vd ..._HopNhat_20260614 → ..._HopNhat_20261018):
@@ -26,6 +26,7 @@ KHÔNG sửa thẳng bản chạy thật (công cụ đồng bộ sẽ giữ l�
 """
 import argparse
 import copy
+import datetime
 import difflib
 import json
 import os
@@ -1067,7 +1068,8 @@ def _acquire_standalone_ledger_lock():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("files", nargs="+")
-    ap.add_argument("--today", default="")
+    ap.add_argument("--today", default="",
+                    help="ngày nạp YYYY-MM-DD (mặc định: hôm nay theo giờ máy)")
     ap.add_argument("--thay-ban", default="", metavar="DASHBOARD_CU",
                     help="nạp PHIÊN BẢN NỐI TIẾP: cập nhật tại chỗ thẻ của bản cũ này theo bản mới "
                          "(đúng MỘT tệp mới; cùng lát cắt, ngày mới hơn)")
@@ -1078,6 +1080,14 @@ def main():
     ap.add_argument("--hub", default="",
                     help="thư mục hub chứa EBM_MASTER.json (mặc định: thư mục cha của tools/; dùng cho kiểm thử)")
     args = ap.parse_args()
+    # Vá 03/11/2026: gọi tay thiếu --today thì thẻ mới mang mã «EVID-0000-*», date_added và ngày history
+    # rỗng, bản sao lưu tên «manual» — đo cùng ngày: 89 thẻ trong sổ cái thật bị vậy (31 thẻ của một
+    # lượt hôm đó đã khôi phục và nạp lại). Thiếu cờ ⇒ lấy ngày hôm nay; có cờ thì phải đúng dạng.
+    if not args.today:
+        args.today = datetime.date.today().isoformat()
+    elif not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.today):
+        print("⛔ --today phải có dạng YYYY-MM-DD (nhận %r)." % args.today)
+        return 2
 
     here = os.path.dirname(os.path.abspath(__file__))
     hub = os.path.abspath(args.hub) if args.hub else os.path.dirname(here)
