@@ -547,8 +547,9 @@ def giac_quan_skill_tai_khoan(bundle: Path | None = None, hub: Path | None = Non
 def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str, str]]:
     """THƯ VIỆN ENDNOTE (19/10/2026, bác sĩ: «Hãy làm tất cả 6 việc giúp tôi» — việc 6).
 
-    Thư viện đặt trong OneDrive theo lựa chọn của bác sĩ ⇒ canh hai rủi ro Clarivate cảnh báo: BẢN SAO XUNG ĐỘT đồng bộ và tệp
-    chỉ còn trên mây (ưu tiên 1); cùng nhóm «_Cho thung rac…» còn bản ghi chờ bác sĩ chuyển vào thùng rác, bản ghi chờ bác sĩ
+    GIAO DỊCH GHI TREO (03/11/2026) là ưu tiên 0 (🔴): EndNote giữ giao dịch chưa commit quá 30 phút — sự cố 02–03/11 mất ~22 giờ
+    thay đổi khi EndNote khởi động lại. Thư viện đặt trong OneDrive theo lựa chọn của bác sĩ ⇒ canh hai rủi ro Clarivate cảnh báo:
+    BẢN SAO XUNG ĐỘT đồng bộ và tệp chỉ còn trên mây (ưu tiên 1); cùng nhóm «_Cho thung rac…» còn bản ghi chờ bác sĩ chuyển vào thùng rác, bản ghi chờ bác sĩ
     kéo vào nhóm ĐÃ có (post không cộng thêm được — đo 24/10/2026) và tên nhóm đang có ≥2 nhóm riêng (ưu tiên 2). Nguồn:
     `tools/endnote_suc_khoe.py` — chỉ đọc cơ sở dữ liệu `sdb.eni`, KHÔNG gửi AppleScript (không bật EndNote). Chưa khai thư viện /
     không đọc được ⇒ giác quan chết (⚪), KHÔNG phải «ổn».
@@ -571,6 +572,10 @@ def giac_quan_endnote(tinh_trang=None) -> list[tuple[int, str, str, str]]:
         _ghi_chet(["", "thư viện EndNote"], str(kq.get("ly_do") or "không đo được")[:120])
         return []
     ra = [(1, "👤", f"Thư viện EndNote: {c}", "python3 tools/endnote_suc_khoe.py") for c in kq.get("canh_bao") or []]
+    gd = kq.get("giao_dich_mo") or {}
+    if gd.get("treo"):  # 🔴 (03/11/2026): giao dịch treo 22 giờ từng bị cuộn lại khi EndNote khởi động lại
+        ra.insert(0, (0, "👤", f"Thư viện EndNote: {gd.get('mo_ta') or 'EndNote giữ giao dịch ghi treo'}",
+                      "python3 tools/endnote_suc_khoe.py"))
     for n in kq.get("nhom_cho_thung_rac") or []:
         ra.append((2, "👤", f"Nhóm EndNote «{n['ten']}» còn {n['con_o_thu_vien']}/{n['tong']} bản ghi chờ bác sĩ chuyển vào thùng rác",
                    "bấm đúp «Chuyen Nhom Vao Thung Rac.command» ở gốc repo"))

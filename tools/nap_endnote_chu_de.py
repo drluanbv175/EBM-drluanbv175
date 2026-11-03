@@ -1071,8 +1071,8 @@ class EndNoteMac:
         tiến trình Claude, báo một lần «Claude đang ghi EndNote». Bác sĩ vẫn bận quá hạn ⇒ ném lỗi (bỏ lượt ghi, không chen).
         Thiếu mô-đun khoá (cây cũ) ⇒ ghi như trước kèm một dòng cảnh báo — không làm hỏng dây chuyền."""
         kg = nap_khoa_ghi()
-        if kg:
-            kg.cho_phep_ghi(getattr(self, "ung_dung", "EndNote"), ly_do)
+        if kg:  # giao dịch EndNote treo ⇒ GiaoDichEndNoteTreo (03/11/2026) — bỏ lượt ghi như khi bác sĩ đang dùng
+            kg.cho_phep_ghi(getattr(self, "ung_dung", "EndNote"), ly_do, getattr(self, "thu_vien", None))
 
     def nhap(self, tep_xml: Path) -> None:
         self._truoc_khi_ghi("nhập trích dẫn mới")

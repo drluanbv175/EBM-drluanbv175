@@ -35,10 +35,13 @@ Gọi qua `tools/nap_endnote_chu_de.py --tom-tat-vi` (riêng) hoặc tự chạy
 Cần bác sĩ kiểm chứng."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import shutil
 import sqlite3
+import sys
+import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -652,22 +655,97 @@ def ghep_abstract(cu: str, khoi: str) -> str:
     return f"{khoi}\n\n{PHAN_CACH}\n{goc}" if goc else f"{khoi}\n\n{PHAN_CACH}\n{KHONG_ABSTRACT}"
 
 
-def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None) -> Path:
-    """Sao lưu NHẤT QUÁN cơ sở dữ liệu làm việc (`<thư viện>.Data/sdb/sdb.eni`, đọc được khi EndNote đang mở) + chép
-    tệp `.enl`. Trả thư mục sao lưu. Lỗi ⇒ ném — người gọi KHÔNG được ghi gì khi chưa sao lưu được."""
-    sdb = thu_vien.with_suffix(".Data") / "sdb" / "sdb.eni"
-    if not sdb.is_file():
-        raise OSError(f"không thấy cơ sở dữ liệu làm việc {sdb}")
-    goc = dich or (Path.home() / ".ebm-endnote-sao-luu")
-    thu_muc = goc / f"{thu_vien.stem}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-    thu_muc.mkdir(parents=True, exist_ok=False)
+def _sk():
+    """Mô-đun `tools/endnote_suc_khoe.py` (header nhật ký `sdb.nal`) — nạp một lần."""
+    m = sys.modules.get("_sk_tom_tat_vi")
+    if m is None:
+        sp = importlib.util.spec_from_file_location("_sk_tom_tat_vi", Path(__file__).resolve().parent / "endnote_suc_khoe.py")
+        m = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(m)
+        m = sys.modules.setdefault("_sk_tom_tat_vi", m)
+    return m
+
+
+GHI_CHU_GIAO_DICH_MO = (
+    "Bản sao lưu này chụp lúc EndNote đang giữ một giao dịch ghi CHƯA commit (sdb.nal còn header).\n"
+    "Đã chép nguyên byte sdb.eni + sdb.nal (đặt tên sdb.eni-journal — tên SQLite nhận là nhật ký nóng) rồi để SQLite CUỘN LẠI:\n"
+    "sdb.eni ở đây là trạng thái ĐÃ COMMIT cuối cùng trước giao dịch, quick_check lành. Thay đổi nằm trong giao dịch dở KHÔNG có\n"
+    "trong bản này (chúng chỉ nằm trong bộ nhớ EndNote / bản EndNote online nếu đã Sync). Sự cố 02–03/11/2026:\n"
+    "audit/nhat-ky/2026-11-03-endnote-giao-dich-treo-cuon-lai.md\n")
+
+
+def _sao_luu_api(sdb: Path, dich: Path) -> None:
     nguon = sqlite3.connect(f"file:{sdb}?mode=ro", uri=True)
-    dich_db = sqlite3.connect(thu_muc / "sdb.eni")
+    dich_db = sqlite3.connect(dich)
     try:
         nguon.backup(dich_db)
     finally:
         dich_db.close()
         nguon.close()
+
+
+def _chep_kem_nhat_ky(sdb: Path, nal: Path, thu_muc: Path) -> bool:
+    """Chép nguyên byte sdb.eni + sdb.nal → `sdb.eni` + `sdb.eni-journal`. False ⇒ tệp đổi/biến mất trong lúc chép (chép lại)."""
+    def dau():
+        return tuple((p.stat().st_size, p.stat().st_mtime_ns) for p in (sdb, nal))
+    try:
+        truoc = dau()
+        shutil.copyfile(sdb, thu_muc / "sdb.eni")
+        shutil.copyfile(nal, thu_muc / "sdb.eni-journal")
+        return dau() == truoc
+    except FileNotFoundError:  # nhật ký biến mất = giao dịch vừa commit ⇒ lượt sau sao lưu thường
+        return False
+
+
+def _cuon_lai_va_kiem(thu_muc: Path) -> None:
+    """Mở bản sao lưu ĐỌC-GHI: SQLite thấy `sdb.eni-journal` là nhật ký nóng và CUỘN LẠI về trạng thái commit cuối (rồi tự xoá
+    nhật ký). quick_check không lành / nhật ký còn đó ⇒ OSError — người gọi KHÔNG ghi gì."""
+    kn = sqlite3.connect(thu_muc / "sdb.eni")
+    try:
+        for ten in ("ENCIN_Base", "ENCI_Base"):  # collation riêng của EndNote — bản thay thế chỉ để quick_check chạy được
+            kn.create_collation(ten, lambda a, b: (a > b) - (a < b))
+        kq = [r[0] for r in kn.execute("PRAGMA quick_check(20)")]
+    finally:
+        kn.close()
+    if kq != ["ok"]:
+        raise OSError(f"bản sao lưu chụp giữa giao dịch không cuộn lại lành được (quick_check: {kq[:2]})")
+    if (thu_muc / "sdb.eni-journal").exists():
+        raise OSError("bản sao lưu: SQLite không cuộn lại nhật ký giao dịch (sdb.eni-journal còn nguyên)")
+
+
+def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None, *, so_lan: int = 3, ngu=time.sleep) -> Path:
+    """Sao lưu NHẤT QUÁN cơ sở dữ liệu làm việc (`<thư viện>.Data/sdb/sdb.eni`, đọc được khi EndNote đang mở) + chép
+    tệp `.enl`. Trả thư mục sao lưu. Lỗi ⇒ ném — người gọi KHÔNG được ghi gì khi chưa sao lưu được.
+
+    Giao dịch ghi đang mở (03/11/2026): `backup()` của SQLite chỉ đọc sdb.eni — nhật ký mang tên lạ `sdb.nal` nên SQLite không
+    thấy ⇒ bản sao lưu là ảnh chụp GIỮA giao dịch. Mọi bản sao lưu từ 19:01 ngày 02/11 tới chiều 03/11 đều vậy («malformed»),
+    khiến một phiên kết luận nhầm «thư viện hỏng cấu trúc». Nay: có giao dịch ⇒ chép nguyên byte kèm nhật ký rồi cuộn lại
+    (`_cuon_lai_va_kiem`) + `GIAO-DICH-MO.txt`; không có giao dịch trước VÀ sau lúc sao lưu mới tin bản `backup()`."""
+    sdb = thu_vien.with_suffix(".Data") / "sdb" / "sdb.eni"
+    if not sdb.is_file():
+        raise OSError(f"không thấy cơ sở dữ liệu làm việc {sdb}")
+    sk = _sk()
+    goc = dich or (Path.home() / ".ebm-endnote-sao-luu")
+    thu_muc = goc / f"{thu_vien.stem}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    thu_muc.mkdir(parents=True, exist_ok=False)
+    giao_dich = False
+    for lan in range(max(1, so_lan)):
+        for duoi in ("", "-journal"):
+            (thu_muc / f"sdb.eni{duoi}").unlink(missing_ok=True)
+        if not sk.giao_dich_mo(thu_vien):
+            _sao_luu_api(sdb, thu_muc / "sdb.eni")
+            if not sk.giao_dich_mo(thu_vien):  # không giao dịch cả trước lẫn sau ⇒ ảnh chụp nhất quán
+                break
+        elif _chep_kem_nhat_ky(sdb, sk.tep_nhat_ky(thu_vien), thu_muc):
+            giao_dich = True
+            break
+        if lan + 1 < so_lan:
+            ngu(0.5)
+    else:
+        raise OSError("sdb.eni/sdb.nal đổi liên tục trong lúc sao lưu (EndNote đang ghi) — chưa sao lưu được, thử lại sau")
+    if giao_dich:
+        _cuon_lai_va_kiem(thu_muc)
+        (thu_muc / "GIAO-DICH-MO.txt").write_text(GHI_CHU_GIAO_DICH_MO, encoding="utf-8", newline="\n")
     if (thu_muc / "sdb.eni").stat().st_size < 4096:
         raise OSError("bản sao lưu sdb.eni rỗng bất thường")
     shutil.copy2(thu_vien, thu_muc / thu_vien.name)
