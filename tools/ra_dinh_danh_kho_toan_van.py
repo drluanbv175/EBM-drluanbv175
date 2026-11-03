@@ -286,9 +286,48 @@ def _kiem(du_lieu: bytes, *, doi: str = "", tieu_de: str = "") -> tuple[str, str
     return g.kiem_dinh_danh_upw(du_lieu, loai="pdf", doi=doi, tieu_de=tieu_de)
 
 
+def _xet_lai_truoc_sai_bai(kq: KetQua, du_lieu: bytes, md: dict) -> str:
+    """Lý do HẠ «sai bài» xuống «không kiểm được», hoặc "" (giữ sai bài). Chỉ hạ, KHÔNG BAO GIỜ nâng lên «khớp». Hai ca đo 03/11:
+    • bản in BANIN cụt: `PMID-32568065_BANIN.pdf` 1 trang chỉ in mục «Notes» của báo cáo HTA, trong khi tệp nguồn `_CHR.html` là
+      toàn văn đúng bài (23 570 từ) — xét lại trên TỆP NGUỒN ghi ở dải đầu trang bằng cùng cổng BH175 (loai jats/html);
+    • PDF quét có chân trang chữ: `PMID-2899840_CHR.pdf` (NEJM 1988) mỗi trang chỉ có dòng «Downloaded from nejm.org…» (28 từ) —
+      đủ vượt ngưỡng «PDF ảnh» 50 từ của cổng nên bị kết luận sai bài. Bỏ các dòng lặp ở ≥ 2 trong 3 trang đầu rồi đếm lại."""
+    try:
+        trang = g._nap_ttcc().tach_trang(du_lieu)
+    except Exception:  # noqa: BLE001 — cổng đã đọc được tệp này; lỗi ở đây chỉ làm mất phép xét lại
+        return ""
+    if kq.hau_to == "BANIN" and trang:
+        m = MAU_NGUON_BAN_IN.search(trang[0])
+        nguon = kq.tep.parent / m.group(1) if m else None
+        try:
+            b = nguon.read_bytes() if nguon and nguon.is_file() else None
+        except OSError:
+            b = None
+        if b is not None:
+            loai = "jats" if nguon.suffix.lower() == ".xml" else "html"
+            for td, doi in [(t, "") for t in (kq.tieu_de, md.get("tieu_de_goc")) if t] + ([("", kq.doi)] if kq.doi else []):
+                kl, ly = g.kiem_dinh_danh_upw(b, loai=loai, doi=doi, tieu_de=td)
+                if kl == "dung":
+                    return (f"bản in ({len(trang)} trang, {len(' '.join(trang).split())} từ) không mang tiêu đề/DOI ở 3 trang đầu "
+                            f"nhưng tệp nguồn {nguon.name} KHỚP bài ({ly}) — bản in có thể cụt, nên in lại; tệp nguồn giữ nguyên")
+    dau = trang[:3]
+    if len(dau) >= 2:
+        dong = [[" ".join(d.split()) for d in t.splitlines() if d.strip()] for t in dau]
+        dem: dict[str, int] = {}
+        for ds in dong:
+            for d in set(ds):
+                dem[d] = dem.get(d, 0) + 1
+        rieng = " ".join(d for ds in dong for d in ds if dem[d] < 2)
+        if len(rieng.split()) < g.SO_TU_TOI_THIEU_DINH_DANH:
+            mau = next((d for ds in dong for d in ds), "")
+            return (f"lớp chữ của 3 trang đầu chỉ có dòng lặp ở mọi trang («{mau[:70]}») — PDF quét, không đối chiếu được tiêu đề")
+    return ""
+
+
 def kiem_tep(kq: KetQua, md: dict, *, crossref) -> KetQua:
     """Kết luận cho một tệp. `md` = định danh từ nguồn; `crossref(doi) -> (tiêu đề, trạng thái)`. Chỉ đường «dung» của cổng
-    BH175 dẫn tới KHỚP; lỗi mạng/thiếu công cụ dẫn tới KHÔNG ĐO ĐƯỢC."""
+    BH175 dẫn tới KHỚP; lỗi mạng/thiếu công cụ dẫn tới KHÔNG ĐO ĐƯỢC. Thứ tự thử: tiêu đề PubMed → tiêu đề nguyên ngữ (PubMed) →
+    DOI (đối chiếu Crossref) → tiêu đề Crossref (chỉ khi cùng bài với tiêu đề PubMed) → xét lại trước khi kết luận sai bài."""
     kq.nguon_dinh_danh = md.get("nguon", "")
     if md.get("trang_thai") == "loi":
         kq.nhom, kq.ly_do = KHONG_DO_DUOC, md.get("ly_do") or "chưa lấy được định danh (lỗi mạng)"
@@ -298,6 +337,8 @@ def kiem_tep(kq: KetQua, md: dict, *, crossref) -> KetQua:
         return kq
     kq.doi = md.get("doi") or kq.doi
     kq.tieu_de = md.get("tieu_de") or ""
+    goc = md.get("tieu_de_goc") or ""
+    ten_pubmed = [t for t in (kq.tieu_de, goc) if t]
     try:
         du_lieu = kq.tep.read_bytes()
     except OSError as exc:
@@ -317,48 +358,56 @@ def kiem_tep(kq: KetQua, md: dict, *, crossref) -> KetQua:
         kq.nhom, kq.ly_do = KHONG_KIEM_DUOC, ly
         return kq
     ly_tieu_de = ly
+    # Bài không phải tiếng Anh: PubMed ghi tiêu đề DỊCH «[…]», PDF in tiêu đề nguyên ngữ (đo 03/11: 41494416, 42162485, 42809786).
+    if goc and goc != kq.tieu_de:
+        kl, ly = _kiem(du_lieu, tieu_de=goc)
+        if kl == "dung":
+            kq.nhom, kq.can_cu, kq.ly_do = KHOP, "tiêu đề nguyên ngữ", ly
+            return kq
+        if not kq.tieu_de:
+            ly_tieu_de = f"tiêu đề nguyên ngữ: {ly}"
+    ct, tt_cr = "", ""
     if kq.doi:
         kl2, ly2 = _kiem(du_lieu, doi=kq.doi)
         if kl2 == "thieu_cong_cu":
             kq.nhom, kq.ly_do = KHONG_DO_DUOC, ly2
             return kq
+        ct, tt_cr = crossref(kq.doi)
+        cung_bai = not ten_pubmed or tt_cr != "ok" or any(cung_tieu_de(t, ct) for t in ten_pubmed)
         if kl2 == "dung":
-            ct, tt_cr = crossref(kq.doi)
-            if tt_cr == "ok" and kq.tieu_de and not cung_tieu_de(kq.tieu_de, ct):
+            if not cung_bai:
                 kq.nhom = KHONG_KIEM_DUOC
                 kq.ly_do = (f"DOI {kq.doi} có trong PDF nhưng tiêu đề lệch ({ly_tieu_de}) và Crossref ghi DOI này cho «{ct}» — "
                             "DOI của bản ghi có thể không thuộc bài này")
                 return kq
             kq.nhom, kq.can_cu, kq.ly_do = KHOP, "chỉ DOI", f"{ly2}; tiêu đề: {ly_tieu_de}"
             if tt_cr == "ok":
-                kq.ghi_chu.append("Crossref: DOI cùng tiêu đề" if kq.tieu_de else f"Crossref: «{ct}»")
+                kq.ghi_chu.append("Crossref: DOI cùng tiêu đề" if ten_pubmed else f"Crossref: «{ct}»")
             else:
                 kq.ghi_chu.append("Crossref: không có DOI này" if tt_cr == "khong_co" else "Crossref: KHÔNG ĐO ĐƯỢC (lỗi mạng)")
             return kq
-    thu = [("nguyên ngữ", md.get("tieu_de_goc") or "")]
-    tt_cr = ""
-    if kq.doi:
-        ct, tt_cr = crossref(kq.doi)
-        thu.append(("Crossref", ct))
-    for nhan, td in thu:
-        if td and td != kq.tieu_de:
-            kl3, ly3 = _kiem(du_lieu, tieu_de=td)
-            if kl3 == "dung" and nhan == "Crossref" and kq.tieu_de and not cung_tieu_de(kq.tieu_de, td):
+        if ct and ct not in ten_pubmed:
+            kl3, ly3 = _kiem(du_lieu, tieu_de=ct)
+            if kl3 == "dung" and not cung_bai:
                 # Tệp khớp bài mà Crossref ghi cho DOI này, nhưng bài đó KHÔNG phải bài PubMed ghi cho PMID: DOI của bản ghi
                 # trỏ nhầm, hoặc tệp là bài kia — không bao giờ tính «khớp».
                 kq.nhom = KHONG_KIEM_DUOC
-                kq.ly_do = (f"tệp khớp «{td}» — bài Crossref ghi cho DOI {kq.doi} — nhưng PubMed ghi PMID này cho «{kq.tieu_de}» "
+                kq.ly_do = (f"tệp khớp «{ct}» — bài Crossref ghi cho DOI {kq.doi} — nhưng PubMed ghi PMID này cho «{kq.tieu_de}» "
                             f"({ly_tieu_de}); DOI của bản ghi hoặc tệp cần bác sĩ xem")
                 return kq
             if kl3 == "dung":
-                kq.nhom, kq.can_cu, kq.ly_do = KHOP, f"tiêu đề {nhan}", ly3
-                if nhan == "Crossref" and not kq.tieu_de:
+                kq.nhom, kq.can_cu, kq.ly_do = KHOP, "tiêu đề Crossref", ly3
+                if not ten_pubmed:
                     kq.ghi_chu.append("không có tiêu đề PubMed để đối chiếu tiêu đề Crossref")
                 return kq
-            if not kq.tieu_de:
-                ly_tieu_de = f"tiêu đề {nhan}: {ly3}"
-    if not kq.tieu_de and not any(td for _n, td in thu):
+            if not ten_pubmed:
+                ly_tieu_de = f"tiêu đề Crossref: {ly3}"
+    if not ten_pubmed and not ct:
         kq.nhom, kq.ly_do = KHONG_KIEM_DUOC, "không có tiêu đề để đối chiếu và DOI không có trong PDF"
+        return kq
+    ha = _xet_lai_truoc_sai_bai(kq, du_lieu, md)
+    if ha:
+        kq.nhom, kq.ly_do = KHONG_KIEM_DUOC, ha
         return kq
     kq.nhom = SAI_BAI
     kq.ly_do = ly_tieu_de + ("; DOI không có trong PDF" if kq.doi else "; bản ghi không có DOI")

@@ -462,3 +462,50 @@ def test_tieu_de_crossref_cung_bai_cuu_khac_biet_cach_viet(tmp_path, mang):
     kho = _kho(tmp_path, {f"PMID-{DUNG}_CHR.pdf": PDF_DUNG})
     ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False)
     assert ds[0].nhom == r.KHOP and ds[0].can_cu == "tiêu đề Crossref"
+
+
+# ───────────────────────── xét lại trước khi kết luận sai bài (đo 03/11 trên kho thật) ─────────────────────────
+
+def test_pdf_quet_chi_co_chan_trang_lap_la_khong_kiem_duoc(tmp_path, mang):
+    """PMID 2899840 (NEJM 1988): bản quét, lớp chữ mỗi trang chỉ có dòng «Downloaded from nejm.org…» (28 từ) — vượt ngưỡng 50 từ
+    của cổng nên từng bị kết luận sai bài."""
+    mang()
+    chan = ("The New England Journal of Medicine is produced by NEJM Group, a division of the Massachusetts Medical Society. "
+            "Downloaded from nejm.org by Nguyen Luan on October 15, 2026.")
+    kho = _kho(tmp_path, {f"PMID-{DUNG}_CHR.pdf": pdf_gia.pdf_co_chu(chan, chan, chan, chan, rong=400)})
+    ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False)
+    assert ds[0].nhom == r.KHONG_KIEM_DUOC and "dòng lặp" in ds[0].ly_do
+
+
+def test_ban_in_cut_ma_tep_nguon_khop_khong_phai_sai_bai_va_khong_doi(tmp_path, mang):
+    """PMID 32568065: bản in 1 trang chỉ có mục «Notes» của báo cáo HTA; tệp nguồn `_CHR.html` là toàn văn đúng bài."""
+    mang()
+    ban_in = pdf_gia.pdf_co_chu(f"BAN IN TU KHO TOAN VAN EBM PMID {DUNG} nguon: PMID-{DUNG}_CHR.html (phien trinh duyet) "
+                                "Notes Article history The research reported in this issue of the journal was funded. "
+                                + "editorial review report contract programme " * 30)
+    nguon = (f"<html><body><article><h1>{DUNG_TIEU_DE}</h1>"
+             + "".join(f"<h2>{d}</h2><p>{' '.join(f'{d.lower()}{i % 97}' for i in range(900))}</p>"
+                       for d in ("Introduction", "Methods", "Results", "Discussion")) + "</article></body></html>").encode()
+    kho = _kho(tmp_path, {f"PMID-{DUNG}_BANIN.pdf": ban_in, f"PMID-{DUNG}_CHR.html": nguon})
+    assert r.main(["--kho", str(kho), "--khong-endnote", "--cach-ly", "--ap-dung", "--pmid", DUNG]) == 0
+    assert (kho / f"PMID-{DUNG}_CHR.html").read_bytes() == nguon and (kho / f"PMID-{DUNG}_BANIN.pdf").exists()
+    ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False)
+    assert ds[0].nhom == r.KHONG_KIEM_DUOC and "tệp nguồn" in ds[0].ly_do and "KHỚP" in ds[0].ly_do
+
+
+def test_bai_tieng_tay_ban_nha_co_doi_khop_qua_tieu_de_nguyen_ngu(tmp_path, mang):
+    """41494416: PubMed ghi tiêu đề DỊCH «[…]», PDF in tiêu đề tiếng Tây Ban Nha và DOI; Crossref ghi tiêu đề nguyên ngữ. Trước khi
+    vá: nhánh DOI chạy trước, so tiêu đề Crossref (Tây Ban Nha) với tiêu đề dịch (Anh) ⇒ «DOI lệch» giả."""
+    pm, doi = "41494416", "10.1016/j.aprim.2025.103399"
+    goc = "Manejo de la diabetes mellitus tipo 2 en personas con fragilidad en la practica clinica real"
+    pubmed = dict(PUBMED, **{pm: {"uid": pm, "title": "[Management of type 2 diabetes mellitus in frail patients from the "
+                                  "Perspective of Real-World Clinical Practice].", "vernaculartitle": goc + ".",
+                                  "articleids": [{"idtype": "doi", "value": doi}]}})
+    mang(pubmed=pubmed, crossref=dict(CROSSREF, **{doi: goc}))
+    pdf = pdf_gia.pdf_co_chu("Aten Primaria. https://doi.org/" + doi + " " + goc + ". " + "pacientes estudio poblacional " * 40)
+    pdf_khong_tieu_de = pdf_gia.pdf_co_chu("Aten Primaria. https://doi.org/" + doi + " " + "pacientes estudio poblacional " * 40)
+    kho = _kho(tmp_path, {f"PMID-{pm}_BANIN.pdf": pdf, f"PMID-{pm}_UPW.pdf": pdf_khong_tieu_de})
+    kq = _theo_ten(r.ra_kho(kho, email=EMAIL, doc_endnote=False)[0])
+    assert kq[f"PMID-{pm}_BANIN.pdf"].nhom == r.KHOP and kq[f"PMID-{pm}_BANIN.pdf"].can_cu == "tiêu đề nguyên ngữ"
+    # chỉ có DOI: tiêu đề Crossref (nguyên ngữ) cùng bài với tiêu đề nguyên ngữ của PubMed ⇒ khớp chỉ nhờ DOI, không «DOI lệch»
+    assert kq[f"PMID-{pm}_UPW.pdf"].nhom == r.KHOP and kq[f"PMID-{pm}_UPW.pdf"].can_cu == "chỉ DOI"
