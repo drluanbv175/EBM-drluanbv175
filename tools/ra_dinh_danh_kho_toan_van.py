@@ -343,8 +343,17 @@ def kiem_tep(kq: KetQua, md: dict, *, crossref) -> KetQua:
     for nhan, td in thu:
         if td and td != kq.tieu_de:
             kl3, ly3 = _kiem(du_lieu, tieu_de=td)
+            if kl3 == "dung" and nhan == "Crossref" and kq.tieu_de and not cung_tieu_de(kq.tieu_de, td):
+                # Tệp khớp bài mà Crossref ghi cho DOI này, nhưng bài đó KHÔNG phải bài PubMed ghi cho PMID: DOI của bản ghi
+                # trỏ nhầm, hoặc tệp là bài kia — không bao giờ tính «khớp».
+                kq.nhom = KHONG_KIEM_DUOC
+                kq.ly_do = (f"tệp khớp «{td}» — bài Crossref ghi cho DOI {kq.doi} — nhưng PubMed ghi PMID này cho «{kq.tieu_de}» "
+                            f"({ly_tieu_de}); DOI của bản ghi hoặc tệp cần bác sĩ xem")
+                return kq
             if kl3 == "dung":
                 kq.nhom, kq.can_cu, kq.ly_do = KHOP, f"tiêu đề {nhan}", ly3
+                if nhan == "Crossref" and not kq.tieu_de:
+                    kq.ghi_chu.append("không có tiêu đề PubMed để đối chiếu tiêu đề Crossref")
                 return kq
             if not kq.tieu_de:
                 ly_tieu_de = f"tiêu đề {nhan}: {ly3}"

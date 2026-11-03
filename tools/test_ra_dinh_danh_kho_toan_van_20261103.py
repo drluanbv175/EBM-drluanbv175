@@ -442,3 +442,23 @@ def test_song_song_hong_thi_ra_lai_tuan_tu_khong_bo_tep(tmp_path, mang, capsys):
     ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False, so_luong=2)
     assert {kq.tep.name: kq.nhom for kq in ds} == {f"PMID-{HIF}_UPW.pdf": r.SAI_BAI, f"PMID-{DUNG}_CHR.pdf": r.KHOP}
     assert "rà lại tuần tự" in capsys.readouterr().err
+
+
+def test_tieu_de_crossref_cua_bai_khac_khong_bao_gio_thanh_khop(tmp_path, mang):
+    """DOI của bản ghi PubMed trỏ (trên Crossref) tới một bài KHÁC, và tệp kho chính là bài khác đó ⇒ không kiểm được, không khớp."""
+    khac = "Dapagliflozin and anemia in patients with chronic kidney disease"
+    mang(crossref={HIF_DOI: khac})
+    kho = _kho(tmp_path, {f"PMID-{HIF}_UPW.pdf": PDF_DAPA})
+    ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False)
+    assert ds[0].nhom == r.KHONG_KIEM_DUOC and "Crossref ghi cho DOI" in ds[0].ly_do
+
+
+def test_tieu_de_crossref_cung_bai_cuu_khac_biet_cach_viet(tmp_path, mang):
+    """PubMed ghi tiêu đề kèm phụ đề dài mà PDF không in (dưới 60% ở 3 trang đầu); Crossref ghi đúng phần PDF in và cùng bài với
+    tiêu đề PubMed ⇒ khớp qua tiêu đề Crossref."""
+    dai = DUNG_TIEU_DE.rstrip(".") + (": protocol amendment, statistical reanalysis, sensitivity appendix, investigators "
+                                      "consortium report.")
+    mang(pubmed=dict(PUBMED, **{DUNG: dict(PUBMED[DUNG], title=dai)}))
+    kho = _kho(tmp_path, {f"PMID-{DUNG}_CHR.pdf": PDF_DUNG})
+    ds, *_ = r.ra_kho(kho, email=EMAIL, doc_endnote=False)
+    assert ds[0].nhom == r.KHOP and ds[0].can_cu == "tiêu đề Crossref"
