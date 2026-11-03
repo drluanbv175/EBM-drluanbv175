@@ -7630,6 +7630,81 @@ def bh175_unpaywall_kiem_dinh_danh_truoc_khi_luu():
     return True, "PDF/HTML của bài khác không vào kho (luật định danh của bước ⑨) · URL sai bài vào sổ có hạn, lượt sau không tải lại · PDF đúng bài vẫn lưu"
 
 
+def bh176_ra_dinh_danh_kho_toan_van_cu():
+    """03/11 — cổng BH175 chỉ gác tệp MỚI tải về; tệp đã vào kho TRƯỚC đó không ai kiểm. Đo 03/11: `PMID-39186635_UPW.pdf` là
+    «Dapagliflozin and anemia in patients with chronic kidney disease» (bài thật: HIF prolyl hydroxylase inhibitors, NEJM Evid
+    2024), `PMID-42701440_UPW.pdf` là NCHS Data Brief 521 (bài thật: khung nguy cơ tim phổi COPD) — cả hai được BH161 tính «đã đọc
+    toàn văn» và đang gắn trong EndNote. Vá: `tools/ra_dinh_danh_kho_toan_van.py` rà mọi PDF của kho bằng ĐÚNG cổng BH175 với định
+    danh lấy từ PubMed/Europe PMC/Crossref; chạy khô mặc định; `--cach-ly --ap-dung --pmid` chỉ DỜI tệp sai bài đã duyệt. Kiểm HÀNH
+    VI với mạng giả + PDF giả hợp lệ: hai ca đối chứng phải là sai bài (đỏ nếu lọt), tệp đúng vẫn khớp (đối chứng dương), mạng đứt
+    KHÔNG được thành «khớp», chạy khô không dời tệp, dời thật giữ nguyên nội dung. Thiếu pypdf ⇒ ModuleNotFoundError."""
+    import contextlib as _cl
+    import io as _io
+    import json as _js
+    import tempfile as _tf
+    import urllib.error as _ue
+    import urllib.parse as _up
+    from unittest import mock as _mk
+
+    import pypdf  # noqa: F401 — cổng định danh PDF cần pypdf; thiếu thì chốt không đo được, không được xanh
+    r = _nap(REPO / "tools/ra_dinh_danh_kho_toan_van.py", "_bh176_ra")
+    P = _nap(REPO / "tools/pdf_gia_kiem_thu.py", "_bh176_pdf")
+    for ten in ("ra_kho", "kiem_tep", "cach_ly", "main"):
+        if not hasattr(r, ten):
+            return False, f"thiếu {ten} — không có công cụ rà định danh kho toàn văn"
+    bai = {"39186635": ("Hypoxia-Inducible Factor Prolyl Hydroxylase Inhibitors in Kidney Disease.", "10.1056/EVIDoa2300189"),
+           "42701440": ("Addressing Cardiopulmonary Risk in COPD: A Multidisciplinary Expert Opinion Framework for the United "
+                        "States Healthcare System.", "10.2147/COPD.S596426"),
+           "11111111": ("Sodium glucose cotransporter inhibitors and cardiovascular outcomes in heart failure.", "10.1000/x.1")}
+    tep = {"PMID-39186635_UPW.pdf": P.pdf_co_chu("1 Dapagliflozin and anemia in patients with chronic kidney disease Akihiko "
+                                                 "Koshino. " + "hemoglobin hematocrit placebo " * 40),
+           "PMID-42701440_UPW.pdf": P.pdf_co_chu("NCHS Data Brief No. 521 December 2024 Mortality in the United States, 2023. "
+                                                 + "death rates age group leading causes " * 30),
+           "PMID-11111111_CHR.pdf": P.pdf_co_chu(bai["11111111"][0] + " " + "randomized trial endpoint " * 40)}
+    dut = []
+
+    def _mang(req, timeout=None, context=None):
+        u = req if isinstance(req, str) else req.full_url
+        if dut:
+            raise _ue.URLError("mạng đứt (giả)")
+        if "esummary.fcgi" in u:
+            ids = _up.parse_qs(_up.urlparse(u).query)["id"][0].split(",")
+            return _io.BytesIO(_js.dumps({"result": {i: {"title": bai[i][0], "articleids": [{"idtype": "doi", "value": bai[i][1]}]}
+                                                     for i in ids}}).encode())
+        if "europepmc" in u:
+            return _io.BytesIO(b'{"resultList": {"result": []}}')
+        raise _ue.HTTPError(u, 404, "Not Found", None, None)  # Crossref không có DOI giả
+
+    with _tf.TemporaryDirectory() as td, _mk.patch("urllib.request.urlopen", _mang), \
+            _mk.patch.object(r.time, "sleep", lambda s: None), _mk.patch.object(r.g, "_email_lich_su", lambda: "bh@example.org"), \
+            _cl.redirect_stdout(_io.StringIO()):
+        kho = Path(td) / "EBM-Dashboards" / "toan_van_oa"
+        kho.mkdir(parents=True)
+        for ten, b in tep.items():
+            (kho / ten).write_bytes(b)
+        kq = {k.tep.name: k.nhom for k in r.ra_kho(kho, email="bh@example.org", doc_endnote=False)[0]}
+        for ten in ("PMID-39186635_UPW.pdf", "PMID-42701440_UPW.pdf"):
+            if kq.get(ten) != r.SAI_BAI:
+                return False, f"{ten} (ca đối chứng có thật) KHÔNG bị kết luận sai bài: {kq.get(ten)}"
+        if kq.get("PMID-11111111_CHR.pdf") != r.KHOP:
+            return False, f"PDF ĐÚNG bài không khớp — công cụ chặn tất cả (đối chứng dương: {kq.get('PMID-11111111_CHR.pdf')})"
+        dut.append(1)
+        kq_dut = [k.nhom for k in r.ra_kho(kho, email="bh@example.org", doc_endnote=False)[0]]
+        if r.KHOP in kq_dut:
+            return False, "mạng đứt mà vẫn báo «khớp» — lỗi mạng bị đọc thành định danh đúng"
+        dut.clear()
+        r.main(["--kho", str(kho), "--khong-endnote", "--cach-ly"])
+        if sorted(p.name for p in kho.iterdir()) != sorted(tep):
+            return False, "chạy khô (--cach-ly không --ap-dung) đã dời/xoá tệp trong kho"
+        r.main(["--kho", str(kho), "--khong-endnote", "--cach-ly", "--ap-dung", "--pmid", "39186635"])
+        doi = list((kho.parent / r.THU_MUC_CACH_LY).glob("PMID-39186635_UPW.pdf.SAI-BAI-*"))
+        if (kho / "PMID-39186635_UPW.pdf").exists() or len(doi) != 1 or doi[0].read_bytes() != tep["PMID-39186635_UPW.pdf"]:
+            return False, "--cach-ly --ap-dung không dời nguyên vẹn tệp sai bài đã duyệt sang thư mục cách ly"
+        if not (kho / "PMID-42701440_UPW.pdf").exists():
+            return False, "dời cả tệp sai bài CHƯA được duyệt (--pmid không giới hạn)"
+    return True, "hai ca đối chứng (39186635, 42701440) bị bắt bằng cổng BH175 · tệp đúng vẫn khớp · mạng đứt không thành khớp · chạy khô không dời · dời thật chỉ tệp đã duyệt, nguyên vẹn"
+
+
 def bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard():
     """19/10 — xuất gói THA ngoại trú, HAI lỗi «báo sai / ghi nhầm chỗ» cùng họ BH17:
     (1) bước ⑧ EndNote in «nhập mới 17» theo SỐ DỰ ĐỊNH; `import … into document` trả về không lỗi nhưng tra lại theo PMID
@@ -11643,6 +11718,7 @@ BAI_HOC = [
     ("BH164", "15/10", "Cổng toàn văn đọc CẤU TRÚC ĐỀ MỤC: ngưỡng tính trên thân bài (bỏ References/hậu bài); đề mục tường phí xét trước ngưỡng 6000 trừ khi thân bài tự chứng minh toàn văn; IMRaD đồng nghĩa (Background · Interpretation) chỉ ngoài tóm tắt; hai bản cổng (gom · BH161) cùng kết luận", bh164_cong_toan_van_doc_cau_truc_de_muc),
     # BH175 đứng cạnh BH160/BH164 (cùng họ «cổng của kho toàn văn»), không nối đuôi bảng — các PR mở song song đều chèn ở cuối.
     ("BH175", "02/11", "Tầng 2 Unpaywall KIỂM ĐỊNH DANH trước khi lưu (PDF bài JMIR khác vào kho thành toàn văn của PMID 38099896, tải lại mỗi lượt bộ năm): PDF/HTML/JATS qua cùng luật khop_dinh_danh của bước ⑨, URL sai bài vào sổ có hạn, lượt sau không tải lại", bh175_unpaywall_kiem_dinh_danh_truoc_khi_luu),
+    ("BH176", "03/11", "Rà định danh tệp toàn văn ĐÃ có trong kho (cổng BH175 chỉ gác tệp mới; 39186635 và 42701440 là PDF bài khác vẫn tính «đã đọc» và gắn EndNote): mọi PDF qua cùng cổng BH175 với định danh từ PubMed/Europe PMC/Crossref, lỗi mạng không thành khớp, cách ly chỉ dời tệp đã duyệt", bh176_ra_dinh_danh_kho_toan_van_cu),
     ("BH165", "19/10", "Bước ⑧ EndNote đếm lại thư viện sau lệnh nhập (nhập im lặng ⇒ NHẬP HỤT, mã 2, dọn PDF mồ côi); build_library/make_derivatives ghi CẠNH dashboard, không theo thư mục đang đứng", bh165_nhap_endnote_dem_that_va_cong_cu_neo_dashboard),
     ("BH166", "19/10", "Nút bấm đúp .command mang bit thực thi TRONG INDEX (core.fileMode=false nuốt chmod +x); pre-commit chặn tệp .command 100644", bh166_nut_command_mang_bit_thuc_thi_trong_index),
     ("BH167", "21/10", "Nhóm EndNote đo THEO group_id trên bản sao sdb.eni (AppleScript gọi theo tên trả HỢP nhóm trùng tên ⇒ «1 nhóm 9 bài»); ghi vào tên đang có ≥2 nhóm bị từ chối", bh167_endnote_nhom_trung_ten_do_theo_group_id),
