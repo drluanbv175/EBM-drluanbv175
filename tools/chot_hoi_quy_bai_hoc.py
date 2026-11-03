@@ -11444,7 +11444,7 @@ def _bh144_tu_kiem_rang() -> tuple[bool, str]:
     return True, "răng còn"
 
 
-def bh176_design_nhan_consensus_statement():
+def bh178_design_nhan_consensus_statement():
     """03/11 — hằng DESIGN mà `surveillance_scan.search()` AND vào mọi tầng `loc_thiet_ke: true` thiếu
     `"consensus statement"[ptyp]` (loại đồng thuận hiện hành của PubMed), dù mọi truy vấn tầng guideline đều tự khai loại
     này và `khoa_manh_nhat` xếp nó ngang guideline ⇒ bản ghi chỉ mang «Consensus Statement» bị loại IM LẶNG ở mọi chủ đề
@@ -11453,7 +11453,7 @@ def bh176_design_nhan_consensus_statement():
     sự gửi NCBI và truy vấn thật sự gửi Europe PMC phải mang loại này khi lọc; mọi loại điểm 5 của bảng xếp hạng phải qua
     bộ lọc; đối chứng: tầng không lọc không bị AND thêm gì."""
     import urllib.parse as _up
-    S = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py", "_bh176_ss")
+    S = _nap(REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/surveillance_scan.py", "_bh178_ss")
     goi: list[str] = []
 
     def _ncbi(url):
@@ -11862,7 +11862,7 @@ BAI_HOC = [
     ("BH172", "28/10", "Một cửa vào cho câu hỏi CHỦ ĐỀ chứng cứ («tiếp cận … toàn diện dựa trên chứng cứ mới nhất» từng rẽ sang skill tổng thuật / trả lời từ trí nhớ): router + hook UserPromptSubmit nhắc + mô tả skill 80 ký tự + cổng --dashboard của xuat_tong_thuat", bh172_mot_cua_vao_chu_de_chung_cu),
     ("BH173", "28/10", "Quyền lượt lịch khai ĐÚNG LỆNH (gói tuần W44 mất vì lượt lịch không ai bấm «cho phép» bị cắt mà vẫn «succeeded»): mọi lệnh SKILL.md tác vụ lịch phải có trong sync/quyen-lich-nen.json, không khai lệnh ghi quyết định, --ap-dung chỉ thêm + sao lưu, giác quan báo trước kỳ", bh173_quyen_luot_lich_khai_dung_lenh),
     ("BH174", "30/10", "Trần watchlist không giết lượt quét (53 chủ đề từng vượt trần 50 ⇒ gói tuần chết, 0 alert, `--topic` chết theo, orchestrator chẩn đoán sai): watchlist thật qua được bộ quét, trần chỉ áp lượt toàn danh sách, vượt trần có alert, nhịp khoá cho lượt quá 30 phút, công cụ đồng bộ qua được bản đích tụt hậu", bh174_tran_watchlist_khong_giet_luot_quet),
-    ("BH176", "03/11", "Bộ lọc loại thiết kế của bộ quét nhận «Consensus Statement» (DESIGN thiếu loại đồng thuận hiện hành của PubMed ⇒ 792 bản ghi/36 tháng trên 58 chủ đề bị tầng guideline loại im lặng; đường dự phòng Europe PMC cùng lỗ)", bh176_design_nhan_consensus_statement),
+    ("BH178", "03/11", "Bộ lọc loại thiết kế của bộ quét nhận «Consensus Statement» (DESIGN thiếu loại đồng thuận hiện hành của PubMed ⇒ 792 bản ghi/36 tháng trên 58 chủ đề bị tầng guideline loại im lặng; đường dự phòng Europe PMC cùng lỗ)", bh178_design_nhan_consensus_statement),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),

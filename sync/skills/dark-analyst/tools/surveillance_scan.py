@@ -35,7 +35,7 @@ for _s in (_sys_utf8.stdout, _sys_utf8.stderr):
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 EUROPE_PMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
-# VÁ 03/11/2026 (BH176): thêm `"consensus statement"[ptyp]` — loại xuất bản đồng thuận HIỆN HÀNH của PubMed
+# VÁ 03/11/2026 (BH178): thêm `"consensus statement"[ptyp]` — loại xuất bản đồng thuận HIỆN HÀNH của PubMed
 # (NLM bỏ `consensus development conference`). Mọi truy vấn tầng guideline trong watchlist đều tự khai
 # `"consensus statement"[pt]`, và `khoa_manh_nhat` xếp nó ngang guideline (5) — nhưng DESIGN AND thêm vào
 # lại thiếu nó, nên bản ghi chỉ mang «Consensus Statement» (không kèm «Guideline») bị loại IM LẶNG ở MỌI chủ
@@ -696,7 +696,7 @@ def search_europe_pmc(
     else:
         since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
         today = datetime.now(timezone.utc).date().isoformat()
-    # BH176 (03/11/2026): cùng bộ loại với DESIGN — Europe PMC nhận PUB_TYPE:"consensus statement" (đo sống:
+    # BH178 (03/11/2026): cùng bộ loại với DESIGN — Europe PMC nhận PUB_TYPE:"consensus statement" (đo sống:
     # PMID 42372819, 42536391 mang pubType «Consensus Statement»).
     loc = (
         ' AND (PUB_TYPE:"guideline" OR PUB_TYPE:"systematic review" OR PUB_TYPE:"meta-analysis" '
