@@ -239,6 +239,14 @@
       "pdf": "/doi/pdf/{doi}",
       "kiem_lan_cuoi": "2026-10-25 · 5 bài J Urol đều KHÔNG quyền, bị chặn đúng (PMID 42095477, 42095481, 42095468, 42623640, 42284178) — nhánh LƯU chưa có bài đọc được để kiểm",
       "ghi_chu": "Nền Atypon của AUA (Journal of Urology, DOI 10.1097/JU.*). Cloudflare — bác sĩ tick. Bài không quyền: trang ghi «No Access», <article> chỉ có Abstract + References (2.139–9.338 ký tự) ⇒ ngưỡng min chặn; /doi/pdf/ trả 403. Chưa dùng «No Access» làm khoaTrang vì chưa thấy trang có quyền (nhãn truy cập Atypon có thể nằm ở danh sách bài liên quan). Trang AUA ghi cấm đưa nội dung vào ứng dụng AI (đọc 25/10/2026); uỷ quyền đọc theo khoá Wolters Kluwer Health (10.1097/) của bác sĩ. Gặp bài ĐỌC ĐƯỢC đầu tiên thì kiểm nhánh lưu + PDF rồi sửa kiem_lan_cuoi."
+    },
+    "ash": {
+      "mien": ["ashpublications.org"],
+      "chon": ".widget-ArticleFulltext",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-11-03 · PMID 42747316 (Blood Adv, guideline ASH 2026 chẩn đoán thiếu sắt) — lưu HTML đạt, PDF CHƯA lấy được",
+      "ghi_chu": "Nền Silverchair của ASH (Blood, Blood Advances, DOI 10.1182/…). URL /article/doi/<doi> tự chuyển sang /article/<tập>/<số>/<trang>/<id>/<tiêu đề> — truyền URL đích làm --url. Thẻ article/.article-body không bao trọn thân bài; vùng đúng là .widget-ArticleFulltext. PDF qua meta citation_pdf_url trả «Failed to fetch» trong trình duyệt (03/11) ⇒ chỉ có _CHR.html; lần tới thử lại PDF rồi sửa kiem_lan_cuoi. Chưa có khoá «không quyền» (bài kiểm là OA) — gặp bài khoá thì bổ sung."
     }
   },
   "nguon": {
