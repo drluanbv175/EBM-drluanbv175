@@ -51,7 +51,8 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py ngoai-le-moc --tang 1 2 --loi "<nguyên văn bác sĩ>"   # bản ghi CŨ tầng đó vẫn vào hàng chờ
   python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt (trừ bài chỉ thuộc nhóm đề tài «NC · »)
   python3 tools/tom_tat_chung_cu_word.py pdf-hoa [--ap-dung]   # mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote
-Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh).
+Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh/
+sdb.eni hỏng cấu trúc — quick_check, 03/11/2026).
 """
 from __future__ import annotations
 
@@ -377,8 +378,39 @@ def khop_dinh_danh(trang: list[str], doi: str | None, tieu_de: str | None) -> tu
 
 # ───────────────────────── EndNote (chỉ đọc) ─────────────────────────
 
+class ThuVienKhongDoc(RuntimeError):
+    """sdb.eni không đọc được khi liệt kê bản ghi có PDF (03/11/2026). `ma` = 3 khi quick_check xác nhận HỎNG CẤU TRÚC (không có
+    giao dịch đang mở — chặn an toàn, mọi lệnh ghi EndNote phải dừng), 2 khi chưa đo được (kể cả EndNote đang giữ giao dịch ghi
+    chưa commit ở `sdb.nal`). Đo thật 03/11: ⑨ của bộ năm sập bằng traceback «Could not decode to UTF-8 column 'accession_number'»
+    khi một giao dịch mở từ 02/11 19:00:59 — sáng bị kết luận nhầm là hỏng cấu trúc. KHÔNG giải mã «thay thế» để nuốt lỗi: trường
+    đọc được của ảnh chụp giữa giao dịch hay của thư viện hỏng có thể là dữ liệu bản ghi khác."""
+
+    def __init__(self, thong_diep: str, ma: int):
+        super().__init__(thong_diep)
+        self.ma = ma
+
+
+def _thu_vien_khong_doc(thu_vien: Path, e: Exception) -> ThuVienKhongDoc:
+    sk = mod("sk")
+    goc = f"không đọc được sdb.eni ({type(e).__name__}: {e})"[:220]
+    try:
+        loi = sk.kiem_cau_truc(thu_vien)
+    except sk.GiaoDichDangMo as e2:
+        return ThuVienKhongDoc(f"⚪ {goc}; {e2} — KHÔNG kết luận thư viện hỏng; không ghi thêm vào EndNote, bác sĩ đóng thư viện "
+                               "êm (File › Close) hoặc thoát EndNote êm rồi đo lại", 2)
+    except (OSError, sqlite3.Error) as e2:
+        return ThuVienKhongDoc(f"⚪ {goc}; chưa kiểm được cấu trúc ({type(e2).__name__}) — KHÔNG ĐO ĐƯỢC, đo lại sau", 2)
+    if not loi:
+        return ThuVienKhongDoc(f"⚪ {goc}; quick_check lành — đo lại sau (EndNote có thể đang ghi); còn lỗi thì báo bác sĩ", 2)
+    return ThuVienKhongDoc(
+        f"🔴 sdb.eni HỎNG CẤU TRÚC (quick_check {len(loi)} dòng lỗi, vd «{loi[0][:80]}») — {goc}. Không lập hàng chờ và KHÔNG ghi "
+        "EndNote (nạp, gắn PDF, Abstract, Word ⑨) tới khi bác sĩ sửa: EndNote › Library › Recover Library…, hoặc khôi phục bản "
+        "sao lưu lành trong ~/.ebm-endnote-sao-luu/ (bác sĩ quyết). Kiểm: python3 tools/endnote_suc_khoe.py", 3)
+
+
 def ban_ghi_co_pdf(thu_vien: Path) -> list[dict]:
-    """Mọi bản ghi NGOÀI thùng rác có ít nhất một tệp PDF — đọc `sdb.eni` chế độ chỉ-đọc."""
+    """Mọi bản ghi NGOÀI thùng rác có ít nhất một tệp PDF — đọc `sdb.eni` chế độ chỉ-đọc. Đọc lỗi ⇒ ThuVienKhongDoc (kèm chẩn
+    đoán quick_check), không bao giờ traceback trần hay giải mã nuốt lỗi."""
     sk = mod("sk")
     c = sk._ket_noi(thu_vien)
     try:
@@ -389,6 +421,8 @@ def ban_ghi_co_pdf(thu_vien: Path) -> list[dict]:
             f"select r.id, r.accession_number, r.electronic_resource_number, r.title, r.year, {tac_gia}, {tap_chi}, "
             "f.file_path from refs r join file_res f on f.refs_id = r.id where r.trash_state = 0 "
             "and lower(f.file_path) like '%.pdf' order by r.id, f.file_pos").fetchall()
+    except sqlite3.Error as e:
+        raise _thu_vien_khong_doc(thu_vien, e) from e
     finally:
         c.close()
     ra: dict[int, dict] = {}
@@ -1829,6 +1863,15 @@ def _thu_vien() -> Path | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Mọi lệnh đọc bản ghi có PDF: sdb.eni đọc lỗi ⇒ in chẩn đoán, mã 3 (hỏng cấu trúc) hoặc 2 (chưa đo được) — không traceback."""
+    try:
+        return _main(argv)
+    except ThuVienKhongDoc as e:
+        print(str(e))
+        return e.ma
+
+
+def _main(argv: list[str] | None = None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:
             s.reconfigure(encoding="utf-8")
