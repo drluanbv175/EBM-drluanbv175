@@ -1,6 +1,6 @@
-# 03/11/2026 — Bộ lọc loại thiết kế của bộ quét loại im lặng mọi «Consensus Statement» ở tầng guideline (BH176)
+# 03/11/2026 — Bộ lọc loại thiết kế của bộ quét loại im lặng mọi «Consensus Statement» ở tầng guideline (BH178)
 
-**Mã:** BH176. **Phát hiện:** phiên đưa chủ đề «Rung nhĩ ở người có stent mạch vành» vào watchlist (03/11). ESC ACS 2023
+**Mã:** BH178 (ban đầu ghi BH176; đổi cùng ngày vì PR #288 gộp trước đã dùng BH176 và BH177 — chốt BH68 bắt trùng). **Phát hiện:** phiên đưa chủ đề «Rung nhĩ ở người có stent mạch vành» vào watchlist (03/11). ESC ACS 2023
 (PMID 37622654) chỉ được PubMed gán «Journal Article» nên tầng guideline lọt mất. Rà tiếp toàn watchlist thì gặp một lỗ lớn hơn.
 
 ## Chuyện gì đã xảy ra
@@ -44,4 +44,4 @@ xét `[ptyp]` nên vô hiệu hoá các heuristic này: guideline chỉ mang «J
   thật gửi Europe PMC, tầng không lọc giữ nguyên, và mọi loại điểm 5 của bảng xếp hạng đều qua bộ lọc.
 - Đột biến (`python -B`, xoá `__pycache__`, sao lưu + `cmp`): bỏ loại ở `DESIGN` ⇒ 2 test đỏ; bỏ ở Europe PMC ⇒ 1 đỏ; phục hồi ⇒
   4 xanh. Bộ test bộ quét hiện có: 314 qua, 2 bỏ qua.
-- Chốt `BH176` trong `tools/chot_hoi_quy_bai_hoc.py` (ngoại tuyến).
+- Chốt `BH178` trong `tools/chot_hoi_quy_bai_hoc.py` (ngoại tuyến).

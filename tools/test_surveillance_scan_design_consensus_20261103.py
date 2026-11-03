@@ -1,4 +1,4 @@
-"""BH176 (03/11/2026) — bộ lọc loại thiết kế của bộ quét phải nhận «Consensus Statement».
+"""BH178 (03/11/2026) — bộ lọc loại thiết kế của bộ quét phải nhận «Consensus Statement».
 
 Mọi truy vấn tầng guideline trong watchlist đều tự khai `"consensus statement"[pt]` và
 `khoa_manh_nhat` xếp loại này ngang guideline, nhưng hằng DESIGN mà `search()` AND thêm vào lại
