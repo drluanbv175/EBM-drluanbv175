@@ -2,15 +2,17 @@
 """⑨ tóm tắt Word + sức khoẻ EndNote khi sdb.eni đọc lỗi — chẩn đoán bằng quick_check, không traceback, không nuốt lỗi (03/11/2026).
 
 Bối cảnh đo thật 03/11/2026: bước ⑨ của bộ năm (`tom_tat_chung_cu_word.py hang-cho`) sập bằng traceback trần
-«sqlite3.OperationalError: Could not decode to UTF-8 column 'accession_number' with text ' ung th…'». Một phiên khác dò ra gốc:
-sdb.eni HỎNG CẤU TRÚC từ 02/11 ~19:01 (quick_check 101 dòng «invalid page number», «2nd reference to page»); lỗi giải mã chỉ là
-triệu chứng — trường đọc được có thể là dữ liệu bản ghi khác. Còn `endnote_suc_khoe.py` chỉ báo «không đọc được cơ sở dữ liệu:
-DatabaseError», không nói là hỏng cấu trúc, trong khi các phiên vẫn tiếp tục ghi EndNote.
+«sqlite3.OperationalError: Could not decode to UTF-8 column 'accession_number' with text ' ung th…'». Bản sao sdb.eni ra
+quick_check 101 dòng («invalid page number», «2nd reference to page») và sáng 03/11 bị kết luận NHẦM là hỏng cấu trúc; chiều đo
+lại: EndNote giữ MỘT giao dịch ghi chưa commit từ 19:00:59 ngày 02/11 — `sdb.nal` là rollback journal (magic d9d505f9…, tên lạ nên
+SQLite đọc từ ngoài không coi là nhật ký nóng), bản sao chỉ là ảnh chụp giữa giao dịch. `endnote_suc_khoe.py` chỉ báo
+«DatabaseError», không phân biệt hai trường hợp.
 
 Khoá: `kiem_cau_truc` chạy quick_check trên BẢN SAO với collation thay thế ENCIN_Base (thiếu nó quick_check không chạy được) —
-lành ⇒ [], «malformed» hoặc dòng lỗi ⇒ danh sách, lỗi khác ⇒ ném ra (KHÔNG ĐO ĐƯỢC ≠ lành) · ⑨ đọc lỗi trên thư viện hỏng ⇒ mã 3
-kèm «HỎNG CẤU TRÚC … KHÔNG ghi EndNote», không traceback · lỗi giải mã khi cấu trúc lành ⇒ mã 2 (đo lại), KHÔNG giải mã «thay thế» rồi
-trả hàng chờ · `tinh_trang` nói rõ hỏng cấu trúc. Ngoại tuyến: thư viện giả trong tmp_path.
+lành ⇒ [], «malformed» hoặc dòng lỗi ⇒ danh sách, lỗi khác ⇒ ném ra (KHÔNG ĐO ĐƯỢC ≠ lành); `sdb.nal` còn header ⇒ GiaoDichDangMo,
+KHÔNG BAO GIỜ kết luận hỏng · ⑨ đọc lỗi khi giao dịch mở ⇒ mã 2 «KHÔNG kết luận thư viện hỏng»; không có giao dịch mà quick_check
+hỏng ⇒ mã 3 «HỎNG CẤU TRÚC … KHÔNG ghi EndNote»; không traceback · lỗi giải mã khi cấu trúc lành ⇒ mã 2 (đo lại), KHÔNG giải mã
+«thay thế» rồi trả hàng chờ · `tinh_trang` nói đúng trường hợp. Ngoại tuyến: thư viện giả trong tmp_path.
 """
 from __future__ import annotations
 
@@ -148,3 +150,57 @@ def test_suc_khoe_noi_ro_hong_cau_truc(thu_vien):
     _lam_hong(thu_vien)
     canh_bao = " ".join(SK.tinh_trang(thu_vien)["canh_bao"])
     assert "không đọc được cơ sở dữ liệu: DatabaseError" in canh_bao and "HỎNG CẤU TRÚC" in canh_bao
+
+
+# ── giao dịch ghi đang mở (sdb.nal còn header): ảnh chụp giữa giao dịch, KHÔNG phải hỏng (đính chính chiều 03/11) ──────────
+
+def _mo_giao_dich(tv: Path, header: bytes = SK.MAGIC_NHAT_KY) -> None:
+    SK.tep_nhat_ky(tv).write_bytes(header + b"\x00" * 4088)  # rollback journal: 417 trang, 4,1 MB lúc đo thật
+
+
+def test_giao_dich_mo_doc_dung_header_nhat_ky(thu_vien):
+    assert SK.giao_dich_mo(thu_vien) is False, "chưa có sdb.nal"
+    _mo_giao_dich(thu_vien, header=b"\x00" * 8)
+    assert SK.giao_dich_mo(thu_vien) is False, "header đã xoá = giao dịch đã commit"
+    _mo_giao_dich(thu_vien)
+    assert SK.giao_dich_mo(thu_vien) is True
+
+
+def test_kiem_cau_truc_khi_giao_dich_mo_khong_bao_gio_ket_luan_hong(thu_vien):
+    _lam_hong(thu_vien)  # ảnh chụp giữa giao dịch đọc ra «malformed» như bản sao sáng 03/11
+    _mo_giao_dich(thu_vien)
+    with pytest.raises(SK.GiaoDichDangMo):
+        SK.kiem_cau_truc(thu_vien)
+
+
+def test_kiem_cau_truc_giao_dich_mo_ra_trong_luc_do(thu_vien, monkeypatch):
+    _lam_hong(thu_vien)
+    goc = SK._quick_check_ban_sao
+
+    def do_roi_mo(tv, gioi_han):
+        kq = goc(tv, gioi_han)
+        _mo_giao_dich(tv)  # EndNote mở giao dịch ngay sau lúc chép
+        return kq
+
+    monkeypatch.setattr(SK, "_quick_check_ban_sao", do_roi_mo)
+    with pytest.raises(SK.GiaoDichDangMo):
+        SK.kiem_cau_truc(thu_vien)
+
+
+def test_hang_cho_giao_dich_mo_ma_2_khong_bao_hong(thu_vien, capsys):
+    assert TT.ghi_moc(thu_vien, LOI_MOC) == 0
+    _lam_hong(thu_vien)
+    _mo_giao_dich(thu_vien)
+    capsys.readouterr()
+    assert TT.main(["hang-cho"]) == 2
+    ra = capsys.readouterr()
+    assert "giao dịch ghi chưa commit" in ra.out and "KHÔNG kết luận thư viện hỏng" in ra.out
+    assert "HỎNG CẤU TRÚC" not in ra.out and "Recover Library" not in ra.out and "Traceback" not in ra.out + ra.err
+
+
+def test_suc_khoe_giao_dich_mo_khong_bao_hong(thu_vien):
+    _lam_hong(thu_vien)
+    _mo_giao_dich(thu_vien)
+    canh_bao = " ".join(SK.tinh_trang(thu_vien)["canh_bao"])
+    assert "giao dịch ghi chưa commit" in canh_bao and "KHÔNG kết luận thư viện hỏng" in canh_bao
+    assert "HỎNG CẤU TRÚC" not in canh_bao

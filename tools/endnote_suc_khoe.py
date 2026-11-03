@@ -257,14 +257,47 @@ def ban_sao_csdl(thu_vien: Path, so_lan: int = 3, ngu=time.sleep):
             kn.close()
 
 
+MAGIC_NHAT_KY = bytes.fromhex("d9d505f920a163d7")  # đầu tệp rollback journal của SQLite
+
+
+class GiaoDichDangMo(OSError):
+    """EndNote đang giữ một giao dịch ghi CHƯA commit — sdb.eni trên đĩa là ảnh chụp giữa giao dịch, không đo được."""
+
+
+def tep_nhat_ky(thu_vien: Path) -> Path:
+    return sdb(thu_vien).with_name("sdb.nal")
+
+
+def giao_dich_mo(thu_vien: Path) -> bool:
+    """`sdb.nal` là rollback journal của EndNote (tên lạ nên SQLite đọc từ ngoài KHÔNG coi là nhật ký nóng). Header còn magic ⇒ có
+    giao dịch ghi chưa commit (đo 03/11/2026: một giao dịch mở từ 19:00:59 ngày 02/11 tới khi EndNote khởi động lại 16:56 ngày
+    03/11). Tệp vắng hoặc header đã xoá ⇒ False; lỗi đọc khác ⇒ ném ra (không đo được)."""
+    try:
+        with open(tep_nhat_ky(thu_vien), "rb") as f:
+            return f.read(8) == MAGIC_NHAT_KY
+    except FileNotFoundError:
+        return False
+
+
 def kiem_cau_truc(thu_vien: Path, gioi_han: int = 100) -> list[str]:
     """`PRAGMA quick_check` trên BẢN SAO TẠM của sdb.eni (03/11/2026): [] = cấu trúc lành, danh sách = dòng lỗi.
 
-    Đo thật 03/11/2026: sdb.eni hỏng từ khoảng 19:01 ngày 02/11 (101 dòng «invalid page number», «2nd reference to page») — triệu
-    chứng bên ngoài chỉ là lỗi giải mã UTF-8 ở `accession_number` của một bản ghi (trang tràn bị tham chiếu hai lần, lẫn dữ liệu
-    bản ghi khác). EndNote dùng collation riêng ENCIN_Base/ENCI_Base: đăng ký bản so sánh nhị phân thay thế chỉ để quick_check
-    chạy được (bản sao lưu lành vẫn ra «ok» với bản thay thế này). Sqlite tự báo «malformed» ⇒ cũng là hỏng cấu trúc. Lỗi khác
-    (chép không được, nhật ký «nóng») ⇒ ném ra cho bên gọi: KHÔNG ĐO ĐƯỢC, không bao giờ là «lành»."""
+    Đo thật 03/11/2026: ⑨ của bộ năm sập vì lỗi giải mã UTF-8 ở `accession_number`, bản sao sdb.eni ra quick_check 101 dòng
+    («invalid page number», «2nd reference to page») — sáng hôm đó bị kết luận NHẦM là hỏng cấu trúc; chiều đo lại: đó là ảnh chụp
+    giữa một giao dịch ghi chưa commit (`sdb.nal`). Vì vậy giao dịch đang mở (trước hoặc sau phép đo) ⇒ GiaoDichDangMo, KHÔNG
+    BAO GIỜ trả dòng lỗi. EndNote dùng collation riêng ENCIN_Base/ENCI_Base: đăng ký bản so sánh nhị phân thay thế chỉ để
+    quick_check chạy được (bản sao lưu lành vẫn ra «ok» với bản thay thế này). Sqlite tự báo «malformed» ⇒ hỏng. Lỗi khác (chép
+    không được, nhật ký «nóng») ⇒ ném ra cho bên gọi: KHÔNG ĐO ĐƯỢC, không bao giờ là «lành»."""
+    if giao_dich_mo(thu_vien):
+        raise GiaoDichDangMo("EndNote đang giữ giao dịch ghi chưa commit (sdb.nal còn header) — sdb.eni trên đĩa là ảnh chụp "
+                             "giữa giao dịch, quick_check không kết luận được")
+    loi = _quick_check_ban_sao(thu_vien, gioi_han)
+    if loi and giao_dich_mo(thu_vien):  # giao dịch mở ra trong lúc chép ⇒ ảnh chụp không dùng được
+        raise GiaoDichDangMo("giao dịch ghi của EndNote mở ra trong lúc đo (sdb.nal) — quick_check không kết luận được")
+    return loi
+
+
+def _quick_check_ban_sao(thu_vien: Path, gioi_han: int) -> list[str]:
     with ban_sao_csdl(thu_vien) as kn:
         for ten in ("ENCIN_Base", "ENCI_Base"):
             kn.create_collation(ten, lambda a, b: (a > b) - (a < b))
@@ -425,6 +458,9 @@ def _chan_doan_cau_truc(thu_vien: Path) -> str:
     """Đuôi chẩn đoán cho một lần đọc sdb.eni thất bại — đo quick_check rồi nói rõ hỏng cấu trúc hay chưa đo được (03/11/2026)."""
     try:
         loi = kiem_cau_truc(thu_vien)
+    except GiaoDichDangMo as e:
+        return (f" — {e}: KHÔNG kết luận thư viện hỏng; đừng ghi thêm vào EndNote, bác sĩ đóng thư viện êm (File › Close) hoặc "
+                "thoát EndNote êm rồi đo lại — giao dịch treo lâu có nguy cơ mất dữ liệu nếu EndNote sập")
     except (OSError, sqlite3.Error) as e:
         return f" — chưa kiểm được cấu trúc ({type(e).__name__}), đo lại sau"
     if not loi:

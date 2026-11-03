@@ -379,10 +379,11 @@ def khop_dinh_danh(trang: list[str], doi: str | None, tieu_de: str | None) -> tu
 # ───────────────────────── EndNote (chỉ đọc) ─────────────────────────
 
 class ThuVienKhongDoc(RuntimeError):
-    """sdb.eni không đọc được khi liệt kê bản ghi có PDF (03/11/2026). `ma` = 3 khi quick_check xác nhận HỎNG CẤU TRÚC (chặn an
-    toàn — mọi lệnh ghi EndNote phải dừng), 2 khi chưa đo được. Đo thật 03/11: ⑨ của bộ năm sập bằng traceback «Could not decode
-    to UTF-8 column 'accession_number'» trong khi gốc là sdb.eni hỏng cấu trúc từ 02/11 ~19:01 — KHÔNG giải mã «thay thế» để nuốt
-    lỗi: trường đọc được của thư viện hỏng có thể là dữ liệu bản ghi khác."""
+    """sdb.eni không đọc được khi liệt kê bản ghi có PDF (03/11/2026). `ma` = 3 khi quick_check xác nhận HỎNG CẤU TRÚC (không có
+    giao dịch đang mở — chặn an toàn, mọi lệnh ghi EndNote phải dừng), 2 khi chưa đo được (kể cả EndNote đang giữ giao dịch ghi
+    chưa commit ở `sdb.nal`). Đo thật 03/11: ⑨ của bộ năm sập bằng traceback «Could not decode to UTF-8 column 'accession_number'»
+    khi một giao dịch mở từ 02/11 19:00:59 — sáng bị kết luận nhầm là hỏng cấu trúc. KHÔNG giải mã «thay thế» để nuốt lỗi: trường
+    đọc được của ảnh chụp giữa giao dịch hay của thư viện hỏng có thể là dữ liệu bản ghi khác."""
 
     def __init__(self, thong_diep: str, ma: int):
         super().__init__(thong_diep)
@@ -394,6 +395,9 @@ def _thu_vien_khong_doc(thu_vien: Path, e: Exception) -> ThuVienKhongDoc:
     goc = f"không đọc được sdb.eni ({type(e).__name__}: {e})"[:220]
     try:
         loi = sk.kiem_cau_truc(thu_vien)
+    except sk.GiaoDichDangMo as e2:
+        return ThuVienKhongDoc(f"⚪ {goc}; {e2} — KHÔNG kết luận thư viện hỏng; không ghi thêm vào EndNote, bác sĩ đóng thư viện "
+                               "êm (File › Close) hoặc thoát EndNote êm rồi đo lại", 2)
     except (OSError, sqlite3.Error) as e2:
         return ThuVienKhongDoc(f"⚪ {goc}; chưa kiểm được cấu trúc ({type(e2).__name__}) — KHÔNG ĐO ĐƯỢC, đo lại sau", 2)
     if not loi:
