@@ -268,7 +268,10 @@ def dung_pdf(tep_docx: Path, *, chay=subprocess.run) -> Path | None:
     if pandoc_rieng.is_dir():
         moi_truong["PATH"] = str(pandoc_rieng) + os.pathsep + moi_truong.get("PATH", "")
     try:
-        kq = chay([sys.executable, str(GOC / "tools" / "docx_sang_pdf_giu_mau.py"), str(tep_docx), "--ra", str(ra)],
+        # --khong-pandoc (04/11/2026): pandoc bỏ màu CHỮ (cảnh báo đỏ, lợi ích xanh), cỡ chữ và căn lề, và biến ô «ĐIỂM
+        # NHẤN» một dòng thành dòng tiêu đề in đậm căn giữa — bản PDF bác sĩ đọc trong EndNote mất hết điểm nhấn màu.
+        kq = chay([sys.executable, str(GOC / "tools" / "docx_sang_pdf_giu_mau.py"), str(tep_docx), "--ra", str(ra),
+                   "--khong-pandoc"],
                   capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, env=moi_truong)
     except (OSError, subprocess.TimeoutExpired) as e:
         print(f"⚪ không dựng được PDF cho {tep_docx.name}: {e}")
@@ -1008,6 +1011,81 @@ def _o(s) -> str:
     return re.sub(r"\s+", " ", str(s if s is not None else "")).strip() or "—"
 
 
+# ───────────── chuẩn trình bày tiếng Việt lúc DỰNG (04/11/2026, bác sĩ: «chưa chuẩn xác cả về trình bày và ngữ nghĩa») ─────────────
+# Chỉ đổi CÁCH VIẾT, không đổi dữ kiện: tom_tat.json (đã qua cổng số liệu + kiểm chéo độc lập, đối chiếu NGUYÊN VĂN số của bài
+# tiếng Anh) giữ nguyên; Word/PDF in theo quy ước tiếng Việt. Đo 04/11 trên 282 bản: 32.436 số thập phân dấu chấm («HR 0.80»)
+# trong khi mọi sản phẩm khác của hệ viết «0,80»; 656 số nghìn kiểu Anh («13,454 người» — đổi sang thập phân phẩy mà không đổi
+# số này thì đọc thành 13 phẩy 454); 1.423 nhãn «Nhận định thẩm định»/«…của người soạn» cho cùng một ý; 219 chỗ «lực mạnh/yếu,
+# lực khuyến cáo» (dịch sát «strength»); 24 chỗ «95% CI» lẫn với «KTC 95%». Nhãn phân hạng GỐC của nguồn («Strong
+# Recommendation», «Quality of evidence: low») GIỮ nguyên — chỉ thêm lời giải tiếng Việt — vì bảng khuyến cáo in phân hạng
+# NGUYÊN BẢN. Đoạn trong «…» là trích nguyên văn: không đụng.
+_TRICH = re.compile(r"«[^»]*»")
+# Số đứng sau các chữ này là SỐ HIỆU (khuyến cáo 1.1, phân tích 1.1 của Cochrane, Bảng 12.1, mục 5.2, R 2.1…), không phải
+# số thập phân — đo 04/11: «cáo» 76 lần, «mục» 53, «bảng» 51, «tích» (phân tích) 42, «R» 60.
+_SO_HIEU_TRUOC = re.compile(
+    r"(?:^|[^\w])(?:khuyến cáo|tuyên bố|mục|bảng|hình|phần|chương|phụ lục|phân tích|analysis|recommendation|statement|"
+    r"section|table|figure|rec\.?|kc|r|lộ trình|câu hỏi|phiên bản|version|v|sas|stata|spss|revman|python)\s*[(\[]?\s*$",
+    re.IGNORECASE)
+_SO_VI = re.compile(r"(?<![\w.,])(\d+)\.(\d+)(?!\w|\.\d)|(?<![\w.,])([1-9]\d{0,2}(?:,\d{3})+)(?![\d,]|\.\d)")
+_DOI_URL = re.compile(r"10\.\d{4,}/|://|www\.|doi", re.IGNORECASE)
+_THUAT_NGU = (
+    (re.compile(r"\b([Nn])hận định thẩm định\b"), lambda m: f"{m.group(1)}hận định của người tóm tắt"),
+    (re.compile(r"\b([Nn])hận định của người soạn\b"), lambda m: f"{m.group(1)}hận định của người tóm tắt"),
+    (re.compile(r"\bLực khuyến cáo\b"), lambda m: "Độ mạnh khuyến cáo"),
+    (re.compile(r"\blực khuyến cáo\b"), lambda m: "độ mạnh khuyến cáo"),
+    (re.compile(r"\b([Ll])ực (mạnh|yếu)\b"), lambda m: ("K" if m.group(1) == "L" else "k") + f"huyến cáo {m.group(2)}"),
+    (re.compile(r"\bghi lực\b(?! khuyến cáo)"), lambda m: "ghi độ mạnh khuyến cáo"),
+    # «Tường thuật» làm CHỦ NGỮ đầu câu (= phần diễn giải đi kèm khuyến cáo); «tổng quan/tổng hợp tường thuật» là thuật ngữ
+    # đúng (narrative review/synthesis) — giữ.
+    (re.compile(r"(^|[.;:!?]\s+)Tường thuật\b"), lambda m: f"{m.group(1)}Phần diễn giải của nguồn"),
+    (re.compile(r"\b95\s*%\s*CI\b|\bCI\s*95\s*%"), lambda m: "KTC 95%"),
+    (re.compile(r"\bQuality of evidence:\s*(very low|low|moderate|high)\b", re.IGNORECASE),
+     lambda m: f"{m.group(0)} (chất lượng chứng cứ "
+               f"{ {'very low': 'rất thấp', 'low': 'thấp', 'moderate': 'trung bình', 'high': 'cao'}[m.group(1).lower()]})"),
+)
+
+
+_NOI_SO_HIEU = re.compile(r"\s*(?:và|hoặc|,|;|–|-|đến|tới|and|or)\s*$", re.IGNORECASE)
+
+
+def _doi_so(doan: str) -> str:
+    cuoi_so_hieu = -1  # vị trí kết thúc số hiệu vừa giữ — «Phân tích 7.1 và 7.2»: số sau cũng là số hiệu
+
+    def thay(m: re.Match) -> str:
+        nonlocal cuoi_so_hieu
+        dau = doan.rfind(" ", 0, m.start()) + 1
+        cuoi = doan.find(" ", m.end())
+        if _DOI_URL.search(doan[dau:cuoi if cuoi >= 0 else len(doan)]):  # số nằm trong DOI/URL: giữ nguyên
+            return m.group(0)
+        if m.group(3):  # nghìn kiểu Anh 13,454 → 13.454
+            return m.group(3).replace(",", ".")
+        if (_SO_HIEU_TRUOC.search(doan[max(0, m.start() - 24):m.start()])
+                or (cuoi_so_hieu >= 0 and _NOI_SO_HIEU.fullmatch(doan[cuoi_so_hieu:m.start()]))):
+            cuoi_so_hieu = m.end()
+            return m.group(0)
+        return f"{m.group(1)},{m.group(2)}"
+    return _SO_VI.sub(thay, doan)
+
+
+def trinh_bay_vi(s: str) -> str:
+    """Quy ước trình bày tiếng Việt cho chữ in ra Word/PDF: thập phân dấu phẩy, nghìn dấu chấm, thuật ngữ thống nhất. Không
+    đụng đoạn trích nguyên văn «…», DOI/URL (có «/»), phiên bản ba phần (R 4.5.2) và số hiệu mục/khuyến cáo."""
+    ra, vt = [], 0
+    for m in _TRICH.finditer(s):
+        ra.append(_chuan_doan_vi(s[vt:m.start()]))
+        ra.append(m.group(0))
+        vt = m.end()
+    ra.append(_chuan_doan_vi(s[vt:]))
+    return "".join(ra)
+
+
+def _chuan_doan_vi(doan: str) -> str:
+    doan = _doi_so(doan)
+    for mau, thay in _THUAT_NGU:
+        doan = mau.sub(thay, doan)
+    return doan
+
+
 def _ox():
     from docx.oxml import OxmlElement  # noqa: PLC0415
     from docx.oxml.ns import qn  # noqa: PLC0415
@@ -1041,8 +1119,8 @@ def _them(par, text: str, **kieu):
 
 def _viet(par, text, *, co: float | None = None, mau: str | None = None, dam: bool = False) -> None:
     """Chữ có đánh dấu nhấn: **đậm** · [!cảnh báo — đỏ đậm!] · [+lợi ích — xanh lá đậm+] · [CẦN …] cam đậm ·
-    [ngoài bài …] xám nghiêng (số liệu không lấy từ bài này)."""
-    text = _o(text)
+    [ngoài bài …] xám nghiêng (số liệu không lấy từ bài này). Chữ in theo `trinh_bay_vi`."""
+    text = trinh_bay_vi(_o(text))
     vi_tri = 0
     for m in _DANH_DAU.finditer(text):
         if m.start() > vi_tri:
@@ -1237,7 +1315,10 @@ def _mau_danh_gia(s: str, *, agree: bool = False) -> str | None:
     return None
 
 
-RONG_BANG_SO = [4.1, 2.3, 2.3, 1.9, 1.9, 1.3, 1.4, 1.1, 0.7]  # cm — bảng kết quả/tác hại 9 cột, tổng 17 cm
+# Bảng kết quả/tác hại 8 cột, tổng 17 cm. Trước 04/11/2026 là 9 cột (hiệu ứng và KTC tách riêng, cột «Kết cục» 4,1 cm):
+# tên kết cục và ô «Tuyệt đối» bị bẻ thành 6–7 dòng mỗi ô, bảng một kết cục chiếm nửa trang.
+COT_BANG_SO = ["Kết cục", "Can thiệp", "So sánh", "Hiệu ứng (KTC 95%)", "p", "Tuyệt đối", "NNT/NNH", "Tr."]
+RONG_BANG_SO = [4.3, 2.1, 2.1, 3.2, 1.3, 2.2, 1.2, 0.6]
 MAU_GRADE = {"cao": "la", "trung bình": "duong", "thấp": "cam", "rất thấp": "do", "không áp dụng": "xam"}
 MAU_TAC_HAI = {"bat_loi": "do", "loi": "la", "tuong_duong": "xam"}
 
@@ -1245,6 +1326,20 @@ MAU_TAC_HAI = {"bat_loi": "do", "loi": "la", "tuong_duong": "xam"}
 def _gia_tri(h: dict, truong: str) -> str:
     v = _o(h.get(truong))
     return f"{v} †" if v != "—" and truong in set(h.get("may_tinh") or []) else v
+
+
+def _hieu_ung_ktc(h: dict) -> str:
+    """Ô gộp «Hiệu ứng (KTC 95%)»: «HR 0.80 (0.70–0.91)». Dấu † (số máy tính) giữ nguyên theo từng trường."""
+    hu, ktc = _gia_tri(h, "hieu_ung"), _gia_tri(h, "ktc95")
+    if hu == "—":
+        return ktc
+    return hu if ktc == "—" else f"{hu} ({ktc})"
+
+
+def _ngay_vi(s) -> str:
+    """«2026-10-29T04:36:53» → «29/10/2026»; chuỗi khác giữ nguyên."""
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(s or ""))
+    return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else _o(s)
 
 
 def dung_word(tt: dict, ngu_canh: dict):
@@ -1285,10 +1380,11 @@ def dung_word(tt: dict, ngu_canh: dict):
           f"{_o(bg.get('tac_gia'))} · {_o(bg.get('tap_chi'))} · {_o(bg.get('nam'))}"
           + (f" · PMID {bg['pmid']}" if bg.get("pmid") else "") + (f" · DOI {bg['doi']}" if bg.get("doi") else ""),
           nghieng=True, mau=MAU_CHU["xam"], co=11)
-    p = _doan(doc, sau=8, can="giua")
+    p = _doan(doc, sau=1, can="giua")
     _them(p, "THIẾT KẾ: ", dam=True, mau=MAU_CHU["navy"], co=11)
     _them(p, TEN_THIET_KE[tk], co=11)
-    _them(p, "     RÚT BÀI: ", dam=True, mau=MAU_CHU["navy"], co=11)
+    p = _doan(doc, sau=8, can="giua")  # dòng riêng — trước 04/11 hai nhãn dính liền một dòng, khó đọc
+    _them(p, "RÚT BÀI: ", dam=True, mau=MAU_CHU["navy"], co=11)
     tt_rb = rb.get("trang_thai")
     _them(p, {"khong_thay_rut": "không thấy thông báo rút", "khong_thay_rut_rw": "không thấy (chỉ Retraction Watch)",
               "da_rut": "ĐÃ RÚT", "chua_kiem": "CHƯA KIỂM ĐƯỢC"}.get(tt_rb, "—"),
@@ -1311,7 +1407,7 @@ def dung_word(tt: dict, ngu_canh: dict):
         [("Tài trợ", {"dam": True, "nen": "xam"}), bc.get("tai_tro")],
         [("Xung đột lợi ích", {"dam": True, "nen": "xam"}), bc.get("xung_dot_loi_ich")],
         [("Rút bài", {"dam": True, "nen": "xam"}),
-         (f"{NHAN_RUT_BAI.get(tt_rb, '—')} — tra {_o(rb.get('luc'))} ({_o(rb.get('nguon'))})",
+         (f"{NHAN_RUT_BAI.get(tt_rb, '—')} — tra {_ngay_vi(rb.get('luc'))} ({_o(rb.get('nguon'))})",
           {"mau": "la" if tt_rb == "khong_thay_rut" else "do", "dam": tt_rb != "khong_thay_rut"})],
     ], co=11, rong=[4.0, 13.0])
 
@@ -1337,11 +1433,11 @@ def dung_word(tt: dict, ngu_canh: dict):
         so += 1
         _tieu_de_muc(doc, so, "Các khuyến cáo (phân hạng NGUYÊN BẢN của nguồn)")
         _hop(doc, "ĐIỂM NHẤN:", dn.get("ket_qua"))
-        _bang(doc, ["#", "Khuyến cáo", "Lực khuyến cáo", "Mức chứng cứ", "Trang"],
+        _bang(doc, ["#", "Khuyến cáo", "Độ mạnh khuyến cáo", "Mức chứng cứ", "Trang"],
               [[str(i), (kc.get("noi_dung"), {"dam": bool(kc.get("lien_quan_dashboard"))}),
                 (kc.get("luc_khuyen_cao"), {"dam": True, "mau": "navy"}), (kc.get("muc_chung_cu"), {"dam": True}),
                 kc.get("trang")] for i, kc in enumerate(tt.get("khuyen_cao") or [], 1)], co=10.5,
-              rong=[0.8, 9.6, 2.9, 2.7, 1.0])
+              rong=[0.8, 8.8, 3.0, 3.4, 1.0])
     else:
         dt_ = tt.get("doi_tuong") or {}
         ct = tt.get("can_thiep_so_sanh") or {}
@@ -1368,15 +1464,17 @@ def dung_word(tt: dict, ngu_canh: dict):
         _tieu_de_nho(doc, "Phân tích thống kê")
         _viet(_doan(doc), tt.get("phan_tich"))
 
-        cot = ["Kết cục", "Can thiệp", "So sánh", "Hiệu ứng", "KTC 95%", "p", "Tuyệt đối", "NNT/NNH", "Tr."]
+        cot = COT_BANG_SO
 
         def _dong(h: dict, *, nen: str | None = None) -> list:
             ten = _o(h.get("ket_cuc")) + (" (CHÍNH)" if h.get("chinh") else "")
             nen = nen or ("la" if h.get("chinh") else None)
             o = [(ten, {"dam": bool(h.get("chinh")), "nen": nen})]
-            for t_ in TRUONG_SO:
-                o.append((_gia_tri(h, t_), {"dam": t_ in ("hieu_ung", "ktc95"), "nen": nen,
-                                            "mau": "navy" if t_ in ("hieu_ung", "ktc95") else ""}))
+            for t_ in ("nhom_can_thiep", "nhom_so_sanh"):
+                o.append((_gia_tri(h, t_), {"nen": nen}))
+            o.append((_hieu_ung_ktc(h), {"dam": True, "nen": nen, "mau": "navy"}))
+            for t_ in ("p", "tuyet_doi", "nnt"):
+                o.append((_gia_tri(h, t_), {"nen": nen}))
             return o + [(_o(h.get("trang")), {"nen": nen})]
         so += 1
         _tieu_de_muc(doc, so, "Kết quả")
