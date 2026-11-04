@@ -163,13 +163,14 @@
       "mien": ["www.gastrojournal.org", "journal.chestnet.org", "www.kidney-international.org", "www.ajog.org",
                "www.journal-of-hepatology.eu", "www.resuscitationjournal.com", "www.nmcd-journal.com",
                "www.jhltonline.org", "onlinejase.com",
-               "www.ajconline.org", "www.jacr.org"],
+               "www.ajconline.org", "www.jacr.org",
+               "onlinejcf.com", "www.ejinme.com", "www.diabetesresearchclinicalpractice.com", "www.cell.com"],
       "chon": "article",
       "min": 12000,
       "pdf": "meta",
       "khoaTrang": "Article preview",
-      "kiem_lan_cuoi": "2026-10-18 · 7 bài (PMID 35679950, 38395525, 19376844, 31034818, 38490803, 38141870, 40348683); 2026-10-25 · 3 miền mới (PMID 42727699 Resuscitation, 42476858 NMCD, 42764189 JHLT); 2026-11-04 · 2 miền mới (PMID 36428195 JASE onlinejase.com — miền KHÔNG có www; 41862112 AJC www.ajconline.org), cả hai lưu HTML + PDF nhúng; 2026-11-04 · www.jacr.org (PMID 37820837 Lung-RADS v2022, 41721805 ACR Appropriateness Criteria 2025)",
-      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST, KDIGO/ISN, SMFM, EASL; thêm 25/10: ERC Resuscitation, NMCD, ISHLT JHLT; thêm 04/11: ASE JASE, AJC, ACR JACR). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com hoặc SSO id.elsevier.com (tự quay lại, không cần đăng nhập) — bác sĩ tick một lần mỗi miền. linkinghub chuyển tới miền KHÔNG có www (vd resuscitationjournal.com/retrieve/pii/…) rồi mới về www.<miền>/article/<PII>/fulltext — truyền location.href SAU chuyển hướng làm --url. Bài «Perspectives» ngắn của JHLT (14.504 ký tự, không IMRaD): cổng nội dung của «nhan» loại HTML, giữ PDF."
+      "kiem_lan_cuoi": "2026-10-18 · 7 bài (PMID 35679950, 38395525, 19376844, 31034818, 38490803, 38141870, 40348683); 2026-10-25 · 3 miền mới (PMID 42727699 Resuscitation, 42476858 NMCD, 42764189 JHLT); 2026-11-04 · 2 miền mới (PMID 36428195 JASE onlinejase.com — miền KHÔNG có www; 41862112 AJC www.ajconline.org), cả hai lưu HTML + PDF nhúng; 2026-11-04 · www.jacr.org (PMID 37820837 Lung-RADS v2022, 41721805 ACR Appropriateness Criteria 2025); 2026-11-04 · onlinejcf.com (PMID 39608444 — PDF meta trả 403, chỉ HTML; 42595251 có PDF), www.ejinme.com (PMID 42552200), www.diabetesresearchclinicalpractice.com (PMID 38245323), www.cell.com (PMID 29161567 Current Biology) — đều lưu HTML + PDF nhúng trừ ca ghi rõ",
+      "ghi_chu": "Nền Elsevier của tạp chí hội (AGA, CHEST, KDIGO/ISN, SMFM, EASL; thêm 25/10: ERC Resuscitation, NMCD, ISHLT JHLT; thêm 04/11: ASE JASE, AJC, ACR JACR, HFSA J Card Fail [miền không có www], EFIM Eur J Intern Med, IDF Diabetes Res Clin Pract, Cell Press). Cloudflare + chuyển hướng secure.jbs.elsevierhealth.com hoặc SSO id.elsevier.com (tự quay lại, không cần đăng nhập) — bác sĩ tick một lần mỗi miền. linkinghub chuyển tới miền KHÔNG có www (vd resuscitationjournal.com/retrieve/pii/…) rồi mới về www.<miền>/article/<PII>/fulltext — truyền location.href SAU chuyển hướng làm --url. Bài «Perspectives» ngắn của JHLT (14.504 ký tự, không IMRaD): cổng nội dung của «nhan» loại HTML, giữ PDF."
     },
     "jama": {
       "mien": ["jamanetwork.com"],
@@ -264,6 +265,14 @@
       "pdf": "meta",
       "kiem_lan_cuoi": "2026-11-04 · 2 bài (PMID 42167778 ERS/ESGE/ESTS 2026, 26699723 CPA 2016) — lưu HTML + PDF nhúng",
       "ghi_chu": "Nền HighWire của ERS (Eur Respir J, DOI 10.1183/…). doi.org chuyển về /content/erj/<tập>/<số>/<trang>; trang tải chậm (đợi ≥10 giây trước khi đo). meta citation_pdf_url = …full.pdf cùng miền, fetch được. Chưa có khoá «không quyền» (hai bài kiểm có quyền)."
+    },
+    "cfp": {
+      "mien": ["www.cfp.ca"],
+      "chon": ".fulltext-view",
+      "min": 12000,
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-11-04 · PMID 41844291 (Can Fam Physician 72(3):173) — lưu HTML; PDF meta trả HTTP 429 (giới hạn tần suất) ⇒ in BANIN",
+      "ghi_chu": "Nền HighWire của College of Family Physicians of Canada (DOI 10.46747/cfp.*). doi.org chuyển về /content/<tập>/<số>/<trang>; thân bài ở .fulltext-view (giống BMJ). Trang có chữ Subscribe ở thanh trên — không đặt khoaTrang. PDF …full.pdf có thể trả 429 nếu vừa mở nhiều trang; lần tới thử lại PDF rồi sửa kiem_lan_cuoi."
     }
   },
   "nguon": {
