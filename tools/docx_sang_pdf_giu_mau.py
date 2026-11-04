@@ -72,6 +72,11 @@ CSS_IN = """
   table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
   tr { page-break-inside: avoid; }
   td, th { border: 1px solid #b9bfd0; padding: 5px 7px; vertical-align: top; }
+  /* Ô tô nền MỘT dòng (khối «ĐIỂM NHẤN» — bảng 1×1): cho ngắt trang giữa ô, chữ thường căn trái. Thiếu luật này khối dài
+     nhảy cả sang trang sau, để lại trang gần như trống (đo 04/11/2026 trên tóm tắt chứng cứ PMID 42670293). */
+  table.hop tr { page-break-inside: auto; break-inside: auto; }
+  table.hop td { text-align: left; font-weight: normal; padding: 7px 10px; }
+  td p, th p { margin: 0 0 4px 0; }
   h1, h2, h3 { page-break-after: avoid; }
   /* Bảng dài không bị cắt giữa dòng khi sang trang */
   thead { display: table-header-group; }
@@ -210,6 +215,8 @@ def main() -> int:
     ap.add_argument("docx", help="đường dẫn file .docx")
     ap.add_argument("--html-co-san", help="dùng bản HTML đã có thay vì gọi lại pandoc")
     ap.add_argument("--ra", help="đường dẫn PDF đầu ra (mặc định: cùng tên, đuôi .pdf)")
+    ap.add_argument("--khong-pandoc", action="store_true",
+                    help="dựng HTML bằng python-docx kể cả khi có pandoc — giữ MÀU CHỮ, cỡ chữ, căn lề (pandoc bỏ cả ba)")
     a = ap.parse_args()
 
     dx = pathlib.Path(a.docx).resolve()
@@ -229,7 +236,7 @@ def main() -> int:
     if a.html_co_san and pathlib.Path(a.html_co_san).exists():
         html = pathlib.Path(a.html_co_san).read_text("utf-8", errors="replace")
     else:
-        pandoc = shutil.which("pandoc")
+        pandoc = None if a.khong_pandoc else shutil.which("pandoc")
         if not pandoc:
             # NHÁNH DỰ PHÒNG (12/08/2026) — xem docx_sang_html_khong_pandoc.py.
             # Trước đây thiếu pandoc là dừng hẳn, nên máy Windows không bao giờ

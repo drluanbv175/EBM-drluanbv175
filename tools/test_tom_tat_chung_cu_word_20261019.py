@@ -154,7 +154,7 @@ def test_word_11_muc_co_mau_va_luu_y_o_cuoi():
     xml = doc.element.xml
     assert 'w:val="C00000"' in xml and 'w:val="1E7B34"' in xml  # đỏ cảnh báo · xanh lá lợi ích
     assert 'w:fill="E2F0D9"' in xml  # nền xanh lá: điểm nhấn / kết cục chính
-    assert "4.7 điểm % †" in xml
+    assert "4,7 điểm % †" in xml  # Word in thập phân dấu phẩy (04/11/2026); JSON vẫn «4.7»
     than, cuoi = _chu_word(doc)
     assert not T.CUM_CAM_THAN_BAI.search(than) and "đề xuất" not in than.lower()
     assert "CẦN BÁC SĨ KIỂM CHỨNG" in cuoi and "do máy đánh giá" in cuoi and "BHYT tại đơn vị." in cuoi

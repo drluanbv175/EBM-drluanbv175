@@ -89,8 +89,25 @@ def _mau_chu_run(run) -> str | None:
         return None
 
 
+def _co_chu_run(run) -> float | None:
+    """Cỡ chữ (pt) đặt riêng cho run; None = theo kiểu đoạn."""
+    try:
+        return run.font.size.pt if run.font.size is not None else None
+    except Exception:  # noqa: BLE001 — thiếu cỡ chữ không được làm hỏng cả bản dựng
+        return None
+
+
+def _can_le(doan) -> str:
+    """Căn lề của đoạn (giữa/phải/đều hai bên) → CSS; trái/mặc định ⇒ chuỗi rỗng.
+
+    Vì sao (04/11/2026): bản đầu bỏ căn lề, dòng tiêu đề căn giữa của Word ra PDF lệch trái."""
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    return {WD_ALIGN_PARAGRAPH.CENTER: "center", WD_ALIGN_PARAGRAPH.RIGHT: "right",
+            WD_ALIGN_PARAGRAPH.JUSTIFY: "justify"}.get(doan.alignment, "")
+
+
 def _doan_sang_html(doan) -> str:
-    """Một đoạn văn Word → thẻ HTML tương ứng, giữ đề mục và in đậm/nghiêng."""
+    """Một đoạn văn Word → thẻ HTML tương ứng, giữ đề mục, in đậm/nghiêng, màu chữ, cỡ chữ riêng và căn lề."""
     ten = (doan.style.name or "").lower() if doan.style is not None else ""
     noi_dung = []
     for run in doan.runs:
@@ -101,31 +118,45 @@ def _doan_sang_html(doan) -> str:
             t = f"<strong>{t}</strong>"
         if run.italic:
             t = f"<em>{t}</em>"
+        kieu = []
         mau_chu = _mau_chu_run(run)
         if mau_chu:
-            t = f'<span style="color:{mau_chu}">{t}</span>'
+            kieu.append(f"color:{mau_chu}")
+        co = _co_chu_run(run)
+        if co:
+            kieu.append(f"font-size:{co:g}pt")
+        if kieu:
+            t = f'<span style="{";".join(kieu)}">{t}</span>'
         noi_dung.append(t)
     text = "".join(noi_dung) or _thoat(doan.text)
     if not text.strip():
         return ""
+    can = _can_le(doan)
+    sty = f' style="text-align:{can}"' if can else ""
 
     if ten.startswith("heading 1") or ten == "title":
-        return f"<h1>{text}</h1>"
+        return f"<h1{sty}>{text}</h1>"
     if ten.startswith("heading 2"):
-        return f"<h2>{text}</h2>"
+        return f"<h2{sty}>{text}</h2>"
     if ten.startswith("heading 3"):
-        return f"<h3>{text}</h3>"
+        return f"<h3{sty}>{text}</h3>"
     if ten.startswith("heading"):
-        return f"<h4>{text}</h4>"
+        return f"<h4{sty}>{text}</h4>"
     if "list" in ten:
         return f"<li>{text}</li>"
     if "quote" in ten:
         return f"<blockquote>{text}</blockquote>"
-    return f"<p>{text}</p>"
+    return f"<p{sty}>{text}</p>"
 
 
 def _bang_sang_html(bang) -> str:
+    """Bảng Word → HTML. Bảng NHIỀU dòng: dòng đầu là tiêu đề (`<thead>`, lặp lại khi sang trang). Bảng MỘT dòng (ô tô nền
+    kiểu «ĐIỂM NHẤN») KHÔNG có dòng tiêu đề và mang lớp `hop` để CSS in cho phép ngắt trang giữa ô.
+
+    Vì sao (04/11/2026): bản đầu coi dòng đầu của MỌI bảng là `<th>` — ô tô nền một dòng thành tiêu đề in đậm, căn giữa cả
+    đoạn dài; cùng luật «không ngắt giữa dòng» của CSS in, khối dài nhảy sang trang sau, để lại trang gần như trống."""
     hang_html = []
+    mot_dong = len(bang.rows) == 1
     for i, hang in enumerate(bang.rows):
         o_html = []
         for o in hang.cells:
@@ -134,10 +165,12 @@ def _bang_sang_html(bang) -> str:
             noi = " ".join(
                 p for p in (_doan_sang_html(d) for d in o.paragraphs) if p
             ) or "&nbsp;"
-            the = "th" if i == 0 else "td"
+            the = "th" if i == 0 and not mot_dong else "td"
             o_html.append(f"<{the}{style}>{noi}</{the}>")
         hang_html.append("<tr>" + "".join(o_html) + "</tr>")
-    return "<table>" + "".join(hang_html) + "</table>"
+    if mot_dong:
+        return '<table class="hop">' + "".join(hang_html) + "</table>"
+    return "<table><thead>" + hang_html[0] + "</thead><tbody>" + "".join(hang_html[1:]) + "</tbody></table>"
 
 
 def _duyet_theo_thu_tu(tai_lieu):
