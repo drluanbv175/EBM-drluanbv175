@@ -206,6 +206,11 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    Không dùng «≈», «~» — ghi đúng số của bài, báo cáo theo nhóm thì ghi đủ HAI nhóm (93.1% / 92.9%), không tự cộng/làm tròn.
    Sau bạn, một agent ĐỘC LẬP sẽ chấm từng câu với toàn văn; một câu «sai» hay «không có trong bài» là Word không được dựng.
 10. Viết tiếng Việt chuẩn y khoa, thuật ngữ chưa có tương đương thì tiếng Việt kèm tiếng Anh trong ngoặc lần đầu.
+   Văn phong (bác sĩ 04/11/2026: «chưa chuẩn xác cả về trình bày và ngữ nghĩa»): câu ngắn, chủ ngữ rõ, KHÔNG dịch sát cấu trúc
+   tiếng Anh («thêm X đi kèm tử vong thấp hơn» → «thêm X làm giảm tử vong» chỉ khi bài là RCT và nói vậy; quan sát thì «liên
+   quan với»). Một nhãn cho một ý: «Nhận định của người tóm tắt», «độ mạnh khuyến cáo», «khuyến cáo mạnh/có điều kiện», «KTC
+   95%» (không «95% CI», không «lực»). Viết tắt (CAG, GIM, IEE…) giải nghĩa tiếng Việt ở lần đầu. Số chép ĐÚNG như bài (dấu
+   chấm thập phân) — bước dựng tự in theo quy ước Việt (0,80; 13.454); đừng tự đổi dấu trong JSON (cổng so số với bài).
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
 """
