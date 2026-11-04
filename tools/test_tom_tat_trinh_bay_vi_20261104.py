@@ -21,6 +21,13 @@ sys.path.insert(0, str(TOOLS))
 import docx_sang_html_khong_pandoc as H  # noqa: E402
 import tom_tat_chung_cu_word as T  # noqa: E402
 
+try:
+    import docx  # noqa: F401
+    _CO_DOCX = True
+except ImportError:  # CI bản sao trần không cài python-docx
+    _CO_DOCX = False
+CAN_DOCX = pytest.mark.skipif(not _CO_DOCX, reason="cần python-docx (venv ~/.ebm-venv)")
+
 
 @pytest.mark.parametrize("vao, ra", [
     ("HR 0.80 (KTC 95% 0.70–0.91); p=0.0005", "HR 0,80 (KTC 95% 0,70–0,91); p=0,0005"),
@@ -54,6 +61,7 @@ def test_bat_bien_day_chu_so_tren_mau_gia():
         assert re.sub(r"\D", "", T.trinh_bay_vi(s)) == re.sub(r"\D", "", s), s
 
 
+@CAN_DOCX
 def test_bang_mot_dong_la_o_hop_khong_phai_dong_tieu_de():
     from docx import Document
     d = Document()
@@ -63,6 +71,7 @@ def test_bang_mot_dong_la_o_hop_khong_phai_dong_tieu_de():
     assert html.startswith('<table class="hop">') and "<th" not in html
 
 
+@CAN_DOCX
 def test_bang_nhieu_dong_co_thead():
     from docx import Document
     d = Document()
@@ -73,6 +82,7 @@ def test_bang_nhieu_dong_co_thead():
     assert "<thead><tr><th>" in html and "<tbody><tr><td>" in html
 
 
+@CAN_DOCX
 def test_doan_giu_can_giua_mau_chu_va_co_chu():
     from docx import Document
     from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -110,6 +120,7 @@ def test_bang_ket_qua_tam_cot_gop_hieu_ung_ktc():
     assert T._hieu_ung_ktc({"hieu_ung": "", "ktc95": "0.7–0.9"}) == "0.7–0.9"
 
 
+@CAN_DOCX
 def test_word_in_theo_quy_uoc_viet_va_hai_dong_dau_trang():
     tt = {"loai_thiet_ke": "rct", "ket_luan_thuc_hanh": ["HR 0.80 (0.70–0.91); 13,454 người"],
           "ket_qua": [{"ket_cuc": "Tử vong", "chinh": True, "nhom_can_thiep": "434 (7.9%)", "nhom_so_sanh": "539 (9.7%)",
