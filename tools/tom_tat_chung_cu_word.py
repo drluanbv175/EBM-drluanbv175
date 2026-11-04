@@ -184,7 +184,9 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    bình / nghiêm trọng / nguy kịch / không có thông tin · ROBINS-E thấp / một số lo ngại / cao / rất cao · QUADAS, PROBAST
    thấp / cao / không rõ (cả lo ngại khả năng áp dụng). RoB 2/ROBINS/QUADAS/PROBAST được ghi theo kết cục («thấp với tử
    vong; một số lo ngại với đợt cấp»); AMSTAR-2 MỘT mức cho cả tổng quan. Không «có lo ngại», «trung bình» (QUADAS), «không
-   đánh giá được»; kết quả bài tự chấm nghiên cứu gốc không phải một miền — ghi ở `tong_the`.
+   đánh giá được»; kết quả bài tự chấm nghiên cứu gốc không phải một miền — ghi ở `tong_the`. AGREE II (công cụ gốc cho điểm %
+   theo miền): ghi thấp / trung bình / cao, hoặc khoảng «thấp – trung bình» / «trung bình – cao»; KHÔNG «không rõ» — mục không
+   có thông tin nhận điểm thấp nhất ⇒ thiếu thông tin cả miền thì «thấp»; chú thích ngắn đặt trong ngoặc sau mức.
 4. `grade_de_xuat`: mức ∈ {{cao, trung bình, thấp, rất thấp, không áp dụng}} cho TỪNG kết cục chính, lý do theo 5 miền hạ
    (nguy cơ sai lệch · không nhất quán · gián tiếp · không chính xác · sai lệch xuất bản) và miền nâng. Nguồn gốc «máy đánh giá»
    được ghi MỘT lần ở mục Lưu ý cuối văn bản — thân văn bản không viết «đề xuất của máy». Guideline thì ghi phân hạng NGUYÊN
@@ -890,8 +892,48 @@ def _khoa_thang(cong_cu: str) -> str | None:
     return next((k for k in THANG_MUC if cc.startswith(k)), None)
 
 
+# AGREE II (05/11/2026, bác sĩ chọn «Thống nhất khi in»): công cụ gốc cho điểm % theo miền, không có mức chữ; kho viết ~60 kiểu
+# nhãn («tốt», «khá», «đạt một phần tiêu chí (định tính…)», «Mô tả rõ»…). Khi DỰNG quy về thấp / trung bình / cao hoặc khoảng
+# «thấp – trung bình» / «trung bình – cao»; nhãn mô tả giữ nguyên sau dấu «—» để không mất ý người tóm tắt. Dữ liệu KHÔNG đổi.
+_AGREE_DAU = (  # (đầu nhãn, mức in, giữ nguyên nhãn mô tả sau «—») — mẫu cụ thể trước mẫu ngắn
+    (r"thấp\s*(?:–|-|—|đến)\s*trung bình|trung bình\s*(?:–|-|—|đến)\s*thấp", "thấp – trung bình", False),
+    (r"trung bình\s*(?:–|-|—|đến)\s*(?:cao|khá)|cao\s*(?:–|-|—|đến)\s*trung bình|khá\s*(?:–|-|—|đến)\s*cao",
+     "trung bình – cao", False),
+    (r"đạt phần lớn tiêu chí", "trung bình – cao", True),
+    (r"đạt một phần(?: tiêu chí)?", "trung bình", True),
+    (r"mô tả rất hạn chế|mô tả hạn chế", "thấp", True),
+    (r"mô tả một phần", "trung bình", True),
+    (r"mô tả phần lớn|mô tả khá đầy đủ|mô tả khá rõ|khá rõ", "trung bình – cao", True),
+    (r"mô tả rõ|rõ", "cao", True),
+    (r"thấp", "thấp", False), (r"trung bình", "trung bình", False), (r"cao", "cao", False),
+    (r"tốt", "cao", False), (r"khá", "trung bình – cao", False),
+)
+
+
+def _muc_agree(danh_gia: str) -> str:
+    s = str(danh_gia or "").strip()
+    tien_to = s.lower().startswith("chất lượng ")
+    than = s[len("chất lượng "):] if tien_to else s
+    for mau, chuan, mo_ta in _AGREE_DAU:
+        m = re.match(rf"(?:{mau})(?=$|\s*[(,;—]|\s+(?:theo|với|cho|ở|khi|nếu)\b)", than.lower())
+        if not m:
+            continue
+        if mo_ta:
+            return f"{chuan} — {than[:1].lower()}{than[1:]}"
+        if than.lower()[:m.end()] == chuan and not tien_to:
+            return danh_gia
+        con = than[m.end():]
+        if con.strip().strip("()").strip().lower() == chuan:
+            con = ""
+        return chuan + con
+    return danh_gia
+
+
 def muc_chuan(cong_cu: str, danh_gia: str) -> str:
-    """Nhãn đồng nghĩa → nhãn chuẩn của thang (cả chuỗi hoặc đầu từng đoạn «…; …»); nhãn khác giữ nguyên."""
+    """Nhãn đồng nghĩa → nhãn chuẩn của thang (cả chuỗi hoặc đầu từng đoạn «…; …»); nhãn khác giữ nguyên. AGREE II: quy về
+    thấp / trung bình / cao (xem `_AGREE_DAU`)."""
+    if _chuan_cong_cu(cong_cu).startswith("agree"):
+        return _muc_agree(danh_gia)
     k = _khoa_thang(cong_cu)
     dn = DONG_NGHIA_MUC.get(k or "", {})
     if not dn:
