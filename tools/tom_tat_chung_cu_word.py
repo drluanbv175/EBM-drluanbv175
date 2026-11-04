@@ -180,6 +180,11 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    gộp»); «Có một phần» CHỈ ở mục 2, 4, 7, 8, 9 — cổng chặn ở mục khác. Mức tổng thể (Shea 2017): «Không» ở mục then chốt 2, 4,
    7, 9, 11, 13, 15 là lỗi then chốt, «Không» ở mục khác là điểm yếu, «Có một phần» không tính; cao = 0 lỗi then chốt và ≤ 1
    điểm yếu · trung bình = > 1 điểm yếu · thấp = 1 lỗi then chốt · rất thấp = > 1 lỗi then chốt.
+   THANG MỨC từng miền (cổng chặn mức ngoài thang, 04/11/2026): RoB 2 thấp / một số lo ngại / cao · ROBINS-I thấp / trung
+   bình / nghiêm trọng / nguy kịch / không có thông tin · ROBINS-E thấp / một số lo ngại / cao / rất cao · QUADAS, PROBAST
+   thấp / cao / không rõ (cả lo ngại khả năng áp dụng). RoB 2/ROBINS/QUADAS/PROBAST được ghi theo kết cục («thấp với tử
+   vong; một số lo ngại với đợt cấp»); AMSTAR-2 MỘT mức cho cả tổng quan. Không «có lo ngại», «trung bình» (QUADAS), «không
+   đánh giá được»; kết quả bài tự chấm nghiên cứu gốc không phải một miền — ghi ở `tong_the`.
 4. `grade_de_xuat`: mức ∈ {{cao, trung bình, thấp, rất thấp, không áp dụng}} cho TỪNG kết cục chính, lý do theo 5 miền hạ
    (nguy cơ sai lệch · không nhất quán · gián tiếp · không chính xác · sai lệch xuất bản) và miền nâng. Nguồn gốc «máy đánh giá»
    được ghi MỘT lần ở mục Lưu ý cuối văn bản — thân văn bản không viết «đề xuất của máy». Guideline thì ghi phân hạng NGUYÊN
@@ -860,6 +865,71 @@ def _amstar2_sai_thang(mien) -> list[str]:
     return loi
 
 
+# Thang mức từng miền theo công cụ (04/11/2026). Kiểm chéo bù 20 bản đầu bắt 3 mức KHÔNG có trong thang (QUADAS «trung bình»,
+# ROBINS-E «không đánh giá được» ở cấp miền, kết quả công cụ Cochrane xếp làm «miền» AMSTAR-2 «cao/không rõ»); quét kho thấy
+# thêm cùng kiểu (PROBAST «có lo ngại», ROBINS-I «không rõ», «dự kiến thấp»…) và 176 nhãn đồng nghĩa viết lẫn lộn. Khoá = tên
+# công cụ sau `_chuan_cong_cu` (chỉ chữ thường ASCII + số). Công cụ ngoài bảng (AGREE II, JBI, SANRA…) không kiểm thang.
+THANG_MUC = {
+    "rob2": ("thấp", "một số lo ngại", "cao"),
+    "robinsi": ("thấp", "trung bình", "nghiêm trọng", "nguy kịch", "không có thông tin"),
+    "robinse": ("thấp", "một số lo ngại", "cao", "rất cao"),
+    "quadas": ("thấp", "cao", "không rõ"),
+    "probast": ("thấp", "cao", "không rõ"),
+    "amstar2": ("có", "có một phần", "không", "không áp dụng", "không thực hiện phân tích gộp"),
+}
+DONG_NGHIA_MUC = {  # cách viết khác của CÙNG một mức — in thống nhất khi dựng, cổng coi là hợp lệ
+    "rob2": {"nguy cơ thấp": "thấp", "có một số lo ngại": "một số lo ngại", "nguy cơ cao": "cao"},
+    "robinsi": {"vừa": "trung bình", "nguy cơ thấp": "thấp", "không rõ": "không có thông tin"},
+    "robinse": {"có lo ngại (some concerns)": "một số lo ngại", "nguy cơ thấp": "thấp"},
+    "amstar2": {"đạt": "có", "đạt một phần": "có một phần", "không đạt": "không"},
+}
+
+
+def _khoa_thang(cong_cu: str) -> str | None:
+    cc = _chuan_cong_cu(cong_cu)
+    return next((k for k in THANG_MUC if cc.startswith(k)), None)
+
+
+def muc_chuan(cong_cu: str, danh_gia: str) -> str:
+    """Nhãn đồng nghĩa → nhãn chuẩn của thang (cả chuỗi hoặc đầu từng đoạn «…; …»); nhãn khác giữ nguyên."""
+    k = _khoa_thang(cong_cu)
+    dn = DONG_NGHIA_MUC.get(k or "", {})
+    if not dn:
+        return danh_gia
+
+    def doan(s: str) -> str:
+        goc = s.strip()
+        for cu in sorted(dn, key=len, reverse=True):
+            if goc.lower() == cu or re.match(rf"{re.escape(cu)}(?=\s*[(,—–-]|\s+(?:với|cho|ở|theo|khi|nếu)\b)", goc.lower()):
+                moi = dn[cu][:1].upper() + dn[cu][1:] if goc[:1].isupper() else dn[cu]
+                return s.replace(goc[:len(cu)], moi, 1)
+        return s
+    return ";".join(doan(x) for x in str(danh_gia).split(";"))
+
+
+def _muc_hop_le(khoa: str, danh_gia: str) -> bool:
+    """Mỗi đoạn («thấp với X; một số lo ngại với Y» — phán quyết theo kết cục) phải MỞ ĐẦU bằng một mức của thang (sau khi
+    đổi đồng nghĩa), tiếp theo là hết chuỗi, ngoặc chú thích, dấu phẩy/gạch hoặc «với/cho/ở/theo/khi/nếu …». Cho tiền tố «dự
+    kiến» (đề cương chưa có kết quả). «cao hơn», «không đánh giá được», «thấp đến trung bình» không phải mức."""
+    muc = sorted(THANG_MUC[khoa], key=len, reverse=True)
+    mau = re.compile(rf"(?:{'|'.join(re.escape(m) for m in muc)})(?=$|\s*[(,—–-]|\s+(?:với|cho|ở|theo|khi|nếu)\b)")
+    # «dự kiến thấp» — bài đề cương chưa có kết quả, thẩm định thiết kế dự kiến: tiền tố trung thực, mức vẫn phải thuộc thang
+    cac = [re.sub(r"^(?:dự kiến\s+)?(?:lo ngại|nguy cơ)?\s*", "", x.strip().lower()) for x in re.split(r"[;·]", muc_chuan(khoa, danh_gia))]
+    if khoa == "amstar2" and len(cac) > 1:  # AMSTAR-2 chấm MỘT mức cho cả tổng quan — không có mức kép theo kết cục
+        return False
+    return bool(cac) and all(x and mau.match(x) for x in cac)
+
+
+def _muc_sai_thang(cong_cu: str, mien) -> list[str]:
+    k = _khoa_thang(cong_cu)
+    if not k:
+        return []
+    return [f"nguy_co_sai_lech.mien[{i}] «{mi.get('ten')}»: mức «{mi.get('danh_gia')}» không có trong thang {cong_cu} "
+            f"({' / '.join(THANG_MUC[k])}) — chọn đúng một mức của thang (ghi riêng theo kết cục nếu cần)"
+            for i, mi in enumerate(mien or [], 1)
+            if isinstance(mi, dict) and not _rong(mi.get("danh_gia")) and not _muc_hop_le(k, str(mi.get("danh_gia")))]
+
+
 def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     """Danh sách lỗi (rỗng = đạt). Mỗi lỗi là một câu tiếng Việt chỉ đúng chỗ phải sửa."""
     loi: list[str] = []
@@ -904,6 +974,7 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
             loi.append(f"nguy_co_sai_lech.mien[{i}] cần ten · danh_gia · ly_do")
     if cc.startswith("amstar"):
         loi += _amstar2_sai_thang(nc_sl.get("mien"))
+    loi += _muc_sai_thang(str(nc_sl.get("cong_cu") or ""), nc_sl.get("mien"))
     # GRADE đề xuất
     gr = tt.get("grade_de_xuat") or []
     for i, g in enumerate(gr if isinstance(gr, list) else [], 1):
@@ -1513,7 +1584,8 @@ def dung_word(tt: dict, ngu_canh: dict):
     _hop(doc, "ĐIỂM NHẤN:", dn.get("nguy_co_sai_lech"))
     _bang(doc, ["Miền", "Đánh giá", "Lý do", "Tr."],
           [[(m.get("ten"), {"dam": True}),
-            (m.get("danh_gia"), {"dam": True, "nen": _mau_danh_gia(str(m.get("danh_gia")), agree=agree)}),
+            (muc_chuan(str(nsl.get("cong_cu") or ""), str(m.get("danh_gia") or "")),
+             {"dam": True, "nen": _mau_danh_gia(str(m.get("danh_gia")), agree=agree)}),
             m.get("ly_do"), m.get("trang")] for m in nsl.get("mien") or []], co=10.5, rong=[3.6, 2.6, 9.8, 1.0])
     p = _doan(doc)
     _them(p, "TỔNG THỂ: ", dam=True,
