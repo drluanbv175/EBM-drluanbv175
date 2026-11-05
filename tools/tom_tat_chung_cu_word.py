@@ -327,6 +327,18 @@ def cac_so(s: str) -> list[str]:
     return [x if "." in x else (x.lstrip("0") or "0") for x in _SO.findall(_chuan_so(s))]
 
 
+# Chấm giữa có khoảng trắng HAI bên giữa hai chữ số («≥60 · 45–<60», số đếm «34 · 3 · 9») là dấu PHÂN CÁCH danh sách trong chữ
+# của bản tóm tắt (Word in « · » làm phân cách) — không phải dấu thập phân bị PDF tách.
+_CHAM_GIUA_PHAN_CACH = re.compile(r"(?<=\d)[ \t]+[·⋅][ \t]+(?=\d)")
+
+
+def cac_so_tom_tat(s: str) -> list[str]:
+    """Các số trong CHỮ CỦA BẢN TÓM TẮT. 04/11/2026: bản vá 28/10 ghép «11 ·1», «2·⏎12» của PDF thành số thập phân — đúng cho văn
+    bản BÀI, nhưng áp cả lên bản tóm tắt thì « · » phân cách biến «≥60 · 45» thành 60.45 ⇒ cổng chặn số đúng (PMID 39490700,
+    41033330). Phía tóm tắt: chấm giữa có khoảng trắng hai bên là phân cách; «0·85», «1 ·01» vẫn là thập phân."""
+    return cac_so(_CHAM_GIUA_PHAN_CACH.sub(" ; ", s or ""))
+
+
 def _so_khop(so: str, tap: set[str]) -> bool:
     if so in tap:
         return True
@@ -999,7 +1011,7 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
             for truong in TRUONG_SO:
                 if truong in may_tinh:
                     continue
-                for so in cac_so(str(h.get(truong) or "")):
+                for so in cac_so_tom_tat(str(h.get(truong) or "")):
                     if not _so_khop(so, tap):
                         loi.append(f"{khoi}[{i}] «{h.get('ket_cuc')}».{truong}: số {so} KHÔNG có trên trang {tr}±1 "
                                    "— chép sai, sai trang, hay do máy tính (khai may_tinh)?")
@@ -1033,12 +1045,12 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     for h in (tt.get("ket_qua") or []) + (tt.get("tac_hai") or []):
         if isinstance(h, dict):
             for truong in TRUONG_SO:
-                tap_bang.update(cac_so(str(h.get(truong) or "")))
+                tap_bang.update(cac_so_tom_tat(str(h.get(truong) or "")))
     for ten, x in cac_chuoi_kiem_so(tt):
         x = str(x or "")
         if "[ngoài bài" in x:
             continue
-        sai = [so for so in cac_so(x) if not (_so_khop(so, tap_bai) or _so_khop(so, tap_bang))]
+        sai = [so for so in cac_so_tom_tat(x) if not (_so_khop(so, tap_bai) or _so_khop(so, tap_bang))]
         if sai:
             loi.append(f"{ten}: số {', '.join(sorted(set(sai)))} không có trong bài — chép đúng số của bài, hoặc ghi "
                        "«[ngoài bài: <nguồn>]» nếu lấy từ nguồn khác")
