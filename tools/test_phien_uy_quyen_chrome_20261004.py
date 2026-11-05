@@ -107,6 +107,30 @@ def test_kiem_khong_co_phien_va_ngoai_pham_vi(so):
     assert P.kiem("1", "https://www.dynamed.com/x", bay_gio=T0, tep=so, dtv=_dtv())[0] == 3
 
 
+def test_kiem_trang_ngoai_mien_nxb_bi_tu_choi_du_doi_thuoc_nxb(so):
+    """06/11/2026: bài DOI Elsevier mở trên trang hiệp hội (uroweb.org — điều khoản riêng cấm AI) KHÔNG được «được» theo DOI."""
+    _mo(so)
+    ma, tb = P.kiem("41000001", "https://uroweb.org/guidelines/management-of-non-neurogenic-male-luts", doi="10.1016/j.eururo.2026.03.020",
+                    bay_gio=T0, tep=so, dtv=_dtv())
+    assert ma == 3 and "KHÔNG thuộc miền đã khai của Elsevier" in tb
+    # miền giả mạo dạng hậu tố cũng bị chặn; miền con thật của NXB vẫn được
+    assert P.kiem("41000002", "https://sciencedirect.com.vi-du.org/x", doi="10.1016/j.x", bay_gio=T0, tep=so, dtv=_dtv())[0] == 3
+    assert P.kiem("41000003", "https://www.sciencedirect.com/science/article/pii/S1", doi="10.1016/j.x", bay_gio=T0, tep=so,
+                  dtv=_dtv())[0] == 0
+
+
+def test_kiem_nxb_chua_khai_mien_nao_la_tu_choi(so):
+    """NXB có uỷ quyền nhưng bảng chưa khai miền ⇒ không có trang nào «thuộc NXB» ⇒ fail-closed, không coi là được."""
+    dtv = _dtv(uy_quyen=("Elsevier", "Khong Mien"))
+    dtv.DIEU_KHOAN_NXB["Khong Mien"] = {"ket_luan": "cam", "doi": ("10.9999/",), "mien": ()}
+    goc = dtv.nxb_cua
+    dtv.nxb_cua = lambda doi="", url="", tieu_de="": (("Khong Mien", dtv.DIEU_KHOAN_NXB["Khong Mien"])
+                                                     if (doi or "").startswith("10.9999/") else goc(doi=doi, url=url))
+    P.mo(LOI, bay_gio=T0, tep=so, dtv=dtv)
+    ma, tb = P.kiem("41000004", "https://bat-ky.example.org/bai", doi="10.9999/abc", bay_gio=T0, tep=so, dtv=dtv)
+    assert ma == 3 and "chưa khai miền" in tb
+
+
 def _ghi_lich_su(so, n, luc):
     d = P.doc_phien(so)
     d["lich_su"] = [{"luc": (luc + timedelta(seconds=70 * i)).isoformat(), "pmid": str(10_000_000 + i),

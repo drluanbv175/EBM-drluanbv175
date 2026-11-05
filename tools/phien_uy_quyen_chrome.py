@@ -261,6 +261,15 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
     mien = _mien(url)
     if not mien:
         return 3, "thiếu URL trang bài"
+    # TRANG phải nằm trên MIỀN đã khai của chính NXB đó (06/11/2026). `nxb_cua` xét tiền tố DOI TRƯỚC miền, nên bài Elsevier
+    # (DOI 10.1016/…) mở trên trang của HIỆP HỘI (uroweb.org — EAU) vẫn được báo «được» theo uỷ quyền Elsevier, trong khi chính
+    # trang hiệp hội có điều khoản RIÊNG cấm đưa nội dung guideline vào công cụ AI (agent lô 3 tầng C2 phát hiện, 06/11/2026).
+    # DOI chỉ cho biết NXB của bài, không cho biết điều khoản của trang bên thứ ba ⇒ ngoài miền đã khai thì fail-closed.
+    mien_nxb = tuple((dtv.DIEU_KHOAN_NXB.get(ten) or {}).get("mien") or ())
+    if not any(mien == m or mien.endswith("." + m) for m in mien_nxb):
+        return 3, (f"trang ở {mien} KHÔNG thuộc miền đã khai của {ten} ({', '.join(mien_nxb) or 'chưa khai miền'}) — DOI chỉ cho "
+                   "biết NXB của bài, không cho biết điều khoản của trang bên thứ ba (hiệp hội, kho lưu trữ; vd uroweb.org cấm dùng "
+                   "với AI). Đọc điều khoản riêng của miền này; miền thuộc chính NXB thì thêm vào DIEU_KHOAN_NXB qua PR")
     cua_mien = [x for x in d["lich_su"] if x.get("mien") == mien]
     if str(pmid) not in {x.get("pmid") for x in cua_mien} and len({x.get("pmid") for x in cua_mien}) >= d["tran_moi_mien"]:
         return 3, f"đã đủ {d['tran_moi_mien']} bài ở {mien} trong phiên này — dừng miền này (tránh bị NXB khoá tài khoản)"
