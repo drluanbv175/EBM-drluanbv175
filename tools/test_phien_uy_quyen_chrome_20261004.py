@@ -119,6 +119,27 @@ def test_kiem_trang_ngoai_mien_nxb_bi_tu_choi_du_doi_thuoc_nxb(so):
                   dtv=_dtv())[0] == 0
 
 
+def test_kiem_mien_tap_chi_hoi_trong_cau_hinh_lan_chrome_van_duoc(so):
+    """Tạp chí hội do NXB vận hành trên miền riêng (kidney-international.org — Elsevier) đã kiểm thật trong cấu hình làn Chrome
+    ⇒ được; cùng DOI mà trang hiệp hội chưa kiểm (uroweb.org) ⇒ vẫn chặn; cấu hình hỏng/vắng ⇒ chỉ còn miền bảng điều khoản."""
+    _mo(so)
+    ch = {"nxb": {"elsevier_hoi": {"mien": ["www.kidney-international.org"]}, "wiley": {"mien": ["*.onlinelibrary.wiley.com"]}}}
+    url_hoi = "https://www.kidney-international.org/article/S0085-2538(24)00001-1/fulltext"
+    assert P.kiem("41000005", url_hoi, doi="10.1016/j.kint.2024.01.001", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh=ch)[0] == 0
+    assert P.kiem("41000006", "https://uroweb.org/x", doi="10.1016/j.eururo.1", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh=ch)[0] == 3
+    assert P.kiem("41000007", url_hoi, doi="10.1016/j.kint.2024.01.001", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh={})[0] == 3
+    assert "onlinelibrary.wiley.com" in P.mien_lan_chrome(ch)
+
+
+def test_cau_hinh_lan_chrome_that_doc_duoc_va_co_mien_hoi():
+    """Cấu hình thật trong repo đọc được và chứa miền tạp chí hội Elsevier (khoá bảo vệ: đổi tên khoá «nxb»/«mien» là mất đường)."""
+    mien = P.mien_lan_chrome()
+    assert "www.kidney-international.org" in mien and "pmc.ncbi.nlm.nih.gov" in mien
+    assert not P.mien_duoc_phep("uroweb.org", mien)
+    assert not P.mien_duoc_phep("", ("sciencedirect.com",))          # miền rỗng không bao giờ «được»
+    assert P.mien_duoc_phep("WWW.ScienceDirect.com", ("sciencedirect.com",))
+
+
 def test_kiem_nxb_chua_khai_mien_nao_la_tu_choi(so):
     """NXB có uỷ quyền nhưng bảng chưa khai miền ⇒ không có trang nào «thuộc NXB» ⇒ fail-closed, không coi là được."""
     dtv = _dtv(uy_quyen=("Elsevier", "Khong Mien"))
