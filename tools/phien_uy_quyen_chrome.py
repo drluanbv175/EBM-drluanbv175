@@ -242,8 +242,43 @@ def _mien(url: str) -> str:
     return (urlparse(url or "").hostname or "").lower()
 
 
+CAU_HINH_LAN_CHROME = Path(__file__).resolve().parent / "lan_chrome" / "cau_hinh.json"
+
+# Miền có điều khoản/thông báo RIÊNG cấm đưa nội dung vào công cụ AI — chặn TRƯỚC mọi danh sách cho phép (kể cả khi miền nằm
+# trong cấu hình làn Chrome, vốn chỉ chứng nhận CẤU TRÚC trang đã kiểm, không chứng nhận điều khoản). Mỗi mục kèm căn cứ.
+MIEN_CAM_AI_RIENG: dict[str, str] = {
+    "uroweb.org": "EAU — điều khoản trang cấm đưa nội dung guideline vào công cụ AI khi chưa có văn bản cho phép "
+                  "(agent dựng dashboard BPH đọc 06/11/2026)",
+    "auajournals.org": "AUA (J Urol) — trang hiển thị thông báo cấm dùng nội dung với công cụ AI "
+                       "(agent dựng dashboard Té ngã–tiểu không tự chủ ghi nhận 06/11/2026)",
+}
+
+
+def mien_lan_chrome(cau_hinh: dict | None = None) -> tuple[str, ...]:
+    """Miền nền tảng NXB/trạm nguồn ĐÃ KIỂM THẬT của làn Chrome (`cau_hinh.json` → «nxb».*.«mien»; «*.» bỏ thành hậu tố).
+
+    Đọc không được ⇒ () (fail-closed: chỉ còn miền của DIEU_KHOAN_NXB)."""
+    if cau_hinh is None:
+        try:
+            cau_hinh = json.loads(CAU_HINH_LAN_CHROME.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return ()
+    ra: list[str] = []
+    for c in ((cau_hinh or {}).get("nxb") or {}).values():
+        for m in (c.get("mien") or []) if isinstance(c, dict) else []:
+            m = str(m).strip().lower()
+            ra.append(m[2:] if m.startswith("*.") else m)
+    return tuple(x for x in ra if x)
+
+
+def mien_duoc_phep(mien: str, *nhom_mien: tuple[str, ...]) -> bool:
+    """`mien` đúng bằng hoặc là miền con (ngăn bằng dấu chấm) của một miền trong các nhóm — không so chuỗi con."""
+    mien = (mien or "").lower()
+    return bool(mien) and any(mien == m or mien.endswith("." + m) for nhom in nhom_mien for m in nhom if m)
+
+
 def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None, tep: Path | None = None,
-         dtv=None) -> tuple[int, str]:
+         dtv=None, cau_hinh: dict | None = None) -> tuple[int, str]:
     """Được đọc/lưu bài này NGAY BÂY GIỜ không: phiên mở · NXB trong phạm vi · chưa quá trần miền · đủ nhịp."""
     bay_gio = bay_gio or _bay_gio()
     d = phien_mo(bay_gio, tep)
@@ -251,6 +286,11 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
         return 3, "không có phiên uỷ quyền đang mở hôm nay — bác sĩ nói câu uỷ quyền phiên rồi `--mo`"
     if not re.fullmatch(r"\d{1,9}", str(pmid or "")):
         return 3, "PMID sai dạng"
+    # Miền cấm AI riêng xét TRƯỚC mọi thứ — bất kể NXB/DOI/uỷ quyền nào.
+    cam = [m for m in MIEN_CAM_AI_RIENG if mien_duoc_phep(_mien(url), (m,))]
+    if cam:
+        return 3, (f"trang ở {_mien(url)} có điều khoản RIÊNG cấm dùng với AI ({MIEN_CAM_AI_RIENG[cam[0]]}) — không đọc/lưu; "
+                   "xếp bài cho bác sĩ đọc trực tiếp hoặc tìm bản trên miền của NXB")
     dtv = dtv or _nap_dtv()
     ten, _dk = dtv.nxb_cua(doi=doi, url=url)
     # Phạm vi tính LÚC KIỂM, không chỉ theo ảnh chụp lúc mở: NXB có uỷ quyền đọc CÒN HIỆU LỰC ngay bây giờ. Bác sĩ uỷ quyền thêm
@@ -261,6 +301,16 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
     mien = _mien(url)
     if not mien:
         return 3, "thiếu URL trang bài"
+    # TRANG phải nằm trên MIỀN đã khai của chính NXB đó (06/11/2026). `nxb_cua` xét tiền tố DOI TRƯỚC miền, nên bài Elsevier
+    # (DOI 10.1016/…) mở trên trang của HIỆP HỘI (uroweb.org — EAU) vẫn được báo «được» theo uỷ quyền Elsevier, trong khi chính
+    # trang hiệp hội có điều khoản RIÊNG cấm đưa nội dung guideline vào công cụ AI (agent lô 3 tầng C2 phát hiện, 06/11/2026).
+    # DOI chỉ cho biết NXB của bài, không cho biết điều khoản của trang bên thứ ba ⇒ ngoài miền đã khai thì fail-closed.
+    mien_nxb = tuple((dtv.DIEU_KHOAN_NXB.get(ten) or {}).get("mien") or ())
+    if not mien_duoc_phep(mien, mien_nxb, mien_lan_chrome(cau_hinh)):
+        return 3, (f"trang ở {mien} KHÔNG thuộc miền đã khai của {ten} ({', '.join(mien_nxb) or 'chưa khai miền'}) và không có "
+                   "trong cấu hình làn Chrome đã kiểm (tools/lan_chrome/cau_hinh.json) — DOI chỉ cho biết NXB của bài, không cho biết "
+                   "điều khoản của trang bên thứ ba (hiệp hội, kho lưu trữ; vd uroweb.org cấm dùng với AI). Đọc điều khoản riêng của "
+                   "miền này; miền thuộc chính NXB thì thêm vào DIEU_KHOAN_NXB hoặc cau_hinh.json qua PR")
     cua_mien = [x for x in d["lich_su"] if x.get("mien") == mien]
     if str(pmid) not in {x.get("pmid") for x in cua_mien} and len({x.get("pmid") for x in cua_mien}) >= d["tran_moi_mien"]:
         return 3, f"đã đủ {d['tran_moi_mien']} bài ở {mien} trong phiên này — dừng miền này (tránh bị NXB khoá tài khoản)"

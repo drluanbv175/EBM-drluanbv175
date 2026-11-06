@@ -107,6 +107,62 @@ def test_kiem_khong_co_phien_va_ngoai_pham_vi(so):
     assert P.kiem("1", "https://www.dynamed.com/x", bay_gio=T0, tep=so, dtv=_dtv())[0] == 3
 
 
+def test_kiem_trang_ngoai_mien_nxb_bi_tu_choi_du_doi_thuoc_nxb(so):
+    """06/11/2026: bài DOI Elsevier mở trên trang hiệp hội (uroweb.org — điều khoản riêng cấm AI) KHÔNG được «được» theo DOI."""
+    _mo(so)
+    ma, tb = P.kiem("41000001", "https://www.hoi-tiet-nieu-vi-du.org/guidelines/luts", doi="10.1016/j.eururo.2026.03.020",
+                    bay_gio=T0, tep=so, dtv=_dtv())
+    assert ma == 3 and "KHÔNG thuộc miền đã khai của Elsevier" in tb
+    # miền giả mạo dạng hậu tố cũng bị chặn; miền con thật của NXB vẫn được
+    assert P.kiem("41000002", "https://sciencedirect.com.vi-du.org/x", doi="10.1016/j.x", bay_gio=T0, tep=so, dtv=_dtv())[0] == 3
+    assert P.kiem("41000003", "https://www.sciencedirect.com/science/article/pii/S1", doi="10.1016/j.x", bay_gio=T0, tep=so,
+                  dtv=_dtv())[0] == 0
+
+
+def test_kiem_mien_tap_chi_hoi_trong_cau_hinh_lan_chrome_van_duoc(so):
+    """Tạp chí hội do NXB vận hành trên miền riêng (kidney-international.org — Elsevier) đã kiểm thật trong cấu hình làn Chrome
+    ⇒ được; cùng DOI mà trang hiệp hội chưa kiểm (uroweb.org) ⇒ vẫn chặn; cấu hình hỏng/vắng ⇒ chỉ còn miền bảng điều khoản."""
+    _mo(so)
+    ch = {"nxb": {"elsevier_hoi": {"mien": ["www.kidney-international.org"]}, "wiley": {"mien": ["*.onlinelibrary.wiley.com"]}}}
+    url_hoi = "https://www.kidney-international.org/article/S0085-2538(24)00001-1/fulltext"
+    assert P.kiem("41000005", url_hoi, doi="10.1016/j.kint.2024.01.001", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh=ch)[0] == 0
+    assert P.kiem("41000006", "https://uroweb.org/x", doi="10.1016/j.eururo.1", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh=ch)[0] == 3
+    assert P.kiem("41000007", url_hoi, doi="10.1016/j.kint.2024.01.001", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh={})[0] == 3
+    assert "onlinelibrary.wiley.com" in P.mien_lan_chrome(ch)
+
+
+def test_mien_cam_ai_rieng_chan_ca_khi_nam_trong_cau_hinh_lan_chrome(so):
+    """auajournals.org nằm trong cấu hình làn Chrome (cấu trúc trang đã kiểm) nhưng trang có thông báo cấm AI ⇒ vẫn chặn."""
+    _mo(so)
+    dtv = _dtv(uy_quyen=("Elsevier", "Wolters Kluwer Health (LWW · AHA journals · Neurology)"))
+    ch = {"nxb": {"aua": {"mien": ["www.auajournals.org"]}, "x": {"mien": ["uroweb.org"]}}}
+    ma, tb = P.kiem("41000008", "https://www.auajournals.org/doi/10.1097/JU.0000000000003985", doi="10.1097/JU.0000000000003985",
+                    bay_gio=T0, tep=so, dtv=dtv, cau_hinh=ch)
+    assert ma == 3 and "cấm dùng với AI" in tb
+    assert P.kiem("41000009", "https://uroweb.org/g", doi="10.1016/j.eururo.1", bay_gio=T0, tep=so, dtv=dtv, cau_hinh=ch)[0] == 3
+
+
+def test_cau_hinh_lan_chrome_that_doc_duoc_va_co_mien_hoi():
+    """Cấu hình thật trong repo đọc được và chứa miền tạp chí hội Elsevier (khoá bảo vệ: đổi tên khoá «nxb»/«mien» là mất đường)."""
+    mien = P.mien_lan_chrome()
+    assert "www.kidney-international.org" in mien and "pmc.ncbi.nlm.nih.gov" in mien
+    assert not P.mien_duoc_phep("uroweb.org", mien)
+    assert not P.mien_duoc_phep("", ("sciencedirect.com",))          # miền rỗng không bao giờ «được»
+    assert P.mien_duoc_phep("WWW.ScienceDirect.com", ("sciencedirect.com",))
+
+
+def test_kiem_nxb_chua_khai_mien_nao_la_tu_choi(so):
+    """NXB có uỷ quyền nhưng bảng chưa khai miền ⇒ không có trang nào «thuộc NXB» ⇒ fail-closed, không coi là được."""
+    dtv = _dtv(uy_quyen=("Elsevier", "Khong Mien"))
+    dtv.DIEU_KHOAN_NXB["Khong Mien"] = {"ket_luan": "cam", "doi": ("10.9999/",), "mien": ()}
+    goc = dtv.nxb_cua
+    dtv.nxb_cua = lambda doi="", url="", tieu_de="": (("Khong Mien", dtv.DIEU_KHOAN_NXB["Khong Mien"])
+                                                     if (doi or "").startswith("10.9999/") else goc(doi=doi, url=url))
+    P.mo(LOI, bay_gio=T0, tep=so, dtv=dtv)
+    ma, tb = P.kiem("41000004", "https://bat-ky.example.org/bai", doi="10.9999/abc", bay_gio=T0, tep=so, dtv=dtv)
+    assert ma == 3 and "chưa khai miền" in tb
+
+
 def _ghi_lich_su(so, n, luc):
     d = P.doc_phien(so)
     d["lich_su"] = [{"luc": (luc + timedelta(seconds=70 * i)).isoformat(), "pmid": str(10_000_000 + i),
