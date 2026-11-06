@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.57.0 — 2026-11-06 (luật tin cậy cao nhất · mới nhất · có toàn văn + chốt `kiem_moi_nhat_toan_van.py`)
+
+Bác sĩ 06/11/2026: «Luôn đảm bảo những chứng cứ có độ tin cậy cao nhất và mới nhất», «Hãy cập nhật luôn vào hệ thống vì đã xây
+dựng những chứng cứ luôn là mới nhất và độ tin cậy cao nhất», «Những chứng cứ độ tin cậy cao nhất và mới nhất hay là chứng cứ có
+tính áp dụng cho thực hành lâm sàng hãy lấy toàn văn luôn giúp tôi». SKILL.md Bước 2 thêm khối LUẬT 5 điểm (phiên bản mới nhất
+— dấu «đã kiểm phiên bản DD/MM/YYYY» trong `gradeSource` cho nguồn ≥ 5 năm; thứ bậc tin cậy; lượt mới ≥ 12 tháng + vượt-qua cho
+consider nguồn ≥ 3 năm; toàn văn OA → Unpaywall → làn Chrome uỷ quyền; máy kiểm). Công cụ mới `tools/kiem_moi_nhat_toan_van.py`
+(M1 guideline cũ thiếu dấu · M2 nguồn mạnh/mới/apply chưa có toàn văn, đo bằng chính `co_toan_van_trong_kho` của cổng); bộ năm
+gọi ở bước ④-quater, CHỈ CẢNH BÁO. 16 test mới; đột biến bắt 12/12 (9 ở chốt, 3 ở phần nối dây).
+
 ## v1.56.0 — 2026-10-21 (cổng: khai www.ema.europa.eu là miền chặn kiểm tự động, đòi bằng chứng trình duyệt như FDA)
 
 Bác sĩ duyệt 21/10/2026: «mở PR khai EMA vào danh sách miền chặn của cổng, giống cách đang làm với FDA». EMA trả HTTP 403

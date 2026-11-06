@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical Quick View, tab Chuẩn & chất lượng) → cổng liêm chính → bộ năm (toàn văn, EndNote) → hub. Bài tổng thuật liền mạch chỉ dựng TỪ dashboard đã qua cổng. Không phải giám sát định kỳ hay Dashboard Master."
 metadata:
-  version: 1.55.0
+  version: 1.57.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -133,6 +133,33 @@ vấn đề thì skill vẫn tìm theo lối cũ, dính lại đúng các lỗi 
    quan/gộp/guideline MỚI HƠN về cùng chủ đề không (đo 14/08: **125/172 mục `apply` của kho có
    chứng cứ tổng hợp mới hơn**, gồm KDIGO 2026). Bài mới hơn có thể CỦNG CỐ hoặc BÁC — phải
    đọc, không phán từ tiêu đề.
+
+**LUẬT TIN CẬY CAO NHẤT · MỚI NHẤT · CÓ TOÀN VĂN (bác sĩ giao 06/11/2026 — bắt buộc).** Lời bác sĩ:
+«Luôn đảm bảo những chứng cứ có độ tin cậy cao nhất và mới nhất», «Những chứng cứ độ tin cậy cao nhất và
+mới nhất hay là chứng cứ có tính áp dụng cho thực hành lâm sàng hãy lấy toàn văn luôn».
+
+1. **Phiên bản mới nhất.** Mỗi guideline/nhãn thuốc/đồng thuận định dùng ⇒ tìm lại cùng tổ chức + chủ đề
+   bằng VẾ TIÊU ĐỀ trong 3 năm gần nhất, tra «updated/replaced/superseded». Có bản mới ⇒ dùng bản mới;
+   bản cũ chỉ giữ cho nội dung bản mới không đề cập (ghi rõ). Nguồn **≥ 5 năm tuổi** ⇒ ghi vào
+   `gradeSource` đúng khuôn «đã kiểm phiên bản DD/MM/YYYY: chưa có bản thay thế» (hoặc «…: bản thay thế
+   <tên>») — hiện ra cho bác sĩ đọc, máy đọc được; không thêm khoá mới vào DATA.
+2. **Thứ bậc tin cậy.** Guideline có hệ phân hạng rõ (GRADE, class/level) của tổ chức lớn > SR/MA chất
+   lượng cao (Cochrane, AMSTAR 2 cao) > RCT lớn đa trung tâm > quan sát lớn. Đồng thuận/tổng quan tường
+   thuật chỉ khi không có tầng trên, ghi rõ, không bao giờ `apply`. Hai guideline lớn khác chiều ⇒ đặt cạnh.
+3. **Mới nhất.** Lượt mới-vào-PubMed cửa sổ ≥ 12 tháng. RCT/SR lớn 2025–2026 đổi thực hành mà guideline
+   chưa kịp ⇒ đưa vào, đặt cạnh khuyến cáo cũ, tối đa `consider` (không vượt guideline). Lượt vượt-qua chạy
+   cho mọi `apply` VÀ mọi `consider` dựa trên nguồn ≥ 3 năm.
+4. **Toàn văn.** Mọi nguồn tin cậy cao nhất/mới nhất/định dùng cho thực hành (mọi ứng viên `apply`;
+   guideline · SR/MA · RCT ≤ 3 năm) ⇒ lấy toàn văn theo thứ tự: kho có sẵn (`toan_van_oa`) → PMC/Europe
+   PMC/Unpaywall giấy phép mở (`tools/gom_toan_van_dashboard.py --pmid … --unpaywall`) → làn Chrome trong
+   phiên uỷ quyền (`tools/phien_uy_quyen_chrome.py --kiem` trước mỗi bài, `tools/lan_chrome.py`, trần mỗi
+   miền, nhịp, bảng `DIEU_KHOAN_NXB`; trang chống bot ⇒ bác sĩ tự vượt). Không lấy được ⇒ `partial`, tối
+   đa `consider`, và liệt kê cho bác sĩ (DOI + miền).
+5. **Máy kiểm:** `python3 tools/kiem_moi_nhat_toan_van.py <dashboard>.html` — M1 guideline ≥ 5 năm thiếu
+   dấu «đã kiểm phiên bản» (hoặc dấu quá 365 ngày), M2 nguồn mạnh/mới/`apply` chưa có toàn văn trong kho
+   cạnh dashboard (cùng hàm của cổng BH161). Bộ năm chạy nó ở bước ④-quater, CHỈ CẢNH BÁO (không đổi mã
+   thoát). Chạy trước bộ năm và xử lý từng dòng 🟠 khi còn làm được. Không bao giờ nâng `gradeLevel` hay
+   đổi `decision` chỉ vì nguồn mới — luật cổng giữ nguyên.
 
 **Với TỪNG PMID/DOI trước khi đưa vào gói:** kiểm rút bài bằng
 `python medical-ebm-automation/tools/check_citation_retraction.py --pmid <PMID…>` (chuỗi 3

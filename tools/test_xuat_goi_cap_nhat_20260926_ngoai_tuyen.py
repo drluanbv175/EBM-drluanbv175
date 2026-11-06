@@ -182,7 +182,7 @@ class TestSongNgoaiTuyenChanXuat(_Nen):
         self.assertEqual(len(self.goi_verify(goi)), 2, goi)
 
 
-def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS"):
+def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS", rc_moi_nhat=0):
     """run() giả cho CẢ dây chuyền ②③④⑤⑥ chạy thông, không ghi đĩa."""
     def gia(cmd):
         ten = Path(cmd[1]).name
@@ -194,6 +194,8 @@ def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS"
             return 0, "✓ Đã ghi /gia/ban-doc.html"
         if ten == "kiem_cheo_ngu_nghia.py" or ten == "kiem_quan_the_chieu.py":
             return 0, "Tổng: 0"
+        if ten == "kiem_moi_nhat_toan_van.py":   # ④-quater (06/11/2026) — chỉ cảnh báo
+            return rc_moi_nhat, "Tổng: M1 2 · M1-cũ 0 · M2 1/3 ứng viên · ⚪ 0. Cần bác sĩ kiểm chứng."
         if ten == "docx_sang_pdf_giu_mau.py":
             return 0, "✓ /gia/a.pdf"
         if ten == "xuat_trang_thai_cloud.py":
@@ -244,6 +246,20 @@ class TestDonViNgoaiTuyen(_Nen):
         v = self.goi_verify(goi)
         self.assertEqual(len(v), 2, goi)
         self.assertFalse(any("--online" in c for c in v), v)
+
+    def test_buoc_moi_nhat_toan_van_duoc_goi_va_khong_doi_ma_thoat(self):
+        """④-quater (bác sĩ giao 06/11/2026): bộ năm GỌI chốt tin cậy · mới nhất · toàn văn, truyền đúng kho cạnh dashboard,
+        và cảnh báo (mã 1) KHÔNG đổi mã thoát của bộ năm."""
+        rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, False,
+                                    self._gia_co_docx(_gia_day_chuyen(rc_moi_nhat=1)), verify_that=False)
+        self.assertEqual(rc, 0, out)
+        kmn = [c for c in goi if Path(c[1]).name == "kiem_moi_nhat_toan_van.py"]
+        self.assertEqual(len(kmn), 1, goi)
+        self.assertIn("--kho", kmn[0])
+        self.assertEqual(Path(kmn[0][kmn[0].index("--kho") + 1]).name, "toan_van_oa")
+        self.assertIn("④-quater", out)
+        self.assertIn("Tổng: M1 2", out)
+        self.assertEqual(self.json_cuoi(out)["moi_nhat_toan_van_ma"], 1)
 
     def test_doi_chung_online_pass_van_verified_va_san_sang(self):
         """Đối chứng: đường --online PASS không bị bản vá đụng tới."""

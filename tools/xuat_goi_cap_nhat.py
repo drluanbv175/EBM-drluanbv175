@@ -682,6 +682,22 @@ def main() -> int:
             print("   🟠 Có mục cần đọc lại nguồn gốc (quần thể/chiều) — chạy lại lệnh trên để xem"
                   " đoạn nguồn; không chặn xuất.")
 
+    # ── ④-quater Tin cậy cao nhất · mới nhất · toàn văn (bác sĩ giao 06/11/2026) ──
+    # «Luôn đảm bảo những chứng cứ có độ tin cậy cao nhất và mới nhất» + «… hãy lấy toàn văn luôn». CHỈ CẢNH BÁO như K3:
+    # không đổi rc_final, không chặn xuất. Ngoại tuyến (đọc DATA + kho toàn văn cạnh dashboard bằng chính hàm của cổng).
+    print("④-quater Kiểm phiên bản guideline + toàn văn nguồn mạnh/mới (chỉ cảnh báo)…")
+    KMN = ROOT / "tools" / "kiem_moi_nhat_toan_van.py"
+    if not KMN.exists():
+        print("   ⚠ Bỏ qua: thiếu tools/kiem_moi_nhat_toan_van.py")
+    else:
+        rc, out = run([py, str(KMN), str(dash), "--kho", str(kho_canh_dashboard(dash))])
+        result["moi_nhat_toan_van_ma"] = rc
+        tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
+        print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
+        if rc == 1:
+            print("   🟠 Có guideline ≥ 5 năm chưa ghi «đã kiểm phiên bản» hoặc nguồn mạnh/mới chưa có toàn văn — chạy lại lệnh"
+                  " trên để xem từng mục (gom OA/Unpaywall → làn Chrome uỷ quyền); không chặn xuất.")
+
     # ── ⑤ Bản PDF GIỮ MÀU ─────────────────────────────────────────────────────
     # pandoc bỏ hết màu nền ô khi chuyển .docx → HTML, nên bước ④ chỉ còn chữ.
     # Bước này đọc màu TỪ CHÍNH .docx rồi bơm lại vào HTML, sau đó in bằng Chrome
