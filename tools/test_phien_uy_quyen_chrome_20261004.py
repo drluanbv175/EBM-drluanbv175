@@ -110,7 +110,7 @@ def test_kiem_khong_co_phien_va_ngoai_pham_vi(so):
 def test_kiem_trang_ngoai_mien_nxb_bi_tu_choi_du_doi_thuoc_nxb(so):
     """06/11/2026: bài DOI Elsevier mở trên trang hiệp hội (uroweb.org — điều khoản riêng cấm AI) KHÔNG được «được» theo DOI."""
     _mo(so)
-    ma, tb = P.kiem("41000001", "https://uroweb.org/guidelines/management-of-non-neurogenic-male-luts", doi="10.1016/j.eururo.2026.03.020",
+    ma, tb = P.kiem("41000001", "https://www.hoi-tiet-nieu-vi-du.org/guidelines/luts", doi="10.1016/j.eururo.2026.03.020",
                     bay_gio=T0, tep=so, dtv=_dtv())
     assert ma == 3 and "KHÔNG thuộc miền đã khai của Elsevier" in tb
     # miền giả mạo dạng hậu tố cũng bị chặn; miền con thật của NXB vẫn được
@@ -129,6 +129,17 @@ def test_kiem_mien_tap_chi_hoi_trong_cau_hinh_lan_chrome_van_duoc(so):
     assert P.kiem("41000006", "https://uroweb.org/x", doi="10.1016/j.eururo.1", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh=ch)[0] == 3
     assert P.kiem("41000007", url_hoi, doi="10.1016/j.kint.2024.01.001", bay_gio=T0, tep=so, dtv=_dtv(), cau_hinh={})[0] == 3
     assert "onlinelibrary.wiley.com" in P.mien_lan_chrome(ch)
+
+
+def test_mien_cam_ai_rieng_chan_ca_khi_nam_trong_cau_hinh_lan_chrome(so):
+    """auajournals.org nằm trong cấu hình làn Chrome (cấu trúc trang đã kiểm) nhưng trang có thông báo cấm AI ⇒ vẫn chặn."""
+    _mo(so)
+    dtv = _dtv(uy_quyen=("Elsevier", "Wolters Kluwer Health (LWW · AHA journals · Neurology)"))
+    ch = {"nxb": {"aua": {"mien": ["www.auajournals.org"]}, "x": {"mien": ["uroweb.org"]}}}
+    ma, tb = P.kiem("41000008", "https://www.auajournals.org/doi/10.1097/JU.0000000000003985", doi="10.1097/JU.0000000000003985",
+                    bay_gio=T0, tep=so, dtv=dtv, cau_hinh=ch)
+    assert ma == 3 and "cấm dùng với AI" in tb
+    assert P.kiem("41000009", "https://uroweb.org/g", doi="10.1016/j.eururo.1", bay_gio=T0, tep=so, dtv=dtv, cau_hinh=ch)[0] == 3
 
 
 def test_cau_hinh_lan_chrome_that_doc_duoc_va_co_mien_hoi():

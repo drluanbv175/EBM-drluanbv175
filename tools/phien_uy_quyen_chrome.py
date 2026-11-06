@@ -244,6 +244,15 @@ def _mien(url: str) -> str:
 
 CAU_HINH_LAN_CHROME = Path(__file__).resolve().parent / "lan_chrome" / "cau_hinh.json"
 
+# Miền có điều khoản/thông báo RIÊNG cấm đưa nội dung vào công cụ AI — chặn TRƯỚC mọi danh sách cho phép (kể cả khi miền nằm
+# trong cấu hình làn Chrome, vốn chỉ chứng nhận CẤU TRÚC trang đã kiểm, không chứng nhận điều khoản). Mỗi mục kèm căn cứ.
+MIEN_CAM_AI_RIENG: dict[str, str] = {
+    "uroweb.org": "EAU — điều khoản trang cấm đưa nội dung guideline vào công cụ AI khi chưa có văn bản cho phép "
+                  "(agent dựng dashboard BPH đọc 06/11/2026)",
+    "auajournals.org": "AUA (J Urol) — trang hiển thị thông báo cấm dùng nội dung với công cụ AI "
+                       "(agent dựng dashboard Té ngã–tiểu không tự chủ ghi nhận 06/11/2026)",
+}
+
 
 def mien_lan_chrome(cau_hinh: dict | None = None) -> tuple[str, ...]:
     """Miền nền tảng NXB/trạm nguồn ĐÃ KIỂM THẬT của làn Chrome (`cau_hinh.json` → «nxb».*.«mien»; «*.» bỏ thành hậu tố).
@@ -277,6 +286,11 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
         return 3, "không có phiên uỷ quyền đang mở hôm nay — bác sĩ nói câu uỷ quyền phiên rồi `--mo`"
     if not re.fullmatch(r"\d{1,9}", str(pmid or "")):
         return 3, "PMID sai dạng"
+    # Miền cấm AI riêng xét TRƯỚC mọi thứ — bất kể NXB/DOI/uỷ quyền nào.
+    cam = [m for m in MIEN_CAM_AI_RIENG if mien_duoc_phep(_mien(url), (m,))]
+    if cam:
+        return 3, (f"trang ở {_mien(url)} có điều khoản RIÊNG cấm dùng với AI ({MIEN_CAM_AI_RIENG[cam[0]]}) — không đọc/lưu; "
+                   "xếp bài cho bác sĩ đọc trực tiếp hoặc tìm bản trên miền của NXB")
     dtv = dtv or _nap_dtv()
     ten, _dk = dtv.nxb_cua(doi=doi, url=url)
     # Phạm vi tính LÚC KIỂM, không chỉ theo ảnh chụp lúc mở: NXB có uỷ quyền đọc CÒN HIỆU LỰC ngay bây giờ. Bác sĩ uỷ quyền thêm
