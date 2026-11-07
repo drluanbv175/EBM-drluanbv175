@@ -24,6 +24,17 @@ Bản ghi CHƯA PHÂN LOẠI = không thuộc nhóm nào, không có trong tệp
 chủ đề). Đo 07/11/2026: 11 bản ghi chủ đề Chăm sóc giảm nhẹ mất cả nhóm lẫn tag trong 20 phút mà không lệnh nào báo.
 Tag trùng tên (hai tag cùng tên) ⇒ 👤 bác sĩ quyết gộp (đo 07/11: «Frailty» ×2).
 
+CANH RÚT BÀI (07/11/2026, bác sĩ chọn «Làm 1 và 2»): mọi PMID/DOI đối chiếu Retraction Watch ngoại tuyến qua
+`tools/kiem_rut_bai_endnote.py` (chỉ mục của engine). Bản ghi ĐÃ RÚT ⇒ cần tag «⛔ Đã rút bài» và KHÔNG còn đạt «★ Áp dụng – tin
+cậy cao» (tag ★ đang có ⇒ báo thừa để gỡ); hòm việc báo 👤 cho bác sĩ. Nền vắng ⇒ dòng ⚪ «chưa kiểm rút bài», quá hạn 30 ngày
+⇒ 🟡 — không bao giờ đọc thành «không có bài rút».
+
+RỜI NHÓM CHỦ ĐỀ (cùng ngày): bản ghi mang khoá chủ đề («EBM: <khoá>» ở Keywords) mà KHÔNG thuộc nhóm phân loại nào ⇒ 🛎 kèm
+nhóm đề xuất (bảng `nhom_theo_chu_de` của ~/.ebm-endnote.json); `--dua-ve-nhom` ghi chúng vào hàng chờ của
+`nap_endnote_chu_de.py --cho-vao-nhom`. Cố ý KHÔNG so tên nhóm: đo 07/11, 43/44 bản ghi «lệch tên» vẫn ở đúng nhóm chủ đề đã
+được bác sĩ đổi tên/gộp (báo động giả). Không tính: trích dẫn đề tài đã chuyển `loai_bo` (bác sĩ loại có chủ ý), bản ghi ở nhóm
+chờ thùng rác.
+
 Vì sao không tự gắn: EndNote không có lệnh AppleScript nào cho tag (đo EndNote.sdef 07/11/2026) và luật dự án cấm ghi thẳng
 `sdb.eni`. Công cụ chỉ đọc `sdb.eni` (chế độ chỉ-đọc), tính cặp bản ghi×tag còn thiếu, và `--hien "<tag>"` cho EndNote CHỈ hiện
 và tô sáng đúng các bản ghi thiếu tag đó (AppleScript show/highlight — không ghi gì) để phiên Claude kéo một lần lên dòng tag
@@ -37,9 +48,10 @@ Lệnh:
   python3 tools/gan_tag_endnote.py --huong-dan      # quy trình kéo-thả cho phiên Claude (chế độ nền app_drag)
   python3 tools/gan_tag_endnote.py --giu-khoa [PHÚT] # CHẠY NỀN: giữ khoá ghi EndNote suốt phiên kéo-thả (mặc định 30, tối đa 60)
   python3 tools/gan_tag_endnote.py --nha-khoa       # nhả khoá phiên giao diện
+  python3 tools/gan_tag_endnote.py --dua-ve-nhom    # ghi bản ghi RỜI NHÓM chủ đề vào hàng chờ --cho-vao-nhom (có nhóm đề xuất)
   python3 tools/gan_tag_endnote.py --json
-Mã thoát: 0 đủ tag · 1 còn việc (thiếu/thừa/tag chưa tạo/nhóm chưa ánh xạ/chưa phân loại/tag trùng tên) · 2 không đo được
-· 3 tham số sai.
+Mã thoát: 0 đủ tag · 1 còn việc (thiếu/thừa/tag chưa tạo/nhóm chưa ánh xạ/chưa phân loại/rời nhóm/tag trùng tên) · 2 không đo
+được · 3 tham số sai.
 
 Khoá phiên giao diện (07/11/2026): khoá ghi `khoa_ghi_endnote` giữ theo TIẾN TRÌNH và nhả khi tiến trình thoát; phiên kéo-thả
 gồm nhiều lượt công cụ ⇒ giữa hai lượt (rảnh ≥ 20 giây) phiên khác ghi chen được — đo 07/11 một lượt nhập bản ghi lúc đó làm
@@ -66,7 +78,11 @@ TEP_ANH_XA = GOC / "sync" / "endnote-tag-theo-nhom.json"
 TEP_TAG_LE = GOC / "sync" / "endnote-tag-ban-ghi-le.json"
 
 TAG_AP_DUNG = "★ Áp dụng – tin cậy cao"
+TAG_RUT_BAI = "⛔ Đã rút bài"  # trùng `kiem_rut_bai_endnote.TAG_RUT_BAI` (test chốt)
 TAG_NGHIEN_CUU = "Nghiên cứu khoa học"
+# «EBM: <khoá chủ đề>» ở Keywords (`nap_endnote_chu_de`): khoá dashboard `EBM_…` hoặc đề tài `DE-TAI_<mã>`. «EBM: tóm tắt chủ
+# đề» (nhãn bản ghi tóm tắt) KHÔNG phải khoá — đo 07/11/2026 trên Keywords của 2.433 bản ghi.
+KHOA_CHU_DE = re.compile(r"EBM:\s*((?:EBM_|DE-TAI_)[A-Za-z0-9_\-]+)")
 TAG_CHUNG = "Nội ngoại chung"
 MUC_TIN_CAY = frozenset({"high", "mod", "moderate"})
 # `na` chỉ đạt khi nguồn là chuẩn mực chính thức (guideline / nhãn thuốc / chống chỉ định) — đúng ba điều kiện cổng đòi.
@@ -127,7 +143,11 @@ HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude; ƯU TIÊN ch
   5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình / app_release, `python3 tools/gan_tag_endnote.py --nha-khoa`, nhắn các
      phiên đã nhờ tạm dừng.
   Bản ghi CHƯA PHÂN LOẠI (kế hoạch in 🛎): thuộc một chủ đề dashboard (khoá «EBM: <chủ đề>» ở Keywords) ⇒ đưa về nhóm của chủ
-  đề (nhóm có tag riêng); bản ghi lẻ thật ⇒ đọc tiêu đề, ghi tag vào sync/endnote-tag-ban-ghi-le.json (PR) rồi kéo như bước 2."""
+  đề (nhóm có tag riêng); bản ghi lẻ thật ⇒ đọc tiêu đề, ghi tag vào sync/endnote-tag-ban-ghi-le.json (PR) rồi kéo như bước 2.
+  Bản ghi RỜI NHÓM CHỦ ĐỀ (🛎): `--dua-ve-nhom` ghi hàng chờ → `python3 tools/nap_endnote_chu_de.py --cho-vao-nhom "<tên>"` →
+  kéo vào nhóm như bước 2 (nhóm nằm trong bộ nhóm ⇒ app_click tam giác mở bộ, xong đóng lại) → `--cho-vao-nhom` lần nữa để dọn.
+  Bản ghi ĐÃ RÚT (🔴): gắn «⛔ Đã rút bài» (tạo tag nếu chưa có, màu đỏ) và gỡ «★ Áp dụng» (bước 4) — CHỈ sau khi báo bác sĩ;
+  KHÔNG chuyển thùng rác, KHÔNG sửa dashboard (cổng verify_dashboard và sổ rút bài là việc của bác sĩ)."""
 
 
 def _nap(ten: str, tep: str):
@@ -171,10 +191,13 @@ def tag_cua_nhom(group_id: int, ten: str, anh_xa: dict[str, dict], chuyen_khoa: 
 def lap_ke_hoach(*, ban_ghi: dict[int, dict], nhom: list[dict], tag_hien_co: dict[int, set[str]], ten_tag: set[str],
                  anh_xa: dict[str, dict], chuyen_khoa: Callable[[str], str],
                  ngu_canh_cua: Callable[[str | None, str | None], list[dict]],
-                 tag_le: dict[str, dict] | None = None) -> dict:
+                 tag_le: dict[str, dict] | None = None, rut_bai: set[int] | None = None,
+                 bang_nhom: dict[str, str] | None = None, loai_bo: set[int] | None = None) -> dict:
     """Kế hoạch thuần: {thieu: {tag: [rec]}, thua_ap_dung: [rec], tag_chua_tao: [tag], nhom_chua_anh_xa: [...],
-    chua_phan_loai: [rec], dat_ap_dung: n, tong_ban_ghi: n}. `ban_ghi` = {rec: {pmid, doi}} ngoài thùng rác; `tag_le` =
-    {"<recNum>": {"tag": [...]}} của bản ghi lẻ đã phân loại (tệp `TEP_TAG_LE`)."""
+    chua_phan_loai: [rec], roi_nhom: [{rec, khoa, nhom}], rut_bai: [rec], dat_ap_dung: n, tong_ban_ghi: n}.
+    `ban_ghi` = {rec: {pmid, doi, khoa: [khoá chủ đề]}} ngoài thùng rác; `tag_le` = {"<recNum>": {"tag": [...]}} của bản ghi lẻ
+    (tệp `TEP_TAG_LE`); `rut_bai` = recNum ĐÃ RÚT (`kiem_rut_bai_endnote`); `bang_nhom` = {khoá chủ đề: tên nhóm};
+    `loai_bo` = recNum trích dẫn đề tài bác sĩ đã loại có chủ ý."""
     can: dict[int, set[str]] = {}
     chua_anh_xa = []
     trong_nhom: set[int] = set()
@@ -204,29 +227,42 @@ def lap_ke_hoach(*, ban_ghi: dict[int, dict], nhom: list[dict], tag_hien_co: dic
         if r in ban_ghi:
             da_phan_loai_le.add(r)
             can.setdefault(r, set()).update(str(t) for t in v.get("tag") or [])
-    # Không nhóm, không trong tệp bản ghi lẻ, không tag nào ngoài tag Áp dụng (tag Áp dụng không nói chuyên khoa).
-    chua_phan_loai = sorted(r for r in ban_ghi if r not in trong_nhom and r not in da_phan_loai_le
+    # Mang khoá chủ đề mà KHÔNG thuộc nhóm phân loại nào (không so tên nhóm — xem docstring đầu tệp).
+    roi_nhom = [{"rec": r, "khoa": bg["khoa"][0], "nhom": (bang_nhom or {}).get(bg["khoa"][0])}
+                for r, bg in sorted(ban_ghi.items())
+                if bg.get("khoa") and r not in trong_nhom and r not in cho_thung_rac and r not in (loai_bo or set())]
+    da_roi_nhom = {m["rec"] for m in roi_nhom}
+    # Không nhóm, không trong tệp bản ghi lẻ, không tag nào ngoài tag Áp dụng (tag Áp dụng không nói chuyên khoa). Bản ghi đã
+    # báo «rời nhóm» thì không báo trùng ở đây — việc đúng của nó là về lại nhóm chủ đề.
+    chua_phan_loai = sorted(r for r in ban_ghi if r not in trong_nhom and r not in da_phan_loai_le and r not in da_roi_nhom
                             and r not in cho_thung_rac and not (tag_hien_co.get(r, set()) - {TAG_AP_DUNG}))
     dat = set()
     for r, bg in ban_ghi.items():
         if dat_ap_dung_tin_cay(ngu_canh_cua(bg.get("pmid"), bg.get("doi"))):
             dat.add(r)
             can.setdefault(r, set()).add(TAG_AP_DUNG)
+    rut = sorted(set(rut_bai or ()) & set(ban_ghi))
+    for r in rut:  # bài ĐÃ RÚT: mất tư cách «tin cậy cao» dù dashboard cũ còn trích; cần tag cảnh báo
+        dat.discard(r)
+        can.setdefault(r, set()).discard(TAG_AP_DUNG)
+        can[r].add(TAG_RUT_BAI)
     thieu: dict[str, list[int]] = {}
     for r, tags in can.items():
         for t in tags - tag_hien_co.get(r, set()):
             thieu.setdefault(t, []).append(r)
     thua = sorted(r for r, tags in tag_hien_co.items() if TAG_AP_DUNG in tags and r in ban_ghi and r not in dat)
     can_dung = {t for tags in can.values() for t in tags}
-    return {"thieu": {t: sorted(v) for t, v in sorted(thieu.items(), key=lambda kv: (kv[0] != TAG_AP_DUNG, kv[0]))},
+    thu_tu = {TAG_RUT_BAI: 0, TAG_AP_DUNG: 1}  # tag an toàn xếp đầu, rồi tag Áp dụng, rồi theo tên
+    return {"thieu": {t: sorted(v) for t, v in sorted(thieu.items(), key=lambda kv: (thu_tu.get(kv[0], 2), kv[0]))},
             "thua_ap_dung": thua, "tag_chua_tao": sorted(can_dung - ten_tag),
             "nhom_chua_anh_xa": sorted(chua_anh_xa, key=lambda x: -x["so_ban_ghi"]),
-            "chua_phan_loai": chua_phan_loai, "dat_ap_dung": len(dat), "tong_ban_ghi": len(ban_ghi)}
+            "chua_phan_loai": chua_phan_loai, "roi_nhom": roi_nhom, "rut_bai": rut,
+            "dat_ap_dung": len(dat), "tong_ban_ghi": len(ban_ghi)}
 
 
 def con_viec(kh: dict) -> bool:
     return bool(kh.get("thieu") or kh.get("thua_ap_dung") or kh.get("tag_chua_tao") or kh.get("nhom_chua_anh_xa")
-                or kh.get("chua_phan_loai") or kh.get("tag_trung"))
+                or kh.get("chua_phan_loai") or kh.get("roi_nhom") or kh.get("tag_trung"))
 
 
 # ───────────────────────── đọc thư viện thật (chỉ đọc) ─────────────────────────
@@ -304,11 +340,13 @@ def ke_hoach_thu_vien(thu_vien: Path | None = None, *, anh_xa_tep: Path = TEP_AN
         nec = ttw.mod("nec")
         kn = sk._ket_noi(Path(tv))
         try:
-            ban_ghi = {}
-            for rec, acc, erd in kn.execute(
-                    "select id, accession_number, electronic_resource_number from refs where trash_state = 0"):
+            ban_ghi, tieu_de = {}, {}
+            for rec, acc, erd, kw, ti in kn.execute("select id, accession_number, electronic_resource_number, keywords, "
+                                                     "title from refs where trash_state = 0"):
                 pmid = acc if acc and re.fullmatch(r"\d{1,9}", str(acc).strip()) else None
-                ban_ghi[int(rec)] = {"pmid": pmid, "doi": nec.chuan_doi(erd) if erd else None}
+                ban_ghi[int(rec)] = {"pmid": pmid, "doi": nec.chuan_doi(erd) if erd else None,
+                                     "khoa": KHOA_CHU_DE.findall(kw or "")}
+                tieu_de[int(rec)] = ti or ""
             ten_tag, tag_hien_co = doc_tag(kn)
             trung = tag_trung_ten(kn)
         finally:
@@ -317,13 +355,46 @@ def ke_hoach_thu_vien(thu_vien: Path | None = None, *, anh_xa_tep: Path = TEP_AN
         ds = ttw.ngu_canh_dashboard()
         if not ds:
             return {"do_duoc": False, "ly_do": "không thấy dashboard nào (EBM-Dashboards vắng) — không xét được tag Áp dụng"}
+        nap = _nap("_nap_gte_kh", "nap_endnote_chu_de.py")
+        rb = _kiem_rut_bai(ban_ghi, tieu_de)
         kh = lap_ke_hoach(ban_ghi=ban_ghi, nhom=nhom, tag_hien_co=tag_hien_co, ten_tag=ten_tag, anh_xa=anh_xa,
                           chuyen_khoa=lambda q: ba.specialty_of_dashboard("", q),
-                          ngu_canh_cua=lambda p, d: ttw._ngu_canh_cua(ds, p, d), tag_le=tag_le)
+                          ngu_canh_cua=lambda p, d: ttw._ngu_canh_cua(ds, p, d), tag_le=tag_le,
+                          rut_bai={m["rec"] for m in rb.get("rut") or []}, bang_nhom=nap.nhom_da_ghi(),
+                          loai_bo=loai_bo_de_tai(ban_ghi, nap._tim_exports()))
     except (OSError, sqlite3.Error, ValueError, UnicodeDecodeError) as e:
         return {"do_duoc": False, "ly_do": f"{type(e).__name__}: {str(e)[:200]}"}
-    kh.update(do_duoc=True, thu_vien=str(tv), tag_trung=trung)
+    kh.update(do_duoc=True, thu_vien=str(tv), tag_trung=trung, kiem_rut_bai=rb)
     return kh
+
+
+def _kiem_rut_bai(ban_ghi: dict[int, dict], tieu_de: dict[int, str]) -> dict:
+    """Đối chiếu Retraction Watch qua `kiem_rut_bai_endnote` (không gọi mạng). Lỗi bất kỳ ⇒ «không đo được», không bao giờ
+    làm hỏng cả kế hoạch gắn tag và không bao giờ đọc thành «không có bài rút»."""
+    try:
+        rbe = _nap("_rbe_gte", "kiem_rut_bai_endnote.py")
+        return rbe.kiem_ban_ghi({r: {**bg, "tieu_de": tieu_de.get(r, "")} for r, bg in ban_ghi.items()})
+    except Exception as e:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        return {"do_duoc": False, "ly_do": f"{type(e).__name__}: {str(e)[:160]}"}
+
+
+def loai_bo_de_tai(ban_ghi: dict[int, dict], exports: Path | None) -> set[int]:
+    """recNum trích dẫn ĐỀ TÀI bác sĩ đã loại có chủ ý (`loai_bo` của `exports/<mã>/DANH_MUC_TRICH_DAN_<mã>.json`, khớp
+    PMID/DOI). Không thấy exports/tệp ⇒ tập rỗng: bản ghi đó vẫn bị báo rời nhóm (thà báo thừa còn hơn che)."""
+    if exports is None:
+        return set()
+    ra: set[int] = set()
+    for ma in sorted({k[len("DE-TAI_"):] for bg in ban_ghi.values() for k in bg.get("khoa") or [] if k.startswith("DE-TAI_")}):
+        tep = Path(exports) / ma / f"DANH_MUC_TRICH_DAN_{ma}.json"
+        try:
+            lb = json.loads(tep.read_text(encoding="utf-8")).get("loai_bo") or []
+        except (OSError, ValueError):
+            continue
+        pm = {str(x.get("pmid")).strip() for x in lb if isinstance(x, dict) and x.get("pmid")}
+        do = {str(x.get("doi")).strip().lower() for x in lb if isinstance(x, dict) and x.get("doi")}
+        ra |= {r for r, bg in ban_ghi.items() if f"DE-TAI_{ma}" in (bg.get("khoa") or [])
+               and ((bg.get("pmid") and bg["pmid"] in pm) or (bg.get("doi") and str(bg["doi"]).lower() in do))}
+    return ra
 
 
 # ───────────────────────── in / lệnh ─────────────────────────
@@ -332,13 +403,42 @@ def _ds(rec: list[int], toi_da: int = 30) -> str:
     return ", ".join(map(str, rec[:toi_da])) + (f" … (+{len(rec) - toi_da})" if len(rec) > toi_da else "")
 
 
+def dong_rut_bai(kh: dict) -> str | None:
+    """Mệnh đề rút bài của kế hoạch (None khi kế hoạch không mang kết quả kiểm — người gọi cũ/test). Không đo được ⇒ ⚪,
+    nền quá hạn ⇒ 🟡: KHÔNG BAO GIỜ thành «không có bài rút»."""
+    rb = kh.get("kiem_rut_bai")
+    if not rb:
+        return None
+    if not rb.get("do_duoc"):
+        return f"⚪ chưa kiểm rút bài: {rb.get('ly_do')}"
+    phan = []
+    if rb.get("rut"):
+        phan.append(f"🔴 {len(rb['rut'])} bản ghi ĐÃ RÚT (recNum {_ds([m['rec'] for m in rb['rut']], 20)}) — bác sĩ xem")
+    if rb.get("eoc"):
+        phan.append(f"🟠 {len(rb['eoc'])} bản ghi Expression of concern (recNum {_ds([m['rec'] for m in rb['eoc']], 20)})")
+    tuoi = rb.get("tuoi_ngay")
+    if rb.get("qua_han"):
+        phan.append(f"🟡 nền Retraction Watch {'?' if tuoi is None else f'{tuoi:.0f}'} ngày tuổi (hạn 30) — làm mới: "
+                    "python3 medical-ebm-automation/tools/tai_retraction_watch.py")
+    if not phan:
+        phan.append(f"rút bài: không thấy trong {rb.get('da_kiem', '?')} bản ghi có PMID/DOI (nền {tuoi:.0f} ngày; chưa thấy "
+                    "≠ chưa bị rút)")
+    return " · ".join(phan)
+
+
+def _rut_bai_can_bao(kh: dict) -> bool:
+    rb = kh.get("kiem_rut_bai")
+    return bool(rb) and (not rb.get("do_duoc") or bool(rb.get("rut") or rb.get("eoc") or rb.get("qua_han")))
+
+
 def tom_tat_mot_dong(kh: dict) -> str:
     """Một dòng cho bộ năm/hòm việc."""
     if not kh.get("do_duoc"):
         # chữ thường có chủ ý: cụm IN HOA «KHÔNG ĐO ĐƯỢC» trong báo cáo lượt nạp thuộc phép đo kho toàn văn (test 17/10/2026)
         return f"⚪ gắn tag EndNote: không đo được — {kh.get('ly_do')}"
+    rb = f" · {dong_rut_bai(kh)}" if _rut_bai_can_bao(kh) else ""
     if not con_viec(kh):
-        return f"✓ tag EndNote đủ ({kh['dat_ap_dung']} bản ghi mang «{TAG_AP_DUNG}»)"
+        return f"✓ tag EndNote đủ ({kh['dat_ap_dung']} bản ghi mang «{TAG_AP_DUNG}»){rb}"
     so = sum(len(v) for v in kh["thieu"].values())
     phan = [f"{so} cặp bản ghi×tag chờ gắn ({len(kh['thieu'])} tag)"] if so else []
     if kh["thua_ap_dung"]:
@@ -349,9 +449,12 @@ def tom_tat_mot_dong(kh: dict) -> str:
         phan.append(f"{len(kh['nhom_chua_anh_xa'])} nhóm chưa ánh xạ tag")
     if kh.get("chua_phan_loai"):
         phan.append(f"{len(kh['chua_phan_loai'])} bản ghi chưa phân loại (không nhóm, không tag)")
+    if kh.get("roi_nhom"):
+        phan.append(f"{len(kh['roi_nhom'])} bản ghi rời nhóm chủ đề")
     if kh.get("tag_trung"):
         phan.append(f"tag trùng tên: {', '.join(kh['tag_trung'])}")
-    return "🛎 gắn tag EndNote: " + " · ".join(phan) + " — phiên Claude: python3 tools/gan_tag_endnote.py --huong-dan"
+    return ("🛎 gắn tag EndNote: " + " · ".join(phan) + " — phiên Claude: python3 tools/gan_tag_endnote.py --huong-dan"
+            + rb)
 
 
 def in_ke_hoach(kh: dict) -> None:
@@ -359,6 +462,8 @@ def in_ke_hoach(kh: dict) -> None:
         print(tom_tat_mot_dong(kh))
         return
     print(f"Thư viện: {kh['thu_vien']} — {kh['tong_ban_ghi']} bản ghi ngoài thùng rác; {kh['dat_ap_dung']} đạt «{TAG_AP_DUNG}»")
+    if dong_rut_bai(kh):
+        print(dong_rut_bai(kh))
     if not con_viec(kh):
         print("✓ Mọi bản ghi đã đủ tag theo luật.")
         return
@@ -377,6 +482,15 @@ def in_ke_hoach(kh: dict) -> None:
         print(f"🛎 {len(kh['chua_phan_loai'])} bản ghi CHƯA PHÂN LOẠI (không thuộc nhóm nào, không tag chuyên khoa): recNum "
               f"{_ds(kh['chua_phan_loai'])} — bản ghi của chủ đề dashboard (Keywords «EBM: …») ⇒ đưa về nhóm của chủ đề; "
               f"bản ghi lẻ ⇒ đọc tiêu đề, ghi tag vào {TEP_TAG_LE.relative_to(GOC).as_posix()} rồi kéo")
+    if kh.get("roi_nhom"):
+        gom: dict[str, list[int]] = {}
+        for m in kh["roi_nhom"]:
+            gom.setdefault(m["nhom"] or f"(chưa biết nhóm của {m['khoa']} — chọn tay)", []).append(m["rec"])
+        print(f"🛎 {len(kh['roi_nhom'])} bản ghi RỜI NHÓM CHỦ ĐỀ (mang khoá chủ đề mà không thuộc nhóm phân loại nào — vd sau một "
+              "lượt đồng bộ online):")
+        for ten, recs in gom.items():
+            print(f"     «{ten[:80]}»: recNum {_ds(recs)}")
+        print("     python3 tools/gan_tag_endnote.py --dua-ve-nhom   # ghi vào hàng chờ, rồi nap_endnote_chu_de.py --cho-vao-nhom")
     for t in kh.get("tag_trung") or []:
         print(f"👤 tag trùng tên «{t}» (≥ 2 tag cùng tên) — bác sĩ quyết gộp; gộp = chuyển bản ghi sang một tag rồi Tags › "
               "Delete Tag tag còn lại")
@@ -491,6 +605,41 @@ def nha_khoa_giao_dien(*, kg=None, tep: Path | None = None, gui=os.kill, ngu=tim
     return MA_KHONG_DO
 
 
+def dua_ve_nhom(kh: dict, *, nhom: list[dict] | None = None, ghi=None, khoa_ten=None, in_ra=print) -> int:
+    """`--dua-ve-nhom`: ghi bản ghi RỜI NHÓM vào HÀNG CHỜ đưa vào nhóm (`nap_endnote_chu_de.ghi_cho_vao_nhom`) theo nhóm đề
+    xuất. Nhóm đề xuất không tồn tại (đã đổi tên/xoá) hoặc chưa biết ⇒ in ra để chọn tay, KHÔNG đoán. Chỉ ghi tệp hàng chờ —
+    việc đưa vào nhóm vẫn là kéo-thả của phiên Claude/bác sĩ (`nap_endnote_chu_de.py --cho-vao-nhom "<tên>"`)."""
+    if not kh.get("do_duoc"):
+        in_ra(tom_tat_mot_dong(kh))
+        return MA_KHONG_DO
+    if not kh.get("roi_nhom"):
+        in_ra("✓ không có bản ghi nào rời nhóm chủ đề")
+        return MA_OK
+    if nhom is None or ghi is None or khoa_ten is None:
+        sk = _nap("_sk_gte_dvn", "endnote_suc_khoe.py")
+        nap = _nap("_nap_gte_dvn", "nap_endnote_chu_de.py")
+        nhom = sk.doc_nhom(Path(kh["thu_vien"])) if nhom is None else nhom
+        ghi = ghi or nap.ghi_cho_vao_nhom
+        khoa_ten = khoa_ten or sk.khoa_ten
+    theo_ten: dict[str, list[int]] = {}
+    for n in nhom:
+        if n.get("loai", LOAI_NHOM_TU_TAO) == LOAI_NHOM_TU_TAO:
+            theo_ten.setdefault(khoa_ten(n.get("ten") or ""), []).append(n["group_id"])
+    gom: dict[str, list[int]] = {}
+    tay = []
+    for m in kh["roi_nhom"]:
+        if m.get("nhom") and khoa_ten(m["nhom"]) in theo_ten:
+            gom.setdefault(m["nhom"], []).append(m["rec"])
+        else:
+            tay.append(m)
+    for ten, recs in gom.items():
+        con = ghi(Path(kh["thu_vien"]), ten, them=recs, da_vao=set(), group_id=theo_ten[khoa_ten(ten)])
+        in_ra(f"✓ hàng chờ «{ten[:70]}»: {len(con)} bản ghi — python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"{ten}\"")
+    for m in tay:
+        in_ra(f"👤 recNum {m['rec']} (khoá {m['khoa']}): nhóm đề xuất «{m.get('nhom') or '?'}» không có trong thư viện — chọn tay")
+    return MA_CON_VIEC if tay else MA_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -500,6 +649,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--giu-khoa", nargs="?", type=float, const=PHUT_GIU_MAC_DINH, metavar="PHUT",
                     help=f"CHẠY NỀN: giữ khoá ghi EndNote suốt phiên kéo-thả (mặc định {PHUT_GIU_MAC_DINH}, tối đa {PHUT_GIU_TOI_DA})")
     ap.add_argument("--nha-khoa", action="store_true", help="nhả khoá phiên giao diện")
+    ap.add_argument("--dua-ve-nhom", action="store_true", help="ghi bản ghi rời nhóm chủ đề vào hàng chờ --cho-vao-nhom")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     if a.huong_dan:
@@ -515,6 +665,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"⚪ {e}")
             return MA_KHONG_DO
     kh = ke_hoach_thu_vien()
+    if a.dua_ve_nhom:
+        try:
+            return dua_ve_nhom(kh)
+        except (OSError, ValueError) as e:  # hàng chờ hỏng ⇒ báo, không ghi đè (KhongChayDuoc dưới pytest cố ý nổi lên)
+            print(f"⚪ không ghi được hàng chờ: {type(e).__name__}: {e}")
+            return MA_KHONG_DO
     if a.json:
         print(json.dumps(kh, ensure_ascii=False, indent=1))
     elif not a.hien:

@@ -31,9 +31,12 @@
       "lenh": [
         "python3 tools/sync_safety_check.py",
         "python3 tools/chu_trinh_chung_cu.py --vong 3 --ghi-log state/kiem-rut-bai-kho.log",
-        "python3 tools/mau_ky_rut_bai.py"
+        "python3 tools/mau_ky_rut_bai.py",
+        "~/.ebm-venv/bin/python medical-ebm-automation/tools/tai_retraction_watch.py --kiem",
+        "~/.ebm-venv/bin/python medical-ebm-automation/tools/tai_retraction_watch.py",
+        "~/.ebm-venv/bin/python tools/kiem_rut_bai_endnote.py"
       ],
-      "khong_chay": [],
+      "khong_chay": ["python3 tools/gan_tag_endnote.py --huong-dan"],
       "ghi": ["alerts/**", "state/**"]
     },
     "kiem-tra-hoan-thien-he-thong-thang": {

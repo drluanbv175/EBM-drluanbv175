@@ -19,6 +19,11 @@ của việc tái kiểm định kỳ đó; không nối trùng qua tools/tu_kho
 
 CÁC BƯỚC:
 1. `python3 tools/sync_safety_check.py` (Windows: `py -3 tools\sync_safety_check.py`). 🔴 ⇒ DỪNG, báo nguyên văn.
+1b. LÀM MỚI NỀN RETRACTION WATCH khi quá hạn (thêm 07/11/2026, bác sĩ chọn «Làm 1 và 2»: đo 07/11 nền 48 ngày tuổi — hạn 30 —
+   vì chu trình chỉ tải khi nền VẮNG, không tải khi CŨ):
+   `~/.ebm-venv/bin/python medical-ebm-automation/tools/tai_retraction_watch.py --kiem`; mã 1 (quá hạn) hoặc 2 (vắng) ⇒
+   `~/.ebm-venv/bin/python medical-ebm-automation/tools/tai_retraction_watch.py` (CC0, ~67 MB; Crossref Labs → gương GitLab
+   chính thức của Crossref). Tải hỏng ⇒ ghi «⚪ nền chưa làm mới» vào báo cáo và đi tiếp — KHÔNG coi kỳ này là sạch.
 2. Chạy (Windows thay `python3` bằng `py -3`):
    `python3 tools/chu_trinh_chung_cu.py --vong 3 --ghi-log state/kiem-rut-bai-kho.log`
    Lệnh tự chạy ① nguồn thật → ② độ tươi → ③ xác minh (gồm bản ghi mồ côi) → ④ rút bài → ⑤ mâu thuẫn → ⑥ dây
@@ -28,7 +33,12 @@ CÁC BƯỚC:
    BUỘC gọi Bash với `run_in_background: true` rồi ĐỢI thông báo hoàn tất (không ngủ/thăm dò liên tục; đặt `timeout` không đủ).
    KHÔNG kết thúc phiên trước khi
    state/kiem-rut-bai-kho.log có dòng «KẾT THÚC» MỚI của hôm nay — không thấy dòng đó thì báo «⚪ lượt chưa hoàn tất».
-3. Đọc mã thoát:
+2b. QUÉT RÚT BÀI CHO TOÀN THƯ VIỆN ENDNOTE (thêm 07/11/2026 — chu trình ở bước 2 chỉ phủ trích dẫn CỦA DASHBOARD; bản ghi bác sĩ
+   tự nhập, trích dẫn đề tài… thì không ai đối chiếu): `~/.ebm-venv/bin/python tools/kiem_rut_bai_endnote.py` (Windows dùng
+   venv tương ứng; máy chưa khai thư viện EndNote ⇒ mã 2 «không đo được», ghi đúng như vậy). Ngoại tuyến, vài giây, chỉ đọc.
+   Mã 1 ⇒ liệt kê từng recNum ĐÃ RÚT / Expression of concern kèm tiêu đề và câu «Cần bác sĩ xem; tag «⛔ Đã rút bài» và gỡ
+   «★ Áp dụng» do phiên Claude làm qua giao diện (`python3 tools/gan_tag_endnote.py --huong-dan`)». Mã 2 ⇒ ⚪/🟡 giữ nguyên.
+3. Đọc mã thoát (của bước 2; bước 2b báo riêng một dòng):
    - 0: báo MỘT dòng — kho sạch (không thấy nguồn bị rút), kèm câu phạm vi «chỉ là toàn vẹn kỹ thuật».
    - 1: liệt kê NGẮN từng việc chu trình in ra; mục 🔴 rút bài: nêu dashboard, định danh, trạng thái — kèm câu «Cần
      bác sĩ xem; với thông báo rút là bản đính chính bị rút, dựng mẫu bằng `python3 tools/mau_ky_rut_bai.py` — CHỈ bác
