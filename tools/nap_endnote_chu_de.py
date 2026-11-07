@@ -2390,11 +2390,29 @@ def main(argv: list[str] | None = None) -> int:
               "  2. python3 tools/doc_toan_van_co_nguoi.py --pmid <PMID…>   (bài thuê bao: làn Chrome có uỷ quyền,\n"
               "     bác sĩ tự đăng nhập/vượt chặn; công cụ này không tải bài thuê bao)\n"
               f"  3. hoặc trong EndNote: chọn nhóm «{tien_to}…» → References → Find Full Text (quyền truy cập của bác sĩ).")
+    if a.ap_dung and endnote is not None:
+        bao_gan_tag(endnote.thu_vien)
     if not a.ap_dung:
         print("Chạy khô — chưa nhập gì. Thêm --ap-dung để nạp thật.")
     if a.json:
         print(json.dumps(ket_qua, ensure_ascii=False, indent=2, default=str))
     return ma_thoat_nap(ket_qua)
+
+
+def bao_gan_tag(thu_vien: Path) -> str:
+    """Sau lượt nạp THẬT: in một dòng việc gắn tag còn chờ (07/11/2026, bác sĩ: «mỗi lần đưa trích dẫn vào Endnote sẽ gắn Tab
+    luôn cho tôi» — chọn «gắn ngay sau mỗi lần nạp»). EndNote không có lệnh AppleScript cho tag và luật cấm ghi thẳng sdb.eni ⇒
+    phiên Claude đang chạy lệnh này kéo-thả NGAY theo `tools/gan_tag_endnote.py --huong-dan`; lượt không người (lịch nền) ⇒
+    hòm việc 🛎 nhắc. Đo hỏng KHÔNG làm hỏng lượt nạp và không bao giờ in thành «đủ tag»."""
+    try:
+        sp = importlib.util.spec_from_file_location("_gan_tag_nap", ROOT / "tools" / "gan_tag_endnote.py")
+        gt = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(gt)
+        dong = gt.tom_tat_mot_dong(gt.ke_hoach_thu_vien(thu_vien))
+    except Exception as e:  # noqa: BLE001 — báo cáo phụ, không được làm sập lượt nạp
+        dong = f"⚪ gắn tag EndNote: không đo được ({type(e).__name__}: {str(e)[:120]})"
+    print(dong)
+    return dong
 
 
 def ma_thoat_nap(ket_qua: list[dict]) -> int:
