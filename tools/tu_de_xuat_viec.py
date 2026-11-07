@@ -628,7 +628,8 @@ def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
     """GẮN TAG ENDNOTE (07/11/2026, bác sĩ: «mỗi lần đưa trích dẫn vào Endnote sẽ gắn Tab luôn cho tôi … gắn tab với những
     chứng cứ có độ tin cậy cao và áp dụng cho thực hành lâm sàng»). Nguồn: `tools/gan_tag_endnote.py` (chỉ đọc sdb.eni + dashboard).
     Bản ghi×tag còn thiếu / tag Áp dụng thừa / tag chưa tạo / bản ghi chưa phân loại (không nhóm, không tag) ⇒ 🛎 (phiên
-    Claude làm qua giao diện — EndNote không có lệnh AppleScript cho tag); nhóm chưa ánh xạ, tag trùng tên ⇒ 👤 (bác sĩ quyết). Không đo được ⇒ giác quan chết (⚪), KHÔNG phải «đủ tag».
+    Claude làm qua giao diện — EndNote không có lệnh AppleScript cho tag); nhóm chưa ánh xạ, tag trùng tên ⇒ 👤 (bác sĩ quyết); bản ghi rời nhóm chủ đề ⇒ 🛎; bài ĐÃ RÚT ⇒ 👤 ưu tiên 0. Không đo
+    được ⇒ giác quan chết (⚪), KHÔNG phải «đủ tag».
     Trả (ưu tiên, nhãn, mô tả, lệnh) như `giac_quan_endnote`."""
     _SO_GIAC_QUAN["chay"] += 1
     try:
@@ -659,8 +660,37 @@ def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
     if kh.get("chua_phan_loai"):
         ra.append((2, "🛎", f"EndNote: {len(kh['chua_phan_loai'])} bản ghi chưa phân loại (không nhóm, không tag) — đưa về "
                    "nhóm chủ đề hoặc ghi tag vào sync/endnote-tag-ban-ghi-le.json rồi kéo", lenh))
+    if kh.get("roi_nhom"):
+        ra.append((2, "🛎", f"EndNote: {len(kh['roi_nhom'])} bản ghi rời nhóm chủ đề (mang khoá chủ đề mà không thuộc nhóm "
+                   "nào — vd sau đồng bộ online) — ghi hàng chờ rồi kéo về nhóm",
+                   "python3 tools/gan_tag_endnote.py --dua-ve-nhom  # rồi nap_endnote_chu_de.py --cho-vao-nhom"))
     if kh.get("tag_trung"):
         ra.append((3, "👤", f"EndNote: tag trùng tên {', '.join(kh['tag_trung'])} — bác sĩ quyết gộp", lenh))
+    ra += _rut_bai_endnote(kh.get("kiem_rut_bai"))
+    return ra
+
+
+def _rut_bai_endnote(rb: dict | None) -> list[tuple[int, str, str, str]]:
+    """Phần CANH RÚT BÀI của kế hoạch gắn tag (07/11/2026, bác sĩ chọn «Làm 1 và 2»): bài ĐÃ RÚT trong thư viện ⇒ 👤 ưu tiên 0
+    (cùng mức «nguồn rút-bỏ-hẳn đang được trích»); Expression of concern ⇒ 👤; nền Retraction Watch quá hạn ⇒ 🤖 (máy làm mới
+    được); không đo được ⇒ giác quan chết (⚪) — KHÔNG BAO GIỜ thành «không có bài rút»."""
+    if not rb:
+        return []
+    if not rb.get("do_duoc"):
+        _ghi_chet(["", "rút bài EndNote"], str(rb.get("ly_do") or "không đo được")[:120])
+        return []
+    lenh = "python3 tools/kiem_rut_bai_endnote.py"
+    ra = []
+    if rb.get("rut"):
+        so = ", ".join(str(m["rec"]) for m in rb["rut"][:15])
+        ra.append((0, "👤", f"EndNote: {len(rb['rut'])} bản ghi ĐÃ RÚT (Retraction Watch) — recNum {so}: bác sĩ xem; tag «⛔ Đã "
+                   "rút bài» chờ gắn, tag ★ Áp dụng phải gỡ", lenh))
+    if rb.get("eoc"):
+        ra.append((1, "👤", f"EndNote: {len(rb['eoc'])} bản ghi có Expression of concern — bác sĩ xem", lenh))
+    if rb.get("qua_han"):
+        tuoi = rb.get("tuoi_ngay")
+        ra.append((2, "🤖", f"Nền Retraction Watch {'?' if tuoi is None else f'{tuoi:.0f}'} ngày tuổi (hạn 30) — làm mới để canh "
+                   "rút bài cho EndNote và dashboard", "python3 medical-ebm-automation/tools/tai_retraction_watch.py"))
     return ra
 
 
