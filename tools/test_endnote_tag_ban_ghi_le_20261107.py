@@ -195,3 +195,19 @@ def test_duong_dan_in_ra_dang_posix_ca_tren_windows(monkeypatch, capsys):
     G.in_ke_hoach(kh)
     ra = capsys.readouterr().out
     assert "sync/endnote-tag-ban-ghi-le.json" in ra and "sync/endnote-tag-theo-nhom.json" in ra and "\\" not in ra
+
+
+def test_nhom_he_thong_find_full_text_bi_bo_qua():
+    """Đo 07/11/2026: khi bác sĩ chạy Find Full Text, EndNote sinh nhóm «Searching…»/«Not found»/«Found PDF»/«Found URL»
+    (loại «TYPE;7») ⇒ kế hoạch từng báo 4 nhóm 👤 «chưa ánh xạ». Chỉ nhóm «custom» là chỗ phân loại."""
+    nhom = [{"group_id": 173, "ten": "Not found", "loai": "TYPE;7", "rec": [1, 2]},
+            {"group_id": 9, "ten": "EBM · Suy tim", "loai": "custom", "rec": [1]}]
+    kh = _ke_hoach(ban_ghi={1: {}, 2: {}}, nhom=nhom, tag_hien_co={1: {"Tim mạch"}}, tag_le={})
+    assert kh["nhom_chua_anh_xa"] == [] and kh["thieu"] == {}
+    assert kh["chua_phan_loai"] == [2]                         # chỉ ở nhóm hệ thống ⇒ vẫn chưa phân loại
+
+
+def test_huong_dan_giu_bai_hoc_go_tag_nen_va_find_full_text():
+    """Đo 07/11: gỡ tag nhầm ở chế độ nền qua Edit Reference (× trên chip); Find Full Text đang chạy làm thanh bên nhảy ⇒ hoãn."""
+    assert "Edit Reference" in G.HUONG_DAN and "× trên chip" in G.HUONG_DAN
+    assert "Find Full Text đang chạy ⇒ HOÃN kéo-thả" in G.HUONG_DAN and "zoom HAI lần" in G.HUONG_DAN
