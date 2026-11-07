@@ -181,3 +181,17 @@ def test_nhom_cho_thung_rac_khong_bao_chua_phan_loai():
             {"group_id": 170, "ten": "_Can toan van 20261107 - Find Full Text", "rec": [2]}]
     kh = _ke_hoach(ban_ghi={1: {}, 2: {}}, nhom=nhom, tag_hien_co={}, tag_le={})
     assert kh["chua_phan_loai"] == [2] and kh["nhom_chua_anh_xa"] == [] and kh["thieu"] == {}
+
+
+def test_duong_dan_in_ra_dang_posix_ca_tren_windows(monkeypatch, capsys):
+    """CI Windows 07/11/2026: dòng hướng dẫn in «sync\\endnote-tag-ban-ghi-le.json» ⇒ lệnh dán lại hỏng trên Mac (§0.9).
+    Giả lập đường dẫn Windows để bắt được ngay trên Mac."""
+    from pathlib import PureWindowsPath
+    monkeypatch.setattr(G, "GOC", PureWindowsPath("C:/r"))
+    monkeypatch.setattr(G, "TEP_TAG_LE", PureWindowsPath("C:/r/sync/endnote-tag-ban-ghi-le.json"))
+    monkeypatch.setattr(G, "TEP_ANH_XA", PureWindowsPath("C:/r/sync/endnote-tag-theo-nhom.json"))
+    kh = dict(_ke_hoach(ban_ghi={6: {}, 7: {}}, nhom=[{"group_id": 5, "ten": "Nhóm riêng", "rec": [7]}], tag_hien_co={},
+                        tag_le={}), do_duoc=True, thu_vien="x.enl", tag_trung=[])
+    G.in_ke_hoach(kh)
+    ra = capsys.readouterr().out
+    assert "sync/endnote-tag-ban-ghi-le.json" in ra and "sync/endnote-tag-theo-nhom.json" in ra and "\\" not in ra

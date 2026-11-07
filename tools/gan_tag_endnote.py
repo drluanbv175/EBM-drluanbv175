@@ -362,11 +362,11 @@ def in_ke_hoach(kh: dict) -> None:
               f"phiên bản hiện hành) — gỡ qua Manage Tags: recNum {_ds(kh['thua_ap_dung'])}")
     for n in kh["nhom_chua_anh_xa"]:
         print(f"👤 nhóm «{n['ten'][:70]}» (group_id {n['group_id']}, {n['so_ban_ghi']} bản ghi) chưa ánh xạ tag — thêm vào "
-              f"{TEP_ANH_XA.relative_to(GOC)} (bác sĩ chọn tag)")
+              f"{TEP_ANH_XA.relative_to(GOC).as_posix()} (bác sĩ chọn tag)")
     if kh.get("chua_phan_loai"):
         print(f"🛎 {len(kh['chua_phan_loai'])} bản ghi CHƯA PHÂN LOẠI (không thuộc nhóm nào, không tag chuyên khoa): recNum "
               f"{_ds(kh['chua_phan_loai'])} — bản ghi của chủ đề dashboard (Keywords «EBM: …») ⇒ đưa về nhóm của chủ đề; "
-              f"bản ghi lẻ ⇒ đọc tiêu đề, ghi tag vào {TEP_TAG_LE.relative_to(GOC)} rồi kéo")
+              f"bản ghi lẻ ⇒ đọc tiêu đề, ghi tag vào {TEP_TAG_LE.relative_to(GOC).as_posix()} rồi kéo")
     for t in kh.get("tag_trung") or []:
         print(f"👤 tag trùng tên «{t}» (≥ 2 tag cùng tên) — bác sĩ quyết gộp; gộp = chuyển bản ghi sang một tag rồi Tags › "
               "Delete Tag tag còn lại")
