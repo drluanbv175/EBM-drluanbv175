@@ -64,13 +64,18 @@ MA_OK, MA_CON_VIEC, MA_KHONG_DO, MA_THAM_SO = 0, 1, 2, 3
 HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude, xin điều khiển TOÀN MÀN HÌNH — chế độ nền không bấm được Select All):
   0. ListAgents: phiên khác đang nạp/ghi EndNote ⇒ nhắn họ TẠM DỪNG mọi lệnh ghi (kể cả nhập bản ghi) tới khi xong — đo
      07/11/2026: một lượt nhập giữa lúc kéo-thả làm EndNote đổi vùng chọn ⇒ bản ghi mới bị gắn nhầm tag.
-  1. Tag chưa có ⇒ Tags › Create Tag… (tên đúng như kế hoạch in; tag Áp dụng màu xanh lá).
-  2. Với TỪNG tag còn thiếu: `python3 tools/gan_tag_endnote.py --hien "<tag>"` ⇒ EndNote chỉ hiện và tô sáng các bản ghi đó
-     → bấm dòng đầu của danh sách (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái (góc dưới) → kéo từ một
-     dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
+  1. Tag chưa có ⇒ Tags › Create Tag… (tên đúng như kế hoạch in; tag Áp dụng màu xanh lá). Tạo xong EndNote CHỌN luôn tag đó
+     làm khung đang xem ⇒ bấm «All References» trước bước 2: thả bản ghi lên CHÍNH khung đang xem không có tác dụng (đo 07/11).
+  2. Với TỪNG tag còn thiếu — mỗi tag một lượt `--hien` riêng, KHÔNG kéo tag thứ hai từ vùng chọn cũ: sau mỗi lần thả EndNote
+     có thể trở về danh sách đầy đủ, lần kéo sau chỉ mang dòng dưới con trỏ ⇒ gắn nhầm (đo 07/11: bản ghi 6412 nhận nhầm
+     «Tiêu hoá»). `python3 tools/gan_tag_endnote.py --hien "<tag>"` ⇒ EndNote chỉ hiện và tô sáng các bản ghi đó (tiêu đề khung
+     ghi đúng «N References») → bấm dòng đầu của danh sách (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái
+     (góc dưới) → kéo từ một dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
   3. Chạy lại `python3 tools/gan_tag_endnote.py` (đọc sdb.eni, sau vài giây) tới khi tag đó hết thiếu — số đếm cạnh tag trên
-     giao diện làm mới chậm một nhịp, KHÔNG dùng làm căn cứ.
-  4. Thừa tag Áp dụng ⇒ chuột phải bản ghi › Manage Tags › bấm × trên chip tag › OK (menu Tags/References không có lệnh gỡ).
+     giao diện làm mới chậm một nhịp, KHÔNG dùng làm căn cứ. Số đếm tăng lệch số bản ghi (vd +1 thay vì +36) ⇒ đã gắn nhầm
+     dòng khác: tìm bản ghi mới nhận tag mà không thuộc kế hoạch rồi gỡ (bước 4).
+  4. Thừa tag Áp dụng / tag gắn nhầm ⇒ chuột phải bản ghi › Manage Tags › bấm × trên chip tag › OK (menu Tags/References không
+     có lệnh gỡ).
   5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình, nhắn các phiên đã nhờ tạm dừng."""
 
 

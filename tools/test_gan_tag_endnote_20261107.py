@@ -177,6 +177,12 @@ def test_bao_gan_tag_khong_lam_sap_luot_nap(tmp_path, capsys):
     assert dong.startswith("⚪") and "⚪" in capsys.readouterr().out
 
 
+def test_huong_dan_giu_hai_bai_hoc_do_that():
+    """Hai bẫy đo thật 07/11: thả lên chính khung đang xem không tác dụng; kéo tag thứ hai từ vùng chọn cũ gắn nhầm dòng khác."""
+    assert "All References" in G.HUONG_DAN and "mỗi tag một lượt `--hien` riêng" in G.HUONG_DAN
+    assert "ListAgents" in G.HUONG_DAN and "TẠM DỪNG" in G.HUONG_DAN
+
+
 def test_giac_quan_hom_viec(monkeypatch):
     chet = []
     monkeypatch.setattr(tdxv, "_ghi_chet", lambda lenh, ly: chet.append(ly))
