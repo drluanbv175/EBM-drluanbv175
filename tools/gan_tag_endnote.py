@@ -25,17 +25,28 @@ Lệnh:
   python3 tools/gan_tag_endnote.py                  # kế hoạch: thiếu theo từng tag + thừa tag Áp dụng + nhóm chưa ánh xạ
   python3 tools/gan_tag_endnote.py --hien "<tag>"   # EndNote chỉ hiện + tô sáng các bản ghi đang thiếu tag đó
   python3 tools/gan_tag_endnote.py --huong-dan      # quy trình kéo-thả cho phiên Claude (điều khiển toàn màn hình)
+  python3 tools/gan_tag_endnote.py --giu-khoa [PHÚT] # CHẠY NỀN: giữ khoá ghi EndNote suốt phiên kéo-thả (mặc định 30, tối đa 60)
+  python3 tools/gan_tag_endnote.py --nha-khoa       # nhả khoá phiên giao diện
   python3 tools/gan_tag_endnote.py --json
 Mã thoát: 0 đủ tag · 1 còn việc (thiếu/thừa/tag chưa tạo/nhóm chưa ánh xạ) · 2 không đo được · 3 tham số sai.
+
+Khoá phiên giao diện (07/11/2026): khoá ghi `khoa_ghi_endnote` giữ theo TIẾN TRÌNH và nhả khi tiến trình thoát; phiên kéo-thả
+gồm nhiều lượt công cụ ⇒ giữa hai lượt (rảnh ≥ 20 giây) phiên khác ghi chen được — đo 07/11 một lượt nhập bản ghi lúc đó làm
+EndNote đổi vùng chọn ⇒ gắn nhầm tag. `--giu-khoa` là MỘT tiến trình nền giữ và làm mới khoá suốt phiên (ly_do bắt đầu bằng
+`khoa_ghi_endnote.LY_DO_GIAO_DIEN`) ⇒ mọi lệnh ghi qua `EndNoteMac` của mọi phiên chờ rồi bỏ lượt, và show/highlight của phiên
+khác bị từ chối; tự nhả khi hết hạn, khi nhận SIGTERM (`--nha-khoa`) hoặc khi thoát.
 """
 from __future__ import annotations
 
 import argparse
 import importlib.util
 import json
+import os
 import re
+import signal
 import sqlite3
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -60,10 +71,17 @@ TIEN_TO_NHOM_CHU_DE = ("EBM ·", "TT ·")
 TIEN_TO_NHOM_NGHIEN_CUU = ("NC ·",)
 
 MA_OK, MA_CON_VIEC, MA_KHONG_DO, MA_THAM_SO = 0, 1, 2, 3
+PHUT_GIU_MAC_DINH, PHUT_GIU_TOI_DA = 30, 60
+NHIP_LAM_MOI = 30  # giây — làm mới luc_epoch của khoá (HAN_KHOA 15 phút)
+# Ngủ từng giây: Python thử lại time.sleep sau trình xử lý tín hiệu (PEP 475) ⇒ ngủ một lèo 30 s làm `--nha-khoa` chậm tới 30 s
+# (đo thật 07/11/2026: SIGTERM nhận lúc đang ngủ, khoá chỉ nhả khi hết giấc).
+NHIP_NGU = 1.0
 
 HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude, xin điều khiển TOÀN MÀN HÌNH — chế độ nền không bấm được Select All):
-  0. ListAgents: phiên khác đang nạp/ghi EndNote ⇒ nhắn họ TẠM DỪNG mọi lệnh ghi (kể cả nhập bản ghi) tới khi xong — đo
-     07/11/2026: một lượt nhập giữa lúc kéo-thả làm EndNote đổi vùng chọn ⇒ bản ghi mới bị gắn nhầm tag.
+  0. CHẠY NỀN `python3 tools/gan_tag_endnote.py --giu-khoa 30` (Bash run_in_background) và đợi dòng «✓ đang giữ khoá» — mọi
+     lệnh ghi EndNote qua EndNoteMac của mọi phiên (nhập, gắn PDF, ghi trường, show/highlight) chờ rồi bỏ lượt tới khi nhả.
+     Vẫn ListAgents và nhắn phiên khác TẠM DỪNG (agent tự viết AppleScript riêng không đi qua khoá) — đo 07/11/2026: một lượt
+     nhập giữa lúc kéo-thả làm EndNote đổi vùng chọn ⇒ bản ghi mới bị gắn nhầm tag.
   1. Tag chưa có ⇒ Tags › Create Tag… (tên đúng như kế hoạch in; tag Áp dụng màu xanh lá). Tạo xong EndNote CHỌN luôn tag đó
      làm khung đang xem ⇒ bấm «All References» trước bước 2: thả bản ghi lên CHÍNH khung đang xem không có tác dụng (đo 07/11).
   2. Với TỪNG tag còn thiếu — mỗi tag một lượt `--hien` riêng, KHÔNG kéo tag thứ hai từ vùng chọn cũ: sau mỗi lần thả EndNote
@@ -76,7 +94,8 @@ HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude, xin điều 
      dòng khác: tìm bản ghi mới nhận tag mà không thuộc kế hoạch rồi gỡ (bước 4).
   4. Thừa tag Áp dụng / tag gắn nhầm ⇒ chuột phải bản ghi › Manage Tags › bấm × trên chip tag › OK (menu Tags/References không
      có lệnh gỡ).
-  5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình, nhắn các phiên đã nhờ tạm dừng."""
+  5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình, `python3 tools/gan_tag_endnote.py --nha-khoa`, nhắn các phiên đã nhờ
+     tạm dừng."""
 
 
 def _nap(ten: str, tep: str):
@@ -285,9 +304,94 @@ def hien_thieu(tag: str, kh: dict, endnote_cls=None) -> int:
     if not en.dang_mo_dung_thu_vien():
         print("⚪ EndNote chưa mở đúng thư viện — mở EndNote rồi chạy lại")
         return MA_KHONG_DO
-    en.hien_ban_ghi(rec)
+    kg = nap.nap_khoa_ghi()
+    if kg is not None and not kg.khoa_giao_dien_khac():
+        print("⚠ chưa có khoá phiên giao diện — chạy NỀN `python3 tools/gan_tag_endnote.py --giu-khoa 30` trước khi kéo-thả "
+              "(phiên khác có thể ghi chen giữa các lượt và làm đổi vùng chọn)")
+    en.hien_ban_ghi(rec, trong_phien_gan_tag=True)
     print(f"✓ EndNote đang CHỈ hiện {len(rec)} bản ghi (đã tô sáng). Bấm dòng đầu → cmd+A → lọc cột trái «{tag}» → kéo lên tag.")
     return MA_CON_VIEC
+
+
+# ───────────────────────── khoá phiên giao diện ─────────────────────────
+
+def _khoa():
+    """Bản mô-đun khoá DÙNG CHUNG với `EndNoteMac` (nạp qua `nap_endnote_chu_de.nap_khoa_ghi`, xem lý do ở đó)."""
+    kg = _nap("_nap_khoa_gte", "nap_endnote_chu_de.py").nap_khoa_ghi()
+    if kg is None:
+        raise OSError("không nạp được tools/khoa_ghi_endnote.py")
+    return kg
+
+
+def giu_khoa_giao_dien(phut: float, *, kg=None, tep: Path | None = None, ngu=time.sleep, dong_ho=time.monotonic,
+                       dung: dict | None = None, kiem_giao_dich=None, dang_dung=None, in_ra=print) -> int:
+    """Giữ khoá ghi EndNote suốt một phiên kéo-thả (chạy NỀN). Lấy khoá như mọi lệnh ghi (chờ tiến trình khác/bác sĩ, không
+    lấy khi giao dịch treo), rồi làm mới mỗi NHIP_LAM_MOI giây tới khi hết `phut`, khi `dung["co"]` (SIGTERM/SIGINT) — nhả khi
+    ra khỏi phạm vi, kể cả khi lỗi. Các tham số còn lại tiêm được để test."""
+    kg = kg or _khoa()
+    phut = max(1.0, min(float(phut), PHUT_GIU_TOI_DA))
+    ly_do = f"{kg.LY_DO_GIAO_DIEN} — tối đa {phut:g} phút (python3 tools/gan_tag_endnote.py --nha-khoa để nhả)"
+    tu_cli = dung is None
+    dung = dung if dung is not None else {"co": False}
+    if tu_cli:
+        def _dung(*_):
+            dung["co"] = True
+        signal.signal(signal.SIGTERM, _dung)
+        signal.signal(signal.SIGINT, _dung)
+        kiem_giao_dich = kiem_giao_dich or (lambda: kg.kiem_giao_dich_treo(None))
+    with kg.pham_vi_ghi():
+        try:
+            kg.cho_phep_ghi_loi("EndNote", ly_do, tep=tep, kiem_giao_dich=kiem_giao_dich, dang_dung=dang_dung, ngu=ngu,
+                                dong_ho=dong_ho, thong_bao=None if tu_cli else (lambda _n: None))
+        except (kg.DangCoTienTrinhKhacGhi, kg.BacSiDangDungEndNote, kg.GiaoDichEndNoteTreo) as e:
+            in_ra(f"⚪ chưa giữ được khoá ghi EndNote: {e}")
+            return MA_KHONG_DO
+        in_ra(f"✓ đang giữ khoá phiên giao diện (pid {os.getpid()}, tối đa {phut:g} phút) — kéo-thả được; xong chạy --nha-khoa")
+        if tu_cli:
+            sys.stdout.flush()
+        het = dong_ho() + phut * 60
+        lan_lam_moi = dong_ho()
+        while not dung["co"] and dong_ho() < het:
+            ngu(min(NHIP_NGU, max(0.0, het - dong_ho())))
+            if dung["co"]:
+                break
+            if dong_ho() - lan_lam_moi < NHIP_LAM_MOI:
+                continue
+            lan_lam_moi = dong_ho()
+            try:
+                kg.cho_phep_ghi_loi("EndNote", ly_do, tep=tep, dang_dung=lambda: False, thong_bao=lambda _n: None)
+            except (kg.DangCoTienTrinhKhacGhi, OSError) as e:  # mất khoá giữa chừng ⇒ báo, KHÔNG coi như vẫn giữ
+                in_ra(f"⚪ mất khoá phiên giao diện giữa chừng: {e} — dừng kéo-thả, đo lại sdb.eni")
+                return MA_KHONG_DO
+    in_ra("✓ đã nhả khoá phiên giao diện")
+    return MA_OK
+
+
+def nha_khoa_giao_dien(*, kg=None, tep: Path | None = None, gui=os.kill, ngu=time.sleep, in_ra=print) -> int:
+    """Nhả khoá phiên giao diện: gửi SIGTERM cho tiến trình `--giu-khoa` đang giữ. Khoá KHÁC (lượt nạp, MCP…) ⇒ KHÔNG đụng."""
+    kg = kg or _khoa()
+    d = kg.doc_khoa(tep)
+    if not d:
+        in_ra("✓ không có khoá ghi EndNote nào đang giữ")
+        return MA_OK
+    if not str(d.get("ly_do") or "").startswith(kg.LY_DO_GIAO_DIEN):
+        in_ra(f"✗ khoá đang giữ không phải khoá phiên giao diện (pid {d.get('pid')}: «{str(d.get('ly_do'))[:80]}») — không đụng")
+        return MA_THAM_SO
+    if not kg.khoa_giao_dien_khac(tep):
+        in_ra("✓ khoá phiên giao diện đã hết hiệu lực (tiến trình đã thoát hoặc quá hạn)")
+        return MA_OK
+    try:
+        gui(int(d["pid"]), signal.SIGTERM)
+    except ProcessLookupError:
+        in_ra("✓ tiến trình giữ khoá đã thoát")
+        return MA_OK
+    for _ in range(40):
+        if not kg.khoa_giao_dien_khac(tep):
+            in_ra("✓ đã nhả khoá phiên giao diện")
+            return MA_OK
+        ngu(0.25)
+    in_ra(f"⚪ đã gửi tín hiệu dừng cho pid {d.get('pid')} nhưng khoá chưa nhả — kiểm lại sau vài giây")
+    return MA_KHONG_DO
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -296,11 +400,23 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--hien", metavar="TAG", help="EndNote chỉ hiện + tô sáng các bản ghi đang thiếu tag này")
     ap.add_argument("--huong-dan", action="store_true", help="in quy trình kéo-thả cho phiên Claude")
+    ap.add_argument("--giu-khoa", nargs="?", type=float, const=PHUT_GIU_MAC_DINH, metavar="PHUT",
+                    help=f"CHẠY NỀN: giữ khoá ghi EndNote suốt phiên kéo-thả (mặc định {PHUT_GIU_MAC_DINH}, tối đa {PHUT_GIU_TOI_DA})")
+    ap.add_argument("--nha-khoa", action="store_true", help="nhả khoá phiên giao diện")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     if a.huong_dan:
         print(HUONG_DAN)
         return MA_OK
+    if a.giu_khoa is not None or a.nha_khoa:
+        if a.giu_khoa is not None and a.nha_khoa:
+            print("✗ --giu-khoa và --nha-khoa không đi cùng nhau")
+            return MA_THAM_SO
+        try:
+            return giu_khoa_giao_dien(a.giu_khoa) if a.giu_khoa is not None else nha_khoa_giao_dien()
+        except OSError as e:
+            print(f"⚪ {e}")
+            return MA_KHONG_DO
     kh = ke_hoach_thu_vien()
     if a.json:
         print(json.dumps(kh, ensure_ascii=False, indent=1))

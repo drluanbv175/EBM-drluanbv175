@@ -1181,8 +1181,18 @@ class EndNoteMac:
         return {ma: ("" if k < len(doc_lai) and chuan(doc_lai[k]) == chuan(gt) else "đọc lại không khớp nội dung vừa ghi")
                 for k, (ma, gt) in enumerate(cap)}
 
-    def hien_ban_ghi(self, rec: list[int]) -> None:
-        """Đưa EndNote lên trước, CHỈ hiện và tô sáng các bản ghi này (cho bác sĩ ⌘A rồi kéo vào nhóm). Không ghi gì."""
+    def hien_ban_ghi(self, rec: list[int], *, trong_phien_gan_tag: bool = False) -> None:
+        """Đưa EndNote lên trước, CHỈ hiện và tô sáng các bản ghi này (cho bác sĩ ⌘A rồi kéo vào nhóm). Không ghi gì.
+
+        07/11/2026: một phiên khác đang gắn tag qua giao diện (khoá `khoa_ghi_endnote.LY_DO_GIAO_DIEN`) ⇒ ném
+        DangCoTienTrinhKhacGhi — show/highlight đổi danh sách và vùng chọn giữa lúc phiên đó kéo-thả. Chỉ `gan_tag_endnote.py
+        --hien` của CHÍNH phiên giữ khoá truyền `trong_phien_gan_tag=True`."""
+        kg = nap_khoa_ghi()
+        if kg is not None and not trong_phien_gan_tag:
+            d = kg.khoa_giao_dien_khac()
+            if d:
+                raise kg.DangCoTienTrinhKhacGhi(f"tiến trình {d.get('pid')} đang gắn tag EndNote qua giao diện — không hiện/tô "
+                                                "sáng chen; chạy lại sau khi phiên đó nhả khoá")
         csdl = self.so_csdl()
         self._chay('activate\nset ids to items 2 thru -1 of argv\nshow records in ids in window (item 1 of argv)\n'
                    'highlight records in ids in window (item 1 of argv)', self.ten,
@@ -1811,7 +1821,13 @@ def chay_cho_vao_nhom(ten: str, tep: Path | None = None, endnote_cls=None) -> in
     if not en.dang_mo_dung_thu_vien():
         print(f"⚪ EndNote chưa mở thư viện {tv.name} — bác sĩ mở EndNote rồi chạy lại")
         return MA_KHONG_CHAY
-    en.hien_ban_ghi(chon[0]["rec"])
+    try:
+        en.hien_ban_ghi(chon[0]["rec"])
+    except Exception as e:  # noqa: BLE001 — chỉ nuốt đúng lỗi «phiên khác đang gắn tag qua giao diện» (07/11/2026)
+        if type(e).__name__ != "DangCoTienTrinhKhacGhi":
+            raise
+        print(f"⚪ {e}")
+        return MA_KHONG_CHAY
     print(f"✓ EndNote đang CHỈ hiện {len(chon[0]['rec'])} bài chờ. Bác sĩ: bấm vào danh sách → ⌘A → kéo vào nhóm «{chon[0]['ten']}» "
           "ở cột trái (hoặc menu Groups → Add References To → nhóm đó — menu References KHÔNG có mục này, đo 25/10/2026; "
           "phiên Claude làm được: chọn từng dòng rồi dùng menu đó). Xong chạy lại --cho-vao-nhom để kiểm.")

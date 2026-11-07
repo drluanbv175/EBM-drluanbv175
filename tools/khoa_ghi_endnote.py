@@ -153,6 +153,22 @@ def khoa_con_hieu_luc(d: dict | None, bay_gio: float | None = None, song=_pid_so
     return song(d["pid"])
 
 
+LY_DO_GIAO_DIEN = "gắn tag EndNote qua giao diện"
+
+
+def khoa_giao_dien_khac(tep: Path | None = None, song=_pid_song) -> dict | None:
+    """Khoá «PHIÊN GIAO DIỆN» (07/11/2026) của một tiến trình KHÁC còn hiệu lực, hoặc None.
+
+    Gắn tag chỉ làm được bằng kéo-thả trong cửa sổ EndNote, qua nhiều lượt công cụ của một phiên Claude. Khoá theo tiến trình
+    nhả giữa các lượt ⇒ phiên khác ghi chen được trong khoảng nghỉ ≥ NGUONG_RANH: đo 07/11 một lượt nhập bản ghi giữa lúc kéo làm
+    EndNote đổi vùng chọn ⇒ gắn nhầm tag. `tools/gan_tag_endnote.py --giu-khoa` giữ khoá suốt phiên với `ly_do` bắt đầu bằng
+    LY_DO_GIAO_DIEN; khi khoá đó còn hiệu lực, show/highlight (`EndNoteMac.hien_ban_ghi`) của phiên khác cũng phải từ chối."""
+    d = doc_khoa(tep)
+    if khoa_con_hieu_luc(d, song=song) and str(d.get("ly_do") or "").startswith(LY_DO_GIAO_DIEN):
+        return d
+    return None
+
+
 def _ghi_khoa(ly_do: str, tep: Path, luc: float) -> None:
     """Ghi NGUYÊN TỬ (tệp tạm + `os.replace`): tiến trình khác đọc giữa lúc làm mới không bao giờ thấy JSON dở dang — JSON
     hỏng bị `doc_khoa` đọc thành «không có khoá» ⇒ hai tiến trình cùng ghi."""
