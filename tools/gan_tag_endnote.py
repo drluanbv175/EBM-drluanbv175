@@ -87,6 +87,10 @@ TIEN_TO_NHOM_LAM_VIEC = ("_",)
 # Nhóm làm việc chờ bác sĩ chuyển thùng rác (vd «_Cho thung rac 20261106 trung va khong phai chung cu») ⇒ thành viên CHỈ ở đó
 # không bị báo «chưa phân loại» (sắp bỏ, gắn tag là thừa). Nhóm làm việc khác ⇒ thành viên chỉ ở đó VẪN là chưa phân loại.
 NHOM_CHO_THUNG_RAC = re.compile(r"thung\s*rac|thùng\s*rác|trash", re.I)
+# Chỉ nhóm bác sĩ/công cụ TỰ TẠO (`groups.spec` loại «custom», `endnote_suc_khoe.doc_nhom` khoá `loai`) là chỗ phân loại. Nhóm
+# hệ thống của Find Full Text («Searching…», «Found PDF», «Found URL», «Not found» — loại «TYPE;7», đo 07/11/2026) thì EndNote
+# tự đổ bản ghi vào/ra trong lúc tìm ⇒ bỏ qua, không đòi tag, không báo «chưa ánh xạ».
+LOAI_NHOM_TU_TAO = "custom"
 
 MA_OK, MA_CON_VIEC, MA_KHONG_DO, MA_THAM_SO = 0, 1, 2, 3
 PHUT_GIU_MAC_DINH, PHUT_GIU_TOI_DA = 30, 60
@@ -108,14 +112,18 @@ HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude; ƯU TIÊN ch
      ghi đúng «N References»; các dòng tô sáng CHÍNH LÀ vùng chọn).
      CHẾ ĐỘ NỀN (đo 07/11/2026: 22 tag · 153 cặp, 43 bản ghi một lần kéo, 0 nhầm): KHÔNG bấm vào danh sách (bấm làm mất vùng chọn)
      — app_drag với path 5–7 điểm từ MỘT dòng đang tô sáng tới dòng tag ở thanh bên. Tìm dòng tag: app_scroll thanh bên
-     (KHÔNG gõ ô lọc bằng app_type — rơi vào gõ-để-chọn của danh sách) rồi app_zoom đọc toạ độ hàng.
+     (KHÔNG gõ ô lọc bằng app_type — rơi vào gõ-để-chọn của danh sách) rồi app_zoom đọc toạ độ hàng — zoom HAI lần liền nhau
+     NGAY trước khi thả, hai ảnh phải trùng: sau mỗi lần ghi (và liên tục khi Find Full Text đang chạy — nhóm «Searching…»
+     /«Not found»…) EndNote dựng lại thanh bên, cuộn về cuối và trả danh sách về đủ bản ghi (đo 07/11: 9151 nhận nhầm
+     «Update HPQ»). Find Full Text đang chạy ⇒ HOÃN kéo-thả. Thả cách mép trên/dưới thanh bên ≥ 60 px (sát mép ⇒ tự cuộn).
      Toàn màn hình (dự phòng): bấm dòng đầu (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái (góc dưới) → kéo
      từ một dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
   3. Chạy lại `python3 tools/gan_tag_endnote.py` (đọc sdb.eni, sau vài giây) tới khi tag đó hết thiếu — số đếm cạnh tag trên
      giao diện làm mới chậm một nhịp, KHÔNG dùng làm căn cứ. Số đếm tăng lệch số bản ghi (vd +1 thay vì +36) ⇒ đã gắn nhầm
      dòng khác: tìm bản ghi mới nhận tag mà không thuộc kế hoạch rồi gỡ (bước 4).
-  4. Thừa tag Áp dụng / tag gắn nhầm ⇒ chuột phải bản ghi › Manage Tags › bấm × trên chip tag › OK (menu Tags/References không
-     có lệnh gỡ).
+  4. Thừa tag Áp dụng / tag gắn nhầm ⇒ CHẾ ĐỘ NỀN: `--hien` riêng bản ghi đó → app_menu References › Edit Reference → bảng sửa
+     hiện chip tag ở đầu → app_click dấu × trên chip (đo 07/11: gỡ ngay, không cần Save). Hộp «Manage tags» KHÔNG dùng được ở chế
+     độ nền (vùng chip thuộc tiến trình khác — bị từ chối). Toàn màn hình: chuột phải bản ghi › Manage Tags › × › OK.
   5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình / app_release, `python3 tools/gan_tag_endnote.py --nha-khoa`, nhắn các
      phiên đã nhờ tạm dừng.
   Bản ghi CHƯA PHÂN LOẠI (kế hoạch in 🛎): thuộc một chủ đề dashboard (khoá «EBM: <chủ đề>» ở Keywords) ⇒ đưa về nhóm của chủ
@@ -172,6 +180,8 @@ def lap_ke_hoach(*, ban_ghi: dict[int, dict], nhom: list[dict], tag_hien_co: dic
     trong_nhom: set[int] = set()
     cho_thung_rac: set[int] = set()
     for n in nhom:
+        if n.get("loai", LOAI_NHOM_TU_TAO) != LOAI_NHOM_TU_TAO:
+            continue  # nhóm HỆ THỐNG (Find Full Text…): EndNote tự đổ bản ghi vào/ra, không phải phân loại
         rec = [r for r in (n.get("rec") or []) if r in ban_ghi]
         ten_n = n.get("ten") or ""
         if rec and ten_n.startswith(TIEN_TO_NHOM_LAM_VIEC) and str(n["group_id"]) not in anh_xa:
