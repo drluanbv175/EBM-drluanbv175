@@ -112,8 +112,9 @@ def test_ke_hoach_thieu_thua_va_tag_chua_tao():
 
 
 def test_ke_hoach_du_tag():
+    # bản ghi 3 ở ngoài nhóm mang tag bác sĩ tự gắn ⇒ đã phân loại (07/11: bản ghi không nhóm, không tag là còn việc)
     kh = _ke_hoach(nhom=[{"group_id": 9, "ten": "EBM · Suy tim", "rec": [1, 2]}], tag_hien_co={1: {"Tim mạch"},
-                   2: {"Tim mạch", AD}}, ten_tag={"Tim mạch", AD})
+                   2: {"Tim mạch", AD}, 3: {"Tag riêng bác sĩ"}}, ten_tag={"Tim mạch", AD})
     assert kh["thieu"] == {} and kh["thua_ap_dung"] == [] and kh["tag_chua_tao"] == [] and not G.con_viec(kh)
     assert G.tom_tat_mot_dong(dict(kh, do_duoc=True)).startswith("✓")
 
