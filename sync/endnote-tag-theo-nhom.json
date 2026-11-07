@@ -1,0 +1,1132 @@
+{
+ "_ghi_chu": "Ánh xạ nhóm EndNote → tag (07/11/2026, bác sĩ giao «gắn tag tất cả cho phù hợp»). Khoá là group_id của thư viện OneDrive/EndNote/My EndNote Library.enl; «ten» chỉ để đọc. Nhóm mới chưa có ở đây: «EBM ·/TT ·» suy tag chuyên khoa từ câu hỏi, «NC ·» → «Nghiên cứu khoa học» (tools/gan_tag_endnote.py). Sửa tay được; công cụ chỉ đọc.",
+ "nhom": {
+  "5": {
+   "ten": "Tác động dược lý của các thuốc lên giấc ngủ",
+   "tag": [
+    "Thần kinh",
+    "Rối loạn giấc ngủ"
+   ]
+  },
+  "6": {
+   "ten": "Irritable Bowel Syndrome",
+   "tag": [
+    "Tiêu hoá",
+    "Irritable Bowel Syndrome"
+   ]
+  },
+  "7": {
+   "ten": "Tỉ lệ đau đầu mạn tính trong bệnh cảnh trầm cảm và rối loạn lo âu",
+   "tag": [
+    "Thần kinh",
+    "Tâm thần",
+    "Chronic Headache"
+   ]
+  },
+  "8": {
+   "ten": "Bệnh lý động mạch vành",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "9": {
+   "ten": "Điều trị suy tim lấy bệnh nhân làm trung tâm",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "10": {
+   "ten": "Multimorbidity Management",
+   "tag": [
+    "Lão khoa",
+    "Multimorbidity"
+   ]
+  },
+  "11": {
+   "ten": "Đánh giá sự hài lòng tại khoa khám bệnh",
+   "tag": [
+    "Nghiên cứu khoa học"
+   ]
+  },
+  "12": {
+   "ten": "Headache",
+   "tag": [
+    "Thần kinh",
+    "Headache"
+   ]
+  },
+  "13": {
+   "ten": "Suy tim và tiên lượng suy tim",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "14": {
+   "ten": "Tiếp cận chẩn đoán điều trị bệnh thận mạn dựa trên chứng cứ",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "15": {
+   "ten": "Neuropathic Pain",
+   "tag": [
+    "Thần kinh",
+    "Neuropathic pain"
+   ]
+  },
+  "16": {
+   "ten": "Tiếp cận chẩn đoán và điều trị suy tim",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "17": {
+   "ten": "Asthma (Hen Phế Quản)",
+   "tag": [
+    "Hô hấp",
+    "Asthma"
+   ]
+  },
+  "18": {
+   "ten": "Đa bệnh lý (multimorbidity) hoặc bệnh mạn tính ở người cao tuổi",
+   "tag": [
+    "Lão khoa",
+    "Multimorbidity"
+   ]
+  },
+  "19": {
+   "ten": "Fibromyalgia",
+   "tag": [
+    "Thần kinh",
+    "Fibromyalgia"
+   ]
+  },
+  "20": {
+   "ten": "COPD",
+   "tag": [
+    "Hô hấp",
+    "COPD"
+   ]
+  },
+  "21": {
+   "ten": "Sleep neurology (Insomnia  Circadian disorders  Restless legs)",
+   "tag": [
+    "Thần kinh",
+    "Rối loạn giấc ngủ"
+   ]
+  },
+  "22": {
+   "ten": "Chiến lược phát hiện và quản lý sớm bệnh thận mạn ở nhóm bệnh nhân nguy cơ cao",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "23": {
+   "ten": "Tăng áp lực động mạch phổi",
+   "tag": [
+    "Tim mạch",
+    "Tăng áp lực động mạch phổi",
+    "PAH"
+   ]
+  },
+  "24": {
+   "ten": "Heart Failure (HF) and Chronic Obstructive Pulmonary Disease (COPD)",
+   "tag": [
+    "Tim mạch",
+    "Hô hấp",
+    "Heart Failure",
+    "COPD"
+   ]
+  },
+  "26": {
+   "ten": "Geriatrics – Core Evidence",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "27": {
+   "ten": "Geriatric Syndromes",
+   "tag": [
+    "Lão khoa",
+    "Geriatric syndromes"
+   ]
+  },
+  "28": {
+   "ten": "Chronic Disease in Elderly",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "29": {
+   "ten": "Functional Assessment",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "30": {
+   "ten": "End-of-life & Palliative Care",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "31": {
+   "ten": "CKD – Core Evidence",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "32": {
+   "ten": "CKD – Diagnosis & Risk Stratification",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "33": {
+   "ten": "CKD – Pharmacologic Therapy",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "34": {
+   "ten": "EBM · Tăng huyết áp và rối loạn lipid máu ngoại trú — cập nhật theo guideline AHA/ACC 2025 (THA), ACC/AHA…",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "35": {
+   "ten": "EBM · Kê đơn an toàn thuốc tâm thần kinh ở người cao tuổi và người đa bệnh ngoại trú — benzodiazepine/Z-d…",
+   "tag": [
+    "Lão khoa",
+    "Tâm thần"
+   ]
+  },
+  "36": {
+   "ten": "EBM · Cập nhật an toàn EMA/PRAC 6–10/2026 cho ngoại trú: valproate (con của nam giới), Ixchiq, avacopan (…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "37": {
+   "ten": "BPH / LUTS",
+   "tag": [
+    "Thận tiết niệu",
+    "BPH",
+    "LUTS"
+   ]
+  },
+  "38": {
+   "ten": "Nephrolithiasis",
+   "tag": [
+    "Thận tiết niệu",
+    "Nephrolithiasis"
+   ]
+  },
+  "40": {
+   "ten": "IBS – Core Evidence",
+   "tag": [
+    "Tiêu hoá",
+    "Irritable Bowel Syndrome"
+   ]
+  },
+  "41": {
+   "ten": "Urology – Core",
+   "tag": [
+    "Thận tiết niệu",
+    "Urology"
+   ]
+  },
+  "42": {
+   "ten": "IBS – Diet Interventions",
+   "tag": [
+    "Tiêu hoá",
+    "Irritable Bowel Syndrome",
+    "Low-FODMAP"
+   ]
+  },
+  "43": {
+   "ten": "IBS – Pharmacologic",
+   "tag": [
+    "Tiêu hoá",
+    "Irritable Bowel Syndrome"
+   ]
+  },
+  "44": {
+   "ten": "GERD",
+   "tag": [
+    "Tiêu hoá",
+    "GERD"
+   ]
+  },
+  "45": {
+   "ten": "IBD",
+   "tag": [
+    "Tiêu hoá",
+    "IBD"
+   ]
+  },
+  "46": {
+   "ten": "Liver diseases",
+   "tag": [
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "47": {
+   "ten": "Heart Failure (Suy tim)",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "48": {
+   "ten": "Coronary Artery Disease (Động mạch vành)",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "49": {
+   "ten": "Hypertension (Tăng huyết áp)",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "50": {
+   "ten": "Cardiology – Core Evidence",
+   "tag": [
+    "Tim mạch",
+    "Cardiology"
+   ]
+  },
+  "51": {
+   "ten": "Arrhythmia",
+   "tag": [
+    "Tim mạch",
+    "Arrhythmia"
+   ]
+  },
+  "52": {
+   "ten": "Peripheral Artery Disease (Động mạch ngoại biên)",
+   "tag": [
+    "Tim mạch",
+    "Peripheral Artery Disease"
+   ]
+  },
+  "53": {
+   "ten": "Valvular Heart Disease (Bệnh van tim)",
+   "tag": [
+    "Tim mạch",
+    "Valvular Heart Disease"
+   ]
+  },
+  "54": {
+   "ten": "Endocrinology – Core Evidence",
+   "tag": [
+    "Nội tiết",
+    "Endocrinology"
+   ]
+  },
+  "55": {
+   "ten": "Type 2 Diabetes",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes"
+   ]
+  },
+  "56": {
+   "ten": "Obesity / Weight management",
+   "tag": [
+    "Nội tiết",
+    "Obesity"
+   ]
+  },
+  "57": {
+   "ten": "Thyroid disorders",
+   "tag": [
+    "Nội tiết",
+    "Thyroid"
+   ]
+  },
+  "58": {
+   "ten": "Osteoporosis & Bone metabolism",
+   "tag": [
+    "Nội tiết",
+    "Osteoporosis"
+   ]
+  },
+  "59": {
+   "ten": "Adrenal & Pituitary – Core Evidence",
+   "tag": [
+    "Nội tiết",
+    "Adrenal",
+    "Pituitary"
+   ]
+  },
+  "60": {
+   "ten": "Rheumatology – Core Evidence",
+   "tag": [
+    "Khớp",
+    "Rheumatology"
+   ]
+  },
+  "61": {
+   "ten": "Rheumatoid Arthritis",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "62": {
+   "ten": "Osteoarthritis (OA)",
+   "tag": [
+    "Khớp",
+    "Osteoarthritis"
+   ]
+  },
+  "63": {
+   "ten": "Gout",
+   "tag": [
+    "Khớp",
+    "Gout"
+   ]
+  },
+  "64": {
+   "ten": "Spondyloarthritis",
+   "tag": [
+    "Khớp",
+    "Spondyloarthritis"
+   ]
+  },
+  "65": {
+   "ten": "Lupus erythematosus",
+   "tag": [
+    "Khớp",
+    "Lupus erythematosus"
+   ]
+  },
+  "66": {
+   "ten": "Vasculitis",
+   "tag": [
+    "Khớp",
+    "Vasculitis"
+   ]
+  },
+  "67": {
+   "ten": "Respiratory – Core Evidence",
+   "tag": [
+    "Hô hấp"
+   ]
+  },
+  "68": {
+   "ten": "ILD / Pulmonary Fibrosis",
+   "tag": [
+    "Hô hấp",
+    "ILD / Pulmonary Fibrosis"
+   ]
+  },
+  "69": {
+   "ten": "Sleep-related Breathing Disorders",
+   "tag": [
+    "Hô hấp",
+    "Sleep-related Breathing Disorders"
+   ]
+  },
+  "70": {
+   "ten": "Lung cancer",
+   "tag": [
+    "Hô hấp",
+    "Lung cancer"
+   ]
+  },
+  "71": {
+   "ten": "Neurology – Core Evidence",
+   "tag": [
+    "Thần kinh",
+    "Neurology"
+   ]
+  },
+  "72": {
+   "ten": "Stroke",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  },
+  "73": {
+   "ten": "Epilepsy",
+   "tag": [
+    "Thần kinh",
+    "Epilepsy"
+   ]
+  },
+  "74": {
+   "ten": "Multiple Sclerosis",
+   "tag": [
+    "Thần kinh",
+    "Multiple Sclerosis"
+   ]
+  },
+  "75": {
+   "ten": "Neurodegenerative disorders (Alzheimer, Parkinson , Cognitive impairment)",
+   "tag": [
+    "Thần kinh",
+    "Neurodegenerative disorders"
+   ]
+  },
+  "76": {
+   "ten": "Demyelinating disorders",
+   "tag": [
+    "Thần kinh",
+    "Demyelinating disorders"
+   ]
+  },
+  "77": {
+   "ten": "Heart Failure and Neuropsychiatric Comorbidity",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure",
+    "Tâm thần"
+   ]
+  },
+  "78": {
+   "ten": "Suy tim ở người cao tuổi",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure",
+    "Lão khoa"
+   ]
+  },
+  "79": {
+   "ten": "Core Evidence",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "80": {
+   "ten": "Depressive Disorders",
+   "tag": [
+    "Tâm thần",
+    "Depression"
+   ]
+  },
+  "81": {
+   "ten": "Anxiety Disorders",
+   "tag": [
+    "Tâm thần",
+    "Anxiety"
+   ]
+  },
+  "82": {
+   "ten": "Bipolar Disorders",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "83": {
+   "ten": "Schizophrenia & Psychosis",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "84": {
+   "ten": "PTSD & Trauma Disorders",
+   "tag": [
+    "Tâm thần",
+    "Rối loạn stress sau sang chấn (PTSD)"
+   ]
+  },
+  "85": {
+   "ten": "OCD & Related Disorders",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "86": {
+   "ten": "Somatic Symptom Disorders",
+   "tag": [
+    "Tâm thần",
+    "Somatic symptom disorder"
+   ]
+  },
+  "87": {
+   "ten": "Sleep Psychiatry",
+   "tag": [
+    "Tâm thần",
+    "Rối loạn giấc ngủ"
+   ]
+  },
+  "88": {
+   "ten": "Addiction Medicine",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "89": {
+   "ten": "Child & Adolescent Psychiatry",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "90": {
+   "ten": "Psychopharmacology",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "91": {
+   "ten": "Psychotherapy",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "92": {
+   "ten": "Comorbid Psychiatry (Medicine)",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "93": {
+   "ten": "RLS",
+   "tag": [
+    "Thần kinh",
+    "RLS"
+   ]
+  },
+  "94": {
+   "ten": "Complex Regional Pain Syndrome (CRPS)",
+   "tag": [
+    "Khớp",
+    "Complex Regional Pain Syndrome (CRPS)"
+   ]
+  },
+  "95": {
+   "ten": "Frailty in Older Adults",
+   "tag": [
+    "Lão khoa",
+    "Frailty"
+   ]
+  },
+  "96": {
+   "ten": "Myofascial Pain Syndrome (Hội chứng đau vùng cơ mạn tính)",
+   "tag": [
+    "Khớp",
+    "Đau mạn tính"
+   ]
+  },
+  "97": {
+   "ten": "EBM · COPD: tiếp cận chẩn đoán – điều trị, và CHỨNG CỨ ĐIỀU TRỊ trên đối tượng đặc biệt · đa bệnh đồng mắc",
+   "tag": [
+    "Hô hấp",
+    "COPD"
+   ]
+  },
+  "98": {
+   "ten": "EBM · Cập nhật an toàn EMA PRAC (đăng 12 tháng 6 năm 2026): valproate (tín hiệu NDD ở con của nam giới),…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "99": {
+   "ten": "EBM · Cập nhật EBM tuần — nội tổng quát ngoại trú, người cao tuổi đa bệnh & an toàn thuốc",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "100": {
+   "ten": "EBM · Cập nhật EBM ngoại trú — an toàn thuốc & guideline mới (MHRA finasteride/co mạch mũi; Surviving Sep…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "101": {
+   "ten": "EBM · Cập nhật chứng cứ tuần W24: thận–thiếu máu (KDIGO 2026), hen (GINA 2026), COPD (GOLD 2026) cho thực…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "102": {
+   "ten": "EBM · Thuốc điều trị ĐTĐ típ 2 & béo phì — sóng dữ liệu pha 3 / NMA quanh ADA 2026: áp dụng đến đâu cho n…",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "Obesity"
+   ]
+  },
+  "103": {
+   "ten": "EBM · Tuần W27: định nghĩa-phân loại suy tim phổ quát 2026, chẩn đoán AUB/PMB, và GLP-1 đường uống cho gi…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "104": {
+   "ten": "EBM · 3 cập nhật ngoại trú W28: viêm túi thừa đại tràng (ACG) · viêm khớp dạng thấp (APLAR) · đa xơ cứng…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "105": {
+   "ten": "EBM · Tuần 7–13 tháng 7 năm 2026 có cập nhật chứng cứ/khuyến cáo nào đáng đổi thực hành ngoại trú không?",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "106": {
+   "ten": "EBM · Tuần W31: không có cập nhật MỚI (ban hành 20–27 tháng 7 năm 2026) đổi thực hành ngoại trú xác minh…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "107": {
+   "ten": "EBM · Hai guideline mới tuần W32 thay đổi gì cho quản lý ngoại trú bệnh nhân tâm thần (rối loạn lipid do…",
+   "tag": [
+    "Tâm thần"
+   ]
+  },
+  "108": {
+   "ten": "EBM · Cấp cứu ban đầu ngoại trú — nhận diện nhiễm khuẩn huyết, phản vệ và hồi sinh tim phổi cơ bản",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "109": {
+   "ten": "EBM · Người cao tuổi đa bệnh lý: tiếp cận CHẨN ĐOÁN và ĐIỀU TRỊ trong thực hành khám bệnh ngoại trú",
+   "tag": [
+    "Lão khoa",
+    "Multimorbidity"
+   ]
+  },
+  "110": {
+   "ten": "EBM · Bệnh mạch vành: chẩn đoán và điều trị theo chứng cứ mới nhất — kèm bệnh đồng mắc tim mạch·nội tiết…",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "111": {
+   "ten": "EBM · Bệnh thận mạn kèm các bệnh lí kết hợp thường gặp (đái tháo đường, tim mạch, rung nhĩ, thiếu máu, tă…",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "112": {
+   "ten": "EBM · Bệnh thận mạn (CKD) — chẩn đoán, phân tầng KDIGO và làm chậm tiến triển",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD",
+    "KDIGO"
+   ]
+  },
+  "113": {
+   "ten": "EBM · Thiếu máu trong bệnh thận mạn (CKD) — chẩn đoán, sắt, ESA, HIF-PHI và đích hemoglobin ở ngoại trú",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "114": {
+   "ten": "EBM · Biến chứng thần kinh ở bệnh nhân đái tháo đường — tầm soát, dự phòng và điều trị đau theo chứng cứ",
+   "tag": [
+    "Nội tiết",
+    "Thần kinh",
+    "Polyneuropathy"
+   ]
+  },
+  "115": {
+   "ten": "EBM · Viêm phổi cộng đồng (CAP) — Cập nhật ATS 2025",
+   "tag": [
+    "Hô hấp"
+   ]
+  },
+  "116": {
+   "ten": "EBM · Hội chứng Tim mạch–Thận–Chuyển hóa (CKM) — Phân giai đoạn AHA 2023 và điều trị đa trục 2024",
+   "tag": [
+    "Tim mạch",
+    "Thận tiết niệu",
+    "Nội tiết"
+   ]
+  },
+  "117": {
+   "ten": "EBM · Hô hấp ngoại trú — viêm phổi cộng đồng ở người lớn (ATS 2026) và hen phế quản (GINA 2026, thuốc cắt…",
+   "tag": [
+    "Hô hấp",
+    "Asthma"
+   ]
+  },
+  "118": {
+   "ten": "EBM · COPD kèm tim mạch – nội tiết: quản lý đồng thời thế nào?",
+   "tag": [
+    "Hô hấp",
+    "Tim mạch",
+    "COPD"
+   ]
+  },
+  "119": {
+   "ten": "EBM · COPD và COPD kèm bệnh tim mạch, nội tiết, thận, chuyển hóa: cập nhật 2026",
+   "tag": [
+    "Hô hấp",
+    "COPD"
+   ]
+  },
+  "120": {
+   "ten": "EBM · Bệnh thận mạn kèm suy tim (KDIGO 2026) và tăng acid uric máu/gút ở người bệnh thận mạn — cập nhật c…",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD",
+    "Heart Failure"
+   ]
+  },
+  "121": {
+   "ten": "EBM · Đái tháo đường type 2 & Béo phì — Kỷ nguyên GLP-1 (2025–2026)",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "Obesity"
+   ]
+  },
+  "122": {
+   "ten": "EBM · Hidradenitis suppurativa (viêm tuyến mồ hôi mủ) ở người lớn — nhận biết sớm & xử trí theo bậc tại c…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "123": {
+   "ten": "EBM · Đái tháo đường ở người lớn — tiếp cận chẩn đoán, điều trị và quản lý biến chứng tại phòng khám ngoạ…",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes"
+   ]
+  },
+  "124": {
+   "ten": "EBM · Tiếp cận chẩn đoán–điều trị đau đầu người lớn ngoại trú — chứng cứ mới nhất, độ tin cậy cao nhất",
+   "tag": [
+    "Thần kinh",
+    "Headache"
+   ]
+  },
+  "125": {
+   "ten": "EBM · Đau đầu người lớn ngoại trú — chẩn đoán & điều trị · bệnh lý kết hợp · đối tượng đặc biệt · tiên lư…",
+   "tag": [
+    "Thần kinh",
+    "Headache"
+   ]
+  },
+  "126": {
+   "ten": "EBM · Đau mạn tính ở người lớn — tiếp cận chẩn đoán, quản lý và điều trị tại phòng khám ngoại trú",
+   "tag": [
+    "Thần kinh",
+    "Đau mạn tính"
+   ]
+  },
+  "127": {
+   "ten": "EBM · Cập nhật chứng cứ — Hô hấp ngoại trú",
+   "tag": [
+    "Hô hấp"
+   ]
+  },
+  "128": {
+   "ten": "EBM · Hội chứng ruột kích thích (IBS) ở người lớn: chẩn đoán dương tính, chế độ ăn, thuốc và liệu pháp tâ…",
+   "tag": [
+    "Tiêu hoá",
+    "Irritable Bowel Syndrome"
+   ]
+  },
+  "129": {
+   "ten": "EBM · Bệnh lý huyết học ngoại trú — THIẾU MÁU (chẩn đoán, thiếu sắt, truyền máu, thalassemia, bệnh thận m…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "130": {
+   "ten": "EBM · Lão khoa — Kê đơn an toàn & Deprescribing (2023–2026)",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "131": {
+   "ten": "EBM · Bệnh lý mạch máu não & động mạch cảnh — phân tầng, dự phòng (tiên phát/thứ phát) & tái thông ĐM cảnh",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  },
+  "132": {
+   "ten": "EBM · Tiếp cận chẩn đoán-điều trị Bệnh lý Mạch máu não: khung tổng quát, kết hợp bệnh lý thường gặp, đối…",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  },
+  "133": {
+   "ten": "NC · Chăm sóc thận ĐTĐ típ 2 ngoại trú BVQY175 (btm-dtd2-ngoai-tru-BVQY175)",
+   "tag": [
+    "Nghiên cứu khoa học",
+    "CKD"
+   ]
+  },
+  "134": {
+   "ten": "EBM · Sốc phản vệ ở trẻ em — adrenaline tiêm bắp kịp thời + kế hoạch hành động cá thể hóa có giảm biến ch…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "135": {
+   "ten": "NC · hai-long-benh-nhan-C1a-BVQY175",
+   "tag": [
+    "Nghiên cứu khoa học"
+   ]
+  },
+  "136": {
+   "ten": "EBM · Viêm khớp dạng thấp (RA) — Điều trị theo EULAR 2025 update",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "137": {
+   "ten": "EBM · Viêm khớp dạng thấp (RA) & bệnh THẬN: an toàn thuốc và bảo vệ chức năng thận",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "138": {
+   "ten": "EBM · Viêm khớp dạng thấp kèm bệnh tim mạch – chuyển hoá – nội tiết: tầm soát & quản lý nguy cơ thế nào?",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "139": {
+   "ten": "EBM · Viêm khớp dạng thấp (RA) & nguy cơ TIM MẠCH: tầm soát và quản lý thế nào?",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "140": {
+   "ten": "EBM · Suy tuyến thượng thận: do thuốc · kèm bệnh lý phối hợp · trên đối tượng đặc biệt · tiên lượng",
+   "tag": [
+    "Nội tiết",
+    "Adrenal",
+    "Glucocorticoid-induced Adrenal Insufficiency"
+   ]
+  },
+  "141": {
+   "ten": "EBM · Suy tim: tiếp cận chẩn đoán–điều trị theo phân suất tống máu (EF) & quản lý bệnh đồng mắc",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "142": {
+   "ten": "EBM · Suy tim và bệnh lý nội tiết: cường giáp · suy giáp · cường aldosteron · suy thượng thận · u tủy thư…",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết",
+    "Heart Failure"
+   ]
+  },
+  "143": {
+   "ten": "EBM · Suy tim — chẩn đoán và điều trị; bệnh lý kết hợp; đối tượng đặc biệt; và tiên lượng (cập nhật ngày…",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "144": {
+   "ten": "EBM · Cập nhật chứng cứ — Thận",
+   "tag": [
+    "Thận tiết niệu"
+   ]
+  },
+  "145": {
+   "ten": "EBM · Tiên lượng suy tim: yếu tố quyết định, công cụ dự báo đã kiểm định, và điều gì thay đổi được tiên l…",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "146": {
+   "ten": "TT · Suy tim toàn diện — chẩn đoán, điều trị, tiên lượng (28/10/2026)",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "147": {
+   "ten": "EBM · Cập nhật chứng cứ — Tim mạch",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "148": {
+   "ten": "EBM · Tuân thủ điều trị ở bệnh mạn ngoại trú — sáng kiến nào cải thiện tuân thủ thuốc dựa trên bằng chứng?",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "149": {
+   "ten": "EBM · Viêm khớp dạng thấp và bệnh lý tâm thần kinh đi kèm: tiếp cận chẩn đoán và điều trị",
+   "tag": [
+    "Khớp",
+    "Tâm thần",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "150": {
+   "ten": "EBM · Viêm khớp dạng thấp (VKDT): tiếp cận chẩn đoán-điều trị, bệnh đồng mắc thường gặp và đối tượng đặc…",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "151": {
+   "ten": "EBM · Viêm đa dây thần kinh đối xứng ngọn chi mạn ở người lớn — tìm nguyên nhân & điều trị đau (ngoại trú)",
+   "tag": [
+    "Thần kinh",
+    "Polyneuropathy"
+   ]
+  },
+  "152": {
+   "ten": "EBM · Viêm dạ dày người lớn ngoại trú — tiếp cận chẩn đoán & điều trị theo TỪNG LOẠI · kết hợp bệnh lý th…",
+   "tag": [
+    "Tiêu hoá"
+   ]
+  },
+  "153": {
+   "ten": "EBM · Điều trị viêm gan B mạn — chỉ định, lựa chọn thuốc, ngừng thuốc, tầm soát HCC, và các đối tượng đặc…",
+   "tag": [
+    "Tiêu hoá",
+    "Chronic Hepatitis B"
+   ]
+  },
+  "154": {
+   "ten": "EBM · Viêm gan B mạn: chứng cứ mới nhất và độ tin cậy cao nhất · TIÊN LƯỢNG · kèm BỆNH LÝ PHỐI HỢP · trên…",
+   "tag": [
+    "Tiêu hoá",
+    "Chronic Hepatitis B"
+   ]
+  },
+  "155": {
+   "ten": "EBM · Viêm gan B — TIẾP CẬN CHẨN ĐOÁN trọn đường đi: ai cần xét nghiệm · đọc bộ ba huyết thanh học · phân…",
+   "tag": [
+    "Tiêu hoá",
+    "Chronic Hepatitis B"
+   ]
+  },
+  "156": {
+   "ten": "EBM · Viêm khớp dạng thấp — phác đồ điều trị DMARD phù hợp nhất hiện hành (treat-to-target; EULAR 2025 &…",
+   "tag": [
+    "Khớp",
+    "Rheumatoid Arthritis"
+   ]
+  },
+  "157": {
+   "ten": "EBM · COPD: tiếp cận đa chuyên khoa (hô hấp – tim mạch – ban đầu) để nhận diện và giảm NGUY CƠ TIM PHỔI —…",
+   "tag": [
+    "Hô hấp",
+    "Tim mạch",
+    "COPD"
+   ]
+  },
+  "158": {
+   "ten": "EBM · An toàn người bệnh ngoại trú — phòng ngừa sai sót chẩn đoán, kê đơn và theo dõi kết quả ở người cao…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "159": {
+   "ten": "EBM · Polyp dạ dày và polyp đại trực tràng — chẩn đoán, điều trị (cắt nội soi), theo dõi và đọc kết quả g…",
+   "tag": [
+    "Tiêu hoá"
+   ]
+  },
+  "160": {
+   "ten": "EBM · Tiếp cận chẩn đoán tổn thương dạng u (tổn thương khu trú) ở gan ở người lớn ngoại trú — lâm sàng, s…",
+   "tag": [
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "161": {
+   "ten": "EBM · Tăng huyết áp ngoại trú — chẩn đoán, phân tầng nguy cơ, đích huyết áp, khởi trị, THA kháng trị",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "162": {
+   "ten": "EBM · Polyp dạ dày — chẩn đoán, cắt nội soi, theo dõi và đọc kết quả giải phẫu bệnh (kèm niêm mạc nền: te…",
+   "tag": [
+    "Tiêu hoá"
+   ]
+  },
+  "163": {
+   "ten": "EBM · Polyp đại trực tràng — kỹ thuật cắt polyp, khoảng nội soi theo dõi, polyp ác tính và đọc kết quả gi…",
+   "tag": [
+    "Tiêu hoá"
+   ]
+  },
+  "164": {
+   "ten": "EBM · Orlistat (alli OTC 60 mg & Xenical kê đơn 120 mg) — nguy cơ tổn thương thận cấp & sỏi thận oxalat:…",
+   "tag": [
+    "Nội tiết",
+    "Obesity"
+   ]
+  },
+  "165": {
+   "ten": "EBM · Bệnh ĐM cảnh do xơ vữa: tầm soát, điều trị nội khoa tối ưu & tái thông để dự phòng đột quỵ",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  },
+  "166": {
+   "ten": "EBM · COPD — chẩn đoán & điều trị duy trì ngoại trú: cập nhật theo GOLD 2026 và các RCT mốc",
+   "tag": [
+    "Hô hấp",
+    "COPD"
+   ]
+  },
+  "167": {
+   "ten": "EBM · Cảnh báo an toàn thuốc MHRA ảnh hưởng kê đơn ngoại trú (04–10/2026) — finasteride/dutasteride, thuố…",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "168": {
+   "ten": "EBM · Tiếp cận chẩn đoán tổn thương dạng nốt và u ở phổi ở người lớn ngoại trú — lâm sàng, xét nghiệm (si…",
+   "tag": [
+    "Hô hấp",
+    "Lung cancer"
+   ]
+  },
+  "169": {
+   "ten": "EBM · Điều trị rung nhĩ ở người có stent động mạch vành: phác đồ kháng huyết khối theo từng giai đoạn (≤1…",
+   "tag": [
+    "Tim mạch",
+    "Arrhythmia",
+    "CAD"
+   ]
+  },
+  "171": {
+   "ten": "EBM · Bệnh lý mạch máu não — hợp nhất cho thực hành EBM: dự phòng · đột quỵ thiếu máu cấp · TIA · rung nh…",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  }
+ }
+}

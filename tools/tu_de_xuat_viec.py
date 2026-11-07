@@ -624,6 +624,41 @@ def giac_quan_tom_tat_word(hang_cho=None) -> list[tuple[int, str, str]]:
              "python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨")]
 
 
+def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
+    """GẮN TAG ENDNOTE (07/11/2026, bác sĩ: «mỗi lần đưa trích dẫn vào Endnote sẽ gắn Tab luôn cho tôi … gắn tab với những
+    chứng cứ có độ tin cậy cao và áp dụng cho thực hành lâm sàng»). Nguồn: `tools/gan_tag_endnote.py` (chỉ đọc sdb.eni + dashboard).
+    Bản ghi×tag còn thiếu / tag Áp dụng thừa / tag chưa tạo ⇒ 🛎 (phiên Claude làm qua giao diện — EndNote không có lệnh
+    AppleScript cho tag); nhóm chưa ánh xạ ⇒ 👤 (bác sĩ chọn tag). Không đo được ⇒ giác quan chết (⚪), KHÔNG phải «đủ tag».
+    Trả (ưu tiên, nhãn, mô tả, lệnh) như `giac_quan_endnote`."""
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        if ke_hoach is None:
+            sp = _ilu_mea.spec_from_file_location("_gte_tdxv", Path(__file__).resolve().parent / "gan_tag_endnote.py")
+            gt = _ilu_mea.module_from_spec(sp)
+            sp.loader.exec_module(gt)
+            ke_hoach = gt.ke_hoach_thu_vien
+        kh = ke_hoach()
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(["", "gắn tag EndNote"], f"lỗi {type(exc).__name__}")
+        return []
+    if not kh.get("do_duoc"):
+        _ghi_chet(["", "gắn tag EndNote"], str(kh.get("ly_do") or "không đo được")[:120])
+        return []
+    lenh = "python3 tools/gan_tag_endnote.py  # rồi --huong-dan (phiên Claude điều khiển toàn màn hình)"
+    ra = []
+    so = sum(len(v) for v in (kh.get("thieu") or {}).values())
+    if so or kh.get("thua_ap_dung"):
+        phan = ([f"{so} cặp bản ghi×tag chờ gắn ({len(kh['thieu'])} tag)"] if so else []) + (
+            [f"{len(kh['thua_ap_dung'])} bản ghi thừa tag Áp dụng – tin cậy cao"] if kh.get("thua_ap_dung") else [])
+        ra.append((2, "🛎", "EndNote: " + " · ".join(phan) + " — phiên Claude kéo-thả qua giao diện", lenh))
+    if kh.get("tag_chua_tao"):
+        ra.append((2, "🛎", f"EndNote: cần tạo tag {', '.join(kh['tag_chua_tao'])} (Tags › Create Tag…)", lenh))
+    if kh.get("nhom_chua_anh_xa"):
+        ra.append((3, "👤", f"EndNote: {len(kh['nhom_chua_anh_xa'])} nhóm chưa ánh xạ tag — bác sĩ chọn tag, ghi vào "
+                   "sync/endnote-tag-theo-nhom.json", lenh))
+    return ra
+
+
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
     """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
@@ -1390,6 +1425,9 @@ def main() -> int:
     # ⑦n TÓM TẮT CHỨNG CỨ WORD (19/10/2026): trích dẫn MỚI có PDF chờ phiên Claude tóm tắt — xem docstring.
     for uu, dong, lenh in giac_quan_tom_tat_word():
         de_xuat.append((uu, "🛎", dong, lenh))
+
+    # ⑦o GẮN TAG ENDNOTE (07/11/2026): cặp bản ghi×tag chờ phiên Claude kéo-thả — xem docstring.
+    de_xuat += giac_quan_gan_tag_endnote()
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
