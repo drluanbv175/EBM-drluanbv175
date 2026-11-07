@@ -1,0 +1,517 @@
+{
+ "_ghi_chu": "Tag của bản ghi LẺ (không thuộc nhóm nào) — khoá recNum của thư viện OneDrive/EndNote/My EndNote Library.enl. Phiên Claude phân loại theo TIÊU ĐỀ ngày 07/11/2026 theo lời bác sĩ «gắn tab tất cả cho phù hợp»: tag chuyên khoa rộng (Tim mạch, Nội tiết…) kèm tag chủ đề cụ thể đã có sẵn (CAD, CKD, Type 2 Diabetes…). 6020–6121: bản ghi bác sĩ tự nhập 11/2025; 7328–7331: câu hỏi AskTrip-AI (DOI zenodo); 7414–7473: trích dẫn đã chuyển sang loai_bo của đề tài btm-dtd2-ngoai-tru-BVQY175 (không gắn «Nghiên cứu khoa học»). Bác sĩ sửa «tag» là đổi tag cần có; tools/gan_tag_endnote.py đo thiếu theo tệp này.",
+ "ban_ghi": {
+  "6020": {
+   "tieu_de": "2023 AHA/ACC/ACCP/ASPC/NLA/PCNA Guideline for the Management of Patients With Chronic Coro",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6031": {
+   "tieu_de": "Rivaroxaban to reduce the risk of major cardiovascular events in patients with chronic cor",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6035": {
+   "tieu_de": "Predicting 28-day all-cause mortality in patients admitted to intensive care units with pr",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure"
+   ]
+  },
+  "6036": {
+   "tieu_de": "Efficacy and Safety of Finerenone Across the Ejection Fraction Spectrum in Heart Failure W",
+   "tag": [
+    "Tim mạch",
+    "Heart Failure",
+    "Finerenone"
+   ]
+  },
+  "6037": {
+   "tieu_de": "Coronary atherosclerosis in athletes: emerging concepts and preventive strategies",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6041": {
+   "tieu_de": "Association between metabolic score for insulin resistance (METS-IR) and hypertension: a c",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "6042": {
+   "tieu_de": "Probiotics: A Potential Strategy for Preventing and Managing Cardiovascular Disease",
+   "tag": [
+    "Tim mạch",
+    "Probiotics"
+   ]
+  },
+  "6043": {
+   "tieu_de": "Beneficial Effects of Omega-3 Fatty Acids on Obesity and Related Metabolic and Chronic Inf",
+   "tag": [
+    "Nội tiết",
+    "Obesity"
+   ]
+  },
+  "6045": {
+   "tieu_de": "The prognostic significance of stress hyperglycemia ratio in evaluating all-cause and card",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6046": {
+   "tieu_de": "10. Cardiovascular Disease and Risk Management: Standards of Care in Diabetes—2025",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết",
+    "Type 2 Diabetes"
+   ]
+  },
+  "6047": {
+   "tieu_de": "Salidroside promotes pro-angiogenesis and repair of blood brain barrier via Notch/ITGB1 si",
+   "tag": [
+    "Thần kinh"
+   ]
+  },
+  "6048": {
+   "tieu_de": "Wearable blood pressure sensors for cardiovascular monitoring and machine learning algorit",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "6051": {
+   "tieu_de": "Matrix Metalloproteinases: Pathophysiologic Implications and Potential Therapeutic Targets",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6056": {
+   "tieu_de": "Baroreflex Function in Cardiovascular Disease",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6058": {
+   "tieu_de": "Different types of cell death and their interactions in myocardial ischemia–reperfusion in",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6060": {
+   "tieu_de": "The spleen in ischaemic heart disease",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6062": {
+   "tieu_de": "Red Meat Consumption and its Relationship With Cardiovascular Health: A Review of Pathophy",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6063": {
+   "tieu_de": "Mechanisms of diabetic cardiomyopathy: Focus on inflammation",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6065": {
+   "tieu_de": "A novel wearable device integrating ECG and PCG for cardiac health monitoring",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6066": {
+   "tieu_de": "Oxidative stress and inflammation in the pathogenesis of neurological disorders: Mechanism",
+   "tag": [
+    "Thần kinh"
+   ]
+  },
+  "6067": {
+   "tieu_de": "Cardiovascular-Liver-Metabolic Health: Recommendations in Screening, Diagnosis, and Manage",
+   "tag": [
+    "Tim mạch",
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "6069": {
+   "tieu_de": "Glycated Hemoglobin and Cardiovascular Disease in Patients Without Diabetes",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6070": {
+   "tieu_de": "Roadmap for alleviating the manifestations of ageing in the cardiovascular system",
+   "tag": [
+    "Tim mạch",
+    "Lão khoa"
+   ]
+  },
+  "6071": {
+   "tieu_de": "Cardiovascular Disease in Anabolic Androgenic Steroid Users",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6072": {
+   "tieu_de": "Effects of the Mediterranean Diet on the Components of Metabolic Syndrome Concerning the C",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6073": {
+   "tieu_de": "An overview of obesity‐related complications: The epidemiological evidence linking body we",
+   "tag": [
+    "Nội tiết",
+    "Obesity"
+   ]
+  },
+  "6075": {
+   "tieu_de": "Cardiovascular disease and metabolic dysfunction-associated steatotic liver disease: patho",
+   "tag": [
+    "Tim mạch",
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "6076": {
+   "tieu_de": "Steatotic Liver Disease: Pathophysiology and Emerging Pharmacotherapies",
+   "tag": [
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "6077": {
+   "tieu_de": "2025 Heart Disease and Stroke Statistics: A Report of US and Global Data From the American",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6078": {
+   "tieu_de": "A Modeling Study for Hip Fracture Rates in Romania",
+   "tag": [
+    "Nội tiết",
+    "Osteoporosis"
+   ]
+  },
+  "6079": {
+   "tieu_de": "Association between triglyceride-glucose (TyG) related indices and cardiovascular diseases",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6080": {
+   "tieu_de": "Associations of the hs-CRP/HDL-C ratio with cardiovascular disease among US adults: Eviden",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6081": {
+   "tieu_de": "Cardiovascular therapeutic targets of sodium-glucose co-transporter 2 (SGLT2) inhibitors b",
+   "tag": [
+    "Tim mạch",
+    "SGLT2i"
+   ]
+  },
+  "6082": {
+   "tieu_de": "From physiology to pathology: Emerging roles of GPER in cardiovascular disease",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6083": {
+   "tieu_de": "Optimal dietary patterns for healthy aging",
+   "tag": [
+    "Lão khoa"
+   ]
+  },
+  "6086": {
+   "tieu_de": "Thyroid hormone receptor-β analogues for the treatment of metabolic dysfunction-associated",
+   "tag": [
+    "Tiêu hoá",
+    "Liver Diseases"
+   ]
+  },
+  "6087": {
+   "tieu_de": "A Proteomics-Based Approach for Prediction of Different Cardiovascular Diseases and Dement",
+   "tag": [
+    "Tim mạch",
+    "Thần kinh"
+   ]
+  },
+  "6088": {
+   "tieu_de": "Association of body roundness index with cardiovascular disease in patients with cardiomet",
+   "tag": [
+    "Tim mạch",
+    "Nội tiết"
+   ]
+  },
+  "6089": {
+   "tieu_de": "The roles of lncMALAT1 in coronary artery disease regulation and therapeutic perspective: ",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6093": {
+   "tieu_de": "State-of-the-Art Review: Percutaneous Coronary Intervention in Acute Coronary Syndrome",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6099": {
+   "tieu_de": "Expert perspectives on the intravascular imaging guidance of PCI, diagnosis and treatment ",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6103": {
+   "tieu_de": "Optimal duration of dual antiplatelet therapy for minor stroke within 72 hours of symptom ",
+   "tag": [
+    "Thần kinh",
+    "Stroke"
+   ]
+  },
+  "6105": {
+   "tieu_de": "Advances in Clinical Cardiology 2024: A Summary of Key Clinical Trials",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6106": {
+   "tieu_de": "Predicting Acute Myocardial Infarction in Patients with Critical Coronary Artery Narrowing",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6107": {
+   "tieu_de": "Highlights of Cardiovascular Disease Prevention Studies Presented at the 2025 American Col",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6108": {
+   "tieu_de": "Hypertension research 2024 update and perspectives: blood pressure management",
+   "tag": [
+    "Tim mạch",
+    "Hypertension"
+   ]
+  },
+  "6109": {
+   "tieu_de": "Highlights of Cardiovascular Disease Prevention Studies Presented at the 2024 American Hea",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6113": {
+   "tieu_de": "Cardiovascular Research Technologies 2025: Beyond the Guidelines: DAPT selection and durat",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6115": {
+   "tieu_de": "Coronary Microvascular Dysfunction: Bridging the Diagnosis–Treatment Divide in Women with ",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6118": {
+   "tieu_de": "Cardiac Surgery 2024 Reviewed",
+   "tag": [
+    "Tim mạch"
+   ]
+  },
+  "6119": {
+   "tieu_de": "Key advances in cardiac computed tomography: A review of the most relevant studies publish",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "6121": {
+   "tieu_de": "Aspirin-free strategies after percutaneous coronary intervention: Old habits, consolidated",
+   "tag": [
+    "Tim mạch",
+    "CAD"
+   ]
+  },
+  "7328": {
+   "tieu_de": "What are the key recommendations in the KDIGO 2025 guidelines for managing nephrotic syndr",
+   "tag": [
+    "Thận tiết niệu",
+    "KDIGO"
+   ]
+  },
+  "7329": {
+   "tieu_de": "What are the recommended estrogen-based treatments for preventing recurrent urinary tract ",
+   "tag": [
+    "Thận tiết niệu",
+    "Urology"
+   ]
+  },
+  "7330": {
+   "tieu_de": "What do the KDIGO guidelines recommend for anemia management?",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD",
+    "KDIGO"
+   ]
+  },
+  "7331": {
+   "tieu_de": "What are the recommended guidelines for restarting anticoagulation therapy in patients wit",
+   "tag": [
+    "Nội ngoại chung"
+   ]
+  },
+  "7414": {
+   "tieu_de": "A cross-sectional study of prescribing rates for SGLT2 inhibitors and GLP-1 receptor agoni",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "SGLT2i"
+   ]
+  },
+  "7415": {
+   "tieu_de": "[Management of type 2 diabetes mellitus in frail patients from the Perspective of Real-Wor",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "Lão khoa"
+   ]
+  },
+  "7417": {
+   "tieu_de": "Association of Race and Ethnicity With Prescription of SGLT2 Inhibitors and GLP1 Receptor ",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "SGLT2i"
+   ]
+  },
+  "7424": {
+   "tieu_de": "Impact of American Diabetes Association 2022 Guidelines on Prescribing Rates of Sodium-Glu",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "SGLT2i"
+   ]
+  },
+  "7429": {
+   "tieu_de": "SGLT2 Inhibitor and GLP-1 Receptor Agonist Prescriptions in Newly Diagnosed Type 2 Diabete",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "SGLT2i"
+   ]
+  },
+  "7433": {
+   "tieu_de": "Prescribing Patterns of SGLT2 Inhibitors and GLP-1 Receptor Agonists in Patients With Type",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "SGLT2i"
+   ]
+  },
+  "7435": {
+   "tieu_de": "Multidisciplinary proactive e-consults to improve guideline-directed medical therapies for",
+   "tag": [
+    "Nội tiết",
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7440": {
+   "tieu_de": "The SGLT2 inhibitor gap: why are we missing opportunities in primary care?",
+   "tag": [
+    "Nội tiết",
+    "SGLT2i"
+   ]
+  },
+  "7442": {
+   "tieu_de": "[Discrepancies in the perception of chronic kidney disease detection and proper management",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7443": {
+   "tieu_de": "Audit and Feedback Supporting New Guideline Implementation in Chronic Kidney Disease.",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7447": {
+   "tieu_de": "Early Identification and Management of Chronic Kidney Disease: A Narrative Review of the C",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7449": {
+   "tieu_de": "\"Positive Kidney Health\": Implementation and design of a pharmacist-led intervention for p",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7451": {
+   "tieu_de": "From guidelines to practice: general practitioners' consensus on indicators for managing s",
+   "tag": [
+    "Lão khoa",
+    "Multimorbidity"
+   ]
+  },
+  "7455": {
+   "tieu_de": "Large-scale AI analysis reveals missed opportunities in albuminuria testing and disease-mo",
+   "tag": [
+    "Thận tiết niệu",
+    "CKD"
+   ]
+  },
+  "7457": {
+   "tieu_de": "Association Between Serum Homocysteine and Chronic Kidney Disease Severity in Vietnamese O",
+   "tag": [
+    "Thận tiết niệu",
+    "Nội tiết",
+    "CKD",
+    "Type 2 Diabetes"
+   ]
+  },
+  "7471": {
+   "tieu_de": "KHẢO SÁT TÌNH HÌNH SỬ DỤNG THUỐC ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG TÝP 2 Ở BỆNH NHÂN CAO TUỔI NGOẠI ",
+   "tag": [
+    "Nội tiết",
+    "Type 2 Diabetes",
+    "Lão khoa"
+   ]
+  },
+  "7473": {
+   "tieu_de": "Mối liên quan giữa một số yếu tố nguy cơ tim mạch với  tổn thương thận theo tỷ lệ albumin/",
+   "tag": [
+    "Thận tiết niệu",
+    "Nội tiết",
+    "CKD",
+    "Type 2 Diabetes"
+   ]
+  }
+ }
+}

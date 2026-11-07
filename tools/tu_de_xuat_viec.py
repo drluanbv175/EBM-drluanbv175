@@ -627,8 +627,8 @@ def giac_quan_tom_tat_word(hang_cho=None) -> list[tuple[int, str, str]]:
 def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
     """GẮN TAG ENDNOTE (07/11/2026, bác sĩ: «mỗi lần đưa trích dẫn vào Endnote sẽ gắn Tab luôn cho tôi … gắn tab với những
     chứng cứ có độ tin cậy cao và áp dụng cho thực hành lâm sàng»). Nguồn: `tools/gan_tag_endnote.py` (chỉ đọc sdb.eni + dashboard).
-    Bản ghi×tag còn thiếu / tag Áp dụng thừa / tag chưa tạo ⇒ 🛎 (phiên Claude làm qua giao diện — EndNote không có lệnh
-    AppleScript cho tag); nhóm chưa ánh xạ ⇒ 👤 (bác sĩ chọn tag). Không đo được ⇒ giác quan chết (⚪), KHÔNG phải «đủ tag».
+    Bản ghi×tag còn thiếu / tag Áp dụng thừa / tag chưa tạo / bản ghi chưa phân loại (không nhóm, không tag) ⇒ 🛎 (phiên
+    Claude làm qua giao diện — EndNote không có lệnh AppleScript cho tag); nhóm chưa ánh xạ, tag trùng tên ⇒ 👤 (bác sĩ quyết). Không đo được ⇒ giác quan chết (⚪), KHÔNG phải «đủ tag».
     Trả (ưu tiên, nhãn, mô tả, lệnh) như `giac_quan_endnote`."""
     _SO_GIAC_QUAN["chay"] += 1
     try:
@@ -644,7 +644,7 @@ def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
     if not kh.get("do_duoc"):
         _ghi_chet(["", "gắn tag EndNote"], str(kh.get("ly_do") or "không đo được")[:120])
         return []
-    lenh = "python3 tools/gan_tag_endnote.py  # rồi --huong-dan (phiên Claude điều khiển toàn màn hình)"
+    lenh = "python3 tools/gan_tag_endnote.py  # rồi --huong-dan (phiên Claude kéo-thả, chế độ nền)"
     ra = []
     so = sum(len(v) for v in (kh.get("thieu") or {}).values())
     if so or kh.get("thua_ap_dung"):
@@ -656,6 +656,11 @@ def giac_quan_gan_tag_endnote(ke_hoach=None) -> list[tuple[int, str, str, str]]:
     if kh.get("nhom_chua_anh_xa"):
         ra.append((3, "👤", f"EndNote: {len(kh['nhom_chua_anh_xa'])} nhóm chưa ánh xạ tag — bác sĩ chọn tag, ghi vào "
                    "sync/endnote-tag-theo-nhom.json", lenh))
+    if kh.get("chua_phan_loai"):
+        ra.append((2, "🛎", f"EndNote: {len(kh['chua_phan_loai'])} bản ghi chưa phân loại (không nhóm, không tag) — đưa về "
+                   "nhóm chủ đề hoặc ghi tag vào sync/endnote-tag-ban-ghi-le.json rồi kéo", lenh))
+    if kh.get("tag_trung"):
+        ra.append((3, "👤", f"EndNote: tag trùng tên {', '.join(kh['tag_trung'])} — bác sĩ quyết gộp", lenh))
     return ra
 
 

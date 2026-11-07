@@ -13,7 +13,16 @@ Ba nguồn tag cho mỗi bản ghi (ngoài thùng rác):
   2. Tag theo nhóm đã ánh xạ ở `sync/endnote-tag-theo-nhom.json` (khoá group_id; bác sĩ duyệt cách làm 07/11/2026).
   3. Nhóm mới chưa ánh xạ: «NC · …» ⇒ «Nghiên cứu khoa học»; «EBM · …»/«TT · …» ⇒ tag chuyên khoa suy từ câu hỏi bằng ĐÚNG
      luật chuyên khoa của Antifacts (`build_antifacts.specialty_of_dashboard`); chuyên khoa không có tag riêng ⇒ «Nội ngoại chung».
-     Nhóm khác (nhóm bác sĩ tự tạo) ⇒ báo «chưa ánh xạ», KHÔNG đoán.
+     Nhóm khác (nhóm bác sĩ tự tạo) ⇒ báo «chưa ánh xạ», KHÔNG đoán. Nhóm LÀM VIỆC tên bắt đầu bằng «_» (agent tạo tạm: chờ
+     thùng rác, cần toàn văn…) ⇒ không đòi tag và không tính là chỗ phân loại.
+  4. Bản ghi LẺ (không thuộc nhóm nào) đã phân loại theo tiêu đề ở `sync/endnote-tag-ban-ghi-le.json` (khoá recNum; phiên
+     Claude 07/11/2026 làm theo lời bác sĩ «gắn tab tất cả cho phù hợp» — bác sĩ sửa tệp là đổi tag). Ghi lại để tag lẻ đã
+     gắn cũng được ĐO lại: tag mất (đồng bộ online, khôi phục từ thùng rác…) ⇒ hiện thành thiếu, không lặng lẽ biến mất.
+
+Bản ghi CHƯA PHÂN LOẠI = không thuộc nhóm nào, không có trong tệp bản ghi lẻ và không mang tag nào ngoài tag Áp dụng ⇒ 🛎
+(phiên Claude đọc tiêu đề, đề xuất tag, ghi vào tệp bản ghi lẻ rồi kéo; bản ghi của một chủ đề dashboard thì đưa về nhóm của
+chủ đề). Đo 07/11/2026: 11 bản ghi chủ đề Chăm sóc giảm nhẹ mất cả nhóm lẫn tag trong 20 phút mà không lệnh nào báo.
+Tag trùng tên (hai tag cùng tên) ⇒ 👤 bác sĩ quyết gộp (đo 07/11: «Frailty» ×2).
 
 Vì sao không tự gắn: EndNote không có lệnh AppleScript nào cho tag (đo EndNote.sdef 07/11/2026) và luật dự án cấm ghi thẳng
 `sdb.eni`. Công cụ chỉ đọc `sdb.eni` (chế độ chỉ-đọc), tính cặp bản ghi×tag còn thiếu, và `--hien "<tag>"` cho EndNote CHỈ hiện
@@ -23,12 +32,14 @@ xuất gỡ tag khác — bác sĩ có thể tự gắn.
 
 Lệnh:
   python3 tools/gan_tag_endnote.py                  # kế hoạch: thiếu theo từng tag + thừa tag Áp dụng + nhóm chưa ánh xạ
+                                                    #   + bản ghi chưa phân loại + tag trùng tên
   python3 tools/gan_tag_endnote.py --hien "<tag>"   # EndNote chỉ hiện + tô sáng các bản ghi đang thiếu tag đó
-  python3 tools/gan_tag_endnote.py --huong-dan      # quy trình kéo-thả cho phiên Claude (điều khiển toàn màn hình)
+  python3 tools/gan_tag_endnote.py --huong-dan      # quy trình kéo-thả cho phiên Claude (chế độ nền app_drag)
   python3 tools/gan_tag_endnote.py --giu-khoa [PHÚT] # CHẠY NỀN: giữ khoá ghi EndNote suốt phiên kéo-thả (mặc định 30, tối đa 60)
   python3 tools/gan_tag_endnote.py --nha-khoa       # nhả khoá phiên giao diện
   python3 tools/gan_tag_endnote.py --json
-Mã thoát: 0 đủ tag · 1 còn việc (thiếu/thừa/tag chưa tạo/nhóm chưa ánh xạ) · 2 không đo được · 3 tham số sai.
+Mã thoát: 0 đủ tag · 1 còn việc (thiếu/thừa/tag chưa tạo/nhóm chưa ánh xạ/chưa phân loại/tag trùng tên) · 2 không đo được
+· 3 tham số sai.
 
 Khoá phiên giao diện (07/11/2026): khoá ghi `khoa_ghi_endnote` giữ theo TIẾN TRÌNH và nhả khi tiến trình thoát; phiên kéo-thả
 gồm nhiều lượt công cụ ⇒ giữa hai lượt (rảnh ≥ 20 giây) phiên khác ghi chen được — đo 07/11 một lượt nhập bản ghi lúc đó làm
@@ -52,6 +63,7 @@ from pathlib import Path
 
 GOC = Path(__file__).resolve().parent.parent
 TEP_ANH_XA = GOC / "sync" / "endnote-tag-theo-nhom.json"
+TEP_TAG_LE = GOC / "sync" / "endnote-tag-ban-ghi-le.json"
 
 TAG_AP_DUNG = "★ Áp dụng – tin cậy cao"
 TAG_NGHIEN_CUU = "Nghiên cứu khoa học"
@@ -69,6 +81,12 @@ CHUYEN_KHOA_TAG = {
 }
 TIEN_TO_NHOM_CHU_DE = ("EBM ·", "TT ·")
 TIEN_TO_NHOM_NGHIEN_CUU = ("NC ·",)
+# Nhóm LÀM VIỆC tạm («_Cho thung rac …», «_Can toan van … - Find Full Text» do agent tạo 06–07/11/2026): không phải phân loại
+# ⇒ không đòi tag, và thuộc nhóm này KHÔNG tính là «đã phân loại». Ánh xạ khai rõ group_id vẫn thắng.
+TIEN_TO_NHOM_LAM_VIEC = ("_",)
+# Nhóm làm việc chờ bác sĩ chuyển thùng rác (vd «_Cho thung rac 20261106 trung va khong phai chung cu») ⇒ thành viên CHỈ ở đó
+# không bị báo «chưa phân loại» (sắp bỏ, gắn tag là thừa). Nhóm làm việc khác ⇒ thành viên chỉ ở đó VẪN là chưa phân loại.
+NHOM_CHO_THUNG_RAC = re.compile(r"thung\s*rac|thùng\s*rác|trash", re.I)
 
 MA_OK, MA_CON_VIEC, MA_KHONG_DO, MA_THAM_SO = 0, 1, 2, 3
 PHUT_GIU_MAC_DINH, PHUT_GIU_TOI_DA = 30, 60
@@ -77,7 +95,7 @@ NHIP_LAM_MOI = 30  # giây — làm mới luc_epoch của khoá (HAN_KHOA 15 ph�
 # (đo thật 07/11/2026: SIGTERM nhận lúc đang ngủ, khoá chỉ nhả khi hết giấc).
 NHIP_NGU = 1.0
 
-HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude, xin điều khiển TOÀN MÀN HÌNH — chế độ nền không bấm được Select All):
+HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude; ƯU TIÊN chế độ NỀN app_* — không cần điều khiển toàn màn hình):
   0. CHẠY NỀN `python3 tools/gan_tag_endnote.py --giu-khoa 30` (Bash run_in_background) và đợi dòng «✓ đang giữ khoá» — mọi
      lệnh ghi EndNote qua EndNoteMac của mọi phiên (nhập, gắn PDF, ghi trường, show/highlight) chờ rồi bỏ lượt tới khi nhả.
      Vẫn ListAgents và nhắn phiên khác TẠM DỪNG (agent tự viết AppleScript riêng không đi qua khoá) — đo 07/11/2026: một lượt
@@ -87,15 +105,21 @@ HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude, xin điều 
   2. Với TỪNG tag còn thiếu — mỗi tag một lượt `--hien` riêng, KHÔNG kéo tag thứ hai từ vùng chọn cũ: sau mỗi lần thả EndNote
      có thể trở về danh sách đầy đủ, lần kéo sau chỉ mang dòng dưới con trỏ ⇒ gắn nhầm (đo 07/11: bản ghi 6412 nhận nhầm
      «Tiêu hoá»). `python3 tools/gan_tag_endnote.py --hien "<tag>"` ⇒ EndNote chỉ hiện và tô sáng các bản ghi đó (tiêu đề khung
-     ghi đúng «N References») → bấm dòng đầu của danh sách (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái
-     (góc dưới) → kéo từ một dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
+     ghi đúng «N References»; các dòng tô sáng CHÍNH LÀ vùng chọn).
+     CHẾ ĐỘ NỀN (đo 07/11/2026: 22 tag · 153 cặp, 43 bản ghi một lần kéo, 0 nhầm): KHÔNG bấm vào danh sách (bấm làm mất vùng chọn)
+     — app_drag với path 5–7 điểm từ MỘT dòng đang tô sáng tới dòng tag ở thanh bên. Tìm dòng tag: app_scroll thanh bên
+     (KHÔNG gõ ô lọc bằng app_type — rơi vào gõ-để-chọn của danh sách) rồi app_zoom đọc toạ độ hàng.
+     Toàn màn hình (dự phòng): bấm dòng đầu (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái (góc dưới) → kéo
+     từ một dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
   3. Chạy lại `python3 tools/gan_tag_endnote.py` (đọc sdb.eni, sau vài giây) tới khi tag đó hết thiếu — số đếm cạnh tag trên
      giao diện làm mới chậm một nhịp, KHÔNG dùng làm căn cứ. Số đếm tăng lệch số bản ghi (vd +1 thay vì +36) ⇒ đã gắn nhầm
      dòng khác: tìm bản ghi mới nhận tag mà không thuộc kế hoạch rồi gỡ (bước 4).
   4. Thừa tag Áp dụng / tag gắn nhầm ⇒ chuột phải bản ghi › Manage Tags › bấm × trên chip tag › OK (menu Tags/References không
      có lệnh gỡ).
-  5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình, `python3 tools/gan_tag_endnote.py --nha-khoa`, nhắn các phiên đã nhờ
-     tạm dừng."""
+  5. Xong: xoá ô lọc, nhả điều khiển toàn màn hình / app_release, `python3 tools/gan_tag_endnote.py --nha-khoa`, nhắn các
+     phiên đã nhờ tạm dừng.
+  Bản ghi CHƯA PHÂN LOẠI (kế hoạch in 🛎): thuộc một chủ đề dashboard (khoá «EBM: <chủ đề>» ở Keywords) ⇒ đưa về nhóm của chủ
+  đề (nhóm có tag riêng); bản ghi lẻ thật ⇒ đọc tiêu đề, ghi tag vào sync/endnote-tag-ban-ghi-le.json (PR) rồi kéo như bước 2."""
 
 
 def _nap(ten: str, tep: str):
@@ -138,21 +162,41 @@ def tag_cua_nhom(group_id: int, ten: str, anh_xa: dict[str, dict], chuyen_khoa: 
 
 def lap_ke_hoach(*, ban_ghi: dict[int, dict], nhom: list[dict], tag_hien_co: dict[int, set[str]], ten_tag: set[str],
                  anh_xa: dict[str, dict], chuyen_khoa: Callable[[str], str],
-                 ngu_canh_cua: Callable[[str | None, str | None], list[dict]]) -> dict:
+                 ngu_canh_cua: Callable[[str | None, str | None], list[dict]],
+                 tag_le: dict[str, dict] | None = None) -> dict:
     """Kế hoạch thuần: {thieu: {tag: [rec]}, thua_ap_dung: [rec], tag_chua_tao: [tag], nhom_chua_anh_xa: [...],
-    dat_ap_dung: n, tong_ban_ghi: n}. `ban_ghi` = {rec: {pmid, doi}} ngoài thùng rác."""
+    chua_phan_loai: [rec], dat_ap_dung: n, tong_ban_ghi: n}. `ban_ghi` = {rec: {pmid, doi}} ngoài thùng rác; `tag_le` =
+    {"<recNum>": {"tag": [...]}} của bản ghi lẻ đã phân loại (tệp `TEP_TAG_LE`)."""
     can: dict[int, set[str]] = {}
     chua_anh_xa = []
+    trong_nhom: set[int] = set()
+    cho_thung_rac: set[int] = set()
     for n in nhom:
         rec = [r for r in (n.get("rec") or []) if r in ban_ghi]
+        ten_n = n.get("ten") or ""
+        if rec and ten_n.startswith(TIEN_TO_NHOM_LAM_VIEC) and str(n["group_id"]) not in anh_xa:
+            # chỉ bỏ qua CHÍNH nhóm làm việc: bản ghi còn ở nhóm chủ đề khác vẫn nhận tag của nhóm đó
+            if NHOM_CHO_THUNG_RAC.search(ten_n):
+                cho_thung_rac.update(rec)
+            continue
         if not rec:
             continue
+        trong_nhom.update(rec)
         tags = tag_cua_nhom(n["group_id"], n.get("ten") or "", anh_xa, chuyen_khoa)
         if tags is None:
             chua_anh_xa.append({"group_id": n["group_id"], "ten": n.get("ten") or "", "so_ban_ghi": len(rec)})
             continue
         for r in rec:
             can.setdefault(r, set()).update(tags)
+    da_phan_loai_le: set[int] = set()
+    for k, v in (tag_le or {}).items():
+        r = int(k)
+        if r in ban_ghi:
+            da_phan_loai_le.add(r)
+            can.setdefault(r, set()).update(str(t) for t in v.get("tag") or [])
+    # Không nhóm, không trong tệp bản ghi lẻ, không tag nào ngoài tag Áp dụng (tag Áp dụng không nói chuyên khoa).
+    chua_phan_loai = sorted(r for r in ban_ghi if r not in trong_nhom and r not in da_phan_loai_le
+                            and r not in cho_thung_rac and not (tag_hien_co.get(r, set()) - {TAG_AP_DUNG}))
     dat = set()
     for r, bg in ban_ghi.items():
         if dat_ap_dung_tin_cay(ngu_canh_cua(bg.get("pmid"), bg.get("doi"))):
@@ -167,11 +211,12 @@ def lap_ke_hoach(*, ban_ghi: dict[int, dict], nhom: list[dict], tag_hien_co: dic
     return {"thieu": {t: sorted(v) for t, v in sorted(thieu.items(), key=lambda kv: (kv[0] != TAG_AP_DUNG, kv[0]))},
             "thua_ap_dung": thua, "tag_chua_tao": sorted(can_dung - ten_tag),
             "nhom_chua_anh_xa": sorted(chua_anh_xa, key=lambda x: -x["so_ban_ghi"]),
-            "dat_ap_dung": len(dat), "tong_ban_ghi": len(ban_ghi)}
+            "chua_phan_loai": chua_phan_loai, "dat_ap_dung": len(dat), "tong_ban_ghi": len(ban_ghi)}
 
 
 def con_viec(kh: dict) -> bool:
-    return bool(kh.get("thieu") or kh.get("thua_ap_dung") or kh.get("tag_chua_tao") or kh.get("nhom_chua_anh_xa"))
+    return bool(kh.get("thieu") or kh.get("thua_ap_dung") or kh.get("tag_chua_tao") or kh.get("nhom_chua_anh_xa")
+                or kh.get("chua_phan_loai") or kh.get("tag_trung"))
 
 
 # ───────────────────────── đọc thư viện thật (chỉ đọc) ─────────────────────────
@@ -185,6 +230,34 @@ def doc_anh_xa(tep: Path = TEP_ANH_XA) -> dict[str, dict]:
     if not isinstance(nhom, dict):
         raise ValueError(f"{tep.name}: thiếu khoá «nhom» dạng object")
     return nhom
+
+
+def doc_tag_le(tep: Path = TEP_TAG_LE) -> dict[str, dict]:
+    """Bản ghi lẻ đã phân loại {"<recNum>": {"tieu_de", "tag": [...]}}. Tệp vắng ⇒ {}; tệp hỏng / khoá không phải số / tag
+    rỗng ⇒ ValueError — không im lặng bỏ qua (một mục hỏng là một bản ghi lặng lẽ thôi được đo)."""
+    if not tep.is_file():
+        return {}
+    d = json.loads(tep.read_text(encoding="utf-8"))
+    bg = d.get("ban_ghi") if isinstance(d, dict) else None
+    if not isinstance(bg, dict):
+        raise ValueError(f"{tep.name}: thiếu khoá «ban_ghi» dạng object")
+    for k, v in bg.items():
+        tags = v.get("tag") if isinstance(v, dict) else None
+        if not re.fullmatch(r"\d+", str(k)) or not isinstance(tags, list) or not tags \
+                or not all(isinstance(t, str) and t.strip() for t in tags):
+            raise ValueError(f"{tep.name}: mục «{k}» cần khoá recNum dạng số và «tag» là danh sách tên tag không rỗng")
+    return bg
+
+
+def tag_trung_ten(kn: sqlite3.Connection) -> list[str]:
+    """Tên tag xuất hiện ở ≥ 2 tag khác nhau (đo 07/11/2026: «Frailty» ×2 — bản ghi chia ở hai tag cùng tên)."""
+    dem: dict[str, int] = {}
+    for (spec,) in kn.execute("select spec from tag_groups"):
+        s = spec.decode("utf-8", "replace") if isinstance(spec, bytes) else str(spec or "")
+        m = re.search(r"<name>(.*?)</name>", s, re.S)
+        if m:
+            dem[m.group(1)] = dem.get(m.group(1), 0) + 1
+    return sorted(t for t, n in dem.items() if n > 1)
 
 
 def doc_tag(kn: sqlite3.Connection) -> tuple[set[str], dict[int, set[str]]]:
@@ -207,9 +280,11 @@ def doc_tag(kn: sqlite3.Connection) -> tuple[set[str], dict[int, set[str]]]:
     return set(ten.values()), theo_rec
 
 
-def ke_hoach_thu_vien(thu_vien: Path | None = None, *, anh_xa_tep: Path = TEP_ANH_XA) -> dict:
+def ke_hoach_thu_vien(thu_vien: Path | None = None, *, anh_xa_tep: Path = TEP_ANH_XA, tag_le_tep: Path = TEP_TAG_LE) -> dict:
     """Kế hoạch cho thư viện thật. Không đo được ⇒ {"do_duoc": False, "ly_do": …} — không bao giờ coi là «đủ tag»."""
     try:
+        # Tệp cấu hình đọc TRƯỚC thư viện: tệp hỏng phải báo đúng tên lỗi cả trên máy chưa có EndNote.
+        anh_xa, tag_le = doc_anh_xa(anh_xa_tep), doc_tag_le(tag_le_tep)
         sk = _nap("_sk_gte", "endnote_suc_khoe.py")
         tv = Path(thu_vien) if thu_vien else sk.thu_vien_cau_hinh()
         if not tv or not Path(tv).is_file():
@@ -225,18 +300,19 @@ def ke_hoach_thu_vien(thu_vien: Path | None = None, *, anh_xa_tep: Path = TEP_AN
                 pmid = acc if acc and re.fullmatch(r"\d{1,9}", str(acc).strip()) else None
                 ban_ghi[int(rec)] = {"pmid": pmid, "doi": nec.chuan_doi(erd) if erd else None}
             ten_tag, tag_hien_co = doc_tag(kn)
+            trung = tag_trung_ten(kn)
         finally:
             kn.close()
         nhom = sk.doc_nhom(Path(tv))
         ds = ttw.ngu_canh_dashboard()
         if not ds:
             return {"do_duoc": False, "ly_do": "không thấy dashboard nào (EBM-Dashboards vắng) — không xét được tag Áp dụng"}
-        kh = lap_ke_hoach(ban_ghi=ban_ghi, nhom=nhom, tag_hien_co=tag_hien_co, ten_tag=ten_tag, anh_xa=doc_anh_xa(anh_xa_tep),
+        kh = lap_ke_hoach(ban_ghi=ban_ghi, nhom=nhom, tag_hien_co=tag_hien_co, ten_tag=ten_tag, anh_xa=anh_xa,
                           chuyen_khoa=lambda q: ba.specialty_of_dashboard("", q),
-                          ngu_canh_cua=lambda p, d: ttw._ngu_canh_cua(ds, p, d))
+                          ngu_canh_cua=lambda p, d: ttw._ngu_canh_cua(ds, p, d), tag_le=tag_le)
     except (OSError, sqlite3.Error, ValueError, UnicodeDecodeError) as e:
         return {"do_duoc": False, "ly_do": f"{type(e).__name__}: {str(e)[:200]}"}
-    kh.update(do_duoc=True, thu_vien=str(tv))
+    kh.update(do_duoc=True, thu_vien=str(tv), tag_trung=trung)
     return kh
 
 
@@ -261,6 +337,10 @@ def tom_tat_mot_dong(kh: dict) -> str:
         phan.append(f"tag chưa tạo: {', '.join(kh['tag_chua_tao'])}")
     if kh["nhom_chua_anh_xa"]:
         phan.append(f"{len(kh['nhom_chua_anh_xa'])} nhóm chưa ánh xạ tag")
+    if kh.get("chua_phan_loai"):
+        phan.append(f"{len(kh['chua_phan_loai'])} bản ghi chưa phân loại (không nhóm, không tag)")
+    if kh.get("tag_trung"):
+        phan.append(f"tag trùng tên: {', '.join(kh['tag_trung'])}")
     return "🛎 gắn tag EndNote: " + " · ".join(phan) + " — phiên Claude: python3 tools/gan_tag_endnote.py --huong-dan"
 
 
@@ -283,6 +363,13 @@ def in_ke_hoach(kh: dict) -> None:
     for n in kh["nhom_chua_anh_xa"]:
         print(f"👤 nhóm «{n['ten'][:70]}» (group_id {n['group_id']}, {n['so_ban_ghi']} bản ghi) chưa ánh xạ tag — thêm vào "
               f"{TEP_ANH_XA.relative_to(GOC)} (bác sĩ chọn tag)")
+    if kh.get("chua_phan_loai"):
+        print(f"🛎 {len(kh['chua_phan_loai'])} bản ghi CHƯA PHÂN LOẠI (không thuộc nhóm nào, không tag chuyên khoa): recNum "
+              f"{_ds(kh['chua_phan_loai'])} — bản ghi của chủ đề dashboard (Keywords «EBM: …») ⇒ đưa về nhóm của chủ đề; "
+              f"bản ghi lẻ ⇒ đọc tiêu đề, ghi tag vào {TEP_TAG_LE.relative_to(GOC)} rồi kéo")
+    for t in kh.get("tag_trung") or []:
+        print(f"👤 tag trùng tên «{t}» (≥ 2 tag cùng tên) — bác sĩ quyết gộp; gộp = chuyển bản ghi sang một tag rồi Tags › "
+              "Delete Tag tag còn lại")
     print("Quy trình: python3 tools/gan_tag_endnote.py --huong-dan")
 
 
