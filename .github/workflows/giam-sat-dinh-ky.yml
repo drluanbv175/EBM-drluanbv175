@@ -8,7 +8,7 @@
 # Workflow này đập trên máy GitHub: đúng giờ, không cần máy bác thức, không cần CLI.
 #
 # PHẠM VI — nói rõ để «xanh ở đây» không bị đọc quá:
-#   LÀM ĐƯỢC : 14 verifier tất định trên tệp CÓ TRONG GIT + gương .codex.
+#   LÀM ĐƯỢC : 14 verifier tất định trên tệp CÓ TRONG GIT + gương .codex (11 chạy trần; 3 cần repo anh em + 3 gói ghim).
 #   KHÔNG LÀM: giám sát chứng cứ thật (weekly_safety.sh / monthly_update.sh
 #              KHÔNG nằm trong git; EBM_MASTER và EBM-Dashboards bị .gitignore
 #              CỐ Ý). Việc đó vẫn thuộc máy bác sĩ — xem Routine ở HUONG-DAN.
@@ -42,7 +42,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # KHÔNG có bước `pip install` — đã đo, không phải đoán. Chạy lại toàn bộ 11
+      # 11 verifier dưới đây KHÔNG cần `pip install` — đã đo, không phải đoán (02/11/2026: chỉ verify_research_gate_contracts ở
+      # bước repo anh em cần 3 gói ghim, cài riêng ngay trước bước đó). Chạy lại toàn bộ 11
       # verifier và bước gương bằng `python3 -S` (bỏ site-packages, mô phỏng máy
       # GitHub trần): 11/11 + gương đều xanh, 0 lỗi ModuleNotFound. Chúng chỉ dùng
       # thư viện chuẩn cộng module anh em cùng thư mục tools/.
@@ -83,6 +84,19 @@ jobs:
         if: ${{ steps.anh_em.outcome != 'success' }}
         run: |
           echo "::warning title=3 verifier cần repo anh em bị BỎ QUA::Không lấy được drluanbv175/medical-ebm-automation (repo riêng tư mà chưa đặt secret SIBLING_REPO_TOKEN?). Lượt xanh này KHÔNG phủ verify_research_gate_contracts, verify_controlled_research_automation, verify_lessons_rubric_alignment."
+
+      # 02/11/2026: verify_research_gate_contracts dựng G0+G1 chốt thật bằng helper chung của repo y khoa
+      # (tests/_chuoi_da_chot.py) — helper import module test (pytest) và engine (defusedxml, requests). Chỉ cài ĐÚNG ba gói
+      # đó, phiên bản ghim theo requirements.lock.txt của repo anh em (đo bằng venv trống: đủ ba gói là chạy được); 11 verifier
+      # phía trên vẫn chạy trần như cũ. Thiếu dòng ghim nào ⇒ bước đỏ, không cài bản thả nổi.
+      - name: Cài 3 gói ghim cho helper G0/G1 của repo anh em
+        if: ${{ hashFiles('medical-ebm-automation/requirements.lock.txt') != '' }}
+        run: |
+          set -eu
+          grep -E '^(pytest|defusedxml|requests)==' medical-ebm-automation/requirements.lock.txt > "$RUNNER_TEMP/ghim-anh-em.txt"
+          cat "$RUNNER_TEMP/ghim-anh-em.txt"
+          [ "$(wc -l < "$RUNNER_TEMP/ghim-anh-em.txt")" -eq 3 ]
+          python3 -m pip install --disable-pip-version-check -q -r "$RUNNER_TEMP/ghim-anh-em.txt"
 
       - name: 3 verifier cần repo anh em
         if: ${{ hashFiles('medical-ebm-automation/tools/audit_research_gates.py') != '' }}

@@ -9,6 +9,12 @@ và kiểm 4 bất biến vận hành:
 - G9 thiếu chữ ký liêm chính thật không được phát hành công bố.
 
 Không ghi vào repo, không dùng dữ liệu thật, không chạm PII.
+
+SỬA 02/11/2026 (CI `giam-sat-dinh-ky` đỏ từ 12/10): từ khi đài kiểm soát CHẤM SỐNG cổng (repo y khoa, 06/10/2026),
+G0/G1 kiểu «checkpoint rỗng + artifact một dòng» bị chấm BLOCKED ⇒ người chặn đầu tiên thành G0 thay vì cổng đang kiểm.
+G0+G1 nay dựng bằng helper DÙNG CHUNG của repo y khoa `tests/_chuoi_da_chot.py::dung_g0_g1_da_chot` (chốt thật, tự
+kiểm chấm sống PASS — sống cùng bộ chấm nên không lạc hậu lần nữa); checkpoint mang khoá «study» và artifact đặt tên
+theo mã đề tài như bộ sinh thật. Helper cần pytest + defusedxml + requests (bước CI cài đúng ba gói đó).
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+from contextlib import contextmanager
 import pathlib
 from pathlib import Path
 from typing import Any
@@ -64,6 +71,17 @@ if not (REPO_TOOLS / "audit_research_gates.py").exists():
 
 import audit_research_gates as ARG  # noqa: E402
 
+# Helper G0+G1 chốt thật nằm ở tests/ của repo y khoa; nó import module test (pytest) và engine (defusedxml, requests).
+sys.path.insert(0, str(REPO / "tests"))
+try:
+    from _chuoi_da_chot import dung_g0_g1_da_chot  # noqa: E402
+except ModuleNotFoundError as _exc:
+    _LY_DO_HELPER = (f"FAIL: không nạp được medical-ebm-automation/tests/_chuoi_da_chot.py ({_exc}) — cần pytest, "
+                     "defusedxml, requests (venv ~/.ebm-venv trên máy thật; bước CI cài ghim theo requirements.lock.txt).")
+    if __name__ == "__main__":
+        raise SystemExit(_LY_DO_HELPER)
+    raise
+
 
 REQUIRED_ARTIFACTS = {
     "G0": ["G0_A1_PICO_FINER_AUTO.md"],
@@ -92,21 +110,6 @@ REQUIRED_ARTIFACTS = {
     "G9": ["G9_A10_AUTHOR_INTEGRITY_AUTO.md"],
 }
 
-CONFIRMED_G1_PARAMS = {
-    "design": "rct",
-    "design_confirmed": True,
-    "objectives": ["Mục tiêu fixture đã chốt"],
-    "primary_outcome": "Kết cục chính fixture tại 12 tuần",
-    "population": "Quần thể fixture",
-    "setting": "Bệnh viện fixture",
-    "study_period": "2027-2028",
-    "feasibility_confirmed": True,
-    "evidence_review_confirmed": True,
-    "reviewed_by_role": "methodologist",
-    "reviewed_at": "2026-07-27T10:00:00+07:00",
-}
-
-
 def _fail(message: str) -> None:
     raise AssertionError(message)
 
@@ -120,20 +123,19 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _checkpoint(out_dir: Path, gate: str, payload: dict[str, Any] | None = None) -> None:
-    data: dict[str, Any] = {"gate": gate, "guardrail": {"passed": True}}
-    if gate == "G1":
-        data["quality_gate"] = {
-            "status": "PASS_G1_CONFIRMED",
-            "pending_actions": [],
-        }
+def _checkpoint(out_dir: Path, gate: str, study: str, payload: dict[str, Any] | None = None) -> None:
+    # Khoá «study» bắt buộc: thiếu nó skill_standards.real_world_signals suy mã đề tài từ tên thư mục tạm và chấm sống
+    # các cổng bằng mã SAI (artifact không khớp tên) — xem tests/test_dai_kiem_soat_cham_song_20261102.py (repo y khoa).
+    data: dict[str, Any] = {"study": study, "gate": gate, "guardrail": {"passed": True}}
     data.update(payload or {})
     _write_json(out_dir / f"{gate}_checkpoint.json", data)
 
 
-def _write_required_artifacts(out_dir: Path, gates: list[str]) -> None:
+def _write_required_artifacts(out_dir: Path, gates: list[str], study: str) -> None:
     for gate in gates:
-        for name in REQUIRED_ARTIFACTS.get(gate, []):
+        for ten in REQUIRED_ARTIFACTS.get(gate, []):
+            # Bộ sinh thật đặt tên theo mã đề tài (G6_A7_ANALYSIS_SCRIPTS_<mã>.md); bộ chấm sống tìm đúng tên đó.
+            name = ten.replace("_AUTO", f"_{study}")
             if name.endswith(".json"):
                 _write_json(
                     out_dir / name,
@@ -146,6 +148,48 @@ def _write_required_artifacts(out_dir: Path, gates: list[str]) -> None:
                 continue
             suffix = "\n" if name.endswith(".md") else ""
             (out_dir / name).write_text(f"synthetic fixture for {gate}{suffix}", encoding="utf-8")
+
+
+def _dung_de_tai(out_dir: Path, study: str, gates_sau_g1: list[str], **meta: Any) -> None:
+    """G0+G1 chốt THẬT (helper chung, tự kiểm chấm sống PASS) + checkpoint/artifact tổng hợp cho các cổng sau G1."""
+    dung_g0_g1_da_chot(out_dir, study, them_meta={"title": "Đề tài fixture", **meta, "G3": {"effect_size": 0.5}})
+    for gate in gates_sau_g1:
+        _checkpoint(out_dir, gate, study)
+    _write_required_artifacts(out_dir, gates_sau_g1, study)
+
+
+# Trạng thái ĐẠT của bộ chấm từng cổng (gN_quality_gate) — dùng cho kịch bản «thượng nguồn đã xong».
+_DAT_THEO_CONG = {
+    "G2": "PASS_G2_APPROVED", "G3": "PASS_G3_CONFIRMED", "G4": "PASS_G4_SAP_LOCKED",
+    "G5": "PASS_G5_DATA_LOCKED", "G6": "PASS_G6_SCRIPTS_CONFIRMED", "G7": "PASS_G7_CONFIRMED",
+    "G8": "PASS_G8_REVIEW_RECORDED",
+}
+
+
+@contextmanager
+def _gia_lap_thuong_nguon_dat(cac_cong: list[str]):
+    """Giả lập chấm sống ĐẠT cho `cac_cong` (cùng cách đồ gá tests/_gia_lap_cham_song.py của repo y khoa), cổng khác
+    chấm THẬT. Lý do: «G2/G4/G5/G8 đã ký» cần chữ ký sổ cái, mà khoá ký thử chỉ dùng được dưới pytest — script đứng
+    riêng không dựng được chuỗi ký thật. Kịch bản G9 chỉ kiểm LOGIC phân loại của đài khi thượng nguồn xong; chính G9
+    vẫn chấm thật. Khôi phục hàm thật khi ra khỏi khối."""
+    import cong_song as CS  # noqa: PLC0415
+
+    that = CS.trang_thai_song
+
+    def _gia(gate: str, study: str, out_dir: Path, repo_root: Path | None = None) -> dict[str, Any]:
+        g = str(gate).upper()
+        if g in cac_cong:
+            st = _DAT_THEO_CONG[g]
+            return CS._ket(g, st, CS.NGUON_SONG, "giả lập: thượng nguồn đã đạt (verifier)", st)
+        return that(gate, study, out_dir, repo_root)
+
+    CS.xoa_dem()
+    CS.trang_thai_song = _gia
+    try:
+        yield
+    finally:
+        CS.trang_thai_song = that
+        CS.xoa_dem()
 
 
 def _gate(report: dict[str, Any], gate: str) -> dict[str, Any]:
@@ -178,17 +222,7 @@ def _verify_new_study_auto_resume() -> None:
 def _verify_g2_human_irb_stop() -> None:
     with tempfile.TemporaryDirectory(prefix="ebm_gate_contract_g2_") as tmp:
         out_dir = Path(tmp)
-        _write_json(out_dir / "study_meta.json", {
-            "title": "Đề tài fixture",
-            "design_code": "rct",
-            "gate_params": {
-                "G1": CONFIRMED_G1_PARAMS,
-                "G3": {"effect_size": 0.5},
-            },
-        })
-        for gate in ["G0", "G1", "G2"]:
-            _checkpoint(out_dir, gate)
-        _write_required_artifacts(out_dir, ["G0", "G1", "G2"])
+        _dung_de_tai(out_dir, "VERIFY-GATE-G2", ["G2"])
 
         report = ARG.audit_gates("VERIFY-GATE-G2", out_dir=out_dir, write=False)
         g2 = _gate(report, "G2")
@@ -204,20 +238,8 @@ def _verify_g2_human_irb_stop() -> None:
 def _verify_g6_data_lock_stop() -> None:
     with tempfile.TemporaryDirectory(prefix="ebm_gate_contract_g6_") as tmp:
         out_dir = Path(tmp)
-        _write_json(out_dir / "study_meta.json", {
-            "title": "Đề tài fixture",
-            "design_code": "rct",
-            "irb_approved": True,
-            "sap_lock_date": "2026-07-13",
-            "gate_params": {
-                "G1": CONFIRMED_G1_PARAMS,
-                "G3": {"effect_size": 0.5},
-            },
-        })
-        gates = ["G0", "G1", "G2", "G3", "G4", "G5", "G6"]
-        for gate in gates:
-            _checkpoint(out_dir, gate)
-        _write_required_artifacts(out_dir, gates)
+        _dung_de_tai(out_dir, "VERIFY-GATE-G6", ["G2", "G3", "G4", "G5", "G6"],
+                     irb_approved=True, sap_lock_date="2026-07-13")
 
         report = ARG.audit_gates("VERIFY-GATE-G6", out_dir=out_dir, write=False)
         g5 = _gate(report, "G5")
@@ -236,24 +258,12 @@ def _verify_g6_data_lock_stop() -> None:
 def _verify_g9_integrity_stop() -> None:
     with tempfile.TemporaryDirectory(prefix="ebm_gate_contract_g9_") as tmp:
         out_dir = Path(tmp)
-        _write_json(out_dir / "study_meta.json", {
-            "title": "Đề tài fixture",
-            "design_code": "rct",
-            "irb_approved": True,
-            "sap_lock_date": "2026-07-13",
-            "data_lock_date": "2026-07-13",
-            "results_final": True,
-            "gate_params": {
-                "G1": CONFIRMED_G1_PARAMS,
-                "G3": {"effect_size": 0.5},
-            },
-        })
-        gates = ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"]
-        for gate in gates:
-            _checkpoint(out_dir, gate)
-        _write_required_artifacts(out_dir, gates)
+        _dung_de_tai(out_dir, "VERIFY-GATE-G9", ["G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"],
+                     irb_approved=True, sap_lock_date="2026-07-13", data_lock_date="2026-07-13",
+                     results_final=True)
 
-        report = ARG.audit_gates("VERIFY-GATE-G9", out_dir=out_dir, write=False)
+        with _gia_lap_thuong_nguon_dat(["G2", "G3", "G4", "G5", "G6", "G7", "G8"]):
+            report = ARG.audit_gates("VERIFY-GATE-G9", out_dir=out_dir, write=False)
         g9 = _gate(report, "G9")
         _assert(g9["status"] == ARG.STATUS_NEEDS_REAL, "G9 thiếu chữ ký liêm chính phải NEEDS_REAL")
         _assert("COI/tài trợ/đóng góp tác giả/khai báo AI đã ký" in g9["release_contract"]["blockers"],
