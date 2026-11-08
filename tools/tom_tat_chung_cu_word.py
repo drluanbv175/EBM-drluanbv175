@@ -572,6 +572,15 @@ NHAN_RUT_BAI = {"khong_thay_rut": "Không thấy thông báo rút bài (chuỗi 
                 "chua_kiem": "CHƯA KIỂM ĐƯỢC RÚT BÀI — tra lại trước khi dùng"}
 
 
+# Nhãn NGẮN ở đầu trang Word + màu cho cả đầu trang lẫn dòng «Rút bài» của bảng thông tin. 08/11/2026: đầu trang thiếu khoá
+# «dinh_chinh_bi_rut_da_ky» ⇒ guideline CCS/CHFS 2025 (PMID 41110921, bác sĩ đã ký xem xét 24/09) hiện «RÚT BÀI: —» màu ĐỎ trong
+# khi bảng bên dưới ghi đúng «bài gốc không bị rút». Trạng thái lạ ⇒ «—» đỏ (fail-closed, không bao giờ xanh).
+NHAN_RUT_BAI_NGAN = {"khong_thay_rut": "không thấy thông báo rút", "khong_thay_rut_rw": "không thấy (chỉ Retraction Watch)",
+                     "dinh_chinh_bi_rut_da_ky": "bài gốc không bị rút (cờ là bản đính chính bị rút — bác sĩ đã ký xem xét)",
+                     "da_rut": "ĐÃ RÚT", "chua_kiem": "CHƯA KIỂM ĐƯỢC"}
+MAU_RUT_BAI = {"khong_thay_rut": "la", "khong_thay_rut_rw": "cam", "dinh_chinh_bi_rut_da_ky": "cam"}
+
+
 # ───────────────────────── chuẩn bị gói đọc ─────────────────────────
 
 def chuan_bi(thu_vien: Path, ma: str, *, ngu_canh_tat_ca: dict | None = None, rut_bai=kiem_rut_bai) -> tuple[int, Path | None]:
@@ -1568,9 +1577,7 @@ def dung_word(tt: dict, ngu_canh: dict):
     p = _doan(doc, sau=8, can="giua")  # dòng riêng — trước 04/11 hai nhãn dính liền một dòng, khó đọc
     _them(p, "RÚT BÀI: ", dam=True, mau=MAU_CHU["navy"], co=11)
     tt_rb = rb.get("trang_thai")
-    _them(p, {"khong_thay_rut": "không thấy thông báo rút", "khong_thay_rut_rw": "không thấy (chỉ Retraction Watch)",
-              "da_rut": "ĐÃ RÚT", "chua_kiem": "CHƯA KIỂM ĐƯỢC"}.get(tt_rb, "—"),
-          dam=True, mau=MAU_CHU["la" if tt_rb == "khong_thay_rut" else ("cam" if tt_rb == "khong_thay_rut_rw" else "do")], co=11)
+    _them(p, NHAN_RUT_BAI_NGAN.get(tt_rb, "—"), dam=True, mau=MAU_CHU[MAU_RUT_BAI.get(tt_rb, "do")], co=11)
 
     so = 1
     _tieu_de_muc(doc, so, "Kết luận cho thực hành")
@@ -1605,7 +1612,7 @@ def dung_word(tt: dict, ngu_canh: dict):
         [("Xung đột lợi ích", {"dam": True, "nen": "xam"}), bc.get("xung_dot_loi_ich")],
         [("Rút bài", {"dam": True, "nen": "xam"}),
          (f"{NHAN_RUT_BAI.get(tt_rb, '—')} — tra {_ngay_vi(rb.get('luc'))} ({_o(rb.get('nguon'))})",
-          {"mau": "la" if tt_rb == "khong_thay_rut" else "do", "dam": tt_rb != "khong_thay_rut"})],
+          {"mau": MAU_RUT_BAI.get(tt_rb, "do"), "dam": tt_rb != "khong_thay_rut"})],
     ], co=11, rong=[4.0, 13.0])
 
     so += 1

@@ -113,3 +113,20 @@ def test_word_khong_co_ngu_canh_dashboard_thi_khong_in_o_nguon():
 def test_huong_dan_doc_co_luat_ap_dung_nhanh():
     hd = T.huong_dan_doc()
     assert "11. ÁP DỤNG NHANH" in hd and "Áp dụng nhanh tại phòng khám" in hd and "can_xac_nhan" in hd
+
+
+@CAN_DOCX
+@pytest.mark.parametrize("tt_rb, nhan, mau", [
+    ("dinh_chinh_bi_rut_da_ky", "bài gốc không bị rút", "cam"),
+    ("khong_thay_rut", "không thấy thông báo rút", "la"),
+    ("khong_thay_rut_rw", "không thấy (chỉ Retraction Watch)", "cam"),
+    ("chua_kiem", "CHƯA KIỂM ĐƯỢC", "do"),
+    ("trang_thai_la", "—", "do")])
+def test_dau_trang_rut_bai_co_nhan_cho_moi_trang_thai(tt_rb, nhan, mau):
+    """08/11/2026: PMID 41110921 (đính chính bị rút, bác sĩ đã ký) hiện «RÚT BÀI: —» đỏ ở đầu trang — thiếu nhãn."""
+    ngc = copy.deepcopy(G.NGU_CANH)
+    ngc["rut_bai"] = {"trang_thai": tt_rb, "luc": "2026-11-08T00:00:00", "nguon": "pubmed"}
+    doc = T.dung_word(G._hop_le(), ngc)
+    p = next(x for x in doc.paragraphs if x.text.startswith("RÚT BÀI:"))
+    assert p.text.startswith(f"RÚT BÀI: {nhan}")
+    assert str(p.runs[-1].font.color.rgb) == T.MAU_CHU[mau]
