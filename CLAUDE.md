@@ -81,7 +81,7 @@ Ba luật nền: (1) plugin không bao giờ là chủ của việc có cổng �
 - Việt hoá: nguồn bền `tools/vietnamize/vi_descriptions.json` (lớp phủ lúc dựng danh mục/trang tra). Menu gõ `/` đọc thẳng cache plugin nên bản cập nhật plugin trả mô tả về tiếng Anh; `tu_sua_chua.py` chạy `apply_vi.py --tu-quet` mỗi phiên (chạy tay: `~/.ebm-venv/bin/python tools/vietnamize/apply_vi.py --tu-quet`, có hiệu lực ngay). `apply_vi` từ chối ghi khi thiếu PyYAML và từ chối ghi vào tệp nằm trong repo git. Từ điển KHÔNG chứa bản dịch cho skill bác sĩ tự viết (`sync/skills/`). Cloud đè Cowork định kỳ — chỉ phục hồi được, không đẩy ngược được; skill dựng sẵn của app không Việt hoá được.
 
 ## 4. Bản đồ dự án (đọc trước khi sửa code)
-- **`medical-ebm-automation/` = DỰ ÁN SỐNG** (pipeline EBM, research tracker, dashboard, Evidence Workbench, scheduler, scoring, RAG). Mọi việc lập trình mặc định làm ở đây; đọc `medical-ebm-automation/CLAUDE.md` + `AGENTS.md`. Nhánh mặc định: `feat/r1-1-2-design-gap-remediation`. 32 thang điểm `verified` có nguồn đã rà; chỉ 8 thang có công cụ tính xác định (`tools/risk_score_calc.py`), còn lại là mô tả văn xuôi.
+- **`medical-ebm-automation/` = DỰ ÁN SỐNG** (pipeline EBM, research tracker, dashboard, Evidence Workbench, scheduler, scoring, RAG). Mọi việc lập trình mặc định làm ở đây; đọc `medical-ebm-automation/CLAUDE.md` + `AGENTS.md`. Nhánh mặc định: `feat/r1-1-2-design-gap-remediation`. 37 thang điểm `verified` có nguồn đã rà; 15 thang có công cụ tính xác định (`tools/risk_score_calc.py`), còn lại là mô tả văn xuôi.
 - **`ebm-copilot/`** = nguyên mẫu Phase 1, lưu trữ — không thêm tính năng (cần thì port sang dự án sống).
 - Hạ tầng dùng chung: `EBM-Dashboards/`, `dashboard_mockups/`, `EBM_MASTER/`, `sync/`. Dữ liệu cố ý nằm NGOÀI git (code → GitHub, dữ liệu → OneDrive).
 - **`clinical_runtime/`** = hợp đồng governance Clinical V2 (schema/static hardening cho C3/C5/C6/C7, retraction, prompt-injection, conflicting evidence); kiểm `python3 tools/verify_clinical_runtime_schema_hardening.py`. KHÔNG gọi là production runtime cho dữ liệu bệnh nhân thật khi chưa có tích hợp, bảo mật, UAT và phê duyệt thật.
@@ -196,7 +196,7 @@ Dựng dashboard (EW) → cổng liêm chính → an toàn thuốc (nếu liên 
 - Căn chỉnh repo/Claude Code/Codex: `python3 ../tools/verify_claude_code_repo_alignment.py` · rubric ↔ LESSONS: `python3 ../tools/verify_lessons_rubric_alignment.py`.
 - Pipeline chứng cứ (fixture offline, không PII): `python3 ../tools/verify_clinical_evidence_update_pipeline.py`.
 - Chu trình tự động có kiểm soát: `python3 ../tools/run_controlled_automation_cycle.py` · control plane: `python3 ../tools/run_orchestrator.py "<ca/đề tài/câu hỏi>"` (dry-run mặc định; `--execute` chạy Codex trong phiên tạm chỉ-đọc; không thay pipeline nghiên cứu canonical hay cổng bác sĩ/IRB/PI).
-- Kiểm rút bài + độ tươi 32 thang điểm (QUÝ, tác vụ `kiem-thang-diem-quy`): `python3 tools/kiem_do_tuoi_thang_diem.py [--nhanh]` — không bao giờ tự đổi cut-off.
+- Kiểm rút bài + độ tươi 37 thang điểm (QUÝ, tác vụ `kiem-thang-diem-quy`): `python3 tools/kiem_do_tuoi_thang_diem.py [--nhanh]` — không bao giờ tự đổi cut-off.
 - Trạng thái tổng: `python3 ../tools/tu_de_xuat_viec.py` · độ tươi: `python3 ../tools/kiem_do_tuoi_chung_cu.py` · an toàn đồng bộ: `python3 ../tools/sync_safety_check.py`.
 
 _Nguyên mẫu cũ `ebm-copilot/`: `pip install -r requirements.txt` → `python -m src.research.digest` → `pytest tests/` (chỉ tham chiếu)._
