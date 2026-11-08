@@ -1307,13 +1307,25 @@ def verify_pmid_online(pmid, retries=2):
             if "json" not in content_type and raw.lstrip().startswith("<"):
                 raise ValueError("NCBI trả HTML thay vì JSON (có thể bị block)")
             j = json.loads(raw)
-            res = j.get("result", {})
-            if pmid in res and "title" in res[pmid]:
+            res = j.get("result") if isinstance(j, dict) else None
+            rec = res.get(pmid) if isinstance(res, dict) else None
+            if isinstance(rec, dict) and "title" in rec and not rec.get("error"):
                 # pubdate thường dạng "2026 Mar 13" hoặc "2026" — chỉ cần năm cho so khớp
                 # dateVersion (vá 2026-07-12, xem docstring module).
-                _ghi_doi_cua_pmid(pmid, _doi_tu_esummary(res[pmid]), res[pmid].get("pubtype"))
-                return True, res[pmid].get("title", ""), res[pmid].get("pubdate", "")
-            return False, "không có trong PubMed", ""
+                _ghi_doi_cua_pmid(pmid, _doi_tu_esummary(rec), rec.get("pubtype"))
+                return True, rec.get("title", ""), rec.get("pubdate", "")
+            if isinstance(rec, dict) and rec.get("error"):
+                # Vá 08/11/2026: CHỈ kết luận «không tồn tại» khi NCBI TỪ CHỐI RÕ cho đúng PMID này (đo: PMID không có thật
+                # ⇒ {"uid": …, "error": "cannot get document summary"}). Vẫn hỏi Europe PMC trước khi chặn.
+                fallback = verify_pmid_europe_pmc(pmid)
+                if fallback[0] is True:
+                    return fallback
+                return False, "không có trong PubMed", ""
+            # Vá 08/11/2026: HTTP 200 mà JSON KHÔNG có bản ghi của PMID (không phải lời từ chối) là phản hồi TẠM THỜI lúc NCBI
+            # quá tải/giới hạn tần suất — đo cùng ngày: lô bộ năm chạy song song lượt gom vượt-qua ⇒ cổng chặn cứng (mã 3)
+            # dashboard Gout vì PMID 20131255 và 34882311 «không có trong PubMed», trong khi cả hai có thật. Đi nhánh lỗi
+            # tạm thời: thử lại, Europe PMC, cuối cùng None («không xác minh được», fail-closed) — KHÔNG bao giờ False.
+            raise ValueError("NCBI trả JSON không có bản ghi cho PMID %s (nghi quá tải/giới hạn tần suất)" % pmid)
         except (ValueError, JSONDecodeError) as e:
             last_err = e
             fallback = verify_pmid_europe_pmc(pmid)
