@@ -219,6 +219,13 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    quan với»). Một nhãn cho một ý: «Nhận định của người tóm tắt», «độ mạnh khuyến cáo», «khuyến cáo mạnh/có điều kiện», «KTC
    95%» (không «95% CI», không «lực»). Viết tắt (CAG, GIM, IEE…) giải nghĩa tiếng Việt ở lần đầu. Số chép ĐÚNG như bài (dấu
    chấm thập phân) — bước dựng tự in theo quy ước Việt (0,80; 13.454); đừng tự đổi dấu trong JSON (cổng so số với bài).
+11. ÁP DỤNG NHANH (bác sĩ 08/11/2026: «đảm bảo đúng chuẩn, chính xác nhất và giúp áp dụng nhanh cho thực hành lâm sàng»): mục 2
+   của Word «Áp dụng nhanh tại phòng khám» (in từ `goi_y_ap_dung`) đứng ngay sau kết luận — bác sĩ đọc nó đầu tiên.
+   `nen_lam` mở đầu bằng HÀNH ĐỘNG chính (động từ + đối tượng + điều kiện của bài); `khong_nen` ghi chống chỉ định/việc tránh;
+   `dieu_kien` ghi quần thể, ngưỡng, chống chỉ định ĐÚNG như bài; `theo_doi` ghi chỉ số + thời điểm khi bài nêu. Bài ★ (trong
+   `ngu_canh.json` là nguồn mục `apply` mức high/moderate, hoặc `na` khi là guideline/nhãn thuốc) ⇒ cổng chặn khi thiếu CẢ
+   `dieu_kien` lẫn `theo_doi`. Kết luận và gợi ý phải trả lời đúng câu hỏi của mục dashboard (`tieu_de_muc`); bài không đỡ
+   đúng chiều hoặc đúng quần thể của khuyến cáo đó ⇒ ghi vào `can_xac_nhan`, KHÔNG viết lệch bài cho khớp dashboard.
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
 """
@@ -985,6 +992,14 @@ def _muc_sai_thang(cong_cu: str, mien) -> list[str]:
             if isinstance(mi, dict) and not _rong(mi.get("danh_gia")) and not _muc_hop_le(k, str(mi.get("danh_gia")))]
 
 
+def la_sao(ngu_canh: dict) -> bool:
+    """Bài của gói đọc đạt ★ Áp dụng – tin cậy cao (cùng luật tag, `gan_tag_endnote.dat_ap_dung_tin_cay`)? Lỗi nạp ⇒ False."""
+    try:
+        return bool(mod("gte").dat_ap_dung_tin_cay(list(ngu_canh.get("ngu_canh_dashboard") or [])))
+    except Exception:  # noqa: BLE001 — luật ★ không nạp được thì không thêm đòi hỏi (các luật khác vẫn chạy)
+        return False
+
+
 def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     """Danh sách lỗi (rỗng = đạt). Mỗi lỗi là một câu tiếng Việt chỉ đúng chỗ phải sửa."""
     loi: list[str] = []
@@ -1014,6 +1029,11 @@ def kiem_tom_tat(tt: dict, trang: list[str], ngu_canh: dict) -> list[str]:
     goi_y = tt.get("goi_y_ap_dung") or {}
     if _rong(goi_y.get("nen_lam")) and _rong(goi_y.get("khong_nen")):
         loi.append("goi_y_ap_dung cần ít nhất «nen_lam» hoặc «khong_nen»")
+    # 08/11/2026 (bác sĩ: «giúp áp dụng nhanh cho thực hành lâm sàng»): bài ★ Áp dụng – tin cậy cao là nguồn của khuyến cáo
+    # «Áp dụng» ⇒ phần áp dụng nhanh phải nói ĐỦ để làm: ai/khi nào (điều kiện, chống chỉ định) hoặc theo dõi gì.
+    if la_sao(ngu_canh) and _rong(goi_y.get("dieu_kien")) and _rong(goi_y.get("theo_doi")):
+        loi.append("bài ★ Áp dụng – tin cậy cao: goi_y_ap_dung cần «dieu_kien» (quần thể, ngưỡng, chống chỉ định của bài) hoặc "
+                   "«theo_doi» — phần Áp dụng nhanh phải đủ để làm ngay")
     # Công cụ nguy cơ sai lệch đúng thiết kế
     nc_sl = tt.get("nguy_co_sai_lech") or {}
     cc = _chuan_cong_cu(nc_sl.get("cong_cu", ""))
@@ -1473,8 +1493,39 @@ def _ngay_vi(s) -> str:
     return f"{m.group(3)}/{m.group(2)}/{m.group(1)}" if m else _o(s)
 
 
+NHAN_QUYET_DINH_DASH = {"apply": "ÁP DỤNG", "consider": "CÂN NHẮC", "notyet": "CHƯA ĐỦ ĐỂ THAY ĐỔI THỰC HÀNH"}
+NHAN_MUC_DASH = {"high": "cao", "mod": "trung bình", "moderate": "trung bình", "low": "thấp", "vlow": "rất thấp",
+                 "na": "nguồn không dùng thang GRADE"}
+TOI_DA_VI_TRI = 3
+
+
+def vi_tri_khuyen_cao(ngu_canh: dict) -> list[str]:
+    """Bài là NGUỒN CHÍNH của khuyến cáo nào trên dashboard — chỉ phiên bản HIỆN HÀNH (`ban_cu` False), vai «muc», bản mới nhất
+    trước, tối đa `TOI_DA_VI_TRI` dòng. Bác sĩ 08/11/2026: «giúp áp dụng nhanh cho thực hành lâm sàng» ⇒ người đọc thấy ngay bài
+    đỡ khuyến cáo nào. Đây là trục QUYẾT ĐỊNH của dashboard — tách khỏi mức chắc chắn GRADE máy đánh giá ở mục GRADE."""
+    def khoa_ngay(x: dict) -> str:
+        m = re.match(r"(\d{2})/(\d{2})/(\d{4})", str(x.get("ngay") or ""))
+        return f"{m.group(3)}{m.group(2)}{m.group(1)}" if m else re.sub(r"\D", "", str(x.get("ngay") or ""))[:8]
+    ds = [x for x in ngu_canh.get("ngu_canh_dashboard") or [] if isinstance(x, dict) and x.get("vai") == "muc"
+          and not x.get("ban_cu")]
+    ra: list[str] = []
+    da: set = set()
+    for x in sorted(ds, key=khoa_ngay, reverse=True):
+        k = (x.get("chu_de"), x.get("muc"))
+        if k in da:
+            continue
+        da.add(k)
+        dec = str(x.get("decision") or "").strip().lower()
+        muc = str(x.get("gradeLevel") or "").strip().lower()
+        ra.append(f"**{NHAN_QUYET_DINH_DASH.get(dec, dec.upper() or '—')}** — «{_o(x.get('tieu_de_muc'))}» · "
+                  f"{_o(x.get('chu_de'))} (bản {_ngay_vi(x.get('ngay'))}) · mức chứng cứ trên dashboard: "
+                  f"{NHAN_MUC_DASH.get(muc, muc or '—')}")
+    return ra[:TOI_DA_VI_TRI]
+
+
 def dung_word(tt: dict, ngu_canh: dict):
-    """Dựng Document từ tom_tat.json ĐÃ QUA CỔNG. 11 mục (guideline/nhãn thuốc: 10 — không có mục tác hại riêng)."""
+    """Dựng Document từ tom_tat.json ĐÃ QUA CỔNG. 11 mục (guideline/nhãn thuốc: 10 — không có mục tác hại riêng); mục 2 «Áp
+    dụng nhanh tại phòng khám» đứng ngay sau kết luận (08/11/2026)."""
     from docx import Document  # noqa: PLC0415
     from docx.shared import Cm, Pt  # noqa: PLC0415
     doc = Document()
@@ -1524,6 +1575,21 @@ def dung_word(tt: dict, ngu_canh: dict):
     so = 1
     _tieu_de_muc(doc, so, "Kết luận cho thực hành")
     _hop(doc, "ĐIỂM NHẤN CHO THỰC HÀNH", tt.get("ket_luan_thuc_hanh"), mau="la", danh_sach=True)
+
+    # Bác sĩ 08/11/2026: «Tóm tắt tiếng việt đảm bảo đúng chuẩn,chính xác nhất và giúp áp dụng nhanh cho thực hành lâm sàng» ⇒
+    # phần áp dụng đứng NGAY sau kết luận (trước 08/11 nằm ở mục 10, sau phương pháp/kết quả/RoB/GRADE).
+    so += 1
+    gy = tt.get("goi_y_ap_dung") or {}
+    _tieu_de_muc(doc, so, "Áp dụng nhanh tại phòng khám")
+    vt = vi_tri_khuyen_cao(ngu_canh)
+    if vt:
+        _hop(doc, "BÀI LÀ NGUỒN CỦA KHUYẾN CÁO TRÊN DASHBOARD", vt, mau="duong", danh_sach=True)
+    _hop(doc, "ĐIỂM NHẤN:", dn.get("goi_y"), mau="la")
+    for nhan, khoa, mau in (("NÊN LÀM", "nen_lam", "la"), ("KHÔNG NÊN", "khong_nen", "do"),
+                            ("THẬN TRỌNG / ĐIỀU KIỆN", "dieu_kien", "cam"), ("THEO DÕI", "theo_doi", "duong")):
+        if not _rong(gy.get(khoa)):
+            _them(_doan(doc, truoc=4, sau=1), nhan, dam=True, mau=MAU_CHU[mau])
+            _danh_sach(doc, gy.get(khoa), mau_dau=mau)
 
     so += 1
     _tieu_de_muc(doc, so, "Thông tin trích dẫn")
@@ -1665,16 +1731,6 @@ def dung_word(tt: dict, ngu_canh: dict):
     _nhan_dong(doc, "TRIỂN KHAI TẠI VIỆT NAM", ka.get("trien_khai_viet_nam"), "duong")
 
     so += 1
-    gy = tt.get("goi_y_ap_dung") or {}
-    _tieu_de_muc(doc, so, "Áp dụng vào thực hành")
-    _hop(doc, "ĐIỂM NHẤN:", dn.get("goi_y"), mau="la")
-    for nhan, khoa, mau in (("NÊN LÀM", "nen_lam", "la"), ("KHÔNG NÊN", "khong_nen", "do"),
-                            ("THẬN TRỌNG / ĐIỀU KIỆN", "dieu_kien", "cam"), ("THEO DÕI", "theo_doi", "duong")):
-        if not _rong(gy.get(khoa)):
-            _them(_doan(doc, truoc=4, sau=1), nhan, dam=True, mau=MAU_CHU[mau])
-            _danh_sach(doc, gy.get(khoa), mau_dau=mau)
-
-    so += 1
     _tieu_de_muc(doc, so, "Điểm mạnh và hạn chế")
     _hop(doc, "ĐIỂM NHẤN:", dn.get("manh_han_che"))
     _them(_doan(doc, sau=1), "ĐIỂM MẠNH", dam=True, mau=MAU_CHU["la"])
@@ -1687,7 +1743,8 @@ def dung_word(tt: dict, ngu_canh: dict):
     _them(_doan(doc, truoc=6, sau=4), "Lưu ý", dam=True, mau=MAU_CHU["cam"], co=13)
     _hop(doc, "CẦN BÁC SĨ KIỂM CHỨNG:", f"bản tóm tắt do máy (Claude) soạn từ toàn văn PDF. Mức chắc chắn GRADE ở mục "
          f"{so_grade} do máy đánh giá theo phương pháp GRADE; phần áp dụng vào thực hành là gợi ý — quyết định cho từng người "
-         "bệnh thuộc bác sĩ (Cổng A).", mau="cam")
+         "bệnh thuộc bác sĩ (Cổng A). Dòng «bài là nguồn của khuyến cáo trên dashboard» ở mục 2 là trạng thái của dashboard "
+         "(ứng viên), không phải phê duyệt.", mau="cam")
     if not _rong(tt.get("can_xac_nhan")):
         _them(_doan(doc, truoc=4, sau=1), "ĐIỂM CẦN XÁC NHẬN", dam=True, mau=MAU_CHU["cam"])
         _danh_sach(doc, tt.get("can_xac_nhan"), mau_dau="cam")
