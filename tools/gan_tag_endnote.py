@@ -132,6 +132,12 @@ HUONG_DAN = """Gắn tag bằng giao diện EndNote (phiên Claude; ƯU TIÊN ch
      NGAY trước khi thả, hai ảnh phải trùng: sau mỗi lần ghi (và liên tục khi Find Full Text đang chạy — nhóm «Searching…»
      /«Not found»…) EndNote dựng lại thanh bên, cuộn về cuối và trả danh sách về đủ bản ghi (đo 07/11: 9151 nhận nhầm
      «Update HPQ»). Find Full Text đang chạy ⇒ HOÃN kéo-thả. Thả cách mép trên/dưới thanh bên ≥ 60 px (sát mép ⇒ tự cuộn).
+     EndNote SYNC tự chạy ~13–16 phút/lần (dòng «Synced at …» đầu thanh bên): đọc giờ đó TRƯỚC khi kéo, làm trong cửa sổ giữa
+     hai lượt — đo 08/11/2026: lượt sync 10:50 đè mất tag vừa gắn ~1 phút trước (33/35 bản ghi) và trả danh sách về đủ ⇒ lần
+     thả kế tiếp chỉ trúng 2 bản ghi; xong lượt, chờ qua lượt sync kế tiếp rồi đo lại. Sau sync EndNote có thể giữ giao dịch
+     ghi MỞ hàng chục phút (sdb.nal còn header): mọi công cụ đọc sdb.eni (kể cả kế hoạch này) báo «malformed»/không đo được —
+     ảnh chụp giữa giao dịch, KHÔNG phải hỏng; khi đó xác nhận bằng số đếm trên thanh bên (tăng đúng +N), không sửa sdb.eni.
+     Lần thả «trượt» (danh sách KHÔNG về đủ, thanh bên tự cuộn về đầu, số đếm không tăng) ⇒ `--hien` lại rồi kéo lại.
      Toàn màn hình (dự phòng): bấm dòng đầu (chờ 0,5 s) → cmd+A (chờ 0,8 s) → gõ tên tag vào ô lọc cột trái (góc dưới) → kéo
      từ một dòng đã chọn, nhả lên dòng tag (nhấn chuột · chờ 0,3 s · di qua vài điểm · chờ 0,5 s · nhả).
   3. Chạy lại `python3 tools/gan_tag_endnote.py` (đọc sdb.eni, sau vài giây) tới khi tag đó hết thiếu — số đếm cạnh tag trên
