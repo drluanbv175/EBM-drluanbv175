@@ -902,6 +902,39 @@ def kiem_rut_bai(pmids: list[str]) -> dict[str, dict]:
         return {}
 
 
+def kiem_rut_doi(doi_can: list[str]) -> dict[str, dict]:
+    """Tra rút bài cho nhóm DOI qua Crossref `updated-by` (CrossrefRetraction của repo y khoa). Lỗi ⇒ {} (mọi DOI giữ
+    «chưa kiểm», KHÔNG coi là sạch). Tách thành hàm riêng (08/11/2026) để `--phu-mo-coi` dùng chung và test chặn được mạng."""
+    import importlib.util as _ilu_mea
+    _sp_mea = _ilu_mea.spec_from_file_location("_bst_sxmn3", Path(__file__).resolve().parent / "ban_sao_tran.py")
+    _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
+    _sp_mea.loader.exec_module(_bst_mea)
+    mea = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
+    sys.path.insert(0, str(mea))
+    try:
+        from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
+        import os as _os  # noqa: PLC0415
+        return CrossrefRetraction(mailto=_os.environ.get("NCBI_EMAIL", "")).check(doi_can)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠ Không tra được nhóm DOI ({e}) — giữ nguyên, KHÔNG coi là sạch.")
+        return {}
+
+
+def _can_xac_minh_ton_tai(bg: dict) -> bool:
+    """Xác minh TỒN TẠI đã quá hạn hoặc không đọc được ngày ⇒ phải gọi lại `xac_minh_mot`. Bản ghi chỉ quá hạn KIỂM RÚT
+    BÀI thì không cần (vá 08/11/2026 — trước đó `--phu-mo-coi` xác minh lại tồn tại cho cả nhóm này rồi bỏ sót rút bài)."""
+    tuoi = _tuoi_ngay(bg.get("xac_minh_luc"))
+    return tuoi is None or tuoi > HAN_TON_TAI_NGAY
+
+
+def _can_kiem_rut(bg: dict) -> bool:
+    """PMID/DOI chưa dương tính, tồn tại còn hạn, mà kiểm rút bài VẮNG hoặc QUÁ HẠN ⇒ cần tái kiểm rút bài."""
+    if bg.get("da_rut") or bg.get("loai") not in ("pmid", "doi") or _can_xac_minh_ton_tai(bg):
+        return False
+    t = _tuoi_ngay(bg.get("kiem_rut_luc"))
+    return t is None or t > HAN_RUT_BAI_NGAY
+
+
 def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
     """Tái kiểm rút bài cho từng định danh CHỈ ĐỊNH TAY — vá lỗ «bản ghi mồ côi».
 
@@ -965,19 +998,7 @@ def kiem_rut_lai_dich_danh(ids: list[str]) -> int:
             else:
                 print(f"  ⚠ {khoa}: chưa tra được ({tt or 'không rõ'}) — giữ nguyên.")
     if doi_can:
-        import importlib.util as _ilu_mea
-        _sp_mea = _ilu_mea.spec_from_file_location("_bst_sxmn3", Path(__file__).resolve().parent / "ban_sao_tran.py")
-        _bst_mea = _ilu_mea.module_from_spec(_sp_mea)
-        _sp_mea.loader.exec_module(_bst_mea)
-        mea = _bst_mea.duong_goc("medical-ebm-automation", REPO) or (REPO / "medical-ebm-automation")
-        sys.path.insert(0, str(mea))
-        try:
-            from app.sources.crossref_retraction import CrossrefRetraction  # noqa: PLC0415
-            import os as _os  # noqa: PLC0415
-            kq_doi = CrossrefRetraction(mailto=_os.environ.get("NCBI_EMAIL", "")).check(doi_can)
-        except Exception as e:  # noqa: BLE001
-            kq_doi = {}
-            print(f"  ⚠ Không tra được nhóm DOI ({e}) — giữ nguyên, KHÔNG coi là sạch.")
+        kq_doi = kiem_rut_doi(doi_can)
         for doi in doi_can:
             # Vá 03/10/2026: bản cũ ghi `doi:`+casefold ⇒ đẻ bản ghi chữ thường bên cạnh bản cũ viết hoa. Nay ghi vào
             # MỌI biến thể đang có (vắng sổ thì tạo một bản khoá chuẩn); phán quyết RÚT phủ mọi biến thể.
@@ -1258,10 +1279,22 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
     # được gì. Đẩy bác sĩ đi làm một việc chắc chắn vô ích còn tệ hơn im lặng: nó tiêu
     # thời gian thật và làm mất niềm tin vào mọi lời khuyên khác của công cụ.
     if thieu:
-        chua_rut = [x for x in thieu if "chưa kiểm rút bài" in x[1] or "kiểm rút bài đã" in x[1]]
+        # VÁ 08/11/2026 — TÁCH «QUÁ HẠN kiểm rút bài» khỏi «CHƯA kiểm được rút bài». Bản cũ gộp hai nhóm dưới một lời khuyên
+        # «thêm NCBI_API_KEY». Đo 08/11: 94 mục đều là lần kiểm «ok» đã quá 30 ngày (đã TỪNG kiểm được) — `--kiem-rut-lai`
+        # sửa xong 94/94 không cần khoá. Khuyên khoá cho nhóm này là đúng lớp lỗi BH14: lời khuyên chắc chắn lệch đòn bẩy.
+        qua_han_rut = [x for x in thieu if "kiểm rút bài đã" in x[1]]
+        chua_rut = [x for x in thieu if "chưa kiểm rút bài" in x[1]]
         het_han = [x for x in thieu if "xác minh đã" in x[1]]
-        khac = [x for x in thieu if x not in chua_rut and x not in het_han]
+        khac = [x for x in thieu if x not in chua_rut and x not in het_han and x not in qua_han_rut]
         print("\n  Vì sao hết hiệu lực — CÁCH SỬA KHÁC NHAU, đừng gộp:")
+        if qua_han_rut:
+            mo_coi_rut = sum(1 for k, _ in qua_han_rut if not (muc.get(k) or {}).get("cac_dashboard"))
+            print(f"     • {len(qua_han_rut)} mục: QUÁ HẠN kiểm rút bài (lần kiểm thành công gần nhất đã quá "
+                  f"{HAN_RUT_BAI_NGAY} ngày) — đã TỪNG kiểm được, chạy lại SẼ sửa được, không cần khoá API.")
+            print("       → `--quet` tái kiểm mục đang được dashboard trích; `--phu-mo-coi` tái kiểm mục mồ côi"
+                  + (f" ({mo_coi_rut} mục không dashboard nào trích)" if mo_coi_rut else "")
+                  + "; hoặc `--kiem-rut-lai <định danh…>`.")
+            print("       [MA] CAN_KIEM_RUT_LAI")
         if chua_rut:
             # ĐỔI 14/08/2026: lời khuyên cũ ("chạy lại KHÔNG sửa được, phải có NCBI_API_KEY")
             # nay SAI, vì kiểm rút bài đã đi qua chuỗi 3 tầng — nền Retraction Watch ngoại
@@ -1526,10 +1559,16 @@ def _chay_lenh(a) -> int:
         vd = _nap_verify_dashboard()
         so = doc_so()
         muc = so["muc"]
-        can = [k for k, bg in muc.items()
-               if not bg.get("da_rut") and not con_hieu_luc(bg)[0]
-               and bg.get("loai") in ("pmid", "doi")]
-        print(f"Phủ mồ côi: {len(can)} bản ghi không dashboard nào kéo vào --quet.")
+        het_hieu_luc = [k for k, bg in muc.items()
+                        if not bg.get("da_rut") and not con_hieu_luc(bg)[0]
+                        and bg.get("loai") in ("pmid", "doi")]
+        # VÁ 08/11/2026: chỉ xác minh lại TỒN TẠI khi phần tồn tại thật sự quá hạn. Đo 08/11: 94 bản ghi mồ côi chỉ quá hạn
+        # KIỂM RÚT BÀI (lần kiểm «ok» > 30 ngày) — bản cũ xác minh lại tồn tại cả 94 («+94 xác minh») rồi chỉ kiểm rút bài
+        # cho PMID CHƯA TỪNG kiểm ⇒ cả 94 vẫn quá hạn, `--bao-cao` lại khuyên NCBI_API_KEY. Chạy `--kiem-rut-lai` cho đúng
+        # 94 định danh ⇒ 94/94 «ok», không cần khoá.
+        can = [k for k in het_hieu_luc if _can_xac_minh_ton_tai(muc[k])]
+        print(f"Phủ mồ côi: {len(het_hieu_luc)} bản ghi hết hiệu lực — {len(can)} cần xác minh lại tồn tại, "
+              f"{len(het_hieu_luc) - len(can)} chỉ thiếu/quá hạn kiểm rút bài.")
         thanh = 0
         for v in range(1, max(1, a.vong) + 1):
             if not can:
@@ -1557,28 +1596,15 @@ def _chay_lenh(a) -> int:
                     print(f"  … {thanh} đã xác minh (đã ghi sổ giữa chừng)")
             can = con_lai
         ghi_so(so)
-        # nhóm PMID vừa có ngày → kiểm rút bài luôn bằng chuỗi 3 tầng (một thể)
-        pmids_moi = [muc[k]["gia_tri"] for k in list(muc)
-                     if muc[k].get("loai") == "pmid" and muc[k].get("xac_minh_luc")
-                     and not muc[k].get("kiem_rut_luc")]
-        if pmids_moi:
-            print(f"Kiểm rút bài cho {len(pmids_moi)} PMID mới có ngày…")
-            kq = kiem_rut_bai(pmids_moi)
-            import datetime as _dt
-            bay_gio = _dt.datetime.now().isoformat(timespec="seconds")
-            for pm, info in kq.items():
-                khoa = f"pmid:{pm}"
-                tt = (info or {}).get("status", "")
-                if khoa in muc and tt in ("retracted", "expression_of_concern", "ok"):
-                    muc[khoa]["kiem_rut_luc"] = bay_gio
-                    muc[khoa]["ghi_chu_rut"] = tt
-                    if tt == "retracted":
-                        muc[khoa]["da_rut"] = True
-                        muc[khoa]["rut_va_thay"] = bool((info or {}).get("retract_and_replace"))
-                        _gan_dau_hieu_thong_bao(muc[khoa], info)
-            ghi_so(so)
-        print(f"Xong: +{thanh} xác minh · {len(can)} chưa tra được (giữ CHƯA KIỂM). "
-              "Chạy --bao-cao xem độ phủ mới.")
+        # Kiểm rút bài cho MỌI PMID/DOI hết hiệu lực mà tồn tại nay còn hạn và kiểm rút bài vắng HOẶC quá hạn — qua đúng
+        # `kiem_rut_lai_dich_danh` (whitelist trạng thái đóng, luật bất đối xứng: không bao giờ xoá dương tính cũ). Bản cũ
+        # chỉ kiểm PMID chưa từng kiểm ⇒ bản ghi «ok» quá hạn và mọi DOI kẹt «quá hạn» vĩnh viễn ở nhánh này.
+        ids_rut = [k for k in het_hieu_luc if k in muc and _can_kiem_rut(muc[k])]
+        if ids_rut:
+            print(f"Kiểm rút bài cho {len(ids_rut)} định danh thiếu/quá hạn kiểm rút bài…")
+            kiem_rut_lai_dich_danh(ids_rut)
+        print(f"Xong: +{thanh} xác minh tồn tại · {len(can)} chưa tra được tồn tại (giữ CHƯA KIỂM) · "
+              f"{len(ids_rut)} định danh đã đưa đi kiểm rút bài. Chạy --bao-cao xem độ phủ mới.")
         return 0
     if a.kiem_rut_lai:
         return kiem_rut_lai_dich_danh(a.kiem_rut_lai)
