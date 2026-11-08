@@ -620,7 +620,10 @@ def giac_quan_tom_tat_word(hang_cho=None) -> list[tuple[int, str, str]]:
     n_moi = len(ds) - n_cu
     phan = ([f"{n_moi} trích dẫn MỚI"] if n_moi else []) + (
         [f"{n_cu} bản ghi CŨ tầng ngoại lệ mốc (bác sĩ chọn tóm tắt — `ngoai-le-moc`)"] if n_cu else [])
-    return [(2, " + ".join(phan) + " có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)",
+    # 08/11/2026: chính sách «chỉ ★» (bác sĩ: «tóm tắt Word tiếng Việt chỉ với các chứng cứ áp dụng cho thực hành lâm sàng với độ
+    # tin cậy cao và mới nhất») — hàng chờ đã lọc ở `tom_tat_chung_cu_word.hang_cho`, mục mang `sao=True`.
+    sao = " ★ Áp dụng – tin cậy cao (mới nhất trước)" if all(x.get("sao") for x in ds) else ""
+    return [(2, " + ".join(phan) + sao + " có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)",
              "python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨")]
 
 
