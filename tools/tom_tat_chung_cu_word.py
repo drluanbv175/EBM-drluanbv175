@@ -1206,6 +1206,10 @@ _THUAT_NGU = (
 
 
 _NOI_SO_HIEU = re.compile(r"\s*(?:và|hoặc|,|;|–|-|đến|tới|and|or)\s*$", re.IGNORECASE)
+# Số đi kèm «%» (kể cả đầu khoảng «16.8–38.3%») là SỐ ĐO, không bao giờ là số hiệu mục/khuyến cáo. Đo 08/11/2026 trên các bản
+# đã dựng: «(tuyên bố 2.2, 90.0%)» (chuỗi số hiệu nối qua dấu phẩy), «toàn phần 99.8%» («phần» = mục), «điển hình 7.7%»
+# («hình» = hình vẽ), «phân tích (0.5%», «hạng V 16.8–38.3%» («V» = phiên bản) đều bị giữ dấu chấm trong Word/PDF.
+_SAU_LA_PHAN_TRAM = re.compile(r"\s*(?:[–-]\s*\d+(?:[.,]\d+)?\s*)?%")
 
 
 def _doi_so(doan: str) -> str:
@@ -1219,7 +1223,8 @@ def _doi_so(doan: str) -> str:
             return m.group(0)
         if m.group(3):  # nghìn kiểu Anh 13,454 → 13.454
             return m.group(3).replace(",", ".")
-        if (_SO_HIEU_TRUOC.search(doan[max(0, m.start() - 24):m.start()])
+        if not _SAU_LA_PHAN_TRAM.match(doan, m.end()) and (
+                _SO_HIEU_TRUOC.search(doan[max(0, m.start() - 24):m.start()])
                 or (cuoi_so_hieu >= 0 and _NOI_SO_HIEU.fullmatch(doan[cuoi_so_hieu:m.start()]))):
             cuoi_so_hieu = m.end()
             return m.group(0)
