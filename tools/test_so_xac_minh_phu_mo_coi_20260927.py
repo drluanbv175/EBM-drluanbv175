@@ -27,6 +27,8 @@ def M(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "SO", tmp_path / ".so-xac-minh-nguon.json")
     monkeypatch.setattr(mod, "_nap_verify_dashboard", lambda: None)
     monkeypatch.setattr(mod, "kiem_rut_bai", lambda ds: {})
+    # 08/11/2026: `--phu-mo-coi` nay kiểm rút bài cả DOI qua `kiem_rut_doi` (Crossref) — chặn mạng, «không tra được».
+    monkeypatch.setattr(mod, "kiem_rut_doi", lambda ds: {})
     return mod
 
 

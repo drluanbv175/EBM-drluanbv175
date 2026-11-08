@@ -252,11 +252,16 @@ def _chu_trinh(a: argparse.Namespace) -> int:
                 "PMID CHƯA kiểm được RÚT BÀI dù đã qua cả 3 tầng (Retraction Watch ngoại "
                 "tuyến → NCBI → Europe PMC). Thêm `NCBI_API_KEY` vào "
                 "~/.ebm-secrets/medical-ebm-automation.env sẽ mở lại tầng NCBI.")
+        if "CAN_KIEM_RUT_LAI" in out:
+            # Thêm 08/11/2026: lần kiểm rút bài «ok» đã quá 30 ngày — chạy lại là sửa được, KHÔNG phải việc chờ khoá API.
+            viec_can_lam.append(
+                "Có nguồn QUÁ HẠN kiểm rút bài (đã từng kiểm được) — chạy lại `python3 tools/so_xac_minh_nguon.py "
+                "--quet --vong 3` rồi `--phu-mo-coi --vong 3` (mục mồ côi) SẼ sửa được, không cần khoá API.")
         if "CAN_CHAY_THEM_VONG" in out:
             viec_can_lam.append("Có nguồn quá hạn xác minh tồn tại — chạy lại thêm vòng SẼ sửa được.")
         if "CAN_XEM_TAY" in out:
             viec_can_lam.append("Có nguồn hết hiệu lực vì lý do khác — xem phần ③④ ở trên.")
-        if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH",
+        if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH", "CAN_KIEM_RUT_LAI",
                                       "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
             viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
     elif rc != 0:
