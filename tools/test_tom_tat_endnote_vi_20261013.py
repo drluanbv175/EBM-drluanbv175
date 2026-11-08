@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import importlib.util
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -312,3 +313,98 @@ def test_ghi_truong_doc_lai_khong_khop_thi_bao_loi():
 def test_cli_tom_tat_can_file_va_khong_di_cung_gan_kho():
     assert N.main(["--tom-tat-vi"]) == 3
     assert N.main(["--tom-tat-vi", "--gan-kho"]) == 3
+
+
+# ── Luật GIỮ–XOÁ kho sao lưu thư viện (08/11/2026) ─────────────────────────────
+# Kho phình 16,75 GB / 1570 tệp trong 4 tuần vì mỗi lượt ghi tạo một bản ~38 MB mà không có luật nào dọn.
+BAY_GIO = datetime(2026, 11, 8, 12, 0, 0)
+# Chốt luôn dùng `xoa_han=True`: mặc định của hàm là DỜI vào `~/.Trash`, nên chốt chạy mặc định sẽ đổ thư mục thử
+# vào Thùng rác THẬT của bác sĩ (đo 08/11: đúng như vậy ở lượt đầu). Trong tmp_path thì xoá hẳn là đúng và sạch.
+
+
+def _ban(goc: Path, moc: str) -> Path:
+    d = goc / f"My EndNote Library-{moc}"
+    d.mkdir(parents=True)
+    (d / "sdb.eni").write_bytes(b"x" * 8192)
+    return d
+
+
+def test_don_sao_luu_ba_tang_gio_ngay_thang(tmp_path):
+    goc = tmp_path / "kho"
+    for m in ("20261108-110000", "20261108-090000", "20261107-130000",   # ① trong 48h ⇒ giữ HẾT
+              "20261105-200000", "20261105-080000", "20261104-100000",   # ② mỗi NGÀY giữ bản mới nhất
+              "20261013-100000", "20261012-100000", "20260920-100000"):  # ③ mỗi THÁNG giữ bản mới nhất
+        _ban(goc, m)
+    bc = tt.don_sao_luu_cu(goc, ap_dung=True, xoa_han=True, bay_gio=BAY_GIO, giu_it_nhat=0)
+    assert sorted(p.name for p in goc.iterdir()) == [
+        "My EndNote Library-20260920-100000",   # mốc tháng 9
+        "My EndNote Library-20261013-100000",   # mốc tháng 10 = bản MỚI NHẤT của tháng
+        "My EndNote Library-20261104-100000",   # mốc ngày 04/11
+        "My EndNote Library-20261105-200000",   # mốc ngày 05/11 = bản MỚI NHẤT của ngày
+        "My EndNote Library-20261107-130000",   # 23 giờ trước ⇒ tầng ①
+        "My EndNote Library-20261108-090000",
+        "My EndNote Library-20261108-110000",
+    ]
+    assert (bc["xet"], bc["giu"], len(bc["xoa"])) == (9, 7, 2)
+
+
+def test_don_sao_luu_san_giu_it_nhat(tmp_path):
+    goc = tmp_path / "kho"
+    for i in range(6):
+        _ban(goc, f"2026010{i + 1}-100000")        # cùng tháng 01/2026 ⇒ mốc tháng chỉ giữ 1
+    bc = tt.don_sao_luu_cu(goc, giu_ngay=0, giu_het_gio=0, giu_it_nhat=4, ap_dung=True, xoa_han=True, bay_gio=BAY_GIO)
+    assert bc["giu"] == 4 and len(list(goc.iterdir())) == 4   # sàn kéo lên 4 bản mới nhất
+
+
+def test_don_sao_luu_khong_dung_muc_khac_va_ten_khong_co_moc(tmp_path):
+    goc = tmp_path / "kho"
+    _ban(goc, "20260101-100000")      # cũ hơn mốc tháng ⇒ đáng xoá
+    _ban(goc, "20260102-100000")      # bản mới nhất tháng 01 ⇒ giữ
+    (goc / "tom-tat-abstract-vi-20261019-truoc-THA.json").write_text("{}", encoding="utf-8")
+    (goc / "thay-ban-in-p-20261027").mkdir()                 # loại sao lưu KHÁC, không có sdb.eni
+    kh = goc / "My EndNote Library-khong-moc"
+    kh.mkdir()
+    (kh / "sdb.eni").write_bytes(b"x" * 8192)                # tên không đọc được mốc ⇒ GIỮ, không đoán
+    # Ca QUYẾT ĐỊNH: KHỚP khuôn `-YYYYMMDD-HHMMSS` nhưng KHÔNG có sdb.eni ⇒ không phải sao lưu thư viện.
+    # Kho dùng chung, và `lien_ket_da_nen.sao_luu_ra_ngoai()` cũng đặt tên bằng dấu thời gian — thiếu điều kiện
+    # `sdb.eni` là xoá sản phẩm của công cụ khác (đột biến ① từng LỌT qua bộ chốt vì thiếu đúng ca này).
+    khac = goc / "san-pham-khac-20260103-100000"
+    khac.mkdir()
+    (khac / "noi-dung.txt").write_text("x", encoding="utf-8")
+    bc = tt.don_sao_luu_cu(goc, giu_ngay=0, giu_het_gio=0, giu_it_nhat=0, ap_dung=True, xoa_han=True, bay_gio=BAY_GIO)
+    con = sorted(p.name for p in goc.iterdir())
+    assert "tom-tat-abstract-vi-20261019-truoc-THA.json" in con
+    assert "thay-ban-in-p-20261027" in con
+    assert "My EndNote Library-khong-moc" in con
+    assert "san-pham-khac-20260103-100000" in con
+    assert (khac / "noi-dung.txt").is_file()
+    assert bc["bo_qua_khong_khop"] == 3 and bc["xoa"] == ["My EndNote Library-20260101-100000"]
+
+
+def test_don_sao_luu_chay_kho_khong_xoa_gi(tmp_path):
+    goc = tmp_path / "kho"
+    for m in ("20260101-100000", "20260102-100000"):
+        _ban(goc, m)
+    bc = tt.don_sao_luu_cu(goc, giu_ngay=0, giu_het_gio=0, giu_it_nhat=0, bay_gio=BAY_GIO)
+    assert bc["xoa"] and bc["byte"] > 0 and not bc["ap_dung"]
+    assert len(list(goc.iterdir())) == 2
+
+
+def test_sao_luu_thu_vien_khong_vo_khi_don_loi(tmp_path, monkeypatch):
+    """Dọn sao lưu KHÔNG BAO GIỜ được làm lượt sao lưu thất bại — bản vừa tạo mới là việc chính."""
+    tv = tmp_path / "Lib.enl"
+    tv.write_bytes(b"enl")
+    sdb = tmp_path / "Lib.Data" / "sdb"
+    sdb.mkdir(parents=True)
+    c = sqlite3.connect(sdb / "sdb.eni")
+    c.execute("create table refs(id integer, abstract text)")
+    c.executemany("insert into refs values (?, ?)", [(i, "x" * 500) for i in range(40)])
+    c.commit()
+    c.close()
+
+    def no(*_a, **_k):
+        raise RuntimeError("dọn hỏng")
+
+    monkeypatch.setattr(tt, "don_sao_luu_cu", no)
+    d = tt.sao_luu_thu_vien(tv, tmp_path / "sl")
+    assert (d / "sdb.eni").is_file() and (d / "Lib.enl").read_bytes() == b"enl"

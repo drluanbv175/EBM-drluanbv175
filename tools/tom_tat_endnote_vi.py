@@ -43,7 +43,7 @@ import sqlite3
 import sys
 import time
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 MO_DAU = "【EBM · ĐỌC NHANH】"
@@ -749,7 +749,120 @@ def sao_luu_thu_vien(thu_vien: Path, dich: Path | None = None, *, so_lan: int = 
     if (thu_muc / "sdb.eni").stat().st_size < 4096:
         raise OSError("bản sao lưu sdb.eni rỗng bất thường")
     shutil.copy2(thu_vien, thu_muc / thu_vien.name)
+    try:   # dọn bản cũ theo luật giữ–xoá; KHÔNG BAO GIỜ được làm lượt sao lưu này thất bại
+        don_sao_luu_cu(goc, ap_dung=True)
+    except Exception:  # noqa: BLE001 — mọi lỗi dọn đều bỏ qua, bản sao lưu vừa tạo mới là việc chính
+        pass
     return thu_muc
+
+
+KHUON_THU_MUC_SAO_LUU = re.compile(r"^.+-(\d{8})-(\d{6})$")
+GIU_NGAY_SAO_LUU = 14
+GIU_HET_GIO_SAO_LUU = 48
+GIU_IT_NHAT_SAO_LUU = 5
+
+
+def _moc_tu_ten(ten: str) -> datetime | None:
+    """Mốc thời gian lấy từ ĐUÔI TÊN thư mục (`…-YYYYMMDD-HHMMSS`), KHÔNG lấy từ mtime: mtime đổi khi OneDrive tải
+    lại hoặc khi chép sang máy khác, tên thì không. Không đọc được mốc ⇒ None (người gọi GIỮ, không đoán)."""
+    m = KHUON_THU_MUC_SAO_LUU.match(ten)
+    if not m:
+        return None
+    try:
+        return datetime.strptime(f"{m.group(1)}-{m.group(2)}", "%Y%m%d-%H%M%S")
+    except ValueError:
+        return None
+
+
+def _noi_cho_xoa(goc: Path) -> Path:
+    """Nơi DỜI bản cũ tới: Thùng rác của người dùng (macOS `~/.Trash` — bác sĩ thấy và hoàn tác được bằng Finder);
+    không có thì `<kho>/_cho-xoa/` để còn chạy trên Windows. Theo lệ `don_ban_sao_git.py`: DỜI, không xoá."""
+    tr = Path.home() / ".Trash"
+    return tr if tr.is_dir() else (goc / "_cho-xoa")
+
+
+def don_sao_luu_cu(goc: Path | None = None, *, giu_ngay: int = GIU_NGAY_SAO_LUU,
+                   giu_het_gio: int = GIU_HET_GIO_SAO_LUU, giu_it_nhat: int = GIU_IT_NHAT_SAO_LUU,
+                   ap_dung: bool = False, xoa_han: bool = False, bay_gio: datetime | None = None) -> dict:
+    """Luật GIỮ–XOÁ cho kho sao lưu thư viện EndNote (08/11/2026).
+
+    Mỗi lượt ghi EndNote tạo một bản ~38 MB và TRƯỚC ĐÂY không có luật nào dọn: đo 08/11/2026 kho đã
+    **16,75 GB / 1570 tệp** chỉ sau 4 tuần (tháng 10: 6,37 GB · tháng 11: 10,38 GB).
+
+    GIỮ theo BA TẦNG — kho này để CUỘN LẠI khi một lượt ghi làm hỏng thư viện, nên dày ở gần và thưa ở xa:
+      ① mọi bản trong `giu_het_gio` giờ gần nhất (cuộn lại ngay sau một lượt ghi vừa chạy);
+      ② bản MỚI NHẤT của mỗi NGÀY trong `giu_ngay` ngày (phát hiện hỏng muộn vài ngày vẫn còn mốc để về);
+      ③ bản MỚI NHẤT của mỗi THÁNG cũ hơn (~38 MB/tháng làm bảo hiểm — sự cố 02–03/11/2026 được cứu nhờ có sao lưu);
+      + sàn `giu_it_nhat` bản mới nhất, kể cả khi đặt hạn rất ngắn.
+    Đo 08/11: 308 bản → giữ ~20, thu hồi ~7 GB, mà mọi mốc cuộn lại vẫn còn.
+
+    CHỈ xét thư mục khớp ĐÚNG khuôn `<tên>-YYYYMMDD-HHMMSS` VÀ có `sdb.eni` bên trong — kho này dùng CHUNG với các
+    loại sao lưu khác (`tom-tat-abstract-vi-…json`, `thay-ban-in-p-…`), mọi thứ khác KHÔNG bị đụng tới.
+
+    Chạy khô mặc định (`ap_dung=False`). `ap_dung=True` **DỜI vào Thùng rác**, hoàn tác được bằng Finder — chỉ
+    `xoa_han=True` mới xoá hẳn (không dùng trong đường ghi tự động). Lỗi một thư mục không làm hỏng cả lượt (ghi vào
+    `loi`); người gọi trong ĐƯỜNG GHI phải bọc try/except — dọn sao lưu KHÔNG BAO GIỜ được làm lượt sao lưu thất bại."""
+    goc = goc or (Path.home() / ".ebm-endnote-sao-luu")
+    bay_gio = bay_gio or datetime.now()
+    bc: dict = {"goc": str(goc), "xet": 0, "giu": 0, "xoa": [], "byte": 0, "loi": [],
+                "ap_dung": ap_dung, "xoa_han": xoa_han, "noi_cho_xoa": str(_noi_cho_xoa(goc)),
+                "bo_qua_khong_khop": 0}
+    if not goc.is_dir():
+        return bc
+    ung_vien: list[tuple[datetime, Path]] = []
+    for d in sorted(goc.iterdir()):
+        if not d.is_dir():
+            continue
+        moc = _moc_tu_ten(d.name)
+        if moc is None or not (d / "sdb.eni").is_file():
+            bc["bo_qua_khong_khop"] += 1
+            continue
+        ung_vien.append((moc, d))
+    bc["xet"] = len(ung_vien)
+    ung_vien.sort(key=lambda x: x[0], reverse=True)
+    han_gio = bay_gio - timedelta(hours=max(0, giu_het_gio))
+    han_ngay = bay_gio - timedelta(days=max(0, giu_ngay))
+    giu: set[Path] = set()
+    da_giu: set[str] = set()   # mốc NGÀY/THÁNG đã có bản đại diện
+    for moc, d in ung_vien:    # ung_vien đã sắp MỚI NHẤT TRƯỚC ⇒ bản đầu của mỗi mốc là bản mới nhất của mốc đó
+        if moc >= han_gio:
+            giu.add(d)
+            continue
+        khoa = moc.strftime("ngay:%Y-%m-%d") if moc >= han_ngay else moc.strftime("thang:%Y-%m")
+        if khoa not in da_giu:
+            da_giu.add(khoa)
+            giu.add(d)
+    for _moc, d in ung_vien:
+        if len(giu) >= max(0, giu_it_nhat):
+            break
+        giu.add(d)
+    for _moc, d in ung_vien:
+        if d in giu:
+            continue
+        try:
+            co = sum(x.stat().st_size for x in d.rglob("*") if x.is_file())
+        except OSError:
+            co = 0
+        if ap_dung:
+            try:
+                if xoa_han:
+                    shutil.rmtree(d)
+                else:
+                    noi = _noi_cho_xoa(goc)
+                    noi.mkdir(parents=True, exist_ok=True)
+                    dich = noi / d.name
+                    k = 1
+                    while dich.exists():        # trùng tên trong Thùng rác ⇒ thêm hậu tố, KHÔNG ghi đè
+                        dich = noi / f"{d.name}~{k}"
+                        k += 1
+                    shutil.move(str(d), str(dich))
+            except OSError as e:
+                bc["loi"].append(f"{d.name}: {e}")
+                continue
+        bc["xoa"].append(d.name)
+        bc["byte"] += co
+    bc["giu"] = len(giu)
+    return bc
 
 
 def ghi_tom_tat(endnote, files: list[Path], *, kho: Path | None, ap_dung: bool, doc_data,
@@ -933,7 +1046,35 @@ def main(argv: list[str] | None = None) -> int:
     nhom.add_argument("--mau", action="store_true", help=f"in khuôn JSON hợp lệ của kho {TEP_TOM_TAT_ABS}")
     nhom.add_argument("--kiem", type=Path, metavar="THU_MUC_HOAC_TEP",
                       help=f"kiểm khuôn kho {TEP_TOM_TAT_ABS} (thư mục EBM-Dashboards hoặc chính tệp)")
+    nhom.add_argument("--don-sao-luu", action="store_true",
+                      help=f"dọn kho sao lưu thư viện EndNote theo luật giữ–xoá ba tầng (mọi bản {GIU_HET_GIO_SAO_LUU}h "
+                           f"+ mốc mỗi ngày trong {GIU_NGAY_SAO_LUU} ngày + mốc mỗi tháng cũ + sàn {GIU_IT_NHAT_SAO_LUU}); "
+                           "chạy khô nếu không có --ap-dung")
+    ap.add_argument("--giu-ngay", type=int, default=GIU_NGAY_SAO_LUU, metavar="N",
+                    help=f"số ngày giữ MỌI bản sao lưu (mặc định {GIU_NGAY_SAO_LUU})")
+    ap.add_argument("--giu-gio", type=int, default=GIU_HET_GIO_SAO_LUU, metavar="H",
+                    help=f"số giờ giữ MỌI bản, không thưa hoá (mặc định {GIU_HET_GIO_SAO_LUU})")
+    ap.add_argument("--ap-dung", action="store_true",
+                    help="thật sự dọn: DỜI bản cũ vào Thùng rác (hoàn tác được); chỉ dùng với --don-sao-luu")
+    ap.add_argument("--xoa-han", action="store_true",
+                    help="xoá HẲN thay vì dời vào Thùng rác (không hoàn tác được)")
     a = ap.parse_args(argv)
+    if a.don_sao_luu:
+        bc = don_sao_luu_cu(giu_ngay=a.giu_ngay, giu_het_gio=a.giu_gio, ap_dung=a.ap_dung, xoa_han=a.xoa_han)
+        gb = bc["byte"] / 1073741824
+        print(f"Kho: {bc['goc']}")
+        print(f"  xét {bc['xet']} bản sao lưu thư viện · giữ {bc['giu']} · "
+              f"{('ĐÃ XOÁ HẲN' if bc['xoa_han'] else 'ĐÃ DỜI') if bc['ap_dung'] else 'sẽ dọn'} "
+              f"{len(bc['xoa'])} · thu hồi {gb:.2f} GB")
+        if bc["ap_dung"] and not bc["xoa_han"] and bc["xoa"]:
+            print(f"  → đã dời vào {bc['noi_cho_xoa']} — dung lượng trả lại khi bác sĩ dọn Thùng rác")
+        if bc["bo_qua_khong_khop"]:
+            print(f"  bỏ qua {bc['bo_qua_khong_khop']} mục không phải sao lưu thư viện (không đụng tới)")
+        for x in bc["loi"]:
+            print(f"  ✗ {x}")
+        if not bc["ap_dung"] and bc["xoa"]:
+            print("  → chạy thật: thêm --ap-dung")
+        return 1 if bc["loi"] else 0
     if a.mau:
         print(json.dumps(MAU_KHO_TOM_TAT, ensure_ascii=False, indent=2))
         return 0
