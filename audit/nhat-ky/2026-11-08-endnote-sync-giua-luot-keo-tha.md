@@ -21,5 +21,10 @@ số đếm không đổi) ⇒ `--hien` lại rồi kéo lại thì đạt. Dòn
 **Vá:** đoạn hướng dẫn kéo-thả trong `tools/gan_tag_endnote.py` (`--huong-dan`) thêm luật: đọc giờ «Synced at» trước khi kéo, làm
 giữa hai lượt sync, đo lại sau lượt kế tiếp; giao dịch mở ⇒ xác nhận bằng số đếm thanh bên; lần thả trượt ⇒ `--hien` lại.
 
-**Còn mở (bác sĩ):** kiểm lần cuối bằng `python3 tools/gan_tag_endnote.py` khi EndNote đã ghi giao dịch xuống (thường sau lượt
-sync kế tiếp hoặc khi đóng thư viện bình thường) — kỳ vọng: không thiếu, không thừa, 0 rời nhóm.
+**Kết cục (11:18–11:24):** giao dịch mở kéo dài 31 phút (`endnote_suc_khoe.py` 🔴 BH177 lúc 11:21, phiên «Cập nhật vấn đề Endnote»
+báo bác sĩ: Sync → Quit êm → mở lại → Sync). EndNote được khởi động lại 11:23:09 ⇒ mọi thay đổi sau 10:50 BỊ CUỘN LẠI trên đĩa (tag MS 33,
+Thần kinh 33, PTSD 32, Somatic 36, Tâm thần 132, Vasculitis 32); phần đã xuống đĩa trước 10:50 (7 nhóm, ★, Hô hấp, ILD, Khớp) còn.
+Lượt Sync ngay sau khởi động KÉO VỀ ĐỦ từ bản online (lượt 11:03 đã «All changes have been sent»). Đối chiếu chốt 11:24 với bản sao lưu:
+7 nhóm +239, 0 gỡ; tag +231 bản ghi, 0 gỡ, đúng từng số kế hoạch; `gan_tag_endnote.py` không thiếu, 0 rời nhóm, ★ 272;
+`endnote_suc_khoe.py` 🟢, không còn giao dịch treo. Bài học: bản online là lưới đỡ — trước khi đóng/khởi động lại EndNote khi có giao
+dịch treo, xác nhận trang Sync Status ghi «All changes have been sent» SAU lần ghi cuối.
