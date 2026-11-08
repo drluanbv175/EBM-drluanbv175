@@ -226,6 +226,17 @@ Luật (cổng `dung` kiểm máy — sai là KHÔNG ra Word):
    `ngu_canh.json` là nguồn mục `apply` mức high/moderate, hoặc `na` khi là guideline/nhãn thuốc) ⇒ cổng chặn khi thiếu CẢ
    `dieu_kien` lẫn `theo_doi`. Kết luận và gợi ý phải trả lời đúng câu hỏi của mục dashboard (`tieu_de_muc`); bài không đỡ
    đúng chiều hoặc đúng quần thể của khuyến cáo đó ⇒ ghi vào `can_xac_nhan`, KHÔNG viết lệch bài cho khớp dashboard.
+12. NĂM LỖI KIỂM CHÉO HAY BẮT (đo trên 5 bản ★ đầu tiên, 08/11/2026 — mỗi lỗi tốn thêm một lượt kiểm chéo):
+   (a) MỨC LỜI: giữ đúng must/should/may · recommend/suggest/conditionally recommend (against) — «phải / nên / có thể / gợi ý /
+   khuyến cáo có điều kiện chống»; không biến khuyến cáo có điều kiện thành câu mệnh lệnh trống trơn; «can be delayed» là «có
+   thể hoãn», không phải «hoãn». (b) KHÔNG THÊM «chỉ khi», «chỉ dành cho» khi bài không viết — «người không đáp ứng X ⇒ nên đề
+   nghị Y» KHÁC «Y chỉ dành cho người không đáp ứng X» (bài có thể đề nghị Y ở nhóm khác). (c) QUẦN THỂ TỪNG KHUYẾN CÁO: mỗi
+   khuyến cáo một quần thể riêng («đang mang thai hoặc dự định mang thai» ≠ «trong thai kỳ, nếu cần thuốc»; «mới chẩn đoán VÀ
+   đang hoạt động»; «người bệnh chọn lọc»); gộp nhiều khuyến cáo dưới một nhãn chung thì nhãn phải đúng cho TẤT CẢ. (d) PHẠM
+   VI CÂU «bài không nêu/không có X»: chỉ viết khi đã dò hết thân bài, và ghi đúng phạm vi («không nêu liều của thuốc chống xơ»,
+   không phải «không nêu liều» khi bài có liều thuốc khác); «mỗi khuyến cáo» chỉ dùng khi đúng cho mọi khuyến cáo in trong bài.
+   (e) NƠI CHỨA DỮ LIỆU: ghi đúng như bài («dữ liệu nền ở sổ X», không tự đổi thành «báo cáo phương pháp ở sổ X»); phân hạng chỉ
+   nằm ở bảng ⇒ `trang` gồm cả trang của bảng. Số không bao giờ viết «khoảng/≈» — cổng chặn, kể cả khi bài viết «approximately».
 
 Khuôn JSON (thay «…» bằng nội dung thật; giữ đủ khoá):
 """
