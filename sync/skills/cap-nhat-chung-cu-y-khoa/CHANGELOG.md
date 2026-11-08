@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.59.0 — 2026-11-08 (tóm tắt Word ⑨: mục «Áp dụng nhanh tại phòng khám» ngay sau kết luận)
+
+Bác sĩ 08/11/2026: «Tóm tắt tiếng việt đảm bảo đúng chuẩn,chính xác nhất và giúp áp dụng nhanh cho thực hành lâm sàng».
+`tools/tom_tat_chung_cu_word.py`: mục 2 của Word là «Áp dụng nhanh tại phòng khám» (trước: mục 10, sau phương pháp/kết quả/RoB/
+GRADE), mở bằng ô «bài là nguồn của khuyến cáo trên dashboard» (bản hiện hành, mới nhất trước, ≤ 3 dòng — trục quyết định của
+dashboard, tách khỏi GRADE máy); cổng chặn bài ★ thiếu cả `dieu_kien` lẫn `theo_doi`; hướng dẫn đọc thêm luật 11. Cổng số liệu và
+kiểm chéo độc lập giữ nguyên. Đo 08/11: 163/163 tóm tắt ★ đã có đều đạt cổng mới; bản mẫu CIBIS-II vẫn 12 trang. 12 test mới;
+đột biến 9/9 đỏ.
+
 ## v1.58.0 — 2026-11-08 (hàng chờ tóm tắt Word ⑨ chỉ ★ Áp dụng – tin cậy cao, mới nhất trước)
 
 Bác sĩ 08/11/2026: «tóm tắt Word tiếng Việt chỉ với các chứng cứ áp dụng cho thực hành lâm sàng với độ tin cậy cao và mới nhất».
