@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.58.0 — 2026-11-08 (hàng chờ tóm tắt Word ⑨ chỉ ★ Áp dụng – tin cậy cao, mới nhất trước)
+
+Bác sĩ 08/11/2026: «tóm tắt Word tiếng Việt chỉ với các chứng cứ áp dụng cho thực hành lâm sàng với độ tin cậy cao và mới nhất».
+`tools/tom_tat_chung_cu_word.py` có chính sách «chỉ ★» (`chi-sao --loi "<nguyên văn>"`, tệp `TomTatChungCu/_chi_sao.json` cạnh
+thư viện; `--tat` để tắt): hàng chờ chỉ giữ bài đạt luật tag ★ (`gan_tag_endnote.dat_ap_dung_tin_cay` — một nguồn sự thật), áp cho
+cả bản ghi cũ của ngoại lệ mốc, xếp năm xuất bản giảm dần; không đọc được dashboard ⇒ không đo được (không «0 chờ»). Đo 08/11 trên
+thư viện thật: 1.145 → 105 bài (87 mới + 18 cũ). 15 test mới; đột biến 8/8 đỏ.
+
 ## v1.57.0 — 2026-11-06 (luật tin cậy cao nhất · mới nhất · có toàn văn + chốt `kiem_moi_nhat_toan_van.py`)
 
 Bác sĩ 06/11/2026: «Luôn đảm bảo những chứng cứ có độ tin cậy cao nhất và mới nhất», «Hãy cập nhật luôn vào hệ thống vì đã xây

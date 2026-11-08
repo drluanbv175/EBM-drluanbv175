@@ -50,6 +50,7 @@ Lệnh:
   python3 tools/tom_tat_chung_cu_word.py moc --loi "<nguyên văn bác sĩ>"   # bản ghi hiện có: để nguyên, không tóm tắt
   python3 tools/tom_tat_chung_cu_word.py ngoai-le-moc --tang 1 2 --loi "<nguyên văn bác sĩ>"   # bản ghi CŨ tầng đó vẫn vào hàng chờ
   python3 tools/tom_tat_chung_cu_word.py hang-cho [--dashboard <tệp>] [--chuan-bi] [--json]   # chứng cứ MỚI chờ tóm tắt (trừ bài chỉ thuộc nhóm đề tài «NC · »)
+  python3 tools/tom_tat_chung_cu_word.py chi-sao --loi "<nguyên văn bác sĩ>" [--tat]   # hàng chờ chỉ ★ Áp dụng – tin cậy cao, mới nhất trước
   python3 tools/tom_tat_chung_cu_word.py pdf-hoa [--ap-dung]   # mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote
 Mã thoát: 0 đạt · 1 cổng có lỗi (sửa JSON) · 2 không đo được (thiếu thư viện/PDF/gói) · 3 CHẶN an toàn (rút bài/định danh/
 sdb.eni hỏng cấu trúc — quick_check, 03/11/2026).
@@ -242,7 +243,7 @@ _MOD: dict = {}
 
 def mod(ten: str):
     tep = {"sk": "endnote_suc_khoe.py", "nec": "nap_endnote_chu_de.py", "tt": "tom_tat_endnote_vi.py",
-           "sx": "so_xac_minh_nguon.py"}[ten]
+           "sx": "so_xac_minh_nguon.py", "gte": "gan_tag_endnote.py"}[ten]
     if ten not in _MOD:
         _MOD[ten] = _nap(f"_ttcc_{ten}", tep)
     return _MOD[ten]
@@ -1942,6 +1943,52 @@ def doc_ngoai_le_moc(thu_vien: Path) -> set[int]:
         return set()
 
 
+# Bác sĩ 08/11/2026: «tóm tắt Word tiếng Việt chỉ với các chứng cứ áp dụng cho thực hành lâm sàng với độ tin cậy cao và mới
+# nhất». CHÍNH SÁCH «CHỈ ★» của hàng chờ: chỉ bản ghi đạt tag «★ Áp dụng – tin cậy cao» (`gan_tag_endnote.dat_ap_dung_tin_cay` —
+# MỘT luật cho cả tag lẫn hàng chờ: nguồn chính của mục `apply` ở phiên bản dashboard HIỆN HÀNH, mức high/moderate, hoặc `na` khi
+# là guideline/nhãn thuốc; consensus, low/vlow, trích dẫn chỉ còn ở bản cũ không đạt) và xếp MỚI NHẤT trước (năm xuất bản giảm
+# dần, rồi recNum giảm dần). Áp cho cả trích dẫn MỚI lẫn bản ghi CŨ của ngoại lệ mốc. Đo 08/11 trước khi có luật: hàng chờ 1121 mới
+# + 21 cũ — phần lớn là bài tham khảo/cân nhắc. Bài ngoài ★ vẫn nhận tóm tắt tiếng Việt TỪ ABSTRACT (`tom_tat_endnote_vi.py`,
+# `--tom-tat-vi`) và vẫn phải có toàn văn (bác sĩ 24/10). Tệp vắng/hỏng/thiếu lời bác sĩ ⇒ không lọc (luật 19/10 + ngoại lệ 24/10).
+TEN_CHI_SAO = "_chi_sao.json"
+
+
+class ChiSaoKhongDoDuoc(NgoaiLeKhongDoDuoc):
+    """Chính sách «chỉ ★» đang bật nhưng không đọc được dashboard nào để xét ★ — KHÔNG được trả «0 chờ» (xanh giả)."""
+
+
+def tep_chi_sao(thu_vien: Path) -> Path:
+    return thu_muc_ra(thu_vien) / TEN_CHI_SAO
+
+
+def ghi_chi_sao(thu_vien: Path, loi_bac_si: str, *, tat: bool = False) -> int:
+    """Bật (hoặc `tat=True` — tắt) chính sách «chỉ ★». Bắt buộc nguyên văn lời bác sĩ; ghi đè quyết định trước."""
+    if len((loi_bac_si or "").strip()) < LOI_MOC_TOI_THIEU:
+        print("✗ cần NGUYÊN VĂN lời bác sĩ (--loi) làm căn cứ đổi chính sách hàng chờ")
+        return 1
+    tep = tep_chi_sao(thu_vien)
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tep.write_text(json.dumps({"phien_ban": 1, "luc": dt.datetime.now().isoformat(timespec="seconds"),
+                               "loi_bac_si": loi_bac_si.strip(), "bat": not tat}, ensure_ascii=False), encoding="utf-8")
+    print(f"✓ hàng chờ tóm tắt Word: {'TẮT' if tat else 'BẬT'} chính sách «chỉ ★ Áp dụng – tin cậy cao, mới nhất trước» — {tep}")
+    return 0
+
+
+def doc_chi_sao(thu_vien: Path) -> bool:
+    """Chính sách «chỉ ★» có hiệu lực? Vắng/hỏng/thiếu lời bác sĩ/`bat` không phải True ⇒ False (giữ luật cũ)."""
+    try:
+        d = json.loads(tep_chi_sao(thu_vien).read_text(encoding="utf-8"))
+        return d.get("bat") is True and len(str(d.get("loi_bac_si") or "").strip()) >= LOI_MOC_TOI_THIEU
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def nam_xuat_ban(bg: dict) -> int:
+    """Năm 4 chữ số đầu tiên của trường năm EndNote («2024», «2024 Mar»…); không có ⇒ 0 (xếp cuối)."""
+    m = re.search(r"\b(1[89]\d{2}|20\d{2})\b", str(bg.get("nam") or ""))
+    return int(m.group(1)) if m else 0
+
+
 def trich_dan_cua_dashboard(dash: Path) -> tuple[set[str], set[str]]:
     """(PMID, DOI chuẩn hoá) mà dashboard trích — mục chính lẫn tài liệu tham khảo."""
     ds = mod("tt").ngu_canh([dash], mod("nec")._nap_doc_data())
@@ -2024,7 +2071,9 @@ def chi_thuoc_de_tai(thu_vien: Path) -> set[int]:
 
 def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | None:
     """Trích dẫn MỚI (ngoài mốc) có PDF và chưa có Word, rồi bản ghi CŨ thuộc tầng ngoại lệ mốc (`ngoai-le-moc`, xếp theo tầng).
-    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán). Bản ghi KHÔNG thuộc nhóm «EBM · »
+    Mỗi mục mang `nguon_hang_cho`: «moi» hoặc «ngoai_le_moc». None = chưa có mốc (không đoán). Chính sách «chỉ ★» bật
+    (`chi-sao`, bác sĩ 08/11/2026) ⇒ chỉ giữ bản ghi đạt ★ (mục mang `sao=True`) và xếp mới nhất trước; không đọc được dashboard ⇒
+    ChiSaoKhongDoDuoc. Bản ghi KHÔNG thuộc nhóm «EBM · »
     nào mà thuộc nhóm đề tài «NC · » hoặc có PMID/DOI trong danh mục trích dẫn của một đề tài (kể cả bài đã loại) bị loại; không đọc
     được nhóm hay danh mục ⇒ NhomKhongDoDuoc."""
     moc = doc_moc(thu_vien)
@@ -2034,6 +2083,8 @@ def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | N
     moi = [dict(bg, nguon_hang_cho="moi") for bg in co_pdf if bg["rec"] not in moc]
     cu: list[dict] = []
     ngoai_le = doc_ngoai_le_moc(thu_vien)
+    chi_sao = doc_chi_sao(thu_vien)
+    ds: dict[str, dict] = {}
     if ngoai_le:
         ds = ngu_canh_dashboard()
         if not ds:
@@ -2057,6 +2108,15 @@ def hang_cho(thu_vien: Path, *, dashboard: Path | None = None) -> list[dict] | N
     if dashboard is not None:
         pm, doi = trich_dan_cua_dashboard(dashboard)
         moi, cu = ([bg for bg in nh if (bg["pmid"] and bg["pmid"] in pm) or (bg["doi"] and bg["doi"] in doi)] for nh in (moi, cu))
+    if chi_sao:
+        if moi or cu:
+            ds = ds or ngu_canh_dashboard()
+            if not ds:
+                raise ChiSaoKhongDoDuoc("chính sách «chỉ ★» bật nhưng không đọc được dashboard nào (EBM-Dashboards/) để xét "
+                                        "★ Áp dụng – tin cậy cao — không đo được")
+            dat = mod("gte").dat_ap_dung_tin_cay
+            moi, cu = ([dict(bg, sao=True) for bg in nh if dat(_ngu_canh_cua(ds, bg["pmid"], bg["doi"]))] for nh in (moi, cu))
+        return sorted(moi + cu, key=lambda x: (-nam_xuat_ban(x), -int(x["rec"])))
     return sorted(moi, key=lambda x: x["rec"]) + sorted(cu, key=lambda x: (x["tang"], x["rec"]))
 
 
@@ -2120,6 +2180,9 @@ def _main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("ngoai-le-moc", help="bản ghi CŨ (trong mốc) thuộc tầng ưu tiên đã chọn vẫn vào hàng chờ tóm tắt")
     p.add_argument("--tang", type=int, nargs="+", required=True, choices=(1, 2, 3, 4))
     p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
+    p = sub.add_parser("chi-sao", help="hàng chờ chỉ nhận bản ghi ★ Áp dụng – tin cậy cao, xếp mới nhất trước")
+    p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời bác sĩ")
+    p.add_argument("--tat", action="store_true", help="tắt chính sách (trở về hàng chờ mọi trích dẫn mới có PDF)")
     p = sub.add_parser("pdf-hoa", help="mọi Word đã có → PDF giữ màu, gắn PDF thay Word trong EndNote")
     p.add_argument("--ap-dung", action="store_true")
     p = sub.add_parser("hang-cho", help="trích dẫn MỚI (ngoài mốc) có PDF chưa có Word")
@@ -2154,6 +2217,8 @@ def _main(argv: list[str] | None = None) -> int:
         return ghi_moc(tv, a.loi, ghi_de=a.ghi_de)
     if a.lenh == "ngoai-le-moc":
         return ghi_ngoai_le_moc(tv, a.tang, a.loi)
+    if a.lenh == "chi-sao":
+        return ghi_chi_sao(tv, a.loi, tat=a.tat)
     if a.lenh == "pdf-hoa":
         return pdf_hoa(tv, ap_dung=a.ap_dung)
     if a.lenh == "hang-cho":
@@ -2169,12 +2234,15 @@ def _main(argv: list[str] | None = None) -> int:
         if a.json:
             print(json.dumps([{k: v for k, v in x.items() if k != "pdf"} for x in hc], ensure_ascii=False, indent=1))
             return 0
+        sao = doc_chi_sao(tv)
+        loai = "trích dẫn ★ Áp dụng – tin cậy cao" if sao else "trích dẫn MỚI"
         if not hc:
-            print("🟢 không có trích dẫn MỚI có PDF chờ tóm tắt Word" + (f" trong {a.dashboard.name}" if a.dashboard else ""))
+            print(f"🟢 không có {loai} có PDF chờ tóm tắt Word" + (f" trong {a.dashboard.name}" if a.dashboard else ""))
             return 0
-        print(f"🛎 {len(hc)} trích dẫn MỚI có PDF chờ tóm tắt Word" + (f" ({a.dashboard.name})" if a.dashboard else "") + ":")
+        print(f"🛎 {len(hc)} {loai} có PDF chờ tóm tắt Word" + (f" ({a.dashboard.name})" if a.dashboard else "")
+              + (" — mới nhất trước:" if sao else ":"))
         for x in hc:
-            print(f"  · {x['khoa']:<14} rec {x['rec']:<5} {x['tieu_de'][:80]}")
+            print(f"  · {x['khoa']:<14} rec {x['rec']:<5} {(x.get('nam') or '----')[:4]:<4} {x['tieu_de'][:76]}")
             if a.chuan_bi:
                 chuan_bi(tv, x["khoa"])
         print(HUONG_DAN_HANG_CHO)
@@ -2193,6 +2261,8 @@ def _main(argv: list[str] | None = None) -> int:
         except (NgoaiLeKhongDoDuoc, NhomKhongDoDuoc) as e:
             print(f"Hàng chờ: ⚪ {e}")
             return 2
+        if doc_chi_sao(tv):
+            print("Chính sách hàng chờ: CHỈ ★ Áp dụng – tin cậy cao, mới nhất trước (bác sĩ 08/11/2026 — `chi-sao`)")
         if hc is None:
             print("Hàng chờ chứng cứ MỚI: ⚪ chưa có mốc «để nguyên»")
         else:
