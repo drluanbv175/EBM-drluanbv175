@@ -282,6 +282,13 @@
       "pdf": "/doi/pdfdirect/{doi}",
       "kiem_lan_cuoi": "2026-11-10 · PMID 34724392 (JCO, ASCO guideline 2021) — lưu HTML + PDF /doi/pdfdirect/ nhúng (%PDF-, 610 KB), «nhan» ✓ và gắn EndNote",
       "ghi_chu": "Nền Atypon của American Society of Clinical Oncology (JCO, JCO OP…, DOI 10.1200/…). doi.org chuyển về /doi/<doi>. Thân bài ở #abstracts + #bodymatter (khung phụ ngoài hai vùng này). Như Neurology: /doi/pdf/ trả trang XEM PDF dạng HTML (~164 KB, không phải %PDF-), /doi/pdfdirect/ trả PDF thật. Trang có chữ Subscribe ở thanh trên — không đặt khoaTrang. Chưa gặp bài khoá: khoá dựa vào min trên #bodymatter (như SAGE) + chuỗi khoá chung của Atypon."
+    },
+    "nihr": {
+      "mien": ["www.journalslibrary.nihr.ac.uk"],
+      "chon": "#abstract,#full-report",
+      "min": 12000,
+      "kiem_lan_cuoi": "2026-11-10 · 2 bài (PMID 40824117 synopsis HTA 2025 — 86.891 ký tự; 42661570 chuyên khảo HTA — 924.857 ký tự) — lưu HTML, «nhan» ✓, PDF in BANIN rồi gắn EndNote",
+      "ghi_chu": "NIHR Journals Library (HTA, HSDR…; DOI 10.3310/…), toàn văn mở. doi.org chuyển về /<loạt>/<mã> hoặc /<loạt>/published-articles/<mã>. Trang hiện màn kiểm tra chống robot AWS («Let's confirm you are human») và đòi lại theo chu kỳ — bác sĩ tự bấm Begin trên Chrome của máy đang chạy làn, máy không bấm. Toàn văn nằm trong tab ẩn #full-report; từng chương lại ẩn bằng style=\"display: none;\" ⇒ in_pdf_toan_van_kho bỏ khai báo ẩn (trước đó bản in chỉ còn 2 trang tóm tắt). «Publication PDF» ở njl-admin.nihr.ac.uk khác nguồn ⇒ fetch bị CORS chặn ⇒ không đặt pdf, lưu HTML rồi in BANIN. Bản PMC của NIHR chỉ có tóm tắt + tài liệu tham khảo (cổng nhan chặn đúng)."
     }
   },
   "nguon": {

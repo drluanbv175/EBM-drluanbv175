@@ -61,6 +61,11 @@ _TAG_HTML_MO = re.compile(r"<\s*(html|head|body)\b[^>]*>", re.I)
 _TAG_HTML_DONG = re.compile(r"<\s*/\s*(html|head|body)\s*>", re.I)
 _DOCTYPE = re.compile(r"<!doctype[^>]*>", re.I)
 _CHU_THICH_PHIEN = re.compile(r"<!--\s*ebm-phien:.*?-->", re.S)
+# Khai báo ẨN ghi thẳng trong thuộc tính style (NIHR Journals Library 10/11/2026: mỗi chương báo cáo là
+# <div class="section_wrapper" style="display: none;"> — JS của trang chỉ mở một chương khi bấm). Bản lưu không còn JS ⇒ phải bỏ
+# khai báo ẩn, nếu không PDF in ra chỉ còn phần tóm tắt (đo: 2 trang / 4.839 ký tự thay vì 86.891 ký tự thân bài).
+_AN_TRONG_STYLE = re.compile(r"(display\s*:\s*none|visibility\s*:\s*hidden)\s*(!important)?\s*;?", re.I)
+_THUOC_TINH_STYLE = re.compile(r"(\sstyle\s*=\s*)(\"[^\"]*\"|'[^']*')", re.I)
 
 CSS = """
 @page { size: A4; margin: 14mm 13mm; }
@@ -290,7 +295,7 @@ def _khai_bao_tac_gia(meta: ET.Element) -> str:
 def lam_sach_html(van_ban: str) -> str:
     """HTML lưu từ trang (Unpaywall/phiên Chrome) → THÂN HTML an toàn để in: gỡ mọi script/style/khung nhúng/ảnh/liên kết tài
     nguyên (không có lượt gọi mạng nào lúc in; PDF base64 nhúng trong `<script>` của bộ lưu Chrome cũng bị gỡ), gỡ vỏ
-    html/head/body và chú thích dấu phiên."""
+    html/head/body và chú thích dấu phiên; bỏ khai báo ẩn (display:none, visibility:hidden) trong thuộc tính style."""
     s = _CHU_THICH_PHIEN.sub("", van_ban)
     s = _DOCTYPE.sub("", s)
     s = _TAG_GO.sub("", s)
@@ -300,6 +305,8 @@ def lam_sach_html(van_ban: str) -> str:
     s = _TAG_HTML_DONG.sub("", s)
     s = re.sub(r"\s(on[a-z]+)\s*=\s*(\"[^\"]*\"|'[^']*')", "", s, flags=re.I)          # bỏ trình xử lý sự kiện
     s = re.sub(r"\s(src|srcset|data-src)\s*=\s*(\"[^\"]*\"|'[^']*')", "", s, flags=re.I)  # bỏ mọi nguồn tải còn sót
+    # Hiện lại phần thân bài trang gốc ẩn bằng style ghi thẳng trên thẻ (chương thu gọn, tab chưa mở) — vùng lưu đã là thân bài.
+    s = _THUOC_TINH_STYLE.sub(lambda m: m.group(1) + m.group(2)[0] + _AN_TRONG_STYLE.sub("", m.group(2)[1:-1]) + m.group(2)[-1], s)
     return s.strip()
 
 

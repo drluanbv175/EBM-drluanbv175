@@ -76,6 +76,21 @@ def test_lam_sach_html_go_moi_duong_goi_mang() -> None:
     assert "Than bai" in r
 
 
+
+def test_lam_sach_html_hien_chuong_bi_an_bang_style_kieu_nihr() -> None:
+    # Đo thật 10/11/2026 (NIHR Journals Library, PMID 40824117/42661570): mỗi chương báo cáo là
+    # <div class="section_wrapper" style="display: none;"> — bản in cũ chỉ còn tóm tắt (2 trang / 4.839 ký tự).
+    s = ('<div id="abstract"><p>Tom tat</p></div><div class="tab-pane fade" id="full-report">'
+         '<div class="section_wrapper" id="s1" style="display: none;"><h2>Introduction</h2><p>Chuong mot</p></div>'
+         "<div class='section_wrapper' id='s2' style='color: red; DISPLAY:NONE !important; margin: 0'><p>Chuong hai</p></div>"
+         '<div id="g1" style="visibility: hidden"><p>Thuat ngu</p></div></div>')
+    r = IP.lam_sach_html(s)
+    for an in ("display: none", "DISPLAY:NONE", "visibility: hidden"):
+        assert an not in r, an
+    assert "color: red;" in r and "margin: 0" in r, "chỉ bỏ khai báo ẩn, giữ khai báo khác"
+    for chu in ("Tom tat", "Chuong mot", "Chuong hai", "Thuat ngu"):
+        assert chu in r, chu
+
 def test_dai_dau_trang_ban_chr_ghi_ban_quyen() -> None:
     t = IP.bao_trang("<p>x</p>", "1", Path("PMID-1_CHR.html"))
     assert "CÓ BẢN QUYỀN" in t and "không phân phối lại" in t and "PMID 1" in t
