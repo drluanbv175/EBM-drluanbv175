@@ -273,6 +273,15 @@
       "pdf": "meta",
       "kiem_lan_cuoi": "2026-11-04 · PMID 41844291 (Can Fam Physician 72(3):173) — lưu HTML; PDF meta trả HTTP 429 (giới hạn tần suất) ⇒ in BANIN",
       "ghi_chu": "Nền HighWire của College of Family Physicians of Canada (DOI 10.46747/cfp.*). doi.org chuyển về /content/<tập>/<số>/<trang>; thân bài ở .fulltext-view (giống BMJ). Trang có chữ Subscribe ở thanh trên — không đặt khoaTrang. PDF …full.pdf có thể trả 429 nếu vừa mở nhiều trang; lần tới thử lại PDF rồi sửa kiem_lan_cuoi."
+    },
+    "asco": {
+      "mien": ["ascopubs.org"],
+      "chon": "#abstracts,#bodymatter",
+      "min": 12000,
+      "khoa": "Get Access|Purchase this article|Access options",
+      "pdf": "/doi/pdfdirect/{doi}",
+      "kiem_lan_cuoi": "2026-11-10 · PMID 34724392 (JCO, ASCO guideline 2021) — bộ lưu dựng tệp ok:true (vùng 109.891 ký tự) + PDF /doi/pdfdirect/ nhúng (%PDF-, 610 KB)",
+      "ghi_chu": "Nền Atypon của American Society of Clinical Oncology (JCO, JCO OP…, DOI 10.1200/…). doi.org chuyển về /doi/<doi>. Thân bài ở #abstracts + #bodymatter (khung phụ ngoài hai vùng này). Như Neurology: /doi/pdf/ trả trang XEM PDF dạng HTML (~164 KB, không phải %PDF-), /doi/pdfdirect/ trả PDF thật. Trang có chữ Subscribe ở thanh trên — không đặt khoaTrang. Chưa gặp bài khoá: khoá dựa vào min trên #bodymatter (như SAGE) + chuỗi khoá chung của Atypon."
     }
   },
   "nguon": {
