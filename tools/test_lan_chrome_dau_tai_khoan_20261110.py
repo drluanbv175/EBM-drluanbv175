@@ -111,3 +111,36 @@ def test_cung_danh_sach_cum_voi_cong_va_dong_thi_hanh_goi_ham():
     assert "var taiKhoan = coDauTaiKhoan(c.innerText);" in dong, "dòng thi hành phải gọi hàm có ranh giới từ"
     assert not [d for d in dong if "/sign out|log ?out|my account/i" in d], "còn mẫu trần không ranh giới ở dòng thi hành"
     assert [d for d in dong if "module.exports" in d and "coDauTaiKhoan: coDauTaiKhoan" in d], "hàm phải xuất để test bằng node"
+
+
+# ── Khoá «Purchase» của Cochrane (11/11/2026) ─────────────────────────────────────────────────────────────────────────
+# Đo thật 10–11/11/2026: «Purchase» trần (cờ i) khớp «purchased» / «purchasers of healthcare» trong thân bài ⇒ 4 bài Cochrane
+# đọc được (PMID 27103611, 30699470, 26068955, 25062018 — có đủ Background→Discussion và PDF) bị báo «khoá trong thân bài».
+
+CAU_HINH = json.loads((TOOLS / "lan_chrome" / "cau_hinh.json").read_text(encoding="utf-8"))
+LC = _nap("_lan_chrome_dau_tai_khoan_20261111", "lan_chrome.py")
+
+
+def _danh_gia(t):
+    ma = ("const m=require(process.argv[1]);let s='';process.stdin.on('data',d=>s+=d);"
+          "process.stdin.on('end',()=>process.stdout.write(JSON.stringify(m.danhGia(JSON.parse(s)))))")
+    r = subprocess.run([NODE, "-e", ma, str(BO_LUU)], input=json.dumps(t), capture_output=True, text=True,
+                       encoding="utf-8", timeout=30)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+@pytest.mark.skipif(NODE is None, reason="máy không có node")
+@pytest.mark.parametrize("cau, khoa", [
+    ("Participants purchased their own medication.", False),          # PMID 30699470, 25062018
+    ("Decisions by purchasers of healthcare were considered.", False),  # PMID 26068955, 27103611
+    ("Purchase this review to read the full text.", True),
+    ("Sign in to read the full review.", True),
+])
+def test_cochrane_purchase_chi_khop_tu_rieng(cau, khoa):
+    url = "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD000001.pub2/full"
+    o = LC.dien_cau_hinh(CAU_HINH["nxb"]["cochrane_library"], url, "10.1002/14651858.CD000001.pub2",
+                         CAU_HINH["dau_khong_quyen_url"])
+    than = "Background Objectives Search methods Selection criteria Main results Discussion " * 200 + " " + cau
+    kq = _danh_gia({"o": o, "href": url, "soVung": 1, "doDai": len(than), "vung": than, "trang": "", "deMuc": []})
+    assert kq["ok"] is (not khoa), kq
