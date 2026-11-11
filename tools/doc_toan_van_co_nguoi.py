@@ -148,10 +148,14 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         # Gastroenterology/AJKD rơi vào «chưa kiểm» dù cùng điều khoản Elsevier. 10.1378 (CHEST — Crossref /prefixes «Elsevier BV»,
         # đo 04/10/2026): journal.chestnet.org chạy trên nền tảng Elsevier, chân trang «Terms and Conditions» trỏ ĐÚNG trang điều
         # khoản website Elsevier ở `nguon` (đọc trên Chrome 04/10/2026) ⇒ cùng điều khoản, cùng uỷ quyền.
+        # 10.1124/ (Pharmacological Reviews — ASPET) và 10.4158/ (Endocrine Practice — AACE): Crossref works ghi «Elsevier BV»,
+        # DOI phân giải qua linkinghub.elsevier.com; trang chủ hai tạp chí ghi «Copyright © 2026 Elsevier Inc.» và trỏ đúng điều
+        # khoản website Elsevier (đọc 11/11/2026, cùng tiền lệ CHEST).
         "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/",
-                                     "10.1378/"),
+                                     "10.1378/", "10.1124/", "10.4158/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
-                 "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org"),
+                 "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org", "aspetjournals.org",
+                 "endocrinepractice.org"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
@@ -205,7 +209,8 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         # 10.1530/eje- (14/10/2026): European Journal of Endocrinology chuyển từ Bioscientifica sang OUP từ 01/01/2023; DOI cũ
         # 10.1530/EJE-… nay phân giải sang academic.oup.com/ejendo (đo trên Chrome) ⇒ điều khoản OUP. Đặt ở khoá OUP (đứng TRƯỚC
         # khoá Bioscientifica trong bảng) để `nxb_cua` gán EJE cho OUP cả khi chỉ có DOI, không có URL.
-        "ket_luan": "cam", "doi": ("10.1093/", "10.1210/", "10.1164/", "10.1530/eje-"), "mien": ("academic.oup.com", "oup.com"),
+        "ket_luan": "cam", "doi": ("10.1093/", "10.1210/", "10.1164/", "10.1530/eje-", "10.5665/"),  # 10.5665/ SLEEP (11/11/2026)
+        "mien": ("academic.oup.com", "oup.com"),
         "nguon": "https://academic.oup.com/pages/legal-notice", "doc_luc": "2026-10-03",
         "trich": "use any portion of the Content in combination with any artificial intelligence (AI) tool",
         "loai_nguon": "Legal notice của Oxford Academic, mục «Text and Data Mining, TDM Reservation Policy, and Artificial "
@@ -238,7 +243,9 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "platforms provided by AAP», không nêu đích danh publications.aap.org",
         "duong_hop_le": "văn bản cho phép của AAP"},
     "SAGE Publishing": {
-        "ket_luan": "cam", "doi": ("10.1177/",), "mien": ("journals.sagepub.com", "sagepub.com"),
+        # 10.1089/ (Mary Ann Liebert, nay thuộc Sage) và 10.4997/ (J R Coll Physicians Edinb): Crossref works ghi «SAGE Publications»,
+        # DOI phân giải về journals.sagepub.com (đo 11/11/2026).
+        "ket_luan": "cam", "doi": ("10.1177/", "10.1089/", "10.4997/"), "mien": ("journals.sagepub.com", "sagepub.com", "liebertpub.com"),
         "nguon": "https://www.sagepub.com/tdm-ai-policy", "doc_luc": "2026-10-03",
         "trich": "for any AI uses including generative AI you will need … a license from Sage",
         "loai_nguon": "Sage Policy on TDM and AI (không ghi ngày) — đọc qua WebFetch; TDM phi thương mại nội dung có quyền truy "
@@ -261,7 +268,7 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "huấn luyện AI; không nói về công cụ AI đọc–tóm tắt ⇒ «không rõ ⇒ xử như cấm»",
         "duong_hop_le": "permissions@acponline.org"},
     "Wolters Kluwer Health (LWW · AHA journals · Neurology)": {
-        "ket_luan": "cam", "doi": ("10.1097/", "10.1161/", "10.1212/"),
+        "ket_luan": "cam", "doi": ("10.1097/", "10.1161/", "10.1212/", "10.2215/", "10.11124/"),  # CJASN · JBI Evid Synth (Crossref 11/11/2026)
         "mien": ("journals.lww.com", "lww.com", "ovid.com", "ahajournals.org", "neurology.org"),
         "nguon": "https://www.ovid.com/global/terms", "doc_luc": "2026-10-03",
         "trich": "any commercial use of any Site Materials … without the prior written consent of WKH",
@@ -304,8 +311,8 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
     # Crossref /prefixes cùng ngày. Taylor & Francis cấm RÕ dùng với công cụ AI; Minerva Medica và ASH bảo lưu RÕ quyền TDM/huấn
     # luyện AI; bảy NXB còn lại chỉ cấm huấn luyện/phát triển AI hoặc im lặng về AI ⇒ «không rõ ⇒ xử như cấm» (doctrine §2septies).
     "Taylor & Francis (Informa UK)": {
-        "ket_luan": "cam", "doi": ("10.1080/", "10.3109/"),
-        "mien": ("tandfonline.com", "informahealthcare.com", "taylorandfrancis.com"),
+        "ket_luan": "cam", "doi": ("10.1080/", "10.3109/", "10.2217/"),  # 10.2217/ Future Medicine, nay thuộc T&F (11/11/2026)
+        "mien": ("tandfonline.com", "informahealthcare.com", "taylorandfrancis.com", "futuremedicine.com"),
         "nguon": "https://www.tandfonline.com/terms-and-conditions", "doc_luc": "2026-10-14",
         "trich": "the Materials may not be input into any artificial intelligence or large language model tool",
         "loai_nguon": "Informa Group terms of website use (tandfonline.com, đọc trên Chrome 14/10/2026): Part II §4.b.iv «Use of "
@@ -531,6 +538,40 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "công cụ AI kể cả qua plugin và tiện ích, cấm mọi hình thức khai thác văn bản và dữ liệu; phạm vi nêu rõ ASCO "
                       "Publications gồm Journal of Clinical Oncology và các tạp chí JCO",
         "duong_hop_le": "văn bản cho phép của ASCO (permissions@asco.org)"},
+    # Đợt đọc 11/11/2026 — NXB của bài có bản đọc miễn phí mà làn Chrome từ chối vì «chưa kiểm điều khoản» (bác sĩ 11/11: «Kiểm
+    # điều khoản»). Đọc trên Chrome của bác sĩ; tiền tố DOI đối chiếu Crossref /prefixes cùng ngày.
+    "Bentham Science Publishers": {
+        "ket_luan": "cam", "doi": ("10.2174/",), "mien": ("benthamscience.com", "eurekaselect.com"),
+        "nguon": "https://www.benthamscience.com/terms-and-conditions", "doc_luc": "2026-11-11",
+        "trich": "published content be used for LLM or AI training, ingestion, or any external application",
+        "loai_nguon": "Terms and Conditions của Bentham Science (không ghi ngày cập nhật; WebFetch 403, đọc trên Chrome): «Under no "
+                      "circumstances…» cấm dùng nội dung để huấn luyện, nạp vào LLM/AI hay mọi ứng dụng bên ngoài; chỉ cho tải để "
+                      "dùng cá nhân phi thương mại tạm thời; giữ mọi quyền",
+        "duong_hop_le": "giấy phép riêng xin trực tiếp Bentham Science Publishers"},
+    "Clinical and Experimental Rheumatology S.A.S.": {
+        "ket_luan": "cam", "doi": ("10.55563/",), "mien": ("clinexprheumatol.org",),
+        "nguon": "https://www.clinexprheumatol.org/guidelines-visitors.asp", "doc_luc": "2026-11-11",
+        "trich": "The use of robots or automated downloading programs is prohibited.",
+        "loai_nguon": "Conditions for the use of this site (chân trang clinexprheumatol.org; đọc trên Chrome): mọi tài liệu © Clinical "
+                      "and Experimental Rheumatology S.A.S., chỉ sao chép phi lợi nhuận theo luật bản quyền, cấm robot/chương trình "
+                      "tải tự động; KHÔNG có điều nào về AI/TDM ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "văn bản cho phép của Clinical and Experimental Rheumatology (trang Contact Us)"},
+    "Academy of Managed Care Pharmacy (AMCP — J Manag Care Spec Pharm)": {
+        "ket_luan": "cam", "doi": ("10.18553/",), "mien": ("jmcp.org", "amcp.org"),
+        "nguon": "https://www.jmcp.org/about-jmcp/reprints-and-permissions", "doc_luc": "2026-11-11",
+        "trich": "may not be reproduced … without prior written permission",
+        "loai_nguon": "Trang Reprints and Permissions của JMCP (đọc trên Chrome; jmcp.org không có trang Terms of Use): bài đọc miễn "
+                      "phí nhưng KHÔNG mang giấy phép mở, tác giả chuyển bản quyền cho AMCP; chính sách AI chỉ nói về tác giả và "
+                      "phản biện viên; KHÔNG có điều về dùng nội dung đã đăng với AI/TDM ⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "văn bản cho phép của AMCP; quyền sao chụp qua Copyright Clearance Center"},
+    "American Board of Family Medicine (ABFM — J Am Board Fam Med)": {
+        "ket_luan": "cam", "doi": ("10.3122/",), "mien": ("jabfm.org",),
+        "nguon": "https://www.jabfm.org/page/permissions", "doc_luc": "2026-11-11",
+        "trich": "Reproduced by permission of the American Board of Family Medicine.",
+        "loai_nguon": "Trang Reprint and Copyright Permission Requests của jabfm.org (đọc trên Chrome; không có trang Terms of Use): "
+                      "bài đọc miễn phí nhưng KHÔNG nêu giấy phép mở, mọi việc tái bản phải xin phép ABFM; KHÔNG có điều về AI/TDM "
+                      "⇒ «không rõ ⇒ xử như cấm»",
+        "duong_hop_le": "văn bản cho phép của ABFM qua thư yêu cầu trên trang Permissions"},
 }
 # GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
 # khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
@@ -548,6 +589,28 @@ GIAY_PHEP_MO_CAP_NXB: dict[str, dict] = {
         "ghi_chu": "Bài IMR Press xuất bản: CC BY 4.0 (trang Copyright & License, cập nhật 24/12/2025). The Heart Surgery Forum do "
                    "IMR Press xuất bản từ tập 28 số 8 (2025); bài cũ hơn do NXB trước đăng theo CC BY-NC, IMR Press lưu hộ trên "
                    "imrpress.com (ghi trên trang bài 10.1532/hsf.3547, đọc 18/10/2026) — cả hai đều là giấy phép mở."},
+    # Đợt đọc 11/11/2026 — NXB mà toàn bộ nội dung trên miền của mình mang giấy phép mở (đọc trên Chrome của bác sĩ).
+    "Psychiatria Polska (KRW PTP)": {
+        "mien": ("psychiatriapolska.pl",),
+        "giay_phep": ("cc-by",),
+        "nguon": "https://www.psychiatriapolska.pl/For-Authors,1777.html", "doc_luc": "2026-11-11",
+        "trich": "Their availability is regulated by Creative Commons CC-BY license",
+        "ghi_chu": "Câu khai nằm trong Guide for Authors của tạp chí (trang chủ/About không có điều khoản sử dụng); bài đăng Open "
+                   "Access tại psychiatriapolska.pl. NXB: Komitet Redakcyjno-Wydawniczy Polskiego Towarzystwa Psychiatrycznego."},
+    "Hong Kong Academy of Medicine Press (East Asian Arch Psychiatry)": {
+        "mien": ("easap.asia",),
+        "giay_phep": ("cc-by-nc-nd",),
+        "nguon": "https://www.easap.asia/", "doc_luc": "2026-11-11",
+        "trich": "content on this site is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0",
+        "ghi_chu": "Mục «Licencing Policy» trên trang chủ easap.asia («Except where otherwise noted…»). Tiền tố 10.12809 còn dùng cho "
+                   "Hong Kong Medical Journal (hkmj.org) — KHÔNG suy rộng sang miền đó."},
+    "e-Century Publishing Corporation": {
+        "mien": ("e-century.us", "ajtr.org"),
+        "giay_phep": ("cc-by-nc",),
+        "nguon": "https://e-century.us/web/information_for_authors.php", "doc_luc": "2026-11-11",
+        "trich": "the copyright will be released by the publisher under the Creative Commons Attribution Non-Commercial License",
+        "ghi_chu": "Trang Information for Authors chung cho mọi tạp chí của NXB + trang e-century.us/web «All journals listed on this "
+                   "page are open access». Câu giấy phép không ghi phiên bản CC BY-NC. www.ajtr.org chuyển hướng về e-century.us."},
 }
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
