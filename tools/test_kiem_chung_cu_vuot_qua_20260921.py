@@ -25,6 +25,20 @@ kcv = importlib.util.module_from_spec(spec)
 sys.modules["kcv_test_0921"] = kcv
 spec.loader.exec_module(kcv)
 
+# Manifest mẫu mang ngày CỐ ĐỊNH (20260810, 20260921…) còn hạn «âm tính» (HAN_AM_TINH_NGAY = 92) tính từ HÔM NAY ⇒ bộ test tự đỏ
+# theo lịch (11/11/2026: 20260810 đủ 93 ngày ⇒ hai test «cu=True» đỏ trên CI dù mã không đổi). Cố định «hôm nay» = 22/09/2026,
+# ngày viết bộ test; phép thử hạn tuổi thật nằm ở test_kiem_chung_cu_vuot_qua_han_am_tinh_20260922.py (ngày tương đối).
+_VA_HOM_NAY = mock.patch.object(kcv, "_hom_nay", lambda: __import__("datetime").date(2026, 9, 22))
+
+
+def setUpModule():
+    _VA_HOM_NAY.start()
+
+
+def tearDownModule():
+    _VA_HOM_NAY.stop()
+
+
 ELINK_RONG = {"linksets": [{"linksetdbs": []}]}
 ELINK_CO_ID = {"linksets": [{"linksetdbs": [{"links": ["99999999"]}]}]}
 ESUM_CO = {"result": {"uids": ["99999999"], "99999999": {"pubdate": "2025 Jan", "title": "Tong quan moi",
