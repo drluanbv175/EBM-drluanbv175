@@ -54,6 +54,16 @@
     return '';
   }
 
+  /** Dấu giao diện tài khoản lọt vào thân bài (THUẦN — test bằng node). CÙNG danh sách và CÙNG ranh giới từ với cổng
+   *  `phien_uy_quyen_chrome._DAU_TAI_KHOAN`: ngay trước và ngay sau cụm không được là chữ/số. Trước 10/11/2026 mẫu ở đây thiếu
+   *  ranh giới ⇒ câu văn «…symptom or sign outside of the following…» (bản PMC của PMID 39482474) bị báo «CÓ DẤU TÀI KHOẢN»,
+   *  bài phải dừng chờ bác sĩ dù cổng `--nhan` nhận. Ranh giới viết bằng \p{L}\p{N} (cờ u) vì \b của JS chỉ hiểu chữ ASCII —
+   *  «đăng xuất» bắt đầu bằng «đ» sẽ không bao giờ khớp. */
+  var DAU_TAI_KHOAN = /(?<![\p{L}\p{N}_])(sign out|log ?out|my account|đăng xuất|tài khoản của tôi)(?![\p{L}\p{N}_])/iu;
+  function coDauTaiKhoan(vanBan) {
+    return DAU_TAI_KHOAN.test(String(vanBan || ''));
+  }
+
   function dauPdf(buf) {
     return String.fromCharCode.apply(null, Array.prototype.slice.call(new Uint8Array(buf)));
   }
@@ -117,7 +127,7 @@
     ds.forEach(function (e) { c.appendChild(e.cloneNode(true)); });
     c.querySelectorAll('script,style,noscript,iframe,nav,header,footer,aside,form,button,svg,[class*="account"],[class*="login"],[class*="signin"]')
       .forEach(function (e) { e.remove(); });
-    var taiKhoan = /sign out|log ?out|my account/i.test(c.innerText);
+    var taiKhoan = coDauTaiKhoan(c.innerText);
     var html = '<!-- ebm-phien:' + ma + ' pmid:' + pmid + ' url:' + url + ' -->\n<!doctype html><html><head><meta charset="utf-8"><title>PMID ' +
       pmid + '</title></head><body>\n' + c.innerHTML + '\n' +
       (pdfB64 ? '<script type="application/pdf;base64" id="ebm-pdf">' + pdfB64 + '</scr' + 'ipt>\n' : '') + '</body></html>';
@@ -148,5 +158,5 @@
   g.__ebmDanhGia = danhGia;
   g.__ebmTai = tai;
   g.__ebmPdfNut = pdfNut;
-  if (typeof module !== 'undefined' && module.exports) module.exports = {danhGia: danhGia, chonPdf2: chonPdf2};
+  if (typeof module !== 'undefined' && module.exports) module.exports = {danhGia: danhGia, chonPdf2: chonPdf2, coDauTaiKhoan: coDauTaiKhoan};
 })(typeof window !== 'undefined' ? window : globalThis);
