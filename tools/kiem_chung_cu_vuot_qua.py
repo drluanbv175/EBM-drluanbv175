@@ -210,6 +210,13 @@ def _kiem_manifest_hop_le(man: dict) -> str:
     return ""
 
 
+def _hom_nay():
+    """Ngày hôm nay cho phép tính tuổi manifest — tách hàm để test cố định được ngày (11/11/2026: manifest mẫu 20260810 của
+    bộ test đủ 93 ngày > HAN_AM_TINH_NGAY ⇒ test tự đỏ theo lịch dù mã không đổi)."""
+    import datetime as _dt
+    return _dt.date.today()
+
+
 def doc_bao_cao_vuot_qua(thu_muc: Path | None = None) -> dict:
     """Báo cáo «bị vượt qua» mới nhất và tập PMID đang có bài tổng hợp mới hơn.
 
@@ -262,7 +269,7 @@ def doc_bao_cao_vuot_qua(thu_muc: Path | None = None) -> dict:
         if not ly:
             try:
                 import datetime as _dt_han
-                tuoi_ngay = (_dt_han.date.today()
+                tuoi_ngay = (_hom_nay()
                             - _dt_han.date(int(ngay[:4]), int(ngay[4:6]), int(ngay[6:8]))).days
             except (ValueError, IndexError):
                 tuoi_ngay = None
