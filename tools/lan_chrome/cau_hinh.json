@@ -84,11 +84,11 @@
     "cochrane_library": {
       "mien": ["www.cochranelibrary.com"],
       "chon": "article",
-      "khoa": "Sign in to read|Purchase|Get access|Subscribe to",
+      "khoa": "Sign in to read|\\bPurchase\\b|Get access|Subscribe to",
       "min": 12000,
       "pdfXem": "(?:/cdsr/doi/[^\"'\\s]+)?/pdf/CDSR/[^\"'\\s]+\\.pdf",
       "kiem_lan_cuoi": "2026-10-17 · PMID 28898390 (CD006211.pub3, 99 trang); 2026-11-04 · 3 bài (PMID 35536541, 39312290, 39991882) — PDF thật ở /cdsr/doi/<doi>/pdf/CDSR/<CD>/<CD>.pdf; mẫu cũ chỉ bắt đuôi /pdf/CDSR/… nên dựng URL ở gốc miền ⇒ HTTP 404, đã thêm tiền tố tuỳ chọn",
-      "ghi_chu": "meta citation_pdf_url là TRANG XEM PDF (≈ 4 KB HTML) — bộ lưu đọc trang đó, tìm liên kết /pdf/CDSR/…/*.pdf rồi mới tải tệp PDF thật."
+      "ghi_chu": "Khoá «Purchase» phải là TỪ RIÊNG (\\b): đo 10–11/11/2026, chữ «Purchase» trần khớp «purchased»/«purchasers» trong thân bài ⇒ 4 bài đọc được bị báo khoá (PMID 27103611, 30699470, 26068955, 25062018). meta citation_pdf_url là TRANG XEM PDF (≈ 4 KB HTML) — bộ lưu đọc trang đó, tìm liên kết /pdf/CDSR/…/*.pdf rồi mới tải tệp PDF thật."
     },
     "wiley": {
       "mien": ["onlinelibrary.wiley.com", "*.onlinelibrary.wiley.com"],
