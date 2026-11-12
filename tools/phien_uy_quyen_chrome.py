@@ -13,7 +13,10 @@ GIỚI HẠN — không mở rộng được bằng cờ:
     (doctrine `_CONNECTOR-CHUNG-CU.md` §2septies mục 8) được dùng làm lời mở phiên, vẫn ghi nguyên văn kèm ngày nói.
   • Uỷ quyền đọc ngày 03/10 (`dieu-khoan-bac-si-uy-quyen.json`) ghi phạm vi «tóm tắt… KHÔNG lưu toàn văn». Lưu bản sao là phạm vi
     RỘNG HƠN ⇒ cần lời phiên này; và CHỈ áp cho NXB đã có uỷ quyền đọc còn hiệu lực — tính LÚC KIỂM từng bài, nên uỷ quyền
-    thêm/rút giữa phiên có hiệu lực ngay. NXB chưa kiểm điều khoản ⇒ không lưu.
+    thêm/rút giữa phiên có hiệu lực ngay. NXB chưa kiểm điều khoản ⇒ không lưu. NGOẠI LỆ 12/11/2026 (bác sĩ: «Thêm Cambridge vào
+    làn Chrome»): NXB mà CHÍNH điều khoản cho phép tải-lưu-đánh chỉ mục để TDM phi thương mại (`TDM_CHO_PHEP_LUU` của
+    doc_toan_van_co_nguoi.py — Cambridge University Press) thuộc phạm vi phiên không cần uỷ quyền, CHỈ với trang trên miền của
+    NXB đó (cambridge.org); vẫn cần lời mở phiên, trần và nhịp như mọi NXB.
     Cơ sở dữ liệu (DynaMed/EBSCO, Scopus, Web of Science) KHÔNG BAO GIỜ thuộc phiên — điều khoản cấm dùng nội dung với AI.
   • Điều khoản nhà xuất bản KHÔNG đổi: tài khoản cá nhân cho phép đọc cá nhân; tải nhiều tự động có thể bị NXB khoá tài khoản.
     Trách nhiệm điều khoản thuộc bác sĩ. Vì vậy có TRẦN mỗi miền (TRAN_MOI_MIEN bài/phiên) và NHỊP (≥ NGHI_TOI_THIEU_GIAY giây
@@ -203,8 +206,26 @@ def luu_tru_phien(d: dict, tep: Path | None = None) -> Path:
 
 
 def nxb_duoc_luu(dtv, hom_nay=None) -> list[str]:
-    """NXB thuộc phạm vi lưu: có uỷ quyền đọc CÒN HIỆU LỰC (khoá «cam» của DIEU_KHOAN_NXB) và không thuộc KHONG_BAO_GIO."""
-    return [ten for ten in dtv.DIEU_KHOAN_NXB if ten not in KHONG_BAO_GIO and dtv.uy_quyen_bac_si(ten, hom_nay)]
+    """NXB thuộc phạm vi lưu, không thuộc KHONG_BAO_GIO: (1) có uỷ quyền đọc CÒN HIỆU LỰC (khoá «cam» của DIEU_KHOAN_NXB), hoặc
+    (2) NXB mà CHÍNH điều khoản cho phép lưu bản sao để TDM phi thương mại (`TDM_CHO_PHEP_LUU` — 12/11/2026, Cambridge) — không cần
+    uỷ quyền vì NXB cho phép; trang vẫn phải nằm trên miền của NXB (xét ở `kiem`). Bộ điều khoản thiếu bảng (2) ⇒ chỉ còn (1)."""
+    ra = [ten for ten in dtv.DIEU_KHOAN_NXB if ten not in KHONG_BAO_GIO and dtv.uy_quyen_bac_si(ten, hom_nay)]
+    return ra + [ten for ten in (getattr(dtv, "TDM_CHO_PHEP_LUU", None) or {}) if ten not in KHONG_BAO_GIO and ten not in ra]
+
+
+def nxb_cua_lan(dtv, doi: str = "", url: str = "") -> tuple[str | None, tuple[str, ...], bool]:
+    """(tên NXB, miền đã khai của NXB, có phải mục TDM_CHO_PHEP_LUU) cho một bài của làn lưu bản sao.
+
+    Bảng «cấm» (`nxb_cua`) xét TRƯỚC: bài khớp một NXB «cấm» thì theo luật uỷ quyền của NXB đó, dù trang ở đâu. Không khớp ⇒ tra
+    `nxb_tdm_cho_phep` (12/11/2026). Bộ điều khoản không có hàm tra TDM (bộ giả trong test cũ) ⇒ coi như bảng TDM rỗng."""
+    ten, d = dtv.nxb_cua(doi=doi, url=url)
+    if ten:
+        return ten, tuple((d or {}).get("mien") or ()), False
+    tra = getattr(dtv, "nxb_tdm_cho_phep", None)
+    ten, d = tra(doi=doi, url=url) if tra else (None, None)
+    if ten:
+        return ten, tuple((d or {}).get("mien") or ()), True
+    return None, (), False
 
 
 def mo(can_cu: str, *, bay_gio: datetime | None = None, tep: Path | None = None, dtv=None) -> tuple[int, str]:
@@ -292,7 +313,7 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
         return 3, (f"trang ở {_mien(url)} có điều khoản RIÊNG cấm dùng với AI ({MIEN_CAM_AI_RIENG[cam[0]]}) — không đọc/lưu; "
                    "xếp bài cho bác sĩ đọc trực tiếp hoặc tìm bản trên miền của NXB")
     dtv = dtv or _nap_dtv()
-    ten, _dk = dtv.nxb_cua(doi=doi, url=url)
+    ten, mien_nxb, la_tdm = nxb_cua_lan(dtv, doi, url)
     # Phạm vi tính LÚC KIỂM, không chỉ theo ảnh chụp lúc mở: NXB có uỷ quyền đọc CÒN HIỆU LỰC ngay bây giờ. Bác sĩ uỷ quyền thêm
     # NXB khi phiên đang mở (04/10: «J Rheumatol uỷ quyền») thì áp ngay; rút uỷ quyền (xoá mục/het_han) thì dừng ngay.
     # `d["nxb"]` chỉ còn là ảnh chụp lúc mở để đối chiếu. KHONG_BAO_GIO đã bị loại sẵn trong nxb_duoc_luu.
@@ -301,12 +322,17 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
     mien = _mien(url)
     if not mien:
         return 3, "thiếu URL trang bài"
+    # NXB cho phép TDM (12/11/2026): quyền lưu đến từ điều khoản của CHÍNH NXB cho nội dung trên nền tảng của nó ⇒ trang PHẢI nằm
+    # trên miền của NXB; miền nền tảng của cấu hình làn Chrome (PMC, Europe PMC…) KHÔNG được tính — bản ở đó theo điều khoản/giấy
+    # phép riêng của nơi lưu (bản OA đi dây chuyền OA).
+    if la_tdm and not mien_duoc_phep(mien, mien_nxb):
+        return 3, (f"trang ở {mien} KHÔNG thuộc miền của {ten} ({', '.join(mien_nxb) or 'chưa khai miền'}) — quyền lưu để TDM chỉ áp "
+                   "cho nội dung trên nền tảng của chính NXB; mở bài trên miền đó hoặc đi làn thường/dây chuyền OA")
     # TRANG phải nằm trên MIỀN đã khai của chính NXB đó (06/11/2026). `nxb_cua` xét tiền tố DOI TRƯỚC miền, nên bài Elsevier
     # (DOI 10.1016/…) mở trên trang của HIỆP HỘI (uroweb.org — EAU) vẫn được báo «được» theo uỷ quyền Elsevier, trong khi chính
     # trang hiệp hội có điều khoản RIÊNG cấm đưa nội dung guideline vào công cụ AI (agent lô 3 tầng C2 phát hiện, 06/11/2026).
     # DOI chỉ cho biết NXB của bài, không cho biết điều khoản của trang bên thứ ba ⇒ ngoài miền đã khai thì fail-closed.
-    mien_nxb = tuple((dtv.DIEU_KHOAN_NXB.get(ten) or {}).get("mien") or ())
-    if not mien_duoc_phep(mien, mien_nxb, mien_lan_chrome(cau_hinh)):
+    if not la_tdm and not mien_duoc_phep(mien, mien_nxb, mien_lan_chrome(cau_hinh)):
         return 3, (f"trang ở {mien} KHÔNG thuộc miền đã khai của {ten} ({', '.join(mien_nxb) or 'chưa khai miền'}) và không có "
                    "trong cấu hình làn Chrome đã kiểm (tools/lan_chrome/cau_hinh.json) — DOI chỉ cho biết NXB của bài, không cho biết "
                    "điều khoản của trang bên thứ ba (hiệp hội, kho lưu trữ; vd uroweb.org cấm dùng với AI). Đọc điều khoản riêng của "
@@ -319,6 +345,9 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
         con = d["nghi_toi_thieu_giay"] - (bay_gio - cuoi).total_seconds()
         if con > 0:
             return 3, f"chưa đủ nhịp ở {mien} — đợi thêm {int(con) + 1} giây"
+    if la_tdm:
+        return 0, (f"được — phiên {d['ma']}, {ten}, {mien} (chính NXB cho phép lưu để TDM phi thương mại — giữ điều kiện: kèm "
+                   "liên kết bài gốc, xoá bản lưu khi dự án kết thúc, không tải hàng loạt)")
     return 0, f"được — phiên {d['ma']}, {ten}, {mien}"
 
 

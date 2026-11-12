@@ -612,6 +612,37 @@ GIAY_PHEP_MO_CAP_NXB: dict[str, dict] = {
         "ghi_chu": "Trang Information for Authors chung cho mọi tạp chí của NXB + trang e-century.us/web «All journals listed on this "
                    "page are open access». Câu giấy phép không ghi phiên bản CC BY-NC. www.ajtr.org chuyển hướng về e-century.us."},
 }
+# NXB mà CHÍNH điều khoản cho phép LƯU bản sao để khai thác văn bản và dữ liệu (TDM) phi thương mại (12/11/2026 — bác sĩ ra lệnh
+# trong chat: «Thêm Cambridge vào làn Chrome»). Bảng RIÊNG thứ ba, KHÔNG gộp vào DIEU_KHOAN_NXB (bảng đó cố ý chỉ nhận «cấm»: mục
+# khác sẽ miễn khai `dieu_khoan` cho mọi bài ở `--nap`) và KHÔNG gộp vào GIAY_PHEP_MO_CAP_NXB (nội dung ở đây KHÔNG mang giấy phép
+# mở — chỉ là quyền TDM CÓ ĐIỀU KIỆN với nội dung bác sĩ truy cập hợp pháp). CHỈ phiên lưu bản sao dùng
+# (`phien_uy_quyen_chrome.nxb_duoc_luu` / `kiem`): NXB vào phạm vi phiên mà KHÔNG cần uỷ quyền đọc của bác sĩ (chính NXB cho phép),
+# vẫn cần lời mở phiên + trần/nhịp; TRANG phải nằm trên MIỀN của chính NXB (`mien`) — DOI chỉ cho biết NXB của bài, không cho biết
+# điều khoản của bản lưu ở kho/miền khác. `--nap` và `nxb_cua` KHÔNG đọc bảng này (hồ sơ trích xuất vẫn tự khai `dieu_khoan`).
+# `dieu_kien` là điều kiện của chính điều khoản — người dùng bản lưu phải giữ đúng. CHỈ ghi điều ĐÃ ĐỌC (nguồn + ngày + trích ≤ 15 từ).
+TDM_CHO_PHEP_LUU: dict[str, dict] = {
+    "Cambridge University Press": {
+        # 10.1017/ — Crossref works ghi publisher «Cambridge University Press (CUP)» (member 56; 10.1017/S0033291721001549, đối
+        # chiếu 12/11/2026). 10.1192/ — Crossref ghi publisher «Royal College of Psychiatrists» (member 170) NHƯNG content-domain
+        # cambridge.org và dòng bản quyền «Published by Cambridge University Press on behalf of Royal College of Psychiatrists»
+        # (10.1192/bjp.2026.10651, cùng ngày): bài BJP đọc trên Cambridge Core chịu cùng Terms of use; bản ở miền khác KHÔNG hưởng.
+        "doi": ("10.1017/", "10.1192/"),
+        "mien": ("cambridge.org",),
+        "nguon": "https://www.cambridge.org/core/legal-notices/terms", "doc_luc": "2026-11-12",
+        "trich": "You may download, extract, store and index Content to which you have lawful access",
+        "loai_nguon": "Terms of use của Cambridge Core («Last Updated: March 2025»), mục «Machine Analysis (Text and Data Mining)» — "
+                      "đọc trên Chrome của bác sĩ 12/11/2026. Danh sách điều cấm của cùng trang có «Create a database … by "
+                      "downloading and storing any Content», nhưng mục TDM cho phép RÕ tải, trích, lưu, đánh chỉ mục để TDM "
+                      "phi thương mại ⇒ không phải «cấm», cũng không phải giấy phép mở",
+        "dieu_kien": (
+            "chỉ mục đích PHI THƯƠNG MẠI",
+            "chỉ nội dung bác sĩ truy cập HỢP PHÁP — trang tường phí («Access options») ⇒ không lưu",
+            "dùng kết quả TDM phải kèm liên kết về bài gốc trên cambridge.org (dấu phiên `url:` đầu tệp _CHR và nhật ký phiên giữ URL)",
+            "xoá bản lưu cục bộ khi dự án nghiên cứu kết thúc",
+            "Cambridge theo dõi việc tải và có quyền đặt giới hạn ⇒ giữ trần bài/miền và nhịp của phiên, không tải hàng loạt",
+        ),
+        "quyet_dinh": "«Thêm Cambridge vào làn Chrome» (bác sĩ, chat 12/11/2026)"},
+}
 # Tiêu đề guideline của ESC (cả guideline đồng chủ trì «ESC/EAS…», «ESC/ERS…») — xem mục ESC ở trên.
 _TIEU_DE_ESC_GUIDELINE = re.compile(r"\bESC(?:/[A-Z][A-Za-z]*)*\b[^.\n]{0,40}\bGuidelines?\b")
 _KET_LUAN_DIEU_KHOAN_NHAN = {"cho_phep", "giay_phep_cc"}
@@ -709,11 +740,24 @@ def giay_phep_mo_cap_nxb(url: str = "") -> tuple[str | None, dict | None]:
     return None, None
 
 
+def nxb_tdm_cho_phep(doi: str = "", url: str = "") -> tuple[str | None, dict | None]:
+    """(tên NXB, mục) của TDM_CHO_PHEP_LUU theo tiền tố DOI rồi miền (đúng miền hoặc miền con ngăn bằng dấu chấm); không khớp ⇒
+    (None, None). CHỈ NHẬN DIỆN NXB — người gọi (phiên lưu bản sao) còn phải tự đòi TRANG nằm trên `mien` của mục, và phải xét
+    bảng «cấm» (`nxb_cua`) TRƯỚC. Không thay `nxb_cua`: Cambridge vẫn là «chưa kiểm» với cổng `--nap` (12/11/2026)."""
+    doi, h = (doi or "").lower(), _mien(url)
+    for ten, d in TDM_CHO_PHEP_LUU.items():
+        if any(doi.startswith(t) for t in d["doi"]) or (h and any(h == m or h.endswith("." + m) for m in d["mien"])):
+            return ten, d
+    return None, None
+
+
 def lech_doctrine(van_ban: str) -> list[str]:
     """So bảng `DIEU_KHOAN_NXB` với doctrine `.claude/agents/_CONNECTOR-CHUNG-CU.md` §2septies (03/10/2026).
 
     Cổng (`kiem_ho_so`) chỉ chặn hồ sơ SAU khi agent đã đọc bài; doctrine mới là chỗ dạy agent dừng TRƯỚC khi mở bài
-    (CLAUDE.md §6.4). Thêm một NXB «cấm» vào bảng mà quên doctrine ⇒ agent vẫn mở bài đó. Trả danh sách chỗ lệch (rỗng = khớp)."""
+    (CLAUDE.md §6.4). Thêm một NXB «cấm» vào bảng mà quên doctrine ⇒ agent vẫn mở bài đó. Từ 12/11/2026 so cả `TDM_CHO_PHEP_LUU`
+    (NXB cho phép lưu bản sao để TDM): doctrine phải nêu tên + mọi tiền tố DOI + tên bảng, không thì agent không biết NXB đó đã
+    vào phiên lưu bản sao và điều kiện đi kèm. Trả danh sách chỗ lệch (rỗng = khớp)."""
     i = van_ban.find("## 2septies. ")
     if i < 0:
         return ["doctrine mất §2septies (điều khoản NXB trước toàn văn)"]
@@ -725,6 +769,11 @@ def lech_doctrine(van_ban: str) -> list[str]:
             for ten, d in DIEU_KHOAN_NXB.items()
             if d.get("ket_luan") == "cam"
             and (ten.split(" (")[0].strip() not in muc or any(f"`{t}`" not in muc for t in d["doi"]))]
+    lech += [f"§2septies không nêu NXB cho phép lưu bản sao để TDM {ten} kèm tiền tố DOI {d['doi']}"
+             for ten, d in TDM_CHO_PHEP_LUU.items()
+             if ten.split(" (")[0].strip() not in muc or any(f"`{t}`" not in muc for t in d["doi"])]
+    if TDM_CHO_PHEP_LUU and "`TDM_CHO_PHEP_LUU`" not in muc:
+        lech.append("§2septies không trỏ bảng `TDM_CHO_PHEP_LUU` (NXB cho phép lưu bản sao để TDM phi thương mại)")
     if "tools/doc_toan_van_co_nguoi.py" not in muc:
         lech.append("§2septies không trỏ công cụ tools/doc_toan_van_co_nguoi.py")
     if "8. **ĐIỀU KHOẢN NXB TRƯỚC TOÀN VĂN.**" not in van_ban:
@@ -754,7 +803,9 @@ _MUC_DU_MAC_DINH = ("thiet_ke", "quan_the", "ket_cuc_chinh")
 HUONG_DAN = """QUY TRÌNH «ĐỌC TOÀN VĂN QUA TRÌNH DUYỆT CÓ BÁC SĨ» (Claude làm; bác sĩ chỉ vượt chặn/đăng nhập trên trang):
   0. `python3 tools/gom_toan_van_dashboard.py --queue <tệp> --unpaywall` trước — bài có bản OA (PMC, hoặc bản mang giấy phép mở
      qua Unpaywall — tầng 2) thì dây chuyền OA lấy, KHÔNG cần làn này.
-  0b. NXB có uỷ quyền đọc của bác sĩ VÀ bác sĩ đã nói câu uỷ quyền phiên ⇒ phiên LƯU bản sao `tools/phien_uy_quyen_chrome.py`
+  0b. NXB có uỷ quyền đọc của bác sĩ (hoặc NXB mà CHÍNH điều khoản cho phép lưu bản sao để TDM phi thương mại — bảng
+     `TDM_CHO_PHEP_LUU`, vd Cambridge University Press 12/11/2026, chỉ trang trên miền của NXB đó, giữ đúng `dieu_kien` của mục)
+     VÀ bác sĩ đã nói câu uỷ quyền phiên ⇒ phiên LƯU bản sao `tools/phien_uy_quyen_chrome.py`
      (`--mo "<nguyên văn>"` một lần; `--kiem <PMID> --url <URL>` trước MỖI bài; `--nhan <PMID> --tep <tệp> --url <URL>` từng tệp;
      `--dung` khi bác sĩ nói «dừng») — lưu `toan_van_oa/PMID-<n>_CHR.*` (có bản quyền, KHÔNG phải OA). Ngoài phiên: theo các bước dưới.
      Công cụ đóng gói (17/10/2026): `python3 tools/lan_chrome.py hang-cho` (bài chờ theo miền · ưu tiên · có cấu hình · phạm vi)
