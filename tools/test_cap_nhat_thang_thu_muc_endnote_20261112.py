@@ -412,16 +412,34 @@ def test_kiem_lich_nen_hieu_file_thang(tmp_path):
 
 
 def test_khai_lich_va_quyen_nhat_quan():
+    """13/11/2026 bác sĩ: «có 2 tác vụ cập nhật tháng … gộp lại chỉ 1 tác vụ» ⇒ phiếu thư mục EndNote là bước SAU bộ
+    thu thập trong tác vụ tháng DUY NHẤT `cap-nhat-thang-ebm`; tác vụ ngày 5 riêng đã bỏ."""
     goc = TOOLS.parent
     ky = json.loads((goc / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
-    tv = next(t for t in ky["tac_vu"] if t["id"] == "cap-nhat-thang-thu-muc-endnote")
-    assert tv["dau_vet"]["loai"] == "file-thang" and cn.TIEN_TO_TEP in tv["dau_vet"]["path"]
-    skill = (goc / "sync" / "scheduled-tasks" / "cap-nhat-thang-thu-muc-endnote" / "SKILL.md").read_text(encoding="utf-8")
-    assert "`python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da 3 --hoan-thien --ghi`" in skill
+    assert not [t for t in ky["tac_vu"] if t["id"] == "cap-nhat-thang-thu-muc-endnote"]
+    assert not (goc / "sync" / "scheduled-tasks" / "cap-nhat-thang-thu-muc-endnote").exists()
+    thang = [t for t in ky["tac_vu"] if t["cron"].split()[2] != "*" and t["cron"].split()[3] == "*"
+             and "cap-nhat" in t["id"]]
+    assert [t["id"] for t in thang] == ["cap-nhat-thang-ebm"]  # đúng MỘT tác vụ cập nhật tháng
+    skill = (goc / "sync" / "scheduled-tasks" / "cap-nhat-thang-ebm" / "SKILL.md").read_text(encoding="utf-8")
+    # 13/11/2026 (lần 2) bác sĩ: «Gói thu thập an toàn thuốc và duyệt chứng cứ hãy gộp vào một tác vụ tháng» ⇒ thứ tự bắt buộc:
+    # an toàn thuốc → cập nhật tháng → gói duyệt (quy trình goi-duyet-tuan-ebm) → phiếu thư mục EndNote.
+    vi_tri = [skill.index(s) for s in ("`bash medical-ebm-automation/scripts/weekly_safety.sh`",
+                                        "`bash medical-ebm-automation/scripts/monthly_update.sh`",
+                                        "`sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md`",
+                                        "`python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da 3 --hoan-thien --ghi`")]
+    assert vi_tri == sorted(vi_tri)
+    for tid in ("thu-thap-tuan-an-toan-thuoc", "goi-duyet-tuan-ebm"):  # không còn là tác vụ lịch riêng
+        assert not [t for t in ky["tac_vu"] if t["id"] == tid], tid
+    assert not (goc / "sync" / "scheduled-tasks" / "thu-thap-tuan-an-toan-thuoc").exists()
+    assert (goc / "sync" / "scheduled-tasks" / "goi-duyet-tuan-ebm" / "SKILL.md").exists()  # tệp QUY TRÌNH vẫn giữ
     assert "run_in_background" in skill
     assert "KHÔNG tự mở agent" in skill
     q = json.loads((goc / "sync" / "quyen-lich-nen.json").read_text(encoding="utf-8"))
-    tv = q["tac_vu"]["cap-nhat-thang-thu-muc-endnote"]
+    assert "cap-nhat-thang-thu-muc-endnote" not in q["tac_vu"]
+    tv = q["tac_vu"]["cap-nhat-thang-ebm"]
+    assert "bash medical-ebm-automation/scripts/monthly_update.sh" in tv["lenh"]
+    assert "bash medical-ebm-automation/scripts/weekly_safety.sh" in tv["lenh"]
     assert not any("--ghi-endnote" in c for c in tv["lenh"])  # lượt lịch không bao giờ được khai quyền ghi EndNote
     assert any("--ghi-endnote" in c for c in tv["khong_chay"])
 

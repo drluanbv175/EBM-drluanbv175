@@ -30,10 +30,12 @@ vụ này và tại sao bị xoá, KHÔNG phải mô tả hiện trạng.
 | Tonghopcapnhat | Có thể trùng phần tổng hợp tuần của `goi-duyet-tuan-ebm` | Bác sĩ tự xác nhận trùng, xoá |
 | Ebmdakhoa | Không trùng — lựa chọn cá nhân (bản tin đa khoa) | Bác sĩ không còn đọc |
 
-**Trạng thái hiện hành:** tự động hoá chạy DUY NHẤT qua 6 `scheduled-tasks` nội bộ
-(`goi-duyet-tuan-ebm` · `thu-thap-tuan-an-toan-thuoc` · `cap-nhat-thang-ebm` ·
-`giam-sat-acc-aha-quy` · `kiem-tra-hoan-thien-he-thong-thang` · `kiem-thang-diem-quy`
-— cái cuối thêm 13/09/2026, xem
+**Trạng thái hiện hành:** tự động hoá chạy DUY NHẤT qua các `scheduled-tasks` nội bộ — danh sách
+kỳ vọng ở `sync/lich-nen-ky-vong.json` (nguồn git `sync/scheduled-tasks/`). 13/11/2026 bác sĩ: gộp nhịp tháng
+thành MỘT tác vụ `cap-nhat-thang-ebm` — gồm cả bộ thu thập an toàn thuốc (`weekly_safety.sh`, trước là tác vụ tuần
+`thu-thap-tuan-an-toan-thuoc`), gói duyệt chứng cứ (quy trình `sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md`, trước là
+tác vụ tuần) và phiếu theo thư mục EndNote — và BỎ hai tác vụ giám sát guideline `giam-sat-acc-aha-quy` (quý) ·
+`giam-sat-9-tram-web-hoi-tuan` (tuần) — xem
 `mcp__scheduled-tasks__list_scheduled_tasks` để đối chiếu trạng thái thật bất kỳ lúc nào.
 Không còn tác vụ nào ở tầng claude.ai web song song với tầng này — nguyên tắc "web = người
 tiêu thụ ứng viên, KHÔNG là bộ thu thập thứ hai" nay đơn giản là không còn tầng web nào để áp

@@ -17,8 +17,8 @@ sống lồng bên trong `medical-ebm-automation/` (remote `drluanbv175/medical-
 venv `~/.ebm-venv`). Đọc kỹ `CLAUDE.md` ở gốc TRƯỚC khi làm gì — đó là doctrine đầy đủ, rất dài,
 ghi lại hàng trăm bài học đã vá; tự đối chiếu doctrine với mã sống thay vì tin lời khai trong đó.
 
-MỤC ĐÍCH TÁC VỤ NÀY — khác hẳn 4 tác vụ lịch nền hiện có (`thu-thap-tuan-an-toan-thuoc`,
-`goi-duyet-tuan-ebm`, `cap-nhat-thang-ebm`, `giam-sat-acc-aha-quy` — cả 4 đều lo NỘI DUNG/AN
+MỤC ĐÍCH TÁC VỤ NÀY — khác hẳn tác vụ lịch nền nội dung `cap-nhat-thang-ebm` (từ 13/11/2026 gộp cả
+thu thập an toàn thuốc, gói duyệt chứng cứ và phiếu thư mục EndNote — đều lo NỘI DUNG/AN
 TOÀN chứng cứ lâm sàng, quét PubMed, cảnh báo thuốc). Tác vụ này lo **HOÀN THIỆN KỸ THUẬT CỦA
 CHÍNH HỆ THỐNG**: dây nối cổng chất lượng, doctrine agent có theo kịp mã không, 2 repo có đối
 chiếu nhau không, CI có chạy thật không, tài liệu CLAUDE.md có đoạn nào ghi số liệu/trạng thái

@@ -1,7 +1,12 @@
 ---
 name: goi-duyet-tuan-ebm
-description: Chu trình TUẦN hệ giám sát chứng cứ EBM — 18:30 thứ Hai, ngay sau bộ thu thập 18:00 (bác sĩ đổi 17/08): quét → ≤7 thẻ CANDIDATE → queue/tuan-<W>.md
+description: QUY TRÌNH gói duyệt chứng cứ (từ 13/11/2026 là BƯỚC 5 của tác vụ tháng cap-nhat-thang-ebm, không còn là tác vụ lịch riêng): quét → ≤7 thẻ CANDIDATE → queue/tuan-<W>.md
 ---
+
+13/11/2026 — KHÔNG CÒN LÀ TÁC VỤ LỊCH RIÊNG (bác sĩ: «Gói thu thập an toàn thuốc và duyệt chứng cứ hãy gộp vào một tác vụ
+tháng»). Tệp này là QUY TRÌNH gói duyệt; tác vụ tháng `cap-nhat-thang-ebm` (ngày 1, 18:30) đọc nó ở bước 5 và làm trọn
+QUY TRÌNH 0–7 + các mục Bổ sung + BƯỚC CUỐI. Nhịp TUẦN cũ (thứ Hai 18:30) đã bỏ: gói xuất mỗi tháng một lần, vẫn đặt tên
+`queue/tuan-<ISO-week>.md` theo tuần chạy; con trỏ quét tăng dần nên cửa sổ tự phủ trọn khoảng giữa hai lượt.
 
 NỀN TẢNG: macOS + Windows. THƯ MỤC LÀM VIỆC = gốc thư mục OneDrive «Claude AI» của MÁY ĐANG CHẠY (repo EBM-drluanbv175):
 - macOS: "$HOME/Library/CloudStorage/OneDrive-Personal/Claude AI"
@@ -35,7 +40,7 @@ QUY TRÌNH (mẫu chuẩn: queue/tuan-2026-W33.md):
    LÊN ĐẦU gói, TRƯỚC cả bảng tự đề xuất, và thêm vào alerts/<ngày>.md; ⚪ (mã thoát 3) ⇒ giữ nguyên chữ «chưa đo
    được», TUYỆT ĐỐI không viết «kho sạch»; 🟢 (mã thoát 0) ⇒ một dòng trong phần tình trạng.
 1. Chạy `python3 EBM-Dashboards/tools/surveillance_scan.py --json-report state/tuan.json` (con trỏ tăng dần tự lo cửa sổ; tôn trọng khoá .quet.lock — bị khoá thì dừng, báo rõ). Lệnh in `error:` hoặc `started_at` trong state/tuan.json không phải lượt vừa chạy ⇒ lượt quét KHÔNG chạy, tệp đó là của tuần trước: ghi «🔴 bước 1 không chạy được: <dòng error nguyên văn>» lên đầu gói + alerts/<ngày>.md, KHÔNG dựng thẻ từ tệp cũ (thêm 30/10/2026, BH174).
-1b. Chạy làn đối chiếu `python3 tools/doi_chieu_openalex.py --toan-bo --ngay 10 --max 10` — ứng viên «⚡ chỉ-OpenAlex» đáng chú ý thì đưa vào cân nhắc chọn thẻ (vẫn ≤7 tổng).
+1b. Chạy làn đối chiếu `python3 tools/doi_chieu_openalex.py --toan-bo --ngay 35 --max 10` — ứng viên «⚡ chỉ-OpenAlex» đáng chú ý thì đưa vào cân nhắc chọn thẻ (vẫn ≤7 tổng).
 1c. Đọc `EBM-Dashboards/surveillance/ung-vien-ngoai-quet.jsonl` (nếu có) — ứng viên do worker/canary/phiên thường phát hiện NGOÀI vòng quét; mục `trang_thai` còn CANDIDATE thì cân nhắc chọn thẻ như 1b (vẫn ≤7 tổng, vẫn kiểm rút bài ở bước 4); đã lên thẻ hoặc bị loại thì cập nhật `trang_thai` kèm tuần xử lý — không xoá dòng (giữ dấu vết).
 2. Đọc state/tuan.json: số chủ đề PASS/FAIL, tổng ứng viên, độ trễ (khối do_tre). Lưu bản sao vào EBM-Dashboards/surveillance/tuan-<ISO-week>-quet.json (Read rồi Write — không `cp`). Khối `quan_sat_han_che` (thêm 03/10/2026, EV-03) liệt kê chủ đề thẩm quyền 0 ứng viên mà làn PubMed KHÔNG quan sát được văn bản chính thức — chép vào gói dạng «⚪ 0 ≠ không có cập nhật — kênh khác: …», TUYỆT ĐỐI không viết «không có gì mới» cho các chủ đề đó.
 2b. ĐO SẢN LƯỢNG TRUY VẤN + CHUỖI 0 ỨNG VIÊN (thêm 03/10/2026 — W39/W40: nhiều chủ đề 0 ứng viên mà lượt vẫn PASS, đề xuất viết lại truy vấn soạn 02/10 nằm chờ, không ai thấy). SAU bước 2 (tệp tuần này đã lưu):
@@ -96,7 +101,7 @@ muốn đổi trình bày thì sửa `tools/dung_hom_thu.py`, KHÔNG sửa tay H
 
 ## Bổ sung 16/08/2026 (nâng cấp Tầng-2 — bác sĩ duyệt): số đo TÁC ĐỘNG vào gói tuần
 Trước phần kết của gói duyệt, chạy và đính kèm tóm tắt:
-`python3 tools/do_tac_dong.py --ngay 7`
+`python3 tools/do_tac_dong.py --ngay 31`
 (lượt tra điểm-khám · miss · thẻ nóng — KHÔNG-PII từ gốc). Nhắc đúng ba điều
 không-được-suy in sẵn trong báo cáo: 0 lượt ≠ hệ vô dụng · lượt tra ≠ lượt áp
 dụng (Cổng A) · miss = tín hiệu watchlist, xem state/cau-hoi-chua-giam-sat.jsonl.
@@ -112,7 +117,7 @@ Sau bước quét, liệt kê dashboard có bản Word/bản-đọc CŨ HƠN n�
 thời; còn dư thì ghi số lượng vào gói (giác quan ⑩ của bảng tự-đề-xuất cũng đếm).
 
 ## Bổ sung 16/08 (vòng nội dung): ĐẶT CẠNH chứng cứ đang dùng vs nguồn mới hơn
-Mỗi 2 tuần (tuần chẵn ISO), chạy `python3 tools/dat_canh_chung_cu_moi.py --top 12`
+MỖI lượt (nhịp tháng từ 13/11/2026; trước là mỗi 2 tuần), chạy `python3 tools/dat_canh_chung_cu_moi.py --top 12`
 và đính link file `derivatives/DAT-CANH-CHUNG-CU-MOI_<ngày>.md` vào gói duyệt.
 Nhắc đúng giới hạn in sẵn trong file: danh sách «liên quan» do PubMed trả, CÓ THỂ
 lạc chủ đề (title gốc in kèm để loại nhanh); tool không phán chiều, không đổi
