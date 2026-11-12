@@ -499,12 +499,22 @@ def kiem_kho_tom_tat(kho_tt: dict) -> list[str]:
 
 _SO = re.compile(r"\d+(?:\.\d+)?")
 
+# MỌI dấu cách Unicode loại Zs trừ dấu cách thường (U+00A0, U+1680, U+2000–U+200A, U+202F, U+205F, U+3000). Viết bằng mã
+# thoát, không viết ký tự trần: ký tự vô hình trong mã nguồn chính là cách U+2008 lọt khỏi lớp ký tự cũ (13/11/2026).
+_DAU_CACH_UNICODE = re.compile(r"[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]")
+
 
 def _cac_so(s: str) -> set[str]:
     """Các con số trong chuỗi. Chuẩn hoá hai cách viết của abstract: «0·85» (Lancet) → 0.85; «1,234» / «1 234» (phân
-    cách hàng nghìn) → 1234. Dấu phẩy thập phân KHÔNG chuẩn hoá — tóm tắt phải chép số đúng như abstract."""
-    s = re.sub(r"(?<=\d)[·⋅](?=\d)", ".", s or "")
-    s = re.sub(r"(?<=\d)[,    ](?=\d{3}(?!\d))", "", s)
+    cách hàng nghìn) → 1234. Dấu phẩy thập phân KHÔNG chuẩn hoá — tóm tắt phải chép số đúng như abstract.
+
+    Mọi dấu cách Unicode loại Zs đổi về dấu cách thường TRƯỚC khi tách số (13/11/2026): PubMed efetch có khi dùng U+2008 /
+    U+2009 / U+202F / U+00A0 làm dấu nghìn («18 152» viết bằng U+2008, PMID 35219395) trong khi EndNote lưu dấu cách
+    thường — hàm chạy cho CẢ tóm tắt lẫn văn bản gốc nên hai phía luôn so cùng một dạng. Bẫy giữ nguyên có chủ ý: số 4 chữ
+    số + dấu cách + số 3 chữ số bị gộp theo luật hàng nghìn (năm «2024 120» → 2024120)."""
+    s = _DAU_CACH_UNICODE.sub(" ", s or "")
+    s = re.sub(r"(?<=\d)[·⋅](?=\d)", ".", s)
+    s = re.sub(r"(?<=\d)[, ](?=\d{3}(?!\d))", "", s)
     return set(_SO.findall(s))
 
 
