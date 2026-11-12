@@ -1081,6 +1081,28 @@ def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = Non
              "hữu ích", 'python3 tools/ghi_duyet_the_tuan.py "duyệt W<tuần>: 1 ✓ 3 ✗ 5 hoãn" --ghi')]
 
 
+def giac_quan_cap_nhat_thang_thu_muc(dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str, str]]:
+    """PHIẾU CẬP NHẬT THÁNG THEO THƯ MỤC ENDNOTE (12/11/2026, bác sĩ: «Xây dựng tự động cập nhật chứng cứ hàng tháng với các thư
+    mục trong Endnote»). Phiếu tháng (tác vụ lịch `cap-nhat-thang-thu-muc-endnote`, ngày 5) liệt kê thư mục cần BẢN NỐI TIẾP —
+    việc agent tốn token nên chỉ làm khi bác sĩ duyệt ⇒ 👤; bước ghi EndNote máy làm được mà lượt lịch không được làm ⇒ 🛎.
+    Logic ở `tools/cap_nhat_thang_thu_muc_endnote.giac_quan` (một nguồn
+    cho CLI và bảng này): thư mục đã có bản dashboard mới hơn bản phiếu ghi thì tự rơi khỏi dòng nhắc. Ngoại tuyến. Chưa có phiếu
+    THÁNG NÀY / phiếu hỏng / vắng EBM-Dashboards ⇒ giác quan chết (⚪), KHÔNG phải «không có thư mục cần cập nhật»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "phiếu cập nhật tháng thư mục EndNote"]
+    try:
+        sp = _ilu_mea.spec_from_file_location("_cntm_tdxv", Path(__file__).resolve().parent / "cap_nhat_thang_thu_muc_endnote.py")
+        cn = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(cn)
+        viec, chet = cn.giac_quan(dash_dir, hom_nay)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return []
+    if chet:
+        _ghi_chet(nhan, chet)
+    return viec
+
+
 def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
@@ -1466,6 +1488,9 @@ def main() -> int:
 
     # ⑦o GẮN TAG ENDNOTE (07/11/2026): cặp bản ghi×tag chờ phiên Claude kéo-thả — xem docstring.
     de_xuat += giac_quan_gan_tag_endnote()
+
+    # ⑦p PHIẾU CẬP NHẬT THÁNG THEO THƯ MỤC ENDNOTE (12/11/2026): thư mục cần bản nối tiếp chờ bác sĩ duyệt — xem docstring.
+    de_xuat += giac_quan_cap_nhat_thang_thu_muc(DASH)  # đúng khuôn (ưu tiên, nhãn, mô tả, lệnh) — nhãn do giác quan quyết
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)

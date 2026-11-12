@@ -108,7 +108,7 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
             if ket is None:
                 ra["khong_do_duoc"].append(f"{tv['id']}: không đọc được {dv['path']} (bản sao trần/máy khác)")
                 continue
-        elif loai in ("file-tuan-iso", "file-ngay"):
+        elif loai in ("file-tuan-iso", "file-ngay", "file-thang"):
             if not (goc / Path(dv["path"]).parent).exists():
                 ra["khong_do_duoc"].append(f"{tv['id']}: thư mục {Path(dv['path']).parent}/ vắng mặt (bản sao trần)")
                 continue
@@ -150,8 +150,10 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                               f"có lượt chạy TRỄ {tre[0]:%d/%m %H:%M} (ngoài hạn {tv.get('grace_gio', 30)}h) — lịch không nổ "
                               "đúng hẹn, lượt sau là chạy tay/bù" if tre else "KHÔNG có dấu vết nào"))
             else:
+                # file-tuan-iso: tệp mang tuần ISO của kỳ; file-thang (12/11/2026): tệp mang THÁNG của kỳ `{thang}` = YYYY-MM (phiếu
+                # cập nhật tháng thư mục EndNote). Cả hai chỉ xét CÓ/KHÔNG — tên tệp không mang giờ chạy nên không tách được trễ.
                 iso = s.isocalendar()
-                f = goc / dv["path"].format(iso_nam=iso[0], iso_tuan=iso[1])
+                f = goc / dv["path"].format(iso_nam=iso[0], iso_tuan=iso[1], thang=f"{s:%Y-%m}")
                 if f.exists():
                     continue
                 thieu.append((s, "lo", f"thiếu {f.relative_to(goc)}"))
