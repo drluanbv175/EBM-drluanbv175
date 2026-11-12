@@ -49,7 +49,8 @@ def test_repo_that_dat_va_thu_muc_rong(tmp_path, capsys):
     kq = K.kiem_thu_muc()
     # 13/11/2026: bác sĩ bỏ 4 tác vụ lịch (gộp vào tác vụ tháng + bỏ giám sát guideline) ⇒ sàn 14 → 12; bù lại đòi MỌI tác vụ
     # kỳ vọng ở sync/lich-nen-ky-vong.json đều có SKILL nguồn đã qua bộ kiểm (mất nguồn cứu hộ của tác vụ đang chạy ⇒ đỏ).
-    assert len(kq) >= 12 and not any(kq.values()), {k: v for k, v in kq.items() if v}
+    # 13/11/2026 (lần 2): bỏ thêm kiem-thang-diem-quy (bác sĩ: «Kiểm rút bài 32 thang điểm lâm sàng đã không còn ý nghĩa») ⇒ sàn 11.
+    assert len(kq) >= 11 and not any(kq.values()), {k: v for k, v in kq.items() if v}
     import json
     ky = json.loads((Path(__file__).resolve().parent.parent / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
     thieu = [t["id"] for t in ky["tac_vu"] if t["id"] not in kq]

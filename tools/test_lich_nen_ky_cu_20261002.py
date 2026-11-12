@@ -107,6 +107,6 @@ def test_tac_vu_giam_sat_guideline_da_bo_theo_bac_si_20261113():
     (công cụ `giam_sat_to_chuc.py` giữ để chạy tay). Logic dấu vết `file-ngay` vẫn được kiểm bằng fixture SO_9_TRAM ở trên."""
     import json
     so = json.loads((GOC / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
-    for tid in ("giam-sat-9-tram-web-hoi-tuan", "giam-sat-acc-aha-quy"):
+    for tid in ("giam-sat-9-tram-web-hoi-tuan", "giam-sat-acc-aha-quy", "kiem-thang-diem-quy"):  # +thang điểm quý, bỏ 13/11
         assert not [t for t in so["tac_vu"] if t["id"] == tid], tid
         assert not (GOC / "sync" / "scheduled-tasks" / tid).exists(), tid

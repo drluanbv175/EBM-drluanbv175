@@ -14,7 +14,7 @@ Bạn đang chạy vòng TÁI KIỂM RÚT BÀI hằng tháng cho KHO CHỨNG C�
 
 BỐI CẢNH (vì sao việc này phải chạy định kỳ): sổ xác minh nguồn chỉ coi trạng thái rút bài còn hiệu lực 30 ngày.
 Trước 28/09/2026 không tác vụ lịch nào tái kiểm kho — một bài đã trích có thể bị rút sau khi dashboard phát hành mà
-không ai biết (tác vụ `kiem-thang-diem-quy` chỉ phủ 32 thang điểm, không phủ dashboard). Tác vụ này là owner DUY NHẤT
+không ai biết (tác vụ quý `kiem-thang-diem-quy` từng phủ 32 thang điểm, đã bỏ 13/11/2026 theo bác sĩ). Tác vụ này là owner DUY NHẤT
 của việc tái kiểm định kỳ đó; không nối trùng qua tools/tu_khoi_dong.py.
 
 CÁC BƯỚC:
