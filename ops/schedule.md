@@ -15,7 +15,7 @@
 | Quét chứng cứ BỊ VƯỢT QUA toàn kho | **QUÝ (hạn 92ng) — MỚI** | `quarterly_superseded.sh` | `derivatives/CHUNG-CU-VUOT-QUA_*.txt` + alerts |
 | Rút bài toàn sổ | THÁNG (hạn 30ng có sẵn trong sổ xác minh) | `so_xac_minh_nguon --quet` | sổ + alerts |
 | Đo độ trễ | MỖI lượt quét (tự động trong báo cáo) | `surveillance_scan` | khối `do_tre` |
-| Kiểm rút bài 32 thang điểm verified — **MỚI 13/09/2026** | QUÝ (ngày 2 tháng 1/4/7/10, 18:00) | tác vụ cloud `kiem-thang-diem-quy` (**KHÔNG** qua `tu_khoi_dong` — owner riêng, tránh trùng lặp) | `data/archive/quarterly_clinical_scores.log` + `state/kiem-thang-diem-quy.json` + alerts |
+| ~~Kiểm rút bài 32 thang điểm verified~~ — **ĐÃ BỎ 13/11/2026** (bác sĩ: «Kiểm rút bài 32 thang điểm lâm sàng đã không còn ý nghĩa») | — | tác vụ `kiem-thang-diem-quy` đã xoá; công cụ `medical-ebm-automation/tools/kiem_do_tuoi_thang_diem.py` giữ để chạy tay | — |
 
 ## 6 tác vụ claude.ai web — ĐÃ XOÁ HẾT (13/09/2026)
 Bảng dưới đây là TRẠNG THÁI LỊCH SỬ (Q2, 15/08/2026) — giữ lại để biết vì sao từng có 6 tác
