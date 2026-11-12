@@ -53,6 +53,16 @@
       ],
       "khong_chay": [],
       "ghi": ["state/**"]
+    },
+    "cap-nhat-thang-thu-muc-endnote": {
+      "_ghi_chu": "12/11/2026: công cụ tự gọi orchestrator (--quet, candidate) và phần KHÔNG ghi EndNote của dây chuyền toàn văn (--hoan-thien: gom OA + in PDF vào kho) bằng tiến trình con — không khai từng lệnh con. Bước GHI EndNote cần --ghi-endnote: chỉ phiên Claude có người (khong_chay), không bao giờ lượt lịch. Lượt lịch không ghi tệp bằng Write/Edit (phiếu do chính công cụ ghi).",
+      "lenh": [
+        "python3 tools/sync_safety_check.py",
+        "python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da * --hoan-thien --ghi"
+      ],
+      "khong_chay": ["python3 tools/quyen_lich_nen.py --ap-dung",
+                     "python3 tools/cap_nhat_thang_thu_muc_endnote.py --hoan-thien --ghi-endnote --ghi"],
+      "ghi": []
     }
   }
 }
