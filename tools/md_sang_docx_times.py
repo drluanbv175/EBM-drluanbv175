@@ -420,12 +420,22 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
     return doc
 
 
+def co_chu_mac_dinh(ra: Path) -> float:
+    """Cỡ thân bài khi KHÔNG khai --co-chu: 13pt nếu tệp ra nằm trong một thư mục `exports/` (hồ sơ đề tài — chuẩn
+    trình bày của cổng G0–G10 mà kiem_chi_tiet_he_nghien_cuu đo), 12pt ở nơi khác như trước.
+
+    12/11/2026: lượt 28/10 dựng SOP/phiếu/kế hoạch/SAP của đề tài BTM bằng công cụ này với cỡ mặc định 12 ⇒ 5 bản bị
+    bộ đo báo đỏ «cỡ thân bài 12pt (chuẩn 13)»; phải dựng lại bằng xuat_docx_chuan.py."""
+    return 13.0 if "exports" in Path(ra).resolve().parts else 12.0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="Markdown → Word (.docx), font mặc định Times New Roman.")
     ap.add_argument("nguon", type=Path, help="file .md đầu vào")
     ap.add_argument("--ra", type=Path, help="file .docx đầu ra (mặc định cùng tên)")
-    ap.add_argument("--co-chu", type=float, default=12.0, help="cỡ chữ thân bài (pt)")
+    ap.add_argument("--co-chu", type=float, default=None,
+                    help="cỡ chữ thân bài (pt); mặc định 13 nếu tệp ra nằm trong exports/ (hồ sơ đề tài), 12 nơi khác")
     ap.add_argument("--trang-de-cuong", action="store_true",
                     help="trình bày văn bản nộp Hội đồng: A4, lề 3-2-2-2 cm, căn đều, "
                          "«---» = ngắt trang, phần trước «---» đầu tiên là trang bìa căn giữa")
@@ -436,6 +446,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     ra = a.ra or a.nguon.with_suffix(".docx")
     ra.parent.mkdir(parents=True, exist_ok=True)
+    if a.co_chu is None:
+        a.co_chu = co_chu_mac_dinh(ra)
 
     doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu, a.trang_de_cuong)
     doc.save(str(ra))
