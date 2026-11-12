@@ -287,6 +287,18 @@ def _uu_tien_va_doi(dashboards: list[Path], doc) -> tuple[dict[str, int], dict[s
     return uu, doi
 
 
+def pham_vi_nhom(phien, dtv, host: str, doi: str, url: str, duoc: set[str]) -> str:
+    """Cột «phạm vi phiên» của một nhóm miền trong `hang-cho` — CÙNG phép tra NXB với `--kiem` (12/11/2026): bảng «cấm» trước,
+    rồi NXB cho phép lưu bản sao để TDM (`TDM_CHO_PHEP_LUU`, Cambridge). Mục TDM chỉ ✓ khi chính miền của nhóm thuộc NXB — bản ở
+    kho khác (vd archive.lstmed.ac.uk mang DOI 10.1017/) thì `--kiem` từ chối nên ghi «✗ ngoài miền NXB»."""
+    ten, mien_nxb, la_tdm = phien.nxb_cua_lan(dtv, doi, url)
+    if la_tdm and not phien.mien_duoc_phep(host, mien_nxb):
+        return "✗ ngoài miền NXB"
+    if ten in duoc:
+        return "✓"
+    return "✗ chưa kiểm điều khoản" if not ten else "✗ ngoài phạm vi"
+
+
 def lenh_hang_cho(mien: str | None, ra_json: Path | None) -> int:
     phien = _nap("phien_uy_quyen_chrome")
     kho = phien.KHO
@@ -312,10 +324,9 @@ def lenh_hang_cho(mien: str | None, ra_json: Path | None) -> int:
     print(f"{'miền':34s} {'bài':>4s}  áp/cân/chưa/tk   cấu hình   phạm vi phiên")
     for host, nhom in sorted(theo.items(), key=lambda kv: (min(x["uu_tien"] for x in kv[1]), -len(kv[1]))):
         dem = [sum(1 for x in nhom if x["uu_tien"] == i) for i in range(4)]
-        ten_nxb = dtv.nxb_cua(doi=nhom[0]["doi"], url=nhom[0]["url"])[0]
         cfg = tim_nxb(host, ch)[0] or ((ch.get("chuyen_huong") or {}).get(host, "") + " ↪" if host in (ch.get("chuyen_huong") or {})
                                        else "—")
-        pv = "✓" if ten_nxb in duoc else ("✗ chưa kiểm điều khoản" if not ten_nxb else "✗ ngoài phạm vi")
+        pv = pham_vi_nhom(phien, dtv, host, nhom[0]["doi"], nhom[0]["url"], duoc)
         print(f"{host[:34]:34s} {len(nhom):4d}  {'/'.join(map(str, dem)):14s}   {cfg[:9]:9s}  {pv}")
     if ra_json:
         ra_json.write_text(json.dumps(ds, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

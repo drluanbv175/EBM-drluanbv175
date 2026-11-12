@@ -7,7 +7,8 @@
     "redirectedFrom=fulltext",
     "redirectedFrom=PDF",
     "ovid\\.com/jnls/[^?]*/abstract/",
-    "redirectionsource=fulltextview"
+    "redirectionsource=fulltextview",
+    "cambridge\\.org/core/journals/[^/?#]+/article/abs/"
   ],
   "nxb": {
     "sciencedirect": {
@@ -289,6 +290,16 @@
       "min": 12000,
       "kiem_lan_cuoi": "2026-11-10 · 2 bài (PMID 40824117 synopsis HTA 2025 — 86.891 ký tự; 42661570 chuyên khảo HTA — 924.857 ký tự) — lưu HTML, «nhan» ✓, PDF in BANIN rồi gắn EndNote",
       "ghi_chu": "NIHR Journals Library (HTA, HSDR…; DOI 10.3310/…), toàn văn mở. doi.org chuyển về /<loạt>/<mã> hoặc /<loạt>/published-articles/<mã>. Trang hiện màn kiểm tra chống robot AWS («Let's confirm you are human») và đòi lại theo chu kỳ — bác sĩ tự bấm Begin trên Chrome của máy đang chạy làn, máy không bấm. Toàn văn nằm trong tab ẩn #full-report; từng chương lại ẩn bằng style=\"display: none;\" ⇒ in_pdf_toan_van_kho bỏ khai báo ẩn (trước đó bản in chỉ còn 2 trang tóm tắt). «Publication PDF» ở njl-admin.nihr.ac.uk khác nguồn ⇒ fetch bị CORS chặn ⇒ không đặt pdf, lưu HTML rồi in BANIN. Bản PMC của NIHR chỉ có tóm tắt + tài liệu tham khảo (cổng nhan chặn đúng)."
+    },
+    "cambridge_core": {
+      "mien": ["www.cambridge.org"],
+      "chon": ".abstract-content,.content-box",
+      "min": 12000,
+      "khoaDeMuc": ["Access options"],
+      "khoaTrang": "\\bArticle purchase\\b",
+      "pdf": "meta",
+      "kiem_lan_cuoi": "2026-11-12 · đo DOM, CHƯA lưu bài nào (chưa có phiên): CÓ quyền — PMID 42112625 (BJP, OA CC BY; .abstract-content 2.234 + .content-box 37.661 ký tự, đề mục Method/Results/Discussion; meta citation_pdf_url cùng nguồn trả %PDF- qua yêu cầu Range 8 byte) và PMID 42765379 (Psychol Med, OA; 1.971 + 32.793 ký tự) ⇒ __ebmDanhGia ok:true; KHÔNG quyền — PMID 33952359 (Psychol Med) và 42169209 (BJP): URL chuyển về /article/abs/, đề mục «Access options», .content-box rỗng (vùng 1.622 và 1.956 ký tự) ⇒ ok:false; mỗi lớp khoá (dấu URL · min · khoaDeMuc · khoaTrang) tự chặn được bài 33952359",
+      "ghi_chu": "Cambridge Core (Cambridge University Press; DOI 10.1017/…, BJP 10.1192/… của RCPsych). Phạm vi phiên theo bảng TDM_CHO_PHEP_LUU (điều khoản Cambridge cho phép lưu để TDM phi thương mại — chỉ trang trên cambridge.org; kèm liên kết bài gốc, xoá bản lưu khi dự án kết thúc). URL /core/product/identifier/<PII>/type/journal_article chuyển về /core/journals/<tạp chí>/article/<slug>/<mã> khi CÓ quyền, về /article/abs/… khi KHÔNG quyền (đã thêm vào dau_khong_quyen_url) — truyền location.href làm --url. Tóm tắt nằm ở .abstract-content NGOÀI .content-box. KHÔNG thêm #references-list vào chon: bài không quyền vẫn hiện danh mục tham khảo dài (33952359: 20.325 ký tự) ⇒ vùng vượt min, chỉ còn khoaDeMuc/dấu URL chặn. «Access options» chỉ khoá theo ĐỀ MỤC (khớp nguyên đề mục), không khoá theo chữ trên trang vì thân bài y tế có thể có cụm «access options»; khoaTrang chỉ khớp cụm từ riêng «Article purchase» (bài học PR #320: chữ «Purchase» trần khớp «purchased»). Bác sĩ chưa có quyền thuê bao Cambridge (trang báo cơ sở liên kết không có quyền) ⇒ thực tế chỉ lưu được bài OA; nhánh lưu/nhan chưa chạy — gặp bài lưu được đầu tiên thì kiểm PDF nhúng + cổng nội dung rồi sửa kiem_lan_cuoi."
     }
   },
   "nguon": {
