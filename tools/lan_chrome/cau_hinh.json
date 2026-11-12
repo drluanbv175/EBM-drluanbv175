@@ -49,11 +49,11 @@
     "springer_link": {
       "mien": ["link.springer.com"],
       "chon": ".c-article-body",
-      "khoaTrang": "Access this article|Buy article PDF|Buy Now",
+      "khoaTrang": "(?<!Open )\\bAccess this article\\b|\\bBuy article PDF\\b|\\bBuy Now\\b",
       "min": 10000,
       "pdf": "meta",
-      "kiem_lan_cuoi": "2026-10-14 · 1 bài",
-      "ghi_chu": "Mới kiểm 1 bài — gặp trang khác thì báo lại."
+      "kiem_lan_cuoi": "2026-11-12 · 3 bài",
+      "ghi_chu": "«Access this article» KHÔNG được khớp câu giấy phép «Open Access This article is licensed under a Creative Commons…» của bài OA (đo 12/11/2026: PMID 40838698, JCSM trên link.springer.com, thân bài 68.629 ký tự bị báo khoá giả) ⇒ lookbehind (?<!Open ) + ranh giới từ. Tường phí thật: «Access this article / Log in via an institution / Subscribe and save» (PMID 42289039)."
     },
     "nature": {
       "mien": ["www.nature.com"],
