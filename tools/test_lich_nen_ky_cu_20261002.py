@@ -101,10 +101,12 @@ def test_file_ngay_vang_thu_muc_la_khong_do_duoc(tmp_path):
     assert kq["phat_hien"] == [] and any("vắng mặt" in x for x in kq["khong_do_duoc"])
 
 
-def test_so_khai_that_co_tac_vu_9_tram_va_ban_nguon_git():
+def test_tac_vu_giam_sat_guideline_da_bo_theo_bac_si_20261113():
+    """13/11/2026 bác sĩ: «các tác vụ giám sát Guideline cũng không cần nữa» ⇒ hai tác vụ lịch
+    `giam-sat-9-tram-web-hoi-tuan` (tuần) và `giam-sat-acc-aha-quy` (quý) đã bỏ khỏi sổ kỳ vọng VÀ nguồn git
+    (công cụ `giam_sat_to_chuc.py` giữ để chạy tay). Logic dấu vết `file-ngay` vẫn được kiểm bằng fixture SO_9_TRAM ở trên."""
     import json
     so = json.loads((GOC / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
-    tv = [t for t in so["tac_vu"] if t["id"] == "giam-sat-9-tram-web-hoi-tuan"]
-    assert len(tv) == 1 and tv[0]["cron"] == "45 18 * * 1" and tv[0]["dau_vet"]["loai"] == "file-ngay"
-    skill = GOC / "sync" / "scheduled-tasks" / "giam-sat-9-tram-web-hoi-tuan" / "SKILL.md"
-    assert skill.exists() and "NỀN TẢNG: macOS + Windows" in skill.read_text(encoding="utf-8")
+    for tid in ("giam-sat-9-tram-web-hoi-tuan", "giam-sat-acc-aha-quy"):
+        assert not [t for t in so["tac_vu"] if t["id"] == tid], tid
+        assert not (GOC / "sync" / "scheduled-tasks" / tid).exists(), tid

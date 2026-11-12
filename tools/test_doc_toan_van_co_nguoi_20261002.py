@@ -246,10 +246,10 @@ def test_giac_quan_the_tuan(tmp_path):
     for pm in ("42377292", "42751933"):
         (dash / "toan_van_oa" / f"PMID-{pm}_PMC1.xml").write_text("<x/>", encoding="utf-8", newline="\n")
     assert tdx.giac_quan_toan_van_the_tuan(q, dash, homnay) == []
-    cu = time.time() - 20 * 86400
+    cu = time.time() - 40 * 86400  # 13/11/2026: gói duyệt nhịp tháng ⇒ ngưỡng 35 ngày
     (dash / "toan_van_oa" / "PMID-42377292_PMC1.xml").unlink()
     os.utime(q / "tuan-2026-W40.md", (cu, cu))
-    assert tdx.giac_quan_toan_van_the_tuan(q, dash, homnay) == [], "gói > 14 ngày không nhắc"
+    assert tdx.giac_quan_toan_van_the_tuan(q, dash, homnay) == [], "gói > 35 ngày không nhắc"
     truoc = len(tdx._GIAC_QUAN_CHET)
     assert tdx.giac_quan_toan_van_the_tuan(tmp_path / "khong-co", dash, homnay) == [] and len(tdx._GIAC_QUAN_CHET) == truoc + 1
 

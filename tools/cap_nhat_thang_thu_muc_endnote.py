@@ -1066,7 +1066,7 @@ def giac_quan(dash_dir: Path, hom_nay: dt.date | None = None) -> tuple[list[tupl
     try:
         d = json.loads(js.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return [], f"chưa có phiếu tháng {thang} (tác vụ lịch cap-nhat-thang-thu-muc-endnote, ngày 5)"
+        return [], f"chưa có phiếu tháng {thang} (tác vụ lịch cap-nhat-thang-ebm, ngày 1)"
     except (OSError, ValueError) as e:
         return [], f"phiếu {js.name} không đọc được ({type(e).__name__})"
     moi = dashboards_moi_nhat(dash_dir)

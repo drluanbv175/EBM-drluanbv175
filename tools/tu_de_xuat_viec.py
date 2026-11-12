@@ -698,7 +698,7 @@ def _rut_bai_endnote(rb: dict | None) -> list[tuple[int, str, str, str]]:
 
 
 def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str]]:
-    """Thẻ của gói tuần MỚI NHẤT (≤ 14 ngày) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
+    """Thẻ của gói duyệt MỚI NHẤT (≤ 35 ngày — nhịp tháng từ 13/11/2026, trước ≤ 14) chỉ có TÓM TẮT vì bài không có bản OA (02/10/2026, bác sĩ yêu cầu).
 
     Đo W40: 5/7 thẻ «chỉ tóm tắt» ⇒ trần «Cân nhắc». Hầu hết nhà xuất bản chặn truy cập tự động (đo 02/10) nên đường duy nhất là làn
     CÓ NGƯỜI: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập, Claude trích xuất có cấu trúc (`tools/doc_toan_van_co_nguoi.py`).
@@ -712,7 +712,7 @@ def giac_quan_toan_van_the_tuan(queue_dir: Path, dash_dir: Path, hom_nay: dt.dat
     if not goi:
         return []
     moi = goi[-1]
-    if (hom_nay - dt.date.fromtimestamp(moi.stat().st_mtime)).days > 14:
+    if (hom_nay - dt.date.fromtimestamp(moi.stat().st_mtime)).days > 35:
         return []
     kho = dash_dir / "toan_van_oa"
     if not kho.is_dir():
@@ -1054,7 +1054,7 @@ def giac_quan_pr_cho_gop(cac_repo: list[tuple[str, Path]], chay=None, bay_gio: d
 
 def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = None, so: Path | None = None
                                  ) -> list[tuple[int, str, str]]:
-    """Thẻ của gói tuần MỚI NHẤT (≥ 3 ngày tuổi, ≤ 21 ngày) chưa có quyết định của bác sĩ trong sổ (EV-10, 03/10/2026).
+    """Thẻ của gói duyệt MỚI NHẤT (≥ 3 ngày tuổi, ≤ 35 ngày — nhịp tháng từ 13/11/2026, trước ≤ 21) chưa có quyết định của bác sĩ trong sổ (EV-10, 03/10/2026).
     Ngoại tuyến; vắng queue ⇒ giác quan chết (⚪)."""
     _SO_GIAC_QUAN["chay"] += 1
     hom_nay = hom_nay or dt.date.today()
@@ -1069,7 +1069,7 @@ def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = Non
         if goi is None:
             return []
         tuoi = (hom_nay - dt.date.fromtimestamp(goi.stat().st_mtime)).days
-        if not 3 <= tuoi <= 21:
+        if not 3 <= tuoi <= 35:
             return []
         the, chua = gd.chua_quyet(goi, so)
     except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
@@ -1083,7 +1083,7 @@ def giac_quan_the_tuan_chua_quyet(queue_dir: Path, hom_nay: dt.date | None = Non
 
 def giac_quan_cap_nhat_thang_thu_muc(dash_dir: Path, hom_nay: dt.date | None = None) -> list[tuple[int, str, str, str]]:
     """PHIẾU CẬP NHẬT THÁNG THEO THƯ MỤC ENDNOTE (12/11/2026, bác sĩ: «Xây dựng tự động cập nhật chứng cứ hàng tháng với các thư
-    mục trong Endnote»). Phiếu tháng (tác vụ lịch `cap-nhat-thang-thu-muc-endnote`, ngày 5) liệt kê thư mục cần BẢN NỐI TIẾP —
+    mục trong Endnote»). Phiếu tháng (tác vụ lịch tháng `cap-nhat-thang-ebm`, ngày 1) liệt kê thư mục cần BẢN NỐI TIẾP —
     việc agent tốn token nên chỉ làm khi bác sĩ duyệt ⇒ 👤; bước ghi EndNote máy làm được mà lượt lịch không được làm ⇒ 🛎.
     Logic ở `tools/cap_nhat_thang_thu_muc_endnote.giac_quan` (một nguồn
     cho CLI và bảng này): thư mục đã có bản dashboard mới hơn bản phiếu ghi thì tự rơi khỏi dòng nhắc. Ngoại tuyến. Chưa có phiếu
@@ -1422,13 +1422,10 @@ def main() -> int:
     # chạy qua mcp scheduled-tasks (cloud, KHÔNG cần máy/phiên local đang mở —
     # khác hẳn launchd cũ) — 4/4 lần chạy gần nhất đều PASS đúng hẹn, không hề
     # lỡ kỳ nào kể từ khi đổi. giac_quan_lich_nen() đã cập nhật theo lịch mới.
-    for uu, dong in giac_quan_lich_nen_theo_noi_chay(
-            _GOC_MEA / "data" / "archive" / "launchd_weekly.log"):
-        de_xuat.append((uu, "🛎" if uu < 2 else "👤", dong,
-                        "bash medical-ebm-automation/scripts/weekly_safety.sh  # chạy bù"
-                        if uu < 2 else "bấm «Run now» tác vụ thu-thap-tuan-an-toan-thuoc "
-                        "(mcp__scheduled-tasks__run_scheduled_task) hoặc kiểm lịch sử qua "
-                        "list_task_runs"))
+    # 13/11/2026 — bác sĩ gộp bộ thu thập an toàn thuốc vào tác vụ THÁNG `cap-nhat-thang-ebm` (bỏ tác vụ tuần
+    # thu-thap-tuan-an-toan-thuoc) ⇒ ⑦d (ngưỡng theo NHỊP TUẦN: >10 ngày = mức 0) sẽ báo động giả cả tháng nên KHÔNG gọi nữa.
+    # Hàm giac_quan_lich_nen() giữ nguyên (chốt BH kiểm hành vi của nó). Thay thế: ⑦f dưới đây canh kỳ của tác vụ tháng theo
+    # sync/lich-nen-ky-vong.json, và hook độ tươi `kiem_do_tuoi_chung_cu.py` canh log an toàn thuốc với ngưỡng 35 ngày.
 
     # ⑦f CẢM BIẾN NGƯỜI CHẾT (T2-01, 20/09/2026): mỗi KỲ lịch nền phải để lại dấu vết đầu ra ĐÚNG HẸN. ⑦d ở trên chỉ so
     # «PASS cuối» nên một lượt chạy tay chen giữa làm kỳ lỡ vô hình (đúng ca 14/09: 3/4 tác vụ bị xoá, không cảm biến nào

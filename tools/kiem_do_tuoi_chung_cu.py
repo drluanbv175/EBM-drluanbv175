@@ -74,7 +74,7 @@ LOG_THANG = _MEA / "data" / "archive" / "launchd_monthly.log"
 WEEKLY_SH = _MEA / "scripts" / "weekly_safety.sh"
 
 # Ngưỡng nới hơn chu kỳ danh nghĩa: job tuần trễ 3 ngày chưa đáng gọi là bỏ bê.
-HAN_AN_TOAN_NGAY = 10      # giám sát an toàn thuốc: chu kỳ tuần
+HAN_AN_TOAN_NGAY = 35      # giám sát an toàn thuốc: chu kỳ THÁNG từ 13/11/2026 (bác sĩ gộp vào tác vụ tháng; trước là tuần, 10)
 HAN_CAP_NHAT_NGAY = 35     # cập nhật guideline: chu kỳ tháng
 # Ngưỡng RIÊNG cho "chủ đề lâu chưa xem lại", cố ý cao hơn HAN_CAP_NHAT_NGAY nhiều.
 # Lý do là chống nhờn cảnh báo: ở nhịp làm việc thật, phần lớn chủ đề luôn quá 35 ngày
