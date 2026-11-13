@@ -151,11 +151,17 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         # 10.1124/ (Pharmacological Reviews — ASPET) và 10.4158/ (Endocrine Practice — AACE): Crossref works ghi «Elsevier BV»,
         # DOI phân giải qua linkinghub.elsevier.com; trang chủ hai tạp chí ghi «Copyright © 2026 Elsevier Inc.» và trỏ đúng điều
         # khoản website Elsevier (đọc 11/11/2026, cùng tiền lệ CHEST).
+        # 7 miền tạp chí hội trên nền Elsevier (đọc chân trang trên Chrome 13/11/2026 — mỗi miền ghi «Copyright © 2026 Elsevier
+        # Inc., its licensors, and contributors.» và «Terms and Conditions» trỏ ĐÚNG trang điều khoản website Elsevier ở `nguon`;
+        # DOI 10.1016/ phân giải qua linkinghub về chính miền đó): jpain.org (J Pain), jaci-inpractice.org (JACI In Practice),
+        # jacionline.org (JACI), mayoclinicproceedings.org (Mayo Clin Proc), giejournal.org (GIE), amjmed.com (Am J Med),
+        # heartlungcirc.org (Heart Lung Circ). Thiếu chúng ⇒ `--kiem` chặn bài của chính Elsevier vì «miền chưa khai».
         "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/",
                                      "10.1378/", "10.1124/", "10.4158/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
                  "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org", "aspetjournals.org",
-                 "endocrinepractice.org"),
+                 "endocrinepractice.org", "jpain.org", "jaci-inpractice.org", "jacionline.org", "mayoclinicproceedings.org",
+                 "giejournal.org", "amjmed.com", "heartlungcirc.org"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
