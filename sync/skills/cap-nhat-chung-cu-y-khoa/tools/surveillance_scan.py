@@ -826,7 +826,10 @@ def summarize_europe_pmc(
 # nằm ở đây: gói tuần chỉ trình ≤ 7 thẻ dù quét bao nhiêu chủ đề, và làn tính phí có trần TUẦN riêng. Thứ tăng theo số chủ đề
 # là THỜI GIAN (đo W36–W44: tới 38 giây/chủ đề ⇒ 100 chủ đề ≈ 63 phút; đó là việc của `lam_moi_khoa`). Trần này chỉ còn là rào
 # chống watchlist bị SINH SAI (hàng trăm mục làm NCBI chặn IP); đo 30/10: 53 active + 5 chủ đề chưa khai, 73 chủ đề dashboard.
-TRAN_CHU_DE_ACTIVE = 100
+# Nâng 100 → 150 (13/11/2026): bác sĩ duyệt đợt 7 watchlist (+28 chủ đề ⇒ 107 active). Số đo thời lượng: lượt tháng 13/11
+# quét 79 chủ đề trong 20 phút 14 giây (≈ 15 giây/chủ đề) ⇒ 107 ≈ 27 phút, 150 ≈ 38 phút; trường hợp xấu 38 giây/chủ đề
+# (W36–W44) ⇒ 150 ≈ 95 phút — vẫn trong một lượt nền tháng. Trần vẫn chặn watchlist sinh sai cỡ hàng trăm mục.
+TRAN_CHU_DE_ACTIVE = 150
 
 
 def kiem_tran_chu_de(topics: Sequence[dict[str, str]]) -> None:
