@@ -471,13 +471,23 @@ def khoi_ung_vien(uv: Path) -> str:
             + "\n".join(dong) + "</section>")
 
 
+def chon_goi_moi_nhat(thu_muc: Path) -> Path | None:
+    """Chọn gói duyệt MỚI NHẤT theo thời điểm ghi, không theo tên tệp.
+
+    Từ 13/11/2026 gói tháng có thể nằm ở tệp riêng `tuan-<W>-thang.md` cạnh `tuan-<W>.md` cùng tuần ISO
+    (không ghi đè gói tuần đã có). Sắp theo tên thì «-» < «.» nên gói tháng xếp TRƯỚC gói tuần và hòm thư
+    nhúng nhầm bản cũ — đo thật 13/11/2026.
+    """
+    goi = sorted(thu_muc.glob("tuan-*.md"), key=lambda p: (p.stat().st_mtime, p.name))
+    return goi[-1] if goi else None
+
+
 def main() -> int:
     hom_nay = dt.datetime.now()
     khoi: list[str] = []
 
-    goi = sorted((REPO / "queue").glob("tuan-*.md"))
-    if goi:
-        g = goi[-1]
+    g = chon_goi_moi_nhat(REPO / "queue")
+    if g:
         tuoi = (hom_nay.date() - dt.date.fromtimestamp(g.stat().st_mtime)).days
         khoi.append(f"<section class='goi'><div class='dau-muc'><h2 class='muc'><span class='so'>I.</span>Gói duyệt tuần — {g.stem.replace('tuan-', '').upper()}</h2>"
                     f"<p class='mo'>{'Sinh hôm nay' if tuoi == 0 else f'Sinh {tuoi} ngày trước'} bởi chu trình giám sát tự động · mọi thẻ là <b>đề xuất</b> chờ bác sĩ phản bác</p></div>"

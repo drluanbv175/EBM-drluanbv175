@@ -22,6 +22,7 @@
         "python3 tools/tuyen_bo_do_phu.py",
         "python3 tools/do_tac_dong.py --ngay 31",
         "python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/*.html --online",
+        "python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/*.html --online --khong-endnote",
         "python3 tools/dat_canh_chung_cu_moi.py --top 12",
         "python3 tools/dung_hom_thu.py"
       ],
