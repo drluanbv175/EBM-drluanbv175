@@ -23,7 +23,10 @@ NGUYÊN TẮC (không nới bằng cờ):
     trong tóm tắt phải có NGUYÊN VĂN trong abstract gốc của chính bản ghi — lệch một số ⇒ không in tóm tắt đó.
     Bài KHÔNG có abstract (20/10/2026, bác sĩ cho phép): mục kho khai `"nguon": "toan_van_pmc"` thì nguồn và văn bản
     đối chiếu số là TOÀN VĂN PMC TRUY CẬP MỞ trong kho (`PMID-<n>_PMC<id>.xml`) — cùng chốt cứng; bài CÓ abstract mà khai
-    nguồn này, hoặc kho không có tệp PMC đó ⇒ không in. Nhãn và dòng chân ghi rõ nguồn là toàn văn.
+    nguồn này, hoặc kho không có tệp PMC đó ⇒ không in. Nhãn và dòng chân ghi rõ nguồn là toàn văn. Mở rộng 13/11/2026
+    (bác sĩ: «có mở rộng cho abstract guideline»): bài CÓ abstract nhưng abstract chỉ mô tả chung, không nêu khuyến cáo,
+    cũng được soạn từ toàn văn PMC khi mục kho khai lý do ở `abstract_khong_noi_dung` — nhãn ghi «abstract gốc không nêu
+    nội dung khuyến cáo».
   • Nhãn giữ đúng nhãn của dashboard: «Nguồn không phân hạng» (gradeLevel 'na') KHÔNG có nghĩa là chứng cứ yếu;
     giá trị lạ ⇒ «chưa rõ», không đoán.
   • Abstract gốc (PubMed/nhà xuất bản) GIỮ NGUYÊN dưới dấu phân cách; chạy lại chỉ thay khối tiếng Việt.
@@ -65,6 +68,7 @@ NHAN_DONG = {"diem_nhan": "⭐", "ket_qua": "▶️ KẾT QUẢ", "action": "✅
              "lech": "❗ KHUYẾN NGHỊ KHÁC NHAU GIỮA CÁC CHỦ ĐỀ", "tham_khao": "ℹ️ TÀI LIỆU THAM KHẢO BỔ TRỢ",
              "may": "ℹ️ TÓM TẮT MÁY TỪ ABSTRACT",
              "may_pmc": "ℹ️ TÓM TẮT MÁY TỪ TOÀN VĂN PMC (bài không có abstract)",
+             "may_pmc_abs": "ℹ️ TÓM TẮT MÁY TỪ TOÀN VĂN PMC (abstract gốc không nêu nội dung khuyến cáo)",
              "thu_vien": "ℹ️ TÀI LIỆU TRONG THƯ VIỆN (không thuộc dashboard nào)"}
 # Hậu tố tệp trong kho toàn văn → nhãn nguồn ngắn (cùng quy ước với nap_endnote_chu_de.NGUON_PDF).
 NGUON_TOAN_VAN = (("_CHR", "bản quyền — dùng cá nhân"), ("_WTDM", "TDM Wiley"), ("_UPW", "truy cập mở"),
@@ -89,9 +93,15 @@ CHAN_MAY = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ abst
             "khuyến nghị · áp dụng qua Cổng A.")
 CHAN_MAY_PMC = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ toàn văn PMC truy cập mở (bài không có abstract), chưa qua cổng "
                 "dashboard, không phải khuyến nghị · áp dụng qua Cổng A.")
+CHAN_MAY_PMC_ABS = ("Cần bác sĩ kiểm chứng · «Tóm tắt MÁY» rút từ toàn văn PMC truy cập mở (abstract gốc bên dưới không nêu nội "
+                    "dung khuyến cáo), chưa qua cổng dashboard, không phải khuyến nghị · áp dụng qua Cổng A.")
 # NGUỒN của tóm tắt máy (20/10/2026 — bác sĩ: «cho phép tóm tắt máy từ toàn văn PMC truy cập mở khi bài không có abstract,
-# giữ chốt kiểm con số so với toàn văn»). Mặc định «abstract». «toan_van_pmc» CHỈ nhận khi bản ghi không có abstract, và văn bản
+# giữ chốt kiểm con số so với toàn văn»). Mặc định «abstract». «toan_van_pmc» nhận khi bản ghi không có abstract, và văn bản
 # đối chiếu số là JATS XML PMC trong kho — không phải bản lưu phiên Chrome (_CHR, có bản quyền) hay HTML Unpaywall.
+# MỞ RỘNG 13/11/2026 (bác sĩ: «Luật tóm tắt máy: có mở rộng cho abstract guideline»): bản ghi CÓ abstract nhưng abstract chỉ là
+# đoạn mô tả chung không nêu khuyến cáo (vd ADA Standards of Care, guideline của hiệp hội) cũng được soạn từ toàn văn PMC — CHỈ
+# khi mục kho khai LÝ DO ở `abstract_khong_noi_dung` (không khai ⇒ vẫn từ chối như trước). Cùng chốt số so với toàn văn PMC;
+# nhãn và dòng chân ghi rõ «abstract gốc không nêu nội dung»; abstract gốc vẫn giữ nguyên bên dưới dấu phân cách.
 NGUON_TOM_TAT = ("abstract", "toan_van_pmc")
 KHONG_ABSTRACT = "(PubMed không có abstract cho bài này)"
 _TEP_PMC = re.compile(r"PMID-\d+_PMC\d+\.xml")
@@ -106,7 +116,10 @@ KHOA_TRUONG_TOM_TAT = tuple(k for k, _ in NHAN_TOM_TAT)
 #              phiên sau «SOẠN mục» trái với quyết định đã ghi.
 #   `nguon`  — (20/10/2026) nguồn soạn: «abstract» (mặc định) hoặc «toan_van_pmc» (xem NGUON_TOM_TAT); không in nguyên văn,
 #              chỉ đổi nhãn, dòng chân và văn bản đối chiếu số.
-TRUONG_SIEU_DU_LIEU = ("soan", "bo_qua", "nguon")
+#   `abstract_khong_noi_dung` — (13/11/2026) LÝ DO abstract gốc không dùng được làm nguồn (vd «abstract guideline chỉ mô tả
+#              chung, không nêu khuyến cáo»); CHỈ đi cùng «nguon»: «toan_van_pmc» và là điều kiện để bài CÓ abstract được soạn
+#              từ toàn văn PMC. Không in nguyên văn.
+TRUONG_SIEU_DU_LIEU = ("soan", "bo_qua", "nguon", "abstract_khong_noi_dung")
 _KHOA_DINH_DANH = re.compile(r"PMID \d{1,9}|DOI 10\.\d{4,9}/\S+")
 MAU_KHO_TOM_TAT = {
     "_about": ("Kho «Tóm tắt MÁY» cho trích dẫn CHỈ là tài liệu tham khảo — phiên Claude soạn từ ABSTRACT GỐC (mọi con số phải có "
@@ -114,8 +127,10 @@ MAU_KHO_TOM_TAT = {
                + ", ".join(KHOA_TRUONG_TOM_TAT) + ". Siêu dữ liệu tuỳ chọn, không bao giờ in: «soan» (ai/khi nào/từ nguồn nào "
                "soạn) và «bo_qua» (LÝ DO cố ý không tóm tắt — vd trường Abstract của bản ghi là ghi chú của bác sĩ; mục bo_qua "
                "không in tóm tắt máy, không tính «chưa tóm tắt», KHÔNG soạn đè), «nguon» («abstract» mặc định; «toan_van_pmc» "
-               "CHỈ cho bài không có abstract — soạn từ toàn văn PMC truy cập mở PMID-<n>_PMC<id>.xml trong kho, số đối chiếu "
-               "với toàn văn đó). Khoá lạ khác bị báo lỗi, mục không có trường hợp lệ (và không bo_qua) = «chưa tóm tắt»."),
+               "cho bài không có abstract — soạn từ toàn văn PMC truy cập mở PMID-<n>_PMC<id>.xml trong kho, số đối chiếu "
+               "với toàn văn đó; bài CÓ abstract chỉ khi khai thêm «abstract_khong_noi_dung» = LÝ DO abstract không nêu nội "
+               "dung, vd abstract guideline chỉ mô tả chung). Khoá lạ khác bị báo lỗi, mục không có trường hợp lệ (và không "
+               "bo_qua) = «chưa tóm tắt»."),
     "muc": {
         "PMID 12345678": {k: f"<{nhan.lower()} — tiếng Việt, rút từ abstract gốc>" for k, nhan in NHAN_TOM_TAT},
         "DOI 10.1000/vi-du.2026.001": {k: f"<{nhan.lower()}>" for k, nhan in NHAN_TOM_TAT},
@@ -494,6 +509,13 @@ def kiem_kho_tom_tat(kho_tt: dict) -> list[str]:
         if "nguon" in (v or {}) and v.get("nguon") not in NGUON_TOM_TAT:
             loi.append(f"kho tóm tắt máy: «{k}» có «nguon» = «{v.get('nguon')}» — chỉ nhận: " + ", ".join(NGUON_TOM_TAT)
                        + " (mục này không in)")
+        if "abstract_khong_noi_dung" in (v or {}):
+            if not _gon(v.get("abstract_khong_noi_dung")):
+                loi.append(f"kho tóm tắt máy: «{k}» có «abstract_khong_noi_dung» rỗng — ghi LÝ DO abstract gốc không nêu nội "
+                           "dung, hoặc bỏ hẳn trường này")
+            elif v.get("nguon") != "toan_van_pmc":
+                loi.append(f"kho tóm tắt máy: «{k}» có «abstract_khong_noi_dung» nhưng «nguon» không phải «toan_van_pmc» — "
+                           "trường này chỉ đi cùng nguồn toàn văn PMC")
     return loi
 
 
@@ -567,8 +589,9 @@ def kiem_tom_tat_may(tt, goc: str, pmid: str | None = None, kho: Path | None = N
     (None, các số lệch): không in.
 
     Văn bản đối chiếu: abstract gốc của bản ghi (mặc định); mục `"nguon": "toan_van_pmc"` ⇒ toàn văn PMC truy cập mở trong
-    `kho` — CHỈ khi bản ghi không có abstract. Bị từ chối vì nguồn (bài có abstract, kho thiếu tệp PMC, «nguon» lạ) ⇒
-    (None, [một dòng «⛔ …»]) — fail-closed, không in."""
+    `kho` — khi bản ghi không có abstract, hoặc (13/11/2026) bản ghi CÓ abstract mà mục khai LÝ DO ở `abstract_khong_noi_dung`
+    (abstract guideline chỉ mô tả chung). Bị từ chối vì nguồn (bài có abstract mà không khai lý do, kho thiếu tệp PMC,
+    «nguon» lạ) ⇒ (None, [một dòng «⛔ …»]) — fail-closed, không in."""
     if _bo_qua(tt) or not isinstance(tt, dict) or not any(_gon(tt.get(k)) for k in KHOA_TRUONG_TOM_TAT):
         return None, []
     nguon = tt.get("nguon") or "abstract"
@@ -576,8 +599,9 @@ def kiem_tom_tat_may(tt, goc: str, pmid: str | None = None, kho: Path | None = N
         return None, [f"⛔ «nguon» = «{nguon}» không hợp lệ"]
     doi_chieu = goc
     if nguon == "toan_van_pmc":
-        if not khong_co_abstract(goc):
-            return None, ["⛔ bản ghi CÓ abstract — tóm tắt máy phải rút từ abstract (nguồn toàn văn PMC chỉ cho bài không có abstract)"]
+        if not khong_co_abstract(goc) and not _gon(tt.get("abstract_khong_noi_dung")):
+            return None, ["⛔ bản ghi CÓ abstract — tóm tắt máy phải rút từ abstract (nguồn toàn văn PMC chỉ cho bài không có abstract,"
+                          " hoặc khi mục khai lý do ở «abstract_khong_noi_dung»)"]
         doi_chieu = van_ban_toan_van_pmc(pmid, kho)
         if not doi_chieu:
             return None, ["⛔ kho không có toàn văn PMC truy cập mở (PMID-<n>_PMC<id>.xml) để đối chiếu số"]
@@ -596,13 +620,21 @@ def tom_tat_cho(muc: dict, kho_tt: dict, goc: str, kho: Path | None = None) -> t
 
 def _dong_may(tom_tat: dict) -> list[str]:
     """Nhãn + các trường của tóm tắt máy — một chỗ dựng cho mọi loại khối, nên chữ giống hệt nhau ở mọi nơi in."""
-    nhan_may = NHAN_DONG["may_pmc"] if tom_tat.get("nguon") == "toan_van_pmc" else NHAN_DONG["may"]
+    nhan_may = NHAN_DONG[_loai_may(tom_tat)]
     return [f"{nhan_may} (chưa qua cổng dashboard — không phải khuyến nghị):",
             *(f"   {nhan}: {_gon(tom_tat.get(k))}" for k, nhan in NHAN_TOM_TAT if _gon(tom_tat.get(k)))]
 
 
+def _loai_may(tom_tat: dict) -> str:
+    """Khoá nhãn theo nguồn soạn: «may» (abstract) · «may_pmc» (toàn văn PMC, bài không có abstract) · «may_pmc_abs» (toàn
+    văn PMC, abstract gốc không nêu nội dung — 13/11/2026)."""
+    if tom_tat.get("nguon") != "toan_van_pmc":
+        return "may"
+    return "may_pmc_abs" if _gon(tom_tat.get("abstract_khong_noi_dung")) else "may_pmc"
+
+
 def _chan_may(tom_tat: dict) -> str:
-    return CHAN_MAY_PMC if tom_tat.get("nguon") == "toan_van_pmc" else CHAN_MAY
+    return {"may": CHAN_MAY, "may_pmc": CHAN_MAY_PMC, "may_pmc_abs": CHAN_MAY_PMC_ABS}[_loai_may(tom_tat)]
 
 
 def _khoi_tham_khao(nc: dict, so_khac: int, tom_tat: dict | None = None) -> list[str]:
