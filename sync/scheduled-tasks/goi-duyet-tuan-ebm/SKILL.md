@@ -75,7 +75,8 @@ tóm tắt, kể cả khi bài OA nằm sẵn trên PMC):
    phải toàn văn. Thẩm định thì mở chính tệp PDF (hoặc HTML `_CHR`) ở trang/mục ghi kèm; trên thẻ
    chỉ ghi dữ kiện/con số kèm số trang và trích ≤ 15 từ, KHÔNG chép đoạn văn của bài vào gói.
    `appraisalCompleteness=full` chỉ khi đã đọc đủ các mục cần ở PDF; chỉ dựa bản đọc máy ⇒ `partial`.
-5. Xuất `queue/tuan-<ISO-week>.md` đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
+5. Xuất `queue/tuan-<ISO-week>.md` (tệp đó ĐÃ CÓ gói khác cùng tuần ISO ⇒ KHÔNG ghi đè: xuất `queue/tuan-<ISO-week>-thang.md`, mã thẻ
+   `W<nn>-T01…`; hòm thư chọn gói mới nhất theo thời điểm ghi) đúng **MẪU CHÍNH THỨC** (chốt 12/09/2026, thay cho tham chiếu
    lỗi thời "6 dòng/xem mẫu W33" — định dạng thật đã tăng lên 8 khối qua W35-W37 mà chưa từng được
    viết lại): `sync/scheduled-tasks/goi-duyet-tuan-ebm/MAU-THE-CHUNG-CU-TUAN.md`. Mỗi thẻ: tiêu đề
    [ID] chủ đề — loại nguồn — đề xuất (Áp dụng ngay|Cân nhắc|Chưa đủ, ghi rõ là ĐỀ XUẤT để bác sĩ
@@ -113,7 +114,8 @@ Chạy `python3 tools/tu_de_xuat_viec.py` và đặt bảng này LÊN ĐẦU gó
 ## Bổ sung 16/08 (phái sinh tươi): XUẤT LẠI bản Word/bản-đọc cho dashboard đã đổi
 Sau bước quét, liệt kê dashboard có bản Word/bản-đọc CŨ HƠN nội dung bằng
 `python3 tools/tu_de_xuat_viec.py --phai-sinh-cu` (mỗi dòng một đường dẫn) — với TỐI ĐA 5 bản, chạy
-`python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/<file>.html --online` để bác sĩ không đọc bản lỗi
+`python3 tools/xuat_goi_cap_nhat.py EBM-Dashboards/<file>.html --online --khong-endnote` (lượt lịch KHÔNG ghi EndNote —
+BH173; bước ⑧ để phiên có người) để bác sĩ không đọc bản lỗi
 thời; còn dư thì ghi số lượng vào gói (giác quan ⑩ của bảng tự-đề-xuất cũng đếm).
 
 ## Bổ sung 16/08 (vòng nội dung): ĐẶT CẠNH chứng cứ đang dùng vs nguồn mới hơn

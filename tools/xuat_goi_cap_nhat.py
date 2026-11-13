@@ -551,6 +551,8 @@ def main() -> int:
                     help="chạy cổng liêm chính có phân giải PMID/DOI thật trước khi xuất")
     ap.add_argument("--parts", help="file JSON nhóm 'phần' lớn cho bản Word (tuỳ chọn)")
     ap.add_argument("--json", action="store_true", help="in kết quả dạng JSON")
+    ap.add_argument("--khong-endnote", action="store_true",
+                    help="bỏ bước ⑧ ghi EndNote — cho lượt lịch (ranh giới quyền lượt lịch BH173: lượt lịch không ghi EndNote)")
     a = ap.parse_args()
 
     dash = Path(a.dashboard).resolve()
@@ -757,6 +759,8 @@ def main() -> int:
     print("⑧ EndNote…")
     if _dang_kiem_thu():
         print("   ⚪ Bỏ qua trong lượt test.")
+    elif a.khong_endnote:
+        print("   ⚪ Bỏ qua (--khong-endnote: lượt lịch không ghi EndNote — phiên có người chạy lại không cờ này).")
     else:
         buoc_endnote(py, dash, verified)
 
