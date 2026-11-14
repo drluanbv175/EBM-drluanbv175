@@ -124,6 +124,14 @@ SO = DASH / ".so-xac-minh-nguon.json"
 HAN_TON_TAI_NGAY = 180
 HAN_RUT_BAI_NGAY = 30
 
+# Hai lý do «không có ngày xác minh dùng được» — TÁCH RIÊNG vì cách sửa khác nhau (vá 14/11/2026). Cả hai đều HẾT hiệu lực
+# (fail-closed): không ngày thì không bao giờ được tính là còn hạn.
+#   • VẮNG ngày (khoá không có / None / chuỗi rỗng): bản ghi TRẦN — cầu NC⇄LS (`cau_noi_nghien_cuu_lam_sang.py`) và
+#     `--quet-ledger` tạo bản ghi mà CHƯA xác minh tồn tại. Máy tự sửa được: `--phu-mo-coi`.
+#   • CÓ ngày mà không đọc được (chuỗi sai khuôn ISO, kiểu lạ): dữ liệu sổ hỏng/ghi tay — phải xem tay.
+LY_DO_CHUA_XAC_MINH_TON_TAI = "chưa xác minh tồn tại lần nào"
+LY_DO_NGAY_HONG = "không đọc được ngày xác minh"
+
 
 def chuan_hoa_khoa(khoa: str) -> str:
     """Dạng CHUẨN của một khoá sổ — hàm DUY NHẤT mà mọi đường GHI lẫn ĐỌC khoá phải đi qua (vá 03/10/2026).
@@ -328,7 +336,11 @@ def _hom_nay() -> dt.date:
 
 
 def _tuoi_ngay(iso: str | None) -> int | None:
-    if not iso:
+    """Số ngày từ mốc ISO tới hôm nay; None khi vắng HOẶC không đọc được (caller phải coi None là hết hiệu lực).
+
+    Vá 14/11/2026: giá trị không phải chuỗi (số, danh sách… — sổ ghi tay/hỏng) từng ném TypeError ở `iso[:10]` và làm
+    SẬP cả `--bao-cao`; nay trả None như mọi ngày không đọc được (fail-closed, không bao giờ thành «còn hạn»)."""
+    if not iso or not isinstance(iso, str):
         return None
     try:
         return (_hom_nay() - dt.date.fromisoformat(iso[:10])).days
@@ -336,13 +348,35 @@ def _tuoi_ngay(iso: str | None) -> int | None:
         return None
 
 
+def _vang_ngay_xac_minh(bg: dict) -> bool:
+    """Bản ghi TRẦN: chưa từng có `xac_minh_luc` (khoá vắng, None hoặc chuỗi trắng) — khác với «có ngày nhưng hỏng».
+
+    Không bao giờ dùng hàm này để coi bản ghi là còn hạn; nó chỉ chọn CÁCH SỬA (`--phu-mo-coi`) cho phần đã hết hiệu lực."""
+    x = bg.get("xac_minh_luc")
+    return x is None or (isinstance(x, str) and not x.strip())
+
+
+def _nguon_goc_ban_ghi(bg: dict) -> str:
+    """Nhãn NGUỒN GỐC của một bản ghi theo `cac_dashboard` — chỉ để báo cáo đếm (không đổi phán quyết nào)."""
+    ds = [str(x) for x in (bg.get("cac_dashboard") or [])]
+    if not ds:
+        return "không liên kết"
+    if all(x == "(hub-only)" for x in ds):
+        return "thẻ hub (--quet-ledger)"
+    if all(x.startswith("NC:") for x in ds):
+        return "đề tài NC (cầu NC⇄LS)"
+    return "dashboard"
+
+
 def con_hieu_luc(ban_ghi: dict) -> tuple[bool, str]:
     """Mục đã xác minh có còn dùng được không? Trả (còn, lý do nếu không)."""
     if ban_ghi.get("da_rut"):
         return False, "ĐÃ BỊ RÚT"
+    if _vang_ngay_xac_minh(ban_ghi):
+        return False, LY_DO_CHUA_XAC_MINH_TON_TAI
     tuoi = _tuoi_ngay(ban_ghi.get("xac_minh_luc"))
     if tuoi is None:
-        return False, "không đọc được ngày xác minh"
+        return False, LY_DO_NGAY_HONG
     if tuoi > HAN_TON_TAI_NGAY:
         return False, f"xác minh đã {tuoi} ngày (hạn {HAN_TON_TAI_NGAY})"
     tuoi_rut = _tuoi_ngay(ban_ghi.get("kiem_rut_luc"))
@@ -1285,7 +1319,16 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
         qua_han_rut = [x for x in thieu if "kiểm rút bài đã" in x[1]]
         chua_rut = [x for x in thieu if "chưa kiểm rút bài" in x[1]]
         het_han = [x for x in thieu if "xác minh đã" in x[1]]
-        khac = [x for x in thieu if x not in chua_rut and x not in het_han and x not in qua_han_rut]
+        # VÁ 14/11/2026 — TÁCH «bản ghi TRẦN chưa xác minh tồn tại» khỏi «lý do khác / xem tay». Đo 14/11: cả 80/80 mục
+        # «[MA] CAN_XEM_TAY — không đọc được ngày xác minh» là bản ghi VẮNG hẳn `xac_minh_luc` (52 thẻ `(hub-only)` do
+        # `--quet-ledger` tạo ngày 12–13/11 + 28 PMID `NC:<đề tài>` do cầu NC⇄LS tạo); thử xác minh mẫu cả hai nhóm đều
+        # THÀNH CÔNG ngay. `--vong 3` không chạm tới (chỉ tái kiểm định danh gom từ dashboard) còn nhãn «xem tay» đẩy bác
+        # sĩ đi rà tay một việc máy làm được — đúng lớp lỗi BH14 (lời khuyên lệch đòn bẩy). URL trần KHÔNG vào nhóm này vì
+        # `--phu-mo-coi` chỉ phủ PMID/DOI.
+        chua_ton_tai = [x for x in thieu if x[1] == LY_DO_CHUA_XAC_MINH_TON_TAI
+                        and (muc.get(x[0]) or {}).get("loai") in ("pmid", "doi")]
+        khac = [x for x in thieu
+                if x not in chua_rut and x not in het_han and x not in qua_han_rut and x not in chua_ton_tai]
         print("\n  Vì sao hết hiệu lực — CÁCH SỬA KHÁC NHAU, đừng gộp:")
         if qua_han_rut:
             mo_coi_rut = sum(1 for k, _ in qua_han_rut if not (muc.get(k) or {}).get("cac_dashboard"))
@@ -1322,8 +1365,27 @@ def bao_cao(nguon_pham_vi: set[str] | None = None) -> int:
             print(f"     • {len(het_han)} mục: xác minh tồn tại đã quá {HAN_TON_TAI_NGAY} ngày.")
             print("       → Chạy lại thêm vòng SẼ sửa được.")
             print("       [MA] CAN_CHAY_THEM_VONG")
+        if chua_ton_tai:
+            nguon_goc: dict[str, int] = {}
+            for k, _ in chua_ton_tai:
+                ten_goc = _nguon_goc_ban_ghi(muc.get(k) or {})
+                nguon_goc[ten_goc] = nguon_goc.get(ten_goc, 0) + 1
+            chi_tiet = " · ".join(f"{n} {ten}" for ten, n in sorted(nguon_goc.items(), key=lambda x: (-x[1], x[0])))
+            print(f"     • {len(chua_ton_tai)} mục: bản ghi TRẦN — {LY_DO_CHUA_XAC_MINH_TON_TAI} ({chi_tiet}).")
+            print("       → Máy tự sửa được, không cần khoá API, KHÔNG phải việc xem tay: "
+                  "`python3 tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3`.")
+            print("         (`--vong 3` KHÔNG chạm tới nhóm này; lượt đầy đủ `chu_trinh_chung_cu.py` tự gọi "
+                  "`--phu-mo-coi` sau `--quet-ledger`.) Không tra được ⇒ giữ CHƯA KIỂM, không bao giờ thành «còn hạn».")
+            print("       [MA] CAN_PHU_MO_COI")
         if khac:
-            print(f"     • {len(khac)} mục: lý do khác — {khac[0][1]}")
+            # Liệt kê MỌI lý do kèm số đếm (vá 14/11/2026): bản cũ chỉ in lý do của mục ĐẦU TIÊN ⇒ một nhóm lẫn nhiều lý do
+            # bị đọc thành một lý do duy nhất.
+            ly_do_dem: dict[str, int] = {}
+            for _k, ld in khac:
+                ly_do_dem[ld or "(không rõ)"] = ly_do_dem.get(ld or "(không rõ)", 0) + 1
+            print(f"     • {len(khac)} mục: lý do khác — cần xem tay:")
+            for ld, n in sorted(ly_do_dem.items(), key=lambda x: (-x[1], x[0])):
+                print(f"         – {n} mục: {ld}")
             print("       [MA] CAN_XEM_TAY")
     # Đếm RIÊNG hai mức: "rút bỏ hẳn" và "rút rồi ĐĂNG LẠI bản đã sửa". Gộp lại thì
     # một trích dẫn HỢP LỆ (bản đã sửa, thường cùng DOI/PMID) bị đọc thành "không được
@@ -1451,6 +1513,7 @@ def quet_ledger_hub(vong: int = 1) -> None:
                 can_doi.append(doi)
     can_pmid, can_doi = sorted(set(can_pmid)), sorted(set(can_doi))
     print(f"HUB: cần kiểm {len(can_pmid)} PMID + {len(can_doi)} DOI (chưa có phán quyết còn hạn)")
+    khoa_truoc = set(muc)  # để cuối lượt đếm bản ghi TRẦN mới tạo (vá 14/11/2026)
 
     sys.path.insert(0, str(_bst_qlh.duong_goc("medical-ebm-automation", REPO)
                            or (REPO / "medical-ebm-automation")))
@@ -1514,6 +1577,13 @@ def quet_ledger_hub(vong: int = 1) -> None:
                    if not any((muc[k].get("kiem_rut_luc") or "") > han for k in cac_khoa_trong_so(muc, f"doi:{d}"))]
     ghi_so(so)
     print(f"✓ ghi {ghi} phán quyết vào sổ · còn KHÔNG BIẾT: {len(can_pmid)} PMID + {len(can_doi)} DOI")
+    # Lượt này chỉ kiểm RÚT BÀI: định danh hub chưa có trong sổ được tạo dưới dạng bản ghi TRẦN (chưa xác minh tồn tại) ⇒
+    # chưa hiệu lực cho tới khi `--phu-mo-coi` chạy. Đo 14/11/2026: 52 bản ghi như vậy (12–13/11) đứng ở «xem tay» vì không
+    # lượt nào phủ mồ côi sau `--quet-ledger` chạy lẻ. Nói ra ngay tại đây thay vì để báo cáo sau gọi sai tên.
+    moi_tran = [k for k in muc if k not in khoa_truoc and _vang_ngay_xac_minh(muc[k])]
+    if moi_tran:
+        print(f"ℹ {len(moi_tran)} bản ghi hub MỚI chưa xác minh tồn tại — chạy tiếp "
+              "`python3 tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3` để sổ hội tụ (chưa phủ thì chúng tính là hết hiệu lực).")
 
 def main() -> int:
     for s in (sys.stdout, sys.stderr):
