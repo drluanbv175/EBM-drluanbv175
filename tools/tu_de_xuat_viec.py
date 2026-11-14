@@ -1205,6 +1205,24 @@ def dem_ngoai_giam_sat(dong: list[dict], da_ra: dict) -> tuple[int, list[str]]:
     return miss, cho
 
 
+def chi_dashboard_hien_hanh(cac_tep: list[Path]) -> list[Path]:
+    """Bỏ dashboard đã bị PHIÊN BẢN NỐI TIẾP thay (cùng lát cắt, ngày cũ hơn) — vá 14/11/2026.
+
+    Đo 13/11/2026: `--phai-sinh-cu` báo 12 dashboard có Word/bản-đọc lỗi thời, nhưng CẢ 12 đã có bản nối tiếp mới hơn
+    (vd SuyTim_NguoiCaoTuoi_20261103 đã có 20261107 và 20261113) ⇒ quy trình gói duyệt bảo «xuất lại tối đa 5 bản» là
+    xuất lại bản bác sĩ không còn đọc. Luật «cùng lát cắt, ngày mới hơn ⇒ thay bản cũ» lấy từ CHÍNH
+    `dat_canh_chung_cu_moi.chi_ban_moi_nhat` + `dang_ky_chu_de.tach_ten` (một nguồn sự thật, không viết luật thứ hai).
+    Không nạp được công cụ đó ⇒ GIỮ ĐỦ (báo thừa an toàn hơn im lặng)."""
+    try:
+        spec = _ilu_mea.spec_from_file_location("_dccm_tdxv", Path(__file__).resolve().parent / "dat_canh_chung_cu_moi.py")
+        mod = _ilu_mea.module_from_spec(spec)
+        sys.modules["_dccm_tdxv"] = mod
+        spec.loader.exec_module(mod)
+        return mod.chi_ban_moi_nhat(list(cac_tep), mod._tach_ten_chu_de())
+    except Exception:  # noqa: BLE001 — công cụ vắng/hỏng ⇒ không lọc
+        return list(cac_tep)
+
+
 def dem_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> int:
     """Số dashboard có bản Word/bản-đọc THẬT SỰ lỗi thời (xem `liet_ke_dashboard_phai_sinh_loi_thoi`)."""
     return len(liet_ke_dashboard_phai_sinh_loi_thoi(dash_dir))
@@ -1229,7 +1247,7 @@ def liet_ke_dashboard_phai_sinh_loi_thoi(dash_dir: Path) -> list[Path]:
         import verify_dashboard as vd  # noqa: PLC0415
     except ImportError:
         vd = None
-    for f_db in sorted(dash_dir.glob("WebDashboard_*.html")):
+    for f_db in chi_dashboard_hien_hanh(sorted(dash_dir.glob("WebDashboard_*.html"))):
         if ".bak" in f_db.name:
             continue
         ma = f_db.stem.replace("WebDashboard_EBM_VanDeCuThe_", "").replace("WebDashboard_EBM_", "")
