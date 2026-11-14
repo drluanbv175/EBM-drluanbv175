@@ -20,6 +20,7 @@ Mã thoát: 0 luôn (bảng đề xuất là sản phẩm, không phải phán q
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import hashlib
 import json
@@ -29,6 +30,7 @@ import shutil
 import subprocess
 import sys
 import time
+import unicodedata
 from pathlib import Path
 
 for _s in (sys.stdout, sys.stderr):
@@ -1190,10 +1192,23 @@ def van_tay_goi(thu_muc: Path) -> dict[str, str]:
     return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in goi if p.is_file()}
 
 
-def _manifest_g10(ck: object) -> tuple[dt.datetime | None, dict[str, str]]:
-    """(mốc lắp G10 `generated_at`, tên tệp → sha256 trong `release_manifest`) từ G10_checkpoint.json đã nạp; chỉ đọc."""
+# Giờ Việt Nam (UTC+7, không đổi giờ theo mùa). `G10_checkpoint.generated_at` là giờ máy KHÔNG múi (run_g10_assemble ghi
+# `datetime.now()` trên máy bác sĩ ở VN), còn `G10_QUALITY_REPORT.generated_at` là giờ UTC CÓ múi ⇒ phải quy về cùng một múi
+# trước khi lấy ngày để so với ngày bình duyệt (vd 28/10 18:30Z là 29/10 theo giờ VN). Cố định +7 thay vì giờ máy đang chạy:
+# phiên Cloud chạy theo UTC.
+_GIO_VN = dt.timezone(dt.timedelta(hours=7))
+
+
+def _ngay_vn(luc: dt.datetime) -> dt.date:
+    """Ngày theo giờ VN: mốc có múi ⇒ đổi sang UTC+7; mốc không múi ⇒ coi là giờ máy VN (đúng cách bộ lắp G10 ghi)."""
+    return (luc.astimezone(_GIO_VN) if luc.tzinfo else luc).date()
+
+
+def _manifest_g10(ck: object) -> tuple[dt.datetime | None, dict[str, str], str | None]:
+    """(mốc lắp G10 `generated_at`, tên tệp → sha256 trong `release_manifest`, `release_manifest.package_sha256`) từ
+    G10_checkpoint.json đã nạp; chỉ đọc."""
     if not isinstance(ck, dict):
-        return None, {}
+        return None, {}, None
     try:
         luc = dt.datetime.fromisoformat(str(ck.get("generated_at")))
     except ValueError:
@@ -1205,20 +1220,77 @@ def _manifest_g10(ck: object) -> tuple[dt.datetime | None, dict[str, str]]:
         for v in tep.values():
             if isinstance(v, dict) and v.get("path") and v.get("sha256"):
                 manifest[Path(str(v["path"])).name] = str(v["sha256"]).strip().lower()
-    return luc, manifest
+    goi = str(rm.get("package_sha256") or "").strip().lower() if isinstance(rm, dict) else ""
+    return luc, manifest, goi or None
 
 
-def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
+def _ngay_cham_g10(thu_muc: Path, goi_manifest: str | None) -> dt.date | None:
+    """Ngày (giờ VN) của lượt chấm G10 GHI gần nhất, CHỈ khi ràng buộc được với manifest đang lưu; không thì None.
+
+    Vì sao cần (14/11/2026, người duyệt PR #337 tái hiện xanh giả): khi G10 chưa được PI ký, mỗi lượt `g10_quality_gate.py`
+    ghi (write=True) GHI ĐÈ `release_manifest` bằng băm hiện hành mà GIỮ NGUYÊN `generated_at` (PF.ghi_checkpoint_giu_moc_sinh);
+    tiêu chí G10-AUTO-10 còn dặn «Trước ký: chạy lại g10_quality_gate.py để cập nhật manifest». Vậy «tệp khớp manifest» KHÔNG
+    có nghĩa «nội dung có từ lúc generated_at»: sửa gói sau bình duyệt rồi chấm lại ⇒ khớp manifest mà generated_at vẫn cũ.
+
+    Mỗi lượt chấm GHI đều viết `G10_QUALITY_REPORT.json` (generated_at UTC + package_sha256 của gói lúc chấm) ngay trước khi
+    ghi manifest; lượt chấm KHÔNG ghi (write=False: gate_contract, audit_research_gates, approve_gate trước ký) không đụng cả
+    hai, và chỉ bộ chấm G10 ghi `release_manifest` (bộ lắp dựng checkpoint rồi gọi bộ chấm). Báo cáo mang `package_sha256`
+    TRÙNG `release_manifest.package_sha256` ⇒ gói lúc chấm báo cáo = gói trong manifest; báo cáo luôn là lượt ghi MỚI NHẤT ⇒
+    mốc báo cáo ≥ lúc manifest được viết. Không ràng buộc được (vắng/hỏng, băm lệch, giờ không múi) ⇒ None."""
+    try:
+        bc = json.loads((thu_muc / "G10_QUALITY_REPORT.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not goi_manifest or not isinstance(bc, dict) or str(bc.get("package_sha256") or "").strip().lower() != goi_manifest:
+        return None
+    try:
+        luc = dt.datetime.fromisoformat(str(bc.get("generated_at")))
+    except ValueError:
+        return None
+    return _ngay_vn(luc) if luc.tzinfo else None
+
+
+def _chuan_ten_de_tai(ten: str) -> str:
+    """Chuẩn hoá tên đề tài đúng như `gate_contract.is_real_study_denylisted`: bỏ khoảng trắng đầu/cuối, NFC, casefold."""
+    return unicodedata.normalize("NFC", (ten or "").strip()).casefold()
+
+
+def doc_danh_sach_de_tai_that(tep_gate_contract: Path) -> frozenset[str] | None:
+    """`REAL_STUDY_DENYLIST` của repo y khoa (đã chuẩn hoá), đọc bằng ast — KHÔNG import engine. Không đọc/không hiểu được
+    (vắng tệp, cú pháp lạ, danh sách rỗng) ⇒ None: người gọi phải coi là «không loại trừ được đề tài thật»."""
+    try:
+        cay = ast.parse(tep_gate_contract.read_text(encoding="utf-8"))
+    except (OSError, ValueError, SyntaxError):
+        return None
+    for nut in cay.body:
+        if isinstance(nut, ast.Assign):
+            dich, gia_tri = nut.targets, nut.value
+        elif isinstance(nut, ast.AnnAssign) and nut.value is not None:
+            dich, gia_tri = [nut.target], nut.value
+        else:
+            continue
+        if not any(isinstance(t, ast.Name) and t.id == "REAL_STUDY_DENYLIST" for t in dich):
+            continue
+        if (isinstance(gia_tri, ast.Call) and getattr(gia_tri.func, "id", "") == "frozenset"
+                and len(gia_tri.args) == 1 and not gia_tri.keywords):
+            gia_tri = gia_tri.args[0]
+        try:
+            ten = ast.literal_eval(gia_tri)
+        except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+            return None
+        if isinstance(ten, (set, frozenset, list, tuple)) and ten and all(isinstance(x, str) for x in ten):
+            return frozenset(_chuan_ten_de_tai(x) for x in ten)
+        return None
+    return None
+
+
+def xet_binh_duyet_de_tai(thu_muc: Path, danh_sach_that: frozenset[str] | None = None) -> tuple[str, str]:
     """Phán quyết cho MỘT thư mục đề tài: ("bo_qua"|"ok", "") · ("viec", dòng) · ("chet", lý do không đo được).
 
-    Luật (so theo NỘI DUNG — băm và mốc ghi trong tệp; mtime OneDrive có thể trôi nên không bao giờ dùng):
-      • chưa có G10_checkpoint.json (chưa lắp G10) hoặc `study_kind=synthetic_test` ⇒ bỏ qua, không báo;
-      • đã lắp G10 mà không có bản bình duyệt độc lập nào ⇒ việc;
-      • một bản bình duyệt ghi ĐỦ sha256 hiện hành của mọi tệp gói ⇒ đã phủ, xong (bằng chứng mạnh nhất);
-      • còn lại so ngày bình duyệt mới nhất R với mốc lắp G10 G (`generated_at`): tệp gói KHỚP manifest G10 ⇒ nội dung có từ
-        lúc lắp (R > G phủ · R < G gói lắp lại sau bình duyệt ⇒ việc · cùng ngày ⇒ không đo được); tệp LỆCH manifest ⇒ đã sửa
-        SAU G (R < G ⇒ việc · R ≥ G ⇒ không biết sửa trước hay sau bình duyệt ⇒ không đo được); tệp không có trong manifest
-        ⇒ không đo được. Có bản bình duyệt không định được ngày ⇒ không kết luận «đổi sau», chỉ «không đo được»."""
+    Đề tài thật xác định như repo y khoa (gate_contract, hai lớp): `study_kind=synthetic_test` chỉ được bỏ qua khi tên thư mục
+    KHÔNG nằm trong `REAL_STUDY_DENYLIST` (`danh_sach_that`, đã chuẩn hoá). Cờ synthetic trên đề tài trong danh sách (lỗi chép
+    study_meta giữa các đề tài) ⇒ vẫn đo như đề tài THẬT và báo kèm cảnh báo cờ; không đọc được danh sách ⇒ không đo được
+    (⚪) — không bao giờ bỏ qua im lặng. Luật đo gói: `_xet_goi_g10`."""
     ma = thu_muc.name
     g10 = thu_muc / "G10_checkpoint.json"
     if not g10.is_file():
@@ -1227,8 +1299,36 @@ def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
         meta = json.loads((thu_muc / "study_meta.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return "chet", "study_meta.json không đọc được — không biết có phải đề tài thật"
+    canh_bao = ""
     if isinstance(meta, dict) and str(meta.get("study_kind", "")).strip().casefold() == "synthetic_test":
-        return "bo_qua", ""
+        if danh_sach_that is None:
+            return "chet", ("study_kind=synthetic_test nhưng không đọc được REAL_STUDY_DENYLIST "
+                            "(medical-ebm-automation/tools/gate_contract.py) — không loại trừ được đề tài thật")
+        if _chuan_ten_de_tai(ma) not in danh_sach_that:
+            return "bo_qua", ""
+        canh_bao = ("study_kind=synthetic_test trên đề tài nằm trong REAL_STUDY_DENYLIST — cờ đặt nhầm? "
+                    "vẫn đo như đề tài THẬT")
+    loai, chi_tiet = _xet_goi_g10(thu_muc, ma, g10)
+    if not canh_bao:
+        return loai, chi_tiet
+    if loai == "viec":
+        return "viec", f"{chi_tiet} · ⚠ {canh_bao}"
+    return "chet", canh_bao + (f"; {chi_tiet}" if chi_tiet else "")
+
+
+def _xet_goi_g10(thu_muc: Path, ma: str, g10: Path) -> tuple[str, str]:
+    """Luật đo gói của một đề tài thật đã lắp G10 (so theo NỘI DUNG — băm và mốc ghi trong tệp; mtime OneDrive có thể trôi
+    nên không bao giờ dùng):
+      • đã lắp G10 mà không có bản bình duyệt độc lập nào ⇒ việc;
+      • một bản bình duyệt ghi ĐỦ sha256 hiện hành của mọi tệp gói ⇒ đã phủ, xong (bằng chứng mạnh nhất);
+      • còn lại so ngày bình duyệt mới nhất R với hai mốc của manifest G10: G_lắp = ngày `generated_at` (manifest không bao
+        giờ được viết TRƯỚC mốc này) và G = max(G_lắp, ngày lượt chấm G10 ràng buộc được với manifest — `_ngay_cham_g10`;
+        manifest không bao giờ được viết SAU mốc này). Tệp gói KHỚP manifest ⇒ nội dung có từ lúc manifest được viết:
+        R < G_lắp ⇒ gói lắp lại sau bình duyệt ⇒ việc · R > G ⇒ phủ · cùng ngày G, G_lắp ≤ R < G (manifest có thể đã làm mới
+        cho gói đã sửa sau bình duyệt) hoặc không ràng buộc được lượt chấm (G vắng) ⇒ không đo được. Tệp LỆCH manifest ⇒ sửa
+        SAU lần viết manifest, tức sau G (hoặc sau G_lắp khi G vắng): R nhỏ hơn mốc đó ⇒ việc · còn lại ⇒ không đo được. Tệp
+        không có trong manifest ⇒ không đo được. Có bản bình duyệt không định được ngày ⇒ không kết luận «đổi sau», chỉ «không
+        đo được»."""
     bam = van_tay_goi(thu_muc)
     if not bam:
         return "chet", "đã lắp G10 mà không thấy " + " / ".join(f"{t}_<mã>.md" for t in _TIEN_TO_GOI)
@@ -1236,8 +1336,8 @@ def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
         ck = json.loads(g10.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         ck = None
-    g_luc, manifest = _manifest_g10(ck)
-    ngay_g = f"{g_luc:%d/%m/%Y}" if g_luc else "?"
+    g_luc, manifest, goi_manifest = _manifest_g10(ck)
+    ngay_g = f"{_ngay_vn(g_luc):%d/%m/%Y}" if g_luc else "?"
     ban = _ban_binh_duyet(thu_muc, ma)
     if not ban:
         return "viec", (f"Đề tài {ma}: đã lắp G10 ({ngay_g}) mà CHƯA có bản bình duyệt độc lập nào — chạy MỘT agent "
@@ -1260,17 +1360,33 @@ def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
     if not co_ngay:
         return "chet", f"bản bình duyệt không định được ngày ({', '.join(khong_ngay)}); {goi_y}"
     r, ten_r = max(co_ngay)
+    g_lap = _ngay_vn(g_luc)                       # manifest không bao giờ được viết TRƯỚC ngày này
+    ngay_cham = _ngay_cham_g10(thu_muc, goi_manifest)
+    g_moc = max(g_lap, ngay_cham) if ngay_cham else None   # manifest không bao giờ được viết SAU ngày này (None = không biết)
     doi: list[str] = []
     khong_ro: list[str] = []
     for ten, h in sorted(bam.items()):
         if ten not in manifest:
             khong_ro.append(f"{ten} không có trong manifest G10")
-        elif r < g_luc.date():
-            doi.append(f"{ten} {'sửa sau' if manifest[ten] != h else 'lắp lại ở'} G10 {ngay_g}")
         elif manifest[ten] != h:
-            khong_ro.append(f"{ten} lệch manifest G10 (sửa sau {ngay_g}, không có mốc để so với bình duyệt {r:%d/%m/%Y})")
-        elif r == g_luc.date():
-            khong_ro.append(f"bình duyệt và lắp G10 cùng ngày {ngay_g}")
+            # Lệch ⇒ sửa SAU lần viết manifest gần nhất: sau G_lắp, và sau cả lượt chấm ràng buộc được (lượt đó còn thấy gói
+            # đúng bằng manifest) — cả hai là cận DƯỚI của lúc sửa.
+            moc_sua = g_moc or g_lap
+            if r < moc_sua:
+                doi.append(f"{ten} sửa sau G10 {moc_sua:%d/%m/%Y}")
+            else:
+                khong_ro.append(f"{ten} lệch manifest G10 (sửa sau {moc_sua:%d/%m/%Y}, không có mốc để so với bình duyệt "
+                                f"{r:%d/%m/%Y})")
+        elif r < g_lap:
+            doi.append(f"{ten} lắp lại ở G10 {g_lap:%d/%m/%Y}")
+        elif g_moc is None:
+            khong_ro.append("không ràng buộc được G10_QUALITY_REPORT.json với release_manifest (package_sha256/giờ có múi) — "
+                            "bộ chấm G10 ghi đè manifest mà giữ generated_at nên không biết manifest viết lúc nào")
+        elif r < g_moc:
+            khong_ro.append(f"G10 chấm lại {g_moc:%d/%m/%Y} sau bình duyệt {r:%d/%m/%Y} — manifest có thể đã làm mới cho gói "
+                            "sửa sau bình duyệt (khớp manifest không còn chứng minh nội dung có từ trước bình duyệt)")
+        elif r == g_moc:
+            khong_ro.append(f"bình duyệt và lắp/chấm G10 cùng ngày {g_moc:%d/%m/%Y}")
     if doi and not khong_ngay:
         return "viec", (f"Đề tài {ma}: gói nộp đổi sau lần bình duyệt độc lập gần nhất ({ten_r}, {r:%d/%m/%Y}; "
                         f"{'; '.join(doi)}) — chạy MỘT agent binh-duyet (≈0,4 triệu token) trước khi nộp")
@@ -1281,19 +1397,25 @@ def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
     return "ok", ""
 
 
-def giac_quan_binh_duyet_doc_lap(exports_dir: Path) -> list[tuple[int, str, str]]:
+def giac_quan_binh_duyet_doc_lap(exports_dir: Path,
+                                 tep_gate_contract: Path | None = None) -> list[tuple[int, str, str]]:
     """BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026). Bài học 29/10/2026: MỘT agent `binh-duyet` tìm 4 lỗi 🔴 + 10 🟠 trong
     gói nộp Hội đồng của C1a mà MỌI cổng máy đều cho qua; bác sĩ duyệt cố định bước «bình duyệt độc lập trước mốc nộp/khoá».
 
-    Với mỗi đề tài THẬT trong `exports/` (có study_meta.json, không phải thư mục hệ thống, không `study_kind=synthetic_test`)
-    đã lắp G10: gói nộp/khoá đổi SAU bản bình duyệt độc lập mới nhất, hoặc chưa có bản nào ⇒ dòng 🛎 (máy làm được nhưng
-    chưa ai chạy; tốn token nên dòng ghi rõ ước tính). Luật đo ở `xet_binh_duyet_de_tai`. Chỉ ĐỌC — không đụng sổ cái, con dấu
-    hay tệp trong manifest G10. Vắng exports/ (phiên Cloud một-repo, CI) hoặc một đề tài không đo được ⇒ giác quan chết (⚪),
-    KHÔNG phải «đã bình duyệt»."""
+    Với mỗi đề tài THẬT trong `exports/` (có study_meta.json, không phải thư mục hệ thống; `study_kind=synthetic_test` chỉ
+    được bỏ qua khi tên KHÔNG nằm trong `REAL_STUDY_DENYLIST` của `tep_gate_contract` — mặc định
+    `<exports>/../tools/gate_contract.py`) đã lắp G10: gói nộp/khoá đổi SAU bản bình duyệt độc lập mới nhất, hoặc chưa có bản
+    nào ⇒ dòng 🛎 (máy làm được nhưng chưa ai chạy; tốn token nên dòng ghi rõ ước tính). Luật đo ở `xet_binh_duyet_de_tai`.
+    Chỉ ĐỌC — không đụng sổ cái, con dấu hay tệp trong manifest G10. Vắng exports/ (phiên Cloud một-repo, CI) hoặc một đề
+    tài không đo được ⇒ giác quan chết (⚪), KHÔNG phải «đã bình duyệt».
+
+    Phạm vi đo (giới hạn đã khai): chỉ đo «tệp gói .md trong exports/ có đổi sau bản bình duyệt hay không». KHÔNG đo các phát
+    hiện 🔴/🟠 của bản bình duyệt đã được xử lý chưa, KHÔNG canh bản sao nộp ngoài exports/ hay bản .docx."""
     _SO_GIAC_QUAN["chay"] += 1
     if not exports_dir.is_dir():
         _ghi_chet(["", "bình duyệt độc lập gói nộp"], "không có medical-ebm-automation/exports ở cây này")
         return []
+    danh_sach_that = doc_danh_sach_de_tai_that(tep_gate_contract or exports_dir.parent / "tools" / "gate_contract.py")
     viec: list[tuple[int, str, str]] = []
     try:
         cac_de_tai = sorted(p for p in exports_dir.iterdir()
@@ -1304,7 +1426,7 @@ def giac_quan_binh_duyet_doc_lap(exports_dir: Path) -> list[tuple[int, str, str]
         return []
     for d in cac_de_tai:
         try:
-            loai, chi_tiet = xet_binh_duyet_de_tai(d)
+            loai, chi_tiet = xet_binh_duyet_de_tai(d, danh_sach_that)
         except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
             _ghi_chet(["", f"bình duyệt độc lập {d.name}"], f"lỗi {type(exc).__name__}")
             continue

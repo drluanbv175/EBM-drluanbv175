@@ -12,6 +12,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -22,7 +23,8 @@ M = importlib.util.module_from_spec(_sp)
 _sp.loader.exec_module(M)
 
 MA = "de-tai-that-X1"
-G10_LUC = "2026-10-28T19:19:08.041909"  # mốc lắp G10 thật của C1a (G10_checkpoint.generated_at)
+G10_LUC = "2026-10-28T19:19:08.041909"  # mốc lắp G10 thật của C1a (G10_checkpoint.generated_at, giờ máy VN không múi)
+CHAM_LUC = "2026-10-28T13:51:46.967735+00:00"  # lượt chấm G10 thật của C1a (G10_QUALITY_REPORT.generated_at = 20:51 giờ VN)
 NOI_DUNG_NOP = "# Đề cương nộp Hội đồng\nN = 1.000\n"
 NOI_DUNG_TN = "# Đề cương thống nhất\n18 mục\n"
 
@@ -39,10 +41,34 @@ def _sha(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
+def _goi(files: dict) -> str:
+    """package_sha256 đúng thuật toán `g10_quality_gate._manifest`."""
+    return hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def _ghi_bao_cao(d: Path, goi: str, cham: str) -> None:
+    (d / "G10_QUALITY_REPORT.json").write_text(
+        json.dumps({"kind": "g10_quality_report", "generated_at": cham, "package_sha256": goi}),
+        encoding="utf-8", newline="\n")
+
+
+def _cham_lai(d: Path, cham: str) -> None:
+    """Mô phỏng `g10_quality_gate.py` (ghi, G10 CHƯA ký): băm lại gói hiện hành vào release_manifest, GIỮ NGUYÊN
+    generated_at (PF.ghi_checkpoint_giu_moc_sinh) và ghi G10_QUALITY_REPORT.json mang package_sha256 mới."""
+    tep_ck = d / "G10_checkpoint.json"
+    ck = json.loads(tep_ck.read_text(encoding="utf-8"))
+    files = {k: {"path": v["path"], "sha256": hashlib.sha256((d / v["path"]).read_bytes()).hexdigest()}
+             for k, v in ck["release_manifest"]["files"].items()}
+    ck["release_manifest"] = {"algorithm": "SHA-256", "files": files, "package_sha256": _goi(files)}
+    tep_ck.write_text(json.dumps(ck), encoding="utf-8", newline="\n")
+    _ghi_bao_cao(d, _goi(files), cham)
+
+
 def _de_tai(exports: Path, ma: str = MA, *, g10: str | None = G10_LUC, meta: dict | str | None = None,
             nop: str | None = NOI_DUNG_NOP, tn: str | None = NOI_DUNG_TN, sua_sau_g10: bool = False,
-            trong_manifest: bool = True) -> Path:
-    """Dựng một thư mục đề tài: tệp gói + G10_checkpoint.json mang manifest băm ĐÚNG nội dung lúc lắp."""
+            trong_manifest: bool = True, cham: str | None = CHAM_LUC) -> Path:
+    """Dựng một thư mục đề tài: tệp gói + G10_checkpoint.json mang manifest băm ĐÚNG nội dung lúc lắp + (mặc định)
+    G10_QUALITY_REPORT.json của lượt chấm ghi manifest đó — đúng dòng chảy thật (bộ lắp gọi bộ chấm ngay sau khi lắp)."""
     d = exports / ma
     d.mkdir(parents=True)
     meta_txt = meta if isinstance(meta, str) else json.dumps(meta or {"topic": "x"}, ensure_ascii=False)
@@ -57,9 +83,26 @@ def _de_tai(exports: Path, ma: str = MA, *, g10: str | None = G10_LUC, meta: dic
     if g10 is not None:
         files = {k: {"path": ten, "sha256": _sha(nd)} for k, (ten, nd) in tep.items()} if trong_manifest else {}
         ck = {"gate": "G10", "study": ma, "generated_at": g10,
-              "release_manifest": {"algorithm": "SHA-256", "files": files}}
+              "release_manifest": {"algorithm": "SHA-256", "files": files, "package_sha256": _goi(files)}}
         (d / "G10_checkpoint.json").write_text(json.dumps(ck), encoding="utf-8", newline="\n")
+        if cham is not None:
+            _ghi_bao_cao(d, _goi(files), cham)
     return d
+
+
+def _gate_contract(goc: Path, noi_dung: str) -> Path:
+    """`<goc>/tools/gate_contract.py` giả — đúng chỗ mặc định cảm biến tìm (`<exports>/../tools/gate_contract.py`)."""
+    p = goc / "tools" / "gate_contract.py"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(noi_dung, encoding="utf-8", newline="\n")
+    return p
+
+
+def _denylist(*ten: str) -> str:
+    """Khuôn giống gate_contract thật: chú thích, AnnAssign `frozenset({...})`, hàm phía sau."""
+    dong = "".join(f"    {t!r},\n    # chú thích giữa các mục\n" for t in ten)
+    return ("import unicodedata\n\n# Danh sách đề tài THẬT\nREAL_STUDY_DENYLIST: frozenset = frozenset({\n" + dong
+            + "})\n\n\ndef is_real_study_denylisted(study):\n    return False\n")
 
 
 def _binh_duyet(d: Path, ngay: str | None = "20261029", noi_dung: str = "> Bình duyệt độc lập.\n# Báo cáo\n",
@@ -79,9 +122,10 @@ def test_chua_lap_g10_khong_bao_khong_chet(tmp_path):
     assert M._GIAC_QUAN_CHET == [] and M._SO_GIAC_QUAN["chay"] == 1
 
 
-def test_de_tai_synthetic_test_bo_qua(tmp_path):
-    _de_tai(tmp_path, meta={"study_kind": "synthetic_test"})
-    assert M.giac_quan_binh_duyet_doc_lap(tmp_path) == [] and M._GIAC_QUAN_CHET == []
+def test_de_tai_synthetic_test_ngoai_danh_sach_that_bo_qua(tmp_path):
+    _gate_contract(tmp_path, _denylist("hai-long-benh-nhan-C1a-BVQY175", "KKB-HAI-LONG-2026"))
+    _de_tai(tmp_path / "exports", meta={"study_kind": "synthetic_test"})
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path / "exports") == [] and M._GIAC_QUAN_CHET == []
 
 
 def test_thu_muc_he_thong_va_thu_muc_khong_study_meta_bo_qua(tmp_path):
@@ -290,3 +334,119 @@ def test_van_tay_goi_cli(tmp_path, monkeypatch, capsys):
         assert f"sha256 {h}  {ten}" in ra
     monkeypatch.setattr("sys.argv", ["tu_de_xuat_viec.py", "--van-tay-goi", "../ngoai"])
     assert M.main() == 2
+
+
+# ── manifest G10 bị bộ chấm GHI ĐÈ mà giữ generated_at (người duyệt PR #337, 14/11/2026) ─────────────────────────────────
+
+def test_manifest_lam_moi_sau_binh_duyet_giu_generated_at_khong_bao_gio_ok(tmp_path):
+    # Tái hiện của người duyệt: lắp 28/10, bình duyệt 29/10, SỬA gói 31/10 rồi chấm lại G10 (G10-AUTO-10 dặn «trước ký: chạy
+    # lại g10_quality_gate.py») ⇒ manifest khớp gói đã sửa mà generated_at vẫn 28/10. Bản đầu trả ('ok','') — xanh giả.
+    d = _de_tai(tmp_path)
+    _binh_duyet(d, "20261029")
+    nop = d / f"DE_CUONG_NOP_HOI_DONG_{MA}.md"
+    nop.write_text(NOI_DUNG_NOP + "\nSửa 31/10 sau bình duyệt.\n", encoding="utf-8", newline="\n")
+    _cham_lai(d, "2026-10-31T03:00:00+00:00")
+    ck = json.loads((d / "G10_checkpoint.json").read_text(encoding="utf-8"))
+    assert ck["generated_at"] == G10_LUC                                       # tự kiểm: mốc lắp GIỮ NGUYÊN
+    assert ck["release_manifest"]["files"]["irb_protocol_md"]["sha256"] == M.van_tay_goi(d)[nop.name]  # và tệp KHỚP manifest
+    assert M.xet_binh_duyet_de_tai(d)[0] != "ok"
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path) == []
+    assert len(M._GIAC_QUAN_CHET) == 1
+    assert "chấm lại 31/10/2026 sau bình duyệt 29/10/2026" in M._GIAC_QUAN_CHET[0] and "--van-tay-goi" in M._GIAC_QUAN_CHET[0]
+
+
+@pytest.mark.parametrize("hong", ["vang", "goi_lech", "gio_khong_mui", "json_hong"])
+def test_khong_rang_buoc_duoc_bao_cao_voi_manifest_la_khong_do_duoc(tmp_path, hong):
+    # Tệp khớp manifest + bình duyệt sau ngày lắp, nhưng không neo được lúc manifest được viết ⇒ ⚪, không «ổn».
+    d = _de_tai(tmp_path)
+    _binh_duyet(d, "20261029")
+    bc = d / "G10_QUALITY_REPORT.json"
+    if hong == "vang":
+        bc.unlink()
+    elif hong == "goi_lech":      # vd báo cáo của lượt chấm SAU KÝ thấy gói khác (lượt đó không ghi manifest)
+        _ghi_bao_cao(d, "0" * 64, "2026-10-28T13:51:46+00:00")
+    elif hong == "gio_khong_mui":  # không biết giờ UTC hay giờ VN ⇒ không lấy làm cận trên
+        _ghi_bao_cao(d, json.loads((d / "G10_checkpoint.json").read_text(encoding="utf-8"))
+                     ["release_manifest"]["package_sha256"], "2026-10-28T13:51:46")
+    else:
+        bc.write_text("{hỏng", encoding="utf-8", newline="\n")
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path) == []
+    assert len(M._GIAC_QUAN_CHET) == 1 and "không ràng buộc được G10_QUALITY_REPORT" in M._GIAC_QUAN_CHET[0]
+
+
+def test_moc_cham_utc_quy_ve_gio_vn_truoc_khi_lay_ngay(tmp_path):
+    # 28/10 18:30Z = 29/10 01:30 giờ VN ⇒ cùng ngày bình duyệt 29/10 ⇒ ⚪. Lấy .date() của giờ UTC (28/10) sẽ ra «ổn» giả.
+    d = _de_tai(tmp_path, cham="2026-10-28T18:30:00+00:00")
+    _binh_duyet(d, "20261029")
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path) == []
+    assert len(M._GIAC_QUAN_CHET) == 1 and "cùng ngày 29/10/2026" in M._GIAC_QUAN_CHET[0]
+
+
+def test_sua_goi_sau_lan_cham_lai_ma_lan_cham_sau_binh_duyet_bao_chuong(tmp_path):
+    # Lắp 28/10, bình duyệt 29/10, chấm lại 31/10 (gói chưa đổi), rồi SỬA gói ⇒ tệp lệch manifest mà lượt chấm 31/10 còn thấy
+    # gói đúng manifest ⇒ chắc chắn sửa sau 31/10 > 29/10 ⇒ 🛎 (bản đầu chỉ biết mốc 28/10 ⇒ ⚪).
+    d = _de_tai(tmp_path)
+    _binh_duyet(d, "20261029")
+    _cham_lai(d, "2026-10-31T03:00:00+00:00")
+    (d / f"DE_CUONG_THONG_NHAT_{MA}.md").write_text(NOI_DUNG_TN + "\nSửa sau lần chấm 31/10.\n", encoding="utf-8",
+                                                    newline="\n")
+    kq = M.giac_quan_binh_duyet_doc_lap(tmp_path)
+    assert len(kq) == 1 and f"DE_CUONG_THONG_NHAT_{MA}.md sửa sau G10 31/10/2026" in kq[0][1]
+    assert M._GIAC_QUAN_CHET == []
+
+
+# ── ngày bình duyệt chỉ lấy ở PHẦN ĐẦU nội dung (1.500 ký tự) ───────────────────────────────────────────────────────────
+
+def test_ngay_o_than_bai_sau_1500_ky_tu_khong_phai_ngay_binh_duyet(tmp_path):
+    # Thân bài nhắc ngày của sự kiện KHÁC (vòng phản biện trước, ngày ký…) — không được coi là ngày bình duyệt.
+    d = _de_tai(tmp_path)
+    noi_dung = ("> Báo cáo bình duyệt độc lập (không ghi ngày ở đầu).\n# Báo cáo\n" + "Nhận xét chi tiết.\n" * 120
+                + "Theo phản biện vòng trước ngày 30/10/2026, mục 4 đã sửa.\nNgày: 30/10/2026\n")
+    assert len(noi_dung) > 1600 and "30/10/2026" not in noi_dung[:1500]   # tự kiểm fixture
+    _binh_duyet(d, None, noi_dung=noi_dung)
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path) == []
+    assert len(M._GIAC_QUAN_CHET) == 1 and "không định được ngày" in M._GIAC_QUAN_CHET[0]
+
+
+# ── đề tài thật theo HAI lớp của repo y khoa: study_kind + REAL_STUDY_DENYLIST ─────────────────────────────────────────
+
+_MA_DAU = "khảo-sát-thật-Y2"
+
+
+@pytest.mark.parametrize("ma,ten_trong_danh_sach", [
+    (MA, f"  {MA.upper()}  "),                                  # khác hoa/thường + khoảng trắng
+    (_MA_DAU, unicodedata.normalize("NFD", _MA_DAU)),           # cùng chữ, khác dạng tổ hợp Unicode
+])
+def test_synthetic_trong_danh_sach_that_van_do_nhu_de_tai_that(tmp_path, ma, ten_trong_danh_sach):
+    # Lỗi chép study_meta giữa các đề tài: đề tài THẬT mang nhầm study_kind=synthetic_test ⇒ vẫn đo, kèm cảnh báo cờ.
+    _gate_contract(tmp_path, _denylist("de-tai-khac", ten_trong_danh_sach))
+    _de_tai(tmp_path / "exports", ma=unicodedata.normalize("NFC", ma), meta={"study_kind": "synthetic_test"})
+    kq = M.giac_quan_binh_duyet_doc_lap(tmp_path / "exports")
+    assert len(kq) == 1 and "CHƯA có bản bình duyệt độc lập" in kq[0][1]
+    assert "REAL_STUDY_DENYLIST" in kq[0][1] and "cờ đặt nhầm" in kq[0][1]
+
+
+def test_synthetic_trong_danh_sach_that_da_binh_duyet_van_hien_canh_bao(tmp_path):
+    _gate_contract(tmp_path, _denylist(MA))
+    d = _de_tai(tmp_path / "exports", meta={"study_kind": "synthetic_test"})
+    _binh_duyet(d, "20261029")
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path / "exports") == []
+    assert len(M._GIAC_QUAN_CHET) == 1 and "REAL_STUDY_DENYLIST" in M._GIAC_QUAN_CHET[0]
+
+
+@pytest.mark.parametrize("gate_contract", [None, "def f(:\n", "X = 1\n", "REAL_STUDY_DENYLIST: frozenset = frozenset()\n"])
+def test_synthetic_khi_khong_doc_duoc_danh_sach_that_la_khong_do_duoc(tmp_path, gate_contract):
+    if gate_contract is not None:
+        _gate_contract(tmp_path, gate_contract)
+    _de_tai(tmp_path / "exports", meta={"study_kind": "synthetic_test"})
+    assert M.giac_quan_binh_duyet_doc_lap(tmp_path / "exports") == []
+    assert len(M._GIAC_QUAN_CHET) == 1 and "không đọc được REAL_STUDY_DENYLIST" in M._GIAC_QUAN_CHET[0]
+
+
+def test_doc_danh_sach_that_tu_gate_contract_that_cua_repo_y_khoa():
+    # Bộ đọc ast phải hiểu đúng khuôn tệp THẬT (AnnAssign + frozenset({...}) + chú thích). Vắng repo y khoa (Cloud/CI) ⇒ bỏ.
+    tep = M._GOC_MEA / "tools" / "gate_contract.py"
+    if not tep.is_file():
+        pytest.skip("không có medical-ebm-automation/tools/gate_contract.py ở cây này")
+    ds = M.doc_danh_sach_de_tai_that(tep)
+    assert ds is not None and "hai-long-benh-nhan-c1a-bvqy175" in ds
