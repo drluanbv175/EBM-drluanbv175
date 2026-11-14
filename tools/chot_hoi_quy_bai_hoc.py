@@ -9524,7 +9524,13 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
     minh nguồn — bước 4b từng đọc mã 2 thành «nguồn đã rút» (đỏ giả cho đính chính bác sĩ đã ký, họ BH115) và lặp owner ngày
     4; (9) `dong_bo_tac_vu_lich` KHÔNG chép SKILL mới vào runtime khi quyền của nó chưa 🟢 (hook tua nhanh master rồi chép
     TRƯỚC khi bác sĩ áp quyền ⇒ lượt kế tiếp bị cắt ngay bước 0); (10) cảm biến: máy có bản chạy mà thiếu log từ mốc
-    `dau_vet.tu_ngay` ⇒ 🔴 kỳ lỡ, không «⚪ bản sao trần» mãi."""
+    `dau_vet.tu_ngay` ⇒ 🔴 kỳ lỡ, không «⚪ bản sao trần» mãi. Mở rộng 14/11/2026 (tác vụ kỹ thuật tháng — phép dò cũ chỉ nhận
+    python3/venv/bash nên `gh run list`, `git worktree list`, `cd medical-ebm-automation && … pytest`, `git branch … | head`
+    lọt, lượt lịch bị cắt giữa chừng): (11) phép dò bắt lệnh `git`/`gh`/`cd` chưa khai và LỆNH GHÉP (`&&`, `|`, `;`, `cd` đầu
+    lệnh) — kể cả khi trùng chữ một mục `lenh` (Claude Code xét quyền từng lệnh con) — chỉ miễn ở `khong_chay`; «<…>» không
+    phải chuyển hướng, toán tử trong nháy không tính, mẫu mô tả «…» không xét; tác vụ đang chạy theo sổ kỳ vọng mà thiếu khoá
+    khai ⇒ mọi lệnh của nó «chưa khai»; (12) tác vụ kỹ thuật tháng tiền kiểm `quyen_lich_nen --tac-vu` của CHÍNH nó ngay sau
+    BẮT ĐẦU, trước mảng ①, DỪNG + ghi KẾT THÚC mã 2 khi thiếu quyền; khai của nó không có lệnh SỬA (commit/push/PR/Edit)."""
     import json as _json
     import tempfile as _tf
     Q = _nap(REPO / "tools" / "quyen_lich_nen.py", "_bh173_qln")
@@ -9638,9 +9644,46 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
         if [p["uu"] for p in kq10["phat_hien"]] != [0]:
             return False, ("máy có bản chạy mà thiếu log từ mốc dấu vết không ra 🔴 kỳ lỡ — lượt bị cắt ngay lệnh ghi dấu vết "
                            f"đầu tiên lại vô hình ({kq10})")
+    # (11) 14/11/2026 — lệnh ghép / git / gh / tác vụ đang chạy chưa khai khoá: đo trên repo tạm (hành vi, không đếm chuỗi).
+    with _tf.TemporaryDirectory() as d:
+        g = Path(d)
+        # Lệnh ghép được KHAI TRÙNG CHỮ ở `lenh` — chỉ luật lệnh ghép (không phải luật «chưa khai») bắt được chúng.
+        sk11 = ("`python3 tools/a.py --ma <0|1|2>`\n`cd x && python3 tools/a.py --ma 0`\n`gh run list --repo a/b`\n"
+                "`git log --grep \"a|b\"`\n`git branch -a | head -20`\n`git status; ls`\n`cd medical-ebm-automation`\n"
+                "Không thêm `cd … &&`.\nCho người chạy tay: `bash a.sh && echo xong`\n")
+        ghi9(g / "sync" / "scheduled-tasks" / "t" / "SKILL.md", sk11)
+        ghi9(g / "sync" / "scheduled-tasks" / "moi" / "SKILL.md", "`python3 tools/m.py`\n")
+        ghi9(g / "sync" / "lich-nen-ky-vong.json", _json.dumps({"tac_vu": [{"id": "t"}, {"id": "moi"}]}))
+        ghi9(g / "sync" / "quyen-lich-nen.json", _json.dumps({"nen_tang": "darwin", "tac_vu": {"t": {
+            "lenh": ["python3 tools/a.py --ma *", "cd x && python3 tools/a.py --ma 0", "git log --grep \"a|b\"",
+                     "git branch -a | head -20", "git status; ls", "cd medical-ebm-automation", "git status | head"],
+            "khong_chay": ["bash a.sh && echo xong"], "ghi": []}}}))
+        kq11 = Q.kiem(g, nen_tang="__khong_doi_chieu_may__")
+        mong = [("t", "cd x && python3 tools/a.py --ma 0"), ("t", "gh run list --repo a/b"),
+                ("t", "git branch -a | head -20"), ("t", "git status; ls"), ("t", "cd medical-ebm-automation"),
+                ("t", "git status | head"), ("moi", "python3 tools/m.py")]  # mục `lenh` ghép SKILL không nhắc vẫn bị báo
+        if sorted(kq11["thieu_khai"]) != sorted(mong):
+            return False, ("phép dò quyền lượt lịch lọt lệnh ghép/git/gh hoặc tác vụ đang chạy chưa khai khoá (hoặc báo oan "
+                           f"chỗ điền «<…>»/nháy/mẫu «…»/khong_chay): {sorted(kq11['thieu_khai'])}")
+    # (12) Tác vụ kỹ thuật tháng: bước 0 tiền kiểm CHÍNH nó, sau BẮT ĐẦU, trước mảng ①, có DỪNG + KẾT THÚC mã 2.
+    tvkt = "kiem-tra-hoan-thien-he-thong-thang"
+    skt = (REPO / "sync" / "scheduled-tasks" / tvkt / "SKILL.md").read_text(encoding="utf-8")
+    i_bd = skt.find(f"`python3 tools/ghi_dau_vet_lich.py {tvkt} --bat-dau`")
+    i_q = skt.find(f"`python3 tools/quyen_lich_nen.py --tac-vu {tvkt}`")
+    i_viec = skt.find("\nVIỆC CẦN KIỂM MỖI LẦN CHẠY")
+    if min(i_bd, i_q, i_viec) < 0 or not i_bd < i_q < i_viec:
+        return False, "tác vụ kỹ thuật tháng không tiền kiểm quyen_lich_nen --tac-vu của chính nó giữa BẮT ĐẦU và mảng ①"
+    khoi12 = skt[i_q:i_viec]
+    if "DỪNG LƯỢT NGAY" not in khoi12 or f"`python3 tools/ghi_dau_vet_lich.py {tvkt} --ma 2`" not in khoi12:
+        return False, "bước 0 của tác vụ kỹ thuật tháng không DỪNG lượt + ghi KẾT THÚC mã 2 khi thiếu quyền/không đo được"
+    sua = re.compile(r"^(?:git (?:-C \S+ )?(?:commit|push|merge|rebase|reset|checkout|add|switch|pull)\b|gh pr\b)")
+    xau12 = [c for c in khai["tac_vu"].get(tvkt, {}).get("lenh", []) if sua.search(c)]
+    if xau12:
+        return False, f"khai quyền tác vụ kỹ thuật tháng có lệnh SỬA (lượt lịch không tự sửa — để phiên có người): {xau12}"
     return True, ("mọi lệnh tác vụ lịch đã khai; không khai lệnh ghi quyết định; ap_dung chỉ thêm + sao lưu; giác quan có gọi; "
                   "mọi tác vụ có dấu vết; tác vụ tháng tiền kiểm đúng tập + dừng; không giả dấu vết log chủ khác; tác vụ tháng "
-                  "không tự đọc mã sổ xác minh; không chép SKILL khi quyền chưa xanh; thiếu log từ mốc ⇒ 🔴")
+                  "không tự đọc mã sổ xác minh; không chép SKILL khi quyền chưa xanh; thiếu log từ mốc ⇒ 🔴; bắt lệnh "
+                  "ghép/git/gh + tác vụ chưa khai khoá; tác vụ kỹ thuật tiền kiểm chính nó + không khai lệnh sửa")
 
 
 def bh172_mot_cua_vao_chu_de_chung_cu():

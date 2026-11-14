@@ -42,20 +42,34 @@
       "ghi": ["alerts/**", "state/**"]
     },
     "kiem-tra-hoan-thien-he-thong-thang": {
-      "_ghi_chu": "Chỉ khai các lệnh ĐO. Bước SỬA (sửa mã, chạy pytest, commit, mở PR) cố ý KHÔNG khai: lượt lịch dừng ở đó để có người duyệt.",
+      "_ghi_chu": "Chỉ khai các lệnh ĐO. Bước SỬA (sửa mã, chạy pytest chọn lọc sau sửa, commit, push, mở PR) cố ý KHÔNG khai — SKILL nói rõ lượt lịch KHÔNG gõ chúng mà ghi «🛎 việc sửa cho phiên có người» (14/11/2026: trước đó SKILL vẫn dặn tự sửa + commit/push ⇒ lượt bị cắt ngang giữa chừng). 14/11/2026: viết lại mọi lệnh thành MỘT lệnh đơn chạy từ gốc (git -C medical-ebm-automation …, medical-ebm-automation/tools/…, pytest tự lấy pytest.ini của repo y khoa) thay `cd … &&`/ống `|` mà Claude Code xét quyền từng lệnh con; thêm git/gh (trước đó phép dò chỉ nhận python3/venv/bash nên `gh run list`, `git worktree list` lọt khỏi khai báo); thêm bước 0 tiền kiểm `quyen_lich_nen --tac-vu` của chính tác vụ. `git … fetch origin --quiet` chỉ cập nhật ref theo dõi từ xa (không đổi nhánh/cây làm việc) — cần để đo lạc hậu (BH93); mọi lệnh còn lại chỉ đọc hoặc ghi sổ đo của chính công cụ. Hồi quy dây nối approve_gate (pytest) để ở khong_chay: lệnh chứa tên công cụ ghi quyết định không được khai cho lượt lịch (rào BH173) — lượt lịch đọc CI repo y khoa (chạy trọn bộ test) thay vào đó.",
       "lenh": [
-        "python3 tools/chot_hoi_quy_bai_hoc.py",
+        "python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --bat-dau",
+        "python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --ma *",
+        "python3 tools/quyen_lich_nen.py --tac-vu kiem-tra-hoan-thien-he-thong-thang",
+        "git branch --show-current",
+        "git -C medical-ebm-automation fetch origin --quiet",
+        "git fetch origin --quiet",
+        "python3 tools/kiem_cay_lam_viec.py",
+        "git status --short",
+        "git -C medical-ebm-automation status --short",
         "python3 tools/kiem_dieu_phoi.py",
+        "~/.ebm-venv/bin/python medical-ebm-automation/tools/list_studies.py",
+        "~/.ebm-venv/bin/python medical-ebm-automation/tools/kiem_chi_tiet_he_nghien_cuu.py --study * --no-write",
         "python3 tools/verify_claude_code_repo_alignment.py",
+        "gh run list --repo drluanbv175/EBM-drluanbv175 --limit 3 --json databaseId,status,conclusion,headSha",
+        "gh run list --repo drluanbv175/medical-ebm-automation --limit 3 --json databaseId,status,conclusion,headSha",
+        "git worktree list",
+        "git for-each-ref --count=20 --sort=-committerdate --no-merged=master refs/heads refs/remotes",
+        "git log --oneline -10 master..*",
+        "python3 tools/chot_hoi_quy_bai_hoc.py",
         "python3 tools/kiem_plugin_day_du.py",
         "python3 tools/do_su_dung_cong_cu.py --thang * --ghi",
-        "python3 tools/do_su_dung_cong_cu.py --tong-hop",
-        "~/.ebm-venv/bin/python tools/kiem_chi_tiet_he_nghien_cuu.py --study * --no-write",
-        "~/.ebm-venv/bin/python tools/list_studies.py",
-        "python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --bat-dau",
-        "python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --ma *"
+        "python3 tools/do_su_dung_cong_cu.py --tong-hop"
       ],
-      "khong_chay": [],
+      "khong_chay": ["python3 tools/quyen_lich_nen.py --ap-dung",
+                     "~/.ebm-venv/bin/python -m pytest medical-ebm-automation/tests/test_approve_gate_quality_gate_wiring_20260824.py -v",
+                     "cd medical-ebm-automation && ~/.ebm-venv/bin/python -m pytest -k * -q"],
       "ghi": ["state/**"]
     },
     "cap-nhat-thang-ebm": {

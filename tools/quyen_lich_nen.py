@@ -25,6 +25,20 @@ Nguồn khai DUY NHẤT: `sync/quyen-lich-nen.json` (đi qua git, bác sĩ duy�
 Mã thoát: 0 = đủ · 1 = thiếu (in danh sách) · 2 = KHÔNG đo được (máy không phải nền tảng đã khai, thiếu/hỏng tệp) — ⚪, không
 bao giờ là «đủ».
 
+LỆNH GHÉP · git/gh (14/11/2026, tác vụ kỹ thuật tháng)
+=====================================================
+Phép dò cũ chỉ nhận lệnh bắt đầu bằng `python3`/`~/.ebm-venv/bin/python`/`bash` ⇒ SKILL kỹ thuật tháng có `gh run list …`,
+`git worktree list`, `cd medical-ebm-automation && … pytest …`, `git branch … | head -20` mà phép kiểm vẫn «🟢 đủ»: lượt lịch
+gõ tới đó là bị cắt ngang, cảm biến chỉ thấy «BẮT ĐẦU thiếu KẾT THÚC» SAU sự việc. Nay:
+  · lệnh trong backtick bắt đầu bằng `git`/`gh`/`cd` cũng là lệnh phải khai;
+  · lệnh có toán tử shell (`&&`, `||`, `|`, `;`, `&`, chuyển hướng `>`/`<`, `(`…`)`) hoặc mở đầu bằng `cd` là LỆNH GHÉP: Claude
+    Code xét quyền TỪNG lệnh con, một quy tắc khai không phủ được ⇒ luôn vào `thieu_khai`, kể cả khi trùng chữ một mục `lenh`
+    (mục `lenh` có toán tử cũng bị báo — quy tắc vô hiệu). Ngoại lệ duy nhất: lệnh ghép khai ở `khong_chay` (lượt không gõ,
+    chỉ IN cho người chạy tay). «<…>» là chỗ điền tham số, không phải chuyển hướng; toán tử nằm trong nháy không tính;
+  · backtick có «…» là MẪU MÔ TẢ (không gõ nguyên văn được — vd lời dặn «không thêm `cd … &&`») ⇒ không xét lệnh ghép/git/gh;
+  · ngoài các khoá đã khai, xét cả SKILL của mọi tác vụ đang chạy theo `sync/lich-nen-ky-vong.json` (tác vụ lịch mới mà quên
+    khai khoá thì mọi lệnh của nó đều là «chưa khai», không lặng im). Thư mục SKILL cũ không còn lịch (`ebm-*`) không xét.
+
 Ranh giới: chỉ khai lệnh ĐO/BÁO/DỰNG GÓI; không khai lệnh ghi quyết định thay bác sĩ (xem `_ranh_gioi` trong tệp khai).
 """
 from __future__ import annotations
@@ -34,6 +48,7 @@ import datetime as dt
 import fnmatch
 import json
 import re
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -49,18 +64,56 @@ KHAI = GOC / "sync" / "quyen-lich-nen.json"
 NGUON_TAC_VU = GOC / "sync" / "scheduled-tasks"
 SETTINGS = GOC / ".claude" / "settings.local.json"
 
-# Lệnh trong backtick bắt đầu bằng trình chạy — đúng thứ lượt lịch sẽ gõ vào Bash.
-_LENH_RE = re.compile(r"`((?:python3|~/\.ebm-venv/bin/python|bash) [^`\n]+)`")
+# Lệnh trong backtick bắt đầu bằng trình chạy — đúng thứ lượt lịch sẽ gõ vào Bash. 14/11/2026: thêm `git`/`gh`/`cd`.
+_LENH_RE = re.compile(r"`((?:python3|~/\.ebm-venv/bin/python|bash|git|gh|cd) [^`\n]+)`")
+_DAU_MOI = ("git ", "gh ", "cd ")          # đầu lệnh mới thêm 14/11/2026 — riêng nhóm này áp ngoại lệ «…» (mẫu mô tả)
+MAU_MO_TA = "…"                           # backtick có dấu ba chấm = mẫu mô tả, không phải lệnh gõ nguyên văn
+_CHO_DIEN = re.compile(r"<[^<>\n]*>")     # «<mã>», «<0|1|2>», «<phần liên quan>» — chỗ điền tham số của SKILL
+_KY_TU_TOAN_TU = frozenset("();<>|&")
+
+
+def ly_do_ghep(lenh: str) -> str | None:
+    """Toán tử shell làm `lenh` thành LỆNH GHÉP (quy tắc khai không phủ được), hoặc None nếu là một lệnh đơn.
+
+    Claude Code xét quyền từng lệnh con của `a && b`, `a | b`, `a; b` ⇒ một mục `Bash(...)` không bao giờ cho cả chuỗi chạy.
+    `cd x` đứng đầu cũng tính: lượt chạy tiếp ở thư mục khác, các lệnh tương đối sau đó sai chỗ, và `cd` không được khai.
+    Toán tử trong nháy không tính; «<…>» thay bằng một từ trước khi tách (đó là chỗ điền, không phải chuyển hướng)."""
+    s = _CHO_DIEN.sub("X", lenh)
+    if s.split(maxsplit=1)[:1] == ["cd"]:
+        return "cd (đổi thư mục)"
+    try:
+        lx = shlex.shlex(s, posix=False, punctuation_chars=True)
+        lx.whitespace_split = True
+        tu = list(lx)
+    except ValueError:
+        return "nháy không đóng (không tách được lệnh)"
+    for t in tu:
+        if t and set(t) <= _KY_TU_TOAN_TU:
+            return t
+    return None
 
 
 def lenh_trong_skill(van_ban: str) -> list[str]:
-    """Các lệnh (trong backtick) của một SKILL.md, giữ thứ tự, bỏ trùng."""
+    """Các lệnh (trong backtick) của một SKILL.md, giữ thứ tự, bỏ trùng.
+
+    Bỏ qua mẫu mô tả («…») CHỈ với đầu lệnh mới (`git`/`gh`/`cd`) — lệnh `python3`/venv/`bash` giữ đúng phép dò cũ."""
     ra: list[str] = []
     for m in _LENH_RE.finditer(van_ban):
         c = " ".join(m.group(1).split())
+        if c.startswith(_DAU_MOI) and MAU_MO_TA in c:
+            continue
         if c not in ra:
             ra.append(c)
     return ra
+
+
+def tac_vu_dang_chay(goc: Path) -> list[str]:
+    """Tác vụ lịch PHẢI hoạt động theo `sync/lich-nen-ky-vong.json` (cùng nguồn với cảm biến kỳ lỡ). Vắng/hỏng ⇒ []."""
+    try:
+        d = json.loads((goc / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
+        return [str(t["id"]) for t in d.get("tac_vu", []) if isinstance(t, dict) and t.get("id")]
+    except (OSError, ValueError, AttributeError):
+        return []
 
 
 def duoc_phu(lenh: str, quy_tac: list[str]) -> bool:
@@ -104,16 +157,29 @@ def kiem(goc: Path = GOC, khai: dict | None = None, settings: Path | None = None
             ra["khong_do"].append("tác vụ chưa khai ở sync/quyen-lich-nen.json: " + (", ".join(la) or "(danh sách rỗng)"))
             return ra
         khai = {**khai, "tac_vu": {t: tat_ca[t] for t in tac_vu}}
-    for ten, tv in khai.get("tac_vu", {}).items():
+        xet = dict(khai["tac_vu"])
+    else:
+        # 14/11/2026: tác vụ lịch đang chạy mà chưa có khoá khai ⇒ xét SKILL của nó với tập phủ RỖNG (mọi lệnh là «chưa khai»).
+        xet = dict(khai.get("tac_vu", {}))
+        for t in tac_vu_dang_chay(goc):
+            xet.setdefault(t, {})
+    for ten, tv in xet.items():
+        # Mục `lenh` có toán tử shell là quy tắc vô hiệu (Claude Code xét từng lệnh con) — báo, đừng để nó «phủ» SKILL.
+        for c in tv.get("lenh", []):
+            if ly_do_ghep(c) and (ten, c) not in ra["thieu_khai"]:
+                ra["thieu_khai"].append((ten, c))
         skill = goc / "sync" / "scheduled-tasks" / ten / "SKILL.md"
         try:
             vb = skill.read_text(encoding="utf-8")
         except OSError:
             ra["khong_do"].append(f"{ten}: không đọc được {skill.relative_to(goc)}")
             continue
-        phu = list(tv.get("lenh", [])) + list(tv.get("khong_chay", []))
+        khong_chay = list(tv.get("khong_chay", []))
+        phu = list(tv.get("lenh", [])) + khong_chay
         for c in lenh_trong_skill(vb):
-            if not duoc_phu(c, phu):
+            # Lệnh ghép chỉ hợp lệ khi lượt KHÔNG gõ nó (khai ở khong_chay — in cho người chạy tay).
+            thieu = (not duoc_phu(c, khong_chay)) if ly_do_ghep(c) else (not duoc_phu(c, phu))
+            if thieu and (ten, c) not in ra["thieu_khai"]:
                 ra["thieu_khai"].append((ten, c))
     nt = nen_tang or sys.platform
     if nt != khai.get("nen_tang", "darwin"):
@@ -166,7 +232,12 @@ def main(argv: list[str] | None = None) -> int:
         if not a.json:
             print(f"🔴 LƯỢT LỊCH SẼ BỊ CẮT NGANG — có lệnh chưa được phép (lượt vẫn ghi «succeeded»){pham_vi}:")
             for ten, c in kq["thieu_khai"]:
-                print(f"   ✗ {ten}: SKILL.md có lệnh chưa khai ở sync/quyen-lich-nen.json — {c}")
+                op = ly_do_ghep(c)
+                if op:
+                    print(f"   ✗ {ten}: LỆNH GHÉP «{op}» — Claude Code xét quyền từng lệnh con, quy tắc khai không phủ được: {c}"
+                          " → viết lại thành MỘT lệnh đơn (git -C <thư mục> …, đường dẫn tính từ gốc, cờ báo cáo của công cụ)")
+                else:
+                    print(f"   ✗ {ten}: SKILL.md có lệnh chưa khai ở sync/quyen-lich-nen.json — {c}")
             for q in kq["thieu_may"]:
                 print(f"   ✗ máy chưa áp: {q}")
             print("   → khai lệnh mới ở sync/quyen-lich-nen.json (bác sĩ duyệt) rồi: python3 tools/quyen_lich_nen.py --ap-dung")
