@@ -20,6 +20,12 @@ CÁCH LÀM (ngoại tuyến, không gọi mạng)
    `summary.doNow`, `summary.dontDo` và `action` của các mục `decision:'apply'`.
 2. Tìm từng cụm (đã chuẩn hoá chữ thường, khoảng trắng, gạch nối, thẻ HTML) trong từng sản
    phẩm phái sinh được đưa vào (bản đọc, Word dạng HTML, bản tin chat).
+   SO THEO TỪNG MỤC (14/11/2026): với sản phẩm in theo từng mục (Word — «ITEM-xx. <tiêu đề>»),
+   cụm lấy từ `action` của một mục chỉ được tìm trong ĐOẠN của chính mục đó — đoạn mở ở mốc
+   «ITEM-xx. <tiêu đề>», đóng ở mốc của mục kế tiếp. Trước đây cụm được tìm trong cả tài liệu, nên cụm
+   rụng khỏi mục A mà còn ở mục B (cụm chung như «khi eGFR ≥ 30») vẫn ✓. Bản đọc (sắp lại theo chủ
+   đề, không in định danh) hoặc mục không định vị được ⇒ so cả tài liệu như cũ, ghi
+   `pham_vi: tai_lieu`. Cụm của `summary.*` luôn so cả tài liệu.
 
 BA MỨC — cố ý KHÔNG có mức «SAI»
 ================================
@@ -71,9 +77,21 @@ _TU_TOI_THIEU = 2     # cụm phải có ít nhất 2 từ SAU dấu điều ki�
 _DAU_TU_DU = {"ngoài thai kỳ", "trong thai kỳ"}
 
 
-def chuan_hoa(t: str) -> str:
-    """Chữ thường + NFC + bỏ thẻ HTML/entity + gộp khoảng trắng + thống nhất gạch/nháy."""
-    t = re.sub(r"<[^>]+>", " ", t or "")
+# Thẻ HTML THẬT (vá 14/11/2026, đo ở quality/eval/kiem-cheo-ngu-nghia/do-nhay-dot-bien-20261114): «<» liền tên thẻ (chữ
+# cái, có thể sau «/», «!», «?») và tên thẻ kết thúc bằng khoảng trắng, «/» hoặc «>»; chú thích «<!-- … -->». Trước đây mọi
+# đoạn «<…>» đều bị coi là thẻ ⇒ trong văn bản THUẦN «<» so sánh («risk < 3 %», «p<0.05», «eGFR <30») xoá mất chữ tới dấu «>»
+# kế tiếp (7/298 tóm tắt bị cắt, có câu «not recommended» mà K4 cần thấy).
+_THE_HTML = re.compile(r"<!--.*?-->|<[!?]?/?[a-zA-Z][a-zA-Z0-9:-]*(?:\s[^<>]*)?/?>", re.S)
+# Văn bản THUẦN (tóm tắt PubMed dạng text): chỉ bỏ thẻ định dạng nội dòng mà bản XML/HTML của PubMed có thể mang theo.
+_THE_DINH_DANG = re.compile(r"</?(?:i|b|u|em|strong|sup|sub|sc|span|p|br|mml:[a-z]+)(?:\s[^<>]*)?/?>", re.I)
+
+
+def chuan_hoa(t: str, html: bool = True) -> str:
+    """Chữ thường + NFC + bỏ thẻ HTML/entity + gộp khoảng trắng + thống nhất gạch/nháy.
+
+    html=True (DATA, bản đọc, Word HTML): bỏ mọi thẻ HTML THẬT. html=False (tóm tắt nguồn — văn bản thuần): chỉ bỏ thẻ định
+    dạng nội dòng, mọi «<»/«>» khác là dấu so sánh và được GIỮ."""
+    t = (_THE_HTML if html else _THE_DINH_DANG).sub(" ", t or "")
     t = _html.unescape(t)
     t = unicodedata.normalize("NFC", t).lower()
     t = t.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
@@ -125,15 +143,15 @@ def doc_data(dash: Path) -> dict | None:
 
 
 def lay_nguon_dieu_kien(data: dict) -> list[dict]:
-    """[{vi_tri, van_ban, cum:[…]}] — chỉ giữ câu CÓ điều kiện."""
+    """[{vi_tri, van_ban, cum:[…], ma_muc?}] — chỉ giữ câu CÓ điều kiện; câu của một mục mang `ma_muc` (id mục)."""
     ra: list[dict] = []
     sm = data.get("summary") or {}
 
-    def them(vi_tri: str, v) -> None:
+    def them(vi_tri: str, v, ma_muc: str | None = None) -> None:
         if isinstance(v, str) and v.strip():
             cum = trich_cum_dieu_kien(v)
             if cum:
-                ra.append({"vi_tri": vi_tri, "van_ban": v, "cum": cum})
+                ra.append({"vi_tri": vi_tri, "van_ban": v, "cum": cum, **({"ma_muc": ma_muc} if ma_muc else {})})
 
     them("summary.conclusion", sm.get("conclusion"))
     for k in ("doNow", "dontDo"):
@@ -141,27 +159,90 @@ def lay_nguon_dieu_kien(data: dict) -> list[dict]:
             them(f"summary.{k}[{i}]", v)
     for it in data.get("items") or []:
         if isinstance(it, dict) and it.get("decision") == "apply":
-            them(f"{it.get('id') or '?'}.action", it.get("action"))
+            them(f"{it.get('id') or '?'}.action", it.get("action"), str(it.get("id") or "") or None)
     return ra
 
 
-def doi_chieu(nguon: list[dict], dich: dict[str, str | None]) -> dict:
-    """dich: {tên sản phẩm: văn bản đã đọc | None (không có)}."""
+# ── So theo TỪNG MỤC (14/11/2026) ──────────────────────────────────────────────────────────────
+_DAU_TIEU_DE = 40   # số ký tự đầu của tiêu đề dùng làm mốc (bản xuất có thể cắt/ngắt dòng tiêu đề dài)
+
+
+def neo_muc(data: dict) -> list[dict]:
+    """[{id, tieu_de}] cho MỌI mục theo thứ tự DATA (kể cả consider/notyet — bản xuất in cả chúng, chúng cũng là mốc ĐÓNG
+    đoạn của mục đứng trước)."""
+    ra = []
+    for it in data.get("items") or []:
+        if isinstance(it, dict):
+            ra.append({"id": str(it.get("id") or ""), "tieu_de": chuan_hoa(str(it.get("title") or ""))})
+    return ra
+
+
+def _mau_dinh_danh(ma: str) -> re.Pattern:
+    return re.compile(rf"(?<![\w-]){re.escape(ma.lower())}(?!\d)")
+
+
+def _moc_muc(vb: str, n: dict) -> list[int]:
+    """Vị trí «ITEM-xx. <tiêu đề>» — định danh đi LIỀN tiêu đề của chính mục (Word in mỗi mục như vậy). Định danh đứng một mình
+    («(item-47, item-48)» trong bản đọc) là TRÍCH DẪN chéo, không phải đầu mục ⇒ không tính."""
+    if not (n.get("id") and n.get("tieu_de")):
+        return []
+    dau = re.escape(n["tieu_de"][:_DAU_TIEU_DE].strip())
+    return [m.start() for m in re.finditer(rf"(?<![\w-]){re.escape(n['id'].lower())}(?!\d)\W{{0,4}}{dau}", vb)]
+
+
+def co_cau_truc_muc(vb: str, neo: list[dict]) -> bool:
+    """Sản phẩm in theo TỪNG MỤC khi ít nhất một nửa số mục có mốc «ITEM-xx. <tiêu đề>». Bản đọc sắp lại nội dung theo chủ đề
+    (cờ đỏ, việc cần làm…) và chỉ trích định danh mục trong ngoặc ⇒ cắt theo mục ở đó sinh báo động giả (đo 14/11/2026 trên 115
+    dashboard: mọi dòng chuyển ✓→🟠 khi cắt theo tiêu đề đơn thuần đều ở bản đọc, Word 0) ⇒ so cả tài liệu."""
+    co_ma = [n for n in neo if n.get("id")]
+    return bool(co_ma) and sum(1 for n in co_ma if _moc_muc(vb, n)) * 2 >= len(co_ma)
+
+
+def doan_cua_muc(vb: str, neo: list[dict]) -> dict[str, list[tuple[int, int]]]:
+    """{id mục: [(đầu, cuối), …]} trên văn bản sản phẩm ĐÃ chuẩn hoá. Mỗi mốc «ITEM-xx. <tiêu đề>» mở một đoạn; đoạn đóng ở
+    mốc kế tiếp của một mục KHÁC (hoặc cuối tài liệu). Mục không có mốc, hoặc sản phẩm không in theo từng mục
+    (`co_cau_truc_muc`) ⇒ vắng trong kết quả (người gọi so cả tài liệu)."""
+    if not co_cau_truc_muc(vb, neo):
+        return {}
+    theo_vi_tri: dict[int, set[str]] = {}
+    for n in neo:
+        for p in _moc_muc(vb, n):
+            theo_vi_tri.setdefault(p, set()).add(n["id"])
+    moc = sorted(theo_vi_tri.items())
+    ra: dict[str, list[tuple[int, int]]] = {}
+    for i, (p, ids) in enumerate(moc):
+        het = next((q for q, ids2 in moc[i + 1:] if ids2 - ids), len(vb))
+        for ma in ids:
+            ra.setdefault(ma, []).append((p, het))
+    return ra
+
+
+def doi_chieu(nguon: list[dict], dich: dict[str, str | None], neo: list[dict] | None = None) -> dict:
+    """dich: {tên sản phẩm: văn bản đã đọc | None (không có)}. neo (từ `neo_muc`) ⇒ cụm của một mục chỉ tìm trong ĐOẠN của
+    mục đó; không có neo hoặc không định vị được mục ⇒ tìm trong cả tài liệu (pham_vi «tai_lieu»)."""
     da_chuan = {k: (chuan_hoa(v) if v is not None else None) for k, v in dich.items()}
+    doan = {k: (doan_cua_muc(vb, neo) if (vb is not None and neo) else {}) for k, vb in da_chuan.items()}
     dong = []
     dem = {"con": 0, "can_doc": 0, "chua_kiem": 0}
     for n in nguon:
+        ma = n.get("ma_muc")
         for c in n["cum"]:
-            kq = {}
+            kq, pham_vi = {}, {}
             for ten, vb in da_chuan.items():
                 if vb is None:
                     kq[ten] = "chua_kiem"
-                elif c in vb:
-                    kq[ten] = "con"
+                    dem[kq[ten]] += 1
+                    continue
+                khoang = doan[ten].get(ma) if ma else None
+                if khoang:
+                    pham_vi[ten] = "muc"
+                    thay = any(c in vb[a:b] for a, b in khoang)
                 else:
-                    kq[ten] = "can_doc"
+                    pham_vi[ten] = "tai_lieu"
+                    thay = c in vb
+                kq[ten] = "con" if thay else "can_doc"
                 dem[kq[ten]] += 1
-            dong.append({"vi_tri": n["vi_tri"], "cum": c, "ket_qua": kq})
+            dong.append({"vi_tri": n["vi_tri"], "cum": c, "ket_qua": kq, "pham_vi": pham_vi})
     return {"dong": dong, "dem": dem, "san_pham": {k: v is not None for k, v in dich.items()}}
 
 
@@ -185,7 +266,9 @@ def in_bao_cao(dash: Path, kq: dict) -> None:
           + (f" · không có: {', '.join(vang)}" if vang else ""))
     for d in kq["dong"]:
         dau = " ".join(f"{_KY_HIEU[v]}{k}" for k, v in d["ket_qua"].items())
-        print(f"  {dau}  [{d['vi_tri']}] «{d['cum']}»")
+        ca_tl = [k for k, v in (d.get("pham_vi") or {}).items() if v == "tai_lieu" and d["vi_tri"].endswith(".action")]
+        print(f"  {dau}  [{d['vi_tri']}] «{d['cum']}»"
+              + (f" (không định vị được mục trong {', '.join(ca_tl)} — so cả tài liệu)" if ca_tl else ""))
     e = kq["dem"]
     print(f"Tổng: {e['con']} ✓ còn · {e['can_doc']} 🟠 cần đọc lại · {e['chua_kiem']} ⚪ chưa kiểm")
     if e["can_doc"]:
@@ -289,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
     dich = {"ban_doc": _doc_tep(a.ban_doc), "word_html": _doc_tep(a.word_html)}
     if a.chat:
         dich["chat"] = _doc_tep(a.chat)
-    kq = doi_chieu(nguon, dich)
+    kq = doi_chieu(nguon, dich, neo_muc(data))
     kq["dashboard"] = str(dash)
     kq["so_cau_co_dieu_kien"] = len(nguon)
     if a.json:

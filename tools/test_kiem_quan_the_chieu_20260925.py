@@ -144,6 +144,7 @@ def test_k2_duoc_dem_vao_tong(tmp_path, capsys):
     assert it1["k2_co_mau"][0]["so"] == "9999" and it1["k2_co_mau"][0]["muc"] in ("can_doc", "chua_kiem")
     assert rc == 1
     tong_phan_quyet = sum(len(d["k1_nguong"]) + len(d["k1_cap"]) + len(d["k2_co_mau"]) + 1
+                          + len(d["k3b"]) + (1 if d["k4b"] else 0)        # K3b/K4b (14/11/2026) cũng phải được đếm
                           for d in kq["muc"] if d["co_nguon"])
     khong_nguon = sum(1 for d in kq["muc"] if not d["co_nguon"])
     assert sum(kq["dem"].values()) == tong_phan_quyet + khong_nguon   # K2 phải được đếm vào tổng

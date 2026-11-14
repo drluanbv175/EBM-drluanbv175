@@ -648,6 +648,7 @@ def main() -> int:
     # ── ④-bis K3: mệnh đề điều kiện có còn nguyên trong bản đọc/Word không (25/09/2026) ──
     # Bác sĩ duyệt 25/09/2026 (audit/16): MỨC CẢNH BÁO — KHÔNG đổi rc_final, không chặn
     # xuất; chỉ cân nhắc chặn sau khi đo báo động giả trên bộ vàng do bác sĩ gắn nhãn.
+    # 14/11/2026: K3 so theo TỪNG MỤC (cụm của mục chỉ tìm trong đoạn của chính mục đó) — vẫn CẢNH BÁO.
     print("④-bis Kiểm giữ mệnh đề điều kiện (K3, chỉ cảnh báo)…")
     K3 = ROOT / "tools" / "kiem_cheo_ngu_nghia.py"
     if not K3.exists():
@@ -669,19 +670,21 @@ def main() -> int:
     # ── ④-ter K1 quần thể + K4 chiều khuyến cáo (25/09/2026, audit/16) ──
     # Cần tóm tắt nguồn ⇒ chỉ chạy khi có --online. CÙNG mức CẢNH BÁO như K3: không đổi
     # rc_final, không chặn xuất (bác sĩ duyệt 25/09/2026).
+    # 14/11/2026: cùng công cụ chạy thêm K3b (nguồn khuyến cáo có điều kiện mà mục không giữ) và K4b
+    # (mục nói KHÔNG làm trong khi nguồn ủng hộ) — VẪN CẢNH BÁO; chuyển CHẶN là quyết định của bác sĩ.
     K1 = ROOT / "tools" / "kiem_quan_the_chieu.py"
     if not a.online:
-        print("④-ter Bỏ qua K1/K2/K4 (không có --online — cần tóm tắt nguồn).")
+        print("④-ter Bỏ qua K1/K2/K3b/K4/K4b (không có --online — cần tóm tắt nguồn).")
     elif not K1.exists():
         print("④-ter ⚠ Bỏ qua: thiếu tools/kiem_quan_the_chieu.py")
     else:
-        print("④-ter Kiểm quần thể + cỡ mẫu + chiều khuyến cáo (K1/K2/K4, chỉ cảnh báo)…")
+        print("④-ter Kiểm quần thể + cỡ mẫu + điều kiện nguồn + chiều khuyến cáo (K1/K2/K3b/K4/K4b, chỉ cảnh báo)…")
         rc, out = run([py, str(K1), str(dash), "--online"])
         result["k1k4_ma"] = rc
         tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
         print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
         if rc == 1:
-            print("   🟠 Có mục cần đọc lại nguồn gốc (quần thể/chiều) — chạy lại lệnh trên để xem"
+            print("   🟠 Có mục cần đọc lại nguồn gốc (quần thể/điều kiện/chiều) — chạy lại lệnh trên để xem"
                   " đoạn nguồn; không chặn xuất.")
 
     # ── ④-quater Tin cậy cao nhất · mới nhất · toàn văn (bác sĩ giao 06/11/2026) ──

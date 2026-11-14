@@ -16,9 +16,10 @@ Ba lệnh:
                        đúng, S/✗ = sai, ? = chưa đủ căn cứ). Chạy khô mặc định; KHÔNG ghi đè nhãn đã có trừ khi --ghi-de; lưu nguyên văn lời bác sĩ.
   do [--online]      — đo K1 so với nhãn «đúng quần thể», K4 so với nhãn «đúng chiều»: báo động giả (🟠 trên mục bác sĩ nói
                        đúng) · bỏ lọt (mục bác sĩ nói sai mà máy im). Nhãn còn trống ⇒ CHƯA ĐO (không bao giờ in 0%).
+                       Từ 14/11/2026: K3b so với nhãn «đủ điều kiện», K4b so với «đúng chiều» (chỉ mục nói KHÔNG làm).
 GIỚI HẠN NÓI TRƯỚC: K3 kiểm bản xuất (bản đọc/Word) có GIỮ cụm điều kiện của chính mục không — nhãn «đủ điều kiện» của bác sĩ
-hỏi khác (mục có giữ đủ điều kiện của BÀI GỐC không) ⇒ K3 không đo bằng nhãn này; nhãn đó cho biết lỗi «rụng điều kiện ngay
-trong mục» có xảy ra không — hiện chưa phép kiểm nào bắt.
+hỏi khác (mục có giữ đủ điều kiện của BÀI GỐC không) ⇒ K3 không đo bằng nhãn này; nhãn đó đo K3b (14/11/2026 — so mục với
+câu khuyến cáo có điều kiện của tóm tắt nguồn, chỉ phần ánh xạ được qua hai thứ tiếng).
 Chuyển một phép kiểm sang CHẶN là quyết định của BÁC SĨ sau khi xem số đo — công cụ không bao giờ tự chuyển.
 Mã thoát: 0 chạy xong · 1 lời bác sĩ không đọc được · 2 thiếu tệp/không đo được.
 """
@@ -205,7 +206,7 @@ def bang_nham_lan(cap: list[tuple[bool, bool]]) -> dict:
 def do(bv: dict, nguon: dict[str, str | None], kiem_muc=None) -> dict:
     """K1 so với «đúng quần thể», K4 so với «đúng chiều» — chỉ trên mục ĐÃ có nhãn và ĐÃ có tóm tắt nguồn."""
     kiem_muc = kiem_muc or _nap("_bvk_kqtc", "kiem_quan_the_chieu.py").kiem_muc
-    k1, k4, chua = [], [], {"chua_nhan": 0, "chua_nguon": 0}
+    k1, k4, k3b, k4b, chua = [], [], [], [], {"chua_nhan": 0, "chua_nguon": 0}
     for m in bv["muc"]:
         nh = m.get("nhan_bac_si") or {}
         if nh.get("dung_quan_the") is None and nh.get("dung_chieu") is None:
@@ -222,11 +223,17 @@ def do(bv: dict, nguon: dict[str, str | None], kiem_muc=None) -> dict:
             k1.append((bao, not nh["dung_quan_the"]))
         if nh.get("dung_chieu") is not None and kq.get("k4"):
             k4.append((kq["k4"]["muc"] == "can_doc", not nh["dung_chieu"]))
+        # K3b/K4b (14/11/2026): chỉ khi bộ kiểm có phép đó (bản kiem_muc cũ/giả không có khoá ⇒ CHƯA ĐO, không phải 0)
+        if nh.get("du_dieu_kien") is not None and "k3b" in kq:
+            k3b.append((any(x["muc"] == "can_doc" for x in kq["k3b"]), not nh["du_dieu_kien"]))
+        if nh.get("dung_chieu") is not None and kq.get("k4b"):
+            k4b.append((kq["k4b"]["muc"] == "can_doc", not nh["dung_chieu"]))
     co_nhan = [m.get("nhan_bac_si") or {} for m in bv["muc"]]
     co_nhan = [nh for nh in co_nhan if any(nh.get(k) is not None for k in NHAN)]
     dk = [(m.get("nhan_bac_si") or {}).get("du_dieu_kien") for m in bv["muc"]]
     co_nhan_dk = [x for x in dk if x is not None]
-    return {"K1": bang_nham_lan(k1), "K4": bang_nham_lan(k4), "chua": chua,
+    return {"K1": bang_nham_lan(k1), "K4": bang_nham_lan(k4), "K3b": bang_nham_lan(k3b), "K4b": bang_nham_lan(k4b),
+            "chua": chua,
             "muc_rung_dieu_kien": sum(1 for x in co_nhan_dk if x is False) if co_nhan_dk else None,
             "so_nhan_dieu_kien": len(co_nhan_dk),
             "so_nhan": len(co_nhan), "so_nhan_may_de_xuat": sum(1 for nh in co_nhan if nh.get("de_xuat_boi"))}
@@ -238,16 +245,19 @@ def _pt(x) -> str:
 
 def in_do(kq: dict) -> None:
     print("ĐO BỘ VÀNG — kiểm chéo ngữ nghĩa mục «apply» (nhãn của bác sĩ là chuẩn)")
-    for k, ten in (("K1", "quần thể"), ("K4", "chiều khuyến cáo")):
-        b = kq[k]
+    for k, ten in (("K1", "quần thể"), ("K4", "chiều khuyến cáo"), ("K3b", "nguồn có điều kiện mà mục không giữ"),
+                   ("K4b", "mục nói KHÔNG làm khi nguồn ủng hộ — chỉ mục phủ định")):
+        b = kq.get(k)
+        if b is None:
+            continue
         print(f"  {k} ({ten}): {b['n']} mục có nhãn · máy bắt đúng {b['tp']} · báo động giả {b['fp']} "
               f"({_pt(b['bao_dong_gia'])}) · bỏ lọt {b['fn']} ({_pt(b['bo_lot'])})")
     c = kq["chua"]
     print(f"  Chưa đo: {c['chua_nhan']} mục chưa có nhãn bác sĩ · {c['chua_nguon']} mục chưa có tóm tắt nguồn")
     rung = kq["muc_rung_dieu_kien"]
     so_rung = "CHƯA ĐO" if rung is None else f"{rung}/{kq['so_nhan_dieu_kien']}"
-    print(f"  Mục bác sĩ nói RỤNG ĐIỀU KIỆN so với bài gốc: {so_rung} — hiện CHƯA phép kiểm nào bắt lỗi này "
-          "(K3 kiểm bản xuất giữ cụm điều kiện của MỤC, không so với bài gốc).")
+    print(f"  Mục bác sĩ nói RỤNG ĐIỀU KIỆN so với bài gốc: {so_rung} — K3b (14/11/2026) là phép duy nhất so mục với bài "
+          "gốc, xem dòng K3b ở trên (K3 chỉ kiểm bản xuất giữ cụm điều kiện của MỤC).")
     if kq.get("so_nhan_may_de_xuat"):
         print(f"  ⚠ {kq['so_nhan_may_de_xuat']}/{kq['so_nhan']} nhãn do máy soạn sẵn, bác sĩ xác nhận — chuẩn CÓ máy tham gia, "
               "chưa phải bộ vàng bác sĩ gắn độc lập; đọc số đo với giới hạn đó.")

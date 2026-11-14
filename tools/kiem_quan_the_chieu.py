@@ -70,6 +70,57 @@ _K3 = _nap("_k3_kqtc", "kiem_cheo_ngu_nghia.py")
 chuan_hoa = _K3.chuan_hoa
 doc_data = _K3.doc_data
 
+
+def chuan_hoa_nguon(t: str) -> str:
+    """Chuẩn hoá văn bản NGUỒN (tóm tắt PubMed — văn bản thuần): «<»/«>» là dấu so sánh, không phải thẻ HTML (vá 14/11/2026)."""
+    return chuan_hoa(t, html=False)
+
+
+# ── Thân tóm tắt: bỏ dòng trích dẫn, tác giả, cơ quan, định danh (vá 14/11/2026) ─────────────────
+# Bản efetch dạng text: «1. Tạp chí. Năm…» · tiêu đề · tác giả (cá nhân hoặc tổ chức) · Collaborators · Author information
+# (cơ quan) · Comment in/Erratum in… · THÂN tóm tắt · © · Conflict of interest · DOI/PMCID/PMID. Trước đây K1/K4 đọc CẢ bản ⇒
+# «Children's Hospital», «Department of Paediatrics», «American Academy of Pediatrics» làm K1 tưởng nguồn có nêu «trẻ em»
+# (4 lần K1 báo ✓ trên mục đã bị đổi quần thể), số trang/năm trong dòng trích dẫn khớp nhầm cỡ mẫu.
+_LA_EFETCH = re.compile(r"(?m)^PMID:\s*\d+")
+_DOAN_SIEU_DU_LIEU = re.compile(
+    r"^(?:author information|collaborators|comment (?:in|on)|erratum (?:in|for)|update (?:of|in)|updated (?:and )?"
+    r"(?:republished )?(?:in|from)|republished (?:in|from)|corrected and republished|retraction (?:in|of)|retracted|"
+    r"expression of concern|copyright|©|\(c\) \d{4}|conflict of interest|competing interests?|declaration of "
+    r"(?:competing )?interests?|doi:|pmid:|pmcid:|summary for patients in)", re.I)
+_PHAN_TAC_GIA = re.compile(r"^(?:[\w'’.\-]+\s+){1,4}[A-Z]{1,4}(?:\(\d+\))*$")
+
+
+def _la_ds_tac_gia(d: str) -> bool:
+    """Đoạn là danh sách tác giả «Họ AB(1), Họ C, …» (≥ 3 phần, ≥ 60% phần đúng khuôn tên PubMed)."""
+    phan = [x.strip() for x in re.split(r"[,;]", d.strip().rstrip(".")) if x.strip()]
+    return len(phan) >= 3 and sum(bool(_PHAN_TAC_GIA.match(x)) for x in phan) >= 0.6 * len(phan)
+
+
+def than_nguon(raw: str) -> str:
+    """Tiêu đề + THÂN tóm tắt của bản efetch dạng text. Văn bản không theo khuôn efetch (vd «tiêu đề. tóm tắt» từ
+    --nguon-json) ⇒ giữ nguyên."""
+    raw = raw or ""
+    doan = [d.strip() for d in re.split(r"\n\s*\n", raw) if d.strip()]
+    if not (doan and re.match(r"^\d+\.\s", doan[0]) and _LA_EFETCH.search(raw)):
+        return raw
+    if not re.search(r"\d{4}", doan[0]):
+        # khuôn sách/«RETRACTED ARTICLE»: dòng đầu là tiêu đề hoặc nhãn — giữ mọi đoạn trừ siêu dữ liệu và danh sách tác giả
+        giu = [re.sub(r"^\d+\.\s+", "", doan[0])]
+        giu += [d for d in doan[1:] if not _DOAN_SIEU_DU_LIEU.match(d) and not _la_ds_tac_gia(d)]
+        return "\n\n".join(giu)
+    giu, i = [], 1
+    if i < len(doan):
+        giu.append(doan[i])                           # tiêu đề
+        i += 1
+    tac_gia_da_bo = False
+    while i < len(doan) and doan[i].startswith("["):  # «[Article in German…]», «[No authors listed]»
+        tac_gia_da_bo |= doan[i].lower().startswith("[no authors")
+        i += 1
+    if not tac_gia_da_bo and i < len(doan) and not _DOAN_SIEU_DU_LIEU.match(doan[i]):
+        i += 1                                        # dòng tác giả (cá nhân hoặc TỔ CHỨC — tổ chức không nhận được qua khuôn tên)
+    giu += [d for d in doan[i:] if not _DOAN_SIEU_DU_LIEU.match(d) and not _la_ds_tac_gia(d)]
+    return "\n\n".join(giu)
+
 # ── K1a: ngưỡng số ─────────────────────────────────────────────────────────────
 # (khoá, mẫu nhận chỉ số ở MỤC (Việt/Anh), mẫu nhận chỉ số ở NGUỒN (Anh))
 _CHI_SO = (
@@ -121,16 +172,22 @@ def kiem_nguong(khoa: str, so: str, nguon: str) -> tuple[str, str]:
 # ── K1b: cặp quần thể loại trừ nhau ────────────────────────────────────────────
 # Mỗi vế: (tên, mẫu ở MỤC, mẫu ở NGUỒN). Vế «phủ định» (non-dialysis…) được xoá khỏi văn bản
 # trước khi tìm vế dương tương ứng, để «non-dialysis» không bị đọc thành «dialysis».
+# Từ vựng mở rộng 14/11/2026 (đo: 84 lần K1 lọt im vì cách viết tiếng Việt ngoài từ điển — «bệnh nhi», «trẻ vị thành niên»,
+# «người trưởng thành», «ĐTĐ1», «PSTM giảm», «phân suất tống máu còn bảo tồn»). Phía NGUỒN cố ý KHÔNG có «child» trần
+# (khớp nhầm «Child-Pugh»).
 _CAP = (
-    (("HFrEF", r"hfref|phân suất tống máu giảm|ef giảm", r"hfref|reduced ejection fraction"),
-     ("HFpEF", r"hfpef|phân suất tống máu bảo tồn|ef bảo tồn", r"hfpef|preserved ejection fraction")),
-    (("ĐTĐ típ 1", r"(?:típ|tuýp|type) ?1", r"type 1 diabetes|t1d"),
-     ("ĐTĐ típ 2", r"(?:típ|tuýp|type) ?2", r"type 2 diabetes|t2d")),
-    (("trẻ em", r"trẻ em|nhi khoa|children|pediatric", r"children|pa?ediatric|adolescents?|infants?"),
-     ("người lớn", r"người lớn|adults?", r"adults?")),
+    (("HFrEF", r"hfref|(?:phân suất tống máu|pstm|ef) giảm", r"hfref|reduced (?:left ventricular )?ejection fraction"),
+     ("HFpEF", r"hfpef|(?:phân suất tống máu|pstm|ef) (?:còn )?bảo tồn",
+      r"hfpef|preserved (?:left ventricular )?ejection fraction")),
+    (("ĐTĐ típ 1", r"(?:típ|tuýp|type) ?1|đtđ ?1", r"type 1 diabetes|t1d"),
+     ("ĐTĐ típ 2", r"(?:típ|tuýp|type) ?2|đtđ ?2", r"type 2 diabetes|t2d")),
+    (("trẻ em", r"trẻ em|bệnh nhi|nhi khoa|(?:trẻ )?vị thành niên|thanh thiếu niên|trẻ sơ sinh|children|pediatric",
+      r"children|pa?ediatric|adolescen\w*|infants?|neonat\w*|newborns?"),
+     ("người lớn", r"người lớn|người trưởng thành|adults?", r"adults?")),
     (("ngoài thai kỳ", r"ngoài thai kỳ|không mang thai|non-pregnant", r"non-?pregnant|not pregnant"),
-     ("thai kỳ", r"thai kỳ|phụ nữ có thai|mang thai|pregnan\w*", r"pregnan\w*")),
-    (("không lọc máu", r"không lọc máu|chưa lọc máu|non-dialysis", r"non-?dialysis|not (?:on|receiving) dialysis"),
+     ("thai kỳ", r"thai kỳ|thai phụ|phụ nữ có thai|mang thai|pregnan\w*", r"pregnan\w*")),
+    (("không lọc máu", r"không lọc máu|chưa lọc máu|chưa chạy thận|non-dialysis",
+      r"non-?dialysis|not (?:on|receiving|requiring) dialysis"),
      ("lọc máu", r"lọc máu|chạy thận|thẩm phân|dialysis", r"dialysis|ha?emodialysis")),
 )
 
@@ -186,10 +243,15 @@ def kiem_cap(muc: str, nguon: str) -> list[dict]:
 
 # ── K4: tín hiệu ngược chiều ───────────────────────────────────────────────────
 _NGUOC = re.compile(
-    r"(?<!\w)(?:is |are )?not recommended|should not be (?:used|given|offered|prescribed)"
+    r"(?<!\w)(?:is |are )?not recommended|should not be (?:routinely )?(?:used|given|offered|prescribed|considered|initiated"
+    r"|started|screened)"
     r"|no (?:significant |clinically meaningful |additional )?(?:benefit|reduction|improvement|difference)"
-    r"|did not (?:significantly )?(?:reduce|improve|lower|prevent|decrease)"
-    r"|was not (?:superior|associated with (?:a )?(?:lower|reduced|improved))"
+    # 14/11/2026: thì hiện tại «does not reduce», «did not result in/lead to», «was not lower», «not effective», «were/is not
+    # superior», «not non-inferior» — đo được 35 lần K4 lọt vì các dạng này (do-nhay-dot-bien-20261114)
+    r"|(?:did|does|do) not (?:significantly )?(?:reduce|improve|lower|prevent|decrease|attenuate|slow|result in|lead to)"
+    r"|(?:was|were|is|are) not (?:significantly )?(?:superior|non-?inferior|lower|reduced|decreased"
+    r"|associated with (?:a |an )?(?:significantly )?(?:lower|reduced|decreased|improved))"
+    r"|(?:was|were|is|are) not (?:highly )?(?:effective|efficacious|beneficial)"
     r"|failed to (?:reduce|improve|show|demonstrate)"
     r"|class iii|net harm|(?:increased|caused) (?:the )?(?:risk of )?harm|stopped (?:early )?for futility"
     # 20/10/2026: cách nói CHUẨN của khuyến cáo chống trong guideline — GRADE «(strong|conditional) recommendation
@@ -203,7 +265,10 @@ _NGUOC = re.compile(
 # Câu «không khác biệt» về kết cục PHỤ/an toàn/phân nhóm là chuyện thường trong thử nghiệm DƯƠNG
 # tính — không phải tín hiệu ngược chiều của khuyến cáo. Bỏ qua trừ khi câu cũng nói tới kết cục
 # CHÍNH; «not recommended»/«Class III»/«should not» thì KHÔNG BAO GIỜ bỏ qua.
-_PHU = re.compile(r"secondary|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety"
+# 14/11/2026: «secondary» CHỈ khi là kết cục phụ — trước đây «secondary analysis»/«secondary prevention» (thiết kế, quần thể)
+# cũng làm câu bị bỏ qua (3 lần K4 lọt).
+_PHU = re.compile(r"secondary (?:(?:efficacy |safety |key )?(?:end ?points?|outcomes?|measures?|composite)|analyses of (?:the )?"
+                  r"secondary)|key secondary|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety"
                   r"|tolerab|discontinuation")
 _CHINH = re.compile(r"primary (?:end ?point|outcome|composite)")
 _LUON_BAO = re.compile(r"not recommended|should not be|class iii|net harm|futility|against|outweighs? (?:the |its )?benefit"
@@ -220,8 +285,21 @@ def muc_phu_dinh(it: dict) -> bool:
     return any(_MUC_PHU_DINH.match(str(it.get(k) or "")) for k in ("title", "action"))
 
 
+# Mệnh đề GIẢ ĐỊNH/ĐIỀU KIỆN đứng TRƯỚC tín hiệu ngược chiều («if a liberal policy does not improve…», «patients in whom
+# education is not effective should…», «PDT was recommended when CBT was not effective») — không phải kết luận ngược chiều.
+# Đo 14/11/2026: 5/7 báo động K4 MỚI trên mục thật sau khi mở rộng từ vựng thuộc dạng này. «when compared» không phải điều kiện.
+_GIA_DINH_TRUOC = re.compile(r"(?<!\w)(?:if|whether|unless|in whom|in those whom|when(?! compared))(?!\w)")
+
+
+def _nguoc_sau_gia_dinh(c: str) -> bool:
+    """Mọi lần khớp _NGUOC trong câu đều đứng SAU một dấu giả định/điều kiện ⇒ câu chỉ nêu tình huống giả định."""
+    ds = list(_NGUOC.finditer(c))
+    return bool(ds) and all(_GIA_DINH_TRUOC.search(c, 0, m.start()) for m in ds)
+
+
 def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
-    """(câu ngược chiều cần đọc lại, câu đã bỏ qua vì chỉ về kết cục phụ/an toàn) — tối đa 3 mỗi loại."""
+    """(câu ngược chiều cần đọc lại, câu đã bỏ qua vì chỉ về kết cục phụ/an toàn hoặc chỉ là mệnh đề giả định) — tối đa 3
+    mỗi loại. «not recommended»/«Class III»/«against»… (_LUON_BAO) thì KHÔNG BAO GIỜ bỏ qua."""
     cau = re.split(r"(?<=[.;])\s+", nguon)
     bao: list[str] = []
     bo: list[str] = []
@@ -229,7 +307,8 @@ def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
         c = c.strip()
         if not _NGUOC.search(c):
             continue
-        if not _LUON_BAO.search(c) and _PHU.search(c) and not _CHINH.search(c):
+        luon = _LUON_BAO.search(c)
+        if not luon and ((_PHU.search(c) and not _CHINH.search(c)) or _nguoc_sau_gia_dinh(c)):
             bo.append(c)
         else:
             bao.append(c)
@@ -239,6 +318,200 @@ def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
 def kiem_chieu(nguon: str) -> list[str]:
     """Các câu nguồn chứa tín hiệu ngược chiều (nguyên văn đã chuẩn hoá, tối đa 3)."""
     return kiem_chieu_chi_tiet(nguon)[0]
+
+
+# ── Câu nguồn: tách câu + phần KẾT LUẬN (dùng chung cho K3b/K4b, 14/11/2026) ──────────────────────
+_KET_LUAN = re.compile(r"(?:conclusions?|interpretation|recommendations?|implications for practice)\s*:")
+
+
+def tach_cau(t: str) -> list[str]:
+    return [c.strip() for c in re.split(r"(?<=[.;])\s+", t or "") if c.strip()]
+
+
+def phan_ket_luan(nguon: str) -> str:
+    """Phần sau nhãn Kết luận/Interpretation CUỐI cùng của thân tóm tắt; không có nhãn ⇒ cả thân."""
+    m = None
+    for m in _KET_LUAN.finditer(nguon):
+        pass
+    return nguon[m.end():] if m else nguon
+
+
+# ── K4b: MỤC nói «KHÔNG làm» trong khi NGUỒN ủng hộ (14/11/2026) ─────────────────────────────────
+# K4 chỉ tìm tín hiệu ngược chiều ở NGUỒN; mục nói «không làm» còn được coi là cùng chiều nguồn ⇒ đột biến «mục đảo sang
+# KHÔNG làm khi nguồn ủng hộ» lọt 582/582 (do-nhay-dot-bien-20261114). K4b: mục là khuyến cáo phủ định THẬT VÀ phần Kết luận
+# của nguồn (không có nhãn ⇒ cả thân) có câu ủng hộ rõ VÀ không có câu chống/hại nào ⇒ 🟠. Có câu chống/hại ⇒ ✓ (cùng chiều).
+# Không có câu ủng hộ lẫn chống ⇒ ⚪ (không phán được — thường gặp ở tóm tắt guideline chỉ mô tả phạm vi).
+# «Không» + từ mô tả/phủ định kép KHÔNG phải khuyến cáo chống: «KHÔNG từ chối SGLT2i…» (= nên dùng), «Không dung nạp NSAID: …»
+# (= người không dung nạp), «KHÔNG khuyên kiêng sữa» (= nên giữ).
+_PHU_DINH_KEP = re.compile(r"^\W*không\s+(?:nên\s+)?(?:bỏ|từ chối|ngừng|dừng|trì hoãn|hoãn|né|chờ|đợi|ngại|bỏ qua|quên|kiêng"
+                           r"|khuyên (?:kiêng|tránh|ngừng|bỏ)|dung nạp|đáp ứng|triệu chứng|đái tháo đường|mang thai|lọc máu"
+                           r"|có triệu chứng)(?!\w)", re.I)
+_UNG_HO = re.compile(
+    r"(?<!not )(?<!no )(?<!\w)(?:significantly |substantially |markedly )?(?:reduced|lowered|decreased|improved|prevented"
+    r"|slowed|attenuated)(?!\w)(?! (?:ejection|left|renal|kidney|egfr|glomerular|bone|function|lung|exercise|dose|doses"
+    r"|sodium|salt|calorie|fat|intensity|frequency|gfr|cardiac|hepatic|mobility)(?!\w))"
+    r"|(?<!not )(?<!\w)(?:reduces|lowers|decreases|improves|prevents|slows)(?!\w)"
+    r"|(?<!\w)(?:is|are|be) (?:strongly |conditionally )?recommended"
+    r"|(?<!\w)(?:we|panel|guideline|uspstf|task force|who|nice|committee|acp|ada|gina) (?:strongly )?(?:recommends?|suggests?)"
+    r"(?! against)"
+    r"|(?<!\w)(?:was|were|is|are) (?:superior|non-?inferior) to"
+    r"|(?<!\w)(?:was|were|is|are) associated with (?:a |an )?(?:significantly )?(?:lower|reduced|decreased)"
+    r"|(?<!\w)(?:resulted in|led to) (?:a |an )?(?:significantly )?(?:lower|reduced|fewer)"
+    r"|(?<!\w)(?:is|was|are|were|remains?) (?:highly |an )?(?:effective|efficacious|beneficial)"
+    r"|(?<!\w)(?:showed|demonstrated|provided|conferred|offers?|has|have) (?:a |significant |clinical |substantial )?"
+    r"(?:net )?benefits?"
+    r"|(?<!\w)should (?:be (?:used|offered|given|prescribed|considered|initiated|started|screened)|receive)"
+    r"|(?<!\w)(?:is|are) indicated|(?<!\w)first-line|(?<!\w)reduc\w* (?:the )?(?:risk|incidence|rates?|mortality|hospitali\w*)")
+# Câu chống/hại — RỘNG có chủ ý (thà ✓ còn hơn báo động giả): ngoài _NGUOC còn «avoid», «discontinue», «deprescribe»,
+# «contraindicated», «increased risk of», «harm», «inappropriate», «overuse», «low-value», «unnecessary».
+# «benefits and harms» (khuôn USPSTF «balance of benefits and harms») là câu mô tả phương pháp, không phải câu chống.
+_CHONG = re.compile(r"(?<!\w)(?:avoid\w*|discontinu\w*|deprescrib\w*|withdraw\w*|contraindicat\w*|inappropriate\w*|overuse"
+                    r"|overdiagnos\w*|overtreat\w*|low[- ]value|unnecessary|(?<!benefits and )(?<!benefit and )harms?|harmful"
+                    r"|(?:increased|higher|excess) (?:the )?risks? of|no longer recommended|should not|must not|do not|don't)(?!\w)")
+
+
+def muc_phu_dinh_that(it: dict) -> bool:
+    """Mục là khuyến cáo «KHÔNG làm» thật: tiêu đề/hành động mở đầu bằng phủ định, không phải phủ định kép hay từ mô tả."""
+    return any(_MUC_PHU_DINH.match(v) and not _PHU_DINH_KEP.match(v)
+               for v in (str(it.get(k) or "") for k in ("title", "action")))
+
+
+def kiem_k4b(it: dict, nguon: str) -> dict | None:
+    """None khi mục không phải khuyến cáo «KHÔNG làm». Nguồn đã chuẩn hoá (thân tóm tắt)."""
+    if not muc_phu_dinh_that(it):
+        return None
+    tat_ca = tach_cau(nguon)
+    cau = tat_ca[:1] + tach_cau(phan_ket_luan(nguon))
+    chong = [c for c in cau if _NGUOC.search(c) or _CHONG.search(c)]
+    if chong:
+        return {"muc": "khop", "cau_nguon": chong[:3]}
+    # câu ủng hộ: ưu tiên tiêu đề + Kết luận; Kết luận im lặng thì xét cả thân (kết quả chính thường nằm ở RESULTS)
+    ung_ho = [c for c in cau if _UNG_HO.search(c)] or [c for c in tat_ca if _UNG_HO.search(c)
+                                                       and not (_NGUOC.search(c) or _CHONG.search(c))]
+    if ung_ho:
+        return {"muc": "can_doc", "cau_nguon": ung_ho[:3]}
+    return {"muc": "chua_kiem", "cau_nguon": []}
+
+
+# ── K3b: NGUỒN khuyến cáo CÓ ĐIỀU KIỆN mà MỤC không giữ (14/11/2026) ─────────────────────────────
+# K3 chỉ so BẢN XUẤT với MỤC ⇒ cụm đã rụng NGAY TRONG MỤC thì không còn gì để so (0/602 ở do-nhay-dot-bien-20261114).
+# Nguồn tiếng ANH, mục tiếng VIỆT ⇒ chỉ so được thứ ánh xạ tất định qua hai thứ tiếng. K3b xét CÂU KHUYẾN CÁO CÓ ĐIỀU KIỆN của
+# nguồn (động từ khuyến cáo «recommend/suggest/should/is indicated» + dấu điều kiện «if/unless/only/when/in the absence of/
+# contraindicated/in patients with…», không phải câu mô tả phạm vi tài liệu) VÀ có chung ít nhất một THUẬT NGỮ La-tinh với
+# hành động của mục (tên thuốc/can thiệp/bệnh: «sglt2i», «bisphosphonate», «saba») — để chắc câu đó nói về CÙNG khuyến cáo:
+#   · câu có NGƯỠNG kèm toán tử (EF/eGFR/tuổi/HbA1c/BMI/LDL) mà mục (tiêu đề + quần thể + pico.P + hành động) không nhắc chỉ
+#     số đó ⇒ 🟠; nhắc đúng con số ⇒ ✓; nhắc con số khác ⇒ để K1 phán (không báo trùng);
+#   · câu không có ngưỡng: hành động của mục không còn dấu điều kiện nào («nếu/khi/trừ/chỉ/ở người…/cho bệnh nhân…»,
+#     ngưỡng số) ⇒ 🟠; còn ⇒ ✓ (máy không hiểu nghĩa, chỉ biết mục CÓ giữ một điều kiện).
+# Không câu nào đủ ba điều kiện ⇒ K3b không phán (im). Đo 14/11 trên 663 mục thật: bản KHÔNG neo thuật ngữ báo 25 mục, bản
+# đối chiếu ngưỡng/quần thể cho mọi câu báo 62 mục (gần hết là giả: «pregnancy» trong mục lục guideline, tuổi trong thang
+# điểm, thời gian theo dõi) ⇒ chọn bản neo thuật ngữ (thà im còn hơn báo động giả). Mệnh đề định tính («khi đã tối ưu nền
+# tảng») chỉ được nhận là «còn/không còn điều kiện», không so được nội dung — giới hạn nói trước.
+_K3B_DONG_TU = re.compile(r"(?<!\w)(?:recommends?|recommended(?! (?:by|in the|for the))|suggests?|suggested|should"
+                          r"|(?:is|are) indicated|advises?)(?!\w)")
+_K3B_DAU = re.compile(r"(?<!\w)(?:if|unless|only|provided that|in the absence of|except|contraindicat\w*"
+                      r"|when(?! compared| used| exercising)|(?:in|for|among) (?:patients|adults|people|persons|individuals"
+                      r"|those|women|men|children) (?:with|who|aged|without|at|receiving|on|taking))(?!\w)")
+_K3B_MO_TA = re.compile(r"this guideline|these guidelines|this update|this document|this statement|clinical judgment"
+                        r"|health ?care providers? should|this report|recommendations? (?:address|cover|were)")
+_K3B_DAU_VI = re.compile(r"(?<!\w)(?:nếu|khi|trừ|chỉ|ngoại trừ|miễn là|trong trường hợp|đối với|ở người|ở bệnh nhân|ở bn"
+                         r"|ở phụ nữ|ở trẻ|ở nam|ở nữ|cho người|cho bệnh nhân|cho bn|cho phụ nữ|cho trẻ|với người|với bệnh nhân"
+                         r"|có chỉ định|chống chỉ định|ngoài thai kỳ|trong thai kỳ|sau khi|trước khi)(?!\w)")
+_K3B_THUAT_NGU_BO = {"grade", "class", "level", "item", "items", "guideline", "dashboard", "with", "from", "that", "this"}
+_K3B_CHI_SO = (
+    ("ef", r"lvef|ef|(?:left ventricular )?ejection fraction(?: \(lvef\)| \(ef\))?"),
+    ("egfr", r"egfr|(?:estimated )?glomerular filtration rate(?: \(egfr\))?"),
+    ("hba1c", r"hba1c|a1c|glycated ha?emoglobin(?: \(hba1c\))?"),
+    ("bmi", r"bmi|body mass index(?: \(bmi\))?"),
+    ("ldl", r"ldl-c|ldl cholesterol|ldl|low-density lipoprotein cholesterol(?: \(ldl-c\))?"),
+)
+_K3B_SO = r"(\d+(?:\.\d+)?)"
+_K3B_DEM = r"(?:of |is |are |was |were |level of |levels? |value of )?"
+_K3B_TOAN_TU = (_K3B_DEM + r"(?:>=|<=|<|>|=<|=>|at least|of at least|less than|greater than|"
+                r"more than|above|below|under|over|lower than|higher than)\s*")
+# Tuổi chỉ khi có NGỮ CẢNH tuổi («aged», «years of age», «or older») — «> 3 years» trần thường là thời gian theo dõi.
+_K3B_TUOI = (
+    re.compile(rf"(?<!\w)(?:aged?|age of) (?:>=|<=|<|>|at least|over|under|older than|younger than|less than|greater than)\s*"
+               rf"{_K3B_SO}(?!\d)"),
+    re.compile(rf"(?<![\d.]){_K3B_SO} (?:years?|yrs?)(?: of age| old)? (?:or|and) (?:older|over|above|younger)"),
+    re.compile(rf"(?<!\w)(?:older|younger) than {_K3B_SO}(?!\d)"),
+)
+
+
+def trich_nguong_nguon(cau: str) -> list[tuple[str, str]]:
+    """[(khoá, con số)] — ngưỡng CÓ TOÁN TỬ trong một câu nguồn đã chuẩn hoá (khoảng «25 to 75», giá trị nền «mean eGFR 43»
+    không tính: không phải điều kiện)."""
+    ra: list[tuple[str, str]] = []
+
+    def them(khoa: str, so: str) -> None:
+        so = so[:-2] if so.endswith(".0") else so
+        if (khoa, so) not in ra:
+            ra.append((khoa, so))
+
+    for khoa, mau in _K3B_CHI_SO:
+        for m in re.finditer(rf"(?<!\w)(?:{mau})(?!\w)\s*{_K3B_TOAN_TU}{_K3B_SO}(?![\d])", cau):
+            them(khoa, m.group(1))
+        for m in re.finditer(rf"(?<!\w)(?:{mau})(?!\w)\s*{_K3B_DEM}{_K3B_SO}\s*%?\s*(?:ml/min\S*\s*)?or (?:more|higher|"
+                             rf"greater|less|lower|above|below)", cau):
+            them(khoa, m.group(1))
+    for mau in _K3B_TUOI:
+        for m in mau.finditer(cau):
+            them("tuoi", m.group(1))
+    return ra
+
+
+def thuat_ngu_la_tinh(van_ban: str) -> set[str]:
+    """Từ La-tinh ≥ 4 ký tự trong văn bản tiếng Việt (tên thuốc, can thiệp, viết tắt bệnh) — dùng để NEO câu nguồn."""
+    t = chuan_hoa(van_ban)
+    return {w for w in re.findall(r"(?<![\w-])[a-z][a-z0-9-]{3,}(?![\w-])", t) if w.isascii() and w not in _K3B_THUAT_NGU_BO}
+
+
+def cau_khuyen_cao_co_dieu_kien(nguon: str, thuat_ngu: set[str]) -> list[str]:
+    """Câu nguồn có động từ khuyến cáo + dấu điều kiện, không mô tả phạm vi tài liệu, có chung thuật ngữ với mục."""
+    ra = []
+    for c in tach_cau(nguon):
+        if not (_K3B_DONG_TU.search(c) and _K3B_DAU.search(c)) or _K3B_MO_TA.search(c):
+            continue
+        if any(re.search(rf"(?<![\w-]){re.escape(w)}(?![\w-])", c) for w in thuat_ngu):
+            ra.append(c)
+    return ra
+
+
+def _co_chi_so_muc(khoa: str, muc: str) -> bool:
+    mau = r"tuổi|age[ds]?|người già" if khoa == "tuoi" else next(m for k, m, _ in _CHI_SO if k == khoa)
+    return re.search(rf"(?<!\w)(?:{mau})(?!\w)", muc) is not None
+
+
+def hanh_dong_co_dieu_kien(action: str) -> bool:
+    """Hành động còn ít nhất một dấu điều kiện: cụm K3, dấu tiếng Việt mở rộng, hoặc ngưỡng số."""
+    a = chuan_hoa(action)
+    return bool(_K3.trich_cum_dieu_kien(action) or _K3B_DAU_VI.search(a) or trich_nguong(a))
+
+
+def kiem_k3b(it: dict, nguon: str) -> list[dict]:
+    """Mỗi phần tử: {loai: nguong|menh_de, dieu_kien, muc: khop|can_doc, doan_nguon}. Nguồn đã chuẩn hoá (thân tóm tắt).
+    Rỗng = K3b không phán (không có câu khuyến cáo có điều kiện nói về cùng thuật ngữ)."""
+    action = str(it.get("action") or "")
+    cau = cau_khuyen_cao_co_dieu_kien(nguon, thuat_ngu_la_tinh(action))[:3]
+    if not cau:
+        return []
+    pham_vi = chuan_hoa(f"{it.get('title') or ''}. {_van_ban_muc(it)}. {action}")
+    nguong_muc = set(trich_nguong(pham_vi))
+    co_dk = hanh_dong_co_dieu_kien(action)
+    ra: list[dict] = []
+    for c in cau:
+        doan = c[:240]
+        ng = trich_nguong_nguon(c)
+        for khoa, so in ng:
+            if (khoa, so) in nguong_muc:
+                ra.append({"loai": "nguong", "dieu_kien": f"{khoa} {so}", "muc": "khop", "doan_nguon": doan})
+            elif not _co_chi_so_muc(khoa, pham_vi):
+                ra.append({"loai": "nguong", "dieu_kien": f"{khoa} {so}", "muc": "can_doc", "doan_nguon": doan})
+        if not ng and not any(x["loai"] == "menh_de" for x in ra):
+            ra.append({"loai": "menh_de", "dieu_kien": "mệnh đề điều kiện", "muc": "khop" if co_dk else "can_doc",
+                       "doan_nguon": doan})
+    return ra
+
 
 
 # ── K2: cỡ mẫu n= (25/09/2026) ──────────────────────────────────────────────────
@@ -321,10 +594,11 @@ def _van_ban_muc(it: dict) -> str:
 def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
     muc_tx = chuan_hoa(_van_ban_muc(it))
     dong = {"id": it.get("id") or "?", "pmid": it.get("pmid"), "doi": it.get("doi"),
-            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k2_co_mau": [], "k4": None}
+            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k2_co_mau": [], "k4": None,
+            "k3b": [], "k4b": None}
     if nguon_tho is None:
         return dong
-    ng = chuan_hoa(nguon_tho)
+    ng = chuan_hoa_nguon(than_nguon(nguon_tho))
     for khoa, so in trich_nguong(muc_tx):
         muc, doan = kiem_nguong(khoa, so, ng)
         dong["k1_nguong"].append({"chi_so": khoa, "so": so, "muc": muc, "doan_nguon": doan})
@@ -332,6 +606,8 @@ def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
     for so in trich_co_mau(chuan_hoa(f"{_van_ban_muc(it)}. {it.get('title') or ''}")):
         muc, doan = kiem_co_mau(so, ng)
         dong["k2_co_mau"].append({"so": so, "muc": muc, "doan_nguon": doan})
+    dong["k3b"] = kiem_k3b(it, ng)
+    dong["k4b"] = kiem_k4b(it, ng)
     tin_hieu, bo_qua = kiem_chieu_chi_tiet(ng)
     if tin_hieu and muc_phu_dinh(it):
         # mục và nguồn cùng nói «không làm» ⇒ khớp; câu nguồn giữ ở cau_bo_qua để người đọc vẫn thấy
@@ -351,13 +627,26 @@ def kiem_dashboard(data: dict, nguon: dict[str, str], online: bool) -> dict:
             tx = _tai_online(str(it["pmid"]).strip())
         ra.append(kiem_muc(it, tx))
     dem = {"khop": 0, "can_doc": 0, "chua_kiem": 0}
+    dem_phep = {p: {"khop": 0, "can_doc": 0, "chua_kiem": 0} for p in PHEP_KQTC}
     for d in ra:
         if not d["co_nguon"]:
             dem["chua_kiem"] += 1
             continue
-        for x in d["k1_nguong"] + d["k1_cap"] + d["k2_co_mau"] + [d["k4"]]:
-            dem[x["muc"]] += 1
-    return {"muc": ra, "dem": dem, "so_muc_co_nguon": sum(d["co_nguon"] for d in ra)}
+        for p, ds in phan_quyet_theo_phep(d).items():
+            for x in ds:
+                dem[x["muc"]] += 1
+                dem_phep[p][x["muc"]] += 1
+    return {"muc": ra, "dem": dem, "dem_theo_phep": dem_phep, "so_muc_co_nguon": sum(d["co_nguon"] for d in ra)}
+
+
+PHEP_KQTC = ("K1", "K2", "K3b", "K4", "K4b")
+
+
+def phan_quyet_theo_phep(d: dict) -> dict[str, list[dict]]:
+    """Các dòng phán quyết của MỘT mục, theo phép (audit/16: phần ngưỡng của K2 nằm trong K1 — ở đây ngưỡng tính cho K1).
+    K3b/K4b (14/11/2026) đếm riêng để người đọc và bộ đo độ nhạy tách được."""
+    return {"K1": d["k1_nguong"] + d["k1_cap"], "K2": d["k2_co_mau"], "K3b": d.get("k3b") or [],
+            "K4": [d["k4"]] if d.get("k4") else [], "K4b": [d["k4b"]] if d.get("k4b") else []}
 
 
 _KH = {"khop": "✓", "can_doc": "🟠", "chua_kiem": "⚪"}
@@ -388,8 +677,26 @@ def in_bao_cao(ten: str, kq: dict) -> None:
         else:
             print(f"  ✓ [{d['id']}] K4 không thấy tín hiệu ngược chiều rõ ràng"
                   + (f" (bỏ qua {len(k4['cau_bo_qua'])} câu chỉ về kết cục phụ/an toàn)" if k4["cau_bo_qua"] else ""))
+        for x in d.get("k3b") or []:
+            if x["muc"] != "can_doc":
+                continue
+            if x["loai"] == "nguong":
+                print(f"  🟠 [{d['id']}] K3b nguồn khuyến cáo kèm ngưỡng «{x['dieu_kien']}» mà mục không nhắc chỉ số đó — "
+                      f"nguồn: «{x['doan_nguon'][:200]}»")
+            else:
+                print(f"  🟠 [{d['id']}] K3b nguồn khuyến cáo CÓ ĐIỀU KIỆN, hành động của mục không còn dấu điều kiện nào — "
+                      f"nguồn: «{x['doan_nguon'][:200]}»")
+        k4b = d.get("k4b")
+        if k4b and k4b["muc"] == "can_doc":
+            for c in k4b["cau_nguon"]:
+                print(f"  🟠 [{d['id']}] K4b mục nói KHÔNG làm, nguồn có câu ủng hộ (không câu chống/hại nào): «{c[:200]}»")
+        elif k4b and k4b["muc"] == "chua_kiem":
+            print(f"  ⚪ [{d['id']}] K4b mục nói KHÔNG làm, nguồn không có câu ủng hộ lẫn chống rõ ràng — chưa phán được")
     e = kq["dem"]
-    print(f"Tổng: {e['khop']} ✓ khớp · {e['can_doc']} 🟠 cần đọc lại · {e['chua_kiem']} ⚪ chưa kiểm")
+    ep = kq.get("dem_theo_phep") or {}
+    theo = " · ".join(f"{p} {ep[p]['can_doc']}" for p in PHEP_KQTC if p in ep)
+    print(f"Tổng: {e['khop']} ✓ khớp · {e['can_doc']} 🟠 cần đọc lại · {e['chua_kiem']} ⚪ chưa kiểm"
+          + (f" (🟠 theo phép: {theo})" if theo else ""))
     if e["can_doc"]:
         print("🟠 = cần ĐỌC LẠI nguồn gốc, KHÔNG phải kết luận «sai». K4 hay báo cả kết cục phụ "
               "«không khác biệt» trong thử nghiệm dương tính. Công cụ chỉ cảnh báo.")

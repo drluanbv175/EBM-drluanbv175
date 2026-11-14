@@ -161,7 +161,9 @@ def test_sinh_k3_hai_bien_the_cung_mot_cum(tmp_path):
     assert ban_xuat["muc_dot_bien"] == rec["muc"]                # bản xuất mất cụm, mục giữ nguyên
     cum = ban_xuat["dich"]["cum"]
     assert cum in ban_xuat["ban_xuat_goc"] and cum not in ban_xuat["ban_xuat_dot_bien"]
-    assert trong_muc["lop"] == "K3_rung_trong_muc" and trong_muc["trong_pham_vi"] is False
+    # 14/11/2026c: rụng NGAY TRONG MỤC thuộc phạm vi phép mới K3b (so mục với NGUỒN)
+    assert trong_muc["lop"] == "K3_rung_trong_muc" and trong_muc["trong_pham_vi"] is True
+    assert trong_muc["phep"] == "K3b" and trong_muc["truong"] == "k3b"
     assert cum not in M.chuan_hoa(trong_muc["muc_dot_bien"]["action"])
     assert trong_muc["ban_xuat_goc"] == trong_muc["ban_xuat_dot_bien"] == M.chuan_hoa(trong_muc["muc_dot_bien"]["action"])
 
@@ -185,7 +187,8 @@ def test_sinh_k4_dao_cau_ket_luan(tmp_path):
     db2 = M.sinh_k4_nguon(_rec("ITEM-02", tmp_path), NGUON["102"], 9)
     assert "reduced ejection fraction" in db2["nguon_dot_bien"] and "did not improve outcomes" in db2["nguon_dot_bien"]
     db3 = M.sinh_k4_muc(rec, NGUON["101"], 9)
-    assert db3["trong_pham_vi"] is False and db3["muc_dot_bien"]["action"].split()[0] in ("KHÔNG", "Tránh", "Không")
+    assert db3["trong_pham_vi"] is True and db3["phep"] == "K4b" and db3["truong"] == "k4b"   # phạm vi K4b từ 14/11c
+    assert db3["muc_dot_bien"]["action"].split()[0] in ("KHÔNG", "Tránh", "Không")
 
 
 # ───────────────────────── chấm: quy kết đúng chỗ ─────────────────────────
@@ -331,10 +334,13 @@ def test_khong_do_duoc_la_ma_2(tmp_path, capsys):
 
 def test_ma_thoat_theo_so_phep_do_duoc():
     def th(*n):
+        assert len(n) == len(M.PHEP)
         return {"theo_phep_trong_pham_vi": {p: {"n": k} for p, k in zip(M.PHEP, n)}}
-    assert M.ma_thoat(th(3, 2, 5, 1)) == 0
-    assert M.ma_thoat(th(3, 0, 5, 1)) == 1             # một phép CHƯA ĐO ⇒ không phải 0
-    assert M.ma_thoat(th(0, 0, 0, 0)) == 2
+    assert M.PHEP == ("K1", "K2", "K3", "K3b", "K4", "K4b")
+    assert M.ma_thoat(th(3, 2, 5, 4, 1, 6)) == 0
+    assert M.ma_thoat(th(3, 0, 5, 4, 1, 6)) == 1       # một phép CHƯA ĐO ⇒ không phải 0
+    assert M.ma_thoat(th(3, 2, 5, 0, 1, 6)) == 1       # K3b chưa đo cũng vậy
+    assert M.ma_thoat(th(0, 0, 0, 0, 0, 0)) == 2
 
 
 # ───────────────────────── chẩn đoán lý do lọt (thẩm định 14/11: quy kết K3 theo cụm K3 THỰC trích) ─────────────────────────
@@ -363,7 +369,8 @@ def test_ly_do_k3_khong_trich_cum_du_cum_bo_sinh_con_cho_khac():
                       "<p>Dùng statin ở người ≥ 75 tuổi.</p><p>Mục khác: theo dõi ở người ≥ 75 tuổi.</p>",
                       "ở người ≥ 75 tuổi")
     assert db["ket_qua"] == "lot_im"
-    assert db["k3_chan_doan"] == {"so_cum_k3": 0, "cum_k3_bi_cat": 0, "cum_k3_bi_cat_con_cho_khac": 0}
+    assert db["k3_chan_doan"] == {"so_cum_k3": 0, "cum_k3_bi_cat": 0, "cum_k3_bi_cat_con_cho_khac": 0,
+                                  "pham_vi": "tai_lieu"}
     assert db["ly_do_lot"] == "k3_khong_trich_cum"
 
 
@@ -382,13 +389,15 @@ def test_ly_do_k3_khop_cap_tai_lieu_chi_khi_cum_k3_bi_cat_con_o_muc_khac():
                       "<p>Dùng thuốc X khi eGFR ≥ 30 ml/phút.</p><p>Giảm liều thuốc Z khi eGFR ≥ 30 ml/phút.</p>",
                       "khi eGFR ≥ 30 ml/phút")
     assert db["ket_qua"] == "lot_xanh"
-    assert db["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 1}
+    assert db["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 1,
+                                  "pham_vi": "tai_lieu"}
     assert db["ly_do_lot"] == "cum_con_o_cho_khac_trong_ban_xuat"
     # cùng mục, Word KHÔNG có cụm ở chỗ khác ⇒ K3 bắt (không có lý do lọt)
     db2 = _k3_ban_xuat("Dùng thuốc X khi eGFR ≥ 30 ml/phút.", "<p>Dùng thuốc X khi eGFR ≥ 30 ml/phút.</p>",
                        "khi eGFR ≥ 30 ml/phút")
     assert db2["ket_qua"] == "bat" and db2["ly_do_lot"] is None
-    assert db2["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 0}
+    assert db2["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 0,
+                                   "pham_vi": "tai_lieu"}
 
 
 def test_ly_do_k3_khong_chan_doan_duoc_la_khac():
@@ -426,12 +435,16 @@ def test_tong_hop_k3_quy_ket_va_do_nhay_neu_so_theo_tung_muc():
 
 def test_k1_trong_tu_dien_hoi_bo_kiem_that():
     assert M.k1_trong_tu_dien("trẻ em", "nhi khoa") is True
-    assert M.k1_trong_tu_dien("trẻ em", "bệnh nhi") is False              # bộ SINH nhận, bộ KIỂM không
-    assert M.k1_trong_tu_dien("người lớn", "người trưởng thành") is False
-    assert M.k1_trong_tu_dien("HFpEF", "suy tim phân suất tống máu còn bảo tồn") is False
+    # 14/11/2026c: từ điển bộ kiểm đã mở rộng — các cách viết từng lọt im nay được nhận
+    assert M.k1_trong_tu_dien("trẻ em", "bệnh nhi") is True
+    assert M.k1_trong_tu_dien("trẻ em", "trẻ vị thành niên") is True
+    assert M.k1_trong_tu_dien("người lớn", "người trưởng thành") is True
+    assert M.k1_trong_tu_dien("HFpEF", "suy tim phân suất tống máu còn bảo tồn") is True
+    assert M.k1_trong_tu_dien("HFrEF", "suy tim PSTM giảm") is True
     assert M.k1_trong_tu_dien("ĐTĐ típ 1", "ĐTĐ tuýp 1") is True
-    assert M.k1_trong_tu_dien("ĐTĐ típ 1", "ĐTĐ1") is False
+    assert M.k1_trong_tu_dien("ĐTĐ típ 1", "ĐTĐ1") is True
     assert M.k1_trong_tu_dien("ngoài thai kỳ", "phụ nữ không mang thai") is True
+    assert M.k1_trong_tu_dien("trẻ em", "trẻ nhỏ") is False               # vẫn có cách viết ngoài từ điển — hàm phải nói thật
 
 
 def test_tong_hop_k1_tach_trong_ngoai_tu_dien(tmp_path):
@@ -451,13 +464,19 @@ def test_tong_hop_k1_tach_trong_ngoai_tu_dien(tmp_path):
 def test_chan_doan_nguon_dem_doan_chuan_hoa_xoa():
     ngan = "LNM risk < 3 % in group A and > 5 % in group B."
     dai = "Rate < 2 " + "x" * 250 + " > end. Drug Z is not recommended."
-    nguon = {"1": ngan, "2": dai, "3": "No comparison signs at all."}
+    the = "Drug <i>X</i> reduced events."
+    nguon = {"1": ngan, "2": dai, "3": "No comparison signs at all.", "4": the}
+    # mẫu CŨ (trước bản vá 14/11/2026): mọi «<…>» là thẻ ⇒ 3 nguồn bị cắt, có đoạn > 200 ký tự
+    assert [len(M.vung_bi_cat(nguon[k], mau_cu=True)) for k in "1234"] == [1, 1, 0, 2]
     cd = M.chan_doan_nguon(nguon)
-    assert cd["so_nguon"] == 3 and cd["nguon_bi_cat"] == 2 and cd["nguon_bi_cat_tren_200_ky_tu"] == 1
-    assert cd["ky_tu_bi_cat"] == len("< 3 % in group A and >") + len("< 2 " + "x" * 250 + " >")
+    # mẫu bộ kiểm ĐANG dùng cho nguồn: chỉ thẻ định dạng nội dòng ⇒ chỉ nguồn «4» bị bỏ (đúng 2 thẻ <i>, </i>)
+    assert cd["so_nguon"] == 4 and cd["nguon_bi_cat"] == 1 and cd["nguon_bi_cat_tren_200_ky_tu"] == 0
+    assert cd["ky_tu_bi_cat"] == len("<i>") + len("</i>") and cd["nguon_bi_cat_neu_mau_cu"] == 3
     assert cd["ky_tu_tong"] == sum(len(v) for v in nguon.values())
-    # gắn với hành vi THẬT của bộ kiểm: đúng đoạn đó biến mất sau chuan_hoa
-    assert "group a" not in M.chuan_hoa(ngan) and "group b" in M.chuan_hoa(ngan)
+    # gắn với hành vi THẬT của bộ kiểm: chữ giữa «<» so sánh và «>» không còn bị xoá
+    kq = M._kq()
+    assert "group a" in kq.chuan_hoa_nguon(ngan) and "not recommended" in kq.chuan_hoa_nguon(dai)
+    assert kq.chuan_hoa_nguon(the) == "drug x reduced events."
 
 
 def test_ban_md_tom_tat_ghi_rieng_phan_trong_tu_dien(tmp_path):
