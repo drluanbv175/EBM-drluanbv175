@@ -886,8 +886,14 @@ def giac_quan_bo_canh_nen(thu_muc_la: Path | None = None, thu_muc_tools: Path | 
     ② Sức khoẻ bộ canh lịch nền: gọi THẲNG hàm `suc_khoe()` của `canh_lich_nen_email.py` (import, không parse chuỗi in; công
        cụ không có `--json`) với sổ lượt chạy + kết quả đo plist ở ①:
          mã 0 (khoẻ) ⇒ không dòng nào · mã 1 ⇒ 🛎 (phiên Claude chạy tay công cụ để chẩn), RIÊNG nhãn lượt cuối
-         `kenh_chua_bat` ⇒ 👤 (bật kênh = điền khoá cấu hình trong kho secrets — máy không được đụng) · mã 3 ⇒ 👤 «chưa cài».
-       Đã đo ở ① là CHƯA cài (mã 3 chắc chắn) thì không thêm dòng — dòng gộp của ① đã nói, không nhân đôi.
+         `kenh_chua_bat` ⇒ 👤 với lệnh `python3 tools/nhap_kenh_canh_bao.py` (công cụ nhập kênh chuyên trách, CHỈ BÁC SĨ
+         TỰ CHẠY, ô nhập ẩn — máy không đụng kho secrets). KHÔNG chỉ `--xem-truoc`: nhánh đó không đo kênh, lịch xanh thì
+         in «🟢 Không có lỗi đỏ» ⇒ xanh giả ngay trên đường khắc phục (thẩm định PR #346). Kênh chưa bật mà agent đã cài
+         còn > `HAN_CU_GIAY` không có lượt mới ⇒ thêm MỘT dòng 🛎 riêng (agent không chạy là việc máy chẩn được, không
+         trộn vào việc của bác sĩ). Sổ thiếu mốc lượt cuối ⇒ 🛎 «sổ hỏng», dù nhãn còn sót là `kenh_chua_bat`.
+         mã 3 ⇒ chỉ khi ① ĐO ĐƯỢC là chưa cài; khi đó dòng gộp của ① đã nói ⇒ không thêm dòng, không nhân đôi. Mã 3 với
+         `da_cai` None (không phải macOS, hoặc không đọc được nhãn/plist) = «chưa có lượt chạy, không biết đã cài chưa»:
+         ① đã ghi ⚪ «không đo được» ⇒ KHÔNG thêm dòng 👤 «chưa cài» lặp lại mỗi phiên (docstring `suc_khoe`).
 
     Trả (ưu tiên, nhãn, mô tả, lệnh). Tham số chỉ để test chạy trên thư mục tạm (không đọc ~/Library thật)."""
     nen_tang = nen_tang or sys.platform
@@ -941,15 +947,25 @@ def giac_quan_bo_canh_nen(thu_muc_la: Path | None = None, thu_muc_tools: Path | 
     lenh_chan = "python3 tools/canh_lich_nen_email.py  # chạy tay: đo lại + in lý do"
     if ma == 1:
         lan = so.get("lan_chay_cuoi") if isinstance(so.get("lan_chay_cuoi"), dict) else {}
-        if lan.get("ket_qua") == "kenh_chua_bat":
-            ra.append((2, "👤", _bo_dau_trang_thai(dong) + " — bật kênh = điền khoá ENABLE_EMAIL_ALERTS/SMTP_*/ALERT_EMAIL_TO "
-                       "trong kho secrets (việc của bác sĩ; máy không đụng kho secrets)",
-                       "python3 tools/canh_lich_nen_email.py --xem-truoc  # công cụ in TÊN khoá còn thiếu, không in giá trị"))
+        try:
+            luc: float | None = float(lan.get("luc"))
+        except (TypeError, ValueError):
+            luc = None  # suc_khoe đã báo «sổ hỏng» — nhãn còn sót không được đẩy thành việc bác sĩ
+        if luc is not None and lan.get("ket_qua") == "kenh_chua_bat":
+            ra.append((2, "👤", f"bộ canh lịch nền: kênh email CHƯA bật (lượt cuối {dt.datetime.fromtimestamp(luc):%H:%M %d/%m})"
+                       " — lỗi đỏ của lịch nền KHÔNG tới được bác sĩ. Bác sĩ tự nhập kênh (ô nhập ẩn; máy không đụng kho "
+                       "secrets, không xem giá trị)",
+                       "python3 tools/nhap_kenh_canh_bao.py  # bác sĩ tự chạy (ô nhập ẩn); xem khoá thiếu: "
+                       "python3 tools/canh_lich_nen_email.py"))
+            # Lý do thứ hai cùng dòng của suc_khoe (agent đã cài mà quá hạn không có lượt) là việc máy chẩn được ⇒ 🛎 riêng.
+            if da_cai_email is True and bay_gio - luc > ce.HAN_CU_GIAY:
+                ra.append((2, "🛎", _bo_dau_trang_thai(dong), lenh_chan))
         else:
             ra.append((2, "🛎", _bo_dau_trang_thai(dong), lenh_chan))
-    elif ma == 3:
-        ra.append((2, "👤", _bo_dau_trang_thai(dong),
-                   "python3 tools/canh_lich_nen_email.py --cai-launchd  # in plist/hướng dẫn cài; macOS thêm --ap-dung"))
+    elif ma == 3 and da_cai_email is None:
+        # Chưa có lượt chạy, không biết đã cài chưa (da_cai False đã return ở trên): ① đã ghi ⚪ «không đo được» — không
+        # nhắc «chưa cài» giả mỗi phiên. Mã 3 khi ① đo được là ĐÃ cài thì rơi xuống «mã lạ» bên dưới, không bị nuốt.
+        pass
     elif ma != 0:
         _ghi_chet(["", "sức khoẻ bộ canh lịch nền"], f"mã lạ {ma}")
     return ra

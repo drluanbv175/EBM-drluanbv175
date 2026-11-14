@@ -1,8 +1,9 @@
 """Giác quan BỘ CANH NỀN của hòm việc (14/11/2026) — `tu_de_xuat_viec.giac_quan_bo_canh_nen`.
 
 Hai giác quan CHỈ ĐỌC: ① ba bộ canh nền (canh_dia_onedrive · canh_mang_vpn · canh_lich_nen_email) đã có plist launchd chưa
-— gộp MỘT dòng 👤; ② sức khoẻ bộ canh lịch nền qua `canh_lich_nen_email.suc_khoe()` — mã 1 ⇒ 🛎 (riêng kênh chưa bật ⇒ 👤),
-mã 3 ⇒ 👤. «Không đo được» ⇒ giác quan chết (⚪), KHÔNG BAO GIỜ 🟢.
+— gộp MỘT dòng 👤; ② sức khoẻ bộ canh lịch nền qua `canh_lich_nen_email.suc_khoe()` — mã 1 ⇒ 🛎 (riêng kênh chưa bật ⇒ 👤
+nhập kênh bằng `nhap_kenh_canh_bao.py`, lý do khác kèm theo vẫn 🛎 riêng), mã 3 ⇒ 👤 chỉ khi ĐO ĐƯỢC là chưa cài. «Không đo
+được» ⇒ giác quan chết (⚪), KHÔNG BAO GIỜ 🟢.
 
 Mọi phép thử chạy trên thư mục tạm (LaunchAgents giả, sổ giả) — KHÔNG đọc ~/Library thật. Nhãn launchd đọc từ mã nguồn
 THẬT của ba công cụ (đúng đường giác quan đi trên máy thật).
@@ -155,9 +156,60 @@ def test_khong_phai_macos_la_giac_quan_chet(tmp_path) -> None:
     ra = _goi(la, _so(tmp_path, "xanh"), nen_tang="win32")
     assert any("bộ canh nền launchd" in c for c in T._GIAC_QUAN_CHET), "nền tảng không có launchd phải là ⚪"
     assert ra == []
-    ra2 = _goi(la, tmp_path / "khong-co-so.json", nen_tang="linux")
-    assert len(ra2) == 1 and ra2[0][1] == "👤" and "--cai-launchd" in ra2[0][3], ra2
-    _khong_xanh(ra2)
+    # Chưa từng chạy mà KHÔNG biết đã cài hay chưa (suc_khoe mã 3, da_cai None): ⚪ của ① đã nói «không đo được» — không
+    # thêm dòng 👤 «chưa cài» kèm lệnh --cai-launchd lặp lại mỗi phiên (docstring suc_khoe: «không nhắc giả mỗi phiên»).
+    for nen_tang in ("linux", "win32"):
+        T._GIAC_QUAN_CHET.clear()
+        ra2 = _goi(la, tmp_path / "khong-co-so.json", nen_tang=nen_tang)
+        assert ra2 == [], f"{nen_tang}: không biết đã cài mà vẫn nhắc «chưa cài»: {ra2}"
+        assert any("bộ canh nền launchd" in c for c in T._GIAC_QUAN_CHET), f"{nen_tang}: phải còn ⚪ — không im lặng"
+
+
+def test_mac_khong_doc_duoc_nhan_email_va_chua_co_luot_khong_nhac_chua_cai(tmp_path) -> None:
+    """macOS nhưng không đọc được nhãn của bộ canh email (da_cai None) + sổ trống ⇒ ⚪ ở ①, không dòng 👤 «chưa cài»."""
+    tools_gia = tmp_path / "tools"
+    tools_gia.mkdir()
+    for tep in ("canh_dia_onedrive.py", "canh_mang_vpn.py"):
+        (tools_gia / tep).write_text((_TOOLS / tep).read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    goc = (_TOOLS / "canh_lich_nen_email.py").read_text(encoding="utf-8")
+    assert "\nNHAN_LAUNCHD = " in goc, "mã nguồn bộ canh email đổi cách khai nhãn — phép thử không đo được"
+    (tools_gia / "canh_lich_nen_email.py").write_text(goc.replace("\nNHAN_LAUNCHD = ", "\nNHAN_LAUNCHD: str = ", 1),
+                                                      encoding="utf-8", newline="\n")
+    la = _cai(tmp_path / "LaunchAgents", "canh_dia_onedrive.py", "canh_mang_vpn.py")
+    ra = _goi(la, tmp_path / "khong-co-so.json", tools=tools_gia)
+    assert any("canh_lich_nen_email.py: không đọc được NHAN_LAUNCHD" in c for c in T._GIAC_QUAN_CHET), T._GIAC_QUAN_CHET
+    assert ra == [], f"không biết đã cài mà vẫn nhắc «chưa cài»: {ra}"
+
+
+def test_thu_muc_ten_plist_khong_tinh_la_da_cai(tmp_path) -> None:
+    """Một THƯ MỤC tên «<nhãn>.plist» không phải agent launchd — vẫn là «chưa cài» (khoá S_ISREG)."""
+    la = tmp_path / "LaunchAgents"
+    la.mkdir()
+    for tep in _BA_TEP:
+        (la / f"{_nhan(tep)}.plist").mkdir()
+    ra = _goi(la, tmp_path / "khong-co-so.json")
+    assert len(ra) == 1 and ra[0][1] == "👤" and "3/3" in ra[0][2], ra
+    assert T._GIAC_QUAN_CHET == []
+
+
+@pytest.mark.parametrize("ma_gia", [7, 3])
+def test_ma_la_tu_suc_khoe_la_giac_quan_chet_khong_nuot_im_lang(tmp_path, ma_gia) -> None:
+    """`suc_khoe` trả mã ngoài {0, 1, 3} — hoặc mã 3 trong khi ① đo được là ĐÃ cài (công cụ không bao giờ trả thế) ⇒ giác
+    quan chết «mã lạ», không dòng việc, không im lặng."""
+    tools_gia = tmp_path / "tools"
+    tools_gia.mkdir()
+    for tep in ("canh_dia_onedrive.py", "canh_mang_vpn.py"):
+        (tools_gia / tep).write_text((_TOOLS / tep).read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    (tools_gia / "canh_lich_nen_email.py").write_text(
+        f'NHAN_LAUNCHD = "{_nhan("canh_lich_nen_email.py")}"\n'
+        "TEP_STATE = None\n"
+        "def doc_state(duong_dan=None):\n    return {}\n"
+        f"def suc_khoe(st, bay_gio, da_cai):\n    return {ma_gia}, \"x\"\n",
+        encoding="utf-8", newline="\n")
+    la = _cai(tmp_path / "LaunchAgents", *_BA_TEP)
+    ra = _goi(la, tmp_path / "khong-co-so.json", tools=tools_gia)
+    assert ra == [], ra
+    assert any("sức khoẻ bộ canh lịch nền" in c and f"mã lạ {ma_gia}" in c for c in T._GIAC_QUAN_CHET), T._GIAC_QUAN_CHET
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -177,7 +229,35 @@ def test_kenh_chua_bat_la_viec_bac_si(tmp_path) -> None:
     la = _cai(tmp_path / "LaunchAgents", *_BA_TEP)
     ra = _goi(la, _so(tmp_path, "kenh_chua_bat"))
     assert len(ra) == 1 and ra[0][1] == "👤", ra
-    assert "kho secrets" in ra[0][2] and "--xem-truoc" in ra[0][3]
+    uu, ai, viec, lenh = ra[0]
+    # Lệnh khắc phục phải là công cụ nhập kênh chuyên trách (bác sĩ tự chạy, ô nhập ẩn). `--xem-truoc` KHÔNG đo kênh: lịch
+    # xanh thì nó in «🟢 Không có lỗi đỏ» — làm theo hòm việc sẽ nhận một dòng xanh giả ngay trên đường khắc phục.
+    assert "python3 tools/nhap_kenh_canh_bao.py" in lenh, lenh
+    assert "--xem-truoc" not in lenh, lenh
+    assert "giờ không có lượt mới" not in viec, "dòng 👤 chỉ được mang lý do kênh"
+    _khong_xanh(ra)
+
+
+def test_kenh_chua_bat_va_agent_qua_48_gio_tach_hai_dong(tmp_path) -> None:
+    """Hai lý do khác chủ: kênh chưa bật (👤 bác sĩ nhập kênh) + agent đã cài mà > 48 giờ không có lượt (🛎 máy chẩn được)."""
+    la = _cai(tmp_path / "LaunchAgents", *_BA_TEP)
+    ra = _goi(la, _so(tmp_path, "kenh_chua_bat", cach_giay=50 * 3600))
+    assert sorted(r[1] for r in ra) == sorted(["👤", "🛎"]), ra
+    bac_si = next(r for r in ra if r[1] == "👤")
+    chuong = next(r for r in ra if r[1] == "🛎")
+    assert "nhap_kenh_canh_bao.py" in bac_si[3] and "giờ không có lượt mới" not in bac_si[2], bac_si
+    assert "giờ không có lượt mới" in chuong[2] and "nhap_kenh_canh_bao" not in chuong[3], chuong
+    _khong_xanh(ra)
+
+
+def test_so_hong_mang_nhan_kenh_chua_bat_la_chuong_khong_phai_viec_bac_si(tmp_path) -> None:
+    """Sổ thiếu mốc lượt cuối thì suc_khoe báo «sổ hỏng» — nhãn kenh_chua_bat còn sót không được đẩy thành việc bác sĩ."""
+    la = _cai(tmp_path / "LaunchAgents", *_BA_TEP)
+    tep = tmp_path / "state" / "canh-lich-nen-email.json"
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    tep.write_text(json.dumps({"lan_chay_cuoi": {"ket_qua": "kenh_chua_bat"}}), encoding="utf-8", newline="\n")
+    ra = _goi(la, tep)
+    assert len(ra) == 1 and ra[0][1] == "🛎" and "hỏng" in ra[0][2], ra
 
 
 def test_da_cai_ma_qua_48_gio_khong_co_luot_moi_la_chuong(tmp_path) -> None:
