@@ -9,9 +9,12 @@ này chỉ đọc file và git index; không tự sửa/sync.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -166,6 +169,121 @@ def check_nhat_ky_su_co(tep_cu: Path | None = None, thu_muc: Path | None = None,
     ket_qua: dict[str, Any] = {"name": "nhat_ky_su_co", "status": "FAIL" if loi else "PASS"}
     if loi:
         ket_qua["errors"] = loi
+    return ket_qua
+
+
+# Doctrine không được nhắc tác vụ lịch đã bỏ (14/11/2026, hướng hoàn thiện (1) sau tầng 1–2).
+# Hai lần lỗi thời có thật: 13/11 bác sĩ gộp lịch nội dung thành MỘT tác vụ tháng và bỏ tác vụ quý
+# thang điểm, nhưng CLAUDE.md §1(c) vẫn ghi «tác vụ lịch `goi-duyet-tuan-ebm`» và §10 vẫn ghi
+# «tác vụ `kiem-thang-diem-quy`» — phiên sau đọc doctrine sẽ tin một lịch không còn bắn. Chỉ lượt
+# kiểm tháng 14/11 bắt được bằng mắt (audit/nhat-ky/2026-11-14-claude-md-loi-thoi-kiem-thang.md).
+# Mỗi tên đã bỏ kèm tệp nhật ký ghi lời bác sĩ; test đòi tên có mặt trong đúng tệp đó.
+# Bỏ thêm tác vụ ⇒ thêm một dòng ở đây trong CÙNG PR xoá thư mục sync/scheduled-tasks/<tên>/.
+TAC_VU_LICH_DA_BO: dict[str, str] = {
+    "thu-thap-tuan-an-toan-thuoc": "audit/nhat-ky/2026-11-13-gop-lich-nen-mot-tac-vu-thang.md",
+    # Còn là QUY TRÌNH (sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md) mà tác vụ tháng đọc ⇒
+    # nhắc tên vẫn hợp lệ; chỉ gọi nó là «tác vụ …» mới sai.
+    "goi-duyet-tuan-ebm": "audit/nhat-ky/2026-11-13-gop-lich-nen-mot-tac-vu-thang.md",
+    "giam-sat-9-tram-web-hoi-tuan": "audit/nhat-ky/2026-11-13-gop-lich-nen-mot-tac-vu-thang.md",
+    "cap-nhat-thang-thu-muc-endnote": "audit/nhat-ky/2026-11-13-gop-lich-nen-mot-tac-vu-thang.md",
+    "giam-sat-acc-aha-quy": "audit/nhat-ky/2026-11-13-gop-lich-nen-mot-tac-vu-thang.md",
+    "kiem-thang-diem-quy": "audit/nhat-ky/2026-11-13-bo-tac-vu-kiem-thang-diem-quy.md",
+}
+THU_MUC_TAC_VU_LICH = ROOT / "sync" / "scheduled-tasks"
+SO_LICH_KY_VONG = ROOT / "sync" / "lich-nen-ky-vong.json"
+
+_TEN_KEBAB = r"[a-z0-9]+(?:-[a-z0-9]+)+"
+_LA_KEBAB = re.compile(rf"{_TEN_KEBAB}\Z")
+# «tác vụ [lịch|nền|tháng|quý|tuần|…] `tên`[, `tên` …]» — văn bản nói tên đó LÀ một tác vụ lịch.
+# Chỉ nhận tên trong dấu huyền đứng NGAY sau cụm «tác vụ …» (cho phép «:» hoặc «(» xen giữa),
+# nên «Tác vụ lịch (app Claude trên Mac): đo sống bằng `list_scheduled_tasks`» không bị bắt.
+_NGU_CANH_TAC_VU = re.compile(
+    r"tác vụ(?:\s+(?:lịch|nền|tháng|quý|tuần|ngày|định kỳ|hằng\s+\w+))*\s*[:(]?\s*"
+    r"((?:`[^`\n]+`(?:\s*(?:,|·|/|và|hoặc)\s*)?)+)",
+    re.IGNORECASE)
+_TEN_TRONG_HUYEN = re.compile(r"`([^`\n]+)`")
+# Đường dẫn tới thư mục một tác vụ: phải là thư mục có thật trong nguồn git.
+_DUONG_DAN_TAC_VU = re.compile(rf"scheduled-tasks/({_TEN_KEBAB})(?![a-z0-9-])")
+
+
+def _dong(van_ban: str, vi_tri: int) -> int:
+    return van_ban.count("\n", 0, vi_tri) + 1
+
+
+def check_tac_vu_lich_trong_doctrine(
+        tai_lieu: dict[str, Path] | None = None,
+        thu_muc_tac_vu: Path | None = None,
+        so_ky_vong: Path | None = None,
+        da_bo: dict[str, str] | None = None) -> dict[str, Any]:
+    """Chặn doctrine (CLAUDE.md, AGENTS.md gốc) nhắc tác vụ lịch đã bỏ hoặc không tồn tại.
+
+    Ba luật, đối chiếu với tập tên CÒN SỐNG = thư mục `sync/scheduled-tasks/*` có SKILL.md ∪ `id` trong
+    `sync/lich-nen-ky-vong.json`:
+      1. Tên đứng sau cụm «tác vụ …» phải còn sống VÀ không nằm trong `TAC_VU_LICH_DA_BO`
+         (bắt «tác vụ lịch `goi-duyet-tuan-ebm`»: thư mục còn vì là quy trình, lịch thì đã bỏ).
+      2. Đường dẫn `scheduled-tasks/<tên>` phải trỏ thư mục có thật.
+      3. Tên đã bỏ mà không còn ở dạng nào (không thư mục, không sổ kỳ vọng) ⇒ cấm nhắc ở bất cứ
+         đâu, kể cả ngoài dấu huyền.
+    Không đọc được sổ kỳ vọng hoặc thư mục nguồn ⇒ FAIL (không đo được không phải «ổn»).
+    """
+    tai_lieu = ROOT_DOCS if tai_lieu is None else tai_lieu
+    thu_muc = thu_muc_tac_vu or THU_MUC_TAC_VU_LICH
+    so = so_ky_vong or SO_LICH_KY_VONG
+    da_bo = TAC_VU_LICH_DA_BO if da_bo is None else da_bo
+    loi: list[str] = []
+
+    if not thu_muc.is_dir():
+        loi.append(f"không thấy thư mục nguồn tác vụ lịch {thu_muc} — không đối chiếu được")
+        thu_muc_song: set[str] = set()
+    else:
+        # Chỉ thư mục CÓ SKILL.md mới là nguồn sống: thư mục rỗng/sót lại sau khi `git rm` (OneDrive
+        # hay để lại) không được làm một tác vụ đã xoá trông như còn.
+        thu_muc_song = {p.name for p in thu_muc.iterdir() if (p / "SKILL.md").is_file()}
+    try:
+        id_ky_vong = {str(t["id"]) for t in json.loads(so.read_text(encoding="utf-8"))["tac_vu"]}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        loi.append(f"không đọc được sổ kỳ vọng {so} ({type(exc).__name__}) — không đối chiếu được")
+        id_ky_vong = set()
+    song = thu_muc_song | id_ky_vong
+
+    for ten in sorted(set(da_bo) & id_ky_vong):
+        loi.append(f"`{ten}` vừa nằm trong TAC_VU_LICH_DA_BO vừa có trong sổ kỳ vọng — tác vụ được "
+                   "khôi phục thì gỡ khỏi danh sách đã bỏ, đã bỏ thì gỡ khỏi sổ")
+
+    for nhan, duong in tai_lieu.items():
+        if not duong.exists():
+            loi.append(f"không thấy {duong}")
+            continue
+        # Chuẩn hoá NFC: «tác vụ» gõ ở dạng tổ hợp (NFD) không được lọt khỏi luật 1.
+        van_ban = unicodedata.normalize("NFC", _read(duong))
+        for m in _NGU_CANH_TAC_VU.finditer(van_ban):
+            for ten in _TEN_TRONG_HUYEN.findall(m.group(1)):
+                if not _LA_KEBAB.match(ten):
+                    continue
+                if ten in da_bo:
+                    loi.append(f"{nhan}:{_dong(van_ban, m.start())}: gọi `{ten}` là tác vụ lịch nhưng "
+                               f"tác vụ đó ĐÃ BỎ (nguồn: {da_bo[ten]})")
+                elif ten not in song:
+                    loi.append(f"{nhan}:{_dong(van_ban, m.start())}: gọi `{ten}` là tác vụ lịch nhưng "
+                               "không có trong sync/scheduled-tasks/ lẫn sync/lich-nen-ky-vong.json")
+        for m in _DUONG_DAN_TAC_VU.finditer(van_ban):
+            if m.group(1) not in thu_muc_song:
+                loi.append(f"{nhan}:{_dong(van_ban, m.start())}: đường dẫn scheduled-tasks/{m.group(1)} "
+                           "không có thư mục trong sync/scheduled-tasks/")
+        for ten, nguon in sorted(da_bo.items()):
+            if ten in song:
+                continue
+            for m in re.finditer(rf"(?<![a-z0-9-]){re.escape(ten)}(?![a-z0-9-])", van_ban):
+                loi.append(f"{nhan}:{_dong(van_ban, m.start())}: nhắc tác vụ lịch đã bỏ `{ten}` "
+                           f"(nguồn: {nguon}) — doctrine chỉ giữ luật thường trực, lịch sử ở nhật ký")
+
+    ket_qua: dict[str, Any] = {
+        "name": "doctrine_tac_vu_lich",
+        "status": "FAIL" if loi else "PASS",
+    }
+    if loi:
+        # Cùng một tên nhắc hai lần trên một dòng cho ra hai thông điệp y hệt — giữ thứ tự, bỏ trùng.
+        ket_qua["errors"] = list(dict.fromkeys(loi))
     return ket_qua
 
 
@@ -329,6 +447,7 @@ def run_verification() -> dict[str, Any]:
         check_root_docs(),
         check_claude_md_budget(),
         check_nhat_ky_su_co(),
+        check_tac_vu_lich_trong_doctrine(),
         check_medical_docs(),
         check_tracked_contract_files(),
         check_agent_sync_health(),
