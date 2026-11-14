@@ -1,22 +1,22 @@
 {
-  "sinh_luc": "2026-11-04T04:51:50",
+  "sinh_luc": "2026-11-14T08:20:46",
   "may": "Mac",
   "co_du_lieu_dashboard_that": true,
   "bo_dem": {
     "do_tuoi_chung_cu": {
-      "ma_thoat": 1,
-      "stdout": "🟡 GIÁM SÁT CHỨNG CỨ QUÁ HẠN\n   • 5 chủ đề chưa xem lại quá 120 ngày: RA_EULAR2024 (129ng), RA_TimMach (127ng), RA_Than (127ng) và 2 chủ đề nữa. Chạy `~/.ebm-venv/bin/python ops/orchestrator.py --cu-nhat 3 --online` (máy làm phần quét/kiểm) rồi `/cap-nhat-chung-cu <chủ đề>` cho mục cần trước.\n   77 chủ đề · trung vị 15 ngày kể từ lần xem lại · 27 chủ đề quá 35 ngày\n   Lâu nhất: RA_EULAR2024 (129ng) · RA_TimMach (127ng) · RA_Than (127ng) · RA_TimMachChuyenHoaNoiTiet (122ng) · NhiKhoa_SocPhanVe (121ng)\n   (11 bản tin gộp không tính vào «lâu nhất» — không thể làm mới thành một chủ đề)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)\n   (Chốt này chỉ NHẮC — quét chứng cứ phải do bác sĩ chủ động và duyệt kết quả.)",
+      "ma_thoat": 0,
+      "stdout": "🟢 HỆ GIÁM SÁT còn hoạt động — gói mới nhất 14/11/2026\n   114 chủ đề · trung vị 2 ngày kể từ lần xem lại · 11 chủ đề quá 35 ngày\n   Lâu nhất: BenhMachMauNao_HopNhat (27ng) · COPD (25ng) · BenhDMCanh_DuPhongDotQuy (25ng) · ViemDaDayThanKinh (25ng) · Orlistat_AKI_FDA (25ng)\n   (12 bản tin gộp không tính vào «lâu nhất» — không thể làm mới thành một chủ đề)\n   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi\n    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)",
       "stderr": ""
     },
     "quyet_dinh_da_duyet": {
       "ma_thoat": 0,
-      "stdout": "CHỐT QUYẾT ĐỊNH ĐÃ DUYỆT — 38 mục trong sổ\nKẾT: ✓ 38 còn nguyên · 🔴 0 tái phạm · ⚪ 0 không kiểm được.\nChốt chỉ ĐO — muốn áp lại quyết định, bác sĩ ra lệnh riêng. Cần bác sĩ kiểm chứng.",
+      "stdout": "CHỐT QUYẾT ĐỊNH ĐÃ DUYỆT — 278 mục trong sổ\nKẾT: ✓ 278 còn nguyên · 🔴 0 tái phạm · ⚪ 0 không kiểm được.\nChốt chỉ ĐO — muốn áp lại quyết định, bác sĩ ra lệnh riêng. Cần bác sĩ kiểm chứng.",
       "stderr": ""
     },
     "tu_de_xuat_viec": {
       "ma_thoat": 0,
-      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-11-04 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  Giác quan đo được: 244/244\n  🔴 👤 8 cặp hai-bản-nói-ngược cùng PMID — bác sĩ quyết bản đúng\n       → python3 tools/dang_ky_chu_de.py\n  🟠 🛎 2 chủ đề có tầng 0 ứng viên nhiều lượt mà CHƯA có số đo sản lượng tin được (0 ứng viên ≠ không có chứng cứ mới) — máy đo để biết truy vấn có mù không (số đo sản lượng lưu cũ hơn 9 ngày, khác watchlist hiện hành hoặc đo không trọn): Vẩy nến (Psoriasis) [2 lượt W44–W45]; Viêm gan B mạn — điều trị [3 lượt W43–W45]\n       → python3 tools/kiem_san_luong_giam_sat.py --json state/san-luong-giam-sat-gan-nhat.json --dung-lai-neu-moi-hon-ngay 2\n  🟠 🤖 6 lượt điểm-khám NGOÀI giám sát — rà ứng viên mở watchlist\n       → đọc state/cau-hoi-chua-giam-sat.jsonl trong gói tuần\n  🟡 🤖 Phủ sổ xác minh: 222 mục chưa/hết hạn (đo trên TOÀN sổ)\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3 ; ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --quet-ledger --vong 3 ; ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3\n  🟡 🤖 Chỉ mục RAG cũ hơn kho toàn văn — dựng lại\n       → ~/.ebm-venv/bin/python tools/rag_toan_van.py --dung-index\n  🟡 🤖 Repo gốc: 3 file chưa commit · 0 commit chưa có trên remote nào — soi rồi commit/push (file/nhánh của phiên khác thì ĐỂ NGUYÊN — chỉ đẩy bản sao `rescue/<nhánh>`)\n       → git -C \"Claude AI\" status -sb\n  🟡 🤖 Repo y khoa: 1 file chưa commit · 2 commit chưa có trên remote nào (ở 2 nhánh cục bộ: claude/btm-dtd2-ho-so-de-tai-20261027, claude/dashboard-nhanh-dich-may-20261027) — soi rồi commit/push (file/nhánh của phiên khác thì ĐỂ NGUYÊN — chỉ đẩy bản sao `rescue/<nhánh>`)\n       → git -C \"medical-ebm-automation\" log --branches --not --remotes --oneline\n  🟡 👤 Nhóm EndNote «_Cho thung rac 2026-11-03 5 ban trung Suy tim NCT» còn 5/5 bản ghi chờ bác sĩ chuyển vào thùng rác\n       → bấm đúp «Chuyen Nhom Vao Thung Rac.command» ở gốc repo\n  🟡 🛎 28 bản ghi EndNote chờ đưa vào nhóm «Tác động dược lý của các thuốc lên giấc ngủ» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Tác động dược lý của các thuốc lên giấc ngủ\"\n  🟡 🛎 1 bản ghi EndNote chờ đưa vào nhóm «EBM · Polyp đại trực tràng — kỹ thuật cắt polyp, khoảng nội soi theo d» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"EBM · Polyp đại trực tràng — kỹ thuật cắt polyp, khoảng nội soi theo dõi, polyp ác tính và đọc kết quả gi…\"\n  🟡 🛎 66 bản ghi EndNote chờ đưa vào nhóm «Sleep Psychiatry» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Sleep Psychiatry\"\n  🟡 🛎 52 bản ghi EndNote chờ đưa vào nhóm «Neuropathic Pain» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Neuropathic Pain\"\n  🟡 🛎 47 bản ghi EndNote chờ đưa vào nhóm «Valvular Heart Disease (Bệnh van tim)» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Valvular Heart Disease (Bệnh van tim)\"\n  🟡 🛎 51 bản ghi EndNote chờ đưa vào nhóm «Đa bệnh lý (multimorbidity) hoặc bệnh mạn tính ở người cao tuổi» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Đa bệnh lý (multimorbidity) hoặc bệnh mạn tính ở người cao tuổi\"\n  🟡 🛎 58 bản ghi EndNote chờ đưa vào nhóm «Suy tim ở người cao tuổi» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Suy tim ở người cao tuổi\"\n  🟡 🛎 31 bản ghi EndNote chờ đưa vào nhóm «Heart Failure and Neuropsychiatric Comorbidity» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Heart Failure and Neuropsychiatric Comorbidity\"\n  🟡 🛎 260 trích dẫn MỚI + 3 bản ghi CŨ tầng ngoại lệ mốc (bác sĩ chọn tóm tắt — `ngoai-le-moc`) có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)\n       → python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨\n  🟡 👤 22 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-10-29.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-10-29.md\n  🟡 👤 2 PR chờ bác sĩ gộp — gốc: #282 · y khoa: #212 (CI xanh 2/2; cũ nhất 34 giờ)\n       → nêu SỐ PR muốn gộp trong chat (gh --auto không chờ CI ở repo này)\n  🟡 👤 18/29 thẻ gói tuan-2026-W45 chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp rồi ghi `--bac-si-da-doc <PMID> --ghi-chu \"<kết luận>\" --ghi`; tới lúc đó thẻ giữ trần «Cân nhắc»\n       → python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-2026-W45.md  # rồi --huong-dan\n  ⓘ Repo gốc: 91 commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên origin/master (trùng bản vá/gộp squash) — không còn việc; nhánh cục bộ chỉ còn bản đã gộp: chore/do-song-07-18-10, chore/loai-semantic-scholar-so-nguon, chore/moc-plugin-sau-go-aipoch-20261024, claude/antifacts-tien-do-de-tai-20261027…\n  ⓘ Repo y khoa: 130 commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên origin/feat/r1-1-2-design-gap-remediation (trùng bản vá/gộp squash) — không còn việc; nhánh cục bộ chỉ còn bản đã gộp: chore/loai-semantic-scholar, claude/c1a-g0-pi-chot-20261011, claude/c1a-g2-ho-so-irb-20261003, claude/c1a-pi-chot-g3-g4-g10-20261014…\n  ⓘ 3 chủ đề thẩm quyền 0 ứng viên ≥ 2 lượt liền — QUAN SÁT HẠN CHẾ ĐÃ BIẾT (EV-03): làn PubMed không thấy văn bản chính thức, theo dõi ở kênh khác; 0 ứng viên ≠ không có cập nhật: An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA) [3 lượt W43–W45]; NICE — hướng dẫn mới [3 lượt W43–W45]; USPSTF — khuyến cáo dự phòng [3 lượt W43–W45]",
-      "stderr": ""
+      "stdout": "==================================================================\n  HỆ TỰ ĐỀ XUẤT VIỆC — 2026-11-14 (sinh từ bộ đếm sống, không cảm giác)\n==================================================================\n  Giác quan đo được: 279/280 — 1 KHÔNG đo được (xem cuối bảng)\n  🔴 🤖 1 quy tắc quyền lượt lịch đã khai mà máy CHƯA áp — lượt lịch kế tiếp sẽ bị cắt ngang\n       → python3 tools/quyen_lich_nen.py --ap-dung\n  🟠 🛎 2 chủ đề có tầng 0 ứng viên nhiều lượt mà CHƯA có số đo sản lượng tin được (0 ứng viên ≠ không có chứng cứ mới) — máy đo để biết truy vấn có mù không (số đo sản lượng lưu cũ hơn 9 ngày, khác watchlist hiện hành hoặc đo không trọn): Giám sát HCC & Gan mật [2 lượt W45–W46]; Sleep Psychiatry — rối loạn lưỡng cực và loạn thần [0 ở W46, W45 (PASS_DEGRADED) không đo được]\n       → python3 tools/kiem_san_luong_giam_sat.py --json state/san-luong-giam-sat-gan-nhat.json --dung-lai-neu-moi-hon-ngay 2\n  🟡 🤖 Phủ sổ xác minh: 97 mục chưa/hết hạn (đo trên TOÀN sổ)\n       → ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --vong 3 ; ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --quet-ledger --vong 3 ; ~/.ebm-venv/bin/python tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3\n  🟡 🤖 Chỉ mục RAG cũ hơn kho toàn văn — dựng lại\n       → ~/.ebm-venv/bin/python tools/rag_toan_van.py --dung-index\n  🟡 🤖 Repo gốc: 7 file chưa commit · 0 commit chưa có trên remote nào — soi rồi commit/push (file/nhánh của phiên khác thì ĐỂ NGUYÊN — chỉ đẩy bản sao `rescue/<nhánh>`)\n       → git -C \"Claude AI\" status -sb\n  🟡 🤖 Repo y khoa: 1 file chưa commit · 0 commit chưa có trên remote nào — soi rồi commit/push (file/nhánh của phiên khác thì ĐỂ NGUYÊN — chỉ đẩy bản sao `rescue/<nhánh>`)\n       → git -C \"medical-ebm-automation\" status -sb\n  🟡 🛎 2 bản ghi EndNote chờ đưa vào nhóm «Chiến lược phát hiện và quản lý sớm bệnh thận mạn ở nhóm bệnh nhân ngu» — phiên Claude làm qua menu EndNote (Groups › Add References To), hoặc bác sĩ kéo tay\n       → python3 tools/nap_endnote_chu_de.py --cho-vao-nhom \"Chiến lược phát hiện và quản lý sớm bệnh thận mạn ở nhóm bệnh nhân nguy cơ cao\"\n  🟡 🛎 3 bản ghi CŨ tầng ngoại lệ mốc (bác sĩ chọn tóm tắt — `ngoai-le-moc`) ★ Áp dụng – tin cậy cao (mới nhất trước) có PDF chờ tóm tắt chứng cứ Word (đọc toàn văn → kiểm chéo độc lập)\n       → python3 tools/tom_tat_chung_cu_word.py hang-cho  # rồi skill cap-nhat-chung-cu-y-khoa bước ⑨\n  🟡 🛎 EndNote: 3 cặp bản ghi×tag chờ gắn (1 tag) — phiên Claude kéo-thả qua giao diện\n       → python3 tools/gan_tag_endnote.py  # rồi --huong-dan (phiên Claude kéo-thả, chế độ nền)\n  🟡 👤 Phiếu cập nhật tháng thư mục EndNote 2026-11: 16 thư mục cần bản nối tiếp (còn 16 chưa làm) — bác sĩ duyệt danh sách (agent ≈ 0,5–0,8 triệu token/chủ đề)\n       → mở EBM-Dashboards/derivatives/CAP-NHAT-THANG-THU-MUC_2026-11.md\n  🟡 🤖 Nguồn feed_bjgp HỎNG KÉO DÀI: 6 lượt live liền từ 2026-10-29 (14 ngày, kiểu: cloudflare-chan) — lượt vẫn PASS nên không tự lộ; đo lại đường mạng, chặn ở biên/mạng thì chuyển nguồn sang lane không phụ thuộc mạng (Crossref/Europe PMC)\n       → cd medical-ebm-automation && python tools/do_mang_nguon.py  # đo đường mạng tới từng nguồn\n  🟡 👤 3 mục 'apply' có nguồn tổng hợp MỚI HƠN — bản đặt-cạnh sẵn ở DAT-CANH-CHUNG-CU-MOI_2026-11-13.md (không phán chiều, bác sĩ tự so)\n       → mở EBM-Dashboards/derivatives/DAT-CANH-CHUNG-CU-MOI_2026-11-13.md\n  🟡 👤 2 PR chờ bác sĩ gộp — y khoa: #225 #226 (CI xanh 2/2; cũ nhất 12 giờ)\n       → nêu SỐ PR muốn gộp trong chat (gh --auto không chờ CI ở repo này)\n  🟡 👤 1/8 thẻ gói tuan-2026-W46 chỉ có TÓM TẮT (không có bản OA) — bài của NXB cho phép: Claude mở trình duyệt, bác sĩ tự vượt chặn/đăng nhập; bài Elsevier/ADA (điều khoản cấm AI): bác sĩ đọc trực tiếp rồi ghi `--bac-si-da-doc <PMID> --ghi-chu \"<kết luận>\" --ghi`; tới lúc đó thẻ giữ trần «Cân nhắc»\n       → python3 tools/doc_toan_van_co_nguoi.py --queue queue/tuan-2026-W46.md  # rồi --huong-dan\n  🟡 🛎 Phiếu tháng 2026-11: 185 mục apply/consider chưa có PDF trong EndNote · 0 thiếu khối tiếng Việt — máy gắn kho/tóm tắt được, lượt lịch không ghi EndNote ⇒ cần phiên Claude\n       → python3 tools/cap_nhat_thang_thu_muc_endnote.py --hoan-thien --ghi-endnote --ghi\n  ⚪ giác quan KHÔNG đo được: skill tài khoản claude.ai (2 skill: gương cục bộ đồng bộ 2026-10-02, cũ hơn ZIP cùng nội dung đóng gói 2026-11-14 — không thấy đã tải lên chưa; ZIP mới nhất (2026-11-14 07:02): cap-nhat-chung-cu-y-khoa, dark-analyst — đã tải đúng ZIP này thì bỏ qua)\n  ⓘ Repo gốc: 125 commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên origin/master (trùng bản vá/gộp squash) — không còn việc; nhánh cục bộ chỉ còn bản đã gộp: chore/bo-kiem-thang-diem-quy, chore/do-song-07-18-10, chore/loai-semantic-scholar-so-nguon, chore/moc-plugin-sau-go-aipoch-20261024…\n  ⓘ Repo y khoa: 139 commit cục bộ chưa đẩy nhưng NỘI DUNG đã có trên origin/feat/r1-1-2-design-gap-remediation (trùng bản vá/gộp squash) — không còn việc; nhánh cục bộ chỉ còn bản đã gộp: chore/loai-semantic-scholar, claude/bo-sinh-theo-binh-duyet-20261112, claude/btm-docx-chuan-20261112, claude/c1a-g0-pi-chot-20261011…\n  ⓘ 3 chủ đề thẩm quyền 0 ứng viên ≥ 2 lượt liền — QUAN SÁT HẠN CHẾ ĐÃ BIẾT (EV-03): làn PubMed không thấy văn bản chính thức, theo dõi ở kênh khác; 0 ứng viên ≠ không có cập nhật: An toàn thuốc — cảnh báo mới (MHRA/FDA/EMA) [4 lượt W43–W46]; NICE — hướng dẫn mới [4 lượt W43–W46]; USPSTF — khuyến cáo dự phòng [4 lượt W43–W46]",
+      "stderr": "2026-11-14 08:22:08 | INFO    | app.sources.retraction_watch | [retraction_watch] nạp 31952 PMID có phán quyết, 136 PMID được phục hồi; 63869 DOI có phán quyết, 159 DOI được phục hồi"
     }
   },
   "so_da_duyet": {
@@ -416,12 +416,2339 @@
           },
           "duyet": "2026-08-16",
           "ly_do": "FLOW semaglutide — cùng bài với CKM·ITEM-04 đã duyệt đợt 7-mục 16/08; RCT không tự phân hạng"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-07",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-17",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-22",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-24",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-28",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-34",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-06",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-12",
+          "pmid": "38833246",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-29",
+          "pmid": "25222388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-30",
+          "pmid": "25222388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-31",
+          "pmid": "25222388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261106.html",
+          "item": "ITEM-37",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-01",
+          "pmid": "42082413",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-04",
+          "pmid": "37844924",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-05",
+          "pmid": "35313113",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-08",
+          "pmid": "37844924",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-10",
+          "pmid": "37844924",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-11",
+          "pmid": "32021585",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-13",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-14",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-20",
+          "pmid": "37844924",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-23",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-28",
+          "pmid": "40854602",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-29",
+          "pmid": "40854602",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-31",
+          "pmid": "42766853",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-32",
+          "pmid": "32663106",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-41",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-42",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-49",
+          "pmid": "15710956",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-01",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-02",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-03",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-07",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-11",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-12",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-13",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-21",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-22",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-24",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-25",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-28",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-29",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-30",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-31",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-36",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-37",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-38",
+          "pmid": "29627967",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-41",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-42",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-45",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-46",
+          "pmid": "37726988",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-47",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-48",
+          "pmid": "39210722",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-49",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-50",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-58",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261106.html",
+          "item": "ITEM-59",
+          "pmid": "38743805",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-01",
+          "pmid": "24730690",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-02",
+          "pmid": "40264351",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-03",
+          "pmid": "28276062",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-07",
+          "pmid": "26336950",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-08",
+          "pmid": "26900382",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-10",
+          "pmid": "25901057",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-13",
+          "pmid": "35363878",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-17",
+          "pmid": "19889013",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-18",
+          "pmid": "42948139",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-19",
+          "pmid": "29392710",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-20",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-23",
+          "pmid": "32779747",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-24",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-25",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-26",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-28",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-30",
+          "pmid": "39106314",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-34",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-35",
+          "pmid": "38748979",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026: «Duyệt 78 mục «áp dụng ngay» của lô 3» + chọn «Duyệt cả 78, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-LO3_20261106.md"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-10",
+          "pmid": "37345871",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026 duyệt đề xuất sau làn Chrome (AskUserQuestion, chọn đủ 4): «BPH ITEM-10 → áp dụng», «Động kinh ITEM-49 gradeLevel → low», «Rượu ITEM-27 → áp dụng», «BPH ITEM-03 tách mức D»"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_TangSanTuyenTienLiet_BPH_LUTS_20261106.html",
+          "item": "ITEM-42",
+          "pmid": "29801017",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026 duyệt đề xuất sau làn Chrome (AskUserQuestion, chọn đủ 4): «BPH ITEM-10 → áp dụng», «Động kinh ITEM-49 gradeLevel → low», «Rượu ITEM-27 → áp dụng», «BPH ITEM-03 tách mức D»"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_Ruou_ThuocLa_NgoaiTru_20261106.html",
+          "item": "ITEM-27",
+          "pmid": "33464343",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026 duyệt đề xuất sau làn Chrome (AskUserQuestion, chọn đủ 4): «BPH ITEM-10 → áp dụng», «Động kinh ITEM-49 gradeLevel → low», «Rượu ITEM-27 → áp dụng», «BPH ITEM-03 tách mức D»"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DongKinh_NguoiLon_NgoaiTru_20261106.html",
+          "item": "ITEM-49",
+          "pmid": "25922863",
+          "ky_vong": {
+            "gradeLevel": "low"
+          },
+          "duyet": "2026-11-06",
+          "ly_do": "Bác sĩ 06/11/2026 duyệt đề xuất sau làn Chrome (AskUserQuestion, chọn đủ 4): «BPH ITEM-10 → áp dụng», «Động kinh ITEM-49 gradeLevel → low», «Rượu ITEM-27 → áp dụng», «BPH ITEM-03 tách mức D»"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-01",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-07",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-08",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-11",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-20",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-22",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-25",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-26",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-27",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-28",
+          "pmid": "41858317",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261107.html",
+          "item": "ITEM-29",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 11» cho câu hỏi «Duyệt 11 mục «áp dụng» của dashboard sỏi thận?» — duyệt nguyên trạng 11 mục apply (9 mục CARI 2026 PMID 41858317 + 2 nhãn FDA ketorolac, citrate kali)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-08",
+          "pmid": "40665902",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-09",
+          "pmid": "40665902",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-11",
+          "pmid": "28192789",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-12",
+          "pmid": "28192789",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-40",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-41",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-42",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauCanCo_MyofascialPain_NgoaiTru_20261107.html",
+          "item": "ITEM-46",
+          "pmid": "38101929",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-07",
+          "ly_do": "Bác sĩ 07/11/2026: chọn «Duyệt cả 8» cho câu hỏi «Duyệt 8 mục «áp dụng» của dashboard đau cân cơ?» — duyệt nguyên trạng 8 mục apply (DEGAM S3 2025 ×2, ACP 2017 ×2, Beers 2023, nhãn FDA cyclobenzaprine, nhãn FDA tizanidine, BMJ Rapid Recommendations 2023)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-01",
+          "pmid": "40701556",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-02",
+          "pmid": "40701562",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-07",
+          "pmid": "42413123",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-08",
+          "pmid": "40550582",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-09",
+          "pmid": "40701556",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-10",
+          "pmid": "40701562",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-13",
+          "pmid": "40701562",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-14",
+          "pmid": "41618934",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-16",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-17",
+          "pmid": "42417116",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-18",
+          "pmid": "29422793",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-19",
+          "pmid": "42417116",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-20",
+          "pmid": "42417116",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-21",
+          "pmid": "40550582",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-22",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-23",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-29",
+          "pmid": "40701559",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261107.html",
+          "item": "ITEM-32",
+          "pmid": "40306978",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-01",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-03",
+          "pmid": "31385462",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-06",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-07",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-10",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-13",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-16",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-22",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-29",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-30",
+          "pmid": "42336388",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-32",
+          "pmid": "36597810",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-35",
+          "pmid": "37845798",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-37",
+          "pmid": "32090480",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-40",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-41",
+          "pmid": "39106314",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261107.html",
+          "item": "ITEM-43",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-07",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-14",
+          "pmid": "42433014",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-17",
+          "pmid": "33303485",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-21",
+          "pmid": "42433014",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-24",
+          "pmid": "42433014",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261107.html",
+          "item": "ITEM-26",
+          "pmid": "42433014",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-06",
+          "pmid": "40907995",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-10",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-13",
+          "pmid": "42642341",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-18",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-19",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-26",
+          "pmid": "37581410",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PhoiKe_ILD_NgoaiTru_20261107.html",
+          "item": "ITEM-28",
+          "pmid": "33185464",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-01",
+          "pmid": "42481270",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-02",
+          "pmid": "31970405",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-05",
+          "pmid": "31970405",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-16",
+          "pmid": "34235884",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-22",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-23",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-24",
+          "pmid": "37845798",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-25",
+          "pmid": "40499922",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-26",
+          "pmid": "36927642",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-27",
+          "pmid": "40499922",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-29",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-30",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-31",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-33",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemMach_LonVaANCA_NgoaiTru_20261108.html",
+          "item": "ITEM-34",
+          "pmid": "36597810",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-06",
+          "pmid": "26092914",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-14",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-15",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-16",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-17",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-18",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-19",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-20",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-21",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-22",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_XoCungRaiRac_MS_NgoaiTru_20261108.html",
+          "item": "ITEM-23",
+          "pmid": "31462584",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-01",
+          "pmid": "32867516",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-03",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-06",
+          "pmid": "32867516",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-08",
+          "pmid": "32867516",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-11",
+          "pmid": "32867516",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-16",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-19",
+          "pmid": "41540779",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-20",
+          "pmid": "34588212",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-24",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-25",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-28",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-29",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-30",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-31",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-32",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-33",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_LuongCuc_TamThanPhanLiet_NgoaiTru_20261108.html",
+          "item": "ITEM-36",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-08",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-11",
+          "pmid": "38408360",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-13",
+          "pmid": "38408360",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-14",
+          "pmid": "42593701",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-17",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-18",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-19",
+          "pmid": "38408360",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-20",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-21",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_PTSD_SangChan_NgoaiTru_20261108.html",
+          "item": "ITEM-25",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-10",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-11",
+          "pmid": "42441734",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-12",
+          "pmid": "37718254",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-16",
+          "pmid": "42441734",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-17",
+          "pmid": "36749887",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-18",
+          "pmid": "42441734",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-19",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-20",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-24",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-25",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261108.html",
+          "item": "ITEM-26",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_RoiLoanTrieuChungCoThe_NgoaiTru_20261108.html",
+          "item": "ITEM-12",
+          "pmid": "37338872",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_RoiLoanTrieuChungCoThe_NgoaiTru_20261108.html",
+          "item": "ITEM-13",
+          "pmid": "37338866",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_RoiLoanTrieuChungCoThe_NgoaiTru_20261108.html",
+          "item": "ITEM-35",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_RoiLoanTrieuChungCoThe_NgoaiTru_20261108.html",
+          "item": "ITEM-36",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_RoiLoanTrieuChungCoThe_NgoaiTru_20261108.html",
+          "item": "ITEM-37",
+          "pmid": "37139824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+          "item": "ITEM-07",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+          "item": "ITEM-27",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+          "item": "ITEM-28",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+          "item": "ITEM-29",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_NoiTiet_20261107.html",
+          "item": "ITEM-04",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_TongHop_20261107.html",
+          "item": "ITEM-03",
+          "pmid": "42661420",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+          "item": "ITEM-01",
+          "pmid": "41186418",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+          "item": "ITEM-06",
+          "pmid": "29405329",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+          "item": "ITEM-11",
+          "pmid": "41186418",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+          "item": "ITEM-19",
+          "pmid": "41186418",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+          "item": "ITEM-22",
+          "pmid": "29405329",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20261107.html",
+          "item": "ITEM-02",
+          "pmid": "30872156",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20261107.html",
+          "item": "ITEM-03",
+          "pmid": "30872149",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyYeu_Frailty_NguoiCaoTuoi_20261107.html",
+          "item": "ITEM-06",
+          "pmid": "32904824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_NguoiCaoTuoi_DaBenhLy_NgoaiTru_20261107.html",
+          "item": "ITEM-05",
+          "pmid": "32904824",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_DauDau_20261107.html",
+          "item": "ITEM-15",
+          "pmid": "42673560",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_MachMauNao_TiepCanTongQuat_20261107.html",
+          "item": "ITEM-17",
+          "pmid": "39429201",
+          "ky_vong": {
+            "decision": "apply"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026: «duyệt các mục «áp dụng»» + chọn «Duyệt cả 136, ghi sổ» (AskUserQuestion) — duyệt nguyên trạng theo bảng derivatives/DUYET-AP-DUNG-20261108.md (lô 4 IBD/Lupus/Giảm nhẹ, lô 5 bảy chủ đề, mục viết lại/mới ở bản nối tiếp 07/11)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+          "item": "ITEM-01",
+          "ky_vong": {
+            "decision": "consider"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026 chấp nhận đề xuất hạ áp dụng → cân nhắc (AskUserQuestion, chọn cả 3: «Suy tim ITEM-01, Suy tim nội tiết ITEM-03, Viêm gan B ITEM-06»)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_SuyTim_NoiTiet_20261107.html",
+          "item": "ITEM-03",
+          "ky_vong": {
+            "decision": "consider"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026 chấp nhận đề xuất hạ áp dụng → cân nhắc (AskUserQuestion, chọn cả 3: «Suy tim ITEM-01, Suy tim nội tiết ITEM-03, Viêm gan B ITEM-06»)"
+        },
+        {
+          "file": "WebDashboard_EBM_VanDeCuThe_ViemGanB_TiepCanChanDoan_DieuTri_20261107.html",
+          "item": "ITEM-06",
+          "ky_vong": {
+            "decision": "consider"
+          },
+          "duyet": "2026-11-08",
+          "ly_do": "Bác sĩ 08/11/2026 chấp nhận đề xuất hạ áp dụng → cân nhắc (AskUserQuestion, chọn cả 3: «Suy tim ITEM-01, Suy tim nội tiết ITEM-03, Viêm gan B ITEM-06»)"
         }
       ]
     },
     "mau_thuan_da_duyet": {
       "_about": "Cặp KHÁC QUYẾT ĐỊNH mà BÁC SĨ đã xem và kết luận KHÔNG phải mâu thuẫn — thường vì hai bản nói về HAI KẾT CỤC khác nhau của cùng một nghiên cứu. Máy KHÔNG tự phán điều này (độ giống tiêu đề không thay được phán đoán ngữ nghĩa — BH28), nên phải khai tay ở đây. Mục đã khai vẫn được LIỆT KÊ nhưng tách khỏi danh sách đỏ, kèm lý do và ngày duyệt.",
-      "_updated": "2026-10-21",
+      "_updated": "2026-11-12",
       "muc": [
         {
           "pmid": "29668352",
@@ -443,6 +2770,28 @@
           "ly_do": "KDIGO Controversies Conference (ITEM-06) — bản 20260609 (consider, design ghi Guideline) ĐÃ BỊ THAY bởi bản nối tiếp 20261021 (notyet), nguồn được xếp lại đúng loại: báo cáo hội nghị bàn tranh cãi KDIGO 2026 (đồng thuận), không phải guideline. Khác quyết định là do bác sĩ chủ động hạ ngày 21/10/2026 — lời bác sĩ nguyên văn: «Hạ ITEM-06». Không phải hai bản chứng cứ nói ngược nhau.",
           "duyet_boi": "bác sĩ",
           "duyet_ngay": "2026-10-21"
+        },
+        {
+          "pmid": "34447992",
+          "chu_de": "SuyTim",
+          "ly_do": "ESC 2021 suy tim (PMID 34447992) được trích cho HAI khuyến cáo KHÁC NHAU: đánh giá frailty ở người suy tim (mục 13.4 — «Cân nhắc», SuyTim_NguoiCaoTuoi_20261103) so với MRA / chẩn đoán bằng peptide lợi niệu / khởi trị song song 4 trụ cột («Áp dụng», SuyTim_NoiTiet, SuyTim_TongHop, SuyTim_ChanDoan_DieuTri_DongMac các bản). Khác quyết định cho hai khuyến cáo khác nhau là hợp lý, không phải hai bản nói ngược nhau. Lời bác sĩ 05/11/2026 (chọn trong phiếu hỏi): «Ghi: không mâu thuẫn».",
+          "duyet_boi": "bác sĩ",
+          "duyet_ngay": "2026-11-05"
+        },
+        {
+          "pmid": "42661420",
+          "chu_de": "SuyTim",
+          "ly_do": "ESC 2026 HF guideline — hai bản trích HAI KHUYẾN CÁO KHÁC NHAU của cùng guideline: SuyTim_NguoiCaoTuoi (20261102) dùng cho mục «Cân nhắc» về đánh giá suy yếu/lo âu/trầm cảm (Class IIa, Level C); SuyTim_NoiTiet (20261107) dùng cho mục «Áp dụng» MRA ở suy tim kèm cường aldosteron nguyên phát (Class I, Level A). Mức khác nhau đúng theo Class của từng khuyến cáo; mục IIa là «Cân nhắc» ở cả ba bản đang trích (NguoiCaoTuoi 20261107 ITEM-27/55, TongHop ITEM-67). Bản 20261102 đã có bản nối tiếp 20261107. Không phải hai bản nói ngược nhau.",
+          "duyet_boi": "bác sĩ",
+          "duyet_ngay": "2026-11-08",
+          "loi_bac_si": "cặp PMID 42661420 … Hãy hoàn thiện hết (duyệt đề xuất «không phải mâu thuẫn» của Claude, 08/11/2026)"
+        },
+        {
+          "pmid": "41186418",
+          "chu_de": "ViemGanB",
+          "ly_do": "AASLD–IDSA 2025 (ITEM-06, lát cắt TiepCanChanDoan_DieuTri) — bản 20260912 (apply) ĐÃ BỊ THAY bởi bản nối tiếp 20261107 (consider). Bản 20261107 tin cậy cao hơn: đối chiếu TOÀN VĂN 07/11/2026 (phiên uỷ quyền Chrome, PMID-41186418_CHR.pdf) cho thấy khuyến cáo 3 và 4 làm nền đều Conditional, chứng cứ Very low; bác sĩ đã duyệt hạ apply → consider ngày 08/11/2026; sửa ngưỡng F2 7 kPa (bản 12/09, trích qua tóm tắt) thành 8 kPa theo toàn văn. Lời bác sĩ nguyên văn 12/11/2026: «Hai bản nói ngược nhau hãy dùng bản có độ tin cậy cao nhất». Không phải hai bản chứng cứ nói ngược nhau — dùng bản 20261107.",
+          "duyet_boi": "bác sĩ",
+          "duyet_ngay": "2026-11-12"
         }
       ]
     }

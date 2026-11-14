@@ -1,46 +1,24 @@
-
-
-  ▸ DauDau: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260718  DauDau
-      20260811  DauDau_TongHop
-
-  ▸ MachMauNao: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260610  MachMauNao_DongMachCanh
-      20260724  MachMauNao_TiepCanTongQuat
-
-  ▸ RA: 4 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260628  RA_EULAR2024
-      20260630  RA_Than
-      20260630  RA_TimMach
-      20260705  RA_TimMachChuyenHoaNoiTiet
-
-  ▸ SuyTim: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260630  SuyTim_NoiTiet
-      20260718  SuyTim_ChanDoan_DieuTri_DongMac
-      20260804  SuyTim_TongHop
-      20260805  SuyTim_TongHop
-      20260811  SuyTim_TongHop
-      20260909  SuyTim_TongHop
-      20260914  SuyTim_TongHop
-
-  ▸ VKDT: 2 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260717  VKDT_TongHop
-      20260811  VKDT_TamThanKinh
-      20260915  VKDT_TamThanKinh
-
-  ▸ ViemGanB: 3 lát cắt — cần đọc CẢ NHÓM, đừng bỏ bản cũ
-      20260716  ViemGanB_DieuTri
-      20260811  ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet
-      20260912  ViemGanB_TiepCanChanDoan_DieuTri
-
-  ── Bản cũ CHỈ THIẾU, không nói sai (bản mới bao trọn) ──
-     SuyTim_TongHop: bản 20260804 nằm gọn trong bản 20260914 (+35 nguồn mới)
-     SuyTim_TongHop: bản 20260805 nằm gọn trong bản 20260914 (+30 nguồn mới)
-     SuyTim_TongHop: bản 20260811 nằm gọn trong bản 20260914 (+18 nguồn mới)
-     SuyTim_TongHop: bản 20260909 nằm gọn trong bản 20260914 (+4 nguồn mới)
-     TienLuongSuyTim: bản 20260718 nằm gọn trong bản 20260914 (+3 nguồn mới)
-     VKDT_TamThanKinh: bản 20260811 nằm gọn trong bản 20260915 (+13 nguồn mới)
-     ViemDaDay_TongHop: bản 20260811 nằm gọn trong bản 20260816 (+8 nguồn mới)
+bản 20261112 (+0 nguồn mới)
+     TienLuongSuyTim: bản 20261024 nằm gọn trong bản 20261105 (+2 nguồn mới)
+     TramCam_NgoaiTru: bản 20261105 nằm gọn trong bản 20261112 (+1 nguồn mới)
+     TraoNguocDDTQ_GERD_NgoaiTru: bản 20261105 nằm gọn trong bản 20261112 (+0 nguồn mới)
+     TuanThuDieuTri: bản 20260611 nằm gọn trong bản 20261104 (+3 nguồn mới)
+     TuanThuDieuTri: bản 20261020 nằm gọn trong bản 20261104 (+1 nguồn mới)
+     UGan_TonThuongKhuTru_ChanDoan: bản 20261029 nằm gọn trong bản 20261112 (+1 nguồn mới)
+     UGan_TonThuongKhuTru_ChanDoan: bản 20261108 nằm gọn trong bản 20261112 (+0 nguồn mới)
+     VKDT_TamThanKinh: bản 20260811 nằm gọn trong bản 20261104 (+16 nguồn mới)
+     VKDT_TamThanKinh: bản 20260915 nằm gọn trong bản 20261104 (+3 nguồn mới)
+     VKDT_TongHop: bản 20261024 nằm gọn trong bản 20261105 (+1 nguồn mới)
+     ViemCotSongTheTruc_SpA: bản 20261105 nằm gọn trong bản 20261113 (+0 nguồn mới)
+     ViemCotSongTheTruc_SpA: bản 20261112 nằm gọn trong bản 20261113 (+0 nguồn mới)
+     ViemDaDayThanKinh: bản 20260612 nằm gọn trong bản 20261020 (+1 nguồn mới)
+     ViemGanB_DieuTri: bản 20260716 nằm gọn trong bản 20261107 (+2 nguồn mới)
+     ViemGanB_DieuTri: bản 20261102 nằm gọn trong bản 20261107 (+0 nguồn mới)
+     ViemGanB_DieuTri: bản 20261104 nằm gọn trong bản 20261107 (+0 nguồn mới)
+     ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet: bản 20260811 nằm gọn trong bản 20261105 (+7 nguồn mới)
+     ViemKhopDangThap: bản 20260610 nằm gọn trong bản 20261020 (+3 nguồn mới)
+     ViemMach_LonVaANCA_NgoaiTru: bản 20261108 nằm gọn trong bản 20261112 (+0 nguồn mới)
+     XoCungRaiRac_MS_NgoaiTru: bản 20261108 nằm gọn trong bản 20261112 (+0 nguồn mới)
 
 ======================================================================
   🟢 KHÔNG có mục nào hai bản nói ngược nhau.
