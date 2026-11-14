@@ -1329,6 +1329,30 @@ def giac_quan_cap_nhat_thang_thu_muc(dash_dir: Path, hom_nay: dt.date | None = N
     return viec
 
 
+def giac_quan_worktree_tich_tu() -> list[tuple[int, str, str, str]]:
+    """WORKTREE TẠM TÍCH TỤ (14/11/2026, bác sĩ giao sau lượt dọn đĩa: «viết thêm một cảm biến cho hòm việc để nó tự cảnh báo khi
+    worktree vượt ngưỡng»).
+
+    Đo 14/11/2026: `~/.ebm-worktrees` lên 379 worktree ≈ 9,5 GB — nguồn phình đĩa LỚN NHẤT của máy, lại còn nuôi chỉ mục Spotlight
+    (`~/Library/Metadata`) phình lên 9,9 GB; không bộ đếm nào nhìn chỗ đó nên nó lớn âm thầm tới khi đĩa gần đầy. Logic ở
+    `tools/don_worktree_tam.giac_quan` (một nguồn cho CLI và bảng này): chỉ ĐẾM thư mục nên tức thì, không gọi git; dung lượng chỉ
+    nói khi có ảnh chụp lượt quét đầy đủ còn hạn. Ngoại tuyến. Vắng thư mục gốc hoặc đọc không được ⇒ giác quan chết (⚪), KHÔNG
+    phải «worktree vẫn trong ngưỡng»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "worktree tạm tích tụ"]
+    try:
+        sp = _ilu_mea.spec_from_file_location("_dwt_tdxv", Path(__file__).resolve().parent / "don_worktree_tam.py")
+        dwt = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(dwt)
+        viec, chet = dwt.giac_quan()
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return []
+    for c in chet:
+        _ghi_chet(nhan, c)
+    return viec
+
+
 def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
@@ -2115,6 +2139,9 @@ def main() -> int:
 
     # ⑦p PHIẾU CẬP NHẬT THÁNG THEO THƯ MỤC ENDNOTE (12/11/2026): thư mục cần bản nối tiếp chờ bác sĩ duyệt — xem docstring.
     de_xuat += giac_quan_cap_nhat_thang_thu_muc(DASH)  # đúng khuôn (ưu tiên, nhãn, mô tả, lệnh) — nhãn do giác quan quyết
+
+    # ⑦q WORKTREE TẠM TÍCH TỤ (14/11/2026): ~/.ebm-worktrees vượt ngưỡng — nguồn phình đĩa lớn nhất — xem docstring.
+    de_xuat += giac_quan_worktree_tich_tu()  # đúng khuôn (ưu tiên, nhãn 🛎, mô tả, lệnh)
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
