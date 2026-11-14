@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical Quick View, tab Chuẩn & chất lượng) → cổng liêm chính → bộ năm (toàn văn, EndNote) → hub. Bài tổng thuật liền mạch chỉ dựng TỪ dashboard đã qua cổng. Không phải giám sát định kỳ hay Dashboard Master."
 metadata:
-  version: 1.60.0
+  version: 1.61.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -439,6 +439,23 @@ của cùng một thử nghiệm). Không tính được thì in rõ *"chưa ki�
 ③ **Bản Word** `derivatives/<mã>_TaiLieuChiTiet.docx` — bản lưu trữ chuẩn, có màu ·
 ④ **Word dạng HTML** `<mã>_TaiLieuChiTiet.html` — đọc thẳng trong khung chat (mất màu nền ô) ·
 ⑤ **PDF giữ màu** `<mã>_TaiLieuChiTiet.pdf` — giữ đúng huy hiệu mức chứng cứ (xanh lá Cao/Áp dụng ngay · cam Trung bình/Cân nhắc · đỏ Rất thấp), in bằng Chrome headless.
+
+**Kiểm chéo ngữ nghĩa ④-bis/④-ter — CHỈ CẢNH BÁO** (bác sĩ duyệt 25/09/2026, `audit/16`; không đổi mã thoát, không chặn
+xuất; chuyển sang CHẶN là quyết định của bác sĩ). ④-bis `tools/kiem_cheo_ngu_nghia.py` — **K3**: cụm điều kiện của mục
+(«nếu…», «trừ khi…», «ngoài thai kỳ»…) còn nguyên văn trong bản đọc/Word không, so theo từng mục. ④-ter
+`tools/kiem_quan_the_chieu.py <dashboard> --online` (chỉ chạy khi có `--online` — cần tóm tắt PubMed), trên mục `apply` có
+PMID/DOI: **K1** quần thể (ngưỡng EF/eGFR/tuổi/HbA1c/BMI/LDL; cặp loại trừ HFrEF↔HFpEF, típ 1↔típ 2…) · **K2** cỡ mẫu `n=` ·
+**K4** nguồn có tín hiệu NGƯỢC chiều mục · **K3b** (14/11/2026) nguồn có câu khuyến cáo CÓ ĐIỀU KIỆN (ngưỡng số, hoặc
+«if/unless/only/in patients with…») chung thuật ngữ với hành động của mục, mà mục đã rụng điều kiện đó · **K4b** (14/11/2026)
+mục là khuyến cáo «KHÔNG làm» trong khi nguồn có câu ủng hộ và không có câu chống/hại nào.
+Cách đọc: dòng `Tổng: … ✓ · … 🟠 · … ⚪ (🟠 theo phép: K1 a · K2 b · K3b c · K4 d · K4b e)` cho biết 🟠 thuộc phép nào;
+chạy lại đúng lệnh ④-ter để xem từng dòng `🟠 [ITEM-xx] K…` kèm đoạn nguồn. 🟠 = ĐỌC LẠI nguồn gốc (giao `trich-xuat-y-van`),
+KHÔNG phải «sai»; chỉ sửa mục khi đọc lại thấy lệch thật; 🟠 không bao giờ là lý do tự đổi `decision`/`gradeLevel` (chỉ đề
+xuất cho bác sĩ). ⚪ = chưa kiểm được. **Không có 🟠 KHÔNG có nghĩa là đúng:** độ nhạy đo bằng
+`python3 tools/do_nhay_kiem_ngu_nghia.py` (đột biến tổng hợp; báo cáo `quality/eval/kiem-cheo-ngu-nghia/do-nhay-dot-bien-*.md`)
+— lượt 14/11/2026c: K1 99% · K2 98% · K3 62% · **K3b ~1%** (27% trong phần phép phán được) · K4 99% · **K4b ~25%** (56%
+trong phần phán được). K3b/K4b im ở đa số mục ⇒ vẫn tự đối chiếu điều kiện và chiều khuyến cáo với nguồn. Báo động giả đo
+trên bộ vàng do BÁC SĨ gắn nhãn (`tools/bo_vang_kiem_ngu_nghia.py phieu|ghi --loi "<nguyên văn>"|do`; máy không tự gắn nhãn).
 
 Sau bộ năm, cùng lệnh chạy tiếp (tiện ích, KHÔNG đổi mã thoát): ⑥ làm mới `cloud-mirror/` · ⑦ **toàn văn MỌI trích dẫn** (`tools/toan_van_theo_chu_de.py --moi-trich-dan`, cần `--online`) ⇒ phiếu `derivatives/<mã>_toan-van.md` — mỗi trích dẫn: đã đọc toàn văn hay GIẢI PHÁP cho bác sĩ · ⑧ **EndNote** (`tools/nap_endnote_chu_de.py --file <dashboard> --ap-dung`): trích dẫn vào nhóm «EBM · <câu hỏi>», gắn PDF có sẵn, rồi ghi khối «EBM · ĐỌC NHANH» tiếng Việt vào trường Abstract (abstract gốc giữ dưới dấu phân cách; sao lưu `sdb.eni` trước). Khối dựng từ ngữ cảnh MỌI dashboard dù ⑧ chỉ chạy một dashboard — bài là mục chính ở chủ đề khác không bị ghi đè. Bài CHỈ là tham khảo nhận «Tóm tắt MÁY» từ kho `EBM-Dashboards/tom-tat-abstract-vi.json` (nhãn chưa qua cổng; số phải có nguyên văn trong abstract gốc). Dòng «ℹ Trích dẫn tham khảo CHƯA có tóm tắt máy: N» ⇒ agent đọc abstract gốc và SOẠN mục cho kho `EBM-Dashboards/tom-tat-abstract-vi.json` đúng KHUÔN KHOÁ (khoá định danh/trường sai ⇒ báo lỗi «sai dạng»/«trường lạ» và mục đó không in): `{"muc": {"PMID <n>": {"thiet_ke": "…", "P": "…", "I": "…", "C": "…", "O": "…", "ket_qua": "…", "han_che": "…", "ket_luan": "…"}}}` — trích dẫn không có PMID dùng khoá `"DOI <doi chữ thường>"`; in khuôn mẫu bằng `python3 tools/tom_tat_endnote_vi.py --mau`. Hai trường SIÊU DỮ LIỆU tuỳ chọn, không bao giờ in: `"soan"` (ai/khi nào/từ nguồn nào soạn) và `"bo_qua"` (LÝ DO cố ý không tóm tắt — vd trường Abstract của bản ghi là ghi chú của bác sĩ, không phải abstract PubMed). Mục đã có `"bo_qua"` thì KHÔNG soạn tóm tắt đè lên — công cụ liệt kê riêng ở dòng «ℹ Cố ý KHÔNG tóm tắt máy», không tính vào «CHƯA có tóm tắt máy». Bài KHÔNG có abstract (PubMed trống) mà kho có toàn văn PMC truy cập mở `toan_van_oa/PMID-<n>_PMC<id>.xml` ⇒ soạn từ toàn văn đó và thêm `"nguon": "toan_van_pmc"` (thay cho `bo_qua`) — số phải có nguyên văn trong toàn văn PMC; bài CÓ abstract mà khai nguồn này, hoặc chỉ có bản Chrome/Unpaywall, ⇒ công cụ từ chối in — TRỪ khi abstract chỉ là đoạn mô tả chung không nêu khuyến cáo (vd guideline ADA Standards of Care): khai thêm `"abstract_khong_noi_dung": "<lý do>"` thì được soạn từ toàn văn PMC, nhãn ghi «abstract gốc không nêu nội dung khuyến cáo» (bác sĩ 13/11/2026). Chép số đúng abstract, không khuyến nghị, không mức chứng cứ; rồi chạy lại `python3 tools/nap_endnote_chu_de.py --file <dashboard> --tom-tat-vi --ap-dung` (hoặc `--tat-ca --tom-tat-vi --ap-dung`; thiếu `--ap-dung` là chạy khô — chỉ in «sẽ ghi N», chưa ghi gì; thiếu `--file`/`--tat-ca` ⇒ mã 3). Từ 24/10/2026 (bác sĩ: chứng cứ chưa đạt chuẩn ⇒ tóm tắt tiếng Việt CHI TIẾT vào Abstract, «từ abstract gốc, có cổng số liệu»): thêm `"han_che"` (hạn chế) và `"ket_luan"` (kết luận của tác giả) — cùng chốt số; bài là MỤC CHÍNH có mục kho thì tóm tắt máy in TÁCH RIÊNG dưới khối dashboard (dòng chân riêng); bài trong thư viện KHÔNG thuộc dashboard nào ghi bằng `python3 tools/nap_endnote_chu_de.py --tom-tat-thu-vien` (chạy khô) rồi thêm `--ap-dung`. MỌI trích dẫn — kể cả bài chỉ tóm tắt từ abstract — vẫn phải gom và gắn toàn văn (bác sĩ 24/10: «luôn phải tải toàn văn»): `python3 tools/gom_toan_van_dashboard.py --pmid <PMID…> --unpaywall` → `python3 tools/in_pdf_toan_van_kho.py --pmid <PMID…> --ap-dung` → `python3 tools/nap_endnote_chu_de.py --gan-kho --ap-dung`; bài không OA thì làn Chrome có uỷ quyền (đúng luật NXB). EndNote không ghi được chữ đậm/màu qua AppleScript ⇒ nhấn mạnh bằng nhãn IN HOA + biểu tượng màu trong BMP; KHÔNG sửa thẳng `sdb.eni`.
 
