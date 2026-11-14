@@ -242,7 +242,10 @@ def test_khoa_dang_bi_giu_thi_het_han_bao_loi_va_khong_ghi(M, tmp_path, monkeypa
         assert "KHÔNG ghi gì" in str(ei.value)
         assert M.SO.read_bytes() == truoc, "ghi khi CHƯA cầm khoá"
         assert not list(M.SO.parent.glob("*.tmp"))
-    M.ghi_so(a)  # tiến trình kia thoát ⇒ khoá hệ điều hành tự nhả, ghi bình thường
+    # Tiến trình kia thoát ⇒ khoá hệ điều hành tự nhả, ghi bình thường. Hạn chờ rộng: Windows nhả khoá của tiến trình bị
+    # giết «tuỳ tài nguyên hệ thống», không nhất thiết tức thì.
+    monkeypatch.setattr(M, "HAN_CHO_KHOA_GIAY", 15.0)
+    M.ghi_so(a)
     assert set(_tren_dia(M)) == {"pmid:1", "pmid:2"}
 
 

@@ -462,6 +462,22 @@ def _ap_vao_cho(dich: dict, nguon: dict) -> None:
             dich[k] = v
 
 
+def _thay_nguyen_tu(tam: Path, dich: Path) -> None:
+    """`os.replace` — trên Windows thử lại ngắn khi tệp đích đang bị một NGƯỜI ĐỌC mở (đọc sổ không cần khoá; `open()` của
+    Python trên Windows không cho phép thay tệp đang mở ⇒ PermissionError chốc lát). POSIX thay được tệp đang mở ⇒ một lần."""
+    import os
+    import time
+    so_lan = 20 if sys.platform == "win32" else 1
+    for lan in range(so_lan):
+        try:
+            os.replace(tam, dich)
+            return
+        except PermissionError:
+            if lan == so_lan - 1:
+                raise
+            time.sleep(0.1)
+
+
 def ghi_so(so: dict, *, ghi_de_so_hong: bool = False) -> None:
     """Ghi sổ dưới KHOÁ, GỘP với sổ trên đĩa, NGUYÊN TỬ.
 
@@ -525,7 +541,7 @@ def ghi_so(so: dict, *, ghi_de_so_hong: bool = False) -> None:
                 fh.write(du_lieu)
                 fh.flush()
                 os.fsync(fh.fileno())
-            os.replace(tam, SO)
+            _thay_nguyen_tu(tam, SO)
         except BaseException:
             try:
                 tam.unlink()
