@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.62.0 — 2026-11-14 (mã `DUONG_TINH_CHUA_VAO_SO` của sổ xác minh)
+
+#364 thêm mã cấp lượt `DUONG_TINH_CHUA_VAO_SO` (mã 2, kèm `SO_DANG_KHOA`): lượt đã phát hiện nguồn rút/EoC mới rồi mới hết hạn chờ khoá sổ. Trước bản này bảng mã chưa có, agent chỉ thấy văn bản đầu ra nên có thể đọc nhầm thành lỗi hạ tầng. Thêm vào đoạn «Mã cấp LƯỢT»: coi nguồn là ĐÃ BIẾT bị rút ngay, 🔴 lên đầu, chạy lại để ghi sổ. Chỉ đổi doctrine.
+
 ## v1.61.0 — 2026-11-14 (dạy kiểm chéo ngữ nghĩa ④-bis/④-ter: K1–K4 + K3b/K4b mới, mức CẢNH BÁO)
 
 PR #359 thêm K3b (nguồn khuyến cáo CÓ ĐIỀU KIỆN mà mục đã rụng điều kiện) và K4b (mục «KHÔNG làm» khi nguồn ủng hộ) vào

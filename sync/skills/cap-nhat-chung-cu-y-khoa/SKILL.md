@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical Quick View, tab Chuẩn & chất lượng) → cổng liêm chính → bộ năm (toàn văn, EndNote) → hub. Bài tổng thuật liền mạch chỉ dựng TỪ dashboard đã qua cổng. Không phải giám sát định kỳ hay Dashboard Master."
 metadata:
-  version: 1.61.0
+  version: 1.62.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -724,7 +724,7 @@ Nay báo cáo TÁCH lý do và chỉ đúng cách sửa cho từng loại:
 **Mã cấp LƯỢT** (không phải lý do của từng mục): `SO_HONG` (mã 2 — sổ hỏng: không ghi gì, khôi phục trước, KHÔNG
 xoá tệp hỏng) · `KHONG_DO_DUOC` (mã 3 — thiếu dashboard/sổ: «chưa đo», không phải sạch) · `SO_DANG_KHOA` (mã 3, thêm
 14/11/2026 — một lượt khác giữ khoá ghi sổ quá hạn chờ 60 giây ⇒ lượt này KHÔNG ghi gì; chạy lại khi lượt kia xong;
-KHÔNG xoá `.so-xac-minh-nguon.json.lock` — khoá của hệ điều hành tự nhả khi tiến trình giữ nó thoát). Từ 14/11/2026
+KHÔNG xoá `.so-xac-minh-nguon.json.lock` — khoá của hệ điều hành tự nhả khi tiến trình giữ nó thoát). · `DUONG_TINH_CHUA_VAO_SO` (mã 2, luôn đi kèm `SO_DANG_KHOA`, thêm 14/11/2026 — lượt hết hạn chờ khoá SAU KHI đã phát hiện nguồn rút/EoC mới: báo cáo in danh sách; coi các nguồn đó là ĐÃ BIẾT bị rút ngay, đưa 🔴 lên đầu, KHÔNG ra ⚪ «khoá bận»; chạy lại khi lượt kia xong để ghi vào sổ). Từ 14/11/2026
 mọi đường ghi sổ đi qua `ghi_so` (khoá tệp + đọc lại sổ trên đĩa + GỘP BA CHIỀU + ghi nguyên tử) ⇒ `--quet`/`--vong`,
 `--quet-ledger`, `--phu-mo-coi`, `--kiem-rut-lai` và cầu NC⇄LS chạy song song không còn xoá mất bản ghi của nhau; dương
 tính rút bài trên đĩa không bao giờ bị một «ok» cũ đè mất.
