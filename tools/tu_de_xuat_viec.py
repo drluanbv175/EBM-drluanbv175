@@ -1585,6 +1585,56 @@ def giac_quan_binh_duyet_doc_lap(exports_dir: Path,
     return viec
 
 
+def giac_quan_kiem_cheo_g6(exports_dir: Path, tep_cong_cu: Path | None = None,
+                           tep_gate_contract: Path | None = None) -> list[tuple[int, str, str, str]]:
+    """KIỂM CHÉO G6 BẰNG PHẦN MỀM THỨ HAI (14/11/2026, gói tự động hoá A–D — bác sĩ giao).
+
+    Với mỗi đề tài THẬT trong `exports/` (cùng luật «đề tài thật» với giác quan bình duyệt: study_meta.json, không phải thư
+    mục hệ thống; `study_kind=synthetic_test` chỉ bỏ qua khi tên KHÔNG nằm trong REAL_STUDY_DENYLIST) đã có kết quả Python G6:
+    trạng thái đọc bằng CHÍNH hàm `trang_thai` của `medical-ebm-automation/tools/kiem_cheo_g6.py` (chỉ đọc tệp, không chạy
+    SPSS/R). Chưa kiểm chéo / CŨ (kết quả Python hoặc dữ liệu khoá đổi sau lượt kiểm chéo) ⇒ 🛎 (máy chạy được — một lệnh);
+    LỆCH / lỗi / từ chối ⇒ 👤 (thống kê viên đọc G6_kiem_cheo.md — máy không tự sửa số). Khớp, lệch nhỏ, «không đo được»
+    (máy thiếu SPSS/R) ⇒ không thành việc. Không có công cụ / exports ⇒ giác quan chết (⚪), KHÔNG phải «đã kiểm chéo».
+    Tư vấn — không mở/chặn cổng G6."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan_gq = ["", "kiểm chéo G6 (SPSS + R)"]
+    if not exports_dir.is_dir():
+        _ghi_chet(nhan_gq, "không có medical-ebm-automation/exports ở cây này")
+        return []
+    tep = tep_cong_cu or exports_dir.parent / "tools" / "kiem_cheo_g6.py"
+    if not tep.is_file():
+        _ghi_chet(nhan_gq, f"chưa có {tep.name} ở repo y khoa (nhánh chưa gộp?)")
+        return []
+    try:
+        spec = _ilu_mea.spec_from_file_location("kiem_cheo_g6_mea", tep)
+        kc = _ilu_mea.module_from_spec(spec)
+        spec.loader.exec_module(kc)  # type: ignore[union-attr]
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan_gq, f"không nạp được {tep.name}: {type(exc).__name__}")
+        return []
+    danh_sach_that = doc_danh_sach_de_tai_that(tep_gate_contract or exports_dir.parent / "tools" / "gate_contract.py")
+    viec: list[tuple[int, str, str, str]] = []
+    for d in sorted(p for p in exports_dir.iterdir()
+                    if p.is_dir() and not p.name.startswith((".", "_")) and p.name not in _THU_MUC_HE_THONG_EXPORTS
+                    and (p / "study_meta.json").is_file() and (p / "G6_analysis_summary.json").is_file()):
+        try:
+            meta = json.loads((d / "study_meta.json").read_text(encoding="utf-8"))
+            if isinstance(meta, dict) and str(meta.get("study_kind", "")).strip().casefold() == "synthetic_test":
+                if danh_sach_that is None or _chuan_ten_de_tai(d.name) not in danh_sach_that:
+                    continue
+            t = kc.trang_thai(d)
+        except Exception as exc:  # noqa: BLE001
+            _ghi_chet(["", f"kiểm chéo G6 {d.name}"], f"lỗi {type(exc).__name__}")
+            continue
+        lenh = f"python3 medical-ebm-automation/tools/kiem_cheo_g6.py chay --study {d.name}"
+        if t["trang_thai"] in (kc.CHUA_CHAY, kc.CU):
+            viec.append((2, "🛎", f"{d.name}: kiểm chéo G6 bằng SPSS + R — {t['nhan']} ({t.get('ly_do', '')})", lenh))
+        elif t["trang_thai"] in (kc.LECH, kc.LOI, kc.TU_CHOI):
+            viec.append((1, "👤", f"{d.name}: kiểm chéo G6 {t['nhan']} — thống kê viên đọc "
+                         f"exports/{d.name}/G6_kiem_cheo.md (không sửa Python cho khớp phần mềm khác)", lenh))
+    return viec
+
+
 # Kết quả `--json` gần nhất của kiem_san_luong_giam_sat; None ⇒ đúng hằng KET_QUA_GAN_NHAT của chính công cụ đó.
 SAN_LUONG_GIAM_SAT: Path | None = None
 
@@ -1849,6 +1899,9 @@ def main() -> int:
     # ⑥b BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026): gói G10 đổi sau bản bình duyệt mới nhất — xem docstring.
     for uu, dong, lenh in giac_quan_binh_duyet_doc_lap(_GOC_MEA / "exports"):
         de_xuat.append((uu, "🛎", dong, lenh))
+
+    # ⑥c KIỂM CHÉO G6 BẰNG SPSS + R (14/11/2026): chưa kiểm chéo / cũ ⇒ 🛎; lệch / lỗi ⇒ 👤 — xem docstring.
+    de_xuat += giac_quan_kiem_cheo_g6(_GOC_MEA / "exports")  # đúng khuôn (ưu tiên, nhãn, mô tả, lệnh)
 
     # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
     # đọc phán quyết run mới nhất CỦA TỪNG REPO; đỏ = việc ưu tiên 0. Fail-soft
