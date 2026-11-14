@@ -198,10 +198,18 @@ def co_cau_truc_muc(vb: str, neo: list[dict]) -> bool:
     return bool(co_ma) and sum(1 for n in co_ma if _moc_muc(vb, n)) * 2 >= len(co_ma)
 
 
+# Tiêu đề phần ĐUÔI mà EBM-Dashboards/tools/build_dashboard_docx.py in ngay sau mục cuối (add_part_heading «NGUỒN VÀ LIÊM
+# CHÍNH DỮ LIỆU»). Đo 14/11/2026 trên 303 Word HTML thật: có mặt ở 303/303, đúng một lần, luôn SAU mốc mục cuối, không lần nào
+# trước đó. «Tài liệu tham khảo»/«Phụ lục» KHÔNG dùng được làm mốc: chúng nằm trong bảng của từng mục (299 và 29 tệp).
+_MOC_KET_THUC = ("nguồn và liêm chính dữ liệu",)
+
+
 def doan_cua_muc(vb: str, neo: list[dict]) -> dict[str, list[tuple[int, int]]]:
     """{id mục: [(đầu, cuối), …]} trên văn bản sản phẩm ĐÃ chuẩn hoá. Mỗi mốc «ITEM-xx. <tiêu đề>» mở một đoạn; đoạn đóng ở
-    mốc kế tiếp của một mục KHÁC (hoặc cuối tài liệu). Mục không có mốc, hoặc sản phẩm không in theo từng mục
-    (`co_cau_truc_muc`) ⇒ vắng trong kết quả (người gọi so cả tài liệu)."""
+    mốc kế tiếp của một mục KHÁC. Đoạn của mục CUỐI đóng ở tiêu đề phần đuôi đầu tiên sau nó (`_MOC_KET_THUC`, sửa sau thẩm
+    định PR #359 — trước đây nó kéo tới hết tài liệu, nên cụm rụng khỏi mục cuối mà còn ở phần đuôi vẫn ✓). GIỚI HẠN: sản
+    phẩm không có tiêu đề đuôi đó (bộ dựng khác, tệp cũ) thì đoạn mục cuối vẫn kéo tới cuối tài liệu. Mục không có mốc, hoặc
+    sản phẩm không in theo từng mục (`co_cau_truc_muc`) ⇒ vắng trong kết quả (người gọi so cả tài liệu)."""
     if not co_cau_truc_muc(vb, neo):
         return {}
     theo_vi_tri: dict[int, set[str]] = {}
@@ -209,9 +217,12 @@ def doan_cua_muc(vb: str, neo: list[dict]) -> dict[str, list[tuple[int, int]]]:
         for p in _moc_muc(vb, n):
             theo_vi_tri.setdefault(p, set()).add(n["id"])
     moc = sorted(theo_vi_tri.items())
+    if not moc:
+        return {}
+    cuoi = min((i for i in (vb.find(x, moc[-1][0]) for x in _MOC_KET_THUC) if i >= 0), default=len(vb))
     ra: dict[str, list[tuple[int, int]]] = {}
     for i, (p, ids) in enumerate(moc):
-        het = next((q for q, ids2 in moc[i + 1:] if ids2 - ids), len(vb))
+        het = next((q for q, ids2 in moc[i + 1:] if ids2 - ids), cuoi)
         for ma in ids:
             ra.setdefault(ma, []).append((p, het))
     return ra

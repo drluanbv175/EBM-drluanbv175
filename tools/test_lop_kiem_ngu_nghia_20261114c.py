@@ -398,3 +398,78 @@ def test_bo_vang_do_k3b_theo_du_dieu_kien_va_k4b_theo_dung_chieu(capsys):
     kq2 = B.do(bv, {str(i): "abc" for i in range(1, 6)},
                kiem_muc=lambda it, tx: {"k1_nguong": [], "k1_cap": [], "k4": {"muc": "khop"}})
     assert kq2["K3b"]["n"] == 0 and kq2["K3b"]["bao_dong_gia"] is None
+
+
+# ───────────────────────── thẩm định đối kháng PR #359 (sửa sau gộp, 14/11/2026) ─────────────────────────
+
+def test_k4_gia_dinh_chi_bo_khi_tin_hieu_nam_trong_menh_de_dieu_kien():
+    """Dấu điều kiện của một mệnh đề PHỤ đã đóng bằng dấu phẩy («When added to…, X did not reduce…») không biến kết luận âm
+    tính thành giả định — trước bản sửa cả bốn câu dưới bị đẩy vào cau_bo_qua, K4 trấn an sai (xanh giả)."""
+    for cau in ("CONCLUSIONS: When added to guideline-directed therapy, drug X did not reduce cardiovascular death or "
+                "hospitalization for heart failure.",
+                "In patients in whom PCI was performed, drug X did not reduce MACE.",
+                "Whether given early or late, drug X did not improve the primary outcome.",
+                "When used as first-line therapy, drug X was not superior to placebo for the primary outcome."):
+        bao, bo = Q.kiem_chieu_chi_tiet(Q.chuan_hoa_nguon(cau))
+        assert len(bao) == 1 and bo == [], cau
+    # cùng kết luận âm tính đi qua kiem_muc ⇒ K4 «can_doc», không «khop»
+    src = _efetch("Drug X in heart failure.", "CONCLUSIONS: When added to guideline-directed therapy, drug X did not reduce "
+                  "cardiovascular death or hospitalization for heart failure.")
+    d = Q.kiem_muc({"id": "X", "decision": "apply", "title": "Thuốc X trong suy tim", "action": "Thêm thuốc X.",
+                    "pmid": "1"}, src)
+    assert d["k4"]["muc"] == "can_doc" and d["k4"]["cau_bo_qua"] == []
+
+
+def test_k4_gia_dinh_khong_bao_gio_bo_cau_ve_ket_cuc_chinh():
+    """Câu nói về kết cục CHÍNH không bị bộ lọc kết cục phụ bỏ — luật giả định cũng không được đi vòng qua _CHINH."""
+    bao, bo = Q.kiem_chieu_chi_tiet(Q.chuan_hoa_nguon("If drug X does not reduce the primary outcome events, it should be "
+                                                      "stopped."))
+    assert len(bao) == 1 and bo == []
+
+
+def test_k4_ket_cuc_phu_khong_an_secondary_analyses_of_secondary_prevention():
+    """Nhánh «secondary analyses of secondary» của _PHU (nhánh thừa) làm câu thiết kế «secondary analyses of secondary
+    prevention trials» bị coi là kết cục phụ — đúng loại câu bản vá «secondary analysis/prevention» muốn giữ lại."""
+    assert Q.kiem_chieu(Q.chuan_hoa_nguon("In secondary analyses of secondary prevention trials, drug X did not reduce "
+                                          "stroke."))
+    bao, bo = Q.kiem_chieu_chi_tiet(Q.chuan_hoa_nguon("Analyses of the secondary end points showed no significant "
+                                                      "difference."))
+    assert bao == [] and len(bo) == 1                              # kết cục phụ thật vẫn bỏ qua
+
+
+def test_k4_nhan_in_ly_do_bo_qua_gom_ca_menh_de_gia_dinh(capsys):
+    src = _efetch("Drug X.", "RESULTS: Patients in whom education is not effective should receive preventive treatment.")
+    d = Q.kiem_muc({"id": "X", "decision": "apply", "title": "Thuốc X", "action": "Giáo dục bệnh nhân.", "pmid": "1"}, src)
+    assert d["k4"]["muc"] == "khop" and len(d["k4"]["cau_bo_qua"]) == 1
+    Q.in_bao_cao("t", {"muc": [d], "so_muc_co_nguon": 1, "dem": {"khop": 1, "can_doc": 0, "chua_kiem": 0}})
+    assert "câu chỉ về kết cục phụ/an toàn hoặc mệnh đề giả định" in capsys.readouterr().out
+
+
+def test_doan_cua_muc_cuoi_dong_o_phan_nguon_va_liem_chinh():
+    """Đoạn của mục CUỐI đóng ở tiêu đề «NGUỒN VÀ LIÊM CHÍNH DỮ LIỆU» (build_dashboard_docx.py in phần đó sau mục cuối):
+    cụm rụng khỏi mục cuối mà còn ở phần đuôi tài liệu thì vẫn bị bắt."""
+    # mục lục có thể nhắc tên phần đuôi TRƯỚC các mục — mốc kết thúc chỉ tính SAU mốc mục cuối
+    word = ("<h1>MỤC LỤC</h1><p>Nội dung chứng cứ · Nguồn và liêm chính dữ liệu</p>"
+            "<h2>ITEM-01. Thuốc X ở bệnh thận mạn</h2><p>Dùng thuốc X khi eGFR ≥ 30 ml/phút.</p>"
+            "<h2>ITEM-02. Thuốc Z trong suy tim</h2><p>Giảm liều thuốc Z.</p>"
+            "<h1>NGUỒN VÀ LIÊM CHÍNH DỮ\nLIỆU</h1><p>Phụ lục: giảm liều thuốc Z khi eGFR ≥ 30 ml/phút.</p>")
+    vb = K3.chuan_hoa(word)
+    (a, b), = K3.doan_cua_muc(vb, K3.neo_muc(DATA_K3))["ITEM-02"]
+    assert "giảm liều thuốc z." in vb[a:b] and "phụ lục" not in vb[a:b]
+    kq = K3.doi_chieu(K3.lay_nguon_dieu_kien(DATA_K3), {"word_html": word}, K3.neo_muc(DATA_K3))
+    assert {d["vi_tri"]: d["ket_qua"]["word_html"] for d in kq["dong"]} == {"ITEM-01.action": "con",
+                                                                            "ITEM-02.action": "can_doc"}
+    # không có tiêu đề kết thúc ⇒ đoạn mục cuối kéo tới hết tài liệu như cũ
+    vb2 = K3.chuan_hoa(word.replace("NGUỒN VÀ LIÊM CHÍNH DỮ\nLIỆU", "Ghi chú").replace("Nguồn và liêm chính dữ liệu", ""))
+    (a2, b2), = K3.doan_cua_muc(vb2, K3.neo_muc(DATA_K3))["ITEM-02"]
+    assert b2 == len(vb2)
+
+
+def test_k4_muc_phu_dinh_in_dung_ly_do(capsys):
+    src = _efetch("Screening.", "CONCLUSIONS: The USPSTF recommends against screening for disease X in adults.")
+    d = Q.kiem_muc({"id": "X", "decision": "apply", "title": "Không tầm soát bệnh X", "action": "Không tầm soát.",
+                    "pmid": "1"}, src)
+    assert d["k4"]["muc"] == "khop" and d["k4"]["muc_phu_dinh"] is True
+    Q.in_bao_cao("t", {"muc": [d], "so_muc_co_nguon": 1, "dem": {"khop": 1, "can_doc": 0, "chua_kiem": 0}})
+    out = capsys.readouterr().out
+    assert "câu ngược chiều của nguồn CÙNG chiều với mục" in out and "kết cục phụ" not in out
