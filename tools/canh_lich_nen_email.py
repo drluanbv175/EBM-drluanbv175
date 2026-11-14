@@ -24,18 +24,26 @@ LÀM GÌ
      KHÔNG ghi sổ chống lặp (lượt sau thử lại).
   4. Chống gửi lặp: cùng NỘI DUNG cảnh báo (vân tay SHA-256 của danh sách lỗi đỏ đã sắp xếp) không gửi quá 1 lần/24 giờ.
      Sổ trạng thái `state/canh-lich-nen-email.json` (thư mục `state/` bị `.gitignore` loại — không vào git).
-  5. `--cai-launchd`: CHẠY KHÔ in plist (mỗi ngày 09:00); `--ap-dung` mới cài; `--go-launchd` gỡ. Windows: chỉ in hướng dẫn
-     Task Scheduler, không cài. Cài là việc của BÁC SĨ — agent không tự chạy `--ap-dung`.
+  5. `--cai-launchd`: CHẠY KHÔ in plist (mỗi ngày 09:00, kèm `--thong-bao`); `--ap-dung` mới cài; `--go-launchd` gỡ.
+     Windows: chỉ in hướng dẫn Task Scheduler, không cài. Cài là việc của BÁC SĨ — agent không tự chạy `--ap-dung`.
+  6. BỘ CANH TỰ HỎNG KHÔNG ĐƯỢC IM LẶNG (duyệt PR #338): dưới launchd mọi đầu ra vào /dev/null và launchd bỏ qua mã thoát.
+       · `--thong-bao`: lượt nào mã 2 (cảnh báo KHÔNG tới email / không đo được) ⇒ thông báo hệ thống macOS (osascript,
+         ≤ 1 lần/20 giờ) — chỉ NHÃN kết quả, không giá trị cấu hình. Đây là đường lùi duy nhất không cần mở Claude.
+       · `--suc-khoe`: CHỈ ĐỌC sổ `lan_chay_cuoi` ⇒ 🟡 khi lượt cuối không tới kênh email, hoặc agent nền đã cài mà lượt
+         cuối cũ hơn 48 giờ. Dành cho hòm việc/hook SessionStart đọc (nối dây ở PR sau — không sửa ở đây).
 
     python3 tools/canh_lich_nen_email.py                  # đo hai cảm biến; đỏ ⇒ gửi email (chống lặp 24 giờ)
     python3 tools/canh_lich_nen_email.py --xem-truoc      # in email SẼ gửi, không gửi, không ghi sổ
     python3 tools/canh_lich_nen_email.py --im-khi-on      # (launchd) im lặng khi 🟢
+    python3 tools/canh_lich_nen_email.py --thong-bao      # thêm thông báo macOS khi cảnh báo không tới email (mã 2)
+    python3 tools/canh_lich_nen_email.py --suc-khoe       # chỉ đọc sổ: bộ canh có đang làm việc không
     python3 tools/canh_lich_nen_email.py --cai-launchd    # chạy khô; thêm --ap-dung để cài (macOS)
 
 Mã thoát: 0 = đo được cả hai cảm biến, không lỗi đỏ, kênh email sẵn sàng · 1 = có lỗi đỏ VÀ cảnh báo ĐÃ tới kênh email
 (gửi ở lượt này, hoặc cùng nội dung đã gửi < 24 giờ) · 2 = ⚪ cảnh báo KHÔNG tới được hoặc không đo được (kênh email chưa
 bật, gửi lỗi, không thấy repo y khoa, cảm biến không đo được) — không bao giờ là «ổn» · 3 = `--cai-launchd` trên nền tảng
-không cài tự động được. Riêng `--xem-truoc` (không gửi gì): 0 không đỏ · 1 có đỏ · 2 không đo được trọn.
+không cài tự động được. Riêng `--xem-truoc` (không gửi gì): 0 không đỏ · 1 có đỏ · 2 không đo được trọn. Riêng
+`--suc-khoe`: 0 bộ canh khoẻ · 1 🟡 cần xem · 3 ⚪ chưa cài agent nền (macOS) — `--im-khi-on` im lặng ở 0 và 3.
 
 Ranh giới: CHỈ ĐO và BÁO — không tạo/xoá/chạy tác vụ lịch, không sửa `settings.local.json`, không đụng nội dung y khoa.
 """
@@ -72,6 +80,11 @@ DAU_KET_QUA = "@@KQ_CANH_LICH@@"      # tiền tố dòng JSON tiến trình con
 # Lý do «skipped» của notify.send_email — chỉ chuyển tiếp đúng các giá trị này (danh sách trắng).
 LY_DO_CHUA_BAT = {"email_not_configured", "missing_app_password"}
 KHOA_CAU_HINH = ("ENABLE_EMAIL_ALERTS", "SMTP_HOST", "SMTP_FROM", "SMTP_PASSWORD", "ALERT_EMAIL_TO")
+# Nhãn `lan_chay_cuoi.ket_qua` nghĩa là cảnh báo TỚI ĐƯỢC kênh email (hoặc không có gì để báo, kênh sẵn sàng). Mọi nhãn
+# khác — kenh_chua_bat, kenh_khong_do_duoc, khong_thay_repo, khong_do_duoc, khong_gui_* — là bộ canh KHÔNG làm được việc.
+KET_QUA_TOI_KENH = {"xanh", "da_gui", "da_gui_trong_24h"}
+HAN_CU_GIAY = 48 * 3600               # lịch chạy mỗi ngày — quá 48 giờ không có lượt mới ⇒ agent nền không chạy
+KHOANG_THONG_BAO_GIAY = 20 * 3600     # < 24 giờ để lượt hằng ngày nào cũng báo; lượt chạy tay dồn dập thì không
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -331,9 +344,10 @@ def ghi_da_gui(st: dict, vt: str, bay_gio: float) -> dict:
 # launchd (macOS) / Task Scheduler (Windows — chỉ hướng dẫn)
 # ---------------------------------------------------------------------------------------------------------------------
 def tao_plist(python: str, tep: Path) -> bytes:
+    # Đầu ra vào /dev/null và launchd bỏ qua mã thoát ⇒ `--thong-bao` là đường duy nhất để bộ canh hỏng tự lộ ra.
     return plistlib.dumps({
         "Label": NHAN_LAUNCHD,
-        "ProgramArguments": [python, str(tep), "--im-khi-on"],
+        "ProgramArguments": [python, str(tep), "--im-khi-on", "--thong-bao"],
         "StartCalendarInterval": {"Hour": GIO_CHAY, "Minute": PHUT_CHAY},
         "RunAtLoad": False,
         "StandardOutPath": os.devnull,
@@ -348,6 +362,7 @@ def cai_launchd(ap_dung: bool, go: bool) -> int:
         print("⚪ --cai-launchd chỉ cài tự động trên macOS. Windows: tự tạo tác vụ Task Scheduler (công cụ KHÔNG cài):")
         print(f'   schtasks /Create /SC DAILY /ST {GIO_CHAY:02d}:{PHUT_CHAY:02d} /TN "EBM canh lich nen email" '
               f'/TR "\\"{sys.executable}\\" \\"{tep}\\" --im-khi-on"')
+        print("   (Windows không có --thong-bao: kiểm bộ canh bằng python tools/canh_lich_nen_email.py --suc-khoe)")
         print("   (hoặc Task Scheduler → Create Basic Task → Daily → Start a program: python + đường dẫn công cụ + --im-khi-on)")
         return 3
     duong = Path.home() / "Library" / "LaunchAgents" / f"{NHAN_LAUNCHD}.plist"
@@ -384,6 +399,91 @@ def cai_launchd(ap_dung: bool, go: bool) -> int:
     return 0
 
 
+def da_cai_launchd() -> bool | None:
+    """Agent nền đã cài chưa: macOS ⇒ có/không tệp plist; nền tảng khác ⇒ None (không biết — Task Scheduler cài tay)."""
+    if sys.platform != "darwin":
+        return None
+    return (Path.home() / "Library" / "LaunchAgents" / f"{NHAN_LAUNCHD}.plist").is_file()
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Bộ canh tự hỏng không được im lặng: thông báo hệ thống + đọc sức khoẻ từ sổ
+# ---------------------------------------------------------------------------------------------------------------------
+def _mo_ta_ket_qua(ket_qua: str) -> str:
+    """Nhãn kết quả ⇒ câu ngắn tiếng Việt. Chỉ từ NHÃN (không bao giờ giá trị cấu hình)."""
+    co_dinh = {
+        "kenh_chua_bat": "kênh email chưa bật",
+        "kenh_khong_do_duoc": "không đo được kênh email",
+        "khong_thay_repo": "không thấy repo y khoa (kênh notify)",
+        "khong_do_duoc": "cảm biến lịch nền không đo được trọn",
+    }
+    if ket_qua in co_dinh:
+        return co_dinh[ket_qua]
+    if ket_qua.startswith("khong_gui_"):
+        return f"có lỗi đỏ nhưng email KHÔNG gửi được ({ket_qua[len('khong_gui_'):][:40]})"
+    return f"kết quả lạ «{ket_qua[:40]}»"
+
+
+def thong_bao_he_thong(noi_dung: str) -> bool:
+    """Thông báo hệ thống macOS (osascript). Nền tảng khác ⇒ False (không giả là đã báo)."""
+    if sys.platform != "darwin":
+        return False
+    loi = noi_dung.replace("\\", " ").replace('"', "'")[:180]
+    try:
+        r = subprocess.run(["osascript", "-e", f'display notification "{loi}" with title "LỊCH NỀN EBM — cần xem"'],
+                           capture_output=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return r.returncode == 0
+
+
+def noi_dung_thong_bao(ket_qua: str, so_loi_do: int) -> str:
+    dau = f"Lịch nền có {so_loi_do} lỗi đỏ; " if so_loi_do else ""
+    return (dau + f"bộ canh KHÔNG đưa được cảnh báo tới email: {_mo_ta_ket_qua(ket_qua)}. "
+            "Chạy python3 tools/canh_lich_nen_email.py để xem.")
+
+
+def can_thong_bao(st: dict, bay_gio: float) -> bool:
+    try:
+        truoc = float(st.get("thong_bao_luc") or 0)
+    except (TypeError, ValueError):
+        truoc = 0.0
+    return not (0 <= bay_gio - truoc < KHOANG_THONG_BAO_GIAY)
+
+
+def suc_khoe(st: dict, bay_gio: float, da_cai: bool | None) -> tuple[int, str]:
+    """Đọc `lan_chay_cuoi` của sổ (không đo lại, không gửi gì). (mã, một dòng):
+    0 🟢 lượt cuối tới được kênh email · 1 🟡 lượt cuối không tới kênh / agent đã cài mà không chạy > 48 giờ / sổ hỏng ·
+    3 ⚪ chưa cài agent nền (macOS) hoặc chưa từng chạy mà không biết đã cài chưa — trạng thái bác sĩ chọn, không phải
+    hỏng, nhưng cũng KHÔNG in là 🟢. Trên nền tảng không biết đã cài hay chưa
+    (`da_cai` None) thì bỏ phép «cũ > 48 giờ» (lượt chạy tay để lại sổ cũ sẽ báo giả), vẫn xét nhãn kết quả."""
+    if da_cai is False:
+        return 3, ("⚪ bộ canh lịch nền chưa cài agent nền — cài là việc của bác sĩ: "
+                   "python3 tools/canh_lich_nen_email.py --cai-launchd --ap-dung")
+    lan = st.get("lan_chay_cuoi")
+    if not isinstance(lan, dict):
+        if da_cai:
+            return 1, ("🟡 bộ canh lịch nền đã cài nhưng sổ chưa có lượt chạy nào — agent nền có chạy không? "
+                       f"(launchctl print gui/<uid>/{NHAN_LAUNCHD})")
+        # Không biết đã cài hay chưa (Windows) và chưa từng chạy ⇒ ⚪ nói rõ, không 🟢, cũng không nhắc giả mỗi phiên.
+        return 3, ("⚪ bộ canh lịch nền chưa có lượt chạy nào (không biết agent nền đã cài chưa) — "
+                   "chạy tay python tools/canh_lich_nen_email.py")
+    try:
+        luc = float(lan.get("luc"))
+    except (TypeError, ValueError):
+        return 1, "🟡 sổ bộ canh lịch nền hỏng (thiếu mốc lượt cuối) — chạy tay python3 tools/canh_lich_nen_email.py"
+    ket_qua = str(lan.get("ket_qua", ""))
+    moc = f"{dt.datetime.fromtimestamp(luc):%H:%M %d/%m}"
+    ly_do = []
+    if ket_qua not in KET_QUA_TOI_KENH:
+        ly_do.append(f"lượt cuối ({moc}) KHÔNG đưa được cảnh báo tới email — {_mo_ta_ket_qua(ket_qua)}")
+    if da_cai and bay_gio - luc > HAN_CU_GIAY:
+        ly_do.append(f"agent nền đã cài mà {int((bay_gio - luc) // 3600)} giờ không có lượt mới (lượt cuối {moc})")
+    if ly_do:
+        return 1, "🟡 bộ canh lịch nền: " + "; ".join(ly_do) + " — chạy tay python3 tools/canh_lich_nen_email.py"
+    return 0, f"🟢 bộ canh lịch nền: lượt cuối {moc} — cảnh báo tới được kênh email ({ket_qua})"
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Luồng chính
 # ---------------------------------------------------------------------------------------------------------------------
@@ -399,6 +499,16 @@ def _mo_ta_chua_bat(kq: dict) -> str:
     thieu = kq.get("thieu") or []
     return "⚪ kênh email chưa bật" + (f" (thiếu khoá: {', '.join(thieu)})" if thieu else "") + \
         " — cảnh báo KHÔNG được gửi. Bác sĩ tự nhập kênh: python3 tools/nhap_kenh_canh_bao.py"
+
+
+def _mo_ta_kenh_khong_do_duoc(kq: dict) -> str:
+    """Lịch xanh, phép đo kênh (`trang-thai`) không trả `bat` ⇒ chưa thử gửi gì — không được nói «gửi lỗi», cũng không
+    được coi là «sẵn sàng»."""
+    if kq.get("status") == "khong_nap_duoc":
+        return (f"⚪ không nạp được kênh notify của repo y khoa ({kq.get('loai_loi')}"
+                + (f": {kq['module']}" if kq.get("module") else "") + ") — KHÔNG biết kênh email có gửi được không.")
+    return (f"⚪ không đo được trạng thái kênh email (loại: {kq.get('loai_loi') or kq.get('status') or 'không rõ'}; "
+            "chi tiết không in để khỏi lộ cấu hình) — KHÔNG phải «sẵn sàng».")
 
 
 def _mo_ta_khong_gui(kq: dict) -> str:
@@ -421,6 +531,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--cai-launchd", action="store_true", help="in/cài agent launchd chạy mỗi ngày (macOS)")
     ap.add_argument("--go-launchd", action="store_true", help="in/gỡ agent launchd")
     ap.add_argument("--ap-dung", action="store_true", help="với --cai-launchd/--go-launchd: làm thật (mặc định chạy khô)")
+    ap.add_argument("--thong-bao", action="store_true",
+                    help="thông báo hệ thống macOS khi cảnh báo KHÔNG tới email (mã 2; ≤ 1 lần/20 giờ)")
+    ap.add_argument("--suc-khoe", action="store_true", help="chỉ đọc sổ: bộ canh có đang làm việc không (không đo lại)")
     ap.add_argument("--_con", choices=("trang-thai", "gui"), help=argparse.SUPPRESS)
     ap.add_argument("--_mea", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
@@ -428,6 +541,11 @@ def main(argv: list[str] | None = None) -> int:
         return _che_do_con(a._con, a._mea or "")
     if a.cai_launchd or a.go_launchd:
         return cai_launchd(a.ap_dung, a.go_launchd)
+    if a.suc_khoe:
+        ma_sk, dong_sk = suc_khoe(doc_state(), time.time(), da_cai_launchd())
+        if not (a.im_khi_on and ma_sk in (0, 3)):
+            print(dong_sk)
+        return ma_sk
 
     bay_gio = time.time()
     lich, quyen = do_lich(), do_quyen()
@@ -463,13 +581,14 @@ def main(argv: list[str] | None = None) -> int:
                     for x in lich["phu"] + quyen["phu"]:
                         print(f"   ⚪ {x}")
             else:
-                ket_qua, ma = "kenh_chua_bat", 2
+                # Nhãn tách bạch từng nguyên nhân — `--suc-khoe` và thông báo hệ thống đọc lại đúng nhãn này.
                 if not mea:
-                    mo_ta = "⚪ không thấy repo y khoa (kênh notify) — bộ canh không gửi được email"
+                    ket_qua, mo_ta = "khong_thay_repo", "⚪ không thấy repo y khoa (kênh notify) — bộ canh không gửi được email"
                 elif "bat" in kenh:
-                    mo_ta = _mo_ta_chua_bat(kenh)
+                    ket_qua, mo_ta = "kenh_chua_bat", _mo_ta_chua_bat(kenh)
                 else:
-                    mo_ta = _mo_ta_khong_gui(kenh)
+                    ket_qua, mo_ta = "kenh_khong_do_duoc", _mo_ta_kenh_khong_do_duoc(kenh)
+                ma = 2
                 print("🟢 Lịch nền không có lỗi đỏ, NHƯNG " + mo_ta)
     else:
         vt = van_tay(do)
@@ -492,6 +611,10 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 ket_qua, ma = f"khong_gui_{kq.get('status')}", 2
                 print("   " + _mo_ta_khong_gui(kq))
+    # Cảnh báo không tới email (mã 2) dưới launchd thì mọi dòng in ở trên đều vào /dev/null ⇒ thông báo hệ thống.
+    if a.thong_bao and ma == 2 and can_thong_bao(st, bay_gio) \
+            and thong_bao_he_thong(noi_dung_thong_bao(ket_qua, len(do))):
+        st["thong_bao_luc"] = round(bay_gio)
     # Sổ chỉ chứa vân tay + mốc giờ + nhãn kết quả — không bao giờ giá trị cấu hình.
     st["lan_chay_cuoi"] = {"luc": round(bay_gio), "ket_qua": ket_qua, "so_loi_do": len(do)}
     try:

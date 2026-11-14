@@ -214,6 +214,34 @@ def test_xanh_nhung_kenh_chua_bat_la_ma_2_noi_ro(monkeypatch, tmp_path, capsys):
     assert [c for c, _ in kenh.goi] == ["trang-thai"], "lịch xanh không bao giờ gửi email"
 
 
+def test_xanh_khong_thay_repo_y_khoa_la_ma_2_khong_goi_kenh(monkeypatch, tmp_path, capsys):
+    """Duyệt PR #338 (đột biến A): không thấy repo y khoa ⇒ không đo được kênh ⇒ KHÔNG được ra 0 «kênh sẵn sàng»."""
+    kenh = _KenhGia()
+    assert _chay(monkeypatch, tmp_path, _lich(), _lich(), kenh, mea=None) == 2
+    out = capsys.readouterr().out
+    assert "không thấy repo y khoa" in out and "kênh email sẵn sàng" not in out
+    assert kenh.goi == [], "không có repo thì không có kênh để gọi"
+    assert cle.doc_state()["lan_chay_cuoi"]["ket_qua"] == "khong_thay_repo"
+
+
+@pytest.mark.parametrize("trang_thai,chuoi", [
+    ({"status": "error", "loai_loi": "ket_noi"}, "không đo được trạng thái kênh email (loại: ket_noi"),
+    ({"status": "error", "loai_loi": "het_gio_tien_trinh_con"}, "loại: het_gio_tien_trinh_con"),
+    ({"status": "khong_nap_duoc", "loai_loi": "ModuleNotFoundError", "module": "sqlalchemy"},
+     "không nạp được kênh notify của repo y khoa (ModuleNotFoundError: sqlalchemy)"),
+    ({"status": "skipped", "reason": "pytest_khong_goi_kenh_that"}, "loại: skipped"),
+])
+def test_xanh_kenh_khong_do_duoc_la_ma_2_khong_bao_san_sang(monkeypatch, tmp_path, capsys, trang_thai, chuoi):
+    """Duyệt PR #338 (đột biến D): phép đo kênh lỗi/không nạp được ⇒ ⚪ mã 2 — chỉ `bat is True` mới là sẵn sàng. Chưa thử
+    gửi gì nên cũng không được nói «gửi email KHÔNG thành công»."""
+    kenh = _KenhGia(trang_thai=trang_thai)
+    assert _chay(monkeypatch, tmp_path, _lich(), _lich(), kenh, argv=["--im-khi-on"]) == 2
+    out = capsys.readouterr().out
+    assert chuoi in out and "kênh email sẵn sàng" not in out and "gửi email KHÔNG thành công" not in out
+    assert [c for c, _ in kenh.goi] == ["trang-thai"], "lịch xanh không bao giờ gửi email"
+    assert cle.doc_state()["lan_chay_cuoi"]["ket_qua"] == "kenh_khong_do_duoc"
+
+
 def test_khong_do_duoc_trong_la_ma_2_khong_goi_kenh(monkeypatch, tmp_path, capsys):
     kenh = _KenhGia()
     assert _chay(monkeypatch, tmp_path, _lich(do_duoc=False, phu=["thiếu log"]), _lich(), kenh) == 2
@@ -228,14 +256,15 @@ def test_xem_truoc_khong_gui_khong_ghi_so(monkeypatch, tmp_path, capsys):
 
 
 # ---- tiến trình con THẬT với gói `app` GIẢ (không SMTP, không secrets) ---------------------------------------------------
-def _dung_app_gia(goc: Path, mat_khau: str = MK_GIA, ket_qua: str = "{'status': 'sent', 'to': DIA_CHI}") -> Path:
+def _dung_app_gia(goc: Path, mat_khau: str = MK_GIA, ket_qua: str = "{'status': 'sent', 'to': DIA_CHI}",
+                  bat: bool = True) -> Path:
     mea = goc / "mea-gia"
     (mea / "app" / "services").mkdir(parents=True)
     (mea / "app" / "__init__.py").write_text("", encoding="utf-8", newline="\n")
     (mea / "app" / "services" / "__init__.py").write_text("", encoding="utf-8", newline="\n")
     (mea / "app" / "config.py").write_text(textwrap.dedent(f"""
         class _S:
-            enable_email_alerts = True
+            enable_email_alerts = {bat!r}
             smtp_host = {MAY_CHU_GIA!r}
             smtp_from = {DIA_CHI_GIA!r}
             smtp_password = {mat_khau!r}
@@ -274,6 +303,20 @@ def test_tien_trinh_con_bao_kenh_chua_bat_bang_ten_khoa(tmp_path):
     kq = cle.chay_con("gui", {"subject": "s", "body": "b"}, mea, python=sys.executable)
     assert kq == {"status": "skipped", "reason": "missing_app_password", "thieu": ["SMTP_PASSWORD"]}
     assert cle.chay_con("trang-thai", {}, mea, python=sys.executable) == {"bat": False, "thieu": ["SMTP_PASSWORD"]}
+
+
+def test_tien_trinh_con_trang_thai_cong_tac_tat_la_chua_bat(tmp_path):
+    """Duyệt PR #338 (đột biến E): `trang-thai` phải dùng ĐÚNG điều kiện của notify.send_email — đủ SMTP mà
+    ENABLE_EMAIL_ALERTS tắt thì notify trả 'skipped' ⇒ kênh CHƯA bật, tên khoá công tắc phải hiện trong `thieu`."""
+    mea = _dung_app_gia(tmp_path, bat=False)
+    assert cle.chay_con("trang-thai", {}, mea, python=sys.executable) == {"bat": False, "thieu": ["ENABLE_EMAIL_ALERTS"]}
+
+
+def test_khoa_cau_hinh_khop_dieu_kien_cua_notify_send_email():
+    """Danh sách khoá phải trùng đúng năm thuộc tính mà notify.send_email đòi trước khi gửi (đối chiếu 14/11/2026 với
+    nhánh nền y khoa: enable_email_alerts · smtp_host · alert_email_to · smtp_from · smtp_password)."""
+    assert {k.lower() for k in cle.KHOA_CAU_HINH} == {
+        "enable_email_alerts", "smtp_host", "alert_email_to", "smtp_from", "smtp_password"}
 
 
 def test_tien_trinh_con_loi_smtp_chi_tra_nhan_khong_tra_chuoi_loi(tmp_path):
@@ -328,12 +371,124 @@ def test_ran_pytest_khong_cham_kenh_that():
         assert cle.chay_con("gui", {"subject": "s", "body": "b"}, mea)["reason"] == "pytest_khong_goi_kenh_that"
 
 
+# ---- bộ canh tự hỏng không được im lặng (duyệt PR #338): --thong-bao + --suc-khoe ----------------------------------------
+def _bat_thong_bao(monkeypatch):
+    goi: list[str] = []
+    monkeypatch.setattr(cle, "thong_bao_he_thong", lambda nd: goi.append(nd) or True)
+    return goi
+
+
+@pytest.mark.parametrize("lich,kenh,mea,nhan", [
+    (_lich(), _KenhGia(trang_thai={"bat": False, "thieu": ["SMTP_PASSWORD"]}), "co", "kênh email chưa bật"),
+    (_lich(), _KenhGia(trang_thai={"status": "error", "loai_loi": "ket_noi"}), "co", "không đo được kênh email"),
+    (_lich(), _KenhGia(), None, "không thấy repo y khoa"),
+    (DO, _KenhGia(gui={"status": "error", "loai_loi": "xac_thuc"}), "co", "email KHÔNG gửi được (error)"),
+    (DO, _KenhGia(), None, "không thấy repo y khoa"),
+    (_lich(do_duoc=False, phu=["thiếu log"]), _KenhGia(), "co", "không đo được trọn"),
+])
+def test_thong_bao_he_thong_khi_canh_bao_khong_toi_email(monkeypatch, tmp_path, lich, kenh, mea, nhan):
+    goi = _bat_thong_bao(monkeypatch)
+    assert _chay(monkeypatch, tmp_path, lich, _lich(), kenh, argv=["--im-khi-on", "--thong-bao"], mea=mea) == 2
+    assert len(goi) == 1 and nhan in goi[0], goi
+    for bi_mat in BI_MAT:
+        assert bi_mat not in goi[0]
+    assert cle.doc_state()["thong_bao_luc"] == 1_000_000
+    # 1 giờ sau ⇒ không báo lại; 21 giờ sau (lượt hằng ngày) ⇒ báo lại
+    _chay(monkeypatch, tmp_path, lich, _lich(), kenh, argv=["--im-khi-on", "--thong-bao"], mea=mea,
+          bay_gio=1_000_000.0 + 3600)
+    assert len(goi) == 1
+    _chay(monkeypatch, tmp_path, lich, _lich(), kenh, argv=["--im-khi-on", "--thong-bao"], mea=mea,
+          bay_gio=1_000_000.0 + 21 * 3600)
+    assert len(goi) == 2
+
+
+def test_thong_bao_khong_bat_khi_canh_bao_da_toi_email_hoac_khong_xin(monkeypatch, tmp_path):
+    goi = _bat_thong_bao(monkeypatch)
+    assert _chay(monkeypatch, tmp_path, _lich(), _lich(), _KenhGia(), argv=["--thong-bao"]) == 0
+    assert _chay(monkeypatch, tmp_path, DO, _lich(), _KenhGia(), argv=["--thong-bao"]) == 1
+    assert _chay(monkeypatch, tmp_path, DO, _lich(), _KenhGia(gui={"status": "error"}), bay_gio=2_000_000.0) == 2
+    assert goi == [], "mã 0/1 không báo; thiếu --thong-bao thì không báo"
+    assert "thong_bao_luc" not in cle.doc_state()
+
+
+def test_thong_bao_that_bai_khong_ghi_moc_lan_sau_thu_lai(monkeypatch, tmp_path):
+    monkeypatch.setattr(cle, "thong_bao_he_thong", lambda nd: False)
+    kenh = _KenhGia(trang_thai={"bat": False, "thieu": []})
+    assert _chay(monkeypatch, tmp_path, _lich(), _lich(), kenh, argv=["--thong-bao"]) == 2
+    assert "thong_bao_luc" not in cle.doc_state()
+
+
+def test_thong_bao_he_thong_ngoai_macos_khong_gia_da_bao(monkeypatch):
+    monkeypatch.setattr(cle.sys, "platform", "linux")
+    monkeypatch.setattr(cle.subprocess, "run", lambda *a, **k: pytest.fail("không được gọi osascript"))
+    assert cle.thong_bao_he_thong("x") is False
+
+
+def _so(ket_qua, luc=1_000_000):
+    return {"lan_chay_cuoi": {"luc": luc, "ket_qua": ket_qua, "so_loi_do": 0}}
+
+
+@pytest.mark.parametrize("ket_qua", ["kenh_chua_bat", "kenh_khong_do_duoc", "khong_thay_repo", "khong_do_duoc",
+                                     "khong_gui_error", "khong_gui_skipped", "nhan_la"])
+@pytest.mark.parametrize("da_cai", [True, None])
+def test_suc_khoe_luot_cuoi_khong_toi_kenh_la_vang(ket_qua, da_cai):
+    ma, dong = cle.suc_khoe(_so(ket_qua), 1_000_000.0 + 3600, da_cai)
+    assert ma == 1 and dong.startswith("🟡") and "KHÔNG đưa được cảnh báo tới email" in dong
+
+
+@pytest.mark.parametrize("ket_qua", sorted(cle.KET_QUA_TOI_KENH))
+def test_suc_khoe_luot_cuoi_toi_kenh_va_moi_la_xanh(ket_qua):
+    ma, dong = cle.suc_khoe(_so(ket_qua), 1_000_000.0 + 47 * 3600, True)
+    assert ma == 0 and dong.startswith("🟢")
+
+
+def test_suc_khoe_da_cai_ma_cu_hon_48_gio_la_vang_chua_biet_cai_thi_bo_phep_cu():
+    ma, dong = cle.suc_khoe(_so("xanh"), 1_000_000.0 + 49 * 3600, True)
+    assert ma == 1 and "49 giờ không có lượt mới" in dong
+    assert cle.suc_khoe(_so("xanh"), 1_000_000.0 + 49 * 3600, None)[0] == 0, "Windows: lượt chạy tay cũ không báo giả"
+
+
+def test_suc_khoe_chua_cai_va_so_trong_hong():
+    assert cle.suc_khoe(_so("kenh_chua_bat"), 1_000_000.0, False)[0] == 3, "chưa cài = bác sĩ chưa chọn, không nhắc"
+    ma, dong = cle.suc_khoe({}, 1_000_000.0, True)
+    assert ma == 1 and "chưa có lượt chạy nào" in dong
+    assert cle.suc_khoe({}, 1_000_000.0, None)[0] == 3
+    assert cle.suc_khoe({"lan_chay_cuoi": {"ket_qua": "xanh"}}, 1_000_000.0, True)[0] == 1
+    assert cle.suc_khoe({"lan_chay_cuoi": "hỏng"}, 1_000_000.0, True)[0] == 1
+
+
+def test_suc_khoe_doc_dung_so_do_luong_chinh_ghi(monkeypatch, tmp_path, capsys):
+    """Đầu–cuối: lượt chính ghi nhãn ⇒ `--suc-khoe` đọc lại đúng sổ; chỉ đọc, không đo lại, không ghi sổ."""
+    kenh = _KenhGia(trang_thai={"bat": False, "thieu": ["SMTP_PASSWORD"]})
+    _chay(monkeypatch, tmp_path, _lich(), _lich(), kenh, argv=["--im-khi-on"])
+    capsys.readouterr()
+    truoc = cle.TEP_STATE.read_bytes()
+    monkeypatch.setattr(cle, "da_cai_launchd", lambda: True)
+    monkeypatch.setattr(cle, "do_lich", lambda: pytest.fail("--suc-khoe không được đo lại"))
+    assert cle.main(["--suc-khoe", "--im-khi-on"]) == 1
+    assert "kênh email chưa bật" in capsys.readouterr().out
+    assert cle.TEP_STATE.read_bytes() == truoc and len(kenh.goi) == 1
+
+
+def test_suc_khoe_im_khi_on_im_lang_khi_xanh_va_chua_cai(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(cle, "TEP_STATE", tmp_path / "s.json")
+    monkeypatch.setattr(cle.time, "time", lambda: 1_000_000.0 + 60)
+    cle.ghi_state(_so("xanh"))
+    for da_cai, ma in ((True, 0), (False, 3)):
+        monkeypatch.setattr(cle, "da_cai_launchd", lambda d=da_cai: d)
+        assert cle.main(["--suc-khoe", "--im-khi-on"]) == ma
+        assert capsys.readouterr().out == ""
+        assert cle.main(["--suc-khoe"]) == ma and capsys.readouterr().out.strip()
+
+
 # ---- launchd ----------------------------------------------------------------------------------------------------------
 def test_plist_moi_ngay_mot_lan_khong_chay_luc_nap():
     tep = Path("/x/tools/canh_lich_nen_email.py")
     d = plistlib.loads(cle.tao_plist("/usr/bin/python3", tep))
     assert d["Label"] == cle.NHAN_LAUNCHD and d["StartCalendarInterval"] == {"Hour": 9, "Minute": 0}
-    assert d["RunAtLoad"] is False and d["ProgramArguments"] == ["/usr/bin/python3", str(tep), "--im-khi-on"]
+    assert d["RunAtLoad"] is False
+    # Đầu ra vào /dev/null ⇒ --thong-bao là đường lùi duy nhất để bộ canh hỏng tự lộ ra (duyệt PR #338).
+    assert d["ProgramArguments"] == ["/usr/bin/python3", str(tep), "--im-khi-on", "--thong-bao"]
     assert not any(k in d for k in ("KeepAlive", "WatchPaths", "StartInterval"))
 
 
