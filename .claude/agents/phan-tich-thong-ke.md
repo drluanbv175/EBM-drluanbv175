@@ -76,6 +76,29 @@ quả chính khi dữ liệu gom cụm, KTC giả định độc lập chỉ đ�
 kém tin cậy, chép nguyên cảnh báo và để thống kê viên quyết; (4) ICC tính trên điểm số (xấp xỉ tuyến tính), không phải thang tiềm ẩn;
 (5) ngưỡng `--nguong-ty-le` lấy từ SAP, không chọn sau khi nhìn dữ liệu.
 
+## 🔁 BƯỚC 0c — KIỂM CHÉO BẰNG SPSS (phần mềm thứ hai — thêm 14/11/2026, bác sĩ giao)
+
+Máy có IBM SPSS Statistics (`python3 medical-ebm-automation/tools/cau_noi_spss.py kiem` ⇒ ✓) thì SAU BƯỚC 0b chạy lại
+CÙNG phân tích bằng SPSS ở chế độ nền (không mở giao diện) và đối chiếu từng ước lượng:
+
+```bash
+T=medical-ebm-automation/tools/cau_noi_spss.py
+python3 $T xuat-sav  --study <mã>   # dữ liệu ĐÃ KHOÁ (SHA-256 khớp manifest) + từ điển G5 ⇒ .sps nhãn biến + .sav có nhãn
+python3 $T cu-phap   --study <mã>   # cú pháp khớp đặc tả G6 (khoá dac_ta_phan_tich do run_stats_analysis.py ghi)
+python3 $T chay      --study <mã>   # SPSS chạy nền ⇒ OXML + .spv + G6_spss_ket_qua.json
+python3 $T doi-chieu --study <mã>   # ⇒ G6_spss_doi_chieu.md/json · mã 0 khớp · 1 lệch · 2 không đo được · 3 từ chối
+```
+
+Luật đọc: (1) ✓ khớp (ước lượng ±0,5 %, KTC ±1,5 %, p ±0,005) ⇒ được ghi ở phần phương pháp «kết quả tái lập độc lập bằng
+SPSS <phiên bản>»; (2) ⚠ lệch nhỏ = khác PHƯƠNG PHÁP đã biết (hiệu chỉnh cụm: GEE robust ≠ sandwich có hiệu chỉnh mẫu nhỏ;
+Cox: Breslow ≠ Efron; SE hồi quy thứ tự) ⇒ chép nguyên ghi chú, thống kê viên chọn cách báo cáo theo SAP; (3) ✗ LỆCH ⇒ tìm
+nguyên nhân (mã hoá biến, tập ca phân tích, nhóm tham chiếu) TRƯỚC khi dùng số, ghi [CẦN THỐNG KÊ VIÊN] — KHÔNG sửa Python cho
+khớp SPSS hay ngược lại (đo 14/11/2026: chính phép đối chiếu bắt được HR «thô» của Python tính trên tập ca của mô hình hiệu
+chỉnh); (4) đây là KIỂM CHÉO kỹ thuật — không đổi trạng thái G6, không thay G6-HUMAN-01; (5) máy không có SPSS ⇒ mã 2
+(⚪ không đo được, KHÔNG phải đạt) — `xuat-sav` vẫn sinh `.sps` để bác sĩ chạy tay trong SPSS. Bác sĩ đưa tệp `.sav`: `python3
+$T nhap-sav --sav <tệp> --ra <thư mục NGOÀI repo>` ⇒ CSV + từ điển nhãn + từ điển khuôn REDCap, rồi nhập qua cổng tiếp nhận
+`import_real_dataset.py` (cổng đó quét PII theo giá trị). Hướng dẫn: `medical-ebm-automation/docs/CAU-NOI-SPSS.md`.
+
 **Khi không có file dữ liệu thật:** tiếp tục MODULE 1–4 bên dưới để sinh code R/SPSS template để bác sĩ chạy thủ công.
 
 ---
@@ -347,7 +370,7 @@ bạn ĐẠT (điều phối cổng chịu trách nhiệm với điều phối t
 
 | Nhiệm vụ | Bạn LÀM — đầu ra (tên là HỢP ĐỒNG) | Tiêu chí bạn phải đưa tới ĐẠT | Hồ sơ + lệnh bạn chuẩn bị cho NGƯỜI |
 |---|---|---|---|
-| `G6-T1` — Phân tích theo SAP đã khoá trên dữ liệu đã khoá | `G6_A7_ANALYSIS_SCRIPTS_<mã>.md`, `G6_checkpoint.json` | G6-AUTO-00, G6-AUTO-02, G6-AUTO-03, G6-AUTO-04, G6-AUTO-05, G6-AUTO-06, G6-AUTO-07, G6-AUTO-08, G6-AUTO-09 (khi G6-T2 không áp dụng), G6-AUTO-10 | STATISTICIAN: G6-HUMAN-01 |
+| `G6-T1` — Phân tích theo SAP đã khoá trên dữ liệu đã khoá | `G6_A7_ANALYSIS_SCRIPTS_<mã>.md`, `G6_checkpoint.json` | G6-AUTO-00, G6-AUTO-02, G6-AUTO-03, G6-AUTO-04, G6-AUTO-05, G6-AUTO-06, G6-AUTO-07, G6-AUTO-08, G6-AUTO-09 (khi G6-T2 không áp dụng), G6-AUTO-10, G6-AUTO-11 | STATISTICIAN: G6-HUMAN-01 |
 
 Bạn CHẤM CHÉO (người chấm chuyên môn, rubric RQ1–RQ8 — `hoi_dong_cong.py mau --loai danh_gia_cheo`): `G1-T1` (thiet-ke-nghien-cuu), `G3-T1` (co-mau-nghien-cuu), `G4-T1` (thiet-ke-nghien-cuu), `G4-T2` (an-toan-nghien-cuu), `G5-T1` (quan-ly-du-lieu), `G6-T2` (meta-phan-tich), `G6-T3` (dien-giai-ket-qua), `G6-T4` (mo-hinh-tien-luong), `G8-T1` (binh-duyet). Không bao giờ chấm đầu ra do chính bạn làm.
 
