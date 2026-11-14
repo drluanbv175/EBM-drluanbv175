@@ -79,6 +79,15 @@ else:
 """,
     "run_stats_analysis.py": GHI + '# "--hiep-bien-phan-loai" "--loc" "poisson_pr"\nprint("phan tich xong")\n',
     "kiem_cheo_g6.py": GHI + "print(json.dumps({'trang_thai': 'KHOP'}))\n",
+    "doi_chieu_bien_de_cuong.py": GHI + """
+if (goc / "DC_HONG").exists():
+    print("khong phai json"); sys.exit(2)
+ph = [{"muc": "LECH", "luat": "V2", "pham_vi": "nhap_lieu", "bien": "GioiTinh", "chi_tiet": "ma khac"},
+      {"muc": "LECH", "luat": "V5", "pham_vi": "phan_tich", "bien": "NhomTuoi", "chi_tiet": "ngoai de cuong"},
+      {"muc": "CAN_XEM", "luat": "V4", "pham_vi": "nhap_lieu", "bien": "x", "chi_tiet": "chi o tu dien"}]
+print(json.dumps({"trang_thai": "LECH", "phat_hien": ph, "nguon_nguoi_duyet": ["DE_CUONG.md"], "dat_canh": []}, indent=1))
+sys.exit(1)
+""",
     "cau_noi_spss.py": """from pathlib import Path
 GOC = Path(__file__).resolve().parents[1]
 def tim_du_lieu_khoa(study):
@@ -258,3 +267,16 @@ def test_chay_sap_chi_tren_du_lieu_khoa_kiem_cheo_mac_dinh(yk):
     assert kq["ket_qua"]["lenh"] == "ket-qua"
     _cc("chay_sap_g6", study="DE-TAI", lenh="chay", kiem_cheo=False, ap_dung=True)
     assert "--kiem-cheo" not in _goi(yk)[-2] and not [x for g in _goi(yk) for x in g if str(x).startswith("--i-confirm")]
+
+
+def test_doi_chieu_bien_chi_doc_tach_lech_nhap_lieu_va_phan_tich(yk):
+    sc = {t["name"]: t["inputSchema"] for t in M.xu_ly({"jsonrpc": "2.0", "id": 3, "method": "tools/list"})["result"]["tools"]}
+    assert "doi_chieu_bien" in sc and "ap_dung" not in sc["doi_chieu_bien"]["properties"]
+    loi, kq = _cc("doi_chieu_bien", study="DE-TAI")
+    assert not loi and kq["trang_thai"] == "LECH" and kq["ma_thoat"] == 1  # có lệch là KẾT QUẢ, không phải lỗi công cụ
+    assert [x["bien"] for x in kq["lech_nhap_lieu"]] == ["GioiTinh"] and [x["bien"] for x in kq["lech_phan_tich"]] == ["NhomTuoi"]
+    assert [x["bien"] for x in kq["can_xem"]] == ["x"] and "KHÔNG tự thêm biến" in kq["ghi_chu"]
+    assert _goi(yk)[-1] == ["doi_chieu_bien_de_cuong.py", "--study", "DE-TAI", "--json"]
+    (yk / "DC_HONG").write_text("", encoding="utf-8")
+    loi, kq = _cc("doi_chieu_bien", study="DE-TAI")
+    assert not loi and kq["trang_thai"] is None and "không đo được ≠ đồng bộ" in kq["ghi_chu"]

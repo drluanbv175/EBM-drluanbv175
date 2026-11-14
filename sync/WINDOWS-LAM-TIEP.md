@@ -211,7 +211,8 @@ trả 0.
 Cùng khuôn với `endnote-ebm`. Máy chủ `tools/mcp/spss_r_ebm_mcp.py` (chỉ dùng thư viện chuẩn) gọi
 CHÍNH các công cụ của repo y khoa bằng Python của `~/.ebm-venv` (Windows: `~/.ebm-venv/Scripts/python.exe`):
 mẫu nhập Excel/.sav · kiểm từng ô · nhập kép · cổng tiếp nhận · xuất/mở SPSS và RStudio · phân tích G6
-trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 13 công cụ. F4 (14/11/2026) thêm 4: `lam_sach`
+trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 14 công cụ — 15/11/2026 thêm `doi_chieu_bien` (biến máy ↔
+đề cương/bộ biến đã duyệt, chỉ đọc; lệch nhập liệu thì sinh mẫu/tiếp nhận bị từ chối). F4 (14/11/2026) thêm 4: `lam_sach`
 (làm sạch bản sao sau tiếp nhận; `nhap_lieu_tiep_nhan` nay tự gọi), `g5_con_thieu` (chấm cổng G5 KHÔNG ghi),
 `bien_phai_sinh` (kiểm/tính/đối chiếu SPSS–R), `chay_sap_g6` (chạy trọn đặc tả SAP); `phan_tich_g6` nhận thêm
 `poisson_pr`, `hiep_bien_phan_loai`, `loc`. Công cụ của repo y khoa chưa gộp (vd `chay_sap_g6.py`) ⇒ máy chủ báo

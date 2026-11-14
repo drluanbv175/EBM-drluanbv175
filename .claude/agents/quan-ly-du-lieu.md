@@ -44,7 +44,12 @@ python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 >    Muốn gõ thẳng trong SPSS thay Excel: `mau --study <mã> --dang sav` ⇒ gõ trong Data View (chọn nhãn giá trị; SPSS
 >    KHÔNG chặn lỗi lúc gõ) ⇒ `nhap`/`so-sanh` với tệp `.sav` — CÙNG kiểm và nhập kép như Excel.
 >
-> **Qua MCP `spss-r-ebm` (Claude Code + Desktop, F4 14/11/2026):** cùng chuỗi trên bằng công cụ `nhap_lieu_mau` →
+> **Đối chiếu biến ↔ đề cương TRƯỚC khi sinh mẫu (15/11/2026, bác sĩ):** `python3 tools/nhap_lieu_excel.py mau` và `nhap
+> --tiep-nhan` tự từ chối khi từ điển máy lệch bảng biến số của đề cương/bộ biến G3 đã duyệt (thiếu biến, sai mã, G3 ≠ G5);
+> chi tiết bằng `tools/doi_chieu_bien_de_cuong.py --study <mã>` hoặc MCP `doi_chieu_bien`. Sửa bản máy theo nguồn chuẩn; nếu
+> nguồn chuẩn sai thì chủ nhiệm duyệt sửa đề cương/bộ biến trước — agent không tự thêm/bớt biến.
+>
+> **Qua MCP `spss-r-ebm` (Claude Code + Desktop, F4 14/11/2026):** cùng chuỗi trên bằng công cụ `doi_chieu_bien` → `nhap_lieu_mau` →
 > `nhap_lieu_kiem` → `nhap_lieu_so_sanh` → `nhap_lieu_tiep_nhan` (tiếp nhận xong TỰ `lam_sach` bản sao) → `g5_con_thieu`
 > (chấm cổng G5 bằng đúng hàm của cổng, KHÔNG ghi: tiêu chí chưa đạt + việc cần làm — trình nguyên danh sách đó cho bác sĩ,
 > không tự đoán). Công cụ có tác dụng chạy khô mặc định (`ap_dung: true` mới làm). Query mở ⇒ PI/quản lý dữ liệu đối chiếu
