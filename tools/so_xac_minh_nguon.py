@@ -50,9 +50,12 @@ Dùng
 
 Mã thoát: 0 = mọi nguồn của phạm vi đã quét đều còn hiệu lực · 1 = còn thiếu
 · 2 = có nguồn ĐÃ BỊ RÚT (nghiêm trọng, phải xử lý trước khi dùng) — HOẶC sổ HỎNG (dòng «[MA] SO_HONG»;
-  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`) · 3 = KHÔNG ĐO ĐƯỢC (không thấy dashboard nào / chưa có
-  sổ; dòng «[MA] KHONG_DO_DUOC») — không phải rút bài, cũng không phải sạch — HOẶC không ghi được vì tiến trình khác
-  giữ KHOÁ GHI quá hạn chờ (dòng «[MA] SO_DANG_KHOA»; không ghi gì, chạy lại sau).
+  không ghi gì, khôi phục sổ trước; xem `SoHongLoi`) — HOẶC lượt này vừa thấy dương tính rút bài/EoC MÀ KHÔNG ghi
+  được vì khoá (dòng «[MA] DUONG_TINH_CHUA_VAO_SO» kèm danh sách, cộng «[MA] SO_DANG_KHOA»; thêm 14/11/2026: dương
+  tính chỉ còn trong đầu ra, chưa vào sổ — coi như nguồn đã rút, chạy lại khi khoá nhả) · 3 = KHÔNG ĐO ĐƯỢC (không
+  thấy dashboard nào / chưa có sổ; dòng «[MA] KHONG_DO_DUOC») — không phải rút bài, cũng không phải sạch — HOẶC
+  không ghi được vì tiến trình khác giữ KHOÁ GHI quá hạn chờ mà lượt này KHÔNG có dương tính nào chưa vào sổ (dòng
+  «[MA] SO_DANG_KHOA»; không ghi gì, chạy lại sau).
 
 Ghi đồng thời (vá 14/11/2026): mọi lần ghi đi qua `ghi_so` — cầm khoá tệp `.so-xac-minh-nguon.json.lock` (flock/msvcrt),
 đọc lại sổ trên đĩa, GỘP BA CHIỀU với thay đổi của chính lượt này rồi mới ghi nguyên tử ⇒ hai lượt chạy song song không
@@ -228,7 +231,14 @@ class SoDangKhoaLoi(RuntimeError):
     Lượt này KHÔNG ghi gì (không bao giờ ghi khi chưa cầm khoá — ghi lúc đó là đúng lỗ «người ghi sau đè mất bản ghi
     của người ghi trước» mà khoá sinh ra để chặn). CLI in «[MA] SO_DANG_KHOA» và thoát mã 3 (không đo/không ghi được —
     không phải rút bài, cũng không phải sạch). Khoá là khoá HỆ ĐIỀU HÀNH (flock/msvcrt): tiến trình giữ khoá chết thì
-    khoá tự nhả, nên KHÔNG BAO GIỜ xoá tệp khoá bằng tay."""
+    khoá tự nhả, nên KHÔNG BAO GIỜ xoá tệp khoá bằng tay.
+
+    `duong_tinh_chua_vao_so` (thêm 14/11/2026, thẩm định #355): `ghi_so` gắn danh sách (khoá, nhãn) các dương tính rút
+    bài/EoC đang có trong sổ BỘ NHỚ mà sổ trên đĩa chưa mang. Trước đó một lượt vừa thấy «🔴 ĐÃ BỊ RÚT» rồi hết hạn chờ
+    khoá chỉ ra mã 3 + ⚪ «khoá bận» ⇒ dương tính mới mất im lặng. Nay `in_loi_khoa` in danh sách + «[MA]
+    DUONG_TINH_CHUA_VAO_SO» và trả mã 2."""
+
+    duong_tinh_chua_vao_so: tuple = ()
 
 
 # Hạn chờ khoá ghi (giây). Một lần ghi giữ khoá rất ngắn (đọc sổ trên đĩa + gộp + ghi nguyên tử, cỡ dưới 1 giây với sổ
@@ -369,6 +379,55 @@ _TRUONG_PHAN_QUYET_RUT = ("da_rut", "rut_va_thay", "ghi_chu_rut", "kiem_rut_luc"
                           "thong_bao_ids", "sua_loi_bi_rut")
 
 
+def _hang_nghiem_trong(bg: dict) -> int:
+    """Mức nghiêm trọng của phán quyết rút bài trong MỘT bản ghi — số lớn hơn = nghiêm trọng hơn (thêm 14/11/2026).
+
+    4 rút bỏ hẳn · 3 đã rút nhưng thông báo rút là BẢN ĐÍNH CHÍNH bị rút (cổng vẫn chặn tới khi bác sĩ ký) · 2 rút & đăng
+    lại bản sửa (trích dẫn vẫn dùng được) · 1 chỉ có Expression of Concern · 0 không dương tính. Vắng `rut_va_thay` ⇒ coi là
+    rút bỏ hẳn (cùng cách `bao_cao` xếp «ĐÃ BỊ RÚT»)."""
+    if bg.get("da_rut"):
+        if bg.get("rut_va_thay"):
+            return 2
+        return 3 if bg.get("sua_loi_bi_rut") else 4
+    return 1 if _la_eoc(bg) else 0
+
+
+def _moc_kiem_rut(bg: dict):
+    """`kiem_rut_luc` dạng datetime; vắng / không phải chuỗi / sai khuôn ISO ⇒ None (KHÔNG đoán)."""
+    giatri = bg.get("kiem_rut_luc")
+    if not isinstance(giatri, str) or not giatri:
+        return None
+    try:
+        return dt.datetime.fromisoformat(giatri)
+    except ValueError:
+        return None
+
+
+def _ben_thang_khi_ca_hai_duong_tinh(cua_toi: dict, tren_dia: dict) -> str:
+    """Cả ta lẫn đĩa cùng DƯƠNG TÍNH mà phán quyết khác nhau ⇒ bên nào giữ NHÓM phán quyết: "toi" hoặc "dia".
+
+    Vá 14/11/2026 (thẩm định #355): docstring cũ nói «phán quyết của ta (mới hơn) thắng» nhưng mã không so mốc nào ⇒ một
+    «rút & thay» (`rut_va_thay=True`) CŨ của ta đè được «rút bỏ hẳn» MỚI trên đĩa (hạ mã 2 xuống mã 1). Luật nay:
+      a. Một bên «đã rút», bên kia chỉ EoC ⇒ bên «đã rút» thắng BẤT KỂ mốc (bất đối xứng: tín hiệu rút từ bất kỳ nguồn nào
+         là nhận; một lần kiểm sau chỉ thấy EoC không gỡ được «đã rút»).
+      b. Còn lại so `kiem_rut_luc`: bên MỚI HƠN thắng (lần kiểm sau có thể tinh chỉnh đúng — vd phát hiện bản sửa đăng lại).
+      c. Không xác định được bên mới hơn (vắng/hỏng/bằng nhau/không so được) ⇒ giữ bên NGHIÊM TRỌNG hơn
+         (`_hang_nghiem_trong`) — không bao giờ hạ mức khi không biết; hai bên bằng mức ⇒ giữ của ta như trước."""
+    rut_toi, rut_dia = bool(cua_toi.get("da_rut")), bool(tren_dia.get("da_rut"))
+    if rut_toi != rut_dia:
+        return "toi" if rut_toi else "dia"
+    moc_toi, moc_dia = _moc_kiem_rut(cua_toi), _moc_kiem_rut(tren_dia)
+    if moc_toi is not None and moc_dia is not None:
+        try:
+            if moc_toi > moc_dia:
+                return "toi"
+            if moc_dia > moc_toi:
+                return "dia"
+        except TypeError:
+            pass  # một bên có múi giờ, bên kia không ⇒ không so được ⇒ luật c
+    return "dia" if _hang_nghiem_trong(tren_dia) > _hang_nghiem_trong(cua_toi) else "toi"
+
+
 def _gop_ban_ghi(goc, cua_toi: dict, tren_dia: dict) -> dict:
     """Gộp MỘT bản ghi khi CẢ tiến trình này lẫn tiến trình khác cùng đổi nó kể từ lúc đọc.
 
@@ -378,7 +437,10 @@ def _gop_ban_ghi(goc, cua_toi: dict, tren_dia: dict) -> dict:
       3. BẤT ĐỐI XỨNG — dương tính trên đĩa KHÔNG BAO GIỜ mất: đĩa dương tính (`da_rut`/EoC) mà bản của ta không ⇒ chép
          NGUYÊN nhóm phán quyết rút bài của đĩa (một «ok» cũ của ta không được đè một «đã rút» mới của người kia); lưới
          cuối: kết quả vẫn thiếu `da_rut` của đĩa ⇒ chép lại; đĩa mang EoC mà kết quả không ⇒ giữ cờ `quan_ngai` (cờ EoC
-         dính, như `lenh_quet` đã giữ). Cả hai cùng dương tính ⇒ phán quyết của ta (mới hơn) thắng."""
+         dính, như `lenh_quet` đã giữ).
+      4. Cả hai cùng dương tính mà nhóm phán quyết khác nhau ⇒ chép NGUYÊN nhóm của bên thắng theo
+         `_ben_thang_khi_ca_hai_duong_tinh` («đã rút» thắng EoC; rồi `kiem_rut_luc` mới hơn; không biết bên nào mới hơn ⇒
+         bên nghiêm trọng hơn) — sửa 14/11/2026, trước đó «của ta thắng» mà không so mốc."""
     goc = goc if isinstance(goc, dict) else {}
     ra = dict(tren_dia)
     for truong in set(cua_toi) | set(goc):
@@ -395,19 +457,25 @@ def _gop_ban_ghi(goc, cua_toi: dict, tren_dia: dict) -> dict:
         tap_toi = set(cua_toi.get("cac_dashboard") or [])
         tap_dia = set(tren_dia.get("cac_dashboard") or [])
         ra["cac_dashboard"] = sorted((tap_dia | (tap_toi - tap_goc)) - (tap_goc - tap_toi))
-    def _chep_phan_quyet_cua_dia(cac_truong) -> None:
+    def _chep_phan_quyet(nguon: dict, cac_truong) -> None:
         for truong in cac_truong:
-            if truong in tren_dia:
-                ra[truong] = tren_dia[truong]
+            if truong in nguon:
+                ra[truong] = nguon[truong]
             else:
                 ra.pop(truong, None)
 
-    if _la_duong_tinh(tren_dia) and not _la_duong_tinh(cua_toi):
+    duong_dia, duong_toi = _la_duong_tinh(tren_dia), _la_duong_tinh(cua_toi)
+    if duong_dia and not duong_toi:
         # Phán quyết DƯƠNG TÍNH trên đĩa thắng phán quyết không dương tính của ta — chép NGUYÊN nhóm (kể cả ngày kiểm),
         # không trộn «ghi_chu_rut=retracted» của người kia với «kiem_rut_luc» của lần kiểm «ok» của ta.
-        _chep_phan_quyet_cua_dia(_TRUONG_PHAN_QUYET_RUT + ("quan_ngai",))
+        _chep_phan_quyet(tren_dia, _TRUONG_PHAN_QUYET_RUT + ("quan_ngai",))
+    elif duong_dia and duong_toi and any(ra.get(t, _VANG) != tren_dia.get(t, _VANG) for t in _TRUONG_PHAN_QUYET_RUT):
+        # Luật 4: cả hai dương tính, nhóm phán quyết lệch nhau (ta đã đổi nhóm) ⇒ một bên thắng CẢ nhóm — không trộn
+        # «rut_va_thay» của lần kiểm này với «kiem_rut_luc»/thông báo của lần kiểm kia. Cờ EoC xử lý riêng (dính) ở dưới.
+        ben = _ben_thang_khi_ca_hai_duong_tinh(cua_toi, tren_dia)
+        _chep_phan_quyet(tren_dia if ben == "dia" else cua_toi, _TRUONG_PHAN_QUYET_RUT)
     if tren_dia.get("da_rut") and not ra.get("da_rut"):
-        _chep_phan_quyet_cua_dia(_TRUONG_PHAN_QUYET_RUT)  # lưới cuối: «đã rút» trên đĩa không bao giờ mất
+        _chep_phan_quyet(tren_dia, _TRUONG_PHAN_QUYET_RUT)  # lưới cuối: «đã rút» trên đĩa không bao giờ mất
     if _la_eoc(tren_dia) and not _la_eoc(ra):
         ra["quan_ngai"] = True
     return ra
@@ -491,9 +559,18 @@ def ghi_so(so: dict, *, ghi_de_so_hong: bool = False) -> None:
     3. Ghi NGUYÊN TỬ: tệp tạm CÙNG thư mục → fsync → os.replace (vá 26/09/2026, phát hiện #3) — người đọc chỉ thấy bản cũ
        trọn vẹn hoặc bản mới trọn vẹn.
     Sau khi ghi, `so` (cùng mọi bản ghi con) được cập nhật TẠI CHỖ thành đúng nội dung vừa ghi, và ảnh gốc được làm mới —
-    lần ghi kế tiếp của cùng tiến trình gộp từ mốc mới."""
+    lần ghi kế tiếp của cùng tiến trình gộp từ mốc mới (thiếu bước làm mới này thì bản ghi/trường chính ta vừa XOÁ sau
+    lần ghi trước sẽ «hồi sinh» từ đĩa ở lần ghi sau — test `test_so_xac_minh_tiep_20261114d.py` khoá hành vi này).
+    Hết hạn chờ khoá ⇒ `SoDangKhoaLoi` mang `duong_tinh_chua_vao_so` (vá 14/11/2026) để CLI không làm mất im lặng
+    dương tính rút bài vừa thấy."""
     import os
-    with _KhoaSo():
+    khoa_so = _KhoaSo()
+    try:
+        khoa_so.__enter__()
+    except SoDangKhoaLoi as e:
+        e.duong_tinh_chua_vao_so = _duong_tinh_chua_vao_so(so)
+        raise
+    try:
         tren_dia = None
         if SO.exists():
             try:
@@ -550,6 +627,74 @@ def ghi_so(so: dict, *, ghi_de_so_hong: bool = False) -> None:
             raise
         if isinstance(so, _SoDaDoc):
             so._anh_goc = du_lieu.encode("utf-8")
+    finally:
+        khoa_so.__exit__(None, None, None)
+
+
+def _nhan_duong_tinh(bg: dict) -> str:
+    """Nhãn người đọc cho một bản ghi dương tính — cùng chữ với các dòng 🔴/🟠 mà các lệnh quét in ra."""
+    hang = _hang_nghiem_trong(bg)
+    if hang == 4:
+        return "ĐÃ BỊ RÚT"
+    if hang == 3:
+        return "ĐÃ BỊ RÚT (thông báo rút là BẢN ĐÍNH CHÍNH bị rút — cần bác sĩ xem)"
+    if hang == 2:
+        return "ĐÃ RÚT & ĐĂNG LẠI BẢN SỬA"
+    return "EXPRESSION OF CONCERN"
+
+
+def _duong_tinh_chua_vao_so(so: dict) -> list[tuple[str, str]]:
+    """[(khoá, nhãn)] các dương tính rút bài/EoC có trong sổ BỘ NHỚ `so` mà sổ trên đĩa CHƯA mang (thêm 14/11/2026).
+
+    Gọi khi KHÔNG ghi được (hết hạn chờ khoá). So với sổ trên đĩa đọc KHÔNG cần khoá (mọi lần ghi đều thay tệp nguyên tử
+    nên luôn đọc được một bản trọn); đĩa không đọc được/hỏng ⇒ so với ảnh gốc lúc `doc_so`; cả hai không có ⇒ coi sổ rỗng
+    (liệt kê thừa an toàn hơn bỏ sót). «Chưa mang» = mức nghiêm trọng của ta cao hơn bản trên đĩa (kể cả đĩa vắng bản ghi),
+    hoặc ta mang EoC mà đĩa không."""
+    muc_dia = None
+    try:
+        muc_dia = _phan_tich_so(SO.read_bytes())["muc"]
+    except (OSError, SoHongLoi):
+        anh_goc = getattr(so, "_anh_goc", None)
+        if anh_goc:
+            try:
+                muc_dia = _phan_tich_so(anh_goc)["muc"]
+            except SoHongLoi:
+                muc_dia = None
+    muc_dia = muc_dia if isinstance(muc_dia, dict) else {}
+    ra: list[tuple[str, str]] = []
+    for khoa, bg in sorted((so.get("muc") or {}).items()):
+        if not isinstance(bg, dict) or not _la_duong_tinh(bg):
+            continue
+        tren = muc_dia.get(khoa)
+        tren = tren if isinstance(tren, dict) else {}
+        if _hang_nghiem_trong(bg) > _hang_nghiem_trong(tren) or (_la_eoc(bg) and not _la_eoc(tren)):
+            ra.append((khoa, _nhan_duong_tinh(bg)))
+    return ra
+
+
+TRAN_IN_DUONG_TINH_CHUA_VAO_SO = 50
+
+
+def in_loi_khoa(e: SoDangKhoaLoi, file=None) -> int:
+    """In thông báo chuẩn khi KHÔNG ghi được sổ vì khoá; trả mã thoát theo hợp đồng của sổ (thêm 14/11/2026).
+
+    Còn dương tính chưa vào sổ ⇒ in danh sách + «[MA] DUONG_TINH_CHUA_VAO_SO» và trả 2 (có nguồn đã rút/EoC mà sổ chưa
+    biết — KHÔNG được ra ⚪ «khoá bận»); không có ⇒ trả 3. Dòng «[MA] SO_DANG_KHOA» luôn in. Dùng chung cho `main()` và cầu
+    NC⇄LS (`tools/cau_noi_nghien_cuu_lam_sang.py`)."""
+    file = file if file is not None else sys.stderr
+    print(f"⛔ {e}", file=file)
+    ds = list(getattr(e, "duong_tinh_chua_vao_so", ()) or ())
+    if ds:
+        print(f"🔴 {len(ds)} dương tính rút bài/EoC của lượt này CHƯA VÀO SỔ (không ghi được vì khoá) — coi như đã biết "
+              "ngay từ bây giờ, KHÔNG dùng kết luận của các bài «ĐÃ BỊ RÚT»; chạy lại khi lượt kia xong để ghi vào sổ:",
+              file=file)
+        for khoa, nhan in ds[:TRAN_IN_DUONG_TINH_CHUA_VAO_SO]:
+            print(f"   • {khoa} — {nhan}", file=file)
+        if len(ds) > TRAN_IN_DUONG_TINH_CHUA_VAO_SO:
+            print(f"   … và {len(ds) - TRAN_IN_DUONG_TINH_CHUA_VAO_SO} mục nữa", file=file)
+        print("[MA] DUONG_TINH_CHUA_VAO_SO", file=file)
+    print("[MA] SO_DANG_KHOA — không ghi gì vào sổ; chạy lại khi lượt kia xong.", file=file)
+    return 2 if ds else 3
 
 
 _KHOA_SO_RE = re.compile(r'"((?:pmid|doi|url):[^"\\]+)"\s*:\s*\{')
@@ -1928,10 +2073,9 @@ def main() -> int:
         return 2
     except SoDangKhoaLoi as e:
         # Vá 14/11/2026: tiến trình khác giữ khoá ghi quá hạn ⇒ lượt này không ghi gì. Mã 3 = không ghi/đo được — KHÔNG
-        # phải rút bài (2), cũng không phải «còn thiếu» (1) hay sạch (0).
-        print(f"⛔ {e}", file=sys.stderr)
-        print("[MA] SO_DANG_KHOA — không ghi gì vào sổ; chạy lại khi lượt kia xong.", file=sys.stderr)
-        return 3
+        # phải «còn thiếu» (1) hay sạch (0). Lượt đã thấy dương tính rút bài/EoC mà chưa vào sổ ⇒ mã 2 + «[MA]
+        # DUONG_TINH_CHUA_VAO_SO» kèm danh sách (thẩm định #355: trước đó dương tính mới mất im lặng dưới ⚪ «khoá bận»).
+        return in_loi_khoa(e)
 
 
 def _chay_lenh(a) -> int:

@@ -24,7 +24,10 @@ decision, không mở cổng nào:
 Dùng:  python3 tools/cau_noi_nghien_cuu_lam_sang.py            # mọi đề tài thật
        python3 tools/cau_noi_nghien_cuu_lam_sang.py --study hai-long-benh-nhan-C1a-BVQY175
 Mã thoát: 0 = chạy trọn (kể cả khi CÓ cảnh báo — cảnh báo là sản phẩm, không phải lỗi)
-· 1 = không có đề tài nào · 2 = hạ tầng.
+· 1 = không có đề tài nào · 2 = hạ tầng (kể cả sổ xác minh HỎNG — dòng «[MA] SO_HONG», không ghi gì)
+· 3 = sổ xác minh đang bị tiến trình khác giữ KHOÁ GHI quá hạn chờ (dòng «[MA] SO_DANG_KHOA») — liên kết NC:<đề tài>
+  của lượt này CHƯA vào sổ, chạy lại sau; tệp CANH-BAO-CHUNG-CU đã ghi vẫn có hiệu lực (thêm 14/11/2026 — trước đó hai
+  ca sổ hỏng/sổ khoá thoát bằng traceback).
 """
 from __future__ import annotations
 
@@ -82,7 +85,13 @@ def main() -> int:
         return 1
 
     so_mod = _nap("so_xm_cau", REPO / "tools" / "so_xac_minh_nguon.py")
-    so = so_mod.doc_so()
+    try:
+        so = so_mod.doc_so()
+    except so_mod.SoHongLoi as e:
+        # KHÔNG bắt đầu sổ mới, KHÔNG ghi gì: ghi đè lúc này là xoá dương tính rút bài đã tích luỹ (cùng luật CLI của sổ).
+        print(f"⛔ {e}")
+        print("[MA] SO_HONG — cầu NC⇄LS không đọc/ghi sổ xác minh; khôi phục sổ trước rồi chạy lại.")
+        return 2
     muc = so["muc"]
     chain = None
     try:
@@ -149,7 +158,20 @@ def main() -> int:
             print(f"    → đã ghi {f_cb.name}")
 
     if tong_ghi_so:
-        so_mod.ghi_so(so)
+        try:
+            so_mod.ghi_so(so)
+        except so_mod.SoDangKhoaLoi as e:
+            # Vá 14/11/2026 (thẩm định #355): trước đó thoát bằng traceback. Nay in đúng mã của sổ (kèm «[MA]
+            # DUONG_TINH_CHUA_VAO_SO» nếu sổ bộ nhớ còn dương tính chưa vào sổ) rồi trả 3 — không ghi gì, không xanh giả.
+            so_mod.in_loi_khoa(e, file=sys.stdout)
+            print(f"Sổ đang khoá — chạy lại sau: {tong_ghi_so} liên kết NC:<đề tài> của lượt này CHƯA vào sổ canh. "
+                  "Tệp CANH-BAO-CHUNG-CU (nếu vừa ghi ở trên) vẫn có hiệu lực.")
+            print("Cần bác sĩ kiểm chứng.")
+            return 3
+        except so_mod.SoHongLoi as e:
+            print(f"⛔ {e}")
+            print("[MA] SO_HONG — không ghi gì vào sổ; khôi phục sổ trước rồi chạy lại.")
+            return 2
         print(f"Đã ghi sổ xác minh: +{tong_ghi_so} liên kết NC:<đề tài> — các nhịp "
               "quét định kỳ của hệ lâm sàng từ nay canh hộ nền đề tài.")
     else:

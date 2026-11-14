@@ -221,8 +221,9 @@ def ke_hoach(topic: str | None, online: bool, xuat: bool, *, uu_tien: bool = Fal
 
 # ── phân loại mã thoát THEO BƯỚC (T1-04) ─────────────────────────────────────────────────────────────
 def phan_loai(buoc: str, rc: int, *, a2_json_khong_pass: bool = False) -> tuple[str, str]:
-    """(mức, thông điệp). mức ∈ ok · noi_dung · ha_tang · tham_so · khoa_ban · rut · chan · timeout
+    """(mức, thông điệp). mức ∈ ok · noi_dung · ha_tang · tham_so · khoa_ban · rut · chan · timeout · so_dang_khoa
     (+ «cho_trinh_duyet» do `thuc_thi` đổi từ ha_tang của B2 khi dashboard có URL miền chặn bot thiếu bằng chứng).
+    «so_dang_khoa» (A4 mã 3, 14/11/2026) KHÔNG thuộc DUNG_HET: lượt đi tiếp, mã tổng ≥ 1, phiếu ghi dòng chạy lại.
 
     Số mã thoát KHÔNG có nghĩa chung giữa các bước: A2 rc=2 vừa là argparse vừa là «quét không PASS»; A4 rc=2
     là «có NGUỒN ĐÃ BỊ RÚT» chứ không phải mạng; B4 rc=3 là «CHẶN XUẤT» của cổng. Trước đây mọi rc=2 đều in
@@ -250,7 +251,14 @@ def phan_loai(buoc: str, rc: int, *, a2_json_khong_pass: bool = False) -> tuple[
         return "noi_dung", f"quét trả rc={rc}"
     if buoc.startswith("A4"):
         if rc == 2:
+            # Gồm cả ca dương tính vừa thấy mà chưa vào sổ vì khoá («[MA] DUONG_TINH_CHUA_VAO_SO» in ngay trên) — vẫn 🔴.
             return "rut", "🔴 NGUỒN ĐÃ BỊ RÚT — xử lý trước khi dùng (KHÔNG chạy lại vì mạng)"
+        if rc == 3:
+            # Vá 14/11/2026 (thẩm định #355): mã 3 của sổ trong A4 = «[MA] SO_DANG_KHOA» (tiến trình khác giữ khoá ghi quá hạn
+            # chờ; không ghi gì). «KHONG_DO_DUOC» (không thấy dashboard) không xảy ra ở đây vì `_thieu_tep` đã chặn dashboard
+            # vắng trước khi chạy. Trước đó rơi chung «sổ xác minh chưa đủ» — sai nhãn, người đọc đi tìm nguồn thiếu.
+            return "so_dang_khoa", ("[MA] SO_DANG_KHOA — sổ đang khoá: tiến trình khác giữ khoá ghi sổ xác minh quá hạn chờ, "
+                                    "A4 KHÔNG ghi gì vào sổ — chạy lại sau bằng --resume (KHÔNG xoá tệp khoá); lượt đi tiếp")
         return "noi_dung", "sổ xác minh chưa đủ (đi tiếp, ghi vào phiếu)"
     if buoc.startswith("B2"):
         if rc == 2:
@@ -422,7 +430,8 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
     """
     chay = chay or _chay_that  # tra lúc GỌI (không phải lúc định nghĩa) để test main() thay được bộ chạy
     res = {"tong_rc": 0, "dung": None, "ket_qua": {}, "lat_hong": set(), "rut": [], "ung_vien": None,
-           "phien": [], "a2_bao_cao": [], "tv_bao_cao": [], "b2_offline": False, "du_phong": [], "cho_trinh_duyet": []}
+           "phien": [], "a2_bao_cao": [], "tv_bao_cao": [], "b2_offline": False, "du_phong": [], "cho_trinh_duyet": [],
+           "so_dang_khoa": []}
     for b in cac_buoc:
         ten = b["buoc"]
         if _la_da_xong(b, da_xong):
@@ -500,6 +509,8 @@ def thuc_thi(cac_buoc: list[dict], *, chay=None, ghi=lambda d: None, da_xong: fr
         res["tong_rc"] = max(res["tong_rc"], 1)
         if muc == "rut":
             res["rut"].append(b.get("lat") or ten)
+        if muc == "so_dang_khoa":
+            res["so_dang_khoa"].append(b.get("lat") or ten)
         if muc in ("chan", "cho_trinh_duyet") and ten.startswith("B2"):
             res["lat_hong"].add(b.get("lat"))
     return res
@@ -575,6 +586,11 @@ def phieu_can_phien(topic: str | None, tt: dict, cac_db: list[Path], res: dict,
     viec: list[str] = []
     goi_y = tt.get("a2_arg") or topic or ""
     ly_do: list[str] = []
+    if res.get("so_dang_khoa"):
+        # 14/11/2026: A4 vướng khoá ghi sổ xác minh ⇒ phiếu phải nói ra (không phải việc bác sĩ, nhưng lượt này CHƯA ghi sổ) —
+        # đặt TRƯỚC lối ra sớm của bản tin gộp `khong_can`: A4 vẫn chạy trên dashboard của nó.
+        viec.append("🤖 [MA] SO_DANG_KHOA — sổ xác minh đang khoá ở A4 của: " + ", ".join(res["so_dang_khoa"])
+                    + " — lượt này KHÔNG ghi gì vào sổ; chạy lại sau bằng --resume khi lượt kia xong (KHÔNG xoá tệp khoá)")
     if tt.get("loai") == "khong_can":
         return viec  # bản tin gộp: không làm mới bằng máy
     if tt.get("loai") == "khong_ro" and tt.get("lat_cat"):
