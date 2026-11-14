@@ -46,6 +46,7 @@ def test_claude_code_repo_alignment_overall_passes():
         "root_docs",
         "claude_md_budget",
         "nhat_ky_su_co",  # 01/10/2026: tệp nhật ký cũ đóng băng + quy ước audit/nhat-ky/
+        "doctrine_tac_vu_lich",  # 14/11/2026: doctrine không nhắc tác vụ lịch đã bỏ
         "medical_repo_docs",
         "tracked_contract_files",
         "agent_sync_health",
