@@ -9520,7 +9520,11 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
     giác quan này (BH41). Mở rộng 14/11/2026 (lịch nền phải GÃY ỒN): (5) mọi tác vụ trong sync/lich-nen-ky-vong.json có dấu
     vết máy-đọc-được (không `khong-co`); (6) tác vụ tháng tiền kiểm `quyen_lich_nen --tac-vu` TRƯỚC bước 1 và DỪNG khi thiếu
     quyền, `--tac-vu` đo đúng tập (tác vụ khác không làm dừng oan, tên sai không thành «đủ»); (7) `ghi_dau_vet_lich` không
-    ghi chen log của chủ khác."""
+    ghi chen log của chủ khác. Đính chính 14/11/2026 (người duyệt độc lập, PR #339 đã gộp): (8) tác vụ tháng KHÔNG chạy sổ xác
+    minh nguồn — bước 4b từng đọc mã 2 thành «nguồn đã rút» (đỏ giả cho đính chính bác sĩ đã ký, họ BH115) và lặp owner ngày
+    4; (9) `dong_bo_tac_vu_lich` KHÔNG chép SKILL mới vào runtime khi quyền của nó chưa 🟢 (hook tua nhanh master rồi chép
+    TRƯỚC khi bác sĩ áp quyền ⇒ lượt kế tiếp bị cắt ngay bước 0); (10) cảm biến: máy có bản chạy mà thiếu log từ mốc
+    `dau_vet.tu_ngay` ⇒ 🔴 kỳ lỡ, không «⚪ bản sao trần» mãi."""
     import json as _json
     import tempfile as _tf
     Q = _nap(REPO / "tools" / "quyen_lich_nen.py", "_bh173_qln")
@@ -9592,8 +9596,51 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
             return False, f"ghi_dau_vet_lich nhận ghi chen log của chủ khác ({tv_chu_khac}) — giả được dấu vết kỳ lỡ"
         except G.KhongGhiLoi:
             pass
+    # (8) Phân xử mã sổ xác minh chỉ ở owner (chu_trinh_chung_cu, tác vụ ngày 4) — tác vụ tháng tự đọc mã 2 là đỏ giả.
+    if [c for c in Q.lenh_trong_skill(sk) if "so_xac_minh_nguon" in c]:
+        return False, ("tác vụ tháng lại chạy so_xac_minh_nguon — mã 2 gồm cả ca đính chính bác sĩ ĐÃ KÝ (đỏ giả vào alerts/); "
+                       "owner duy nhất là kiem-rut-bai-kho-thang")
+    # (9) Không chép SKILL mới vào runtime khi quyền của nó chưa 🟢 — đo trên repo git tạm, nền tảng ép darwin.
+    import datetime as _dt
+    import subprocess as _sp
+    D = _nap(REPO / "tools" / "dong_bo_tac_vu_lich.py", "_bh173_dbtvl")
+    with _tf.TemporaryDirectory() as d:
+        g, bc = Path(d) / "repo", Path(d) / "bc"
+
+        def ghi9(p, nd):
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(nd, encoding="utf-8", newline="\n")
+
+        def git9(*lenh):
+            _sp.run(["git", "-C", str(g), "-c", "user.name=t", "-c", "user.email=t@example.org", "-c", "commit.gpgsign=false",
+                     *lenh], check=True, capture_output=True)
+        ghi9(g / "sync" / "lich-nen-ky-vong.json", _json.dumps({"tac_vu": [{"id": "t"}]}))
+        ghi9(g / "sync" / "quyen-lich-nen.json", _json.dumps({"nen_tang": "darwin", "tac_vu": {"t": {
+            "lenh": ["python3 tools/a.py", "python3 tools/moi.py"], "khong_chay": [], "ghi": []}}}))
+        ghi9(g / ".claude" / "settings.local.json", _json.dumps({"permissions": {"allow": ["Bash(python3 tools/a.py)"]}}))
+        _sp.run(["git", "init", "-q", str(g)], check=True, capture_output=True)
+        for nd in ("`python3 tools/a.py`\n", "`python3 tools/a.py`\n`python3 tools/moi.py`\n"):
+            ghi9(g / "sync" / "scheduled-tasks" / "t" / "SKILL.md", nd)
+            git9("add", "-A")
+            git9("commit", "-q", "-m", "v")
+        ghi9(bc / "t" / "SKILL.md", "`python3 tools/a.py`\n")
+        D.ap_dung(g, bc, {"t": "tut_hau"}, nen_tang="darwin")
+        if "moi.py" in (bc / "t" / "SKILL.md").read_text(encoding="utf-8"):
+            return False, ("dong_bo_tac_vu_lich chép SKILL mới vào runtime khi lệnh mới chưa được phép — lượt lịch kế tiếp bị cắt "
+                           "ngang ngay lệnh đó (mất phần bản cũ vẫn chạy được)")
+    # (10) Máy CÓ bản chạy, thiếu log từ mốc dấu vết ⇒ 🔴 kỳ lỡ (không ⚪ mãi khi lệnh ghi dấu vết đầu tiên bị cắt).
+    K = _nap(REPO / "tools" / "kiem_lich_nen.py", "_bh173_kln")
+    with _tf.TemporaryDirectory() as d:
+        (Path(d) / "bc" / "tv").mkdir(parents=True)
+        so10 = {"cua_so_ngay": 60, "tac_vu": [{"id": "tv", "cron": "0 18 3 * *", "tu_ngay": "2026-10-01", "grace_gio": 30,
+                "dau_vet": {"loai": "log-ket-thuc", "path": "state/tv.log", "tu_ngay": "2026-12-03"}}]}
+        kq10 = K.kiem(_dt.datetime(2026, 12, 5, 9, 0), so10, Path(d), Path(d) / "bc")
+        if [p["uu"] for p in kq10["phat_hien"]] != [0]:
+            return False, ("máy có bản chạy mà thiếu log từ mốc dấu vết không ra 🔴 kỳ lỡ — lượt bị cắt ngay lệnh ghi dấu vết "
+                           f"đầu tiên lại vô hình ({kq10})")
     return True, ("mọi lệnh tác vụ lịch đã khai; không khai lệnh ghi quyết định; ap_dung chỉ thêm + sao lưu; giác quan có gọi; "
-                  "mọi tác vụ có dấu vết; tác vụ tháng tiền kiểm đúng tập + dừng; không giả dấu vết log chủ khác")
+                  "mọi tác vụ có dấu vết; tác vụ tháng tiền kiểm đúng tập + dừng; không giả dấu vết log chủ khác; tác vụ tháng "
+                  "không tự đọc mã sổ xác minh; không chép SKILL khi quyền chưa xanh; thiếu log từ mốc ⇒ 🔴")
 
 
 def bh172_mot_cua_vao_chu_de_chung_cu():

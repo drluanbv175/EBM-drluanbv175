@@ -20,8 +20,10 @@ Tra `sync/lich-nen-ky-vong.json`: tác vụ phải khai `dau_vet.loai = "log-ket
 "tools/ghi_dau_vet_lich.py"` và `dau_vet.path` nằm dưới `state/`. Nối MỘT dòng, giờ do MÁY lấy:
     ===== YYYY-MM-DD HH:MM:SS : BẮT ĐẦU <id>
     ===== YYYY-MM-DD HH:MM:SS : KẾT THÚC <id> (mã N)
-— đúng khuôn `kiem_lich_nen._ket_thuc()` đọc. Dòng BẮT ĐẦU làm tệp log TỒN TẠI ngay từ lượt đầu: lượt sau bị cắt ngang
-trước dòng KẾT THÚC ⇒ cảm biến báo 🔴 kỳ lỡ (gãy ồn), thay vì «⚪ không đọc được log» mãi mãi (gãy âm thầm).
+— đúng khuôn `kiem_lich_nen._ket_thuc()` đọc. Lượt bị cắt ngang sau BẮT ĐẦU, trước KẾT THÚC ⇒ cảm biến báo 🔴 «lượt bị
+cắt ngang». Đính chính 14/11/2026: nếu chính lệnh BẮT ĐẦU đầu tiên bị cắt (chưa áp quyền) thì tệp log KHÔNG tồn tại — vì
+vậy sổ kỳ vọng khai thêm `dau_vet.tu_ngay`: từ mốc đó, máy CÓ bản chạy của tác vụ mà thiếu log ⇒ cảm biến báo 🔴 kỳ lỡ
+(gãy ồn), không còn «⚪ không đọc được log» mãi mãi (gãy âm thầm).
 `--ma`: 0 = mọi mảng sạch · 1 = có việc cho bác sĩ / đã tự sửa · 2 = có mảng KHÔNG đo được.
 
 Rào (không giả dấu vết): chỉ ghi cho tác vụ tự khai `ghi_boi` là công cụ này — log của script thu thập
