@@ -196,12 +196,12 @@ def test_chu_trinh_doc_ma_phu_mo_coi(capsys):
 
 # ── --quet-ledger nói ra khi vừa tạo bản ghi trần ───────────────────────────────────────────────────────────────
 
-def test_quet_ledger_nhac_phu_mo_coi_khi_tao_ban_ghi_tran(M, monkeypatch, tmp_path):
+def _chay_quet_ledger(M, monkeypatch, tmp_path, the_hub: list[dict], ket_qua_doi: dict, so_truoc: dict) -> str:
+    """Chạy `quet_ledger_hub(1)` trên hub giả + chuỗi rút bài giả (không mạng); trả đầu ra."""
     hub_dir = tmp_path / "EBM_MASTER"
     hub_dir.mkdir()
-    (hub_dir / "EBM_MASTER.json").write_text(json.dumps({"evidence_cards": [{"source": {"doi": "10.9/moi"}}]}),
-                                             encoding="utf-8")
-    _ghi_so(M, {})
+    (hub_dir / "EBM_MASTER.json").write_text(json.dumps({"evidence_cards": the_hub}), encoding="utf-8")
+    _ghi_so(M, so_truoc)
 
     class _BST:
         @staticmethod
@@ -214,7 +214,7 @@ def test_quet_ledger_nhac_phu_mo_coi_khi_tao_ban_ghi_tran(M, monkeypatch, tmp_pa
 
     class _CR:
         def check(self, lo):
-            return {d: {"status": "ok"} for d in lo}
+            return {d: ket_qua_doi.get(d, {"status": "ok"}) for d in lo}
 
     import types
     goi_that = importlib.util.module_from_spec
@@ -246,8 +246,63 @@ def test_quet_ledger_nhac_phu_mo_coi_khi_tao_ban_ghi_tran(M, monkeypatch, tmp_pa
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         M.quet_ledger_hub(1)
-    out = buf.getvalue()
+    return buf.getvalue()
+
+
+def test_quet_ledger_nhac_phu_mo_coi_khi_tao_ban_ghi_tran(M, monkeypatch, tmp_path):
+    out = _chay_quet_ledger(M, monkeypatch, tmp_path, [{"source": {"doi": "10.9/moi"}}], {}, {})
     bg = M.doc_so()["muc"]["doi:10.9/moi"]
     assert "xac_minh_luc" not in bg and bg["ghi_chu_rut"] == "ok"
     assert M.con_hieu_luc(bg) == (False, M.LY_DO_CHUA_XAC_MINH_TON_TAI), "bản ghi trần không được tính còn hạn"
     assert "1 bản ghi hub MỚI chưa xác minh tồn tại" in out and "--phu-mo-coi" in out
+
+
+# ── Rà #349 (vá 14/11/2026): ba góp ý mức thấp ──────────────────────────────────────────────────────────────────────
+
+def test_quet_ledger_khong_dem_ban_ghi_tran_da_co_tu_truoc(M, monkeypatch, tmp_path):
+    """Bộ lọc `k not in khoa_truoc`: bản ghi trần CŨ (đã nằm sẵn trong sổ) không được đếm là «MỚI» của lượt này."""
+    so_truoc = {"pmid:777": {"loai": "pmid", "gia_tri": "777", "cac_dashboard": ["NC:de-tai-thu"]}}
+    out = _chay_quet_ledger(M, monkeypatch, tmp_path, [{"source": {"doi": "10.9/moi"}}], {}, so_truoc)
+    assert "1 bản ghi hub MỚI chưa xác minh tồn tại" in out, out
+    assert "2 bản ghi hub MỚI" not in out
+
+
+def test_quet_ledger_khong_dem_ban_ghi_moi_da_rut(M, monkeypatch, tmp_path):
+    """Bản ghi hub mới là DƯƠNG TÍNH (`da_rut`): `--phu-mo-coi` bỏ qua nó ⇒ nhắc «chạy --phu-mo-coi» là lời khuyên vô ích."""
+    the = [{"source": {"doi": "10.9/sach"}}, {"source": {"doi": "10.9/rut"}}]
+    out = _chay_quet_ledger(M, monkeypatch, tmp_path, the, {"10.9/rut": {"status": "retracted"}}, {})
+    muc = M.doc_so()["muc"]
+    assert muc["doi:10.9/rut"]["da_rut"] is True and "xac_minh_luc" not in muc["doi:10.9/rut"]
+    assert "1 bản ghi hub MỚI chưa xác minh tồn tại" in out, out
+
+
+def test_quet_ledger_chi_co_ban_ghi_moi_da_rut_thi_im(M, monkeypatch, tmp_path):
+    out = _chay_quet_ledger(M, monkeypatch, tmp_path, [{"source": {"doi": "10.9/rut"}}],
+                            {"10.9/rut": {"status": "retracted"}}, {})
+    assert "bản ghi hub MỚI" not in out
+
+
+def test_bao_cao_khong_noi_vong_3_khong_cham_toi_ban_ghi_tran_co_dashboard(M):
+    """Bản ghi trần CÓ liên kết dashboard: `--vong` gom từ dashboard nên CÓ phủ nó — không được in «KHÔNG chạm tới»."""
+    _ghi_so(M, {"pmid:333": {"loai": "pmid", "gia_tri": "333", "cac_dashboard": ["WebDashboard_X.html"]}})
+    rc, out = _bao_cao(M)
+    assert rc == 1 and "[MA] CAN_PHU_MO_COI" in out
+    assert "KHÔNG chạm tới" not in out
+    assert "`--vong 3` cũng phủ được" in out
+
+
+def test_bao_cao_tach_dem_vong_3_khi_tron_hai_nguon_goc(M):
+    muc = {k: v for k, v in _so_mau().items() if k in ("doi:10.1/hub", "pmid:111")}
+    muc["pmid:333"] = {"loai": "pmid", "gia_tri": "333", "cac_dashboard": ["WebDashboard_X.html"]}
+    _ghi_so(M, muc)
+    _rc, out = _bao_cao(M)
+    assert "2 mục không liên kết dashboard nào: `--vong 3` KHÔNG chạm tới" in out
+    assert "1 mục có liên kết dashboard: `--vong 3` cũng phủ được" in out
+
+
+def test_bao_cao_chi_ban_ghi_tran_ngoai_dashboard_van_noi_khong_cham_toi(M):
+    muc = {k: v for k, v in _so_mau().items() if k in ("doi:10.1/hub", "pmid:111")}
+    _ghi_so(M, muc)
+    _rc, out = _bao_cao(M)
+    assert "`--vong 3` KHÔNG chạm tới nhóm này" in out
+    assert "cũng phủ được" not in out

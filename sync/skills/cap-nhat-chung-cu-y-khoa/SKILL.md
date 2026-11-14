@@ -2,7 +2,7 @@
 name: cap-nhat-chung-cu-y-khoa
 description: "CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical Quick View, tab Chuẩn & chất lượng) → cổng liêm chính → bộ năm (toàn văn, EndNote) → hub. Bài tổng thuật liền mạch chỉ dựng TỪ dashboard đã qua cổng. Không phải giám sát định kỳ hay Dashboard Master."
 metadata:
-  version: 1.59.0
+  version: 1.60.0
 ---
 
 # Skill: Cập nhật chứng cứ y khoa theo vấn đề lâm sàng cụ thể
@@ -700,7 +700,17 @@ Nay báo cáo TÁCH lý do và chỉ đúng cách sửa cho từng loại:
 | PMID chưa kiểm được rút bài, **chưa tải nền Retraction Watch ngoại tuyến** | tải MỘT LẦN, không cần khoá API: `python medical-ebm-automation/tools/tai_retraction_watch.py` rồi chạy lại — **SẼ** sửa được | `CAN_TAI_RETRACTION_WATCH` |
 | PMID chưa kiểm được rút bài, **nền ngoại tuyến ĐÃ tải mà vẫn tắc** | chạy lại thêm vòng có thể sửa (chuỗi 3 tầng); phần còn sót cần thêm `NCBI_API_KEY` vào `~/.ebm-secrets/medical-ebm-automation.env` để mở tầng NCBI | `CAN_NCBI_API_KEY` |
 | xác minh tồn tại quá 180 ngày | chạy lại thêm vòng **SẼ** sửa được | `CAN_CHAY_THEM_VONG` |
-| lý do khác | xem tay | `CAN_XEM_TAY` |
+| PMID/DOI **QUÁ HẠN** kiểm rút bài (lần kiểm thành công gần nhất đã quá 30 ngày — đã TỪNG kiểm được) | chạy lại **SẼ** sửa được, không cần khoá API: `--quet` tái kiểm mục đang được dashboard trích; `--phu-mo-coi` tái kiểm mục mồ côi (không dashboard nào trích); hoặc `--kiem-rut-lai <định danh…>` | `CAN_KIEM_RUT_LAI` |
+| bản ghi **TRẦN** PMID/DOI — chưa xác minh tồn tại lần nào (thẻ hub do `--quet-ledger` tạo, đề tài NC do cầu NC⇄LS tạo…) | máy tự sửa được, không cần khoá API, **KHÔNG** phải xem tay: `python3 tools/so_xac_minh_nguon.py --phu-mo-coi --vong 3` (phủ MỌI bản ghi trần; `--vong 3` chỉ phủ phần có liên kết dashboard còn trên đĩa — báo cáo in số đếm từng phần). Không tra được ⇒ giữ CHƯA KIỂM, không bao giờ thành «còn hạn» | `CAN_PHU_MO_COI` |
+| lý do khác (ngày xác minh hỏng/sai khuôn, URL trần…) — báo cáo liệt kê MỌI lý do kèm số đếm | xem tay | `CAN_XEM_TAY` |
+
+**Mã cấp LƯỢT** (không phải lý do của từng mục): `SO_HONG` (mã 2 — sổ hỏng: không ghi gì, khôi phục trước, KHÔNG
+xoá tệp hỏng) · `KHONG_DO_DUOC` (mã 3 — thiếu dashboard/sổ: «chưa đo», không phải sạch) · `SO_DANG_KHOA` (mã 3, thêm
+14/11/2026 — một lượt khác giữ khoá ghi sổ quá hạn chờ 60 giây ⇒ lượt này KHÔNG ghi gì; chạy lại khi lượt kia xong;
+KHÔNG xoá `.so-xac-minh-nguon.json.lock` — khoá của hệ điều hành tự nhả khi tiến trình giữ nó thoát). Từ 14/11/2026
+mọi đường ghi sổ đi qua `ghi_so` (khoá tệp + đọc lại sổ trên đĩa + GỘP BA CHIỀU + ghi nguyên tử) ⇒ `--quet`/`--vong`,
+`--quet-ledger`, `--phu-mo-coi`, `--kiem-rut-lai` và cầu NC⇄LS chạy song song không còn xoá mất bản ghi của nhau; dương
+tính rút bài trên đĩa không bao giờ bị một «ok» cũ đè mất.
 
 ⚠️ **ĐÍNH CHÍNH 10/09/2026 (đợt kiểm độc lập tuyến ĐỘ TIN CẬY):** bản trước của bảng này chỉ
 có MỘT dòng cho "PMID chưa kiểm được rút bài" và ghi cứng *"chạy lại KHÔNG sửa được — cần

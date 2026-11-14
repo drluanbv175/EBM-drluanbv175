@@ -179,6 +179,7 @@ def _chu_trinh(a: argparse.Namespace) -> int:
                                     "bác sĩ duyệt rồi `python3 tools/ap_dung_de_xuat_watchlist.py`.")
 
     # ── 3 + 4. XÁC MINH TỪNG NGUỒN và RÚT BÀI ───────────────────────────────
+    out_phu = ""  # đầu ra ③a/③b — chỉ đọc để bắt «không ghi được vì khoá» (mã thoát của chúng không thay phán quyết ③④)
     if a.nhanh:
         rc, out = chay([PY, "tools/so_xac_minh_nguon.py", "--bao-cao"],
                        "③④ Độ phủ xác minh (đọc sổ, không gọi mạng)")
@@ -194,10 +195,11 @@ def _chu_trinh(a: argparse.Namespace) -> int:
         # có thể TẠO bản ghi chưa có ngày xác minh) rồi mới phủ mồ côi (xác minh tồn tại cho mọi PMID/DOI còn thiếu, kể cả
         # bản ghi hub vừa tạo). `--quet-ledger` cũng chưa quy trình nào gọi ⇒ phán quyết rút bài của thẻ hub hết hạn lặng lẽ.
         if _co_dashboard_that() and rc != 3:
-            chay([PY, "tools/so_xac_minh_nguon.py", "--quet-ledger", "--vong", str(a.vong)],
-                 f"③a Rút bài cho định danh chỉ-có-trong-hub ({a.vong} vòng)")
-            chay([PY, "tools/so_xac_minh_nguon.py", "--phu-mo-coi", "--vong", str(a.vong)],
-                 f"③b Phủ bản ghi mồ côi của sổ ({a.vong} vòng)")
+            _rc_a, out_a = chay([PY, "tools/so_xac_minh_nguon.py", "--quet-ledger", "--vong", str(a.vong)],
+                                f"③a Rút bài cho định danh chỉ-có-trong-hub ({a.vong} vòng)")
+            _rc_b, out_b = chay([PY, "tools/so_xac_minh_nguon.py", "--phu-mo-coi", "--vong", str(a.vong)],
+                                f"③b Phủ bản ghi mồ côi của sổ ({a.vong} vòng)")
+            out_phu = out_a + out_b
     khong_do_duoc = (rc == 3 or "KHONG_DO_DUOC" in out
                      # chuỗi của bản so_xac_minh_nguon CŨ (trả 2/1 cho hai ca này) — vẫn phải ra ⚪, không ra 🔴
                      or "Không thấy dashboard nào khớp" in out or "Sổ trống" in out)
@@ -207,6 +209,11 @@ def _chu_trinh(a: argparse.Namespace) -> int:
         # «có nguồn rút bỏ hẳn» — chưa ai thấy bài nào bị rút ở lượt này.
         viec_can_lam.append("🔴 SỔ XÁC MINH NGUỒN HỎNG — dương tính rút bài đã biết có thể bị mất; mọi phát "
                             "hành bị chặn tới khi khôi phục sổ (xem hướng dẫn ở phần ③④). KHÔNG xoá tệp hỏng.")
+    elif "SO_DANG_KHOA" in out:
+        # Vá 14/11/2026: sổ đang bị tiến trình khác giữ KHOÁ GHI quá hạn chờ ⇒ so_xac_minh_nguon không ghi gì, trả 3. KHÔNG
+        # được rơi vào nhánh «thiếu EBM-Dashboards» bên dưới (sai lý do), càng không phải 🟢.
+        viec_can_lam.append("⚪ Sổ xác minh nguồn đang bị một lượt khác giữ khoá ghi quá hạn chờ — lượt này KHÔNG ghi gì "
+                            "(xem ③④). Chạy lại chu trình khi lượt kia xong; KHÔNG xoá tệp khoá.")
     elif khong_do_duoc:
         # VÁ 26/09/2026 (phát hiện #28): bản sao trần/Cloud không có EBM-Dashboards ⇒ so_xac_minh_nguon trả 3.
         # BẮT BUỘC thêm một việc ⚪ (không «bỏ qua»): nếu viec_can_lam rỗng, tổng kết sẽ in 🟢 «không thấy bài bị
@@ -261,9 +268,12 @@ def _chu_trinh(a: argparse.Namespace) -> int:
             viec_can_lam.append("Có nguồn quá hạn xác minh tồn tại — chạy lại thêm vòng SẼ sửa được.")
         if "CAN_PHU_MO_COI" in out:
             # Thêm 14/11/2026: bản ghi TRẦN (thẻ hub/đề tài NC chưa từng xác minh tồn tại) — trước đó sổ gọi là «xem tay».
+            # Vá 14/11/2026 (rà #349): bỏ câu «`--vong 3` không chạm tới nhóm này» in vô điều kiện — sai với bản ghi trần có
+            # liên kết dashboard. `--phu-mo-coi` thì đúng cho MỌI bản ghi trần PMID/DOI; phần tách theo nguồn gốc ở ③④.
             viec_can_lam.append(
-                "Có bản ghi TRẦN chưa xác minh tồn tại (thẻ hub/đề tài NC) — `python3 tools/so_xac_minh_nguon.py "
-                "--phu-mo-coi --vong 3` SẼ sửa được (máy làm, không cần khoá API; `--vong 3` không chạm tới nhóm này).")
+                "Có bản ghi TRẦN chưa xác minh tồn tại (thẻ hub/đề tài NC/…) — `python3 tools/so_xac_minh_nguon.py "
+                "--phu-mo-coi --vong 3` SẼ sửa được (máy làm, không cần khoá API; phủ cả phần `--vong 3` không chạm tới — "
+                "xem phần ③④).")
         if "CAN_XEM_TAY" in out:
             viec_can_lam.append("Có nguồn hết hiệu lực vì lý do khác — xem phần ③④ ở trên.")
         if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH", "CAN_KIEM_RUT_LAI",
@@ -272,6 +282,10 @@ def _chu_trinh(a: argparse.Namespace) -> int:
     elif rc != 0:
         # Mã lạ (tiến trình bị giết, lỗi chưa đặt tên…) — KHÔNG được rơi im lặng thành 🟢 (vá #28, 26/09/2026).
         viec_can_lam.append(f"⚪ Bước ③④ thoát mã lạ ({rc}) — chưa đo được xác minh nguồn/rút bài; xem phần ③④.")
+    if "SO_DANG_KHOA" in out_phu and "SO_DANG_KHOA" not in out:
+        # Vá 14/11/2026: ③a/③b vướng khoá ghi ⇒ phán quyết rút bài thẻ hub / phủ mồ côi của lượt này KHÔNG vào sổ.
+        viec_can_lam.append("⚪ Bước ③a/③b không ghi được vì sổ đang bị lượt khác giữ khoá — phần đó chưa vào sổ; chạy lại "
+                            "`--quet-ledger` / `--phu-mo-coi` khi lượt kia xong (xem ③a/③b).")
 
     # ── 5. NHẤT QUÁN GIỮA CÁC BẢN CÙNG CHỦ ĐỀ ───────────────────────────────
     # Đặt SAU phần xác minh vì nó đọc nội dung dashboard, không gọi mạng; và đặt
