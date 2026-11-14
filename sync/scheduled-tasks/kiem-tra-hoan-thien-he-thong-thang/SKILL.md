@@ -27,7 +27,7 @@ chứng cứ y khoa.
 
 DẤU VẾT LƯỢT — BẮT BUỘC (14/11/2026; cảm biến `tools/kiem_lich_nen.py` chỉ canh được tác vụ để lại dấu vết máy-đọc-được):
 - Lệnh Bash ĐẦU TIÊN của lượt: `python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --bat-dau`
-- Lệnh Bash CUỐI CÙNG của lượt (sau báo cáo):
+- Lệnh Bash CUỐI CÙNG của lượt (sau báo cáo; TRỪ khi lượt dừng ở BƯỚC 0 — khi đó cố ý KHÔNG ghi, xem bước 0):
   `python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --ma <0|1|2>` — 0 = mọi mảng sạch, không có việc ·
   1 = có việc cho bác sĩ / việc sửa cho phiên có người · 2 = có mảng KHÔNG đo được/không chạy được.
 Công cụ nối dòng BẮT ĐẦU/KẾT THÚC (giờ do máy lấy) vào `state/kiem-tra-hoan-thien-he-thong.log` khai ở
@@ -41,11 +41,13 @@ lệnh lượt này sẽ gõ, khai ở khoá `kiem-tra-hoan-thien-he-thong-thang
 - mã 0 (🟢) ⇒ làm tiếp các mảng ①–⑨.
 - mã 1 (🔴 có lệnh của lượt này chưa được phép trên máy, hoặc SKILL có lệnh chưa khai/lệnh ghép — lượt sẽ bị cắt ngang giữa
   chừng mà bộ lập lịch vẫn ghi «succeeded») HOẶC mã 2 (⚪ KHÔNG đo được quyền — «không đo được» không phải «đủ»)
-  ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy mảng ①–⑨. Chạy
-  `python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --ma 2` (ghi KẾT THÚC mã 2 — lượt không chạy được) rồi
-  kết thúc bằng tin nhắn mở đầu «🔴 LƯỢT KỸ THUẬT THÁNG DỪNG Ở BƯỚC 0 — tiền kiểm quyền mã <n>», dán NGUYÊN VĂN các dòng ✗/⚪
-  công cụ in, và lệnh bác sĩ tự chạy `python3 tools/quyen_lich_nen.py --ap-dung` rồi «Run now».
-  (Nếu chính lệnh ghi KẾT THÚC bị cắt vì chưa áp quyền, cảm biến tự báo 🔴 «cắt ngang» — vẫn là gãy ồn; không thử cách khác.)
+  ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy mảng ①–⑨, và KHÔNG ghi dòng KẾT THÚC (không gõ lệnh `--ma` của mục «DẤU VẾT LƯỢT»). Lý do:
+  cảm biến `tools/kiem_lich_nen.py` chỉ đọc MỐC GIỜ của dòng KẾT THÚC, không đọc mã — ghi KẾT THÚC (dù mã 2) là kỳ được tính
+  «đúng hẹn», tức xanh giả cho một kỳ không chạy. Để BẮT ĐẦU đứng một mình thì cảm biến tự báo 🔴 «có BẮT ĐẦU nhưng KHÔNG có
+  KẾT THÚC — … xem python3 tools/quyen_lich_nen.py», đúng gốc (đo khi thẩm định 14/11/2026). Kết thúc bằng tin nhắn mở đầu
+  «🔴 LƯỢT KỸ THUẬT THÁNG DỪNG Ở BƯỚC 0 — tiền kiểm quyền mã <n> (cố ý không ghi KẾT THÚC)», dán NGUYÊN VĂN các dòng ✗/⚪ công
+  cụ in, và lệnh bác sĩ tự chạy `python3 tools/quyen_lich_nen.py --ap-dung` rồi «Run now» (lượt chạy lại trong hạn ghi đủ
+  BẮT ĐẦU + KẾT THÚC thì kỳ thành đúng hẹn).
 - Windows: BỎ QUA bước 0 — hợp đồng quyền `sync/quyen-lich-nen.json` chỉ khai cho macOS (`nen_tang: darwin`, cùng cách
   `tools/dong_bo_tac_vu_lich.py` coi là «không áp»); ghi «⚪ bước 0 không áp trên Windows» vào báo cáo rồi làm tiếp.
 
@@ -149,5 +151,5 @@ fast-forward hay đẩy vào `master` (bác sĩ đã bỏ quy tắc tự gộp n
 Request do bác sĩ duyệt. KHÔNG hỏi lại người dùng — đây là phiên chạy nền không có ai theo dõi trực tiếp; nếu gặp quyết định
 thật sự cần người (không phải việc máy tự quyết được), chỉ ghi vào báo cáo, không dừng lại chờ.
 
-BƯỚC CUỐI BẮT BUỘC: chạy lệnh ghi dòng KẾT THÚC ở mục «DẤU VẾT LƯỢT» phía trên (`--ma` theo kết quả báo cáo). Thiếu bước này thì
-kỳ tháng bị cảm biến tính là LỠ dù báo cáo đã viết xong.
+BƯỚC CUỐI BẮT BUỘC (lượt đã qua bước 0): chạy lệnh ghi dòng KẾT THÚC ở mục «DẤU VẾT LƯỢT» phía trên (`--ma` theo kết quả báo
+cáo). Thiếu bước này thì kỳ tháng bị cảm biến tính là LỠ dù báo cáo đã viết xong. Lượt dừng ở bước 0 thì KHÔNG ghi (xem bước 0).

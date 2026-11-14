@@ -34,8 +34,10 @@ gõ tới đó là bị cắt ngang, cảm biến chỉ thấy «BẮT ĐẦU th
   · lệnh có toán tử shell (`&&`, `||`, `|`, `;`, `&`, chuyển hướng `>`/`<`, `(`…`)`) hoặc mở đầu bằng `cd` là LỆNH GHÉP: Claude
     Code xét quyền TỪNG lệnh con, một quy tắc khai không phủ được ⇒ luôn vào `thieu_khai`, kể cả khi trùng chữ một mục `lenh`
     (mục `lenh` có toán tử cũng bị báo — quy tắc vô hiệu). Ngoại lệ duy nhất: lệnh ghép khai ở `khong_chay` (lượt không gõ,
-    chỉ IN cho người chạy tay). «<…>» là chỗ điền tham số, không phải chuyển hướng; toán tử nằm trong nháy không tính;
-  · backtick có «…» là MẪU MÔ TẢ (không gõ nguyên văn được — vd lời dặn «không thêm `cd … &&`») ⇒ không xét lệnh ghép/git/gh;
+    chỉ IN cho người chạy tay). «<…>» là chỗ điền tham số, không phải chuyển hướng; toán tử nằm trong nháy không tính (nháy
+    theo đúng luật shell, kể cả nháy dính giữa từ như `--format="%H|%s"`), riêng `$(` trong nháy kép vẫn là lệnh con;
+  · backtick có «…» là MẪU MÔ TẢ (không gõ nguyên văn được — vd lời dặn «không thêm `cd … &&`») ⇒ không xét lệnh ghép/git/gh.
+    «…» xét SAU khi thay chỗ điền: `git -C x log <…>` là lệnh thật có chỗ điền, vẫn phải khai (đính chính thẩm định 14/11);
   · ngoài các khoá đã khai, xét cả SKILL của mọi tác vụ đang chạy theo `sync/lich-nen-ky-vong.json` (tác vụ lịch mới mà quên
     khai khoá thì mọi lệnh của nó đều là «chưa khai», không lặng im). Thư mục SKILL cũ không còn lịch (`ebm-*`) không xét.
 
@@ -48,7 +50,6 @@ import datetime as dt
 import fnmatch
 import json
 import re
-import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -72,35 +73,67 @@ _CHO_DIEN = re.compile(r"<[^<>\n]*>")     # «<mã>», «<0|1|2>», «<phần li
 _KY_TU_TOAN_TU = frozenset("();<>|&")
 
 
+def _toan_tu_ngoai_nhay(s: str) -> str | None:
+    """Toán tử shell ĐẦU TIÊN nằm ngoài nháy (cả cụm ký tự toán tử liền nhau, vd `&&`, `>&`), hoặc None.
+
+    Quét theo luật nháy của shell POSIX: nháy đơn không có ký tự thoát; trong nháy kép `\\` thoát ký tự kế; ngoài nháy `\\`
+    thoát ký tự kế (`\\|` là chữ, không phải ống). Nháy mở ở BẤT KỲ đâu trong từ (`--format="%H|%s"`) — trước 14/11/2026
+    dùng `shlex(posix=False)` vốn chỉ nhận nháy đứng đầu từ nên báo oan `|` trong nháy dính giữa từ. Không dùng
+    `shlex(posix=True)`: nó bỏ nháy nên `"|"` đứng riêng thành token `|` (báo oan theo chiều ngược). `$(` trong nháy kép vẫn
+    là lệnh con (shell thay thế lệnh cả trong nháy kép) ⇒ trả `$(`. Nháy không đóng ⇒ ValueError."""
+    i, n, nhay = 0, len(s), ""
+    while i < n:
+        ch = s[i]
+        if nhay == "'":
+            if ch == "'":
+                nhay = ""
+        elif nhay == '"':
+            if ch == "\\":
+                i += 1
+            elif ch == '"':
+                nhay = ""
+            elif ch == "$" and s[i + 1:i + 2] == "(":
+                return "$("
+        elif ch == "\\":
+            i += 1
+        elif ch in "'\"":
+            nhay = ch
+        elif ch in _KY_TU_TOAN_TU:
+            j = i
+            while j < n and s[j] in _KY_TU_TOAN_TU:
+                j += 1
+            return s[i:j]
+        i += 1
+    if nhay:
+        raise ValueError("nháy không đóng")
+    return None
+
+
 def ly_do_ghep(lenh: str) -> str | None:
     """Toán tử shell làm `lenh` thành LỆNH GHÉP (quy tắc khai không phủ được), hoặc None nếu là một lệnh đơn.
 
     Claude Code xét quyền từng lệnh con của `a && b`, `a | b`, `a; b` ⇒ một mục `Bash(...)` không bao giờ cho cả chuỗi chạy.
     `cd x` đứng đầu cũng tính: lượt chạy tiếp ở thư mục khác, các lệnh tương đối sau đó sai chỗ, và `cd` không được khai.
-    Toán tử trong nháy không tính; «<…>» thay bằng một từ trước khi tách (đó là chỗ điền, không phải chuyển hướng)."""
+    Toán tử trong nháy không tính; «<…>» thay bằng một từ trước khi quét (đó là chỗ điền, không phải chuyển hướng)."""
     s = _CHO_DIEN.sub("X", lenh)
     if s.split(maxsplit=1)[:1] == ["cd"]:
         return "cd (đổi thư mục)"
     try:
-        lx = shlex.shlex(s, posix=False, punctuation_chars=True)
-        lx.whitespace_split = True
-        tu = list(lx)
+        return _toan_tu_ngoai_nhay(s)
     except ValueError:
         return "nháy không đóng (không tách được lệnh)"
-    for t in tu:
-        if t and set(t) <= _KY_TU_TOAN_TU:
-            return t
-    return None
 
 
 def lenh_trong_skill(van_ban: str) -> list[str]:
     """Các lệnh (trong backtick) của một SKILL.md, giữ thứ tự, bỏ trùng.
 
-    Bỏ qua mẫu mô tả («…») CHỈ với đầu lệnh mới (`git`/`gh`/`cd`) — lệnh `python3`/venv/`bash` giữ đúng phép dò cũ."""
+    Bỏ qua mẫu mô tả («…») CHỈ với đầu lệnh mới (`git`/`gh`/`cd`) — lệnh `python3`/venv/`bash` giữ đúng phép dò cũ. «…»
+    xét SAU khi thay chỗ điền «<…>» (cú pháp chỗ điền chính thức của SKILL): `git -C x log <…>` là lệnh thật, không phải mẫu
+    mô tả — xét trên chuỗi thô thì nó lọt hẳn khỏi phép dò (xanh giả, đo khi thẩm định 14/11/2026)."""
     ra: list[str] = []
     for m in _LENH_RE.finditer(van_ban):
         c = " ".join(m.group(1).split())
-        if c.startswith(_DAU_MOI) and MAU_MO_TA in c:
+        if c.startswith(_DAU_MOI) and MAU_MO_TA in _CHO_DIEN.sub("X", c):
             continue
         if c not in ra:
             ra.append(c)
