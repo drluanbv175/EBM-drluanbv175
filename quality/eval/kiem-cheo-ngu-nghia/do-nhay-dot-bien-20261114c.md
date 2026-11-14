@@ -2,7 +2,7 @@
 
 > **Đột biến TỔNG HỢP có nhãn theo cấu trúc — KHÔNG thay bộ vàng do bác sĩ gắn nhãn.** Công cụ không đổi chế độ chặn; chuyển K1–K4 từ CẢNH BÁO sang CHẶN là quyết định của bác sĩ (audit/16 §4). Báo động trên đối chứng là CẬN TRÊN của báo động giả: mục thật chưa được gắn nhãn đúng/sai.
 
-Sinh bởi `tools/do_nhay_kiem_ngu_nghia.py` · hạt giống 20261114 · băm mã (16 ký tự đầu): `kiem_cheo_ngu_nghia.py` a2379f82dffac62f, `kiem_quan_the_chieu.py` b536780d27c7adf9, `do_nhay_kiem_ngu_nghia.py` 7815459a11fbe7a9.
+Sinh bởi `tools/do_nhay_kiem_ngu_nghia.py` · hạt giống 20261114 · băm mã (16 ký tự đầu): `kiem_cheo_ngu_nghia.py` 928b79ff754c3348, `kiem_quan_the_chieu.py` 09dbc9114a7e95e1, `do_nhay_kiem_ngu_nghia.py` 7815459a11fbe7a9.
 
 ## Tóm tắt
 

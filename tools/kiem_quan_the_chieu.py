@@ -266,10 +266,10 @@ _NGUOC = re.compile(
 # tính — không phải tín hiệu ngược chiều của khuyến cáo. Bỏ qua trừ khi câu cũng nói tới kết cục
 # CHÍNH; «not recommended»/«Class III»/«should not» thì KHÔNG BAO GIỜ bỏ qua.
 # 14/11/2026: «secondary» CHỈ khi là kết cục phụ — trước đây «secondary analysis»/«secondary prevention» (thiết kế, quần thể)
-# cũng làm câu bị bỏ qua (3 lần K4 lọt).
-_PHU = re.compile(r"secondary (?:(?:efficacy |safety |key )?(?:end ?points?|outcomes?|measures?|composite)|analyses of (?:the )?"
-                  r"secondary)|key secondary|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety"
-                  r"|tolerab|discontinuation")
+# cũng làm câu bị bỏ qua (3 lần K4 lọt). Sửa sau thẩm định PR #359: bỏ nhánh «secondary analyses of (the) secondary» — nhánh
+# thừa (kết cục phụ thật đã khớp ở nhánh đầu) lại làm câu thiết kế «secondary analyses of secondary prevention trials» bị bỏ.
+_PHU = re.compile(r"secondary (?:efficacy |safety |key )?(?:end ?points?|outcomes?|measures?|composite)|key secondary"
+                  r"|exploratory|subgroup|post[ -]?hoc|adverse events?|serious adverse|safety|tolerab|discontinuation")
 _CHINH = re.compile(r"primary (?:end ?point|outcome|composite)")
 _LUON_BAO = re.compile(r"not recommended|should not be|class iii|net harm|futility|against|outweighs? (?:the |its )?benefit"
                        r"|d recommendation")
@@ -285,16 +285,30 @@ def muc_phu_dinh(it: dict) -> bool:
     return any(_MUC_PHU_DINH.match(str(it.get(k) or "")) for k in ("title", "action"))
 
 
-# Mệnh đề GIẢ ĐỊNH/ĐIỀU KIỆN đứng TRƯỚC tín hiệu ngược chiều («if a liberal policy does not improve…», «patients in whom
+# Mệnh đề GIẢ ĐỊNH/ĐIỀU KIỆN chứa tín hiệu ngược chiều («if a liberal policy does not improve…», «patients in whom
 # education is not effective should…», «PDT was recommended when CBT was not effective») — không phải kết luận ngược chiều.
 # Đo 14/11/2026: 5/7 báo động K4 MỚI trên mục thật sau khi mở rộng từ vựng thuộc dạng này. «when compared» không phải điều kiện.
+# Sửa sau thẩm định PR #359: tín hiệu phải nằm TRONG mệnh đề điều kiện — không có dấu phẩy giữa dấu điều kiện và tín hiệu.
+# «When added to GDMT, drug X did not reduce…» / «In patients in whom PCI was performed, X did not reduce…» là KẾT LUẬN âm
+# tính (mệnh đề phụ đã đóng bằng dấu phẩy); bản đầu bỏ cả chúng ⇒ K4 xanh giả. Câu về kết cục CHÍNH không bao giờ bỏ.
 _GIA_DINH_TRUOC = re.compile(r"(?<!\w)(?:if|whether|unless|in whom|in those whom|when(?! compared))(?!\w)")
 
 
 def _nguoc_sau_gia_dinh(c: str) -> bool:
-    """Mọi lần khớp _NGUOC trong câu đều đứng SAU một dấu giả định/điều kiện ⇒ câu chỉ nêu tình huống giả định."""
+    """Mọi lần khớp _NGUOC trong câu đều nằm TRONG một mệnh đề giả định/điều kiện: có dấu điều kiện đứng trước và KHÔNG có
+    dấu phẩy nào giữa dấu điều kiện gần nhất và tín hiệu ⇒ câu chỉ nêu tình huống giả định. Câu nói tới kết cục CHÍNH (_CHINH)
+    không bao giờ được coi là giả định (cùng luật với bộ lọc kết cục phụ)."""
+    if _CHINH.search(c):
+        return False
     ds = list(_NGUOC.finditer(c))
-    return bool(ds) and all(_GIA_DINH_TRUOC.search(c, 0, m.start()) for m in ds)
+    if not ds:
+        return False
+    for m in ds:
+        dau = list(_GIA_DINH_TRUOC.finditer(c, 0, m.start()))
+        # dấu GẦN nhất: khoảng của dấu xa hơn chứa trọn khoảng của nó, nên có phẩy ở đây là có phẩy ở mọi dấu
+        if not dau or "," in c[dau[-1].end():m.start()]:
+            return False
+    return True
 
 
 def kiem_chieu_chi_tiet(nguon: str) -> tuple[list[str], list[str]]:
@@ -674,9 +688,13 @@ def in_bao_cao(ten: str, kq: dict) -> None:
         if k4["muc"] == "can_doc":
             for c in k4["cau_nguon"]:
                 print(f"  🟠 [{d['id']}] K4 tín hiệu ngược chiều trong nguồn: «{c[:200]}»")
+        elif k4.get("muc_phu_dinh"):
+            print(f"  ✓ [{d['id']}] K4 mục là khuyến cáo phủ định — {len(k4['cau_bo_qua'])} câu ngược chiều của nguồn CÙNG "
+                  "chiều với mục")
         else:
             print(f"  ✓ [{d['id']}] K4 không thấy tín hiệu ngược chiều rõ ràng"
-                  + (f" (bỏ qua {len(k4['cau_bo_qua'])} câu chỉ về kết cục phụ/an toàn)" if k4["cau_bo_qua"] else ""))
+                  + (f" (bỏ qua {len(k4['cau_bo_qua'])} câu chỉ về kết cục phụ/an toàn hoặc mệnh đề giả định)"
+                     if k4["cau_bo_qua"] else ""))
         for x in d.get("k3b") or []:
             if x["muc"] != "can_doc":
                 continue
