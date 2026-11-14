@@ -59,7 +59,7 @@
       "ghi": ["state/**"]
     },
     "cap-nhat-thang-ebm": {
-      "_ghi_chu": "13/11/2026: MỘT tác vụ tháng duy nhất (bác sĩ: «gộp lại chỉ 1 tác vụ» và «Gói thu thập an toàn thuốc và duyệt chứng cứ hãy gộp vào một tác vụ tháng») — bộ thu thập an toàn thuốc weekly_safety.sh + monthly_update.sh + nhịp liêm chính (script tự cd vào engine) rồi phiếu thư mục EndNote. 12/11/2026: công cụ tự gọi orchestrator (--quet, candidate) và phần KHÔNG ghi EndNote của dây chuyền toàn văn (--hoan-thien: gom OA + in PDF vào kho) bằng tiến trình con — không khai từng lệnh con. Bước GHI EndNote cần --ghi-endnote: chỉ phiên Claude có người (khong_chay), không bao giờ lượt lịch. Lượt lịch không ghi tệp bằng Write/Edit (phiếu do chính công cụ ghi) — TRỪ một dòng alerts/<ngày>.md khi dừng ở bước 0 hoặc gặp nguồn đã rút ở bước 4b (cùng cách quy trình gói duyệt ghi alerts). 14/11/2026: bước 0 TIỀN KIỂM (quyen_lich_nen --tac-vu chỉ xét lệnh của chính lượt này + kiem_lich_nen) — thiếu quyền ⇒ dừng lượt ồn thay vì bị cắt ngang giữa chừng mà vẫn «succeeded»; bước 4b làm mới sổ xác minh nguồn (chỉ ghi THÀNH CÔNG, công cụ tự ghi sổ).",
+      "_ghi_chu": "13/11/2026: MỘT tác vụ tháng duy nhất (bác sĩ: «gộp lại chỉ 1 tác vụ» và «Gói thu thập an toàn thuốc và duyệt chứng cứ hãy gộp vào một tác vụ tháng») — bộ thu thập an toàn thuốc weekly_safety.sh + monthly_update.sh + nhịp liêm chính (script tự cd vào engine) rồi phiếu thư mục EndNote. 12/11/2026: công cụ tự gọi orchestrator (--quet, candidate) và phần KHÔNG ghi EndNote của dây chuyền toàn văn (--hoan-thien: gom OA + in PDF vào kho) bằng tiến trình con — không khai từng lệnh con. Bước GHI EndNote cần --ghi-endnote: chỉ phiên Claude có người (khong_chay), không bao giờ lượt lịch. Lượt lịch không ghi tệp bằng Write/Edit (phiếu do chính công cụ ghi) — TRỪ một dòng alerts/<ngày>.md khi dừng ở bước 0 (cùng cách quy trình gói duyệt ghi alerts). 14/11/2026: bước 0 TIỀN KIỂM (quyen_lich_nen --tac-vu chỉ xét lệnh của chính lượt này + kiem_lich_nen) — thiếu quyền ⇒ dừng lượt ồn thay vì bị cắt ngang giữa chừng mà vẫn «succeeded». Đính chính 14/11/2026: đã GỠ bước 4b (so_xac_minh_nguon --vong 3) — lặp tác vụ kiem-rut-bai-kho-thang ngày 4 (owner duy nhất của tái kiểm sổ xác minh/rút bài) và đọc mã 2 thành «nguồn đã rút» sai cho ca bản đính chính bác sĩ đã ký.",
       "lenh": [
         "python3 tools/quyen_lich_nen.py --tac-vu cap-nhat-thang-ebm,goi-duyet-tuan-ebm",
         "python3 tools/kiem_lich_nen.py",
@@ -67,7 +67,6 @@
         "bash medical-ebm-automation/scripts/weekly_safety.sh",
         "bash medical-ebm-automation/scripts/monthly_update.sh",
         "bash medical-ebm-automation/scripts/evidence_integrity_monthly.sh",
-        "python3 tools/so_xac_minh_nguon.py --vong 3",
         "python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da * --hoan-thien --ghi"
       ],
       "khong_chay": ["python3 tools/quyen_lich_nen.py --ap-dung",

@@ -5,8 +5,10 @@
 (2) `python3 tools/kiem_lich_nen.py`: tác vụ `kiem-tra-hoan-thien-he-thong-thang` khai `dau_vet: khong-co` ⇒ «⚪ không canh
 được»; (3) sổ xác minh nguồn 97 mục chưa/hết hạn, không có nhịp làm mới định kỳ.
 
-Khoá: bước 0 tiền kiểm của tác vụ tháng (quyền chỉ của lệnh lượt đó — `--tac-vu`), bước 4b sổ xác minh, dấu vết
-BẮT ĐẦU/KẾT THÚC của tác vụ kỹ thuật qua `tools/ghi_dau_vet_lich.py`, mọi tác vụ lịch đều canh được, mọi lệnh đã khai quyền.
+Khoá: bước 0 tiền kiểm của tác vụ tháng (quyền chỉ của lệnh lượt đó — `--tac-vu`), dấu vết BẮT ĐẦU/KẾT THÚC của
+tác vụ kỹ thuật qua `tools/ghi_dau_vet_lich.py`, mọi tác vụ lịch đều canh được, mọi lệnh đã khai quyền.
+Đính chính 14/11/2026 (người duyệt độc lập): (3) là tiền đề SAI — owner tái kiểm sổ là tác vụ `kiem-rut-bai-kho-thang`; bước
+4b đã gỡ (đọc mã 2 thành «nguồn đã rút» là đỏ giả cho đính chính đã ký). Khoá mới ở `test_lich_nen_dinh_chinh_20261114.py`.
 """
 
 from __future__ import annotations
@@ -222,17 +224,6 @@ def test_tac_vu_thang_tien_kiem_buoc_0_truoc_buoc_1_va_dung_khi_thieu_quyen():
     ds = re.search(r"--tac-vu (\S+)`", sk).group(1).split(",")
     assert all(t in khai for t in ds) and set(ds) == {TV_THANG, TV_GOI}
     assert f"sync/scheduled-tasks/{TV_GOI}/SKILL.md" in sk
-
-
-def test_tac_vu_thang_lam_moi_so_xac_minh_sau_lien_chinh_truoc_goi_duyet():
-    sk = _skill(TV_THANG)
-    vi_tri = [sk.index(s) for s in ("`bash medical-ebm-automation/scripts/evidence_integrity_monthly.sh`",
-                                    "`python3 tools/so_xac_minh_nguon.py --vong 3`",
-                                    f"`sync/scheduled-tasks/{TV_GOI}/SKILL.md`")]
-    assert vi_tri == sorted(vi_tri)
-    khoi = _khoi_buoc(sk, "4b. ", "\n5. ")
-    for cum in ("run_in_background", "CHỈ ghi THÀNH CÔNG", "KHÔNG làm hỏng lượt", "[MA] SO_HONG", "ĐÃ BỊ RÚT"):
-        assert cum in khoi, cum
 
 
 @pytest.mark.parametrize("ten", [TV_THANG, TV_GOI, TV_KY_THUAT])

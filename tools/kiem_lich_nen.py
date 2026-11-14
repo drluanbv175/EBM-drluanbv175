@@ -25,12 +25,20 @@ còn «🟢 Mọi kỳ … đúng hẹn (0 tác vụ có dấu vết)» — đú
 repo y khoa ANH EM: bộ lập lịch chỉ sống trên Mac (bố cục lồng), log ở bản anh em trên Cloud chỉ
 chứa lượt chạy tay ⇒ đọc nó sẽ báo «kỳ không nổ đúng hẹn» cho nhầm máy (đỏ giả). Mã thoát giữ 0:
 `tu_khoi_dong._canh_lich_nen` coi mọi mã ngoài {0,1} là «cảm biến lỗi».
+
+14/11/2026 (đính chính PR #339): tác vụ khai `dau_vet.tu_ngay` (mốc từ đó lượt lịch PHẢI ghi log — vd lệnh
+`tools/ghi_dau_vet_lich.py` mới có trong SKILL từ kỳ đó) ⇒ (a) kỳ TRƯỚC mốc không xét bằng log (không đỏ giả cho kỳ chưa có
+lệnh ghi dấu vết); (b) máy CÓ bản chạy của tác vụ (`~/.claude/scheduled-tasks/<id>/`, ghi đè bằng `EBM_TAC_VU_LICH_DIR`)
+mà KHÔNG có tệp log ⇒ coi là CHƯA có dấu vết nào ⇒ kỳ từ mốc trở đi ra 🔴 lỡ. Trước đó trường hợp này in «⚪ không đọc
+được log (bản sao trần/máy khác)» — nhãn sai trên chính máy chạy lịch, và đứng ⚪ mãi nếu lệnh ghi dấu vết ĐẦU TIÊN đã bị
+cắt (chưa áp quyền): đúng kiểu gãy âm thầm. Máy KHÔNG có bản chạy (Cloud, bản sao trần, máy không chạy lịch) vẫn ⚪.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -85,9 +93,19 @@ def _ket_thuc(duong: Path) -> list[dt.datetime] | None:
     return _moc(duong, "KẾT THÚC")
 
 
-def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: Path = GOC) -> dict:
-    """Trả {'phat_hien': [{id, ky, muc, uu, thong_diep}], 'khong_do_duoc': [...], 'ok': n}. Thuần đọc."""
+def thu_muc_ban_chay() -> Path:
+    """Thư mục bản chạy tác vụ lịch của app — CÙNG quy ước với `tools/dong_bo_tac_vu_lich.py`."""
+    return Path(os.environ.get("EBM_TAC_VU_LICH_DIR") or (Path.home() / ".claude" / "scheduled-tasks"))
+
+
+def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: Path = GOC,
+         ban_chay: Path | None = None) -> dict:
+    """Trả {'phat_hien': [{id, ky, muc, uu, thong_diep}], 'khong_do_duoc': [...], 'ok': n}. Thuần đọc.
+
+    `ban_chay`: thư mục bản chạy tác vụ lịch (mặc định `thu_muc_ban_chay()`) — chỉ dùng cho tác vụ khai `dau_vet.tu_ngay`,
+    để phân biệt «máy chạy lịch mà chưa có log» (🔴 từ mốc) với «máy không chạy lịch» (⚪)."""
     bay_gio = hom_nay or dt.datetime.now()
+    ban_chay = ban_chay if ban_chay is not None else thu_muc_ban_chay()
     if so_khai is None:
         try:
             so_khai = json.loads(SO_KHAI.read_text(encoding="utf-8"))
@@ -107,6 +125,15 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
         if loai == "khong-co" or loai is None:
             ra["khong_do_duoc"].append(f"{tv['id']}: chưa khai dấu vết máy-đọc-được — không canh được")
             continue
+        # 14/11/2026: mốc dấu vết — kỳ trước mốc chưa có lệnh ghi log trong SKILL ⇒ không xét bằng log (không đỏ giả).
+        moc_dv = dt.date.fromisoformat(dv["tu_ngay"]) if dv.get("tu_ngay") else None
+        if moc_dv is not None:
+            cac = [s for s in cac if s.date() >= moc_dv]
+            if not cac:
+                ra["khong_do_duoc"].append(f"{tv['id']}: dấu vết log chỉ có từ kỳ {moc_dv:%d/%m/%Y} — kỳ trước mốc không "
+                                           "canh được bằng log (chưa phải lỡ, cũng chưa phải đúng hẹn)")
+                continue
+        log_vang_may_chay = False
         ket: list[dt.datetime] | None = None
         bat_dau: list[dt.datetime] = []
         if loai == "log-ket-thuc":
@@ -116,8 +143,17 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
             # có dấu vết», để người đọc tìm đúng gốc (tools/quyen_lich_nen.py) chứ không đi tìm tác vụ bị xoá.
             bat_dau = _moc(goc / dv["path"], "BẮT ĐẦU") or []
             if ket is None:
-                ra["khong_do_duoc"].append(f"{tv['id']}: không đọc được {dv['path']} (bản sao trần/máy khác)")
-                continue
+                if moc_dv is not None and (ban_chay / tv["id"]).is_dir():
+                    # Máy CHẠY tác vụ này (có bản chạy) mà không có log từ mốc ⇒ lượt chưa từng ghi được dấu vết — kể cả
+                    # khi lệnh ghi dấu vết ĐẦU TIÊN bị cắt vì chưa áp quyền. Đó là kỳ lỡ (🔴), không phải «không đo được».
+                    ket, log_vang_may_chay = [], True
+                elif moc_dv is not None:
+                    ra["khong_do_duoc"].append(f"{tv['id']}: máy này không có bản chạy của tác vụ ({ban_chay}/{tv['id']}) "
+                                               f"và không có {dv['path']} — Cloud/bản sao trần/máy không chạy lịch")
+                    continue
+                else:
+                    ra["khong_do_duoc"].append(f"{tv['id']}: không đọc được {dv['path']} (bản sao trần/máy khác)")
+                    continue
         elif loai in ("file-tuan-iso", "file-ngay", "file-thang"):
             if not (goc / Path(dv["path"]).parent).exists():
                 ra["khong_do_duoc"].append(f"{tv['id']}: thư mục {Path(dv['path']).parent}/ vắng mặt (bản sao trần)")
@@ -161,7 +197,11 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                               f"có lượt chạy TRỄ {tre[0]:%d/%m %H:%M} (ngoài hạn {tv.get('grace_gio', 30)}h) — lịch không nổ "
                               "đúng hẹn, lượt sau là chạy tay/bù" if tre else
                               f"có BẮT ĐẦU {cat[0]:%d/%m %H:%M} nhưng KHÔNG có KẾT THÚC — lượt bị cắt ngang/chết giữa chừng "
-                              "(lệnh đòi duyệt quyền? xem python3 tools/quyen_lich_nen.py)" if cat else "KHÔNG có dấu vết nào"))
+                              "(lệnh đòi duyệt quyền? xem python3 tools/quyen_lich_nen.py)" if cat else
+                              f"KHÔNG có dấu vết nào — {dv['path']} chưa từng được tạo dù máy có bản chạy của tác vụ (lệnh ghi "
+                              "dấu vết ĐẦU TIÊN bị cắt vì chưa áp quyền, hoặc bản chạy SKILL còn cũ? xem python3 "
+                              "tools/quyen_lich_nen.py và python3 tools/dong_bo_tac_vu_lich.py)" if log_vang_may_chay else
+                              "KHÔNG có dấu vết nào"))
             else:
                 # file-tuan-iso: tệp mang tuần ISO của kỳ; file-thang (12/11/2026): tệp mang THÁNG của kỳ `{thang}` = YYYY-MM (phiếu
                 # cập nhật tháng thư mục EndNote). Cả hai chỉ xét CÓ/KHÔNG — tên tệp không mang giờ chạy nên không tách được trễ.

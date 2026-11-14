@@ -14,7 +14,17 @@ PHẠM VI: chỉ các tác vụ PHẢI hoạt động theo `sync/lich-nen-ky-von
   • tut_hau   — bản chạy trùng khít MỘT phiên bản CŨ của nguồn trong git ⇒ tự chép được (`--ap-dung`, sao lưu trước);
   • khac_rieng — bản chạy khác MỌI phiên bản nguồn (có sửa riêng) ⇒ KHÔNG chép đè, cần bác sĩ xem;
   • chua_tao  — có nguồn, không có bản chạy ⇒ tạo tác vụ trong app là việc của bác sĩ (máy KHÔNG tự tạo/xoá tác vụ).
+  • cho_quyen — (14/11/2026) bản chạy tụt hậu NHƯNG lệnh của SKILL mới chưa được phép trên máy (`quyen_lich_nen --tac-vu`
+                chưa 🟢) ⇒ GIỮ bản chạy cũ, KHÔNG chép; việc của bác sĩ: `python3 tools/quyen_lich_nen.py --ap-dung`.
 Không có thư mục bản chạy (Cloud, máy chưa cài app) ⇒ ⚪ không đo được, mã 0 — không báo đỏ giả.
+
+CỔNG QUYỀN TRƯỚC KHI CHÉP (đính chính PR #339, 14/11/2026): hook SessionStart gọi `tu_sua_chua --ap-dung` — bước tua nhanh
+master (`day_do_song_cloud`) chạy TRƯỚC bước chép này ⇒ SKILL vừa gộp vào runtime ngay phiên Mac kế tiếp, TRƯỚC khi bác sĩ áp
+quyền. SKILL mới thêm lệnh chưa được phép (vd bước 0 tiền kiểm của tác vụ tháng) thì lượt lịch kế tiếp bị cắt ngay lệnh đó — mất
+cả phần trước đó vẫn chạy được ở bản cũ (bộ thu thập an toàn thuốc). Vì vậy tác vụ có hợp đồng quyền (khoá trong
+`sync/quyen-lich-nen.json`, hoặc SKILL tự gọi `quyen_lich_nen.py --tac-vu …`) chỉ được chép khi đúng tập quyền đó 🟢 trên máy;
+không đo được quyền ⇒ cũng giữ (fail-closed). Tác vụ không có hợp đồng quyền, hoặc tệp khai dành cho nền tảng khác máy này ⇒
+chép như cũ.
 
 Dùng:  python3 tools/dong_bo_tac_vu_lich.py [--im-khi-on]      # mã 1 nếu có tác vụ tụt hậu
        python3 tools/dong_bo_tac_vu_lich.py --ap-dung            # chép nguồn → bản chạy cho tác vụ tụt hậu
@@ -25,8 +35,10 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -72,8 +84,53 @@ def _chuan(b: bytes) -> bytes:
     return b.replace(b"\r\n", b"\n").rstrip()
 
 
-def phan_loai(repo: Path, ban_chay: Path) -> dict[str, str]:
-    """{id tác vụ: khop · tut_hau · khac_rieng · chua_tao · thieu_nguon · khong_do_duoc}."""
+_TIEN_KIEM_RE = re.compile(r"`python3 tools/quyen_lich_nen\.py --tac-vu ([^`\s]+)`")
+
+
+def _nap_quyen():
+    """Nạp `quyen_lich_nen.py` nằm CẠNH công cụ này — cùng hàm `kiem()` mà bước 0 tiền kiểm của lượt lịch dùng."""
+    sp = importlib.util.spec_from_file_location("_dbtvl_quyen_lich_nen", Path(__file__).resolve().parent / "quyen_lich_nen.py")
+    mod = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(mod)
+    return mod
+
+
+def cong_quyen(repo: Path, ma: str, nen_tang: str | None = None) -> tuple[str, list[str]]:
+    """Quyền của SKILL NGUỒN tác vụ `ma` trên máy: ('khong_ap'|'du'|'thieu'|'khong_do', các dòng lý do).
+
+    Tập quyền xét = danh sách trong lệnh tiền kiểm `quyen_lich_nen.py --tac-vu …` của chính SKILL nguồn (nếu có), ngược lại
+    khoá `ma` trong `sync/quyen-lich-nen.json`. 'khong_ap' = tác vụ không có hợp đồng quyền / tệp khai vắng / khai cho nền
+    tảng khác ⇒ không chặn. 'khong_do' = có hợp đồng mà không đo được (tệp khai hỏng, settings không đọc được…) ⇒ chặn."""
+    try:
+        khai = json.loads((repo / "sync" / "quyen-lich-nen.json").read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return "khong_ap", []
+    except (OSError, ValueError) as e:
+        return "khong_do", [f"không đọc được sync/quyen-lich-nen.json ({type(e).__name__})"]
+    if (nen_tang or sys.platform) != khai.get("nen_tang", "darwin"):
+        return "khong_ap", []
+    try:
+        vb = (repo / "sync" / "scheduled-tasks" / ma / "SKILL.md").read_text(encoding="utf-8")
+    except OSError:
+        return "khong_do", [f"không đọc được SKILL nguồn của {ma}"]
+    m = _TIEN_KIEM_RE.search(vb)
+    if m:
+        ds = [t for t in m.group(1).split(",") if t]
+    elif ma in khai.get("tac_vu", {}):
+        ds = [ma]
+    else:
+        return "khong_ap", []
+    kq = _nap_quyen().kiem(repo, khai=khai, nen_tang=nen_tang or sys.platform, tac_vu=ds)
+    if kq["thieu_khai"] or kq["thieu_may"]:
+        return "thieu", ([f"SKILL có lệnh chưa khai: {c}" for _t, c in kq["thieu_khai"]]
+                         + [f"máy chưa áp: {q}" for q in kq["thieu_may"]])
+    if kq["khong_do"]:
+        return "khong_do", list(kq["khong_do"])
+    return "du", []
+
+
+def phan_loai(repo: Path, ban_chay: Path, nen_tang: str | None = None) -> dict[str, str]:
+    """{id tác vụ: khop · tut_hau · cho_quyen · khac_rieng · chua_tao · thieu_nguon · khong_do_duoc}."""
     ra: dict[str, str] = {}
     for ma in tac_vu_ky_vong(repo):
         nguon = repo / "sync" / "scheduled-tasks" / ma / "SKILL.md"
@@ -90,12 +147,18 @@ def phan_loai(repo: Path, ban_chay: Path) -> dict[str, str]:
                 ra[ma] = "khong_do_duoc"
             else:
                 ra[ma] = "tut_hau" if _chuan(dich.read_bytes()) in {_chuan(b) for b in cu} else "khac_rieng"
+        if ra[ma] == "tut_hau" and cong_quyen(repo, ma, nen_tang)[0] in ("thieu", "khong_do"):
+            ra[ma] = "cho_quyen"
     return ra
 
 
-def ap_dung(repo: Path, ban_chay: Path, loai: dict[str, str]) -> tuple[list[str], Path | None]:
-    """Chép nguồn → bản chạy cho tác vụ tụt hậu; sao lưu CẢ thư mục bản chạy (ngoài OneDrive) trước khi ghi."""
-    can = [ma for ma, v in loai.items() if v == "tut_hau"]
+def ap_dung(repo: Path, ban_chay: Path, loai: dict[str, str], nen_tang: str | None = None) -> tuple[list[str], Path | None]:
+    """Chép nguồn → bản chạy cho tác vụ tụt hậu; sao lưu CẢ thư mục bản chạy (ngoài OneDrive) trước khi ghi.
+
+    Kiểm lại cổng quyền NGAY trước khi chép (người gọi có thể truyền `loai` tính từ trước/ở nơi khác): quyền của SKILL mới
+    chưa 🟢 ⇒ không chép tác vụ đó."""
+    can = [ma for ma, v in loai.items()
+           if v == "tut_hau" and cong_quyen(repo, ma, nen_tang)[0] not in ("thieu", "khong_do")]
     if not can:
         return [], None
     sao_luu = ban_chay.parent / f"{ban_chay.name}-backup-{dt.datetime.now():%Y%m%d-%H%M%S}"
@@ -107,6 +170,8 @@ def ap_dung(repo: Path, ban_chay: Path, loai: dict[str, str]) -> tuple[list[str]
 
 _NHAN = {
     "tut_hau": "🟡 tụt hậu nguồn git (tự chép được, --ap-dung)",
+    "cho_quyen": ("👤 tụt hậu nhưng GIỮ bản chạy cũ — lệnh của SKILL mới chưa được phép (hoặc không đo được quyền) trên máy; "
+                  "chép vào thì lượt lịch bị cắt ngang: bác sĩ chạy python3 tools/quyen_lich_nen.py --ap-dung, phiên sau tự chép"),
     "khac_rieng": "🔴 bản chạy có sửa riêng — KHÔNG chép đè, cần bác sĩ xem",
     "chua_tao": "👤 chưa tạo trong app — bác sĩ tạo tác vụ (máy không tự tạo)",
     "thieu_nguon": "⚪ kỳ vọng có nhưng không thấy nguồn trong git",
@@ -133,16 +198,22 @@ def main() -> int:
             print(f"✓ Đã chép nguồn → bản chạy: {', '.join(da_chep)} (sao lưu: {sao_luu})")
         loai = phan_loai(REPO, ban_chay)
 
-    can_bac_si = {ma: v for ma, v in loai.items() if v in ("chua_tao", "khac_rieng")}
+    # cho_quyen là việc của BÁC SĨ (áp quyền), không phải việc máy tự sửa: chỉ làm `--can-bac-si` đỏ — để bước sửa của
+    # tu_sua_chua không chạy lại vô ích mỗi phiên rồi báo «chưa sửa được».
+    viec_bac_si = ("chua_tao", "khac_rieng", "cho_quyen")
+    can_bac_si = {ma: v for ma, v in loai.items() if v in viec_bac_si}
     quan_tam = can_bac_si if a.can_bac_si else {ma: v for ma, v in loai.items() if v != "khop"}
     if quan_tam:
         print(f"ĐỒNG BỘ TÁC VỤ LỊCH — nguồn: sync/scheduled-tasks · bản chạy: {ban_chay}")
         for ma, v in sorted(quan_tam.items()):
             print(f"   {ma}: {_NHAN[v]}")
+            if v == "cho_quyen" and not a.im_khi_on:
+                for dong in cong_quyen(REPO, ma)[1][:8]:
+                    print(f"      ✗ {dong}")
     elif not a.im_khi_on:
         print(f"🟢 {len(loai)}/{len(loai)} tác vụ kỳ vọng khớp nguồn git.")
     if a.can_bac_si:
-        return 1 if any(v in ("chua_tao", "khac_rieng") for v in loai.values()) else 0
+        return 1 if any(v in viec_bac_si for v in loai.values()) else 0
     return 1 if any(v == "tut_hau" for v in loai.values()) else 0
 
 

@@ -1,6 +1,6 @@
 ---
 name: cap-nhat-thang-ebm
-description: Tác vụ THÁNG DUY NHẤT của hệ chứng cứ — ngày 1, 18:30: tiền kiểm quyền (thiếu ⇒ dừng ồn) → thu thập an toàn thuốc → cập nhật tháng + liêm chính + làm mới sổ xác minh nguồn → gói duyệt chứng cứ (≤7 thẻ CANDIDATE) → phiếu theo thư mục EndNote cho bác sĩ duyệt bản nối tiếp
+description: Tác vụ THÁNG DUY NHẤT của hệ chứng cứ — ngày 1, 18:30: tiền kiểm quyền (thiếu ⇒ dừng ồn) → thu thập an toàn thuốc → cập nhật tháng + liêm chính → gói duyệt chứng cứ (≤7 thẻ CANDIDATE) → phiếu theo thư mục EndNote cho bác sĩ duyệt bản nối tiếp
 ---
 
 NỀN TẢNG: CHỈ CHẠY TRÊN MAC — tác vụ gọi script bash (`*.sh`) ở bước 2–4. Windows: DỪNG ngay, báo «tác vụ này chỉ chạy trên Mac», không tự dịch sang lệnh khác.
@@ -48,13 +48,11 @@ CÁC BƯỚC:
    `medical-ebm-automation/data/archive/launchd_monthly.log`.
 4. `bash medical-ebm-automation/scripts/evidence_integrity_monthly.sh` — nhịp liêm chính tháng (tệp không tồn tại ⇒ bỏ qua và
    nói rõ). Log: `medical-ebm-automation/data/archive/evidence_integrity.log`.
-4b. `python3 tools/so_xac_minh_nguon.py --vong 3` — làm mới SỔ XÁC MINH NGUỒN của mọi dashboard (tồn tại/metadata hạn 180
-   ngày, trạng thái rút bài hạn 30 ngày; trước 14/11/2026 không có nhịp làm mới định kỳ nên mục hết hạn cứ dồn lại). Chạy nền
-   (`run_in_background: true`). Sổ CHỈ ghi THÀNH CÔNG — lỗi mạng chỉ để mục ở «chưa xác minh», KHÔNG làm hỏng lượt: dù mã nào
-   cũng làm tiếp bước 5. Đọc mã: 0 = mọi nguồn còn hiệu lực · 1 = còn mục thiếu/hết hạn (báo số công cụ in, không phải lỗi) ·
-   2 KÈM dòng «[MA] SO_HONG» = sổ HỎNG, công cụ không ghi gì (báo nguyên văn; KHÔNG tự chạy `--cuu-so-hong`, đó là việc phiên
-   có người) · 2 KHÔNG kèm dòng đó = CÓ NGUỒN ĐÃ BỊ RÚT ⇒ đưa lên ĐẦU báo cáo và thêm một dòng 🔴 vào `alerts/<YYYY-MM-DD>.md`
-   như quy trình gói duyệt · 3 «[MA] KHONG_DO_DUOC» = ⚪ không đo được (không phải sạch, không phải rút bài).
+   SỔ XÁC MINH NGUỒN / RÚT BÀI KHO KHÔNG làm ở lượt này: owner DUY NHẤT là tác vụ lịch `kiem-rut-bai-kho-thang` (ngày 4,
+   chu_trinh_chung_cu.py --vong 3 — gồm xác minh theo dashboard, quét định danh chỉ-có-trong-hub, phủ bản ghi mồ côi, và phân
+   xử đúng ca «bản đính chính bị rút» bác sĩ ĐÃ KÝ). Đính chính 14/11/2026: bước 4b cũ chạy lặp đúng lệnh xác minh đó sớm 3
+   ngày (thiếu hai lượt phủ hub/mồ côi) và đọc mã 2 thành «có nguồn đã rút» — sai cho ca đính chính đã ký (mã 2 bật cả khi chỉ
+   có khối «✅ … ĐÃ KÝ») ⇒ đã gỡ. Lượt này KHÔNG gọi công cụ sổ xác minh.
 5. GÓI DUYỆT CHỨNG CỨ: dùng công cụ Read đọc `sync/scheduled-tasks/goi-duyet-tuan-ebm/SKILL.md` (QUY TRÌNH gói duyệt — không
    còn là tác vụ lịch riêng) rồi làm TRỌN «QUY TRÌNH» 0–7, các mục «Bổ sung» và «BƯỚC CUỐI BẮT BUỘC» đúng như viết ở đó (đúng
    lệnh, đúng luật cứng: ≤7 thẻ CANDIDATE, kiểm rút bài, đọc toàn văn, mẫu thẻ, hòm thư bác sĩ, gửi tệp). Gói xuất
@@ -73,8 +71,7 @@ CÁC BƯỚC:
 7. Báo NGẮN, TRUNG THỰC, theo thứ tự: (0) bước 0 — mã thoát tiền kiểm quyền và các dòng 🔴/🟠/⚪ của cảm biến kỳ lỡ (nếu có);
    (a) bước 2–4 — đọc dòng «KẾT THÚC» cuối của ba log trên (công cụ Read), mã thoát từng
    bước và verdict PASS/CÓ BƯỚC LỖI, KHÔNG tô hồng; bước lỗi nêu tên + mã thoát + hệ quả (watermark giữ, không nối Hub); có cảnh
-   báo an toàn thuốc MỚI thì đưa lên đầu; (a') bước 4b — mã thoát sổ xác minh nguồn + số mục còn thiếu/hết hạn (nguồn ĐÃ RÚT thì
-   đã đưa lên đầu); (b) bước 5 — tóm tắt gói duyệt ≤10 dòng như quy trình yêu cầu (tệp queue + hòm thư đã
+   báo an toàn thuốc MỚI thì đưa lên đầu; (b) bước 5 — tóm tắt gói duyệt ≤10 dòng như quy trình yêu cầu (tệp queue + hòm thư đã
    gửi); (c) bước 6 — đọc phiếu `.md` (công cụ Read), báo theo đúng thứ tự phiếu: bảng nhóm (a)–(d); 🔴 mục «Áp dụng» chưa đọc
    toàn văn; danh sách bản nối tiếp (ưu tiên trước, kèm ước tính token); ⑨ chờ duyệt; toàn văn còn thiếu; đề xuất watchlist; thư
    mục có nội dung thật chưa có dashboard; kết quả từng chủ đề quét và từng bước hoàn thiện. Mã thoát của bước 6: 0 không có việc

@@ -157,7 +157,9 @@ VIEC_MAY = [
     ("Tác vụ lịch đang chạy bản SKILL cũ (tụt hậu nguồn git)",
      [PY, "tools/dong_bo_tac_vu_lich.py", "--im-khi-on"],
      [PY, "tools/dong_bo_tac_vu_lich.py", "--ap-dung"], False),
-    ("Tác vụ lịch chưa tạo trong app / bản chạy có sửa riêng",
+    # 14/11/2026 (đính chính PR #339): thêm «SKILL mới chờ áp quyền» — dong_bo_tac_vu_lich giữ bản chạy cũ khi lệnh của SKILL
+    # mới chưa được phép trên máy (chép vào thì lượt lịch kế tiếp bị cắt ngay lệnh mới, mất phần bản cũ vẫn chạy được).
+    ("Tác vụ lịch chưa tạo trong app / bản chạy có sửa riêng / SKILL mới chờ bác sĩ áp quyền",
      [PY, "tools/dong_bo_tac_vu_lich.py", "--can-bac-si", "--im-khi-on"],
      None, False),                # tạo/xoá tác vụ trong app là việc của bác sĩ
     # Thêm 25/10/2026 — ca thật: repo đổi skill 24/10 sau lần đóng ZIP 23/10; hòm việc báo «bác sĩ tải ZIP lên», bác sĩ tải lại
