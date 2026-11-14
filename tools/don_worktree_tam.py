@@ -139,6 +139,26 @@ def quet_day_du(goc: str | Path | None = None, chay=None, do_dung_luong: bool = 
     return kq
 
 
+def _repo_chinh(d: Path, chay) -> Path:
+    """Thư mục repo CHÍNH của worktree `d` — phải gỡ worktree TỪ ĐÓ, không từ bên trong chính nó.
+
+    CI windows-latest 14/11/2026: `git worktree remove` chạy với `cwd` = chính worktree thì THẤT BẠI — Windows không xoá được
+    thư mục đang là thư mục làm việc của một tiến trình. Mac/Linux cho phép nên lỗi này không lộ trên máy bác sĩ.
+    Không hỏi được repo chính ⇒ trả lại chính `d` (giữ hành vi cũ, vẫn chạy được trên POSIX)."""
+    rc, out = chay(["rev-parse", "--git-common-dir"], d)
+    g = (out or "").strip()
+    if rc != 0 or not g:
+        return d
+    pg = Path(g)
+    if not pg.is_absolute():
+        pg = d / pg
+    try:
+        pg = pg.resolve()
+    except OSError:
+        return d
+    return pg.parent if pg.name == ".git" and pg.parent.is_dir() else d
+
+
 def don(ten_ds: list[str], goc: str | Path | None = None, ap_dung: bool = False, chay=None) -> dict:
     """Gỡ worktree SẠCH. Kiểm lại trạng thái NGAY TRƯỚC khi gỡ — không tin danh sách quét trước đó."""
     chay = chay or _chay_git
@@ -165,7 +185,8 @@ def don(ten_ds: list[str], goc: str | Path | None = None, ap_dung: bool = False,
         if not ap_dung:
             kq["da"].append(ten)
             continue
-        rc2, _ = chay(["worktree", "remove", "--force", str(d)], d)
+        noi = _repo_chinh(d, chay)          # gỡ TỪ repo chính — xem _repo_chinh (lỗi Windows 14/11/2026)
+        rc2, _ = chay(["worktree", "remove", "--force", str(d)], noi)
         if rc2 == 0 and not d.exists():
             kq["da"].append(ten)
         else:

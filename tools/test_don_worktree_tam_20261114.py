@@ -38,19 +38,24 @@ def _dung_goc(tmp: Path, muc: list[tuple[str, bool]]) -> Path:
     return g
 
 
-def _gia_chay(trang_thai: dict[str, str | None], remove_ok: bool = True, nhat_ky: list | None = None):
-    """Hàm git giả. Giá trị None = `git status` LỖI (chưa đo được); chuỗi rỗng = sạch; chuỗi có chữ = còn việc dở."""
+def _gia_chay(trang_thai: dict[str, str | None], remove_ok: bool = True, nhat_ky: list | None = None,
+              repo_chinh: Path | None = None):
+    """Hàm git giả. Giá trị None = `git status` LỖI (chưa đo được); chuỗi rỗng = sạch; chuỗi có chữ = còn việc dở.
+
+    `nhat_ky` ghi (tên thư mục, hai từ đầu của lệnh, cwd thật) — cần cwd để chốt luật «không gỡ từ trong chính worktree»."""
     def chay(args, cwd, giay=60):
         ten = Path(cwd).name
         if nhat_ky is not None:
-            nhat_ky.append((ten, tuple(args[:2])))
+            nhat_ky.append((ten, tuple(args[:2]), Path(cwd)))
+        if list(args[:2]) == ["rev-parse", "--git-common-dir"]:
+            return (0, str(repo_chinh / ".git")) if repo_chinh else (1, "")
         if list(args[:2]) == ["status", "--porcelain"]:
             v = trang_thai.get(ten, "")
             return (1, "") if v is None else (0, v)
         if list(args[:2]) == ["worktree", "remove"]:
             if not remove_ok:
                 return 1, ""
-            shutil.rmtree(cwd, ignore_errors=True)
+            shutil.rmtree(args[-1], ignore_errors=True)   # xoá ĐƯỜNG DẪN trong lệnh, không phải cwd (git thật cũng vậy)
             return 0, ""
         return 0, ""
     return chay
@@ -113,7 +118,7 @@ def test_sao_luu_du_sach_van_khong_bao_gio_bi_go(tmp_path):
     kq = dwt.don(["_saoluu_endnote"], g, ap_dung=True, chay=_gia_chay({"_saoluu_endnote": ""}, nhat_ky=nk))
     assert kq["da"] == [] and kq["bo_qua"] and kq["bo_qua"][0][1] == "là bản sao lưu"
     assert (g / "_saoluu_endnote").is_dir()
-    assert all(a != ("worktree", "remove") for _t, a in nk)
+    assert all(a != ("worktree", "remove") for _t, a, _c in nk)
 
 
 def test_khong_phai_worktree_thi_khong_go(tmp_path):
@@ -133,7 +138,7 @@ def test_chay_kho_khong_goi_remove(tmp_path):
     kq = dwt.don(["sach"], g, ap_dung=False, chay=_gia_chay({"sach": ""}, nhat_ky=nk))
     assert kq["da"] == ["sach"]
     assert (g / "sach").is_dir()
-    assert all(a != ("worktree", "remove") for _t, a in nk)
+    assert all(a != ("worktree", "remove") for _t, a, _c in nk)
 
 
 def test_ap_dung_go_that(tmp_path):
@@ -258,3 +263,19 @@ def test_dong_bao_noi_ro_tong_va_so_go_duoc(tmp_path):
     dong = viec[0][2]
     assert f"{dwt.NGUONG_SO} worktree tạm có thể gỡ" in dong
     assert f"tổng {dwt.NGUONG_SO + 1}" in dong and "luôn được giữ" in dong
+
+
+def test_go_worktree_khong_bao_gio_chay_tu_trong_chinh_no(tmp_path):
+    """★ CI windows-latest 14/11/2026: `git worktree remove` chạy với cwd = chính worktree thì Windows KHÔNG xoá được
+    (thư mục đang là cwd của tiến trình). Phải gỡ từ repo CHÍNH. Mac/Linux cho qua nên lỗi chỉ lộ ở CI."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    g = _dung_goc(tmp_path, [("sach", True)])
+    nk: list = []
+    kq = dwt.don(["sach"], g, ap_dung=True, chay=_gia_chay({"sach": ""}, nhat_ky=nk, repo_chinh=repo))
+    assert kq["da"] == ["sach"]
+    noi_go = [c for _t, a, c in nk if a == ("worktree", "remove")]
+    assert noi_go, "phải có lệnh gỡ"
+    assert all(c != g / "sach" for c in noi_go), "KHÔNG được gỡ từ bên trong chính worktree"
+    assert noi_go[0] == repo
