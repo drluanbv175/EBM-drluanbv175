@@ -9,6 +9,7 @@ phép. Bác sĩ chọn «khai đúng lệnh»: `sync/quyen-lich-nen.json` (đi q
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -117,10 +118,15 @@ def test_moi_lenh_cua_tac_vu_lich_da_khai_tren_repo():
 def test_khai_khong_chua_lenh_ghi_quyet_dinh_thay_bac_si():
     khai = json.loads((REPO / "sync" / "quyen-lich-nen.json").read_text(encoding="utf-8"))
     cam = ("ap_dung_de_xuat_watchlist", "ghi_vuot_qua_da_xet", "approve_gate", "nap_endnote", "manage_ledger",
-           "ingest_dashboard", "ghi_duyet_the_tuan", "quyen_lich_nen")
+           "ingest_dashboard", "ghi_duyet_the_tuan")
+    # 14/11/2026: bước 0 tiền kiểm của lượt tháng chạy `quyen_lich_nen` dạng CHỈ ĐỌC (đo quyền, không ghi settings). Luật cũ cấm
+    # mọi lệnh chứa tên công cụ; nay chỉ cho đúng hai dạng chỉ-đọc (fullmatch, không cờ nào khác) — `--ap-dung` (ghi cấu hình
+    # máy) vẫn bị cấm ở assert dưới lẫn ở mẫu này.
+    qln_chi_doc = re.compile(r"python3 tools/quyen_lich_nen\.py(?: --tac-vu [A-Za-z0-9,_-]+)?")
     for ten, tv in khai["tac_vu"].items():
         for c in tv["lenh"]:
             assert not any(x in c for x in cam), f"{ten}: lệnh ghi quyết định/cấu hình không được khai cho lượt lịch: {c}"
+            assert "quyen_lich_nen" not in c or qln_chi_doc.fullmatch(c), f"{ten}: quyen_lich_nen chỉ được dạng chỉ-đọc: {c}"
             assert "--ap-dung" not in c, f"{ten}: {c}"
 
 

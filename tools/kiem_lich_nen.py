@@ -70,14 +70,19 @@ def cac_ky(cron: str, tu: dt.date, den: dt.date) -> list[dt.datetime]:
     return ra
 
 
-def _ket_thuc(duong: Path) -> list[dt.datetime] | None:
-    """Thời điểm các dòng `===== YYYY-MM-DD HH:MM:SS : KẾT THÚC …` trong log; None = không đọc được."""
+def _moc(duong: Path, nhan: str) -> list[dt.datetime] | None:
+    """Thời điểm các dòng `===== YYYY-MM-DD HH:MM:SS : <nhan> …` trong log; None = không đọc được."""
     try:
         van = duong.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
     return [dt.datetime.strptime(f"{a} {b}", "%Y-%m-%d %H:%M:%S")
-            for a, b in re.findall(r"=+ (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) : KẾT THÚC", van)]
+            for a, b in re.findall(r"=+ (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) : " + re.escape(nhan), van)]
+
+
+def _ket_thuc(duong: Path) -> list[dt.datetime] | None:
+    """Thời điểm các dòng `===== YYYY-MM-DD HH:MM:SS : KẾT THÚC …` trong log; None = không đọc được."""
+    return _moc(duong, "KẾT THÚC")
 
 
 def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: Path = GOC) -> dict:
@@ -103,8 +108,13 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
             ra["khong_do_duoc"].append(f"{tv['id']}: chưa khai dấu vết máy-đọc-được — không canh được")
             continue
         ket: list[dt.datetime] | None = None
+        bat_dau: list[dt.datetime] = []
         if loai == "log-ket-thuc":
             ket = _ket_thuc(goc / dv["path"])
+            # 14/11/2026: dòng BẮT ĐẦU (tools/ghi_dau_vet_lich.py --bat-dau, script launchd) mà thiếu KẾT THÚC trong hạn = lượt
+            # đã NỔ nhưng chết/bị cắt ngang giữa chừng (lệnh đòi duyệt quyền ⇒ lượt vẫn «succeeded») — nói rõ thay vì «không
+            # có dấu vết», để người đọc tìm đúng gốc (tools/quyen_lich_nen.py) chứ không đi tìm tác vụ bị xoá.
+            bat_dau = _moc(goc / dv["path"], "BẮT ĐẦU") or []
             if ket is None:
                 ra["khong_do_duoc"].append(f"{tv['id']}: không đọc được {dv['path']} (bản sao trần/máy khác)")
                 continue
@@ -146,9 +156,12 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                 tre = [e for e in ket if s + grace < e < han_tre]
                 if dung_han:
                     continue
+                cat = [b for b in bat_dau if s <= b <= s + grace]
                 thieu.append((s, "tre" if tre else "lo",
                               f"có lượt chạy TRỄ {tre[0]:%d/%m %H:%M} (ngoài hạn {tv.get('grace_gio', 30)}h) — lịch không nổ "
-                              "đúng hẹn, lượt sau là chạy tay/bù" if tre else "KHÔNG có dấu vết nào"))
+                              "đúng hẹn, lượt sau là chạy tay/bù" if tre else
+                              f"có BẮT ĐẦU {cat[0]:%d/%m %H:%M} nhưng KHÔNG có KẾT THÚC — lượt bị cắt ngang/chết giữa chừng "
+                              "(lệnh đòi duyệt quyền? xem python3 tools/quyen_lich_nen.py)" if cat else "KHÔNG có dấu vết nào"))
             else:
                 # file-tuan-iso: tệp mang tuần ISO của kỳ; file-thang (12/11/2026): tệp mang THÁNG của kỳ `{thang}` = YYYY-MM (phiếu
                 # cập nhật tháng thư mục EndNote). Cả hai chỉ xét CÓ/KHÔNG — tên tệp không mang giờ chạy nên không tách được trễ.
