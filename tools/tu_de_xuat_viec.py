@@ -1128,6 +1128,195 @@ def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, 
              "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
 
 
+# ── BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026) ──────────────────────────────────────────────────────────────────
+# Thư mục HỆ THỐNG trong exports/ của repo y khoa — khớp `list_studies._THU_MUC_HE_THONG` (không phải đề tài).
+_THU_MUC_HE_THONG_EXPORTS = frozenset({"chatgpt_project", "phase_2b"})
+# Tệp GÓI nộp/khoá: nội dung nguồn (md). Bản .docx dựng lại từ md (lượt dựng lại đổi byte mà không đổi nội dung) nên KHÔNG
+# tính — sửa tay thẳng vào .docx là rủi ro còn lại đã biết.
+_TIEN_TO_GOI = ("DE_CUONG_NOP_HOI_DONG", "DE_CUONG_THONG_NHAT")
+_HEX64 = re.compile(r"\b[0-9a-f]{64}\b")
+# Ngày trong PHẦN ĐẦU bản bình duyệt (chỉ dùng khi tên tệp không mang ngày): «Bình duyệt độc lập ngày 29/10/2026» hoặc dòng
+# nhãn «Ngày: …» / «Ngày bình duyệt: …» / «Date: …». Chỉ đọc 1.500 ký tự đầu — thân bài nhắc ngày của sự kiện KHÁC.
+_NGAY_BAN_BINH_DUYET = (
+    re.compile(r"(?:bình duyệt|phản biện)[^\n]{0,60}?\bngày\s+(\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})", re.IGNORECASE),
+    re.compile(r"^[\s>*#_-]*(?:ngày(?:\s+(?:bình duyệt|phản biện))?|date)[\s*_]*[:：][\s*_]*"
+               r"(\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})", re.IGNORECASE | re.MULTILINE),
+)
+
+
+def _mau_ban_binh_duyet(ma: str) -> re.Pattern:
+    """`PHAN_BIEN_<NHÃN…>_[<YYYYMMDD>_]<mã>.md` — tên thật đo trên exports/ 14/11/2026: agent `binh-duyet` ghi
+    `PHAN_BIEN_DE_CUONG_NOP_20261029_<mã>.md`. Nhóm 1 = ngày ở tên (có thể vắng)."""
+    return re.compile(rf"PHAN_BIEN_(?:[A-Z]+_)*(?:(\d{{8}})_)?{re.escape(ma)}\.md")
+
+
+def _ban_binh_duyet(thu_muc: Path, ma: str) -> list[Path]:
+    """Mọi bản bình duyệt ĐỘC LẬP của gói: `PHAN_BIEN_*_<mã>.md` + `G8_PEER_REVIEW_REPORT_<mã>.md` (người phản biện thật).
+
+    KHÔNG tính: biên bản hội đồng cổng (`hoi_dong/` — tư vấn, chính nó đã cho gói 29/10 đi qua), `PHAN-HOI-BINH-DUYET_*`
+    và `QUYET-DINH-BINH-DUYET_*` (thư phản hồi/quyết định của tác giả, không phải bản bình duyệt)."""
+    mau = _mau_ban_binh_duyet(ma)
+    g8 = f"G8_PEER_REVIEW_REPORT_{ma}.md"
+    return sorted(p for p in thu_muc.iterdir() if p.is_file() and (mau.fullmatch(p.name) or p.name == g8))
+
+
+def _ngay_ban_binh_duyet(p: Path, ma: str, noi_dung: str) -> dt.date | None:
+    """Ngày bình duyệt ghi TRONG tệp (tên `…_<YYYYMMDD>_<mã>.md`, rồi phần đầu nội dung) — không bao giờ đọc mtime
+    (OneDrive làm trôi mtime). Không định được ⇒ None."""
+    m = _mau_ban_binh_duyet(ma).fullmatch(p.name)
+    if m and m.group(1):
+        try:
+            return dt.datetime.strptime(m.group(1), "%Y%m%d").date()
+        except ValueError:
+            pass
+    dau = noi_dung[:1500]
+    for mau in _NGAY_BAN_BINH_DUYET:
+        k = mau.search(dau)
+        if not k:
+            continue
+        for dinh_dang in ("%d/%m/%Y", "%Y-%m-%d"):
+            try:
+                return dt.datetime.strptime(k.group(1), dinh_dang).date()
+            except ValueError:
+                continue
+    return None
+
+
+def van_tay_goi(thu_muc: Path) -> dict[str, str]:
+    """sha256 từng tệp gói nộp/khoá đang có (tên tệp → hex) — người bình duyệt ghi các dòng này vào bản bình duyệt để cảm
+    biến đo theo NỘI DUNG (`--van-tay-goi <mã>`)."""
+    ma = thu_muc.name
+    goi = [thu_muc / f"{tien_to}_{ma}.md" for tien_to in _TIEN_TO_GOI]
+    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in goi if p.is_file()}
+
+
+def _manifest_g10(ck: object) -> tuple[dt.datetime | None, dict[str, str]]:
+    """(mốc lắp G10 `generated_at`, tên tệp → sha256 trong `release_manifest`) từ G10_checkpoint.json đã nạp; chỉ đọc."""
+    if not isinstance(ck, dict):
+        return None, {}
+    try:
+        luc = dt.datetime.fromisoformat(str(ck.get("generated_at")))
+    except ValueError:
+        luc = None
+    rm = ck.get("release_manifest")
+    tep = rm.get("files") if isinstance(rm, dict) else None
+    manifest: dict[str, str] = {}
+    if isinstance(tep, dict):
+        for v in tep.values():
+            if isinstance(v, dict) and v.get("path") and v.get("sha256"):
+                manifest[Path(str(v["path"])).name] = str(v["sha256"]).strip().lower()
+    return luc, manifest
+
+
+def xet_binh_duyet_de_tai(thu_muc: Path) -> tuple[str, str]:
+    """Phán quyết cho MỘT thư mục đề tài: ("bo_qua"|"ok", "") · ("viec", dòng) · ("chet", lý do không đo được).
+
+    Luật (so theo NỘI DUNG — băm và mốc ghi trong tệp; mtime OneDrive có thể trôi nên không bao giờ dùng):
+      • chưa có G10_checkpoint.json (chưa lắp G10) hoặc `study_kind=synthetic_test` ⇒ bỏ qua, không báo;
+      • đã lắp G10 mà không có bản bình duyệt độc lập nào ⇒ việc;
+      • một bản bình duyệt ghi ĐỦ sha256 hiện hành của mọi tệp gói ⇒ đã phủ, xong (bằng chứng mạnh nhất);
+      • còn lại so ngày bình duyệt mới nhất R với mốc lắp G10 G (`generated_at`): tệp gói KHỚP manifest G10 ⇒ nội dung có từ
+        lúc lắp (R > G phủ · R < G gói lắp lại sau bình duyệt ⇒ việc · cùng ngày ⇒ không đo được); tệp LỆCH manifest ⇒ đã sửa
+        SAU G (R < G ⇒ việc · R ≥ G ⇒ không biết sửa trước hay sau bình duyệt ⇒ không đo được); tệp không có trong manifest
+        ⇒ không đo được. Có bản bình duyệt không định được ngày ⇒ không kết luận «đổi sau», chỉ «không đo được»."""
+    ma = thu_muc.name
+    g10 = thu_muc / "G10_checkpoint.json"
+    if not g10.is_file():
+        return "bo_qua", ""
+    try:
+        meta = json.loads((thu_muc / "study_meta.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "chet", "study_meta.json không đọc được — không biết có phải đề tài thật"
+    if isinstance(meta, dict) and str(meta.get("study_kind", "")).strip().casefold() == "synthetic_test":
+        return "bo_qua", ""
+    bam = van_tay_goi(thu_muc)
+    if not bam:
+        return "chet", "đã lắp G10 mà không thấy " + " / ".join(f"{t}_<mã>.md" for t in _TIEN_TO_GOI)
+    try:
+        ck = json.loads(g10.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ck = None
+    g_luc, manifest = _manifest_g10(ck)
+    ngay_g = f"{g_luc:%d/%m/%Y}" if g_luc else "?"
+    ban = _ban_binh_duyet(thu_muc, ma)
+    if not ban:
+        return "viec", (f"Đề tài {ma}: đã lắp G10 ({ngay_g}) mà CHƯA có bản bình duyệt độc lập nào — chạy MỘT agent "
+                        "binh-duyet (≈0,4 triệu token) trước khi nộp")
+    co_ngay: list[tuple[dt.date, str]] = []
+    khong_ngay: list[str] = []
+    can_phu = set(bam.values())
+    for p in ban:
+        noi_dung = p.read_text(encoding="utf-8", errors="replace")
+        if can_phu <= set(_HEX64.findall(noi_dung.lower())):
+            return "ok", ""
+        ngay = _ngay_ban_binh_duyet(p, ma, noi_dung)
+        if ngay:
+            co_ngay.append((ngay, p.name))
+        else:
+            khong_ngay.append(p.name)
+    goi_y = f"ghi sha256 gói (python3 tools/tu_de_xuat_viec.py --van-tay-goi {ma}) vào bản bình duyệt để đo theo nội dung"
+    if g_luc is None:
+        return "chet", f"G10_checkpoint.json thiếu/hỏng generated_at — không có mốc nội dung của gói; {goi_y}"
+    if not co_ngay:
+        return "chet", f"bản bình duyệt không định được ngày ({', '.join(khong_ngay)}); {goi_y}"
+    r, ten_r = max(co_ngay)
+    doi: list[str] = []
+    khong_ro: list[str] = []
+    for ten, h in sorted(bam.items()):
+        if ten not in manifest:
+            khong_ro.append(f"{ten} không có trong manifest G10")
+        elif r < g_luc.date():
+            doi.append(f"{ten} {'sửa sau' if manifest[ten] != h else 'lắp lại ở'} G10 {ngay_g}")
+        elif manifest[ten] != h:
+            khong_ro.append(f"{ten} lệch manifest G10 (sửa sau {ngay_g}, không có mốc để so với bình duyệt {r:%d/%m/%Y})")
+        elif r == g_luc.date():
+            khong_ro.append(f"bình duyệt và lắp G10 cùng ngày {ngay_g}")
+    if doi and not khong_ngay:
+        return "viec", (f"Đề tài {ma}: gói nộp đổi sau lần bình duyệt độc lập gần nhất ({ten_r}, {r:%d/%m/%Y}; "
+                        f"{'; '.join(doi)}) — chạy MỘT agent binh-duyet (≈0,4 triệu token) trước khi nộp")
+    if doi:
+        khong_ro.append(f"có bản bình duyệt không định được ngày ({', '.join(khong_ngay)}) — có thể mới hơn gói")
+    if khong_ro:
+        return "chet", "; ".join(dict.fromkeys(khong_ro)) + f"; {goi_y}"
+    return "ok", ""
+
+
+def giac_quan_binh_duyet_doc_lap(exports_dir: Path) -> list[tuple[int, str, str]]:
+    """BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026). Bài học 29/10/2026: MỘT agent `binh-duyet` tìm 4 lỗi 🔴 + 10 🟠 trong
+    gói nộp Hội đồng của C1a mà MỌI cổng máy đều cho qua; bác sĩ duyệt cố định bước «bình duyệt độc lập trước mốc nộp/khoá».
+
+    Với mỗi đề tài THẬT trong `exports/` (có study_meta.json, không phải thư mục hệ thống, không `study_kind=synthetic_test`)
+    đã lắp G10: gói nộp/khoá đổi SAU bản bình duyệt độc lập mới nhất, hoặc chưa có bản nào ⇒ dòng 🛎 (máy làm được nhưng
+    chưa ai chạy; tốn token nên dòng ghi rõ ước tính). Luật đo ở `xet_binh_duyet_de_tai`. Chỉ ĐỌC — không đụng sổ cái, con dấu
+    hay tệp trong manifest G10. Vắng exports/ (phiên Cloud một-repo, CI) hoặc một đề tài không đo được ⇒ giác quan chết (⚪),
+    KHÔNG phải «đã bình duyệt»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    if not exports_dir.is_dir():
+        _ghi_chet(["", "bình duyệt độc lập gói nộp"], "không có medical-ebm-automation/exports ở cây này")
+        return []
+    viec: list[tuple[int, str, str]] = []
+    try:
+        cac_de_tai = sorted(p for p in exports_dir.iterdir()
+                            if p.is_dir() and not p.name.startswith((".", "_")) and p.name not in _THU_MUC_HE_THONG_EXPORTS
+                            and (p / "study_meta.json").is_file())
+    except OSError as exc:
+        _ghi_chet(["", "bình duyệt độc lập gói nộp"], f"lỗi {type(exc).__name__}")
+        return []
+    for d in cac_de_tai:
+        try:
+            loai, chi_tiet = xet_binh_duyet_de_tai(d)
+        except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+            _ghi_chet(["", f"bình duyệt độc lập {d.name}"], f"lỗi {type(exc).__name__}")
+            continue
+        if loai == "viec":
+            viec.append((1, chi_tiet,
+                         f"python3 tools/tu_de_xuat_viec.py --van-tay-goi {d.name}  # rồi MỘT agent binh-duyet đọc trọn gói, "
+                         f"lưu exports/{d.name}/PHAN_BIEN_DE_CUONG_NOP_<YYYYMMDD>_{d.name}.md kèm các dòng sha256 đó"))
+        elif loai == "chet":
+            _ghi_chet(["", f"bình duyệt độc lập {d.name}"], chi_tiet)
+    return viec
+
+
 # Kết quả `--json` gần nhất của kiem_san_luong_giam_sat; None ⇒ đúng hằng KET_QUA_GAN_NHAT của chính công cụ đó.
 SAN_LUONG_GIAM_SAT: Path | None = None
 
@@ -1281,7 +1470,22 @@ def main() -> int:
     ap.add_argument("--json", type=Path, default=None, help="ghi bảng dạng máy đọc (cho hom_viec_mot_cua.py)")
     ap.add_argument("--phai-sinh-cu", action="store_true",
                     help="chỉ in đường dẫn dashboard có bản Word/bản-đọc cũ hơn nội dung (lượt lịch gói tuần dùng)")
+    ap.add_argument("--van-tay-goi", metavar="MA", default=None,
+                    help="in sha256 tệp gói nộp/khoá của đề tài <MA> (dán vào bản bình duyệt độc lập để đo theo nội dung)")
     a = ap.parse_args()
+    if a.van_tay_goi is not None:
+        ma = a.van_tay_goi
+        thu_muc = _GOC_MEA / "exports" / ma
+        if not re.fullmatch(r"[\w][\w.-]*", ma) or not thu_muc.is_dir():
+            print(f"✗ không có đề tài '{ma}' trong medical-ebm-automation/exports/", file=sys.stderr)
+            return 2
+        bam = van_tay_goi(thu_muc)
+        if not bam:
+            print(f"✗ đề tài '{ma}' chưa có tệp gói nộp/khoá ({' / '.join(_TIEN_TO_GOI)})", file=sys.stderr)
+            return 2
+        for ten, h in bam.items():
+            print(f"sha256 {h}  {ten}")
+        return 0
     if a.phai_sinh_cu:
         for f in liet_ke_dashboard_phai_sinh_loi_thoi(DASH):
             print(f.relative_to(REPO).as_posix() if f.is_relative_to(REPO) else f)
@@ -1373,6 +1577,10 @@ def main() -> int:
     if _so_cc:
         de_xuat.append((1, "👤", f"C1a: 0/{_so_cc} cổng cứng có chữ ký — bước tiếp là hồ sơ "
                         "G2 nộp IRB thật", "xem exports/.../HO-SO-KHOI-DONG-2026-08-15.md"))
+
+    # ⑥b BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026): gói G10 đổi sau bản bình duyệt mới nhất — xem docstring.
+    for uu, dong, lenh in giac_quan_binh_duyet_doc_lap(_GOC_MEA / "exports"):
+        de_xuat.append((uu, "🛎", dong, lenh))
 
     # ⑦b GIÁC QUAN CI (thêm 16/08 — bài học «CI đỏ 13 tháng không ai nhìn»):
     # đọc phán quyết run mới nhất CỦA TỪNG REPO; đỏ = việc ưu tiên 0. Fail-soft
