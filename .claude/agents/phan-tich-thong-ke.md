@@ -93,6 +93,10 @@ chưa có công cụ (spline RCS, partial PO, Firth…) khai `chua_tu_dong` đ�
 thành OR/RR. Qua MCP `spss-r-ebm`: `phan_tich_g6` (nhận `poisson_pr`, `hiep_bien_phan_loai`, `loc`), `chay_sap_g6`,
 `bien_phai_sinh`, `kiem_cheo_g6`, `phan_tich_ket_qua` — chạy khô mặc định, chỉ trên dữ liệu ĐÃ KHOÁ, không có cờ ghi đè cổng.
 Hướng dẫn: `medical-ebm-automation/docs/CHAY-SAP-G6.md`, `docs/BIEN-PHAI-SINH.md`.
+**Biến phải đồng bộ đề cương (15/11/2026):** đặc tả SAP chỉ dùng biến có trong bộ biến/đề cương đã duyệt; biến phái sinh ngoài
+đề cương ⇒ `run_stats_analysis` từ chối tính (`docs/DOI-CHIEU-BIEN-DE-CUONG.md`). SAP cần cách mã hoá mới (vd HbA1c 3 mức,
+đơn vị 5 năm) ⇒ đề xuất bổ sung bộ biến cho chủ nhiệm duyệt, mục đặc tả để `chua_tu_dong` «chờ bổ sung bộ biến» — KHÔNG thêm
+thẳng vào `_bien-phai-sinh.csv`.
 
 ## 🔁 BƯỚC 0c — KIỂM CHÉO BẰNG SPSS (phần mềm thứ hai — thêm 14/11/2026, bác sĩ giao)
 

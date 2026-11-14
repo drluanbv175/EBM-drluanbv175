@@ -168,6 +168,15 @@ medical-ebm-automation/tools/bien_phai_sinh.py kiem --study <mã>` hoặc MCP `s
 Hiệp biến PHÂN LOẠI (mã nguyên ≥ 0, vd khung giờ khám) khai riêng để G6 mở thành biến giả (`hiep_bien_phan_loai`), không để
 mô hình coi mã số là liên tục.
 
+**ĐỒNG BỘ VỚI ĐỀ CƯƠNG (15/11/2026, bác sĩ: «biến xác định không đúng, nhập liệu không đúng thì không thể phân tích được»):**
+nguồn chuẩn của biến là bảng biến số của đề cương nộp (cột «Mã biến») và bộ biến G3 ĐÃ DUYỆT; `_bo-bien-rieng.csv`, từ điển
+G5, `_bien-phai-sinh.csv` là BẢN MÁY phải khớp nguồn đó. KHÔNG thêm biến — kể cả biến phái sinh mà SAP cần — thẳng vào bản
+máy khi nguồn chuẩn chưa có: soạn đề xuất bổ sung bộ biến/đề cương để chủ nhiệm duyệt (khuôn
+`exports/btm-dtd2-ngoai-tru-BVQY175/DE-XUAT-BO-SUNG-BO-BIEN-G3_20261115.md`). Trường `calc` của REDCap phải có biến phái sinh
+CÙNG TÊN, đúng định nghĩa calc (nhập Excel/SPSS không tính calc ⇒ cột trống). Kiểm sau MỖI lần sửa bộ biến: `python3
+medical-ebm-automation/tools/doi_chieu_bien_de_cuong.py --study <mã>` hoặc MCP `spss-r-ebm` → `doi_chieu_bien`. Lệch nhập liệu
+chặn sinh mẫu/tiếp nhận; lệch phân tích chặn tính biến phái sinh ở G6 — sửa theo nguồn chuẩn, không lách.
+
 ---
 
 ### PHẦN 5 — CODEBOOK EDC-READY (REDCap/Castor)

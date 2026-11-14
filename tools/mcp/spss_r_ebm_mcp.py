@@ -13,7 +13,9 @@ gọi CHÍNH các công cụ đã đo của repo y khoa (`medical-ebm-automation
     (F2/F3 14/11/2026: Poisson vững `poisson_pr`, hiệp biến phân loại → biến giả, lọc quần thể `loc`);
   • (F4, 14/11/2026) clean_research_dataset.py — LÀM SẠCH bản sao sau cổng tiếp nhận (query log, không sửa nguồn, không
     khoá); g5_quality_gate.evaluate_study(write=False) — «còn thiếu gì để khoá G5» CHỈ ĐỌC; bien_phai_sinh.py — kiểm/tính/
-    đối chiếu biến phái sinh; chay_sap_g6.py — chạy TRỌN đặc tả SAP G6 (mỗi phân tích một gate) trên dữ liệu đã khoá.
+    đối chiếu biến phái sinh; chay_sap_g6.py — chạy TRỌN đặc tả SAP G6 (mỗi phân tích một gate) trên dữ liệu đã khoá;
+  • (15/11/2026) doi_chieu_bien_de_cuong.py — biến máy ↔ đề cương/bộ biến đã duyệt (CHỈ ĐỌC; lệch nhập liệu thì công cụ
+    chuẩn tự từ chối sinh mẫu/tiếp nhận, lệch phân tích thì từ chối tính biến phái sinh).
 
 Rào chắn (không có ngoại lệ):
   • Công cụ CÓ TÁC DỤNG (sinh mẫu, tiếp nhận, xuất/mở, chạy kiểm chéo) CHẠY KHÔ mặc định — `ap_dung: true` mới làm.
@@ -55,7 +57,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
 
 GOC = Path(__file__).resolve().parents[2]  # repo gốc — thư mục chứa .mcp.json
 TEN_MAY_CHU = "spss-r-ebm"
-PHIEN_BAN = "1.1.0"
+PHIEN_BAN = "1.2.0"
 GIAO_THUC = ("2025-06-18", "2025-03-26", "2024-11-05")
 CAN_KIEM = "Cần bác sĩ kiểm chứng."
 DUOI_NHAP = (".xlsx", ".xlsm", ".sav")
@@ -665,6 +667,26 @@ def cc_g5_con_thieu(a: dict) -> dict:
                        "của người — máy chủ không có công cụ đó. " + CAN_KIEM}  # fmt: skip
 
 
+def cc_doi_chieu_bien(a: dict) -> dict:
+    """Biến máy (từ điển nhập liệu, biến phái sinh, đặc tả SAP) ↔ đề cương/bộ biến đã duyệt — chỉ đọc."""
+    study = _ma_de_tai(a)
+    kq = chay_cong_cu("doi_chieu_bien_de_cuong.py", ["--study", study, "--json"], 300, tron=True)
+    bc = _json_dau_ra(kq)
+    if not isinstance(bc, dict):
+        return {**kq, "trang_thai": None, "ghi_chu": "KHÔNG đọc được kết quả đối chiếu — không đo được ≠ đồng bộ. " + CAN_KIEM}
+    ph = bc.get("phat_hien") or []
+    gon = lambda x: {k: x.get(k) for k in ("luat", "pham_vi", "bien", "chi_tiet")}  # noqa: E731
+    return {"trang_thai": bc.get("trang_thai"), "ma_thoat": kq.get("ma_thoat"), "nguon_nguoi_duyet": bc.get("nguon_nguoi_duyet"),
+            "ban_may": bc.get("ban_may"), "so_bien_nguon": bc.get("so_bien_nguon"), "khong_do_duoc": bc.get("khong_do_duoc"),
+            "lech_nhap_lieu": [gon(x) for x in ph if x.get("muc") == "LECH" and x.get("pham_vi") == "nhap_lieu"],
+            "lech_phan_tich": [gon(x) for x in ph if x.get("muc") == "LECH" and x.get("pham_vi") == "phan_tich"],
+            "can_xem": [gon(x) for x in ph if x.get("muc") != "LECH"][:TRAN_PHAT_HIEN],
+            "dat_canh": _gon(bc.get("dat_canh"), 6000),
+            "ghi_chu": "Chỉ đọc. Nguồn chuẩn là đề cương/bộ biến ĐÃ DUYỆT — sửa bản máy cho khớp; nguồn cần đổi thì chủ nhiệm "
+                       "duyệt sửa đề cương/bộ biến trước, agent KHÔNG tự thêm biến vào bản máy. Lệch nhập liệu ⇒ sinh mẫu/tiếp "
+                       "nhận bị từ chối; lệch phân tích ⇒ tính biến phái sinh ở G6 bị từ chối. " + CAN_KIEM}  # fmt: skip
+
+
 def _ds_ten(v, ten: str) -> str:
     ds = v if isinstance(v, list) else str(v).split(",")
     ds = [str(x).strip() for x in ds if str(x).strip()]
@@ -901,6 +923,15 @@ CONG_CU = [
         cc_lam_sach,
     ),  # fmt: skip
     (
+        "doi_chieu_bien",
+        "ĐỐI CHIẾU BIẾN ↔ ĐỀ CƯƠNG (doi_chieu_bien_de_cuong.py): từ điển nhập liệu, biến phái sinh, đặc tả SAP so với bảng "
+        "biến số của đề cương nộp và bộ biến G3 đã duyệt — thiếu biến, sai mã, biến phái sinh ngoài đề cương, trường calc không "
+        "có công thức, G3 ≠ G5, đặc tả dùng biến lạ. Tách lệch nhập liệu / lệch phân tích; định nghĩa đặt cạnh công thức. Chỉ "
+        "đọc — chạy TRƯỚC nhap_lieu_mau và sau mọi lần sửa bộ biến.",
+        _sc({"study": _ST}, ["study"]),
+        cc_doi_chieu_bien,
+    ),
+    (
         "g5_con_thieu",
         "CÒN THIẾU GÌ ĐỂ KHOÁ G5: chấm bằng đúng hàm của cổng G5 (g5_quality_gate) ở chế độ KHÔNG GHI — trả trạng "
         "thái, các tiêu chí chưa đạt kèm việc cần làm, khoá kỹ thuật/phê duyệt người đã hợp lệ chưa, vai đã ký. Chỉ đọc.",
@@ -949,7 +980,7 @@ def xu_ly(tin: dict) -> dict | None:
               "serverInfo": {"name": TEN_MAY_CHU, "version": PHIEN_BAN},
               "instructions": "SPSS · R/RStudio · nhập liệu của bác sĩ: mọi bước đi qua công cụ chuẩn của repo y khoa; công cụ "
                               "có tác dụng CHẠY KHÔ mặc định (ap_dung: true mới làm); KHÔNG có công cụ khoá dữ liệu, ký cổng, "
-                              "duyệt công thức/đặc tả, đóng query, sửa giá trị hay xoá. Thứ tự đề tài: nhap_lieu_kiem → "
+                              "duyệt công thức/đặc tả, đóng query, sửa giá trị hay xoá. Thứ tự đề tài: doi_chieu_bien → nhap_lieu_mau → nhap_lieu_kiem → "
                               "nhap_lieu_tiep_nhan (tự lam_sach) → g5_con_thieu → [người khoá G5] → bien_phai_sinh kiem → "
                               "chay_sap_g6 (hoặc phan_tich_g6) → kiem_cheo_g6. Trả lời bác sĩ bằng tiếng Việt, kèm «Cần bác sĩ kiểm chứng»."}  # fmt: skip
     elif pt == "ping":
