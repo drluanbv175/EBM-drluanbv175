@@ -386,6 +386,13 @@ def _ghi_truong(it: dict, truong: str, gia_tri: str) -> None:
         it[truong] = gia_tri
 
 
+def k1_trong_tu_dien(ve_ten: str, viet: str) -> bool:
+    """Cách viết `viet` có được TỪ ĐIỂN của bộ kiểm K1 nhận là vế `ve_ten` không — hỏi thẳng `kiem_cap` thật (cùng
+    luật xét vế đặc hiệu trước, bỏ vế sau phủ định). Nhãn CẤU TRÚC tính trước khi chấm, không nhìn nguồn hay kết quả:
+    dùng để tách «lỗ hổng từ vựng» (cách viết ngoài từ điển) khỏi «lỗ hổng cơ chế» trong độ nhạy K1."""
+    return any(x["ve_muc"] == ve_ten for x in _kq().kiem_cap(chuan_hoa(viet), ""))
+
+
 def sinh_k1(rec: dict, nguon: str, hat: int) -> dict | None:
     """Thay nhãn quần thể A→B (mục mang A, nguồn nêu A không nêu B) hoặc chèn B khi mục chưa mang nhãn nào."""
     it = rec["muc"]
@@ -416,7 +423,7 @@ def sinh_k1(rec: dict, nguon: str, hat: int) -> dict | None:
     else:
         moi["population"] = f"{viet}, {it.get('population') or ''}".strip(", ")
     return {"lop": "K1_quan_the", "phep": "K1", "truong": "k1_cap", "trong_pham_vi": True,
-            "bien_the": f"{kieu}:{viet}", "dich": {"ve_muc": b["ten"]},
+            "bien_the": f"{kieu}:{viet}", "dich": {"ve_muc": b["ten"]}, "tu_dien_bo_kiem": k1_trong_tu_dien(b["ten"], viet),
             "mo_ta": f"{kieu}: nguồn nêu «{a['ten']}», mục ghi «{viet}»", "muc_dot_bien": moi, "nguon_dot_bien": nguon}
 
 
@@ -660,7 +667,9 @@ def sinh_k3(rec: dict, hat: int, word_chuan: str | None) -> list[dict]:
         {**chung, "lop": "K3_rung_ban_xuat", "trong_pham_vi": True, "bien_the": f"{kieu}|{x['nhom']}",
          "mo_ta": f"bản xuất mất «{x['cum']}»", "muc_dot_bien": _sao(it), "ban_xuat_goc": d0, "ban_xuat_dot_bien": d1,
          "ban_xuat_mot_cho": d1_mot, "so_lan_hien_thi": n_lan,
-         "cum_con_cho_khac": chuan_hoa(x["cum"]) in d1},
+         # hành động đã cắt, đúng dạng nằm trong bản xuất đột biến — để chan_doan_k3 biết cụm nào CỦA K3 bị mất khỏi
+         # mục (không dùng cụm của bộ sinh: bộ sinh rộng hơn từ điển K3, quy kết theo nó che lỗ hổng trích cụm)
+         "hanh_dong_cat": a1},
         {**chung, "lop": "K3_rung_trong_muc", "trong_pham_vi": False, "bien_the": x["nhom"],
          "mo_ta": f"mục mất «{x['cum']}» (bản xuất trung thành với mục đã đổi)", "muc_dot_bien": moi,
          "ban_xuat_goc": chuan_hoa(act_moi), "ban_xuat_dot_bien": chuan_hoa(act_moi)},
@@ -772,6 +781,19 @@ def chan_doan_nguon(nguon: dict[str, str]) -> dict:
             "ky_tu_tong": sum(len(t) for t in nguon.values())}
 
 
+def chan_doan_k3(db: dict, bo: dict) -> dict | None:
+    """Đột biến K3 ở bản xuất: K3 THỰC trích bao nhiêu cụm từ hành động của mục (đúng hàm k3_nguon của bộ kiểm), bao
+    nhiêu cụm trong đó bị phép cắt làm mất khỏi hành động, và bao nhiêu cụm bị mất vẫn còn ở chỗ khác trong bản xuất
+    đột biến (K3 khớp cấp TÀI LIỆU nên vẫn thấy). None khi đột biến không mang hành động đã cắt (không chẩn đoán được)."""
+    cat = db.get("hanh_dong_cat")
+    if cat is None:
+        return None
+    cum = [c for n in bo["k3_nguon"]({"summary": {}, "items": [db["muc_dot_bien"]]}) for c in n["cum"]]
+    bi_cat = [c for c in cum if c not in cat]
+    return {"so_cum_k3": len(cum), "cum_k3_bi_cat": len(bi_cat),
+            "cum_k3_bi_cat_con_cho_khac": sum(1 for c in bi_cat if c in db["ban_xuat_dot_bien"])}
+
+
 def ly_do_lot(db: dict, r: dict | None, nguon_goc: str | None) -> str | None:
     """Giải thích MỘT lần lọt (chỉ để đọc báo cáo — không đổi kết quả chấm)."""
     if db["ket_qua"] in ("bat", "bat_lech") or not db["trong_pham_vi"]:
@@ -792,9 +814,19 @@ def ly_do_lot(db: dict, r: dict | None, nguon_goc: str | None) -> str | None:
             return "bo_loc_ket_cuc_phu"
         return "dang_phu_dinh_ngoai_tu_dien"
     if db["lop"] == "K3_rung_ban_xuat":
-        if db.get("cum_con_cho_khac"):
+        # Quy kết theo cụm mà K3 THỰC trích (chan_doan_k3), theo thứ tự: không trích được cụm nào ⇒ dù bản xuất ra sao
+        # cũng lọt; mọi cụm K3 trích vẫn nguyên trong hành động đã cắt ⇒ phần bị cắt nằm ngoài cụm K3; chỉ khi cụm K3
+        # bị cắt mà còn ở chỗ khác trong bản xuất mới là lỗi so khớp cấp TÀI LIỆU.
+        if db["ket_qua"] == "lot_im":
+            return "k3_khong_trich_cum"
+        cd = db.get("k3_chan_doan")
+        if not cd:
+            return "khac"
+        if not cd["cum_k3_bi_cat"]:
+            return "k3_trich_cum_khac"
+        if cd["cum_k3_bi_cat_con_cho_khac"]:
             return "cum_con_o_cho_khac_trong_ban_xuat"
-        return "k3_khong_trich_cum" if db["ket_qua"] == "lot_im" else "k3_trich_cum_khac"
+        return "khac"
     if db["lop"] in ("K2_nguong", "K2_co_mau"):
         return "nguon_khong_neu" if db["ket_qua"] == "lot_trang" else ("ngoai_tu_dien" if db["ket_qua"] == "lot_im" else "khac")
     return "khac"
@@ -947,6 +979,8 @@ def cham_tat_ca(dot_bien: list[dict], goc: dict, bo: dict, nguon: dict[str, str]
         db["ket_qua"] = cham_k3(db, bo) if db["phep"] == "K3" else cham_k124(db, goc.get(db["_khoa"]) or {}, bo)
         if db.get("ban_xuat_mot_cho"):
             db["ket_qua_mot_cho"] = cham_k3(db, bo, "ban_xuat_mot_cho")
+        if db["lop"] == "K3_rung_ban_xuat":
+            db["k3_chan_doan"] = chan_doan_k3(db, bo)
         db["ly_do_lot"] = ly_do_lot(db, db.pop("_r", None), (nguon or {}).get(db.get("pmid") or ""))
 
 
@@ -969,7 +1003,19 @@ def tong_hop(dot_bien: list[dict]) -> dict:
     k3 = theo_lop.get("K3_rung_ban_xuat", [])
     lot_k3 = [d for d in k3 if d["ket_qua"] != "bat"]
     hai_cho = [d for d in k3 if d.get("ket_qua_mot_cho")]
-    k3_phu = {"lot": len(lot_k3), "lot_do_cum_con_cho_khac": sum(1 for d in lot_k3 if d.get("cum_con_cho_khac")),
+    # Lý do lọt K3 quy theo cụm K3 THỰC trích (ly_do_lot/chan_doan_k3), không theo cụm của bộ sinh.
+    ld_k3 = {k: sum(1 for d in lot_k3 if d.get("ly_do_lot") == k)
+             for k in ("k3_khong_trich_cum", "k3_trich_cum_khac", "cum_con_o_cho_khac_trong_ban_xuat")}
+    bat_k3 = sum(1 for d in k3 if d["ket_qua"] == "bat")
+    cap_tl = ld_k3["cum_con_o_cho_khac_trong_ban_xuat"]
+    k3_phu = {"n": len(k3), "bat": bat_k3, "lot": len(lot_k3),
+              "lot_k3_khong_trich_cum": ld_k3["k3_khong_trich_cum"],
+              "lot_k3_trich_cum_khac": ld_k3["k3_trich_cum_khac"],
+              "lot_do_khop_cap_tai_lieu": cap_tl,
+              "lot_khac": len(lot_k3) - sum(ld_k3.values()),
+              # CẬN TRÊN nếu K3 so theo TỪNG MỤC: chỉ thu hồi được các ca khớp cấp tài liệu; lọt do trích cụm vẫn lọt
+              "do_nhay_neu_so_theo_tung_muc": (bat_k3 + cap_tl) / len(k3) if k3 else None,
+              "ktc95_neu_so_theo_tung_muc": wilson(bat_k3 + cap_tl, len(k3)),
               "hien_thi_tu_2_lan": len(hai_cho),
               "mot_cho_mat_van_bat": sum(1 for d in hai_cho if d["ket_qua_mot_cho"] == "bat"),
               "theo_nhom_dau": {}}
@@ -978,16 +1024,20 @@ def tong_hop(dot_bien: list[dict]) -> dict:
         o = k3_phu["theo_nhom_dau"].setdefault(nhom, {"n": 0, "bat": 0})
         o["n"] += 1
         o["bat"] += d["ket_qua"] == "bat"
+    for o in k3_phu["theo_nhom_dau"].values():
+        o["do_nhay"], o["ktc95"] = o["bat"] / o["n"], wilson(o["bat"], o["n"])
+    # K1: tách cách viết CÓ / KHÔNG có trong từ điển bộ kiểm (nhãn cấu trúc của bộ sinh) — lỗ hổng từ vựng ≠ cơ chế
+    k1 = theo_phep.get("K1", [])
+    k1_phu = {"trong_tu_dien": _o([d for d in k1 if d.get("tu_dien_bo_kiem") is True]),
+              "ngoai_tu_dien": _o([d for d in k1 if d.get("tu_dien_bo_kiem") is False])}
     ly_do: dict[str, dict[str, int]] = {}
     for db in dot_bien:
         if db.get("ly_do_lot"):
             o = ly_do.setdefault(db["lop"], {})
             o[db["ly_do_lot"]] = o.get(db["ly_do_lot"], 0) + 1
-    k3_phu["do_nhay_khi_cum_khong_con_cho_khac"] = (
-        sum(1 for d in k3 if d["ket_qua"] == "bat") / (len(k3) - k3_phu["lot_do_cum_con_cho_khac"])
-        if len(k3) > k3_phu["lot_do_cum_con_cho_khac"] else None)
     return {
         "ly_do_lot": ly_do,
+        "k1_phu": k1_phu,
         "k3_phu": k3_phu,
         "theo_phep_trong_pham_vi": {p: _o(theo_phep.get(p, [])) for p in PHEP},
         "theo_lop": {k: {**_o(v), "phep": v[0]["phep"], "trong_pham_vi": v[0]["trong_pham_vi"]}
@@ -1047,7 +1097,7 @@ def ban_json(kq: dict, *, hat: int, ngay: str) -> dict:
                                  "lọt đầy đủ ở tong_hop. Danh sách đầy đủ: chạy lại công cụ với --json (cùng dữ liệu, cùng hạt giống).",
         "dot_bien_lot": [{"lop": d["lop"], "bien_the": d["bien_the"], "dashboard": d["dashboard"], "id": d["id"],
                       "pmid": d["pmid"], "mo_ta": d["mo_ta"][:160], "ket_qua": d["ket_qua"],
-                      **({"cum_con_cho_khac": d["cum_con_cho_khac"]} if "cum_con_cho_khac" in d else {}),
+                      **({"k3_chan_doan": d["k3_chan_doan"]} if d.get("k3_chan_doan") else {}),
                       **({"ket_qua_mot_cho": d["ket_qua_mot_cho"]} if d.get("ket_qua_mot_cho") else {}),
                       **({"ly_do_lot": d["ly_do_lot"]} if d.get("ly_do_lot") else {})}
                          for d in kq["dot_bien"] if d["trong_pham_vi"] and d["ket_qua"] not in ("bat", "bat_lech")],
@@ -1095,12 +1145,29 @@ _TEN_LY_DO = {
     "chuan_hoa_xoa_mat_cau": "câu đã đảo nằm trong đoạn chuan_hoa xoá như thẻ HTML («<» so sánh … «>»)",
     "bo_loc_ket_cuc_phu": "câu đã đảo bị bộ lọc «kết cục phụ» bỏ qua (vd «secondary analysis», «secondary prevention»)",
     "dang_phu_dinh_ngoai_tu_dien": "dạng phủ định không có trong từ điển K4 (thì hiện tại, «not effective», «did not result in»…)",
-    "cum_con_o_cho_khac_trong_ban_xuat": "cùng cụm còn ở chỗ khác trong bản xuất ⇒ K3 khớp cấp tài liệu vẫn thấy",
+    "cum_con_o_cho_khac_trong_ban_xuat": "cụm K3 trích được bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất ⇒ "
+                                         "K3 khớp cấp tài liệu vẫn thấy",
     "k3_khong_trich_cum": "K3 không trích được cụm điều kiện nào từ hành động",
-    "k3_trich_cum_khac": "K3 trích cụm khác nhưng bỏ sót cụm bị rụng",
+    "k3_trich_cum_khac": "mọi cụm K3 trích được vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3)",
     "nguon_khong_neu": "nguồn không nêu ⇒ ⚪",
     "ngoai_tu_dien": "bộ kiểm không trích được con số",
 }
+
+
+def _rieng_tu_dien(th: dict, p: str) -> dict | None:
+    """Độ nhạy riêng phần NẰM TRONG từ điển bộ kiểm (nhãn cấu trúc của bộ sinh): K1 = cách viết bộ kiểm nhận được,
+    K3 = nhóm dấu điều kiện có trong từ điển K3 (`dau_k3`). K2/K4 không tách ⇒ None."""
+    if p == "K1":
+        o = (th.get("k1_phu") or {}).get("trong_tu_dien")
+    elif p == "K3":
+        o = ((th.get("k3_phu") or {}).get("theo_nhom_dau") or {}).get("dau_k3")
+    else:
+        o = None
+    return o if o and o.get("n") else None
+
+
+def _o_rieng(o: dict | None) -> str:
+    return "—" if not o else f"{_pt(o['do_nhay'])} ({_ktc(o['ktc95'])}; {o['bat']}/{o['n']})"
 
 
 def ban_md(bj: dict) -> str:
@@ -1115,8 +1182,13 @@ def ban_md(bj: dict) -> str:
          + ", ".join(f"`{k}` {v}" for k, v in bj["ma_bo_kiem_sha256_16"].items()) + ".", "",
          "## Tóm tắt", "",
          "- Độ nhạy trong phạm vi thiết kế: " + " · ".join(
-             f"{p} {_pt(th['theo_phep_trong_pham_vi'][p]['do_nhay'])} (n={th['theo_phep_trong_pham_vi'][p]['n']})" for p in PHEP)
-         + ".",
+             f"{p} {_pt(th['theo_phep_trong_pham_vi'][p]['do_nhay'])} (n={th['theo_phep_trong_pham_vi'][p]['n']}"
+             + (f"; riêng phần trong từ điển bộ kiểm {_pt(r['do_nhay'])} [KTC {_ktc(r['ktc95'])}; {r['bat']}/{r['n']}]"
+                if (r := _rieng_tu_dien(th, p)) else "") + ")"
+             for p in PHEP) + ".",
+         "- Số gộp tính cả cách viết/dấu điều kiện mà bộ sinh CỐ Ý chọn ngoài từ điển bộ kiểm (đo lỗ hổng từ vựng); "
+         "«riêng phần trong từ điển» = K1 với cách viết bộ kiểm nhận được, K3 với nhóm dấu có trong từ điển K3 "
+         "(`dau_k3`) — phần còn lọt ở đó là lỗ hổng CƠ CHẾ, không phải từ vựng.",
          "- Lớp lỗi NGOÀI phạm vi thiết kế (không phép nào được thiết kế để bắt): " + " · ".join(
              f"{_TEN_LOP.get(k, k)} {o['bat']}/{o['n']}" for k, o in th["theo_lop"].items() if not o["trong_pham_vi"]) + ".",
          f"- Đối chứng mức dashboard — nếu chuyển sang CHẶN: K1/K2/K4 chặn {dc['dashboard']['K124']['bao']}/"
@@ -1131,11 +1203,13 @@ def ban_md(bj: dict) -> str:
          "- Bộ sinh phủ được (mục đủ điều kiện tiên quyết / mục đã thử): " + " · ".join(
              f"{k} {v['sinh_duoc']}/{v['muc_thu']}" for k, v in sorted((bj.get("phu_bo_sinh") or {}).items())) + ".", "",
          "## 1. Độ nhạy theo phép (chỉ đột biến TRONG phạm vi thiết kế của phép)", "",
-         "| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Kể cả 🟠 lệch chỗ | Lọt ✓ (trấn an sai) | Lọt ⚪ | Lọt im |",
-         "|---|---|---|---|---|---|---|---|"]
+         "| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Riêng phần trong từ điển bộ kiểm (KTC 95%; bắt/n) "
+         "| Kể cả 🟠 lệch chỗ | Lọt ✓ (trấn an sai) | Lọt ⚪ | Lọt im |",
+         "|---|---|---|---|---|---|---|---|---|"]
     for p in PHEP:
         o = th["theo_phep_trong_pham_vi"][p]
         L.append(f"| {p} | {o['n']} | {o['bat']} | {_pt(o['do_nhay'])} ({_ktc(o['ktc95'])}) | "
+                 f"{_o_rieng(_rieng_tu_dien(th, p))} | "
                  f"{_pt(o['do_nhay_rong'])} ({_ktc(o['ktc95_rong'])}) | {o['lot_xanh']} | {o['lot_trang']} | {o['lot_im']} |")
     L += ["", "## 2. Theo lớp đột biến", "",
           "| Lớp | Phạm vi thiết kế | n | Bắt | Độ nhạy (KTC 95%) | Lọt ✓ | Lọt ⚪ | Lọt im |", "|---|---|---|---|---|---|---|---|"]
@@ -1148,16 +1222,32 @@ def ban_md(bj: dict) -> str:
         L += [f"- {_TEN_LOP.get(k, k)}: {_LY_DO_NGOAI.get(k, '')}" for k in ngoai]
     kp = th.get("k3_phu") or {}
     if kp:
-        nhom = ", ".join(f"{k} {v['bat']}/{v['n']}" for k, v in sorted(kp["theo_nhom_dau"].items()))
+        nhom = ", ".join(f"{k} {v['bat']}/{v['n']} ({_pt(v['do_nhay'])}; KTC {_ktc(v['ktc95'])})"
+                         for k, v in sorted(kp["theo_nhom_dau"].items()))
+        trich = kp["lot_k3_khong_trich_cum"] + kp["lot_k3_trich_cum_khac"]
+        so_sanh = ("lớn hơn" if trich > kp["lot_do_khop_cap_tai_lieu"]
+                   else "nhỏ hơn" if trich < kp["lot_do_khop_cap_tai_lieu"] else "bằng")
         L += ["", "**K3 — phân tích thêm (rụng ở bản xuất):**",
               f"- Bắt theo nhóm dấu điều kiện của bộ sinh: {nhom} (`dau_k3` = dấu có trong từ điển K3; `dau_khac` = "
               "giới hạn quần thể/điều kiện ngoài từ điển; `nguong_so` = ngưỡng số đứng trần, không có «nếu/khi»).",
-              f"- {kp['lot_do_cum_con_cho_khac']}/{kp['lot']} lần lọt là vì CÙNG cụm điều kiện còn ở chỗ khác trong bản "
-              "xuất (mục khác/phần tóm tắt) — K3 khớp cấp TÀI LIỆU, không biết cụm thuộc mục nào.",
-              f"- Độ nhạy khi cụm KHÔNG còn ở chỗ khác trong bản xuất (đo cơ chế trích cụm + so khớp): "
-              f"{_pt(kp.get('do_nhay_khi_cum_khong_con_cho_khac'))}.",
+              f"- {kp['lot']} lần lọt, quy theo cụm mà K3 THỰC trích từ hành động (không theo cụm của bộ sinh): "
+              f"{kp['lot_k3_khong_trich_cum']} lần K3 không trích được cụm nào · {kp['lot_k3_trich_cum_khac']} lần mọi cụm "
+              f"K3 trích vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3) · "
+              f"{kp['lot_do_khop_cap_tai_lieu']} lần cụm K3 bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất "
+              f"(K3 khớp cấp TÀI LIỆU, không biết cụm thuộc mục nào)"
+              + (f" · {kp['lot_khac']} lần khác" if kp.get("lot_khac") else "") + ".",
+              f"- Độ nhạy TỐI ĐA nếu K3 so theo TỪNG MỤC (bắt + ca khớp cấp tài liệu, trên cùng n = {kp['n']}): "
+              f"{_pt(kp.get('do_nhay_neu_so_theo_tung_muc'))} ({_ktc(kp.get('ktc95_neu_so_theo_tung_muc'))}). Lỗ hổng "
+              f"trích cụm/từ vựng ({trich}/{kp['lot']} lần lọt) {so_sanh} lỗ hổng so khớp cấp tài liệu "
+              f"({kp['lot_do_khop_cap_tai_lieu']}/{kp['lot']}).",
               f"- {kp['hien_thi_tu_2_lan']} đột biến có hành động hiển thị ≥ 2 lần nguyên văn trong Word; nếu chỉ MỘT chỗ mất "
               f"cụm thì K3 bắt {kp['mot_cho_mat_van_bat']}/{kp['hien_thi_tu_2_lan']}."]
+    k1p = th.get("k1_phu") or {}
+    if k1p.get("trong_tu_dien", {}).get("n") or k1p.get("ngoai_tu_dien", {}).get("n"):
+        t, n = k1p["trong_tu_dien"], k1p["ngoai_tu_dien"]
+        L += ["", "**K1 — tách từ vựng khỏi cơ chế:**",
+              f"- Cách viết bộ kiểm NHẬN được (hỏi thẳng `kiem_cap` thật): {_o_rieng(t)} · cách viết NGOÀI từ điển: "
+              f"{_o_rieng(n)}."]
     ld = th.get("ly_do_lot") or {}
     if ld:
         L += ["", "**Lý do lọt (trong phạm vi thiết kế):**", "", "| Lớp | Lý do | Số lần |", "|---|---|---|"]

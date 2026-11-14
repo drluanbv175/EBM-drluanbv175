@@ -20,6 +20,8 @@ nên cần số đo cả hai chiều.
 | K3 | 602 | 322 | 53% (49–57%) |
 | K4 | 107 | 66 | 62% (52–70%) |
 
+- **Riêng phần nằm trong từ điển bộ kiểm** (tách lỗ hổng từ vựng khỏi lỗ hổng cơ chế): K1 với cách viết bộ kiểm nhận được
+  96% (90–98%; 99/103), cách viết ngoài từ điển 0/84 · K3 với nhóm dấu có trong từ điển K3 72% (68–76%; 320/442).
 - **Ngoài phạm vi thiết kế, 0% bắt:**
   - rụng điều kiện NGAY TRONG MỤC so với nguồn: 0/602;
   - mục đảo sang «không làm» khi nguồn ủng hộ: 0/582;
@@ -40,16 +42,26 @@ nên cần số đo cả hai chiều.
    - K4 không nhận các dạng phủ định sau (35 lần lọt): thì hiện tại «does not reduce», «not effective», «did not result in»,
      «was not lower», «should not be considered», «not non-inferior».
    - Bộ lọc «kết cục phụ» bỏ cả «secondary analysis» và «secondary prevention» (3 lần lọt).
-4. **K3 so khớp cấp TÀI LIỆU.**
-   - 193/280 lần lọt là vì cùng cụm điều kiện còn ở chỗ khác trong bản xuất.
-   - Khi cụm không còn ở chỗ khác, K3 bắt 79%.
+4. **K3 trích cụm hẹp hơn điều kiện thật, và so khớp cấp TÀI LIỆU.** 280 lần lọt, quy theo cụm mà K3 THỰC trích từ hành
+   động (`trich_cum_dieu_kien`), không theo cụm của bộ sinh:
+   - 115 lần K3 không trích được cụm nào, nên lọt dù bản xuất có ra sao;
+   - 84 lần mọi cụm K3 trích vẫn nguyên trong hành động đã cắt (phần bị rụng nằm ngoài cụm của K3);
+   - 81 lần cụm K3 bị cắt khỏi mục nhưng còn ở chỗ khác trong bản xuất (K3 khớp cấp tài liệu, không biết cụm thuộc mục nào).
+   - Nếu K3 so theo từng mục, độ nhạy TỐI ĐA là 67% (KTC 63–71%). Lỗ hổng trích cụm/từ vựng (199/280) lớn hơn lỗ hổng
+     so khớp cấp tài liệu (81/280).
    - K3 không coi giới hạn quần thể («ở người…», «ở bệnh nhân…»: 2/98 bắt) và ngưỡng số đứng trần (0/62) là điều kiện.
+   - **Đính chính trước khi gộp** (thẩm định đối kháng 14/11): bản đầu của PR quy kết theo cụm của BỘ SINH, nên ghi
+     «193/280 lần lọt vì cụm còn ở chỗ khác» và «79% khi cụm không còn ở chỗ khác». Hai số đó thổi phồng lỗ hổng so khớp
+     cấp tài liệu khoảng 2,4 lần và che lỗ hổng trích cụm. Các số headline của bảng trên không đổi.
 
 **Kiểm hồi quy:**
-- `tools/test_do_nhay_kiem_ngu_nghia_20261114.py`: 20 test, ngoại tuyến, fixture tự dựng.
+- `tools/test_do_nhay_kiem_ngu_nghia_20261114.py`: 29 test, ngoại tuyến, fixture tự dựng.
 - Kiểm đột biến chính công cụ đo: 14/14 phép đỏ đúng chỗ, phục hồi xong `cmp` khớp.
 - Phép M14 («thứ tự mức ở phần tử đích») sống sót lần đầu, vì với bộ kiểm thật nó là đột biến tương đương. Đã thêm test có
   hai dòng cho cùng phần tử đích; chạy lại thì đỏ.
+- Phần chẩn đoán lý do lọt (sửa theo thẩm định): 9 test mới, đỏ trên mã cũ, xanh trên mã mới; 13/13 phép đột biến đỏ,
+  phục hồi `cmp` khớp. Phép Đ12 sống sót lần đầu vì fixture có hai số đếm lý do bằng nhau (lỗi phép thử); sửa fixture,
+  chạy lại thì đỏ.
 
 **Giới hạn.**
 - Đây là đột biến TỔNG HỢP: không thay bộ vàng do bác sĩ gắn nhãn, và không tự đổi chế độ chặn.

@@ -335,3 +335,147 @@ def test_ma_thoat_theo_so_phep_do_duoc():
     assert M.ma_thoat(th(3, 2, 5, 1)) == 0
     assert M.ma_thoat(th(3, 0, 5, 1)) == 1             # một phép CHƯA ĐO ⇒ không phải 0
     assert M.ma_thoat(th(0, 0, 0, 0)) == 2
+
+
+# ───────────────────────── chẩn đoán lý do lọt (thẩm định 14/11: quy kết K3 theo cụm K3 THỰC trích) ─────────────────────────
+
+def _rec_tay(action: str) -> dict:
+    return {"muc": {"id": "ITEM-T", "decision": "apply", "action": action}, "dashboard": "WebDashboard_EBM_T.html",
+            "chi_so": 0, "duong_dan": Path("WebDashboard_EBM_T.html")}
+
+
+def _k3_ban_xuat(action: str, word_html: str, cum_bo_sinh: str) -> dict:
+    """Đột biến K3 ở bản xuất THẬT, chọn hạt giống để bộ sinh rụng đúng `cum_bo_sinh`, rồi chấm bằng bộ kiểm THẬT."""
+    rec, word = _rec_tay(action), M.gon_dau(M.chuan_hoa(word_html))
+    for hat in range(200):
+        dbs = M.sinh_k3(rec, hat, word)
+        if dbs and dbs[0]["dich"]["cum"] == M.chuan_hoa(cum_bo_sinh):
+            db = {**dbs[0], "dashboard": rec["dashboard"], "id": "ITEM-T", "pmid": None, "_khoa": ("T", 0)}
+            assert db["bien_the"].startswith("ban_xuat_that|")
+            M.cham_tat_ca([db], {}, M.bo_kiem_that())
+            return db
+    raise AssertionError(f"bộ sinh không chọn được cụm {cum_bo_sinh!r}")
+
+
+def test_ly_do_k3_khong_trich_cum_du_cum_bo_sinh_con_cho_khac():
+    # K3 không coi «ở người …» là điều kiện ⇒ lot_im; cụm của BỘ SINH còn ở mục khác trong Word nhưng điều đó không cứu được
+    db = _k3_ban_xuat("Dùng statin ở người ≥ 75 tuổi.",
+                      "<p>Dùng statin ở người ≥ 75 tuổi.</p><p>Mục khác: theo dõi ở người ≥ 75 tuổi.</p>",
+                      "ở người ≥ 75 tuổi")
+    assert db["ket_qua"] == "lot_im"
+    assert db["k3_chan_doan"] == {"so_cum_k3": 0, "cum_k3_bi_cat": 0, "cum_k3_bi_cat_con_cho_khac": 0}
+    assert db["ly_do_lot"] == "k3_khong_trich_cum"
+
+
+def test_ly_do_k3_trich_cum_khac_khi_cum_k3_van_nguyen():
+    # bộ sinh cắt «ở người …» (ngoài từ điển K3); cụm K3 «khi eGFR …» còn nguyên trong hành động đã cắt
+    db = _k3_ban_xuat("Dùng thuốc X khi eGFR ≥ 30 ml/phút, ở người ≥ 75 tuổi.",
+                      "<p>Dùng thuốc X khi eGFR ≥ 30 ml/phút, ở người ≥ 75 tuổi.</p><p>Theo dõi ở người ≥ 75 tuổi.</p>",
+                      "ở người ≥ 75 tuổi")
+    assert db["ket_qua"] == "lot_xanh"
+    assert db["k3_chan_doan"]["so_cum_k3"] == 1 and db["k3_chan_doan"]["cum_k3_bi_cat"] == 0
+    assert db["ly_do_lot"] == "k3_trich_cum_khac"
+
+
+def test_ly_do_k3_khop_cap_tai_lieu_chi_khi_cum_k3_bi_cat_con_o_muc_khac():
+    db = _k3_ban_xuat("Dùng thuốc X khi eGFR ≥ 30 ml/phút.",
+                      "<p>Dùng thuốc X khi eGFR ≥ 30 ml/phút.</p><p>Giảm liều thuốc Z khi eGFR ≥ 30 ml/phút.</p>",
+                      "khi eGFR ≥ 30 ml/phút")
+    assert db["ket_qua"] == "lot_xanh"
+    assert db["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 1}
+    assert db["ly_do_lot"] == "cum_con_o_cho_khac_trong_ban_xuat"
+    # cùng mục, Word KHÔNG có cụm ở chỗ khác ⇒ K3 bắt (không có lý do lọt)
+    db2 = _k3_ban_xuat("Dùng thuốc X khi eGFR ≥ 30 ml/phút.", "<p>Dùng thuốc X khi eGFR ≥ 30 ml/phút.</p>",
+                       "khi eGFR ≥ 30 ml/phút")
+    assert db2["ket_qua"] == "bat" and db2["ly_do_lot"] is None
+    assert db2["k3_chan_doan"] == {"so_cum_k3": 1, "cum_k3_bi_cat": 1, "cum_k3_bi_cat_con_cho_khac": 0}
+
+
+def test_ly_do_k3_khong_chan_doan_duoc_la_khac():
+    db = {"lop": "K3_rung_ban_xuat", "trong_pham_vi": True, "ket_qua": "lot_xanh"}
+    assert M.ly_do_lot(db, None, None) == "khac"                       # không có chẩn đoán ⇒ không đoán lý do
+    def cd(bi_cat, con):
+        return {**db, "k3_chan_doan": {"so_cum_k3": 2, "cum_k3_bi_cat": bi_cat, "cum_k3_bi_cat_con_cho_khac": con}}
+    assert M.ly_do_lot(cd(0, 0), None, None) == "k3_trich_cum_khac"
+    assert M.ly_do_lot(cd(1, 1), None, None) == "cum_con_o_cho_khac_trong_ban_xuat"
+    assert M.ly_do_lot(cd(1, 0), None, None) == "khac"                 # cụm K3 bị cắt mà không còn chỗ khác vẫn lọt: lạ
+    assert M.ly_do_lot({**cd(1, 1), "ket_qua": "lot_im"}, None, None) == "k3_khong_trich_cum"   # lot_im xét TRƯỚC
+    assert M.chan_doan_k3({"muc_dot_bien": {}, "ban_xuat_dot_bien": ""}, M.bo_kiem_that()) is None
+
+
+def _k3_gia(ket_qua: str, ly_do: str | None, nhom: str = "dau_k3:khi") -> dict:
+    # cờ cũ «cum_con_cho_khac» (theo cụm của bộ sinh) cố ý = True: tổng hợp KHÔNG được dựa vào nó
+    return {"lop": "K3_rung_ban_xuat", "phep": "K3", "trong_pham_vi": True, "bien_the": f"ban_xuat_that|{nhom}",
+            "ket_qua": ket_qua, "ly_do_lot": ly_do, "cum_con_cho_khac": True}
+
+
+def test_tong_hop_k3_quy_ket_va_do_nhay_neu_so_theo_tung_muc():
+    ds = ([_k3_gia("bat", None)] * 5 + [_k3_gia("lot_im", "k3_khong_trich_cum", "dau_khac:ở người")] * 3
+          + [_k3_gia("lot_xanh", "k3_trich_cum_khac", "nguong_so:egfr")] * 2
+          + [_k3_gia("lot_xanh", "cum_con_o_cho_khac_trong_ban_xuat")]
+          + [_k3_gia("lot_xanh", "khac")])
+    kp = M.tong_hop(ds)["k3_phu"]
+    assert (kp["n"], kp["bat"], kp["lot"]) == (12, 5, 7)
+    assert kp["lot_k3_khong_trich_cum"] == 3 and kp["lot_k3_trich_cum_khac"] == 2
+    assert kp["lot_do_khop_cap_tai_lieu"] == 1 and kp["lot_khac"] == 1      # số đếm các lý do cố ý khác nhau
+    assert abs(kp["do_nhay_neu_so_theo_tung_muc"] - 6 / 12) < 1e-12        # (bắt + khớp cấp tài liệu) / n, n KHÔNG bị bớt
+    assert kp["ktc95_neu_so_theo_tung_muc"] == M.wilson(6, 12)
+    dk = kp["theo_nhom_dau"]["dau_k3"]
+    assert (dk["n"], dk["bat"]) == (7, 5) and dk["ktc95"] == M.wilson(5, 7)
+
+
+def test_k1_trong_tu_dien_hoi_bo_kiem_that():
+    assert M.k1_trong_tu_dien("trẻ em", "nhi khoa") is True
+    assert M.k1_trong_tu_dien("trẻ em", "bệnh nhi") is False              # bộ SINH nhận, bộ KIỂM không
+    assert M.k1_trong_tu_dien("người lớn", "người trưởng thành") is False
+    assert M.k1_trong_tu_dien("HFpEF", "suy tim phân suất tống máu còn bảo tồn") is False
+    assert M.k1_trong_tu_dien("ĐTĐ típ 1", "ĐTĐ tuýp 1") is True
+    assert M.k1_trong_tu_dien("ĐTĐ típ 1", "ĐTĐ1") is False
+    assert M.k1_trong_tu_dien("ngoài thai kỳ", "phụ nữ không mang thai") is True
+
+
+def test_tong_hop_k1_tach_trong_ngoai_tu_dien(tmp_path):
+    rec = _rec("ITEM-01", tmp_path)
+    db = M.sinh_k1(rec, NGUON["101"], 1)
+    viet = db["bien_the"].split(":", 1)[1]
+    assert db["tu_dien_bo_kiem"] is M.k1_trong_tu_dien(db["dich"]["ve_muc"], viet)
+    def k1(tu_dien, kq):
+        return {"lop": "K1_quan_the", "phep": "K1", "trong_pham_vi": True, "bien_the": "x", "ket_qua": kq,
+                "tu_dien_bo_kiem": tu_dien}
+    th = M.tong_hop([k1(True, "bat")] * 3 + [k1(True, "lot_xanh")] + [k1(False, "lot_im")] * 4)
+    assert (th["k1_phu"]["trong_tu_dien"]["n"], th["k1_phu"]["trong_tu_dien"]["bat"]) == (4, 3)
+    assert (th["k1_phu"]["ngoai_tu_dien"]["n"], th["k1_phu"]["ngoai_tu_dien"]["bat"]) == (4, 0)
+    assert th["theo_phep_trong_pham_vi"]["K1"]["n"] == 8
+
+
+def test_chan_doan_nguon_dem_doan_chuan_hoa_xoa():
+    ngan = "LNM risk < 3 % in group A and > 5 % in group B."
+    dai = "Rate < 2 " + "x" * 250 + " > end. Drug Z is not recommended."
+    nguon = {"1": ngan, "2": dai, "3": "No comparison signs at all."}
+    cd = M.chan_doan_nguon(nguon)
+    assert cd["so_nguon"] == 3 and cd["nguon_bi_cat"] == 2 and cd["nguon_bi_cat_tren_200_ky_tu"] == 1
+    assert cd["ky_tu_bi_cat"] == len("< 3 % in group A and >") + len("< 2 " + "x" * 250 + " >")
+    assert cd["ky_tu_tong"] == sum(len(v) for v in nguon.values())
+    # gắn với hành vi THẬT của bộ kiểm: đúng đoạn đó biến mất sau chuan_hoa
+    assert "group a" not in M.chuan_hoa(ngan) and "group b" in M.chuan_hoa(ngan)
+
+
+def test_ban_md_tom_tat_ghi_rieng_phan_trong_tu_dien(tmp_path):
+    p = _dash(tmp_path)
+    kq = M.do_tat_ca(tmp_path, hat=11, nguon_fn=_nguon_fn, da_pass=lambda x: x == p)
+    th = kq["tong_hop"]
+    th["k1_phu"]["trong_tu_dien"] = {**th["k1_phu"]["trong_tu_dien"], "n": 4, "bat": 3, "do_nhay": 0.75,
+                                     "ktc95": M.wilson(3, 4)}
+    th["k3_phu"]["theo_nhom_dau"]["dau_k3"] = {"n": 10, "bat": 7, "do_nhay": 0.7, "ktc95": M.wilson(7, 10)}
+    md = M.ban_md(M.ban_json(kq, hat=11, ngay="20261114"))
+    tom_tat = md.split("## Tóm tắt", 1)[1].split("## Dữ liệu", 1)[0]
+    assert "K1 " in tom_tat and "riêng phần trong từ điển bộ kiểm 75% [KTC" in tom_tat and "; 3/4]" in tom_tat
+    assert "riêng phần trong từ điển bộ kiểm 70% [KTC" in tom_tat and "; 7/10]" in tom_tat
+    bang1 = md.split("## 1.", 1)[1].split("## 2.", 1)[0]
+    assert "Riêng phần trong từ điển" in bang1 and "70% (" in bang1
+    # câu so sánh hai lỗ hổng K3 phải theo SỐ ĐO, không viết cứng
+    for khong, khac, cap, chu in ((3, 1, 2, "lớn hơn"), (1, 0, 3, "nhỏ hơn"), (1, 1, 2, "bằng")):
+        th["k3_phu"].update(lot_k3_khong_trich_cum=khong, lot_k3_trich_cum_khac=khac, lot_do_khop_cap_tai_lieu=cap,
+                            lot=khong + khac + cap, lot_khac=0)
+        md = M.ban_md(M.ban_json(kq, hat=11, ngay="20261114"))
+        assert f"({khong + khac}/{khong + khac + cap} lần lọt) {chu} lỗ hổng so khớp cấp tài liệu" in md

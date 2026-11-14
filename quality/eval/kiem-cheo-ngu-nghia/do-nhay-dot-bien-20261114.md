@@ -2,11 +2,12 @@
 
 > **Đột biến TỔNG HỢP có nhãn theo cấu trúc — KHÔNG thay bộ vàng do bác sĩ gắn nhãn.** Công cụ không đổi chế độ chặn; chuyển K1–K4 từ CẢNH BÁO sang CHẶN là quyết định của bác sĩ (audit/16 §4). Báo động trên đối chứng là CẬN TRÊN của báo động giả: mục thật chưa được gắn nhãn đúng/sai.
 
-Sinh bởi `tools/do_nhay_kiem_ngu_nghia.py` · hạt giống 20261114 · băm mã (16 ký tự đầu): `kiem_cheo_ngu_nghia.py` 1de40bea61a7701c, `kiem_quan_the_chieu.py` e2712800183c6905, `do_nhay_kiem_ngu_nghia.py` d8dc8167e7770377.
+Sinh bởi `tools/do_nhay_kiem_ngu_nghia.py` · hạt giống 20261114 · băm mã (16 ký tự đầu): `kiem_cheo_ngu_nghia.py` 1de40bea61a7701c, `kiem_quan_the_chieu.py` e2712800183c6905, `do_nhay_kiem_ngu_nghia.py` 3188a911fb21e0de.
 
 ## Tóm tắt
 
-- Độ nhạy trong phạm vi thiết kế: K1 53% (n=187) · K2 98% (n=169) · K3 53% (n=602) · K4 62% (n=107).
+- Độ nhạy trong phạm vi thiết kế: K1 53% (n=187; riêng phần trong từ điển bộ kiểm 96% [KTC 90%–98%; 99/103]) · K2 98% (n=169) · K3 53% (n=602; riêng phần trong từ điển bộ kiểm 72% [KTC 68%–76%; 320/442]) · K4 62% (n=107).
+- Số gộp tính cả cách viết/dấu điều kiện mà bộ sinh CỐ Ý chọn ngoài từ điển bộ kiểm (đo lỗ hổng từ vựng); «riêng phần trong từ điển» = K1 với cách viết bộ kiểm nhận được, K3 với nhóm dấu có trong từ điển K3 (`dau_k3`) — phần còn lọt ở đó là lỗ hổng CƠ CHẾ, không phải từ vựng.
 - Lớp lỗi NGOÀI phạm vi thiết kế (không phép nào được thiết kế để bắt): K2 · đổi ngưỡng số nằm trong HÀNH ĐỘNG 0/40 · K3 · rụng điều kiện NGAY TRONG MỤC so với nguồn 0/602 · K4 · MỤC đảo sang «không làm» khi nguồn ủng hộ 0/582.
 - Đối chứng mức dashboard — nếu chuyển sang CHẶN: K1/K2/K4 chặn 46/97 dashboard đã PASS, K3 chặn 102/115.
 
@@ -19,12 +20,12 @@ Sinh bởi `tools/do_nhay_kiem_ngu_nghia.py` · hạt giống 20261114 · băm m
 
 ## 1. Độ nhạy theo phép (chỉ đột biến TRONG phạm vi thiết kế của phép)
 
-| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Kể cả 🟠 lệch chỗ | Lọt ✓ (trấn an sai) | Lọt ⚪ | Lọt im |
-|---|---|---|---|---|---|---|---|
-| K1 | 187 | 99 | 53% (46%–60%) | 53% (46%–60%) | 4 | 0 | 84 |
-| K2 | 169 | 166 | 98% (95%–99%) | 98% (95%–99%) | 0 | 3 | 0 |
-| K3 | 602 | 322 | 53% (49%–57%) | 53% (49%–57%) | 165 | 0 | 115 |
-| K4 | 107 | 66 | 62% (52%–70%) | 62% (52%–70%) | 41 | 0 | 0 |
+| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Riêng phần trong từ điển bộ kiểm (KTC 95%; bắt/n) | Kể cả 🟠 lệch chỗ | Lọt ✓ (trấn an sai) | Lọt ⚪ | Lọt im |
+|---|---|---|---|---|---|---|---|---|
+| K1 | 187 | 99 | 53% (46%–60%) | 96% (90%–98%; 99/103) | 53% (46%–60%) | 4 | 0 | 84 |
+| K2 | 169 | 166 | 98% (95%–99%) | — | 98% (95%–99%) | 0 | 3 | 0 |
+| K3 | 602 | 322 | 53% (49%–57%) | 72% (68%–76%; 320/442) | 53% (49%–57%) | 165 | 0 | 115 |
+| K4 | 107 | 66 | 62% (52%–70%) | — | 62% (52%–70%) | 41 | 0 | 0 |
 
 ## 2. Theo lớp đột biến
 
@@ -45,10 +46,13 @@ Lớp **ngoài phạm vi thiết kế** đo lỗ hổng — không tính vào đ
 - K4 · MỤC đảo sang «không làm» khi nguồn ủng hộ: K4 chỉ tìm tín hiệu ngược chiều trong NGUỒN; mục nói «không làm» còn được coi là cùng chiều nguồn.
 
 **K3 — phân tích thêm (rụng ở bản xuất):**
-- Bắt theo nhóm dấu điều kiện của bộ sinh: dau_k3 320/442, dau_khac 2/98, nguong_so 0/62 (`dau_k3` = dấu có trong từ điển K3; `dau_khac` = giới hạn quần thể/điều kiện ngoài từ điển; `nguong_so` = ngưỡng số đứng trần, không có «nếu/khi»).
-- 193/280 lần lọt là vì CÙNG cụm điều kiện còn ở chỗ khác trong bản xuất (mục khác/phần tóm tắt) — K3 khớp cấp TÀI LIỆU, không biết cụm thuộc mục nào.
-- Độ nhạy khi cụm KHÔNG còn ở chỗ khác trong bản xuất (đo cơ chế trích cụm + so khớp): 79%.
+- Bắt theo nhóm dấu điều kiện của bộ sinh: dau_k3 320/442 (72%; KTC 68%–76%), dau_khac 2/98 (2%; KTC 1%–7%), nguong_so 0/62 (0%; KTC 0%–6%) (`dau_k3` = dấu có trong từ điển K3; `dau_khac` = giới hạn quần thể/điều kiện ngoài từ điển; `nguong_so` = ngưỡng số đứng trần, không có «nếu/khi»).
+- 280 lần lọt, quy theo cụm mà K3 THỰC trích từ hành động (không theo cụm của bộ sinh): 115 lần K3 không trích được cụm nào · 84 lần mọi cụm K3 trích vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3) · 81 lần cụm K3 bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất (K3 khớp cấp TÀI LIỆU, không biết cụm thuộc mục nào).
+- Độ nhạy TỐI ĐA nếu K3 so theo TỪNG MỤC (bắt + ca khớp cấp tài liệu, trên cùng n = 602): 67% (63%–71%). Lỗ hổng trích cụm/từ vựng (199/280 lần lọt) lớn hơn lỗ hổng so khớp cấp tài liệu (81/280).
 - 0 đột biến có hành động hiển thị ≥ 2 lần nguyên văn trong Word; nếu chỉ MỘT chỗ mất cụm thì K3 bắt 0/0.
+
+**K1 — tách từ vựng khỏi cơ chế:**
+- Cách viết bộ kiểm NHẬN được (hỏi thẳng `kiem_cap` thật): 96% (90%–98%; 99/103) · cách viết NGOÀI từ điển: 0% (0%–4%; 0/84).
 
 **Lý do lọt (trong phạm vi thiết kế):**
 
@@ -57,9 +61,9 @@ Lớp **ngoài phạm vi thiết kế** đo lỗ hổng — không tính vào đ
 | K1_quan_the | cách viết tiếng Việt của nhãn không có trong từ điển bộ kiểm | 84 |
 | K1_quan_the | từ khoá vế đổi sang chỉ có ở DÒNG TÁC GIẢ/cơ quan (vd «Children's Hospital») ⇒ bộ kiểm tưởng nguồn có nêu | 4 |
 | K2_co_mau | nguồn không nêu ⇒ ⚪ | 3 |
-| K3_rung_ban_xuat | cùng cụm còn ở chỗ khác trong bản xuất ⇒ K3 khớp cấp tài liệu vẫn thấy | 193 |
-| K3_rung_ban_xuat | K3 không trích được cụm điều kiện nào từ hành động | 56 |
-| K3_rung_ban_xuat | K3 trích cụm khác nhưng bỏ sót cụm bị rụng | 31 |
+| K3_rung_ban_xuat | K3 không trích được cụm điều kiện nào từ hành động | 115 |
+| K3_rung_ban_xuat | mọi cụm K3 trích được vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3) | 84 |
+| K3_rung_ban_xuat | cụm K3 trích được bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất ⇒ K3 khớp cấp tài liệu vẫn thấy | 81 |
 | K4_nguon_nguoc | dạng phủ định không có trong từ điển K4 (thì hiện tại, «not effective», «did not result in»…) | 35 |
 | K4_nguon_nguoc | câu đã đảo nằm trong đoạn chuan_hoa xoá như thẻ HTML («<» so sánh … «>») | 3 |
 | K4_nguon_nguoc | câu đã đảo bị bộ lọc «kết cục phụ» bỏ qua (vd «secondary analysis», «secondary prevention») | 3 |
