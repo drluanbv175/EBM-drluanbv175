@@ -155,8 +155,12 @@ nền G0 lưu từ lượt trước và báo G0 không đo được). Công cụ
 - mã 1 ⇒ mỗi dòng «🆕 …» công cụ in thành một dòng «🛎 việc sửa cho phiên có người: <khoá 🆕 nguyên văn> — bằng chứng: tệp mốc
   trên (khoá `moi`, `kich_ban`) — kiểm lại: chạy lại lệnh trên». Có dòng «ℹ️ Lần đầu ở chế độ này» ⇒ ghi là MỐC ĐẦU TIÊN (mọi
   khiếm khuyết đang có tính là mới), không gọi là hồi quy. Dòng «✔️ đã hết» chép kèm — bằng chứng bản sửa đã có tác dụng.
-- mã 2 ⇒ ⚪ có phần KHÔNG đo được (chép nguyên văn dòng «⚪ không đo được: …», vd G0 khi NCBI chặn/mất mạng, pytest không chạy);
-  «không đo được» không phải «ổn». Không chạy lại theo cách khác.
+- mã 2 ⇒ ⚪ có phần KHÔNG đo được (chép nguyên văn dòng «⚪ không đo được: …» hoặc «⚪ KHÔNG ĐO ĐƯỢC: …», vd G0 khi NCBI
+  chặn/mất mạng, pytest không chạy, kịch bản lỗi nội bộ của canary); «không đo được» không phải «ổn». Không chạy lại theo
+  cách khác. Python báo `can't open file` (cũng mã 2 nhưng KHÔNG có dòng ⚪ nào của công cụ) ⇒ ghi «⚪ công cụ chưa có trên
+  nhánh đang checkout của repo y khoa (PR y khoa #259 chưa gộp, hoặc cây y khoa ở nhánh khác)» kèm dòng lỗi nguyên văn — đó
+  không phải «ổn», cũng không phải khiếm khuyết mới; không tự đổi nhánh hay chạy bản ở nơi khác.
+- mã khác 0/1/2 ⇒ ⚪ không đo được, chép 3 dòng cuối đầu ra nguyên văn.
 Lượt lịch KHÔNG sửa gì theo kết quả này — sửa là việc của phiên có người.
 
 BÁO CÁO: viết một bản tóm tắt ngắn gọn BẰNG TIẾNG VIỆT (đúng theo chỉ thị ngôn ngữ toàn cục của
