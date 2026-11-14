@@ -259,10 +259,15 @@ def _chu_trinh(a: argparse.Namespace) -> int:
                 "--quet --vong 3` rồi `--phu-mo-coi --vong 3` (mục mồ côi) SẼ sửa được, không cần khoá API.")
         if "CAN_CHAY_THEM_VONG" in out:
             viec_can_lam.append("Có nguồn quá hạn xác minh tồn tại — chạy lại thêm vòng SẼ sửa được.")
+        if "CAN_PHU_MO_COI" in out:
+            # Thêm 14/11/2026: bản ghi TRẦN (thẻ hub/đề tài NC chưa từng xác minh tồn tại) — trước đó sổ gọi là «xem tay».
+            viec_can_lam.append(
+                "Có bản ghi TRẦN chưa xác minh tồn tại (thẻ hub/đề tài NC) — `python3 tools/so_xac_minh_nguon.py "
+                "--phu-mo-coi --vong 3` SẼ sửa được (máy làm, không cần khoá API; `--vong 3` không chạm tới nhóm này).")
         if "CAN_XEM_TAY" in out:
             viec_can_lam.append("Có nguồn hết hiệu lực vì lý do khác — xem phần ③④ ở trên.")
         if not any(x in out for x in ("CAN_NCBI_API_KEY", "CAN_TAI_RETRACTION_WATCH", "CAN_KIEM_RUT_LAI",
-                                      "CAN_CHAY_THEM_VONG", "CAN_XEM_TAY")):
+                                      "CAN_CHAY_THEM_VONG", "CAN_PHU_MO_COI", "CAN_XEM_TAY")):
             viec_can_lam.append("Còn nguồn chưa xác minh hoặc hết hạn — xem phần ③④ ở trên.")
     elif rc != 0:
         # Mã lạ (tiến trình bị giết, lỗi chưa đặt tên…) — KHÔNG được rơi im lặng thành 🟢 (vá #28, 26/09/2026).
