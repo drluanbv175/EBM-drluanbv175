@@ -105,8 +105,15 @@ def test_tac_vu_giam_sat_guideline_da_bo_theo_bac_si_20261113():
     """13/11/2026 bác sĩ: «các tác vụ giám sát Guideline cũng không cần nữa» ⇒ hai tác vụ lịch
     `giam-sat-9-tram-web-hoi-tuan` (tuần) và `giam-sat-acc-aha-quy` (quý) đã bỏ khỏi sổ kỳ vọng VÀ nguồn git
     (công cụ `giam_sat_to_chuc.py` giữ để chạy tay). Logic dấu vết `file-ngay` vẫn được kiểm bằng fixture SO_9_TRAM ở trên."""
+    # 14/11/2026 (việc I): đọc danh sách tác vụ đã bỏ từ NGUỒN DUY NHẤT `TAC_VU_LICH_DA_BO` (chốt doctrine #348) thay bộ ba
+    # tên viết riêng ở đây — hai danh sách từng có thể trôi lệch (bỏ thêm tác vụ mà chỉ sửa một nơi). Mọi tên đã bỏ: không còn
+    # trong sổ kỳ vọng, không còn thư mục nguồn — trừ `goi-duyet-tuan-ebm` (còn là QUY TRÌNH tác vụ tháng đọc).
     import json
+    V = _nap("vcra_kycu", "verify_claude_code_repo_alignment.py")
     so = json.loads((GOC / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
-    for tid in ("giam-sat-9-tram-web-hoi-tuan", "giam-sat-acc-aha-quy", "kiem-thang-diem-quy"):  # +thang điểm quý, bỏ 13/11
+    da_bo = set(V.TAC_VU_LICH_DA_BO)
+    assert {"giam-sat-9-tram-web-hoi-tuan", "giam-sat-acc-aha-quy", "kiem-thang-diem-quy"} <= da_bo  # lời bác sĩ 13/11
+    for tid in sorted(da_bo):
         assert not [t for t in so["tac_vu"] if t["id"] == tid], tid
-        assert not (GOC / "sync" / "scheduled-tasks" / tid).exists(), tid
+        if tid != "goi-duyet-tuan-ebm":
+            assert not (GOC / "sync" / "scheduled-tasks" / tid).exists(), tid

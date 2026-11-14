@@ -15,7 +15,8 @@ trần: không có log/queue) ⇒ ⚪ không đo được, KHÔNG đỏ (BH08); 
 Sổ khai kỳ vọng: `sync/lich-nen-ky-vong.json` (đi qua git). Python không gọi được MCP `scheduled-tasks`, nên đây là
 đo GIÁN TIẾP qua đầu ra; muốn biết chắc trạng thái bộ lập lịch, phiên Claude gọi `list_scheduled_tasks`.
 
-Mức: 🔴 (0) kỳ gần nhất LỠ hẳn (không dấu vết) · 🟠 (1) chỉ có lượt trễ/chạy bù ngoài hạn (lịch không nổ đúng hẹn)
+Mức: 🔴 (0) kỳ gần nhất LỠ hẳn (không dấu vết) · 🟠 (1) chỉ có lượt trễ/chạy bù ngoài hạn (lịch không nổ đúng hẹn), hoặc lượt
+  trong hạn KHÔNG TRỌN (mã KẾT THÚC ngoài `MA_TRON`, 14/11/2026)
 · 🟡 (2) kỳ cũ hơn đã lỡ nhưng kỳ sau đã chạy lại (còn trong cửa sổ) — chỉ in khi chạy KHÔNG cờ; `--im-khi-on` (hook)
   im lặng với mức này vì không còn việc gì để làm (02/10/2026, HV-08).
 Mã thoát: 0 = mọi kỳ đến hạn đều có dấu vết đúng hẹn (hoặc KHÔNG đo được kỳ nào — tiêu đề ⚪) · 1 = có 🔴/🟠.
@@ -32,6 +33,15 @@ lệnh ghi dấu vết); (b) máy CÓ bản chạy của tác vụ (`~/.claude/s
 mà KHÔNG có tệp log ⇒ coi là CHƯA có dấu vết nào ⇒ kỳ từ mốc trở đi ra 🔴 lỡ. Trước đó trường hợp này in «⚪ không đọc
 được log (bản sao trần/máy khác)» — nhãn sai trên chính máy chạy lịch, và đứng ⚪ mãi nếu lệnh ghi dấu vết ĐẦU TIÊN đã bị
 cắt (chưa áp quyền): đúng kiểu gãy âm thầm. Máy KHÔNG có bản chạy (Cloud, bản sao trần, máy không chạy lịch) vẫn ⚪.
+
+14/11/2026 (đọc MÃ của dòng KẾT THÚC): trước đó mọi dòng KẾT THÚC trong hạn đều tính kỳ «đúng hẹn», không đọc «(mã N)» ⇒ một
+lượt dừng giữa chừng mà vẫn ghi «KẾT THÚC … (mã 2)» (dừng ở bước 0 tiền kiểm, mảng không đo được, nguồn giả) hiện xanh. Nay
+mỗi dòng KẾT THÚC được phân xử theo hợp đồng mã CHUNG của các bộ ghi log lịch nền (`MA_TRON`, xem chú thích ở đó):
+  · mã thuộc `MA_TRON` (0 sạch · 1 trọn lượt, có việc cho bác sĩ) hoặc «tổng thể=PASS» ⇒ lượt TRỌN, kỳ đúng hẹn;
+  · mã khác (2 …) hoặc «tổng thể=CÓ BƯỚC LỖI» ⇒ 🟠 «lượt KHÔNG TRỌN (mã N)» — không đếm là đúng hẹn (kỳ cũ hơn: 🟡);
+  · KẾT THÚC trong hạn mà KHÔNG đọc được mã (không «(mã N)», không «tổng thể=…» đã biết) ⇒ ⚪ không đo được — không phải
+    đúng hẹn, cũng không phải lỡ. Cố ý KHÔNG coi mã 1 là «không trọn»: cả `ghi_dau_vet_lich --ma 1` lẫn `chu_trinh_chung_cu`
+    mã 1 là lượt đi HẾT và có việc cho bác sĩ (log thật: kỳ rút bài 04/11 mã 1) — gọi đó là không trọn là 🟠 giả mỗi kỳ có việc.
 """
 from __future__ import annotations
 
@@ -93,6 +103,42 @@ def _ket_thuc(duong: Path) -> list[dt.datetime] | None:
     return _moc(duong, "KẾT THÚC")
 
 
+# Hợp đồng mã KẾT THÚC CHUNG của các bộ ghi log lịch nền (14/11/2026) — sửa ở đây thì phải sửa cùng các bộ ghi:
+#   · tools/ghi_dau_vet_lich.py --ma: 0 mọi mảng sạch · 1 có việc cho bác sĩ/việc sửa cho phiên có người · 2 có mảng KHÔNG đo
+#     được/không chạy được;
+#   · tools/chu_trinh_chung_cu.py --ghi-log: 0 mọi chốt đạt · 1 có việc cần bác sĩ làm · 2 nền tảng không đáng tin;
+#   · script launchd (monthly_update.sh, quarterly_*.sh…): «tổng thể=PASS» · «tổng thể=CÓ BƯỚC LỖI».
+# Mã 0 và 1 đều là lượt ĐI HẾT (1 chỉ nói có việc cho người) ⇒ trọn; mã khác là lượt không cho ra phép đo trọn vẹn.
+MA_TRON = frozenset({0, 1})
+_DONG_KET_THUC = re.compile(r"=+ (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) : KẾT THÚC([^\n]*)")
+_MA_SO = re.compile(r"\(mã (-?\d+)\)")
+_TONG_THE = re.compile(r"tổng thể=(PASS|CÓ BƯỚC LỖI)(?![^\s=])")
+
+
+def phan_xu_ket_thuc(phan_sau: str) -> tuple[bool | None, str]:
+    """(trọn?, nhãn) của MỘT dòng KẾT THÚC từ phần chữ đứng SAU «KẾT THÚC». trọn = None ⇒ không đọc được mã (⚪).
+
+    «(mã N)» thắng «tổng thể=…» khi dòng có cả hai. Mã lạ ngoài hợp đồng (vd 3, 75) là KHÔNG trọn — lượt không tự nhận là xong."""
+    m = _MA_SO.search(phan_sau)
+    if m:
+        n = int(m.group(1))
+        return n in MA_TRON, f"mã {n}"
+    m = _TONG_THE.search(phan_sau)
+    if m:
+        return m.group(1) == "PASS", f"tổng thể={m.group(1)}"
+    return None, "không đọc được mã"
+
+
+def _ket_thuc_co_ma(duong: Path) -> list[tuple[dt.datetime, bool | None, str]] | None:
+    """[(thời điểm, trọn?, nhãn)] của mọi dòng KẾT THÚC trong log (`phan_xu_ket_thuc`); None = không đọc được tệp."""
+    try:
+        van = duong.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return [(dt.datetime.strptime(f"{a} {b}", "%Y-%m-%d %H:%M:%S"), *phan_xu_ket_thuc(sau))
+            for a, b, sau in _DONG_KET_THUC.findall(van)]
+
+
 def thu_muc_ban_chay() -> Path:
     """Thư mục bản chạy tác vụ lịch của app — CÙNG quy ước với `tools/dong_bo_tac_vu_lich.py`."""
     return Path(os.environ.get("EBM_TAC_VU_LICH_DIR") or (Path.home() / ".claude" / "scheduled-tasks"))
@@ -135,9 +181,12 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                 continue
         log_vang_may_chay = False
         ket: list[dt.datetime] | None = None
+        ket_ma: list[tuple[dt.datetime, bool | None, str]] = []
         bat_dau: list[dt.datetime] = []
         if loai == "log-ket-thuc":
-            ket = _ket_thuc(goc / dv["path"])
+            ket_ma_doc = _ket_thuc_co_ma(goc / dv["path"])
+            ket = None if ket_ma_doc is None else [e for e, _t, _n in ket_ma_doc]
+            ket_ma = ket_ma_doc or []
             # 14/11/2026: dòng BẮT ĐẦU (tools/ghi_dau_vet_lich.py --bat-dau, script launchd) mà thiếu KẾT THÚC trong hạn = lượt
             # đã NỔ nhưng chết/bị cắt ngang giữa chừng (lệnh đòi duyệt quyền ⇒ lượt vẫn «succeeded») — nói rõ thay vì «không
             # có dấu vết», để người đọc tìm đúng gốc (tools/quyen_lich_nen.py) chứ không đi tìm tác vụ bị xoá.
@@ -174,6 +223,7 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
             ra["khong_do_duoc"].append(f"{tv['id']}: loại dấu vết «{loai}» không hỗ trợ")
             continue
         thieu: list[tuple[dt.datetime, str, str]] = []  # (kỳ, mức, mô tả)
+        khong_ro: list[str] = []  # kỳ có KẾT THÚC trong hạn mà không đọc được mã ⇒ ⚪ (không đúng hẹn, không lỡ)
         for i, s in enumerate(cac):
             ky_sau = cac_ky(tv["cron"], s.date() + dt.timedelta(days=1), s.date() + dt.timedelta(days=400))
             han_tre = ky_sau[0] if ky_sau else s + dt.timedelta(days=400)
@@ -188,9 +238,24 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                                   f"có tệp TRỄ ngày {tre[0]:%d/%m} (ngoài hạn {tv.get('grace_gio', 30)}h) — lịch không nổ đúng hẹn"
                                   if tre else f"không có tệp {Path(dv['path']).name.replace('{ngay}', '<ngày>')} trong hạn"))
                     continue
-                dung_han = [e for e in ket if s <= e <= s + grace]
+                # 14/11/2026: chỉ lượt TRỌN (mã thuộc MA_TRON / «tổng thể=PASS») mới làm kỳ đúng hẹn — xem docstring mô-đun.
+                trong_han = [(e, tron, nhan) for e, tron, nhan in ket_ma if s <= e <= s + grace]
                 tre = [e for e in ket if s + grace < e < han_tre]
-                if dung_han:
+                if any(tron for _e, tron, _n in trong_han):
+                    continue
+                khong_tron = [(e, nhan) for e, tron, nhan in trong_han if tron is False]
+                if khong_tron:
+                    e0, nhan0 = khong_tron[-1]
+                    thieu.append((s, "khong_tron",
+                                  f"lượt KHÔNG TRỌN ({nhan0}) — có KẾT THÚC {e0:%d/%m %H:%M} trong hạn nhưng mã báo lượt không đi "
+                                  "hết (dừng ở bước 0 tiền kiểm / mảng không đo được / nền tảng không đáng tin) — không tính là "
+                                  "đúng hẹn; đọc báo cáo của lượt đó"
+                                  + (f"; có lượt TRỄ {tre[0]:%d/%m %H:%M} sau hạn" if tre else "")))
+                    continue
+                if trong_han:
+                    e0, _t0, nhan0 = trong_han[-1]
+                    khong_ro.append(f"{tv['id']}: kỳ {s:%d/%m/%Y %H:%M} có KẾT THÚC {e0:%d/%m %H:%M} trong hạn nhưng "
+                                    f"{nhan0} (không có «(mã N)»/«tổng thể=…») — không tính đúng hẹn, cũng không phải lỡ")
                     continue
                 cat = [b for b in bat_dau if s <= b <= s + grace]
                 thieu.append((s, "tre" if tre else "lo",
@@ -210,11 +275,14 @@ def kiem(hom_nay: dt.datetime | None = None, so_khai: dict | None = None, goc: P
                 if f.exists():
                     continue
                 thieu.append((s, "lo", f"thiếu {f.relative_to(goc)}"))
+        ra["khong_do_duoc"].extend(khong_ro)
         if not thieu:
-            ra["ok"] += 1
+            if not khong_ro:
+                ra["ok"] += 1
             continue
         moi_nhat_hong = thieu[-1][0] == cac[-1]
         for s, muc, mo_ta in thieu:
+            # «lo» (không dấu vết) 🔴 · «tre»/«khong_tron» 🟠 — chỉ ở kỳ GẦN NHẤT; kỳ cũ hơn 🟡 (kỳ sau đã chạy lại).
             uu = (0 if muc == "lo" else 1) if (s == cac[-1] and moi_nhat_hong) else 2
             ra["phat_hien"].append({
                 "id": tv["id"], "ky": s.strftime("%Y-%m-%d %H:%M"), "muc": muc, "uu": uu,
@@ -251,7 +319,8 @@ def main(argv: list[str] | None = None) -> int:
             for x in kq["khong_do_duoc"]:
                 print(f"   ⚪ {x}")
         return 0
-    print("🔴 LỊCH NỀN CÓ KỲ KHÔNG NỔ ĐÚNG HẸN" if hong else "🟡 Lịch nền: có kỳ cũ đã lỡ (kỳ sau đã chạy lại)")
+    print("🔴 LỊCH NỀN CÓ KỲ KHÔNG NỔ ĐÚNG HẸN / KHÔNG CHẠY TRỌN" if hong
+          else "🟡 Lịch nền: có kỳ cũ đã lỡ/không trọn (kỳ sau đã chạy lại)")
     for p in sorted(kq["phat_hien"], key=lambda x: (x["uu"], x["ky"])):
         print(f"   {'🔴' if p['uu'] == 0 else '🟠' if p['uu'] == 1 else '🟡'} {p['thong_diep']}")
     print("   → phiên Claude: gọi list_scheduled_tasks + list_task_runs (tác vụ bị xoá/tắt?), rồi «Run now» hoặc "
