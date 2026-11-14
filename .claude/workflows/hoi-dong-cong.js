@@ -189,11 +189,20 @@ const nhiemVu = (hoSo.nhiem_vu || []).filter(n => n.ap_dung !== false && (n.tai_
 log(`${GATE}: ${nhiemVu.length} đầu ra đem chấm · ${(hoSo.dp || []).length} DP đem tranh biện · trạng thái sống ${hoSo.trang_thai_song}`)
 
 // ── Pha 2: đánh giá chéo (song song theo nhiệm vụ, hai người chấm mỗi đầu ra) ─────────────────────────────────────────
+// 15/11/2026 (bác sĩ: «đã có kiểm tra chéo, điều phối nhưng đã không thực hiện được và được báo cáo hoàn thiện»): RQ4
+// chấm TRÊN số đo nhất quán xuyên cổng của MÁY (hồ sơ máy `nhat_quan_xuyen_cong`, lọc theo cổng) — không tự suy từ văn
+// bản. Lệch cứng ⇒ RQ4 loi_do (⇒ tra_ve_sua); lệch mềm / cần xem / chưa đủ để so ⇒ RQ4 can_sua — không bao giờ «dat».
+const NQ_SO = HS && Array.isArray(HS.nhat_quan_xuyen_cong) ? HS.nhat_quan_xuyen_cong : null
+const NQ_RQ4 = 'RQ4 chấm TRÊN số đo nhất quán xuyên cổng của máy ' + (NQ_SO
+  ? `(trục thuộc cổng ${GATE}: ${JSON.stringify(NQ_SO.map(k => ({ ma: k.ma, muc: k.muc, ghi_chu: k.ghi_chu })))})`
+  : `(tự chạy chỉ đọc \`python3 tools/nhat_quan_xuyen_cong.py --study ${STUDY} --json\` rồi lọc trục thuộc ${GATE})`) +
+  ': trục lech_cung ⇒ RQ4 loi_do; lech_mem/can_xem/chua_du ⇒ RQ4 can_sua (căn cứ loai=lenh); chỉ khi mọi trục khop mới ' +
+  'được RQ4 dat. '
 const chamMot = (n, nguoi, vai) => goi(
   `${CHUNG}\nBạn là người chấm «${nguoi}» (vai ${vai}) cho ĐẦU RA nhiệm vụ ${n.ma} của tác giả «${n.tac_gia}». ` +
   `Tệp: ${n.tai_lieu.join(', ')}. Chấm ĐỦ RQ1–RQ8 theo rubric của .claude/agents/_HOI-DONG-CONG.md §3 ` +
   `(trạng thái sống chỉ đọc: \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\`). ` +
-  'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' +
+  'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' + NQ_RQ4 +
   `${BAI_HOC_LOI} Trả nguoi_cham="${nguoi}", vai="${vai}".`,
   { label: `chấm ${n.ma} · ${nguoi}`, phase: 'Đánh giá chéo', agentType: nguoi, schema: MUC_CHAM })
 const chamXong = (cham, n) => {
@@ -271,7 +280,7 @@ const chamGom = nhom => goi(
   'riêng đủ RQ1–RQ8, xét từng đầu ra trên tệp của chính nó, không để nhận xét đầu ra này lan sang đầu ra khác: ' +
   nhom.map(n => `${n.ma} (tác giả «${n.tac_gia}»; tệp: ${n.tai_lieu.join(', ')})`).join(' · ') +
   `. Rubric .claude/agents/_HOI-DONG-CONG.md §3 (trạng thái sống chỉ đọc: \`python3 tools/hoi_dong_cong.py cham-song --study ${STUDY} --gate ${GATE}\`). ` +
-  'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' +
+  'can_sua/loi_do bắt buộc có nhận xét + căn cứ; lỗi đỏ RQ3/RQ6/RQ7 ⇒ tra_ve_sua; khong_ap_dung phải nêu lý do. ' + NQ_RQ4 +
   `${BAI_HOC_LOI} Trả danh_gia = đúng một mục cho MỖI mã nhiệm vụ (ma_nhiem_vu), nguoi_cham="giam-khao-cong", vai="giam_khao".`,
   { label: `giám khảo ${nhom.map(n => n.ma).join('+')}`, phase: 'Đánh giá chéo', agentType: 'giam-khao-cong', schema: GOM_CHAM })
 const nhomGK = []
