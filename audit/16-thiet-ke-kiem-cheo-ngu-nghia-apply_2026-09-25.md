@@ -100,5 +100,10 @@ người ta bỏ qua cả cảnh báo thật).
   - Giới hạn: cỡ mẫu GỘP của phân tích gộp có thể không ghi nguyên văn trong tóm tắt ⇒ 🟠 giả.
 - **Còn lại:** nhắc R1d cho `tham-dinh-dau-ra` để lại tới khi có số đo bộ vàng. Hiện K1/K2/K3/K4 mới chỉ cảnh báo,
   chưa phải luật cổng.
+- **Độ nhạy đo bằng đột biến tổng hợp (14/11/2026):** `tools/do_nhay_kiem_ngu_nghia.py` dùng mục apply thật của các
+  dashboard đã PASS và đo cả độ nhạy lẫn báo động trên đối chứng, kèm KTC 95% Wilson. Báo cáo:
+  `quality/eval/kiem-cheo-ngu-nghia/do-nhay-dot-bien-<ngày>.md`; lỗ hổng tìm được ghi ở
+  `audit/nhat-ky/2026-11-14-do-nhay-k1k4-dot-bien.md`. Số đo này không thay bộ vàng do bác sĩ gắn nhãn, và công cụ
+  không đổi chế độ chặn.
 
 _Cần bác sĩ kiểm chứng._
