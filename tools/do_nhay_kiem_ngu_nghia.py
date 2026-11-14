@@ -20,9 +20,9 @@ CÁCH LÀM (không đổi hành vi `kiem_cheo_ngu_nghia.py` / `kiem_quan_the_chi
      K1  đổi quần thể      — thay/chèn nhãn quần thể loại trừ nhau (HFrEF↔HFpEF, típ 1↔típ 2, …) ⇒ `k1_cap`
      K2  đổi con số        — ngưỡng EF/eGFR/tuổi/HbA1c/BMI/LDL ⇒ `k1_nguong` (audit/16: phần ngưỡng của K2 nằm
                              trong K1) · cỡ mẫu n= ⇒ `k2_co_mau`
-     K3  rụng điều kiện    — ở BẢN XUẤT (đúng phạm vi K3) · NGAY TRONG MỤC so với nguồn (ngoài phạm vi K3)
-     K4  đảo chiều         — NGUỒN nói ngược chiều với mục apply (đúng phạm vi K4) · MỤC đảo sang «không làm»
-                             khi nguồn ủng hộ (ngoài phạm vi K4)
+     K3  rụng điều kiện    — ở BẢN XUẤT (phạm vi K3) · NGAY TRONG MỤC so với nguồn (phạm vi K3b, từ 14/11/2026c)
+     K4  đảo chiều         — NGUỒN nói ngược chiều với mục apply (phạm vi K4) · MỤC đảo sang «không làm» khi nguồn
+                             ủng hộ (phạm vi K4b, từ 14/11/2026c)
    Nhãn «lỗi» đến từ CẤU TRÚC phép biến đổi (máy biết đã đổi gì), không từ kết quả của chính phép kiểm. Danh
    mục cụm điều kiện, nhãn quần thể, ngưỡng của bộ sinh RỘNG HƠN từ điển của bộ kiểm có chủ ý — để đo được
    cả lỗ hổng từ vựng. Mỗi đột biến có hạt giống riêng (sha256 của hạt giống + khoá mục) ⇒ tất định.
@@ -42,7 +42,8 @@ Dùng:
     python3 tools/do_nhay_kiem_ngu_nghia.py                       # chạy khô: in bảng, không ghi tệp
     python3 tools/do_nhay_kiem_ngu_nghia.py --online --ghi        # tải tóm tắt còn thiếu, ghi báo cáo
     python3 tools/do_nhay_kiem_ngu_nghia.py --bo-dem <tệp.json> --hat-giong 20261114 --ghi
-Báo cáo: quality/eval/kiem-cheo-ngu-nghia/do-nhay-dot-bien-<YYYYMMDD>.json + .md
+    python3 tools/do_nhay_kiem_ngu_nghia.py --bo-dem <tệp.json> --ngay 20261114c --so-sanh <báo cáo cũ>.json --ghi
+Báo cáo: quality/eval/kiem-cheo-ngu-nghia/do-nhay-dot-bien-<YYYYMMDD[hậu tố]>.json + .md (--so-sanh ⇒ thêm bảng TRƯỚC/SAU)
 Mã thoát: 0 = cả bốn phép đều đo được · 1 = chỉ đo được một phần (phép nào CHƯA ĐO ghi rõ) ·
           2 = không đo được gì (không có dashboard PASS / không có mục apply). «Không đo được» không bao giờ là 0.
 Cần bác sĩ kiểm chứng.
@@ -75,9 +76,11 @@ REPO = Path(__file__).resolve().parents[1]
 THU_MUC_BAO_CAO = REPO / "quality" / "eval" / "kiem-cheo-ngu-nghia"
 HAT_GIONG_MAC_DINH = 20261114
 Z95 = 1.959963984540054
-PHEP = ("K1", "K2", "K3", "K4")
+PHEP = ("K1", "K2", "K3", "K3b", "K4", "K4b")
 # Trường phán quyết của kiem_quan_the_chieu.kiem_muc thuộc về phép nào (audit/16: ngưỡng của K2 nằm trong K1).
-TRUONG_CUA_PHEP = {"K1": ("k1_cap",), "K2": ("k1_nguong", "k2_co_mau"), "K4": ("k4",)}
+# K3b/K4b (14/11/2026c) đọc NGUỒN như K1/K2/K4 nên dùng chung đường chấm cham_k124.
+TRUONG_CUA_PHEP = {"K1": ("k1_cap",), "K2": ("k1_nguong", "k2_co_mau"), "K3b": ("k3b",), "K4": ("k4",), "K4b": ("k4b",)}
+PHEP_NGUON = ("K1", "K2", "K3b", "K4", "K4b")
 KQ = ("bat", "bat_lech", "lot_xanh", "lot_trang", "lot_im")
 
 
@@ -112,7 +115,7 @@ def bo_kiem_that() -> dict:
     """Các hàm kiểm THẬT — đo đúng thứ dây chuyền chạy ở ④-bis/④-ter của xuat_goi_cap_nhat.py."""
     return {"kiem_muc": _kq().kiem_muc, "kiem_dashboard": _kq().kiem_dashboard,
             "muc_phu_dinh": _kq().muc_phu_dinh, "k3_nguon": _k3().lay_nguon_dieu_kien,
-            "k3_doi_chieu": _k3().doi_chieu}
+            "k3_doi_chieu": _k3().doi_chieu, "k3_neo": _k3().neo_muc}
 
 
 def goc_du_lieu(ten: str) -> Path:
@@ -638,8 +641,14 @@ def _boc(van_ban_chuan: str) -> str:
     return _html.escape(van_ban_chuan, quote=False)
 
 
-def sinh_k3(rec: dict, hat: int, word_chuan: str | None) -> list[dict]:
-    """Hai đột biến cho CÙNG một cụm điều kiện: rụng ở BẢN XUẤT (mục giữ nguyên) và rụng NGAY TRONG MỤC."""
+def neo_gon(neo: list[dict] | None) -> list[dict] | None:
+    """Mốc mục (k3 neo_muc) qua cùng phép gon_dau như bản Word đo ở đây — tiêu đề có «( x»/« ,» vẫn khớp."""
+    return [{**n, "tieu_de": gon_dau(n["tieu_de"])} for n in neo] if neo else None
+
+
+def sinh_k3(rec: dict, hat: int, word_chuan: str | None, neo: list[dict] | None = None) -> list[dict]:
+    """Hai đột biến cho CÙNG một cụm điều kiện: rụng ở BẢN XUẤT (mục giữ nguyên; K3 so theo TỪNG MỤC nhờ `neo` của
+    dashboard) và rụng NGAY TRONG MỤC (K3b so mục với nguồn)."""
     it = rec["muc"]
     act = _doc_truong(it, "action")
     cum = tim_dieu_kien(act)
@@ -660,19 +669,20 @@ def sinh_k3(rec: dict, hat: int, word_chuan: str | None) -> list[dict]:
         d1_mot = word_chuan.replace(a0, a1, 1) if n_lan >= 2 else None
     else:
         d0, d1, kieu = a0, a1, "ban_xuat_tong_hop"
+        neo = None                                    # bản xuất tổng hợp chỉ có MỘT hành động ⇒ không cần mốc
     moi = _sao(it)
     moi["action"] = act_moi
     chung = {"phep": "K3", "truong": "k3", "dich": {"cum": chuan_hoa(x["cum"])}}
     return [
         {**chung, "lop": "K3_rung_ban_xuat", "trong_pham_vi": True, "bien_the": f"{kieu}|{x['nhom']}",
          "mo_ta": f"bản xuất mất «{x['cum']}»", "muc_dot_bien": _sao(it), "ban_xuat_goc": d0, "ban_xuat_dot_bien": d1,
-         "ban_xuat_mot_cho": d1_mot, "so_lan_hien_thi": n_lan,
+         "ban_xuat_mot_cho": d1_mot, "so_lan_hien_thi": n_lan, "neo": neo_gon(neo) if kieu == "ban_xuat_that" else None,
          # hành động đã cắt, đúng dạng nằm trong bản xuất đột biến — để chan_doan_k3 biết cụm nào CỦA K3 bị mất khỏi
          # mục (không dùng cụm của bộ sinh: bộ sinh rộng hơn từ điển K3, quy kết theo nó che lỗ hổng trích cụm)
          "hanh_dong_cat": a1},
-        {**chung, "lop": "K3_rung_trong_muc", "trong_pham_vi": False, "bien_the": x["nhom"],
-         "mo_ta": f"mục mất «{x['cum']}» (bản xuất trung thành với mục đã đổi)", "muc_dot_bien": moi,
-         "ban_xuat_goc": chuan_hoa(act_moi), "ban_xuat_dot_bien": chuan_hoa(act_moi)},
+        {**chung, "lop": "K3_rung_trong_muc", "phep": "K3b", "truong": "k3b", "trong_pham_vi": True,
+         "bien_the": x["nhom"], "mo_ta": f"mục mất «{x['cum']}» (bản xuất trung thành với mục đã đổi)", "muc_dot_bien": moi,
+         "ban_xuat_goc": chuan_hoa(act_moi), "ban_xuat_dot_bien": chuan_hoa(act_moi), "nguon_dot_bien": None},
     ]
 
 
@@ -758,27 +768,32 @@ def sinh_k4_muc(rec: dict, nguon: str, hat: int) -> dict:
     act = _doc_truong(it, "action")
     moi = _sao(it)
     moi["action"] = f"{tien} {act[:1].lower()}{act[1:]}" if act else tien
-    return {"lop": "K4_muc_dao", "phep": "K4", "truong": "k4", "trong_pham_vi": False, "bien_the": f"tien_to:{tien}",
+    return {"lop": "K4_muc_dao", "phep": "K4b", "truong": "k4b", "trong_pham_vi": True, "bien_the": f"tien_to:{tien}",
             "dich": {}, "mo_ta": f"mục: thêm «{tien}» đầu hành động", "muc_dot_bien": moi, "nguon_dot_bien": nguon}
 
 
 # ───────────────────────── chẩn đoán lý do lọt ─────────────────────────
-# chuan_hoa() của K3 (bộ K1/K2/K4 dùng lại) xoá mọi đoạn «<…>» như thẻ HTML. Bản efetch là VĂN BẢN THUẦN — «<» là dấu so
-# sánh («LNM risk < 3 %», «p<0.05») ⇒ cả đoạn tới dấu «>» kế tiếp bị xoá. Mẫu dưới CHÉP đúng mẫu đó để đo phần bị mất.
-_THE_GIA = re.compile(r"<[^>]+>")
+# Tới 14/11/2026 chuan_hoa() của K3 (bộ K1/K2/K4 dùng lại) xoá mọi đoạn «<…>» như thẻ HTML ⇒ trong bản efetch (VĂN BẢN THUẦN,
+# «<» là dấu so sánh) chữ tới dấu «>» kế tiếp bị xoá (7/298 nguồn ở báo cáo 20261114). Nay nguồn đi qua
+# kiem_quan_the_chieu.chuan_hoa_nguon (chỉ bỏ thẻ định dạng nội dòng). Chẩn đoán đo ĐÚNG mẫu mà bộ kiểm hiện dùng cho nguồn —
+# lấy thẳng từ mô-đun K3 — nên sau bản vá phải ra 0; mẫu cũ còn giữ để so (`mau_cu=True`).
+_THE_GIA_CU = re.compile(r"<[^>]+>")
 
 
-def vung_bi_cat(raw: str) -> list[tuple[int, int]]:
-    """Các đoạn của văn bản THUẦN mà chuan_hoa sẽ xoá (efetch không có thẻ HTML ⇒ mọi đoạn khớp đều là chữ bị mất)."""
-    return [m.span() for m in _THE_GIA.finditer(raw or "")]
+def vung_bi_cat(raw: str, mau_cu: bool = False) -> list[tuple[int, int]]:
+    """Các đoạn của văn bản THUẦN mà bộ chuẩn hoá NGUỒN của bộ kiểm sẽ xoá (efetch không có thẻ HTML ⇒ đoạn khớp là chữ mất)."""
+    mau = _THE_GIA_CU if mau_cu else getattr(_k3(), "_THE_DINH_DANG", _THE_GIA_CU)
+    return [m.span() for m in mau.finditer(raw or "")]
 
 
 def chan_doan_nguon(nguon: dict[str, str]) -> dict:
     vung = {p: vung_bi_cat(t) for p, t in nguon.items()}
+    cu = {p: vung_bi_cat(t, mau_cu=True) for p, t in nguon.items()}
     return {"so_nguon": len(nguon), "nguon_bi_cat": sum(1 for v in vung.values() if v),
             "nguon_bi_cat_tren_200_ky_tu": sum(1 for v in vung.values() if any(e - s > 200 for s, e in v)),
             "ky_tu_bi_cat": sum(e - s for v in vung.values() for s, e in v),
-            "ky_tu_tong": sum(len(t) for t in nguon.values())}
+            "ky_tu_tong": sum(len(t) for t in nguon.values()),
+            "nguon_bi_cat_neu_mau_cu": sum(1 for v in cu.values() if v)}
 
 
 def chan_doan_k3(db: dict, bo: dict) -> dict | None:
@@ -790,8 +805,14 @@ def chan_doan_k3(db: dict, bo: dict) -> dict | None:
         return None
     cum = [c for n in bo["k3_nguon"]({"summary": {}, "items": [db["muc_dot_bien"]]}) for c in n["cum"]]
     bi_cat = [c for c in cum if c not in cat]
+    vb = db["ban_xuat_dot_bien"]
+    # cùng phạm vi K3 thật so: đoạn của mục khi định vị được (neo), không thì cả tài liệu
+    khoang = (_k3().doan_cua_muc(vb, db["neo"]).get(str(db["muc_dot_bien"].get("id") or "")) if db.get("neo") else None)
+    def con(c):
+        return any(c in vb[a:b] for a, b in khoang) if khoang else c in vb
     return {"so_cum_k3": len(cum), "cum_k3_bi_cat": len(bi_cat),
-            "cum_k3_bi_cat_con_cho_khac": sum(1 for c in bi_cat if c in db["ban_xuat_dot_bien"])}
+            "cum_k3_bi_cat_con_cho_khac": sum(1 for c in bi_cat if con(c)),
+            "pham_vi": "muc" if khoang else "tai_lieu"}
 
 
 def ly_do_lot(db: dict, r: dict | None, nguon_goc: str | None) -> str | None:
@@ -829,6 +850,12 @@ def ly_do_lot(db: dict, r: dict | None, nguon_goc: str | None) -> str | None:
         return "khac"
     if db["lop"] in ("K2_nguong", "K2_co_mau"):
         return "nguon_khong_neu" if db["ket_qua"] == "lot_trang" else ("ngoai_tu_dien" if db["ket_qua"] == "lot_im" else "khac")
+    if db["lop"] == "K3_rung_trong_muc":
+        return {"lot_trang": "khong_co_nguon", "lot_im": "k3b_khong_co_cau_khuyen_cao_neo",
+                "lot_xanh": "hanh_dong_con_dau_dieu_kien_khac"}.get(db["ket_qua"], "khac")
+    if db["lop"] == "K4_muc_dao":
+        return {"lot_trang": "nguon_khong_co_cau_ung_ho_ro", "lot_xanh": "nguon_co_cau_chong_hai",
+                "lot_im": "muc_khong_nhan_la_phu_dinh_that"}.get(db["ket_qua"], "khac")
     return "khac"
 
 
@@ -845,6 +872,11 @@ def chu_ky_bao(r: dict, phep: str) -> set[str]:
     elif phep == "K4":
         if (r.get("k4") or {}).get("muc") == "can_doc":
             ra.add("k4")
+    elif phep == "K3b":
+        ra |= {f"k3b:{x['loai']}:{x['dieu_kien']}" for x in r.get("k3b") or [] if x["muc"] == "can_doc"}
+    elif phep == "K4b":
+        if (r.get("k4b") or {}).get("muc") == "can_doc":
+            ra.add("k4b")
     return ra
 
 
@@ -858,6 +890,13 @@ def _muc_dich(db: dict, r: dict) -> str | None:
               and x["so"].replace(",", ".") == dich["so"]]
     elif tr == "k2_co_mau":
         ds = [x["muc"] for x in r.get("k2_co_mau") or [] if x["so"] == dich["so"]]
+    elif tr == "k3b":
+        # K3b không biết trước điều kiện đích (cụm tiếng Việt ↔ câu nguồn tiếng Anh) ⇒ đích = mọi dòng K3b; «bắt» chỉ khi có 🟠
+        # MỚI so với đối chứng (cham_k124 xét chữ ký) — ở đây chỉ trả mức để phân loại lọt
+        ds = [x["muc"] for x in r.get("k3b") or []]
+        ds = [m for m in ds if m != "can_doc"] or ds
+    elif tr == "k4b":
+        ds = [(r.get("k4b") or {}).get("muc")] if r.get("k4b") else []
     else:
         ds = [(r.get("k4") or {}).get("muc")] if r.get("k4") else []
     for muc in ("can_doc", "khop", "chua_kiem"):
@@ -867,9 +906,20 @@ def _muc_dich(db: dict, r: dict) -> str | None:
 
 
 def cham_k124(db: dict, r_goc: dict, bo: dict) -> str:
+    """Chấm đột biến của các phép đọc NGUỒN (K1/K2/K3b/K4/K4b). Không có nguồn ⇒ lot_trang (phép không phán được)."""
+    if db.get("nguon_dot_bien") is None:
+        return "lot_trang"
     r = bo["kiem_muc"](db["muc_dot_bien"], db["nguon_dot_bien"])
     db["_r"] = r
+    if db["truong"] == "k3b":
+        db["phan_duoc"] = bool(r_goc.get("k3b"))
+        if chu_ky_bao(r, "K3b") - chu_ky_bao(r_goc, "K3b"):
+            return "bat"
+        muc = _muc_dich(db, r)
+        return {"khop": "lot_xanh", "can_doc": "lot_xanh", "chua_kiem": "lot_trang"}.get(muc or "", "lot_im")
     muc = _muc_dich(db, r)
+    if db["truong"] == "k4b":
+        db["phan_duoc"] = muc in ("khop", "can_doc")
     if muc == "can_doc":
         return "bat"
     if chu_ky_bao(r, db["phep"]) - chu_ky_bao(r_goc, db["phep"]):
@@ -882,8 +932,9 @@ def cham_k3(db: dict, bo: dict, khoa_dich: str = "ban_xuat_dot_bien") -> str:
     nguon = bo["k3_nguon"]({"summary": {}, "items": [db["muc_dot_bien"]]})
     if not nguon:
         return "lot_im"
-    goc = bo["k3_doi_chieu"](nguon, {"ban_xuat": _boc(db["ban_xuat_goc"])})
-    moi = bo["k3_doi_chieu"](nguon, {"ban_xuat": _boc(db[khoa_dich])})
+    neo = db.get("neo")
+    goc = bo["k3_doi_chieu"](nguon, {"ban_xuat": _boc(db["ban_xuat_goc"])}, neo)
+    moi = bo["k3_doi_chieu"](nguon, {"ban_xuat": _boc(db[khoa_dich])}, neo)
     lat = any(g["ket_qua"]["ban_xuat"] == "con" and m["ket_qua"]["ban_xuat"] == "can_doc"
               for g, m in zip(goc["dong"], moi["dong"]))
     return "bat" if lat else "lot_xanh"
@@ -895,32 +946,43 @@ def _co_phan_quyet(r: dict, phep: str) -> bool:
     """Phép có phán ✓ hoặc 🟠 cho mục (⚪ / không có dòng = không phán được)."""
     if phep == "K4":
         return bool(r.get("k4"))
+    if phep == "K4b":
+        return (r.get("k4b") or {}).get("muc") in ("khop", "can_doc")
     return any(x["muc"] in ("khop", "can_doc") for tr in TRUONG_CUA_PHEP[phep] for x in r.get(tr) or [])
 
 
 def do_doi_chung(muc: list[dict], nguon: dict[str, str], du_lieu: dict[Path, dict], bo: dict) -> tuple[dict, dict]:
     """(thống kê đối chứng, {khoá mục: kết quả kiem_muc gốc}). Không đột biến gì."""
-    ket_qua, dem = {}, {p: {"n": 0, "bao": 0, "phan_quyet": 0} for p in ("K1", "K2", "K4")}
+    ket_qua, dem = {}, {p: {"n": 0, "bao": 0, "phan_quyet": 0} for p in PHEP_NGUON}
     for rec in muc:
         pm = _pmid(rec["muc"])
         if not pm or pm not in nguon:
             continue
         r = bo["kiem_muc"](rec["muc"], nguon[pm])
         ket_qua[_khoa(rec)] = r
-        for p in ("K1", "K2", "K4"):
+        for p in PHEP_NGUON:
             dem[p]["n"] += 1
             dem[p]["bao"] += bool(chu_ky_bao(r, p))
             dem[p]["phan_quyet"] += _co_phan_quyet(r, p)
-    # mức DASHBOARD — đúng như mã thoát của ④-bis/④-ter: nếu chuyển sang CHẶN thì bao nhiêu bản PASS hôm nay bị chặn
-    dash = {"K124": {"n": 0, "bao": 0}, "K3": {"n": 0, "bao": 0, "dong_can_doc": 0, "dong": 0}}
+    # mức DASHBOARD — đúng như mã thoát của ④-bis/④-ter: nếu chuyển sang CHẶN thì bao nhiêu bản PASS hôm nay bị chặn.
+    # K124 giữ đúng nghĩa cũ (chỉ K1/K2/K4) để so được với báo cáo trước; K3b/K4b đếm riêng (cùng ④-ter, cùng mã thoát).
+    dash = {"K124": {"n": 0, "bao": 0}, "K3b4b": {"n": 0, "bao": 0}, "K3": {"n": 0, "bao": 0, "dong_can_doc": 0, "dong": 0}}
     for f, data in du_lieu.items():
         kd = bo["kiem_dashboard"](data, nguon, False)
         if kd["so_muc_co_nguon"]:
+            theo = kd.get("dem_theo_phep")
+            if theo:
+                bao124 = sum(theo[p]["can_doc"] for p in ("K1", "K2", "K4") if p in theo)
+                bao_b = sum(theo[p]["can_doc"] for p in ("K3b", "K4b") if p in theo)
+            else:
+                bao124, bao_b = kd["dem"]["can_doc"], 0
             dash["K124"]["n"] += 1
-            dash["K124"]["bao"] += kd["dem"]["can_doc"] > 0
+            dash["K124"]["bao"] += bao124 > 0
+            dash["K3b4b"]["n"] += 1
+            dash["K3b4b"]["bao"] += bao_b > 0
         dich = {"ban_doc": _doc(_duong_ban_doc(f)), "word_html": _doc(_duong_word(f))}
         if any(v is not None for v in dich.values()):
-            k3 = bo["k3_doi_chieu"](bo["k3_nguon"](data), dich)
+            k3 = bo["k3_doi_chieu"](bo["k3_nguon"](data), dich, bo["k3_neo"](data))
             dash["K3"]["n"] += 1
             dash["K3"]["bao"] += k3["dem"]["can_doc"] > 0
             dash["K3"]["dong_can_doc"] += k3["dem"]["can_doc"]
@@ -936,7 +998,7 @@ PHU_BO_SINH: dict[str, dict] = {}   # {lớp: {muc_thu, sinh_duoc}} của lượ
 
 
 def sinh_dot_bien(muc: list[dict], nguon: dict[str, str], goc: dict, hat: int, bo: dict,
-                  word: dict[Path, str | None]) -> list[dict]:
+                  word: dict[Path, str | None], neo: dict[Path, list[dict]] | None = None) -> list[dict]:
     """Mọi đột biến, kèm thông tin mục (dashboard, id, pmid). Điều kiện tiên quyết K4: đối chứng K4 = ✓ (đối
     chứng đã 🟠 thì 🟠 sau đột biến không quy được cho đột biến) và mục không phải khuyến cáo phủ định."""
     ra: list[dict] = []
@@ -961,7 +1023,10 @@ def sinh_dot_bien(muc: list[dict], nguon: dict[str, str], goc: dict, hat: int, b
             r0 = goc.get(_khoa(rec)) or {}
             if (r0.get("k4") or {}).get("muc") == "khop" and not bo["muc_phu_dinh"](it):
                 ds += [thu("K4_nguon_nguoc", sinh_k4_nguon(rec, src, hat)), thu("K4_muc_dao", sinh_k4_muc(rec, src, hat))]
-        k3 = sinh_k3(rec, hat, word.get(rec["duong_dan"]))
+        k3 = sinh_k3(rec, hat, word.get(rec["duong_dan"]), (neo or {}).get(rec["duong_dan"]))
+        for db in k3:
+            if db["lop"] == "K3_rung_trong_muc":
+                db["nguon_dot_bien"] = src            # K3b so mục với NGUỒN; không có nguồn ⇒ chấm lot_trang
         thu("K3", k3)
         ds += k3
         for db in ds:
@@ -1030,6 +1095,9 @@ def tong_hop(dot_bien: list[dict]) -> dict:
     k1 = theo_phep.get("K1", [])
     k1_phu = {"trong_tu_dien": _o([d for d in k1 if d.get("tu_dien_bo_kiem") is True]),
               "ngoai_tu_dien": _o([d for d in k1 if d.get("tu_dien_bo_kiem") is False])}
+    # K3b/K4b: riêng phần phép PHÁN ĐƯỢC (K3b: đối chứng có ≥1 dòng K3b — nguồn có câu khuyến cáo có điều kiện neo được vào
+    # hành động; K4b: nguồn có câu ủng hộ hoặc chống rõ ràng) — tách giới hạn dữ liệu nguồn khỏi lỗ hổng cơ chế
+    phan_duoc = {p: _o([d for d in theo_phep.get(p, []) if d.get("phan_duoc")]) for p in ("K3b", "K4b")}
     ly_do: dict[str, dict[str, int]] = {}
     for db in dot_bien:
         if db.get("ly_do_lot"):
@@ -1037,6 +1105,7 @@ def tong_hop(dot_bien: list[dict]) -> dict:
             o[db["ly_do_lot"]] = o.get(db["ly_do_lot"], 0) + 1
     return {
         "ly_do_lot": ly_do,
+        "phan_duoc": phan_duoc,
         "k1_phu": k1_phu,
         "k3_phu": k3_phu,
         "theo_phep_trong_pham_vi": {p: _o(theo_phep.get(p, [])) for p in PHEP},
@@ -1061,7 +1130,8 @@ def do_tat_ca(thu_muc: Path, *, hat: int, nguon_fn, bo: dict | None = None, da_p
     nguon, tk_nguon = nguon_fn(pmids)
     doi_chung, goc = do_doi_chung(muc, nguon, du_lieu, bo)
     word = {f: (gon_dau(chuan_hoa(w)) if (w := _doc(_duong_word(f))) else None) for f in du_lieu}
-    dot_bien = sinh_dot_bien(muc, nguon, goc, hat, bo, word)
+    neo = {f: bo["k3_neo"](d) for f, d in du_lieu.items()} if "k3_neo" in bo else None
+    dot_bien = sinh_dot_bien(muc, nguon, goc, hat, bo, word, neo)
     cham_tat_ca(dot_bien, goc, bo, nguon)
     return {"so_dashboard_pass": len(dashboards), "so_dashboard_doc_duoc": len(du_lieu), "so_muc_apply": len(muc),
             "so_muc_co_nguon": sum(1 for rec in muc if _pmid(rec["muc"]) in nguon), "nguon": tk_nguon,
@@ -1133,8 +1203,6 @@ _TEN_LOP = {
 }
 _LY_DO_NGOAI = {
     "K2_nguong_hanh_dong": "K1/K2 chỉ đọc population/pico.P/title — không đọc action.",
-    "K3_rung_trong_muc": "K3 so BẢN XUẤT với MỤC, không so MỤC với nguồn ⇒ cụm đã rụng khỏi mục thì không còn gì để so.",
-    "K4_muc_dao": "K4 chỉ tìm tín hiệu ngược chiều trong NGUỒN; mục nói «không làm» còn được coi là cùng chiều nguồn.",
 }
 
 
@@ -1145,8 +1213,15 @@ _TEN_LY_DO = {
     "chuan_hoa_xoa_mat_cau": "câu đã đảo nằm trong đoạn chuan_hoa xoá như thẻ HTML («<» so sánh … «>»)",
     "bo_loc_ket_cuc_phu": "câu đã đảo bị bộ lọc «kết cục phụ» bỏ qua (vd «secondary analysis», «secondary prevention»)",
     "dang_phu_dinh_ngoai_tu_dien": "dạng phủ định không có trong từ điển K4 (thì hiện tại, «not effective», «did not result in»…)",
-    "cum_con_o_cho_khac_trong_ban_xuat": "cụm K3 trích được bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất ⇒ "
-                                         "K3 khớp cấp tài liệu vẫn thấy",
+    "cum_con_o_cho_khac_trong_ban_xuat": "cụm K3 trích được bị cắt khỏi hành động nhưng còn ở chỗ khác trong phạm vi K3 so "
+                                         "(đoạn của mục; không định vị được mục thì cả tài liệu) ⇒ K3 vẫn thấy",
+    "khong_co_nguon": "mục không có tóm tắt nguồn ⇒ K3b không phán được (⚪)",
+    "k3b_khong_co_cau_khuyen_cao_neo": "nguồn không có câu khuyến cáo CÓ ĐIỀU KIỆN chung thuật ngữ với hành động ⇒ K3b im",
+    "hanh_dong_con_dau_dieu_kien_khac": "hành động đã cắt vẫn còn dấu điều kiện khác (K3b chỉ biết «còn/không còn điều kiện») "
+                                        "hoặc mục còn nhắc chỉ số của ngưỡng",
+    "nguon_khong_co_cau_ung_ho_ro": "nguồn không có câu ủng hộ rõ (thường gặp: tóm tắt guideline chỉ mô tả phạm vi) ⇒ ⚪",
+    "nguon_co_cau_chong_hai": "phần Kết luận/tiêu đề nguồn có câu chống/hại (rộng có chủ ý) ⇒ K4b coi là cùng chiều",
+    "muc_khong_nhan_la_phu_dinh_that": "mục đảo không được nhận là khuyến cáo «KHÔNG làm» thật",
     "k3_khong_trich_cum": "K3 không trích được cụm điều kiện nào từ hành động",
     "k3_trich_cum_khac": "mọi cụm K3 trích được vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3)",
     "nguon_khong_neu": "nguồn không nêu ⇒ ⚪",
@@ -1156,11 +1231,13 @@ _TEN_LY_DO = {
 
 def _rieng_tu_dien(th: dict, p: str) -> dict | None:
     """Độ nhạy riêng phần NẰM TRONG từ điển bộ kiểm (nhãn cấu trúc của bộ sinh): K1 = cách viết bộ kiểm nhận được,
-    K3 = nhóm dấu điều kiện có trong từ điển K3 (`dau_k3`). K2/K4 không tách ⇒ None."""
+    K3 = nhóm dấu điều kiện có trong từ điển K3 (`dau_k3`); K3b/K4b = phần phép PHÁN ĐƯỢC trên nguồn đó. K2/K4 ⇒ None."""
     if p == "K1":
         o = (th.get("k1_phu") or {}).get("trong_tu_dien")
     elif p == "K3":
         o = ((th.get("k3_phu") or {}).get("theo_nhom_dau") or {}).get("dau_k3")
+    elif p in ("K3b", "K4b"):
+        o = (th.get("phan_duoc") or {}).get(p)
     else:
         o = None
     return o if o and o.get("n") else None
@@ -1173,7 +1250,9 @@ def _o_rieng(o: dict | None) -> str:
 def ban_md(bj: dict) -> str:
     d, dc, th = bj["du_lieu"], bj["doi_chung"], bj["tong_hop"]
     ngay = bj["ngay"]
-    ngay_vn = f"{ngay[6:8]}/{ngay[4:6]}/{ngay[:4]}" if len(ngay) == 8 else ngay
+    m_ngay = re.match(r"(\d{8})(.*)$", ngay)
+    ngay_vn = (f"{ngay[6:8]}/{ngay[4:6]}/{ngay[:4]}" + (f", lượt {m_ngay.group(2)}" if m_ngay.group(2) else "")
+               if m_ngay else ngay)
     L = [f"# Độ nhạy kiểm chéo ngữ nghĩa K1–K4 — đột biến tổng hợp ({ngay_vn})", "",
          "> **Đột biến TỔNG HỢP có nhãn theo cấu trúc — KHÔNG thay bộ vàng do bác sĩ gắn nhãn.** Công cụ không đổi "
          "chế độ chặn; chuyển K1–K4 từ CẢNH BÁO sang CHẶN là quyết định của bác sĩ (audit/16 §4). "
@@ -1183,16 +1262,22 @@ def ban_md(bj: dict) -> str:
          "## Tóm tắt", "",
          "- Độ nhạy trong phạm vi thiết kế: " + " · ".join(
              f"{p} {_pt(th['theo_phep_trong_pham_vi'][p]['do_nhay'])} (n={th['theo_phep_trong_pham_vi'][p]['n']}"
-             + (f"; riêng phần trong từ điển bộ kiểm {_pt(r['do_nhay'])} [KTC {_ktc(r['ktc95'])}; {r['bat']}/{r['n']}]"
+             + (f"; riêng phần {'phép phán được' if p in ('K3b', 'K4b') else 'trong từ điển bộ kiểm'} "
+                f"{_pt(r['do_nhay'])} [KTC {_ktc(r['ktc95'])}; {r['bat']}/{r['n']}]"
                 if (r := _rieng_tu_dien(th, p)) else "") + ")"
              for p in PHEP) + ".",
          "- Số gộp tính cả cách viết/dấu điều kiện mà bộ sinh CỐ Ý chọn ngoài từ điển bộ kiểm (đo lỗ hổng từ vựng); "
          "«riêng phần trong từ điển» = K1 với cách viết bộ kiểm nhận được, K3 với nhóm dấu có trong từ điển K3 "
-         "(`dau_k3`) — phần còn lọt ở đó là lỗ hổng CƠ CHẾ, không phải từ vựng.",
+         "(`dau_k3`) — phần còn lọt ở đó là lỗ hổng CƠ CHẾ, không phải từ vựng; với K3b/K4b là phần đột biến mà phép "
+         "PHÁN ĐƯỢC trên nguồn đó (K3b: nguồn có câu khuyến cáo có điều kiện neo được vào hành động; K4b: nguồn có câu "
+         "ủng hộ hoặc chống rõ ràng).",
          "- Lớp lỗi NGOÀI phạm vi thiết kế (không phép nào được thiết kế để bắt): " + " · ".join(
              f"{_TEN_LOP.get(k, k)} {o['bat']}/{o['n']}" for k, o in th["theo_lop"].items() if not o["trong_pham_vi"]) + ".",
          f"- Đối chứng mức dashboard — nếu chuyển sang CHẶN: K1/K2/K4 chặn {dc['dashboard']['K124']['bao']}/"
-         f"{dc['dashboard']['K124']['n']} dashboard đã PASS, K3 chặn {dc['dashboard']['K3']['bao']}/{dc['dashboard']['K3']['n']}.",
+         f"{dc['dashboard']['K124']['n']} dashboard đã PASS"
+         + (f", K3b/K4b chặn {dc['dashboard']['K3b4b']['bao']}/{dc['dashboard']['K3b4b']['n']}"
+            if dc["dashboard"].get("K3b4b") else "")
+         + f", K3 chặn {dc['dashboard']['K3']['bao']}/{dc['dashboard']['K3']['n']}.",
          "",
          "## Dữ liệu", "",
          f"- Dashboard ĐÃ PASS (bản mới nhất mỗi chủ đề): {d['so_dashboard_pass']} (đọc được DATA: "
@@ -1203,7 +1288,8 @@ def ban_md(bj: dict) -> str:
          "- Bộ sinh phủ được (mục đủ điều kiện tiên quyết / mục đã thử): " + " · ".join(
              f"{k} {v['sinh_duoc']}/{v['muc_thu']}" for k, v in sorted((bj.get("phu_bo_sinh") or {}).items())) + ".", "",
          "## 1. Độ nhạy theo phép (chỉ đột biến TRONG phạm vi thiết kế của phép)", "",
-         "| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Riêng phần trong từ điển bộ kiểm (KTC 95%; bắt/n) "
+         "| Phép | n đột biến | Bắt đúng chỗ | Độ nhạy (KTC 95% Wilson) | Riêng phần trong từ điển bộ kiểm — K3b/K4b: phần phép "
+         "phán được (KTC 95%; bắt/n) "
          "| Kể cả 🟠 lệch chỗ | Lọt ✓ (trấn an sai) | Lọt ⚪ | Lọt im |",
          "|---|---|---|---|---|---|---|---|---|"]
     for p in PHEP:
@@ -1233,10 +1319,10 @@ def ban_md(bj: dict) -> str:
               f"- {kp['lot']} lần lọt, quy theo cụm mà K3 THỰC trích từ hành động (không theo cụm của bộ sinh): "
               f"{kp['lot_k3_khong_trich_cum']} lần K3 không trích được cụm nào · {kp['lot_k3_trich_cum_khac']} lần mọi cụm "
               f"K3 trích vẫn nguyên trong hành động đã cắt (phần bị cắt nằm ngoài cụm của K3) · "
-              f"{kp['lot_do_khop_cap_tai_lieu']} lần cụm K3 bị cắt khỏi hành động nhưng còn ở chỗ khác trong bản xuất "
-              f"(K3 khớp cấp TÀI LIỆU, không biết cụm thuộc mục nào)"
+              f"{kp['lot_do_khop_cap_tai_lieu']} lần cụm K3 bị cắt khỏi hành động nhưng còn ở chỗ khác trong phạm vi K3 so "
+              f"(từ 14/11/2026c: đoạn của chính mục khi bản xuất in «ITEM-xx. <tiêu đề>»; cả tài liệu khi không định vị được)"
               + (f" · {kp['lot_khac']} lần khác" if kp.get("lot_khac") else "") + ".",
-              f"- Độ nhạy TỐI ĐA nếu K3 so theo TỪNG MỤC (bắt + ca khớp cấp tài liệu, trên cùng n = {kp['n']}): "
+              f"- Cận trên nếu cả phần «còn ở chỗ khác» cũng được quy đúng mục (bắt + phần đó, trên cùng n = {kp['n']}): "
               f"{_pt(kp.get('do_nhay_neu_so_theo_tung_muc'))} ({_ktc(kp.get('ktc95_neu_so_theo_tung_muc'))}). Lỗ hổng "
               f"trích cụm/từ vựng ({trich}/{kp['lot']} lần lọt) {so_sanh} lỗ hổng so khớp cấp tài liệu "
               f"({kp['lot_do_khop_cap_tai_lieu']}/{kp['lot']}).",
@@ -1261,7 +1347,7 @@ def ban_md(bj: dict) -> str:
         L.append(f"| {o['lop']} | `{o['bien_the']}` | {o['n']} | {o['bat']} | {_pt(o['do_nhay'])} ({_ktc(o['ktc95'])}) | {lot} |")
     L += ["", "## 4. Đối chứng KHÔNG đột biến (cận trên báo động giả)", "",
           "| Phép | Mục có nguồn | Mục có 🟠 | Tỉ lệ (KTC 95%) | Mục phép phán được ✓/🟠 |", "|---|---|---|---|---|"]
-    for p in ("K1", "K2", "K4"):
+    for p in [x for x in PHEP_NGUON if x in dc["muc"]]:
         o = dc["muc"][p]
         L.append(f"| {p} | {o['n']} | {o['bao']} | {_pt(o['bao'] / o['n'] if o['n'] else None)} "
                  f"({_ktc(wilson(o['bao'], o['n']))}) | {o['phan_quyet']} ({_pt(o['phan_quyet'] / o['n'] if o['n'] else None)}) |")
@@ -1270,16 +1356,35 @@ def ban_md(bj: dict) -> str:
           "sẽ bị chặn):", "",
           f"- K1/K2/K4 (bộ đệm tóm tắt, ngoại tuyến): {k124['bao']}/{k124['n']} dashboard có ≥1 🟠 "
           f"({_pt(k124['bao'] / k124['n'] if k124['n'] else None)}).",
-          f"- K3 (bản đọc + Word HTML thật): {k3['bao']}/{k3['n']} dashboard có ≥1 🟠 · {k3['dong_can_doc']}/{k3['dong']} "
-          "dòng cụm-điều-kiện × sản phẩm là 🟠.", "",
+          *([f"- K3b/K4b (cùng bước ④-ter): {dc['dashboard']['K3b4b']['bao']}/{dc['dashboard']['K3b4b']['n']} dashboard có ≥1 🟠."]
+            if dc["dashboard"].get("K3b4b") else []),
+          f"- K3 (bản đọc + Word HTML thật, so theo TỪNG MỤC khi định vị được mục): {k3['bao']}/{k3['n']} dashboard có ≥1 🟠 · "
+          f"{k3['dong_can_doc']}/{k3['dong']} dòng cụm-điều-kiện × sản phẩm là 🟠.", "",
           ""]
     cd = bj.get("chan_doan_nguon") or {}
     if cd.get("so_nguon"):
-        L += ["## Phát hiện phụ — chuẩn hoá nguồn làm mất chữ", "",
-              f"`chuan_hoa()` (K3, được K1/K2/K4 dùng lại) xoá mọi đoạn «<…>» như thẻ HTML. Bản tóm tắt efetch là văn bản THUẦN, "
-              f"«<» là dấu so sánh ⇒ chữ tới dấu «>» kế tiếp bị xoá trước khi K1/K2/K4 đọc: {cd['nguon_bi_cat']}/{cd['so_nguon']} "
-              f"nguồn bị cắt, {cd['nguon_bi_cat_tren_200_ky_tu']} nguồn mất đoạn > 200 ký tự, tổng {cd['ky_tu_bi_cat']:,} / "
-              f"{cd['ky_tu_tong']:,} ký tự. Đoạn bị xoá có thể chứa đúng câu «not recommended» mà K4 cần thấy.", ""]
+        cu = cd.get("nguon_bi_cat_neu_mau_cu")
+        L += ["## Chuẩn hoá nguồn — chữ bị xoá", "",
+              f"Bộ chuẩn hoá NGUỒN mà bộ kiểm đang dùng xoá chữ ở {cd['nguon_bi_cat']}/{cd['so_nguon']} nguồn "
+              f"({cd['nguon_bi_cat_tren_200_ky_tu']} nguồn mất đoạn > 200 ký tự; tổng {cd['ky_tu_bi_cat']:,} / {cd['ky_tu_tong']:,} "
+              "ký tự)."
+              + (f" Với mẫu cũ (mọi «<…>» là thẻ HTML, trước bản vá 14/11/2026) con số này là {cu}/{cd['so_nguon']}: trong văn "
+                 "bản THUẦN «<» là dấu so sánh, chữ tới dấu «>» kế tiếp bị xoá trước khi K1/K2/K4 đọc." if cu is not None else ""),
+              ""]
+    ss = bj.get("so_sanh")
+    if ss:
+        L += [f"## So sánh TRƯỚC/SAU (cùng hạt giống, cùng dữ liệu) — trước: `{ss['tep']}`", "",
+              "| Phép / lớp | Trước: bắt/n (độ nhạy) | Sau: bắt/n (độ nhạy) |", "|---|---|---|"]
+        for k, (t, s_) in ss["phep"].items():
+            L.append(f"| {k} | {t} | {s_} |")
+        L += ["", "Đọc bảng trên: nếu lượt SAU thêm vào từ điển bộ kiểm CHÍNH những cách viết/dạng phủ định mà bộ sinh dùng, phần "
+              "tăng ở đây đo CƠ CHẾ trên các cách viết đó — không chứng minh bộ kiểm phủ được cách viết khác (cần một danh sách "
+              "biến thể giữ riêng, bộ kiểm chưa từng thấy). Mẫu số có thể lệch vài đơn vị vì bộ sinh dùng chung chuẩn hoá và "
+              "đối chứng K4 của bộ kiểm làm điều kiện tiên quyết.",
+              "", "| Đối chứng (mục thật, chưa đột biến) | Trước | Sau |", "|---|---|---|"]
+        for k, (t, s_) in ss["doi_chung"].items():
+            L.append(f"| {k} | {t} | {s_} |")
+        L += [""]
     L += ["## Cách đọc và giới hạn", "",
           "- «Bắt đúng chỗ» = trường đích của phép chuyển 🟠; «🟠 lệch chỗ» = phép có 🟠 MỚI nhưng ở phần tử khác; "
           "«Lọt ✓» = phép báo khớp trên mục đã bị làm sai (nguy hiểm nhất); «Lọt ⚪» = phép nói chưa kiểm được; "
@@ -1290,9 +1395,52 @@ def ban_md(bj: dict) -> str:
           "dấu điều kiện ngoài danh sách K3) — vì vậy độ nhạy phản ánh cả lỗ hổng từ vựng, không chỉ cơ chế.",
           "- Đột biến tổng hợp ≠ lỗi thật: lỗi do người/agent soạn có thể tinh vi hơn (diễn đạt lại, sai một phần). "
           "Tóm tắt PubMed không phải toàn văn. Khử trùng theo bản PASS mới nhất mỗi chủ đề.",
+          "- K3b/K4b (14/11/2026c) đọc tóm tắt tiếng ANH để so với mục tiếng VIỆT ⇒ chỉ so được thứ ánh xạ tất định: K3b xét câu "
+          "khuyến cáo CÓ ĐIỀU KIỆN của nguồn neo vào hành động qua thuật ngữ La-tinh chung (ngưỡng có toán tử / hành động còn "
+          "hay mất mọi dấu điều kiện), K4b xét câu ủng hộ/chống ở Kết luận. Mệnh đề định tính không so được nội dung.",
           "- Báo cáo không chép văn bản nguồn; tóm tắt nằm ở bộ đệm ngoài git.", "",
           "_Cần bác sĩ kiểm chứng._", ""]
     return "\n".join(L)
+
+
+def _bo(o: dict | None) -> str:
+    return "—" if not o or not o.get("n") else f"{o['bat']}/{o['n']} ({_pt(o['bat'] / o['n'])})"
+
+
+def _bao(o: dict | None) -> str:
+    return "—" if not o or not o.get("n") else f"{o['bao']}/{o['n']} ({_pt(o['bao'] / o['n'])})"
+
+
+def so_sanh(cu: dict, moi: dict, tep: str) -> dict:
+    """Bảng TRƯỚC/SAU giữa hai báo cáo JSON của công cụ này (cùng hạt giống). Lớp đột biến trước đây NGOÀI phạm vi (K3 rụng
+    trong mục, K4 mục đảo) được so với phép mới nhận nó (K3b, K4b)."""
+    tc, tm = cu.get("tong_hop") or {}, moi.get("tong_hop") or {}
+    pc, pm = tc.get("theo_phep_trong_pham_vi") or {}, tm.get("theo_phep_trong_pham_vi") or {}
+    lc, lm = tc.get("theo_lop") or {}, tm.get("theo_lop") or {}
+    hang = {p: (_bo(pc.get(p)), _bo(pm.get(p))) for p in ("K1", "K2", "K3", "K4")}
+    hang["K1 · riêng cách viết trong từ điển"] = (_bo((tc.get("k1_phu") or {}).get("trong_tu_dien")),
+                                                 _bo((tm.get("k1_phu") or {}).get("trong_tu_dien")))
+    hang["K1 · cách viết ngoài từ điển (đo lỗ hổng từ vựng)"] = (_bo((tc.get("k1_phu") or {}).get("ngoai_tu_dien")),
+                                                                 _bo((tm.get("k1_phu") or {}).get("ngoai_tu_dien")))
+    hang["K3b · rụng điều kiện NGAY TRONG MỤC (trước: ngoài phạm vi)"] = (_bo(lc.get("K3_rung_trong_muc")),
+                                                                        _bo(pm.get("K3b")))
+    hang["K4b · MỤC đảo sang «không làm» (trước: ngoài phạm vi)"] = (_bo(lc.get("K4_muc_dao")), _bo(pm.get("K4b")))
+    hang["K2 · ngưỡng trong HÀNH ĐỘNG (vẫn ngoài phạm vi)"] = (_bo(lc.get("K2_nguong_hanh_dong")),
+                                                            _bo(lm.get("K2_nguong_hanh_dong")))
+    dc, dm = cu.get("doi_chung") or {}, moi.get("doi_chung") or {}
+    dch = {f"{p} · mục có 🟠 / mục có nguồn": (_bao((dc.get("muc") or {}).get(p)), _bao((dm.get("muc") or {}).get(p)))
+           for p in PHEP_NGUON}
+    for k, ten in (("K124", "K1/K2/K4 · dashboard có 🟠"), ("K3b4b", "K3b/K4b · dashboard có 🟠"),
+                   ("K3", "K3 · dashboard có 🟠")):
+        dch[ten] = (_bao((dc.get("dashboard") or {}).get(k)), _bao((dm.get("dashboard") or {}).get(k)))
+    k3c, k3m = (dc.get("dashboard") or {}).get("K3") or {}, (dm.get("dashboard") or {}).get("K3") or {}
+    dch["K3 · dòng cụm × sản phẩm là 🟠"] = (f"{k3c.get('dong_can_doc', '—')}/{k3c.get('dong', '—')}",
+                                         f"{k3m.get('dong_can_doc', '—')}/{k3m.get('dong', '—')}")
+    cc, cm = cu.get("chan_doan_nguon") or {}, moi.get("chan_doan_nguon") or {}
+    dch["Nguồn bị chuẩn hoá xoá chữ"] = (f"{cc.get('nguon_bi_cat', '—')}/{cc.get('so_nguon', '—')}",
+                                        f"{cm.get('nguon_bi_cat', '—')}/{cm.get('so_nguon', '—')}")
+    return {"tep": tep, "phep": hang, "doi_chung": dch,
+            "ma_cu": cu.get("ma_bo_kiem_sha256_16"), "hat_giong_cu": cu.get("hat_giong")}
 
 
 def in_tom_tat(bj: dict) -> None:
@@ -1308,7 +1456,7 @@ def in_tom_tat(bj: dict) -> None:
             print(f"  [ngoài phạm vi] {k}: n={o['n']} · bắt {o['bat']} ({_pt(o['do_nhay'])})")
     dc = bj["doi_chung"]["muc"]
     print("  Đối chứng (cận trên báo động giả): " + " · ".join(
-        f"{p} {dc[p]['bao']}/{dc[p]['n']}" for p in ("K1", "K2", "K4")))
+        f"{p} {dc[p]['bao']}/{dc[p]['n']}" for p in PHEP_NGUON if p in dc))
     print("  Đột biến TỔNG HỢP — không thay bộ vàng; không tự đổi chế độ chặn. Cần bác sĩ kiểm chứng.")
 
 
@@ -1331,6 +1479,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--bao-cao", help="thư mục ghi báo cáo (mặc định quality/eval/kiem-cheo-ngu-nghia/)")
     ap.add_argument("--ghi", action="store_true", help="ghi báo cáo .json + .md (mặc định chạy khô)")
     ap.add_argument("--json", action="store_true", help="in bản JSON ra stdout")
+    ap.add_argument("--so-sanh", help="báo cáo JSON cũ của công cụ này ⇒ thêm bảng TRƯỚC/SAU vào báo cáo (cùng hạt giống)")
     a = ap.parse_args(argv)
 
     goc = goc_du_lieu("EBM-Dashboards")
@@ -1350,6 +1499,15 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     ngay = a.ngay or dt.date.today().strftime("%Y%m%d")
     bj = ban_json(kq, hat=a.hat_giong, ngay=ngay)
+    if a.so_sanh:
+        try:
+            cu = json.loads(Path(a.so_sanh).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"⚪ Không đọc được báo cáo để so sánh {Path(a.so_sanh).as_posix()}: {e}")
+            return 2
+        if cu.get("hat_giong") != a.hat_giong:
+            print(f"⚠ Báo cáo cũ dùng hạt giống {cu.get('hat_giong')}, lượt này {a.hat_giong} — TRƯỚC/SAU không cùng đột biến.")
+        bj["so_sanh"] = so_sanh(cu, bj, Path(a.so_sanh).name)
     if a.json:
         print(json.dumps(bj, ensure_ascii=False, indent=1))
     else:
